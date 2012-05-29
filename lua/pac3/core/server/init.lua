@@ -82,18 +82,28 @@ function pac.CheckPart(ply, data)
 end
 
 function pac.SubmitPart(data, ply)
-	local rp = RecipientFilter()
-	rp:AddAllPlayers()
-	
-	if data.ply then
-		rp:RemovePlayer(data.ply)
-	end
-	
 	if net then
+		local rp = player.GetAll()
+		
+		if data.ply then
+			for k,v in pairs(rp) do
+				if data.ply == v then
+					rp[k] = nil
+				end
+			end
+		end
+	
 		net.Start("pac_receive")
 			net.WriteString(glon.encode(data))
 		net.Send(ply or rp)
 	else
+		local rp = RecipientFilter()
+		rp:AddAllPlayers()
+		
+		if data.ply then
+			rp:RemovePlayer(data.ply)
+		end
+		
 		datastream.StreamToClients(ply or rp, "pac_receive", data)
 	end
 end

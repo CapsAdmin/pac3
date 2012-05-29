@@ -11,6 +11,7 @@ function pac.CreatePart(name)
 	part:Initialize()
 
 	table.insert(pac.ActiveParts, part)
+	part.Id = #pac.ActiveParts
 
 	part:SetName("part " .. #pac.ActiveParts)
 
@@ -78,6 +79,10 @@ do -- meta
 
 	PART.ClassName = "base"
 
+	function PART:__tostring()
+		return string.format("%s[%s][%i]", self.Type, self.ClassName, self.Id)
+	end
+	
 	pac.GetSet(PART, "BoneIndex")
 	pac.GetSet(PART, "Owner", NULL)
 	pac.GetSet(PART, "Parent", pac.NULL)
@@ -329,7 +334,7 @@ do -- meta
 		
 			local pos, ang = owner:GetPos(), owner:GetAngles()
 		
-			if self.Parent:IsValid() then
+			if self.Parent:IsValid() and (self.Parent.ClassName ~= PART.ClassName and self.Parent.ClassName ~= "player") then
 				pos, ang = self.Parent:GetDrawPosition()
 			elseif owner:IsValid() then
 				pos, ang = owner:GetBonePosition(self.BoneIndex or 0)

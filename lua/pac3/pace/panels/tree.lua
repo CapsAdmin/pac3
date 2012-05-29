@@ -104,7 +104,7 @@ end
 
 function PANEL:PopulateParts(node, parts, children)
 	for key, part in pairs(parts) do
-		key = part:GetName()
+		key = tostring(part)
 				
 		if not part:HasParent() or children then
 			local part_node
