@@ -125,6 +125,7 @@ function pace.LoadPartFromFile(part, name)
 		else
 			ErrorNoHalt("pac3 tried to load non existant part " .. name)
 		end
+		pace.RefreshTree()
 	end
 end
 
