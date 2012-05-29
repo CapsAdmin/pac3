@@ -1,21 +1,52 @@
-function pac.SubmitOutfit(ent, outfit)
-	datastream.StreamToServer("pac_submit", {ent = ent, outfit = outfit})
-end
-
-function pac.SetSubmittedOutfit(ent, tbl)
-	for key, outfit in ipairs(pac.GetOutfits()) do
-		if outfit:GetName() == tbl.Name then
-			outfit:Clear()
-			outfit:SetTable(tbl)
-			return
+local function handle_data(data)
+	if IsValid(data.ent) then
+		if type(data.part) == "table" then
+			pac.SetSubmittedPart(data.ply, data.ent, data.part)
+		elseif type(data.part) ==  "string" then
+			pac.RemoveSubmittedPart(data.ply, data.ent, data.part)
 		end
 	end
-
-	pac.CreateOutfit(ent):SetTable(tbl)
 end
 
-function pac.RemoveSubmittedOutfit(ply, ent, name)
-	pac.RemoveOutfitByName(name)
+if net then
+	function pac.SubmitPart(ent, part)
+		net.Start("pac_submit")
+			net.WriteString(glon.encode({ent = ent, part = part:ToTable()}))
+		net.SendToServer()
+	end
+
+	net.Receive("pac_receive", function()
+		local data = glon.decode(net.ReadString())
+		handle_data(data)
+	end)
+else
+	require("datastream")
+
+	function pac.SubmitPart(ent, part)
+		datastream.StreamToServer("pac_submit", {ent = ent, part = part:ToTable()})
+	end
+
+	datastream.Hook("pac_receive", function(_,_,_, data)
+		handle_data(data)
+	end)
+end
+
+function pac.SetSubmittedPart(ply, ent, tbl)
+	for key, part in pairs(pac.GetParts()) do
+		if part:GetOwner() == ent and part:GetName() == tbl.Name then
+			part:Clear()
+			part:SetTable(tbl)
+			return
+		end
+	end 
+
+	local part = pac.CreatePart(tbl.self.ClassName)
+	part:SetOwner(ent)
+	part:SetTable(tbl)
+end
+
+function pac.RemoveSubmittedPart(ply, ent, name)
+	pac.RemovePartByName(name)
 end
 
 function pac.Notify(allowed, reason)
@@ -31,14 +62,4 @@ usermessage.Hook("pac_submit_acknowledged", function(umr)
 	local reason = umr:ReadString()
 
 	pac.Notify(allowed, reason)
-end)
-
-datastream.Hook("pac_submit", function(_,_,_, data)
-	if IsValid(data.ent) then
-		if type(data.outfit) == "table" then
-			pac.SetSubmittedOutfit(data.ent, data.outfit)
-		elseif type(data.outfit) ==  "string" then
-			pac.RemoveSubmittedOutfit(data.ply, data.ent, data.outfit)
-		end
-	end
 end)

@@ -1,120 +1,61 @@
+pace.current_part = pac.NULL
 pace.properties = NULL
-pace.view = NULL
 pace.tree = NULL
 
-local reset_pose_params =
-{
-	"body_rot_z",
-	"spine_rot_z",
-	"head_rot_z",
-	"head_rot_y",
-	"head_rot_x",
-	"walking",
-	"running",
-	"swimming",
-	"rhand",
-	"lhand",
-	"rfoot",
-	"lfoot",
-	"move_yaw",
-	"aim_yaw",
-	"aim_pitch",
-	"breathing",
-	"vertical_velocity",
-	"vehicle_steer",
-	"body_yaw",
-	"spine_yaw",
-	"head_yaw",
-	"head_pitch",
-	"head_roll",
-}
+local L = pace.LanguageString
 
-function pace.GetTPose()
-	return pace.tposed
+function pace.SetViewPart(part, reset_campos)	
+	local ent = pace.GetViewEntity()
+
+	pace.SetViewEntity(part:GetOwner())
+
+	if reset_campos or not ent:IsValid() then
+		pace.ResetView()
+	end	
+
 end
 
-function pace.SetTPose(b)
-	if b then
-		pac.AddHook("CalcMainActivity", function(ply) return ply:LookupSequence("ragdoll"), ply:LookupSequence("ragdoll") end)
-		pac.AddHook("UpdateAnimation", function(ply) for k,v in pairs(reset_pose_params) do ply:SetPoseParameter(v, 0) end end)
-	else
-		pac.RemoveHook("CalcMainActivity")
-		pac.RemoveHook("UpdateAnimation")
-	end
-	pace.tposed = b
-end
-
-function pace.SetViewOutfit(outfit)
-	if outfit:GetOwner():IsPlayer() then
-		pac.AddHook("ShouldDrawLocalPlayer", function() return true end)
-	else
-		pac.RemoveHook("ShouldDrawLocalPlayer")
-	end
-
-	pace.view:SetViewOutfit(outfit)
-end
-
-function pace.RefreshTree(rebuild)
-	if rebuild then
-		pace.tree.rebuild = true
-		pace.tree:Clear()
-	end
-	if pace.tree then
-		pace.tree:Populate()
-		timer.Simple(0, function()
-			pace.tree:Populate()
-			if rebuild then
-				pace.tree.rebuild = nil
-			end
-		end)
-	end
-end
-
-function pace.PopulateProperties(obj)
+function pace.PopulateProperties(part)
 	if pace.properties:IsValid() then
-		pace.properties:Populate(obj)
+		pace.properties:Populate(part)
 	end
-end
-
-pace.current_outfit = pac.Null
-pace.current_part = pac.Null
-
-function pace.OnOutfitSelected(obj)
-	pace.PopulateProperties(obj)
-	pace.current_outfit = obj
 end
 
 function pace.OnDraw()
 	pace.mctrl.HUDPaint()
 end
 
-function pace.OnPartSelected(obj)
-	pace.PopulateProperties(obj)
-	pace.mctrl.SetTarget(obj)
-	pace.current_outfit = obj.Outfit
-	pace.current_part = obj
-end
-
-function pace.OnCreateOutfit()
-	local outfit = pac.CreateOutfit(LocalPlayer())
-	pace.RefreshTree()
+function pace.OnPartSelected(part)
+	pace.PopulateProperties(part)
+	pace.mctrl.SetTarget(part)
+	pace.current_part = part
+	
+	pace.SetViewPart(part)
+	
+	pace.Editor:InvalidateLayout()
+	
+	if pac.MatBrowser and pac.MatBrowser:IsValid() then
+		pac.MatBrowser:Remove()
+	end
+	
+	pace.StopSelect()
 end
 
 function pace.OnCreatePart(name)
-	local outfit = pace.current_outfit
-	if outfit:IsValid() then
-		local part = pac.CreatePart(name)
-		part:SetName(name .. " " .. #outfit:GetParts())
+	local part = pac.CreatePart(name)
 
-		local parent = pace.current_part
-		if parent:IsValid() then
-			part:SetParent(parent:GetName())
-		end
-
-		outfit:AddPart(part)
-
-		pace.RefreshTree()
+	local parent = pace.current_part
+	
+	if parent:IsValid() then	
+		part:SetName(name .. " " .. pac.GetPartCount(name, parent:GetChildren()))
+		part:SetParent(parent)
+	else
+		part:SetName(name .. " " .. pac.GetPartCount(name))
 	end
+		
+	pace.SetViewPart(part)
+
+	pace.RefreshTree()
 end
 
 function pace.OnVariableChanged(obj, key, val, skip_undo)
@@ -125,45 +66,65 @@ function pace.OnVariableChanged(obj, key, val, skip_undo)
 		if not skip_undo then
 			pace.CallChangeForUndo(obj, key, val)
 		end
+		
+		local node = obj.editor_node
+		if IsValid(node) then			
+			if key == "Name" then
+				node:SetText(val)
+			elseif key == "Model" and val and val ~= "" then
+				node:SetModel(val)
+			elseif key == "Parent" or key == "ParentName" then
+				local tree = obj.editor_node
+				if IsValid(tree) then
+					tree = tree:GetRoot()
+					tree:SetSelectedItem(nil)
+					node:Remove()
+					pace.RefreshTree()
+				end
+			end
+		end
 	end
 end
 
 pace.OnUndo = pace.Undo
 pace.OnRedo = pace.Redo
 
-local L = pace.LanguageString
-
-function pace.SaveOutfitToFile(outfit, name)
+function pace.SavePartToFile(part, name)
 	if not name then
 		Derma_StringRequest(
-			L"save outfit",
+			L"save part",
 			L"filename:",
-			outfit:GetName(),
+			part:GetName(),
 
 			function(name)
-				pace.SaveOutfitToFile(outfit, name)
+				pace.SavePartToFile(part, name)
 			end
-
 		)
 	else
-		luadata.WriteFile("pac3/outfits/" .. name .. ".txt", outfit:ToTable())
+		print("[pac3] saving " .. name)
+		luadata.WriteFile("pac3/" .. name .. ".txt", part:ToTable())
 	end
 end
 
-function pace.LoadOutfitFromFile(outfit, name)
+function pace.LoadPartFromFile(part, name)
 	if not name then
 		Derma_StringRequest(
-			L"load outfit",
+			L"load part",
 			L"filename:",
 			"",
 
 			function(name)
-				pace.LoadOutfitFromFile(outfit, name)
+				pace.LoadPartFromFile(part, name)
 			end
-
 		)
 	else
-		outfit:SetTable(luadata.ReadFile("pac3/outfits/" .. name .. ".txt"))
+		print("[pac3] loading " .. name)
+		local data = luadata.ReadFile("pac3/" .. name .. ".txt")
+		if data then
+			part:SetTable(data)
+		else
+			ErrorNoHalt("pac3 tried to load non existant part " .. name)
+		end
 	end
 end
 
@@ -173,39 +134,97 @@ function pace.OnOpenMenu()
 	menu:AddOption("toggle t pose", function()
 		pace.SetTPose(not pace.GetTPose())
 	end)
-	menu:AddOption("toggle lighting", function()
-		pace.view:SetLighting(not pace.view:GetLighting())
+	menu:AddOption("reset view", function()
+		pace.ResetView()
+	end)
+	menu:AddOption("reset eye angles", function()
+		local ent = pace.GetViewEntity()
+		if ent:IsValid() then
+			if ent:IsPlayer() then
+				ent:SetEyeAngles(Angle(0, 0, 0))
+			else
+				ent:SetAngles(Angle(0, 0, 0))
+			end
+		
+			ent:SetupBones()
+		end
 	end)
 	menu:Open()
 	menu:MakePopup()
 end
 
-function pace.OnPartMenu(part)
-	local menu = DermaMenu()
-	menu:SetPos(gui.MousePos())
-	menu:AddOption("Remove", function()
-		part:Remove()
-		pace.RefreshTree()
-		pace.OnOutfitSelected(pace.current_outfit)
-	end)
-	menu:Open()
-	menu:MakePopup()
+local function add_parts(menu)
+	for class_name in pairs(pac.GetRegisteredParts()) do
+		menu:AddOption(class_name, function()
+			pace.Call("CreatePart", class_name)
+		end)--:SetImage(pace.PartIcons[class_name])
+	end
 end
 
-function pace.OnOutfitMenu(outfit)
+function pace.OnPartMenu(obj)
 	local menu = DermaMenu()
 	menu:SetPos(gui.MousePos())
+	
 	menu:AddOption("save", function()
-		pace.SaveOutfitToFile(outfit)
+		pace.SavePartToFile(obj)
+		CloseDermaMenus()
 	end)
+
 	menu:AddOption("load", function()
-		pace.LoadOutfitFromFile(outfit)
+		pace.LoadPartFromFile(obj)
+		pace.RefreshTree()
+		CloseDermaMenus()
+	end)
+	
+	menu:AddOption("submit", function()
+		pac.SubmitPart(obj:GetOwner(), obj)
+	end)
+		
+	menu:AddOption("clone", function()
+		obj:Clone()
 		pace.RefreshTree()
 	end)
-	menu:AddOption("Remove", function()
-		outfit:Remove()
+	
+	menu:AddSpacer()
+
+	add_parts(menu)
+	
+	menu:AddSpacer()
+	
+	menu:AddOption("owner", function()
+		pace.SelectEntity(function(ent)
+			obj:SetOwner(ent)
+			pace.SetViewEntity(ent)
+		end)
+		
+	end)
+	
+	menu:AddOption("remove", function()
+		obj:Remove()
 		pace.RefreshTree()
 	end)
+		
 	menu:Open()
 	menu:MakePopup()
+end
+
+function pace.OnNewPartMenu()
+	pace.current_part = pac.NULL
+	local menu = DermaMenu()
+	menu:MakePopup()
+	menu:SetPos(gui.MousePos())
+	add_parts(menu)
+end
+
+function pace.OnHoverPart(obj)
+	obj:Highlight()
+end
+
+function pace.OnOpenEditor()
+	pace.EnableView(true)
+end
+
+function pace.OnCloseEditor()
+	pace.EnableView(false)
+	pace.StopSelect()
 end

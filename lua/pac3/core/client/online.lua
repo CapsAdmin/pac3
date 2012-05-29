@@ -9,8 +9,10 @@ local function SteamIDToCommunityID(id)
 	return tostring("7656119" .. 7960265728 + a + (b*2))
 end
 
-function pac.GetSteamOutfitURL(steamid, callback)
-	steamid = IsEntity(steamid) and steamid:IsPlayer() and steamid:SteamID() or steamid
+function pac.GetSteamPartURL(steamid, callback)
+	if IsEntity(steamid) and steamid.SteamID then
+		steamid = steamid:SteamID()
+	end
 
 	local url = ("http://steamcommunity.com/profiles/%s/?xml=1"):format(SteamIDToCommunityID(steamid))
 
@@ -19,8 +21,8 @@ function pac.GetSteamOutfitURL(steamid, callback)
 	end)
 end
 
-function pac.GetSteamOutfit(steamid, callback)
-	pac.GetSteamOutfitURL(steamid, function(url)
+function pac.GetSteamPart(steamid, callback)
+	pac.GetSteamPartURL(steamid, function(url)
 		if url then
 			http.Get(url, "", function(str)
 				callback(glon.decode(str))
@@ -29,10 +31,10 @@ function pac.GetSteamOutfit(steamid, callback)
 	end)
 end
 
-function pac.LoadOutfitFromProfile(ply)
-	pac.GetSteamOutfit(ply, function(tbl)
+function pac.LoadPartFromProfile(ply)
+	pac.GetSteamPart(ply, function(tbl)
 		if ply:IsPlayer() then
-			pac.SetSubmittedOutfit(ply, tbl)
+			pac.SetSubmittedPart(ply, tbl)
 		end
 	end)
 end

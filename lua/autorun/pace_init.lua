@@ -1,6 +1,6 @@
 if SERVER then
-	AddCSLuaFile("autorun/pac_init.lua")
-
+	AddCSLuaFile("autorun/pace_init.lua")
+		
 	local function add_files(dir)
 		local files
 		
@@ -27,11 +27,9 @@ if SERVER then
 		end
 	end
 
-	add_files("pac3/core/client/")
-
-	include("pac3/core/server/init.lua")
+	add_files("pac3/pace/")
 end
 
 if CLIENT then
-	include("pac3/core/client/init.lua")
+	include("pac3/pace/init.lua")
 end

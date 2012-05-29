@@ -11,6 +11,10 @@ pac.BoneNameReplacements =
 	{"Neck1", "neck"},
 	{"Head1", "head"},
 	{"Toe0", "toe"},
+	{"lowerarm", "lower arm"},
+	{"Bip", ""},
+	{" R", " right"},
+	{" L", " left"},
 }
 
 function pac.GetAllBones(ent)
@@ -40,7 +44,8 @@ function pac.GetAllBones(ent)
 				{
 					friendly = friendly,
 					real = name,
-					bone = bone
+					bone = bone,
+					i = i,
 				}
 			end
 		end
@@ -58,8 +63,8 @@ function pac.GetModelBones(ent)
 	return ent.pac_bones
 end
 
-function pac.GetModelBonesSorted(ent)
-	local bones = table.Copy(pac.GetModelBones(ent))
+function pac.GetModelBonesSorted(ent, o)
+	local bones = o or table.Copy(pac.GetModelBones(ent))
 	bones = table.ClearKeys(bones)
 
 	table.sort(bones, function(a,b)
@@ -75,13 +80,11 @@ function pac.HookBuildBone(ent)
 	end
 end
 
-function pac.EntityBuildBonePositions(ply)
-	for key, outfit in pairs(pac.GetOutfits()) do
-		if outfit:GetOwner() == ply then
-			for key, part in pairs(outfit:GetParts()) do
-				if part.BuildBonePositions then
-					part:BuildBonePositions(ply)
-				end
+function pac.EntityBuildBonePositions(ent)	
+	for key, part in pairs(pac.GetParts()) do
+		if part:GetOwner() == ent then
+			if part.BuildBonePositions then
+				part:BuildBonePositions(ent)
 			end
 		end
 	end

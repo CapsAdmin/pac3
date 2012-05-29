@@ -5,14 +5,14 @@ do -- container
 	PANEL.Base = "DPanel"
 
 	function PANEL:Paint(w, h)
-		surface.SetDrawColor(color_white)
-		surface.DrawRect(0, 0, w or self:GetWide(), h or self:GetTall() + 1)
-		surface.SetDrawColor(color_black)
-		surface.DrawOutlinedRect(0, 0, w or self:GetWide(), h or self:GetTall() + 1)
+		if net then
+			self:GetSkin().tex.MenuBG(0, 0, (w or self:GetWide()) + (self.right and -1 or 3), (h or self:GetTall()) + 1)
+		else
+			self:GetSkin().DrawButtonBorder(self, 0, 0, (w or self:GetWide()) + (self.right and -1 or 3), (h or self:GetTall()) + 1)
+		end
 	end
 
 	function PANEL:SetContent(pnl)
-		self:NoClipping(true)
 		pnl:SetParent(self)
 		self.content = pnl
 	end
@@ -34,27 +34,25 @@ do -- list
 	PANEL.ClassName = "properties"
 	PANEL.Base = "DHorizontalDivider"
 
-	PANEL.List = {}
-
 	AccessorFunc(PANEL, "item_height", "ItemHeight")
 
 	function PANEL:Init()
+		self.List = {}
+		
 		DHorizontalDivider.Init(self)
 
 		local left = vgui.Create("DPanelList", self)
-			left:Dock(FILL)
 			self:SetLeft(left)
 		self.left = left
 
 		local right = vgui.Create("DPanelList", self)
-			right:Dock(FILL)
 			self:SetRight(right)
 		self.right = right
 
-		self:SetDividerWidth(1)
+		self:SetDividerWidth(2)
 		self:SetLeftWidth(91)
 		self:SetItemHeight(14)
-
+		
 		pace.properties = self
 	end
 
@@ -62,27 +60,28 @@ do -- list
 		return (self.item_height * (#self.List + 1)) - (self:GetDividerWidth() + 1)
 	end
 
-	function PANEL:PerformLayout()
-		DHorizontalDivider.PerformLayout(self)
-
+	function PANEL:FixHeight()
 		local sorted = table.Copy(self.List)
 
-		for key, data in ipairs(self.List) do
+		for key, data in pairs(self.List) do
 			data.left:SetTall(self:GetItemHeight())
 			data.right:SetTall(self:GetItemHeight())
 		end
 	end
 
-	function PANEL:AddItem(key, var)
+	function PANEL:AddItem(key, var, pos)
 		local btn = pace.CreatePanel("properties_label")
-		btn:SetValue(key)
+			btn:SetValue(key:gsub("%u", " %1"):lower())
+			btn.pac3_sort_pos = pos
 		self.left:AddItem(btn)
 
 		local pnl = pace.CreatePanel("properties_container")
+		pnl.right = true
 		if type(var) == "Panel" then
 			pnl:SetContent(var)
 		end
-
+		
+		pnl.pac3_sort_pos = pos
 		self.right:AddItem(pnl)
 
 		table.insert(self.List, {left = btn, right = pnl, panel = var, key = key})
@@ -97,7 +96,7 @@ do -- list
 	end
 
 	function PANEL:Clear()
-		for key, data in ipairs(self.List) do
+		for key, data in pairs(self.List) do
 			data.left:Remove()
 			data.right:Remove()
 		end
@@ -109,27 +108,46 @@ do -- list
 		self:Clear()
 
 		local tbl = {}
-		local data = obj:ToTable()
-
+		local data = obj:GetVars()
+		
 		for pos, str in ipairs(pace.PropertyOrder) do
 			for key, val in pairs(data) do
 				if key == str then
-					table.insert(tbl, {key = key, val = val})
+					table.insert(tbl, {pos = pos, key = key, val = val})
 					data[key] = nil
 				end
 			end
 		end
 
 		for key, val in pairs(data) do
-			table.insert(tbl, {key = key, val = val})
+			table.insert(tbl, {pos = #tbl, key = key, val = val})
 		end
-
-		for _, data in ipairs(tbl) do
+		
+		for pos, data in ipairs(tbl) do
 			local key, val = data.key, data.val
 
 			if key ~= "ClassName" then
 				local pnl
 				local T = type(val):lower()
+				
+				-- hack for color, since color is a vector as well
+				-- but we want a slightly different vector control
+				-- for colors
+				if key:lower():find("color") then
+					T = "color"
+				end
+				
+				if key:lower() == "bone" then
+					T = "bone"
+				end
+				
+				if key:lower() == "model" then
+					T = "model"
+				end
+				
+				if key:lower() == "material" then
+					T = "material"
+				end
 
 				if pace.PanelExists("properties_" .. T) then
 					pnl = pace.CreatePanel("properties_" .. T)
@@ -141,11 +159,10 @@ do -- list
 				end
 			end
 		end
-
-		self:TellParentAboutSizeChanges()
-		self:PerformLayout()
+		
+		self:FixHeight()
 	end
-
+	
 	pace.RegisterPanel(PANEL)
 end
 
@@ -157,7 +174,7 @@ do -- non editable string
 
 	function PANEL:SetValue(str)
 		local lbl = vgui.Create("DLabel")
-			lbl:SetTextColor(color_black)
+			lbl:SetTextColor(derma.Color(net and "text_dark" or "text_bright", self, color_black))
 			lbl:SetFont("defaultsmall")
 			lbl:SetText("  " .. str) -- ugh
 			lbl:SizeToContents()
@@ -177,8 +194,8 @@ do -- base editable
 		if self.editing then return end
 
 		local str = skip_encode and var or self:Encode(var)
-
-		self:SetTextColor(color_black)
+		
+		self:SetTextColor(derma.Color(net and "text_dark" or "text_bright", self, color_black))
 		self:SetFont("DefaultSmall")
 		self:SetText("  " .. str) -- ugh
 		self:SizeToContents()
@@ -190,8 +207,15 @@ do -- base editable
 		self.original_str = str
 		self.original_var = var
 	end
+	
+	-- kind of a hack
+	local last_focus = NULL
 
 	function PANEL:OnMousePressed(mcode)
+		if last_focus:IsValid() then
+			last_focus:Reset()
+		end	
+				
 		if mcode == MOUSE_LEFT then
 			self.MousePressing = true
 			if self:MousePress(true) == false then return end
@@ -199,9 +223,15 @@ do -- base editable
 				self:EditText()
 				self:DoubleClick()
 				self.last_press = 0
+				
+				last_focus = self
 			else
 				self.last_press = RealTime() + 0.2
 			end
+		end
+		
+		if mcode == MOUSE_RIGHT and self.SpecialCallback then
+			self:SpecialCallback()
 		end
 	end
 
@@ -220,27 +250,44 @@ do -- base editable
 	function PANEL:DoubleClick()
 
 	end
+	
 	function PANEL:MousePress()
 
 	end
 
 	function PANEL:EditText()
-
-		self.editing = true
 		self:SetText("")
+		
 		local pnl = vgui.Create("DTextEntry", self)
+		self.editing = pnl
 		pnl:SetFont("DefaultSmall")
 		pnl:SetDrawBackground(false)
 		pnl:SetDrawBorder(false)
-		pnl:SetSize(self:GetSize())
 		pnl:SetValue(self.original_str or "")
 		pnl:SetKeyboardInputEnabled(true)
 		pnl:RequestFocus()
+		pnl:SelectAllOnFocus(true)
+		
+		local x,y = pnl:GetPos()
+		pnl:SetPos(x+3,y-4)
+				
 		pnl.OnEnter = function()
+			self.editing = false
+			
 			pnl:Remove()
+			
 			self:SetValue(pnl:GetValue() or "", true)
 			self.OnValueChanged(self:Decode(pnl:GetValue()))
+		end
+	end
+	
+	function PANEL:Reset()
+		if IsValid(self.editing) then
+			self.editing:OnEnter()
 			self.editing = false
+		else
+			self:SetValue(self.original_var)
+			self.OnValueChanged(self.original_var)
 		end
 	end
 
@@ -273,7 +320,7 @@ do -- string
 end
 
 do -- vector
-	local function VECTOR(ctor, type, arg1, arg2, arg3)
+	local function VECTOR(ctor, type, arg1, arg2, arg3, encode, special_callback, sens)
 		local PANEL = {}
 
 		PANEL.ClassName = "properties_" .. type
@@ -283,27 +330,73 @@ do -- vector
 			self.vector = ctor(0,0,0)
 
 			local left = pace.CreatePanel("properties_number", self)
-			left:SetMouseInputEnabled(true)
-			left.OnValueChanged = function(num)
-				self.vector[arg1] = num
-				self.OnValueChanged(self.vector)
-				self:PerformLayout()
-			end
-
 			local middle = pace.CreatePanel("properties_number", self)
-			middle:SetMouseInputEnabled(true)
-			middle.OnValueChanged = function(num)
-				self.vector[arg2] = num
+			local right = pace.CreatePanel("properties_number", self)
+			
+			if encode then
+				left.Encode = encode
+				middle.Encode = encode
+				right.Encode = encode
+			end
+			
+			if sens then
+				left.sens = sens
+				middle.sens = sens
+				right.sens = sens
+			end
+			
+			if special_callback then
+				left.SpecialCallback = function(self2) special_callback(self, self2) end
+				middle.SpecialCallback = function(self2) special_callback(self, self2) end
+				right.SpecialCallback = function(self2) special_callback(self, self2) end
+			end
+			
+			left:SetMouseInputEnabled(true)
+			left.OnValueChanged = function(num)			
+				self.vector[arg1] = num
+				
+				if input.IsKeyDown(KEY_LSHIFT) then
+					middle:SetValue(num)
+					self.vector[arg2] = num
+					
+					right:SetValue(num)
+					self.vector[arg3] = num
+				end
+				
 				self.OnValueChanged(self.vector)
-				self:PerformLayout()
+				self:InvalidateLayout()
 			end
 
-			local right = pace.CreatePanel("properties_number", self)
-			right:SetMouseInputEnabled(true)
-			right.OnValueChanged = function(num)
-				self.vector[arg3] = num
+			middle:SetMouseInputEnabled(true)
+			middle.OnValueChanged = function(num)			
+				self.vector[arg2] = num
+				
+				if input.IsKeyDown(KEY_LSHIFT) then
+					left:SetValue(num)
+					self.vector[arg1] = num
+					
+					right:SetValue(num)
+					self.vector[arg3] = num
+				end
+				
 				self.OnValueChanged(self.vector)
-				self:PerformLayout()
+				self:InvalidateLayout()
+			end
+
+			right:SetMouseInputEnabled(true)
+			right.OnValueChanged = function(num)				
+				self.vector[arg3] = num
+				
+				if input.IsKeyDown(KEY_LSHIFT) then
+					middle:SetValue(num)
+					self.vector[arg2] = num
+					
+					left:SetValue(num)
+					self.vector[arg1] = num
+				end
+				
+				self.OnValueChanged(self.vector)
+				self:InvalidateLayout()
 			end
 
 			left:SetPaintBorderEnabled(true)
@@ -323,6 +416,14 @@ do -- vector
 			self.right:SetValue(math.Round(vec[arg3], 3))
 		end
 
+		function PANEL:SpecialCallback()
+			self.left:SetValue(0)
+			self.middle:SetValue(0)
+			self.right:SetValue(0)
+			
+			self.OnValueChanged(ctor(0,0,0))
+		end
+		
 		function PANEL:PerformLayout()
 			self.left:SizeToContents()
 			self.middle:SizeToContents()
@@ -341,6 +442,40 @@ do -- vector
 
 	VECTOR(Vector, "vector", "x", "y", "z")
 	VECTOR(Angle, "angle", "p", "y", "r")
+	VECTOR(Vector, "color", "x", "y", "z", 
+		function(_, num)		
+			num = tonumber(num) or 0
+	
+			num = math.Round(num) 
+			num = math.max(num, 0) 
+
+			return tostring(num)
+		end, 
+		
+		function(self)
+			local frm = vgui.Create("DFrame")
+			frm:SetSize(100, 100)
+			frm:Center()
+			frm:MakePopup()
+			frm:SetTitle("")
+		
+			local clr = vgui.Create("DColorMixer", frm)
+			clr:Dock(FILL)
+			clr:SetColor(Color(self.vector.x, self.vector.y, self.vector.z))
+			
+			function clr.Think()
+				if 
+					clr.ColorCube:GetDragging() or 
+					clr.AlphaBar:GetDragging() or 
+					clr.RGBBar:GetDragging() 
+				then
+					local clr = clr:GetColor() or Color(255, 255, 255, 255)
+					self.OnValueChanged(Vector(clr.r, clr.g, clr.b))
+				end
+			end
+		end,
+		10
+	)
 end
 
 do -- number
@@ -348,12 +483,14 @@ do -- number
 
 	PANEL.ClassName = "properties_number"
 	PANEL.Base = "pace_properties_base_type"
-
+	
+	PANEL.sens = 1
+	
 	function PANEL:MousePress(bool)
 		if bool then
 			self.mousey = gui.MouseY()
 			self.mousex = gui.MouseX()
-			self.oldval = self:GetValue()
+			self.oldval = tonumber(self:GetValue()) or 0
 		else
 			self.mousey = nil
 		end
@@ -362,13 +499,21 @@ do -- number
 	function PANEL:Think()
 		if self:IsMouseDown() then
 			local delta = (self.mousey - gui.MouseY()) / 10
-			local val = self.oldval + delta
+			local val = self:Encode(self.oldval + (delta * self.sens))
 			self:SetValue(val)
-			self.OnValueChanged(val)
+			self.OnValueChanged(tonumber(val))
 		end
 	end
 
 	function PANEL:Encode(num)
+		num = tonumber(num) or 0
+		
+		num = math.Round(num, 3)
+		
+		if input.IsKeyDown(KEY_LCONTROL) then
+			num = math.Round(num)
+		end
+		
 		return tostring(num)
 	end
 
@@ -387,17 +532,98 @@ do -- boolean
 
 	function PANEL:Init()
 		local chck = vgui.Create("DCheckBox", self)
-		chck.OnChange = function() self.OnValueChanged(chck:GetChecked()) end
+		chck.OnChange = function() 
+			local b = chck:GetChecked()
+			self.OnValueChanged(b) 
+			self.lbl:SetText(tostring(b))
+		end
 		self.chck = chck
+		
+		local lbl = vgui.Create("DLabel", self)
+		lbl:SetTextColor(derma.Color(net and "text_dark" or "text_bright", self, color_black))
+		self.lbl = lbl
 	end
 
 	function PANEL:SetValue(b)
 		self.chck:SetChecked(b)
+		self.lbl:SetText(tostring(b))
 	end
 
 	function PANEL:OnValueChanged()
 
 	end
 
+	function PANEL:PerformLayout()
+		self.BaseClass.PerformLayout(self)
+		
+		self.chck:SetPos(0, 2)
+		self.chck:SetSize(12, 12)
+
+		self.lbl:MoveRightOf(self.chck, 5)
+		self.lbl:CenterVertical()
+		local w,h = self:GetParent():GetSize()
+		self:SetSize(w-2,h)
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
+do -- bone
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_bone"
+	PANEL.Base = "pace_properties_base_type"
+	
+	function PANEL:SpecialCallback()
+		pace.SelectBone(pace.GetViewEntity(), function(data)
+			self:SetValue(data.friendly)
+			self.OnValueChanged(data.friendly)
+		end)
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
+do -- model
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_model"
+	PANEL.Base = "pace_properties_base_type"
+		
+	function PANEL:SpecialCallback()
+		g_SpawnMenu:Open()
+		
+		--[[pac.AddHook("VGUIMousePressed", function(panel, mcode)
+			if net then
+				print(panel:Find("ContenIcon"))
+				if panel:GetClassName() == "ContentIcon" and panel.spawnname then
+					self:SetValue(panel.spawnname)
+				end
+			else
+			
+			end
+		end)]]
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
+do -- material
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_material"
+	PANEL.Base = "pace_properties_base_type"
+		
+	function PANEL:SpecialCallback()		
+		local pnl = pace.CreatePanel("mat_browser")
+		
+		function pnl.MaterialSelected(_, path)
+			self:SetValue(path)
+			self.OnValueChanged(path)
+		end
+		
+		pac.MatBrowser = pnl
+	end
+	
 	pace.RegisterPanel(PANEL)
 end

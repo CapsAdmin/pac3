@@ -2,19 +2,18 @@ local PART = {}
 
 PART.ClassName = "model"
 
-PART.ClipPlanes = {}
-
 pac.StartStorableVars()
+	--pac.GetSet(PART, "BoneMerge", false)
 	pac.GetSet(PART, "Skin", 0)
 	pac.GetSet(PART, "Fullbright", false)
 	pac.GetSet(PART, "Invert", false)
 	pac.GetSet(PART, "DoubleFace", false)
 	pac.GetSet(PART, "Bodygroup", 0)
 	pac.GetSet(PART, "BodygroupState", 0)
-	pac.GetSet(PART, "Animation", {})
 	pac.GetSet(PART, "Sequence", 1)
 	pac.GetSet(PART, "Material", "")
-	pac.GetSet(PART, "Color", color_white)
+	pac.GetSet(PART, "Color", Vector(255, 255, 255))
+	pac.GetSet(PART, "Alpha", 1)
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
 	pac.GetSet(PART, "Size", 1)
 	pac.GetSet(PART, "Model", "models/props_junk/watermelon01.mdl")
@@ -23,6 +22,11 @@ pac.EndStorableVars()
 pac.GetSet(PART, "Entity", NULL)
 
 function PART:Initialize()
+	self.ClipPlanes = {}
+	
+	self.Color = self.Color * 1
+	self.Scale = self.Scale * 1
+	
 	self.Entity = pac.CreateEntity(self.Model)
 	self.Entity:SetNoDraw(true)
 	self.Entity.PACPart = self
@@ -33,7 +37,7 @@ function PART:GetModelBones()
 	if parent and parent.Entity:IsValid() then
 		return pac.GetModelBones(parent.Entity)
 	else
-		return pac.GetModelBones(self.Owner)
+		return pac.GetModelBones(self:GetOwner())
 	end
 end
 
@@ -42,7 +46,7 @@ function PART:GetModelBonesSorted()
 	if parent and IsValid(parent.Entity) then
 		return pac.GetModelBonesSorted(parent.Entity)
 	else
-		return pac.GetModelBonesSorted(self.Owner)
+		return pac.GetModelBonesSorted(self:GetOwner())
 	end
 end
 
@@ -58,10 +62,9 @@ function PART:RemoveClipPlane(id)
 	end
 end
 
-function PART:OnAttach(outfit)
-	local owner = outfit:GetOwner()
-
+function PART:OnAttach(owner)
 	local ent = self:GetEntity()
+	
 	if ent:IsValid() and owner:IsValid() then
 		ent:SetPos(owner:EyePos())
 		ent:SetParent(owner)
@@ -69,28 +72,70 @@ function PART:OnAttach(outfit)
 	end
 end
 
-local bclip
+function PART:OnParent(part)
+	local ent = self:GetEntity()
 
-function PART:PostPlayerDraw(owner, pos, ang)
+	if part.ClassName == self.ClassName and part:GetEntity():IsValid() then
+		ent:SetParent(self:GetParent():GetEntity())
+	else
+		ent:SetParent(owner)
+	end	
+end
+
+function PART:OnUnParent()
+	local ent = self:GetEntity()
+	
+	if ent:IsValid() then
+		ent:SetParent(self:GetOwner())
+	end
+end
+
+local ring = Material("particle/particle_Ring_Sharp")
+
+function PART:DrawHighlight(owner, pos, ang)
 	local ent = self.Entity
 
 	if ent:IsValid() then
+		render.SetMaterial(ring)
+		render.DrawSprite(pos, 8, 8, color_white)
+	end
+end
+
+local bclip
+
+function PART:OnDraw(owner, pos, ang)
+	if self:IsHighlighting() then
+		self:DrawHighlight(owner, pos, ang)
+	end
+	
+	local ent = self.Entity
+
+	if ent:IsValid() then
+	
+		if ent:GetParent():IsValid() then
+			if self.BoneMerge then
+				ent:AddEffects(EF_BONEMERGE)
+			else
+				ent:RemoveEffects(EF_BONEMERGE)
+			end
+		end
+	
 		ent:SetPos(pos)
 		ent:SetRenderOrigin(pos)
 		ent:SetAngles(ang)
 		ent:SetRenderAngles(ang)
-
+		
 		if #self.ClipPlanes > 0 then
 			bclip = render.EnableClipping(true)
 
-			for key, clip in ipairs(self.ClipPlanes) do
-				local pos, ang = LocalToWorld(clip.LocalPos, self:GetVelocityAngle(clip.LocalAng), pos, ang)
-				local normal = ang:Forward()
-				render.PushCustomClipPlane(normal, normal:Dot(pos + normal))
+			for key, clip in pairs(self.ClipPlanes) do
+				if clip:IsValid() then
+					local pos, ang = LocalToWorld(clip.Position, clip:CalcAngleVelocity(clip.Angles), pos, ang)
+					local normal = ang:Forward()
+					render.PushCustomClipPlane(normal, normal:Dot(pos + normal))
+				end
 			end
 		end
-
-		if self.Fullbright then	render.SuppressEngineLighting(true)	end
 
 			if self.DoubleFace then
 				render.CullMode(MATERIAL_CULLMODE_CW)
@@ -99,9 +144,17 @@ function PART:PostPlayerDraw(owner, pos, ang)
 					render.CullMode(MATERIAL_CULLMODE_CW)
 				end
 			end
-
-				ent:DrawModel()
-
+						
+			if self.Colorf then render.SetColorModulation(self.Colorf.r, self.Colorf.g, self.Colorf.b) end
+			if self.Alpha then render.SetBlend(self.Alpha) end
+			if self.Materialm then if net then render.MaterialOverride(self.Materialm) else SetMaterialOverride(self.Materialm) end end
+		
+			if self.Fullbright then
+				render.SuppressEngineLighting(true) 
+			end
+			
+				ent:DrawModel()		
+				
 			if self.DoubleFace then
 				render.CullMode(MATERIAL_CULLMODE_CCW)
 				ent:DrawModel()
@@ -110,11 +163,21 @@ function PART:PostPlayerDraw(owner, pos, ang)
 					render.CullMode(MATERIAL_CULLMODE_CCW)
 				end
 			end
-
-		if self.Fullbright then	render.SuppressEngineLighting(false) end
-
+				
+			if self.Fullbright then
+				render.SuppressEngineLighting(false) 
+			end
+			
+			render.SetColorModulation(1,1,1)
+			render.SetBlend(1)
+			
+			if net then render.MaterialOverride() else SetMaterialOverride() end
+		
 		if #self.ClipPlanes > 0 then
-			for key, clip in ipairs(self.ClipPlanes) do
+			for key, clip in pairs(self.ClipPlanes) do
+				if not clip:IsValid() then
+					table.remove(key, self.ClipPlanes)
+				end
 				render.PopCustomClipPlane()
 			end
 
@@ -145,30 +208,19 @@ function PART:SetSize(var)
 end
 
 function PART:SetColor(var)
-	var = var or color_white
+	var = var or Vector()
 
 	self.Color = var
-	self.Entity:SetColor(var.r, var.g, var.b, var.a)
+	self.Colorf = Vector(var.r, var.g, var.b) / 255
 end
 
 function PART:SetMaterial(var)
 	var = var or ""
 
 	self.Material = var
-	self.Entity:SetMaterial(var or "")
-end
-
-function PART:SetAnimation(var)
-	if not var then self.Animation = nil return end
-
-	self.Animation = {
-		Loop = var.Loop,
-		Name = var.Name or "invalid name",
-		Rate = var.Rate or 1,
-		Offset = var.Offset or 0,
-		Min = var.Min or 0,
-		Max = var.Max or 1,
-	}
+	if var ~= "" then
+		self.Materialm = Material(var)
+	end
 end
 
 function PART:SetBodygroupState(var)
