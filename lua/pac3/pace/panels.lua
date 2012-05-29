@@ -16,16 +16,15 @@ function pace.CreatePanel(class_name, parent)
 end
 
 function pace.RegisterPanels()
-	for _, name in pairs(file.FindInLua("pac3/pace/panels/*.lua")) do
-		include("pac3/pace/panels/" .. name)
+	local files 
+	
+	if file.FindInLua then
+		files = file.FindInLua("pac3/pace/panels/*.lua")
+	else
+		files = file.Find("pac3/pace/panels/*.lua", LUA_PATH)
 	end
-end
-
-function pace.Panic()
-	for key, pnl in ipairs(pace.ActivePanels) do
-		if pnl:IsValid() then
-			pnl:Remove()
-			table.remove(pace.ActivePanels, key)
-		end
+	
+	for _, name in pairs(files) do
+		include("pac3/pace/panels/" .. name)
 	end
 end

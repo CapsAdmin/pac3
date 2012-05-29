@@ -52,7 +52,7 @@ function class.InsertIntoBaseField(META, var, pos)
 
 	if T1 == "table" then
 		if T2 == "table" and not var.Type then
-			for key, base in ipairs(var) do
+			for key, base in pairs(var) do
 				table.insert(META.Base, key, base)
 			end
 		else
@@ -91,11 +91,10 @@ function class.Derive(obj, var)
 	end
 
 	if T == "table" then
-
 		if var.Type then
-			obj.BaseClass = var
+			obj.BaseClass = table.Copy(var)
 		else
-			for _, base in ipairs(var) do
+			for _, base in pairs(var) do
 				class.Derive(obj, base)
 			end
 		end
@@ -124,7 +123,7 @@ function class.Derive(obj, var)
 		end
 	end
 
-	for _, base in ipairs(tbl) do
+	for _, base in pairs(tbl) do
 		for key, val in pairs(base) do
 			obj[key] = obj[key] or val
 		end
@@ -154,10 +153,14 @@ function class.Create(Type, ClassName)
 				return META[key]
 			end
 
-			for key, base in ipairs(META.__bases) do
+			for key, base in pairs(META.__bases) do
 				if base[key] ~= nil then
 					return base[key]
 				end
+			end
+			
+			if META.__indexx then
+				return META.__indexx(self, key)
 			end
 		end
 	else

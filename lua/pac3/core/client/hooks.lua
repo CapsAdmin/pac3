@@ -1,23 +1,58 @@
+function pac.PrePlayerDraw(ply)
+	if not ply:IsPlayer() then return end
+	for key, part in pairs(pac.GetParts()) do
+		if 
+			not part.Screenspace and 
+			not part.Translucent and 
+			part:GetOwner() == ply and 
+			not part:HasParent() 
+		then
+			part:Draw("OnDraw")
+			part:Draw("PrePlayerDraw")
+		end
+	end
+end
+pac.AddHook("PrePlayerDraw")
+
 function pac.PostPlayerDraw(ply)
 	if not ply:IsPlayer() then return end
-	for key, outfit in pairs(pac.GetOutfits()) do
-		if outfit:GetOwner() == ply then
-			outfit:Draw("PostPlayerDraw")
+	for key, part in pairs(pac.GetParts()) do
+		if 
+			not part.Screenspace and 
+			not part.Translucent and 
+			part:GetOwner() == ply and 
+			not part:HasParent() 
+		then
+			part:Draw("OnDraw")
+			part:Draw("PostPlayerDraw")
 		end
 	end
 end
 pac.AddHook("PostPlayerDraw")
 
 function pac.PostDrawTranslucentRenderables()
-	for key, outfit in pairs(pac.GetOutfits()) do
-		outfit:Draw("PostDrawTranslucentRenderables")
+	for key, part in pairs(pac.GetParts()) do
+		if 
+			part.Translucent or 
+			not Screenspace and 
+			not part:GetOwner():IsPlayer() and 
+			not part:HasParent() 
+		then
+			part:Draw("OnDraw")
+		end
 	end
 end
 pac.AddHook("PostDrawTranslucentRenderables")
 
 function pac.RenderScreenspaceEffect()
-	for key, outfit in pairs(pac.GetOutfits()) do
-		outfit:Draw("RenderScreenspaceEffect")
+	for key, part in pairs(pac.GetParts()) do
+		if 
+			part.Screenspace or 
+			not part.Translucent and
+			not part:HasParent() 
+		then
+			part:Draw("OnDraw")
+		end
 	end
 end
 pac.AddHook("RenderScreenspaceEffect")
@@ -30,22 +65,38 @@ pac.AddHook("Tick")
 function pac.OnEntityCreated(ply)
 	timer.Simple(1, function()
 		if ply:IsPlayer() then
-			pac.LoadOutfitFromProfile(ply)
+			--pac.LoadPartFromProfile(ply)
 		end
 	end)
 end
 pac.AddHook("OnEntityCreated")
 
 function pac.EntityRemoved(ent)
-	for key, outfit in pairs(pac.GetOutfits()) do
-		if outfit:GetOwner() == ent then
-			outfit:Remove()
-			pac.Outfits[key] = nil
+	for key, part in pairs(pac.GetParts()) do
+		if part:IsValid() and part:GetOwner() == ent then
+			part:Remove()
 		end
 	end
 end
 pac.AddHook("EntityRemoved")
 
-datastream.Hook("pac_submit", function( _, _, _, tbl)
-	pac.CreateOutfit(tbl.ent):SetTable(tbl.outfit)
-end)
+if net then
+	net.Receive("pac_submit", function()
+		local tbl = glon.decode(net.ReadString())
+		pac.CreatePart(tbl.ent):SetTable(tbl.part)
+	end)
+	
+	net.Receive("pac_effect_precached", function()
+		local name = net.ReadString()
+		pac.CallHook("EffectPrecached", name)
+	end)
+else
+	usermessage.Hook("pac_effect_precached", function(umr)
+		local name = umr:ReadString()
+		pac.CallHook("EffectPrecached", name)
+	end)
+
+	datastream.Hook("pac_submit", function( _, _, _, tbl)
+		pac.CreatePart(tbl.ent):SetTable(tbl.part)
+	end)
+end

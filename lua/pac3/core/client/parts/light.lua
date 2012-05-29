@@ -3,13 +3,13 @@ local PART = {}
 PART.ClassName = "light"
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Color", Color(255, 255, 255, 255))
+	pac.GetSet(PART, "Color", Vector(255, 255, 255))
 	pac.GetSet(PART, "Brightness", 1)
 	pac.GetSet(PART, "Size", 10)
 pac.EndStorableVars()
 
-function PART:PostPlayerDraw(owner, pos, ang)
-	local params = DynamicLight(tostring(self))
+function PART:OnDraw(owner, pos, ang)
+	local params = DynamicLight()
 	if params then
 		params.Pos = pos
 		params.r = self.Color.r
@@ -17,8 +17,8 @@ function PART:PostPlayerDraw(owner, pos, ang)
 		params.b = self.Color.b
 		params.Brightness = self.Brightness
 		params.Size = self.Size
-		params.Decay = FrameTime()
-		params.DieTime = CurTime() + 0.1
+		params.Decay = 0
+		params.DieTime = CurTime() + 0.5
 	end
 end
 

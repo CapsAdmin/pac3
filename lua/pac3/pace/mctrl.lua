@@ -18,11 +18,10 @@ mctrl.angle_pos = 0.5
 mctrl.scale_pos = 0.25
 
 do -- pace
-	mctrl.target = pac.Null
+	mctrl.target = pac.NULL
 
 	function mctrl.SetTarget(part)
-		if part.ClassName == "outfit" then return end
-		mctrl.target = part or pac.Null
+		mctrl.target = part or pac.NULL
 	end
 
 	function mctrl.GetTarget()
@@ -49,7 +48,7 @@ do -- pace
 		end
 	end
 
-	function mctrl.GetTargetLocalPos(pos, ang)
+	function mctrl.GetTargetPosition(pos, ang)
 		local wpos, wang = mctrl.GetBonePos()
 		if wpos and wang then
 			return WorldToLocal(pos, ang, wpos, wang)
@@ -57,93 +56,66 @@ do -- pace
 	end
 
 	function mctrl.GetCameraOrigin()
-		if pace.view:IsValid() then
-			return pace.view.pos
-		end
-		return LocalPlayer():EyePos()
+		return pace.GetViewPos()
 	end
 
-
 	function mctrl.GetCameraAngles()
-		if pace.view:IsValid() then
-			return pace.view.ang
-		end
-		return LocalPlayer():EyeAngles()
+		return pace.GetViewAngles()
 	end
 
 	function mctrl.GetMousePos()
-		if pace.view:IsValid() then
-			return pace.view:ScreenToLocal(gui.MousePos())
-		end
 		return gui.MousePos()
 	end
 
 	function mctrl.VecToScreen(vec)
-		if pace.view:IsValid() then
-			local w,h = pace.view:GetSize()
-			local x,y,vis = pace.VectorToLPCameraScreen(
-				(vec - mctrl.GetCameraOrigin()):Normalize(),
-				w,
-				h,
-				mctrl.GetCameraAngles(),
-				math.rad(pace.view.fov)
-			)
-
-			return {x=x,y=y, vis = vis > 0}
-		end
-
-		return vec:ToScreen()
+		local x,y,vis = pace.VectorToLPCameraScreen(
+			(vec - mctrl.GetCameraOrigin()):Normalize(),
+			ScrW(),
+			ScrH(),
+			mctrl.GetCameraAngles(),
+			math.rad(pace.GetViewFOV())
+		)
+		return {x=x,y=y, visible = vis > 0}
 	end
 
 	function mctrl.ScreenToVec(x,y)
-		if pace.view:IsValid() then
-			local w,h = pace.view:GetSize()
-			local vec = pace.LPCameraScreenToVector(
-				x,
-				y,
-				w,
-				h,
-				mctrl.GetCameraAngles(),
-				math.rad(pace.view.fov)
-			)
+		local vec = pace.LPCameraScreenToVector(
+			x,
+			y,
+			ScrW(),
+			ScrH(),
+			mctrl.GetCameraAngles(),
+			math.rad(pace.GetViewFOV())
+		)
 
-			return vec
-		end
-
-		return gui.ScreenToVec(x,y)
+		return vec
 	end
 
 	function mctrl.GetCalculatedScale()
-		return 8
+		return 7 * math.rad(pace.GetViewFOV())
 	end
 
 	function mctrl.OnMove(part, pos)
-		pace.Call("VariableChanged", part, "LocalPos", pos)
+		if input.IsKeyDown(KEY_LCONTROL) then
+			pos.x = math.Round(pos.x/pace.GridSizePos) * pace.GridSizePos
+			pos.y = math.Round(pos.y/pace.GridSizePos) * pace.GridSizePos
+			pos.z = math.Round(pos.z/pace.GridSizePos) * pace.GridSizePos
+		end
+	
+		pace.Call("VariableChanged", part, "Position", pos)
 		timer.Create("pace_refresh_properties", 0.1, 1, function()
 			pace.PopulateProperties(part)
 		end)
 	end
 
-	function mctrl.OnScale(part, scale, axis)
-		if part.SetScale then
-			if axis == AXIS_X then
-				local _scale = part:GetScale()
-				_scale.x = scale.x
-				pace.Call("VariableChanged", part, "Scale", _scale)
-			elseif axis == AXIS_Y then
-				local _scale = part:GetScale()
-				_scale.y = scale.y
-				pace.Call("VariableChanged", part, "Scale", _scale)
-			elseif axis == AXIS_Z then
-				local _scale = part:GetScale()
-				_scale.z = scale.z
-				pace.Call("VariableChanged", part, "Scale", _scale)
-			end
-		end
-	end
-
 	function mctrl.OnRotate(part, ang)
-		pace.Call("VariableChanged", part, "LocalAng", ang)
+		if input.IsKeyDown(KEY_LCONTROL) then
+			ang.p = math.Round(ang.p/pace.GridSizeAng) * pace.GridSizeAng
+			ang.y = math.Round(ang.y/pace.GridSizeAng) * pace.GridSizeAng
+			ang.r = math.Round(ang.r/pace.GridSizeAng) * pace.GridSizeAng
+		end
+		
+		pace.Call("VariableChanged", part, "Angles", ang)
 		timer.Create("pace_refresh_properties", 0.1, 1, function()
 			pace.PopulateProperties(part)
 		end)
@@ -168,7 +140,6 @@ end
 -- Mctrl functions
 
 function mctrl.LinePlaneIntersection(pos, normal, x, y)
-	local ply = LocalPlayer()
 	return
 		line_plane_intersection(
 			Vector(0, 0, 0),
@@ -201,23 +172,22 @@ function mctrl.CalculateMovement(axis, x, y, offset)
 				local x, y = mctrl.PointToAxis(pos, forward, x, y)
 				local localpos = mctrl.LinePlaneIntersection(pos, right, x, y)
 
-				return localpos and (mctrl.GetTargetLocalPos(pos + localpos:Dot(forward)*forward - forward*offset, ang))
+				return localpos and (mctrl.GetTargetPosition(pos + localpos:Dot(forward)*forward - forward*offset, ang))
 			elseif axis == AXIS_Y then
 				local x, y = mctrl.PointToAxis(pos, right, x, y)
 				local localpos = mctrl.LinePlaneIntersection(pos, forward, x, y)
 
-				return localpos and (mctrl.GetTargetLocalPos(pos + localpos:Dot(right)*right - right*offset, ang))
+				return localpos and (mctrl.GetTargetPosition(pos + localpos:Dot(right)*right - right*offset, ang))
 			elseif axis == AXIS_Z then
 				local x, y = mctrl.PointToAxis(pos, up, x, y)
 				local localpos = mctrl.LinePlaneIntersection(pos, forward, x, y) or mctrl.LinePlaneIntersection(pos, right, x, y)
 
-				return localpos and (mctrl.GetTargetLocalPos(pos + localpos:Dot(up)*up - up*offset, ang))
+				return localpos and (mctrl.GetTargetPosition(pos + localpos:Dot(up)*up - up*offset, ang))
 			elseif axis == AXIS_VIEW then
-				local ply = LocalPlayer()
 				local camnormal = mctrl.GetCameraAngles():Forward()
 				local localpos = mctrl.LinePlaneIntersection(pos, camnormal, x, y)
 
-				return localpos and (mctrl.GetTargetLocalPos(pos + localpos, ang))
+				return localpos and (mctrl.GetTargetPosition(pos + localpos, ang))
 			end
 		end
 	end
@@ -234,17 +204,17 @@ function mctrl.CalculateScale(axis, x, y, offset)
 				local x, y = mctrl.PointToAxis(pos, forward, x, y)
 				local localpos = mctrl.LinePlaneIntersection(pos, right, x, y)
 
-				return localpos and (mctrl.GetTargetLocalPos(pos + localpos:Dot(forward)*forward - forward*offset, ang)), AXIS_X
+				return localpos and (mctrl.GetTargetPosition(pos + localpos:Dot(forward)*forward - forward*offset, ang)), AXIS_X
 			elseif axis == AXIS_Y then
 				local x, y = mctrl.PointToAxis(pos, right, x, y)
 				local localpos = mctrl.LinePlaneIntersection(pos, forward, x, y)
 
-				return localpos and (mctrl.GetTargetLocalPos(pos + localpos:Dot(right)*right - right*offset, ang)), AXIS_Y
+				return localpos and (mctrl.GetTargetPosition(pos + localpos:Dot(right)*right - right*offset, ang)), AXIS_Y
 			elseif axis == AXIS_Z then
 				local x, y = mctrl.PointToAxis(pos, up, x, y)
 				local localpos = mctrl.LinePlaneIntersection(pos, forward, x, y) or mctrl.LinePlaneIntersection(pos, right, x, y)
 
-				return localpos and (mctrl.GetTargetLocalPos(pos + localpos:Dot(up)*up - up*offset, ang)), AXIS_Z
+				return localpos and (mctrl.GetTargetPosition(pos + localpos:Dot(up)*up - up*offset, ang)), AXIS_Z
 			end
 		end
 	end
@@ -266,7 +236,7 @@ function mctrl.CalculateRotation(axis, x, y)
 					local _, localang = WorldToLocal(vector_origin, diffang, vector_origin, ang)
 					local _, newang = LocalToWorld(vector_origin, Angle(math.NormalizeAngle(localang.p + localang.y), 0, 0), vector_origin, ang)
 
-					return select(2, mctrl.GetTargetLocalPos(vector_origin, newang))
+					return select(2, mctrl.GetTargetPosition(vector_origin, newang))
 				end
 			elseif axis == AXIS_Y then
 				local localpos = mctrl.LinePlaneIntersection(pos, up, x, y)
@@ -277,7 +247,7 @@ function mctrl.CalculateRotation(axis, x, y)
 					local _, localang = WorldToLocal(vector_origin, diffang, vector_origin, ang)
 					local _, newang = LocalToWorld(vector_origin, Angle(0, math.NormalizeAngle(localang.p + localang.y), 0), vector_origin, ang)
 
-					return select(2, mctrl.GetTargetLocalPos(vector_origin, newang))
+					return select(2, mctrl.GetTargetPosition(vector_origin, newang))
 				end
 			elseif axis == AXIS_Z then
 				local localpos = mctrl.LinePlaneIntersection(pos, forward, x, y)
@@ -288,7 +258,7 @@ function mctrl.CalculateRotation(axis, x, y)
 					local _, localang = WorldToLocal(vector_origin, diffang, vector_origin, ang)
 					local _, newang = LocalToWorld(vector_origin, Angle(0, 0, math.NormalizeAngle(localang.p)), vector_origin, ang)
 
-					return select(2, mctrl.GetTargetLocalPos(vector_origin, newang))
+					return select(2, mctrl.GetTargetPosition(vector_origin, newang))
 				end
 			end
 		end
@@ -445,40 +415,41 @@ function mctrl.HUDPaint()
 
 		local r = mctrl.GetCalculatedScale()
 		local o = mctrl.VecToScreen(pos)
+		
+		if o.visible then
+			if mctrl.grab.axis == AXIS_X or mctrl.grab.axis == AXIS_VIEW then
+				surface.SetDrawColor(255, 200, 0, 255)
+			else
+				surface.SetDrawColor(255, 80, 80, 255)
+			end
+			mctrl.LineToBox(o, mctrl.VecToScreen(pos + forward * r))
+			--mctrl.LineToBox(o, mctrl.VecToScreen(pos + forward * r * mctrl.scale_pos), 8)
+			mctrl.RotationLines(pos, forward, up, r)
 
-		if mctrl.grab.axis == AXIS_X or mctrl.grab.axis == AXIS_VIEW then
+
+			if mctrl.grab.axis == AXIS_Y or mctrl.grab.axis == AXIS_VIEW then
+				surface.SetDrawColor(255, 200, 0, 255)
+			else
+				surface.SetDrawColor(80, 255, 80, 255)
+			end
+			mctrl.LineToBox(o, mctrl.VecToScreen(pos + right * r))
+			--mctrl.LineToBox(o, mctrl.VecToScreen(pos + right * r * mctrl.scale_pos), 8)
+			mctrl.RotationLines(pos, right, forward, r)
+
+			if mctrl.grab.axis == AXIS_Z or mctrl.grab.axis == AXIS_VIEW then
+				surface.SetDrawColor(255, 200, 0, 255)
+			else
+				surface.SetDrawColor(80, 80, 255, 255)
+			end
+			mctrl.LineToBox(o, mctrl.VecToScreen(pos + up * r))
+			--mctrl.LineToBox(o, mctrl.VecToScreen(pos + up * r * mctrl.scale_pos), 8)
+			mctrl.RotationLines(pos, up, right, r)
+
 			surface.SetDrawColor(255, 200, 0, 255)
-		else
-			surface.SetDrawColor(255, 80, 80, 255)
+			surface.DrawOutlinedRect(o.x - 3, o.y - 3, 6, 6)
 		end
-		mctrl.LineToBox(o, mctrl.VecToScreen(pos + forward * r))
-		--mctrl.LineToBox(o, mctrl.VecToScreen(pos + forward * r * mctrl.scale_pos), 8)
-		mctrl.RotationLines(pos, forward, up, r)
-
-
-		if mctrl.grab.axis == AXIS_Y or mctrl.grab.axis == AXIS_VIEW then
-			surface.SetDrawColor(255, 200, 0, 255)
-		else
-			surface.SetDrawColor(80, 255, 80, 255)
-		end
-		mctrl.LineToBox(o, mctrl.VecToScreen(pos + right * r))
-		--mctrl.LineToBox(o, mctrl.VecToScreen(pos + right * r * mctrl.scale_pos), 8)
-		mctrl.RotationLines(pos, right, forward, r)
-
-		if mctrl.grab.axis == AXIS_Z or mctrl.grab.axis == AXIS_VIEW then
-			surface.SetDrawColor(255, 200, 0, 255)
-		else
-			surface.SetDrawColor(80, 80, 255, 255)
-		end
-		mctrl.LineToBox(o, mctrl.VecToScreen(pos + up * r))
-		--mctrl.LineToBox(o, mctrl.VecToScreen(pos + up * r * mctrl.scale_pos), 8)
-		mctrl.RotationLines(pos, up, right, r)
-
-		surface.SetDrawColor(255, 200, 0, 255)
-		surface.DrawOutlinedRect(o.x - 3, o.y - 3, 6, 6)
 	end
 end
---hook.Add("HUDPaint", "pace_mctrl_HUDPaint", mctrl.HUDPaint)
 
 function mctrl.Think()
 	local x, y = mctrl.GetMousePos()
