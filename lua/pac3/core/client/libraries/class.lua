@@ -143,8 +143,10 @@ function class.Create(Type, ClassName)
 	META = table.Copy(META)
 	class.Derive(META, META.Base)
 
-	function META:__tostring()
-		return string.format("%s[%s]", self.Type, self.ClassName)
+	if not META.__tostring then
+		function META:__tostring()
+			return string.format("%s[%s]", self.Type, self.ClassName)
+		end
 	end
 
 	if META.Base then
