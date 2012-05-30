@@ -655,8 +655,8 @@ do -- meta
 			return LocalToWorld(
 				self.Position, 
 				self:CalcAngleVelocity(self.Angles), 
-				pos, 
-				ang
+				pos or owner:GetPos(), 
+				ang or owner:GetAngles()
 			)
 		end
 		
