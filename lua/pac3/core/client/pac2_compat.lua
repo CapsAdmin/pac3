@@ -41,11 +41,14 @@ end
 
 function pac.ConvertPAC2Config(data, ent)
 	local _out = {}
+	
+	local base = pac.CreatePart("base")
+		base:SetOwner(ent)
+		base:SetName("pac2 outfit")
 		
 	for bone, data in pairs(data.bones) do
-		local part = pac.CreatePart("bone")
+		local part = base:CreatePart("bone")			
 			part:SetName(bone)
-			part:SetOwner(ent)
 			part:SetBone(translate_bone(part, bones[bone]))
 			part:SetSize(data.size)
 			part:SetScale(data.scale)
@@ -55,9 +58,8 @@ function pac.ConvertPAC2Config(data, ent)
 	
 	for key, data in pairs(data.parts)  do
 		if data.sprite.Enabled then
-			local part = pac.CreatePart("sprite")
+			local part = base:CreatePart("sprite")			
 				part:SetName(data.name)
-				part:SetOwner(ent)
 								
 				if data.parent ~= "none" then
 					part:SetParentName(data.parent)
@@ -76,9 +78,8 @@ function pac.ConvertPAC2Config(data, ent)
 		end
 		
 		if data.light.Enabled then
-			local part = pac.CreatePart("light")
+			local part = base:CreatePart("light")		
 				part:SetName(data.name)
-				part:SetOwner(ent)
 												
 				if data.parent ~= "none" then
 					part:SetParentName(data.parent)
@@ -92,13 +93,11 @@ function pac.ConvertPAC2Config(data, ent)
 				part:SetSize(data.light.Size)
 				part:SetEyeAngles(data.eyeangles)
 				part:SetWeaponClass(data.weaponclass)
-
 		end
 		
 		if data.text.Enabled then
-			local part = pac.CreatePart("text")
+			local part = base:CreatePart("text")		
 				part:SetName(data.name)
-				part:SetOwner(ent)
 				
 				if data.parent ~= "none" then
 					part:SetParentName(data.parent)
@@ -118,12 +117,11 @@ function pac.ConvertPAC2Config(data, ent)
 				part:SetSize(data.text.size)
 				part:SetEyeAngles(data.eyeangles)
 				part:SetWeaponClass(data.weaponclass)
-
 		end
 		
 		if data.trail.Enabled then
-			local part = pac.CreatePart("trail")
-				part:SetOwner(ent)
+			local part = base:CreatePart("trail")
+				part:SetName(data.name .. " " .. part.ClassName)
 				
 				part:SetStartSize(data.trail.startsize)
 				part:SetColor(data.trail.color)
@@ -133,20 +131,18 @@ function pac.ConvertPAC2Config(data, ent)
 		end
 		
 		if data.effect.Enabled then
-			local part = pac.CreatePart("effect")
-				part:SetOwner(ent)
+			local part = base:CreatePart("effect")
+				part:SetName(data.name .. " " .. part.ClassName)				
 				
 				part:SetLoop(data.effect.loop)
 				part:SetRate(data.effect.rate)
 				part:SetEffect(data.effect.effect)
 				part:SetWeaponClass(data.weaponclass)
-
 		end
 		
 		if data.color.a ~= 0 and data.size ~= 0 and data.scale ~= vector_origin then
-			local part = pac.CreatePart("model")
+			local part = base:CreatePart("model")
 				part:SetName(data.name)
-				part:SetOwner(ent)
 				
 				part:SetWeaponClass(data.weaponclass)
 				
@@ -170,15 +166,16 @@ function pac.ConvertPAC2Config(data, ent)
 				part:SetEyeAngles(data.eyeangles)
 				
 				if data.clip.Enabled then
-					local part2 = pac.CreatePart("clip")
-						part2:SetParent(part)
+					local part2 = part:CreatePart("clip")
+						part2:SetName(data.name .. " " .. part.ClassName)				
+						
 						part2:SetPosition(data.clip.angles:Forward() * data.clip.distance)
 						part2:SetAngles(data.clip.angles)
 				end
 				
 				if data.animation.Enabled then
-					local part2 = pac.CreatePart("animation")
-						part2:SetParent(part)
+					local part2 = part:CreatePart("animation")
+						part2:SetName(data.name .. " " .. part.ClassName)				
 						part2:SetSequence(data.animation.sequence)
 						part2:SetRate(data.animation.rate)
 						part2:SetMin(data.animation.min)
@@ -197,10 +194,7 @@ function pac.ConvertPAC2Config(data, ent)
 							bone.size == "1"
 						then continue end
 						
-						local part2 = pac.CreatePart("bone")
-							part2:SetParent(part)
-							part2:SetOwner(part2:GetOwner())	
-							
+						local part2 = part:CreatePart("bone")
 							part2:SetBone(translate_bone(part2, nil, key))
 							
 							part2:SetScale(bone.scale)
@@ -212,15 +206,22 @@ function pac.ConvertPAC2Config(data, ent)
 		end
 	end
 	
-	local base = pac.CreatePart("player")
-	base:SetOwner(ent)
-	base:SetName("player mod")
+	local part = base:CreatePart("player")
+		part:SetName("player mod")
+		
+		part:SetColor(Vector(data.player_color.r, data.player_color.g, data.player_color.b))
+		part:SetAlpha(data.player_color.a)
+		part:SetMaterial(data.player_material)
+		part:SetScale(data.overall_scale)
+		part:SetDrawWeapon(data.drawwep)
 	
-	base:SetColor(Vector(data.player_color.r, data.player_color.g, data.player_color.b))
-	base:SetAlpha(data.player_color.a)
-	base:SetMaterial(data.player_material)
-	base:SetScale(data.overall_scale)
-	base:SetDrawWeapon(data.drawwep)
+	timer.Simple(1, function()
+		for key, part in pairs(pac.GetParts()) do
+			if not part:HasParent() then
+				part:SetParentName("pac2 outfit")
+			end
+		end
+	end)
 	
 	return base
 end

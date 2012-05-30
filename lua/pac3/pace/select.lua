@@ -29,7 +29,7 @@ end
 local R = function(event, name) if hook.GetTable()[event] and hook.GetTable()[event][name] then hook.Remove(event, name) end end
 function pace.StopSelect()
 	R("GUIMousePressed", "pac_draw_select")
-	R("PostDrawHUD", "pac_draw_select")
+	R("HUDPaint", "pac_draw_select")
 	R("HUDPaint", "pac_highlight")
 end
 
@@ -45,7 +45,7 @@ function pace.SelectBone(ent, callback)
 		end
 	end
 
-	local function PostDrawHUD()
+	local function HUDPaint()
 		local x,y = gui.MousePos()
 		local tbl = {}
 
@@ -76,7 +76,7 @@ function pace.SelectBone(ent, callback)
 	end
 
 	hook.Add("GUIMousePressed", "pac_draw_select", GUIMousePressed)
-	hook.Add("PostDrawHUD", "pac_draw_select", PostDrawHUD)
+	hook.Add("HUDPaint", "pac_draw_select", HUDPaint)
 end
 
 function pace.SelectPart(parts, callback)
@@ -89,7 +89,7 @@ function pace.SelectPart(parts, callback)
 		end
 	end
 
-	local function PostDrawHUD()
+	local function HUDPaint()
 		local x,y = gui.MousePos()
 		local tbl = {}
 
@@ -118,7 +118,7 @@ function pace.SelectPart(parts, callback)
 	end
 
 	hook.Add("GUIMousePressed", "pac_draw_select", GUIMousePressed)
-	hook.Add("PostDrawHUD", "pac_draw_select", PostDrawHUD)
+	hook.Add("HUDPaint", "pac_draw_select", HUDPaint)
 end
 
 function pace.SelectEntity(callback)
@@ -131,7 +131,7 @@ function pace.SelectEntity(callback)
 		end
 	end
 
-	local function PostDrawHUD()
+	local function HUDPaint()
 		local x,y = gui.MousePos()
 		local tbl = {}
 
@@ -162,5 +162,5 @@ function pace.SelectEntity(callback)
 	end
 
 	hook.Add("GUIMousePressed", "pac_draw_select", GUIMousePressed)
-	hook.Add("PostDrawHUD", "pac_draw_select", PostDrawHUD)
+	hook.Add("HUDPaint", "pac_draw_select", HUDPaint)
 end

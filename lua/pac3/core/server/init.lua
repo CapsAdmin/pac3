@@ -83,19 +83,9 @@ end
 
 function pac.SubmitPart(data, ply)
 	if net then
-		local rp = player.GetAll()
-		
-		if data.ply then
-			for k,v in pairs(rp) do
-				if data.ply == v then
-					rp[k] = nil
-				end
-			end
-		end
-	
 		net.Start("pac_receive")
 			net.WriteString(glon.encode(data))
-		net.Send(ply or rp)
+		net.Send(ply or player.GetAll())
 	else
 		local rp = RecipientFilter()
 		rp:AddAllPlayers()
@@ -130,7 +120,7 @@ pac.AddHook("PlayerInitialSpawn")
 function pac.CheckSubmitPart(ply, data)
 	local allowed, issue = true, ""
 
-	if CurTime() < (ply.LastPACSubmission or 0) + 0.3 then
+	if (ply.LastPACSubmission or 0) > CurTime() then
 		allowed, issue = false, "You must wait 1 second between submissions."
 	end
 
@@ -142,13 +132,14 @@ function pac.CheckSubmitPart(ply, data)
 		allowed, issue = false, args[2]
 	end
 
-	if allowed then
+	if true or allowed then
+		print(ply, " submitted outfit to ", data.ent)
 		pac.SubmitPart(data)
 
 		pac.Parts[ply:EntIndex()] = pac.Parts[ply:EntIndex()] or {}
 		table.insert(pac.Parts[ply:EntIndex()], data)
 
-		ply.LastPACSubmission = CurTime()
+		ply.LastPACSubmission = CurTime() + 2
 		umsg.Start("pac_submit_acknowledged", ply)
 			umsg.Bool(allowed)
 			umsg.String("")
@@ -162,7 +153,7 @@ function pac.CheckSubmitPart(ply, data)
 end
 
 function pac.RemovePart(ply, data)
-	if pac.IsAllowedToModify(ply, data.ent) then
+	--if pac.IsAllowedToModify(ply, data.ent) then
 		pac.Parts[ply:EntIndex()] = pac.Parts[ply:EntIndex()] or {}
 
 		pac.SubmitPart(data)
@@ -173,7 +164,7 @@ function pac.RemovePart(ply, data)
 				break
 			end
 		end
-	end
+	--end
 end
 
 local function handle_data(ply, data)

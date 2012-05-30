@@ -30,8 +30,8 @@ end
 
 concommand.Add("pac_editor", function()
 	pace.Panic()
-	include("autorun/pac_init.lua")
-	include("autorun/pace_init.lua")
+	----include("autorun/pac_init.lua")
+	--include("autorun/pace_init.lua")
 	timer.Simple(0.1, function() pace.OpenEditor() end)
 end)
 
