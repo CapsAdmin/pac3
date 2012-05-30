@@ -23,9 +23,13 @@ end
 function PART:GetOwner()
 	local parent = self:GetParent()
 	
-	if parent:IsValid() then
+	if parent:IsValid() then		
 		if parent.ClassName == "model" and parent:GetEntity():IsValid() then
 			return parent.Entity
+		end
+		
+		if parent.ClassName == "base" then
+			return parent:GetOwner()
 		end
 		
 		if parent.ClassName == "player" then
