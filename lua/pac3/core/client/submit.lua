@@ -51,7 +51,24 @@ function pac.SetSubmittedPart(ply, ent, tbl)
 end
 
 function pac.RemoveSubmittedPart(ply, ent, name)
-	datastream.StreamToServer("pac_submit", {ent = ent, part = name})
+	print(ply, " is removing ", name, " from ", ent)
+
+	for key, part in pairs(pac.GetParts()) do
+		if not part:HasParent() and part:GetPlayerOwner() == ply and part:GetName() == name then
+			part:Remove()
+			return
+		end
+	end 
+end
+
+function pac.SubmitRemove(ent, name)
+	if net then
+		net.Start("pac_submit")
+			net.WriteString(glon.encode({ent = ent, part = name}))
+		net.SendToServer()
+	else
+		datastream.StreamToServer("pac_submit", {ent = ent, part = name})
+	end
 end
 
 function pac.Notify(allowed, reason)

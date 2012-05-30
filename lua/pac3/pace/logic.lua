@@ -203,7 +203,7 @@ function pace.OnPartMenu(obj)
 	end)
 	
 	menu:AddOption("remove", function()
-		pac.RemoveSubmittedPart(obj:GetPlayerOwner(), obj:GetOwner(), obj:GetName())
+		pac.SubmitRemove(obj:GetOwner(), obj:GetName())
 		obj:Remove()
 		pace.RefreshTree()
 	end)
