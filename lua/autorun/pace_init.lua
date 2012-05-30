@@ -5,12 +5,11 @@ if SERVER then
 		local files
 		
 		if net then
-			local _files, _folders = file.Find(dir .. "*", LUA_PATH)
+			local _files, _folders = file.FindNewBeta and file.FindNewBeta(dir .. "*", LUA_PATH) or file.Find(dir .. "*", LUA_PATH)
 			files = {}
 			for k,v in pairs(_files) do 
 				table.insert(files, v)
 			end
-			
 			for k,v in pairs(_folders) do 
 				table.insert(files, v)
 			end
