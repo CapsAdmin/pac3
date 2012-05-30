@@ -51,7 +51,7 @@ function pac.SetSubmittedPart(ply, ent, tbl)
 end
 
 function pac.RemoveSubmittedPart(ply, ent, name)
-	pac.RemovePartByName(name)
+	datastream.StreamToServer("pac_submit", {ent = ent, part = name})
 end
 
 function pac.Notify(allowed, reason)
