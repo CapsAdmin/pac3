@@ -4,7 +4,7 @@ if SERVER then
 	local function add_files(dir)
 		local files
 		
-		if net then
+		if not file.FindInLua then
 			local _files, _folders = file.Find(dir .. "*", LUA_PATH)
 			files = {}
 			for k,v in pairs(_files) do 
