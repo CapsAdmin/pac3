@@ -14,6 +14,7 @@ function pac.CreatePart(name)
 	part.Id = #pac.ActiveParts
 
 	part:SetName("part " .. #pac.ActiveParts)
+	part:SetPlayerOwner(LocalPlayer())
 
 	pac.CallHook("OnPartCreated", part)
 
@@ -84,6 +85,7 @@ do -- meta
 	end
 	
 	pac.GetSet(PART, "BoneIndex")
+	pac.GetSet(PART, "PlayerOwner", NULL)
 	pac.GetSet(PART, "Owner", NULL)
 	pac.GetSet(PART, "Parent", pac.NULL)
 	pac.GetSet(PART, "Tooltip")
@@ -152,8 +154,13 @@ do -- meta
 		end
 	end
 
-	do -- parts
-
+	do -- parenting
+		function PART:CreatePart(name)
+			local part = pac.CreatePart(name)
+			self:AddChild(self)
+			return part
+		end
+	
 		function PART:SetParent(var)
 			if not var or not var:IsValid() then
 				self:UnParent()
@@ -272,6 +279,13 @@ do -- meta
 
 			return children
 		end
+		
+		function PART:RemoveChildren()
+			for key, part in pairs(self:GetChildren()) do
+				part:Remove()
+			end
+			self.Children = {}
+		end
 
 		function PART:GetChildByName(var)
 			local parts = self:GetChildren()
@@ -375,6 +389,10 @@ do -- meta
 			return self.StorableVars
 		end
 
+		function PART:Clear()
+			self:RemoveChildren()
+		end
+		
 		function PART:SetTable(tbl)
 			for key, value in pairs(tbl.self) do
 				if self["Set" .. key] then
@@ -437,7 +455,9 @@ do -- meta
 			end
 
 			for key, part in pairs(self:GetChildren()) do
-				part:Remove()
+				if part:IsValid() then
+					part:Remove()
+				end
 			end
 			
 			self:OnRemove()

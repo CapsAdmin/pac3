@@ -32,15 +32,20 @@ else
 end
 
 function pac.SetSubmittedPart(ply, ent, tbl)
+	print("received outfit from ", ply, " to set on ", ent)
+	PrintTable(tbl)
+
 	for key, part in pairs(pac.GetParts()) do
-		if part:GetOwner() == ent and part:GetName() == tbl.Name then
+		if not part:HasParent() and part:GetPlayerOwner() == ply and part:GetName() == tbl.self.Name then
 			part:Clear()
+			part:SetOwner(ent)
 			part:SetTable(tbl)
 			return
 		end
 	end 
 
 	local part = pac.CreatePart(tbl.self.ClassName)
+	part:SetPlayerOwner(ply)
 	part:SetOwner(ent)
 	part:SetTable(tbl)
 end

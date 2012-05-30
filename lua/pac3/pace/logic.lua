@@ -165,7 +165,32 @@ end
 function pace.OnPartMenu(obj)
 	local menu = DermaMenu()
 	menu:SetPos(gui.MousePos())
+		
+	if not obj:HasParent() then
+		menu:AddOption("wear", function()
+			pac.SubmitPart(obj:GetOwner(), obj)
+		end)
+	end
 	
+	menu:AddOption("clone", function()
+		obj:Clone()
+		pace.RefreshTree()
+	end)
+
+	menu:AddOption("set owner", function()
+		pace.SelectEntity(function(ent)
+			obj:SetOwner(ent)
+			pace.SetViewEntity(ent)
+		end)
+		
+	end)
+		
+	menu:AddSpacer()
+
+	add_parts(menu)
+	
+	menu:AddSpacer()
+
 	menu:AddOption("save", function()
 		pace.SavePartToFile(obj)
 		CloseDermaMenus()
@@ -177,31 +202,9 @@ function pace.OnPartMenu(obj)
 		CloseDermaMenus()
 	end)
 	
-	menu:AddOption("submit", function()
-		pac.SubmitPart(obj:GetOwner(), obj)
-	end)
-		
-	menu:AddOption("clone", function()
-		obj:Clone()
-		pace.RefreshTree()
-	end)
-	
-	menu:AddSpacer()
-
-	add_parts(menu)
-	
-	menu:AddSpacer()
-	
-	menu:AddOption("owner", function()
-		pace.SelectEntity(function(ent)
-			obj:SetOwner(ent)
-			pace.SetViewEntity(ent)
-		end)
-		
-	end)
-	
 	menu:AddOption("remove", function()
 		obj:Remove()
+		pac.RemoveSubmittedPart(obj:GetPlayerOwner(), obj:GetOwner(), obj:GetName())
 		pace.RefreshTree()
 	end)
 		

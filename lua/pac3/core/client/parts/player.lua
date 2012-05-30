@@ -29,7 +29,7 @@ function PART:RemoveClipPlane(id)
 end
 
 function PART:GetOwner()
-	return LocalPlayer()
+	return self.PlayerOwner
 end
 
 function PART:SetSize(var)
