@@ -176,7 +176,7 @@ function PART:OnDraw(owner, pos, ang)
 		if #self.ClipPlanes > 0 then
 			for key, clip in pairs(self.ClipPlanes) do
 				if not clip:IsValid() then
-					table.remove(key, self.ClipPlanes)
+					table.remove(self.ClipPlanes, key)
 				end
 				render.PopCustomClipPlane()
 			end
