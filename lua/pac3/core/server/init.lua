@@ -153,13 +153,14 @@ function pac.CheckSubmitPart(ply, data)
 end
 
 function pac.RemovePart(ply, data)
+	print(ply, " is removing ", data.part)
 	--if pac.IsAllowedToModify(ply, data.ent) then
 		pac.Parts[ply:EntIndex()] = pac.Parts[ply:EntIndex()] or {}
 
 		pac.SubmitPart(data)
 
 		for key, _data in pairs(pac.Parts[ply:EntIndex()]) do
-			if _data.part.Name == data.part then
+			if _data.part.self.Name == data.part then
 				table.remove(pac.Parts[ply:EntIndex()], key)
 				break
 			end
