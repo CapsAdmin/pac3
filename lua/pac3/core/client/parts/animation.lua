@@ -10,7 +10,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Rate", 1)
 	pac.GetSet(PART, "Offset", 0)
 	pac.GetSet(PART, "Min", 0)
-	pac.GetSet(PART, "Max", 0)
+	pac.GetSet(PART, "Max", 1)
 pac.EndStorableVars()
 
 function PART:GetEntity()
