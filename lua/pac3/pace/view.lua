@@ -9,11 +9,6 @@ acsfnc("Pos", Vector(5,5,5))
 acsfnc("Angles", Angle(0,0,0))
 acsfnc("FOV", 75)
 
-function pace.SetViewEntity(ent)
-	pace.ViewEntity = ent
-	pace.ResetView()
-end
-
 function pace.GetViewEntity()
 	return pace.ViewEntity or LocalPlayer()
 end

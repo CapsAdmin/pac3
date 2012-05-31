@@ -1,6 +1,7 @@
 local class = pac.class
 
 pac.ActiveParts = pac.ActiveParts or {}
+local part_count = 0 -- unique id thing
 
 function pac.CreatePart(name)
 	local part = class.Create("part", name)
@@ -11,12 +12,14 @@ function pac.CreatePart(name)
 	part:Initialize()
 
 	table.insert(pac.ActiveParts, part)
-	part.Id = #pac.ActiveParts
+	part.Id = part_count
 
 	part:SetName("part " .. #pac.ActiveParts)
 	part:SetPlayerOwner(LocalPlayer())
 
 	pac.CallHook("OnPartCreated", part)
+	
+	part_count = part_count + 1
 
 	return part
 end
@@ -409,12 +412,24 @@ do -- meta
 				self:AddChild(part)
 			end
 		end
+		
+		local function COPY(var) 
+			if type(var) == "Vector" or type(var) == "Angle" then 
+				return var * 1 
+			end 
+			
+			if type(var) == "table" then
+				return table.Copy(var)
+			end
+			
+			return var 
+		end
 
 		function PART:ToTable()
 			local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 			for _, key in pairs(self:GetStorableVars()) do
-				tbl.self[key] = self[key]
+				tbl.self[key] = COPY(self[key])
 			end
 						
 			for _, part in pairs(self:GetChildren()) do
@@ -428,7 +443,7 @@ do -- meta
 			local tbl = {}
 
 			for _, key in pairs(self:GetStorableVars()) do
-				tbl[key] = self[key]
+				tbl[key] = COPY(self[key])
 			end
 			
 			return tbl			

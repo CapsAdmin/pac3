@@ -5,14 +5,11 @@ pace.tree = NULL
 local L = pace.LanguageString
 
 function pace.SetViewPart(part, reset_campos)	
-	local ent = pace.GetViewEntity()
-
 	pace.SetViewEntity(part:GetOwner())
 
-	if reset_campos or not ent:IsValid() then
+	if reset_campos then
 		pace.ResetView()
 	end	
-
 end
 
 function pace.PopulateProperties(part)
@@ -225,6 +222,8 @@ function pace.OnHoverPart(obj)
 end
 
 function pace.OnOpenEditor()
+	pace.SetViewPos(LocalPlayer():EyePos())
+	pace.SetViewAngles(LocalPlayer():EyeAngles())
 	pace.EnableView(true)
 end
 
