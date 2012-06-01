@@ -1,3 +1,63 @@
+local L = pace.LanguageString
+
+pace.PropertyLimits = 
+{
+	Sequence = function(self, num)
+		num = tonumber(num)
+		return math.Round(math.max(num, -1))
+	end,
+	
+	Skin = function(self, num)
+		num = tonumber(num)
+		return math.Round(math.max(num, 0))
+	end,
+	Bodygroup = function(self, num)
+		num = tonumber(num)
+		return math.Round(math.max(num, 0))
+	end,
+	BodygroupState = function(self, num)
+		num = tonumber(num)
+		return math.Round(math.max(num, 0))
+	end,
+	
+	Size = function(self, num)
+		self.sens = 0.25
+		
+		return num
+	end,
+	
+	Alpha = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Clamp(num, 0, 1)
+	end,
+	OutlineAlpha = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Clamp(num, 0, 1)
+	end,
+}
+
+function pace.TranslatePropertiesKey(key)					
+	key = key:lower()
+
+	if key:find("color") then
+		return "color"
+	end
+	
+	if key == "bone" then
+		return key
+	end
+	
+	if key == "model" then
+		return key
+	end
+	
+	if key == "material" or key == "spritepath" or key == "trailpath" then
+		return "material"
+	end
+end
+
 do -- container
 	local PANEL = {}
 
@@ -61,8 +121,6 @@ do -- list
 	end
 
 	function PANEL:FixHeight()
-		local sorted = table.Copy(self.List)
-
 		for key, data in pairs(self.List) do
 			data.left:SetTall(self:GetItemHeight())
 			data.right:SetTall(self:GetItemHeight())
@@ -71,7 +129,7 @@ do -- list
 
 	function PANEL:AddItem(key, var, pos)
 		local btn = pace.CreatePanel("properties_label")
-			btn:SetValue(key:gsub("%u", " %1"):lower())
+			btn:SetValue(L(key:gsub("%u", " %1"):lower()))
 			btn.pac3_sort_pos = pos
 		self.left:AddItem(btn)
 
@@ -87,19 +145,14 @@ do -- list
 		table.insert(self.List, {left = btn, right = pnl, panel = var, key = key})
 	end
 
-	local function setup_var(pnl, obj, key)
-		obj.editor_pnl = pnl
-		pnl:SetValue(obj["Get" .. key](obj))
-		pnl.OnValueChanged = function(val)
-			pace.Call("VariableChanged", obj, key, val)
-		end
-	end
-
 	function PANEL:Clear()
 		for key, data in pairs(self.List) do
 			data.left:Remove()
 			data.right:Remove()
 		end
+		
+		self.left:Clear()
+		self.right:Clear()
 
 		self.List = {}
 	end
@@ -108,54 +161,47 @@ do -- list
 		self:Clear()
 
 		local tbl = {}
-		local data = obj:GetVars()
+		local data = {}
+		
+		for key, val in pairs(obj:GetVars()) do
+			table.insert(data, {key = key, val = val})
+		end
+		
+		table.sort(data, function(a,b) return a.key > b.key end)
 		
 		for pos, str in ipairs(pace.PropertyOrder) do
-			for key, val in pairs(data) do
-				if key == str then
-					table.insert(tbl, {pos = pos, key = key, val = val})
-					data[key] = nil
+			for i, val in ipairs(data) do
+				if val.key == str then
+					table.insert(tbl, {pos = pos, key = val.key, val = val.val})
+					table.remove(data, i)
 				end
 			end
 		end
 
-		for key, val in pairs(data) do
-			table.insert(tbl, {pos = #tbl, key = key, val = val})
+		for pos, val in ipairs(data) do
+			table.insert(tbl, {pos = pos, key = val.key, val = val.val})
 		end
-		
+				
 		for pos, data in ipairs(tbl) do
 			local key, val = data.key, data.val
 
 			if key ~= "ClassName" then
 				local pnl
-				local T = type(val):lower()
+				local T = (pace.TranslatePropertiesKey(key) or type(val)):lower()
 				
-				-- hack for color, since color is a vector as well
-				-- but we want a slightly different vector control
-				-- for colors
-				if key:lower():find("color") then
-					T = "color"
-				end
-				
-				if key:lower() == "bone" then
-					T = "bone"
-				end
-				
-				if key:lower() == "model" then
-					T = "model"
-				end
-				
-				if key:lower() == "material" then
-					T = "material"
-				end
-
 				if pace.PanelExists("properties_" .. T) then
 					pnl = pace.CreatePanel("properties_" .. T)
 				end
 
 				if pnl then
-					setup_var(pnl, obj, key)
-					self:AddItem(key, pnl)
+					obj.editor_pnl = pnl
+					
+					pnl:SetValue(obj["Get" .. key](obj))
+					pnl.LimitValue = pace.PropertyLimits[key]
+					pnl.OnValueChanged = function(val)
+						pace.Call("VariableChanged", obj, key, val)
+					end
+					self:AddItem(key, pnl, pos)
 				end
 			end
 		end
@@ -212,22 +258,28 @@ do -- base editable
 	local last_focus = NULL
 
 	function PANEL:OnMousePressed(mcode)
+		pace.BusyWithProperties = true
+	
 		if last_focus:IsValid() then
 			last_focus:Reset()
 		end	
 				
 		if mcode == MOUSE_LEFT then
-			self.MousePressing = true
-			if self:MousePress(true) == false then return end
-			if (self.last_press or 0) > RealTime() then
-				self:EditText()
-				self:DoubleClick()
-				self.last_press = 0
-				
-				last_focus = self
-			else
-				self.last_press = RealTime() + 0.2
-			end
+			--if input.IsKeyDown(KEY_R) then
+			--	self:Restart()
+			--else
+				self.MousePressing = true
+				if self:MousePress(true) == false then return end
+				if (self.last_press or 0) > RealTime() then
+					self:EditText()
+					self:DoubleClick()
+					self.last_press = 0
+					
+					last_focus = self
+				else
+					self.last_press = RealTime() + 0.2
+				end
+			--end
 		end
 		
 		if mcode == MOUSE_RIGHT and self.SpecialCallback then
@@ -236,12 +288,14 @@ do -- base editable
 	end
 
 	function PANEL:OnMouseReleased()
+		pace.BusyWithProperties = false
 		self:MousePress(false)
 		self.MousePressing = false
 	end
 
 	function PANEL:IsMouseDown()
 		if not input.IsMouseDown(MOUSE_LEFT) then
+			pace.BusyWithProperties = false
 			self.MousePressing = false
 		end
 		return self.MousePressing
@@ -254,8 +308,14 @@ do -- base editable
 	function PANEL:MousePress()
 
 	end
+	
+	function PANEL:Restart()
+		self:SetValue("")
+	end
 
 	function PANEL:EditText()
+		pace.BusyWithProperties = true
+		
 		self:SetText("")
 		
 		local pnl = vgui.Create("DTextEntry", self)
@@ -272,6 +332,7 @@ do -- base editable
 		pnl:SetPos(x+3,y-4)
 				
 		pnl.OnEnter = function()
+			pace.BusyWithProperties = false
 			self.editing = false
 			
 			pnl:Remove()
@@ -426,8 +487,13 @@ do -- vector
 		
 		function PANEL:PerformLayout()
 			self.left:SizeToContents()
+			self.left:SetWide(math.max(self.left:GetWide(), 12))
+			
 			self.middle:SizeToContents()
+			self.middle:SetWide(math.max(self.middle:GetWide(), 12))
+			
 			self.right:SizeToContents()
+			self.right:SetWide(math.max(self.right:GetWide(), 12))
 
 			self.middle:MoveRightOf(self.left, 10)
 			self.right:MoveRightOf(self.middle, 10)
@@ -464,13 +530,18 @@ do -- vector
 			clr:SetColor(Color(self.vector.x, self.vector.y, self.vector.z))
 			
 			function clr.Think()
-				if 
-					clr.ColorCube:GetDragging() or 
-					clr.AlphaBar:GetDragging() or 
-					clr.RGBBar:GetDragging() 
-				then
+				if net then
 					local clr = clr:GetColor() or Color(255, 255, 255, 255)
 					self.OnValueChanged(Vector(clr.r, clr.g, clr.b))
+				else
+					if 
+						clr.ColorCube:GetDragging() or 
+						clr.AlphaBar:GetDragging() or 
+						clr.RGBBar:GetDragging() 
+					then
+						local clr = clr:GetColor() or Color(255, 255, 255, 255)
+						self.OnValueChanged(Vector(clr.r, clr.g, clr.b))
+					end
 				end
 			end
 		end,
@@ -497,9 +568,21 @@ do -- number
 	end
 
 	function PANEL:Think()
-		if self:IsMouseDown() then
+		if self:IsMouseDown() then			
+			local sens = self.sens
+			
+			if input.IsKeyDown(KEY_LALT) then
+				sens = sens / 10
+			end
+			
 			local delta = (self.mousey - gui.MouseY()) / 10
-			local val = self:Encode(self.oldval + (delta * self.sens))
+			local val = self.oldval + (delta * sens)
+			
+			if self.LimitValue then
+				val = self:LimitValue(val) or val
+			end
+			
+			val = self:Encode(val)
 			self:SetValue(val)
 			self.OnValueChanged(tonumber(val))
 		end

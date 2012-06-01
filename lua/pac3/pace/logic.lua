@@ -129,13 +129,13 @@ end
 function pace.OnOpenMenu()
 	local menu = DermaMenu()
 	menu:SetPos(gui.MousePos())
-	menu:AddOption("toggle t pose", function()
+	menu:AddOption(L"toggle t pose", function()
 		pace.SetTPose(not pace.GetTPose())
 	end)
-	menu:AddOption("reset view", function()
+	menu:AddOption(L"reset view", function()
 		pace.ResetView()
 	end)
-	menu:AddOption("reset eye angles", function()
+	menu:AddOption(L"reset eye angles", function()
 		local ent = pace.GetViewEntity()
 		if ent:IsValid() then
 			if ent:IsPlayer() then
@@ -164,17 +164,17 @@ function pace.OnPartMenu(obj)
 	menu:SetPos(gui.MousePos())
 		
 	if not obj:HasParent() then
-		menu:AddOption("wear", function()
+		menu:AddOption(L"wear", function()
 			pac.SubmitPart(obj:GetOwner(), obj)
 		end)
 	end
 	
-	menu:AddOption("clone", function()
+	menu:AddOption(L"clone", function()
 		obj:Clone()
 		pace.RefreshTree()
 	end)
 
-	menu:AddOption("set owner", function()
+	menu:AddOption(L"set owner", function()
 		pace.SelectEntity(function(ent)
 			obj:SetOwner(ent)
 			pace.SetViewEntity(ent)
@@ -188,18 +188,18 @@ function pace.OnPartMenu(obj)
 	
 	menu:AddSpacer()
 
-	menu:AddOption("save", function()
+	menu:AddOption(L"save", function()
 		pace.SavePartToFile(obj)
 		CloseDermaMenus()
 	end)
 
-	menu:AddOption("load", function()
+	menu:AddOption(L"load", function()
 		pace.LoadPartFromFile(obj)
 		pace.RefreshTree()
 		CloseDermaMenus()
 	end)
 	
-	menu:AddOption("remove", function()
+	menu:AddOption(L"remove", function()
 		pac.SubmitRemove(obj:GetOwner(), obj:GetName())
 		obj:Remove()
 		pace.RefreshTree()
