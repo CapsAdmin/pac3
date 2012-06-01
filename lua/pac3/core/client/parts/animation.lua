@@ -4,7 +4,7 @@ PART.ClassName = "animation"
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Loop", true)
-	pac.GetSet(PART, "PingPongLoop", true)
+	pac.GetSet(PART, "PingPongLoop", false)
 	pac.GetSet(PART, "Name", "invalid name")
 	pac.GetSet(PART, "Sequence", -1)
 	pac.GetSet(PART, "Rate", 1)

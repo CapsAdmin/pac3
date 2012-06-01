@@ -9,6 +9,7 @@ function pace.AddLanguage(key, val)
 end
 
 function pace.LanguageString(str, extra)
+	do return str end
 	local lang = str:gsub("%s", "_"):gsub("%p", ""):lower()
 
 	if extra then

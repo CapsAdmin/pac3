@@ -1,3 +1,5 @@
+local L = pace.LanguageString
+
 local PANEL = {}
 
 PANEL.ClassName = "tree"

@@ -65,6 +65,8 @@ function pac.GUIMouseReleased(mc)
 end
 
 local function CalcDrag()
+	if pace.BusyWithProperties then return end
+	
 	local ftime = FrameTime() * 50
 	local mult = 1
 	
