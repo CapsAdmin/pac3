@@ -82,6 +82,7 @@ do -- meta
 	local PART = {}
 
 	PART.ClassName = "base"
+	PART.Internal = true
 
 	function PART:__tostring()
 		return string.format("%s[%s][%i]", self.Type, self.ClassName, self.Id)

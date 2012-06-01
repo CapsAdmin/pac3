@@ -1,7 +1,6 @@
 if net then
 	pace.PartIcons =
 	{
-		part = "icon16/status_online.png",
 		text = "icon16/text_align_center.png",
 		bone = "widgets/bone_small.png",
 		clip = "icon16/cut.png",
@@ -12,14 +11,13 @@ if net then
 		model = "icon16/shape_square.png",
 		animation = "icon16/eye.png",
 		player = "icon16/user.png",
-		base = "icon16/world.png",
+		group = "icon16/world.png",
 		trail = "icon16/arrow_undo.png",
 		sunbeams = "icon16/sun.png",
 	}
 else
 	pace.PartIcons =
 	{
-		part = "gui/silkicons/user",
 		text = "gui/silkicons/page",
 		bone = "gui/silkicons/anchor",
 		light = "gui/silkicons/star",
@@ -30,15 +28,19 @@ pace.PropertyOrder =
 {
 	"Name",
 	"Description",
+	"Hide",
 	"ParentName",
 	"WeaponClass",
+	"HideWeaponClass",
 	"Bone",
 	"Position",
 	"Angles",
 	"AngleVelocity",
 	"ModifyAngles",
-	"Parent",
 	"Size",
+	"Scale",
+	"Color",
+	"Alpha",
 	"Min",
 	"Max",
 	"Loop",
