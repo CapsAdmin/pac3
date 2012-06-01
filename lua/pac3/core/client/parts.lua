@@ -352,7 +352,7 @@ do -- meta
 		
 			local pos, ang = owner:GetPos(), owner:GetAngles()
 		
-			if self.Parent:IsValid() and (self.Parent.ClassName ~= PART.ClassName and self.Parent.ClassName ~= "player") then
+			if self.Parent:IsValid() and (self.Parent.ClassName ~= "group" and self.Parent.ClassName ~= "player") then
 				pos, ang = self.Parent:GetDrawPosition()
 			elseif owner:IsValid() then
 				pos, ang = owner:GetBonePosition(self.BoneIndex or 0)
