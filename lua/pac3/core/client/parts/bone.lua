@@ -28,7 +28,7 @@ function PART:GetOwner()
 			return parent.Entity
 		end
 		
-		if parent.ClassName == "base" then
+		if parent.ClassName == "group" then
 			return parent:GetOwner()
 		end
 		
