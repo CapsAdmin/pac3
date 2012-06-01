@@ -13,6 +13,7 @@ if net then
 		player = "icon16/user.png",
 		group = "icon16/world.png",
 		trail = "icon16/arrow_undo.png",
+		event = "icon16/clock.png",
 		sunbeams = "icon16/sun.png",
 	}
 else

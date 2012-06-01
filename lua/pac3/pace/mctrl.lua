@@ -30,7 +30,7 @@ do -- pace
 	end
 
 	function mctrl.GetTarget()
-		return mctrl.target
+		return mctrl.target:IsValid() and not mctrl.target:IsHidden() and mctrl.target or pac.NULL
 	end
 
 	function mctrl.GetAxes(ang)

@@ -538,18 +538,18 @@ do -- meta
 
 				-- todo: avoid concatenation?
 				if pac.PatternCache[wep_class..self.WeaponClass] or wep_class:find(self.WeaponClass) then
-					self.Hide = false
+					self.WeaponClassHidden = false
 				else
-					self.Hide = true
+					self.WeaponClassHidden = true
 				end
 
-				if not self.Hide and self.HideWeaponClass then
+				if not self:IsHidden() and self.HideWeaponClass then
 					if net then 
 						wep:SetColor(Color(255,255,255,0))
 					else
 						wep:SetColor(255,255,255,0)
 					end
-				elseif not self.Hide and not self.HideWeaponClass then
+				elseif not self:IsHidden() and not self.HideWeaponClass then
 					if net then
 						wep:SetColor(Color(255,255,255,255))
 					else
@@ -560,25 +560,18 @@ do -- meta
 			end
 		end
 	end
+	
+	function PART:IsHidden()
+		return self.Hide == true or self.WeaponClassHidden == true or self.EventHide == true or false
+	end
 
 	function PART:Draw(event)
-		if self[event] and not self.Hide then
+		if self[event] and not self:IsHidden() then
 			self[event](self, self:GetOwner(), self:GetDrawPosition())
 		end
 		for index, part in pairs(self:GetChildren()) do
-			if part[event] and not part.Hide then
+			if part[event] and not part:IsHidden() then
 				part:Draw(event)
-			end
-		end
-	end
-
-	function PART:CallPartFunc(func, ...)
-		if self[func] then 
-			self[func](self, ...) 
-		end
-		for key, part in pairs(self:GetChildren()) do
-			if part[func] then
-				part:CallPartFunc(func, ...)
 			end
 		end
 	end

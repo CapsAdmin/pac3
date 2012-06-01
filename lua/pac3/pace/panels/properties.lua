@@ -49,6 +49,10 @@ function pace.TranslatePropertiesKey(key)
 		return key
 	end
 	
+	if key == "event" then
+		return key
+	end
+	
 	if key == "sequence" or key == "sequencename" then
 		return "sequence"
 	end
@@ -745,6 +749,42 @@ do -- sequence list
 			local pnl = list:AddLine(id, name)
 			pnl.seq_name = name
 			pnl.seq_id = id
+			
+			if cur == name then
+				list:SelectItem(pnl)
+			end
+		end
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
+do -- event list
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_event"
+	PANEL.Base = "pace_properties_base_type"
+		
+	function PANEL:SpecialCallback()	
+		local frame = vgui.Create("DFrame")
+		frame:SetTitle(L"events")
+		frame:SetSize(300, 300)
+		frame:Center()
+		frame:SetSizable(true)
+
+		local list = vgui.Create("DListView", frame)
+		list:Dock(FILL)
+		list:SetMultiSelect(false)
+		list:AddColumn("event")
+
+		list.OnRowSelected = function(_, id, line) 
+			self:SetValue(line.event_name)
+			self.OnValueChanged(line.event_name)
+		end
+
+		for name in pairs(pace.current_part.Events) do
+			local pnl = list:AddLine(name)
+			pnl.event_name = name
 			
 			if cur == name then
 				list:SelectItem(pnl)
