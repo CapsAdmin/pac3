@@ -34,34 +34,53 @@ function PART:RemoveClipPlane(id)
 	end
 end
 
+function PART:StartClipping(pos, ang)
+	if #self.ClipPlanes > 0 then
+		bclip = render.EnableClipping(true)
+
+		for key, clip in pairs(self.ClipPlanes) do
+			if clip:IsValid() then
+				local pos, ang = LocalToWorld(clip.Position, clip:CalcAngleVelocity(clip.Angles), pos, ang)
+				local normal = ang:Forward()
+				render.PushCustomClipPlane(normal, normal:Dot(pos + normal))
+			end
+		end
+	end
+end
+
+function PART:EndClipping()
+	if #self.ClipPlanes > 0 then
+		for key, clip in pairs(self.ClipPlanes) do
+			if not clip:IsValid() then
+				table.remove(key, self.ClipPlanes)
+			end
+			render.PopCustomClipPlane()
+		end
+
+		render.EnableClipping(bclip)
+	end
+end
+
 function PART:GetOwner()
 	return self.PlayerOwner
 end
 
+function PART:UpdateScale()
+	local owner = self:GetOwner()
+	
+	if owner:IsValid() then
+		owner:SetModelScale(self.Scale * self.Size)
+	end
+end
+
 function PART:SetSize(var)
-	local owner = self:GetOwner()
-	
-	if owner:IsValid() then
-		owner:SetModelScale(self.Scale * var)
-	end
-	
 	self.Size = var
+	self:UpdateScale()
 end
 
-function PART:SetScale(var)
-	local owner = self:GetOwner()
-
-	if owner:IsValid() then
-		owner:SetModelScale(var * self.Size)
-	end
-	
+function PART:SetScale(var)	
 	self.Scale = var
-end
-
-function PART:OnAttach(owner)
-	self:SetSize(self:GetSize())
-	self:SetScale(self:GetScale())
-	owner:SetModel(self:GetModel())
+	self:UpdateScale()
 end
 
 PART.Colorf = Vector(1,1,1)
@@ -71,6 +90,12 @@ function PART:SetColor(var)
 
 	self.Color = var
 	self.Colorf = Vector(var.r, var.g, var.b) / 255
+	self:UpdateColor()
+end
+
+function PART:SetMaterial(var)
+	self.Material = var
+	self:UpdateMaterial()
 end
 
 function PART:GetModel()
@@ -92,41 +117,9 @@ function PART:SetModel(path)
 	
 	self.Model = path
 end
-	
-function PART:PrePlayerDraw(owner, pos, ang)
-	render.SetColorModulation(self.Colorf.r, self.Colorf.g, self.Colorf.b)
-	render.SetBlend(self.Alpha)
-	-- seems to work better than destroying the shadow..
-	
-	if #self.ClipPlanes > 0 then
-		bclip = render.EnableClipping(true)
 
-		for key, clip in pairs(self.ClipPlanes) do
-			if clip:IsValid() then
-				local pos, ang = LocalToWorld(clip.Position, clip:CalcAngleVelocity(clip.Angles), pos, ang)
-				local normal = ang:Forward()
-				render.PushCustomClipPlane(normal, normal:Dot(pos + normal))
-			end
-		end
-	end
-
-	if net then
-		owner:SetColor(Color(self.Color.r, self.Color.g, self.Color.b, math.max(self.Alpha * 255, 1)))
-	else
-		owner:SetColor(self.Color.r, self.Color.g, self.Color.b, math.max(self.Alpha * 255, 1)) 
-	end
-	
+function PART:UpdateWeaponDraw(owner)
 	local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or NULL
-	
-	if self.Alpha == 0 then	
-		if wep:IsWeapon() then 
-			wep:DestroyShadow() 
-		end
-		
-		owner:SetMaterial("models/effects/vol_light001")
-	else
-		owner:SetMaterial(self.Material)
-	end
 	
 	if wep:IsWeapon() then
 		if self.DrawWeapon then
@@ -141,6 +134,37 @@ function PART:PrePlayerDraw(owner, pos, ang)
 	end
 end
 
+function PART:UpdateColor(owner)
+	render.SetColorModulation(self.Colorf.r, self.Colorf.g, self.Colorf.b)
+	render.SetBlend(self.Alpha)
+	
+	if net then
+		owner:SetColor(Color(self.Color.r, self.Color.g, self.Color.b, 255))
+	else
+		owner:SetColor(self.Color.r, self.Color.g, self.Color.b, 255) 
+	end
+end
+
+function PART:UpdateMaterial(owner)
+	owner:SetMaterial(self.Material)
+end
+
+function PART:OnAttach(owner)
+	owner:SetModel(self:GetModel())
+	self:UpdateColor(owner)
+	self:UpdateMaterial(owner)
+	self:UpdateWeaponDraw(owner)
+end
+
+function PART:PrePlayerDraw(owner, pos, ang)
+	self:StartClipping(pos, ang)
+	
+	self:UpdateWeaponDraw(owner)
+	
+	--self:UpdateColor(owner)
+	--self:UpdateMaterial(owner)
+end
+
 function PART:PostPlayerDraw(owner, pos, ang)
 	if net then
 		render.MaterialOverride()
@@ -151,20 +175,8 @@ function PART:PostPlayerDraw(owner, pos, ang)
 	render.SetColorModulation(1,1,1)
 	render.SetBlend(1)
 	
-	if self.Alpha == 0 then
-		owner:DestroyShadow()
-	end
-	
-	if #self.ClipPlanes > 0 then
-		for key, clip in pairs(self.ClipPlanes) do
-			if not clip:IsValid() then
-				table.remove(key, self.ClipPlanes)
-			end
-			render.PopCustomClipPlane()
-		end
-
-		render.EnableClipping(bclip)
-	end
+	self:EndClipping()
+	self:UpdateScale()
 end
-		
+
 pac.RegisterPart(PART)
