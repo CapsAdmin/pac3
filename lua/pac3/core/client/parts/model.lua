@@ -129,7 +129,7 @@ function PART:OnDraw(owner, pos, ang)
 			bclip = render.EnableClipping(true)
 
 			for key, clip in pairs(self.ClipPlanes) do
-				if clip:IsValid() then
+				if clip:IsValid() and not clip:IsHidden() then
 					local pos, ang = LocalToWorld(clip.Position, clip:CalcAngleVelocity(clip.Angles), pos, ang)
 					local normal = ang:Forward()
 					render.PushCustomClipPlane(normal, normal:Dot(pos + normal))
@@ -178,7 +178,9 @@ function PART:OnDraw(owner, pos, ang)
 				if not clip:IsValid() then
 					table.remove(self.ClipPlanes, key)
 				end
-				render.PopCustomClipPlane()
+				if not clip:IsHidden() then
+					render.PopCustomClipPlane()
+				end
 			end
 
 			render.EnableClipping(bclip)

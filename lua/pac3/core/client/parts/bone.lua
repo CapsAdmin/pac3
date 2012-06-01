@@ -57,7 +57,7 @@ function PART:GetBonePosition(owner)
 end
 
 function PART:BuildBonePositions(owner)
-	if self.Hide then return end
+	if self:IsHidden() then return end
 	
 	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone))
 
