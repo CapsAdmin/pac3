@@ -40,10 +40,6 @@ pace.PropertyLimits =
 
 function pace.TranslatePropertiesKey(key)					
 	key = key:lower()
-
-	if key:find("color") then
-		return "color"
-	end
 	
 	if key == "bone" then
 		return key
@@ -53,8 +49,16 @@ function pace.TranslatePropertiesKey(key)
 		return key
 	end
 	
+	if key == "sequence" or key == "sequencename" then
+		return "sequence"
+	end
+	
 	if key == "material" or key == "spritepath" or key == "trailpath" then
 		return "material"
+	end	
+
+	if key:find("color") then
+		return "color"
 	end
 end
 
@@ -239,7 +243,7 @@ do -- base editable
 	function PANEL:SetValue(var, skip_encode)
 		if self.editing then return end
 
-		local str = skip_encode and var or self:Encode(var)
+		local str = tostring(skip_encode and var or self:Encode(var))
 		
 		self:SetTextColor(derma.Color(net and "text_dark" or "text_bright", self, color_black))
 		self:SetFont("DefaultSmall")
@@ -597,7 +601,7 @@ do -- number
 			num = math.Round(num)
 		end
 		
-		return tostring(num)
+		return num
 	end
 
 	function PANEL:Decode(str)
@@ -706,6 +710,46 @@ do -- material
 		end
 		
 		pac.MatBrowser = pnl
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
+do -- sequence list
+		local PANEL = {}
+
+	PANEL.ClassName = "properties_sequence"
+	PANEL.Base = "pace_properties_base_type"
+		
+	function PANEL:SpecialCallback()	
+		local frame = vgui.Create("DFrame")
+		frame:SetTitle(L"animations")
+		frame:SetSize(300, 300)
+		frame:Center()
+		frame:SetSizable(true)
+
+		local list = vgui.Create("DListView", frame)
+		list:Dock(FILL)
+		list:SetMultiSelect(false)
+		list:AddColumn("id"):SetFixedWidth(25)
+		list:AddColumn("name")
+
+		list.OnRowSelected = function(_, id, line) 
+			self:SetValue(line.seq_name)
+			self.OnValueChanged(line.seq_name)
+		end
+
+		local cur = pace.current_part:GetSequenceName()
+		
+		for id, name in pairs(pace.current_part:GetSequenceList()) do
+			local pnl = list:AddLine(id, name)
+			pnl.seq_name = name
+			pnl.seq_id = id
+			
+			if cur == name then
+				list:SelectItem(pnl)
+			end
+		end
 	end
 	
 	pace.RegisterPanel(PANEL)

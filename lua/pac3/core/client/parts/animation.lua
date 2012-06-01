@@ -5,7 +5,7 @@ PART.ClassName = "animation"
 pac.StartStorableVars()
 	pac.GetSet(PART, "Loop", true)
 	pac.GetSet(PART, "PingPongLoop", false)
-	pac.GetSet(PART, "Name", "invalid name")
+	pac.GetSet(PART, "SequenceName", "invalid name")
 	pac.GetSet(PART, "Sequence", -1)
 	pac.GetSet(PART, "Rate", 1)
 	pac.GetSet(PART, "Offset", 0)
@@ -17,11 +17,31 @@ function PART:GetEntity()
 	return self.Parent:IsValid() and self.Parent.ClassName == "model" and self.Parent:GetEntity() or self:GetOwner()
 end
 
+function PART:GetSequenceList()
+	local ent = self:GetEntity()
+
+	if ent:IsValid() then	
+		if net then
+			return ent:GetSequenceList()
+		else
+			local tbl = {}
+			for i = 1, math.huge do
+				local name = ent:GetSequenceName()
+				if name ~= "Unknown" then
+					tbl[i] = name
+				else
+					return tbl
+				end
+			end
+		end
+	end
+end
+
 function PART:OnDraw()
 	local ent = self:GetEntity()
 
 	if ent:IsValid() then	
-		local seq = ent:LookupSequence(self.Name)
+		local seq = ent:LookupSequence(self.SequenceName)
 		
 		if seq ~= -1 then
 			ent:ResetSequence(seq)
