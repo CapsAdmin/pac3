@@ -21,7 +21,12 @@ do -- pace
 	mctrl.target = pac.NULL
 
 	function mctrl.SetTarget(part)
-		mctrl.target = part or pac.NULL
+		part = part or pac.NULL
+		if part:IsValid() and part.HideGizmo then
+			mctrl.target = pac.NULL
+		else
+			mctrl.target = part
+		end
 	end
 
 	function mctrl.GetTarget()

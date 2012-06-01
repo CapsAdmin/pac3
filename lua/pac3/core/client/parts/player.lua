@@ -1,19 +1,25 @@
 local PART = {}
 
-PART.ClassName = "player"		
-
-pac.StartStorableVars()
-	pac.GetSet(PART, "Material", "")
-	pac.GetSet(PART, "Color", Vector(255, 255, 255))
-	pac.GetSet(PART, "Alpha", 1)
-	pac.GetSet(PART, "Scale", Vector(1,1,1))
-	pac.GetSet(PART, "Size", 1)
-	pac.GetSet(PART, "Model", "")
-	pac.GetSet(PART, "DrawWeapon", true)
-pac.EndStorableVars()
+PART.ClassName = "player"	
+PART.HideGizmo = true
 
 function PART:Initialize()
 	self.ClipPlanes = {}
+	
+	self.StorableVars = {}
+
+	pac.StartStorableVars()
+		pac.GetSet(self, "Name", "")
+		pac.GetSet(self, "Description", "")
+		pac.GetSet(self, "Hide", false)
+		pac.GetSet(self, "Material", "")
+		pac.GetSet(self, "Color", Vector(255, 255, 255))
+		pac.GetSet(self, "Alpha", 1)
+		pac.GetSet(self, "Scale", Vector(1,1,1))
+		pac.GetSet(self, "Size", 1)
+		pac.GetSet(self, "Model", "")
+		pac.GetSet(self, "DrawWeapon", true)
+	pac.EndStorableVars()
 end
 
 function PART:AddClipPlane(part)
@@ -52,9 +58,10 @@ function PART:SetScale(var)
 	self.Scale = var
 end
 
-function PART:OnAttach()
+function PART:OnAttach(owner)
 	self:SetSize(self:GetSize())
 	self:SetScale(self:GetScale())
+	owner:SetModel(self:GetModel())
 end
 
 PART.Colorf = Vector(1,1,1)
@@ -64,6 +71,26 @@ function PART:SetColor(var)
 
 	self.Color = var
 	self.Colorf = Vector(var.r, var.g, var.b) / 255
+end
+
+function PART:GetModel()
+	local owner = self:GetOwner()
+
+	if owner:IsValid() and (not self.Model or self.Model == "") then
+		return owner:GetModel()
+	end
+	
+	return self.Model
+end
+
+function PART:SetModel(path)
+	local owner = self:GetOwner()
+
+	if owner:IsValid() then
+		owner:SetModel(path)
+	end
+	
+	self.Model = path
 end
 	
 function PART:PrePlayerDraw(owner, pos, ang)
@@ -98,7 +125,7 @@ function PART:PrePlayerDraw(owner, pos, ang)
 		
 		owner:SetMaterial("models/effects/vol_light001")
 	else
-		owner:SetMaterial(self.player_material)
+		owner:SetMaterial(self.Material)
 	end
 	
 	if wep:IsWeapon() then
@@ -111,7 +138,7 @@ function PART:PrePlayerDraw(owner, pos, ang)
 				wep.RenderOverride = function() end
 			end
 		end
-	end	
+	end
 end
 
 function PART:PostPlayerDraw(owner, pos, ang)
