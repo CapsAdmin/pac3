@@ -65,12 +65,8 @@ function PART:GetOwner()
 	return self.PlayerOwner
 end
 
-function PART:UpdateScale()
-	local owner = self:GetOwner()
-	
-	if owner:IsValid() then
-		owner:SetModelScale(self.Scale * self.Size)
-	end
+function PART:UpdateScale(owner)	
+	owner:SetModelScale(self.Scale * self.Size)
 end
 
 function PART:SetSize(var)
@@ -149,11 +145,14 @@ function PART:UpdateMaterial(owner)
 	owner:SetMaterial(self.Material)
 end
 
-function PART:OnAttach(owner)
-	owner:SetModel(self:GetModel())
+function PART:UpdateAll(owner)
 	self:UpdateColor(owner)
 	self:UpdateMaterial(owner)
-	self:UpdateWeaponDraw(owner)
+	self:UpdateScale(owner)
+end
+
+function PART:OnAttach(owner)
+	owner:SetModel(self:GetModel())
 end
 
 function PART:PrePlayerDraw(owner, pos, ang)
@@ -161,8 +160,7 @@ function PART:PrePlayerDraw(owner, pos, ang)
 	
 	self:UpdateWeaponDraw(owner)
 	
-	--self:UpdateColor(owner)
-	--self:UpdateMaterial(owner)
+	self:UpdateAll(owner)
 end
 
 function PART:PostPlayerDraw(owner, pos, ang)
@@ -176,7 +174,8 @@ function PART:PostPlayerDraw(owner, pos, ang)
 	render.SetBlend(1)
 	
 	self:EndClipping()
-	self:UpdateScale()
+	
+	self:UpdateAll(owner)
 end
 
 pac.RegisterPart(PART)
