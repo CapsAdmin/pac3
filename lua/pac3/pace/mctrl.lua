@@ -56,7 +56,7 @@ do -- pace
 	function mctrl.GetTargetPosition(pos, ang)
 		local wpos, wang = mctrl.GetBonePos()
 		if wpos and wang then
-			return wpos, wang or WorldToLocal(pos, ang, wpos, wang)
+			return WorldToLocal(pos, ang, wpos, wang)
 		end
 	end
 
