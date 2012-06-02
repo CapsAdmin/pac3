@@ -72,6 +72,14 @@ function PART:OnAttach(owner)
 	end
 end
 
+function PART:OnChildAdd(part)
+	local ent = self:GetEntity()
+	
+	if ent:IsValid() then
+		part:SetOwner(ent)
+	end
+end
+
 function PART:OnParent(part)
 	local ent = self:GetEntity()
 

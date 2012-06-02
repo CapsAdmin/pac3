@@ -223,6 +223,7 @@ do -- meta
 			local id = table.insert(parts, var)
 			
 			var:OnParent(self)
+			self:OnChildAdd(var)
 			var.ParentName = self:GetName()
 
 			return id
@@ -498,6 +499,7 @@ do -- meta
 		
 		function PART:OnThink()	end
 		function PART:OnParent() end
+		function PART:OnChildAdd() end
 		function PART:OnUnParent() end
 		function PART:Highlight() end
 		function PART:OnWeaponChanged() end
