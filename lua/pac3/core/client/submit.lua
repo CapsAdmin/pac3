@@ -15,7 +15,7 @@ if net then
 		net.SendToServer()
 	end
 
-	net.Receive("pac_receive", function()
+	net.Receive("pac_submit", function()
 		local data = glon.decode(net.ReadString())
 		handle_data(data)
 	end)
@@ -26,7 +26,7 @@ else
 		datastream.StreamToServer("pac_submit", {ent = ent, part = part:ToTable()})
 	end
 
-	datastream.Hook("pac_receive", function(_,_,_, data)
+	datastream.Hook("pac_submit", function(_,_,_, data)
 		handle_data(data)
 	end)
 end

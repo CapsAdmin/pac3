@@ -74,32 +74,34 @@ local function install_drag(node)
 				self.part:SetParent(child)
 			end
 		end
+		
 		return self
 	end
 end
 
+local fix_folder_funcs = function(tbl) 
+	tbl.MakeFolder = function() end
+	tbl.FilePopulateCallback = function() end
+	tbl.FilePopulate = function() end
+	tbl.PopulateChildren = function() end
+	tbl.PopulateChildrenAndSelf = function() end
+	return tbl
+end
 -- a hack, because creating a new node button will mess up the layout
 function PANEL:AddNode(...)
 
-	local node = DTree.AddNode(self, ...)
+	local node = fix_folder_funcs(DTree.AddNode(self, ...))
 	if net then install_drag(node) end
 	node.SetModel = self.SetModel
 
 	node.AddNode = function(...)
-		local node = DTree_Node.AddNode(...)
-		if net then install_drag(node) end
-		node.SetModel = self.SetModel
-		
-		node.PopulateChildren = function() end
-		node.FilePopulate = function() end
-		node.PopulateChildrenAndSelf = function() end
-				
-		return node
+		local node_ = fix_folder_funcs(DTree_Node.AddNode(...))
+		node_.AddNode = node.AddNode
+		if net then install_drag(node_) end
+		node_.SetModel = self.SetModel
+						
+		return node_
 	end
-	
-	node.PopulateChildren = function() end
-	node.FilePopulate = function() end
-	node.PopulateChildrenAndSelf = function() end
 	
 	return node
 end
@@ -163,7 +165,7 @@ function PANEL:Populate()
 		end
 	end
 
-	self:PopulateParts(self, pac.GetParts())
+	self:PopulateParts(self, pac.GetParts(true))
 	
 	self:StretchToParent()
 	self:InvalidateLayout()

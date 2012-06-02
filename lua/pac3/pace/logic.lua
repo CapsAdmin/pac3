@@ -44,11 +44,10 @@ function pace.OnCreatePart(name)
 	local parent = pace.current_part
 	
 	if parent:IsValid() then	
-		part:SetName(name .. " " .. pac.GetPartCount(name, parent:GetChildren()))
 		part:SetParent(parent)
-	else
-		part:SetName(name .. " " .. pac.GetPartCount(name))
 	end
+	
+	part:SetName(name .. " " .. pac.GetPartCount(name))
 		
 	pace.SetViewPart(part)
 

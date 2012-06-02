@@ -42,9 +42,9 @@ end
 function pac.ConvertPAC2Config(data, ent)
 	local _out = {}
 	
-	local base = pac.CreatePart("base")
-		base:SetOwner(ent)
+	local base = pac.CreatePart("group")
 		base:SetName("pac2 outfit")
+		base:SetOwner(ent)
 		
 	for bone, data in pairs(data.bones) do
 		local part = base:CreatePart("bone")			
@@ -218,7 +218,7 @@ function pac.ConvertPAC2Config(data, ent)
 	timer.Simple(1, function()
 		for key, part in pairs(pac.GetParts()) do
 			if not part:HasParent() then
-				part:SetParentName("pac2 outfit")
+				part:SetParent(base)
 			end
 		end
 	end)
@@ -228,6 +228,5 @@ end
 
 concommand.Add("convert_pac2_config", function(ply, _, args)
 	pac.Panic()
-	PrintTable(args)
 	pac.ConvertPAC2Config(glon.decode(file.Read("pac2_outfits/"..args[1].."/"..args[2].."/outfit.txt")), LocalPlayer())
 end)

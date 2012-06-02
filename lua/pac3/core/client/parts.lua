@@ -39,7 +39,18 @@ function pac.GetPart(name)
 	return class.Get("part", name)
 end
 
-function pac.GetParts()
+function pac.GetParts(owned_only)
+	if owned_only then		
+		local tbl = {}
+		for key, part in pairs(pac.ActiveParts) do
+			if not part:IsValid() then
+				pac.ActiveParts[key] = nil
+			elseif part:GetPlayerOwner() == LocalPlayer() then
+				table.insert(tbl, part)
+			end
+		end
+		return tbl
+	end
 	for key, part in pairs(pac.ActiveParts) do
 		if not part:IsValid() then
 			pac.ActiveParts[key] = nil
@@ -175,14 +186,15 @@ do -- meta
 		end
 		
 		function PART:SetParentName(var)		
-			if not var or var == "" then
-				self:UnParent()
-			end
+			self:UnParent()
 			self.ParentName = var
+			self.ParentNameNotFound = nil
 		end
 		
 		function PART:UpdateParentName()
 			local name = self.ParentName
+			
+			if self.ParentNameNotFound == name then return end
 			
 			local parent
 			
@@ -193,11 +205,11 @@ do -- meta
 				end
 			end
 			
-			if not parent then
-				return
+			if parent then
+				self:SetParent(parent)
+			else
+				self.ParentNameNotFound = name
 			end
-		
-			self:SetParent(parent)
 		end
 		
 		function PART:AddChild(var)
@@ -207,12 +219,6 @@ do -- meta
 			local parts = self:GetChildren()
 
 			var.Parent = self
-
-			for key, part in pairs(parts) do
-				if part:GetName() == var.Name then
-					var.Name = var.Name .. " conflict"
-				end
-			end
 
 			local id = table.insert(parts, var)
 			
@@ -319,10 +325,12 @@ do -- meta
 		function PART:SetBone(var)
 			self.Bone = var
 			self.BoneIndex = nil
+			self.TriedToFindBone = nil
 		end
 
 		function PART:ClearBone()
 			self.BoneIndex = nil
+			self.TriedToFindBone = nil
 		end
 
 		function PART:GetModelBones()
@@ -346,16 +354,18 @@ do -- meta
 		function PART:GetBonePosition(owner)
 			owner = owner or self:GetOwner()
 						
-			if not self.BoneIndex then
+			if not self.BoneIndex and self.TriedToFindBone ~= self.Bone then
 				self:UpdateBoneIndex(owner)
 			end
-		
+			
 			local pos, ang = owner:GetPos(), owner:GetAngles()
-		
-			if self.Parent:IsValid() and (self.Parent.ClassName ~= "group" and self.Parent.ClassName ~= "player") then
-				pos, ang = self.Parent:GetDrawPosition()
-			elseif owner:IsValid() then
-				pos, ang = owner:GetBonePosition(self.BoneIndex or 0)
+			
+			if self.BoneIndex then
+				if self.Parent:IsValid() and (self.Parent.ClassName ~= "group" and self.Parent.ClassName ~= "player") then
+					pos, ang = self.Parent:GetDrawPosition()
+				elseif owner:IsValid() then
+					pos, ang = owner:GetBonePosition(self.BoneIndex)
+				end
 			end
 				
 			return pos, ang
@@ -372,7 +382,7 @@ do -- meta
 					if not self.BoneIndex then
 						self.Error = self.Bone .. " cannot be found on '" .. tostring(owner) .. "' in both self and its active weapon"
 						MsgN(self.Error)
-						self.BoneIndex = -1
+						self.TriedToFindBone = self.Bone
 					end
 				end
 			end
@@ -576,21 +586,34 @@ do -- meta
 		end
 	end
 	
+	function PART:SetWeaponClass(var)
+		self.WeaponClass = var
+		
+		local owner = self:GetOwner()
+		if owner.GetActiveWeapon then
+			local wep = ply:GetActiveWeapon()
+			if wep:IsValid() then
+				self:WeaponChanged(wep) 
+			end
+		end
+	end
+		
 	function PART:Think()
 		local ply = self:GetOwner()
 
 		if ply.GetActiveWeapon then
 			local wep = ply:GetActiveWeapon()
-
-			--if wep ~= ply.pac_lastweapon then
-				if wep:IsValid() then
-					self:WeaponChanged(wep)
+			local class = wep:IsValid() and wep:GetClass() or ""
+			
+			if class ~= self.lastweapon then
+				if class ~= "" then 
+					self:WeaponChanged(wep) 
 				end
-			--	ply.pac_lastweapon = wep
-			--end
+				self.lastweapon = class
+			end			
 		end
 		
-		if not self.Parent:IsValid() and self.ParentName then
+		if not self.Parent:IsValid() and self.ParentName and self.ParentName ~= "" then
 			self:UpdateParentName()
 		end
 	end
