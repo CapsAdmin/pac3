@@ -47,7 +47,7 @@ end
 function PART:OnDraw(owner, pos, ang)
 	if self.Sprite then
 		render.SetMaterial(self.Sprite)
-		render.DrawSprite(pos, self.SizeX * self.Size, self.SizeX * self.Size, self.ColorC)
+		render.DrawSprite(pos, self.SizeX * self.Size, self.SizeY * self.Size, self.ColorC)
 	end
 end
 

@@ -83,7 +83,7 @@ end
 
 function pac.SubmitPart(data, ply)
 	if net then
-		net.Start("pac_receive")
+		net.Start("pac_submit")
 			net.WriteString(glon.encode(data))
 		net.Send(ply or player.GetAll())
 	else
@@ -94,7 +94,7 @@ function pac.SubmitPart(data, ply)
 			rp:RemovePlayer(data.ply)
 		end
 		
-		datastream.StreamToClients(ply or rp, "pac_receive", data)
+		datastream.StreamToClients(ply or rp, "pac_submit", data)
 	end
 end
 
@@ -103,11 +103,14 @@ function pac.PlayerInitialSpawn(ply)
 		if ply:IsPlayer() then
 			for ent, data in pairs(pac.Parts) do
 				if Entity(ent):IsValid() then
-					local ent = data[#data].ent
-					if ent:IsValid() then
-						local part = data[#data].part
+					local data = data[#data]
+					if data then
+						local ent = data.ent or NULL
+						if ent:IsValid() then
+							local part = data[#data].part
 
-						pac.SubmitPart({ent = ent, part = part}, ply)
+							pac.SubmitPart({ent = ent, part = part}, ply)
+						end
 					end
 				end
 			end
@@ -181,7 +184,6 @@ end
 
 if net then
 	util.AddNetworkString("pac_submit")
-	util.AddNetworkString("pac_receive")
 	util.AddNetworkString("pac_effect_precached")
 	util.AddNetworkString("pac_precache_effect")
 

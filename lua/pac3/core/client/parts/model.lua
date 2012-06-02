@@ -229,14 +229,22 @@ function PART:SetBodygroupState(var)
 	var = var or 0
 
 	self.BodygroupState = var
-	self.Entity:SetBodygroup(self.Bodygroup, var)
+	timer.Simple(0, function() 
+		if self:IsValid() and self.Entity:IsValid() then
+			self.Entity:SetBodygroup(self.Bodygroup, var) 
+		end
+	end)		
 end
 
 function PART:SetBodygroup(var)
 	var = var or 0
 
 	self.Bodygroup = var
-	self.Entity:SetBodygroup(var, self.BodygroupState)
+	timer.Simple(0, function() 
+		if self:IsValid() and self.Entity:IsValid() then
+			self.Entity:SetBodygroup(var, self.BodygroupState) 
+		end
+	end)		
 end
 
 function PART:SetSkin(var)

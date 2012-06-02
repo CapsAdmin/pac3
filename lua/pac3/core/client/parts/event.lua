@@ -29,14 +29,14 @@ PART.Events =
 	end,
 
 	primary_ammo_empty = function(owner)
-		local wep = owner:GetActiveWeapon()
+		local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or NULL
 		if wep:IsValid() and wep:Clip1() == 0 then
 			return true
 		end
 	end,
 	
 	secondary_ammo_empty = function(owner)
-		local wep = owner:GetActiveWeapon()
+		local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or NULL
 		if wep:IsValid() and wep:Clip2() == 0 then
 			return true
 		end
