@@ -222,9 +222,9 @@ do -- meta
 
 			local id = table.insert(parts, var)
 			
+			var.ParentName = self:GetName()
 			var:OnParent(self)
 			self:OnChildAdd(var)
-			var.ParentName = self:GetName()
 
 			return id
 		end
