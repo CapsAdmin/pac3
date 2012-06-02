@@ -591,7 +591,7 @@ do -- meta
 		
 		local owner = self:GetOwner()
 		if owner.GetActiveWeapon then
-			local wep = ply:GetActiveWeapon()
+			local wep = owner:GetActiveWeapon()
 			if wep:IsValid() then
 				self:WeaponChanged(wep) 
 			end
