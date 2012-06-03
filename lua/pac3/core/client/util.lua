@@ -39,6 +39,7 @@ do -- hook helpers
 			local args = {pcall(func, ...)}
 			if not args[1] then
 				ErrorNoHalt("[pac3]" .. str .. " : " .. args[2] .. "\n")
+				pac.RemoveHook(str)
 				table.insert(pac.Errors, args[2])
 			end
 			table.remove(args, 1)

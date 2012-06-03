@@ -47,3 +47,16 @@ include("submit.lua")
 pac.LoadParts()
 
 include("pac2_compat.lua")
+
+concommand.Add("pac_restart", function()
+	if pac then pac.Panic() end
+	local was_open
+	if pace then was_open = pace.Editor:IsValid() pace.Panic() end
+
+	include("autorun/pac_init.lua")
+	include("autorun/pace_init.lua")
+
+	if was_open then 
+		pace.OpenEditor() 
+	end
+end)
