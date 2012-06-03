@@ -57,6 +57,10 @@ PART.Events =
 	end,
 }
 
+function PART:GetOwner()
+	return self.PlayerOwner 
+end
+
 function PART:Think()
 	local owner = self:GetOwner()
 	
