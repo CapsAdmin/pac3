@@ -75,9 +75,11 @@ pac.AddHook("OnEntityCreated")
 
 function pac.EntityRemoved(ent)
 	timer.Simple(2, function()
-		for key, part in pairs(pac.GetParts(true)) do
-			if part:IsValid() and part:GetOwner() == ent then
-				part:Remove()
+		if not ent:IsValid() then
+			for key, part in pairs(pac.GetParts(true)) do
+				if part:IsValid() and part:GetOwner() == ent then
+					part:Remove()
+				end
 			end
 		end
 	end)
