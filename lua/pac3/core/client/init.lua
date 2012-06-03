@@ -53,6 +53,9 @@ concommand.Add("pac_restart", function()
 	local was_open
 	if pace then was_open = pace.Editor:IsValid() pace.Panic() end
 
+	pac = {}
+	pace = {}
+	
 	include("autorun/pac_init.lua")
 	include("autorun/pace_init.lua")
 

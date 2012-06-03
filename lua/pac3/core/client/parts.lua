@@ -14,7 +14,6 @@ function pac.CreatePart(name)
 	table.insert(pac.ActiveParts, part)
 	part.Id = part_count
 
-	part:SetName("part " .. #pac.ActiveParts)
 	part:SetPlayerOwner(LocalPlayer())
 
 	pac.CallHook("OnPartCreated", part)
@@ -131,6 +130,16 @@ do -- meta
 		self.Parent = pac.NULL
 	end
 	
+	function PART:SetName(var)
+		for key, part in pairs(pac.GetParts()) do
+			if part:GetName() == var and part ~= self then
+				self.Name = var .. " conflict"
+				return
+			end
+		end
+		self.Name = var
+	end
+	
 	do -- owner
 		function PART:SetOwner(ent)
 			ent = ent or NULL
@@ -244,7 +253,7 @@ do -- meta
 
 		function PART:HasChild(part)
 			for key, child in pairs(self:GetChildren()) do
-				if child == part then
+				if child == part or child:HasChild(part) then
 					return true
 				end
 			end
@@ -370,7 +379,7 @@ do -- meta
 						self.Parent.ClassName ~= "player"
 					) 
 				then
-					local ent = self.Parent.Entity -- model
+					local ent = self.Parent.Entity or NULL -- model
 
 					if ent:IsValid() then
 						pos, ang = ent:GetBonePosition(self.BoneIndex)
@@ -434,7 +443,6 @@ do -- meta
 			
 			for key, value in pairs(tbl.children) do
 				local part = pac.CreatePart(value.self.ClassName)
-				part:SetOwner(self:GetOwner())
 				part:SetTable(value)
 				self:AddChild(part)
 			end
@@ -458,7 +466,7 @@ do -- meta
 			for _, key in pairs(self:GetStorableVars()) do
 				tbl.self[key] = COPY(self[key])
 			end
-						
+
 			for _, part in pairs(self:GetChildren()) do
 				table.insert(tbl.children, part:ToTable())
 			end
@@ -478,9 +486,7 @@ do -- meta
 		
 		function PART:Clone()
 			local part = pac.CreatePart(self.ClassName)
-			part:SetOwner(self:GetOwner())
 			part:SetTable(self:ToTable())
-			part:SetName(self:GetName() .. " copy")
 			return part
 		end
 	end

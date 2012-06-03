@@ -74,13 +74,15 @@ end
 pac.AddHook("OnEntityCreated")
 
 function pac.EntityRemoved(ent)
-	for key, part in pairs(pac.GetParts()) do
-		if part:IsValid() and part:GetOwner() == ent then
-			part:Remove()
+	timer.Simple(2, function()
+		for key, part in pairs(pac.GetParts(true)) do
+			if part:IsValid() and part:GetOwner() == ent then
+				part:Remove()
+			end
 		end
-	end
+	end)
 end
---pac.AddHook("EntityRemoved")
+pac.AddHook("EntityRemoved")
 
 if net then
 	net.Receive("pac_submit", function()
