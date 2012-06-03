@@ -213,8 +213,13 @@ do -- meta
 		end
 		
 		function PART:AddChild(var)
-			if not var or not var:IsValid() then self:UnParent() end
-			if self == var or var:HasChild(self) then return false end
+			if not var or not var:IsValid() then 
+				self:UnParent() 
+			end
+			
+			if self == var or var:HasChild(self) then 
+				return false 
+			end
 			
 			local parts = self:GetChildren()
 
@@ -344,28 +349,36 @@ do -- meta
 
 		function PART:GetRealBoneName(name, owner)
 			owner = owner or self:GetOwner()
-
-			if not owner.pac_bones or not owner.pac_bones[name] or not owner.pac_bones[name].real then
-				owner.pac_bones = pac.GetAllBones(owner)
-			end
-
-			return owner:IsValid() and owner.pac_bones and owner.pac_bones[name] and owner.pac_bones[name].real or name
-		end
-
-		function PART:GetBonePosition(owner)
-			owner = owner or self:GetOwner()
-						
-			if not self.BoneIndex and self.TriedToFindBone ~= self.Bone then
-				self:UpdateBoneIndex(owner)
+			
+			if owner:IsValid() and owner.pac_bones and owner.pac_bones[name] then
+				return owner.pac_bones[name].real
 			end
 			
+			return name
+		end
+
+		function PART:GetBonePosition(owner, idx)
+			owner = owner or self:GetOwner()
+
 			local pos, ang = owner:GetPos(), owner:GetAngles()
 			
 			if self.BoneIndex then
-				if self.Parent:IsValid() and (self.Parent.ClassName ~= "group" and self.Parent.ClassName ~= "player") then
-					pos, ang = self.Parent:GetDrawPosition()
+				if 
+					self.Parent:IsValid() and 
+					(
+						self.Parent.ClassName ~= "group" and 
+						self.Parent.ClassName ~= "player"
+					) 
+				then
+					local ent = self.Parent.Entity -- model
+
+					if ent:IsValid() then
+						pos, ang = ent:GetBonePosition(self.BoneIndex)
+					else
+						pos, ang = self.Parent:GetDrawPosition(nil, self.Bone) -- "bone" is origin of parent
+					end
 				elseif owner:IsValid() then
-					pos, ang = owner:GetBonePosition(self.BoneIndex)
+					pos, ang = owner:GetBonePosition(idx or self.BoneIndex)
 				end
 			end
 				
@@ -374,16 +387,18 @@ do -- meta
 
 		function PART:UpdateBoneIndex(owner)
 			owner = owner or self:GetOwner()
-			self.BoneIndex = owner:LookupBone(self:GetRealBoneName(self.Bone))
-			if not self.BoneIndex and (owner:IsNPC() or owner:IsPlayer()) and owner.GetActiveWeapon then
-				local wep = owner:GetActiveWeapon()
+			if owner:IsValid() then
+				self.BoneIndex = owner:LookupBone(self:GetRealBoneName(self.Bone))
+				if not self.BoneIndex and (owner:IsNPC() or owner:IsPlayer()) and owner.GetActiveWeapon then
+					local wep = owner:GetActiveWeapon()
 
-				if wep:IsWeapon() then
-					self.BoneIndex = wep:LookupBone(self:GetRealBoneName(self.Bone, wep))
-					if not self.BoneIndex then
-						self.Error = self.Bone .. " cannot be found on '" .. tostring(owner) .. "' in both self and its active weapon"
-						MsgN(self.Error)
-						self.TriedToFindBone = self.Bone
+					if wep:IsWeapon() then
+						self.BoneIndex = wep:LookupBone(self:GetRealBoneName(self.Bone, wep))
+						if not self.BoneIndex then
+							self.Error = self.Bone .. " cannot be found on '" .. tostring(owner) .. "' in both self and its active weapon"
+							MsgN(self.Error)
+							self.TriedToFindBone = self.Bone
+						end
 					end
 				end
 			end
@@ -601,10 +616,10 @@ do -- meta
 	end
 		
 	function PART:Think()
-		local ply = self:GetOwner()
+		local owner = self:GetOwner()
 
-		if ply.GetActiveWeapon then
-			local wep = ply:GetActiveWeapon()
+		if owner.GetActiveWeapon then
+			local wep = owner:GetActiveWeapon()
 			local class = wep:IsValid() and wep:GetClass() or ""
 			
 			if class ~= self.lastweapon then
@@ -617,6 +632,24 @@ do -- meta
 		
 		if not self.Parent:IsValid() and self.ParentName and self.ParentName ~= "" then
 			self:UpdateParentName()
+		end
+		
+		if not owner.pac_bones then
+			pac.GetModelBones(owner)
+		end
+	
+		if not self.BoneIndex and self.TriedToFindBone ~= self.Bone then
+			self:UpdateBoneIndex(owner)
+		end
+			
+		if not owner:IsValid() then
+			if self.Parent:IsValid() and self.Parent.ClassName == "model" and self.Parent:GetEntity():IsValid() then
+				self:SetOwner(self.Parent:GetEntity())
+			elseif pace.GetViewEntity():IsValid() then
+				self:SetOwner(pace.GetViewEntity())
+			else
+				self:SetOwner(LocalPlayer())
+			end
 		end
 	end
 	
@@ -638,9 +671,11 @@ do -- meta
 	end
 
 	function PART:CalcEyeAngles(pos, ang)
-		if self.EyeAngles and self:GetOwner():IsPlayer() then
+		local owner = self:GetOwner()
+		
+		if self.EyeAngles and owner:IsPlayer() then
 			pos, ang = LocalToWorld(self.Position, self:CalcAngleVelocity(self.Angles), pos, ang)
-			ang = self.Angles + (self:GetOwner():GetEyeTraceNoCursor().HitPos - pos):Angle()
+			ang = self.Angles + (owner:GetEyeTraceNoCursor().HitPos - pos):Angle()
 			return ang
 		end
 		
@@ -668,18 +703,6 @@ do -- meta
 	
 	function PART:GetDrawPosition(owner)
 		owner = owner or self:GetOwner()
-		
-		if not owner:IsValid() then
-			if self.Parent:IsValid() and self.Parent.ClassName == "model" and self.Parent:GetEntity():IsValid() then
-				self:SetOwner(self.Parent:GetEntity())
-			elseif pace.GetViewEntity():IsValid() then
-				self:SetOwner(pace.GetViewEntity())
-			else
-				self:SetOwner(LocalPlayer())
-			end
-			owner = self:GetOwner()
-		end
-	
 		
 		if owner:IsValid() then
 			local pos, ang = self:GetBonePosition(owner)

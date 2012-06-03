@@ -25,16 +25,20 @@ function PART:GetSequenceList()
 			return ent:GetSequenceList()
 		else
 			local tbl = {}
-			for i = 1, math.huge do
+			local last -- hack for gmod 12
+			for i = 1, 1000 do 
 				local name = ent:GetSequenceName()
-				if name ~= "Unknown" then
+				if name ~= "Unknown" and name ~= last then 
 					tbl[i] = name
+					last = name
 				else
 					return tbl
 				end
 			end
+			return tbl
 		end
 	end
+	return {"none"}
 end
 
 function PART:OnDraw()
