@@ -80,7 +80,7 @@ function pac.EntityRemoved(ent)
 		end
 	end
 end
-pac.AddHook("EntityRemoved")
+--pac.AddHook("EntityRemoved")
 
 if net then
 	net.Receive("pac_submit", function()
