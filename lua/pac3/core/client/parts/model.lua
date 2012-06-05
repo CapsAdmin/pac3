@@ -3,7 +3,7 @@ local PART = {}
 PART.ClassName = "model"
 
 pac.StartStorableVars()
-	--pac.GetSet(PART, "BoneMerge", false)
+	pac.GetSet(PART, "BoneMerge", false)
 	pac.GetSet(PART, "Skin", 0)
 	pac.GetSet(PART, "Fullbright", false)
 	pac.GetSet(PART, "Invert", false)
@@ -112,6 +112,10 @@ end
 local bclip
 
 function PART:OnDraw(owner, pos, ang)
+	if self.SuppressDraw then return end
+	
+	self:CheckBoneMerge()
+	
 	if self:IsHighlighting() then
 		self:DrawHighlight(owner, pos, ang)
 	end
@@ -119,14 +123,6 @@ function PART:OnDraw(owner, pos, ang)
 	local ent = self.Entity
 
 	if ent:IsValid() then
-	
-		if ent:GetParent():IsValid() then
-			if self.BoneMerge then
-				ent:AddEffects(EF_BONEMERGE)
-			else
-				ent:RemoveEffects(EF_BONEMERGE)
-			end
-		end
 	
 		ent:SetPos(pos)
 		ent:SetRenderOrigin(pos)
@@ -161,7 +157,9 @@ function PART:OnDraw(owner, pos, ang)
 				render.SuppressEngineLighting(true) 
 			end
 			
+			if self.BoneMerge then self.SuppressDraw = true end
 				ent:DrawModel()		
+			if self.BoneMerge then self.SuppressDraw = false end
 				
 			if self.DoubleFace then
 				render.CullMode(MATERIAL_CULLMODE_CCW)
@@ -264,6 +262,30 @@ end
 
 function PART:OnRemove()
 	SafeRemoveEntity(self.Entity)
+end
+
+
+function PART:CheckBoneMerge()
+	local ent = self.Entity
+	if ent:IsValid() then
+			
+		if ent:GetParent():IsValid() then
+			if self.BoneMerge then	
+				if not ent:IsEffectActive(EF_BONEMERGE) then
+					ent:AddEffects(EF_BONEMERGE)
+				end
+			else
+				if ent:IsEffectActive(EF_BONEMERGE) then
+					ent:RemoveEffects(EF_BONEMERGE)
+				end
+			end
+		else	
+			local owner = self:GetOwner()
+			if owner:IsValid() then
+				ent:SetParent(owner)
+			end
+		end		
+	end
 end
 
 pac.RegisterPart(PART)

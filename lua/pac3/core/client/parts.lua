@@ -657,6 +657,8 @@ do -- meta
 				self:SetOwner(LocalPlayer())
 			end
 		end
+		
+		self:OnThink()
 	end
 	
 	function PART:SubmitToServer()

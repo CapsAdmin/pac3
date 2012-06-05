@@ -86,12 +86,11 @@ function PART:SetColor(var)
 
 	self.Color = var
 	self.Colorf = Vector(var.r, var.g, var.b) / 255
-	self:UpdateColor()
 end
 
 function PART:SetMaterial(var)
 	self.Material = var
-	self:UpdateMaterial()
+	self.Materialm = Material(var)
 end
 
 function PART:GetModel()
@@ -130,15 +129,14 @@ function PART:UpdateWeaponDraw(owner)
 	end
 end
 
-function PART:UpdateColor(owner)
-	render.SetColorModulation(self.Colorf.r, self.Colorf.g, self.Colorf.b)
-	render.SetBlend(self.Alpha)
-	
-	if net then
-		owner:SetColor(Color(self.Color.r, self.Color.g, self.Color.b, 255))
+function PART:UpdateColor(owner)	
+	if net then 
+		owner:SetColor(Color(self.Color.r, self.Color.g, self.Color.b, math.ceil(self.Alpha * 255)))
 	else
-		owner:SetColor(self.Color.r, self.Color.g, self.Color.b, 255) 
+		owner:SetColor(self.Color.r, self.Color.g, self.Color.b, math.ceil(self.Alpha * 255))
 	end
+	
+	render.SetBlend(self.Alpha)
 end
 
 function PART:UpdateMaterial(owner)
@@ -146,9 +144,9 @@ function PART:UpdateMaterial(owner)
 end
 
 function PART:UpdateAll(owner)
-	self:UpdateColor(owner)
-	self:UpdateMaterial(owner)
 	self:UpdateScale(owner)
+	self:UpdateMaterial(owner)
+	self:UpdateColor(owner)
 end
 
 function PART:OnAttach(owner)
@@ -160,22 +158,13 @@ function PART:PrePlayerDraw(owner, pos, ang)
 	
 	self:UpdateWeaponDraw(owner)
 	
-	self:UpdateAll(owner)
+	self:UpdateAll(owner)	
 end
 
-function PART:PostPlayerDraw(owner, pos, ang)
-	if net then
-		render.MaterialOverride()
-	else
-		SetMaterialOverride(0)
-	end
-	
-	render.SetColorModulation(1,1,1)
+function PART:PostPlayerDraw(owner, pos, ang)	
 	render.SetBlend(1)
-	
+
 	self:EndClipping()
-	
-	self:UpdateAll(owner)
 end
 
 pac.RegisterPart(PART)
