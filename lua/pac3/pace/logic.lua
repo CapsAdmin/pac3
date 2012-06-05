@@ -216,6 +216,13 @@ function pace.OnNewPartMenu()
 	menu:MakePopup()
 	menu:SetPos(gui.MousePos())
 	add_parts(menu)
+	menu:AddSpacer()
+	menu:AddOption(L"clear", function()
+		for key, part in pairs(pac.GetParts()) do
+			part:Remove()
+		end
+		pace.RefreshTree()
+	end)
 end
 
 function pace.OnHoverPart(obj)
