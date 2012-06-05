@@ -14,6 +14,7 @@ function PART:Initialize()
 		pac.GetSet(self, "Hide", false)
 		pac.GetSet(self, "Material", "")
 		pac.GetSet(self, "Color", Vector(255, 255, 255))
+		pac.GetSet(self, "Brightness", 1)
 		pac.GetSet(self, "Alpha", 1)
 		pac.GetSet(self, "Scale", Vector(1,1,1))
 		pac.GetSet(self, "Size", 1)
@@ -66,17 +67,20 @@ function PART:GetOwner()
 end
 
 function PART:UpdateScale(owner)	
+	owner:InvalidateBoneCache()
 	owner:SetModelScale(self.Scale * self.Size)
+	owner:SetupBones()
+	--print(self.Scale, self.Size)
 end
 
 function PART:SetSize(var)
 	self.Size = var
-	self:UpdateScale()
+	self:UpdateScale(self:GetOwner())
 end
 
 function PART:SetScale(var)	
 	self.Scale = var
-	self:UpdateScale()
+	self:UpdateScale(self:GetOwner())
 end
 
 PART.Colorf = Vector(1,1,1)
@@ -85,7 +89,7 @@ function PART:SetColor(var)
 	var = var or Vector(255, 255, 255)
 
 	self.Color = var
-	self.Colorf = Vector(var.r, var.g, var.b) / 255
+	self.Colorf = (Vector(var.r, var.g, var.b) / 255)
 end
 
 function PART:SetMaterial(var)
@@ -130,21 +134,23 @@ function PART:UpdateWeaponDraw(owner)
 end
 
 function PART:UpdateColor(owner)	
-	if net then 
-		owner:SetColor(Color(self.Color.r, self.Color.g, self.Color.b, math.ceil(self.Alpha * 255)))
-	else
-		owner:SetColor(self.Color.r, self.Color.g, self.Color.b, math.ceil(self.Alpha * 255))
-	end
-	
+	render.SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness)
 	render.SetBlend(self.Alpha)
 end
 
 function PART:UpdateMaterial(owner)
-	owner:SetMaterial(self.Material)
+	--owner:SetMaterial(self.Material)
+	if not self.Materialm then return end
+	
+	if net then
+		render.MaterialOverride(self.Materialm)
+	else
+		SetMaterialOverride(self.Materialm)
+	end
 end
 
 function PART:UpdateAll(owner)
-	self:UpdateScale(owner)
+	--self:UpdateScale(owner)
 	self:UpdateMaterial(owner)
 	self:UpdateColor(owner)
 end
@@ -163,6 +169,12 @@ end
 
 function PART:PostPlayerDraw(owner, pos, ang)	
 	render.SetBlend(1)
+	render.SetColorModulation(1,1,1)
+	if net then
+		render.MaterialOverride()
+	else
+		SetMaterialOverride(0)
+	end
 
 	self:EndClipping()
 end

@@ -16,14 +16,14 @@ local function checkfield(tbl, key, def)
 end
 
 function class.GetSet(tbl, name, def)
-    tbl["Set" .. name] = function(self, var) self[name] = var end
-    tbl["Get" .. name] = function(self, var) return self[name] end
+    tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
+    tbl["Get" .. name] = tbl["Get" .. name] or function(self, var) return self[name] end
     tbl[name] = def
 end
 
 function class.IsSet(tbl, name, def)
-    tbl["Set" .. name] = function(self, var) self[name] = var end
-    tbl["Is" .. name] = function(self, var) return self[name] end
+    tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
+    tbl["Is" .. name] = tbl["Is" .. name] or function(self, var) return self[name] end
     tbl[name] = def
 end
 
