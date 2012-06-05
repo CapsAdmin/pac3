@@ -238,6 +238,7 @@ function PART:SetMaterial(var)
 	var = var or ""
 
 	self.Material = var
+	
 	if var ~= "" then
 		self.Materialm = Material(var)
 	end

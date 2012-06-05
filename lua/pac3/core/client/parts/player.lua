@@ -93,9 +93,15 @@ function PART:SetColor(var)
 end
 
 function PART:SetMaterial(var)
+	var = var or ""
+
 	self.Material = var
-	self.Materialm = Material(var)
+	
+	if var ~= "" then
+		self.Materialm = Material(var)
+	end
 end
+
 
 function PART:GetModel()
 	local owner = self:GetOwner()
@@ -139,13 +145,10 @@ function PART:UpdateColor(owner)
 end
 
 function PART:UpdateMaterial(owner)
-	--owner:SetMaterial(self.Material)
-	if not self.Materialm then return end
-	
 	if net then
-		render.MaterialOverride(self.Materialm)
+		render.MaterialOverride(self.Material ~= "" and self.Materialm or nil)
 	else
-		SetMaterialOverride(self.Materialm)
+		SetMaterialOverride(self.Material ~= "" and self.Materialm or nil)
 	end
 end
 
