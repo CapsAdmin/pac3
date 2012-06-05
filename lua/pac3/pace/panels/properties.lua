@@ -521,14 +521,14 @@ do -- vector
 			num = tonumber(num) or 0
 	
 			num = math.Round(num) 
-			num = math.max(num, 0) 
+			num = math.Clamp(num, 0, 255) 
 
 			return tostring(num)
 		end, 
 		
 		function(self)
 			local frm = vgui.Create("DFrame")
-			frm:SetSize(100, 100)
+			frm:SetSize(200, 200)
 			frm:Center()
 			frm:MakePopup()
 			frm:SetTitle("")
@@ -540,7 +540,9 @@ do -- vector
 			function clr.Think()
 				if net then
 					local clr = clr:GetColor() or Color(255, 255, 255, 255)
-					self.OnValueChanged(Vector(clr.r, clr.g, clr.b))
+					local vec = Vector(clr.r, clr.g, clr.b)
+					self.OnValueChanged(vec)
+					self:SetValue(vec)
 				else
 					if 
 						clr.ColorCube:GetDragging() or 
@@ -548,7 +550,9 @@ do -- vector
 						clr.RGBBar:GetDragging() 
 					then
 						local clr = clr:GetColor() or Color(255, 255, 255, 255)
-						self.OnValueChanged(Vector(clr.r, clr.g, clr.b))
+						local vec = Vector(clr.r, clr.g, clr.b)
+						self.OnValueChanged(vec)
+						self:SetValue(vec)
 					end
 				end
 			end

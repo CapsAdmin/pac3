@@ -13,11 +13,14 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Sequence", 1)
 	pac.GetSet(PART, "Material", "")
 	pac.GetSet(PART, "Color", Vector(255, 255, 255))
+	pac.GetSet(PART, "Brightness", 1)
 	pac.GetSet(PART, "Alpha", 1)
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
 	pac.GetSet(PART, "Size", 1)
 	pac.GetSet(PART, "Model", "models/props_junk/watermelon01.mdl")
 pac.EndStorableVars()
+
+PART.Colorf = Vector(1,1,1)
 
 pac.GetSet(PART, "Entity", NULL)
 
@@ -149,9 +152,18 @@ function PART:OnDraw(owner, pos, ang)
 				end
 			end
 						
-			if self.Colorf then render.SetColorModulation(self.Colorf.r, self.Colorf.g, self.Colorf.b) end
+			if self.Colorf then 
+				render.SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness) 
+			end
+			
 			if self.Alpha then render.SetBlend(self.Alpha) end
-			if self.Materialm then if net then render.MaterialOverride(self.Materialm) else SetMaterialOverride(self.Materialm) end end
+			
+			if net then 
+				render.MaterialOverride(self.Material ~= "" and self.Materialm or nil) 
+			else 
+				SetMaterialOverride(self.Material ~= "" and self.Materialm or nil) 
+			end 
+
 		
 			if self.Fullbright then
 				render.SuppressEngineLighting(true) 
@@ -219,7 +231,7 @@ function PART:SetColor(var)
 	var = var or Vector()
 
 	self.Color = var
-	self.Colorf = Vector(var.r, var.g, var.b) / 255
+	self.Colorf = (Vector(var.r, var.g, var.b) / 255) * self.Brightness
 end
 
 function PART:SetMaterial(var)

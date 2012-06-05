@@ -41,6 +41,7 @@ pace.PropertyOrder =
 	"Size",
 	"Scale",
 	"Color",
+	"Brightness",
 	"Alpha",
 	"Min",
 	"Max",
