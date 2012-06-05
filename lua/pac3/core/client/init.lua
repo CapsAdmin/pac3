@@ -1,5 +1,6 @@
 pac = pac or {}
 
+include("libraries/profiler.lua")
 include("libraries/luadata.lua")
 include("libraries/class.lua")
 include("libraries/null.lua")
