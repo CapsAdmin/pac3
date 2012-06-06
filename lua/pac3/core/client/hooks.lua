@@ -17,7 +17,8 @@ function pac.PrePlayerDraw(ply)
 	for key, part in pairs(pac.GetParts()) do
 		if 
 			part.ClassName == "player" and
-			not part:IsHidden() 
+			not part:IsHidden() and
+			part:GetOwner() == ply
 		then
 			part:Draw("PrePlayerDraw")
 		end
@@ -44,7 +45,8 @@ function pac.PostPlayerDraw(ply)
 	for key, part in pairs(pac.GetParts()) do
 		if 
 			part.ClassName == "player" and
-			not part:IsHidden() 
+			not part:IsHidden() and
+			part:GetOwner() == ply
 		then
 			part:Draw("PostPlayerDraw")
 		end
