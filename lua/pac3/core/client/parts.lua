@@ -549,7 +549,30 @@ do -- meta
 		end
 	end
 	
-	do -- player specific		
+	do -- weapon class specific	
+		function PART:SetWeaponClass(var)
+			self.WeaponClass = var
+			
+			self:CalcWeaponClass()
+		end
+
+		function PART:SetHideWeaponClass(var)
+			self.pac_weapons_reset = nil
+			self.HideWeaponClass = var
+			
+			self:CalcWeaponClass()
+		end
+		
+		function PART:CalcWeaponClass()
+			local owner = self:GetOwner()
+			if owner.GetActiveWeapon then
+				local wep = owner:GetActiveWeapon()
+				if wep:IsValid() then
+					self:WeaponChanged(wep) 
+				end
+			end
+		end
+	
 		function PART:WeaponChanged(wep)
 
 			if not self.pac_weapons_reset then
@@ -593,7 +616,7 @@ do -- meta
 			end
 		end
 	end
-	
+
 	function PART:IsHidden()
 		return self.Hide == true or self.WeaponClassHidden == true or self.EventHide == true or false
 	end
@@ -609,18 +632,6 @@ do -- meta
 		end
 	end
 	
-	function PART:SetWeaponClass(var)
-		self.WeaponClass = var
-		
-		local owner = self:GetOwner()
-		if owner.GetActiveWeapon then
-			local wep = owner:GetActiveWeapon()
-			if wep:IsValid() then
-				self:WeaponChanged(wep) 
-			end
-		end
-	end
-		
 	function PART:Think()
 		local owner = self:GetOwner()
 
@@ -663,11 +674,6 @@ do -- meta
 	
 	function PART:SubmitToServer()
 		pac.SubmitPart(self:GetOwner(), self:ToTable())
-	end
-
-	function PART:SetHideWeaponClass(var)
-		self.pac_weapons_reset = nil
-		self.HideWeaponClass = var
 	end
 	
 	function PART:GetName()
