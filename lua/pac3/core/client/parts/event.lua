@@ -120,10 +120,12 @@ function PART:Think()
 		if func then
 			local parent = self:GetParent()
 			if parent:IsValid() then
-				if self.Invert then
+				if self:IsHidden() then
+					parent.EventHide = self.Invert
+				elseif self.Invert then
 					parent.EventHide = not (func(owner, self) or false)
 				else
-					parent.EventHide = (func(owner, self) or false)
+					parent.EventHide = (func(owner, self) or false) 
 				end
 			end
 		end
