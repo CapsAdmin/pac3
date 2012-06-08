@@ -87,14 +87,7 @@ function pac.SubmitPart(data, ply)
 			net.WriteString(glon.encode(data))
 		net.Send(ply or player.GetAll())
 	else
-		local rp = RecipientFilter()
-		rp:AddAllPlayers()
-		
-		if data.ply then
-			rp:RemovePlayer(data.ply)
-		end
-		
-		datastream.StreamToClients(ply or rp, "pac_submit", data)
+		datastream.StreamToClients(ply or player.GetAll(), "pac_submit", data)
 	end
 end
 

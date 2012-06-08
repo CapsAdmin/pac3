@@ -165,8 +165,6 @@ end
 function PART:PrePlayerDraw(owner, pos, ang)
 	self:StartClipping(pos, ang)
 	
-	self:UpdateWeaponDraw(owner)
-	
 	self:UpdateAll(owner)	
 end
 
@@ -180,6 +178,7 @@ function PART:PostPlayerDraw(owner, pos, ang)
 	end
 
 	self:EndClipping()
+	self:UpdateWeaponDraw(owner)
 end
 
 pac.RegisterPart(PART)

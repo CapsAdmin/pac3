@@ -33,7 +33,6 @@ end
 
 function pac.SetSubmittedPart(ply, ent, tbl)
 	print("received outfit from ", ply, " to set on ", ent)
-	PrintTable(tbl)
 
 	for key, part in pairs(pac.GetParts()) do
 		if not part:HasParent() and part:GetPlayerOwner() == ply and part:GetName() == tbl.self.Name then
