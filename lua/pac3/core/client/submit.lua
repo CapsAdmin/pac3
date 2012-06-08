@@ -71,6 +71,16 @@ function pac.SubmitRemove(ent, name)
 	end
 end
 
+function pac.SubmitOwner(a, b, name)
+	if net then
+		net.Start("pac_submit")
+			net.WriteString(glon.encode({a = a, b = b, part = name}))
+		net.SendToServer()
+	else
+		datastream.StreamToServer("pac_submit", {a = a, b = b, part = name})
+	end
+end
+
 function pac.Notify(allowed, reason)
 	 if allowed then
 		chat.AddText(Color(255,255,0), "[PAC3] ", Color(0,255,0), "Your config has been applied.")
