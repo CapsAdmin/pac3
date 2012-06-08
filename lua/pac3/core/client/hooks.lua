@@ -3,7 +3,6 @@ function pac.PrePlayerDraw(ply)
 	
 	for key, part in pairs(pac.GetParts()) do
 		if 
-			part.ClassName ~= "player" and
 			not part:IsHidden() and
 			not part.Screenspace and 
 			not part.Translucent and 
@@ -11,15 +10,6 @@ function pac.PrePlayerDraw(ply)
 			not part:HasParent() 
 		then
 			part:Draw("OnDraw")
-		end
-	end
-	
-	for key, part in pairs(pac.GetParts()) do
-		if 
-			part.ClassName == "player" and
-			not part:IsHidden() and
-			part:GetOwner() == ply
-		then
 			part:Draw("PrePlayerDraw")
 		end
 	end
@@ -31,7 +21,6 @@ function pac.PostPlayerDraw(ply)
 	
 	for key, part in pairs(pac.GetParts()) do
 		if 
-			part.ClassName ~= "player" and
 			not part:IsHidden() and
 			not part.Screenspace and 
 			not part.Translucent and 
@@ -39,16 +28,7 @@ function pac.PostPlayerDraw(ply)
 			not part:HasParent() 
 		then
 			part:Draw("OnDraw")
-		end
-	end
-	
-	for key, part in pairs(pac.GetParts()) do
-		if 
-			part.ClassName == "player" and
-			not part:IsHidden() and
-			part:GetOwner() == ply
-		then
-			part:Draw("PostPlayerDraw")
+   			part:Draw("PostPlayerDraw")
 		end
 	end
 end

@@ -14,7 +14,7 @@ do -- hook helpers
 			local args = {pcall(func, ...)}
 			if not args[1] then
 				ErrorNoHalt(args[2] .. "\n")
-				table.insert(pac.Errors, args[2])
+				--table.insert(pac.Errors, args[2])
 			end
 			table.remove(args, 1)
 			return unpack(args)
@@ -101,15 +101,12 @@ end
 function pac.PlayerInitialSpawn(ply)
 	timer.Simple(1, function()
 		if ply:IsPlayer() then
-			for ent, data in pairs(pac.Parts) do
+			for ent, outfits in pairs(pac.Parts) do
 				if Entity(ent):IsValid() then
-					local data = data[#data]
-					if data then
-						local ent = data.ent or NULL
+                    for key, outfit in pairs(outfits) do
+						local ent = outfit.ent or NULL
 						if ent:IsValid() then
-							local part = data[#data].part
-
-							pac.SubmitPart({ent = ent, part = part}, ply)
+							pac.SubmitPart(outfit, ply)
 						end
 					end
 				end
@@ -171,10 +168,29 @@ function pac.RemovePart(ply, data)
 	--end
 end
 
+function pac.SetOwnerPart(ply, data)
+	print(ply, " is changing owner ", data.part)
+	--if pac.IsAllowedToModify(ply, data.ent) then
+		pac.Parts[ply:EntIndex()] = pac.Parts[ply:EntIndex()] or {}
+
+		for key, _data in pairs(pac.Parts[ply:EntIndex()]) do
+			if _data.part.self.Name == data.part then
+				_data.ent = data.b
+				pac.SubmitPart({ply = ply, ent = data.a, part = data.part})
+				pac.SubmitPart(_data)
+				break
+			end
+		end
+	--end
+end
+
+
 local function handle_data(ply, data)
 	if IsValid(data.ent) then
 		data.ply = ply
-		if type(data.part) == "table" then
+		if IsEntity(data.a) and data.a:IsValid() and IsEntity(data.b) and data.b:IsValid() then
+			pac.SetOwnerPart(ply, data)
+		elseif type(data.part) == "table" then
 			pac.CheckSubmitPart(ply, data)
 		elseif type(data.part) == "string" then
 			pac.RemovePart(ply, data)
