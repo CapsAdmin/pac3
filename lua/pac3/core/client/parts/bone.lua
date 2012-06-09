@@ -56,9 +56,7 @@ function PART:GetBonePosition(owner)
 	return pos or Vector(0,0,0), ang or Angle(0,0,0)
 end
 
-function PART:BuildBonePositions(owner)
-	if self:IsHidden() then return end
-	
+function PART:BuildBonePositions(owner)	
 	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone))
 
 	local matrix = owner:GetBoneMatrix(self.BoneIndex)

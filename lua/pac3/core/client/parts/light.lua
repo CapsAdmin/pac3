@@ -9,7 +9,7 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:OnDraw(owner, pos, ang)
-	local params = DynamicLight()
+	local params = DynamicLight(tostring(pos))
 	if params then
 		params.Pos = pos
 		params.r = self.Color.r
@@ -18,7 +18,7 @@ function PART:OnDraw(owner, pos, ang)
 		params.Brightness = self.Brightness
 		params.Size = self.Size
 		params.Decay = 0
-		params.DieTime = CurTime() + 0.5
+		params.DieTime = -1
 	end
 end
 
