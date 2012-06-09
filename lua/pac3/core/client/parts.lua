@@ -627,7 +627,7 @@ do -- meta
 		end
 		for index, part in pairs(self:GetChildren()) do
 			if part[event] and not part:IsHidden() then
-				part:Draw(event)
+				part:Draw(event, part:GetOwner(), part:GetDrawPosition())
 			end
 		end
 	end
