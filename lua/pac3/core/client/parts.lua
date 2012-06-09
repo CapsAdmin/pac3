@@ -286,9 +286,11 @@ do -- meta
 		function PART:GetRootPart()
 			local p = self
 			
-			repeat
+			for i=1, 100 do
+				local _p = p:GetParent()
+				if not _p:IsValid() then break end
 				p = p:GetParent()
-			until not p:IsValid()
+			end
 			
 			return p
 		end
