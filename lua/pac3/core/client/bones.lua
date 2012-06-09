@@ -80,24 +80,10 @@ function pac.HookBuildBone(ent)
 	end
 end
 
-local function build_bones(part, ent)
-	local owner = part:GetOwner()
-	if owner == ent and part.BuildBonePositions and not part:IsHidden() then
-		part:BuildBonePositions(owner)
-		for index, part in pairs(part:GetChildren()) do
-			local owner = part:GetOwner()
-			if owner == ent and part.BuildBonePositions and not part:IsHidden() then
-				part:BuildBonePositions(owner)
-				build_bones(part, ent)
-			end
-		end	
-	end
-end
-
 function pac.EntityBuildBonePositions(ent)	
 	for key, part in pairs(pac.GetParts()) do
-		if not part:IsHidden() and not part:HasParent() then
-			build_bones(part, ent)
+		if not part:GetRootPart():IsHidden() and part.BuildBonePositions and part:GetOwner() == ent then
+			part:BuildBonePositions(ent)
 		end
 	end	
 end
