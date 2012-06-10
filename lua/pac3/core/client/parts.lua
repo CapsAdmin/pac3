@@ -520,6 +520,9 @@ do -- meta
 		function PART:OnUnParent() end
 		function PART:Highlight() end
 		
+		function PART:OnHide() end
+		function PART:OnShow() end
+		
 		function PART:OnSetOwner(ent)
 			if not ent:IsPlayer() then
 				self.PostDrawTranslucentRenderables = self.PostDrawTranslucentRenderables or self.PostPlayerDraw
@@ -544,6 +547,28 @@ do -- meta
 		end
 	end
 	
+	function PART:SetHide(b)
+		if b ~= self.Hide then
+			if b then
+				self:OnHide()
+			else
+				self:OnShow()
+			end
+		end
+		self.Hide = b
+	end
+	
+	function PART:SetEventHide(b)
+		if b ~= self.EventHide then
+			if b then
+				self:OnHide()
+			else
+				self:OnShow()
+			end
+		end
+		self.EventHide = b
+	end
+	
 	function PART:IsHidden()
 		return self.Hide == true or self.EventHide == true or false
 	end
@@ -559,7 +584,7 @@ do -- meta
 		end
 	end
 	
-	function PART:Think()
+	function PART:Think()	
 		local owner = self:GetOwner()
 	
 		if not self.Parent:IsValid() and self.ParentName and self.ParentName ~= "" then

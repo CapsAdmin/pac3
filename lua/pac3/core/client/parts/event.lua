@@ -166,11 +166,11 @@ function PART:Think()
 			local parent = self:GetParent()
 			if parent:IsValid() then
 				if self:IsHidden() then
-					parent.EventHide = self.Invert
+					parent:SetEventHide(self.Invert)
 				elseif self.Invert then
-					parent.EventHide = not (data.callback(self, ent, self:GetParsedArguments(data.arguments)) or false)
+					parent:SetEventHide(not (data.callback(self, ent, self:GetParsedArguments(data.arguments)) or false) )
 				else
-					parent.EventHide = (data.callback(self, ent, self:GetParsedArguments(data.arguments)) or false) 
+					parent:SetEventHide((data.callback(self, ent, self:GetParsedArguments(data.arguments)) or false) )
 				end
 			end
 		end
