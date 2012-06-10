@@ -288,6 +288,19 @@ do -- meta
 			
 			return p
 		end
+		
+		function PART:IsHiddenEx()
+			local p = self
+			
+			for i=1, 100 do
+				local _p = p:GetParent()
+				if not _p:IsValid() then break end
+				if p:IsHidden() then return true end
+				p = p:GetParent()
+			end
+			
+			return false
+		end
 
 		function PART:GetChildren()
 			local children = self.Children

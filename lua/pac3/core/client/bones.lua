@@ -83,7 +83,7 @@ end
 
 function pac.EntityBuildBonePositions(ent)	
 	for key, part in pairs(pac.GetParts()) do
-		if not part:GetRootPart():IsHidden() and part.BuildBonePositions and part:GetOwner() == ent then
+		if not part:IsHiddenEx() and part.BuildBonePositions and part:GetOwner() == ent then
 			part:BuildBonePositions(ent)
 		end
 	end	
