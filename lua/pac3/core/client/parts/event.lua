@@ -75,7 +75,7 @@ PART.Events =
 			if ent:IsValid() then
 				if self:StringOperator(ent:GetClass(), find) then
 					pac.HideWeapon(ent, hide)
-					return false
+					return true
 				end
 			end
 		end,
@@ -150,10 +150,6 @@ function PART:Initialize()
 		pac.GetSet(self, "Operator", "")
 		pac.GetSet(self, "Invert", false)
 	pac.EndStorableVars()
-end
-
-function PART:GetOwner()
-	return self.PlayerOwner 
 end
 
 function PART:Think()
