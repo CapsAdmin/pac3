@@ -74,7 +74,11 @@ function pac.ConvertPAC2Config(data, ent)
 				part:SetSizeX(data.sprite.x)
 				part:SetSizeY(data.sprite.y)
 				part:SetEyeAngles(data.eyeangles)
-				part:SetWeaponClass(data.weaponclass)
+				if data.weaponclass ~= "" then 
+					local part = part:CreatePart("event")
+					part:SetEvent("weapon_class")
+					part:SetArguments(data.weaponclass)
+				end
 		end
 		
 		if data.light.Enabled then
@@ -92,7 +96,11 @@ function pac.ConvertPAC2Config(data, ent)
 				part:SetBrightness(data.light.Brightness)
 				part:SetSize(data.light.Size)
 				part:SetEyeAngles(data.eyeangles)
-				part:SetWeaponClass(data.weaponclass)
+				if data.weaponclass ~= "" then 
+					local part = part:CreatePart("event")
+					part:SetEvent("weapon_class")
+					part:SetArguments(data.weaponclass)
+				end
 		end
 		
 		if data.text.Enabled then
@@ -116,7 +124,11 @@ function pac.ConvertPAC2Config(data, ent)
 				part:SetFont(data.text.font)
 				part:SetSize(data.text.size)
 				part:SetEyeAngles(data.eyeangles)
-				part:SetWeaponClass(data.weaponclass)
+				if data.weaponclass ~= "" then 
+					local part = part:CreatePart("event")
+					part:SetEvent("weapon_class")
+					part:SetArguments(data.weaponclass)
+				end
 		end
 		
 		if data.trail.Enabled then
@@ -127,7 +139,11 @@ function pac.ConvertPAC2Config(data, ent)
 				part:SetColor(data.trail.color)
 				part:SetMaterial(data.trail.material)
 				part:SetLength(data.trail.length)		
-				part:SetWeaponClass(data.weaponclass)				
+				if data.weaponclass ~= "" then 
+					local part = part:CreatePart("event")
+					part:SetEvent("weapon_class")
+					part:SetArguments(data.weaponclass)
+				end				
 		end
 		
 		if data.effect.Enabled then
@@ -137,14 +153,22 @@ function pac.ConvertPAC2Config(data, ent)
 				part:SetLoop(data.effect.loop)
 				part:SetRate(data.effect.rate)
 				part:SetEffect(data.effect.effect)
-				part:SetWeaponClass(data.weaponclass)
+				if data.weaponclass ~= "" then 
+					local part = part:CreatePart("event")
+					part:SetEvent("weapon_class")
+					part:SetArguments(data.weaponclass)
+				end
 		end
 		
 		if data.color.a ~= 0 and data.size ~= 0 and data.scale ~= vector_origin then
 			local part = base:CreatePart("model")
 				part:SetName(data.name)
 				
-				part:SetWeaponClass(data.weaponclass)
+				if data.weaponclass ~= "" then 
+					local part = part:CreatePart("event")
+					part:SetEvent("weapon_class")
+					part:SetArguments(data.weaponclass)
+				end
 				
 				if data.parent ~= "none" then
 					part:SetParentName(data.parent)

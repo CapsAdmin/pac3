@@ -108,8 +108,6 @@ do -- meta
 	pac.StartStorableVars()
 		pac.GetSet(PART, "ParentName", "")
 		pac.GetSet(PART, "Bone", "head")
-		pac.GetSet(PART, "WeaponClass", "")
-		pac.GetSet(PART, "HideWeaponClass", false)
 		pac.GetSet(PART, "Position", Vector(0,0,0))
 		pac.GetSet(PART, "Angles", Angle(0,0,0))
 		pac.GetSet(PART, "AngleVelocity", Angle(0, 0, 0))
@@ -145,10 +143,6 @@ do -- meta
 			ent = ent or NULL
 			
 			self.Owner = ent
-
-			if ent.GetActiveWeapon and ent:GetActiveWeapon():IsWeapon() then
-				self:OnWeaponChanged(ent:GetActiveWeapon())
-			end
 			
 			if ent:IsValid() then
 				self:OnAttach(ent)
@@ -525,7 +519,6 @@ do -- meta
 		function PART:OnChildAdd() end
 		function PART:OnUnParent() end
 		function PART:Highlight() end
-		function PART:OnWeaponChanged() end
 		
 		function PART:OnSetOwner(ent)
 			if not ent:IsPlayer() then
@@ -551,76 +544,8 @@ do -- meta
 		end
 	end
 	
-	do -- weapon class specific	
-		function PART:SetWeaponClass(var)
-			self.WeaponClass = var
-			
-			self:CalcWeaponClass()
-		end
-
-		function PART:SetHideWeaponClass(var)
-			self.pac_weapons_reset = nil
-			self.HideWeaponClass = var
-			
-			self:CalcWeaponClass()
-		end
-		
-		function PART:CalcWeaponClass()
-			local owner = self:GetOwner()
-			if owner.GetActiveWeapon then
-				local wep = owner:GetActiveWeapon()
-				if wep:IsValid() then
-					self:WeaponChanged(wep) 
-				end
-			end
-		end
-	
-		function PART:WeaponChanged(wep)
-
-			if not self.pac_weapons_reset then
-				for key, wep in pairs(self:GetOwner():GetWeapons()) do
-					if net then 
-						wep:SetColor(color_white)
-					else
-						wep:SetColor(255,255,255,255)
-					end
-				end
-
-				self.pac_weapons_reset = true
-			end
-
-			wep.pac_bones = pac.GetAllBones(wep)
-
-			if self.WeaponClass then
-				local wep_class = wep:GetClass()
-
-				-- todo: avoid concatenation?
-				if pac.PatternCache[wep_class..self.WeaponClass] or wep_class:find(self.WeaponClass) then
-					self.WeaponClassHidden = false
-				else
-					self.WeaponClassHidden = true
-				end
-
-				if not self:IsHidden() and self.HideWeaponClass then
-					if net then 
-						wep:SetColor(Color(255,255,255,0))
-					else
-						wep:SetColor(255,255,255,0)
-					end
-				elseif not self:IsHidden() and not self.HideWeaponClass then
-					if net then
-						wep:SetColor(Color(255,255,255,255))
-					else
-						wep:SetColor(255,255,255,255)
-					end
-				end
-
-			end
-		end
-	end
-
 	function PART:IsHidden()
-		return self.Hide == true or self.WeaponClassHidden == true or self.EventHide == true or false
+		return self.Hide == true or self.EventHide == true or false
 	end
 
 	function PART:Draw(event)
@@ -636,19 +561,7 @@ do -- meta
 	
 	function PART:Think()
 		local owner = self:GetOwner()
-
-		if owner.GetActiveWeapon then
-			local wep = owner:GetActiveWeapon()
-			local class = wep:IsValid() and wep:GetClass() or ""
-			
-			if class ~= self.lastweapon then
-				if class ~= "" then 
-					self:WeaponChanged(wep) 
-				end
-				self.lastweapon = class
-			end			
-		end
-		
+	
 		if not self.Parent:IsValid() and self.ParentName and self.ParentName ~= "" then
 			self:UpdateParentName()
 		end

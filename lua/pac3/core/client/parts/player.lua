@@ -127,28 +127,31 @@ function PART:UpdateWeaponDraw(owner)
 	local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or NULL
 	
 	if wep:IsWeapon() then
-		if self.DrawWeapon then
-			if wep.RenderOverride then
-				wep.RenderOverride = nil
-			end
-		else
-			if not wep.RenderOverride then
-				wep.RenderOverride = function() end
-			end
-		end
+		pac.HideWeapon(wep, self.DrawWeapon)
 	end
 end
 
-function PART:UpdateColor(owner)	
-	render.SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness)
-	render.SetBlend(self.Alpha)
+function PART:UpdateColor(owner)
+	if 
+		self.Brightness ~= 1 and
+		self.Colorf.r ~= 1 and 
+		self.Colorf.g ~= 1 and
+		self.Colorf.b ~= 1 
+	then
+		render.SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness)
+	end
+	if self.Alpha ~= 1 then 
+		render.SetBlend(self.Alpha)
+	end
 end
 
 function PART:UpdateMaterial(owner)
-	if net then
-		render.MaterialOverride(self.Material ~= "" and self.Materialm or nil)
-	else
-		SetMaterialOverride(self.Material ~= "" and self.Materialm or nil)
+	if self.Material ~= "" then
+		if net then
+			render.MaterialOverride(self.Materialm)
+		else
+			SetMaterialOverride(self.Materialm)
+		end
 	end
 end
 
@@ -169,8 +172,10 @@ function PART:PrePlayerDraw(owner, pos, ang)
 end
 
 function PART:PostPlayerDraw(owner, pos, ang)	
+	
 	render.SetBlend(1)
 	render.SetColorModulation(1,1,1)
+	
 	if net then
 		render.MaterialOverride()
 	else
