@@ -1,5 +1,10 @@
 local L = pace.LanguageString
 
+pace.HiddenProperties =
+{
+	Arguments = true,
+}
+
 pace.PropertyLimits = 
 {
 	Sequence = function(self, num)
@@ -50,6 +55,14 @@ function pace.TranslatePropertiesKey(key)
 	end
 	
 	if key == "event" then
+		return key
+	end
+	
+	if key == "operator" then
+		return key
+	end	
+	
+	if key == "arguments" then
 		return key
 	end
 	
@@ -120,8 +133,6 @@ do -- list
 		self:SetDividerWidth(2)
 		self:SetLeftWidth(91)
 		self:SetItemHeight(14)
-		
-		pace.properties = self
 	end
 
 	function PANEL:GetHeight()
@@ -193,24 +204,68 @@ do -- list
 		for pos, data in ipairs(tbl) do
 			local key, val = data.key, data.val
 
-			if key ~= "ClassName" then
-				local pnl
-				local T = (pace.TranslatePropertiesKey(key) or type(val)):lower()
-				
-				if pace.PanelExists("properties_" .. T) then
-					pnl = pace.CreatePanel("properties_" .. T)
-				end
+			local pnl
+			local T = (pace.TranslatePropertiesKey(key) or type(val)):lower()
+			
+			if pace.PanelExists("properties_" .. T) then
+				pnl = pace.CreatePanel("properties_" .. T)
+			end
 
-				if pnl then
-					obj.editor_pnl = pnl
-					
-					pnl:SetValue(obj["Get" .. key](obj))
-					pnl.LimitValue = pace.PropertyLimits[key]
-					pnl.OnValueChanged = function(val)
-						pace.Call("VariableChanged", obj, key, val)
-					end
-					self:AddItem(key, pnl, pos)
+			if pnl then
+				obj.editor_pnl = pnl
+				
+				pnl:SetValue(obj["Get" .. key](obj))
+				pnl.LimitValue = pace.PropertyLimits[key]
+				pnl.OnValueChanged = function(val)
+					pace.Call("VariableChanged", obj, key, val)
 				end
+				self:AddItem(key, pnl, pos)
+			end
+		end
+		
+		self:FixHeight()
+	end
+	
+	function PANEL:PopulateCustom(obj)
+		self:Clear()
+
+		local tbl = {}
+		local data = {}
+		
+		for key, val in pairs(obj) do
+			table.insert(data, {key = key, val = val.val, callback = val.callback})
+		end
+		
+		table.sort(data, function(a,b) return a.key > b.key end)
+		
+		for pos, str in ipairs(pace.PropertyOrder) do
+			for i, val in ipairs(data) do
+				if val.key == str then
+					table.insert(tbl, {pos = pos, key = val.key, val = val.val, callback = val.callback})
+					table.remove(data, i)
+				end
+			end
+		end
+
+		for pos, val in ipairs(data) do
+			table.insert(tbl, {pos = pos, key = val.key, val = val.val, callback = val.callback})
+		end
+				
+		for pos, data in ipairs(tbl) do
+			local key, val = data.key, data.val
+
+			local pnl
+			local T = (pace.TranslatePropertiesKey(key) or type(val)):lower()
+			
+			if pace.PanelExists("properties_" .. T) then
+				pnl = pace.CreatePanel("properties_" .. T)
+			end
+
+			if pnl then				
+				pnl:SetValue(val)
+				pnl.LimitValue = pace.PropertyLimits[key]
+				pnl.OnValueChanged = data.callback
+				self:AddItem(key, pnl, pos)
 			end
 		end
 		
@@ -779,7 +834,7 @@ do -- event list
 		local list = vgui.Create("DListView", frame)
 		list:Dock(FILL)
 		list:SetMultiSelect(false)
-		list:AddColumn("event")
+		list:AddColumn(L"event")
 
 		list.OnRowSelected = function(_, id, line) 
 			self:SetValue(line.event_name)
@@ -787,12 +842,100 @@ do -- event list
 		end
 
 		for name in pairs(pace.current_part.Events) do
-			local pnl = list:AddLine(name)
+			local pnl = list:AddLine(L(name:gsub("_", " ")))
 			pnl.event_name = name
 			
 			if cur == name then
 				list:SelectItem(pnl)
 			end
+		end
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
+do -- operator list
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_operator"
+	PANEL.Base = "pace_properties_base_type"
+		
+	function PANEL:SpecialCallback()	
+		local frame = vgui.Create("DFrame")
+		frame:SetTitle(L"operators")
+		frame:SetSize(300, 300)
+		frame:Center()
+		frame:SetSizable(true)
+
+		local list = vgui.Create("DListView", frame)
+		list:Dock(FILL)
+		list:SetMultiSelect(false)
+		list:AddColumn(L"operator")
+
+		list.OnRowSelected = function(_, id, line) 
+			self:SetValue(line.event_name)
+			self.OnValueChanged(line.event_name)
+		end
+
+		for _, name in pairs(pace.current_part.Operators) do
+			local pnl = list:AddLine(L(name))
+			pnl.event_name = name
+			
+			if cur == name then
+				list:SelectItem(pnl)
+			end
+		end
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
+do -- arguments
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_arguments"
+	PANEL.Base = "pace_properties_base_type"
+		
+	function PANEL:SpecialCallback()	
+		local data = pace.current_part.Events[pace.current_part.Event]
+		data = data and data.arguments
+		
+		if not data then return end
+				
+		local frame = vgui.Create("DFrame")
+		frame:SetTitle(L"arguments")
+		frame:SetSize(300, 300)
+		frame:Center()
+		frame:SetSizable(true)
+		frame:MakePopup()
+
+		local list = vgui.Create("pace_properties", frame)
+		list:Dock(FILL)
+			
+		local tbl = {}
+		local args = {pace.current_part:GetParsedArguments(data)}
+		if args then
+			for pos, arg in ipairs(data) do
+				local nam, typ = next(arg)
+				if args[pos] then
+					arg = args[pos]
+				else
+					if typ == "string" then
+						arg = ""
+					elseif typ == "number" then
+						arg = 0
+					elseif typ == "boolean" then
+						arg = false
+					end
+				end
+				tbl[nam] = {val = arg, callback = function(val)
+					local args = {pace.current_part:GetParsedArguments(data)}
+					args[pos] = val
+					pace.current_part:ParseArguments(unpack(args))
+					self:SetValue(pace.current_part.Arguments)
+				end}
+			end
+			list:PopulateCustom(tbl)
 		end
 	end
 	

@@ -5,132 +5,138 @@ PART.HideGizmo = true
 
 PART.Events = 
 {
-	velocity = function(owner, self) 
-		local num = tonumber(self.Arguments)
-		if num and owner:GetVelocity():Length() > num then
-			return true
-		end
-	end,
-
-	on_fire = net and (function(owner)
-		return owner:IsOnFire()
-	end) or nil,
-
-	flashlight = function(owner)
-		if owner:IsPlayer() and owner:FlashlightIsOn() then
-			return true
-		end
-	end,
+	speed = 
+	{
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, num)
+			return self:NumberOperator(ent:GetVelocity():Length(), num)
+		end,
+	},
 	
-	voice_chat = function(owner)
-		if owner:IsPlayer() and owner:IsSpeaking() then
-			return true
-		end
-	end,
+	is_under_water = 
+	{
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, num) 
+			return self:NumberOperator(ent:WaterLevel(), num)
+		end,
+	},
 	
-	primary_ammo_equals = function(owner, self)
-		local num = tonumber(self.Arguments) or 0
-		local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or NULL
-		if wep:IsValid() and wep:Clip1() == num then
-			return true
-		end
-	end,
-	
-	secondary_ammo_equals = function(owner, self)
-		local num = tonumber(self.Arguments) or 0
-		local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or NULL
-		if wep:IsValid() and wep:Clip2() == num then
-			return true
-		end
-	end,
-	
-	primary_ammo_above = function(owner, self)
-		local num = tonumber(self.Arguments) or 0
-		local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or NULL
-		if wep:IsValid() and wep:Clip1() > num then
-			return true
-		end	
-	end,
-	
-	secondary_ammo_above = function(owner, self)
-		local num = tonumber(self.Arguments) or 0
-		local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or NULL
-		if wep:IsValid() and wep:Clip2() > num then
-			return true
-		end	
-	end,
-	
-	on_ground = function(owner)
-		if owner:IsPlayer() and owner:IsOnGround() then
-			return true
-		end
-	end,
-	
-	under_water = function(owner, self)
-		local num = tonumber(self.Arguments) or 3
-
-		if owner:WaterLevel() > num then
-			return true
-		end
-	end,
-	
-	in_vehicle = function(owner, self)
-		local ent = owner:GetVehicle()
-		if ent:IsValid() then
+	is_flashlight_on = 
+	{ 
 		
-			if self.Arguments ~= "" then
-				local class = ent:GetClass()
-				if pac.PatternCache[class..self.Arguments] or class:find(self.Arguments) then
-					pac.PatternCache[class..self.Arguments] = true
-					return true
-				end
-				
-				return false
+		callback = function(self, ent)
+			return ent.FlashlightIsOn and ent:FlashlightIsOn()
+		end,
+	},
+	
+	is_on_ground = 
+	{ 
+		
+		callback = function(self, ent)
+			return ent.IsOnGround and ent:IsOnGround()
+		end,
+	},
+	
+	is_voice_chatting =
+	{ 
+		
+		callback = function(self, ent)
+			return ent.IsSpeaking and ent:IsSpeaking()
+		end,
+	},
+	
+	ammo = 
+	{
+		arguments = {{primary = "boolean"}, {amount = "number"}},
+		callback = function(self, ent, primary, amount)
+			local ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
+			if ent:IsValid() then
+				return self:NumberOperator(primary and ent:Clip1() or ent:Clip2(), amount)
 			end
-
-			return true
-		end
-	end,
+		end,
+	},
 	
-	model_equals = function(owner, self)
-		return owner:GetModel() == self.Arguments
-	end,
+	vehicle_class =
+	{
+		arguments = {{find = "string"}},
+		callback = function(self, ent, find)
+			local ent = ent.GetVehicle and ent:GetVehicle() or NULL
+			if ent:IsValid() then
+				return self:StringOperator(ent:GetClass(), find)
+			end
+		end,
+	},
 	
-	model_find = function(owner, self)
-		if self.Arguments ~= "" then
-			local str = owner:GetModel()
-			if pac.PatternCache[str..self.Arguments] or str:find(self.Arguments) then
-				pac.PatternCache[str..self.Arguments] = true
+	weapon_class =
+	{
+		arguments = {{find = "string"}, {hide = "boolean"}},
+		callback = function(self, ent, find, hide)
+			local ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
+			if ent:IsValid() then
+				if self:StringOperator(ent:GetClass(), find) then
+					pac.HideWeapon(ent, hide)
+					return false
+				end
+			end
+		end,
+	},	
+	
+	has_weapon =
+	{
+		arguments = {{find = "string"}},
+		callback = function(self, ent, find)
+			local tbl = ent.GetWeapons and ent:GetWeapons()
+			if tbl then
+				for key, val in pairs(tbl) do
+					val = val:GetClass()
+					if self:StringOperator(val, find) then
+						return true
+					end
+				end
+			end
+		end,
+	},
+	
+	model_name =
+	{
+		arguments = {{find = "string"}},
+		callback = function(self, ent, find)
+			return self:StringOperator(ent:GetModel(), find)
+		end,
+	},
+	
+	sequence_name =
+	{
+		arguments = {{find = "string"}},
+		callback = function(self, ent, find)
+			return self:StringOperator(ent:GetSequenceName(ent:GetSequence()), find)
+		end,
+	},
+	
+	timer =
+	{
+		arguments = {{interval = "number"}},
+		callback = function(self, ent, num)
+			num = num or 1
+			
+			return CurTime()%num > (num / 2)
+		end,
+	},
+	
+	animation_event =
+	{
+		arguments = {{find = "string"}, {time = "number"}},
+		callback = function(self, ent, find, time)
+			time = time or 0.1
+			
+			local data = ent.pac_anim_event 
+			
+			if data and data.time + time > CurTime() then
 				return true
-			end
-		end
-	end,
+			end			
+		end,
+	}
 }
-
-function PART:GetOwner()
-	return self.PlayerOwner 
-end
-
-function PART:Think()
-	local owner = self:GetOwner()
-	
-	if owner:IsValid() then
-		local func = self.Events[self.Event]
-		
-		if func then
-			local parent = self:GetParent()
-			if parent:IsValid() then
-				if self:IsHidden() then
-					parent.EventHide = self.Invert
-				elseif self.Invert then
-					parent.EventHide = not (func(owner, self) or false)
-				else
-					parent.EventHide = (func(owner, self) or false) 
-				end
-			end
-		end
-	end
-end
 
 function PART:Initialize()
 	self.StorableVars = {}
@@ -141,8 +147,154 @@ function PART:Initialize()
 		pac.GetSet(self, "Hide", false)
 		pac.GetSet(self, "Event", "")
 		pac.GetSet(self, "Arguments", "")
+		pac.GetSet(self, "Operator", "")
 		pac.GetSet(self, "Invert", false)
 	pac.EndStorableVars()
 end
 
+function PART:GetOwner()
+	return self.PlayerOwner 
+end
+
+function PART:Think()
+	local ent = self:GetOwner()
+	
+	if ent:IsValid() then
+		local data = self.Events[self.Event]
+		
+		if data then
+			local parent = self:GetParent()
+			if parent:IsValid() then
+				if self:IsHidden() then
+					parent.EventHide = self.Invert
+				elseif self.Invert then
+					parent.EventHide = not (data.callback(self, ent, self:GetParsedArguments(data.arguments)) or false)
+				else
+					parent.EventHide = (data.callback(self, ent, self:GetParsedArguments(data.arguments)) or false) 
+				end
+			end
+		end
+	end
+end
+
+PART.Operators = 
+{
+	"equal",
+	"not equal",
+	"above",
+	"equal or above",
+	"below",
+	"equal or below",
+
+	"find",
+	"find simple",
+	
+	"maybe",
+}
+
+pac.EventArgumentCache = {}
+
+function PART:ParseArguments(...)
+	local str = ""
+	local args = {...}
+	
+	for key, val in ipairs(args) do
+		local T = type(val)
+		
+		if T == "boolean" then
+			val = val and "1" or "0"
+		elseif T == "string" then
+			val = tostring(val) or ""
+		elseif T == "number" then
+			val = tostring(val) or "0"
+		end
+		
+		if key == #args then
+			str = str .. val
+		else
+			str = str .. val .. "@@"
+		end
+	end
+		
+	self.Arguments = str
+end
+
+function PART:GetParsedArguments(data)
+	if not data then return end
+
+	local line = self.Arguments
+	local hash = line .. tostring(data)
+	
+	if pac.EventArgumentCache[hash] then
+		return unpack(pac.EventArgumentCache[hash])
+	end
+
+	local args = line:Split("@@")
+	
+	for pos, arg in ipairs(data) do
+		local nam, typ = next(arg)
+		if not args[pos] then 
+			break
+		elseif typ == "boolean" then
+			args[pos] = tonumber(args[pos]) ~= 0
+		elseif typ == "number" then
+			args[pos] = tonumber(args[pos]) or 0
+		elseif typ == "string" then
+			args[pos] = tostring(args[pos]) or ""
+		end
+	end
+	
+	pac.EventArgumentCache[hash] = args
+		
+	return unpack(args)
+end
+
+function PART:StringOperator(a, b)
+	if not self.Operator or not a or not b then
+		return false
+	elseif self.Operator == "equal" then
+		return a == b
+	elseif self.Operator == "not equal" then
+		return a ~= b
+	elseif self.Operator == "find" then
+		return pac.StringFind(a, b)
+	elseif self.Operator == "find simple" then
+		return pac.StringFind(a, b, true)
+	elseif self.Operator == "maybe" then
+		return math.random() > 0.5
+	end	
+end
+
+function PART:NumberOperator(a, b)
+	if not self.Operator or not a or not b then
+		return false
+	elseif self.Operator == "equal" then
+		return a == b
+	elseif self.Operator == "not equal" then
+		return a ~= b
+	elseif self.Operator == "above" then
+		return a > b
+	elseif self.Operator == "equal or above" then
+		return a >= b
+	elseif self.Operator == "below" then
+		return a < b
+	elseif self.Operator == "equal or below" then
+		return a <= b
+	elseif self.Operator == "maybe" then
+		return math.random() > 0.5
+	end	
+end
+
 pac.RegisterPart(PART)
+
+local enums = {}
+
+for key, val in pairs(_G) do
+	if type(key) == "string" and key:find("PLAYERANIMEVENT_", nil, true) then
+		enums[val] = key:gsub("PLAYERANIMEVENT_", ""):gsub("_", " "):lower()
+	end
+end
+
+pac.AddHook("DoAnimationEvent", function(ply, event, data)
+	ply.pac_anim_event = {name = enums[event], time = CurTime()}
+end)

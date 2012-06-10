@@ -13,7 +13,9 @@ function PANEL:Init()
 	self.div = div
 	
 	self:SetTop(pace.CreatePanel("tree"))
-	self:SetBottom(pace.CreatePanel("properties"))
+	local pnl = pace.CreatePanel("properties")
+	pace.properties = pnl
+	self:SetBottom(pnl)
 end
 
 function PANEL:PerformLayout()
