@@ -112,6 +112,7 @@ do -- meta
 		pac.GetSet(PART, "Angles", Angle(0,0,0))
 		pac.GetSet(PART, "AngleVelocity", Angle(0, 0, 0))
 		pac.GetSet(PART, "EyeAngles", false)
+		pac.GetSet(PART, "AimPartName", "")
 		pac.GetSet(PART, "Name", "")
 		pac.GetSet(PART, "Description", "")
 		pac.GetSet(PART, "Hide", false)
@@ -126,6 +127,7 @@ do -- meta
 		
 		self.Owner = NULL
 		self.Parent = pac.NULL
+		self.AimPart = pac.NULL
 	end
 	
 	function PART:SetName(var)
@@ -381,12 +383,16 @@ do -- meta
 			if owner:IsValid() then
 				local pos, ang = self:GetBonePosition(owner, nil, pos, ang)
 		
-				return LocalToWorld(
+				pos, ang = LocalToWorld(
 					self.Position, 
 					self.Angles, 
 					pos or owner:GetPos(), 
-					self:CalcAngleVelocity(self:CalcEyeAngles(pos, ang)) or owner:GetAngles()
+					ang or owner:GetAngles()
 				)
+				
+				ang = self:CalcAngles(owner, ang) or ang
+				
+				return pos, ang
 			end
 			
 			return Vector(0, 0, 0), Angle(0, 0, 0)
@@ -613,17 +619,16 @@ do -- meta
 
 	do
 		local pos, ang, owner
-		local last_pos
-		local last_ang
 		function PART:Draw(event, pos, ang)
 			if self[event] and not self:IsHidden() then
 				owner = self:GetOwner()
 				pos, ang = self:GetDrawPosition(owner, pos, ang)
 				
-				self[event](self, owner, pos, ang)
+				self.cached_pos = pos
+				self.cached_ang = ang
 				
-				last_pos = pos
-				last_ang = ang
+				self[event](self, owner, pos, ang)
+
 			end
 			
 			for index, part in pairs(self:GetChildren()) do
@@ -677,17 +682,41 @@ do -- meta
 	function PART:IsValid()
 		return true
 	end
+	
+	function PART:SetAimPartName(name)
+		if not name or name == "" then
+			self.AimPart = pac.NULL
+		return end
 
-	function PART:CalcEyeAngles(pos, ang)
-		local owner = self:GetOwner()
+		local found = false
 		
-		if self.EyeAngles and owner:IsPlayer() then
-			pos, ang = LocalToWorld(self.Position, self:CalcAngleVelocity(self.Angles), pos, ang)
-			ang = self.Angles + (owner:GetEyeTraceNoCursor().HitPos - pos):Angle()
-			return ang
+		for key, part in pairs(self:GetRootPart():GetChildren()) do	
+			if part:GetName() == name then
+				self.AimPart = part
+				found = true
+				break
+			end
 		end
 		
-		return ang
+		if found then
+			self.AimPartName = name
+		else
+			self.AimPart = pac.NULL
+		end
+	end	
+	
+	function PART:CalcAngles(owner, ang)
+		owner = owner or self:GetOwner()
+		
+		ang = self:CalcAngleVelocity(ang)
+		
+		if self.AimPart:IsValid() then	
+			return self.Angles + (self.AimPart.cached_pos - self.cached_pos):Angle()
+		elseif self.EyeAngles and owner:IsPlayer() then
+			return self.Angles + (owner:GetEyeTraceNoCursor().HitPos - self.cached_pos):Angle()
+		end
+			
+		return self:CalcAngleVelocity(ang)
 	end
 		
 	function PART:CalcAngleVelocity(ang)

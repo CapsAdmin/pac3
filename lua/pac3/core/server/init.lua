@@ -61,6 +61,7 @@ else
 	concommand.Add("pac_precache_effect", function(ply, _, args)
 		local name = args[1]
 		if not table.HasValue(pac.EffectsBlackList, name) then
+			print(ply, " precached effect ", name)
 			pac.PrecacheEffect(name)
 		end
 	end)
