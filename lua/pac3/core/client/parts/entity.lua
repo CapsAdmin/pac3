@@ -1,6 +1,6 @@
 local PART = {}
 
-PART.ClassName = "player"	
+PART.ClassName = "entity"	
 PART.HideGizmo = true
 
 function PART:Initialize()
@@ -62,15 +62,11 @@ function PART:EndClipping()
 	end
 end
 
-function PART:GetOwner()
-	return self.PlayerOwner
-end
-
 function PART:UpdateScale(owner)	
 	owner:InvalidateBoneCache()
 	owner:SetModelScale(self.Scale * self.Size)
 	owner:SetupBones()
-	--print(self.Scale, self.Size)
+	print(self.Scale, self.Size)
 end
 
 function PART:SetSize(var)
@@ -115,8 +111,13 @@ end
 
 function PART:SetModel(path)
 	local owner = self:GetOwner()
+	
+	if path == "" and owner.pac_original_model then
+		owner:SetModel(owner.pac_original_model)
+	end
 
 	if owner:IsValid() then
+		owner.pac_original_model = owner.pac_original_model or owner:GetModel()
 		owner:SetModel(path)
 	end
 	
@@ -127,16 +128,16 @@ function PART:UpdateWeaponDraw(owner)
 	local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or NULL
 	
 	if wep:IsWeapon() then
-		pac.HideWeapon(wep, self.DrawWeapon)
+		pac.HideWeapon(wep, not self.DrawWeapon)
 	end
 end
 
 function PART:UpdateColor(owner)
 	if 
-		self.Brightness ~= 1 and
-		self.Colorf.r ~= 1 and 
-		self.Colorf.g ~= 1 and
-		self.Colorf.b ~= 1 
+		self.Brightness ~= 1 or
+		self.Colorf.r == 1 or 
+		self.Colorf.g == 1 or
+		self.Colorf.b == 1
 	then
 		render.SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness)
 	end
@@ -161,17 +162,29 @@ function PART:UpdateAll(owner)
 	self:UpdateColor(owner)
 end
 
-function PART:OnAttach(owner)
-	owner:SetModel(self:GetModel())
+function PART:OnDetach(ent)
+	if not ent:IsPlayer() then
+		ent:SetNoDraw(false)
+		if ent.pac_original_model then
+			ent:SetModel(ent.pac_original_model)
+		end
+	end	
 end
 
-function PART:PrePlayerDraw(owner, pos, ang)
+function PART:PreDraw(owner, pos, ang)
+	if not owner:IsPlayer() then
+		owner:SetNoDraw(true)
+	end	
+
 	self:StartClipping(pos, ang)
 	
 	self:UpdateAll(owner)	
 end
 
-function PART:PostPlayerDraw(owner, pos, ang)	
+function PART:OnDraw(owner, pos, ang)	
+	if not owner:IsPlayer() then
+		owner:DrawModel()
+	end
 	
 	render.SetBlend(1)
 	render.SetColorModulation(1,1,1)

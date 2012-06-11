@@ -35,20 +35,6 @@ function PANEL:SetBottom(pnl)
 	self.div:SetBottom(pnl)
 end
 
-local last = 0
-
-function PANEL:Think(...)
-	if last < CurTime() and input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_E) then
-		if pace.Focused then
-			pace.KillFocus()
-		else
-			pace.GainFocus()
-		end
-		last = CurTime() + 0.2
-	end
-	return DFrame.Think(self, ...)
-end
-
 pace.Focused = true
 
 function pace.IsFocused()

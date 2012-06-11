@@ -41,7 +41,7 @@ function PART:GetSequenceList()
 	return {"none"}
 end
 
-function PART:OnDraw()
+function PART:OnThink()
 	local ent = self:GetEntity()
 
 	if ent:IsValid() then	
