@@ -257,15 +257,19 @@ function pace.OnCloseEditor()
 end
 
 function pace.OnShortcutSave()
-	local part = pace.current_part:GetRootPart()
-	pace.SavePartToFile(part, part:GetName())
-	surface.PlaySound("buttons/button9.wav")
+	if pace.current_part:IsValid() then
+		local part = pace.current_part:GetRootPart()
+		pace.SavePartToFile(part, part:GetName())
+		surface.PlaySound("buttons/button9.wav")
+	end
 end
 
 function pace.OnShortcutWear()
-	local part = pace.current_part:GetRootPart()
-	pac.SubmitPart(part:GetOwner(), part)
-	surface.PlaySound("buttons/button9.wav")
+	if pace.current_part:IsValid() then
+		local part = pace.current_part:GetRootPart()
+		pac.SubmitPart(part:GetOwner(), part)
+		surface.PlaySound("buttons/button9.wav")
+	end
 end
 
 function pace.OnToggleFocus()
