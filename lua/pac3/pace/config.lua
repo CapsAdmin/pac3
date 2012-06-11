@@ -10,11 +10,13 @@ if net then
 		effect = "icon16/wand.png",
 		model = "icon16/shape_square.png",
 		animation = "icon16/eye.png",
-		player = "icon16/user.png",
+		entity = "icon16/brick.png",
 		group = "icon16/world.png",
 		trail = "icon16/arrow_undo.png",
 		event = "icon16/clock.png",
 		sunbeams = "icon16/sun.png",
+		sound = "icon16/sound.png",
+		command = "icon16/application_xp_terminal.png",
 	}
 else
 	pace.PartIcons =

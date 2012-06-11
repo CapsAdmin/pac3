@@ -142,12 +142,12 @@ do -- meta
 		function PART:SetOwner(ent)
 			ent = ent or NULL
 			
+			self:OnDetach(self:GetOwner())
+			
 			self.Owner = ent
 			
 			if ent:IsValid() then
 				self:OnAttach(ent)
-			else
-				self:OnDetach(ent)
 			end
 		end
 		
@@ -374,30 +374,50 @@ do -- meta
 			
 			return name
 		end
-
-		function PART:GetBonePosition(owner, idx)
+		
+		function PART:GetDrawPosition(owner, pos, ang)
 			owner = owner or self:GetOwner()
+			
+			if owner:IsValid() then
+				local pos, ang = self:GetBonePosition(owner, nil, pos, ang)
+		
+				return LocalToWorld(
+					self.Position, 
+					self.Angles, 
+					pos or owner:GetPos(), 
+					self:CalcAngleVelocity(self:CalcEyeAngles(pos, ang)) or owner:GetAngles()
+				)
+			end
+			
+			return Vector(0, 0, 0), Angle(0, 0, 0)
+		end
 
-			local pos, ang = owner:GetPos(), owner:GetAngles()
+		function PART:GetBonePosition(owner, idx, pos, ang)
+			owner = owner or self:GetOwner()
 			
 			if self.BoneIndex then
-				if 
-					self.Parent:IsValid() and 
-					(
-						self.Parent.ClassName ~= "group" and 
-						self.Parent.ClassName ~= "player"
-					) 
-				then
-					local ent = self.Parent.Entity or NULL -- model
-
+				local parent = self:GetParent()
+				if parent:IsValid() and parent.ClassName ~= "group" then
+					local ent = parent.Entity or NULL
+					
 					if ent:IsValid() then
+						-- if the parent part is a model, get the bone position of the parent model
 						pos, ang = ent:GetBonePosition(self.BoneIndex)
 					else
-						pos, ang = self.Parent:GetDrawPosition(nil, self.Bone) -- "bone" is origin of parent
+						-- else just get the origin of the part
+						if not pos or not ang then 
+							-- unless we've passed it from parent
+							pos, ang = parent:GetDrawPosition()
+						end
 					end
 				elseif owner:IsValid() then
+					-- if there is no parent, default to owner bones
 					pos, ang = owner:GetBonePosition(idx or self.BoneIndex)
 				end
+			else
+				-- default to owner origin until BoneIndex is ready
+				pos = pos or owner:GetPos()
+				ang = ang or owner:GetAngles()
 			end
 				
 			return pos, ang
@@ -507,10 +527,6 @@ do -- meta
 		function PART:Remove()
 			pac.CallHook("OnPartRemove", self)
 
-			if self.Parent then
-				self:OnDetach(self.Parent)
-			end
-
 			for key, part in pairs(self:GetChildren()) do
 				if part:IsValid() then
 					part:Remove()
@@ -558,6 +574,15 @@ do -- meta
 		function PART:IsHighlighting()
 			return self.highlight > CurTime()
 		end
+				
+		local ring = Material("particle/particle_Ring_Sharp")
+
+		function PART:DrawHighlight(owner, pos, ang)
+			render.SetMaterial(ring)
+			cam.IgnoreZ(true)
+			render.DrawSprite(pos, 8, 8, color_white)
+			cam.IgnoreZ(false)
+		end
 	end
 	
 	function PART:SetHide(b)
@@ -586,13 +611,29 @@ do -- meta
 		return self.Hide == true or self.EventHide == true or false
 	end
 
-	function PART:Draw(event)
-		if self[event] and not self:IsHidden() then
-			self[event](self, self:GetOwner(), self:GetDrawPosition())
-		end
-		for index, part in pairs(self:GetChildren()) do
-			if part[event] and not part:IsHidden() then
-				part:Draw(event, part:GetOwner(), part:GetDrawPosition())
+	do
+		local pos, ang, owner
+		local last_pos
+		local last_ang
+		function PART:Draw(event, pos, ang)
+			if self[event] and not self:IsHidden() then
+				owner = self:GetOwner()
+				pos, ang = self:GetDrawPosition(owner, pos, ang)
+				
+				self[event](self, owner, pos, ang)
+				
+				last_pos = pos
+				last_ang = ang
+			end
+			
+			for index, part in pairs(self:GetChildren()) do
+				if part[event] and not part:IsHidden() then
+					part:Draw(event)
+				end
+			end
+			
+			if pos and ang and owner and self:IsHighlighting() then
+				self:DrawHighlight(owner, pos, ang)
 			end
 		end
 	end
@@ -668,24 +709,5 @@ do -- meta
 		return ang
 	end		
 	
-	function PART:GetDrawPosition(owner)
-		owner = owner or self:GetOwner()
-		
-		if owner:IsValid() then
-			local pos, ang = self:GetBonePosition(owner)
-			
-			ang = self:CalcEyeAngles(pos, ang)
-			
-			return LocalToWorld(
-				self.Position, 
-				self:CalcAngleVelocity(self.Angles), 
-				pos or owner:GetPos(), 
-				ang or owner:GetAngles()
-			)
-		end
-		
-		return Vector(0, 0, 0), Angle(0, 0, 0)
-	end
-
 	pac.RegisterPart(PART)
 end

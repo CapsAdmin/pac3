@@ -38,8 +38,8 @@ function pace.OnPartSelected(part)
 	pace.StopSelect()
 end
 
-function pace.OnCreatePart(name)
-	local part = pac.CreatePart(name)
+function pace.OnCreatePart(class_name, name, desc)
+	local part = pac.CreatePart(class_name)
 
 	local parent = pace.current_part
 	
@@ -47,11 +47,13 @@ function pace.OnCreatePart(name)
 		part:SetParent(parent)
 	end
 	
-	part:SetName(name .. " " .. pac.GetPartCount(name))
+	part:SetName(name or (class_name .. " " .. pac.GetPartCount(class_name)))
+	if desc then part:SetDescription(desc) end
 		
 	pace.SetViewPart(part)
-
-	pace.RefreshTree()
+	pace.OnPartSelected(part)
+	
+	pace.RefreshTree()	
 end
 
 function pace.OnVariableChanged(obj, key, val, skip_undo)
@@ -116,11 +118,16 @@ function pace.LoadPartFromFile(part, name)
 	else
 		print("[pac3] loading " .. name)
 		local data = luadata.ReadFile("pac3/" .. name .. ".txt")
-		if data then
+		if data and data.self then
 			part:SetTable(data)
 		else
 			ErrorNoHalt("pac3 tried to load non existant part " .. name)
 		end
+		
+		if IsValid(part.editor_node) then
+			part.editor_node:SetText(part:GetName())
+		end
+		
 		pace.RefreshTree()
 	end
 end
@@ -234,9 +241,59 @@ function pace.OnOpenEditor()
 	pace.SetViewPos(LocalPlayer():EyePos())
 	pace.SetViewAngles(LocalPlayer():EyeAngles())
 	pace.EnableView(true)
+	
+	if #pac.GetParts() == 0 then
+		pace.Call("CreatePart", "group", L"my outfit", L"add parts to me!")
+	else
+		pace.OnPartSelected(select(2, next(pac.GetParts())))
+	end
+	
+	pace.ResetView()
 end
 
 function pace.OnCloseEditor()
 	pace.EnableView(false)
 	pace.StopSelect()
 end
+
+function pace.OnShortcutSave()
+	local part = pace.current_part:GetRootPart()
+	pace.SavePartToFile(part, part:GetName())
+	surface.PlaySound("buttons/button9.wav")
+end
+
+function pace.OnShortcutWear()
+	local part = pace.current_part:GetRootPart()
+	pac.SubmitPart(part:GetOwner(), part)
+	surface.PlaySound("buttons/button9.wav")
+end
+
+function pace.OnToggleFocus()
+	if pace.Focused then
+		pace.KillFocus()
+	else
+		pace.GainFocus()
+	end
+end
+
+local last = 0
+
+function pace.CheckShortcuts()
+	if last > CurTime() then return end
+
+	if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_S) then
+		pace.Call("ShortcutSave")
+		last = CurTime() + 0.2
+	end
+	
+	if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_D) then
+		pace.Call("ShortcutWear")
+		last = CurTime() + 0.2
+	end
+	
+	if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_E) then
+		pace.Call("ToggleFocus")
+		last = CurTime() + 0.2
+	end
+end
+hook.Add("Think", "pace_shortcuts", pace.CheckShortcuts)

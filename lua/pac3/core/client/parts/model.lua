@@ -101,27 +101,12 @@ function PART:OnUnParent()
 	end
 end
 
-local ring = Material("particle/particle_Ring_Sharp")
-
-function PART:DrawHighlight(owner, pos, ang)
-	local ent = self.Entity
-
-	if ent:IsValid() then
-		render.SetMaterial(ring)
-		render.DrawSprite(pos, 8, 8, color_white)
-	end
-end
-
 local bclip
 
 function PART:OnDraw(owner, pos, ang)
 	if self.SuppressDraw then return end
 	
 	self:CheckBoneMerge()
-	
-	if self:IsHighlighting() then
-		self:DrawHighlight(owner, pos, ang)
-	end
 	
 	local ent = self.Entity
 

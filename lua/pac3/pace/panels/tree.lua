@@ -123,7 +123,11 @@ function PANEL:PopulateParts(node, parts, children)
 				else
 					part_node = node:AddNode(part:GetName())
 				end
-			end		
+			end
+			
+			if part:GetDescription() ~= "" then 
+				part_node:SetTooltip(part:GetDescription())
+			end
 			
 			part.editor_node = part_node
 			part_node.part = part

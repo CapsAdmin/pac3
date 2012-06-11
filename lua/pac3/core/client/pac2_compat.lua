@@ -230,7 +230,7 @@ function pac.ConvertPAC2Config(data, ent)
 		end
 	end
 	
-	local part = base:CreatePart("player")
+	local part = base:CreatePart("entity")
 		part:SetName("player mod")
 		
 		part:SetColor(Vector(data.player_color.r, data.player_color.g, data.player_color.b))

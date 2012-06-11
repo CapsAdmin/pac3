@@ -3,14 +3,12 @@ function pac.PrePlayerDraw(ply)
 	
 	for key, part in pairs(pac.GetParts()) do
 		if 
-			not part:IsHidden() and
 			not part.Screenspace and 
-			not part.Translucent and 
+			not part:IsHidden() and
 			part:GetOwner() == ply and 
 			not part:HasParent() 
 		then
-			part:Draw("OnDraw")
-			part:Draw("PrePlayerDraw")
+			part:Draw("PreDraw")
 		end
 	end
 end
@@ -21,14 +19,12 @@ function pac.PostPlayerDraw(ply)
 	
 	for key, part in pairs(pac.GetParts()) do
 		if 
-			not part:IsHidden() and
 			not part.Screenspace and 
-			not part.Translucent and 
+			not part:IsHidden() and
 			part:GetOwner() == ply and 
 			not part:HasParent() 
 		then
 			part:Draw("OnDraw")
-   			part:Draw("PostPlayerDraw")
 		end
 	end
 end
@@ -38,10 +34,10 @@ function pac.PostDrawTranslucentRenderables()
 	for key, part in pairs(pac.GetParts()) do
 		if 
 			not part:IsHidden() and
-			(part.Translucent or not part.Screenspace) and 
-			not part:GetOwner():IsPlayer() and 
+			(part.Translucent or not part:GetOwner():IsPlayer()) and
 			not part:HasParent() 
 		then
+			part:Draw("PreDraw")
 			part:Draw("OnDraw")
 		end
 	end
@@ -52,7 +48,7 @@ function pac.RenderScreenspaceEffect()
 	for key, part in pairs(pac.GetParts()) do
 		if 
 			not part:IsHidden() and
-			(part.Screenspace or not part.Translucent) and
+			part.Screenspace and
 			not part:HasParent() 
 		then
 			part:Draw("OnDraw")

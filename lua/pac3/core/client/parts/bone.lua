@@ -31,10 +31,6 @@ function PART:GetOwner()
 		if parent.ClassName == "group" then
 			return parent:GetOwner()
 		end
-		
-		if parent.ClassName == "player" then
-			return LocalPlayer()
-		end
 	end
 	
 	return self.Owner
