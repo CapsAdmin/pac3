@@ -10,19 +10,13 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 PART.last_spew = 0
-PART.Entity = NULL
-
-function PART:Initialize()
-	self.BaseClass.Initialize(self)
-
-	self:SetEffect(self.Effect)
-end
 
 function PART:GetEntity()
+	local parent = self:GetParent()
 	return 
-		self.RealParent and 
-		IsValid(self.RealParent.Entity) and 
-		self.RealParent.Entity 
+		parent:IsValid() and 
+		parent.Entity and 
+		parent:GetEntity()
 		or 		
 		self:GetOwner()
 		or
@@ -41,7 +35,8 @@ function PART:SetEffect(name)
 	end
 end
 
-pac.AddHook("EffectPrecached", function(name)
+pac.AddHook("pac_EffectPrecached", function(name)
+	print("pac3: effect ", name, " precached!")
 	for key, part in pairs(pac.GetParts()) do
 		if part.ClassName == "effect" then
 			if part.Effect == name then
@@ -58,14 +53,11 @@ function PART:OnDraw(owner, pos, ang)
 
 	if ent:IsValid() then
 
-		ent:SetPos(pos)
-		ent:SetAngles(ang)
-
 		if self.Loop then
 			local time = CurTime()
 			if self.last_spew < time then
 				ent:StopParticles()
-				self:Emit()
+				self:Emit(pos, ang)
 				self.last_spew = time + self.Rate
 			end
 		end
@@ -81,19 +73,20 @@ function PART:OnRemove()
 	end
 end
 
-function PART:Emit()
+function PART:Emit(pos, ang)
 	local ent = self:GetEntity()
 	
 	if ent:IsValid() then
 		if not self.Effect then
 			ent:StopParticles()
+			return
 		end
 
 		if self.Follow then
 			ParticleEffectAttach(self.Effect, PATTACH_ABSORIGIN_FOLLOW, ent, 1)
 		else
 			ent:StopParticles()
-			ParticleEffect(self.Effect, ent:GetPos(), ent:GetAngles(), ent)
+			ParticleEffect(self.Effect, pos, ang, ent)
 		end
 
 		self:SetTooltip(self.Effect)
