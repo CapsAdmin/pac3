@@ -701,11 +701,11 @@ do -- meta
 			end
 		end
 		
-		if found then
-			self.AimPartName = name
-		else
+		if not found then
 			self.AimPart = pac.NULL
 		end
+		
+		self.AimPartName = name
 	end	
 	
 	function PART:CalcAngles(owner, ang)
