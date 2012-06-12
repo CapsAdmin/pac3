@@ -690,20 +690,19 @@ do -- meta
 		if not name or name == "" then
 			self.AimPart = pac.NULL
 		return end
-
-		local found = false
 		
-		for key, part in pairs(self:GetRootPart():GetChildren()) do	
-			if part:GetName() == name then
-				self.AimPart = part
-				found = true
-				break
+		self.AimPart = pac.NULL
+		
+		-- such a hack...
+		-- it's a fix for finding the part too early when wearing
+		timer.Simple(0, function()
+			for key, part in pairs(self:GetRootPart():GetChildren()) do	
+				if part:GetName() == name then
+					self.AimPart = part
+					break
+				end
 			end
-		end
-		
-		if not found then
-			self.AimPart = pac.NULL
-		end
+		end)
 		
 		self.AimPartName = name
 	end	
