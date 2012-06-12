@@ -283,7 +283,7 @@ end
 local last = 0
 
 function pace.CheckShortcuts()
-	if pace.Editor:IsValid() then
+	if pace.Editor and pace.Editor:IsValid() then
 		if last > CurTime() then return end
 
 		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_S) then
@@ -302,4 +302,5 @@ function pace.CheckShortcuts()
 		end
 	end
 end
+
 hook.Add("Think", "pace_shortcuts", pace.CheckShortcuts)
