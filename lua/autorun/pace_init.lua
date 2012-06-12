@@ -5,15 +5,7 @@ if SERVER then
 		local files
 		
 		if not file.FindInLua then
-			local _files, _folders = file.Find(dir .. "*", LUA_PATH)
-			files = {}
-			for k,v in pairs(_files) do 
-				table.insert(files, v)
-			end
-			
-			for k,v in pairs(_folders) do 
-				table.insert(files, v)
-			end
+			files = table.Merge(file.Find("lua/" .. dir .. "*", "GAME"))
 		else
 			files = file.FindInLua(dir .. "*")
 		end
