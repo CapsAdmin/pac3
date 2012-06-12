@@ -618,6 +618,9 @@ do -- meta
 	end
 
 	do
+		PART.cached_pos = Vector(0,0,0)
+		PART.cached_ang = Angle(0,0,0)
+	
 		local pos, ang, owner
 		function PART:Draw(event, pos, ang)
 			if self[event] and not self:IsHidden() then
