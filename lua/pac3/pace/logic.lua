@@ -283,21 +283,23 @@ end
 local last = 0
 
 function pace.CheckShortcuts()
-	if not pace.Editor:IsValid() or last > CurTime() then return end
+	if pace.Editor:IsValid() then
+		if last > CurTime() then return end
 
-	if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_S) then
-		pace.Call("ShortcutSave")
-		last = CurTime() + 0.2
-	end
-	
-	if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_D) then
-		pace.Call("ShortcutWear")
-		last = CurTime() + 0.2
-	end
-	
-	if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_E) then
-		pace.Call("ToggleFocus")
-		last = CurTime() + 0.2
+		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_S) then
+			pace.Call("ShortcutSave")
+			last = CurTime() + 0.2
+		end
+		
+		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_D) then
+			pace.Call("ShortcutWear")
+			last = CurTime() + 0.2
+		end
+		
+		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_E) then
+			pace.Call("ToggleFocus")
+			last = CurTime() + 0.2
+		end
 	end
 end
 hook.Add("Think", "pace_shortcuts", pace.CheckShortcuts)
