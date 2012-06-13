@@ -9,8 +9,18 @@ function PART:Initialize()
 	pac.StartStorableVars()
 		pac.GetSet(self, "Name", "")
 		pac.GetSet(self, "Description", "")
+		pac.GetSet(self, "OwnerName", "self")
 		pac.GetSet(self, "Hide", false)
 	pac.EndStorableVars()
+end
+
+function PART:SetOwnerName(name)
+	self.OwnerName = name
+	self:CheckOwner()
+end
+
+function PART:CheckOwner(ent)
+	self:SetOwner(pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent))
 end
 
 pac.RegisterPart(PART)

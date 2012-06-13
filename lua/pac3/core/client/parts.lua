@@ -140,7 +140,7 @@ do -- meta
 		self.Name = var
 	end
 	
-	do -- owner
+	do -- owner	
 		function PART:SetOwner(ent)
 			ent = ent or NULL
 			
@@ -157,12 +157,10 @@ do -- meta
 			if not self.Owner:IsValid() then
 				if self:GetParent():IsValid() then
 					return self:GetParent():GetOwner()
-				else
-					return LocalPlayer() -- asdasdasdasd
 				end
 			end		
 			
-			return self.Owner
+			return self.Owner or NULL
 		end
 
 		function PART:GetOwnerModelBones()

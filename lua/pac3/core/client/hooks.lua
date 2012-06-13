@@ -62,25 +62,25 @@ function pac.Tick()
 end
 pac.AddHook("Tick")
 
-function pac.OnEntityCreated(ply)
-	timer.Simple(1, function()
-		if ply:IsPlayer() then
-			--pac.LoadPartFromProfile(ply)
+function pac.OnEntityCreated(ent)
+	if ent:IsValid() then
+		for key, part in pairs(pac.GetParts(true)) do
+			if part.ClassName == "group" then
+				part:CheckOwner(ent)
+			end
 		end
-	end)
+	end
 end
 pac.AddHook("OnEntityCreated")
 
 function pac.EntityRemoved(ent)
-	timer.Simple(2, function()
-		if not ent:IsValid() then
-			for key, part in pairs(pac.GetParts(true)) do
-				if part:IsValid() and part:GetOwner() == ent then
-					part:Remove()
-				end
+	if ent:IsValid() then
+		for key, part in pairs(pac.GetParts(true)) do
+			if part.ClassName == "group" then
+				part:CheckOwner(ent)
 			end
 		end
-	end)
+	end
 end
 pac.AddHook("EntityRemoved")
 
