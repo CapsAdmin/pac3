@@ -489,8 +489,10 @@ do -- meta
 				part:SetTable(value)
 			end
 			
-			self:ResolveParentName()
-			self:ResolveAimPartName()
+			timer.Simple(0.1, function()
+				self:ResolveParentName()
+				self:ResolveAimPartName()
+			end)
 		end
 		
 		local function COPY(var) 
