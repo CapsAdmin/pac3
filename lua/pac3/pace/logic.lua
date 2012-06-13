@@ -47,7 +47,12 @@ function pace.OnCreatePart(class_name, name, desc)
 		part:SetParent(parent)
 	end
 	
-	part:SetName(name or (class_name .. " " .. pac.GetPartCount(class_name)))
+	if part.AlternativeName then
+		part:SetName(part.AlternativeName)
+	else
+		part:SetName(name or (class_name .. " " .. pac.GetPartCount(class_name)))
+	end
+	
 	if desc then part:SetDescription(desc) end
 		
 	pace.SetViewPart(part)

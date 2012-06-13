@@ -12,6 +12,7 @@ function PART:Initialize()
 		pac.GetSet(self, "Name", "")
 		pac.GetSet(self, "Description", "")
 		pac.GetSet(self, "Hide", false)
+		pac.GetSet(self, "ParentName", "")
 		pac.GetSet(self, "Material", "")
 		pac.GetSet(self, "Color", Vector(255, 255, 255))
 		pac.GetSet(self, "Brightness", 1)
@@ -62,11 +63,13 @@ function PART:EndClipping()
 	end
 end
 
-function PART:UpdateScale(owner)	
-	owner:InvalidateBoneCache()
-	owner:SetModelScale(self.Scale * self.Size)
-	owner:SetupBones()
-	print(self.Scale, self.Size)
+function PART:UpdateScale(ent)
+	ent = ent or NULL
+	if ent:IsValid() then
+		ent:InvalidateBoneCache()
+		ent:SetModelScale(self.Scale * self.Size)
+		ent:SetupBones()
+	end
 end
 
 function PART:SetSize(var)
@@ -100,39 +103,39 @@ end
 
 
 function PART:GetModel()
-	local owner = self:GetOwner()
+	local ent = self:GetOwner()
 
-	if owner:IsValid() and (not self.Model or self.Model == "") then
-		return owner:GetModel()
+	if ent:IsValid() and (not self.Model or self.Model == "") then
+		return ent:GetModel()
 	end
 	
 	return self.Model
 end
 
 function PART:SetModel(path)
-	local owner = self:GetOwner()
+	local ent = self:GetOwner()
 	
-	if path == "" and owner.pac_original_model then
-		owner:SetModel(owner.pac_original_model)
+	if path == "" and ent.pac_original_model then
+		ent:SetModel(ent.pac_original_model)
 	end
 
-	if owner:IsValid() then
-		owner.pac_original_model = owner.pac_original_model or owner:GetModel()
-		owner:SetModel(path)
+	if ent:IsValid() then
+		ent.pac_original_model = ent.pac_original_model or ent:GetModel()
+		ent:SetModel(path)
 	end
 	
 	self.Model = path
 end
 
-function PART:UpdateWeaponDraw(owner)
-	local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or NULL
+function PART:UpdateWeaponDraw(ent)
+	local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 	
 	if wep:IsWeapon() then
 		pac.HideWeapon(wep, not self.DrawWeapon)
 	end
 end
 
-function PART:UpdateColor(owner)
+function PART:UpdateColor(ent)
 	if 
 		self.Brightness ~= 1 or
 		self.Colorf.r == 1 or 
@@ -146,7 +149,7 @@ function PART:UpdateColor(owner)
 	end
 end
 
-function PART:UpdateMaterial(owner)
+function PART:UpdateMaterial(ent)
 	if self.Material ~= "" then
 		if net then
 			render.MaterialOverride(self.Materialm)
@@ -156,14 +159,14 @@ function PART:UpdateMaterial(owner)
 	end
 end
 
-function PART:UpdateAll(owner)
-	--self:UpdateScale(owner)
-	self:UpdateMaterial(owner)
-	self:UpdateColor(owner)
+function PART:UpdateAll(ent)
+	--self:UpdateScale(ent)
+	self:UpdateMaterial(ent)
+	self:UpdateColor(ent)
 end
 
 function PART:OnDetach(ent)
-	if not ent:IsPlayer() then
+	if ent:IsValid() and not ent:IsPlayer() then
 		ent:SetNoDraw(false)
 		if ent.pac_original_model then
 			ent:SetModel(ent.pac_original_model)
@@ -171,19 +174,19 @@ function PART:OnDetach(ent)
 	end	
 end
 
-function PART:PreDraw(owner, pos, ang)
-	if not owner:IsPlayer() then
-		owner:SetNoDraw(true)
+function PART:PreDraw(ent, pos, ang)
+	if ent:IsValid() and not ent:IsPlayer() then
+		ent:SetNoDraw(true)
 	end	
 
 	self:StartClipping(pos, ang)
 	
-	self:UpdateAll(owner)	
+	self:UpdateAll(ent)	
 end
 
-function PART:OnDraw(owner, pos, ang)	
-	if not owner:IsPlayer() then
-		owner:DrawModel()
+function PART:OnDraw(ent, pos, ang)	
+	if ent:IsValid() and not ent:IsPlayer() then
+		ent:DrawModel()
 	end
 	
 	render.SetBlend(1)
@@ -196,7 +199,7 @@ function PART:OnDraw(owner, pos, ang)
 	end
 
 	self:EndClipping()
-	self:UpdateWeaponDraw(owner)
+	self:UpdateWeaponDraw(ent)
 end
 
 pac.RegisterPart(PART)
