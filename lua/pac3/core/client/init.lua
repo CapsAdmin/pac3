@@ -82,6 +82,42 @@ function pac.HideWeapon(wep, hide)
 	end
 end
 
+pac.OwnerNames =
+{
+	"self",
+	"vehicle",
+	"weapon",
+}
+
+function pac.HandleOwnerName(owner, name, ent)
+
+	if name == "self" then
+		return owner
+	end
+	
+	if name == "weapon" then
+		return owner.GetActiveWeapon and owner:GetActiveWeapon()
+	end
+	
+	if name == "vehicle" then
+		return owner.GetVehicle and owner:GetVehicle()
+	end
+	
+	if IsValid(ent) then
+		if ent:GetOwner() == owner and pac.StringFind(ent:GetClass(), name) or pac.StringFind(ent:GetClass(), name, true) then
+			return ent
+		end
+	end
+	
+	for key, ent in pairs(ents.GetAll()) do
+		if ent:GetOwner() == owner and pac.StringFind(ent:GetClass(), name) or pac.StringFind(ent:GetClass(), name, true) then
+			return ent
+		end
+	end
+
+	return NULL
+end
+
 concommand.Add("pac_restart", function()
 	if pac then pac.Panic() end
 	local was_open
