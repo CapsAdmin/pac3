@@ -64,6 +64,10 @@ function pace.TranslatePropertiesKey(key)
 	
 	if key == "arguments" then
 		return key
+	end	
+	
+	if key == "aimpartname" or key == "parentname" then
+		return "part"
 	end
 	
 	if key == "sequence" or key == "sequencename" then
@@ -728,6 +732,22 @@ do -- bone
 		pace.SelectBone(pace.GetViewEntity(), function(data)
 			self:SetValue(data.friendly)
 			self.OnValueChanged(data.friendly)
+		end)
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
+do -- part
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_part"
+	PANEL.Base = "pace_properties_base_type"
+	
+	function PANEL:SpecialCallback()
+		pace.SelectPart(pac.GetParts(), function(part)
+			self:SetValue(part:GetName())
+			self.OnValueChanged(part:GetName())
 		end)
 	end
 	

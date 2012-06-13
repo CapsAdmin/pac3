@@ -695,8 +695,8 @@ do -- meta
 		
 		-- such a hack...
 		-- it's a fix for finding the part too early when wearing
-		timer.Simple(0, function()
-			for key, part in pairs(self:GetRootPart():GetChildren()) do	
+		timer.Simple(0.1, function()
+			for key, part in pairs(pac.GetParts()) do	
 				if part:GetName() == name then
 					self.AimPart = part
 					break

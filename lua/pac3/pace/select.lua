@@ -1,12 +1,12 @@
 function pace.DrawHUDText(x, y, text)
-	--[[surface.SetDrawColor(255, 255, 255, 255)
+	surface.SetDrawColor(255, 255, 255, 255)
 	surface.DrawLine(
 		Lerp(0.2, gui.MouseX(), x),
 		Lerp(0.2, gui.MouseY(), y),
 
 		Lerp(0.05, x, gui.MouseX()),
 		Lerp(0.05, y, gui.MouseY())
-	)]]
+	)
 
 	surface.SetFont("DefaultFixedOutline")
 	surface.SetTextColor(255, 255, 255, 255)
@@ -16,6 +16,20 @@ function pace.DrawHUDText(x, y, text)
 end
 
 local area = 20
+local x,y = 0,0
+local siz = 5
+
+function pace.DrawSelection(pos)	
+	if pos.visible then
+		surface.SetDrawColor(255, 255, 255, 255)
+		surface.DrawOutlinedRect(pos.x-(siz*0.5), pos.y-(siz*0.5), siz, siz)
+
+		return
+			x > pos.x - area and x < pos.x + area and
+			y > pos.y - area and y < pos.y + area
+	end
+end
+
 
 local function get_friendly_name(ent)
 	local name = ent.GetName and ent:GetName()
@@ -46,19 +60,12 @@ function pace.SelectBone(ent, callback)
 	end
 
 	local function HUDPaint()
-		local x,y = gui.MousePos()
+		x,y = gui.MousePos()
 		local tbl = {}
 
 		for friendly, data in pairs(bones) do
 			local pos = ent:GetBonePosition(ent:LookupBone(data.real)):ToScreen()
-
-			surface.SetDrawColor(255, 255, 255, 255)
-			surface.DrawRect(pos.x, pos.y, 2, 2)
-
-			if
-				x > pos.x - area and x < pos.x + 5 + area and
-				y > pos.y - area and y < pos.y + 5 + area
-			then
+			if pace.DrawSelection(pos) then
 				table.insert(tbl, {pos = pos, real = data.real, friendly = friendly, dist = Vector(pos.x, pos.y, 0):Distance(Vector(x, y, 0))})
 			end
 		end
@@ -66,9 +73,7 @@ function pace.SelectBone(ent, callback)
 
 		if tbl[1] then
 			table.sort(tbl, function(a, b) return a.dist < b.dist end)
-
 			data = tbl[1]
-
 			pace.DrawHUDText(data.pos.x, data.pos.y, data.friendly)
 		else
 			data = nil
@@ -90,19 +95,12 @@ function pace.SelectPart(parts, callback)
 	end
 
 	local function HUDPaint()
-		local x,y = gui.MousePos()
+		x,y = gui.MousePos()
 		local tbl = {}
 
 		for key, part in pairs(parts) do
-			local pos = part:GetDrawPosition():ToScreen()
-
-			surface.SetDrawColor(255, 255, 255, 255)
-			surface.DrawRect(pos.x, pos.y, 2, 2)
-
-			if
-				x > pos.x - area and x < pos.x + 5 + area and
-				y > pos.y - area and y < pos.y + 5 + area
-			then
+			local pos = part.cached_pos:ToScreen()
+			if pace.DrawSelection(pos) then
 				table.insert(tbl, {part = part, pos = pos, dist = Vector(pos.x, pos.y, 0):Distance(Vector(x, y, 0))})
 			end
 		end
@@ -132,19 +130,12 @@ function pace.SelectEntity(callback)
 	end
 
 	local function HUDPaint()
-		local x,y = gui.MousePos()
+		x,y = gui.MousePos()
 		local tbl = {}
 
 		for _, ent in pairs(ents.GetAll()) do
 			local pos = ent:EyePos():ToScreen()
-
-			surface.SetDrawColor(255, 255, 255, 255)
-			surface.DrawRect(pos.x, pos.y, 2, 2)
-
-			if
-				x > pos.x - area and x < pos.x + 5 + area and
-				y > pos.y - area and y < pos.y + 5 + area
-			then
+			if pace.DrawSelection(pos) then
 				table.insert(tbl, {pos = pos, ent = ent, dist = Vector(pos.x, pos.y, 0):Distance(Vector(x, y, 0))})
 			end
 		end
@@ -152,9 +143,7 @@ function pace.SelectEntity(callback)
 
 		if tbl[1] then
 			table.sort(tbl, function(a, b) return a.dist < b.dist end)
-
 			data = tbl[1]
-
 			pace.DrawHUDText(data.pos.x, data.pos.y, get_friendly_name(data.ent))
 		else
 			data = nil
