@@ -10,6 +10,7 @@ function PART:Initialize()
 		pac.GetSet(self, "Name", "")
 		pac.GetSet(self, "Description", "")
 		pac.GetSet(self, "OwnerName", "self")
+		pac.GetSet(self, "ParentName", "")
 		pac.GetSet(self, "Hide", false)
 	pac.EndStorableVars()
 end

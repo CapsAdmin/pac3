@@ -48,6 +48,9 @@ function PART:GetBonePosition(owner)
 	if not pos and not ang then
 		pos, ang = owner:GetBonePosition(self.BoneIndex)
 	end
+	
+	self.cached_pos = pos
+	self.cached_ang = ang
 
 	return pos or Vector(0,0,0), ang or Angle(0,0,0)
 end
@@ -57,15 +60,15 @@ function PART:BuildBonePositions(owner)
 
 	local matrix = owner:GetBoneMatrix(self.BoneIndex)
 
-	if matrix then
-	
-		matrix:Translate(self.Position)
+	if matrix then	
 
 		if self.RelativeAngles then
-			matrix:Rotate(self:CalcAngleVelocity(self.Angles))
+			matrix:Rotate(self:CalcAngles(owner, self.Angles))
 		else
-			matrix:SetAngle(self:CalcAngleVelocity(self.Angles))
+			matrix:SetAngle(self:CalcAngles(owner, self.Angles))
 		end
+		
+		matrix:Translate(self.Position)
 
 		matrix:Scale(self.Scale * self.Size)
 

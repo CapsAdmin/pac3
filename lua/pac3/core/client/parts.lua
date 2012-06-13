@@ -104,6 +104,7 @@ do -- meta
 	pac.GetSet(PART, "Parent", pac.NULL)
 	pac.GetSet(PART, "Tooltip")
 	pac.GetSet(PART, "SilkIcon", "plugin")
+	pac.GetSet(PART, "AlternativeName")
 
 	pac.StartStorableVars()
 		pac.GetSet(PART, "ParentName", "")
@@ -130,13 +131,28 @@ do -- meta
 		self.AimPart = pac.NULL
 	end
 	
-	function PART:SetName(var)
+	function PART:SetName(var, skip_alternative)
 		for key, part in pairs(pac.GetParts()) do
 			if part:GetName() == var and part ~= self then
-				self.Name = var .. " conflict"
-				return
+				if not skip_alternative and self.AlternativeName then
+					self:SetName(self.AlternativeName, true)
+				else
+					var = var .. " conflict"
+				end
+				break
 			end
 		end
+		
+		for key, part in pairs(self:GetChildren()) do
+			part:SetParentName(var)
+		end
+		
+		for key, part in pairs(pac.GetParts()) do
+			if part.AimPartName and part.AimPartName ~= "" and part.AimPartName == self.Name then
+				part:SetAimPartName(var)
+			end
+		end
+		
 		self.Name = var
 	end
 	
@@ -188,47 +204,41 @@ do -- meta
 			end
 		end
 		
-		function PART:SetParentName(var)		
-			self:UnParent()
+		function PART:SetParentName(var)
+			if not var or var == "" then
+				self:UnParent()
+				return
+			end
+
 			self.ParentName = var
-			self.ParentNameNotFound = nil
+			
+			self:ResolveParentName()
 		end
 		
-		function PART:UpdateParentName()
-			local name = self.ParentName
-			
-			if self.ParentNameNotFound == name then return end
-			
-			local parent
-			
+		function PART:ResolveParentName()
 			for key, part in pairs(pac.GetParts()) do
-				if part:GetOwner() == self:GetOwner() and part:GetName() == name then
-					parent = part
+				if part:GetName() == self.ParentName then
+					self:SetParent(part)
 					break
 				end
 			end
-			
-			if parent then
-				self:SetParent(parent)
-			else
-				self.ParentNameNotFound = name
-			end
 		end
-		
+				
 		function PART:AddChild(var)
 			if not var or not var:IsValid() then 
-				self:UnParent() 
+				self:UnParent()
+				return
 			end
 			
 			if self == var or var:HasChild(self) then 
 				return false 
 			end
-			
-			local parts = self:GetChildren()
-
+		
+			var:UnParent()
+		
 			var.Parent = self
 
-			local id = table.insert(parts, var)
+			local id = table.insert(self:GetChildren(), var)
 			
 			var.ParentName = self:GetName()
 			var:OnParent(self)
@@ -477,8 +487,10 @@ do -- meta
 			for key, value in pairs(tbl.children) do
 				local part = pac.CreatePart(value.self.ClassName)
 				part:SetTable(value)
-				self:AddChild(part)
 			end
+			
+			self:ResolveParentName()
+			self:ResolveAimPartName()
 		end
 		
 		local function COPY(var) 
@@ -493,15 +505,18 @@ do -- meta
 			return var 
 		end
 
-		function PART:ToTable()
+		function PART:ToTable(make_copy_name, is_child)
 			local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 			for _, key in pairs(self:GetStorableVars()) do
-				tbl.self[key] = COPY(self[key])
+				tbl.self[key] = COPY(self["Get"..key] and self["Get"..key](self) or self[key])
+				if make_copy_name and (key == "Name" or key == "AimPartName" or (key == "ParentName" and is_child)) then
+					tbl.self[key] = tbl.self[key] .. " copy"
+				end
 			end
 
 			for _, part in pairs(self:GetChildren()) do
-				table.insert(tbl.children, part:ToTable())
+				table.insert(tbl.children, part:ToTable(make_copy_name, true))
 			end
 
 			return tbl
@@ -519,7 +534,7 @@ do -- meta
 		
 		function PART:Clone()
 			local part = pac.CreatePart(self.ClassName)
-			part:SetTable(self:ToTable())
+			part:SetTable(self:ToTable(true))
 			return part
 		end
 	end
@@ -647,10 +662,6 @@ do -- meta
 	function PART:Think()	
 		local owner = self:GetOwner()
 	
-		if not self.Parent:IsValid() and self.ParentName and self.ParentName ~= "" then
-			self:UpdateParentName()
-		end
-		
 		if not owner.pac_bones then
 			pac.GetModelBones(owner)
 		end
@@ -684,26 +695,26 @@ do -- meta
 		return true
 	end
 	
-	function PART:SetAimPartName(name)
-		if not name or name == "" then
-			self.AimPart = pac.NULL
-		return end
-		
-		self.AimPart = pac.NULL
-		
-		-- such a hack...
-		-- it's a fix for finding the part too early when wearing
-		timer.Simple(0.1, function()
-			for key, part in pairs(pac.GetParts()) do	
-				if part:GetName() == name then
-					self.AimPart = part
-					break
-				end
+	do -- aim part		
+		function PART:SetAimPartName(name)
+			if not name or name == "" then
+				self.AimPart = pac.NULL
+			return end
+			
+			self.AimPartName = name
+			
+			self:ResolveAimPartName()
+		end	
+	end
+	
+	function PART:ResolveAimPartName()
+		for key, part in pairs(pac.GetParts()) do	
+			if part:GetName() == self.AimPartName then
+				self.AimPart = part
+				break
 			end
-		end)
-		
-		self.AimPartName = name
-	end	
+		end
+	end
 	
 	function PART:CalcAngles(owner, ang)
 		owner = owner or self:GetOwner()

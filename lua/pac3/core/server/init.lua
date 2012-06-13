@@ -208,3 +208,13 @@ else
 		handle_data(ply, data)
 	end)
 end
+
+-- should this be here?
+
+concommand.Add("pac_in_editor", function(ply, command, arguments)
+	if tonumber(arguments[1]) >= 1 then
+		ply:SetNWBool("in pac3 editor", true)
+	else
+		ply:SetNWBool("in pac3 editor", false)
+	end
+end)
