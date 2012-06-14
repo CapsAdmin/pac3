@@ -63,15 +63,7 @@ end
 
 do -- preview
 
-	local last_inpreview = false
-
-	local RunConsoleCommand = RunConsoleCommand
-	local GetAllPlayers = player.GetAll
-	local Color = Color
-	local DrawText = draw.DrawText
-
-	local position_3D
-	local position
+	local last_inpreview
 
 	hook.Add("HUDPaint", "pac_InPAC3Editor", function()
 		if pace.IsActive() and pace.IsActive() ~= last_inpreview then
@@ -84,11 +76,12 @@ do -- preview
 			RunConsoleCommand("pac_in_editor", 0)
 			last_inpreview = pace.IsActive()
 		end
-		for key, ply in pairs(GetAllPlayers()) do
+		
+		for key, ply in pairs(player.GetAll()) do
 			if ply ~= LocalPlayer() and ply:GetNWBool("in pac3 editor") then
-				position_3D = ply:GetBonePosition(ply:LookupBone("ValveBiped.Bip01_Head1"))
-				position = (position_3D + Vector(0,0,10)):ToScreen()
-				DrawText("In PAC3 Editor", "ChatFont", position.x, position.y, Color(255,255,255,Clamp((position_3D + Vector(0,0,10)):Distance(EyePos()) * -1 + 500, 0, 500)/500*255),1)
+				local pos_3d = ply:GetBonePosition(ply:LookupBone("ValveBiped.Bip01_Head1"))
+				local pos_2d = (pos_3d + Vector(0,0,10)):ToScreen()
+				draw.DrawText("In PAC3 Editor", "ChatFont", pos_2d.x, pos_2d.y, Color(255,255,255,math.Clamp((pos_3d + Vector(0,0,10)):Distance(EyePos()) * -1 + 500, 0, 500)/500*255),1)
 			end
 		end
 	end)

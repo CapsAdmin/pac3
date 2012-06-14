@@ -211,10 +211,6 @@ end
 
 -- should this be here?
 
-concommand.Add("pac_in_editor", function(ply, command, arguments)
-	if tonumber(arguments[1]) >= 1 then
-		ply:SetNWBool("in pac3 editor", true)
-	else
-		ply:SetNWBool("in pac3 editor", false)
-	end
+concommand.Add("pac_in_editor", function(ply, _, args)
+	ply:SetNWBool("in pac3 editor", args[1] == 1)
 end)
