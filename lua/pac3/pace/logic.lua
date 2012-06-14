@@ -182,11 +182,6 @@ function pace.OnPartMenu(obj)
 		end)
 	end
 	
-	menu:AddOption(L"clone", function()
-		obj:Clone()
-		pace.RefreshTree()
-	end)
-
 	menu:AddOption(L"set owner", function()
 		pace.SelectEntity(function(ent)
 			pac.SubmitOwner(obj:GetOwner(), ent, obj:GetName())
@@ -194,6 +189,26 @@ function pace.OnPartMenu(obj)
 			pace.SetViewEntity(ent)
 		end)
 		
+	end)
+	
+	menu:AddOption(L"copy", function()
+		local tbl = obj:ToTable()
+			tbl.Name = nil
+			tbl.Description = nil
+			tbl.children = {}
+		pace.Clipboard = tbl
+	end)
+	
+	if type(pace.Clipboard) == "table" then
+		menu:AddOption(L"paste", function()
+			obj:SetTable(pace.Clipboard)
+			pace.Clipboard = nil
+		end)
+	end
+	
+	menu:AddOption(L"clone", function()
+		obj:Clone()
+		pace.RefreshTree()
 	end)
 		
 	menu:AddSpacer()
