@@ -107,7 +107,25 @@ function PANEL:AddNode(...)
 end
 
 function PANEL:PopulateParts(node, parts, children)
-	for key, part in pairs(parts) do
+	local tbl = {}
+	
+	table.sort(parts, function(a,b) 
+		return a and b and a:GetName() < b:GetName() 
+	end)
+	
+	for key, val in pairs(parts) do
+		if not val:HasChildren() then
+			table.insert(tbl, val)
+		end
+	end
+	
+	for key, val in pairs(parts) do
+		if val:HasChildren() then
+			table.insert(tbl, val)
+		end
+	end
+	
+	for key, part in ipairs(tbl) do
 		key = tostring(part)
 				
 		if not part:HasParent() or children then

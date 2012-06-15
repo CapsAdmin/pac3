@@ -107,6 +107,7 @@ do -- meta
 	pac.GetSet(PART, "AlternativeName")
 
 	pac.StartStorableVars()
+		pac.GetSet(PART, "OwnerName", "self")
 		pac.GetSet(PART, "ParentName", "")
 		pac.GetSet(PART, "Bone", "head")
 		pac.GetSet(PART, "Position", Vector(0,0,0))
@@ -157,6 +158,18 @@ do -- meta
 	end
 	
 	do -- owner	
+		function PART:SetOwnerName(name)
+			self.OwnerName = name
+			self:CheckOwner()
+		end
+
+		function PART:CheckOwner(ent)
+			if self.OwnerName ~= "" then
+				local ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent)
+				self:SetOwner(ent)
+			end
+		end
+
 		function PART:SetOwner(ent)
 			ent = ent or NULL
 			
@@ -170,11 +183,14 @@ do -- meta
 		end
 		
 		function PART:GetOwner()
-			if not self.Owner:IsValid() then
-				if self:GetParent():IsValid() then
-					return self:GetParent():GetOwner()
+			local parent = self:GetParent()
+			
+			if parent:IsValid() then
+				if self.ClassName ~= "event" and parent.ClassName == "model" and parent.Entity:IsValid() then
+					return parent.Entity
 				end
-			end		
+				return parent:GetOwner()
+			end
 			
 			return self.Owner or NULL
 		end
@@ -678,17 +694,7 @@ do -- meta
 		if not self.BoneIndex and self.TriedToFindBone ~= self.Bone then
 			self:UpdateBoneIndex(owner)
 		end
-			
-		if not owner:IsValid() then
-			if self.Parent:IsValid() and self.Parent.ClassName == "model" and self.Parent:GetEntity():IsValid() then
-				self:SetOwner(self.Parent:GetEntity())
-			elseif pace.GetViewEntity():IsValid() then
-				self:SetOwner(pace.GetViewEntity())
-			else
-				self:SetOwner(LocalPlayer())
-			end
-		end
-		
+					
 		self:OnThink()
 	end
 	
@@ -736,7 +742,7 @@ do -- meta
 			return self.Angles + (owner:GetEyeTraceNoCursor().HitPos - self.cached_pos):Angle()
 		end
 			
-		return self:CalcAngleVelocity(ang)
+		return self:CalcAngleVelocity(ang) or Angle(0,0,0)
 	end
 		
 	function PART:CalcAngleVelocity(ang)

@@ -44,7 +44,6 @@ function pac.ConvertPAC2Config(data, ent)
 	
 	local base = pac.CreatePart("group")
 		base:SetName("pac2 outfit")
-		base:SetOwner(ent)
 		
 	for bone, data in pairs(data.bones) do
 		local part = base:CreatePart("bone")			

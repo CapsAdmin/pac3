@@ -1,6 +1,7 @@
 local PART = {}
 
 PART.ClassName = "clip"
+PART.NeedsParent = true
 
 function PART:OnParent(parent)
 	if not parent:IsValid() then
