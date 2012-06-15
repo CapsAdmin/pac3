@@ -130,8 +130,8 @@ function pac.CheckSubmitPart(ply, data)
 		print(ply, " submitted outfit to ", data.ent)
 		pac.SubmitPart(data)
 
-		pac.Parts[ply:EntIndex()] = pac.Parts[ply:EntIndex()] or {}
-		table.insert(pac.Parts[ply:EntIndex()], data)
+		pac.Parts[ply:UniqueID()] = pac.Parts[ply:UniqueID()] or {}
+		table.insert(pac.Parts[ply:UniqueID()], data)
 
 		ply.LastPACSubmission = CurTime() + 2
 		umsg.Start("pac_submit_acknowledged", ply)
@@ -149,13 +149,13 @@ end
 function pac.RemovePart(ply, data)
 	print(ply, " is removing ", data.part)
 	--if pac.IsAllowedToModify(ply, data.ent) then
-		pac.Parts[ply:EntIndex()] = pac.Parts[ply:EntIndex()] or {}
+		pac.Parts[ply:UniqueID()] = pac.Parts[ply:UniqueID()] or {}
 
 		pac.SubmitPart(data)
 
-		for key, _data in pairs(pac.Parts[ply:EntIndex()]) do
+		for key, _data in pairs(pac.Parts[ply:UniqueID()]) do
 			if _data.part.self.Name == data.part then
-				table.remove(pac.Parts[ply:EntIndex()], key)
+				table.remove(pac.Parts[ply:UniqueID()], key)
 				break
 			end
 		end
@@ -165,9 +165,9 @@ end
 function pac.SetOwnerPart(ply, data)
 	print(ply, " is changing owner ", data.part)
 	--if pac.IsAllowedToModify(ply, data.ent) then
-		pac.Parts[ply:EntIndex()] = pac.Parts[ply:EntIndex()] or {}
+		pac.Parts[ply:UniqueID()] = pac.Parts[ply:UniqueID()] or {}
 
-		for key, _data in pairs(pac.Parts[ply:EntIndex()]) do
+		for key, _data in pairs(pac.Parts[ply:UniqueID()]) do
 			if _data.part.self.Name == data.part then
 				_data.ent = data.b
 				pac.SubmitPart({ply = ply, ent = data.a, part = data.part})
