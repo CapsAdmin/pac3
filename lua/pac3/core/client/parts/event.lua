@@ -2,6 +2,8 @@ local PART = {}
 
 PART.ClassName = "event"
 PART.HideGizmo = true
+PART.NeedsParent = true
+
 
 PART.Events = 
 {
@@ -64,6 +66,14 @@ PART.Events =
 			if ent:IsValid() then
 				return self:StringOperator(ent:GetClass(), find)
 			end
+		end,
+	},
+	
+	entity_class =
+	{
+		arguments = {{find = "string"}},
+		callback = function(self, ent, find)
+			return self:StringOperator(ent:GetClass(), find)
 		end,
 	},
 	

@@ -2,6 +2,7 @@ local PART = {}
 
 PART.ClassName = "group"
 PART.HideGizmo = true
+PART.NeedsParent = false
 
 function PART:Initialize()
 	self.StorableVars = {}
@@ -9,19 +10,12 @@ function PART:Initialize()
 	pac.StartStorableVars()
 		pac.GetSet(self, "Name", "")
 		pac.GetSet(self, "Description", "")
-		pac.GetSet(self, "OwnerName", "self")
+		pac.GetSet(self, "OwnerName", "")
 		pac.GetSet(self, "ParentName", "")
 		pac.GetSet(self, "Hide", false)
 	pac.EndStorableVars()
-end
-
-function PART:SetOwnerName(name)
-	self.OwnerName = name
-	self:CheckOwner()
-end
-
-function PART:CheckOwner(ent)
-	self:SetOwner(pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent))
+	
+	self:SetOwnerName("self")
 end
 
 pac.RegisterPart(PART)

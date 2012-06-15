@@ -2,6 +2,8 @@ local PART = {}
 
 PART.ClassName = "entity"	
 PART.HideGizmo = true
+PART.PrePlayerDraw = true
+PART.PostPlayerDraw = true
 
 function PART:Initialize()
 	self.ClipPlanes = {}
@@ -19,7 +21,6 @@ function PART:Initialize()
 		pac.GetSet(self, "Alpha", 1)
 		pac.GetSet(self, "Scale", Vector(1,1,1))
 		pac.GetSet(self, "Size", 1)
-		pac.GetSet(self, "Model", "")
 		pac.GetSet(self, "Invert", false)
 		pac.GetSet(self, "DoubleFace", false)
 		pac.GetSet(self, "DrawWeapon", true)
@@ -93,22 +94,23 @@ function PART:SetSkin(var)
 	end
 end
 
-
 function PART:StartClipping(pos, ang)
 	if #self.ClipPlanes > 0 then
-		bclip = render.EnableClipping(true)
+		local bclip = render.EnableClipping(true)
 
 		for key, clip in pairs(self.ClipPlanes) do
 			if clip:IsValid() then
-				local pos, ang = LocalToWorld(clip.Position, clip:CalcAngleVelocity(clip.Angles), pos, ang)
+				local pos, ang = LocalToWorld(clip.Position, clip:CalcAngles(clip.Angles), pos, ang)
 				local normal = ang:Forward()
 				render.PushCustomClipPlane(normal, normal:Dot(pos + normal))
 			end
 		end
+		
+		return bclip
 	end
 end
 
-function PART:EndClipping()
+function PART:EndClipping(bclip)
 	if #self.ClipPlanes > 0 then
 		for key, clip in pairs(self.ClipPlanes) do
 			if not clip:IsValid() then
@@ -174,31 +176,6 @@ function PART:SetDrawWeapon(b)
 	self:UpdateWeaponDraw(self:GetOwner())
 end
 
-function PART:GetModel()
-	local ent = self:GetOwner()
-
-	if ent:IsValid() and (not self.Model or self.Model == "") then
-		return ent:GetModel()
-	end
-	
-	return self.Model
-end
-
-function PART:SetModel(path)
-	local ent = self:GetOwner()
-	
-	if path == "" and ent.pac_original_model then
-		ent:SetModel(ent.pac_original_model)
-	end
-
-	if ent:IsValid() then
-		ent.pac_original_model = ent.pac_original_model or ent:GetModel()
-		ent:SetModel(path)
-	end
-	
-	self.Model = path
-end
-
 function PART:UpdateWeaponDraw(ent)
 	local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 	
@@ -255,13 +232,14 @@ function PART:GetDrawPosition()
 	end
 end
 
+local bclip
 
 function PART:PreDraw(ent, pos, ang)
 	if ent:IsValid() and not ent:IsPlayer() then
 		ent:SetNoDraw(true)
 	end	
 
-	self:StartClipping(pos, ang)
+	--bclip = self:StartClipping(pos, ang)
 	
 	self:UpdateAll(ent)
 
@@ -296,7 +274,10 @@ function PART:OnDraw(ent, pos, ang)
 		SetMaterialOverride(0)
 	end
 
-	self:EndClipping()
+	--if bclip ~= nil then 
+		--self:EndClipping(bclip)
+		--bclip = nil
+	--end
 end
 
 pac.RegisterPart(PART)

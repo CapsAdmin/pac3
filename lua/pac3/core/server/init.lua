@@ -95,8 +95,8 @@ end
 function pac.PlayerInitialSpawn(ply)
 	timer.Simple(1, function()
 		if ply:IsPlayer() then
-			for ent, outfits in pairs(pac.Parts) do
-				if Entity(ent):IsValid() then
+			for id, outfits in pairs(pac.Parts) do
+				if player.GetByUniqueID(id) then
                     for key, outfit in pairs(outfits) do
 						local ent = outfit.ent or NULL
 						if ent:IsValid() then

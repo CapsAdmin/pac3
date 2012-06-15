@@ -181,16 +181,7 @@ function pace.OnPartMenu(obj)
 			pac.SubmitPart(obj:GetOwner(), obj)
 		end)
 	end
-	
-	menu:AddOption(L"set owner", function()
-		pace.SelectEntity(function(ent)
-			pac.SubmitOwner(obj:GetOwner(), ent, obj:GetName())
-			obj:SetOwner(ent)
-			pace.SetViewEntity(ent)
-		end)
-		
-	end)
-	
+
 	menu:AddOption(L"copy", function()
 		local tbl = obj:ToTable()
 			tbl.Name = nil

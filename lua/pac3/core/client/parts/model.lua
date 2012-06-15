@@ -74,14 +74,6 @@ function PART:OnAttach(owner)
 	end
 end
 
-function PART:OnChildAdd(part)
-	local ent = self:GetEntity()
-	
-	if ent:IsValid() and part.ClassName ~= "event" then
-		part:SetOwner(ent)
-	end
-end
-
 function PART:OnParent(part)
 	local ent = self:GetEntity()
 
@@ -100,8 +92,6 @@ function PART:OnUnParent()
 	end
 end
 
-local bclip
-
 function PART:OnDraw(owner, pos, ang)
 	if self.SuppressDraw then return end
 	
@@ -116,18 +106,20 @@ function PART:OnDraw(owner, pos, ang)
 		ent:SetAngles(ang)
 		ent:SetRenderAngles(ang)
 		
+		local bclip
+		
 		if #self.ClipPlanes > 0 then
 			bclip = render.EnableClipping(true)
 
 			for key, clip in pairs(self.ClipPlanes) do
 				if clip:IsValid() and not clip:IsHidden() then
-					local pos, ang = LocalToWorld(clip.Position, clip:CalcAngleVelocity(clip.Angles), pos, ang)
+					local pos, ang = LocalToWorld(clip.Position, clip:CalcAngles(owner, clip.Angles), pos, ang)
 					local normal = ang:Forward()
 					render.PushCustomClipPlane(normal, normal:Dot(pos + normal))
 				end
 			end
 		end
-
+			
 			if self.DoubleFace then
 				render.CullMode(MATERIAL_CULLMODE_CW)
 			else
@@ -186,6 +178,12 @@ function PART:OnDraw(owner, pos, ang)
 
 			render.EnableClipping(bclip)
 		end
+	else
+		timer.Simple(0, function()
+			self.Entity = pac.CreateEntity(self.Model)
+			self.Entity:SetNoDraw(true)
+			self.Entity.PACPart = self
+		end)
 	end
 end
 
@@ -269,10 +267,12 @@ function PART:CheckBoneMerge()
 			if self.BoneMerge then	
 				if not ent:IsEffectActive(EF_BONEMERGE) then
 					ent:AddEffects(EF_BONEMERGE)
+					ent:AddEffects(EF_BONEMERGE_FASTCULL)
 				end
 			else
 				if ent:IsEffectActive(EF_BONEMERGE) then
 					ent:RemoveEffects(EF_BONEMERGE)
+					ent:RemoveEffects(EF_BONEMERGE_FASTCULL)
 				end
 			end
 		else	

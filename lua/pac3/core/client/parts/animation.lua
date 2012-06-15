@@ -1,6 +1,7 @@
 local PART = {}
 
-PART.ClassName = "animation"		
+PART.ClassName = "animation"
+PART.NeedsParent = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Loop", true)
@@ -13,12 +14,19 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Max", 1)
 pac.EndStorableVars()
 
-function PART:GetEntity()
-	return self.Parent:IsValid() and self.Parent.ClassName == "model" and self.Parent:GetEntity() or self:GetOwner()
+function PART:GetOwner()
+	local parent = self:GetParent()
+	
+	if parent:IsValid() then		
+		if parent.ClassName == "model" and parent.Entity:IsValid() then
+			return parent.Entity
+		end
+	end
+	
+	return self.BaseClass.GetOwner(self)
 end
-
 function PART:GetSequenceList()
-	local ent = self:GetEntity()
+	local ent = self:GetOwner()
 
 	if ent:IsValid() then	
 		if net then
@@ -42,7 +50,7 @@ function PART:GetSequenceList()
 end
 
 function PART:OnThink()
-	local ent = self:GetEntity()
+	local ent = self:GetOwner()
 
 	if ent:IsValid() then	
 		local seq = ent:LookupSequence(self.SequenceName)

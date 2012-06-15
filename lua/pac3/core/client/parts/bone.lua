@@ -1,6 +1,8 @@
 local PART = {}
 
 PART.ClassName = "bone"
+PART.NeedsParent = true
+
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Modify", true)
@@ -25,16 +27,12 @@ function PART:GetOwner()
 	local parent = self:GetParent()
 	
 	if parent:IsValid() then		
-		if parent.ClassName == "model" and parent:GetEntity():IsValid() then
+		if parent.ClassName == "model" and parent.Entity:IsValid() then
 			return parent.Entity
-		end
-		
-		if parent.ClassName == "group" then
-			return parent:GetOwner()
 		end
 	end
 	
-	return self.Owner
+	return self.BaseClass.GetOwner(self)
 end
 
 function PART:GetBonePosition(owner, ...)

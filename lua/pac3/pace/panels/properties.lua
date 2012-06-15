@@ -66,6 +66,10 @@ function pace.TranslatePropertiesKey(key)
 		return key
 	end	
 	
+	if key == "ownername" then
+		return key
+	end	
+	
 	if key == "aimpartname" or key == "parentname" then
 		return "part"
 	end
@@ -748,6 +752,21 @@ do -- part
 		pace.SelectPart(pac.GetParts(), function(part)
 			self:SetValue(part:GetName())
 			self.OnValueChanged(part:GetName())
+		end)
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
+do -- owner
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_ownername"
+	PANEL.Base = "pace_properties_base_type"
+	
+	function PANEL:SpecialCallback()
+		pace.SelectEntity(function(ent)
+			pace.current_part:SetOwnerName(ent:GetClass())
 		end)
 	end
 	

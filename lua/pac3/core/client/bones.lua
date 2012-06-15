@@ -80,13 +80,3 @@ function pac.HookBuildBone(ent)
 		hook.Call("EntityBuildBonePositions", GAMEMODE, ...)
 	end
 end
-
-function pac.EntityBuildBonePositions(ent)	
-	for key, part in pairs(pac.GetParts()) do
-		if not part:IsHiddenEx() and part.BuildBonePositions and part:GetOwner() == ent then
-			part:BuildBonePositions(ent)
-		end
-	end
-	ent:InvalidateBoneCache()
-end
-pac.AddHook("EntityBuildBonePositions")

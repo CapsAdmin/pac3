@@ -50,6 +50,8 @@ pac.LoadParts()
 include("pac2_compat.lua")
 
 function pac.StringFind(a, b, simple)
+	if not a or not b then return end
+	
 	if simple then
 		a = a:lower()
 		b = b:lower()
@@ -89,7 +91,27 @@ pac.OwnerNames =
 	"weapon",
 }
 
+local function find_ent(ent, str)
+	return 
+		pac.StringFind(ent:GetClass(), str) or 
+		pac.StringFind(ent:GetClass(), str, true) or 
+		
+		(ent.GetName and pac.StringFind(ent:GetName(), str)) or 
+		(ent.GetName and pac.StringFind(ent:GetName(), str, true)) or 
+		
+		pac.StringFind(ent:GetModel(), str) or 
+		pac.StringFind(ent:GetModel(), str, true) 
+end
+
+local function check_owner(a, b)
+	return true--a:GetOwner() == b
+end
+
 function pac.HandleOwnerName(owner, name, ent)
+
+	if IsEntity(name) and name:IsValid() then
+		return name
+	end
 
 	if name == "self" then
 		return owner
@@ -104,13 +126,13 @@ function pac.HandleOwnerName(owner, name, ent)
 	end
 	
 	if IsValid(ent) then
-		if ent:GetOwner() == owner and pac.StringFind(ent:GetClass(), name) or pac.StringFind(ent:GetClass(), name, true) then
+		if check_owner(ent, owner) and find_ent(ent, name) then
 			return ent
 		end
 	end
 	
 	for key, ent in pairs(ents.GetAll()) do
-		if ent:GetOwner() == owner and pac.StringFind(ent:GetClass(), name) or pac.StringFind(ent:GetClass(), name, true) then
+		if check_owner(ent, owner) and find_ent(ent, name) then
 			return ent
 		end
 	end

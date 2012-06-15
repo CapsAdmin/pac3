@@ -1,6 +1,7 @@
 local PART = {}
 
 PART.ClassName = "effect"
+PART.NeedsParent = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Effect", "default")
@@ -9,19 +10,19 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Rate", 1)
 pac.EndStorableVars()
 
-PART.last_spew = 0
-
-function PART:GetEntity()
+function PART:GetOwner()
 	local parent = self:GetParent()
-	return 
-		parent:IsValid() and 
-		parent.Entity and 
-		parent:GetEntity()
-		or 		
-		self:GetOwner()
-		or
-		NULL
+	
+	if parent:IsValid() then		
+		if parent.ClassName == "model" and parent.Entity:IsValid() then
+			return parent.Entity
+		end
+	end
+	
+	return self.BaseClass.GetOwner(self)
 end
+
+PART.last_spew = 0
 
 function PART:SetEffect(name)
 	self.Effect = name
@@ -49,7 +50,7 @@ end)
 function PART:OnDraw(owner, pos, ang)
 	if not self.Ready then return end
 	
-	local ent = self:GetEntity()
+	local ent = self:GetOwner()
 
 	if ent:IsValid() then
 
@@ -65,7 +66,7 @@ function PART:OnDraw(owner, pos, ang)
 end
 
 function PART:OnRemove()
-	local ent = self:GetEntity()
+	local ent = self:GetOwner()
 
 	if ent:IsValid() and ent.IsPACEntity then
 		ent:StopParticles()
@@ -74,7 +75,7 @@ function PART:OnRemove()
 end
 
 function PART:Emit(pos, ang)
-	local ent = self:GetEntity()
+	local ent = self:GetOwner()
 	
 	if ent:IsValid() then
 		if not self.Effect then
