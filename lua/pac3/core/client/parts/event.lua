@@ -149,6 +149,7 @@ function PART:Initialize()
 		pac.GetSet(self, "Arguments", "")
 		pac.GetSet(self, "Operator", "")
 		pac.GetSet(self, "Invert", false)
+		pac.GetSet(self, "ParentName", "")
 	pac.EndStorableVars()
 end
 
