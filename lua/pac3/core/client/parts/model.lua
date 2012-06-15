@@ -101,9 +101,7 @@ function PART:OnDraw(owner, pos, ang)
 
 	if ent:IsValid() then
 	
-		ent:SetPos(pos)
 		ent:SetRenderOrigin(pos)
-		ent:SetAngles(ang)
 		ent:SetRenderAngles(ang)
 		
 		local bclip

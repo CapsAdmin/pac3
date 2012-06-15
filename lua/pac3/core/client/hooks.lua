@@ -156,7 +156,6 @@ function pac.EntityBuildBonePositions(ent)
 			part:BuildBonePositions(ent)
 		end
 	end
-	ent:InvalidateBoneCache()
 end
 pac.AddHook("EntityBuildBonePositions")
 

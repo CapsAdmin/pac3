@@ -30,7 +30,7 @@ function PART:Initialize()
 		pac.GetSet(self, "Skin", 0)
 		pac.GetSet(self, "Bodygroup", 0)
 		pac.GetSet(self, "BodygroupState", 0)
-		if net then pac.GetSet(self, "DrawShadow", true) end
+		pac.GetSet(self, "DrawShadow", true)
 	pac.EndStorableVars()
 end
 
@@ -46,14 +46,12 @@ function PART:RemoveClipPlane(id)
 	end
 end
 
-if net then
-	function PART:SetDrawShadow(b)
-		self.DrawShadow = b
+function PART:SetDrawShadow(b)
+	self.DrawShadow = b
 
-		local ent = self:GetOwner()
-		if ent:IsValid() then
-			ent:DrawShadow(b)
-		end
+	local ent = self:GetOwner()
+	if ent:IsValid() then
+		ent:DrawShadow(b)
 	end
 end
 
