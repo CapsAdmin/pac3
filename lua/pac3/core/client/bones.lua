@@ -86,6 +86,7 @@ function pac.EntityBuildBonePositions(ent)
 		if not part:IsHiddenEx() and part.BuildBonePositions and part:GetOwner() == ent then
 			part:BuildBonePositions(ent)
 		end
-	end	
+	end
+	ent:InvalidateBoneCache()
 end
 pac.AddHook("EntityBuildBonePositions")

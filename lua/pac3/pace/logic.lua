@@ -209,8 +209,8 @@ function pace.OnPartMenu(obj)
 	menu:AddOption(L"clone", function()
 		obj:Clone()
 		pace.RefreshTree()
-	end)
-		
+	end)	
+			
 	menu:AddSpacer()
 
 	add_parts(menu)

@@ -400,7 +400,7 @@ do -- meta
 				
 				ang = self:CalcAngles(owner, ang) or ang
 				
-				return pos, ang
+				return pos or Vector(0, 0, 0), ang or Angle(0, 0, 0)
 			end
 			
 			return Vector(0, 0, 0), Angle(0, 0, 0)
@@ -639,8 +639,15 @@ do -- meta
 		local pos, ang, owner
 		function PART:Draw(event, pos, ang)
 			if self[event] and not self:IsHidden() then
+				pos = pos or Vector(0,0,0)
+				ang = ang or Angle(0,0,0)
+				
 				owner = self:GetOwner()
+				
 				pos, ang = self:GetDrawPosition(owner, pos, ang)
+				
+					pos = pos or Vector(0,0,0)
+				ang = ang or Angle(0,0,0)
 				
 				self.cached_pos = pos
 				self.cached_ang = ang
@@ -651,7 +658,7 @@ do -- meta
 			
 			for index, part in pairs(self:GetChildren()) do
 				if part[event] and not part:IsHidden() then
-					part:Draw(event)
+					part:Draw(event, pos, ang)
 				end
 			end
 			

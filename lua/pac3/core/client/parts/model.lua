@@ -10,7 +10,6 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "DoubleFace", false)
 	pac.GetSet(PART, "Bodygroup", 0)
 	pac.GetSet(PART, "BodygroupState", 0)
-	pac.GetSet(PART, "Sequence", 1)
 	pac.GetSet(PART, "Material", "")
 	pac.GetSet(PART, "Color", Vector(255, 255, 255))
 	pac.GetSet(PART, "Brightness", 1)
@@ -147,8 +146,7 @@ function PART:OnDraw(owner, pos, ang)
 				render.MaterialOverride(self.Material ~= "" and self.Materialm or nil) 
 			else 
 				SetMaterialOverride(self.Material ~= "" and self.Materialm or nil) 
-			end 
-
+			end
 		
 			if self.Fullbright then
 				render.SuppressEngineLighting(true) 
