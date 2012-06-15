@@ -20,7 +20,16 @@ function PART:Initialize()
 		pac.GetSet(self, "Scale", Vector(1,1,1))
 		pac.GetSet(self, "Size", 1)
 		pac.GetSet(self, "Model", "")
+		pac.GetSet(self, "Invert", false)
+		pac.GetSet(self, "DoubleFace", false)
 		pac.GetSet(self, "DrawWeapon", true)
+		
+		pac.GetSet(self, "RelativeBones", true)
+			
+		pac.GetSet(self, "Skin", 0)
+		pac.GetSet(self, "Bodygroup", 0)
+		pac.GetSet(self, "BodygroupState", 0)
+		if net then pac.GetSet(self, "DrawShadow", true) end
 	pac.EndStorableVars()
 end
 
@@ -35,6 +44,55 @@ function PART:RemoveClipPlane(id)
 		part:Remove()
 	end
 end
+
+if net then
+	function PART:SetDrawShadow(b)
+		self.DrawShadow = b
+
+		local ent = self:GetOwner()
+		if ent:IsValid() then
+			ent:DrawShadow(b)
+		end
+	end
+end
+
+function PART:SetBodygroupState(var)
+	var = var or 0
+
+	self.BodygroupState = var
+	
+	local ent = self:GetOwner()
+	timer.Simple(0, function() 
+		if self:IsValid() and ent:IsValid() then
+			ent:SetBodygroup(self.Bodygroup, var) 
+		end
+	end)		
+end
+
+function PART:SetBodygroup(var)
+	var = var or 0
+
+	self.Bodygroup = var
+	
+	local ent = self:GetOwner()
+	timer.Simple(0, function() 
+		if self:IsValid() and ent:IsValid() then
+			ent:SetBodygroup(var, self.BodygroupState) 
+		end
+	end)		
+end
+
+function PART:SetSkin(var)
+	var = var or 0
+
+	self.Skin = var
+
+	local ent = self:GetOwner()
+	if ent:IsValid() then
+		ent:SetSkin(var)
+	end
+end
+
 
 function PART:StartClipping(pos, ang)
 	if #self.ClipPlanes > 0 then
@@ -66,7 +124,7 @@ end
 function PART:UpdateScale(ent)
 	ent = ent or NULL
 	if ent:IsValid() then
-		ent:InvalidateBoneCache()
+		self:SetRelativeBones(self:GetRelativeBones())
 		ent:SetModelScale(self.Scale * self.Size)
 		ent:SetupBones()
 	end
@@ -74,12 +132,14 @@ end
 
 function PART:SetSize(var)
 	self.Size = var
-	self:UpdateScale(self:GetOwner())
+	local ent = self:GetOwner()
+	self:UpdateScale(ent)
 end
 
 function PART:SetScale(var)	
 	self.Scale = var
-	self:UpdateScale(self:GetOwner())
+	local ent = self:GetOwner()
+	self:UpdateScale(ent)
 end
 
 PART.Colorf = Vector(1,1,1)
@@ -101,6 +161,14 @@ function PART:SetMaterial(var)
 	end
 end
 
+function PART:SetRelativeBones(b)
+	self.RelativeBones = b
+	local ent = self:GetOwner()
+	if ent:IsValid() then
+		if net then ent:SetIK(not b) end
+		self:UpdateScale(ent)
+	end
+end
 
 function PART:GetModel()
 	local ent = self:GetOwner()
@@ -160,7 +228,6 @@ function PART:UpdateMaterial(ent)
 end
 
 function PART:UpdateAll(ent)
-	--self:UpdateScale(ent)
 	self:UpdateMaterial(ent)
 	self:UpdateColor(ent)
 end
@@ -174,6 +241,17 @@ function PART:OnDetach(ent)
 	end	
 end
 
+local aaa = false
+
+function PART:GetDrawPosition()
+	local ent = self:GetOwner()
+
+	if ent:IsValid() then
+		return ent:GetPos()
+	end
+end
+
+
 function PART:PreDraw(ent, pos, ang)
 	if ent:IsValid() and not ent:IsPlayer() then
 		ent:SetNoDraw(true)
@@ -181,12 +259,28 @@ function PART:PreDraw(ent, pos, ang)
 
 	self:StartClipping(pos, ang)
 	
-	self:UpdateAll(ent)	
+	self:UpdateAll(ent)
+
+	if self.Invert then
+		render.CullMode(MATERIAL_CULLMODE_CW)
+	end
+
+	if self.Fullbright then
+		render.SuppressEngineLighting(true) 
+	end
 end
 
 function PART:OnDraw(ent, pos, ang)	
 	if ent:IsValid() and not ent:IsPlayer() then
 		ent:DrawModel()
+	end
+	
+	if self.Invert then
+		render.CullMode(MATERIAL_CULLMODE_CCW)
+	end
+	
+	if self.Fullbright then
+		render.SuppressEngineLighting(false) 
 	end
 	
 	render.SetBlend(1)

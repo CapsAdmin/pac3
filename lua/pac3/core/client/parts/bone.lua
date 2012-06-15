@@ -3,7 +3,8 @@ local PART = {}
 PART.ClassName = "bone"
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "RelativeAngles", true)
+	pac.GetSet(PART, "Modify", true)
+	pac.GetSet(PART, "RotateOrigin", true)
 
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
 	pac.GetSet(PART, "Size", 1)
@@ -36,7 +37,7 @@ function PART:GetOwner()
 	return self.Owner
 end
 
-function PART:GetBonePosition(owner)
+function PART:GetBonePosition(owner, ...)
 	owner = owner or self:GetOwner()
 
 	if not self.BoneIndex then
@@ -48,6 +49,8 @@ function PART:GetBonePosition(owner)
 	if not pos and not ang then
 		pos, ang = owner:GetBonePosition(self.BoneIndex)
 	end
+	
+	owner:InvalidateBoneCache()
 	
 	self.cached_pos = pos
 	self.cached_ang = ang
@@ -61,18 +64,32 @@ function PART:BuildBonePositions(owner)
 	local matrix = owner:GetBoneMatrix(self.BoneIndex)
 
 	if matrix then	
-
-		if self.RelativeAngles then
-			matrix:Rotate(self:CalcAngles(owner, self.Angles))
+		
+		local ang = self:CalcAngles(owner, self.Angles) or self.Angles
+		
+		if self.EyeAngles or self.AimPart:IsValid() then
+			ang.r = ang.y
+			ang.y = -ang.p
+			ang.p = 0
+			
+		end
+	
+		if self.Modify then
+			if self.RotateOrigin then
+				matrix:Translate(self.Position)
+				matrix:Rotate(ang)
+			else
+				matrix:Rotate(ang)
+				matrix:Translate(self.Position)
+			end
 		else
-			matrix:SetAngle(self:CalcAngles(owner, self.Angles))
+			matrix:SetAngle(ang)
+			matrix:SetTranslation(self.Position)
 		end
 		
-		matrix:Translate(self.Position)
-
 		matrix:Scale(self.Scale * self.Size)
 
-		owner:InvalidateBoneCache()
+		
 		owner:SetBoneMatrix(self.BoneIndex, matrix)
 	end
 end
