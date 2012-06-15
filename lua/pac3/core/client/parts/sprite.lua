@@ -17,12 +17,16 @@ function PART:SetColor(v)
 	self.ColorC.r = v.r
 	self.ColorC.g = v.g
 	self.ColorC.b = v.b
+	
+	self.Color = v
 end
 
 function PART:SetAlpha(n)
 	self.ColorC = self.ColorC or Color(255, 255, 255, 255)
 	
 	self.ColorC.a = n * 255
+	
+	self.Alpha = n
 end
 
 function PART:Initialize()

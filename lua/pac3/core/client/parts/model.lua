@@ -77,7 +77,7 @@ end
 function PART:OnChildAdd(part)
 	local ent = self:GetEntity()
 	
-	if ent:IsValid() then
+	if ent:IsValid() and part.ClassName ~= "event" then
 		part:SetOwner(ent)
 	end
 end
