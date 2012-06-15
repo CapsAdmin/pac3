@@ -169,6 +169,11 @@ function PART:SetRelativeBones(b)
 	end
 end
 
+function PART:SetDrawWeapon(b)
+	self.DrawWeapon = b
+	self:UpdateWeaponDraw(self:GetOwner())
+end
+
 function PART:GetModel()
 	local ent = self:GetOwner()
 
@@ -292,7 +297,6 @@ function PART:OnDraw(ent, pos, ang)
 	end
 
 	self:EndClipping()
-	self:UpdateWeaponDraw(ent)
 end
 
 pac.RegisterPart(PART)
