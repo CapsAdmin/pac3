@@ -124,7 +124,7 @@ end
 function PART:UpdateScale(ent)
 	ent = ent or NULL
 	if ent:IsValid() then
-		self:SetRelativeBones(self:GetRelativeBones())
+		if net then ent:SetIK(not self.RelativeBones) end
 		ent:SetModelScale(self.Scale * self.Size)
 		ent:SetupBones()
 	end
@@ -165,7 +165,6 @@ function PART:SetRelativeBones(b)
 	self.RelativeBones = b
 	local ent = self:GetOwner()
 	if ent:IsValid() then
-		if net then ent:SetIK(not b) end
 		self:UpdateScale(ent)
 	end
 end
