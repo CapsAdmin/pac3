@@ -43,13 +43,13 @@ function PART:GetBonePosition(owner, ...)
 	end
 
 	local pos, ang = owner:GetBonePosition(owner:GetBoneParent(self.BoneIndex))
+	owner:InvalidateBoneCache()
 
 	if not pos and not ang then
 		pos, ang = owner:GetBonePosition(self.BoneIndex)
+		owner:InvalidateBoneCache()
 	end
-	
-	owner:InvalidateBoneCache()
-	
+		
 	self.cached_pos = pos
 	self.cached_ang = ang
 

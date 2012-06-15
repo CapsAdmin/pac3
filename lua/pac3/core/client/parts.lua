@@ -433,6 +433,7 @@ do -- meta
 					if ent:IsValid() then
 						-- if the parent part is a model, get the bone position of the parent model
 						pos, ang = ent:GetBonePosition(self.BoneIndex)
+						ent:InvalidateBoneCache()
 					else
 						-- else just get the origin of the part
 						if not pos or not ang then 
@@ -443,6 +444,7 @@ do -- meta
 				elseif owner:IsValid() then
 					-- if there is no parent, default to owner bones
 					pos, ang = owner:GetBonePosition(idx or self.BoneIndex)
+					owner:InvalidateBoneCache()
 				end
 			else
 				-- default to owner origin until BoneIndex is ready
