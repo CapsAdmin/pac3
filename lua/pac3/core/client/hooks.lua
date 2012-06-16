@@ -9,9 +9,7 @@ local function draw(ent, part, event)
 end
 
 function pac.HookEntityRender(ent, part)
-	if part:IsValid() and not part:HasParent() then
-		part = part:GetRootPart()
-	
+	if part:IsValid() and not part:HasParent() then	
 		if not ent.pac_parts then
 			ent.pac_parts = {[part.Id] = part}
 		else

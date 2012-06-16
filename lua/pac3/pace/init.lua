@@ -16,6 +16,7 @@ include("screenvec.lua")
 include("panels.lua")
 
 pace.ActivePanels = pace.ActivePanels or {}
+pace.Editor = NULL
 
 function pace.OpenEditor()
 	local editor = pace.CreatePanel("editor")
