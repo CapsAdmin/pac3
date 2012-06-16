@@ -189,7 +189,11 @@ do -- meta
 			if ent:IsValid() then
 				self:OnAttach(ent)
 				if pac.HookEntityRender then
-					pac.HookEntityRender(ent, self)
+					timer.Simple(0.1, function()
+						if ent:IsValid() and self:IsValid() then
+							pac.HookEntityRender(ent, self:GetRootPart()) 
+						end
+					end)
 				end
 			end
 		end
@@ -319,25 +323,42 @@ do -- meta
 		end
 		
 		function PART:GetRootPart()
-			local p = self
 			
-			for i=1, 100 do
-				local _p = p:GetParent()
-				if not _p:IsValid() then break end
-				p = p:GetParent()
+			if not self:HasParent() then return self end
+		
+			local temp = self
+			
+			for i = 1, 100 do
+				local parent = temp:GetParent()
+				
+				if parent:IsValid() then
+					temp = parent
+				else
+					break
+				end
 			end
 			
-			return p
+			return self
 		end
 		
 		function PART:IsHiddenEx()
-			local p = self
 			
-			for i=1, 100 do
-				local _p = p:GetParent()
-				if not _p:IsValid() then break end
-				if p:IsHidden() then return true end
-				p = p:GetParent()
+			if self:IsHidden() then return true end
+			
+			local temp = self
+			
+			for i = 1, 100 do
+				local parent = temp:GetParent()
+				
+				if parent:IsValid() then
+					if parent:IsHidden() then
+						return true
+					else
+						temp = parent
+					end
+				else
+					break
+				end
 			end
 			
 			return false
@@ -523,8 +544,10 @@ do -- meta
 			end
 			
 			timer.Simple(0.1, function()
-				self:ResolveParentName()
-				self:ResolveAimPartName()
+				if self:IsValid() then
+					self:ResolveParentName()
+					self:ResolveAimPartName()
+				end
 			end)
 		end
 		
@@ -667,7 +690,7 @@ do -- meta
 	
 		local pos, ang, owner
 		function PART:Draw(event, pos, ang)
-			if not self:IsHidden() then
+			if not self:IsHiddenEx() then
 				if self[event] then
 					pos = pos or Vector(0,0,0)
 					ang = ang or Angle(0,0,0)
@@ -681,10 +704,10 @@ do -- meta
 					
 					self.cached_pos = pos
 					self.cached_ang = ang
-										
+
 					self[event](self, owner, pos, ang)
 				end
-				
+								
 				for index, part in pairs(self:GetChildren()) do
 					if part[event] then
 						part:Draw(event, pos, ang)
