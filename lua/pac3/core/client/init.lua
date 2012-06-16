@@ -25,14 +25,17 @@ end
 function pac.RemoveAllPACEntities()
 	for key, ent in pairs(ents.GetAll()) do
 		if ent.IsPACEntity then
-			ent:Remove()
+			if pac.UnhookEntityRender then
+				pac.UnhookEntityRender(ent)
+			end
+			--ent:Remove()
 		end
 	end
 end
 
 function pac.Panic()
 	pac.RemoveAllParts()
-	--pac.RemoveAllPACEntities()
+	pac.RemoveAllPACEntities()
 	pac.Parts = {}
 end
 

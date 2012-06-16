@@ -2,8 +2,6 @@ local PART = {}
 
 PART.ClassName = "event"
 PART.HideGizmo = true
-PART.NeedsParent = true
-
 
 PART.Events = 
 {

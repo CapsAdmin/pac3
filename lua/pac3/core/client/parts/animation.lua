@@ -1,7 +1,6 @@
 local PART = {}
 
 PART.ClassName = "animation"
-PART.NeedsParent = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Loop", true)

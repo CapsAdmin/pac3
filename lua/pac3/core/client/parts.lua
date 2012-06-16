@@ -164,21 +164,33 @@ do -- meta
 		end
 
 		function PART:CheckOwner(ent)
+			local parent = self:GetParent()
+			
+			if parent:IsValid() then
+				return parent:CheckOwner(ent)
+			end
+		
 			if self.OwnerName ~= "" then
 				local ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent)
-				self:SetOwner(ent)
+				if ent ~= self:GetOwner() then
+					self:SetOwner(ent)
+					return true
+				end
 			end
 		end
 
 		function PART:SetOwner(ent)
 			ent = ent or NULL
-			
+						
 			self:OnDetach(self:GetOwner())
 			
 			self.Owner = ent
 			
 			if ent:IsValid() then
 				self:OnAttach(ent)
+				if pac.HookEntityRender then
+					pac.HookEntityRender(ent, self)
+				end
 			end
 		end
 		
@@ -186,7 +198,10 @@ do -- meta
 			local parent = self:GetParent()
 			
 			if parent:IsValid() then
-				if self.ClassName ~= "event" and parent.ClassName == "model" and parent.Entity:IsValid() then
+				if 
+					self.ClassName ~= "event" and 
+					parent.ClassName == "model" and parent.Entity:IsValid() 
+				then
 					return parent.Entity
 				end
 				return parent:GetOwner()
@@ -591,11 +606,7 @@ do -- meta
 		function PART:OnHide() end
 		function PART:OnShow() end
 		
-		function PART:OnSetOwner(ent)
-			if not ent:IsPlayer() then
-				self.PostDrawTranslucentRenderables = self.PostDrawTranslucentRenderables or self.PostPlayerDraw
-			end
-		end
+		function PART:OnSetOwner(ent) end
 	end
 	
 	do -- highlight
@@ -656,30 +667,31 @@ do -- meta
 	
 		local pos, ang, owner
 		function PART:Draw(event, pos, ang)
-			if self[event] and not self:IsHidden() then
-				pos = pos or Vector(0,0,0)
-				ang = ang or Angle(0,0,0)
-				
-				owner = self:GetOwner()
-				
-				pos, ang = self:GetDrawPosition(owner, pos, ang)
-				
+			if not self:IsHidden() then
+				if self[event] then
 					pos = pos or Vector(0,0,0)
-				ang = ang or Angle(0,0,0)
-				
-				self.cached_pos = pos
-				self.cached_ang = ang
-				
-				self[event](self, owner, pos, ang)
+					ang = ang or Angle(0,0,0)
+					
+					owner = self:GetOwner()
+					
+					pos, ang = self:GetDrawPosition(owner, pos, ang)
+					
+						pos = pos or Vector(0,0,0)
+					ang = ang or Angle(0,0,0)
+					
+					self.cached_pos = pos
+					self.cached_ang = ang
+					
+					self[event](self, owner, pos, ang)
 
-			end
-			
-			for index, part in pairs(self:GetChildren()) do
-				if part[event] and not part:IsHidden() then
-					part:Draw(event, pos, ang)
+				end
+				
+				for index, part in pairs(self:GetChildren()) do
+					if part[event] then
+						part:Draw(event, pos, ang)
+					end
 				end
 			end
-			
 			if pos and ang and owner and self:IsHighlighting() then
 				self:DrawHighlight(owner, pos, ang)
 			end

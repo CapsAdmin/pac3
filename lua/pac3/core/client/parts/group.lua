@@ -2,7 +2,6 @@ local PART = {}
 
 PART.ClassName = "group"
 PART.HideGizmo = true
-PART.NeedsParent = false
 
 function PART:Initialize()
 	self.StorableVars = {}
@@ -15,7 +14,8 @@ function PART:Initialize()
 		pac.GetSet(self, "Hide", false)
 	pac.EndStorableVars()
 	
-	self:SetOwnerName("self")
+	-- hacks
+	timer.Simple(0.1, function() self:SetOwnerName("self") end) 
 end
 
 pac.RegisterPart(PART)

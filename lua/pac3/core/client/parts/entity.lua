@@ -2,8 +2,6 @@ local PART = {}
 
 PART.ClassName = "entity"	
 PART.HideGizmo = true
-PART.PrePlayerDraw = true
-PART.PostPlayerDraw = true
 
 function PART:Initialize()
 	self.ClipPlanes = {}
@@ -122,24 +120,25 @@ function PART:EndClipping(bclip)
 end
 
 function PART:UpdateScale(ent)
-	ent = ent or NULL
+	ent = ent or self:GetOwner()
 	if ent:IsValid() then
-		if net then ent:SetIK(not self.RelativeBones) end
 		ent:SetModelScale(self.Scale * self.Size)
 		ent:SetupBones()
+		if net then 
+			ent:SetIK(not self.RelativeBones) 
+			ent:SetupBones()
+		end
 	end
 end
 
 function PART:SetSize(var)
 	self.Size = var
-	local ent = self:GetOwner()
-	self:UpdateScale(ent)
+	self:UpdateScale()
 end
 
 function PART:SetScale(var)	
 	self.Scale = var
-	local ent = self:GetOwner()
-	self:UpdateScale(ent)
+	self:UpdateScale()
 end
 
 PART.Colorf = Vector(1,1,1)
@@ -211,13 +210,23 @@ function PART:UpdateAll(ent)
 	self:UpdateColor(ent)
 end
 
-function PART:OnDetach(ent)
-	if ent:IsValid() and not ent:IsPlayer() then
-		ent:SetNoDraw(false)
-		if ent.pac_original_model then
-			ent:SetModel(ent.pac_original_model)
-		end
+function PART:OnAttach(ent)
+	if not ent:IsPlayer() then
+		ent:SetNoDraw(true)
 	end	
+	
+	ent.pac_old_scale = ent.pac_old_scale or ent:GetModelScale()
+end
+
+function PART:OnDetach(ent)
+	if not ent:IsPlayer() then
+		ent:SetNoDraw(false)
+	end	
+	
+	if ent.pac_old_scale then
+		ent:SetModelScale(ent.pac_old_scale)
+		ent:SetupBones()
+	end
 end
 
 local aaa = false
@@ -233,10 +242,6 @@ end
 local bclip
 
 function PART:PreDraw(ent, pos, ang)
-	if ent:IsValid() and not ent:IsPlayer() then
-		ent:SetNoDraw(true)
-	end	
-
 	--bclip = self:StartClipping(pos, ang)
 	
 	self:UpdateAll(ent)
