@@ -1,8 +1,6 @@
 local PART = {}
 
 PART.ClassName = "bone"
-PART.NeedsParent = true
-
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Modify", true)

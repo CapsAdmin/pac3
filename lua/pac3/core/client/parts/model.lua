@@ -1,6 +1,7 @@
 local PART = {}
 
 PART.ClassName = "model"
+PART.ManualDraw = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "BoneMerge", false)
@@ -97,6 +98,7 @@ function PART:OnDraw(owner, pos, ang)
 	
 	self:CheckBoneMerge()
 	
+	
 	local ent = self.Entity
 
 	if ent:IsValid() then
@@ -125,7 +127,7 @@ function PART:OnDraw(owner, pos, ang)
 					render.CullMode(MATERIAL_CULLMODE_CW)
 				end
 			end
-						
+
 			if self.Colorf then 
 				render.SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness) 
 			end

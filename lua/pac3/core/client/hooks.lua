@@ -1,131 +1,93 @@
---PAC_RENDER_METHOD_PLAYER = true
-
-if PAC_RENDER_METHOD_PLAYER then
-	function pac.PrePlayerDraw(ply)
-		if not ply:IsPlayer() then return end
-		
-		for key, part in pairs(pac.GetParts()) do
-			if 
-				not part.Screenspace and 
-				not part:IsHidden() and
-				part:GetOwner() == ply and 
-				not part:HasParent() 
-			then
-				part:Draw("PreDraw")
-			end
+local function draw(ent, part, event)
+	for key, part in pairs(ent.pac_parts) do
+		if part:IsValid() then 
+			part:Draw(event)
+		else
+			ent.pac_parts[key] = nil
 		end
-	end
-	pac.AddHook("PrePlayerDraw")
-
-	function pac.PostPlayerDraw(ply)
-		if not ply:IsPlayer() then return end
-		
-		for key, part in pairs(pac.GetParts()) do
-			if 
-				not part.Screenspace and 
-				not part:IsHidden() and
-				part:GetOwner() == ply and 
-				not part:HasParent() 
-			then
-				part:Draw("OnDraw")
-			end
-		end
-	end
-	pac.AddHook("PostPlayerDraw")
-
-	function pac.PostDrawTranslucentRenderables()
-		for key, part in pairs(pac.GetParts()) do
-			if 
-				not part:IsHidden() and
-				(part.Translucent or not part:GetOwner():IsPlayer()) and
-				not part:HasParent() 
-			then
-				part:Draw("PreDraw")
-				part:Draw("OnDraw")
-			end
-		end
-	end
-	pac.AddHook("PostDrawTranslucentRenderables")
-
-	function pac.RenderScreenspaceEffect()
-		for key, part in pairs(pac.GetParts()) do
-			if 
-				not part:IsHidden() and
-				part.Screenspace and
-				not part:HasParent() 
-			then
-				part:Draw("OnDraw")
-			end
-		end
-	end
-	pac.AddHook("RenderScreenspaceEffect")
-else
-	function pac.PrePlayerDraw(ply)
-		if not ply:IsPlayer() then return end
-		
-		for key, part in pairs(pac.GetParts()) do
-			if 
-				not part.Screenspace and
-				part.PrePlayerDraw and
-				not part:IsHidden() and
-				part:GetOwner() == ply 
-			then
-				part:Draw("PreDraw")
-			end
-		end
-	end
-	pac.AddHook("PrePlayerDraw")
-
-	function pac.PostPlayerDraw(ply)
-		if not ply:IsPlayer() then return end
-		
-		for key, part in pairs(pac.GetParts()) do
-			if 
-				not part.Screenspace and
-				part.PostPlayerDraw and 
-				not part:IsHidden() and
-				part:GetOwner() == ply 
-			then
-				part:Draw("OnDrawz")
-			end
-		end
-	end
-	pac.AddHook("PostPlayerDraw")
-
-	function pac.PostDrawTranslucentRenderables()
-		for key, part in pairs(pac.GetParts()) do
-			if 
-				not part:IsHidden() and
-				not part:HasParent() 
-			then
-				local owner = part:GetOwner()
-				if owner ~= LocalPlayer() or LocalPlayer():ShouldDrawLocalPlayer() then
-					if not owner:IsPlayer() then 
-						part:Draw("PreDraw")
-					end
-					part:Draw("OnDraw")
-				end
-			end
-		end
-	end
-	pac.AddHook("PostDrawTranslucentRenderables")
-
-	function pac.RenderScreenspaceEffect()
-		for key, part in pairs(pac.GetParts()) do
-			if 
-				part.Screenspace and
-				not part:IsHidden() and
-				not part:HasParent() 
-			then
-				local owner = part:GetOwner()
-				if owner ~= LocalPlayer() or LocalPlayer():ShouldDrawLocalPlayer() then
-					part:Draw("OnDraw")
-				end
-			end
-		end
-	end
-	pac.AddHook("RenderScreenspaceEffect")
+	end	
 end
+
+function pac.HookEntityRender(ent, part)
+	if part:IsValid() then
+		part = part:GetRootPart()
+	
+		if not ent.pac_parts then
+			ent.pac_parts = {[part.Id] = part}
+		else
+			ent.pac_parts[part.Id] = part
+		end
+
+		if 
+			ent.pac_old_RenderOverride == nil and
+			ent.pac_overriden_RenderOverride and 
+			ent.RenderOverride ~= ent.pac_overriden_RenderOverride 
+		then
+			if ent.RenderOverride then
+				local old_RenderOverride = ent.RenderOverride
+				
+				function ent:RenderOverride(...)
+					if not self.pac_parts then
+						pac.UnhookEntityRender(self)
+					else
+						draw(self, part, "PreDraw")			
+						old_RenderOverride(self, ...)
+						draw(self, part, "OnDraw")
+					end		
+				end
+				
+				ent.pac_overriden_RenderOverride = ent.RenderOverride
+				ent.pac_old_RenderOverride = old_RenderOverride
+				
+				--print("hooked existing ", ent, part)
+			else 			
+				function ent:RenderOverride()
+					if not self.pac_parts then
+						pac.UnhookEntityRender(self)
+					else
+						draw(self, part, "PreDraw")			
+						ent:DrawModel()
+						draw(self, part, "OnDraw")
+					end						
+				end
+				
+				ent.pac_overriden_RenderOverride = ent.RenderOverride
+				ent.pac_old_RenderOverride = false
+				
+				--print("hooked ", ent, part)
+			end
+		end
+	end
+end
+
+function pac.UnhookEntityRender(ent)	
+	if ent.pac_old_RenderOverride then
+		ent.RenderOverride = ent.pac_old_RenderOverrid
+	elseif ent.pac_old_RenderOverride == false then
+		ent.RenderOverride = nil
+	end
+
+	ent.pac_overriden_RenderOverride = nil
+	ent.pac_old_RenderOverride = nil
+	ent.pac_parts = nil
+	--print("unhooked ", ent)
+end
+
+function pac.RenderScreenspaceEffect()
+	for key, part in pairs(pac.GetParts()) do
+		if 
+			part.Screenspace and
+			not part:IsHidden() and
+			not part:HasParent() 
+		then
+			local owner = part:GetOwner()
+			if owner ~= LocalPlayer() or LocalPlayer():ShouldDrawLocalPlayer() then
+				part:Draw("OnDraw")
+			end
+		end
+	end
+end
+--pac.AddHook("RenderScreenspaceEffect")
 
 function pac.Tick()
 	pac.CallPartHook("Think")
@@ -134,7 +96,7 @@ pac.AddHook("Tick")
 
 function pac.OnEntityCreated(ent)
 	if ent:IsValid() then
-		for key, part in pairs(pac.GetParts(true)) do
+		for key, part in pairs(pac.GetParts()) do
 			part:CheckOwner(ent)
 		end
 	end
@@ -143,7 +105,7 @@ pac.AddHook("OnEntityCreated")
 
 function pac.EntityRemoved(ent)
 	if ent:IsValid() then
-		for key, part in pairs(pac.GetParts(true)) do
+		for key, part in pairs(pac.GetParts()) do
 			part:CheckOwner(ent)
 		end
 	end

@@ -1,7 +1,6 @@
 local PART = {}
 
 PART.ClassName = "effect"
-PART.NeedsParent = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Effect", "default")
