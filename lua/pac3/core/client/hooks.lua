@@ -9,7 +9,7 @@ local function draw(ent, part, event)
 end
 
 function pac.HookEntityRender(ent, part)
-	if part:IsValid() then
+	if part:IsValid() and not part:HasParent() then
 		part = part:GetRootPart()
 	
 		if not ent.pac_parts then
@@ -19,7 +19,7 @@ function pac.HookEntityRender(ent, part)
 		end
 
 		if 
-			ent.pac_old_RenderOverride == nil and
+			ent.pac_old_RenderOverride == nil or
 			ent.pac_overriden_RenderOverride and 
 			ent.RenderOverride ~= ent.pac_overriden_RenderOverride 
 		then
@@ -30,9 +30,11 @@ function pac.HookEntityRender(ent, part)
 					if not self.pac_parts then
 						pac.UnhookEntityRender(self)
 					else
+						self:InvalidateBoneCache()
 						draw(self, part, "PreDraw")			
 						old_RenderOverride(self, ...)
 						draw(self, part, "OnDraw")
+
 					end		
 				end
 				
@@ -45,8 +47,9 @@ function pac.HookEntityRender(ent, part)
 					if not self.pac_parts then
 						pac.UnhookEntityRender(self)
 					else
+						self:InvalidateBoneCache()
 						draw(self, part, "PreDraw")			
-						ent:DrawModel()
+						self:DrawModel()
 						draw(self, part, "OnDraw")
 					end						
 				end
