@@ -103,8 +103,8 @@ function PART:OnDraw(owner, pos, ang)
 
 	if ent:IsValid() then
 	
-		ent:SetRenderOrigin(pos)
-		ent:SetRenderAngles(ang)
+		ent:SetPos(pos)
+		ent:SetAngles(ang)
 		
 		local bclip
 		
@@ -164,7 +164,7 @@ function PART:OnDraw(owner, pos, ang)
 			render.SetColorModulation(1,1,1)
 			render.SetBlend(1)
 			
-			if net then render.MaterialOverride() else SetMaterialOverride() end
+			if net then render.MaterialOverride() else SetMaterialOverride(0) end
 		
 		if #self.ClipPlanes > 0 then
 			for key, clip in pairs(self.ClipPlanes) do

@@ -676,14 +676,13 @@ do -- meta
 					
 					pos, ang = self:GetDrawPosition(owner, pos, ang)
 					
-						pos = pos or Vector(0,0,0)
+					pos = pos or Vector(0,0,0)
 					ang = ang or Angle(0,0,0)
 					
 					self.cached_pos = pos
 					self.cached_ang = ang
-					
+										
 					self[event](self, owner, pos, ang)
-
 				end
 				
 				for index, part in pairs(self:GetChildren()) do
@@ -692,6 +691,7 @@ do -- meta
 					end
 				end
 			end
+			
 			if pos and ang and owner and self:IsHighlighting() then
 				self:DrawHighlight(owner, pos, ang)
 			end
