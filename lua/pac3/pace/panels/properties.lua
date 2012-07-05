@@ -766,7 +766,7 @@ do -- owner
 	
 	function PANEL:SpecialCallback()
 		pace.SelectEntity(function(ent)
-			pace.current_part:SetOwnerName(ent:GetClass())
+			pace.current_part:SetOwnerName(ent:EntIndex())
 		end)
 	end
 	
