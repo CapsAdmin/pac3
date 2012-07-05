@@ -22,6 +22,7 @@ function PART:Initialize()
 		pac.GetSet(self, "Invert", false)
 		pac.GetSet(self, "DoubleFace", false)
 		pac.GetSet(self, "DrawWeapon", true)
+		pac.GetSet(self, "Fullbright", false)
 		
 		pac.GetSet(self, "RelativeBones", true)
 			

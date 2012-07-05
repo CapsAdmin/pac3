@@ -1,17 +1,27 @@
 local PART = {}
 
 PART.ClassName = "animation"
+PART.HideGizmo = true
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Loop", true)
-	pac.GetSet(PART, "PingPongLoop", false)
-	pac.GetSet(PART, "SequenceName", "invalid name")
-	pac.GetSet(PART, "Sequence", -1)
-	pac.GetSet(PART, "Rate", 1)
-	pac.GetSet(PART, "Offset", 0)
-	pac.GetSet(PART, "Min", 0)
-	pac.GetSet(PART, "Max", 1)
-pac.EndStorableVars()
+function PART:Initialize()
+	self.StorableVars = {}
+	
+	pac.StartStorableVars()
+		pac.GetSet(self, "Name", "")
+		pac.GetSet(self, "Description", "")
+		pac.GetSet(self, "OwnerName", "")
+		pac.GetSet(self, "ParentName", "")
+		pac.GetSet(self, "Hide", false)
+		
+		pac.GetSet(self, "Loop", true)
+		pac.GetSet(self, "PingPongLoop", false)
+		pac.GetSet(self, "SequenceName", "ragdoll")
+		pac.GetSet(self, "Rate", 1)
+		pac.GetSet(self, "Offset", 0)
+		pac.GetSet(self, "Min", 0)
+		pac.GetSet(self, "Max", 1)
+	pac.EndStorableVars()
+end
 
 function PART:GetOwner()
 	local parent = self:GetParent()
@@ -34,7 +44,7 @@ function PART:GetSequenceList()
 			local tbl = {}
 			local last -- hack for gmod 12
 			for i = 1, 1000 do 
-				local name = ent:GetSequenceName()
+				local name = ent:GetSequenceName(i)
 				if name ~= "Unknown" and name ~= last then 
 					tbl[i] = name
 					last = name
@@ -49,6 +59,8 @@ function PART:GetSequenceList()
 end
 
 function PART:OnThink()
+	if self:IsHidden() then return end
+	
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then	
@@ -57,7 +69,7 @@ function PART:OnThink()
 		if seq ~= -1 then
 			ent:ResetSequence(seq)
 		else
-			ent:ResetSequence(self.Sequence)
+			ent:ResetSequence(tonumber(self.SequenceName) or -1)
 		end
 		
 		if self.Rate > 0 then

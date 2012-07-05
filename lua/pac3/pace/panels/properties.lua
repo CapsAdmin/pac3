@@ -9,7 +9,7 @@ pace.PropertyLimits =
 {
 	Sequence = function(self, num)
 		num = tonumber(num)
-		return math.Round(math.max(num, -1))
+		return math.Round(math.min(num, -1))
 	end,
 	
 	Skin = function(self, num)
