@@ -107,24 +107,28 @@ local function find_ent(ent, str)
 end
 
 local function check_owner(a, b)
-	return true--a:GetOwner() == b
+	return a:GetOwner() == b or (not b.CPPIGetOwner or b:CPPIGetOwner() == a or b:CPPIGetOwner() == true)
 end
 
 function pac.HandleOwnerName(owner, name, ent)
 
-	if IsEntity(name) and name:IsValid() then
-		return name
+	if tonumber(name)  then
+		if Entity(tonumber(name)):IsValid() then
+			return Entity(tonumber(name))
+		end
+		
+		return NULL
 	end
 
 	if name == "self" then
 		return owner
 	end
 	
-	if name == "weapon" then
+	if name == "active weapon" then
 		return owner.GetActiveWeapon and owner:GetActiveWeapon()
 	end
 	
-	if name == "vehicle" then
+	if name == "active vehicle" then
 		return owner.GetVehicle and owner:GetVehicle()
 	end
 	
