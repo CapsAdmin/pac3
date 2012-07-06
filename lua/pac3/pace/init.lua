@@ -19,19 +19,26 @@ pace.ActivePanels = pace.ActivePanels or {}
 pace.Editor = NULL
 
 function pace.OpenEditor()
+	pace.SetLanguage()
 	local editor = pace.CreatePanel("editor")
 		editor:SetSize(220, ScrH())
 		editor:Dock(LEFT)
 		editor:MakePopup()
 		editor.Close = function() 
-			pace.Call("CloseEditor") 
-			editor:Remove() 
-			pace.Active = false
+			pace.CloseEditor()
 		end
 	pace.Editor = editor
 	pace.Active = true
 	
 	pace.Call("OpenEditor")
+end
+
+function pace.CloseEditor()
+	if pace.Editor:IsValid() then
+		pace.Call("CloseEditor") 
+		pace.Editor:Remove() 
+		pace.Active = false
+	end
 end
 
 function pace.IsActive()

@@ -46,12 +46,8 @@ function pace.OnCreatePart(class_name, name, desc)
 	if parent:IsValid() then	
 		part:SetParent(parent)
 	end
-	
-	if part.AlternativeName then
-		part:SetName(part.AlternativeName)
-	else
-		part:SetName(name or (class_name .. " " .. pac.GetPartCount(class_name)))
-	end
+
+	part:SetName(name or (L(class_name) .. " " .. pac.GetPartCount(class_name)))
 	
 	if desc then part:SetDescription(desc) end
 		
@@ -158,6 +154,16 @@ function pace.OnOpenMenu()
 			ent:SetupBones()
 		end
 	end)
+	local langmenu = menu:AddSubMenu(L"language")
+	langmenu:AddOption("english", function()
+		pace.SetLanguage("english")
+	end)
+	for key, val in pairs(file.Find("lua/pac3/pace/translations/*", true)) do
+		val = val:gsub("%.txt", "")
+		langmenu:AddOption(val, function()
+			pace.SetLanguage(val)
+		end)
+	end
 	menu:Open()
 	menu:MakePopup()
 end
@@ -165,7 +171,7 @@ end
 local function add_parts(menu)
 	for class_name, tbl in pairs(pac.GetRegisteredParts()) do
 		if not tbl.Internal then
-			menu:AddOption(class_name, function()
+			menu:AddOption(L(class_name), function()
 				pace.Call("CreatePart", class_name)
 			end)--:SetImage(pace.PartIcons[class_name])
 		end

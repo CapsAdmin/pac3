@@ -1,28 +1,44 @@
-local KnownGUIStrings = {}
+pace.KnownGUIStrings = pace.KnownGUIStrings or {}
+pace.CurrentTranslation = {}
 
-function pace.GetKnownGUIStrings()
-	return KnownGUIStrings
-end
-
-function pace.AddLanguage(key, val)
-	language.Add("pace_" .. key, val)
-end
-
-function pace.LanguageString(str, extra)
-	do return str end
-	local lang = str:gsub("%s", "_"):gsub("%p", ""):lower()
-
-	if extra then
-		lang = extra .. lang
+function pace.GetOutputForTranslation()
+	local str = ""
+	
+	for key, val in pairs(pace.KnownGUIStrings) do
+		str = str .. ("%s = %s\n"):format(key:gsub("(.)","_%1_"), val)
 	end
+	
+	return str
+end
 
-	lang = "pace_" .. lang
+local cvar = CreateConVar("pac_language", "english")
 
-	language.Add(lang, str)
+function pace.SetLanguage(lang)
 
-	lang = "#" .. lang
+	lang = lang or cvar:GetString()
+	RunConsoleCommand("pac_language", lang)
+	
+	pace.CurrentTranslation = {}
+	
+	if lang ~= "english" then
+		for _, line in pairs(file.Read("lua/pac3/pace/translations/"..lang..".txt", true):Split("\n")) do
+			local key, val = line:match("(.-) = (.+)")
+			pace.CurrentTranslation[key] = val		
+		end
+	end
+	
+	if pace.Editor and pace.Editor:IsValid() then
+		pace.CloseEditor()
+		timer.Simple(0.1, function()
+			pace.OpenEditor()
+		end)
+	end
+end
 
-	KnownGUIStrings[lang] = str
+function pace.LanguageString(val)
+	local key = val:Trim():lower()
+		
+	pace.KnownGUIStrings[key] = val
 
-	return lang
+	return pace.CurrentTranslation[key] or val
 end

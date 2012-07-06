@@ -1,3 +1,5 @@
+local L = pace.LanguageString
+
 function pace.DrawHUDText(x, y, text)
 	surface.SetDrawColor(255, 255, 255, 255)
 	surface.DrawLine(
@@ -74,7 +76,7 @@ function pace.SelectBone(ent, callback)
 		if tbl[1] then
 			table.sort(tbl, function(a, b) return a.dist < b.dist end)
 			data = tbl[1]
-			pace.DrawHUDText(data.pos.x, data.pos.y, data.friendly)
+			pace.DrawHUDText(data.pos.x, data.pos.y, L(data.friendly))
 		else
 			data = nil
 		end

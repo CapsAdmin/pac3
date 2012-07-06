@@ -693,7 +693,7 @@ do -- boolean
 		chck.OnChange = function() 
 			local b = chck:GetChecked()
 			self.OnValueChanged(b) 
-			self.lbl:SetText(tostring(b))
+			self.lbl:SetText(L(tostring(b)))
 		end
 		self.chck = chck
 		
@@ -704,7 +704,7 @@ do -- boolean
 
 	function PANEL:SetValue(b)
 		self.chck:SetChecked(b)
-		self.lbl:SetText(tostring(b))
+		self.lbl:SetText(L(tostring(b)))
 	end
 
 	function PANEL:OnValueChanged()
@@ -734,7 +734,7 @@ do -- bone
 	
 	function PANEL:SpecialCallback()
 		pace.SelectBone(pace.GetViewEntity(), function(data)
-			self:SetValue(data.friendly)
+			self:SetValue(L(data.friendly))
 			self.OnValueChanged(data.friendly)
 		end)
 	end
