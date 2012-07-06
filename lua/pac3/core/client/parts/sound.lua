@@ -36,7 +36,7 @@ function PART:StopSound()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() and ent.IsPACEntity then
-		ent:StopSounds()
+		ent:StopSound(self.Sound)
 	end
 end
 

@@ -59,7 +59,7 @@ function PART:GetSequenceList()
 end
 
 function PART:OnThink()
-	if self:IsHidden() then return end
+	if self:IsHiddenEx() then return end
 	
 	local ent = self:GetOwner()
 
@@ -73,7 +73,7 @@ function PART:OnThink()
 		end
 		
 		if self.Rate > 0 then
-			local frame = (CurTime() + self.Offset) * self.Rate
+			local frame = (UnPredictedCurTime() + self.Offset) * self.Rate
 			local min = self.Min
 			local max = self.Max
 			if self.PingPongLoop then
