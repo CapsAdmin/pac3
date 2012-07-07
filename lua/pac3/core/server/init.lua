@@ -47,7 +47,14 @@ function pac.PrecacheEffect(name)
 		umsg.Start("pac_effect_precached")
 			umsg.String(name)
 		umsg.End()
-	end
+    -- compat hack
+    if PAC then
+      if PAC.EffectsBlackList and table.HasValue(PAC.EffectsBlackList, effect) then return end
+        umsg.Start("PAC Effect Precached")
+          umsg.String(name)
+        umsg.End()
+      end
+     end
 end
 
 if net then
