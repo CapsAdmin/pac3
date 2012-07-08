@@ -124,10 +124,8 @@ function PART:UpdateScale(ent)
 	ent = ent or self:GetOwner()
 	if ent:IsValid() then
 		ent:SetModelScale(self.Scale * self.Size)
-		ent:SetupBones()
 		if net then 
 			ent:SetIK(not self.RelativeBones) 
-			ent:SetupBones()
 		end
 	end
 end
@@ -209,6 +207,7 @@ end
 function PART:UpdateAll(ent)
 	self:UpdateMaterial(ent)
 	self:UpdateColor(ent)
+	self:UpdateScale(ent)
 end
 
 function PART:OnAttach(ent)

@@ -92,6 +92,13 @@ end
 
 function pac.Tick()
 	pac.CallPartHook("Think")
+	
+	for key, part in pairs(pac.ActiveParts) do
+		if not part:IsValid() then
+			pac.ActiveParts[key] = nil
+			pac.MakeNull(part)
+		end
+	end
 end
 pac.AddHook("Tick")
 

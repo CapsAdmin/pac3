@@ -439,7 +439,6 @@ do -- meta
 		
 		function PART:GetDrawPosition(owner, pos, ang)
 			owner = owner or self:GetOwner()
-			
 			if owner:IsValid() then
 				local pos, ang = self:GetBonePosition(owner, nil, pos, ang)
 		
@@ -452,7 +451,7 @@ do -- meta
 				
 				ang = self:CalcAngles(owner, ang) or ang
 				
-				return pos or Vector(0, 0, 0), ang or Angle(0, 0, 0)
+				return pos or owner:GetPos(), ang or owner:GetAngles()
 			end
 			
 			return Vector(0, 0, 0), Angle(0, 0, 0)
@@ -479,13 +478,13 @@ do -- meta
 					end
 				elseif owner:IsValid() then
 					-- if there is no parent, default to owner bones
-					pos, ang = owner:GetBonePosition(idx or self.BoneIndex)
 					owner:InvalidateBoneCache()
+					pos, ang = owner:GetBonePosition(idx or self.BoneIndex)
 				end
 			else
 				-- default to owner origin until BoneIndex is ready
-				pos = pos or owner:GetPos()
-				ang = ang or owner:GetAngles()
+				pos = owner:GetPos()
+				ang = owner:GetAngles()
 			end
 				
 			return pos, ang
@@ -611,7 +610,8 @@ do -- meta
 			end
 			
 			self:OnRemove()
-			pac.MakeNull(self)
+			
+			self.IsValid = function() return false end
 		end
 
 		function PART:OnAttach() end
@@ -704,7 +704,7 @@ do -- meta
 					
 					self.cached_pos = pos
 					self.cached_ang = ang
-
+					
 					self[event](self, owner, pos, ang)
 				end
 								
