@@ -158,8 +158,8 @@ function pace.OnOpenMenu()
 	langmenu:AddOption("english", function()
 		pace.SetLanguage("english")
 	end)
-	for key, val in pairs(file.Find("lua/pac3/pace/translations/*", true)) do
-		val = val:gsub("%.txt", "")
+	for key, val in pairs(file.Find("lua_temp/pac3/pace/translations/*", _G.net and "GAME" or true)) do
+		val = val:gsub("%.lua", "")
 		langmenu:AddOption(val, function()
 			pace.SetLanguage(val)
 		end)

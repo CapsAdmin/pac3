@@ -21,10 +21,7 @@ function pace.SetLanguage(lang)
 	pace.CurrentTranslation = {}
 	
 	if lang ~= "english" then
-		for _, line in pairs(file.Read("lua/pac3/pace/translations/"..lang..".txt", true):Split("\n")) do
-			local key, val = line:match("(.-) = (.+)")
-			pace.CurrentTranslation[key] = val		
-		end
+		table.Merge(pace.CurrentTranslation, CompileFile("pac3/pace/translations/"..lang..".lua")())
 	end
 	
 	if pace.Editor and pace.Editor:IsValid() then

@@ -17,17 +17,15 @@ if SERVER then
 		for _, name in pairs(getfiles(dir)) do
 			if name:sub(-4) == ".lua" then
 				AddCSLuaFile(dir .. name)
+				print(dir .. name)
 			elseif not name:find(".", nil, true) then
 				add_files(dir .. name .. "/")
+				print(dir .. name .. "/")
 			end
 		end
 	end
 	
 	add_files("pac3/pace/")
-
-	for _, name in pairs(getfiles("pac3/pace/translations/")) do
-		resource.AddSingleFile("pac3/pace/translations/" .. name)
-	end
 end
 
 if CLIENT then
