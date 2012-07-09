@@ -19,6 +19,7 @@ function PART:Initialize()
 		pac.GetSet(self, "Alpha", 1)
 		pac.GetSet(self, "Scale", Vector(1,1,1))
 		pac.GetSet(self, "Size", 1)
+		pac.GetSet(self, "OverallSize", 1)
 		pac.GetSet(self, "Invert", false)
 		pac.GetSet(self, "DoubleFace", false)
 		pac.GetSet(self, "DrawWeapon", true)
@@ -31,6 +32,31 @@ function PART:Initialize()
 		pac.GetSet(self, "BodygroupState", 0)
 		pac.GetSet(self, "DrawShadow", true)
 	pac.EndStorableVars()
+end
+
+function PART:SetOverallSize(num)
+	if self:GetOwner():IsValid() then
+		if num ~= 1 then
+			local owner = self:GetOwner()
+			pac.HookBuildBone(owner)
+			self.pac3_bonebuild_ref = owner
+		end
+	end
+	
+	self.OverallSize = num
+end
+
+function PART:OnBuildBonePositions(ent)
+	if self.OverallSize ~= 1 then
+		for i = 0, ent:GetBoneCount() do
+			local mat = ent:GetBoneMatrix(i)
+			if mat then
+				mat:Scale(Vector() * self.OverallSize)
+				
+				ent:SetBoneMatrix(i, mat)
+			end
+		end
+	end
 end
 
 function PART:AddClipPlane(part)

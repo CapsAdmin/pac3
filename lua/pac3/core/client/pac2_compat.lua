@@ -9,10 +9,12 @@ local bones =
 	["head"] = "valvebiped.bip01_head1",
 	["right clavicle"] = "valvebiped.bip01_r_clavicle",
 	["right upper arm"] = "valvebiped.bip01_r_upperarm",
+	["right upperarm"] = "valvebiped.bip01_r_upperarm",
 	["right forearm"] = "valvebiped.bip01_r_forearm",
 	["right hand"] = "valvebiped.bip01_r_hand",
 	["left clavicle"] = "valvebiped.bip01_l_clavicle",
 	["left upper arm"] = "valvebiped.bip01_l_upperarm",
+	["left upperarm"] = "valvebiped.bip01_l_upperarm",
 	["left forearm"] = "valvebiped.bip01_l_forearm",
 	["left hand"] = "valvebiped.bip01_l_hand",
 	["right thigh"] = "valvebiped.bip01_r_thigh",
@@ -26,6 +28,7 @@ local bones =
 }
 
 local function translate_bone(bone)
+	if bones[bone] then return bones[bone] end
 	if not bone.lower then debug.Trace() return "" end
 	bone = bone:lower()
 	for key, val in pairs(bones) do
@@ -43,18 +46,7 @@ function pac.ConvertPAC2Config(data, ent)
 	local base = pac.CreatePart("group")
 		base:SetName("pac2 outfit")
 		
-	for bone, data in pairs(data.bones) do
-		local part = pac.CreatePart("bone")			
-			part:SetParent(base)
-			part:SetName(bone)
-			part:SetBone(translate_bone(bone))
-			part:SetSize(tonumber(data.size))
-			part:SetScale(data.scale)
-			part:SetPosition(data.offset)
-			part:SetAngles(data.angles)
-	end
-	
-	for key, data in pairs(data.parts)  do
+	for key, data in pairs(data.parts) do
 		if data.sprite.Enabled then
 			local part = pac.CreatePart("sprite") 
 				part:SetParent(base)
@@ -66,15 +58,22 @@ function pac.ConvertPAC2Config(data, ent)
 				part:SetColor(Vector(data.sprite.color.r, data.sprite.color.g, data.sprite.color.b))
 				part:SetAlpha(data.sprite.color.a / 255)
 				
+				part:SetPosition(data.offset*1)
+				part:SetAngles(data.angles*1)
+				part:SetAngleVelocity(Angle(data.anglevelocity.p, -data.anglevelocity.r, data.anglevelocity.y)*0.5)
+				
 				part:SetMaterial(data.sprite.material)
 				part:SetSizeX(data.sprite.x)
 				part:SetSizeY(data.sprite.y)
 				part:SetEyeAngles(data.eyeangles)
 				if data.weaponclass and data.weaponclass ~= "" then  
 					local part_ = pac.CreatePart("event")
+					part_:SetName(part.Name .. " weapon class")
 					part_:SetParent(part)
 					part_:SetEvent("weapon_class")
-					part_:SetArguments(data.weaponclass)
+					part_:SetOperator("find simple")
+					part_:SetInvert(true)
+					part_:SetArguments(data.weaponclass .. "@@" .. (data.hideweaponclass and "1" or "0"))
 				end
 		end
 		
@@ -88,14 +87,21 @@ function pac.ConvertPAC2Config(data, ent)
 				
 				part:SetColor(Vector(data.light.r, data.light.g, data.light.b))
 				
+				part:SetPosition(data.offset*1)
+				part:SetAngles(data.angles*1)
+				part:SetAngleVelocity(Angle(data.anglevelocity.p, -data.anglevelocity.r, data.anglevelocity.y)*0.5)
+				
 				part:SetBrightness(data.light.Brightness)
 				part:SetSize(data.light.Size)
-				part:SetEyeAngles(data.eyeangles)
+				
 				if data.weaponclass and data.weaponclass ~= "" then  
 					local part_ = pac.CreatePart("event")
+					part_:SetName(part.Name .. " weapon class")
 					part_:SetParent(part)
 					part_:SetEvent("weapon_class")
-					part_:SetArguments(data.weaponclass)
+					part_:SetOperator("find simple")
+					part_:SetInvert(true)
+					part_:SetArguments(data.weaponclass .. "@@" .. (data.hideweaponclass and "1" or "0"))
 				end
 		end
 		
@@ -113,6 +119,10 @@ function pac.ConvertPAC2Config(data, ent)
 				part:SetColor(Vector(data.text.outlinecolor.r, data.text.outlinecolor.g, data.text.outlinecolor.b))
 				part:SetAlpha(data.text.outlinecolor.a / 255)
 				
+				part:SetPosition(data.offset*1)
+				part:SetAngles(data.angles*1)
+				part:SetAngleVelocity(Angle(data.anglevelocity.p, -data.anglevelocity.r, data.anglevelocity.y)*0.5)
+				
 				part:SetOutline(data.text.outline)
 				part:SetText(data.text.text)
 				part:SetFont(data.text.font)
@@ -120,9 +130,12 @@ function pac.ConvertPAC2Config(data, ent)
 				part:SetEyeAngles(data.eyeangles)
 				if data.weaponclass and data.weaponclass ~= "" then  
 					local part_ = pac.CreatePart("event")
+					part_:SetName(part.Name .. " weapon class")
 					part_:SetParent(part)
 					part_:SetEvent("weapon_class")
-					part_:SetArguments(data.weaponclass)
+					part_:SetOperator("find simple")
+					part_:SetInvert(true)
+					part_:SetArguments(data.weaponclass .. "@@" .. (data.hideweaponclass and "1" or "0"))
 				end
 		end
 		
@@ -133,45 +146,32 @@ function pac.ConvertPAC2Config(data, ent)
 				part:SetName(data.name .. " " .. part.ClassName)
 				part:SetBone(translate_bone(data.bone))
 				
+				part:SetPosition(data.offset*1)
+				part:SetAngles(data.angles*1)
+				part:SetAngleVelocity(Angle(data.anglevelocity.p, -data.anglevelocity.r, data.anglevelocity.y)*0.5)
+				
 				part:SetStartSize(data.trail.startsize)
 				part:SetColor(data.trail.color)
 				part:SetMaterial(data.trail.material)
 				part:SetLength(data.trail.length)		
 				if data.weaponclass and data.weaponclass ~= "" then  
 					local part_ = pac.CreatePart("event")
+					part_:SetName(part.Name .. " weapon class")
 					part_:SetParent(part)
 					part_:SetEvent("weapon_class")
-					part_:SetArguments(data.weaponclass)
+					part_:SetOperator("find simple")
+					part_:SetInvert(true)
+					part_:SetArguments(data.weaponclass .. "@@" .. (data.hideweaponclass and "1" or "0"))
 				end		
 		end
-		
-		if data.effect.Enabled then
-			local part = pac.CreatePart("effect")
-				part:SetParent(base)
-				part.pac2_part = data	
-				part:SetName(data.name .. " " .. part.ClassName)
-				part:SetBone(translate_bone(data.bone))
-				
-				part:SetPosition(data.offset)
-				part:SetAngles(data.angles)
-				
-				part:SetLoop(data.effect.loop)
-				part:SetRate(data.effect.rate)
-				part:SetEffect(data.effect.effect)
-				if data.weaponclass and data.weaponclass ~= "" then  
-					local part_ = pac.CreatePart("event")
-					part_:SetParent(part)
-					part_:SetEvent("weapon_class")
-					part_:SetArguments(data.weaponclass)
-				end
-		end
-		
-		if data.color.a ~= 0 and data.size ~= 0 and data.scale ~= vector_origin then
+			
+		if true or  data.color.a ~= 0 and data.size ~= 0 and data.scale ~= vector_origin or data.effect.Enabled then
 			local part = pac.CreatePart("model")
 				part:SetParent(base)
 				part.pac2_part = data
 				part:SetName(data.name)
 				part:SetBone(translate_bone(data.bone))
+				part:SetOriginFix(data.originfix)
 				
 				part:SetMaterial(data.material)
 				
@@ -180,28 +180,52 @@ function pac.ConvertPAC2Config(data, ent)
 				
 				part:SetModel(data.model)
 				part:SetSize(data.size)
-				part:SetScale(data.scale)
-				part:SetPosition(data.offset)
-				part:SetAngles(data.angles)
+				part:SetScale(data.scale*1)
+				
+				part:SetPosition(data.offset*1)
+				part:SetAngles(data.angles*1)
+				part:SetAngleVelocity(Angle(data.anglevelocity.p, -data.anglevelocity.r, data.anglevelocity.y)*0.5)
+				
 				part:SetInvert(data.mirrored)
 				part:SetFullbright(data.fullbright)
 				part:SetEyeAngles(data.eyeangles)
-				
+
+				if data.effect.Enabled then
+					local part2 = pac.CreatePart("effect")
+					part2:SetName(data.name .. " " .. part2.ClassName)
+					part2:SetParent(part)
+					part2:SetBone(translate_bone(data.bone))
+										
+					part2:SetLoop(data.effect.loop)
+					part2:SetRate(data.effect.rate)
+					part2:SetEffect(data.effect.effect)
+					if data.weaponclass and data.weaponclass ~= "" then  
+						local part_ = pac.CreatePart("event")
+						part_:SetName(part2.Name .. " weapon class")
+						part_:SetParent(part2)
+						part_:SetEvent("weapon_class")
+						part_:SetOperator("find simple")
+						part_:SetInvert(true)
+						part_:SetArguments(data.weaponclass .. "@@" .. (data.hideweaponclass and "1" or "0"))
+					end
+				end				
+								
 				if data.clip.Enabled then
 					local part2 = part:CreatePart("clip")
-						part2:SetName(data.name .. " " .. part2.ClassName)				
+						part2:SetName(data.name .. " " .. part2.ClassName)	
+						if data.clip.bone and data.clip.bone ~= "" then 
+							part2:SetBone(data.clip.bone)
+						end
 						part2:SetParent(part)
-						part2:SetBone(data.clip.bone)
-						
 						part2:SetPosition(data.clip.angles:Forward() * data.clip.distance)
-						part2:SetAngles(data.clip.angles)
+						part2:SetAngles(data.clip.angles*-1)
 				end
 				
 				if data.animation.Enabled then
 					local part2 = part:CreatePart("animation")		
 						part2:SetParent(part)
 						part2:SetName(data.name .. " " .. part.ClassName)				
-						part2:SetSequence(data.animation.sequence)
+						part2:SetSequenceName(data.animation.sequence)
 						part2:SetRate(data.animation.rate)
 						part2:SetMin(data.animation.min)
 						part2:SetMax(data.animation.max)
@@ -211,7 +235,9 @@ function pac.ConvertPAC2Config(data, ent)
 				end
 				
 				if data.modelbones.Enabled then
-					part:SetOverallSize(data.modelbones.overallsize)
+					part:SetOverallSize(tonumber(data.modelbones.overallsize))
+					part:SetBoneMerge(data.modelbones.merge)
+					part.pac2_modelbone = data.modelbones.redirectparent
 					
 					for key, bone in pairs(data.modelbones.bones) do
 						bone.size = tonumber(bone.size)
@@ -227,9 +253,10 @@ function pac.ConvertPAC2Config(data, ent)
 							part2:SetParent(part)
 							part2:SetBone(part:GetEntity():GetBoneName(key))
 							
-							part2:SetScale(bone.scale)
-							part2:SetAngles(bone.angles)
-							part2:SetPosition(bone.offset)
+							part2:SetScale(bone.scale*1)
+							part2:SetAngles(bone.angles*1)
+							part2:SetPosition(bone.offset*1)
+							part2:SetAngleVelocity(bone.anglevelocity*1)
 							
 							part2:SetSize(bone.size)
 					end
@@ -237,32 +264,54 @@ function pac.ConvertPAC2Config(data, ent)
 				
 				if data.weaponclass and data.weaponclass ~= "" then 
 					local part_ = pac.CreatePart("event")
+					part_:SetName(part.Name .. " weapon class")
 					part_:SetParent(part)
 					part_:SetEvent("weapon_class")
-					part_:SetArguments(data.weaponclass)
+					part_:SetOperator("find simple")
+					part_:SetInvert(true)
+					part_:SetArguments(data.weaponclass .. "@@" .. (data.hideweaponclass and "1" or "0"))
 				end
 		end
 	end
 	
 	local part = pac.CreatePart("entity")
 		part:SetParent(base)
-		part:SetName("player mod")
+		part:SetName("player")
 		
 		part:SetColor(Vector(data.player_color.r, data.player_color.g, data.player_color.b))
-		part:SetAlpha(data.player_color.a)
+		part:SetAlpha(data.player_color.a/255)
 		part:SetMaterial(data.player_material)
-		part:SetScale(data.overall_scale)
+		part:SetScale(data.overall_scale*1)
 		part:SetDrawWeapon(data.drawwep)
+		
+	for bone, data in pairs(data.bones) do
+		local part_ = pac.CreatePart("bone")			
+			part_:SetParent(part)
+			part_:SetName(bone)
+			part_:SetBone(translate_bone(bone))
+			part_:SetSize(tonumber(data.size))
+			part_:SetScale(data.scale*1)
+			part_:SetPosition(data.offset*1)
+			part_:SetAngles(data.angles*1)
+	end
 	
-	for key, part in pairs(base:GetChildren()) do
+	for key, part in pairs(pac.GetParts(true)) do
 		if part.pac2_part and part.pac2_part.parent and part.pac2_part.parent ~= "none" then
-			for key, parent in pairs(base:GetChildren()) do
+			for key, parent in pairs(pac.GetParts(true)) do
 				if parent:GetName() == part.pac2_part.parent then
 					part:SetParent(parent)
-					print(part, parent)
+					if parent.pac2_modelbone then
+						part:SetBone(translate_bone(parent.pac2_modelbone))
+					end
 				end
 			end
 		end
+	end
+	
+	-- hacks
+	
+	for key, part in pairs(pac.GetParts(true)) do
+		timer.Simple(0.1, function() part:OnParent(ent) end)
 	end
 
 	return base

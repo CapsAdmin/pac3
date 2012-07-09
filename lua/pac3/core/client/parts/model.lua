@@ -18,6 +18,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
 	pac.GetSet(PART, "Size", 1)
 	pac.GetSet(PART, "OverallSize", 1)
+	pac.GetSet(PART, "OriginFix", false)
 	pac.GetSet(PART, "Model", "models/props_junk/watermelon01.mdl")
 pac.EndStorableVars()
 
@@ -25,19 +26,22 @@ function PART:SetOverallSize(num)
 	if self.Entity:IsValid() then
 		if num ~= 1 then
 			pac.HookBuildBone(self.Entity)
+			self.pac3_bonebuild_ref = self.Entity
 		end
 	end
 	
 	self.OverallSize = num
 end
 
-function PART:BuildBonePositions(ent)
-	for i = 0, ent:GetBoneCount() do
-		local mat = ent:GetBoneMatrix(i)
-		if mat then
-			mat:Scale(Vector()*self.OverallSize)
-			
-			ent:SetBoneMatrix(i, mat)
+function PART:OnBuildBonePositions(ent)
+	if self.OverallSize ~= 1 then
+		for i = 0, ent:GetBoneCount() do
+			local mat = ent:GetBoneMatrix(i)
+			if mat then
+				mat:Scale(Vector()*self.OverallSize)
+				
+				ent:SetBoneMatrix(i, mat)
+			end
 		end
 	end
 end
@@ -125,8 +129,20 @@ function PART:OnDraw(owner, pos, ang)
 
 	if ent:IsValid() then
 	
-		ent:SetPos(pos)
-		ent:SetAngles(ang)
+		if self.OriginFix and ent.pac3_center then			
+			local pos, ang = LocalToWorld(
+				ent.pac3_center * self.Scale * -self.Size, 
+				Angle(0,0,0), 
+				
+				pos, 
+				ang
+			)
+			ent:SetPos(pos)
+			ent:SetAngles(ang)
+		else		
+			ent:SetPos(pos)
+			ent:SetAngles(ang)
+		end
 		
 		local bclip
 		
@@ -213,7 +229,8 @@ function PART:SetModel(var)
 	self.Model = var
 	self.Entity.pac_bones = nil
 	self.Entity:SetModel(var)
-	self:SetTooltip(var)
+	local min, max = self.Entity:GetRenderBounds()
+	self.Entity.pac3_center = (min + max) * 0.5
 end
 
 function PART:SetScale(var)

@@ -7,7 +7,20 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Loop", true)
 	pac.GetSet(PART, "Follow", true)
 	pac.GetSet(PART, "Rate", 1)
+	
+	--pac.GetSet(PART, "ControlPointA", "")
+	--pac.GetSet(PART, "ControlPointB", "")
 pac.EndStorableVars()
+
+function PART:SetControlPointA(var)
+	self.ControlPointA = var
+	self:ResolveControlPoints()
+end
+
+function PART:SetControlPointB(var)
+	self.ControlPointB = var
+	self:ResolveControlPoints()
+end
 
 function PART:GetOwner()
 	local parent = self:GetParent()
@@ -58,7 +71,7 @@ function PART:OnDraw(owner, pos, ang)
 			if self.last_spew < time then
 				ent:StopParticles()
 				self:Emit(pos, ang)
-				self.last_spew = time + self.Rate
+				self.last_spew = time + math.max(self.Rate, 0.1)
 			end
 		end
 	end
@@ -73,6 +86,22 @@ function PART:OnRemove()
 	end
 end
 
+function PART:ResolveControlPoints()
+	for key, part in pairs(pac.GetParts()) do	
+		if part:GetName() == self.ControlPointA then
+			self.ControlPointAPart = part
+			break
+		end
+	end
+	
+	for key, part in pairs(pac.GetParts()) do	
+		if part:GetName() == self.ControlPointB then
+			self.ControlPointBPart = part
+			break
+		end
+	end
+end
+
 function PART:Emit(pos, ang)
 	local ent = self:GetOwner()
 	
@@ -81,15 +110,25 @@ function PART:Emit(pos, ang)
 			ent:StopParticles()
 			return
 		end
-
-		if self.Follow then
+		
+		if self.ControlPointAPart and self.ControlPointBPart then
+			ent:CreateParticleEffect(
+				self.Effect, 
+				{
+					entity = self.ControlPointAPart.Entity or self.ControlPointAPart:GetOwner(),
+					attachtype = PATTACH_ABSORIGIN_FOLLOW,
+				},
+				{
+					entity = self.ControlPointBPart.Entity or self.ControlPointBPart:GetOwner(),
+					attachtype = PATTACH_ABSORIGIN_FOLLOW,
+				}
+			)
+		elseif self.Follow then
 			ParticleEffectAttach(self.Effect, PATTACH_ABSORIGIN_FOLLOW, ent, 1)
 		else
 			ent:StopParticles()
 			ParticleEffect(self.Effect, pos, ang, ent)
 		end
-
-		self:SetTooltip(self.Effect)
 	end
 end
 

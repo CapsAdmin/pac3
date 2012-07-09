@@ -13,8 +13,7 @@ pac.EndStorableVars()
 function PART:OnAttach(owner)
 	self.BoneIndex = nil
 	pac.HookBuildBone(owner)
-	
-	self:SetTooltip(self.Bone)
+	self.pac3_bonebuild_ref = owner
 end
 
 function PART:OnParent()
@@ -54,7 +53,7 @@ function PART:GetBonePosition(owner, ...)
 	return pos or Vector(0,0,0), ang or Angle(0,0,0)
 end
 
-function PART:BuildBonePositions(owner)	
+function PART:OnBuildBonePositions(owner)	
 	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone))
 
 	local matrix = owner:GetBoneMatrix(self.BoneIndex)
