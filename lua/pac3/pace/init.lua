@@ -30,6 +30,12 @@ function pace.OpenEditor()
 	pace.Editor = editor
 	pace.Active = true
 	
+	if ctp and ctp.Disable then
+		ctp:Disable()
+	end
+	
+	RunConsoleCommand("pac_in_editor", 1)
+	
 	pace.Call("OpenEditor")
 end
 
@@ -39,6 +45,8 @@ function pace.CloseEditor()
 		pace.Editor:Remove() 
 		pace.Active = false
 	end
+	
+	RunConsoleCommand("pac_in_editor", 0)
 end
 
 function pace.IsActive()
@@ -70,21 +78,7 @@ function pace.Panic()
 end
 
 do -- preview
-
-	local last_inpreview
-
-	hook.Add("HUDPaint", "pac_InPAC3Editor", function()
-		if pace.IsActive() and pace.IsActive() ~= last_inpreview then
-			RunConsoleCommand("pac_in_editor", 1)
-			last_inpreview = pace.IsActive()
-			if ctp and ctp.Disable then
-				ctp:Disable()
-			end
-		elseif not pace.IsActive() and pace.IsActive() ~= last_inpreview then
-			RunConsoleCommand("pac_in_editor", 0)
-			last_inpreview = pace.IsActive()
-		end
-		
+	hook.Add("HUDPaint", "pac_InPAC3Editor", function()		
 		for key, ply in pairs(player.GetAll()) do
 			if ply ~= LocalPlayer() and ply:GetNWBool("in pac3 editor") then
 				local pos_3d = ply:GetBonePosition(ply:LookupBone("ValveBiped.Bip01_Head1"))
