@@ -62,7 +62,6 @@ end
 
 function PART:SetText(str)
 	self.Text = str
-	self:SetTooltip(str)
 end
 
 pac.RegisterPart(PART)

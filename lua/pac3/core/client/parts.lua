@@ -102,9 +102,6 @@ do -- meta
 	pac.GetSet(PART, "PlayerOwner", NULL)
 	pac.GetSet(PART, "Owner", NULL)
 	pac.GetSet(PART, "Parent", pac.NULL)
-	pac.GetSet(PART, "Tooltip")
-	pac.GetSet(PART, "SilkIcon", "plugin")
-	pac.GetSet(PART, "AlternativeName")
 
 	pac.StartStorableVars()
 		pac.GetSet(PART, "OwnerName", "self")
@@ -132,14 +129,10 @@ do -- meta
 		self.AimPart = pac.NULL
 	end
 	
-	function PART:SetName(var, skip_alternative)
+	function PART:SetName(var)
 		for key, part in pairs(pac.GetParts()) do
 			if part:GetName() == var and part ~= self then
-				if not skip_alternative and self.AlternativeName then
-					self:SetName(self.AlternativeName, true)
-				else
-					var = var .. " conflict"
-				end
+				var = var .. " conflict"
 				break
 			end
 		end
@@ -500,7 +493,7 @@ do -- meta
 					if wep:IsWeapon() then
 						self.BoneIndex = wep:LookupBone(self:GetRealBoneName(self.Bone, wep))
 						if not self.BoneIndex then
-							self.Error = self.Bone .. " cannot be found on '" .. tostring(owner) .. "' in both self and its active weapon"
+							self.Error = self.Bone .. " cannot be found on '" .. tostring(owner) .. "'"
 							MsgN(self.Error)
 							self.TriedToFindBone = self.Bone
 						end
@@ -620,7 +613,8 @@ do -- meta
 		function PART:OnStore()	end
 		function PART:OnRestore() end
 		
-		function PART:OnThink()	end
+		function PART:OnThink() end
+		function PART:OnBuildBonePositions() end
 		function PART:OnParent() end
 		function PART:OnChildAdd() end
 		function PART:OnUnParent() end
@@ -717,6 +711,19 @@ do -- meta
 			
 			if pos and ang and owner and self:IsHighlighting() then
 				self:DrawHighlight(owner, pos, ang)
+			end
+		end
+	end
+	
+	function PART:BuildBonePositions(owner)
+		self:OnBuildBonePositions(owner)
+		do return end
+		if not self:IsHiddenEx() then
+			
+			self:OnBuildBonePositions(owner)
+			
+			for key, child in pairs(self:GetChildren()) do
+				child:BuildBonePositions(owner)
 			end
 		end
 	end

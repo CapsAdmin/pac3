@@ -122,7 +122,7 @@ pac.AddHook("EntityRemoved")
 
 function pac.EntityBuildBonePositions(ent)	
 	for key, part in pairs(pac.GetParts()) do
-		if not part:IsHiddenEx() and part.BuildBonePositions and (part:GetOwner() == ent or part.OverallSize ~= 1) then
+		if part.pac3_bonebuild_ref == ent then
 			part:BuildBonePositions(ent)
 		end
 	end

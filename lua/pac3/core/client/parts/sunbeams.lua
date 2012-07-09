@@ -31,7 +31,6 @@ end
 
 function PART:SetTrailPath(var)
 	self:SetMaterial(var)
-	self:SetTooltip(var)
 end
 
 function PART:SetMaterial(var)
