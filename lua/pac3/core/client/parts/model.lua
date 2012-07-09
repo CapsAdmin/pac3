@@ -17,8 +17,30 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Alpha", 1)
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
 	pac.GetSet(PART, "Size", 1)
+	pac.GetSet(PART, "OverallSize", 1)
 	pac.GetSet(PART, "Model", "models/props_junk/watermelon01.mdl")
 pac.EndStorableVars()
+
+function PART:SetOverallSize(num)
+	if self.Entity:IsValid() then
+		if num ~= 1 then
+			pac.HookBuildBone(self.Entity)
+		end
+	end
+	
+	self.OverallSize = num
+end
+
+function PART:BuildBonePositions(ent)
+	for i = 0, ent:GetBoneCount() do
+		local mat = ent:GetBoneMatrix(i)
+		if mat then
+			mat:Scale(Vector()*self.OverallSize)
+			
+			ent:SetBoneMatrix(i, mat)
+		end
+	end
+end
 
 PART.Colorf = Vector(1,1,1)
 
