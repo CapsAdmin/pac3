@@ -107,6 +107,18 @@ end
 
 function pace.LoadPartFromFile(part, name)
 	if not name then
+		
+		local frm = vgui.Create("DFrame")
+		frm:SetTitle(L"outfits")
+		local pnl = pace.CreatePanel("browser", frm)
+		pnl:Dock(FILL)
+		
+		frm:SetSize(300, 500)
+		frm:MakePopup()
+		frm:Center()
+		
+		do return end
+		
 		Derma_StringRequest(
 			L"load part",
 			L"filename:",
@@ -118,9 +130,13 @@ function pace.LoadPartFromFile(part, name)
 		)
 	else
 		print("[pac3] loading " .. name)
+		name = name:gsub("%.txt", "")
 		local data = luadata.ReadFile("pac3/" .. name .. ".txt")
 		if data and data.self then
-			part:SetTable(data)
+			if part:IsValid() then
+				part:Clear()	
+				part:SetTable(data)
+			end
 		else
 			ErrorNoHalt("pac3 tried to load non existant part " .. name)
 		end
@@ -164,6 +180,16 @@ function pace.OnOpenMenu()
 			pace.SetLanguage(val)
 		end)
 	end
+		
+	menu:AddSpacer()
+	
+	menu:AddOption(L"clear", function()
+		for key, part in pairs(pac.GetParts()) do
+			part:Remove()
+		end
+		pace.RefreshTree()
+	end)
+		
 	menu:Open()
 	menu:MakePopup()
 end
@@ -230,7 +256,7 @@ function pace.OnPartMenu(obj)
 		obj:Remove()
 		pace.RefreshTree()
 	end)
-		
+
 	menu:Open()
 	menu:MakePopup()
 end
@@ -240,8 +266,21 @@ function pace.OnNewPartMenu()
 	local menu = DermaMenu()
 	menu:MakePopup()
 	menu:SetPos(gui.MousePos())
-	add_parts(menu)
+	
+	menu:AddOption(L"load", function()
+		local obj = pac.CreatePart("group")
+		pace.OnPartSelected(obj)
+		pace.LoadPartFromFile(obj)
+		pace.RefreshTree()
+		CloseDermaMenus()
+	end)
+
 	menu:AddSpacer()
+	
+	add_parts(menu)
+	
+	menu:AddSpacer()
+	
 	menu:AddOption(L"clear", function()
 		for key, part in pairs(pac.GetParts()) do
 			part:Remove()

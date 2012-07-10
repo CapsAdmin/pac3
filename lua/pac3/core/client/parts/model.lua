@@ -22,6 +22,8 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Model", "models/props_junk/watermelon01.mdl")
 pac.EndStorableVars()
 
+PART.Entity = NULL
+
 function PART:SetOverallSize(num)
 	if self.Entity:IsValid() then
 		if num ~= 1 then
