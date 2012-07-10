@@ -256,7 +256,6 @@ function pac.ConvertPAC2Config(data, ent)
 							part2:SetScale(bone.scale*1)
 							part2:SetAngles(bone.angles*1)
 							part2:SetPosition(bone.offset*1)
-							part2:SetAngleVelocity(bone.anglevelocity*1)
 							
 							part2:SetSize(bone.size)
 					end
