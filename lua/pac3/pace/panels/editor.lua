@@ -1,10 +1,12 @@
+local L = pace.LanguageString
+
 local PANEL = {}
 
 PANEL.ClassName = "editor"
 PANEL.Base = "DFrame"
 
 function PANEL:Init()
-	self:SetTitle("pac3 editor")
+	self:SetTitle("pac3 " .. L"editor")
 	self:SetSizable(true)
 	
 	local div = vgui.Create("DVerticalDivider", self)

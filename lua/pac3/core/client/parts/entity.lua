@@ -240,8 +240,6 @@ function PART:OnAttach(ent)
 	if not ent:IsPlayer() then
 		ent:SetNoDraw(true)
 	end	
-	
-	ent.pac_old_scale = ent.pac_old_scale or ent:GetModelScale()
 end
 
 function PART:OnDetach(ent)
@@ -249,10 +247,8 @@ function PART:OnDetach(ent)
 		ent:SetNoDraw(false)
 	end	
 	
-	if ent.pac_old_scale then
-		ent:SetModelScale(ent.pac_old_scale)
-		ent:SetupBones()
-	end
+	ent:SetModelScale(Vector(1,1,1))
+	ent:SetupBones()
 end
 
 local aaa = false

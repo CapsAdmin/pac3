@@ -5,7 +5,9 @@ local part_count = 0 -- unique id thing
 
 function pac.CreatePart(name)
 	local part = class.Create("part", name)
-
+	
+	if not part then return pac.NULL end
+	
 	if part.PreInitialize then 
 		part:PreInitialize()
 	end
