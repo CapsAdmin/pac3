@@ -1,4 +1,3 @@
-setfenv(1, _G)
 pac = pac or {}
 
 pac.Parts = pac.Parts or {}
