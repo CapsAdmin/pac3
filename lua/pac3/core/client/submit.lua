@@ -37,6 +37,7 @@ function pac.SetSubmittedPart(ply, ent, tbl)
 	for key, part in pairs(pac.GetParts()) do
 		if not part:HasParent() and part:GetPlayerOwner() == ply and part:GetName() == tbl.self.Name then
 			part:Clear()
+			part:SetOwner(ent)
 			part:SetTable(tbl)
 			return
 		end
@@ -44,6 +45,7 @@ function pac.SetSubmittedPart(ply, ent, tbl)
 
 	local part = pac.CreatePart(tbl.self.ClassName)
 	part:SetPlayerOwner(ply)
+	part:SetOwner(ent)
 	part:SetTable(tbl)
 end
 
