@@ -534,11 +534,13 @@ do -- meta
 				local part = pac.CreatePart(value.self.ClassName)
 				part:SetTable(value)
 			end
-			
-			timer.Simple(0, function()
+	
+			self:ResolveParentName()
+
+			timer.Simple(0.1, function()
 				if self:IsValid() then
 					self:ResolveParentName()
-					timer.Simple(0, function()
+					timer.Simple(0.1, function()
 						if self:IsValid() then
 							self:UpdateBoneIndex(self:GetOwner())
 						end
