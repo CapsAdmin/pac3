@@ -219,5 +219,5 @@ end
 -- should this be here?
 
 concommand.Add("pac_in_editor", function(ply, _, args)
-	ply:SetNWBool("in pac3 editor", args[1] == "1")
+	ply:SetNWBool("in pac3 editor", tonumber(args[1]) == 1)
 end)
