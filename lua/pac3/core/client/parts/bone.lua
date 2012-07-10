@@ -32,6 +32,14 @@ function PART:GetOwner()
 	return self.BaseClass.GetOwner(self)
 end
 
+function PART:OnThink()
+	-- this is to setup the cached values
+	if self.first_getbpos == nil and self:GetOwner():IsValid() then
+		self:GetBonePosition()
+		self.first_getbpos = false
+	end
+end
+
 function PART:GetBonePosition(owner, ...)
 	owner = owner or self:GetOwner()
 
@@ -57,16 +65,14 @@ function PART:OnBuildBonePositions(owner)
 	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone))
 
 	local matrix = owner:GetBoneMatrix(self.BoneIndex)
-
+	
 	if matrix then	
 		
 		local ang = self:CalcAngles(owner, self.Angles) or self.Angles
-		
+				
 		if self.EyeAngles or self.AimPart:IsValid() then
 			ang.r = ang.y
-			ang.y = -ang.p
-			ang.p = 0
-			
+			ang.y = -ang.p			
 		end
 	
 		if self.Modify then
@@ -83,7 +89,6 @@ function PART:OnBuildBonePositions(owner)
 		end
 		
 		matrix:Scale(self.Scale * self.Size)
-
 		
 		owner:SetBoneMatrix(self.BoneIndex, matrix)
 	end

@@ -39,20 +39,7 @@ luadata.Types = {
 		return ("%s"):format(var)
 	end,
 	["string"] = function(var)
-
-		local str = ""
-
-		for char in var:gmatch(".") do
-			str = str  .. (s.EscapeSequences[str:byte()] or char)
-		end
-
-		if str:find('"', nil, true) then
-			str = "'" .. str .. "'"
-		else
-			str = '"' .. str .. '"'
-		end
-
-		return str
+		return ("%q"):format(var)
 	end,
 	["boolean"] = function(var)
 		return ("%s"):format(var and "true" or "false")
@@ -179,6 +166,7 @@ do -- file extension
 	end
 
 	function luadata.Hush(bool)
+		print("aaa")
 		luadata.Hushed = bool
 	end
 

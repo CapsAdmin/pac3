@@ -90,8 +90,8 @@ end
 pac.OwnerNames =
 {
 	"self",
-	"vehicle",
-	"weapon",
+	"active vehicle",
+	"active weapon",
 }
 
 local function find_ent(ent, str)
