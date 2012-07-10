@@ -1,3 +1,4 @@
+setfenv(1, _G)
 pac = pac or {}
 
 pac.Parts = pac.Parts or {}
@@ -138,7 +139,7 @@ function pac.CheckSubmitPart(ply, data)
 		pac.SubmitPart(data)
 
 		pac.Parts[ply:UniqueID()] = pac.Parts[ply:UniqueID()] or {}
-		pac.Parts[ply:UniqueID()][data.self.Name] = data
+		pac.Parts[ply:UniqueID()][data.part.self.Name] = data
 
 		ply.LastPACSubmission = CurTime() + 2
 		umsg.Start("pac_submit_acknowledged", ply)
