@@ -138,7 +138,7 @@ function pac.CheckSubmitPart(ply, data)
 		pac.SubmitPart(data)
 
 		pac.Parts[ply:UniqueID()] = pac.Parts[ply:UniqueID()] or {}
-		pac.Parts[ply:UniqueID()][data.part.self.Name] = data
+		table.insert(pac.Parts[ply:UniqueID()], data)
 
 		ply.LastPACSubmission = CurTime() + 2
 		umsg.Start("pac_submit_acknowledged", ply)
@@ -157,9 +157,15 @@ function pac.RemovePart(ply, data)
 	print(ply, " is removing ", data.part)
 	--if pac.IsAllowedToModify(ply, data.ent) then
 		pac.Parts[ply:UniqueID()] = pac.Parts[ply:UniqueID()] or {}
-		pac.Parts[ply:UniqueID()][data.part] = nil
-		
+
 		pac.SubmitPart(data)
+
+		for key, _data in pairs(pac.Parts[ply:UniqueID()]) do
+			if _data.part.self.Name == data.part then
+				table.remove(pac.Parts[ply:UniqueID()], key)
+				break
+			end
+		end
 	--end
 end
 
@@ -167,12 +173,18 @@ function pac.SetOwnerPart(ply, data)
 	print(ply, " is changing owner ", data.part)
 	--if pac.IsAllowedToModify(ply, data.ent) then
 		pac.Parts[ply:UniqueID()] = pac.Parts[ply:UniqueID()] or {}
-		local part = pac.Parts[ply:UniqueID()][data.part]
-		part.ent = data.b
-		pac.SubmitPart({ply = ply, ent = data.a, part = data.part})
-		pac.SubmitPart(part)
+
+		for key, _data in pairs(pac.Parts[ply:UniqueID()]) do
+			if _data.part.self.Name == data.part then
+				_data.ent = data.b
+				pac.SubmitPart({ply = ply, ent = data.a, part = data.part})
+				pac.SubmitPart(_data)
+				break
+			end
+		end
 	--end
 end
+
 
 local function handle_data(ply, data)
 	if IsValid(data.ent) then
