@@ -161,7 +161,7 @@ function PART:Initialize()
 	pac.EndStorableVars()
 end
 
-function PART:Think()
+function PART:OnThink()
 	local ent = self:GetOwner()
 	
 	if ent:IsValid() then

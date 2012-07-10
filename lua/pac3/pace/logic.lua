@@ -301,7 +301,7 @@ local last = 0
 
 function pace.CheckShortcuts()
 	if pace.Editor and pace.Editor:IsValid() then
-		if last > CurTime() then return end
+		if last > CurTime() or input.IsMouseDown(MOUSE_LEFT) then return end
 
 		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_S) then
 			pace.Call("ShortcutSave")

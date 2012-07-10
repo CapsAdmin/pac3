@@ -32,7 +32,6 @@ function pac.HookEntityRender(ent, part)
 						draw(self, part, "PreDraw")			
 						old_RenderOverride(self, ...)
 						draw(self, part, "OnDraw")
-
 					end		
 				end
 				

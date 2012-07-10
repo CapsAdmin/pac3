@@ -140,9 +140,9 @@ do -- meta
 		for key, part in pairs(self:GetChildren()) do
 			part:SetParentName(var)
 		end
-		
-		for key, part in pairs(pac.GetParts()) do
-			if part.AimPartName and part.AimPartName ~= "" and part.AimPartName == self.Name then
+	
+		for key, part in pairs(pac.GetParts(true)) do
+			if part.AimPart == self then
 				part:SetAimPartName(var)
 			end
 		end
@@ -175,7 +175,7 @@ do -- meta
 		function PART:SetOwner(ent)
 			ent = ent or NULL
 						
-			self:OnDetach(self:GetOwner())
+			if self:GetOwner():IsValid() then self:OnDetach(self:GetOwner()) end
 			
 			self.Owner = ent
 			
@@ -239,12 +239,10 @@ do -- meta
 			end
 
 			self.ParentName = var
-			
-			self:ResolveParentName()
 		end
 		
 		function PART:ResolveParentName()
-			for key, part in pairs(pac.GetParts()) do
+			for key, part in pairs(pac.GetParts(true)) do
 				if part:GetName() == self.ParentName then
 					self:SetParent(part)
 					break
@@ -535,10 +533,14 @@ do -- meta
 				part:SetTable(value)
 			end
 			
-			timer.Simple(0.1, function()
+			timer.Simple(0, function()
 				if self:IsValid() then
 					self:ResolveParentName()
-					self:ResolveAimPartName()
+					timer.Simple(0, function()
+						if self:IsValid() then
+							self:UpdateBoneIndex(self:GetOwner())
+						end
+					end)
 				end
 			end)
 		end
@@ -560,7 +562,7 @@ do -- meta
 
 			for _, key in pairs(self:GetStorableVars()) do
 				tbl.self[key] = COPY(self["Get"..key] and self["Get"..key](self) or self[key])
-				if make_copy_name and (key == "Name" or key == "AimPartName" or (key == "ParentName" and is_child)) then
+				if make_copy_name and (key == "Name" or (key == "AimPartName" and is_child) or (key == "ParentName" and is_child)) then
 					tbl.self[key] = tbl.self[key] .. " copy"
 				end
 			end
@@ -738,7 +740,11 @@ do -- meta
 		if not self.BoneIndex and self.TriedToFindBone ~= self.Bone then
 			self:UpdateBoneIndex(owner)
 		end
-					
+				
+		if self.AimPartName and self.AimPartName ~= "" and not self.AimPart:IsValid() and part ~= self then
+			self:ResolveAimPartName()
+		end
+
 		self:OnThink()
 	end
 	
@@ -761,20 +767,18 @@ do -- meta
 			return end
 			
 			self.AimPartName = name
-			
-			self:ResolveAimPartName()
 		end	
-	end
 	
-	function PART:ResolveAimPartName()
-		for key, part in pairs(pac.GetParts()) do	
-			if part:GetName() == self.AimPartName then
-				self.AimPart = part
-				break
+		function PART:ResolveAimPartName()
+			for key, part in pairs(pac.GetParts()) do	
+				if part ~= self and part:GetName() == self.AimPartName then
+					self.AimPart = part
+					break
+				end
 			end
 		end
 	end
-	
+
 	function PART:CalcAngles(owner, ang)
 		owner = owner or self:GetOwner()
 		
