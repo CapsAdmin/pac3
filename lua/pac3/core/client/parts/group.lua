@@ -15,7 +15,9 @@ function PART:Initialize()
 	pac.EndStorableVars()
 	
 	-- hacks
-	timer.Simple(0.1, function() self:SetOwnerName("self") end) 
+	timer.Simple(0.1, function() 
+		self:SetOwnerName("self") 
+	end) 
 end
 
 pac.RegisterPart(PART)

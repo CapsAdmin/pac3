@@ -3,25 +3,27 @@ local class = pac.class
 pac.ActiveParts = pac.ActiveParts or {}
 local part_count = 0 -- unique id thing
 
-function pac.CreatePart(name)
-	local part = class.Create("part", name)
+function pac.CreatePart(name, owner)
+	owner = owner or LocalPlayer()
 	
-	if not part then return pac.NULL end
+	local part = class.Create("part", name)
 	
 	if part.PreInitialize then 
 		part:PreInitialize()
 	end
+		
 	part:Initialize()
 
 	table.insert(pac.ActiveParts, part)
 	part.Id = part_count
-
-	part:SetPlayerOwner(LocalPlayer())
-
-	pac.CallHook("OnPartCreated", part)
-	
 	part_count = part_count + 1
-
+	
+	if owner then
+		part:SetPlayerOwner(owner)
+	end
+	
+	pac.dprint("creating %s part owned by %s", part.ClassName, owner:Nick())
+	
 	return part
 end
 
@@ -60,8 +62,8 @@ function pac.GetParts(owned_only)
 	return pac.ActiveParts
 end
 
-function pac.RemoveAllParts()
-	for key, part in pairs(pac.GetParts()) do
+function pac.RemoveAllParts(owned_only)
+	for key, part in pairs(pac.GetParts(owned_only)) do
 		if part:IsValid() then
 			part:Remove()
 		end
@@ -73,7 +75,7 @@ function pac.GetPartCount(class, children)
 	class = class:lower()
 	local count = 0
 
-	for key, part in pairs(children or pac.GetParts()) do
+	for key, part in pairs(children or pac.GetParts(true)) do
 		if part.ClassName:lower() == class then
 			count = count + 1
 		end
@@ -132,19 +134,13 @@ do -- meta
 	end
 	
 	function PART:SetName(var)
-		for key, part in pairs(pac.GetParts()) do
-			if part:GetName() == var and part ~= self then
-				var = var .. " conflict"
-				break
-			end
-		end
-		
+	
 		for key, part in pairs(self:GetChildren()) do
 			part:SetParentName(var)
 		end
-	
-		for key, part in pairs(pac.GetParts(true)) do
-			if part.AimPart == self then
+		
+		for key, part in pairs(pac.GetParts()) do
+			if part.AimPartName and part.AimPartName ~= "" and part.AimPartName == self.Name then
 				part:SetAimPartName(var)
 			end
 		end
@@ -193,6 +189,17 @@ do -- meta
 			end
 		end
 		
+		-- always return the root owner
+		function PART:GetPlayerOwner()
+			local parent = self:GetParent()
+			
+			if parent:IsValid() then
+				return parent:GetPlayerOwner()
+			end
+			
+			return self.PlayerOwner or NULL
+		end
+		
 		function PART:GetOwner()
 			local parent = self:GetParent()
 			
@@ -221,7 +228,7 @@ do -- meta
 	do -- parenting
 		function PART:CreatePart(name)
 			local part = pac.CreatePart(name)
-			self:AddChild(self)
+			part:SetParent(self)
 			return part
 		end
 	
@@ -241,10 +248,12 @@ do -- meta
 			end
 
 			self.ParentName = var
+			
+			self:ResolveParentName()
 		end
 		
 		function PART:ResolveParentName()
-			for key, part in pairs(pac.GetParts(true)) do
+			for key, part in pairs(pac.GetParts()) do
 				if part:GetName() == self.ParentName then
 					self:SetParent(part)
 					break
@@ -376,19 +385,6 @@ do -- meta
 			self.Children = {}
 		end
 
-		function PART:GetChildByName(var)
-			local parts = self:GetChildren()
-			if parts[var] then
-				return parts[var]
-			else
-				for index, part in pairs(parts[var]) do
-					if part:GetName() == var then
-						return self.Children[index]
-					end
-				end
-			end
-		end
-		
 		function PART:UnParent()
 			local parent = self:GetParent()
 			
@@ -524,27 +520,27 @@ do -- meta
 		function PART:SetTable(tbl)
 			for key, value in pairs(tbl.self) do
 				if self["Set" .. key] then
-					self["Set" .. key](self, value)
-				else
-					self[key] = value
+					-- hack?? it effectively removes name confliction for other parts
+					if key:find("Name", nil, true) then
+						self["Set" .. key](self, pac.HandlePartName(self:GetPlayerOwner(), value, key))
+					else
+						self["Set" .. key](self, value)
+					end
+				elseif key ~= "ClassName" then
+					--self[key] = value
+					pac.dprint("settable: unhandled key [%q] = %q", key, tostring(val))
 				end
 			end
 			
 			for key, value in pairs(tbl.children) do
-				local part = pac.CreatePart(value.self.ClassName)
+				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
 				part:SetTable(value)
 			end
-	
-			self:ResolveParentName()
-
+						
 			timer.Simple(0.1, function()
 				if self:IsValid() then
 					self:ResolveParentName()
-					timer.Simple(0.1, function()
-						if self:IsValid() then
-							self:UpdateBoneIndex(self:GetOwner())
-						end
-					end)
+					self:ResolveAimPartName()
 				end
 			end)
 		end
@@ -566,7 +562,7 @@ do -- meta
 
 			for _, key in pairs(self:GetStorableVars()) do
 				tbl.self[key] = COPY(self["Get"..key] and self["Get"..key](self) or self[key])
-				if make_copy_name and (key == "Name" or (key == "AimPartName" and is_child) or (key == "ParentName" and is_child)) then
+				if make_copy_name and (key == "Name" or "AimPartName" or (key == "ParentName" and is_child)) then
 					tbl.self[key] = tbl.self[key] .. " copy"
 				end
 			end
@@ -602,11 +598,7 @@ do -- meta
 		function PART:Remove()
 			pac.CallHook("OnPartRemove", self)
 
-			for key, part in pairs(self:GetChildren()) do
-				if part:IsValid() then
-					part:Remove()
-				end
-			end
+			self:RemoveChildren()
 			
 			self:OnRemove()
 			
@@ -753,7 +745,7 @@ do -- meta
 	end
 	
 	function PART:SubmitToServer()
-		pac.SubmitPart(self:GetOwner(), self:ToTable())
+		pac.SubmitPart(self:ToTable())
 	end
 	
 	function PART:GetName()

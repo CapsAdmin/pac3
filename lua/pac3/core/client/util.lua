@@ -1,3 +1,16 @@
+function pac.dprint(fmt, ...)
+	if pac.debug or LocalPlayer():Nick():find("CapsAdmin", nil, true) then
+		MsgN("\n")	
+		MsgN(">>>PAC3>>>")
+		MsgN(fmt:format(...))
+		MsgN("==TRACE==")
+		debug.Trace()
+		MsgN("==TRACE==")
+		MsgN("<<<PAC3<<<")
+		MsgN("\n")
+	end
+end
+
 function pac.IsValidEntity(var)
 	return IsEntity(var) and var:IsValid()
 end

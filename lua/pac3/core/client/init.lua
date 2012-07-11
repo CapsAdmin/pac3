@@ -147,10 +147,30 @@ function pac.HandleOwnerName(owner, name, ent)
 	return NULL
 end
 
+-- this function adds the unique id of the owner to the part name to resolve name conflicts
+-- hack??!?!
+
+function pac.HandlePartName(ply, name)
+	if ply:IsValid() and ply ~= LocalPlayer() then
+		return ply:UniqueID() .. " " .. name
+	end
+	
+	if not ply:IsValid() then
+		pac.dprint("tried to handle part name %q but the player owner (%s) is not valid", name, tostring(ply))
+	end
+	
+	return name
+end
+
 concommand.Add("pac_restart", function()
 	if pac then pac.Panic() end
+	
 	local was_open
-	if pace then was_open = pace.Editor:IsValid() pace.Panic() end
+	
+	if pace then 
+		was_open = pace.Editor:IsValid() 
+		pace.Panic() 
+	end
 
 	pac = {}
 	pace = {}

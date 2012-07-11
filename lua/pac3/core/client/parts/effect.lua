@@ -49,7 +49,7 @@ function PART:SetEffect(name)
 end
 
 pac.AddHook("pac_EffectPrecached", function(name)
-	print("pac3: effect ", name, " precached!")
+	pac.dprint("effect %q precached!", name)
 	for key, part in pairs(pac.GetParts()) do
 		if part.ClassName == "effect" then
 			if part.Effect == name then

@@ -37,8 +37,6 @@ function pac.HookEntityRender(ent, part)
 				
 				ent.pac_overriden_RenderOverride = ent.RenderOverride
 				ent.pac_old_RenderOverride = old_RenderOverride
-				
-				--print("hooked existing ", ent, part)
 			else 			
 				function ent:RenderOverride()
 					if not self.pac_parts then
@@ -53,8 +51,6 @@ function pac.HookEntityRender(ent, part)
 				
 				ent.pac_overriden_RenderOverride = ent.RenderOverride
 				ent.pac_old_RenderOverride = false
-				
-				--print("hooked ", ent, part)
 			end
 		end
 	end

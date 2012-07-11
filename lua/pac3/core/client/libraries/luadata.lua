@@ -166,7 +166,6 @@ do -- file extension
 	end
 
 	function luadata.Hush(bool)
-		print("aaa")
 		luadata.Hushed = bool
 	end
 
