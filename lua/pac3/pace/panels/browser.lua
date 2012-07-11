@@ -22,21 +22,19 @@ local function OnMousePressed(self, mcode)
 end
 
 function PANEL:AddOutfits(folder, callback)
-	file.TFind("data/"..folder.."*", function(path, folders, files)
-		for i, name in pairs(files) do			
-			local outfit = folder .. name
-			if file.Exists(outfit) then
-				local filenode = self:AddLine(
-					name, 
-					string.NiceSize(file.Size(outfit)), 
-					os.date("%m/%d/%Y %H:%M", file.Time(outfit))
-				)
-				filenode.FileName = name
-				filenode.OnSelect = callback
-				filenode.OnMousePressed = OnMousePressed
-			end
+	for i, name in pairs(file.Find(folder.."*", _G.net and "DATA" or nil)) do			
+		local outfit = folder .. name
+		if file.Exists(outfit, _G.net and "DATA" or nil) then
+			local filenode = self:AddLine(
+				name, 
+				string.NiceSize(file.Size(outfit, _G.net and "DATA" or nil)), 
+				os.date("%m/%d/%Y %H:%M", file.Time(outfit, _G.net and "DATA" or nil))
+			)
+			filenode.FileName = name
+			filenode.OnSelect = callback
+			filenode.OnMousePressed = OnMousePressed
 		end
-	end)
+	end
 end
 
 function PANEL:PopulateFromClient()
