@@ -319,7 +319,7 @@ end
 function pace.OnShortcutWear()
 	if pace.current_part:IsValid() then
 		local part = pace.current_part:GetRootPart()
-		pac.SubmitPart(part:GetOwner(), part)
+		pac.SendPartToServer(part)
 		surface.PlaySound("buttons/button9.wav")
 	end
 end
@@ -338,12 +338,12 @@ function pace.CheckShortcuts()
 	if pace.Editor and pace.Editor:IsValid() then
 		if last > CurTime() or input.IsMouseDown(MOUSE_LEFT) then return end
 
-		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_S) then
+		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_M) then
 			pace.Call("ShortcutSave")
 			last = CurTime() + 0.2
 		end
 		
-		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_D) then
+		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_N) then
 			pace.Call("ShortcutWear")
 			last = CurTime() + 0.2
 		end

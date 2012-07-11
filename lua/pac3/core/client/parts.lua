@@ -562,7 +562,7 @@ do -- meta
 
 			for _, key in pairs(self:GetStorableVars()) do
 				tbl.self[key] = COPY(self["Get"..key] and self["Get"..key](self) or self[key])
-				if make_copy_name and (key == "Name" or "AimPartName" or (key == "ParentName" and is_child)) then
+				if make_copy_name and key:find("Name", nil, true) then
 					tbl.self[key] = tbl.self[key] .. " copy"
 				end
 			end
