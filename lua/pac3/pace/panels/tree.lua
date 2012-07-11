@@ -166,7 +166,7 @@ function PANEL:PopulateParts(node, parts, children)
 				end
 			end
 			
-			if part.ClassName == "model" and part.GetModel then
+			if false and part.ClassName == "model" and part.GetModel then
 				part_node:SetModel(part:GetModel())
 			else
 				part_node.Icon:SetImage(pace.PartIcons[part.ClassName] or (net and "icon16/plugin") or "gui/silkicons/plugin")
