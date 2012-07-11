@@ -100,7 +100,7 @@ function pace.SavePartToFile(part, name)
 			end
 		)
 	else
-		print("[pac3] saving " .. name)
+		pac.dprint("saving %s", name)
 		luadata.WriteFile("pac3/" .. name .. ".txt", part:ToTable())
 	end
 end
@@ -129,7 +129,7 @@ function pace.LoadPartFromFile(part, name)
 			end
 		)
 	else
-		print("[pac3] loading " .. name)
+		pac.dprint("loading %s",  name)
 		name = name:gsub("%.txt", "")
 		local data = luadata.ReadFile("pac3/" .. name .. ".txt")
 		if data and data.self then
@@ -184,9 +184,7 @@ function pace.OnOpenMenu()
 	menu:AddSpacer()
 	
 	menu:AddOption(L"clear", function()
-		for key, part in pairs(pac.GetParts()) do
-			part:Remove()
-		end
+		pac.RemoveAllParts(true)
 		pace.RefreshTree()
 	end)
 		
@@ -210,7 +208,7 @@ function pace.OnPartMenu(obj)
 		
 	if not obj:HasParent() then
 		menu:AddOption(L"wear", function()
-			pac.SubmitPart(obj:GetOwner(), obj)
+			pac.SendPartToServer(obj)
 		end)
 	end
 
@@ -252,7 +250,7 @@ function pace.OnPartMenu(obj)
 	end)
 	
 	menu:AddOption(L"remove", function()
-		pac.SubmitRemove(obj:GetOwner(), obj:GetName())
+		pac.RemovePartOnServer(obj:GetName())
 		obj:Remove()
 		pace.RefreshTree()
 	end)
@@ -282,9 +280,7 @@ function pace.OnNewPartMenu()
 	menu:AddSpacer()
 	
 	menu:AddOption(L"clear", function()
-		for key, part in pairs(pac.GetParts()) do
-			part:Remove()
-		end
+		pac.RemoveAllParts(true)
 		pace.RefreshTree()
 	end)
 end
@@ -298,7 +294,7 @@ function pace.OnOpenEditor()
 	pace.SetViewAngles(LocalPlayer():EyeAngles())
 	pace.EnableView(true)
 	
-	if #pac.GetParts() == 0 then
+	if #pac.GetParts(true) == 0 then
 		pace.Call("CreatePart", "group", L"my outfit", L"add parts to me!")
 	else
 		pace.OnPartSelected(select(2, next(pac.GetParts())))

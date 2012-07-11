@@ -1,7 +1,21 @@
+setfenv(1, _G)
 pac = pac or {}
 
 pac.Parts = pac.Parts or {}
 pac.Errors = {}
+
+function pac.dprint(fmt, ...)
+	if pac.debug or GetHostName() == "CapsAdmin's Server" then
+		MsgN("\n")
+		MsgN(">>>PAC3>>>")
+		MsgN(fmt:format(...))
+		MsgN("==TRACE==")
+		debug.Trace()
+		MsgN("==TRACE==")
+		MsgN("<<<PAC3<<<")
+		MsgN("\n")
+	end
+end
 
 do -- hook helpers
 	function pac.CallHook(str, ...)
@@ -26,176 +40,102 @@ do -- hook helpers
 	end
 end
 
-pac.EffectsBlackList =
-{
-	"frozen_steam",
-	"portal_rift_01",
-	"explosion_silo",
-	"citadel_shockwave_06",
-	"citadel_shockwave",
-	"choreo_launch_rocket_start",
-	"choreo_launch_rocket_jet",
-}
+do -- effects
 
-function pac.PrecacheEffect(name)
-	PrecacheParticleSystem(name)
+	pac.EffectsBlackList =
+	{
+		"frozen_steam",
+		"portal_rift_01",
+		"explosion_silo",
+		"citadel_shockwave_06",
+		"citadel_shockwave",
+		"choreo_launch_rocket_start",
+		"choreo_launch_rocket_jet",
+	}
+
+	function pac.PrecacheEffect(name)
+		PrecacheParticleSystem(name)
+		if net then
+			net.Start("pac_effect_precached")
+				net.WriteString(name)
+			net.Send()
+		else
+			umsg.Start("pac_effect_precached")
+				umsg.String(name)
+			umsg.End()
+		-- compat hack
+		if PAC then
+		  if PAC.EffectsBlackList and table.HasValue(PAC.EffectsBlackList, effect) then return end
+			umsg.Start("PAC Effect Precached")
+			  umsg.String(name)
+			umsg.End()
+		  end
+		 end
+	end
+
 	if net then
-		net.Start("pac_effect_precached")
-			net.WriteString(name)
-		net.Send()
+		net.Receive("pac_precache_effect", function()
+			local name = net.ReadString()
+			if not table.HasValue(pac.EffectsBlackList, name) then
+				pac.PrecacheEffect(name)
+			end
+		end)
 	else
-		umsg.Start("pac_effect_precached")
-			umsg.String(name)
-		umsg.End()
-    -- compat hack
-    if PAC then
-      if PAC.EffectsBlackList and table.HasValue(PAC.EffectsBlackList, effect) then return end
-        umsg.Start("PAC Effect Precached")
-          umsg.String(name)
-        umsg.End()
-      end
-     end
-end
-
-if net then
-	net.Receive("pac_precache_effect", function()
-		local name = net.ReadString()
-		if not table.HasValue(pac.EffectsBlackList, name) then
-			pac.PrecacheEffect(name)
-		end
-	end)
-else
-	concommand.Add("pac_precache_effect", function(ply, _, args)
-		local name = args[1]
-		if not table.HasValue(pac.EffectsBlackList, name) then
-			print(ply, " precached effect ", name)
-			pac.PrecacheEffect(name)
-		end
-	end)
-end
-
-function pac.IsAllowedToModify(ply, ent)
-	if ent:IsPlayer() and ent ~= ply then
-		return false, "you cannot change other player's pac outfits"
+		concommand.Add("pac_precache_effect", function(ply, _, args)
+			local name = args[1]
+			if not table.HasValue(pac.EffectsBlackList, name) then
+				pac.dprint("%s precached effect %s", ply:Nick(), name)
+				pac.PrecacheEffect(name)
+			end
+		end)
 	end
-	return true
 end
 
-function pac.CheckPart(ply, data)
-	local allowed, reason = true, ""
-	if IsValid(data.ent) and type(data.part) == "table" then
-		allowed, reason = pac.IsAllowedToModify(ply, data.ent)
+function pac.SubmitPart(data, filter)
+
+	local uid = data.owner:UniqueID()
+	pac.Parts[uid] = pac.Parts[uid] or {}
+	
+	if type(data.part) == "table" then
+		pac.Parts[uid][data.part.self.Name] = data
+	else
+		pac.Parts[uid][data.part] = nil
 	end
-	return true
-end
-
-function pac.SubmitPart(data, ply)
+		
 	if net then
 		net.Start("pac_submit")
 			net.WriteString(glon.encode(data))
-		net.Send(ply or player.GetAll())
+		net.Send(filter or player.GetAll())
 	else
-		datastream.StreamToClients(ply or player.GetAll(), "pac_submit", data)
+		datastream.StreamToClients(filter or player.GetAll(), "pac_submit", data)
 	end
 end
 
-function pac.PlayerInitialSpawn(ply)
-	timer.Simple(1, function()
-		if ply:IsPlayer() then
-			for id, outfits in pairs(pac.Parts) do
-				if player.GetByUniqueID(id) then
-                    for key, outfit in pairs(outfits) do
-						local ent = outfit.ent or NULL
-						if ent:IsValid() then
-							pac.SubmitPart(outfit, ply)
-						end
-					end
-				end
-			end
-		end
-	end)
+function pac.SubmitPartNotify(data)
+	pac.dprint("submitted outfit %q from %s with %i number of children to set on %s", data.part.self.Name, data.owner:Nick(), table.Count(data.part.children), data.part.self.OwnerName)
+	
+	pac.SubmitPart(data)
+	
+	-- todo: check owner name if the player is allowed to modify
+
+	umsg.Start("pac_submit_acknowledged", data.owner)
+		umsg.Bool(true)
+		umsg.String("")
+	umsg.End()
 end
 
-pac.AddHook("PlayerInitialSpawn")
-
-function pac.CheckSubmitPart(ply, data)
-	local allowed, issue = true, ""
-
-	if (ply.LastPACSubmission or 0) > CurTime() then
-		allowed, issue = false, "You must wait 1 second between submissions."
-	end
-
-	allowed, issue = pac.CheckPart(ply, data)
-
-	local args = { hook.Call("PrePACPartApply", GAMEMODE, ply, data) }
-
-	if args[1] == false then
-		allowed, issue = false, args[2]
-	end
-
-	if true or allowed then
-		print(ply, " submitted outfit to ", data.ent)
-		pac.SubmitPart(data)
-
-		pac.Parts[ply:UniqueID()] = pac.Parts[ply:UniqueID()] or {}
-		table.insert(pac.Parts[ply:UniqueID()], data)
-
-		ply.LastPACSubmission = CurTime() + 2
-		umsg.Start("pac_submit_acknowledged", ply)
-			umsg.Bool(allowed)
-			umsg.String("")
-		umsg.End()
-	else
-		umsg.Start("pac_submit_acknowledged", ply)
-			umsg.Bool(allowed)
-			umsg.String(issue or "")
-		umsg.End()
-	end
+function pac.RemovePart(data)
+	pac.dprint("%s is removed %q", data.owner:Nick(), data.part)
+	
+	pac.SubmitPart(data)
 end
 
-function pac.RemovePart(ply, data)
-	print(ply, " is removing ", data.part)
-	--if pac.IsAllowedToModify(ply, data.ent) then
-		pac.Parts[ply:UniqueID()] = pac.Parts[ply:UniqueID()] or {}
-
-		pac.SubmitPart(data)
-
-		for key, _data in pairs(pac.Parts[ply:UniqueID()]) do
-			if _data.part.self.Name == data.part then
-				table.remove(pac.Parts[ply:UniqueID()], key)
-				break
-			end
-		end
-	--end
-end
-
-function pac.SetOwnerPart(ply, data)
-	print(ply, " is changing owner ", data.part)
-	--if pac.IsAllowedToModify(ply, data.ent) then
-		pac.Parts[ply:UniqueID()] = pac.Parts[ply:UniqueID()] or {}
-
-		for key, _data in pairs(pac.Parts[ply:UniqueID()]) do
-			if _data.part.self.Name == data.part then
-				_data.ent = data.b
-				pac.SubmitPart({ply = ply, ent = data.a, part = data.part})
-				pac.SubmitPart(_data)
-				break
-			end
-		end
-	--end
-end
-
-
-local function handle_data(ply, data)
-	if IsValid(data.ent) then
-		data.ply = ply
-		if IsEntity(data.a) and data.a:IsValid() and IsEntity(data.b) and data.b:IsValid() then
-			pac.SetOwnerPart(ply, data)
-		elseif type(data.part) == "table" then
-			pac.CheckSubmitPart(ply, data)
-		elseif type(data.part) == "string" then
-			pac.RemovePart(ply, data)
-		end
+local function handle_data(owner, data)
+	data.owner = owner
+	if type(data.part) == "table" then
+		pac.SubmitPartNotify(data)
+	elseif type(data.part) == "string" then
+		pac.RemovePart(data)
 	end
 end
 
@@ -215,6 +155,23 @@ else
 		handle_data(ply, data)
 	end)
 end
+
+
+function pac.PlayerInitialSpawn(ply)
+	timer.Simple(1, function()
+		if ply:IsPlayer() then
+			for id, outfits in pairs(pac.Parts) do
+				if player.GetByUniqueID(id) then
+                    for key, outfit in pairs(outfits) do
+						pac.SubmitPart(outfit, ply)
+					end
+				end
+			end
+		end
+	end)
+end
+
+pac.AddHook("PlayerInitialSpawn")
 
 -- should this be here?
 
