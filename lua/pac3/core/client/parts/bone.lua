@@ -34,9 +34,9 @@ end
 
 function PART:OnThink()
 	-- this is to setup the cached values
-	if self.first_getbpos == nil and self:GetOwner():IsValid() then
+	if not self.first_getbpos and self:GetPlayerOwner():IsValid() then
 		self:GetBonePosition()
-		self.first_getbpos = false
+		self.first_getbpos = true
 	end
 end
 
