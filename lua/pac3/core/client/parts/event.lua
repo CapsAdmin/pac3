@@ -139,7 +139,7 @@ PART.Events =
 			
 			local data = ent.pac_anim_event 
 			
-			if data and data.time + time > CurTime() then
+			if data and self:StringOperator(data.name, find) and data.time + time > CurTime() then
 				return true
 			end			
 		end,
@@ -303,3 +303,30 @@ end
 pac.AddHook("DoAnimationEvent", function(ply, event, data)
 	ply.pac_anim_event = {name = enums[event], time = CurTime()}
 end)
+
+--[[
+attack primary
+swim
+flinch rightleg
+flinch leftarm
+flinch head
+cancel
+attack secondary
+flinch rightarm
+jump
+snap yaw
+attack grenade
+custom
+cancel reload
+reload loop
+custom gesture sequence
+custom sequence
+spawn
+doublejump
+flinch leftleg
+flinch chest
+die
+reload end
+reload
+custom gesture
+]]

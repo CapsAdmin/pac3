@@ -4,32 +4,59 @@ PART.ClassName = "trail"
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Length", 100)
+	pac.GetSet(PART, "Spacing", 1)
 	pac.GetSet(PART, "StartSize", 3)
-	pac.GetSet(PART, "Color", Vector(255, 255, 255))
-	pac.GetSet(PART, "Alpha", 1)
+	pac.GetSet(PART, "EndSize", 0)
+	pac.GetSet(PART, "StartColor", Vector(255, 255, 255))
+	pac.GetSet(PART, "EndColor", Vector(255, 255, 255))
+	pac.GetSet(PART, "StartAlpha", 1)
+	pac.GetSet(PART, "EndAlpha", 1)
+	pac.GetSet(PART, "Stretch", false)
 	pac.GetSet(PART, "TrailPath", "trails/laser")
 pac.EndStorableVars()
 
-function PART:SetColor(v)
-	self.ColorC = self.ColorC or Color(255, 255, 255, 255)
-	
-	self.ColorC.r = v.r
-	self.ColorC.g = v.g
-	self.ColorC.b = v.b
-	
-	self.Color = v
-end
-
-function PART:SetAlpha(n)
-	self.ColorC = self.ColorC or Color(255, 255, 255, 255)
-	
-	self.ColorC.a = n * 255
-	
-	self.Alpha = n
-end
+PART.LastAdd = 0
 
 function PART:Initialize()
+	self.StartColorC = Color(255, 255, 255, 255)
+	self.EndColorC = Color(255, 255, 255, 255)
 	self:SetTrailPath(self.TrailPath)
+end
+
+function PART:SetStartColor(v)
+	self.StartColorC = self.StartColorC or Color(255, 255, 255, 255)
+	
+	self.StartColorC.r = v.r
+	self.StartColorC.g = v.g
+	self.StartColorC.b = v.b
+	
+	self.StartColor = v
+end
+
+function PART:SetEndColor(v)
+	self.EndColorC = self.EndColorC or Color(255, 255, 255, 255)
+	
+	self.EndColorC.r = v.r
+	self.EndColorC.g = v.g
+	self.EndColorC.b = v.b
+	
+	self.EndColor = v
+end
+
+function PART:SetStartAlpha(n)
+	self.StartColorC = self.StartColorC or Color(255, 255, 255, 255)
+	
+	self.StartColorC.a = n * 255
+	
+	self.StartAlpha = n
+end
+
+function PART:SetEndAlpha(n)
+	self.EndColorC = self.EndColorC or Color(255, 255, 255, 255)
+	
+	self.EndColorC.a = n * 255
+	
+	self.EndAlpha = n
 end
 
 function PART:SetTrailPath(var)
@@ -46,27 +73,53 @@ function PART:SetMaterial(var)
 	self.TrailPath = var
 end
 
-function PART:OnDraw(owner, pos, ang)
-	if self.Trail then
-		self.traildata = self.traildata or {}
-		self.traildata.points = self.traildata.points or {}
-
-		table.insert(self.traildata.points, pos)
-		if #self.traildata.points > self.Length then 
-			table.remove(self.traildata.points, #self.traildata.points - self.Length) 
-		end
-		render.SetMaterial(self.Trail)
-		render.StartBeam(#self.traildata.points-1)
-			for k,v in pairs(self.traildata.points) do
-				width = k / (self.Length / self.StartSize)
-				render.AddBeam(v, width, width, self.Color)
-			end
-		render.EndBeam()
-	end
+function PART:OnAttach()
+	self.points = {}
 end
 
-function PART:OnRestore(data)
-	self:SetMaterial(data.TrailPath)
+function PART:OnDetach()
+	self.points = {}
+end
+
+function PART:OnDraw(owner, pos, ang)
+	if self.Trail and self.StartColorC and self.EndColorC then
+	
+		self.points = self.points or {}
+		
+		if self.Spacing == 0 or self.LastAdd < RealTime() then
+			table.insert(self.points, pos)
+			self.LastAdd = RealTime() + self.Spacing / 1000
+		end
+		
+		local len = tonumber(self.Length)
+		local count = #self.points
+		
+		if self.Spacing > 0 then
+			len = math.ceil(math.abs(len - self.Spacing))
+		end
+		
+		render.SetMaterial(self.Trail)
+		
+		render.StartBeam(count)
+			for k, v in pairs(self.points) do
+				width = k / (len / self.StartSize)
+				
+				local coord = (1/count) * (k - 1)
+				local color = Color(255, 255, 255, 255)
+				
+				color.r = Lerp(coord, self.EndColorC.r, self.StartColorC.r)
+				color.g = Lerp(coord, self.EndColorC.g, self.StartColorC.g)
+				color.b = Lerp(coord, self.EndColorC.b, self.StartColorC.b)
+				color.a = Lerp(coord, self.EndColorC.a, self.StartColorC.a)
+				
+				render.AddBeam(k == count and pos or v, width + self.EndSize, self.Stretch and coord or width, color)
+			end
+		render.EndBeam()		
+		
+		if count >= len then 
+			table.remove(self.points, 1) 
+		end
+	end
 end
 
 pac.RegisterPart(PART)
