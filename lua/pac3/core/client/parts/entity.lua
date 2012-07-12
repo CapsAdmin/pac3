@@ -34,18 +34,6 @@ function PART:Initialize()
 	pac.EndStorableVars()
 end
 
-function PART:SetOverallSize(num)
-	if self:GetOwner():IsValid() then
-		if num ~= 1 then
-			local owner = self:GetOwner()
-			pac.HookBuildBone(owner)
-			self.pac3_bonebuild_ref = owner
-		end
-	end
-	
-	self.OverallSize = num
-end
-
 function PART:OnBuildBonePositions(ent)
 	if self.OverallSize ~= 1 then
 		for i = 0, ent:GetBoneCount() do
@@ -148,10 +136,21 @@ end
 
 function PART:UpdateScale(ent)
 	ent = ent or self:GetOwner()
-	if ent:IsValid() then
-		ent:SetModelScale(self.Scale * self.Size)
+	if ent:IsValid() then		
 		if net then 
 			ent:SetIK(not self.RelativeBones) 
+		end
+		
+		if self.OverallSize ~= 1 and not self.setup_overallscale then
+			pac.HookBuildBone(ent)
+			self.pac3_bonebuild_ref = ent
+			self.setup_overallscale = true
+		end
+		
+		local scale = self.Scale * self.Size
+		
+		if scale ~= ent:GetModelScale() then
+			ent:SetModelScale(scale)
 		end
 	end
 end

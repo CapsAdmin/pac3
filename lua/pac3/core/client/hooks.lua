@@ -28,6 +28,7 @@ function pac.HookEntityRender(ent, part)
 					if not self.pac_parts then
 						pac.UnhookEntityRender(self)
 					else
+						self:InvalidateBoneCache()
 						draw(self, part, "PreDraw")			
 						old_RenderOverride(self, ...)
 						draw(self, part, "OnDraw")
@@ -42,6 +43,7 @@ function pac.HookEntityRender(ent, part)
 					if not self.pac_parts then
 						pac.UnhookEntityRender(self)
 					else
+						self:InvalidateBoneCache()
 						draw(self, part, "PreDraw")			
 						self:DrawModel()
 						draw(self, part, "OnDraw")
