@@ -51,7 +51,10 @@ function pace.OnCreatePart(class_name, name, desc)
 	
 	if desc then part:SetDescription(desc) end
 		
-	pace.SetViewPart(part)
+	if part:GetPlayerOwner() == LocalPlayer() then
+		pace.SetViewPart(part)
+	end
+
 	pace.OnPartSelected(part)
 	
 	pace.RefreshTree()	
