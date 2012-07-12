@@ -521,7 +521,7 @@ do -- meta
 			for key, value in pairs(tbl.self) do
 				if self["Set" .. key] then
 					-- hack?? it effectively removes name confliction for other parts
-					if key:find("Name", nil, true) then
+					if key:find("Name", nil, true) and key ~= "OwnerName" then
 						self["Set" .. key](self, pac.HandlePartName(self:GetPlayerOwner(), value, key))
 					else
 						self["Set" .. key](self, value)
@@ -662,7 +662,7 @@ do -- meta
 	end
 	
 	function PART:SetEventHide(b)
-		if b ~= self.EventHide then
+		if b ~= self.EventHide or b ~= self.Hide then
 			if b then
 				self:OnHide()
 			else

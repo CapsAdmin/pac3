@@ -151,7 +151,15 @@ function pac.ConvertPAC2Config(data, ent)
 				part:SetAngleVelocity(Angle(data.anglevelocity.p, -data.anglevelocity.r, data.anglevelocity.y)*0.5)
 				
 				part:SetStartSize(data.trail.startsize)
-				part:SetColor(data.trail.color)
+				
+				part:SetStartColor(Vector(data.trail.color.r, data.trail.color.g, data.trail.color.b))
+				part:SetEndColor(Vector(data.trail.color.r, data.trail.color.g, data.trail.color.b))
+				
+				part:SetStartAlpha(data.trail.color.a/255)
+				part:SetEndAlpha(data.trail.color.a/255)
+				
+				part:SetSpacing(0)
+				
 				part:SetMaterial(data.trail.material)
 				part:SetLength(data.trail.length)		
 				if data.weaponclass and data.weaponclass ~= "" then  

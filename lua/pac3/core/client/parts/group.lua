@@ -16,7 +16,11 @@ function PART:Initialize()
 	
 	-- hacks
 	timer.Simple(0.1, function() 
-		self:SetOwnerName("self") 
+		if self.OwnerName == "" then
+			self:SetOwnerName("self")
+		else
+			self:CheckOwner() 
+		end
 	end) 
 end
 

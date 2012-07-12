@@ -12,6 +12,10 @@ pac.StartStorableVars()
 	--pac.GetSet(PART, "ControlPointB", "")
 pac.EndStorableVars()
 
+function PART:Initialize()
+	self:SetEffect(self.Effect)
+end
+
 function PART:SetControlPointA(var)
 	self.ControlPointA = var
 	self:ResolveControlPoints()
@@ -70,6 +74,7 @@ function PART:OnDraw(owner, pos, ang)
 			local time = CurTime()
 			if self.last_spew < time then
 				ent:StopParticles()
+				ent:StopParticleEmission()
 				self:Emit(pos, ang)
 				self.last_spew = time + math.max(self.Rate, 0.1)
 			end
@@ -82,7 +87,7 @@ function PART:OnRemove()
 
 	if ent:IsValid() and ent.IsPACEntity then
 		ent:StopParticles()
-		ent:Remove()
+		ent:StopParticleEmission()
 	end
 end
 
@@ -102,12 +107,21 @@ function PART:ResolveControlPoints()
 	end
 end
 
+function PART:OnHide()
+	local ent = self:GetOwner()
+	if ent:IsValid() then
+		ent:StopParticles()
+		ent:StopParticleEmission()
+	end
+end
+
 function PART:Emit(pos, ang)
 	local ent = self:GetOwner()
 	
 	if ent:IsValid() then
 		if not self.Effect then
 			ent:StopParticles()
+			ent:StopParticleEmission()
 			return
 		end
 		
@@ -127,6 +141,7 @@ function PART:Emit(pos, ang)
 			ParticleEffectAttach(self.Effect, PATTACH_ABSORIGIN_FOLLOW, ent, 1)
 		else
 			ent:StopParticles()
+			ent:StopParticleEmission()
 			ParticleEffect(self.Effect, pos, ang, ent)
 		end
 	end
