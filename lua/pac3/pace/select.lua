@@ -136,9 +136,11 @@ function pace.SelectEntity(callback)
 		local tbl = {}
 
 		for _, ent in pairs(ents.GetAll()) do
-			local pos = ent:EyePos():ToScreen()
-			if pace.DrawSelection(pos) then
-				table.insert(tbl, {pos = pos, ent = ent, dist = Vector(pos.x, pos.y, 0):Distance(Vector(x, y, 0))})
+			if ent:IsValid() then
+				local pos = ent:EyePos():ToScreen()
+				if pace.DrawSelection(pos) then
+					table.insert(tbl, {pos = pos, ent = ent, dist = Vector(pos.x, pos.y, 0):Distance(Vector(x, y, 0))})
+				end
 			end
 		end
 
