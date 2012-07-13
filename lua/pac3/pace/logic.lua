@@ -109,6 +109,8 @@ function pace.SavePartToFile(part, name)
 end
 
 function pace.LoadPartFromFile(part, name)
+	if not part:IsValid() then return end
+	
 	if not name then
 		
 		local frm = vgui.Create("DFrame")

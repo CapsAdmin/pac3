@@ -83,19 +83,20 @@ end
 
 function PART:OnDraw(owner, pos, ang)
 	if self.Trail and self.StartColorC and self.EndColorC then
-	
 		self.points = self.points or {}
 		
-		if self.Spacing == 0 or self.LastAdd < RealTime() then
+		local len = tonumber(self.Length)
+		local spc = tonumber(self.Spacing)
+		
+		if spc == 0 or self.LastAdd < RealTime() then
 			table.insert(self.points, pos)
-			self.LastAdd = RealTime() + self.Spacing / 1000
+			self.LastAdd = RealTime() + spc / 1000
 		end
 		
-		local len = tonumber(self.Length)
 		local count = #self.points
 		
-		if self.Spacing > 0 then
-			len = math.ceil(math.abs(len - self.Spacing))
+		if spc > 0 then
+			len = math.ceil(math.abs(len - spc))
 		end
 		
 		render.SetMaterial(self.Trail)

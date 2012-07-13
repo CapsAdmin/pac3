@@ -244,6 +244,7 @@ do -- meta
 		function PART:SetParentName(var)
 			if not var or var == "" then
 				self:UnParent()
+				self.ParentName = ""
 				return
 			end
 
@@ -758,11 +759,8 @@ do -- meta
 	
 	do -- aim part		
 		function PART:SetAimPartName(name)
-			if not name or name == "" then
-				self.AimPart = pac.NULL
-			return end
-			
-			self.AimPartName = name
+			self.AimPartName = name or ""
+			self.AimPart = pac.NULL
 		end	
 	
 		function PART:ResolveAimPartName()
