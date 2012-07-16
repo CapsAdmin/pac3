@@ -63,13 +63,14 @@ pac.AddHook("pac_EffectPrecached", function(name)
 	end
 end)
 
+local CurTime = CurTime
+
 function PART:OnDraw(owner, pos, ang)
 	if not self.Ready then return end
 	
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
-
 		if self.Loop then
 			local time = CurTime()
 			if self.last_spew < time then
@@ -114,6 +115,9 @@ function PART:OnHide()
 		ent:StopParticleEmission()
 	end
 end
+
+local ParticleEffect = ParticleEffect
+local ParticleEffectAttach = ParticleEffectAttach
 
 function PART:Emit(pos, ang)
 	local ent = self:GetOwner()

@@ -42,6 +42,7 @@ function PANEL:PopulateFromClient()
 	
 	self:AddOutfits("pac3/", function(node)
 		pace.LoadPartFromFile(pace.current_part, node.FileName)
+		pace.RefreshTree()
 	end)		
 end
 
@@ -53,15 +54,15 @@ function PANEL:OnRowRightClick(id, line)
 		Derma_StringRequest(L"rename", L"type the new name:", line.name, function(text)
 			
 			local c = file.Read(line.FileName)
-			file.Delete(line.FileName)
-			file.Write(line.FileName, c)
+			file.Delete(line.FileName, _G.net and "DATA" or nil)
+			file.Write(line.FileName, c, _G.net and "DATA" or nil)
 			
 			self:PopulateFromClient()
 		end)
 	end)
 	
 	menu:AddOption(L"delete", function()
-		file.Delete(line.FileName)
+		file.Delete("pac3/" .. line.FileName, _G.net and "DATA" or nil)
 		self:PopulateFromClient()
 	end)
 end

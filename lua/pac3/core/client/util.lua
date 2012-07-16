@@ -36,8 +36,7 @@ function pac.CreateEntity(model)
 	end
 	
 	ent:SetModel(model)
-	ent:Spawn()
-	
+		
 	ent.IsPACEntity = true
 	
 	return ent

@@ -1,3 +1,5 @@
+local pac = pac
+
 pac.BoneNameReplacements =
 {
 	{"Anim_Attachment", "attach"},

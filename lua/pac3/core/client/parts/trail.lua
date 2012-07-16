@@ -81,6 +81,18 @@ function PART:OnDetach()
 	self.points = {}
 end
 
+local Lerp = Lerp
+local RealTime = RealTime
+local tonumber = tonumber
+local table_insert = table.insert
+local table_remove = table.remove
+local math_ceil = math.ceil
+local math_abs = math.abs
+local render_StartBeam = render.StartBeam
+local render_EndBeam = render.EndBeam
+local render_AddBeam = render.AddBeam
+local render_MaterialOverride = render.MaterialOverride or render.SetMaterial
+
 function PART:OnDraw(owner, pos, ang)
 	if self.Trail and self.StartColorC and self.EndColorC then
 		self.points = self.points or {}
@@ -89,19 +101,19 @@ function PART:OnDraw(owner, pos, ang)
 		local spc = tonumber(self.Spacing)
 		
 		if spc == 0 or self.LastAdd < RealTime() then
-			table.insert(self.points, pos)
+			table_insert(self.points, pos)
 			self.LastAdd = RealTime() + spc / 1000
 		end
 		
 		local count = #self.points
 		
 		if spc > 0 then
-			len = math.ceil(math.abs(len - spc))
+			len = math_ceil(math_abs(len - spc))
 		end
 		
-		render.SetMaterial(self.Trail)
+		render_MaterialOverride(self.Trail)
 		
-		render.StartBeam(count)
+		render_StartBeam(count)
 			for k, v in pairs(self.points) do
 				width = k / (len / self.StartSize)
 				
@@ -113,12 +125,12 @@ function PART:OnDraw(owner, pos, ang)
 				color.b = Lerp(coord, self.EndColorC.b, self.StartColorC.b)
 				color.a = Lerp(coord, self.EndColorC.a, self.StartColorC.a)
 				
-				render.AddBeam(k == count and pos or v, width + self.EndSize, self.Stretch and coord or width, color)
+				render_AddBeam(k == count and pos or v, width + self.EndSize, self.Stretch and coord or width, color)
 			end
-		render.EndBeam()		
+		render_EndBeam()		
 		
 		if count >= len then 
-			table.remove(self.points, 1) 
+			table_remove(self.points, 1) 
 		end
 	end
 end

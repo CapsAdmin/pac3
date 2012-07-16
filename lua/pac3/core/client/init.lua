@@ -22,12 +22,19 @@ function pac.LoadParts()
 	end
 end
 
+function pac.CheckParts()
+	for key, part in pairs(pac.ActiveParts) do
+		if not part:IsValid() then
+			pac.ActiveParts[key] = nil
+			pac.MakeNull(part)
+		end
+	end
+end
+
 function pac.RemoveAllPACEntities()
 	for key, ent in pairs(ents.GetAll()) do
-		if ent.IsPACEntity then
-			if pac.UnhookEntityRender then
-				pac.UnhookEntityRender(ent)
-			end
+		if ent.IsPACEntity or pac.pac_parts then
+			pac.UnhookEntityRender(ent)
 			--ent:Remove()
 		end
 	end

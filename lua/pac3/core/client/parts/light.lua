@@ -9,6 +9,8 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Color", Vector(255, 255, 255))
 pac.EndStorableVars()
 
+local DynamicLight = DynamicLight
+
 function PART:OnDraw(owner, pos, ang)
 	self.Params = self.Params or DynamicLight(self.Owner:EntIndex() + self.Id)
 	local params = self.Params

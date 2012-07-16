@@ -26,7 +26,6 @@ function PART:SetOverallSize(num)
 	if self.Entity:IsValid() then
 		if num ~= 1 then
 			pac.HookBuildBone(self.Entity)
-			self.pac3_bonebuild_ref = self.Entity
 		end
 	end
 	
@@ -39,7 +38,6 @@ function PART:OnBuildBonePositions(ent)
 			local mat = ent:GetBoneMatrix(i)
 			if mat then
 				mat:Scale(Vector()*self.OverallSize)
-				
 				ent:SetBoneMatrix(i, mat)
 			end
 		end
@@ -58,6 +56,14 @@ function PART:Initialize()
 	
 	self.Entity = pac.CreateEntity(self.Model)
 	self.Entity:SetNoDraw(true)
+	--[[self.Entity:SetRenderMode(RENDERMODE_NONE)
+	self.Entity:AddEffects(EF_NOINTERP)
+	self.Entity:AddEffects(EF_NOSHADOW)
+	self.Entity:AddEffects(EF_NODRAW)
+	self.Entity:AddEffects(EF_NORECEIVESHADOW)
+	self.Entity:AddEFlags(EFL_NO_THINK_FUNCTION)
+	self.Entity:DrawShadow(false)
+	self.Entity:DestroyShadow()]]
 	self.Entity.PACPart = self
 end
 
@@ -97,6 +103,7 @@ function PART:OnAttach(owner)
 	if ent:IsValid() and owner:IsValid() then
 		ent:SetPos(owner:EyePos())
 		ent:SetParent(owner)
+		ent:SetOwner(owner)
 		self.BoneIndex = nil
 	end
 end
@@ -106,8 +113,10 @@ function PART:OnParent(part)
 
 	if part.ClassName == self.ClassName and part:GetEntity():IsValid() then
 		ent:SetParent(self:GetParent():GetEntity())
+		ent:SetOwner(self:GetParent():GetEntity())
 	else
 		ent:SetParent(owner)
+		ent:SetOwner(owner)
 	end	
 end
 
@@ -116,15 +125,25 @@ function PART:OnUnParent()
 	
 	if ent:IsValid() then
 		ent:SetParent(self:GetOwner())
+		ent:SetOwner(self:GetOwner())
 	end
 end
+
+local render_EnableClipping = render.EnableClipping
+local render_PushCustomClipPlane = render.PushCustomClipPlane
+local render_CullMode = render.CullMode
+local render_SetColorModulation = render.SetColorModulation
+local render_SetBlend = render.SetBlend
+local render_MaterialOverride = render.MaterialOverride or SetMaterialOverride
+local render_SuppressEngineLighting = render.SuppressEngineLighting
+local render_PopCustomClipPlane = render.PopCustomClipPlane
+local LocalToWorld = LocalToWorld
 
 function PART:OnDraw(owner, pos, ang)
 	if self.SuppressDraw then return end
 	
 	self:CheckBoneMerge()
-	
-	
+		
 	local ent = self.Entity
 
 	if ent:IsValid() then
@@ -143,43 +162,40 @@ function PART:OnDraw(owner, pos, ang)
 			ent:SetPos(pos)
 			ent:SetAngles(ang)
 		end
+				
+		ent:SetupBones()
 		
 		local bclip
 		
 		if #self.ClipPlanes > 0 then
-			bclip = render.EnableClipping(true)
+			bclip = render_EnableClipping(true)
 
 			for key, clip in pairs(self.ClipPlanes) do
 				if clip:IsValid() and not clip:IsHidden() then
 					local pos, ang = LocalToWorld(clip.Position, clip:CalcAngles(owner, clip.Angles), pos, ang)
 					local normal = ang:Forward()
-					render.PushCustomClipPlane(normal, normal:Dot(pos + normal))
+					render_PushCustomClipPlane(normal, normal:Dot(pos + normal))
 				end
 			end
-		end
-			
+		end			
 			if self.DoubleFace then
-				render.CullMode(MATERIAL_CULLMODE_CW)
+				render_CullMode(MATERIAL_CULLMODE_CW)
 			else
 				if self.Invert then
-					render.CullMode(MATERIAL_CULLMODE_CW)
+					render_CullMode(MATERIAL_CULLMODE_CW)
 				end
 			end
 
 			if self.Colorf then 
-				render.SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness) 
+				render_SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness) 
 			end
 			
-			if self.Alpha then render.SetBlend(self.Alpha) end
+			if self.Alpha then render_SetBlend(self.Alpha) end
 			
-			if net then 
-				render.MaterialOverride(self.Material ~= "" and self.Materialm or nil) 
-			else 
-				SetMaterialOverride(self.Material ~= "" and self.Materialm or nil) 
-			end
+			render_MaterialOverride(self.Material ~= "" and self.Materialm or nil) 
 		
 			if self.Fullbright then
-				render.SuppressEngineLighting(true) 
+				render_SuppressEngineLighting(true) 
 			end
 			
 			if self.BoneMerge then self.SuppressDraw = true end
@@ -187,34 +203,34 @@ function PART:OnDraw(owner, pos, ang)
 			if self.BoneMerge then self.SuppressDraw = false end
 				
 			if self.DoubleFace then
-				render.CullMode(MATERIAL_CULLMODE_CCW)
+				render_CullMode(MATERIAL_CULLMODE_CCW)
 				ent:DrawModel()
 			else
 				if self.Invert then
-					render.CullMode(MATERIAL_CULLMODE_CCW)
+					render_CullMode(MATERIAL_CULLMODE_CCW)
 				end
 			end
 				
 			if self.Fullbright then
-				render.SuppressEngineLighting(false) 
+				render_SuppressEngineLighting(false) 
 			end
 			
-			render.SetColorModulation(1,1,1)
-			render.SetBlend(1)
+			render_SetColorModulation(1,1,1)
+			render_SetBlend(1)
 			
-			if net then render.MaterialOverride() else SetMaterialOverride(0) end
+			render_MaterialOverride()
 		
 		if #self.ClipPlanes > 0 then
 			for key, clip in pairs(self.ClipPlanes) do
 				if not clip:IsValid() then
-					table.remove(self.ClipPlanes, key)
+					self.ClipPlanes[key] = nil
 				end
 				if not clip:IsHidden() then
-					render.PopCustomClipPlane()
+					render_PopCustomClipPlane()
 				end
 			end
 
-			render.EnableClipping(bclip)
+			render_EnableClipping(bclip)
 		end
 	else
 		timer.Simple(0, function()
@@ -318,6 +334,7 @@ function PART:CheckBoneMerge()
 			local owner = self:GetOwner()
 			if owner:IsValid() then
 				ent:SetParent(owner)
+				ent:SetOwner(owner)
 			end
 		end		
 	end

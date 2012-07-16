@@ -1,3 +1,4 @@
+local pac = pac
 local class = pac.class
 
 pac.ActiveParts = pac.ActiveParts or {}
@@ -46,18 +47,11 @@ function pac.GetParts(owned_only)
 	if owned_only then		
 		local tbl = {}
 		for key, part in pairs(pac.ActiveParts) do
-			if not part:IsValid() then
-				pac.ActiveParts[key] = nil
-			elseif part:GetPlayerOwner() == LocalPlayer() then
-				table.insert(tbl, part)
+			if part:GetPlayerOwner() == LocalPlayer() then
+				tbl[key] = part
 			end
 		end
 		return tbl
-	end
-	for key, part in pairs(pac.ActiveParts) do
-		if not part:IsValid() then
-			pac.ActiveParts[key] = nil
-		end
 	end
 	return pac.ActiveParts
 end
@@ -119,6 +113,9 @@ do -- meta
 		pac.GetSet(PART, "Name", "")
 		pac.GetSet(PART, "Description", "")
 		pac.GetSet(PART, "Hide", false)
+		
+		pac.GetSet(PART, "EditorExpand", false)
+		pac.GetSet(PART, "SortingPriority", 0)
 	pac.EndStorableVars()
 	
 	function PART:PreInitialize()
@@ -148,6 +145,11 @@ do -- meta
 		self.Name = var
 	end
 	
+	function PART:SetSortingPriority(num)
+		self.SortingPriority = num
+		self.needs_sorting = true
+	end
+	
 	do -- owner	
 		function PART:SetOwnerName(name)
 			self.OwnerName = name
@@ -173,19 +175,15 @@ do -- meta
 		function PART:SetOwner(ent)
 			ent = ent or NULL
 						
-			if self:GetOwner():IsValid() then self:OnDetach(self:GetOwner()) end
+			if self:GetOwner():IsValid() then 
+				self:OnDetach(self:GetOwner()) 
+			end
 			
 			self.Owner = ent
 			
 			if ent:IsValid() then
+				pac.HookEntityRender(ent, self:GetRootPart()) 
 				self:OnAttach(ent)
-				if pac.HookEntityRender then
-					timer.Simple(0.1, function()
-						if ent:IsValid() and self:IsValid() then
-							pac.HookEntityRender(ent, self:GetRootPart()) 
-						end
-					end)
-				end
 			end
 		end
 		
@@ -249,8 +247,6 @@ do -- meta
 			end
 
 			self.ParentName = var
-			
-			self:ResolveParentName()
 		end
 		
 		function PART:ResolveParentName()
@@ -279,6 +275,10 @@ do -- meta
 			local id = table.insert(self:GetChildren(), var)
 			
 			var.ParentName = self:GetName()
+			
+			self:ClearBone()
+			var:ClearBone()
+			
 			var:OnParent(self)
 			self:OnChildAdd(var)
 
@@ -304,25 +304,15 @@ do -- meta
 		
 		function PART:RemoveChild(var)
 			local children = self:GetChildren()
-			
-			if children[var] then	
-				if children[var]:IsValid() then
-					children[var].Parent = pac.NULL
-					children[var].ParentName = ""
-					children[var] = nil
-				end
-			else
-				for index, part in pairs(children) do
-					if part == var then
-						children[index].Parent = pac.NULL
-						children[index].ParentName = ""
-						children[index] = nil
-						return
-					end
+
+			for key, part in pairs(children) do
+				if part == var then
+					part.Parent = pac.NULL
+					part.ParentName = ""
+					children[key] = nil
+					return
 				end
 			end
-			
-			self.Children = children
 		end
 		
 		function PART:GetRootPart()
@@ -368,15 +358,7 @@ do -- meta
 		end
 
 		function PART:GetChildren()
-			local children = self.Children
-			
-			for key, part in pairs(children) do
-				if not part:IsValid() then
-					children[key] = nil
-				end
-			end
-
-			return children
+			return self.Children
 		end
 		
 		function PART:RemoveChildren()
@@ -392,6 +374,8 @@ do -- meta
 			if parent:IsValid() then
 				parent:RemoveChild(self)
 			end
+			
+			self:ClearBone()
 			
 			self:OnUnParent()
 		end
@@ -598,10 +582,13 @@ do -- meta
 		
 		function PART:Remove()
 			pac.CallHook("OnPartRemove", self)
+			self:OnRemove()
+			
+			if self:HasParent() then
+				self:GetParent():RemoveChild(self)
+			end
 
 			self:RemoveChildren()
-			
-			self:OnRemove()
 			
 			self.IsValid = function() return false end
 		end
@@ -680,10 +667,11 @@ do -- meta
 	do
 		PART.cached_pos = Vector(0,0,0)
 		PART.cached_ang = Angle(0,0,0)
-	
+				
 		local pos, ang, owner
+		
 		function PART:Draw(event, pos, ang)
-			if not self:IsHiddenEx() then
+			if not self:IsHiddenEx() then				
 				if self[event] then
 					pos = pos or Vector(0,0,0)
 					ang = ang or Angle(0,0,0)
@@ -697,11 +685,11 @@ do -- meta
 					
 					self.cached_pos = pos
 					self.cached_ang = ang
-					
+				
 					self[event](self, owner, pos, ang)
 				end
-								
-				for index, part in pairs(self:GetChildren()) do
+	
+				for _, part in pairs(self.Children) do
 					if part[event] then
 						part:Draw(event, pos, ang)
 					end
@@ -713,6 +701,7 @@ do -- meta
 			end
 		end
 	end
+	
 	
 	function PART:BuildBonePositions(owner)
 		self:OnBuildBonePositions(owner)
@@ -737,7 +726,12 @@ do -- meta
 		if not self.BoneIndex and self.TriedToFindBone ~= self.Bone then
 			self:UpdateBoneIndex(owner)
 		end
-				
+		
+		if self.last_parent_name ~= self.ParentName then
+			self:ResolveParentName()
+			self.last_parent_name = self.ParentName
+		end
+		
 		if self.AimPartName and self.AimPartName ~= "" and not self.AimPart:IsValid() and part ~= self then
 			self:ResolveAimPartName()
 		end

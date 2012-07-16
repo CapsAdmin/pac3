@@ -13,7 +13,6 @@ pac.EndStorableVars()
 function PART:OnAttach(owner)
 	self.BoneIndex = nil
 	pac.HookBuildBone(owner)
-	self.pac3_bonebuild_ref = owner
 end
 
 function PART:OnParent()
@@ -33,6 +32,7 @@ function PART:GetOwner()
 end
 
 function PART:OnThink()
+	
 	-- this is to setup the cached values
 	if not self.first_getbpos and self:GetPlayerOwner():IsValid() then
 		self:GetBonePosition()
