@@ -58,6 +58,9 @@ function PART:GetSequenceList()
 	return {"none"}
 end
 
+local UnPredictedCurTime = UnPredictedCurTime
+local tonumber = tonumber
+
 function PART:OnThink()
 	if self:IsHiddenEx() then return end
 	

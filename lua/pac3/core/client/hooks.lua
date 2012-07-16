@@ -1,6 +1,9 @@
+pac.drawn_entities = {}
+
 local function draw(ent, part, event)
 	for key, part in pairs(ent.pac_parts) do
-		if part:IsValid() then 
+		-- dont' draw children, they are handled by part:Draw()
+		if part:IsValid() and not part:HasParent() then 
 			part:Draw(event)
 		else
 			ent.pac_parts[key] = nil
@@ -8,67 +11,58 @@ local function draw(ent, part, event)
 	end	
 end
 
+local render_ResetModelLighting = render.ResetModelLighting
+local RENDERMODE_NONE = RENDERMODE_NONE
+
+local FrameNumber = FrameNumber
+local cvar = CreateClientConVar("pac_experimental_optimization", "0")
+local frame_number = 0
+
+function pac.RenderOverride(ent)
+	frame_number = FrameNumber()
+	
+	if cvar:GetBool() and ent.pac_frame_number ~= frame_number then
+		if not ent.pac_parts then
+			pac.UnhookEntityRender(ent)
+		else
+			if ent:IsPlayer() then
+				ent:SetRenderMode(RENDERMODE_NONE)
+			end
+			
+			ent:InvalidateBoneCache()
+			draw(ent, part, "PreDraw")
+			--ent:DrawModel()
+			ent:InvalidateBoneCache()
+			draw(ent, part, "OnDraw")
+			ent:InvalidateBoneCache()
+		end
+	end
+	
+	ent.pac_frame_number = frame_number
+end
+
 function pac.HookEntityRender(ent, part)
 	if part:IsValid() and not part:HasParent() then	
+		pac.dprint("hooking render on %s to draw part %s", tostring(ent), tostring(part))
+		
 		if not ent.pac_parts then
 			ent.pac_parts = {[part.Id] = part}
 		else
 			ent.pac_parts[part.Id] = part
 		end
-
-		if 
-			ent.pac_old_RenderOverride == nil or
-			ent.pac_overriden_RenderOverride and 
-			ent.RenderOverride ~= ent.pac_overriden_RenderOverride 
-		then
-			if ent.RenderOverride then
-				local old_RenderOverride = ent.RenderOverride
-				
-				function ent:RenderOverride(...)
-					if not self.pac_parts then
-						pac.UnhookEntityRender(self)
-					else
-						self:InvalidateBoneCache()
-						draw(self, part, "PreDraw")			
-						old_RenderOverride(self, ...)
-						draw(self, part, "OnDraw")
-						self:InvalidateBoneCache()
-					end		
-				end
-				
-				ent.pac_overriden_RenderOverride = ent.RenderOverride
-				ent.pac_old_RenderOverride = old_RenderOverride
-			else 			
-				function ent:RenderOverride()
-					if not self.pac_parts then
-						pac.UnhookEntityRender(self)
-					else
-						self:InvalidateBoneCache()
-						draw(self, part, "PreDraw")			
-						self:DrawModel()
-						draw(self, part, "OnDraw")
-						self:InvalidateBoneCache()
-					end						
-				end
-				
-				ent.pac_overriden_RenderOverride = ent.RenderOverride
-				ent.pac_old_RenderOverride = false
-			end
-		end
+		
+		pac.drawn_entities[ent:EntIndex()] = ent
 	end
 end
 
 function pac.UnhookEntityRender(ent)	
-	if ent.pac_old_RenderOverride then
-		ent.RenderOverride = ent.pac_old_RenderOverrid
-	elseif ent.pac_old_RenderOverride == false then
-		ent.RenderOverride = nil
+	pac.drawn_entities[ent:EntIndex()] = nil
+		
+	if ent:IsPlayer() then
+		ent:SetRenderMode(RENDERMODE_NORMAL)
 	end
-
-	ent.pac_overriden_RenderOverride = nil
-	ent.pac_old_RenderOverride = nil
+	
 	ent.pac_parts = nil
-	--print("unhooked ", ent)
 end
 
 function pac.RenderScreenspaceEffect()
@@ -87,17 +81,27 @@ function pac.RenderScreenspaceEffect()
 end
 --pac.AddHook("RenderScreenspaceEffect")
 
-function pac.Tick()
-	pac.CallPartHook("Think")
-	
-	for key, part in pairs(pac.ActiveParts) do
-		if not part:IsValid() then
-			pac.ActiveParts[key] = nil
-			pac.MakeNull(part)
+local pac = pac
+
+function pac.PostDrawTranslucentRenderables()
+	for key, ent in pairs(pac.drawn_entities) do
+		if ent:IsValid() then
+			if ent ~= LocalPlayer() or ent:ShouldDrawLocalPlayer() then
+				pac.RenderOverride(ent)
+			end
+		else	
+			pac.drawn_entities[key] = nil
 		end
 	end
 end
-pac.AddHook("Tick")
+pac.AddHook("PostDrawTranslucentRenderables")
+
+
+function pac.Think()
+	pac.CheckParts()
+	pac.CallPartHook("Think")
+end
+pac.AddHook("Think")
 
 function pac.OnEntityCreated(ent)
 	if ent:IsValid() then
@@ -119,7 +123,7 @@ pac.AddHook("EntityRemoved")
 
 function pac.EntityBuildBonePositions(ent)	
 	for key, part in pairs(pac.GetParts()) do
-		if part.pac3_bonebuild_ref == ent and not part:IsHiddenEx() then
+		if part:GetOwner() == ent and not part:IsHiddenEx() then
 			part:BuildBonePositions(ent)
 		end
 	end

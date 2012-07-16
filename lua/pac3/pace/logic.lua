@@ -75,7 +75,7 @@ function pace.OnVariableChanged(obj, key, val, skip_undo)
 				node:SetText(val)
 			elseif key == "Model" and val and val ~= "" then
 				node:SetModel(val)
-			elseif key == "Parent" or key == "ParentName" then
+			elseif key == "Parent" then
 				local tree = obj.editor_node
 				if IsValid(tree) then
 					tree = tree:GetRoot()
@@ -149,8 +149,6 @@ function pace.LoadPartFromFile(part, name)
 		if IsValid(part.editor_node) then
 			part.editor_node:SetText(part:GetName())
 		end
-		
-		pace.RefreshTree()
 	end
 end
 
@@ -250,7 +248,6 @@ function pace.OnPartMenu(obj)
 
 	menu:AddOption(L"load", function()
 		pace.LoadPartFromFile(obj)
-		pace.RefreshTree()
 		CloseDermaMenus()
 	end)
 	
@@ -270,19 +267,16 @@ function pace.OnNewPartMenu()
 	menu:MakePopup()
 	menu:SetPos(gui.MousePos())
 	
+	add_parts(menu)
+	
+	menu:AddSpacer()
+		
 	menu:AddOption(L"load", function()
 		local obj = pac.CreatePart("group")
 		pace.OnPartSelected(obj)
 		pace.LoadPartFromFile(obj)
-		pace.RefreshTree()
 		CloseDermaMenus()
 	end)
-
-	menu:AddSpacer()
-	
-	add_parts(menu)
-	
-	menu:AddSpacer()
 	
 	menu:AddOption(L"clear", function()
 		pac.RemoveAllParts(true)

@@ -47,10 +47,13 @@ function PART:SetMaterial(var)
 	self.SpritePath = var
 end
 
+local render_SetMaterial = render.MaterialOverride or render.SetMaterial
+local render_DrawSprite = render.DrawSprite
+
 function PART:OnDraw(owner, pos, ang)
 	if self.Sprite then
-		render.SetMaterial(self.Sprite)
-		render.DrawSprite(pos, self.SizeX * self.Size, self.SizeY * self.Size, self.ColorC)
+		render_SetMaterial(self.Sprite)
+		render_DrawSprite(pos, self.SizeX * self.Size, self.SizeY * self.Size, self.ColorC)
 	end
 end
 

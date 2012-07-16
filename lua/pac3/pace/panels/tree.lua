@@ -19,10 +19,10 @@ function PANEL:Init()
 	pace.tree = self
 end
 
-if net then
-	function PANEL:Think(...)
+function PANEL:Think(...)	
+	if _G.net then
 		local pnl = vgui.GetHoveredPanel()
-
+		
 		if pnl then
 			pnl = pnl:GetParent()
 			
@@ -30,10 +30,10 @@ if net then
 				pace.Call("HoverPart", pnl.part)
 			end
 		end	
-		
-		if DTree.Think then
-			return DTree.Think(self, ...)
-		end
+	end
+			
+	if DTree.Think then
+		return DTree.Think(self, ...)
 	end
 end
 
@@ -41,8 +41,6 @@ function PANEL:OnMousePressed(mc)
 	if mc == MOUSE_RIGHT then
 		pace.Call("NewPartMenu")
 	end
-	
-	pace.RefreshTree()
 end
 
 function PANEL:SetModel(path)
@@ -64,6 +62,7 @@ end
 
 local function install_drag(node)
 	node:SetDraggableName("pac3")
+	
 	function node:OnDrop(child)
 		-- we're hovering on the label, not the actual node
 		-- so get the parent node instead
@@ -79,6 +78,17 @@ local function install_drag(node)
 	end
 end
 
+local function install_expand(node)
+	local old = node.SetExpanded
+	node.SetExpanded = function(self, b, ...)
+		if self.part and self.part:IsValid() then
+			self.part:SetEditorExpand(b)
+		end
+		
+		return old(self, b, ...)
+	end
+end
+
 local fix_folder_funcs = function(tbl) 
 	tbl.MakeFolder = function() end
 	tbl.FilePopulateCallback = function() end
@@ -91,14 +101,16 @@ end
 function PANEL:AddNode(...)
 
 	local node = fix_folder_funcs(DTree.AddNode(self, ...))
+	install_expand(node)
 	if net then install_drag(node) end
-	node.SetModel = self.SetModel
+	--node.SetModel = self.SetModel
 
 	node.AddNode = function(...)
 		local node_ = fix_folder_funcs(DTree_Node.AddNode(...))
 		node_.AddNode = node.AddNode
 		if net then install_drag(node_) end
-		node_.SetModel = self.SetModel
+		install_expand(node_)
+		--node_.SetModel = self.SetModel
 						
 		return node_
 	end
@@ -107,6 +119,8 @@ function PANEL:AddNode(...)
 end
 
 function PANEL:PopulateParts(node, parts, children)
+	parts = table.ClearKeys(parts)
+
 	local tbl = {}
 	
 	table.sort(parts, function(a,b) 
@@ -131,21 +145,15 @@ function PANEL:PopulateParts(node, parts, children)
 		if not part:HasParent() or children then
 			local part_node
 			
-			if pace.tree.rebuild then
-				part_node = node:AddNode(part:GetName())
+			if IsValid(part.editor_node) then
+				part_node = part.editor_node
+			elseif IsValid(self.parts[key]) then
+				part_node = self.parts[key]
 			else
-				if IsValid(part.editor_node) then
-					part_node = part.editor_node
-				elseif IsValid(self.parts[key]) then
-					part_node = self.parts[key]
-				else
-					part_node = node:AddNode(part:GetName())
-				end
+				part_node = node:AddNode(part:GetName())
 			end
 			
-			if part:GetDescription() ~= "" then 
-				part_node:SetTooltip(part:GetDescription())
-			end
+			part_node:SetTooltip(part:GetDescription())
 			
 			part.editor_node = part_node
 			part_node.part = part
@@ -166,27 +174,36 @@ function PANEL:PopulateParts(node, parts, children)
 				end
 			end
 			
-			if false and part.ClassName == "model" and part.GetModel then
-				part_node:SetModel(part:GetModel())
-			else
+			--[[if false and part.ClassName == "model" and part.GetModel then
+				--part_node:SetModel(part:GetModel())
+			else]]
 				part_node.Icon:SetImage(pace.PartIcons[part.ClassName] or (net and "icon16/plugin") or "gui/silkicons/plugin")
-			end
-			
-			part_node:ExpandTo(true)
+			--end
 			
 			self:PopulateParts(part_node, part:GetChildren(), true)
+			
+			if part:GetEditorExpand() == true then 
+				part_node:ExpandTo(part:GetEditorExpand())
+			end
 		end
 	end
 end
 
 function PANEL:Populate()
+
 	for key, node in pairs(self.parts) do
 		if not node.part or not node.part:IsValid() then
 			node:Remove()
 			self.parts[key] = nil
 		end
 	end
-
+	
+	--[[self.m_pSelectedItem = nil
+	
+	for key, node in pairs(self:GetItems()) do
+		node:Remove()
+	end]]
+	
 	self:PopulateParts(self, pac.GetParts(true))
 	
 	self:StretchToParent()
@@ -209,8 +226,10 @@ hook.Add("pac_OnPartRemove", "pace_remove_tree_nodes", remove_node)
 
 function pace.RefreshTree()
 	if pace.tree:IsValid() then
-		timer.Create("pace_tree_refresh", 0.1, 1, function()
-			pace.tree:Populate()
+		timer.Create("pace_refresh_tree",  0.2, 1, function()
+			if pace.tree:IsValid() then
+				pace.tree:Populate()
+			end
 		end)
 	end
 end

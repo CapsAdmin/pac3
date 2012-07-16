@@ -143,7 +143,6 @@ function PART:UpdateScale(ent)
 		
 		if self.OverallSize ~= 1 and not self.setup_overallscale then
 			pac.HookBuildBone(ent)
-			self.pac3_bonebuild_ref = ent
 			self.setup_overallscale = true
 		end
 		
@@ -205,6 +204,12 @@ function PART:UpdateWeaponDraw(ent)
 	end
 end
 
+local render_CullMode = render.CullMode
+local render_SuppressEngineLighting = render.SuppressEngineLighting
+local render_SetBlend = render.SetBlend
+local render_SetColorModulation = render.SetColorModulation
+local render_MaterialOverride = render.MaterialOverride or SetMaterialOverride
+
 function PART:UpdateColor(ent)
 	if 
 		self.Brightness ~= 1 or
@@ -212,20 +217,16 @@ function PART:UpdateColor(ent)
 		self.Colorf.g == 1 or
 		self.Colorf.b == 1
 	then
-		render.SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness)
+		render_SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness)
 	end
 	if self.Alpha ~= 1 then 
-		render.SetBlend(self.Alpha)
+		render_SetBlend(self.Alpha)
 	end
 end
 
 function PART:UpdateMaterial(ent)
 	if self.Material ~= "" then
-		if net then
-			render.MaterialOverride(self.Materialm)
-		else
-			SetMaterialOverride(self.Materialm)
-		end
+		render_MaterialOverride(self.Materialm)
 	end
 end
 
@@ -236,18 +237,17 @@ function PART:UpdateAll(ent)
 end
 
 function PART:OnAttach(ent)
-	if not ent:IsPlayer() then
+	if not ent:IsPlayer() and ent:IsValid() then
 		ent:SetNoDraw(true)
 	end	
 end
 
 function PART:OnDetach(ent)
-	if not ent:IsPlayer() then
+	if not ent:IsPlayer() and ent:IsValid() then
 		ent:SetNoDraw(false)
 	end	
 	
 	ent:SetModelScale(Vector(1,1,1))
-	ent:SetupBones()
 end
 
 local aaa = false
@@ -268,35 +268,28 @@ function PART:PreDraw(ent, pos, ang)
 	self:UpdateAll(ent)
 
 	if self.Invert then
-		render.CullMode(MATERIAL_CULLMODE_CW)
+		render_CullMode(1) -- MATERIAL_CULLMODE_CW
 	end
 
 	if self.Fullbright then
-		render.SuppressEngineLighting(true) 
+		render_SuppressEngineLighting(true) 
 	end
 end
 
 function PART:OnDraw(ent, pos, ang)	
-	if ent:IsValid() and not ent:IsPlayer() then
-		ent:DrawModel()
-	end
 	
 	if self.Invert then
-		render.CullMode(MATERIAL_CULLMODE_CCW)
+		render_CullMode(0) -- MATERIAL_CULLMODE_CCW
 	end
 	
 	if self.Fullbright then
-		render.SuppressEngineLighting(false) 
+		render_SuppressEngineLighting(false) 
 	end
 	
-	render.SetBlend(1)
-	render.SetColorModulation(1,1,1)
+	render_SetBlend(1)
+	render_SetColorModulation(1,1,1)
 	
-	if net then
-		render.MaterialOverride()
-	else
-		SetMaterialOverride(0)
-	end
+	render_MaterialOverride()
 
 	--if bclip ~= nil then 
 		--self:EndClipping(bclip)
