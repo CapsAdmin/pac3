@@ -14,31 +14,23 @@ end
 local render_ResetModelLighting = render.ResetModelLighting
 local RENDERMODE_NONE = RENDERMODE_NONE
 
-local FrameNumber = FrameNumber
-local cvar = CreateClientConVar("pac_experimental_optimization", "0")
-local frame_number = 0
-
 function pac.RenderOverride(ent)
-	frame_number = FrameNumber()
 	
-	if cvar:GetBool() and ent.pac_frame_number ~= frame_number then
-		if not ent.pac_parts then
-			pac.UnhookEntityRender(ent)
-		else
-			if ent:IsPlayer() then
-				ent:SetRenderMode(RENDERMODE_NONE)
-			end
-			
-			ent:InvalidateBoneCache()
-			draw(ent, part, "PreDraw")
-			--ent:DrawModel()
-			ent:InvalidateBoneCache()
-			draw(ent, part, "OnDraw")
-			ent:InvalidateBoneCache()
+	if not ent.pac_parts then
+		pac.UnhookEntityRender(ent)
+	else
+		if ent:IsPlayer() then
+			ent:SetRenderMode(RENDERMODE_NONE)
 		end
+		
+		ent:InvalidateBoneCache()
+		draw(ent, part, "PreDraw")
+		--ent:DrawModel()
+		ent:InvalidateBoneCache()
+		draw(ent, part, "OnDraw")
+		ent:InvalidateBoneCache()
 	end
 	
-	ent.pac_frame_number = frame_number
 end
 
 function pac.HookEntityRender(ent, part)
