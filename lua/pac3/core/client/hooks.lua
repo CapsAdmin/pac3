@@ -12,17 +12,12 @@ local function draw(ent, part, event)
 end
 
 local render_ResetModelLighting = render.ResetModelLighting
-local RENDERMODE_NONE = RENDERMODE_NONE
 
 function pac.RenderOverride(ent)
 	
 	if not ent.pac_parts then
 		pac.UnhookEntityRender(ent)
 	else
-		if ent:IsPlayer() then
-			ent:SetRenderMode(RENDERMODE_NONE)
-		end
-		
 		ent:InvalidateBoneCache()
 		draw(ent, part, "PreDraw")
 		--ent:DrawModel()
@@ -49,11 +44,7 @@ end
 
 function pac.UnhookEntityRender(ent)	
 	pac.drawn_entities[ent:EntIndex()] = nil
-		
-	if ent:IsPlayer() then
-		ent:SetRenderMode(RENDERMODE_NORMAL)
-	end
-	
+
 	ent.pac_parts = nil
 end
 
