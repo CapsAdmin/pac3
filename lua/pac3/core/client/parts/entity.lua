@@ -20,6 +20,7 @@ function PART:Initialize()
 		pac.GetSet(self, "Scale", Vector(1,1,1))
 		pac.GetSet(self, "Size", 1)
 		pac.GetSet(self, "OverallSize", 1)
+		pac.GetSet(self, "HideEntity", false)
 		pac.GetSet(self, "Invert", false)
 		pac.GetSet(self, "DoubleFace", false)
 		pac.GetSet(self, "DrawWeapon", true)
@@ -47,15 +48,12 @@ function PART:OnBuildBonePositions(ent)
 	end
 end
 
-function PART:AddClipPlane(part)
-	return table.insert(self.ClipPlanes, part)
-end
+function PART:SetDrawShadow(b)
+	self.DrawShadow = b
 
-function PART:RemoveClipPlane(id)
-	local part = self.ClipPlanes[id]
-	if part then
-		table.remove(self.ClipPlanes, id)
-		part:Remove()
+	local ent = self:GetOwner()
+	if ent:IsValid() then
+		ent:DrawShadow(b)
 	end
 end
 
@@ -105,32 +103,54 @@ function PART:SetSkin(var)
 	end
 end
 
-function PART:StartClipping(pos, ang)
-	if #self.ClipPlanes > 0 then
-		local bclip = render.EnableClipping(true)
+function PART:AddClipPlane(part)
+	return table.insert(self.ClipPlanes, part)
+end
 
-		for key, clip in pairs(self.ClipPlanes) do
-			if clip:IsValid() then
-				local pos, ang = LocalToWorld(clip.Position, clip:CalcAngles(clip.Angles), pos, ang)
-				local normal = ang:Forward()
-				render.PushCustomClipPlane(normal, normal:Dot(pos + normal))
-			end
-		end
-		
-		return bclip
+function PART:RemoveClipPlane(id)
+	local part = self.ClipPlanes[id]
+	if part then
+		table.remove(self.ClipPlanes, id)
+		part:Remove()
 	end
 end
 
-function PART:EndClipping(bclip)
+local render_EnableClipping = render.EnableClipping 
+local render_PushCustomClipPlane = render.PushCustomClipPlane
+local LocalToWorld = LocalToWorld
+local bclip 
+
+function PART:StartClipping(owner)	
+	bclip = nil
+	
+	if #self.ClipPlanes > 0 then
+		bclip = render_EnableClipping(true)
+
+		for key, clip in pairs(self.ClipPlanes) do
+			if clip:IsValid() and not clip:IsHidden() then
+				local pos, ang = clip:GetDrawPosition(owner)
+				pos, ang = LocalToWorld(clip.Position, clip:CalcAngles(owner, clip.Angles), pos, ang)
+				local normal = ang:Forward()
+				render_PushCustomClipPlane(normal, normal:Dot(pos + normal))
+			end
+		end
+	end
+end
+
+local render_PopCustomClipPlane = render.PopCustomClipPlane
+
+function PART:EndClipping()
 	if #self.ClipPlanes > 0 then
 		for key, clip in pairs(self.ClipPlanes) do
 			if not clip:IsValid() then
-				table.remove(key, self.ClipPlanes)
+				self.ClipPlanes[key] = nil
 			end
-			render.PopCustomClipPlane()
+			if not clip:IsHidden() then
+				render_PopCustomClipPlane()
+			end
 		end
 
-		render.EnableClipping(bclip)
+		render_EnableClipping(bclip)
 	end
 end
 
@@ -170,7 +190,19 @@ function PART:SetColor(var)
 	var = var or Vector(255, 255, 255)
 
 	self.Color = var
-	self.Colorf = (Vector(var.r, var.g, var.b) / 255)
+	self.Colorf = Vector(var.r, var.g, var.b) / 255
+	
+	self.Colorc = self.Colorc or Color(var.r, var.g, var.b, self.Alpha)
+	self.Colorc.r = var.r
+	self.Colorc.g = var.g
+	self.Colorc.b = var.b
+end
+
+function PART:SetAlpha(var)
+	self.Alpha = var
+	
+	self.Colorc = self.Colorc or Color(self.Color.r, self.Color.g, self.Color.b, self.Alpha)
+	self.Colorc.a = var
 end
 
 function PART:SetMaterial(var)
@@ -211,16 +243,16 @@ local render_SetColorModulation = render.SetColorModulation
 local render_MaterialOverride = render.MaterialOverride or SetMaterialOverride
 
 function PART:UpdateColor(ent)
-	if 
-		self.Brightness ~= 1 or
-		self.Colorf.r == 1 or 
-		self.Colorf.g == 1 or
-		self.Colorf.b == 1
-	then
-		render_SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness)
-	end
-	if self.Alpha ~= 1 then 
-		render_SetBlend(self.Alpha)
+
+	render_SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness)
+	render_SetBlend(self.Alpha)
+	
+	if self.Colorc then
+		if VERSION >= 150 then 
+			ent:SetColor(unpack(self.Colorc))
+		else
+			ent:SetColor(self.Colorc)
+		end
 	end
 end
 
@@ -231,21 +263,29 @@ function PART:UpdateMaterial(ent)
 end
 
 function PART:UpdateAll(ent)
-	self:UpdateMaterial(ent)
 	self:UpdateColor(ent)
+	self:UpdateMaterial(ent)
 	self:UpdateScale(ent)
 end
 
 function PART:OnAttach(ent)
-	if not ent:IsPlayer() and ent:IsValid() then
-		ent:SetNoDraw(true)
+	if ent:IsValid() then
+		function ent.RenderOverride(ent)
+			if self:IsValid() then
+				if not self.HideEntity then 
+					self:PreEntityDraw(ent)
+					ent:DrawModel()
+					self:PostEntityDraw(ent)
+				end
+			else
+				ent.RenderOverride = nil
+			end
+		end
 	end	
 end
 
 function PART:OnDetach(ent)
-	if not ent:IsPlayer() and ent:IsValid() then
-		ent:SetNoDraw(false)
-	end	
+	ent.RenderOverride = nil
 	
 	ent:SetModelScale(Vector(1,1,1))
 end
@@ -260,10 +300,8 @@ function PART:GetDrawPosition()
 	end
 end
 
-local bclip
-
-function PART:PreDraw(ent, pos, ang)
-	--bclip = self:StartClipping(pos, ang)
+function PART:PreEntityDraw(ent)
+	self:StartClipping(ent)
 	
 	self:UpdateAll(ent)
 
@@ -276,7 +314,7 @@ function PART:PreDraw(ent, pos, ang)
 	end
 end
 
-function PART:OnDraw(ent, pos, ang)	
+function PART:PostEntityDraw(ent)	
 	
 	if self.Invert then
 		render_CullMode(0) -- MATERIAL_CULLMODE_CCW
@@ -291,10 +329,7 @@ function PART:OnDraw(ent, pos, ang)
 	
 	render_MaterialOverride()
 
-	--if bclip ~= nil then 
-		--self:EndClipping(bclip)
-		--bclip = nil
-	--end
+	self:EndClipping(bclip)
 end
 
 pac.RegisterPart(PART)
