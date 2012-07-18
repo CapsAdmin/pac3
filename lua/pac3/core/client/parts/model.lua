@@ -19,7 +19,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Size", 1)
 	pac.GetSet(PART, "OverallSize", 1)
 	pac.GetSet(PART, "OriginFix", false)
-	pac.GetSet(PART, "Model", "models/props_junk/watermelon01.mdl")
+	pac.GetSet(PART, "Model", "models/dav0r/hoverball.mdl")
 pac.EndStorableVars()
 
 function PART:SetOverallSize(num)
@@ -172,7 +172,8 @@ function PART:OnDraw(owner, pos, ang)
 
 			for key, clip in pairs(self.ClipPlanes) do
 				if clip:IsValid() and not clip:IsHidden() then
-					local pos, ang = LocalToWorld(clip.Position, clip:CalcAngles(owner, clip.Angles), pos, ang)
+					local pos, ang = clip:GetDrawPosition(owner)
+					pos, ang = LocalToWorld(clip.Position, clip:CalcAngles(owner, clip.Angles), pos, ang)
 					local normal = ang:Forward()
 					render_PushCustomClipPlane(normal, normal:Dot(pos + normal))
 				end
