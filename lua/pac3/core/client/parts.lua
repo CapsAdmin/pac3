@@ -280,6 +280,7 @@ do -- meta
 			var:ClearBone()
 			
 			var:OnParent(self)
+			var:OnAttach(self:GetOwner())
 			self:OnChildAdd(var)
 
 			return id
@@ -309,6 +310,7 @@ do -- meta
 				if part == var then
 					part.Parent = pac.NULL
 					part.ParentName = ""
+					part:OnDetach(self:GetOwner())
 					children[key] = nil
 					return
 				end
@@ -412,6 +414,11 @@ do -- meta
 		end
 		
 		function PART:GetDrawPosition(owner, pos, ang)
+			-- compat hack
+			if self.ClassName == "clip" and not self.BoneIndex then
+				return self.Parent:GetDrawPosition()
+			end
+			
 			owner = owner or self:GetOwner()
 			if owner:IsValid() then
 				local pos, ang = self:GetBonePosition(owner, nil, pos, ang)
@@ -436,7 +443,7 @@ do -- meta
 			
 			if self.BoneIndex then
 				local parent = self:GetParent()
-				if parent:IsValid() and parent.ClassName ~= "group" then
+				if parent:IsValid() and parent.ClassName ~= "group" and parent.ClassName ~= "entity" then
 					local ent = parent.Entity or NULL
 					
 					if ent:IsValid() then
