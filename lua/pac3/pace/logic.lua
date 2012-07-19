@@ -75,7 +75,7 @@ function pace.OnVariableChanged(obj, key, val, skip_undo)
 				node:SetText(val)
 			elseif key == "Model" and val and val ~= "" then
 				node:SetModel(val)
-			elseif key == "Parent" then
+			elseif key == "Parent" or key == "ParentName" then
 				local tree = obj.editor_node
 				if IsValid(tree) then
 					tree = tree:GetRoot()
