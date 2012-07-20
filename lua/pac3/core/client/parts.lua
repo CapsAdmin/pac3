@@ -115,7 +115,6 @@ do -- meta
 		pac.GetSet(PART, "Hide", false)
 		
 		pac.GetSet(PART, "EditorExpand", false)
-		pac.GetSet(PART, "SortingPriority", 0)
 	pac.EndStorableVars()
 	
 	function PART:PreInitialize()
@@ -144,12 +143,7 @@ do -- meta
 		
 		self.Name = var
 	end
-	
-	function PART:SetSortingPriority(num)
-		self.SortingPriority = num
-		self.needs_sorting = true
-	end
-	
+
 	do -- owner	
 		function PART:SetOwnerName(name)
 			self.OwnerName = name
