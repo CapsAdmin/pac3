@@ -129,7 +129,7 @@ function PART:StartClipping(owner)
 		for key, clip in pairs(self.ClipPlanes) do
 			if clip:IsValid() and not clip:IsHidden() then
 				local pos, ang = clip:GetDrawPosition(owner)
-				pos, ang = LocalToWorld(clip.Position, clip:CalcAngles(owner, clip.Angles), pos, ang)
+				pos, ang = LocalToWorld(clip.Position, clip:CalcAngles(owner, clip.Angles), pos, ang or Angle(0))
 				local normal = ang:Forward()
 				render_PushCustomClipPlane(normal, normal:Dot(pos + normal))
 			end
