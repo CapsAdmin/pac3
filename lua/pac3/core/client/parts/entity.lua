@@ -285,9 +285,11 @@ function PART:OnAttach(ent)
 end
 
 function PART:OnDetach(ent)
-	ent.RenderOverride = nil
-	
-	ent:SetModelScale(Vector(1,1,1))
+	if ent:IsValid() then
+		ent.RenderOverride = nil
+		
+		ent:SetModelScale(Vector(1,1,1))
+	end
 end
 
 local aaa = false
