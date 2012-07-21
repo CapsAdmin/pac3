@@ -1,4 +1,4 @@
-pac.drawn_entities = {}
+pac.drawn_entities = pac.drawn_entities or {}
 
 local function draw(ent, part, event)
 	for key, part in pairs(ent.pac_parts) do
@@ -14,7 +14,6 @@ end
 local render_ResetModelLighting = render.ResetModelLighting
 
 function pac.RenderOverride(ent)
-	
 	if not ent.pac_parts then
 		pac.UnhookEntityRender(ent)
 	else
@@ -25,7 +24,6 @@ function pac.RenderOverride(ent)
 		draw(ent, part, "OnDraw")
 		ent:InvalidateBoneCache()
 	end
-	
 end
 
 function pac.HookEntityRender(ent, part)
@@ -39,6 +37,8 @@ function pac.HookEntityRender(ent, part)
 		end
 		
 		pac.drawn_entities[ent:EntIndex()] = ent
+		
+		ent.pac_pixvis = util.GetPixelVisibleHandle()
 	end
 end
 
@@ -48,28 +48,32 @@ function pac.UnhookEntityRender(ent)
 	ent.pac_parts = nil
 end
 
-function pac.RenderScreenspaceEffect()
-	for key, part in pairs(pac.GetParts()) do
-		if 
-			part.Screenspace and
-			not part:IsHidden() and
-			not part:HasParent() 
-		then
-			local owner = part:GetOwner()
-			if owner ~= LocalPlayer() or LocalPlayer():ShouldDrawLocalPlayer() then
-				part:Draw("OnDraw")
-			end
-		end
-	end
-end
---pac.AddHook("RenderScreenspaceEffect")
-
 local pac = pac
 
+local LocalPlayer = LocalPlayer
+local util_PixelVisible = util.PixelVisible
+local cvar_enable = CreateClientConVar("pac_enable", "1")
+local cvar_distance = CreateClientConVar("pac_draw_distance", "0")
+
+local eye_pos = vector_origin
+function pac.RenderScene(pos)
+	eye_pos = pos
+end
+pac.AddHook("RenderScene")
+
 function pac.PostDrawTranslucentRenderables()
+	if not cvar_enable:GetBool() then return end
+	
+	local draw_dist = cvar_distance:GetInt()
+	local local_player = LocalPlayer() 
+	
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
-			if ent ~= LocalPlayer() or ent:ShouldDrawLocalPlayer() then
+			if 
+				ent ~= LocalPlayer() or ent:ShouldDrawLocalPlayer() or
+				util_PixelVisible(ent:EyePos(), ent:BoundingRadius() * 2, ent.pac_pixvis) > 0.5 and 
+				(draw_dist <= 0 or ent:EyePos():Distance(eye_pos) < draw_dist) 
+			then
 				pac.RenderOverride(ent)
 			end
 		else	
@@ -81,6 +85,8 @@ pac.AddHook("PostDrawTranslucentRenderables")
 
 
 function pac.Think()
+	if not cvar_enable:GetBool() then return end
+	
 	pac.CheckParts()
 	pac.CallPartHook("Think")
 end
@@ -105,6 +111,8 @@ end
 pac.AddHook("EntityRemoved")
 
 function pac.EntityBuildBonePositions(ent)	
+	if not cvar_enable:GetBool() then return end
+	
 	for key, part in pairs(pac.GetParts()) do
 		if part:GetOwner() == ent and not part:IsHiddenEx() then
 			part:BuildBonePositions(ent)
