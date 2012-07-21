@@ -69,10 +69,16 @@ function pac.PostDrawTranslucentRenderables()
 	
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
+			local dst = ent:EyePos():Distance(eye_pos)
 			if 
-				ent ~= LocalPlayer() or ent:ShouldDrawLocalPlayer() or
-				util_PixelVisible(ent:EyePos(), ent:BoundingRadius() * 2, ent.pac_pixvis) > 0.5 and 
-				(draw_dist <= 0 or ent:EyePos():Distance(eye_pos) < draw_dist) 
+				(ent == local_player and ent:ShouldDrawLocalPlayer()) or
+				
+				ent ~= local_player and 
+				(					
+					util_PixelVisible(ent:EyePos(), ent:BoundingRadius() * 2, ent.pac_pixvis) ~= 0 and 
+					(draw_dist <= 0 or dst < draw_dist) or
+					dst < 100
+				)
 			then
 				pac.RenderOverride(ent)
 			end
