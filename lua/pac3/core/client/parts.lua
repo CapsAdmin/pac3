@@ -469,17 +469,10 @@ do -- meta
 			owner = owner or self:GetOwner()
 			if owner:IsValid() then
 				self.BoneIndex = owner:LookupBone(self:GetRealBoneName(self.Bone))
-				if not self.BoneIndex and (owner:IsNPC() or owner:IsPlayer()) and owner.GetActiveWeapon then
-					local wep = owner:GetActiveWeapon()
-
-					if wep:IsWeapon() then
-						self.BoneIndex = wep:LookupBone(self:GetRealBoneName(self.Bone, wep))
-						if not self.BoneIndex then
-							self.Error = self.Bone .. " cannot be found on '" .. tostring(owner) .. "'"
-							MsgN(self.Error)
-							self.TriedToFindBone = self.Bone
-						end
-					end
+				if not self.BoneIndex then
+					self.Error = self.Bone .. " cannot be found on '" .. tostring(owner) .. "'"
+					MsgN(self.Error)
+					self.TriedToFindBone = self.Bone
 				end
 			end
 		end
@@ -719,13 +712,17 @@ do -- meta
 	
 	function PART:Think()	
 		local owner = self:GetOwner()
-	
-		if not owner.pac_bones then
-			pac.GetModelBones(owner)
-		end
-	
-		if not self.BoneIndex and self.TriedToFindBone ~= self.Bone then
-			self:UpdateBoneIndex(owner)
+		
+		if owner:IsValid() then
+			if not owner.pac_bones then
+				owner:SetupBones()
+				owner:InvalidateBoneCache()
+				pac.GetModelBones(owner)
+			end
+		
+			if not self.BoneIndex and self.TriedToFindBone ~= self.Bone then
+				self:UpdateBoneIndex(owner)
+			end
 		end
 		
 		if self.last_parent_name ~= self.ParentName then

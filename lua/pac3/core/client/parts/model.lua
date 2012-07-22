@@ -27,6 +27,9 @@ function PART:SetOverallSize(num)
 	if self.Entity:IsValid() then
 		if num ~= 1 then
 			pac.HookBuildBone(self.Entity)
+			self.Entity.pac_part_ref = self
+		else
+			self.Entity.pac_part_ref = nil
 		end
 	end
 	

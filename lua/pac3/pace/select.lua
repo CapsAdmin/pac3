@@ -51,7 +51,7 @@ end
 
 function pace.SelectBone(ent, callback)
 	local data
-	local bones = pac.GetAllBones(ent)
+	local bones = ent.pac_bones or pac.GetAllBones(ent)
 
 	local function GUIMousePressed(mcode)
 		if mcode == MOUSE_LEFT and data then
