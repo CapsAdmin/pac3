@@ -91,7 +91,7 @@ local math_abs = math.abs
 local render_StartBeam = render.StartBeam
 local render_EndBeam = render.EndBeam
 local render_AddBeam = render.AddBeam
-local render_MaterialOverride = render.MaterialOverride or render.SetMaterial
+local render_MaterialOverride = render.SetMaterial
 
 function PART:OnDraw(owner, pos, ang)
 	if self.Trail and self.StartColorC and self.EndColorC then
