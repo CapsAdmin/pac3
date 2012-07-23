@@ -47,7 +47,7 @@ function PART:SetMaterial(var)
 	self.SpritePath = var
 end
 
-local render_SetMaterial = render.MaterialOverride or render.SetMaterial
+local render_SetMaterial = render.SetMaterial
 local render_DrawSprite = render.DrawSprite
 
 function PART:OnDraw(owner, pos, ang)
