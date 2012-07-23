@@ -36,6 +36,8 @@ pace.PropertyOrder =
 	"WeaponClass",
 	"HideWeaponClass",
 	"Bone",
+	"BoneMerge",
+	"OriginFix"
 	"Position",
 	"Angles",
 	"AngleVelocity",

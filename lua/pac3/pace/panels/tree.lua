@@ -180,11 +180,10 @@ function PANEL:PopulateParts(node, parts, children)
 				part_node.Icon:SetImage(pace.PartIcons[part.ClassName] or (net and "icon16/plugin") or "gui/silkicons/plugin")
 			--end
 			
-			self:PopulateParts(part_node, part:GetChildren(), true)
-			
-			if part:GetEditorExpand() == true then 
-				part_node:ExpandTo(part:GetEditorExpand())
-			end
+			self:PopulateParts(part_node, part:GetChildren(), true)			
+		
+			part_node:SetExpanded(part:GetEditorExpand())
+
 		end
 	end
 end
