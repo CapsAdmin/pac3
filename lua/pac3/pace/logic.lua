@@ -293,7 +293,7 @@ function pace.OnOpenEditor()
 	pace.SetViewAngles(LocalPlayer():EyeAngles())
 	pace.EnableView(true)
 	
-	if #pac.GetParts(true) == 0 then
+	if table.Count(pac.GetParts(true)) == 0 then
 		pace.Call("CreatePart", "group", L"my outfit", L"add parts to me!")
 	else
 		pace.OnPartSelected(select(2, next(pac.GetParts())))
