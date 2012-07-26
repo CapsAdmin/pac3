@@ -443,7 +443,7 @@ do -- meta
 			local parent = self:GetParent()
 			
 			if parent:IsValid() and parent.ClassName == "jiggle" then
-				return parent.pos, Angle(math.NormalizeAngle(parent.ang.x), math.NormalizeAngle(parent.ang.y), math.NormalizeAngle(parent.ang.z))
+				return parent.pos, parent.ang
 			end
 			
 			if self.BoneIndex then
