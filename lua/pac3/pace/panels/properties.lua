@@ -80,7 +80,7 @@ function pace.TranslatePropertiesKey(key)
 		return key
 	end	
 	
-	if key == "aimpartname" or key == "parentname" then
+	if key == "aimpartname" or key == "parentname" or key == "followpartname" then
 		return "part"
 	end
 	
