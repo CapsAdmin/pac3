@@ -12,6 +12,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "StartAlpha", 1)
 	pac.GetSet(PART, "EndAlpha", 1)
 	pac.GetSet(PART, "Stretch", false)
+	pac.GetSet(PART, "Physics", false)
 	pac.GetSet(PART, "TrailPath", "trails/laser")
 pac.EndStorableVars()
 
@@ -101,6 +102,10 @@ function PART:OnDraw(owner, pos, ang)
 		local spc = tonumber(self.Spacing)
 		
 		if spc == 0 or self.LastAdd < RealTime() then
+			if self.physics_init then
+				self.points = {}
+				self.physics_init = false
+			end
 			table_insert(self.points, pos)
 			self.LastAdd = RealTime() + spc / 1000
 		end
@@ -110,8 +115,10 @@ function PART:OnDraw(owner, pos, ang)
 		if spc > 0 then
 			len = math_ceil(math_abs(len - spc))
 		end
-		
+				
 		render_MaterialOverride(self.Trail)
+		
+		local delta = FrameTime() * 5
 		
 		render_StartBeam(count)
 			for k, v in pairs(self.points) do
@@ -124,12 +131,12 @@ function PART:OnDraw(owner, pos, ang)
 				color.g = Lerp(coord, self.EndColorC.g, self.StartColorC.g)
 				color.b = Lerp(coord, self.EndColorC.b, self.StartColorC.b)
 				color.a = Lerp(coord, self.EndColorC.a, self.StartColorC.a)
-				
+								
 				render_AddBeam(k == count and pos or v, width + self.EndSize, self.Stretch and coord or width, color)
 			end
 		render_EndBeam()		
 		
-		if count >= len then 
+		if not self.Physics and count >= len then 
 			table_remove(self.points, 1) 
 		end
 	end
