@@ -36,6 +36,12 @@ pace.PropertyLimits =
 		return num
 	end,
 	
+	Strain = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Clamp(num, 0, 1) * 0.999
+	end,
+	
 	Style = function(self, num)
 		num = tonumber(num)
 		return math.Clamp(num, 0, 16)

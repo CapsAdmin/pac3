@@ -434,13 +434,21 @@ do -- meta
 			
 			return Vector(0, 0, 0), Angle(0, 0, 0)
 		end
+		
+		local Angle = Angle
+		local math_NormalizeAngle = math.NormalizeAngle
 
 		function PART:GetBonePosition(owner, idx, pos, ang)
 			owner = owner or self:GetOwner()
+			local parent = self:GetParent()
+			
+			if parent:IsValid() and parent.ClassName == "jiggle" then
+				return parent.pos, Angle(math.NormalizeAngle(parent.ang.x), math.NormalizeAngle(parent.ang.y), math.NormalizeAngle(parent.ang.z))
+			end
 			
 			if self.BoneIndex then
-				local parent = self:GetParent()
 				if parent:IsValid() and parent.ClassName ~= "group" and parent.ClassName ~= "entity" then
+					
 					local ent = parent.Entity or NULL
 					
 					if ent:IsValid() then
@@ -454,6 +462,7 @@ do -- meta
 							pos, ang = parent:GetDrawPosition()
 						end
 					end
+					
 				elseif owner:IsValid() then
 					-- if there is no parent, default to owner bones
 					owner:InvalidateBoneCache()

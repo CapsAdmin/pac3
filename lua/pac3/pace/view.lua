@@ -184,7 +184,15 @@ function pace.SetTPose(b)
 					ply:LookupSequence("ragdoll") 
 			end
 		end)
-		
+	else
+		pac.RemoveHook("CalcMainActivity")
+	end
+	
+	pace.tposed = b
+end
+
+function pace.SetBreathing(b)
+	if b then
 		pac.AddHook("UpdateAnimation", function(ply) 
 			if ply == LocalPlayer() then
 				for k,v in pairs(reset_pose_params) do 
@@ -193,11 +201,14 @@ function pace.SetTPose(b)
 			end
 		end)
 	else
-		pac.RemoveHook("CalcMainActivity")
 		pac.RemoveHook("UpdateAnimation")
 	end
 	
-	pace.tposed = b
+	pace.breathing = b
+end
+
+function pace.GetBreathing()
+	return pace.breathing
 end
 
 function pac.HUDPaint()
