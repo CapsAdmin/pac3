@@ -8,7 +8,26 @@ pac.StartStorableVars()
 
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
 	pac.GetSet(PART, "Size", 1)
+	pac.GetSet(PART, "FollowPartName", "")
 pac.EndStorableVars()
+
+function PART:Initialize()
+	self.FollowPart = pac.NULL
+end
+
+function PART:SetFollowPartName(name)
+	self.FollowPartName = name or ""
+	self.FollowPart = pac.NULL
+end	
+
+function PART:ResolveFollowPartName()
+	for key, part in pairs(pac.GetParts()) do	
+		if part ~= self and part:GetName() == self.FollowPartName then
+			self.FollowPart = part
+			break
+		end
+	end
+end
 
 function PART:OnAttach(owner)
 	self.BoneIndex = nil
@@ -48,7 +67,7 @@ function PART:GetBonePosition(owner, ...)
 		if not self.BoneIndex then
 			self:UpdateBoneIndex(owner)
 		end
-
+	
 		pos, ang = owner:GetBonePosition(owner:GetBoneParent(self.BoneIndex))
 		owner:InvalidateBoneCache()
 
@@ -69,30 +88,34 @@ function PART:OnBuildBonePositions(owner)
 
 	local matrix = owner:GetBoneMatrix(self.BoneIndex)
 	
-	if matrix then	
-		
+	if matrix then			
 		local ang = self:CalcAngles(owner, self.Angles) or self.Angles
-				
-		if self.EyeAngles or self.AimPart:IsValid() then
-			ang.r = ang.y
-			ang.y = -ang.p			
+	
+		if self.FollowPart:IsValid() then			
+			matrix:SetAngle(self.FollowPart.cached_ang + ang)
+			matrix:SetTranslation(self.FollowPart.cached_pos + self.Position)
+		else				
+			if self.EyeAngles or self.AimPart:IsValid() then
+				ang.r = ang.y
+				ang.y = -ang.p			
+			end
+			
+			if self.Modify then
+				if self.RotateOrigin then
+					matrix:Translate(self.Position)
+					matrix:Rotate(ang)
+				else
+					matrix:Rotate(ang)
+					matrix:Translate(self.Position)
+				end
+			else
+				matrix:SetAngle(ang)
+				matrix:SetTranslation(self.Position)
+			end
 		end
 	
-		if self.Modify then
-			if self.RotateOrigin then
-				matrix:Translate(self.Position)
-				matrix:Rotate(ang)
-			else
-				matrix:Rotate(ang)
-				matrix:Translate(self.Position)
-			end
-		else
-			matrix:SetAngle(ang)
-			matrix:SetTranslation(self.Position)
-		end
-		
 		matrix:Scale(self.Scale * self.Size)
-		
+	
 		owner:SetBoneMatrix(self.BoneIndex, matrix)
 	end
 end
