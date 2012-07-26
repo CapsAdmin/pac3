@@ -5,6 +5,7 @@ PART.ManualDraw = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "BoneMerge", false)
+	pac.GetSet(PART, "BoneMergeAlternative", false)
 	pac.GetSet(PART, "Skin", 0)
 	pac.GetSet(PART, "Fullbright", false)
 	pac.GetSet(PART, "Invert", false)
@@ -34,18 +35,6 @@ function PART:SetOverallSize(num)
 	end
 	
 	self.OverallSize = num
-end
-
-function PART:OnBuildBonePositions(ent)
-	if self.OverallSize ~= 1 then
-		for i = 0, ent:GetBoneCount() do
-			local mat = ent:GetBoneMatrix(i)
-			if mat then
-				mat:Scale(Vector()*self.OverallSize)
-				ent:SetBoneMatrix(i, mat)
-			end
-		end
-	end
 end
 
 PART.Colorf = Vector(1,1,1)
@@ -168,13 +157,11 @@ local render_MaterialOverride = render.MaterialOverride or SetMaterialOverride
 local render_SuppressEngineLighting = render.SuppressEngineLighting
 local render_PopCustomClipPlane = render.PopCustomClipPlane
 local LocalToWorld = LocalToWorld
+local MATERIAL_CULLMODE_CW = MATERIAL_CULLMODE_CW
 
-function PART:PreEntityDraw(owner, ent, pos, ang)
-	if self.SuppressDraw then return end
+function PART:PreEntityDraw(owner, ent, pos, ang)	
 	
-	self:CheckBoneMerge()
-	
-	if not ent:IsPlayer() then
+	if not ent:IsPlayer() and pos and ang then
 		if self.OriginFix and ent.pac3_center then			
 			local pos, ang = LocalToWorld(
 				ent.pac3_center * self.Scale * -self.Size, 
@@ -227,11 +214,11 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		render_SuppressEngineLighting(true) 
 	end
 	
-	if self.BoneMerge then self.SuppressDraw = true end
 end
 
-function PART:PostEntityDraw(owner, ent, pos, ang)
-	if self.BoneMerge then self.SuppressDraw = false end
+local MATERIAL_CULLMODE_CCW = MATERIAL_CULLMODE_CCW
+
+function PART:PostEntityDraw(owner, ent)
 		
 	if self.DoubleFace then
 		render_CullMode(MATERIAL_CULLMODE_CCW)
@@ -265,13 +252,34 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 	end
 end
 
+local render_SetMaterial = render.SetMaterial
+
 function PART:OnDraw(owner, pos, ang)
 	local ent = self.Entity
 	
 	if ent:IsValid() then
+		self:CheckBoneMerge()
+	
 		self:PreEntityDraw(owner, ent, pos, ang)
-		ent:DrawModel()				
-		self:PostEntityDraw(owner, ent, pos, ang)
+		
+		if self.wavefront_mesh then
+			local matrix = Matrix()
+			
+			matrix:SetAngle(ang)
+			matrix:SetTranslation(pos)
+			matrix:Scale(self.Scale * self.Size)
+			
+			cam.PushModelMatrix(matrix)
+				if self.Materialm then 
+					render_SetMaterial(self.Materialm)	
+				end
+				self.wavefront_mesh:Draw()
+			cam.PopModelMatrix()
+		else
+			ent:DrawModel()
+		end
+		
+		self:PostEntityDraw(owner, ent)
 	else
 		timer.Simple(0, function()
 			self.Entity = pac.CreateEntity(self.Model)
@@ -281,7 +289,103 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
+local function decode_obj(str)
+	local vertices, normals, texcoords, faces = {}, {}, {}, {}
+
+	for line in str:gmatch("(.-)\n") do
+		local parts = string.Explode(" ", line)
+		if #parts < 1 then continue end
+
+		if parts[1] == "v" then
+			table.insert(vertices, Vector(tonumber(parts[2]), tonumber(parts[3]), tonumber(parts[4])))
+		elseif parts[1] == "vn" then
+			table.insert(normals, Vector(tonumber(parts[2]), tonumber(parts[3]), tonumber(parts[4])))
+		elseif parts[1] == "vt" then
+			table.insert(texcoords, {tonumber(parts[2]), 1 - tonumber(parts[3])})
+		elseif parts[1] == "f" then
+			local face = {}
+
+			for i = 2, #parts do
+				local indices = {}
+
+				for k, v in ipairs(string.Explode("/", parts[i])) do
+					indices[k] = tonumber(v)
+				end
+
+				face[i - 1] = indices
+			end
+
+			table.insert(faces, face)
+		end
+	end
+
+	local data = {}
+
+	local first_pos, previous_pos = 0, 0
+	local first_nor, previous_nor = 0, 0
+	local first_tex, previous_tex = 0, 0
+
+	for face_index, face in ipairs(faces) do
+		for k, v in ipairs(face) do
+			local pos, normal, tex = v[1], v[2], v[3]
+
+			if k == 1 then
+				first_pos = pos
+				first_nor = normal
+				first_tex = tex
+			elseif k > 2 then
+				table.insert(
+					data, 
+					{
+						pos = vertices[first_pos], 
+						normal = normals[first_nor], 
+						u = texcoords[first_tex] and texcoords[first_tex][1], 
+						v = texcoords[first_tex] and texcoords[first_tex][2]
+					}
+				)
+				table.insert(
+					data, 
+					{
+						pos = vertices[pos], 
+						normal = normals[normal], 
+						u = texcoords[tex] and texcoords[tex][1], 
+						v = texcoords[tex] and texcoords[tex][2]
+					}
+				)
+				table.insert(
+					data, 
+					{
+						pos = vertices[previous_pos], 
+						normal = normals[previous_nor], 
+						u = texcoords[previous_tex] and texcoords[previous_tex][1], 
+						v = texcoords[previous_tex] and texcoords[previous_tex][2]
+					}
+				)
+			end
+
+			previous_pos = pos
+			previous_nor = normal
+			previous_tex = tex
+		end
+	end
+
+	return data
+end
+
 function PART:SetModel(var)
+	if var and var:find("%.obj") and var:find("http://") then
+		http.Get(var, "", function(str)
+			if self:IsValid() then
+				self:LoadObj(decode_obj(str))
+			end
+		end)
+		self.Model = var
+		return
+	end
+	
+	self.Obj = nil
+	self.wavefront_mesh = nil
+	
 	self.Model = var
 	self.Entity.pac_bones = nil
 	self.Entity:SetModel(var)
@@ -359,15 +463,18 @@ function PART:CheckBoneMerge()
 	if ent:IsValid() and not ent:IsPlayer() then
 			
 		if ent:GetParent():IsValid() then
-			if self.BoneMerge then	
+			if self.BoneMergeAlternative then	
+				pac.HookBuildBone(ent)
+				ent.pac_part_ref = self
+			end
+			
+			if self.BoneMerge and not self.BoneMergeAlternative then
 				if not ent:IsEffectActive(EF_BONEMERGE) then
 					ent:AddEffects(EF_BONEMERGE)
-					ent:AddEffects(EF_BONEMERGE_FASTCULL)
 				end
 			else
 				if ent:IsEffectActive(EF_BONEMERGE) then
 					ent:RemoveEffects(EF_BONEMERGE)
-					ent:RemoveEffects(EF_BONEMERGE_FASTCULL)
 				end
 			end
 		else	
@@ -378,6 +485,71 @@ function PART:CheckBoneMerge()
 			end
 		end		
 	end
+end
+
+function PART:OnBuildBonePositions(ent)
+	local owner = self:GetOwner()
+	if owner == ent then return end
+	
+	if self.BoneMergeAlternative then
+		local ent_bones = pac.GetModelBones(ent)
+		local owner_bones = pac.GetModelBones(owner)
+		
+		if ent_bones and owner_bones then
+			for friendly, ent_bone in pairs(ent_bones) do
+				local owner_bone = owner_bones[friendly]
+				
+				if owner_bone then
+					local pos, ang = owner:GetBonePosition(owner_bone.real ~= "ValveBiped.Bip01_Head1" and owner_bone.parent_i or owner_bone.i)
+					if pos ~= owner:GetPos() and pos ~= owner:EyePos() then
+
+						if owner_bone.real == "ValveBiped.Bip01_Neck1" then
+							pos = vector_origin
+						end
+						
+						if owner_bone.real == "ValveBiped.Bip01_Head1" then	
+							local wpos, wang = owner:GetBonePosition(owner_bone.parent_i)							
+							local pos, ang = WorldToLocal(pos, ang, wpos, wang)
+
+							local pos2 = ent:GetBonePosition(ent_bone.parent_i)	
+
+							ent:SetBonePosition(ent_bone.i, pos, ang)
+							continue
+						end
+						
+						ent:SetBonePosition(ent_bone.parent_i or ent_bone.i, pos, ang)
+					end
+				end
+			end
+		end
+	end
+	
+	if self.OverallSize ~= 1 then
+		for i = 0, ent:GetBoneCount() do
+			local mat = ent:GetBoneMatrix(i)
+			if mat then
+				mat:Scale(Vector()*self.OverallSize)
+				ent:SetBoneMatrix(i, mat)
+			end
+		end
+	end
+end
+
+function PART:LoadObj(var)
+	if type(var) ~= "table" then 
+		self.Obj = nil
+		self.wavefront_mesh = nil
+	return false end
+	
+	local mesh = NewMesh()
+	mesh:BuildFromTriangles(var)
+	
+	self.wavefront_mesh = mesh
+		
+	self.pac_bones = nil
+	self.Entity:SetRenderBounds(Vector()*-300, Vector()*300)
+	
+	return true
 end
 
 pac.RegisterPart(PART)

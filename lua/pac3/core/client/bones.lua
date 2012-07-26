@@ -41,6 +41,11 @@ function pac.GetAllBones(ent)
 				:Trim()
 				:lower()
 				:gsub("(.-)(%d+)", "%1 %2")
+				
+				local parent_i = ent:GetBoneParent(i)
+				if parent_i == -1 then
+					parent_i = nil
+				end
 
 				tbl[friendly] =
 				{
@@ -48,6 +53,7 @@ function pac.GetAllBones(ent)
 					real = name,
 					bone = bone,
 					i = i,
+					parent_i = parent_i,
 				}
 			end
 		end
