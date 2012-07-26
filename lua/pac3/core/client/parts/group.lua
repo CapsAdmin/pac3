@@ -12,6 +12,7 @@ function PART:Initialize()
 		pac.GetSet(self, "OwnerName", "")
 		pac.GetSet(self, "ParentName", "")
 		pac.GetSet(self, "Hide", false)
+		pac.GetSet(self, "EditorExpand", false)
 	pac.EndStorableVars()
 	
 	-- hacks
