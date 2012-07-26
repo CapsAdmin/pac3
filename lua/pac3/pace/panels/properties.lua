@@ -5,6 +5,11 @@ pace.HiddenProperties =
 	Arguments = true,
 }
 
+pace.HiddenPropertyKeys =
+{
+	"EditorExpand",
+}
+
 pace.PropertyLimits = 
 {
 	Sequence = function(self, num)
@@ -196,7 +201,9 @@ do -- list
 		local data = {}
 		
 		for key, val in pairs(obj:GetVars()) do
-			table.insert(data, {key = key, val = val})
+			if not pace.HiddenPropertyKeys[key] then
+				table.insert(data, {key = key, val = val})
+			end
 		end
 		
 		table.sort(data, function(a,b) return a.key > b.key end)
@@ -216,7 +223,7 @@ do -- list
 				
 		for pos, data in ipairs(tbl) do
 			local key, val = data.key, data.val
-
+			
 			local pnl
 			local T = (pace.TranslatePropertiesKey(key) or type(val)):lower()
 			
@@ -338,6 +345,7 @@ do -- base editable
 	
 		if last_focus:IsValid() then
 			last_focus:Reset()
+			last_focus = NULL
 		end	
 				
 		if mcode == MOUSE_LEFT then
