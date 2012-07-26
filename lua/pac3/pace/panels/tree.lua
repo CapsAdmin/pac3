@@ -19,21 +19,34 @@ function PANEL:Init()
 	pace.tree = self
 end
 
-function PANEL:Think(...)	
-	if _G.net then
-		local pnl = vgui.GetHoveredPanel()
-		
-		if pnl then
-			pnl = pnl:GetParent()
+do
+	local pnl = NULL
+
+	if not _G.net then
+		pac_ChangeTooltip = pac_ChangeTooltip or ChangeTooltip
+		function ChangeTooltip(pnl_, ...)
+			pnl = pnl_ or NULL
+			return pac_ChangeTooltip(pnl_, ...)
+		end
+	end
+
+	function PANEL:Think(...)	
+		if _G.net then
+			pnl = vgui.GetHoveredPanel() or NULL
+		end
+				
+		if pnl:IsValid() then
+			local pnl = pnl:GetParent()
 			
 			if pnl and pnl.part and pnl.part:IsValid() then
 				pace.Call("HoverPart", pnl.part)
 			end
 		end	
-	end
-			
-	if DTree.Think then
-		return DTree.Think(self, ...)
+		
+				
+		if DTree.Think then
+			return DTree.Think(self, ...)
+		end
 	end
 end
 
