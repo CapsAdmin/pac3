@@ -487,6 +487,34 @@ function PART:CheckBoneMerge()
 	end
 end
 
+local bad_bones = 
+{
+	["ValveBiped.Bip01_L_Finger0"] = true,
+	["ValveBiped.Bip01_L_Finger01"] = true,
+	["ValveBiped.Bip01_L_Finger02"] = true, 
+
+	["ValveBiped.Bip01_L_Finger1"] = true,
+	["ValveBiped.Bip01_L_Finger11"] = true, 
+	["ValveBiped.Bip01_L_Finger12"] = true,
+
+	["ValveBiped.Bip01_L_Finger2"] = true,
+	["ValveBiped.Bip01_L_Finger21"] = true,
+	["ValveBiped.Bip01_L_Finger22"] = true,
+
+
+	["ValveBiped.Bip01_R_Finger0"] = true,
+	["ValveBiped.Bip01_R_Finger01"] = true,
+	["ValveBiped.Bip01_R_Finger02"] = true,
+
+	["ValveBiped.Bip01_R_Finger1"] = true,
+	["ValveBiped.Bip01_R_Finger11"] = true,
+	["ValveBiped.Bip01_R_Finger12"] = true,
+
+	["ValveBiped.Bip01_R_Finger2"] = true,
+	["ValveBiped.Bip01_R_Finger21"] = true,
+	["ValveBiped.Bip01_R_Finger22"] = true,
+}
+
 function PART:OnBuildBonePositions(ent)
 	local owner = self:GetOwner()
 	if owner == ent then return end
@@ -499,7 +527,7 @@ function PART:OnBuildBonePositions(ent)
 			for friendly, ent_bone in pairs(ent_bones) do
 				local owner_bone = owner_bones[friendly]
 				
-				if owner_bone then
+				if owner_bone and not bad_bones[owner_bone.real] then				
 					local pos, ang = owner:GetBonePosition(owner_bone.real ~= "ValveBiped.Bip01_Head1" and owner_bone.parent_i or owner_bone.i)
 					if pos ~= owner:GetPos() and pos ~= owner:EyePos() then
 
@@ -516,7 +544,7 @@ function PART:OnBuildBonePositions(ent)
 							ent:SetBonePosition(ent_bone.i, pos, ang)
 							continue
 						end
-						
+		
 						ent:SetBonePosition(ent_bone.parent_i or ent_bone.i, pos, ang)
 					end
 				end
