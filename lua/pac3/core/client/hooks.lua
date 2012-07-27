@@ -70,7 +70,7 @@ function pac.PostDrawTranslucentRenderables()
 		if ent:IsValid() then
 			ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
 			local dst = ent:EyePos():Distance(eye_pos)
-			radius = ent:BoundingRadius() * 1.5
+			radius = ent:BoundingRadius() * 2
 			if 
 				(ent == local_player and ent:ShouldDrawLocalPlayer()) or
 				

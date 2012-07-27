@@ -290,6 +290,8 @@ function PART:OnDraw(owner, pos, ang)
 end
 
 function PART:SetModel(var)
+	self.Entity = self.Entity or pac.CreateEntity(self.Model)
+
 	if var and var:find("http") and pac.urlobj then
 		var = var:gsub("https://", "http://")
 		
