@@ -37,8 +37,6 @@ function pac.HookEntityRender(ent, part)
 		end
 		
 		pac.drawn_entities[ent:EntIndex()] = ent
-		
-		ent.pac_pixvis = util.GetPixelVisibleHandle()
 	end
 end
 
@@ -66,18 +64,21 @@ function pac.PostDrawTranslucentRenderables()
 	
 	local draw_dist = cvar_distance:GetInt()
 	local local_player = LocalPlayer() 
+	local radius = 0
 	
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
+			ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
 			local dst = ent:EyePos():Distance(eye_pos)
+			radius = ent:BoundingRadius() * 1.5
 			if 
 				(ent == local_player and ent:ShouldDrawLocalPlayer()) or
 				
 				ent ~= local_player and 
 				(					
-					util_PixelVisible(ent:EyePos(), ent:BoundingRadius() * 2, ent.pac_pixvis) ~= 0 and 
+					util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 and 
 					(draw_dist <= 0 or dst < draw_dist) or
-					dst < 100
+					dst < radius
 				)
 			then
 				pac.RenderOverride(ent)

@@ -289,106 +289,38 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
-local function decode_obj(str)
-	local vertices, normals, texcoords, faces = {}, {}, {}, {}
-
-	for line in str:gmatch("(.-)\n") do
-		local parts = string.Explode(" ", line)
-		if #parts < 1 then continue end
-
-		if parts[1] == "v" then
-			table.insert(vertices, Vector(tonumber(parts[2]), tonumber(parts[3]), tonumber(parts[4])))
-		elseif parts[1] == "vn" then
-			table.insert(normals, Vector(tonumber(parts[2]), tonumber(parts[3]), tonumber(parts[4])))
-		elseif parts[1] == "vt" then
-			table.insert(texcoords, {tonumber(parts[2]), 1 - tonumber(parts[3])})
-		elseif parts[1] == "f" then
-			local face = {}
-
-			for i = 2, #parts do
-				local indices = {}
-
-				for k, v in ipairs(string.Explode("/", parts[i])) do
-					indices[k] = tonumber(v)
-				end
-
-				face[i - 1] = indices
-			end
-
-			table.insert(faces, face)
-		end
-	end
-
-	local data = {}
-
-	local first_pos, previous_pos = 0, 0
-	local first_nor, previous_nor = 0, 0
-	local first_tex, previous_tex = 0, 0
-
-	for face_index, face in ipairs(faces) do
-		for k, v in ipairs(face) do
-			local pos, normal, tex = v[1], v[2], v[3]
-
-			if k == 1 then
-				first_pos = pos
-				first_nor = normal
-				first_tex = tex
-			elseif k > 2 then
-				table.insert(
-					data, 
-					{
-						pos = vertices[first_pos], 
-						normal = normals[first_nor], 
-						u = texcoords[first_tex] and texcoords[first_tex][1], 
-						v = texcoords[first_tex] and texcoords[first_tex][2]
-					}
-				)
-				table.insert(
-					data, 
-					{
-						pos = vertices[pos], 
-						normal = normals[normal], 
-						u = texcoords[tex] and texcoords[tex][1], 
-						v = texcoords[tex] and texcoords[tex][2]
-					}
-				)
-				table.insert(
-					data, 
-					{
-						pos = vertices[previous_pos], 
-						normal = normals[previous_nor], 
-						u = texcoords[previous_tex] and texcoords[previous_tex][1], 
-						v = texcoords[previous_tex] and texcoords[previous_tex][2]
-					}
-				)
-			end
-
-			previous_pos = pos
-			previous_nor = normal
-			previous_tex = tex
-		end
-	end
-
-	return data
-end
-
 function PART:SetModel(var)
-	if var and var:find("%.obj") and var:find("http://") then
-		http.Get(var, "", function(str)
-			if self:IsValid() then
-				self:LoadObj(decode_obj(str))
+	if var and var:find("http") and pac.urlobj then
+		var = var:gsub("https://", "http://")
+		
+		pac.urlobj.GetObjFromURL(var, function(mesh, err)
+			if not mesh and err then
+				self.Entity:SetModel("error.mdl")
+				self.wavefront_mesh = nil
+				return
 			end
-		end)
+		
+			self.wavefront_mesh = mesh
+			self.Entity.pac_bones = nil
+			
+			if not self.Materialm then
+				self.Materialm = Material("error")
+			end
+			
+			-- temp
+			self.Entity:SetRenderBounds(Vector()*-300, Vector()*300)	
+		end, true)
+		
 		self.Model = var
 		return
 	end
 	
-	self.Obj = nil
 	self.wavefront_mesh = nil
 	
 	self.Model = var
 	self.Entity.pac_bones = nil
 	self.Entity:SetModel(var)
+	
 	local min, max = self.Entity:GetRenderBounds()
 	self.Entity.pac3_center = (min + max) * 0.5
 end
@@ -416,6 +348,20 @@ end
 
 function PART:SetMaterial(var)
 	var = var or ""
+	
+	if pac.urlmat and var:find("http") then
+		var = var:gsub("https://", "http://")
+		var = var:match("http[s]-://.+/.-%.%a+")
+		if var then
+			pac.urlmat.GetMaterialFromURL(var, function(mat)
+				if self:IsValid() then
+					self.Materialm = mat
+				end
+			end)
+			self.Material = var
+			return
+		end
+	end	
 
 	self.Material = var
 	
@@ -561,23 +507,6 @@ function PART:OnBuildBonePositions(ent)
 			end
 		end
 	end
-end
-
-function PART:LoadObj(var)
-	if type(var) ~= "table" then 
-		self.Obj = nil
-		self.wavefront_mesh = nil
-	return false end
-	
-	local mesh = NewMesh()
-	mesh:BuildFromTriangles(var)
-	
-	self.wavefront_mesh = mesh
-		
-	self.pac_bones = nil
-	self.Entity:SetRenderBounds(Vector()*-300, Vector()*300)
-	
-	return true
 end
 
 pac.RegisterPart(PART)

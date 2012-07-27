@@ -65,6 +65,23 @@ function PART:SetTrailPath(var)
 end
 
 function PART:SetMaterial(var)
+	var = var or ""
+	
+	if pac.urlmat and var:find("http") then
+		var = var:gsub("https://", "http://")
+		var = var:match("http[s]-://.+/.-%.%a+")
+		if var then
+			pac.urlmat.GetMaterialFromURL(var, function(mat)
+				if self:IsValid() then
+					self.Trail = mat
+				end
+			end)
+			self.TrailPath = var
+			return
+		end
+	end	
+	
+	
 	if type(var) == "string" then
 		self.Trail = Material(var)
 	elseif type(var) == "IMaterial" then

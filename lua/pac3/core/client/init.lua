@@ -5,6 +5,9 @@ include("libraries/luadata.lua")
 include("libraries/class.lua")
 include("libraries/null.lua")
 
+include("libraries/urlmat.lua")
+include("libraries/urlobj.lua")
+
 -- no need to rematch the same pattern
 pac.PatternCache = {{}}
 
