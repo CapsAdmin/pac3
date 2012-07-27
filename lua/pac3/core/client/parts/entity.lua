@@ -208,6 +208,20 @@ end
 function PART:SetMaterial(var)
 	var = var or ""
 
+	if pac.urlmat and var:find("http") then
+		var = var:gsub("https://", "http://")
+		var = var:match("http[s]-://.+/.-%.%a+")
+		if var then
+			pac.urlmat.GetMaterialFromURL(var, function(mat)
+				if self:IsValid() then
+					self.Materialm = mat
+				end
+			end)
+			self.Material = var
+			return
+		end
+	end	
+	
 	self.Material = var
 	
 	if var ~= "" then
