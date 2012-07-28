@@ -153,7 +153,7 @@ function pac.HandleOwnerName(owner, name, ent)
 	end
 	
 	for key, ent in pairs(ents.GetAll()) do
-		if check_owner(ent, owner) and find_ent(ent, name) then
+		if ent:IsValid() and check_owner(ent, owner) and find_ent(ent, name) then
 			return ent
 		end
 	end
