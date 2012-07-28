@@ -1,7 +1,7 @@
 local urlmat = pac.urlmat or {}
 
 urlmat.TextureSize = 1024
-
+urlmat.RT = urlmat.RT or GetRenderTarget("urlmat_rt", urlmat.TextureSize, urlmat.TextureSize, false)
 urlmat.Panels = urlmat.Panels or {}
 
 function urlmat.Panic()
@@ -14,7 +14,7 @@ function urlmat.Panic()
 	end
 end	
 
-function urlmat.GetMaterialFromURL(url, callback, texture_only)
+function urlmat.GetMaterialFromURL(url, callback, texture_only, shader_params)
 	local id = "html_material_" .. url
 	
 	if urlmat.Panels[id] and urlmat.Panels[id]:IsValid() then
@@ -23,22 +23,17 @@ function urlmat.GetMaterialFromURL(url, callback, texture_only)
 	
 	local pnl= vgui.Create("HTML")
 	urlmat.Panels[id] = pnl
+	pnl:SetPaintedManually(true)
 	pnl:SetPos(ScrW(),ScrH())
 	pnl:SetSize(urlmat.TextureSize, urlmat.TextureSize)
 	pnl:SetHTML([[
 		<style type="text/css">
 		html {			
-			background-color:black;
-			
-			margin-top:0px;
-			margin-top:0px;
-			margin-top:0px;
-			margin-top:0px;
-			
-			padding-top:0px;
-			padding-top:0px;
-			padding-top:0px;
-			padding-top:0px;
+			-webkit-transform: matrix(1, 0, 
+								  0, 1, 
+								  0, 0);
+								  
+			background-color:rgb(0,0,0);
 			
 			overflow:hidden;
 		}
@@ -76,17 +71,18 @@ function urlmat.GetMaterialFromURL(url, callback, texture_only)
 			end
 			
 			local mat = pnl:GetHTMLMaterial()	
+			local tex
 			if mat then
 				if texture_only then
 					callback(mat:GetMaterialTexture("$basetexture"))
-				else
+				else								
 					local newmat = CreateMaterial(name or id, "VertexLitGeneric", shader_params)
-					newmat:SetMaterialTexture("$basetexture", 	mat:GetMaterialTexture("$basetexture"))
-				
+					newmat:SetMaterialTexture("$basetexture", mat:GetMaterialTexture("$basetexture"))
+					
 					callback(newmat)
+					
+					pac.dprint("got material %q", url)
 				end
-				
-				pac.dprint("got material %q", url)
 				
 				pnl:Remove()
 				timer.Remove(id)

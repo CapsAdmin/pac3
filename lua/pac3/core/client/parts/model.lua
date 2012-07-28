@@ -355,11 +355,19 @@ function PART:SetMaterial(var)
 		var = var:gsub("https://", "http://")
 		var = var:match("http[s]-://.+/.-%.%a+")
 		if var then
-			pac.urlmat.GetMaterialFromURL(var, function(mat)
-				if self:IsValid() then
-					self.Materialm = mat
-				end
-			end)
+			pac.urlmat.GetMaterialFromURL(
+				var, 
+				function(mat)
+					if self:IsValid() then
+						self.Materialm = mat
+					end
+				end,
+				false,
+				{
+					["$model"] = 1,
+					["$translucent"] = 1,
+				}
+			)
 			self.Material = var
 			return
 		end
