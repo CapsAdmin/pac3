@@ -78,7 +78,7 @@ function pac.PostDrawTranslucentRenderables()
 				(					
 					util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 and 
 					(draw_dist <= 0 or dst < draw_dist) or
-					dst < radius
+					(dst < radius or dst < 100)
 				)
 			then
 				pac.RenderOverride(ent)

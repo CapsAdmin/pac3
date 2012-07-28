@@ -84,6 +84,7 @@ function pac.GetModelBonesSorted(ent, o)
 end
 
 function pac.HookBuildBone(ent)
+	if not ent:IsValid() then return end
 	ent.BuildBonePositions = function(...)
 		hook.Call("EntityBuildBonePositions", GAMEMODE, ...)
 	end
