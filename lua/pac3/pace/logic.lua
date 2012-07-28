@@ -299,7 +299,7 @@ function pace.OnOpenEditor()
 	if table.Count(pac.GetParts(true)) == 0 then
 		pace.Call("CreatePart", "group", L"my outfit", L"add parts to me!")
 	else
-		pace.OnPartSelected(select(2, next(pac.GetParts())))
+		pace.OnPartSelected(select(2, next(pac.GetParts(true))))
 	end
 	
 	pace.ResetView()
