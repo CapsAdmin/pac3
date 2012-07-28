@@ -40,7 +40,16 @@ function urlobj.ParseObj(data)
 					v1.normal = normals[tonumber(first[3])]
 					v2.normal = normals[tonumber(current[3])]
 					v3.normal = normals[tonumber(previous[3])]
-
+					
+					v1.u = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 0]
+					v1.v = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 1]
+					
+					v2.u = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 0]
+					v2.v = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 1]
+					
+					v3.u = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 0]
+					v3.v = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 1]
+					
 					table_insert(output, v1)
 					table_insert(output, v2)
 					table_insert(output, v3)
@@ -56,53 +65,66 @@ function urlobj.ParseObj(data)
 	return output
 end
 
+function urlobj.CreateObj(str, mesh_only)	
+	local ok, res = pcall(urlobj.ParseObj, str)
+	
+	if not ok then
+		pac.dprint("model parse error %q ", res)
+		
+		callback(ok, res)
+		return
+	end
+	
+	local mesh = NewMesh()
+	mesh:BuildFromTriangles(res)
+	
+	if mesh_only then
+		return mesh
+	else
+		local ent = ClientsideModel("error.mdl")
+		
+		AccessorFunc(ent, "MeshModel", "MeshModel")
+		AccessorFunc(ent, "MeshMaterial", "MeshMaterial")
+		
+		ent.MeshModel = mesh
+		
+		function ent:RenderOverride()
+			local matrix = Matrix()
+		
+			matrix:SetAngle(self:GetAngles())
+			matrix:SetTranslation(self:GetPos())
+			matrix:Scale(self:GetModelScale())
+			
+			if self.MeshMaterial then 
+				render_SetMaterial(self.MeshMaterial)	
+			end
+			
+			cam.PushModelMatrix(matrix)
+				self.MeshModel:Draw()
+			cam.PopModelMatrix()
+		end
+		
+		return ent, mesh
+	end
+end
+
+
 function urlobj.GetObjFromURL(url, callback, mesh_only)
 	pac.dprint("requesting model %q", url)
 	
-	http.Get(url, "", function(str)
-		pac.dprint("loaded model %q", url)
-		
-		local ok, res = pcall(urlobj.ParseObj, str)
-		
-		if not ok then
-			pac.dprint("model parse error %q ", res)
+	if VERSION >= 150 then
+		http.Fetch(url, function(str)	
+			pac.dprint("loaded model %q", url)
+
+			callback(urlobj.CreateObj(str, mesh_only))
+		end)
+	else
+		http.Get(url, "", function(str)
+			pac.dprint("loaded model %q", url)
 			
-			callback(ok, res)
-			return
-		end
-		
-		local mesh = NewMesh()
-		mesh:BuildFromTriangles(res)
-		
-		if mesh_only then
-			callback(mesh)	
-		else
-			local ent = ClientsideModel("error.mdl")
-			
-			AccesssorFunc(ent, "MeshModel", "MeshModel")
-			AccesssorFunc(ent, "MeshMaterial", "MeshMaterial")
-			
-			ent.MeshModel = mesh
-			
-			function ent:RenderOverride()
-				local matrix = Matrix()
-			
-				matrix:SetAngle(self:GetAngles())
-				matrix:SetTranslation(self:GetPos())
-				matrix:Scale(self:GetModelScale())
-				
-				if self.MeshMaterial then 
-					render_SetMaterial(self.MeshMaterial)	
-				end
-				
-				cam.PushModelMatrix(matrix)
-					self.MeshModel:Draw()
-				cam.PopModelMatrix()
-			end
-			
-			callback(ent, mesh)
-		end
-	end)
+			callback(urlobj.CreateObj(str, mesh_only))
+		end)
+	end
 end
 
 pac.urlobj = urlobj
