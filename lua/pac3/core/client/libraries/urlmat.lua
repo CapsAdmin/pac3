@@ -1,109 +1,116 @@
 local urlmat = pac.urlmat or {}
 
 urlmat.TextureSize = 1024
-urlmat.Panels = urlmat.Panels or {}
+urlmat.ActivePanel = urlmat.ActivePanel or NULL
+urlmat.Queue = urlmat.Queue or {}
 
-function urlmat.Panic()
-	for id, pnl in pairs(urlmat.Panels) do
-		if pnl:IsValid() then
-			pnl:Remove()
-		end
-		
-		timer.Remove(id)
-	end
-end	
-
-function urlmat.GetMaterialFromURL(url, callback, texture_only, shader_params)
-	local id = "html_material_" .. url
-	
-	if urlmat.Panels[id] and urlmat.Panels[id]:IsValid() then
-		urlmat.Panels[id]:Remove()
-	end
-	
-	local pnl 
-	
-	if VERSION >= 150 then
-		pnl = vgui.Create("DHTML")
-		pnl:SetScrollbars(false)
-	else
-		pnl = vgui.Create("HTML")
-	end
-	
-	urlmat.Panels[id] = pnl
-	pnl:SetVisible(false)
-	pnl:SetPos(0, 0)
-	pnl:SetSize(urlmat.TextureSize, urlmat.TextureSize)
-	pnl:SetHTML([[
-		<style type="text/css">
-		html {			
-			overflow:hidden;
-			background-color:black;
-		}
-		
-		</style>
-		<body>
-			<img src="]] .. url .. [[" alt="" width="]]..urlmat.TextureSize..[[" height="]]..urlmat.TextureSize..[[" />
-		</body>
-	]])
-	
-	pac.dprint("loading material %q", url)
-	function pnl.FinishedURL()
-		pac.dprint("finished loading material %q", url)
-
-		local i = 0
-		timer.Create(id, 0, 200, function()
-			
-			-- timeout
-			if i == 200 then
-				if pnl:IsValid() then
-					pnl:Remove()
-				end
-				
-				timer.Remove(id)
-				urlmat.Panels[id] = nil
-				return
-			end
-			
-			-- panel is no longer valid
-			if not pnl:IsValid() then
-				timer.Remove(id)
-				urlmat.Panels[id] = nil
-				return
-			end
-			
-			local mat = pnl:GetHTMLMaterial()
-			
-			local tex
-			if mat then
-				if texture_only then
-					callback(mat:GetMaterialTexture("$basetexture"))
-				else								
-					local newmat = CreateMaterial(name or id, "VertexLitGeneric", shader_params)
-					newmat:SetMaterialTexture("$basetexture", mat:GetMaterialTexture("$basetexture"))
-					
-					callback(newmat)
-					
-					pac.dprint("got material %q", url)
-				end
-				
-				pnl:Remove()
-				timer.Remove(id)
-				urlmat.Panels[id] = nil
-			end
-			
-			i = i + 1
-		end)
-	end
-
-	timer.Simple(20, function()
-		if pnl:IsValid() then
-			pac.dprint("material %q timed out", url)
-			pnl:Remove()
-			urlmat.Panels[id] = nil
-		end
-	end)
+if urlmat.ActivePanel:IsValid() then
+	urlmat.ActivePanel:Remove()
 end
 
-urlmat.Panic()
+function urlmat.GetMaterialFromURL(url, callback)	
+	urlmat.Queue[url] = {callback = callback, tries = 0}
+end
+
+function urlmat.Think()
+	if table.Count(urlmat.Queue) > 0 then
+		for url, data in RandomPairs(urlmat.Queue) do
+			-- when the panel is gone start a new one
+			if not urlmat.ActivePanel:IsValid() then
+				urlmat.StartDownload(url, data)
+			end
+		end
+	end
+end
+
+timer.Create("urlmat_queue", 0.1, 0, urlmat.Think)
+
+function urlmat.StartDownload(url, data)
+
+	if urlmat.ActivePanel:IsValid() then
+		urlmat.ActivePanel:Remove()
+	end
+
+	local id = "urlmat_download_" .. url
+	
+	local pnl = vgui.Create(VERSION >= 150 and "DHTML" or "HTML")
+	pnl:SetVisible(true)
+	pnl:SetPos(0, 0)
+	pnl:SetSize(urlmat.TextureSize, urlmat.TextureSize)
+	pnl:SetHTML(
+		[[
+			<style type="text/css">
+				html 
+				{			
+					overflow:hidden;
+					background-color:black;
+				}
+			</style>
+			
+			<body>
+				<img src="]] .. url .. [[" alt="" width="]] .. urlmat.TextureSize..[[" height="]] .. urlmat.TextureSize .. [[" />
+			</body>
+		]]
+	)
+		
+	function pnl.FinishedURL()
+	
+		-- restart the timeout
+		timer.Stop(id)
+		timer.Start(id)
+		
+		hook.Add("Think", id, function()
+		
+			-- panel is no longer valid
+			if not pnl:IsValid() then
+				hook.Remove("Think", id)
+				-- let the timeout handle it
+				return
+			end
+			
+			local html_mat = pnl:GetHTMLMaterial()
+			
+			if html_mat then
+				local vertex_mat = CreateMaterial(url, "VertexLitGeneric")
+				local tex = html_mat:GetMaterialTexture("$basetexture")
+				tex:Download()
+				vertex_mat:SetMaterialTexture("$basetexture", tex)
+				
+				hook.Remove("Think", id)
+				timer.Remove(id)
+				urlmat.Queue[url] = nil
+				pnl:Remove()
+				
+				if data.callback then
+					data.callback(vertex_mat)
+				end
+			end
+			
+		end)
+	end
+	
+	-- 5 sec max timeout
+	timer.Create(id, 5, 1, function()
+		timer.Remove(id)
+		urlmat.Queue[url] = nil
+		pnl:Remove()
+		
+		if hook.GetTable().Think[id] then
+			hook.Remove("Think", id)
+		end
+
+		if data.tries < 3 then
+			pac.dprint("material download %q timed out.. trying again for the %ith time", url, data.tries)
+			-- try again
+			data.tries = data.tries + 1
+			urlmat.GetMaterialFromURL(url, data)
+			urlmat.Queue[url] = data
+		else
+			pac.dprint("material download %q timed out for good", url, data.tries)
+		end
+	end)
+	
+	urlmat.ActivePanel = pnl
+end
 
 pac.urlmat = urlmat

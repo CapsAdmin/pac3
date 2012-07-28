@@ -3,9 +3,11 @@ function pac.dprint(fmt, ...)
 		MsgN("\n")	
 		MsgN(">>>PAC3>>>")
 		MsgN(fmt:format(...))
-		MsgN("==TRACE==")
-		debug.Trace()
-		MsgN("==TRACE==")
+		if pac.debug_trace then
+			MsgN("==TRACE==")
+			debug.Trace()
+			MsgN("==TRACE==")
+		end
 		MsgN("<<<PAC3<<<")
 		MsgN("\n")
 	end
