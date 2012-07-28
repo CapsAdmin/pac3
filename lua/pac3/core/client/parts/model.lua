@@ -366,11 +366,7 @@ function PART:SetMaterial(var)
 						self.Materialm = mat
 					end
 				end,
-				false,
-				{
-					["$model"] = 1,
-					["$translucent"] = 1,
-				}
+				false
 			)
 			self.Material = var
 			return
