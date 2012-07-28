@@ -1,86 +1,59 @@
 local urlobj = pac.urlobj or {}
 
-function urlobj.ParseObj(str)
-	local vertices, normals, texcoords, faces = {}, {}, {}, {}
+-- parser made by animorten
+-- modified slightly by capsadmin
 
-	for line in str:gmatch("(.-)\n") do
-		local parts = string.Explode(" ", line)
-		if #parts < 1 then continue end
+-- THIS ASSUMES FACE DATA COMES AFTER VERTEX DATA
 
-		if parts[1] == "v" then
-			table.insert(vertices, Vector(tonumber(parts[2]), tonumber(parts[3]), tonumber(parts[4])))
-		elseif parts[1] == "vn" then
-			table.insert(normals, Vector(tonumber(parts[2]), tonumber(parts[3]), tonumber(parts[4])))
-		elseif parts[1] == "vt" then
-			table.insert(texcoords, {tonumber(parts[2]), 1 - tonumber(parts[3])})
-		elseif parts[1] == "f" then
-			local face = {}
+local table_insert = table.insert
+local tonumber = tonumber
+
+function urlobj.ParseObj(data)
+	local positions = {}
+	local texcoords = {}
+	local normals = {}
+	local output = {}
+
+	for i in data:gmatch("(.-)\n") do
+		local parts = i:gsub(" +", " "):Trim():Split(" ")
+
+		if parts[1] == "v" and #parts == 4 then
+			table_insert(positions, Vector(parts[2], parts[3], parts[4]))
+		elseif parts[1] == "vt" and #parts == 3 then
+			table_insert(texcoords, tonumber(parts[2]))
+			table_insert(texcoords, tonumber(1 - parts[3]))
+		elseif parts[1] == "vn" and #parts == 4 then
+			table_insert(normals, Vector(parts[2], parts[3], parts[4]))
+		elseif parts[1] == "f" and #parts > 3 then
+			local first, previous
 
 			for i = 2, #parts do
-				local indices = {}
+				local current = parts[i]:Split("/")
 
-				for k, v in ipairs(string.Explode("/", parts[i])) do
-					indices[k] = tonumber(v)
+				if i >= 4 then
+					local v1, v2, v3 = {}, {}, {}
+
+					v1.pos = positions[tonumber(first[1])]
+					v2.pos = positions[tonumber(current[1])]
+					v3.pos = positions[tonumber(previous[1])]
+
+					v1.normal = normals[tonumber(first[3])]
+					v2.normal = normals[tonumber(current[3])]
+					v3.normal = normals[tonumber(previous[3])]
+
+					table_insert(output, v1)
+					table_insert(output, v2)
+					table_insert(output, v3)
+				elseif i == 2 then
+					first = current
 				end
 
-				face[i - 1] = indices
+				previous = current
 			end
-
-			table.insert(faces, face)
 		end
 	end
-
-	local data = {}
-
-	local first_pos, previous_pos = 0, 0
-	local first_nor, previous_nor = 0, 0
-	local first_tex, previous_tex = 0, 0
-
-	for face_index, face in ipairs(faces) do
-		for k, v in ipairs(face) do
-			local pos, normal, tex = v[1], v[2], v[3]
-
-			if k == 1 then
-				first_pos = pos
-				first_nor = normal
-				first_tex = tex
-			elseif k > 2 then
-				table.insert(
-					data, 
-					{
-						pos = vertices[first_pos], 
-						normal = normals[first_nor], 
-						u = texcoords[first_tex] and texcoords[first_tex][1], 
-						v = texcoords[first_tex] and texcoords[first_tex][2]
-					}
-				)
-				table.insert(
-					data, 
-					{
-						pos = vertices[pos], 
-						normal = normals[normal], 
-						u = texcoords[tex] and texcoords[tex][1], 
-						v = texcoords[tex] and texcoords[tex][2]
-					}
-				)
-				table.insert(
-					data, 
-					{
-						pos = vertices[previous_pos], 
-						normal = normals[previous_nor], 
-						u = texcoords[previous_tex] and texcoords[previous_tex][1], 
-						v = texcoords[previous_tex] and texcoords[previous_tex][2]
-					}
-				)
-			end
-
-			previous_pos = pos
-			previous_nor = normal
-			previous_tex = tex
-		end
-	end
-
-	return data
+	
+	return output
 end
 
 function urlobj.GetObjFromURL(url, callback, mesh_only)
