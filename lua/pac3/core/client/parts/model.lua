@@ -265,7 +265,11 @@ function PART:OnDraw(owner, pos, ang)
 		if self.wavefront_mesh then
 			local matrix = Matrix()
 			
-			matrix:SetAngle(ang)
+			if VERSION >= 150 then
+				matrix:SetAngles(ang)
+			else
+				matrix:SetAngle(ang)
+			end
 			matrix:SetTranslation(pos)
 			matrix:Scale(self.Scale * self.Size)
 			

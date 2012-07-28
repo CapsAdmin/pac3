@@ -310,7 +310,7 @@ do -- non editable string
 	function PANEL:SetValue(str)
 		local lbl = vgui.Create("DLabel")
 			lbl:SetTextColor(derma.Color(net and "text_dark" or "text_bright", self, color_black))
-			lbl:SetFont("defaultsmall")
+			lbl:SetFont(VERSION >= 150 and "DermaDefault" or "DefaultSmall")
 			lbl:SetText("  " .. str) -- ugh
 			lbl:SizeToContents()
 		self:SetContent(lbl)
@@ -331,7 +331,7 @@ do -- base editable
 		local str = tostring(skip_encode and var or self:Encode(var))
 		
 		self:SetTextColor(derma.Color(net and "text_dark" or "text_bright", self, color_black))
-		self:SetFont("DefaultSmall")
+		self:SetFont(VERSION >= 150 and "DermaDefault" or "DefaultSmall")
 		self:SetText("  " .. str) -- ugh
 		self:SizeToContents()
 
@@ -410,7 +410,7 @@ do -- base editable
 		
 		local pnl = vgui.Create("DTextEntry", self)
 		self.editing = pnl
-		pnl:SetFont("DefaultSmall")
+		pnl:SetFont(VERSION >= 150 and "DermaDefault" or "DefaultSmall")
 		pnl:SetDrawBackground(false)
 		pnl:SetDrawBorder(false)
 		pnl:SetValue(self.original_str or "")

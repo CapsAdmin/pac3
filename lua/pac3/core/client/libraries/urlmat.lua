@@ -1,7 +1,6 @@
 local urlmat = pac.urlmat or {}
 
 urlmat.TextureSize = 1024
-urlmat.RT = urlmat.RT or GetRenderTarget("urlmat_rt", urlmat.TextureSize, urlmat.TextureSize, false)
 urlmat.Panels = urlmat.Panels or {}
 
 function urlmat.Panic()
@@ -21,25 +20,27 @@ function urlmat.GetMaterialFromURL(url, callback, texture_only, shader_params)
 		urlmat.Panels[id]:Remove()
 	end
 	
-	local pnl= vgui.Create("HTML")
+	local pnl 
+	
+	if VERSION >= 150 then
+		pnl = vgui.Create("DHTML")
+		pnl:SetScrollbars(false)
+	else
+		pnl = vgui.Create("HTML")
+	end
+	
 	urlmat.Panels[id] = pnl
-	pnl:SetPaintedManually(true)
-	pnl:SetPos(ScrW(),ScrH())
+	pnl:SetVisible(false)
+	pnl:SetPos(0, 0)
 	pnl:SetSize(urlmat.TextureSize, urlmat.TextureSize)
 	pnl:SetHTML([[
 		<style type="text/css">
 		html {			
-			-webkit-transform: matrix(1, 0, 
-								  0, 1, 
-								  0, 0);
-								  
-			background-color:rgb(0,0,0);
-			
 			overflow:hidden;
+			background-color:black;
 		}
 		
 		</style>
-
 		<body>
 			<img src="]] .. url .. [[" alt="" width="]]..urlmat.TextureSize..[[" height="]]..urlmat.TextureSize..[[" />
 		</body>
@@ -70,7 +71,8 @@ function urlmat.GetMaterialFromURL(url, callback, texture_only, shader_params)
 				return
 			end
 			
-			local mat = pnl:GetHTMLMaterial()	
+			local mat = pnl:GetHTMLMaterial()
+			
 			local tex
 			if mat then
 				if texture_only then
