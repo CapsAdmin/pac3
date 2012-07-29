@@ -325,6 +325,7 @@ function pac.ConvertPAC2Config(data, ent)
 end
 
 concommand.Add("pac_convert_pac2_config", function(ply, _, args)
+	if not ply.GetPACConfig then return end
 	pac.Panic()
 	pac.ConvertPAC2Config(ply:GetPACConfig(), LocalPlayer())
 end)
