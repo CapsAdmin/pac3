@@ -59,8 +59,8 @@ include("parts.lua")
 include("bones.lua")
 include("hooks.lua")
 
--- include("online.lua")
-include("submit.lua")
+include("online.lua")
+include("wear.lua")
 
 pac.LoadParts()
 
