@@ -9,7 +9,15 @@ if urlmat.ActivePanel:IsValid() then
 end
 
 function urlmat.GetMaterialFromURL(url, callback)	
-	urlmat.Queue[url] = {callback = callback, tries = 0}
+	if urlmat.Queue[url] then
+		local old = urlmat.Queue[url].callback
+		urlmat.Queue[url].callback = function(...)	
+			callback(...)
+			old(...)
+		end
+	else
+		urlmat.Queue[url] = {callback = callback, tries = 0}
+	end
 end
 
 function urlmat.Think()
@@ -35,7 +43,7 @@ function urlmat.StartDownload(url, data)
 	
 	local pnl = vgui.Create(VERSION >= 150 and "DHTML" or "HTML")
 	pnl:SetVisible(true)
-	pnl:SetPos(0, 0)
+	pnl:SetPos(ScrW(), ScrH())
 	pnl:SetSize(urlmat.TextureSize, urlmat.TextureSize)
 	pnl:SetHTML(
 		[[
