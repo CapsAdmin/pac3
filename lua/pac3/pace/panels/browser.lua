@@ -30,17 +30,19 @@ local function OnMousePressed(self, mcode)
 end
 
 function PANEL:AddOutfits(folder, callback)
-	for i, name in pairs(file.Find(folder.."*", _G.net and "DATA" or nil)) do			
-		local outfit = folder .. name
-		if file.Exists(outfit, _G.net and "DATA" or nil) then
-			local filenode = self:AddLine(
-				name:gsub("%.txt", ""), 
-				string.NiceSize(file.Size(outfit, _G.net and "DATA" or nil)), 
-				os.date("%m/%d/%Y %H:%M", file.Time(outfit, _G.net and "DATA" or nil))
-			)
-			filenode.FileName = name
-			filenode.OnSelect = callback
-			filenode.OnMousePressed = OnMousePressed
+	for i, name in pairs(file.Find(folder.."*", _G.net and "DATA" or nil)) do
+		if name:find("%.txt") then
+			local outfit = folder .. name
+			if file.Exists(outfit, _G.net and "DATA" or nil) then
+				local filenode = self:AddLine(
+					name:gsub("%.txt", ""), 
+					string.NiceSize(file.Size(outfit, _G.net and "DATA" or nil)), 
+					os.date("%m/%d/%Y %H:%M", file.Time(outfit, _G.net and "DATA" or nil))
+				)
+				filenode.FileName = name
+				filenode.OnSelect = callback
+				filenode.OnMousePressed = OnMousePressed
+			end
 		end
 	end
 end
