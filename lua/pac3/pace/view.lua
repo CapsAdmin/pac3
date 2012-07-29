@@ -16,6 +16,14 @@ end
 function pace.ResetView()
 	if pace.Focused then
 		local ent = pace.GetViewEntity()
+		
+		if not ent:IsValid() then
+			local _, part = next(pac.GetParts(true))
+			if part then
+				ent = part:GetOwner()
+			end
+		end
+		
 		if ent:IsValid() then
 			pace.ViewPos = ent:EyePos() + Vector(50, 0, 0)
 			pace.ViewAngles = (ent:EyePos() - pace.ViewPos):Angle()
@@ -134,6 +142,7 @@ function pace.EnableView(b)
 		pac.RemoveHook("CalcView")
 		pac.RemoveHook("HUDPaint")
 		pace.SetTPose(false)
+		pace.SetBreathing(false)
 	end
 end
 

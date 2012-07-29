@@ -195,4 +195,6 @@ concommand.Add("pac_restart", function()
 	if was_open then 
 		pace.OpenEditor() 
 	end
+	
+	pace.LoadSession("autoload")
 end)

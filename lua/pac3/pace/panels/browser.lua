@@ -4,10 +4,18 @@ local PANEL = {}
 PANEL.ClassName = "browser"
 PANEL.Base = "DListView"
 
+PANEL.Dir = ""
+AccessorFunc(PANEL, "Dir", "Dir")
+
+function PANEL:SetDir(str)
+	self.Dir = str
+	self:PopulateFromClient()
+end
+
 function PANEL:Init()
 	self:AddColumn(L"name")
 	self:AddColumn(L"size")
-	self:AddColumn(L"date")
+	self:AddColumn(L"modified")
 	self:PopulateFromClient()
 	self:FixColumnsLayout()
 end
@@ -26,7 +34,7 @@ function PANEL:AddOutfits(folder, callback)
 		local outfit = folder .. name
 		if file.Exists(outfit, _G.net and "DATA" or nil) then
 			local filenode = self:AddLine(
-				name, 
+				name:gsub("%.txt", ""), 
 				string.NiceSize(file.Size(outfit, _G.net and "DATA" or nil)), 
 				os.date("%m/%d/%Y %H:%M", file.Time(outfit, _G.net and "DATA" or nil))
 			)
@@ -40,7 +48,7 @@ end
 function PANEL:PopulateFromClient()
 	self:Clear()
 	
-	self:AddOutfits("pac3/", function(node)
+	self:AddOutfits("pac3/" .. self.Dir, self.OnLoad or function(node)
 		pace.LoadPartFromFile(pace.current_part, node.FileName)
 		pace.RefreshTree()
 	end)		
@@ -62,7 +70,7 @@ function PANEL:OnRowRightClick(id, line)
 	end)
 	
 	menu:AddOption(L"delete", function()
-		file.Delete("pac3/" .. line.FileName, _G.net and "DATA" or nil)
+		file.Delete("pac3/" .. self.Dir .. line.FileName, _G.net and "DATA" or nil)
 		self:PopulateFromClient()
 	end)
 end

@@ -240,11 +240,14 @@ do -- list
 			if pnl then
 				obj.editor_pnl = pnl
 				
-				pnl:SetValue(obj["Get" .. key](obj))
+				local val = obj["Get" .. key](obj)
+				pnl:SetValue(val)
 				pnl.LimitValue = pace.PropertyLimits[key]
+				
 				pnl.OnValueChanged = function(val)
 					pace.Call("VariableChanged", obj, key, val)
 				end
+				
 				self:AddItem(key, pnl, pos)
 			end
 		end

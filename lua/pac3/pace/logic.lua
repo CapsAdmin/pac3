@@ -60,14 +60,13 @@ function pace.OnCreatePart(class_name, name, desc)
 	pace.RefreshTree()	
 end
 
-function pace.OnVariableChanged(obj, key, val, skip_undo)
+function pace.OnVariableChanged(obj, key, val, undo_delay)
 	local func = obj["Set" .. key]
 	if func then
 		func(obj, val)
-
-		if not skip_undo then
-			pace.CallChangeForUndo(obj, key, val)
-		end
+		
+	
+		pace.CallChangeForUndo(obj, key, val, undo_delay)
 		
 		local node = obj.editor_node
 		if IsValid(node) then			
@@ -86,6 +85,10 @@ function pace.OnVariableChanged(obj, key, val, skip_undo)
 			end
 		end
 	end
+	
+	timer.Create("autosave_session", 0.5, 1, function()
+		pace.SaveSession("autosave")
+	end)
 end
 
 pace.OnUndo = pace.Undo
@@ -152,9 +155,89 @@ function pace.LoadPartFromFile(part, name)
 	end
 end
 
+function pace.SaveSession(name)
+	if not name then
+		Derma_StringRequest(
+			L"save session",
+			L"filename:",
+			"autoload",
+
+			function(name)
+				pace.SaveSession(name)
+			end
+		)
+	else
+		pac.dprint("saving session %s", name)
+		
+		local data = {}
+		
+		for key, part in pairs(pac.GetParts(true)) do
+			if not part:HasParent() then
+				table.insert(data, part:ToTable())
+			end
+		end
+		
+		luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
+	end
+end
+
+function pace.LoadSession(name, append)
+	if not name then
+		local frm = vgui.Create("DFrame")
+		frm:SetTitle(L"sessions")
+		local pnl = pace.CreatePanel("browser", frm)
+		
+		pnl.OnLoad = function(node)
+			pace.LoadSession(node.FileName)
+		end
+		pnl:SetDir("sessions/")
+		
+		pnl:Dock(FILL)
+		
+		frm:SetSize(300, 500)
+		frm:MakePopup()
+		frm:Center()
+	else
+		pac.dprint("loading session %s",  name)
+		
+		if not append then
+			for key, part in pairs(pac.GetParts(true)) do
+				part:Remove()
+			end
+		end
+		
+		name = name:gsub("%.txt", "")
+		
+		local data = luadata.ReadFile("pac3/sessions/" .. name .. ".txt")
+		
+		for key, tbl in pairs(data) do
+			local part = pac.CreatePart(tbl.self.ClassName)
+			part:SetTable(tbl)
+		end
+		
+		pace.RefreshTree()
+	end
+end
+
+hook.Add("InitPostEntity", "pace_autoload_session", function()
+	pace.LoadSession("autoload")
+	for key, part in pairs(pac.GetParts(true)) do
+		if not part:HasParent() then
+			pac.SendPartToServer(part)
+		end
+	end
+end)
+
 function pace.OnOpenMenu()
 	local menu = DermaMenu()
 	menu:SetPos(gui.MousePos())
+	menu:AddOption(L"save session", function()
+		pace.SaveSession()
+	end)
+	menu:AddOption(L"load session", function()
+		pace.LoadSession()
+	end)
+	menu:AddSpacer()
 	menu:AddOption(L"toggle t pose", function()
 		pace.SetTPose(not pace.GetTPose())
 	end)
@@ -190,7 +273,7 @@ function pace.OnOpenMenu()
 	menu:AddSpacer()
 	
 	menu:AddOption(L"clear", function()
-		pac.RemoveAllParts(true)
+		pac.RemoveAllParts(true, true)
 		pace.RefreshTree()
 	end)
 		
@@ -255,7 +338,6 @@ function pace.OnPartMenu(obj)
 	end)
 	
 	menu:AddOption(L"remove", function()
-		pac.RemovePartOnServer(obj:GetName())
 		obj:Remove()
 		pace.RefreshTree()
 	end)

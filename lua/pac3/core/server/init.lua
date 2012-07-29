@@ -9,9 +9,11 @@ function pac.dprint(fmt, ...)
 		MsgN("\n")
 		MsgN(">>>PAC3>>>")
 		MsgN(fmt:format(...))
-		MsgN("==TRACE==")
-		debug.Trace()
-		MsgN("==TRACE==")
+		if pac.debug_trace then
+			MsgN("==TRACE==")
+			debug.Trace()
+			MsgN("==TRACE==")
+		end
 		MsgN("<<<PAC3<<<")
 		MsgN("\n")
 	end
@@ -91,9 +93,13 @@ do -- effects
 	end
 end
 
+local function get_owner(var)
+	return (IsEntity(var) and var) or (type(var) == "string" and player.GetByUniqueID(var)) or NULL
+end
+
 function pac.SubmitPart(data, filter)
 
-	local uid = data.owner:UniqueID()
+	local uid = data.uid
 	pac.Parts[uid] = pac.Parts[uid] or {}
 	
 	if type(data.part) == "table" then
@@ -101,7 +107,7 @@ function pac.SubmitPart(data, filter)
 	else
 		pac.Parts[uid][data.part] = nil
 	end
-		
+
 	if net then
 		net.Start("pac_submit")
 			net.WriteString(glon.encode(data))
@@ -117,11 +123,13 @@ function pac.SubmitPartNotify(data)
 	pac.SubmitPart(data)
 	
 	-- todo: check owner name if the player is allowed to modify
-
-	umsg.Start("pac_submit_acknowledged", data.owner)
-		umsg.Bool(true)
-		umsg.String("")
-	umsg.End()
+	
+	if data.owner:IsPlayer() then
+		umsg.Start("pac_submit_acknowledged", data.owner)
+			umsg.Bool(true)
+			umsg.String("")
+		umsg.End()
+	end
 end
 
 function pac.RemovePart(data)
@@ -132,6 +140,8 @@ end
 
 local function handle_data(owner, data)
 	data.owner = owner
+	data.uid = owner:UniqueID()
+	
 	if type(data.part) == "table" then
 		pac.SubmitPartNotify(data)
 	elseif type(data.part) == "string" then

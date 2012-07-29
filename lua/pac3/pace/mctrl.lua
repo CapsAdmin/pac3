@@ -107,7 +107,7 @@ do -- pace
 			pos.z = math.Round(pos.z/pace.GridSizePos) * pace.GridSizePos
 		end
 	
-		pace.Call("VariableChanged", part, "Position", pos)
+		pace.Call("VariableChanged", part, "Position", pos, 0.25)
 		timer.Create("pace_refresh_properties", 0.1, 1, function()
 			pace.PopulateProperties(part)
 		end)
@@ -120,7 +120,7 @@ do -- pace
 			ang.r = math.Round(ang.r/pace.GridSizeAng) * pace.GridSizeAng
 		end
 		
-		pace.Call("VariableChanged", part, "Angles", ang)
+		pace.Call("VariableChanged", part, "Angles", ang, 0.25)
 		timer.Create("pace_refresh_properties", 0.1, 1, function()
 			pace.PopulateProperties(part)
 		end)
