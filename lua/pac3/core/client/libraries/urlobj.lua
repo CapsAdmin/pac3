@@ -91,7 +91,11 @@ function urlobj.CreateObj(str, mesh_only)
 		function ent:RenderOverride()
 			local matrix = Matrix()
 		
-			matrix:SetAngle(self:GetAngles())
+			if VERSION >= 150 then
+				matrix:SetAngles(self:GetAngles())
+			else
+				matrix:SetAngle(self:GetAngles())
+			end
 			matrix:SetTranslation(self:GetPos())
 			matrix:Scale(self:GetModelScale())
 			
