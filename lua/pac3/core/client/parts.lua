@@ -13,16 +13,16 @@ function pac.CreatePart(name, owner)
 		part:PreInitialize()
 	end
 		
-	part:Initialize()
-
 	table.insert(pac.ActiveParts, part)
 	part.Id = part_count
 	part_count = part_count + 1
 	
+	part:Initialize()
+	
 	if owner then
 		part:SetPlayerOwner(owner)
 	end
-	
+		
 	pac.dprint("creating %s part owned by %s", part.ClassName, owner:Nick())
 	
 	return part
@@ -56,9 +56,12 @@ function pac.GetParts(owned_only)
 	return pac.ActiveParts
 end
 
-function pac.RemoveAllParts(owned_only)
+function pac.RemoveAllParts(owned_only, server)
 	for key, part in pairs(pac.GetParts(owned_only)) do
 		if part:IsValid() then
+			if server and not part:HasParent() then
+				pac.RemovePartOnServer(part:GetName())
+			end
 			part:Remove()
 		end
 	end
@@ -482,7 +485,7 @@ do -- meta
 			if owner:IsValid() then
 				self.BoneIndex = owner:LookupBone(self:GetRealBoneName(self.Bone))
 				if not self.BoneIndex then
-					self.Error = self.Bone .. " cannot be found on '" .. tostring(owner) .. "'"
+					self.Error = "pac3 warning: " .. self.Bone .. " cannot be found on '" .. tostring(owner) .. "' \n are you sure you're using the the same model?"
 					MsgN(self.Error)
 					self.TriedToFindBone = self.Bone
 				end
@@ -589,7 +592,7 @@ do -- meta
 		function PART:Initialize() end
 		function PART:OnRemove() end
 		
-		function PART:Remove()
+		function PART:Remove()		
 			pac.CallHook("OnPartRemove", self)
 			self:OnRemove()
 			
@@ -604,7 +607,7 @@ do -- meta
 
 		function PART:OnAttach() end
 		function PART:OnDetach() end
-				
+
 		function PART:OnStore()	end
 		function PART:OnRestore() end
 		
@@ -625,16 +628,16 @@ do -- meta
 		PART.highlight = 0
 
 		function PART:Highlight()
-			self.highlight = CurTime() + 0.1	
+			self.highlight = RealTime() + 0.1	
 			
 			for key, part in pairs(self:GetChildren()) do
-				part.highlight = CurTime() + 0.1
+				part.highlight = RealTime() + 0.1
 				part:Highlight()
 			end
 		end
 
 		function PART:IsHighlighting()
-			return self.highlight > CurTime()
+			return self.highlight > RealTime()
 		end
 				
 		local ring = Material("particle/particle_Ring_Sharp")

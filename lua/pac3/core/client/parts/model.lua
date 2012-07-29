@@ -41,13 +41,18 @@ PART.Colorf = Vector(1,1,1)
 
 pac.GetSet(PART, "Entity", NULL)
 
+function PART:GetEntity()
+	self.Entity = self.Entity:IsValid() and self.Entity or pac.CreateEntity(self:GetModel())
+	return self.Entity
+end
+
 function PART:Initialize()
 	self.ClipPlanes = {}
 	
 	self.Color = self.Color * 1
 	self.Scale = self.Scale * 1
 	
-	self.Entity = pac.CreateEntity(self.Model)
+	self.Entity = self:GetEntity()
 	self.Entity:SetNoDraw(true)
 	--[[self.Entity:SetRenderMode(RENDERMODE_NONE)
 	self.Entity:AddEffects(EF_NOINTERP)
@@ -103,6 +108,7 @@ end
 
 function PART:OnParent(part)
 	local ent = self:GetEntity()
+	local owner = self:GetOwner()
 
 	if part.ClassName == self.ClassName and part:GetEntity():IsValid() and owner ~= ent then
 		ent:SetParent(self:GetParent():GetEntity())
@@ -294,7 +300,7 @@ function PART:OnDraw(owner, pos, ang)
 end
 
 function PART:SetModel(var)
-	self.Entity = self.Entity or pac.CreateEntity(self.Model)
+	self.Entity = self.Entity:IsValid() and self.Entity or pac.CreateEntity(self.Model)
 
 	if var and var:find("http") and pac.urlobj then
 		var = var:gsub("https://", "http://")

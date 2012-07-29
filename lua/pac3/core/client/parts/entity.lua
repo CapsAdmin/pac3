@@ -303,6 +303,14 @@ function PART:OnDetach(ent)
 		ent.RenderOverride = nil
 		
 		ent:SetModelScale(Vector(1,1,1))
+		
+		local weps = ent.GetWeapons and ent:GetWeapons()
+		
+		if weps then
+			for key, wep in pairs(weps) do
+				pac.HideWeapon(wep, false)
+			end
+		end
 	end
 end
 
@@ -317,6 +325,7 @@ function PART:GetDrawPosition()
 end
 
 function PART:PreEntityDraw(ent)
+	self:UpdateWeaponDraw(ent)
 	self:StartClipping(ent)
 	
 	self:UpdateAll(ent)
