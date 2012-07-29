@@ -46,6 +46,7 @@ end
 local last = 0
 
 function pace.UndoThink()
+	if not pace.IsActive() then return end
 
 	-- whooaaa
 	if input.IsKeyDown(KEY_LALT) and input.IsKeyDown(KEY_SPACE) and input.IsKeyDown(KEY_Z) then
