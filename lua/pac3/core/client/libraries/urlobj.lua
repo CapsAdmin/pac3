@@ -17,12 +17,12 @@ function urlobj.ParseObj(data)
 	for i in data:gmatch("(.-)\n") do
 		local parts = i:gsub(" +", " "):Trim():Split(" ")
 
-		if parts[1] == "v" and #parts == 4 then
+		if parts[1] == "v" and #parts >= 4 then
 			table_insert(positions, Vector(parts[2], parts[3], parts[4]))
-		elseif parts[1] == "vt" and #parts == 3 then
+		elseif parts[1] == "vt" and #parts >= 3 then
 			table_insert(texcoords, tonumber(parts[2]))
 			table_insert(texcoords, tonumber(1 - parts[3]))
-		elseif parts[1] == "vn" and #parts == 4 then
+		elseif parts[1] == "vn" and #parts >= 4 then
 			table_insert(normals, Vector(parts[2], parts[3], parts[4]))
 		elseif parts[1] == "f" and #parts > 3 then
 			local first, previous
