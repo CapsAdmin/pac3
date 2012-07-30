@@ -130,7 +130,7 @@ pac.AddHook("EntityBuildBonePositions")
 
 if _BETA then
 	net.Receive("pac_submit", function()
-		local tbl = glon.decode(net.ReadString())
+		local tbl = net.ReadTable()
 		pac.CreatePart(tbl.ent):SetTable(tbl.part)
 	end)
 	

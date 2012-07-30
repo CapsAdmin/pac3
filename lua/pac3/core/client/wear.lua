@@ -6,7 +6,7 @@ do -- to server
 	function pac.SendPartToServer(part)
 		if _BETA then
 			net.Start("pac_submit")
-				net.WriteString(glon.encode({part = part:ToTable()}))
+				net.WriteTable({part = part:ToTable()})
 			net.SendToServer()
 		else
 			datastream.StreamToServer("pac_submit", {part = part:ToTable()})
@@ -16,7 +16,7 @@ do -- to server
 	function pac.RemovePartOnServer(name)
 		if _BETA then
 			net.Start("pac_submit")
-				net.WriteString(glon.encode({part = name}))
+				net.WriteTable({part = name})
 			net.SendToServer()
 		else
 			datastream.StreamToServer("pac_submit", {part = name})
@@ -74,7 +74,7 @@ end
 
 if _BETA then
 	net.Receive("pac_submit", function()
-		handle_data(glon.decode(net.ReadString()))
+		handle_data(net.ReadTable())
 	end)
 else
 	datastream.Hook("pac_submit", function(_,_,_, data)
