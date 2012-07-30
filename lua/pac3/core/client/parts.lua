@@ -422,7 +422,7 @@ do -- meta
 			owner = owner or self:GetOwner()
 			if owner:IsValid() then
 				local pos, ang = self:GetBonePosition(owner, nil, pos, ang)
-		
+				
 				pos, ang = LocalToWorld(
 					self.Position, 
 					self.Angles, 
@@ -474,7 +474,8 @@ do -- meta
 			else
 				-- default to owner origin until BoneIndex is ready
 				pos = owner:GetPos()
-				ang = owner:GetAngles()
+				ang = owner:EyeAngles()
+				ang.p = 0
 			end
 				
 			return pos, ang
