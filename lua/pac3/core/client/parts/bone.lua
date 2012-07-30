@@ -53,7 +53,7 @@ end
 function PART:OnThink()
 	
 	-- this is to setup the cached values
-	if not self.first_getbpos and self:GetPlayerOwner():IsValid() then
+	if not self.first_getbpos and self:GetOwner():IsValid() then
 		self:GetBonePosition()
 		self.first_getbpos = true
 	end
@@ -92,7 +92,7 @@ function PART:OnBuildBonePositions(owner)
 		local ang = self:CalcAngles(owner, self.Angles) or self.Angles
 	
 		if self.FollowPart:IsValid() then			
-			if VERSION >= 150 then
+			if _BETA then
 				matrix:SetAngles(self.FollowPart.cached_ang + ang)
 			else
 				matrix:SetAngle(self.FollowPart.cached_ang + ang)

@@ -11,7 +11,7 @@ pac.EffectsBlackList =
 
 function pac.PrecacheEffect(name)
 	PrecacheParticleSystem(name)
-	if net then
+	if _BETA then
 		net.Start("pac_effect_precached")
 			net.WriteString(name)
 		net.Send()
@@ -29,7 +29,7 @@ function pac.PrecacheEffect(name)
 	 end
 end
 
-if net then
+if _BETA then
 	net.Receive("pac_precache_effect", function()
 		local name = net.ReadString()
 		if not table.HasValue(pac.EffectsBlackList, name) then
@@ -40,7 +40,7 @@ else
 	concommand.Add("pac_precache_effect", function(ply, _, args)
 		local name = args[1]
 		if not table.HasValue(pac.EffectsBlackList, name) then
-			pac.dprint("%s precached effect %s", ply:Nick(), name)
+			pac.dprint("%s precached effect %s", tostring(ply), name)
 			pac.PrecacheEffect(name)
 		end
 	end)

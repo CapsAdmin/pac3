@@ -22,8 +22,8 @@ function pac.CreatePart(name, owner)
 	if owner then
 		part:SetPlayerOwner(owner)
 	end
-		
-	pac.dprint("creating %s part owned by %s", part.ClassName, owner:Nick())
+	
+	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))
 	
 	return part
 end
@@ -47,7 +47,7 @@ function pac.GetParts(owned_only)
 	if owned_only then		
 		local tbl = {}
 		for key, part in pairs(pac.ActiveParts) do
-			if part:GetPlayerOwner() == LocalPlayer() then
+			if part:GetPlayerOwner() == LocalPlayer() or not part:GetPlayerOwner():IsPlayer() then
 				tbl[key] = part
 			end
 		end
@@ -164,7 +164,7 @@ do -- meta
 			end
 		
 			if self.OwnerName ~= "" then
-				local ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent)
+				local ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self)
 				if ent ~= self:GetOwner() then
 					self:SetOwner(ent)
 					return true
@@ -195,7 +195,7 @@ do -- meta
 				return parent:GetPlayerOwner()
 			end
 			
-			return self.PlayerOwner or NULL
+			return self.PlayerOwner or self:GetOwner() or NULL
 		end
 		
 		function PART:GetOwner()

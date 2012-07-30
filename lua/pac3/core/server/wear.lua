@@ -1,14 +1,12 @@
-local function get_owner(var)
-	return (IsEntity(var) and var) or (type(var) == "string" and player.GetByUniqueID(var)) or NULL
-end
-
 function pac.SubmitPart(data, filter)
 
 	-- last arg "true" is pac3 only in case you need to do your checking differnetly from pac2
 	local allowed, reason = hook.Call("PrePACConfigApply", GAMEMODE, data.owner, data, true)
-	
-	if allowed == false then return allowed, reason end
-	if pac.IsBanned(data.owner) then return false, "you are banned from using pac" end
+		
+	if data.uid ~= false then
+		if allowed == false then return allowed, reason end
+		if pac.IsBanned(data.owner) then return false, "you are banned from using pac" end
+	end
 
 	local uid = data.uid
 	pac.Parts[uid] = pac.Parts[uid] or {}
@@ -19,7 +17,7 @@ function pac.SubmitPart(data, filter)
 		pac.Parts[uid][data.part] = nil
 	end
 
-	if net then
+	if _BETA then
 		net.Start("pac_submit")
 			net.WriteString(glon.encode(data))
 		net.Send(filter or player.GetAll())
@@ -31,7 +29,7 @@ function pac.SubmitPart(data, filter)
 end
 
 function pac.SubmitPartNotify(data)
-	pac.dprint("submitted outfit %q from %s with %i number of children to set on %s", data.part.self.Name, data.owner:Nick(), table.Count(data.part.children), data.part.self.OwnerName)
+	pac.dprint("submitted outfit %q from %s with %i number of children to set on %s", data.part.self.Name, data.owner:GetName(), table.Count(data.part.children), data.part.self.OwnerName)
 	
 	local allowed, reason = pac.SubmitPart(data)
 	
@@ -44,7 +42,7 @@ function pac.SubmitPartNotify(data)
 end
 
 function pac.RemovePart(data)
-	pac.dprint("%s is removed %q", data.owner:Nick(), data.part)
+	pac.dprint("%s is removed %q", data.owner:GetName(), data.part)
 	
 	pac.SubmitPart(data)
 end
@@ -60,7 +58,7 @@ local function handle_data(owner, data)
 	end
 end
 
-if net then
+if _BETA then
 	util.AddNetworkString("pac_submit")
 	util.AddNetworkString("pac_effect_precached")
 	util.AddNetworkString("pac_precache_effect")
@@ -82,7 +80,7 @@ function pac.PlayerInitialSpawn(ply)
 	timer.Simple(1, function()
 		if ply:IsPlayer() then
 			for id, outfits in pairs(pac.Parts) do
-				if player.GetByUniqueID(id) then
+				if id == false or player.GetByUniqueID(id) and id ~= ply:UniqueID() then
                     for key, outfit in pairs(outfits) do
 						pac.SubmitPart(outfit, ply)
 					end

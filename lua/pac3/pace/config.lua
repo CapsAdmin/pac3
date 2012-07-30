@@ -1,4 +1,6 @@
-if net then
+pace.DefaultFont = _BETA and "DermaDefault" or "DefaultSmall"
+
+if _BETA then
 	pace.PartIcons =
 	{
 		text = "icon16/text_align_center.png",

@@ -41,7 +41,7 @@ function urlmat.StartDownload(url, data)
 
 	local id = "urlmat_download_" .. url
 	
-	local pnl = vgui.Create(VERSION >= 150 and "DHTML" or "HTML")
+	local pnl = vgui.Create(not _BETA and "HTML" or "DHTML")
 	pnl:SetVisible(true)
 	pnl:SetPos(ScrW(), ScrH())
 	pnl:SetSize(urlmat.TextureSize, urlmat.TextureSize)

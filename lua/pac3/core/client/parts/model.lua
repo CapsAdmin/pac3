@@ -271,7 +271,7 @@ function PART:OnDraw(owner, pos, ang)
 		if self.wavefront_mesh then
 			local matrix = Matrix()
 			
-			if VERSION >= 150 then
+			if _BETA then
 				matrix:SetAngles(ang)
 			else
 				matrix:SetAngle(ang)

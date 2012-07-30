@@ -4,7 +4,7 @@ if SERVER then
 	local function add_files(dir)
 		local files
 		
-		if net then
+		if _BETA then
 			files = table.Merge(file.Find("lua/" .. dir .. "*", "GAME"))
 		else
 			files = file.FindInLua(dir .. "*")

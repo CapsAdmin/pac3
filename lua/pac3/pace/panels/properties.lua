@@ -1,3 +1,4 @@
+local _BETA = _BETA
 local L = pace.LanguageString
 
 pace.HiddenProperties =
@@ -7,7 +8,7 @@ pace.HiddenProperties =
 
 pace.HiddenPropertyKeys =
 {
-	"EditorExpand",
+	EditorExpand = true,
 }
 
 pace.PropertyLimits = 
@@ -110,7 +111,7 @@ do -- container
 	PANEL.Base = "DPanel"
 
 	function PANEL:Paint(w, h)
-		if net then
+		if _BETA then
 			self:GetSkin().tex.MenuBG(0, 0, (w or self:GetWide()) + (self.right and -1 or 3), (h or self:GetTall()) + 1)
 		else
 			self:GetSkin().DrawButtonBorder(self, 0, 0, (w or self:GetWide()) + (self.right and -1 or 3), (h or self:GetTall()) + 1)
@@ -313,7 +314,7 @@ do -- non editable string
 	function PANEL:SetValue(str)
 		local lbl = vgui.Create("DLabel")
 			lbl:SetTextColor(derma.Color(net and "text_dark" or "text_bright", self, color_black))
-			lbl:SetFont(VERSION >= 150 and "DermaDefault" or "DefaultSmall")
+			lbl:SetFont(pace.DefaultFont)
 			lbl:SetText("  " .. str) -- ugh
 			lbl:SizeToContents()
 		self:SetContent(lbl)
@@ -333,8 +334,8 @@ do -- base editable
 
 		local str = tostring(skip_encode and var or self:Encode(var))
 		
-		self:SetTextColor(derma.Color(net and "text_dark" or "text_bright", self, color_black))
-		self:SetFont(VERSION >= 150 and "DermaDefault" or "DefaultSmall")
+		self:SetTextColor(derma.Color(_BETA and "text_dark" or "text_bright", self, color_black))
+		self:SetFont(pace.DefaultFont)
 		self:SetText("  " .. str) -- ugh
 		self:SizeToContents()
 
@@ -413,7 +414,7 @@ do -- base editable
 		
 		local pnl = vgui.Create("DTextEntry", self)
 		self.editing = pnl
-		pnl:SetFont(VERSION >= 150 and "DermaDefault" or "DefaultSmall")
+		pnl:SetFont(pace.DefaultFont)
 		pnl:SetDrawBackground(false)
 		pnl:SetDrawBorder(false)
 		pnl:SetValue(self.original_str or "")
@@ -623,7 +624,7 @@ do -- vector
 			clr:SetColor(Color(self.vector.x, self.vector.y, self.vector.z))
 			
 			function clr.Think()
-				if net then
+				if _BETA then
 					local clr = clr:GetColor() or Color(255, 255, 255, 255)
 					local vec = Vector(clr.r, clr.g, clr.b)
 					self.OnValueChanged(vec)
@@ -805,7 +806,7 @@ do -- model
 		g_SpawnMenu:Open()
 		
 		--[[pac.AddHook("VGUIMousePressed", function(panel, mcode)
-			if net then
+			if _BETA then
 				print(panel:Find("ContenIcon"))
 				if panel:GetClassName() == "ContentIcon" and panel.spawnname then
 					self:SetValue(panel.spawnname)

@@ -43,7 +43,7 @@ PART.last_spew = 0
 function PART:SetEffect(name)
 	self.Effect = name
 	self.Ready = false
-	if net then
+	if _BETA then
 		net.Start("pac_precache_effect")
 			net.WriteString(name)
 		net.SendToServer()
