@@ -19,7 +19,7 @@ function pac.SubmitPart(data, filter)
 
 	if _BETA then
 		net.Start("pac_submit")
-			net.WriteString(glon.encode(data))
+			net.WriteTable(data)
 		net.Send(filter or player.GetAll())
 	else
 		datastream.StreamToClients(filter or player.GetAll(), "pac_submit", data)
@@ -64,7 +64,7 @@ if _BETA then
 	util.AddNetworkString("pac_precache_effect")
 
 	net.Receive("pac_submit", function(_, ply)
-		local data = glon.decode(net.ReadString())
+		local data = net.ReadTable()
 		handle_data(ply, data)
 	end)
 else
