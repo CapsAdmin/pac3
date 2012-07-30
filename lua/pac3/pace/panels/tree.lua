@@ -21,8 +21,9 @@ end
 
 do
 	local pnl = NULL
-
-	if not _G.net then
+	local _BETA
+	
+	if not _BETA then
 		pac_ChangeTooltip = pac_ChangeTooltip or ChangeTooltip
 		function ChangeTooltip(pnl_, ...)
 			pnl = pnl_ or NULL
@@ -31,7 +32,7 @@ do
 	end
 
 	function PANEL:Think(...)	
-		if _G.net then
+		if _BETA then
 			pnl = vgui.GetHoveredPanel() or NULL
 		end
 				
@@ -115,13 +116,13 @@ function PANEL:AddNode(...)
 
 	local node = fix_folder_funcs(DTree.AddNode(self, ...))
 	install_expand(node)
-	if net then install_drag(node) end
+	if _BETA then install_drag(node) end
 	--node.SetModel = self.SetModel
 
 	node.AddNode = function(...)
 		local node_ = fix_folder_funcs(DTree_Node.AddNode(...))
 		node_.AddNode = node.AddNode
-		if net then install_drag(node_) end
+		if _BETA then install_drag(node_) end
 		install_expand(node_)
 		--node_.SetModel = self.SetModel
 						

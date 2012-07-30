@@ -1,10 +1,10 @@
-if not net then
+if not _BETA then
 	require("datastream")
 end
 
 do -- to server
 	function pac.SendPartToServer(part)
-		if net then
+		if _BETA then
 			net.Start("pac_submit")
 				net.WriteString(glon.encode({part = part:ToTable()}))
 			net.SendToServer()
@@ -14,7 +14,7 @@ do -- to server
 	end
 
 	function pac.RemovePartOnServer(name)
-		if net then
+		if _BETA then
 			net.Start("pac_submit")
 				net.WriteString(glon.encode({part = name}))
 			net.SendToServer()
@@ -26,7 +26,7 @@ end
 
 do -- from server
 	function pac.WearPartFromServer(owner, part_data)
-		pac.dprint("received outfit %q from %s with %i number of children to set on %s", part_data.self.Name, owner:Nick(), table.Count(part_data.children), part_data.self.OwnerName)
+		pac.dprint("received outfit %q from %s with %i number of children to set on %s", part_data.self.Name, tostring(owner), table.Count(part_data.children), part_data.self.OwnerName)
 
 		for key, part in pairs(pac.GetParts()) do
 			if 
@@ -46,7 +46,7 @@ do -- from server
 	end
 
 	function pac.RemovePartFromServer(owner, part_name)
-		pac.dprint("%s is removed %q", owner:Nick(), part_name)
+		pac.dprint("%s is removed %q", tostring(owner), part_name)
 
 		for key, part in pairs(pac.GetParts()) do
 			if 
@@ -63,18 +63,18 @@ end
 
 local function handle_data(data)
 	if data.owner:IsValid() then
-		if type(data.part) == "table" then
+		local T = type(data.part)
+		if T == "table" then
 			pac.WearPartFromServer(data.owner, data.part)
-		elseif type(data.part) ==  "string" then
+		elseif T ==  "string" then
 			pac.RemovePartFromServer(data.owner, data.part)
 		end
 	end
 end
 
-if net then
+if _BETA then
 	net.Receive("pac_submit", function()
-		local data = glon.decode(net.ReadString())
-		handle_data(data)
+		handle_data(glon.decode(net.ReadString()))
 	end)
 else
 	datastream.Hook("pac_submit", function(_,_,_, data)

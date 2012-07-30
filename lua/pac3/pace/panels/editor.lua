@@ -12,17 +12,34 @@ function PANEL:Init()
 	local div = vgui.Create("DVerticalDivider", self)
 		div:SetDividerHeight(5)
 		div:Dock(FILL)
+		div:SetTopMin(0)
 	self.div = div
 	
 	self:SetTop(pace.CreatePanel("tree"))
 	local pnl = pace.CreatePanel("properties")
 	pace.properties = pnl
 	self:SetBottom(pnl)
+	
+	self:SetCookieName("pac3_editor")
+end
+
+function PANEL:Think(...)
+	local x, y = self:GetPos()
+	
+	if x ~= self.last_x then
+		self:SetCookie("x", x)
+	end
+	
+	if y ~= self.last_y then
+		self:SetCookie("y", y)
+	end
+
+	return DFrame.Think(self, ...)
 end
 
 function PANEL:PerformLayout()
 	DFrame.PerformLayout(self)
-
+	
 	self.div:SetTopHeight(ScrH() - self.bottom:GetHeight() - 30)
 	self.div:InvalidateLayout()
 end
@@ -50,7 +67,7 @@ function pace.GainFocus()
 			self:MakePopup()
 			pace.Focused = true
 			self:AlphaTo(255, 0.1, 0)
-			self:MoveTo(0, 0, 0.1, 0)
+			self:MoveTo(self:GetCookieNumber("x") or 0, self:GetCookieNumber("y") or 0, 0.1, 0)
 		end
 	end
 end
@@ -64,7 +81,7 @@ function pace.KillFocus()
 		gui.EnableScreenClicker(false)
 		pace.Focused = false
 		self:AlphaTo(0, 0.1, 0)
-		self:MoveTo(-self:GetWide(), 0, 0.1, 0)
+		self:MoveTo(self:GetCookieNumber("x") or -self:GetWide(), self:GetCookieNumber("y") or 0, 0.1, 0)
 		
 		self.allowclick = false
 

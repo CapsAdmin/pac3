@@ -207,6 +207,7 @@ function pace.SetBreathing(b)
 				for k,v in pairs(reset_pose_params) do 
 					ply:SetPoseParameter(v, 0) 
 				end 
+				ply:ClearPoseParameters()
 			end
 		end)
 	else

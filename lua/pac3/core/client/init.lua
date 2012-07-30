@@ -124,13 +124,31 @@ local function check_owner(a, b)
 	return a:GetOwner() == b or (not b.CPPIGetOwner or b:CPPIGetOwner() == a or b:CPPIGetOwner() == true)
 end
 
-function pac.HandleOwnerName(owner, name, ent)
+function pac.CalcEntityCRC(ent)
+	local pos = ent:GetPos()
+	local ang = ent:GetAngles()
+	local mdl = ent:GetModel():lower():gsub("\\", "/")
+	local x,y,z = math.Round(pos.x/10)*10, math.Round(pos.y/10)*10, math.Round(pos.z/10)*10
+	local p,_y,r = math.Round(ang.p/10)*10, math.Round(ang.y/10)*10, math.Round(ang.r/10)*10
 
-	if tonumber(name)  then
-		if Entity(tonumber(name)):IsValid() then
-			return Entity(tonumber(name))
-		end
+	local crc = x .. y .. z .. p .. _y .. r .. mdl
+
+	return util.CRC(crc)
+end
+
+function pac.HandleOwnerName(owner, name, ent, part)
+
+	local idx = tonumber(name)
+	if idx then
+		local ent = Entity(idx)
 		
+		if ent:IsValid() then
+			if ent.GetPersistent and ent:GetPersistent() then
+				part:SetOwnerName("persist " .. pac.CalcEntityCRC(ent))
+			end
+		
+			return ent
+		end		
 		return NULL
 	end
 
@@ -144,6 +162,15 @@ function pac.HandleOwnerName(owner, name, ent)
 	
 	if name == "active vehicle" then
 		return owner.GetVehicle and owner:GetVehicle()
+	end
+	
+	if name:find("persist ", nil, true) then
+		local crc = name:match("persist (.+)")
+		for key, ent in pairs(ents.GetAll()) do
+			if ent.GetPersistent and ent:GetModel() and ent:GetPersistent() and crc == pac.CalcEntityCRC(ent) then
+				return ent
+			end
+		end
 	end
 	
 	if IsValid(ent) then
@@ -162,17 +189,17 @@ function pac.HandleOwnerName(owner, name, ent)
 end
 
 -- this function adds the unique id of the owner to the part name to resolve name conflicts
--- hack??!?!
+-- hack??
 
 function pac.HandlePartName(ply, name)
-	if ply:IsValid() and ply ~= LocalPlayer() then
+	if ply:IsPlayer() and ply ~= LocalPlayer() then
 		return ply:UniqueID() .. " " .. name
 	end
 	
-	if not ply:IsValid() then
-		pac.dprint("tried to handle part name %q but the player owner (%s) is not valid", name, tostring(ply))
+	if not ply:IsPlayer() and ply:IsValid() then	
+		return pac.CallHook("HandlePartName", ply, name) or (ply:EntIndex() .. " " .. name)
 	end
-	
+
 	return name
 end
 

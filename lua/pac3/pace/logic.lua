@@ -219,13 +219,16 @@ function pace.LoadSession(name, append)
 	end
 end
 
-hook.Add("InitPostEntity", "pace_autoload_session", function()
+hook.Add("InitPostEntity", "pace_autoload_session", function()	
 	pace.LoadSession("autoload")
-	for key, part in pairs(pac.GetParts(true)) do
-		if not part:HasParent() then
-			pac.SendPartToServer(part)
+	-- give pac some time to solve bones and parents
+	timer.Simple(1, function()
+		for key, part in pairs(pac.GetParts(true)) do
+			if not part:HasParent() then
+				pac.SendPartToServer(part)
+			end
 		end
-	end
+	end)
 end)
 
 function pace.OnOpenMenu()
@@ -263,7 +266,7 @@ function pace.OnOpenMenu()
 	langmenu:AddOption("english", function()
 		pace.SetLanguage("english")
 	end)
-	for key, val in pairs(file.Find((SinglePlayer() and "lua" or "lua_temp") .. "/pac3/pace/translations/*", _G.net and "GAME" or true)) do
+	for key, val in pairs(file.Find((SinglePlayer() and "lua" or "lua_temp") .. "/pac3/pace/translations/*", not _BETA and true or "GAME")) do
 		val = val:gsub("%.lua", "")
 		langmenu:AddOption(val, function()
 			pace.SetLanguage(val)

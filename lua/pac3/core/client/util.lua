@@ -31,7 +31,7 @@ end
 function pac.CreateEntity(model)
 	local ent
 	
-	if net then 
+	if _BETA then 
 		ent = ents.CreateClientProp()
 	else
 		ent = ents.Create("prop_physics")
@@ -74,7 +74,7 @@ do -- hook helpers
 	end
 
 	function pac.CallHook(str, ...)
-		hook.Call("pac_" .. str, GAMEMODE, ...)
+		return hook.Call("pac_" .. str, GAMEMODE, ...)
 	end
 end
 

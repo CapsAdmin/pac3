@@ -38,7 +38,7 @@ function PART:GetSequenceList()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then	
-		if net then
+		if _BETA then
 			return ent:GetSequenceList()
 		else
 			local tbl = {}
@@ -82,7 +82,7 @@ function PART:OnThink()
 			if self.PingPongLoop then
 				ent:SetCycle(min + math.abs(math.Round(frame*0.5) - frame*0.5)*2 * (max - min))
 			else
-				ent:SetCycle(min + frame%1 * (max - min))
+				ent:SetCycle(min + (frame*0.5)%1 * (max - min))
 			end
 		else
 			ent:SetCycle(self.Offset)
