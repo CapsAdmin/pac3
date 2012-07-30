@@ -416,7 +416,9 @@ function PART:SetSkin(var)
 end
 
 function PART:OnRemove()
-	SafeRemoveEntity(self.Entity)
+	if not self.OwnerEntity then
+		SafeRemoveEntity(self.Entity)
+	end
 end
 
 
