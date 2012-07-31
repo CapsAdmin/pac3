@@ -13,6 +13,7 @@ concommand.Add("pac_clear_session", function()
 	pace.RefreshTree()
 end)
 
+pace.SpawnlistBrowser = NULL
 
 function pace.ClientOptionsMenu(pnl)
 	pnl:AddControl("Button", {
@@ -26,6 +27,8 @@ function pace.ClientOptionsMenu(pnl)
 	end
 	browser:SetDir("sessions/")
 	browser:SetSize(400,700)
+	
+	pace.SpawnlistBrowser = browser
 	
 	pnl:AddControl("Button", {
 		Label = L"wear on server",
