@@ -231,6 +231,22 @@ hook.Add("InitPostEntity", "pace_autoload_session", function()
 	end)
 end)
 
+local font_cvar = CreateClientConVar("pac_editor_font", pace.Fonts[1])
+
+function pace.SetFont(fnt)
+	pace.CurrentFont = fnt or font_cvar:GetString()
+	RunConsoleCommand("pac_editor_font", pace.CurrentFont)
+	
+	if pace.Editor and pace.Editor:IsValid() then
+		pace.CloseEditor()
+		timer.Simple(0.1, function()
+			pace.OpenEditor()
+		end)
+	end
+end
+
+pace.SetFont()
+
 function pace.OnOpenMenu()
 	local menu = DermaMenu()
 	menu:SetPos(gui.MousePos())
@@ -272,6 +288,23 @@ function pace.OnOpenMenu()
 			pace.SetLanguage(val)
 		end)
 	end
+	
+	local fontmenu = menu:AddSubMenu(L"font")
+	for key, val in pairs(pace.Fonts) do
+		fontmenu:AddOption(val, function()
+			pace.SetFont(val)
+		end)
+		local pnl = fontmenu.Items[#fontmenu.Items]
+		if pnl and pnl:IsValid() then
+			pnl:SetFont(val)
+			if pace.ShadowedFonts[val] then
+				pnl:SetTextColor(derma.Color("text_bright", pnl, color_white))
+			else
+				pnl:SetTextColor(derma.Color("text_dark", pnl, color_black))
+			end
+		end
+	end
+		
 		
 	menu:AddSpacer()
 	

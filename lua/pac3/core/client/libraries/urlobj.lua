@@ -37,18 +37,22 @@ function urlobj.ParseObj(data)
 					v2.pos = positions[tonumber(current[1])]
 					v3.pos = positions[tonumber(previous[1])]
 
-					v1.normal = normals[tonumber(first[3])]
-					v2.normal = normals[tonumber(current[3])]
-					v3.normal = normals[tonumber(previous[3])]
+					if #normals > 0 then
+						v1.normal = normals[tonumber(first[3])]
+						v2.normal = normals[tonumber(current[3])]
+						v3.normal = normals[tonumber(previous[3])]
+					end
 					
-					v1.u = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 0]
-					v1.v = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 1]
-					
-					v2.u = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 0]
-					v2.v = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 1]
-					
-					v3.u = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 0]
-					v3.v = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 1]
+					if #texcoords > 0 then
+						v1.u = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 0]
+						v1.v = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 1]
+						
+						v2.u = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 0]
+						v2.v = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 1]
+						
+						v3.u = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 0]
+						v3.v = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 1]
+					end
 					
 					table_insert(output, v1)
 					table_insert(output, v2)
@@ -71,9 +75,7 @@ function urlobj.CreateObj(str, mesh_only)
 	local ok, res = pcall(urlobj.ParseObj, str)
 	
 	if not ok then
-		pac.dprint("model parse error %q ", res)
-		
-		callback(ok, res)
+		MsgN("pac3 model parse error %q ", res)
 		return
 	end
 	

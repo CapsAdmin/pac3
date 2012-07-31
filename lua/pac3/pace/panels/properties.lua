@@ -314,7 +314,7 @@ do -- non editable string
 	function PANEL:SetValue(str)
 		local lbl = vgui.Create("DLabel")
 			lbl:SetTextColor(derma.Color(net and "text_dark" or "text_bright", self, color_black))
-			lbl:SetFont(pace.DefaultFont)
+			lbl:SetFont(pace.CurrentFont)
 			lbl:SetText("  " .. str) -- ugh
 			lbl:SizeToContents()
 		self:SetContent(lbl)
@@ -335,7 +335,7 @@ do -- base editable
 		local str = tostring(skip_encode and var or self:Encode(var))
 		
 		self:SetTextColor(derma.Color(_BETA and "text_dark" or "text_bright", self, color_black))
-		self:SetFont(pace.DefaultFont)
+		self:SetFont(pace.CurrentFont)
 		self:SetText("  " .. str) -- ugh
 		self:SizeToContents()
 
@@ -414,7 +414,7 @@ do -- base editable
 		
 		local pnl = vgui.Create("DTextEntry", self)
 		self.editing = pnl
-		pnl:SetFont(pace.DefaultFont)
+		pnl:SetFont(pace.CurrentFont)
 		pnl:SetDrawBackground(false)
 		pnl:SetDrawBorder(false)
 		pnl:SetValue(self.original_str or "")
@@ -721,7 +721,8 @@ do -- boolean
 		self.chck = chck
 		
 		local lbl = vgui.Create("DLabel", self)
-		lbl:SetTextColor(derma.Color(net and "text_dark" or "text_bright", self, color_black))
+		lbl:SetFont(pace.CurrentFont)
+		lbl:SetTextColor(derma.Color(_BETA and "text_dark" or "text_bright", self, color_black))
 		self.lbl = lbl
 	end
 

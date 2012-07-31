@@ -117,20 +117,48 @@ function PANEL:AddNode(...)
 	local node = fix_folder_funcs(DTree.AddNode(self, ...))
 	install_expand(node)
 	if _BETA then install_drag(node) end
-	--node.SetModel = self.SetModel
-
+	node.SetModel = self.SetModel
+	
 	node.AddNode = function(...)
 		local node_ = fix_folder_funcs(DTree_Node.AddNode(...))
-		node_.AddNode = node.AddNode
-		if _BETA then install_drag(node_) end
 		install_expand(node_)
-		--node_.SetModel = self.SetModel
-						
+		if _BETA then install_drag(node_) end
+		node_.SetModel = self.SetModel
+
+		node_.AddNode = node.AddNode
+		
+		node_.PerformLayout = function(...)
+			DTree_Node.PerformLayout(...)
+			if node_.Label then
+				node_.Label:SetFont(pace.CurrentFont)
+
+				if pace.ShadowedFonts[pace.CurrentFont] then
+					node_.Label:SetTextColor(derma.Color("text_bright", self, color_white))
+				else
+					node_.Label:SetTextColor(derma.Color("text_dark", self, color_black))
+				end
+			end			
+		end
+
 		return node_
+	end
+	
+	node.PerformLayout = function(...)
+		DTree_Node.PerformLayout(...)
+		if node.Label then
+			node.Label:SetFont(pace.CurrentFont)
+			if pace.ShadowedFonts[pace.CurrentFont] then
+				node.Label:SetTextColor(derma.Color("text_bright", self, color_white))
+			else
+				node.Label:SetTextColor(derma.Color("text_dark", self, color_black))
+			end
+		end			
 	end
 	
 	return node
 end
+
+local enable_model_icons = CreateClientConVar("pac_editor_model_icons", "1")
 
 function PANEL:PopulateParts(node, parts, children)
 	parts = table.ClearKeys(parts)
@@ -188,11 +216,11 @@ function PANEL:PopulateParts(node, parts, children)
 				end
 			end
 			
-			--[[if false and part.ClassName == "model" and part.GetModel then
-				--part_node:SetModel(part:GetModel())
-			else]]
+			if enable_model_icons:GetBool() and part.ClassName == "model" and part.GetModel then
+				part_node:SetModel(part:GetModel())
+			else
 				part_node.Icon:SetImage(pace.PartIcons[part.ClassName] or (net and "icon16/plugin") or "gui/silkicons/plugin")
-			--end
+			end
 			
 			self:PopulateParts(part_node, part:GetChildren(), true)			
 		
@@ -203,7 +231,7 @@ function PANEL:PopulateParts(node, parts, children)
 end
 
 function PANEL:Populate()
-
+	
 	for key, node in pairs(self.parts) do
 		if not node.part or not node.part:IsValid() then
 			node:Remove()
