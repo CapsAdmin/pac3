@@ -12,7 +12,6 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "StartAlpha", 1)
 	pac.GetSet(PART, "EndAlpha", 1)
 	pac.GetSet(PART, "Stretch", false)
-	pac.GetSet(PART, "Physics", false)
 	pac.GetSet(PART, "TrailPath", "trails/laser")
 pac.EndStorableVars()
 
@@ -119,10 +118,6 @@ function PART:OnDraw(owner, pos, ang)
 		local spc = tonumber(self.Spacing)
 		
 		if spc == 0 or self.LastAdd < RealTime() then
-			if self.physics_init then
-				self.points = {}
-				self.physics_init = false
-			end
 			table_insert(self.points, pos)
 			self.LastAdd = RealTime() + spc / 1000
 		end
@@ -153,7 +148,7 @@ function PART:OnDraw(owner, pos, ang)
 			end
 		render_EndBeam()		
 		
-		if not self.Physics and count >= len then 
+		if count >= len then 
 			table_remove(self.points, 1) 
 		end
 	end
