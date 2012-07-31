@@ -178,6 +178,10 @@ function pace.SaveSession(name)
 		end
 		
 		luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
+		
+		if pace.SpawnlistBrowser:IsValid() then
+			pace.SpawnlistBrowser:PopulateFromClient()
+		end
 	end
 end
 
