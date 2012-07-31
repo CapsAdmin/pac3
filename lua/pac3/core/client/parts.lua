@@ -3,6 +3,7 @@ local class = pac.class
 
 pac.ActiveParts = pac.ActiveParts or {}
 local part_count = 0 -- unique id thing
+local pairs = pairs
 
 function pac.CreatePart(name, owner)
 	owner = owner or LocalPlayer()
@@ -761,8 +762,11 @@ do -- meta
 			self:ResolveFollowPartName()
 		end
 
-
 		self:OnThink()
+		
+		for _, part in pairs(self.Children) do
+			part:Think()
+		end
 	end
 	
 	function PART:SubmitToServer()

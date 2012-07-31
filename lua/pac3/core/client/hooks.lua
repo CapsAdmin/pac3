@@ -1,27 +1,30 @@
 pac.drawn_entities = pac.drawn_entities or {}
-
-local function draw(ent, part, event)
-	for key, part in pairs(ent.pac_parts) do
-		-- dont' draw children, they are handled by part:Draw()
-		if part:IsValid() and not part:HasParent() then 
-			part:Draw(event)
-		else
-			ent.pac_parts[key] = nil
-		end
-	end	
-end
-
+local pairs = pairs
 local render_ResetModelLighting = render.ResetModelLighting
+local time = 0
 
 function pac.RenderOverride(ent)
 	if not ent.pac_parts then
 		pac.UnhookEntityRender(ent)
 	else
 		ent:InvalidateBoneCache()
-		draw(ent, part, "PreDraw")
-		--ent:DrawModel()
-		ent:InvalidateBoneCache()
-		draw(ent, part, "OnDraw")
+			for key, part in pairs(ent.pac_parts) do
+				-- dont' draw children, they are handled by part:Draw()
+				if part:IsValid() then
+					
+					if (part.last_think or 0) < time then
+						part:Think()
+						part.last_think = time + 0.1
+					end
+					
+					part:Draw("OnDraw")
+				else
+					ent.pac_parts[key] = nil
+					if not next(ent.pac_parts) then
+						pac.UnhookEntityRender(ent)
+					end
+				end
+			end	
 		ent:InvalidateBoneCache()
 	end
 end
@@ -62,6 +65,7 @@ pac.AddHook("RenderScene")
 function pac.PostDrawTranslucentRenderables()
 	if not cvar_enable:GetBool() then return end
 	
+	time = RealTime()
 	local draw_dist = cvar_distance:GetInt()
 	local local_player = LocalPlayer() 
 	local radius = 0
@@ -95,7 +99,6 @@ function pac.Think()
 	if not cvar_enable:GetBool() then return end
 	
 	pac.CheckParts()
-	pac.CallPartHook("Think")
 end
 pac.AddHook("Think")
 
