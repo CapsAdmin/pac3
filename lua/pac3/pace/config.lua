@@ -1,4 +1,29 @@
-pace.DefaultFont = _BETA and "DermaDefault" or "DefaultSmall"
+pace.Fonts = 
+{
+	_BETA and "DermaDefault" or "DefaultSmall",
+	"Default",
+	"BudgetLabel",
+	"DefaultsmallDropShadow",
+	"DefaultBold",
+	"TabLarge",
+	"DefaultFixedOutline",
+	"ChatFont",
+	"DefaultFixedDropShadow",
+	"Trebuchet18",
+	"Trebuchet19",
+	"UiBold",
+}
+
+pace.ShadowedFonts = 
+{
+	["BudgetLabel"] = true,
+	["DefaultsmallDropShadow"] = true,
+	["TabLarge"] = true,
+	["DefaultFixedOutline"] = true,
+	["ChatFont"] = true,
+	["DefaultFixedDropShadow"] = true,
+}
+
 
 if _BETA then
 	pace.PartIcons =
