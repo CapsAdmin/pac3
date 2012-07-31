@@ -224,11 +224,11 @@ end
 
 local MATERIAL_CULLMODE_CCW = MATERIAL_CULLMODE_CCW
 
-function PART:PostEntityDraw(owner, ent)
+function PART:PostEntityDraw(owner, ent, pos, ang)
 		
 	if self.DoubleFace then
 		render_CullMode(MATERIAL_CULLMODE_CCW)
-		ent:DrawModel()
+		self:DrawModel(ent, pos, ang)
 	else
 		if self.Invert then
 			render_CullMode(MATERIAL_CULLMODE_CCW)
@@ -268,34 +268,46 @@ function PART:OnDraw(owner, pos, ang)
 	
 		self:PreEntityDraw(owner, ent, pos, ang)
 		
-		if self.wavefront_mesh then
-			local matrix = Matrix()
-			
-			if _BETA then
-				matrix:SetAngles(ang)
-			else
-				matrix:SetAngle(ang)
-			end
-			matrix:SetTranslation(pos)
-			matrix:Scale(self.Scale * self.Size)
-			
-			cam.PushModelMatrix(matrix)
-				if self.Materialm then 
-					render_SetMaterial(self.Materialm)	
-				end
-				self.wavefront_mesh:Draw()
-			cam.PopModelMatrix()
-		else
-			ent:DrawModel()
-		end
+		self:DrawModel(ent, pos, ang)
 		
-		self:PostEntityDraw(owner, ent)
+		self:PostEntityDraw(owner, ent, pos, ang)
 	else
 		timer.Simple(0, function()
 			self.Entity = pac.CreateEntity(self.Model)
 			self.Entity:SetNoDraw(true)
 			self.Entity.PACPart = self
 		end)
+	end
+end
+
+function PART:DrawModel(ent, pos, ang)
+	if self.wavefront_mesh then
+		local matrix = Matrix()
+		
+		if _BETA then
+			matrix:SetAngles(ang)
+		else
+			matrix:SetAngle(ang)
+		end
+		matrix:SetTranslation(pos)
+		matrix:Scale(self.Scale * self.Size)
+		
+		cam.PushModelMatrix(matrix)
+			if self.Materialm then 
+				render_SetMaterial(self.Materialm)	
+			end
+			self.wavefront_mesh:Draw()
+		cam.PopModelMatrix()
+		
+		ent:SetModelScale(Vector(0,0,0))
+		ent:DrawModel()
+		self.wavefront_mesh_hack = true
+	else
+		if self.wavefront_mesh_hack then
+			ent:SetModelScale(self.Scale)
+			self.wavefront_mesh_hack = false
+		end
+		ent:DrawModel()
 	end
 end
 
@@ -358,7 +370,7 @@ function PART:SetColor(var)
 	var = var or Vector()
 
 	self.Color = var
-	self.Colorf = (Vector(var.r, var.g, var.b) / 255) * self.Brightness
+	self.Colorf = (Vector(var.r, var.g, var.b) / 255)
 end
 
 function PART:SetMaterial(var)
@@ -372,6 +384,7 @@ function PART:SetMaterial(var)
 				var, 
 				function(mat)
 					if self:IsValid() then
+						mat:SetMaterialInt("$vertexcolor", 1)
 						self.Materialm = mat
 					end
 				end,

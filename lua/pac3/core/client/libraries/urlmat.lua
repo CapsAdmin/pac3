@@ -60,6 +60,9 @@ function urlmat.StartDownload(url, data)
 			</body>
 		]]
 	)
+	
+	local go = false
+	local time = 0
 		
 	function pnl.FinishedURL()
 	
@@ -78,7 +81,13 @@ function urlmat.StartDownload(url, data)
 			
 			local html_mat = pnl:GetHTMLMaterial()
 			
-			if html_mat then
+			-- give it some time.. IsLoading is sometimes lying
+			if not go and html_mat and not pnl:IsLoading() then
+				time = RealTime() + 0.15
+				go = true
+			end
+			
+			if go and time < RealTime() then
 				local vertex_mat = CreateMaterial(url, "VertexLitGeneric")
 				local tex = html_mat:GetMaterialTexture("$basetexture")
 				tex:Download()
