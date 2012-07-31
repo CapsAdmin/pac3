@@ -474,8 +474,12 @@ do -- meta
 			else
 				-- default to owner origin until BoneIndex is ready
 				pos = owner:GetPos()
-				ang = owner:EyeAngles()
-				ang.p = 0
+				if owner:IsPlayer() then
+					ang = owner:EyeAngles()
+					ang.p = 0
+				else
+					ang = owner:GetAngles()
+				end
 			end
 				
 			return pos, ang

@@ -300,12 +300,15 @@ function PART:OnDraw(owner, pos, ang)
 end
 
 function PART:SetModel(var)
-	self.Entity = self.Entity:IsValid() and self.Entity or pac.CreateEntity(self.Model)
+	self.Entity = self:GetEntity()
 
 	if var and var:find("http") and pac.urlobj then
 		var = var:gsub("https://", "http://")
 		
 		pac.urlobj.GetObjFromURL(var, function(mesh, err)
+			if not self:IsValid() then return end
+			self.Entity = self:GetEntity()
+			
 			if not mesh and err then
 				self.Entity:SetModel("error.mdl")
 				self.wavefront_mesh = nil
