@@ -14,7 +14,7 @@ function pac.CreatePart(name, owner)
 		part:PreInitialize()
 	end
 		
-	table.insert(pac.ActiveParts, part)
+	part.active_parts_key = table.insert(pac.ActiveParts, part)
 	part.Id = part_count
 	part_count = part_count + 1
 	
@@ -135,7 +135,7 @@ do -- meta
 	
 	function PART:SetName(var)
 	
-		for key, part in pairs(self:GetChildren()) do
+		for key, part in pairs(self.Children) do
 			part:SetParentName(var)
 		end
 		
@@ -273,7 +273,7 @@ do -- meta
 		
 			var.Parent = self
 
-			local id = table.insert(self:GetChildren(), var)
+			self.Children[var.Id] = var
 			
 			var.ParentName = self:GetName()
 			
@@ -284,7 +284,7 @@ do -- meta
 			var:OnAttach(self:GetOwner())
 			self:OnChildAdd(var)
 
-			return id
+			return var.Id
 		end
 
 		function PART:HasParent()
@@ -292,11 +292,11 @@ do -- meta
 		end
 
 		function PART:HasChildren()
-			return #self:GetChildren() > 0
+			return next(self.Children) ~= nil
 		end
 
 		function PART:HasChild(part)
-			for key, child in pairs(self:GetChildren()) do
+			for key, child in pairs(self.Children) do
 				if child == part or child:HasChild(part) then
 					return true
 				end
@@ -305,7 +305,7 @@ do -- meta
 		end
 		
 		function PART:RemoveChild(var)
-			local children = self:GetChildren()
+			local children = self.Children
 
 			for key, part in pairs(children) do
 				if part == var then
@@ -365,7 +365,7 @@ do -- meta
 		end
 		
 		function PART:RemoveChildren()
-			for key, part in pairs(self:GetChildren()) do
+			for key, part in pairs(self.Children) do
 				part:Remove()
 			end
 			self.Children = {}
@@ -570,7 +570,7 @@ do -- meta
 				end
 			end
 
-			for _, part in pairs(self:GetChildren()) do
+			for _, part in pairs(self.Children) do
 				table.insert(tbl.children, part:ToTable(make_copy_name, true))
 			end
 
@@ -636,7 +636,7 @@ do -- meta
 		function PART:Highlight()
 			self.highlight = RealTime() + 0.1	
 			
-			for key, part in pairs(self:GetChildren()) do
+			for key, part in pairs(self.Children) do
 				part.highlight = RealTime() + 0.1
 				part:Highlight()
 			end
@@ -728,7 +728,7 @@ do -- meta
 			
 			self:OnBuildBonePositions(owner)
 			
-			for key, child in pairs(self:GetChildren()) do
+			for key, child in pairs(self.Children) do
 				child:BuildBonePositions(owner)
 			end
 		end
@@ -763,7 +763,7 @@ do -- meta
 		end
 
 		self:OnThink()
-		
+	
 		for _, part in pairs(self.Children) do
 			part:Think()
 		end
