@@ -12,9 +12,11 @@ function pac.RenderOverride(ent)
 				-- dont' draw children, they are handled by part:Draw()
 				if part:IsValid() then
 					
-					if (part.last_think or 0) < time then
+					if part.ThinkTime == 0 then
 						part:Think()
-						part.last_think = time + 0.1
+					elseif (part.last_think or 0) < time then
+						part:Think()
+						part.last_think = time + (part.ThinkTime or 0.1)
 					end
 					
 					part:Draw("OnDraw")
