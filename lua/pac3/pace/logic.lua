@@ -57,6 +57,8 @@ function pace.OnCreatePart(class_name, name, desc)
 
 	pace.OnPartSelected(part)
 	
+	part.newly_created = true
+	
 	pace.RefreshTree()	
 end
 
