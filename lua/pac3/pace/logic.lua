@@ -406,7 +406,7 @@ function pace.OnNewPartMenu()
 	end)
 	
 	menu:AddOption(L"clear", function()
-		pac.RemoveAllParts(true)
+		pac.RemoveAllParts(true, true)
 		pace.RefreshTree()
 	end)
 end
