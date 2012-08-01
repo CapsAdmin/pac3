@@ -44,14 +44,15 @@ function urlobj.ParseObj(data)
 					end
 					
 					if #texcoords > 0 then
-						v1.u = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 0]
-						v1.v = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 1]
+						local offset = 8/1024
+						v1.u = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 0] + offset
+						v1.v = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 1] + offset
 						
-						v2.u = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 0]
-						v2.v = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 1]
+						v2.u = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 0] + offset
+						v2.v = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 1] + offset
 						
-						v3.u = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 0]
-						v3.v = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 1]
+						v3.u = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 0] + offset
+						v3.v = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 1] + offset
 					end
 					
 					table_insert(output, v1)
