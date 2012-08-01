@@ -31,10 +31,10 @@ function pac.HookEntityRender(ent, part)
 		pac.dprint("hooking render on %s to draw part %s", tostring(ent), tostring(part))
 		
 		if not ent.pac_parts then
-			ent.pac_parts = {[part.Id] = part}
-		else
-			ent.pac_parts[part.Id] = part
+			ent.pac_parts = {}
 		end
+		
+		ent.pac_parts[part.Id] = part
 		
 		pac.drawn_entities[ent:EntIndex()] = ent
 	end
@@ -61,7 +61,7 @@ pac.AddHook("RenderScene")
 
 function pac.PostDrawTranslucentRenderables()
 	if not cvar_enable:GetBool() then return end
-	
+		
 	time = RealTime()
 	local draw_dist = cvar_distance:GetInt()
 	local local_player = LocalPlayer() 
@@ -88,16 +88,10 @@ function pac.PostDrawTranslucentRenderables()
 			pac.drawn_entities[key] = nil
 		end
 	end
-end
-pac.AddHook("PostDrawTranslucentRenderables")
-
-
-function pac.Think()
-	if not cvar_enable:GetBool() then return end
 	
 	pac.CheckParts()
 end
-pac.AddHook("Think")
+pac.AddHook("PostDrawTranslucentRenderables")
 
 function pac.OnEntityCreated(ent)
 	if ent:IsValid() then
