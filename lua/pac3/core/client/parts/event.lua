@@ -123,11 +123,12 @@ PART.Events =
 	
 	timer =
 	{
-		arguments = {{interval = "number"}},
-		callback = function(self, ent, num)
-			num = num or 1
+		arguments = {{interval = "number"}, {offset = "number"}},
+		callback = function(self, ent, interval, offset)
+			interval = interval or 1
+			offset = offset or 0
 			
-			return CurTime()%num > (num / 2)
+			return (CurTime() + offset)%interval > (interval / 2)
 		end,
 	},
 	
