@@ -20,9 +20,6 @@ function pac.RenderOverride(ent)
 					part:Draw("OnDraw")
 				else
 					ent.pac_parts[key] = nil
-					if not next(ent.pac_parts) then
-						pac.UnhookEntityRender(ent)
-					end
 				end
 			end	
 		ent:InvalidateBoneCache()
