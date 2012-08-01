@@ -212,6 +212,8 @@ function PANEL:PopulateParts(node, parts, children)
 			part_node.DoRightClick = function()
 				if part:IsValid() then
 					pace.Call("PartMenu", part)
+					pace.Call("PartSelected", part)
+					part_node:InternalDoClick()
 					return true
 				end
 			end
@@ -224,8 +226,16 @@ function PANEL:PopulateParts(node, parts, children)
 			
 			self:PopulateParts(part_node, part:GetChildren(), true)			
 		
-			part_node:SetExpanded(part:GetEditorExpand())
-
+			if part.newly_created then
+				part_node:SetSelected(true)
+				if part:HasParent() and part.Parent.editor_node then
+					part.Parent.editor_node:SetExpanded(true)
+				end
+				part.newly_created = nil
+			else
+				part_node:SetSelected(false)
+				part_node:SetExpanded(part:GetEditorExpand())
+			end
 		end
 	end
 end
