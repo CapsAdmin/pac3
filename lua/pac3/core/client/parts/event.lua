@@ -2,6 +2,7 @@ local PART = {}
 
 PART.ClassName = "event"
 PART.HideGizmo = true
+PART.ThinkTime = 0
 
 PART.Events = 
 {
@@ -140,7 +141,7 @@ PART.Events =
 			
 			local data = ent.pac_anim_event 
 			
-			if data and self:StringOperator(data.name, find) and data.time + time > CurTime() then
+			if data and self:StringOperator(data.name, find) and data.time + time > RealTime() then
 				return true
 			end			
 		end,
@@ -302,7 +303,7 @@ for key, val in pairs(_G) do
 end
 
 pac.AddHook("DoAnimationEvent", function(ply, event, data)
-	ply.pac_anim_event = {name = enums[event], time = CurTime()}
+	ply.pac_anim_event = {name = enums[event], time = RealTime()}
 end)
 
 --[[
