@@ -21,11 +21,6 @@ if SERVER then
 		return files
 	end
 		
-	local function AddCSLuaFile(...)
-		print(...)
-		return _G.AddCSLuaFile(...)
-	end
-	
 	AddCSLuaFile("autorun/pac_init.lua")
 		
 	local function add_files(dir)		

@@ -99,12 +99,15 @@ do -- pace
 	function mctrl.GetCalculatedScale()
 		return 7 * math.rad(pace.GetViewFOV())
 	end
+	
+	local cvar_pos_grid = CreateClientConVar("pac_grid_pos_size", "4")
 
 	function mctrl.OnMove(part, pos)
 		if input.IsKeyDown(KEY_LCONTROL) then
-			pos.x = math.Round(pos.x/pace.GridSizePos) * pace.GridSizePos
-			pos.y = math.Round(pos.y/pace.GridSizePos) * pace.GridSizePos
-			pos.z = math.Round(pos.z/pace.GridSizePos) * pace.GridSizePos
+			local num = cvar_ang_grid:GetInt("pac_grid_pos_size")
+			pos.x = math.Round(pos.x/num) * num
+			pos.y = math.Round(pos.y/num) * num
+			pos.z = math.Round(pos.z/num) * num
 		end
 	
 		pace.Call("VariableChanged", part, "Position", pos, 0.25)
@@ -112,12 +115,15 @@ do -- pace
 			pace.PopulateProperties(part)
 		end)
 	end
+	
+	local cvar_ang_grid = CreateClientConVar("pac_grid_pos_size", "45")
 
 	function mctrl.OnRotate(part, ang)
 		if input.IsKeyDown(KEY_LCONTROL) then
-			ang.p = math.Round(ang.p/pace.GridSizeAng) * pace.GridSizeAng
-			ang.y = math.Round(ang.y/pace.GridSizeAng) * pace.GridSizeAng
-			ang.r = math.Round(ang.r/pace.GridSizeAng) * pace.GridSizeAng
+			local num = cvar_ang_grid:GetInt("pac_grid_ang_size")
+			ang.p = math.Round(ang.p/num) * num
+			ang.y = math.Round(ang.y/num) * num
+			ang.r = math.Round(ang.r/num) * num
 		end
 		
 		pace.Call("VariableChanged", part, "Angles", ang, 0.25)
