@@ -74,7 +74,7 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 		if IsValid(node) then			
 			if key == "Name" then
 				if not obj:HasParent() then
-					pac.RemovePartOnServer(obj:GetName())
+					pac.RemovePartOnServer(obj:GetName(), true)
 				end
 				node:SetText(val)
 			elseif key == "Model" and val and val ~= "" then
