@@ -86,6 +86,3 @@ pace.PropertyOrder =
 	"Loop",
 	"PingPongLoop",
 }
-
-pace.GridSizePos = 4
-pace.GridSizeAng = 45

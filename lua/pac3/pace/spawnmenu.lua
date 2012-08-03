@@ -16,10 +16,11 @@ end)
 pace.SpawnlistBrowser = NULL
 
 function pace.ClientOptionsMenu(pnl)
-	pnl:AddControl("Button", {
-		Label = L"show editor",
-		Command = "pac_editor",
-	})
+	pnl:Button(
+		L"show editor",
+		"pac_editor"
+	)
+	
 	local browser = pnl:AddControl("pace_browser", {})
 	
 	browser.OnLoad = function(node)
@@ -30,26 +31,44 @@ function pace.ClientOptionsMenu(pnl)
 	
 	pace.SpawnlistBrowser = browser
 	
-	pnl:AddControl("Button", {
-		Label = L"wear on server",
-		Command = "pac_wear_session",
-	})	
-	pnl:AddControl("Button", {
-		Label = L"clear",
-		Command = "pac_clear_session",
-	})	
-
-	pnl:AddControl("Slider", {
-		Label = L"draw distance",
-		Command = "pac_draw_distance",
-		min = 0,
-		max = 20000,
-	})
+	pnl:Button(
+		L"wear on server",
+		"pac_wear_session"
+	)	
 	
-	pnl:AddControl("Button", {
-		Label = L"convert active pac2 outfit",
-		Command = "pac_convert_pac2_config",
-	})	
+	pnl:Button(
+		L"clear",
+		"pac_clear_session"
+	)	
+
+	pnl:NumSlider(
+		L"draw distance",
+		"pac_draw_distance",
+		0,
+		20000,
+		0
+	)
+	
+	pnl:NumSlider(
+		L"editor grid position size", 
+		"pac_grid_pos_size",
+		0, 
+		64,
+		0		
+	)
+	
+	pnl:NumSlider(
+		L"editor grid angle size", 
+		"pac_grid_ang_size",
+		0, 
+		360,
+		0
+	)
+	
+	pnl:Button(	
+		L"convert active pac2 outfit",
+		"pac_convert_pac2_config"
+	)	
 end
 
 hook.Add("PopulateToolMenu", "pac3_spawnmenu", function()
@@ -62,7 +81,7 @@ hook.Add("PopulateToolMenu", "pac3_spawnmenu", function()
 		"",
 		pace.ClientOptionsMenu,  
 		{ 
-			SwitchConVar = "pac_enable" 
+			SwitchConVar = "pac_enable",
 		}
 	)
 end)

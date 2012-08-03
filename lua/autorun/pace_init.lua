@@ -20,23 +20,15 @@ if SERVER then
 		
 		return files
 	end
-	
-	local function AddCSLuaFile(...)
-		print(...)
-		return _G.AddCSLuaFile(...)
-	end
-	
+		
 	AddCSLuaFile("autorun/pace_init.lua")
 		
 	local function add_files(dir)		
 		for _, name in pairs(getfiles(dir)) do
-			print(name)
 			if name:sub(-4) == ".lua" then
 				AddCSLuaFile(dir .. name)
-				print(dir .. name)
 			elseif not name:find(".", nil, true) then
 				add_files(dir .. name .. "/")
-				print(dir .. name .. "/")
 			end
 		end
 	end
