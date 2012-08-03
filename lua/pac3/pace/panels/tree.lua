@@ -21,9 +21,9 @@ end
 
 do
 	local pnl = NULL
-	local _BETA
+	local VERSION = VERSION
 	
-	if not _BETA then
+	if VERSION < 150 then
 		pac_ChangeTooltip = pac_ChangeTooltip or ChangeTooltip
 		function ChangeTooltip(pnl_, ...)
 			pnl = pnl_ or NULL
@@ -32,7 +32,7 @@ do
 	end
 
 	function PANEL:Think(...)	
-		if _BETA then
+		if VERSION >= 150 then
 			pnl = vgui.GetHoveredPanel() or NULL
 		end
 				
@@ -116,13 +116,13 @@ function PANEL:AddNode(...)
 
 	local node = fix_folder_funcs(DTree.AddNode(self, ...))
 	install_expand(node)
-	if _BETA then install_drag(node) end
+	if VERSION >= 150 then install_drag(node) end
 	node.SetModel = self.SetModel
 	
 	node.AddNode = function(...)
 		local node_ = fix_folder_funcs(DTree_Node.AddNode(...))
 		install_expand(node_)
-		if _BETA then install_drag(node_) end
+		if VERSION >= 150 then install_drag(node_) end
 		node_.SetModel = self.SetModel
 
 		node_.AddNode = node.AddNode

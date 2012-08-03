@@ -70,7 +70,7 @@ function urlobj.ParseObj(data)
 	return output
 end
 
-local _BETA = _BETA
+local VERSION  = VERSION
 
 function urlobj.CreateObj(str, mesh_only)	
 	local ok, res = pcall(urlobj.ParseObj, str)
@@ -96,7 +96,7 @@ function urlobj.CreateObj(str, mesh_only)
 		function ent:RenderOverride()
 			local matrix = Matrix()
 		
-			if _BETA then
+			if VERSION >= 150 then
 				matrix:SetAngles(self:GetAngles())
 			else
 				matrix:SetAngle(self:GetAngles())
@@ -121,7 +121,7 @@ end
 function urlobj.GetObjFromURL(url, callback, mesh_only)
 	pac.dprint("requesting model %q", url)
 	
-	if _BETA then
+	if VERSION >= 150 then
 		http.Fetch(url, function(str)	
 			pac.dprint("loaded model %q", url)
 

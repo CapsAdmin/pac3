@@ -124,7 +124,7 @@ function pac.EntityBuildBonePositions(ent)
 end
 pac.AddHook("EntityBuildBonePositions")
 
-if _BETA then
+if VERSION >= 150 then
 	net.Receive("pac_submit", function()
 		local tbl = net.ReadTable()
 		pac.CreatePart(tbl.ent):SetTable(tbl.part)

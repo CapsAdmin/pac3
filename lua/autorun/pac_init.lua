@@ -1,16 +1,35 @@
 if SERVER then
-	AddCSLuaFile("autorun/pac_init.lua")
-
-	local function add_files(dir)
+	local function getfiles(dir)
 		local files
 		
-		if _BETA then
-			files = table.Merge(file.Find("lua/" .. dir .. "*", "GAME"))
+		if VERSION >= 150 then
+			local a, b = file.Find(dir .. "*", LUA_PATH)
+			
+			files = {}
+			
+			for k,v in pairs(a) do
+				table.insert(files, v)
+			end
+			
+			for k,v in pairs(b) do
+				table.insert(files, v)
+			end
 		else
 			files = file.FindInLua(dir .. "*")
 		end
+			
+		return files
+	end
 		
-		for _, name in pairs(files) do
+	local function AddCSLuaFile(...)
+		print(...)
+		return _G.AddCSLuaFile(...)
+	end
+	
+	AddCSLuaFile("autorun/pac_init.lua")
+		
+	local function add_files(dir)		
+		for _, name in pairs(getfiles(dir)) do
 			if name:sub(-4) == ".lua" then
 				AddCSLuaFile(dir .. name)
 			elseif not name:find(".", nil, true) then
@@ -18,7 +37,7 @@ if SERVER then
 			end
 		end
 	end
-
+	
 	add_files("pac3/core/client/")
 
 	include("pac3/core/server/init.lua")

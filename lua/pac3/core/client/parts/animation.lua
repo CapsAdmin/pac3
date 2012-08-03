@@ -38,7 +38,7 @@ function PART:GetSequenceList()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then	
-		if _BETA then
+		if VERSION >= 150 then
 			return ent:GetSequenceList()
 		else
 			local tbl = {}

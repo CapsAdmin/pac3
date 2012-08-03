@@ -112,6 +112,7 @@ function pace.SavePartToFile(part, name)
 		)
 	else
 		pac.dprint("saving %s", name)
+		file.CreateDir("pac3")
 		luadata.WriteFile("pac3/" .. name .. ".txt", part:ToTable())
 	end
 end
@@ -182,6 +183,8 @@ function pace.SaveSession(name)
 			end
 		end
 		
+		file.CreateDir("pac3")
+		file.CreateDir("pac3/sessions")
 		luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
 		
 		if pace.SpawnlistBrowser:IsValid() then
@@ -291,7 +294,7 @@ function pace.OnOpenMenu()
 	langmenu:AddOption("english", function()
 		pace.SetLanguage("english")
 	end)
-	for key, val in pairs(file.Find((SinglePlayer() and "lua" or "lua_temp") .. "/pac3/pace/translations/*", not _BETA and true or "GAME")) do
+	for key, val in pairs(file.Find((SinglePlayer() and "lua" or "lua_temp") .. "/pac3/pace/translations/*", VERSION < 150 and true or "GAME")) do
 		val = val:gsub("%.lua", "")
 		langmenu:AddOption(val, function()
 			pace.SetLanguage(val)
@@ -303,7 +306,7 @@ function pace.OnOpenMenu()
 		fontmenu:AddOption(val, function()
 			pace.SetFont(val)
 		end)
-		local pnl = fontmenu.Items[#fontmenu.Items]
+		local pnl = fontmenu.Items and fontmenu.Items[#fontmenu.Items]
 		if pnl and pnl:IsValid() then
 			pnl:SetFont(val)
 			if pace.ShadowedFonts[val] then

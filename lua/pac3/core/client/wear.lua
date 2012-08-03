@@ -1,10 +1,10 @@
-if not _BETA then
+if VERSION < 150 then
 	require("datastream")
 end
 
 do -- to server
 	function pac.SendPartToServer(part)
-		if _BETA then
+		if VERSION >= 150 then
 			net.Start("pac_submit")
 				net.WriteTable({part = part:ToTable()})
 			net.SendToServer()
@@ -14,7 +14,7 @@ do -- to server
 	end
 
 	function pac.RemovePartOnServer(name)
-		if _BETA then
+		if VERSION >= 150 then
 			net.Start("pac_submit")
 				net.WriteTable({part = name})
 			net.SendToServer()
@@ -72,7 +72,7 @@ local function handle_data(data)
 	end
 end
 
-if _BETA then
+if VERSION >= 150 then
 	net.Receive("pac_submit", function()
 		handle_data(net.ReadTable())
 	end)

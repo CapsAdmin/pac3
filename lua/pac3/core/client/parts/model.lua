@@ -284,7 +284,7 @@ function PART:DrawModel(ent, pos, ang)
 	if self.wavefront_mesh then
 		local matrix = Matrix()
 		
-		if _BETA then
+		if VERSION >= 150 then
 			matrix:SetAngles(ang)
 		else
 			matrix:SetAngle(ang)

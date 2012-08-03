@@ -41,9 +41,10 @@ function urlmat.StartDownload(url, data)
 
 	local id = "urlmat_download_" .. url
 	
-	local pnl = vgui.Create(not _BETA and "HTML" or "DHTML")
+	local pnl = vgui.Create("HTML")
 	pnl:SetVisible(true)
-	pnl:SetPos(ScrW(), ScrH())
+	pnl:KillFocus()
+	pnl:SetPos(ScrW()-1, ScrH()-1)
 	pnl:SetSize(urlmat.TextureSize, urlmat.TextureSize)
 	pnl:SetHTML(
 		[[
@@ -51,7 +52,6 @@ function urlmat.StartDownload(url, data)
 				html 
 				{			
 					overflow:hidden;
-					background-color:black;
 				}
 			</style>
 			
@@ -63,48 +63,45 @@ function urlmat.StartDownload(url, data)
 	
 	local go = false
 	local time = 0
-		
-	function pnl.FinishedURL()
 	
-		-- restart the timeout
-		timer.Stop(id)
-		timer.Start(id)
+	-- restart the timeout
+	timer.Stop(id)
+	timer.Start(id)
+	
+	hook.Add("Think", id, function()
+	
+		-- panel is no longer valid
+		if not pnl:IsValid() then
+			hook.Remove("Think", id)
+			-- let the timeout handle it
+			return
+		end
 		
-		hook.Add("Think", id, function()
+		local html_mat = pnl:GetHTMLMaterial()
+				
+		-- give it some time.. IsLoading is sometimes lying
+		if not go and html_mat and not pnl:IsLoading() then
+			time = RealTime() + 0.15
+			go = true
+		end
 		
-			-- panel is no longer valid
-			if not pnl:IsValid() then
-				hook.Remove("Think", id)
-				-- let the timeout handle it
-				return
+		if go and time < RealTime() then
+			local vertex_mat = CreateMaterial(url, "VertexLitGeneric")
+			local tex = html_mat:GetMaterialTexture("$basetexture")
+			vertex_mat:SetMaterialTexture("$basetexture", tex)
+
+			hook.Remove("Think", id)
+			timer.Remove(id)
+			urlmat.Queue[url] = nil
+			pnl:Remove()
+			
+			if data.callback then
+				data.callback(vertex_mat)
 			end
-			
-			local html_mat = pnl:GetHTMLMaterial()
-			
-			-- give it some time.. IsLoading is sometimes lying
-			if not go and html_mat and not pnl:IsLoading() then
-				time = RealTime() + 0.15
-				go = true
-			end
-			
-			if go and time < RealTime() then
-				local vertex_mat = CreateMaterial(url, "VertexLitGeneric")
-				local tex = html_mat:GetMaterialTexture("$basetexture")
-				tex:Download()
-				vertex_mat:SetMaterialTexture("$basetexture", tex)
-				
-				hook.Remove("Think", id)
-				timer.Remove(id)
-				urlmat.Queue[url] = nil
-				pnl:Remove()
-				
-				if data.callback then
-					data.callback(vertex_mat)
-				end
-			end
-			
-		end)
-	end
+		end
+		
+	end)
+
 	
 	-- 5 sec max timeout
 	timer.Create(id, 5, 1, function()

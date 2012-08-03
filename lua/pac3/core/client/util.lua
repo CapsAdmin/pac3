@@ -31,7 +31,7 @@ end
 function pac.CreateEntity(model)
 	local ent
 	
-	if _BETA then 
+	if VERSION >= 150 then 
 		ent = ents.CreateClientProp()
 	else
 		ent = ents.Create("prop_physics")

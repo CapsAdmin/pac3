@@ -11,7 +11,7 @@ pac.EffectsBlackList =
 
 function pac.PrecacheEffect(name)
 	PrecacheParticleSystem(name)
-	if _BETA then
+	if VERSION >= 150 then
 		net.Start("pac_effect_precached")
 			net.WriteString(name)
 		net.Send()
@@ -29,7 +29,7 @@ function pac.PrecacheEffect(name)
 	 end
 end
 
-if _BETA then
+if VERSION >= 150 then
 	net.Receive("pac_precache_effect", function()
 		local name = net.ReadString()
 		if not table.HasValue(pac.EffectsBlackList, name) then
