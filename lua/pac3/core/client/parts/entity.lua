@@ -157,7 +157,7 @@ end
 function PART:UpdateScale(ent)
 	ent = ent or self:GetOwner()
 	if ent:IsValid() then		
-		if _BETA then 
+		if VERSION >= 150 then 
 			ent:SetIK(not self.RelativeBones) 
 		end
 		
@@ -262,7 +262,7 @@ function PART:UpdateColor(ent)
 	render_SetBlend(self.Alpha)
 	
 	if self.Colorc then
-		if _BETA then 
+		if VERSION >= 150 then 
 			ent:SetColor(self.Colorc)
 		else
 			ent:SetColor(unpack(self.Colorc))

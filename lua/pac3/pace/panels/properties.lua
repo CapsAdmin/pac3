@@ -1,4 +1,4 @@
-local _BETA = _BETA
+local VERSION  = VERSION
 local L = pace.LanguageString
 
 pace.HiddenProperties =
@@ -111,7 +111,7 @@ do -- container
 	PANEL.Base = "DPanel"
 
 	function PANEL:Paint(w, h)
-		if _BETA then
+		if VERSION >= 150 then
 			self:GetSkin().tex.MenuBG(0, 0, (w or self:GetWide()) + (self.right and -1 or 3), (h or self:GetTall()) + 1)
 		else
 			self:GetSkin().DrawButtonBorder(self, 0, 0, (w or self:GetWide()) + (self.right and -1 or 3), (h or self:GetTall()) + 1)
@@ -334,7 +334,7 @@ do -- base editable
 
 		local str = tostring(skip_encode and var or self:Encode(var))
 		
-		self:SetTextColor(derma.Color(_BETA and "text_dark" or "text_bright", self, color_black))
+		self:SetTextColor(derma.Color(VERSION >= 150 and "text_dark" or "text_bright", self, color_black))
 		self:SetFont(pace.CurrentFont)
 		self:SetText("  " .. str) -- ugh
 		self:SizeToContents()
@@ -624,7 +624,7 @@ do -- vector
 			clr:SetColor(Color(self.vector.x, self.vector.y, self.vector.z))
 			
 			function clr.Think()
-				if _BETA then
+				if VERSION >= 150 then
 					local clr = clr:GetColor() or Color(255, 255, 255, 255)
 					local vec = Vector(clr.r, clr.g, clr.b)
 					self.OnValueChanged(vec)
@@ -722,7 +722,7 @@ do -- boolean
 		
 		local lbl = vgui.Create("DLabel", self)
 		lbl:SetFont(pace.CurrentFont)
-		lbl:SetTextColor(derma.Color(_BETA and "text_dark" or "text_bright", self, color_black))
+		lbl:SetTextColor(derma.Color(VERSION >= 150 and "text_dark" or "text_bright", self, color_black))
 		self.lbl = lbl
 	end
 
@@ -807,7 +807,7 @@ do -- model
 		g_SpawnMenu:Open()
 		
 		--[[pac.AddHook("VGUIMousePressed", function(panel, mcode)
-			if _BETA then
+			if VERSION >= 150 then
 				print(panel:Find("ContenIcon"))
 				if panel:GetClassName() == "ContentIcon" and panel.spawnname then
 					self:SetValue(panel.spawnname)

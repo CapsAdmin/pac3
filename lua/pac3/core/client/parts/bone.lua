@@ -92,7 +92,7 @@ function PART:OnBuildBonePositions(owner)
 		local ang = self:CalcAngles(owner, self.Angles) or self.Angles
 	
 		if self.FollowPart:IsValid() then			
-			if _BETA then
+			if VERSION >= 150 then
 				matrix:SetAngles(self.FollowPart.cached_ang + ang)
 			else
 				matrix:SetAngle(self.FollowPart.cached_ang + ang)

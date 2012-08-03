@@ -1,6 +1,6 @@
 pace.Fonts = 
 {
-	_BETA and "DermaDefault" or "DefaultSmall",
+	VERSION >= 150 and "DermaDefault" or "DefaultSmall",
 	"Default",
 	"BudgetLabel",
 	"DefaultsmallDropShadow",
@@ -25,7 +25,7 @@ pace.ShadowedFonts =
 }
 
 
-if _BETA then
+if VERSION >= 150 then
 	pace.PartIcons =
 	{
 		text = "icon16/text_align_center.png",

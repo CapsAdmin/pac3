@@ -17,7 +17,7 @@ function pac.SubmitPart(data, filter)
 		pac.Parts[uid][data.part] = nil
 	end
 
-	if _BETA then
+	if VERSION >= 150 then
 		net.Start("pac_submit")
 			net.WriteTable(data)
 		net.Send(filter or player.GetAll())
@@ -58,7 +58,7 @@ local function handle_data(owner, data)
 	end
 end
 
-if _BETA then
+if VERSION >= 150 then
 	util.AddNetworkString("pac_submit")
 	util.AddNetworkString("pac_effect_precached")
 	util.AddNetworkString("pac_precache_effect")

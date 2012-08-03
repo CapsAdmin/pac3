@@ -30,14 +30,14 @@ local function OnMousePressed(self, mcode)
 end
 
 function PANEL:AddOutfits(folder, callback)
-	for i, name in pairs(file.Find(folder.."*", _BETA and "DATA" or nil)) do
+	for i, name in pairs(file.Find(folder.."*", VERSION >= 150 and "DATA" or nil)) do
 		if name:find("%.txt") then
 			local outfit = folder .. name
-			if file.Exists(outfit, _BETA and "DATA" or nil) then
+			if file.Exists(outfit, VERSION >= 150 and "DATA" or nil) then
 				local filenode = self:AddLine(
 					name:gsub("%.txt", ""), 
-					string.NiceSize(file.Size(outfit, _BETA and "DATA" or nil)), 
-					os.date("%m/%d/%Y %H:%M", file.Time(outfit, _BETA and "DATA" or nil))
+					string.NiceSize(file.Size(outfit, VERSION >= 150 and "DATA" or nil)), 
+					os.date("%m/%d/%Y %H:%M", file.Time(outfit, VERSION >= 150 and "DATA" or nil))
 				)
 				filenode.FileName = name
 				filenode.OnSelect = callback
@@ -64,15 +64,15 @@ function PANEL:OnRowRightClick(id, line)
 		Derma_StringRequest(L"rename", L"type the new name:", line.name, function(text)
 			
 			local c = file.Read(line.FileName)
-			file.Delete(line.FileName, _BETA and "DATA" or nil)
-			file.Write(line.FileName, c, _BETA and "DATA" or nil)
+			file.Delete(line.FileName, VERSION >= 150 and "DATA" or nil)
+			file.Write(line.FileName, c, VERSION >= 150 and "DATA" or nil)
 			
 			self:PopulateFromClient()
 		end)
 	end)
 	
 	menu:AddOption(L"delete", function()
-		file.Delete("pac3/" .. self.Dir .. line.FileName, _BETA and "DATA" or nil)
+		file.Delete("pac3/" .. self.Dir .. line.FileName, VERSION >= 150 and "DATA" or nil)
 		self:PopulateFromClient()
 	end)
 end
