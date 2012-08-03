@@ -16,13 +16,15 @@ function pac.SubmitPart(data, filter)
 	else
 		pac.Parts[uid][data.part] = nil
 	end
-
-	if VERSION >= 150 then
-		net.Start("pac_submit")
-			net.WriteTable(data)
-		net.Send(filter or player.GetAll())
-	else
-		datastream.StreamToClients(filter or player.GetAll(), "pac_submit", data)
+	
+	if not data.server_only then
+		if VERSION >= 150 then
+			net.Start("pac_submit")
+				net.WriteTable(data)
+			net.Send(filter or player.GetAll())
+		else
+			datastream.StreamToClients(filter or player.GetAll(), "pac_submit", data)
+		end
 	end
 	
 	return true
