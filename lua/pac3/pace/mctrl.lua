@@ -104,7 +104,7 @@ do -- pace
 
 	function mctrl.OnMove(part, pos)
 		if input.IsKeyDown(KEY_LCONTROL) then
-			local num = cvar_ang_grid:GetInt("pac_grid_pos_size")
+			local num = cvar_pos_grid:GetInt("pac_grid_pos_size")
 			pos.x = math.Round(pos.x/num) * num
 			pos.y = math.Round(pos.y/num) * num
 			pos.z = math.Round(pos.z/num) * num
@@ -116,7 +116,7 @@ do -- pace
 		end)
 	end
 	
-	local cvar_ang_grid = CreateClientConVar("pac_grid_pos_size", "45")
+	local cvar_ang_grid = CreateClientConVar("pac_grid_ang_size", "45")
 
 	function mctrl.OnRotate(part, ang)
 		if input.IsKeyDown(KEY_LCONTROL) then
