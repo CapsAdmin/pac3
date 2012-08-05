@@ -44,7 +44,7 @@ function urlmat.StartDownload(url, data)
 	local pnl = vgui.Create("HTML")
 	pnl:SetVisible(true)
 	pnl:KillFocus()
-	pnl:SetPos(ScrW()-1, ScrH()-1)
+	--pnl:SetPos(ScrW()-1, ScrH()-1)
 	pnl:SetSize(urlmat.TextureSize, urlmat.TextureSize)
 	pnl:SetHTML(
 		[[
@@ -60,48 +60,55 @@ function urlmat.StartDownload(url, data)
 			</body>
 		]]
 	)
-	
-	local go = false
-	local time = 0
-	
-	-- restart the timeout
-	timer.Stop(id)
-	timer.Start(id)
-	
-	hook.Add("Think", id, function()
-	
-		-- panel is no longer valid
-		if not pnl:IsValid() then
-			hook.Remove("Think", id)
-			-- let the timeout handle it
-			return
-		end
 		
-		local html_mat = pnl:GetHTMLMaterial()
-				
-		-- give it some time.. IsLoading is sometimes lying
-		if not go and html_mat and not pnl:IsLoading() then
-			time = RealTime() + 0.15
-			go = true
-		end
-		
-		if go and time < RealTime() then
-			local vertex_mat = CreateMaterial(url, "VertexLitGeneric")
-			local tex = html_mat:GetMaterialTexture("$basetexture")
-			vertex_mat:SetMaterialTexture("$basetexture", tex)
+	local function start()
+		local go = false
+		local time = 0
 
-			hook.Remove("Think", id)
-			timer.Remove(id)
-			urlmat.Queue[url] = nil
-			pnl:Remove()
-			
-			if data.callback then
-				data.callback(vertex_mat)
+		-- restart the timeout
+		timer.Stop(id)
+		timer.Start(id)
+	
+		hook.Add("Think", id, function()
+		
+			-- panel is no longer valid
+			if not pnl:IsValid() then
+				hook.Remove("Think", id)
+				-- let the timeout handle it
+				return
 			end
-		end
-		
-	end)
+			
+			local html_mat = pnl:GetHTMLMaterial()
+					
+			-- give it some time.. IsLoading is sometimes lying
+			if not go and html_mat and not pnl:IsLoading() then
+				time = RealTime() + 0.15
+				go = true
+			end
+			
+			if go and time < RealTime() then
+				local vertex_mat = CreateMaterial(url, "VertexLitGeneric")
+				local tex = html_mat:GetMaterialTexture("$basetexture")
+				vertex_mat:SetMaterialTexture("$basetexture", tex)
 
+				hook.Remove("Think", id)
+				timer.Remove(id)
+				urlmat.Queue[url] = nil
+				pnl:Remove()
+				
+				if data.callback then
+					data.callback(vertex_mat)
+				end
+			end
+			
+		end)
+	end
+	
+	if VERSION >= 150 then
+		start()
+	else
+		pnl.FinishedURL = start
+	end
 	
 	-- 5 sec max timeout
 	timer.Create(id, 5, 1, function()
