@@ -800,6 +800,10 @@ do -- meta
 	function PART:CalcAngles(owner, ang)
 		owner = owner or self:GetOwner()
 		
+		if owner:IsValid() and owner:GetOwner():IsValid() then
+			owner = owner:GetOwner()
+		end
+		
 		ang = self:CalcAngleVelocity(ang)
 		
 		if self.AimPart:IsValid() then	
