@@ -29,7 +29,7 @@ function pac.MakeNull(tbl)
 end
 
 function pac.CreateEntity(model)
-	local ent
+	local ent = NULL
 	
 	if VERSION >= 150 then 
 		ent = ents.CreateClientProp()
@@ -37,9 +37,11 @@ function pac.CreateEntity(model)
 		ent = ents.Create("prop_physics")
 	end
 	
-	ent:SetModel(model)
-		
-	ent.IsPACEntity = true
+	if ent:IsValid() then
+		ent:SetModel(model)
+			
+		ent.IsPACEntity = true
+	end
 	
 	return ent
 end
