@@ -386,6 +386,7 @@ function PART:SetMaterial(var)
 					if self:IsValid() then
 						mat:SetMaterialInt("$vertexcolor", 1)
 						self.Materialm = mat
+						self:CallEvent("material_changed")
 					end
 				end,
 				false
@@ -399,6 +400,7 @@ function PART:SetMaterial(var)
 	
 	if var ~= "" then
 		self.Materialm = Material(var)
+		self:CallEvent("material_changed")
 	end
 end
 

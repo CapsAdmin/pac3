@@ -47,6 +47,7 @@ function PART:SetMaterial(var)
 			pac.urlmat.GetMaterialFromURL(var, function(mat)
 				if self:IsValid() then
 					self.Materialm = mat
+					self:CallEvent("material_changed")
 				end
 			end)
 			self.SpritePath = var
@@ -56,8 +57,10 @@ function PART:SetMaterial(var)
 	
 	if type(var) == "string" then
 		self.Materialm = Material(var)
+		self:CallEvent("material_changed")
 	elseif type(var) == "IMaterial" then
 		self.Materialm = var
+		self:CallEvent("material_changed")
 	end
 
 	self.SpritePath = var

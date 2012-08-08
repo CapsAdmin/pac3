@@ -83,11 +83,19 @@ local function setup(PART)
 					if var ~= "" then
 						local _mat = Material(var)
 						local tex = _mat:GetMaterialTexture("$" .. name)
+						
 						if not tex or tex:IsError() then
-							tex = _mat:GetMaterialTexture("$basetexture")
+							tex = CreateMaterial("pac3_tex_" .. var, "VertexLitGeneric", {["$basetexture"] = var}):GetMaterialTexture("$basetexture")
+							if not tex or tex:IsError() then
+								tex = _mat:GetMaterialTexture("$basetexture")
+							end
 						end
 						
 						mat:SetMaterialTexture("$" .. name, tex)
+					else
+						if name == "BumpMap" then
+							self:SetBumpMap("dev/bump_normal")
+						end
 					end
 				end
 			end
@@ -155,7 +163,6 @@ function PART:GetMaterialFromParent()
 			mat:SetMaterialTexture("$basetexture", self.Parent.Materialm:GetMaterialTexture("$basetexture"))
 			
 			self.Materialm = mat
-			self.last_mat = self.Parent.Materialm
 		end
 		
 		self.Parent.Materialm = self.Materialm
@@ -166,15 +173,25 @@ end
 
 function PART:OnParent(parent)
 	self:GetMaterialFromParent()
-	
+	self.updated = false
+end
+
+function PART:UpdateMaterial()
 	for key, val in pairs(self.StorableVars) do
 		self["Set" .. key](self, self[key])
+	end
+end
+
+function PART:OnEvent(event, ...)
+	if event == "material_changed" then
+		self:UpdateMaterial()
 	end
 end
 
 function PART:OnUnParent(parent)
 	self.Materialm = nil
 	parent.Materialm = self.OldParentMaterialM
+	self.updated = false
 end
 
 pac.RegisterPart(PART)

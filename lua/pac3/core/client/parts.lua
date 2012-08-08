@@ -592,6 +592,12 @@ do -- meta
 		end
 	end
 
+	function PART:CallEvent(event, ...)
+		for key, val in pairs(self.Children) do
+			val:OnEvent(event, ...)
+		end
+	end
+	
 	do -- events
 		function PART:Initialize() end
 		function PART:OnRemove() end
@@ -626,6 +632,8 @@ do -- meta
 		function PART:OnShow() end
 		
 		function PART:OnSetOwner(ent) end
+		
+		function PART:OnEvent(event, ...) end
 	end
 	
 	do -- highlight
