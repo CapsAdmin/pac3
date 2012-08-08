@@ -46,7 +46,7 @@ function PART:SetMaterial(var)
 		if var then
 			pac.urlmat.GetMaterialFromURL(var, function(mat)
 				if self:IsValid() then
-					self.Sprite = mat
+					self.Materialm = mat
 				end
 			end)
 			self.SpritePath = var
@@ -55,9 +55,9 @@ function PART:SetMaterial(var)
 	end	
 	
 	if type(var) == "string" then
-		self.Sprite = Material(var)
+		self.Materialm = Material(var)
 	elseif type(var) == "IMaterial" then
-		self.Sprite = var
+		self.Materialm = var
 	end
 
 	self.SpritePath = var
@@ -67,8 +67,8 @@ local render_SetMaterial = render.SetMaterial
 local render_DrawSprite = render.DrawSprite
 
 function PART:OnDraw(owner, pos, ang)
-	if self.Sprite then
-		render_SetMaterial(self.Sprite)
+	if self.Materialm then
+		render_SetMaterial(self.Materialm)
 		render_DrawSprite(pos, self.SizeX * self.Size, self.SizeY * self.Size, self.ColorC)
 	end
 end

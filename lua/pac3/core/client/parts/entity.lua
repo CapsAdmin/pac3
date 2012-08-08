@@ -14,6 +14,7 @@ function PART:Initialize()
 		pac.GetSet(self, "Hide", false)
 		pac.GetSet(self, "ParentName", "")
 		pac.GetSet(self, "Material", "")
+		pac.GetSet(self, "Model", "")
 		pac.GetSet(self, "Color", Vector(255, 255, 255))
 		pac.GetSet(self, "Brightness", 1)
 		pac.GetSet(self, "Alpha", 1)
@@ -44,6 +45,19 @@ function PART:OnBuildBonePositions(ent)
 				
 				ent:SetBoneMatrix(i, mat)
 			end
+		end
+	end
+end
+
+function PART:SetModel(str)
+	self.Model = str
+
+	local ent = self:GetOwner()
+	if ent:IsValid() then
+		if ent:IsPlayer() and ent == LocalPlayer() then
+			RunConsoleCommand("cl_playermodel", "")
+		else
+			ent:SetModel(str)
 		end
 	end
 end

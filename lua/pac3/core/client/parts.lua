@@ -3,7 +3,6 @@ local class = pac.class
 
 pac.ActiveParts = pac.ActiveParts or {}
 local part_count = 0 -- unique id thing
-local pairs = pairs
 
 function pac.CreatePart(name, owner)
 	owner = owner or LocalPlayer()
@@ -14,7 +13,7 @@ function pac.CreatePart(name, owner)
 		part:PreInitialize()
 	end
 		
-	part.active_parts_key = table.insert(pac.ActiveParts, part)
+	table.insert(pac.ActiveParts, part)
 	part.Id = part_count
 	part_count = part_count + 1
 	
@@ -135,7 +134,7 @@ do -- meta
 	
 	function PART:SetName(var)
 	
-		for key, part in pairs(self.Children) do
+		for key, part in pairs(self:GetChildren()) do
 			part:SetParentName(var)
 		end
 		
@@ -273,7 +272,7 @@ do -- meta
 		
 			var.Parent = self
 
-			self.Children[var.Id] = var
+			local id = table.insert(self:GetChildren(), var)
 			
 			var.ParentName = self:GetName()
 			
@@ -284,7 +283,7 @@ do -- meta
 			var:OnAttach(self:GetOwner())
 			self:OnChildAdd(var)
 
-			return var.Id
+			return id
 		end
 
 		function PART:HasParent()
@@ -292,11 +291,11 @@ do -- meta
 		end
 
 		function PART:HasChildren()
-			return next(self.Children) ~= nil
+			return #self:GetChildren() > 0
 		end
 
 		function PART:HasChild(part)
-			for key, child in pairs(self.Children) do
+			for key, child in pairs(self:GetChildren()) do
 				if child == part or child:HasChild(part) then
 					return true
 				end
@@ -305,7 +304,7 @@ do -- meta
 		end
 		
 		function PART:RemoveChild(var)
-			local children = self.Children
+			local children = self:GetChildren()
 
 			for key, part in pairs(children) do
 				if part == var then
@@ -365,7 +364,7 @@ do -- meta
 		end
 		
 		function PART:RemoveChildren()
-			for key, part in pairs(self.Children) do
+			for key, part in pairs(self:GetChildren()) do
 				part:Remove()
 			end
 			self.Children = {}
@@ -380,7 +379,7 @@ do -- meta
 			
 			self:ClearBone()
 			
-			self:OnUnParent()
+			self:OnUnParent(parent)
 		end
 	end
 
@@ -414,12 +413,7 @@ do -- meta
 			return name
 		end
 		
-		function PART:GetDrawPosition(owner, pos, ang)
-			-- compat hack
-			if self.ClassName == "clip" and not self.BoneIndex then
-				return self.Parent:GetDrawPosition()
-			end
-			
+		function PART:GetDrawPosition(owner, pos, ang)			
 			owner = owner or self:GetOwner()
 			if owner:IsValid() then
 				local pos, ang = self:GetBonePosition(owner, nil, pos, ang)
@@ -492,7 +486,9 @@ do -- meta
 				self.BoneIndex = owner:LookupBone(self:GetRealBoneName(self.Bone))
 				if not self.BoneIndex then
 					self.Error = "pac3 warning: " .. self.Bone .. " cannot be found on '" .. tostring(owner) .. "' \n are you sure you're using the the same model?"
-					MsgN(self.Error)
+					if self.Bone ~= "head"  then
+						MsgN(self.Error)
+					end
 					self.TriedToFindBone = self.Bone
 				end
 			end
@@ -570,7 +566,7 @@ do -- meta
 				end
 			end
 
-			for _, part in pairs(self.Children) do
+			for _, part in pairs(self:GetChildren()) do
 				table.insert(tbl.children, part:ToTable(make_copy_name, true))
 			end
 
@@ -636,7 +632,7 @@ do -- meta
 		function PART:Highlight()
 			self.highlight = RealTime() + 0.1	
 			
-			for key, part in pairs(self.Children) do
+			for key, part in pairs(self:GetChildren()) do
 				part.highlight = RealTime() + 0.1
 				part:Highlight()
 			end
@@ -728,7 +724,7 @@ do -- meta
 			
 			self:OnBuildBonePositions(owner)
 			
-			for key, child in pairs(self.Children) do
+			for key, child in pairs(self:GetChildren()) do
 				child:BuildBonePositions(owner)
 			end
 		end
@@ -762,11 +758,8 @@ do -- meta
 			self:ResolveFollowPartName()
 		end
 
+
 		self:OnThink()
-	
-		for _, part in pairs(self.Children) do
-			part:Think()
-		end
 	end
 	
 	function PART:SubmitToServer()
@@ -799,10 +792,6 @@ do -- meta
 
 	function PART:CalcAngles(owner, ang)
 		owner = owner or self:GetOwner()
-		
-		if owner:IsValid() and owner:GetOwner():IsValid() then
-			owner = owner:GetOwner()
-		end
 		
 		ang = self:CalcAngleVelocity(ang)
 		

@@ -19,7 +19,9 @@ function pac.RenderOverride(ent)
 						part.last_think = time + (part.ThinkTime or 0.1)
 					end
 					
-					part:Draw("OnDraw")
+					if not part:HasParent() then
+						part:Draw("OnDraw")
+					end
 				else
 					ent.pac_parts[key] = nil
 				end
