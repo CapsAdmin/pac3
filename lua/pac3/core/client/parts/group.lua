@@ -27,4 +27,11 @@ function PART:Initialize()
 	end) 
 end
 
+function PART:OnChildAdd(part) 
+	local owner = self:GetOwner()
+	if owner:IsValid() and owner.pac_parts then
+		owner.pac_parts[part.Id] = part
+	end
+end
+
 pac.RegisterPart(PART)
