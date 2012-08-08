@@ -44,6 +44,7 @@ if VERSION >= 150 then
 		sunbeams = "icon16/sun.png",
 		sound = "icon16/sound.png",
 		command = "icon16/application_xp_terminal.png",
+		material = "icon16/paintcan.png",
 	}
 else
 	pace.PartIcons =
@@ -60,6 +61,9 @@ pace.PropertyOrder =
 	"Description",
 	"Hide",
 	"ParentName",
+	"BaseTexture",
+	"BumpMap",
+	"EnvMap",
 	"WeaponClass",
 	"HideWeaponClass",
 	"Bone",

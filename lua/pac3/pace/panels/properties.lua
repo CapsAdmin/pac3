@@ -58,9 +58,16 @@ pace.PropertyLimits =
 		num = tonumber(num)
 		return math.Clamp(num, 0, 1)
 	end,
+	
+	CloakFactor = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Clamp(num, 0, 1)
+	end,
 }
 
-function pace.TranslatePropertiesKey(key)					
+function pace.TranslatePropertiesKey(key, obj)
+	local key_ = key
 	key = key:lower()
 	
 	if key == "bone" then
@@ -97,7 +104,15 @@ function pace.TranslatePropertiesKey(key)
 	
 	if key == "material" or key == "spritepath" or key == "trailpath" then
 		return "material"
-	end	
+	end
+	
+	if obj.ClassName == "material" and obj.ShaderParams[key_] == "ITexture" then
+		return "material"
+	end
+	
+	if obj.ClassName == "material" and obj.ShaderParams[key_] == "Vector" and key ~= "phongfresnelranges" then
+		return "color"
+	end
 
 	if key:find("color") then
 		return "color"
@@ -232,7 +247,7 @@ do -- list
 			local key, val = data.key, data.val
 			
 			local pnl
-			local T = (pace.TranslatePropertiesKey(key) or type(val)):lower()
+			local T = (pace.TranslatePropertiesKey(key, obj) or type(val)):lower()
 			
 			if pace.PanelExists("properties_" .. T) then
 				pnl = pace.CreatePanel("properties_" .. T)
@@ -285,7 +300,7 @@ do -- list
 			local key, val = data.key, data.val
 
 			local pnl
-			local T = (pace.TranslatePropertiesKey(key) or type(val)):lower()
+			local T = (pace.TranslatePropertiesKey(key, obj) or type(val)):lower()
 			
 			if pace.PanelExists("properties_" .. T) then
 				pnl = pace.CreatePanel("properties_" .. T)
