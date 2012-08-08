@@ -46,13 +46,13 @@ do -- from server
 	end
 
 	function pac.RemovePartFromServer(owner, part_name)
-		pac.dprint("%s is removed %q", tostring(owner), part_name)
+		pac.dprint("%s removed %q", tostring(owner), part_name)
 
 		for key, part in pairs(pac.GetParts()) do
 			if 
 				not part:HasParent() and 
 				part:GetPlayerOwner() == owner and 
-				part:GetName() == pac.HandlePartName(owner, part_name)
+				(part_name == "__ALL__" or part:GetName() == pac.HandlePartName(owner, part_name))
 			then
 				part:Remove()
 				return

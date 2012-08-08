@@ -14,7 +14,11 @@ function pac.SubmitPart(data, filter)
 	if type(data.part) == "table" then
 		pac.Parts[uid][data.part.self.Name] = data
 	else
-		pac.Parts[uid][data.part] = nil
+		if data.part == "__ALL__" then
+			pac.Parts[uid] = {}
+		else
+			pac.Parts[uid][data.part] = nil
+		end
 	end
 	
 	if not data.server_only then
