@@ -44,7 +44,7 @@ function urlmat.StartDownload(url, data)
 	local pnl = vgui.Create("HTML")
 	pnl:SetVisible(true)
 	pnl:KillFocus()
-	--pnl:SetPos(ScrW()-1, ScrH()-1)
+	pnl:SetPos(ScrW()-1, ScrH()-1)
 	pnl:SetSize(urlmat.TextureSize, urlmat.TextureSize)
 	pnl:SetHTML(
 		[[
