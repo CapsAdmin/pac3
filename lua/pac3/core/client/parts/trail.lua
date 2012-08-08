@@ -72,7 +72,7 @@ function PART:SetMaterial(var)
 		if var then
 			pac.urlmat.GetMaterialFromURL(var, function(mat)
 				if self:IsValid() then
-					self.Trail = mat
+					self.Materialm = mat
 				end
 			end)
 			self.TrailPath = var
@@ -82,9 +82,9 @@ function PART:SetMaterial(var)
 	
 	
 	if type(var) == "string" then
-		self.Trail = Material(var)
+		self.Materialm = Material(var)
 	elseif type(var) == "IMaterial" then
-		self.Trail = var
+		self.Materialm = var
 	end
 
 	self.TrailPath = var
@@ -111,7 +111,7 @@ local render_AddBeam = render.AddBeam
 local render_MaterialOverride = render.SetMaterial
 
 function PART:OnDraw(owner, pos, ang)
-	if self.Trail and self.StartColorC and self.EndColorC then
+	if self.Materialm and self.StartColorC and self.EndColorC then
 		self.points = self.points or {}
 		
 		local len = tonumber(self.Length)
@@ -128,7 +128,7 @@ function PART:OnDraw(owner, pos, ang)
 			len = math_ceil(math_abs(len - spc))
 		end
 				
-		render_MaterialOverride(self.Trail)
+		render_MaterialOverride(self.Materialm)
 		
 		local delta = FrameTime() * 5
 		

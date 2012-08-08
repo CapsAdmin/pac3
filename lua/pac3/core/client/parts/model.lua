@@ -193,7 +193,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 
 		for key, clip in pairs(self.ClipPlanes) do
 			if clip:IsValid() and not clip:IsHidden() then
-				local pos, ang = clip:GetDrawPosition(owner)
+				local pos, ang = clip:GetBonePosition()
 				pos, ang = LocalToWorld(clip.Position, clip:CalcAngles(owner, clip.Angles), pos, ang)
 				local normal = ang:Forward()
 				render_PushCustomClipPlane(normal, normal:Dot(pos + normal))

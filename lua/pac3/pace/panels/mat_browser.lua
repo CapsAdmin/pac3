@@ -2,6 +2,8 @@ pace.Materials = {}
 
 pace.Materials.materials =
 {
+	"models/alyx/hairbits",
+	
 	"models/player/items/soldier/dappertopper",
 	"models/weapons/c_items/c_candy_cane_red",
 	"models/props_halloween/halloween_blk",
