@@ -44,7 +44,7 @@ function urlmat.StartDownload(url, data)
 	local pnl = vgui.Create("HTML")
 	pnl:SetVisible(true)
 	pnl:KillFocus()
-	pnl:SetPos(ScrW()-1, ScrH()-1)
+	--pnl:SetPos(ScrW()-1, ScrH()-1)
 	pnl:SetSize(urlmat.TextureSize, urlmat.TextureSize)
 	pnl:SetHTML(
 		[[
@@ -60,6 +60,7 @@ function urlmat.StartDownload(url, data)
 			</body>
 		]]
 	)
+	pnl:Refresh()
 		
 	local function start()
 		local go = false
@@ -97,7 +98,7 @@ function urlmat.StartDownload(url, data)
 				pnl:Remove()
 				
 				if data.callback then
-					data.callback(vertex_mat)
+					data.callback(vertex_mat, tex)
 				end
 			end
 			
