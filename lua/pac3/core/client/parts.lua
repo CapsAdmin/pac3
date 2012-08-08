@@ -59,13 +59,15 @@ end
 function pac.RemoveAllParts(owned_only, server)
 	for key, part in pairs(pac.GetParts(owned_only)) do
 		if part:IsValid() then
-			if server and not part:HasParent() then
-				pac.RemovePartOnServer(part:GetName())
-			end
 			part:Remove()
 		end
 	end
-	pac.ActiveParts = {}
+	if not owned_only then
+		if server then
+			pac.RemovePartOnServer("__ALL__")
+		end
+		pac.ActiveParts = {}
+	end
 end
 
 function pac.GetPartCount(class, children)
