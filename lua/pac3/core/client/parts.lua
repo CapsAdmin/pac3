@@ -62,10 +62,10 @@ function pac.RemoveAllParts(owned_only, server)
 			part:Remove()
 		end
 	end
+	if server then
+		pac.RemovePartOnServer("__ALL__")
+	end
 	if not owned_only then
-		if server then
-			pac.RemovePartOnServer("__ALL__")
-		end
 		pac.ActiveParts = {}
 	end
 end
