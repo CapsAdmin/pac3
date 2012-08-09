@@ -37,13 +37,13 @@ function pac.CreateEntity(model)
 		ent = ents.Create("prop_physics")
 	end
 	
-	if ent:IsValid() then
+	if ent and ent:IsValid() then
 		ent:SetModel(model)
 			
 		ent.IsPACEntity = true
 	end
 	
-	return ent
+	return ent or NULL
 end
 
 do -- hook helpers
