@@ -287,11 +287,13 @@ end
 
 function PART:OnAttach(ent)
 	if ent:IsValid() then
-
-		if ent:IsPlayer() and ent == LocalPlayer() then
-			RunConsoleCommand("cl_playermodel", self.Model)
-		else
-			ent:SetModel(self.Model)
+		
+		if self.Model ~= "" then
+			if ent:IsPlayer() and ent == LocalPlayer() then
+				RunConsoleCommand("cl_playermodel", self.Model)
+			else
+				ent:SetModel(self.Model)
+			end
 		end
 	
 		function ent.RenderOverride(ent)
