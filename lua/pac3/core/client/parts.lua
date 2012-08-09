@@ -228,6 +228,10 @@ do -- meta
 	end
 
 	do -- parenting
+		function PART:GetChildren()
+			return self.Children
+		end
+		
 		function PART:CreatePart(name)
 			local part = pac.CreatePart(name)
 			part:SetParent(self)
