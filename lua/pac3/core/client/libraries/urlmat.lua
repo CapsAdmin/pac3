@@ -60,7 +60,6 @@ function urlmat.StartDownload(url, data)
 			</body>
 		]]
 	)
-	pnl:Refresh()
 		
 	local function start()
 		local go = false

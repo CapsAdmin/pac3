@@ -2,6 +2,9 @@ local PART = {}
 
 PART.ClassName = "animation"
 PART.HideGizmo = true
+PART.ThinkTime = 0
+
+PART.frame = 0
 
 function PART:Initialize()
 	self.StorableVars = {}
@@ -58,7 +61,6 @@ function PART:GetSequenceList()
 	return {"none"}
 end
 
-local UnPredictedCurTime = UnPredictedCurTime
 local tonumber = tonumber
 
 function PART:OnThink()
@@ -67,25 +69,30 @@ function PART:OnThink()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then	
+		
 		local seq = ent:LookupSequence(self.SequenceName)
+		local rate = self.Rate * FrameTime() / 2
 		
-		if seq ~= -1 then
+		if seq == -1 then
+			ent:SetSequence(tonumber(self.SequenceName) or -1)			
+			return
+		else
 			ent:ResetSequence(seq)
-		else
-			ent:ResetSequence(tonumber(self.SequenceName) or -1)
-		end
-		
-		if self.Rate > 0 then
-			local frame = (UnPredictedCurTime() + self.Offset) * self.Rate
-			local min = self.Min
-			local max = self.Max
-			if self.PingPongLoop then
-				ent:SetCycle(min + math.abs(math.Round(frame*0.5) - frame*0.5)*2 * (max - min))
-			else
-				ent:SetCycle(min + (frame*0.5)%1 * (max - min))
+			if rate == 0 then
+				ent:SetCycle(self.Offset)
+				return
 			end
+		end
+				
+		local min = self.Min
+		local max = self.Max
+		
+		if self.PingPongLoop then
+			self.frame = self.frame + rate / 2
+			ent:SetCycle(min + math.abs(math.Round((self.frame + self.Offset)*0.5) - (self.frame + self.Offset)*0.5)*2 * (max - min))
 		else
-			ent:SetCycle(self.Offset)
+			self.frame = self.frame + rate
+			ent:SetCycle(min + ((self.frame + self.Offset)*0.5)%1 * (max - min))
 		end
 	end
 end

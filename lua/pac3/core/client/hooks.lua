@@ -3,6 +3,19 @@ local pairs = pairs
 local render_ResetModelLighting = render.ResetModelLighting
 local time = 0
 
+local function think(part)
+	if part.ThinkTime == 0 then
+		part:Think()
+	elseif not part.last_think or part.last_think < time then
+		part:Think()
+		part.last_think = time + (part.ThinkTime or 0.1)
+	end
+	
+	for _, part in pairs(part.Children) do
+		think(part)
+	end
+end
+
 function pac.RenderOverride(ent)
 	if not ent.pac_parts then
 		pac.UnhookEntityRender(ent)
@@ -11,13 +24,7 @@ function pac.RenderOverride(ent)
 			for key, part in pairs(ent.pac_parts) do
 				if part:IsValid() then
 					if not part:HasParent() then
-						if part.ThinkTime == 0 then
-							part:Think()
-						elseif not part.last_think or part.last_think < time then
-							part:Think()
-							part.last_think = time + (part.ThinkTime or 0.1)
-						end
-					
+						think(part)
 						part:Draw("OnDraw")
 					end
 				else
