@@ -180,10 +180,10 @@ end
 
 function PART:OnParent(parent)
 	self:GetMaterialFromParent()
-	self.updated = false
 end
 
-function PART:UpdateMaterial()
+function PART:UpdateMaterial(now)
+	self:GetMaterialFromParent()
 	for key, val in pairs(self.StorableVars) do
 		self["Set" .. key](self, self[key])
 	end
@@ -195,9 +195,12 @@ function PART:OnEvent(event, ...)
 	end
 end
 
+function PART:OnParent(parent)
+	self:UpdateMaterial()
+end
+
 function PART:OnUnParent(parent)
 	self.Materialm = nil
-	parent.Materialm = self.OldParentMaterialM
 	self.updated = false
 end
 
