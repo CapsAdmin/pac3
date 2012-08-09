@@ -156,6 +156,12 @@ pace.PropertyLimits =
 		return num
 	end,
 	
+	CellShade = function(self, num)
+		self.sens = 0.1
+		num = tonumber(num)
+		return num
+	end,
+	
 	CloakFactor = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
