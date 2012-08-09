@@ -15,6 +15,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Material", "")
 	pac.GetSet(PART, "Color", Vector(255, 255, 255))
 	pac.GetSet(PART, "Brightness", 1)
+	pac.GetSet(PART, "CellShade", 0)
 	pac.GetSet(PART, "Alpha", 1)
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
 	pac.GetSet(PART, "Size", 1)
@@ -223,6 +224,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 end
 
 local MATERIAL_CULLMODE_CCW = MATERIAL_CULLMODE_CCW
+local WHITE = Material("models/debug/debugwhite")
 
 function PART:PostEntityDraw(owner, ent, pos, ang)
 		
@@ -237,6 +239,21 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 		
 	if self.Fullbright then
 		render_SuppressEngineLighting(false) 
+	end
+	
+	if self.CellShade > 0 then
+		render_CullMode(MATERIAL_CULLMODE_CW)
+			ent:SetModelScale(self.Scale * (1 + self.CellShade))
+				render_SetColorModulation(0,0,0)
+					render_SuppressEngineLighting(true)
+					render_MaterialOverride(WHITE)
+					
+						self:DrawModel(ent, pos, ang)
+						
+					render_MaterialOverride()
+					render_SuppressEngineLighting(false)
+			ent:SetModelScale(self.Scale)
+		render_CullMode(MATERIAL_CULLMODE_CCW)
 	end
 	
 	render_SetColorModulation(1,1,1)
