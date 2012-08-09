@@ -243,16 +243,17 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 	
 	if self.CellShade > 0 then
 		render_CullMode(MATERIAL_CULLMODE_CW)
-			ent:SetModelScale(self.Scale * (1 + self.CellShade))
+			ent:SetModelScale((self.Scale * self.Size) * (1 + self.CellShade))
 				render_SetColorModulation(0,0,0)
 					render_SuppressEngineLighting(true)
 					render_MaterialOverride(WHITE)
-					
+						
+						ent:SetupBones()
 						self:DrawModel(ent, pos, ang)
 						
 					render_MaterialOverride()
 					render_SuppressEngineLighting(false)
-			ent:SetModelScale(self.Scale)
+			ent:SetModelScale(self.Scale * self.Size)
 		render_CullMode(MATERIAL_CULLMODE_CCW)
 	end
 	
