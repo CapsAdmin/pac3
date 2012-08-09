@@ -740,7 +740,11 @@ do -- meta
 		end
 	end
 	
-	function PART:Think()	
+	function PART:Think()
+		for key, part in pairs(self.Children) do
+			part:Think()
+		end
+		
 		local owner = self:GetOwner()
 		
 		if owner:IsValid() then
@@ -769,10 +773,6 @@ do -- meta
 		end
 		
 		self:OnThink()
-		
-		for key, part in pairs(self.Children) do
-			part:Think()
-		end
 	end
 	
 	function PART:SubmitToServer()
