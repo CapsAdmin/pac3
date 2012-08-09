@@ -159,8 +159,15 @@ function PART:GetMaterialFromParent()
 		if not self.Materialm then
 			local mat = CreateMaterial("pac_material_" .. FrameNumber(), "VertexLitGeneric", {})
 			
-			mat:SetMaterialTexture("$bumpmap", self.Parent.Materialm:GetMaterialTexture("$bumpmap"))
-			mat:SetMaterialTexture("$basetexture", self.Parent.Materialm:GetMaterialTexture("$basetexture"))
+			local tex = self.Parent.Materialm:GetMaterialTexture("$bumpmap")
+			if tex and not tex:IsError() then
+				mat:SetMaterialTexture("$bumpmap", tex)
+			end
+			
+			local tex = self.Parent.Materialm:GetMaterialTexture("$basetexture")
+			if tex and not tex:IsError() then
+				mat:SetMaterialTexture("$basetexture", tex)
+			end
 			
 			self.Materialm = mat
 		end

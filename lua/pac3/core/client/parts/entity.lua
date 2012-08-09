@@ -49,19 +49,6 @@ function PART:OnBuildBonePositions(ent)
 	end
 end
 
-function PART:SetModel(str)
-	self.Model = str
-
-	local ent = self:GetOwner()
-	if ent:IsValid() then
-		if ent:IsPlayer() and ent == LocalPlayer() then
-			RunConsoleCommand("cl_playermodel", str)
-		else
-			ent:SetModel(str)
-		end
-	end
-end
-
 function PART:SetDrawShadow(b)
 	self.DrawShadow = b
 
@@ -300,6 +287,13 @@ end
 
 function PART:OnAttach(ent)
 	if ent:IsValid() then
+
+		if ent:IsPlayer() and ent == LocalPlayer() then
+			RunConsoleCommand("cl_playermodel", self.Model)
+		else
+			ent:SetModel(self.Model)
+		end
+	
 		function ent.RenderOverride(ent)
 			if self:IsValid() then
 				if not self.HideEntity then 
