@@ -51,7 +51,7 @@ function pac.ConvertPAC2Config(data, ent)
 			local part = pac.CreatePart("sprite") 
 				part:SetParent(base)
 				part.pac2_part = data
-				part:SetName(data.name)
+				part:SetName(data.name .. " sprite")
 				
 				part:SetBone(translate_bone(data.bone))
 				
@@ -81,7 +81,7 @@ function pac.ConvertPAC2Config(data, ent)
 			local part = pac.CreatePart("light")		
 				part:SetParent(base)
 				part.pac2_part = data
-				part:SetName(data.name)
+				part:SetName(data.name .. " light")
 												
 				part:SetBone(translate_bone(data.bone))
 				
@@ -109,7 +109,7 @@ function pac.ConvertPAC2Config(data, ent)
 			local part = pac.CreatePart("text")	
 				part:SetParent(base)
 				part.pac2_part = data	
-				part:SetName(data.name)
+				part:SetName(data.name .. " text")
 				
 				part:SetBone(translate_bone(data.bone))
 				
@@ -143,7 +143,7 @@ function pac.ConvertPAC2Config(data, ent)
 			local part = pac.CreatePart("trail")
 				part:SetParent(base)
 				part.pac2_part = data	
-				part:SetName(data.name .. " " .. part.ClassName)
+				part:SetName(data.name .. " trail")
 				part:SetBone(translate_bone(data.bone))
 				
 				part:SetPosition(data.offset*1)
@@ -177,7 +177,7 @@ function pac.ConvertPAC2Config(data, ent)
 			local part = pac.CreatePart("model")
 				part:SetParent(base)
 				part.pac2_part = data
-				part:SetName(data.name)
+				part:SetName(data.name .. " model")
 				part:SetBone(translate_bone(data.bone))
 				part:SetOriginFix(data.originfix)
 				
@@ -200,7 +200,7 @@ function pac.ConvertPAC2Config(data, ent)
 
 				if data.effect.Enabled then
 					local part2 = pac.CreatePart("effect")
-					part2:SetName(data.name .. " " .. part2.ClassName)
+					part2:SetName(data.name .. " effect")
 					part2:SetParent(part)
 					part2:SetBone(translate_bone(data.bone))
 										
@@ -220,7 +220,7 @@ function pac.ConvertPAC2Config(data, ent)
 								
 				if data.clip.Enabled then
 					local part2 = part:CreatePart("clip")
-						part2:SetName(data.name .. " " .. part2.ClassName)	
+						part2:SetName(data.name .. " clip")	
 						if data.clip.bone and data.clip.bone ~= "" then 
 							part2:SetBone(data.clip.bone)
 						end
@@ -232,7 +232,7 @@ function pac.ConvertPAC2Config(data, ent)
 				if data.animation.Enabled then
 					local part2 = part:CreatePart("animation")		
 						part2:SetParent(part)
-						part2:SetName(data.name .. " " .. part.ClassName)				
+						part2:SetName(data.name .. " animation")				
 						part2:SetSequenceName(data.animation.sequence)
 						part2:SetRate(data.animation.rate)
 						part2:SetMin(data.animation.min)
@@ -294,7 +294,7 @@ function pac.ConvertPAC2Config(data, ent)
 	for bone, data in pairs(data.bones) do
 		local part_ = pac.CreatePart("bone")			
 			part_:SetParent(part)
-			part_:SetName(bone)
+			part_:SetName(bone .. " bone")
 			part_:SetBone(translate_bone(bone))
 			part_:SetSize(tonumber(data.size))
 			part_:SetScale(data.scale*1)
@@ -305,7 +305,7 @@ function pac.ConvertPAC2Config(data, ent)
 	for key, part in pairs(pac.GetParts(true)) do
 		if part.pac2_part and part.pac2_part.parent and part.pac2_part.parent ~= "none" then
 			for key, parent in pairs(pac.GetParts(true)) do
-				if parent:GetName() == part.pac2_part.parent then
+				if parent:GetName() == (part.pac2_part.parent .. " model") then
 					part:SetParent(parent)
 					if parent.pac2_modelbone then
 						part:SetBone(translate_bone(parent.pac2_modelbone))
