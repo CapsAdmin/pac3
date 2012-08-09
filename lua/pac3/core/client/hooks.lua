@@ -10,15 +10,14 @@ function pac.RenderOverride(ent)
 		ent:InvalidateBoneCache()
 			for key, part in pairs(ent.pac_parts) do
 				if part:IsValid() then
-					
-					if part.ThinkTime == 0 then
-						part:Think()
-					elseif not part.last_think or part.last_think < time then
-						part:Think()
-						part.last_think = time + (part.ThinkTime or 0.1)
-					end
-					
 					if not part:HasParent() then
+						if part.ThinkTime == 0 then
+							part:Think()
+						elseif not part.last_think or part.last_think < time then
+							part:Think()
+							part.last_think = time + (part.ThinkTime or 0.1)
+						end
+					
 						part:Draw("OnDraw")
 					end
 				else

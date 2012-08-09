@@ -767,9 +767,12 @@ do -- meta
 		if self.SetFollowPartName and self.FollowPartName and self.FollowPartName ~= "" and not self.FollowPart:IsValid() and part ~= self then
 			self:ResolveFollowPartName()
 		end
-
-
+		
 		self:OnThink()
+		
+		for key, part in pairs(self.Children) do
+			part:Think()
+		end
 	end
 	
 	function PART:SubmitToServer()
