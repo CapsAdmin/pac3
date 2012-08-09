@@ -595,8 +595,9 @@ do -- meta
 	end
 
 	function PART:CallEvent(event, ...)
-		for key, val in pairs(self.Children) do
-			val:OnEvent(event, ...)
+		self:OnEvent(event, ...)
+		for _, part in pairs(self.Children) do
+			part:CallEvent(event, ...)
 		end
 	end
 	
