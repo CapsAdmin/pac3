@@ -771,10 +771,6 @@ do -- meta
 		end
 		
 		self:OnThink()
-	
-		for _, part in pairs(self.Children) do
-			part:Think()
-		end
 	end
 	
 	function PART:SubmitToServer()
