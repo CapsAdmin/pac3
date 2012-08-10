@@ -9,7 +9,6 @@ if urlmat.ActivePanel:IsValid() then
 end
 
 function urlmat.GetMaterialFromURL(url, callback)	
-	PrintTable(urlmat.Queue)
 	if urlmat.Queue[url] then
 		local old = urlmat.Queue[url].callback
 		urlmat.Queue[url].callback = function(...)	
