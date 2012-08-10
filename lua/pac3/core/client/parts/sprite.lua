@@ -40,27 +40,14 @@ end
 function PART:SetMaterial(var)
 	var = var or ""
 	
-	if pac.urlmat and var:find("http") then
-		var = var:gsub("https://", "http://")
-		var = var:match("http[s]-://.+/.-%.%a+")
-		if var then
-			pac.urlmat.GetMaterialFromURL(var, function(mat)
-				if self:IsValid() then
-					self.Materialm = mat
-					self:CallEvent("material_changed")
-				end
-			end)
-			self.SpritePath = var
-			return
+	if not pac.HandleUrlMat(self, var) then
+		if type(var) == "string" then
+			self.Materialm = Material(var)
+			self:CallEvent("material_changed")
+		elseif type(var) == "IMaterial" then
+			self.Materialm = var
+			self:CallEvent("material_changed")
 		end
-	end	
-	
-	if type(var) == "string" then
-		self.Materialm = Material(var)
-		self:CallEvent("material_changed")
-	elseif type(var) == "IMaterial" then
-		self.Materialm = var
-		self:CallEvent("material_changed")
 	end
 
 	self.SpritePath = var

@@ -109,3 +109,29 @@ do -- get set and editor vars
 		end
 	end
 end
+
+function pac.HandleUrlMat(part, url, callback)
+	if url and pac.urlmat and url:find("http") then	
+		local skip_cache = url:sub(1,1) == "_"
+		url = url:gsub("https://", "http://")
+		url = url:match("http[s]-://.+/.-%.%a+")
+		if url then
+			pac.urlmat.GetMaterialFromURL(
+				url, 
+				function(mat, tex)
+					if part:IsValid() then
+						if callback then
+							callback(mat, tex)
+						else
+							part.Materialm = mat
+							part:CallEvent("material_changed")
+						end
+						pac.dprint("set custom material texture %q to %s", url, part:GetName())
+					end
+				end,
+				skip_cache
+			)
+			return true
+		end
+	end	
+end

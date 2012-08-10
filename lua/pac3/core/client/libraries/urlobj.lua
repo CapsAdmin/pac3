@@ -1,4 +1,5 @@
 local urlobj = pac.urlobj or {}
+urlobj.Cache = urlobj.Cache or {}
 
 -- parser made by animorten
 -- modified slightly by capsadmin
@@ -118,7 +119,12 @@ function urlobj.CreateObj(str, mesh_only)
 end
 
 
-function urlobj.GetObjFromURL(url, callback, mesh_only)
+function urlobj.GetObjFromURL(url, callback, mesh_only, skip_cache)
+	if not skip_cache and urlobj.Cache[url] then
+		callback(urlobj.Cache[url])
+		return
+	end
+
 	pac.dprint("requesting model %q", url)
 			
 	local id = "urlobj_download_" .. url .. tostring(callback)
@@ -130,15 +136,22 @@ function urlobj.GetObjFromURL(url, callback, mesh_only)
 		if VERSION >= 150 then
 			http.Fetch(url, function(str)	
 				pac.dprint("loaded model %q", url)
-
-				callback(urlobj.CreateObj(str, mesh_only))
+				
+				local obj = urlobj.CreateObj(str, mesh_only)
+				
+				urlobj.Cache[url] = obj
+				
+				callback(obj)
 			end)
 		else
 			http.Get(url, "", function(str)
 				pac.dprint("loaded model %q", url)
-					callback(urlobj.CreateObj(str, mesh_only))
-			end)
-					
+				local obj = urlobj.CreateObj(str, mesh_only)
+				
+				urlobj.Cache[url] = obj
+				
+				callback(obj)
+			end)	
 		end
 		
 		hook.Remove("Think", id)

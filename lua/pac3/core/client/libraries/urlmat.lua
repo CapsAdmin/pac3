@@ -3,12 +3,20 @@ local urlmat = pac.urlmat or {}
 urlmat.TextureSize = 1024
 urlmat.ActivePanel = urlmat.ActivePanel or NULL
 urlmat.Queue = urlmat.Queue or {}
+urlmat.Cache = urlmat.Cache or {}
 
 if urlmat.ActivePanel:IsValid() then
 	urlmat.ActivePanel:Remove()
 end
 
-function urlmat.GetMaterialFromURL(url, callback)	
+function urlmat.GetMaterialFromURL(url, callback, skip_cache)
+	if type(callback) == "function" and not skip_cache and urlmat.Cache[url] then
+		local tex = urlmat.Cache[url]
+		local vertex_mat = CreateMaterial("pac3_urlmat_" .. util.CRC(url .. SysTime()), "VertexLitGeneric")
+		vertex_mat:SetMaterialTexture("$basetexture", tex)
+		callback(vertex_mat, tex)
+		return
+	end
 	if urlmat.Queue[url] then
 		local old = urlmat.Queue[url].callback
 		urlmat.Queue[url].callback = function(...)	
@@ -90,15 +98,18 @@ function urlmat.StartDownload(url, data)
 			end
 				
 			if go and time < RealTime() then
-				local vertex_mat = CreateMaterial(url, "VertexLitGeneric")
+				local vertex_mat = CreateMaterial("pac3_urlmat_" .. util.CRC(url .. SysTime()), "VertexLitGeneric")
 				local tex = html_mat:GetMaterialTexture("$basetexture")
 				vertex_mat:SetMaterialTexture("$basetexture", tex)
-
+				tex:Download()
+				
+				urlmat.Cache[url] = tex
+				
 				hook.Remove("Think", id)
 				timer.Remove(id)
 				urlmat.Queue[url] = nil
-				timer.Simple(0.25, function() pnl:Remove() end)
-				
+				timer.Simple(0.15, function() pnl:Remove() end)
+								
 				if data.callback then
 					data.callback(vertex_mat, tex)
 				end
