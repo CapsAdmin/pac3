@@ -85,7 +85,7 @@ local function setup(PART)
 						local tex = _mat:GetMaterialTexture("$" .. name)
 						
 						if not tex or tex:IsError() then
-							tex = CreateMaterial("pac3_tex_" .. var, "VertexLitGeneric", {["$basetexture"] = var}):GetMaterialTexture("$basetexture")
+							tex = CreateMaterial("pac3_tex_" .. var .. "_" .. self.Id, "VertexLitGeneric", {["$basetexture"] = var}):GetMaterialTexture("$basetexture")
 							if not tex or tex:IsError() then
 								tex = _mat:GetMaterialTexture("$basetexture")
 							end
@@ -157,7 +157,7 @@ function PART:GetMaterialFromParent()
 	if self.Parent:IsValid() and self.Parent.Materialm then
 		--print(self.Materialm and self.Materialm:GetName(), self.Parent.Materialm:GetName(), self.last_mat and self.last_mat:GetName())
 		if not self.Materialm then
-			local mat = CreateMaterial("pac_material_" .. FrameNumber(), "VertexLitGeneric", {})
+			local mat = CreateMaterial("pac_material_" .. SysTime(), "VertexLitGeneric", {})
 			
 			local tex = self.Parent.Materialm:GetMaterialTexture("$bumpmap")
 			if tex and not tex:IsError() then
