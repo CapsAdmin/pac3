@@ -80,7 +80,7 @@ function urlobj.CreateObj(str, mesh_only)
 		return
 	end
 	
-	local mesh = NewMesh()
+	local mesh = VERSION >= 150 and Mesh() or NewMesh()
 	mesh:BuildFromTriangles(res)
 	
 	if mesh_only then
@@ -120,29 +120,29 @@ end
 
 function urlobj.GetObjFromURL(url, callback, mesh_only)
 	pac.dprint("requesting model %q", url)
-	
-	if VERSION >= 150 then
-		http.Fetch(url, function(str)	
-			pac.dprint("loaded model %q", url)
-
-			callback(urlobj.CreateObj(str, mesh_only))
-		end)
-	else
-		http.Get(url, "", function(str)
-			pac.dprint("loaded model %q", url)
 			
-			local id = "urlobj_download_" .. url .. tostring(callback)
-			hook.Add("Think", id, function()
-				if pac.urlmat and pac.urlmat.Busy then
-					return
-				end
-				
+	local id = "urlobj_download_" .. url .. tostring(callback)
+	hook.Add("Think", id, function()
+		if pac.urlmat and pac.urlmat.Busy then
+			return
+		end
+		
+		if VERSION >= 150 then
+			http.Fetch(url, function(str)	
+				pac.dprint("loaded model %q", url)
+
 				callback(urlobj.CreateObj(str, mesh_only))
-				
-				hook.Remove("Think", id)
 			end)
-		end)
-	end
+		else
+			http.Get(url, "", function(str)
+				pac.dprint("loaded model %q", url)
+					callback(urlobj.CreateObj(str, mesh_only))
+			end)
+					
+		end
+		
+		hook.Remove("Think", id)
+	end)
 end
 
 pac.urlobj = urlobj

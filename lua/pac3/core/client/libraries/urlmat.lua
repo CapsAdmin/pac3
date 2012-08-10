@@ -47,99 +47,93 @@ function urlmat.StartDownload(url, data)
 	
 	local pnl = vgui.Create("HTML")
 	pnl:SetVisible(true)
---	pnl:SetPos(ScrW()-1, ScrH()-1)
+	pnl:SetPos(ScrW()-1, ScrH()-1)
 	pnl:SetSize(urlmat.TextureSize, urlmat.TextureSize)
+	pnl:SetHTML(
+		[[
+			<style type="text/css">
+				html 
+				{			
+					overflow:hidden;
+				}
+			</style>
+			
+			<body>
+				<img src="]] .. url .. [[" alt="" width="]] .. urlmat.TextureSize..[[" height="]] .. urlmat.TextureSize .. [[" />
+			</body>
+		]]
+	)
 	
-	function pnl:Paint() -- hacky delayed loading..
-		if self.__loaded then return end
-		self.__loaded = true
-		self.Paint=nil
-		
-		pnl:SetHTML(
-			[[
-				<style type="text/css">
-					html 
-					{			
-						overflow:hidden;
-					}
-				</style>
-				
-				<body>
-					<img src="]] .. url .. [[" alt="" width="]] .. urlmat.TextureSize..[[" height="]] .. urlmat.TextureSize .. [[" />
-				</body>
-			]]
-		)
-			
-		local function start()
-			local go = false
-			local time = 0
 
-			-- restart the timeout
-			timer.Stop(id)
-			timer.Start(id)
-		
-			hook.Add("Think", id, function()
-			
-				-- panel is no longer valid
-				if not pnl:IsValid() then
-					hook.Remove("Think", id)
-					-- let the timeout handle it
-					return
-				end
-				
-				local html_mat = pnl:GetHTMLMaterial()
-						
-				-- give it some time.. IsLoading is sometimes lying
-				if not go and html_mat and not pnl:IsLoading() then
-					time = RealTime() + 0.25
-					go = true
-				end
-				
-				if go and time < RealTime() then
-					local vertex_mat = CreateMaterial(url, "VertexLitGeneric")
-					local tex = html_mat:GetMaterialTexture("$basetexture")
-					vertex_mat:SetMaterialTexture("$basetexture", tex)
+	local function start()
+		local go = false
+		local time = 0
 
-					hook.Remove("Think", id)
-					timer.Remove(id)
-					urlmat.Queue[url] = nil
-					timer.Simple(0.25, function() pnl:Remove() end)
-					
-					if data.callback then
-						data.callback(vertex_mat, tex)
-					end
-				end
-				
-			end)
-		end
+		-- restart the timeout
+		timer.Stop(id)
+		timer.Start(id)
+	
+		hook.Add("Think", id, function()
 		
-		if VERSION >= 150 then
-			start()
-		else
-			pnl.FinishedURL = start
-		end
-		
-		-- 5 sec max timeout
-		timer.Create(id, 5, 1, function()
-			timer.Remove(id)
-			urlmat.Queue[url] = nil
-			pnl:Remove()
-			
-			if hook.GetTable().Think[id] then
+			-- panel is no longer valid
+			if not pnl:IsValid() then
 				hook.Remove("Think", id)
+				-- let the timeout handle it
+				return
 			end
+			
+			local html_mat = pnl:GetHTMLMaterial()
+					
+			-- give it some time.. IsLoading is sometimes lying
+			if not go and html_mat and not pnl:IsLoading() then
+				time = RealTime() + 0.25
+				go = true
+			end
+				
+			if go and time < RealTime() then
+				local vertex_mat = CreateMaterial(url, "VertexLitGeneric")
+				local tex = html_mat:GetMaterialTexture("$basetexture")
+				vertex_mat:SetMaterialTexture("$basetexture", tex)
 
-			if data.tries < 3 then
-				pac.dprint("material download %q timed out.. trying again for the %ith time", url, data.tries)
-				-- try again
-				data.tries = data.tries + 1
-				urlmat.GetMaterialFromURL(url, data)
-				urlmat.Queue[url] = data
-			else
-				pac.dprint("material download %q timed out for good", url, data.tries)
+				hook.Remove("Think", id)
+				timer.Remove(id)
+				urlmat.Queue[url] = nil
+				timer.Simple(0.25, function() pnl:Remove() end)
+				
+				if data.callback then
+					data.callback(vertex_mat, tex)
+				end
 			end
+			
 		end)
 	end
+
+	if VERSION >= 150 then
+		pnl.FinishedURL = start
+	else
+		pnl.FinishedURL = start
+	end
+	
+	-- 5 sec max timeout
+	timer.Create(id, 5, 1, function()
+		timer.Remove(id)
+		urlmat.Queue[url] = nil
+		pnl:Remove()
+		
+		if hook.GetTable().Think[id] then
+			hook.Remove("Think", id)
+		end
+
+		if data.tries < 3 then
+			pac.dprint("material download %q timed out.. trying again for the %ith time", url, data.tries)
+			-- try again
+			data.tries = data.tries + 1
+			urlmat.GetMaterialFromURL(url, data)
+			urlmat.Queue[url] = data
+		else
+			pac.dprint("material download %q timed out for good", url, data.tries)
+		end
+	end)
 	
 	urlmat.ActivePanel = pnl
 end
