@@ -208,28 +208,15 @@ end
 
 function PART:SetMaterial(var)
 	var = var or ""
-
-	if pac.urlmat and var:find("http") then
-		var = var:gsub("https://", "http://")
-		var = var:match("http[s]-://.+/.-%.%a+")
-		if var then
-			pac.urlmat.GetMaterialFromURL(var, function(mat)
-				if self:IsValid() then
-					self.Materialm = mat
-					self:CallEvent("material_changed")
-				end
-			end)
-			self.Material = var
-			return
+	
+	if not pac.HandleUrlMat(self, var) then	
+		if var ~= "" then
+			self.Materialm = Material(var)
+			self:CallEvent("material_changed")
 		end
-	end	
+	end
 	
 	self.Material = var
-	
-	if var ~= "" then
-		self.Materialm = Material(var)
-		self:CallEvent("material_changed")
-	end
 end
 
 function PART:SetRelativeBones(b)
@@ -291,8 +278,10 @@ function PART:OnAttach(ent)
 		if self.Model ~= "" then
 			if ent:IsPlayer() and ent == LocalPlayer() then
 				RunConsoleCommand("cl_playermodel", self.Model)
+				ent.pac_bones = nil
 			else
 				ent:SetModel(self.Model)
+				ent.pac_bones = nil
 			end
 		end
 	

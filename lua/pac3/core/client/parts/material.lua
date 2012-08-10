@@ -58,28 +58,29 @@ local function setup(PART)
 
 			PART["Set" .. name] = function(self, var)
 				self[name] = var
+								
+				if 
+					self.SKIP or
+					pac.HandleUrlMat(
+						self, 
+						var, 
+						function(_, tex) 
+							local mat = self:GetMaterialFromParent()
+							if mat then
+								mat:SetMaterialTexture("$" .. name, tex)
+								self.SKIP = true
+								self:UpdateMaterial()
+								self.SKIP = false
+							end
+						end
+					)
+				then
+					return
+				end
 				
 				local mat = self:GetMaterialFromParent()
 				
 				if mat then				
-					if pac.urlmat and var:find("http") then
-						var = var:gsub("https://", "http://")
-						var = var:match("http[s]-://.+/.-%.%a+")
-						if var then
-							pac.urlmat.GetMaterialFromURL(
-								var, 
-								function(_, tex)
-									if self:IsValid() then
-										mat:SetMaterialTexture("$" .. name, tex)
-										pac.dprint("set custom material texture %q to %s", var, name)
-									end
-								end,
-								false
-							)
-							return
-						end
-					end	
-					
 					if var ~= "" then
 						local _mat = Material(var)
 						local tex = _mat:GetMaterialTexture("$" .. name)
@@ -94,7 +95,7 @@ local function setup(PART)
 						mat:SetMaterialTexture("$" .. name, tex)
 					else
 						if name == "BumpMap" then
-							self:SetBumpMap("dev/bump_normal")
+							mat:SetMaterialString("$bumpmap", "dev/bump_normal")
 						end
 					end
 				end
@@ -154,19 +155,21 @@ function PART:Initialize()
 end
 
 function PART:GetMaterialFromParent()
-	if self.Parent:IsValid() and self.Parent.Materialm then
+	if self.Parent:IsValid() then
 		--print(self.Materialm and self.Materialm:GetName(), self.Parent.Materialm:GetName(), self.last_mat and self.last_mat:GetName())
 		if not self.Materialm then
 			local mat = CreateMaterial("pac_material_" .. SysTime(), "VertexLitGeneric", {})
 			
-			local tex = self.Parent.Materialm:GetMaterialTexture("$bumpmap")
-			if tex and not tex:IsError() then
-				mat:SetMaterialTexture("$bumpmap", tex)
-			end
-			
-			local tex = self.Parent.Materialm:GetMaterialTexture("$basetexture")
-			if tex and not tex:IsError() then
-				mat:SetMaterialTexture("$basetexture", tex)
+			if self.Parent.Materialm then
+				local tex = self.Parent.Materialm:GetMaterialTexture("$bumpmap")
+				if tex and not tex:IsError() then
+					mat:SetMaterialTexture("$bumpmap", tex)
+				end
+				
+				local tex = self.Parent.Materialm:GetMaterialTexture("$basetexture")
+				if tex and not tex:IsError() then
+					mat:SetMaterialTexture("$basetexture", tex)
+				end
 			end
 			
 			self.Materialm = mat

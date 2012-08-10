@@ -215,7 +215,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 	
 	if self.Alpha then render_SetBlend(self.Alpha) end
 	
-	render_MaterialOverride(self.Material ~= "" and self.Materialm or nil) 
+	render_MaterialOverride(self.Materialm) 
 
 	if self.Fullbright then
 		render_SuppressEngineLighting(true) 
@@ -394,32 +394,14 @@ end
 function PART:SetMaterial(var)
 	var = var or ""
 	
-	if pac.urlmat and var:find("http") then
-		var = var:gsub("https://", "http://")
-		var = var:match("http[s]-://.+/.-%.%a+")
-		if var then
-			pac.urlmat.GetMaterialFromURL(
-				var, 
-				function(mat)
-					if self:IsValid() then
-						mat:SetMaterialInt("$vertexcolor", 1)
-						self.Materialm = mat
-						self:CallEvent("material_changed")
-					end
-				end,
-				false
-			)
-			self.Material = var
-			return
+	if not pac.HandleUrlMat(self, var) then
+		if var ~= "" then
+			self.Materialm = Material(var)
+			self:CallEvent("material_changed")
 		end
-	end	
-
-	self.Material = var
-	
-	if var ~= "" then
-		self.Materialm = Material(var)
-		self:CallEvent("material_changed")
 	end
+	
+	self.Material = var
 end
 
 function PART:SetBodygroupState(var)
