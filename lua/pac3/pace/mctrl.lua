@@ -74,7 +74,7 @@ do -- pace
 
 	function mctrl.VecToScreen(vec)
 		local x,y,vis = pace.VectorToLPCameraScreen(
-			(vec - mctrl.GetCameraOrigin()):Normalize(),
+			(vec - mctrl.GetCameraOrigin()):GetNormalized(),
 			ScrW(),
 			ScrH(),
 			mctrl.GetCameraAngles(),

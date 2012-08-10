@@ -232,14 +232,16 @@ function pace.LoadSession(name, append)
 end
 
 hook.Add("InitPostEntity", "pace_autoload_session", function()	
-	pace.LoadSession("autoload")
-	-- give pac some time to solve bones and parents
-	timer.Simple(1, function()
-		for key, part in pairs(pac.GetParts(true)) do
-			if not part:HasParent() then
-				pac.SendPartToServer(part)
+	timer.Simple(5, function()
+		pace.LoadSession("autoload")
+		timer.Simple(3, function()
+		-- give pac some time to solve bones and parents
+			for key, part in pairs(pac.GetParts(true)) do
+				if not part:HasParent() then
+					pac.SendPartToServer(part)
+				end
 			end
-		end
+		end)
 	end)
 end)
 
