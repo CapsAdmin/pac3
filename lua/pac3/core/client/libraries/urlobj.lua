@@ -131,7 +131,16 @@ function urlobj.GetObjFromURL(url, callback, mesh_only)
 		http.Get(url, "", function(str)
 			pac.dprint("loaded model %q", url)
 			
-			callback(urlobj.CreateObj(str, mesh_only))
+			local id = "urlobj_download_" .. url .. tostring(callback)
+			hook.Add("Think", id, function()
+				if pac.urlmat and pac.urlmat.Busy then
+					return
+				end
+				
+				callback(urlobj.CreateObj(str, mesh_only))
+				
+				hook.Remove("Think", id)
+			end)
 		end)
 	end
 end
