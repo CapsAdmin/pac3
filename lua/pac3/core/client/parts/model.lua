@@ -334,6 +334,11 @@ function PART:SetModel(var)
 
 	if var and var:find("http") and pac.urlobj then
 		var = var:gsub("https://", "http://")
+		local skip_cache = var:sub(1,1) == "_"
+		
+		if skip_cache then
+			var = var:sub(2)
+		end	
 		
 		pac.urlobj.GetObjFromURL(var, function(mesh, err)
 			if not self:IsValid() then return end
@@ -354,7 +359,7 @@ function PART:SetModel(var)
 			
 			-- temp
 			self.Entity:SetRenderBounds(Vector()*-300, Vector()*300)	
-		end, true)
+		end, true, skip_cache)
 		
 		self.Model = var
 		return
