@@ -51,6 +51,13 @@ PART.ShaderParams =
 	HalfLambert = "boolean",]]
 }
 
+function PART:Think()
+	if self.delay_set and self.Parent then
+		self.delay_set()
+		self.delay_set = nil
+	end
+end
+
 local function setup(PART)
 	for name, T in pairs(PART.ShaderParams) do		
 		if T == "ITexture" then
@@ -71,6 +78,14 @@ local function setup(PART)
 								self.SKIP = true
 								self:UpdateMaterial()
 								self.SKIP = false
+							else
+								self.delay_set = function()
+									local mat = self:GetMaterialFromParent()
+									mat:SetMaterialTexture("$" .. name, tex)
+									self.SKIP = true
+									self:UpdateMaterial()
+									self.SKIP = false
+								end
 							end
 						end
 					)
