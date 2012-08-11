@@ -358,7 +358,7 @@ function PART:SetModel(var)
 			end
 			
 			-- temp
-			self.Entity:SetRenderBounds(Vector()*-300, Vector()*300)	
+			self.Entity:SetRenderBounds(Vector(1, 1, 1)*-300, Vector(1, 1, 1)*300)	
 		end, true, skip_cache)
 		
 		self.Model = var
@@ -390,7 +390,7 @@ function PART:SetSize(var)
 end
 
 function PART:SetColor(var)
-	var = var or Vector()
+	var = var or Vector(1, 1, 1)
 
 	self.Color = var
 	self.Colorf = (Vector(var.r, var.g, var.b) / 255)
@@ -543,7 +543,7 @@ function PART:OnBuildBonePositions(ent)
 		for i = 0, ent:GetBoneCount() do
 			local mat = ent:GetBoneMatrix(i)
 			if mat then
-				mat:Scale(Vector()*self.OverallSize)
+				mat:Scale(Vector(1, 1, 1)*self.OverallSize)
 				ent:SetBoneMatrix(i, mat)
 			end
 		end
