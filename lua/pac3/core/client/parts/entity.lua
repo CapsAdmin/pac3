@@ -41,7 +41,7 @@ function PART:OnBuildBonePositions(ent)
 		for i = 0, ent:GetBoneCount() do
 			local mat = ent:GetBoneMatrix(i)
 			if mat then
-				mat:Scale(Vector() * self.OverallSize)
+				mat:Scale(Vector(1, 1, 1) * self.OverallSize)
 				
 				ent:SetBoneMatrix(i, mat)
 			end
