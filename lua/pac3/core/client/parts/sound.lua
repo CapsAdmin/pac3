@@ -1,8 +1,7 @@
 local PART = {}
 
 PART.ClassName = "sound"
-PART.HideGizmo = true
-
+PART.NonPhysical = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Sound", "")

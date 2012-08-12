@@ -105,7 +105,7 @@ do -- list
 		local data = {}
 		
 		for key, val in pairs(obj:GetVars()) do
-			if not pace.HiddenPropertyKeys[key] then
+			if not pace.HiddenPropertyKeys[key] or pace.HiddenPropertyKeys[key] == obj.ClassName then
 				table.insert(data, {key = key, val = val})
 			end
 		end

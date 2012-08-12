@@ -1,7 +1,7 @@
 local PART = {}
 
 PART.ClassName = "material"
-PART.HideGizmo = true
+PART.NonPhysical = true
 
 PART.ShaderParams =
 {
@@ -155,19 +155,10 @@ local function setup(PART)
 	end
 end
 
-function PART:Initialize()
-	self.StorableVars = {}
+pac.StartStorableVars()
+	setup(PART)
+pac.EndStorableVars()
 
-	pac.StartStorableVars()
-		pac.GetSet(self, "Name", "")
-		pac.GetSet(self, "Description", "")
-		pac.GetSet(self, "OwnerName", "")
-		pac.GetSet(self, "ParentName", "")
-		pac.GetSet(self, "EditorExpand", false)
-		--pac.GetSet(self, "CloakColorAlpha", 0)
-		setup(self)
-	pac.EndStorableVars()
-end
 
 function PART:GetMaterialFromParent()
 	if self.Parent:IsValid() then

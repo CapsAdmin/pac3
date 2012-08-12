@@ -1,8 +1,15 @@
 local PART = {}
 
 PART.ClassName = "event"
-PART.HideGizmo = true
+PART.NonPhysical = true
 PART.ThinkTime = 0
+
+pac.StartStorableVars()
+	pac.GetSet(PART, "Event", "")
+	pac.GetSet(PART, "Arguments", "")
+	pac.GetSet(PART, "Operator", "")
+	pac.GetSet(PART, "Invert", false)
+pac.EndStorableVars()
 
 PART.Events = 
 {
@@ -147,21 +154,6 @@ PART.Events =
 		end,
 	}
 }
-
-function PART:Initialize()
-	self.StorableVars = {}
-	
-	pac.StartStorableVars()
-		pac.GetSet(self, "Name", "")
-		pac.GetSet(self, "Description", "")
-		pac.GetSet(self, "Hide", false)
-		pac.GetSet(self, "Event", "")
-		pac.GetSet(self, "Arguments", "")
-		pac.GetSet(self, "Operator", "")
-		pac.GetSet(self, "Invert", false)
-		pac.GetSet(self, "ParentName", "")
-	pac.EndStorableVars()
-end
 
 function PART:OnThink()
 	local ent = self:GetOwner()

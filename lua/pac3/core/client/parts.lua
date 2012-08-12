@@ -10,6 +10,24 @@ function pac.CreatePart(name, owner)
 	
 	local part = class.Create("part", name)
 	
+	part.UniqueID = tostring(util.CRC(os.time() + RealTime() + part_count))
+	
+	if part.NonPhysical then
+		local function remove(field)
+			if part.StorableVars then 
+				part.StorableVars[field] = nil 
+			end
+			class.RemoveField(part, field)
+		end
+		
+		remove("Bone")
+		remove("Position")
+		remove("Angles")
+		remove("AngleVelocity")
+		remove("EyeAngles")
+		remove("AimPartName")
+	end
+	
 	if part.PreInitialize then 
 		part:PreInitialize()
 	end
@@ -34,6 +52,7 @@ function pac.RegisterPart(META, name)
 	if not META.Base then
 		class.InsertIntoBaseField(META, "base")
 	end
+	
 	class.Register(META, "part", name)
 end
 
@@ -122,6 +141,7 @@ do -- meta
 		pac.GetSet(PART, "Hide", false)
 		
 		pac.GetSet(PART, "EditorExpand", false)
+		pac.GetSet(PART, "UniqueID", "")
 	pac.EndStorableVars()
 	
 	function PART:PreInitialize()
@@ -143,10 +163,10 @@ do -- meta
 		end
 		
 		for key, part in pairs(pac.GetParts()) do
-			if part.AimPartName and part.AimPartName ~= "" and part.AimPartName == self.Name then
+			if part.AimPartName and part.AimPartName ~= "" and (part.AimPartUID == self.UniqueID or part.AimPartName == self.Name) then
 				part:SetAimPartName(var)
 			end
-			if part.FollowPartName and part.FollowPartName ~= "" and part.FollowPartName == self.Name then
+			if part.FollowPartName and part.FollowPartName ~= "" and (part.FollowPartUID == self.UniqueID or part.FollowPartName == self.Name) then
 				part:SetFollowPartName(var)
 			end
 		end
@@ -251,6 +271,7 @@ do -- meta
 			if not var or var == "" then
 				self:UnParent()
 				self.ParentName = ""
+				self.ParentUID = nil
 				return
 			end
 
@@ -259,7 +280,7 @@ do -- meta
 		
 		function PART:ResolveParentName()
 			for key, part in pairs(pac.GetParts()) do
-				if part:GetName() == self.ParentName then
+				if part:GetUniqueID() == self.ParentUID or part:GetName() == self.ParentName then
 					self:SetParent(part)
 					break
 				end
@@ -283,6 +304,7 @@ do -- meta
 			self.Children[var.Id] = var
 			
 			var.ParentName = self:GetName()
+			var.ParentUID = self:GetUniqueID()
 			
 			self:ClearBone()
 			var:ClearBone()
@@ -318,6 +340,7 @@ do -- meta
 				if part == var then
 					part.Parent = pac.NULL
 					part.ParentName = ""
+					part.ParentUID = nil
 					part:OnDetach(self:GetOwner())
 					children[key] = nil
 					return
@@ -566,7 +589,14 @@ do -- meta
 			local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 			for _, key in pairs(self:GetStorableVars()) do
-				tbl.self[key] = COPY(self["Get"..key] and self["Get"..key](self) or self[key])
+				local var = COPY(self[key] and self["Get"..key](self) or self[key])
+				
+				if var == self["__def" .. key] then
+					continue
+				end
+				
+				tbl.self[key] = var
+							
 				if make_copy_name and (key == "Name" or key == "AimPartName"  or key == "FollowPartName" or (key == "ParentName" and is_child)) then
 					tbl.self[key] = tbl.self[key] .. " copy"
 				end
@@ -791,12 +821,13 @@ do -- meta
 	do -- aim part		
 		function PART:SetAimPartName(name)
 			self.AimPartName = name or ""
+			self.AimPartUID = nil
 			self.AimPart = pac.NULL
 		end	
 	
 		function PART:ResolveAimPartName()
 			for key, part in pairs(pac.GetParts()) do	
-				if part ~= self and part:GetName() == self.AimPartName then
+				if part ~= self and (part:GetUniqueID() == self.AimPartUID or part:GetName() == self.AimPartName) then
 					self.AimPart = part
 					break
 				end
