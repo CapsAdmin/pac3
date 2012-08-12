@@ -122,11 +122,13 @@ end
 function pac.CalcView()
 	if pace.editing_viewmodel then
 		local ent = LocalPlayer():GetViewModel()
-		ent:SetPos(pace.ViewPos)
-		ent:SetAngles(pace.ViewAngles)
-		ent:SetRenderOrigin(pace.ViewPos)
-		ent:SetRenderAngles(pace.ViewAngles)
-		ent:SetupBones()
+		if ent:IsValid() then
+			ent:SetPos(pace.ViewPos)
+			ent:SetAngles(pace.ViewAngles)
+			ent:SetRenderOrigin(pace.ViewPos)
+			ent:SetRenderAngles(pace.ViewAngles)
+			ent:SetupBones()
+		end
 	end
 	return
 	{
