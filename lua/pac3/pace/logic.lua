@@ -23,6 +23,13 @@ function pace.OnDraw()
 end
 
 function pace.OnPartSelected(part)
+	local owner = part:GetOwner()
+	if owner:IsValid() and owner:GetClass() == "viewmodel" then
+		pace.editing_viewmodel = true
+	elseif pace.editing_viewmodel then
+		pace.editing_viewmodel = false
+	end
+
 	pace.PopulateProperties(part)
 	pace.mctrl.SetTarget(part)
 	pace.current_part = part
@@ -65,8 +72,16 @@ end
 function pace.OnVariableChanged(obj, key, val, undo_delay)
 	local func = obj["Set" .. key]
 	if func then
-		func(obj, val)
+	
+		if key == "OwnerName" then
+			if val == "viewmodel" then
+				pace.editing_viewmodel = true
+			elseif obj[key] == "viewmodel" then
+				pace.editing_viewmodel = false
+			end
+		end
 		
+		func(obj, val)
 	
 		pace.CallChangeForUndo(obj, key, val, undo_delay)
 		

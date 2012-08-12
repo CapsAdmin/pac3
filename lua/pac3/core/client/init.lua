@@ -143,6 +143,16 @@ function pac.HandleOwnerName(owner, name, ent, part)
 		local ent = Entity(idx)
 		
 		if ent:IsValid() then
+			if owner.GetViewModel and ent == owner:GetViewModel() then
+				part:SetOwnerName("viewmodel")
+				return	ent
+			end
+			
+			if ent == LocalPlayer() then
+				part:SetOwnerName("self")
+				return ent
+			end
+		
 			if ent.GetPersistent and ent:GetPersistent() then
 				part:SetOwnerName("persist " .. pac.CalcEntityCRC(ent))
 			end
@@ -162,6 +172,10 @@ function pac.HandleOwnerName(owner, name, ent, part)
 	
 	if name == "active vehicle" then
 		return owner.GetVehicle and owner:GetVehicle()
+	end
+	
+	if name == "viewmodel" then
+		return owner.GetViewModel and owner:GetViewModel()
 	end
 	
 	if name:find("persist ", nil, true) then

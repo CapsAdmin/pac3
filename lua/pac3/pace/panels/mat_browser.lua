@@ -513,6 +513,16 @@ function PANEL:Init()
 	self.MatList = list
 end
 
+
+local cache = {}
+local function IsError(path)
+	if cache[path] then return true end
+	if Material(path):IsError() then
+		cache[path] = truer
+		return true
+	end
+end
+
 function PANEL:SetMaterialList(tbl)
 	self:SetSelected()
 	
@@ -521,6 +531,8 @@ function PANEL:SetMaterialList(tbl)
 	self.MatList:Clear(true)
 	
 	for i, material in ipairs(self.MaterialList) do
+		if IsError(material) then continue end
+		
 		local image = vgui.Create("DImageButton")
 		image:SetOnViewMaterial(material, material)
 		image:SetSize(64, 64)

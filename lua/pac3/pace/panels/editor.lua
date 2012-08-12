@@ -7,7 +7,7 @@ PANEL.Base = "DFrame"
 
 function PANEL:Init()
 	self:SetTitle("pac3 " .. L"editor")
-	self:SetSizable(true)
+	self:SetSizable(false)
 	
 	local div = vgui.Create("DVerticalDivider", self)
 		div:SetDividerHeight(5)
@@ -24,6 +24,7 @@ function PANEL:Init()
 end
 
 function PANEL:Think(...)
+	do return end
 	local x, y = self:GetPos()
 	
 	if x ~= self.last_x then

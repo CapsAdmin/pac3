@@ -80,7 +80,7 @@ do -- pace
 			mctrl.GetCameraAngles(),
 			math.rad(pace.GetViewFOV())
 		)
-		return {x=x,y=y, visible = vis > 0}
+		return {x=x-1,y=y-1, visible = vis > 0}
 	end
 
 	function mctrl.ScreenToVec(x,y)
@@ -402,21 +402,34 @@ function mctrl.GUIMouseReleased(mc)
 	end
 end
 
+local function DrawLine(x,y, a,b)
+	surface.DrawLine(x, y, a, b)
+	surface.DrawLine(x+1, y+1, a+1, b+1)
+	surface.DrawLine(x-1, y-1, a-1, b-1)
+end
+
+local function DrawOutlinedRect(x,y, w,h)
+	surface.DrawOutlinedRect(x,y, w,h)
+	surface.DrawOutlinedRect(x+1,y+1, w-2,h-2)
+end
+
 function mctrl.LineToBox(origin, point, siz)
 	siz = siz or 6
-	surface.DrawLine(origin.x, origin.y, point.x, point.y)
-	surface.DrawOutlinedRect(point.x - (siz * 0.5), point.y - (siz * 0.5), siz, siz)
+	DrawLine(origin.x, origin.y, point.x, point.y)
+	DrawOutlinedRect(point.x - (siz * 0.5), point.y - (siz * 0.5), siz, siz)
 end
 
 function mctrl.RotationLines(pos, dir, dir2, r)
 	local pr = mctrl.VecToScreen(pos + dir * r * mctrl.angle_pos)
 	local pra = mctrl.VecToScreen(pos + dir * r * (mctrl.angle_pos * 0.9) + dir2*r*0.08)
 	local prb = mctrl.VecToScreen(pos + dir * r * (mctrl.angle_pos * 0.9) + dir2*r*-0.08)
-	surface.DrawLine(pr.x, pr.y, pra.x, pra.y)
-	surface.DrawLine(pr.x, pr.y, prb.x, prb.y)
+	DrawLine(pr.x, pr.y, pra.x, pra.y)
+	DrawLine(pr.x, pr.y, prb.x, prb.y)
 end
 
 function mctrl.HUDPaint()
+	if pace.IsSelecting then return end
+	
 	local target = mctrl.GetTarget()
 	if not target then return end
 
@@ -463,6 +476,8 @@ function mctrl.HUDPaint()
 end
 
 function mctrl.Think()
+	if pace.IsSelecting then return end
+	
 	local x, y = mctrl.GetMousePos()
 	if mctrl.grab.axis and mctrl.grab.mode == MODE_MOVE then
 		mctrl.Move(mctrl.grab.axis, x, y, mctrl.GetCalculatedScale())
