@@ -100,6 +100,8 @@ pace.HiddenProperties =
 pace.HiddenPropertyKeys =
 {
 	EditorExpand = true,
+	UniqueID = true,
+	OwnerName = "group",
 }
 
 pace.PropertyLimits = 

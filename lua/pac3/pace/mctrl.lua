@@ -22,7 +22,7 @@ do -- pace
 
 	function mctrl.SetTarget(part)
 		part = part or pac.NULL
-		if part:IsValid() and part.HideGizmo then
+		if part:IsValid() and part.NonPhysical then
 			mctrl.target = pac.NULL
 		else
 			mctrl.target = part

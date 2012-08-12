@@ -1,39 +1,33 @@
 local PART = {}
 
 PART.ClassName = "entity"	
-PART.HideGizmo = true
+PART.NonPhysical = true
+
+pac.StartStorableVars()
+	pac.GetSet(PART, "Material", "")
+	pac.GetSet(PART, "Model", "")
+	pac.GetSet(PART, "Color", Vector(255, 255, 255))
+	pac.GetSet(PART, "Brightness", 1)
+	pac.GetSet(PART, "Alpha", 1)
+	pac.GetSet(PART, "Scale", Vector(1,1,1))
+	pac.GetSet(PART, "Size", 1)
+	pac.GetSet(PART, "OverallSize", 1)
+	pac.GetSet(PART, "HideEntity", false)
+	pac.GetSet(PART, "Invert", false)
+	pac.GetSet(PART, "DoubleFace", false)
+	pac.GetSet(PART, "DrawWeapon", true)
+	pac.GetSet(PART, "Fullbright", false)
+	
+	pac.GetSet(PART, "RelativeBones", true)
+		
+	pac.GetSet(PART, "Skin", 0)
+	pac.GetSet(PART, "Bodygroup", 0)
+	pac.GetSet(PART, "BodygroupState", 0)
+	pac.GetSet(PART, "DrawShadow", true)
+pac.EndStorableVars()
 
 function PART:Initialize()
 	self.ClipPlanes = {}
-	
-	self.StorableVars = {}
-
-	pac.StartStorableVars()
-		pac.GetSet(self, "Name", "")
-		pac.GetSet(self, "Description", "")
-		pac.GetSet(self, "Hide", false)
-		pac.GetSet(self, "ParentName", "")
-		pac.GetSet(self, "Material", "")
-		pac.GetSet(self, "Model", "")
-		pac.GetSet(self, "Color", Vector(255, 255, 255))
-		pac.GetSet(self, "Brightness", 1)
-		pac.GetSet(self, "Alpha", 1)
-		pac.GetSet(self, "Scale", Vector(1,1,1))
-		pac.GetSet(self, "Size", 1)
-		pac.GetSet(self, "OverallSize", 1)
-		pac.GetSet(self, "HideEntity", false)
-		pac.GetSet(self, "Invert", false)
-		pac.GetSet(self, "DoubleFace", false)
-		pac.GetSet(self, "DrawWeapon", true)
-		pac.GetSet(self, "Fullbright", false)
-		
-		pac.GetSet(self, "RelativeBones", true)
-			
-		pac.GetSet(self, "Skin", 0)
-		pac.GetSet(self, "Bodygroup", 0)
-		pac.GetSet(self, "BodygroupState", 0)
-		pac.GetSet(self, "DrawShadow", true)
-	pac.EndStorableVars()
 end
 
 function PART:OnBuildBonePositions(ent)

@@ -7,7 +7,7 @@ class.Registered = {}
 
 local function checkfield(tbl, key, def)
     tbl[key] = tbl[key] or def
-
+	
     if not tbl[key] then
         error(string.format("The key %q was not found!", key), 3)
     end
@@ -15,16 +15,38 @@ local function checkfield(tbl, key, def)
     return tbl[key]
 end
 
+local function COPY(var) 
+	if type(var) == "Vector" or type(var) == "Angle" then 
+		return var * 1 
+	end 
+	
+	if type(var) == "table" then
+		return table.Copy(var)
+	end
+	
+	return var 
+end
+
 function class.GetSet(tbl, name, def)
     tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
     tbl["Get" .. name] = tbl["Get" .. name] or function(self, var) return self[name] end
+	tbl["__def" .. name] = COPY(def)
     tbl[name] = def
 end
 
 function class.IsSet(tbl, name, def)
     tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
     tbl["Is" .. name] = tbl["Is" .. name] or function(self, var) return self[name] end
+	tbl["__def" .. name] = COPY(def)
     tbl[name] = def
+end
+
+function class.RemoveField(tbl, name)
+	tbl["Set" .. name] = nil
+    tbl["Get" .. name] = nil
+    tbl["Is" .. name] = nil
+	tbl["__def" .. name] = nil
+    tbl[name] = nil
 end
 
 function class.Get(type, name)

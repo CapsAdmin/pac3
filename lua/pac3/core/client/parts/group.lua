@@ -1,20 +1,9 @@
 local PART = {}
 
 PART.ClassName = "group"
-PART.HideGizmo = true
+PART.NonPhysical = true
 
-function PART:Initialize()
-	self.StorableVars = {}
-	
-	pac.StartStorableVars()
-		pac.GetSet(self, "Name", "")
-		pac.GetSet(self, "Description", "")
-		pac.GetSet(self, "OwnerName", "")
-		pac.GetSet(self, "ParentName", "")
-		pac.GetSet(self, "Hide", false)
-		pac.GetSet(self, "EditorExpand", false)
-	pac.EndStorableVars()
-	
+function PART:Initialize()	
 	-- hacks
 	timer.Simple(0.1, function() 
 		if not self:IsValid() then return end

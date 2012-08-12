@@ -17,7 +17,7 @@ end
 function PART:OnRemove()
 	local parent = self:GetParent()
 	
-	if parent:IsValid() and self.clip_id then
+	if parent:IsValid() and self.clip_id and parent.RemoveClipPlane then
 		parent:RemoveClipPlane(self.clip_id)
 	end
 end

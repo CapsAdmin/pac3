@@ -1,30 +1,20 @@
 local PART = {}
 
 PART.ClassName = "animation"
-PART.HideGizmo = true
+PART.NonPhysical = true
 PART.ThinkTime = 0
 
 PART.frame = 0
 
-function PART:Initialize()
-	self.StorableVars = {}
-	
-	pac.StartStorableVars()
-		pac.GetSet(self, "Name", "")
-		pac.GetSet(self, "Description", "")
-		pac.GetSet(self, "OwnerName", "")
-		pac.GetSet(self, "ParentName", "")
-		pac.GetSet(self, "Hide", false)
-		
-		pac.GetSet(self, "Loop", true)
-		pac.GetSet(self, "PingPongLoop", false)
-		pac.GetSet(self, "SequenceName", "ragdoll")
-		pac.GetSet(self, "Rate", 1)
-		pac.GetSet(self, "Offset", 0)
-		pac.GetSet(self, "Min", 0)
-		pac.GetSet(self, "Max", 1)
-	pac.EndStorableVars()
-end
+pac.StartStorableVars()		
+	pac.GetSet(PART, "Loop", true)
+	pac.GetSet(PART, "PingPongLoop", false)
+	pac.GetSet(PART, "SequenceName", "ragdoll")
+	pac.GetSet(PART, "Rate", 1)
+	pac.GetSet(PART, "Offset", 0)
+	pac.GetSet(PART, "Min", 0)
+	pac.GetSet(PART, "Max", 1)
+pac.EndStorableVars()
 
 function PART:GetOwner()
 	local parent = self:GetParent()
