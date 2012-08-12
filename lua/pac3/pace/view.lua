@@ -85,6 +85,12 @@ local function CalcDrag()
 	if input.IsKeyDown(KEY_LSHIFT) then
 		mult = 5
 	end
+	
+	if input.IsKeyDown(KEY_UP) then
+		pace.OnMouseWheeled(0.25)
+	elseif input.IsKeyDown(KEY_DOWN) then
+		pace.OnMouseWheeled(-0.25)
+	end
 		
 	if mcode == MOUSE_LEFT then
 		local delta = (held_mpos - Vector(gui.MousePos())) / 5 * math.rad(pace.ViewFOV)
@@ -114,15 +120,25 @@ local function CalcDrag()
 end
 
 function pac.CalcView()
+	if pace.editing_viewmodel then
+		local ent = LocalPlayer():GetViewModel()
+		ent:SetPos(pace.ViewPos)
+		ent:SetAngles(pace.ViewAngles)
+		ent:SetRenderOrigin(pace.ViewPos)
+		ent:SetRenderAngles(pace.ViewAngles)
+		ent:SetupBones()
+	end
 	return
 	{
 		origin = pace.ViewPos,
 		angles = pace.ViewAngles,
-		fov = pace.ViewFOV,
+		fov =  pace.editing_viewmodel and pace.ViewFOV + 10 or pace.ViewFOV,
 	}
 end
 
 function pac.ShouldDrawLocalPlayer()
+	if pace.editing_viewmodel then
+	return end
 	return true
 end
 
@@ -143,6 +159,13 @@ function pace.EnableView(b)
 		pac.RemoveHook("HUDPaint")
 		pace.SetTPose(false)
 		pace.SetBreathing(false)
+		
+		if pace.editing_viewmodel then
+			local ent = LocalPlayer():GetViewModel()
+			ent:SetRenderOrigin(nil)
+			ent:SetRenderAngles(nil)
+			ent:SetupBones()
+		return end
 	end
 end
 
@@ -232,7 +255,6 @@ function pac.HUDPaint()
 		CalcDrag()
 	
 		if ent:IsValid() then
-			CalcAnimationFix(ent)
 			pace.Call("Draw", ScrW(), ScrH())
 		end
 	end

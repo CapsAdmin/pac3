@@ -278,10 +278,8 @@ function PART:OnAttach(ent)
 		if self.Model ~= "" then
 			if ent:IsPlayer() and ent == LocalPlayer() then
 				RunConsoleCommand("cl_playermodel", self.Model)
-				ent.pac_bones = nil
 			else
 				ent:SetModel(self.Model)
-				ent.pac_bones = nil
 			end
 		end
 	

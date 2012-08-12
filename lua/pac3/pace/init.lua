@@ -22,7 +22,7 @@ pace.Editor = NULL
 function pace.OpenEditor()
 	pace.SetLanguage()
 	local editor = pace.CreatePanel("editor")
-		editor:SetSize(220, ScrH())
+		editor:SetSize(240, ScrH())
 		editor:MakePopup()
 		editor.Close = function() 
 			pace.CloseEditor()

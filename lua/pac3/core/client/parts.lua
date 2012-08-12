@@ -410,8 +410,10 @@ do -- meta
 		function PART:GetRealBoneName(name, owner)
 			owner = owner or self:GetOwner()
 			
-			if owner:IsValid() and owner.pac_bones and owner.pac_bones[name] then
-				return owner.pac_bones[name].real
+			local bones = pac.GetModelBones(owner)
+			
+			if owner:IsValid() and bones and bones[name] then
+				return bones[name].real
 			end
 			
 			return name

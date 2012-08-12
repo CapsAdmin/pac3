@@ -47,11 +47,15 @@ function pace.StopSelect()
 	R("GUIMousePressed", "pac_draw_select")
 	R("HUDPaint", "pac_draw_select")
 	R("HUDPaint", "pac_highlight")
+	
+	timer.Simple(0.1, function()
+		pace.IsSelecting = false
+	end)
 end
 
 function pace.SelectBone(ent, callback)
 	local data
-	local bones = ent.pac_bones or pac.GetAllBones(ent)
+	local bones = pac.GetModelBones(ent)
 
 	local function GUIMousePressed(mcode)
 		if mcode == MOUSE_LEFT and data then
@@ -81,7 +85,9 @@ function pace.SelectBone(ent, callback)
 			data = nil
 		end
 	end
-
+	
+	pace.IsSelecting = true
+	
 	hook.Add("GUIMousePressed", "pac_draw_select", GUIMousePressed)
 	hook.Add("HUDPaint", "pac_draw_select", HUDPaint)
 end
@@ -116,6 +122,8 @@ function pace.SelectPart(parts, callback)
 			data = nil
 		end
 	end
+	
+	pace.IsSelecting = true
 
 	hook.Add("GUIMousePressed", "pac_draw_select", GUIMousePressed)
 	hook.Add("HUDPaint", "pac_draw_select", HUDPaint)
@@ -153,6 +161,8 @@ function pace.SelectEntity(callback)
 			data = nil
 		end
 	end
+	
+	pace.IsSelecting = true
 
 	hook.Add("GUIMousePressed", "pac_draw_select", GUIMousePressed)
 	hook.Add("HUDPaint", "pac_draw_select", HUDPaint)

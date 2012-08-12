@@ -53,7 +53,7 @@ do -- list
 		self.right = right
 
 		self:SetDividerWidth(2)
-		self:SetLeftWidth(91)
+		self:SetLeftWidth(110)
 		self:SetItemHeight(14)
 	end
 
@@ -225,6 +225,21 @@ do -- base editable
 
 	PANEL.ClassName = "properties_base_type"
 	PANEL.Base = "DLabel"
+	
+	function PANEL:Init(...)
+		if self.SpecialCallback then
+			local btn = vgui.Create("DButton", self)
+			btn:SetSize(16, 16)
+			btn:Dock(RIGHT)
+			btn:SetText("...")
+			btn.DoClick = function() self:SpecialCallback() end
+			btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2() end or btn.DoClick
+		end
+		
+		if DLabel and DLabel.Init then
+			return DLabel.Init(self, ...)
+		end
+	end
 
 	function PANEL:SetValue(var, skip_encode)
 		if self.editing then return end
@@ -236,7 +251,7 @@ do -- base editable
 		self:SetText("  " .. str) -- ugh
 		self:SizeToContents()
 
-		if #str > 0 then
+		if #str > 10 then
 			self:SetTooltip(str)
 		end
 
@@ -273,8 +288,13 @@ do -- base editable
 			--end
 		end
 		
-		if mcode == MOUSE_RIGHT and self.SpecialCallback then
-			self:SpecialCallback()
+		if false and mcode == MOUSE_RIGHT then
+			local menu = DermaMenu()
+			menu:SetPos(gui.MousePos())
+			menu:MakePopup()
+			menu:AddOption(L"reset", function()
+				self:Restart()
+			end)
 		end
 	end
 
@@ -301,7 +321,8 @@ do -- base editable
 	end
 	
 	function PANEL:Restart()
-		self:SetValue("")
+		self:SetValue(self:Decode(""))
+		self.OnValueChanged(self:Decode(""))
 	end
 
 	function PANEL:EditText()
@@ -401,6 +422,10 @@ do -- vector
 				left.SpecialCallback = function(self2) special_callback(self, self2) end
 				middle.SpecialCallback = function(self2) special_callback(self, self2) end
 				right.SpecialCallback = function(self2) special_callback(self, self2) end
+			else
+				left.Restart = function() self:Restart() end
+				middle.Restart = function() self:Restart() end
+				right.Restart = function() self:Restart() end
 			end
 			
 			left:SetMouseInputEnabled(true)
@@ -459,23 +484,25 @@ do -- vector
 			self.middle = middle
 			self.right = right
 		end
-
-		function PANEL:SetValue(vec)
-			self.vector = vec
-
-			self.left:SetValue(math.Round(vec[arg1], 3))
-			self.middle:SetValue(math.Round(vec[arg2], 3))
-			self.right:SetValue(math.Round(vec[arg3], 3))
-		end
-
-		function PANEL:SpecialCallback()
+		
+		function PANEL:Restart()
 			self.left:SetValue(0)
 			self.middle:SetValue(0)
 			self.right:SetValue(0)
 			
-			self.OnValueChanged(ctor(0,0,0))
+			self.left:OnValueChanged(0)
+			self.middle:OnValueChanged(0)
+			self.right:OnValueChanged(0)
 		end
-		
+
+		function PANEL:SetValue(vec)
+			self.vector = vec
+
+			self.left:SetValue(math.Round(vec[arg1], 4))
+			self.middle:SetValue(math.Round(vec[arg2], 4))
+			self.right:SetValue(math.Round(vec[arg3], 4))
+		end
+
 		function PANEL:PerformLayout()
 			self.left:SizeToContents()
 			self.left:SetWide(math.max(self.left:GetWide(), 12))
@@ -489,7 +516,7 @@ do -- vector
 			self.middle:MoveRightOf(self.left, 10)
 			self.right:MoveRightOf(self.middle, 10)
 		end
-
+		
 		function PANEL:OnValueChanged()
 
 		end
@@ -660,6 +687,27 @@ do -- bone
 		end)
 	end
 	
+	function PANEL:SpecialCallback2()
+		local ent = pace.GetViewEntity()
+		local bones = pac.GetModelBones(ent)
+		
+		local menu = DermaMenu()
+		menu:MakePopup()
+		
+		local x,y = pace.Editor:GetPos()
+		menu:SetPos(x + pace.Editor:GetWide(),y)
+		menu:SetTall(ScrH())
+		
+		bones = table.ClearKeys(bones)
+		table.sort(bones, function(a,b) return a.friendly > b.friendly end)
+		for _, data in ipairs(bones) do
+			menu:AddOption(L(data.friendly), function()
+				self:SetValue(L(data.friendly))
+				self.OnValueChanged(data.friendly)
+			end)
+		end
+	end
+	
 	pace.RegisterPanel(PANEL)
 end
 
@@ -676,6 +724,22 @@ do -- part
 		end)
 	end
 	
+	function PANEL:SpecialCallback2()
+		local menu = DermaMenu()
+		menu:MakePopup()
+		
+		local x,y = pace.Editor:GetPos()
+		menu:SetPos(x + pace.Editor:GetWide(),y)
+		menu:SetTall(ScrH())
+		
+		for _, part in pairs(pac.GetParts(true)) do
+			menu:AddOption(part:GetName(), function()
+				self:SetValue(part:GetName())
+				self.OnValueChanged(part:GetName())
+			end)
+		end
+	end
+	
 	pace.RegisterPanel(PANEL)
 end
 
@@ -688,7 +752,33 @@ do -- owner
 	function PANEL:SpecialCallback()
 		pace.SelectEntity(function(ent)
 			pace.current_part:SetOwnerName(ent:EntIndex())
+			self.OnValueChanged(ent:EntIndex())
 		end)
+	end
+		
+	function PANEL:SpecialCallback2()
+		local menu = DermaMenu()
+		menu:MakePopup()
+		
+		local x,y = pace.Editor:GetPos()
+		menu:SetPos(x + pace.Editor:GetWide(),y)
+		menu:SetTall(ScrH())
+		
+		local function get_friendly_name(ent)
+			local name = ent.GetName and ent:GetName()
+			if not name or name == "" then
+				name = ent:GetClass()
+			end
+
+			return ent:EntIndex() .. " - " .. name
+		end
+		
+		for _, ent in pairs(ents.GetAll()) do
+			menu:AddOption(get_friendly_name(ent), function()
+				pace.current_part:SetOwnerName(ent:EntIndex())
+				self.OnValueChanged(ent:EntIndex())
+			end)
+		end
 	end
 	
 	pace.RegisterPanel(PANEL)
@@ -699,20 +789,85 @@ do -- model
 
 	PANEL.ClassName = "properties_model"
 	PANEL.Base = "pace_properties_base_type"
-		
-	function PANEL:SpecialCallback()
+	
+	function PANEL:SpecialCallback2()
 		g_SpawnMenu:Open()
+	end
+	
+	function PANEL:SpecialCallback()
+
+		local frame = vgui.Create("DFrame")
+		frame:SetTitle(L"models")
+		frame:SetPos(pace.Editor:GetWide(), 0)
+		frame:SetSize(pace.Editor:GetWide(), ScrH())
 		
-		--[[pac.AddHook("VGUIMousePressed", function(panel, mcode)
-			if VERSION >= 150 then
-				print(panel:Find("ContenIcon"))
-				if panel:GetClassName() == "ContentIcon" and panel.spawnname then
-					self:SetValue(panel.spawnname)
-				end
-			else
+		local divider = vgui.Create("DVerticalDivider", frame)
+		divider:Dock(FILL)
+				
+		local top = vgui.Create("DPanelList")
+			top:EnableVerticalScrollbar(true)		
+		divider:SetTop(top)
+		
+		local bottom = vgui.Create("DPanelList")
+			bottom:Dock(FILL)
+			bottom:EnableHorizontal(true)
+			bottom:EnableVerticalScrollbar(true)
+			bottom:SetSpacing(4, 4)
+		divider:SetBottom(bottom)
+		
+		local function GetParentFolder(str)
+			return str:match("(.*/)" .. (".*/"):rep(1)) or ""
+		end
+	
+		local function populate(dir)
+			frame:SetTitle(dir)
 			
-			end
-		end)]]
+			file.TFind(dir .. "*", function(_, folders, files)
+				if GetParentFolder(dir):find("/", nil, true) then
+					local btn = vgui.Create("DButton")
+						btn:SetText("..")
+						top:AddItem(btn)
+					
+					function btn:DoClick()
+						for k,v in pairs(top:GetItems()) do v:Remove() end
+						for k,v in pairs(bottom:GetItems()) do v:Remove() end
+						populate(GetParentFolder(dir))
+					end
+				end
+						
+				for _, name in pairs(folders) do
+					local btn = vgui.Create("DButton")
+					btn:SetText(name)
+					top:AddItem(btn)
+					
+					function btn:DoClick()
+						for k,v in pairs(top:GetItems()) do v:Remove() end
+						for k,v in pairs(bottom:GetItems()) do v:Remove() end
+						populate(dir .. name .. "/")
+					end
+				end
+				
+				for _, name in pairs(files) do
+					if name:find(".mdl", nil, true) then
+						local btn = vgui.Create("SpawnIcon")
+						btn:SetIconSize(64)
+						btn:SetSize(64, 64)
+						
+						btn:SetModel(dir .. name)
+						bottom:AddItem(btn)
+						
+						function btn.DoClick()
+							pace.current_part:SetModel(dir .. name)
+						end
+					end
+				end
+			end)
+			
+			top:InvalidateLayout(true)
+			bottom:InvalidateLayout(true)
+		end
+
+		populate("models/")
 	end
 	
 	pace.RegisterPanel(PANEL)
@@ -724,8 +879,16 @@ do -- material
 	PANEL.ClassName = "properties_material"
 	PANEL.Base = "pace_properties_base_type"
 		
-	function PANEL:SpecialCallback()		
+	function PANEL:SpecialCallback()
+		if pac.MatBrowser and pac.MatBrowser:IsValid() then
+			pac.MatBrowser:Remove()
+		end
+		
 		local pnl = pace.CreatePanel("mat_browser")
+		
+		pnl:SetPos(pace.Editor:GetWide(), 0)
+		pnl:SetSize(pace.Editor:GetWide(), ScrH())
+		
 		
 		function pnl.MaterialSelected(_, path)
 			self:SetValue(path)
