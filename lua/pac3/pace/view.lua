@@ -160,12 +160,10 @@ function pace.EnableView(b)
 		pace.SetTPose(false)
 		pace.SetBreathing(false)
 		
-		if pace.editing_viewmodel then
-			local ent = LocalPlayer():GetViewModel()
-			ent:SetRenderOrigin(nil)
-			ent:SetRenderAngles(nil)
-			ent:SetupBones()
-		return end
+		local ent = LocalPlayer():GetViewModel()
+		ent:SetRenderOrigin(nil)
+		ent:SetRenderAngles(nil)
+		ent:SetupBones()
 	end
 end
 
