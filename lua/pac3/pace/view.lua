@@ -161,9 +161,11 @@ function pace.EnableView(b)
 		pace.SetBreathing(false)
 		
 		local ent = LocalPlayer():GetViewModel()
-		ent:SetRenderOrigin(nil)
-		ent:SetRenderAngles(nil)
-		ent:SetupBones()
+		if ent:IsValid() then
+			ent:SetRenderOrigin(nil)
+			ent:SetRenderAngles(nil)
+			ent:SetupBones()
+		end
 	end
 end
 
