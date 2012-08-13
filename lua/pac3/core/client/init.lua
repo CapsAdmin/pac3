@@ -91,12 +91,12 @@ end
 
 function pac.HideWeapon(wep, hide)
 	if hide then
-		if not wep.RenderOverride then
-			wep.RenderOverride = function() end
-		end
+		wep:SetNoDraw(true)
+		wep.pac_wep_hiding = true
 	else
-		if wep.RenderOverride then
-			wep.RenderOverride = nil
+		if wep.pac_wep_hiding then
+			wep:SetNoDraw(false)
+			wep.pac_wep_hiding = false
 		end
 	end
 end
