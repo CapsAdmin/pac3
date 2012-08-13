@@ -153,6 +153,8 @@ function PART:SetOwnerEntity(b)
 			ent:SetModelScale(Vector(1,1,1))
 		end
 	end
+	
+	self.OwnerEntity = b
 end
 
 local render_EnableClipping = render.EnableClipping
