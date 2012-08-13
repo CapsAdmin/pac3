@@ -22,7 +22,7 @@ function pace.OnDraw()
 	pace.mctrl.HUDPaint()
 end
 
-function pace.OnPartSelected(part)
+function pace.OnPartSelected(part, is_selecting)
 	local owner = part:GetOwner()
 	if owner:IsValid() and owner:GetClass() == "viewmodel" then
 		pace.editing_viewmodel = true
@@ -42,7 +42,13 @@ function pace.OnPartSelected(part)
 		pac.MatBrowser:Remove()
 	end
 	
-	pace.StopSelect()
+	if pace.tree:IsValid() then
+		pace.tree:SelectPart(part)
+	end
+	
+	if not is_selecting then
+		pace.StopSelect()
+	end
 end
 
 function pace.OnCreatePart(class_name, name, desc)

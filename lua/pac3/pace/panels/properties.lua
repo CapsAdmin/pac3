@@ -720,7 +720,7 @@ do -- part
 	function PANEL:SpecialCallback()
 		pace.SelectPart(pac.GetParts(), function(part)
 			self:SetValue(part:GetName())
-			self.OnValueChanged(part:GetName())
+			self.OnValueChanged(part)
 		end)
 	end
 	
@@ -735,7 +735,7 @@ do -- part
 		for _, part in pairs(pac.GetParts(true)) do
 			menu:AddOption(part:GetName(), function()
 				self:SetValue(part:GetName())
-				self.OnValueChanged(part:GetName())
+				self.OnValueChanged(part)
 			end)
 		end
 	end

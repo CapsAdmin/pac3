@@ -274,6 +274,11 @@ do -- meta
 				self.ParentUID = nil
 				return
 			end
+			
+			if type(var) ~= "string" then
+				self:SetParent(var)
+				return
+			end
 
 			self.ParentName = var
 		end
@@ -674,12 +679,14 @@ do -- meta
 	do -- highlight
 		PART.highlight = 0
 
-		function PART:Highlight()
+		function PART:Highlight(skip_children)
 			self.highlight = RealTime() + 0.1	
 			
-			for key, part in pairs(self.Children) do
-				part.highlight = RealTime() + 0.1
-				part:Highlight()
+			if not skip_children then
+				for key, part in pairs(self.Children) do
+					part.highlight = RealTime() + 0.1
+					part:Highlight()
+				end
 			end
 		end
 
@@ -687,12 +694,20 @@ do -- meta
 			return self.highlight > RealTime()
 		end
 				
-		local ring = Material("particle/particle_Ring_Sharp")
+		local mat = Material("models/debug/debugwhite")
+
+		local render_MaterialOverride = render.MaterialOverride or SetMaterialOverride
 
 		function PART:DrawHighlight(owner, pos, ang)
-			render.SetMaterial(ring)
 			cam.IgnoreZ(true)
-			render.DrawSprite(pos, 8, 8, color_white)
+			local ent = self.Entity
+			if ent and ent:IsValid() then
+				local pulse = math.sin(RealTime()*20) * 1
+				pulse = pulse + 2
+				render.SetColorModulation(pulse, pulse, pulse)
+				render_MaterialOverride(mat)
+				ent:DrawModel()
+			end
 			cam.IgnoreZ(false)
 		end
 	end
@@ -819,8 +834,16 @@ do -- meta
 	end
 	
 	do -- aim part		
-		function PART:SetAimPartName(name)
-			self.AimPartName = name or ""
+		function PART:SetAimPartName(var)
+					
+			if var and type(var) ~= "string" then
+				self.AimPartName = var:GetName()
+				self.AimPartUID = var:GetUniqueID()
+				self.AimPart = var
+				return
+			end
+		
+			self.AimPartName = var or ""
 			self.AimPartUID = nil
 			self.AimPart = pac.NULL
 		end	
@@ -829,6 +852,7 @@ do -- meta
 			for key, part in pairs(pac.GetParts()) do	
 				if part ~= self and (part:GetUniqueID() == self.AimPartUID or part:GetName() == self.AimPartName) then
 					self.AimPart = part
+					self.AimPartUID = part.UniqueID
 					break
 				end
 			end

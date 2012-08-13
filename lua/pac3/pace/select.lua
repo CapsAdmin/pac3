@@ -9,8 +9,12 @@ function pace.DrawHUDText(x, y, text)
 		Lerp(0.05, x, gui.MouseX()),
 		Lerp(0.05, y, gui.MouseY())
 	)
-
-	surface.SetFont("DermaDefault")
+	
+	if VERSION >= 150 then
+		surface.SetFont("DermaDefault")
+	else
+		surface.SetFont("DefaultFixedOutline")
+	end
 	surface.SetTextColor(255, 255, 255, 255)
 	local w, h = surface.GetTextSize(text)
 	surface.SetTextPos(x - (w * 0.5), y - h)
@@ -25,6 +29,8 @@ function pace.DrawSelection(pos)
 	if pos.visible then
 		surface.SetDrawColor(255, 255, 255, 255)
 		surface.DrawOutlinedRect(pos.x-(siz*0.5), pos.y-(siz*0.5), siz, siz)
+		surface.SetDrawColor(0, 0, 0, 255)
+		surface.DrawOutlinedRect(pos.x-(siz*0.5)-1, pos.y-(siz*0.5)-1, siz+2, siz+2)
 
 		return
 			x > pos.x - area and x < pos.x + area and
@@ -107,9 +113,11 @@ function pace.SelectPart(parts, callback)
 		local tbl = {}
 
 		for key, part in pairs(parts) do
-			local pos = part.cached_pos:ToScreen()
-			if pace.DrawSelection(pos) then
-				table.insert(tbl, {part = part, pos = pos, dist = Vector(pos.x, pos.y, 0):Distance(Vector(x, y, 0))})
+			if not part:IsHidden() then
+				local pos = part.cached_pos:ToScreen()
+				if pace.DrawSelection(pos) then
+					table.insert(tbl, {part = part, pos = pos, dist = Vector(pos.x, pos.y, 0):Distance(Vector(x, y, 0))})
+				end
 			end
 		end
 
@@ -118,6 +126,7 @@ function pace.SelectPart(parts, callback)
 			table.sort(tbl, function(a, b) return a.dist < b.dist end)
 			data = tbl[1]
 			pace.DrawHUDText(data.pos.x, data.pos.y, data.part:GetName())
+			data.part:Highlight(true)
 		else
 			data = nil
 		end
