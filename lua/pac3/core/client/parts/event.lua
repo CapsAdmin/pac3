@@ -7,7 +7,7 @@ PART.ThinkTime = 0
 pac.StartStorableVars()
 	pac.GetSet(PART, "Event", "")
 	pac.GetSet(PART, "Arguments", "")
-	pac.GetSet(PART, "Operator", "")
+	pac.GetSet(PART, "Operator", "find simple")
 	pac.GetSet(PART, "Invert", false)
 pac.EndStorableVars()
 
@@ -152,7 +152,21 @@ PART.Events =
 				return true
 			end			
 		end,
-	}
+	},
+
+	command =
+	{
+		arguments = {{find = "string"}, {time = "number"}},
+		callback = function(self, ent, find, time)
+			time = time or 0.1
+			
+			local data = ent.pac_command_event 
+			
+			if data and self:StringOperator(data.name, find) and data.time + time > RealTime() then
+				return true
+			end			
+		end,
+	},
 }
 
 function PART:OnThink()
@@ -293,6 +307,15 @@ for key, val in pairs(_G) do
 		enums[val] = key:gsub("PLAYERANIMEVENT_", ""):gsub("_", " "):lower()
 	end
 end
+
+usermessage.Hook("pac_event", function(umr)
+	local ply = umr:ReadEntity()
+	local str = umr:ReadString()
+	
+	if ply:IsValid() then
+		ply.pac_command_event = {name = str, time = RealTime()}
+	end
+end)
 
 pac.AddHook("DoAnimationEvent", function(ply, event, data)
 	ply.pac_anim_event = {name = enums[event], time = RealTime()}

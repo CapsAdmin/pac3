@@ -531,7 +531,7 @@ function PANEL:SetMaterialList(tbl)
 	self.MatList:Clear(true)
 	
 	for i, material in ipairs(self.MaterialList) do
-		if IsError(material) then continue end
+		-- if IsError(material) then continue end
 		
 		local image = vgui.Create("DImageButton")
 		image:SetOnViewMaterial(material, material)

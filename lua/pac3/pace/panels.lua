@@ -6,7 +6,11 @@ function pace.RegisterPanel(PANEL)
 end
 
 function pace.PanelExists(class_name)
-	return pace.RegisteredPanels[class_name] ~= nil
+	return pace.GetRegisteredPanel(class_name) ~= nil
+end
+
+function pace.GetRegisteredPanel(class_name)
+	return pace.RegisteredPanels[class_name]
 end
 
 function pace.CreatePanel(class_name, parent)
