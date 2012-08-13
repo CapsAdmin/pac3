@@ -707,6 +707,7 @@ do -- meta
 				render.SetColorModulation(pulse, pulse, pulse)
 				render_MaterialOverride(mat)
 				ent:DrawModel()
+				render_MaterialOverride()
 			end
 			cam.IgnoreZ(false)
 		end

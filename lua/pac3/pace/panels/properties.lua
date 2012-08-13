@@ -1,6 +1,39 @@
 local VERSION  = VERSION
 local L = pace.LanguageString
 
+local function SHOW_SPECIAL(pnl, parent, size)
+	size = size or 150
+	
+	pnl:SetPos(pace.Editor:GetWide(), select(2, parent:LocalToScreen()) - size + 25)
+	pnl:SetSize(size, size)
+	pnl:MakePopup()		
+end
+
+local function FIX_MENU(menu)
+	menu:SetMaxHeight(500)
+	menu:InvalidateLayout(true, true)
+	menu:SetPos(pace.Editor:GetPos() + pace.Editor:GetWide(), gui.MouseY() - (menu:GetTall() * 0.5))
+end
+
+pace.ActiveSpecialPanel = NULL
+
+function pace.SafeRemoveSpecialPanel()
+	if pace.ActiveSpecialPanel:IsValid() then
+		pace.ActiveSpecialPanel:Remove()
+	end
+end
+
+hook.Add("GUIMousePressed", "pace_SafeRemoveSpecialPanel", function()
+	local pnl = pace.ActiveSpecialPanel
+	if pnl:IsValid() then
+		local x,y = gui.MousePos()
+		local _x, _y = pnl:GetPos()
+		if x < _x or y < _y or x > _x + pnl:GetWide() or y > _y + pnl:GetTall() then
+			pnl:Remove()
+		end
+	end
+end)
+
 do -- container
 	local PANEL = {}
 
@@ -226,6 +259,12 @@ do -- base editable
 	PANEL.ClassName = "properties_base_type"
 	PANEL.Base = "DLabel"
 	
+	PANEL.SingleClick = true
+	
+	function PANEL:OnCursorMoved()
+		self:SetCursor("hand")
+	end
+	
 	function PANEL:Init(...)
 		if self.SpecialCallback then
 			local btn = vgui.Create("DButton", self)
@@ -276,7 +315,7 @@ do -- base editable
 			--else
 				self.MousePressing = true
 				if self:MousePress(true) == false then return end
-				if (self.last_press or 0) > RealTime() then
+				if self.SingleClick or (self.last_press or 0) > RealTime() then
 					self:EditText()
 					self:DoubleClick()
 					self.last_press = 0
@@ -299,14 +338,12 @@ do -- base editable
 	end
 
 	function PANEL:OnMouseReleased()
-		pace.BusyWithProperties = false
 		self:MousePress(false)
 		self.MousePressing = false
 	end
 
 	function PANEL:IsMouseDown()
 		if not input.IsMouseDown(MOUSE_LEFT) then
-			pace.BusyWithProperties = false
 			self.MousePressing = false
 		end
 		return self.MousePressing
@@ -325,9 +362,7 @@ do -- base editable
 		self.OnValueChanged(self:Decode(""))
 	end
 
-	function PANEL:EditText()
-		pace.BusyWithProperties = true
-		
+	function PANEL:EditText()		
 		self:SetText("")
 		
 		local pnl = vgui.Create("DTextEntry", self)
@@ -352,7 +387,24 @@ do -- base editable
 			self:SetValue(pnl:GetValue() or "", true)
 			self.OnValueChanged(self:Decode(pnl:GetValue()))
 		end
+		
+		pace.BusyWithProperties = pnl
 	end
+	
+	local function click()
+		if not input.IsMouseDown(MOUSE_LEFT) then return end
+		local pnl = pace.BusyWithProperties
+		if pnl and pnl ~= true and pnl:IsValid() then
+			local x, y = gui.MousePos()
+			local _x, _y = pnl:GetParent():LocalToScreen()
+			if x < _x or y < _y or x > _x + pnl:GetParent():GetWide() or y > _y + pnl:GetParent():GetTall() then
+				pnl:OnEnter()
+			end
+		end
+	end
+	
+	hook.Add("GUIMousePressed", "pace_property_text_edit", click)
+	hook.Add("VGUIMousePressed", "pace_property_text_edit", click)
 	
 	function PANEL:Reset()
 		if IsValid(self.editing) then
@@ -388,7 +440,9 @@ do -- string
 
 	PANEL.ClassName = "properties_string"
 	PANEL.Base = "pace_properties_base_type"
-
+	
+	PANEL.SingleClick = true
+	
 	pace.RegisterPanel(PANEL)
 end
 
@@ -399,7 +453,7 @@ do -- vector
 		PANEL.ClassName = "properties_" .. type
 		PANEL.Base = "pace_properties_container"
 
-		function PANEL:Init()
+		function PANEL:Init(...)
 			self.vector = ctor(0,0,0)
 
 			local left = pace.CreatePanel("properties_number", self)
@@ -416,16 +470,6 @@ do -- vector
 				left.sens = sens
 				middle.sens = sens
 				right.sens = sens
-			end
-			
-			if special_callback then
-				left.SpecialCallback = function(self2) special_callback(self, self2) end
-				middle.SpecialCallback = function(self2) special_callback(self, self2) end
-				right.SpecialCallback = function(self2) special_callback(self, self2) end
-			else
-				left.Restart = function() self:Restart() end
-				middle.Restart = function() self:Restart() end
-				right.Restart = function() self:Restart() end
 			end
 			
 			left:SetMouseInputEnabled(true)
@@ -483,7 +527,18 @@ do -- vector
 			self.left = left
 			self.middle = middle
 			self.right = right
+			
+			if self.SpecialCallback then
+				local btn = vgui.Create("DButton", self)
+				btn:SetSize(16, 16)
+				btn:Dock(RIGHT)
+				btn:SetText("...")
+				btn.DoClick = function() self:SpecialCallback() end
+				btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2() end or btn.DoClick
+			end
 		end
+		
+		PANEL.SpecialCallback = special_callback		
 		
 		function PANEL:Restart()
 			self.left:SetValue(0)
@@ -505,13 +560,13 @@ do -- vector
 
 		function PANEL:PerformLayout()
 			self.left:SizeToContents()
-			self.left:SetWide(math.max(self.left:GetWide(), 12))
+			self.left:SetWide(math.max(self.left:GetWide(), 22))
 			
 			self.middle:SizeToContents()
-			self.middle:SetWide(math.max(self.middle:GetWide(), 12))
+			self.middle:SetWide(math.max(self.middle:GetWide(), 22))
 			
 			self.right:SizeToContents()
-			self.right:SetWide(math.max(self.right:GetWide(), 12))
+			self.right:SetWide(math.max(self.right:GetWide(), 22))
 
 			self.middle:MoveRightOf(self.left, 10)
 			self.right:MoveRightOf(self.middle, 10)
@@ -537,15 +592,35 @@ do -- vector
 		end, 
 		
 		function(self)
+			pace.SafeRemoveSpecialPanel()
+			
 			local frm = vgui.Create("DFrame")
-			frm:SetSize(200, 200)
-			frm:Center()
-			frm:MakePopup()
-			frm:SetTitle("")
-		
+			frm:SetTitle("color")
+			
+			SHOW_SPECIAL(frm, self)
+			
 			local clr = vgui.Create("DColorMixer", frm)
 			clr:Dock(FILL)
 			clr:SetColor(Color(self.vector.x, self.vector.y, self.vector.z))
+			
+			local function tohex(vec)
+				return ("#%X%X%X"):format(vec.x, vec.y, vec.z)
+			end
+			
+			local function fromhex(str)
+				local x,y,z = str:match("#?(..)(..)(..)")
+				return Vector(tonumber("0x" .. x), tonumber("0x" .. y), tonumber("0x" .. z))
+			end
+			
+			local html_color = vgui.Create("DTextEntry", frm)
+			html_color:Dock(BOTTOM)
+			html_color:SetText(tohex(self.vector))
+			html_color.OnEnter = function() 
+				local vec = fromhex(html_color:GetValue())
+				clr:SetColor(Color(vec.x, vec.y, vec.z))
+				self:SetValue(vec)
+				self.OnValueChanged(vec)
+			end
 			
 			function clr.Think()
 				if VERSION >= 150 then
@@ -561,11 +636,14 @@ do -- vector
 					then
 						local clr = clr:GetColor() or Color(255, 255, 255, 255)
 						local vec = Vector(clr.r, clr.g, clr.b)
+						html_color:SetText(tohex(vec))
 						self.OnValueChanged(vec)
 						self:SetValue(vec)
 					end
 				end
 			end
+			
+			pace.ActiveSpecialPanel = frm
 		end,
 		10
 	)
@@ -579,6 +657,8 @@ do -- number
 	
 	PANEL.sens = 1
 	
+	PANEL.SingleClick = false
+	
 	function PANEL:MousePress(bool)
 		if bool then
 			self.mousey = gui.MouseY()
@@ -587,6 +667,10 @@ do -- number
 		else
 			self.mousey = nil
 		end
+	end
+	
+	function PANEL:OnCursorMoved()
+		self:SetCursor("sizens")
 	end
 
 	function PANEL:Think()
@@ -652,6 +736,8 @@ do -- boolean
 
 	function PANEL:SetValue(b)
 		self.chck:SetChecked(b)
+		self.chck:Toggle()
+		self.chck:Toggle()
 		self.lbl:SetText(L(tostring(b)))
 	end
 
@@ -692,11 +778,8 @@ do -- bone
 		local bones = pac.GetModelBones(ent)
 		
 		local menu = DermaMenu()
-		menu:MakePopup()
 		
-		local x,y = pace.Editor:GetPos()
-		menu:SetPos(x + pace.Editor:GetWide(),y)
-		menu:SetTall(ScrH())
+		menu:MakePopup()
 		
 		bones = table.ClearKeys(bones)
 		table.sort(bones, function(a,b) return a.friendly > b.friendly end)
@@ -706,6 +789,8 @@ do -- bone
 				self.OnValueChanged(data.friendly)
 			end)
 		end
+		
+		FIX_MENU(menu)
 	end
 	
 	pace.RegisterPanel(PANEL)
@@ -726,11 +811,8 @@ do -- part
 	
 	function PANEL:SpecialCallback2()
 		local menu = DermaMenu()
-		menu:MakePopup()
-		
-		local x,y = pace.Editor:GetPos()
-		menu:SetPos(x + pace.Editor:GetWide(),y)
-		menu:SetTall(ScrH())
+	
+		menu:MakePopup()		
 		
 		for _, part in pairs(pac.GetParts(true)) do
 			menu:AddOption(part:GetName(), function()
@@ -738,6 +820,8 @@ do -- part
 				self.OnValueChanged(part)
 			end)
 		end
+		
+		FIX_MENU(menu)
 	end
 	
 	pace.RegisterPanel(PANEL)
@@ -759,11 +843,7 @@ do -- owner
 	function PANEL:SpecialCallback2()
 		local menu = DermaMenu()
 		menu:MakePopup()
-		
-		local x,y = pace.Editor:GetPos()
-		menu:SetPos(x + pace.Editor:GetWide(),y)
-		menu:SetTall(ScrH())
-		
+				
 		local function get_friendly_name(ent)
 			local name = ent.GetName and ent:GetName()
 			if not name or name == "" then
@@ -779,6 +859,8 @@ do -- owner
 				self.OnValueChanged(ent:EntIndex())
 			end)
 		end
+		
+		FIX_MENU(menu)
 	end
 	
 	pace.RegisterPanel(PANEL)
@@ -791,11 +873,13 @@ do -- model
 	PANEL.Base = "pace_properties_base_type"
 	
 	function PANEL:SpecialCallback2()
+		pace.SafeRemoveSpecialPanel()
 		g_SpawnMenu:Open()
 	end
 	
 	function PANEL:SpecialCallback()
-
+		pace.SafeRemoveSpecialPanel()
+		
 		local frame = vgui.Create("DFrame")
 		frame:SetTitle(L"models")
 		frame:SetPos(pace.Editor:GetWide(), 0)
@@ -848,11 +932,13 @@ do -- model
 				end
 				
 				for _, name in pairs(files) do
+					local dir = dir:match("../.-/(.+)")
+
 					if name:find(".mdl", nil, true) then
 						local btn = vgui.Create("SpawnIcon")
 						btn:SetIconSize(64)
 						btn:SetSize(64, 64)
-						
+												
 						btn:SetModel(dir .. name)
 						bottom:AddItem(btn)
 						
@@ -860,14 +946,33 @@ do -- model
 							pace.current_part:SetModel(dir .. name)
 						end
 					end
-				end
+					
+					-- umm
+					
+					if name:find(".vmt", nil, true) then
+						local image = vgui.Create("DImageButton")
+						image:SetSize(64, 64)
+						local path = (dir .. name):match("materials/(.-)%.vmt")
+						image:SetMaterial(path)
+						image:SetTooltip(path)
+						bottom:AddItem(image)
+						
+						function image.DoClick()
+							pace.current_part:SetMaterial(path)
+						end
+					end
+										
+
+ 				end
 			end)
 			
 			top:InvalidateLayout(true)
 			bottom:InvalidateLayout(true)
 		end
 
-		populate("models/")
+		populate("../")
+		
+		pace.ActiveSpecialPanel = frame
 	end
 	
 	pace.RegisterPanel(PANEL)
@@ -880,22 +985,18 @@ do -- material
 	PANEL.Base = "pace_properties_base_type"
 		
 	function PANEL:SpecialCallback()
-		if pac.MatBrowser and pac.MatBrowser:IsValid() then
-			pac.MatBrowser:Remove()
-		end
+		pace.SafeRemoveSpecialPanel()
 		
 		local pnl = pace.CreatePanel("mat_browser")
 		
-		pnl:SetPos(pace.Editor:GetWide(), 0)
-		pnl:SetSize(pace.Editor:GetWide(), ScrH())
-		
+		SHOW_SPECIAL(pnl, self, 300)
 		
 		function pnl.MaterialSelected(_, path)
 			self:SetValue(path)
 			self.OnValueChanged(path)
 		end
 		
-		pac.MatBrowser = pnl
+		pace.ActiveSpecialPanel = pnl
 	end
 	
 	pace.RegisterPanel(PANEL)
@@ -907,7 +1008,9 @@ do -- sequence list
 	PANEL.ClassName = "properties_sequence"
 	PANEL.Base = "pace_properties_base_type"
 		
-	function PANEL:SpecialCallback()	
+	function PANEL:SpecialCallback()
+		pace.SafeRemoveSpecialPanel()
+		
 		local frame = vgui.Create("DFrame")
 		frame:SetTitle(L"animations")
 		frame:SetSize(300, 300)
@@ -936,6 +1039,8 @@ do -- sequence list
 				list:SelectItem(pnl)
 			end
 		end
+		
+		pace.ActiveSpecialPanel = frame
 	end
 	
 	pace.RegisterPanel(PANEL)
@@ -948,10 +1053,11 @@ do -- event list
 	PANEL.Base = "pace_properties_base_type"
 		
 	function PANEL:SpecialCallback()	
+		pace.SafeRemoveSpecialPanel()
+		
 		local frame = vgui.Create("DFrame")
 		frame:SetTitle(L"events")
-		frame:SetSize(300, 300)
-		frame:Center()
+		SHOW_SPECIAL(frame, self, 250)
 		frame:SetSizable(true)
 
 		local list = vgui.Create("DListView", frame)
@@ -972,6 +1078,8 @@ do -- event list
 				list:SelectItem(pnl)
 			end
 		end
+		
+		pace.ActiveSpecialPanel = frame
 	end
 	
 	pace.RegisterPanel(PANEL)
@@ -984,10 +1092,11 @@ do -- operator list
 	PANEL.Base = "pace_properties_base_type"
 		
 	function PANEL:SpecialCallback()	
+		pace.SafeRemoveSpecialPanel()
+		 
 		local frame = vgui.Create("DFrame")
 		frame:SetTitle(L"operators")
-		frame:SetSize(300, 300)
-		frame:Center()
+		SHOW_SPECIAL(frame, self, 250)
 		frame:SetSizable(true)
 
 		local list = vgui.Create("DListView", frame)
@@ -1008,6 +1117,8 @@ do -- operator list
 				list:SelectItem(pnl)
 			end
 		end
+		
+		pace.ActiveSpecialPanel = frame
 	end
 	
 	pace.RegisterPanel(PANEL)
@@ -1019,7 +1130,9 @@ do -- arguments
 	PANEL.ClassName = "properties_arguments"
 	PANEL.Base = "pace_properties_base_type"
 		
-	function PANEL:SpecialCallback()	
+	function PANEL:SpecialCallback()
+		pace.SafeRemoveSpecialPanel()
+		 
 		local data = pace.current_part.Events[pace.current_part.Event]
 		data = data and data.arguments
 		
@@ -1027,8 +1140,7 @@ do -- arguments
 				
 		local frame = vgui.Create("DFrame")
 		frame:SetTitle(L"arguments")
-		frame:SetSize(300, 300)
-		frame:Center()
+		SHOW_SPECIAL(frame, self, 250)
 		frame:SetSizable(true)
 		frame:MakePopup()
 
@@ -1060,6 +1172,8 @@ do -- arguments
 			end
 			list:PopulateCustom(tbl)
 		end
+		
+		pace.ActiveSpecialPanel = frame
 	end
 	
 	pace.RegisterPanel(PANEL)

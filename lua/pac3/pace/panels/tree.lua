@@ -61,14 +61,18 @@ function PANEL:SetModel(path)
 	local pnl = vgui.Create("DModelPanel", self)
 		pnl:SetModel(path or "")
 		pnl:SetSize(16, 16)
-
-		local mins, maxs = pnl.Entity:GetRenderBounds()
-		pnl:SetCamPos(mins:Distance(maxs) * Vector(0.75, 0.75, 0.5) * 15)
-		pnl:SetLookAt((maxs + mins) / 2)
-		pnl:SetFOV(3)
+		
+		if pnl.Entity and pnl.Entity:IsValid() then
+			local mins, maxs = pnl.Entity:GetRenderBounds()
+			pnl:SetCamPos(mins:Distance(maxs) * Vector(0.75, 0.75, 0.5) * 15)
+			pnl:SetLookAt((maxs + mins) / 2)
+			pnl:SetFOV(3)
+		end
 
 		pnl.SetImage = function() end
 		pnl.GetImage = function() end
+		
+		pnl:TellParentAboutSizeChanges()
 
 	self.Icon:Remove()
 	self.Icon = pnl

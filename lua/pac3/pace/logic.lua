@@ -38,9 +38,7 @@ function pace.OnPartSelected(part, is_selecting)
 	
 	pace.Editor:InvalidateLayout()
 	
-	if pac.MatBrowser and pac.MatBrowser:IsValid() then
-		pac.MatBrowser:Remove()
-	end
+	pace.SafeRemoveSpecialPanel()
 	
 	if pace.tree:IsValid() then
 		pace.tree:SelectPart(part)
@@ -461,6 +459,7 @@ end
 function pace.OnCloseEditor()
 	pace.EnableView(false)
 	pace.StopSelect()
+	pace.SafeRemoveSpecialPanel()
 end
 
 function pace.OnShortcutSave()

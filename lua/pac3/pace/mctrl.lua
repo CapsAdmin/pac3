@@ -370,7 +370,7 @@ function mctrl.GUIMousePressed(mc)
 
 				-- Rotation
 				local axis
-				local dist = mctrl.grab_dist
+				local dist = mctrl.grab_dist * 2
 				for i, v in pairs
 					{
 						[AXIS_X] = mctrl.VecToScreen(pos + forward * r * mctrl.angle_pos),
