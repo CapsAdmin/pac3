@@ -15,15 +15,25 @@ function PART:Initialize()
 	self.FollowPart = pac.NULL
 end
 
-function PART:SetFollowPartName(name)
-	self.FollowPartName = name or ""
+function PART:SetFollowPartName(var)
+
+	if var and type(var) ~= "string" then
+		self.FollowPartName = var:GetName()
+		self.FollowPartUID = var:GetUniqueID()
+		self.FollowPart = var
+		return
+	end
+
+	self.FollowPartName = var or ""
+	self.FollowPartUID = nil
 	self.FollowPart = pac.NULL
 end	
 
 function PART:ResolveFollowPartName()
 	for key, part in pairs(pac.GetParts()) do	
-		if part ~= self and part:GetName() == self.FollowPartName then
+		if part ~= self and (part.UniqueID == self.UniqueID or part:GetName() == self.FollowPartName) then
 			self.FollowPart = part
+			self.FollowPartUID = part.UniqueID
 			break
 		end
 	end

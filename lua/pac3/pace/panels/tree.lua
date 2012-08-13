@@ -240,6 +240,21 @@ function PANEL:PopulateParts(node, parts, children)
 	end
 end
 
+function PANEL:SelectPart(part)
+	for key, node in pairs(self.parts) do
+		if not node.part or not node.part:IsValid() then
+			node:Remove()
+			self.parts[key] = nil
+		else
+			if node.part == part then
+				node:SetSelected(true)
+			else
+				node:SetSelected(false)
+			end
+		end
+	end
+end
+
 function PANEL:Populate()
 	
 	for key, node in pairs(self.parts) do
