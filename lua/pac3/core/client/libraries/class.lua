@@ -28,15 +28,24 @@ local function COPY(var)
 end
 
 function class.GetSet(tbl, name, def)
-    tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
-    tbl["Get" .. name] = tbl["Get" .. name] or function(self, var) return self[name] end
+    if type(def) == "number" then
+		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = tonumber(var) end
+		tbl["Get" .. name] = tbl["Get" .. name] or function(self, var) return tonumber(self[name]) end
+	else
+		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
+		tbl["Get" .. name] = tbl["Get" .. name] or function(self, var) return self[name] end
+	end
 	tbl["__def" .. name] = COPY(def)
     tbl[name] = def
 end
 
 function class.IsSet(tbl, name, def)
-    tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
-    tbl["Is" .. name] = tbl["Is" .. name] or function(self, var) return self[name] end
+	if type(def) == "number" then
+		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = tonumber(var) end
+	else
+		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
+	end
+    tbl["Is" .. name] = tbl["Is" .. name] or function(self, var) return self[name] ~= nil end
 	tbl["__def" .. name] = COPY(def)
     tbl[name] = def
 end
