@@ -37,11 +37,14 @@ if VERSION >= 150 then
 		end
 	end)
 else
-	concommand.Add("pac_precache_effect", function(ply, _, args)
-		local name = args[1]
-		if not table.HasValue(pac.EffectsBlackList, name) then
-			pac.dprint("%s precached effect %s", tostring(ply), name)
-			pac.PrecacheEffect(name)
-		end
+	-- because we're using the same command as pac2 and we want to make sure it's loaded after pac2 and not before
+	timer.Simple(2, function()
+		concommand.Add("pac_precache_effect", function(ply, _, args)
+			local name = args[1]
+			if not table.HasValue(pac.EffectsBlackList, name) then
+				pac.dprint("%s precached effect %s", tostring(ply), name)
+				pac.PrecacheEffect(name)
+			end
+		end)
 	end)
 end
