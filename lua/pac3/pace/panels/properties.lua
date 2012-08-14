@@ -301,9 +301,7 @@ do -- base editable
 	-- kind of a hack
 	local last_focus = NULL
 
-	function PANEL:OnMousePressed(mcode)
-		pace.BusyWithProperties = true
-	
+	function PANEL:OnMousePressed(mcode)	
 		if last_focus:IsValid() then
 			last_focus:Reset()
 			last_focus = NULL
@@ -379,7 +377,7 @@ do -- base editable
 		pnl:SetPos(x+3,y-4)
 				
 		pnl.OnEnter = function()
-			pace.BusyWithProperties = false
+			pace.BusyWithProperties = NULL
 			self.editing = false
 			
 			pnl:Remove()
@@ -390,6 +388,8 @@ do -- base editable
 		
 		pace.BusyWithProperties = pnl
 	end
+	
+	pace.BusyWithProperties = NULL
 	
 	local function click()
 		if not input.IsMouseDown(MOUSE_LEFT) then return end
