@@ -463,6 +463,9 @@ function PART:CheckBoneMerge()
 		if ent:GetParent():IsValid() then
 			if self.BoneMergeAlternative then	
 				ent.pac_part_ref = self
+				if not ent.BuildBonePositions then
+					pac.HookBuildBone(ent)
+				end
 			end
 			
 			if self.BoneMerge and not self.BoneMergeAlternative then
