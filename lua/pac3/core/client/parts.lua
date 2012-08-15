@@ -241,10 +241,6 @@ do -- meta
 		function PART:GetOwnerModelBones()
 			return pac.GetModelBones(self:GetOwner())
 		end
-
-		function PART:GetOwnerModelBonesSorted()
-			return pac.GetModelBonesSorted(self:GetOwner())
-		end
 	end
 
 	do -- parenting
@@ -429,10 +425,6 @@ do -- meta
 
 		function PART:GetModelBones()
 			return pac.GetModelBones(self:GetOwner())
-		end
-
-		function PART:GetModelBonesSorted()
-			return pac.GetModelBonesSorted(self:GetOwner())
 		end
 
 		function PART:GetRealBoneName(name, owner)

@@ -72,20 +72,14 @@ function pac.GetModelBones(ent)
 	return ent.pac_bones
 end
 
-function pac.GetModelBonesSorted(ent, o)
-	local bones = o or table.Copy(pac.GetModelBones(ent))
-	bones = table.ClearKeys(bones)
-
-	table.sort(bones, function(a,b)
-		return a.friendly > b.friendly
-	end)
-
-	return bones
-end
-
 function pac.HookBuildBone(ent)
 	if not ent:IsValid() then return end
 	ent.BuildBonePositions = function(...)
 		hook.Call("EntityBuildBonePositions", GAMEMODE, ...)
 	end
+end
+
+function pac.UnHookBuildBone(ent)
+	if not ent:IsValid() then return end
+	ent.BuildBonePositions = nil
 end

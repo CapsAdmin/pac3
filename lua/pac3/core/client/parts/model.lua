@@ -75,15 +75,6 @@ function PART:GetModelBones()
 	end
 end
 
-function PART:GetModelBonesSorted()
-	local parent = self.RealParent
-	if parent and IsValid(parent.Entity) then
-		return pac.GetModelBonesSorted(parent.Entity)
-	else
-		return pac.GetModelBonesSorted(self:GetOwner())
-	end
-end
-
 function PART:AddClipPlane(part)
 	return table.insert(self.ClipPlanes, part)
 end
@@ -446,6 +437,24 @@ function PART:OnRemove()
 	end
 end
 
+function PART:SetBoneMergeAlternative(b)
+	
+	self.BoneMergeAlternative = b
+
+	local ent = self.Entity
+	if ent:IsValid() then
+		ent.pac_bones = nil
+		local owner = self:GetOwner()
+		if owner:IsValid() then 
+			owner.pac_bones = nil
+		end
+		if b then
+			pac.HookBuildBone(ent)
+		else
+			pac.UnHookBuildBone(ent)
+		end
+	end
+end
 
 function PART:CheckBoneMerge()
 	local ent = self.Entity
@@ -453,7 +462,6 @@ function PART:CheckBoneMerge()
 			
 		if ent:GetParent():IsValid() then
 			if self.BoneMergeAlternative then	
-				pac.HookBuildBone(ent)
 				ent.pac_part_ref = self
 			end
 			
