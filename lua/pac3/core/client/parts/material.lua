@@ -81,10 +81,12 @@ local function setup(PART)
 							else
 								self.delay_set = function()
 									local mat = self:GetMaterialFromParent()
-									mat:SetMaterialTexture("$" .. name, tex)
-									self.SKIP = true
-									self:UpdateMaterial()
-									self.SKIP = false
+									if mat then
+										mat:SetMaterialTexture("$" .. name, tex)
+										self.SKIP = true
+										self:UpdateMaterial()
+										self.SKIP = false
+									end
 								end
 							end
 						end
