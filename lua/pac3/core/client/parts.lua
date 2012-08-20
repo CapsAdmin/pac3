@@ -420,7 +420,10 @@ do -- meta
 		function PART:ClearBone()
 			self.BoneIndex = nil
 			self.TriedToFindBone = nil
-			self:GetOwner().pac_bones = nil
+			local owner = self:GetOwner()
+			if owner:IsValid() then	
+				owner.pac_bones = nil
+			end
 		end
 
 		function PART:GetModelBones()
