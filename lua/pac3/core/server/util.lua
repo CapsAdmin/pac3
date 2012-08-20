@@ -1,5 +1,5 @@
 function pac.dprint(fmt, ...)
-	if pac.debug or GetHostName() == "CapsAdmin's Server" then
+	if pac.debug then
 		MsgN("\n")
 		MsgN(">>>PAC3>>>")
 		MsgN(fmt:format(...))

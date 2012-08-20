@@ -34,6 +34,8 @@ function PART:ResolveFollowPartName()
 		if part ~= self and (part.UniqueID == self.UniqueID or part:GetName() == self.FollowPartName) then
 			self.FollowPart = part
 			self.FollowPartUID = part.UniqueID
+			
+			pac.HookBuildBone(part:GetOwner())
 			break
 		end
 	end
@@ -41,7 +43,7 @@ end
 
 function PART:OnAttach(owner)
 	self.BoneIndex = nil
-	pac.HookBuildBone(owner)
+	pac.HookBuildBone(owner, self)
 end
 
 function PART:OnParent()
@@ -67,10 +69,16 @@ function PART:OnThink()
 		self:GetBonePosition()
 		self.first_getbpos = true
 	end
+	
+	local owner = self:GetOwner()
+	
+	if owner:IsValid() and not owner.BuildBonePositions then
+		pac.HookBuildBone(owner)
+	end
 end
 
-function PART:GetBonePosition(owner, ...)
-	owner = owner or self:GetOwner()
+function PART:GetBonePosition(...)
+	local owner = self:GetOwner()
 	local pos, ang
 	
 	if owner:IsValid() then
@@ -123,7 +131,11 @@ function PART:OnBuildBonePositions(owner)
 					matrix:Translate(self.Position)
 				end
 			else
-				matrix:SetAngle(ang)
+				if VERSION >= 150 then
+					matrix:SetAngles(ang)
+				else
+					matrix:SetAngle(ang)
+				end
 				matrix:SetTranslation(self.Position)
 			end
 		end

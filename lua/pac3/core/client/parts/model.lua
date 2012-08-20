@@ -28,7 +28,7 @@ pac.EndStorableVars()
 function PART:SetOverallSize(num)
 	if self.Entity:IsValid() then
 		if num ~= 1 then
-			pac.HookBuildBone(self.Entity)
+			pac.HookBuildBone(self.Entity, self)
 			self.Entity.pac_part_ref = self
 		else
 			self.Entity.pac_part_ref = nil
@@ -449,9 +449,9 @@ function PART:SetBoneMergeAlternative(b)
 			owner.pac_bones = nil
 		end
 		if b then
-			pac.HookBuildBone(ent)
+			pac.HookBuildBone(ent, self)
 		else
-			pac.UnHookBuildBone(ent)
+			pac.UnHookBuildBone(ent, self)
 		end
 	end
 end
@@ -464,7 +464,7 @@ function PART:CheckBoneMerge()
 			if self.BoneMergeAlternative then	
 				ent.pac_part_ref = self
 				if not ent.BuildBonePositions then
-					pac.HookBuildBone(ent)
+					pac.HookBuildBone(ent, self)
 				end
 			end
 			
@@ -517,7 +517,10 @@ local bad_bones =
 
 function PART:OnBuildBonePositions(ent)
 	local owner = self:GetOwner()
-	if owner == ent then return end
+	ent = self.Entity
+	
+	
+	if  owner == ent then return end
 	
 	if self.BoneMergeAlternative then
 		local ent_bones = pac.GetModelBones(ent)
@@ -552,11 +555,12 @@ function PART:OnBuildBonePositions(ent)
 		end
 	end
 	
+	
 	if self.OverallSize ~= 1 then
 		for i = 0, ent:GetBoneCount() do
 			local mat = ent:GetBoneMatrix(i)
 			if mat then
-				mat:Scale(Vector(1, 1, 1)*self.OverallSize)
+				mat:Scale(Vector(1, 1, 1) * self.OverallSize)
 				ent:SetBoneMatrix(i, mat)
 			end
 		end

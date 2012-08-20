@@ -1,5 +1,5 @@
 function pac.dprint(fmt, ...)
-	if pac.debug or LocalPlayer():Nick():find("CapsAdmin", nil, true) then
+	if pac.debug then
 		MsgN("\n")	
 		MsgN(">>>PAC3>>>")
 		MsgN(fmt:format(...))

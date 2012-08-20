@@ -25,9 +25,9 @@ function pac.GetAllBones(ent)
 	local tbl = {}
 
 	if ent:IsValid() then
-		local count = ent:GetBoneCount() or 1
+		local count = ent:GetBoneCount()
 
-		for i = 0, count do
+		for i = 0, count or 1 do
 			local name = ent:GetBoneName(i)
 			local bone = ent:LookupBone(name)
 			local friendly = name
@@ -57,6 +57,8 @@ function pac.GetAllBones(ent)
 				}
 			end
 		end
+		
+		ent.pac_bone_count = count
 	end
 
 	return tbl
@@ -64,7 +66,7 @@ end
 
 function pac.GetModelBones(ent)
 
-	if ent:IsValid() and (not ent.pac_bones or ent:GetModel() ~= ent.pac_last_model) then
+	if ent:IsValid() and (not ent.pac_bones or ent:GetModel() ~= ent.pac_last_model or ent:GetBoneCount() ~= ent.pac_bone_count) then
 		ent.pac_bones = pac.GetAllBones(ent)
 		ent.pac_last_model = ent:GetModel()
 	end

@@ -122,10 +122,10 @@ pac.AddHook("EntityRemoved")
 
 function pac.EntityBuildBonePositions(ent)	
 	if not cvar_enable:GetBool() then return end
-	
+
 	for key, part in pairs(pac.GetParts()) do
-		if (part:GetOwner() == ent or ent.pac_part_ref == part) and not part:IsHiddenEx() then
-			part:BuildBonePositions(ent)
+		if (ent == part:GetOwner() or ent == part.Entity) and not part:IsHiddenEx() then
+			part:OnBuildBonePositions(ent)
 		end
 	end
 end
