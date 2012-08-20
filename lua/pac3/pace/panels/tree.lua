@@ -71,8 +71,10 @@ function PANEL:SetModel(path)
 
 		pnl.SetImage = function() end
 		pnl.GetImage = function() end
-		
-		pnl:TellParentAboutSizeChanges()
+
+		if VERSION < 150 then
+			pnl:TellParentAboutSizeChanges()
+		end
 
 	self.Icon:Remove()
 	self.Icon = pnl

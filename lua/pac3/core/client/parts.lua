@@ -119,7 +119,7 @@ do -- meta
 	PART.Internal = true
 
 	function PART:__tostring()
-		return string.format("%s[%s][%i]", self.Type, self.ClassName, self.Id)
+		return string.format("%s[%s][%s][%i]", self.Type, self.ClassName, self.Name, self.Id)
 	end
 	
 	pac.GetSet(PART, "BoneIndex")
@@ -414,13 +414,13 @@ do -- meta
 	do -- bones
 		function PART:SetBone(var)
 			self.Bone = var
-			self.BoneIndex = nil
-			self.TriedToFindBone = nil
+			self:ClearBone()
 		end
 
 		function PART:ClearBone()
 			self.BoneIndex = nil
 			self.TriedToFindBone = nil
+			self:GetOwner().pac_bones = nil
 		end
 
 		function PART:GetModelBones()
@@ -439,10 +439,10 @@ do -- meta
 			return name
 		end
 		
-		function PART:GetDrawPosition(owner, pos, ang)			
-			owner = owner or self:GetOwner()
+		function PART:GetDrawPosition(pos, ang)			
+			local owner = self:GetOwner()
 			if owner:IsValid() then
-				local pos, ang = self:GetBonePosition(owner, nil, pos, ang)
+				local pos, ang = self:GetBonePosition(nil, pos, ang)
 				
 				pos, ang = LocalToWorld(
 					self.Position, 
@@ -462,8 +462,8 @@ do -- meta
 		local Angle = Angle
 		local math_NormalizeAngle = math.NormalizeAngle
 
-		function PART:GetBonePosition(owner, idx, pos, ang)
-			owner = owner or self:GetOwner()
+		function PART:GetBonePosition(idx, pos, ang)
+			local owner = self:GetOwner()
 			local parent = self:GetParent()
 			
 			if parent:IsValid() and parent.ClassName == "jiggle" then
@@ -768,21 +768,7 @@ do -- meta
 			end
 		end
 	end
-	
-	
-	function PART:BuildBonePositions(owner)
-		self:OnBuildBonePositions(owner)
-		do return end
-		if not self:IsHiddenEx() then
-			
-			self:OnBuildBonePositions(owner)
-			
-			for key, child in pairs(self.Children) do
-				child:BuildBonePositions(owner)
-			end
-		end
-	end
-	
+		
 	function PART:Think()	
 		local owner = self:GetOwner()
 		

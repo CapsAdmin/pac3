@@ -157,7 +157,7 @@ function PART:UpdateScale(ent)
 		end
 		
 		if self.OverallSize ~= 1 and not self.setup_overallscale then
-			pac.HookBuildBone(ent)
+			pac.HookBuildBone(ent, self)
 			self.setup_overallscale = true
 		end
 		

@@ -20,6 +20,8 @@ pace.ActivePanels = pace.ActivePanels or {}
 pace.Editor = NULL
 
 function pace.OpenEditor()
+	if hook.Call("PrePACEditorOpen", GAMEMODE, LocalPlayer()) == false then return end
+	
 	pace.SetLanguage()
 	local editor = pace.CreatePanel("editor")
 		editor:SetSize(240, ScrH())
