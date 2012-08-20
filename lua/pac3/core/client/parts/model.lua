@@ -518,9 +518,8 @@ local bad_bones =
 function PART:OnBuildBonePositions(ent)
 	local owner = self:GetOwner()
 	ent = self.Entity
-	
-	
-	if  owner == ent then return end
+		
+	if not ent:IsValid() or not owner:IsValid() or owner == ent then return end
 	
 	if self.BoneMergeAlternative then
 		local ent_bones = pac.GetModelBones(ent)
@@ -553,8 +552,7 @@ function PART:OnBuildBonePositions(ent)
 				end
 			end
 		end
-	end
-	
+	end	
 	
 	if self.OverallSize ~= 1 then
 		for i = 0, ent:GetBoneCount() do
