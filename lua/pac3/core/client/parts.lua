@@ -621,7 +621,9 @@ do -- meta
 		
 		function PART:Clone()
 			local part = pac.CreatePart(self.ClassName)
+			local uid = part.UniqueID
 			part:SetTable(self:ToTable(true))
+			part.UniqueID = uid
 			return part
 		end
 	end
