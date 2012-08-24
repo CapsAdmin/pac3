@@ -164,10 +164,10 @@ do -- meta
 		end
 		
 		for key, part in pairs(pac.GetParts()) do
-			if part.AimPartName and part.AimPartName ~= "" and (part.AimPartUID == self.UniqueID or part.AimPartName == self.Name) then
+			if part.AimPartName and part.AimPartName ~= "" and part:GetPlayerOwner() == self:GetPlayerOwner() and (part.AimPartUID == self.UniqueID or part.AimPartName == self.Name) then
 				part:SetAimPartName(var)
 			end
-			if part.FollowPartName and part.FollowPartName ~= "" and (part.FollowPartUID == self.UniqueID or part.FollowPartName == self.Name) then
+			if part.FollowPartName and part.FollowPartName ~= "" and part:GetPlayerOwner() == self:GetPlayerOwner() and (part.FollowPartUID == self.UniqueID or part.FollowPartName == self.Name) then
 				part:SetFollowPartName(var)
 			end
 		end
@@ -289,7 +289,7 @@ do -- meta
 		
 		function PART:ResolveParentName()
 			for key, part in pairs(pac.GetParts()) do
-				if part:GetUniqueID() == self.ParentUID or part:GetName() == self.ParentName then
+				if part:GetPlayerOwner() == self:GetPlayerOwner() and (part:GetUniqueID() == self.ParentUID or part:GetName() == self.ParentName) then
 					self:SetParent(part)
 					break
 				end
