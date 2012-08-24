@@ -13,13 +13,13 @@ do -- to server
 		end
 	end
 
-	function pac.RemovePartOnServer(name, server_only)
+	function pac.RemovePartOnServer(name, server_only, filter)
 		if VERSION >= 150 then
 			net.Start("pac_submit")
 				net.WriteTable({part = name, server_only = server_only})
 			net.SendToServer()
 		else
-			datastream.StreamToServer("pac_submit", {part = name, server_only = server_only})
+			datastream.StreamToServer("pac_submit", {part = name, server_only = server_only, filter = filter})
 		end
 	end
 end

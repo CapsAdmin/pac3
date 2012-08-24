@@ -21,6 +21,18 @@ function pac.SubmitPart(data, filter)
 		end
 	end
 	
+	if filter == false then
+		filter = data.owner
+	elseif filter == true then
+		local tbl = {}
+		for k,v in pairs(player.GetAll()) do
+			if v ~= data.owner then
+				table.insert(tbl, v)
+			end
+		end
+		filter = tbl
+	end
+	
 	if not data.server_only then
 		if VERSION >= 150 then
 			net.Start("pac_submit")
@@ -50,7 +62,7 @@ end
 function pac.RemovePart(data)
 	pac.dprint("%s is removed %q", data.owner:GetName(), data.part)
 	
-	pac.SubmitPart(data)
+	pac.SubmitPart(data, data.filter)
 end
 
 local function handle_data(owner, data)

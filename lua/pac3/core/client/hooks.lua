@@ -32,8 +32,6 @@ function pac.RenderOverride(ent)
 					ent.pac_parts[key] = nil
 				end
 			end	
-		ent:SetupBones()
-		ent:InvalidateBoneCache()
 	end
 end
 
@@ -64,9 +62,9 @@ local util_PixelVisible = util.PixelVisible
 local cvar_enable = CreateClientConVar("pac_enable", "1")
 local cvar_distance = CreateClientConVar("pac_draw_distance", "0")
 
-local eye_pos = vector_origin
+pac.EyePos = vector_origin
 function pac.RenderScene(pos)
-	eye_pos = pos
+	pac.EyePos = pos
 end
 pac.AddHook("RenderScene")
 
@@ -81,7 +79,7 @@ function pac.PostDrawTranslucentRenderables()
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
 			ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
-			local dst = ent:EyePos():Distance(eye_pos)
+			local dst = ent:EyePos():Distance(pac.EyePos)
 			radius = ent:BoundingRadius() * 3
 			if 
 				(ent == local_player and ent:ShouldDrawLocalPlayer()) or
