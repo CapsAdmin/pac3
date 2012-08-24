@@ -83,6 +83,16 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
+function PART:OnThink()
+	if self:IsHiddenEx() then
+		local ent = self:GetOwner()
+		if ent:IsValid() then
+			ent:StopParticles()
+			ent:StopParticleEmission()
+		end	
+	end
+end
+
 function PART:OnRemove()
 	local ent = self:GetOwner()
 
@@ -105,14 +115,6 @@ function PART:ResolveControlPoints()
 			self.ControlPointBPart = part
 			break
 		end
-	end
-end
-
-function PART:OnHide()
-	local ent = self:GetOwner()
-	if ent:IsValid() then
-		ent:StopParticles()
-		ent:StopParticleEmission()
 	end
 end
 
@@ -142,7 +144,8 @@ function PART:Emit(pos, ang)
 				}
 			)
 		elseif self.Follow then
-			ParticleEffectAttach(self.Effect, PATTACH_ABSORIGIN_FOLLOW, ent, 1)
+			ent:StopParticles()
+			ParticleEffectAttach(self.Effect, PATTACH_ABSORIGIN_FOLLOW, ent, 0)
 		else
 			ent:StopParticles()
 			ent:StopParticleEmission()
