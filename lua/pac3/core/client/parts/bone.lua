@@ -31,7 +31,7 @@ end
 
 function PART:ResolveFollowPartName()
 	for key, part in pairs(pac.GetParts()) do	
-		if part ~= self and (part.UniqueID == self.UniqueID or part:GetName() == self.FollowPartName) then
+		if part ~= self and part:GetPlayerOwner() == self:GetPlayerOwner() and (part.UniqueID == self.UniqueID or part:GetName() == self.FollowPartName) then
 			self.FollowPart = part
 			self.FollowPartUID = part.UniqueID
 			
