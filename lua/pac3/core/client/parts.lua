@@ -236,6 +236,13 @@ do -- meta
 				return parent:GetOwner()
 			end
 			
+			if self.Owner:IsPlayer() then
+				local rag = self.Owner:GetRagdollEntity()
+				if rag and rag:IsValid() then
+					return rag
+				end
+			end
+
 			return self.Owner or NULL
 		end
 

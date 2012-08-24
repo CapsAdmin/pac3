@@ -32,6 +32,7 @@ function pac.RenderOverride(ent)
 					ent.pac_parts[key] = nil
 				end
 			end	
+		ent:SetupBones()
 		ent:InvalidateBoneCache()
 	end
 end
