@@ -134,7 +134,7 @@ function urlmat.StartDownload(url, data)
 			hook.Remove("Think", id)
 		end
 
-		if data.tries < 3 then
+		if data.tries < 5 then
 			pac.dprint("material download %q timed out.. trying again for the %ith time", url, data.tries)
 			-- try again
 			data.tries = data.tries + 1
