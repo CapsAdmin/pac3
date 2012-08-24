@@ -860,10 +860,16 @@ do -- meta
 		
 		ang = self:CalcAngleVelocity(ang)
 		
-		if self.AimPart:IsValid() then	
+		if self.AimPartName == "LOCALEYES" then
+			return self.Angles + (pac.EyePos - self.cached_pos):Angle()
+		elseif self.AimPart:IsValid() then	
 			return self.Angles + (self.AimPart.cached_pos - self.cached_pos):Angle()
-		elseif self.EyeAngles and owner:IsPlayer() then
-			return self.Angles + (owner:GetEyeTraceNoCursor().HitPos - self.cached_pos):Angle()
+		elseif self.EyeAngles then
+			if owner:IsPlayer() then
+				return self.Angles + (owner:GetEyeTraceNoCursor().HitPos - self.cached_pos):Angle()
+			elseif owner:IsNPC() then
+				return self.Angles + ((owner:EyePos() + owner:GetAimVector() * 100) - self.cached_pos):Angle()
+			end
 		end
 			
 		return self:CalcAngleVelocity(ang) or Angle(0,0,0)
