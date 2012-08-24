@@ -78,13 +78,14 @@ function pac.GetParts(owned_only)
 end
 
 function pac.RemoveAllParts(owned_only, server)
-	for key, part in pairs(pac.GetParts(owned_only)) do
-		if part:IsValid() then
-			part:Remove()
-		end
-	end
 	if server then
 		pac.RemovePartOnServer("__ALL__")
+	else
+		for key, part in pairs(pac.GetParts(owned_only)) do
+			if part:IsValid() then
+				part:Remove()
+			end
+		end
 	end
 	if not owned_only then
 		pac.ActiveParts = {}
@@ -711,7 +712,7 @@ do -- meta
 	end
 	
 	function PART:SetHide(b)
-		if b ~= self.Hide then
+		if b ~= self.EventHide or b ~= self.Hide then
 			if b then
 				self:OnHide()
 			else
