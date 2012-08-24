@@ -236,7 +236,7 @@ do -- meta
 				return parent:GetOwner()
 			end
 			
-			if self.Owner:IsPlayer() then
+			if self.Owner:IsPlayer() and self.Owner:IsValid() then
 				local rag = self.Owner:GetRagdollEntity()
 				if rag and rag:IsValid() then
 					return rag
