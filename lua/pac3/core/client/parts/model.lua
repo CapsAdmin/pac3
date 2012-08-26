@@ -310,9 +310,12 @@ function PART:DrawModel(ent, pos, ang)
 			self.wavefront_mesh:Draw()
 		cam.PopModelMatrix()
 		
-		ent:SetModelScale(Vector(0,0,0))
+		if not self.wavefront_mesh_hack then
+			ent:SetModelScale(Vector(0,0,0))
+			self.wavefront_mesh_hack = true
+		end
+		
 		ent:DrawModel()
-		self.wavefront_mesh_hack = true
 	else
 		if self.wavefront_mesh_hack then
 			ent:SetModelScale(self.Scale)

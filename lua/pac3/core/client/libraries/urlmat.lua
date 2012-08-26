@@ -54,6 +54,7 @@ function urlmat.StartDownload(url, data)
 	
 	local pnl = vgui.Create("HTML")
 	pnl:SetVisible(true)
+	--pnl:SetPos(50,50)
 	pnl:SetPos(ScrW()-1, ScrH()-1)
 	pnl:SetSize(urlmat.TextureSize, urlmat.TextureSize)
 	pnl:SetHTML(
@@ -62,6 +63,7 @@ function urlmat.StartDownload(url, data)
 				html 
 				{			
 					overflow:hidden;
+					margin: -8px -8px;
 				}
 			</style>
 			
@@ -99,8 +101,18 @@ function urlmat.StartDownload(url, data)
 				
 			if go and time < RealTime() then
 				local vertex_mat = CreateMaterial("pac3_urlmat_" .. util.CRC(url .. SysTime()), "VertexLitGeneric")
-				local tex = html_mat:GetMaterialTexture("$basetexture")
-				vertex_mat:SetMaterialTexture("$basetexture", tex)
+				
+				local tex
+				
+				if VERSION >= 150 then
+					tex = html_mat:GetTexture("$basetexture")
+					tex:Download()
+					vertex_mat:SetTexture("$basetexture", tex)
+				else
+					tex = html_mat:GetMaterialTexture("$basetexture")
+					vertex_mat:SetMaterialTexture("$basetexture", tex)
+				end
+				
 				tex:Download()
 				
 				urlmat.Cache[url] = tex
@@ -119,7 +131,7 @@ function urlmat.StartDownload(url, data)
 	end
 
 	if VERSION >= 150 then
-		pnl.FinishedURL = start
+		start()
 	else
 		pnl.FinishedURL = start
 	end
