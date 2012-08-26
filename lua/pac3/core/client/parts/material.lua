@@ -34,12 +34,13 @@ PART.ShaderParams =
 	RimlightBoost = "number",	
 	RimlightExponent = "number",
 	
-	EnvMap = "ITexture",
+	-- doesn't do anything i think
+	--[[EnvMap = "ITexture",
 	EnvMapMask = "ITexture",
 	EnvMapTint = "Vector",
 	EnvMapContrast = "number",
 	EnvMapSaturation = "Vector",
-	EnvMapMode = "number",
+	EnvMapMode = "number",]]
 	
 	--[[EmissiveBlendEnabled = "boolean",
 	EmissiveBlendTexture = "ITexture",

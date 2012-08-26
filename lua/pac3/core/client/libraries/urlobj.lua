@@ -45,7 +45,7 @@ function urlobj.ParseObj(data)
 					end
 					
 					if #texcoords > 0 then
-						local offset = 8/1024
+						local offset = 0--8/1024
 						v1.u = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 0] + offset
 						v1.v = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 1] + offset
 						
