@@ -13,7 +13,11 @@ function urlmat.GetMaterialFromURL(url, callback, skip_cache)
 	if type(callback) == "function" and not skip_cache and urlmat.Cache[url] then
 		local tex = urlmat.Cache[url]
 		local vertex_mat = CreateMaterial("pac3_urlmat_" .. util.CRC(url .. SysTime()), "VertexLitGeneric")
-		vertex_mat:SetMaterialTexture("$basetexture", tex)
+		if VERSION >= 150 then
+			vertex_mat:SetTexture("$basetexture", tex)
+		else
+			vertex_mat:SetMaterialTexture("$basetexture", tex)
+		end
 		callback(vertex_mat, tex)
 		return
 	end

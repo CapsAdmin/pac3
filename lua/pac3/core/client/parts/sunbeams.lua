@@ -16,7 +16,7 @@ function PART:OnDraw(owner, pos, ang)
 	
 	DrawSunbeams(
 		self.Darken, 
-		dist_mult * self.Multiplier * (math.Clamp(pac.EyeAng:Forward():DotProduct((pos - pac.EyePos):Normalize()) - 0.5, 0, 1) * 2) ^ 5, 
+		dist_mult * self.Multiplier * (math.Clamp(pac.EyeAng:Forward():DotProduct((pos - pac.EyePos):GetNormalized()) - 0.5, 0, 1) * 2) ^ 5, 
 		self.Size, 
 		spos.x / ScrW(), 
 		spos.y / ScrH()

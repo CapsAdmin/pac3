@@ -11,7 +11,6 @@ function PANEL:Init()
 	self:SetLineHeight(18)
 	self:SetIndentSize(2)
 
-	self.outfits = {}
 	self.parts = {}
 	
 	self:Populate()
@@ -262,6 +261,9 @@ function PANEL:SelectPart(part)
 end
 
 function PANEL:Populate()
+
+	self:SetLineHeight(18)
+	self:SetIndentSize(2)
 	
 	for key, node in pairs(self.parts) do
 		if not node.part or not node.part:IsValid() then

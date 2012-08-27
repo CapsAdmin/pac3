@@ -29,7 +29,7 @@ PART.Inputs =
 	time = RealTime,
 	synced_time = CurTime,
 	camera_distance = function(s, p) return p.cached_pos:Distance(pac.EyePos) end,
-	angle_distance = function(s, p) return math.Clamp(math.abs(pac.EyeAng:Forward():DotProduct((p.cached_pos - pac.EyePos):Normalize())) - 0.5, 0, 1) end,
+	angle_distance = function(s, p) return math.Clamp(math.abs(pac.EyeAng:Forward():DotProduct((p.cached_pos - pac.EyePos):GetNormalized())) - 0.5, 0, 1) end,
 	owner_speed = function(s, p) return p:GetOwner():GetVelocity():Length() end,
 }
 
