@@ -23,7 +23,7 @@ PART.ShaderParams =
 	
 	Phong = "boolean",
 	PhongBoost = "number",
-	PhongExpontent = "number",
+	PhongExponent = "number",
 	PhongTint = "Vector",
 	PhongFresnelRanges = "Vector",
 	PhongWarpTexture = "ITexture",
@@ -35,12 +35,18 @@ PART.ShaderParams =
 	RimlightExponent = "number",
 	
 	-- doesn't do anything i think
-	--[[EnvMap = "ITexture",
+	EnvMap = "ITexture",
 	EnvMapMask = "ITexture",
 	EnvMapTint = "Vector",
 	EnvMapContrast = "number",
 	EnvMapSaturation = "Vector",
-	EnvMapMode = "number",]]
+	EnvMapMode = "number",
+	
+	AmbientOcclusion = "boolean",
+	AmbientOcclusionColor = "Vector",
+	AmbientOcclusionTexture = "ITexture",
+	
+	HalfLambert = "boolean",
 	
 	--[[EmissiveBlendEnabled = "boolean",
 	EmissiveBlendTexture = "ITexture",

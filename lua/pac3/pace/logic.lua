@@ -377,6 +377,9 @@ function pace.OnPartMenu(obj)
 		local tbl = obj:ToTable()
 			tbl.Name = nil
 			tbl.Description = nil
+			tbl.ParentName = nil
+			tbl.UniqueID = nil
+			
 			tbl.children = {}
 		pace.Clipboard = tbl
 	end)
