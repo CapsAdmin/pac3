@@ -41,10 +41,12 @@ if VERSION >= 150 then
 		group = "icon16/world.png",
 		trail = "icon16/arrow_undo.png",
 		event = "icon16/clock.png",
-		sunbeams = "icon16/sun.png",
+		sunbeams = "icon16/weather_sun.png",
+		jiggle = "icon16/chart_line.png",
 		sound = "icon16/sound.png",
 		command = "icon16/application_xp_terminal.png",
 		material = "icon16/paintcan.png",
+		proxy = "icon16/calculator.png",
 	}
 else
 	pace.PartIcons =
