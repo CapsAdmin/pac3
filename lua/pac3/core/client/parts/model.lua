@@ -101,14 +101,16 @@ end
 function PART:OnParent(part)
 	local ent = self:GetEntity()
 	local owner = self:GetOwner()
-
-	if part.ClassName == self.ClassName and part:GetEntity():IsValid() and owner ~= ent then
-		ent:SetParent(self:GetParent():GetEntity())
-		ent:SetOwner(self:GetParent():GetEntity())
-	elseif owner ~= ent then
-		ent:SetParent(owner)
-		ent:SetOwner(owner)
-	end	
+	
+	if ent:IsValid() and owner:IsValid() then
+		if part.ClassName == self.ClassName and part:GetEntity():IsValid() and owner ~= ent then
+			ent:SetParent(self:GetParent():GetEntity())
+			ent:SetOwner(self:GetParent():GetEntity())
+		elseif owner ~= ent then
+			ent:SetParent(owner)
+			ent:SetOwner(owner)
+		end	
+	end
 end
 
 function PART:OnUnParent()
