@@ -63,8 +63,9 @@ local cvar_enable = CreateClientConVar("pac_enable", "1")
 local cvar_distance = CreateClientConVar("pac_draw_distance", "0")
 
 pac.EyePos = vector_origin
-function pac.RenderScene(pos)
+function pac.RenderScene(pos, ang)
 	pac.EyePos = pos
+	pac.EyeAng = ang
 end
 pac.AddHook("RenderScene")
 
@@ -92,8 +93,12 @@ function pac.PostDrawTranslucentRenderables()
 				)
 			then
 				pac.RenderOverride(ent)
+				ent.pac_drawing = true
+			else
+				ent.pac_drawing = false
 			end
 		else	
+			ent.pac_drawing = false
 			pac.drawn_entities[key] = nil
 		end
 	end
@@ -101,6 +106,19 @@ function pac.PostDrawTranslucentRenderables()
 	pac.CheckParts()
 end
 pac.AddHook("PostDrawTranslucentRenderables")
+
+function pac.RenderScreenspaceEffects()
+	for key, ent in pairs(pac.drawn_entities) do
+		if ent.pac_drawing then
+			for key, part in pairs(ent.pac_parts) do
+				if part.ClassName == "sunbeams" then
+					part:Draw("OnDraw")
+				end
+			end
+		end
+	end
+end
+pac.AddHook("RenderScreenspaceEffects")
 
 function pac.OnEntityCreated(ent)
 	if ent:IsValid() then

@@ -62,10 +62,15 @@ pace.PropertyOrder =
 	"Hide",
 	"ParentName",
 	"OwnerName",
+	
+	"Input",
+	"Function",
+	
 	"AimPartName",
-	"WeaponClass",
-	"HideWeaponClass",
+	
 	"Bone",
+	"VariableName",
+	"Axis",
 	"BoneMerge",
 	"BoneMergeAlternative",
 	"OverallSize",
@@ -91,6 +96,7 @@ pace.PropertyOrder =
 	"CellShade",
 	"StartAlpha",
 	"EndAlpha",
+	"InputMultiplier",
 	"Min",
 	"Max",
 	"Loop",
@@ -136,7 +142,7 @@ pace.PropertyOrder =
 	
 	"AmbientOcclusion",
 	"AmbientOcclusionTexture",
-	"AmbientOcclusionColor",
+	"AmbientOcclusionColor",	
 }
 
 
@@ -251,6 +257,14 @@ function pace.TranslatePropertiesKey(key, obj)
 	if key == "ownername" then
 		return key
 	end	
+	
+	if key == "function" and obj.ClassName == "proxy" then
+		return "proxyfunctions"
+	end
+	
+	if key == "input" and obj.ClassName == "proxy" then
+		return "proxyinputs"
+	end
 	
 	if key == "aimpartname" or key == "parentname" or key == "followpartname" then
 		return "part"

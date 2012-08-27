@@ -46,6 +46,13 @@ PART.ShaderParams =
 	AmbientOcclusionColor = "Vector",
 	AmbientOcclusionTexture = "ITexture",
 	
+	--[[Selfillum = "boolean",
+	SelillumTint = "Vector",
+	SelfillumMask = "ITexture",
+	Selfillum_Envmapmask_Alpha = "ITexture",
+	SelfillumFresnel = "boolean",
+	SelfillumFresnlenMinMaxExp = "Vector",]]
+	
 	HalfLambert = "boolean",
 	
 	--[[EmissiveBlendEnabled = "boolean",
@@ -58,7 +65,7 @@ PART.ShaderParams =
 	HalfLambert = "boolean",]]
 }
 
-function PART:Think()
+function PART:OnThink()
 	if self.delay_set and self.Parent then
 		self.delay_set()
 		self.delay_set = nil
