@@ -98,7 +98,6 @@ function pac.PostDrawTranslucentRenderables()
 				ent.pac_drawing = false
 			end
 		else	
-			ent.pac_drawing = false
 			pac.drawn_entities[key] = nil
 		end
 	end
