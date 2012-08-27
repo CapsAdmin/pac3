@@ -63,9 +63,6 @@ pace.PropertyOrder =
 	"ParentName",
 	"OwnerName",
 	"AimPartName",
-	"BaseTexture",
-	"BumpMap",
-	"EnvMap",
 	"WeaponClass",
 	"HideWeaponClass",
 	"Bone",
@@ -103,6 +100,43 @@ pace.PropertyOrder =
 	"Arguments",
 	"Operator",
 	"Invert",
+	
+	"BaseTexture",
+	"BumpMap",
+	
+	"Phong",
+	"PhongTint",
+	"PhongBoost",
+	"PhongFresnelRanges",
+	"PhongExponentTexture",
+	"PhongExponent",
+	"PhongAlbedoTint",
+	"PhongWarpTexture",
+	
+	"Rimlight",
+	"RimlightBoost",
+	"RimlightExponent",
+		
+	"EnvMap",
+	"EnvMapMask",
+	"EnvMapContrast",
+	"EnvMapSaturation",
+	"EnvMapTint",
+	"EnvMapMode",
+	
+	"Detail",
+	"DetailTint",
+	"DetailScale",
+	"DetailBlendMode",
+	"DetailBlendFactor",
+	
+	"CloakPassEnabled",
+	"CloakFactor",
+	"RefractAmount",
+	
+	"AmbientOcclusion",
+	"AmbientOcclusionTexture",
+	"AmbientOcclusionColor",
 }
 
 
@@ -183,6 +217,11 @@ pace.PropertyLimits =
 		num = tonumber(num)
 		return math.Clamp(num, 0, 1)
 	end,
+	
+	DetailBlendMode = function(self, num)
+		num = tonumber(num)
+		return math.Round(math.max(num, 0))
+	end,
 }
 
 function pace.TranslatePropertiesKey(key, obj)
@@ -228,8 +267,13 @@ function pace.TranslatePropertiesKey(key, obj)
 	if obj.ClassName == "material" and obj.ShaderParams[key_] == "ITexture" then
 		return "material"
 	end
-	
-	if obj.ClassName == "material" and obj.ShaderParams[key_] == "Vector" and key ~= "phongfresnelranges" then
+		
+	if obj.ClassName == "material" and obj.ShaderParams[key_] == "Vector" and 
+		(
+			key ~= "phongfresnelranges" and
+			not key:find("tint")
+		)
+	then
 		return "color"
 	end
 
