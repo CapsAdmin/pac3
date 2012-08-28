@@ -230,6 +230,17 @@ pace.PropertyLimits =
 		num = tonumber(num)
 		return math.Round(math.max(num, 0))
 	end,
+	
+	Volume = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Clamp(num, 0, 1)
+	end,	
+	Pitch = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Clamp(num, 0, 1)
+	end,
 }
 
 function pace.TranslatePropertiesKey(key, obj)

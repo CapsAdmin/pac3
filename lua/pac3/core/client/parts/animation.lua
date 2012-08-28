@@ -69,7 +69,7 @@ function PART:OnThink()
 		else
 			ent:ResetSequence(seq)
 			if rate == 0 then
-				ent:SetCycle(self.Offset)
+				ent:SetCycle(self.Offset%1)
 				return
 			end
 		end
