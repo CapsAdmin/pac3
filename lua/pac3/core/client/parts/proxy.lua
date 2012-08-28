@@ -93,6 +93,8 @@ end
 
 function PART:OnThink()
 	local parent = self.Parent
+	if not parent:IsValid() then return end
+	
 	local T = type(parent[self.VariableName])
 	
 	if T == "number" or T == "Vector" or T == "Angle" then
