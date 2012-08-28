@@ -5,7 +5,8 @@ PART.NonPhysical = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Sound", "")
-	pac.GetSet(PART, "Volume", 100)
+	pac.GetSet(PART, "Volume", 1)
+	pac.GetSet(PART, "Pitch", 1)
 	pac.GetSet(PART, "MinPitch", 100)
 	pac.GetSet(PART, "MaxPitch", 100)
 pac.EndStorableVars()
@@ -26,6 +27,38 @@ function PART:OnHide()
 	self:StopSound()
 end
 
+function PART:SetSound(str)
+	self.Sound = str:gsub("\\", "/")
+end
+
+function PART:SetVolume(num)
+	if num > 1 then
+		num = num / 100
+	end
+	
+	self.Volume = num
+	
+	if not self.csptch then
+		self:PlaySound()
+	end
+	
+	if self.csptch then
+		self.csptch:ChangeVolume(math.Clamp(num, 0, 1))
+	end
+end
+
+function PART:SetPitch(num)
+	self.Pitch = num
+	
+	if not self.csptch then
+		self:PlaySound()
+	end
+	
+	if self.csptch then
+		self.csptch:ChangePitch(math.Clamp(num*255, 0, 255))
+	end
+end
+
 function PART:PlaySound()
 	local ent = self:GetOwner()
 
@@ -41,15 +74,26 @@ function PART:PlaySound()
 			end
 		)
 		
-		ent:EmitSound(snd, self.Volume, math.random(self.MinPitch, self.MaxPitch))
+		if self.csptch then
+			self.csptch:Stop()
+		end
+		
+		local csptch = CreateSound(self:GetPlayerOwner(), snd)
+		csptch:SetSoundLevel(85)
+		csptch:Play()
+		csptch:ChangeVolume(self.Volume)
+		csptch:ChangePitch(math.random(self.MinPitch, self.MaxPitch))
+		
+		self.csptch = csptch
+		ent.csptch = csptch
 	end
 end
 
 function PART:StopSound()
 	local ent = self:GetOwner()
 
-	if ent:IsValid() and ent.IsPACEntity then
-		ent:StopSound(self.Sound)
+	if self.csptch then
+		self.csptch:Stop()
 	end
 end
 
