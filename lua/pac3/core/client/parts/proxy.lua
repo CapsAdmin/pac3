@@ -33,6 +33,16 @@ PART.Inputs =
 	owner_speed = function(s, p) return p:GetOwner():GetVelocity():Length() end,
 }
 
+function PART:CheckLastVar(parent)
+	if self.last_var ~= self.VariableName then
+		if self.last_var then
+			parent["Set" .. self.VariableName](parent, self.last_var_val)
+		end
+		self.last_var = self.VariableName
+		self.last_var_val = parent["Get" .. self.VariableName](parent)
+	end	
+end
+
 function PART:OnThink()
 	local parent = self.Parent
 	local T = type(parent[self.VariableName])
@@ -45,6 +55,7 @@ function PART:OnThink()
 			local num = self.Min + (self.Max - self.Min) * ((F(((I(self, parent) / self.InputDivider) + self.Offset) * self.InputMultiplier) + 1) / 2)
 			
 			if T == "number" then
+				--self:CheckLastVar(parent)
 				parent["Set" .. self.VariableName](parent, num)
 			else
 				local val = parent[self.VariableName]
@@ -61,6 +72,8 @@ function PART:OnThink()
 						val.z = num
 					end
 				end
+				
+				--self:CheckLastVar(parent)
 				parent["Set" .. self.VariableName](parent, val)
 			end		
 		end
