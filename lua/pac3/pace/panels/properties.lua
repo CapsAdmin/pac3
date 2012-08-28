@@ -1286,11 +1286,16 @@ do -- Proxy Variables
 		end
 
 		for key, _ in pairs(parent.StorableVars) do
-			local pnl = list:AddLine(L(key:gsub("%u", " %1"):lower()))
-			pnl.event_name = key
+			if key == "UniqueID" then continue end
 			
-			if cur == key then
-				list:SelectItem(pnl)
+			local T = type(parent[key])
+			if T == "number" or T == "Vector" or T == "Angle" then
+				local pnl = list:AddLine(L(key:gsub("%u", " %1"):lower()))
+				pnl.event_name = key
+				
+				if cur == key then
+					list:SelectItem(pnl)
+				end
 			end
 		end
 		
