@@ -266,6 +266,10 @@ function pace.TranslatePropertiesKey(key, obj)
 	
 	if key == "input" and obj.ClassName == "proxy" then
 		return "proxyinputs"
+	end	
+	
+	if key == "variablename" and obj.ClassName == "proxy" then
+		return "proxyvars"
 	end
 	
 	if key == "aimpartname" or key == "parentname" or key == "followpartname" then

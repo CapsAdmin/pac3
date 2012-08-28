@@ -1256,3 +1256,46 @@ do -- Proxy Functions
 	
 	pace.RegisterPanel(PANEL)
 end
+
+do -- Proxy Variables
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_proxyvars"
+	PANEL.Base = "pace_properties_base_type"
+		
+	function PANEL:SpecialCallback()	
+		local parent = pace.current_part.Parent
+		
+		if not parent:IsValid() then return end
+		
+		pace.SafeRemoveSpecialPanel()
+		 
+		local frame = vgui.Create("DFrame")
+		frame:SetTitle(L"functions")
+		SHOW_SPECIAL(frame, self, 250)
+		frame:SetSizable(true)
+
+		local list = vgui.Create("DListView", frame)
+		list:Dock(FILL)
+		list:SetMultiSelect(false)
+		list:AddColumn(L"parent variables")
+
+		list.OnRowSelected = function(_, id, line) 
+			self:SetValue(line.event_name)
+			self.OnValueChanged(line.event_name)
+		end
+
+		for key, _ in pairs(parent.StorableVars) do
+			local pnl = list:AddLine(L(key:gsub("%u", " %1"):lower()))
+			pnl.event_name = key
+			
+			if cur == key then
+				list:SelectItem(pnl)
+			end
+		end
+		
+		pace.ActiveSpecialPanel = frame
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
