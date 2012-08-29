@@ -42,6 +42,7 @@ PART.Inputs =
 	owner_speed_ex = function(s, p) s.owner_speed_ex = (s.owner_speed_ex or 0) + p:GetOwner():GetVelocity():Length() return s.owner_speed_ex end,
 	parent_speed = function(s, p)
 		p = p.Parent
+		if not p:IsValid() then return 0 end
 		local diff = p.cached_pos - (p.last_pos or Vector(0,0,0))
 		p.last_pos = p.cached_pos
 		
@@ -52,6 +53,7 @@ PART.Inputs =
 	end,
 	parent_speed_ex = function(s, p)
 		p = p.Parent
+		if not p:IsValid() then return 0 end
 		local diff = p.cached_pos - (p.last_pos or Vector(0,0,0))
 		p.last_pos = p.cached_pos
 		

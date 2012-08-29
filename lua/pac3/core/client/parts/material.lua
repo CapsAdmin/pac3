@@ -129,14 +129,15 @@ local function setup(PART)
 						else
 							tex = _mat:GetMaterialTexture("$" .. name)
 						end
-						
-						if not tex or tex:IsError() then
+												
+						if not tex or tex:GetName() == "error" then
 							if VERSION >= 150 then
 								tex = CreateMaterial("pac3_tex_" .. var .. "_" .. self.Id, "VertexLitGeneric", {["$basetexture"] = var}):GetTexture("$basetexture")
 							else
 								tex = CreateMaterial("pac3_tex_" .. var .. "_" .. self.Id, "VertexLitGeneric", {["$basetexture"] = var}):GetMaterialTexture("$basetexture")
 							end
-							if not tex or tex:IsError() then
+														
+							if not tex or tex:GetName() == "error" then
 								if VERSION >= 150 then
 									tex = _mat:GetTexture("$basetexture")
 								else
