@@ -142,40 +142,79 @@ function pace.LoadPartFromFile(part, name)
 	if not name then
 		
 		local frm = vgui.Create("DFrame")
-		frm:SetTitle(L"outfits")
+		frm:SetTitle(L"parts")
 		local pnl = pace.CreatePanel("browser", frm)
 		pnl:Dock(FILL)
+		
+		local btn = vgui.Create("DButton", frm)
+		btn:Dock(BOTTOM)
+		btn:SetText(L"load from url")
+		btn.DoClick = function()
+			Derma_StringRequest(
+				L"load part",
+				L"pastebin urls also work!",
+				"",
+
+				function(name)
+					pace.LoadPartFromFile(part, name)
+				end
+			)
+		end
 		
 		frm:SetSize(300, 500)
 		frm:MakePopup()
 		frm:Center()
-		
-		do return end
-		
-		Derma_StringRequest(
-			L"load part",
-			L"filename:",
-			"",
-
-			function(name)
-				pace.LoadPartFromFile(part, name)
-			end
-		)
 	else
 		pac.dprint("loading %s",  name)
-		name = name:gsub("%.txt", "")
-		local data = luadata.ReadFile("pac3/" .. name .. ".txt")
-		if data and data.self then
-			if part:IsValid() then
-				part:Clear()	
-				part:SetTable(data)
-			end
-		else
-			ErrorNoHalt("pac3 tried to load non existant part " .. name)
-		end
 		
-		if IsValid(part.editor_node) then
-			part.editor_node:SetText(part:GetName())
+		if name:find("http") then	
+			name = name:gsub("https://", "http://")
+			
+			if name:lower():find("pastebin.com") then
+				name = name:gsub(".com/", ".com/raw.php?i=")
+			end
+			
+			local function callback(str)
+				local data = luadata.Decode(str)
+		
+				if data and data.self then
+					if part:IsValid() then
+						part:Clear()	
+						part:SetTable(data)
+					end
+				else
+					ErrorNoHalt("pac3 tried to load non existant part " .. name)
+				end
+				
+				if IsValid(part.editor_node) then
+					part.editor_node:SetText(part:GetName())
+				end
+			end
+			
+			if VERSION >= 150 then
+				http.Fetch(name, callback)
+			else
+				http.Get(name, "", callback)
+			end
+			
+			pace.RefreshTree()
+		else
+			name = name:gsub("%.txt", "")
+			local data = luadata.ReadFile("pac3/" .. name .. ".txt")
+			if data and data.self then
+				if part:IsValid() then
+					part:Clear()	
+					part:SetTable(data)
+				end
+			else
+				ErrorNoHalt("pac3 tried to load non existant part " .. name)
+			end
+			
+			if IsValid(part.editor_node) then
+				part.editor_node:SetText(part:GetName())
+			end
+			
+			pace.RefreshTree()
 		end
 	end
 end
@@ -228,6 +267,23 @@ function pace.LoadSession(name, append)
 		frm:SetSize(300, 500)
 		frm:MakePopup()
 		frm:Center()
+		
+		
+		local btn = vgui.Create("DButton", frm)
+		btn:Dock(BOTTOM)
+		btn:SetText(L"load from url")
+		btn.DoClick = function()
+			Derma_StringRequest(
+				L"load part",
+				L"pastebin urls also work!",
+				"",
+
+				function(name)
+					pace.LoadSession(name, append)
+				end
+			)
+		end
+		
 	else
 		pac.dprint("loading session %s",  name)
 		
@@ -240,16 +296,41 @@ function pace.LoadSession(name, append)
 			end
 		end
 		
-		name = name:gsub("%.txt", "")
+		if name:find("http") then	
+			name = name:gsub("https://", "http://")
+			
+			if name:lower():find("pastebin.com") then
+				name = name:gsub(".com/", ".com/raw.php?i=")
+			end
+			
+			local function callback(str)
+				local data = luadata.Decode(str)
 		
-		local data = luadata.ReadFile("pac3/sessions/" .. name .. ".txt")
+				for key, tbl in pairs(data) do
+					local part = pac.CreatePart(tbl.self.ClassName)
+					part:SetTable(tbl)
+				end
+				
+				pace.RefreshTree()
+			end
+			
+			if VERSION >= 150 then
+				http.Fetch(name, callback)
+			else
+				http.Get(name, "", callback)
+			end
+		else
+			name = name:gsub("%.txt", "")
 		
-		for key, tbl in pairs(data) do
-			local part = pac.CreatePart(tbl.self.ClassName)
-			part:SetTable(tbl)
+			local data = luadata.ReadFile("pac3/sessions/" .. name .. ".txt")
+		
+			for key, tbl in pairs(data) do
+				local part = pac.CreatePart(tbl.self.ClassName)
+				part:SetTable(tbl)
+			end
+			
+			pace.RefreshTree()
 		end
-		
-		pace.RefreshTree()
 	end
 end
 
@@ -291,6 +372,13 @@ function pace.OnOpenMenu()
 	end)
 	menu:AddOption(L"load session", function()
 		pace.LoadSession()
+	end)
+	menu:AddOption(L"wear session", function()
+		for key, part in pairs(pac.GetParts(true)) do
+			if not part:HasParent() then
+				pac.SendPartToServer(part)
+			end
+		end
 	end)
 	menu:AddSpacer()
 	menu:AddOption(L"toggle t pose", function()
