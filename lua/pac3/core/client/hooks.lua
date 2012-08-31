@@ -36,7 +36,7 @@ function pac.RenderOverride(ent)
 end
 
 function pac.HookEntityRender(ent, part)
-	if part:IsValid() and not part:HasParent() then	
+	if ent:IsValid() and part:IsValid() and not part:HasParent() then	
 		pac.dprint("hooking render on %s to draw part %s", tostring(ent), tostring(part))
 		
 		if not ent.pac_parts then
