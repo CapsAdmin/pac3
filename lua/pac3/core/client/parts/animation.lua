@@ -15,7 +15,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Min", 0)
 	pac.GetSet(PART, "Max", 1)
 pac.EndStorableVars()
-
+ 
 function PART:GetOwner()
 	local parent = self:GetParent()
 	
@@ -58,18 +58,20 @@ function PART:OnThink()
 	
 	local ent = self:GetOwner()
 
-	if ent:IsValid() then	
-		
+	if ent:IsValid() then		
 		local seq = ent:LookupSequence(self.SequenceName)
-		local rate = self.Rate * FrameTime() / 2
+		local rate = self.Rate / 200
 		
 		if seq == -1 then
-			ent:SetSequence(tonumber(self.SequenceName) or -1)			
-			return
-		else
-			ent:ResetSequence(seq)
+			ent:SetSequence(tonumber(self.SequenceName) or -1)
 			if rate == 0 then
-				ent:SetCycle(self.Offset%1)
+				ent:SetCycle(self.Offset)
+				return
+			end			
+		else
+			ent:SetSequence(seq)
+			if rate == 0 then
+				ent:SetCycle(self.Offset)
 				return
 			end
 		end

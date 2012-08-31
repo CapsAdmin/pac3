@@ -554,7 +554,7 @@ do -- meta
 			for key, value in pairs(tbl.self) do
 				if self["Set" .. key] then
 					-- hack?? it effectively removes name confliction for other parts
-					if key:find("Name", nil, true) and key ~= "OwnerName" then
+					if key:find("Name", nil, true) and key ~= "OwnerName" and key ~= "SequenceName" and key ~= "VariableName" then
 						self["Set" .. key](self, pac.HandlePartName(self:GetPlayerOwner(), value, key))
 					else
 						self["Set" .. key](self, value)
