@@ -27,6 +27,16 @@ function PART:OnHide()
 	self:StopSound()
 end
 
+function PART:OnThink()
+	if self:IsHiddenEx() then
+		self:StopSound()
+	else
+		if not self.csptch or not self.csptch:IsPlaying() then
+			self:PlaySound()
+		end
+	end
+end
+
 function PART:SetSound(str)
 	self.Sound = str:gsub("\\", "/")
 end

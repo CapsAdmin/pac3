@@ -15,6 +15,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Pow", 1)
 	pac.GetSet(PART, "VariableName", "")
 	pac.GetSet(PART, "Axis", "")
+	pac.GetSet(PART, "RootOwner", false)
 pac.EndStorableVars()
 
 PART.Functions = 
@@ -38,8 +39,8 @@ PART.Inputs =
 	synced_time = CurTime,
 	camera_distance = function(s, p) return p.cached_pos:Distance(pac.EyePos) end,
 	angle_distance = function(s, p) return math.Clamp(math.abs(pac.EyeAng:Forward():DotProduct((p.cached_pos - pac.EyePos):GetNormalized())) - 0.5, 0, 1) end,
-	owner_speed = function(s, p) return p:GetOwner():GetVelocity():Length() end,
-	owner_speed_ex = function(s, p) s.owner_speed_ex = (s.owner_speed_ex or 0) + p:GetOwner():GetVelocity():Length() return s.owner_speed_ex end,
+	owner_speed = function(s, p) return p:GetOwner(s.RootOwner):GetVelocity():Length() end,
+	owner_speed_ex = function(s, p) s.owner_speed_ex = (s.owner_speed_ex or 0) + p:GetOwner(s.RootOwner):GetVelocity():Length() return s.owner_speed_ex end,
 	parent_speed = function(s, p)
 		p = p.Parent
 		if not p:IsValid() then return 0 end
@@ -97,6 +98,8 @@ function PART:CheckLastVar(parent)
 end
 
 function PART:OnThink()
+	if self:IsHiddenEx() then return end
+	
 	local parent = self.Parent
 	if not parent:IsValid() then return end
 	

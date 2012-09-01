@@ -255,7 +255,11 @@ do -- meta
 			return self.PlayerOwner or self:GetOwner() or NULL
 		end
 		
-		function PART:GetOwner()
+		function PART:GetOwner(root)
+			if root then
+				return self:GetRootPart():GetOwner()
+			end
+		
 			local parent = self:GetParent()
 			
 			if parent:IsValid() then
@@ -399,7 +403,7 @@ do -- meta
 			
 			for i = 1, 100 do
 				local parent = temp:GetParent()
-				
+
 				if parent:IsValid() then
 					temp = parent
 				else
@@ -407,7 +411,7 @@ do -- meta
 				end
 			end
 			
-			return self
+			return temp
 		end
 		
 		function PART:IsHiddenEx()
