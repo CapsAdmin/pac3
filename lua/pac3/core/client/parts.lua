@@ -10,6 +10,10 @@ function pac.CreatePart(name, owner)
 	
 	local part = class.Create("part", name)
 	
+	if not part then
+		error("pac3 tried to create unknown part " .. name)
+	end
+	
 	part.UniqueID = tostring(util.CRC(os.time() + RealTime() + part_count))
 	
 	if part.NonPhysical then
