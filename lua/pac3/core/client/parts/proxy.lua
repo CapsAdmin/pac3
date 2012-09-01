@@ -16,6 +16,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "VariableName", "")
 	pac.GetSet(PART, "Axis", "")
 	pac.GetSet(PART, "RootOwner", false)
+	pac.GetSet(PART, "Additive", false)
 pac.EndStorableVars()
 
 PART.Functions = 
@@ -24,66 +25,111 @@ PART.Functions =
 	sin = math.sin,
 	cos = math.cos,
 	tan = math.tan,
+	abs = math.abs,
 	mod = function(n, s) return n%s.Max end,
 }
 
-local function getvel(e)
-	if e.IsPACEntity then
-		
-	end
+local FrameTime = FrameTime
+
+local function calc_velocity(part)
+	local diff = part.cached_pos - (part.last_pos or Vector(0, 0, 0))
+	part.last_pos = part.cached_pos
+
+	part.last_vel_smooth = part.last_vel_smooth or Vector(0, 0, 0)
+	part.last_vel_smooth = (part.last_vel_smooth + (diff - part.last_vel_smooth) * FrameTime() * 4)
+	
+	return part.last_vel_smooth
 end
 
 PART.Inputs =
 {
 	time = RealTime,
 	synced_time = CurTime,
-	camera_distance = function(s, p) return p.cached_pos:Distance(pac.EyePos) end,
-	angle_distance = function(s, p) return math.Clamp(math.abs(pac.EyeAng:Forward():DotProduct((p.cached_pos - pac.EyePos):GetNormalized())) - 0.5, 0, 1) end,
-	owner_speed = function(s, p) return p:GetOwner(s.RootOwner):GetVelocity():Length() end,
-	owner_speed_ex = function(s, p) s.owner_speed_ex = (s.owner_speed_ex or 0) + p:GetOwner(s.RootOwner):GetVelocity():Length() return s.owner_speed_ex end,
-	parent_speed = function(s, p)
-		p = p.Parent
-		if not p:IsValid() then return 0 end
-		local diff = p.cached_pos - (p.last_pos or Vector(0,0,0))
-		p.last_pos = p.cached_pos
-		
-		p.last_vel_smooth = p.last_vel_smooth or 0
-		p.last_vel_smooth = (p.last_vel_smooth + (diff:Length() - p.last_vel_smooth) * FrameTime() * 4)
-		
-		return p.last_vel_smooth
-	end,
-	parent_speed_ex = function(s, p)
-		p = p.Parent
-		if not p:IsValid() then return 0 end
-		local diff = p.cached_pos - (p.last_pos or Vector(0,0,0))
-		p.last_pos = p.cached_pos
-		
-		p.last_vel_smooth = p.last_vel_smooth or 0
-		p.last_vel_smooth = (p.last_vel_smooth + (diff:Length() - p.last_vel_smooth) * FrameTime() * 4)
-		
-		s.parent_speed_ex = (s.parent_speed_ex or 0) + p.last_vel_smooth
-		
-		return s.parent_speed_ex
-	end,
-	local_parent_speed = function(s, p)
-		p = p.Parent
-		local ent = p:GetPlayerOwner()
-		local pos = 0
-		
-		if ent:IsValid() then
-			pos = p:GetPlayerOwner():EyePos():Distance(p.cached_pos)
-		end
-		
-		local diff = math.abs(pos - (p.last_speed_ex or 0))
-		p.last_speed_ex = pos
-		
-		p.last_vel_smooth = p.last_vel_smooth or 0
-		p.last_vel_smooth = (p.last_vel_smooth + (diff - p.last_vel_smooth) * FrameTime() * 4)
-			
-		return p.last_vel_smooth - 1
-	end,
 	random = function(s, p)
 		return math.random()
+	end,
+	
+	eye_position_distance = function(self, parent) 
+		return parent.cached_pos:Distance(pac.EyePos) 
+	end,
+	eye_angle_distance = function(self, parent) 
+		return math.Clamp(math.abs(pac.EyeAng:Forward():DotProduct((parent.cached_pos - pac.EyePos):GetNormalized())) - 0.5, 0, 1) 
+	end,
+	
+	-- outfit owner
+	owner_velocity_length = function(self, parent) 
+		local owner = self:GetOwner(self.RootOwner)
+		
+		if owner:IsValid() then
+			return parent:GetOwner(self.RootOwner):GetVelocity():Length() 
+		end
+		
+		return 0
+	end,
+	owner_velocity_forward = function(self, parent) 
+		local owner = self:GetOwner(self.RootOwner)
+		
+		if owner:IsValid() then 
+			return owner:EyeAngles():Forward():Dot(calc_velocity(parent))
+		end
+		
+		return 0
+	end,
+	owner_velocity_right = function(self, parent) 
+		local owner = self:GetOwner(self.RootOwner)
+		
+		if owner:IsValid() then 
+			return owner:EyeAngles():Right():Dot(calc_velocity(parent))
+		end
+		
+		return 0
+	end,
+	owner_velocity_up = function(self, parent) 
+		local owner = self:GetOwner(self.RootOwner)
+		
+		if owner:IsValid() then 
+			return owner:EyeAngles():Up():Dot(calc_velocity(parent))
+		end
+		
+		return 0
+	end,
+	
+	-- parent part
+	parent_velocity_length = function(self, parent) 
+		parent = parent.Parent
+		
+		if parent:IsValid() then
+			return calc_velocity(parent):Length()
+		end
+		
+		return 0
+	end,
+	parent_velocity_forward = function(self, parent) 
+		parent = parent.Parent
+		
+		if parent:IsValid() then
+			return parent.cached_ang:Forward():Dot(calc_velocity(parent))
+		end
+		
+		return 0
+	end,
+	parent_velocity_right = function(self, parent) 
+		parent = parent.Parent
+		
+		if parent:IsValid() then
+			return parent.cached_ang:Right():Dot(calc_velocity(parent))
+		end
+		
+		return 0
+	end,
+	parent_velocity_up = function(self, parent) 
+		parent = parent.Parent
+		
+		if parent:IsValid() then 
+			return parent.cached_ang:Up():Dot(calc_velocity(parent))
+		end
+		
+		return 0
 	end
 }
 
@@ -112,9 +158,14 @@ function PART:OnThink()
 		if F and I then
 			local num = self.Min + (self.Max - self.Min) * ((F(((I(self, parent) / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
 			
+			
+			if self.Additive then
+				self.num_additive = (self.num_additive or 0) + num
+				num = self.num_additive
+			end
+			
 			if T == "number" then
-				--self:CheckLastVar(parent)
-				parent["Set" .. self.VariableName](parent, num)
+				parent["Set" .. self.VariableName](parent, tonumber(num))
 			else
 				local val = parent[self.VariableName]
 				if self.Axis ~= "" and val[self.Axis] then
