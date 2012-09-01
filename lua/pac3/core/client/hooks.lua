@@ -43,9 +43,14 @@ function pac.HookEntityRender(ent, part)
 			ent.pac_parts = {}
 		end
 		
-		ent.pac_parts[part.Id] = part
+		-- umm
+		-- it sometimes say ent.pac_parts is nil
+		-- why?
+		if ent.pac_parts then
+			ent.pac_parts[part.Id] = part
 		
-		pac.drawn_entities[ent:EntIndex()] = ent
+			pac.drawn_entities[ent:EntIndex()] = ent
+		end
 	end
 end
 
