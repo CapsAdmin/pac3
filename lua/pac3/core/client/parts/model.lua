@@ -182,92 +182,94 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 			
 	ent:SetupBones()
 	
-	local bclip
-	
-	if #self.ClipPlanes > 0 then
-		bclip = render_EnableClipping(true)
+	if self.Alpha ~= 0 and self.Size ~= 0 then
+		local bclip
+		
+		if #self.ClipPlanes > 0 then
+			bclip = render_EnableClipping(true)
 
-		for key, clip in pairs(self.ClipPlanes) do
-			if clip:IsValid() and not clip:IsHidden() then
-				local pos, ang = clip:GetBonePosition()
-				pos, ang = LocalToWorld(clip.Position, clip:CalcAngles(owner, clip.Angles), pos, ang)
-				local normal = ang:Forward()
-				render_PushCustomClipPlane(normal, normal:Dot(pos + normal))
+			for key, clip in pairs(self.ClipPlanes) do
+				if clip:IsValid() and not clip:IsHidden() then
+					local pos, ang = clip:GetBonePosition()
+					pos, ang = LocalToWorld(clip.Position, clip:CalcAngles(owner, clip.Angles), pos, ang)
+					local normal = ang:Forward()
+					render_PushCustomClipPlane(normal, normal:Dot(pos + normal))
+				end
+			end
+		end			
+		if self.DoubleFace then
+			render_CullMode(MATERIAL_CULLMODE_CW)
+		else
+			if self.Invert then
+				render_CullMode(MATERIAL_CULLMODE_CW)
 			end
 		end
-	end			
-	if self.DoubleFace then
-		render_CullMode(MATERIAL_CULLMODE_CW)
-	else
-		if self.Invert then
-			render_CullMode(MATERIAL_CULLMODE_CW)
+
+		if self.Colorf then 
+			render_SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness) 
+		end
+		
+		render_SetBlend(self.Alpha)
+		
+		render_MaterialOverride(self.Materialm) 
+
+		if self.Fullbright then
+			render_SuppressEngineLighting(true) 
 		end
 	end
-
-	if self.Colorf then 
-		render_SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness) 
-	end
-	
-	if self.Alpha then render_SetBlend(self.Alpha) end
-	
-	render_MaterialOverride(self.Materialm) 
-
-	if self.Fullbright then
-		render_SuppressEngineLighting(true) 
-	end
-	
 end
 
 local MATERIAL_CULLMODE_CCW = MATERIAL_CULLMODE_CCW
 local WHITE = Material("models/debug/debugwhite")
 
 function PART:PostEntityDraw(owner, ent, pos, ang)
+	if self.Alpha ~= 0 and self.Size ~= 0 then
+		if self.DoubleFace then
+			render_CullMode(MATERIAL_CULLMODE_CCW)
+			self:DrawModel(ent, pos, ang)
+		else
+			if self.Invert then
+				render_CullMode(MATERIAL_CULLMODE_CCW)
+			end
+		end
+			
+		if self.Fullbright then
+			render_SuppressEngineLighting(false) 
+		end
 		
-	if self.DoubleFace then
-		render_CullMode(MATERIAL_CULLMODE_CCW)
-		self:DrawModel(ent, pos, ang)
-	else
-		if self.Invert then
+		if self.CellShade > 0 then
+			render_CullMode(MATERIAL_CULLMODE_CW)
+				ent:SetModelScale((self.Scale * self.Size) * (1 + self.CellShade))
+					render_SetColorModulation(0,0,0)
+						render_SuppressEngineLighting(true)
+						render_MaterialOverride(WHITE)
+							
+							ent:SetupBones()
+							self:DrawModel(ent, pos, ang)
+							
+						render_MaterialOverride()
+						render_SuppressEngineLighting(false)
+				ent:SetModelScale(self.Scale * self.Size)
 			render_CullMode(MATERIAL_CULLMODE_CCW)
 		end
-	end
 		
-	if self.Fullbright then
-		render_SuppressEngineLighting(false) 
-	end
-	
-	if self.CellShade > 0 then
-		render_CullMode(MATERIAL_CULLMODE_CW)
-			ent:SetModelScale((self.Scale * self.Size) * (1 + self.CellShade))
-				render_SetColorModulation(0,0,0)
-					render_SuppressEngineLighting(true)
-					render_MaterialOverride(WHITE)
-						
-						ent:SetupBones()
-						self:DrawModel(ent, pos, ang)
-						
-					render_MaterialOverride()
-					render_SuppressEngineLighting(false)
-			ent:SetModelScale(self.Scale * self.Size)
-		render_CullMode(MATERIAL_CULLMODE_CCW)
-	end
-	
-	render_SetColorModulation(1,1,1)
-	render_SetBlend(1)
-	
-	render_MaterialOverride()
-	
-	if #self.ClipPlanes > 0 then
-		for key, clip in pairs(self.ClipPlanes) do
-			if not clip:IsValid() then
-				self.ClipPlanes[key] = nil
+		render_SetColorModulation(1,1,1)
+		render_SetBlend(1)
+		
+		render_MaterialOverride()
+		
+		if #self.ClipPlanes > 0 then
+			for key, clip in pairs(self.ClipPlanes) do
+				if not clip:IsValid() then
+					self.ClipPlanes[key] = nil
+				end
+				if not clip:IsHidden() then
+					render_PopCustomClipPlane()
+				end
 			end
-			if not clip:IsHidden() then
-				render_PopCustomClipPlane()
-			end
-		end
 
-		render_EnableClipping(bclip)
+			render_EnableClipping(bclip)
+		end
 	end
 end
 
@@ -293,37 +295,43 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
+local VERSION = VERSION
+local Matrix = Matrix
+local cam_PushModelMatrix = cam.PushModelMatrix
+local cam_PopModelMatrix = cam.PopModelMatrix
+
 function PART:DrawModel(ent, pos, ang)
-	if self.wavefront_mesh then
-		local matrix = Matrix()
-		
-		if VERSION >= 150 then
-			matrix:SetAngles(ang)
-		else
-			matrix:SetAngle(ang)
-		end
-		matrix:SetTranslation(pos)
-		matrix:Scale(self.Scale * self.Size)
-		
-		cam.PushModelMatrix(matrix)
-			if self.Materialm then 
-				render_SetMaterial(self.Materialm)	
+	if self.Alpha ~= 0 and self.Size ~= 0 then
+		if self.wavefront_mesh then
+			local matrix = Matrix()
+			
+			if VERSION >= 150 then
+				matrix:SetAngles(ang)
+			else
+				matrix:SetAngle(ang)
+
 			end
-			self.wavefront_mesh:Draw()
-		cam.PopModelMatrix()
-		
-		if not self.wavefront_mesh_hack then
+			matrix:SetTranslation(pos)
+			matrix:Scale(self.Scale * self.Size)
+			
+			cam_PushModelMatrix(matrix)
+				if self.Materialm then 
+					render_SetMaterial(self.Materialm)	
+				end
+				self.wavefront_mesh:Draw()
+			cam_PopModelMatrix()
+			
 			ent:SetModelScale(Vector(0,0,0))
 			self.wavefront_mesh_hack = true
-		end
 		
-		ent:DrawModel()
-	else
-		if self.wavefront_mesh_hack then
-			ent:SetModelScale(self.Scale)
-			self.wavefront_mesh_hack = false
+			ent:DrawModel()
+		else
+			if self.wavefront_mesh_hack then
+				ent:SetModelScale(self.Scale)
+				self.wavefront_mesh_hack = false
+			end
+			ent:DrawModel()
 		end
-		ent:DrawModel()
 	end
 end
 

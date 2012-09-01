@@ -52,16 +52,10 @@ do -- hook helpers
 	function pac.AddHook(str, func)
 		func = func or pac[str]
 		hook.Add(str, "pac_" .. str, function(...)
-			if pac.Profiling then
-				pac.StartProfiling(str)
-			end
 			local args = {pcall(func, ...)}
-			if pac.Profiling then
-				pac.StopProfiling(str)
-			end
 			if not args[1] then
 				ErrorNoHalt("[pac3]" .. str .. " : " .. args[2] .. "\n")
-				pac.RemoveHook(str)
+				--pac.RemoveHook(str)
 				table.insert(pac.Errors, args[2])
 			end
 			table.remove(args, 1)
