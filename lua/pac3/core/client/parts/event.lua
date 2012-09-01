@@ -9,6 +9,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Arguments", "")
 	pac.GetSet(PART, "Operator", "find simple")
 	pac.GetSet(PART, "Invert", false)
+	pac.GetSet(PART, "RootOwner", false)
 pac.EndStorableVars()
 
 PART.Events = 
@@ -170,7 +171,7 @@ PART.Events =
 }
 
 function PART:OnThink()
-	local ent = self:GetOwner()
+	local ent = self:GetOwner(self.RootOwner)
 	
 	if ent:IsValid() then
 		local data = self.Events[self.Event]
