@@ -81,6 +81,9 @@ PART.Inputs =
 			
 		return p.last_vel_smooth - 1
 	end,
+	random = function(s, p)
+		return math.random()
+	end
 }
 
 function PART:CheckLastVar(parent)
