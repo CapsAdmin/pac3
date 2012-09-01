@@ -30,13 +30,13 @@ function PART:SetFollowPartName(var)
 end	
 
 function PART:ResolveFollowPartName()
+	if not self.FollowPartName or self.FollowPartName == "" then return end
+	
 	for key, part in pairs(pac.GetParts()) do	
-		if part ~= self and part:GetPlayerOwner() == self:GetPlayerOwner() and (part.UniqueID == self.UniqueID or part:GetName() == self.FollowPartName) then
-			self.FollowPart = part
-			self.FollowPartUID = part.UniqueID
-			
+		if part ~= self and part:GetPlayerOwner() == self:GetPlayerOwner() and part.Name == self.FollowPartName then
+			self:SetFollowPartName(part)			
 			pac.HookBuildBone(part:GetOwner())
-			break
+			return
 		end
 	end
 end

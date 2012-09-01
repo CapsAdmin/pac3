@@ -167,12 +167,40 @@ do -- meta
 			part:SetParentName(var)
 		end
 		
+		local found_aimpart = false
+		local found_followpart = false
+		
 		for key, part in pairs(pac.GetParts()) do
-			if part.AimPartName and part.AimPartName ~= "" and part:GetPlayerOwner() == self:GetPlayerOwner() and (part.AimPartUID == self.UniqueID or part.AimPartName == self.Name) then
-				part:SetAimPartName(var)
+			if part:GetPlayerOwner() == self:GetPlayerOwner() then
+				if part.AimPartName and part.AimPartName ~= "" and part.AimPartUID == self.UniqueID then
+					part:SetAimPartName(var)
+					found_aimpart = true
+				end
+				
+				if part.FollowPartName and part.FollowPartName ~= "" and part.FollowPartUID == self.UniqueID then
+					part:SetFollowPartName(var)
+					found_followpart = true
+				end
 			end
-			if part.FollowPartName and part.FollowPartName ~= "" and part:GetPlayerOwner() == self:GetPlayerOwner() and (part.FollowPartUID == self.UniqueID or part.FollowPartName == self.Name) then
-				part:SetFollowPartName(var)
+		end
+		
+		if not found_aimpart or not found_followpart then
+			for key, part in pairs(pac.GetParts()) do
+				if part:GetPlayerOwner() == self:GetPlayerOwner() then
+					if not found_aimpart then
+						if part.AimPartName and part.AimPartName ~= "" and part.Name == self.Name and part ~= self then
+							part:SetAimPartName(var)
+							found_aimpart = true
+						end
+					end
+					
+					if not found_followpart then
+						if part.FollowPartName and part.FollowPartName ~= "" and part.Name == self.Name and part ~= self then
+							part:SetFollowPartName(var)
+							found_followpart = true
+						end
+					end
+				end
 			end
 		end
 		
@@ -261,7 +289,7 @@ do -- meta
 		end
 		
 		function PART:CreatePart(name)
-			local part = pac.CreatePart(name)
+			local part = pac.CreatePart(name, self:GetPlayerOwner())
 			part:SetParent(self)
 			return part
 		end
@@ -291,11 +319,13 @@ do -- meta
 			self.ParentName = var
 		end
 		
-		function PART:ResolveParentName()
+		function PART:ResolveParentName()			
 			for key, part in pairs(pac.GetParts()) do
-				if part:GetPlayerOwner() == self:GetPlayerOwner() and (part:GetUniqueID() == self.ParentUID or part:GetName() == self.ParentName) then
-					self:SetParent(part)
-					break
+				if part:IsValid() then
+					if part ~= self and part:GetPlayerOwner() == self:GetPlayerOwner() and part.Name == self.ParentName then
+						self:SetParent(part)
+						return
+					end
 				end
 			end
 		end
@@ -459,6 +489,8 @@ do -- meta
 			if owner:IsValid() then
 				local pos, ang = self:GetBonePosition(nil, pos, ang)
 				
+				if type(pos) == "Player" then debug.Trace() end
+				
 				pos, ang = LocalToWorld(
 					self.Position, 
 					self.Angles, 
@@ -508,13 +540,18 @@ do -- meta
 					pos, ang = owner:GetBonePosition(idx or self.BoneIndex)
 				end
 			else
-				-- default to owner origin until BoneIndex is ready
-				pos = owner:GetPos()
-				if owner:IsPlayer() then
-					ang = owner:EyeAngles()
-					ang.p = 0
+				if owner:IsValid() then
+					-- default to owner origin until BoneIndex is ready
+					pos = owner:GetPos()
+					if owner:IsPlayer() then
+						ang = owner:EyeAngles()
+						ang.p = 0
+					else
+						ang = owner:GetAngles()
+					end
 				else
-					ang = owner:GetAngles()
+					pos = Vector(0,0,0)
+					ang = Angle(0,0,0)
 				end
 			end
 				
@@ -572,11 +609,21 @@ do -- meta
 			for key, value in pairs(tbl.children) do
 				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
 				part:SetTable(value)
+				part.temp_parent = self
 			end
-						
+
 			timer.Simple(0.1, function()
 				if self:IsValid() then
-					self:ResolveParentName()
+							
+					for key, part in pairs(pac.GetParts()) do
+						if part:IsValid() then
+							if part.temp_parent then
+								part:SetParent(part.temp_parent)
+								part.temp_parent = nil
+							end
+						end
+					end
+				
 					self:ResolveAimPartName()
 					if self.ResolveFollowPartName then 
 						self:ResolveFollowPartName()
@@ -585,7 +632,11 @@ do -- meta
 			end)
 		end
 		
-		local function COPY(var) 
+		local function COPY(var, key) 							
+			if (key == "UniqueID" or key:sub(-3) == "UID") and var and var ~= "" then
+				return util.CRC(var .. var)
+			end
+			
 			if type(var) == "Vector" or type(var) == "Angle" then 
 				return var * 1 
 			end 
@@ -601,16 +652,18 @@ do -- meta
 			local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 			for _, key in pairs(self:GetStorableVars()) do
-				local var = COPY(self[key] and self["Get"..key](self) or self[key])
+				local var = COPY(self[key] and self["Get"..key](self) or self[key], key)
 				
 				if var == self["__def" .. key] then
 					continue
 				end
-				
+								
 				tbl.self[key] = var
 							
 				if make_copy_name and (key == "Name" or key == "AimPartName"  or key == "FollowPartName" or (key == "ParentName" and is_child)) then
-					tbl.self[key] = tbl.self[key] .. " copy"
+					if tbl.self[key] ~= "" then
+						tbl.self[key] = tbl.self[key] .. " copy"
+					end
 				end
 			end
 
@@ -625,12 +678,13 @@ do -- meta
 			local tbl = {}
 
 			for _, key in pairs(self:GetStorableVars()) do
-				tbl[key] = COPY(self[key])
+				tbl[key] = COPY(self[key], key)
 			end
 			
 			return tbl			
 		end
 		
+			
 		function PART:Clone()
 			local part = pac.CreatePart(self.ClassName)
 			local uid = part.UniqueID
@@ -660,6 +714,8 @@ do -- meta
 			end
 
 			self:RemoveChildren()
+			
+			pac.ActiveParts[self.Id] = nil
 			
 			self.IsValid = function() return false end
 		end
@@ -762,7 +818,7 @@ do -- meta
 					
 					owner = self:GetOwner()
 					
-					pos, ang = self:GetDrawPosition(owner, pos, ang)
+					pos, ang = self:GetDrawPosition(pos, ang)
 					
 					pos = pos or Vector(0,0,0)
 					ang = ang or Angle(0,0,0)
@@ -806,11 +862,11 @@ do -- meta
 			self.last_parent_name = self.ParentName
 		end
 		
-		if self.AimPartName and self.AimPartName ~= "" and not self.AimPart:IsValid() and part ~= self then
+		if self.AimPartName and self.AimPartName ~= "" and not self.AimPart:IsValid() then
 			self:ResolveAimPartName()
 		end
 		
-		if self.SetFollowPartName and self.FollowPartName and self.FollowPartName ~= "" and not self.FollowPart:IsValid() and part ~= self then
+		if self.SetFollowPartName and self.FollowPartName and self.FollowPartName ~= "" and not self.FollowPart:IsValid() then
 			self:ResolveFollowPartName()
 		end
 		
@@ -845,11 +901,12 @@ do -- meta
 		end	
 	
 		function PART:ResolveAimPartName()
+			if not self.AimPartName or self.AimPartName == "" then return end
+			
 			for key, part in pairs(pac.GetParts()) do	
-				if part ~= self and (part:GetUniqueID() == self.AimPartUID or part:GetName() == self.AimPartName) then
-					self.AimPart = part
-					self.AimPartUID = part.UniqueID
-					break
+				if part ~= self and part:GetName() == self.AimPartName then
+					self:SetAimPartName(part)
+					return
 				end
 			end
 		end

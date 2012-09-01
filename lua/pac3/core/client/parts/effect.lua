@@ -145,6 +145,7 @@ function PART:Emit(pos, ang)
 			)
 		elseif self.Follow then
 			ent:StopParticles()
+			ent:StopParticleEmission()
 			ParticleEffectAttach(self.Effect, PATTACH_ABSORIGIN_FOLLOW, ent, 0)
 		else
 			ent:StopParticles()

@@ -114,9 +114,9 @@ local function CalcDrag()
 		pace.ViewPos = pace.ViewPos + pace.ViewAngles:Up() * mult * ftime
 	end
 	
-	if input.IsKeyDown(KEY_LALT) then
+	--[[if input.IsKeyDown(KEY_LALT) then
 		pace.ViewPos = pace.ViewPos + pace.ViewAngles:Up() * -mult * ftime
-	end
+	end]]
 end
 
 function pac.CalcView()

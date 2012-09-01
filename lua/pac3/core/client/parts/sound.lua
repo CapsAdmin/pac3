@@ -36,26 +36,26 @@ function PART:SetVolume(num)
 		num = num / 100
 	end
 	
-	self.Volume = num
+	self.Volume = math.Clamp(num, 0, 1)
 	
 	if not self.csptch then
 		self:PlaySound()
 	end
 	
 	if self.csptch then
-		self.csptch:ChangeVolume(math.Clamp(num, 0, 1))
+		self.csptch:ChangeVolume(self.Volume)
 	end
 end
 
 function PART:SetPitch(num)
-	self.Pitch = num
+	self.Pitch = math.Clamp(num*255, 0, 255)
 	
 	if not self.csptch then
 		self:PlaySound()
 	end
 	
 	if self.csptch then
-		self.csptch:ChangePitch(math.Clamp(num*255, 0, 255))
+		self.csptch:ChangePitch(self.Pitch)
 	end
 end
 
@@ -79,13 +79,9 @@ function PART:PlaySound()
 		end
 		
 		local csptch = CreateSound(self:GetPlayerOwner(), snd)
-		csptch:SetSoundLevel(85)
-		csptch:Play()
-		csptch:ChangeVolume(self.Volume)
-		csptch:ChangePitch(math.random(self.MinPitch, self.MaxPitch))
-		
+		csptch:PlayEx(self.Volume, math.random(self.MinPitch, self.MaxPitch))		
+		ent.pac_csptch = csptch
 		self.csptch = csptch
-		ent.csptch = csptch
 	end
 end
 

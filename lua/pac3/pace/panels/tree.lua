@@ -296,7 +296,6 @@ local function remove_node(obj)
 end
 
 hook.Add("pac_OnPartRemove", "pace_remove_tree_nodes", remove_node)
-hook.Add("pac_OnPartRemove", "pace_remove_tree_nodes", remove_node)
 
 function pace.RefreshTree()
 	if pace.tree:IsValid() then
