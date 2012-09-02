@@ -323,11 +323,13 @@ function pace.LoadSession(name, append)
 			name = name:gsub("%.txt", "")
 		
 			local data = luadata.ReadFile("pac3/sessions/" .. name .. ".txt")
-		
-			for key, tbl in pairs(data) do
-				local part = pac.CreatePart(tbl.self.ClassName)
-				part:SetTable(tbl)
-			end
+			
+			timer.Simple(0.1, function()				
+				for key, tbl in pairs(data) do
+					local part = pac.CreatePart(tbl.self.ClassName)
+					part:SetTable(tbl)
+				end
+			end)
 			
 			pace.RefreshTree()
 		end
