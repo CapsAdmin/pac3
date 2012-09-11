@@ -168,6 +168,33 @@ PART.Events =
 			end			
 		end,
 	},
+	
+	say =
+	{
+		arguments = {{find = "string"}, {time = "number"}, {owner = "boolean"}},
+		callback = function(self, ent, find, time, owner)
+			time = time or 0.1
+			
+			if owner then
+				owner = self:GetOwner(true)
+				if owner:IsValid() then
+					local data = owner.pac_say_event 
+					
+					if data and self:StringOperator(data.str, find) and data.time + time > RealTime() then
+						return true
+					end
+				end
+			else
+				for key, ply in pairs(player.GetAll()) do
+					local data = ent.pac_say_event 
+					
+					if data and self:StringOperator(data.str, find) and data.time + time > RealTime() then
+						return true
+					end			
+				end
+			end
+		end,
+	},
 }
 
 function PART:OnThink()
@@ -320,6 +347,10 @@ end)
 
 pac.AddHook("DoAnimationEvent", function(ply, event, data)
 	ply.pac_anim_event = {name = enums[event], time = RealTime()}
+end)
+
+pac.AddHook("OnPlayerChat", function(ply, str)
+	ply.pac_say_event = {str = str, time = RealTime()}
 end)
 
 --[[
