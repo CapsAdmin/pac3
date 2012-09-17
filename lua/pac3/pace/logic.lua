@@ -461,6 +461,11 @@ function pace.OnPartMenu(obj)
 		menu:AddOption(L"wear", function()
 			pac.SendPartToServer(obj)
 		end)
+		
+		menu:AddOption(L"spawn", function()
+			local data = pac.PartToContraptionData(obj)
+			datastream.StreamToServer("pac_to_contraption", data)
+		end)
 	end
 
 	menu:AddOption(L"copy", function()

@@ -906,20 +906,23 @@ do -- model
 		local function populate(dir)
 			frame:SetTitle(dir)
 			
-			file.TFind(dir .. "*", function(_, folders, files)
-				if GetParentFolder(dir):find("/", nil, true) then
-					local btn = vgui.Create("DButton")
-						btn:SetText("..")
-						top:AddItem(btn)
-					
-					function btn:DoClick()
-						for k,v in pairs(top:GetItems()) do v:Remove() end
-						for k,v in pairs(bottom:GetItems()) do v:Remove() end
-						populate(GetParentFolder(dir))
-					end
+			local a,b = file.Find(dir .. "*", "GAME")
+			local files = table.Merge(a or {}, b or {})
+			
+			if GetParentFolder(dir):find("/", nil, true) then
+				local btn = vgui.Create("DButton")
+					btn:SetText("..")
+					top:AddItem(btn)
+				
+				function btn:DoClick()
+					for k,v in pairs(top:GetItems()) do v:Remove() end
+					for k,v in pairs(bottom:GetItems()) do v:Remove() end
+					populate(GetParentFolder(dir))
 				end
-						
-				for _, name in pairs(folders) do
+			end
+					
+			for _, name in pairs(files) do
+				if not name:find("%.", nil, true) then
 					local btn = vgui.Create("DButton")
 					btn:SetText(name)
 					top:AddItem(btn)
@@ -930,47 +933,47 @@ do -- model
 						populate(dir .. name .. "/")
 					end
 				end
+			end
+			
+			for _, name in pairs(files) do
+				local dir = dir:match("../.-/(.+)")
+
+				if name:find(".mdl", nil, true) then
+					local btn = vgui.Create("SpawnIcon")
+					btn:SetIconSize(64)
+					btn:SetSize(64, 64)
+											
+					btn:SetModel(dir .. name)
+					bottom:AddItem(btn)
+					
+					function btn.DoClick()
+						pace.current_part:SetModel(dir .. name)
+					end
+				end
 				
-				for _, name in pairs(files) do
-					local dir = dir:match("../.-/(.+)")
-
-					if name:find(".mdl", nil, true) then
-						local btn = vgui.Create("SpawnIcon")
-						btn:SetIconSize(64)
-						btn:SetSize(64, 64)
-												
-						btn:SetModel(dir .. name)
-						bottom:AddItem(btn)
-						
-						function btn.DoClick()
-							pace.current_part:SetModel(dir .. name)
-						end
-					end
+				-- umm
+				
+				if name:find(".vmt", nil, true) then
+					local image = vgui.Create("DImageButton")
+					image:SetSize(64, 64)
+					local path = (dir .. name):match("materials/(.-)%.vmt")
+					image:SetMaterial(path)
+					image:SetTooltip(path)
+					bottom:AddItem(image)
 					
-					-- umm
-					
-					if name:find(".vmt", nil, true) then
-						local image = vgui.Create("DImageButton")
-						image:SetSize(64, 64)
-						local path = (dir .. name):match("materials/(.-)%.vmt")
-						image:SetMaterial(path)
-						image:SetTooltip(path)
-						bottom:AddItem(image)
-						
-						function image.DoClick()
-							pace.current_part:SetMaterial(path)
-						end
+					function image.DoClick()
+						pace.current_part:SetMaterial(path)
 					end
-										
+				end
+									
 
- 				end
-			end)
+			end
 			
 			top:InvalidateLayout(true)
 			bottom:InvalidateLayout(true)
 		end
 
-		populate("../")
+		populate(VERSION >= 150 and "" or "../")
 		
 		pace.ActiveSpecialPanel = frame
 	end
