@@ -61,6 +61,7 @@ include("hooks.lua")
 
 include("online.lua")
 include("wear.lua")
+include("contraption.lua")
 
 pac.LoadParts()
 

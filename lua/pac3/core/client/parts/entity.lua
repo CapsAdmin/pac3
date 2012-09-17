@@ -52,15 +52,6 @@ function PART:SetDrawShadow(b)
 	end
 end
 
-function PART:SetDrawShadow(b)
-	self.DrawShadow = b
-
-	local ent = self:GetOwner()
-	if ent:IsValid() then
-		ent:DrawShadow(b)
-	end
-end
-
 function PART:SetBodygroupState(var)
 	var = var or 0
 
