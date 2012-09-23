@@ -408,11 +408,22 @@ function pace.OnOpenMenu()
 	langmenu:AddOption("english", function()
 		pace.SetLanguage("english")
 	end)
-	for key, val in pairs(file.Find((SinglePlayer() and "lua" or "lua_temp") .. "/pac3/pace/translations/*", VERSION < 150 and true or "GAME")) do
-		val = val:gsub("%.lua", "")
-		langmenu:AddOption(val, function()
-			pace.SetLanguage(val)
-		end)
+	
+	
+	if VERSION >= 150 then
+		for key, val in pairs(file.Find("lua/pac3/pace/translations/*", "GAME")) do
+			val = val:gsub("%.lua", "")
+			langmenu:AddOption(val, function()
+				pace.SetLanguage(val)
+			end)
+		end
+	else
+		for key, val in pairs(file.Find((SinglePlayer() and "lua" or "lua_temp") .. "/pac3/pace/translations/*", true)) do
+			val = val:gsub("%.lua", "")
+			langmenu:AddOption(val, function()
+				pace.SetLanguage(val)
+			end)
+		end
 	end
 	
 	local fontmenu = menu:AddSubMenu(L"font")
