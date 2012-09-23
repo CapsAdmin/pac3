@@ -1,3 +1,5 @@
+if VERSION >= 150 then return end
+
 datastream.Hook("pac_to_contraption", function(ply, _,_,_, data)
 	for key, val in pairs(data) do
 		if hook.Call("PlayerSpawnProp", GAMEMODE, ply, data.mdl) ~= false then
