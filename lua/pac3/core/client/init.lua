@@ -17,7 +17,7 @@ function pac.LoadParts()
 	if file.FindInLua then
 		files = file.FindInLua("pac3/core/client/parts/*.lua")
 	else
-		files = file.Find("pac3/core/client/parts/*.lua", LUA_PATH)
+		files = file.Find("pac3/core/client/parts/*.lua", "LUA")
 	end
 	
 	for _, name in pairs(files) do

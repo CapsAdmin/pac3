@@ -25,7 +25,7 @@ function pace.RegisterPanels()
 	if file.FindInLua then
 		files = file.FindInLua("pac3/pace/panels/*.lua")
 	else
-		files = file.Find("pac3/pace/panels/*.lua", LUA_PATH)
+		files = file.Find("pac3/pace/panels/*.lua", "LUA")
 	end
 	
 	for _, name in pairs(files) do

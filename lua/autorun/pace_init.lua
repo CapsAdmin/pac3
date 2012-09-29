@@ -3,7 +3,7 @@ if SERVER then
 		local files
 		
 		if VERSION >= 150 then
-			local a, b = file.Find(dir .. "*", LUA_PATH)
+			local a, b = file.Find(dir .. "*", "LUA")
 			
 			files = {}
 			
