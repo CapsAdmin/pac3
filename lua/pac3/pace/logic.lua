@@ -455,12 +455,20 @@ function pace.OnOpenMenu()
 end
 
 local function add_parts(menu)
+	local temp = {}
+	
 	for class_name, tbl in pairs(pac.GetRegisteredParts()) do
 		if not tbl.Internal then
-			menu:AddOption(L(class_name), function()
-				pace.Call("CreatePart", class_name)
-			end)--:SetImage(pace.PartIcons[class_name])
+			table.insert(temp, class_name)
 		end
+	end
+	
+	table.sort(temp)
+	
+	for _, class_name in ipairs(temp) do
+		menu:AddOption(L(class_name), function()
+			pace.Call("CreatePart", class_name)
+		end)--:SetImage(pace.PartIcons[class_name])
 	end
 end
 
