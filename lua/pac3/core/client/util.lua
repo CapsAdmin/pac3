@@ -141,7 +141,9 @@ function pac.PushEntityMatrix(ent, pos, ang, scale)
 end
 
 function pac.PopEntityMatrix(ent)
-	cam.PopModelMatrix()
+  if VERSION >= 150 then
+     cam.PopModelMatrix()
+  end
 end
 
 function pac.SetModelScale(ent, scale)
