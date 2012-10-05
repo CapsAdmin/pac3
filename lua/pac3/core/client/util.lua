@@ -129,3 +129,26 @@ function pac.HandleUrlMat(part, url, callback)
 		end
 	end	
 end
+
+function pac.PushEntityMatrix(ent, pos, ang, scale)
+	if VERSION >= 150 then
+		local mat = Matrix()
+			mat:SetTranslation(pos or ent:GetPos())
+			mat:SetAngles(ang or ent:GetAngles())
+			mat:Scale(scale or ent.pac_uniform_scale or Vector(1,1,1))
+		cam.PushModelMatrix(mat)
+	end
+end
+
+function pac.PopEntityMatrix(ent)
+	cam.PopModelMatrix()
+end
+
+function pac.SetModelScale(ent, scale)
+	if VERSION >= 150 then
+		--???????????????
+		ent.pac_uniform_scale = scale or Vector(1,1,1)
+	else
+		ent:SetModelScale(scale)
+	end
+end
