@@ -103,7 +103,12 @@ function urlobj.CreateObj(str, mesh_only)
 				matrix:SetAngle(self:GetAngles())
 			end
 			matrix:SetTranslation(self:GetPos())
-			matrix:Scale(self:GetModelScale())
+			
+			if VERSION >= 150 then
+				matrix:Scale(self.pac_uniform_scale)
+			else
+				matrix:Scale(self:GetModelScale())
+			end
 			
 			if self.MeshMaterial then 
 				render_SetMaterial(self.MeshMaterial)	

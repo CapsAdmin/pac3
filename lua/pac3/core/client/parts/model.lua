@@ -143,7 +143,7 @@ function PART:SetOwnerEntity(b)
 			self.Entity = NULL
 			
 			ent.RenderOverride = nil
-			ent:SetModelScale(Vector(1,1,1))
+			pac.SetModelScale(ent, Vector(1,1,1))
 		end
 	end
 	
@@ -179,7 +179,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 			ent:SetAngles(ang)
 		end
 	end
-			
+				
 	ent:SetupBones()
 	
 	if self.Alpha ~= 0 and self.Size ~= 0 then
@@ -239,7 +239,7 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 		
 		if self.CellShade > 0 then
 			render_CullMode(MATERIAL_CULLMODE_CW)
-				ent:SetModelScale((self.Scale * self.Size) * (1 + self.CellShade))
+				pac.SetModelScale(ent, (self.Scale * self.Size) * (1 + self.CellShade))
 					render_SetColorModulation(0,0,0)
 						render_SuppressEngineLighting(true)
 						render_MaterialOverride(WHITE)
@@ -249,7 +249,7 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 							
 						render_MaterialOverride()
 						render_SuppressEngineLighting(false)
-				ent:SetModelScale(self.Scale * self.Size)
+				pac.SetModelScale(ent, self.Scale * self.Size)
 			render_CullMode(MATERIAL_CULLMODE_CCW)
 		end
 		
@@ -301,6 +301,8 @@ local cam_PushModelMatrix = cam.PushModelMatrix
 local cam_PopModelMatrix = cam.PopModelMatrix
 
 function PART:DrawModel(ent, pos, ang)
+	pac.PushEntityMatrix(ent, pos, ang)
+
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 		if self.wavefront_mesh then
 			local matrix = Matrix()
@@ -321,18 +323,20 @@ function PART:DrawModel(ent, pos, ang)
 				self.wavefront_mesh:Draw()
 			cam_PopModelMatrix()
 			
-			ent:SetModelScale(Vector(0,0,0))
+			pac.SetModelScale(ent, Vector(0,0,0))
 			self.wavefront_mesh_hack = true
 		
 			ent:DrawModel()
 		else
 			if self.wavefront_mesh_hack then
-				ent:SetModelScale(self.Scale)
+				pac.SetModelScale(ent, self.Scale)
 				self.wavefront_mesh_hack = false
 			end
 			ent:DrawModel()
 		end
 	end
+	
+	pac.PopEntityMatrix(ent)
 end
 
 function PART:SetModel(var)
@@ -385,14 +389,14 @@ function PART:SetScale(var)
 	var = var or Vector(1,1,1)
 
 	self.Scale = var
-	self.Entity:SetModelScale(self.Scale * self.Size)
+	pac.SetModelScale(self.Entity, self.Scale * self.Size)
 end
 
 function PART:SetSize(var)
 	var = var or 1
 
 	self.Size = var
-	self.Entity:SetModelScale(self.Scale * self.Size)
+	pac.SetModelScale(self.Entity, self.Scale * self.Size)
 end
 
 function PART:SetColor(var)

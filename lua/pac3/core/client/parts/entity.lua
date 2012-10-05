@@ -154,8 +154,14 @@ function PART:UpdateScale(ent)
 		
 		local scale = self.Scale * self.Size
 		
-		if scale ~= ent:GetModelScale() then
-			ent:SetModelScale(scale)
+		if VERSION >= 150 then
+			if scale ~= ent.pac_uniform_scale then
+				pac.SetModelScale(ent, scale)
+			end
+		else
+			if scale ~= ent:GetModelScale() then
+				pac.SetModelScale(ent, scale)
+			end
 		end
 	end
 end
@@ -286,7 +292,7 @@ function PART:OnDetach(ent)
 	if ent:IsValid() then
 		ent.RenderOverride = nil
 		
-		ent:SetModelScale(Vector(1,1,1))
+		pac.SetModelScale(ent, Vector(1,1,1))
 		
 		local weps = ent.GetWeapons and ent:GetWeapons()
 		
@@ -321,9 +327,12 @@ function PART:PreEntityDraw(ent)
 	if self.Fullbright then
 		render_SuppressEngineLighting(true) 
 	end
+	
+	pac.PushEntityMatrix(ent)
 end
 
 function PART:PostEntityDraw(ent)	
+	pac.PopEntityMatrix(ent)
 	
 	if self.Invert then
 		render_CullMode(0) -- MATERIAL_CULLMODE_CCW
