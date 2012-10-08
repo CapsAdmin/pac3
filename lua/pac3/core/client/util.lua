@@ -150,6 +150,7 @@ function pac.SetModelScale(ent, scale)
 	if VERSION >= 150 then
 		--???????????????
 		ent.pac_uniform_scale = scale or Vector(1,1,1)
+		ent:SetModelScale(scale.x)
 	else
 		ent:SetModelScale(scale)
 	end
