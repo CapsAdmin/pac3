@@ -148,9 +148,13 @@ end
 
 function pac.SetModelScale(ent, scale)
 	if VERSION >= 150 then
-		--???????????????
-		ent.pac_uniform_scale = scale or Vector(1,1,1)
-		ent:SetModelScale(scale.x)
+		if ent.EnableMatrix then
+			local mat = Matrix()
+			mat:Scale(scale)
+			ent:EnableMatrix("RenderMultiply", mat)
+		else
+			ent:SetModelScale(scale.x)
+		end
 	else
 		ent:SetModelScale(scale)
 	end
