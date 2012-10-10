@@ -113,16 +113,24 @@ function PART:PlaySound()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
-		local snd = self.Sound:gsub(
-			"(%[%d-,%d-%])", 
-			function(minmax) 
-				local min, max = minmax:match("%[(%d-),(%d-)%]")
-				if max < min then
-					max = min
+		local snd
+		
+		local sounds = self.Sound:Split(";")
+		
+		if #sounds > 1 then
+			snd = table.Random(sounds)
+		else
+			snd = self.Sound:gsub(
+				"(%[%d-,%d-%])", 
+				function(minmax) 
+					local min, max = minmax:match("%[(%d-),(%d-)%]")
+					if max < min then
+						max = min
+					end
+					return math.random(min, max) 
 				end
-				return math.random(min, max) 
-			end
-		)
+			)
+		end
 		
 		if self.csptch then
 			self.csptch:Stop()
