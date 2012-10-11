@@ -410,12 +410,14 @@ function PART:SetMaterial(var)
 	var = var or ""
 	
 	if not pac.HandleUrlMat(self, var) then
-		if var ~= "" then
+		if var == "" then
+			self.Materialm = nil
+		else			
 			self.Materialm = Material(var)
 			self:CallEvent("material_changed")
 		end
 	end
-	
+		
 	self.Material = var
 end
 
