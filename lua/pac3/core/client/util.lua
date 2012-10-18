@@ -155,6 +155,8 @@ function pac.SetModelScale(ent, scale)
 		else
 			ent:SetModelScale(scale.x)
 		end
+		
+		ent.pac_uniform_scale = scale
 	else
 		ent:SetModelScale(scale)
 	end
