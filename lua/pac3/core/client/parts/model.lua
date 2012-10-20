@@ -249,7 +249,7 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 							
 						render_MaterialOverride()
 						render_SuppressEngineLighting(false)
-				pac.SetModelScale(ent, self.Scale * self.Size)
+				pac.SetModelScale(ent)
 			render_CullMode(MATERIAL_CULLMODE_CCW)
 		end
 		
@@ -279,11 +279,17 @@ function PART:OnDraw(owner, pos, ang)
 	local ent = self.Entity
 	
 	if ent:IsValid() then
+		self:CheckScale()
 		self:CheckBoneMerge()
 	
 		self:PreEntityDraw(owner, ent, pos, ang)
 		
+		pac.SetModelScale(ent, self.Scale * self.Size)
+		--ent:SetupBones()
+		
 		self:DrawModel(ent, pos, ang)
+		
+		pac.SetModelScale(ent)
 		
 		self:PostEntityDraw(owner, ent, pos, ang)
 	else
@@ -301,8 +307,6 @@ local cam_PushModelMatrix = cam.PushModelMatrix
 local cam_PopModelMatrix = cam.PopModelMatrix
 
 function PART:DrawModel(ent, pos, ang)
-	pac.PushEntityMatrix(ent, pos, ang)
-
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 		if self.wavefront_mesh then
 			local matrix = Matrix()
@@ -324,19 +328,12 @@ function PART:DrawModel(ent, pos, ang)
 			cam_PopModelMatrix()
 			
 			pac.SetModelScale(ent, Vector(0,0,0))
-			self.wavefront_mesh_hack = true
 		
 			ent:DrawModel()
 		else
-			if self.wavefront_mesh_hack then
-				pac.SetModelScale(ent, self.Scale)
-				self.wavefront_mesh_hack = false
-			end
 			ent:DrawModel()
 		end
 	end
-	
-	pac.PopEntityMatrix(ent)
 end
 
 function PART:SetModel(var)
@@ -383,6 +380,25 @@ function PART:SetModel(var)
 	
 	local min, max = self.Entity:GetRenderBounds()
 	self.Entity.pac3_center = (min + max) * 0.5
+end
+local NORMAL = Vector(1,1,1)
+function PART:CheckScale()
+	if VERSION < 150 then return end
+	-- this RenderMultiply doesn't work with this..
+	if self.Entity:IsValid() and self.Entity:GetBoneName(0) ~= "static_prop" then
+		if self.Scale ~= NORMAL then
+			if not self.requires_bone_scale then
+				pac.HookBuildBone(self.Entity, self)
+				self.Entity.pac_part_ref = self
+				self.requires_bone_scale = true
+				self.Entity.pac_bone_scaling = true
+			end
+		else
+			self.Entity.pac_part_ref = nil
+			self.requires_bone_scale = false
+			self.Entity.pac_bone_scaling = false
+		end
+	end
 end
 
 function PART:SetScale(var)
@@ -571,7 +587,20 @@ function PART:OnBuildBonePositions(ent)
 				end
 			end
 		end
-	end	
+	end
+	
+	if self.requires_bone_scale then
+		local scale = self.Scale * self.Size
+		scale = Vector(scale.y, scale.z, scale.x)
+		
+		for i = 0, ent:GetBoneCount() do	
+			local mat = ent:GetBoneMatrix(i)
+			if mat then
+				mat:Scale(scale)
+				ent:SetBoneMatrix(i, mat)
+			end
+		end
+	end
 	
 	if self.OverallSize ~= 1 then
 		for i = 0, ent:GetBoneCount() do

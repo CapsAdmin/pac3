@@ -142,26 +142,16 @@ end
 
 function PART:UpdateScale(ent)
 	ent = ent or self:GetOwner()
-	if ent:IsValid() then		
-		if VERSION >= 150 then 
-			ent:SetIK(not self.RelativeBones) 
-		end
-		
-		if self.OverallSize ~= 1 and not self.setup_overallscale then
+	if ent:IsValid() then				
+		if self.RelativeBones or self.OverallSize ~= 1 and not self.setup_overallscale then
 			pac.HookBuildBone(ent, self)
 			self.setup_overallscale = true
 		end
 		
-		local scale = self.Scale * self.Size
-		
-		if VERSION >= 150 then
-			if scale ~= ent.pac_uniform_scale then
-				pac.SetModelScale(ent, scale)
-			end
+		if ent:IsPlayer() then
+			pac.SetModelScale(ent, self.Scale, self.Size)
 		else
-			if scale ~= ent:GetModelScale() then
-				pac.SetModelScale(ent, scale)
-			end
+			pac.SetModelScale(ent, self.Scale * self.Size)
 		end
 	end
 end
@@ -329,13 +319,9 @@ function PART:PreEntityDraw(ent)
 	if self.Fullbright then
 		render_SuppressEngineLighting(true) 
 	end
-	
-	pac.PushEntityMatrix(ent)
 end
 
-function PART:PostEntityDraw(ent)	
-	pac.PopEntityMatrix(ent)
-	
+function PART:PostEntityDraw(ent)		
 	if self.Invert then
 		render_CullMode(0) -- MATERIAL_CULLMODE_CCW
 	end
