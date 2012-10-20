@@ -130,34 +130,28 @@ function pac.HandleUrlMat(part, url, callback)
 	end	
 end
 
-function pac.PushEntityMatrix(ent, pos, ang, scale)
+function pac.SetModelScale(ent, scale, size)
+	if not ent:IsValid() then return end
+	if ent.pac_bone_scaling then return end
+	
 	if VERSION >= 150 then
-		local mat = Matrix()
-			mat:SetTranslation(pos or ent:GetPos())
-			mat:SetAngles(ang or ent:GetAngles())
-			mat:Scale(scale or ent.pac_uniform_scale or Vector(1,1,1))
-		cam.PushModelMatrix(mat)
-	end
-end
-
-function pac.PopEntityMatrix(ent)
-  if VERSION >= 150 then
-     cam.PopModelMatrix()
-  end
-end
-
-function pac.SetModelScale(ent, scale)
-	if VERSION >= 150 then
-		if ent.EnableMatrix then
+		if scale then
 			local mat = Matrix()
 			mat:Scale(scale)
 			ent:EnableMatrix("RenderMultiply", mat)
-		else
-			ent:SetModelScale(scale.x)
+			ent:SetupBones()
+			ent.pac_model_scale = scale
 		end
 		
-		ent.pac_uniform_scale = scale
-	else
+		if size then
+			ent:SetModelScale(size == 1 and 1.000001 or size, 0)
+		end
+		
+		if not scale and not size then
+			ent:DisableMatrix("RenderMultiply")
+			ent:SetupBones()
+		end
+	elseif scale then
 		ent:SetModelScale(scale)
 	end
 end

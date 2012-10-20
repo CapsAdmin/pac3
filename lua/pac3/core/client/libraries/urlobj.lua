@@ -105,7 +105,7 @@ function urlobj.CreateObj(str, mesh_only)
 			matrix:SetTranslation(self:GetPos())
 			
 			if VERSION >= 150 then
-				matrix:Scale(self.pac_uniform_scale)
+				matrix:Scale(self.pac_model_scale)
 			else
 				matrix:Scale(self:GetModelScale())
 			end

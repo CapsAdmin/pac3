@@ -85,17 +85,20 @@ function PART:GetBonePosition(...)
 		if not self.BoneIndex then
 			self:UpdateBoneIndex(owner)
 		end
-	
-		pos, ang = owner:GetBonePosition(owner:GetBoneParent(self.BoneIndex))
-		owner:InvalidateBoneCache()
-
-		if not pos and not ang then
-			pos, ang = owner:GetBonePosition(self.BoneIndex)
+		
+		if self.BoneIndex then
+		
+			pos, ang = owner:GetBonePosition(owner:GetBoneParent(self.BoneIndex))
 			owner:InvalidateBoneCache()
+
+			if not pos and not ang then
+				pos, ang = owner:GetBonePosition(self.BoneIndex)
+				owner:InvalidateBoneCache()
+			end
+				
+			self.cached_pos = pos
+			self.cached_ang = ang
 		end
-			
-		self.cached_pos = pos
-		self.cached_ang = ang
 	end
 
 	return pos or Vector(0,0,0), ang or Angle(0,0,0)
