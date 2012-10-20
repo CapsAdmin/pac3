@@ -386,7 +386,7 @@ function PART:CheckScale()
 	if VERSION < 150 then return end
 	-- this RenderMultiply doesn't work with this..
 	if self.Entity:IsValid() and self.Entity:GetBoneName(0) ~= "static_prop" then
-		if self.Scale ~= NORMAL then
+		if self.Scale * self.Size ~= NORMAL then
 			if not self.requires_bone_scale then
 				pac.HookBuildBone(self.Entity, self)
 				self.Entity.pac_part_ref = self
