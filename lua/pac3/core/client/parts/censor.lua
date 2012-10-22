@@ -1,3 +1,4 @@
+do return end
 local PART = {}
 
 PART.ClassName = "\231\166\129"

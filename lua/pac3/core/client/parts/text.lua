@@ -27,16 +27,16 @@ function PART:SetAlpha(n)
 end
 
 function PART:SetOutlineColor(v)
-	self.ColorC = self.ColorC or Color(255, 255, 255, 255)
+	self.OutlineColorC = self.OutlineColorC or Color(255, 255, 255, 255)
 	
-	self.ColorC.r = v.r
-	self.ColorC.g = v.g
-	self.ColorC.b = v.b
+	self.OutlineColorC.r = v.r
+	self.OutlineColorC.g = v.g
+	self.OutlineColorC.b = v.b
 end
 
 function PART:SetOutlineAlpha(n)
-	self.ColorC = self.ColorC or Color(255, 255, 255, 255)
-	self.ColorC.a = n * 255
+	self.OutlineColorC = self.OutlineColorC or Color(255, 255, 255, 255)
+	self.OutlineColorC.a = n * 255
 end
 
 local cam_Start3D = cam.Start3D
