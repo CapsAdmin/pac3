@@ -235,11 +235,7 @@ function PART:UpdateColor(ent)
 	render_SetBlend(self.Alpha)
 	
 	if self.Colorc then
-		if VERSION >= 150 then 
-			ent:SetColor(self.Colorc)
-		else
-			ent:SetColor(unpack(self.Colorc))
-		end
+		ent:SetColor(self.Colorc)
 	end
 end
 

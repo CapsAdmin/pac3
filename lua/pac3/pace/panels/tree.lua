@@ -20,20 +20,9 @@ end
 
 do
 	local pnl = NULL
-	local VERSION = VERSION
-	
-	if VERSION < 150 then
-		pac_ChangeTooltip = pac_ChangeTooltip or ChangeTooltip
-		function ChangeTooltip(pnl_, ...)
-			pnl = pnl_ or NULL
-			return pac_ChangeTooltip(pnl_, ...)
-		end
-	end
 
 	function PANEL:Think(...)	
-		if VERSION >= 150 then
-			pnl = vgui.GetHoveredPanel() or NULL
-		end
+		pnl = vgui.GetHoveredPanel() or NULL
 				
 		if pnl:IsValid() then
 			local pnl = pnl:GetParent()
@@ -70,10 +59,6 @@ function PANEL:SetModel(path)
 
 		pnl.SetImage = function() end
 		pnl.GetImage = function() end
-
-		if VERSION < 150 then
-			pnl:TellParentAboutSizeChanges()
-		end
 
 	self.Icon:Remove()
 	self.Icon = pnl
@@ -121,13 +106,13 @@ function PANEL:AddNode(...)
 
 	local node = fix_folder_funcs(DTree.AddNode(self, ...))
 	install_expand(node)
-	if VERSION >= 150 then install_drag(node) end
+	install_drag(node)
 	node.SetModel = self.SetModel
 	
 	node.AddNode = function(...)
 		local node_ = fix_folder_funcs(DTree_Node.AddNode(...))
 		install_expand(node_)
-		if VERSION >= 150 then install_drag(node_) end
+		install_drag(node_)
 		node_.SetModel = self.SetModel
 
 		node_.AddNode = node.AddNode

@@ -301,7 +301,6 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
-local VERSION = VERSION
 local Matrix = Matrix
 local cam_PushModelMatrix = cam.PushModelMatrix
 local cam_PopModelMatrix = cam.PopModelMatrix
@@ -311,12 +310,7 @@ function PART:DrawModel(ent, pos, ang)
 		if self.wavefront_mesh then
 			local matrix = Matrix()
 			
-			if VERSION >= 150 then
-				matrix:SetAngles(ang)
-			else
-				matrix:SetAngle(ang)
-
-			end
+			matrix:SetAngles(ang)
 			matrix:SetTranslation(pos)
 			matrix:Scale(self.Scale * self.Size)
 			
@@ -383,9 +377,8 @@ function PART:SetModel(var)
 end
 local NORMAL = Vector(1,1,1)
 function PART:CheckScale()
-	if VERSION < 150 then return end
 	-- this RenderMultiply doesn't work with this..
-	if self.Entity:IsValid() and self.Entity:GetBoneName(0) ~= "static_prop" then
+	if self.Entity:IsValid() and self.Entity:GetBoneCount() > 1 then
 		if self.Scale * self.Size ~= NORMAL then
 			if not self.requires_bone_scale then
 				pac.HookBuildBone(self.Entity, self)
@@ -393,11 +386,12 @@ function PART:CheckScale()
 				self.requires_bone_scale = true
 				self.Entity.pac_bone_scaling = true
 			end
-		else
-			self.Entity.pac_part_ref = nil
-			self.requires_bone_scale = false
-			self.Entity.pac_bone_scaling = false
+			return true
 		end
+		
+		self.Entity.pac_part_ref = nil
+		self.requires_bone_scale = false
+		self.Entity.pac_bone_scaling = false	
 	end
 end
 
@@ -405,14 +399,18 @@ function PART:SetScale(var)
 	var = var or Vector(1,1,1)
 
 	self.Scale = var
-	pac.SetModelScale(self.Entity, self.Scale * self.Size)
+	if not self:CheckScale() then
+		pac.SetModelScale(self.Entity, self.Scale * self.Size)
+	end
 end
 
 function PART:SetSize(var)
 	var = var or 1
 
 	self.Size = var
-	pac.SetModelScale(self.Entity, self.Scale * self.Size)
+	if not self:CheckScale() then
+		pac.SetModelScale(self.Entity, self.Scale * self.Size)
+	end
 end
 
 function PART:SetColor(var)
@@ -589,15 +587,28 @@ function PART:OnBuildBonePositions(ent)
 		end
 	end
 	
+	print("asuidjasudij")
+	
 	if self.requires_bone_scale then
+	
+		if ASDF then ASDF(self, ent) return end
+		
 		local scale = self.Scale * self.Size
 		scale = Vector(scale.y, scale.z, scale.x)
 		
-		for i = 0, ent:GetBoneCount() do	
-			local mat = ent:GetBoneMatrix(i)
+		for friendly, data in pairs(pac.GetModelBones(ent)) do	
+			local mat = ent:GetBoneMatrix(data.i)
 			if mat then
 				mat:Scale(scale)
-				ent:SetBoneMatrix(i, mat)
+				
+				if data.parent_i > 0 then
+					local parent_mat = ent:GetBoneMatrix(data.parent_i)
+					if parent_mat then
+						mat:Translate((mat:GetTranslation() - parent_mat:GetTranslation()) * scale)
+					end
+				end
+				
+				ent:SetBoneMatrix(data.i, mat)
 			end
 		end
 	end

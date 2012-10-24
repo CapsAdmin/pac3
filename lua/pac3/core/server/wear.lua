@@ -34,13 +34,9 @@ function pac.SubmitPart(data, filter)
 	end
 	
 	if not data.server_only then
-		if VERSION >= 150 then
-			net.Start("pac_submit")
-				net.WriteTable(data)
-			net.Send(filter or player.GetAll())
-		else
-			datastream.StreamToClients(filter or player.GetAll(), "pac_submit", data)
-		end
+		net.Start("pac_submit")
+			net.WriteTable(data)
+		net.Send(filter or player.GetAll())	
 	end
 	
 	return true
@@ -76,23 +72,14 @@ local function handle_data(owner, data)
 	end
 end
 
-if VERSION >= 150 then
-	util.AddNetworkString("pac_submit")
-	util.AddNetworkString("pac_effect_precached")
-	util.AddNetworkString("pac_precache_effect")
+util.AddNetworkString("pac_submit")
+util.AddNetworkString("pac_effect_precached")
+util.AddNetworkString("pac_precache_effect")
 
-	net.Receive("pac_submit", function(_, ply)
-		local data = net.ReadTable()
-		handle_data(ply, data)
-	end)
-else
-	require("datastream")
-	
-	datastream.Hook("pac_submit", function(ply, _, _, _, data)
-		handle_data(ply, data)
-	end)
-end
-
+net.Receive("pac_submit", function(_, ply)
+	local data = net.ReadTable()
+	handle_data(ply, data)
+end)
 
 function pac.PlayerInitialSpawn(ply)
 	timer.Simple(1, function()

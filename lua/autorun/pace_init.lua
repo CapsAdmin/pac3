@@ -1,23 +1,18 @@
 if SERVER then
 	local function getfiles(dir)
-		local files
 		
-		if VERSION >= 150 then
-			local a, b = file.Find(dir .. "*", "LUA")
-			
-			files = {}
-			
-			for k,v in pairs(a) do
-				table.insert(files, v)
-			end
-			
-			for k,v in pairs(b) do
-				table.insert(files, v)
-			end
-		else
-			files = file.FindInLua(dir .. "*")
+		local a, b = file.Find(dir .. "*", "LUA")
+		
+		local files = {}
+		
+		for k,v in pairs(a) do
+			table.insert(files, v)
 		end
 		
+		for k,v in pairs(b) do
+			table.insert(files, v)
+		end
+	
 		return files
 	end
 		

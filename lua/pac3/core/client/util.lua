@@ -29,14 +29,8 @@ function pac.MakeNull(tbl)
 end
 
 function pac.CreateEntity(model)
-	local ent = NULL
-	
-	if VERSION >= 150 then 
-		ent = ents.CreateClientProp()
-	else
-		ent = ents.Create("prop_physics")
-	end
-	
+	local ent = ents.CreateClientProp()
+
 	if ent and ent:IsValid() then
 		ent:SetModel(model)
 			
@@ -133,25 +127,21 @@ end
 function pac.SetModelScale(ent, scale, size)
 	if not ent:IsValid() then return end
 	if ent.pac_bone_scaling then return end
+
+	if scale then
+		local mat = Matrix()
+		mat:Scale(scale)
+		ent:EnableMatrix("RenderMultiply", mat)
+		ent:SetupBones()
+		ent.pac_model_scale = scale
+	end
 	
-	if VERSION >= 150 then
-		if scale then
-			local mat = Matrix()
-			mat:Scale(scale)
-			ent:EnableMatrix("RenderMultiply", mat)
-			ent:SetupBones()
-			ent.pac_model_scale = scale
-		end
-		
-		if size then
-			ent:SetModelScale(size == 1 and 1.000001 or size, 0)
-		end
-		
-		if not scale and not size then
-			ent:DisableMatrix("RenderMultiply")
-			ent:SetupBones()
-		end
-	elseif scale then
-		ent:SetModelScale(scale)
+	if size then
+		ent:SetModelScale(size == 1 and 1.000001 or size, 0)
+	end
+	
+	if not scale and not size then
+		ent:DisableMatrix("RenderMultiply")
+		ent:SetupBones()
 	end
 end

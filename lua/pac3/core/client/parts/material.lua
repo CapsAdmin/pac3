@@ -88,11 +88,8 @@ local function setup(PART)
 						function(_, tex) 
 							local mat = self:GetMaterialFromParent()
 							if mat then
-								if VERSION >= 150 then
-									mat:SetTexture("$" .. name, tex)
-								else
-									mat:SetMaterialTexture("$" .. name, tex)
-								end
+								mat:SetTexture("$" .. name, tex)
+								
 								self.SKIP = true
 								self:UpdateMaterial()
 								self.SKIP = false
@@ -100,11 +97,7 @@ local function setup(PART)
 								self.delay_set = function()
 									local mat = self:GetMaterialFromParent()
 									if mat then
-										if VERSION >= 150 then
-											mat:SetTexture("$" .. name, tex)
-										else
-											mat:SetMaterialTexture("$" .. name, tex)
-										end
+										mat:SetTexture("$" .. name, tex)
 										self.SKIP = true
 										self:UpdateMaterial()
 										self.SKIP = false
@@ -122,42 +115,20 @@ local function setup(PART)
 				if mat then				
 					if var ~= "" then
 						local _mat = Material(var)
-						local tex
-						
-						if VERSION >= 150 then
-							tex = _mat:GetTexture("$" .. name) 
-						else
-							tex = _mat:GetMaterialTexture("$" .. name)
-						end
-												
+						local tex = _mat:GetTexture("$" .. name) 
+
 						if not tex or tex:GetName() == "error" then
-							if VERSION >= 150 then
-								tex = CreateMaterial("pac3_tex_" .. var .. "_" .. self.Id, "VertexLitGeneric", {["$basetexture"] = var}):GetTexture("$basetexture")
-							else
-								tex = CreateMaterial("pac3_tex_" .. var .. "_" .. self.Id, "VertexLitGeneric", {["$basetexture"] = var}):GetMaterialTexture("$basetexture")
-							end
+							tex = CreateMaterial("pac3_tex_" .. var .. "_" .. self.Id, "VertexLitGeneric", {["$basetexture"] = var}):GetTexture("$basetexture")
 														
 							if not tex or tex:GetName() == "error" then
-								if VERSION >= 150 then
-									tex = _mat:GetTexture("$basetexture")
-								else
-									tex = _mat:GetMaterialTexture("$basetexture")
-								end
+								tex = _mat:GetTexture("$basetexture")
 							end
 						end
 						
-						if VERSION >= 150 then
-							mat:SetTexture("$" .. name, tex)
-						else
-							mat:SetMaterialTexture("$" .. name, tex)
-						end
+						mat:SetTexture("$" .. name, tex)
 					else
 						if name == "BumpMap" then
-							if VERSION >= 150 then
-								mat:SetString("$bumpmap", "dev/bump_normal")
-							else
-								mat:SetMaterialString("$bumpmap", "dev/bump_normal")
-							end
+							mat:SetString("$bumpmap", "dev/bump_normal")
 						end
 					end
 				end
@@ -171,11 +142,7 @@ local function setup(PART)
 				local mat = self:GetMaterialFromParent()
 				
 				if mat then
-					if VERSION >= 150 then
-						mat:SetInt("$" .. name, var and 1 or 0)
-					else
-						mat:SetMaterialInt("$" .. name, var and 1 or 0)
-					end
+					mat:SetInt("$" .. name, var and 1 or 0)
 				end
 			end
 		elseif T == "number" then
@@ -187,11 +154,7 @@ local function setup(PART)
 				local mat = self:GetMaterialFromParent()
 				
 				if mat then
-					if VERSION >= 150 then
-						mat:SetFloat("$" .. name, var)
-					else
-						mat:SetMaterialFloat("$" .. name, var)
-					end
+					mat:SetFloat("$" .. name, var)
 				end
 			end
 		elseif T == "Vector" then
@@ -203,11 +166,7 @@ local function setup(PART)
 				local mat = self:GetMaterialFromParent()
 				
 				if mat then
-					if VERSION >= 150 then
-						mat:SetVector("$" .. name, var)
-					else
-						mat:SetMaterialVector("$" .. name, var)
-					end
+					mat:SetVector("$" .. name, var)
 				end
 			end
 		end
@@ -227,31 +186,14 @@ function PART:GetMaterialFromParent()
 			
 			if self.Parent.Materialm then
 				local tex
-				if VERSION >= 150 then
-					tex = self.Parent.Materialm:GetTexture("$bumpmap")
-				else
-					tex = self.Parent.Materialm:GetMaterialTexture("$bumpmap")
-				end
+				tex = self.Parent.Materialm:GetTexture("$bumpmap")
 				if tex and not tex:IsError() then
-					if VERSION >= 150 then
-						mat:SetTexture("$bumpmap", tex)
-					else
-						mat:SetMaterialTexture("$bumpmap", tex)
-					end
+					mat:SetTexture("$bumpmap", tex)
 				end
 				
-				local tex
-				if VERSION >= 150 then
-					tex = self.Parent.Materialm:GetTexture("$basetexture")
-				else
-					tex = self.Parent.Materialm:GetMaterialTexture("$basetexture")
-				end
+				local tex = self.Parent.Materialm:GetTexture("$basetexture")
 				if tex and not tex:IsError() then
-					if VERSION >= 150 then
-						mat:SetTexture("$basetexture", tex)
-					else
-						mat:SetMaterialTexture("$basetexture", tex)
-					end
+					mat:SetTexture("$basetexture", tex)
 				end
 			end
 			

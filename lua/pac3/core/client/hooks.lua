@@ -87,7 +87,12 @@ function pac.PostDrawTranslucentRenderables()
 			ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
 			local dst = ent:EyePos():Distance(pac.EyePos)
 			radius = ent:BoundingRadius() * 3
-			if 
+			
+			if not ent:IsPlayer() and not ent:IsNPC() then
+				radius = radius * 4
+			end
+			
+			if 				
 				(ent == local_player and ent:ShouldDrawLocalPlayer()) or
 				
 				ent ~= local_player and 
@@ -153,23 +158,12 @@ function pac.EntityBuildBonePositions(ent)
 end
 pac.AddHook("EntityBuildBonePositions")
 
-if VERSION >= 150 then
-	net.Receive("pac_submit", function()
-		local tbl = net.ReadTable()
-		pac.CreatePart(tbl.ent):SetTable(tbl.part)
-	end)
-	
-	net.Receive("pac_effect_precached", function()
-		local name = net.ReadString()
-		pac.CallHook("EffectPrecached", name)
-	end)
-else
-	usermessage.Hook("pac_effect_precached", function(umr)
-		local name = umr:ReadString()
-		pac.CallHook("EffectPrecached", name)
-	end)
+net.Receive("pac_submit", function()
+	local tbl = net.ReadTable()
+	pac.CreatePart(tbl.ent):SetTable(tbl.part)
+end)
 
-	datastream.Hook("pac_submit", function( _, _, _, tbl)
-		pac.CreatePart(tbl.ent):SetTable(tbl.part)
-	end)
-end
+net.Receive("pac_effect_precached", function()
+	local name = net.ReadString()
+	pac.CallHook("EffectPrecached", name)
+end)

@@ -11,40 +11,14 @@ pac.EffectsBlackList =
 
 function pac.PrecacheEffect(name)
 	PrecacheParticleSystem(name)
-	if VERSION >= 150 then
-		net.Start("pac_effect_precached")
-			net.WriteString(name)
-		net.Send()
-	else
-		umsg.Start("pac_effect_precached")
-			umsg.String(name)
-		umsg.End()
-	-- compat hack
-	if PAC then
-	  if PAC.EffectsBlackList and table.HasValue(PAC.EffectsBlackList, effect) then return end
-		umsg.Start("PAC Effect Precached")
-		  umsg.String(name)
-		umsg.End()
-	  end
-	 end
+	net.Start("pac_effect_precached")
+		net.WriteString(name)
+	net.Send()
 end
 
-if VERSION >= 150 then
-	net.Receive("pac_precache_effect", function()
-		local name = net.ReadString()
-		if not table.HasValue(pac.EffectsBlackList, name) then
-			pac.PrecacheEffect(name)
-		end
-	end)
-else
-	-- because we're using the same command as pac2 and we want to make sure it's loaded after pac2 and not before
-	timer.Simple(2, function()
-		concommand.Add("pac_precache_effect", function(ply, _, args)
-			local name = args[1]
-			if not table.HasValue(pac.EffectsBlackList, name) then
-				pac.dprint("%s precached effect %s", tostring(ply), name)
-				pac.PrecacheEffect(name)
-			end
-		end)
-	end)
-end
+net.Receive("pac_precache_effect", function()
+	local name = net.ReadString()
+	if not table.HasValue(pac.EffectsBlackList, name) then
+		pac.PrecacheEffect(name)
+	end
+end)

@@ -11,7 +11,7 @@ function pac.CreatePart(name, owner)
 	local part = class.Create("part", name)
 	
 	if not part then
-		error("pac3 tried to create unknown part " .. name)
+		error("pac3 tried to create unknown part " .. name or "unknown")
 	end
 	
 	part.UniqueID = tostring(util.CRC(os.time() + RealTime() + part_count))
@@ -670,9 +670,9 @@ do -- meta
 				if var == self["__def" .. key] then
 					continue
 				end
-								
+				
 				tbl.self[key] = var
-							
+
 				if make_copy_name and (key == "Name" or key == "AimPartName"  or key == "FollowPartName" or (key == "ParentName" and is_child)) then
 					if tbl.self[key] ~= "" then
 						tbl.self[key] = tbl.self[key] .. " copy"
