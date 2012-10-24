@@ -191,11 +191,7 @@ function pace.LoadPartFromFile(part, name)
 				end
 			end
 			
-			if VERSION >= 150 then
-				http.Fetch(name, callback)
-			else
-				http.Get(name, "", callback)
-			end
+			http.Fetch(name, callback)	
 			
 			pace.RefreshTree()
 		else
@@ -314,11 +310,7 @@ function pace.LoadSession(name, append)
 				pace.RefreshTree()
 			end
 			
-			if VERSION >= 150 then
-				http.Fetch(name, callback)
-			else
-				http.Get(name, "", callback)
-			end
+			http.Fetch(name, callback)		
 		else
 			name = name:gsub("%.txt", "")
 		
@@ -409,21 +401,11 @@ function pace.OnOpenMenu()
 		pace.SetLanguage("english")
 	end)
 	
-	
-	if VERSION >= 150 then
-		for key, val in pairs(file.Find("lua/pac3/pace/translations/*", "GAME")) do
-			val = val:gsub("%.lua", "")
-			langmenu:AddOption(val, function()
-				pace.SetLanguage(val)
-			end)
-		end
-	else
-		for key, val in pairs(file.Find((SinglePlayer() and "lua" or "lua_temp") .. "/pac3/pace/translations/*", true)) do
-			val = val:gsub("%.lua", "")
-			langmenu:AddOption(val, function()
-				pace.SetLanguage(val)
-			end)
-		end
+	for key, val in pairs(file.Find("lua/pac3/pace/translations/*", "GAME")) do
+		val = val:gsub("%.lua", "")
+		langmenu:AddOption(val, function()
+			pace.SetLanguage(val)
+		end)
 	end
 	
 	local fontmenu = menu:AddSubMenu(L"font")
@@ -483,7 +465,9 @@ function pace.OnPartMenu(obj)
 		
 		menu:AddOption(L"spawn", function()
 			local data = pac.PartToContraptionData(obj)
-			datastream.StreamToServer("pac_to_contraption", data)
+			net.Start("pac_to_contraption")
+				net.WriteTable(data)
+			net.Send()
 		end)
 	end
 

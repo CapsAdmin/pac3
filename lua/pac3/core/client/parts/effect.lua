@@ -43,13 +43,9 @@ PART.last_spew = 0
 function PART:SetEffect(name)
 	self.Effect = name
 	self.Ready = false
-	if VERSION >= 150 then
-		net.Start("pac_precache_effect")
-			net.WriteString(name)
-		net.SendToServer()
-	else
-		RunConsoleCommand("pac_precache_effect", name)
-	end
+	net.Start("pac_precache_effect")
+		net.WriteString(name)
+	net.SendToServer()
 end
 
 pac.AddHook("pac_EffectPrecached", function(name)

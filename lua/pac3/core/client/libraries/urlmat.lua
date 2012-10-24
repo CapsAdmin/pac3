@@ -13,11 +13,7 @@ function urlmat.GetMaterialFromURL(url, callback, skip_cache)
 	if type(callback) == "function" and not skip_cache and urlmat.Cache[url] then
 		local tex = urlmat.Cache[url]
 		local vertex_mat = CreateMaterial("pac3_urlmat_" .. util.CRC(url .. SysTime()), "VertexLitGeneric")
-		if VERSION >= 150 then
-			vertex_mat:SetTexture("$basetexture", tex)
-		else
-			vertex_mat:SetMaterialTexture("$basetexture", tex)
-		end
+		vertex_mat:SetTexture("$basetexture", tex)
 		callback(vertex_mat, tex)
 		return
 	end
@@ -106,16 +102,9 @@ function urlmat.StartDownload(url, data)
 			if go and time < RealTime() then
 				local vertex_mat = CreateMaterial("pac3_urlmat_" .. util.CRC(url .. SysTime()), "VertexLitGeneric")
 				
-				local tex
-				
-				if VERSION >= 150 then
-					tex = html_mat:GetTexture("$basetexture")
-					tex:Download()
-					vertex_mat:SetTexture("$basetexture", tex)
-				else
-					tex = html_mat:GetMaterialTexture("$basetexture")
-					vertex_mat:SetMaterialTexture("$basetexture", tex)
-				end
+				local tex = html_mat:GetTexture("$basetexture")
+				tex:Download()
+				vertex_mat:SetTexture("$basetexture", tex)				
 				
 				tex:Download()
 				
@@ -134,11 +123,7 @@ function urlmat.StartDownload(url, data)
 		end)
 	end
 
-	if VERSION >= 150 then
-		start()
-	else
-		pnl.FinishedURL = start
-	end
+	start()
 	
 	-- 5 sec max timeout
 	timer.Create(id, 5, 1, function()

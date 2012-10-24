@@ -113,11 +113,7 @@ function PART:OnBuildBonePositions(owner)
 		local ang = self:CalcAngles(owner, self.Angles) or self.Angles
 	
 		if self.FollowPart:IsValid() then			
-			if VERSION >= 150 then
-				matrix:SetAngles(self.FollowPart.cached_ang + ang)
-			else
-				matrix:SetAngle(self.FollowPart.cached_ang + ang)
-			end
+			matrix:SetAngles(self.FollowPart.cached_ang + ang)
 			matrix:SetTranslation(self.FollowPart.cached_pos + self.Position)
 		else				
 			if self.EyeAngles or self.AimPart:IsValid() then
@@ -134,11 +130,7 @@ function PART:OnBuildBonePositions(owner)
 					matrix:Translate(self.Position)
 				end
 			else
-				if VERSION >= 150 then
-					matrix:SetAngles(ang)
-				else
-					matrix:SetAngle(ang)
-				end
+				matrix:SetAngles(ang)
 				matrix:SetTranslation(self.Position)
 			end
 		end

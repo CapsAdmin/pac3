@@ -10,11 +10,8 @@ function pace.DrawHUDText(x, y, text)
 		Lerp(0.05, y, gui.MouseY())
 	)
 	
-	if VERSION >= 150 then
-		surface.SetFont("DermaDefault")
-	else
-		surface.SetFont("DefaultFixedOutline")
-	end
+	surface.SetFont("DermaDefault")
+
 	surface.SetTextColor(255, 255, 255, 255)
 	local w, h = surface.GetTextSize(text)
 	surface.SetTextPos(x - (w * 0.5), y - h)

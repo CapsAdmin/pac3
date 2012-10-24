@@ -8,7 +8,7 @@ function pac.Ban(ply)
 		umsg.String("You have been banned from using pac!")
 	umsg.End()
 	
-	local fil = file.Read("pac_bans.txt", VERSION >= 150 and "DATA" or nil)
+	local fil = file.Read("pac_bans.txt", "DATA")
 	
 	local bans = {}
 	if fil and fil ~= "" then
@@ -25,7 +25,7 @@ function pac.Ban(ply)
 	
 	pac.Bans = bans
 	
-	file.Write("pac_bans.txt", util.TableToKeyValues(bans), VERSION >= 150 and "DATA" or nil)
+	file.Write("pac_bans.txt", util.TableToKeyValues(bans), "DATA")
 end
 
 function pac.Unban(ply)
@@ -35,7 +35,7 @@ function pac.Unban(ply)
 		umsg.String("You are now permitted to use pac!")
 	umsg.End()
 		
-	local fil = file.Read("pac_bans.txt", VERSION >= 150 and "DATA" or nil)
+	local fil = file.Read("pac_bans.txt", "DATA")
 	
 	local bans = {}
 	if fil and fil ~= "" then
@@ -50,7 +50,7 @@ function pac.Unban(ply)
 	
 	pac.Bans = bans
 	
-	file.Write("pac_bans.txt", util.TableToKeyValues(bans), VERSION >= 150 and "DATA" or nil)
+	file.Write("pac_bans.txt", util.TableToKeyValues(bans), "DATA")
 end
 
 local function GetPlayer(target)
@@ -78,7 +78,7 @@ end)
 function pac.IsBanned(ply)
 	if not ply or not ply:IsValid() then return false end
 	if not pac.Bans then
-		local fil = file.Read("pac_bans.txt", VERSION >= 150 and "DATA" or nil)
+		local fil = file.Read("pac_bans.txt", "DATA")
 	
 		local bans = {}
 		if fil and fil ~= "" then

@@ -1,4 +1,3 @@
-local VERSION  = VERSION
 local L = pace.LanguageString
 
 local function SHOW_SPECIAL(pnl, parent, size)
@@ -41,11 +40,7 @@ do -- container
 	PANEL.Base = "DPanel"
 
 	function PANEL:Paint(w, h)
-		if VERSION >= 150 then
-			self:GetSkin().tex.MenuBG(0, 0, (w or self:GetWide()) + (self.right and -1 or 3), (h or self:GetTall()) + 1)
-		else
-			self:GetSkin().DrawButtonBorder(self, 0, 0, (w or self:GetWide()) + (self.right and -1 or 3), (h or self:GetTall()) + 1)
-		end
+		self:GetSkin().tex.MenuBG(0, 0, (w or self:GetWide()) + (self.right and -1 or 3), (h or self:GetTall()) + 1)
 	end
 
 	function PANEL:SetContent(pnl)
@@ -285,7 +280,7 @@ do -- base editable
 
 		local str = tostring(skip_encode and var or self:Encode(var))
 		
-		self:SetTextColor(derma.Color(VERSION >= 150 and "text_dark" or "text_bright", self, color_black))
+		self:SetTextColor(derma.Color("text_dark", self, color_black))
 		self:SetFont(pace.CurrentFont)
 		self:SetText("  " .. str) -- ugh
 		self:SizeToContents()
@@ -623,24 +618,10 @@ do -- vector
 			end
 			
 			function clr.Think()
-				if VERSION >= 150 then
-					local clr = clr:GetColor() or Color(255, 255, 255, 255)
-					local vec = Vector(clr.r, clr.g, clr.b)
-					self.OnValueChanged(vec)
-					self:SetValue(vec)
-				else
-					if 
-						clr.ColorCube:GetDragging() or 
-						clr.AlphaBar:GetDragging() or 
-						clr.RGBBar:GetDragging() 
-					then
-						local clr = clr:GetColor() or Color(255, 255, 255, 255)
-						local vec = Vector(clr.r, clr.g, clr.b)
-						html_color:SetText(tohex(vec))
-						self.OnValueChanged(vec)
-						self:SetValue(vec)
-					end
-				end
+				local clr = clr:GetColor() or Color(255, 255, 255, 255)
+				local vec = Vector(clr.r, clr.g, clr.b)
+				self.OnValueChanged(vec)
+				self:SetValue(vec)
 			end
 			
 			pace.ActiveSpecialPanel = frm
@@ -730,7 +711,7 @@ do -- boolean
 		
 		local lbl = vgui.Create("DLabel", self)
 		lbl:SetFont(pace.CurrentFont)
-		lbl:SetTextColor(derma.Color(VERSION >= 150 and "text_dark" or "text_bright", self, color_black))
+		lbl:SetTextColor(derma.Color("text_dark", self, color_black))
 		self.lbl = lbl
 	end
 
@@ -973,7 +954,7 @@ do -- model
 			bottom:InvalidateLayout(true)
 		end
 
-		populate(VERSION >= 150 and "" or "../")
+		populate("")
 		
 		pace.ActiveSpecialPanel = frame
 	end

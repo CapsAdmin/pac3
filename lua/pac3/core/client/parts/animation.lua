@@ -31,22 +31,7 @@ function PART:GetSequenceList()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then	
-		if VERSION >= 150 then
-			return ent:GetSequenceList()
-		else
-			local tbl = {}
-			local last -- hack for gmod 12
-			for i = 1, 1000 do 
-				local name = ent:GetSequenceName(i)
-				if name ~= "Unknown" and name ~= last then 
-					tbl[i] = name
-					last = name
-				else
-					return tbl
-				end
-			end
-			return tbl
-		end
+		return ent:GetSequenceList()
 	end
 	return {"none"}
 end

@@ -71,8 +71,6 @@ function urlobj.ParseObj(data)
 	return output
 end
 
-local VERSION  = VERSION
-
 function urlobj.CreateObj(str, mesh_only)	
 	local ok, res = pcall(urlobj.ParseObj, str)
 	
@@ -81,7 +79,7 @@ function urlobj.CreateObj(str, mesh_only)
 		return
 	end
 	
-	local mesh = VERSION >= 150 and Mesh() or NewMesh()
+	local mesh = Mesh()
 	mesh:BuildFromTriangles(res)
 	
 	if mesh_only then
@@ -97,18 +95,10 @@ function urlobj.CreateObj(str, mesh_only)
 		function ent:RenderOverride()
 			local matrix = Matrix()
 		
-			if VERSION >= 150 then
-				matrix:SetAngles(self:GetAngles())
-			else
-				matrix:SetAngle(self:GetAngles())
-			end
+			matrix:SetAngles(self:GetAngles())
 			matrix:SetTranslation(self:GetPos())
-			
-			if VERSION >= 150 then
-				matrix:Scale(self.pac_model_scale)
-			else
-				matrix:Scale(self:GetModelScale())
-			end
+			matrix:Scale(self.pac_model_scale)
+		
 			
 			if self.MeshMaterial then 
 				render_SetMaterial(self.MeshMaterial)	
@@ -137,28 +127,17 @@ function urlobj.GetObjFromURL(url, callback, mesh_only, skip_cache)
 		if pac.urlmat and pac.urlmat.Busy then
 			return
 		end
-		
-		if VERSION >= 150 then
-			http.Fetch(url, function(str)	
-				pac.dprint("loaded model %q", url)
-				
-				local obj = urlobj.CreateObj(str, mesh_only)
-				
-				urlobj.Cache[url] = obj
-				
-				callback(obj)
-			end)
-		else
-			http.Get(url, "", function(str)
-				pac.dprint("loaded model %q", url)
-				local obj = urlobj.CreateObj(str, mesh_only)
-				
-				urlobj.Cache[url] = obj
-				
-				callback(obj)
-			end)	
-		end
-		
+	
+		http.Fetch(url, function(str)	
+			pac.dprint("loaded model %q", url)
+			
+			local obj = urlobj.CreateObj(str, mesh_only)
+			
+			urlobj.Cache[url] = obj
+			
+			callback(obj)
+		end)
+	
 		hook.Remove("Think", id)
 	end)
 end

@@ -1,26 +1,14 @@
-if VERSION < 150 then
-	require("datastream")
-end
-
 do -- to server
 	function pac.SendPartToServer(part)
-		if VERSION >= 150 then
-			net.Start("pac_submit")
-				net.WriteTable({part = part:ToTable()})
-			net.SendToServer()
-		else
-			datastream.StreamToServer("pac_submit", {part = part:ToTable()})
-		end
+		net.Start("pac_submit")
+			net.WriteTable({part = part:ToTable()})
+		net.SendToServer()
 	end
 
 	function pac.RemovePartOnServer(name, server_only, filter)
-		if VERSION >= 150 then
-			net.Start("pac_submit")
-				net.WriteTable({part = name, server_only = server_only})
-			net.SendToServer()
-		else
-			datastream.StreamToServer("pac_submit", {part = name, server_only = server_only, filter = filter})
-		end
+		net.Start("pac_submit")
+			net.WriteTable({part = name, server_only = server_only})
+		net.SendToServer()
 	end
 end
 
@@ -80,15 +68,9 @@ local function handle_data(data)
 	end
 end
 
-if VERSION >= 150 then
-	net.Receive("pac_submit", function()
-		handle_data(net.ReadTable())
-	end)
-else
-	datastream.Hook("pac_submit", function(_,_,_, data)
-		handle_data(data)
-	end)
-end
+net.Receive("pac_submit", function()
+	handle_data(net.ReadTable())
+end)
 
 function pac.Notify(allowed, reason)
 	 if allowed then
