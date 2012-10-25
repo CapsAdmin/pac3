@@ -26,8 +26,8 @@ do -- from server
 				pac.dprint("removing part %q to be replaced with the part previously received", part.Name)
 				part:Remove()
 			end
-		end 
-		
+		end
+	
 		local part = pac.CreatePart(part_data.self.ClassName, owner)
 		part:SetTable(part_data)
 		part:CheckOwner()

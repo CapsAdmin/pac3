@@ -40,9 +40,10 @@ end
 
 function PANEL:PerformLayout()
 	DFrame.PerformLayout(self)
-	
+		
 	self.div:SetTopHeight(ScrH() - self.bottom:GetHeight() - 30)
 	self.div:InvalidateLayout()
+	
 end
 
 function PANEL:SetTop(pnl)

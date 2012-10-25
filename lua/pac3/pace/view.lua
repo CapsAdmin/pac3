@@ -86,9 +86,9 @@ local function CalcDrag()
 		mult = 5
 	end
 	
-	if input.IsKeyDown(KEY_UP) then
+	if input.IsKeyDown(KEY_UP) or input.IsMouseDown(MOUSE_WHEEL_UP) then
 		pace.OnMouseWheeled(0.25)
-	elseif input.IsKeyDown(KEY_DOWN) then
+	elseif input.IsKeyDown(KEY_DOWN) or input.IsMouseDown(MOUSE_WHEEL_DOWN) then
 		pace.OnMouseWheeled(-0.25)
 	end
 		
@@ -139,9 +139,9 @@ function pac.CalcView()
 end
 
 function pac.ShouldDrawLocalPlayer()
-	if pace.editing_viewmodel then
-	return end
-	return true
+	if not pace.editing_viewmodel then
+		return true
+	end
 end
 
 function pace.EnableView(b)
