@@ -21,17 +21,17 @@ function pac.RenderOverride(ent)
 		pac.UnhookEntityRender(ent)
 	else
 		ent:InvalidateBoneCache()
-		ent:SetupBones()
-			for key, part in pairs(ent.pac_parts) do
-				if part:IsValid() then
-					if not part:HasParent() then
-						think(part)
-						part:Draw("OnDraw")
-					end
-				else
-					ent.pac_parts[key] = nil
+		--ent:SetupBones()
+		for key, part in pairs(ent.pac_parts) do
+			if part:IsValid() then
+				if not part:HasParent() then
+					think(part)
+					part:Draw("OnDraw")
 				end
-			end	
+			else
+				ent.pac_parts[key] = nil
+			end
+		end	
 	end
 end
 
@@ -74,18 +74,41 @@ function pac.RenderScene(pos, ang)
 end
 pac.AddHook("RenderScene")
 
+
+-- don't allow drawing in the skybox
+local SKIP_DRAW
+
+function pac.PreDrawSkyBox()
+	SKIP_DRAW = true
+end
+pac.AddHook("PreDrawSkyBox")
+
+function pac.PostDrawSkyBox()
+	SKIP_DRAW = false
+end
+pac.AddHook("PostDrawSkyBox")
+
+local draw_dist
+local local_player
+local radius
+
+local dst
+
 function pac.PostDrawTranslucentRenderables()
+
+	if SKIP_DRAW then return end
 	if not cvar_enable:GetBool() then return end
 		
 	time = RealTime()
-	local draw_dist = cvar_distance:GetInt()
-	local local_player = LocalPlayer() 
-	local radius = 0
+
+	draw_dist = cvar_distance:GetInt()
+	local_player = LocalPlayer() 
+	radius = 0
 	
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
 			ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
-			local dst = ent:EyePos():Distance(pac.EyePos)
+			dst = ent:EyePos():Distance(pac.EyePos)
 			radius = ent:BoundingRadius() * 3
 			
 			if not ent:IsPlayer() and not ent:IsNPC() then

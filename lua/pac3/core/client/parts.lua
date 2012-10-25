@@ -5,6 +5,13 @@ pac.ActiveParts = pac.ActiveParts or {}
 local part_count = 0 -- unique id thing
 local pairs = pairs
 
+local function remove(part, field)
+	if part.StorableVars then 
+		part.StorableVars[field] = nil 
+	end
+	class.RemoveField(part, field)
+end
+
 function pac.CreatePart(name, owner)
 	owner = owner or LocalPlayer()
 	
@@ -16,20 +23,13 @@ function pac.CreatePart(name, owner)
 	
 	part.UniqueID = tostring(util.CRC(os.time() + RealTime() + part_count))
 	
-	if part.NonPhysical then
-		local function remove(field)
-			if part.StorableVars then 
-				part.StorableVars[field] = nil 
-			end
-			class.RemoveField(part, field)
-		end
-		
-		remove("Bone")
-		remove("Position")
-		remove("Angles")
-		remove("AngleVelocity")
-		remove("EyeAngles")
-		remove("AimPartName")
+	if part.NonPhysical then		
+		remove(part, "Bone")
+		remove(part, "Position")
+		remove(part, "Angles")
+		remove(part, "AngleVelocity")
+		remove(part, "EyeAngles")
+		remove(part, "AimPartName")
 	end
 	
 	if part.PreInitialize then 
@@ -48,6 +48,8 @@ function pac.CreatePart(name, owner)
 	end
 	
 	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))
+	
+	pac.CallHook("OnPartCreated", part, owner == LocalPlayer())
 	
 	return part
 end

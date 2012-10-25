@@ -180,7 +180,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		end
 	end
 				
-	ent:SetupBones()
+	--ent:SetupBones()
 	
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 		local bclip

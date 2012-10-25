@@ -101,6 +101,19 @@ local fix_folder_funcs = function(tbl)
 	tbl.PopulateChildrenAndSelf = function() end
 	return tbl
 end
+
+local function node_layout(self, ...)
+	DTree_Node.PerformLayout(self, ...)
+	if self.Label then
+		self.Label:SetFont(pace.CurrentFont)
+		if pace.ShadowedFonts[pace.CurrentFont] then
+			self.Label:SetTextColor(derma.Color("text_bright", self, color_white))
+		else
+			self.Label:SetTextColor(derma.Color("text_dark", self, color_black))
+		end
+	end			
+end
+
 -- a hack, because creating a new node button will mess up the layout
 function PANEL:AddNode(...)
 
@@ -108,7 +121,7 @@ function PANEL:AddNode(...)
 	install_expand(node)
 	install_drag(node)
 	node.SetModel = self.SetModel
-	
+		
 	node.AddNode = function(...)
 		local node_ = fix_folder_funcs(DTree_Node.AddNode(...))
 		install_expand(node_)
@@ -117,34 +130,13 @@ function PANEL:AddNode(...)
 
 		node_.AddNode = node.AddNode
 		
-		node_.PerformLayout = function(...)
-			DTree_Node.PerformLayout(...)
-			if node_.Label then
-				node_.Label:SetFont(pace.CurrentFont)
-
-				if pace.ShadowedFonts[pace.CurrentFont] then
-					node_.Label:SetTextColor(derma.Color("text_bright", self, color_white))
-				else
-					node_.Label:SetTextColor(derma.Color("text_dark", self, color_black))
-				end
-			end			
-		end
-
+		node_.PerformLayout = node_layout
+		
 		return node_
 	end
 	
-	node.PerformLayout = function(...)
-		DTree_Node.PerformLayout(...)
-		if node.Label then
-			node.Label:SetFont(pace.CurrentFont)
-			if pace.ShadowedFonts[pace.CurrentFont] then
-				node.Label:SetTextColor(derma.Color("text_bright", self, color_white))
-			else
-				node.Label:SetTextColor(derma.Color("text_dark", self, color_black))
-			end
-		end			
-	end
-	
+	node.PerformLayout = node_layout	
+		
 	return node
 end
 
@@ -152,7 +144,7 @@ local enable_model_icons = CreateClientConVar("pac_editor_model_icons", "1")
 
 function PANEL:PopulateParts(node, parts, children)
 	parts = table.ClearKeys(parts)
-
+	
 	local tbl = {}
 	
 	table.sort(parts, function(a,b) 
@@ -172,7 +164,7 @@ function PANEL:PopulateParts(node, parts, children)
 	end
 	
 	for key, part in ipairs(tbl) do
-		key = tostring(part)
+		key = part.Id
 				
 		if not part:HasParent() or children then
 			local part_node
@@ -211,7 +203,7 @@ function PANEL:PopulateParts(node, parts, children)
 			if enable_model_icons:GetBool() and part.ClassName == "model" and part.GetModel then
 				part_node:SetModel(part:GetModel())
 			else
-				part_node.Icon:SetImage(pace.PartIcons[part.ClassName] or (net and "icon16/plugin") or "gui/silkicons/plugin")
+				part_node.Icon:SetImage(pace.PartIcons[part.ClassName] or "gui/silkicons/plugin")
 			end
 			
 			self:PopulateParts(part_node, part:GetChildren(), true)			
@@ -265,11 +257,31 @@ function PANEL:Populate()
 	
 	self:PopulateParts(self, pac.GetParts(true))
 	
-	self:StretchToParent()
 	self:InvalidateLayout()
 end
 
 pace.RegisterPanel(PANEL)
+
+function debug.trace()	
+	MsgN("")
+    MsgN("Trace: " )
+	
+	for level = 1, math.huge do
+		local info = debug.getinfo(level, "Sln")
+		
+		if info then
+			if info.what == "C" then
+				MsgN(level, "\tC function")
+			else
+				MsgN(string.format("\t%i: Line %d\t\"%s\"\t%s", level, info.currentline, info.name or "unknown", info.short_src or ""))
+			end
+		else
+			break
+		end
+    end
+
+    MsgN("")
+end
 
 local function remove_node(obj)
 	if (obj.editor_node or NULL):IsValid() then
@@ -282,11 +294,19 @@ end
 
 hook.Add("pac_OnPartRemove", "pace_remove_tree_nodes", remove_node)
 
+local function remove_node(part, localplayer)
+	if localplayer then
+		pace.RefreshTree()
+	end
+end
+hook.Add("pac_OnPartCreated", "pace_create_tree_nodes", create_node)
+
 function pace.RefreshTree()
 	if pace.tree:IsValid() then
-		timer.Create("pace_refresh_tree",  0.2, 1, function()
+		timer.Create("pace_refresh_tree",  0.01, 1, function()
 			if pace.tree:IsValid() then
 				pace.tree:Populate()
+				pace.tree.RootNode:SetExpanded(true, true) -- why do I have to do this`?
 			end
 		end)
 	end

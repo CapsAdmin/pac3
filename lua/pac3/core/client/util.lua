@@ -124,15 +124,17 @@ function pac.HandleUrlMat(part, url, callback)
 	end	
 end
 
+local mat
+local Matrix = Matrix
+
 function pac.SetModelScale(ent, scale, size)
 	if not ent:IsValid() then return end
 	if ent.pac_bone_scaling then return end
 
 	if scale then
-		local mat = Matrix()
+		mat = Matrix()
 		mat:Scale(scale)
 		ent:EnableMatrix("RenderMultiply", mat)
-		ent:SetupBones()
 		ent.pac_model_scale = scale
 	end
 	

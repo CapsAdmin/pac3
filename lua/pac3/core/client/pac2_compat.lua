@@ -318,7 +318,7 @@ function pac.ConvertPAC2Config(data, ent)
 	-- hacks
 	
 	for key, part in pairs(pac.GetParts(true)) do
-		timer.Simple(0.1, function() part:OnParent(ent) end)
+		part:SetParent(part:GetParent())
 	end
 
 	return base
