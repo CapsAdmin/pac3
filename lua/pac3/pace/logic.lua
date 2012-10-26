@@ -49,7 +49,7 @@ function pace.OnPartSelected(part, is_selecting)
 	end
 end
 
-function pace.OnCreatePart(class_name, name, desc)
+function pace.OnCreatePart(class_name, name, desc, mdl)
 	local part = pac.CreatePart(class_name)
 
 	local parent = pace.current_part
@@ -61,6 +61,7 @@ function pace.OnCreatePart(class_name, name, desc)
 	part:SetName(name or (L(class_name) .. " " .. pac.GetPartCount(class_name)))
 	
 	if desc then part:SetDescription(desc) end
+	if mdl then part:SetModel(mdl) end
 		
 	if part:GetPlayerOwner() == LocalPlayer() then
 		pace.SetViewPart(part)
@@ -104,7 +105,7 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 					tree = tree:GetRoot()
 					tree:SetSelectedItem(nil)
 					node:Remove()
-					pace.RefreshTree()
+					pace.RefreshTree(true)
 				end
 			end
 		end
@@ -210,7 +211,7 @@ function pace.LoadPartFromFile(part, name)
 				part.editor_node:SetText(part:GetName())
 			end
 			
-			pace.RefreshTree()
+			pace.RefreshTree(true)
 		end
 	end
 end
@@ -307,7 +308,7 @@ function pace.LoadSession(name, append)
 					part:SetTable(tbl)
 				end
 				
-				pace.RefreshTree()
+				pace.RefreshTree(true)
 			end
 			
 			http.Fetch(name, callback)		
@@ -321,9 +322,10 @@ function pace.LoadSession(name, append)
 					local part = pac.CreatePart(tbl.self.ClassName)
 					part:SetTable(tbl)
 				end
+				
+				pace.RefreshTree(true)
 			end)
 			
-			pace.RefreshTree()
 		end
 	end
 end

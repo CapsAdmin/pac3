@@ -139,6 +139,15 @@ function pac.PostDrawTranslucentRenderables()
 end
 pac.AddHook("PostDrawTranslucentRenderables")
 
+function pac.SwapEntityDraw(a, b)
+	for key, ent in pairs(pac.drawn_entities) do
+		if ent == a then
+			pac.drawn_entities[key] = b
+			break
+		end
+	end
+end
+
 function pac.RenderScreenspaceEffects()
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent.pac_drawing then

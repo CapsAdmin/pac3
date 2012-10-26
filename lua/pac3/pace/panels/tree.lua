@@ -46,11 +46,11 @@ function PANEL:OnMousePressed(mc)
 end
 
 function PANEL:SetModel(path)
-	local pnl = vgui.Create("DModelPanel", self)
+	local pnl = vgui.Create("SpawnIcon", self)
 		pnl:SetModel(path or "")
 		pnl:SetSize(16, 16)
 		
-		if pnl.Entity and pnl.Entity:IsValid() then
+		--[[if pnl.Entity and pnl.Entity:IsValid() then
 			local mins, maxs = pnl.Entity:GetRenderBounds()
 			pnl:SetCamPos(mins:Distance(maxs) * Vector(0.75, 0.75, 0.5) * 15)
 			pnl:SetLookAt((maxs + mins) / 2)
@@ -58,7 +58,7 @@ function PANEL:SetModel(path)
 		end
 
 		pnl.SetImage = function() end
-		pnl.GetImage = function() end
+		pnl.GetImage = function() end]]
 
 	self.Icon:Remove()
 	self.Icon = pnl
@@ -98,6 +98,7 @@ local fix_folder_funcs = function(tbl)
 	tbl.FilePopulateCallback = function() end
 	tbl.FilePopulate = function() end
 	tbl.PopulateChildren = function() end
+	tbl.ChildExpanded = function() end
 	tbl.PopulateChildrenAndSelf = function() end
 	return tbl
 end
@@ -237,13 +238,13 @@ function PANEL:SelectPart(part)
 	end
 end
 
-function PANEL:Populate()
+function PANEL:Populate(reset)
 
 	self:SetLineHeight(18)
 	self:SetIndentSize(2)
 	
 	for key, node in pairs(self.parts) do
-		if not node.part or not node.part:IsValid() then
+		if reset or (not node.part or not node.part:IsValid()) then
 			node:Remove()
 			self.parts[key] = nil
 		end
@@ -262,27 +263,6 @@ end
 
 pace.RegisterPanel(PANEL)
 
-function debug.trace()	
-	MsgN("")
-    MsgN("Trace: " )
-	
-	for level = 1, math.huge do
-		local info = debug.getinfo(level, "Sln")
-		
-		if info then
-			if info.what == "C" then
-				MsgN(level, "\tC function")
-			else
-				MsgN(string.format("\t%i: Line %d\t\"%s\"\t%s", level, info.currentline, info.name or "unknown", info.short_src or ""))
-			end
-		else
-			break
-		end
-    end
-
-    MsgN("")
-end
-
 local function remove_node(obj)
 	if (obj.editor_node or NULL):IsValid() then
 		obj.editor_node:SetForceShowExpander()
@@ -294,19 +274,26 @@ end
 
 hook.Add("pac_OnPartRemove", "pace_remove_tree_nodes", remove_node)
 
-local function remove_node(part, localplayer)
+local function refresh(part, localplayer)
 	if localplayer then
-		pace.RefreshTree()
+		pace.RefreshTree(true)
 	end
 end
-hook.Add("pac_OnPartCreated", "pace_create_tree_nodes", create_node)
+hook.Add("pac_OnWoreOutfit", "pace_create_tree_nodes", refresh)
 
-function pace.RefreshTree()
+local function refresh(part, localplayer)
+	if localplayer then
+		pace.RefreshTree(true)
+	end
+end
+hook.Add("pac_OnWoreOutfit", "pace_create_tree_nodes", refresh)
+
+function pace.RefreshTree(reset)
 	if pace.tree:IsValid() then
-		timer.Create("pace_refresh_tree",  0.01, 1, function()
+		timer.Create("pace_refresh_tree",  0.2, 1, function()
 			if pace.tree:IsValid() then
-				pace.tree:Populate()
-				pace.tree.RootNode:SetExpanded(true, true) -- why do I have to do this`?
+				pace.tree:Populate(reset)
+				pace.tree.RootNode:SetExpanded(true, true) -- why do I have to do this?
 			end
 		end)
 	end

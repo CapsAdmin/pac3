@@ -859,6 +859,14 @@ do -- model
 	end
 	
 	function PANEL:SpecialCallback()
+		pace.close_spawn_menu = true
+		pace.SafeRemoveSpecialPanel()
+		g_SpawnMenu:Open()
+	end
+	
+	-- this is so lame
+	
+	--[[function PANEL:SpecialCallback()
 		pace.SafeRemoveSpecialPanel()
 		
 		local frame = vgui.Create("DFrame")
@@ -957,7 +965,7 @@ do -- model
 		populate("")
 		
 		pace.ActiveSpecialPanel = frame
-	end
+	end]]
 	
 	pace.RegisterPanel(PANEL)
 end
