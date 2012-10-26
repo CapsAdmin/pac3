@@ -13,6 +13,26 @@ concommand.Add("pac_clear_session", function()
 	pace.RefreshTree()
 end)
 
+net.Receive("pac_spawn_part", function()
+	local mdl = net.ReadString()
+	
+	if pace.close_spawn_menu then
+		pace.Call("VariableChanged", pace.current_part, "Model", mdl)
+	
+		if g_SpawnMenu:IsVisible() then
+			g_SpawnMenu:Close()
+		end
+		
+		pace.close_spawn_menu = false
+	elseif pace.current_part.ClassName ~= "model" then
+		local name = mdl:match(".+/(.+)%.mdl")
+		
+		pace.Call("CreatePart", "model", name, nil, mdl)
+	else
+		pace.Call("VariableChanged", pace.current_part, "Model", mdl)
+	end
+end)
+
 pace.SpawnlistBrowser = NULL
 
 function pace.ClientOptionsMenu(pnl)

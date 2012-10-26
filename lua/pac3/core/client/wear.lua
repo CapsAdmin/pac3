@@ -31,6 +31,8 @@ do -- from server
 		local part = pac.CreatePart(part_data.self.ClassName, owner)
 		part:SetTable(part_data)
 		part:CheckOwner()
+		
+		pac.CallHook("OnWoreOutfit", part, owner == LocalPlayer())
 	end
 
 	function pac.RemovePartFromServer(owner, part_name)

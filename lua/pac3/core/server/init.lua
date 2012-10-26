@@ -10,6 +10,7 @@ include("wear.lua")
 include("playermodels.lua")
 include("event.lua")
 include("contraption.lua")
+include("spawnmenu.lua")
 
 -- should this be here?
 
