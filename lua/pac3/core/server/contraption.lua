@@ -1,4 +1,4 @@
-net.Receive("pac_precache_effect", function()
+net.Receive("pac_to_contraption", function()
 	local data = net.ReadTable()
 	
 	for key, val in pairs(data) do
