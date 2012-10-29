@@ -378,7 +378,7 @@ end
 local NORMAL = Vector(1,1,1)
 function PART:CheckScale()
 	-- this RenderMultiply doesn't work with this..
-	if self.Entity:IsValid() and self.Entity:GetBoneCount() > 1 then
+	if self.Entity:IsValid() and self.Entity:GetBoneCount() and self.Entity:GetBoneCount() > 1 then
 		if self.Scale * self.Size ~= NORMAL then
 			if not self.requires_bone_scale then
 				pac.HookBuildBone(self.Entity, self)
