@@ -83,7 +83,6 @@ function PART:RemoveClipPlane(id)
 	local part = self.ClipPlanes[id]
 	if part then
 		table.remove(self.ClipPlanes, id)
-		part:Remove()
 	end
 end
 
