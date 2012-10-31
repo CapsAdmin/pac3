@@ -1,3 +1,5 @@
+util.AddNetworkString("pac_to_contraption")
+
 net.Receive("pac_to_contraption", function()
 	local data = net.ReadTable()
 	
