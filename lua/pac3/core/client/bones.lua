@@ -65,6 +65,7 @@ function pac.GetAllBones(ent)
 end
 
 function pac.GetModelBones(ent)
+	if not ent then debug.Trace() end
 
 	if ent:IsValid() and (not ent.pac_bones or ent:GetModel() ~= ent.pac_last_model or ent:GetBoneCount() ~= ent.pac_bone_count) then
 		ent.pac_bones = pac.GetAllBones(ent)

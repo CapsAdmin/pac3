@@ -26,15 +26,6 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:SetOverallSize(num)
-	if self.Entity:IsValid() then
-		if num ~= 1 then
-			pac.HookBuildBone(self.Entity, self)
-			self.Entity.pac_part_ref = self
-		else
-			self.Entity.pac_part_ref = nil
-		end
-	end
-	
 	self.OverallSize = num
 end
 
@@ -377,18 +368,13 @@ function PART:CheckScale()
 	-- this RenderMultiply doesn't work with this..
 	if self.Entity:IsValid() and self.Entity:GetBoneCount() and self.Entity:GetBoneCount() > 1 then
 		if self.Scale * self.Size ~= NORMAL then
-			if not self.requires_bone_scale then
-				pac.HookBuildBone(self.Entity, self)
-				self.Entity.pac_part_ref = self
-				self.requires_bone_scale = true
-				self.Entity.pac_bone_scaling = true
+			if not self.requires_bone_model_scale then
+				self.requires_bone_model_scale = true
 			end
 			return true
 		end
 		
-		self.Entity.pac_part_ref = nil
-		self.requires_bone_scale = false
-		self.Entity.pac_bone_scaling = false	
+		self.requires_bone_model_scale = false
 	end
 end
 
@@ -478,26 +464,16 @@ function PART:SetBoneMergeAlternative(b)
 		if owner:IsValid() then 
 			owner.pac_bones = nil
 		end
-		if b then
-			pac.HookBuildBone(ent, self)
-		else
-			pac.UnHookBuildBone(ent, self)
-		end
 	end
 end
+
+local EF_BONEMERGE = EF_BONEMERGE
 
 function PART:CheckBoneMerge()
 	local ent = self.Entity
 	if ent:IsValid() and not ent:IsPlayer() then
 			
-		if ent:GetParent():IsValid() then
-			if self.BoneMergeAlternative then	
-				ent.pac_part_ref = self
-				if not ent.BuildBonePositions then
-					pac.HookBuildBone(ent, self)
-				end
-			end
-			
+		if ent:GetParent():IsValid() then			
 			if self.BoneMerge and not self.BoneMergeAlternative then
 				if not ent:IsEffectActive(EF_BONEMERGE) then
 					ent:AddEffects(EF_BONEMERGE)
@@ -545,11 +521,48 @@ local bad_bones =
 	["ValveBiped.Bip01_R_Finger22"] = true,
 }
 
-function PART:OnBuildBonePositions(ent)
+function PART:OnBuildBonePositions()
+	local ent = self:GetEntity()
 	local owner = self:GetOwner()
-	ent = self.Entity
+	
+	if not ent:IsValid() or not owner:IsValid() then return end
+	
+	for key, part in pairs(self:GetChildren()) do
+		if part.ClassName == "bone" then
+			part:BuildBonePositions(ent)
+		end
+	end
+	
+	if self.OverallSize ~= 1 then
+		for i = 0, ent:GetBoneCount() do
+			local mat = ent:GetBoneMatrix(i)
+			if mat then
+				mat:Scale(Vector(1, 1, 1) * self.OverallSize)
+				ent:SetBoneMatrix(i, mat)
+			end
+		end
+	end
+	
+	if self.requires_bone_scale then		
+		local scale = self.Scale * self.Size
+		scale = Vector(scale.y, scale.z, scale.x)
 		
-	if not ent:IsValid() or not owner:IsValid() or owner == ent then return end
+		for friendly, data in pairs(pac.GetModelBones(ent)) do	
+			local mat = ent:GetBoneMatrix(data.i)
+			if mat then
+				mat:Scale(scale)
+				
+				if data.parent_i > 0 then
+					local parent_mat = ent:GetBoneMatrix(data.parent_i)
+					if parent_mat then
+						mat:Translate((mat:GetTranslation() - parent_mat:GetTranslation()) * scale)
+					end
+				end
+				
+				ent:SetBoneMatrix(data.i, mat)
+			end
+		end
+	end
 	
 	if self.BoneMergeAlternative then
 		local ent_bones = pac.GetModelBones(ent)
@@ -580,42 +593,6 @@ function PART:OnBuildBonePositions(ent)
 						ent:SetBonePosition(ent_bone.parent_i or ent_bone.i, pos, ang)
 					end
 				end
-			end
-		end
-	end
-	
-	print("asuidjasudij")
-	
-	if self.requires_bone_scale then
-	
-		if ASDF then ASDF(self, ent) return end
-		
-		local scale = self.Scale * self.Size
-		scale = Vector(scale.y, scale.z, scale.x)
-		
-		for friendly, data in pairs(pac.GetModelBones(ent)) do	
-			local mat = ent:GetBoneMatrix(data.i)
-			if mat then
-				mat:Scale(scale)
-				
-				if data.parent_i > 0 then
-					local parent_mat = ent:GetBoneMatrix(data.parent_i)
-					if parent_mat then
-						mat:Translate((mat:GetTranslation() - parent_mat:GetTranslation()) * scale)
-					end
-				end
-				
-				ent:SetBoneMatrix(data.i, mat)
-			end
-		end
-	end
-	
-	if self.OverallSize ~= 1 then
-		for i = 0, ent:GetBoneCount() do
-			local mat = ent:GetBoneMatrix(i)
-			if mat then
-				mat:Scale(Vector(1, 1, 1) * self.OverallSize)
-				ent:SetBoneMatrix(i, mat)
 			end
 		end
 	end

@@ -1,5 +1,5 @@
 function pac.SpawnPart(ply, model)
-	if ply:GetNWBool("in pac3 editor") then
+	if IsValid(ply) and ply:GetNWBool("in pac3 editor") then
 		net.Start("pac_spawn_part")
 			net.WriteString(model)
 		net.Send(ply)

@@ -143,11 +143,6 @@ end
 function PART:UpdateScale(ent)
 	ent = ent or self:GetOwner()
 	if ent:IsValid() then				
-		if self.RelativeBones or self.OverallSize ~= 1 and not self.setup_overallscale then
-			pac.HookBuildBone(ent, self)
-			self.setup_overallscale = true
-		end
-		
 		if ent:IsPlayer() then
 			pac.SetModelScale(ent, self.Scale, self.Size)
 		else

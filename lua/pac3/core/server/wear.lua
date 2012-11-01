@@ -2,7 +2,13 @@ function pac.SubmitPart(data, filter)
 
 	-- last arg "true" is pac3 only in case you need to do your checking differnetly from pac2
 	local allowed, reason = hook.Call("PrePACConfigApply", GAMEMODE, data.owner, data, true)
-		
+
+	local ent = Entity(tonumber(data.part.self.OwnerName))
+	if ent:IsValid() and ent.CPPICanPhysgun and not ent:CPPICanPhysgun(data.owner) then
+		allowed = false
+		reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
+	end
+	
 	if data.uid ~= false then
 		if allowed == false then return allowed, reason end
 		if pac.IsBanned(data.owner) then return false, "you are banned from using pac" end
