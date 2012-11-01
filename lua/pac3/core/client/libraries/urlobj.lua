@@ -121,10 +121,16 @@ function urlobj.GetObjFromURL(url, callback, mesh_only, skip_cache)
 	end
 
 	pac.dprint("requesting model %q", url)
-			
+
 	local id = "urlobj_download_" .. url .. tostring(callback)
 	hook.Add("Think", id, function()
 		if pac.urlmat and pac.urlmat.Busy then
+			return
+		end
+		
+		if not skip_cache and urlobj.Cache[url] then
+			callback(urlobj.Cache[url])
+			hook.Remove("Think", id)
 			return
 		end
 	
