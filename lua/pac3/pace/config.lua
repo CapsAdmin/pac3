@@ -9,8 +9,6 @@ pace.Fonts =
 	"DefaultFixedOutline",
 	"ChatFont",
 	"DefaultFixedDropShadow",
-	"Trebuchet18",
-	"Trebuchet19",
 	"UiBold",
 }
 
