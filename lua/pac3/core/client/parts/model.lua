@@ -287,9 +287,7 @@ function PART:OnDraw(owner, pos, ang)
 		--ent:SetupBones()
 		
 		self:DrawModel(ent, pos, ang)
-		
-		pac.SetModelScale(ent)
-		
+				
 		self:PostEntityDraw(owner, ent, pos, ang)
 	else
 		timer.Simple(0, function()
