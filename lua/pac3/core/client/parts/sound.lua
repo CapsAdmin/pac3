@@ -9,6 +9,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Pitch", 1)
 	pac.GetSet(PART, "MinPitch", 100)
 	pac.GetSet(PART, "MaxPitch", 100)
+	pac.GetSet(PART, "RootOwner", false)
 pac.EndStorableVars()
 
 function PART:Initialize()
@@ -110,7 +111,7 @@ function PART:SetPitch(num)
 end
 
 function PART:PlaySound()
-	local ent = self:GetOwner()
+	local ent = self:GetOwner(self.RootOwner)
 
 	if ent:IsValid() then
 		local snd
@@ -136,7 +137,7 @@ function PART:PlaySound()
 			self.csptch:Stop()
 		end
 		
-		local csptch = CreateSound(self:GetPlayerOwner(), snd)
+		local csptch = CreateSound(ent, snd)
 		csptch:PlayEx(self.Volume, math.random(self.MinPitch, self.MaxPitch))		
 		ent.pac_csptch = csptch
 		self.csptch = csptch

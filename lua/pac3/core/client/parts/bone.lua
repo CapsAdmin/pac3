@@ -35,7 +35,6 @@ function PART:ResolveFollowPartName()
 	for key, part in pairs(pac.GetParts()) do	
 		if part ~= self and part:GetPlayerOwner() == self:GetPlayerOwner() and part.Name == self.FollowPartName then
 			self:SetFollowPartName(part)			
-			pac.HookBuildBone(part:GetOwner())
 			return
 		end
 	end
@@ -43,7 +42,6 @@ end
 
 function PART:OnAttach(owner)
 	self.BoneIndex = nil
-	pac.HookBuildBone(owner, self)
 end
 
 function PART:OnParent()
@@ -63,17 +61,10 @@ function PART:GetOwner()
 end
 
 function PART:OnThink()
-	
 	-- this is to setup the cached values
 	if not self.first_getbpos and self:GetOwner():IsValid() then
 		self:GetBonePosition()
 		self.first_getbpos = true
-	end
-	
-	local owner = self:GetOwner()
-	
-	if owner:IsValid() and not owner.BuildBonePositions then
-		pac.HookBuildBone(owner)
 	end
 end
 
@@ -104,7 +95,7 @@ function PART:GetBonePosition(...)
 	return pos or Vector(0,0,0), ang or Angle(0,0,0)
 end
 
-function PART:OnBuildBonePositions(owner)	
+function PART:BuildBonePositions(owner)	
 	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone))
 
 	local matrix = owner:GetBoneMatrix(self.BoneIndex)
@@ -134,7 +125,7 @@ function PART:OnBuildBonePositions(owner)
 				matrix:SetTranslation(self.Position)
 			end
 		end
-	
+		
 		matrix:Scale(self.Scale * self.Size)
 	
 		owner:SetBoneMatrix(self.BoneIndex, matrix)

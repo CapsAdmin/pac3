@@ -828,6 +828,8 @@ do -- meta
 		function PART:Draw(event, pos, ang)
 			if not self:IsHiddenEx() then				
 				if self[event] then
+					self:OnBuildBonePositions()
+				
 					pos = pos or Vector(0,0,0)
 					ang = ang or Angle(0,0,0)
 					

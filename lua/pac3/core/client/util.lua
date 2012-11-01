@@ -147,3 +147,56 @@ function pac.SetModelScale(ent, scale, size)
 		ent:SetupBones()
 	end
 end
+
+-- no need to rematch the same pattern
+pac.PatternCache = {{}}
+
+function pac.StringFind(a, b, simple)
+	if not a or not b then return end
+	
+	if simple then
+		a = a:lower()
+		b = b:lower()
+	end
+	
+	local hash = a..b
+	
+	if pac.PatternCache[hash] ~= nil then
+		return pac.PatternCache[hash]
+	end
+	
+	if simple and a:find(b, nil, true) or not simple and a:find(b) then
+		pac.PatternCache[hash] = true
+		return true
+	else
+		pac.PatternCache[hash] = false
+		return false
+	end
+end
+
+function pac.HideWeapon(wep, hide)
+	if hide then
+		wep:SetNoDraw(true)
+		wep.pac_wep_hiding = true
+	else
+		if wep.pac_wep_hiding then
+			wep:SetNoDraw(false)
+			wep.pac_wep_hiding = false
+		end
+	end
+end
+
+-- this function adds the unique id of the owner to the part name to resolve name conflicts
+-- hack??
+
+function pac.HandlePartName(ply, name)
+	if ply:IsPlayer() and ply ~= LocalPlayer() then
+		return ply:UniqueID() .. " " .. name
+	end
+	
+	if not ply:IsPlayer() and ply:IsValid() then	
+		return pac.CallHook("HandlePartName", ply, name) or (ply:EntIndex() .. " " .. name)
+	end
+
+	return name
+end
