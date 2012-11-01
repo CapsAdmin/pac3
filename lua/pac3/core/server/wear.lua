@@ -43,7 +43,7 @@ function pac.SubmitPart(data, filter)
 end
 
 function pac.SubmitPartNotify(data)
-	pac.dprint("submitted outfit %q from %s with %i number of children to set on %s", data.part.self.Name, data.owner:GetName(), table.Count(data.part.children), data.part.self.OwnerName)
+	pac.dprint("submitted outfit %q from %s with %i number of children to set on %s", data.part.self.Name or "", data.owner:GetName(), table.Count(data.part.children), data.part.self.OwnerName or "")
 	
 	local allowed, reason = pac.SubmitPart(data)
 	

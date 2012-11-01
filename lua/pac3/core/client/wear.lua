@@ -14,7 +14,7 @@ end
 
 do -- from server
 	function pac.WearPartFromServer(owner, part_data)
-		pac.dprint("received outfit %q from %s with %i number of children to set on %s", part_data.self.Name, tostring(owner), table.Count(part_data.children), part_data.self.OwnerName)
+		pac.dprint("received outfit %q from %s with %i number of children to set on %s", part_data.self.Name or "", tostring(owner), table.Count(part_data.children), part_data.self.OwnerName or "")
 
 		for key, part in pairs(pac.GetParts()) do
 			if 
