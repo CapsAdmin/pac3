@@ -179,7 +179,7 @@ pac.EndStorableVars()
 
 
 function PART:GetMaterialFromParent()
-	if self.Parent:IsValid() then
+	if self:GetParent():IsValid() then
 		--print(self.Materialm and self.Materialm:GetName(), self.Parent.Materialm:GetName(), self.last_mat and self.last_mat:GetName())
 		if not self.Materialm then
 			local mat = CreateMaterial("pac_material_" .. SysTime(), "VertexLitGeneric", {})

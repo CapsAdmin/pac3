@@ -374,7 +374,7 @@ do -- meta
 			var:OnAttach(self:GetOwner())
 			self:OnChildAdd(var)
 			
-			if self:HasParent() then self.Parent:SortChildren() end
+			if self:HasParent() then self:GetParent():SortChildren() end
 
 			return var.Id
 		end		
@@ -393,7 +393,7 @@ do -- meta
 		end
 
 		function PART:HasParent()
-			return self.Parent and self.Parent:IsValid()
+			return self:GetParent() and self:GetParent():IsValid()
 		end
 
 		function PART:HasChildren()
@@ -419,7 +419,7 @@ do -- meta
 					part.ParentUID = nil
 					part:OnDetach(self:GetOwner())
 					children[key] = nil
-					if self:HasParent() then self.Parent:SortChildren() end
+					if self:HasParent() then self:GetParent():SortChildren() end
 					return
 				end
 			end
@@ -841,6 +841,7 @@ do -- meta
 		
 		function PART:Draw(event, pos, ang)
 			if not self:IsHiddenEx() then				
+				
 				if self[event] then
 					self:OnBuildBonePositions()
 				
@@ -861,7 +862,7 @@ do -- meta
 				end
 	
 				for _, part in ipairs(self.Children) do
-					if part[event] then
+					if part[event] or part.ClassName == "group" then
 						part:Draw(event, pos, ang)
 					end
 				end
@@ -988,7 +989,7 @@ do -- meta
 	
 	function PART:SetDrawOrder(num)
 		self.DrawOrder = num
-		if self:HasParent() then self.Parent:SortChildren() end
+		if self:HasParent() then self:GetParent():SortChildren() end
 	end
 	
 	pac.RegisterPart(PART)
