@@ -375,6 +375,8 @@ do -- meta
 			self:OnChildAdd(var)
 			
 			if self:HasParent() then self:GetParent():SortChildren() end
+			var:SortChildren()
+			self:SortChildren()
 
 			return var.Id
 		end		
@@ -420,6 +422,7 @@ do -- meta
 					part:OnDetach(self:GetOwner())
 					children[key] = nil
 					if self:HasParent() then self:GetParent():SortChildren() end
+					part:OnUnParent(self)
 					return
 				end
 			end
