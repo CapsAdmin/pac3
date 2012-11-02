@@ -59,6 +59,8 @@ end
 function pace.SelectBone(ent, callback)
 	local data
 	local bones = pac.GetModelBones(ent)
+	
+	if not bones then return end
 
 	local function GUIMousePressed(mcode)
 		if mcode == MOUSE_LEFT and data then
