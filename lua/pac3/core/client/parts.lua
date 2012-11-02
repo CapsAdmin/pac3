@@ -155,6 +155,7 @@ do -- meta
 		pac.GetSet(PART, "Name", "")
 		pac.GetSet(PART, "Description", "")
 		pac.GetSet(PART, "Hide", false)
+		pac.GetSet(PART, "DrawOrder", 0)
 		
 		pac.GetSet(PART, "EditorExpand", false)
 		pac.GetSet(PART, "UniqueID", "")
@@ -359,7 +360,9 @@ do -- meta
 		
 			var.Parent = self
 
-			self.Children[var.Id] = var
+			if not table.HasValue(self.Children, var) then
+				table.insert(self.Children, var)
+			end
 			
 			var.ParentName = self:GetName()
 			var.ParentUID = self:GetUniqueID()
@@ -370,8 +373,23 @@ do -- meta
 			var:OnParent(self)
 			var:OnAttach(self:GetOwner())
 			self:OnChildAdd(var)
+			
+			if self:HasParent() then self.Parent:SortChildren() end
 
 			return var.Id
+		end		
+		
+		local sort = function(a, b)
+			if a and b then
+				return a.DrawOrder < b.DrawOrder
+			end
+		end
+		
+		function PART:SortChildren()
+			local new = {}
+			for key, val in pairs(self.Children) do table.insert(new, val) end
+			self.Children = new
+			table.sort(self.Children, sort)
 		end
 
 		function PART:HasParent()
@@ -401,6 +419,7 @@ do -- meta
 					part.ParentUID = nil
 					part:OnDetach(self:GetOwner())
 					children[key] = nil
+					if self:HasParent() then self.Parent:SortChildren() end
 					return
 				end
 			end
@@ -624,24 +643,19 @@ do -- meta
 			for key, value in pairs(tbl.children) do
 				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
 				part:SetTable(value)
-				part.temp_parent = self
+				part:SetParent(self)
 			end
-
-			timer.Simple(0.1, function()
-				if self:IsValid() then
-							
-					for key, part in pairs(pac.GetParts()) do
-						if part:IsValid() then
-							if part.temp_parent then
-								part:SetParent(part.temp_parent)
-								part.temp_parent = nil
-							end
-						end
-					end
-				
-					self:ResolveAimPartName()
-					if self.ResolveFollowPartName then 
-						self:ResolveFollowPartName()
+		
+			self:ResolveAimPartName()
+			
+			if self.ResolveFollowPartName then 
+				self:ResolveFollowPartName()
+			end
+			
+			timer.Create("pac_sort_parts", 0.1, 1, function()						
+				for key, part in pairs(pac.GetParts()) do
+					if part:IsValid() then
+						self:SortChildren()
 					end
 				end
 			end)
@@ -711,7 +725,7 @@ do -- meta
 
 	function PART:CallEvent(event, ...)
 		self:OnEvent(event, ...)
-		for _, part in pairs(self.Children) do
+		for _, part in ipairs(self.Children) do
 			part:CallEvent(event, ...)
 		end
 	end
@@ -763,7 +777,7 @@ do -- meta
 			self.highlight = RealTime() + 0.1	
 			
 			if not skip_children then
-				for key, part in pairs(self.Children) do
+				for key, part in ipairs(self.Children) do
 					part.highlight = RealTime() + 0.1
 					part:Highlight()
 				end
@@ -846,7 +860,7 @@ do -- meta
 					self[event](self, owner, pos, ang)
 				end
 	
-				for _, part in pairs(self.Children) do
+				for _, part in ipairs(self.Children) do
 					if part[event] then
 						part:Draw(event, pos, ang)
 					end
@@ -970,7 +984,12 @@ do -- meta
 		end
 		
 		return ang
-	end		
+	end
+	
+	function PART:SetDrawOrder(num)
+		self.DrawOrder = num
+		if self:HasParent() then self.Parent:SortChildren() end
+	end
 	
 	pac.RegisterPart(PART)
 end
