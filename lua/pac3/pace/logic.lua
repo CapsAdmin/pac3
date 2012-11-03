@@ -469,7 +469,7 @@ function pace.OnPartMenu(obj)
 			local data = pac.PartToContraptionData(obj)
 			net.Start("pac_to_contraption")
 				net.WriteTable(data)
-			net.Send()
+			net.SendToServer()
 		end)
 	end
 
