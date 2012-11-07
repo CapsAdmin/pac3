@@ -33,12 +33,7 @@ end
 function PART:OnBuildBonePositions(ent)
 	if self.OverallSize ~= 1 then
 		for i = 0, ent:GetBoneCount() do
-			local mat = ent:GetBoneMatrix(i)
-			if mat then
-				mat:Scale(Vector(1, 1, 1) * self.OverallSize)
-				
-				ent:SetBoneMatrix(i, mat)
-			end
+			ent:ManipulateBoneScale(0, Vector(1, 1, 1) * self.OverallSize)
 		end
 	end
 end
@@ -246,6 +241,8 @@ function PART:UpdateAll(ent)
 	self:UpdateScale(ent)
 end
 
+local blank_mat = Material("models/wireframe")
+
 function PART:OnAttach(ent)
 	if ent:IsValid() then
 		
@@ -261,6 +258,7 @@ function PART:OnAttach(ent)
 			if self:IsValid() then
 				if not self.HideEntity then 
 					self:PreEntityDraw(ent)
+					ent:SetupBones()
 					ent:DrawModel()
 					self:PostEntityDraw(ent)
 				end

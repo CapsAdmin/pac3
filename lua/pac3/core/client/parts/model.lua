@@ -312,8 +312,9 @@ function PART:DrawModel(ent, pos, ang)
 			pac.SetModelScale(ent, Vector(0,0,0))
 		
 			ent:DrawModel()
-		else
+		else	
 			ent:DrawModel()
+			pac.ResetBones(ent)
 		end
 	end
 end
@@ -365,7 +366,7 @@ function PART:SetModel(var)
 end
 local NORMAL = Vector(1,1,1)
 function PART:CheckScale()
-	-- this RenderMultiply doesn't work with this..
+	-- RenderMultiply doesn't work with this..
 	if self.Entity:IsValid() and self.Entity:GetBoneCount() and self.Entity:GetBoneCount() > 1 then
 		if self.Scale * self.Size ~= NORMAL then
 			if not self.requires_bone_model_scale then
@@ -473,8 +474,19 @@ function PART:CheckBoneMerge()
 	local ent = self.Entity
 	if ent:IsValid() and not ent:IsPlayer() then
 			
-		if ent:GetParent():IsValid() then			
+		if ent:GetParent():IsValid() then	
 			if self.BoneMerge and not self.BoneMergeAlternative then
+				ent:SetupBones()
+				ent:InvalidateBoneCache()
+				
+				local owner = self:GetOwner()
+				if owner:IsPlayer() then
+					local wep = owner:GetActiveWeapon()
+					if wep:IsValid() then
+						wep:SetupBones()
+					end
+				end
+			
 				if not ent:IsEffectActive(EF_BONEMERGE) then
 					ent:AddEffects(EF_BONEMERGE)
 				end
@@ -527,40 +539,18 @@ function PART:OnBuildBonePositions()
 	
 	if not ent:IsValid() or not owner:IsValid() then return end
 	
-	for key, part in pairs(self:GetChildren()) do
-		if part.ClassName == "bone" then
-			part:BuildBonePositions(ent)
-		end
-	end
-	
 	if self.OverallSize ~= 1 then
 		for i = 0, ent:GetBoneCount() do
-			local mat = ent:GetBoneMatrix(i)
-			if mat then
-				mat:Scale(Vector(1, 1, 1) * self.OverallSize)
-				ent:SetBoneMatrix(i, mat)
-			end
+			ent:ManipulateBoneScale(i, Vector(1, 1, 1) * self.OverallSize)
 		end
 	end
 	
-	if self.requires_bone_scale then		
+	if self.requires_bone_model_scale then		
 		local scale = self.Scale * self.Size
 		scale = Vector(scale.y, scale.z, scale.x)
 		
-		for friendly, data in pairs(pac.GetModelBones(ent)) do	
-			local mat = ent:GetBoneMatrix(data.i)
-			if mat then
-				mat:Scale(scale)
-				
-				if data.parent_i > 0 then
-					local parent_mat = ent:GetBoneMatrix(data.parent_i)
-					if parent_mat then
-						mat:Translate((mat:GetTranslation() - parent_mat:GetTranslation()) * scale)
-					end
-				end
-				
-				ent:SetBoneMatrix(data.i, mat)
-			end
+		for i = 0, ent:GetBoneCount() do
+			ent:ManipulateBoneScale(i, scale)
 		end
 	end
 	

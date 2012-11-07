@@ -11,8 +11,11 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "FollowPartName", "")
 pac.EndStorableVars()
 
+PART.ThinkTime = 0
+
 function PART:Initialize()
 	self.FollowPart = pac.NULL
+	self.Scale = Vector(1,1,1)
 end
 
 function PART:SetFollowPartName(var)
@@ -66,6 +69,12 @@ function PART:OnThink()
 		self:GetBonePosition()
 		self.first_getbpos = true
 	end
+
+	local owner = self:GetOwner()
+	
+	if owner:IsValid() then
+		self:OnBuildBonePositions(owner)
+	end
 end
 
 function PART:GetBonePosition(...)
@@ -95,41 +104,45 @@ function PART:GetBonePosition(...)
 	return pos or Vector(0,0,0), ang or Angle(0,0,0)
 end
 
-function PART:BuildBonePositions(owner)	
-	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone))
+function PART:OnBuildBonePositions(owner)	
+	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone)) or 0
+	
+	local ang = self:CalcAngles(owner, self.Angles) or self.Angles
 
-	local matrix = owner:GetBoneMatrix(self.BoneIndex)
-	
-	if matrix then			
-		local ang = self:CalcAngles(owner, self.Angles) or self.Angles
-	
-		if self.FollowPart:IsValid() then			
-			matrix:SetAngles(self.FollowPart.cached_ang + ang)
-			matrix:SetTranslation(self.FollowPart.cached_pos + self.Position)
-		else				
-			if self.EyeAngles or self.AimPart:IsValid() then
-				ang.r = ang.y
-				ang.y = -ang.p			
-			end
-			
-			if self.Modify then
-				if self.RotateOrigin then
-					matrix:Translate(self.Position)
-					matrix:Rotate(ang)
-				else
-					matrix:Rotate(ang)
-					matrix:Translate(self.Position)
-				end
-			else
-				matrix:SetAngles(ang)
-				matrix:SetTranslation(self.Position)
-			end
+	if self.FollowPart:IsValid() then
+		local parent = owner:GetBoneParent(self.BoneIndex)
+		
+		local pos, ang
+		if parent then
+			pos, ang = owner:GetBonePosition(parent)
+		else
+			pos, ang = owner:GetPos(), owner:GetAngles()
 		end
 		
-		matrix:Scale(self.Scale * self.Size)
-	
-		owner:SetBoneMatrix(self.BoneIndex, matrix)
+		pos, ang = WorldToLocal(pos, ang, self.FollowPart.cached_pos + self.Position, self.FollowPart.cached_ang + ang)
+		owner:ManipulateBoneAngles(self.BoneIndex, ang) -- this should be world
+		owner:ManipulateBonePosition(self.BoneIndex, -pos) -- this should be world
+	else				
+		if self.EyeAngles or self.AimPart:IsValid() then
+			ang.r = ang.y
+			ang.y = -ang.p			
+		end
+		
+		if self.Modify then
+			if self.RotateOrigin then
+				owner:ManipulateBonePosition(self.BoneIndex, owner:GetManipulateBonePosition(self.BoneIndex) + self.Position)
+				owner:ManipulateBoneAngles(self.BoneIndex, owner:GetManipulateBoneAngles(self.BoneIndex) + ang)
+			else
+				owner:ManipulateBoneAngles(self.BoneIndex, owner:GetManipulateBoneAngles(self.BoneIndex) + ang)
+				owner:ManipulateBonePosition(self.BoneIndex, owner:GetManipulateBonePosition(self.BoneIndex) + self.Position)
+			end
+		else
+			owner:ManipulateBoneAngles(self.BoneIndex, ang) -- this should be world
+			owner:ManipulateBonePosition(self.BoneIndex, self.Position) -- this should be world
+		end
 	end
+	
+	owner:ManipulateBoneScale(self.BoneIndex, self.Scale * self.Size)
 end
 
 pac.RegisterPart(PART)
