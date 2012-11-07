@@ -87,9 +87,8 @@ local function install_expand(node)
 	node.SetExpanded = function(self, b, ...)
 		if self.part and self.part:IsValid() then
 			self.part:SetEditorExpand(b)
+			return old(self, b, ...)
 		end
-		
-		return old(self, b, ...)
 	end
 end
 

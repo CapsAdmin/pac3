@@ -25,6 +25,9 @@ function pac.GetAllBones(ent)
 	local tbl = {}
 
 	if ent:IsValid() then
+		ent:InvalidateBoneCache()
+		ent:SetupBones()
+	
 		local count = ent:GetBoneCount()
 
 		for i = 0, count or 1 do
@@ -75,14 +78,14 @@ function pac.GetModelBones(ent)
 	return ent.pac_bones
 end
 
-function pac.HookBuildBone(ent)
-	if not ent:IsValid() then return end
-	ent.BuildBonePositions = function(...)
-		hook.Call("EntityBuildBonePositions", GAMEMODE, ...)
-	end
-end
+local SCALE_RESET = Vector(1,1,1)
+local ORIGIN_RESET = Vector(0,0,0)
+local ANGLE_RESET = Angle(0,0,0)
 
-function pac.UnHookBuildBone(ent)
-	if not ent:IsValid() then return end
-	ent.BuildBonePositions = nil
+function pac.ResetBones(ent)
+	for i = 0, ent:GetBoneCount() do
+		ent:ManipulateBoneScale(i, SCALE_RESET)
+		ent:ManipulateBonePosition(i, ORIGIN_RESET)
+		ent:ManipulateBoneAngles(i, ANGLE_RESET)
+	end
 end
