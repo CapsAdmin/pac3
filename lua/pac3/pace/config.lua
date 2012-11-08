@@ -3,7 +3,7 @@ pace.Fonts =
 	"DermaDefault",
 	"Default",
 	"BudgetLabel",
-	"DefaultsmallDropShadow",
+	"DefaultSmallDropShadow",
 	"DefaultBold",
 	"TabLarge",
 	"DefaultFixedOutline",
