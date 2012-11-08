@@ -83,9 +83,12 @@ local ORIGIN_RESET = Vector(0,0,0)
 local ANGLE_RESET = Angle(0,0,0)
 
 function pac.ResetBones(ent)
-	for i = 0, ent:GetBoneCount() do
-		ent:ManipulateBoneScale(i, SCALE_RESET)
-		ent:ManipulateBonePosition(i, ORIGIN_RESET)
-		ent:ManipulateBoneAngles(i, ANGLE_RESET)
+	local count =ent:GetBoneCount()
+	if count > 1 then
+		for i = 0, count do
+			ent:ManipulateBoneScale(i, SCALE_RESET)
+			ent:ManipulateBonePosition(i, ORIGIN_RESET)
+			ent:ManipulateBoneAngles(i, ANGLE_RESET)
+		end
 	end
 end
