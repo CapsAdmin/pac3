@@ -3,6 +3,8 @@ pac = pac or {}
 pac.Parts = pac.Parts or {}
 pac.Errors = {}
 
+include("pac3/core/shared/player_mods.lua")
+
 include("util.lua")
 include("bans.lua")
 include("effects.lua")

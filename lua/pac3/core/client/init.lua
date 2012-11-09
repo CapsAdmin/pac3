@@ -1,5 +1,7 @@
 pac = pac or {}
 
+include("pac3/core/shared/player_mods.lua")
+
 include("libraries/luadata.lua")
 include("libraries/class.lua")
 include("libraries/null.lua")

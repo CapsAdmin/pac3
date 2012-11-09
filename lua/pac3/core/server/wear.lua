@@ -21,12 +21,16 @@ function pac.SubmitPart(data, filter)
 	
 	if type(data.part) == "table" then
 		pac.Parts[uid][data.part.self.Name] = data
+		
+		pac.HandleServerModifiers(data)		
 	else
 		if data.part == "__ALL__" then
 			pac.Parts[uid] = {}
 		else
 			pac.Parts[uid][data.part] = nil
 		end
+		
+		pac.HandleServerModifiers(data.owner, true)
 	end
 	
 	if filter == false then

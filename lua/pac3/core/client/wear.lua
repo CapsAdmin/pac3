@@ -1,7 +1,14 @@
+CreateClientConVar("pac_server_player_size", 0, true, true)
+
 do -- to server
 	function pac.SendPartToServer(part)
+		local data = {part = part:ToTable()}
+		data.owner = part:GetOwner()
+			
+		pac.HandleServerModifiers(data)
+		
 		net.Start("pac_submit")
-			net.WriteTable({part = part:ToTable()})
+			net.WriteTable(data)
 		net.SendToServer()
 	end
 
@@ -32,18 +39,22 @@ do -- from server
 		part:SetTable(part_data)
 		part:CheckOwner()
 		
+		pac.HandleServerModifiers(part_data)
+		
 		pac.CallHook("OnWoreOutfit", part, owner == LocalPlayer())
 	end
 
 	function pac.RemovePartFromServer(owner, part_name)
 		pac.dprint("%s removed %q", tostring(owner), part_name)
 
-		if part_name == "__ALL__" then
+		if part_name == "__ALL__" then		
 			for key, part in pairs(pac.GetParts()) do
 				if not part:HasParent() and part:GetPlayerOwner() == owner then
 					part:Remove()
 				end
 			end 
+			
+			pac.HandleServerModifiers(owner, true)
 		else
 			for key, part in pairs(pac.GetParts()) do
 				if 
