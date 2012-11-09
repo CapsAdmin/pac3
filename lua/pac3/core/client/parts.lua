@@ -168,6 +168,9 @@ do -- meta
 		self.Angles = self.Angles * 1
 		self.AngleVelocity = self.AngleVelocity * 1
 		
+		self.cached_ang = Angle(0,0,0)
+		self.cached_pos = Angle(0,0,0)
+		
 		self.Owner = NULL
 		self.Parent = pac.NULL
 		self.AimPart = pac.NULL
