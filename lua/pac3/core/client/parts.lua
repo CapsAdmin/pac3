@@ -169,7 +169,7 @@ do -- meta
 		self.AngleVelocity = self.AngleVelocity * 1
 		
 		self.cached_ang = Angle(0,0,0)
-		self.cached_pos = Angle(0,0,0)
+		self.cached_pos = Vector(0,0,0)
 		
 		self.Owner = NULL
 		self.Parent = pac.NULL
