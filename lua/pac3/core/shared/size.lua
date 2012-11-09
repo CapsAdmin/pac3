@@ -27,8 +27,8 @@ function pac.SetPlayerSize(ply, f)
 	
 	ply:SetStepSize(def.step * f)
 	
-	ply:SetHull(def.min * scale, def.max * f)
-	ply:SetHullDuck(def.min * scale, def.maxduck * f)
+	ply:SetHull(def.min * f, def.max * f)
+	ply:SetHullDuck(def.min * f, def.maxduck * f)
 			
 	local phys = ply:GetPhysicsObject()
 	if phys:IsValid() then
