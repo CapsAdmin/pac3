@@ -9,6 +9,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
 	pac.GetSet(PART, "Size", 1)
 	pac.GetSet(PART, "FollowPartName", "")
+	pac.GetSet(PART, "Jiggle", 0)
 pac.EndStorableVars()
 
 PART.ThinkTime = 0
@@ -142,6 +143,7 @@ function PART:OnBuildBonePositions(owner)
 		end
 	end
 	
+	owner:ManipulateBoneJiggle(self.BoneIndex, self.Jiggle) -- afaik anything but 1 is not doing anything at all
 	owner:ManipulateBoneScale(self.BoneIndex, self.Scale * self.Size)
 end
 
