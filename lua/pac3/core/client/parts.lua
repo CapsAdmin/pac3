@@ -605,7 +605,7 @@ do -- meta
 				if not self.BoneIndex then
 					self.Error = "pac3 warning: " .. self.Bone .. " cannot be found on '" .. tostring(owner) .. "' \n are you sure you're using the the same model?"
 					if self.Bone ~= "head"  then
-						MsgN(self.Error)
+						pac.dprint(self.Error)
 					end
 					self.TriedToFindBone = self.Bone
 				end
