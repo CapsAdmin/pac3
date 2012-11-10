@@ -143,6 +143,8 @@ end
 local enable_model_icons = CreateClientConVar("pac_editor_model_icons", "1")
 
 function PANEL:PopulateParts(node, parts, children)
+	fix_folder_funcs(node)
+
 	parts = table.ClearKeys(parts)
 	
 	local tbl = {}
@@ -176,6 +178,8 @@ function PANEL:PopulateParts(node, parts, children)
 			else
 				part_node = node:AddNode(part:GetName())
 			end
+			
+			fix_folder_funcs(part_node)
 			
 			part_node:SetTooltip(part:GetDescription())
 			
