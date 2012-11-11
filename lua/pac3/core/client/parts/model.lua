@@ -550,6 +550,16 @@ function PART:OnBuildBonePositions()
 		scale = Vector(scale.y, scale.z, scale.x)
 		
 		for i = 0, ent:GetBoneCount() do
+			local dir = Vector(0,1,0)
+			
+			if ent:GetBoneParent(i) then
+				local posa = ent:GetBonePosition(i)
+				local posb = ent:GetBonePosition(ent:GetBoneParent(i))
+				
+				dir = (posa - posb):GetNormalized()
+			end
+		
+			ent:ManipulateBonePosition(i, dir * scale)
 			ent:ManipulateBoneScale(i, scale)
 		end
 	end
