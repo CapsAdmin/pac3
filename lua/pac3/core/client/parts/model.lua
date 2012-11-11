@@ -533,6 +533,8 @@ local bad_bones =
 	["ValveBiped.Bip01_R_Finger22"] = true,
 }
 
+local SCALE_NORMAL = Vector(1, 1, 1)
+
 function PART:OnBuildBonePositions()
 	local ent = self:GetEntity()
 	local owner = self:GetOwner()
@@ -541,26 +543,20 @@ function PART:OnBuildBonePositions()
 	
 	if self.OverallSize ~= 1 then
 		for i = 0, ent:GetBoneCount() do
-			ent:ManipulateBoneScale(i, Vector(1, 1, 1) * self.OverallSize)
+			ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * (SCALE_NORMAL * self.OverallSize))
 		end
 	end
 	
 	if self.requires_bone_model_scale then		
 		local scale = self.Scale * self.Size
-		scale = Vector(scale.y, scale.z, scale.x)
 		
-		for i = 0, ent:GetBoneCount() do
-			local dir = Vector(0,1,0)
-			
-			if ent:GetBoneParent(i) then
-				local posa = ent:GetBonePosition(i)
-				local posb = ent:GetBonePosition(ent:GetBoneParent(i))
-				
-				dir = (posa - posb):GetNormalized()
+		for i = 0, ent:GetBoneCount()-1 do	
+			if i == 0 then
+				ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * Vector(scale.x ^ 0.25, scale.y ^ 0.25, scale.z ^ 0.25))
+			else
+				ent:ManipulateBonePosition(i, ent:GetManipulateBonePosition(i) + Vector((scale.x-1) ^ 4, 0, 0))
+				ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * scale)
 			end
-		
-			ent:ManipulateBonePosition(i, dir * scale)
-			ent:ManipulateBoneScale(i, scale)
 		end
 	end
 	
