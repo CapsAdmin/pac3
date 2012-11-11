@@ -128,7 +128,7 @@ function urlobj.GetObjFromURL(url, callback, mesh_only, skip_cache)
 			return
 		end
 		
-		if not skip_cache or urlobj.Cache[url] then
+		if not skip_cache and urlobj.Cache[url] then
 			callback(urlobj.Cache[url])
 			hook.Remove("Think", id)
 			return
