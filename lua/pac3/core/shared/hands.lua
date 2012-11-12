@@ -1,8 +1,6 @@
-if SERVER then
-   AddCSLuaFile("shared.lua")
-end
+local SWEP = {Primary = {}, Secondary = {}}
 
-SWEP.Author = ""
+SWEP.Author = "CapsAdmin"
 SWEP.Contact = ""
 SWEP.Purpose = ""
 SWEP.Instructions = ""
@@ -35,25 +33,6 @@ SWEP.Secondary.DefaultClip = -1
 SWEP.Secondary.Automatic = false
 SWEP.Secondary.Ammo = "none"
 
-
-function SWEP:DrawHUD() end
-function SWEP:PrintWeaponInfo() end
-
-function SWEP:DrawWeaponSelection(x,y,w,t,a)
-    draw.SimpleText("C", "TitleFont2", x + w / 2, y, Color(255, 220, 0, a), TEXT_ALIGN_CENTER)
-end
-
-function SWEP:DrawWorldModel() return true end
-function SWEP:CanPrimaryAttack() return false end
-function SWEP:CanSecondaryAttack() return false end
-function SWEP:Reload() return false end
-function SWEP:Holster() return true end
-function SWEP:ShouldDropOnDie() return false end
-
-function SWEP:Initialize()
-    self:SetWeaponHoldType(self.HoldType)
-end
-
 function SWEP:OnDrop()   
     if SERVER then
 		self:Remove()
@@ -61,28 +40,36 @@ function SWEP:OnDrop()
 end
 
 function SWEP:GetViewModelPosition(pos, ang)
-  
-   pos.x=0
-   pos.y=0
-   pos.z=35575 -- I don't want to see you ever again
-   
-   return pos, ang
+	-- die
+	pos.z = 35575
+	return pos, ang
 end
 
--- This is not a weapon
 function SWEP:TranslateActivity(act)
-    return act
+	return act
 end
 
--- HACK AHOY
 function SWEP:Deploy()
    self.Think = self._Think
    return true
 end
 
 function SWEP:_Think()
-	if self.Owner and self.Owner:IsValid() and self.Owner:GetViewModel():IsValid() then
+	if self.Owner:IsValid() and self.Owner:GetViewModel():IsValid() then
 		self.Owner:GetViewModel():SetNoDraw(true)
 		self.Think = nil
 	end
 end
+
+function SWEP:Initialize() end
+function SWEP:DrawHUD() end
+function SWEP:PrintWeaponInfo() end
+function SWEP:DrawWeaponSelection(x,y,w,t,a) end
+function SWEP:DrawWorldModel() return true end
+function SWEP:CanPrimaryAttack() return false end
+function SWEP:CanSecondaryAttack() return false end
+function SWEP:Reload() return false end
+function SWEP:Holster() return true end
+function SWEP:ShouldDropOnDie() return false end
+
+weapons.Register(SWEP, "hands", true)
