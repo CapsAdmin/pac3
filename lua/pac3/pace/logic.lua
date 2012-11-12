@@ -133,7 +133,7 @@ function pace.SavePartToFile(part, name)
 	else
 		pac.dprint("saving %s", name)
 		file.CreateDir("pac3")
-		luadata.WriteFile("pac3/" .. name .. ".txt", part:ToTable())
+		pac.luadata.WriteFile("pac3/" .. name .. ".txt", part:ToTable())
 	end
 end
 
@@ -176,7 +176,7 @@ function pace.LoadPartFromFile(part, name)
 			end
 			
 			local function callback(str)
-				local data = luadata.Decode(str)
+				local data = pac.luadata.Decode(str)
 		
 				if data and data.self then
 					if part:IsValid() then
@@ -197,7 +197,7 @@ function pace.LoadPartFromFile(part, name)
 			pace.RefreshTree()
 		else
 			name = name:gsub("%.txt", "")
-			local data = luadata.ReadFile("pac3/" .. name .. ".txt")
+			local data = pac.luadata.ReadFile("pac3/" .. name .. ".txt")
 			if data and data.self then
 				if part:IsValid() then
 					part:Clear()	
@@ -240,7 +240,7 @@ function pace.SaveSession(name)
 		
 		file.CreateDir("pac3")
 		file.CreateDir("pac3/sessions")
-		luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
+		pac.luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
 		
 		if pace.SpawnlistBrowser:IsValid() then
 			pace.SpawnlistBrowser:PopulateFromClient()
@@ -301,7 +301,7 @@ function pace.LoadSession(name, append)
 			end
 			
 			local function callback(str)
-				local data = luadata.Decode(str)
+				local data = pac.luadata.Decode(str)
 		
 				for key, tbl in pairs(data) do
 					local part = pac.CreatePart(tbl.self.ClassName)
@@ -315,7 +315,7 @@ function pace.LoadSession(name, append)
 		else
 			name = name:gsub("%.txt", "")
 		
-			local data = luadata.ReadFile("pac3/sessions/" .. name .. ".txt")
+			local data = pac.luadata.ReadFile("pac3/sessions/" .. name .. ".txt")
 			
 			timer.Simple(0.1, function()				
 				for key, tbl in pairs(data) do

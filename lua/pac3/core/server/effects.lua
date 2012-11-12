@@ -10,7 +10,8 @@ pac.EffectsBlackList =
 }
 
 function pac.PrecacheEffect(name)
-	PrecacheParticleSystem(name)
+	game.PrecacheParticleSystem(name)
+	game.AddParticles(name)
 	net.Start("pac_effect_precached")
 		net.WriteString(name)
 	net.Send()
