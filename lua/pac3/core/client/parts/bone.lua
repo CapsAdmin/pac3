@@ -73,7 +73,7 @@ function PART:OnThink()
 
 	local owner = self:GetOwner()
 	
-	if owner:IsValid() then
+	if owner:IsValid() and not self:IsHiddenEx() then
 		self:OnBuildBonePositions(owner)
 	end
 end

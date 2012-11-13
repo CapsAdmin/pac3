@@ -142,7 +142,7 @@ local function setup(PART)
 				local mat = self:GetMaterialFromParent()
 				
 				if mat then
-					mat:SetInt("$" .. name, var and 1 or 0)
+					mat:SetString("$" .. name, var and "1" or "0") -- setint crashes?
 				end
 			end
 		elseif T == "number" then
