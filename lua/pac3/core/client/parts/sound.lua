@@ -94,7 +94,7 @@ function PART:SetVolume(num)
 	end
 	
 	if self.csptch then
-		self.csptch:ChangeVolume(self.Volume)
+		self.csptch:ChangeVolume(self.Volume, 0)
 	end
 end
 
@@ -106,7 +106,7 @@ function PART:SetPitch(num)
 	end
 	
 	if self.csptch then
-		self.csptch:ChangePitch(self.Pitch)
+		self.csptch:ChangePitch(self.Pitch, 0)
 	end
 end
 
