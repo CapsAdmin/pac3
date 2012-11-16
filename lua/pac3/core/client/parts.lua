@@ -731,7 +731,7 @@ do -- meta
 
 	function PART:CallEvent(event, ...)
 		self:OnEvent(event, ...)
-		for _, part in ipairs(self.Children) do
+		for _, part in pairs(self.Children) do
 			part:CallEvent(event, ...)
 		end
 	end
@@ -783,7 +783,7 @@ do -- meta
 			self.highlight = RealTime() + 0.1	
 			
 			if not skip_children then
-				for key, part in ipairs(self.Children) do
+				for key, part in pairs(self.Children) do
 					part.highlight = RealTime() + 0.1
 					part:Highlight()
 				end
@@ -867,7 +867,7 @@ do -- meta
 					self[event](self, owner, pos, ang)
 				end
 	
-				for _, part in ipairs(self.Children) do
+				for _, part in pairs(self.Children) do
 					if part[event] or part.ClassName == "group" then
 						part:Draw(event, pos, ang)
 					end

@@ -165,7 +165,7 @@ function PANEL:PopulateParts(node, parts, children)
 		end
 	end
 	
-	for key, part in ipairs(tbl) do
+	for key, part in pairs(tbl) do
 		key = part.Id
 				
 		if not part:HasParent() or children then

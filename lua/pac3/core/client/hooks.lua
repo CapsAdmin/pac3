@@ -18,17 +18,6 @@ function pac.EntityRemoved(ent)
 end
 pac.AddHook("EntityRemoved")
 
-function pac.EntityBuildBonePositions(ent)	
-	if not cvar_enable:GetBool() then return end
-
-	for key, part in pairs(pac.GetParts()) do
-		if (ent == part:GetOwner() or ent == part.Entity) and not part:IsHiddenEx() then
-			part:OnBuildBonePositions(ent)
-		end
-	end
-end
-pac.AddHook("EntityBuildBonePositions")
-
 net.Receive("pac_submit", function()
 	local tbl = net.ReadTable()
 	pac.CreatePart(tbl.ent):SetTable(tbl.part)

@@ -140,8 +140,8 @@ do -- list
 		
 		table.sort(data, function(a,b) return a.key > b.key end)
 		
-		for pos, str in ipairs(pace.PropertyOrder) do
-			for i, val in ipairs(data) do
+		for pos, str in pairs(pace.PropertyOrder) do
+			for i, val in pairs(data) do
 				if val.key == str then
 					table.insert(tbl, {pos = pos, key = val.key, val = val.val})
 					table.remove(data, i)
@@ -149,11 +149,11 @@ do -- list
 			end
 		end
 
-		for pos, val in ipairs(data) do
+		for pos, val in pairs(data) do
 			table.insert(tbl, {pos = pos, key = val.key, val = val.val})
 		end
 				
-		for pos, data in ipairs(tbl) do
+		for pos, data in pairs(tbl) do
 			local key, val = data.key, data.val
 			
 			local pnl
@@ -193,8 +193,8 @@ do -- list
 		
 		table.sort(data, function(a,b) return a.key > b.key end)
 		
-		for pos, str in ipairs(pace.PropertyOrder) do
-			for i, val in ipairs(data) do
+		for pos, str in pairs(pace.PropertyOrder) do
+			for i, val in pairs(data) do
 				if val.key == str then
 					table.insert(tbl, {pos = pos, key = val.key, val = val.val, callback = val.callback})
 					table.remove(data, i)
@@ -202,11 +202,11 @@ do -- list
 			end
 		end
 
-		for pos, val in ipairs(data) do
+		for pos, val in pairs(data) do
 			table.insert(tbl, {pos = pos, key = val.key, val = val.val, callback = val.callback})
 		end
 				
-		for pos, data in ipairs(tbl) do
+		for pos, data in pairs(tbl) do
 			local key, val = data.key, data.val
 
 			local pnl
@@ -764,7 +764,7 @@ do -- bone
 		
 		bones = table.ClearKeys(bones)
 		table.sort(bones, function(a,b) return a.friendly > b.friendly end)
-		for _, data in ipairs(bones) do
+		for _, data in pairs(bones) do
 			menu:AddOption(L(data.friendly), function()
 				self:SetValue(L(data.friendly))
 				self.OnValueChanged(data.friendly)
@@ -1142,7 +1142,7 @@ do -- arguments
 		local tbl = {}
 		local args = {pace.current_part:GetParsedArguments(data)}
 		if args then
-			for pos, arg in ipairs(data) do
+			for pos, arg in pairs(data) do
 				local nam, typ = next(arg)
 				if args[pos] then
 					arg = args[pos]

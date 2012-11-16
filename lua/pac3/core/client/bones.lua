@@ -36,7 +36,7 @@ function pac.GetAllBones(ent)
 			local friendly = name
 
 			if bone then
-				for _, value in ipairs(pac.BoneNameReplacements) do
+				for _, value in pairs(pac.BoneNameReplacements) do
 					friendly = friendly:gsub(value[1], value[2])
 				end
 

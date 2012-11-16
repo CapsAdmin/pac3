@@ -449,7 +449,7 @@ local function add_parts(menu)
 	
 	table.sort(temp)
 	
-	for _, class_name in ipairs(temp) do
+	for _, class_name in pairs(temp) do
 		menu:AddOption(L(class_name), function()
 			pace.Call("CreatePart", class_name)
 		end)--:SetImage(pace.PartIcons[class_name])

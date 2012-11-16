@@ -1,5 +1,36 @@
 CreateClientConVar("pac_server_player_size", 0, true, true)
 
+local function decimal_hack_mul(tbl)
+	--[[for key, val in pairs(tbl) do
+		local t = type(val)
+		if t == "Vector" then
+			tbl[key].x = tbl[key].x * 100
+			tbl[key].y = tbl[key].y * 100
+			tbl[key].z = tbl[key].z * 100
+		elseif t == "number" then
+			tbl[key] = val * 100
+		elseif t == "table" then
+			decimal_hack_mul(val)
+		end
+	end]]
+end
+
+local function decimal_hack_div(tbl)
+	--[[for key, val in pairs(tbl) do
+		local t = type(val)
+		if t == "Vector" then
+			tbl[key].x = tbl[key].x / 100
+			tbl[key].y = tbl[key].y / 100
+			tbl[key].z = tbl[key].z / 100
+		elseif t == "number" then
+			tbl[key] = val / 100
+		elseif t == "table" then
+			decimal_hack_div(val)
+		end
+	end]]
+end
+
+
 do -- to server
 	function pac.SendPartToServer(part)
 		local data = {part = part:ToTable()}
@@ -8,13 +39,16 @@ do -- to server
 		pac.HandleServerModifiers(data)
 		
 		net.Start("pac_submit")
+			decimal_hack_mul(data)
 			net.WriteTable(data)
 		net.SendToServer()
 	end
 
 	function pac.RemovePartOnServer(name, server_only, filter)
 		net.Start("pac_submit")
-			net.WriteTable({part = name, server_only = server_only})
+			local data = {part = name, server_only = server_only}
+			decimal_hack_mul(data)
+			net.WriteTable(data)
 		net.SendToServer()
 	end
 end
@@ -82,7 +116,9 @@ local function handle_data(data)
 end
 
 net.Receive("pac_submit", function()
-	handle_data(net.ReadTable())
+	local data = net.ReadTable()
+	decimal_hack_div(data)
+	handle_data(data)
 end)
 
 function pac.Notify(allowed, reason)
