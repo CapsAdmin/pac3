@@ -530,7 +530,7 @@ function PANEL:SetMaterialList(tbl)
 	
 	self.MatList:Clear(true)
 	
-	for i, material in ipairs(self.MaterialList) do
+	for i, material in pairs(self.MaterialList) do
 		-- if IsError(material) then continue end
 		
 		local image = vgui.Create("DImageButton")
@@ -571,7 +571,7 @@ function PANEL:Init()
 	local sheet = vgui.Create("DPropertySheet", self)
 	sheet:Dock(FILL)
 	
-	for _, data in ipairs(list) do
+	for _, data in pairs(list) do
 		local name, tbl = data.key, data.val
 		local pnl = pace.CreatePanel("mat_browser_sheet", self)
 		pnl:SetMaterialList(tbl)

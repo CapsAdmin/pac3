@@ -21,10 +21,7 @@ function pac.RenderOverride(ent)
 		pac.UnhookEntityRender(ent)
 	else
 		pac.ResetBones(ent)
-		
-		ent:SetupBones()
-		ent:InvalidateBoneCache()
-	
+			
 		for key, part in pairs(ent.pac_parts) do
 			if part:IsValid() then
 				if not part:HasParent() then

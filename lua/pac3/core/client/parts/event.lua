@@ -239,7 +239,7 @@ function PART:ParseArguments(...)
 	local str = ""
 	local args = {...}
 	
-	for key, val in ipairs(args) do
+	for key, val in pairs(args) do
 		local T = type(val)
 		
 		if T == "boolean" then
@@ -272,7 +272,7 @@ function PART:GetParsedArguments(data)
 
 	local args = line:Split("@@")
 	
-	for pos, arg in ipairs(data) do
+	for pos, arg in pairs(data) do
 		local nam, typ = next(arg)
 		if not args[pos] then 
 			break

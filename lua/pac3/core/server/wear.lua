@@ -1,9 +1,39 @@
+local function decimal_hack_mul(tbl)
+	--[[for key, val in pairs(tbl) do
+		local t = type(val)
+		if t == "Vector" then
+			tbl[key].x = tbl[key].x * 100
+			tbl[key].y = tbl[key].y * 100
+			tbl[key].z = tbl[key].z * 100
+		elseif t == "number" then
+			tbl[key] = val * 100
+		elseif t == "table" then
+			decimal_hack_mul(val)
+		end
+	end]]
+end
+
+local function decimal_hack_div(tbl)
+	--[[for key, val in pairs(tbl) do
+		local t = type(val)
+		if t == "Vector" then
+			tbl[key].x = tbl[key].x / 100
+			tbl[key].y = tbl[key].y / 100
+			tbl[key].z = tbl[key].z / 100
+		elseif t == "number" then
+			tbl[key] = val / 100
+		elseif t == "table" then
+			decimal_hack_div(val)
+		end
+	end]]
+end
+
 function pac.SubmitPart(data, filter)
 
 	-- last arg "true" is pac3 only in case you need to do your checking differnetly from pac2
 	local allowed, reason = hook.Call("PrePACConfigApply", GAMEMODE, data.owner, data, true)
 
-	if type(data.part) == "table" then
+	if type(data.part) == "table" then	
 		local ent = Entity(tonumber(data.part.self.OwnerName))
 		if ent:IsValid() and ent.CPPICanPhysgun and not ent:CPPICanPhysgun(data.owner) then
 			allowed = false
@@ -47,6 +77,7 @@ function pac.SubmitPart(data, filter)
 	
 	if not data.server_only then
 		net.Start("pac_submit")
+			decimal_hack_mul(data)
 			net.WriteTable(data)
 		net.Send(filter or player.GetAll())	
 	end
@@ -90,6 +121,7 @@ util.AddNetworkString("pac_precache_effect")
 
 net.Receive("pac_submit", function(_, ply)
 	local data = net.ReadTable()
+	decimal_hack_div(data)
 	handle_data(ply, data)
 end)
 
