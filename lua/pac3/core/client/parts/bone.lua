@@ -114,9 +114,12 @@ function PART:OnBuildBonePositions(owner)
 		local parent = owner:GetBoneParent(self.BoneIndex)
 		
 		local pos, ang
+		
 		if parent then
 			pos, ang = owner:GetBonePosition(parent)
-		else
+		end
+		
+		if not pos or not ang then
 			pos, ang = owner:GetPos(), owner:GetAngles()
 		end
 		
