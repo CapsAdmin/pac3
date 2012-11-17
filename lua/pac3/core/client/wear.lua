@@ -1,35 +1,41 @@
+local function decimal_hack_unpack(tbl)
+	for key, val in pairs(tbl) do
+		local t = type(val)
+		if t == "table" and val.__type then 
+			t = val.__type 
+			
+			if t == "Vector" then
+				tbl[key] = Vector()
+				tbl[key].x = tostring(val.x)
+				tbl[key].y = tonumber(val.y)
+				tbl[key].z = tonumber(val.z)
+			elseif t == "number" then
+				tbl[key] = tonumber(val.val)
+			end
+		elseif t == "table" then
+			decimal_hack_unpack(val)
+		end
+	end
+end
+
+local function decimal_hack_pack(tbl)
+	for key, val in pairs(tbl) do
+		local t = type(val)
+		if t == "Vector" then
+			tbl[key] = {}
+			tbl[key].x = tostring(val.x)
+			tbl[key].y = tostring(val.y)
+			tbl[key].z = tostring(val.z)
+			tbl[key].__type = "Vector"
+		elseif t == "number" then
+			tbl[key] = {__type = "number", val = tostring(val)}
+		elseif t == "table" then
+			decimal_hack_pack(val)
+		end
+	end
+end
+
 CreateClientConVar("pac_server_player_size", 0, true, true)
-
-local function decimal_hack_mul(tbl)
-	--[[for key, val in pairs(tbl) do
-		local t = type(val)
-		if t == "Vector" then
-			tbl[key].x = tbl[key].x * 100
-			tbl[key].y = tbl[key].y * 100
-			tbl[key].z = tbl[key].z * 100
-		elseif t == "number" then
-			tbl[key] = val * 100
-		elseif t == "table" then
-			decimal_hack_mul(val)
-		end
-	end]]
-end
-
-local function decimal_hack_div(tbl)
-	--[[for key, val in pairs(tbl) do
-		local t = type(val)
-		if t == "Vector" then
-			tbl[key].x = tbl[key].x / 100
-			tbl[key].y = tbl[key].y / 100
-			tbl[key].z = tbl[key].z / 100
-		elseif t == "number" then
-			tbl[key] = val / 100
-		elseif t == "table" then
-			decimal_hack_div(val)
-		end
-	end]]
-end
-
 
 do -- to server
 	function pac.SendPartToServer(part)
@@ -39,7 +45,7 @@ do -- to server
 		pac.HandleServerModifiers(data)
 		
 		net.Start("pac_submit")
-			decimal_hack_mul(data)
+			decimal_hack_pack(data)
 			net.WriteTable(data)
 		net.SendToServer()
 	end
@@ -47,7 +53,7 @@ do -- to server
 	function pac.RemovePartOnServer(name, server_only, filter)
 		net.Start("pac_submit")
 			local data = {part = name, server_only = server_only}
-			decimal_hack_mul(data)
+			decimal_hack_pack(data)
 			net.WriteTable(data)
 		net.SendToServer()
 	end
@@ -117,7 +123,7 @@ end
 
 net.Receive("pac_submit", function()
 	local data = net.ReadTable()
-	decimal_hack_div(data)
+	decimal_hack_unpack(data)
 	handle_data(data)
 end)
 
