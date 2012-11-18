@@ -83,10 +83,6 @@ function PART:SetSound(str)
 end
 
 function PART:SetVolume(num)
-	if num > 1 then
-		num = num / 100
-	end
-	
 	self.Volume = math.Clamp(num, 0, 1)
 	
 	if not self.csptch then
@@ -99,14 +95,14 @@ function PART:SetVolume(num)
 end
 
 function PART:SetPitch(num)
-	self.Pitch = math.Clamp(num*255, 0, 255)
+	self.Pitch = math.Clamp(num, 0, 1)
 	
 	if not self.csptch then
 		self:PlaySound()
 	end
 	
 	if self.csptch then
-		self.csptch:ChangePitch(self.Pitch, 0)
+		self.csptch:ChangePitch(self.Pitch*255, 0)
 	end
 end
 
