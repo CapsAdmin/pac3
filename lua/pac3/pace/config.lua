@@ -15,7 +15,7 @@ pace.Fonts =
 pace.ShadowedFonts = 
 {
 	["BudgetLabel"] = true,
-	["DefaultsmallDropShadow"] = true,
+	["DefaultSmallDropShadow"] = true,
 	["TabLarge"] = true,
 	["DefaultFixedOutline"] = true,
 	["ChatFont"] = true,
