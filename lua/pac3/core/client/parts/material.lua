@@ -89,7 +89,7 @@ local function setup(PART)
 								
 				if 
 					self.SKIP or
-					pac.HandleUrlMat(
+					pac.Handleurltex(
 						self, 
 						var, 
 						function(_, tex) 

@@ -180,7 +180,7 @@ end
 function PART:SetMaterial(var)
 	var = var or ""
 	
-	if not pac.HandleUrlMat(self, var) then	
+	if not pac.Handleurltex(self, var) then	
 		if var == "" then
 			self.Materialm = nil
 		else

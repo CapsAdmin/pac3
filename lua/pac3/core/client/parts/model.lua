@@ -349,7 +349,7 @@ function PART:SetModel(var)
 			
 			-- temp
 			self.Entity:SetRenderBounds(Vector(1, 1, 1)*-300, Vector(1, 1, 1)*300)	
-		end, true, skip_cache)
+		end, skip_cache)
 		
 		self.Model = var
 		return
@@ -407,7 +407,7 @@ end
 function PART:SetMaterial(var)
 	var = var or ""
 	
-	if not pac.HandleUrlMat(self, var) then
+	if not pac.Handleurltex(self, var) then
 		if var == "" then
 			self.Materialm = nil
 		else			

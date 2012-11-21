@@ -98,13 +98,13 @@ do -- get set and editor vars
 	end
 end
 
-function pac.HandleUrlMat(part, url, callback)
-	if url and pac.urlmat and url:find("http") then	
+function pac.Handleurltex(part, url, callback)
+	if url and pac.urltex and url:find("http") then	
 		local skip_cache = url:sub(1,1) == "_"
 		url = url:gsub("https://", "http://")
 		url = url:match("http[s]-://.+/.-%.%a+")
 		if url then
-			pac.urlmat.GetMaterialFromURL(
+			pac.urltex.GetMaterialFromURL(
 				url, 
 				function(mat, tex)
 					if part:IsValid() then

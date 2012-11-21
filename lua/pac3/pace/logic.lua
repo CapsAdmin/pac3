@@ -102,10 +102,12 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 			elseif key == "Parent" or key == "ParentName" then
 				local tree = obj.editor_node
 				if IsValid(tree) then
-					tree = tree:GetRoot()
-					tree:SetSelectedItem(nil)
 					node:Remove()
-					pace.RefreshTree(true)
+					tree = tree:GetRoot()
+					if tree:IsValid() then
+						tree:SetSelectedItem(nil)
+						pace.RefreshTree(true)
+					end
 				end
 			end
 		end
