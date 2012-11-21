@@ -1,4 +1,5 @@
 local urlobj = pac.urlobj or {}
+urlobj.Queue = urlobj.Queue or {}
 urlobj.Cache = urlobj.Cache or {}
 
 -- parser made by animorten
@@ -15,6 +16,11 @@ function urlobj.ParseObj(data)
 	local normals = {}
 	local output = {}
 
+	if pac.debug then
+		debug.Trace()
+	end
+	pac.dprint("parsing model")
+	
 	for i in data:gmatch("(.-)\n") do
 		local parts = i:gsub(" +", " "):Trim():Split(" ")
 
@@ -67,85 +73,71 @@ function urlobj.ParseObj(data)
 			end
 		end
 	end
-	
+		
 	return output
 end
 
-function urlobj.CreateObj(str, mesh_only)	
-	local ok, res = pcall(urlobj.ParseObj, str)
+function urlobj.CreateObj(obj_str)	
+	local ok, res = pcall(urlobj.ParseObj, obj_str)
 	
 	if not ok then
-		MsgN("pac3 model parse error %q ", res)
+		MsgN("pac3 obj parse error %q ", res)
 		return
 	end
 	
 	local mesh = Mesh()
 	mesh:BuildFromTriangles(res)
 	
-	if mesh_only then
-		return mesh
-	else
-		local ent = ClientsideModel("error.mdl")
-		
-		AccessorFunc(ent, "MeshModel", "MeshModel")
-		AccessorFunc(ent, "MeshMaterial", "MeshMaterial")
-		
-		ent.MeshModel = mesh
-		
-		function ent:RenderOverride()
-			local matrix = Matrix()
-		
-			matrix:SetAngles(self:GetAngles())
-			matrix:SetTranslation(self:GetPos())
-			matrix:Scale(self.pac_model_scale)
-		
-			
-			if self.MeshMaterial then 
-				render_SetMaterial(self.MeshMaterial)	
-			end
-			
-			cam.PushModelMatrix(matrix)
-				self.MeshModel:Draw()
-			cam.PopModelMatrix()
-		end
-		
-		return ent, mesh
-	end
+	return mesh
 end
 
-
-function urlobj.GetObjFromURL(url, callback, mesh_only, skip_cache)
-	if not skip_cache and urlobj.Cache[url] then
+function urlobj.GetObjFromURL(url, callback, skip_cache)
+	-- if it's already downloaded just return it
+	if callback and not skip_cache and urlobj.Cache[url] then
 		callback(urlobj.Cache[url])
 		return
 	end
-
-	pac.dprint("requesting model %q", url)
-
-	local id = "urlobj_download_" .. url .. tostring(callback)
-	hook.Add("Think", id, function()
-		if pac.urlmat and pac.urlmat.Busy then
-			return
-		end
-		
-		if not skip_cache and urlobj.Cache[url] then
-			callback(urlobj.Cache[url])
-			hook.Remove("Think", id)
-			return
-		end
 	
-		http.Fetch(url, function(str)	
-			pac.dprint("loaded model %q", url)
-			
-			local obj = urlobj.CreateObj(str, mesh_only)
-			
-			urlobj.Cache[url] = obj
-			
-			callback(obj)
-		end)
-	
-		hook.Remove("Think", id)
-	end)
+	-- if it's already being downloaded, append the callback to the current download
+	if urlobj.Queue[url] then
+		local old = urlobj.Queue[url].callback
+		urlobj.Queue[url].callback = function(...)	
+			callback(...)
+			old(...)
+		end
+	else
+		urlobj.Queue[url] = {callback = callback}
+	end
 end
+
+function urlobj.Think()
+	if pac.urltex and pac.urltex.Busy then return end
+
+	if table.Count(urlobj.Queue) > 0 then
+		for url, data in pairs(urlobj.Queue) do
+			if not data.Downloading then
+				pac.dprint("requesting model download %q", url)
+				
+				data.Downloading = true
+
+				http.Fetch(url, function(obj_str)	
+					pac.dprint("downloaded model %q", url)
+
+					local obj = urlobj.CreateObj(obj_str)
+					
+					urlobj.Cache[url] = obj
+					urlobj.Queue[url] = nil
+
+					data.callback(obj)
+				end)
+			end
+		end
+		urlobj.Busy = true
+	else
+		urlobj.Busy = false
+	end
+end
+
+timer.Create("urlobj_queue", 0.1, 0, urlobj.Think)
 
 pac.urlobj = urlobj
