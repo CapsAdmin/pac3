@@ -50,7 +50,8 @@ PART.ShaderParams =
 	BlendTintColorOverBase = "Vector",  
 	ColorTint_Base = "Vector",
 	ColorTint_Tmp = "Vector",
-	--Color2 = "Vector",
+	Color = "Vector",
+	Color2 = "Vector",
 	
 	--[[Selfillum = "boolean",
 	SelillumTint = "Vector",
@@ -164,14 +165,22 @@ local function setup(PART)
 				end
 			end
 		elseif T == "Vector" then
-			pac.GetSet(PART, name, Vector(0,0,0))
+			local def = Vector(0,0,0)
+			
+			-- hack
+			local key = name:lower()
+			if key == "color" or key == "color2" then
+				def = Vector(1,1,1)
+			end
+			
+			pac.GetSet(PART, name, def)
 			
 			PART["Set" .. name] = function(self, var)
 				self[name] = var
 				
 				local mat = self:GetMaterialFromParent()
 				
-				if mat then
+				if mat then				
 					mat:SetVector("$" .. name, var)
 				end
 			end
