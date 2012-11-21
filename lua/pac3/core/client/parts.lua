@@ -965,7 +965,7 @@ do -- meta
 			return self.Angles + (self.AimPart.cached_pos - self.cached_pos):Angle()
 		elseif self.EyeAngles then
 			if owner:IsPlayer() then
-				return self.Angles + (owner:GetEyeTraceNoCursor().HitPos - self.cached_pos):Angle()
+				return self.Angles + ((owner.pac_hitpos or owner:GetEyeTraceNoCursor().HitPos) - self.cached_pos):Angle()
 			elseif owner:IsNPC() then
 				return self.Angles + ((owner:EyePos() + owner:GetForward() * 100) - self.cached_pos):Angle()
 			end
