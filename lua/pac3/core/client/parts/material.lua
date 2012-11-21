@@ -47,7 +47,7 @@ PART.ShaderParams =
 	AmbientOcclusionTexture = "ITexture",
 	
 	BlendTintByBaseAlpha = "boolean", 
-	BlendTintColorOverbase = "boolean",  
+	BlendTintColorOverbase = "number",  
 	ColorTint_Base = "Vector",
 	ColorTint_Tmp = "Vector",
 	Color2 = "Vector",
