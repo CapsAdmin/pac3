@@ -1,62 +1,62 @@
-local urlmat = pac.urlmat or {}
+local urltex = pac.urltex or {}
 
-urlmat.TextureSize = 1024
-urlmat.ActivePanel = urlmat.ActivePanel or NULL
-urlmat.Queue = urlmat.Queue or {}
-urlmat.Cache = urlmat.Cache or {}
+urltex.TextureSize = 1024
+urltex.ActivePanel = urltex.ActivePanel or NULL
+urltex.Queue = urltex.Queue or {}
+urltex.Cache = urltex.Cache or {}
 
-if urlmat.ActivePanel:IsValid() then
-	urlmat.ActivePanel:Remove()
+if urltex.ActivePanel:IsValid() then
+	urltex.ActivePanel:Remove()
 end
 
-function urlmat.GetMaterialFromURL(url, callback, skip_cache)
-	if type(callback) == "function" and not skip_cache and urlmat.Cache[url] then
-		local tex = urlmat.Cache[url]
-		local vertex_mat = CreateMaterial("pac3_urlmat_" .. util.CRC(url .. SysTime()), "VertexLitGeneric")
+function urltex.GetMaterialFromURL(url, callback, skip_cache)
+	if type(callback) == "function" and not skip_cache and urltex.Cache[url] then
+		local tex = urltex.Cache[url]
+		local vertex_mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), "VertexLitGeneric")
 		vertex_mat:SetTexture("$basetexture", tex)
 		callback(vertex_mat, tex)
 		return
 	end
-	if urlmat.Queue[url] then
-		local old = urlmat.Queue[url].callback
-		urlmat.Queue[url].callback = function(...)	
+	if urltex.Queue[url] then
+		local old = urltex.Queue[url].callback
+		urltex.Queue[url].callback = function(...)	
 			callback(...)
 			old(...)
 		end
 	else
-		urlmat.Queue[url] = {callback = callback, tries = 0}
+		urltex.Queue[url] = {callback = callback, tries = 0}
 	end
 end
 
-function urlmat.Think()
-	if table.Count(urlmat.Queue) > 0 then
-		for url, data in RandomPairs(urlmat.Queue) do
+function urltex.Think()
+	if table.Count(urltex.Queue) > 0 then
+		for url, data in pairs(urltex.Queue) do
 			-- when the panel is gone start a new one
-			if not urlmat.ActivePanel:IsValid() then
-				urlmat.StartDownload(url, data)
+			if not urltex.ActivePanel:IsValid() then
+				urltex.StartDownload(url, data)
 			end
 		end
-		urlmat.Busy = true
+		urltex.Busy = true
 	else
-		urlmat.Busy = false
+		urltex.Busy = false
 	end
 end
 
-timer.Create("urlmat_queue", 0.1, 0, urlmat.Think)
+timer.Create("urltex_queue", 0.1, 0, urltex.Think)
 
-function urlmat.StartDownload(url, data)
+function urltex.StartDownload(url, data)
 
-	if urlmat.ActivePanel:IsValid() then
-		urlmat.ActivePanel:Remove()
+	if urltex.ActivePanel:IsValid() then
+		urltex.ActivePanel:Remove()
 	end
 
-	local id = "urlmat_download_" .. url
+	local id = "urltex_download_" .. url
 	
 	local pnl = vgui.Create("HTML")
 	pnl:SetVisible(true)
 	--pnl:SetPos(50,50)
 	pnl:SetPos(ScrW()-1, ScrH()-1)
-	pnl:SetSize(urlmat.TextureSize, urlmat.TextureSize)
+	pnl:SetSize(urltex.TextureSize, urltex.TextureSize)
 	pnl:SetHTML(
 		[[
 			<style type="text/css">
@@ -68,7 +68,7 @@ function urlmat.StartDownload(url, data)
 			</style>
 			
 			<body>
-				<img src="]] .. url .. [[" alt="" width="]] .. urlmat.TextureSize..[[" height="]] .. urlmat.TextureSize .. [[" />
+				<img src="]] .. url .. [[" alt="" width="]] .. urltex.TextureSize..[[" height="]] .. urltex.TextureSize .. [[" />
 			</body>
 		]]
 	)
@@ -100,7 +100,7 @@ function urlmat.StartDownload(url, data)
 			end
 				
 			if go and time < RealTime() then
-				local vertex_mat = CreateMaterial("pac3_urlmat_" .. util.CRC(url .. SysTime()), "VertexLitGeneric")
+				local vertex_mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), "VertexLitGeneric")
 				
 				local tex = html_mat:GetTexture("$basetexture")
 				tex:Download()
@@ -108,11 +108,11 @@ function urlmat.StartDownload(url, data)
 				
 				tex:Download()
 				
-				urlmat.Cache[url] = tex
+				urltex.Cache[url] = tex
 				
 				hook.Remove("Think", id)
 				timer.Remove(id)
-				urlmat.Queue[url] = nil
+				urltex.Queue[url] = nil
 				timer.Simple(0.15, function() pnl:Remove() end)
 								
 				if data.callback then
@@ -128,7 +128,7 @@ function urlmat.StartDownload(url, data)
 	-- 5 sec max timeout
 	timer.Create(id, 5, 1, function()
 		timer.Remove(id)
-		urlmat.Queue[url] = nil
+		urltex.Queue[url] = nil
 		pnl:Remove()
 		
 		if hook.GetTable().Think[id] then
@@ -139,14 +139,14 @@ function urlmat.StartDownload(url, data)
 			pac.dprint("material download %q timed out.. trying again for the %ith time", url, data.tries)
 			-- try again
 			data.tries = data.tries + 1
-			urlmat.GetMaterialFromURL(url, data)
-			urlmat.Queue[url] = data
+			urltex.GetMaterialFromURL(url, data)
+			urltex.Queue[url] = data
 		else
 			pac.dprint("material download %q timed out for good", url, data.tries)
 		end
 	end)
 	
-	urlmat.ActivePanel = pnl
+	urltex.ActivePanel = pnl
 end
 
-pac.urlmat = urlmat
+pac.urltex = urltex
