@@ -290,6 +290,8 @@ function pace.TranslatePropertiesKey(key, obj)
 	if obj.ClassName == "material" and obj.ShaderParams[key_] == "Vector" and 
 		(
 			key ~= "phongfresnelranges" and
+			key ~= "color2" and
+			key ~= "color" and
 			not key:find("tint")
 		)
 	then
