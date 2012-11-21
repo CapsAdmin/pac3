@@ -180,7 +180,11 @@ local function setup(PART)
 				
 				local mat = self:GetMaterialFromParent()
 				
-				if mat then				
+				if mat then	
+					if key == "color" or key == "color2" then
+						timer.Simple(0.1, function() mat:SetVector("$" .. name, var) end)
+					end
+				
 					mat:SetVector("$" .. name, var)
 				end
 			end
