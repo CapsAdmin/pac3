@@ -160,3 +160,12 @@ function pac.RenderScreenspaceEffects()
 	end
 end
 pac.AddHook("RenderScreenspaceEffects")
+
+function pac.Think()
+	for key, ent in pairs(pac.drawn_entities) do
+		if ent.pac_drawing then
+			ent.pac_hitpos = ent:GetEyeTraceNoCursor().HitPos
+		end
+	end
+end
+pac.AddHook("Think")
