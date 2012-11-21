@@ -47,9 +47,9 @@ PART.ShaderParams =
 	AmbientOcclusionTexture = "ITexture",
 	
 	BlendTintByBaseAlpha = "boolean", 
-	BlendTtintColorOverbase = "boolean",  
+	BlendTintColorOverbase = "boolean",  
 	ColorTint_Base = "Vector",
-	ColorTint_tmp = "Vector",
+	ColorTint_Tmp = "Vector",
 	Color2 = "Vector",
 	
 	--[[Selfillum = "boolean",
@@ -148,7 +148,7 @@ local function setup(PART)
 				local mat = self:GetMaterialFromParent()
 				
 				if mat then
-					mat:SetString("$" .. name, var and "1" or "0") -- setint crashes?
+					mat:SetInt("$" .. name, var and 1 or 0) -- setint crashes?
 				end
 			end
 		elseif T == "number" then
