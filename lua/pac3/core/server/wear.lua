@@ -136,7 +136,9 @@ function pac.PlayerInitialSpawn(ply)
 	timer.Simple(1, function()
 		if ply:IsPlayer() then
 			for id, outfits in pairs(pac.Parts) do
-				if id == false or player.GetByUniqueID(id) and id ~= ply:UniqueID() then
+				local owner = (player.GetByUniqueID(id) or NULL)
+				-- is valid is lying??
+				if id == false or owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
                     for key, outfit in pairs(outfits) do
 						pac.SubmitPart(outfit, ply)
 					end

@@ -40,7 +40,7 @@ end
 function PART:SetMaterial(var)
 	var = var or ""
 	
-	if not pac.HandleUrlMat(self, var) then
+	if not pac.Handleurltex(self, var) then
 		if type(var) == "string" then
 			self.Materialm = Material(var)
 			self:CallEvent("material_changed")
