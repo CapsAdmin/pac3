@@ -28,3 +28,5 @@ if tags == "" then
 elseif not tags:find("PAC3") then
 	RunConsoleCommand("sv_tags", "PAC3," .. tags)
 end
+
+CreateConVar("has_pac3", "1", {FCVAR_NOTIFY})
