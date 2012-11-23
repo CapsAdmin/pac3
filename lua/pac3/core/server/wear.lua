@@ -1,21 +1,25 @@
 local function decimal_hack_unpack(tbl)
 	for key, val in pairs(tbl) do
 		local t = type(val)
-		if t == "table" and val.__type then 
-			t = val.__type 
-			
-			if t == "Vector" then
-				tbl[key] = Vector()
-				tbl[key].x = tostring(val.x)
-				tbl[key].y = tonumber(val.y)
-				tbl[key].z = tonumber(val.z)
-			elseif t == "number" then
-				tbl[key] = tonumber(val.val)
+		if t == "table" then 
+			if val.__type then
+				t = val.__type 
+				
+				if t == "Vector" then
+					tbl[key] = Vector()
+					tbl[key].x = tostring(val.x)
+					tbl[key].y = tonumber(val.y)
+					tbl[key].z = tonumber(val.z)
+				elseif t == "number" then
+					tbl[key] = tonumber(val.val)
+				end
+			else
+				decimal_hack_unpack(val)
 			end
-		elseif t == "table" then
-			decimal_hack_unpack(val)
 		end
 	end
+	
+	return tbl
 end
 
 local function decimal_hack_pack(tbl)
@@ -33,6 +37,8 @@ local function decimal_hack_pack(tbl)
 			decimal_hack_pack(val)
 		end
 	end
+	
+	return tbl
 end
 
 function pac.SubmitPart(data, filter)
@@ -84,8 +90,7 @@ function pac.SubmitPart(data, filter)
 	
 	if not data.server_only then
 		net.Start("pac_submit")
-			decimal_hack_pack(data)
-			net.WriteTable(data)
+			net.WriteTable(decimal_hack_pack(table.Copy(data)))
 		net.Send(filter or player.GetAll())	
 	end
 	
