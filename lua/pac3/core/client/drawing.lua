@@ -111,6 +111,10 @@ function pac.PostDrawTranslucentRenderables()
 			dst = ent:EyePos():Distance(pac.EyePos)
 			radius = ent:BoundingRadius() * 3
 			
+			if ent:IsPlayer() and radius < 32 then
+				radius = 128
+			end
+			
 			if not ent:IsPlayer() and not ent:IsNPC() then
 				radius = radius * 4
 			end
