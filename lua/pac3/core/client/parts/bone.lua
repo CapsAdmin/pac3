@@ -78,7 +78,7 @@ function PART:OnThink()
 	end
 end
 
-function PART:GetBonePosition(...)
+function PART:GetBonePosition()
 	local owner = self:GetOwner()
 	local pos, ang
 	
@@ -110,22 +110,12 @@ function PART:OnBuildBonePositions(owner)
 	
 	local ang = self:CalcAngles(owner, self.Angles) or self.Angles
 
-	if self.FollowPart:IsValid() then
-		local parent = owner:GetBoneParent(self.BoneIndex)
+	if self.FollowPart:IsValid() then		
+		local pos, ang = self:GetBonePosition()
 		
-		local pos, ang
-		
-		if parent then
-			pos, ang = owner:GetBonePosition(parent)
-		end
-		
-		if not pos or not ang then
-			pos, ang = owner:GetPos(), owner:GetAngles()
-		end
-		
-		pos, ang = WorldToLocal(pos, ang, self.FollowPart.cached_pos + self.Position, self.FollowPart.cached_ang + ang)
+		pos, ang = WorldToLocal(pos, ang, self.FollowPart.cached_pos + self.Position, self.FollowPart.cached_ang + self.Angles)
 		owner:ManipulateBoneAngles(self.BoneIndex, ang) -- this should be world
-		owner:ManipulateBonePosition(self.BoneIndex, -pos) -- this should be world
+		owner:ManipulateBonePosition(self.BoneIndex, pos) -- this should be world
 	else				
 		if self.EyeAngles or self.AimPart:IsValid() then
 			ang.r = ang.y
