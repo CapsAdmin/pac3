@@ -91,7 +91,11 @@ function urlobj.CreateObj(obj_str)
 	return mesh
 end
 
+local enable = CreateConVar("pac_enable_urlobj", "1")
+
 function urlobj.GetObjFromURL(url, callback, skip_cache)
+	if not enable:GetBool() then return end
+
 	-- if it's already downloaded just return it
 	if callback and not skip_cache and urlobj.Cache[url] then
 		callback(urlobj.Cache[url])

@@ -48,7 +48,7 @@ function pac.SubmitPart(data, filter)
 
 	if type(data.part) == "table" then	
 		local ent = Entity(tonumber(data.part.self.OwnerName))
-		if ent:IsValid() and ent.CPPICanPhysgun and not ent:CPPICanPhysgun(data.owner) then
+		if ent:IsValid() and ent.CPPICanTool and (not ent:CPPICanTool(data.owner) or ent:CPPIGetOwner() == data.owner) then
 			allowed = false
 			reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
 		end

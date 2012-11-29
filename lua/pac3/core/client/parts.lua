@@ -528,9 +528,7 @@ do -- meta
 			local owner = self:GetOwner()
 			if owner:IsValid() then
 				local pos, ang = self:GetBonePosition(nil, pos, ang)
-				
-				if type(pos) == "Player" then debug.Trace() end
-				
+								
 				pos, ang = LocalToWorld(
 					self.Position, 
 					self.Angles, 

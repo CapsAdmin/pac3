@@ -9,7 +9,11 @@ if urltex.ActivePanel:IsValid() then
 	urltex.ActivePanel:Remove()
 end
 
+local enable = CreateConVar("pac_enable_urlmat", "1")
+
 function urltex.GetMaterialFromURL(url, callback, skip_cache)
+	if not enable:GetBool() then return end
+	
 	if type(callback) == "function" and not skip_cache and urltex.Cache[url] then
 		local tex = urltex.Cache[url]
 		local vertex_mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), "VertexLitGeneric")
