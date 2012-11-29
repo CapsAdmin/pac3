@@ -9,7 +9,7 @@ if urltex.ActivePanel:IsValid() then
 	urltex.ActivePanel:Remove()
 end
 
-local enable = CreateConVar("pac_enable_urlmat", "1")
+local enable = CreateConVar("pac_enable_urltex", "1")
 
 function urltex.GetMaterialFromURL(url, callback, skip_cache)
 	if not enable:GetBool() then return end
