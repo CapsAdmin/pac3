@@ -308,6 +308,10 @@ function PART:DrawModel(ent, pos, ang)
 				end
 				self.wavefront_mesh:Draw()
 			cam_PopModelMatrix()
+			
+			pac.SetModelScale(ent, Vector(0,0,0))
+		
+			ent:DrawModel()
 		else	
 			ent:DrawModel()
 			pac.ResetBones(ent)
