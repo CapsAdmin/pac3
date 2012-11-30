@@ -287,7 +287,8 @@ do -- meta
 				return parent:GetOwner()
 			end
 			
-			if self.Owner:IsPlayer() and self.Owner:IsValid() then
+			-- this line keeps lying telling me the player is valid, but when trying to use it, gmod throws an error
+			if self.Owner:IsPlayer() and self.Owner:IsValid() and type(self.Owner) == "Player" and self.Owner.GetRagdollEntity then
 				local rag = self.Owner:GetRagdollEntity()
 				if rag and rag:IsValid() then
 					return rag
@@ -804,7 +805,7 @@ do -- meta
 				pulse = pulse + 2
 				render.SetColorModulation(pulse, pulse, pulse)
 				render_MaterialOverride(mat)
-				ent:DrawModel()
+				self:DrawModel(owner, pos, ang)
 				render_MaterialOverride()
 			end
 			cam.IgnoreZ(false)

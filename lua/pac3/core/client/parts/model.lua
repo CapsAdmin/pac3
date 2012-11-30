@@ -29,8 +29,6 @@ function PART:SetOverallSize(num)
 	self.OverallSize = num
 end
 
-PART.Colorf = Vector(1,1,1)
-
 pac.GetSet(PART, "Entity", NULL)
 
 function PART:GetEntity()
@@ -55,6 +53,8 @@ function PART:Initialize()
 	self.Entity:DrawShadow(false)
 	self.Entity:DestroyShadow()]]
 	self.Entity.PACPart = self
+	
+	self.Colorf = Vector(1, 1, 1)
 end
 
 function PART:GetModelBones()
@@ -308,10 +308,6 @@ function PART:DrawModel(ent, pos, ang)
 				end
 				self.wavefront_mesh:Draw()
 			cam_PopModelMatrix()
-			
-			pac.SetModelScale(ent, Vector(0,0,0))
-		
-			ent:DrawModel()
 		else	
 			ent:DrawModel()
 			pac.ResetBones(ent)

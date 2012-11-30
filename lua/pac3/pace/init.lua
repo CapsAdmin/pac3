@@ -14,6 +14,7 @@ include("mctrl.lua")
 include("screenvec.lua")
 
 include("panels.lua")
+include("tools.lua")
 include("spawnmenu.lua")
 
 pace.ActivePanels = pace.ActivePanels or {}

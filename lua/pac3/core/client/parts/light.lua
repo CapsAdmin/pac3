@@ -27,7 +27,18 @@ function PART:OnDraw(owner, pos, ang)
 		
 		-- 100000000 constant is better than calling RealTime()
 		params.DieTime = 100000000 -- RealTime()
+		
+		render.ComputeDynamicLighting(pos, ang:Up())
 	end
 end
+
+function PART:OnHide()
+	local p = self.Params 
+	if p then
+		p.DieTime = 0
+	end
+end
+
+PART.OnRemove = OnHide
 
 pac.RegisterPart(PART)
