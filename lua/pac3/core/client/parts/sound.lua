@@ -148,4 +148,28 @@ function PART:StopSound()
 	end
 end
 
+local channels = 
+{
+	CHAN_AUTO = 0,
+	CHAN_WEAPON = 1,
+	CHAN_VOICE = 2,
+	CHAN_ITEM = 3,
+	CHAN_BODY = 4,
+	CHAN_STREAM = 5,
+	CHAN_STATIC = 6,
+}
+
+for key, CHAN in pairs(channels) do
+	sound.Add( 
+	{
+		name = "pac_silence_" .. key:lower(),
+		channel = CHAN,
+		volume = 0,
+		soundlevel = 0,
+		pitchstart = 0,
+		pitchend = 0,
+		sound = "ambient/_period.wav"
+	} )
+end
+
 pac.RegisterPart(PART)

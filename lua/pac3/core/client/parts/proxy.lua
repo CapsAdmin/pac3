@@ -130,8 +130,30 @@ PART.Inputs =
 		end
 		
 		return 0
-	end
+	end,
+	
+	command = function(self)
+		local ply = self:GetPlayerOwner()
+		local data = ply.pac_proxy_event
+		
+		if data and data.name == self:GetName() then
+			self.last_command_proxy_num = num
+			return data.num
+		end
+		
+		return self.last_command_proxy_num or 0
+	end,
 }
+
+usermessage.Hook("pac_proxy", function(umr)
+	local ply = umr:ReadEntity()
+	local str = umr:ReadString()
+	local num = umr:ReadFloat()
+	
+	if ply:IsValid() then
+		ply.pac_proxy_event = {name = str, num = num}
+	end
+end)
 
 function PART:CheckLastVar(parent)
 	if self.last_var ~= self.VariableName then
@@ -143,6 +165,14 @@ function PART:CheckLastVar(parent)
 	end	
 end
 
+local allowed =
+{
+	number = true,
+	Vector = true,
+	Angle = true,
+	boolean = true,
+}
+
 function PART:OnThink()
 	if self:IsHiddenEx() then return end
 	
@@ -151,7 +181,7 @@ function PART:OnThink()
 	
 	local T = type(parent[self.VariableName])
 	
-	if T == "number" or T == "Vector" or T == "Angle" then
+	if allowed[T] then
 		local F = self.Functions[self.Function]
 		local I = self.Inputs[self.Input]
 		
@@ -164,7 +194,9 @@ function PART:OnThink()
 				num = self.num_additive
 			end
 			
-			if T == "number" then
+			if T == "boolean" then
+				parent["Set" .. self.VariableName](parent, tonumber(num) > 0)
+			elseif T == "number" then
 				parent["Set" .. self.VariableName](parent, tonumber(num))
 			else
 				local val = parent[self.VariableName]

@@ -496,12 +496,24 @@ function pace.OnPartMenu(obj)
 	menu:AddOption(L"clone", function()
 		obj:Clone()
 		pace.RefreshTree()
-	end)	
-			
+	end)
+		
+	local tools = menu:AddSubMenu(L"tools")
+	for key, data in pairs(pace.Tools) do
+		if #data.suboptions > 0 then
+			local menu = tools:AddSubMenu(data.name)
+			for key, option in pairs(data.suboptions) do
+				menu:AddOption(option, function() data.callback(obj, key) end)
+			end
+		else
+			tools:AddOption(data.name, function() data.callback(obj) end)
+		end
+	end
+	
 	menu:AddSpacer()
 
 	add_parts(menu)
-	
+
 	menu:AddSpacer()
 
 	menu:AddOption(L"save", function()
