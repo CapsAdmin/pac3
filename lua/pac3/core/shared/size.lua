@@ -35,8 +35,15 @@ function pac.SetPlayerSize(ply, f)
 		phys:SetMass(def.mass * f)	
 	end
 	
-	hook.Add("UpdateAnimation", "scale", function(ply, vel, max)
+	hook.Add("UpdateAnimation", "pac_scale", function(ply, vel, max)
 		if ply.pac_player_size and ply.pac_player_size ~= 1 then
+			if 
+				ply:GetModelScale() ~= ply.pac_player_size or
+				ply:GetViewOffset() ~= def.view * ply.pac_player_size
+			then
+				pac.SetPlayerSize(ply, ply.pac_player_size)
+			end
+		
 			ply:SetPlaybackRate(1 / ply.pac_player_size)
 			return true
 		end
