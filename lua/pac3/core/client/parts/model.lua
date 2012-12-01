@@ -187,7 +187,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 				end
 			end
 		end			
-		if self.DoubleFace then
+		if self.DoubleFace or self.wavefront_mesh then
 			render_CullMode(MATERIAL_CULLMODE_CW)
 		else
 			if self.Invert then
@@ -201,7 +201,9 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		
 		render_SetBlend(self.Alpha)
 		
-		render_MaterialOverride(self.Materialm) 
+		if not self.wavefront_mesh then
+			render_MaterialOverride(self.Materialm) 
+		end
 
 		if self.Fullbright then
 			render_SuppressEngineLighting(true) 
@@ -214,7 +216,7 @@ local WHITE = Material("models/debug/debugwhite")
 
 function PART:PostEntityDraw(owner, ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
-		if self.DoubleFace then
+		if self.DoubleFace or self.wavefront_mesh then
 			render_CullMode(MATERIAL_CULLMODE_CCW)
 			self:DrawModel(ent, pos, ang)
 		else
@@ -301,11 +303,11 @@ function PART:DrawModel(ent, pos, ang)
 			matrix:SetAngles(ang)
 			matrix:SetTranslation(pos)
 			matrix:Scale(self.Scale * self.Size)
+			if self.Materialm then 
+				render_SetMaterial(self.Materialm)	
+			end
 			
 			cam_PushModelMatrix(matrix)
-				if self.Materialm then 
-					render_SetMaterial(self.Materialm)	
-				end
 				self.wavefront_mesh:Draw()
 			cam_PopModelMatrix()
 			
