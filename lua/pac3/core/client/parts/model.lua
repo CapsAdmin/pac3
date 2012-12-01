@@ -201,9 +201,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		
 		render_SetBlend(self.Alpha)
 		
-		if not self.wavefront_mesh then
-			render_MaterialOverride(self.Materialm) 
-		end
+		render_MaterialOverride(self.Materialm) 
 
 		if self.Fullbright then
 			render_SuppressEngineLighting(true) 
@@ -303,11 +301,11 @@ function PART:DrawModel(ent, pos, ang)
 			matrix:SetAngles(ang)
 			matrix:SetTranslation(pos)
 			matrix:Scale(self.Scale * self.Size)
-			if self.Materialm then 
-				render_SetMaterial(self.Materialm)	
-			end
 			
 			cam_PushModelMatrix(matrix)
+				if self.Materialm then 
+					render_SetMaterial(self.Materialm)	
+				end
 				self.wavefront_mesh:Draw()
 			cam_PopModelMatrix()
 			
