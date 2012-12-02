@@ -65,7 +65,7 @@ local pac = pac
 local LocalPlayer = LocalPlayer
 local util_PixelVisible = util.PixelVisible
 local cvar_enable = CreateClientConVar("pac_enable", "1")
-local cvar_distance = CreateClientConVar("pac_draw_distance", "0")
+local cvar_distance = CreateClientConVar("pac_draw_distance", "500")
 
 pac.EyePos = vector_origin
 function pac.RenderScene(pos, ang)
@@ -94,8 +94,8 @@ local radius
 
 local dst
 
-function pac.PostDrawTranslucentRenderables()
-
+function pac.PostDrawTranslucentRenderables(bool1, bool2)
+	if bool2 then return end
 	if SKIP_DRAW then return end
 	if not cvar_enable:GetBool() then return end
 		

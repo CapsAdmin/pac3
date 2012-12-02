@@ -151,25 +151,25 @@ end
 -- no need to rematch the same pattern
 pac.PatternCache = {{}}
 
-function pac.StringFind(a, b, simple)
+function pac.StringFind(a, b, simple, case_sensitive)
 	if not a or not b then return end
 	
-	if simple then
+	if simple and not case_sensitive then
 		a = a:lower()
 		b = b:lower()
 	end
-	
-	local hash = a..b
-	
-	if pac.PatternCache[hash] ~= nil then
+		
+	pac.PatternCache[a] = pac.PatternCache[a] or {}
+		
+	if pac.PatternCache[a][b] ~= nil then
 		return pac.PatternCache[hash]
 	end
 	
 	if simple and a:find(b, nil, true) or not simple and a:find(b) then
-		pac.PatternCache[hash] = true
+		pac.PatternCache[a][b] = true
 		return true
 	else
-		pac.PatternCache[hash] = false
+		pac.PatternCache[a][b] = false
 		return false
 	end
 end

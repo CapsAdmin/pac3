@@ -1,5 +1,8 @@
+local function real_isvalid(s) return (pcall(s["GetPos"], s)) end
+
+-- why does this hook get called with NULL entities?
 function pac.OnEntityCreated(ent)
-	if ent:GetOwner():IsPlayer() then
+	if ent:IsValid() and ent:GetOwner():IsPlayer() and real_isvalid(ent) then
 		for key, part in pairs(pac.GetParts()) do
 			if not part:HasParent() then
 				part:CheckOwner(ent)
@@ -10,7 +13,7 @@ end
 pac.AddHook("OnEntityCreated")
 
 function pac.EntityRemoved(ent)
-	if ent:GetOwner():IsPlayer() then
+	if ent:IsValid() and ent:GetOwner():IsPlayer()and real_isvalid(ent)  then
 		for key, part in pairs(pac.GetParts()) do
 			if not part:HasParent() then
 				part:CheckOwner(ent)

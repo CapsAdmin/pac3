@@ -157,7 +157,7 @@ do -- owner
 		end
 		
 		-- this line keeps lying telling me the player is valid, but when trying to use it, gmod throws an error
-		if self.Owner:IsPlayer() and self.Owner:IsValid() and type(self.Owner) == "Player" and self.Owner.GetRagdollEntity then
+		if self.Owner:IsPlayer() and self.Owner:IsValid() and type(self.Owner) == "Player" and self.Owner.GetRagdollEntity and self.Owner:IsAlive() then
 			local rag = self.Owner:GetRagdollEntity()
 			if rag and rag:IsValid() then
 				return rag
@@ -827,7 +827,7 @@ function PART:CalcAngles(owner, ang)
 	
 	ang = self:CalcAngleVelocity(ang)
 	
-	if self.AimPartName:find("LOCALEYES", nil, true) then
+	if pac.StringFind(self.AimPartName, "LOCALEYES", true, true) then
 		return self.Angles + (pac.EyePos - self.cached_pos):Angle()
 	elseif self.AimPart:IsValid() then	
 		return self.Angles + (self.AimPart.cached_pos - self.cached_pos):Angle()
