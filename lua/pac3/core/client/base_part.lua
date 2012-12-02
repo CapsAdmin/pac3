@@ -157,7 +157,7 @@ do -- owner
 		end
 		
 		-- this line keeps lying telling me the player is valid, but when trying to use it, gmod throws an error
-		if self.Owner:IsPlayer() and self.Owner:IsValid() and type(self.Owner) == "Player" and self.Owner.GetRagdollEntity and self.Owner:IsAlive() then
+		if self.Owner:IsPlayer() and self.Owner:IsValid() and type(self.Owner) == "Player" and self.Owner.GetRagdollEntity and self.Owner:Alive() then
 			local rag = self.Owner:GetRagdollEntity()
 			if rag and rag:IsValid() then
 				return rag
