@@ -39,16 +39,42 @@ end
 
 function PART:OnHide()
 	local ent = self:GetOwner()
-
-	if ent:IsValid() then		
+		
+	if ent:IsValid() then
 		ent.pac_sequence = nil
 		ent.pac_holdtype = nil
 	end
 end
 
+function PART:OnShow()
+	self.last_holdtype = nil
+end
+
 PART.OnRemove = PART.OnHide
 
 local tonumber = tonumber
+
+local ActIndex = 
+{
+	["pistol"] = ACT_HL2MP_IDLE_PISTOL,
+	["smg"] = ACT_HL2MP_IDLE_SMG1,
+	["grenade"] = ACT_HL2MP_IDLE_GRENADE,
+	["ar2"] = ACT_HL2MP_IDLE_AR2,
+	["shotgun"] = ACT_HL2MP_IDLE_SHOTGUN,
+	["rpg"] = ACT_HL2MP_IDLE_RPG,
+	["physgun"] = ACT_HL2MP_IDLE_PHYSGUN,
+	["crossbow"] = ACT_HL2MP_IDLE_CROSSBOW,
+	["melee"] = ACT_HL2MP_IDLE_MELEE,
+	["slam"] = ACT_HL2MP_IDLE_SLAM,
+	["normal"] = ACT_HL2MP_IDLE,
+	["fist"] = ACT_HL2MP_IDLE_FIST,
+	["melee2"] = ACT_HL2MP_IDLE_MELEE2,
+	["passive"] = ACT_HL2MP_IDLE_PASSIVE,
+	["knife"] = ACT_HL2MP_IDLE_KNIFE,
+	["duel"] = ACT_HL2MP_IDLE_DUEL,
+	["camera"] = ACT_HL2MP_IDLE_CAMERA,
+	["revolver"] = ACT_HL2MP_IDLE_REVOLVER	
+}
 
 function PART:OnThink()
 	if self:IsHiddenEx() then return end
@@ -56,6 +82,47 @@ function PART:OnThink()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then		
+		local t = self.WeaponHoldType
+		t = t:lower()
+		
+		if t ~= self.last_holdtype then			
+			local index = ActIndex[t]
+			
+			if index == nil then
+				ent.pac_holdtype = nil
+				return
+			end
+
+			local params = {}
+			params[ACT_MP_STAND_IDLE] = index
+			params[ACT_MP_WALK] = index+1
+			params[ACT_MP_RUN] = index+2
+			params[ACT_MP_CROUCH_IDLE] = index+3
+			params[ACT_MP_CROUCHWALK] = index+4
+			params[ACT_MP_ATTACK_STAND_PRIMARYFIRE]	= index+5
+			params[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE] = index+5
+			params[ACT_MP_RELOAD_STAND ] = index+6
+			params[ACT_MP_RELOAD_CROUCH ] = index+6
+			params[ACT_MP_JUMP] = index+7
+			params[ACT_RANGE_ATTACK1] = index+8
+			params[ACT_MP_SWIM_IDLE] = index+8
+			params[ACT_MP_SWIM] = index+9
+			
+			-- "normal" jump animation doesn't exist
+			if t == "normal" then
+				params[ACT_MP_JUMP] = ACT_HL2MP_JUMP_SLAM
+			end
+			
+			-- these two aren't defined in ACTs for whatever reason
+			if t == "knife" or t == "melee2" then
+				params[ACT_MP_CROUCH_IDLE] = nil
+			end
+			
+			ent.pac_holdtype = params
+			
+			self.last_holdtype = t
+		end
+	
 		local seq = ent:LookupSequence(self.SequenceName)
 		local rate = self.Rate / 4
 		
@@ -95,73 +162,6 @@ function PART:OnThink()
 			self.frame = self.frame + rate
 			ent:SetCycle(min + ((self.frame + self.Offset)*0.5)%1 * (max - min))
 		end
-	end
-end
-
-local ActIndex = 
-{
-	["pistol"] = ACT_HL2MP_IDLE_PISTOL,
-	["smg"] = ACT_HL2MP_IDLE_SMG1,
-	["grenade"] = ACT_HL2MP_IDLE_GRENADE,
-	["ar2"] = ACT_HL2MP_IDLE_AR2,
-	["shotgun"] = ACT_HL2MP_IDLE_SHOTGUN,
-	["rpg"] = ACT_HL2MP_IDLE_RPG,
-	["physgun"] = ACT_HL2MP_IDLE_PHYSGUN,
-	["crossbow"] = ACT_HL2MP_IDLE_CROSSBOW,
-	["melee"] = ACT_HL2MP_IDLE_MELEE,
-	["slam"] = ACT_HL2MP_IDLE_SLAM,
-	["normal"] = ACT_HL2MP_IDLE,
-	["fist"] = ACT_HL2MP_IDLE_FIST,
-	["melee2"] = ACT_HL2MP_IDLE_MELEE2,
-	["passive"] = ACT_HL2MP_IDLE_PASSIVE,
-	["knife"] = ACT_HL2MP_IDLE_KNIFE,
-	["duel"] = ACT_HL2MP_IDLE_DUEL,
-	["camera"] = ACT_HL2MP_IDLE_CAMERA,
-	["revolver"] = ACT_HL2MP_IDLE_REVOLVER	
-}
-
-function PART:SetWeaponHoldType(t)
-	
-	self.WeaponHoldType = t
-	
-	local ent = self:GetOwner()
-
-	if ent:IsValid() then	
-		t = t:lower()
-		
-		local index = ActIndex[t]
-		
-		if index == nil then
-			ent.pac_holdtype = nil
-			return
-		end
-
-		local params = {}
-		params[ACT_MP_STAND_IDLE] = index
-		params[ACT_MP_WALK] = index+1
-		params[ACT_MP_RUN] = index+2
-		params[ACT_MP_CROUCH_IDLE] = index+3
-		params[ACT_MP_CROUCHWALK] = index+4
-		params[ACT_MP_ATTACK_STAND_PRIMARYFIRE]	= index+5
-		params[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE] = index+5
-		params[ACT_MP_RELOAD_STAND ] = index+6
-		params[ACT_MP_RELOAD_CROUCH ] = index+6
-		params[ACT_MP_JUMP] = index+7
-		params[ACT_RANGE_ATTACK1] = index+8
-		params[ACT_MP_SWIM_IDLE] = index+8
-		params[ACT_MP_SWIM] = index+9
-		
-		-- "normal" jump animation doesn't exist
-		if t == "normal" then
-			params[ACT_MP_JUMP] = ACT_HL2MP_JUMP_SLAM
-		end
-		
-		-- these two aren't defined in ACTs for whatever reason
-		if t == "knife" or t == "melee2" then
-			params[ACT_MP_CROUCH_IDLE] = nil
-		end
-		
-		ent.pac_holdtype = params
 	end
 end
 
