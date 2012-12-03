@@ -9,8 +9,8 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "RandomColour", true) -- haaaa
 	pac.GetSet(PART, "FireDelay", 0.2)
 	pac.GetSet(PART, "NumberParticles", 1)
-	pac.GetSet(PART, "Velocity", Vector(10, 10, 10))
-	pac.GetSet(PART, "Spread", 50)
+	pac.GetSet(PART, "Velocity", Vector(0, 250, 0))
+	pac.GetSet(PART, "Spread", 0.1)
 	pac.GetSet(PART, "DieTime", 3)
 	pac.GetSet(PART, "StartAlpha", 255)
 	pac.GetSet(PART, "EndAlpha", 0)
@@ -84,6 +84,7 @@ end
 function PART:Initialize()
 	self.NextShot = RealTime()
 	self.Created = RealTime() + 0.1
+	self.emitter = ParticleEmitter(self.cached_pos, false)
 end
 
 function PART:Set3D(b)
