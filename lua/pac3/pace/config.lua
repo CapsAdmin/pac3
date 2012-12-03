@@ -43,6 +43,7 @@ pace.PartIcons =
 	command = "icon16/application_xp_terminal.png",
 	material = "icon16/paintcan.png",
 	proxy = "icon16/calculator.png",
+	particles = "icon16/water.png",
 }
 
 pace.PropertyOrder =
