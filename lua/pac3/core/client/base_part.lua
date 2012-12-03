@@ -681,23 +681,35 @@ do -- highlight
 	end
 end
 
+function PART:CallOnChildren(func, ...)
+	for k,v in pairs(self:GetChildren()) do
+		if v[func] then v[func](v, ...) end
+		v:CallOnChildren(...)
+	end
+end
+
 function PART:SetHide(b)
-	if b ~= self.EventHide or b ~= self.Hide then
+	if b ~= self.Hide then
 		if b then
 			self:OnHide()
+			self:CallOnChildren("OnHide")
 		else
 			self:OnShow()
+			self:CallOnChildren("OnShow")
 		end
 	end
 	self.Hide = b
+	self:CallOnChildren("OnHide")
 end
 
 function PART:SetEventHide(b)
-	if b ~= self.EventHide or b ~= self.Hide then
+	if b ~= self.EventHide then
 		if b then
 			self:OnHide()
+			self:CallOnChildren("OnHide")
 		else
 			self:OnShow()
+			self:CallOnChildren("OnShow")
 		end
 	end
 	self.EventHide = b
