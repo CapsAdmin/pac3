@@ -42,6 +42,7 @@ function PART:OnHide()
 
 	if ent:IsValid() then		
 		ent.pac_sequence = nil
+		ent.pac_holdtype = nil
 	end
 end
 
