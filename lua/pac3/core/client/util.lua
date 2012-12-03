@@ -162,7 +162,7 @@ function pac.StringFind(a, b, simple, case_sensitive)
 	pac.PatternCache[a] = pac.PatternCache[a] or {}
 		
 	if pac.PatternCache[a][b] ~= nil then
-		return pac.PatternCache[hash]
+		return pac.PatternCache[a][b]
 	end
 	
 	if simple and a:find(b, nil, true) or not simple and a:find(b) then
