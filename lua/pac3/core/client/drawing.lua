@@ -97,7 +97,17 @@ local dst
 function pac.PostDrawTranslucentRenderables(bool1, bool2)
 	if bool2 then return end
 	if SKIP_DRAW then return end
-	if not cvar_enable:GetBool() then return end
+	if not cvar_enable:GetBool() then
+		for key, ent in pairs(pac.drawn_entities) do
+			if ent.pac_drawing == true then
+				for key, part in pairs(ent.pac_parts) do
+					part:CallOnChildrenAndSelf("OnHide")
+				end
+				pac.ResetBones(ent)
+			end
+			ent.pac_drawing = false
+		end
+	return end
 		
 	time = RealTime()
 
@@ -129,9 +139,22 @@ function pac.PostDrawTranslucentRenderables(bool1, bool2)
 					(dst < radius or dst < 200)
 				)
 			then
+				if ent.pac_drawing == false then
+					for key, part in pairs(ent.pac_parts) do
+						part:CallOnChildrenAndSelf("OnShow")
+					end
+				end
+			
 				pac.RenderOverride(ent)
 				ent.pac_drawing = true
 			else
+				if ent.pac_drawing == true then
+					for key, part in pairs(ent.pac_parts) do
+						part:CallOnChildrenAndSelf("OnHide")
+					end
+					pac.ResetBones(ent)
+				end
+			
 				ent.pac_drawing = false
 			end
 		else	

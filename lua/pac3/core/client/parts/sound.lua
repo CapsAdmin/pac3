@@ -16,10 +16,6 @@ function PART:Initialize()
 	self:PlaySound()
 end
 
-function PART:OnRemove()
-	self:StopSound()
-end
-
 function PART:OnShow()
 	self:PlaySound()
 end
@@ -141,8 +137,6 @@ function PART:PlaySound()
 end
 
 function PART:StopSound()
-	local ent = self:GetOwner()
-
 	if self.csptch then
 		self.csptch:Stop()
 	end

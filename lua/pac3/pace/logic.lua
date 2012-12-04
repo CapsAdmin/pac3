@@ -78,6 +78,9 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 	local func = obj["Set" .. key]
 	if func then
 	
+		-- no change
+		if obj[key] == val then return end
+	
 		if key == "OwnerName" then
 			if val == "viewmodel" then
 				pace.editing_viewmodel = true
@@ -99,7 +102,7 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 				node:SetText(val)
 			elseif key == "Model" and val and val ~= "" then
 				node:SetModel(val)
-			elseif key == "Parent" or key == "ParentName" then
+			elseif key == "Parent" then
 				local tree = obj.editor_node
 				if IsValid(tree) then
 					node:Remove()
@@ -117,6 +120,10 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 		pace.SaveSession("autosave")
 	end)
 end
+
+hook.Add("pac_OnPartParent", "pace_parent", function(parent, child)
+	pace.OnVariableChanged(parent, "Parent", child)
+end)
 
 pace.OnUndo = pace.Undo
 pace.OnRedo = pace.Redo

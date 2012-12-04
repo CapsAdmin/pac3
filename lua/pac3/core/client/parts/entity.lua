@@ -243,7 +243,8 @@ end
 
 local blank_mat = Material("models/wireframe")
 
-function PART:OnAttach(ent)
+function PART:OnShow()	
+	local ent = self:GetOwner()
 	if ent:IsValid() then
 		
 		if self.Model ~= "" then
@@ -266,10 +267,23 @@ function PART:OnAttach(ent)
 				ent.RenderOverride = nil
 			end
 		end
+		
+		self.current_ro = ent.RenderOverride
 	end	
 end
 
-function PART:OnDetach(ent)
+function PART:OnThink()
+	if self:IsHiddenEx() then return end
+	
+	local ent = self:GetOwner()
+	
+	if ent:IsValid() and (not self.current_ro or self.current_ro ~= ent.RenderOverride) then
+		self:OnShow()
+	end
+end
+
+function PART:OnHide()
+	local ent = self:GetOwner()
 	if ent:IsValid() then
 		ent.RenderOverride = nil
 		
@@ -285,7 +299,16 @@ function PART:OnDetach(ent)
 	end
 end
 
-local aaa = false
+PART.OnAttach = PART.OnShow
+PART.OnDetach = PART.OnHide
+
+function PART:SetHideEntity(b)
+	self.HideEntity = b
+	
+	if b then 
+		self:OnAttach(self:GetOwner())
+	end
+end
 
 function PART:GetDrawPosition()
 	local ent = self:GetOwner()

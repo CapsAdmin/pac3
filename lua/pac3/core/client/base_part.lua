@@ -208,10 +208,16 @@ do -- parenting
 		self.ParentName = var
 	end
 	
-	function PART:ResolveParentName()			
+	function PART:ResolveParentName()
+	
 		for key, part in pairs(pac.GetParts()) do
 			if part:IsValid() then
-				if part ~= self and part:GetPlayerOwner() == self:GetPlayerOwner() and part.UniqueID == self.ParentUID then
+				if 
+					part ~= self and 
+					self.Parent ~= part and 
+					part:GetPlayerOwner() == self:GetPlayerOwner() and 
+					part.UniqueID == self.ParentUID 
+				then
 					self:SetParent(part)
 					return
 				end
@@ -220,7 +226,12 @@ do -- parenting
 		
 		for key, part in pairs(pac.GetParts()) do
 			if part:IsValid() then
-				if part ~= self and part:GetPlayerOwner() == self:GetPlayerOwner() and part.Name == self.ParentName then
+				if 
+					part ~= self and 
+					self.Parent ~= part and 
+					part:GetPlayerOwner() == self:GetPlayerOwner() and 
+					part.Name == self.ParentName 
+				then
 					self:SetParent(part)
 					return
 				end
@@ -256,9 +267,14 @@ do -- parenting
 		var:OnAttach(self:GetOwner())
 		self:OnChildAdd(var)
 		
-		if self:HasParent() then self:GetParent():SortChildren() end
+		if self:HasParent() then 
+			self:GetParent():SortChildren() 
+		end
+		
 		var:SortChildren()
 		self:SortChildren()
+		
+		pac.CallHook("OnPartParent", self, var)
 
 		return var.Id
 	end		
@@ -306,7 +322,9 @@ do -- parenting
 				part.ParentUID = nil
 				part:OnDetach(self:GetOwner())
 				children[key] = nil
-				if self:HasParent() then self:GetParent():SortChildren() end
+				if self:HasParent() then 
+					self:GetParent():SortChildren() 
+				end
 				part:OnUnParent(self)
 				return
 			end
@@ -537,14 +555,6 @@ do -- serializing
 		if self.ResolveFollowPartName then 
 			self:ResolveFollowPartName()
 		end
-		
-		timer.Create("pac_sort_parts", 0.1, 1, function()						
-			for key, part in pairs(pac.GetParts()) do
-				if part:IsValid() then
-					self:SortChildren()
-				end
-			end
-		end)
 	end
 	
 	local function COPY(var, key) 							
@@ -605,8 +615,6 @@ do -- serializing
 		local uid = part.UniqueID
 		part:SetTable(self:ToTable(true))
 		part.UniqueID = uid
-		part:ResolveParentName()
-		part:SetParent(part:GetParent())
 		return part
 	end
 end
@@ -624,6 +632,7 @@ do -- events
 	
 	function PART:Remove()		
 		pac.CallHook("OnPartRemove", self)
+		self:OnHide()
 		self:OnRemove()
 		
 		if self:HasParent() then
@@ -700,6 +709,11 @@ function PART:CallOnChildren(func, ...)
 		if v[func] then v[func](v, ...) end
 		v:CallOnChildren(...)
 	end
+end
+
+function PART:CallOnChildrenAndSelf(func, ...)
+	if self[func] then self[func](self, ...) end
+	self:CallOnChildren(func, ...)
 end
 
 function PART:SetHide(b)
@@ -836,14 +850,24 @@ do -- aim part
 		if not self.AimPartName or self.AimPartName == "" then return end
 		
 		for key, part in pairs(pac.GetParts()) do	
-			if part ~= self and part.UniqueID == self.AimPartUID then
+			if 
+				part ~= self and 
+				self.AimPart ~= part and 
+				part:GetPlayerOwner() == self:GetPlayerOwner() and 
+				part.UniqueID == self.AimPartUID
+			then
 				self:SetAimPartName(part)
 				return
 			end
 		end
 		
 		for key, part in pairs(pac.GetParts()) do	
-			if part ~= self and part:GetName() == self.AimPartName then
+			if 
+				part ~= self and 
+				self.AimPart ~= part and 
+				part:GetPlayerOwner() == self:GetPlayerOwner() and 
+				part.Name == self.AimPartName 
+			then
 				self:SetAimPartName(part)
 				return
 			end

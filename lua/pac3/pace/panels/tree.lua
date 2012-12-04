@@ -67,18 +67,17 @@ end
 local function install_drag(node)
 	node:SetDraggableName("pac3")
 	
-	function node:OnDrop(child)
+	function node:DroppedOn(child)
 		-- we're hovering on the label, not the actual node
 		-- so get the parent node instead
-		child = child:GetParent().part
+		self:InsertNode(child)
+		self:SetExpanded(true)
 		
-		if child and child:IsValid() then
+		if child.part and child.part:IsValid() then
 			if self.part and self.part:IsValid() then
-				self.part:SetParent(child)
+				self.part:SetParent(child.part)
 			end
 		end
-		
-		return self
 	end
 end
 
@@ -86,8 +85,6 @@ local function install_expand(node)
 	local old = node.SetExpanded
 	node.SetExpanded = function(self, b, ...)
 		if self.part and self.part:IsValid() then
-			local parent = self:GetParentNode()
-			if not self.ChildExpanded then self.ChildExpanded = function() end end
 			self.part:SetEditorExpand(b)
 			return old(self, b, ...)
 		end
@@ -217,15 +214,11 @@ function PANEL:PopulateParts(node, parts, children)
 			if part.newly_created then
 				part_node:SetSelected(true)
 				if part:HasParent() and part.Parent.editor_node then
-					local parent = part.Parent.editor_node:GetParentNode()
-					if not parent.ChildExpanded then parent.ChildExpanded = function() end end
 					part.Parent.editor_node:SetExpanded(true)
 				end
 				part.newly_created = nil
 			else
 				part_node:SetSelected(false)
-				local parent = part_node:GetParentNode()
-				if not parent.ChildExpanded then parent.ChildExpanded = function() end end
 				part_node:SetExpanded(part:GetEditorExpand())
 			end
 		end
@@ -299,11 +292,9 @@ hook.Add("pac_OnPartCreated", "pace_create_tree_nodes", refresh)
 
 function pace.RefreshTree(reset)
 	if pace.tree:IsValid() then
-		timer.Create("pace_refresh_tree",  0.5, 1, function()
+		timer.Create("pace_refresh_tree",  0, 1, function()
 			if pace.tree:IsValid() then
 				pace.tree:Populate(reset)
-				local parent = pace.tree.RootNode:GetParentNode()
-				if not parent.ChildExpanded then parent.ChildExpanded = function() end end
 				pace.tree.RootNode:SetExpanded(true, true) -- why do I have to do this?
 			end
 		end)
