@@ -211,6 +211,15 @@ do -- parenting
 	function PART:ResolveParentName()			
 		for key, part in pairs(pac.GetParts()) do
 			if part:IsValid() then
+				if part ~= self and part:GetPlayerOwner() == self:GetPlayerOwner() and part.UniqueID == self.ParentUID then
+					self:SetParent(part)
+					return
+				end
+			end
+		end
+		
+		for key, part in pairs(pac.GetParts()) do
+			if part:IsValid() then
 				if part ~= self and part:GetPlayerOwner() == self:GetPlayerOwner() and part.Name == self.ParentName then
 					self:SetParent(part)
 					return
@@ -536,7 +545,7 @@ do -- serializing
 	end
 	
 	local function COPY(var, key) 							
-		if (key == "UniqueID" or key:sub(-3) == "UID") and var and var ~= "" then
+		if var and (key == "UniqueID" or key:sub(-3) == "UID") and var ~= "" then
 			return util.CRC(var .. var)
 		end
 		
@@ -593,6 +602,8 @@ do -- serializing
 		local uid = part.UniqueID
 		part:SetTable(self:ToTable(true))
 		part.UniqueID = uid
+		part:ResolveParentName()
+		part:SetParent(part:GetParent())
 		return part
 	end
 end
@@ -820,6 +831,13 @@ do -- aim part
 
 	function PART:ResolveAimPartName()
 		if not self.AimPartName or self.AimPartName == "" then return end
+		
+		for key, part in pairs(pac.GetParts()) do	
+			if part ~= self and part.UniqueID == self.AimPartUID then
+				self:SetAimPartName(part)
+				return
+			end
+		end
 		
 		for key, part in pairs(pac.GetParts()) do	
 			if part ~= self and part:GetName() == self.AimPartName then
