@@ -1,6 +1,6 @@
 util.AddNetworkString("pac_to_contraption")
 
-net.Receive("pac_to_contraption", function()
+net.Receive("pac_to_contraption", function(len, ply)
 	local data = net.ReadTable()
 	
 	for key, val in pairs(data) do
