@@ -48,9 +48,13 @@ function pac.SubmitPart(data, filter)
 
 	if type(data.part) == "table" then	
 		local ent = Entity(tonumber(data.part.self.OwnerName))
-		if ent:IsValid() and ent.CPPICanTool and (ent:CPPIGetOwner() ~= data.owner and not ent:CPPICanTool(data.owner)) then
-			allowed = false
-			reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
+		if ent:IsValid()then
+			if ent.CPPICanTool and (ent:CPPIGetOwner() ~= data.owner and not ent:CPPICanTool(data.owner)) then
+				allowed = false
+				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
+			else
+				duplicator.StoreEntityModifier(ent, "pac_config", data)
+			end
 		end
 	end
 	

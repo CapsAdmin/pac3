@@ -271,7 +271,10 @@ do -- parenting
 	
 	function PART:SortChildren()
 		local new = {}
-		for key, val in pairs(self.Children) do table.insert(new, val) end
+		for key, val in pairs(self.Children) do 
+			table.insert(new, val) 
+			val:SortChildren()
+		end
 		self.Children = new
 		table.sort(self.Children, sort)
 	end
