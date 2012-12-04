@@ -232,7 +232,9 @@ end
 function PART:UpdateMaterial(now)
 	self:GetMaterialFromParent()
 	for key, val in pairs(self.StorableVars) do
-		self["Set" .. key](self, self[key])
+		if self.ShaderParams[key] then
+			self["Set" .. key](self, self[key])
+		end
 	end
 end
 

@@ -41,6 +41,11 @@ function pace.ClientOptionsMenu(pnl)
 		"pac_editor"
 	)
 	
+	pnl:CheckBox(
+		L"enable",
+		"pac_enable"
+	)
+	
 	local browser = pnl:AddControl("pace_browser", {})
 	
 	browser.OnLoad = function(node)
