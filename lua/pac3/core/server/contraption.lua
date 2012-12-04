@@ -34,3 +34,33 @@ net.Receive("pac_to_contraption", function(len, ply)
 		end
 	end
 end)
+
+local function make_copy(tbl, input)
+	for key, val in pairs(tbl.self) do
+		if key == "Name" then
+			tbl.self[key] = val .. " " .. input
+		end
+		if key:find("UID", 0, true) or key == "UniqueID" then
+			tbl.self[key] = util.CRC(val .. input)
+		end
+	end
+	for key, val in pairs(tbl.children) do
+		make_copy(val, input)
+	end
+end
+
+duplicator.RegisterEntityModifier("pac_config", function(ply, ent, data)
+	local id = ent:EntIndex()
+	data.owner = ply
+	data.part.self.OwnerName = id
+	data.uid = ply:UniqueID()
+	
+	make_copy(data.part, id)
+	
+	ent:CallOnRemove("pac_config", function(ent)	
+		data.part = data.part.self.Name
+		pac.RemovePart(data)
+	end)
+	
+	pac.SubmitPart(data)
+end)

@@ -44,6 +44,8 @@ pace.PartIcons =
 	material = "icon16/paintcan.png",
 	proxy = "icon16/calculator.png",
 	particles = "icon16/water.png",
+	woohoo = "icon16/webcam_delete.png",
+	halo = "icon16/shading.png",
 }
 
 pace.PropertyOrder =
