@@ -8,41 +8,11 @@ pac.StartStorableVars()
 
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
 	pac.GetSet(PART, "Size", 1)
-	pac.GetSet(PART, "FollowPartName", "")
 	pac.GetSet(PART, "Jiggle", 0)
+	pac.SetupPartName(PART, "FollowPart")
 pac.EndStorableVars()
 
 PART.ThinkTime = 0
-
-function PART:Initialize()
-	self.FollowPart = pac.NULL
-	self.Scale = Vector(1,1,1)
-end
-
-function PART:SetFollowPartName(var)
-
-	if var and type(var) ~= "string" then
-		self.FollowPartName = var:GetName()
-		self.FollowPartUID = var:GetUniqueID()
-		self.FollowPart = var
-		return
-	end
-
-	self.FollowPartName = var or ""
-	self.FollowPartUID = nil
-	self.FollowPart = pac.NULL
-end	
-
-function PART:ResolveFollowPartName()
-	if not self.FollowPartName or self.FollowPartName == "" then return end
-	
-	for key, part in pairs(pac.GetParts()) do	
-		if part ~= self and part:GetPlayerOwner() == self:GetPlayerOwner() and part.Name == self.FollowPartName then
-			self:SetFollowPartName(part)			
-			return
-		end
-	end
-end
 
 function PART:OnAttach(owner)
 	self.BoneIndex = nil

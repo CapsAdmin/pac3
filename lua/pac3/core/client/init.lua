@@ -1,10 +1,10 @@
 pac = pac or {}
 
-include("pac3/core/shared/init.lua")
-
-include("libraries/luadata.lua")
-include("libraries/class.lua")
 include("libraries/null.lua")
+include("libraries/class.lua")
+include("libraries/luadata.lua")
+
+include("pac3/core/shared/init.lua")
 
 include("libraries/urltex.lua")
 include("libraries/urlobj.lua")

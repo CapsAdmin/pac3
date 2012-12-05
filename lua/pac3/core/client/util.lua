@@ -110,7 +110,10 @@ do -- get set and editor vars
 		
 		local last_key = "last_" .. name_key:lower()
 		
-		pac.GetSet(PART, part_key, pac.NULL)
+		pac.EndStorableVars()
+			pac.GetSet(PART, part_key, pac.NULL)
+		pac.StartStorableVars()
+		
 		pac.GetSet(PART, name_key, "")
 		
 		PART.ResolvePartNames = PART.ResolvePartNames or function(self)
@@ -126,11 +129,10 @@ do -- get set and editor vars
 		PART.PartNameResolvers[part_key] = function(self)
 			if 
 				self[name_key] and 
-				self[last_key] ~= self[name_key] and 
 				self[name_key] ~= "" and 
+				self[name_key] ~= self[last_key] and 
 				not self[part_key]:IsValid() 
 			then
-			
 				for key, part in pairs(pac.GetParts()) do
 					if 
 						part ~= self and 
@@ -160,10 +162,13 @@ do -- get set and editor vars
 		end
 		
 		PART[name_set_key] = function(self, var)
-			self[name_key] = var
 			self[part_uid_key] = nil
+			self[part_key] = pac.NULL
 			
-			if type(var) ~= "string" then
+			if type(var) == "string" then
+				self[name_key] = var
+			else
+				self[name_key] = var:GetName()
 				self[part_set_key](self, var)
 			end
 		end			
@@ -236,7 +241,7 @@ function pac.StringFind(a, b, simple, case_sensitive)
 	if pac.PatternCache[a][b] ~= nil then
 		return pac.PatternCache[a][b]
 	end
-	
+		
 	if simple and a:find(b, nil, true) or not simple and a:find(b) then
 		pac.PatternCache[a][b] = true
 		return true

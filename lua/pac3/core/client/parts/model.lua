@@ -39,9 +39,6 @@ end
 function PART:Initialize()
 	self.ClipPlanes = {}
 	
-	self.Color = self.Color * 1
-	self.Scale = self.Scale * 1
-	
 	self.Entity = self:GetEntity()
 	self.Entity:SetNoDraw(true)
 	--[[self.Entity:SetRenderMode(RENDERMODE_NONE)
@@ -53,8 +50,6 @@ function PART:Initialize()
 	self.Entity:DrawShadow(false)
 	self.Entity:DestroyShadow()]]
 	self.Entity.PACPart = self
-	
-	self.Colorf = Vector(1, 1, 1)
 end
 
 function PART:GetModelBones()
@@ -197,6 +192,8 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 
 		if self.Colorf then 
 			render_SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness) 
+		else
+			self:SetColor(self:GetColor())
 		end
 		
 		render_SetBlend(self.Alpha)
@@ -398,10 +395,10 @@ function PART:SetSize(var)
 end
 
 function PART:SetColor(var)
-	var = var or Vector(1, 1, 1)
+	var = var or Vector(255, 255, 255)
 
 	self.Color = var
-	self.Colorf = (Vector(var.r, var.g, var.b) / 255)
+	self.Colorf = Vector(var.r, var.g, var.b) / 255
 end
 
 function PART:SetMaterial(var)

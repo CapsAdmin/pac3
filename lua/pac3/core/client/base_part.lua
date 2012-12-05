@@ -10,17 +10,14 @@ end
 pac.GetSet(PART, "BoneIndex")
 pac.GetSet(PART, "PlayerOwner", NULL)
 pac.GetSet(PART, "Owner", NULL)
-pac.GetSet(PART, "Parent", pac.NULL)
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "OwnerName", "self")
-	pac.GetSet(PART, "ParentName", "")
 	pac.GetSet(PART, "Bone", "head")
 	pac.GetSet(PART, "Position", Vector(0,0,0))
 	pac.GetSet(PART, "Angles", Angle(0,0,0))
 	pac.GetSet(PART, "AngleVelocity", Angle(0, 0, 0))
 	pac.GetSet(PART, "EyeAngles", false)
-	pac.GetSet(PART, "AimPartName", "")
 	pac.GetSet(PART, "Name", "")
 	pac.GetSet(PART, "Description", "")
 	pac.GetSet(PART, "Hide", false)
@@ -28,67 +25,17 @@ pac.StartStorableVars()
 	
 	pac.GetSet(PART, "EditorExpand", false)
 	pac.GetSet(PART, "UniqueID", "")
+	
+	pac.SetupPartName(PART, "AimPart")
+	pac.SetupPartName(PART, "Parent")
+	
 pac.EndStorableVars()
 
 function PART:PreInitialize()
 	self.Children = {}
 	
-	self.Position = self.Position * 1
-	self.Angles = self.Angles * 1
-	self.AngleVelocity = self.AngleVelocity * 1
-	
-	self.cached_ang = Angle(0,0,0)
 	self.cached_pos = Vector(0,0,0)
-	
-	self.Owner = NULL
-	self.Parent = pac.NULL
-	self.AimPart = pac.NULL
-end
-
-function PART:SetName(var)
-
-	for key, part in pairs(self.Children) do
-		part:SetParentName(var)
-	end
-	
-	local found_aimpart = false
-	local found_followpart = false
-	
-	for key, part in pairs(pac.GetParts()) do
-		if part:GetPlayerOwner() == self:GetPlayerOwner() then
-			if part.AimPartName and part.AimPartName ~= "" and part.AimPartUID == self.UniqueID then
-				part:SetAimPartName(var)
-				found_aimpart = true
-			end
-			
-			if part.FollowPartName and part.FollowPartName ~= "" and part.FollowPartUID == self.UniqueID then
-				part:SetFollowPartName(var)
-				found_followpart = true
-			end
-		end
-	end
-	
-	if not found_aimpart or not found_followpart then
-		for key, part in pairs(pac.GetParts()) do
-			if part:GetPlayerOwner() == self:GetPlayerOwner() then
-				if not found_aimpart then
-					if part.AimPartName and part.AimPartName ~= "" and part.Name == self.Name and part ~= self then
-						part:SetAimPartName(var)
-						found_aimpart = true
-					end
-				end
-				
-				if not found_followpart then
-					if part.FollowPartName and part.FollowPartName ~= "" and part.Name == self.Name and part ~= self then
-						part:SetFollowPartName(var)
-						found_followpart = true
-					end
-				end
-			end
-		end
-	end
-	
-	self.Name = var
+	self.cached_ang = Angle(0,0,0)
 end
 
 do -- owner	
@@ -179,6 +126,7 @@ do -- parenting
 	
 	function PART:CreatePart(name)
 		local part = pac.CreatePart(name, self:GetPlayerOwner())
+		if not part then return end
 		part:SetParent(self)
 		return part
 	end
@@ -192,53 +140,6 @@ do -- parenting
 		end
 	end
 	
-	function PART:SetParentName(var)
-		if not var or var == "" then
-			self:UnParent()
-			self.ParentName = ""
-			self.ParentUID = nil
-			return
-		end
-		
-		if type(var) ~= "string" then
-			self:SetParent(var)
-			return
-		end
-
-		self.ParentName = var
-	end
-	
-	function PART:ResolveParentName()
-	
-		for key, part in pairs(pac.GetParts()) do
-			if part:IsValid() then
-				if 
-					part ~= self and 
-					self.Parent ~= part and 
-					part:GetPlayerOwner() == self:GetPlayerOwner() and 
-					part.UniqueID == self.ParentUID 
-				then
-					self:SetParent(part)
-					return
-				end
-			end
-		end
-		
-		for key, part in pairs(pac.GetParts()) do
-			if part:IsValid() then
-				if 
-					part ~= self and 
-					self.Parent ~= part and 
-					part:GetPlayerOwner() == self:GetPlayerOwner() and 
-					self.ParentName == part.Name
-				then
-					self:SetParent(part)
-					return
-				end
-			end
-		end
-	end
-			
 	function PART:AddChild(var)
 		if not var or not var:IsValid() then 
 			self:UnParent()
@@ -549,28 +450,14 @@ do -- serializing
 			part:SetTable(value)
 			part:SetParent(self)
 		end
-	
-		self:ResolveAimPartName()
-		
-		if self.ResolveFollowPartName then 
-			self:ResolveFollowPartName()
-		end
 	end
 	
 	local function COPY(var, key) 							
 		if var and (key == "UniqueID" or key:sub(-3) == "UID") and var ~= "" then
 			return util.CRC(var .. var)
 		end
-		
-		if type(var) == "Vector" or type(var) == "Angle" then 
-			return var * 1 
-		end 
-		
-		if type(var) == "table" then
-			return table.Copy(var)
-		end
-		
-		return var 
+
+		return pac.class.Copy(var)
 	end
 
 	function PART:ToTable(make_copy_name, is_child)
@@ -611,6 +498,7 @@ do -- serializing
 			
 	function PART:Clone()
 		local part = pac.CreatePart(self.ClassName)
+		if not part then return end
 		local uid = part.UniqueID
 		part:SetTable(self:ToTable(true))
 		part.UniqueID = util.CRC(uid .. uid .. RealTime())
@@ -802,19 +690,8 @@ function PART:Think()
 		end
 	end
 	
-	if self.last_parent_name ~= self.ParentName then
-		self:ResolveParentName()
-		self.last_parent_name = self.ParentName
-	end
-	
-	if self.last_aimpart_name ~= self.AimPartName and self.AimPartName and self.AimPartName ~= "" and not self.AimPart:IsValid() then
-		self:ResolveAimPartName()
-		self.last_aimpart_name = self.AimPartName
-	end
-	
-	if self.SetFollowPartName and self.last_followpart_name ~= self.FollowPartName and self.FollowPartName and self.FollowPartName ~= "" and not self.FollowPart:IsValid() then
-		self:ResolveFollowPartName()
-		self.last_followpart_name = self.FollowPartName
+	if self.ResolvePartNames then
+		self:ResolvePartNames()
 	end
 	
 	self:OnThink()
@@ -830,50 +707,6 @@ end
 
 function PART:IsValid()
 	return true
-end
-
-do -- aim part		
-	function PART:SetAimPartName(var)
-				
-		if var and type(var) ~= "string" then
-			self.AimPartName = var:GetName()
-			self.AimPartUID = var:GetUniqueID()
-			self.AimPart = var
-			return
-		end
-	
-		self.AimPartName = var or ""
-		self.AimPartUID = nil
-		self.AimPart = pac.NULL
-	end	
-
-	function PART:ResolveAimPartName()
-		if not self.AimPartName or self.AimPartName == "" then return end
-		
-		for key, part in pairs(pac.GetParts()) do	
-			if 
-				part ~= self and 
-				self.AimPart ~= part and 
-				part:GetPlayerOwner() == self:GetPlayerOwner() and 
-				part.UniqueID == self.AimPartUID
-			then
-				self:SetAimPartName(part)
-				return
-			end
-		end
-		
-		for key, part in pairs(pac.GetParts()) do	
-			if 
-				part ~= self and 
-				self.AimPart ~= part and 
-				part:GetPlayerOwner() == self:GetPlayerOwner() and 
-				part.Name == self.AimPartName 
-			then
-				self:SetAimPartName(part)
-				return
-			end
-		end
-	end
 end
 
 function PART:CalcAngles(owner, ang)

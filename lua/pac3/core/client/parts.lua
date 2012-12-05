@@ -18,9 +18,10 @@ function pac.CreatePart(name, owner)
 	local part = class.Create("part", name)
 	
 	if not part then
-		error("pac3 tried to create unknown part " .. name or "unknown")
+		print("pac3 tried to create unknown part " .. name or "unknown")
+		part = class.Create("part", "base")
 	end
-	
+		
 	part.UniqueID = tostring(util.CRC(os.time() + RealTime() + part_count))
 	
 	if part.NonPhysical then		
@@ -29,7 +30,7 @@ function pac.CreatePart(name, owner)
 		remove(part, "Angles")
 		remove(part, "AngleVelocity")
 		remove(part, "EyeAngles")
-		remove(part, "AimPartName")
+		remove(part, "AimName")
 		remove(part, "DrawOrder")
 	end
 	

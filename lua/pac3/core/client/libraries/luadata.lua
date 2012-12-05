@@ -40,23 +40,19 @@ function luadata.SetModifier(type, callback)
 end
 
 function luadata.Type(var)
-	local t
-
-	if IsEntity(var) then
-		if var:IsValid() then
-			t = "Entity"
-		else
-			t = "NULL"
-		end
-	else
-		t = type(var)
-	end
+	local t = type(var)
 
 	if t == "table" then
 		if var.LuaDataType then
 			t = var.LuaDataType
 		end
-	end
+	elseif IsEntity(var) then
+		if var:IsValid() then
+			t = "Entity"
+		else
+			t = "NULL"
+		end		
+	end	
 
 	return t
 end

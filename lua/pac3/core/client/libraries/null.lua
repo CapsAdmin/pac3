@@ -1,11 +1,13 @@
 local NULL = {}
 
+NULL.LuaDataType = "pac_null"
+
 local function FALSE()
 	return false
 end
 
 function NULL:__tostring()
-	return "NULL"
+	return "pac_null"
 end
 
 function NULL:IsValid()
@@ -13,11 +15,11 @@ function NULL:IsValid()
 end
 
 function NULL:__index(key)
-	if type(key) == "string" and string.sub(key, 0, 2) == "Is" then
+	if type(key) == "string" and key:sub(0, 2) == "Is" then
 		return FALSE
 	end
 
-	error(("tried to index %q on a null value"):format(key), 2)
+	error(("tried to index %q on a null part"):format(key), 2)
 end
 
 pac.NULLMeta = NULL
