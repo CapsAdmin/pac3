@@ -100,7 +100,7 @@ function pac.PostDrawTranslucentRenderables(bool1, bool2)
 	if not cvar_enable:GetBool() then
 		for key, ent in pairs(pac.drawn_entities) do
 			if ent:IsValid() then
-				if ent.pac_drawing == true then
+				if ent.pac_parts and ent.pac_drawing == true then
 					for key, part in pairs(ent.pac_parts) do
 						part:CallOnChildrenAndSelf("OnHide")
 					end
@@ -143,7 +143,7 @@ function pac.PostDrawTranslucentRenderables(bool1, bool2)
 					(dst < radius or dst < 200)
 				)
 			then
-				if ent.pac_drawing == false then
+				if ent.pac_parts and ent.pac_drawing == false then
 					for key, part in pairs(ent.pac_parts) do
 						part:CallOnChildrenAndSelf("OnShow")
 					end
@@ -152,7 +152,7 @@ function pac.PostDrawTranslucentRenderables(bool1, bool2)
 				pac.RenderOverride(ent)
 				ent.pac_drawing = true
 			else
-				if ent.pac_drawing == true then
+				if ent.pac_parts and ent.pac_drawing == true then
 					for key, part in pairs(ent.pac_parts) do
 						part:CallOnChildrenAndSelf("OnHide")
 					end
