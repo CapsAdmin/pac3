@@ -23,6 +23,14 @@ function pac.EntityRemoved(ent)
 end
 pac.AddHook("EntityRemoved")
 
+timer.Create("pac_gc", 2, 0, function()
+	for key, part in pairs(pac.GetPatrs()) do	
+		if not part:GetPlayerOwner():IsValid() then
+			part:Remove()
+		end
+	end
+end)
+
 net.Receive("pac_submit", function()
 	local tbl = net.ReadTable()
 	pac.CreatePart(tbl.ent):SetTable(tbl.part)

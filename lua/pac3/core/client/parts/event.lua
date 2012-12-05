@@ -9,7 +9,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Arguments", "")
 	pac.GetSet(PART, "Operator", "find simple")
 	pac.GetSet(PART, "Invert", false)
-	pac.GetSet(PART, "RootOwner", false)
+	pac.GetSet(PART, "RootOwner", true)
 pac.EndStorableVars()
 
 PART.Events = 
