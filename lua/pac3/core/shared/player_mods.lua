@@ -14,7 +14,7 @@ function pac.HandleServerModifiers(data, remove)
 
 	local ply = data.owner or NULL
 	
-	if not ply:IsPlayer() then return end
+	if not ply:IsPlayer() or not ply:IsValid() then return end
 	
 	if SERVER and pac_allow_server_size:GetBool() or CLIENT then
 		local offset = 1
