@@ -808,12 +808,14 @@ function PART:Think()
 		self.last_parent_name = self.ParentName
 	end
 	
-	if self.AimPartName and self.AimPartName ~= "" and not self.AimPart:IsValid() then
+	if self.last_aimpart_name ~= self.AimPartName and self.AimPartName and self.AimPartName ~= "" and not self.AimPart:IsValid() then
 		self:ResolveAimPartName()
+		self.last_aimpart_name = self.AimPartName
 	end
 	
-	if self.SetFollowPartName and self.FollowPartName and self.FollowPartName ~= "" and not self.FollowPart:IsValid() then
+	if self.SetFollowPartName and self.last_followpart_name ~= self.FollowPartName and self.FollowPartName and self.FollowPartName ~= "" and not self.FollowPart:IsValid() then
 		self:ResolveFollowPartName()
+		self.last_followpart_name = self.FollowPartName
 	end
 	
 	self:OnThink()

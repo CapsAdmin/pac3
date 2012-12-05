@@ -99,13 +99,17 @@ function pac.PostDrawTranslucentRenderables(bool1, bool2)
 	if SKIP_DRAW then return end
 	if not cvar_enable:GetBool() then
 		for key, ent in pairs(pac.drawn_entities) do
-			if ent.pac_drawing == true then
-				for key, part in pairs(ent.pac_parts) do
-					part:CallOnChildrenAndSelf("OnHide")
+			if ent:IsValid() then
+				if ent.pac_drawing == true then
+					for key, part in pairs(ent.pac_parts) do
+						part:CallOnChildrenAndSelf("OnHide")
+					end
+					pac.ResetBones(ent)
 				end
-				pac.ResetBones(ent)
+				ent.pac_drawing = false
+			else
+				pac.drawn_entities[key] = nil
 			end
-			ent.pac_drawing = false
 		end
 	return end
 		
@@ -177,12 +181,16 @@ end
 
 function pac.RenderScreenspaceEffects()
 	for key, ent in pairs(pac.drawn_entities) do
-		if ent.pac_drawing then
-			for key, part in pairs(ent.pac_parts) do
-				if part.ClassName == "sunbeams" then
-					part:Draw("OnDraw")
+		if ent:IsValid() then
+			if ent.pac_drawing then
+				for key, part in pairs(ent.pac_parts) do
+					if part.ClassName == "sunbeams" then
+						part:Draw("OnDraw")
+					end
 				end
 			end
+		else
+			pac.drawn_entities[key] = nil
 		end
 	end
 end
@@ -190,8 +198,12 @@ pac.AddHook("RenderScreenspaceEffects")
 
 function pac.Think()
 	for key, ent in pairs(pac.drawn_entities) do
-		if ent.pac_drawing and ent:IsPlayer() then
-			ent.pac_hitpos = ent:GetEyeTraceNoCursor().HitPos
+		if ent:IsValid() then
+			if ent.pac_drawing and ent:IsPlayer() then
+				ent.pac_hitpos = ent:GetEyeTraceNoCursor().HitPos
+			end
+		else
+			pac.drawn_entities[key] = nil
 		end
 	end
 end

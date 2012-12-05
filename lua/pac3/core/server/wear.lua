@@ -93,9 +93,13 @@ function pac.SubmitPart(data, filter)
 	end
 	
 	if not data.server_only then
-		net.Start("pac_submit")
-			net.WriteTable(decimal_hack_pack(table.Copy(data)))
-		net.Send(filter or player.GetAll())	
+		if pac.netstream then
+			pac.netstream.Start(filter or player.GetAll(), data)
+		else
+			net.Start("pac_submit")
+				net.WriteTable(decimal_hack_pack(table.Copy(data)))
+			net.Send(filter or player.GetAll())	
+		end
 	end
 	
 	return true
@@ -135,11 +139,17 @@ util.AddNetworkString("pac_submit")
 util.AddNetworkString("pac_effect_precached")
 util.AddNetworkString("pac_precache_effect")
 
-net.Receive("pac_submit", function(_, ply)
-	local data = net.ReadTable()
-	decimal_hack_unpack(data)
-	handle_data(ply, data)
-end)
+if pac.netstream then
+	pac.netstream.Hook("pac_submit", function(ply, data)
+		handle_data(ply, data)
+	end)
+else
+	net.Receive("pac_submit", function(_, ply)
+		local data = net.ReadTable()
+		decimal_hack_unpack(data)
+		handle_data(ply, data)
+	end)
+end
 
 function pac.PlayerInitialSpawn(ply)
 	timer.Simple(1, function()

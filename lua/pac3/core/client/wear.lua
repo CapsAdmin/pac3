@@ -50,18 +50,27 @@ do -- to server
 			
 		pac.HandleServerModifiers(data)
 		
-		net.Start("pac_submit")
-			decimal_hack_pack(data)
-			net.WriteTable(data)
-		net.SendToServer()
+		if pac.netstream then
+			pac.netstream.Start("pac_submit", data)
+		else
+			net.Start("pac_submit")
+				decimal_hack_pack(data)
+				net.WriteTable(data)
+			net.SendToServer()
+		end
 	end
 
 	function pac.RemovePartOnServer(name, server_only, filter)
-		net.Start("pac_submit")
-			local data = {part = name, server_only = server_only}
-			decimal_hack_pack(data)
-			net.WriteTable(data)
-		net.SendToServer()
+		local data = {part = name, server_only = server_only}
+		
+		if pac.netstream then
+			pac.netstream.Start("pac_submit", data)
+		else
+			net.Start("pac_submit")
+				decimal_hack_pack(data)
+				net.WriteTable(data)
+			net.SendToServer()
+		end
 	end
 end
 
@@ -127,11 +136,17 @@ local function handle_data(data)
 	end
 end
 
-net.Receive("pac_submit", function()
-	local data = net.ReadTable()
-	decimal_hack_unpack(data)
-	handle_data(data)
-end)
+if pac.netstream then
+	pac.netstream.Hook("pac_submit", function(data)
+		handle_data(data)
+	end)
+else
+	net.Receive("pac_submit", function()
+		local data = net.ReadTable()
+		decimal_hack_unpack(data)
+		handle_data(data)
+	end)
+end
 
 function pac.Notify(allowed, reason)
 	 if allowed then
