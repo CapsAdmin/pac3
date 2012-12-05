@@ -96,6 +96,78 @@ do -- get set and editor vars
 			tbl.StorableVars[key] = key
 		end
 	end
+	
+	function pac.SetupPartName(PART, key)
+	
+		PART.PartNameResolvers = PART.PartNameResolvers or {}
+		
+		local part_key = key
+		local part_uid_key = part_key .. "UID"
+		local part_set_key = "Set" .. part_key
+		
+		local name_key = key.."Name"
+		local name_set_key = "Set" .. name_key
+		
+		local last_key = "last_" .. name_key:lower()
+		
+		pac.GetSet(PART, part_key, pac.NULL)
+		pac.GetSet(PART, name_key, "")
+		
+		PART.ResolvePartNames = PART.ResolvePartNames or function(self)
+			for key, func in pairs(self.PartNameResolvers) do
+				func(self)
+			end
+		end		
+				
+		PART["Resolve" .. name_key] = function(self)
+			PART.PartNameResolvers[part_key](self)
+		end
+		
+		PART.PartNameResolvers[part_key] = function(self)
+			if 
+				self[name_key] and 
+				self[last_key] ~= self[name_key] and 
+				self[name_key] ~= "" and 
+				not self[part_key]:IsValid() 
+			then
+			
+				for key, part in pairs(pac.GetParts()) do
+					if 
+						part ~= self and 
+						self[part_key] ~= part and 
+						part:GetPlayerOwner() == self:GetPlayerOwner() and 
+						part.UniqueID == self[part_uid_key] 
+					then
+						self[name_set_key](self, part)
+						break
+					end
+				end
+				
+				for key, part in pairs(pac.GetParts()) do
+					if 
+						part ~= self and 
+						self[part_key] ~= part and 
+						part:GetPlayerOwner() == self:GetPlayerOwner() and 
+						self[name_key] == part.Name
+					then
+						self[name_set_key](self, part)
+						break
+					end
+				end
+				
+				self[last_key] = self[name_key]
+			end
+		end
+		
+		PART[name_set_key] = function(self, var)
+			self[name_key] = var
+			self[part_uid_key] = nil
+			
+			if type(var) ~= "string" then
+				self[part_set_key](self, var)
+			end
+		end			
+	end
 end
 
 function pac.Handleurltex(part, url, callback)

@@ -3,10 +3,10 @@ local L = pace.LanguageString
 local PANEL = {}
 
 PANEL.ClassName = "tree"
-PANEL.Base = "DTree"
+PANEL.Base = "pac_dtree"
 
 function PANEL:Init()
-	DTree.Init(self)
+	pace.pac_dtree.Init(self)
 
 	self:SetLineHeight(18)
 	self:SetIndentSize(2)
@@ -33,8 +33,8 @@ do
 		end	
 		
 				
-		if DTree.Think then
-			return DTree.Think(self, ...)
+		if pace.pac_dtree.Think then
+			return pace.pac_dtree.Think(self, ...)
 		end
 	end
 end
@@ -75,7 +75,7 @@ local function install_drag(node)
 		
 		if child.part and child.part:IsValid() then
 			if self.part and self.part:IsValid() then
-				self.part:SetParent(child.part)
+				child.part:SetParent(self.part)
 			end
 		end
 	end
@@ -102,7 +102,7 @@ local fix_folder_funcs = function(tbl)
 end
 
 local function node_layout(self, ...)
-	DTree_Node.PerformLayout(self, ...)
+	pace.pac_dtree_node.PerformLayout(self, ...)
 	if self.Label then
 		self.Label:SetFont(pace.CurrentFont)
 		if pace.ShadowedFonts[pace.CurrentFont] then
@@ -116,13 +116,13 @@ end
 -- a hack, because creating a new node button will mess up the layout
 function PANEL:AddNode(...)
 
-	local node = fix_folder_funcs(DTree.AddNode(self, ...))
+	local node = fix_folder_funcs(pace.pac_dtree.AddNode(self, ...))
 	install_expand(node)
 	install_drag(node)
 	node.SetModel = self.SetModel
 		
 	node.AddNode = function(...)
-		local node_ = fix_folder_funcs(DTree_Node.AddNode(...))
+		local node_ = fix_folder_funcs(pace.pac_dtree_node.AddNode(...))
 		install_expand(node_)
 		install_drag(node_)
 		node_.SetModel = self.SetModel
