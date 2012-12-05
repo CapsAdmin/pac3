@@ -280,6 +280,7 @@ function PART:OnDraw(owner, pos, ang)
 		self:DrawModel(ent, pos, ang)
 				
 		self:PostEntityDraw(owner, ent, pos, ang)
+		pac.ResetBones(ent)
 	else
 		timer.Simple(0, function()
 			self.Entity = pac.CreateEntity(self.Model)
@@ -314,7 +315,6 @@ function PART:DrawModel(ent, pos, ang)
 			ent:DrawModel()
 		else	
 			ent:DrawModel()
-			pac.ResetBones(ent)
 		end
 	end
 end

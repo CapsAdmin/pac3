@@ -230,7 +230,7 @@ do -- parenting
 					part ~= self and 
 					self.Parent ~= part and 
 					part:GetPlayerOwner() == self:GetPlayerOwner() and 
-					part.Name == self.ParentName 
+					self.ParentName == part.Name
 				then
 					self:SetParent(part)
 					return
@@ -606,15 +606,14 @@ do -- serializing
 			tbl[key] = COPY(self[key], key)
 		end
 		
-		return tbl			
+		return tbl
 	end
-	
-		
+			
 	function PART:Clone()
 		local part = pac.CreatePart(self.ClassName)
 		local uid = part.UniqueID
 		part:SetTable(self:ToTable(true))
-		part.UniqueID = uid
+		part.UniqueID = util.CRC(uid .. uid .. RealTime())
 		return part
 	end
 end
