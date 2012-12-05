@@ -1,7 +1,6 @@
 pac = pac or {}
 
-include("pac3/core/shared/player_mods.lua")
-include("pac3/core/shared/hands.lua")
+include("pac3/core/shared/init.lua")
 
 include("libraries/luadata.lua")
 include("libraries/class.lua")
@@ -64,6 +63,7 @@ include("owner.lua")
 include("online.lua")
 include("wear.lua")
 include("contraption.lua")
+include("expression.lua")
 
 pac.LoadParts()
 

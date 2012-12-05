@@ -17,6 +17,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Axis", "")
 	pac.GetSet(PART, "RootOwner", false)
 	pac.GetSet(PART, "Additive", false)
+	pac.GetSet(PART, "Expression", "")
 pac.EndStorableVars()
 
 PART.Functions = 
@@ -173,11 +174,76 @@ local allowed =
 	boolean = true,
 }
 
+function PART:SetExpression(str)
+	self.Expression = str
+	self.ExpressionFunc = nil
+	
+	if str and str ~= "" then
+		local parent = self.Parent
+		if not self.Parent:IsValid() then self.needs_compiliation = true return end
+	
+		local lib = {}
+		
+		for name, func in pairs(PART.Inputs) do
+			lib[name] = function() return func(self, parent) end
+		end
+
+		local ok, res = pac.CompileExpression(str, lib)
+		if ok then
+			self.ExpressionFunc = res
+		else
+			print(res)
+		end
+	end
+end
+
 function PART:OnThink()
 	if self:IsHiddenEx() then return end
 	
 	local parent = self.Parent
 	if not parent:IsValid() then return end
+	
+	if self.needs_compiliation then
+		self:SetExpression(self.Expression)
+		self.needs_compiliation = false
+	end
+	
+	if self.ExpressionFunc then
+		local T = type(parent[self.VariableName])
+		
+		if allowed[T] then
+			local ok, x,y,z = pcall(self.ExpressionFunc)
+			
+			if not ok then
+				if self:GetPlayerOwner() == LocalPlayer() then	
+					ErrorNoHalt(x.."\n")
+				end
+			end
+			
+			x = x or 0
+			
+			if T == "boolean" then
+				parent["Set" .. self.VariableName](parent, tonumber(x) > 0)
+			elseif T == "number" then
+				parent["Set" .. self.VariableName](parent, tonumber(x))
+			else
+				local val = parent[self.VariableName]
+				
+				if T == "Angle" then
+					val.p = x
+					val.y = y or val.y
+					val.r = z or val.r
+				else					
+					val.x = x
+					val.y = y or val.y
+					val.z = z or val.z
+				end
+				
+				parent["Set" .. self.VariableName](parent, val)
+			end	
+		end
+		return
+	end
 	
 	local T = type(parent[self.VariableName])
 	
@@ -187,8 +253,7 @@ function PART:OnThink()
 		
 		if F and I then
 			local num = self.Min + (self.Max - self.Min) * ((F(((I(self, parent) / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
-			
-			
+						
 			if self.Additive then
 				self.num_additive = (self.num_additive or 0) + num
 				num = self.num_additive
@@ -214,7 +279,6 @@ function PART:OnThink()
 					end
 				end
 				
-				--self:CheckLastVar(parent)
 				parent["Set" .. self.VariableName](parent, val)
 			end		
 		end
