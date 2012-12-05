@@ -36,6 +36,8 @@ function PART:OnHide()
 	local p = self.Params 
 	if p then
 		p.DieTime = 0
+		p.Size = 0
+		p.Pos = Vector()
 	end
 end
 

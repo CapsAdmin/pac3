@@ -51,14 +51,13 @@ end
 
 function pace.OnCreatePart(class_name, name, desc, mdl)
 	local part = pac.CreatePart(class_name)
-
+	part:SetName(name or (L(class_name) .. " " .. (pac.GetPartCount(class_name)) + 1))
+	
 	local parent = pace.current_part
 	
 	if parent:IsValid() then	
 		part:SetParent(parent)
 	end
-
-	part:SetName(name or (L(class_name) .. " " .. pac.GetPartCount(class_name)))
 	
 	if desc then part:SetDescription(desc) end
 	if mdl then part:SetModel(mdl) end
