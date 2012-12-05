@@ -39,7 +39,9 @@ function pac.SetPlayerSize(ply, f)
 		if ply.pac_player_size and ply.pac_player_size ~= 1 then
 			if 
 				ply:GetModelScale() ~= ply.pac_player_size or
-				ply:GetViewOffset() ~= def.view * ply.pac_player_size
+				ply:GetViewOffset() ~= def.view * ply.pac_player_size or
+				ply:GetRunSpeed() ~= math.max(def.run *  ply.pac_player_size, TICKRATE/2) or
+				ply:GetWalkSpeed() ~= math.max(def.walk *  ply.pac_player_size, TICKRATE/4)
 			then
 				pac.SetPlayerSize(ply, ply.pac_player_size)
 			end
