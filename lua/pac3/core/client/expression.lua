@@ -63,7 +63,7 @@ function compile_expression(str, extra_lib)
 	str = "local IN = select(1, ...) return " .. str
 	local func = CompileString(str, "pac_expression", false)
 	if type(func) == "string" then
-		print(func)	
+		return false, func
 	else
 		setfenv(func, lib)
 		return true, func
