@@ -1,3 +1,5 @@
+local pac = pac
+
 pac.drawn_entities = pac.drawn_entities or {}
 local pairs = pairs
 local render_ResetModelLighting = render.ResetModelLighting
@@ -60,7 +62,6 @@ function pac.UnhookEntityRender(ent)
 	ent.pac_parts = nil
 end
 
-local pac = pac
 
 local LocalPlayer = LocalPlayer
 local util_PixelVisible = util.PixelVisible
@@ -182,7 +183,7 @@ end
 function pac.RenderScreenspaceEffects()
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
-			if ent.pac_drawing then
+			if ent.pac_drawing and ent.pac_parts then
 				for key, part in pairs(ent.pac_parts) do
 					if part.ClassName == "sunbeams" then
 						part:Draw("OnDraw")

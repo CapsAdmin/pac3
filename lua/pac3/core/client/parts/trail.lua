@@ -18,8 +18,6 @@ pac.EndStorableVars()
 PART.LastAdd = 0
 
 function PART:Initialize()
-	self.StartColorC = Color(255, 255, 255, 255)
-	self.EndColorC = Color(255, 255, 255, 255)
 	self:SetTrailPath(self.TrailPath)
 end
 
