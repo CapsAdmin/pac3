@@ -24,7 +24,7 @@ end
 pac.AddHook("EntityRemoved")
 
 timer.Create("pac_gc", 2, 0, function()
-	for key, part in pairs(pac.GetPatrs()) do	
+	for key, part in pairs(pac.GetParts()) do	
 		if not part:GetPlayerOwner():IsValid() then
 			part:Remove()
 		end
