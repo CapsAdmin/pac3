@@ -91,37 +91,36 @@ function PART:OnThink()
 				
 				if index == nil then
 					ent.pac_holdtype = nil
-					return
+				else
+					local params = {}
+					params[ACT_MP_STAND_IDLE] = index
+					params[ACT_MP_WALK] = index+1
+					params[ACT_MP_RUN] = index+2
+					params[ACT_MP_CROUCH_IDLE] = index+3
+					params[ACT_MP_CROUCHWALK] = index+4
+					params[ACT_MP_ATTACK_STAND_PRIMARYFIRE]	= index+5
+					params[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE] = index+5
+					params[ACT_MP_RELOAD_STAND ] = index+6
+					params[ACT_MP_RELOAD_CROUCH ] = index+6
+					params[ACT_MP_JUMP] = index+7
+					params[ACT_RANGE_ATTACK1] = index+8
+					params[ACT_MP_SWIM_IDLE] = index+8
+					params[ACT_MP_SWIM] = index+9
+					
+					-- "normal" jump animation doesn't exist
+					if t == "normal" then
+						params[ACT_MP_JUMP] = ACT_HL2MP_JUMP_SLAM
+					end
+					
+					-- these two aren't defined in ACTs for whatever reason
+					if t == "knife" or t == "melee2" then
+						params[ACT_MP_CROUCH_IDLE] = nil
+					end
+					
+					ent.pac_holdtype = params
+					
+					self.last_holdtype = t
 				end
-
-				local params = {}
-				params[ACT_MP_STAND_IDLE] = index
-				params[ACT_MP_WALK] = index+1
-				params[ACT_MP_RUN] = index+2
-				params[ACT_MP_CROUCH_IDLE] = index+3
-				params[ACT_MP_CROUCHWALK] = index+4
-				params[ACT_MP_ATTACK_STAND_PRIMARYFIRE]	= index+5
-				params[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE] = index+5
-				params[ACT_MP_RELOAD_STAND ] = index+6
-				params[ACT_MP_RELOAD_CROUCH ] = index+6
-				params[ACT_MP_JUMP] = index+7
-				params[ACT_RANGE_ATTACK1] = index+8
-				params[ACT_MP_SWIM_IDLE] = index+8
-				params[ACT_MP_SWIM] = index+9
-				
-				-- "normal" jump animation doesn't exist
-				if t == "normal" then
-					params[ACT_MP_JUMP] = ACT_HL2MP_JUMP_SLAM
-				end
-				
-				-- these two aren't defined in ACTs for whatever reason
-				if t == "knife" or t == "melee2" then
-					params[ACT_MP_CROUCH_IDLE] = nil
-				end
-				
-				ent.pac_holdtype = params
-				
-				self.last_holdtype = t
 			end
 		end
 	
