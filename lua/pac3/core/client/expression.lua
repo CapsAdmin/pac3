@@ -32,23 +32,10 @@ local lib =
 	tanh = math.tanh,
 	tan = math.tan,
 }
-local allowed_chars = "%(%),%.^%+%-/%*%d%s=><%%"
-
-do
-	local str = "IN"
-	for k in pairs(lib) do str = str .. k end
-	allowed_chars = allowed_chars .. str
-	allowed_chars = "[" .. allowed_chars .. "]"
-end
 
 local blacklist = {"do", "for", "repeat", "until", "function", "end"}
 
-function compile_expression(str, extra_lib)		
-	local illegal_chars = str:gsub(allowed_chars, "")
-	if #illegal_chars ~= 0 then		
-		return false, string.format("illegal characters used %q", illegal_chars)
-	end
-	
+function compile_expression(str, extra_lib)
 	for _, word in pairs(blacklist) do
 		if str:find("[%p%s]" .. word) or str:find(word .. "[%p%s]") then
 			return false, string.format("illegal characters used %q", word)
