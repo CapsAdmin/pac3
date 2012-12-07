@@ -134,17 +134,14 @@ function pac.CalcView()
 	end
 	
 	if follow_entity:GetBool() then
-		pace.ViewPos = pace.ViewPos + (LocalPlayer():GetVelocity() * FrameTime())
+		local ent = pace.GetViewEntity()
+		pace.ViewPos = pace.ViewPos + (ent:GetVelocity() * FrameTime())
 	end
-	
-	local pos = pace.ViewPos
-	local ang = pace.ViewAngles
 
-	
 	return
 	{
-		origin = pos,
-		angles = ang,
+		origin = pace.ViewPos,
+		angles = pace.ViewAngles,
 		fov =  pace.editing_viewmodel and pace.ViewFOV + 10 or pace.ViewFOV,
 	}
 end
