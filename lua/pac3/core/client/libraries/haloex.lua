@@ -12,7 +12,7 @@ local rt_Store		= render.GetScreenEffectTexture( 0 )
 
 local List = {}
 
-function haloex.Add( ents, color, blurx, blury, passes, add, ignorez, size )
+function haloex.Add( ents, color, blurx, blury, passes, add, ignorez, amount, spherical, shape )
 
 	if add == nil then add = true end
 	if ignorez == nil then ignorez = false end
@@ -27,7 +27,9 @@ function haloex.Add( ents, color, blurx, blury, passes, add, ignorez, size )
 		DrawPasses = passes or 1,
 		Additive = add,
 		IgnoreZ = ignorez,
-		Size = size or 1,
+		Amount = amount or 1,
+		SphericalSize = spherical or 1,
+		Shape = shape or 1,
 	}
 	
 	table.insert( List, t )
@@ -114,7 +116,7 @@ function haloex.Render( entry )
 		render.CopyRenderTargetToTexture( rt_Stencil )
 		render.OverrideDepthEnable( false, false )
 		render.SetStencilEnable( false );
-		render.BlurRenderTarget( rt_Stencil, entry.BlurX, entry.BlurY, 1 )
+		render.BlurRenderTarget( rt_Stencil, entry.BlurX, entry.BlurY, entry.Amount )
 	
 	-- Put our scene back
 		render.SetRenderTarget( OldRT )
@@ -147,7 +149,16 @@ function haloex.Render( entry )
 		end
 		
 		for i=0, entry.DrawPasses do
-			render.DrawScreenQuad()
+			local s = entry.SphericalSize
+			local n = (i / entry.DrawPasses)
+			local x = math.sin(n * math.pi * 2) * s
+			local y = math.cos(n * math.pi * 2) * s
+			render.DrawScreenQuadEx(
+				math.Clamp(x, s * -entry.Shape, s * entry.Shape),
+				math.Clamp(y, s * -entry.Shape, s * entry.Shape),
+				ScrW(),
+				ScrH()
+			)
 		end
 	
 	-- PUT EVERYTHING BACK HOW WE FOUND IT
