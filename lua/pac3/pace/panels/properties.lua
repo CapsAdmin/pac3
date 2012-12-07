@@ -592,7 +592,7 @@ do -- vector
 			local frm = vgui.Create("DFrame")
 			frm:SetTitle("color")
 			
-			SHOW_SPECIAL(frm, self)
+			SHOW_SPECIAL(frm, self, 300)
 			
 			local clr = vgui.Create("DColorMixer", frm)
 			clr:Dock(FILL)
@@ -613,8 +613,8 @@ do -- vector
 			html_color.OnEnter = function() 
 				local vec = fromhex(html_color:GetValue())
 				clr:SetColor(Color(vec.x, vec.y, vec.z))
-				self:SetValue(vec)
 				self.OnValueChanged(vec)
+				self:SetValue(vec)
 			end
 			
 			function clr.Think()
@@ -622,6 +622,7 @@ do -- vector
 				local vec = Vector(clr.r, clr.g, clr.b)
 				self.OnValueChanged(vec)
 				self:SetValue(vec)
+				html_color:SetText(tohex(vec))
 			end
 			
 			pace.ActiveSpecialPanel = frm
