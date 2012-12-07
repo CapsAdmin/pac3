@@ -78,7 +78,7 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 	if func then
 	
 		-- no change
-		if obj[key] == val then return end
+		--if obj[key] == val then return end
 	
 		if key == "OwnerName" then
 			if val == "viewmodel" then
