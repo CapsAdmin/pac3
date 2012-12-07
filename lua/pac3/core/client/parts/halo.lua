@@ -12,8 +12,18 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Amount", 1)
 	pac.GetSet(PART, "Additive", true) -- haaaa
 	pac.GetSet(PART, "IgnoreZ", false)
+	pac.GetSet(PART, "SphericalSize", 1)
+	pac.GetSet(PART, "Shape", 1)
 	pac.GetSet(PART, "AffectChildren", false)
 pac.EndStorableVars()
+
+function PART:SetShape(n)
+	self.Shape = math.Clamp(n, 0, 1)
+end
+
+function PART:SetPasses(n)
+	self.Passes = math.min(n, 50)
+end
 
 function PART:OnThink()
 	local parent = self:GetParent()
@@ -22,13 +32,13 @@ function PART:OnThink()
 		
 		if self.AffectChildren then
 			for key, part in pairs(parent:GetChildren()) do
-				if parent.ClassName == "model" and parent.Entity:IsValid() and not parent:IsHiddenEx() then
-					table.insert(tbl, parent.Entity)
+				if part.ClassName == "model" and part.Entity:IsValid() and not part:IsHiddenEx() then
+					table.insert(tbl, part.Entity)
 				end
 			end
 		end
 		
-		pac.haloex.Add(tbl, Color(self.Color.r, self.Color.g, self.Color.b), self.BlurX, self.BlurY, self.Passes, self.Additive, self.IgnoreZ, self.Amount)
+		pac.haloex.Add(tbl, Color(self.Color.r, self.Color.g, self.Color.b), self.BlurX, self.BlurY, self.Passes, self.Additive, self.IgnoreZ, self.Amount, self.SphericalSize, self.Shape)
 	end
 end
 
