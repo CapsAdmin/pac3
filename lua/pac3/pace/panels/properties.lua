@@ -40,7 +40,18 @@ do -- container
 	PANEL.Base = "DPanel"
 
 	function PANEL:Paint(w, h)
-		self:GetSkin().tex.MenuBG(0, 0, (w or self:GetWide()) + (self.right and -1 or 3), (h or self:GetTall()) + 1)
+		--self:GetSkin().tex.MenuBG(0, 0, w + (self.right and -1 or 3), h + 1)
+		if not self.right then		
+			surface.SetDrawColor(derma.Color("text_bright", self, color_white))
+			surface.DrawRect(0,0,w+5,h)
+			surface.SetDrawColor(derma.Color("text_dark", self, color_black))
+			surface.DrawOutlinedRect(0,0,w+5,h+2)
+		else
+			surface.SetDrawColor(derma.Color("text_bright", self, color_white))
+			surface.DrawRect(0,0,w,h)
+			surface.SetDrawColor(derma.Color("text_dark", self, color_black))
+			surface.DrawOutlinedRect(0,0,w,h+2)
+		end
 	end
 
 	function PANEL:SetContent(pnl)
@@ -80,7 +91,7 @@ do -- list
 			self:SetRight(right)
 		self.right = right
 
-		self:SetDividerWidth(2)
+		self:SetDividerWidth(3)
 		self:SetLeftWidth(110)
 		self:SetItemHeight(14)
 	end
@@ -98,6 +109,7 @@ do -- list
 
 	function PANEL:AddItem(key, var, pos)
 		local btn = pace.CreatePanel("properties_label")
+			btn:NoClipping(true)
 			btn:SetValue(L(key:gsub("%u", " %1"):lower()))
 			btn.pac3_sort_pos = pos
 		self.left:AddItem(btn)
@@ -238,7 +250,7 @@ do -- non editable string
 
 	function PANEL:SetValue(str)
 		local lbl = vgui.Create("DLabel")
-			lbl:SetTextColor(derma.Color(net and "text_dark" or "text_bright", self, color_black))
+			lbl:SetTextColor(derma.Color("text_dark", self, color_black))
 			lbl:SetFont(pace.CurrentFont)
 			lbl:SetText("  " .. str) -- ugh
 			lbl:SizeToContents()
@@ -471,7 +483,9 @@ do -- vector
 			left.OnValueChanged = function(num)			
 				self.vector[arg1] = num
 				
-				if input.IsKeyDown(KEY_LSHIFT) then
+				if input.IsKeyDown(KEY_R) then
+					self:Restart()
+				elseif input.IsKeyDown(KEY_LSHIFT) then
 					middle:SetValue(num)
 					self.vector[arg2] = num
 					
@@ -487,7 +501,9 @@ do -- vector
 			middle.OnValueChanged = function(num)			
 				self.vector[arg2] = num
 				
-				if input.IsKeyDown(KEY_LSHIFT) then
+				if input.IsKeyDown(KEY_R) then
+					self:Restart()
+				elseif input.IsKeyDown(KEY_LSHIFT) then
 					left:SetValue(num)
 					self.vector[arg1] = num
 					
@@ -503,7 +519,9 @@ do -- vector
 			right.OnValueChanged = function(num)				
 				self.vector[arg3] = num
 				
-				if input.IsKeyDown(KEY_LSHIFT) then
+				if input.IsKeyDown(KEY_R) then
+					self:Restart()
+				elseif input.IsKeyDown(KEY_LSHIFT) then
 					middle:SetValue(num)
 					self.vector[arg2] = num
 					
@@ -540,9 +558,7 @@ do -- vector
 			self.middle:SetValue(0)
 			self.right:SetValue(0)
 			
-			self.left:OnValueChanged(0)
-			self.middle:OnValueChanged(0)
-			self.right:OnValueChanged(0)
+			self.OnValueChanged(self.vector)
 		end
 
 		function PANEL:SetValue(vec)
@@ -567,8 +583,7 @@ do -- vector
 			self.right:MoveRightOf(self.middle, 10)
 		end
 		
-		function PANEL:OnValueChanged()
-
+		function PANEL:OnValueChanged(vec)
 		end
 
 		pace.RegisterPanel(PANEL)
@@ -716,6 +731,8 @@ do -- boolean
 		self.lbl = lbl
 	end
 
+	function PANEL:Paint() end
+	
 	function PANEL:SetValue(b)
 		self.chck:SetChecked(b)
 		self.chck:Toggle()
@@ -730,8 +747,10 @@ do -- boolean
 	function PANEL:PerformLayout()
 		self.BaseClass.PerformLayout(self)
 		
-		self.chck:SetPos(0, 2)
-		self.chck:SetSize(12, 12)
+		local s = 4
+		
+		self.chck:SetPos(s*0.5, s*0.5+1)
+		self.chck:SetSize(self:GetTall()-s, self:GetTall()-s)
 
 		self.lbl:MoveRightOf(self.chck, 5)
 		self.lbl:CenterVertical()

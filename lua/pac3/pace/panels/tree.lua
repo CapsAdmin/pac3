@@ -9,7 +9,7 @@ function PANEL:Init()
 	pace.pac_dtree.Init(self)
 
 	self:SetLineHeight(18)
-	self:SetIndentSize(2)
+	self:SetIndentSize(10)
 
 	self.parts = {}
 	

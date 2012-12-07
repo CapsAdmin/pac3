@@ -5,12 +5,13 @@ local PANEL = {}
 PANEL.ClassName = "editor"
 PANEL.Base = "DFrame"
 
-function PANEL:Init()
+function PANEL:Init()	
 	self:SetTitle("pac3 " .. L"editor")
-	self:SetSizable(false)
+	self:SetSizable(true)
+	--self:DockPadding(2, 23, 2, 2)
 	
 	local div = vgui.Create("DVerticalDivider", self)
-		div:SetDividerHeight(5)
+		div:SetDividerHeight(2)
 		div:Dock(FILL)
 		div:SetTopMin(0)
 	self.div = div
@@ -21,21 +22,23 @@ function PANEL:Init()
 	self:SetBottom(pnl)
 	
 	self:SetCookieName("pac3_editor")
+	self:SetPos(self:GetCookieNumber("x"), 0)
 end
 
 function PANEL:Think(...)
-	do return end
-	local x, y = self:GetPos()
+	DFrame.Think(self, ...)
 	
+	self:SetTall(ScrH())
+	local w = math.max(self:GetWide(), 200)
+	self:SetWide(w)
+	local x = self:GetPos()
+	x = math.Clamp(x, 0, ScrW()-w)
+	self:SetPos(x, 0)
+		
 	if x ~= self.last_x then
 		self:SetCookie("x", x)
+		self.last_x = x
 	end
-	
-	if y ~= self.last_y then
-		self:SetCookie("y", y)
-	end
-
-	return DFrame.Think(self, ...)
 end
 
 function PANEL:PerformLayout()
@@ -83,7 +86,6 @@ function pace.KillFocus()
 		gui.EnableScreenClicker(false)
 		pace.Focused = false
 		self:AlphaTo(0, 0.1, 0)
-		self:MoveTo(self:GetCookieNumber("x") or -self:GetWide(), self:GetCookieNumber("y") or 0, 0.1, 0)
 		
 		self.allowclick = false
 

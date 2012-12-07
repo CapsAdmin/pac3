@@ -370,7 +370,7 @@ function mctrl.GUIMousePressed(mc)
 
 				-- Rotation
 				local axis
-				local dist = mctrl.grab_dist * 2
+				local dist = mctrl.grab_dist
 				for i, v in pairs
 					{
 						[AXIS_X] = mctrl.VecToScreen(pos + forward * r * mctrl.angle_pos),
@@ -402,10 +402,24 @@ function mctrl.GUIMouseReleased(mc)
 	end
 end
 
+local white = surface.GetTextureID("gui/center_gradient.vtf")
+
+local function DrawLineEx(x1,y1, x2,y2, w, skip_tex)
+	w = w or 1
+	if not skip_tex then surface.SetTexture(white) end
+	
+	local dx,dy = x1-x2, y1-y2
+	local ang = math.atan2(dx, dy)
+	local dst = math.sqrt((dx * dx) + (dy * dy))
+	
+	x1 = x1 - dx * 0.5
+	y1 = y1 - dy * 0.5
+	
+	surface.DrawTexturedRectRotated(x1, y1, w, dst, math.deg(ang))
+end
+
 local function DrawLine(x,y, a,b)
-	surface.DrawLine(x, y, a, b)
-	surface.DrawLine(x+1, y+1, a+1, b+1)
-	surface.DrawLine(x-1, y-1, a-1, b-1)
+	DrawLineEx(x,y, a,b, 3)
 end
 
 local function DrawOutlinedRect(x,y, w,h)
@@ -413,10 +427,31 @@ local function DrawOutlinedRect(x,y, w,h)
 	surface.DrawOutlinedRect(x+1,y+1, w-2,h-2)
 end
 
+local function DrawCircleEx(x, y, rad, res, ...)
+	res = res or 16
+			
+	local spacing = (res/rad) - 0.1
+	
+	for i = 0, res do		
+		local i1 = ((i+0) / res) * math.pi * 2
+		local i2 = ((i+1 + spacing) / res) * math.pi * 2
+		
+		DrawLineEx(
+			x + math.sin(i1) * rad, 
+			y + math.cos(i1) * rad, 
+			
+			x + math.sin(i2) * rad, 
+			y + math.cos(i2) * rad, 
+			...
+		)
+	end
+end
+	
+
 function mctrl.LineToBox(origin, point, siz)
-	siz = siz or 6
+	siz = siz or 7
 	DrawLine(origin.x, origin.y, point.x, point.y)
-	DrawOutlinedRect(point.x - (siz * 0.5), point.y - (siz * 0.5), siz, siz)
+	DrawCircleEx(point.x, point.y, siz, 32, 2)
 end
 
 function mctrl.RotationLines(pos, dir, dir2, r)
@@ -470,7 +505,7 @@ function mctrl.HUDPaint()
 			mctrl.RotationLines(pos, up, right, r)
 
 			surface.SetDrawColor(255, 200, 0, 255)
-			surface.DrawOutlinedRect(o.x - 3, o.y - 3, 6, 6)
+			DrawCircleEx(o.x, o.y, 4, 32, 2)
 		end
 	end
 end
