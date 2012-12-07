@@ -168,7 +168,7 @@ hook.Add( "PostDrawEffects", "RenderHaloexs", function()
 	if ( #List == 0 ) then return end
 	
 	for k, v in pairs( List ) do
-		Render( v )
+		haloex.Render( v )
 	end
 		
 	List = {}
