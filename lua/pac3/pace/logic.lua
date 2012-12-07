@@ -384,22 +384,32 @@ function pace.OnOpenMenu()
 			end
 		end
 	end)
+	menu:AddSubMenu(L"clear session", function()end):AddOption(L"OK", function() 
+		pac.RemoveAllParts(true, true)
+		pace.RefreshTree()
+	end)
 	menu:AddSpacer()
 	menu:AddOption(L"toggle t pose", function()
 		pace.SetTPose(not pace.GetTPose())
-	end)
-	menu:AddSpacer()
-	menu:AddOption(L"reset view", function()
-		pace.ResetView()
 	end)
 	menu:AddOption(L"toggle focus", function()
 		pace.Call("ToggleFocus")
 		chat.AddText("[pac3] \"ctrl + e\" to get the editor focus back")
 	end)
+	menu:AddOption(L"toggle camera follow", function()
+		local c = GetConVar("pac_camera_follow_entity")
+		RunConsoleCommand("pac_camera_follow_entity", c:GetBool() and "0" or "1")
+	end)
 	menu:AddOption(L"reset eye angles", function()
 		local ent = pace.GetViewEntity()
 		if ent:IsValid() then
 			if ent:IsPlayer() then
+				
+				RunConsoleCommand("+forward")
+				timer.Simple(0, function() 
+					RunConsoleCommand("-forward") 
+				end)
+				
 				ent:SetEyeAngles(Angle(0, 0, 0))
 			else
 				ent:SetAngles(Angle(0, 0, 0))
@@ -408,7 +418,11 @@ function pace.OnOpenMenu()
 			ent:SetupBones()
 		end
 	end)
+	menu:AddOption(L"reset view", function()
+		pace.ResetView()
+	end)
 	menu:AddSpacer()
+		
 	local langmenu = menu:AddSubMenu(L"language")
 	langmenu:AddOption("english", function()
 		pace.SetLanguage("english")
@@ -436,13 +450,11 @@ function pace.OnOpenMenu()
 			end
 		end
 	end
-		
-		
-	menu:AddSpacer()
 	
-	menu:AddOption(L"clear", function()
-		pac.RemoveAllParts(true, true)
-		pace.RefreshTree()
+	menu:AddSpacer()
+		
+	menu:AddOption(L"help", function()
+		pace.ShowWiki()
 	end)
 		
 	menu:Open()

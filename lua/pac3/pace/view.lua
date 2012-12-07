@@ -10,7 +10,7 @@ acsfnc("Angles", Angle(0,0,0))
 acsfnc("FOV", 75)
 
 function pace.GetViewEntity()
-	return pace.ViewEntity or LocalPlayer()
+	return pace.ViewEntity:IsValid() and pace.ViewEntity or LocalPlayer()
 end
 
 function pace.ResetView()
@@ -119,6 +119,8 @@ local function CalcDrag()
 	end]]
 end
 
+local follow_entity = CreateConVar("pac_camera_follow_entity", "0")
+
 function pac.CalcView()
 	if pace.editing_viewmodel then
 		local ent = LocalPlayer():GetViewModel()
@@ -130,10 +132,19 @@ function pac.CalcView()
 			ent:SetupBones()
 		end
 	end
+	
+	if follow_entity:GetBool() then
+		pace.ViewPos = pace.ViewPos + (LocalPlayer():GetVelocity() * FrameTime())
+	end
+	
+	local pos = pace.ViewPos
+	local ang = pace.ViewAngles
+
+	
 	return
 	{
-		origin = pace.ViewPos,
-		angles = pace.ViewAngles,
+		origin = pos,
+		angles = ang,
 		fov =  pace.editing_viewmodel and pace.ViewFOV + 10 or pace.ViewFOV,
 	}
 end
