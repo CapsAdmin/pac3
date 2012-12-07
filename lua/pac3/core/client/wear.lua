@@ -148,9 +148,10 @@ else
 	end)
 end
 
-function pac.Notify(allowed, reason)
+function pac.Notify(allowed, reason, name)
 	 if allowed then
-		chat.AddText(Color(255,255,0), "[PAC3] ", Color(0,255,0), "Your config has been applied.")
+		MsgC(Color(255,255,0), "[PAC3] ")
+		MsgC(Color(0,255,0), "Your part " .. name .. " has been applied.\n")
 	else
 		chat.AddText(Color(255,255,0), "[PAC3] ", Color(255,0,0), reason)
 	end
@@ -159,6 +160,7 @@ end
 usermessage.Hook("pac_submit_acknowledged", function(umr)
 	local allowed = umr:ReadBool()
 	local reason = umr:ReadString()
+	local name = umr:ReadString()
 
-	pac.Notify(allowed, reason)
+	pac.Notify(allowed, reason, name)
 end)
