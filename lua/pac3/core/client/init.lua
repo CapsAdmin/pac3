@@ -3,6 +3,7 @@ pac = pac or {}
 include("libraries/null.lua")
 include("libraries/class.lua")
 include("libraries/luadata.lua")
+include("libraries/haloex.lua")
 
 include("pac3/core/shared/init.lua")
 
