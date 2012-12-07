@@ -533,14 +533,15 @@ local bad_bones =
 local SCALE_NORMAL = Vector(1, 1, 1)
 
 function PART:OnBuildBonePositions()
+
 	local ent = self:GetEntity()
 	local owner = self:GetOwner()
 	
 	if not ent:IsValid() or not owner:IsValid() or not ent:GetBoneCount() or ent:GetBoneCount() < 1 then return end
 	
 	if self.OverallSize ~= 1 then
-		for i = 0, ent:GetBoneCount() do
-			ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * (SCALE_NORMAL * self.OverallSize))
+		for i = 0, ent:GetBoneCount()-1 do
+			ent:ManipulateBoneScale(i, SCALE_NORMAL * self.OverallSize)
 		end
 	end
 	

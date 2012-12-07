@@ -476,10 +476,11 @@ function pace.OnPartMenu(obj)
 
 	menu:AddOption(L"copy", function()
 		local tbl = obj:ToTable()
-			tbl.Name = nil
-			tbl.Description = nil
-			tbl.ParentName = nil
-			tbl.UniqueID = nil
+			tbl.self.Name = nil
+			tbl.self.Description = nil
+			tbl.self.ParentName = nil
+			tbl.self.Parent = nil
+			tbl.self.UniqueID = nil
 			
 			tbl.children = {}
 		pace.Clipboard = tbl
@@ -494,7 +495,6 @@ function pace.OnPartMenu(obj)
 	
 	menu:AddOption(L"clone", function()
 		obj:Clone()
-		pace.RefreshTree()
 	end)
 		
 	local tools = menu:AddSubMenu(L"tools")

@@ -501,7 +501,8 @@ do -- serializing
 		if not part then return end
 		local uid = part.UniqueID
 		part:SetTable(self:ToTable(true))
-		part.UniqueID = util.CRC(uid .. uid .. RealTime())
+		part:ResolveParentName()
+		part.UniqueID = uid
 		return part
 	end
 end
