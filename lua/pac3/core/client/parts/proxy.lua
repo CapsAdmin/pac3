@@ -20,6 +20,10 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Expression", "")
 pac.EndStorableVars()
 
+function PART:Initialize()
+	self.vec_additive = {}
+end
+
 PART.Functions = 
 {
 	none = function(n) return n end,
@@ -222,12 +226,29 @@ function PART:OnThink()
 			
 			x = x or 0
 			
+			if self.Additive then	
+				self.vec_additive[1] = (self.vec_additive[1] or 0) + x
+				x = self.vec_additive[1]
+			end
+			
 			if T == "boolean" then
 				parent["Set" .. self.VariableName](parent, tonumber(x) > 0)
 			elseif T == "number" then
 				parent["Set" .. self.VariableName](parent, tonumber(x))
 			else
 				local val = parent[self.VariableName]
+				
+				if self.Additive then	
+					if y then 
+						self.vec_additive[2] = (self.vec_additive[2] or 0) + y 
+						y = self.vec_additive[2] 
+					end
+					
+					if z then 
+						self.vec_additive[3] = (self.vec_additive[3] or 0) + z 
+						z = self.vec_additive[3] 
+					end					
+				end
 				
 				if T == "Angle" then
 					val.p = x
@@ -242,45 +263,44 @@ function PART:OnThink()
 				parent["Set" .. self.VariableName](parent, val)
 			end	
 		end
-		return
-	end
-	
-	local T = type(parent[self.VariableName])
-	
-	if allowed[T] then
-		local F = self.Functions[self.Function]
-		local I = self.Inputs[self.Input]
+	else
+		local T = type(parent[self.VariableName])
 		
-		if F and I then
-			local num = self.Min + (self.Max - self.Min) * ((F(((I(self, parent) / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
-						
-			if self.Additive then
-				self.num_additive = (self.num_additive or 0) + num
-				num = self.num_additive
-			end
+		if allowed[T] then
+			local F = self.Functions[self.Function]
+			local I = self.Inputs[self.Input]
 			
-			if T == "boolean" then
-				parent["Set" .. self.VariableName](parent, tonumber(num) > 0)
-			elseif T == "number" then
-				parent["Set" .. self.VariableName](parent, tonumber(num))
-			else
-				local val = parent[self.VariableName]
-				if self.Axis ~= "" and val[self.Axis] then
-					val[self.Axis] = num
-				else
-					if T == "Angle" then
-						val.p = num
-						val.y = num
-						val.r = num
-					else					
-						val.x = num
-						val.y = num
-						val.z = num
-					end
+			if F and I then
+				local num = self.Min + (self.Max - self.Min) * ((F(((I(self, parent) / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
+							
+				if self.Additive then
+					self.vec_additive[1] = (self.vec_additive[1] or 0) + num
+					num = self.vec_additive[1]
 				end
 				
-				parent["Set" .. self.VariableName](parent, val)
-			end		
+				if T == "boolean" then
+					parent["Set" .. self.VariableName](parent, tonumber(num) > 0)
+				elseif T == "number" then
+					parent["Set" .. self.VariableName](parent, tonumber(num))
+				else
+					local val = parent[self.VariableName]
+					if self.Axis ~= "" and val[self.Axis] then
+						val[self.Axis] = num
+					else
+						if T == "Angle" then
+							val.p = num
+							val.y = num
+							val.r = num
+						else					
+							val.x = num
+							val.y = num
+							val.z = num
+						end
+					end
+					
+					parent["Set" .. self.VariableName](parent, val)
+				end		
+			end
 		end
 	end
 end
