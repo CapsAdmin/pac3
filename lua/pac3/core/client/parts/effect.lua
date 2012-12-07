@@ -40,9 +40,9 @@ end
 
 PART.last_spew = 0
 
-for key, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
-	game.AddParticles("particles/" .. file_name)
-end
+--for key, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
+--	game.AddParticles("particles/" .. file_name)
+--end
 
 function PART:SetEffect(name)
 	self.Effect = name

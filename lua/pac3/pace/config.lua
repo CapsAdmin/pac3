@@ -12,6 +12,17 @@ pace.Fonts =
 	"UiBold",
 }
 
+for i = 1, 5 do
+	surface.CreateFont("pac_font_"..i, 
+	{
+		font = "Tahoma",
+		size = 11 + i,
+		weight = 50,
+		antialias = true,
+	})
+	table.insert(pace.Fonts, i, "pac_font_"..i)
+end
+
 pace.ShadowedFonts = 
 {
 	["BudgetLabel"] = true,
