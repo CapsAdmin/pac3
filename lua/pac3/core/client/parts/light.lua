@@ -26,9 +26,7 @@ function PART:OnDraw(owner, pos, ang)
 		params.b = self.Color.b		
 		
 		-- 100000000 constant is better than calling RealTime()
-		params.DieTime = 100000000 -- RealTime()
-		
-		render.ComputeDynamicLighting(pos, ang:Up())
+		params.DieTime = 1000000000000 -- RealTime()
 	end
 end
 
