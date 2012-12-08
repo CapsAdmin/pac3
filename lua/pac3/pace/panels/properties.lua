@@ -183,6 +183,11 @@ do -- list
 				pnl.LimitValue = pace.PropertyLimits[key]
 				
 				pnl.OnValueChanged = function(val)
+					if T == "number" then
+						val = tonumber(val) or 0
+					elseif T == "string" then
+						val = tostring(val)
+					end
 					pace.Call("VariableChanged", obj, key, val)
 				end
 				
