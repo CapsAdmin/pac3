@@ -53,7 +53,7 @@ do -- owner
 		
 		local prev_owner = self:GetOwner()
 		
-		if ent:GetClass() == "class C_HL2MPRagdoll" then
+		if ent and ent:IsValid() and ent:GetClass() == "class C_HL2MPRagdoll" then
 			if prev_owner:IsPlayer() then
 				local rag = prev_owner:GetRagdollEntity() or NULL
 				if rag:IsValid() then
