@@ -37,7 +37,9 @@ end)
 
 local function make_copy(tbl, input)
 	for key, val in pairs(tbl.self) do
-		if key == "Name" then
+		if key == "ClassName" then continue end
+		
+		if (key == "Name" or key == "ParentName" or key:find("PartName", 0, true)) and val ~= "" then
 			tbl.self[key] = val .. " " .. input
 		end
 		if key:find("UID", 0, true) or key == "UniqueID" then
@@ -51,11 +53,12 @@ end
 
 duplicator.RegisterEntityModifier("pac_config", function(ply, ent, data)
 	local id = ent:EntIndex()
-	data.owner = ply
-	data.part.self.OwnerName = id
-	data.uid = ply:UniqueID()
 	
 	make_copy(data.part, id)
+	
+	data.owner = ply
+	data.uid = ply:UniqueID()
+	data.part.self.OwnerName = id
 	
 	ent:CallOnRemove("pac_config", function(ent)	
 		data.part = data.part.self.Name
