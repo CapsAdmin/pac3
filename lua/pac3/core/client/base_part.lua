@@ -555,40 +555,23 @@ do -- events
 	function PART:OnEvent(event, ...) end
 end
 
-do -- highlight
-	PART.highlight = 0
-
-	function PART:Highlight(skip_children)
-		self.highlight = RealTime() + 0.1	
-		
-		if not skip_children then
-			for key, part in pairs(self.Children) do
-				part.highlight = RealTime() + 0.1
-				part:Highlight()
+function PART:Highlight(skip_children)
+	local tbl = {self.Entity and self.Entity:IsValid() and self.Entity or nil}
+	
+	if not skip_children then
+		for key, part in pairs(self.Children) do
+			local ent = part.Entity
+			
+			if ent and ent:IsValid() then
+				table.insert(tbl, ent)
 			end
 		end
 	end
-
-	function PART:IsHighlighting()
-		return self.highlight > RealTime()
-	end
-			
-	local mat = Material("models/debug/debugwhite")
-
-	local render_MaterialOverride = render.MaterialOverride or SetMaterialOverride
-
-	function PART:DrawHighlight(owner, pos, ang)
-		cam.IgnoreZ(true)
-		local ent = self.Entity
-		if ent and ent:IsValid() then
-			local pulse = math.sin(RealTime()*20) * 1
-			pulse = pulse + 2
-			render.SetColorModulation(pulse, pulse, pulse)
-			render_MaterialOverride(mat)
-			self:DrawModel(owner, pos, ang)
-			render_MaterialOverride()
-		end
-		cam.IgnoreZ(false)
+	
+	if #tbl > 0 then
+		local pulse = math.abs(1+math.sin(RealTime()*20) * 255)
+		pulse = pulse + 2
+		pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
 	end
 end
 
@@ -668,10 +651,6 @@ do
 					part:Draw(event, pos, ang)
 				end
 			end
-		end
-		
-		if pos and ang and owner and self:IsHighlighting() then
-			self:DrawHighlight(owner, pos, ang)
 		end
 	end
 end

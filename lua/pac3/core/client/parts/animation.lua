@@ -125,7 +125,7 @@ function PART:OnThink()
 		end
 	
 		local seq = ent:LookupSequence(self.SequenceName)
-		local rate = math.min((self.Rate * ent:SequenceDuration(seq)), 1)
+		local rate = math.min((self.Rate * (ent:SequenceDuration(seq) or 0)), 1)
 				
 		if seq ~= -1 then
 			ent:SetSequence(seq)
