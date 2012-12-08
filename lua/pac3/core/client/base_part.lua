@@ -53,11 +53,13 @@ do -- owner
 		
 		local prev_owner = self:GetOwner()
 		
-		if prev_owner:IsPlayer() then
-			local rag = prev_owner:GetRagdollEntity() or NULL
-			if rag:IsValid() then
-				self:SetOwner(rag)
-				return
+		if ent:GetClass() == "class C_HL2MPRagdoll" then
+			if prev_owner:IsPlayer() then
+				local rag = prev_owner:GetRagdollEntity() or NULL
+				if rag:IsValid() then
+					self:SetOwner(rag)
+					return
+				end
 			end
 		end
 		
