@@ -53,7 +53,7 @@ function PART:Initialize()
 end
 
 function PART:GetModelBones()
-	local parent = self.RealParent
+	local parent = self.Parent
 	if parent and parent.Entity:IsValid() then
 		return pac.GetModelBones(parent.Entity)
 	else
@@ -72,10 +72,11 @@ function PART:RemoveClipPlane(id)
 	end
 end
 
-function PART:OnAttach(owner)
+function PART:OnShow()
+	local owner = self:GetOwner()
 	local ent = self:GetEntity()
 	
-	if ent:IsValid() and owner:IsValid() and owner ~= ent then
+	if ent:IsValid() and owner:IsValid() then
 		ent:SetPos(owner:EyePos())
 		ent:SetParent(owner)
 		ent:SetOwner(owner)

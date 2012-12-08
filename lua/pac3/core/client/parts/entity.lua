@@ -299,14 +299,13 @@ function PART:OnHide()
 	end
 end
 
-PART.OnAttach = PART.OnShow
-PART.OnDetach = PART.OnHide
-
 function PART:SetHideEntity(b)
 	self.HideEntity = b
 	
 	if b then 
-		self:OnAttach(self:GetOwner())
+		self:OnShow()
+	else
+		self:OnHide()
 	end
 end
 
