@@ -77,11 +77,11 @@ function PART:SetMaterial(var)
 	self.TrailPath = var
 end
 
-function PART:OnAttach()
+function PART:OnShow()
 	self.points = {}
 end
 
-function PART:OnDetach()
+function PART:OnHide()
 	self.points = {}
 end
 

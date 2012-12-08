@@ -44,16 +44,31 @@ do -- owner
 		self:CheckOwner()
 	end
 
-	function PART:CheckOwner(ent)
+	function PART:CheckOwner(ent, removed)		
 		local parent = self:GetParent()
 		
 		if parent:IsValid() then
 			return parent:CheckOwner(ent)
 		end
-	
-		if self.OwnerName ~= "" then
+		
+		local prev_owner = self:GetOwner()
+		
+		if prev_owner:IsPlayer() then
+			local rag = prev_owner:GetRagdollEntity() or NULL
+			if rag:IsValid() then
+				self:SetOwner(rag)
+				return
+			end
+		end
+		
+		if removed and prev_owner == ent then
+			self:SetOwner()
+			return
+		end
+			
+		if not removed and self.OwnerName ~= "" then
 			local ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self)
-			if ent ~= self:GetOwner() then
+			if ent ~= prev_owner then
 				self:SetOwner(ent)
 				return true
 			end
@@ -62,16 +77,15 @@ do -- owner
 
 	function PART:SetOwner(ent)
 		ent = ent or NULL
-					
-		if self:GetOwner():IsValid() then 
-			self:OnDetach(self:GetOwner()) 
-		end
-		
-		self.Owner = ent
-		
+				
 		if ent:IsValid() then
+			self.Owner = ent
+			self:CallOnChildrenAndSelf("OnShow")
 			pac.HookEntityRender(ent, self:GetRootPart()) 
-			self:OnAttach(ent)
+		else
+			self:CallOnChildrenAndSelf("OnHide")
+			pac.UnhookEntityRender(ent) 
+			self.Owner = ent
 		end
 	end
 	
@@ -96,21 +110,14 @@ do -- owner
 		if parent:IsValid() then
 			if 
 				self.ClassName ~= "event" and 
-				parent.ClassName == "model" and parent.Entity:IsValid() 
+				parent.ClassName == "model" and 
+				parent.Entity:IsValid() 
 			then
 				return parent.Entity
 			end
 			return parent:GetOwner()
-		end
+		end	
 		
-		-- this line keeps lying telling me the player is valid, but when trying to use it, gmod throws an error
-		if self.Owner:IsPlayer() and self.Owner:IsValid() and not self.Owner:Alive() then
-			local rag = self.Owner:GetRagdollEntity()
-			if rag and rag:IsValid() then
-				return rag
-			end
-		end
-
 		return self.Owner or NULL
 	end
 
@@ -165,7 +172,6 @@ do -- parenting
 		var:ClearBone()
 		
 		var:OnParent(self)
-		var:OnAttach(self:GetOwner())
 		self:OnChildAdd(var)
 		
 		if self:HasParent() then 
@@ -221,7 +227,6 @@ do -- parenting
 				part.Parent = pac.NULL
 				part.ParentName = ""
 				part.ParentUID = nil
-				part:OnDetach(self:GetOwner())
 				children[key] = nil
 				if self:HasParent() then 
 					self:GetParent():SortChildren() 
@@ -354,6 +359,10 @@ do -- bones
 		
 		if parent:IsValid() and parent.ClassName == "jiggle" then
 			return parent.pos, parent.ang
+		end
+		
+		if not self.BoneIndex then
+			self:UpdateBoneIndex(owner)
 		end
 		
 		if self.BoneIndex then
@@ -533,9 +542,6 @@ do -- events
 		
 		self.IsValid = function() return false end
 	end
-
-	function PART:OnAttach() end
-	function PART:OnDetach() end
 
 	function PART:OnStore()	end
 	function PART:OnRestore() end

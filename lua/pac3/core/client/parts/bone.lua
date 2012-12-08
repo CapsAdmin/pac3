@@ -14,13 +14,11 @@ pac.EndStorableVars()
 
 PART.ThinkTime = 0
 
-function PART:OnAttach(owner)
+function PART:OnShow(owner)
 	self.BoneIndex = nil
 end
 
-function PART:OnParent()
-	self:OnAttach(self:GetOwner())
-end
+PART.OnParent = PART.OnShow
 
 function PART:GetOwner()
 	local parent = self:GetParent()
