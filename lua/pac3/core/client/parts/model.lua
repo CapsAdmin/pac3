@@ -322,11 +322,16 @@ function PART:SetModel(var)
 
 	if var and var:find("http") and pac.urlobj then
 		var = var:gsub("https://", "http://")
+		
+		if var:lower():find("pastebin.com") then
+			var = var:gsub(".com/", ".com/raw.php?i=")
+		end
+		
 		local skip_cache = var:sub(1,1) == "_"
 		
 		if skip_cache then
 			var = var:sub(2)
-		end	
+		end
 		
 		pac.urlobj.GetObjFromURL(var, function(mesh, err)
 			if not self:IsValid() then return end
