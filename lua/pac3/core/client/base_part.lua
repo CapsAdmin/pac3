@@ -23,6 +23,9 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Hide", false)
 	pac.GetSet(PART, "DrawOrder", 0)
 	
+	pac.GetSet(PART, "PositionOffset", Vector(0,0,0))
+	pac.GetSet(PART, "AngleOffset", Angle(0,0,0))
+	
 	pac.GetSet(PART, "EditorExpand", false)
 	pac.GetSet(PART, "UniqueID", "")
 	
@@ -627,6 +630,9 @@ function PART:IsHidden()
 end
 
 do
+	local VEC0 = Vector(0,0,0)
+	local ANG0 = Angle(0,0,0)
+
 	PART.cached_pos = Vector(0,0,0)
 	PART.cached_ang = Angle(0,0,0)
 			
@@ -650,6 +656,10 @@ do
 				
 				self.cached_pos = pos
 				self.cached_ang = ang
+				
+				if self.PositionOffset ~= VEC0 or self.AngleOffset ~= ANG0 then
+					pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
+				end
 			
 				self[event](self, owner, pos, ang)
 			end

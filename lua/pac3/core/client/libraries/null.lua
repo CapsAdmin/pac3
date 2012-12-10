@@ -1,6 +1,7 @@
 local NULL = {}
 
 NULL.LuaDataType = "pac_null"
+NULL.ClassName = "NULL"
 
 local function FALSE()
 	return false
