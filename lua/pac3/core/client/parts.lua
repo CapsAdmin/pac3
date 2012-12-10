@@ -33,6 +33,8 @@ function pac.CreatePart(name, owner)
 		remove(part, "AimName")
 		remove(part, "DrawOrder")
 		remove(part, "AimPartName")
+		remove(part, "PositionOffset")
+		remove(part, "AngleOffset")
 	end
 	
 	if part.PreInitialize then 

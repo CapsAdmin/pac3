@@ -78,7 +78,6 @@ pace.PropertyOrder =
 	"BoneMerge",
 	"BoneMergeAlternative",
 	"OverallSize",
-	"OriginFix",
 	"Position",
 	"Angles",
 	"AngleVelocity",
@@ -86,6 +85,11 @@ pace.PropertyOrder =
 	"EyeAngles",
 	"Size",
 	"Scale",
+	
+	"OriginFix",
+	"PositionOffset",
+	"AngleOffset",
+	
 	"Model",
 	"Bodygroup",
 	"BodygroupState",
