@@ -513,10 +513,8 @@ do -- serializing
 	function PART:Clone()
 		local part = pac.CreatePart(self.ClassName)
 		if not part then return end
-		local uid = part.UniqueID
 		part:SetTable(self:ToTable(true))
 		part:ResolveParentName()
-		part.UniqueID = uid
 		return part
 	end
 end
