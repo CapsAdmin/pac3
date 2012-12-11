@@ -142,7 +142,7 @@ PART.Inputs =
 		local data = ply.pac_proxy_event
 		
 		if data and data.name == self:GetName() then
-			self.last_command_proxy_num = num
+			self.last_command_proxy_num = data.num
 			return data.num
 		end
 		
