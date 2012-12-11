@@ -148,6 +148,12 @@ PART.Inputs =
 		
 		return self.last_command_proxy_num or 0
 	end,
+	
+	voice_volume = function(self)
+		local ply = self:GetPlayerOwner()
+		
+		return ply:VoiceVolume()
+	end,
 }
 
 usermessage.Hook("pac_proxy", function(umr)
