@@ -16,6 +16,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Color", Vector(255, 255, 255))
 	pac.GetSet(PART, "Brightness", 1)
 	pac.GetSet(PART, "CellShade", 0)
+	pac.GetSet(PART, "LightBlend", 1)
 	pac.GetSet(PART, "Alpha", 1)
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
 	pac.GetSet(PART, "Size", 1)
@@ -76,7 +77,7 @@ function PART:OnShow()
 	local owner = self:GetOwner()
 	local ent = self:GetEntity()
 	
-	if ent:IsValid() and owner:IsValid() then
+	if ent:IsValid() and owner:IsValid() and owner ~= ent then
 		ent:SetPos(owner:EyePos())
 		ent:SetParent(owner)
 		ent:SetOwner(owner)
@@ -192,7 +193,22 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		end
 
 		if self.Colorf then 
-			render_SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness) 
+			local r, g, b = self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness
+
+			if self.LightBlend ~= 1 then
+				local 
+				v = render.GetLightColor(pos) * self.LightBlend
+				r = r * v.r
+				g = g * v.g
+				b = b * v.b
+				
+				v = render.GetAmbientLightColor(pos) * self.LightBlend
+				r = r * v.r
+				g = g * v.g
+				b = b * v.b
+			end
+			
+			render_SetColorModulation(r,g,b) 
 		else
 			self:SetColor(self:GetColor())
 		end
