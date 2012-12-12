@@ -38,9 +38,13 @@ PART.ShaderParams =
 	EnvMap = "ITexture",
 	EnvMapMask = "ITexture",
 	EnvMapTint = "Vector",
-	EnvMapContrast = "number",
-	EnvMapSaturation = "Vector",
 	EnvMapMode = "number",
+	EnvMapContrast = "number",
+	EnvMapMaskScale = "number",
+	EnvMapSaturation = "Vector",
+	NormalMapAlphaEnvMapMask = "boolean",
+	BaseAlphaEnvMapMask = "boolean",
+	Selfillum_EnvMapMask_Alpha = "number",
 	
 	AmbientOcclusion = "boolean",
 	AmbientOcclusionColor = "Vector",
@@ -52,17 +56,42 @@ PART.ShaderParams =
 	ColorTint_Tmp = "Vector",
 	Color = "Vector",
 	Color2 = "Vector",
+
 	
-	--[[Selfillum = "boolean",
+	HalfLambert = "boolean",
+	
+	-- feature bloat?
+--[[
+	
+	Selfillum = "boolean",
 	SelillumTint = "Vector",
 	SelfillumMask = "ITexture",
 	Selfillum_Envmapmask_Alpha = "ITexture",
 	SelfillumFresnel = "boolean",
-	SelfillumFresnlenMinMaxExp = "Vector",]]
+	SelfillumFresnlenMinMaxExp = "Vector",
+
+ 	FleshInteriorEnabled = "boolean", --"0", "Enable Flesh interior blend pass" )
+	FleshInteriorTexture = "ITexture", --"", "Flesh color texture" )
+	FleshInteriorNoiseTexture = "ITexture", --"", "Flesh noise texture" )
+	FleshBorderTexture1D = "ITexture", --"", "Flesh border 1D texture" )
+	FleshNormalTexture = "ITexture", --"", "Flesh normal texture" )
+	FleshSubsurfaceTexture = "ITexture", --"", "Flesh subsurface texture" )
+	FleshCubeTexture = "ITexture", --"", "Flesh cubemap texture" )
+	FleshBorderNoiseScale = "number", --"1.5", "Flesh Noise UV scalar for border" )
+	FleshDebugForceFleshOn = "boolean", --"0", "Flesh Debug full flesh" )
+	--FleshEFFECTCENTERRADIUS1, SHADER_PARAM_TYPE_VEC4, "[0 0 0 0.001]", "Flesh effect center and radius" )
+	--FleshEFFECTCENTERRADIUS2, SHADER_PARAM_TYPE_VEC4, "[0 0 0 0.001]", "Flesh effect center and radius" )
+	--FleshEFFECTCENTERRADIUS3, SHADER_PARAM_TYPE_VEC4, "[0 0 0 0.001]", "Flesh effect center and radius" )
+	--FleshEFFECTCENTERRADIUS4, SHADER_PARAM_TYPE_VEC4, "[0 0 0 0.001]", "Flesh effect center and radius" )
+	FleshSubsurfaceTint = "Vector", --"[1 1 1]", "Subsurface Color" )
+	FleshBorderWidth = "number", --"0.3", "Flesh border" )
+	FleshBorderSoftness = "number", --"0.42", "Flesh border softness (> 0.0 && <= 0.5)" )
+	FleshBorderTint = "Vector", --"[1 1 1]", "Flesh border Color" )
+	FleshGlobalOpacity = "number", --"1.0", "Flesh global opacity" )
+	FleshGlossBrightness = "number", --"0.66", "Flesh gloss brightness" )
+	FleshScrollSpeed = "number", --"1.0", "Flesh scroll speed" )
 	
-	HalfLambert = "boolean",
-	
-	--[[EmissiveBlendEnabled = "boolean",
+	EmissiveBlendEnabled = "boolean",
 	EmissiveBlendTexture = "ITexture",
 	EmissiveBlendBaseTexture = "ITexture",
 	EmissiveBlendFlowTexture = "ITexture",

@@ -154,6 +154,30 @@ PART.Inputs =
 		
 		return ply:VoiceVolume()
 	end,
+	
+	light_amount_r = function(self, parent)
+		parent = parent.Parent
+		
+		if parent:IsValid() then
+			return render.GetAmbientLightColor(parent.cached_pos) * render.GetLightColor(parent.cached_pos).r
+		end
+	end,	
+	
+	light_amount_g = function(self, parent)
+		parent = parent.Parent
+		
+		if parent:IsValid() then
+			return render.GetAmbientLightColor(parent.cached_pos) * render.GetLightColor(parent.cached_pos).g
+		end
+	end,	
+	
+	light_amount_b = function(self, parent)
+		parent = parent.Parent
+		
+		if parent:IsValid() then
+			return render.GetAmbientLightColor(parent.cached_pos) * render.GetLightColor(parent.cached_pos).b
+		end
+	end,
 }
 
 usermessage.Hook("pac_proxy", function(umr)
