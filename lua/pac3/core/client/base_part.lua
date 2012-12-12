@@ -31,7 +31,6 @@ pac.StartStorableVars()
 	
 	pac.SetupPartName(PART, "AimPart")
 	pac.SetupPartName(PART, "Parent")
-	
 pac.EndStorableVars()
 
 function PART:PreInitialize()

@@ -56,6 +56,16 @@ function pace.IsActive()
 	return pace.Active == true
 end
 
+local basic_mode = CreateConVar("pac_basic_mode", #table.Merge(table.Merge(file.Find("pac3/*", "DATA")), table.Merge(file.Find("pac3/sessions/*", "DATA"))) == 0 and "1" or "0" )
+
+function pace.IsInBasicMode()
+	return basic_mode:GetBool()
+end
+
+function pace.ToggleBasicMode()
+	RunConsoleCommand("pac_basic_mode", basic_mode:GetBool() and "0" or "1")
+end
+
 concommand.Add("pac_editor", function()
 	pace.Panic()
 	----include("autorun/pac_init.lua")

@@ -1,37 +1,66 @@
-pace.Fonts = 
-{
-	"DermaDefault",
-	"Default",
-	"BudgetLabel",
-	"DefaultSmallDropShadow",
-	"DefaultBold",
-	"TabLarge",
-	"DefaultFixedOutline",
-	"ChatFont",
-	"DefaultFixedDropShadow",
-	"UiBold",
-}
-
-for i = 1, 5 do
-	surface.CreateFont("pac_font_"..i, 
+do -- advanced mode
+	pace.BasicParts = 
 	{
-		font = "Tahoma",
-		size = 11 + i,
-		weight = 50,
-		antialias = true,
-	})
-	table.insert(pace.Fonts, i, "pac_font_"..i)
+		model = true,
+		light = true,
+		sprite = true,
+		bone = true,
+	}
+	
+	pace.BasicProperties = 
+	{
+		Position = true,
+		Angles = true,
+		Size = true,
+		ParentName = true,
+		Alpha = true,
+		Color = true,
+		Skin = true,
+		Material = true,
+		Name = true,
+		Description = true,
+		Hide = true,
+		SpritePath = true,
+		Brightness = true,
+	}
 end
 
-pace.ShadowedFonts = 
-{
-	["BudgetLabel"] = true,
-	["DefaultSmallDropShadow"] = true,
-	["TabLarge"] = true,
-	["DefaultFixedOutline"] = true,
-	["ChatFont"] = true,
-	["DefaultFixedDropShadow"] = true,
-}
+do -- fonts
+	pace.Fonts = 
+	{
+		"DermaDefault",
+		"Default",
+		"BudgetLabel",
+		"DefaultSmallDropShadow",
+		"DefaultBold",
+		"TabLarge",
+		"DefaultFixedOutline",
+		"ChatFont",
+		"DefaultFixedDropShadow",
+		"UiBold",
+	}
+
+	for i = 1, 5 do
+		surface.CreateFont("pac_font_"..i, 
+		{
+			font = "Tahoma",
+			size = 11 + i,
+			weight = 50,
+			antialias = true,
+		})
+		table.insert(pace.Fonts, i, "pac_font_"..i)
+	end
+
+	pace.ShadowedFonts = 
+	{
+		["BudgetLabel"] = true,
+		["DefaultSmallDropShadow"] = true,
+		["TabLarge"] = true,
+		["DefaultFixedOutline"] = true,
+		["ChatFont"] = true,
+		["DefaultFixedDropShadow"] = true,
+	}
+end
 
 pace.PartIcons =
 {
@@ -153,19 +182,6 @@ pace.PropertyOrder =
 	"AmbientOcclusionColor",	
 }
 
-
-pace.HiddenProperties =
-{
-	Arguments = true,
-}
-
-pace.HiddenPropertyKeys =
-{
-	EditorExpand = true,
-	UniqueID = true,
-	OwnerName = "group",
-}
-
 pace.PropertyLimits = 
 {
 	Sequence = function(self, num)
@@ -249,34 +265,34 @@ pace.PropertyLimits =
 	end,
 }
 
+pace.HiddenProperties =
+{
+	Arguments = true,
+}
+
+pace.HiddenPropertyKeys =
+{
+	EditorExpand = true,
+	UniqueID = true,
+	OwnerName = "group",
+}
+
+
 function pace.TranslatePropertiesKey(key, obj)
 	local key_ = key
 	key = key:lower()
 	
-	if key == "bone" then
+	if 
+		key == "bone" or 
+		key == "model" or
+		key == "event" or
+		key == "operator" or
+		key == "arguments" or
+		key == "ownername"
+	then
 		return key
 	end
-	
-	if key == "model" then
-		return key
-	end
-	
-	if key == "event" then
-		return key
-	end
-	
-	if key == "operator" then
-		return key
-	end	
-	
-	if key == "arguments" then
-		return key
-	end	
-	
-	if key == "ownername" then
-		return key
-	end	
-	
+
 	if key == "function" and obj.ClassName == "proxy" then
 		return "proxyfunctions"
 	end
