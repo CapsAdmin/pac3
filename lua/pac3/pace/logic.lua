@@ -389,6 +389,15 @@ function pace.OnOpenMenu()
 		pace.RefreshTree()
 	end)
 	menu:AddSpacer()
+	menu:AddOption(L"toggle basic mode", function()
+		pace.ToggleBasicMode()
+		if pace.Editor and pace.Editor:IsValid() then
+			pace.CloseEditor()
+			timer.Simple(0.1, function()
+				pace.OpenEditor()
+			end)
+		end
+	end)
 	menu:AddOption(L"toggle t pose", function()
 		pace.SetTPose(not pace.GetTPose())
 	end)
@@ -465,6 +474,7 @@ local function add_parts(menu)
 	local temp = {}
 	
 	for class_name, tbl in pairs(pac.GetRegisteredParts()) do
+		if pace.IsInBasicMode() and not pace.BasicParts[class_name] then continue end
 		if not tbl.Internal then
 			table.insert(temp, class_name)
 		end
@@ -475,7 +485,7 @@ local function add_parts(menu)
 	for _, class_name in pairs(temp) do
 		menu:AddOption(L(class_name), function()
 			pace.Call("CreatePart", class_name)
-		end)--:SetImage(pace.PartIcons[class_name])
+		end):SetImage(pace.PartIcons[class_name])
 	end
 end
 

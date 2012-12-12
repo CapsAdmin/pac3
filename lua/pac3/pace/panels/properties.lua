@@ -168,6 +168,8 @@ do -- list
 		for pos, data in pairs(tbl) do
 			local key, val = data.key, data.val
 			
+			if pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
+			
 			local pnl
 			local T = (pace.TranslatePropertiesKey(key, obj) or type(val)):lower()
 			
