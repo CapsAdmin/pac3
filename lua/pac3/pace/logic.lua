@@ -518,7 +518,7 @@ function pace.OnMenuBarPopulate(bar)
 			menu:AddOption(L"wear", function() pace.WearSession() end)
 			local clear = menu:AddSubMenu(L"clear", function() end)
 			clear.GetDeleteSelf = function() return false end
-			clear:AddOption(L"OK", function() pac.ClearSession() end)
+			clear:AddOption(L"OK", function() pace.ClearSession() end)
 		menu:AddSpacer()
 			menu:AddOption(L"help", function() pace.ShowWiki() end)
 			menu:AddOption(L"exit", function() pace.CloseEditor() end)
@@ -563,7 +563,7 @@ function pace.OnOpenMenu()
 		menu:AddOption(L"save session", function() pace.SaveSession() end)
 		menu:AddOption(L"load session", function() pace.LoadSession() end)
 		menu:AddOption(L"wear session", function() pace.WearSession() end)
-		menu:AddSubMenu(L"clear session", function()end):AddOption(L"OK", function() pac.ClearSession() end)
+		menu:AddSubMenu(L"clear session", function()end):AddOption(L"OK", function() pace.ClearSession() end)
 		
 	menu:AddSpacer()
 		
