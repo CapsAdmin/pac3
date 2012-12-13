@@ -152,20 +152,18 @@ else
 	end)
 end
 
-function pac.PlayerInitialSpawn(ply)
-	timer.Simple(1, function()
-		if ply:IsPlayer() then
-			for id, outfits in pairs(pac.Parts) do
-				local owner = (player.GetByUniqueID(id) or NULL)
-				-- is valid is lying??
-				if id == false or owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
-                    for key, outfit in pairs(outfits) do
-						pac.SubmitPart(outfit, ply)
-					end
+function pac.RequestOutfits(ply)
+	if ply:IsValid() and not ply.pac_requested_outfits then
+		for id, outfits in pairs(pac.Parts) do
+			local owner = (player.GetByUniqueID(id) or NULL)
+			if id == false or owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
+				for key, outfit in pairs(outfits) do
+					pac.SubmitPart(outfit, ply)
 				end
 			end
 		end
-	end)
+		ply.pac_requested_outfits = true
+	end
 end
 
-pac.AddHook("PlayerInitialSpawn")
+concommand.Add("pac_request_outfits", pac.RequestOutfits)
