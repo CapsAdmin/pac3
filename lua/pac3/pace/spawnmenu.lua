@@ -96,6 +96,21 @@ function pace.ClientOptionsMenu(pnl)
 	)	
 end
 
+list.Set(
+	"DesktopWindows", 
+	"PACEditor",
+	{
+		title           = "PAC Editor",
+		icon            = "icon64/playermodel.png",
+		width           = 960,
+		height          = 700,
+		onewindow       = true,
+		init            = function()
+			pace.OpenEditor()
+		end
+	}
+)
+
 hook.Add("PopulateToolMenu", "pac3_spawnmenu", function()
 	spawnmenu.AddToolMenuOption(
 		"Options", 

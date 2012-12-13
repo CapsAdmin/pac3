@@ -338,6 +338,19 @@ function pace.LoadSession(name, append)
 	end
 end
 
+function pace.WearSession()
+	for key, part in pairs(pac.GetParts(true)) do
+		if not part:HasParent() then
+			pac.SendPartToServer(part)
+		end
+	end
+end
+
+function pace.ClearSession()
+	pac.RemoveAllParts(true, true)
+	pace.RefreshTree()
+end
+
 hook.Add("InitPostEntity", "pace_autoload_session", function()	
 	timer.Simple(5, function()
 		pace.LoadSession("autoload")
@@ -366,90 +379,63 @@ function pace.SetFont(fnt)
 	end
 end
 
+function pace.ToggleCameraFollow()
+	local c = GetConVar("pac_camera_follow_entity")
+	RunConsoleCommand("pac_camera_follow_entity", c:GetBool() and "0" or "1")
+end
+
 pace.SetFont()
 
-function pace.OnOpenMenu()
-	local menu = DermaMenu()
-	menu:SetPos(gui.MousePos())
-	menu:AddOption(L"save session", function()
-		pace.SaveSession()
-	end)
-	menu:AddOption(L"load session", function()
-		pace.LoadSession()
-	end)
-	menu:AddOption(L"wear session", function()
-		for key, part in pairs(pac.GetParts(true)) do
-			if not part:HasParent() then
-				pac.SendPartToServer(part)
-			end
-		end
-	end)
-	menu:AddSubMenu(L"clear session", function()end):AddOption(L"OK", function() 
-		pac.RemoveAllParts(true, true)
-		pace.RefreshTree()
-	end)
-	menu:AddSpacer()
-	menu:AddOption(L"toggle basic mode", function()
-		pace.ToggleBasicMode()
-		if pace.Editor and pace.Editor:IsValid() then
-			pace.CloseEditor()
-			timer.Simple(0.1, function()
-				pace.OpenEditor()
-			end)
-		end
-	end)
-	menu:AddOption(L"toggle t pose", function()
-		pace.SetTPose(not pace.GetTPose())
-	end)
-	menu:AddOption(L"toggle focus", function()
-		pace.Call("ToggleFocus")
-		chat.AddText("[pac3] \"ctrl + e\" to get the editor focus back")
-	end)
-	menu:AddOption(L"toggle camera follow", function()
-		local c = GetConVar("pac_camera_follow_entity")
-		RunConsoleCommand("pac_camera_follow_entity", c:GetBool() and "0" or "1")
-	end)
-	menu:AddOption(L"reset eye angles", function()
-		local ent = pace.GetViewEntity()
-		if ent:IsValid() then
-			if ent:IsPlayer() then
-				
-				RunConsoleCommand("+forward")
-				timer.Simple(0, function() 
-					RunConsoleCommand("-forward") 
+function pace.ResetEyeAngles()
+	local ent = pace.GetViewEntity()
+	if ent:IsValid() then
+		if ent:IsPlayer() then
+			
+			RunConsoleCommand("+forward")
+			timer.Simple(0, function() 
+				RunConsoleCommand("-forward") 
+				timer.Simple(0.1, function()
+					RunConsoleCommand("+back")
+					timer.Simple(0.015, function() 
+						RunConsoleCommand("-back")
+					end)
 				end)
-				
-				ent:SetEyeAngles(Angle(0, 0, 0))
-			else
-				ent:SetAngles(Angle(0, 0, 0))
-			end
-		
-			ent:SetupBones()
+			end)
+			
+			ent:SetEyeAngles(Angle(0, 0, 0))
+		else
+			ent:SetAngles(Angle(0, 0, 0))
 		end
-	end)
-	menu:AddOption(L"reset view", function()
-		pace.ResetView()
-	end)
-	menu:AddSpacer()
-		
-	local langmenu = menu:AddSubMenu(L"language")
-	langmenu:AddOption("english", function()
+	
+		ent:SetupBones()
+	end
+end
+function pace.AddLanguagesToMenu(menu)
+	local menu = menu:AddSubMenu(L"language")
+	menu.GetDeleteSelf = function() return false end
+	menu:AddOption("english", function()
 		pace.SetLanguage("english")
 	end)
 	
 	for key, val in pairs(file.Find("pac3/pace/translations/*", "LUA")) do
 		val = val:gsub("%.lua", "")
-		langmenu:AddOption(val, function()
+		menu:AddOption(val, function()
 			pace.SetLanguage(val)
 		end)
 	end
+end
+
+function pace.AddFontsToMenu(menu)
+	local menu = menu:AddSubMenu(L"font")
+	menu.GetDeleteSelf = function() return false end
 	
-	local fontmenu = menu:AddSubMenu(L"font")
 	for key, val in pairs(pace.Fonts) do
-		fontmenu:AddOption(val, function()
+		menu:AddOption(val, function()
 			pace.SetFont(val)
 		end)
-		local pnl = fontmenu.Items and fontmenu.Items[#fontmenu.Items]
+		
+		local pnl = menu.Items and menu.Items[#menu.Items]
+		
 		if pnl and pnl:IsValid() then
 			pnl:SetFont(val)
 			if pace.ShadowedFonts[val] then
@@ -459,12 +445,64 @@ function pace.OnOpenMenu()
 			end
 		end
 	end
+end
+
+
+function pace.OnMenuBarPopulate(bar)
+	local menu = bar:AddMenu("pac")
+			menu:AddOption(L"save", function() pace.SaveSession() end)
+			menu:AddOption(L"load", function() pace.LoadSession() end)
+			menu:AddOption(L"wear", function() pace.WearSession() end)
+			local clear = menu:AddSubMenu(L"clear", function() end)
+			clear.GetDeleteSelf = function() return false end
+			clear:AddOption(L"OK", function() pac.ClearSession() end)
+		menu:AddSpacer()
+			menu:AddOption(L"help", function() pace.ShowWiki() end)
+			menu:AddOption(L"exit", function() pace.CloseEditor() end)
 	
+	local menu = bar:AddMenu(L"view")
+		menu:AddOption(L"hide editor", function() pace.Call("ToggleFocus") chat.AddText("[pac3] \"ctrl + e\" to get the editor back") end)
+		menu:AddCVar(L"camera follow", "pac_camera_follow_entity", "1", "0")
+		menu:AddOption(L"reset view position", function() pace.ResetView() end)
+
+	local menu = bar:AddMenu(L"options")
+		menu:AddCVar(L"advanced mode", "pac_basic_mode", "0", "1").DoClick = function() pace.ToggleBasicMode() end
+		pace.AddLanguagesToMenu(menu)
+		pace.AddFontsToMenu(menu)
+		
+	local menu = bar:AddMenu(L"player")
+		menu:AddCVar(L"t pose").OnChecked = function(s, b) pace.SetTPose(b) end
+		menu:AddOption(L"reset eye angles", function() pace.ResetEyeAngles() end)
+		
+	bar:RequestFocus(true)
+end
+
+function pace.OnOpenMenu()
+	local menu = DermaMenu()
+	menu:SetPos(gui.MousePos())
+	
+		menu:AddOption(L"save session", function() pace.SaveSession() end)
+		menu:AddOption(L"load session", function() pace.LoadSession() end)
+		menu:AddOption(L"wear session", function() pace.WearSession() end)
+		menu:AddSubMenu(L"clear session", function()end):AddOption(L"OK", function() pac.ClearSession() end)
+		
 	menu:AddSpacer()
 		
-	menu:AddOption(L"help", function()
-		pace.ShowWiki()
-	end)
+		menu:AddOption(L"toggle basic mode", function() pace.ToggleBasicMode() end)
+		menu:AddOption(L"toggle t pose", function() pace.SetTPose(not pace.GetTPose()) end)
+		menu:AddOption(L"toggle focus", function() pace.Call("ToggleFocus") chat.AddText("[pac3] \"ctrl + e\" to get the editor focus back") end)
+		menu:AddOption(L"toggle camera follow", function() pace.ToggleCameraFollow() end)
+		menu:AddOption(L"reset eye angles", function() pace.ResetEyeAngles() end)
+		menu:AddOption(L"reset view", function() pace.ResetView() end)
+		
+	menu:AddSpacer()
+		
+		pace.AddLanguagesToMenu(menu)
+		pace.AddFontsToMenu(menu)
+		
+	menu:AddSpacer()
+		
+		menu:AddOption(L"help", function() pace.ShowWiki() end)
 		
 	menu:Open()
 	menu:MakePopup()

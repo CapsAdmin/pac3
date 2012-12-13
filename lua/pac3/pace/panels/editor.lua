@@ -4,6 +4,10 @@ local PANEL = {}
 
 PANEL.ClassName = "editor"
 PANEL.Base = "DFrame"
+PANEL.menu_bar = NULL
+
+local BAR_SIZE = 17
+local enable_bar = CreateConVar("pac_enable_menubar", "1")
 
 function PANEL:Init()	
 	self:SetTitle("pac3 " .. L"editor")
@@ -22,12 +26,31 @@ function PANEL:Init()
 	self:SetBottom(pnl)
 	
 	self:SetCookieName("pac3_editor")
-	self:SetPos(self:GetCookieNumber("x"), 0)
+	self:SetPos(self:GetCookieNumber("x"), BAR_SIZE)
+		
+	if enable_bar:GetBool() then
+		local bar = vgui.Create("DMenuBar", self)
+		bar:SetSize(self:GetWide(), BAR_SIZE)
+		pace.Call("MenuBarPopulate", bar)
+	
+		self.menu_bar = bar
+		
+		self:DockMargin(2,2,2,2)
+		self:DockPadding(2,2,2,2)
+	end
+end
+
+function PANEL:OnRemove()
+	if self.menu_bar:IsValid() then
+		self.menu_bar:Remove()
+	end
 end
 
 function PANEL:Think(...)
 	DFrame.Think(self, ...)
-	
+
+	local bar = self.menu_bar
+		
 	self:SetTall(ScrH())
 	local w = math.max(self:GetWide(), 200)
 	self:SetWide(w)
@@ -43,10 +66,10 @@ end
 
 function PANEL:PerformLayout()
 	DFrame.PerformLayout(self)
-		
-	self.div:SetTopHeight(ScrH() - self.bottom:GetHeight() - 30)
-	self.div:InvalidateLayout()
+
+	self.div:SetTopHeight(ScrH() - self.bottom:GetHeight() - BAR_SIZE + 2)
 	
+	self.div:InvalidateLayout()
 end
 
 function PANEL:SetTop(pnl)
@@ -72,7 +95,6 @@ function pace.GainFocus()
 			self:MakePopup()
 			pace.Focused = true
 			self:AlphaTo(255, 0.1, 0)
-			self:MoveTo(self:GetCookieNumber("x") or 0, self:GetCookieNumber("y") or 0, 0.1, 0)
 		end
 	end
 end
@@ -86,7 +108,7 @@ function pace.KillFocus()
 		gui.EnableScreenClicker(false)
 		pace.Focused = false
 		self:AlphaTo(0, 0.1, 0)
-		
+				
 		self.allowclick = false
 
 		timer.Simple(0.2, function()
