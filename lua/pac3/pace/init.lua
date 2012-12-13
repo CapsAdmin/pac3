@@ -40,7 +40,9 @@ function pace.OpenEditor()
 	end
 	
 	RunConsoleCommand("pac_in_editor", "1")
-				
+	
+	pace.DisableExternalHooks()
+	
 	pace.Call("OpenEditor")
 end
 
@@ -53,6 +55,40 @@ function pace.CloseEditor()
 	end
 	
 	RunConsoleCommand("pac_in_editor", "0")
+	
+	pace.RestoreExternalHooks()
+end
+
+pace.ExternalHooks = 
+{
+	"CalcView",
+	"ShouldDrawLocalPlayer",
+}
+
+function pace.DisableExternalHooks()
+	for _, event in pairs(pace.ExternalHooks) do
+		local hooks = hook.GetTable()[event]
+
+		if hooks then
+			pace.OldHooks = pace.OldHooks or {}
+			pace.OldHooks[event] = pace.OldHooks[event] or {}
+			pace.OldHooks[event] = table.Copy(hooks)
+
+			for name in pairs(hooks) do
+				hook.Remove(event, name)
+			end
+		end
+	end
+end
+
+function pace.RestoreExternalHooks()
+	if pace.OldHooks then
+		for event, hooks in pairs(pace.OldHooks) do
+			for name, func in pairs(hooks) do
+				hook.Add(event, name, func)
+			end
+		end
+	end
 end
 
 function pace.IsActive()
