@@ -229,9 +229,10 @@ function pace.SaveSession(name)
 		Derma_StringRequest(
 			L"save session",
 			L"filename:",
-			"autoload",
+			pace.LastSaveName or "autoload",
 
 			function(name)
+				pace.LastSaveName = name
 				pace.SaveSession(name)
 			end
 		)
@@ -447,11 +448,73 @@ function pace.AddFontsToMenu(menu)
 	end
 end
 
+function pace.GetOutfits()
+	local out = {}
+	
+	for i, name in pairs(file.Find("pac3/sessions/*", "DATA")) do
+		if name:find("%.txt") then
+			local outfit = "pac3/sessions/" .. name
+			if file.Exists(outfit, "DATA") then
+				local data = {}
+					data.Name = name:gsub("%.txt", "")
+					data.FileName = name
+					data.Size = string.NiceSize(file.Size(outfit, "DATA"))
+					data.LastModified = os.date("%m/%d/%Y %H:%M", file.Time(outfit, "DATA"))
+				table.insert(out, data)
+			end
+		end
+	end
+	
+	return out
+end
+
+function pace.AddOutfitsToMenu(menu)
+	menu.GetDeleteSelf = function() return false end
+	for key, data in pairs(pace.GetOutfits()) do
+		local menu = menu:AddSubMenu(data.Name, function() pace.LoadSession(data.FileName) end)
+		menu.GetDeleteSelf = function() return false end
+		menu:AddOption(L"rename", function()
+			Derma_StringRequest(L"rename", L"type the new name:", data.Name, function(text)
+				
+				local c = file.Read(data.FileName)
+				file.Delete(data.FileName, "DATA")
+				file.Write(data.FileName, c, "DATA")
+			end)
+		end)
+		
+		local clear = menu:AddSubMenu(L"delete", function() end)
+		clear.GetDeleteSelf = function() return false end
+		clear:AddOption(L"OK", function() file.Delete("pac3/sessions/" .. data.FileName, "DATA") end)
+	end
+end
+
+function pace.AddToolsToMenu(menu)
+	menu.GetDeleteSelf = function() return false end
+	for key, data in pairs(pace.Tools) do
+		if #data.suboptions > 0 then
+			local menu = menu:AddSubMenu(data.name)
+			menu.GetDeleteSelf = function() return false end
+			for key, option in pairs(data.suboptions) do
+				menu:AddOption(option, function() 
+					if pace.current_part:IsValid() then
+						data.callback(pace.current_part, key) 
+					end
+				end)
+			end
+		else
+			menu:AddOption(data.name, function() 
+				if pace.current_part:IsValid() then
+					data.callback(pace.current_part) 
+				end
+			end)
+		end
+	end
+end
 
 function pace.OnMenuBarPopulate(bar)
 	local menu = bar:AddMenu("pac")
 			menu:AddOption(L"save", function() pace.SaveSession() end)
-			menu:AddOption(L"load", function() pace.LoadSession() end)
+			pace.AddOutfitsToMenu(menu:AddSubMenu(L"load", function() pace.LoadSession() end))		
 			menu:AddOption(L"wear", function() pace.WearSession() end)
 			local clear = menu:AddSubMenu(L"clear", function() end)
 			clear.GetDeleteSelf = function() return false end
@@ -467,12 +530,28 @@ function pace.OnMenuBarPopulate(bar)
 
 	local menu = bar:AddMenu(L"options")
 		menu:AddCVar(L"advanced mode", "pac_basic_mode", "0", "1").DoClick = function() pace.ToggleBasicMode() end
+			menu:AddSpacer()
+				menu:AddOption(L"position grid size", function()
+					Derma_StringRequest(L"position grid size", L"size in units:", GetConVarNumber("pac_grid_pos_size"), function(val) 
+						RunConsoleCommand("pac_grid_pos_size", val)
+					end)
+				end)
+				menu:AddOption(L"angles grid size", function()
+					Derma_StringRequest(L"angles grid size", L"size in degrees:", GetConVarNumber("pac_grid_ang_size"), function(val) 
+						RunConsoleCommand("pac_grid_ang_size", val)
+					end) 
+				end)
+			menu:AddSpacer()
 		pace.AddLanguagesToMenu(menu)
 		pace.AddFontsToMenu(menu)
 		
 	local menu = bar:AddMenu(L"player")
 		menu:AddCVar(L"t pose").OnChecked = function(s, b) pace.SetTPose(b) end
-		menu:AddOption(L"reset eye angles", function() pace.ResetEyeAngles() end)
+		menu:AddOption(L"reset eye angles", function() pace.ResetEyeAngles() end)		
+		menu:AddCVar(L"physical player size", "pac_allow_server_size", "1", "0")
+		
+	local menu = bar:AddMenu(L"tools")
+		pace.AddToolsToMenu(menu)
 		
 	bar:RequestFocus(true)
 end
@@ -559,18 +638,6 @@ function pace.OnPartMenu(obj)
 	menu:AddOption(L"clone", function()
 		obj:Clone()
 	end)
-		
-	local tools = menu:AddSubMenu(L"tools")
-	for key, data in pairs(pace.Tools) do
-		if #data.suboptions > 0 then
-			local menu = tools:AddSubMenu(data.name)
-			for key, option in pairs(data.suboptions) do
-				menu:AddOption(option, function() data.callback(obj, key) end)
-			end
-		else
-			tools:AddOption(data.name, function() data.callback(obj) end)
-		end
-	end
 	
 	menu:AddSpacer()
 
