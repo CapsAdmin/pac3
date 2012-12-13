@@ -24,10 +24,12 @@ function pace.OpenEditor()
 	if hook.Call("PrePACEditorOpen", GAMEMODE, LocalPlayer()) == false then return end
 	
 	pace.SetLanguage()
+	
 	local editor = pace.CreatePanel("editor")
 		editor:SetSize(240, ScrH())
 		editor:MakePopup()
 		editor.Close = function() 
+			editor:OnRemove()
 			pace.CloseEditor()
 		end
 	pace.Editor = editor
@@ -37,19 +39,20 @@ function pace.OpenEditor()
 		ctp:Disable()
 	end
 	
-	RunConsoleCommand("pac_in_editor", 1)
-	
+	RunConsoleCommand("pac_in_editor", "1")
+				
 	pace.Call("OpenEditor")
 end
 
 function pace.CloseEditor()
 	if pace.Editor:IsValid() then
+		pace.Editor:OnRemove()
 		pace.Call("CloseEditor") 
 		pace.Editor:Remove() 
 		pace.Active = false
 	end
 	
-	RunConsoleCommand("pac_in_editor", 0)
+	RunConsoleCommand("pac_in_editor", "0")
 end
 
 function pace.IsActive()
@@ -64,6 +67,12 @@ end
 
 function pace.ToggleBasicMode()
 	RunConsoleCommand("pac_basic_mode", basic_mode:GetBool() and "0" or "1")
+	if pace.Editor and pace.Editor:IsValid() then
+		pace.CloseEditor()
+		timer.Simple(0.1, function()
+			pace.OpenEditor()
+		end)
+	end
 end
 
 concommand.Add("pac_editor", function()
@@ -82,6 +91,7 @@ function pace.Call(str, ...)
 end
 
 function pace.Panic()
+	pace.CloseEditor()
 	for key, pnl in pairs(pace.ActivePanels) do
 		if pnl:IsValid() then
 			pnl:Remove()
