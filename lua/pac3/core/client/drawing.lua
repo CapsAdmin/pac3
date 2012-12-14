@@ -95,7 +95,7 @@ local radius
 
 local dst
 
-function pac.PostDrawTranslucentRenderables(bool1, bool2)
+function pac.PostDrawOpaqueRenderables(bool1, bool2)
 	if bool2 then return end
 	if SKIP_DRAW then return end
 	if not cvar_enable:GetBool() then
@@ -169,7 +169,7 @@ function pac.PostDrawTranslucentRenderables(bool1, bool2)
 	
 	pac.CheckParts()
 end
-pac.AddHook("PostDrawTranslucentRenderables")
+pac.AddHook("PostDrawOpaqueRenderables")
 
 function pac.SwapEntityDraw(a, b)
 	for key, ent in pairs(pac.drawn_entities) do
