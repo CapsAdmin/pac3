@@ -72,13 +72,13 @@ local function StickCallback(particle, hitpos, normal)
 	end
 
 	particle:SetLifeTime(0)
-	particle:SetDieTime(particle.StickLifeTime)
+	particle:SetDieTime(particle.StickLifeTime or 0)
 
-	particle:SetStartSize(particle.StickStartSize)
-	particle:SetEndSize(particle.StickEndSize)
+	particle:SetStartSize(particle.StickStartSize or 0)
+	particle:SetEndSize(particle.StickEndSize or 0)
 
-	particle:SetStartAlpha(particle.StickStartAlpha)
-	particle:SetEndAlpha(particle.StickEndAlpha)
+	particle:SetStartAlpha(particle.StickStartAlpha or 0)
+	particle:SetEndAlpha(particle.StickEndAlpha or 0)
 end
 
 function PART:Initialize()
