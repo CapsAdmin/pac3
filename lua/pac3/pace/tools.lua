@@ -1,6 +1,29 @@
 local L = pace.LanguageString
 pace.Tools = {}
 
+function pace.AddToolsToMenu(menu)
+	menu.GetDeleteSelf = function() return false end
+	for key, data in pairs(pace.Tools) do
+		if #data.suboptions > 0 then
+			local menu = menu:AddSubMenu(data.name)
+			menu.GetDeleteSelf = function() return false end
+			for key, option in pairs(data.suboptions) do
+				menu:AddOption(option, function() 
+					if pace.current_part:IsValid() then
+						data.callback(pace.current_part, key) 
+					end
+				end)
+			end
+		else
+			menu:AddOption(data.name, function() 
+				if pace.current_part:IsValid() then
+					data.callback(pace.current_part) 
+				end
+			end)
+		end
+	end
+end
+
 function pace.AddTool(name, callback, ...)
 	for i,v in pairs(pace.Tools) do 
 		if v.name == name then

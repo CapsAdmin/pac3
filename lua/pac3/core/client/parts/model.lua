@@ -53,15 +53,6 @@ function PART:Initialize()
 	self.Entity.PACPart = self
 end
 
-function PART:GetModelBones()
-	local parent = self.Parent
-	if parent and parent.Entity:IsValid() then
-		return pac.GetModelBones(parent.Entity)
-	else
-		return pac.GetModelBones(self:GetOwner())
-	end
-end
-
 function PART:AddClipPlane(part)
 	return table.insert(self.ClipPlanes, part)
 end
@@ -581,8 +572,8 @@ function PART:OnBuildBonePositions()
 	end
 	
 	if self.BoneMergeAlternative then
-		local ent_bones = pac.GetModelBones(ent)
-		local owner_bones = pac.GetModelBones(owner)
+		local ent_bones = self:GetModelBones(ent)
+		local owner_bones = self:GetModelBones(owner)
 		
 		if ent_bones and owner_bones then
 			for friendly, ent_bone in pairs(ent_bones) do

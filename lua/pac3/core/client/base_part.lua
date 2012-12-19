@@ -124,10 +124,6 @@ do -- owner
 		
 		return self.Owner or NULL
 	end
-
-	function PART:GetOwnerModelBones()
-		return pac.GetModelBones(self:GetOwner())
-	end
 end
 
 do -- parenting
@@ -318,14 +314,14 @@ do -- bones
 		end
 	end
 
-	function PART:GetModelBones()
-		return pac.GetModelBones(self:GetOwner())
+	function PART:GetModelBones(owner)
+		return pac.GetModelBones(owner or self:GetOwner())
 	end
 
 	function PART:GetRealBoneName(name, owner)
 		owner = owner or self:GetOwner()
 		
-		local bones = pac.GetModelBones(owner)
+		local bones = self:GetModelBones(owner)
 		
 		if owner:IsValid() and bones and bones[name] then
 			return bones[name].real
@@ -365,65 +361,30 @@ do -- bones
 			return parent.pos, parent.ang
 		end
 		
-		if not self.BoneIndex then
-			self:UpdateBoneIndex(owner)
-		end
-		
-		if self.BoneIndex then
-			if parent:IsValid() and parent.ClassName ~= "group" and parent.ClassName ~= "entity" then
-				
-				local ent = parent.Entity or NULL
-				
-				if ent:IsValid() then
-					-- if the parent part is a model, get the bone position of the parent model
-					pos, ang = ent:GetBonePosition(self.BoneIndex)
-					ent:InvalidateBoneCache()
-				else
-					-- else just get the origin of the part
-					if not pos or not ang then 
-						-- unless we've passed it from parent
-						pos, ang = parent:GetDrawPosition()
-					end
-				end
-				
-			elseif owner:IsValid() then
-				-- if there is no parent, default to owner bones
-				owner:InvalidateBoneCache()
-				pos, ang = owner:GetBonePosition(idx or self.BoneIndex)
-			end
-		else
-			if owner:IsValid() then
-				-- default to owner origin until BoneIndex is ready
-				pos = owner:GetPos()
-				if owner:IsPlayer() then
-					ang = owner:EyeAngles()
-					ang.p = 0
-				else
-					ang = owner:GetAngles()
-				end
+		if parent:IsValid() and parent.ClassName ~= "group" and parent.ClassName ~= "entity" then
+			
+			local ent = parent.Entity or NULL
+			
+			if ent:IsValid() then
+				-- if the parent part is a model, get the bone position of the parent model
+				pos, ang = pac.GetBonePosAng(ent, self.Bone)
+				ent:InvalidateBoneCache()
 			else
-				pos = Vector(0,0,0)
-				ang = Angle(0,0,0)
+				-- else just get the origin of the part
+				if not pos or not ang then 
+					-- unless we've passed it from parent
+					pos, ang = parent:GetDrawPosition()
+				end
 			end
+			
+		elseif owner:IsValid() then
+			-- if there is no parent, default to owner bones
+			owner:InvalidateBoneCache()
+			pos, ang = pac.GetBonePosAng(owner, self.Bone)
 		end
 			
 		return pos, ang
 	end
-
-	function PART:UpdateBoneIndex(owner)
-		owner = owner or self:GetOwner()
-		if owner:IsValid() then
-			self.BoneIndex = owner:LookupBone(self:GetRealBoneName(self.Bone))
-			if not self.BoneIndex then
-				self.Error = "pac3 warning: " .. self.Bone .. " cannot be found on '" .. tostring(owner) .. "' \n are you sure you're using the the same model?"
-				if self.Bone ~= "head"  then
-					pac.dprint(self.Error)
-				end
-				self.TriedToFindBone = self.Bone
-			end
-		end
-	end
-
 end
 
 do -- serializing
@@ -677,11 +638,7 @@ function PART:Think()
 		if not owner.pac_bones then
 			owner:SetupBones()
 			owner:InvalidateBoneCache()
-			pac.GetModelBones(owner)
-		end
-	
-		if not self.BoneIndex and self.TriedToFindBone ~= self.Bone then
-			self:UpdateBoneIndex(owner)
+			self:GetModelBones()
 		end
 	end
 	

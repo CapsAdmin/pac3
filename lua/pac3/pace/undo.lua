@@ -1,6 +1,9 @@
 pace.UndoHistory = {}
 pace.UndoPosition = 1
 
+pace.OnUndo = pace.Undo
+pace.OnRedo = pace.Redo
+
 local last = {}
 
 function pace.CallChangeForUndo(part, key, val, delay)
