@@ -1,6 +1,31 @@
 pace.KnownGUIStrings = pace.KnownGUIStrings or {}
 pace.CurrentTranslation = {}
 
+function pace.LanguageString(val)
+	local key = val:Trim():lower()
+		
+	pace.KnownGUIStrings[key] = val
+
+	return pace.CurrentTranslation[key] or val
+end
+
+local L = pace.LanguageString
+
+function pace.AddLanguagesToMenu(menu)
+	local menu = menu:AddSubMenu(L"language")
+	menu.GetDeleteSelf = function() return false end
+	menu:AddOption("english", function()
+		pace.SetLanguage("english")
+	end)
+	
+	for key, val in pairs(file.Find("pac3/pace/translations/*", "LUA")) do
+		val = val:gsub("%.lua", "")
+		menu:AddOption(val, function()
+			pace.SetLanguage(val)
+		end)
+	end
+end
+
 function pace.GetOutputForTranslation()
 	local str = ""
 	
@@ -30,12 +55,4 @@ function pace.SetLanguage(lang)
 			pace.OpenEditor()
 		end)
 	end
-end
-
-function pace.LanguageString(val)
-	local key = val:Trim():lower()
-		
-	pace.KnownGUIStrings[key] = val
-
-	return pace.CurrentTranslation[key] or val
 end

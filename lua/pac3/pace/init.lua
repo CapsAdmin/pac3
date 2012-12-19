@@ -7,8 +7,15 @@ include("language.lua")
 include("select.lua")
 include("view.lua")
 include("config.lua")
+include("parts.lua")
+include("sessions.lua")
 include("logic.lua")
 include("undo.lua")
+include("fonts.lua")
+include("basic_mode.lua")
+include("settings.lua")
+include("shortcuts.lua")
+include("menu_bar.lua")
 
 include("mctrl.lua")
 include("screenvec.lua")
@@ -59,33 +66,45 @@ function pace.CloseEditor()
 	pace.RestoreExternalHooks()
 end
 
-pace.ExternalHooks = 
-{
-	"CalcView",
-	"ShouldDrawLocalPlayer",
-}
-
-function pace.DisableExternalHooks()
-	for _, event in pairs(pace.ExternalHooks) do
-		local hooks = hook.GetTable()[event]
-
-		if hooks then
-			pace.OldHooks = pace.OldHooks or {}
-			pace.OldHooks[event] = pace.OldHooks[event] or {}
-			pace.OldHooks[event] = table.Copy(hooks)
-
-			for name in pairs(hooks) do
-				hook.Remove(event, name)
-			end
+function pace.Panic()
+	pace.CloseEditor()
+	for key, pnl in pairs(pace.ActivePanels) do
+		if pnl:IsValid() then
+			pnl:Remove()
+			table.remove(pace.ActivePanels, key)
 		end
 	end
 end
 
-function pace.RestoreExternalHooks()
-	if pace.OldHooks then
-		for event, hooks in pairs(pace.OldHooks) do
-			for name, func in pairs(hooks) do
-				hook.Add(event, name, func)
+do -- forcing hooks
+	pace.ExternalHooks = 
+	{
+		"CalcView",
+		"ShouldDrawLocalPlayer",
+	}
+
+	function pace.DisableExternalHooks()
+		for _, event in pairs(pace.ExternalHooks) do
+			local hooks = hook.GetTable()[event]
+
+			if hooks then
+				pace.OldHooks = pace.OldHooks or {}
+				pace.OldHooks[event] = pace.OldHooks[event] or {}
+				pace.OldHooks[event] = table.Copy(hooks)
+
+				for name in pairs(hooks) do
+					hook.Remove(event, name)
+				end
+			end
+		end
+	end
+
+	function pace.RestoreExternalHooks()
+		if pace.OldHooks then
+			for event, hooks in pairs(pace.OldHooks) do
+				for name, func in pairs(hooks) do
+					hook.Add(event, name, func)
+				end
 			end
 		end
 	end
@@ -95,26 +114,8 @@ function pace.IsActive()
 	return pace.Active == true
 end
 
-local basic_mode = CreateConVar("pac_basic_mode", #table.Merge(table.Merge(file.Find("pac3/*", "DATA")), table.Merge(file.Find("pac3/sessions/*", "DATA"))) == 0 and "1" or "0" )
-
-function pace.IsInBasicMode()
-	return basic_mode:GetBool()
-end
-
-function pace.ToggleBasicMode()
-	RunConsoleCommand("pac_basic_mode", basic_mode:GetBool() and "0" or "1")
-	if pace.Editor and pace.Editor:IsValid() then
-		pace.CloseEditor()
-		timer.Simple(0.1, function()
-			pace.OpenEditor()
-		end)
-	end
-end
-
 concommand.Add("pac_editor", function()
 	pace.Panic()
-	----include("autorun/pac_init.lua")
-	--include("autorun/pace_init.lua")
 	timer.Simple(0.1, function() pace.OpenEditor() end)
 end)
 
@@ -126,27 +127,15 @@ function pace.Call(str, ...)
 	end
 end
 
-function pace.Panic()
-	pace.CloseEditor()
-	for key, pnl in pairs(pace.ActivePanels) do
-		if pnl:IsValid() then
-			pnl:Remove()
-			table.remove(pace.ActivePanels, key)
+hook.Add("HUDPaint", "pac_InPAC3Editor", function()		
+	for key, ply in pairs(player.GetAll()) do
+		if ply ~= LocalPlayer() and ply:GetNWBool("in pac3 editor") then
+			local id = ply:LookupBone("ValveBiped.Bip01_Head1")
+			local pos_3d = id and ply:GetBonePosition(id) or ply:EyePos()
+			local pos_2d = (pos_3d + Vector(0,0,10)):ToScreen()
+			draw.DrawText("In PAC3 Editor", "ChatFont", pos_2d.x, pos_2d.y, Color(255,255,255,math.Clamp((pos_3d + Vector(0,0,10)):Distance(EyePos()) * -1 + 500, 0, 500)/500*255),1)
 		end
 	end
-end
-
-do -- preview
-	hook.Add("HUDPaint", "pac_InPAC3Editor", function()		
-		for key, ply in pairs(player.GetAll()) do
-			if ply ~= LocalPlayer() and ply:GetNWBool("in pac3 editor") then
-				local id = ply:LookupBone("ValveBiped.Bip01_Head1")
-				local pos_3d = id and ply:GetBonePosition(id) or ply:EyePos()
-				local pos_2d = (pos_3d + Vector(0,0,10)):ToScreen()
-				draw.DrawText("In PAC3 Editor", "ChatFont", pos_2d.x, pos_2d.y, Color(255,255,255,math.Clamp((pos_3d + Vector(0,0,10)):Distance(EyePos()) * -1 + 500, 0, 500)/500*255),1)
-			end
-		end
-	end)
-end
+end)
 
 pace.RegisterPanels()

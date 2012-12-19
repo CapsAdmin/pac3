@@ -213,9 +213,17 @@ function PANEL:PopulateParts(node, parts, children)
 		
 			if part.newly_created then
 				part_node:SetSelected(true)
-				if part:HasParent() and part.Parent.editor_node then
-					part.Parent.editor_node:SetExpanded(true)
+				
+				local function expand(part)
+					if part:HasParent() and part.Parent.editor_node then
+						part.Parent.editor_node:SetExpanded(true)
+						expand(part.Parent)
+					end
 				end
+
+				expand(part)
+				
+				part_node:SetSelected(true)
 				part.newly_created = nil
 			else
 				part_node:SetSelected(false)

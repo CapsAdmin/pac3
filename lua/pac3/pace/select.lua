@@ -75,7 +75,7 @@ function pace.SelectBone(ent, callback)
 		local tbl = {}
 
 		for friendly, data in pairs(bones) do
-			local pos = ent:GetBonePosition(ent:LookupBone(data.real)):ToScreen()
+			local pos = pac.GetBonePosAng(ent, friendly):ToScreen()
 			if pace.DrawSelection(pos) then
 				table.insert(tbl, {pos = pos, real = data.real, friendly = friendly, dist = Vector(pos.x, pos.y, 0):Distance(Vector(x, y, 0))})
 			end

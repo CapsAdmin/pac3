@@ -61,6 +61,29 @@ function pac.GetAllBones(ent)
 			end
 		end
 		
+		for key, data in pairs(ent:GetAttachments()) do	
+			local parent_i = ent:GetParentAttachment(data.id)
+			if parent_i == -1 then
+				parent_i = nil
+			end
+			local friendly = data.name
+			
+			friendly = friendly
+			:Trim()
+			:lower()
+			:gsub("(.-)(%d+)", "%1 %2")
+		
+			tbl[friendly] =
+			{
+				friendly = friendly,
+				real = data.name,
+				id = data.id,
+				i = data.id,
+				parent_i = parent_i,
+				is_attachment = true,				
+			}
+		end
+		
 		ent.pac_bone_count = count
 	end
 
@@ -68,14 +91,67 @@ function pac.GetAllBones(ent)
 end
 
 function pac.GetModelBones(ent)
-	if not ent then debug.Trace() end
 
-	if ent:IsValid() and (not ent.pac_bones or ent:GetModel() ~= ent.pac_last_model or ent:GetBoneCount() ~= ent.pac_bone_count) then
+	if not ent.pac_bones or ent:GetModel() ~= ent.pac_last_model then
 		ent.pac_bones = pac.GetAllBones(ent)
 		ent.pac_last_model = ent:GetModel()
 	end
 
 	return ent.pac_bones
+end
+
+function pac.GetBonePosAng(ent, id, parent)
+	if not ent:IsValid() then return Vector(), Angle() end
+
+	local pos, ang
+	
+	local bones = pac.GetModelBones(ent)
+	local data = bones[id]
+	
+	if data then
+		if data.is_attachment then
+			if parent then
+				local data = ent:GetAttachment(data.parent_i)
+				
+				if not data then
+					data = ent:GetAttachment(data.id)
+				end	
+				
+				if data then
+					return data.Pos, data.Ang
+				end
+			else
+				local data = ent:GetAttachment(data.id)
+				if data then
+					return data.Pos, data.Ang
+				end
+			end
+		end
+		
+		if parent then
+			pos, ang = ent:GetBonePosition(data.parent_i)
+			if not pos or not ang then
+				pos, ang = ent:GetBonePosition(data.bone)
+			end
+		else
+			pos, ang = ent:GetBonePosition(data.bone)
+		end
+	end
+	
+	if not pos then 
+		pos = ent:GetPos() 
+	end
+	
+	if not ang then
+		if ent:IsPlayer() then
+			ang = ent:EyeAngles()
+			ang.p = 0
+		else
+			ang = ent:GetAngles()
+		end
+	end
+	
+	return pos, ang
 end
 
 local SCALE_RESET = Vector(1,1,1)

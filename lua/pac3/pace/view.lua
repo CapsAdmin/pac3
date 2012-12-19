@@ -217,41 +217,12 @@ function pace.GetTPose()
 	return pace.tposed
 end
 
-function pace.SetTPose(b)
-	if b then
-		pac.AddHook("CalcMainActivity", function(ply) 
-			if ply == LocalPlayer() then
-				return 
-					ply:LookupSequence("ragdoll"), 
-					ply:LookupSequence("ragdoll") 
-			end
-		end)
-	else
-		pac.RemoveHook("CalcMainActivity")
-	end
-	
-	pace.tposed = b
-end
+function pace.SetViewPart(part, reset_campos)	
+	pace.SetViewEntity(part:GetOwner())
 
-function pace.SetBreathing(b)
-	if b then
-		pac.AddHook("UpdateAnimation", function(ply) 
-			if ply == LocalPlayer() then
-				for k,v in pairs(reset_pose_params) do 
-					ply:SetPoseParameter(v, 0) 
-				end 
-				ply:ClearPoseParameters()
-			end
-		end)
-	else
-		pac.RemoveHook("UpdateAnimation")
-	end
-	
-	pace.breathing = b
-end
-
-function pace.GetBreathing()
-	return pace.breathing
+	if reset_campos then
+		pace.ResetView()
+	end	
 end
 
 function pac.HUDPaint()
