@@ -110,7 +110,7 @@ function pac.GetBonePosAng(ent, id, parent)
 	
 	if data then
 		if data.is_attachment then
-			if parent then
+			if parent and data.parent_i then
 				local data = ent:GetAttachment(data.parent_i)
 				
 				if not data then
@@ -128,7 +128,7 @@ function pac.GetBonePosAng(ent, id, parent)
 			end
 		end
 		
-		if parent then
+		if parent and data.parent_i then
 			pos, ang = ent:GetBonePosition(data.parent_i)
 			if not pos or not ang then
 				pos, ang = ent:GetBonePosition(data.bone)
