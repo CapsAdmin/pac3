@@ -136,6 +136,11 @@ function pac.GetBonePosAng(ent, id, parent)
 		else
 			pos, ang = ent:GetBonePosition(data.bone)
 		end
+	else
+		local id = ent:LookupBone(id)
+		if id then
+			pos, ang = ent:GetBonePosition(id)
+		end
 	end
 	
 	if not pos then 
