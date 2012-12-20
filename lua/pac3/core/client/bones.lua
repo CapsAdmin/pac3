@@ -111,19 +111,19 @@ function pac.GetBonePosAng(ent, id, parent)
 	if data then
 		if data.is_attachment then
 			if parent and data.parent_i then
-				local data = ent:GetAttachment(data.parent_i)
+				local posang = ent:GetAttachment(data.parent_i)
 				
-				if not data then
-					data = ent:GetAttachment(data.id)
+				if not posang then
+					posang = ent:GetAttachment(data.id)
 				end	
 				
-				if data then
-					return data.Pos, data.Ang
+				if posang then
+					return posang.Pos, posang.Ang
 				end
 			else
-				local data = ent:GetAttachment(data.id)
-				if data then
-					return data.Pos, data.Ang
+				local posang = ent:GetAttachment(data.id)
+				if posang then
+					return posang.Pos, posang.Ang
 				end
 			end
 		end
