@@ -61,27 +61,30 @@ function pac.GetAllBones(ent)
 			end
 		end
 		
-		for key, data in pairs(ent:GetAttachments()) do	
-			local parent_i = ent:GetParentAttachment(data.id)
-			if parent_i == -1 then
-				parent_i = nil
-			end
-			local friendly = data.name
+		local tbl = ent:GetAttachments()
+		if tbl then
+			for key, data in pairs(tbl) do	
+				local parent_i = ent:GetParentAttachment(data.id)
+				if parent_i == -1 then
+					parent_i = nil
+				end
+				local friendly = data.name or "????"
+				
+				friendly = friendly
+				:Trim()
+				:lower()
+				:gsub("(.-)(%d+)", "%1 %2")
 			
-			friendly = friendly
-			:Trim()
-			:lower()
-			:gsub("(.-)(%d+)", "%1 %2")
-		
-			tbl[friendly] =
-			{
-				friendly = friendly,
-				real = data.name,
-				id = data.id,
-				i = data.id,
-				parent_i = parent_i,
-				is_attachment = true,				
-			}
+				tbl[friendly] =
+				{
+					friendly = friendly,
+					real = data.name or "?????",
+					id = data.id,
+					i = data.id,
+					parent_i = parent_i,
+					is_attachment = true,				
+				}
+			end
 		end
 		
 		ent.pac_bone_count = count
