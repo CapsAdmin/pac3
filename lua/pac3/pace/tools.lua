@@ -39,15 +39,7 @@ pace.AddTool(L"scale this and children", function(part, suboption)
 		scale = tonumber(scale)
 		
 		if scale and part:IsValid() then
-			if part.SetPosition then 
-				part:SetPosition(part:GetPosition() * scale)
-			end 
-					
-			if part.SetSize then 
-				part:SetSize(part:GetSize() * scale) 
-			end 
-					
-			for _, part in pairs(part:GetChildren()) do 
+			local function scale_parts(part, scale)
 				if part.SetPosition then 
 					part:SetPosition(part:GetPosition() * scale)
 				end 
@@ -55,7 +47,13 @@ pace.AddTool(L"scale this and children", function(part, suboption)
 				if part.SetSize then 
 					part:SetSize(part:GetSize() * scale) 
 				end 
-			end		
+						
+				for _, part in pairs(part:GetChildren()) do 
+					scale_parts(part, scale)
+				end
+			end
+			
+			scale_parts(part, scale)
 		end			
 	end)
 end)
