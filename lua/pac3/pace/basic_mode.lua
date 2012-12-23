@@ -9,6 +9,7 @@ pace.BasicParts =
 pace.BasicProperties = 
 {
 	Position = true,
+	Model = true,
 	Angles = true,
 	Size = true,
 	ParentName = true,
