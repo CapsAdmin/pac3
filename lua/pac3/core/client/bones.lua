@@ -105,7 +105,14 @@ end
 
 function pac.GetBonePosAng(ent, id, parent)
 	if not ent:IsValid() then return Vector(), Angle() end
-
+	
+	if ent:IsPlayer() and not ent:Alive() then
+		local rag = ent:GetRagdollEntity() or NULL
+		if rag:IsValid() then
+			ent = rag
+		end
+	end
+		
 	local pos, ang
 	
 	local bones = pac.GetModelBones(ent)
