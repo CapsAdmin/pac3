@@ -16,6 +16,10 @@ function NULL:IsValid()
 end
 
 function NULL:__index(key)
+	if key == "ClassName" then
+		return "NULL"
+	end
+
 	if type(key) == "string" and key:sub(0, 2) == "Is" then
 		return FALSE
 	end
