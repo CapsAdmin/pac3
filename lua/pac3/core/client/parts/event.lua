@@ -46,6 +46,14 @@ PART.Events =
 		end,
 	},
 	
+	is_in_noclip = 
+	{ 
+		
+		callback = function(self, ent)
+			return ent:GetMoveType() == MOVETYPE_NOCLIP
+		end,
+	},
+	
 	is_voice_chatting =
 	{ 
 		
