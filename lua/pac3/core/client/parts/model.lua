@@ -73,6 +73,7 @@ function PART:OnShow()
 		ent:SetParent(owner)
 		ent:SetOwner(owner)
 		self.BoneIndex = nil
+		self:SetOwnerEntity(self.OwnerEntity)
 	end
 end
 
