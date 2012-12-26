@@ -1,4 +1,36 @@
 local printf = function(fmt, ...) MsgN(string.format(fmt, ...)) end
+local check = function() end
+local table = {insert = table.insert}
+
+do -- table copy
+	local lookup_table = {}
+	
+	local function copy(obj, skip_meta)
+	
+		if type(obj) == "Vector" or type(obj) == "Angle" then
+			return obj * 1
+		elseif lookup_table[obj] then
+			return lookup_table[obj]
+		elseif type(obj) == "table" then
+			local new_table = {}
+			
+			lookup_table[obj] = new_table
+					
+			for key, val in pairs(obj) do
+				new_table[copy(key, skip_meta)] = copy(val, skip_meta)
+			end
+			
+			return skip_meta and new_table or setmetatable(new_table, getmetatable(obj))
+		else
+			return obj
+		end
+	end
+
+	function table.copy(obj, skip_meta)
+		lookup_table = {}
+		return copy(obj, skip_meta)
+	end
+end
 
 local class = {}
 
@@ -8,53 +40,25 @@ local function checkfield(tbl, key, def)
     tbl[key] = tbl[key] or def
 	
     if not tbl[key] then
-        error(string.format("The key %q was not found!", key), 3)
+        error(string.format("The type field %q was not found!", key), 3)
     end
 
     return tbl[key]
 end
 
-local function table_copy(tbl)
-	if getmetatable(tbl) then return tbl end
-	
-	local out = {}
-	
-	for k,v in pairs(tbl) do
-		if type(v) == "table" then
-			out[k] = table_copy(v)
-		else
-			if type(v) == "Vector" or type(v) == "Angle" then 
-				v = v * 1 
-			end 
-		
-			out[k] = v
-		end
-	end
-	
-	return out
-end
-
-function class.Copy(var) 
-	if type(var) == "Vector" or type(var) == "Angle" then 
-		return var * 1 
-	end 
-	
-	if type(var) == "table" then
-		return table_copy(var)
-	end
-	
-	return var 
-end
-
 function class.GetSet(tbl, name, def)
+
     if type(def) == "number" then
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = tonumber(var) end
 		tbl["Get" .. name] = tbl["Get" .. name] or function(self, var) return tonumber(self[name]) end
+	elseif type(def) == "string" then
+		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = tostring(var) end
+		tbl["Get" .. name] = tbl["Get" .. name] or function(self, var) return tostring(self[name]) end
 	else
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
 		tbl["Get" .. name] = tbl["Get" .. name] or function(self, var) return self[name] end
 	end
-	tbl["__def" .. name] = def
+		
     tbl[name] = def
 end
 
@@ -64,8 +68,8 @@ function class.IsSet(tbl, name, def)
 	else
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
 	end
-    tbl["Is" .. name] = tbl["Is" .. name] or function(self, var) return self[name] ~= nil end
-	tbl["__def" .. name] = def
+    tbl["Is" .. name] = tbl["Is" .. name] or function(self, var) return self[name] end
+
     tbl[name] = def
 end
 
@@ -73,167 +77,91 @@ function class.RemoveField(tbl, name)
 	tbl["Set" .. name] = nil
     tbl["Get" .. name] = nil
     tbl["Is" .. name] = nil
-	tbl["__def" .. name] = nil
+
     tbl[name] = nil
 end
 
-function class.Get(type, name)
-    if not type then return end
-    if not name then return end
-    return class.Registered[type] and class.Registered[type][name] or nil
+function class.Get(type_name, class_name)
+    check(type_name, "string")
+    check(class_name, "string")
+	
+    return class.Registered[type_name] and class.Registered[type_name][class_name] or nil
 end
 
-function class.GetAll(type)
-	return class.Registered[type]
+function class.GetAll(type_name)
+	check(type_name, "string")
+	return class.Registered[type_name]
 end
 
-function class.Register(META, type, name)
-    local type = checkfield(META, "Type", type)
+function class.Register(META, type_name, name)
+    local type_name = checkfield(META, "Type", type_name)
     local name = checkfield(META, "ClassName", name)
 
-    class.Registered[type] = class.Registered[type] or {}
-    class.Registered[type][name] = META
+    class.Registered[type_name] = class.Registered[type_name] or {}
+    class.Registered[type_name][name] = META
 end
 
-function class.InsertIntoBaseField(META, var, pos)
-
-	local T1 = type(META.Base)
-	local T2 = type(var)
-
-	if T1 == "table" then
-		if T2 == "table" and not var.Type then
+function class.HandleBaseField(META, var)
+	if not var then return end
+	
+	local t = type(var)
+	
+	if t == "string" then
+		class.HandleBaseField(META, class.Get(META.Type, var))
+	elseif t == "table" then
+		-- if it's a table and does not have the Type field we assume it's a table of bases
+		if not var.Type then
 			for key, base in pairs(var) do
-				table.insert(META.Base, key, base)
+				class.HandleBaseField(META, base)
 			end
 		else
-			if table.HasValue(META.Base, var) then return end
-
-			if pos then
-				table.insert(META.Base, pos, var)
-			else
-				table.insert(META.Base, var)
-			end
+			-- make a copy of it so we don't alter the meta template
+			var = table.copy(var)
+			
+			META.BaseList = META.BaseList or {}
+			
+			table.insert(META.BaseList, var)
 		end
-	end
-
-	if META.ClassName == var then return end
-
-	if T1 == "string" then
-		META.Base = {META.Base}
-		class.InsertIntoBaseField(META, var, pos)
-	end
-
-	if T1 == "nil" then
-		META.Base = {var}
 	end
 end
 
-function class.Derive(obj, var)
-	local T = type(var)
-
-	if T == "nil" then
-		return
-	end
-
-	if T == "string" then
-		var = class.Get(obj.Type, var)
-		T = type(var)
-	end
-
-	if T == "table" then
-		if var.Type then
-			obj.BaseClass = table_copy(var)
-		else
-			for _, base in pairs(var) do
-				class.Derive(obj, base)
-			end
-		end
-
-		if var.Base then
-			class.Derive(var, var.Base)
-		end
-
-		for key, val in pairs(var) do
-			if type(val) == "table" then
-				if getmetatable(val) then
-					obj[key] = val
-				else
-					obj[key] = obj[key] or {}
-					table.Merge(obj[key], table_copy(val))
-				end
-			end
-		end
-	end
-
-	-- the code below is kinda huh
-	local tbl = {}
-	local cur = obj
-	for i = 1, 10 do
-		if cur then
-			table.insert(tbl, cur)
-			cur = cur.BaseClass
-		else
-			break
-		end
-	end
-
-	for _, base in pairs(tbl) do
-		for key, val in pairs(base) do
-			obj[key] = obj[key] or val
-		end
-	end
-
-	obj.__bases = tbl
-end
-
-function class.Create(type, class_name)
-    local META = class.Get(type, class_name)
+function class.Create(type_name, class_name)
+    local META = class.Get(type_name, class_name)
 	
     if not META then
         printf("tried to create unknown %s %q!", type or "no type", class_name or "no class")
         return
     end
+	
+	local obj = table.copy(META)
+	class.HandleBaseField(obj, obj.Base)
+	class.HandleBaseField(obj, obj.TypeBase)
 
-	META = table_copy(META)
-	class.Derive(META, META.Base)
-
-	if not META.__tostring then
-		function META:__tostring()
-			return string.format("%s[%s]", self.Type, self.ClassName)
-		end
-	end
-
-	if META.Base then
-		function META:__index(key)
-			if META[key] ~= nil then
-				return META[key]
+	if obj.BaseList then	
+		if #obj.BaseList == 1 then
+			for key, val in pairs(obj.BaseList[1]) do
+				obj[key] = obj[key] or val
 			end
-
-			for key, base in pairs(META.__bases) do
-				if base[key] ~= nil then
-					return base[key]
+			obj.BaseClass = obj.BaseList[1]
+		else		
+			local current = obj
+			for i, base in pairs(obj.BaseList) do
+				for key, val in pairs(base) do
+					obj[key] = obj[key] or val
 				end
-			end
-			
-			if META.__indexx then
-				return META.__indexx(self, key)
+				current.BaseClass = base
+				current = base
 			end
 		end
-	else
-		META.__index = META
 	end
-	
-	local default_vars = {}
-	
-	for key, val in pairs(META) do
-		if key:sub(1, 5) == "__def" then
-			default_vars[key:sub(6)] = class.Copy(val)
-		end
-	end
-			
-	local obj = setmetatable(default_vars, META)
+		
+	obj.MetaTable = META
+
+	setmetatable(obj, obj)
 	
 	return obj
 end
+
+class.Copy = table.copy
 
 pac.class = class

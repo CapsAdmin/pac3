@@ -12,6 +12,16 @@ local function remove(part, field)
 	class.RemoveField(part, field)
 end
 
+local function merge_storable(tbl, base)
+	if not base then return end
+	if base.StorableVars then
+		for k,v in pairs(base.StorableVars) do
+			tbl.StorableVars[k] = v
+		end
+		merge_storable(tbl, base.BaseClass)
+	end
+end
+
 function pac.CreatePart(name, owner)
 	owner = owner or LocalPlayer()
 	
@@ -24,6 +34,8 @@ function pac.CreatePart(name, owner)
 		
 	part.UniqueID = tostring(util.CRC(os.time() + RealTime() + part_count))
 	
+	merge_storable(part, part.BaseClass)
+	
 	if part.NonPhysical then		
 		remove(part, "Bone")
 		remove(part, "Position")
@@ -35,6 +47,12 @@ function pac.CreatePart(name, owner)
 		remove(part, "AimPartName")
 		remove(part, "PositionOffset")
 		remove(part, "AngleOffset")
+	end
+	
+	part.DefaultVars = {}
+	
+	for key, val in pairs(part.StorableVars) do
+		part.DefaultVars[key] = pac.class.Copy(part[key])
 	end
 	
 	if part.PreInitialize then 
@@ -60,9 +78,7 @@ function pac.CreatePart(name, owner)
 end
 
 function pac.RegisterPart(META, name)
-	if not META.Base then
-		class.InsertIntoBaseField(META, "base")
-	end
+	META.TypeBase = "base"
 	
 	class.Register(META, "part", name)
 	
