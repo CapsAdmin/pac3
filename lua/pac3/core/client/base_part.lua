@@ -193,6 +193,7 @@ do -- parenting
 	end
 	
 	function PART:SortChildren()
+		self.DrawOrder = self.DrawOrder or 0
 		local new = {}
 		for key, val in pairs(self.Children) do 
 			table.insert(new, val) 
@@ -431,7 +432,7 @@ do -- serializing
 			return util.CRC(var .. var)
 		end
 
-		return pac.class.Copy(var)
+		return pac.class.Copy(var) or var
 	end
 
 	function PART:ToTable(make_copy_name, is_child)
@@ -440,7 +441,7 @@ do -- serializing
 		for _, key in pairs(self:GetStorableVars()) do
 			local var = COPY(self[key] and self["Get"..key](self) or self[key], key)
 			
-			if var == self["__def" .. key] then
+			if var == self.DefaultVars[key] then
 				continue
 			end
 			
