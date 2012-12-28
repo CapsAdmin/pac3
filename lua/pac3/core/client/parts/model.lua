@@ -558,7 +558,7 @@ function PART:OnBuildBonePositions()
 	
 	if self.OverallSize ~= 1 then
 		for i = 0, ent:GetBoneCount()-1 do
-			ent:ManipulateBoneScale(i, SCALE_NORMAL * self.OverallSize)
+			ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * SCALE_NORMAL * self.OverallSize)
 		end
 	end
 	

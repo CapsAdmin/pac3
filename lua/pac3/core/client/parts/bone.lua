@@ -38,12 +38,6 @@ function PART:OnThink()
 		self:GetBonePosition()
 		self.first_getbpos = true
 	end
-
-	local owner = self:GetOwner()
-	
-	if owner:IsValid() and not self:IsHiddenEx() then
-		self:OnBuildBonePositions(owner)
-	end
 end
 
 function PART:GetBonePosition()
@@ -59,7 +53,11 @@ function PART:GetBonePosition()
 	return pos, ang
 end
 
-function PART:OnBuildBonePositions(owner)	
+function PART:OnBuildBonePositions()	
+	local owner = self:GetOwner()
+	
+	if not owner:IsValid() then return end
+	
 	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone)) or 0
 	
 	local ang = self:CalcAngles(owner, self.Angles) or self.Angles
@@ -91,7 +89,7 @@ function PART:OnBuildBonePositions(owner)
 	end
 	
 	owner:ManipulateBoneJiggle(self.BoneIndex, self.Jiggle) -- afaik anything but 1 is not doing anything at all
-	owner:ManipulateBoneScale(self.BoneIndex, self.Scale * self.Size)
+	owner:ManipulateBoneScale(self.BoneIndex, owner:GetManipulateBoneScale(self.BoneIndex) * self.Scale * self.Size)
 end
 
 pac.RegisterPart(PART)

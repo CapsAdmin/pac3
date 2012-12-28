@@ -54,19 +54,10 @@ do -- owner
 		end
 		
 		local prev_owner = self:GetOwner()
-		
-		if ent and ent:IsValid() and ent:GetClass() == "class C_HL2MPRagdoll" then
-			if prev_owner:IsPlayer() then
-				local rag = prev_owner:GetRagdollEntity() or NULL
-				if rag:IsValid() then
-					self:SetOwner(rag)
-					return
-				end
-			end
-		end
-		
+			
 		if removed and prev_owner == ent then
-			self:SetOwner()
+			self:SetOwner(self:GetPlayerOwner())
+			self.temp_hidden = true
 			return
 		end
 			
@@ -74,6 +65,7 @@ do -- owner
 			local ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self)
 			if ent ~= prev_owner then
 				self:SetOwner(ent)
+				self.temp_hidden = false
 				return true
 			end
 		end
@@ -258,7 +250,7 @@ do -- parenting
 	end
 	
 	function PART:IsHiddenEx()
-		
+		if self.temp_hidden then return true end
 		if self:IsHidden() then return true end
 		
 		local temp = self
@@ -598,11 +590,8 @@ do
 	local pos, ang, owner
 	
 	function PART:Draw(event, pos, ang)
-		if not self:IsHiddenEx() then				
-			
-			if self[event] then
-				self:OnBuildBonePositions()
-			
+		if not self:IsHiddenEx() then			
+			if self[event] then			
 				pos = pos or Vector(0,0,0)
 				ang = ang or Angle(0,0,0)
 				
@@ -648,6 +637,12 @@ function PART:Think()
 	end
 	
 	self:OnThink()
+end
+
+function PART:BuildBonePositions()	
+	if not self:IsHiddenEx() then
+		self:OnBuildBonePositions()
+	end
 end
 
 function PART:SubmitToServer()

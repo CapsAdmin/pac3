@@ -156,7 +156,7 @@ do -- get set and editor vars
 						break
 					end
 				end
-				
+														
 				self[last_key] = self[name_key]
 			end
 		end
