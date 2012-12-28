@@ -15,6 +15,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "ConstrainX", false)
 	pac.GetSet(PART, "ConstrainY", false)
 	pac.GetSet(PART, "ConstrainZ", false)
+	pac.GetSet(PART, "Invert", false)
 pac.EndStorableVars()
 
 local math_AngleDifference = math.AngleDifference
@@ -42,9 +43,7 @@ function PART:OnDraw(owner, pos, ang)
 			end
 		end
 		
-		if not self.ConstrainX then self.pos.x = self.pos.x + (self.vel.x * speed) end
-		if not self.ConstrainY then self.pos.y = self.pos.y + (self.vel.y * speed) end
-		if not self.ConstrainZ then self.pos.z = self.pos.z + (self.vel.z * speed) end
+		self.pos = self.pos + (self.vel * (self.Invert and -speed or speed))
 		
 		if not self.ConstrainX then self.vel.x = self.vel.x * self.Strain end
 		if not self.ConstrainY then self.vel.y = self.vel.y * self.Strain end
