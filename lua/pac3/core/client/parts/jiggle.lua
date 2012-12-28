@@ -9,13 +9,16 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "LocalVelocity", true)
 	pac.GetSet(PART, "JiggleAngle", true)
 	pac.GetSet(PART, "JigglePosition", true)
+	
 	pac.GetSet(PART, "ConstrainPitch", false)
 	pac.GetSet(PART, "ConstrainYaw", false)
 	pac.GetSet(PART, "ConstrainRoll", false)
+	
 	pac.GetSet(PART, "ConstrainX", false)
 	pac.GetSet(PART, "ConstrainY", false)
 	pac.GetSet(PART, "ConstrainZ", false)
-	pac.GetSet(PART, "Invert", false)
+	
+	pac.GetSet(PART, "ConstrainSphere", 0)
 pac.EndStorableVars()
 
 local math_AngleDifference = math.AngleDifference
@@ -28,36 +31,61 @@ function PART:OnDraw(owner, pos, ang)
 		self.vel = self.vel or VectorRand()
 		self.pos = self.pos or pos * 1
 				
-		if not self.ConstrainX then self.vel.x = self.vel.x + (pos.x - self.pos.x) end
-		if not self.ConstrainY then self.vel.y = self.vel.y + (pos.y - self.pos.y) end
-		if not self.ConstrainZ then self.vel.z = self.vel.z + (pos.z - self.pos.z) end
-		
-		if self.ConstantVelocity then
+		if not self.ConstrainX then 
+			self.vel.x = self.vel.x + (pos.x - self.pos.x) 
+			
 			if self.LocalVelocity then
-				self.vel = self.vel + 
-				ang:Right() * self.ConstantVelocity.x +
-				ang:Forward() * self.ConstantVelocity.y +
-				ang:Up() * self.ConstantVelocity.z
+				self.vel = self.vel + ang:Right() * self.ConstantVelocity.x
 			else
-				self.vel = self.vel + self.ConstantVelocity
+				self.vel.x = self.vel.x + self.ConstantVelocity.x
 			end
+			
+			self.pos.x = self.pos.x + (self.vel.x * (self.Invert and -speed or speed))
+			self.vel.x = self.vel.x * self.Strain
+		else
+			self.pos.x = pos.x
+		end
+				
+		if not self.ConstrainY then 
+			self.vel.y = self.vel.y + (pos.y - self.pos.y) 
+			
+			if self.LocalVelocity then
+				self.vel = self.vel + ang:Forward() * self.ConstantVelocity.y
+			else
+				self.vel.y = self.vel.y + self.ConstantVelocity.y
+			end
+			
+			self.pos.y = self.pos.y + (self.vel.y * speed)
+			self.vel.y = self.vel.y * self.Strain
+		else
+			self.pos.y = pos.y
 		end
 		
-		self.pos = self.pos + (self.vel * (self.Invert and -speed or speed))
-		
-		if not self.ConstrainX then self.vel.x = self.vel.x * self.Strain end
-		if not self.ConstrainY then self.vel.y = self.vel.y * self.Strain end
-		if not self.ConstrainZ then self.vel.z = self.vel.z * self.Strain end
-
-		if not self.LocalVelocity then
-			if self.ConstrainX then self.pos.x = pos.x end
-			if self.ConstrainY then self.pos.y = pos.y end
-			if self.ConstrainZ then self.pos.z = pos.z end
+		if not self.ConstrainZ then 
+			self.vel.z = self.vel.z + (pos.z - self.pos.z) 
+			
+			if self.LocalVelocity then
+				self.vel = self.vel + ang:Up() * self.ConstantVelocity.z
+			else
+				self.vel.z = self.vel.z + self.ConstantVelocity.z
+			end
+			
+			self.pos.z = self.pos.z + (self.vel.z * speed)
+			self.vel.z = self.vel.z * self.Strain
+		else
+			self.pos.z = pos.z
 		end
+		
 	else
 		self.pos = pos
 	end
 		
+	if self.ConstrainSphere > 0 then
+		local len = math.min(self.pos:Distance(pos), self.ConstrainSphere)
+		
+		self.pos = pos + (self.pos - pos):GetNormalized() * len
+	end
+	
 	if self.JiggleAngle then
 		self.angvel = self.angvel or ang * 1
 		self.ang = self.ang or ang * 1
@@ -82,6 +110,7 @@ function PART:OnDraw(owner, pos, ang)
 	else
 		self.ang = ang
 	end
+	
 end
 
 pac.RegisterPart(PART)
