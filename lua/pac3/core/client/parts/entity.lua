@@ -30,7 +30,9 @@ function PART:Initialize()
 	self.ClipPlanes = {}
 end
 
-function PART:OnBuildBonePositions(ent)
+function PART:OnBuildBonePositions()
+	local ent = self:GetOwner()
+	
 	if self.OverallSize ~= 1 then
 		for i = 0, ent:GetBoneCount() do
 			ent:ManipulateBoneScale(0, Vector(1, 1, 1) * self.OverallSize)

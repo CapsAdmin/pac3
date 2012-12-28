@@ -18,11 +18,30 @@ local function think(part)
 	end
 end
 
+local function buildbones(part)
+	part:BuildBonePositions()
+	
+	for _, part in pairs(part.Children) do
+		buildbones(part)
+	end
+end
+
 function pac.RenderOverride(ent)
 	if not ent.pac_parts then
 		pac.UnhookEntityRender(ent)
 	else
 		pac.ResetBones(ent)
+			
+		-- bones MUST be setup before drawing or else unexpected/random results might happen
+		for key, part in pairs(ent.pac_parts) do
+			if part:IsValid() then
+				if not part:HasParent() then
+					buildbones(part)
+				end
+			else
+				ent.pac_parts[key] = nil
+			end
+		end
 			
 		for key, part in pairs(ent.pac_parts) do
 			if part:IsValid() then
