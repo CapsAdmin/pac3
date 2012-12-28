@@ -12,6 +12,9 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "ConstrainPitch", false)
 	pac.GetSet(PART, "ConstrainYaw", false)
 	pac.GetSet(PART, "ConstrainRoll", false)
+	pac.GetSet(PART, "ConstrainX", false)
+	pac.GetSet(PART, "ConstrainY", false)
+	pac.GetSet(PART, "ConstrainZ", false)
 pac.EndStorableVars()
 
 local math_AngleDifference = math.AngleDifference
@@ -22,8 +25,8 @@ function PART:OnDraw(owner, pos, ang)
 	
 	if self.JigglePosition then
 		self.vel = self.vel or VectorRand()
-		self.pos = self.pos or pos * 1 
-		
+		self.pos = self.pos or pos * 1
+				
 		self.vel = self.vel + (pos - self.pos)
 		
 		if self.ConstantVelocity then
@@ -39,6 +42,10 @@ function PART:OnDraw(owner, pos, ang)
 		
 		self.pos = self.pos + (self.vel * speed)
 		self.vel = self.vel * self.Strain
+		
+		if self.ConstrainX then self.pos.x = pos.x end
+		if self.ConstrainY then self.pos.y = pos.y end
+		if self.ConstrainZ then self.pos.z = pos.z end
 	else
 		self.pos = pos
 	end
