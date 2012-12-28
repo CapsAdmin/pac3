@@ -27,7 +27,9 @@ function PART:OnDraw(owner, pos, ang)
 		self.vel = self.vel or VectorRand()
 		self.pos = self.pos or pos * 1
 				
-		self.vel = self.vel + (pos - self.pos)
+		if not self.ConstrainX then self.vel.x = self.vel.x + (pos.x - self.pos.x) end
+		if not self.ConstrainY then self.vel.y = self.vel.y + (pos.y - self.pos.y) end
+		if not self.ConstrainZ then self.vel.z = self.vel.z + (pos.z - self.pos.z) end
 		
 		if self.ConstantVelocity then
 			if self.LocalVelocity then
@@ -40,12 +42,19 @@ function PART:OnDraw(owner, pos, ang)
 			end
 		end
 		
-		self.pos = self.pos + (self.vel * speed)
-		self.vel = self.vel * self.Strain
+		if not self.ConstrainX then self.pos.x = self.pos.x + (self.vel.x * speed) end
+		if not self.ConstrainY then self.pos.y = self.pos.y + (self.vel.y * speed) end
+		if not self.ConstrainZ then self.pos.z = self.pos.z + (self.vel.z * speed) end
 		
-		if self.ConstrainX then self.pos.x = pos.x end
-		if self.ConstrainY then self.pos.y = pos.y end
-		if self.ConstrainZ then self.pos.z = pos.z end
+		if not self.ConstrainX then self.vel.x = self.vel.x * self.Strain end
+		if not self.ConstrainY then self.vel.y = self.vel.y * self.Strain end
+		if not self.ConstrainZ then self.vel.z = self.vel.z * self.Strain end
+
+		if not self.LocalVelocity then
+			if self.ConstrainX then self.pos.x = pos.x end
+			if self.ConstrainY then self.pos.y = pos.y end
+			if self.ConstrainZ then self.pos.z = pos.z end
+		end
 	else
 		self.pos = pos
 	end
