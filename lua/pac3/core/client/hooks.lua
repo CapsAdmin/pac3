@@ -13,6 +13,9 @@ function pac.EntityRemoved(ent)
 	if ent:IsValid() and ent:GetOwner():IsPlayer() then
 		for key, part in pairs(pac.GetParts()) do
 			if not part:HasParent() then
+				if part:GetOwner() == ent then
+					part:SetOwner(part:GetPlayerOwner())
+				end
 				part:CheckOwner(ent, true)
 			end
 		end

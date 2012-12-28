@@ -116,6 +116,14 @@ pace.PropertyOrder =
 	"AmbientOcclusion",
 	"AmbientOcclusionTexture",
 	"AmbientOcclusionColor",	
+	
+	"ConstrainSphere",
+	"ConstrainX",
+	"ConstrainY",
+	"ConstrainZ",
+	"ConstrainPitch",
+	"ConstrainYaw",
+	"ConstrainRoll",
 }
 
 pace.PropertyLimits = 
