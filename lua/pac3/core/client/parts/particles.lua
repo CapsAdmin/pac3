@@ -26,7 +26,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Collide", true)
 	pac.GetSet(PART, "Lighting", true)
 	pac.GetSet(PART, "Sliding", true)
-	pac.GetSet(PART, "3D", true)
+	pac.GetSet(PART, "3D", false)
 	pac.GetSet(PART, "AlignToSurface", true)
 	pac.GetSet(PART, "StickToSurface", true)
 	pac.GetSet(PART, "DoubleSided", true)
@@ -85,6 +85,11 @@ function PART:Initialize()
 	self.NextShot = RealTime()
 	self.Created = RealTime() + 0.1
 	self.emitter = ParticleEmitter(self.cached_pos, false)
+	self:Set3D(self:Get3D())
+end
+
+function PART:SetNumberParticles(num)
+	self.NumberParticles = math.Clamp(num, 0, 100)
 end
 
 function PART:Set3D(b)
