@@ -33,7 +33,7 @@ local lib =
 	tan = math.tan,
 }
 
-local blacklist = {"do", "for", "repeat", "until", "function", "end"}
+local blacklist = {"repeat", "until", "function", "end"}
 
 function compile_expression(str, extra_lib)
 	for _, word in pairs(blacklist) do

@@ -1,7 +1,7 @@
 function pac.OnEntityCreated(ent)
 	if ent:IsValid() and ent:GetOwner():IsPlayer() then
 		for key, part in pairs(pac.GetParts()) do
-			if not part:HasParent() then
+			if not part:HasParent() and part:GetPlayerOwner() == ent:GetOwner() then
 				part:CheckOwner(ent, false)
 			end
 		end
@@ -12,7 +12,7 @@ pac.AddHook("OnEntityCreated")
 function pac.EntityRemoved(ent)
 	if ent:IsValid() and ent:GetOwner():IsPlayer() then
 		for key, part in pairs(pac.GetParts()) do
-			if not part:HasParent() then
+			if not part:HasParent() and part:GetPlayerOwner() == ent:GetOwner() then
 				part:CheckOwner(ent, true)
 			end
 		end
