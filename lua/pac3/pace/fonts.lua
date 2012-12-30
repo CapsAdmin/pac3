@@ -7,7 +7,6 @@ pace.Fonts =
 	"BudgetLabel",
 	"DefaultSmallDropShadow",
 	"DefaultBold",
-	"TabLarge",
 	"DefaultFixedOutline",
 	"ChatFont",
 	"DefaultFixedDropShadow",
