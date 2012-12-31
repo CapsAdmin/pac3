@@ -50,7 +50,7 @@ PART.Events =
 	{ 
 		
 		callback = function(self, ent)
-			return ent:GetMoveType() == MOVETYPE_NOCLIP and (not ent.GetVehicle or ent:GetVehicle():IsValid())
+			return ent:GetMoveType() == MOVETYPE_NOCLIP and (not ent.GetVehicle or not ent:GetVehicle():IsValid())
 		end,
 	},
 	
