@@ -12,6 +12,17 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "RootOwner", true)
 pac.EndStorableVars()
 
+local function calc_velocity(part)
+	local diff = part.cached_pos - (part.last_pos or Vector(0, 0, 0))
+	part.last_pos = part.cached_pos
+
+	part.last_vel_smooth = part.last_vel_smooth or Vector(0, 0, 0)
+	part.last_vel_smooth = (part.last_vel_smooth + (diff - part.last_vel_smooth) * FrameTime() * 4)
+	
+	return part.last_vel_smooth
+end
+
+
 PART.Events = 
 {
 	speed = 
@@ -201,6 +212,134 @@ PART.Events =
 					end			
 				end
 			end
+		end,
+	},
+	
+	-- outfit owner
+	owner_velocity_length = 
+	{
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, speed) 
+			local owner = self:GetOwner(self.RootOwner)
+			local parent = self:GetParent()
+			
+			if parent:IsValid() and owner:IsValid() then
+				return self:NumberOperator(parent:GetOwner(self.RootOwner):GetVelocity():Length(), speed)
+			end
+			
+			return 0
+		end,
+	},
+	owner_velocity_forward = 
+	{
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, speed) 
+			local owner = self:GetOwner(self.RootOwner)
+			local parent = self:GetParent()
+			
+			if parent:IsValid() and owner:IsValid() then
+				return self:NumberOperator(owner:EyeAngles():Forward():Dot(calc_velocity(parent)), speed)
+			end
+			
+			return 0
+		end,
+	},
+	owner_velocity_right = 
+	{
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, speed) 
+			local owner = self:GetOwner(self.RootOwner)
+			local parent = self:GetParent()
+			
+			if parent:IsValid() and owner:IsValid() then
+				return self:NumberOperator(owner:EyeAngles():Right():Dot(calc_velocity(parent)), speed)
+			end
+			
+			return 0
+		end,
+	},
+	owner_velocity_up = 
+	{
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, speed) 
+			local owner = self:GetOwner(self.RootOwner)
+			local parent = self:GetParent()
+			
+			if parent:IsValid() and owner:IsValid() then
+				return self:NumberOperator(owner:EyeAngles():Up():Dot(calc_velocity(parent)), speed)
+			end
+			
+			return 0
+		end,
+	},
+	
+	-- parent part
+	parent_velocity_length = 
+	{
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, speed) 
+			local parent = self:GetParent()
+			
+			if parent:HasParent() then
+				parent = parent:GetParent()
+			end
+			
+			if parent:IsValid() then
+				return self:NumberOperator(calc_velocity(parent):Length(), speed)
+			end
+			
+			return 0
+		end,
+	},
+	parent_velocity_forward = 
+	{
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, speed) 
+			local parent = self:GetParent()
+			
+			if parent:HasParent() then
+				parent = parent:GetParent()
+			end
+			
+			if parent:IsValid() then
+				return self:NumberOperator( parent.cached_ang:Forward():Dot(calc_velocity(parent)), speed)
+			end
+			
+			return 0
+		end,
+	},
+	parent_velocity_right = 
+	{
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, speed) 
+			local parent = self:GetParent()
+			
+			if parent:HasParent() then
+				parent = parent:GetParent()
+			end
+			
+			if parent:IsValid() then
+				return self:NumberOperator( parent.cached_ang:Right():Dot(calc_velocity(parent)), speed)
+			end
+			
+			return 0
+		end,
+	},
+	parent_velocity_up = 
+	{
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, speed) 
+			local parent = self:GetParent()
+			
+			if parent:HasParent() then
+				parent = parent:GetParent()
+			end
+			
+			if parent:IsValid() then
+				return self:NumberOperator( parent.cached_ang:Up():Dot(calc_velocity(parent)), speed)
+			end
+			
+			return 0
 		end,
 	},
 }

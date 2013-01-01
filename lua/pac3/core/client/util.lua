@@ -69,6 +69,8 @@ do -- hook helpers
 end
 
 do -- get set and editor vars
+	pac.VariableOrder = {}
+	
 	local __store = false
 
 	function pac.StartStorableVars()
@@ -80,6 +82,8 @@ do -- get set and editor vars
 	end
 
 	function pac.GetSet(tbl, key, ...)
+		table.insert(pac.VariableOrder, key)
+		
 		pac.class.GetSet(tbl, key, ...)
 
 		if __store then
@@ -89,6 +93,7 @@ do -- get set and editor vars
 	end
 
 	function pac.IsSet(tbl, key, ...)
+		table.insert(pac.VariableOrder, key)
 		pac.class.IsSet(tbl, key, ...)
 
 		if __store then
@@ -98,7 +103,8 @@ do -- get set and editor vars
 	end
 	
 	function pac.SetupPartName(PART, key)
-	
+		table.insert(pac.VariableOrder, key)
+		
 		PART.PartNameResolvers = PART.PartNameResolvers or {}
 		
 		local part_key = key

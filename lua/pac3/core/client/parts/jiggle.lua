@@ -19,6 +19,8 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "ConstrainZ", false)
 	
 	pac.GetSet(PART, "ConstrainSphere", 0)
+	pac.GetSet(PART, "StopRadius", 1)
+	pac.GetSet(PART, "Ground", false)
 pac.EndStorableVars()
 
 local math_AngleDifference = math.AngleDifference
@@ -27,10 +29,14 @@ function PART:OnDraw(owner, pos, ang)
 	local delta = FrameTime() 
 	local speed = self.Speed * delta
 	
-	if self.JigglePosition then
+	if self.StopRadius ~= 0 and self.pos and self.pos:Distance(pos) < self.StopRadius then 
+		self.vel = Vector()
+	return end
+
+	if self.JigglePosition then	
 		self.vel = self.vel or VectorRand()
 		self.pos = self.pos or pos * 1
-				
+		
 		if not self.ConstrainX then 
 			self.vel.x = self.vel.x + (pos.x - self.pos.x) 
 			
@@ -76,10 +82,13 @@ function PART:OnDraw(owner, pos, ang)
 			self.pos.z = pos.z
 		end
 		
+		if self.Ground then
+			self.pos.z = util.QuickTrace(pos, physenv.GetGravity()*100).HitPos.z
+		end
 	else
 		self.pos = pos
 	end
-		
+			
 	if self.ConstrainSphere > 0 then
 		local len = math.min(self.pos:Distance(pos), self.ConstrainSphere)
 		
