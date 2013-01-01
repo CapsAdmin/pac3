@@ -22,6 +22,7 @@ pace.BasicProperties =
 	Hide = true,
 	SpritePath = true,
 	Brightness = true,
+	Bone = true,
 }
 
 local basic_mode = CreateConVar("pac_basic_mode", #table.Merge(table.Merge(file.Find("pac3/*", "DATA")), table.Merge(file.Find("pac3/sessions/*", "DATA"))) == 0 and "1" or "0" )

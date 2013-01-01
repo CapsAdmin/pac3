@@ -152,7 +152,11 @@ do -- list
 		
 		table.sort(data, function(a,b) return a.key > b.key end)
 		
-		for pos, str in pairs(pace.PropertyOrder) do
+		local ordered_list = {}
+		for k,v in pairs(pace.PropertyOrder) do table.insert(ordered_list, v) end
+		for k,v in pairs(pac.VariableOrder) do table.insert(ordered_list, v) end
+		
+		for pos, str in pairs(ordered_list) do
 			for i, val in pairs(data) do
 				if val.key == str then
 					table.insert(tbl, {pos = pos, key = val.key, val = val.val})
@@ -1308,7 +1312,7 @@ do -- Proxy Variables
 			if key == "UniqueID" then continue end
 			
 			local T = type(parent[key])
-			if T == "number" or T == "Vector" or T == "Angle" then
+			if T == "number" or T == "Vector" or T == "Angle" or T == "boolean" then
 				local pnl = list:AddLine(L(key:gsub("%u", " %1"):lower()))
 				pnl.event_name = key
 				
