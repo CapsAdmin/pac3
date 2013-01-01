@@ -19,7 +19,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "ConstrainZ", false)
 	
 	pac.GetSet(PART, "ConstrainSphere", 0)
-	pac.GetSet(PART, "StopRadius", 1)
+	pac.GetSet(PART, "StopRadius", 0)
 	pac.GetSet(PART, "Ground", false)
 pac.EndStorableVars()
 
