@@ -41,7 +41,26 @@ local function decimal_hack_pack(tbl)
 	return tbl
 end
 
+pac.StreamQueue = pac.StreamQueue or {}
+
+local frame_number = 0
+
+timer.Create("pac_check_stream_queue", 0.1, 0, function()
+	if not pac.BusyStreaming and #pac.StreamQueue ~= 0 then
+		pac.SubmitPart(unpack(table.remove(pac.StreamQueue)))
+	end
+	frame_number = frame_number + 1
+end)
+
 function pac.SubmitPart(data, filter)
+
+	if type(data.part) == "table" then	
+		if last_frame == frame_number then
+			table.insert(pac.StreamQueue, {data, filter})
+			pac.dprint("queuing part %q from %s", data.part.self.Name, tostring(data.owner))
+			return "queue"
+		end
+	end
 
 	-- last arg "true" is pac3 only in case you need to do your checking differnetly from pac2
 	local allowed, reason = hook.Call("PrePACConfigApply", GAMEMODE, data.owner, data, true)
@@ -100,6 +119,10 @@ function pac.SubmitPart(data, filter)
 				net.WriteTable(decimal_hack_pack(table.Copy(data)))
 			net.Send(filter or player.GetAll())	
 		end
+		
+		if type(data.part) == "table" then	
+			last_frame = frame_number
+		end
 	end
 	
 	return true
@@ -111,6 +134,7 @@ function pac.SubmitPartNotify(data)
 	local allowed, reason = pac.SubmitPart(data)
 	
 	if data.owner:IsPlayer() then
+		if allowed == "queue" then return end
 		umsg.Start("pac_submit_acknowledged", data.owner)
 			umsg.Bool(allowed)
 			umsg.String(reason or "")
