@@ -312,6 +312,9 @@ function PART:DrawModel(ent, pos, ang)
 			matrix:SetTranslation(pos)
 			matrix:Scale(self.Scale * self.Size)
 			
+			render.PushFilterMag(TEXFILTER.ANISOTROPIC)
+			render.PushFilterMin(TEXFILTER.ANISOTROPIC)
+			
 			cam_PushModelMatrix(matrix)
 				if self.Materialm then 
 					render_SetMaterial(self.Materialm)	
@@ -322,6 +325,9 @@ function PART:DrawModel(ent, pos, ang)
 			pac.SetModelScale(ent, Vector(0,0,0))
 		
 			ent:DrawModel()
+			
+			render.PopFilterMin(TEXFILTER.ANISOTROPIC)
+			render.PopFilterMag(TEXFILTER.ANISOTROPIC)
 		else	
 			ent:DrawModel()
 		end

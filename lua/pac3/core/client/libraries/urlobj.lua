@@ -51,15 +51,14 @@ function urlobj.ParseObj(data)
 					end
 					
 					if #texcoords > 0 then
-						local offset = 0--8/1024
-						v1.u = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 0] + offset
-						v1.v = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 1] + offset
+						v1.u = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 0]%1
+						v1.v = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 1]%1
 						
-						v2.u = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 0] + offset
-						v2.v = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 1] + offset
+						v2.u = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 0]%1
+						v2.v = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 1]%1
 						
-						v3.u = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 0] + offset
-						v3.v = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 1] + offset
+						v3.u = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 0]%1
+						v3.v = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 1]%1
 					end
 					
 					table_insert(output, v1)
@@ -87,7 +86,7 @@ function urlobj.CreateObj(obj_str)
 	
 	local mesh = Mesh()
 	mesh:BuildFromTriangles(res)
-	
+		
 	return mesh
 end
 

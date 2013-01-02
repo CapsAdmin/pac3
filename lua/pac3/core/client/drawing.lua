@@ -5,6 +5,16 @@ local pairs = pairs
 local render_ResetModelLighting = render.ResetModelLighting
 local time = 0
 
+local sort = function(a, b)
+	if a and b then
+		return a.DrawOrder < b.DrawOrder
+	end
+end
+	
+local function sortparts(parts)
+	table.sort(parts, sort)
+end
+
 local function think(part)
 	if part.ThinkTime == 0 then
 		part:Think()
@@ -40,6 +50,7 @@ function pac.RenderOverride(ent)
 				end
 			else
 				ent.pac_parts[key] = nil
+				sortparts(ent.pac_parts)
 			end
 		end
 			
@@ -51,6 +62,7 @@ function pac.RenderOverride(ent)
 				end
 			else
 				ent.pac_parts[key] = nil
+				sortparts(ent.pac_parts)
 			end
 		end
 	end
@@ -68,9 +80,10 @@ function pac.HookEntityRender(ent, part)
 		-- it sometimes say ent.pac_parts is nil
 		-- why?
 		if ent.pac_parts then
-			ent.pac_parts[part.Id] = part
+			table.insert(ent.pac_parts, part)
 		
 			pac.drawn_entities[ent:EntIndex()] = ent
+			sortparts(ent.pac_parts)
 		end
 	end
 end
