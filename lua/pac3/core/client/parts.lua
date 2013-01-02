@@ -43,7 +43,7 @@ function pac.CreatePart(name, owner)
 		remove(part, "AngleVelocity")
 		remove(part, "EyeAngles")
 		remove(part, "AimName")
-		remove(part, "DrawOrder")
+		if part.ClassName ~= "group" then remove(part, "DrawOrder") end
 		remove(part, "AimPartName")
 		remove(part, "PositionOffset")
 		remove(part, "AngleOffset")
