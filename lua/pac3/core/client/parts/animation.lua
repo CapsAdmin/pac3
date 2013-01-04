@@ -73,8 +73,17 @@ local ActIndex =
 	["knife"] = ACT_HL2MP_IDLE_KNIFE,
 	["duel"] = ACT_HL2MP_IDLE_DUEL,
 	["camera"] = ACT_HL2MP_IDLE_CAMERA,
-	["revolver"] = ACT_HL2MP_IDLE_REVOLVER	
+	["revolver"] = ACT_HL2MP_IDLE_REVOLVER,
+	
+	zombie = ACT_HL2MP_IDLE_ZOMBIE,
+	magic = ACT_HL2MP_IDLE_MAGIC,
+	--meleeangry = ACT_HL2MP_IDLE_MELEE_ANGRY,
+	--angry = ACT_HL2MP_IDLE_ANGRY,
+	suitcase = ACT_HL2MP_IDLE_SUITCASE,
+	scared = ACT_HL2MP_IDLE_SCARED,
 }
+
+PART.ValidHoldTypes = ActIndex
 
 function PART:OnThink()
 	if self:IsHiddenEx() then return end
@@ -93,19 +102,19 @@ function PART:OnThink()
 					ent.pac_holdtype = nil
 				else
 					local params = {}
-					params[ACT_MP_STAND_IDLE] = index
-					params[ACT_MP_WALK] = index+1
-					params[ACT_MP_RUN] = index+2
-					params[ACT_MP_CROUCH_IDLE] = index+3
-					params[ACT_MP_CROUCHWALK] = index+4
-					params[ACT_MP_ATTACK_STAND_PRIMARYFIRE]	= index+5
-					params[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE] = index+5
-					params[ACT_MP_RELOAD_STAND ] = index+6
-					params[ACT_MP_RELOAD_CROUCH ] = index+6
-					params[ACT_MP_JUMP] = index+7
-					params[ACT_RANGE_ATTACK1] = index+8
-					params[ACT_MP_SWIM_IDLE] = index+8
-					params[ACT_MP_SWIM] = index+9
+						params[ACT_MP_STAND_IDLE] = index
+						params[ACT_MP_WALK] = index+1
+						params[ACT_MP_RUN] = index+2
+						params[ACT_MP_CROUCH_IDLE] = index+3
+						params[ACT_MP_CROUCHWALK] = index+4
+						params[ACT_MP_ATTACK_STAND_PRIMARYFIRE]	= index+5
+						params[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE] = index+5
+						params[ACT_MP_RELOAD_STAND ] = index+6
+						params[ACT_MP_RELOAD_CROUCH ] = index+6
+						params[ACT_MP_JUMP] = index+7
+						params[ACT_RANGE_ATTACK1] = index+8
+						params[ACT_MP_SWIM_IDLE] = index+8
+						params[ACT_MP_SWIM] = index+9
 					
 					-- "normal" jump animation doesn't exist
 					if t == "normal" then

@@ -1327,3 +1327,42 @@ do -- Proxy Variables
 	
 	pace.RegisterPanel(PANEL)
 end
+
+do -- Proxy Functions
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_weaponholdtype"
+	PANEL.Base = "pace_properties_base_type"
+		
+	function PANEL:SpecialCallback()	
+		pace.SafeRemoveSpecialPanel()
+		 
+		local frame = vgui.Create("DFrame")
+		frame:SetTitle(L"holdtype")
+		SHOW_SPECIAL(frame, self, 250)
+		frame:SetSizable(true)
+
+		local list = vgui.Create("DListView", frame)
+		list:Dock(FILL)
+		list:SetMultiSelect(false)
+		list:AddColumn(L"name")
+
+		list.OnRowSelected = function(_, id, line) 
+			self:SetValue(line.event_name)
+			self.OnValueChanged(line.event_name)
+		end
+
+		for name in pairs(pace.current_part.ValidHoldTypes) do
+			local pnl = list:AddLine(L(name))
+			pnl.event_name = name
+			
+			if cur == name then
+				list:SelectItem(pnl)
+			end
+		end
+		
+		pace.ActiveSpecialPanel = frame
+	end
+	
+	pace.RegisterPanel(PANEL)
+end

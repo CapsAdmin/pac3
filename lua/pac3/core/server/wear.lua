@@ -153,7 +153,7 @@ local function handle_data(owner, data)
 	data.owner = owner
 	data.uid = owner:UniqueID()
 	
-	if type(data.part) == "table" then
+	if type(data.part) == "table" and data.part.self then
 		pac.SubmitPartNotify(data)
 	elseif type(data.part) == "string" then
 		pac.RemovePart(data)
