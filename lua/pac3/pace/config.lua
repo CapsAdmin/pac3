@@ -237,6 +237,10 @@ function pace.TranslatePropertiesKey(key, obj)
 		return key
 	end
 
+	if key == "weaponholdtype" and obj.ClassName == "animation" then
+		return "weaponholdtype"
+	end
+	
 	if key == "function" and obj.ClassName == "proxy" then
 		return "proxyfunctions"
 	end

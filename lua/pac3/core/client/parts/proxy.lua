@@ -178,6 +178,27 @@ PART.Inputs =
 			return render.GetAmbientLightColor(parent.cached_pos) * render.GetLightColor(parent.cached_pos).b
 		end
 	end,
+	
+	owner_health = function(self)
+		local owner = self:GetOwner(self.RootOwner)
+		
+		if owner:IsValid() then 
+			return owner:Health()
+		end
+		
+		return 0
+	end,
+	
+	
+	owner_armor = function(self)
+		local owner = self:GetOwner(self.RootOwner)
+		
+		if owner:IsValid() then 
+			return owner:Armor()
+		end
+		
+		return 0
+	end,
 }
 
 usermessage.Hook("pac_proxy", function(umr)
