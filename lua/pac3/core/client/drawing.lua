@@ -6,7 +6,7 @@ local render_ResetModelLighting = render.ResetModelLighting
 local time = 0
 
 local sort = function(a, b)
-	if a and b then
+	if a and b and a.DrawOrder and b.DrawOrder then
 		return a.DrawOrder < b.DrawOrder
 	end
 end
