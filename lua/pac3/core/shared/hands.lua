@@ -10,6 +10,7 @@ SWEP.DrawCrosshair = true
 SWEP.ViewModel = "models/weapons/v_hands.mdl"
 SWEP.WorldModel = "models/weapons/w_bugbait.mdl"
 SWEP.DrawWeaponInfoBox = true
+SWEP.Base = "weapon_base"
 
 SWEP.SlotPos = 1
 SWEP.Slot = 1
