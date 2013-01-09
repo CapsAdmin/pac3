@@ -254,6 +254,15 @@ function PART:GetMaterialFromParent()
 	end
 end
 
+function PART:GetRawMaterial()
+	if not self.Materialm then
+		local mat = CreateMaterial("pac_material_" .. SysTime(), "VertexLitGeneric", {})
+		self.Materialm = mat
+	end
+	
+	return self.Materialm
+end
+
 function PART:OnParent(parent)
 	self:GetMaterialFromParent()
 end

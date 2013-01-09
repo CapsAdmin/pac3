@@ -534,6 +534,7 @@ function PANEL:SetMaterialList(tbl)
 		-- if IsError(material) then continue end
 		
 		local image = vgui.Create("DImageButton")
+		image.m_Image.LoadMaterial = function(s) s:DoLoadMaterial() end
 		image:SetOnViewMaterial(material, material)
 		image:SetSize(64, 64)
 		image.Value = material

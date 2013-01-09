@@ -397,6 +397,8 @@ do -- serializing
 		self:RemoveChildren()
 	end
 	
+	PART.delayed_variables = {}
+	
 	function PART:SetTable(tbl)
 		for key, value in pairs(tbl.self) do
 			if self["Set" .. key] then
@@ -404,7 +406,11 @@ do -- serializing
 				if key:find("Name", nil, true) and key ~= "OwnerName" and key ~= "SequenceName" and key ~= "VariableName" then
 					self["Set" .. key](self, pac.HandlePartName(self:GetPlayerOwner(), value, key))
 				else
-					self["Set" .. key](self, value)
+					if key == "Material" then
+						table.insert(self.delayed_variables, {key = key, val = value})
+					else			
+						self["Set" .. key](self, value)
+					end
 				end
 			elseif key ~= "ClassName" then
 				--self[key] = value
@@ -636,6 +642,17 @@ function PART:Think()
 		self:ResolvePartNames()
 	end
 	
+	if self.delayed_variables then
+		
+		for _, data in pairs(self.delayed_variables) do
+			print(data.key, data.val)
+			self["Set" .. data.key](self, data.val)
+		end
+		
+		self.delayed_variables = nil
+	end
+	
+
 	self:OnThink()
 end
 

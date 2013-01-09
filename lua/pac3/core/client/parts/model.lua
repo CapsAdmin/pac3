@@ -431,7 +431,7 @@ function PART:SetMaterial(var)
 		if var == "" then
 			self.Materialm = nil
 		else			
-			self.Materialm = Material(var)
+			self.Materialm = pac.Material(var, self)
 			self:CallEvent("material_changed")
 		end
 	end
