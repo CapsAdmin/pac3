@@ -181,6 +181,16 @@ do -- get set and editor vars
 	end
 end
 
+function pac.Material(str, part)
+	for key, part in pairs(pac.GetParts()) do
+		if str == part:GetName() and part.GetRawMaterial then
+			return part:GetRawMaterial()
+		end
+	end
+	
+	return Material(str)
+end
+
 function pac.Handleurltex(part, url, callback)
 	if url and pac.urltex and url:find("http") then	
 		local skip_cache = url:sub(1,1) == "_"
