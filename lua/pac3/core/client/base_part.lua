@@ -408,9 +408,9 @@ do -- serializing
 				else
 					if key == "Material" then
 						table.insert(self.delayed_variables, {key = key, val = value})
-					else			
-						self["Set" .. key](self, value)
 					end
+					
+					self["Set" .. key](self, value)
 				end
 			elseif key ~= "ClassName" then
 				--self[key] = value
@@ -645,6 +645,7 @@ function PART:Think()
 	if self.delayed_variables then
 		
 		for _, data in pairs(self.delayed_variables) do
+			print(data.key, data.val)
 			self["Set" .. data.key](self, data.val)
 		end
 		
