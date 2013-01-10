@@ -645,7 +645,6 @@ function PART:Think()
 	if self.delayed_variables then
 		
 		for _, data in pairs(self.delayed_variables) do
-			print(data.key, data.val)
 			self["Set" .. data.key](self, data.val)
 		end
 		
