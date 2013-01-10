@@ -397,9 +397,9 @@ do -- serializing
 		self:RemoveChildren()
 	end
 	
-	PART.delayed_variables = {}
-	
 	function PART:SetTable(tbl)
+		self.delayed_variables = self.delayed_variables or {}
+		
 		for key, value in pairs(tbl.self) do
 			if self["Set" .. key] then
 				-- hack?? it effectively removes name confliction for other parts
