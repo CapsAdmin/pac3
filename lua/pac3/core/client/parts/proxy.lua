@@ -61,6 +61,31 @@ PART.Inputs =
 		return math.Clamp(math.abs(pac.EyeAng:Forward():DotProduct((parent.cached_pos - pac.EyePos):GetNormalized())) - 0.5, 0, 1) 
 	end,
 	
+	owner_eye_angle_pitch = function(self, parent)
+		local owner = self:GetOwner(self.RootOwner)
+		
+		if owner:IsValid() then
+			local n = owner:EyeAngles().n
+			return -(1+math.NormalizeAngle(n)/89)/2 + 1
+		end
+	end,
+	owner_eye_angle_pitch = function(self, parent)
+		local owner = self:GetOwner(self.RootOwner)
+		
+		if owner:IsValid() then
+			local n = owner:EyeAngles().y
+			return math.NormalizeAngle(n)/90
+		end
+	end,
+	owner_eye_angle_roll = function(self, parent)
+		local owner = self:GetOwner(self.RootOwner)
+		
+		if owner:IsValid() then
+			local n = owner:EyeAngles().r
+			return math.NormalizeAngle(n)/90
+		end
+	end,
+	
 	-- outfit owner
 	owner_velocity_length = function(self, parent) 
 		local owner = self:GetOwner(self.RootOwner)
