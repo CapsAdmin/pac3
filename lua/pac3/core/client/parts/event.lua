@@ -437,17 +437,37 @@ function PART:GetParsedArguments(data)
 	return unpack(args)
 end
 
+local cache = {}
+
+local function CompareBTable(a, btbl, func, ...)
+	for _, b in pairs(btbl) do
+		if func(a, b, ...) then
+			return true
+		end
+	end	
+	
+	return false
+end
+
 function PART:StringOperator(a, b)
+	
+	local args = cache[b]
+	
+	if not args then
+		args = b:Split(";")
+		cache[b] = args
+	end
+	
 	if not self.Operator or not a or not b then
 		return false
 	elseif self.Operator == "equal" then
-		return a == b
+		return CompareBTable(a, args, function(a, b) return a == b end)
 	elseif self.Operator == "not equal" then
-		return a ~= b
+		return CompareBTable(a, args, function(a, b) return a ~= b end)
 	elseif self.Operator == "find" then
-		return pac.StringFind(a, b)
+		return CompareBTable(a, args, pac.StringFind)
 	elseif self.Operator == "find simple" then
-		return pac.StringFind(a, b, true)
+		return CompareBTable(a, args, pac.StringFind, true)
 	elseif self.Operator == "maybe" then
 		return math.random() > 0.5
 	end	
