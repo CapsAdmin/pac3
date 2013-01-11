@@ -58,7 +58,8 @@ function PART:SetEffect(name)
 	net.SendToServer()
 end
 
-pac.AddHook("pac_effect_precached", function(name)
+net.Receive("pac_effect_precached", function()
+	local name = net.ReadString()
 	pac.dprint("effect %q precached!", name)
 	for key, part in pairs(pac.GetParts()) do
 		if part.ClassName == "effect" then
