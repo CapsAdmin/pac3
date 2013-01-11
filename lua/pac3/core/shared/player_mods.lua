@@ -7,16 +7,20 @@ end
 include("size.lua")
 
 function pac.HandleServerModifiers(data, remove)
-	if remove then
-		pac.SetPlayerSize(data, 1)
-		return
-	end
-
 	local ply = data.owner or NULL
 	
 	if not ply:IsPlayer() or not ply:IsValid() then return end
 	
-	if SERVER and pac_allow_server_size:GetBool() or CLIENT then
+	if GetConVarNumber("pac_allow_server_size") > 0 then
+		if CLIENT and GetConVarNumber("pac_server_player_size") == 0 then
+			remove = true
+		end
+		
+		if remove then
+			pac.SetPlayerSize(data, 1)
+			return
+		end
+	
 		local offset = 1
 
 		if ply.GetInfoNum then

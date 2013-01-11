@@ -66,7 +66,7 @@ PART.Inputs =
 		
 		if owner:IsValid() then
 			local n = owner:EyeAngles().n
-			return -(1+math.NormalizeAngle(n)/89)/2 + 1
+			return -(1 + math.NormalizeAngle(n) / 89) / 2 + 1
 		end
 	end,
 	owner_eye_angle_pitch = function(self, parent)

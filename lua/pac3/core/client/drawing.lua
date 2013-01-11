@@ -2,7 +2,6 @@ local pac = pac
 
 pac.drawn_entities = pac.drawn_entities or {}
 local pairs = pairs
-local render_ResetModelLighting = render.ResetModelLighting
 local time = 0
 
 local sort = function(a, b)
@@ -36,29 +35,32 @@ local function buildbones(part)
 	end
 end
 
-function pac.RenderOverride(ent)
+function pac.RenderOverride(ent, type, draw_only)
 	if not ent.pac_parts then
 		pac.UnhookEntityRender(ent)
 	else
-		pac.ResetBones(ent)
+		if not draw_only then
+		
+			pac.ResetBones(ent)
 			
-		-- bones MUST be setup before drawing or else unexpected/random results might happen
-		for key, part in pairs(ent.pac_parts) do
-			if part:IsValid() then
-				if not part:HasParent() then
-					buildbones(part)
+			-- bones MUST be setup before drawing or else unexpected/random results might happen
+			for key, part in pairs(ent.pac_parts) do
+				if part:IsValid() then
+					if not part:HasParent() then
+						buildbones(part)
+					end
+				else
+					ent.pac_parts[key] = nil
+					sortparts(ent.pac_parts)
 				end
-			else
-				ent.pac_parts[key] = nil
-				sortparts(ent.pac_parts)
 			end
 		end
 			
 		for key, part in pairs(ent.pac_parts) do
 			if part:IsValid() then
 				if not part:HasParent() then
-					think(part)
-					part:Draw("OnDraw")
+					if not draw_only then think(part) end
+					part:Draw("OnDraw", nil, nil, type)
 				end
 			else
 				ent.pac_parts[key] = nil
@@ -182,7 +184,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2)
 					end
 				end
 			
-				pac.RenderOverride(ent)
+				pac.RenderOverride(ent, "opaque")
 				ent.pac_drawing = true
 			else
 				if ent.pac_parts and ent.pac_drawing == true then
@@ -203,14 +205,18 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2)
 end
 pac.AddHook("PostDrawOpaqueRenderables")
 
-function pac.SwapEntityDraw(a, b)
+function pac.PostDrawTranslucentRenderables()
 	for key, ent in pairs(pac.drawn_entities) do
-		if ent == a then
-			pac.drawn_entities[key] = b
-			break
+		if ent:IsValid() then
+			if ent.pac_drawing and ent.pac_parts then
+				pac.RenderOverride(ent, "translucent", true)
+			end
+		else
+			pac.drawn_entities[key] = nil
 		end
 	end
 end
+pac.AddHook("PostDrawTranslucentRenderables")
 
 function pac.RenderScreenspaceEffects()
 	for key, ent in pairs(pac.drawn_entities) do
@@ -233,7 +239,8 @@ function pac.Think()
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
 			if ent.pac_drawing and ent:IsPlayer() then
-				ent.pac_hitpos = ent:GetEyeTraceNoCursor().HitPos
+				ent.pac_traceres = ent:GetEyeTraceNoCursor()
+				ent.pac_hitpos = ent.pac_traceres.HitPos
 			end
 		else
 			pac.drawn_entities[key] = nil

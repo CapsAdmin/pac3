@@ -112,6 +112,12 @@ function pac.GetBonePosAng(ent, id, parent)
 			ent = rag
 		end
 	end
+	
+	if id == "HITPOS" then
+		if ent.pac_traceres then
+			return ent.pac_traceres.HitPos, ent.pac_traceres.HitNormal:Angle()
+		end
+	end
 		
 	local pos, ang
 	
@@ -147,7 +153,7 @@ function pac.GetBonePosAng(ent, id, parent)
 			pos, ang = ent:GetBonePosition(data.bone)
 		end
 	else
-		local id = ent:LookupBone(id)
+		local id = id and ent:LookupBone(id) or nil
 		if id then
 			pos, ang = ent:GetBonePosition(id)
 		end

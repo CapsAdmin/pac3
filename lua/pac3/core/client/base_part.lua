@@ -595,7 +595,7 @@ do
 			
 	local pos, ang, owner
 	
-	function PART:Draw(event, pos, ang)
+	function PART:Draw(event, pos, ang, draw_type)
 		if not self:IsHiddenEx() then			
 			if self[event] then			
 				pos = pos or Vector(0,0,0)
@@ -614,13 +614,19 @@ do
 				if self.PositionOffset ~= VEC0 or self.AngleOffset ~= ANG0 then
 					pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
 				end
-			
-				self[event](self, owner, pos, ang)
+				
+				if 
+					self.Translucent == nil or
+					(self.Translucent == true and draw_type == "translucent")  or
+					(self.Translucent == false and draw_type == "opaque")
+				then		
+					self[event](self, owner, pos, ang)
+				end
 			end
 
 			for _, part in pairs(self.Children) do
 				if part[event] or part.ClassName == "group" then
-					part:Draw(event, pos, ang)
+					part:Draw(event, pos, ang, draw_type)
 				end
 			end
 		end

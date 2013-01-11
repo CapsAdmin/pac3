@@ -11,6 +11,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Alpha", 1)
 	pac.GetSet(PART, "OutlineColor", Vector(255, 255, 255))
 	pac.GetSet(PART, "OutlineAlpha", 1)
+	pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
 
 function PART:SetColor(v)

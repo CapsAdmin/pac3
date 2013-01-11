@@ -15,12 +15,15 @@ local def =
 }
 
 function pac.SetPlayerSize(ply, f)	
-	local TICKRATE = SERVER and 1/FrameTime() or 0
+	--local TICKRATE = SERVER and 1/FrameTime() or 0
 	
-	ply:SetModelScale(f, 0)
+	if not ply.SetViewOffset then return end
 	
 	ply:SetViewOffset(def.view * f)
 	ply:SetViewOffsetDucked(def.viewducked * f)
+	
+	--[[
+	ply:SetModelScale(f, 0)
 	
 	ply:SetRunSpeed(math.max(def.run * f, TICKRATE/2))
 	ply:SetWalkSpeed(math.max(def.walk * f, TICKRATE/4))
@@ -29,12 +32,13 @@ function pac.SetPlayerSize(ply, f)
 	
 	ply:SetHull(def.min * f, def.max * f * (f > 1 and 0.5 or f < 1 and 1 or 1))
 	ply:SetHullDuck(def.min * f, def.maxduck * f * (f > 1 and 1.25 or f < 1 and 1.5 or 1))
-			
+	
 	local phys = ply:GetPhysicsObject()
 	if phys:IsValid() then
 		phys:SetMass(def.mass * f)	
 	end
 	
+
 	hook.Add("UpdateAnimation", "pac_scale", function(ply, vel, max)
 		if ply.pac_player_size and ply.pac_player_size ~= 1 then
 			if 
@@ -50,6 +54,30 @@ function pac.SetPlayerSize(ply, f)
 			return true
 		end
 	end)
-	 
+	]]
+	
+	if SERVER then
+		hook.Add("Think", "pac_check_scale", function()
+			for key, ply in pairs(player.GetAll()) do 
+				if ply.pac_player_size and ply.pac_player_size ~= 1 then
+					if ply:GetViewOffset() ~= def.view * ply.pac_player_size then
+						pac.SetPlayerSize(ply, ply.pac_player_size)
+					end
+				end
+			end
+		end)
+	end
+	
+	if CLIENT and ply == LocalPlayer() then
+		hook.Add("Think", "pac_check_scale", function()
+			local ply = LocalPlayer()
+			if ply.pac_player_size and ply.pac_player_size ~= 1 then
+				if ply:GetViewOffset() ~= def.view * ply.pac_player_size then
+					pac.SetPlayerSize(ply, ply.pac_player_size)
+				end
+			end
+		end)
+	end
+	
 	ply.pac_player_size = f
 end
