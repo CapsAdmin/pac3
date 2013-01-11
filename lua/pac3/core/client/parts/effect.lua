@@ -40,21 +40,25 @@ end
 
 PART.last_spew = 0
 
---for key, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
---	game.AddParticles("particles/" .. file_name)
---end
+LOADED_PARTICLES = LOADED_PARTICLES or {}
+
+for key, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
+	if not LOADED_PARTICLES[file_name] then
+		game.AddParticles("particles/" .. file_name)
+	end
+	LOADED_PARTICLES[file_name] = true
+end
 
 function PART:SetEffect(name)
 	self.Effect = name
 	self.Ready = false
 	
-	do return end
-	net.Start("pac_precache_effect")
+	net.Start("pac_request_precache")
 		net.WriteString(name)
 	net.SendToServer()
 end
 
-pac.AddHook("pac_EffectPrecached", function(name)
+pac.AddHook("pac_effect_precached", function(name)
 	pac.dprint("effect %q precached!", name)
 	for key, part in pairs(pac.GetParts()) do
 		if part.ClassName == "effect" then

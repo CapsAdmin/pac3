@@ -148,16 +148,6 @@ function PART:UpdateScale(ent)
 	end
 end
 
-function PART:SetSize(var)
-	self.Size = var
-	self:UpdateScale()
-end
-
-function PART:SetScale(var)	
-	self.Scale = var
-	self:UpdateScale()
-end
-
 PART.Colorf = Vector(1,1,1)
 
 function PART:SetColor(var)
@@ -271,6 +261,8 @@ function PART:OnShow()
 		end
 		
 		self.current_ro = ent.RenderOverride
+		
+		self:UpdateScale()
 	end	
 end
 

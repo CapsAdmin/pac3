@@ -115,6 +115,8 @@ function pace.LoadSession(name, append)
 		
 			local data = pac.luadata.ReadFile("pac3/sessions/" .. name .. ".txt")
 			
+			data = pac.FixSession(data)
+			
 			timer.Simple(0.1, function()				
 				for key, tbl in pairs(data) do
 					local part = pac.CreatePart(tbl.self.ClassName)
@@ -166,4 +168,43 @@ function pace.AddSessionsToMenu(menu)
 		clear.GetDeleteSelf = function() return false end
 		clear:AddOption(L"OK", function() file.Delete("pac3/sessions/" .. data.FileName, "DATA") end)
 	end
+end
+
+-- this is for fixing parts that are not in a group
+
+function pac.FixSession(data)
+	local parts = {}
+	local other = {}
+	
+	for key, part in pairs(data) do
+		if part.self.ClassName ~= "group" then
+			table.insert(parts, part)
+		else
+			table.insert(other, part)
+		end
+	end
+	
+	if #parts > 0 then
+		local session = {
+			{		
+				["self"] = {
+					["EditorExpand"] = true,
+					["ClassName"] = "group",
+					["UniqueID"] = util.CRC(tostring(data)),
+					["Name"] = "automatic group",
+					["Description"] = "Please put your parts in groups!",				
+				},
+				
+				["children"] = parts,
+			},
+		}
+		
+		for k,v in pairs(other) do
+			table.insert(session, v)
+		end
+		
+		return session
+	end
+	
+	return data
 end

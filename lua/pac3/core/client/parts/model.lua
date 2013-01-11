@@ -20,10 +20,12 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Alpha", 1)
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
 	pac.GetSet(PART, "Size", 1)
+	pac.GetSet(PART, "AlternativeScaling", false)
 	pac.GetSet(PART, "OverallSize", 1)
 	pac.GetSet(PART, "OriginFix", false)
 	pac.GetSet(PART, "Model", "models/dav0r/hoverball.mdl")
 	pac.GetSet(PART, "OwnerEntity", false)
+	pac.GetSet(PART, "Translucent", false)
 pac.EndStorableVars()
 
 function PART:SetOverallSize(num)
@@ -412,8 +414,13 @@ function PART:SetSize(var)
 	var = var or 1
 
 	self.Size = var
-	if not self:CheckScale() then
-		pac.SetModelScale(self.Entity, self.Scale * self.Size)
+	
+	if self.AlternativeScaling then	
+		pac.SetModelScale(self.Entity, nil, self.Size)
+	else
+		if not self:CheckScale() then
+			pac.SetModelScale(self.Entity, self.Scale * self.Size)
+		end
 	end
 end
 

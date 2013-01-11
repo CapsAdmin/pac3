@@ -1,4 +1,5 @@
 local L = pace.LanguageString
+local L = pace.LanguageString
 
 function pace.OnMenuBarPopulate(bar)
 	local menu = bar:AddMenu("pac")
@@ -18,6 +19,7 @@ function pace.OnMenuBarPopulate(bar)
 		menu:AddOption(L"reset view position", function() pace.ResetView() end)
 
 	local menu = bar:AddMenu(L"options")
+		menu:AddCVar(L"show deprecated features", "pac_show_deprecated", "1", "0").DoClick = function() pace.ToggleDeprecatedFeatures() end
 		menu:AddCVar(L"advanced mode", "pac_basic_mode", "0", "1").DoClick = function() pace.ToggleBasicMode() end
 			menu:AddSpacer()
 				menu:AddOption(L"position grid size", function()

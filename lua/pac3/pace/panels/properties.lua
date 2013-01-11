@@ -173,6 +173,12 @@ do -- list
 			local key, val = data.key, data.val
 			
 			if pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
+			if not pace.IsShowingDeprecatedFeatures() then
+				local part = pace.DeprecatedProperties[key]
+				if part == true or part == obj.ClassName then
+					continue
+				end
+			end
 			
 			local pnl
 			local T = (pace.TranslatePropertiesKey(key, obj) or type(val)):lower()

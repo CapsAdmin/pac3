@@ -9,6 +9,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Color", Vector(255, 255, 255))
 	pac.GetSet(PART, "Alpha", 1)
 	pac.GetSet(PART, "SpritePath", "sprites/grip")
+	pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
 
 function PART:SetColor(v)
