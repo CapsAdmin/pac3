@@ -498,11 +498,12 @@ end
 function PART:OnHide()
 	if self.Event == "weapon_class" then
 		local ent = self:GetOwner()
-		
-		ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
-		if ent:IsValid() then	
-			ent.pac_wep_hiding = false
-			pac.HideWeapon(ent, false)
+		if ent:IsValid() then
+			ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
+			if ent:IsValid() then	
+				ent.pac_wep_hiding = false
+				pac.HideWeapon(ent, false)
+			end
 		end
 	end
 end
