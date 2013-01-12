@@ -219,8 +219,7 @@ PART.Inputs =
 		
 		return 0
 	end,
-	
-	
+		
 	owner_armor = function(self)
 		local owner = self:GetOwner(self.RootOwner)
 		

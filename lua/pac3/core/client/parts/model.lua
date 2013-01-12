@@ -401,12 +401,31 @@ function PART:CheckScale()
 	end
 end
 
+function PART:SetAlternativeScaling(b)
+	self.AlternativeScaling = b
+	self:SetScale(self.Scale)
+end
+
+local VEC3_NOMRAL = Vector(1,1,1)
+
 function PART:SetScale(var)
 	var = var or Vector(1,1,1)
 
 	self.Scale = var
-	if not self:CheckScale() then
-		pac.SetModelScale(self.Entity, self.Scale * self.Size)
+		
+	if self.AlternativeScaling then	
+		if not self:CheckScale() then
+			pac.SetModelScale(self.Entity, self.Scale)
+			self.used_alt_scale = true
+		end
+	else
+		if self.used_alt_scale then
+			pac.SetModelScale(self.Entity, nil, 1)
+			self.used_alt_scale = false
+		end
+		if not self:CheckScale() then
+			pac.SetModelScale(self.Entity, self.Scale * self.Size)
+		end
 	end
 end
 
@@ -417,7 +436,12 @@ function PART:SetSize(var)
 	
 	if self.AlternativeScaling then	
 		pac.SetModelScale(self.Entity, nil, self.Size)
+		self.used_alt_scale = true
 	else
+		if self.used_alt_scale then
+			pac.SetModelScale(self.Entity, nil, 1)
+			self.used_alt_scale = false
+		end
 		if not self:CheckScale() then
 			pac.SetModelScale(self.Entity, self.Scale * self.Size)
 		end
@@ -563,6 +587,8 @@ local bad_bones =
 local SCALE_NORMAL = Vector(1, 1, 1)
 
 function PART:OnBuildBonePositions()
+
+	if self.AlternativeScaling then return end
 
 	local ent = self:GetEntity()
 	local owner = self:GetOwner()
