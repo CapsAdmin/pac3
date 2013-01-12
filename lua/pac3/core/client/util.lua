@@ -115,6 +115,7 @@ do -- get set and editor vars
 		local name_set_key = "Set" .. name_key
 		
 		local last_key = "last_" .. name_key:lower()
+		local try_key = "try_" .. name_key:lower()
 		
 		pac.EndStorableVars()
 			pac.GetSet(PART, part_key, pac.NULL)
@@ -137,7 +138,7 @@ do -- get set and editor vars
 				self[name_key] and 
 				self[name_key] ~= "" and 
 				self[name_key] ~= self[last_key] and 
-				not self[part_key]:IsValid() 
+				(not self[part_key]:IsValid() or self[try_key])
 			then
 				for key, part in pairs(pac.GetParts()) do
 					if 
@@ -151,29 +152,39 @@ do -- get set and editor vars
 					end
 				end
 				
-				for key, part in pairs(pac.GetParts()) do
-					if 
-						part ~= self and 
-						self[part_key] ~= part and 
-						part:GetPlayerOwner() == self:GetPlayerOwner() and 
-						self[name_key] == part.Name
-					then
-						self[name_set_key](self, part)
-						break
+				print(self, self[name_key])
+				
+				if not self.supress_part_name_find then
+					for key, part in pairs(pac.GetParts()) do
+						if 
+							part ~= self and 
+							self[part_key] ~= part and 
+							part:GetPlayerOwner() == self:GetPlayerOwner() and 
+							self[name_key] == part.Name
+						then
+							self[name_set_key](self, part)
+							break
+						end
 					end
 				end
-														
-				self[last_key] = self[name_key]
+				
+				if not self.supress_part_name_find then self[last_key] = self[name_key] end
+				self[try_key] = false
 			end
 		end
 		
 		PART[name_set_key] = function(self, var)
-			self[part_uid_key] = nil
-			self[part_key] = pac.NULL
-			
 			if type(var) == "string" then
 				self[name_key] = var
+				self[try_key] = true
+				
+				if self.supress_part_name_find then
+					PART.PartNameResolvers[part_key](self)
+				end
 			else
+				--self[part_uid_key] = nil
+				--self[part_key] = pac.NULL
+							
 				self[name_key] = var:GetName()
 				self[part_set_key](self, var)
 			end

@@ -102,7 +102,7 @@ do -- from server
 	function pac.RemovePartFromServer(owner, part_name)
 		pac.dprint("%s removed %q", tostring(owner), part_name)
 
-		if part_name == "__ALL__" then		
+		if part_name == "__ALL__" then					
 			for key, part in pairs(pac.GetParts()) do
 				if not part:HasParent() and part:GetPlayerOwner() == owner then
 					part:Remove()

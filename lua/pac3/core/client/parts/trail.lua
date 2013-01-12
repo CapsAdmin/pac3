@@ -13,6 +13,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "EndAlpha", 1)
 	pac.GetSet(PART, "Stretch", false)
 	pac.GetSet(PART, "TrailPath", "trails/laser")
+	pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
 
 PART.LastAdd = 0
