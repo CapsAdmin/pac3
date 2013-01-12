@@ -22,6 +22,7 @@ pace.PartIcons =
 	particles = "icon16/water.png",
 	woohoo = "icon16/webcam_delete.png",
 	halo = "icon16/shading.png",
+	poseparameter = "icon16/vector.png",
 }
 
 pace.PropertyOrder =
@@ -259,6 +260,10 @@ function pace.TranslatePropertiesKey(key, obj)
 	
 	if key == "sequence" or key == "sequencename" then
 		return "sequence"
+	end
+	
+	if key == "poseparameter" then
+		return "poseparameter"
 	end
 	
 	if key == "material" or key == "spritepath" or key == "trailpath" then

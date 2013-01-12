@@ -11,8 +11,14 @@ pac.EndStorableVars()
 
 local DynamicLight = DynamicLight
 
+pac3_dynamic_lights = pac3_dynamic_lights or {}
+
 function PART:OnDraw(owner, pos, ang)
-	self.Params = self.Params or DynamicLight(self.Owner:EntIndex() + self.Id)
+	local id = tonumber(self.UniqueID)
+	self.Params = self.Params or pac3_dynamic_lights[id] or DynamicLight(id)
+	if not pac3_dynamic_lights[id] then
+		pac3_dynamic_lights[id] = self.Params
+	end
 	local params = self.Params
 	if params then
 		params.Pos = pos
@@ -35,6 +41,7 @@ function PART:OnHide()
 	if p then
 		p.DieTime = 0
 		p.Size = 0
+		p.MinLight = 0
 		p.Pos = Vector()
 	end
 end

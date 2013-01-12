@@ -1044,7 +1044,7 @@ do -- material
 end
 
 do -- sequence list
-		local PANEL = {}
+	local PANEL = {}
 
 	PANEL.ClassName = "properties_sequence"
 	PANEL.Base = "pace_properties_base_type"
@@ -1086,6 +1086,51 @@ do -- sequence list
 	
 	pace.RegisterPanel(PANEL)
 end
+
+do -- pose parameter list
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_poseparameter"
+	PANEL.Base = "pace_properties_base_type"
+		
+	function PANEL:SpecialCallback()
+		pace.SafeRemoveSpecialPanel()
+		
+		local frame = vgui.Create("DFrame")
+		frame:SetTitle(L"pose parameters")
+		frame:SetSize(300, 300)
+		frame:Center()
+		frame:SetSizable(true)
+
+		local list = vgui.Create("DListView", frame)
+		list:Dock(FILL)
+		list:SetMultiSelect(false)
+		list:AddColumn("id"):SetFixedWidth(25)
+		list:AddColumn("name")
+
+		list.OnRowSelected = function(_, id, line) 
+			self:SetValue(line.seq_name)
+			self.OnValueChanged(line.seq_name)
+		end
+
+		local cur = pace.current_part:GetPoseParameter()
+		
+		for _, data in pairs(pace.current_part:GetPoseParameterList()) do
+			local pnl = list:AddLine(id, data.name)
+			pnl.seq_name = data.name
+			pnl.seq_id = data.i
+			
+			if cur == data.name then
+				list:SelectItem(pnl)
+			end
+		end
+		
+		pace.ActiveSpecialPanel = frame
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
 
 do -- event list
 	local PANEL = {}

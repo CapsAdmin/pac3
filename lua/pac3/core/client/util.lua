@@ -151,9 +151,7 @@ do -- get set and editor vars
 						break
 					end
 				end
-				
-				print(self, self[name_key])
-				
+								
 				if not self.supress_part_name_find then
 					for key, part in pairs(pac.GetParts()) do
 						if 
@@ -279,12 +277,18 @@ function pac.StringFind(a, b, simple, case_sensitive)
 end
 
 function pac.HideWeapon(wep, hide)
+	if wep.pac_hide_weapon == true then
+		wep:SetNoDraw(true)
+		wep.pac_wep_hiding = true
+		return
+	end
 	if hide then
 		wep:SetNoDraw(true)
 		wep.pac_wep_hiding = true
 	else
 		if wep.pac_wep_hiding then
 			wep:SetNoDraw(false)
+			debug.Trace()
 			wep.pac_wep_hiding = false
 		end
 	end

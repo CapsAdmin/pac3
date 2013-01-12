@@ -8,8 +8,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Size", 0.1)
 pac.EndStorableVars()
 
-function PART:OnDraw(owner, pos, ang)
-
+function PART:OnRenderScreenspaceEffects(owner, pos, ang)
 	local spos = pos:ToScreen()
 	
 	local dist_mult = - math.Clamp(pac.EyePos:Distance(pos) / 1000, 0, 1) + 1

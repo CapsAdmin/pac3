@@ -56,7 +56,7 @@ do -- owner
 		local prev_owner = self:GetOwner()
 			
 		if removed and prev_owner == ent then
-			self:SetOwner(self:GetPlayerOwner())
+			self:SetOwner()
 			self.temp_hidden = true
 			return
 		end
@@ -76,10 +76,8 @@ do -- owner
 				
 		if ent:IsValid() then
 			self.Owner = ent
-			self:CallOnChildrenAndSelf("OnShow")
 			pac.HookEntityRender(ent, self:GetRootPart()) 
 		else
-			self:CallOnChildrenAndSelf("OnHide")
 			pac.UnhookEntityRender(ent) 
 			self.Owner = ent
 		end
@@ -244,6 +242,10 @@ do -- parenting
 		end
 		
 		return temp
+	end
+	
+	function PART:IsHidden()
+		return self.temp_hidden or self.Hide
 	end
 	
 	function PART:IsHiddenEx()

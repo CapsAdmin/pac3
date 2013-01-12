@@ -43,6 +43,7 @@ function PART:OnHide()
 	if ent:IsValid() then
 		ent.pac_sequence = nil
 		ent.pac_holdtype = nil
+		ent.pac_pose_param = nil
 	end
 end
 
@@ -84,6 +85,14 @@ local ActIndex =
 }
 
 PART.ValidHoldTypes = ActIndex
+
+local function math_isvalid(num) 
+	return
+		num and
+		num ~= inf and
+		num ~= ninf and
+		(num >= 0 or num <= 0)
+end
 
 function PART:OnThink()
 	if self:IsHiddenEx() then return end
@@ -168,10 +177,14 @@ function PART:OnThink()
 		
 		if self.PingPongLoop then
 			self.frame = self.frame + rate / 2
-			ent:SetCycle(min + math.abs(math.Round((self.frame + self.Offset)*0.5) - (self.frame + self.Offset)*0.5)*2 * (max - min))
+			local cycle = min + math.abs(math.Round((self.frame + self.Offset)*0.5) - (self.frame + self.Offset)*0.5)*2 * (max - min)
+			if not math_isvalid(cycle) then print(self.frame, self.Offset, min, max) return end
+			ent:SetCycle(cycle)
 		else
 			self.frame = self.frame + rate
-			ent:SetCycle(min + ((self.frame + self.Offset)*0.5)%1 * (max - min))
+			local cycle = min + ((self.frame + self.Offset)*0.5)%1 * (max - min)
+			if not math_isvalid(cycle) then print(self.frame, self.Offset, min, max) return end
+			ent:SetCycle(cycle)
 		end
 	end
 end
