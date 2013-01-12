@@ -288,7 +288,6 @@ function pac.HideWeapon(wep, hide)
 	else
 		if wep.pac_wep_hiding then
 			wep:SetNoDraw(false)
-			debug.Trace()
 			wep.pac_wep_hiding = false
 		end
 	end
