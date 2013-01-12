@@ -42,6 +42,7 @@ pace.AddTool(L"scale this and children", function(part, suboption)
 			local function scale_parts(part, scale)
 				if part.SetPosition then 
 					part:SetPosition(part:GetPosition() * scale)
+					part:SetPositionOffset(part:GetPositionOffset() * scale)
 				end 
 						
 				if part.SetSize then 
@@ -79,6 +80,32 @@ pace.AddTool(L"spawn as props", function(part)
 	net.Start("pac_to_contraption")
 		net.WriteTable(data)
 	net.SendToServer()
+end)
+
+function round_pretty(val)
+	return math.Round(val, 2)
+end
+
+pace.AddTool(L"help i have ocd (rounding numbers)", function(part)
+	local function ocdify_parts(part)
+		for _, key in pairs(part:GetStorableVars()) do
+			local val = part["Get" .. key](part)
+			
+			if type(val) == "number" then		
+				part["Set" .. key](part, round_pretty(val))
+			elseif type(val) == "Vector" then
+				part["Set" .. key](part, Vector(round_pretty(val.x), round_pretty(val.y), round_pretty(val.z)))
+			elseif type(val) == "Angle" then
+				part["Set" .. key](part, Angle(round_pretty(val.p), round_pretty(val.y), round_pretty(val.r)))
+			end
+		end
+		
+		for _, part in pairs(part:GetChildren()) do
+			ocdify_parts(part)
+		end
+	end
+	
+	ocdify_parts(part)
 end)
 
 pace.AddTool(L"record surrounding props to pac", function(part)

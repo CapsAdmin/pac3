@@ -148,7 +148,7 @@ do -- parenting
 		if self == var or var:HasChild(self) then 
 			return false 
 		end
-	
+			
 		var:UnParent()
 	
 		var.Parent = self
@@ -212,22 +212,19 @@ do -- parenting
 		return false
 	end
 	
-	function PART:RemoveChild(var)
-		local children = self.Children
-
-		for key, part in pairs(children) do
+	function PART:RemoveChild(var)	
+		for key, part in pairs(self.Children) do
 			if part == var then
-				part.Parent = pac.NULL
-				part.ParentName = ""
-				part.ParentUID = nil
-				children[key] = nil
+				self.Children[key] = nil
 				if self:HasParent() then 
 					self:GetParent():SortChildren() 
 				end
 				part:OnUnParent(self)
-				return
+				break
 			end
 		end
+		
+		self:SortChildren()
 	end
 	
 	function PART:GetRootPart()
@@ -404,7 +401,9 @@ do -- serializing
 			if self["Set" .. key] then
 				-- hack?? it effectively removes name confliction for other parts
 				if key:find("Name", nil, true) and key ~= "OwnerName" and key ~= "SequenceName" and key ~= "VariableName" then
+					self.supress_part_name_find = true
 					self["Set" .. key](self, pac.HandlePartName(self:GetPlayerOwner(), value, key))
+					self.supress_part_name_find = false
 				else
 					if key == "Material" then
 						table.insert(self.delayed_variables, {key = key, val = value})

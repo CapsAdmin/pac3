@@ -686,6 +686,24 @@ do -- number
 	function PANEL:OnCursorMoved()
 		self:SetCursor("sizens")
 	end
+	
+	function PANEL:SetNumberValue(val)		
+		if self.LimitValue then
+			val = self:LimitValue(val) or val
+		end
+		
+		val = self:Encode(val)
+		self:SetValue(val)
+		self.OnValueChanged(tonumber(val))
+	end
+	
+	function PANEL:OnMouseWheeled(delta)
+		if not input.IsKeyDown(KEY_LCONTROL) then delta = delta / 10 end
+		if input.IsKeyDown(KEY_LALT) then delta = delta / 10 end 
+		local val = self:GetValue() + (self.oldval or 0) + (delta * self.sens)
+		
+		self:SetNumberValue(val)
+	end
 
 	function PANEL:Think()
 		if self:IsMouseDown() then			
@@ -696,15 +714,9 @@ do -- number
 			end
 			
 			local delta = (self.mousey - gui.MouseY()) / 10
-			local val = self.oldval + (delta * sens)
+			local val = (self.oldval or 0) + (delta * sens)
 			
-			if self.LimitValue then
-				val = self:LimitValue(val) or val
-			end
-			
-			val = self:Encode(val)
-			self:SetValue(val)
-			self.OnValueChanged(tonumber(val))
+			self:SetNumberValue(val)
 		end
 	end
 

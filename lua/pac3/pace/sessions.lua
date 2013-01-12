@@ -117,7 +117,10 @@ function pace.LoadSession(name, append)
 			
 			data = pac.FixSession(data)
 			
-			timer.Simple(0.1, function()				
+			pac.RemoveAllParts(true)
+			
+			timer.Simple(0.1, function()
+				
 				for key, tbl in pairs(data) do
 					local part = pac.CreatePart(tbl.self.ClassName)
 					part:SetTable(tbl)
@@ -125,7 +128,6 @@ function pace.LoadSession(name, append)
 				
 				pace.RefreshTree(true)
 			end)
-			
 		end
 	end
 end
