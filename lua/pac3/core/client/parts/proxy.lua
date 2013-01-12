@@ -65,7 +65,7 @@ PART.Inputs =
 		local owner = self:GetOwner(self.RootOwner)
 		
 		if owner:IsValid() then
-			local n = owner:EyeAngles().n
+			local n = owner:EyeAngles().p
 			return -(1 + math.NormalizeAngle(n) / 89) / 2 + 1
 		end
 		
