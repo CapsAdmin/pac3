@@ -110,7 +110,9 @@ PART.Events =
 			local ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 			if ent:IsValid() then
 				if self:StringOperator(ent:GetClass(), find) then
-					pac.HideWeapon(ent, hide)
+					if not self:IsHiddenEx() then 
+						pac.HideWeapon(ent, hide)
+					end
 					return true
 				end
 			end
@@ -491,6 +493,18 @@ function PART:NumberOperator(a, b)
 	elseif self.Operator == "maybe" then
 		return math.random() > 0.5
 	end	
+end
+
+function PART:OnHide()
+	if self.Event == "weapon_class" then
+		local ent = self:GetOwner()
+		
+		ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
+		if ent:IsValid() then	
+			ent.pac_wep_hiding = false
+			pac.HideWeapon(ent, false)
+		end
+	end
 end
 
 pac.RegisterPart(PART)

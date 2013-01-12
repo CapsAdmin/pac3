@@ -8,7 +8,7 @@ pace.DeprecatedProperties =
 {
 	AngleVelocity = true, -- use proxies on angle offset instead!
 	OriginFix = true, -- use position offset instead!
-	OveralSize = true, -- use Size instead!
+	OverallSize = true, -- use Size instead!
 	BoneMergeAlternative = true, -- broken
 	
 	InputMultiplier = "proxy",

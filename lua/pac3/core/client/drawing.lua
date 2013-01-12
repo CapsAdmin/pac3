@@ -223,9 +223,7 @@ function pac.RenderScreenspaceEffects()
 		if ent:IsValid() then
 			if ent.pac_drawing and ent.pac_parts then
 				for key, part in pairs(ent.pac_parts) do
-					if part.ClassName == "sunbeams" then
-						part:Draw("OnDraw")
-					end
+					part:Draw("OnRenderScreenspaceEffects")
 				end
 			end
 		else

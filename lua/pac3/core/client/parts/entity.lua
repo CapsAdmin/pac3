@@ -201,7 +201,11 @@ function PART:UpdateWeaponDraw(ent)
 	local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 	
 	if wep:IsWeapon() then
-		pac.HideWeapon(wep, not self.DrawWeapon)
+		local hide = not self.DrawWeapon
+		if hide == true then
+			wep.pac_hide_weapon = hide
+			pac.HideWeapon(wep, hide)
+		end
 	end
 end
 
@@ -235,7 +239,7 @@ end
 
 local blank_mat = Material("models/wireframe")
 
-function PART:OnShow()	
+function PART:OnShow()
 	local ent = self:GetOwner()
 	if ent:IsValid() then
 		
@@ -266,11 +270,25 @@ function PART:OnShow()
 	end	
 end
 
-function PART:OnThink()
+function PART:OnThink()		
+	if self:IsHiddenEx() then
+		if not self.temp_hide_ent then
+			self:OnHide()
+			print("hiding")
+			self.temp_hide_ent = true
+		end
+	else
+		if self.temp_hide_ent then
+			self:OnShow()
+			print("showing")
+			self.temp_hide_ent = false
+		end
+	end
+	
 	if self:IsHiddenEx() then return end
 	
 	local ent = self:GetOwner()
-	
+		
 	if ent:IsValid() and (not self.current_ro or self.current_ro ~= ent.RenderOverride) then
 		self:OnShow()
 	end
@@ -287,6 +305,7 @@ function PART:OnHide()
 		
 		if weps then
 			for key, wep in pairs(weps) do
+				wep.pac_hide_weapon = nil
 				pac.HideWeapon(wep, false)
 			end
 		end

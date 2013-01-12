@@ -68,14 +68,18 @@ PART.Inputs =
 			local n = owner:EyeAngles().n
 			return -(1 + math.NormalizeAngle(n) / 89) / 2 + 1
 		end
+		
+		return 0
 	end,
-	owner_eye_angle_pitch = function(self, parent)
+	owner_eye_angle_yaw = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
 		
 		if owner:IsValid() then
 			local n = owner:EyeAngles().y
 			return math.NormalizeAngle(n)/90
 		end
+		
+		return 0
 	end,
 	owner_eye_angle_roll = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
@@ -84,6 +88,8 @@ PART.Inputs =
 			local n = owner:EyeAngles().r
 			return math.NormalizeAngle(n)/90
 		end
+		
+		return 0
 	end,
 	
 	-- outfit owner

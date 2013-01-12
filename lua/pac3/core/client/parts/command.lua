@@ -1,6 +1,7 @@
 local PART = {}
 
 PART.ClassName = "command"
+PART.NonPhysical = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "String", "")
