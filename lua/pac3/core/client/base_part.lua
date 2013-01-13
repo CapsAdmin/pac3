@@ -626,9 +626,7 @@ do
 			end
 
 			for _, part in pairs(self.Children) do
-				if part[event] or part.ClassName == "group" then
-					part:Draw(event, pos, ang, draw_type)
-				end
+				part:Draw(event, pos, ang, draw_type)
 			end
 		end
 	end

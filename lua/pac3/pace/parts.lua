@@ -248,6 +248,10 @@ do -- menu
 			obj:Clone()
 		end)
 		
+		menu:AddOption(L"help", function()
+			pace.ShowHelp(obj.ClassName)
+		end)
+		
 		menu:AddSpacer()
 
 		pace.AddRegisteredPartsToMenu(menu)

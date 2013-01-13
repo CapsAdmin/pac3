@@ -20,6 +20,9 @@ PART.LastAdd = 0
 
 function PART:Initialize()
 	self:SetTrailPath(self.TrailPath)
+	
+	self.StartColorC = Color(255, 255, 255, 255)	
+	self.EndColorC = Color(255, 255, 255, 255)
 end
 
 function PART:SetStartColor(v)
@@ -62,15 +65,39 @@ function PART:SetTrailPath(var)
 	self:SetMaterial(var)
 end
 
+function PART:FixMaterial()
+	local mat = self.Materialm
+	
+	if not mat then return end
+	
+	local shader = mat:GetShader()
+	
+	if shader == "VertexLitGeneric" or shader == "Cable" then
+		local tex_path = mat:GetString("$basetexture")
+		
+		if tex_path then		
+			local params = {}
+			
+			params["$basetexture"] = tex_path
+			params["$vertexcolor"] = 1
+			params["$vertexalpha"] = 1
+			
+			self.Materialm = CreateMaterial(mat:GetName() .. "_pac_trail", "UnlitGeneric", params)
+		end		
+	end
+end
+
 function PART:SetMaterial(var)
 	var = var or ""
 	
 	if not pac.Handleurltex(self, var) then
 		if type(var) == "string" then
 			self.Materialm = pac.Material(var, self)
+			self:FixMaterial()
 			self:CallEvent("material_changed")
 		elseif type(var) == "IMaterial" then
 			self.Materialm = var
+			self:FixMaterial()
 			self:CallEvent("material_changed")
 		end
 	end

@@ -103,6 +103,12 @@ function pac.GetModelBones(ent)
 	return ent.pac_bones
 end
 
+local UP = Vector(0,0,1):Angle()
+
+pac.AddHook("GravGunOnPickedUp", function(ply, pos, id)
+	ply.pac_last_footstep_pos = pos	
+end)
+
 function pac.GetBonePosAng(ent, id, parent)
 	if not ent:IsValid() then return Vector(), Angle() end
 	
@@ -116,6 +122,12 @@ function pac.GetBonePosAng(ent, id, parent)
 	if id == "HITPOS" then
 		if ent.pac_traceres then
 			return ent.pac_traceres.HitPos, ent.pac_traceres.HitNormal:Angle()
+		end
+	end
+	
+	if id == "footstep" then
+		if ent.pac_last_footstep_pos then
+			return ent.pac_last_footstep_pos, UP
 		end
 	end
 		

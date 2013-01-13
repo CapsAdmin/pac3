@@ -186,13 +186,13 @@ end
 
 pace.wiki_panel = NULL
 
-function pace.ShowWiki()
+function pace.ShowWiki(url)
 	if pace.wiki_panel:IsValid() then
 		pace.wiki_panel:Remove()
 	end
 	
 	local pnl = pace.CreatePanel("web_browser")
-	pnl:OpenURL("http://pac.educatewiki.com/wiki/Getting_Started")
+	pnl:OpenURL(url or "http://pac.educatewiki.com/wiki/Getting_Started")
 	pnl:SetSize(ScrW()*0.9, ScrH()*0.8)
 	pnl:Center()
 	pnl:MakePopup()
