@@ -291,4 +291,20 @@ function PART:OnUnParent(parent)
 	self.updated = false
 end
 
+function PART:OnHide()
+	local parent = self:GetParent()
+	
+	if parent:IsValid() then
+		parent.Materialm = nil
+	end
+end
+
+function PART:OnShow()
+	local parent = self:GetParent()
+	
+	if parent:IsValid() then
+		self:OnParent(parent)
+	end
+end
+
 pac.RegisterPart(PART)
