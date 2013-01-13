@@ -119,9 +119,13 @@ function pac.GetBonePosAng(ent, id, parent)
 		end
 	end
 	
-	if id == "HITPOS" then
+	if id == "hitpos" then
 		if ent.pac_traceres then
 			return ent.pac_traceres.HitPos, ent.pac_traceres.HitNormal:Angle()
+		else
+			local res = util.QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()})
+			
+			return res.HitPos, res.HitNormal:Angle()
 		end
 	end
 	
