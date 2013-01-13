@@ -6,10 +6,11 @@ PART.NonPhysical = true
 pac.StartStorableVars()
 	pac.GetSet(PART, "Sound", "")
 	pac.GetSet(PART, "Volume", 1)
-	pac.GetSet(PART, "Pitch", 1)
+	pac.GetSet(PART, "Pitch", 0.4)
 	pac.GetSet(PART, "MinPitch", 100)
 	pac.GetSet(PART, "MaxPitch", 100)
-	pac.GetSet(PART, "RootOwner", false)
+	pac.GetSet(PART, "RootOwner", true)
+	pac.GetSet(PART, "PlayOnFootstep", false)
 pac.EndStorableVars()
 
 function PART:Initialize()
@@ -25,6 +26,26 @@ function PART:OnHide()
 end
 
 function PART:OnThink()
+
+	if self.last_playonfootstep ~= self.PlayOnFootstep then
+		local ent = self:GetOwner()
+		if ent:IsValid() and ent:IsPlayer() then
+			ent.pac_footstep_override = ent.pac_footstep_override or {}
+			
+			if self.PlayOnFootstep then
+				ent.pac_footstep_override[self.UniqueID] = self
+			else
+				ent.pac_footstep_override[self.UniqueID] = nil
+			end
+			
+			if table.Count(ent.pac_footstep_override) == 0 then
+				ent.pac_footstep_override = nil
+			end
+			
+			self.last_playonfootstep = self.PlayOnFootstep
+		end
+	end
+
 	if self:IsHiddenEx() then
 		self:StopSound()
 	else
@@ -102,27 +123,31 @@ function PART:SetPitch(num)
 	end
 end
 
-function PART:PlaySound()
+function PART:PlaySound(osnd, ovol)
 	local ent = self:GetOwner(self.RootOwner)
 
 	if ent:IsValid() then
 		local snd
 		
-		local sounds = self.Sound:Split(";")
-		
-		if #sounds > 1 then
-			snd = table.Random(sounds)
+		if osnd and self.Sound == "" then
+			snd = osnd
 		else
-			snd = self.Sound:gsub(
-				"(%[%d-,%d-%])", 
-				function(minmax) 
-					local min, max = minmax:match("%[(%d-),(%d-)%]")
-					if max < min then
-						max = min
+			local sounds = self.Sound:Split(";")
+			
+			if #sounds > 1 then
+				snd = table.Random(sounds)
+			else
+				snd = self.Sound:gsub(
+					"(%[%d-,%d-%])", 
+					function(minmax) 
+						local min, max = minmax:match("%[(%d-),(%d-)%]")
+						if max < min then
+							max = min
+						end
+						return math.random(min, max) 
 					end
-					return math.random(min, max) 
-				end
-			)
+				)
+			end
 		end
 		
 		if self.csptch then
@@ -130,7 +155,24 @@ function PART:PlaySound()
 		end
 		
 		local csptch = CreateSound(ent, snd)
-		csptch:PlayEx(self.Volume, math.random(self.MinPitch, self.MaxPitch))		
+		
+		local vol
+		
+		if osnd and self.Volume == -1 then
+			vol = ovol or 1
+		else
+			vol = self.Volume
+		end
+		
+		local pitch
+		
+		if self.MinPitch == self.MaxPitch then
+			pitch = self.Pitch * 255
+		else
+			pitch = math.random(self.MinPitch, self.MaxPitch)
+		end
+		
+		csptch:PlayEx(vol, pitch)		
 		ent.pac_csptch = csptch
 		self.csptch = csptch
 	end
@@ -165,5 +207,15 @@ for key, CHAN in pairs(channels) do
 		sound = "ambient/_period.wav"
 	} )
 end
+
+hook.Add("pac_PlayerFootstep", "pac_sound_footstep", function(ply, pos, snd, vol)
+	if ply.pac_footstep_override then
+		for key, part in pairs(ply.pac_footstep_override) do
+			if not part:IsHiddenEx() then
+				part:PlaySound(snd, vol)
+			end
+		end
+	end
+end)
 
 pac.RegisterPart(PART)

@@ -53,7 +53,8 @@ PART.Events =
 	{ 
 		
 		callback = function(self, ent)
-			return ent.IsOnGround and ent:IsOnGround()
+			--return ent.IsOnGround and ent:IsOnGround()
+			return util.QuickTrace(ent:GetPos(), Vector(0,0,-5), ent).Hit
 		end,
 	},
 	

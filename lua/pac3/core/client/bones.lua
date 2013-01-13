@@ -105,7 +105,7 @@ end
 
 local UP = Vector(0,0,1):Angle()
 
-pac.AddHook("GravGunOnPickedUp", function(ply, pos, id)
+pac.AddHook("pac_PlayerFootstep", function(ply, pos)
 	ply.pac_last_footstep_pos = pos	
 end)
 

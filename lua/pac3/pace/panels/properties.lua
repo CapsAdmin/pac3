@@ -113,8 +113,10 @@ do -- list
 			btn:SetValue(L(key:gsub("%u", " %1"):lower()))
 			btn.pac3_sort_pos = pos
 			
-			btn.key_name = key
-			btn.part_name = obj.ClassName
+			if obj then
+				btn.key_name = key
+				btn.part_namepart_name = obj.ClassName
+			end
 			
 		self.left:AddItem(btn)
 
@@ -310,26 +312,26 @@ do -- non editable string
 			lbl.pac_tooltip_hack = true
 		self:SetContent(lbl)
 		
-		lbl.OnCursorEntered = function() 
+		if self.part_name and self.key_name then
+			lbl.OnCursorEntered = function() 
+				
+				if lbl.wiki_info then
+					lbl:SetTooltip(lbl.wiki_info)
+					return
+				end
 			
-			if lbl.wiki_info then
-				lbl:SetTooltip(lbl.wiki_info)
-				return
+				if not lbl.fetching_wiki then
+					lbl:SetCursor("waitarrow")
+					pace.GetPropertyDescription(self.part_name, self.key_name, function(str)
+						lbl:SetTooltip(str)
+						ChangeTooltip(lbl)
+						lbl.wiki_info = str
+						lbl:SetCursor("arrow")
+					end)
+					lbl.fetching_wiki = true
+				end	
 			end
-		
-			if not lbl.fetching_wiki then
-				lbl:SetCursor("waitarrow")
-				pace.GetPropertyDescription(self.part_name, self.key_name, function(str)
-					lbl:SetTooltip(str)
-					ChangeTooltip(lbl)
-					lbl.wiki_info = str
-					lbl:SetCursor("arrow")
-				end)
-				lbl.fetching_wiki = true
-			end	
 		end
-		
-		lbl:SetCursor("hand")
 	end
 
 	pace.RegisterPanel(PANEL)
