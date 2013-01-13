@@ -328,8 +328,8 @@ do -- bones
 			local pos, ang = self:GetBonePosition(nil, pos, ang)
 							
 			pos, ang = LocalToWorld(
-				self.Position, 
-				self.Angles, 
+				self.Position or Vector(0,0,0), 
+				self.Angles or Angle(0,0,0), 
 				pos or owner:GetPos(), 
 				ang or owner:GetAngles()
 			)
