@@ -3,3 +3,4 @@
 
 include("hands.lua")
 include("player_mods.lua")
+include("footsteps_fix.lua")

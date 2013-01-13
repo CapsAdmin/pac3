@@ -62,6 +62,30 @@ PART.Inputs =
 		return math.Clamp(math.abs(pac.EyeAng:Forward():DotProduct((parent.cached_pos - pac.EyePos):GetNormalized())) - 0.5, 0, 1) 
 	end,
 	
+	aim_length = function(self, parent) 
+		local owner = self:GetOwner(self.RootOwner)
+
+		if owner:IsValid() then
+			local res = util.QuickTrace(owner:EyePos(), owner:EyeAngles():Forward() * 16000, {owner, owner:GetParent()})
+			
+			return res.StartPos:Distance(res.HitPos)
+		end
+		
+		return 0
+	end,
+	
+	aim_length_fraction = function(self, parent) 
+		local owner = self:GetOwner(self.RootOwner)
+		
+		if owner:IsValid() then
+			local res = util.QuickTrace(owner:EyePos(), owner:EyeAngles():Forward() * 16000, {owner, owner:GetParent()})
+			
+			return res.Fraction
+		end
+		
+		return 0
+	end,
+	
 	owner_eye_angle_pitch = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
 		
