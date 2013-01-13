@@ -70,17 +70,11 @@ pace.PropertyOrder =
 	"CellShade",
 	"StartAlpha",
 	"EndAlpha",
-	"InputMultiplier",
 	"Min",
 	"Max",
 	"Loop",
 	"PingPongLoop",
-	
-	"Event",
-	"Arguments",
-	"Operator",
-	"Invert",
-	
+		
 	"BaseTexture",
 	"BumpMap",
 	

@@ -10,7 +10,10 @@ pace.DeprecatedProperties =
 	OriginFix = true, -- use position offset instead!
 	OverallSize = true, -- use Size instead!
 	BoneMergeAlternative = true, -- broken
-	
+	FollowBone = true, -- broken
+		
+	-- not ready for deprecation yet
+	--[[
 	InputMultiplier = "proxy",
 	InputDivider = "proxy",
 	Function = "proxy",
@@ -20,6 +23,7 @@ pace.DeprecatedProperties =
 	Min = "proxy",
 	Max = "proxy",
 	Pow = "proxy",
+	]]
 }
 
 local basic_mode = CreateConVar("pac_show_deprecated", "0")

@@ -344,6 +344,20 @@ PART.Events =
 			return 0
 		end,
 	},
+		
+	gravitygun_punt =
+	{
+		arguments = {{time = "number"}},
+		callback = function(self, ent, time)
+			time = time or 0.1
+			
+			local punted = ent.pac_gravgun_punt 
+			
+			if punted and punted + time > RealTime() then
+				return true
+			end			
+		end,
+	},
 }
 
 function PART:OnThink()
@@ -533,6 +547,19 @@ end)
 
 pac.AddHook("OnPlayerChat", function(ply, str)
 	ply.pac_say_event = {str = str, time = RealTime()}
+end)
+
+pac.AddHook("GravGunOnPickedUp", function(ply, ent)
+	ply.pac_gravgun_ent = ent
+end)
+
+pac.AddHook("GravGunOnDropped", function(ply, ent)
+	ply.pac_gravgun_ent = ent
+end)
+
+pac.AddHook("GravGunPunt", function(ply, ent)
+	ply.pac_gravgun_ent = ent
+	ply.pac_gravgun_punt = RealTime()
 end)
 
 --[[

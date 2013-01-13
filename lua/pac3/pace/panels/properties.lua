@@ -107,11 +107,15 @@ do -- list
 		end
 	end
 
-	function PANEL:AddItem(key, var, pos)
+	function PANEL:AddItem(key, var, pos, obj)
 		local btn = pace.CreatePanel("properties_label")
 			btn:NoClipping(true)
 			btn:SetValue(L(key:gsub("%u", " %1"):lower()))
 			btn.pac3_sort_pos = pos
+			
+			btn.key_name = key
+			btn.part_name = obj.ClassName
+			
 		self.left:AddItem(btn)
 
 		local pnl = pace.CreatePanel("properties_container")
@@ -203,7 +207,7 @@ do -- list
 					pace.Call("VariableChanged", obj, key, val)
 				end
 				
-				self:AddItem(key, pnl, pos)
+				self:AddItem(key, pnl, pos, obj)
 			end
 		end
 		
@@ -260,6 +264,38 @@ do -- list
 end
 
 do -- non editable string
+	local DTooltip = _G.DTooltip
+	if DTooltip and DTooltip.PositionTooltip then
+		pace_Old_PositionTooltip = pace_Old_PositionTooltip or DTooltip.PositionTooltip
+		function DTooltip.PositionTooltip(self, ...)
+			if self.TargetPanel.pac_tooltip_hack then
+				local args = {pace_Old_PositionTooltip(self, ...)}
+									
+				if ( !IsValid( self.TargetPanel ) ) then
+					self:Remove()
+					return;
+				end
+
+				self:PerformLayout()
+				
+				local x, y		= input.GetCursorPos()
+				local w, h		= self:GetSize()
+				
+				local lx, ly	= self.TargetPanel:LocalToScreen( 0, 0 )
+								
+				y = math.min( y, ly - h )
+				
+				self:SetPos( x, y )
+							
+				
+				return unpack(args)
+			end
+			
+			return pace_Old_PositionTooltip(self, ...)
+		end
+	end
+	
+
 	local PANEL = {}
 
 	PANEL.ClassName = "properties_label"
@@ -271,7 +307,29 @@ do -- non editable string
 			lbl:SetFont(pace.CurrentFont)
 			lbl:SetText("  " .. str) -- ugh
 			lbl:SizeToContents()
+			lbl.pac_tooltip_hack = true
 		self:SetContent(lbl)
+		
+		lbl.OnCursorEntered = function() 
+			
+			if lbl.wiki_info then
+				lbl:SetTooltip(lbl.wiki_info)
+				return
+			end
+		
+			if not lbl.fetching_wiki then
+				lbl:SetCursor("waitarrow")
+				pace.GetPropertyDescription(self.part_name, self.key_name, function(str)
+					lbl:SetTooltip(str)
+					ChangeTooltip(lbl)
+					lbl.wiki_info = str
+					lbl:SetCursor("arrow")
+				end)
+				lbl.fetching_wiki = true
+			end	
+		end
+		
+		lbl:SetCursor("hand")
 	end
 
 	pace.RegisterPanel(PANEL)
