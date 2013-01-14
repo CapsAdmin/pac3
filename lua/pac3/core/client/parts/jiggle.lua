@@ -26,13 +26,23 @@ pac.EndStorableVars()
 
 local math_AngleDifference = math.AngleDifference
 
-function PART:OnThink()
-	if self.ResetOnHide and self:IsHiddenEx() then
-		self.pos = Vector()
-		self.vel = Vector()
+function PART:Reset()
+	local pos, ang = self:GetDrawPosition()
 		
-		self.ang = Angle()
-		self.angvel = Angle()
+	self.pos = pos
+	self.vel = Vector()
+	
+	self.ang = ang
+	self.angvel = Angle()
+end
+
+function PART:Initialize()
+	self:Reset()
+end
+
+function PART:OnShow()
+	if self.ResetOnHide and self:IsHiddenEx() then
+		self:Reset()
 	end
 end
 

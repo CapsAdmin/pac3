@@ -81,14 +81,6 @@ function pac.RegisterPart(META, name)
 	META.TypeBase = "base"
 	
 	class.Register(META, "part", name)
-	
-	for _, part in pairs(pac.GetParts()) do
-		if part.ClassName == META.ClassName then
-			for k,v in pairs(META) do
-				part[k] = v
-			end
-		end
-	end
 end
 
 function pac.GetRegisteredParts()
