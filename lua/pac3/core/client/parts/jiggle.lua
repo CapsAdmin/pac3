@@ -21,9 +21,20 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "ConstrainSphere", 0)
 	pac.GetSet(PART, "StopRadius", 0)
 	pac.GetSet(PART, "Ground", false)
+	pac.GetSet(PART, "ResetOnHide", false)
 pac.EndStorableVars()
 
 local math_AngleDifference = math.AngleDifference
+
+function PART:OnThink()
+	if self.ResetOnHide and self:IsHiddenEx() then
+		self.pos = Vector()
+		self.vel = Vector()
+		
+		self.ang = Angle()
+		self.angvel = Angle()
+	end
+end
 
 function PART:OnDraw(owner, pos, ang)	
 	local delta = FrameTime() 
