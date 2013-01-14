@@ -323,10 +323,12 @@ do -- non editable string
 				if not lbl.fetching_wiki then
 					lbl:SetCursor("waitarrow")
 					pace.GetPropertyDescription(self.part_name, self.key_name, function(str)
-						lbl:SetTooltip(str)
-						ChangeTooltip(lbl)
-						lbl.wiki_info = str
-						lbl:SetCursor("arrow")
+						if lbl:IsValid() then
+							lbl:SetTooltip(str)
+							ChangeTooltip(lbl)
+							lbl.wiki_info = str
+							lbl:SetCursor("arrow")
+						end
 					end)
 					lbl.fetching_wiki = true
 				end	

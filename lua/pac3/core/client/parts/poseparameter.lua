@@ -53,6 +53,8 @@ function PART:OnThink(ent)
 end
 
 hook.Add("UpdateAnimation", "pac_pose_param", function(ply)
+	if not ply or not ply:IsValid() then return end
+	
 	local data = ply.pac_pose_param
 	if data then
 		ply:SetPoseParameter(data.key, data.val)

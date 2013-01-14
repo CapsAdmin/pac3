@@ -190,7 +190,7 @@ function PART:OnThink()
 end
 
 hook.Add("TranslateActivity", "pac_holdtype", function(ply, act)
-	if ply.pac_holdtype and ply.pac_holdtype[act] then
+	if ply and ply:IsValid() and ply.pac_holdtype and ply.pac_holdtype[act] then
 		return ply.pac_holdtype[act]
 	end
 end)
