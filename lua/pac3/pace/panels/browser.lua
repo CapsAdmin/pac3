@@ -57,6 +57,8 @@ function PANEL:PopulateFromClient()
 end
 
 function PANEL:OnRowRightClick(id, line)
+	if not line.FileName then return end
+
 	local menu = DermaMenu()
 	menu:SetPos(gui.MouseX(),gui.MouseY())
 	menu:MakePopup()

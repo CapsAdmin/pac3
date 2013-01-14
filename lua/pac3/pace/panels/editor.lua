@@ -112,7 +112,9 @@ function pace.KillFocus()
 		self.allowclick = false
 
 		timer.Simple(0.2, function()
-			self.allowclick = true
+			if self:IsValid() then
+				self.allowclick = true
+			end
 		end)
 	end
 end
