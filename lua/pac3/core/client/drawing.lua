@@ -158,7 +158,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2)
 		if ent:IsValid() then
 			ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
 			dst = ent:EyePos():Distance(pac.EyePos)
-			radius = ent:BoundingRadius() * 3 * ent:GetModelScale()
+			radius = ent:BoundingRadius() * 3 * (ent:GetModelScale() or 1)
 			
 			if ent:IsPlayer() and radius < 32 then
 				radius = 128

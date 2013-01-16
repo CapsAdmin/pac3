@@ -178,6 +178,13 @@ else
 	end)
 end
 
+function pac.ClearOutfit(ply)
+	local uid = ply:UniqueID()
+	
+	pac.Parts[uid] = nil
+	pac.HandleServerModifiers(ply, true)
+end
+
 function pac.RequestOutfits(ply)
 	if ply:IsValid() and not ply.pac_requested_outfits then
 		for id, outfits in pairs(pac.Parts) do

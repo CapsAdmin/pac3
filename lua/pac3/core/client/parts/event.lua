@@ -41,6 +41,14 @@ PART.Events =
 		end,
 	},
 	
+	is_client = 
+	{ 
+		
+		callback = function(self, ent)
+			return self:GetPlayerOwner() == ent
+		end,
+	},
+	
 	is_flashlight_on = 
 	{ 
 		
