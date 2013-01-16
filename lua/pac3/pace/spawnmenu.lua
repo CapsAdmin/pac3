@@ -44,6 +44,14 @@ function pace.ClientOptionsMenu(pnl)
 	pnl:CheckBox(
 		L"enable",
 		"pac_enable"
+	)	
+
+	pnl:NumSlider(
+		L"draw distance",
+		"pac_draw_distance",
+		0,
+		20000,
+		0
 	)
 	
 	local browser = pnl:AddControl("pace_browser", {})
@@ -64,35 +72,6 @@ function pace.ClientOptionsMenu(pnl)
 	pnl:Button(
 		L"clear",
 		"pac_clear_session"
-	)	
-
-	pnl:NumSlider(
-		L"draw distance",
-		"pac_draw_distance",
-		0,
-		20000,
-		0
-	)
-	
-	pnl:NumSlider(
-		L"editor grid position size", 
-		"pac_grid_pos_size",
-		0, 
-		64,
-		0		
-	)
-	
-	pnl:NumSlider(
-		L"editor grid angle size", 
-		"pac_grid_ang_size",
-		0, 
-		360,
-		0
-	)
-	
-	pnl:Button(	
-		L"convert active pac2 outfit",
-		"pac_convert_pac2_config"
 	)	
 end
 

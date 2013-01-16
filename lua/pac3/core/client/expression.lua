@@ -35,7 +35,7 @@ local lib =
 
 local blacklist = {"repeat", "until", "function", "end"}
 
-function compile_expression(str, extra_lib)
+local function compile_expression(str, extra_lib)
 	for _, word in pairs(blacklist) do
 		if str:find("[%p%s]" .. word) or str:find(word .. "[%p%s]") then
 			return false, string.format("illegal characters used %q", word)
