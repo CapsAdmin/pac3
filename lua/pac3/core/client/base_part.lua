@@ -408,9 +408,13 @@ do -- serializing
 					self.supress_part_name_find = false
 				else
 					if key == "Material" then
+						if not value:find("/") then
+							value = pac.HandlePartName(self:GetPlayerOwner(), value, key)
+						end
+					
 						table.insert(self.delayed_variables, {key = key, val = value})
 					end
-					
+										
 					self["Set" .. key](self, value)
 				end
 			elseif key ~= "ClassName" then
