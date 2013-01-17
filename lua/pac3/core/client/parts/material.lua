@@ -277,7 +277,7 @@ function PART:UpdateMaterial(now)
 end
 
 function PART:OnEvent(event, ...)
-	if self:IsHiddenEx() then return end
+	if self.suppress_event then return end
 	if event == "material_changed" then
 		self:UpdateMaterial()
 	end
@@ -295,8 +295,10 @@ end
 function PART:OnHide()
 	local parent = self:GetParent()
 	
-	if parent:IsValid() then
-		parent.Materialm = pac.Material(parent.Material, self)
+	if parent:IsValid() and parent.SetMaterial then
+		self.suppress_event = true
+		parent:SetMaterial(parent.Material)
+		self.suppress_event = nil
 	end
 end
 
