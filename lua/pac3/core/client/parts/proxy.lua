@@ -54,6 +54,12 @@ PART.Inputs =
 	random = function(s, p)
 		return math.random()
 	end,
+	timeex = function(s, p)
+		s.time = s.time or 0
+		s.time = s.time + (FrameTime() * 60)
+		
+		return s.time
+	end,
 	
 	eye_position_distance = function(self, parent) 
 		return parent.cached_pos:Distance(pac.EyePos) 
@@ -308,7 +314,9 @@ function PART:SetExpression(str)
 end
 
 function PART:OnThink()
-	if self:IsHiddenEx() then return end
+	if self:IsHiddenEx() then 
+		self.time = 0
+	return end
 	
 	local parent = self.Parent
 	if not parent:IsValid() then return end
