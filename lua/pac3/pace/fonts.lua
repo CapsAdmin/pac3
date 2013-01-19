@@ -3,14 +3,6 @@ local L = pace.LanguageString
 pace.Fonts = 
 {
 	"DermaDefault",
-	"Default",
-	"BudgetLabel",
-	"DefaultSmallDropShadow",
-	"DefaultBold",
-	"DefaultFixedOutline",
-	"ChatFont",
-	"DefaultFixedDropShadow",
-	"UiBold",
 }
 
 for i = 1, 5 do
