@@ -313,10 +313,12 @@ function PART:SetExpression(str)
 	end
 end
 
+function PART:OnHide()
+	self.time = 0
+end
+
 function PART:OnThink()
-	if self:IsHiddenEx() then 
-		self.time = 0
-	return end
+	if self:IsHiddenEx() then return end
 	
 	local parent = self.Parent
 	if not parent:IsValid() then return end
