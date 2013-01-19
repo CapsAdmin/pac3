@@ -139,6 +139,146 @@ pace.AddTool(L"record surrounding props to pac", function(part)
 	end
 end)
 
+do
+
+	local function fix_name(str)
+		str = str:lower()
+		str = str:gsub("_", " ")
+		return str
+	end
+
+	local hue =
+	{
+		"red",
+		"orange",
+		"yellow",
+		"green",
+		"turquoise",
+		"blue",
+		"purple",
+		"magenta",	
+	}
+
+	local sat =
+	{
+		"pale",
+		"",
+		"strong",
+	}
+
+	local val =
+	{
+		"dark",
+		"",
+		"bright"
+	}
+
+	local function HSVToNames(h,s,v)
+		return 
+			hue[math.Round((1+(h/360)*#hue))] or hue[1],
+			sat[math.ceil(s*#sat)] or sat[1],
+			val[math.ceil(v*#val)] or val[1]
+	end
+
+	local function ColorToNames(c)
+		return HSVToNames(ColorToHSV(Color(c.r, c.g, c.b)))
+	end
+
+	pace.AddTool(L"rename parts", function(part, suboptions)
+		local function go(parts)
+			for _, part in pairs(parts) do
+				local name
+				
+				if part.ClassName == "model" then
+					local mdl = part:GetModel()
+					name = fix_name(("/".. mdl):match(".+/(.-)%."))
+				end
+			
+				if part.ClassName == "sound" then
+					local snd = part:GetSound()
+					name = fix_name(("/".. snd):match(".+/(.-)%."))
+				end
+			
+				if part.ClassName == "sprite" then
+					local mat = part:GetSpritePath()
+					name = fix_name(("/".. mat):match(".+/(.+)"):gsub("%..+", ""))
+				end
+			
+				if part.ClassName == "bone" then
+					name = part:GetBone()
+				end
+				
+				if part.ClassName == "animation" then
+					local name = part:GetSequenceName()
+					if name == "" then
+						name = part:GetWeaponHoldType()
+					end
+					name = fix_name(name)
+				end
+			
+				if part.ClassName == "event" then
+					name = fix_name(part:GetEvent())
+				end
+			
+				if part.ClassName == "light" and part:GetColor() ~= Vector(255, 255, 255)  then	
+					local hue, sat, val = ColorToNames(part:GetColor())
+					name = hue .. " light"
+				end
+			
+				if part.ClassName == "proxy" then
+					name = fix_name(part:GetVariableName()) .. " changer"
+				end
+			
+				if part.ClassName == "clip" then
+					name = "clip"
+				end			
+				
+				if name then
+					part:SetName(name)
+					pace.OnVariableChanged(part, "Name", name)
+				end
+				
+				if suboptions == 2 then
+					go(part.Children, true)
+				end
+			end
+			
+			local renamed = {}
+			
+			for _, part in pairs(parts) do
+				if part:HasParent() then
+					
+					local parts = {}
+					for k,v in pairs(part:GetParent():GetChildren()) do
+						if v:GetName() == part:GetName() then
+							table.insert(parts, v)
+						end
+					end
+					
+					if #parts > 1 then
+						for k,v in pairs(parts) do
+							v:SetName(v:GetName() .. " " .. k)
+							pace.OnVariableChanged(v, "Name", v.Name)
+						end
+					end
+					
+					if suboptions == 2 then
+						go(part.Children, true)
+					end
+				end
+			end
+		end
+		
+		if suboptions == 2 then
+			go(part:GetChildren())
+		else
+			go(pac.GetParts(true))
+		end
+	end, L"everything", L"children")
+
+end
+	
+
 do return end
 
 pace.AddTool(L"convert to expression2 holo", function(part)
