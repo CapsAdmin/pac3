@@ -31,6 +31,8 @@ local lib =
 	sqrt = math.sqrt,
 	tanh = math.tanh,
 	tan = math.tan,
+	
+	clamp = math.Clamp,
 }
 
 local blacklist = {"repeat", "until", "function", "end"}
