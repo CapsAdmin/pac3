@@ -38,6 +38,10 @@ PART.Functions =
 local FrameTime = FrameTime
 
 local function calc_velocity(part)
+	if IsEntity(part) and part:IsValid() then
+		return part:GetVelocity()
+	end
+
 	local diff = part.cached_pos - (part.last_pos or Vector(0, 0, 0))
 	part.last_pos = part.cached_pos
 
@@ -313,6 +317,10 @@ function PART:SetExpression(str)
 	end
 end
 
+function PART:OnParent()
+	self.needs_compiliation = true
+end
+
 function PART:OnHide()
 	self.time = 0
 end
@@ -340,21 +348,27 @@ function PART:OnThink()
 				end
 			end
 			
-			x = x or 0
-			
-			if self.Additive then	
-				self.vec_additive[1] = (self.vec_additive[1] or 0) + x
-				x = self.vec_additive[1]
-			end
-			
 			if T == "boolean" then
+				x = x or parent["Get" .. self.VariableName] == true and 1 or 0
 				parent["Set" .. self.VariableName](parent, tonumber(x) > 0)
 			elseif T == "number" then
+							
+				if self.Additive then	
+					self.vec_additive[1] = (self.vec_additive[1] or 0) + x
+					x = self.vec_additive[1]
+				end
+			
+				x = x or parent["Get" .. self.VariableName]
 				parent["Set" .. self.VariableName](parent, tonumber(x))
 			else
 				local val = parent[self.VariableName]
 				
 				if self.Additive then	
+					if x then
+						self.vec_additive[1] = (self.vec_additive[1] or 0) + x
+						x = self.vec_additive[1]
+					end
+				
 					if y then 
 						self.vec_additive[2] = (self.vec_additive[2] or 0) + y 
 						y = self.vec_additive[2] 
@@ -365,13 +379,13 @@ function PART:OnThink()
 						z = self.vec_additive[3] 
 					end					
 				end
-				
+								
 				if T == "Angle" then
-					val.p = x
+					val.p = x or val.p
 					val.y = y or val.y
 					val.r = z or val.r
 				else					
-					val.x = x
+					val.x = x or val.x
 					val.y = y or val.y
 					val.z = z or val.z
 				end

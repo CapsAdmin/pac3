@@ -2,6 +2,7 @@ local PART = {}
 
 PART.ClassName = "sound"
 PART.NonPhysical = true
+PART.ThinkTime = 0
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Sound", "")
@@ -45,14 +46,7 @@ function PART:OnThink()
 			self.last_playonfootstep = self.PlayOnFootstep
 		end
 	end
-
-	if self:IsHiddenEx() then
-		self:StopSound()
-	else
-		if not self.csptch or not self.csptch:IsPlaying() then
-			self:PlaySound()
-		end
-	end
+	
 end
 
 -- fixes by Python 1320
@@ -97,29 +91,27 @@ function PART:SetSound(str)
 	end
 
 	self.Sound = str:gsub("\\", "/")
+	
+	self:PlaySound()
 end
 
 function PART:SetVolume(num)
-	self.Volume = math.Clamp(num, 0, 1)
+	self.Volume = num
 	
 	if not self.csptch then
 		self:PlaySound()
-	end
-	
-	if self.csptch then
-		self.csptch:ChangeVolume(self.Volume, 0)
+	else
+		self.csptch:ChangeVolume(math.Clamp(self.Volume, 0.01, 1), 0)
 	end
 end
 
 function PART:SetPitch(num)
-	self.Pitch = math.Clamp(num, 0, 1)
+	self.Pitch = num
 	
 	if not self.csptch then
 		self:PlaySound()
-	end
-	
-	if self.csptch then
-		self.csptch:ChangePitch(self.Pitch*255, 0)
+	else
+		self.csptch:ChangePitch(math.Clamp(self.Pitch*255, 1, 255), 0)
 	end
 end
 
@@ -171,7 +163,7 @@ function PART:PlaySound(osnd, ovol)
 		else
 			pitch = math.random(self.MinPitch, self.MaxPitch)
 		end
-		
+				
 		csptch:PlayEx(vol, pitch)		
 		ent.pac_csptch = csptch
 		self.csptch = csptch
