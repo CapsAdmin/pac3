@@ -46,7 +46,14 @@ function PART:OnThink()
 			self.last_playonfootstep = self.PlayOnFootstep
 		end
 	end
-	
+
+	if self:IsHiddenEx() then
+		self:StopSound()
+	else
+		if not self.csptch or not self.csptch:IsPlaying() then
+			self:PlaySound()
+		end
+	end
 end
 
 -- fixes by Python 1320
@@ -100,8 +107,10 @@ function PART:SetVolume(num)
 	
 	if not self.csptch then
 		self:PlaySound()
-	else
-		self.csptch:ChangeVolume(math.Clamp(self.Volume, 0.01, 1), 0)
+	end
+	
+	if self.csptch then
+		self.csptch:ChangeVolume(math.Clamp(self.Volume, 0.001, 1), 0)
 	end
 end
 
@@ -110,7 +119,9 @@ function PART:SetPitch(num)
 	
 	if not self.csptch then
 		self:PlaySound()
-	else
+	end
+	
+	if self.csptch then
 		self.csptch:ChangePitch(math.Clamp(self.Pitch*255, 1, 255), 0)
 	end
 end
