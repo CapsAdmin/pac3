@@ -116,7 +116,7 @@ function urlobj.GetObjFromURL(url, callback, skip_cache)
 			old(...)
 		end
 	else
-		urlobj.Queue[url] = {callback = callback}
+		urlobj.Queue[url] = {callback = callback, tries = 0}
 	end
 end
 
@@ -125,8 +125,14 @@ function urlobj.Think()
 
 	for url, data in pairs(urlobj.Queue)  do
 		if v.Downloading and v.Downloading < RealTime() then 
-			pac.dprint("model download timed out %q", url)
-			urlobj.Cache[url] = nil
+			pac.dprint("model download timed out for the %s time %q", data.tries, url)
+			if data.tries > 3 then
+				urlobj.Queue[url] = nil
+				pac.dprint("model download timed out for good %q", url)
+			else
+				data.Downloading = false
+			end
+			data.tries = data.tries + 1
 		return end
 	end
 	
@@ -135,7 +141,7 @@ function urlobj.Think()
 			if not data.Downloading then
 				pac.dprint("requesting model download %q", url)
 				
-				data.Downloading = RealTime() + 5
+				data.Downloading = RealTime() + 15
 
 				http.Fetch(url, function(obj_str)	
 					pac.dprint("downloaded model %q", url)
