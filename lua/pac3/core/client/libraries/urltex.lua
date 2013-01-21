@@ -5,6 +5,11 @@ urltex.ActivePanel = urltex.ActivePanel or NULL
 urltex.Queue = urltex.Queue or {}
 urltex.Cache = urltex.Cache or {}
 
+concommand.Add("pac_urltex_clear_cache", function()
+	urltex.Cache = {}
+	urltex.Queue = {}
+end)
+
 if urltex.ActivePanel:IsValid() then
 	urltex.ActivePanel:Remove()
 end
