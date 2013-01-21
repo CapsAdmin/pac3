@@ -2,6 +2,11 @@ local urlobj = pac.urlobj or {}
 urlobj.Queue = urlobj.Queue or {}
 urlobj.Cache = urlobj.Cache or {}
 
+concommand.Add("pac_urlobj_clear_cache", function()
+	urlobj.Cache = {}
+	urlobj.Queue = {}
+end)
+
 -- parser made by animorten
 -- modified slightly by capsadmin
 
@@ -11,6 +16,8 @@ local table_insert = table.insert
 local tonumber = tonumber
 
 function urlobj.ParseObj(data)
+	debug.sethook()
+
 	local positions = {}
 	local texcoords = {}
 	local normals = {}
@@ -116,12 +123,19 @@ end
 function urlobj.Think()
 	if pac.urltex and pac.urltex.Busy then return end
 
+	for url, data in pairs(urlobj.Queue)  do
+		if v.Downloading and v.Downloading < RealTime() then 
+			pac.dprint("model download timed out %q", url)
+			urlobj.Cache[url] = nil
+		return end
+	end
+	
 	if table.Count(urlobj.Queue) > 0 then
 		for url, data in pairs(urlobj.Queue) do
 			if not data.Downloading then
 				pac.dprint("requesting model download %q", url)
 				
-				data.Downloading = true
+				data.Downloading = RealTime() + 5
 
 				http.Fetch(url, function(obj_str)	
 					pac.dprint("downloaded model %q", url)
