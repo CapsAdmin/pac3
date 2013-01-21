@@ -1,7 +1,7 @@
 local pac_allow_server_size
 
 if SERVER then 
-	pac_allow_server_size = CreateConVar("pac_allow_server_size", 0, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
+	pac_allow_server_size = CreateConVar("pac_allow_server_size", 1, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
 end
 
 include("size.lua")

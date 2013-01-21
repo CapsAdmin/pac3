@@ -39,7 +39,7 @@ function pace.OnMenuBarPopulate(bar)
 	local menu = bar:AddMenu(L"player")
 		menu:AddCVar(L"t pose").OnChecked = function(s, b) pace.SetTPose(b) end
 		menu:AddOption(L"reset eye angles", function() pace.ResetEyeAngles() end)		
-		menu:AddCVar(L"physical player size", "pac_allow_server_size", "1", "0")
+		menu:AddCVar(L"physical player size", "pac_server_player_size", "1", "0")
 		
 	local menu = bar:AddMenu(L"tools")
 		pace.AddToolsToMenu(menu)
