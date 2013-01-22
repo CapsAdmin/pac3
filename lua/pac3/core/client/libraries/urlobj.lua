@@ -124,7 +124,7 @@ function urlobj.Think()
 	if pac.urltex and pac.urltex.Busy then return end
 
 	for url, data in pairs(urlobj.Queue)  do
-		if v.Downloading and v.Downloading < RealTime() then 
+		if data.Downloading and data.Downloading < RealTime() then 
 			pac.dprint("model download timed out for the %s time %q", data.tries, url)
 			if data.tries > 3 then
 				urlobj.Queue[url] = nil
