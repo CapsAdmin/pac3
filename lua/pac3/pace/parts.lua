@@ -46,6 +46,8 @@ function pace.OnPartSelected(part, is_selecting)
 		pace.tree:SelectPart(part)
 	end
 	
+	pace.current_part_uid = part.UniqueID
+	
 	if not is_selecting then
 		pace.StopSelect()
 	end
@@ -172,7 +174,7 @@ function pace.LoadPartFromURL(part, url)
 		url = url:gsub(".com/", ".com/raw.php?i=")
 	end
 	
-	http.Fetch(name, function(str)
+	http.Fetch(url, function(str)
 		if not part:IsValid() then return end
 		
 		local data = pac.luadata.Decode(str)
@@ -187,7 +189,7 @@ function pace.LoadPartFromURL(part, url)
 			
 			pace.RefreshTree()
 		else
-			print("pac3 tried to load invalid part " .. name)
+			print("pac3 tried to load invalid part " .. url)
 		end
 	end)
 end
