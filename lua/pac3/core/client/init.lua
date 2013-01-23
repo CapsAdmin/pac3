@@ -94,10 +94,3 @@ function pac.Restart()
 end
 
 concommand.Add("pac_restart", pac.Restart)
-
-hook.Add("KeyPress", "pac_request_outfits", function()	
-	if LocalPlayer():IsValid() then
-		RunConsoleCommand("pac_request_outfits")
-		hook.Remove("KeyPress", "pac_request_outfits")
-	end
-end)
