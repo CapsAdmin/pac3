@@ -275,6 +275,40 @@ PART.Inputs =
 
 		return 0
 	end,
+	
+	player_color_r = function(self)
+		local vec = self:GetOwner(self.RootOwner)
+		
+		if owner:IsValid() and owner:IsPlayer() then
+			local vec = Vector(GetConVarString("cl_playercolor"))
+			
+			return vec.r
+		end
+		
+		return 1
+	end,
+	player_color_g = function(self)
+		local vec = self:GetOwner(self.RootOwner)
+		
+		if owner:IsValid() and owner:IsPlayer() then
+			local vec = Vector(GetConVarString("cl_playercolor"))
+			
+			return vec.g
+		end
+		
+		return 1
+	end,	
+	player_color_b = function(self)
+		local vec = self:GetOwner(self.RootOwner)
+		
+		if owner:IsValid() and owner:IsPlayer() then
+			local vec = Vector(GetConVarString("cl_playercolor"))
+			
+			return vec.b
+		end
+		
+		return 1
+	end,
 }
 
 usermessage.Hook("pac_proxy", function(umr)

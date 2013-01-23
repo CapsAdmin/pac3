@@ -64,7 +64,8 @@ function PANEL:OnRowRightClick(id, line)
 	menu:MakePopup()
 	menu:AddOption(L"rename", function()
 		Derma_StringRequest(L"rename", L"type the new name:", line.name, function(text)
-			
+			if not line.FileName then return end
+
 			local c = file.Read(line.FileName)
 			file.Delete(line.FileName, "DATA")
 			file.Write(line.FileName, c, "DATA")
@@ -74,6 +75,8 @@ function PANEL:OnRowRightClick(id, line)
 	end)
 	
 	menu:AddOption(L"delete", function()
+		if not line.FileName then return end
+
 		file.Delete("pac3/" .. self.Dir .. line.FileName, "DATA")
 		self:PopulateFromClient()
 	end)
