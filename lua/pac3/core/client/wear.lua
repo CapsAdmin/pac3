@@ -164,3 +164,10 @@ usermessage.Hook("pac_submit_acknowledged", function(umr)
 
 	pac.Notify(allowed, reason, name)
 end)
+
+hook.Add("KeyRelease", "pac_request_outfits", function()	
+	if LocalPlayer():IsValid() and LocalPlayer():GetVelocity():Length() > 5 then
+		RunConsoleCommand("pac_request_outfits")
+		hook.Remove("KeyRelease", "pac_request_outfits")
+	end
+end)
