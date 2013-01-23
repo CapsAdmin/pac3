@@ -14,6 +14,8 @@ concommand.Add("pac_clear_session", function()
 end)
 
 net.Receive("pac_spawn_part", function()
+	if not pace.current_part:IsValid() then return end
+	
 	local mdl = net.ReadString()
 	
 	if pace.close_spawn_menu then

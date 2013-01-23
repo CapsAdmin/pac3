@@ -190,13 +190,13 @@ function PART:OnThink()
 end
 
 hook.Add("TranslateActivity", "pac_holdtype", function(ply, act)
-	if ply and ply:IsValid() and ply.pac_holdtype and ply.pac_holdtype[act] then
+	if IsEntity(ply) and ply:IsValid() and ply.pac_holdtype and ply.pac_holdtype[act] then
 		return ply.pac_holdtype[act]
 	end
 end)
 
 hook.Add("CalcMainActivity", "pac_player_animations", function(ply, act) 
-	if ply.pac_sequence then
+	if IsEntity(ply) and ply:IsValid() and ply.pac_sequence then
 		return ply.pac_sequence, ply.pac_sequence
 	end
 end)
