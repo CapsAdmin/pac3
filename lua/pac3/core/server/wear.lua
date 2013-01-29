@@ -181,8 +181,8 @@ end
 function pac.ClearOutfit(ply)
 	local uid = ply:UniqueID()
 	
-	pac.Parts[uid] = nil
 	pac.HandleServerModifiers(ply, true)
+	pac.SubmitPart({part = "__ALL__", uid = ply:UniqueID(), owner = ply})
 end
 
 function pac.RequestOutfits(ply)
