@@ -75,10 +75,9 @@ PART.Inputs =
 		return math.random()
 	end,
 	timeex = function(s, p)
-		s.time = s.time or 0
-		s.time = s.time + (FrameTime() * 60)
-
-		return s.time
+		s.time = s.time or RealTime()
+		
+		return RealTime() - s.time
 	end,
 
 	eye_position_distance = function(self, parent)
@@ -363,7 +362,15 @@ function PART:SetExpression(str)
 end
 
 function PART:OnHide()
-	self.time = 0
+	self.time = nil
+	self.vec_additive = Vector()
+	self.ExpressionFunc = nil
+end
+
+function PART:OnShow()
+	self.time = nil
+	self.vec_additive = Vector()
+	self.ExpressionFunc = nil
 end
 
 function PART:OnThink()
