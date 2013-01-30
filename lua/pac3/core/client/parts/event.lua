@@ -41,9 +41,20 @@ PART.Events =
 		end,
 	},
 	
+	client_spawned = 
+	{
+		arguments = {{time = "number"}},
+		callback = function(self, ent, time)
+			time = time or 0.1
+						
+			if ent.pac_playerspawn and ent.pac_playerspawn + time > RealTime() then
+				return true
+			end			
+		end,	
+	},
+	
 	is_client = 
-	{ 
-		
+	{ 	
 		callback = function(self, ent)
 			return self:GetPlayerOwner() == ent
 		end,
@@ -569,6 +580,10 @@ end)
 pac.AddHook("GravGunPunt", function(ply, ent)
 	ply.pac_gravgun_ent = ent
 	ply.pac_gravgun_punt = RealTime()
+end)
+
+pac.AddHook("PlayerSpawned", function(ply)
+	ply.pac_playerspawn = RealTime()
 end)
 
 --[[
