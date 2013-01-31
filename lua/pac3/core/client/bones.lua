@@ -30,12 +30,11 @@ function pac.GetAllBones(ent)
 	
 		local count = ent:GetBoneCount()
 
-		for i = 0, count or 1 do
-			local name = ent:GetBoneName(i)
-			local bone = ent:LookupBone(name)
+		for bone = 0, count or 1 do
+			local name = ent:GetBoneName(bone)
 			local friendly = name
 
-			if bone then
+			if name then
 				for _, value in pairs(pac.BoneNameReplacements) do
 					friendly = friendly:gsub(value[1], value[2])
 				end
@@ -45,7 +44,7 @@ function pac.GetAllBones(ent)
 				:lower()
 				:gsub("(.-)(%d+)", "%1 %2")
 				
-				local parent_i = ent:GetBoneParent(i)
+				local parent_i = ent:GetBoneParent(bone)
 				if parent_i == -1 then
 					parent_i = nil
 				end
@@ -55,15 +54,15 @@ function pac.GetAllBones(ent)
 					friendly = friendly,
 					real = name,
 					bone = bone,
-					i = i,
+					i = bone,
 					parent_i = parent_i,
 				}
 			end
 		end
 		
-		local tbl = ent:GetAttachments()
-		if tbl then
-			for key, data in pairs(tbl) do	
+		local attachments = ent:GetAttachments()
+		if attachments then
+			for key, data in pairs(attachments) do	
 				local parent_i = ent:GetParentAttachment(data.id)
 				if parent_i == -1 then
 					parent_i = nil
