@@ -2,7 +2,65 @@ pace.Materials = {}
 
 pace.Materials.materials =
 {
+	"models/weapons/v_crowbar/crowbar_cyl",
+	"models/weapons/v_crowbar/head_uvw",
+	"models/weapons/v_bugbait/bugbait_sheet",
+	"models/combine_advisor/arm",
+	"models/combine_advisor/hose",
+	"models/combine_advisor/face5",
+	"models/combine_advisor/body9",
+	"models/barnacle/barnacle_sheet",
+	"models/headcrab_black/blackcrab_sheet",
+	"models/headcrab/allinonebacup2",
+	"models/headcrab_classic/headcrabsheet",
+	"models/stalker/stalker_sheet",
+	"models/zombie_poison/poisonzombie_sheet",
+	"models/zombie_fast/fast_zombie_sheet",
+	
+	"models/gunship/gunshipsheet",
+	"models/shield_scanner/minelayer_sheet",
+	"models/roller/rollermine_sheet",
+	"models/dog/dog_sheet",
+	"models/gibs/combine_helicopter_gibs/combine_helicopter01",
+	"models/synth/mainbody",
+	"models/combine_room/combine_monitor001",
+	"models/items/combinerifle_ammo",
+	"models/shadertest/shader2",
+	"models/props_combine/combine_train001",
+	"models/props_combine/combinethumper001",
+	"models/props_combine/health_charger001",
+	"models/props_combine/masterinterface01",
+	"models/props_combine/introomarea_sheet",
+	"models/props_combine/combine_bunker01",
+	"models/props_combine/weaponstripper_sheet",
+	"models/props_combine/tpcontroller_sheet",
+	"models/props_combine/combine_tower01a",
+	"models/combine_mine/combine_mine03",
+	"models/magnusson_teleporter/magnusson_teleporter",
+	"models/combine_strider/strider_brain",
+	"models/combine_advisor_pod/combine_advisor_pod",
+	"models/magnusson_device/magnusson_device_basecolor",
+	
+	"models/antlion_grub/antlion_grub",
+	"models/antlion/antlion_worker_wing",
+	"models/antlion/antlion_worker",
+	"models/ministrider/mini_skin_basecolor",
+	"models/ministrider/mini_armor_basecolor",
+	"models/spitball/spitball",
+	
+	"models/mossman/mossman_hair",
 	"models/alyx/hairbits",
+	
+	"models/brokenglass/glassbroken_piece1",
+	"models/props_halloween/flask",
+	"models/props_halloween/flask_liquid",
+	"models/props_halloween/flask_glass",
+	"models/props_halloween/pumpkin",
+	"models/props_mining/dustbowl_roof01",
+	"models/props_mvm/mvm_museum_coal",
+	"models/effects/partyhat",
+	"models/props_gameplay/ball001",
+	"models/props_gameplay/orange_cone001",
 	
 	"models/player/items/soldier/dappertopper",
 	"models/weapons/c_items/c_candy_cane_red",
@@ -93,7 +151,6 @@ pace.Materials.materials =
 	"models/props_pipes/GutterMetal01a",
 	"models/props_pipes/Pipesystem01a_skin3",
 	"models/props_wasteland/wood_fence01a",
-	"models/props_foliage/tree_deciduous_01a_trunk",
 	"models/props_c17/FurnitureFabric003a",
 	"models/props_c17/FurnitureMetal001a",
 	"models/props_c17/paper01",
@@ -143,7 +200,6 @@ pace.Materials.materials =
 	"models/props_canal/metalwall005b",
 	"models/props_canal/rock_riverbed01a",
 	"models/props_combine/citadel_cable",
-	"models/props_combine/citadel_cable_b",
 	"models/props_combine/combine_interface_disp",
 	"models/props_combine/combine_monitorbay_disp",
 	"models/props_combine/com_shield001a",
@@ -170,7 +226,6 @@ pace.Materials.materials =
 	"models/props_debris/tilefloor001c",
 	"models/props_foliage/driftwood_01a",
 	"models/props_foliage/oak_tree01",
-	"models/props_foliage/tree_deciduous_01a_trunk",
 	"models/props_interiors/metalfence007a",
 	"models/props_junk/plasticcrate01a",
 	"models/props_junk/plasticcrate01b",
@@ -186,7 +241,6 @@ pace.Materials.materials =
 	"models/props_lab/xencrystal_sheet",
 	"models/props_pipes/destroyedpipes01a",
 	"models/props_pipes/GutterMetal01a",
-	"models/props_pipes/pipemetal001a",
 	"models/props_pipes/pipeset_metal02",
 	"models/props_pipes/pipesystem01a_skin1",
 	"models/props_pipes/pipesystem01a_skin2",
@@ -513,6 +567,10 @@ function PANEL:Init()
 	self.MatList = list
 end
 
+function PANEL:Paint(w, h)
+	surface.SetDrawColor(0,0,0, 255)
+	surface.DrawRect(0, 0, w, h)
+end
 
 local cache = {}
 local function IsError(path)
