@@ -22,22 +22,18 @@ function pac.SetPlayerSize(ply, f)
 	ply:SetViewOffset(def.view * f)
 	ply:SetViewOffsetDucked(def.viewducked * f)
 	
-	--[[
 	ply:SetModelScale(f, 0)
-	
-	ply:SetRunSpeed(math.max(def.run * f, TICKRATE/2))
-	ply:SetWalkSpeed(math.max(def.walk * f, TICKRATE/4))
-	
 	ply:SetStepSize(def.step * f)
-	
-	ply:SetHull(def.min * f, def.max * f * (f > 1 and 0.5 or f < 1 and 1 or 1))
-	ply:SetHullDuck(def.min * f, def.maxduck * f * (f > 1 and 1.25 or f < 1 and 1.5 or 1))
-	
+
 	local phys = ply:GetPhysicsObject()
 	if phys:IsValid() then
 		phys:SetMass(def.mass * f)	
 	end
 	
+	--[[
+	
+	ply:SetRunSpeed(math.max(def.run * f, TICKRATE/2))
+	ply:SetWalkSpeed(math.max(def.walk * f, TICKRATE/4))
 
 	hook.Add("UpdateAnimation", "pac_scale", function(ply, vel, max)
 		if ply.pac_player_size and ply.pac_player_size ~= 1 then
