@@ -44,17 +44,23 @@ local function compile_expression(str, extra_lib)
 		end
 	end
 	
+	local functions = {}
+	
+	for k,v in pairs(lib) do functions[k] = v end
+	
 	if extra_lib then
-		for k,v in pairs(extra_lib) do lib[k] = v end
+		for k,v in pairs(extra_lib) do functions[k] = v end
 	end
 	
-	lib.select = select
+	functions.select = select
 	str = "local IN = select(1, ...) return " .. str
+	
 	local func = CompileString(str, "pac_expression", false)
+	
 	if type(func) == "string" then
 		return false, func
 	else
-		setfenv(func, lib)
+		setfenv(func, functions)
 		return true, func
 	end
 end
