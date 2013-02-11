@@ -364,13 +364,11 @@ end
 function PART:OnHide()
 	self.time = nil
 	self.vec_additive = Vector()
-	self.ExpressionFunc = nil
 end
 
 function PART:OnShow()
 	self.time = nil
 	self.vec_additive = Vector()
-	self.ExpressionFunc = nil
 end
 
 function PART:OnThink()

@@ -551,7 +551,7 @@ end
 function PART:CallOnChildren(func, ...)
 	for k,v in pairs(self:GetChildren()) do
 		if v[func] then v[func](v, ...) end
-		v:CallOnChildren(...)
+		v:CallOnChildren(func, ...)
 	end
 end
 
