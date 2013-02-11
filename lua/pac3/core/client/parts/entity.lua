@@ -274,13 +274,11 @@ function PART:OnThink()
 	if self:IsHiddenEx() then
 		if not self.temp_hide_ent then
 			self:OnHide()
-			print("hiding")
 			self.temp_hide_ent = true
 		end
 	else
 		if self.temp_hide_ent then
 			self:OnShow()
-			print("showing")
 			self.temp_hide_ent = false
 		end
 	end
