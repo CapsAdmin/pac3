@@ -190,7 +190,8 @@ PART.Events =
 			
 			local data = ent.pac_anim_event 
 			
-			if data and self:StringOperator(data.name, find) and data.time + time > RealTime() then
+			if data and (data.reset or self:StringOperator(data.name, find) and data.time + time > RealTime()) then
+				data.reset = false
 				return true
 			end			
 		end,
@@ -391,10 +392,10 @@ function PART:OnThink()
 			if parent:IsValid() then
 				if self:IsHidden() then
 					parent:SetEventHide(self.Invert)
-				elseif self.Invert then
-					parent:SetEventHide(not (data.callback(self, ent, self:GetParsedArguments(data.arguments)) or false) )
 				else
-					parent:SetEventHide((data.callback(self, ent, self:GetParsedArguments(data.arguments)) or false) )
+					local b = (data.callback(self, ent, self:GetParsedArguments(data.arguments)) or false) 
+					if self.Invert then b = not b end
+					parent:SetEventHide(b)
 				end
 			end
 		end
@@ -562,7 +563,7 @@ usermessage.Hook("pac_event", function(umr)
 end)
 
 pac.AddHook("DoAnimationEvent", function(ply, event, data)
-	ply.pac_anim_event = {name = enums[event], time = RealTime()}
+	ply.pac_anim_event = {name = enums[event], time = RealTime(), reset = true}
 end)
 
 pac.AddHook("OnPlayerChat", function(ply, str)

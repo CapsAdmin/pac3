@@ -12,6 +12,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "MaxPitch", 100)
 	pac.GetSet(PART, "RootOwner", true)
 	pac.GetSet(PART, "PlayOnFootstep", false)
+	pac.GetSet(PART, "Overlapping", false)
 pac.EndStorableVars()
 
 function PART:Initialize()
@@ -19,10 +20,12 @@ function PART:Initialize()
 end
 
 function PART:OnShow()
+	self.played_overlapping = false
 	self:PlaySound()
 end
 
 function PART:OnHide()
+	self.played_overlapping = false
 	self:StopSound()
 end
 
@@ -152,13 +155,7 @@ function PART:PlaySound(osnd, ovol)
 				)
 			end
 		end
-		
-		if self.csptch then
-			self.csptch:Stop()
-		end
-		
-		local csptch = CreateSound(ent, snd)
-		
+						
 		local vol
 		
 		if osnd and self.Volume == -1 then
@@ -166,7 +163,7 @@ function PART:PlaySound(osnd, ovol)
 		else
 			vol = self.Volume
 		end
-		
+											
 		local pitch
 		
 		if self.MinPitch == self.MaxPitch then
@@ -174,10 +171,23 @@ function PART:PlaySound(osnd, ovol)
 		else
 			pitch = math.random(self.MinPitch, self.MaxPitch)
 		end
-				
-		csptch:PlayEx(vol, pitch)		
-		ent.pac_csptch = csptch
-		self.csptch = csptch
+		
+		if self.Overlapping then
+			if not self.played_overlapping then
+				ent:EmitSound(snd, vol * 160, pitch)
+				self.played_overlapping = true
+			end
+		else
+			if self.csptch then
+				self.csptch:Stop()
+			end
+			
+			local csptch = CreateSound(ent, snd)
+
+			csptch:PlayEx(vol, pitch)		
+			ent.pac_csptch = csptch
+			self.csptch = csptch
+		end
 	end
 end
 
