@@ -19,12 +19,14 @@ function PART:Initialize()
 	self:PlaySound()
 end
 
-function PART:OnShow()
+function PART:OnShow(from_event)
+	if not from_event then return end
 	self.played_overlapping = false
 	self:PlaySound()
 end
 
 function PART:OnHide()
+	if not from_event then return end
 	self.played_overlapping = false
 	self:StopSound()
 end

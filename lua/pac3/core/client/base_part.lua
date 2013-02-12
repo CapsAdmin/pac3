@@ -578,10 +578,10 @@ function PART:SetEventHide(b)
 	if b ~= self.EventHide then
 		if b then
 			self:OnHide()
-			self:CallOnChildren("OnHide")
+			self:CallOnChildren("OnHide", true)
 		else
 			self:OnShow()
-			self:CallOnChildren("OnShow")
+			self:CallOnChildren("OnShow", true)
 		end
 	end
 	self.EventHide = b
