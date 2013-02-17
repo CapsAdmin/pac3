@@ -381,9 +381,6 @@ PART.Events =
 	},
 }
 
-function PART:Invalidate()
-	self.last_val = nil
-end
 
 function PART:OnThink()
 	local ent = self:GetOwner(self.RootOwner)
@@ -407,10 +404,7 @@ function PART:OnThink()
 					end
 				end
 				
-				if self.last_val ~= b then
-					parent:SetEventHide(b, self)
-					self.last_val = b
-				end
+				parent:SetEventHide(b, self)
 			end
 		end
 	end

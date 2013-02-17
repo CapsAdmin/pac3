@@ -260,12 +260,7 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 				render_CullMode(MATERIAL_CULLMODE_CCW)
 			pac.SetModelScale(ent, self.Scale * self.Size)
 		end
-		
-		render_SetColorModulation(1,1,1)
-		render_SetBlend(1)
-		
-		render_MaterialOverride()
-		
+				
 		if #self.ClipPlanes > 0 then
 			for key, clip in pairs(self.ClipPlanes) do
 				if not clip:IsValid() then
