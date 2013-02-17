@@ -697,6 +697,13 @@ function PART:CalcAngles(owner, ang)
 	
 	if pac.StringFind(self.AimPartName, "LOCALEYES", true, true) then
 		return self.Angles + (pac.EyePos - self.cached_pos):Angle()
+	elseif pac.StringFind(self.AimPartName, "playereyes", true, true) then
+		local ent = me.pac_traceres.Entity
+		if ent:IsValid() then
+			return self.Angles + (ent:EyePos() - self.cached_pos):Angle()
+		else
+			return self.Angles + (pac.EyePos - self.cached_pos):Angle()
+		end
 	elseif self.AimPart:IsValid() then	
 		return self.Angles + (self.AimPart.cached_pos - self.cached_pos):Angle()
 	elseif self.EyeAngles then
