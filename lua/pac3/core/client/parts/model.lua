@@ -82,6 +82,13 @@ function PART:OnShow()
 	end
 end
 
+function PART:OnThink()
+	pac.SetModelScale(self:GetEntity(), self.Scale * self.Size)
+	
+	self:CheckScale()
+	self:CheckBoneMerge()
+end
+
 function PART:OnParent(part)
 	local ent = self:GetEntity()
 	local owner = self:GetOwner()
@@ -238,20 +245,20 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 			render_SuppressEngineLighting(false) 
 		end
 		
-		if self.CellShade > 0 then
-			render_CullMode(MATERIAL_CULLMODE_CW)
-				pac.SetModelScale(ent, (self.Scale * self.Size) * (1 + self.CellShade))
-					render_SetColorModulation(0,0,0)
-						render_SuppressEngineLighting(true)
-						render_MaterialOverride(WHITE)
-							
-							ent:SetupBones()
-							self:DrawModel(ent, pos, ang)
-							
-						render_MaterialOverride()
+		if self.CellShade > 0 then		
+			self:CheckScale()
+			self:CheckBoneMerge()
+		
+			pac.SetModelScale(ent, self.Scale * self.Size * (1 + self.CellShade))
+				render_CullMode(MATERIAL_CULLMODE_CW)
+						render_SetColorModulation(0,0,0)
+							render_SuppressEngineLighting(true)
+								render_MaterialOverride(WHITE)
+									self:DrawModel(ent, pos, ang)														
+								render_MaterialOverride()
 						render_SuppressEngineLighting(false)
-				pac.SetModelScale(ent)
-			render_CullMode(MATERIAL_CULLMODE_CCW)
+				render_CullMode(MATERIAL_CULLMODE_CCW)
+			pac.SetModelScale(ent, self.Scale * self.Size)
 		end
 		
 		render_SetColorModulation(1,1,1)
@@ -276,27 +283,19 @@ end
 
 local render_SetMaterial = render.SetMaterial
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw(owner, pos, ang)	
 	local ent = self.Entity
 	
-	if ent:IsValid() then
-		self:CheckScale()
-		self:CheckBoneMerge()
-	
+	if ent:IsValid() then	
+		
 		self:PreEntityDraw(owner, ent, pos, ang)
-		
-		pac.SetModelScale(ent, self.Scale * self.Size)
-		--ent:SetupBones()
-		
-		self:DrawModel(ent, pos, ang)
-				
+			self:DrawModel(ent, pos, ang)	
 		self:PostEntityDraw(owner, ent, pos, ang)
+		
 		pac.ResetBones(ent)
 	else
 		timer.Simple(0, function()
-			self.Entity = pac.CreateEntity(self.Model)
-			self.Entity:SetNoDraw(true)
-			self.Entity.PACPart = self
+			self:Initialize()
 		end)
 	end
 end
@@ -610,39 +609,6 @@ function PART:OnBuildBonePositions()
 			else
 				ent:ManipulateBonePosition(i, ent:GetManipulateBonePosition(i) + Vector((scale.x-1) ^ 4, 0, 0))
 				ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * scale)
-			end
-		end
-	end
-	
-	if self.BoneMergeAlternative then
-		local ent_bones = self:GetModelBones(ent)
-		local owner_bones = self:GetModelBones(owner)
-		
-		if ent_bones and owner_bones then
-			for friendly, ent_bone in pairs(ent_bones) do
-				local owner_bone = owner_bones[friendly]
-				
-				if owner_bone and not bad_bones[owner_bone.real] then				
-					local pos, ang = owner:GetBonePosition(owner_bone.real ~= "ValveBiped.Bip01_Head1" and owner_bone.parent_i or owner_bone.i)
-					if pos ~= owner:GetPos() and pos ~= owner:EyePos() then
-
-						if owner_bone.real == "ValveBiped.Bip01_Neck1" then
-							pos = vector_origin
-						end
-						
-						if owner_bone.real == "ValveBiped.Bip01_Head1" then	
-							local wpos, wang = owner:GetBonePosition(owner_bone.parent_i)							
-							local pos, ang = WorldToLocal(pos, ang, wpos, wang)
-
-							local pos2 = ent:GetBonePosition(ent_bone.parent_i)	
-
-							ent:SetBonePosition(ent_bone.i, pos, ang)
-							continue
-						end
-		
-						ent:SetBonePosition(ent_bone.parent_i or ent_bone.i, pos, ang)
-					end
-				end
 			end
 		end
 	end

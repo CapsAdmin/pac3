@@ -91,7 +91,7 @@ function PART:OnDraw(owner, pos, ang)
 end
 
 function PART:OnThink()
-	if self:IsHiddenEx() then
+	if self:IsHidden() then
 		local ent = self:GetOwner()
 		if ent:IsValid() then
 			ent:StopParticles()

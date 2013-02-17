@@ -101,6 +101,7 @@ function pac.GetParts(owned_only)
 		end
 		return tbl
 	end
+	
 	return pac.ActiveParts
 end
 

@@ -374,7 +374,7 @@ end
 function PART:OnThink()
 	self:CalcVelocity()
 
-	if self:IsHiddenEx() then return end
+	if self:IsHidden() then return end
 
 	local parent = self.Parent
 	if not parent:IsValid() then return end

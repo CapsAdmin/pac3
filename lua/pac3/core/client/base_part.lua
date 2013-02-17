@@ -245,32 +245,25 @@ do -- parenting
 	end
 	
 	function PART:IsHidden()
-		return self.temp_hidden or self.Hide
+		return 
+			self.temp_hidden or 
+			self.Hide or
+			self.EventHide 
+		
 	end
 	
-	function PART:IsHiddenEx()
-		if self.temp_hidden then return true end
-		if self:IsHidden() then return true end
+	function PART:SetHide(b)
+		self:CallRecursive(b and "OnHide" or "OnShow")
 		
-		local temp = self
-		
-		for i = 1, 100 do
-			local parent = temp:GetParent()
-			
-			if parent:IsValid() then
-				if parent:IsHidden() then
-					return true
-				else
-					temp = parent
-				end
-			else
-				break
-			end
-		end
-		
-		return false
+		self.Hide = b
 	end
-	
+
+	function PART:SetEventHide(b, filter)
+		self:CallRecursive(b and "OnHide" or "OnShow", true)
+		
+		self:SetKeyValueRecursive("EventHide", b, filter)
+	end
+
 	function PART:RemoveChildren()
 		for key, part in pairs(self.Children) do
 			part:Remove()
@@ -322,21 +315,36 @@ do -- bones
 		return name
 	end
 	
-	function PART:GetDrawPosition(pos, ang)			
-		local owner = self:GetOwner()
-		if owner:IsValid() then
-			local pos, ang = self:GetBonePosition(nil, pos, ang)
-							
-			pos, ang = LocalToWorld(
-				self.Position or Vector(0,0,0), 
-				self.Angles or Angle(0,0,0), 
-				pos or owner:GetPos(), 
-				ang or owner:GetAngles()
-			)
-			
-			ang = self:CalcAngles(owner, ang) or ang
-			
-			return pos or owner:GetPos(), ang or owner:GetAngles()
+	function PART:GetDrawPosition(pos, ang)
+		local frame_num = FrameNumber()
+		
+		if frame_num ~= self.last_drawpos_framenum or not self.last_drawpos then
+			self.last_drawpos_framenum = frame_num
+
+			local owner = self:GetOwner()
+			if owner:IsValid() then
+				local pos, ang = self:GetBonePosition(pos, ang)
+								
+				pos, ang = LocalToWorld(
+					self.Position or Vector(0,0,0), 
+					self.Angles or Angle(0,0,0), 
+					pos or owner:GetPos(), 
+					ang or owner:GetAngles()
+				)
+				
+				ang = self:CalcAngles(owner, ang) or ang
+				
+				pos = pos or owner:GetPos()
+				ang = ang or owner:GetAngles()
+				
+				self.last_drawpos = pos
+				self.last_drawang = ang
+				
+				return pos, ang
+			end			
+		
+		else
+			return self.last_drawpos, self.last_drawang
 		end
 		
 		return Vector(0, 0, 0), Angle(0, 0, 0)
@@ -345,37 +353,48 @@ do -- bones
 	local Angle = Angle
 	local math_NormalizeAngle = math.NormalizeAngle
 
-	function PART:GetBonePosition(idx, pos, ang)
-		local owner = self:GetOwner()
-		local parent = self:GetParent()
+	function PART:GetBonePosition(pos, ang)
+		local frame_num = FrameNumber()
 		
-		if parent:IsValid() and parent.ClassName == "jiggle" then
-			return parent.pos, parent.ang
-		end
-		
-		if parent:IsValid() and parent.ClassName ~= "group" and parent.ClassName ~= "entity" then
+		if frame_num ~= self.last_bonepos_framenum or not self.last_bonepos then
+			self.last_bonepos_framenum = frame_num
+
+			local owner = self:GetOwner()
+			local parent = self:GetParent()
 			
-			local ent = parent.Entity or NULL
-			
-			if ent:IsValid() then
-				-- if the parent part is a model, get the bone position of the parent model
-				pos, ang = pac.GetBonePosAng(ent, self.Bone)
-				ent:InvalidateBoneCache()
-			else
-				-- else just get the origin of the part
-				if not pos or not ang then 
-					-- unless we've passed it from parent
-					pos, ang = parent:GetDrawPosition()
-				end
+			if parent:IsValid() and parent.ClassName == "jiggle" then
+				return parent.pos, parent.ang
 			end
 			
-		elseif owner:IsValid() then
-			-- if there is no parent, default to owner bones
-			owner:InvalidateBoneCache()
-			pos, ang = pac.GetBonePosAng(owner, self.Bone)
+			if parent:IsValid() and parent.ClassName ~= "group" and parent.ClassName ~= "entity" then
+				
+				local ent = parent.Entity or NULL
+				
+				if ent:IsValid() then
+					-- if the parent part is a model, get the bone position of the parent model
+					pos, ang = pac.GetBonePosAng(ent, self.Bone)
+					ent:InvalidateBoneCache()
+				else
+					-- else just get the origin of the part
+					if not pos or not ang then 
+						-- unless we've passed it from parent
+						pos, ang = parent:GetDrawPosition()
+					end
+				end
+				
+			elseif owner:IsValid() then
+				-- if there is no parent, default to owner bones
+				owner:InvalidateBoneCache()
+				pos, ang = pac.GetBonePosAng(owner, self.Bone)
+			end
+					
+			self.last_bonepos = pos
+			self.last_boneang = ang
+				
+			return pos, ang
+		else
+			return self.last_bonepos, self.last_boneang
 		end
-			
-		return pos, ang
 	end
 end
 
@@ -489,6 +508,24 @@ function PART:CallEvent(event, ...)
 		part:CallEvent(event, ...)
 	end
 end
+	
+function PART:CallRecursive(func, ...)
+	if self[func] then self[func](self, ...) end
+	
+	for k, v in pairs(self.Children) do	
+		v:CallRecursive(func, ...)
+	end
+end
+
+function PART:SetKeyValueRecursive(key, val, filter)
+	self[key] = val
+	
+	for k,v in pairs(self.Children) do
+		if v ~= filter then
+			v:SetKeyValueRecursive(key, val)
+		end
+	end
+end
 
 do -- events
 	function PART:Initialize() end
@@ -548,49 +585,6 @@ function PART:Highlight(skip_children)
 	end
 end
 
-function PART:CallOnChildren(func, ...)
-	for k,v in pairs(self:GetChildren()) do
-		if v[func] then v[func](v, ...) end
-		v:CallOnChildren(func, ...)
-	end
-end
-
-function PART:CallOnChildrenAndSelf(func, ...)
-	if self[func] then self[func](self, ...) end
-	self:CallOnChildren(func, ...)
-end
-
-function PART:SetHide(b)
-	if b ~= self.Hide then
-		if b then
-			self:OnHide()
-			self:CallOnChildren("OnHide")
-		else
-			self:OnShow()
-			self:CallOnChildren("OnShow")
-		end
-	end
-	self.Hide = b
-	self:CallOnChildren("OnHide")
-end
-
-function PART:SetEventHide(b)
-	if b ~= self.EventHide then
-		if b then
-			self:OnHide()
-			self:CallOnChildren("OnHide", true)
-		else
-			self:OnShow()
-			self:CallOnChildren("OnShow", true)
-		end
-	end
-	self.EventHide = b
-end
-
-function PART:IsHidden()
-	return self.Hide == true or self.EventHide == true or false
-end
-
 do
 	local VEC0 = Vector(0,0,0)
 	local ANG0 = Angle(0,0,0)
@@ -601,30 +595,30 @@ do
 	local pos, ang, owner
 	
 	function PART:Draw(event, pos, ang, draw_type)
-		if not self:IsHiddenEx() then			
+		if not self:IsHidden() then			
 			if self[event] then			
-				pos = pos or Vector(0,0,0)
-				ang = ang or Angle(0,0,0)
-				
-				owner = self:GetOwner()
-				
-				pos, ang = self:GetDrawPosition(pos, ang)
-				
-				pos = pos or Vector(0,0,0)
-				ang = ang or Angle(0,0,0)
-				
-				self.cached_pos = pos
-				self.cached_ang = ang
-				
-				if self.PositionOffset ~= VEC0 or self.AngleOffset ~= ANG0 then
-					pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
-				end
-				
 				if 
 					self.Translucent == nil or
 					(self.Translucent == true and draw_type == "translucent")  or
 					(self.Translucent == false and draw_type == "opaque")
-				then		
+				then	
+					pos = pos or Vector(0,0,0)
+					ang = ang or Angle(0,0,0)
+					
+					owner = self:GetOwner()
+					
+					pos, ang = self:GetDrawPosition(pos, ang)
+					
+					pos = pos or Vector(0,0,0)
+					ang = ang or Angle(0,0,0)
+					
+					self.cached_pos = pos
+					self.cached_ang = ang
+					
+					if self.PositionOffset ~= VEC0 or self.AngleOffset ~= ANG0 then
+						pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
+					end
+				
 					self[event](self, owner, pos, ang)
 				end
 			end
@@ -641,8 +635,6 @@ function PART:Think()
 	
 	if owner:IsValid() then
 		if not owner.pac_bones then
-			owner:SetupBones()
-			owner:InvalidateBoneCache()
 			self:GetModelBones()
 		end
 	end
@@ -665,7 +657,7 @@ function PART:Think()
 end
 
 function PART:BuildBonePositions()	
-	if not self:IsHiddenEx() then
+	if not self:IsHidden() then
 		self:OnBuildBonePositions()
 	end
 end
