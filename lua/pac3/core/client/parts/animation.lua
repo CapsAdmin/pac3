@@ -45,6 +45,8 @@ function PART:OnHide()
 		ent.pac_holdtype = nil
 		ent.pac_pose_param = nil
 	end
+	
+	self.last_holdtype = nil
 end
 
 function PART:OnShow()

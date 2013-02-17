@@ -247,6 +247,7 @@ do -- parenting
 	function PART:IsHidden()
 		return 
 			self.temp_hidden or 
+			self._Hide or
 			self.Hide or
 			self.EventHide 
 		
@@ -256,10 +257,21 @@ do -- parenting
 		self:CallRecursive(b and "OnHide" or "OnShow")
 		
 		self.Hide = b
+		self:SetKeyValueRecursive("_Hide", b)
+	end
+	
+	function pac.InvalidateEvents()
+		for key, val in pairs(pac.GetParts()) do
+			val.last_eventhide = nil
+		end
 	end
 
 	function PART:SetEventHide(b, filter)
-		self:CallRecursive(b and "OnHide" or "OnShow", true)
+		-- or is this needed for all the chilren children as well?
+		if self.last_eventhide ~= b then
+			self:CallRecursive(b and "OnHide" or "OnShow", true)
+			self.last_eventhide = b
+		end
 		
 		self:SetKeyValueRecursive("EventHide", b, filter)
 	end

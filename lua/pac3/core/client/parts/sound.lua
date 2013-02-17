@@ -13,6 +13,8 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "RootOwner", true)
 	pac.GetSet(PART, "PlayOnFootstep", false)
 	pac.GetSet(PART, "Overlapping", false)
+	pac.GetSet(PART, "SoundLevel", 100)
+	pac.GetSet(PART, "Loop", false)
 pac.EndStorableVars()
 
 function PART:Initialize()
@@ -55,8 +57,13 @@ function PART:OnThink()
 	if self:IsHidden() then
 		self:StopSound()
 	else
-		if not self.csptch or not self.csptch:IsPlaying() then
+		if not self.csptch then
 			self:PlaySound()
+		else
+			if self.Loop then
+				if not self.csptch:IsPlaying() then self.csptch:Play() end
+				self.csptch:ChangePitch((self.Pitch * 255) + math.sin(os.clock())/2, 0)
+			end
 		end
 	end
 end
@@ -185,7 +192,8 @@ function PART:PlaySound(osnd, ovol)
 			end
 			
 			local csptch = CreateSound(ent, snd)
-
+			
+			csptch:SetSoundLevel(self.SoundLevel)
 			csptch:PlayEx(vol, pitch)		
 			ent.pac_csptch = csptch
 			self.csptch = csptch

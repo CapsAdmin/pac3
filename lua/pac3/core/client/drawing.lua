@@ -39,6 +39,10 @@ local function buildbones(part)
 	end
 end
 
+local render_SetColorModulation = render.SetColorModulation
+local render_SetBlend = render.SetBlend
+local render_MaterialOverride = render.MaterialOverride or SetMaterialOverride
+
 function pac.RenderOverride(ent, type, draw_only)
 	if not ent.pac_parts then
 		pac.UnhookEntityRender(ent)
@@ -72,6 +76,11 @@ function pac.RenderOverride(ent, type, draw_only)
 			end
 		end
 	end
+	
+	render_SetColorModulation(1,1,1)
+	render_SetBlend(1)
+	
+	render_MaterialOverride()
 end
 
 function pac.HookEntityRender(ent, part)
