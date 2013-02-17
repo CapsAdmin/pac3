@@ -56,9 +56,7 @@ function pac.SetPlayerSize(ply, f)
 		hook.Add("Think", "pac_check_scale", function()
 			for key, ply in pairs(player.GetAll()) do 
 				local siz = ply.pac_player_size or 1
-				
-				print(ply, ply:GetModelScale(), ply:GetViewOffset(), def.view * siz, siz)
-				
+								
 				if siz ~= 1 and (ply:GetModelScale() ~= siz or ply:GetViewOffset() ~= def.view * siz) then
 					pac.SetPlayerSize(ply, siz)
 				end
