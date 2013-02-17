@@ -52,7 +52,7 @@ function PART:OnThink()
 		end
 	end
 
-	if self:IsHiddenEx() then
+	if self:IsHidden() then
 		self:StopSound()
 	else
 		if not self.csptch or not self.csptch:IsPlaying() then
@@ -226,7 +226,7 @@ end
 hook.Add("pac_PlayerFootstep", "pac_sound_footstep", function(ply, pos, snd, vol)
 	if ply.pac_footstep_override then
 		for key, part in pairs(ply.pac_footstep_override) do
-			if not part:IsHiddenEx() then
+			if not part:IsHidden() then
 				part:PlaySound(snd, vol)
 			end
 		end

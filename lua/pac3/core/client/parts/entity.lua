@@ -141,11 +141,21 @@ function PART:UpdateScale(ent)
 	ent = ent or self:GetOwner()
 	if ent:IsValid() then				
 		if ent:IsPlayer() then
-			pac.SetModelScale(ent, self.Scale, self.Size)
+			pac.SetModelScale(ent, nil, self.Size)
 		else
 			pac.SetModelScale(ent, self.Scale * self.Size)
 		end
 	end
+end
+
+function PART:SetSize(val)
+	self.Size = val
+	self:UpdateScale()
+end
+
+function PART:SetScale(val)
+	self.Scale = val
+	self:UpdateScale()
 end
 
 PART.Colorf = Vector(1,1,1)
@@ -241,21 +251,11 @@ local blank_mat = Material("models/wireframe")
 
 function PART:OnShow()
 	local ent = self:GetOwner()
-	if ent:IsValid() then
-		
-		if self.Model ~= "" then
-			if ent:IsPlayer() and ent == LocalPlayer() then
-				RunConsoleCommand("cl_playermodel", self.Model)
-			else
-				ent:SetModel(self.Model)
-			end
-		end
-	
+	if ent:IsValid() then	
 		function ent.RenderOverride(ent)
-			if self:IsValid() then
-				if not self.HideEntity then 
+			if self:IsValid() then			
+				if not self.HideEntity then 					
 					self:PreEntityDraw(ent)
-					ent:SetupBones()
 					ent:DrawModel()
 					self:PostEntityDraw(ent)
 				end
@@ -270,25 +270,31 @@ function PART:OnShow()
 	end	
 end
 
-function PART:OnThink()		
-	if self:IsHiddenEx() then
-		if not self.temp_hide_ent then
-			self:OnHide()
-			self.temp_hide_ent = true
-		end
-	else
-		if self.temp_hide_ent then
-			self:OnShow()
-			self.temp_hide_ent = false
-		end
-	end
+function PART:SetModel(str)
+	self.Model = str
 	
-	if self:IsHiddenEx() then return end
+	if str ~= "" and self:GetOwner() == LocalPlayer() then
+		self:OnShow()
+		RunConsoleCommand("cl_playermodel", str)
+	end
+end
+
+function PART:OnThink()		
+	if self:IsHidden() then return end
 	
 	local ent = self:GetOwner()
-		
-	if ent:IsValid() and (not self.current_ro or self.current_ro ~= ent.RenderOverride) then
-		self:OnShow()
+	
+	
+	if ent:IsValid() then
+		-- holy shit why does shooting reset the scale
+		-- dumb workaround
+		if ent:IsPlayer() and ent:GetModelScale() ~= self.Size then
+			self:UpdateScale(ent)
+		end
+				
+		if not self.current_ro or self.current_ro ~= ent.RenderOverride then
+			self:OnShow()
+		end
 	end
 end
 
@@ -332,8 +338,9 @@ function PART:PreEntityDraw(ent)
 	self:UpdateWeaponDraw(ent)
 	self:StartClipping(ent)
 	
-	self:UpdateAll(ent)
-
+	self:UpdateColor(ent)
+	self:UpdateMaterial(ent)
+	
 	if self.Invert then
 		render_CullMode(1) -- MATERIAL_CULLMODE_CW
 	end

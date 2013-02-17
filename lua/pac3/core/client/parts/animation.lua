@@ -95,7 +95,7 @@ local function math_isvalid(num)
 end
 
 function PART:OnThink()
-	if self:IsHiddenEx() then return end
+	if self:IsHidden() then return end
 	
 	local ent = self:GetOwner()
 

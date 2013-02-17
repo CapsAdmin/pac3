@@ -98,7 +98,7 @@ function PART:Set3D(b)
 end
 
 function PART:OnDraw(owner, pos, ang)
-	if not self:IsHiddenEx() then
+	if not self:IsHidden() then
 		self:EmitParticles(pos, ang)
 	end
 end

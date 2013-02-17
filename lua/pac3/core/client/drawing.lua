@@ -3,6 +3,7 @@ local pac = pac
 pac.drawn_entities = pac.drawn_entities or {}
 local pairs = pairs
 local time = 0
+local frame_number = 0
 
 local sort = function(a, b)
 	if a and b and a.DrawOrder and b.DrawOrder then
@@ -16,7 +17,10 @@ end
 
 local function think(part)
 	if part.ThinkTime == 0 then
-		part:Think()
+		if part.last_think ~= frame_number then 
+			part:Think()
+			part.last_think = frame_number
+		end
 	elseif not part.last_think or part.last_think < time then
 		part:Think()
 		part.last_think = time + (part.ThinkTime or 0.1)
@@ -55,7 +59,7 @@ function pac.RenderOverride(ent, type, draw_only)
 				end
 			end
 		end
-			
+		
 		for key, part in pairs(ent.pac_parts) do
 			if part:IsValid() then
 				if not part:HasParent() then
@@ -132,12 +136,13 @@ local dst
 function pac.PostDrawOpaqueRenderables(bool1, bool2)
 	if bool2 then return end
 	if SKIP_DRAW then return end
+	
 	if not cvar_enable:GetBool() then
 		for key, ent in pairs(pac.drawn_entities) do
 			if ent:IsValid() then
 				if ent.pac_parts and ent.pac_drawing == true then
 					for key, part in pairs(ent.pac_parts) do
-						part:CallOnChildrenAndSelf("OnHide")
+						part:CallRecursive("OnHide")
 					end
 					pac.ResetBones(ent)
 				end
@@ -149,6 +154,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2)
 	return end
 		
 	time = RealTime()
+	frame_number = FrameNumber()
 
 	draw_dist = cvar_distance:GetInt()
 	local_player = LocalPlayer() 
@@ -180,7 +186,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2)
 			then
 				if ent.pac_parts and ent.pac_drawing == false then
 					for key, part in pairs(ent.pac_parts) do
-						part:CallOnChildrenAndSelf("OnShow")
+						part:CallRecursive("OnShow")
 					end
 				end
 			
@@ -189,7 +195,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2)
 			else
 				if ent.pac_parts and ent.pac_drawing == true then
 					for key, part in pairs(ent.pac_parts) do
-						part:CallOnChildrenAndSelf("OnHide")
+						part:CallRecursive("OnHide")
 					end
 					pac.ResetBones(ent)
 				end
@@ -205,7 +211,10 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2)
 end
 pac.AddHook("PostDrawOpaqueRenderables")
 
-function pac.PostDrawTranslucentRenderables()
+function pac.PostDrawTranslucentRenderables(bool1, bool2)
+	if bool2 then return end
+	if SKIP_DRAW then return end
+
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
 			if ent.pac_drawing and ent.pac_parts then
@@ -237,8 +246,10 @@ function pac.Think()
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
 			if ent.pac_drawing and ent:IsPlayer() then
+			
 				ent.pac_traceres = ent:GetEyeTraceNoCursor()
 				ent.pac_hitpos = ent.pac_traceres.HitPos
+				
 			end
 		else
 			pac.drawn_entities[key] = nil

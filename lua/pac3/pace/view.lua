@@ -129,7 +129,6 @@ function pac.CalcView()
 			ent:SetAngles(pace.ViewAngles)
 			ent:SetRenderOrigin(pace.ViewPos)
 			ent:SetRenderAngles(pace.ViewAngles)
-			ent:SetupBones()
 		end
 	end
 	
@@ -182,7 +181,6 @@ end
 local function CalcAnimationFix(ent)
 	if ent.SetEyeAngles then
 		ent:SetEyeAngles(Angle(0,0,0))
-		ent:SetupBones()
 	end
 end
 

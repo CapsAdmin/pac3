@@ -246,7 +246,6 @@ function pac.SetModelScale(ent, scale, size)
 	
 	if not scale and not size then
 		ent:DisableMatrix("RenderMultiply")
-		ent:SetupBones()
 	end
 end
 

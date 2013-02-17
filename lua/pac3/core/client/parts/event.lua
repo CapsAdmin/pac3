@@ -130,7 +130,7 @@ PART.Events =
 			local ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 			if ent:IsValid() then
 				if self:StringOperator(ent:GetClass(), find) then
-					if not self:IsHiddenEx() then 
+					if not self:IsHidden() then 
 						pac.HideWeapon(ent, hide)
 					end
 					return true
@@ -381,6 +381,10 @@ PART.Events =
 	},
 }
 
+function PART:Invalidate()
+	self.last_val = nil
+end
+
 function PART:OnThink()
 	local ent = self:GetOwner(self.RootOwner)
 	
@@ -390,12 +394,22 @@ function PART:OnThink()
 		if data then
 			local parent = self:GetParent()
 			if parent:IsValid() then
-				if self:IsHidden() then
-					parent:SetEventHide(self.Invert)
+				-- this should be the only case where we need this since IsHidden is modified to obey events
+				local b
+				
+				if self.Hide or self.EventHide then --self:IsHidden() then
+					b = self.Invert
 				else
-					local b = (data.callback(self, ent, self:GetParsedArguments(data.arguments)) or false) 
-					if self.Invert then b = not b end
-					parent:SetEventHide(b)
+					b = data.callback(self, ent, self:GetParsedArguments(data.arguments)) or false
+					
+					if self.Invert then 
+						b = not b 
+					end
+				end
+				
+				if self.last_val ~= b then
+					parent:SetEventHide(b, self)
+					self.last_val = b
 				end
 			end
 		end
