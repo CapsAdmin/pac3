@@ -185,9 +185,9 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2)
 			end
 			
 			if 				
-				(ent == local_player and ent:ShouldDrawLocalPlayer()) or
+				(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer()) or
 				
-				ent ~= local_player and 
+				ent ~= pac.LocalPlayer and 
 				(					
 					util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 and 
 					(draw_dist <= 0 or dst < draw_dist) or
