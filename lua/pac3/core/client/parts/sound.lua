@@ -27,13 +27,18 @@ function PART:OnShow(from_event)
 	self:PlaySound()
 end
 
-function PART:OnHide()
+function PART:OnHide(from_event)
 	if not from_event then return end
 	self.played_overlapping = false
 	self:StopSound()
 end
 
 function PART:OnThink()
+
+	if self:IsHidden() then
+		self:StopSound()
+		return
+	end
 
 	if self.last_playonfootstep ~= self.PlayOnFootstep then
 		local ent = self:GetOwner()
@@ -53,19 +58,16 @@ function PART:OnThink()
 			self.last_playonfootstep = self.PlayOnFootstep
 		end
 	end
-
-	if self:IsHidden() then
-		self:StopSound()
+	
+	if not self.csptch then
+		self:PlaySound()
 	else
-		if not self.csptch then
-			self:PlaySound()
-		else
-			if self.Loop then
-				if not self.csptch:IsPlaying() then self.csptch:Play() end
-				self.csptch:ChangePitch((self.Pitch * 255) + math.sin(os.clock())/2, 0)
-			end
+		if self.Loop then
+			if not self.csptch:IsPlaying() then self.csptch:Play() end
+			self.csptch:ChangePitch((self.Pitch * 255) + math.sin(pac.RealTime)/2, 0)
 		end
 	end
+	
 end
 
 -- fixes by Python 1320

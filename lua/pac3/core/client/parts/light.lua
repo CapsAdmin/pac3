@@ -31,8 +31,8 @@ function PART:OnDraw(owner, pos, ang)
 		params.g = self.Color.g
 		params.b = self.Color.b		
 		
-		-- 100000000 constant is better than calling RealTime()
-		params.DieTime = 1000000000000 -- RealTime()
+		-- 100000000 constant is better than calling pac.RealTime
+		params.DieTime = 1000000000000 -- pac.RealTime
 	end
 end
 

@@ -28,17 +28,49 @@ function pac.MakeNull(tbl)
 	end
 end
 
-function pac.CreateEntity(model)
-	local ent = ents.CreateClientProp()
+pac.EntityType = 1
 
-	if ent and ent:IsValid() then
+function pac.CreateEntity(model, type)
+	type = type or pac.EntityType or 1
+
+	local ent = NULL
+
+	if type == 1 then
+
+		ent = ClientsideModel(model)
+
+	elseif type == 2 then
+
+		ent = ents.CreateClientProp()
 		ent:SetModel(model)
-			
-		ent.IsPACEntity = true
+
+	elseif type == 3 then
+
+		effects.Register(
+			{
+				Init = function(self, p)
+					self:SetModel(model)
+					ent = self
+				end,
+
+				Think = function()
+					return true
+				end,
+
+				Render = function(self)
+					if self.Draw then self:Draw() else self:DrawModel() end
+				end
+			},
+
+			"pac_model"
+		)
+
+		util.Effect("pac_model", EffectData())
 	end
-	
-	return ent or NULL
+
+	return ent
 end
+
 
 do -- hook helpers
 	pac.Errors = {}
@@ -296,7 +328,7 @@ end
 -- hack??
 
 function pac.HandlePartName(ply, name)
-	if ply:IsPlayer() and ply ~= LocalPlayer() then
+	if ply:IsPlayer() and ply ~= pac.LocalPlayer then
 		return ply:UniqueID() .. " " .. name
 	end
 	

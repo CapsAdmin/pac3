@@ -2,8 +2,10 @@ local pac = pac
 
 pac.drawn_entities = pac.drawn_entities or {}
 local pairs = pairs
-local time = 0
-local frame_number = 0
+
+pac.LocalPlayer = NULL
+pac.RealTime = 0
+pac.FrameNumber = 0
 
 local sort = function(a, b)
 	if a and b and a.DrawOrder and b.DrawOrder then
@@ -17,13 +19,13 @@ end
 
 local function think(part)
 	if part.ThinkTime == 0 then
-		if part.last_think ~= frame_number then 
+		if part.last_think ~= pac.FrameNumber then 
 			part:Think()
-			part.last_think = frame_number
+			part.last_think = pac.FrameNumber
 		end
-	elseif not part.last_think or part.last_think < time then
+	elseif not part.last_think or part.last_think < pac.RealTime then
 		part:Think()
-		part.last_think = time + (part.ThinkTime or 0.1)
+		part.last_think = pac.RealTime + (part.ThinkTime or 0.1)
 	end
 	
 	for _, part in pairs(part.Children) do
@@ -110,7 +112,6 @@ function pac.UnhookEntityRender(ent)
 end
 
 
-local LocalPlayer = LocalPlayer
 local util_PixelVisible = util.PixelVisible
 local cvar_enable = CreateClientConVar("pac_enable", "1")
 local cvar_distance = CreateClientConVar("pac_draw_distance", "500")
@@ -137,7 +138,6 @@ end
 pac.AddHook("PostDrawSkyBox")
 
 local draw_dist
-local local_player
 local radius
 
 local dst
@@ -162,11 +162,12 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2)
 		end
 	return end
 		
-	time = RealTime()
-	frame_number = FrameNumber()
+	-- commonly used variables		
+	pac.RealTime = RealTime()
+	pac.FrameNumber = FrameNumber()
+	pac.LocalPlayer = LocalPlayer() 
 
 	draw_dist = cvar_distance:GetInt()
-	local_player = LocalPlayer() 
 	radius = 0
 	
 	for key, ent in pairs(pac.drawn_entities) do
