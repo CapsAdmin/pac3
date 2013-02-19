@@ -104,11 +104,11 @@ function urltex.StartDownload(url, data)
 					
 			-- give it some time.. IsLoading is sometimes lying
 			if not go and html_mat and not pnl:IsLoading() then
-				time = RealTime() + 0.25
+				time = pac.RealTime + 0.25
 				go = true
 			end
 				
-			if go and time < RealTime() then
+			if go and time < pac.RealTime then
 				local vertex_mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), "VertexLitGeneric")
 				
 				local tex = html_mat:GetTexture("$basetexture")

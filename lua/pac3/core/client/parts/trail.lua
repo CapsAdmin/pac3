@@ -132,9 +132,9 @@ function PART:OnDraw(owner, pos, ang)
 		local len = tonumber(self.Length)
 		local spc = tonumber(self.Spacing)
 		
-		if spc == 0 or self.LastAdd < RealTime() then
+		if spc == 0 or self.LastAdd < pac.RealTime then
 			table_insert(self.points, pos)
-			self.LastAdd = RealTime() + spc / 1000
+			self.LastAdd = pac.RealTime + spc / 1000
 		end
 		
 		local count = #self.points

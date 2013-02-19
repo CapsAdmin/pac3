@@ -56,7 +56,7 @@ function PART:GetVelocity(part)
 		end
 	end
 
-	local time = RealTime()
+	local time = pac.RealTime
 
 	if self.next_vel_calc < time then
 		self.next_vel_calc = time + 0.1
@@ -75,9 +75,9 @@ PART.Inputs =
 		return math.random()
 	end,
 	timeex = function(s, p)
-		s.time = s.time or RealTime()
+		s.time = s.time or pac.RealTime
 		
-		return RealTime() - s.time
+		return pac.RealTime - s.time
 	end,
 
 	eye_position_distance = function(self, parent)
@@ -390,7 +390,7 @@ function PART:OnThink()
 			local ok, x,y,z = pcall(self.ExpressionFunc)
 
 			if not ok then
-				if self:GetPlayerOwner() == LocalPlayer() then
+				if self:GetPlayerOwner() == pac.LocalPlayer then
 					ErrorNoHalt(x .. "\n")
 				end
 				return

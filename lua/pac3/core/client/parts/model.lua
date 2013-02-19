@@ -141,6 +141,8 @@ function PART:SetOwnerEntity(b)
 	self.OwnerEntity = b
 end
 
+local pac = pac
+
 local render_EnableClipping = render.EnableClipping
 local render_PushCustomClipPlane = render.PushCustomClipPlane
 local render_CullMode = render.CullMode
@@ -176,7 +178,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 		local bclip
 		
-		if #self.ClipPlanes > 0 then
+		if not pac.DisableClip and #self.ClipPlanes > 0 then
 			bclip = render_EnableClipping(true)
 
 			for key, clip in pairs(self.ClipPlanes) do
@@ -187,17 +189,24 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 					render_PushCustomClipPlane(normal, normal:Dot(pos + normal))
 				end
 			end
-		end			
-		if self.DoubleFace or self.wavefront_mesh then
-			render_CullMode(MATERIAL_CULLMODE_CW)
-		else
-			if self.Invert then
+		end		
+
+		if not pac.DisableDoubleFace then
+			if self.DoubleFace or self.wavefront_mesh then
 				render_CullMode(MATERIAL_CULLMODE_CW)
+			else
+				if self.Invert then
+					render_CullMode(MATERIAL_CULLMODE_CW)
+				end
 			end
 		end
-
-		if self.Colorf then 
-			local r, g, b = self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness
+		
+		if not pac.DisableColoring then
+			if not self.Colorf then 
+				self:SetColor(self:GetColor())
+			end
+			
+			local r, g, b = self.Colorf.r, self.Colorf.g, self.Colorf.b
 
 			if self.LightBlend ~= 1 then
 				local 
@@ -213,14 +222,11 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 			end
 			
 			render_SetColorModulation(r,g,b) 
-		else
-			self:SetColor(self:GetColor())
+			render_SetBlend(self.Alpha)
 		end
 		
-		render_SetBlend(self.Alpha)
-		
 		render_MaterialOverride(self.Materialm) 
-
+		
 		if self.Fullbright then
 			render_SuppressEngineLighting(true) 
 		end
@@ -232,12 +238,15 @@ local WHITE = Material("models/debug/debugwhite")
 
 function PART:PostEntityDraw(owner, ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
-		if self.DoubleFace or self.wavefront_mesh then
-			render_CullMode(MATERIAL_CULLMODE_CCW)
-			self:DrawModel(ent, pos, ang)
-		else
-			if self.Invert then
+	
+		if not pac.DisableDoubleFace then		
+			if self.DoubleFace or self.wavefront_mesh then
 				render_CullMode(MATERIAL_CULLMODE_CCW)
+				self:DrawModel(ent, pos, ang)
+			else
+				if self.Invert then
+					render_CullMode(MATERIAL_CULLMODE_CCW)
+				end
 			end
 		end
 			
@@ -261,7 +270,7 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 			pac.SetModelScale(ent, self.Scale * self.Size)
 		end
 				
-		if #self.ClipPlanes > 0 then
+		if not pac.DisableClip and #self.ClipPlanes > 0 then
 			for key, clip in pairs(self.ClipPlanes) do
 				if not clip:IsValid() then
 					self.ClipPlanes[key] = nil
@@ -442,11 +451,17 @@ function PART:SetSize(var)
 	end
 end
 
+function PART:SetBrightness(num)
+	self.Brightness = num
+	
+	self:SetColor(self:GetColor())
+end
+
 function PART:SetColor(var)
 	var = var or Vector(255, 255, 255)
 
 	self.Color = var
-	self.Colorf = Vector(var.r, var.g, var.b) / 255
+	self.Colorf = Color((var.r/255) * self.Brightness, (var.g/255) * self.Brightness, (var.b/255) * self.Brightness)
 end
 
 function PART:SetMaterial(var)

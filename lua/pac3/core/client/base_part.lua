@@ -326,88 +326,6 @@ do -- bones
 		
 		return name
 	end
-	
-	function PART:GetDrawPosition(pos, ang)
-		local frame_num = FrameNumber()
-		
-		if frame_num ~= self.last_drawpos_framenum or not self.last_drawpos then
-			self.last_drawpos_framenum = frame_num
-
-			local owner = self:GetOwner()
-			if owner:IsValid() then
-				local pos, ang = self:GetBonePosition(pos, ang)
-								
-				pos, ang = LocalToWorld(
-					self.Position or Vector(0,0,0), 
-					self.Angles or Angle(0,0,0), 
-					pos or owner:GetPos(), 
-					ang or owner:GetAngles()
-				)
-				
-				ang = self:CalcAngles(owner, ang) or ang
-				
-				pos = pos or owner:GetPos()
-				ang = ang or owner:GetAngles()
-				
-				self.last_drawpos = pos
-				self.last_drawang = ang
-				
-				return pos, ang
-			end			
-		
-		else
-			return self.last_drawpos, self.last_drawang
-		end
-		
-		return Vector(0, 0, 0), Angle(0, 0, 0)
-	end
-	
-	local Angle = Angle
-	local math_NormalizeAngle = math.NormalizeAngle
-
-	function PART:GetBonePosition(pos, ang)
-		local frame_num = FrameNumber()
-		
-		if frame_num ~= self.last_bonepos_framenum or not self.last_bonepos then
-			self.last_bonepos_framenum = frame_num
-
-			local owner = self:GetOwner()
-			local parent = self:GetParent()
-			
-			if parent:IsValid() and parent.ClassName == "jiggle" then
-				return parent.pos, parent.ang
-			end
-			
-			if parent:IsValid() and parent.ClassName ~= "group" and parent.ClassName ~= "entity" then
-				
-				local ent = parent.Entity or NULL
-				
-				if ent:IsValid() then
-					-- if the parent part is a model, get the bone position of the parent model
-					pos, ang = pac.GetBonePosAng(ent, self.Bone)
-					ent:InvalidateBoneCache()
-				else
-					-- else just get the origin of the part
-					if not pos or not ang then 
-						-- unless we've passed it from parent
-						pos, ang = parent:GetDrawPosition()
-					end
-				end
-				
-			elseif owner:IsValid() then
-				-- if there is no parent, default to owner bones
-				owner:InvalidateBoneCache()
-				pos, ang = pac.GetBonePosAng(owner, self.Bone)
-			end
-					
-			self.last_bonepos = pos
-			self.last_boneang = ang
-				
-			return pos, ang
-		else
-			return self.last_bonepos, self.last_boneang
-		end
-	end
 end
 
 do -- serializing
@@ -591,13 +509,13 @@ function PART:Highlight(skip_children)
 	end
 	
 	if #tbl > 0 then
-		local pulse = math.abs(1+math.sin(RealTime()*20) * 255)
+		local pulse = math.abs(1+math.sin(pac.RealTime*20) * 255)
 		pulse = pulse + 2
 		pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
 	end
 end
 
-do
+do -- drawing. this code is running every frame
 	local VEC0 = Vector(0,0,0)
 	local ANG0 = Angle(0,0,0)
 
@@ -619,7 +537,7 @@ do
 					
 					owner = self:GetOwner()
 					
-					pos, ang = self:GetDrawPosition(pos, ang)
+					pos, ang = self:GetDrawPosition()
 					
 					pos = pos or Vector(0,0,0)
 					ang = ang or Angle(0,0,0)
@@ -631,7 +549,7 @@ do
 						pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
 					end
 				
-					self[event](self, owner, pos, ang)
+					self[event](self, owner, pos, ang) -- this is where it usually calls Ondraw on all the parts
 				end
 			end
 
@@ -639,6 +557,120 @@ do
 				part:Draw(event, pos, ang, draw_type)
 			end
 		end
+	end
+	
+	local LocalToWorld = LocalToWorld
+	
+	function PART:GetDrawPosition()		
+		if pac.FrameNumber ~= self.last_drawpos_framenum or not self.last_drawpos then
+			self.last_drawpos_framenum = pac.FrameNumber
+
+			local owner = self:GetOwner()
+			if owner:IsValid() then
+				local pos, ang = self:GetBonePosition()
+								
+				pos, ang = LocalToWorld(
+					self.Position or VEC0, 
+					self.Angles or ANG0, 
+					pos or owner:GetPos(), 
+					ang or owner:GetAngles()
+				)
+								
+				ang = self:CalcAngles(owner, ang) or ang
+				
+				self.last_drawpos = pos
+				self.last_drawang = ang
+				
+				return pos, ang
+			end			
+		
+		else
+			return self.last_drawpos, self.last_drawang
+		end
+		
+		return VEC0, ANG0
+	end
+	
+	function PART:GetBonePosition()		
+		if pac.FrameNumber ~= self.last_bonepos_framenum or not self.last_bonepos then
+			self.last_bonepos_framenum = pac.FrameNumber
+
+			local owner = self:GetOwner()
+			local parent = self:GetParent()
+			
+			if parent:IsValid() and parent.ClassName == "jiggle" then
+				return parent.pos, parent.ang
+			end
+			
+			if parent:IsValid() and parent.ClassName ~= "group" and parent.ClassName ~= "entity" then
+				
+				local ent = parent.Entity or NULL
+				
+				if ent:IsValid() then
+					-- if the parent part is a model, get the bone position of the parent model
+					pos, ang = pac.GetBonePosAng(ent, self.Bone)
+					ent:InvalidateBoneCache()
+				else
+					-- else just get the origin of the part
+					if not pos or not ang then 
+						-- unless we've passed it from parent
+						pos, ang = parent:GetDrawPosition()
+					end
+				end
+				
+			elseif owner:IsValid() then
+				-- if there is no parent, default to owner bones
+				owner:InvalidateBoneCache()
+				pos, ang = pac.GetBonePosAng(owner, self.Bone)
+			end
+					
+			self.last_bonepos = pos
+			self.last_boneang = ang
+				
+			return pos, ang
+		else
+			return self.last_bonepos, self.last_boneang
+		end
+	end
+		
+	function PART:CalcAngles(owner, ang)
+		owner = owner or self:GetOwner()
+		
+		ang = self.calc_angvel and self:CalcAngleVelocity(ang) or ang
+
+		if self.EyeAngles then
+		
+			if owner:IsPlayer() then
+				return self.Angles + ((owner.pac_hitpos or owner:GetEyeTraceNoCursor().HitPos) - self.cached_pos):Angle()
+			elseif owner:IsNPC() then
+				return self.Angles + ((owner:EyePos() + owner:GetForward() * 100) - self.cached_pos):Angle()
+			end
+			
+		end
+		
+		if self.AimPart:IsValid() then	
+		
+			return self.Angles + (self.AimPart.cached_pos - self.cached_pos):Angle()
+			
+		end 
+		
+		if pac.StringFind(self.AimPartName, "LOCALEYES", true, true) then
+		
+			return self.Angles + (pac.EyePos - self.cached_pos):Angle()
+		
+		end
+		
+		if pac.StringFind(self.AimPartName, "PLAYEREYES", true, true) then
+		
+			local ent = owner.pac_traceres and owner.pac_traceres.Entity or NULL
+			if ent:IsValid() then
+				return self.Angles + (ent:EyePos() - self.cached_pos):Angle()
+			else
+				return self.Angles + (pac.EyePos - self.cached_pos):Angle()
+			end		
+		end
+			
+		return ang or Angle(0,0,0)
 	end
 end
 	
@@ -686,54 +718,29 @@ function PART:IsValid()
 	return true
 end
 
-function PART:CalcAngles(owner, ang)
-	owner = owner or self:GetOwner()
-	
-	if owner:IsValid() and owner:GetOwner():IsValid() then
-		owner = owner:GetOwner()
-	end
-	
-	ang = self:CalcAngleVelocity(ang)
-	
-	if pac.StringFind(self.AimPartName, "LOCALEYES", true, true) then
-		return self.Angles + (pac.EyePos - self.cached_pos):Angle()
-	elseif pac.StringFind(self.AimPartName, "playereyes", true, true) then
-		local ent = owner.pac_traceres and owner.pac_traceres.Entity or NULL
-		if ent:IsValid() then
-			return self.Angles + (ent:EyePos() - self.cached_pos):Angle()
-		else
-			return self.Angles + (pac.EyePos - self.cached_pos):Angle()
-		end
-	elseif self.AimPart:IsValid() then	
-		return self.Angles + (self.AimPart.cached_pos - self.cached_pos):Angle()
-	elseif self.EyeAngles then
-		if owner:IsPlayer() then
-			return self.Angles + ((owner.pac_hitpos or owner:GetEyeTraceNoCursor().HitPos) - self.cached_pos):Angle()
-		elseif owner:IsNPC() then
-			return self.Angles + ((owner:EyePos() + owner:GetForward() * 100) - self.cached_pos):Angle()
-		end
-	end
+do -- this is kinda deprecated	
+	function PART:SetAngleVelocity(ang)
+		self.calc_angvel = ang.p == 0 and ang.y == 0 and ang.r == 0
 		
-	return self:CalcAngleVelocity(ang) or Angle(0,0,0)
-end
-	
-function PART:CalcAngleVelocity(ang)
-	local v = self.AngleVelocity
-	
-	if v.p == 0 and v.y == 0 and v.r == 0 then
-		self.AnglesVel = nil
-	else				
-		local delta = FrameTime() * 10
-		self.AnglesVel = self.AnglesVel or Angle(0, 0, 0)
-
-		self.AnglesVel.p = self.AnglesVel.p + (v.p * delta)
-		self.AnglesVel.y = self.AnglesVel.y + (v.y * delta)
-		self.AnglesVel.r = self.AnglesVel.r + (v.r * delta)
-			
-		return self.AnglesVel + ang	
+		self.AngleVelocity = ang
 	end
-	
-	return ang
+
+	function PART:CalcAngleVelocity(ang)
+		local v = self.AngleVelocity
+		
+		if self.calc_angvel then				
+			local delta = FrameTime() * 10
+			self.AnglesVel = self.AnglesVel or Angle(0, 0, 0)
+
+			self.AnglesVel.p = self.AnglesVel.p + (v.p * delta)
+			self.AnglesVel.y = self.AnglesVel.y + (v.y * delta)
+			self.AnglesVel.r = self.AnglesVel.r + (v.r * delta)
+				
+			return self.AnglesVel + ang	
+		end
+		
+		return ang
+	end
 end
 
 function PART:SetDrawOrder(num)

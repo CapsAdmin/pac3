@@ -273,7 +273,7 @@ end
 function PART:SetModel(str)
 	self.Model = str
 	
-	if str ~= "" and self:GetOwner() == LocalPlayer() then
+	if str ~= "" and self:GetOwner() == pac.LocalPlayer then
 		self:OnShow()
 		RunConsoleCommand("cl_playermodel", str)
 	end

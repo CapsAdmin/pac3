@@ -96,7 +96,7 @@ do -- from server
 		
 		pac.HandleServerModifiers(part_data)
 		
-		pac.CallHook("OnWoreOutfit", part, owner == LocalPlayer())
+		pac.CallHook("OnWoreOutfit", part, owner == pac.LocalPlayer)
 	end
 
 	function pac.RemovePartFromServer(owner, part_name)
@@ -166,7 +166,7 @@ usermessage.Hook("pac_submit_acknowledged", function(umr)
 end)
 
 hook.Add("KeyRelease", "pac_request_outfits", function()	
-	if LocalPlayer():IsValid() and LocalPlayer():GetVelocity():Length() > 5 then
+	if pac.LocalPlayer:IsValid() and pac.LocalPlayer:GetVelocity():Length() > 5 then
 		RunConsoleCommand("pac_request_outfits")
 		hook.Remove("KeyRelease", "pac_request_outfits")
 	end

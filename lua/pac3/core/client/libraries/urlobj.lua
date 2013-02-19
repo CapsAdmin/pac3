@@ -124,7 +124,7 @@ function urlobj.Think()
 	if pac.urltex and pac.urltex.Busy then return end
 
 	for url, data in pairs(urlobj.Queue)  do
-		if data.Downloading and data.Downloading < RealTime() then 
+		if data.Downloading and data.Downloading < pac.RealTime then 
 			pac.dprint("model download timed out for the %s time %q", data.tries, url)
 			if data.tries > 3 then
 				urlobj.Queue[url] = nil
@@ -141,7 +141,7 @@ function urlobj.Think()
 			if not data.Downloading then
 				pac.dprint("requesting model download %q", url)
 				
-				data.Downloading = RealTime() + 15
+				data.Downloading = pac.RealTime + 15
 
 				http.Fetch(url, function(obj_str)	
 					pac.dprint("downloaded model %q", url)

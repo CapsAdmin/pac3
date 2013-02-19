@@ -82,8 +82,8 @@ local function StickCallback(particle, hitpos, normal)
 end
 
 function PART:Initialize()
-	self.NextShot = RealTime()
-	self.Created = RealTime() + 0.1
+	self.NextShot = pac.RealTime
+	self.Created = pac.RealTime + 0.1
 	self.emitter = ParticleEmitter(self.cached_pos, false)
 	self:Set3D(self:Get3D())
 end
@@ -107,7 +107,7 @@ function PART:EmitParticles(pos, ang)
 	local emt = self.emitter
 	if not emt then return end
 	
-	if self.NextShot < RealTime() then
+	if self.NextShot < pac.RealTime then
 		local spread = self.Spread / 180
 		
 		if self.Material == "" then return end
@@ -207,7 +207,7 @@ function PART:EmitParticles(pos, ang)
 			end
 		end
 
-		self.NextShot = RealTime() + self.FireDelay
+		self.NextShot = pac.RealTime + self.FireDelay
 	end
 end
 

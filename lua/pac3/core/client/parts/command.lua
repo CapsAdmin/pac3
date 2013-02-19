@@ -17,7 +17,7 @@ function PART:OnShow()
 end
 
 function PART:SetString(str)
-	if self.UseLua and self:GetPlayerOwner() == LocalPlayer() then
+	if self.UseLua and self:GetPlayerOwner() == pac.LocalPlayer then
 		self.func = CompileString(str, "pac_event")
 	end	
 	self.String = str
@@ -26,7 +26,7 @@ end
 function PART:Execute()
 	local ent = self:GetPlayerOwner()
 
-	if ent == LocalPlayer() then
+	if ent == pac.LocalPlayer then
 		if self.UseLua and self.func then
 			local status, err = pcall(self.func)
 			if not status then

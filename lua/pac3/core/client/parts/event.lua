@@ -47,7 +47,7 @@ PART.Events =
 		callback = function(self, ent, time)
 			time = time or 0.1
 						
-			if ent.pac_playerspawn and ent.pac_playerspawn + time > RealTime() then
+			if ent.pac_playerspawn and ent.pac_playerspawn + time > pac.RealTime then
 				return true
 			end			
 		end,	
@@ -190,7 +190,7 @@ PART.Events =
 			
 			local data = ent.pac_anim_event 
 			
-			if data and (data.reset or self:StringOperator(data.name, find) and data.time + time > RealTime()) then
+			if data and (data.reset or self:StringOperator(data.name, find) and data.time + time > pac.RealTime) then
 				data.reset = false
 				return true
 			end			
@@ -205,7 +205,7 @@ PART.Events =
 			
 			local data = ent.pac_command_event 
 			
-			if data and self:StringOperator(data.name, find) and data.time + time > RealTime() then
+			if data and self:StringOperator(data.name, find) and data.time + time > pac.RealTime then
 				return true
 			end			
 		end,
@@ -222,7 +222,7 @@ PART.Events =
 				if owner:IsValid() then
 					local data = owner.pac_say_event 
 					
-					if data and self:StringOperator(data.str, find) and data.time + time > RealTime() then
+					if data and self:StringOperator(data.str, find) and data.time + time > pac.RealTime then
 						return true
 					end
 				end
@@ -230,7 +230,7 @@ PART.Events =
 				for key, ply in pairs(player.GetAll()) do
 					local data = ent.pac_say_event 
 					
-					if data and self:StringOperator(data.str, find) and data.time + time > RealTime() then
+					if data and self:StringOperator(data.str, find) and data.time + time > pac.RealTime then
 						return true
 					end			
 				end
@@ -374,7 +374,7 @@ PART.Events =
 			
 			local punted = ent.pac_gravgun_punt 
 			
-			if punted and punted + time > RealTime() then
+			if punted and punted + time > pac.RealTime then
 				return true
 			end			
 		end,
@@ -566,16 +566,16 @@ usermessage.Hook("pac_event", function(umr)
 	local str = umr:ReadString()
 	
 	if ply:IsValid() then
-		ply.pac_command_event = {name = str, time = RealTime()}
+		ply.pac_command_event = {name = str, time = pac.RealTime}
 	end
 end)
 
 pac.AddHook("DoAnimationEvent", function(ply, event, data)
-	ply.pac_anim_event = {name = enums[event], time = RealTime(), reset = true}
+	ply.pac_anim_event = {name = enums[event], time = pac.RealTime, reset = true}
 end)
 
 pac.AddHook("OnPlayerChat", function(ply, str)
-	ply.pac_say_event = {str = str, time = RealTime()}
+	ply.pac_say_event = {str = str, time = pac.RealTime}
 end)
 
 pac.AddHook("GravGunOnPickedUp", function(ply, ent)
@@ -588,11 +588,11 @@ end)
 
 pac.AddHook("GravGunPunt", function(ply, ent)
 	ply.pac_gravgun_ent = ent
-	ply.pac_gravgun_punt = RealTime()
+	ply.pac_gravgun_punt = pac.RealTime
 end)
 
 pac.AddHook("PlayerSpawned", function(ply)
-	ply.pac_playerspawn = RealTime()
+	ply.pac_playerspawn = pac.RealTime
 end)
 
 --[[

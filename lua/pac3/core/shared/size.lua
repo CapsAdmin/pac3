@@ -64,9 +64,9 @@ function pac.SetPlayerSize(ply, f)
 		end)
 	end
 	
-	if CLIENT and ply == LocalPlayer() then
+	if CLIENT and ply == pac.LocalPlayer then
 		hook.Add("Think", "pac_check_scale", function()
-			local ply = LocalPlayer()
+			local ply = pac.LocalPlayer
 			local siz = ply.pac_player_size or 1
 		
 			if siz ~= 1 and (ply:GetModelScale() ~= siz or ply:GetViewOffset() ~= def.view * siz) then

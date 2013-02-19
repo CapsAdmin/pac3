@@ -44,7 +44,7 @@ function pac.HandleOwnerName(owner, name, ent, part)
 				return	ent
 			end
 			
-			if ent == LocalPlayer() then
+			if ent == pac.LocalPlayer then
 				part:SetOwnerName("self")
 				return ent
 			end
