@@ -570,8 +570,8 @@ do -- drawing. this code is running every frame
 				local pos, ang = self:GetBonePosition()
 								
 				pos, ang = LocalToWorld(
-					self.Position or VEC0, 
-					self.Angles or ANG0, 
+					self.Position or Vector(), 
+					self.Angles or Angle(), 
 					pos or owner:GetPos(), 
 					ang or owner:GetAngles()
 				)
@@ -588,7 +588,7 @@ do -- drawing. this code is running every frame
 			return self.last_drawpos, self.last_drawang
 		end
 		
-		return VEC0, ANG0
+		return Vector(0,0,0), Angle(0,0,0)
 	end
 	
 	function PART:GetBonePosition()		
