@@ -29,8 +29,11 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "EditorExpand", false)
 	pac.GetSet(PART, "UniqueID", "")
 	
-	pac.SetupPartName(PART, "AimPart")
 	pac.SetupPartName(PART, "AnglePart")
+	pac.GetSet(PART, "AnglePartMultiplier", Vector(1,1,1))
+	
+	pac.SetupPartName(PART, "AimPart")
+	
 	pac.SetupPartName(PART, "Parent")
 pac.EndStorableVars()
 
@@ -653,7 +656,13 @@ do -- drawing. this code is running every frame
 		
 		if self.AnglePart:IsValid() then
 			
-			return self.AngleOffset + self.Angles + self.AnglePart.cached_ang
+			local a = self.AnglePart.cached_ang * 1
+			
+			a.p = self.AnglePartMultiplier.x
+			a.y = self.AnglePartMultiplier.y
+			a.r = self.AnglePartMultiplier.z
+			
+			return self.AngleOffset + self.Angles + a
 			
 		end
 		
