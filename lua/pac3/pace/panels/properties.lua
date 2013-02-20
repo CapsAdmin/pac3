@@ -1131,7 +1131,11 @@ do -- sequence list
 			self.OnValueChanged(line.seq_name)
 		end
 
-		local cur = pace.current_part:GetSequenceName()
+		local cur
+		
+		if pace.current_part.ClassName == "animation" then
+			cur = pace.current_part:GetSequenceName()
+		end
 		
 		for id, name in pairs(pace.current_part:GetSequenceList()) do
 			local pnl = list:AddLine(id, name)

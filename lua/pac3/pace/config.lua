@@ -9,6 +9,7 @@ pace.PartIcons =
 	effect = "icon16/wand.png",
 	model = "icon16/shape_square.png",
 	animation = "icon16/eye.png",
+	holdtype = "icon16/user_edit.png",
 	entity = "icon16/brick.png",
 	group = "icon16/world.png",
 	trail = "icon16/arrow_undo.png",
@@ -252,7 +253,7 @@ function pace.TranslatePropertiesKey(key, obj)
 		return "part"
 	end
 	
-	if key == "sequence" or key == "sequencename" then
+	if key == "sequence" or key == "sequencename" or (obj.ClassName == "holdtype" and (obj.ActMods[key_] or key == "fallback")) then
 		return "sequence"
 	end
 	
