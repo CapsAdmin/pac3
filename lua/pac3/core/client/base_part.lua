@@ -30,6 +30,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "UniqueID", "")
 	
 	pac.SetupPartName(PART, "AimPart")
+	pac.SetupPartName(PART, "AnglePart")
 	pac.SetupPartName(PART, "Parent")
 pac.EndStorableVars()
 
@@ -647,6 +648,12 @@ do -- drawing. this code is running every frame
 			elseif owner:IsNPC() then
 				return self.Angles + ((owner:EyePos() + owner:GetForward() * 100) - self.cached_pos):Angle()
 			end
+			
+		end
+		
+		if self.AnglePart:IsValid() then
+			
+			return self.AngleOffset + self.Angles + self.AnglePart.cached_ang
 			
 		end
 		
