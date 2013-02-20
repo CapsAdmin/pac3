@@ -6,8 +6,8 @@ PART.ThinkTime = 0
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Event", "")
-	pac.GetSet(PART, "Arguments", "")
 	pac.GetSet(PART, "Operator", "find simple")
+	pac.GetSet(PART, "Arguments", "")
 	pac.GetSet(PART, "Invert", false)
 	pac.GetSet(PART, "RootOwner", true)
 pac.EndStorableVars()
@@ -25,6 +25,30 @@ end
 
 PART.Events = 
 {
+	owner_health =
+	{	
+		arguments = {{health = "number"}},
+		callback = function(self, ent, num)
+			if ent:IsValid() and ent.Health then
+				return self:NumberOperator(ent:Health(), num)
+			end
+
+			return 0
+		end,
+	},
+
+	owner_armor =
+	{	
+		arguments = {{armor = "number"}},
+		callback = function(self, ent, num)
+			if ent:IsValid() and ent.Armor then
+				return self:NumberOperator(ent:Armor(), num)
+			end
+
+			return 0
+		end,
+	},
+
 	speed = 
 	{
 		arguments = {{speed = "number"}},

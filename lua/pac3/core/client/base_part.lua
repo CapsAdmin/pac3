@@ -81,6 +81,8 @@ do -- owner
 			pac.UnhookEntityRender(ent) 
 			self.Owner = ent
 		end
+		
+		self:CallRecursive("OnShow")
 	end
 	
 	-- always return the root owner
