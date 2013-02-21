@@ -155,7 +155,7 @@ PART.Inputs =
 		local owner = self:GetOwner(self.RootOwner)
 
 		if owner:IsValid() then
-			return owner:EyeAngles():Forward():Dot(self:GetVelocity(parent))
+			return owner:EyeAngles():Forward():Dot(self:GetVelocity(owner))
 		end
 
 		return 0
@@ -164,7 +164,7 @@ PART.Inputs =
 		local owner = self:GetOwner(self.RootOwner)
 
 		if owner:IsValid() then
-			return owner:EyeAngles():Right():Dot(self:GetVelocity(parent))
+			return owner:EyeAngles():Right():Dot(self:GetVelocity(owner))
 		end
 
 		return 0
@@ -173,7 +173,7 @@ PART.Inputs =
 		local owner = self:GetOwner(self.RootOwner)
 
 		if owner:IsValid() then
-			return owner:EyeAngles():Up():Dot(self:GetVelocity(parent))
+			return owner:EyeAngles():Up():Dot(self:GetVelocity(owner))
 		end
 
 		return 0
