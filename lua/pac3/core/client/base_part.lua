@@ -250,36 +250,82 @@ do -- parenting
 		return temp
 	end
 	
-	function PART:IsHidden()
-		return 
-			self.temp_hidden or 
-			self._Hide or
-			self.Hide or
-			self.EventHide 
+	do
+		-- this doesn't work
+		--[[
 		
-	end
-	
-	function PART:SetHide(b)
-		self:CallRecursive(b and "OnHide" or "OnShow")
-		
-		self.Hide = b
-		self:SetKeyValueRecursive("_Hide", b)
-	end
-	
-	function pac.InvalidateEvents()
-		for key, val in pairs(pac.GetParts()) do
-			val.last_eventhide = nil
+		function PART:IsHidden()
+			return 
+				self.temp_hidden or 
+				self._Hide or
+				self.Hide or
+				self.EventHide 
+			
 		end
-	end
+		
+		function PART:SetHide(b)
+			self:CallRecursive(b and "OnHide" or "OnShow")
+			
+			self.Hide = b
+			self:SetKeyValueRecursive("_Hide", b)
+		end
+		
+		function pac.InvalidateEvents()
+			for key, val in pairs(pac.GetParts()) do
+				val.last_eventhide = nil
+			end
+		end
 
-	function PART:SetEventHide(b, filter)
-		-- or is this needed for all the chilren children as well?
-		if self.last_eventhide ~= b then
-			self:CallRecursive(b and "OnHide" or "OnShow", true)
-			self.last_eventhide = b
-		end
+		function PART:SetEventHide(b, filter)
+			-- or is this needed for all the chilren children as well?
+			if self.last_eventhide ~= b then
+				self:CallRecursive(b and "OnHide" or "OnShow", true)
+				self.last_eventhide = b
+			end
+			
+			self:SetKeyValueRecursive("EventHide", b, filter)
+		end]]
 		
-		self:SetKeyValueRecursive("EventHide", b, filter)
+		function PART:SetHide(b)
+			self.Hide = b
+			
+			self:CallRecursive(b and "OnHide" or "OnShow")
+		end
+
+		function PART:SetEventHide(b)
+			if b ~= self.EventHide then
+				self:CallRecursive(b and "OnHide" or "OnShow", true)
+			end
+			self.EventHide = b
+		end
+
+		function PART:IsHiddenEx()
+			return self.Hide == true or self.EventHide == true or false
+		end
+			
+		function PART:IsHidden()
+			if self.temp_hidden then return true end
+			if self:IsHiddenEx() then return true end
+			
+			local temp = self
+			
+			for i = 1, 100 do
+				local parent = temp:GetParent()
+				
+				if parent:IsValid() then
+					if parent:IsHiddenEx() then
+						return true
+					else
+						temp = parent
+					end
+				else
+					break
+				end
+			end
+			
+			return false
+		end
+	
 	end
 
 	function PART:RemoveChildren()
