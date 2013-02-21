@@ -97,7 +97,17 @@ PART.Events =
 		
 		callback = function(self, ent)
 			--return ent.IsOnGround and ent:IsOnGround()
-			return util.QuickTrace(ent:GetPos(), Vector(0,0,-5), ent).Hit
+			
+			local res = util.TraceHull({
+				start = ent:GetPos(),
+				endpos = ent:GetPos() + Vector(0,0,-5),
+				mins = ent:OBBMins(),
+				maxs = ent:OBBMaxs(),
+				filter = ent,
+				--mask = MASK_SOLID_BRUSHONLY,
+			})
+			
+			return res.Hit
 		end,
 	},
 	
