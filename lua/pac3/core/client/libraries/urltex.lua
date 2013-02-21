@@ -16,14 +16,15 @@ end
 
 local enable = CreateConVar("pac_enable_urltex", "1")
 
-function urltex.GetMaterialFromURL(url, callback, skip_cache)
+function urltex.GetMaterialFromURL(url, callback, skip_cache, shader)
+	shader = shader or "VertexLitGeneric"
 	if not enable:GetBool() then return end
 	
 	if type(callback) == "function" and not skip_cache and urltex.Cache[url] then
 		local tex = urltex.Cache[url]
-		local vertex_mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), "VertexLitGeneric")
-		vertex_mat:SetTexture("$basetexture", tex)
-		callback(vertex_mat, tex)
+		local mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), shader)
+		mat:SetTexture("$basetexture", tex)
+		callback(mat, tex)
 		return
 	end
 	if urltex.Queue[url] then
