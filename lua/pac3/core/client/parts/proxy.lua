@@ -21,13 +21,12 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Axis", "")
 	
 	pac.GetSet(PART, "ZeroEyePitch", false)
+	pac.GetSet(PART, "ResetVelocitiesOnHide", true)
+	pac.GetSet(PART, "VelocityRoughness", 10)
 pac.EndStorableVars()
 
 function PART:Initialize()
 	self.vec_additive = {}
-	self.last_vel = Vector()
-	self.last_vel_smooth = Vector()
-	self.last_pos = Vector()
 	self.next_vel_calc = 0
 end
 
@@ -44,7 +43,10 @@ PART.Functions =
 local FrameTime = FrameTime
 
 function PART:CalcVelocity()
-	self.last_vel_smooth = (self.last_vel_smooth + (self.last_vel - self.last_vel_smooth) * FrameTime() * 10)
+	self.last_vel = self.last_vel or Vector()
+	self.last_vel_smooth = self.last_vel_smooth or self.last_vel or Vector()
+	
+	self.last_vel_smooth = (self.last_vel_smooth + (self.last_vel - self.last_vel_smooth) * FrameTime() * math.max(self.VelocityRoughness, 0.1))
 end
 
 function PART:GetVelocity(part)
@@ -62,7 +64,7 @@ function PART:GetVelocity(part)
 
 	if self.next_vel_calc < time then
 		self.next_vel_calc = time + 0.1
-		self.last_vel = self.last_pos - pos
+		self.last_vel = (self.last_pos or pos) - pos
 		self.last_pos = pos
 	end
 
@@ -376,6 +378,12 @@ end
 function PART:OnHide()
 	self.time = nil
 	self.vec_additive = Vector()
+	
+	if self.ResetVelocitiesOnHide then
+		self.last_vel = nil
+		self.last_pos = nil
+		self.last_vel_smooth = nil
+	end
 end
 
 function PART:OnShow()
