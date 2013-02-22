@@ -9,7 +9,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Expression", "")
 	pac.GetSet(PART, "RootOwner", false)
 	pac.GetSet(PART, "Additive", false)
-
+	
 	pac.GetSet(PART, "Input", "time")
 	pac.GetSet(PART, "Function", "sin")
 	pac.GetSet(PART, "Offset", 0)
@@ -19,6 +19,8 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Max", 1)
 	pac.GetSet(PART, "Pow", 1)
 	pac.GetSet(PART, "Axis", "")
+	
+	pac.GetSet(PART, "ZeroEyePitch", false)
 pac.EndStorableVars()
 
 function PART:Initialize()
@@ -67,6 +69,16 @@ function PART:GetVelocity(part)
 	return self.last_vel_smooth / 5
 end
 
+function PART:CalcEyeAngles(ent)
+	local ang = ent:EyeAngles()
+	
+	if self.ZeroEyePitch then
+		ang.p = 0
+	end
+	
+	return ang
+end
+
 PART.Inputs =
 {
 	time = RealTime,
@@ -91,7 +103,7 @@ PART.Inputs =
 		local owner = self:GetOwner(self.RootOwner)
 
 		if owner:IsValid() then
-			local res = util.QuickTrace(owner:EyePos(), owner:EyeAngles():Forward() * 16000, {owner, owner:GetParent()})
+			local res = util.QuickTrace(owner:EyePos(), self:CalcEyeAngles(owner):Forward() * 16000, {owner, owner:GetParent()})
 
 			return res.StartPos:Distance(res.HitPos)
 		end
@@ -102,7 +114,7 @@ PART.Inputs =
 		local owner = self:GetOwner(self.RootOwner)
 
 		if owner:IsValid() then
-			local res = util.QuickTrace(owner:EyePos(), owner:EyeAngles():Forward() * 16000, {owner, owner:GetParent()})
+			local res = util.QuickTrace(owner:EyePos(), self:CalcEyeAngles(owner):Forward() * 16000, {owner, owner:GetParent()})
 
 			return res.Fraction
 		end
@@ -114,7 +126,7 @@ PART.Inputs =
 		local owner = self:GetOwner(self.RootOwner)
 
 		if owner:IsValid() then
-			local n = owner:EyeAngles().p
+			local n = self:CalcEyeAngles(owner).p
 			return -(1 + math.NormalizeAngle(n) / 89) / 2 + 1
 		end
 
@@ -124,7 +136,7 @@ PART.Inputs =
 		local owner = self:GetOwner(self.RootOwner)
 
 		if owner:IsValid() then
-			local n = owner:EyeAngles().y
+			local n = self:CalcEyeAngles(owner).y
 			return math.NormalizeAngle(n)/90
 		end
 
@@ -134,7 +146,7 @@ PART.Inputs =
 		local owner = self:GetOwner(self.RootOwner)
 
 		if owner:IsValid() then
-			local n = owner:EyeAngles().r
+			local n = self:CalcEyeAngles(owner).r
 			return math.NormalizeAngle(n)/90
 		end
 
@@ -146,7 +158,7 @@ PART.Inputs =
 		local owner = self:GetOwner(self.RootOwner)
 
 		if owner:IsValid() then
-			return self:GetVelocity(parent:GetOwner(self.RootOwner)):Length()
+			return self:GetVelocity(owner):Length()
 		end
 
 		return 0
@@ -155,7 +167,7 @@ PART.Inputs =
 		local owner = self:GetOwner(self.RootOwner)
 
 		if owner:IsValid() then
-			return owner:EyeAngles():Forward():Dot(self:GetVelocity(owner))
+			return self:CalcEyeAngles(owner):Forward():Dot(self:GetVelocity(owner))
 		end
 
 		return 0
@@ -164,7 +176,7 @@ PART.Inputs =
 		local owner = self:GetOwner(self.RootOwner)
 
 		if owner:IsValid() then
-			return owner:EyeAngles():Right():Dot(self:GetVelocity(owner))
+			return self:CalcEyeAngles(owner):Right():Dot(self:GetVelocity(owner))
 		end
 
 		return 0
@@ -173,7 +185,7 @@ PART.Inputs =
 		local owner = self:GetOwner(self.RootOwner)
 
 		if owner:IsValid() then
-			return owner:EyeAngles():Up():Dot(self:GetVelocity(owner))
+			return self:CalcEyeAngles(owner):Up():Dot(self:GetVelocity(owner))
 		end
 
 		return 0
