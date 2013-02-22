@@ -28,7 +28,7 @@ function pac.MakeNull(tbl)
 	end
 end
 
-pac.EntityType = 1
+pac.EntityType = 2
 
 function pac.CreateEntity(model, type)
 	type = type or pac.EntityType or 1
