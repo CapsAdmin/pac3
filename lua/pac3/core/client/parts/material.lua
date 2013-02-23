@@ -161,7 +161,9 @@ local function setup(PART)
 							end
 						end
 						
-						mat:SetTexture("$" .. name, tex)
+						if tex then						
+							mat:SetTexture("$" .. name, tex)
+						end
 					else
 						if name == "BumpMap" then
 							mat:SetString("$bumpmap", "dev/bump_normal")
