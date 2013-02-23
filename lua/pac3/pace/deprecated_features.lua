@@ -1,7 +1,7 @@
 pace.DeprecatedParts = 
 {
 	woohoo = true,
-	command = true,
+	--command = true,
 }
 
 pace.DeprecatedProperties = 
