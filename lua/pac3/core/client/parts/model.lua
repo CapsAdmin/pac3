@@ -287,7 +287,7 @@ end
 
 local render_SetMaterial = render.SetMaterial
 
-function PART:OnDraw(owner, pos, ang)	
+function PART:OnDraw(owner, pos, ang)
 	local ent = self.Entity
 	
 	if ent:IsValid() then	
@@ -308,8 +308,36 @@ local Matrix = Matrix
 local cam_PushModelMatrix = cam.PushModelMatrix
 local cam_PopModelMatrix = cam.PopModelMatrix
 
+surface.CreateFont("pac_urlobj_loading", 
+	{
+		font = "Arial",
+		size = 20,
+		weight = 10,
+		antialias = true,
+		outline = true,
+	}
+)
+
 function PART:DrawModel(ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
+	
+		if self.loading_obj then				
+			cam.Start2D()
+				local pos2d = pos:ToScreen()
+			
+				surface.SetFont("pac_urlobj_loading")
+				surface.SetTextColor(255, 255, 255, 255)
+				
+				
+				local str = "loading" .. ("."):rep(pac.RealTime*3%3)
+				local w, h = surface.GetTextSize("loading...")
+				
+				surface.SetTextPos(pos2d.x - w/2, pos2d.y - h/2)
+				surface.DrawText(str)
+			cam.End2D()
+			return
+		end
+	
 		if self.wavefront_mesh then
 			local matrix = Matrix()
 			
@@ -355,8 +383,13 @@ function PART:SetModel(var)
 			var = var:sub(2)
 		end
 		
+		self.loading_obj = true
+		
 		pac.urlobj.GetObjFromURL(var, function(mesh, err)
 			if not self:IsValid() then return end
+			
+			self.loading_obj = false
+			
 			self.Entity = self:GetEntity()
 			
 			if not mesh and err then
