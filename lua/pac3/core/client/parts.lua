@@ -100,7 +100,7 @@ function pac.GetParts(owned_only)
 	if owned_only then		
 		local tbl = {}
 		for key, part in pairs(pac.ActiveParts) do
-			if part:GetPlayerOwner() == pac.LocalPlayer or not part:GetPlayerOwner():IsPlayer() then
+			if part:GetPlayerOwner() == pac.LocalPlayer and (part.show_in_editor == nil or part.show_in_editor) then
 				tbl[key] = part
 			end
 		end
