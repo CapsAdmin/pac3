@@ -41,7 +41,7 @@ function pac.HandleOwnerName(owner, name, ent, part)
 		if ent:IsValid() then
 			if owner:IsValid() and owner.GetViewModel and ent == owner:GetViewModel() then
 				part:SetOwnerName("viewmodel")
-				return	ent
+				return ent
 			end
 			
 			if ent == pac.LocalPlayer then
@@ -62,16 +62,18 @@ function pac.HandleOwnerName(owner, name, ent, part)
 		return owner
 	end
 	
-	if name == "active weapon" then
-		return owner:IsValid() and owner.GetActiveWeapon and owner:GetActiveWeapon()
-	end
-	
-	if name == "active vehicle" then
-		return owner:IsValid() and owner.GetVehicle and owner:GetVehicle()
-	end
-	
-	if name == "viewmodel" then
-		return owner:IsValid() and owner.GetViewModel and owner:GetViewModel()
+	if owner:IsValid() then		
+		if name == "active weapon" and owner.GetActiveWeapon then
+			return owner:GetActiveWeapon()
+		end
+		
+		if name == "active vehicle" and owner.GetVehicle then
+			return owner:GetVehicle()
+		end
+		
+		if name == "viewmodel" and owner.GetViewModel then
+			return owner:GetViewModel()
+		end
 	end
 	
 	if name:find("persist ", nil, true) then

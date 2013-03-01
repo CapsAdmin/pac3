@@ -66,7 +66,7 @@ do -- owner
 		end
 			
 		if not removed and self.OwnerName ~= "" then
-			local ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self)
+			local ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self) or NULL
 			if ent ~= prev_owner then
 				self:SetOwner(ent)
 				self.temp_hidden = false
@@ -578,7 +578,8 @@ do -- drawing. this code is running every frame
 	
 	function PART:Draw(event, pos, ang, draw_type)
 		if not self:IsHidden() then			
-			if self[event] then			
+			if self[event] then	
+							
 				if 
 					self.Translucent == nil or
 					(self.Translucent == true and draw_type == "translucent")  or
@@ -586,9 +587,9 @@ do -- drawing. this code is running every frame
 				then	
 					pos = pos or Vector(0,0,0)
 					ang = ang or Angle(0,0,0)
-					
+										
 					owner = self:GetOwner()
-					
+										
 					pos, ang = self:GetDrawPosition()
 					
 					pos = pos or Vector(0,0,0)

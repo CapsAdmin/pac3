@@ -1,5 +1,5 @@
 function pac.SetupENT(ENT, owner)	
-	ENT.pac_owner = owner or "self"
+	ENT.pac_owner = ENT.pac_owner or owner or "self"
 	
 	local function find(parent, name)
 		for key, part in pairs(parent:GetChildren()) do
