@@ -97,12 +97,18 @@ do -- pace
 	end
 
 	function mctrl.GetCalculatedScale()
-		local dist = pace.current_part.cached_pos:Distance(pace.GetViewPos()) / 70
+		local part = pace.current_part
+		
+		if part.ClassName == "clip" then
+			part = part.Parent
+		end
+		
+		if not part:IsValid() then return 3 end
+	
+		local dist = part.cached_pos:Distance(pace.GetViewPos()) / 70
 		
 		if dist > 1 then dist = 1 / dist end
-		
-		epoe.Print(dist)
-		
+				
 		return 7 * math.rad(pace.GetViewFOV()) / dist
 	end
 	
