@@ -53,8 +53,8 @@ local mcode
 
 function pac.GUIMousePressed(mc)
 	if pace.mctrl.GUIMousePressed(mc) then return end
-
-	if mc == MOUSE_LEFT then
+	
+	if mc == MOUSE_LEFT and not pace.editing_viewmodel then
 		held_ang = pace.ViewAngles*1
 		held_mpos = Vector(gui.MousePos())
 	end
@@ -69,21 +69,34 @@ end
 function pac.GUIMouseReleased(mc)
 	if pace.mctrl.GUIMouseReleased(mc) then return end
 	
+	if pace.editing_viewmodel then return end
+
 	mcode = nil
 end
 
 local function CalcDrag()
 	if pace.BusyWithProperties:IsValid() then return end
 	
+	if pace.editing_viewmodel then return end
+
+	
 	local ftime = FrameTime() * 50
-	local mult = 1
+	local mult = 5
 	
 	if input.IsKeyDown(KEY_LCONTROL) then
 		mult = 0.1
 	end
-
+	
+	if pace.current_part:IsValid() then
+		local origin = pace.current_part.cached_pos
+		
+		if origin ~= Vector(0,0,0) then
+			mult = mult * (origin:Distance(pace.ViewPos) / 200)
+		end
+	end
+	
 	if input.IsKeyDown(KEY_LSHIFT) then
-		mult = 5
+		mult = mult + 5
 	end
 	
 	if input.IsKeyDown(KEY_UP) or input.IsMouseDown(MOUSE_WHEEL_UP) then
@@ -121,17 +134,13 @@ end
 
 local follow_entity = CreateConVar("pac_camera_follow_entity", "0")
 
-function pac.CalcView()
-	if pace.editing_viewmodel then
-		local ent = LocalPlayer():GetViewModel()
-		if ent:IsValid() then
-			ent:SetPos(pace.ViewPos)
-			ent:SetAngles(pace.ViewAngles)
-			ent:SetRenderOrigin(pace.ViewPos)
-			ent:SetRenderAngles(pace.ViewAngles)
-		end
-	end
-	
+function pac.CalcView(ply, pos, ang, fov)
+	if pace.editing_viewmodel then 
+		pace.ViewPos = pos
+		pace.ViewAngles = ang
+		pace.ViewFOV = fov
+	return end
+
 	if follow_entity:GetBool() then
 		local ent = pace.GetViewEntity()
 		pace.ViewPos = pace.ViewPos + (ent:GetVelocity() * FrameTime())
@@ -141,7 +150,7 @@ function pac.CalcView()
 	{
 		origin = pace.ViewPos,
 		angles = pace.ViewAngles,
-		fov =  pace.editing_viewmodel and pace.ViewFOV + 10 or pace.ViewFOV,
+		fov = pace.ViewFOV,
 	}
 end
 
@@ -168,13 +177,6 @@ function pace.EnableView(b)
 		pac.RemoveHook("HUDPaint")
 		pace.SetTPose(false)
 		pace.SetBreathing(false)
-		
-		local ent = LocalPlayer():GetViewModel()
-		if ent:IsValid() then
-			ent:SetRenderOrigin(nil)
-			ent:SetRenderAngles(nil)
-			ent:SetupBones()
-		end
 	end
 end
 
