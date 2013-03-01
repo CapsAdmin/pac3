@@ -97,7 +97,13 @@ do -- pace
 	end
 
 	function mctrl.GetCalculatedScale()
-		return 7 * math.rad(pace.GetViewFOV())
+		local dist = pace.current_part.cached_pos:Distance(pace.GetViewPos()) / 70
+		
+		if dist > 1 then dist = 1 / dist end
+		
+		epoe.Print(dist)
+		
+		return 7 * math.rad(pace.GetViewFOV()) / dist
 	end
 	
 	local cvar_pos_grid = CreateClientConVar("pac_grid_pos_size", "4")
