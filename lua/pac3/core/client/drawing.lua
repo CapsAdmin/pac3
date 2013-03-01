@@ -224,13 +224,14 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 			if not ent:IsPlayer() and not ent:IsNPC() then
 				radius = radius * 4
 			end
-			
+				
 			if 				
 				(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer()) or
 				
 				ent ~= pac.LocalPlayer and 
 				(					
 					util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 and 
+					(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance < dst)) or
 					(draw_dist <= 0 or dst < draw_dist) or
 					(dst < radius or dst < 200)
 				)
