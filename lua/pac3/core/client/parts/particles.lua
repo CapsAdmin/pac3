@@ -33,9 +33,11 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "ParticleAngleVelocity", Vector(50, 50, 50))
 	pac.GetSet(PART, "StickLifetime", 2)
 	pac.GetSet(PART, "StickStartSize", 20)
-	pac.GetSet(PART, "StickStartSize", 0)
+	pac.GetSet(PART, "StickEndSize", 0)
 	pac.GetSet(PART, "StickStartAlpha", 255)
-	pac.GetSet(PART, "StickStartAlpha", 0)
+	pac.GetSet(PART, "StickEndAlpha", 0)
+	
+	pac.GetSet(PART, "AddVelocityFromOwner", false)
 pac.EndStorableVars()
 
 local function RemoveCallback(particle)
@@ -161,6 +163,13 @@ function PART:EmitParticles(pos, ang)
 					particle:SetAngles(ang_)
 				else
 					particle:SetAngles(ang:Angle())
+				end
+				
+				if self.AddVelocityFromOwner then
+					local owner = self:GetOwner(true)
+					if owner:IsValid() then
+						vec = vec + owner:GetVelocity()
+					end
 				end
 
 				particle:SetVelocity((vec + ang) * self.Velocity)
