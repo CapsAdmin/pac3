@@ -36,6 +36,12 @@ function pace.OnMenuBarPopulate(bar)
 		pace.AddLanguagesToMenu(menu)
 		pace.AddFontsToMenu(menu)
 		
+		menu:AddSpacer()
+		
+		local rendering = menu:AddSubMenu(L"rendering", function() end)
+			rendering.GetDeleteSelf = function() return false end
+			rendering:AddCVar(L"draw in reflections", "pac_suppress_frames", "1", "0")
+		
 	local menu = bar:AddMenu(L"player")
 		menu:AddCVar(L"t pose").OnChecked = function(s, b) pace.SetTPose(b) end
 		menu:AddOption(L"reset eye angles", function() pace.ResetEyeAngles() end)		
