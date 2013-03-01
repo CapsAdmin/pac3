@@ -67,7 +67,7 @@ function pac.RenderOverride(ent, type, draw_only)
 		end
 		
 		for key, part in pairs(ent.pac_parts) do
-			if part:IsValid() then
+			if part:IsValid() then		
 				if not part:HasParent() then
 					if not draw_only then think(part) end
 					part:Draw("OnDraw", nil, nil, type)
