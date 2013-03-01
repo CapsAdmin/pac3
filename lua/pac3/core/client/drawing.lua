@@ -142,25 +142,66 @@ local radius
 
 local dst
 
-function pac.PostDrawOpaqueRenderables(bool1, bool2)
+-- hacky optimization
+-- allows only the last draw call
+local cvar_framesuppress = CreateClientConVar("pac_suppress_frames", "1")
+
+local function setup_suppress()
+	local last_framenumber = 0
+	local current_frame = 0
+	local current_frame_count = 0
+	
+	return function()
+		if cvar_framesuppress:GetBool() then
+			local frame_number = FrameNumber()
+			
+			if frame_number == last_framenumber then
+				current_frame = current_frame + 1
+			else
+				last_framenumber = frame_number
+							
+				if current_frame_count ~= current_frame then
+					current_frame_count = current_frame
+				end
+				
+				current_frame = 1
+			end
+					
+			return current_frame < current_frame_count
+		end
+	end
+end
+-- hacky optimization
+
+local last_enable
+
+local should_suppress = setup_suppress()
+function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 	if bool2 then return end
 	if SKIP_DRAW then return end
 	
 	if not cvar_enable:GetBool() then
-		for key, ent in pairs(pac.drawn_entities) do
-			if ent:IsValid() then
-				if ent.pac_parts and ent.pac_drawing == true then
-					for key, part in pairs(ent.pac_parts) do
-						part:CallRecursive("OnHide")
+		if last_enable ~= cvar_enable:GetBool() then
+			for key, ent in pairs(pac.drawn_entities) do
+				if ent:IsValid() then
+					if ent.pac_parts and ent.pac_drawing == true then
+						for key, part in pairs(ent.pac_parts) do
+							part:CallRecursive("OnHide")
+						end
+						pac.ResetBones(ent)
 					end
-					pac.ResetBones(ent)
+					ent.pac_drawing = false
+				else
+					pac.drawn_entities[key] = nil
 				end
-				ent.pac_drawing = false
-			else
-				pac.drawn_entities[key] = nil
 			end
+			last_enable = cvar_enable:GetBool()
 		end
-	return end
+	return else
+		last_enable = nil
+	end
+	
+	if should_suppress() then return end
 		
 	-- commonly used variables		
 	pac.RealTime = RealTime()
@@ -221,9 +262,12 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2)
 end
 pac.AddHook("PostDrawOpaqueRenderables")
 
+local should_suppress = setup_suppress()
 function pac.PostDrawTranslucentRenderables(bool1, bool2)
 	if bool2 then return end
 	if SKIP_DRAW then return end
+	
+	if should_suppress() then return end
 
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
@@ -237,7 +281,10 @@ function pac.PostDrawTranslucentRenderables(bool1, bool2)
 end
 pac.AddHook("PostDrawTranslucentRenderables")
 
+local should_suppress = setup_suppress()
 function pac.RenderScreenspaceEffects()
+	if should_suppress() then return end
+
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
 			if ent.pac_drawing and ent.pac_parts then
@@ -252,7 +299,10 @@ function pac.RenderScreenspaceEffects()
 end
 pac.AddHook("RenderScreenspaceEffects")
 
+local should_suppress = setup_suppress()
 function pac.Think()
+	if should_suppress() then return end
+	
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
 			if ent.pac_drawing and ent:IsPlayer() then
