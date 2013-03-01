@@ -66,6 +66,7 @@ function pac.SetupENT(ENT, owner)
 		
 		if self.pac_show_in_editor == nil then
 			self:SetShowPACPartsInEditor(false)
+			self.pac_show_in_editor = nil
 		end
 	end
 
