@@ -84,13 +84,13 @@ function pac.SetupENT(ENT, owner)
 	
 	function ENT:AttachPACSession(session)
 		for _, part in pairs(session) do
-			self:AttachPACPart(val)
+			self:AttachPACPart(part)
 		end
 	end
 	
 	function ENT:RemovePACSession(session)
 		for _, part in pairs(session) do
-			self:RemovePACPart(val)
+			self:RemovePACPart(part)
 		end
 	end
 	
