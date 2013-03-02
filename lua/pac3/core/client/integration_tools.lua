@@ -121,3 +121,80 @@ function pac.SetupSWEP(SWEP, owner)
 	SWEP.pac_owner = owner or "Owner"	
 	pac.SetupENT(SWEP, owner)	
 end
+
+function pac.AddEntityClassListener(class, session, check_func, draw_dist)
+	
+	if session.self then
+		session = {session}
+	end
+	
+	draw_dist = 0
+	check_func = check_func or function(ent) return ent:GetClass() == class end
+	
+	local id = "pac_auto_attach_" .. class
+	
+	local weapons = {}
+	local function weapon_think()
+		for _, ent in pairs(weapons) do
+			if ent.Owner and ent.Owner:IsValid() then
+				if ent.Owner:GetActiveWeapon() == ent then
+					if not ent.pac_deployed then
+						ent:AttachPACSession(session)
+						ent.pac_deployed = true			
+					end
+				else
+					if ent.pac_deployed then
+						ent:RemovePACSession(session)
+						ent.pac_deployed = false
+					end
+				end
+			end
+		end
+	end
+	
+	local function created(ent)
+		if ent:IsValid() and check_func(ent) then
+			if ent:IsWeapon() then
+				pac.SetupSWEP(ent)
+				weapons[ent:EntIndex()] = ent
+				hook.Add("Think", id, weapon_think)
+			else
+				pac.SetupENT(ent)
+				ent:AttachPACSession(session)
+				ent:SetPACDrawDistance(draw_dist)
+			end
+		end
+	end
+	
+	local function removed(ent)
+		if ent:IsValid() and check_func(ent) and ent.pac_outfits then
+			ent:RemovePACSession(session)
+			weapons[ent:EntIndex()] = nil
+		end
+	end
+	
+	for key, ent in pairs(ents.GetAll()) do
+		created(ent)
+	end
+	
+	hook.Add("EntityRemoved", id, removed)
+	hook.Add("OnEntityCreated", id, created)
+end
+
+function pac.RemoveEntityClassListener(class, session)
+	if session.self then
+		session = {session}
+	end
+	
+	for key, ent in pairs(ents.GetAll()) do
+		if check_func(ent) and ent.pac_outfits then
+			ent:RemovePACSession(session)
+		end
+	end
+	
+	local id = "pac_auto_attach_" .. class
+		
+	hook.Remove("Think", id)
+	hook.Remove("EntityRemoved", id)
+	hook.Remove("OnEntityCreated", id)
+end
