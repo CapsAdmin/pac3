@@ -578,6 +578,12 @@ do -- drawing. this code is running every frame
 	
 	function PART:Draw(event, pos, ang, draw_type)
 		if not self:IsHidden() then			
+			owner = self:GetOwner()	
+			
+			if self.OwnerName == "viewmodel" and owner:GetOwner() == pac.LocalPlayer and pac.LocalPlayer:ShouldDrawLocalPlayer() then
+				return
+			end
+			
 			if self[event] then	
 							
 				if 
@@ -587,9 +593,7 @@ do -- drawing. this code is running every frame
 				then	
 					pos = pos or Vector(0,0,0)
 					ang = ang or Angle(0,0,0)
-										
-					owner = self:GetOwner()
-										
+																				
 					pos, ang = self:GetDrawPosition()
 					
 					pos = pos or Vector(0,0,0)
