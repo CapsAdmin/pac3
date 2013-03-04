@@ -32,7 +32,7 @@ function pac.CreatePart(name, owner)
 		part = class.Create("part", "base")
 	end
 		
-	self.cvar_enable = CreateClientConVar("pac_enable_" .. name, 1, true)
+	part.cvar_enable = CreateClientConVar("pac_enable_" .. name, 1, true)
 	part.UniqueID = tostring(util.CRC(os.time() + pac.RealTime + part_count))
 	
 	merge_storable(part, part.BaseClass)

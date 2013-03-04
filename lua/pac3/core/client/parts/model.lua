@@ -26,8 +26,14 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Model", "models/dav0r/hoverball.mdl")
 	pac.GetSet(PART, "OwnerEntity", false)
 	pac.GetSet(PART, "Translucent", false)
-	pac.GetSet(PART, "TextureFilterType", false)
+	pac.GetSet(PART, "TextureFilter", 3)
 pac.EndStorableVars()
+
+
+function PART:SetTextureFilter(num)
+	self.TextureFilter = num
+	self.texfilter_enum = TEXFILTER[math.ceil(num)]
+end
 
 function PART:SetOverallSize(num)
 	self.OverallSize = num
@@ -319,8 +325,6 @@ surface.CreateFont("pac_urlobj_loading",
 	}
 )
 
-local TEXFILTER = TEXFILTER
-
 function PART:DrawModel(ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 	
@@ -348,8 +352,12 @@ function PART:DrawModel(ent, pos, ang)
 			matrix:SetTranslation(pos)
 			matrix:Scale(self.Scale * self.Size)
 			
-			render.PushFilterMag(TEXFILTER[self.TextureFilterType])
-			render.PushFilterMin(TEXFILTER[self.TextureFilterType])
+			local filter = self.texfilter_enum
+			
+			if filter then
+				render.PushFilterMag(filter)
+				render.PushFilterMin(filter)
+			end
 			
 			cam_PushModelMatrix(matrix)
 				if self.Materialm then 
@@ -362,8 +370,10 @@ function PART:DrawModel(ent, pos, ang)
 		
 			ent:DrawModel()
 			
-			render.PopFilterMin()
-			render.PopFilterMag()
+			if filter then
+				render.PopFilterMin()
+				render.PopFilterMag()
+			end
 		else	
 			ent:DrawModel()
 		end
