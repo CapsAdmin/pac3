@@ -29,10 +29,9 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "TextureFilter", 3)
 pac.EndStorableVars()
 
-
 function PART:SetTextureFilter(num)
 	self.TextureFilter = num
-	self.texfilter_enum = TEXFILTER[math.ceil(num)]
+	self.texfilter_enum = math.Clamp(math.Round(num), 0, 3)
 end
 
 function PART:SetOverallSize(num)
@@ -344,6 +343,14 @@ function PART:DrawModel(ent, pos, ang)
 			cam.End2D()
 			return
 		end
+		
+			
+		local filter = self.texfilter_enum
+		
+		if filter then
+			render.PushFilterMag(filter)
+			render.PushFilterMin(filter)
+		end
 			
 		if self.wavefront_mesh then
 			local matrix = Matrix()
@@ -360,13 +367,6 @@ function PART:DrawModel(ent, pos, ang)
 			cam_PopModelMatrix()
 			
 			pac.SetModelScale(ent, Vector(0,0,0))
-		end
-		
-		local filter = self.texfilter_enum
-		
-		if filter then
-			render.PushFilterMag(filter)
-			render.PushFilterMin(filter)
 		end
 		
 		ent:DrawModel()
