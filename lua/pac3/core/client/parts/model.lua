@@ -344,21 +344,14 @@ function PART:DrawModel(ent, pos, ang)
 			cam.End2D()
 			return
 		end
-	
+			
 		if self.wavefront_mesh then
 			local matrix = Matrix()
 			
 			matrix:SetAngles(ang)
 			matrix:SetTranslation(pos)
 			matrix:Scale(self.Scale * self.Size)
-			
-			local filter = self.texfilter_enum
-			
-			if filter then
-				render.PushFilterMag(filter)
-				render.PushFilterMin(filter)
-			end
-			
+				
 			cam_PushModelMatrix(matrix)
 				if self.Materialm then 
 					render_SetMaterial(self.Materialm)	
@@ -367,15 +360,20 @@ function PART:DrawModel(ent, pos, ang)
 			cam_PopModelMatrix()
 			
 			pac.SetModelScale(ent, Vector(0,0,0))
+		end
 		
-			ent:DrawModel()
-			
-			if filter then
-				render.PopFilterMin()
-				render.PopFilterMag()
-			end
-		else	
-			ent:DrawModel()
+		local filter = self.texfilter_enum
+		
+		if filter then
+			render.PushFilterMag(filter)
+			render.PushFilterMin(filter)
+		end
+		
+		ent:DrawModel()
+		
+		if filter then
+			render.PopFilterMin()
+			render.PopFilterMag()
 		end
 	end
 end
