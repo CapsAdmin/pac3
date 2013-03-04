@@ -44,6 +44,34 @@ function PART:PreInitialize()
 	self.cached_ang = Angle(0,0,0)
 end
 
+function PART:ConVarEnabled()
+	if self.last_framenumber ~= pac.FrameNumber then
+		if not self.cvar_enable:GetBool() then 
+			if self.last_enabled ~= false then
+				self:CallRecursive("OnHide") 
+				self.last_enabled = false
+			end
+			
+			self.enabled = false
+			self.last_framenumber = pac.FrameNumber
+			
+			return false
+		else
+			if self.last_enabled ~= true then
+				self:CallRecursive("OnShow") 
+				self.last_enabled = true
+			end
+		end
+		
+		self.enabled = true
+		self.last_framenumber = pac.FrameNumber
+		
+		return true
+	end
+	
+	return self.enabled 
+end
+
 do -- owner	
 	function PART:SetOwnerName(name)
 		self.OwnerName = name
@@ -577,13 +605,15 @@ do -- drawing. this code is running every frame
 	local pos, ang, owner
 	
 	function PART:Draw(event, pos, ang, draw_type)
+		if not self:ConVarEnabled() then return end
+		
 		if not self:IsHidden() then			
 			owner = self:GetOwner()	
 			
 			if self.OwnerName == "viewmodel" and owner:GetOwner() == pac.LocalPlayer and pac.LocalPlayer:ShouldDrawLocalPlayer() then
 				return
 			end
-			
+						
 			if self[event] then	
 							
 				if 
@@ -744,6 +774,8 @@ do -- drawing. this code is running every frame
 end
 	
 function PART:Think()	
+	if not self:ConVarEnabled() then return end
+
 	local owner = self:GetOwner()
 	
 	if owner:IsValid() then

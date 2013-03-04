@@ -8,7 +8,7 @@ pac.StartStorableVars()
 
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
 	pac.GetSet(PART, "Size", 1)
-	pac.GetSet(PART, "Jiggle", 0)
+	pac.GetSet(PART, "Jiggle", false)
 	pac.SetupPartName(PART, "FollowPart")
 pac.EndStorableVars()
 
@@ -88,7 +88,7 @@ function PART:OnBuildBonePositions()
 		end
 	end
 	
-	owner:ManipulateBoneJiggle(self.BoneIndex, self.Jiggle) -- afaik anything but 1 is not doing anything at all
+	owner:ManipulateBoneJiggle(self.BoneIndex, type(self.Jiggle) == "number" and self.Jiggle or (self.Jiggle and 1 or 0)) -- afaik anything but 1 is not doing anything at all
 	owner:ManipulateBoneScale(self.BoneIndex, owner:GetManipulateBoneScale(self.BoneIndex) * self.Scale * self.Size)
 end
 

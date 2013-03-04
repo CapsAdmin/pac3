@@ -25,6 +25,38 @@ end
 
 PART.Events = 
 {
+	advanced_timer = 
+	{
+		arguments = {{delay = "number"}, {repeat_times = "number"}},
+		callback = function(self, ent, delay, repeat_times)
+			if self.timer_finished then return end
+		
+			self.timer_repeats = self.timer_repeats or 1
+			self.timer_time = self.timer_time or os.clock()
+						
+			if (os.clock() - self.timer_time) > delay then
+					
+				if repeat_times == 0 then
+					return true
+				elseif self.timer_repeats < repeat_times then
+					self.timer_time = os.clock()
+					self.timer_repeats = self.timer_repeats + 1
+					return true
+				end
+								
+				if repeat_times == self.timer_repeats then
+					self.timer_finished = true
+					self.timer_repeats = 0
+					return false
+				end
+				
+				return true
+			end
+			
+			return false
+		end,		
+	},
+
 	owner_health =
 	{	
 		arguments = {{health = "number"}},
@@ -572,7 +604,7 @@ function PART:NumberOperator(a, b)
 	end	
 end
 
-function PART:OnHide()
+function PART:OnHide(from_event)
 	if self.Event == "weapon_class" then
 		local ent = self:GetOwner()
 		if ent:IsValid() then
@@ -583,6 +615,11 @@ function PART:OnHide()
 			end
 		end
 	end
+
+end
+
+function PART:OnShow()
+	self.timer_finished = false
 end
 
 pac.RegisterPart(PART)
