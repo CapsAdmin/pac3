@@ -26,10 +26,6 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "DrawShadow", true)
 pac.EndStorableVars()
 
-function PART:Initialize()
-	self.ClipPlanes = {}
-end
-
 function PART:OnBuildBonePositions()
 	local ent = self:GetOwner()
 	
@@ -83,57 +79,6 @@ function PART:SetSkin(var)
 	local ent = self:GetOwner()
 	if ent:IsValid() then
 		ent:SetSkin(var)
-	end
-end
-
-function PART:AddClipPlane(part)
-	return table.insert(self.ClipPlanes, part)
-end
-
-function PART:RemoveClipPlane(id)
-	local part = self.ClipPlanes[id]
-	if part then
-		table.remove(self.ClipPlanes, id)
-		part:Remove()
-	end
-end
-
-local render_EnableClipping = render.EnableClipping 
-local render_PushCustomClipPlane = render.PushCustomClipPlane
-local LocalToWorld = LocalToWorld
-local bclip 
-
-function PART:StartClipping(owner)	
-	bclip = nil
-	
-	if #self.ClipPlanes > 0 then
-		bclip = render_EnableClipping(true)
-
-		for key, clip in pairs(self.ClipPlanes) do
-			if clip:IsValid() and not clip:IsHidden() then
-				local pos, ang = clip:GetDrawPosition(owner)
-				pos, ang = LocalToWorld(clip.Position, clip:CalcAngles(owner, clip.Angles), pos, ang or Angle(0))
-				local normal = ang:Forward()
-				render_PushCustomClipPlane(normal, normal:Dot(pos + normal))
-			end
-		end
-	end
-end
-
-local render_PopCustomClipPlane = render.PopCustomClipPlane
-
-function PART:EndClipping()
-	if #self.ClipPlanes > 0 then
-		for key, clip in pairs(self.ClipPlanes) do
-			if not clip:IsValid() then
-				self.ClipPlanes[key] = nil
-			end
-			if not clip:IsHidden() then
-				render_PopCustomClipPlane()
-			end
-		end
-
-		render_EnableClipping(bclip)
 	end
 end
 
@@ -254,10 +199,14 @@ function PART:OnShow()
 	if ent:IsValid() then	
 		function ent.RenderOverride(ent)
 			if self:IsValid() then			
-				if not self.HideEntity then 					
+				if not self.HideEntity then 
+					self:ModifiersPostEvent("PreDraw")
+					
 					self:PreEntityDraw(ent)
 					ent:DrawModel()
 					self:PostEntityDraw(ent)
+					
+					self:ModifiersPostEvent("OnDraw")
 				end
 			else
 				ent.RenderOverride = nil
@@ -336,7 +285,6 @@ end
 
 function PART:PreEntityDraw(ent)
 	self:UpdateWeaponDraw(ent)
-	self:StartClipping(ent)
 	
 	self:UpdateColor(ent)
 	self:UpdateMaterial(ent)
@@ -363,8 +311,6 @@ function PART:PostEntityDraw(ent)
 	render_SetColorModulation(1,1,1)
 	
 	render_MaterialOverride()
-
-	self:EndClipping(bclip)
 end
 
 pac.RegisterPart(PART)

@@ -7,8 +7,8 @@ local matColor	= Material( "model_color" )
 local mat_Copy	= Material( "pp/copy" )
 local mat_Add	= Material( "pp/add" )
 local mat_Sub	= Material( "pp/sub" )
-local rt_Stencil	= render.GetBloomTex0()
-local rt_Store		= render.GetScreenEffectTexture( 0 )
+local rt_Stencil	= GetRenderTarget("halo_ex_stencil" .. os.clock(), ScrW(), ScrH(), true)
+local rt_Store		= GetRenderTarget("halo_ex_store" .. os.clock(), ScrW(), ScrH(), true)
 
 local List = {}
 
@@ -72,8 +72,12 @@ function haloex.Render( entry )
 		
 			if ( !IsValid( v ) ) then continue end
 			
-			render.PushFlashlightMode( true )
-				v:DrawModel()
+			render.PushFlashlightMode( true )	
+				if v.pacDrawModel then
+					v:pacDrawModel()
+				else
+					v:DrawModel()
+				end
 			render.PopFlashlightMode()
 		
 		end
@@ -103,7 +107,11 @@ function haloex.Render( entry )
 			render.SetColorModulation( entry.Color.r/255, entry.Color.g/255, entry.Color.b/255 )
 			render.SetBlend( entry.Color.a/255 );
 
-			v:DrawModel()
+			if v.pacDrawModel then
+				v:pacDrawModel()
+			else
+				v:DrawModel()
+			end
 			
 		end
 			

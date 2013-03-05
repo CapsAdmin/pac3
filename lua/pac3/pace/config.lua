@@ -24,6 +24,7 @@ pace.PartIcons =
 	woohoo = "icon16/webcam_delete.png",
 	halo = "icon16/shading.png",
 	poseparameter = "icon16/vector.png",
+	fog = "icon16/weather_clouds.png",
 }
 
 pace.PropertyOrder =

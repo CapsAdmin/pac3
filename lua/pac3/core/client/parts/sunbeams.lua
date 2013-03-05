@@ -6,9 +6,11 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Darken", 0)
 	pac.GetSet(PART, "Multiplier", 0.25)
 	pac.GetSet(PART, "Size", 0.1)
+	pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
 
-function PART:OnRenderScreenspaceEffects(owner, pos, ang)
+function PART:OnDraw(owner, pos, ang)
+	cam.Start2D()
 	local spos = pos:ToScreen()
 	
 	local dist_mult = - math.Clamp(pac.EyePos:Distance(pos) / 1000, 0, 1) + 1
@@ -20,6 +22,7 @@ function PART:OnRenderScreenspaceEffects(owner, pos, ang)
 		spos.x / ScrW(), 
 		spos.y / ScrH()
 	)
+	cam.End2D()
 end
 
 pac.RegisterPart(PART)

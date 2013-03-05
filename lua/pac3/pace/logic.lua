@@ -33,11 +33,25 @@ function pace.OnOpenEditor()
 	pace.SetViewAngles(LocalPlayer():EyeAngles())
 	pace.EnableView(true)
 	
-	if table.Count(pac.GetParts(true)) == 0 then
+	pace.TrySelectPart()
+	
+	pace.ResetView()
+end
+
+function pace.TrySelectPart()
+	local part
+	
+	for k,v in pairs(pac.GetParts(true)) do
+		if v.UniqueID == pace.current_part_uid then
+			part = v
+		end
+	end
+	
+	if part then
+		pace.OnPartSelected(part)
+	elseif table.Count(pac.GetParts(true)) == 0 then
 		pace.Call("CreatePart", "group", L"my outfit", L"add parts to me!")
 	else
 		pace.OnPartSelected(select(2, next(pac.GetParts(true))))
 	end
-	
-	pace.ResetView()
 end

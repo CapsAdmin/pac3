@@ -2,24 +2,44 @@ local PART = {}
 
 PART.ClassName = "clip"
 
-function PART:OnParent(parent)
-	if not parent:IsValid() then
-		self:OnRemove()
-	elseif parent.AddClipPlane then
-		self.clip_id = parent:AddClipPlane(self)
-	end
-end
-
-function PART:OnUnParent()
-	self:OnRemove()
-end
-
-function PART:OnRemove()
-	local parent = self:GetParent()
+function PART:OnParent(part)
+	part:AddModifier(self)
 	
-	if parent:IsValid() and self.clip_id and parent.RemoveClipPlane then
-		parent:RemoveClipPlane(self.clip_id)
+	-- this is only really for halos..
+	if IsEntity(part.Entity) and part.Entity:IsValid() then
+		function part.Entity.pacDrawModel(ent)
+			self:PreOnDraw()
+			ent:DrawModel()
+			self:PostOnDraw()
+		end
 	end
+end
+
+function PART:OnUnParent(part)
+	if not part:IsValid() then return end
+	part:RemoveModifier(self)
+end
+
+local render_EnableClipping = render.EnableClipping
+local render_PushCustomClipPlane = render.PushCustomClipPlane
+
+local bclip
+
+function PART:PreOnDraw(owner)
+	bclip = render_EnableClipping(true)
+
+	local pos, ang = LocalToWorld(self.Position, self:CalcAngles(owner, self.Angles), self:GetBonePosition())
+	local normal = ang:Forward()
+		
+	render_PushCustomClipPlane(normal, normal:Dot(pos + normal))
+end
+
+local render_PopCustomClipPlane = render.PopCustomClipPlane
+
+function PART:PostOnDraw()
+	render_PopCustomClipPlane()
+	
+	render_EnableClipping(bclip)
 end
 
 pac.RegisterPart(PART)
