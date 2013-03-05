@@ -200,8 +200,10 @@ do -- menu
 		local temp = {}
 		
 		for class_name, tbl in pairs(pac.GetRegisteredParts()) do
+			
 			if pace.IsInBasicMode() and not pace.BasicParts[class_name] then continue end
 			if not pace.IsShowingDeprecatedFeatures() and pace.DeprecatedParts[class_name] then continue end
+			
 			if not tbl.Internal then
 				table.insert(temp, class_name)
 			end

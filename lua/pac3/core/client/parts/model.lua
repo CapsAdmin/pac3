@@ -2,6 +2,7 @@ local PART = {}
 
 PART.ClassName = "model"
 PART.ManualDraw = true
+PART.HandleModifiersManually = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "BoneMerge", false)
@@ -25,7 +26,6 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "OriginFix", false)
 	pac.GetSet(PART, "Model", "models/dav0r/hoverball.mdl")
 	pac.GetSet(PART, "OwnerEntity", false)
-	pac.GetSet(PART, "Translucent", false)
 	pac.GetSet(PART, "TextureFilter", 3)
 pac.EndStorableVars()
 
@@ -45,9 +45,7 @@ function PART:GetEntity()
 	return self.Entity
 end
 
-function PART:Initialize()
-	self.ClipPlanes = {}
-	
+function PART:Initialize()	
 	self.Entity = self:GetEntity()
 	self.Entity:SetNoDraw(true)
 	--[[self.Entity:SetRenderMode(RENDERMODE_NONE)
@@ -59,17 +57,6 @@ function PART:Initialize()
 	self.Entity:DrawShadow(false)
 	self.Entity:DestroyShadow()]]
 	self.Entity.PACPart = self
-end
-
-function PART:AddClipPlane(part)
-	return table.insert(self.ClipPlanes, part)
-end
-
-function PART:RemoveClipPlane(id)
-	local part = self.ClipPlanes[id]
-	if part then
-		table.remove(self.ClipPlanes, id)
-	end
 end
 
 function PART:OnShow()
@@ -149,14 +136,11 @@ end
 
 local pac = pac
 
-local render_EnableClipping = render.EnableClipping
-local render_PushCustomClipPlane = render.PushCustomClipPlane
 local render_CullMode = render.CullMode
 local render_SetColorModulation = render.SetColorModulation
 local render_SetBlend = render.SetBlend
-local render_MaterialOverride = render.MaterialOverride or SetMaterialOverride
+local render_ModelMaterialOverride = render.ModelMaterialOverride
 local render_SuppressEngineLighting = render.SuppressEngineLighting
-local render_PopCustomClipPlane = render.PopCustomClipPlane
 local LocalToWorld = LocalToWorld
 local MATERIAL_CULLMODE_CW = MATERIAL_CULLMODE_CW
 
@@ -179,24 +163,12 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		end
 	end
 				
-	--ent:SetupBones()
+	--ent:SetupBones(
 	
 	if self.Alpha ~= 0 and self.Size ~= 0 then
-		local bclip
-		
-		if not pac.DisableClip and #self.ClipPlanes > 0 then
-			bclip = render_EnableClipping(true)
-
-			for key, clip in pairs(self.ClipPlanes) do
-				if clip:IsValid() and not clip:IsHidden() then
-					local pos, ang = clip:GetBonePosition()
-					pos, ang = LocalToWorld(clip.Position, clip:CalcAngles(owner, clip.Angles), pos, ang)
-					local normal = ang:Forward()
-					render_PushCustomClipPlane(normal, normal:Dot(pos + normal))
-				end
-			end
-		end		
-
+	
+		self:ModifiersPreEvent("OnDraw")
+	
 		if not pac.DisableDoubleFace then
 			if self.DoubleFace or self.wavefront_mesh then
 				render_CullMode(MATERIAL_CULLMODE_CW)
@@ -231,7 +203,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 			render_SetBlend(self.Alpha)
 		end
 		
-		render_MaterialOverride(self.Materialm) 
+		render_ModelMaterialOverride(self.Materialm) 
 		
 		if self.Fullbright then
 			render_SuppressEngineLighting(true) 
@@ -268,26 +240,15 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 				render_CullMode(MATERIAL_CULLMODE_CW)
 						render_SetColorModulation(0,0,0)
 							render_SuppressEngineLighting(true)
-								render_MaterialOverride(WHITE)
+								render_ModelMaterialOverride(WHITE)
 									self:DrawModel(ent, pos, ang)														
-								render_MaterialOverride()
+								render_ModelMaterialOverride()
 						render_SuppressEngineLighting(false)
 				render_CullMode(MATERIAL_CULLMODE_CCW)
 			pac.SetModelScale(ent, self.Scale * self.Size)
 		end
-				
-		if not pac.DisableClip and #self.ClipPlanes > 0 then
-			for key, clip in pairs(self.ClipPlanes) do
-				if not clip:IsValid() then
-					self.ClipPlanes[key] = nil
-				end
-				if not clip:IsHidden() then
-					render_PopCustomClipPlane()
-				end
-			end
-
-			render_EnableClipping(bclip)
-		end
+		
+		self:ModifiersPostEvent("OnDraw")
 	end
 end
 
@@ -414,6 +375,12 @@ function PART:SetModel(var)
 			
 			if not self.Materialm then
 				self.Materialm = Material("error")
+			end
+
+			function self.Entity.pacDrawModel(ent)
+				self:ModifiersPreEvent("OnDraw")
+				self:DrawModel(ent, ent:GetPos(), ent:GetAngles())
+				self:ModifiersPostEvent("OnDraw")
 			end
 			
 			-- temp

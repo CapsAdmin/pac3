@@ -304,6 +304,8 @@ function pace.RefreshTree(reset)
 			if pace.tree:IsValid() then
 				pace.tree:Populate(reset)
 				pace.tree.RootNode:SetExpanded(true, true) -- why do I have to do this?
+				
+				pace.TrySelectPart()
 			end
 		end)
 	end

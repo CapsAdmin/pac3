@@ -43,7 +43,7 @@ end
 
 local render_SetColorModulation = render.SetColorModulation
 local render_SetBlend = render.SetBlend
-local render_MaterialOverride = render.MaterialOverride or SetMaterialOverride
+local render_ModelMaterialOverride = render.ModelMaterialOverride
 
 function pac.RenderOverride(ent, type, draw_only)
 	if not ent.pac_parts then
@@ -82,7 +82,7 @@ function pac.RenderOverride(ent, type, draw_only)
 	render_SetColorModulation(1,1,1)
 	render_SetBlend(1)
 	
-	render_MaterialOverride()
+	render_ModelMaterialOverride()
 end
 
 function pac.HookEntityRender(ent, part)

@@ -1,3 +1,4 @@
+setfenv(1, _G)
 local PART = {}
 
 PART.ClassName = "base"
@@ -22,6 +23,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Description", "")
 	pac.GetSet(PART, "Hide", false)
 	pac.GetSet(PART, "DrawOrder", 0)
+	pac.GetSet(PART, "Translucent", false)
 	
 	pac.GetSet(PART, "PositionOffset", Vector(0,0,0))
 	pac.GetSet(PART, "AngleOffset", Angle(0,0,0))
@@ -39,6 +41,7 @@ pac.EndStorableVars()
 
 function PART:PreInitialize()
 	self.Children = {}
+	self.modifiers = {}
 	
 	self.cached_pos = Vector(0,0,0)
 	self.cached_ang = Angle(0,0,0)
@@ -70,6 +73,55 @@ function PART:ConVarEnabled()
 	end
 	
 	return self.enabled 
+end
+
+do -- modifiers
+	PART.HandleModifiersManually = false
+
+	function PART:AddModifier(part)	
+		self:RemoveModifier(part)	
+		table.insert(self.modifiers, part)
+	end
+
+	function PART:RemoveModifier(part)
+		for k,v in pairs(self.modifiers) do
+			if v == part then
+				table.remove(self.modifiers, k)
+				break
+			end
+		end
+	end
+
+	function PART:ModifiersPreEvent(event)
+		if #self.modifiers > 0 then
+			for _, part in pairs(self.modifiers) do
+				if not part:IsHidden() then
+					part.pre_draw_events = part.pre_draw_events or {}
+					part.pre_draw_events[event] = part.pre_draw_events[event] or "Pre" .. event
+					
+					if part[part.pre_draw_events[event]] then
+						part[part.pre_draw_events[event]](part, owner, pos, ang)
+					end
+				end
+			end
+		end
+	end
+
+	function PART:ModifiersPostEvent(event)
+		if #self.modifiers > 0 then
+			for _, part in pairs(self.modifiers) do
+				if not part:IsHidden() then
+					part.post_draw_events = part.post_draw_events or {}
+					part.post_draw_events[event] = part.post_draw_events[event] or "Post" .. event
+										
+					if part[part.post_draw_events[event]] then
+						part[part.post_draw_events[event]](part, owner, pos, ang)
+					end
+				end
+			end
+		end
+	end
+
 end
 
 do -- owner	
@@ -615,15 +667,14 @@ do -- drawing. this code is running every frame
 			end
 						
 			if self[event] then	
-							
+					
 				if 
-					self.Translucent == nil or
 					(self.Translucent == true and draw_type == "translucent")  or
 					(self.Translucent == false and draw_type == "opaque")
 				then	
 					pos = pos or Vector(0,0,0)
 					ang = ang or Angle(0,0,0)
-																				
+
 					pos, ang = self:GetDrawPosition()
 					
 					pos = pos or Vector(0,0,0)
@@ -635,8 +686,12 @@ do -- drawing. this code is running every frame
 					if self.PositionOffset ~= VEC0 or self.AngleOffset ~= ANG0 then
 						pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
 					end
-				
+						
+					if not self.HandleModifiersManually then self:ModifiersPreEvent(event, draw_type) end
+									
 					self[event](self, owner, pos, ang) -- this is where it usually calls Ondraw on all the parts
+					
+					if not self.HandleModifiersManually then self:ModifiersPostEvent(event, draw_type) end
 				end
 			end
 
