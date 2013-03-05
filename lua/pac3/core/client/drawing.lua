@@ -123,20 +123,6 @@ function pac.RenderScene(pos, ang)
 end
 pac.AddHook("RenderScene")
 
-
--- don't allow drawing in the skybox
-local SKIP_DRAW
-
-function pac.PreDrawSkyBox()
-	SKIP_DRAW = true
-end
-pac.AddHook("PreDrawSkyBox")
-
-function pac.PostDrawSkyBox()
-	SKIP_DRAW = false
-end
-pac.AddHook("PostDrawSkyBox")
-
 local draw_dist
 local radius
 
@@ -176,10 +162,7 @@ end
 local last_enable
 
 local should_suppress = setup_suppress()
-function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
-	if bool2 then return end
-	if SKIP_DRAW then return end
-	
+function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)	
 	if not cvar_enable:GetBool() then
 		if last_enable ~= cvar_enable:GetBool() then
 			for key, ent in pairs(pac.drawn_entities) do
@@ -264,10 +247,7 @@ end
 pac.AddHook("PostDrawOpaqueRenderables")
 
 local should_suppress = setup_suppress()
-function pac.PostDrawTranslucentRenderables(bool1, bool2)
-	if bool2 then return end
-	if SKIP_DRAW then return end
-	
+function pac.PostDrawTranslucentRenderables()
 	if should_suppress() then return end
 
 	for key, ent in pairs(pac.drawn_entities) do
@@ -281,24 +261,6 @@ function pac.PostDrawTranslucentRenderables(bool1, bool2)
 	end
 end
 pac.AddHook("PostDrawTranslucentRenderables")
-
-local should_suppress = setup_suppress()
-function pac.RenderScreenspaceEffects()
-	if should_suppress() then return end
-
-	for key, ent in pairs(pac.drawn_entities) do
-		if ent:IsValid() then
-			if ent.pac_drawing and ent.pac_parts then
-				for key, part in pairs(ent.pac_parts) do
-					part:Draw("OnRenderScreenspaceEffects")
-				end
-			end
-		else
-			pac.drawn_entities[key] = nil
-		end
-	end
-end
-pac.AddHook("RenderScreenspaceEffects")
 
 local should_suppress = setup_suppress()
 function pac.Think()
