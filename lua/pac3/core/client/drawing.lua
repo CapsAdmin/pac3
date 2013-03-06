@@ -78,7 +78,7 @@ function pac.RenderOverride(ent, type, draw_only)
 						if owner:GetOwner() ~= pac.LocalPlayer then
 							continue
 						end
-					end
+					elseif type == "viewmodel" then continue end
 					
 					part:Draw("OnDraw", nil, nil, type)
 				end
