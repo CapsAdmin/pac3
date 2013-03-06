@@ -69,7 +69,17 @@ function pac.RenderOverride(ent, type, draw_only)
 		for key, part in pairs(ent.pac_parts) do
 			if part:IsValid() then		
 				if not part:HasParent() then
-					if not draw_only then think(part) end
+					if not draw_only then think(part) end									
+					
+					if part.OwnerName == "viewmodel" then
+						if type ~= "viewmodel" then continue end
+						
+						local owner = part:GetOwner()
+						if owner:GetOwner() ~= pac.LocalPlayer then
+							continue
+						end
+					end
+					
 					part:Draw("OnDraw", nil, nil, type)
 				end
 			else
@@ -280,3 +290,20 @@ function pac.Think()
 	end
 end
 pac.AddHook("Think")
+
+local should_suppress = setup_suppress()
+function pac.PostDrawViewModel()
+	--if should_suppress() then return end
+
+	for key, ent in pairs(pac.drawn_entities) do
+		if ent:IsValid() then
+			if ent.pac_drawing and ent.pac_parts then
+				pac.RenderOverride(ent, "viewmodel", true)
+			end
+		else
+			pac.drawn_entities[key] = nil
+		end
+	end
+end
+
+pac.AddHook("PostDrawViewModel")
