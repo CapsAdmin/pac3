@@ -13,10 +13,10 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	local str = part:GetEvent()
+	local str = self:GetEvent()
 	
 	if self:GetArguments() ~= "" then
-		str = str .. " " .. part:GetOperator() .. " ".. part:GetArguments()
+		str = str .. " " .. self:GetOperator() .. " ".. self:GetArguments()
 	end
 	
 	return pac.PrettifyName(str)
