@@ -24,8 +24,8 @@ function pace.OnCreatePart(class_name, name, desc, mdl)
 end
 
 function pace.OnPartSelected(part, is_selecting)
-	local owner = part:GetOwner()
-	if owner:IsValid() and owner:GetClass() == "viewmodel" then
+	local parent = part:GetRootPart()
+	if parent:IsValid() and parent.OwnerName == "viewmodel" then
 		pace.editing_viewmodel = true
 	elseif pace.editing_viewmodel then
 		pace.editing_viewmodel = false

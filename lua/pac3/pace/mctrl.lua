@@ -63,6 +63,14 @@ do -- pace
 	function mctrl.GetCameraOrigin()
 		return pace.GetViewPos()
 	end
+	
+	function mctrl.GetCameraFOV()
+		if pace.editing_viewmodel then
+			return pace.GetViewFOV() - 36
+		end
+	
+		return pace.GetViewFOV()
+	end
 
 	function mctrl.GetCameraAngles()
 		return pace.GetViewAngles()
@@ -78,7 +86,7 @@ do -- pace
 			ScrW(),
 			ScrH(),
 			mctrl.GetCameraAngles(),
-			math.rad(pace.GetViewFOV())
+			math.rad(mctrl.GetCameraFOV())
 		)
 		return {x=x-1,y=y-1, visible = vis > 0}
 	end
@@ -90,7 +98,7 @@ do -- pace
 			ScrW(),
 			ScrH(),
 			mctrl.GetCameraAngles(),
-			math.rad(pace.GetViewFOV())
+			math.rad(mctrl.GetCameraFOV())
 		)
 
 		return vec
@@ -98,6 +106,10 @@ do -- pace
 
 	function mctrl.GetCalculatedScale()
 		local part = pace.current_part
+		
+		if pace.editing_viewmodel then
+			return 5
+		end
 		
 		if part.ClassName == "clip" then
 			part = part.Parent
