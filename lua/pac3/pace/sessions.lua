@@ -85,7 +85,7 @@ function pace.LoadSession(name, append)
 		if not append then
 			for key, part in pairs(pac.GetParts(true)) do
 				if not part:HasParent() then
-					pac.RemovePartOnServer(part:GetName(), nil, true)
+					pac.RemovePartOnServer(part.UniqueID, nil, true)
 					part:Remove()
 				end
 			end

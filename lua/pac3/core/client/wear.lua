@@ -115,7 +115,7 @@ do -- from server
 				if 
 					not part:HasParent() and 
 					part:GetPlayerOwner() == owner and 
-					part.UniqueID == part_data.self.UniqueID
+					part.UniqueID == part_name
 				then
 					part:Remove()
 					return
