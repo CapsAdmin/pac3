@@ -17,6 +17,10 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Loop", false)
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	return pac.PrettifyName(("/".. self:GetSound()):match(".+/(.-)%.")) or "no sound"
+end
+
 function PART:Initialize()
 	self:PlaySound()
 end

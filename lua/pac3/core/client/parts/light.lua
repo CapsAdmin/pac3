@@ -9,6 +9,11 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Color", Vector(255, 255, 255))
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	local hue, sat, val = pac.ColorToNames(self:GetColor())
+	return hue .. " light"
+end
+
 local DynamicLight = DynamicLight
 
 pac3_dynamic_lights = pac3_dynamic_lights or {}

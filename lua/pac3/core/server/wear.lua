@@ -86,7 +86,7 @@ function pac.SubmitPart(data, filter)
 	pac.Parts[uid] = pac.Parts[uid] or {}
 	
 	if type(data.part) == "table" then
-		pac.Parts[uid][data.part.self.Name] = data
+		pac.Parts[uid][data.part.self.UniqueID] = data
 		
 		pac.HandleServerModifiers(data)		
 	else
@@ -154,7 +154,7 @@ local function handle_data(owner, data)
 	data.uid = owner:UniqueID()
 	
 	if type(data.part) == "table" and data.part.self then
-		if type(data.part.self) == "table" and not data.part.self.Name then return end -- bogus data
+		if type(data.part.self) == "table" and not data.part.self.UniqueID then return end -- bogus data
 		
 		pac.SubmitPartNotify(data)
 	elseif type(data.part) == "string" then

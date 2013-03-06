@@ -25,6 +25,10 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "VelocityRoughness", 10)
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	return pac.PrettifyName(self:GetVariableName()) .. " changer"
+end
+
 function PART:Initialize()
 	self.vec_additive = {}
 	self.next_vel_calc = 0

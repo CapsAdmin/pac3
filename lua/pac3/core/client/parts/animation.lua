@@ -17,6 +17,18 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "WeaponHoldType", "none")
 pac.EndStorableVars()
  
+function PART:GetNiceName()
+	local str = self:GetSequenceName()
+	
+	if str == "" and self:GetWeaponHoldType() ~= "none" then
+		str = self:GetWeaponHoldType()
+	else
+		str = self.ClassName
+	end
+	
+	return pac.PrettifyName(str)
+end
+ 
 function PART:GetOwner()
 	local parent = self:GetParent()
 	

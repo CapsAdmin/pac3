@@ -16,6 +16,11 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	return pac.PrettifyName(("/".. self:GetTrailPath()):match(".+/(.+)"):gsub("%..+", "")) or "error"
+end
+
+
 PART.LastAdd = 0
 
 function PART:Initialize()
@@ -82,7 +87,7 @@ function PART:FixMaterial()
 			params["$vertexcolor"] = 1
 			params["$vertexalpha"] = 1
 			
-			self.Materialm = CreateMaterial(mat:GetName() .. "_pac_trail", "UnlitGeneric", params)
+			self.Materialm = CreateMaterial(tostring(self) .. "_pac_trail", "UnlitGeneric", params)
 		end		
 	end
 end

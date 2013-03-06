@@ -9,6 +9,10 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Range", 0)
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	return pac.PrettifyName(self:GetPoseParameter())
+end
+
 function PART:GetPoseParameterList()
 	local ent = self:GetOwner()
 	

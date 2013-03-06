@@ -47,6 +47,38 @@ function PART:PreInitialize()
 	self.cached_ang = Angle(0,0,0)
 end
 
+function PART:GetNiceName()
+	return self.ClassName
+end
+
+function PART:GetName()
+	if self.Name == "" then
+		local nice = self:GetNiceName()
+		local num
+		local count = 0
+		
+		if self:HasParent() then
+			for key, val in pairs(self:GetParent():GetChildren()) do
+				if val:GetNiceName() == self:GetNiceName() then
+					count = count + 1
+					
+					if val == self then
+						num = count
+					end
+				end
+			end
+		end
+		
+		if num and count > 1 then
+			nice = nice .. " " .. num
+		end
+		
+		return nice
+	end
+	 
+	return self.Name
+end
+
 function PART:ConVarEnabled()
 	if self.last_framenumber ~= pac.FrameNumber then
 		if not self.cvar_enable:GetBool() then 
@@ -511,8 +543,8 @@ do -- serializing
 		end
 	end
 	
-	local function COPY(var, key) 							
-		if var and (key == "UniqueID" or key:sub(-3) == "UID") and var ~= "" then
+	local function COPY(var, key, make_copy_name) 							
+		if make_copy_name and var and (key == "UniqueID" or key:sub(-3) == "UID") and var ~= "" then
 			return util.CRC(var .. var)
 		end
 
@@ -522,11 +554,15 @@ do -- serializing
 	function PART:ToTable(make_copy_name, is_child)
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
-		for _, key in pairs(self:GetStorableVars()) do
-			local var = COPY(self[key] and self["Get"..key](self) or self[key], key)
+		for _, key in pairs(self:GetStorableVars()) do			
+			local var = COPY(self[key] and self["Get"..key](self) or self[key], key, make_copy_name)
 			
 			if var == self.DefaultVars[key] then
 				continue
+			end
+				
+			if key == "Name" and self.Name == "" then
+				var = ""
 			end
 			
 			tbl.self[key] = var
@@ -559,6 +595,10 @@ do -- serializing
 		local part = pac.CreatePart(self.ClassName)
 		if not part then return end
 		part:SetTable(self:ToTable(true))
+		
+		part.ParentUID = self.ParentUID
+		part.ParentName = self.ParentName
+		
 		part:ResolveParentName()
 		return part
 	end
@@ -864,10 +904,6 @@ end
 
 function PART:SubmitToServer()
 	pac.SubmitPart(self:ToTable())
-end
-
-function PART:GetName()
-	return self.Name or "no name"
 end
 
 function PART:IsValid()

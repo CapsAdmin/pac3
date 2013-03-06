@@ -9,6 +9,11 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	local mult = self:GetMultiplier()
+	return mult > 0 and "bright sunbeams" or mult < 0 and "dark sunbeams"
+end
+
 function PART:OnDraw(owner, pos, ang)
 	cam.Start2D()
 	local spos = pos:ToScreen()

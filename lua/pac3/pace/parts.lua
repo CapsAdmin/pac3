@@ -2,7 +2,6 @@ local L = pace.LanguageString
 
 function pace.OnCreatePart(class_name, name, desc, mdl)
 	local part = pac.CreatePart(class_name)
-	part:SetName(name or (L(class_name) .. " " .. (pac.GetPartCount(class_name))))
 	
 	local parent = pace.current_part
 	
@@ -17,7 +16,7 @@ function pace.OnCreatePart(class_name, name, desc, mdl)
 		pace.SetViewPart(part)
 	end
 
-	pace.OnPartSelected(part)
+	pace.Call("PartSelected", part)
 	
 	part.newly_created = true
 	
@@ -89,7 +88,11 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 					end
 				end
 			end
-		end
+						
+			if obj.Name == "" then
+				node:SetText(obj:GetName())
+			end
+		end		
 	end
 	
 	timer.Create("autosave_session", 0.5, 1, function()
@@ -311,5 +314,5 @@ function pace.OnHoverPart(obj)
 end
 
 hook.Add("pac_OnPartParent", "pace_parent", function(parent, child)
-	pace.OnVariableChanged(parent, "Parent", child)
+	pace.Call("VariableChanged",parent, "Parent", child)
 end)

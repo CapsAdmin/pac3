@@ -61,7 +61,7 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, data)
 	data.part.self.OwnerName = id
 	
 	ent:CallOnRemove("pac_config", function(ent)	
-		data.part = data.part.self.Name
+		data.part = data.part.self.UniqueID
 		pac.RemovePart(data)
 	end)
 	
