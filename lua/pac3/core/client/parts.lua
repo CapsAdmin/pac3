@@ -61,6 +61,8 @@ function pac.CreatePart(name, owner)
 		part.DefaultVars[key] = pac.class.Copy(part[key])
 	end
 	
+	part.DefaultVars.UniqueID = "" -- uh
+	
 	if part.PreInitialize then 
 		part:PreInitialize()
 	end

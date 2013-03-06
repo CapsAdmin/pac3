@@ -543,8 +543,8 @@ do -- serializing
 		end
 	end
 	
-	local function COPY(var, key, make_copy_name) 							
-		if make_copy_name and var and (key == "UniqueID" or key:sub(-3) == "UID") and var ~= "" then
+	local function COPY(var, key, make_copy_name) 								
+		if make_copy_name and (var and (key == "UniqueID" or key:sub(-3) == "UID") and var ~= "") then
 			return util.CRC(var .. var)
 		end
 
