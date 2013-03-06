@@ -12,6 +12,10 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	return pac.PrettifyName(("/".. self:GetSpritePath()):match(".+/(.+)"):gsub("%..+", "")) or "error"
+end
+
 function PART:SetColor(v)
 	self.ColorC = self.ColorC or Color(255, 255, 255, 255)
 	

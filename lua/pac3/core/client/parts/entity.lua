@@ -26,6 +26,16 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "DrawShadow", true)
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	local ent = self:GetOwner()
+	
+	if ent:IsPlayer() then
+		return ent:Nick()
+	else
+		return language.GetPhrase(ent:GetClass())
+	end	
+end
+
 function PART:OnBuildBonePositions()
 	local ent = self:GetOwner()
 	

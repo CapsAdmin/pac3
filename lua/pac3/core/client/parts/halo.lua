@@ -17,6 +17,12 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "AffectChildren", false)
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	local h,s,v = pac.ColorToNames(self:GetColor())
+	
+	return h .. " halo"
+end
+
 function PART:SetShape(n)
 	self.Shape = math.Clamp(n, 0, 1)
 end

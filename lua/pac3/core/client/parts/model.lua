@@ -29,6 +29,12 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "TextureFilter", 3)
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	local str = pac.PrettifyName(("/".. self:GetModel()):match(".+/(.-)%."))
+	
+	return str and str:gsub("%d", "") or "error"
+end
+
 function PART:SetTextureFilter(num)
 	self.TextureFilter = num
 	self.texfilter_enum = math.Clamp(math.Round(num), 0, 3)

@@ -12,6 +12,10 @@ pac.StartStorableVars()
 	--pac.GetSet(PART, "ControlPointB", "")
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	return pac.PrettifyName(self:GetEffect())
+end
+
 function PART:Initialize()
 	self:SetEffect(self.Effect)
 end

@@ -12,6 +12,10 @@ pac.StartStorableVars()
 	pac.SetupPartName(PART, "FollowPart")
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	return self:GetBone()
+end
+
 PART.ThinkTime = 0
 
 function PART:OnShow(owner)

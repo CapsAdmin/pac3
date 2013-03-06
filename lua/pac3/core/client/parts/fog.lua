@@ -12,6 +12,12 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Height", 0)
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	local h,s,v = pac.ColorToNames(self:GetColor())
+	
+	return h .. " fog"
+end
+
 function PART:SetColor(v)
 	self.Color = v
 

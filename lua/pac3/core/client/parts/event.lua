@@ -12,6 +12,16 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "RootOwner", true)
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	local str = part:GetEvent()
+	
+	if self:GetArguments() ~= "" then
+		str = str .. " " .. part:GetOperator() .. " ".. part:GetArguments()
+	end
+	
+	return pac.PrettifyName(str)
+end
+
 local function calc_velocity(part)
 	local diff = part.cached_pos - (part.last_pos or Vector(0, 0, 0))
 	part.last_pos = part.cached_pos

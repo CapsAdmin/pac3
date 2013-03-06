@@ -111,39 +111,6 @@ pace.AddTool(L"help i have ocd (rounding numbers)", function(part)
 	ocdify_parts(part)
 end)
 
-if false then
-
-pace.AddTool(L"record surrounding props to pac", function(part)
-	local base = pac.CreatePart("group")
-	base:SetName("recorded props")
-
-	local origin = base:CreatePart("model")
-	origin:SetName("origin")
-	origin:SetBone("none")
-	origin:SetModel("models/dav0r/hoverball.mdl")
-
-	for key, ent in pairs(ents.FindInSphere(pac.EyePos, 1000)) do
-		if 
-			not ent:IsPlayer() and
-			not ent:IsNPC() and
-			not ent:GetOwner():IsPlayer() 
-		then
-			local mdl = origin:CreatePart("model")
-			mdl:SetModel(ent:GetModel())
-			
-			local lpos, lang = WorldToLocal(ent:GetPos(), ent:GetAngles(), pac.EyePos, pac.EyeAng)
-			
-			mdl:SetMaterial(ent:GetMaterial())
-			mdl:SetPosition(lpos)
-			mdl:SetAngles(lang)
-			local c = ent:GetColor()
-			mdl:SetColor(Vector(c.r,c.g,c.b))
-			mdl:SetAlpha(c.a/255)
-			mdl:SetName(ent:GetModel():match(".+/(.-)%.mdl"))
-		end
-	end
-end)
-end
 do
 
 	local function fix_name(str)
@@ -214,15 +181,15 @@ do
 				end
 				
 				if part.ClassName == "animation" then
-					local name = part:GetSequenceName()
-					if name == "" then
-						name = part:GetWeaponHoldType()
+					local str = part:GetSequenceName()
+					if str == "" then
+						str = part:GetWeaponHoldType()
 					end
-					name = fix_name(name)
+					name = fix_name(str)
 				end
 			
 				if part.ClassName == "event" then
-					name = fix_name(part:GetEvent())
+					name = fix_name(part:GetEvent().. " " .. part:GetOperator() .. " ".. part:GetArguments())
 				end
 			
 				if part.ClassName == "light" and part:GetColor() ~= Vector(255, 255, 255)  then	
@@ -240,7 +207,7 @@ do
 				
 				if name then
 					part:SetName(name)
-					pace.OnVariableChanged(part, "Name", name)
+					pace.Call("VariableChanged",part, "Name", name)
 				end
 				
 				if suboptions == 2 then
@@ -263,7 +230,7 @@ do
 					if #parts > 1 then
 						for k,v in pairs(parts) do
 							v:SetName(v:GetName() .. " " .. k)
-							pace.OnVariableChanged(v, "Name", v.Name)
+							pace.Call("VariableChanged",v, "Name", v.Name)
 						end
 					end
 					
@@ -364,4 +331,35 @@ pace.AddTool(L"convert to expression2 holo", function(part)
 	end
 	file.CreateDir("expression2/pac")
 	file.Write("expression2/pac/"..part:GetName()..".txt", convert(part))
+end)
+
+pace.AddTool(L"record surrounding props to pac", function(part)
+	local base = pac.CreatePart("group")
+	base:SetName("recorded props")
+
+	local origin = base:CreatePart("model")
+	origin:SetName("origin")
+	origin:SetBone("none")
+	origin:SetModel("models/dav0r/hoverball.mdl")
+
+	for key, ent in pairs(ents.FindInSphere(pac.EyePos, 1000)) do
+		if 
+			not ent:IsPlayer() and
+			not ent:IsNPC() and
+			not ent:GetOwner():IsPlayer() 
+		then
+			local mdl = origin:CreatePart("model")
+			mdl:SetModel(ent:GetModel())
+			
+			local lpos, lang = WorldToLocal(ent:GetPos(), ent:GetAngles(), pac.EyePos, pac.EyeAng)
+			
+			mdl:SetMaterial(ent:GetMaterial())
+			mdl:SetPosition(lpos)
+			mdl:SetAngles(lang)
+			local c = ent:GetColor()
+			mdl:SetColor(Vector(c.r,c.g,c.b))
+			mdl:SetAlpha(c.a/255)
+			mdl:SetName(ent:GetModel():match(".+/(.-)%.mdl"))
+		end
+	end
 end)

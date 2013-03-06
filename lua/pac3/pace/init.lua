@@ -127,7 +127,9 @@ end)
 
 function pace.Call(str, ...)
 	if pace["On" .. str] then
-		pace["On" .. str](...)
+		if hook.Run("pace_On" .. str, ...) ~= false then
+			pace["On" .. str](...)
+		end
 	else
 		ErrorNoHalt("missing function pace.On" .. str .. "!\n")
 	end

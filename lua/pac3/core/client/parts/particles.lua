@@ -41,6 +41,10 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "OwnerVelocityMultiplier", 0)
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	return pac.PrettifyName(("/".. self:GetMaterial()):match(".+/(.+)")) or "error"
+end
+
 local function RemoveCallback(particle)
 	particle:SetLifeTime(0)
 	particle:SetDieTime(0)

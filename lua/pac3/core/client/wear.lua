@@ -82,7 +82,7 @@ do -- from server
 			if 
 				not part:HasParent() and 
 				part:GetPlayerOwner() == owner and 
-				part:GetName() == pac.HandlePartName(owner, part_data.self.Name) and 
+				part.UniqueID == part_data.self.UniqueID and 
 				part.ClassName == part_data.self.ClassName 
 			then
 				pac.dprint("removing part %q to be replaced with the part previously received", part.Name)
@@ -115,7 +115,7 @@ do -- from server
 				if 
 					not part:HasParent() and 
 					part:GetPlayerOwner() == owner and 
-					part:GetName() == pac.HandlePartName(owner, part_name)
+					part.UniqueID == part_data.self.UniqueID
 				then
 					part:Remove()
 					return

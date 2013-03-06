@@ -48,10 +48,10 @@ function pace.TrySelectPart()
 	end
 	
 	if part then
-		pace.OnPartSelected(part)
+		pace.Call("PartSelected", part)
 	elseif table.Count(pac.GetParts(true)) == 0 then
 		pace.Call("CreatePart", "group", L"my outfit", L"add parts to me!")
 	else
-		pace.OnPartSelected(select(2, next(pac.GetParts(true))))
+		pace.Call("PartSelected", select(2, next(pac.GetParts(true))))
 	end
 end
