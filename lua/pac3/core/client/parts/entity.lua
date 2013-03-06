@@ -29,11 +29,15 @@ pac.EndStorableVars()
 function PART:GetNiceName()
 	local ent = self:GetOwner()
 	
-	if ent:IsPlayer() then
-		return ent:Nick()
-	else
-		return language.GetPhrase(ent:GetClass())
-	end	
+	if ent:IsValid() then
+		if ent:IsPlayer() then
+			return ent:Nick()
+		else
+			return language.GetPhrase(ent:GetClass())
+		end	
+	end
+	
+	return self.ClassName
 end
 
 function PART:OnBuildBonePositions()
