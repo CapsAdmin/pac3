@@ -71,7 +71,7 @@ function PART:OnShow()
 	
 	if ent:IsValid() and owner:IsValid() and owner ~= ent then
 		ent:SetPos(owner:EyePos())
-		ent:SetParent(owner)
+		--ent:SetParent(owner)
 		ent:SetOwner(owner)
 		self.BoneIndex = nil
 		
@@ -94,10 +94,10 @@ function PART:OnParent(part)
 	
 	if ent:IsValid() and owner:IsValid() then
 		if part.ClassName == self.ClassName and part:GetEntity():IsValid() and owner ~= ent then
-			ent:SetParent(self:GetParent():GetEntity())
+		--	ent:SetParent(self:GetParent():GetEntity())
 			ent:SetOwner(self:GetParent():GetEntity())
 		elseif owner ~= ent then
-			ent:SetParent(owner)
+			--ent:SetParent(owner)
 			ent:SetOwner(owner)
 		end	
 	end
@@ -107,7 +107,7 @@ function PART:OnUnParent()
 	local ent = self:GetEntity()
 	
 	if ent:IsValid() and owner ~= ent then
-		ent:SetParent(self:GetOwner())
+		--ent:SetParent(self:GetOwner())
 		ent:SetOwner(self:GetOwner())
 	end
 end
@@ -154,18 +154,21 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 	
 	if not ent:IsPlayer() and pos and ang then
 		if self.OriginFix and ent.pac3_center then			
-			local pos, ang = LocalToWorld(
+			pos, ang = LocalToWorld(
 				ent.pac3_center * self.Scale * -self.Size, 
 				Angle(0,0,0), 
 				
 				pos, 
 				ang
 			)
+		end
+		
+		if not self.skip_orient then
 			ent:SetPos(pos)
 			ent:SetAngles(ang)
-		else		
-			ent:SetPos(pos)
-			ent:SetAngles(ang)
+		else
+			self.cached_pos = pos
+			self.cached_ang = ang
 		end
 	end
 				
@@ -542,6 +545,12 @@ function PART:SetBoneMergeAlternative(b)
 		if owner:IsValid() then 
 			owner.pac_bones = nil
 		end
+		
+		if b then
+			ent:SetParent(owner)
+		else
+			ent:SetParent(NULL)
+		end
 	end
 end
 
@@ -575,7 +584,7 @@ function PART:CheckBoneMerge()
 		else	
 			local owner = self:GetOwner()
 			if owner:IsValid() and owner ~= ent then
-				ent:SetParent(owner)
+			--	ent:SetParent(owner)
 				ent:SetOwner(owner)
 			end
 		end		
