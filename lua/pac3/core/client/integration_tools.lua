@@ -181,7 +181,7 @@ function pac.AddEntityClassListener(class, session, check_func, draw_dist)
 	hook.Add("OnEntityCreated", id, created)
 end
 
-function pac.RemoveEntityClassListener(class, session)
+function pac.RemoveEntityClassListener(class, session, check_func)
 	if session.self then
 		session = {session}
 	end
