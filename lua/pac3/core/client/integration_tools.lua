@@ -137,16 +137,27 @@ function pac.AddEntityClassListener(class, session, check_func, draw_dist)
 	local function weapon_think()
 		for _, ent in pairs(weapons) do
 			if ent.Owner and ent.Owner:IsValid() then
+				if not ent.AttachPACSession then
+					pac.SetupSWEP(ent)
+				end
+			
 				if ent.Owner:GetActiveWeapon() == ent then
 					if not ent.pac_deployed then
 						ent:AttachPACSession(session)
 						ent.pac_deployed = true			
 					end
+					
+					ent.pac_last_owner = ent.Owner
 				else
 					if ent.pac_deployed then
 						ent:RemovePACSession(session)
 						ent.pac_deployed = false
 					end
+				end
+			elseif (ent.pac_last_owner or NULL):IsValid() and not ent.pac_last_owner:Alive() then
+				if ent.pac_deployed then
+					ent:RemovePACSession(session)
+					ent.pac_deployed = false
 				end
 			end
 		end
@@ -155,7 +166,6 @@ function pac.AddEntityClassListener(class, session, check_func, draw_dist)
 	local function created(ent)
 		if ent:IsValid() and check_func(ent) then
 			if ent:IsWeapon() then
-				pac.SetupSWEP(ent)
 				weapons[ent:EntIndex()] = ent
 				hook.Add("Think", id, weapon_think)
 			else
