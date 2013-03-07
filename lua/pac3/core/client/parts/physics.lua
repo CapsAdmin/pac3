@@ -7,8 +7,12 @@ PART.NonPhysical = true
 pac.StartStorableVars()	
 	pac.GetSet(PART, "Box", true)
 	pac.GetSet(PART, "Radius", 1)
+	pac.GetSet(PART, "SelfCollision", false)
+	pac.GetSet(PART, "Gravity", true)
+	pac.GetSet(PART, "Collisions", true)
+	pac.GetSet(PART, "Mass", 100)
 
-	pac.GetSet(PART, "FollowPos", false)
+	pac.GetSet(PART, "Follow", false)
 	
 	pac.GetSet(PART, "SecondsToArrive", 0.1)
 	
@@ -27,6 +31,22 @@ PART.phys = NULL
 function PART:SetBox(b)
 	self.Box = b
 	self:SetRadius(self.Radius)
+end
+
+function PART:SetCollisions(b)
+	self.Collisions = b
+	
+	if self.phys:IsValid() then 
+		self.phys:EnableCollisions(b) 
+	end
+end
+
+function PART:SetMass(n)
+	self.Mass = n
+	
+	if self.phys:IsValid() then 
+		self.phys:SetMass(n) 
+	end
 end
 
 function PART:SetRadius(n)
@@ -49,6 +69,26 @@ function PART:SetRadius(n)
 	self.phys = ent:GetPhysicsObject()
 end
 
+function PART:SetGravity(b)
+	self.Gravity = b
+	
+	if self.phys:IsValid() then
+		self.phys:EnableGravity(b)
+	end
+end
+
+function PART:SetSelfCollision(b)
+	self.SelfCollision = b
+	
+	if self.Parent.ClassName ~= "model" then return end
+	local ent = self.Parent:GetEntity()
+	if b then
+		ent:SetCollisionGroup(COLLISION_GROUP_NONE)
+	else
+		ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+	end
+end
+
 local params = {}
 
 function PART:OnThink()
@@ -57,13 +97,13 @@ function PART:OnThink()
 	
 	if phys:IsValid() then
 		phys:Wake()
-
-		if not self.FollowPos then return end
+		
+		if not self.Follow then return end
 
 		params.pos = self.Parent.cached_pos
 		params.angle  = self.Parent.cached_ang
 		
-		params.secondstoarrive = self.SecondsToArrive
+		params.secondstoarrive = math.max(self.SecondsToArrive, 0.0001)
 		params.maxangular = self.MaxAngular
 		params.maxangulardamp = self.MaxAngularDamp
 		params.maxspeed = self.MaxSpeed
