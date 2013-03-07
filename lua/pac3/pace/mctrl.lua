@@ -66,9 +66,9 @@ do -- pace
 	
 	function mctrl.GetCameraFOV()
 		if pace.editing_viewmodel then
-			return pace.GetViewFOV() - 36
+			return LocalPlayer():GetActiveWeapon().ViewModelFOV or 55
 		end
-	
+		
 		return pace.GetViewFOV()
 	end
 
@@ -82,10 +82,10 @@ do -- pace
 
 	function mctrl.VecToScreen(vec)
 		local x,y,vis = pace.VectorToLPCameraScreen(
-			(vec - mctrl.GetCameraOrigin()):GetNormalized(),
+			(vec - EyePos()):GetNormalized(),
 			ScrW(),
 			ScrH(),
-			mctrl.GetCameraAngles(),
+			EyeAngles(),
 			math.rad(mctrl.GetCameraFOV())
 		)
 		return {x=x-1,y=y-1, visible = vis > 0}
@@ -97,7 +97,7 @@ do -- pace
 			y,
 			ScrW(),
 			ScrH(),
-			mctrl.GetCameraAngles(),
+			EyeAngles(),
 			math.rad(mctrl.GetCameraFOV())
 		)
 
