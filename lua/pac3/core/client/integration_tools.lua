@@ -211,12 +211,14 @@ function pac.RemoveEntityClassListener(class, session, check_func)
 	hook.Remove("OnEntityCreated", id)
 end
 
-if easylua and luadev then
-	easylua.PACSetClassListener = function(class_name, name, b)
-		if b == nil then
-			b = true
+timer.Simple(0, function()
+	if easylua and luadev then
+		function easylua.PACSetClassListener(class_name, name, b)
+			if b == nil then
+				b = true
+			end
+			
+			luadev.RunOnClients(("pac.%s(%q, {%s})"):format(b and "AddEntityClassListener" or "RemoveEntityClassListener", class_name, file.Read("pac3/sessions/".. name .. ".txt", "DATA"))) 
 		end
-		
-		luadev.RunOnClients(("pac.%s(%q, {%s})"):format(b and "AddEntityClassListener" or "RemoveEntityClassListener", class_name, file.Read("pac3/sessions/".. name .. ".txt", "DATA"))) 
 	end
-end
+end)
