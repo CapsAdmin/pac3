@@ -75,6 +75,9 @@ function pace.SelectBone(ent, callback)
 		local tbl = {}
 
 		for friendly, data in pairs(bones) do
+			if pace.editing_viewmodel and data.is_attachment then
+				continue
+			end
 			local pos = pac.GetBonePosAng(ent, friendly):ToScreen()
 			if pace.DrawSelection(pos) then
 				table.insert(tbl, {pos = pos, real = data.real, friendly = friendly, dist = Vector(pos.x, pos.y, 0):Distance(Vector(x, y, 0))})

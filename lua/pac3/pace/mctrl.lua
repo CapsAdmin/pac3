@@ -499,7 +499,7 @@ function mctrl.HUDPaint()
 		local r = mctrl.GetCalculatedScale()
 		local o = mctrl.VecToScreen(pos)
 		
-		if o.visible then
+		if true or o.visible then
 			if mctrl.grab.axis == AXIS_X or mctrl.grab.axis == AXIS_VIEW then
 				surface.SetDrawColor(255, 200, 0, 255)
 			else

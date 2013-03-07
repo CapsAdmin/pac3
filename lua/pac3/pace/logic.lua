@@ -18,7 +18,9 @@ end
 
 hook.Add("PostDrawViewModel", "pace_viewmodel_edit", function()
 	if pace.editing_viewmodel then
-		pace.mctrl.HUDPaint()
+		cam.Start2D()
+			pace.mctrl.HUDPaint()
+		cam.End2D()
 	end
 end)
 
