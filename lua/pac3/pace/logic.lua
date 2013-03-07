@@ -11,8 +11,16 @@ function pace.PopulateProperties(part)
 end
 
 function pace.OnDraw()
-	pace.mctrl.HUDPaint()
+	if not pace.editing_viewmodel then
+		pace.mctrl.HUDPaint()
+	end
 end
+
+hook.Add("PostDrawViewModel", "pace_viewmodel_edit", function()
+	if pace.editing_viewmodel then
+		pace.mctrl.HUDPaint()
+	end
+end)
 
 hook.Add("InitPostEntity", "pace_autoload_session", function()	
 	timer.Simple(5, function()
