@@ -843,15 +843,21 @@ do -- drawing. this code is running every frame
 		local owner = self:GetOwner(true)
 		
 		ang = self.calc_angvel and self:CalcAngleVelocity(ang) or ang
-
-		if self.EyeAngles then
 		
-			if owner:IsPlayer() then
-				return self.Angles + ((owner.pac_hitpos or owner:GetEyeTraceNoCursor().HitPos) - self.cached_pos):Angle()
-			elseif owner:IsNPC() then
-				return self.Angles + ((owner:EyePos() + owner:GetForward() * 100) - self.cached_pos):Angle()
-			end
-			
+		if pac.StringFind(self.AimPartName, "LOCALEYES", true, true) then
+		
+			return self.Angles + (pac.EyePos - self.cached_pos):Angle()
+		
+		end
+		
+		if pac.StringFind(self.AimPartName, "PLAYEREYES", true, true) then
+		
+			local ent = owner.pac_traceres and owner.pac_traceres.Entity or NULL
+			if ent:IsValid() then
+				return self.Angles + (ent:EyePos() - self.cached_pos):Angle()
+			else
+				return self.Angles + (pac.EyePos - self.cached_pos):Angle()
+			end		
 		end
 		
 		if self.AnglePart:IsValid() then
@@ -872,20 +878,14 @@ do -- drawing. this code is running every frame
 			
 		end 
 		
-		if pac.StringFind(self.AimPartName, "LOCALEYES", true, true) then
+		if self.EyeAngles then
 		
-			return self.Angles + (pac.EyePos - self.cached_pos):Angle()
-		
-		end
-		
-		if pac.StringFind(self.AimPartName, "PLAYEREYES", true, true) then
-		
-			local ent = owner.pac_traceres and owner.pac_traceres.Entity or NULL
-			if ent:IsValid() then
-				return self.Angles + (ent:EyePos() - self.cached_pos):Angle()
-			else
-				return self.Angles + (pac.EyePos - self.cached_pos):Angle()
-			end		
+			if owner:IsPlayer() then
+				return self.Angles + ((owner.pac_hitpos or owner:GetEyeTraceNoCursor().HitPos) - self.cached_pos):Angle()
+			elseif owner:IsNPC() then
+				return self.Angles + ((owner:EyePos() + owner:GetForward() * 100) - self.cached_pos):Angle()
+			end
+			
 		end
 			
 		return ang or Angle(0,0,0)
