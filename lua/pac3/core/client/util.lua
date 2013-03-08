@@ -202,7 +202,7 @@ do -- get set and editor vars
 		pac.StartStorableVars()
 		
 		pac.GetSet(PART, name_key, "")
-		pac.GetSet(PART, part_uid_key,"")
+		pac.GetSet(PART, part_uid_key, "")
 					
 		PART.ResolvePartNames = PART.ResolvePartNames or function(self)
 			for key, func in pairs(self.PartNameResolvers) do
@@ -216,8 +216,10 @@ do -- get set and editor vars
 		
 		PART.PartNameResolvers[part_key] = function(self)
 	
+			if self[part_uid_key] == "" and self[name_key] == "" then return end 
+	
 			if 
-				(self[part_uid_key] == "" and (self[name_find_count_key] or 0) < 3)or
+				(self[part_uid_key] == "" and (self[name_find_count_key] or 0) < 3) or
 				self[part_uid_key] and 
 				self[part_uid_key] ~= self[last_key] and 
 				(not self[part_key]:IsValid() or self[try_key])
@@ -259,16 +261,21 @@ do -- get set and editor vars
 			self[name_find_count_key] = 0
 			
 			if type(var) == "string" then
-				self[name_key] = var
-				self[try_key] = true
 				
+				self[name_key] = var
+
+				if var == "" then
+					self[part_uid_key] = ""
+					self[part_key] = pac.NULL
+					return
+				else
+					self[try_key] = true
+				end
+			
 				if self.supress_part_name_find then
 					PART.PartNameResolvers[part_key](self)
 				end
 			else
-				--self[part_uid_key] = nil
-				--self[part_key] = pac.NULL
-							
 				self[name_key] = var:GetName()
 				self[part_uid_key] = var.UniqueID
 				self[part_set_key](self, var)
