@@ -23,7 +23,6 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "MaxAngularDamp", 1000)
 	pac.GetSet(PART, "DampFactor", 1)
 	
-	pac.GetSet(PART, "TeleportDistance", 0)
 	pac.GetSet(PART, "ConstrainSphere", 0)
 pac.EndStorableVars()
 
@@ -120,7 +119,6 @@ function PART:OnThink()
 				phys:SetPos(self.Parent.cached_pos + (self.Parent.cached_pos - phys:GetPos()):GetNormalized() * -self.ConstrainSphere)
 			end
 		else			
-			-- this is nicer i think
 			if self.ConstrainSphere ~= 0 then
 				local offset = self.Parent.cached_pos - phys:GetPos()
 													
