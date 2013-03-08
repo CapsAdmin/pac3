@@ -3,6 +3,8 @@ local L = pace.LanguageString
 function pace.OnCreatePart(class_name, name, desc, mdl)
 	local part = pac.CreatePart(class_name)
 	
+	if name then part:SetName(name) end
+	
 	local parent = pace.current_part
 	
 	if parent:IsValid() then	

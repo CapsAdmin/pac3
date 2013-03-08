@@ -195,12 +195,15 @@ do -- get set and editor vars
 		local last_key = "last_" .. name_key:lower()
 		local try_key = "try_" .. name_key:lower()
 		
+		local name_find_count_key = name_key:lower() .. "_try_count"
+		
 		pac.EndStorableVars()
 			pac.GetSet(PART, part_key, pac.NULL)
 		pac.StartStorableVars()
 		
 		pac.GetSet(PART, name_key, "")
-		
+		pac.GetSet(PART, part_uid_key,"")
+					
 		PART.ResolvePartNames = PART.ResolvePartNames or function(self)
 			for key, func in pairs(self.PartNameResolvers) do
 				func(self)
@@ -212,10 +215,11 @@ do -- get set and editor vars
 		end
 		
 		PART.PartNameResolvers[part_key] = function(self)
+	
 			if 
-				self[name_key] and 
-				self[name_key] ~= "" and 
-				self[name_key] ~= self[last_key] and 
+				(self[part_uid_key] == "" and (self[name_find_count_key] or 0) < 3)or
+				self[part_uid_key] and 
+				self[part_uid_key] ~= self[last_key] and 
 				(not self[part_key]:IsValid() or self[try_key])
 			then
 				for key, part in pairs(pac.GetParts()) do
@@ -229,8 +233,8 @@ do -- get set and editor vars
 						break
 					end
 				end
-								
-				if not self.supress_part_name_find then
+
+				if not self.supress_part_name_find then					
 					for key, part in pairs(pac.GetParts()) do
 						if 
 							part ~= self and 
@@ -242,14 +246,18 @@ do -- get set and editor vars
 							break
 						end
 					end
+					
+					self[name_find_count_key] = (self[name_find_count_key] or 0) + 1
 				end
 				
-				if not self.supress_part_name_find then self[last_key] = self[name_key] end
+				self[last_key] = self[part_uid_key] 
 				self[try_key] = false
 			end
 		end
 		
 		PART[name_set_key] = function(self, var)
+			self[name_find_count_key] = 0
+			
 			if type(var) == "string" then
 				self[name_key] = var
 				self[try_key] = true
@@ -261,6 +269,7 @@ do -- get set and editor vars
 				--self[part_uid_key] = nil
 				--self[part_key] = pac.NULL
 							
+				self[name_key] = var:GetName()
 				self[part_uid_key] = var.UniqueID
 				self[part_set_key](self, var)
 			end
