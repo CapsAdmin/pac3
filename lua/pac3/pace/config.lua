@@ -26,7 +26,7 @@ pace.PartIcons =
 	poseparameter = "icon16/disconnect.png",
 	fog = "icon16/weather_clouds.png",
 	physics = "icon16/shape_handles.png",
-	vector = "icon16/vector.png",
+	beam = "icon16/vector.png",
 }
 
 pace.PropertyOrder =
@@ -252,7 +252,7 @@ function pace.TranslatePropertiesKey(key, obj)
 		return "proxyvars"
 	end
 	
-	if key == "aimpartname" or key == "parentname" or key == "followpartname" or key == "anglepartname" then
+	if key == "aimpartname" or key == "parentname" or key == "followpartname" or key == "anglepartname" or key == "endpointname" then
 		return "part"
 	end
 	
