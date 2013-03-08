@@ -23,9 +23,10 @@ pace.PartIcons =
 	particles = "icon16/water.png",
 	woohoo = "icon16/webcam_delete.png",
 	halo = "icon16/shading.png",
-	poseparameter = "icon16/vector.png",
+	poseparameter = "icon16/disconnect.png",
 	fog = "icon16/weather_clouds.png",
 	physics = "icon16/shape_handles.png",
+	vector = "icon16/vector.png",
 }
 
 pace.PropertyOrder =

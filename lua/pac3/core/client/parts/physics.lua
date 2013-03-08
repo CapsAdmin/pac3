@@ -24,6 +24,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "DampFactor", 1)
 	
 	pac.GetSet(PART, "TeleportDistance", 0)
+	pac.GetSet(PART, "ConstrainSphere", 0)
 pac.EndStorableVars()
 
 PART.phys = NULL
@@ -98,26 +99,37 @@ function PART:OnThink()
 	if phys:IsValid() then
 		phys:Wake()
 		
-		if not self.Follow then return end
+		if self.Follow then
+			params.pos = self.Parent.cached_pos
+			params.angle  = self.Parent.cached_ang
+			
+			params.secondstoarrive = math.max(self.SecondsToArrive, 0.0001)
+			params.maxangular = self.MaxAngular
+			params.maxangulardamp = self.MaxAngularDamp
+			params.maxspeed = self.MaxSpeed
+			params.maxspeeddamp = self.MaxSpeedDamp
+			params.dampfactor = self.DampFactor
+			
+			params.teleportdistance = 0
 
-		params.pos = self.Parent.cached_pos
-		params.angle  = self.Parent.cached_ang
-		
-		params.secondstoarrive = math.max(self.SecondsToArrive, 0.0001)
-		params.maxangular = self.MaxAngular
-		params.maxangulardamp = self.MaxAngularDamp
-		params.maxspeed = self.MaxSpeed
-		params.maxspeeddamp = self.MaxSpeedDamp
-		params.dampfactor = self.DampFactor
-		
-		params.teleportdistance = 0
-				
-		-- this is nicer i think
-		if self.TeleportDistance ~= 0 and phys:GetPos():Distance(self.Parent.cached_pos) > self.TeleportDistance then
-			phys:SetPos(self.Parent.cached_pos + (self.Parent.cached_pos - phys:GetPos()):GetNormalized() * -self.TeleportDistance)
+			phys:ComputeShadowControl(params)
+			
+							
+			-- this is nicer i think
+			if self.ConstrainSphere ~= 0 and phys:GetPos():Distance(self.Parent.cached_pos) > self.ConstrainSphere then
+				phys:SetPos(self.Parent.cached_pos + (self.Parent.cached_pos - phys:GetPos()):GetNormalized() * -self.ConstrainSphere)
+			end
+		else			
+			-- this is nicer i think
+			if self.ConstrainSphere ~= 0 then
+				local offset = self.Parent.cached_pos - phys:GetPos()
+													
+				if offset:Length() > self.ConstrainSphere then								
+					phys:SetPos(self.Parent.cached_pos - offset:GetNormalized() * self.ConstrainSphere)
+					phys:SetVelocity(Vector())
+				end
+			end
 		end
-		
-		phys:ComputeShadowControl(params)
 	end
 end
 
