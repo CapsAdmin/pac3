@@ -27,7 +27,7 @@ do
 	local min = math.min
 	local max = math.max
 	
-	local lerp = function(m, b, a) return min(max((b - a) * m + a, a),b) end
+	local lerp = function(m, a, b) return (b - a) * m + a end
 
 	function pac.DrawBeam(veca, vecb, dira, dirb, bend, res, width, start_color, end_color, frequency, tex_stretch, width_bend, width_bend_size)
 		
@@ -180,6 +180,8 @@ end
 function PART:SetMaterial(var)
 	var = var or ""
 	
+	self.Material = var
+	
 	if not pac.Handleurltex(self, var) then
 		if type(var) == "string" then
 			self.Materialm = pac.Material(var, self)
@@ -190,9 +192,7 @@ function PART:SetMaterial(var)
 			self:FixMaterial()
 			self:CallEvent("material_changed")
 		end
-	end
-
-	self.Material = var
+	end	
 end
 
 function PART:OnDraw(owner, pos, ang)
@@ -205,8 +205,8 @@ function PART:OnDraw(owner, pos, ang)
 			pos, 
 			part.cached_pos, 
 			
-			ang:Up(), 			
-			part.cached_ang:Up(), 
+			ang:Forward(), 			
+			part.cached_ang:Forward(), 
 			
 			self.Bend, 
 			self.Resolution, 
