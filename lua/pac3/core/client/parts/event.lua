@@ -264,6 +264,10 @@ PART.Events =
 		callback = function(self, ent, find, time)
 			time = time or 0.1
 			
+			if ent:GetClass() == "viewmodel" then
+				ent = pac.LocalPlayer
+			end
+			
 			local data = ent.pac_anim_event 
 			
 			if data and (data.reset or self:StringOperator(data.name, find) and data.time + time > pac.RealTime) then
