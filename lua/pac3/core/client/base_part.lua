@@ -536,15 +536,14 @@ do -- serializing
 	end
 	
 	function PART:SetTable(tbl)
+		self.supress_part_name_find = true
 		self.delayed_variables = self.delayed_variables or {}
 		
 		for key, value in pairs(tbl.self) do
 			if self["Set" .. key] then
 				-- hack?? it effectively removes name confliction for other parts
 				if key:find("Name", nil, true) and key ~= "OwnerName" and key ~= "SequenceName" and key ~= "VariableName" then
-					self.supress_part_name_find = true
 					self["Set" .. key](self, pac.HandlePartName(self:GetPlayerOwner(), value, key))
-					self.supress_part_name_find = false
 				else
 					if key == "Material" then
 						if not value:find("/") then
@@ -918,6 +917,9 @@ function PART:Think()
 	
 
 	self:OnThink()
+	
+	
+	self.supress_part_name_find = false
 end
 
 function PART:BuildBonePositions()	
