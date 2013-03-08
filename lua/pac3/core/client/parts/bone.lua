@@ -64,7 +64,7 @@ function PART:OnBuildBonePositions()
 	
 	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone)) or 0
 	
-	local ang = self:CalcAngles(owner, self.Angles) or self.Angles
+	local ang = self:CalcAngles(self.Angles) or self.Angles
 
 	if self.FollowPart:IsValid() then		
 		local pos, ang = self:GetBonePosition()

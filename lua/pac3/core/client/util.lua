@@ -261,7 +261,7 @@ do -- get set and editor vars
 				--self[part_uid_key] = nil
 				--self[part_key] = pac.NULL
 							
-				self[name_key] = var:GetName()
+				self[part_uid_key] = var.UniqueID
 				self[part_set_key](self, var)
 			end
 		end			

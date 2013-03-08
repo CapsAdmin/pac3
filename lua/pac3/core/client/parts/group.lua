@@ -3,6 +3,10 @@ local PART = {}
 PART.ClassName = "group"
 PART.NonPhysical = true
 
+pac.StartStorableVars()
+	pac.GetSet(PART, "Duplicate", false)
+pac.EndStorableVars()
+
 function PART:Initialize()	
 	-- hacks
 	timer.Simple(0.1, function() 
