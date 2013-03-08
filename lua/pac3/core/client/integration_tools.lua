@@ -41,6 +41,11 @@ function pac.SetupENT(ENT, owner)
 	end
 
 	function ENT:AttachPACPart(outfit, owner)
+		
+		if outfit.self.OwnerName == "viewmodel" and self ~= LocalPlayer() then 
+			return
+		end
+	
 		owner = owner or self.pac_owner or self.Owner
 		
 		if self.pac_owner == "self" then
@@ -56,10 +61,10 @@ function pac.SetupENT(ENT, owner)
 		if part:IsValid() then
 			part:Remove()
 		end
-
+	
 		part = pac.CreatePart(outfit.self.ClassName, owner)
 		part:SetTable(outfit)
-
+		
 		self.pac_outfits[outfit.self.UniqueID] = part
 
 		self.pac_part_find_cache = {}
