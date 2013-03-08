@@ -72,7 +72,7 @@ function PART:OnShow()
 	if ent:IsValid() and owner:IsValid() and owner ~= ent then
 		ent:SetPos(owner:EyePos())
 		--ent:SetParent(owner)
-		ent:SetOwner(owner)
+		--ent:SetOwner(owner)
 		self.BoneIndex = nil
 		
 		if self.OwnerEntity then
@@ -95,10 +95,10 @@ function PART:OnParent(part)
 	if ent:IsValid() and owner:IsValid() then
 		if part.ClassName == self.ClassName and part:GetEntity():IsValid() and owner ~= ent then
 		--	ent:SetParent(self:GetParent():GetEntity())
-			ent:SetOwner(self:GetParent():GetEntity())
+		--	ent:SetOwner(self:GetParent():GetEntity())
 		elseif owner ~= ent then
 			--ent:SetParent(owner)
-			ent:SetOwner(owner)
+			--ent:SetOwner(owner)
 		end	
 	end
 end
@@ -108,7 +108,7 @@ function PART:OnUnParent()
 	
 	if ent:IsValid() and owner ~= ent then
 		--ent:SetParent(self:GetOwner())
-		ent:SetOwner(self:GetOwner())
+	--	ent:SetOwner(self:GetOwner())
 	end
 end
 
@@ -558,36 +558,25 @@ local EF_BONEMERGE = EF_BONEMERGE
 
 function PART:CheckBoneMerge()
 	local ent = self.Entity
-	if ent:IsValid() and not ent:IsPlayer() then
-			
-		if ent:GetParent():IsValid() then	
-			if self.BoneMerge and not self.BoneMergeAlternative then
-				ent:SetupBones()
-				ent:InvalidateBoneCache()
-				
+	if ent:IsValid() and not ent:IsPlayer() then			
+		if self.BoneMerge and not self.BoneMergeAlternative then
+			if not ent:GetParent():IsValid() then	
 				local owner = self:GetOwner()
-				if owner:IsPlayer() then
-					local wep = owner:GetActiveWeapon()
-					if wep:IsValid() then
-						wep:SetupBones()
-					end
-				end
-			
-				if not ent:IsEffectActive(EF_BONEMERGE) then
-					ent:AddEffects(EF_BONEMERGE)
-				end
-			else
-				if ent:IsEffectActive(EF_BONEMERGE) then
-					ent:RemoveEffects(EF_BONEMERGE)
-				end
+				ent:SetParent(owner)
 			end
-		else	
-			local owner = self:GetOwner()
-			if owner:IsValid() and owner ~= ent then
-			--	ent:SetParent(owner)
-				ent:SetOwner(owner)
+		
+			if not ent:IsEffectActive(EF_BONEMERGE) then
+				ent:AddEffects(EF_BONEMERGE)
 			end
-		end		
+		else
+			if ent:GetParent():IsValid() then	
+				ent:SetParent(NULL)
+			end
+		
+			if ent:IsEffectActive(EF_BONEMERGE) then
+				ent:RemoveEffects(EF_BONEMERGE)
+			end
+		end
 	end
 end
 

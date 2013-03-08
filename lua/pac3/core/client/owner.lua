@@ -1,6 +1,7 @@
 pac.OwnerNames =
 {
 	"self",
+	"viewmodel",
 	"active vehicle",
 	"active weapon",
 }
@@ -21,6 +22,10 @@ local function check_owner(a, b)
 	return a:GetOwner() == b or (not b.CPPIGetOwner or b:CPPIGetOwner() == a or b:CPPIGetOwner() == true)
 end
 
+local function check_outfits(ent, part)
+	return not ent.pac_outfits-- or not ent.pac_outfits[part.UniqueID]
+end
+
 function pac.CalcEntityCRC(ent)
 	local pos = ent:GetPos()
 	local ang = ent:GetAngles()
@@ -33,7 +38,7 @@ function pac.CalcEntityCRC(ent)
 	return util.CRC(crc)
 end
 
-function pac.HandleOwnerName(owner, name, ent, part)
+function pac.HandleOwnerName(owner, name, ent, part, check_func)
 	local idx = tonumber(name)
 	if idx then
 		local ent = Entity(idx)
@@ -86,13 +91,13 @@ function pac.HandleOwnerName(owner, name, ent, part)
 	end
 	
 	if IsValid(ent) then
-		if check_owner(ent, owner) and find_ent(ent, name) then
+		if (not check_func or check_func(ent)) and check_owner(ent, owner) and find_ent(ent, name) then
 			return ent
 		end
 	end
 	
 	for key, ent in pairs(ents.GetAll()) do
-		if ent:IsValid() and check_owner(ent, owner) and find_ent(ent, name) then
+		if ent:IsValid() and (not check_func or check_func(ent)) and check_owner(ent, owner) and find_ent(ent, name) then
 			return ent
 		end
 	end

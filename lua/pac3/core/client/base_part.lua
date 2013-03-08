@@ -170,20 +170,46 @@ do -- owner
 		end
 		
 		local prev_owner = self:GetOwner()
+		
+		if self.Duplicate then
 			
-		if removed and prev_owner == ent then
-			self:SetOwner()
-			self.temp_hidden = true
-			return
-		end
+			local ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self, function(ent) return ent.pac_duplicate_attach_uid ~= self.UniqueID end) or NULL
 			
-		if not removed and self.OwnerName ~= "" then
-			local ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self) or NULL
-			if ent ~= prev_owner then
-				self:SetOwner(ent)
-				self.temp_hidden = false
-				return true
+			if ent ~= prev_owner and ent:IsValid() then
+				
+				local tbl = self:ToTable(true)
+				tbl.self.OwnerName = "self"
+				pac.SetupENT(ent)
+				ent:SetShowPACPartsInEditor(false)
+				ent:AttachPACPart(tbl)
+				ent:CallOnRemove("pac_remove_outfit_" .. tbl.self.UniqueID, function()
+					ent:RemovePACPart(tbl)
+				end)
+				
+				if self:GetPlayerOwner() == pac.LocalPlayer then
+					ent:SetPACDrawDistance(0)
+				end
+				
+				ent.pac_duplicate_attach_uid = self.UniqueID
 			end
+		
+		else
+					
+			if removed and prev_owner == ent then
+				self:SetOwner()
+				self.temp_hidden = true
+				return
+			end
+				
+			if not removed and self.OwnerName ~= "" then
+				local ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self) or NULL
+				if ent ~= prev_owner then
+					self:SetOwner(ent)
+					self.temp_hidden = false
+					return true
+				end
+			end
+			
 		end
 	end
 
@@ -756,7 +782,7 @@ do -- drawing. this code is running every frame
 					ang or owner:GetAngles()
 				)
 								
-				ang = self:CalcAngles(owner, ang) or ang
+				ang = self:CalcAngles(ang) or ang
 				
 				self.last_drawpos = pos
 				self.last_drawang = ang
@@ -813,8 +839,8 @@ do -- drawing. this code is running every frame
 		end
 	end
 		
-	function PART:CalcAngles(owner, ang)
-		owner = owner or self:GetOwner()
+	function PART:CalcAngles(ang)
+		local owner = self:GetOwner(true)
 		
 		ang = self.calc_angvel and self:CalcAngleVelocity(ang) or ang
 

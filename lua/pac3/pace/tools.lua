@@ -280,7 +280,7 @@ pace.AddTool(L"convert to expression2 holo", function(part)
 				
 		for key, clip in pairs(part.ClipPlanes) do
 			if clip:IsValid() and not clip:IsHidden() then
-				local pos, ang = clip.Position, clip:CalcAngles(owner, clip.Angles)
+				local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
 				local normal = ang:Forward()
 				holo_str = holo_str .. 
 				"holoClip(HOLO_NAME, " .. tovec(pos) .. ", " .. tovec(normal) ..  ", 1)\n"
