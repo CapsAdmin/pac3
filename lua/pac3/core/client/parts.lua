@@ -22,7 +22,7 @@ local function merge_storable(tbl, base)
 	end
 end
 
-function pac.CreatePart(name, owner)
+function pac.CreatePart(name, owner, skip_hook)
 	owner = owner or pac.LocalPlayer
 	
 	local part = class.Create("part", name)
@@ -80,7 +80,9 @@ function pac.CreatePart(name, owner)
 	
 	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))
 	
-	pac.CallHook("OnPartCreated", part, owner == pac.LocalPlayer)
+	if not skip_hook then
+		pac.CallHook("OnPartCreated", part, owner == pac.LocalPlayer)
+	end
 	
 	return part
 end
@@ -103,7 +105,7 @@ function pac.GetParts(owned_only)
 	if owned_only then		
 		local tbl = {}
 		for key, part in pairs(pac.ActiveParts) do
-			if part:GetPlayerOwner() == pac.LocalPlayer and (part.show_in_editor == nil or part.show_in_editor) then
+			if part:GetPlayerOwner() == pac.LocalPlayer and (part.show_in_editor == nil or part.show_in_editor == true) then
 				tbl[key] = part
 			end
 		end
