@@ -145,6 +145,8 @@ function PART:SetPitch(num)
 end
 
 function PART:PlaySound(osnd, ovol)
+	if self:IsHidden() then self:StopSound() return end
+
 	local ent = self:GetOwner(self.RootOwner)
 
 	if ent:IsValid() then

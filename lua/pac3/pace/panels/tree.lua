@@ -285,6 +285,8 @@ end
 hook.Add("pac_OnPartRemove", "pace_remove_tree_nodes", remove_node)
 
 local function refresh(part, localplayer)
+	if not part.show_in_editor then return end
+	
 	if localplayer then
 		pace.RefreshTree(true)
 	end
@@ -292,6 +294,8 @@ end
 hook.Add("pac_OnWoreOutfit", "pace_create_tree_nodes", refresh)
 
 local function refresh(part, localplayer)
+	if not part.show_in_editor then return end
+	
 	if localplayer then
 		pace.RefreshTree(true)
 	end

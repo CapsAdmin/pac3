@@ -270,7 +270,7 @@ PART.Events =
 			
 			local data = ent.pac_anim_event 
 			
-			if data and (data.reset or self:StringOperator(data.name, find) and data.time + time > pac.RealTime) then
+			if data and (data.reset and self:StringOperator(data.name, find) and data.time + time > pac.RealTime) then
 				data.reset = false
 				return true
 			end			

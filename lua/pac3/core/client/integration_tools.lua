@@ -41,8 +41,8 @@ function pac.SetupENT(ENT, owner)
 	end
 
 	function ENT:AttachPACPart(outfit, owner)
-		
-		if outfit.self.OwnerName == "viewmodel" and self ~= LocalPlayer() then 
+				
+		if outfit.self.OwnerName == "viewmodel" and self:IsWeapon() and self.Owner:IsValid() and self.Owner:IsPlayer() and self.Owner ~= LocalPlayer() then 
 			return
 		end
 	
