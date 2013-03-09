@@ -32,7 +32,7 @@ function PART:OnShow(from_event)
 end
 
 function PART:OnHide(from_event)
-	if not from_event then return end
+	--if not from_event then return end
 	self.played_overlapping = false
 	self:StopSound()
 end
@@ -145,8 +145,6 @@ function PART:SetPitch(num)
 end
 
 function PART:PlaySound(osnd, ovol)
-	if self:IsHidden() then self:StopSound() return end
-
 	local ent = self:GetOwner(self.RootOwner)
 
 	if ent:IsValid() then
