@@ -154,9 +154,24 @@ end
 
 function pace.AddSessionsToMenu(menu)
 	menu.GetDeleteSelf = function() return false end
+	
+	menu:AddOption(L"load from url", function()
+		Derma_StringRequest(
+			L"load session",
+			L"pastebin urls also work!",
+			"",
+
+			function(name)
+				pace.LoadSession(name, append)
+			end
+		)
+	end)
+	
 	for key, data in pairs(pace.GetSessions()) do
 		local menu = menu:AddSubMenu(data.Name, function() pace.LoadSession(data.FileName) end)
+		
 		menu.GetDeleteSelf = function() return false end
+		
 		menu:AddOption(L"rename", function()
 			Derma_StringRequest(L"rename", L"type the new name:", data.Name, function(text)
 				

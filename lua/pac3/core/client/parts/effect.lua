@@ -134,6 +134,12 @@ end
 local ParticleEffect = ParticleEffect
 local ParticleEffectAttach = ParticleEffectAttach
 
+function PART:OnShow(from_event)
+	if from_event then
+		self:Emit(self:GetDrawPosition())
+	end
+end
+
 function PART:Emit(pos, ang)
 	local ent = self:GetOwner()
 	

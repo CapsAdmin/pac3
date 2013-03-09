@@ -29,7 +29,7 @@ do
 	
 	local lerp = function(m, a, b) return (b - a) * m + a end
 
-	function pac.DrawBeam(veca, vecb, dira, dirb, bend, res, width, start_color, end_color, frequency, tex_stretch, width_bend, width_bend_size)
+	function pac.DrawBeam(veca, vecb, dira, dirb, bend, res, width, start_color, end_color, frequency, tex_stretch, tex_scroll, width_bend, width_bend_size)
 		
 		if not veca or not vecb or not dira or not dirb then error("!") return end
 		
@@ -79,7 +79,7 @@ do
 				AddBeam(
 					vector, 					
 					width + ((sin(wave) ^ width_bend_size) * width_bend), 					
-					i / tex_stretch, 					
+					(i / tex_stretch) + tex_scroll, 					
 					color)
 			end
 					
@@ -102,6 +102,7 @@ pac.StartStorableVars()
 	
 	pac.GetSet(PART, "Material", "cable/rope")
 	pac.GetSet(PART, "TextureStretch", 1)
+	pac.GetSet(PART, "TextureScroll", 0)
 	pac.GetSet(PART, "StartColor", Vector(255, 255, 255))
 	pac.GetSet(PART, "EndColor", Vector(255, 255, 255))
 	pac.GetSet(PART, "StartAlpha", 1)
@@ -215,6 +216,7 @@ function PART:OnDraw(owner, pos, ang)
 			self.EndColorC, 
 			self.Frequency, 
 			self.TextureStretch, 
+			self.TextureScroll, 
 			self.WidthBend, 
 			self.WidthBendSize
 		)
