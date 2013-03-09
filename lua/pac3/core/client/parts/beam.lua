@@ -71,10 +71,10 @@ do
 				vector.y = lerp(frac, ay, by) + lerp(frac, ady * bendmult, bdy * bendmult)
 				vector.z = lerp(frac, az, bz) + lerp(frac, adz * bendmult, bdz * bendmult)
 										
-				color.r = start_color.r == end_color.r and 255 or lerp(frac, start_color.r, end_color.r)
-				color.g = start_color.g == end_color.g and 255 or lerp(frac, start_color.g, end_color.g)
-				color.b = start_color.b == end_color.b and 255 or lerp(frac, start_color.b, end_color.b)
-				color.a = start_color.a == end_color.a and 255 or lerp(frac, start_color.a, end_color.a)
+				color.r = start_color.r == end_color.r and start_color.r or lerp(frac, start_color.r, end_color.r)
+				color.g = start_color.g == end_color.g and start_color.g or lerp(frac, start_color.g, end_color.g)
+				color.b = start_color.b == end_color.b and start_color.b or lerp(frac, start_color.b, end_color.b)
+				color.a = start_color.a == end_color.a and start_color.a or lerp(frac, start_color.a, end_color.a)
 				
 				AddBeam(
 					vector, 					
