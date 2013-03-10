@@ -1,16 +1,11 @@
 local L = pace.LanguageString
 
 concommand.Add("pac_wear_session", function()
-	for key, part in pairs(pac.GetParts(true)) do
-		if not part:HasParent() then
-			pac.SendPartToServer(part)
-		end
-	end
+	pace.WearSession()
 end)
 
 concommand.Add("pac_clear_session", function()
-	pac.RemoveAllParts(true, true)
-	pace.RefreshTree()
+	pace.ClearSession()
 end)
 
 net.Receive("pac_spawn_part", function()

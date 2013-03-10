@@ -341,10 +341,6 @@ function PANEL:CreateChildNodes()
 	self.ChildNodes:SetVisible(self.m_bExpanded)
 	self.ChildNodes.OnChildRemoved = function()
 		self.ChildNodes:InvalidateLayout()
-		
-		if not self.ChildNodes:HasChildren() then
-			self:SetExpanded(false)
-		end
 	end
 	
 	self.ChildNodes.OnModified = function()

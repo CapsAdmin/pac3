@@ -11,6 +11,9 @@ pace.DeprecatedProperties =
 	OverallSize = true, -- use Size instead!
 	BoneMergeAlternative = true, -- broken
 	FollowBone = true, -- broken
+	
+	AnglePartMultiplier = true, -- useless
+	AnglePartName = true, -- useless
 		
 	-- not ready for deprecation yet
 	--[[

@@ -68,8 +68,11 @@ local function install_drag(node)
 	node:SetDraggableName("pac3")
 	
 	function node:DroppedOn(child)
-		-- we're hovering on the label, not the actual node
-		-- so get the parent node instead
+						
+		if not child.part then
+			child = child:GetParent()
+		end
+		
 		self:InsertNode(child)
 		self:SetExpanded(true)
 		
@@ -78,6 +81,25 @@ local function install_drag(node)
 				child.part:SetParent(self.part)
 			end
 		end
+	end
+	
+	local old = node.OnDrop
+	
+	function node:OnDrop(child, ...)
+		-- we're hovering on the label, not the actual node
+		-- so get the parent node instead
+		
+		if not child.part then
+			child = child:GetParent()
+		end
+				
+		if child.part and child.part:IsValid() then
+			if self.part and self.part:IsValid() then
+				self.part:SetParent(child.part)
+			end
+		end
+		
+		return old(self, child, ...)
 	end
 end
 
@@ -277,7 +299,7 @@ local function remove_node(obj)
 	if (obj.editor_node or NULL):IsValid() then
 		obj.editor_node:SetForceShowExpander()
 		obj.editor_node:GetRoot().m_pSelectedItem = nil
-		obj.editor_node:Remove()
+		obj.editor_node:Remove()		
 		pace.RefreshTree()
 	end
 end

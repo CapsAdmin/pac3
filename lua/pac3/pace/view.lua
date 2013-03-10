@@ -87,8 +87,8 @@ local function CalcDrag()
 		mult = 0.1
 	end
 	
-	if pace.current_part:IsValid() then
-		local origin = pace.current_part.cached_pos
+	if pace.current_part:IsValid() and not pace.current_part.NonPhysical then
+		local origin = pace.current_part:GetDrawPosition()
 		
 		if origin ~= Vector(0,0,0) then
 			mult = mult * (origin:Distance(pace.ViewPos) / 200)

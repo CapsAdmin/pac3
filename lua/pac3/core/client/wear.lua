@@ -97,6 +97,15 @@ do -- from server
 		pac.HandleServerModifiers(part_data)
 		
 		pac.CallHook("OnWoreOutfit", part, owner == pac.LocalPlayer)
+		
+		
+		if owner == pac.LocalPlayer then
+			for key, part in pairs(pac.GetParts()) do
+				if part:GetPlayerOwner() == owner then
+					part:ResolvePartNames(true)
+				end
+			end
+		end
 	end
 
 	function pac.RemovePartFromServer(owner, part_name)
@@ -118,9 +127,17 @@ do -- from server
 					part.UniqueID == part_name
 				then
 					part:Remove()
-					return
+					break
 				end
-			end 
+			end
+			
+			if owner == pac.LocalPlayer then
+				for key, part in pairs(pac.GetParts()) do
+					if part:GetPlayerOwner() == owner then
+						part:ResolvePartNames(true)
+					end
+				end
+			end
 		end
 	end
 end

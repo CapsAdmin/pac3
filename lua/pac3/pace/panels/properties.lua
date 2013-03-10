@@ -159,6 +159,7 @@ do -- list
 		table.sort(data, function(a,b) return a.key > b.key end)
 		
 		local ordered_list = {}
+		
 		for k,v in pairs(pace.PropertyOrder) do table.insert(ordered_list, v) end
 		for k,v in pairs(pac.VariableOrder) do table.insert(ordered_list, v) end
 		
