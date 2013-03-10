@@ -90,24 +90,15 @@ do -- from server
 			end
 		end
 	
-		local part = pac.CreatePart(part_data.self.ClassName, owner)
-		part:SetTable(part_data)
-		part:CheckOwner()
-		
-		pac.HandleServerModifiers(part_data)
-		
-		pac.CallHook("OnWoreOutfit", part, owner == pac.LocalPlayer)
-		
-		
-		if owner == pac.LocalPlayer then
-			for key, part in pairs(pac.GetParts()) do
-				if part:GetPlayerOwner() == owner then
-					part.supress_part_name_find = true
-					part:ResolvePartNames(true)
-					part.supress_part_name_find = false
-				end
-			end
-		end
+		timer.Simple(0.1, function()		
+			local part = pac.CreatePart(part_data.self.ClassName, owner)
+			part:SetTable(part_data)
+			part:CheckOwner()
+			
+			pac.HandleServerModifiers(part_data)
+			
+			pac.CallHook("OnWoreOutfit", part, owner == pac.LocalPlayer)
+		end)
 	end
 
 	function pac.RemovePartFromServer(owner, part_name)
@@ -130,16 +121,6 @@ do -- from server
 				then
 					part:Remove()
 					break
-				end
-			end
-			
-			if owner == pac.LocalPlayer then
-				for key, part in pairs(pac.GetParts()) do
-					if part:GetPlayerOwner() == owner then
-						part.supress_part_name_find = true
-						part:ResolvePartNames(true)
-						part.supress_part_name_find = false
-					end
 				end
 			end
 		end

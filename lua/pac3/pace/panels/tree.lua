@@ -326,7 +326,7 @@ hook.Add("pac_OnPartCreated", "pace_create_tree_nodes", refresh)
 
 function pace.RefreshTree(reset)
 	if pace.tree:IsValid() then
-		timer.Create("pace_refresh_tree",  0, 1, function()
+		timer.Create("pace_refresh_tree",  0.2, 1, function()
 			if pace.tree:IsValid() then
 				pace.tree:Populate(reset)
 				pace.tree.RootNode:SetExpanded(true, true) -- why do I have to do this?
