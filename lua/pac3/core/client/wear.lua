@@ -102,7 +102,9 @@ do -- from server
 		if owner == pac.LocalPlayer then
 			for key, part in pairs(pac.GetParts()) do
 				if part:GetPlayerOwner() == owner then
+					part.supress_part_name_find = true
 					part:ResolvePartNames(true)
+					part.supress_part_name_find = false
 				end
 			end
 		end
@@ -134,7 +136,9 @@ do -- from server
 			if owner == pac.LocalPlayer then
 				for key, part in pairs(pac.GetParts()) do
 					if part:GetPlayerOwner() == owner then
+						part.supress_part_name_find = true
 						part:ResolvePartNames(true)
+						part.supress_part_name_find = false
 					end
 				end
 			end
