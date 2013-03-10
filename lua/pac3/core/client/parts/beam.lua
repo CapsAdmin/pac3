@@ -8,8 +8,7 @@ do
 	local bdx,bdy,bdz = 0,0,0
 	
 	local frac = 0
-	local point
-	local wave
+	local wave = 0
 	local bendmult = 0
 	
 	local StartBeam = render.StartBeam
@@ -24,30 +23,17 @@ do
 	local vector = Vector()
 	local color = Color(255, 255, 255, 255)
 	
-	local min = math.min
-	local max = math.max
-	
 	local lerp = function(m, a, b) return (b - a) * m + a end
 
 	function pac.DrawBeam(veca, vecb, dira, dirb, bend, res, width, start_color, end_color, frequency, tex_stretch, tex_scroll, width_bend, width_bend_size)
 		
-		if not veca or not vecb or not dira or not dirb then error("!") return end
+		if not veca or not vecb or not dira or not dirb then return end
 		
-		ax = veca.x
-		ay = veca.y
-		az = veca.z
+		ax = veca.x; ay = veca.y; az = veca.z
+		bx = vecb.x; by = vecb.y; bz = vecb.z
 		
-		bx = vecb.x
-		by = vecb.y
-		bz = vecb.z
-		
-		adx = dira.x
-		ady = dira.y
-		adz = dira.z
-		
-		bdx = dirb.x
-		bdy = dirb.y
-		bdz = dirb.z
+		adx = dira.x; ady = dira.y; adz = dira.z
+		bdx = dirb.x; bdy = dirb.y; bdz = dirb.z
 		
 		bend = bend or 10
 		res = math.max(res or 32, 2)
@@ -59,7 +45,7 @@ do
 		width_bend = width_bend or 0
 		width_bend_size = width_bend_size or 1
 			
-		StartBeam(res+1)
+		StartBeam(res + 1)
 					
 			for i = 0, res do
 			
@@ -80,7 +66,9 @@ do
 					vector, 					
 					width + ((sin(wave) ^ width_bend_size) * width_bend), 					
 					(i / tex_stretch) + tex_scroll, 					
-					color)
+					color
+				)
+				
 			end
 					
 		EndBeam()

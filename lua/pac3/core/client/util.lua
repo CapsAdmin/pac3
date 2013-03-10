@@ -149,6 +149,16 @@ end
 do -- get set and editor vars
 	pac.VariableOrder = {}
 	
+	local function insert_key(key)
+		for k,v in pairs(pac.VariableOrder) do
+			if k == key then
+				return
+			end
+		end
+		
+		table.insert(pac.VariableOrder, key)
+	end
+	
 	local __store = false
 
 	function pac.StartStorableVars()
@@ -160,7 +170,7 @@ do -- get set and editor vars
 	end
 
 	function pac.GetSet(tbl, key, ...)
-		table.insert(pac.VariableOrder, key)
+		insert_key(key)
 		
 		pac.class.GetSet(tbl, key, ...)
 
@@ -171,7 +181,7 @@ do -- get set and editor vars
 	end
 
 	function pac.IsSet(tbl, key, ...)
-		table.insert(pac.VariableOrder, key)
+		insert_key(key)
 		pac.class.IsSet(tbl, key, ...)
 
 		if __store then
@@ -181,18 +191,19 @@ do -- get set and editor vars
 	end
 	
 	function pac.SetupPartName(PART, key)
-		table.insert(pac.VariableOrder, key)
+		insert_key(key)
 		
 		PART.PartNameResolvers = PART.PartNameResolvers or {}
 		
 		local part_key = key
-		local part_uid_key = part_key .. "UID"
 		local part_set_key = "Set" .. part_key
 		
+		local uid_key = part_key .. "UID"
 		local name_key = key.."Name"
 		local name_set_key = "Set" .. name_key
 		
-		local last_key = "last_" .. name_key:lower()
+		local last_name_key = "last_" .. name_key:lower()
+		local last_uid_key = "last_" .. uid_key:lower()
 		local try_key = "try_" .. name_key:lower()
 		
 		local name_find_count_key = name_key:lower() .. "_try_count"
@@ -202,11 +213,11 @@ do -- get set and editor vars
 		pac.StartStorableVars()
 		
 		pac.GetSet(PART, name_key, "")
-		pac.GetSet(PART, part_uid_key, "")
+		pac.GetSet(PART, uid_key, "")
 					
-		PART.ResolvePartNames = PART.ResolvePartNames or function(self)
+		PART.ResolvePartNames = PART.ResolvePartNames or function(self, force)
 			for key, func in pairs(self.PartNameResolvers) do
-				func(self)
+				func(self, force)
 			end
 		end		
 				
@@ -214,14 +225,15 @@ do -- get set and editor vars
 			PART.PartNameResolvers[part_key](self)
 		end
 		
-		PART.PartNameResolvers[part_key] = function(self)
+		PART.PartNameResolvers[part_key] = function(self, force)
 	
-			if self[part_uid_key] == "" and self[name_key] == "" then return end 
+			if self[uid_key] == "" and self[name_key] == "" then return end 
 	
 			if 
-				(self[part_uid_key] == "" and (self[name_find_count_key] or 0) < 3) or
-				self[part_uid_key] and 
-				self[part_uid_key] ~= self[last_key] and 
+				force or 
+				(self[uid_key] == "" and (self[name_find_count_key] or 0) < 3) or
+				self[uid_key] and 
+				(self[uid_key] ~= self[last_uid_key] or self[name_key] ~= self[last_name_key]) and
 				(not self[part_key]:IsValid() or self[try_key])
 			then
 				for key, part in pairs(pac.GetParts()) do
@@ -229,11 +241,13 @@ do -- get set and editor vars
 						part ~= self and 
 						self[part_key] ~= part and 
 						part:GetPlayerOwner() == self:GetPlayerOwner() and 
-						part.UniqueID == self[part_uid_key] 
+						part.UniqueID == self[uid_key] 
 					then
 						self[name_set_key](self, part)
 						break
 					end
+					
+					self[last_uid_key] = self[uid_key] 
 				end
 
 				if not self.supress_part_name_find then					
@@ -249,10 +263,10 @@ do -- get set and editor vars
 						end
 					end
 					
+					self[last_name_key] = self[name_key] 
 					self[name_find_count_key] = (self[name_find_count_key] or 0) + 1
 				end
-				
-				self[last_key] = self[part_uid_key] 
+								
 				self[try_key] = false
 			end
 		end
@@ -265,7 +279,7 @@ do -- get set and editor vars
 				self[name_key] = var
 
 				if var == "" then
-					self[part_uid_key] = ""
+					self[uid_key] = ""
 					self[part_key] = pac.NULL
 					return
 				else
@@ -277,7 +291,7 @@ do -- get set and editor vars
 				end
 			else
 				self[name_key] = var:GetName()
-				self[part_uid_key] = var.UniqueID
+				self[uid_key] = var.UniqueID
 				self[part_set_key](self, var)
 			end
 		end			
