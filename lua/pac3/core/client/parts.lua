@@ -25,10 +25,17 @@ end
 function pac.CreatePart(name, owner, skip_hook)
 	owner = owner or pac.LocalPlayer
 	
+	if not name then
+		print("[pac3] what the fuck is this")
+		debug.Trace()
+		
+		name = "base"
+	end
+		
 	local part = class.Create("part", name)
 	
 	if not part then
-		print("pac3 tried to create unknown part " .. name or "unknown")
+		print("pac3 tried to create unknown part " .. name)
 		part = class.Create("part", "base")
 	end
 		

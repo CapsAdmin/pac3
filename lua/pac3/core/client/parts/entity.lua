@@ -293,7 +293,7 @@ function PART:GetDrawPosition()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
-		return ent:GetPos()
+		return ent:GetPos(), ent:GetAngles()
 	end
 end
 
