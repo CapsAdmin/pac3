@@ -28,11 +28,6 @@ timer.Create("pac_gc", 2, 0, function()
 	end
 end)
 
-net.Receive("pac_submit", function()
-	local tbl = net.ReadTable()
-	pac.CreatePart(tbl.ent):SetTable(tbl.part)
-end)
-
 net.Receive("pac_effect_precached", function()
 	local name = net.ReadString()
 	pac.CallHook("EffectPrecached", name)

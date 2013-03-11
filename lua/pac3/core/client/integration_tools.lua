@@ -13,6 +13,16 @@ function pac.SetupENT(ENT, owner)
 	end
 
 	function ENT:FindPACPart(outfit, name)
+	
+		if not outfit.self and outfit[1].self then
+			for key, val in pairs(outfit) do
+				local part = self:FindPACPart(val, name)
+				if part then
+					return part
+				end
+			end
+		end
+	
 		self.pac_part_find_cache = self.pac_part_find_cache or {}
 
 		local part = self.pac_outfits[outfit.self.UniqueID] or pac.NULL
@@ -32,15 +42,11 @@ function pac.SetupENT(ENT, owner)
 		end
 	end
 
-	function ENT:GetPACPartPosAng(outfit, name)
-		local part = self:FindPACPart(outfit, name)
-
-		if part then
-			return part.cached_pos, part.cached_ang
-		end
-	end
-
 	function ENT:AttachPACPart(outfit, owner)
+	
+		if not outfit.self then 
+			return self:AttachPACSession(outfit, owner)
+		end
 				
 		if outfit.self.OwnerName == "viewmodel" and self:IsWeapon() and self.Owner:IsValid() and self.Owner:IsPlayer() and self.Owner ~= LocalPlayer() then 
 			return
@@ -76,6 +82,10 @@ function pac.SetupENT(ENT, owner)
 	end
 
 	function ENT:RemovePACPart(outfit)
+		if not outfit.self then 
+			return self:RemovePACSession(outfit)
+		end
+	
 		self.pac_outfits = self.pac_outfits or {}
 
 		local part = self.pac_outfits[outfit.self.UniqueID] or pac.NULL
@@ -85,6 +95,14 @@ function pac.SetupENT(ENT, owner)
 		end
 
 		self.pac_part_find_cache = {}
+	end
+		
+	function ENT:GetPACPartPosAng(outfit, name)
+		local part = self:FindPACPart(outfit, name)
+
+		if part then
+			return part.cached_pos, part.cached_ang
+		end
 	end
 	
 	function ENT:AttachPACSession(session)

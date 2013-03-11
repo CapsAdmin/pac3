@@ -108,6 +108,28 @@ pac.AddHook("pac_PlayerFootstep", function(ply, pos)
 	ply.pac_last_footstep_pos = pos	
 end)
 
+local function GetBonePosition(ent, id)
+	if pac.MatrixBoneMethod then		
+		local mat = ent:GetBoneMatrix(id)
+				
+		if mat then
+			return mat:GetTranslation(), mat:GetAngles()
+		end
+	end
+	
+	return ent:GetBonePosition(id)
+end
+
+local function GetBonePosition(ent, id)
+	local pos, ang =  ent:GetBonePosition(id)
+	
+	if ang and ent:GetClass() == "viewmodel" and ent:GetOwner():IsPlayer() and ent:GetOwner():GetActiveWeapon().ViewModelFlip then
+		ang.r = -ang.r
+	end
+		
+	return pos, ang
+end
+
 function pac.GetBonePosAng(ent, id, parent)
 	if not ent:IsValid() then return Vector(), Angle() end
 	
@@ -149,28 +171,28 @@ function pac.GetBonePosAng(ent, id, parent)
 				end	
 				
 				if posang then
-					return posang.Pos, posang.Ang
+					pos, ang = posang.Pos, posang.Ang
 				end
 			else
 				local posang = ent:GetAttachment(data.id)
 				if posang then
-					return posang.Pos, posang.Ang
+					pos, ang = posang.Pos, posang.Ang
 				end
 			end
-		end
-		
-		if parent and data.parent_i then
-			pos, ang = ent:GetBonePosition(data.parent_i)
-			if not pos or not ang then
-				pos, ang = ent:GetBonePosition(data.bone)
+		else		
+			if parent and data.parent_i then
+				pos, ang = GetBonePosition(ent, data.parent_i)
+				if not pos or not ang then
+					pos, ang = GetBonePosition(ent, data.bone)
+				end
+			else
+				pos, ang = GetBonePosition(ent, data.bone)
 			end
-		else
-			pos, ang = ent:GetBonePosition(data.bone)
 		end
 	else
 		local id = id and ent:LookupBone(id) or nil
 		if id then
-			pos, ang = ent:GetBonePosition(id)
+			pos, ang = GetBonePosition(ent, id)
 		end
 	end
 	
