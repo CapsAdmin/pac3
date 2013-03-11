@@ -182,7 +182,7 @@ local render_CullMode = render.CullMode
 local render_SuppressEngineLighting = render.SuppressEngineLighting
 local render_SetBlend = render.SetBlend
 local render_SetColorModulation = render.SetColorModulation
-local render_MaterialOverride = render.MaterialOverride or SetMaterialOverride
+local render_MaterialOverride = render.MaterialOverride
 
 function PART:UpdateColor(ent)
 
@@ -195,7 +195,7 @@ function PART:UpdateColor(ent)
 end
 
 function PART:UpdateMaterial(ent)
-	if self.Material ~= "" then
+	if self.Materialm then
 		render_MaterialOverride(self.Materialm)
 	end
 end
