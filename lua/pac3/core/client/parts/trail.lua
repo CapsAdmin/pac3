@@ -128,7 +128,7 @@ local math_abs = math.abs
 local render_StartBeam = render.StartBeam
 local render_EndBeam = render.EndBeam
 local render_AddBeam = render.AddBeam
-local render_MaterialOverride = render.SetMaterial
+local render_SetMaterial = render.SetMaterial
 
 function PART:OnDraw(owner, pos, ang)
 	if self.Materialm and self.StartColorC and self.EndColorC then
@@ -148,7 +148,7 @@ function PART:OnDraw(owner, pos, ang)
 			len = math_ceil(math_abs(len - spc))
 		end
 				
-		render_MaterialOverride(self.Materialm)
+		render_SetMaterial(self.Materialm)
 		
 		local delta = FrameTime() * 5
 		

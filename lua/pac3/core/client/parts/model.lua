@@ -145,7 +145,7 @@ local pac = pac
 local render_CullMode = render.CullMode
 local render_SetColorModulation = render.SetColorModulation
 local render_SetBlend = render.SetBlend
-local render_ModelMaterialOverride = render.ModelMaterialOverride
+local render_MaterialOverride = render.ModelMaterialOverride
 local render_SuppressEngineLighting = render.SuppressEngineLighting
 local LocalToWorld = LocalToWorld
 local MATERIAL_CULLMODE_CW = MATERIAL_CULLMODE_CW
@@ -212,7 +212,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 			render_SetBlend(self.Alpha)
 		end
 		
-		render_ModelMaterialOverride(self.Materialm) 
+		render_MaterialOverride(self.Materialm) 
 		
 		if self.Fullbright then
 			render_SuppressEngineLighting(true) 
@@ -249,9 +249,9 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 				render_CullMode(MATERIAL_CULLMODE_CW)
 						render_SetColorModulation(0,0,0)
 							render_SuppressEngineLighting(true)
-								render_ModelMaterialOverride(WHITE)
+								render_MaterialOverride(WHITE)
 									self:DrawModel(ent, pos, ang)														
-								render_ModelMaterialOverride()
+								render_MaterialOverride()
 						render_SuppressEngineLighting(false)
 				render_CullMode(MATERIAL_CULLMODE_CCW)
 			pac.SetModelScale(ent, self.Scale * self.Size)

@@ -73,29 +73,16 @@ end
 function PART:UpdateActTable()
 	self.ActTable = self.ActTable or {}
 	
-	local ent = self:GetOwner()
+	local ent = self:GetOwner(true)
 	
 	if ent:IsValid() then
 		for name, act in pairs(act_mods) do
 			self.ActTable[act] = ent:GetSequenceActivity(ent:LookupSequence(self[name]))
 		end
 		
-		
 		ent.pac_acttable = self.ActTable
 		ent.pac_acttable.fallback = ent:GetSequenceActivity(ent:LookupSequence(self.Fallback))
 	end
-end
-
-function PART:GetOwner()
-	local parent = self:GetParent()
-	
-	if parent:IsValid() then		
-		if parent.ClassName == "model" and parent.Entity:IsValid() then
-			return parent.Entity
-		end
-	end
-	
-	return self.BaseClass.GetOwner(self)
 end
 
 function PART:GetSequenceList()
@@ -108,15 +95,21 @@ function PART:GetSequenceList()
 end
 
 function PART:OnHide()
-	local ent = self:GetOwner()
-		
+	local ent = self:GetOwner(true)
+				
 	if ent:IsValid() then
 		ent.pac_acttable = nil
 	end
 end
 
-function PART:OnShow()
+function PART:OnShow(from_event, from_drawing)
 	self:UpdateActTable()
+end
+
+function PART:OnThink()
+	if self:IsHidden() then
+		self:OnHide()
+	end
 end
 
 hook.Add("TranslateActivity", "pac_acttable", function(ply, act)

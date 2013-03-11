@@ -27,7 +27,7 @@ pac.EndStorableVars()
 local math_AngleDifference = math.AngleDifference
 
 function PART:Reset()
-	local pos, ang = self:GetDrawPosition()
+	local pos, ang = self:HasParent() and not self.Parent.NonPhysical and self.Parent:GetDrawPosition() or self:GetBonePosition()
 		
 	self.pos = pos
 	self.vel = Vector()

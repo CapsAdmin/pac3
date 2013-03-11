@@ -35,6 +35,13 @@ end
 
 PART.Events = 
 {
+	is_crouching =
+	{
+		callback = function(self, ent)
+			return ent.Crouching and ent:Crouching()
+		end,
+	},
+	
 	advanced_timer = 
 	{
 		arguments = {{delay = "number"}, {repeat_times = "number"}},
@@ -270,7 +277,7 @@ PART.Events =
 			
 			local data = ent.pac_anim_event 
 			
-			if data and (data.reset and self:StringOperator(data.name, find) and data.time + time > pac.RealTime) then
+			if data and (self:StringOperator(data.name, find) and data.time + time > pac.RealTime) then
 				data.reset = false
 				return true
 			end			

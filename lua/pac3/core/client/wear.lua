@@ -90,7 +90,7 @@ do -- from server
 			end
 		end
 	
-		timer.Simple(0.1, function()		
+		timer.Simple(0.25, function()		
 			local part = pac.CreatePart(part_data.self.ClassName, owner)
 			part:SetTable(part_data)
 			part:CheckOwner()

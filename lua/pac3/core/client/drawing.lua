@@ -44,6 +44,7 @@ end
 local render_SetColorModulation = render.SetColorModulation
 local render_SetBlend = render.SetBlend
 local render_ModelMaterialOverride = render.ModelMaterialOverride
+local render_MaterialOverride = render.MaterialOverride
 
 function pac.RenderOverride(ent, type, draw_only)
 	if not ent.pac_parts then
@@ -92,6 +93,7 @@ function pac.RenderOverride(ent, type, draw_only)
 	render_SetColorModulation(1,1,1)
 	render_SetBlend(1)
 	
+	render_MaterialOverride()
 	render_ModelMaterialOverride()
 end
 
@@ -231,7 +233,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 			then
 				if ent.pac_parts and ent.pac_drawing == false then
 					for key, part in pairs(ent.pac_parts) do
-						part:CallRecursive("OnShow")
+						part:CallRecursive("OnShow", false, true)
 					end
 				end
 			
@@ -240,7 +242,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 			else
 				if ent.pac_parts and ent.pac_drawing == true then
 					for key, part in pairs(ent.pac_parts) do
-						part:CallRecursive("OnHide")
+						part:CallRecursive("OnHide", false, true)
 					end
 					pac.ResetBones(ent)
 				end

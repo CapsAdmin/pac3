@@ -637,7 +637,14 @@ function PART:CallEvent(event, ...)
 end
 	
 function PART:CallRecursive(func, ...)
-	if self[func] then self[func](self, ...) end
+	if self[func] --[[and (not self.last_call_recurse or self.last_call_recurse[func] ~= pac.FrameNumber)]] then 
+		self[func](self, ...) 
+		
+		--self.last_call_recurse = self.last_call_recurse or {}
+		--self.last_call_recurse[func] = pac.FrameNumber
+	--else
+	--	print("prevented call!!", func)
+	end
 	
 	for k, v in pairs(self.Children) do	
 		v:CallRecursive(func, ...)
