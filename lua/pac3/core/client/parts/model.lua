@@ -145,6 +145,7 @@ local pac = pac
 local render_CullMode = render.CullMode
 local render_SetColorModulation = render.SetColorModulation
 local render_SetBlend = render.SetBlend
+local render_ModelMaterialOverride = render.MaterialOverride
 local render_MaterialOverride = render.ModelMaterialOverride
 local render_SuppressEngineLighting = render.SuppressEngineLighting
 local LocalToWorld = LocalToWorld
@@ -211,9 +212,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 			render_SetColorModulation(r,g,b) 
 			render_SetBlend(self.Alpha)
 		end
-		
-		render_MaterialOverride(self.Materialm) 
-		
+			
 		if self.Fullbright then
 			render_SuppressEngineLighting(true) 
 		end
@@ -321,26 +320,34 @@ function PART:DrawModel(ent, pos, ang)
 			render.PushFilterMag(filter)
 			render.PushFilterMin(filter)
 		end
+		
+		--if self.Materialm then
+		render_MaterialOverride(self.Materialm) 
+		render_ModelMaterialOverride(self.Materialm) 
+		if self.Materialm then 
+			render_SetMaterial(self.Materialm) 
+		end
+		--end
+			
+		
 			
 		if self.wavefront_mesh then
+			ent:SetModelScale(0,0)
+			ent:DrawModel()
+			
 			local matrix = Matrix()
 			
 			matrix:SetAngles(ang)
 			matrix:SetTranslation(pos)
 			matrix:Scale(self.Scale * self.Size)
-				
+							
 			cam_PushModelMatrix(matrix)
-				if self.Materialm then 
-					render_SetMaterial(self.Materialm)	
-				end
 				self.wavefront_mesh:Draw()
 			cam_PopModelMatrix()
-			
-			pac.SetModelScale(ent, Vector(0,0,0))
+		else
+			ent:DrawModel()
 		end
-		
-		ent:DrawModel()
-		
+				
 		if filter then
 			render.PopFilterMin()
 			render.PopFilterMag()
