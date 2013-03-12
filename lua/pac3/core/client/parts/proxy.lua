@@ -26,7 +26,11 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	return pac.PrettifyName(self:GetVariableName()) .. " changer"
+	if self:GetVariableName() == "" then
+		return self.ClassName
+	end
+
+	return pac.PrettifyName(self:GetVariableName()) .. " = " .. (self.debug_var or "?") .. " proxy"
 end
 
 function PART:Initialize()
@@ -415,7 +419,7 @@ function PART:OnThink()
 
 			if not ok then
 				if self:GetPlayerOwner() == pac.LocalPlayer then
-					ErrorNoHalt(x .. "\n")
+					chat.AddText("pac proxy error on part " .. tostring(self) .. ": " .. x .. "\n")
 				end
 				return
 			end
@@ -467,6 +471,14 @@ function PART:OnThink()
 
 				parent["Set" .. self.VariableName](parent, val)
 			end
+			
+			local str = ""
+			
+			if x then str = str .. math.Round(x, 3) end
+			if y then str = str .. ", " .. math.Round(y, 3) end
+			if z then str = str .. ", " .. math.Round(z, 3) end
+			
+			self.debug_var = str
 		end
 	else
 		local T = type(parent[self.VariableName])
@@ -505,6 +517,14 @@ function PART:OnThink()
 
 					parent["Set" .. self.VariableName](parent, val)
 				end
+				
+				local str = ""
+			
+				if x then str = str .. math.Round(x, 3) end
+				if y then str = str .. ", " .. math.Round(y, 3) end
+				if z then str = str .. ", " .. math.Round(z, 3) end
+				
+				self.debug_var = str
 			end
 		end
 	end

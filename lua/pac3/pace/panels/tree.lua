@@ -32,6 +32,27 @@ do
 			end
 		end	
 		
+		for key, part in pairs(pac.GetParts(true)) do
+		
+			if part.event_triggered ~= nil then
+				local node = part.editor_node
+				if node and node:IsValid() then
+					if part.event_triggered then
+						node.Icon:SetImage("icon16/clock_red.png")
+					else
+						node.Icon:SetImage(pace.PartIcons[part.ClassName])
+					end				
+				end
+			end
+			
+			if part.ClassName == "proxy" and part.Name == "" then
+				local node = part.editor_node
+				if node and node:IsValid() then
+					node:SetText(part:GetName())		
+				end
+			end
+		end
+		
 				
 		if pace.pac_dtree.Think then
 			return pace.pac_dtree.Think(self, ...)
