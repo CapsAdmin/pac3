@@ -82,6 +82,7 @@ function PART:UpdateActTable()
 		
 		ent.pac_acttable = self.ActTable
 		ent.pac_acttable.fallback = ent:GetSequenceActivity(ent:LookupSequence(self.Fallback))
+		ent.pac_holdtype_part = self
 	end
 end
 
@@ -96,8 +97,8 @@ end
 
 function PART:OnHide()
 	local ent = self:GetOwner(true)
-				
-	if ent:IsValid() then
+
+	if ent:IsValid() and ent.pac_holdtype_part == self then
 		ent.pac_acttable = nil
 	end
 end
@@ -115,6 +116,10 @@ end
 hook.Add("TranslateActivity", "pac_acttable", function(ply, act)
 	if IsEntity(ply) and ply:IsValid() and ply.pac_acttable and ply.pac_acttable[act] then
 		if ply.pac_acttable[act] == -1 then
+			if ply.pac_acttable.fallback == -1 then
+				return -- do nothing at all
+			end
+			
 			return ply.pac_acttable.fallback
 		end
 		
