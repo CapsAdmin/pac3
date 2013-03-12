@@ -738,8 +738,8 @@ do -- drawing. this code is running every frame
 					
 				if 
 					draw_type == "viewmodel" or
-					(self.Translucent == true and draw_type == "translucent")  or
-					(self.Translucent == false and draw_type == "opaque")
+					((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
+					((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
 				then
 					
 					pos = pos or Vector(0,0,0)

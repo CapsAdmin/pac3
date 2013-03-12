@@ -235,7 +235,7 @@ PART.Inputs =
 		local ply = self:GetPlayerOwner()
 		local data = ply.pac_proxy_event
 
-		if data and data.name == self:GetName() then
+		if data and pac.HandlePartName(ply, data.name) then
 			self.last_command_proxy_num = data.num
 			return data.num
 		end
