@@ -256,6 +256,11 @@ function PART:GetMaterialFromParent()
 	end
 end
 
+function PART:SetTranslucent(b)
+	self.Translucent = b
+	self:UpdateMaterial()
+end
+
 function PART:GetRawMaterial()
 	if not self.Materialm then
 		local mat = CreateMaterial("pac_material_" .. SysTime(), "VertexLitGeneric", {})
@@ -274,6 +279,12 @@ function PART:UpdateMaterial(now)
 	for key, val in pairs(self.StorableVars) do
 		if self.ShaderParams[key] then
 			self["Set" .. key](self, self[key])
+		end
+	end
+	
+	for key, part in pairs(pac.GetParts()) do
+		if part.Materialm == self.Materialm and self ~= part then
+			part.force_translucent = self.Translucent
 		end
 	end
 end
