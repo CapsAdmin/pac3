@@ -289,6 +289,15 @@ function PART:UpdateMaterial(now)
 	end
 end
 
+function PART:OnRemove()
+	for key, part in pairs(pac.GetParts()) do
+		if part.Materialm == self.Materialm and self ~= part then
+			part.force_translucent = nil
+			part.Materialm = nil
+		end
+	end
+end
+
 function PART:OnEvent(event, ...)
 	if self.suppress_event then return end
 	if event == "material_changed" then

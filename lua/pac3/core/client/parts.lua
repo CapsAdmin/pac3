@@ -56,6 +56,7 @@ function pac.CreatePart(name, owner, skip_hook)
 		remove(part, "AnglePartMultiplier")
 		remove(part, "PositionOffset")
 		remove(part, "AngleOffset")
+		remove(part, "Translucent")
 		
 		if part.ClassName ~= "group" then 
 			remove(part, "DrawOrder") 
