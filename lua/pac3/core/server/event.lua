@@ -1,7 +1,6 @@
 -- event
 concommand.Add("pac_event", function(ply, _, args)
 	if not args[1] then return end
-	print("once")
 	umsg.Start("pac_event")
 		umsg.Entity(ply)
 		umsg.String(args[1])
@@ -10,7 +9,6 @@ end)
 
 concommand.Add("+pac_event", function(ply, _, args)
 	if not args[1] then return end
-	print("on")
 	umsg.Start("pac_event")
 		umsg.Entity(ply)
 		umsg.String(args[1] .. "_on")
@@ -19,7 +17,6 @@ end)
 
 concommand.Add("-pac_event", function(ply, _, args)
 	if not args[1] then return end
-	print("off")
 	umsg.Start("pac_event")
 		umsg.Entity(ply)
 		umsg.String(args[1] .. "_off")
