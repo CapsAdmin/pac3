@@ -3,7 +3,8 @@ function pac.SetupENT(ENT, owner)
 	
 	local function find(parent, name)
 		for key, part in pairs(parent:GetChildren()) do
-			if part:GetName():lower():find(name:lower()) then
+		
+			if part:GetName():lower():find(name) then
 				return part
 			end
 
@@ -14,15 +15,19 @@ function pac.SetupENT(ENT, owner)
 
 	function ENT:FindPACPart(outfit, name)
 	
-		if not outfit.self and outfit[1].self then
+		name = name:lower() 
+	
+		if not outfit.self then
 			for key, val in pairs(outfit) do
 				local part = self:FindPACPart(val, name)
-				if part then
+				if part:IsValid() then
 					return part
 				end
 			end
+			
+			return pac.NULL
 		end
-	
+			
 		self.pac_part_find_cache = self.pac_part_find_cache or {}
 
 		local part = self.pac_outfits[outfit.self.UniqueID] or pac.NULL
@@ -31,15 +36,18 @@ function pac.SetupENT(ENT, owner)
 			local cached = self.pac_part_find_cache[name] or pac.NULL
 
 			if cached:IsValid() then return cached end
-
+			
 			part = find(part, name)
-
-			if part:IsValid() then
+			
+			
+			if part then
 				self.pac_part_find_cache[name] = part
 
 				return part
 			end
 		end
+		
+		return pac.NULL
 	end
 
 	function ENT:AttachPACPart(outfit, owner)
