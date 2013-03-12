@@ -22,12 +22,14 @@ function pac.SetPlayerSize(ply, f)
 	ply:SetViewOffset(def.view * f)
 	ply:SetViewOffsetDucked(def.viewducked * f)
 	
-	ply:SetModelScale(f, 0)
-	ply:SetStepSize(def.step * f)
+	if SERVER then		
+		ply:SetModelScale(f, 0)
+		ply:SetStepSize(def.step * f)
 
-	local phys = ply:GetPhysicsObject()
-	if phys:IsValid() then
-		phys:SetMass(def.mass * f)	
+		local phys = ply:GetPhysicsObject()
+		if phys:IsValid() then
+			phys:SetMass(def.mass * f)	
+		end
 	end
 	
 	--[[
@@ -64,14 +66,19 @@ function pac.SetPlayerSize(ply, f)
 		end)
 	end
 	
-	if CLIENT and ply == pac.LocalPlayer then
-		hook.Add("Think", "pac_check_scale", function()
+	if CLIENT then
+		hook.Add("UpdateAnimation", "pac_check_scale", function(ply)
 			local ply = pac.LocalPlayer
 			local siz = ply.pac_player_size or 1
 		
 			if siz ~= 1 and (ply:GetModelScale() ~= siz or ply:GetViewOffset() ~= def.view * siz) then
 				pac.SetPlayerSize(ply, ply.pac_player_size)
-			end		
+			end	
+			
+			if siz ~= 1 then
+				ply:SetPlaybackRate(siz)
+				return true
+			end
 		end)
 	end
 	

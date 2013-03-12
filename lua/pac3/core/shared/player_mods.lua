@@ -31,18 +31,21 @@ function pac.HandleServerModifiers(data, remove)
 			offset = offset - 1
 			pac.SetPlayerSize(data.owner, offset)
 		elseif offset == 1 then
-		
+			local size
+			
 			for key, part in pairs(data.part.children) do
 				if 
 					part.self.ClassName == "entity" and
-					part.self.Size and part.self.Size ~= 1
+					part.self.Size and 
+					part.self.Size ~= 1
 				then
-					pac.SetPlayerSize(data.owner, part.self.Size)
-					return
+					size = part.self.Size
 				end
-			end
+			end	
 			
-			pac.SetPlayerSize(data.owner, 1)
+			if size then
+				pac.SetPlayerSize(data.owner, size)
+			end
 		end
 	end
 end
