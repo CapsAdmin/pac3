@@ -773,13 +773,13 @@ do -- drawing. this code is running every frame
 	
 	local LocalToWorld = LocalToWorld
 	
-	function PART:GetDrawPosition()		
+	function PART:GetDrawPosition(bone_override)		
 		if pac.FrameNumber ~= self.last_drawpos_framenum or not self.last_drawpos then
 			self.last_drawpos_framenum = pac.FrameNumber
 
 			local owner = self:GetOwner()
 			if owner:IsValid() then
-				local pos, ang = self:GetBonePosition()
+				local pos, ang = self:GetBonePosition(bone_override)
 								
 				pos, ang = LocalToWorld(
 					self.Position or Vector(), 
@@ -803,7 +803,7 @@ do -- drawing. this code is running every frame
 		return Vector(0,0,0), Angle(0,0,0)
 	end
 	
-	function PART:GetBonePosition()		
+	function PART:GetBonePosition(bone_override)		
 		if pac.FrameNumber ~= self.last_bonepos_framenum or not self.last_bonepos then
 			self.last_bonepos_framenum = pac.FrameNumber
 
@@ -820,7 +820,7 @@ do -- drawing. this code is running every frame
 				
 				if ent:IsValid() then
 					-- if the parent part is a model, get the bone position of the parent model
-					pos, ang = pac.GetBonePosAng(ent, self.Bone)
+					pos, ang = pac.GetBonePosAng(ent, bone_override or self.Bone)
 					ent:InvalidateBoneCache()
 				else
 					-- else just get the origin of the part

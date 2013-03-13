@@ -3,5 +3,5 @@
 
 include("hands.lua")
 include("pac_weapon.lua")
-include("player_mods.lua")
+include("modifiers.lua")
 include("footsteps_fix.lua")

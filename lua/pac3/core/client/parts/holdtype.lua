@@ -43,7 +43,7 @@ do
 		temp.CrouchWalk = temp.Crouchwalk
 		temp.Crouchwalk = nil
 	end
-
+	
 	act_mods = temp
 end
 
@@ -55,6 +55,8 @@ pac.StartStorableVars()
 	end
 	
 	pac.GetSet(PART, "Fallback", "")
+	pac.GetSet(PART, "Noclip", "")
+	pac.GetSet(PART, "Air", "")
 pac.EndStorableVars()
 
 for name, act in pairs(act_mods) do
@@ -81,7 +83,12 @@ function PART:UpdateActTable()
 		end
 		
 		ent.pac_acttable = self.ActTable
+		
+		-- custom acts
 		ent.pac_acttable.fallback = ent:GetSequenceActivity(ent:LookupSequence(self.Fallback))
+		ent.pac_acttable.noclip = ent:GetSequenceActivity(ent:LookupSequence(self.Noclip))
+		ent.pac_acttable.air = ent:GetSequenceActivity(ent:LookupSequence(self.Air))
+		
 		ent.pac_holdtype_part = self
 	end
 end
@@ -108,22 +115,28 @@ function PART:OnShow(from_event, from_drawing)
 end
 
 function PART:OnThink()
-	if self:IsHidden() then
-		self:OnHide()
+	if not self:IsHidden() then
+		self:OnShow()
 	end
 end
 
 hook.Add("TranslateActivity", "pac_acttable", function(ply, act)
-	if IsEntity(ply) and ply:IsValid() and ply.pac_acttable and ply.pac_acttable[act] then
-		if ply.pac_acttable[act] == -1 then
-			if ply.pac_acttable.fallback == -1 then
-				return -- do nothing at all
-			end
-			
-			return ply.pac_acttable.fallback
+	if IsEntity(ply) and ply:IsValid() and ply.pac_acttable then
+		if ply.pac_acttable[act] and ply.pac_acttable[act] ~= -1 then
+			return ply.pac_acttable[act]
 		end
 		
-		return ply.pac_acttable[act]
+		if ply.pac_acttable.noclip ~= -1 and ply:GetMoveType() == MOVETYPE_NOCLIP then
+			return ply.pac_acttable.noclip
+		end
+		
+		if ply.pac_acttable.air ~= -1 and ply:GetMoveType() ~= MOVETYPE_NOCLIP and not ply:IsOnGround() then
+			return ply.pac_acttable.air
+		end	
+	
+		if ply.pac_acttable.fallback ~= -1 then
+			return ply.pac_acttable.fallback
+		end
 	end
 end)
 	

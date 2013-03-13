@@ -20,6 +20,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Pow", 1)
 	pac.GetSet(PART, "Axis", "")
 	
+	pac.GetSet(PART, "PlayerAngles", false)
 	pac.GetSet(PART, "ZeroEyePitch", false)
 	pac.GetSet(PART, "ResetVelocitiesOnHide", true)
 	pac.GetSet(PART, "VelocityRoughness", 10)
@@ -80,7 +81,7 @@ function PART:GetVelocity(part)
 end
 
 function PART:CalcEyeAngles(ent)
-	local ang = ent:EyeAngles()
+	local ang = self.PlayerAngles and ent:GetAngles() or ent:EyeAngles()
 	
 	if self.ZeroEyePitch then
 		ang.p = 0

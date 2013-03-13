@@ -41,14 +41,10 @@ local function decimal_hack_pack(tbl)
 	return tbl
 end
 
-CreateClientConVar("pac_server_player_size", 0, true, true)
-
 do -- to server
 	function pac.SendPartToServer(part)
 		local data = {part = part:ToTable()}
 		data.owner = part:GetOwner()
-			
-		pac.HandleServerModifiers(data)
 		
 		if pac.netstream then
 			pac.netstream.Start("pac_submit", data)
@@ -95,7 +91,7 @@ do -- from server
 			part:SetTable(part_data)
 			part:CheckOwner()
 			
-			pac.HandleServerModifiers(part_data)
+			pac.HandleModifiers(part_data, owner)
 			
 			pac.CallHook("OnWoreOutfit", part, owner == pac.LocalPlayer)
 		end)
@@ -111,7 +107,7 @@ do -- from server
 				end
 			end 
 			
-			pac.HandleServerModifiers(owner, true)
+			pac.HandleModifiers(nil, owner)
 		else
 			for key, part in pairs(pac.GetParts()) do
 				if 

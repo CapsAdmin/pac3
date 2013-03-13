@@ -86,17 +86,13 @@ function pac.SubmitPart(data, filter)
 	pac.Parts[uid] = pac.Parts[uid] or {}
 	
 	if type(data.part) == "table" then
-		pac.Parts[uid][data.part.self.UniqueID] = data
-		
-		pac.HandleServerModifiers(data)		
+		pac.Parts[uid][data.part.self.UniqueID] = data	
 	else
 		if data.part == "__ALL__" then
 			pac.Parts[uid] = {}
 		else
 			pac.Parts[uid][data.part] = nil
 		end
-		
-		pac.HandleServerModifiers(data.owner, true)
 	end
 	
 	if filter == false then
@@ -112,6 +108,7 @@ function pac.SubmitPart(data, filter)
 	end
 	
 	if not data.server_only then
+	
 		if pac.netstream then
 			pac.netstream.Start(filter or player.GetAll(), data)
 		else
@@ -122,6 +119,7 @@ function pac.SubmitPart(data, filter)
 		
 		if type(data.part) == "table" then	
 			last_frame = frame_number
+			pac.HandleModifiers(data.part, data.owner)
 		end
 	end
 	
@@ -145,6 +143,10 @@ end
 
 function pac.RemovePart(data)
 	pac.dprint("%s is removed %q", data.owner:GetName(), data.part)
+	
+	if data.part == "__ALL__" then
+		pac.HandleModifiers(nil, data.owner)
+	end
 	
 	pac.SubmitPart(data, data.filter)
 end
@@ -181,8 +183,8 @@ end
 function pac.ClearOutfit(ply)
 	local uid = ply:UniqueID()
 	
-	pac.HandleServerModifiers(ply, true)
 	pac.SubmitPart({part = "__ALL__", uid = ply:UniqueID(), owner = ply})
+	pac.HandleModifiers(nil, ply)
 end
 
 function pac.RequestOutfits(ply)

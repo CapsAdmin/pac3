@@ -1,7 +1,6 @@
 local PART = {}
 
 PART.ClassName = "entity"	
-PART.NonPhysical = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Material", "")
@@ -24,7 +23,9 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Bodygroup", 0)
 	pac.GetSet(PART, "BodygroupState", 0)
 	pac.GetSet(PART, "DrawShadow", true)
+	pac.GetSet(PART, "Weapon", false)
 pac.EndStorableVars()
+
 
 function PART:GetNiceName()
 	local ent = self:GetOwner()
@@ -36,9 +37,23 @@ function PART:GetNiceName()
 			return language.GetPhrase(ent:GetClass())
 		end	
 	end
+			
+	if self.Weapon then
+		return "Weapon"
+	end
 	
 	return self.ClassName
 end
+
+function PART:SetWeapon(b)
+	self:OnHide()
+
+	self.Weapon = b
+	--self.HideGizmo = not b
+	
+	self:OnShow()
+end
+
 
 function PART:OnBuildBonePositions()
 	local ent = self:GetOwner()
@@ -208,18 +223,46 @@ end
 
 local blank_mat = Material("models/wireframe")
 
+local vector_origin = Vector()
+local angle_origin = Angle()
+
 function PART:OnShow()
 	local ent = self:GetOwner()
-	if ent:IsValid() then	
+	if ent:IsValid() then
+		if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
+			ent = ent:GetActiveWeapon()
+		else		
+			if self.Model ~= "" and self:GetOwner() == pac.LocalPlayer and self.Model:lower() ~= self:GetOwner():GetModel():lower() then
+				RunConsoleCommand("pac_setmodel", self.Model)
+			end
+		end
+		
 		function ent.RenderOverride(ent)
 			if self:IsValid() then			
 				if not self.HideEntity then 
-					self:ModifiersPostEvent("PreDraw")
-					
+				
+					self:ModifiersPostEvent("PreDraw")					
 					self:PreEntityDraw(ent)
-					ent:DrawModel()
-					self:PostEntityDraw(ent)
 					
+					local modpos = self.Position ~= vector_origin or self.Angles ~= angle_origin
+					local pos
+					
+					if modpos then
+						pos = ent:GetPos()
+						local pos, ang = self:GetDrawPosition(not self.Weapon and "none" or nil) 
+						ent:SetPos(pos)
+						ent:SetRenderAngles(ang)
+						ent:SetupBones()				
+					end
+					
+					ent:DrawModel()
+					
+					if modpos then				
+						ent:SetPos(pos)
+						ent:SetRenderAngles(angle_origin)
+					end					
+				
+					self:PostEntityDraw(ent)					
 					self:ModifiersPostEvent("OnDraw")
 				end
 			else
@@ -238,25 +281,30 @@ function PART:SetModel(str)
 	
 	if str ~= "" and self:GetOwner() == pac.LocalPlayer then
 		self:OnShow()
-		RunConsoleCommand("cl_playermodel", str)
+		RunConsoleCommand("pac_setmodel", str)
 	end
 end
 
 function PART:OnThink()		
 	if self:IsHidden() then return end
 	
-	local ent = self:GetOwner()
-	
+	local ent = self:GetOwner()	
 	
 	if ent:IsValid() then
+		if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
+			ent = ent:GetActiveWeapon()
+		end
+	
 		-- holy shit why does shooting reset the scale
 		-- dumb workaround
 		if ent:IsPlayer() and ent:GetModelScale() ~= self.Size then
 			self:UpdateScale(ent)
 		end
 				
-		if not self.current_ro or self.current_ro ~= ent.RenderOverride then
+		if not self.current_ro or self.current_ro ~= ent.RenderOverride or ent ~= self.last_ent then
+			self:OnHide()
 			self:OnShow()
+			self.last_ent = ent
 		end
 	end
 end
@@ -264,6 +312,10 @@ end
 function PART:OnHide()
 	local ent = self:GetOwner()
 	if ent:IsValid() then
+		if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
+			ent = ent:GetActiveWeapon()
+		end
+	
 		ent.RenderOverride = nil
 		
 		pac.SetModelScale(ent, Vector(1,1,1))
@@ -286,14 +338,6 @@ function PART:SetHideEntity(b)
 		self:OnShow()
 	else
 		self:OnHide()
-	end
-end
-
-function PART:GetDrawPosition()
-	local ent = self:GetOwner()
-
-	if ent:IsValid() then
-		return ent:GetPos(), ent:GetAngles()
 	end
 end
 
