@@ -84,3 +84,36 @@ function pac.SetPlayerSize(ply, f)
 	
 	ply.pac_player_size = f
 end
+
+pac.AddServerModifier("size", function(data, owner) 
+	if not data then
+		pac.SetPlayerSize(owner, 1)
+	else
+		local offset = 1
+
+		if owner.GetInfoNum then
+			offset = owner:GetInfoNum("pac_modifier_size", 0)
+		end
+		
+		if offset > 1 then
+			offset = offset - 1
+			pac.SetPlayerSize(owner, offset)
+		elseif offset == 1 then
+			local size
+			
+			for key, part in pairs(data.children) do
+				if 
+					part.self.ClassName == "entity" and
+					part.self.Size and 
+					part.self.Size ~= 1
+				then
+					size = part.self.Size
+				end
+			end	
+			
+			if size then
+				pac.SetPlayerSize(owner, size)
+			end
+		end
+	end
+end)

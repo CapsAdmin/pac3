@@ -22,7 +22,7 @@ do -- pace
 
 	function mctrl.SetTarget(part)
 		part = part or pac.NULL
-		if part:IsValid() and part.NonPhysical then
+		if part:IsValid() and part.NonPhysical or part.HideGizmo then
 			mctrl.target = pac.NULL
 		else
 			mctrl.target = part
@@ -114,14 +114,14 @@ do -- pace
 		if part.ClassName == "clip" then
 			part = part.Parent
 		end
-		
+				
 		if not part:IsValid() then return 3 end
 	
-		local dist = part.cached_pos:Distance(pace.GetViewPos()) / 70
+		local dist = (part.cached_pos:Distance(pace.GetViewPos()) / 70) + 10
 		
 		if dist > 1 then dist = 1 / dist end
-				
-		return 7 * math.rad(pace.GetViewFOV()) / dist
+		
+		return math.rad(pace.GetViewFOV()) / dist
 	end
 	
 	local cvar_pos_grid = CreateClientConVar("pac_grid_pos_size", "4")

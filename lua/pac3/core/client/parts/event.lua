@@ -16,7 +16,7 @@ function PART:GetNiceName()
 	local str = self:GetEvent()
 	
 	if self:GetArguments() ~= "" then
-		str = str .. " " .. self:GetOperator() .. " ".. self:GetArguments()
+		str = str .. " " .. self:GetOperator() .. " \"".. self:GetArguments():gsub(";", " or ") .. "\""
 	end
 	
 	return pac.PrettifyName(str)
@@ -35,6 +35,19 @@ end
 
 PART.Events = 
 {
+	holdtype = 
+	{
+		arguments = {{find = "string"}},
+		callback = function(self, ent, find, hide)
+			local ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
+			if ent:IsValid() then			
+				if self:StringOperator(ent:GetHoldType(), find) then
+					return true
+				end
+			end
+		end,
+	},
+
 	is_crouching =
 	{
 		callback = function(self, ent)

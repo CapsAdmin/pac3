@@ -262,7 +262,7 @@ function pace.TranslatePropertiesKey(key, obj)
 		return "part"
 	end
 	
-	if key == "sequence" or key == "sequencename" or (obj.ClassName == "holdtype" and (obj.ActMods[key_] or key == "fallback")) then
+	if key == "sequence" or key == "sequencename" or (obj.ClassName == "holdtype" and (obj.ActMods[key_] or key == "fallback" or key == "noclip" or key == "air")) then
 		return "sequence"
 	end
 	
