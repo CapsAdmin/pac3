@@ -254,6 +254,8 @@ function PART:OnShow()
 					
 						pos = ent:GetPos()
 						local pos, ang = self:GetDrawPosition(not self.Weapon and "none" or nil) 
+						self.cached_pos = pos
+						self.cached_ang = ang
 						ent:SetPos(pos)
 						ent:SetRenderAngles(ang)
 						ent:SetupBones()				

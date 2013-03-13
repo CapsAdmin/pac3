@@ -117,7 +117,7 @@ do -- pace
 				
 		if not part:IsValid() then return 3 end
 	
-		local dist = (part.cached_pos:Distance(pace.GetViewPos()) / 70) + 10
+		local dist = (part.cached_pos:Distance(pace.GetViewPos()) / 70)
 		
 		if dist > 1 then dist = 1 / dist end
 		
