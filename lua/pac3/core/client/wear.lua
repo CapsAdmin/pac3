@@ -86,7 +86,9 @@ do -- from server
 			end
 		end
 	
-		timer.Simple(0.25, function()		
+		timer.Simple(0.25, function()
+			if not owner:IsValid() then return end
+			
 			local part = pac.CreatePart(part_data.self.ClassName, owner)
 			part:SetTable(part_data)
 			part:CheckOwner()

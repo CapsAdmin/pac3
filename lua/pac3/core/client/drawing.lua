@@ -175,6 +175,9 @@ local last_enable
 
 local should_suppress = setup_suppress()
 function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)	
+	-- commonly used variables		
+	pac.LocalPlayer = LocalPlayer() 
+	
 	if not cvar_enable:GetBool() then
 		if last_enable ~= cvar_enable:GetBool() then
 			for key, ent in pairs(pac.drawn_entities) do
@@ -197,11 +200,10 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 	end
 	
 	if should_suppress() then return end
-		
+	
 	-- commonly used variables		
 	pac.RealTime = RealTime()
 	pac.FrameNumber = FrameNumber()
-	pac.LocalPlayer = LocalPlayer() 
 
 	draw_dist = cvar_distance:GetInt()
 	radius = 0

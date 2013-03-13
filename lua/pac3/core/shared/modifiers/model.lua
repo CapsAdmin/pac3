@@ -4,7 +4,7 @@ if SERVER then
 		model = player_manager.AllValidModels()[model] or model
 		
 		if not util.IsValidModel(model) then
-			model = player_manager.TranslatePlayerModel(owner:GetInfo("cl_playermodel"))
+			model = player_manager.TranslatePlayerModel(ply:GetInfo("cl_playermodel"))
 		end
 		
 		ply:SetModel(model)
