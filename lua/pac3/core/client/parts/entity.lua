@@ -100,17 +100,6 @@ function PART:SetBodygroup(var)
 	end)		
 end
 
-function PART:SetSkin(var)
-	var = var or 0
-
-	self.Skin = var
-
-	local ent = self:GetOwner()
-	if ent:IsValid() then
-		ent:SetSkin(var)
-	end
-end
-
 function PART:UpdateScale(ent)
 	ent = ent or self:GetOwner()
 	if ent:IsValid() then				
@@ -247,23 +236,25 @@ function PART:OnShow()
 					local modpos = self.Position ~= vector_origin or self.Angles ~= angle_origin
 					local pos
 					
-					if modpos then					
-						if self.Weapon then
-							ent:GetOwner():RenderOverride(true)
-						end
-					
+					if modpos then										
 						pos = ent:GetPos()
+						
 						local pos, ang = self:GetDrawPosition(not self.Weapon and "none" or nil) 
 						self.cached_pos = pos
 						self.cached_ang = ang
+						
 						ent:SetPos(pos)
 						ent:SetRenderAngles(ang)
-						ent:SetupBones()				
+						ent:SetupBones()
+					else
+						self.cached_pos = ent:GetPos()
+						self.cached_ang = ent:GetAngles()
 					end
 					
-					if skip then return end
-					ent:DrawModel()
+					ent:SetSkin(self.Skin)
 					
+					ent:DrawModel()
+										
 					if modpos then				
 						ent:SetPos(pos)
 						ent:SetRenderAngles(angle_origin)
@@ -301,7 +292,7 @@ function PART:OnThink()
 		if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
 			ent = ent:GetActiveWeapon()
 		end
-	
+					
 		-- holy shit why does shooting reset the scale
 		-- dumb workaround
 		if ent:IsPlayer() and ent:GetModelScale() ~= self.Size then
