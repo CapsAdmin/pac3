@@ -237,7 +237,7 @@ function PART:OnShow()
 			end
 		end
 		
-		function ent.RenderOverride(ent)
+		function ent.RenderOverride(ent, skip)
 			if self:IsValid() then			
 				if not self.HideEntity then 
 				
@@ -247,7 +247,11 @@ function PART:OnShow()
 					local modpos = self.Position ~= vector_origin or self.Angles ~= angle_origin
 					local pos
 					
-					if modpos then
+					if modpos then					
+						if self.Weapon then
+							ent:GetOwner():RenderOverride(true)
+						end
+					
 						pos = ent:GetPos()
 						local pos, ang = self:GetDrawPosition(not self.Weapon and "none" or nil) 
 						ent:SetPos(pos)
@@ -255,6 +259,7 @@ function PART:OnShow()
 						ent:SetupBones()				
 					end
 					
+					if skip then return end
 					ent:DrawModel()
 					
 					if modpos then				
