@@ -117,11 +117,13 @@ do -- pace
 				
 		if not part:IsValid() then return 3 end
 	
-		local dist = (part.cached_pos:Distance(pace.GetViewPos()) / 70)
+		local dist = (part.cached_pos:Distance(pace.GetViewPos()) / 50)
 		
-		if dist > 1 then dist = 1 / dist end
+		if dist > 1 then 
+			dist = 1 / dist 
+		end
 		
-		return math.rad(pace.GetViewFOV()) / dist
+		return 5 * math.rad(pace.GetViewFOV()) / dist
 	end
 	
 	local cvar_pos_grid = CreateClientConVar("pac_grid_pos_size", "4")
