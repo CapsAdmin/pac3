@@ -76,12 +76,13 @@ list.Set(
 	"DesktopWindows", 
 	"PACEditor",
 	{
-		title           = "PAC Editor",
-		icon            = "icon64/playermodel.png",
-		width           = 960,
-		height          = 700,
-		onewindow       = true,
-		init            = function()
+		title = "PAC Editor",
+		icon = "icon64/playermodel.png",
+		width = 960,
+		height = 700,
+		onewindow = true,
+		init = function(icn, pnl)
+			pnl:Remove()
 			pace.OpenEditor()
 		end
 	}

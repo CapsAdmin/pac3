@@ -1,8 +1,0 @@
-"AddonInfo"
-{
-	"name"        "pac"
-	"version"     "3"
-	"author_name" "CapsAdmin"
-	"author_url"  "http://steamcommunity.com/id/CapsAdmin"
-	"info"        "the third version of pac"
-}

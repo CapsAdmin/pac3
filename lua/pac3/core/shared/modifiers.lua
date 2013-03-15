@@ -9,6 +9,7 @@ function pac.GetServerModifiers()
 end
 
 function pac.HandleModifiers(data, owner)
+	if not owner:IsValid() then return end
 	for key, func in pairs(pac.GetServerModifiers()) do
 		func(data, owner)
 	end
