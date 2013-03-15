@@ -491,6 +491,28 @@ function PART:SetColor(var)
 	self.Colorf = Color((var.r/255) * self.Brightness, (var.g/255) * self.Brightness, (var.b/255) * self.Brightness)
 end
 
+function PART:FixMaterial()
+	local mat = self.Materialm
+	
+	if not mat then return end
+	
+	local shader = mat:GetShader()
+	
+	if shader == "UnlitGeneric" then
+		local tex_path = mat:GetString("$basetexture")
+		
+		if tex_path then		
+			local params = {}
+			
+			params["$basetexture"] = tex_path
+			params["$vertexcolor"] = 1
+			params["$additive"] = 1
+			
+			self.Materialm = CreateMaterial("pac_fixmat_" .. os.clock(), "VertexLitGeneric", params)
+		end		
+	end
+end
+
 function PART:SetMaterial(var)
 	var = var or ""
 	
@@ -499,6 +521,7 @@ function PART:SetMaterial(var)
 			self.Materialm = nil
 		else			
 			self.Materialm = pac.Material(var, self)
+			self:FixMaterial()
 			self:CallEvent("material_changed")
 		end
 	end

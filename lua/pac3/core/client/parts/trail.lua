@@ -87,7 +87,7 @@ function PART:FixMaterial()
 			params["$vertexcolor"] = 1
 			params["$vertexalpha"] = 1
 			
-			self.Materialm = CreateMaterial(tostring(self) .. "_pac_trail", "UnlitGeneric", params)
+			self.Materialm = CreateMaterial("pac_fixmat_" .. os.clock(), "VertexLitGeneric", params)
 		end		
 	end
 end
@@ -98,14 +98,14 @@ function PART:SetMaterial(var)
 	if not pac.Handleurltex(self, var) then
 		if type(var) == "string" then
 			self.Materialm = pac.Material(var, self)
-			self:FixMaterial()
 			self:CallEvent("material_changed")
 		elseif type(var) == "IMaterial" then
 			self.Materialm = var
-			self:FixMaterial()
 			self:CallEvent("material_changed")
 		end
 	end
+
+	self:FixMaterial()
 
 	self.TrailPath = var
 end

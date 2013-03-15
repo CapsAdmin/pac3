@@ -39,6 +39,7 @@ pac.StartStorableVars()
 	
 	--pac.GetSet(PART, "AddVelocityFromOwner", false)
 	pac.GetSet(PART, "OwnerVelocityMultiplier", 0)
+	pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -88,12 +89,19 @@ local function StickCallback(particle, hitpos, normal)
 	particle:SetEndAlpha(particle.StickEndAlpha or 0)
 end
 
-function PART:Initialize()
+function PART:CreateEmitter()
 	self.NextShot = pac.RealTime
 	self.Created = pac.RealTime + 0.1
-	self.emitter = ParticleEmitter(self.cached_pos, false)
-	self:Set3D(self:Get3D())
+	
+	if self.last_3d ~= self["3D"] then
+		self.emitter = ParticleEmitter(self.cached_pos, self["3D"])
+		self.last_3d = self["3D"]
+	end
+	
+	self.emitter:SetNoDraw(true)
 end
+
+PART.Initialize = PART.CreateEmitter
 
 function PART:SetNumberParticles(num)
 	self.NumberParticles = math.Clamp(num, 0, 100)
@@ -101,11 +109,13 @@ end
 
 function PART:Set3D(b)
 	self["3D"] = b 
-	self.emitter = ParticleEmitter(self.cached_pos, b)
+	self:CreateEmitter()
 end
 
 function PART:OnDraw(owner, pos, ang)
 	if not self:IsHidden() then
+		self.emitter:SetPos(pos)
+		self.emitter:Draw()
 		self:EmitParticles(pos, ang)
 	end
 end
