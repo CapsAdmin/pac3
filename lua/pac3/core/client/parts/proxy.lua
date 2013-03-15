@@ -64,7 +64,7 @@ function PART:GetVelocity(part)
 	if not pos or pos == Vector() then
 		if IsEntity(part) then
 			pos = part:GetPos()
-		else
+		else part:GetOwner():IsValid() then
 			pos = part:GetOwner():GetPos()
 		end
 	end
@@ -420,7 +420,7 @@ function PART:OnThink()
 
 			if not ok then
 				if self:GetPlayerOwner() == pac.LocalPlayer then
-					chat.AddText("pac proxy error on part " .. tostring(self) .. ": " .. x .. "\n")
+					chat.AddText("pac proxy error on " .. tostring(self) .. ": " .. x .. "\n")
 				end
 				return
 			end
