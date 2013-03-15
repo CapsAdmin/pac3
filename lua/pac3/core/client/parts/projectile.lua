@@ -79,13 +79,16 @@ function PART:Shoot(pos, ang)
 		phys:AddVelocity((ang:Forward() + (VectorRand():Angle():Forward() * self.Spread)) * self.Speed * 1000)
 		phys:EnableCollisions(self.Collisions)	
 		phys:SetDamping(self.Damping, 0)
+		
 		if self.OutfitPart:IsValid() then
 			ent.pac_draw_distance = 0			
 			
 			local tbl = self.OutfitPart:ToTable()
 			
 			tbl.self.Name = "projectile " .. self:GetPlayerOwner():UniqueID() .. os.clock()
-			local part = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner(), true)
+			
+			pac.SuppressCreatedEvents = true
+			local part = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner())
 			
 			local id = part.Id + self:GetPlayerOwner():UniqueID()
 			
@@ -104,8 +107,8 @@ function PART:Shoot(pos, ang)
 				if self:IsValid() then self.projectiles[idx] = nil end
 				pac.drawn_entities[id] = nil
 				part:Remove()
-			end)
-			
+			end)			
+			pac.SuppressCreatedEvents = false
 		end	
 	end)
 end
