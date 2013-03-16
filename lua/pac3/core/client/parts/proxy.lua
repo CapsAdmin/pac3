@@ -64,7 +64,7 @@ function PART:GetVelocity(part)
 	if not pos or pos == Vector() then
 		if IsEntity(part) then
 			pos = part:GetPos()
-		else part:GetOwner():IsValid() then
+		elseif part:GetOwner():IsValid() then
 			pos = part:GetOwner():GetPos()
 		end
 	end
