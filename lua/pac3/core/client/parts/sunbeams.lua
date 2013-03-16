@@ -11,7 +11,7 @@ pac.EndStorableVars()
 
 function PART:GetNiceName()
 	local mult = self:GetMultiplier()
-	return mult > 0 and "bright sunbeams" or mult < 0 and "dark sunbeams"
+	return mult > 0 and "bright sunbeams" or mult < 0 and "dark sunbeams" or self.ClassName
 end
 
 function PART:OnDraw(owner, pos, ang)
