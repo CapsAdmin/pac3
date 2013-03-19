@@ -189,6 +189,8 @@ function pace.AddSessionsToMenu(menu)
 		end
 	end
 	
+	menu:AddSpacer()
+	
 	for key, data in pairs(pace.GetSessions()) do
 		local menu = menu:AddSubMenu(data.Name, function() pace.LoadSession(data.FileName) end)
 		
