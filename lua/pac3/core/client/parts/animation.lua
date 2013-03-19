@@ -62,9 +62,9 @@ end
 
 PART.random_seqname = ""
 
-function PART:SetSequence(name)
+function PART:SetSequenceName(name)
 	self.SequenceName = name
-	self.random_seqname = table.Random(self.SequenceName:Split(";"))
+	self.random_seqname = table.Random(name:Split(";"))
 end
 
 function PART:OnShow()
@@ -163,9 +163,7 @@ function PART:OnThink()
 				end
 			end
 		end
-		
-		local name = self.SequenceName
-		
+				
 		local seq = ent:LookupSequence(self.random_seqname)
 		
 		if self.OwnerCycle then
