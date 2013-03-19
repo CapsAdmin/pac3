@@ -5,6 +5,8 @@ pace.Fonts =
 	"DermaDefault",
 }
 
+pace.ShadowedFonts = {}
+
 for i = 1, 5 do
 	surface.CreateFont("pac_font_"..i, 
 	{
@@ -16,16 +18,17 @@ for i = 1, 5 do
 	table.insert(pace.Fonts, i, "pac_font_"..i)
 end
 
-pace.ShadowedFonts = 
-{
-	["BudgetLabel"] = true,
-	["DefaultSmallDropShadow"] = true,
-	["TabLarge"] = true,
-	["DefaultFixedOutline"] = true,
-	["ChatFont"] = true,
-	["DefaultFixedDropShadow"] = true,
-}
-
+for i = 1, 5 do
+	surface.CreateFont("pac_shadowed_font_"..i, 
+	{
+		font = "Tahoma",
+		size = 11 + i,
+		weight = 50,
+		antialias = true,
+		shadow = true,
+	})
+	table.insert(pace.ShadowedFonts, i, "pac_shadowed_font_"..i)
+end
 
 local font_cvar = CreateClientConVar("pac_editor_font", pace.Fonts[1])
 

@@ -121,8 +121,16 @@ local function GetBonePosition(ent, id)
 end
 
 local function GetBonePosition(ent, id)
-	local pos, ang =  ent:GetBonePosition(id)
+	local pos, ang, mat = ent:GetBonePosition(id)
 	
+	if pos == ent:GetPos() then
+		mat = ent:GetBoneMatrix(id)
+		if mat then
+			pos = mat:GetTranslation()
+			ang = mat:GetAngles()
+		end
+	end
+		
 	if ang and ent:GetClass() == "viewmodel" and ent:GetOwner():IsPlayer() and ent:GetOwner():GetActiveWeapon().ViewModelFlip then
 		ang.r = -ang.r
 	end

@@ -132,6 +132,20 @@ function pace.LoadSession(name, append)
 	end
 end
 
+function pace.LoadSessionFromTable(data)
+	pac.RemoveAllParts(true)
+			
+	timer.Simple(0.1, function()
+
+		for key, tbl in pairs(data) do
+			local part = pac.CreatePart(tbl.self.ClassName)
+			part:SetTable(tbl)
+		end
+		
+		pace.RefreshTree(true)
+	end)
+end
+
 function pace.GetSessions()
 	local out = {}
 	
@@ -166,6 +180,14 @@ function pace.AddSessionsToMenu(menu)
 			end
 		)
 	end)
+	
+	if pace.example_outfits then
+		local examples = menu:AddSubMenu(L"examples")
+		examples.GetDeleteSelf = function() return false end
+		for name, data in pairs(pace.example_outfits) do
+			examples:AddOption(name, function() pace.LoadSessionFromTable(data) end)
+		end
+	end
 	
 	for key, data in pairs(pace.GetSessions()) do
 		local menu = menu:AddSubMenu(data.Name, function() pace.LoadSession(data.FileName) end)

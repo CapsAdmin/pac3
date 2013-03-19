@@ -41,6 +41,11 @@ function pace.CheckShortcuts()
 			pace.Call("ToggleFocus")
 			last = CurTime() + 0.2
 		end
+		
+		if input.IsKeyDown(KEY_LALT) and input.IsKeyDown(KEY_E) then
+			pace.Call("ToggleFocus", true)
+			last = CurTime() + 0.2
+		end
 	end
 end
 

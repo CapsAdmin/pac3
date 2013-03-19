@@ -88,18 +88,20 @@ function pace.IsFocused()
 	return pace.Focused
 end
 
-function pace.GainFocus()
+function pace.GainFocus(show_editor)
 	local self = pace.Editor
 	if self:IsValid() then
 		if self.allowclick ~= false then
 			self:MakePopup()
 			pace.Focused = true
-			self:AlphaTo(255, 0.1, 0)
+			if not show_editor then
+				self:AlphaTo(255, 0.1, 0)
+			end
 		end
 	end
 end
 
-function pace.KillFocus()
+function pace.KillFocus(show_editor)
 	local self = pace.Editor
 	if self:IsValid() then
 		self:KillFocus()
@@ -107,8 +109,11 @@ function pace.KillFocus()
 		self:SetKeyBoardInputEnabled(false)
 		gui.EnableScreenClicker(false)
 		pace.Focused = false
-		self:AlphaTo(0, 0.1, 0)
-				
+		
+		if not show_editor then
+			self:AlphaTo(0, 0.1, 0)
+		end
+		
 		self.allowclick = false
 
 		timer.Simple(0.2, function()

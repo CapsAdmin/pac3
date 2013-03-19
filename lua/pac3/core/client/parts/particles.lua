@@ -40,6 +40,7 @@ pac.StartStorableVars()
 	--pac.GetSet(PART, "AddVelocityFromOwner", false)
 	pac.GetSet(PART, "OwnerVelocityMultiplier", 0)
 	pac.GetSet(PART, "Translucent", true)
+	pac.GetSet(PART, "DrawManual", false)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -97,8 +98,11 @@ function PART:CreateEmitter()
 		self.emitter = ParticleEmitter(self.cached_pos, self["3D"])
 		self.last_3d = self["3D"]
 	end
-	
-	self.emitter:SetNoDraw(true)
+end
+
+function PART:SetDrawManual(b)
+	self.DrawManual = b
+	self.emitter:SetNoDraw(b)
 end
 
 PART.Initialize = PART.CreateEmitter
@@ -115,7 +119,9 @@ end
 function PART:OnDraw(owner, pos, ang)
 	if not self:IsHidden() then
 		self.emitter:SetPos(pos)
-		self.emitter:Draw()
+		if self.DrawManual then 
+			self.emitter:Draw()
+		end
 		self:EmitParticles(pos, ang)
 	end
 end

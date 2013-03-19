@@ -132,14 +132,23 @@ function PART:OnThink()
 end
 
 function PART:OnParent(part)
-	timer.Simple(0, function() self:OnShow() end)
+	timer.Simple(0, function() self:Enable() end)
 end
 
 function PART:OnUnParent(part)
-	timer.Simple(0, function() self:OnHide() end)
+	timer.Simple(0, function() self:Disable() end)
 end
 
+
 function PART:OnShow()
+	timer.Simple(0, function() self:Enable() end)
+end
+
+function PART:OnHide()
+	timer.Simple(0, function() self:Disable() end)
+end
+
+function PART:Enable()
 	local part = self:GetParent()
 	if part.ClassName ~= "model" then return end
 	
@@ -156,7 +165,7 @@ function PART:OnShow()
 	end
 end
 
-function PART:OnHide()
+function PART:Disable()
 	local part = self:GetParent()
 	if part.ClassName ~= "model" then return end
 		

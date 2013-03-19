@@ -156,8 +156,10 @@ PART.Events =
 	
 	is_on_ground = 
 	{ 
+		arguments = {{exclude_noclip = "boolean"}},
+		callback = function(self, ent, exclude_noclip)
 		
-		callback = function(self, ent)
+			if exclude_noclip and ent:GetMoveType() == MOVETYPE_NOCLIP then return false end
 			--return ent.IsOnGround and ent:IsOnGround()
 			
 			local res = util.TraceHull({
@@ -223,11 +225,17 @@ PART.Events =
 	{
 		arguments = {{find = "string"}, {hide = "boolean"}},
 		callback = function(self, ent, find, hide)
-			local ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
-			if ent:IsValid() then
-				if self:StringOperator(ent:GetClass(), find) then
+		
+			if ent == pac.LocalPlayer:GetViewModel() then
+				ent = pac.LocalPlayer
+			end
+			
+			local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
+			
+			if wep:IsValid() then
+				if self:StringOperator(wep:GetClass(), find) then
 					if not self:IsHidden() then 
-						pac.HideWeapon(ent, hide)
+						pac.HideWeapon(wep, hide)
 					end
 					return true
 				end

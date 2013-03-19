@@ -1,8 +1,8 @@
-function pace.OnToggleFocus()
+function pace.OnToggleFocus(show_editor)
 	if pace.Focused then
-		pace.KillFocus()
+		pace.KillFocus(show_editor)
 	else
-		pace.GainFocus()
+		pace.GainFocus(show_editor)
 	end
 end
 
