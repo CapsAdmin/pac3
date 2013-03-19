@@ -1,5 +1,117 @@
 pace.example_outfits = {}
 --pace.example_outfits[""] = {}
+pace.example_outfits["spinning parts"] = {[1] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+					},
+					["self"] = {
+						["ParentName"] = "hoverball",
+						["ClassName"] = "sunbeams",
+						["UniqueID"] = "3874516580",
+						["Size"] = -0.15,
+						["Multiplier"] = 0.05,
+						["Name"] = "",
+						["ParentUID"] = "4092294027",
+					},
+				},
+				[2] = {
+					["children"] = {
+					},
+					["self"] = {
+						["ParentName"] = "hoverball",
+						["ClassName"] = "proxy",
+						["UniqueID"] = "4150349410",
+						["Expression"] = "nil, time()*50",
+						["ParentUID"] = "4092294027",
+						["Name"] = "",
+						["VariableName"] = "Angles",
+					},
+				},
+				[3] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ParentName"] = "hoverball",
+								["ClassName"] = "model",
+								["Position"] = Vector(11.699999809265, 0, 0),
+								["UniqueID"] = "3278812056",
+								["Size"] = 0.3,
+								["ParentUID"] = "2145645982",
+								["Name"] = "",
+								["Material"] = "models/shadertest/envball_6",
+							},
+						},
+						[2] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ParentName"] = "hoverball",
+								["ClassName"] = "proxy",
+								["UniqueID"] = "4006368583",
+								["Expression"] = "time()*50, time()*50",
+								["ParentUID"] = "2145645982",
+								["Name"] = "",
+								["VariableName"] = "Angles",
+							},
+						},
+					},
+					["self"] = {
+						["ParentName"] = "hoverball",
+						["Position"] = Vector(0, -51, 0),
+						["Name"] = "",
+						["ClassName"] = "model",
+						["UniqueID"] = "2145645982",
+						["Material"] = "models/lilchewchew/embers",
+						["ParentUID"] = "4092294027",
+						["Angles"] = Angle(1642751, 1642751, 0),
+						["EditorExpand"] = true,
+					},
+				},
+				[4] = {
+					["children"] = {
+					},
+					["self"] = {
+						["ParentName"] = "hoverball",
+						["Invert"] = true,
+						["Name"] = "",
+						["ClassName"] = "model",
+						["Size"] = 15,
+						["UniqueID"] = "1872614930",
+						["ParentUID"] = "4092294027",
+						["Material"] = "models/screenspace",
+						["Brightness"] = 0,
+						["EditorExpand"] = true,
+					},
+				},
+			},
+			["self"] = {
+				["ParentName"] = "group",
+				["Position"] = Vector(0, 0, 98),
+				["Name"] = "",
+				["UniqueID"] = "4092294027",
+				["ClassName"] = "model",
+				["Size"] = 2,
+				["EditorExpand"] = true,
+				["Material"] = "models/effects/goldenwrench",
+				["Bone"] = "none",
+				["ParentUID"] = "883707760",
+				["Angles"] = Angle(0, 1642751, 0),
+			},
+		},
+	},
+	["self"] = {
+		["Name"] = "",
+		["ClassName"] = "group",
+		["UniqueID"] = "883707760",
+		["EditorExpand"] = true,
+	},
+},
+}
 pace.example_outfits["boombox"] = {[1] = {
 	["children"] = {
 		[1] = {
