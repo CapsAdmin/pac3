@@ -15,6 +15,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Min", 0)
 	pac.GetSet(PART, "Max", 1)
 	pac.GetSet(PART, "WeaponHoldType", "none")
+	pac.GetSet(PART, "OwnerCycle", false)
 pac.EndStorableVars()
  
 function PART:GetNiceName()
@@ -22,8 +23,6 @@ function PART:GetNiceName()
 	
 	if str == "" and self:GetWeaponHoldType() ~= "none" then
 		str = self:GetWeaponHoldType()
-	else
-		str = self.ClassName
 	end
 	
 	return pac.PrettifyName(str)
@@ -61,7 +60,16 @@ function PART:OnHide()
 	self.last_holdtype = nil
 end
 
+PART.random_seqname = ""
+
+function PART:SetSequence(name)
+	self.SequenceName = name
+	self.random_seqname = table.Random(self.SequenceName:Split(";"))
+end
+
 function PART:OnShow()
+	self.random_seqname = table.Random(self.SequenceName:Split(";"))
+	
 	self.last_holdtype = nil
 end
 
@@ -155,8 +163,18 @@ function PART:OnThink()
 				end
 			end
 		end
-	
-		local seq = ent:LookupSequence(self.SequenceName)
+		
+		local name = self.SequenceName
+		
+		local seq = ent:LookupSequence(self.random_seqname)
+		
+		if self.OwnerCycle then
+			local owner = self.BaseClass.GetOwner(self, true)
+			ent:SetSequence(seq)
+			ent:SetCycle(owner:GetCycle())
+			return
+		end
+		
 		local rate = math.min((self.Rate * (ent:SequenceDuration(seq) or 0)), 1)
 				
 		if seq ~= -1 then
@@ -168,7 +186,7 @@ function PART:OnThink()
 				return
 			end
 		else
-			seq = tonumber(self.SequenceName) or -1
+			seq = tonumber(self.random_seqname) or -1
 			
 			if seq ~= -1 then
 				ent:SetSequence(seq)

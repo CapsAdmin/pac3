@@ -24,11 +24,15 @@ function PART:SetColor(v)
 	self.ColorC.r = v.r
 	self.ColorC.g = v.g
 	self.ColorC.b = v.b
+	
+	self.Color = v
 end
 
 function PART:SetAlpha(n)
 	self.ColorC = self.ColorC or Color(255, 255, 255, 255)
 	self.ColorC.a = n * 255
+	
+	self.Alpha = n
 end
 
 function PART:SetOutlineColor(v)
@@ -37,11 +41,15 @@ function PART:SetOutlineColor(v)
 	self.OutlineColorC.r = v.r
 	self.OutlineColorC.g = v.g
 	self.OutlineColorC.b = v.b
+	
+	self.OutlineColor = v
 end
 
 function PART:SetOutlineAlpha(n)
 	self.OutlineColorC = self.OutlineColorC or Color(255, 255, 255, 255)
 	self.OutlineColorC.a = n * 255
+	
+	self.OutlineAlpha = n
 end
 
 local cam_Start3D = cam.Start3D

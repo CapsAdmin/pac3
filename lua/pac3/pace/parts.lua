@@ -278,13 +278,13 @@ do -- menu
 		end)
 		
 		menu:AddOption(L"load from url", function()
-			Derma_StringRequest(
+				Derma_StringRequest(
 				L"load part",
 				L"pastebin urls also work!",
 				"",
 
-				function(name)
-					pace.LoadSession(name, append)
+				function(url)
+					pace.LoadPartFromURL(obj, url)
 				end
 			)
 		end)

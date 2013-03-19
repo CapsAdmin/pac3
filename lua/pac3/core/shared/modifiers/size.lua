@@ -76,7 +76,7 @@ function pac.SetPlayerSize(ply, f)
 			end	
 			
 			if siz ~= 1 then
-				ply:SetPlaybackRate(siz)
+				ply:SetPlaybackRate(1/siz)
 				return true
 			end
 		end)
