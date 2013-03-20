@@ -90,6 +90,10 @@ function PART:CalcEyeAngles(ent)
 	return ang
 end
 
+local function try_viewmodel(ent)
+	return ent == pac.LocalPlayer:GetViewModel() and pac.LocalPlayer or ent
+end
+
 PART.Inputs =
 {
 	time = RealTime,
@@ -112,6 +116,8 @@ PART.Inputs =
 
 	aim_length = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
+		
+		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
 			local res = util.QuickTrace(owner:EyePos(), self:CalcEyeAngles(owner):Forward() * 16000, {owner, owner:GetParent()})
@@ -123,6 +129,8 @@ PART.Inputs =
 	end,
 	aim_length_fraction = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
+		
+		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
 			local res = util.QuickTrace(owner:EyePos(), self:CalcEyeAngles(owner):Forward() * 16000, {owner, owner:GetParent()})
@@ -135,6 +143,8 @@ PART.Inputs =
 
 	owner_eye_angle_pitch = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
+		
+		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
 			local n = self:CalcEyeAngles(owner).p
@@ -145,6 +155,8 @@ PART.Inputs =
 	end,
 	owner_eye_angle_yaw = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
+		
+		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
 			local n = self:CalcEyeAngles(owner).y
@@ -155,6 +167,8 @@ PART.Inputs =
 	end,
 	owner_eye_angle_roll = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
+		
+		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
 			local n = self:CalcEyeAngles(owner).r
@@ -167,6 +181,8 @@ PART.Inputs =
 	-- outfit owner
 	owner_velocity_length = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
+		
+		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
 			return self:GetVelocity(owner):Length()
@@ -177,6 +193,8 @@ PART.Inputs =
 	owner_velocity_forward = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
 
+		owner = try_viewmodel(owner)
+		
 		if owner:IsValid() then
 			return self:CalcEyeAngles(owner):Forward():Dot(self:GetVelocity(owner))
 		end
@@ -185,6 +203,8 @@ PART.Inputs =
 	end,
 	owner_velocity_right = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
+		
+		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
 			return self:CalcEyeAngles(owner):Right():Dot(self:GetVelocity(owner))
@@ -194,6 +214,8 @@ PART.Inputs =
 	end,
 	owner_velocity_up = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
+		
+		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
 			return self:CalcEyeAngles(owner):Up():Dot(self:GetVelocity(owner))
@@ -281,6 +303,8 @@ PART.Inputs =
 	owner_health = function(self)
 		local owner = self:GetOwner(self.RootOwner)
 
+		owner = try_viewmodel(owner)
+		
 		if owner:IsValid() then
 			return owner:Health()
 		end
@@ -291,6 +315,8 @@ PART.Inputs =
 	owner_armor = function(self)
 		local owner = self:GetOwner(self.RootOwner)
 
+		owner = try_viewmodel(owner)
+		
 		if owner:IsValid() then
 			return owner:Armor()
 		end
@@ -300,6 +326,8 @@ PART.Inputs =
 	
 	player_color_r = function(self)
 		local vec = self:GetOwner(self.RootOwner)
+		
+		owner = try_viewmodel(owner)
 		
 		if owner:IsValid() and owner:IsPlayer() then
 			local vec = Vector(GetConVarString("cl_playercolor"))
@@ -312,6 +340,8 @@ PART.Inputs =
 	player_color_g = function(self)
 		local vec = self:GetOwner(self.RootOwner)
 		
+		owner = try_viewmodel(owner)
+		
 		if owner:IsValid() and owner:IsPlayer() then
 			local vec = Vector(GetConVarString("cl_playercolor"))
 			
@@ -322,6 +352,8 @@ PART.Inputs =
 	end,	
 	player_color_b = function(self)
 		local vec = self:GetOwner(self.RootOwner)
+		
+		owner = try_viewmodel(owner)
 		
 		if owner:IsValid() and owner:IsPlayer() then
 			local vec = Vector(GetConVarString("cl_playercolor"))
