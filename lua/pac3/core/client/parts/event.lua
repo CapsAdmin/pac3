@@ -32,6 +32,9 @@ local function calc_velocity(part)
 	return part.last_vel_smooth
 end
 
+local function try_viewmodel(ent)
+	return ent == pac.LocalPlayer:GetViewModel() and pac.LocalPlayer or ent
+end
 
 PART.Events = 
 {
@@ -39,6 +42,7 @@ PART.Events =
 	{
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find, hide)
+			ent = try_viewmodel(ent)
 			local ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 			if ent:IsValid() then			
 				if self:StringOperator(ent:GetHoldType(), find) then
@@ -51,6 +55,7 @@ PART.Events =
 	is_crouching =
 	{
 		callback = function(self, ent)
+			ent = try_viewmodel(ent)
 			return ent.Crouching and ent:Crouching()
 		end,
 	},
@@ -91,6 +96,7 @@ PART.Events =
 	{	
 		arguments = {{health = "number"}},
 		callback = function(self, ent, num)
+			ent = try_viewmodel(ent)
 			if ent:IsValid() and ent.Health then
 				return self:NumberOperator(ent:Health(), num)
 			end
@@ -103,6 +109,7 @@ PART.Events =
 	{	
 		arguments = {{armor = "number"}},
 		callback = function(self, ent, num)
+			ent = try_viewmodel(ent)
 			if ent:IsValid() and ent.Armor then
 				return self:NumberOperator(ent:Armor(), num)
 			end
@@ -115,6 +122,7 @@ PART.Events =
 	{
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, num)
+			ent = try_viewmodel(ent)
 			return self:NumberOperator(ent:GetVelocity():Length(), num)
 		end,
 	},
@@ -123,6 +131,7 @@ PART.Events =
 	{
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, num) 
+			ent = try_viewmodel(ent)
 			return self:NumberOperator(ent:WaterLevel(), num)
 		end,
 	},
@@ -132,7 +141,7 @@ PART.Events =
 		arguments = {{time = "number"}},
 		callback = function(self, ent, time)
 			time = time or 0.1
-						
+			ent = try_viewmodel(ent)
 			if ent.pac_playerspawn and ent.pac_playerspawn + time > pac.RealTime then
 				return true
 			end			
@@ -142,14 +151,15 @@ PART.Events =
 	is_client = 
 	{ 	
 		callback = function(self, ent)
+			ent = try_viewmodel(ent)
 			return self:GetPlayerOwner() == ent
 		end,
 	},
 	
 	is_flashlight_on = 
-	{ 
-		
+	{ 		
 		callback = function(self, ent)
+			ent = try_viewmodel(ent)
 			return ent.FlashlightIsOn and ent:FlashlightIsOn()
 		end,
 	},
@@ -158,7 +168,7 @@ PART.Events =
 	{ 
 		arguments = {{exclude_noclip = "boolean"}},
 		callback = function(self, ent, exclude_noclip)
-		
+			ent = try_viewmodel(ent)
 			if exclude_noclip and ent:GetMoveType() == MOVETYPE_NOCLIP then return false end
 			--return ent.IsOnGround and ent:IsOnGround()
 			
@@ -176,17 +186,17 @@ PART.Events =
 	},
 	
 	is_in_noclip = 
-	{ 
-		
+	{ 		
 		callback = function(self, ent)
+			ent = try_viewmodel(ent)
 			return ent:GetMoveType() == MOVETYPE_NOCLIP and (not ent.GetVehicle or not ent:GetVehicle():IsValid())
 		end,
 	},
 	
 	is_voice_chatting =
-	{ 
-		
+	{ 		
 		callback = function(self, ent)
+			ent = try_viewmodel(ent)
 			return ent.IsSpeaking and ent:IsSpeaking()
 		end,
 	},
@@ -195,6 +205,7 @@ PART.Events =
 	{
 		arguments = {{primary = "boolean"}, {amount = "number"}},
 		callback = function(self, ent, primary, amount)
+			ent = try_viewmodel(ent)
 			local ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 			if ent:IsValid() then
 				return self:NumberOperator(primary and ent:Clip1() or ent:Clip2(), amount)
@@ -206,6 +217,7 @@ PART.Events =
 	{
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find)
+			ent = try_viewmodel(ent)
 			local ent = ent.GetVehicle and ent:GetVehicle() or NULL
 			if ent:IsValid() then
 				return self:StringOperator(ent:GetClass(), find)
@@ -225,10 +237,7 @@ PART.Events =
 	{
 		arguments = {{find = "string"}, {hide = "boolean"}},
 		callback = function(self, ent, find, hide)
-		
-			if ent == pac.LocalPlayer:GetViewModel() then
-				ent = pac.LocalPlayer
-			end
+			ent = try_viewmodel(ent)
 			
 			local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 			
@@ -247,6 +256,7 @@ PART.Events =
 	{
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find)
+			ent = try_viewmodel(ent)
 			local tbl = ent.GetWeapons and ent:GetWeapons()
 			if tbl then
 				for key, val in pairs(tbl) do
@@ -292,9 +302,7 @@ PART.Events =
 		callback = function(self, ent, find, time)
 			time = time or 0.1
 			
-			if ent:GetClass() == "viewmodel" then
-				ent = pac.LocalPlayer
-			end
+			ent = try_viewmodel(ent)
 			
 			local data = ent.pac_anim_event 
 			
@@ -311,6 +319,8 @@ PART.Events =
 		callback = function(self, ent, find, time)
 			time = time or 0.1
 			
+			ent = try_viewmodel(ent)
+			
 			local data = ent.pac_command_event 
 			
 			if data and self:StringOperator(data.name, find) and data.time + time > pac.RealTime then
@@ -324,6 +334,8 @@ PART.Events =
 		arguments = {{find = "string"}, {time = "number"}, {owner = "boolean"}},
 		callback = function(self, ent, find, time, owner)
 			time = time or 0.1
+			
+			ent = try_viewmodel(ent)
 			
 			if owner then
 				owner = self:GetOwner(true)
@@ -354,6 +366,8 @@ PART.Events =
 			local owner = self:GetOwner(self.RootOwner)
 			local parent = self:GetParent()
 			
+			owner = try_viewmodel(owner)
+			
 			if parent:IsValid() and owner:IsValid() then
 				return self:NumberOperator(parent:GetOwner(self.RootOwner):GetVelocity():Length(), speed)
 			end
@@ -367,6 +381,8 @@ PART.Events =
 		callback = function(self, ent, speed) 
 			local owner = self:GetOwner(self.RootOwner)
 			local parent = self:GetParent()
+			
+			owner = try_viewmodel(owner)
 			
 			if parent:IsValid() and owner:IsValid() then
 				return self:NumberOperator(owner:EyeAngles():Forward():Dot(calc_velocity(parent)), speed)
@@ -382,6 +398,8 @@ PART.Events =
 			local owner = self:GetOwner(self.RootOwner)
 			local parent = self:GetParent()
 			
+			owner = try_viewmodel(owner)
+			
 			if parent:IsValid() and owner:IsValid() then
 				return self:NumberOperator(owner:EyeAngles():Right():Dot(calc_velocity(parent)), speed)
 			end
@@ -395,6 +413,8 @@ PART.Events =
 		callback = function(self, ent, speed) 
 			local owner = self:GetOwner(self.RootOwner)
 			local parent = self:GetParent()
+			
+			owner = try_viewmodel(owner)
 			
 			if parent:IsValid() and owner:IsValid() then
 				return self:NumberOperator(owner:EyeAngles():Up():Dot(calc_velocity(parent)), speed)
@@ -479,6 +499,8 @@ PART.Events =
 		arguments = {{time = "number"}},
 		callback = function(self, ent, time)
 			time = time or 0.1
+			
+			ent = try_viewmodel(ent)
 			
 			local punted = ent.pac_gravgun_punt 
 			
