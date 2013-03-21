@@ -1,18 +1,5 @@
 local L = pace.LanguageString
 
-function pace.WearParts()
-	for key, part in pairs(pac.GetParts(true)) do
-		if not part:HasParent() then
-			pac.SendPartToServer(part)
-		end
-	end
-end
-
-function pace.ClearParts()
-	pac.RemoveAllParts(true, true)
-	pace.RefreshTree()
-end
-
 function pace.SaveParts(name, prompt_name, override_part)
 	if not name or prompt_name then
 		Derma_StringRequest(
