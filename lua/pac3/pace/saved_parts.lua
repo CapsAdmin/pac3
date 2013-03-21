@@ -179,17 +179,19 @@ local function add_files(tbl, dir)
 		if name:find("%.txt") then
 			local path = "pac3/" .. dir .. "/" .. name
 			
-			local data = {}
-				data.Name = name:gsub("%.txt", "")
-				data.FileName = name
-				data.Size = string.NiceSize(file.Size(path, "DATA"))
-				local time = file.Time(path, "DATA")
-				data.LastModified = os.date("%m/%d/%Y %H:%M", time)
-				data.Time = file.Time(path, "DATA")
-				data.Path = path
-				data.RelativePath = (dir .. "/" .. data.Name):sub(2)
-				data.Content = pac.luadata.ReadFile(path)
-			table.insert(tbl, data)
+			if file.Exists(path, "DATA") then
+				local data = {}
+					data.Name = name:gsub("%.txt", "")
+					data.FileName = name
+					data.Size = string.NiceSize(file.Size(path, "DATA"))
+					local time = file.Time(path, "DATA")
+					data.LastModified = os.date("%m/%d/%Y %H:%M", time)
+					data.Time = file.Time(path, "DATA")
+					data.Path = path
+					data.RelativePath = (dir .. "/" .. data.Name):sub(2)
+					data.Content = pac.luadata.ReadFile(path)
+				table.insert(tbl, data)
+			end
 		end
 	end
 	
