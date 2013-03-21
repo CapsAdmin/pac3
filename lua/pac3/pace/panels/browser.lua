@@ -50,36 +50,13 @@ end
 function PANEL:PopulateFromClient()
 	self:Clear()
 	
-	self:AddOutfits("pac3/" .. self.Dir, self.OnLoad or function(node)
-		pace.LoadPartFromFile(pace.current_part, node.FileName)
+	self:AddOutfits("pac3/" .. self.Dir, function(node)
+		pace.LoadParts(self.Dir .. node.FileName)
 		pace.RefreshTree()
 	end)		
 end
 
 function PANEL:OnRowRightClick(id, line)
-	if not line.FileName then return end
-
-	local menu = DermaMenu()
-	menu:SetPos(gui.MouseX(),gui.MouseY())
-	menu:MakePopup()
-	menu:AddOption(L"rename", function()
-		Derma_StringRequest(L"rename", L"type the new name:", line.name, function(text)
-			if not line.FileName then return end
-
-			local c = file.Read(line.FileName)
-			file.Delete(line.FileName, "DATA")
-			file.Write(line.FileName, c, "DATA")
-			
-			self:PopulateFromClient()
-		end)
-	end)
-	
-	menu:AddOption(L"delete", function()
-		if not line.FileName then return end
-
-		file.Delete("pac3/" .. self.Dir .. line.FileName, "DATA")
-		self:PopulateFromClient()
-	end)
 end
 
 pace.RegisterPanel(PANEL)

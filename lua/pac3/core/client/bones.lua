@@ -86,6 +86,16 @@ function pac.GetAllBones(ent)
 			end
 		end
 		
+		tbl.hitpos =
+		{
+			friendly = "hit position"			
+		}
+		
+		tbl.footstep =
+		{
+			friendly = "footsteps"			
+		}
+		
 		ent.pac_bone_count = count
 	end
 

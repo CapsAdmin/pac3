@@ -2,16 +2,28 @@ local L = pace.LanguageString
 local L = pace.LanguageString
 
 function pace.OnMenuBarPopulate(bar)
+	for k,v in pairs(bar.Menus) do
+		v:Remove()
+	end
+
 	local menu = bar:AddMenu("pac")
-			menu:AddOption(L"save", function() pace.SaveSession() end)
-			pace.AddSessionsToMenu(menu:AddSubMenu(L"load", function() pace.LoadSession() end))		
-			menu:AddOption(L"wear", function() pace.WearSession() end)
-			local clear = menu:AddSubMenu(L"clear", function() end)
+			local save, pnl = menu:AddSubMenu(L"save", function() pace.SaveParts() end)
+			pnl:SetImage(pace.MiscIcons.save)
+			pace.AddSaveMenuToMenu(save)		
+			
+			local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
+			pnl:SetImage(pace.MiscIcons.load)
+			pace.AddSavedPartsToMenu(load)
+			
+			menu:AddOption(L"wear", function() pace.WearParts() end):SetImage(pace.MiscIcons.wear)
+			
+			local clear, pnl = menu:AddSubMenu(L"clear", function() end)
+			pnl:SetImage(pace.MiscIcons.clear)	
 			clear.GetDeleteSelf = function() return false end
-			clear:AddOption(L"OK", function() pace.ClearSession() end)
+			clear:AddOption(L"OK", function() pace.ClearParts() end):SetImage(pace.MiscIcons.clear)
 		menu:AddSpacer()
-			menu:AddOption(L"help", function() pace.ShowWiki() end)
-			menu:AddOption(L"exit", function() pace.CloseEditor() end)
+			menu:AddOption(L"help", function() pace.ShowWiki() end):SetImage(pace.MiscIcons.help)
+			menu:AddOption(L"exit", function() pace.CloseEditor() end):SetImage(pace.MiscIcons.exit)
 	
 	local menu = bar:AddMenu(L"view")
 		menu:AddOption(L"hide editor", function() pace.Call("ToggleFocus") chat.AddText("[pac3] \"ctrl + e\" to get the editor back") end)
@@ -62,10 +74,10 @@ function pace.OnOpenMenu()
 	local menu = DermaMenu()
 	menu:SetPos(gui.MousePos())
 	
-		menu:AddOption(L"save session", function() pace.SaveSession() end)
-		menu:AddOption(L"load session", function() pace.LoadSession() end)
-		menu:AddOption(L"wear session", function() pace.WearSession() end)
-		menu:AddSubMenu(L"clear session", function()end):AddOption(L"OK", function() pace.ClearSession() end)
+		menu:AddOption(L"save parts", function() pace.SaveParts() end)
+		menu:AddOption(L"load parts", function() pace.LoadParts() end)
+		menu:AddOption(L"wear parts", function() pace.WearParts() end)
+		menu:AddSubMenu(L"clear parts", function()end):AddOption(L"OK", function() pace.ClearParts() end)
 		
 	menu:AddSpacer()
 		

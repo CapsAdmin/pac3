@@ -7,7 +7,6 @@ PANEL.Base = "DFrame"
 PANEL.menu_bar = NULL
 
 local BAR_SIZE = 17
-local enable_bar = CreateConVar("pac_enable_menubar", "1")
 
 function PANEL:Init()	
 	self:SetTitle("pac3 " .. L"editor")
@@ -27,17 +26,22 @@ function PANEL:Init()
 	
 	self:SetCookieName("pac3_editor")
 	self:SetPos(self:GetCookieNumber("x"), BAR_SIZE)
-		
-	if enable_bar:GetBool() then
-		local bar = vgui.Create("DMenuBar", self)
-		bar:SetSize(self:GetWide(), BAR_SIZE)
-		pace.Call("MenuBarPopulate", bar)
 	
-		self.menu_bar = bar
-		
-		self:DockMargin(2,2,2,2)
-		self:DockPadding(2,2,2,2)
-	end
+	self:MakeBar()
+end
+
+function PANEL:MakeBar()	
+	if self.menu_bar:IsValid() then self.menu_bar:Remove() end
+
+	local bar = vgui.Create("DMenuBar", self)
+	bar:SetSize(self:GetWide(), BAR_SIZE)
+	pace.Call("MenuBarPopulate", bar)
+	pace.MenuBar = bar
+
+	self.menu_bar = bar
+	
+	self:DockMargin(2,2,2,2)
+	self:DockPadding(2,2,2,2)
 end
 
 function PANEL:OnRemove()

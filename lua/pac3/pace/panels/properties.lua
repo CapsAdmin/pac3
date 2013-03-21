@@ -896,22 +896,41 @@ do -- part
 	PANEL.Base = "pace_properties_base_type"
 	
 	function PANEL:SpecialCallback()
-		pace.SelectPart(pac.GetParts(), function(part)
+		pace.SelectPart(pac.GetParts(true), function(part)
 			self:SetValue(part:GetName())
 			self.OnValueChanged(part)
 		end)
 	end
 	
-	function PANEL:SpecialCallback2()
-		local menu = DermaMenu()
-	
-		menu:MakePopup()		
-		
-		for _, part in pairs(pac.GetParts(true)) do
-			menu:AddOption(part:GetName(), function()
+	local function populate(menu, part)
+		if part:HasChildren() then
+			local menu, pnl = menu:AddSubMenu(part:GetName(), function()
 				self:SetValue(part:GetName())
 				self.OnValueChanged(part)
 			end)
+			
+			pnl:SetImage(pace.GetIconFromClassName(part.ClassName))
+			
+			for key, part in pairs(part:GetChildren()) do
+				populate(menu, part)
+			end
+		else
+			menu:AddOption(part:GetName(), function()
+				self:SetValue(part:GetName())
+				self.OnValueChanged(part)
+			end):SetImage(pace.GetIconFromClassName(part.ClassName))
+		end
+	end
+	
+	function PANEL:SpecialCallback2()
+		local menu = DermaMenu()
+		
+		menu:MakePopup()		
+			
+		for _, part in pairs(pac.GetParts(true)) do
+			if not part:HasParent() then
+				populate(menu, part)
+			end
 		end
 		
 		FIX_MENU(menu)

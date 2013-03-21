@@ -1,11 +1,11 @@
 local L = pace.LanguageString
 
-concommand.Add("pac_wear_session", function()
-	pace.WearSession()
+concommand.Add("pac_wear_parts", function()
+	pace.WearParts()
 end)
 
-concommand.Add("pac_clear_session", function()
-	pace.ClearSession()
+concommand.Add("pac_clear_parts", function()
+	pace.ClearParts()
 end)
 
 net.Receive("pac_spawn_part", function()
@@ -54,21 +54,27 @@ function pace.ClientOptionsMenu(pnl)
 	local browser = pnl:AddControl("pace_browser", {})
 	
 	browser.OnLoad = function(node)
-		pace.LoadSession(node.FileName)
+		pace.LoadParts(node.FileName)
 	end
-	browser:SetDir("sessions/")
+	
+	if #file.Find("pac3/sessions/*", "DATA") > 0 then
+		browser:SetDir("sessions/")
+	else
+		browser:SetDir("")
+	end
+	
 	browser:SetSize(400,700)
 	
 	pace.SpawnlistBrowser = browser
 	
 	pnl:Button(
 		L"wear on server",
-		"pac_wear_session"
+		"pac_wear_parts"
 	)	
 	
 	pnl:Button(
 		L"clear",
-		"pac_clear_session"
+		"pac_clear_parts"
 	)	
 end
 

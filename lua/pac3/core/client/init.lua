@@ -90,8 +90,6 @@ function pac.Restart()
 	if was_open then 
 		pace.OpenEditor() 
 	end
-	
-	pace.LoadSession("autoload")
 end
 
 concommand.Add("pac_restart", pac.Restart)

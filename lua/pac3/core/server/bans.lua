@@ -1,7 +1,7 @@
 
 function pac.Ban(ply)
 
-	ply:ConCommand("pac_clear_session")
+	ply:ConCommand("pac_clear_parts")
 
 	umsg.Start("pac_submit_acknowledged", ply)
 		umsg.Bool(false)

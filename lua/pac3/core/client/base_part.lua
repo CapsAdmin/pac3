@@ -51,6 +51,10 @@ function PART:GetNiceName()
 	return self.ClassName
 end
 
+function PART:RemoveOnNULLOwner(b)
+	self.remove_on_null_owner = b
+end
+
 function PART:GetName()
 	if self.Name == "" then
 		local nice = self:GetNiceName()
@@ -907,6 +911,8 @@ function PART:Think()
 		if not owner.pac_bones then
 			self:GetModelBones()
 		end
+	elseif self.remove_on_null_owner then
+		self:Remove()
 	end
 	
 	if self.ResolvePartNames then
