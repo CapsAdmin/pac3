@@ -88,12 +88,14 @@ function pac.GetAllBones(ent)
 		
 		tbl.hitpos =
 		{
-			friendly = "hit position"			
+			friendly = "hit position",		
+			is_special = true,
 		}
 		
 		tbl.footstep =
 		{
-			friendly = "footsteps"			
+			friendly = "footsteps",
+			is_special = true,
 		}
 		
 		ent.pac_bone_count = count
@@ -179,7 +181,7 @@ function pac.GetBonePosAng(ent, id, parent)
 	local bones = pac.GetModelBones(ent)
 	local data = bones[id]
 	
-	if data then
+	if data and not data.is_special then
 		if data.is_attachment then
 			if parent and data.parent_i then
 				local posang = ent:GetAttachment(data.parent_i)
