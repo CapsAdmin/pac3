@@ -249,7 +249,7 @@ function PANEL:PopulateParts(node, parts, children)
 			if enable_model_icons:GetBool() and part.ClassName == "model" and part.GetModel then
 				part_node:SetModel(part:GetModel())
 			else
-				part_node.Icon:SetImage(pace.PartIcons[part.ClassName] or "gui/silkicons/plugin")
+				part_node.Icon:SetImage(pace.GetIconFromClassName(part.ClassName))
 			end
 			
 			self:PopulateParts(part_node, part:GetChildren(), true)			

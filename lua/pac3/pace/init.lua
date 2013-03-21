@@ -8,7 +8,7 @@ include("select.lua")
 include("view.lua")
 include("config.lua")
 include("parts.lua")
-include("sessions.lua")
+include("saved_parts.lua")
 include("logic.lua")
 include("undo.lua")
 include("fonts.lua")
@@ -32,6 +32,8 @@ pace.Editor = NULL
 
 function pace.OpenEditor()
 	if hook.Call("PrePACEditorOpen", GAMEMODE, LocalPlayer()) == false then return end
+	
+	pace.RefreshFiles()
 	
 	pace.SetLanguage()
 	
@@ -72,6 +74,19 @@ function pace.CloseEditor()
 	
 	pace.RestoreExternalHooks()
 end
+
+function pace.RefreshFiles()
+	pace.CachedFiles = nil
+
+	if pace.Editor:IsValid() then
+		pace.Editor:MakeBar()
+	end
+			
+	if pace.SpawnlistBrowser:IsValid() then
+		pace.SpawnlistBrowser:PopulateFromClient()
+	end
+end
+
 
 function pace.Panic()
 	pace.CloseEditor()

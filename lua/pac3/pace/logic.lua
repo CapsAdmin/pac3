@@ -24,9 +24,9 @@ hook.Add("PostDrawViewModel", "pace_viewmodel_edit", function()
 	end
 end)
 
-hook.Add("InitPostEntity", "pace_autoload_session", function()	
+hook.Add("InitPostEntity", "pace_autoload_parts", function()	
 	timer.Simple(5, function()
-		pace.LoadSession("autoload")
+		pace.LoadParts("autoload")
 		timer.Simple(3, function()
 		-- give pac some time to solve bones and parents
 			for key, part in pairs(pac.GetParts(true)) do

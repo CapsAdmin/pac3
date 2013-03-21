@@ -51,7 +51,8 @@ function PART:AttachToEntity(ent)
 	part:SetPlayerOwner(self:GetPlayerOwner())
 	part:SetTable(tbl)
 	part:SetHide(false)
-			
+	part:RemoveOnNULLOwner(true)
+	
 	part.Owner = ent
 	
 	ent.pac_parts = {part}
@@ -140,7 +141,9 @@ function PART:Shoot(pos, ang)
 			timer.Simple(math.Clamp(self.LifeTime, 0, 10), function()
 				if ent:IsValid() then					
 					local id = ent.pac_projectile_id
-					ent.pac_projectile_part:Remove()
+					if ent.pac_projectile_part and ent.pac_projectile_part:IsValid() then
+						ent.pac_projectile_part:Remove()
+					end
 					
 					timer.Simple(0.5, function()
 						ent:Remove()

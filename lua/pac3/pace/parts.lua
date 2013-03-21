@@ -97,108 +97,15 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 		end		
 	end
 	
-	timer.Create("autosave_session", 0.5, 1, function()
-		pace.SaveSession("autosave")
-	end)
-end
-
-function pace.SavePartToFile(part, name)
-	if not name then
-		Derma_StringRequest(
-			L"save part",
-			L"filename:",
-			part:GetName(),
-
-			function(name)
-				pace.SavePartToFile(part, name)
+	timer.Create("autosave_Parts", 0.5, 1, function()
+		for k,v in pairs(pac.GetParts(true)) do
+			if v:HasChildren() then
+				pace.SaveParts("autosave")
+				break
 			end
-		)
-	else
-		pac.dprint("saving %s", name)
-		file.CreateDir("pac3")
-		pac.luadata.WriteFile("pac3/" .. name .. ".txt", part:ToTable())
-	end
-end
-
-function pace.LoadPartFromFile(part, name)
-	if not part:IsValid() then return end
-	
-	if not name then
-		local frm = vgui.Create("DFrame")
-		frm:SetTitle(L"parts")
-		local pnl = pace.CreatePanel("browser", frm)
-		pnl:Dock(FILL)
-		
-		local btn = vgui.Create("DButton", frm)
-		btn:Dock(BOTTOM)
-		btn:SetText(L"load from url")
-		btn.DoClick = function()
-			Derma_StringRequest(
-				L"load part",
-				L"pastebin urls also work!",
-				"",
-
-				function(url)
-					pace.LoadPartFromURL(part, url)
-				end
-			)
-		end
-		
-		frm:SetSize(300, 500)
-		frm:MakePopup()
-		frm:Center()
-	else
-		pac.dprint("loading %s",  name)
-		
-		if name:find("http") then	
-			pace.LoadPartFromURL(part, name)
-		else
-			name = name:gsub("%.txt", "")
-			local data = pac.luadata.ReadFile("pac3/" .. name .. ".txt")
-			
-			if data and data.self then
-				part:Clear()	
-				part:SetTable(data)
-				
-				if IsValid(part.editor_node) then
-					part.editor_node:SetText(part:GetName())
-				end
-				
-				pace.RefreshTree(true)
-			else
-				print("pac3 tried to load non existant part " .. name)
-			end
-		end
-	end
-end
-
-function pace.LoadPartFromURL(part, url)
-	url = url:gsub("https://", "http://")
-	
-	if url:lower():find("pastebin.com") then
-		url = url:gsub(".com/", ".com/raw.php?i=")
-	end
-	
-	http.Fetch(url, function(str)
-		if not part:IsValid() then return end
-		
-		local data = pac.luadata.Decode(str)
-
-		if data and data.self then
-			part:Clear()	
-			part:SetTable(data)
-									
-			if IsValid(part.editor_node) then
-				part.editor_node:SetText(part:GetName())
-			end
-			
-			pace.RefreshTree()
-		else
-			print("pac3 tried to load invalid part " .. url)
 		end
 	end)
 end
-
 
 do -- menu
 	function pace.AddRegisteredPartsToMenu(menu)
@@ -231,7 +138,7 @@ do -- menu
 		if not obj:HasParent() then
 			menu:AddOption(L"wear", function()
 				pac.SendPartToServer(obj)
-			end)
+			end):SetImage(pace.MiscIcons.wear)
 		end
 
 		menu:AddOption(L"copy", function()
@@ -245,13 +152,13 @@ do -- menu
 				tbl.children = {}
 			pace.Clipboard = tbl
 		end)
-		
-		if type(pace.Clipboard) == "table" then
-			menu:AddOption(L"paste", function()
+	
+		menu:AddOption(L"paste", function()
+			if pace.Clipboard then
 				obj:SetTable(pace.Clipboard)
-				pace.Clipboard = nil
-			end)
-		end
+			end
+			--pace.Clipboard = nil
+		end)
 		
 		menu:AddOption(L"clone", function()
 			obj:Clone()
@@ -259,7 +166,7 @@ do -- menu
 		
 		menu:AddOption(L"help", function()
 			pace.ShowHelp(obj.ClassName)
-		end)
+		end):SetImage(pace.MiscIcons.help)
 		
 		menu:AddSpacer()
 
@@ -267,15 +174,13 @@ do -- menu
 
 		menu:AddSpacer()
 
-		menu:AddOption(L"save", function()
-			pace.SavePartToFile(obj)
-			CloseDermaMenus()
-		end)
-
-		menu:AddOption(L"load", function()
-			pace.LoadPartFromFile(obj)
-			CloseDermaMenus()
-		end)
+		local save, pnl = menu:AddSubMenu(L"save", function() pace.SaveParts() end)
+		pnl:SetImage(pace.MiscIcons.save)
+		pace.AddSaveMenuToMenu(save, obj)	
+		
+		local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
+		pnl:SetImage(pace.MiscIcons.load)
+		pace.AddSavedPartsToMenu(load, obj)
 		
 		menu:AddOption(L"load from url", function()
 				Derma_StringRequest(
@@ -287,7 +192,7 @@ do -- menu
 					pace.LoadPartFromURL(obj, url)
 				end
 			)
-		end)
+		end):SetImage(pace.MiscIcons.url)
 		
 		menu:AddOption(L"remove", function()
 			obj:Remove()
@@ -308,17 +213,15 @@ do -- menu
 		
 		menu:AddSpacer()
 			
-		menu:AddOption(L"load", function()
-			local obj = pac.CreatePart("group")
-			pace.OnPartSelected(obj)
-			pace.LoadPartFromFile(obj)
-			CloseDermaMenus()
-		end)
+		local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
+		pnl:SetImage(pace.MiscIcons.load)
+		pace.AddSavedPartsToMenu(load, obj)
 		
 		menu:AddOption(L"clear", function()
 			pac.RemoveAllParts(true, true)
 			pace.RefreshTree()
-		end)
+		end):SetImage(pace.MiscIcons.clear)	
+		
 	end
 end
 

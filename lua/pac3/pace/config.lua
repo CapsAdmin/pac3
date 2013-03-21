@@ -1,3 +1,17 @@
+pace.MiscIcons = {
+	new = "icon16/add.png",
+	autoload = "icon16/transmit_go.png",
+	url = "icon16/server_go.png",
+	outfit = "icon16/group.png",
+	clear = "icon16/cross.png",
+	language = "icon16/user_comment.png",
+	font = "icon16/text_smallcaps.png",
+	load = "icon16/folder.png",
+	save = "icon16/disk.png",
+	exit = "icon16/cancel.png",
+	wear = "icon16/transmit.png",
+	help = "icon16/information.png",
+}
 pace.PartIcons =
 {
 	text = "icon16/text_align_center.png",
@@ -292,4 +306,8 @@ function pace.TranslatePropertiesKey(key, obj)
 	if key:find("color") then
 		return "color"
 	end
+end
+
+function pace.GetIconFromClassName(class_name)
+	return pace.PartIcons[class_name] or "gui/silkicons/plugin"
 end
