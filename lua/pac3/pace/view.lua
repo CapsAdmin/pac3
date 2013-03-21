@@ -75,9 +75,10 @@ function pac.GUIMouseReleased(mc)
 end
 
 local function CalcDrag()
-	if pace.BusyWithProperties:IsValid() then return end
-	
-	if pace.editing_viewmodel then return end
+	if 
+		pace.BusyWithProperties:IsValid() or
+		pace.editing_viewmodel 
+	then return end
 
 	
 	local ftime = FrameTime() * 50
@@ -104,11 +105,13 @@ local function CalcDrag()
 	elseif input.IsKeyDown(KEY_DOWN) or input.IsMouseDown(MOUSE_WHEEL_DOWN) then
 		pace.OnMouseWheeled(-0.25)
 	end
-		
-	if mcode == MOUSE_LEFT then
-		local delta = (held_mpos - Vector(gui.MousePos())) / 5 * math.rad(pace.ViewFOV)
-		pace.ViewAngles.p = math.Clamp(held_ang.p - delta.y, -90, 90)
-		pace.ViewAngles.y = held_ang.y + delta.x
+	
+	if not pace.IsSelecting then
+		if mcode == MOUSE_LEFT then
+			local delta = (held_mpos - Vector(gui.MousePos())) / 5 * math.rad(pace.ViewFOV)
+			pace.ViewAngles.p = math.Clamp(held_ang.p - delta.y, -90, 90)
+			pace.ViewAngles.y = held_ang.y + delta.x
+		end
 	end
 
 	if input.IsKeyDown(KEY_W) then

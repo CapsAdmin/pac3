@@ -1,5 +1,27 @@
 local L = pace.LanguageString
 
+function pace.WearParts()
+	for key, part in pairs(pac.GetParts(true)) do
+		if not part:HasParent() then
+			pac.SendPartToServer(part)
+		end
+	end
+end
+
+function pace.ClearParts()
+	pac.RemoveAllParts(true, true)
+	pace.RefreshTree()
+	
+	timer.Simple(0.1, function()
+		if table.Count(pac.GetParts(true)) == 0 then
+			pace.Call("CreatePart", "group", L"my outfit", L"add parts to me!")
+		end	
+			
+		pace.TrySelectPart()
+	end)
+end
+
+
 function pace.OnCreatePart(class_name, name, desc, mdl)
 	local part = pac.CreatePart(class_name)
 	
@@ -218,8 +240,7 @@ do -- menu
 		pace.AddSavedPartsToMenu(load, obj)
 		
 		menu:AddOption(L"clear", function()
-			pac.RemoveAllParts(true, true)
-			pace.RefreshTree()
+			pace.ClearParts()
 		end):SetImage(pace.MiscIcons.clear)	
 		
 	end
