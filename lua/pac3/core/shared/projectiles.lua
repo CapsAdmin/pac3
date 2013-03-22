@@ -113,7 +113,6 @@ if SERVER then
 				SafeRemoveEntity(ent)
 			end)	
 				
-			print(ply, ent, part.UniqueID)
 			net.Start("pac_projectile_attach")
 				net.WriteEntity(ply)
 				net.WriteString(ent:EntIndex())

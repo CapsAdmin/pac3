@@ -312,7 +312,7 @@ end
 
 local function populate_parts(menu, tbl, dir, override_part)
 	dir = dir or ""
-	menu:AddOption(L"new file", function() pace.SaveParts(nil, dir) end)
+	menu:AddOption(L"new file", function() pace.SaveParts(nil, dir .. "/") end)
 	:SetImage(pace.MiscIcons.new)
 	menu:AddSpacer()
 	for key, data in pairs(tbl) do	
