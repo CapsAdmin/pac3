@@ -33,7 +33,7 @@ function PART:OnDraw(owner, pos, ang)
 end
 
 function PART:AttachToEntity(ent)
-	if not self.OutfitPart:IsValid() then return end
+	if not self.OutfitPart:IsValid() then return false end
 				
 	ent.pac_draw_distance = 0			
 			
@@ -68,6 +68,8 @@ function PART:AttachToEntity(ent)
 	ent.pac_projectile_part = part
 
 	pac.SuppressCreatedEvents = false	
+	
+	return true
 end
 
 function PART:Shoot(pos, ang)
@@ -100,9 +102,7 @@ function PART:Shoot(pos, ang)
 		timer.Simple(self.Delay, function()
 			
 			if not self:IsValid() then return end
-			
-			UUMM = (UUMM or 0) + 1
-			
+						
 			local ent = pac.CreateEntity("models/props_junk/popcan01a.mdl")
 			local idx = table.insert(self.projectiles, ent)
 			
@@ -137,29 +137,29 @@ function PART:Shoot(pos, ang)
 					end
 				end
 			end
-			
-			timer.Simple(math.Clamp(self.LifeTime, 0, 10), function()
-				if ent:IsValid() then					
-					local id = ent.pac_projectile_id
-					if ent.pac_projectile_part and ent.pac_projectile_part:IsValid() then
-						ent.pac_projectile_part:Remove()
-					end
 					
-					timer.Simple(0.5, function()
-						ent:Remove()
-						UUMM = (UUMM or 0) - 1
-						pac.drawn_entities[id] = nil
-					end)
-				end
-			end)	
-			
 			local phys = ent:GetPhysicsObject()
 			phys:EnableGravity(self.Gravity)
 			phys:AddVelocity((ang:Forward() + (VectorRand():Angle():Forward() * self.Spread)) * self.Speed * 1000)
 			phys:EnableCollisions(self.Collisions)	
 			phys:SetDamping(self.Damping, 0)			
 			
-			self:AttachToEntity(ent)
+			if self:AttachToEntity(ent) then
+				timer.Simple(math.Clamp(self.LifeTime, 0, 10), function()
+					if ent:IsValid() and ent.pac_projectile_id then					
+						local id = ent.pac_projectile_id
+						
+						if ent.pac_projectile_part and ent.pac_projectile_part:IsValid() then
+							ent.pac_projectile_part:Remove()
+						end
+						
+						timer.Simple(0.5, function()
+							ent:Remove()
+							pac.drawn_entities[id] = nil
+						end)
+					end
+				end)
+			end
 		end)
 	end
 end

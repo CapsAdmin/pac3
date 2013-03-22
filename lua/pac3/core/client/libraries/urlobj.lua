@@ -1,6 +1,6 @@
 local urlobj = pac.urlobj or {}
-urlobj.Queue = urlobj.Queue or {}
-urlobj.Cache = urlobj.Cache or {}
+urlobj.Queue = {}--urlobj.Queue or {}
+urlobj.Cache = {}--urlobj.Cache or {}
 
 concommand.Add("pac_urlobj_clear_cache", function()
 	urlobj.Cache = {}
@@ -9,8 +9,6 @@ end)
 
 -- parser made by animorten
 -- modified slightly by capsadmin
-
--- THIS ASSUMES FACE DATA COMES AFTER VERTEX DATA
 
 local table_insert = table.insert
 local tonumber = tonumber
@@ -28,9 +26,15 @@ function urlobj.ParseObj(data)
 	end
 	pac.dprint("parsing model")
 	
+	local lines = {}
+	
 	for i in data:gmatch("(.-)\n") do
-		local parts = i:gsub(" +", " "):Trim():Split(" ")
+		local parts = i:gsub("%s+", " "):Trim():Split(" ")
 
+		table.insert(lines, parts)
+	end
+		
+	for _, parts in pairs(lines) do		
 		if parts[1] == "v" and #parts >= 4 then
 			table_insert(positions, Vector(parts[2], parts[3], parts[4]))
 		elseif parts[1] == "vt" and #parts >= 3 then
@@ -38,12 +42,20 @@ function urlobj.ParseObj(data)
 			table_insert(texcoords, tonumber(1 - parts[3]))
 		elseif parts[1] == "vn" and #parts >= 4 then
 			table_insert(normals, Vector(parts[2], parts[3], parts[4]))
-		elseif parts[1] == "f" and #parts > 3 then
+		end
+	end
+		
+	for _, parts in pairs(lines) do
+		if parts[1] == "f" and #parts > 3 then
 			local first, previous
 
 			for i = 2, #parts do
 				local current = parts[i]:Split("/")
 
+				if i == 2 then
+					first = current
+				end
+				
 				if i >= 4 then
 					local v1, v2, v3 = {}, {}, {}
 
@@ -71,15 +83,13 @@ function urlobj.ParseObj(data)
 					table_insert(output, v1)
 					table_insert(output, v2)
 					table_insert(output, v3)
-				elseif i == 2 then
-					first = current
 				end
 
 				previous = current
 			end
 		end
 	end
-		
+				
 	return output
 end
 
@@ -92,8 +102,9 @@ function urlobj.CreateObj(obj_str)
 	end
 	
 	local mesh = Mesh()
+	
 	mesh:BuildFromTriangles(res)
-		
+
 	return mesh
 end
 

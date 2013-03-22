@@ -52,7 +52,7 @@ function pace.OnMenuBarPopulate(bar)
 		
 		local rendering = menu:AddSubMenu(L"rendering", function() end)
 			rendering.GetDeleteSelf = function() return false end
-			rendering:AddCVar(L"draw in reflections", "pac_suppress_frames", "1", "0")
+			rendering:AddCVar(L"draw in reflections", "pac_suppress_frames", "0", "1")
 		
 	local menu = bar:AddMenu(L"player")
 		menu:AddCVar(L"t pose").OnChecked = function(s, b) pace.SetTPose(b) end
