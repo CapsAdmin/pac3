@@ -13,6 +13,8 @@ function pace.ClearParts()
 	pace.RefreshTree()
 	
 	timer.Simple(0.1, function()
+		if not pace.Editor:IsValid() then return end
+	
 		if table.Count(pac.GetParts(true)) == 0 then
 			pace.Call("CreatePart", "group", L"my outfit", L"add parts to me!")
 		end	

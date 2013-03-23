@@ -73,7 +73,7 @@ function pace.DrawHUDText(x,y, text, lx,ly, mx,my, selected, line_color)
 	
 	surface.SetDrawColor(line_color or color)
 	
-	surface.DrawLineEx(
+	DrawLineEx(
 		Lerp(0.025, mx, x+lx),
 		Lerp(0.025, my, y+ly),
 
