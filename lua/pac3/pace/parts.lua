@@ -1,6 +1,10 @@
 local L = pace.LanguageString
 
-function pace.WearParts()
+function pace.WearParts(file)
+	if file then
+		pace.LoadParts(file, false)
+	end
+
 	for key, part in pairs(pac.GetParts(true)) do
 		if not part:HasParent() then
 			pac.SendPartToServer(part)
