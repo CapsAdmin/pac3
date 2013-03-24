@@ -51,10 +51,6 @@ function pace.OpenEditor()
 		ctp:Disable()
 	end
 	
-	if epoe then 
-		RunConsoleCommand("epoe_ui_remove")
-	end
-	
 	RunConsoleCommand("pac_in_editor", "1")
 	
 	pace.DisableExternalHooks()

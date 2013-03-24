@@ -170,6 +170,7 @@ function pace.EnableView(b)
 		pac.AddHook("ShouldDrawLocalPlayer")
 		pac.AddHook("CalcView")
 		pac.AddHook("HUDPaint")
+		pac.AddHook("HUDShouldDraw")
 		pace.Focused = true
 		pace.ResetView()
 	else
@@ -178,6 +179,7 @@ function pace.EnableView(b)
 		pac.RemoveHook("ShouldDrawLocalPlayer")
 		pac.RemoveHook("CalcView")
 		pac.RemoveHook("HUDPaint")
+		pac.RemoveHook("HUDShouldDraw")
 		pace.SetTPose(false)
 		pace.SetBreathing(false)
 	end
@@ -241,5 +243,14 @@ function pac.HUDPaint()
 		if ent:IsValid() then
 			pace.Call("Draw", ScrW(), ScrH())
 		end
+	end
+end
+
+function pac.HUDShouldDraw(typ)
+	if 
+		typ == "CHudEPOE" or
+		(typ == "CHudCrosshair" and pace.editing_viewmodel)
+	then
+		return false
 	end
 end
