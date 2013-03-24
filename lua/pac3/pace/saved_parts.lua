@@ -128,7 +128,7 @@ end
 
 function pace.LoadPartsFromTable(data, clear, override_part)
 			
-	timer.Simple(0.1, function()
+	--timer.Simple(0.1, function()
 		if pace.use_current_part_for_saveload and pace.current_part:IsValid() then
 			override_part = pace.current_part
 		end
@@ -150,7 +150,7 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 		end
 		
 		pace.RefreshTree(true)
-	end)
+--	end)
 end
 
 local function add_files(tbl, dir)
