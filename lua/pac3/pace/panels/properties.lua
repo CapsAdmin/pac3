@@ -948,7 +948,9 @@ do -- owner
 	function PANEL:SpecialCallback()
 		pace.SelectEntity(function(ent)
 			pace.current_part:SetOwnerName(ent:EntIndex())
-			self.OnValueChanged(ent:EntIndex())
+			local name = pace.current_part:GetOwnerName()
+			self.OnValueChanged(name)
+			self:SetValue(L(name))
 		end)
 	end
 		
