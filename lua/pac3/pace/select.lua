@@ -130,13 +130,10 @@ local function select_something(tblin, check, getpos, getfriendly, callback)
 	
 	local function GUIMousePressed(mcode)
 		if mcode == MOUSE_LEFT then
-			
-			if selected and holding or (selected and #selected == 1) then
+			if not selected then
 				pace.StopSelect()
-				holding = nil
-				selected = nil
 			end
-			
+		
 			holding = Vector(gui.MousePos())
 		end
 	end
@@ -146,6 +143,7 @@ local function select_something(tblin, check, getpos, getfriendly, callback)
 			if data then
 				data.dist = nil
 				callback(data)
+				pace.StopSelect()
 			end
 		end
 	end
@@ -190,6 +188,8 @@ local function select_something(tblin, check, getpos, getfriendly, callback)
 					selected = {first}
 				end				
 			end
+		elseif not holding then
+			selected = nil
 		end
 		
 		if selected then			

@@ -99,7 +99,7 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 		pace.CallChangeForUndo(obj, key, val, undo_delay)
 		
 		local node = obj.editor_node
-		if IsValid(node) then			
+		if IsValid(node) then		
 			if key == "Name" then
 				if not obj:HasParent() then
 					pac.RemovePartOnServer(obj:GetName(), true)
