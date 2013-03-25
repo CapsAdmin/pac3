@@ -44,7 +44,8 @@ do
 		tex_stretch = tex_stretch or 1
 		width_bend = width_bend or 0
 		width_bend_size = width_bend_size or 1
-			
+		tex_scroll = tex_scroll or 0
+		
 		StartBeam(res + 1)
 					
 			for i = 0, res do
