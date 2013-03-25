@@ -114,9 +114,9 @@ end
 
 local R = function(event, name) if hook.GetTable()[event] and hook.GetTable()[event][name] then hook.Remove(event, name) end end
 function pace.StopSelect()
+	R("GUIMouseReleased", "pac_draw_select")
 	R("GUIMousePressed", "pac_draw_select")
 	R("HUDPaint", "pac_draw_select")
-	R("HUDPaint", "pac_highlight")
 	
 	timer.Simple(0.1, function()
 		pace.IsSelecting = false
