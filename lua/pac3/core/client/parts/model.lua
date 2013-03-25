@@ -180,7 +180,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		self:ModifiersPreEvent("OnDraw")
 	
 		if not pac.DisableDoubleFace then
-			if self.DoubleFace or self.wavefront_mesh then
+			if self.DoubleFace then
 				render_CullMode(MATERIAL_CULLMODE_CW)
 			else
 				if self.Invert then
@@ -226,7 +226,7 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 	
 		if not pac.DisableDoubleFace then		
-			if self.DoubleFace or self.wavefront_mesh then
+			if self.DoubleFace then
 				render_CullMode(MATERIAL_CULLMODE_CCW)
 				self:DrawModel(ent, pos, ang)
 			else
@@ -342,7 +342,19 @@ function PART:DrawModel(ent, pos, ang)
 			matrix:Scale(self.Scale * self.Size)
 							
 			cam_PushModelMatrix(matrix)
+				if self.Invert then
+					render_CullMode(MATERIAL_CULLMODE_CCW)
+				else
+					render_CullMode(MATERIAL_CULLMODE_CW)
+				end
+				
 				self.wavefront_mesh:Draw()
+				
+				if self.Invert then
+					render_CullMode(MATERIAL_CULLMODE_CW)
+				else
+					render_CullMode(MATERIAL_CULLMODE_CCW)
+				end
 			cam_PopModelMatrix()
 		else
 			ent:DrawModel()
