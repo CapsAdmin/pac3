@@ -255,7 +255,7 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 				render_CullMode(MATERIAL_CULLMODE_CCW)
 			pac.SetModelScale(ent, self.Scale * self.Size)
 		end
-		
+				
 		self:ModifiersPostEvent("OnDraw")
 	end
 end
@@ -293,6 +293,38 @@ surface.CreateFont("pac_urlobj_loading",
 	}
 )
 
+-- fixed drawmodel 2.0 real 100%
+local function RealDrawModel(self, ent, pos, ang) 
+	if self.wavefront_mesh then
+		ent:SetModelScale(0,0)
+		ent:DrawModel()
+		
+		local matrix = Matrix()
+		
+		matrix:SetAngles(ang)
+		matrix:SetTranslation(pos)
+		matrix:Scale(self.Scale * self.Size)
+						
+		cam_PushModelMatrix(matrix)
+			if self.Invert then
+				render_CullMode(MATERIAL_CULLMODE_CCW)
+			else
+				render_CullMode(MATERIAL_CULLMODE_CW)
+			end
+			
+			self.wavefront_mesh:Draw()
+			
+			if self.Invert then
+				render_CullMode(MATERIAL_CULLMODE_CW)
+			else
+				render_CullMode(MATERIAL_CULLMODE_CCW)
+			end
+		cam_PopModelMatrix()
+	else
+		ent:DrawModel()
+	end
+end
+
 function PART:DrawModel(ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 	
@@ -329,36 +361,11 @@ function PART:DrawModel(ent, pos, ang)
 		end
 		--end
 			
+		RealDrawModel(self, ent, pos, ang)
+		render.PushFlashlightMode(true)
+		RealDrawModel(self, ent, pos, ang) -- ugh lol
+		render.PopFlashlightMode()
 		
-			
-		if self.wavefront_mesh then
-			ent:SetModelScale(0,0)
-			ent:DrawModel()
-			
-			local matrix = Matrix()
-			
-			matrix:SetAngles(ang)
-			matrix:SetTranslation(pos)
-			matrix:Scale(self.Scale * self.Size)
-							
-			cam_PushModelMatrix(matrix)
-				if self.Invert then
-					render_CullMode(MATERIAL_CULLMODE_CCW)
-				else
-					render_CullMode(MATERIAL_CULLMODE_CW)
-				end
-				
-				self.wavefront_mesh:Draw()
-				
-				if self.Invert then
-					render_CullMode(MATERIAL_CULLMODE_CW)
-				else
-					render_CullMode(MATERIAL_CULLMODE_CCW)
-				end
-			cam_PopModelMatrix()
-		else
-			ent:DrawModel()
-		end
 				
 		if filter then
 			render.PopFilterMin()
