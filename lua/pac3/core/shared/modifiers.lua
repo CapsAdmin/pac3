@@ -11,7 +11,9 @@ end
 function pac.HandleModifiers(data, owner)
 	if not owner:IsValid() then return end
 	for key, func in pairs(pac.GetServerModifiers()) do
-		func(data, owner)
+		if GetConVarNumber("pac_modifier_" .. key) ~= 0 then
+			func(data, owner)
+		end
 	end
 end
 
