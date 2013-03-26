@@ -19,7 +19,6 @@ function urlobj.ParseObj(data)
 	local positions = {}
 	local texcoords = {}
 	local normals = {}
-	local indices = {}
 	local output = {}
 
 	if pac.debug then
@@ -28,14 +27,11 @@ function urlobj.ParseObj(data)
 	pac.dprint("parsing model")
 	
 	local lines = {}
-		
-	local i = 1
-	for line in data:gmatch("(.-)\n") do
-		local parts = line:gsub("%s+", " "):Trim():Split(" ")
-		parts.line = line
-		parts.line_num = i
+	
+	for i in data:gmatch("(.-)\n") do
+		local parts = i:gsub("%s+", " "):Trim():Split(" ")
+
 		table.insert(lines, parts)
-		i=i+1
 	end
 		
 	for _, parts in pairs(lines) do		
@@ -46,54 +42,55 @@ function urlobj.ParseObj(data)
 			table_insert(texcoords, tonumber(1 - parts[3]))
 		elseif parts[1] == "vn" and #parts >= 4 then
 			table_insert(normals, Vector(parts[2], parts[3], parts[4]))
-		elseif parts[1] == "f" and #parts > 3 then
-			table_insert(indices, {parts[2]:Split("/"), parts[3]:Split("/"), parts[4]:Split("/")})
-		else
-			--PrintTable(parts)
 		end
 	end
 		
-	for _, vtx in pairs(indices) do
-		local v1, v2, v3 = {}, {}, {}
+	for _, parts in pairs(lines) do
+		if parts[1] == "f" and #parts > 3 then
+			local first, previous
 
-		v1.pos = positions[tonumber(vtx[1][1])]
-		v2.pos = positions[tonumber(vtx[2][1])]
-		v3.pos = positions[tonumber(vtx[3][1])]
-		
-		if #texcoords > 0 then
-			v1.u = texcoords[1 + (tonumber(vtx[1][2]) - 1) * 2 + 0]
-			v1.v = texcoords[1 + (tonumber(vtx[1][2]) - 1) * 2 + 1]
-			
-			v2.u = texcoords[1 + (tonumber(vtx[2][2]) - 1) * 2 + 0]
-			v2.v = texcoords[1 + (tonumber(vtx[2][2]) - 1) * 2 + 1]
-			
-			v3.u = texcoords[1 + (tonumber(vtx[3][2]) - 1) * 2 + 0]
-			v3.v = texcoords[1 + (tonumber(vtx[3][2]) - 1) * 2 + 1]
+			for i = 2, #parts do
+				local current = parts[i]:Split("/")
+
+				if i == 2 then
+					first = current
+				end
+				
+				if i >= 4 then
+					local v1, v2, v3 = {}, {}, {}
+
+					v1.pos = positions[tonumber(first[1])]
+					v2.pos = positions[tonumber(current[1])]
+					v3.pos = positions[tonumber(previous[1])]
+
+					if #normals > 0 then
+						v1.normal = normals[tonumber(first[3])]
+						v2.normal = normals[tonumber(current[3])]
+						v3.normal = normals[tonumber(previous[3])]
+					end
+					
+					if #texcoords > 0 then
+						v1.u = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 0]%1
+						v1.v = texcoords[1 + (tonumber(first[2]) - 1) * 2 + 1]%1
+						
+						v2.u = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 0]%1
+						v2.v = texcoords[1 + (tonumber(current[2]) - 1) * 2 + 1]%1
+						
+						v3.u = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 0]%1
+						v3.v = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 1]%1
+					end
+					
+					table_insert(output, v1)
+					table_insert(output, v2)
+					table_insert(output, v3)
+				end
+
+				previous = current
+			end
 		end
-		
-		if #normals > 0 then
-			v1.normal = normals[tonumber(vtx[1][3])]
-			v2.normal = normals[tonumber(vtx[2][3])]
-			v3.normal = normals[tonumber(vtx[3][3])]
-		end
-		
-		table_insert(output, v1)
-		table_insert(output, v2)
-		table_insert(output, v3)
 	end
-		
-	for key, val in pairs(output) do
-		val.u = val.u%1
-		val.v = val.v%1
-	end
-
-	local temp = {}
-
-	for key, val in pairs(output) do
-		temp[key] = {pos = val.pos * 1, normal = val.normal * 1, u = val.u, v = val.v}
-	end
-
-	return temp
+				
+	return output
 end
 
 function urlobj.CreateObj(obj_str)	
