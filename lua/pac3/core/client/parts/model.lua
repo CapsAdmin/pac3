@@ -306,19 +306,7 @@ local function RealDrawModel(self, ent, pos, ang)
 		matrix:Scale(self.Scale * self.Size)
 						
 		cam_PushModelMatrix(matrix)
-			if self.Invert then
-				render_CullMode(MATERIAL_CULLMODE_CCW)
-			else
-				render_CullMode(MATERIAL_CULLMODE_CW)
-			end
-			
 			self.wavefront_mesh:Draw()
-			
-			if self.Invert then
-				render_CullMode(MATERIAL_CULLMODE_CW)
-			else
-				render_CullMode(MATERIAL_CULLMODE_CCW)
-			end
 		cam_PopModelMatrix()
 	else
 		ent:DrawModel()
