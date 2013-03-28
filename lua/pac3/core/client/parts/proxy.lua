@@ -96,6 +96,10 @@ end
 
 PART.Inputs =
 {
+	visible = function(s, p)
+		p.proxy_pixvis = p.proxy_pixvis or util.GetPixelVisibleHandle()
+		return util.PixelVisible(p.cached_pos, 16, p.proxy_pixvis) or 0
+	end,
 	time = RealTime,
 	synced_time = CurTime,
 	random = function(s, p)
