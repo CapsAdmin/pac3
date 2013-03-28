@@ -96,6 +96,17 @@ end
 
 PART.Inputs =
 {
+	owner_fov = function(s, p)
+		local owner = s:GetOwner(s.RootOwner)
+		
+		owner = try_viewmodel(owner)
+
+		if owner:IsValid() and owner.GetFOV then
+			return owner:GetFOV()
+		end
+		
+		return 0
+	end,
 	visible = function(s, p)
 		p.proxy_pixvis = p.proxy_pixvis or util.GetPixelVisibleHandle()
 		return util.PixelVisible(p.cached_pos, 16, p.proxy_pixvis) or 0
