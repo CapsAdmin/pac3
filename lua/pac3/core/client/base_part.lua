@@ -854,11 +854,29 @@ do -- drawing. this code is running every frame
 		
 		ang = self.calc_angvel and self:CalcAngleVelocity(ang) or ang
 		
+		
+		if pac.StringFind(self.AimPartName, "LOCALEYES_YAW", true, true) then
+		
+			local ang = (pac.EyePos - self.cached_pos):Angle()
+			ang.p = 0
+			return self.Angles + ang
+		
+		end	
+		
+		if pac.StringFind(self.AimPartName, "LOCALEYES_PITCH", true, true) then
+		
+			local ang = (pac.EyePos - self.cached_pos):Angle()
+			ang.y = 0
+			return self.Angles + ang
+		
+		end
+		
 		if pac.StringFind(self.AimPartName, "LOCALEYES", true, true) then
 		
 			return self.Angles + (pac.EyePos - self.cached_pos):Angle()
 		
-		end
+		end	
+
 		
 		if pac.StringFind(self.AimPartName, "PLAYEREYES", true, true) then
 		

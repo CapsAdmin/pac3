@@ -341,17 +341,16 @@ function PART:DrawModel(ent, pos, ang)
 			render.PushFilterMin(filter)
 		end
 		
-		--if self.Materialm then
 		render_MaterialOverride(self.Materialm) 
 		render_ModelMaterialOverride(self.Materialm) 
 		if self.Materialm then 
 			render_SetMaterial(self.Materialm) 
 		end
-		--end
 			
 		RealDrawModel(self, ent, pos, ang)
+		
 		render.PushFlashlightMode(true)
-		RealDrawModel(self, ent, pos, ang) -- ugh lol
+			RealDrawModel(self, ent, pos, ang) -- ugh lol
 		render.PopFlashlightMode()
 		
 				
