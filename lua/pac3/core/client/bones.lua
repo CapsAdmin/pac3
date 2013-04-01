@@ -153,6 +153,10 @@ end
 function pac.GetBonePosAng(ent, id, parent)
 	if not ent:IsValid() then return Vector(), Angle() end
 	
+	if ent.pac_owner_override and ent.pac_owner_override:IsValid() then
+		ent = ent.pac_owner_override
+	end
+	
 	if ent:IsPlayer() and not ent:Alive() then
 		local rag = ent:GetRagdollEntity() or NULL
 		if rag:IsValid() then
