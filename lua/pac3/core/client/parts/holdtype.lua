@@ -57,6 +57,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Fallback", "")
 	pac.GetSet(PART, "Noclip", "")
 	pac.GetSet(PART, "Air", "")
+	pac.GetSet(PART, "Sitting", "")
 pac.EndStorableVars()
 
 for name, act in pairs(act_mods) do
@@ -88,6 +89,7 @@ function PART:UpdateActTable()
 		ent.pac_acttable.fallback = ent:GetSequenceActivity(ent:LookupSequence(self.Fallback))
 		ent.pac_acttable.noclip = ent:GetSequenceActivity(ent:LookupSequence(self.Noclip))
 		ent.pac_acttable.air = ent:GetSequenceActivity(ent:LookupSequence(self.Air))
+		ent.pac_acttable.sitting = ent:GetSequenceActivity(ent:LookupSequence(self.Sitting))
 		
 		ent.pac_holdtype_part = self
 	end
@@ -102,7 +104,7 @@ function PART:GetSequenceList()
 	return {"none"}
 end
 
-function PART:OnHide()
+function PART:Disable()
 	local ent = self:GetOwner(true)
 
 	if ent:IsValid() and ent.pac_holdtype_part == self then
@@ -110,13 +112,28 @@ function PART:OnHide()
 	end
 end
 
-function PART:OnShow(from_event, from_drawing)
+function PART:Enable()
 	self:UpdateActTable()
 end
 
+function PART:OnHide()
+	self:Disable()
+	self.invalidate = true
+end
+
+function PART:OnShow(from_event, from_drawing)
+	self:Enable()
+	self.invalidate = true
+end
+
 function PART:OnThink()
-	if not self:IsHidden() then
-		self:OnShow()
+	if self.invalidate then
+		if self:IsHidden() then
+			self:Disable()
+		else
+			self:Enable()
+		end
+		self.invalidate =  false
 	end
 end
 
@@ -124,6 +141,10 @@ hook.Add("TranslateActivity", "pac_acttable", function(ply, act)
 	if IsEntity(ply) and ply:IsValid() and ply.pac_acttable then
 		if ply.pac_acttable[act] and ply.pac_acttable[act] ~= -1 then
 			return ply.pac_acttable[act]
+		end
+		
+		if ply:GetVehicle():IsValid() and ply:GetVehicle():GetClass() == "prop_vehicle_prisoner_pod" then
+			return ply.pac_acttable.sitting
 		end
 		
 		if ply.pac_acttable.noclip ~= -1 and ply:GetMoveType() == MOVETYPE_NOCLIP then
