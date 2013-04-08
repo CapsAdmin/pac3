@@ -66,7 +66,7 @@ function pac.SubmitPart(data, filter)
 	local allowed, reason = hook.Call("PrePACConfigApply", GAMEMODE, data.owner, data, true)
 
 	if type(data.part) == "table" then	
-		local ent = Entity(tonumber(data.part.self.OwnerName))
+		local ent = Entity(tonumber(data.part.self.OwnerName) or -1)
 		if ent:IsValid()then
 			if ent.CPPICanTool and (ent:CPPIGetOwner() ~= data.owner and not ent:CPPICanTool(data.owner)) then
 				allowed = false
