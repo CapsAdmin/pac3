@@ -16,17 +16,17 @@ local def =
 
 function pac.SetPlayerSize(ply, f)	
 	--local TICKRATE = SERVER and 1/FrameTime() or 0
-	
-	if not ply.SetViewOffset then return end
-	
-	ply:SetViewOffset(def.view * f)
-	ply:SetViewOffsetDucked(def.viewducked * f)
+		
+	if ply.SetViewOffset then ply:SetViewOffset(def.view * f) end
+	if ply.SetViewOffsetDucked then ply:SetViewOffsetDucked(def.viewducked * f) end
 	
 	if SERVER then		
-		ply:SetModelScale(f, 0)
-		ply:SetStepSize(def.step * f)
+		if ply.SetStepSize then ply:SetStepSize(def.step * f) end
 
+		ply:SetModelScale(f, 0)
+		
 		local phys = ply:GetPhysicsObject()
+		
 		if phys:IsValid() then
 			phys:SetMass(def.mass * f)	
 		end
@@ -85,7 +85,14 @@ function pac.SetPlayerSize(ply, f)
 	ply.pac_player_size = f
 end
 
-pac.AddServerModifier("size", function(data, owner) 
+pac.AddServerModifier("size", function(data, owner)
+	if data and tonumber(data.self.OwnerName) then
+		 local ent = Entity(tonumber(data.self.OwnerName))
+		 if ent:IsValid() then
+			owner = ent
+		 end
+	end
+ 
 	if not data then
 		pac.SetPlayerSize(owner, 1)
 	else

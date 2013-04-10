@@ -349,7 +349,13 @@ function pac.SetModelScale(ent, scale, size)
 	end
 	
 	if size then
-		ent:SetModelScale(size == 1 and 1.000001 or size, 0)
+		if ent.pac_enable_ik then
+			ent:SetIK(true)
+			ent:SetModelScale(1, 0)
+		else
+			ent:SetIK(false)
+			ent:SetModelScale(size == 1 and 1.000001 or size, 0)
+		end
 	end
 	
 	if not scale and not size then

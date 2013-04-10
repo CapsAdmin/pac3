@@ -1,3 +1,8 @@
+if CLIENT then
+	-- so the client knows it exists
+	pac.AddServerModifier("model", function(data, owner) end)
+end
+
 if SERVER then
 
 	function pac.SetPlayerModel(ply, model)
