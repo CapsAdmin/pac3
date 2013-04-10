@@ -24,8 +24,19 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "BodygroupState", 0)
 	pac.GetSet(PART, "DrawShadow", true)
 	pac.GetSet(PART, "Weapon", false)
+	pac.GetSet(PART, "InverseKinematics", false)
 pac.EndStorableVars()
 
+
+function PART:SetInverseKinematics(b)
+	self.InverseKinematics = b
+	local ent = self:GetOwner()
+	
+	if ent:IsValid() then
+		ent.pac_enable_ik = b
+		self:SetSize(self:GetSize())
+	end
+end
 
 function PART:GetNiceName()
 	local ent = self:GetOwner()
@@ -103,7 +114,7 @@ end
 function PART:UpdateScale(ent)
 	ent = ent or self:GetOwner()
 	if ent:IsValid() then				
-		if ent:IsPlayer() then
+		if ent:IsPlayer() or ent:IsNPC() then
 			pac.SetModelScale(ent, nil, self.Size)
 		else
 			pac.SetModelScale(ent, self.Scale * self.Size)
