@@ -46,9 +46,10 @@ function pace.SaveParts(name, prompt_name, override_part)
 		if #data > 0 then
 			local files, folders = file.Find("pac3/__backup/*", "DATA")
 						
-			if #files > 150 then
+			if #files > 200 then
+				chat.AddText("PAC3 is trying to delete backup files (new system) but you have way too many for lua to delete because of the old system")
 				chat.AddText(
-					("PAC3 is trying to delete backup files (new system) but you have way too many for lua to delete. Go to %s and delete everything in that folder!!!!!!!")
+					("Go to %s and delete everything in that folder! You should only get this warning once if you've used the SVN version of PAC3.")
 					:format(util.RelativePathToFull("lua/includes/init.lua"):gsub("\\", "/"):gsub("lua/includes/init.lua", "data/pac3/__backup/"))
 				)
 			elseif #files > 100 then
@@ -62,7 +63,7 @@ function pace.SaveParts(name, prompt_name, override_part)
 					return a.time > b.time
 				end)
 				
-				for i = 100, #files - 100 do
+				for i = 100, #files do
 					file.Delete(temp[i].path, "DATA")
 				end
 			end
