@@ -77,6 +77,7 @@ end
 local function CalcDrag()
 	if 
 		pace.BusyWithProperties:IsValid() or
+		pace.ActiveSpecialPanel:IsValid() or
 		pace.editing_viewmodel 
 	then return end
 

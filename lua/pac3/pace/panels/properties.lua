@@ -1127,6 +1127,67 @@ do -- material
 	pace.RegisterPanel(PANEL)
 end
 
+local function create_search_list(self, name, add_columns, get_list, get_current, add_line, search_value)
+	select_value = select_value or function(val, key) return val end
+	pace.SafeRemoveSpecialPanel()
+		
+	local frame = vgui.Create("DFrame")
+	frame:SetTitle(L(name))
+	frame:SetSize(300, 300)
+	frame:Center()
+	frame:SetSizable(true)
+
+	local list = vgui.Create("DListView", frame)
+	list:Dock(FILL)
+	list:SetMultiSelect(false)
+	
+	add_columns(list)
+	
+	list.OnRowSelected = function(_, id, line) 
+		local val = select_value(line.list_val, line.list_key)
+		self:SetValue(val)
+		self.OnValueChanged(val)
+	end
+	
+	local first = NULL
+		
+	local function build(find)	
+		list:Clear()			
+		
+		local cur = get_current()
+		
+		for key, val in pairs(get_list()) do
+			if (not find or find == "") or tostring(select_value(val, key)):lower():find(find) then
+			
+				local pnl = add_line(list, key, val)
+				pnl.list_key = key
+				pnl.list_val = val
+				
+				if not first:IsValid() then
+					first = pnl
+				end
+				
+				if cur == name then
+					list:SelectItem(pnl)
+				end
+			end
+		end
+	end
+	
+	local search = vgui.Create("DTextEntry", frame)
+	search:Dock(BOTTOM)
+	search.OnTextChanged = function() build(search:GetValue()) end
+	search.OnEnter = function() if first:IsValid() then list:SelectItem(first) end frame:Remove() end
+	search:RequestFocus()
+	frame:MakePopup()
+	
+	build()
+	
+	pace.ActiveSpecialPanel = frame
+	
+	return frame
+end
+
 do -- sequence list
 	local PANEL = {}
 
@@ -1134,42 +1195,23 @@ do -- sequence list
 	PANEL.Base = "pace_properties_base_type"
 		
 	function PANEL:SpecialCallback()
-		pace.SafeRemoveSpecialPanel()
-		
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"animations")
-		frame:SetSize(300, 300)
-		frame:Center()
-		frame:SetSizable(true)
-
-		local list = vgui.Create("DListView", frame)
-		list:Dock(FILL)
-		list:SetMultiSelect(false)
-		list:AddColumn("id"):SetFixedWidth(25)
-		list:AddColumn("name")
-
-		list.OnRowSelected = function(_, id, line) 
-			self:SetValue(line.seq_name)
-			self.OnValueChanged(line.seq_name)
-		end
-
-		local cur
-		
-		if pace.current_part.ClassName == "animation" then
-			cur = pace.current_part:GetSequenceName()
-		end
-		
-		for id, name in pairs(pace.current_part:GetSequenceList()) do
-			local pnl = list:AddLine(id, name)
-			pnl.seq_name = name
-			pnl.seq_id = id
-			
-			if cur == name then
-				list:SelectItem(pnl)
+		create_search_list(
+			self,
+			"animations", 
+			function(list) 	
+				list:AddColumn("id"):SetFixedWidth(25)
+				list:AddColumn("name") 
+			end,
+			function() 
+				return pace.current_part:GetSequenceList()
+			end,
+			function()
+				return pace.current_part:GetSequenceName()
+			end,
+			function(list, key, val)
+				return list:AddLine(key, val)
 			end
-		end
-		
-		pace.ActiveSpecialPanel = frame
+		)
 	end
 	
 	pace.RegisterPanel(PANEL)
@@ -1181,44 +1223,31 @@ do -- pose parameter list
 	PANEL.ClassName = "properties_poseparameter"
 	PANEL.Base = "pace_properties_base_type"
 		
-	function PANEL:SpecialCallback()
-		pace.SafeRemoveSpecialPanel()
-		
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"pose parameters")
-		frame:SetSize(300, 300)
-		frame:Center()
-		frame:SetSizable(true)
-
-		local list = vgui.Create("DListView", frame)
-		list:Dock(FILL)
-		list:SetMultiSelect(false)
-		list:AddColumn("id"):SetFixedWidth(25)
-		list:AddColumn("name")
-
-		list.OnRowSelected = function(_, id, line) 
-			self:SetValue(line.seq_name)
-			self.OnValueChanged(line.seq_name)
-		end
-
-		local cur = pace.current_part:GetPoseParameter()
-		
-		for _, data in pairs(pace.current_part:GetPoseParameterList()) do
-			local pnl = list:AddLine(id, data.name)
-			pnl.seq_name = data.name
-			pnl.seq_id = data.i
-			
-			if cur == data.name then
-				list:SelectItem(pnl)
+	function PANEL:SpecialCallback()		
+		create_search_list(
+			self,
+			"pose parameters", 
+			function(list) 	
+				list:AddColumn("id"):SetFixedWidth(25)
+				list:AddColumn("name") 
+			end,
+			function() 
+				return pace.current_part:GetPoseParameterList()
+			end,
+			function()
+				return pace.current_part:GetPoseParameter()
+			end,
+			function(list, key, val)
+				return list:AddLine(key, val.name)
+			end,
+			function(val) 
+				return val.name
 			end
-		end
-		
-		pace.ActiveSpecialPanel = frame
+		)
 	end
 	
 	pace.RegisterPanel(PANEL)
 end
-
 
 do -- event list
 	local PANEL = {}
@@ -1227,33 +1256,27 @@ do -- event list
 	PANEL.Base = "pace_properties_base_type"
 		
 	function PANEL:SpecialCallback()	
-		pace.SafeRemoveSpecialPanel()
-		
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"events")
-		SHOW_SPECIAL(frame, self, 250)
-		frame:SetSizable(true)
-
-		local list = vgui.Create("DListView", frame)
-		list:Dock(FILL)
-		list:SetMultiSelect(false)
-		list:AddColumn(L"event")
-
-		list.OnRowSelected = function(_, id, line) 
-			self:SetValue(line.event_name)
-			self.OnValueChanged(line.event_name)
-		end
-
-		for name in pairs(pace.current_part.Events) do
-			local pnl = list:AddLine(L(name:gsub("_", " ")))
-			pnl.event_name = name
-			
-			if cur == name then
-				list:SelectItem(pnl)
+		local frame = create_search_list(
+			self,
+			"events", 
+			function(list) 	
+				list:AddColumn("name") 
+			end,
+			function() 
+				return pace.current_part.Events
+			end,
+			function()
+				return pace.current_part.Event
+			end,
+			function(list, key, val)
+				return list:AddLine(L(key:gsub("_", " ")))
+			end,
+			function(val, key)
+				return key
 			end
-		end
+		)
 		
-		pace.ActiveSpecialPanel = frame
+		SHOW_SPECIAL(frame, self, 250)
 	end
 	
 	pace.RegisterPanel(PANEL)
@@ -1265,34 +1288,28 @@ do -- operator list
 	PANEL.ClassName = "properties_operator"
 	PANEL.Base = "pace_properties_base_type"
 		
-	function PANEL:SpecialCallback()	
-		pace.SafeRemoveSpecialPanel()
-		 
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"operators")
-		SHOW_SPECIAL(frame, self, 250)
-		frame:SetSizable(true)
-
-		local list = vgui.Create("DListView", frame)
-		list:Dock(FILL)
-		list:SetMultiSelect(false)
-		list:AddColumn(L"operator")
-
-		list.OnRowSelected = function(_, id, line) 
-			self:SetValue(line.event_name)
-			self.OnValueChanged(line.event_name)
-		end
-
-		for _, name in pairs(pace.current_part.Operators) do
-			local pnl = list:AddLine(L(name))
-			pnl.event_name = name
-			
-			if cur == name then
-				list:SelectItem(pnl)
+	function PANEL:SpecialCallback()			
+		local frame = create_search_list(
+			self,
+			"operators", 
+			function(list) 	
+				list:AddColumn("name") 
+			end,
+			function() 
+				return pace.current_part.Operators
+			end,
+			function()
+				return pace.current_part.Operator
+			end,
+			function(list, key, val)
+				return list:AddLine(L(val:gsub("_", " ")))
+			end,
+			function(val, key)
+				return val
 			end
-		end
+		)
 		
-		pace.ActiveSpecialPanel = frame
+		SHOW_SPECIAL(frame, self, 250)
 	end
 	
 	pace.RegisterPanel(PANEL)
@@ -1398,34 +1415,26 @@ do -- Proxy Functions
 	PANEL.ClassName = "properties_proxyinputs"
 	PANEL.Base = "pace_properties_base_type"
 		
-	function PANEL:SpecialCallback()	
-		pace.SafeRemoveSpecialPanel()
-		 
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"functions")
-		SHOW_SPECIAL(frame, self, 250)
-		frame:SetSizable(true)
-
-		local list = vgui.Create("DListView", frame)
-		list:Dock(FILL)
-		list:SetMultiSelect(false)
-		list:AddColumn(L"input")
-
-		list.OnRowSelected = function(_, id, line) 
-			self:SetValue(line.event_name)
-			self.OnValueChanged(line.event_name)
-		end
-
-		for name, _ in pairs(pace.current_part.Inputs) do
-			local pnl = list:AddLine(L(name))
-			pnl.event_name = name
-			
-			if cur == name then
-				list:SelectItem(pnl)
+	function PANEL:SpecialCallback()			
+		local frame = create_search_list(
+			self,
+			"operators", 
+			function(list) 	
+				list:AddColumn("name") 
+			end,
+			function() 
+				return pace.current_part.Inputs
+			end,
+			function()
+				return pace.current_part.Input
+			end,
+			function(list, key, val)
+				return list:AddLine(L(key))
+			end,
+			function(val, key)
+				return key
 			end
-		end
-		
-		pace.ActiveSpecialPanel = frame
+		)
 	end
 	
 	pace.RegisterPanel(PANEL)
@@ -1479,7 +1488,7 @@ do -- Proxy Variables
 	pace.RegisterPanel(PANEL)
 end
 
-do -- Proxy Functions
+do -- holdtype
 	local PANEL = {}
 
 	PANEL.ClassName = "properties_weaponholdtype"
