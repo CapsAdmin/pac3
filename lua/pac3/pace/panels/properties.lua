@@ -1127,7 +1127,7 @@ do -- material
 	pace.RegisterPanel(PANEL)
 end
 
-local function create_search_list(self, name, add_columns, get_list, get_current, add_line, search_value)
+local function create_search_list(self, name, add_columns, get_list, get_current, add_line, select_value)
 	select_value = select_value or function(val, key) return val end
 	pace.SafeRemoveSpecialPanel()
 		
@@ -1206,7 +1206,7 @@ do -- sequence list
 				return pace.current_part:GetSequenceList()
 			end,
 			function()
-				return pace.current_part:GetSequenceName()
+				return pace.current_part.ClassName == "animation" and pace.current_part:GetSequenceName()
 			end,
 			function(list, key, val)
 				return list:AddLine(key, val)
