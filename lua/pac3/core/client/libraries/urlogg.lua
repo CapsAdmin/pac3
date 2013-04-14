@@ -511,7 +511,8 @@ function createStream(url, id) {
 function destroyStream(id) {
 	if (streams[id])
 	{
-		streams[id].speed = 0
+		streams[id].splitter.disconnect()
+		streams[id].stop(false, 0)
 		streams[id].onaudioprocess = function() {}
 
 		streams[id] = undefined
