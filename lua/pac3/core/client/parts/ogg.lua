@@ -160,6 +160,8 @@ function PART:SetDoppler(num)
 		
 		stream:EnableDoppler(num)
 	end
+	
+	self.Doppler = num
 end
 
 pac.RegisterPart(PART)
