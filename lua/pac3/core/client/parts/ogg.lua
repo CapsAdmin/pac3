@@ -16,8 +16,6 @@ pac.StartStorableVars()
 	
 	pac.GetSet(PART, "FilterType", 0)
 	pac.GetSet(PART, "FilterFraction", 1)
-	pac.GetSet(PART, "FilterQuality", 1)
-	pac.GetSet(PART, "FilterGain", 1)
 pac.EndStorableVars()
 
 function PART:Initialize()
@@ -48,14 +46,12 @@ local BIND = function(name, set, check)
 end
 
 BIND("Pitch")
-BIND("Loop", "SetLoopCount")
+BIND("Loop", "SetMaxLoopCount")
 BIND("Volume", nil, function(n) return math.Clamp(n, 0, 2) end)
 BIND("Radius", "Set3DRadius", function(n) return math.Clamp(n, 0, 1500) end)
 
 BIND("FilterType")
 BIND("FilterFraction")
-BIND("FilterQuality", nil, function(n) return math.Clamp(n, 0, 5) end)
-BIND("FilterGain", nil, function(n) return math.Clamp(n, 0, 2) end)
 
 function PART:Think()	
 	local owner = self:GetOwner(true) 
