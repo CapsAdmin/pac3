@@ -408,9 +408,6 @@ function open()
     processor = audio.createJavaScriptNode(4096, 0, 1);
     gain = audio.createGainNode()
     
-    var sml = 0
-    var smr = 0
-
     processor.onaudioprocess = function(event)
     {
         var outl = event.outputBuffer.getChannelData(0);
@@ -433,7 +430,10 @@ function open()
 
             var inl = stream.buffer.getChannelData(0)
             var inr = stream.buffer.numberOfChannels == 1 ? inl : stream.buffer.getChannelData(1)
-
+	
+			var sml = 0
+			var smr = 0
+	
             for(var j = 0; j < event.outputBuffer.length; ++j)
             {
                 var length = stream.buffer.length;
