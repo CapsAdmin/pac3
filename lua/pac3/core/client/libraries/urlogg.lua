@@ -79,8 +79,10 @@ do -- STREAM
 	end
 
 	BIND("SamplePosition", ".position = %f", 0)
-	BIND("Seek", ".currentTime = %f", 0)
 	BIND("Speed", ".speed = %f", 1)
+	
+	STREAM.SetPitch = STREAM.SetSpeed
+	STREAM.GetPitch = STREAM.GetSpeed
 
 	webaudio.FILTER =
 	{
@@ -104,7 +106,7 @@ do -- STREAM
 	end
 	
 	function STREAM:SetLoopCount(var)
-		self:Call(".looping = %i", var == true and 1 or var == false and -1 or tonumber(var) or 0)
+		self:Call(".looping = %i", var == 0 and -1 or var == true and 1 or var == false and -1 or tonumber(var) or 0)
 		self.LoopCount = var
 	end
 
@@ -216,10 +218,10 @@ do -- STREAM
 
 		STREAM.source_ent = NULL
 
-		function STREAM:SetSourceEntity(ent, dont_dremove)
+		function STREAM:SetSourceEntity(ent, dont_remove)
 			self.source_ent = ent
 
-			if not dont_dremove then
+			if not dont_remove then
 				ent:CallOnRemove("webaudio_remove_stream_" .. tostring(self), function()
 					self:Remove()
 				end)
