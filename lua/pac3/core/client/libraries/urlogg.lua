@@ -2,6 +2,7 @@
 
 local webaudio = pac.webaudio or {}
 
+webaudio.preinit = false
 webaudio.debug = 0
 webaudio.initialized = false
 webaudio.rate = 0
@@ -34,7 +35,7 @@ do -- STREAM
 	local STREAM = {}
 	STREAM.__index = STREAM
 
-	STREAM.__tostring = function(s) return string.format("stream[%d][%s]", s.id, s.url) end
+	STREAM.__tostring = function(s) return string.format("stream[%p][%d][%s]", s, s.id, s.url) end
 
 	STREAM.loaded = false
 	STREAM.duration = 0
@@ -42,22 +43,38 @@ do -- STREAM
 	STREAM.rad3d = 1000
 	STREAM.usedoppler = true
 	STREAM.url = "" -- ??
-	STREAM.__valid = true
 	STREAM.paused = true
+	
+	function STREAM:__newindex(key, val)
+		if key == "OnFFT" then
+			if type(val) == "function" then
+				self:Call(".usefft(true)")
+			else
+				self:Call(".usefft(false)")
+			end
+		end
+		
+		rawset(self, key, val)
+	end
 
 	function STREAM:Remove()
-		self.__valid = false
+		self.IsValid = function() return false end
 	end
 
 	function STREAM:IsValid()
-		return self.__valid
+		return true
 	end
 
+	local last
+	
 	function STREAM:Call(fmt, ...)
 		if not self.loaded then return end
 
 		local script = ("try { streams[%d]%s } catch(e) { lua.print(e.toString()) }"):format(self.id, fmt:format(...))
-		--dprint(script)
+		if script ~= last then
+			dprint(script)
+			last = script
+		end
 		webaudio.html:QueueJavascript(script)
 	end
 
@@ -201,10 +218,11 @@ do -- STREAM
 
 				local offset = self.pos3d - eye_pos
 				local pan = (offset):GetNormalized():Dot(eye_ang:Right())
-				local vol = self.Volume / (1 + offset:LengthSqr() / (self.rad3d ^ 1.5))
-
-				self:Call(".vol_right.gain.value = %f", math.Clamp(1 + pan, 0, 1) * vol)
-				self:Call(".vol_left.gain.value = %f", math.Clamp(1 - pan, 0, 1) * vol)
+				local vol = math.Clamp((-offset:Length() + self.rad3d) / self.rad3d, 0, 1) ^ 1.5
+				vol = vol * 0.75
+				
+				self:Call(".set_right(%f)", math.Clamp(1 + pan, 0, 1) * vol)
+				self:Call(".set_left(%f)", math.Clamp(1 - pan, 0, 1) * vol)
 
 				if self.usedoppler then
 					local offset = self.pos3d - eye_pos
@@ -234,9 +252,11 @@ do -- STREAM
 
 		function STREAM:SetPanning(num)
 			self.Panning = num
-
-			self:Call(".vol_right.gain.value = %f", math.Clamp(1 + num, 0, 1) * self.Volume)
-			self:Call(".vol_left.gain.value = %f", math.Clamp(1 - num, 0, 1) * self.Volume)
+	
+			if not self.use3d then
+				self:Call(".set_right(%f)", math.Clamp(1 + num, 0, 1) * self.Volume)
+				self:Call(".set_left(%f)", math.Clamp(1 - num, 0, 1) * self.Volume)
+			end
 		end
 
 		function STREAM:GetPanning()
@@ -313,19 +333,22 @@ hook.Add("Think", "webaudio", function()
 					local stream = webaudio.streams[tonumber(args[2]) or 0]
 
 					if stream then
-						if args[1] == "stop" then
+						if args[1] == "fft" then
+							local data = CompileString(args[2], "stream_fft_data")()
+							stream.OnFFT(data)							
+						elseif args[1] == "stop" then
 							stream.paused = true
 						elseif args[1] == "return" then
 							stream.returned_var = {select(3, ...)}
 						elseif args[1] == "loaded" then
 							stream.loaded = true
 							stream.Length = args[3]
-							if stream.paused then
-								stream:Call(".vol_right.gain.value = 0")
-								stream:Call(".vol_left.gain.value = 0")
-							end
 							stream:SetFilterType(3)
 							stream:SetFilterFrequency(100)
+							
+							if stream.OnLoad then
+								stream:OnLoad()
+							end
 						elseif args[1] == "position" then
 							stream.position = args[3]
 						end
@@ -361,7 +384,12 @@ function initialize() {
 	}
 	audio = new webkitAudioContext
 	gain = audio.createGainNode()
+	
+	//var compressor = audio.createDynamicsCompressor()	
+	//gain.connect(compressor)
+	//compressor.connect(audio.destination)
 	gain.connect(audio.destination)
+	
 	lua.message("initialized", audio.sampleRate)
 }
 
@@ -392,8 +420,6 @@ function download(url, callback)
 			source = audio.createBufferSource()
 
 			source.buffer = buffer
-			source.loop = false
-			source.noteOn(0)
 
 			callback(source)
 
@@ -443,31 +469,77 @@ function createStream(url, id) {
 			vol_right.connect(merger, 0, 1)
 		stream.merger = merger
 
-		vol_left.gain.value = 0.5
-		vol_right.gain.value = 1
-
+		stream.left_mult = 0
+		stream.set_left = function(num) { 
+			stream.left_mult = num
+		}
+		
+		stream.right_mult = 0
+		stream.set_right = function(num) { 
+			stream.right_mult = num
+		}
+		
 		var filter = audio.createBiquadFilter()
 		stream.filter = filter
 
 		var proc = audio.createJavaScriptNode(4096, 0, 1)
 
 		stream.position = 0
-		stream.looping =1
+		stream.looping = 1
 
 		stream.play = function(b, sample_pos)
 		{
+			if (sample_pos !== undefined)
+			{ 
+				stream.position = sample_pos
+			}
+			
 			stream.muted = !b
-			if (sample_pos !== undefined) stream.position = 0
+		}
+		
+		stream.usefft = function(b)
+		{
+			if (b)
+			{
+				var fft = audio.createAnalyser()
+				fft.connect(audio.destination)
+				stream.fft = fft
+				
+				var spectrum = new Uint8Array(fft.frequencyBinCount);
+				fft.getByteFrequencyData(spectrum);
+				fft.array = new Array(spectrum.length);
+				fft.spectrum = spectrum
+			}
+			else
+			{
+				stream.fft = false
+			}
 		}
 
+		clamp = function(num, min, max)
+		{
+			return Math.max(min, Math.min(num, max))
+		}
+				
 		proc.onaudioprocess = function(event)
 		{
-			try {
+			try {			
 				var buffer_out_left = event.outputBuffer.getChannelData(0)
 				var buffer_out_right = event.outputBuffer.getChannelData(1)
 				var buffer_in_left = obj.buffer.getChannelData(0)
 				var buffer_in_right = obj.buffer.numberOfChannels == 1 ? buffer_in_left : obj.buffer.getChannelData(1)
 
+				if (stream.muted)
+				{
+					vol_left.gain.value = 0
+					vol_right.gain.value = 0
+				}
+				else
+				{
+					vol_left.gain.value = stream.left_mult
+					vol_right.gain.value = stream.right_mult
+				}
+				
 				for (var i = 0; i < buffer_out_left.length; ++i, stream.position += stream.speed)
 				{
 					if (stream.muted)
@@ -477,8 +549,8 @@ function createStream(url, id) {
 					}
 					else
 					{
-						buffer_out_left[i] = buffer_in_left[(stream.position >>> 0) % buffer_in_left.length]
-						buffer_out_right[i] = buffer_in_right[(stream.position >>> 0) % buffer_in_right.length]
+						buffer_out_left[i] = clamp(buffer_in_left[(stream.position >>> 0) % buffer_in_left.length], -1, 1)
+						buffer_out_right[i] = clamp(buffer_in_right[(stream.position >>> 0) % buffer_in_right.length], -1, 1)
 
 						var count = Math.floor(stream.position / buffer_in_left.length)
 
@@ -492,6 +564,16 @@ function createStream(url, id) {
 						}
 					}
 				}
+				
+				if (stream.fft)
+				{								
+					for(var i = 0; i < stream.fft.spectrum.length; ++i) 
+						stream.fft.array[i] = stream.fft.spectrum[i] / 255;
+					
+					lua.message("stream", "fft", id, "return {" + lol.join(",") + "}");	
+				}
+					
+				
 			} catch(e) {
 				lua.print("SOMETHING BAD HAPPENED")
 			}

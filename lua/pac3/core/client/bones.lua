@@ -250,7 +250,5 @@ function pac.ResetBones(ent)
 			ent:ManipulateBoneAngles(i, ANGLE_RESET)
 			ent:ManipulateBoneJiggle(i, 0)
 		end
-		
-		ent:SetupBones()
 	end
 end
