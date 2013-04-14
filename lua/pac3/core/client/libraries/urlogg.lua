@@ -325,9 +325,9 @@ hook.Add("Think", "webaudio", function()
         local html = vgui.Create("DHTML") or NULL
         if html:IsValid() then
 
-            html:SetVisible(true)
-            html:SetPos(0, 0)
-            html:SetSize(256, 256)
+            html:SetVisible(false)
+            html:SetPos(ScrW(), ScrH())
+            html:SetSize(1, 1)
 
             html:AddFunction("lua", "print", function(text)
                 dprint(text)
@@ -380,7 +380,51 @@ hook.Add("Think", "webaudio", function()
                 dprint(name .. " " .. table.concat({...}, ", "))
             end)
 
-            html:SetHTML([==[
+			html:OpenURL("asset://garrysmod/lua/pac3/core/client/libraries/urlogg.lua")
+            html:SetHTML(webaudio.html_content)
+        end
+
+        webaudio.html = html
+        webaudio.preinit = true
+    end
+
+    if not webaudio.initialized then return end
+
+    if mult ~= 0 then
+
+        local vol = GetConVarNumber("volume")
+
+        if not system.HasFocus() and GetConVarNumber("snd_mute_losefocus") == 1 then
+            vol = 0
+        end
+
+        vol = vol * mult
+
+        webaudio.SetVolume(vol)
+
+        for key, stream in pairs(webaudio.streams) do
+            if stream:IsValid() then
+                stream:Think()
+            else
+                stream:Stop()
+                webaudio.streams[key] = nil
+                webaudio.html:QueueJavascript(("destroyStream(%i)"):format(stream.id))
+
+                setmetatable(stream, getmetatable(NULL))
+            end
+        end
+        
+        local js = table.concat(webaudio.js_queue, "\n")
+        if #js > 0 then
+            webaudio.html:QueueJavascript(js)
+            webaudio.js_queue = {}
+         end
+    end
+end)
+
+pac.webaudio = webaudio
+
+webaudio.html_content = [==[
 <script>
 
 window.onerror = function(description, url, line)
@@ -599,45 +643,4 @@ open()
 
 </script>
 
-]==])
-        end
-
-        webaudio.html = html
-        webaudio.preinit = true
-    end
-
-    if not webaudio.initialized then return end
-
-    if mult ~= 0 then
-
-        local vol = GetConVarNumber("volume")
-
-        if not system.HasFocus() and GetConVarNumber("snd_mute_losefocus") == 1 then
-            vol = 0
-        end
-
-        vol = vol * mult
-
-        webaudio.SetVolume(vol)
-
-        for key, stream in pairs(webaudio.streams) do
-            if stream:IsValid() then
-                stream:Think()
-            else
-                stream:Stop()
-                webaudio.streams[key] = nil
-                webaudio.html:QueueJavascript(("destroyStream(%i)"):format(stream.id))
-
-                setmetatable(stream, getmetatable(NULL))
-            end
-        end
-        
-        local js = table.concat(webaudio.js_queue, "\n")
-        if #js > 0 then
-            webaudio.html:QueueJavascript(js)
-            webaudio.js_queue = {}
-         end
-    end
-end)
-
-pac.webaudio = webaudio
+]==]
