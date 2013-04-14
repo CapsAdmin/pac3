@@ -9,8 +9,10 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Pitch", 1)
 	pac.GetSet(PART, "Radius", 500)
 	pac.GetSet(PART, "Loop", 1)
-	pac.GetSet(PART, "Doppler", false)
-	pac.GetSet(PART, "StopOnHide", true)
+	pac.GetSet(PART, "Doppler", true)
+	pac.GetSet(PART, "StopOnHide", false)
+	pac.GetSet(PART, "PauseOnHide", false)
+	pac.GetSet(PART, "Overlapping", false)
 	
 	pac.GetSet(PART, "FilterType", 0)
 	pac.GetSet(PART, "FilterFraction", 1)
@@ -18,7 +20,9 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "FilterGain", 1)
 pac.EndStorableVars()
 
-PART.stream = NULL
+function PART:Initialize()
+	self.streams = {}
+end
 
 function PART:GetNiceName()
 	return pac.PrettifyName(("/".. self:GetURL()):match(".+/(.-)%.")) or "no sound"
@@ -30,16 +34,20 @@ local BIND = function(name, set, check)
 		if check then
 			var = check(var)
 		end
-				
-		if self.stream:IsValid() then 
-			self.stream[set](self.stream, var)
+		
+		for key, stream in pairs(self.streams) do
+			if stream:IsValid() then
+				stream[set](stream, var)
+			else
+				self.streams[key] = nil
+			end
 		end
 		
 		self[name] = var
 	end
 end
 
-BIND("Pitch", "SetSpeed")
+BIND("Pitch")
 BIND("Loop", "SetLoopCount")
 BIND("Volume", nil, function(n) return math.Clamp(n, 0, 2) end)
 BIND("Radius", "Set3DRadius", function(n) return math.Clamp(n, 0, 1500) end)
@@ -50,68 +58,112 @@ BIND("FilterQuality", nil, function(n) return math.Clamp(n, 0, 5) end)
 BIND("FilterGain", nil, function(n) return math.Clamp(n, 0, 2) end)
 
 function PART:Think()	
-
-	if not self.stream:IsValid() then return end
-	
 	local owner = self:GetOwner(true) 
 	
-	if self.owner_set ~= owner and owner:IsValid() then
-		self.stream:SetSourceEntity(owner)
-		self.owner_set = owner
+	for key, stream in pairs(self.streams) do
+		if not stream:IsValid() then self.streams[key] = nil continue end
+				
+		if stream.owner_set ~= owner and owner:IsValid() then
+			stream:SetSourceEntity(owner)
+			stream.owner_set = owner
+		end
+	end
+end
+
+function PART:SetURL(URL)
+	
+	local urls = {}
+	
+	for _, url in pairs(URL:Split(";")) do	
+		local min, max = url:match(".+%[(.-),(.-)%]")
+		
+		min = tonumber(min)
+		max = tonumber(max)
+		
+		if min and max then
+			for i = min, max do
+				table.insert(urls, (url:gsub("%[.-%]", i)))
+			end
+		else
+			table.insert(urls, url)
+		end
 	end
 	
-	if not self.hacky_init and self.stream.loaded then
-		for key in pairs(self.StorableVars) do
-			if key ~= "URL" then
-				self["Set" .. key](self, self["Get" .. key](self))
+	for _, stream in pairs(self.streams) do	
+		if stream:IsValid() then
+			stream:Remove()
+		end
+	end
+	
+	self.streams = {}
+		
+	for _, URL in pairs(urls) do	
+		local stream = pac.webaudio.Stream(URL)
+		stream:Enable3D(true)
+		stream.OnLoad = function()
+			for key in pairs(self.StorableVars) do
+				if key ~= "URL" then
+					self["Set" .. key](self, self["Get" .. key](self))
+				end
 			end
 		end
-		
-		self.hacky_init = true
+			
+		self.streams[URL] = stream
 	end
+	
+	self.URL = URL
 end
 
-function PART:SetURL(name)
-	if self.stream:IsValid() then
-		self.stream:Remove()
-	end
-		
-	self.stream = pac.webaudio.Stream(name)
-	self.stream:Enable3D(true)
-	self.hacky_init = false
-		
-	self.URL = name
-end
+PART.last_stream = NULL
 
 function PART:OnShow(from_event)
-	if not self.stream:IsValid() then return end
 	
-	if self.StopOnHide then
-		self.stream:Play()
-	else
-		self.stream:Pause()
+	if not from_event then return end
+
+	local stream = table.Random(self.streams)
+	if not stream:IsValid() then return end
+		
+	if self.last_stream:IsValid() and not self.Overlapping then
+		self.last_stream:Stop()
 	end
+				
+	if self.PauseOnHide then
+		stream:Resume()
+	else
+		stream:Start()
+	end
+	
+	self.last_stream = stream
+
 end
 
 function PART:OnHide(from_event)
-	if not self.stream:IsValid() then return end
+	local stream = table.Random(self.streams)
+	if not stream:IsValid() then return end
 	
-	if self.StopOnHide then
-		self.stream:Stop()
-	else
-		self.stream:Resume()
+	if not self.StopOnHide then		
+		if self.PauseOnHide then
+			stream:Pause()
+		else
+			stream:Stop()
+		end
 	end
 end
 
 function PART:OnRemove()
-	if not self.stream:IsValid() then return end
+	for key, stream in pairs(self.streams) do
+		if not stream:IsValid() then self.streams[key] = nil continue end
 	
-	self.stream:Remove()
+		stream:Remove()
+	end
 end
 
 function PART:SetDoppler(num)
-	if not self.stream:IsValid() then return end
-	self.stream:EnableDoppler(num)
+	for key, stream in pairs(self.streams) do
+		if not stream:IsValid() then self.streams[key] = nil continue end
+		
+		stream:EnableDoppler(num)
+	end
 end
 
 pac.RegisterPart(PART)
