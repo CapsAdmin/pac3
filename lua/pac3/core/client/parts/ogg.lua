@@ -120,7 +120,7 @@ function PART:OnShow(from_event)
 	
 	if not from_event then return end
 
-	local stream = table.Random(self.streams)
+	local stream = table.Random(self.streams) or NULL
 	if not stream:IsValid() then return end
 		
 	if self.last_stream:IsValid() and not self.Overlapping then
