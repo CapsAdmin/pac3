@@ -43,6 +43,7 @@ pace.PartIcons =
 	beam = "icon16/vector.png",
 	projectile = "icon16/bomb.png",
 	shake = "icon16/transmit.png",
+	ogg = "icon16/music.png",
 }
 
 pace.PropertyOrder =
@@ -215,9 +216,14 @@ pace.PropertyLimits =
 	Volume = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
-		return math.Clamp(num, 0, 1)
+		return num
 	end,	
 	Pitch = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return num
+	end,
+	FilterFraction = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
 		return math.Clamp(num, 0, 1)
@@ -255,7 +261,7 @@ function pace.TranslatePropertiesKey(key, obj)
 	then
 		return key
 	end
-
+	
 	if key == "weaponholdtype" and obj.ClassName == "animation" then
 		return "weaponholdtype"
 	end
