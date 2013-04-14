@@ -134,7 +134,7 @@ function PART:OnShow(from_event)
 end
 
 function PART:OnHide(from_event)
-	local stream = table.Random(self.streams)
+	local stream = table.Random(self.streams) or NULL
 	if not stream:IsValid() then return end
 	
 	if not self.StopOnHide then		
