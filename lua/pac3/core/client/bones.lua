@@ -242,6 +242,7 @@ local ANGLE_RESET = Angle(0,0,0)
 
 function pac.ResetBones(ent)
 	local count = ent:GetBoneCount() or -1
+	
 	if count > 1 then
 		for i = 0, count do
 			ent:ManipulateBoneScale(i, SCALE_RESET)
@@ -249,5 +250,7 @@ function pac.ResetBones(ent)
 			ent:ManipulateBoneAngles(i, ANGLE_RESET)
 			ent:ManipulateBoneJiggle(i, 0)
 		end
+		
+		ent:SetupBones()
 	end
 end
