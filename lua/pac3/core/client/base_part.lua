@@ -818,7 +818,7 @@ do -- drawing. this code is running every frame
 				return parent.pos, parent.ang
 			end
 			
-			if parent:IsValid() and parent.NonPhysical then
+			if parent:IsValid() and not parent.NonPhysical then
 				
 				local ent = parent.Entity or NULL
 				
