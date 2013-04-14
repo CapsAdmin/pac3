@@ -9,6 +9,7 @@ include("pac3/core/shared/init.lua")
 
 include("libraries/urltex.lua")
 include("libraries/urlobj.lua")
+include("libraries/urlogg.lua")
 
 function pac.LoadParts()
 	local files
