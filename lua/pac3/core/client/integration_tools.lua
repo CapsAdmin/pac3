@@ -249,7 +249,7 @@ timer.Simple(0, function()
 				b = true
 			end
 			
-			luadev.RunOnClients(("pac.%s(%q, {%s})"):format(b and "AddEntityClassListener" or "RemoveEntityClassListener", class_name, file.Read("pac3/sessions/".. name .. ".txt", "DATA"))) 
+			luadev.RunOnClients(("pac.%s(%q, {%s})"):format(b and "AddEntityClassListener" or "RemoveEntityClassListener", class_name, file.Read("pac3/".. name .. ".txt", "DATA"))) 
 		end
 	end
 end)
