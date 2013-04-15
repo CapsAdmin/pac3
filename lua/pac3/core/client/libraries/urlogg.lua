@@ -473,7 +473,7 @@ function open()
             {
                 continue;
             }
-
+		
             var inl = stream.buffer.getChannelData(0)
             var inr = stream.buffer.numberOfChannels == 1 ? inl : stream.buffer.getChannelData(1)
 	
@@ -493,25 +493,25 @@ function open()
 
                 if (stream.filter_type != 0)
                 {                                 
-                    sml = sml + (inl[index + offset] - sml) * stream.filter_fraction
-                    smr = smr + (inr[index + offset] - smr) * stream.filter_fraction
+                    sml = sml + (inl[index] - sml) * stream.filter_fraction
+                    smr = smr + (inr[index] - smr) * stream.filter_fraction
                 
                     if (stream.filter_type == 2)
                     {
-                        outl[j] = (inl[index] - sml) * stream.vol_left
-                        outr[j] = (inr[index] - smr) * stream.vol_right
+                        outl[j] += (inl[index] - sml) * stream.vol_left
+                        outr[j] += (inr[index] - smr) * stream.vol_right
                     }
                     else
                     {
-                        outl[j] = sml * stream.vol_left
-                        outr[j] = smr * stream.vol_right                    
+                        outl[j] += sml * stream.vol_left
+                        outr[j] += smr * stream.vol_right                    
                     }                    
                 
                 }
                 else
                 {
-                    outl[j] = inl[index] * stream.vol_left
-                    outr[j] = inr[index] * stream.vol_right
+                    outl[j] += inl[index] * stream.vol_left
+                    outr[j] += inr[index] * stream.vol_right
                 }                
               
                 stream.position += speed
