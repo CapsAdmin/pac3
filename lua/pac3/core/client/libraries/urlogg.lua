@@ -249,7 +249,9 @@ do -- STREAM
 
             if not dont_remove then
                 ent:CallOnRemove("webaudio_remove_stream_" .. tostring(self), function()
-                    self:Remove()
+					if self:IsValid() then
+						self:Remove()
+					end
                 end)
             end
         end
