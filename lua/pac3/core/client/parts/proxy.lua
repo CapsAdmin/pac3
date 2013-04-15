@@ -123,10 +123,28 @@ PART.Inputs =
 	end,
 
 	eye_position_distance = function(self, parent)
-		return parent.cached_pos:Distance(pac.EyePos)
+		local pos = parent.cached_pos
+		
+		if parent.NonPhysical then
+			local owner = parent:GetOwner(self.RootOwner)
+			if owner:IsValid() then
+				pos = owner:GetPos()
+			end
+		end
+		
+		return pos:Distance(pac.EyePos)
 	end,
 	eye_angle_distance = function(self, parent)
-		return math.Clamp(math.abs(pac.EyeAng:Forward():DotProduct((parent.cached_pos - pac.EyePos):GetNormalized())) - 0.5, 0, 1)
+		local pos = parent.cached_pos
+		
+		if parent.NonPhysical then
+			local owner = parent:GetOwner(self.RootOwner)
+			if owner:IsValid() then
+				pos = owner:GetPos()
+			end
+		end
+	
+		return math.Clamp(math.abs(pac.EyeAng:Forward():DotProduct((pos - pac.EyePos):GetNormalized())) - 0.5, 0, 1)
 	end,
 
 	aim_length = function(self, parent)
