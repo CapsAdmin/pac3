@@ -47,8 +47,8 @@ end
 
 BIND("Pitch")
 BIND("Loop", "SetMaxLoopCount")
-BIND("Volume", nil, function(n) return math.Clamp(n, 0, 2) end)
-BIND("Radius", "Set3DRadius", function(n) return math.Clamp(n, 0, 1500) end)
+BIND("Volume", nil, function(n) return math.Clamp(n, 0, 4) end)
+BIND("Radius", "Set3DRadius")
 
 BIND("FilterType")
 BIND("FilterFraction")
