@@ -383,7 +383,7 @@ hook.Add("Think", "webaudio", function()
             end)
 
 			html:OpenURL("asset://garrysmod/lua/pac3/core/client/libraries/urlogg.lua")
-            html:SetHTML(webaudio.html_content)
+    --        html:SetHTML(webaudio.html_content)
         end
 
         webaudio.html = html
@@ -473,7 +473,7 @@ function open()
             {
                 continue;
             }
-		
+			
             var inl = stream.buffer.getChannelData(0)
             var inr = stream.buffer.numberOfChannels == 1 ? inl : stream.buffer.getChannelData(1)
 	
@@ -482,13 +482,26 @@ function open()
 	
             for(var j = 0; j < event.outputBuffer.length; ++j)
             {
+			
+				if (stream.use_smoothing)
+				{
+					stream.speed_smooth = stream.speed_smooth + (stream.speed - stream.speed_smooth) * 0.001
+					stream.vol_left_smooth = stream.vol_left_smooth + (stream.vol_left - stream.vol_left_smooth) * 0.001
+					stream.vol_right_smooth = stream.vol_right_smooth + (stream.vol_right - stream.vol_right_smooth) * 0.001
+				}
+				else
+				{	
+					stream.speed_smooth = stream.speed
+					stream.vol_left_smooth = stream.vol_left_smooth
+					stream.vol_right_smooth = stream.vol_right_smooth
+				}
+						
+			
                 var length = stream.buffer.length;
                 
                 if (stream.max_loop > 0 && stream.position > length * stream.max_loop)
                     break
-                
-                var speed = stream.use_smoothing ? stream.speed_smooth : stream.speed
-                
+                                
                 var index = (stream.position >>> 0) % length;
 
                 if (stream.filter_type != 0)
@@ -498,26 +511,23 @@ function open()
                 
                     if (stream.filter_type == 2)
                     {
-                        outl[j] += (inl[index] - sml) * stream.vol_left
-                        outr[j] += (inr[index] - smr) * stream.vol_right
+                        outl[j] += (inl[index] - sml) * stream.vol_left_smooth
+                        outr[j] += (inr[index] - smr) * stream.vol_right_smooth
                     }
                     else
                     {
-                        outl[j] += sml * stream.vol_left
-                        outr[j] += smr * stream.vol_right                    
+                        outl[j] += sml * stream.vol_left_smooth
+                        outr[j] += smr * stream.vol_right_smooth                    
                     }                    
                 
                 }
                 else
                 {
-                    outl[j] += inl[index] * stream.vol_left
-                    outr[j] += inr[index] * stream.vol_right
+                    outl[j] += inl[index] * stream.vol_left_smooth
+                    outr[j] += inr[index] * stream.vol_right_smooth
                 }                
               
-                stream.position += speed
-                
-                if (stream.use_smoothing)
-                    stream.speed_smooth = stream.speed_smooth + (stream.speed - stream.speed_smooth) * 0.0005
+                stream.position += stream.speed_smooth
             }
         }
     };
@@ -615,6 +625,9 @@ function createStream(url, id, skip_cache)
         stream.echo_volume = 0
         stream.filter_type = 0
         stream.filter_fraction = 1
+		
+		stream.vol_left_smooth = 0
+		stream.vol_right_smooth = 0
 
         stream.play = function(stop, position)
         {
