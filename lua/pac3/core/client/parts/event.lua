@@ -37,7 +37,41 @@ local function try_viewmodel(ent)
 end
 
 PART.Events = 
-{
+{	
+	fov = 
+	{
+		arguments = {{fov = "number"}},
+		callback = function(self, ent, fov)
+			ent = try_viewmodel(ent)
+			
+			if ent:IsValid() and ent.GetFOV then				
+				return self:NumberOperator(ent:GetFOV(), fov)
+			end
+
+			return 0
+		end,
+	},
+
+	health_lost = 
+	{
+		arguments = {{amount = "number"}},
+		callback = function(self, ent, amount)
+			ent = try_viewmodel(ent)
+			
+			if ent:IsValid() and ent.Health then
+				local health = ent:Health()
+				
+				local diff = (ent.pac_last_health or health) - health
+							
+				ent.pac_last_health = health
+				
+				return self:NumberOperator(diff, amount)
+			end
+
+			return 0
+		end,
+	},
+
 	holdtype = 
 	{
 		arguments = {{find = "string"}},
