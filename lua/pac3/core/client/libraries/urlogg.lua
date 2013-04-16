@@ -77,16 +77,30 @@ do -- STREAM
 
         table.insert(webaudio.js_queue, script)
     end
+	
+	function STREAM:CallNow(fmt, ...)
+        if not self.loaded then return end
+
+        local script = ("try { streams[%d]%s } catch(e) { lua.print(e.toString()) }"):format(self.id, fmt:format(...))
+
+		webaudio.html:RunJavascript(script)
+    end
 
     local function BIND(func_name, js_set, def, check)
         STREAM[func_name] = def
 
         STREAM["Set" .. func_name] = function(self, var)
             if check then
-                var = check(var)
+                var = check(var, self)
             end
 
             self[func_name] = var
+			
+			-- ewww
+			if func_name == "Speed" then
+				var = var + self.pitch_mod
+			end	
+			
             self:Call(js_set, var)
         end
 
@@ -94,6 +108,9 @@ do -- STREAM
             return self[func_name]
         end
     end
+	
+	STREAM.pitch_mod = 0
+	STREAM.volume_mod = 0
 
     BIND("SamplePosition", ".position = %f", 0)
     BIND("Speed", ".speed = %f", 1)
@@ -128,22 +145,22 @@ do -- STREAM
 
     function STREAM:Pause()
         self.paused = true
-        self:Call(".play(false)")
+        self:CallNow(".play(false)")
     end
 
     function STREAM:Resume()
         self.paused = false
-        self:Call(".play(true)")
+        self:CallNow(".play(true)")
     end
 
     function STREAM:Stop()
         self.paused = true
-        self:Call(".play(false, 0)")
+        self:CallNow(".play(false, 0)")
     end
 
     function STREAM:Start()
         self.paused = false
-        self:Call(".play(true, 0)")
+        self:CallNow(".play(true, 0)")
     end
 
     STREAM.Play = STREAM.Start
@@ -224,15 +241,15 @@ do -- STREAM
                     local vol = math.Clamp((-len + self.rad3d) / self.rad3d, 0, 1) ^ 1.5
                     vol = vol * 0.75 * self.Volume
 
-                    self:Call(".vol_right = %f", math.Clamp(1 + pan, 0, 1) * vol)
-                    self:Call(".vol_left = %f", math.Clamp(1 - pan, 0, 1) * vol)
+                    self:Call(".vol_right = %f", (math.Clamp(1 + pan, 0, 1) * vol) + self.volume_mod)
+                    self:Call(".vol_left = %f", (math.Clamp(1 - pan, 0, 1) * vol) + self.volume_mod)
 
                     if self.usedoppler then
                         local offset = self.pos3d - eye_pos
                         local relative_velocity = self.vel3d - eye_vel
                         local meters_per_second = offset:GetNormalized():Dot(-relative_velocity) * 0.0254
 
-                        self:Call(".speed = %f", self.Speed + (meters_per_second / webaudio.SpeedOfSound))
+                        self:Call(".speed = %f", (self.Speed + (meters_per_second / webaudio.SpeedOfSound)) + self.pitch_mod)
                     end
 
                     self.out_of_reach = false
@@ -268,8 +285,8 @@ do -- STREAM
             self.Panning = num
 
             if not self.use3d then
-                self:Call(".vol_right = %f", math.Clamp(1 + num, 0, 1) * self.Volume)
-                self:Call(".vol_left = %f", math.Clamp(1 - num, 0, 1) * self.Volume)
+                self:Call(".vol_right = %f", (math.Clamp(1 + num, 0, 1) * self.Volume) + self.volume_mod)
+                self:Call(".vol_left = %f", (math.Clamp(1 - num, 0, 1) * self.Volume) + self.volume_mod)
             end
         end
 
@@ -389,8 +406,8 @@ hook.Add("Think", "webaudio", function()
                 dprint(name .. " " .. table.concat({...}, ", "))
             end)
 
-          --  html:OpenURL("asset://garrysmod/lua/pac3/core/client/libraries/urlogg.lua")
-            html:SetHTML(webaudio.html_content)
+			html:OpenURL("asset://garrysmod/lua/pac3/core/client/libraries/urlogg.lua")
+            --html:SetHTML(webaudio.html_content)
         end
 
         webaudio.html = html

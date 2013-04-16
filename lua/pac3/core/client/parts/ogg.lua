@@ -7,9 +7,9 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "URL", "")
 	pac.GetSet(PART, "Volume", 1)
 	pac.GetSet(PART, "Pitch", 1)
-	pac.GetSet(PART, "Radius", 500)
-	pac.GetSet(PART, "Loop", 1)
-	pac.GetSet(PART, "Doppler", true)
+	pac.GetSet(PART, "Radius", 1500)
+	pac.GetSet(PART, "PlayCount", 1)
+	pac.GetSet(PART, "Doppler", false)
 	pac.GetSet(PART, "StopOnHide", false)
 	pac.GetSet(PART, "PauseOnHide", false)
 	pac.GetSet(PART, "Overlapping", false)
@@ -20,6 +20,10 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Echo", false)
 	pac.GetSet(PART, "EchoDelay", 0.5)
 	pac.GetSet(PART, "EchoFeedback", 0.75)
+	
+	pac.GetSet(PART, "PlayOnFootstep", false)
+	pac.GetSet(PART, "MinPitch", 0)
+	pac.GetSet(PART, "MaxPitch", 0)
 pac.EndStorableVars()
 
 function PART:Initialize()
@@ -50,7 +54,7 @@ local BIND = function(name, set, check)
 end
 
 BIND("Pitch")
-BIND("Loop", "SetMaxLoopCount")
+BIND("PlayCount", "SetMaxLoopCount")
 BIND("Volume", nil, function(n) return math.Clamp(n, 0, 4) end)
 BIND("Radius", "Set3DRadius")
 
@@ -62,6 +66,22 @@ BIND("Echo")
 BIND("EchoDelay")
 BIND("EchoFeedback", nil, function(n) return math.Clamp(n, 0, 0.99) end)
 
+function PART:PlaySound(ovol)
+	local ent = self:GetOwner(self.RootOwner)
+
+	if ent:IsValid() then						
+		local vol
+		
+		if osnd and self.Volume == -1 then
+			vol = ovol or 1
+		else
+			vol = self.Volume
+		end
+		
+		self:PlaySound(nil, vol)
+	end
+end
+
 function PART:Think()	
 	local owner = self:GetOwner(true) 
 	
@@ -71,6 +91,25 @@ function PART:Think()
 		if stream.owner_set ~= owner and owner:IsValid() then
 			stream:SetSourceEntity(owner)
 			stream.owner_set = owner
+		end
+	end
+	
+	if self.last_playonfootstep ~= self.PlayOnFootstep then
+		local ent = self:GetOwner()
+		if ent:IsValid() and ent:IsPlayer() then
+			ent.pac_footstep_override = ent.pac_footstep_override or {}
+			
+			if self.PlayOnFootstep then
+				ent.pac_footstep_override[self.UniqueID] = self
+			else
+				ent.pac_footstep_override[self.UniqueID] = nil
+			end
+			
+			if table.Count(ent.pac_footstep_override) == 0 then
+				ent.pac_footstep_override = nil
+			end
+			
+			self.last_playonfootstep = self.PlayOnFootstep
 		end
 	end
 end
@@ -126,17 +165,28 @@ end
 
 PART.last_stream = NULL
 
-function PART:OnShow(from_event)
-	
-	if not from_event then return end
-
+function PART:PlaySound(_, vol)
 	local stream = table.Random(self.streams) or NULL
+	
 	if not stream:IsValid() then return end
+		
+	vol = vol or 0
+	
+	self.volume_mod = vol
 		
 	if self.last_stream:IsValid() and not self.Overlapping then
 		self.last_stream:Stop()
+	end	
+	
+	if self.MinPitch ~= self.MaxPitch then
+		stream.pitch_mod = math.Rand(self.MinPitch, self.MaxPitch)
+	else
+		stream.pitch_mod = 0
 	end
-				
+	
+	stream:SetVolume(stream:GetVolume())
+	stream:SetPitch(stream:GetPitch())
+	
 	if self.PauseOnHide then
 		stream:Resume()
 	else
@@ -144,7 +194,12 @@ function PART:OnShow(from_event)
 	end
 	
 	self.last_stream = stream
+end
 
+function PART:OnShow(from_event)	
+	if not from_event then return end
+
+	self:PlaySound()
 end
 
 function PART:OnHide(from_event)
