@@ -16,6 +16,10 @@ pac.StartStorableVars()
 	
 	pac.GetSet(PART, "FilterType", 0)
 	pac.GetSet(PART, "FilterFraction", 1)
+	
+	pac.GetSet(PART, "Echo", false)
+	pac.GetSet(PART, "EchoDelay", 0.5)
+	pac.GetSet(PART, "EchoFeedback", 0.75)
 pac.EndStorableVars()
 
 function PART:Initialize()
@@ -52,6 +56,11 @@ BIND("Radius", "Set3DRadius")
 
 BIND("FilterType")
 BIND("FilterFraction")
+BIND("Echo")
+
+BIND("Echo")
+BIND("EchoDelay")
+BIND("EchoFeedback", nil, function(n) return math.Clamp(n, 0, 0.99) end)
 
 function PART:Think()	
 	local owner = self:GetOwner(true) 
@@ -102,6 +111,11 @@ function PART:SetURL(URL)
 					self["Set" .. key](self, self["Get" .. key](self))
 				end
 			end
+		end
+		stream.OnError =  function(err, info)
+			local str = ("OGG error: %s reason: %s\n"):format(err, info or "none")
+			MsgC(Color(255, 0, 0), "[PAC3] " .. str)
+			self.Errored = str
 		end
 			
 		self.streams[URL] = stream
