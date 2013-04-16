@@ -163,7 +163,9 @@ function PART:OnThink()
 				end
 			end
 		end
-				
+		
+		if not self.random_seqname then return end
+		
 		local seq = ent:LookupSequence(self.random_seqname)
 		
 		if self.OwnerCycle then

@@ -219,14 +219,44 @@ pace.PropertyLimits =
 		return num
 	end,	
 	Pitch = function(self, num)
+		self.sens = 0.125
+		num = tonumber(num)
+		return num
+	end,
+	MinPitch = function(self, num)
+		self.sens = 0.125
+		num = tonumber(num)
+		return num
+	end,
+	MaxPitch = function(self, num)
+		self.sens = 0.125
+		num = tonumber(num)
+		return num
+	end,
+	EchoDelay = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
 		return num
+	end,
+	EchoFeedback = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Clamp(num, 0, 1)
 	end,
 	FilterFraction = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
 		return math.Clamp(num, 0, 1)
+	end,
+	FilterType = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Round(math.Clamp(num, 0, 2))
+	end,
+	PlayCount = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Round(math.max(num, 0))
 	end,
 }
 
