@@ -154,4 +154,5 @@ return {
 ["axis"] = "축",
 ["additive"] = "첨가",
 ["input divider"] = "인풋 분산",
+["is_voice_chatting"] = "음성 채팅",
 }
