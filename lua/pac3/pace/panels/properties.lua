@@ -905,8 +905,7 @@ do -- part
 	local function populate(menu, part)
 		if part:HasChildren() then
 			local menu, pnl = menu:AddSubMenu(part:GetName(), function()
-				self:SetValue(part:GetName())
-				self.OnValueChanged(part)
+				pace.current_part:SetParent(part)
 			end)
 			
 			pnl:SetImage(pace.GetIconFromClassName(part.ClassName))
@@ -916,8 +915,7 @@ do -- part
 			end
 		else
 			menu:AddOption(part:GetName(), function()
-				self:SetValue(part:GetName())
-				self.OnValueChanged(part)
+				pace.current_part:SetParent(part)
 			end):SetImage(pace.GetIconFromClassName(part.ClassName))
 		end
 	end
@@ -967,11 +965,19 @@ do -- owner
 			return ent:EntIndex() .. " - " .. name
 		end
 		
+		for key, name in pairs(pac.OwnerNames) do
+			menu:AddOption(name, function() pace.current_part:SetOwnerName(name) end)
+		end
+		
+		local entities = menu:AddSubMenu("entities", function() end)
+		entities.GetDeleteSelf = function() return false end
 		for _, ent in pairs(ents.GetAll()) do
-			menu:AddOption(get_friendly_name(ent), function()
-				pace.current_part:SetOwnerName(ent:EntIndex())
-				self.OnValueChanged(ent:EntIndex())
-			end)
+			if ent:EntIndex() > 0 then
+				entities:AddOption(get_friendly_name(ent), function()
+					pace.current_part:SetOwnerName(ent:EntIndex())
+					self.OnValueChanged(ent:EntIndex())
+				end)
+			end
 		end
 		
 		FIX_MENU(menu)
