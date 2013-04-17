@@ -154,9 +154,9 @@ return {
 ["axis"] = "축",
 ["additive"] = "첨가",
 ["input divider"] = "인풋 분산",
-["is_voice_chatting"] = "음성 채팅",
 
 -- momo
+["is_voice_chatting"] = "음성 채팅",
 ["new file"] = "새 파일",
 ["load from url"] = "URL에서 불러오기",
 ["ok"] = "확인",
@@ -209,5 +209,26 @@ return {
 ["velocity"] = "거리",
 ["die time"] = "사라지는 시간",
 ["fire delay"] = "발사 지연속도",
+
+["spread"] = "확산",
+["start length"] = "시작 길이",
+["end length"] = "끝 길이",
+["bounce"] = "튕김",
+["gravity"] = "중력",
+["physics"] = "물리",
+["constrain x"] = "콘스트레인 x",
+["constrain y"] = "콘스트레인 y",
+["constrain z"] = "콘스트레인 z",
+["random colour"] = "랜덤 색깔",
+["color1"] = "색1",
+["color2"] = "색2",
+["collide"] = "충돌",
+["lighting"] = "명암",
+["sliding"] = "슬라이딩",
+["number particles"] = "파티클 갯수",
+["air resistance"] = "기압 저항력",
+["3 d"] = "3D",
+["proxy"] = "프록시",
+["player angles"] = "플레이어 각도",
 
 }
