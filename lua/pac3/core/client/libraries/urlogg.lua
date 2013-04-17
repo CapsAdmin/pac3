@@ -406,8 +406,8 @@ hook.Add("Think", "webaudio", function()
                 dprint(name .. " " .. table.concat({...}, ", "))
             end)
 
-			html:OpenURL("asset://garrysmod/lua/pac3/core/client/libraries/urlogg.lua")
-            --html:SetHTML(webaudio.html_content)
+			--html:OpenURL("asset://garrysmod/lua/pac3/core/client/libraries/urlogg.lua")
+            html:SetHTML(webaudio.html_content)
         end
 
         webaudio.html = html
