@@ -238,6 +238,8 @@ for key, CHAN in pairs(channels) do
 end
 
 hook.Add("pac_PlayerFootstep", "pac_sound_footstep", function(ply, pos, snd, vol)
+	if GetConVarNumber("pac_enable") == 0 then return end
+
 	if ply.pac_footstep_override then
 		for key, part in pairs(ply.pac_footstep_override) do
 			if not part:IsHidden() then
