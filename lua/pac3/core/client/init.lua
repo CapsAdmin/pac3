@@ -94,3 +94,57 @@ function pac.Restart()
 end
 
 concommand.Add("pac_restart", pac.Restart)
+
+local cvar_enable = CreateClientConVar("pac_enable", "1")
+
+cvars.AddChangeCallback("pac_enable", function(name)
+	if GetConVarNumber(name) == 1 then
+		pac.Enable()
+	else
+		pac.Disable()
+	end
+end)
+
+function pac.Enable()
+	-- parts were marked as not drawing, so they will show on the next frame
+
+	-- add all the hooks back
+	for event, func in pairs(pac.AddedHooks) do
+		pac.AddHook(event, func)
+	end
+end
+
+function pac.Disable()
+	-- close the editor
+	if pace then
+		pace.CloseEditor()
+	end
+
+	-- turn off all parts
+	for key, ent in pairs(pac.drawn_entities) do
+		if ent:IsValid() then
+		
+			if ent.pac_parts then
+				for key, part in pairs(ent.pac_parts) do
+					part:CallRecursive("OnHide")
+				end
+				
+				pac.ResetBones(ent)				
+			end
+			
+			ent.pac_drawing = false
+			
+		else
+			pac.drawn_entities[key] = nil
+		end
+	end
+	
+	-- disable all hooks
+	for event in pairs(pac.AddedHooks) do
+		pac.RemoveHook(event)
+	end
+end
+
+if GetConVarNumber("pac_enable") == 0 then
+	pac.Disable()
+end

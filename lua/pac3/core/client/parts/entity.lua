@@ -25,8 +25,8 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "DrawShadow", true)
 	pac.GetSet(PART, "Weapon", false)
 	pac.GetSet(PART, "InverseKinematics", false)
+	pac.GetSet(PART, "MuteFootsteps", false)
 pac.EndStorableVars()
-
 
 function PART:SetInverseKinematics(b)
 	self.InverseKinematics = b
@@ -300,6 +300,8 @@ function PART:OnThink()
 	local ent = self:GetOwner()	
 	
 	if ent:IsValid() then
+		ent.pac_mute_footsteps = self.MuteFootsteps
+	
 		if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
 			ent = ent:GetActiveWeapon()
 		end
@@ -320,6 +322,7 @@ end
 
 function PART:OnHide()
 	local ent = self:GetOwner()
+	
 	if ent:IsValid() then
 		if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
 			ent = ent:GetActiveWeapon()

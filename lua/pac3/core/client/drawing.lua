@@ -125,7 +125,6 @@ end
 
 
 local util_PixelVisible = util.PixelVisible
-local cvar_enable = CreateClientConVar("pac_enable", "1")
 local cvar_distance = CreateClientConVar("pac_draw_distance", "500")
 
 pac.EyePos = vector_origin
@@ -171,34 +170,11 @@ local function setup_suppress()
 end
 -- hacky optimization
 
-local last_enable
-
 local should_suppress = setup_suppress()
 function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)	
 	-- commonly used variables		
 	pac.LocalPlayer = LocalPlayer() 
-	
-	if not cvar_enable:GetBool() then
-		if last_enable ~= cvar_enable:GetBool() then
-			for key, ent in pairs(pac.drawn_entities) do
-				if ent:IsValid() then
-					if ent.pac_parts and ent.pac_drawing == true then
-						for key, part in pairs(ent.pac_parts) do
-							part:CallRecursive("OnHide")
-						end
-						pac.ResetBones(ent)
-					end
-					ent.pac_drawing = false
-				else
-					pac.drawn_entities[key] = nil
-				end
-			end
-			last_enable = cvar_enable:GetBool()
-		end
-	return else
-		last_enable = nil
-	end
-	
+		
 	if should_suppress() then return end
 	
 	-- commonly used variables		

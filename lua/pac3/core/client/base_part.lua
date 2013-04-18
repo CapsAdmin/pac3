@@ -227,8 +227,6 @@ do -- owner
 			pac.UnhookEntityRender(ent) 
 			self.Owner = ent
 		end
-		
-		self:CallRecursive("OnShow")
 	end
 	
 	-- always return the root owner
@@ -926,6 +924,11 @@ function PART:Think()
 	local owner = self:GetOwner()
 	
 	if owner:IsValid() then
+		if owner ~= self.last_owner then
+			self:CallRecursive("OnShow")
+			self.last_owner = owner
+		end
+	
 		if not owner.pac_bones then
 			self:GetModelBones()
 		end
@@ -947,8 +950,7 @@ function PART:Think()
 	end
 	
 
-	self:OnThink()
-	
+	self:OnThink()	
 	
 	self.supress_part_name_find = false
 end

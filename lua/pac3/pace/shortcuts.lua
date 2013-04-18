@@ -1,10 +1,3 @@
-
-function pace.OnCloseEditor()
-	pace.EnableView(false)
-	pace.StopSelect()
-	pace.SafeRemoveSpecialPanel()
-end
-
 function pace.OnShortcutSave()
 	if pace.current_part:IsValid() then
 		local part = pace.current_part:GetRootPart()

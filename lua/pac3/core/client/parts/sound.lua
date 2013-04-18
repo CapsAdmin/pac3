@@ -148,6 +148,10 @@ function PART:PlaySound(osnd, ovol)
 	local ent = self:GetOwner(self.RootOwner)
 
 	if ent:IsValid() then
+		if ent:GetClass() == "viewmodel" then
+			ent = pac.LocalPlayer
+		end
+	
 		local snd
 		
 		if osnd and self.Sound == "" then
@@ -236,17 +240,5 @@ for key, CHAN in pairs(channels) do
 		sound = "ambient/_period.wav"
 	} )
 end
-
-hook.Add("pac_PlayerFootstep", "pac_sound_footstep", function(ply, pos, snd, vol)
-	if GetConVarNumber("pac_enable") == 0 then return end
-
-	if ply.pac_footstep_override then
-		for key, part in pairs(ply.pac_footstep_override) do
-			if not part:IsHidden() then
-				part:PlaySound(snd, vol)
-			end
-		end
-	end
-end)
 
 pac.RegisterPart(PART)

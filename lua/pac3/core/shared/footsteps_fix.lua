@@ -24,6 +24,6 @@ if game.SinglePlayer() then
 	end
 else
 	hook.Add("PlayerFootstep", "pac_footstep_fix", function(ply, pos, _, snd, vol)
-		hook.Run("pac_PlayerFootstep", ply, pos, snd, vol)
+		return hook.Run("pac_PlayerFootstep", ply, pos, snd, vol)
 	end)
 end

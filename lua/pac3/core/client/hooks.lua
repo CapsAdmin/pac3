@@ -1,3 +1,75 @@
+function pac.UpdateAnimation(ply)
+	if not IsEntity(ply) or not ply:IsValid() then return end
+	
+	local tbl = ply.pac_pose_params
+	
+	if tbl then
+		for _, data in pairs(ply.pac_pose_params) do
+			ply:SetPoseParameter(data.key, data.val)
+		end
+	end
+end
+pac.AddHook("UpdateAnimation")
+
+function pac.TranslateActivity(ply, act)
+	if IsEntity(ply) and ply:IsValid() then
+	
+		-- animation part
+		if ply.pac_holdtype and ply.pac_holdtype[act] then
+			return ply.pac_holdtype[act]
+		end
+		
+		-- holdtype part
+		if ply.pac_acttable then
+			if ply.pac_acttable[act] and ply.pac_acttable[act] ~= -1 then
+				return ply.pac_acttable[act]
+			end
+			
+			if ply:GetVehicle():IsValid() and ply:GetVehicle():GetClass() == "prop_vehicle_prisoner_pod" then
+				return ply.pac_acttable.sitting
+			end
+			
+			if ply.pac_acttable.noclip ~= -1 and ply:GetMoveType() == MOVETYPE_NOCLIP then
+				return ply.pac_acttable.noclip
+			end
+			
+			if ply.pac_acttable.air ~= -1 and ply:GetMoveType() ~= MOVETYPE_NOCLIP and not ply:IsOnGround() then
+				return ply.pac_acttable.air
+			end	
+		
+			if ply.pac_acttable.fallback ~= -1 then
+				return ply.pac_acttable.fallback
+			end
+		end
+	end
+end
+pac.AddHook("TranslateActivity")
+
+
+function pac.CalcMainActivity(ply, act) 
+	if IsEntity(ply) and ply:IsValid() and ply.pac_sequence then
+		return ply.pac_sequence, ply.pac_sequence
+	end
+end
+pac.AddHook("CalcMainActivity")
+
+function pac.pac_PlayerFootstep(ply, pos, snd, vol)
+	ply.pac_last_footstep_pos = pos	
+
+	if ply.pac_footstep_override then
+		for key, part in pairs(ply.pac_footstep_override) do
+			if not part:IsHidden() then
+				part:PlaySound(snd, vol)
+			end
+		end
+	end
+	
+	if ply.pac_mute_footsteps then
+		return true
+	end
+end
+pac.AddHook("pac_PlayerFootstep")
+
 function pac.OnEntityCreated(ent)
 	if ent:IsValid() and ent:GetOwner():IsPlayer() then
 		for key, part in pairs(pac.GetParts()) do
@@ -21,7 +93,7 @@ end
 pac.AddHook("EntityRemoved")
 
 timer.Create("pac_gc", 2, 0, function()
-	for key, part in pairs(pac.GetParts()) do	
+	for key, part in pairs(pac.GetParts()) do
 		if not part:GetPlayerOwner():IsValid() then
 			part:Remove()
 		end
