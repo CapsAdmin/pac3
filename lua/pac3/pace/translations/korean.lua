@@ -231,4 +231,143 @@ return {
 ["proxy"] = "프록시",
 ["player angles"] = "플레이어 각도",
 
+--poseparameter
+["poseparameter"] = "자세한도 조정",
+
+-- Animation
+["sequence name"] = "장면 이름",
+["owner cycle"] = "사용자에게 직접적용",
+
+-- Ogg
+["ogg"] = "노래 불러오기",
+["echo"] = "에코",
+["echo feedback"] = "에코 피드백",
+["echo delay"] = "에코 지연 속도",
+["play on footstep"] = "발소리로 변경",
+["play count"] = "재생 횟수",
+["filter type"] = "필터 종류",
+["filter fraction"] = "필터 부분",
+
+-- Proxy
+["proxy"] = "프록시",
+["pow"] = "pow함수",
+
+-- Physics
+["physics"] = "물리",
+["constrain x"] = "콘스트레인 x",
+["constrain y"] = "콘스트레인 y",
+["constrain z"] = "콘스트레인 z",
+
+-- Shake
+["shake"] = "흔들기",
+
+-- Beam
+["beam"] = "줄",
+
+-- Fog
+["fog"] = "안개",
+
+-- Particle
+["velocity"] = "거리",
+["die time"] = "사라지는 시간",
+["fire delay"] = "발사 지연시간",
+["spread"] = "확산",
+["start length"] = "시작 길이",
+["end length"] = "끝 길이",
+["bounce"] = "튕김",
+["gravity"] = "중력",
+["random colour"] = "랜덤 색깔",
+["color1"] = "색1",
+["color2"] = "색2",
+["collide"] = "충돌",
+["lighting"] = "명암",
+["sliding"] = "슬라이딩",
+["number particles"] = "파티클 갯수",
+["air resistance"] = "기압 저항력",
+["3 d"] = "3D",
+-- born
+
+-- projectile
+["projectile"] = "발사체",
+
+-- entity
+["player angles"] = "플레이어 각도",
+
+-- Model
+["position offset"] = "위치 기준변환",
+["angle offset"] = "각도 기준변환",
+["light blend"] = "밝기",
+["alternative scaling"] = "비율 조정",
+["texture filter"] = "텍스쳐 필터",
+
+-- Event
+["is voice chatting"] = "음성 채팅",
+["has weapon"] = "무기를 가짐",
+["timer"] = "타이머",
+["model name"] = "모델 이름",
+["is under water"] = "잠수중",
+["ammo"] = "탄약",
+["weapon class"] = "무기 종류",
+["vehicle class"] = "탑승물 종류",
+["owner health"] = "사용자 체력",
+["gravitygun punt"] = "중력건 사용",
+["say"] = "채팅",
+["is crouching"] = "앉기",
+["speed"] = "속도",
+["is flashlight on"] = "손전등 사용",
+["is in noclip"] = "노클립",
+["is on ground"] = "지상",
+["owner armor"] = "사용자 아머",
+["is client"] = "오직 클라이언트만",
+["equal"] = "같음",
+["not equal"] = "같지 않음",
+["above"] = "초과",
+["equal or above"] = "이상",
+["below"] = "미만",
+["equal or below"] = "이하",
+["maybe"] = "아마도",
+["time"] = "시간",
+["advanced timer"] = "진보된 타이머",
+["animation event"] = "애니메이션 이벤트",
+["health lost"] = "HP 감소량",
+["holdtype"] = "무기잡는 방식",
+["fov"] = "시야",
+["entity class"] = "엔티티 클래스",
+
+-- Pac3 menu
+["new file"] = "새 파일",
+["load from url"] = "URL에서 불러오기",
+["ok"] = "확인",
+["hide editor"] = "에디터 숨기기",
+["reset view position"] = "시점 초기화",
+["advanced mode"] = "고급 옵션 표기",
+["show only with active weapon"] = "사용중인 무기표시",
+["hide weapon"] = "무기 숨기기",
+["show weapon"] = "무기 보이기",
+["view"] = "보기",
+["options"] = "옵션",
+["player"] = "플레이어",
+["tools"] = "도구",
+["exit"] = "나가기",
+["toggle basic mode"] = "기본 모드 켜기",
+["disable input"] = "마우스 끄기",
+["english"] = "영어",
+["japanese"] = "일본어",
+["korean"] = "한국어",
+["pac_font_1"] = "PAC 폰트1",
+["pac_font_2"] = "PAC 폰트2",
+["pac_font_3"] = "PAC 폰트3",
+["pac_font_4"] = "PAC 폰트4",
+["pac_font_5"] = "PAC 폰트5",
+["toggle camera follow"] = "카메라를 따라오게",
+["camera follow"] = "카메라를 따라오게",
+["show deprecated feature"] = "쓸모없는 옵션 표기",
+["rendering"] = "렌더링",
+["draw in reflection"] = "반사광 그리기",
+["t pose"] = "T 포즈",
+["modifiers"] = "제한하기",
+["spawn as props"] = "프롭 소환하기",
+["scale this and children"] = "크기 키우기",
+["clear names"] = "이름 지우기",
+
 }
