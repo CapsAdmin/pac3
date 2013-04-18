@@ -33,6 +33,8 @@ pace.Editor = NULL
 function pace.OpenEditor()
 	if hook.Call("PrePACEditorOpen", GAMEMODE, LocalPlayer()) == false then return end
 	
+	pac.Enable()
+	
 	pace.RefreshFiles()
 	
 	pace.SetLanguage()
@@ -59,16 +61,16 @@ function pace.OpenEditor()
 end
 
 function pace.CloseEditor()
+	pace.RestoreExternalHooks()
+
 	if pace.Editor:IsValid() then
 		pace.Editor:OnRemove()
-		pace.Call("CloseEditor") 
 		pace.Editor:Remove() 
 		pace.Active = false
+		pace.Call("CloseEditor") 
 	end
 	
 	RunConsoleCommand("pac_in_editor", "0")
-	
-	pace.RestoreExternalHooks()
 end
 
 function pace.RefreshFiles()
@@ -111,7 +113,9 @@ do -- forcing hooks
 				pace.OldHooks[event] = table.Copy(hooks)
 
 				for name in pairs(hooks) do
-					hook.Remove(event, name)
+					if name:sub(1, 4) ~= "pac_" then
+						hook.Remove(event, name)
+					end
 				end
 			end
 		end
@@ -121,10 +125,14 @@ do -- forcing hooks
 		if pace.OldHooks then
 			for event, hooks in pairs(pace.OldHooks) do
 				for name, func in pairs(hooks) do
-					hook.Add(event, name, func)
+					if name:sub(1, 4) ~= "pac_" then
+						hook.Add(event, name, func)
+					end
 				end
 			end
 		end
+		
+		pace.OldHooks = nil
 	end
 end
 

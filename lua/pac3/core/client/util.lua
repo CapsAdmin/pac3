@@ -120,10 +120,12 @@ end
 
 do -- hook helpers
 	pac.Errors = {}
+	pac.AddedHooks = {}
 
 	function pac.AddHook(str, func)
 		func = func or pac[str]
-		hook.Add(str, "pac_" .. str, function(...)
+		
+		local func = function(...)
 			local args = {pcall(func, ...)}
 			if not args[1] then
 				ErrorNoHalt("[pac3]" .. str .. " : " .. args[2] .. "\n")
@@ -132,7 +134,11 @@ do -- hook helpers
 			end
 			table.remove(args, 1)
 			return unpack(args)
-		end)
+		end
+		
+		hook.Add(str, "pac_" .. str, func)
+		
+		pac.AddedHooks[str] = func
 	end
 
 	function pac.RemoveHook(str)

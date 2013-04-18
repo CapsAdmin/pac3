@@ -116,10 +116,6 @@ end
 
 local UP = Vector(0,0,1):Angle()
 
-pac.AddHook("pac_PlayerFootstep", function(ply, pos)
-	ply.pac_last_footstep_pos = pos	
-end)
-
 local function GetBonePosition(ent, id)
 	if pac.MatrixBoneMethod then		
 		local mat = ent:GetBoneMatrix(id)

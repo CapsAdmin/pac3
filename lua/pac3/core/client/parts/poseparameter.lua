@@ -43,9 +43,11 @@ function PART:OnThink(ent)
 		if data then
 			local num = Lerp((self.Range + 1) / 2, data.range[1] or 0, data.range[2] or 1)
 			
-			ent.pac_pose_param = ent.pac_pose_param or {}
-			ent.pac_pose_param.key  = data.name
-			ent.pac_pose_param.val = num
+			ent.pac_pose_params = ent.pac_pose_params or {}
+			ent.pac_pose_params[self.UniqueID] = ent.pac_pose_params[self.UniqueID] or {}
+			
+			ent.pac_pose_params[self.UniqueID].key  = data.name
+			ent.pac_pose_params[self.UniqueID].val = num
 			
 			ent:SetPoseParameter(data.name, num)
 			
@@ -55,14 +57,5 @@ function PART:OnThink(ent)
 		end
 	end
 end
-
-hook.Add("UpdateAnimation", "pac_pose_param", function(ply)
-	if not IsEntity(ply) or not ply:IsValid() then return end
-	
-	local data = ply.pac_pose_param
-	if data then
-		ply:SetPoseParameter(data.key, data.val)
-	end
-end)
 
 pac.RegisterPart(PART)

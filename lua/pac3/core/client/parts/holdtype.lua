@@ -137,28 +137,4 @@ function PART:OnThink()
 	end
 end
 
-hook.Add("TranslateActivity", "pac_acttable", function(ply, act)
-	if IsEntity(ply) and ply:IsValid() and ply.pac_acttable then
-		if ply.pac_acttable[act] and ply.pac_acttable[act] ~= -1 then
-			return ply.pac_acttable[act]
-		end
-		
-		if ply:GetVehicle():IsValid() and ply:GetVehicle():GetClass() == "prop_vehicle_prisoner_pod" then
-			return ply.pac_acttable.sitting
-		end
-		
-		if ply.pac_acttable.noclip ~= -1 and ply:GetMoveType() == MOVETYPE_NOCLIP then
-			return ply.pac_acttable.noclip
-		end
-		
-		if ply.pac_acttable.air ~= -1 and ply:GetMoveType() ~= MOVETYPE_NOCLIP and not ply:IsOnGround() then
-			return ply.pac_acttable.air
-		end	
-	
-		if ply.pac_acttable.fallback ~= -1 then
-			return ply.pac_acttable.fallback
-		end
-	end
-end)
-	
 pac.RegisterPart(PART)

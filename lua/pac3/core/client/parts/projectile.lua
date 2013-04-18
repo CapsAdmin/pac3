@@ -176,7 +176,7 @@ end
 
 PART.OnHide = OnRemove
 
-do -- physical		
+do -- physical
 	local projectiles = {}	
 	hook.Add("Think", "pac_projectile", function()
 		for key, data in pairs(projectiles) do

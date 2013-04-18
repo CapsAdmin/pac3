@@ -52,6 +52,12 @@ function pace.OnOpenEditor()
 	pace.ResetView()
 end
 
+function pace.OnCloseEditor()
+	pace.EnableView(false)
+	pace.StopSelect()
+	pace.SafeRemoveSpecialPanel()
+end
+
 function pace.TrySelectPart()
 	local part = select(2, next(pac.GetParts(true)))
 	
