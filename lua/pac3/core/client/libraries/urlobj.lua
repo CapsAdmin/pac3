@@ -113,6 +113,12 @@ local enable = CreateConVar("pac_enable_urlobj", "1")
 function urlobj.GetObjFromURL(url, callback, skip_cache)
 	if not enable:GetBool() then return end
 
+	url = url:gsub("https://", "http://")
+
+	if url:lower():find("pastebin.com") then
+		url = url:gsub(".com/", ".com/raw.php?i=")
+	end
+	
 	-- if it's already downloaded just return it
 	if callback and not skip_cache and urlobj.Cache[url] then
 		callback(urlobj.Cache[url])

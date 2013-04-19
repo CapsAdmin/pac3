@@ -364,13 +364,7 @@ end
 function PART:SetModel(var)
 	self.Entity = self:GetEntity()
 
-	if var and var:find("http") and pac.urlobj then
-		var = var:gsub("https://", "http://")
-		
-		if var:lower():find("pastebin.com") then
-			var = var:gsub(".com/", ".com/raw.php?i=")
-		end
-		
+	if var and var:find("http") and pac.urlobj then		
 		local skip_cache = var:sub(1,1) == "_"
 		
 		if skip_cache then

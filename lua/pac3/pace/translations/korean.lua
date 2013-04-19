@@ -157,6 +157,8 @@ return {
 -- momo
 --poseparameter
 ["poseparameter"] = "자세한도 조정",
+["pose parameter"] = "자세 한도",
+["range"] = "범위",
 
 -- Animation
 ["sequence name"] = "장면 이름",
@@ -171,25 +173,71 @@ return {
 ["play count"] = "재생 횟수",
 ["filter type"] = "필터 종류",
 ["filter fraction"] = "필터 부분",
+["doppler"] = "도플러 효과",
+["stop on hide"] = "멈추기",
+["pause on hide"] = "정지 시키기",
+["overlapping"] = "중복",
 
 -- Proxy
 ["proxy"] = "프록시",
 ["pow"] = "pow함수",
+["none"] = "없음",
+["tan"] = "탄젠트",
+["sin"] = "싸인",
+["abs"] = "팽창",
+["cos"] = "코싸인",
+["mod"] = "모드",
 
--- Physics
-["physics"] = "물리",
+-- jiggle
 ["constrain x"] = "콘스트레인 x",
 ["constrain y"] = "콘스트레인 y",
 ["constrain z"] = "콘스트레인 z",
+["strain"] = "압력",
+["constant velocity"] = "정수 속도",
+["local velocity"] = "로컬 속도",
+["jiggle angle"] = "각도가 움직임",
+["jiggle position"] = "위치가 움직임",
+["stop radius"] = "노뼈 멈추기",
+["ground"] = "땅바닥",
+["reset on hide"] = "숨김 리셋",
+
+-- Physics
+["physics"] = "물리",
+["constrain sphere"] = "제한 영역",
+["radius"] = "노뼈",
+["box"] = "상자",
+["self collision"] = "자가 충돌",
+["collisions"] = "충돌",
+["mass"] = "덩어리",
+["seconds to arrive"] = "도착 시간",
+["max speed"] = "한도 속도",
+["max angular"] = "한도 각",
+["max speed damp"] = "한도 속도 습기",
+["max angular damp"] = "한도 각 습기",
+["damp factor"] = "습기 양",
 
 -- Shake
 ["shake"] = "흔들기",
+["frequency"] = "진동 빈도",
+["amplitude"] = "진폭",
+["duration"] = "지속 시간",
 
 -- Beam
 ["beam"] = "줄",
+["end point name"] = "끝 지점",
+["bend"] = "휘어짐",
+["resolution"] = "해상도",
+["width"] = "폭",
+["width bend"] = "폭 휘어짐",
+["width bend size"] = "폭 휘어짐 크기",
+["texture stretch"] = "텍스쳐 늘이기",
+["texture scroll"] = "텍스쳐 돌리기",
 
 -- Fog
 ["fog"] = "안개",
+["start"] = "시작",
+["end"] = "끝",
+["height"] = "높이",
 
 -- Particle
 ["velocity"] = "거리",
@@ -209,13 +257,39 @@ return {
 ["number particles"] = "파티클 갯수",
 ["air resistance"] = "기압 저항력",
 ["3 d"] = "3D",
+["random roll speed"] = "랜덤 구르기 속도",
+["roll delta"] = "델타 구르기",
+["align to surface"] = "표면 조정",
+["stick to surface"] = "표면 붙이기",
+["double sided"] = "두개의 면을가진",
+["particle angle velocity"] = "파티클 각도 거리",
+["stick lifetime"] = "스틱 생명시간",
+["stick start size"] = "스틱 시작 크기",
+["stick end size"] = "스틱 끝 크기",
+["stick start alpha"] = "스틱 시작 알파",
+["stick end alpha"] = "스틱 끝 알파",
+["owner velocity multiplier"] = "사용자 거리 제곱",
+["draw manual"] = "수동 그리기",
+
 -- born
+["chest"] = "가슴",
 
 -- projectile
 ["projectile"] = "발사체",
+["damping"] = "감쇠",
+["sphere"] = "영역",
+["life time"] = "생명 시간",
+["aim dir"] = "에임 감독",
+["sticky"] = "달라붙음",
+["delay"] = "딜레이",
+["outfit part name"] = "내 의상 파트",
+["physical"] = "물질",
+["collide with owner"] = "사용자에 부딪힘",
 
 -- entity
 ["player angles"] = "플레이어 각도",
+["translucent"] = "반투명",
+["inverse kinematics"] = "역 운동학",
 
 -- Model
 ["position offset"] = "위치 기준변환",
@@ -257,6 +331,45 @@ return {
 ["holdtype"] = "무기잡는 방식",
 ["fov"] = "시야",
 ["entity class"] = "엔티티 클래스",
+["client spawned"] = "클라이언트 스폰",
+["owner velocity forward"] = "사용자 전진속도",
+["owner velocity length"] = "사용자 길이속도",
+["owner velocity right"] = "사용자 우향속도",
+["owner velocity up"] = "사용자 상승속도",
+["parent velocity forward"] = "상위 전진속도",
+["parent velocity length"] = "상위 길이속도",
+["parent velocity right"] = "상위 우향속도",
+["parent velocity up"] = "상위 상승속도",
+
+-- holdtype
+["walk"] = "걷기",
+["crouch walk"] = "앉아서 걷기",
+["reload stand"] = "서서 재장전",
+["jump"] = "점프",
+["attack stand primaryfire"] = "서서 주사격무기 공격",
+["swim"] = "수영중",
+["attack crouch primaryfire"] = "앉아서 주사격무기 공격",
+["swim idle"] = "수영 자세",
+["reload crouch"] = "앉아서 재장전",
+["act range attack1"] = "어택1 범위",
+["crouch idle"] = "앉은 자세",
+["act land"] = "착륙",
+["stand idle"] = "서있는 자세",
+["run"] = "달리기",
+["fallback"] = "대비책",
+["noclip"] = "노클립",
+["air"] = "공중",
+["sitting"] = "(의자에)앉음",
+
+-- outline
+["blur x"] = "x 블러",
+["blur y"] = "y 블러",
+["passes"] = "통과함",
+["amount"] = "총량",
+["ignore z"] = "z각 무시",
+["spherical size"] = "구 크기",
+["shape"] = "날카로움",
+["affect children"] = "하위 영향",
 
 -- Pac3 menu
 ["new file"] = "새 파일",
@@ -275,23 +388,19 @@ return {
 ["exit"] = "나가기",
 ["toggle basic mode"] = "기본 모드 켜기",
 ["disable input"] = "마우스 끄기",
-["english"] = "영어",
-["japanese"] = "일본어",
-["korean"] = "한국어",
-["pac_font_1"] = "PAC 폰트1",
-["pac_font_2"] = "PAC 폰트2",
-["pac_font_3"] = "PAC 폰트3",
-["pac_font_4"] = "PAC 폰트4",
-["pac_font_5"] = "PAC 폰트5",
 ["toggle camera follow"] = "카메라를 따라오게",
 ["camera follow"] = "카메라를 따라오게",
-["show deprecated feature"] = "쓸모없는 옵션 표기",
+["show deprecated features"] = "쓸모없는 옵션 표기",
 ["rendering"] = "렌더링",
-["draw in reflection"] = "반사광 그리기",
+["draw in reflections"] = "반사광 그리기",
 ["t pose"] = "T 포즈",
 ["modifiers"] = "제한하기",
 ["spawn as props"] = "프롭 소환하기",
 ["scale this and children"] = "크기 키우기",
 ["clear names"] = "이름 지우기",
-
+["position grid size"] = "위치 그리드 크기",
+["angles grid size"] = "각도 그리드 크기",
+["duplicate"] = "복사하기",
+["sound level"] = "사운드 레벨",
+["style"] = "스타일",
 }
