@@ -291,16 +291,24 @@ PART.Inputs =
 		return parent.cached_ang:Up():Dot(self:GetVelocity(parent))
 	end,
 
-	command = function(self)
+	command = function(self, index)
 		local ply = self:GetPlayerOwner()
-		local data = ply.pac_proxy_event
+		local events = ply.pac_proxy_events
 
-		if data and pac.HandlePartName(ply, data.name) then
-			self.last_command_proxy_num = data.num
-			return data.num
+		if events then
+			for key, data in pairs(events) do
+				if pac.HandlePartName(ply, data.name) == self.Name then
+					
+					data.x = data.x or 0
+					data.y = data.y or 0
+					data.z = data.z or 0
+			
+					return data.x, data.y, data.z
+				end
+			end
 		end
 
-		return self.last_command_proxy_num or 0
+		return 0, 0, 0			
 	end,
 
 	voice_volume = function(self)
@@ -401,10 +409,14 @@ PART.Inputs =
 usermessage.Hook("pac_proxy", function(umr)
 	local ply = umr:ReadEntity()
 	local str = umr:ReadString()
-	local num = umr:ReadFloat()
-
+	
+	local x = umr:ReadFloat()
+	local y = umr:ReadFloat()
+	local z = umr:ReadFloat()
+		
 	if ply:IsValid() then
-		ply.pac_proxy_event = {name = str, num = num}
+		ply.pac_proxy_events = ply.pac_proxy_events or {}
+		ply.pac_proxy_events[str] = {name = str, x = x, y = y, z = z}
 	end
 end)
 
@@ -482,7 +494,7 @@ function PART:OnThink()
 
 		if allowed[T] then
 			local ok, x,y,z = pcall(self.ExpressionFunc)
-
+			
 			if not ok then
 				if self:GetPlayerOwner() == pac.LocalPlayer then
 					chat.AddText("pac proxy error on " .. tostring(self) .. ": " .. x .. "\n")
@@ -534,7 +546,7 @@ function PART:OnThink()
 					val.y = y or val.y
 					val.z = z or val.z
 				end
-
+				
 				parent["Set" .. self.VariableName](parent, val)
 			end
 			
@@ -583,14 +595,8 @@ function PART:OnThink()
 
 					parent["Set" .. self.VariableName](parent, val)
 				end
-				
-				local str = ""
 			
-				if x then str = str .. math.Round(x, 3) end
-				if y then str = str .. ", " .. math.Round(y, 3) end
-				if z then str = str .. ", " .. math.Round(z, 3) end
-				
-				self.debug_var = str
+				self.debug_var = math.Round(num, 3)
 			end
 		end
 	end
