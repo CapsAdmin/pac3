@@ -327,7 +327,8 @@ function PART:OnHide()
 		if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
 			ent = ent:GetActiveWeapon()
 		end
-	
+		
+		ent.pac_mute_footsteps = nil	
 		ent.RenderOverride = nil
 		
 		pac.SetModelScale(ent, Vector(1,1,1))
