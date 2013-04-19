@@ -217,7 +217,7 @@ do -- menu
 				"",
 
 				function(url)
-					pace.LoadPartFromURL(obj, url)
+					pace.LoadParts(url, true, obj)
 				end
 			)
 		end):SetImage(pace.MiscIcons.url)

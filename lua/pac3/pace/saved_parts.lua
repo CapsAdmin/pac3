@@ -113,15 +113,6 @@ function pace.LoadParts(name, append, override_part)
 	else
 		pac.dprint("loading Parts %s",  name)
 		
-		if not append then
-			for key, part in pairs(pac.GetParts(true)) do
-				if not part:HasParent() then
-					pac.RemovePartOnServer(part.UniqueID, nil, true)
-					part:Remove()
-				end
-			end
-		end
-		
 		if name:find("http") then	
 			name = name:gsub("https://", "http://")
 			
@@ -132,7 +123,7 @@ function pace.LoadParts(name, append, override_part)
 			local function callback(str)
 				local data = pac.luadata.Decode(str)
 				
-				pace.LoadPartsFromTable(data, true, override_part)
+				pace.LoadPartsFromTable(data, append, override_part)
 			end
 			
 			http.Fetch(name, callback)		
@@ -145,12 +136,12 @@ function pace.LoadParts(name, append, override_part)
 				data = pac.luadata.ReadFile("pac3/sessions/" .. name .. ".txt")
 			end
 						
-			pace.LoadPartsFromTable(data, true, override_part)
+			pace.LoadPartsFromTable(data, append, override_part)
 		end
 	end
 end
 
-function pace.LoadPartsFromTable(data, clear, override_part)
+function pace.LoadPartsFromTable(data, append, override_part)
 			
 	--timer.Simple(0.1, function()
 		if pace.use_current_part_for_saveload and pace.current_part:IsValid() then
@@ -161,7 +152,7 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 			local part = override_part or pac.CreatePart(data.self.ClassName)
 			part:SetTable(data)
 		else		
-			if clear then
+			if not append then
 				pac.RemoveAllParts(true)
 			end
 			
