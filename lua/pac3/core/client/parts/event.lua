@@ -355,11 +355,15 @@ PART.Events =
 			
 			ent = try_viewmodel(ent)
 			
-			local data = ent.pac_command_event 
+			local events = ent.pac_command_events
 			
-			if data and self:StringOperator(data.name, find) and data.time + time > pac.RealTime then
-				return true
-			end			
+			if events then
+				for key, data in pairs(events) do
+					if self:StringOperator(data.name, find) and data.time + time > pac.RealTime then
+						return true
+					end			
+				end
+			end
 		end,
 	},
 	
@@ -737,7 +741,8 @@ usermessage.Hook("pac_event", function(umr)
 	local str = umr:ReadString()
 	
 	if ply:IsValid() then
-		ply.pac_command_event = {name = str, time = pac.RealTime}
+		ply.pac_command_events = ply.pac_command_events or {}
+		ply.pac_command_events[str] = {name = str, time = pac.RealTime}
 	end
 end)
 
