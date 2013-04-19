@@ -5,7 +5,7 @@ function pace.AddToolsToMenu(menu)
 	menu.GetDeleteSelf = function() return false end
 	for key, data in pairs(pace.Tools) do
 		if #data.suboptions > 0 then
-			local menu = menu:AddSubMenu(data.name)
+			local menu = menu:AddSubMenu(L(data.name))
 			menu.GetDeleteSelf = function() return false end
 			for key, option in pairs(data.suboptions) do
 				menu:AddOption(option, function() 
@@ -15,7 +15,7 @@ function pace.AddToolsToMenu(menu)
 				end)
 			end
 		else
-			menu:AddOption(data.name, function() 
+			menu:AddOption(L(data.name), function() 
 				if pace.current_part:IsValid() then
 					data.callback(pace.current_part) 
 				end
