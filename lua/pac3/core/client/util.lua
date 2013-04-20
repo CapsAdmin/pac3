@@ -351,7 +351,6 @@ function pac.SetModelScale(ent, scale, size)
 		mat = Matrix()
 		mat:Scale(scale)
 		ent:EnableMatrix("RenderMultiply", mat)
-		ent.pac_model_scale = scale
 	end
 	
 	if size then
@@ -366,6 +365,18 @@ function pac.SetModelScale(ent, scale, size)
 	
 	if not scale and not size then
 		ent:DisableMatrix("RenderMultiply")
+	end
+	
+	if scale and size then
+		ent.pac_model_scale = scale * size
+	end
+	
+	if scale and not size then
+		ent.pac_model_scale = scale
+	end
+	
+	if not scale and size then
+		ent.pac_model_scale = Vector(size, size, size)
 	end
 end
 
