@@ -171,10 +171,7 @@ end
 -- hacky optimization
 
 local should_suppress = setup_suppress()
-function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)	
-	-- commonly used variables		
-	pac.LocalPlayer = LocalPlayer() 
-		
+function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)			
 	if should_suppress() then return end
 	
 	-- commonly used variables		

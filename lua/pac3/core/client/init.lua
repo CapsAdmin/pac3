@@ -112,6 +112,12 @@ function pac.Enable()
 	for event, func in pairs(pac.AddedHooks) do
 		pac.AddHook(event, func)
 	end
+	
+	for _, func in pairs(pac.submit_queue) do
+		func()
+	end
+	
+	pac.submit_queue = {}
 end
 
 function pac.Disable()
@@ -148,3 +154,11 @@ end
 if GetConVarNumber("pac_enable") == 0 then
 	pac.Disable()
 end
+
+hook.Add("Think", "pac_localplayer", function()
+	local ply = LocalPlayer()
+	if ply:IsValid() then
+		pac.LocalPlayer = LocalPlayer() 
+		hook.Remove("Think", "pac_localplayer")
+	end
+end)

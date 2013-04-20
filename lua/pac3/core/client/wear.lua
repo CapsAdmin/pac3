@@ -141,10 +141,17 @@ if pac.netstream then
 		handle_data(data)
 	end)
 else
+	pac.submit_queue = {}
+
 	net.Receive("pac_submit", function()
 		local data = net.ReadTable()
 		decimal_hack_unpack(data)
-		handle_data(data)
+		
+		if GetConVarNumber("pac_enable") > 0 then
+			handle_data(data)
+		else
+			table.insert(pac.submit_queue, function() handle_data(data) end)
+		end
 	end)
 end
 
