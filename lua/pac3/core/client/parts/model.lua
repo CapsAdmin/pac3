@@ -310,7 +310,12 @@ local function RealDrawModel(self, ent, pos, ang)
 		
 		matrix:SetAngles(ang)
 		matrix:SetTranslation(pos)
-		matrix:Scale(self.Scale * self.Size)
+		
+		if ent.pac_model_scale then
+			matrix:Scale(ent.pac_model_scale)
+		else
+			matrix:Scale(self.Scale * self.Size)
+		end
 						
 		cam_PushModelMatrix(matrix)
 			self.wavefront_mesh:Draw()
