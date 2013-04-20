@@ -41,6 +41,7 @@ function pac.CreatePart(name, owner, skip_hook)
 		
 	part.cvar_enable = CreateClientConVar("pac_enable_" .. name, 1, true)
 	part.UniqueID = tostring(util.CRC(os.time() + pac.RealTime + part_count))
+	part.GlobalID = util.CRC(part.UniqueID)
 	
 	merge_storable(part, part.BaseClass)
 	
@@ -70,6 +71,7 @@ function pac.CreatePart(name, owner, skip_hook)
 	end
 	
 	part.DefaultVars.UniqueID = "" -- uh
+	part.DefaultVars.GlobalID = "" -- uh
 	
 	if part.PreInitialize then 
 		part:PreInitialize()
