@@ -30,6 +30,7 @@ pac.StartStorableVars()
 	
 	pac.GetSet(PART, "EditorExpand", false)
 	pac.GetSet(PART, "UniqueID", "")
+	pac.GetSet(PART, "GlobalID", "") -- this shit's getting entity
 	
 	pac.SetupPartName(PART, "AnglePart")
 	pac.GetSet(PART, "AnglePartMultiplier", Vector(1,1,1))
@@ -571,7 +572,7 @@ do -- serializing
 	end
 	
 	local function COPY(var, key, make_copy_name) 								
-		if make_copy_name and (var and (key == "UniqueID" or key:sub(-3) == "UID") and var ~= "") then
+		if make_copy_name and (var and (key == "UniqueID" or key == "GlobalID" or key:sub(-3) == "UID") and var ~= "") then
 			return util.CRC(var .. var)
 		end
 

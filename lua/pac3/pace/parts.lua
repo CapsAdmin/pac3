@@ -27,7 +27,6 @@ function pace.ClearParts()
 	end)
 end
 
-
 function pace.OnCreatePart(class_name, name, desc, mdl)
 	local part = pac.CreatePart(class_name)
 	
@@ -192,6 +191,10 @@ do -- menu
 			obj:Clone()
 		end)
 		
+		menu:AddOption(L"copy global id", function()
+			SetClipboardText("\""..obj.GlobalID.."\"")
+		end)
+		
 		menu:AddOption(L"help", function()
 			pace.ShowHelp(obj.ClassName)
 		end):SetImage(pace.MiscIcons.help)
@@ -251,7 +254,6 @@ do -- menu
 		
 	end
 end
-
 
 function pace.OnHoverPart(obj)
 	obj:Highlight()

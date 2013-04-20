@@ -269,13 +269,13 @@ pace.HiddenPropertyKeys =
 {
 	EditorExpand = true,
 	UniqueID = true,
+	GlobalID = true,
 	OwnerName = "group",
 }
 
 function pace.ShouldHideProperty(key)
 	return key:find("UID")
 end
-
 
 function pace.TranslatePropertiesKey(key, obj)
 	local key_ = key
