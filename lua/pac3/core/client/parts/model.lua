@@ -15,6 +15,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "BodygroupState", 0)
 	pac.GetSet(PART, "Material", "")
 	pac.GetSet(PART, "Color", Vector(255, 255, 255))
+	pac.GetSet(PART, "TintColor", Vector(255, 255, 255))
 	pac.GetSet(PART, "Brightness", 1)
 	pac.GetSet(PART, "CellShade", 0)
 	pac.GetSet(PART, "LightBlend", 1)
@@ -86,6 +87,12 @@ function PART:OnThink()
 	
 	self:CheckScale()
 	self:CheckBoneMerge()
+	
+	local ent = self:GetEntity()
+	if ent:IsValid() then
+		ent.pac_matproxies = ent.pac_matproxies or {}
+		ent.pac_matproxies.ItemTintColor = self.TintColor / 255
+	end
 end
 
 function PART:OnParent(part)
