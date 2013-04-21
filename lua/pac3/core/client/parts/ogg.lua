@@ -83,11 +83,17 @@ function PART:PlaySound(ovol)
 end
 
 function PART:Think()	
+	if self:IsHidden() then return end
+
 	local owner = self:GetOwner(true) 
 	
 	for key, stream in pairs(self.streams) do
 		if not stream:IsValid() then self.streams[key] = nil continue end
-				
+			
+		if self.PlayCount == 0 then
+			stream:Resume()
+		end
+		
 		if stream.owner_set ~= owner and owner:IsValid() then
 			stream:SetSourceEntity(owner)
 			stream.owner_set = owner
@@ -203,14 +209,15 @@ function PART:OnShow(from_event)
 end
 
 function PART:OnHide(from_event)
-	local stream = table.Random(self.streams) or NULL
-	if not stream:IsValid() then return end
-	
-	if not self.StopOnHide then		
-		if self.PauseOnHide then
-			stream:Pause()
-		else
-			stream:Stop()
+	for key, stream in pairs(self.streams) do
+		if not stream:IsValid() then self.streams[key] = nil continue end
+			
+		if not self.StopOnHide then		
+			if self.PauseOnHide then
+				stream:Pause()
+			else
+				stream:Stop()
+			end
 		end
 	end
 end
