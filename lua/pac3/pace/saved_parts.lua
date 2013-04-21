@@ -74,14 +74,14 @@ function pace.SaveParts(name, prompt_name, override_part)
 	end
 end
 
-function pace.LoadParts(name, append, override_part)
+function pace.LoadParts(name, clear, override_part)
 	if not name then
 		local frm = vgui.Create("DFrame")
 		frm:SetTitle(L"parts")
 		local pnl = pace.CreatePanel("browser", frm)
 		
 		pnl.OnLoad = function(node)
-			pace.LoadParts(node.FileName)
+			pace.LoadParts(node.FileName, clear, override_part)
 		end
 		
 		if #file.Find("pac3/sessions/*", "DATA") > 0 then
@@ -105,7 +105,7 @@ function pace.LoadParts(name, append, override_part)
 				L"pastebin urls also work!",
 				"",
 				function(name)
-					pace.LoadParts(name, append, override_part)
+					pace.LoadParts(name, clear, override_part)
 				end
 			)
 		end
@@ -123,7 +123,7 @@ function pace.LoadParts(name, append, override_part)
 			local function callback(str)
 				local data = pac.luadata.Decode(str)
 				
-				pace.LoadPartsFromTable(data, append, override_part)
+				pace.LoadPartsFromTable(data, clear, override_part)
 			end
 			
 			http.Fetch(name, callback)		
@@ -136,12 +136,12 @@ function pace.LoadParts(name, append, override_part)
 				data = pac.luadata.ReadFile("pac3/sessions/" .. name .. ".txt")
 			end
 						
-			pace.LoadPartsFromTable(data, append, override_part)
+			pace.LoadPartsFromTable(data, clear, override_part)
 		end
 	end
 end
 
-function pace.LoadPartsFromTable(data, append, override_part)
+function pace.LoadPartsFromTable(data, clear, override_part)
 			
 	--timer.Simple(0.1, function()
 		if pace.use_current_part_for_saveload and pace.current_part:IsValid() then
@@ -152,8 +152,8 @@ function pace.LoadPartsFromTable(data, append, override_part)
 			local part = override_part or pac.CreatePart(data.self.ClassName)
 			part:SetTable(data)
 		else		
-			if not append then
-				pac.RemoveAllParts(true)
+			if clear then
+				pac.RemoveAllParts(true, true)
 			end
 			
 			data = pace.FixParts(data)
@@ -220,7 +220,7 @@ function pace.GetSavedParts(dir)
 	return out
 end
 
-local function populate_part(menu, part, override_part)
+local function populate_part(menu, part, override_part, clear)
 	local name = part.self.Name
 	
 	if name == "" then
@@ -235,7 +235,7 @@ local function populate_part(menu, part, override_part)
 		menu.Open = function(...)
 			if not menu.pac_opened then
 				for key, part in pairs(part.children) do
-					populate_part(menu, part, override_part)
+					populate_part(menu, part, override_part, clear)
 				end
 				menu.pac_opened = true
 			end
@@ -244,12 +244,12 @@ local function populate_part(menu, part, override_part)
 		end		
 	else
 		menu:AddOption(name, function() 
-			pace.LoadPartsFromTable(part, nil, override_part) 
+			pace.LoadPartsFromTable(part, clear, override_part) 
 		end):SetImage(pace.GetIconFromClassName(part.self.ClassName))
 	end
 end
 
-local function populate_parts(menu, tbl, override_part)
+local function populate_parts(menu, tbl, override_part, clear)
 	for key, data in pairs(tbl) do
 		if not data.Path then
 			local menu, pnl = menu:AddSubMenu(key, function()end, data)
@@ -258,7 +258,7 @@ local function populate_parts(menu, tbl, override_part)
 			local old = menu.Open
 			menu.Open = function(...)
 				if not menu.pac_opened then
-					populate_parts(menu, data, override_part)
+					populate_parts(menu, data, override_part, clear)
 					menu.pac_opened = true
 				end
 				
@@ -274,7 +274,7 @@ local function populate_parts(menu, tbl, override_part)
 			end
 			
 			local outfit, pnl = menu:AddSubMenu(data.Name, function() 
-				pace.LoadParts(data.RelativePath, nil, override_part) 
+				pace.LoadParts(data.RelativePath, clear, override_part) 
 			end)
 			pnl:SetImage(icon)
 			outfit.GetDeleteSelf = function() return false end
@@ -283,7 +283,7 @@ local function populate_parts(menu, tbl, override_part)
 			outfit.Open = function(...)
 				if not outfit.pac_opened then
 					for key, part in pairs(parts) do
-						populate_part(outfit, part, override_part)
+						populate_part(outfit, part, override_part, clear)
 					end
 					outfit.pac_opened = true
 				end
@@ -294,7 +294,7 @@ local function populate_parts(menu, tbl, override_part)
 	end
 end
 
-function pace.AddSavedPartsToMenu(menu, override_part)
+function pace.AddSavedPartsToMenu(menu, clear, override_part)
 	menu.GetDeleteSelf = function() return false end
 	
 	menu:AddOption(L"load from url", function()
@@ -304,7 +304,7 @@ function pace.AddSavedPartsToMenu(menu, override_part)
 			"",
 
 			function(name)
-				pace.LoadParts(name, append, override_part)
+				pace.LoadParts(name, clear, override_part)
 			end
 		)
 	end):SetImage(pace.MiscIcons.url)
@@ -322,7 +322,7 @@ function pace.AddSavedPartsToMenu(menu, override_part)
 	menu:AddSpacer()
 	
 	local tbl = pace.GetSavedParts()
-	populate_parts(menu, tbl, override_part)
+	populate_parts(menu, tbl, override_part, clear)
 end
 
 local function populate_parts(menu, tbl, dir, override_part)

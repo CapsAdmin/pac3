@@ -57,7 +57,7 @@ do -- to server
 	end
 
 	function pac.RemovePartOnServer(name, server_only, filter)
-		local data = {part = name, server_only = server_only}
+		local data = {part = name, server_only = server_only, filter = filter}
 		
 		if pac.netstream then
 			pac.netstream.Start("pac_submit", data)

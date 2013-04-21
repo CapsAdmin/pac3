@@ -128,13 +128,14 @@ end
 function pac.RemoveAllParts(owned_only, server)
 	if server then
 		pac.RemovePartOnServer("__ALL__")
-	else
-		for key, part in pairs(pac.GetParts(owned_only)) do
-			if part:IsValid() then
-				part:Remove()
-			end
+	end
+	
+	for key, part in pairs(pac.GetParts(owned_only)) do
+		if part:IsValid() then
+			part:Remove()
 		end
 	end
+	
 	if not owned_only then
 		pac.ActiveParts = {}
 	end
