@@ -11,8 +11,11 @@ local function BIND_MATPROXY(NAME, TYPE)
 			end, 
 			
 			bind = function(self, mat, ent) 
-				if ent.pac_matproxies and ent.pac_matproxies[NAME] then
-					mat[set](mat, self.result, ent.pac_matproxies[NAME])
+				ent = ent or NULL
+				if ent:IsValid() then
+					if ent.pac_matproxies and ent.pac_matproxies[NAME] then
+						mat[set](mat, self.result, ent.pac_matproxies[NAME])
+					end
 				end
 			end
 		}
