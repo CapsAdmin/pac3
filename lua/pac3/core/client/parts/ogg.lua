@@ -172,6 +172,10 @@ end
 PART.last_stream = NULL
 
 function PART:PlaySound(_, vol)
+	if self:GetPlayerOwner() == pac.LocalPlayer and pac.webaudio.rate > 48000 then
+		chat.AddText(Color(255, 0, 0), "[PAC3] the ogg part (custom sounds) cannot be used because you have your sample rate set to " .. pac.webaudio.rate .. " kHz. This is not supported nor is it recommended. Set it to 48000 or below to fix this.")
+	end
+
 	local stream = table.Random(self.streams) or NULL
 	
 	if not stream:IsValid() then return end
