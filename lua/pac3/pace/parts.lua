@@ -101,7 +101,7 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 		if IsValid(node) then		
 			if key == "Name" then
 				if not obj:HasParent() then
-					pac.RemovePartOnServer(obj:GetName(), true)
+					pac.RemovePartOnServer(obj:GetUniqueID(), false, true)
 				end
 				node:SetText(val)
 			elseif key == "Model" and val and val ~= "" then
@@ -211,7 +211,7 @@ do -- menu
 		
 		local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
 		pnl:SetImage(pace.MiscIcons.load)
-		pace.AddSavedPartsToMenu(load, obj)
+		pace.AddSavedPartsToMenu(load, false, obj)
 		
 		menu:AddOption(L"load from url", function()
 				Derma_StringRequest(
@@ -228,6 +228,9 @@ do -- menu
 		menu:AddOption(L"remove", function()
 			obj:Remove()
 			pace.RefreshTree()
+			if not obj:HasParent() and obj.ClassName == "group" then
+				pac.RemovePartOnServer(obj:GetUniqueID(), false, true)
+			end
 		end)
 
 		menu:Open()
@@ -246,7 +249,7 @@ do -- menu
 			
 		local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
 		pnl:SetImage(pace.MiscIcons.load)
-		pace.AddSavedPartsToMenu(load, obj)
+		pace.AddSavedPartsToMenu(load, false, obj)
 		
 		menu:AddOption(L"clear", function()
 			pace.ClearParts()

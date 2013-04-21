@@ -90,6 +90,7 @@ function pac.SubmitPart(data, filter)
 	else
 		if data.part == "__ALL__" then
 			pac.Parts[uid] = {}
+			filter = true
 		else
 			pac.Parts[uid][data.part] = nil
 		end

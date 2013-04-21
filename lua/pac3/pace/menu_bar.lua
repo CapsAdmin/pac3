@@ -13,7 +13,7 @@ function pace.OnMenuBarPopulate(bar)
 			
 			local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
 			pnl:SetImage(pace.MiscIcons.load)
-			pace.AddSavedPartsToMenu(load)
+			pace.AddSavedPartsToMenu(load, true)
 			
 			menu:AddOption(L"wear", function() pace.WearParts() end):SetImage(pace.MiscIcons.wear)
 			
