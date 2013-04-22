@@ -99,6 +99,9 @@ PART.Events =
 		arguments = {{delay = "number"}, {repeat_times = "number"}},
 		callback = function(self, ent, delay, repeat_times)
 			if self.timer_finished then return end
+			
+			delay = delay or 1
+			repeat_times = repeat_times or 1
 		
 			self.timer_repeats = self.timer_repeats or 1
 			self.timer_time = self.timer_time or os.clock()
