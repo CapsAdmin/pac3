@@ -743,6 +743,11 @@ usermessage.Hook("pac_event", function(umr)
 	local ply = umr:ReadEntity()
 	local str = umr:ReadString()
 	
+	-- ^ resets all other events
+	if str:find("^", 0, true) then
+		ply.pac_command_events = {}
+	end	
+		
 	if ply:IsValid() then
 		ply.pac_command_events = ply.pac_command_events or {}
 		ply.pac_command_events[str] = {name = str, time = pac.RealTime}
