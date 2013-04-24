@@ -11,7 +11,7 @@ function pace.OnMenuBarPopulate(bar)
 			pnl:SetImage(pace.MiscIcons.save)
 			pace.AddSaveMenuToMenu(save)		
 			
-			local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
+			local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts(nil, true) end)
 			pnl:SetImage(pace.MiscIcons.load)
 			pace.AddSavedPartsToMenu(load, true)
 			
@@ -75,7 +75,7 @@ function pace.OnOpenMenu()
 	menu:SetPos(gui.MousePos())
 	
 		menu:AddOption(L"save parts", function() pace.SaveParts() end)
-		menu:AddOption(L"load parts", function() pace.LoadParts() end)
+		menu:AddOption(L"load parts", function() pace.LoadParts(nil, true) end)
 		menu:AddOption(L"wear parts", function() pace.WearParts() end)
 		menu:AddSubMenu(L"clear parts", function()end):AddOption(L"OK", function() pace.ClearParts() end)
 		
