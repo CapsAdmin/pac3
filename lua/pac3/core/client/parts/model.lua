@@ -20,6 +20,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "CellShade", 0)
 	pac.GetSet(PART, "LightBlend", 1)
 	pac.GetSet(PART, "Alpha", 1)
+	pac.GetSet(PART, "Passes", 1)
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
 	pac.GetSet(PART, "Size", 1)
 	pac.GetSet(PART, "AlternativeScaling", false)
@@ -300,7 +301,7 @@ surface.CreateFont("pac_urlobj_loading",
 	}
 )
 
--- fixed drawmodel 2.0 real 100%
+-- ugh lol
 local function RealDrawModel(self, ent, pos, ang) 
 	if self.wavefront_mesh then
 		ent:SetModelScale(0,0)
@@ -359,10 +360,16 @@ function PART:DrawModel(ent, pos, ang)
 			render_SetMaterial(self.Materialm) 
 		end
 			
-		RealDrawModel(self, ent, pos, ang)
+		if self.Passes > 1 and self.Alpha < 1 then
+			for i = 1, self.Passes do
+				RealDrawModel(self, ent, pos, ang)
+			end
+		else
+			RealDrawModel(self, ent, pos, ang)
+		end		
 		
 		render.PushFlashlightMode(true)
-			RealDrawModel(self, ent, pos, ang) -- ugh lol
+			RealDrawModel(self, ent, pos, ang)
 		render.PopFlashlightMode()
 		
 				
