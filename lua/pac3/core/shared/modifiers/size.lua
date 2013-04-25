@@ -24,12 +24,6 @@ function pac.SetPlayerSize(ply, f)
 		if ply.SetStepSize then ply:SetStepSize(def.step * f) end
 
 		ply:SetModelScale(f, 0)
-		
-		local phys = ply:GetPhysicsObject()
-		
-		if phys:IsValid() then
-			phys:SetMass(def.mass * f)	
-		end
 	end
 	
 	--[[
