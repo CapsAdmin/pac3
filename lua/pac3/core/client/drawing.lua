@@ -3,7 +3,7 @@ local pac = pac
 pac.drawn_entities = pac.drawn_entities or {}
 local pairs = pairs
 
-pac.LocalPlayer = NULL
+pac.LocalPlayer = LocalPlayer()
 pac.RealTime = 0
 pac.FrameNumber = 0
 
@@ -45,8 +45,34 @@ local render_SetColorModulation = render.SetColorModulation
 local render_SetBlend = render.SetBlend
 local render_ModelMaterialOverride = render.ModelMaterialOverride
 local render_MaterialOverride = render.MaterialOverride
+local TIME = math.huge
+
+local max_render_time_cvar = CreateClientConVar("pac_max_render_time", 0)
+local max_render_time = 0
+
+local function hide_parts(ent)
+	if ent.pac_parts and ent.pac_drawing == true then
+		for key, part in pairs(ent.pac_parts) do
+			part:CallRecursive("OnHide", false, true)
+		end
+		pac.ResetBones(ent)
+	end
+
+	ent.pac_drawing = false
+end
 
 function pac.RenderOverride(ent, type, draw_only)
+	if pac.debug then
+		TIME = SysTime()
+	else
+		if max_render_time > 0 and ent ~= pac.LocalPlayer then
+			TIME = SysTime()
+			
+			if ent.pac_render_time_stop and ent.pac_render_time_stop > TIME then
+				return
+			end
+		end
+	end
 	if not ent.pac_parts then
 		pac.UnhookEntityRender(ent)
 	else
@@ -89,7 +115,35 @@ function pac.RenderOverride(ent, type, draw_only)
 			end
 		end
 	end
+
+	if pac.debug then
+		TIME = (SysTime() - TIME) * 1000
 	
+		local pos = ent:EyePos()
+		
+		if type == "viewmodel" then
+			pos = pos + Vector(0,0,-2)
+		elseif type == "translucent" then
+			pos = pos + Vector(0,0,2)
+		end
+		
+		debugoverlay.Text(pos, type .. " - " .. math.Round(TIME, 3) .. " ms", 0)
+	else	
+		
+		if max_render_time > 0 and ent ~= pac.LocalPlayer then	
+			ent.pac_render_times = ent.pac_render_times or {}
+			TIME = (SysTime() - TIME) * 1000
+			ent.pac_render_times[type] = TIME
+					
+			if TIME > max_render_time then
+				ent.pac_render_time_stop = SysTime() + 2 + (math.random() * 2)
+				
+				hide_parts(ent)
+			end
+		end
+		
+	end
+		
 	render_SetColorModulation(1,1,1)
 	render_SetBlend(1)
 	
@@ -175,6 +229,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 	if should_suppress() then return end
 	
 	-- commonly used variables		
+	max_render_time = max_render_time_cvar:GetFloat()
 	pac.RealTime = RealTime()
 	pac.FrameNumber = FrameNumber()
 
@@ -215,14 +270,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 				pac.RenderOverride(ent, "opaque")
 				ent.pac_drawing = true
 			else
-				if ent.pac_parts and ent.pac_drawing == true then
-					for key, part in pairs(ent.pac_parts) do
-						part:CallRecursive("OnHide", false, true)
-					end
-					pac.ResetBones(ent)
-				end
-			
-				ent.pac_drawing = false
+				hide_parts(ent)
 			end
 		else	
 			pac.drawn_entities[key] = nil

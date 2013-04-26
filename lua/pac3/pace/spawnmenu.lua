@@ -51,6 +51,14 @@ function pace.ClientOptionsMenu(pnl)
 		0
 	)
 	
+	pnl:NumSlider(
+		L"max render time (in ms)",
+		"pac_draw_distance",
+		0,
+		50,
+		0
+	)
+	
 	local browser = pnl:AddControl("pace_browser", {})
 	
 	browser.OnLoad = function(node)
