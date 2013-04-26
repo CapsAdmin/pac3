@@ -53,7 +53,7 @@ function pace.ClientOptionsMenu(pnl)
 	
 	pnl:NumSlider(
 		L"max render time (in ms)",
-		"pac_draw_distance",
+		"pac_max_render_time",
 		0,
 		50,
 		0
