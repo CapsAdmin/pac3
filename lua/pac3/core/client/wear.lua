@@ -59,6 +59,10 @@ do -- to server
 	function pac.RemovePartOnServer(name, server_only, filter)
 		local data = {part = name, server_only = server_only, filter = filter}
 		
+		if name == "__ALL__" then
+			pac.HandleModifiers(nil, owner)
+		end
+		
 		if pac.netstream then
 			pac.netstream.Start("pac_submit", data)
 		else

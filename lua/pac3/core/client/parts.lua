@@ -127,7 +127,7 @@ end
 
 function pac.RemoveAllParts(owned_only, server)
 	if server then
-		pac.RemovePartOnServer("__ALL__")
+		pac.RemovePartOnServer(LocalPlayer(), "__ALL__")
 	end
 	
 	for key, part in pairs(pac.GetParts(owned_only)) do
