@@ -60,7 +60,7 @@ do -- to server
 		local data = {part = name, server_only = server_only, filter = filter}
 		
 		if name == "__ALL__" then
-			pac.HandleModifiers(nil, owner)
+			pac.HandleModifiers(nil, LocalPlayer())
 		end
 		
 		if pac.netstream then
