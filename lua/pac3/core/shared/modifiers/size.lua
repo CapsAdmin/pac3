@@ -26,6 +26,18 @@ function pac.SetPlayerSize(ply, f)
 		ply:SetModelScale(f, 0)
 	end
 	
+	if ply.ResetHull and f == 1 then
+		ply:ResetHull()
+	else
+		
+		if ply.SetHull then 
+			ply:SetHull(def.min * f, def.max * f)
+		end
+		
+		if ply.SetHullDuck then 
+			ply:SetHullDuck(def.min * f, def.maxduck * f)
+		end
+	end
 	--[[
 	
 	ply:SetRunSpeed(math.max(def.run * f, TICKRATE/2))
