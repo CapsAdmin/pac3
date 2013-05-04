@@ -97,7 +97,7 @@ list.Set(
 		onewindow = true,
 		init = function(icn, pnl)
 			pnl:Remove()
-			pace.OpenEditor()
+			RunConsoleCommand("pac_editor")
 		end
 	}
 )
