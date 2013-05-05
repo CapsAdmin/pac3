@@ -48,6 +48,19 @@ net.Receive("pac_e2_setkeyvalue_vec", function()
 	end
 end)
 
+net.Receive("pac_e2_setkeyvalue_ang", function()
+	local ply = net.ReadEntity()
+	
+	if ply:IsValid() then
+		local ent = net.ReadEntity()
+		local id = net.ReadString()
+		local key = net.ReadString()		
+		local val = net.ReadAngle()
+			
+		SetKeyValue(ply, ent, id, key, val)
+	end
+end)
+
 net.Receive("pac_e2_setkeyvalue_num", function()
 	local ply = net.ReadEntity()
 	
