@@ -1,4 +1,4 @@
-AddCSLuaFile()
+AddCSLuaFile("cl_pac.lua")
 
 E2Lib.RegisterExtension("pac", true)
 
