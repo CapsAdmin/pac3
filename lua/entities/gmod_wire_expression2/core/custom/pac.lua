@@ -1,5 +1,3 @@
-AddCSLuaFile("cl_pac.lua")
-
 E2Lib.RegisterExtension("pac", true)
 
 util.AddNetworkString("pac_e2_setkeyvalue_str")	
