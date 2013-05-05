@@ -160,6 +160,11 @@ hook.Add("Think", "pac_localplayer", function()
 	local ply = LocalPlayer()
 	if ply:IsValid() then
 		pac.LocalPlayer = LocalPlayer() 
+		
+		if _G.E2Helper then
+			include("wire_expression_extension.lua")
+		end
+		
 		hook.Remove("Think", "pac_localplayer")
 	end
 end)
