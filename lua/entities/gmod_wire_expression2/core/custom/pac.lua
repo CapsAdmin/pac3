@@ -46,6 +46,6 @@ e2function void pacSetKeyValue(entity owner, string global_id, string key, angle
 		net.WriteString(global_id)		
 		net.WriteString(key)		
 	
-		net.WriteVector(Angle(value[1], value[2], value[3]))		
+		net.WriteAngle(Angle(value[1], value[2], value[3]))		
 	net.Broadcast()
 end
