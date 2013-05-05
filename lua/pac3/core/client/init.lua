@@ -68,6 +68,7 @@ include("contraption.lua")
 include("expression.lua")
 include("integration_tools.lua")
 include("mat_proxies.lua")
+include("wire_expression_extension.lua")
 
 pac.LoadParts()
 
@@ -161,8 +162,9 @@ hook.Add("Think", "pac_localplayer", function()
 	if ply:IsValid() then
 		pac.LocalPlayer = LocalPlayer() 
 		
-		if _G.E2Helper then
-			include("wire_expression_extension.lua")
+		-- uuumm
+		if E2Helper then
+			E2Helper.Descriptions["pacSetKeyValue"] = "Sets a property value on given part. Part unique id is recommended but you can also input name."
 		end
 		
 		hook.Remove("Think", "pac_localplayer")

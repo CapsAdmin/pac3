@@ -73,5 +73,3 @@ net.Receive("pac_e2_setkeyvalue_num", function()
 		SetKeyValue(ply, ent, id, key, val)
 	end
 end)
-
-E2Helper.Descriptions["pacSetKeyValue"] = "Sets a property value on given part. Part unique id is recommended but you can also input name."
