@@ -33,11 +33,11 @@ function pac.SetPlayerSize(ply, f)
 	else
 		
 		if ply.SetHull then 
-			ply:SetHull(def.min * safe, def.max * safe)
+			ply:SetHull(def.min * safe / 2, def.max * safe / 2)
 		end
 		
 		if ply.SetHullDuck then 
-			ply:SetHullDuck(def.min * safe, def.maxduck * safe)
+			ply:SetHullDuck(def.min * safe / 2, def.maxduck * safe / 2)
 		end
 	end
 	--[[
