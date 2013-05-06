@@ -17,10 +17,10 @@ local def =
 function pac.SetPlayerSize(ply, f)	
 	--local TICKRATE = SERVER and 1/FrameTime() or 0
 	
-	f = math.max(f, 0.1)
+	local safe = math.max(f, 0.1)
 		
-	if ply.SetViewOffset then ply:SetViewOffset(def.view * f) end
-	if ply.SetViewOffsetDucked then ply:SetViewOffsetDucked(def.viewducked * f) end
+	if ply.SetViewOffset then ply:SetViewOffset(def.view * safe) end
+	if ply.SetViewOffsetDucked then ply:SetViewOffsetDucked(def.viewducked * safe) end
 	
 	if SERVER then		
 		if ply.SetStepSize then ply:SetStepSize(def.step * f) end
@@ -33,11 +33,11 @@ function pac.SetPlayerSize(ply, f)
 	else
 		
 		if ply.SetHull then 
-			ply:SetHull(def.min * f, def.max * f)
+			ply:SetHull(def.min * safe, def.max * safe)
 		end
 		
 		if ply.SetHullDuck then 
-			ply:SetHullDuck(def.min * f, def.maxduck * f)
+			ply:SetHullDuck(def.min * safe, def.maxduck * safe)
 		end
 	end
 	--[[
