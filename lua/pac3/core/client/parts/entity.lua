@@ -29,6 +29,24 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "AnimationRate", 1)
 pac.EndStorableVars()
 
+local function ENTFIELD(PART, name, field)
+
+	PART[name] = function(self, val)
+		self[name] = val
+		
+		local owner = self:GetOwner()
+		
+		if owner:IsValid() then
+			owner[field] = val
+		end
+	end
+
+end
+
+ENTFIELD(PART, "InverseKinematics", "pac_enable_ik")
+ENTFIELD(PART, "MuteFootsteps", "pac_hide_weapon")
+ENTFIELD(PART, "AnimationRate", "pac_global_animation_rate")
+
 function PART:GetNiceName()
 	local ent = self:GetOwner()
 	
@@ -227,6 +245,7 @@ function PART:OnShow()
 		ent.pac_enable_ik = self.InverseKinematics
 		self:SetColor(self:GetColor())
 		ent:SetColor(self.Colorc)
+		self:UpdateWeaponDraw(self:GetOwner())
 		
 		function ent.RenderOverride(ent, skip)
 			if self:IsValid() then			
