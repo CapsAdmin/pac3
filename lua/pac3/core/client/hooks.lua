@@ -26,7 +26,7 @@ function pac.UpdateAnimation(ply)
 		
 		if scale ~= 0 then		
 			ply:SetCycle(pac.RealTime / scale * length)
-		elseif
+		else
 			ply:SetCycle(0)
 		end
 		
