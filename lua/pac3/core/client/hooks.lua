@@ -1,12 +1,36 @@
 function pac.UpdateAnimation(ply)
 	if not IsEntity(ply) or not ply:IsValid() then return end
-	
+		
 	local tbl = ply.pac_pose_params
 	
 	if tbl then
 		for _, data in pairs(ply.pac_pose_params) do
 			ply:SetPoseParameter(data.key, data.val)
 		end
+	end
+	
+	if ply.pac_global_animation_rate then 
+	
+		if ply.pac_global_animation_rate == 0 then
+			ply:SetCycle((pac.RealTime * ply:GetModelScale() * 2)%1)
+		elseif ply.pac_global_animation_rate ~= 1 then
+			ply:SetCycle((pac.RealTime * ply.pac_global_animation_rate)%1)
+		end
+		
+		return true
+	end
+	
+	if ply.pac_holdtype_alternative_animation_rate then
+		local length = ply:GetVelocity():Dot(ply:EyeAngles():Forward()) > 0 and 1 or -1
+		local scale = ply:GetModelScale() * 2
+		
+		if scale ~= 0 then		
+			ply:SetCycle(pac.RealTime / scale * length)
+		elseif
+			ply:SetCycle(0)
+		end
+		
+		return true
 	end
 end
 pac.AddHook("UpdateAnimation")
