@@ -58,6 +58,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Noclip", "")
 	pac.GetSet(PART, "Air", "")
 	pac.GetSet(PART, "Sitting", "")
+	pac.GetSet(PART, "AlternativeRate", false)
 pac.EndStorableVars()
 
 for name, act in pairs(act_mods) do
@@ -79,6 +80,8 @@ function PART:UpdateActTable()
 	local ent = self:GetOwner(true)
 	
 	if ent:IsValid() then
+		ent.pac_holdtype_alternative_animation_rate = self.AlternativeRate
+		
 		for name, act in pairs(act_mods) do
 			self.ActTable[act] = ent:GetSequenceActivity(ent:LookupSequence(self[name]))
 		end
@@ -109,6 +112,7 @@ function PART:Disable()
 
 	if ent:IsValid() and ent.pac_holdtype_part == self then
 		ent.pac_acttable = nil
+		ent.pac_holdtype_alternative_animation_rate = nil
 	end
 end
 

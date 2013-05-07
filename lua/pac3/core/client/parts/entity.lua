@@ -26,7 +26,18 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Weapon", false)
 	pac.GetSet(PART, "InverseKinematics", false)
 	pac.GetSet(PART, "MuteFootsteps", false)
+	pac.GetSet(PART, "AnimationRate", 1)
 pac.EndStorableVars()
+
+function PART:SetAnimationRate(num)
+	self.AnimationRate = num
+	
+	local ent = self:GetOwner()
+	
+	if ent:IsValid() then
+		ent.pac_global_animation_rate = num
+	end
+end
 
 function PART:SetInverseKinematics(b)
 	self.InverseKinematics = b
@@ -330,6 +341,7 @@ function PART:OnHide()
 		
 		ent.pac_mute_footsteps = nil	
 		ent.RenderOverride = nil
+		ent.pac_global_animation_rate = nil
 		
 		pac.SetModelScale(ent, Vector(1,1,1))
 		
