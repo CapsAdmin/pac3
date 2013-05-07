@@ -29,26 +29,6 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "AnimationRate", 1)
 pac.EndStorableVars()
 
-function PART:SetAnimationRate(num)
-	self.AnimationRate = num
-	
-	local ent = self:GetOwner()
-	
-	if ent:IsValid() then
-		ent.pac_global_animation_rate = num
-	end
-end
-
-function PART:SetInverseKinematics(b)
-	self.InverseKinematics = b
-	local ent = self:GetOwner()
-	
-	if ent:IsValid() then
-		ent.pac_enable_ik = b
-		self:SetSize(self:GetSize())
-	end
-end
-
 function PART:GetNiceName()
 	local ent = self:GetOwner()
 	
@@ -211,13 +191,8 @@ local render_SetColorModulation = render.SetColorModulation
 local render_MaterialOverride = render.MaterialOverride
 
 function PART:UpdateColor(ent)
-
 	render_SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness)
 	render_SetBlend(self.Alpha)
-	
-	if self.Colorc then
-		ent:SetColor(self.Colorc)
-	end
 end
 
 function PART:UpdateMaterial(ent)
@@ -247,6 +222,11 @@ function PART:OnShow()
 				RunConsoleCommand("pac_setmodel", self.Model)
 			end
 		end
+		
+		ent.pac_global_animation_rate = self.AnimationRate
+		ent.pac_enable_ik = self.InverseKinematics
+		self:SetColor(self:GetColor())
+		ent:SetColor(self.Colorc)
 		
 		function ent.RenderOverride(ent, skip)
 			if self:IsValid() then			
@@ -342,6 +322,8 @@ function PART:OnHide()
 		ent.pac_mute_footsteps = nil	
 		ent.RenderOverride = nil
 		ent.pac_global_animation_rate = nil
+		ent.pac_enable_ik = nil
+		ent:SetColor(Color(255, 255, 255, 255))
 		
 		pac.SetModelScale(ent, Vector(1,1,1))
 		
