@@ -31,7 +31,7 @@ pac.EndStorableVars()
 
 local function ENTFIELD(PART, name, field)
 
-	PART[name] = function(self, val)
+	PART["Set" .. name] = function(self, val)
 		self[name] = val
 		
 		local owner = self:GetOwner()
