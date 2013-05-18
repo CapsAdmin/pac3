@@ -88,11 +88,6 @@ function pac.SetPlayerSize(ply, f)
 			if siz ~= 1 and (ply:GetModelScale() ~= siz or ply:GetViewOffset() ~= def.view * siz) then
 				pac.SetPlayerSize(ply, ply.pac_player_size)
 			end	
-			
-			if siz ~= 1 then
-				ply:SetPlaybackRate(1/siz)
-				return true
-			end
 		end)
 	end
 	

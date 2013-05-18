@@ -45,14 +45,16 @@ do -- to server
 	function pac.SendPartToServer(part)
 		local data = {part = part:ToTable()}
 		data.owner = part:GetOwner()
-		
-		if pac.netstream then
-			pac.netstream.Start("pac_submit", data)
-		else
-			net.Start("pac_submit")
-				decimal_hack_pack(data)
-				net.WriteTable(data)
-			net.SendToServer()
+
+		if hook.Run("pac_SendData", filter or player.GetAll(), data) ~= false then
+			if pac.netstream then
+				pac.netstream.Start("pac_submit", data)
+			else
+				net.Start("pac_submit")
+					decimal_hack_pack(data)
+					net.WriteTable(data)
+				net.SendToServer()
+			end
 		end
 	end
 
@@ -129,7 +131,14 @@ do -- from server
 	end
 end
 
-local function handle_data(data)
+pac.submit_queue = {}
+
+function pac.HandleReceivedData(data)
+
+	if GetConVarNumber("pac_enable") == 0 then
+		table.insert(pac.submit_queue, function() pac.HandleReceivedData(data) end)
+	end
+
 	if data.owner:IsValid() then
 		local T = type(data.part)
 		if T == "table" then
@@ -142,20 +151,14 @@ end
 
 if pac.netstream then
 	pac.netstream.Hook("pac_submit", function(data)
-		handle_data(data)
+		pac.HandleReceivedData(data)
 	end)
 else
-	pac.submit_queue = {}
-
 	net.Receive("pac_submit", function()
 		local data = net.ReadTable()
 		decimal_hack_unpack(data)
 		
-		if GetConVarNumber("pac_enable") > 0 then
-			handle_data(data)
-		else
-			table.insert(pac.submit_queue, function() handle_data(data) end)
-		end
+		pac.HandleReceivedData(data)
 	end)
 end
 
