@@ -110,17 +110,19 @@ function pac.SubmitPart(data, filter)
 	
 	if not data.server_only then
 	
-		if pac.netstream then
-			pac.netstream.Start(filter or player.GetAll(), data)
-		else
-			net.Start("pac_submit")
-				net.WriteTable(decimal_hack_pack(table.Copy(data)))
-			net.Send(filter or player.GetAll())	
-		end
-		
-		if type(data.part) == "table" then	
-			last_frame = frame_number
-			pac.HandleModifiers(data.part, data.owner)
+		if hook.Run("pac_SendData", filter or player.GetAll(), data) ~= false then
+			if pac.netstream then
+				pac.netstream.Start(filter or player.GetAll(), data)
+			else
+				net.Start("pac_submit")
+					net.WriteTable(decimal_hack_pack(table.Copy(data)))
+				net.Send(filter or player.GetAll())	
+			end
+			
+			if type(data.part) == "table" then	
+				last_frame = frame_number
+				pac.HandleModifiers(data.part, data.owner)
+			end
 		end
 	end
 	
@@ -152,9 +154,9 @@ function pac.RemovePart(data)
 	pac.SubmitPart(data, data.filter)
 end
 
-local function handle_data(owner, data)
-	data.owner = owner
-	data.uid = owner:UniqueID()
+function pac.HandleReceivedData(ply, data)
+	data.owner = ply
+	data.uid = ply:UniqueID()
 	
 	if type(data.part) == "table" and data.part.self then
 		if type(data.part.self) == "table" and not data.part.self.UniqueID then return end -- bogus data
@@ -171,13 +173,13 @@ util.AddNetworkString("pac_precache_effect")
 
 if pac.netstream then
 	pac.netstream.Hook("pac_submit", function(ply, data)
-		handle_data(ply, data)
+		pac.HandleReceivedData(ply, data)
 	end)
 else
 	net.Receive("pac_submit", function(_, ply)
 		local data = net.ReadTable()
 		decimal_hack_unpack(data)
-		handle_data(ply, data)
+		pac.HandleReceivedData(ply, data)
 	end)
 end
 

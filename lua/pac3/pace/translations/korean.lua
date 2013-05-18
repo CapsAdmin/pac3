@@ -163,6 +163,29 @@ return {
 -- Animation
 ["sequence name"] = "장면 이름",
 ["owner cycle"] = "사용자에게 직접적용",
+["physgun"] = "게리건",
+["zombie"] = "좀비",
+["angry"] = "화남",
+["camera"] = "카메라",
+["crossbow"] = "크로스 보우",
+["duel"] = "듀얼 건",
+["fist"] = "주먹",
+["grenade"] = "폭탄",
+["knife"] = "나이프",
+["magic"] = "마법",
+["melee"] = "검1",
+["melee2"] = "검2",
+["meleeangry"] = "검 화남",
+["normal"] = "노멀",
+["passive"] = "패시브",
+["pistol"] = "피스톨",
+["revolver"] = "리볼버",
+["rpg"] = "RPG",
+["scared"] = "두려움",
+["shotgut"] = "샷건",
+["slam"] = "슬램",
+["suitcase"] = "슈트 케이스",
+["smg"] = "SMG",
 
 -- Ogg
 ["ogg"] = "노래 불러오기",
@@ -326,6 +349,10 @@ return {
 ["player angles"] = "플레이어 각도",
 ["translucent"] = "반투명",
 ["inverse kinematics"] = "역 운동학",
+["weapon"] = "무기",
+["mute footsteps"] = "발소리 끄기",
+["animation rate"] = "애니메이션 속도",
+
 
 -- Model
 ["position offset"] = "위치 기준변환",
@@ -333,6 +360,9 @@ return {
 ["light blend"] = "밝기",
 ["alternative scaling"] = "비율 조정",
 ["texture filter"] = "텍스쳐 필터",
+["tint color"] = "염색",
+["angle part name"] = "각도 파트이름",
+["angle part multiplier"] = "각도 파트승수",
 
 -- Event
 ["is voice chatting"] = "음성 채팅",
@@ -396,6 +426,7 @@ return {
 ["noclip"] = "노클립",
 ["air"] = "공중",
 ["sitting"] = "(의자에)앉음",
+["alternative rate"] = "대안 속도",
 
 -- outline
 ["blur x"] = "x 블러",
@@ -443,4 +474,5 @@ return {
 ["help i have ocd (rounding numbers)"] = "OCD를 가지게하기 (라운딩 넘버)",
 ["copy global id"] = "글로벌 id를 카피",
 ["paste"] = "붙여넣기",
+["auto load (your spawn outfit)"] = "이 PAC를 스폰시 불러오기",
 }

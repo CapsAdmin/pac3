@@ -9,7 +9,7 @@ function pac.UpdateAnimation(ply)
 		end
 	end
 	
-	if ply.pac_global_animation_rate then 
+	if ply.pac_global_animation_rate and ply.pac_global_animation_rate ~= 1 then 
 	
 		if ply.pac_global_animation_rate == 0 then
 			ply:SetCycle((pac.RealTime * ply:GetModelScale() * 2)%1)
