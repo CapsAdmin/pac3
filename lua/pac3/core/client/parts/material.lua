@@ -330,6 +330,12 @@ function PART:OnShow()
 	if parent:IsValid() then
 		self:OnParent(parent)
 	end
+	
+	for key, part in pairs(pac.GetParts()) do
+		if part.Material and part.Material ~= "" and part.Material == self.Name then
+			part:SetMaterial(part:GetMaterial())
+		end
+	end
 end
 
 pac.RegisterPart(PART)

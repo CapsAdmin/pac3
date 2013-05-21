@@ -427,13 +427,15 @@ end
 -- hack??
 
 function pac.HandlePartName(ply, name)
-	if ply:IsPlayer() and ply ~= pac.LocalPlayer then
-		return ply:UniqueID() .. " " .. name
+	if ply:IsValid() then
+		if ply:IsPlayer() and ply ~= pac.LocalPlayer then
+			return ply:UniqueID() .. " " .. name
+		end
+		
+		if not ply:IsPlayer() then	
+			return pac.CallHook("HandlePartName", ply, name) or (ply:EntIndex() .. " " .. name)
+		end
 	end
 	
-	if not ply:IsPlayer() and ply:IsValid() then	
-		return pac.CallHook("HandlePartName", ply, name) or (ply:EntIndex() .. " " .. name)
-	end
-
 	return name
 end
