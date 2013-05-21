@@ -30,34 +30,47 @@ function PART:GetPoseParameterList()
 	return out
 end
 
-function PART:OnThink(ent)
+function PART:SetRange(num)
+	self.Range = num
+	self:UpdateParams()
+end
+
+function PART:UpdateParams()
 	local ent = self:GetOwner()
 	
 	if ent:IsValid() then		
-		if self:IsHidden() then
-			ent.pac_pose_param = nil
-		else	
-			if not self.pose_params or ent:GetModel() ~= self.last_owner_mdl then
-				self.pose_params = self:GetPoseParameterList()
-				self.last_owner_mdl = ent:GetModel()
-			end
+		if not self.pose_params or ent:GetModel() ~= self.last_owner_mdl then
+			self.pose_params = self:GetPoseParameterList()
+			self.last_owner_mdl = ent:GetModel()
+		end
+		
+		local data = self.pose_params[self.PoseParameter]
+		
+		if data then
+			local num = Lerp((self.Range + 1) / 2, data.range[1] or 0, data.range[2] or 1)
 			
-			local data = self.pose_params[self.PoseParameter]
-			if data then
-				local num = Lerp((self.Range + 1) / 2, data.range[1] or 0, data.range[2] or 1)
-				
-				ent.pac_pose_params = ent.pac_pose_params or {}
-				ent.pac_pose_params[self.UniqueID] = ent.pac_pose_params[self.UniqueID] or {}
-				
-				ent.pac_pose_params[self.UniqueID].key  = data.name
-				ent.pac_pose_params[self.UniqueID].val = num
-				
-				ent:SetPoseParameter(data.name, num)
-			else
-				ent.pac_pose_param = nil
-			end
+			ent.pac_pose_params = ent.pac_pose_params or {}
+			ent.pac_pose_params[self.UniqueID] = ent.pac_pose_params[self.UniqueID] or {}
+			
+			ent.pac_pose_params[self.UniqueID].key  = data.name
+			ent.pac_pose_params[self.UniqueID].val = num
+			
+			ent:SetPoseParameter(data.name, num)
 		end
 	end
+end
+
+function PART:OnHide()
+	local ent = self:GetOwner()
+
+	if ent:IsValid() then	
+		ent.pac_pose_params = nil
+		ent:ClearPoseParameters()
+	end
+end
+
+function PART:OnShow(ent)
+	self:UpdateParams()
 end
 
 pac.RegisterPart(PART)

@@ -1,7 +1,7 @@
 local L = pace.LanguageString
 
 concommand.Add("pac_wear_parts", function(ply, _, args)
-	pace.WearParts(args[1])
+	pace.WearParts(args[1], true)
 end)
 
 concommand.Add("pac_clear_parts", function()
