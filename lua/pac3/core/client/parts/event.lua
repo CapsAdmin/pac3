@@ -577,7 +577,7 @@ function PART:OnThink()
 				
 				parent:SetEventHide(b, self)
 				
-				self.event_triggered = not not b
+				self.event_triggered = b
 			end
 		end
 	end

@@ -83,7 +83,9 @@ function PART:PlaySound(ovol)
 end
 
 function PART:Think()	
-	if self:IsHidden() then return end
+	if self:IsHidden() then 
+		self:StopSound()
+	return end
 
 	local owner = self:GetOwner(true) 
 	
@@ -214,13 +216,7 @@ function PART:PlaySound(_, vol)
 	self.last_stream = stream
 end
 
-function PART:OnShow(from_event)	
-	if not from_event then return end
-
-	self:PlaySound()
-end
-
-function PART:OnHide(from_event)
+function PART:StopSound()
 	for key, stream in pairs(self.streams) do
 		if not stream:IsValid() then self.streams[key] = nil continue end
 			
@@ -232,6 +228,16 @@ function PART:OnHide(from_event)
 			end
 		end
 	end
+end
+
+function PART:OnShow(from_event)	
+	if not from_event then return end
+
+	self:PlaySound()
+end
+
+function PART:OnHide(from_event)
+	self:StopSound()
 end
 
 function PART:OnRemove()
