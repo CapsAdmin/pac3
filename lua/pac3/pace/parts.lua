@@ -1,8 +1,8 @@
 local L = pace.LanguageString
 
-function pace.WearParts(file)
+function pace.WearParts(file, clear)
 	if file then
-		pace.LoadParts(file, false)
+		pace.LoadParts(file, clear)
 	end
 
 	for key, part in pairs(pac.GetParts(true)) do
