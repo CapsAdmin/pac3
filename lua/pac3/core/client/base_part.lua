@@ -565,9 +565,11 @@ do -- serializing
 		end
 		
 		for key, value in pairs(tbl.children) do
-			local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
-			part:SetTable(value)
-			part:SetParent(self)
+			timer.Simple(math.random(), function()
+				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
+				part:SetTable(value)
+				part:SetParent(self)
+			end)
 		end
 	end
 	
