@@ -178,22 +178,24 @@ do -- menu
 				
 				tbl.children = {}
 			pace.Clipboard = tbl
-		end)
+		end):SetImage(pace.MiscIcons.copy)
 	
 		menu:AddOption(L"paste", function()
 			if pace.Clipboard then
 				obj:SetTable(pace.Clipboard)
 			end
 			--pace.Clipboard = nil
-		end)
+		end):SetImage(pace.MiscIcons.paste)
 		
 		menu:AddOption(L"clone", function()
 			obj:Clone()
-		end)
+		end):SetImage(pace.MiscIcons.clone)		
 		
-		menu:AddOption(L"copy global id", function()
-			SetClipboardText("\""..obj.GlobalID.."\"")
-		end)
+		if not pace.IsInBasicMode() then
+			menu:AddOption(L"copy global id", function()
+				SetClipboardText("\""..obj.GlobalID.."\"")
+			end):SetImage(pace.MiscIcons.globalid)
+		end
 		
 		menu:AddOption(L"help", function()
 			pace.ShowHelp(obj.ClassName)
@@ -231,7 +233,7 @@ do -- menu
 			if not obj:HasParent() and obj.ClassName == "group" then
 				pac.RemovePartOnServer(obj:GetUniqueID(), false, true)
 			end
-		end)
+		end):SetImage(pace.MiscIcons.clear)
 
 		menu:Open()
 		menu:MakePopup()
