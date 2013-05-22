@@ -77,7 +77,7 @@ function pac.SetupENT(ENT, owner)
 		end
 	
 		part = pac.CreatePart(outfit.self.ClassName, owner)
-		part:SetTable(outfit)
+		part:SetTable(outfit, true)
 		
 		self.pac_outfits[outfit.self.UniqueID] = part
 
@@ -167,28 +167,30 @@ function pac.AddEntityClassListener(class, session, check_func, draw_dist)
 	local weapons = {}
 	local function weapon_think()
 		for _, ent in pairs(weapons) do
-			if ent.Owner and ent.Owner:IsValid() then
-				if not ent.AttachPACSession then
-					pac.SetupSWEP(ent)
-				end
-			
-				if ent.Owner:GetActiveWeapon() == ent then
-					if not ent.pac_deployed then
-						ent:AttachPACSession(session)
-						ent.pac_deployed = true			
+			if ent:IsValid() then
+				if ent.Owner and ent.Owner:IsValid() then
+					if not ent.AttachPACSession then
+						pac.SetupSWEP(ent)
 					end
-					
-					ent.pac_last_owner = ent.Owner
-				else
+				
+					if ent.Owner:GetActiveWeapon() == ent then
+						if not ent.pac_deployed then
+							ent:AttachPACSession(session)
+							ent.pac_deployed = true			
+						end
+						
+						ent.pac_last_owner = ent.Owner
+					else
+						if ent.pac_deployed then
+							ent:RemovePACSession(session)
+							ent.pac_deployed = false
+						end
+					end
+				elseif (ent.pac_last_owner or NULL):IsValid() and not ent.pac_last_owner:Alive() then
 					if ent.pac_deployed then
 						ent:RemovePACSession(session)
 						ent.pac_deployed = false
 					end
-				end
-			elseif (ent.pac_last_owner or NULL):IsValid() and not ent.pac_last_owner:Alive() then
-				if ent.pac_deployed then
-					ent:RemovePACSession(session)
-					ent.pac_deployed = false
 				end
 			end
 		end
