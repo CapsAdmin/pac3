@@ -196,9 +196,7 @@ do -- get set and editor vars
 		end
 	end
 	
-	function pac.SetupPartName(PART, key)
-		insert_key(key)
-		
+	function pac.SetupPartName(PART, key)		
 		PART.PartNameResolvers = PART.PartNameResolvers or {}
 		
 		local part_key = key
@@ -227,8 +225,8 @@ do -- get set and editor vars
 			end
 		end		
 				
-		PART["Resolve" .. name_key] = function(self)
-			PART.PartNameResolvers[part_key](self)
+		PART["Resolve" .. name_key] = function(self, force)
+			PART.PartNameResolvers[part_key](self, force)
 		end
 		
 		PART.PartNameResolvers[part_key] = function(self, force)
@@ -237,11 +235,14 @@ do -- get set and editor vars
 	
 			if 
 				force or 
-				(self[uid_key] == "" and (self[name_find_count_key] or 0) < 3) or
-				self[uid_key] and 
-				(self[uid_key] ~= self[last_uid_key] or self[name_key] ~= self[last_name_key]) and
-				(not self[part_key]:IsValid() or self[try_key])
+				
+				-- this is for old outfits that used names as refference
+				(self[uid_key] == "" and self[name_key] ~= "" and (self[name_find_count_key] or 0) < 3) or
+				
+				self[uid_key] ~= "" and (not self[part_key]:IsValid() or self[try_key])
 			then
+			
+				print(self, self[name_key])
 				for key, part in pairs(pac.GetParts()) do
 					if 
 						part ~= self and 
