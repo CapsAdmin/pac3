@@ -536,9 +536,9 @@ do -- serializing
 
 	function PART:Clear()
 		self:RemoveChildren()
-	end
+	end	
 	
-	function PART:SetTable(tbl)
+	function PART:SetTable(tbl, instant)
 		self.supress_part_name_find = true
 		self.delayed_variables = self.delayed_variables or {}
 		
@@ -565,11 +565,17 @@ do -- serializing
 		end
 		
 		for key, value in pairs(tbl.children) do
-			timer.Simple(math.random(), function()
+			local function create()
 				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
 				part:SetTable(value)
 				part:SetParent(self)
-			end)
+			end
+			
+			if instant then
+				create()
+			else
+				timer.Simple(math.random(), create)
+			end
 		end
 	end
 	
