@@ -22,7 +22,17 @@ function pace.OnMenuBarPopulate(bar)
 			clear.GetDeleteSelf = function() return false end
 			clear:AddOption(L"OK", function() pace.ClearParts() end):SetImage(pace.MiscIcons.clear)
 		menu:AddSpacer()
-			menu:AddOption(L"help", function() pace.ShowWiki() end):SetImage(pace.MiscIcons.help)
+			
+			local help, pnl = menu:AddSubMenu(L"help", function() pace.ShowWiki() end)
+			help.GetDeleteSelf = function() return false end
+			pnl:SetImage(pace.MiscIcons.help)
+			
+			help:AddOption(
+				L"Getting Started", 
+				function() pace.ShowWiki(pace.WikiURL .. "Beginners-FAQ") end
+			):SetImage(pace.MiscIcons.help)
+				
+				
 			menu:AddOption(L"exit", function() pace.CloseEditor() end):SetImage(pace.MiscIcons.exit)
 	
 	local menu = bar:AddMenu(L"view")
