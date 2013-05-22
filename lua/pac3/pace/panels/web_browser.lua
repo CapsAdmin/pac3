@@ -192,7 +192,7 @@ function pace.ShowWiki(url)
 	end
 	
 	local pnl = pace.CreatePanel("web_browser")
-	pnl:OpenURL(url or "http://pac.educatewiki.com/wiki/Getting_Started")
+	pnl:OpenURL(url or pace.WikiURL)
 	pnl:SetSize(ScrW()*0.9, ScrH()*0.8)
 	pnl:Center()
 	pnl:MakePopup()
