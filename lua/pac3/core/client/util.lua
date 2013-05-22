@@ -241,8 +241,6 @@ do -- get set and editor vars
 				
 				self[uid_key] ~= "" and (not self[part_key]:IsValid() or self[try_key])
 			then
-			
-				print(self, self[name_key])
 				for key, part in pairs(pac.GetParts()) do
 					if 
 						part ~= self and 
