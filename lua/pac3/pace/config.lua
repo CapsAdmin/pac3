@@ -1,4 +1,8 @@
 pace.MiscIcons = {
+	copy = "icon16/page_white_text.png",
+	globalid = "icon16/vcard.png",
+	paste = "icon16/paste_plain.png",
+	clone = "icon16/page_copy.png",
 	new = "icon16/add.png",
 	autoload = "icon16/transmit_go.png",
 	url = "icon16/server_go.png",
