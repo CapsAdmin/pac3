@@ -122,7 +122,7 @@ function PART:Shoot(pos, ang)
 				end
 			
 				if not self:GetOwner(true):IsValid() then
-					ent.projectile_part:Remove()
+					timer.Simple(0, function() SafeRemoveEntity(self) end)
 				end
 			
 				if self.AimDir then 
