@@ -6,12 +6,9 @@ pac.Errors = {}
 include("pac3/core/shared/init.lua")
 
 include("util.lua")
-include("bans.lua")
+
 include("effects.lua")
-include("wear.lua")
 include("event.lua")
-include("contraption.lua")
-include("spawnmenu.lua")
 
 -- should this be here?
 
