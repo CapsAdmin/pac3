@@ -49,6 +49,7 @@ pace.PartIcons =
 	shake = "icon16/transmit.png",
 	ogg = "icon16/music.png",
 	script = "icon16/page_white_gear.png",
+	info = "icon16/help.png",
 }
 
 pace.PropertyOrder =

@@ -9,11 +9,6 @@ include("util.lua")
 
 include("effects.lua")
 include("event.lua")
-
--- should this be here?
-
-concommand.Add("pac_in_editor", function(ply, _, args)
-	ply:SetNWBool("in pac3 editor", tonumber(args[1]) == 1)
-end)
+include("map.lua")
 
 CreateConVar("has_pac3", "1", {FCVAR_NOTIFY})
