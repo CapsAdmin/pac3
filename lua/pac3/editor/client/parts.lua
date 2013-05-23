@@ -50,8 +50,8 @@ function pace.OnCreatePart(class_name, name, desc, mdl)
 	pace.Call("PartSelected", part)
 	
 	part.newly_created = true
-	
-	if part:GetRootPart().OwnerName == "world" and part:GetPlayerOwner() == ply then
+		
+	if not part.NonPhysical and parent:IsValid() and not parent:HasParent() and parent.OwnerName == "world" and part:GetPlayerOwner() == ply then
 		local data = ply:GetEyeTrace()
 		
 		if data.HitPos:Distance(ply:GetPos()) < 1000 then
