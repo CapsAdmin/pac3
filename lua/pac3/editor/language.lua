@@ -18,7 +18,7 @@ function pace.AddLanguagesToMenu(menu)
 		pace.SetLanguage("english")
 	end)
 	
-	for key, val in pairs(file.Find("pac3/pace/translations/*", "LUA")) do
+	for key, val in pairs(file.Find("pac3/editor/translations/*", "LUA")) do
 		val = val:gsub("%.lua", "")
 		menu:AddOption(val, function()
 			pace.SetLanguage(val)
@@ -46,7 +46,7 @@ function pace.SetLanguage(lang)
 	pace.CurrentTranslation = {}
 	
 	if lang ~= "english" then
-		table.Merge(pace.CurrentTranslation, CompileFile("pac3/pace/translations/"..lang..".lua")())
+		table.Merge(pace.CurrentTranslation, CompileFile("pac3/editor/translations/"..lang..".lua")())
 	end
 	
 	if pace.Editor and pace.Editor:IsValid() then

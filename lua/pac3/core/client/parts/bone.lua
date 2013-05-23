@@ -80,15 +80,15 @@ function PART:OnBuildBonePositions()
 		
 		if self.Modify then
 			if self.RotateOrigin then
-				owner:ManipulateBonePosition(self.BoneIndex, owner:GetManipulateBonePosition(self.BoneIndex) + self.Position)
-				owner:ManipulateBoneAngles(self.BoneIndex, owner:GetManipulateBoneAngles(self.BoneIndex) + ang)
+				owner:ManipulateBonePosition(self.BoneIndex, owner:GetManipulateBonePosition(self.BoneIndex) + self.Position + self.PositionOffset)
+				owner:ManipulateBoneAngles(self.BoneIndex, owner:GetManipulateBoneAngles(self.BoneIndex) + ang + self.AngleOffset)
 			else
-				owner:ManipulateBoneAngles(self.BoneIndex, owner:GetManipulateBoneAngles(self.BoneIndex) + ang)
-				owner:ManipulateBonePosition(self.BoneIndex, owner:GetManipulateBonePosition(self.BoneIndex) + self.Position)
+				owner:ManipulateBoneAngles(self.BoneIndex, owner:GetManipulateBoneAngles(self.BoneIndex) + ang + self.AngleOffset)
+				owner:ManipulateBonePosition(self.BoneIndex, owner:GetManipulateBonePosition(self.BoneIndex) + self.Position + self.PositionOffset)
 			end
 		else
-			owner:ManipulateBoneAngles(self.BoneIndex, ang) -- this should be world
-			owner:ManipulateBonePosition(self.BoneIndex, self.Position) -- this should be world
+			owner:ManipulateBoneAngles(self.BoneIndex, ang + self.AngleOffset) -- this should be world
+			owner:ManipulateBonePosition(self.BoneIndex, self.Position + self.PositionOffset) -- this should be world
 		end
 	end
 	
