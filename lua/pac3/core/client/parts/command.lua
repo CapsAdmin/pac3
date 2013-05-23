@@ -16,6 +16,11 @@ function PART:OnShow()
 	self:Execute()
 end
 
+function PART:SetUseLua(b)
+	self.UseLua = b
+	self:SetString(self:GetString())
+end
+
 function PART:SetString(str)
 	if self.UseLua and self:GetPlayerOwner() == pac.LocalPlayer then
 		self.func = CompileString(str, "pac_event")
