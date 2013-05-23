@@ -19,6 +19,7 @@ net.Receive("pac_to_contraption", function(len, ply)
 			ent:SetSkin(val.skn)
 			ent:SetMaterial(val.mat)
 			ent:Spawn()
+			ent:SetHealth(9999999) -- how do i make it unbreakable?
 			
 			if ent.CPPISetOwner then
 				ent:CPPISetOwner(ply)
