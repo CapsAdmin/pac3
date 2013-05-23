@@ -60,19 +60,13 @@ include("bones.lua")
 include("hooks.lua")
 include("drawing.lua")
 
-include("owner.lua")
+include("owner_name.lua")
 
-include("online.lua")
-include("wear.lua")
-include("contraption.lua")
 include("expression.lua")
 include("integration_tools.lua")
 include("mat_proxies.lua")
-include("wire_expression_extension.lua")
 
 pac.LoadParts()
-
-include("pac2_compat.lua")
 
 function pac.Restart()
 	if pac then pac.Panic() end
@@ -115,19 +109,10 @@ function pac.Enable()
 		pac.AddHook(event, func)
 	end
 	
-	for _, func in pairs(pac.submit_queue) do
-		func()
-	end
-	
-	pac.submit_queue = {}
+	pac.CallHook("Enable")
 end
 
 function pac.Disable()
-	-- close the editor
-	if pace then
-		pace.CloseEditor()
-	end
-
 	-- turn off all parts
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
@@ -151,6 +136,8 @@ function pac.Disable()
 	for event in pairs(pac.AddedHooks) do
 		pac.RemoveHook(event)
 	end
+	
+	pac.CallHook("Disable")
 end
 
 if GetConVarNumber("pac_enable") == 0 then

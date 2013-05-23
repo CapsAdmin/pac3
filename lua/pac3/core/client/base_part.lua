@@ -1,4 +1,3 @@
-setfenv(1, _G)
 local PART = {}
 
 PART.ClassName = "base"
