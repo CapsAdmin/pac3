@@ -1,5 +1,5 @@
 if SERVER then		
-	AddCSLuaFile("autorun/pac_init.lua")
+	AddCSLuaFile()
 		
 	local function add_files(dir)
 		local files, folders = file.Find(dir .. "*", "LUA")

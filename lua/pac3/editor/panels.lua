@@ -23,12 +23,12 @@ function pace.RegisterPanels()
 	local files 
 	
 	if file.FindInLua then
-		files = file.FindInLua("pac3/pace/panels/*.lua")
+		files = file.FindInLua("pac3/editor/panels/*.lua")
 	else
-		files = file.Find("pac3/pace/panels/*.lua", "LUA")
+		files = file.Find("pac3/editor/panels/*.lua", "LUA")
 	end
 	
 	for _, name in pairs(files) do
-		include("pac3/pace/panels/" .. name)
+		include("pac3/editor/panels/" .. name)
 	end
 end

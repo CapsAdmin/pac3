@@ -10,13 +10,19 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Arguments", "")
 	pac.GetSet(PART, "Invert", false)
 	pac.GetSet(PART, "RootOwner", true)
+	pac.GetSet(PART, "AffectChildrenOnly", false)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
 	local str = self:GetEvent()
 	
 	if self:GetArguments() ~= "" then
-		str = str .. " " .. self:GetOperator() .. " \"".. self:GetArguments():gsub(";", " or ") .. "\""
+		local args = self:GetArguments():gsub(";", " or ")
+		
+		if not tonumber(args) then
+			args = [["]] .. args .. [["]]
+		end
+		str = str .. " " .. self:GetOperator() .. args
 	end
 	
 	return pac.PrettifyName(str)
@@ -38,6 +44,20 @@ end
 
 PART.Events = 
 {	
+	timerx = 
+	{
+		arguments = {{seconds = "number"}, {reset_on_hide = "boolean"}, {synced_time = "boolean"}},
+		
+		callback = function(self, ent, seconds, reset_on_hide, synced_time)	
+			local time = (synced_time and CurTime() or RealTime())
+			
+			self.time = self.time or time
+			self.timerx_reset = reset_on_hide
+			
+			return self:NumberOperator(time - self.time, seconds)
+		end,
+	},
+
 	fov = 
 	{
 		arguments = {{fov = "number"}},
@@ -92,41 +112,6 @@ PART.Events =
 			ent = try_viewmodel(ent)
 			return ent.Crouching and ent:Crouching()
 		end,
-	},
-	
-	advanced_timer = 
-	{
-		arguments = {{delay = "number"}, {repeat_times = "number"}},
-		callback = function(self, ent, delay, repeat_times)
-			if self.timer_finished then return end
-			
-			delay = delay or 1
-			repeat_times = repeat_times or 1
-		
-			self.timer_repeats = self.timer_repeats or 1
-			self.timer_time = self.timer_time or os.clock()
-						
-			if (os.clock() - self.timer_time) > delay then
-					
-				if repeat_times == 0 then
-					return true
-				elseif self.timer_repeats < repeat_times then
-					self.timer_time = os.clock()
-					self.timer_repeats = self.timer_repeats + 1
-					return true
-				end
-								
-				if repeat_times == self.timer_repeats then
-					self.timer_finished = true
-					self.timer_repeats = 0
-					return false
-				end
-				
-				return true
-			end
-			
-			return false
-		end,		
 	},
 
 	owner_health =
@@ -552,6 +537,23 @@ PART.Events =
 	},
 }
 
+local function should_hide(self, ent, data)
+	-- this should be the only case where we need this since IsHidden is modified to obey events
+	local b
+	
+	if self.Hide or self.EventHide then --self:IsHidden() then
+		b = self.Invert
+	else
+		b = data.callback(self, ent, self:GetParsedArguments(data.arguments)) or false
+		
+		if self.Invert then 
+			b = not b 
+		end
+	end
+	
+	return b
+end
+
 
 function PART:OnThink()
 	local ent = self:GetOwner(self.RootOwner)
@@ -560,24 +562,27 @@ function PART:OnThink()
 		local data = self.Events[self.Event]
 		
 		if data then
-			local parent = self:GetParent()
-			if parent:IsValid() then
-				-- this should be the only case where we need this since IsHidden is modified to obey events
-				local b
+			
+			if self.AffectChildrenOnly then
+				local b = should_hide(self, ent, data)
 				
-				if self.Hide or self.EventHide then --self:IsHidden() then
-					b = self.Invert
-				else
-					b = data.callback(self, ent, self:GetParsedArguments(data.arguments)) or false
-					
-					if self.Invert then 
-						b = not b 
-					end
+				for _, child in pairs(self:GetChildren()) do
+					child:SetEventHide(b, self)
 				end
 				
-				parent:SetEventHide(b, self)
-				
+				-- this is just used for the editor..
 				self.event_triggered = b
+			else
+				local parent = self:GetParent()
+				
+				if parent:IsValid() then
+					local b = should_hide(self, ent, data)
+					
+					parent:SetEventHide(b, self)
+					
+					-- this is just used for the editor..
+					self.event_triggered = b
+				end
 			end
 		end
 	end
@@ -712,6 +717,10 @@ function PART:NumberOperator(a, b)
 end
 
 function PART:OnHide(from_event)
+	if self.timerx_reset then
+		self.time = nil
+	end
+
 	if self.Event == "weapon_class" then
 		local ent = self:GetOwner()
 		if ent:IsValid() then
@@ -726,7 +735,6 @@ function PART:OnHide(from_event)
 end
 
 function PART:OnShow()
-	self.timer_finished = false
 end
 
 pac.RegisterPart(PART)

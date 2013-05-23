@@ -1,5 +1,5 @@
 if SERVER then		
-	AddCSLuaFile("autorun/pace_init.lua")
+	AddCSLuaFile()
 			
 	local function add_files(dir)
 		local files, folders = file.Find(dir .. "*", "LUA")
@@ -13,9 +13,9 @@ if SERVER then
 		end
 	end
 	
-	add_files("pac3/pace/")
+	add_files("pac3/editor/")
 end
 
 if CLIENT then
-	include("pac3/pace/init.lua")
+	include("pac3/editor/init.lua")
 end
