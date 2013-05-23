@@ -4,4 +4,3 @@ instead of using hide to trigger stuff, have an on trigger function instead
 have a high level clientside api for changing parts from lua
 
 serversde draw distnace
-make it so () isn't needed in expression

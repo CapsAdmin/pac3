@@ -82,7 +82,7 @@ function pac.Restart()
 	pace = {}
 	
 	include("autorun/pac_init.lua")
-	include("autorun/pace_init.lua")
+	include("autorun/pac_editor_init.lua")
 
 	if was_open then 
 		pace.OpenEditor() 

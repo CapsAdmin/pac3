@@ -250,7 +250,8 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 				radius = radius * 4
 			end
 				
-			if 				
+			if 		
+				ent.IsPACWorldEntity or
 				(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer()) or
 				
 				ent ~= pac.LocalPlayer and 
