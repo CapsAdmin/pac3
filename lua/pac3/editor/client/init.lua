@@ -25,6 +25,7 @@ include("screenvec.lua")
 
 include("panels.lua")
 include("tools.lua")
+include("contraption.lua")
 include("spawnmenu.lua")
 include("wiki.lua")
 include("examples.lua")

@@ -68,7 +68,6 @@ pace.AddTool(L"show only with active weapon", function(part, suboption)
 
 	local class_name = owner:GetActiveWeapon():GetClass()
 
-	event:SetName(class_name .. " ws")
 	event:SetEvent("weapon_class")
 	event:SetOperator("equal")
 	event:SetInvert(true)
@@ -79,7 +78,7 @@ pace.AddTool(L"show only with active weapon", function(part, suboption)
 end, L"hide weapon", L"show weapon")
 
 pace.AddTool(L"spawn as props", function(part)
-	local data = pac.PartToContraptionData(part)
+	local data = pace.PartToContraptionData(part)
 	net.Start("pac_to_contraption")
 		net.WriteTable(data)
 	net.SendToServer()
