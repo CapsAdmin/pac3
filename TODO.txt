@@ -4,3 +4,9 @@ make a script part that will be proxies and events in one
 instead of using hide to trigger stuff, have an on trigger function instead
 have a high level clientside api for changing parts from lua
 rename pace folder to editor
+
+fix position and angle offset for bones
+
+time event that starts from 0 when shown
+
+serversde draw distnace
