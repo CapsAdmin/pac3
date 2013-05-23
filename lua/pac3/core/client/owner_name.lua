@@ -4,6 +4,7 @@ pac.OwnerNames =
 	"viewmodel",
 	"active vehicle",
 	"active weapon",
+	"world",
 }
 
 local function find_ent(ent, str)
@@ -38,8 +39,13 @@ function pac.CalcEntityCRC(ent)
 	return util.CRC(crc)
 end
 
+SafeRemoveEntity(pac.WorldEntity)
+
+pac.WorldEntity = NULL
+
 function pac.HandleOwnerName(owner, name, ent, part, check_func)
 	local idx = tonumber(name)
+	
 	if idx then
 		local ent = Entity(idx)
 		
@@ -61,6 +67,23 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 			return ent
 		end		
 		return NULL
+	end
+	
+	if name == "world" or (pac.WorldEntity:IsValid() and ent == pac.WorldEntity) then
+		if not pac.WorldEntity:IsValid() then
+			local ent = pac.CreateEntity("error.mdl")
+			
+			ent:SetPos(Vector(0,0,0))
+			
+			-- go away ugh
+			ent:SetModelScale(0,0)
+			
+			ent.IsPACWorldEntity = true
+			
+			pac.WorldEntity = ent
+		end
+	
+		return pac.WorldEntity
 	end
 
 	if name == "self" then
