@@ -49,7 +49,7 @@ function PART:AttachToEntity(ent)
 	part.show_in_editor = false
 	part.CheckOwner = function() end
 	part:SetPlayerOwner(self:GetPlayerOwner())
-	part:SetTable(tbl)
+	part:SetTable(tbl, true)
 	part:SetHide(false)
 	part:RemoveOnNULLOwner(true)
 	
@@ -117,6 +117,14 @@ function PART:Shoot(pos, ang)
 			end
 			
 			ent.RenderOverride = function() 
+				if not self:IsValid() then
+					return 
+				end
+			
+				if not self:GetOwner(true):IsValid() then
+					ent.projectile_part:Remove()
+				end
+			
 				if self.AimDir then 
 					ent:SetRenderAngles(ent:GetVelocity():Angle()) 
 				end 
