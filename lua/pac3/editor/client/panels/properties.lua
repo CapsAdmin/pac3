@@ -1532,3 +1532,40 @@ do -- holdtype
 	
 	pace.RegisterPanel(PANEL)
 end
+
+do -- script
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_code"
+	PANEL.Base = "pace_properties_base_type"
+		
+	function PANEL:SpecialCallback()	
+		pace.SafeRemoveSpecialPanel()
+		 
+		local frame = vgui.Create("DFrame")
+		frame:SetTitle(L"script")
+		SHOW_SPECIAL(frame, self, 512)
+		frame:SetSizable(true)
+
+		local editor = vgui.Create("pace_luapad", frame)
+		editor:Dock(FILL)
+
+		editor:SetText(pace.current_part:GetCode())		
+		editor.OnTextChanged = function(self)
+			pace.current_part:SetCode(self:GetValue())
+		end
+		
+		function editor:Think()
+			if pace.current_part.Error then
+				frame:SetTitle(pace.current_part.Error)
+			else
+				frame:SetTitle(L"script")
+			end
+			
+		end
+		
+		pace.ActiveSpecialPanel = frame
+	end
+	
+	pace.RegisterPanel(PANEL)
+end

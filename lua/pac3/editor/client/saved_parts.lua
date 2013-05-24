@@ -156,7 +156,8 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 				pac.RemoveAllParts(true, true)
 			end
 			
-			data = pace.FixParts(data)
+			data = pace.FixBadGrouping(data)
+			data = pace.FixUniqueIDs(data)
 		
 			for key, tbl in pairs(data) do
 				local part = pac.CreatePart(tbl.self.ClassName)
@@ -366,9 +367,39 @@ function pace.AddSaveMenuToMenu(menu, override_part)
 	populate_parts(menu, tbl, nil, override_part)
 end
 
+-- this fixes parts that are using the same uniqueid as other parts because of some bugs in older versions
+function pace.FixUniqueIDs(data)
+	local ids = {}
+	
+	local function iterate(part)
+		ids[part.self.UniqueID] = ids[part.self.UniqueID] or {}
+		
+		table.insert(ids[part.self.UniqueID], part)
+		
+		for key, part in pairs(part.children) do
+			iterate(part)
+		end
+	end
+	
+	for key, part in pairs(data) do
+		iterate(part)
+	end
+	
+	for key, val in pairs(ids) do
+		if #val > 1 then
+			for key, part in pairs(val) do
+				pac.dprint("Part (%s using model %s) named %q has %i other parts with the same unique id. Fixing!", part.self.ClassName, part.self.Name, part.self.Model or "", #val)
+				part.self.UniqueID = util.CRC(key .. tostring(part) .. SysTime())
+			end
+		end
+	end
+	
+	return data
+end
+
 -- this is for fixing parts that are not in a group
 
-function pace.FixParts(data)
+function pace.FixBadGrouping(data)
 	local parts = {}
 	local other = {}
 	

@@ -326,6 +326,10 @@ function pace.TranslatePropertiesKey(key, obj)
 		return "poseparameter"
 	end
 	
+	if key == "code" then
+		return "code"
+	end
+	
 	if key == "material" or key == "spritepath" or key == "trailpath" then
 		return "material"
 	end

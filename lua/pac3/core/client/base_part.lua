@@ -558,7 +558,6 @@ do -- serializing
 					self["Set" .. key](self, value)
 				end
 			elseif key ~= "ClassName" then
-				--self[key] = value
 				pac.dprint("settable: unhandled key [%q] = %q", key, tostring(val))
 			end
 		end
@@ -579,7 +578,8 @@ do -- serializing
 	end
 	
 	local function COPY(var, key, make_copy_name) 								
-		if make_copy_name and (var and (key == "UniqueID" or key:sub(-3) == "UID") and var ~= "") then
+		
+		if make_copy_name and var and var ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
 			return util.CRC(var .. var)
 		end
 
@@ -596,17 +596,7 @@ do -- serializing
 				continue
 			end
 				
-			if key == "Name" and self.Name == "" then
-				var = ""
-			end
-			
 			tbl.self[key] = var
-
-			if make_copy_name and (key == "Name" or key == "AimPartName"  or key == "FollowPartName" or (key == "ParentName" and is_child)) then
-				if tbl.self[key] ~= "" then
-					tbl.self[key] = tbl.self[key] .. " copy"
-				end
-			end
 		end
 
 		for _, part in pairs(self.Children) do
@@ -629,7 +619,7 @@ do -- serializing
 	function PART:Clone()
 		local part = pac.CreatePart(self.ClassName)
 		if not part then return end
-		part:SetTable(self:ToTable(true))
+		part:SetTable(self:ToTable(true), true)
 		
 		part.ParentUID = self.ParentUID
 		part.ParentName = self.ParentName
