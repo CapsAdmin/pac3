@@ -245,14 +245,7 @@ do -- get set and editor vars
 	
 			if self[uid_key] == "" and self[name_key] == "" then return end 
 	
-			if 
-				force or 
-				
-				-- this is for old outfits that used names as refference
-				(self[uid_key] == "" and self[name_key] ~= "" and (self[name_find_count_key] or 0) < 3) or
-				
-				self[uid_key] ~= "" and (not self[part_key]:IsValid() or self[try_key])
-			then
+			if force or self[try_key] or self[uid_key] ~= "" and not self[part_key]:IsValid() then
 				for key, part in pairs(pac.GetParts()) do
 					if 
 						part ~= self and 
@@ -266,24 +259,7 @@ do -- get set and editor vars
 					
 					self[last_uid_key] = self[uid_key] 
 				end
-
-				if not self.supress_part_name_find then					
-					for key, part in pairs(pac.GetParts()) do
-						if 
-							part ~= self and 
-							self[part_key] ~= part and 
-							part:GetPlayerOwner() == self:GetPlayerOwner() and 
-							self[name_key] == part.Name
-						then
-							self[name_set_key](self, part)
-							break
-						end
-					end
-					
-					self[last_name_key] = self[name_key] 
-					self[name_find_count_key] = (self[name_find_count_key] or 0) + 1
-				end
-								
+				
 				self[try_key] = false
 			end
 		end
