@@ -7,7 +7,7 @@ pace.OnRedo = pace.Redo
 local last = {}
 
 function pace.CallChangeForUndo(part, key, val, delay)
-	if pace.SuppressUndo then return end
+	if pace.SuppressUndo or key == "Parent" then return end
 	
 	if last.part == part and last.key == key and (last.val == val or last.delay > RealTime()) then return end
 	last.key = key

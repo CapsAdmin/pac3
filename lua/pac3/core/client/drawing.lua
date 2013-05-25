@@ -188,11 +188,6 @@ function pac.RenderScene(pos, ang)
 end
 pac.AddHook("RenderScene")
 
-local draw_dist
-local radius
-
-local dst
-
 -- hacky optimization
 -- allows only the last draw call
 local cvar_framesuppress = CreateClientConVar("pac_suppress_frames", "1")
@@ -224,6 +219,11 @@ local function setup_suppress()
 end
 -- hacky optimization
 
+local draw_dist = 0
+local sv_draw_dist = 0
+local radius = 0
+local dst = 0
+
 local should_suppress = setup_suppress()
 function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)			
 	if should_suppress() then return end
@@ -234,6 +234,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 	pac.FrameNumber = FrameNumber()
 
 	draw_dist = cvar_distance:GetInt()
+	sv_draw_dist = GetConVarNumber("pac_sv_draw_distance")
 	radius = 0
 	
 	for key, ent in pairs(pac.drawn_entities) do
@@ -256,10 +257,12 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 				
 				ent ~= pac.LocalPlayer and 
 				(					
-					util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 and 
-					(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance < dst)) or
-					(draw_dist <= 0 or dst < draw_dist) or
-					(dst < radius or dst < 200)
+					(util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 or (dst < radius * 1.25)) and 
+					(
+						(sv_draw_dist ~= 0 and (sv_draw_dist == -1 or dst < sv_draw_dist)) or
+						(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance < dst)) or
+						(draw_dist <= 0 or dst < draw_dist)
+					)
 				)
 			then
 				if ent.pac_parts and ent.pac_drawing == false then

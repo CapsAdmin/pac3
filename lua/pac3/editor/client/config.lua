@@ -15,6 +15,8 @@ pace.MiscIcons = {
 	exit = "icon16/cancel.png",
 	wear = "icon16/transmit.png",
 	help = "icon16/information.png",
+	edit = "icon16/table_edit.png",
+	revert = "icon16/table_delete.png",
 }
 pace.PartIcons =
 {
