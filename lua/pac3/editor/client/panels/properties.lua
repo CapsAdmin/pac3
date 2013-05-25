@@ -1555,13 +1555,46 @@ do -- script
 			pace.current_part:SetCode(self:GetValue())
 		end
 		
+		editor.last_error = ""
+		
+		function editor:CheckGlobal(str) 
+			local part = pace.current_part
+			
+			if not part:IsValid() then frame:Remove() return end
+						
+			return part:ShouldHighlight(str)
+		end
+		
 		function editor:Think()
-			if pace.current_part.Error then
-				frame:SetTitle(pace.current_part.Error)
-			else
-				frame:SetTitle(L"script")
+			local part = pace.current_part
+			
+			if not part:IsValid() then frame:Remove() return end
+						
+			local title = L"script editor"
+					  
+			if part.Error then
+				title = part.Error
+			
+				local line = tonumber(title:match("SCRIPT_ENV:(%d-):"))
+				
+				if line then
+					title = title:match("SCRIPT_ENV:(.+)")
+					if self.last_error ~= title then			
+						editor:SetScrollPosition(line)							
+						editor:SetErrorLine(line)
+						self.last_error = title
+					end
+				end
+			else	
+				editor:SetErrorLine(nil)
+				
+				if part.script_printing then
+					title = part.script_printing
+					part.script_printing = nil
+				end
 			end
 			
+			frame:SetTitle(title)
 		end
 		
 		pace.ActiveSpecialPanel = frame
