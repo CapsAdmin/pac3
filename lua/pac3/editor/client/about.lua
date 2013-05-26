@@ -202,6 +202,7 @@ local A = function(str, size, ...) table.insert(credits, {str, size or type(str)
 
 local cast = {
 	"morshmellow",
+	"immortalyes",
 	"kilroy",
 	"white queen",
 	"dizrahk",
