@@ -579,7 +579,9 @@ end
 
 function PART:OnRemove()
 	if not self.OwnerEntity then
-		SafeRemoveEntity(self.Entity)
+		timer.Simple(0, function() 
+			SafeRemoveEntity(self.Entity)
+		end)
 	end
 end
 
