@@ -157,3 +157,5 @@ hook.Add("Think", "pac_localplayer", function()
 		hook.Remove("Think", "pac_localplayer")
 	end
 end)
+
+hook.Run("pac_Initialized")
