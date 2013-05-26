@@ -61,7 +61,7 @@ function pace.ShowLanguageEditor()
 			local menu = DermaMenu()
 			menu:SetPos(gui.MousePos())
 			menu:AddOption(L"edit", function()
-				Derma_StringRequest(
+				local window = Derma_StringRequest(
 					L"translate",
 					english,
 					other,
@@ -72,6 +72,15 @@ function pace.ShowLanguageEditor()
 						pace.SaveCurrentTranslation()
 					end
 				)
+				for _, pnl in pairs(window:GetChildren()) do
+					if pnl.ClassName == "DPanel" then
+						for key, pnl in pairs(pnl:GetChildren()) do
+							if pnl.ClassName == "DTextEntry" then
+								pnl:SetAllowNonAsciiCharacters(true)
+							end
+						end
+					end
+				end
 			end):SetImage(pace.MiscIcons.edit)
 			menu:AddOption(L"revert", function()
 				local new = CompileFile("pac3/editor/client/translations/"..lang..".lua")()[english]
@@ -104,7 +113,7 @@ end
 
 function pace.GetOutputForTranslation()
 	local str = ""
-	
+	 
 	for key, val in pairs(pace.KnownGUIStrings) do
 		str = str .. ("%s = %s\n"):format(key:gsub("(.)","_%1_"), val)
 	end
