@@ -31,9 +31,13 @@ function pace.OnMenuBarPopulate(bar)
 				L"Getting Started", 
 				function() pace.ShowWiki(pace.WikiURL .. "Beginners-FAQ") end
 			):SetImage(pace.MiscIcons.help)
-				
-				
-			menu:AddOption(L"exit", function() pace.CloseEditor() end):SetImage(pace.MiscIcons.exit)
+								
+			menu:AddOption(
+				L"about", 
+				function() pace.ShowAbout() end
+			):SetImage(pace.MiscIcons.about)
+								
+		menu:AddOption(L"exit", function() pace.CloseEditor() end):SetImage(pace.MiscIcons.exit)
 	
 	local menu = bar:AddMenu(L"view")
 		menu:AddOption(L"hide editor", function() pace.Call("ToggleFocus") chat.AddText("[pac3] \"ctrl + e\" to get the editor back") end)
