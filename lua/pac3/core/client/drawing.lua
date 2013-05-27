@@ -8,8 +8,14 @@ pac.RealTime = 0
 pac.FrameNumber = 0
 
 local sort = function(a, b)
-	if a and b and a.DrawOrder and b.DrawOrder then
-		return a.DrawOrder < b.DrawOrder
+	if a and b then 
+		if a.DrawOrder and b.DrawOrder then
+			return a.DrawOrder < b.DrawOrder
+		end
+		
+		if a.part and b.part and a.part.DrawOrder and b.part.DrawOrder then
+			return a.part.DrawOrder < b.part.DrawOrder
+		end
 	end
 end
 	
@@ -96,17 +102,14 @@ function pac.RenderOverride(ent, type, draw_only)
 		for key, part in pairs(ent.pac_parts) do
 			if part:IsValid() then		
 				if not part:HasParent() then
-					if not draw_only then think(part) end									
-					
-					if part.OwnerName == "viewmodel" then
-						if type ~= "viewmodel" then continue end
-						
-						local owner = part:GetOwner()
-						if owner:GetOwner() ~= pac.LocalPlayer then
-							continue
-						end
-					elseif type == "viewmodel" then continue end
-					
+					if not draw_only then 
+						think(part) 
+					end			
+
+					if part.OwnerName == "viewmodel" and type ~= "viewmodel" then
+						continue
+					end					
+
 					part:Draw("OnDraw", nil, nil, type)
 				end
 			else
@@ -151,6 +154,8 @@ function pac.RenderOverride(ent, type, draw_only)
 	render_ModelMaterialOverride()
 end
 
+pac.firstperson_parts = pac.firstperson_parts or {}
+
 function pac.HookEntityRender(ent, part)
 	if ent:IsValid() and part:IsValid() and not part:HasParent() then	
 		pac.dprint("hooking render on %s to draw part %s", tostring(ent), tostring(part))
@@ -167,13 +172,18 @@ function pac.HookEntityRender(ent, part)
 		
 			pac.drawn_entities[ent:EntIndex()] = ent
 			sortparts(ent.pac_parts)
+			
+			if part.ShowInFirstperson and part:GetOwner() == pac.LocalPlayer then
+				table.insert(pac.firstperson_parts, {ent = ent, part = part})
+				sortparts(pac.firstperson_parts)
+			end
 		end
 	end
 end
 
 function pac.UnhookEntityRender(ent)	
 	pac.drawn_entities[ent:EntIndex()] = nil
-
+	
 	ent.pac_parts = nil
 end
 
@@ -278,6 +288,17 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 			end
 		else	
 			pac.drawn_entities[key] = nil
+		end
+	end
+	
+	for key, data in pairs(pac.firstperson_parts) do
+		if data.part:IsValid() and data.ent:IsValid() and data.part.ShowInFirstperson then
+			if not data.ent:ShouldDrawLocalPlayer() then
+				pac.RenderOverride(data.ent, "opaque")
+			end
+		else
+			pac.firstperson_parts[key] = nil
+			sortparts(pac.firstperson_parts)
 		end
 	end
 	
