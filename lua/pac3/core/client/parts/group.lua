@@ -5,6 +5,7 @@ PART.NonPhysical = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Duplicate", false)
+	pac.GetSet(PART, "ShowInFirstperson", false)
 pac.EndStorableVars()
 
 function PART:Initialize()	
