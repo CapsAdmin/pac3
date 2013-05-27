@@ -1,5 +1,98 @@
 pace.example_outfits = {}
 --pace.example_outfits[""] = {}
+pace.example_outfits["custom spray"] = {[1] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+			},
+			["self"] = {
+				["ParentUID"] = "2898900871",
+				["UniqueID"] = "3375894473",
+				["Name"] = "bind i \"pac_event spray\"",
+				["Arguments"] = "spray@@0.1",
+				["ParentName"] = "group",
+				["ClassName"] = "event",
+				["RootOwner"] = false,
+				["Operator"] = "equal",
+				["GlobalID"] = "893763940",
+				["Event"] = "command",
+			},
+		},
+		[2] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ParentName"] = "platex",
+								["ClassName"] = "model",
+								["UniqueID"] = "2265985564",
+								["Model"] = "models\\props/CS_militia/tree_large_militia.mdl",
+								["Size"] = -0.15,
+								["ParentUID"] = "347482952",
+								["Name"] = "some tree",
+								["GlobalID"] = "3379293474",
+							},
+						},
+					},
+					["self"] = {
+						["ParentName"] = "jiggle",
+						["UniqueID"] = "347482952",
+						["Angles"] = Angle(0, 90, -90),
+						["ParentUID"] = "3014689230",
+						["EditorExpand"] = true,
+						["Name"] = "image",
+						["Scale"] = Vector(2.0299999713898, 2.3699998855591, 0.10000000149012),
+						["Alpha"] = 0.995,
+						["ClassName"] = "model",
+						["Size"] = 1.603,
+						["Bone"] = "",
+						["GlobalID"] = "2285036829",
+						["Fullbright"] = true,
+						["Model"] = "models/hunter/plates/plate1x1.mdl",
+						["Material"] = "http://1.bp.blogspot.com/-BtiTcfMnbBk/UIUdRNNgfFI/AAAAAAAAJ9M/ikUHkS7c98M/s1600/flowerframepinkwhite.png",
+					},
+				},
+			},
+			["self"] = {
+				["ParentName"] = "group",
+				["UniqueID"] = "3014689230",
+				["Speed"] = 0,
+				["Name"] = "jiggle",
+				["ClassName"] = "jiggle",
+				["ParentUID"] = "2898900871",
+				["EditorExpand"] = true,
+				["GlobalID"] = "1614317443",
+				["Bone"] = "hitpos",
+				["ResetOnHide"] = true,
+				["Description"] = "The reason it stays still is because speed is set to 0. When it's unhidden it resets back to  where it's supposed to be, the hitpos of the player",
+			},
+		},
+		[3] = {
+			["children"] = {
+			},
+			["self"] = {
+				["ParentName"] = "group",
+				["ClassName"] = "sound",
+				["UniqueID"] = "3516081266",
+				["ParentUID"] = "2898900871",
+				["GlobalID"] = "986270055",
+				["Name"] = "spray sound",
+				["Sound"] = "player/sprayer.wav",
+			},
+		},
+	},
+	["self"] = {
+		["EditorExpand"] = true,
+		["UniqueID"] = "2898900871",
+		["GlobalID"] = "2192964030",
+		["Name"] = "custom spray",
+		["ClassName"] = "group",
+	},
+}
+}
 pace.example_outfits["spinning parts"] = {[1] = {
 	["children"] = {
 		[1] = {
@@ -110,7 +203,7 @@ pace.example_outfits["spinning parts"] = {[1] = {
 		["UniqueID"] = "883707760",
 		["EditorExpand"] = true,
 	},
-},
+}
 }
 pace.example_outfits["boombox"] = {[1] = {
 	["children"] = {
