@@ -219,12 +219,14 @@ local cast = {
 	"techbot",
 	"sauer",
 	"sillytrenya",
+	"scud",
 }
 
 local koreans = {
 	"black tea",
 	"ssogal",
 	"girong",
+	"scud",
 	"명박오니●",
 	"rocketmania",
 	"maybe",
