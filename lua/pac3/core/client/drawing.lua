@@ -108,7 +108,11 @@ function pac.RenderOverride(ent, type, draw_only)
 
 					if part.OwnerName == "viewmodel" and type ~= "viewmodel" then
 						continue
-					end					
+					end
+					
+					if part.OwnerName ~= "viewmodel" and type == "viewmodel" then
+						continue
+					end
 
 					part:Draw("OnDraw", nil, nil, type)
 				end
