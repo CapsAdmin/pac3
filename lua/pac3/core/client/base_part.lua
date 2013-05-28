@@ -219,12 +219,18 @@ do -- owner
 
 	function PART:SetOwner(ent)
 		ent = ent or NULL
-				
+		
 		if ent:IsValid() then
+			local root = self:GetRootPart()
+		
+			if self.Owner ~= ent then
+				pac.UnhookEntityRender(self.Owner, root) 
+			end
+		
 			self.Owner = ent
-			pac.HookEntityRender(ent, self:GetRootPart()) 
+			pac.HookEntityRender(ent, root) 
 		else
-			pac.UnhookEntityRender(ent) 
+			pac.UnhookEntityRender(ent, self:GetRootPart()) 
 			self.Owner = ent
 		end
 	end
