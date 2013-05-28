@@ -97,11 +97,13 @@ pac.AddHook("pac_PlayerFootstep")
 function pac.OnEntityCreated(ent)
 	if ent and ent:IsValid() and ent:GetClass() == "class C_HL2MPRagdoll" then
 		for key, ply in pairs(player.GetAll()) do
-			if ply:GetRagdollEntity() == ent then
-				for _, part in pairs(ply.pac_parts) do
-					part:SetOwner(ent)
+			if ply.pac_parts then
+				if ply:GetRagdollEntity() == ent then
+					for _, part in pairs(ply.pac_parts) do
+						part:SetOwner(ent)
+					end
+					break
 				end
-				break
 			end
 		end
 	end
