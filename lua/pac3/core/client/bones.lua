@@ -153,13 +153,6 @@ function pac.GetBonePosAng(ent, id, parent)
 		ent = ent.pac_owner_override
 	end
 	
-	if ent:IsPlayer() and not ent:Alive() then
-		local rag = ent:GetRagdollEntity() or NULL
-		if rag:IsValid() then
-			ent = rag
-		end
-	end
-	
 	if id == "hitpos" or id == "hit position" then
 		if ent.pac_traceres then
 			return ent.pac_traceres.HitPos, ent.pac_traceres.HitNormal:Angle()

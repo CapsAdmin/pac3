@@ -185,10 +185,21 @@ function pac.HookEntityRender(ent, part)
 	end
 end
 
-function pac.UnhookEntityRender(ent)	
-	pac.drawn_entities[ent:EntIndex()] = nil
-	
-	ent.pac_parts = nil
+function pac.UnhookEntityRender(ent, part)	
+	if part then
+		if ent.pac_parts then
+			for k,v in pairs(ent.pac_parts) do
+				if v == part then
+					ent.pac_parts[k] = nil
+					sortparts(ent.pac_parts)
+				end
+			end
+		end
+	else
+		pac.drawn_entities[ent:EntIndex()] = nil
+		
+		ent.pac_parts = nil
+	end
 end
 
 
@@ -264,7 +275,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 			if not ent:IsPlayer() and not ent:IsNPC() then
 				radius = radius * 4
 			end
-				
+			
 			if 		
 				ent.IsPACWorldEntity or
 				(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer()) or
