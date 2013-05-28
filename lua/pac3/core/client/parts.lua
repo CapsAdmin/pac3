@@ -162,4 +162,23 @@ function pac.CallPartHook(name, ...)
 	end
 end
 
+function pac.GenerateNewUniqueID(part_data, base)
+	local part_data = table.Copy(part_data)
+	base = base or tostring(part_data)
+	
+	local function fixpart(part)
+		for key, val in pairs(part.self) do
+			if val ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
+				part.self[key] = util.CRC(base .. val)
+			end
+		end
+		
+		for key, part in pairs(part.children) do
+			fixpart(part)
+		end
+	end
+	
+	return part_data
+end
+
 include("base_part.lua")

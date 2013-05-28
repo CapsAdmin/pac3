@@ -50,7 +50,7 @@ function pac.SetupENT(ENT, owner)
 		return pac.NULL
 	end
 
-	function ENT:AttachPACPart(outfit, owner)
+	function ENT:AttachPACPart(outfit, owner, keep_uniqueid)
 	
 		if not outfit.self then 
 			return self:AttachPACSession(outfit, owner)
@@ -60,8 +60,12 @@ function pac.SetupENT(ENT, owner)
 			return
 		end
 	
+		if not keep_uniqueid then
+			outfit = pac.GenerateNewUniqueID(outfit, self:EntIndex())
+		end
+	
 		owner = owner or self.pac_owner or self.Owner
-		
+				
 		if self.pac_owner == "self" then
 			owner = self
 		elseif self[self.pac_owner] then
@@ -89,9 +93,13 @@ function pac.SetupENT(ENT, owner)
 		end
 	end
 
-	function ENT:RemovePACPart(outfit)
+	function ENT:RemovePACPart(outfit, keep_uniqueid)
 		if not outfit.self then 
 			return self:RemovePACSession(outfit)
+		end
+					
+		if not keep_uniqueid then
+			outfit = pac.GenerateNewUniqueID(outfit, self:EntIndex())
 		end
 	
 		self.pac_outfits = self.pac_outfits or {}
