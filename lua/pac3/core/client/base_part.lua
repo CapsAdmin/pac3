@@ -535,8 +535,8 @@ do -- serializing
 
 	function PART:Clear()
 		self:RemoveChildren()
-	end	
-	
+	end
+		
 	function PART:SetTable(tbl, instant)
 		self.supress_part_name_find = true
 		self.delayed_variables = self.delayed_variables or {}
