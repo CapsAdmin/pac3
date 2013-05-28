@@ -128,40 +128,44 @@ function DEMO:OnStart(w, h)
 
 	self.max_size = 16
 
-	self.count = 2000
-	self.gravity = Vector(0, -0.5)
+	self.max_particles = 2000
 	self.particles = {}
-	
-	local base =  math.random(360)
-
-	for i=1, self.count do
-		local siz = math.Rand(0.5,self.max_size)
-		self.particles[i] =
-		{
-			pos = {x = w/2, y = h/2},
-			vel = {x = 0, y = 0},
-			siz = siz,
-			clr = HSVToColor(math.Rand(0, 60) + base, 1, 1),
-			drag = 0.99 - (siz/150) ^ 1.1,
-			tex_id1 = table.Random(lines),
-			tex_id2 = table.Random(sprites),
-			random = math.Rand(-1,1),
-		}
-
-	end
+	self.base_color =  math.random(360)
 end
 
-function DEMO:PreUpdate(w, h, t, delta)		
+function DEMO:CreateParticle(x, y, vx, vy, life, on_death)
+	life = life or math.Rand(0.25, 2)
+	
+
+	local siz = math.Rand(0.5,self.max_size)
+	table.insert(
+		self.particles,
+		{
+			pos = {x = x, y = y},
+			vel = {x = vx, y = vy},
+			siz = siz,
+			clr = HSVToColor(math.Rand(0, 60) + self.base_color, 1, 1),
+			drag = 0.99 - (siz/150) ^ 3,
+			tex_id1 = table.Random(lines),
+			tex_id2 = table.Random(sprites),
+			on_death = on_death,
+			life = self.time + life,
+			random = math.Rand(-1,1),
+		}
+	)
+end
+
+function DEMO:PreUpdate(w, h, t, d)		
 	if input.IsKeyDown(KEY_W) then
-		self.cam_pos.y = self.cam_pos.y + delta
+		self.cam_pos.y = self.cam_pos.y + d
 	elseif input.IsKeyDown(KEY_S) then
-		self.cam_pos.y = self.cam_pos.y - delta
+		self.cam_pos.y = self.cam_pos.y - d
 	end
 	
 	if input.IsKeyDown(KEY_A)then
-		self.cam_pos.x = self.cam_pos.x - delta
+		self.cam_pos.x = self.cam_pos.x - d
 	elseif input.IsKeyDown(KEY_D) then	
-		self.cam_pos.x = self.cam_pos.x + delta
+		self.cam_pos.x = self.cam_pos.x + d
 	end
 		
 	local mat = Matrix()
@@ -305,11 +309,7 @@ end
 
 start_height = start_height * 1.75
 
-function DEMO:OnDraw(w, h, delta, t, pos)
-
-	surface.SetDrawColor(0, 0, 0, 20)
-	surface.DrawRect(w*-1, h*-1, w*4, h*4)
-	
+function DEMO:DrawCredits(w, h, d, t, pos)
 	local last_height = 0
 	
 	for i, data in pairs(credits) do
@@ -338,28 +338,31 @@ function DEMO:OnDraw(w, h, delta, t, pos)
 		end
 	end
 	
-	self.spos = self.spos + ((pos - self.spos) * delta)
-		
-	--local pos = Vector(w, h) * 0.5
+	self.spos = self.spos + ((pos - self.spos) * d)
+end
 
-	delta = delta * 50
+function DEMO:DrawParticles(w, h, d, t, pos)
+	d = d * 50
+	
+	local mult = 0.00001
+	
+	if input.IsMouseDown(MOUSE_RIGHT) then
+		mult = 0.0001
+	end
 	
 	for i, part in pairs(self.particles) do
 		-- random velocity for some variation
-		part.vel.x = part.vel.x + ((pos.x - part.pos.x) * 0.0001 * part.siz) + math.Rand(-0.1,0.1) * math.sin(t+part.pos.x)
-		part.vel.y = part.vel.y + ((pos.y - part.pos.y) * 0.0001 * part.siz) + math.Rand(-0.1,0.1) * math.sin(t+part.pos.y)
+		part.vel.x = part.vel.x + ((pos.x - part.pos.x) * mult * part.siz) + math.Rand(-0.1,0.1)
+		part.vel.y = part.vel.y + ((pos.y - part.pos.y) * mult * part.siz) + math.Rand(-0.1,0.1)
 		
-		part.vel.x = part.vel.x + (math.atan2(t/2, part.vel.y)*math.sin(part.random * t + part.siz) * part.siz) * 0.02
-		part.vel.y = part.vel.y + (math.atan2(-t/5, part.vel.x)*math.cos(part.random * t + part.siz) * part.siz) * 0.02 
-
 		-- velocity
-		part.pos.x = part.pos.x + (part.vel.x * delta)
-		part.pos.y = part.pos.y + (part.vel.y * delta)
+		part.pos.x = part.pos.x + (part.vel.x * d)
+		part.pos.y = part.pos.y + (part.vel.y * d)
 
 		-- friction
 		part.vel.x = part.vel.x * part.drag
 		part.vel.y = part.vel.y * part.drag
-
+		
 		-- collision with other particles (buggy)
 		if part.pos.x - part.siz < 0 then
 			part.pos.x = 0 + part.siz * 1
@@ -381,30 +384,41 @@ function DEMO:OnDraw(w, h, delta, t, pos)
 			part.vel.y = part.vel.y * -part.drag
 		end
 		
-		local l = part.vel.x * part.vel.y
-		local s = math.min(part.siz * l + 40, 100)
+		local l = (part.vel.x * part.vel.y) + 5
+		l = l * 0.75
 		
+		local life_scale = math.min(part.life - t, 1) ^ 2
+		local s = math.min(part.siz * l + 40, 100)
+
 		surface.SetTexture(part.tex_id2)
 		
 		surface.SetDrawColor(part.clr.r, part.clr.g, part.clr.b, 255)
 		self:DrawLineEx(
 			part.pos.x, 
 			part.pos.y, 
-			(part.pos.x - part.vel.x*(l+5)), 
-			(part.pos.y - part.vel.y*(l+5)), 
+			part.pos.x - part.vel.x*l, 
+			part.pos.y - part.vel.y*l, 
 			
-			part.siz, true
+			part.siz * life_scale, true
 		)
 		
+		s = s * life_scale
+				
 		surface.SetDrawColor(part.clr.r*0.1*l, part.clr.g*0.1*l, part.clr.b*0.1*l, 255)
 		surface.DrawTexturedRect(
-			(part.pos.x - s), 
-			(part.pos.y - s), 
+			(part.pos.x - s * 0.5), 
+			(part.pos.y - s * 0.5), 
 			s, 
 			s
 		)
+		
+		if part.life < t and (not part.on_death or part:on_death() ~= false) then
+			self.particles[i] = nil
+		end
 	end
-			
+end
+
+function DEMO:DrawPostProcess(w, h, d, t, pos)
 	local params = {}
 
 		params["$pp_colour_addr"] = 0
@@ -428,13 +442,51 @@ function DEMO:OnDraw(w, h, delta, t, pos)
 	
 	vel = vel + 0.1
 	
-	DrawSunbeams(0.5, vel, 0.1, self.spos.x / w, self.spos.y / h)
+	DrawSunbeams(0.5, vel, 0.05, self.spos.x / w, self.spos.y / h)
 	blur_screen(w, h, self.spos.x / w, self.spos.y / h)
+end
+
+local function ang_to_dir(ang, scale)
+	ang = math.deg(ang)
+	scale = scale or 1
+	return math.sin(ang) * scale, math.cos(ang) * scale
+end
+
+function DEMO:SpawnFireworks(x, y)
+	local vx, vy = ang_to_dir(math.Rand(-45, 45), math.Rand(10, 20))
+	self:CreateParticle(x, y, vx, vy, nil, function(part) 
+		for i = -90, 90 do
+			self:CreateParticle(part.pos.x, part.pos.y, ang_to_dir(i * 2, math.Rand(1, 5) * math.Rand(1, 2)))
+		end
+		
+		self.base_color = self.base_color + math.Rand(30, 60)
+	end)
+end
+
+function DEMO:OnDraw(w, h, d, t, pos)
+
+	-- background
+	surface.SetDrawColor(0, 0, 0, 20)
+	surface.DrawRect(w*-1, h*-1, w*4, h*4)
+		
+	if input.IsMouseDown(MOUSE_LEFT) then
+		self:SpawnFireworks(gui.MousePos())
+	end
+		
+	if math.random() > 0.99 then
+		self:SpawnFireworks(math.Rand(0, w), h - 20)
+	end
+		
+	self:DrawCredits(w, h, d, t, pos)
+	self:DrawParticles(w, h, d, t, pos)
+	self:DrawPostProcess(w, h, d, t, pos)
 	
 	self.last_pos = pos
 end
 
 function DEMO:OnUpate(w, h, d, t, pos, first)
+	self.time = t
+	
 	if first then		
 		local ok, err = pcall(self.OnStart, self, w, h)
 		if not ok then return ok, err end
@@ -484,18 +536,16 @@ function pace.ShowAbout()
 						
 		first = false
 		
-		--for i = 1, 255 do
-			quit = input.IsKeyDown(KEY_SPACE) or not ok
+		quit = input.IsKeyDown(KEY_SPACE) or input.IsKeyDown(KEY_ESCAPE) or not ok
 
-			if quit then
-				if not ok then print(err) end
-				pnl:Remove()
-				hook.Remove("PreRender", "pace_about")
-				RunConsoleCommand("volume", old_vol)
-				return
-			end
-		--end
-		
+		if quit then
+			if not ok then print(err) end
+			pnl:Remove()
+			hook.Remove("PreRender", "pace_about")
+			RunConsoleCommand("volume", old_vol)
+			return
+		end
+	
 		return true
 	end)
 end
