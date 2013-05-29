@@ -47,6 +47,7 @@ function pace.OnMenuBarPopulate(bar)
 	local menu = bar:AddMenu(L"options")
 		menu:AddCVar(L"show deprecated features", "pac_show_deprecated", "1", "0").DoClick = function() pace.ToggleDeprecatedFeatures() end
 		menu:AddCVar(L"advanced mode", "pac_basic_mode", "0", "1").DoClick = function() pace.ToggleBasicMode() end
+		menu:AddCVar(L"put parts in submenu", "pac_submenu_parts", "1", "0")
 			menu:AddSpacer()
 				menu:AddOption(L"position grid size", function()
 					Derma_StringRequest(L"position grid size", L"size in units:", GetConVarNumber("pac_grid_pos_size"), function(val) 

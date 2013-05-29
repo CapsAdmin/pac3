@@ -1,7 +1,3 @@
-make a script part that will be proxies and events in one
-
-instead of using hide to trigger stuff, have an on trigger function instead
 have a high level clientside api for changing parts from lua
-
-serversde draw distnace
 fix sounds playing regardless of being hidden when overlap is ticked
+make properties have tags that define what type they are so property translation become less of a mess

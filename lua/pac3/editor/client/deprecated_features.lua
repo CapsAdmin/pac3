@@ -6,6 +6,9 @@ pace.DeprecatedParts =
 
 pace.DeprecatedProperties = 
 {
+	BodygroupState = true, -- we have a bodygroup part now
+	Bodygroup = true, -- we have a bodygroup part now
+
 	AngleVelocity = true, -- use proxies on angle offset instead!
 	OriginFix = true, -- use position offset instead!
 	OverallSize = true, -- use Size instead!

@@ -1,3 +1,57 @@
+pace.PartTree = {
+	entity = {
+		animation = true,
+		holdtype = true,
+		bone = true,
+		poseparameter = true,
+		material = true,
+		effect = true,
+		bodygroup = true,
+	},
+
+	model = {
+		clip = true,
+		halo = true,
+		animation = true,
+		physics = true,
+		jiggle = true, 
+		bone = true,
+		effect = true,
+		material = true,
+		bodygroup = true,
+	},
+
+	modifiers = {
+		animation = true,
+		bodygroup = true,
+		proxy = true,
+		material = true,
+		poseparameter = true,
+		fog = true,   
+		clip = true,     
+	},
+
+	effects = {
+		shake = true,
+		light = true,
+		sound = true,
+		ogg = true,
+		sunbeams = true,
+		effect = true,
+		particles = true,
+		trail = true,
+		sprite = true,
+		beam = true,
+	},
+
+	advanced = {
+		script = true,
+		command = true,
+		projectile = true,
+	},  
+}
+
+
 pace.MiscIcons = {
 	copy = "icon16/page_white_text.png",
 	globalid = "icon16/vcard.png",
@@ -53,7 +107,12 @@ pace.PartIcons =
 	ogg = "icon16/music.png",
 	script = "icon16/page_white_gear.png",
 	info = "icon16/help.png",
+	bodygroup = "icon16/user.png",
 }
+
+pace.PartIcons.effects = pace.PartIcons.effect
+pace.PartIcons.advanced = pace.PartIcons.script
+pace.PartIcons.modifiers = pace.PartIcons.poseparameter
 
 pace.PropertyOrder =
 {
@@ -290,17 +349,26 @@ function pace.TranslatePropertiesKey(key, obj)
 	local key_ = key
 	key = key:lower()
 	
+	if obj.ClassName == "entity" and (key == "positionoffset" or key == "angleoffset") then
+		return ""
+	end
+	
 	if 
 		key == "bone" or 
 		key == "model" or
 		key == "event" or
 		key == "operator" or
 		key == "arguments" or
-		key == "ownername"
+		key == "ownername" or
+		key == "poseparameter" or
+		key == "material" or
+		key == "sequence" or
+		key == "bodygroupname" or
+		key == "code"
 	then
 		return key
 	end
-	
+		
 	if key == "weaponholdtype" and obj.ClassName == "animation" then
 		return "weaponholdtype"
 	end
@@ -317,23 +385,34 @@ function pace.TranslatePropertiesKey(key, obj)
 		return "proxyvars"
 	end
 	
-	if key == "aimpartname" or key == "parentname" or key == "followpartname" or key == "anglepartname" or key == "endpointname" or key == "outfitpartname" then
+	if 
+		key == "aimpartname" or 
+		key == "parentname" or 
+		key == "followpartname" or 
+		key == "anglepartname" or 
+		key == "endpointname" or 
+		key == "outfitpartname" 
+	then
 		return "part"
 	end
 	
-	if key == "sequence" or key == "sequencename" or (obj.ClassName == "holdtype" and (obj.ActMods[key_] or key == "fallback" or key == "noclip" or key == "air")) then
+	if 
+		key == "sequencename" or 
+		(
+			obj.ClassName == "holdtype" and 
+			(
+				obj.ActMods[key_] or 
+				key == "fallback" or 
+				key == "noclip" or 
+				key == "sitting" or
+				key == "air"
+			)
+		) 
+	then
 		return "sequence"
 	end
 	
-	if key == "poseparameter" then
-		return "poseparameter"
-	end
-	
-	if key == "code" then
-		return "code"
-	end
-	
-	if key == "material" or key == "spritepath" or key == "trailpath" then
+	if key == "spritepath" or key == "trailpath" then
 		return "material"
 	end
 	

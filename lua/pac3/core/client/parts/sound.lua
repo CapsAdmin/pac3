@@ -22,7 +22,7 @@ function PART:GetNiceName()
 end
 
 function PART:Initialize()
-	self:PlaySound()
+	--self:PlaySound()
 end
 
 function PART:OnShow(from_event)
@@ -144,7 +144,7 @@ function PART:SetPitch(num)
 	end
 end
 
-function PART:PlaySound(osnd, ovol)
+function PART:PlaySound(osnd, ovol)	
 	local ent = self:GetOwner(self.RootOwner)
 
 	if ent:IsValid() then

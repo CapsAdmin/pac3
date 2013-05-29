@@ -12,13 +12,7 @@ include("libraries/urlobj.lua")
 include("libraries/urlogg.lua")
 
 function pac.LoadParts()
-	local files
-	
-	if file.FindInLua then
-		files = file.FindInLua("pac3/core/client/parts/*.lua")
-	else
-		files = file.Find("pac3/core/client/parts/*.lua", "LUA")
-	end
+	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
 	
 	for _, name in pairs(files) do
 		include("pac3/core/client/parts/" .. name)
