@@ -147,6 +147,8 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 end
 
 do -- menu
+	local cvar_submenu = CreateConVar("pac_submenu_parts", 1)
+	
 	function pace.AddRegisteredPartsToMenu(menu)
 		local temp = {}
 		
@@ -160,15 +162,66 @@ do -- menu
 			end
 		end
 		
-		table.sort(temp)
-		
-		for _, class_name in pairs(temp) do
-			menu:AddOption(L(class_name), function()
-				pace.Call("CreatePart", class_name)
-			end):SetImage(pace.PartIcons[class_name])
+		if pace.IsInBasicMode() or not cvar_submenu:GetBool() then
+				
+			table.sort(temp)
+
+			for _, class_name in pairs(temp) do
+				menu:AddOption(L(class_name), function()
+					pace.Call("CreatePart", class_name)
+				end):SetImage(pace.PartIcons[class_name])
+			end
+		else
+			if not file.Exists("pac3_editor/seen_submenus.txt", "DATA") then
+				menu:AddOption(L"GET RID OF", function()
+					RunConsoleCommand("pac_submenu_parts", 0)
+					file.Write("pac3_editor/seen_submenus.txt", "I HATE SUBMENUS", "DATA")
+				end)
+				
+				menu:AddOption(L"THE SUBMENU", function()
+					RunConsoleCommand("pac_submenu_parts", 0)
+					file.Write("pac3_editor/seen_submenus.txt", "I HATE SUBMENUS", "DATA")
+				end)
+				
+				file.Write("pac3_editor/seen_submenus.txt", "I don't mind submenus", "DATA")
+			end
+			
+			local added = {}
+					
+			for key, tbl in pairs(pace.PartTree) do
+				if type(tbl) == "table" then
+					added[key] = true
+					local sub, pnl = menu:AddSubMenu(L(key), function()
+						if pac.GetRegisteredParts()[key] then
+							pace.Call("CreatePart", key)
+						end
+					end)
+					sub.GetDeleteSelf = function() return false end
+					
+					pnl:SetImage(pace.PartIcons[key])
+					
+					for class_name in pairs(tbl) do
+						added[class_name] = true
+						sub:AddOption(L(class_name), function()
+							pace.Call("CreatePart", class_name)
+						end):SetImage(pace.PartIcons[class_name])
+					end
+				else
+					menu:AddOption(L(key), function()
+						pace.Call("CreatePart", key)
+					end):SetImage(pace.PartIcons[key])
+				end
+			end 
+			
+			for _, class_name in pairs(temp) do
+				if not added[class_name] then
+					menu:AddOption(L(class_name), function()
+						pace.Call("CreatePart", class_name)
+					end):SetImage(pace.PartIcons[class_name])
+				end
+			end
 		end
 	end
-
 
 	function pace.OnPartMenu(obj)
 		local menu = DermaMenu()
@@ -202,6 +255,12 @@ do -- menu
 		menu:AddOption(L"clone", function()
 			obj:Clone()
 		end):SetImage(pace.MiscIcons.clone)		
+				
+		menu:AddSpacer()
+
+		pace.AddRegisteredPartsToMenu(menu)
+
+		menu:AddSpacer()
 		
 		if not pace.IsInBasicMode() then
 			menu:AddOption(L"copy global id", function()
@@ -213,12 +272,6 @@ do -- menu
 			pace.ShowHelp(obj.ClassName)
 		end):SetImage(pace.MiscIcons.help)
 		
-		menu:AddSpacer()
-
-		pace.AddRegisteredPartsToMenu(menu)
-
-		menu:AddSpacer()
-
 		local save, pnl = menu:AddSubMenu(L"save", function() pace.SaveParts() end)
 		pnl:SetImage(pace.MiscIcons.save)
 		pace.AddSaveMenuToMenu(save, obj)	
@@ -226,19 +279,9 @@ do -- menu
 		local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
 		pnl:SetImage(pace.MiscIcons.load)
 		pace.AddSavedPartsToMenu(load, false, obj)
-		
-		menu:AddOption(L"load from url", function()
-				Derma_StringRequest(
-				L"load part",
-				L"pastebin urls also work!",
-				"",
-
-				function(url)
-					pace.LoadParts(url, true, obj)
-				end
-			)
-		end):SetImage(pace.MiscIcons.url)
-		
+				
+		menu:AddSpacer()
+				
 		menu:AddOption(L"remove", function()
 			obj:Remove()
 			pace.RefreshTree()
