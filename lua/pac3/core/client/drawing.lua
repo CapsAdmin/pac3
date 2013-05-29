@@ -217,12 +217,30 @@ pac.AddHook("RenderScene")
 -- allows only the last draw call
 local cvar_framesuppress = CreateClientConVar("pac_suppress_frames", "1")
 
+-- this needs to be called when before drawing things like minimaps and pac_suppress_frames is on
+function pac.SkipRendering(b)
+	pac.skip_rendering = b
+end
+
+-- this is if you want to force it
+function pac.ForceRendering(b)
+	pac.force_rendering = b
+end
+
 local function setup_suppress()
 	local last_framenumber = 0
 	local current_frame = 0
 	local current_frame_count = 0
 	
 	return function()
+		if pac.force_rendering then
+			return false
+		end
+	
+		if pac.skip_rendering then 
+			return true
+		end
+		
 		if cvar_framesuppress:GetBool() then
 			local frame_number = FrameNumber()
 			
