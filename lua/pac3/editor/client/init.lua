@@ -35,6 +35,8 @@ pace.ActivePanels = pace.ActivePanels or {}
 pace.Editor = NULL
 
 function pace.OpenEditor()
+	pace.CloseEditor()
+	
 	if hook.Call("PrePACEditorOpen", GAMEMODE, LocalPlayer()) == false then return end
 	
 	pac.Enable()
