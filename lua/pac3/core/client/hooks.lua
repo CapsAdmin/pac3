@@ -35,6 +35,15 @@ function pac.UpdateAnimation(ply)
 end
 pac.AddHook("UpdateAnimation")
 
+function pac.CreateMove(cmd)
+	local mult = pac.LocalPlayer.pac_movespeed
+	if mult and mult ~= 1 then
+		cmd:SetForwardMove(cmd:GetForwardMove() * mult)
+		cmd:SetSideMove(cmd:GetSideMove() * mult)
+	end
+end
+pac.AddHook("CreateMove")
+
 function pac.TranslateActivity(ply, act)
 	if IsEntity(ply) and ply:IsValid() then
 	
