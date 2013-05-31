@@ -44,6 +44,14 @@ end
 
 PART.Events = 
 {	
+	random = 
+	{	
+		arguments = {{compare = "number"}},
+		callback = function(self, ent, compare)
+			return self:NumberOperator(math.random(), compare)
+		end,
+	},
+
 	timerx = 
 	{
 		arguments = {{seconds = "number"}, {reset_on_hide = "boolean"}, {synced_time = "boolean"}},
@@ -183,6 +191,24 @@ PART.Events =
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
 			return ent.FlashlightIsOn and ent:FlashlightIsOn()
+		end,
+	},
+	
+	ranger = 
+	{
+		arguments = {{compare = "number", distance = "number"}},
+		callback = function(self, ent, distance, compare)
+			ent = try_viewmodel(ent)
+			distance = distance or 1
+			compare = compare or 0
+			
+			local res = util.TraceLine({
+				start = ent:GetPos(),
+				endpos = ent:GetForward() * distance,
+				filter = ent,
+			})
+			
+			return self:NumberOperator(res.Length, compare)
 		end,
 	},
 	

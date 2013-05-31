@@ -27,6 +27,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "InverseKinematics", false)
 	pac.GetSet(PART, "MuteFootsteps", false)
 	pac.GetSet(PART, "AnimationRate", 1)
+	pac.GetSet(PART, "MoveSpeed", 1)
 pac.EndStorableVars()
 
 local function ENTFIELD(PART, name, field)
@@ -46,6 +47,7 @@ end
 ENTFIELD(PART, "InverseKinematics", "pac_enable_ik")
 ENTFIELD(PART, "MuteFootsteps", "pac_hide_weapon")
 ENTFIELD(PART, "AnimationRate", "pac_global_animation_rate")
+ENTFIELD(PART, "MoveSpeed", "pac_movespeed")
 
 function PART:GetNiceName()
 	local ent = self:GetOwner()
