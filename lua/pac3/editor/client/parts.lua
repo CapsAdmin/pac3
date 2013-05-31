@@ -173,6 +173,8 @@ do -- menu
 			end
 		else
 			if not file.Exists("pac3_editor/seen_submenus.txt", "DATA") then
+				file.CreateDir("pac3_editor", "DATA")
+			
 				menu:AddOption(L"GET RID OF", function()
 					RunConsoleCommand("pac_submenu_parts", 0)
 					file.Write("pac3_editor/seen_submenus.txt", "I HATE SUBMENUS", "DATA")
