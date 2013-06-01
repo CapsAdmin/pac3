@@ -107,7 +107,7 @@ function urltex.StartDownload(url, data)
 					
 			-- give it some time.. IsLoading is sometimes lying
 			if not go and html_mat and not pnl:IsLoading() then
-				time = pac.RealTime + 0.25
+				time = pac.RealTime + 0.1
 				go = true
 			end
 				
@@ -125,7 +125,7 @@ function urltex.StartDownload(url, data)
 				hook.Remove("Think", id)
 				timer.Remove(id)
 				urltex.Queue[url] = nil
-				timer.Simple(0.15, function() pnl:Remove() end)
+				timer.Simple(0, function() pnl:Remove() end)
 								
 				if data.callback then
 					data.callback(vertex_mat, tex)

@@ -1,3 +1,5 @@
+local enable = CreateConVar("pac_sv_projectiles", 0, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
+
 do -- projectile entity
 	local ENT = {}
 	
@@ -19,7 +21,8 @@ do -- projectile entity
 	
 	if SERVER then
 			
-		function ENT:SetData(ply, pos, ang, part)				
+		function ENT:SetData(ply, pos, ang, part)			
+
 			if part.Sphere then
 				self:PhysicsInitSphere(math.Clamp(part.Radius, 1, 30))
 			else
@@ -31,35 +34,51 @@ do -- projectile entity
 			phys:AddVelocity((ang:Forward() + (VectorRand():Angle():Forward() * part.Spread)) * part.Speed * 1000)
 			phys:EnableCollisions(part.Collisions)	
 			phys:SetDamping(part.Damping, 0)
+			phys:SetMass(part.Mass)
 			
 			self.dt.AimDir = part.AimDir
 			
 			self.part_data = part
 		end
 		
-		function ENT:Think()
+		if CLIENT then
 			
-			local part = self.part_data
-			
-			if not part then return end
-						
-			if self.Sticky and not self.pac_projectile_stuck then
-				
-				local trace = util.QuickTrace(self:GetPos(), self:GetVelocity() * -10, ent)
-				
-				if trace.Hit then
-					local phys = ent:GetPhysicsObject()
-					phys:EnableGravity(false)
-					phys:EnableMotion(false)
-					phys:SetPos(trace.HitPos)
-					phys:SetAngles(trace.HitNormal:Angle())
-					self.dt.AimDir = false
-					self.pac_projectile_stuck = true
+			function ENT:Think()
+					
+				if self.Sticky and not self.pac_projectile_stuck then
+					
+					local trace = util.QuickTrace(self:GetPos(), self:GetVelocity() * -10, ent)
+					
+					if trace.Hit then
+						local phys = ent:GetPhysicsObject()
+						phys:EnableGravity(false)
+						phys:EnableMotion(false)
+						phys:SetPos(trace.HitPos)
+						phys:SetAngles(trace.HitNormal:Angle())
+						self.dt.AimDir = false
+						self.pac_projectile_stuck = true
+					end
 				end
+				
+				self:NextThink(CurTime())
+				return true
 			end
-			
-			self:NextThink(CurTime())
-			return true
+		end
+		
+		function ENT:Touch(ent)
+			--if ent:IsValid() and (ent:IsPlayer() or ent:IsNPC()) then
+			--	print(ent)
+			--	self:GetPhysicsObject():SetVelocity(Vector(0,0,0))
+			--end
+		end
+		
+		function ENT:PhysicsCollide(data)
+			if self.part_data and self.part_data.Sticky and data.HitEntity:IsWorld() then
+				local phys = self:GetPhysicsObject()
+				phys:SetVelocity(Vector(0,0,0))
+				phys:Sleep()
+				phys:EnableMotion(false)
+			end
 		end
 	end
 	
@@ -73,9 +92,7 @@ if SERVER then
 	
 	util.AddNetworkString("pac_projectile")
 	util.AddNetworkString("pac_projectile_attach")
-	
-	local enable = CreateConVar("pac_projectiles", 1, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
-	
+		
 	net.Receive("pac_projectile", function(len, ply)			
 		if not enable:GetBool() then return end
 	
@@ -105,9 +122,9 @@ if SERVER then
 				ent:SetOwner(ply)
 			end
 			
-			ent:SetPhysicsAttacker(ply)
-			
 			ent:SetData(ply, pos, ang, part)
+			
+			ent:SetPhysicsAttacker(ply)
 				
 			timer.Simple(math.Clamp(part.LifeTime, 0, 10), function()
 				SafeRemoveEntity(ent)
