@@ -14,6 +14,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Sticky", false)
 	pac.GetSet(PART, "Spread", 0)
 	pac.GetSet(PART, "Delay", 0)
+	pac.GetSet(PART, "Mass", 100)
 	pac.SetupPartName(PART, "OutfitPart")
 	pac.GetSet(PART, "Physical", false)
 	pac.GetSet(PART, "CollideWithOwner", false)
@@ -75,6 +76,10 @@ end
 function PART:Shoot(pos, ang)
 	if self.Physical then	
 		if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
+		
+		if GetConVarNumber("pac_sv_projectiles") < 1  then
+			chat.AddText("[pac3] projectiles are not enabled on the server!")
+		end
 		
 		local tbl = {}
 		for key in pairs(self:GetStorableVars()) do
