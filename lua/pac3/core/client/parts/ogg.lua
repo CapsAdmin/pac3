@@ -164,6 +164,10 @@ function PART:SetURL(URL)
 			MsgC(Color(255, 0, 0), "[PAC3] " .. str)
 			self.Errored = str
 		end
+		
+		if pace and pace.Editor:IsValid() and pace.current_part:IsValid() and pace.current_part.ClassName == "ogg" and self:GetPlayerOwner() == pac.LocalPlayer then
+			stream:Play()
+		end
 			
 		self.streams[URL] = stream
 	end
