@@ -373,8 +373,14 @@ PART.Events =
 			
 			if events then
 				for key, data in pairs(events) do
-					if self:StringOperator(data.name, find) and data.time + time > pac.RealTime then
-						return true
+					if self:StringOperator(data.name, find) then
+						if data.on > 0 then
+							return data.on == 1
+						end
+						
+						if data.time + time > pac.RealTime then
+							return true
+						end
 					end			
 				end
 			end
@@ -776,6 +782,7 @@ end
 usermessage.Hook("pac_event", function(umr)
 	local ply = umr:ReadEntity()
 	local str = umr:ReadString()
+	local on = umr:ReadChar()
 	
 	-- ^ resets all other events
 	if str:find("^", 0, true) then
@@ -784,7 +791,7 @@ usermessage.Hook("pac_event", function(umr)
 		
 	if ply:IsValid() then
 		ply.pac_command_events = ply.pac_command_events or {}
-		ply.pac_command_events[str] = {name = str, time = pac.RealTime}
+		ply.pac_command_events[str] = {name = str, time = pac.RealTime, on = on}
 	end
 end)
 
