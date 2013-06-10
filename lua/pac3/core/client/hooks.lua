@@ -5,8 +5,6 @@ function pac.UpdateAnimation(ply)
 		for _, part in pairs(pac.GetParts()) do
 			if part:GetPlayerOwner() == ply and part.ClassName == "model" then
 				local ent = part:GetEntity()
-				local phys =ent:GetPhysicsObject()
-				phys:EnableMotion(false)
 				ent:PhysicsInit(SOLID_NONE)
 				ent:SetMoveType(MOVETYPE_NONE)
 				ent:SetNoDraw(true)
@@ -126,37 +124,39 @@ function pac.OnEntityCreated(ent)
 			if ply:GetRagdollEntity() == ent then
 				if ply.pac_parts then
 					if ply.pac_death_physics_parts then
-						for _, part in pairs(pac.GetParts()) do
-							if part:GetPlayerOwner() == ply and part.ClassName == "model" then
-								ent:SetNoDraw(true)
-								
-								part.skip_orient = true
-								
-								local ent = part:GetEntity()
-								ent:SetParent(NULL)
-								ent:SetNoDraw(true)
-								ent:PhysicsInitBox(Vector(1,1,1) * -5, Vector(1,1,1) * 5)
-								ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS) 
-								
-								local phys = ent:GetPhysicsObject()
-								phys:AddAngleVelocity(VectorRand() * 1000)
-								phys:AddVelocity(ply:GetVelocity()  + VectorRand() * 30)
-								phys:Wake()
-								
-								function ent.RenderOverride(ent)
-									if part:IsValid() then
-										if not part.HideEntity then 
-											part:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
-											ent:DrawModel()
-											part:PostEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
+						if not ply.pac_physics_died then
+							for _, part in pairs(pac.GetParts()) do
+								if part:GetPlayerOwner() == ply and part.ClassName == "model" then
+									ent:SetNoDraw(true)
+									
+									part.skip_orient = true
+									
+									local ent = part:GetEntity()
+									ent:SetParent(NULL)
+									ent:SetNoDraw(true)
+									ent:PhysicsInitBox(Vector(1,1,1) * -5, Vector(1,1,1) * 5)
+									ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS) 
+									
+									local phys = ent:GetPhysicsObject()
+									phys:AddAngleVelocity(VectorRand() * 1000)
+									phys:AddVelocity(ply:GetVelocity()  + VectorRand() * 30)
+									phys:Wake()
+									
+									function ent.RenderOverride(ent)
+										if part:IsValid() then
+											if not part.HideEntity then 
+												part:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
+												ent:DrawModel()
+												part:PostEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
+											end
+										else
+											ent.RenderOverride = nil
 										end
-									else
-										ent.RenderOverride = nil
 									end
-								end
-							end	
+								end	
+							end
+							ply.pac_physics_died = true
 						end
-						ply.pac_physics_died = true
 					else
 						for _, part in pairs(ply.pac_parts) do
 							part:SetOwner(ent)					
