@@ -609,6 +609,9 @@ local EF_BONEMERGE = EF_BONEMERGE
 
 function PART:CheckBoneMerge()
 	local ent = self.Entity
+	
+	if self.skip_orient then return end
+	
 	if ent:IsValid() and not ent:IsPlayer() then			
 		if self.BoneMerge and not self.BoneMergeAlternative then
 			local owner = self:GetOwner()
