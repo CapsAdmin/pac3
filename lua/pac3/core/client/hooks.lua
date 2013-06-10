@@ -1,6 +1,23 @@
 function pac.UpdateAnimation(ply)
 	if not IsEntity(ply) or not ply:IsValid() then return end
 		
+	if ply.pac_death_physics_parts and ply:Alive() and ply.pac_physics_died then
+		for _, part in pairs(pac.GetParts()) do
+			if part:GetPlayerOwner() == ply and part.ClassName == "model" then
+				local ent = part:GetEntity()
+				local phys =ent:GetPhysicsObject()
+				phys:EnableMotion(false)
+				ent:PhysicsInit(SOLID_NONE)
+				ent:SetMoveType(MOVETYPE_NONE)
+				ent:SetNoDraw(true)
+				ent.RenderOverride = nil
+				
+				part.skip_orient = false
+			end	
+		end
+		ply.pac_physics_died = false
+	end
+		
 	local tbl = ply.pac_pose_params
 	
 	if tbl then
@@ -107,13 +124,44 @@ function pac.OnEntityCreated(ent)
 	if ent and ent:IsValid() and ent:GetClass() == "class C_HL2MPRagdoll" then
 		for key, ply in pairs(player.GetAll()) do
 			if ply:GetRagdollEntity() == ent then
-				
 				if ply.pac_parts then
-					for _, part in pairs(ply.pac_parts) do
-						part:SetOwner(ent)
+					if ply.pac_death_physics_parts then
+						for _, part in pairs(pac.GetParts()) do
+							if part:GetPlayerOwner() == ply and part.ClassName == "model" then
+								ent:SetNoDraw(true)
+								
+								part.skip_orient = true
+								
+								local ent = part:GetEntity()
+								ent:SetParent(NULL)
+								ent:SetNoDraw(true)
+								ent:PhysicsInitBox(Vector(1,1,1) * -5, Vector(1,1,1) * 5)
+								ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS) 
+								
+								local phys = ent:GetPhysicsObject()
+								phys:AddAngleVelocity(VectorRand() * 1000)
+								phys:AddVelocity(ply:GetVelocity()  + VectorRand() * 30)
+								phys:Wake()
+								
+								function ent.RenderOverride(ent)
+									if part:IsValid() then
+										if not part.HideEntity then 
+											part:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
+											ent:DrawModel()
+											part:PostEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
+										end
+									else
+										ent.RenderOverride = nil
+									end
+								end
+							end	
+						end
+						ply.pac_physics_died = true
+					else
+						for _, part in pairs(ply.pac_parts) do
+							part:SetOwner(ent)					
+						end
 					end
-					
-					ent.pac_prev_owner = ply
 				end
 				
 				break
