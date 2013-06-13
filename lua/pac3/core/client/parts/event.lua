@@ -723,6 +723,12 @@ function PART:StringOperator(a, b)
 		return CompareBTable(a, args, pac.StringFind)
 	elseif self.Operator == "find simple" then
 		return CompareBTable(a, args, pac.StringFind, true)
+	elseif self.Operator == "changed" then
+		if a ~= self.changed_last_a then
+			self.changed_last_a = a
+			
+			return true
+		end
 	elseif self.Operator == "maybe" then
 		return math.random() > 0.5
 	end	
