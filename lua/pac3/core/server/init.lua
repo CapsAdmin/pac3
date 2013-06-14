@@ -9,6 +9,6 @@ include("util.lua")
 
 include("effects.lua")
 include("event.lua")
-include("map.lua")
+include("map_outfit.lua")
 
 CreateConVar("has_pac3", "1", {FCVAR_NOTIFY})
