@@ -1,5 +1,121 @@
 pace.example_outfits = {}
 --pace.example_outfits[""] = {}
+
+pace.example_outfits["realistic footsteps"] = {[1] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ParentName"] = "is in world",
+								["UniqueID"] = "905788888",
+								["Name"] = "dog footstep[1,4]",
+								["Sound"] = "npc/dog/dog_footstep[1,4].wav",
+								["ClassName"] = "sound",
+								["Pitch"] = 0.625,
+								["ParentUID"] = "213354147",
+								["EditorExpand"] = true,
+								["GlobalID"] = "3008962558",
+							},
+						},
+					},
+					["self"] = {
+						["AffectChildrenOnly"] = true,
+						["Invert"] = true,
+						["ParentName"] = "hoverball",
+						["Name"] = "is ranger below 5?",
+						["EditorExpand"] = true,
+						["UniqueID"] = "213354147",
+						["ClassName"] = "event",
+						["Event"] = "ranger",
+						["GlobalID"] = "2222646410",
+						["Arguments"] = "5@@10",
+						["Operator"] = "below",
+						["ParentUID"] = "103201093",
+						["RootOwner"] = false,
+					},
+				},
+			},
+			["self"] = {
+				["ParentName"] = "my outfit",
+				["Position"] = Vector(-30, 0, 0),
+				["TintColor"] = Vector(0.63942295312881, 0.63942295312881, 0.63942295312881),
+				["Name"] = "right foot",
+				["ClassName"] = "model",
+				["EditorExpand"] = true,
+				["UniqueID"] = "103201093",
+				["GlobalID"] = "4131300437",
+				["Bone"] = "right toe",
+				["Angles"] = Angle(0, 90, 0),
+				["ParentUID"] = "2980027574",
+			},
+		},
+		[2] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ParentName"] = "is in world",
+								["UniqueID"] = "1659234766",
+								["Name"] = "dog footstep[1,4]",
+								["Sound"] = "npc/dog/dog_footstep[1,4].wav",
+								["ClassName"] = "sound",
+								["Pitch"] = 0.625,
+								["ParentUID"] = "3181550699",
+								["EditorExpand"] = true,
+								["GlobalID"] = "3008962558",
+							},
+						},
+					},
+					["self"] = {
+						["AffectChildrenOnly"] = true,
+						["Invert"] = true,
+						["ParentName"] = "hoverball",
+						["Name"] = "is ranger below 5?",
+						["EditorExpand"] = true,
+						["UniqueID"] = "3181550699",
+						["ClassName"] = "event",
+						["Event"] = "ranger",
+						["GlobalID"] = "2222646410",
+						["Arguments"] = "5@@10",
+						["Operator"] = "below",
+						["ParentUID"] = "3681250577",
+						["RootOwner"] = false,
+					},
+				},
+			},
+			["self"] = {
+				["ParentName"] = "my outfit",
+				["Position"] = Vector(-30, 0, 0),
+				["TintColor"] = Vector(0.63942295312881, 0.63942295312881, 0.63942295312881),
+				["Name"] = "left foot",
+				["ClassName"] = "model",
+				["EditorExpand"] = true,
+				["UniqueID"] = "3681250577",
+				["GlobalID"] = "4131300437",
+				["Bone"] = "left toe",
+				["Angles"] = Angle(0, 90, 0),
+				["ParentUID"] = "2980027574",
+			},
+		},
+	},
+	["self"] = {
+		["ClassName"] = "group",
+		["UniqueID"] = "2980027574",
+		["EditorExpand"] = true,
+		["GlobalID"] = "3525443273",
+		["Name"] = "realistic footsteps",
+		["Description"] = "add parts to me!",
+	},
+},
+}
 pace.example_outfits["custom spray"] = {[1] = {
 	["children"] = {
 		[1] = {
