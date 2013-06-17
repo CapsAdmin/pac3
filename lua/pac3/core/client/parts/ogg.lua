@@ -17,9 +17,9 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "FilterType", 0)
 	pac.GetSet(PART, "FilterFraction", 1)
 	
-	pac.GetSet(PART, "Echo", false)
-	pac.GetSet(PART, "EchoDelay", 0.5)
-	pac.GetSet(PART, "EchoFeedback", 0.75)
+	--pac.GetSet(PART, "Echo", false)
+	--pac.GetSet(PART, "EchoDelay", 0.5)
+	--pac.GetSet(PART, "EchoFeedback", 0.75)
 	
 	pac.GetSet(PART, "PlayOnFootstep", false)
 	pac.GetSet(PART, "MinPitch", 0)
