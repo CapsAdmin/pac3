@@ -196,19 +196,22 @@ PART.Events =
 	
 	ranger = 
 	{
-		arguments = {{compare = "number", distance = "number"}},
-		callback = function(self, ent, distance, compare)
-			ent = try_viewmodel(ent)
-			distance = distance or 1
-			compare = compare or 0
+		arguments = {{compare = "number"}, {distance = "number"}},
+		callback = function(self, ent, compare, distance)
+			local parent = self:GetParent()
 			
-			local res = util.TraceLine({
-				start = ent:GetPos(),
-				endpos = ent:GetForward() * distance,
-				filter = ent,
-			})
-			
-			return self:NumberOperator(res.Length, compare)
+			if parent:IsValid() then
+				distance = distance or 1
+				compare = compare or 0
+				
+				local res = util.TraceLine({
+					start = parent.cached_pos,
+					endpos = parent.cached_pos + parent.cached_ang:Forward() * distance,
+					filter = ent,
+				})
+								
+				return self:NumberOperator(res.Fraction * distance, compare)
+			end
 		end,
 	},
 	
