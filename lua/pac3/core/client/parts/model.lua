@@ -380,6 +380,24 @@ function PART:DrawModel(ent, pos, ang)
 	end
 end
 
+local function set_mesh(part, mesh)		
+	part.wavefront_mesh = mesh
+	part.Entity.pac_bones = nil
+	
+	if not part.Materialm then
+		part.Materialm = Material("error")
+	end
+
+	function part.Entity.pacDrawModel(ent)
+		part:ModifiersPreEvent("OnDraw")
+		part:DrawModel(ent, ent:GetPos(), ent:GetAngles())
+		part:ModifiersPostEvent("OnDraw")
+	end
+	
+	-- temp
+	part.Entity:SetRenderBounds(Vector(1, 1, 1)*-300, Vector(1, 1, 1)*300)	
+end
+
 function PART:SetModel(var)
 	self.Entity = self:GetEntity()
 
@@ -392,34 +410,32 @@ function PART:SetModel(var)
 		
 		self.loading_obj = true
 		
-		pac.urlobj.GetObjFromURL(var, function(mesh, err)
+		pac.urlobj.GetObjFromURL(var, function(meshes, err)
 			if not self:IsValid() then return end
 			
 			self.loading_obj = false
 			
 			self.Entity = self:GetEntity()
 			
-			if not mesh and err then
+			if not meshes and err then
 				self.Entity:SetModel("error.mdl")
 				self.wavefront_mesh = nil
 				return
 			end
-		
-			self.wavefront_mesh = mesh
-			self.Entity.pac_bones = nil
 			
-			if not self.Materialm then
-				self.Materialm = Material("error")
+			if table.Count(meshes) == 1 then
+				set_mesh(self, select(2, next(meshes)))
+			else
+				for key, mesh in pairs(meshes) do
+					local part = pac.CreatePart("model", self:GetOwnerName())
+					part:SetName(key)
+					part:SetParent(self)
+					part:SetMaterial(self:GetMaterial())
+					set_mesh(part, mesh)
+				end
+				
+				self:SetAlpha(0)
 			end
-
-			function self.Entity.pacDrawModel(ent)
-				self:ModifiersPreEvent("OnDraw")
-				self:DrawModel(ent, ent:GetPos(), ent:GetAngles())
-				self:ModifiersPostEvent("OnDraw")
-			end
-			
-			-- temp
-			self.Entity:SetRenderBounds(Vector(1, 1, 1)*-300, Vector(1, 1, 1)*300)	
 		end, skip_cache)
 		
 		self.Model = var
