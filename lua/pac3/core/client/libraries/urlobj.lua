@@ -19,8 +19,8 @@ function urlobj.ParseObj(data)
 	local positions = {}
 	local texcoords = {}
 	local normals = {}
-	local output = {}
-
+	local outputs = {}
+	
 	if pac.debug then
 		debug.Trace()
 	end
@@ -45,8 +45,13 @@ function urlobj.ParseObj(data)
 		end
 	end
 		
+	local submodel
+		
 	for _, parts in pairs(lines) do
-		if parts[1] == "f" and #parts > 3 then
+		if parts[1] == "g" then
+			submodel = {}
+			outputs[parts[2]] = submodel
+		elseif parts[1] == "f" and #parts > 3 then
 			local first, previous
 
 			for i = 2, #parts do
@@ -80,17 +85,22 @@ function urlobj.ParseObj(data)
 						v3.v = texcoords[1 + (tonumber(previous[2]) - 1) * 2 + 1]%1
 					end
 					
-					table_insert(output, v1)
-					table_insert(output, v2)
-					table_insert(output, v3)
+					if not submodel then
+						submodel = {}
+						outputs["none"] = submodel
+					end
+
+					table_insert(submodel, v1)
+					table_insert(submodel, v2)
+					table_insert(submodel, v3)
 				end
 
 				previous = current
 			end
 		end
 	end
-				
-	return output
+
+	return outputs
 end
 
 function urlobj.CreateObj(obj_str)	
@@ -100,12 +110,14 @@ function urlobj.CreateObj(obj_str)
 		MsgN("pac3 obj parse error %q ", res)
 		return
 	end
-	
-	local mesh = Mesh()
-	
-	mesh:BuildFromTriangles(res)
 
-	return mesh
+	for name, data in pairs(res) do
+		local mesh = Mesh()
+		mesh:BuildFromTriangles(data)
+		res[name] = mesh
+	end
+	
+	return res
 end
 
 local enable = CreateConVar("pac_enable_urlobj", "1")
