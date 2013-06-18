@@ -436,7 +436,7 @@ function PART:SetModel(var)
 				
 				self:SetAlpha(0)
 			end
-		end, skip_cache)
+		end, skip_cache, true)
 		
 		self.Model = var
 		return

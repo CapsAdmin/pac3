@@ -13,7 +13,7 @@ end)
 local table_insert = table.insert
 local tonumber = tonumber
 
-function urlobj.ParseObj(data)
+function urlobj.ParseObj(data, merge_models)
 	debug.sethook()
 
 	local positions = {}
@@ -48,7 +48,7 @@ function urlobj.ParseObj(data)
 	local submodel
 		
 	for _, parts in pairs(lines) do
-		if parts[1] == "g" then
+		if parts[1] == "g" and not merge_models then
 			submodel = {}
 			outputs[parts[2]] = submodel
 		elseif parts[1] == "f" and #parts > 3 then
@@ -103,8 +103,8 @@ function urlobj.ParseObj(data)
 	return outputs
 end
 
-function urlobj.CreateObj(obj_str)	
-	local ok, res = pcall(urlobj.ParseObj, obj_str)
+function urlobj.CreateObj(obj_str, merge_models)	
+	local ok, res = pcall(urlobj.ParseObj, obj_str, merge_models)
 	
 	if not ok then
 		MsgN("pac3 obj parse error %q ", res)
@@ -122,7 +122,7 @@ end
 
 local enable = CreateConVar("pac_enable_urlobj", "1")
 
-function urlobj.GetObjFromURL(url, callback, skip_cache)
+function urlobj.GetObjFromURL(url, callback, skip_cache, merge_models)
 	if not enable:GetBool() then return end
 
 	url = url:gsub("https://", "http://")
@@ -145,7 +145,7 @@ function urlobj.GetObjFromURL(url, callback, skip_cache)
 			old(...)
 		end
 	else
-		urlobj.Queue[url] = {callback = callback, tries = 0}
+		urlobj.Queue[url] = {callback = callback, tries = 0, merge_models = merge_models}
 	end
 end
 
@@ -177,7 +177,7 @@ function urlobj.Think()
 					
 					pac.dprint("%s", obj_str)
 
-					local obj = urlobj.CreateObj(obj_str)
+					local obj = urlobj.CreateObj(obj_str, data.merge_models)
 					
 					urlobj.Cache[url] = obj
 					urlobj.Queue[url] = nil
