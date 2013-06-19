@@ -1,47 +1,38 @@
 pace.PartTree = {
-	entity = {
-		animation = true,
-		holdtype = true,
-		bone = true,
-		poseparameter = true,
-		material = true,
-		effect = true,
-		bodygroup = true,
-	},
+	
+	sounds = {
+		ogg = true,
+		sound = true,	
+	},	
 
 	model = {
-		clip = true,
-		halo = true,
 		animation = true,
 		physics = true,
-		jiggle = true, 
-		bone = true,
-		effect = true,
-		material = true,
+		holdtype = true,
 		bodygroup = true,
 	},
 
 	modifiers = {
-		animation = true,
-		bodygroup = true,
 		proxy = true,
 		material = true,
-		poseparameter = true,
-		fog = true,   
-		clip = true,     
+		poseparameter = true, 
+		clip = true, 
+		bone = true,
+		jiggle = true,
 	},
 
 	effects = {
 		shake = true,
 		light = true,
-		sound = true,
-		ogg = true,
 		sunbeams = true,
 		effect = true,
 		particles = true,
 		trail = true,
 		sprite = true,
 		beam = true,
+		halo = true,
+		fog = true,
+		
 	},
 
 	advanced = {
