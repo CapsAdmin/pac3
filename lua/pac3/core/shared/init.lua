@@ -6,6 +6,7 @@ include("pac_weapon.lua")
 include("modifiers.lua")
 include("footsteps_fix.lua")
 include("projectiles.lua")
+include("boneanimlib.lua")
 
 local cvar = CreateConVar("pac_restrictions", "0", FCVAR_REPLICATED)
 

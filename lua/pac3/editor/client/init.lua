@@ -30,6 +30,8 @@ include("spawnmenu.lua")
 include("wiki.lua")
 include("examples.lua")
 include("about.lua")
+include("animeditor.lua")
+
 
 pace.ActivePanels = pace.ActivePanels or {}
 pace.Editor = NULL

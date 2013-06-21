@@ -230,14 +230,36 @@ local ORIGIN_RESET = Vector(0,0,0)
 local ANGLE_RESET = Angle(0,0,0)
 
 function pac.ResetBones(ent)
+	ent.pac_boneanim = ent.pac_boneanim or {positions = {}, angles = {}}
+		
 	local count = ent:GetBoneCount() or -1
 	
 	if count > 1 then
 		for i = 0, count do
 			ent:ManipulateBoneScale(i, SCALE_RESET)
-			ent:ManipulateBonePosition(i, ORIGIN_RESET)
-			ent:ManipulateBoneAngles(i, ANGLE_RESET)
+			ent:ManipulateBonePosition(i, ent.pac_boneanim.positions[i] or ORIGIN_RESET)
+			ent:ManipulateBoneAngles(i, ent.pac_boneanim.angles[i] or ANGLE_RESET)
 			ent:ManipulateBoneJiggle(i, 0)
 		end
+	end
+end
+
+function pac.ManipulateBonePosition(ply, id, var)
+	ply.pac_boneanim = ply.pac_boneanim or {positions = {}, angles = {}}
+
+	ply.pac_boneanim.positions[id] = var
+	
+	if not ply.pac_parts then
+		ply:ManipulateBonePosition(id, var)
+	end
+end
+
+function pac.ManipulateBoneAngles(ply, id, var)
+	ply.pac_boneanim = ply.pac_boneanim or {positions = {}, angles = {}}
+	
+	ply.pac_boneanim.angles[id] = var
+	
+	if not ply.pac_parts then
+		ply:ManipulateBoneAngles(id, var)
 	end
 end

@@ -11,6 +11,8 @@ include("libraries/urltex.lua")
 include("libraries/urlobj.lua")
 include("libraries/urlogg.lua")
 
+include("libraries/boneanimlib.lua")
+
 function pac.LoadParts()
 	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
 	
