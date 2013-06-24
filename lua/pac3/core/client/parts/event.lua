@@ -90,8 +90,13 @@ PART.Events =
 				local health = ent:Health()
 				
 				local diff = (ent.pac_last_health or health) - health
-							
-				ent.pac_last_health = health
+				
+				-- set it a frame later or else youll abort the other events of this type this frame..
+				timer.Simple(0, function() 
+					if ent:IsValid() then
+						ent.pac_last_health = health
+					end
+				end)
 				
 				return self:NumberOperator(diff, amount)
 			end
