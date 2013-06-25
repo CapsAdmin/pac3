@@ -77,7 +77,7 @@ do -- STREAM
 
         table.insert(webaudio.js_queue, script)
     end
-
+	
 	function STREAM:CallNow(fmt, ...)
         if not self.loaded then return end
 
@@ -95,12 +95,12 @@ do -- STREAM
             end
 
             self[func_name] = var
-
+			
 			-- ewww
 			if func_name == "Speed" then
 				var = var + self.pitch_mod
-			end
-
+			end	
+			
             self:Call(js_set, var)
         end
 
@@ -108,7 +108,7 @@ do -- STREAM
             return self[func_name]
         end
     end
-
+	
 	STREAM.pitch_mod = 0
 	STREAM.volume_mod = 0
 
@@ -127,7 +127,7 @@ do -- STREAM
 
     BIND("FilterType", ".filter_type = %i")
     BIND("FilterFraction", ".filter_fraction = %f", 0, function(num) return math.Clamp(num, 0, 1) end)
-
+    
     BIND("Echo", ".useEcho(%s)", false)
     BIND("EchoDelay", ".setEchoDelay(Math.ceil(audio.sampleRate * %f))", 1, function(num) return math.max(num, 0) end)
     BIND("EchoFeedback", ".echo_feedback = %f", 0.75)
@@ -310,10 +310,12 @@ do -- STREAM
 
     local stream_count = 0
 
-	local cache = {}
-
-    function webaudio.Stream(url, skip_cache)
+    function webaudio.Stream(url)
         url = url:gsub("http[s?]://", "http://")
+
+        if not url:find("http") then
+            url = "asset://garrysmod/sound/" .. url
+        end
 
         local stream = setmetatable({}, STREAM)
 
@@ -321,70 +323,11 @@ do -- STREAM
 
         stream.url = url
         stream.id = stream_count
-
+        
 		webaudio.streams[stream.id] = stream
-
-		if cache[url] and not skip_cache then
-			webaudio.html:QueueJavascript(string.format("createStream(%q, [%s], %d)", url, cache[url], stream.id, skip_cache))
-		else
-			local function callback(DATA)
-				local byte	
-				local length = #DATA
-				local i = 1
-				local id = tostring(stream)
-				
-				local chunks = {}
-				
-				local function done()					
-					local array = table.concat(chunks, ",")
-
-					cache[url] = array
-
-					webaudio.html:QueueJavascript(string.format("createStream(%q, [%s], %d)", url, cache[url], stream.id))
-					
-					hook.Remove("Think", id)
-				end
-				
-				hook.Add("Think", id, function()
-					if not stream:IsValid() then hook.Remove("Think", id) return end 
-					
-					local chunk = {}
-					
-					for _ = 0, 1024*4 do
-						table.insert(chunk, DATA:byte(i))
-						i = i + 1
-						
-						if i == length then
-							break
-						end
-					end
-					
-					table.insert(chunks, table.concat(chunk, ","))
-					
-					if i == length then
-						done()
-					end
-				end)
-			end
-
-			if not url:find("http") then
-				local file = file.Open("sound/" .. url, "rb", "GAME")
-				
-				if file then
-				
-					local data = file:Read(file:Size())
-									 
-					callback(data) 
-				elseif stream.OnError then
-					stream:OnError("could not find " .. "sound/" .. url)
-				end
-				
-				file:Close()
-			else
-				http.Fetch(url, callback)
-			end
-		end
-
+		
+        webaudio.html:QueueJavascript(string.format("createStream(%q, %d)", url, stream.id))
+		
         return stream
     end
 end
@@ -446,10 +389,10 @@ hook.Add("Think", "webaudio", function()
                             end
 
                             stream:SetMaxLoopCount(stream.MaxLoopCount)
-
+                            
                             stream:SetEcho(stream:GetEcho())
                             stream:SetEchoFeedback(stream:GetEchoFeedback())
-                            stream:SetEchoDelay(stream:GetEchoDelay())
+                            stream:SetEchoDelay(stream:GetEchoDelay())                            
 
                             if stream.OnLoad then
                                 stream:OnLoad()
@@ -539,7 +482,7 @@ function open()
     {
         var outl = event.outputBuffer.getChannelData(0);
         var outr = event.outputBuffer.getChannelData(1);
-
+    
         for(var i = 0; i < event.outputBuffer.length; ++i)
         {
             outl[i] = 0;
@@ -554,10 +497,10 @@ function open()
             {
                 continue;
             }
-
+            
             var echol
             var echor
-
+            
             if (stream.use_echo && stream.echo_buffer)
             {
                 echol = stream.echo_buffer.getChannelData(0);
@@ -597,19 +540,19 @@ function open()
                     else
                     {
                         break
-                    }
+                    }              
                 }
                 else
                 {
                     stream.done_playing = false
-                }
+                }                
 
-                var index = (stream.position >> 0) % length;
+                var index = (stream.position >> 0) % length;                
                 var echo_index = (stream.position >> 0) % stream.echo_delay;
-
+                
                 var left = 0
                 var right = 0
-
+                
                 if (!stream.done_playing)
                 {
                     // filters
@@ -617,7 +560,7 @@ function open()
                     {
                         sml = sml + (inl[index] - sml) * stream.filter_fraction
                         smr = smr + (inr[index] - smr) * stream.filter_fraction
-
+    
                         if (stream.filter_type == 2)
                         {
                             left = (inl[index] - sml) * stream.vol_left_smooth
@@ -635,12 +578,12 @@ function open()
                         right = inr[index] * stream.vol_right_smooth
                     }
                 }
-
+                
                 if (stream.use_echo)
-                {
+                {   
                     echol[echo_index] = echol[echo_index] * stream.echo_feedback + left
                     echor[echo_index] = echor[echo_index] * stream.echo_feedback + right
-
+                    
                     outl[j] += echol[echo_index]
                     outr[j] += echor[echo_index]
                 }
@@ -648,8 +591,8 @@ function open()
                 {
                     outl[j] += left
                     outr[j] += right
-                }
-
+                }                                
+                
                 stream.position += stream.speed_smooth
             }
         }
@@ -674,7 +617,7 @@ function close()
 
 var buffer_cache = []
 
-function decode_buffer(data, callback, url, skip_cache, id)
+function download_buffer(url, callback, skip_cache, id)
 {
     if (!skip_cache && buffer_cache[url])
     {
@@ -683,33 +626,52 @@ function decode_buffer(data, callback, url, skip_cache, id)
         return
     }
 
-	audio.decodeAudioData(
-		data.buffer,
+    var request = new XMLHttpRequest
 
-		function(buffer)
-		{
-			lua.print("decoded " + url + " successfully")
+    request.open("GET", url)
+    request.responseType = "arraybuffer"
+    request.send()
 
-			callback(buffer)
+    request.onload = function()
+    {
+        lua.print("decoding " + url + " " + request.response.byteLength + " ...")
 
-			buffer_cache[url] = buffer
-		},
+        audio.decodeAudioData(request.response,
 
-		function(err)
-		{
-			lua.print("decoding error " + url + " " + err)
-			lua.message("stream", "call", id, "OnError", "decoding failed", err)
-		}
-	)
+            function(buffer)
+            {
+                lua.print("decoded " + url + " successfully")
+
+                callback(buffer)
+
+                buffer_cache[url] = buffer
+            },
+
+            function(err)
+            {
+                lua.print("decoding error " + url + " " + err)
+				lua.message("stream", "call", id, "OnError", "decoding failed", err)
+            }
+        )
+    }
+
+    request.onprogress = function(event)
+    {
+        lua.print("downloading " +  (event.loaded / event.total) * 100)
+    }
+
+    request.onerror = function()
+    {
+        lua.print("downloading " + url + " errored")
+		lua.message("stream", "call", id, "OnError", "download failed")
+    };
 }
 
-function createStream(url, data, id, skip_cache)
+function createStream(url, id, skip_cache)
 {
-	var data = new Uint8Array(data);
-
     lua.print("Loading " + url)
 
-    decode_buffer(data, function(buffer)
+    download_buffer(url, function(buffer)
     {
         var stream = {}
 
@@ -728,7 +690,7 @@ function createStream(url, data, id, skip_cache)
         stream.filter_type = 0
         stream.filter_fraction = 1
         stream.done_playing = false
-
+        
         stream.use_echo = false
         stream.echo_feedback = 0.75
         stream.echo_buffer = false
@@ -751,10 +713,10 @@ function createStream(url, data, id, skip_cache)
         {
             // later
         }
-
+		
 		stream.useEcho = function(b) {
 			stream.use_echo = b
-
+			
 			if (b)
 			{
 				stream.setEchoDelay(stream.echo_delay)
@@ -764,24 +726,24 @@ function createStream(url, data, id, skip_cache)
 				stream.echo_buffer = undefined
 			}
 		}
-
+		        
         stream.setEchoDelay = function(x) {
-
+		
             if(stream.use_echo && (!stream.echo_buffer || (x != stream.echo_buffer.length))) {
                 var size = 1;
-
+                
                 while((size <<= 1) < x);
-
+                
 				stream.echo_buffer = audio.createBuffer(2, size, audio.sampleRate);
             }
-
+            
             stream.echo_delay = x;
         }
-
+        
         streams[id] = stream
 
-        lua.message("stream", "loaded", id)
-    }, url, skip_cache, id)
+        lua.message("stream", "loaded", id, buffer.length)
+    }, skip_cache, id)
 }
 
 function destroyStream(id)
