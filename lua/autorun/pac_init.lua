@@ -1,6 +1,4 @@
-if SERVER then		
-	AddCSLuaFile()
-		
+if SERVER then				
 	local function add_files(dir)
 		local files, folders = file.Find(dir .. "*", "LUA")
 		
