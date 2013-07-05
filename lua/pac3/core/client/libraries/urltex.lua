@@ -16,7 +16,10 @@ end
 
 local enable = CreateConVar("pac_enable_urltex", "1")
 
-function urltex.GetMaterialFromURL(url, callback, skip_cache, shader)
+function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size_hack)
+	if size_hack == nil then
+		size_hack = true
+	end
 	shader = shader or "VertexLitGeneric"
 	if not enable:GetBool() then return end
 	
@@ -36,7 +39,7 @@ function urltex.GetMaterialFromURL(url, callback, skip_cache, shader)
 			old(...)
 		end
 	else
-		urltex.Queue[url] = {callback = callback, tries = 0}
+		urltex.Queue[url] = {callback = callback, tries = 0, size = size, size_hack = size_hack}
 	end
 end
 
@@ -61,6 +64,8 @@ function urltex.StartDownload(url, data)
 	if urltex.ActivePanel:IsValid() then
 		urltex.ActivePanel:Remove()
 	end
+	
+	local size = data.size or urltex.TextureSize
 
 	local id = "urltex_download_" .. url
 	
@@ -68,19 +73,19 @@ function urltex.StartDownload(url, data)
 	pnl:SetVisible(true)
 	--pnl:SetPos(50,50)
 	pnl:SetPos(ScrW()-1, ScrH()-1)
-	pnl:SetSize(urltex.TextureSize, urltex.TextureSize)
+	pnl:SetSize(size, size)
 	pnl:SetHTML(
 		[[
 			<style type="text/css">
 				html 
 				{			
 					overflow:hidden;
-					margin: -8px -8px;
+					]].. (data.size_hack and "margin: -8px -8px;" or "margin: 0px 0px;") ..[[
 				}
 			</style>
 			
 			<body>
-				<img src="]] .. url .. [[" alt="" width="]] .. urltex.TextureSize..[[" height="]] .. urltex.TextureSize .. [[" />
+				<img src="]] .. url .. [[" alt="" width="]] .. size..[[" height="]] .. size .. [[" />
 			</body>
 		]]
 	)
