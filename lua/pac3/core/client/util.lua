@@ -246,21 +246,38 @@ do -- get set and editor vars
 			if self[uid_key] == "" and self[name_key] == "" then return end 
 	
 			if force or self[try_key] or self[uid_key] ~= "" and not self[part_key]:IsValid() then
-				for key, part in pairs(pac.GetParts()) do
-					if 
-						part ~= self and 
-						self[part_key] ~= part and 
-						part:GetPlayerOwner() == self:GetPlayerOwner() and 
-						part.UniqueID == self[uid_key] 
-					then
-						self[name_set_key](self, part)
-						break
-					end
-					
-					self[last_uid_key] = self[uid_key] 
-				end
 				
-				self[try_key] = false
+				-- match by name instead
+				if self[try_key]  then
+					for key, part in pairs(pac.GetParts()) do
+						if 
+							part ~= self and 
+							self[part_key] ~= part and 
+							part:GetPlayerOwner() == self:GetPlayerOwner() and 
+							part:GetName() == self[name_key] 
+						then
+							self[name_set_key](self, part)
+							break
+						end
+						
+						self[last_uid_key] = self[uid_key] 
+					end
+					self[try_key] = false
+				else
+					for key, part in pairs(pac.GetParts()) do
+						if 
+							part ~= self and 
+							self[part_key] ~= part and 
+							part:GetPlayerOwner() == self:GetPlayerOwner() and 
+							part.UniqueID == self[uid_key] 
+						then
+							self[name_set_key](self, part)
+							break
+						end
+						
+						self[last_uid_key] = self[uid_key] 
+					end
+				end
 			end
 		end
 		
