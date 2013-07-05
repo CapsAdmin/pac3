@@ -16,13 +16,13 @@ end
 
 local DynamicLight = DynamicLight
 
-pac3_dynamic_lights = pac3_dynamic_lights or {}
+pac.dynamic_lights = pac.dynamic_lights or {}
 
 function PART:OnDraw(owner, pos, ang)
 	local id = tonumber(self.UniqueID)
-	self.Params = self.Params or pac3_dynamic_lights[id] or DynamicLight(id)
-	if not pac3_dynamic_lights[id] then
-		pac3_dynamic_lights[id] = self.Params
+	self.Params = self.Params or pac.dynamic_lights[id] or DynamicLight(0)
+	if not pac.dynamic_lights[id] then
+		pac.dynamic_lights[id] = self.Params
 	end
 	local params = self.Params
 	if params then
@@ -37,7 +37,7 @@ function PART:OnDraw(owner, pos, ang)
 		params.b = self.Color.b		
 		
 		-- 100000000 constant is better than calling pac.RealTime
-		params.DieTime = 1000000000000 -- pac.RealTime
+		params.DieTime = pac.RealTime
 	end
 end
 
