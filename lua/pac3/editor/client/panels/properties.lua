@@ -14,6 +14,24 @@ local function FIX_MENU(menu)
 	menu:SetPos(pace.Editor:GetPos() + pace.Editor:GetWide(), gui.MouseY() - (menu:GetTall() * 0.5))
 end
 
+local function populate_part_menu(menu, part, func)
+	if part:HasChildren() then
+		local menu, pnl = menu:AddSubMenu(part:GetName(), function()
+			pace.current_part[func](pace.current_part, part)
+		end)
+		
+		pnl:SetImage(pace.GetIconFromClassName(part.ClassName))
+		
+		for key, part in pairs(part:GetChildren()) do
+			populate_part_menu(menu, part, func)
+		end
+	else
+		menu:AddOption(part:GetName(), function()
+			pace.current_part[func](pace.current_part, part)
+		end):SetImage(pace.GetIconFromClassName(part.ClassName))
+	end
+end
+
 pace.ActiveSpecialPanel = NULL
 
 function pace.SafeRemoveSpecialPanel()
@@ -195,6 +213,7 @@ do -- list
 			end
 
 			if pnl then
+				pnl.CurrentKey = key
 				obj.editor_pnl = pnl
 				
 				local val = obj["Get" .. key](obj)
@@ -252,7 +271,8 @@ do -- list
 				pnl = pace.CreatePanel("properties_" .. T)
 			end
 
-			if pnl then				
+			if pnl then	
+				pnl.CurrentKey = key
 				pnl:SetValue(val)
 				pnl.LimitValue = pace.PropertyLimits[key]
 				pnl.OnValueChanged = data.callback
@@ -358,8 +378,8 @@ do -- base editable
 			btn:SetSize(16, 16)
 			btn:Dock(RIGHT)
 			btn:SetText("...")
-			btn.DoClick = function() self:SpecialCallback() end
-			btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2() end or btn.DoClick
+			btn.DoClick = function() self:SpecialCallback(self.CurrentKey) end
+			btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
 		end
 		
 		if DLabel and DLabel.Init then
@@ -627,7 +647,7 @@ do -- vector
 				btn:Dock(RIGHT)
 				btn:SetText("...")
 				btn.DoClick = function() self:SpecialCallback() end
-				btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2() end or btn.DoClick
+				btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
 			end
 		end
 		
@@ -901,33 +921,15 @@ do -- part
 			self.OnValueChanged(part)
 		end)
 	end
-	
-	local function populate(menu, part)
-		if part:HasChildren() then
-			local menu, pnl = menu:AddSubMenu(part:GetName(), function()
-				pace.current_part:SetParent(part)
-			end)
-			
-			pnl:SetImage(pace.GetIconFromClassName(part.ClassName))
-			
-			for key, part in pairs(part:GetChildren()) do
-				populate(menu, part)
-			end
-		else
-			menu:AddOption(part:GetName(), function()
-				pace.current_part:SetParent(part)
-			end):SetImage(pace.GetIconFromClassName(part.ClassName))
-		end
-	end
-	
-	function PANEL:SpecialCallback2()
+		
+	function PANEL:SpecialCallback2(key)
 		local menu = DermaMenu()
 		
 		menu:MakePopup()		
-			
+		
 		for _, part in pairs(pac.GetParts(true)) do
 			if not part:HasParent() then
-				populate(menu, part)
+				populate_part_menu(menu, part, "Set" .. key)
 			end
 		end
 		
@@ -969,7 +971,7 @@ do -- owner
 			menu:AddOption(name, function() pace.current_part:SetOwnerName(name) end)
 		end
 		
-		local entities = menu:AddSubMenu("entities", function() end)
+		local entities = menu:AddSubMenu(L"entities", function() end)
 		entities.GetDeleteSelf = function() return false end
 		for _, ent in pairs(ents.GetAll()) do
 			if ent:EntIndex() > 0 then
@@ -977,6 +979,43 @@ do -- owner
 					pace.current_part:SetOwnerName(ent:EntIndex())
 					self.OnValueChanged(ent:EntIndex())
 				end)
+			end
+		end
+		
+		FIX_MENU(menu)
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
+do -- aimpart
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_aimpartname"
+	PANEL.Base = "pace_properties_base_type"
+		
+	function PANEL:SpecialCallback()
+		pace.SelectEntity(function(ent)
+			pace.current_part:SetOwnerName(ent:EntIndex())
+			local name = pace.current_part:GetOwnerName()
+			self.OnValueChanged(name)
+			self:SetValue(L(name))
+		end)
+	end
+		
+	function PANEL:SpecialCallback2(key)
+		local menu = DermaMenu()
+		menu:MakePopup()
+				
+		for key, name in pairs(pac.AimPartNames) do
+			menu:AddOption(L(key), function() pace.current_part:SetAimPartName(name) end):SetImage("icon16/eye.png")
+		end
+		
+		local parts = menu:AddSubMenu(L"parts", function() end)
+		parts.GetDeleteSelf = function() return false end
+		for _, part in pairs(pac.GetParts(true)) do
+			if not part:HasParent() then
+				populate_part_menu(parts, part, "SetAimPartName")
 			end
 		end
 		

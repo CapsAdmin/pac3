@@ -364,6 +364,7 @@ function pace.TranslatePropertiesKey(key, obj)
 		key == "material" or
 		key == "sequence" or
 		key == "bodygroupname" or
+		key == "aimpartname" or
 		key == "code"
 	then
 		return key
@@ -384,9 +385,8 @@ function pace.TranslatePropertiesKey(key, obj)
 	if key == "variablename" and obj.ClassName == "proxy" then
 		return "proxyvars"
 	end
-	
+
 	if 
-		key == "aimpartname" or 
 		key == "parentname" or 
 		key == "followpartname" or 
 		key == "anglepartname" or 

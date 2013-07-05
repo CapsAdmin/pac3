@@ -854,6 +854,16 @@ do -- drawing. this code is running every frame
 			return self.last_bonepos, self.last_boneang
 		end
 	end
+	
+	-- since this is kind of like a hack I choose to have upper case names to avoid name conflicts with parts
+	-- the editor can use the keys as friendly names 
+	pac.AimPartNames = 
+	{
+		["local eyes"] = "LOCALEYES",
+		["player eyes"] = "PLAYEREYES",
+		["local eyes yaw"] = "LOCALEYES_YAW",
+		["local eyes pitch"] = "LOCALEYES_PITCH",
+	}
 		
 	function PART:CalcAngles(ang)
 		local owner = self:GetOwner(true)
