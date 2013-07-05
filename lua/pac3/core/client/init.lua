@@ -61,6 +61,7 @@ include("owner_name.lua")
 include("expression.lua")
 include("integration_tools.lua")
 include("mat_proxies.lua")
+include("wire_expression_extension.lua")
 
 pac.LoadParts()
 
