@@ -153,7 +153,7 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 			part:SetTable(data)
 		else		
 			if clear then
-				pac.RemoveAllParts(true, true)
+				pace.ClearParts()
 			end
 			
 			data = pace.FixBadGrouping(data)
