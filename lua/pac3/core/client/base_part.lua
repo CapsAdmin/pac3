@@ -705,7 +705,7 @@ do -- events
 	function PART:OnEvent(event, ...) end
 end
 
-function PART:Highlight(skip_children)
+function PART:Highlight(skip_children, data)
 	local tbl = {self.Entity and self.Entity:IsValid() and self.Entity or nil}
 	
 	if not skip_children then
@@ -719,9 +719,13 @@ function PART:Highlight(skip_children)
 	end
 	
 	if #tbl > 0 then
-		local pulse = math.abs(1+math.sin(pac.RealTime*20) * 255)
-		pulse = pulse + 2
-		pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
+		if data then
+			pac.haloex.Add(tbl, unpack(data))
+		else
+			local pulse = math.abs(1+math.sin(pac.RealTime*20) * 255)
+			pulse = pulse + 2
+			pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
+		end
 	end
 end
 
