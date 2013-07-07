@@ -248,7 +248,7 @@ do -- get set and editor vars
 			if force or self[try_key] or self[uid_key] ~= "" and not self[part_key]:IsValid() then
 				
 				-- match by name instead
-				if self[try_key]  then
+				if self[try_key] and not self.supress_part_name_find then
 					for key, part in pairs(pac.GetParts()) do
 						if 
 							part ~= self and 
@@ -296,9 +296,7 @@ do -- get set and editor vars
 					self[try_key] = true
 				end
 			
-				if self.supress_part_name_find then
-					PART.PartNameResolvers[part_key](self)
-				end
+				PART.PartNameResolvers[part_key](self)
 			else
 				self[name_key] = var:GetName()
 				self[uid_key] = var.UniqueID
