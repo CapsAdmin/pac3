@@ -94,7 +94,7 @@ local function CalcDrag()
 		
 		local owner = pace.current_part:GetOwner(true)
 		
-		if owner == pac.WorldEntity then
+		if owner == pac.WorldEntity and owner:IsValid() then
 			if pace.current_part:HasChildren() then
 				for key, child in pairs(pace.current_part:GetChildren()) do
 					if not child.NonPhysical then
