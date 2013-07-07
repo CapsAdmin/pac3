@@ -548,6 +548,11 @@ do -- serializing
 		self.delayed_variables = self.delayed_variables or {}
 		
 		for key, value in pairs(tbl.self) do
+			
+			-- these arent needed because parent system uses the tree structure
+			if key == "ParentUID" then continue end
+			if key == "ParentName" then continue end
+			
 			if self["Set" .. key] then
 				-- hack?? it effectively removes name confliction for other parts
 				if key:find("Name", nil, true) and key ~= "OwnerName" and key ~= "SequenceName" and key ~= "VariableName" then
@@ -560,7 +565,7 @@ do -- serializing
 					
 						table.insert(self.delayed_variables, {key = key, val = value})
 					end
-										
+					
 					self["Set" .. key](self, value)
 				end
 			elseif key ~= "ClassName" then
@@ -598,7 +603,12 @@ do -- serializing
 		for _, key in pairs(self:GetStorableVars()) do			
 			local var = COPY(self[key] and self["Get"..key](self) or self[key], key, make_copy_name)
 			
-			if var == self.DefaultVars[key] then
+			-- these arent needed because parent system uses the tree structure
+			if 	
+				key == "ParentUID" or
+				key == "ParentName" or
+				var == self.DefaultVars[key] 
+			then
 				continue
 			end
 				
