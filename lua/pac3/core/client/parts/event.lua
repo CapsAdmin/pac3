@@ -164,7 +164,7 @@ PART.Events =
 	
 	is_under_water = 
 	{
-		arguments = {{speed = "number"}},
+		arguments = {{level = "number"}},
 		callback = function(self, ent, num) 
 			ent = try_viewmodel(ent)
 			return self:NumberOperator(ent:WaterLevel(), num)
