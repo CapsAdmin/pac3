@@ -109,6 +109,7 @@ function pace.SubmitPart(data, filter)
 	end
 	
 	if not data.server_only then
+		data.player_uid = data.owner:UniqueID()
 	
 		if hook.Run("pac_SendData", filter or player.GetAll(), data) ~= false then
 			if pace.netstream then
