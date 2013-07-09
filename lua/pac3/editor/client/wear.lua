@@ -131,14 +131,34 @@ do -- from server
 	end
 end
 
-function pace.HandleReceivedData(data)
-	if data.owner:IsValid() then
+do
+	local function go(data)
 		local T = type(data.part)
 		if T == "table" then
 			pace.WearPartFromServer(data.owner, data.part)
 		elseif T ==  "string" then
 			pace.RemovePartFromServer(data.owner, data.part)
 		end
+	end
+
+	local queue = {}
+
+	timer.Create("pac_wear_queue", 1, 0, function()
+		for uid, queue in pairs(queue) do
+			local ply = player.GetByUniqueID(uid) or NULL
+			
+			if ply:IsValid() then
+				for k,v in pairs(queue) do
+					go(v)
+					queue[k] = nil
+				end
+			end
+		end
+	end)
+
+	function pace.HandleReceivedData(data)		
+		queue[data.player_uid] = queue[data.player_uid] or {}
+		table.insert(queue[data.player_uid], data)
 	end
 end
 
