@@ -44,6 +44,15 @@ function PART:OnThink()
 	end
 end
 
+function PART:OnHide()	
+	local owner = self:GetOwner()
+	
+	if owner:IsValid() then
+		owner.pac_follow_bones = owner.pac_follow_bones or {}
+		owner.pac_follow_bones[self.BoneIndex] = nil
+	end
+end
+
 function PART:GetBonePosition()
 	local owner = self:GetOwner()
 	local pos, ang
@@ -57,7 +66,30 @@ function PART:GetBonePosition()
 	return pos, ang
 end
 
+local dt = 1
+
+local function manpos(ent, id, pos)
+	ent:ManipulateBonePosition(id, pos)
+end
+
+local function manang(ent, i, ang)		
+	ent:ManipulateBoneAngles(i, ang)
+end
+
+function pac.build_bone_callback(ent)
+	if ent.pac_follow_bones then
+		for id, data in pairs(ent.pac_follow_bones) do
+			local mat = ent:GetBoneMatrix(id)
+			mat:SetAngles(data.ang)
+			mat:SetTranslation(data.pos)
+			ent:SetBoneMatrix(id, mat)
+		end
+	end
+end
+
 function PART:OnBuildBonePositions()	
+
+	dt = FrameTime() * 2
 	local owner = self:GetOwner()
 	
 	if not owner:IsValid() then return end
@@ -66,13 +98,23 @@ function PART:OnBuildBonePositions()
 	
 	local ang = self:CalcAngles(self.Angles) or self.Angles
 
+	owner.pac_follow_bones = owner.pac_follow_bones or {}
+	
 	if self.FollowPart:IsValid() then		
 		local pos, ang = self:GetBonePosition()
 		
-		pos, ang = WorldToLocal(pos, ang, self.FollowPart.cached_pos + self.Position, self.FollowPart.cached_ang + self.Angles)
-		owner:ManipulateBoneAngles(self.BoneIndex, ang) -- this should be world
-		owner:ManipulateBonePosition(self.BoneIndex, pos) -- this should be world
-	else				
+		owner.pac_follow_bones[self.BoneIndex] = owner.pac_follow_bones[self.BoneIndex] or {}
+		
+		owner.pac_follow_bones[self.BoneIndex].pos = self.FollowPart.cached_pos + self.Position
+		owner.pac_follow_bones[self.BoneIndex].ang = self.FollowPart.cached_ang + self.Angles
+		
+		if not owner.pac_follow_bones_function then
+			owner:AddCallback("BuildBonePositions", pac.build_bone_callback)
+			owner.pac_follow_bones_function = pac.build_bone_callback
+		end
+	else
+		owner.pac_follow_bones[self.BoneIndex] = nil
+		
 		if self.EyeAngles or self.AimPart:IsValid() then
 			ang.r = ang.y
 			ang.y = -ang.p			
@@ -80,15 +122,15 @@ function PART:OnBuildBonePositions()
 		
 		if self.Modify then
 			if self.RotateOrigin then
-				owner:ManipulateBonePosition(self.BoneIndex, owner:GetManipulateBonePosition(self.BoneIndex) + self.Position + self.PositionOffset)
-				owner:ManipulateBoneAngles(self.BoneIndex, owner:GetManipulateBoneAngles(self.BoneIndex) + ang + self.AngleOffset)
+				manpos(owner, self.BoneIndex, owner:GetManipulateBonePosition(self.BoneIndex) + self.Position + self.PositionOffset)
+				manang(owner, self.BoneIndex, owner:GetManipulateBoneAngles(self.BoneIndex) + ang + self.AngleOffset)
 			else
-				owner:ManipulateBoneAngles(self.BoneIndex, owner:GetManipulateBoneAngles(self.BoneIndex) + ang + self.AngleOffset)
-				owner:ManipulateBonePosition(self.BoneIndex, owner:GetManipulateBonePosition(self.BoneIndex) + self.Position + self.PositionOffset)
+				manang(owner, self.BoneIndex, owner:GetManipulateBoneAngles(self.BoneIndex) + ang + self.AngleOffset)
+				manpos(owner, self.BoneIndex, owner:GetManipulateBonePosition(self.BoneIndex) + self.Position + self.PositionOffset)
 			end
 		else
-			owner:ManipulateBoneAngles(self.BoneIndex, ang + self.AngleOffset) -- this should be world
-			owner:ManipulateBonePosition(self.BoneIndex, self.Position + self.PositionOffset) -- this should be world
+			manang(owner, self.BoneIndex, ang + self.AngleOffset) -- this should be world
+			manpos(owner, self.BoneIndex, self.Position + self.PositionOffset) -- this should be world
 		end
 	end
 	
