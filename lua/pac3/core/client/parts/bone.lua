@@ -49,7 +49,9 @@ function PART:OnHide()
 	
 	if owner:IsValid() then
 		owner.pac_follow_bones = owner.pac_follow_bones or {}
-		owner.pac_follow_bones[self.BoneIndex] = nil
+		if self.BoneIndex then
+			owner.pac_follow_bones[self.BoneIndex] = nil
+		end
 	end
 end
 
