@@ -44,14 +44,16 @@ function PART:OnThink()
 	end
 end
 
+for k,v in pairs(ents.GetAll()) do
+	v.pac_follow_bones = nil
+end
+
 function PART:OnHide()	
 	local owner = self:GetOwner()
 	
 	if owner:IsValid() then
 		owner.pac_follow_bones = owner.pac_follow_bones or {}
-		if self.BoneIndex then
-			owner.pac_follow_bones[self.BoneIndex] = nil
-		end
+		owner.pac_follow_bones[self.UniqueID] = nil
 	end
 end
 
@@ -80,11 +82,13 @@ end
 
 function pac.build_bone_callback(ent)
 	if ent.pac_follow_bones then
-		for id, data in pairs(ent.pac_follow_bones) do
-			local mat = ent:GetBoneMatrix(id)
-			mat:SetAngles(data.ang)
-			mat:SetTranslation(data.pos)
-			ent:SetBoneMatrix(id, mat)
+		for _, data in pairs(ent.pac_follow_bones) do
+			local mat = ent:GetBoneMatrix(data.bone)
+			if mat then
+				mat:SetAngles(data.ang)
+				mat:SetTranslation(data.pos)
+				ent:SetBoneMatrix(data.bone, mat)
+			end
 		end
 	end
 end
@@ -105,17 +109,18 @@ function PART:OnBuildBonePositions()
 	if self.FollowPart:IsValid() then		
 		local pos, ang = self:GetBonePosition()
 		
-		owner.pac_follow_bones[self.BoneIndex] = owner.pac_follow_bones[self.BoneIndex] or {}
+		owner.pac_follow_bones[self.UniqueID] = owner.pac_follow_bones[self.UniqueID] or {}
 		
-		owner.pac_follow_bones[self.BoneIndex].pos = self.FollowPart.cached_pos + self.Position
-		owner.pac_follow_bones[self.BoneIndex].ang = self.FollowPart.cached_ang + self.Angles
+		owner.pac_follow_bones[self.UniqueID].pos = self.FollowPart.cached_pos + self.Position
+		owner.pac_follow_bones[self.UniqueID].ang = self.FollowPart.cached_ang + self.Angles
+		owner.pac_follow_bones[self.UniqueID].bone = self.BoneIndex
 		
 		if not owner.pac_follow_bones_function then
 			owner:AddCallback("BuildBonePositions", pac.build_bone_callback)
 			owner.pac_follow_bones_function = pac.build_bone_callback
 		end
 	else
-		owner.pac_follow_bones[self.BoneIndex] = nil
+		owner.pac_follow_bones[self.UniqueID] = nil
 		
 		if self.EyeAngles or self.AimPart:IsValid() then
 			ang.r = ang.y
