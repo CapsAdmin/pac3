@@ -1,10 +1,21 @@
 -- event
 concommand.Add("pac_event", function(ply, _, args)
 	if not args[1] then return end
+	
+	local event = args[1]
+	local extra = args[2] or 0
+	
+	if extra == "2" then	
+		ply.pac_event_toggles = ply.pac_event_toggles or {}
+		ply.pac_event_toggles[event] = not ply.pac_event_toggles[event]
+		
+		extra = ply.pac_event_toggles[event] and "1" or "0"
+	end
+	
 	umsg.Start("pac_event")
 		umsg.Entity(ply)
-		umsg.String(args[1])
-		umsg.Char(args[2] or 0)
+		umsg.String(event)
+		umsg.Char(extra)
 	umsg.End()
 end)
 
