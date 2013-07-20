@@ -555,7 +555,7 @@ do -- serializing
 			
 			-- ughhh
 			if key ~= "AimPartName" and self.IngoreSetKeys and self.IngoreSetKeys[key] then continue end
-			if key == "AimPartName" and table.HasValue(pac.AimPartNames, value) then
+			if key == "AimPartName" and not table.HasValue(pac.AimPartNames, value) then
 				continue
 			end
 						
