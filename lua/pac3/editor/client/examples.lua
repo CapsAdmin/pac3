@@ -1,6 +1,296 @@
 pace.example_outfits = {}
 --pace.example_outfits[""] = {}
 
+pace.example_outfits["manual bone merge"] = {[1] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+					},
+					["self"] = {
+						["ClassName"] = "bone",
+						["UniqueID"] = "856336120",
+						["GlobalID"] = "709967943",
+						["FollowPartName"] = "left toe",
+						["Bone"] = "bip toe left",
+						["Name"] = "bip toe left",
+						["FollowPartUID"] = "955774632",
+					},
+				},
+				[2] = {
+					["children"] = {
+					},
+					["self"] = {
+						["GlobalID"] = "3622175859",
+						["ClassName"] = "bone",
+						["UniqueID"] = "3728373108",
+						["FollowPartUID"] = "1994207982",
+						["FollowPartName"] = "left knee",
+						["Bone"] = "bip knee left",
+						["Name"] = "bip knee left",
+						["Scale"] = Vector(2, 1, 1),
+					},
+				},
+				[3] = {
+					["children"] = {
+					},
+					["self"] = {
+						["GlobalID"] = "1308909295",
+						["ClassName"] = "bone",
+						["UniqueID"] = "2336138590",
+						["FollowPartUID"] = "1948671510",
+						["FollowPartName"] = "right knee",
+						["Bone"] = "bip knee right",
+						["Name"] = "bip knee right",
+						["Scale"] = Vector(2, 1, 1),
+					},
+				},
+				[4] = {
+					["children"] = {
+					},
+					["self"] = {
+						["ClassName"] = "bone",
+						["UniqueID"] = "2889420274",
+						["GlobalID"] = "1405862771",
+						["FollowPartName"] = "right foot",
+						["Bone"] = "bip foot right",
+						["Name"] = "bip foot right",
+						["FollowPartUID"] = "672240445",
+					},
+				},
+				[5] = {
+					["children"] = {
+					},
+					["self"] = {
+						["ClassName"] = "bone",
+						["UniqueID"] = "3691159707",
+						["GlobalID"] = "3303553689",
+						["FollowPartName"] = "right hand",
+						["Bone"] = "bip lowerarm right",
+						["Name"] = "bip lowerarm right",
+						["FollowPartUID"] = "4259035567",
+					},
+				},
+				[6] = {
+					["children"] = {
+					},
+					["self"] = {
+						["ClassName"] = "bone",
+						["UniqueID"] = "2224813423",
+						["GlobalID"] = "4089134324",
+						["FollowPartName"] = "left foot",
+						["Bone"] = "bip foot left",
+						["Name"] = "bip foot left",
+						["FollowPartUID"] = "2995259331",
+					},
+				},
+				[7] = {
+					["children"] = {
+					},
+					["self"] = {
+						["ClassName"] = "bone",
+						["UniqueID"] = "3978245216",
+						["GlobalID"] = "45516083",
+						["FollowPartName"] = "right toe",
+						["Bone"] = "bip toe right",
+						["Name"] = "bip toe right",
+						["FollowPartUID"] = "3543216241",
+					},
+				},
+				[8] = {
+					["children"] = {
+					},
+					["self"] = {
+						["ClassName"] = "bone",
+						["UniqueID"] = "2062752203",
+						["GlobalID"] = "2953200370",
+						["FollowPartName"] = "left hand",
+						["Bone"] = "bip lowerarm left",
+						["Name"] = "bip lowerarm left",
+						["FollowPartUID"] = "2558472022",
+					},
+				},
+			},
+			["self"] = {
+				["Model"] = "models/player/items/scout/xms_scout_elf_sneakers.mdl",
+				["ClassName"] = "model",
+				["UniqueID"] = "2394819278",
+				["EditorExpand"] = true,
+				["Translucent"] = true,
+				["Bone"] = "none",
+				["Name"] = "xms scout elf sneakers",
+				["GlobalID"] = "943687162",
+			},
+		},
+		[2] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+					},
+					["self"] = {
+						["Angles"] = Angle(-90, -90, 0),
+						["UniqueID"] = "3543216241",
+						["Size"] = 0,
+						["GlobalID"] = "1363960902",
+						["Bone"] = "right toe",
+						["Name"] = "right toe",
+						["ClassName"] = "model",
+					},
+				},
+				[2] = {
+					["children"] = {
+					},
+					["self"] = {
+						["Angles"] = Angle(-90, 90, 0),
+						["UniqueID"] = "2995259331",
+						["Size"] = 0,
+						["GlobalID"] = "1125095137",
+						["Bone"] = "left foot",
+						["Name"] = "left foot",
+						["ClassName"] = "model",
+					},
+				},
+				[3] = {
+					["children"] = {
+					},
+					["self"] = {
+						["Angles"] = Angle(-90, 180, -90),
+						["UniqueID"] = "955774632",
+						["Size"] = 0,
+						["GlobalID"] = "1363960902",
+						["Bone"] = "left toe",
+						["Name"] = "left toe",
+						["ClassName"] = "model",
+					},
+				},
+				[4] = {
+					["children"] = {
+					},
+					["self"] = {
+						["Size"] = 0,
+						["Angles"] = Angle(3, 4, 90),
+						["Position"] = Vector(-22, -3, 2),
+						["UniqueID"] = "1948671510",
+						["GlobalID"] = "934497996",
+						["Bone"] = "right calf",
+						["Name"] = "right knee",
+						["ClassName"] = "model",
+					},
+				},
+				[5] = {
+					["children"] = {
+					},
+					["self"] = {
+						["Size"] = 0,
+						["Angles"] = Angle(-3, 4, 90),
+						["Position"] = Vector(-22, -3, -2),
+						["UniqueID"] = "1994207982",
+						["GlobalID"] = "934497996",
+						["Bone"] = "left calf",
+						["Name"] = "left knee",
+						["ClassName"] = "model",
+					},
+				},
+				[6] = {
+					["children"] = {
+					},
+					["self"] = {
+						["Angles"] = Angle(-90, -90, 0),
+						["UniqueID"] = "672240445",
+						["Size"] = 0,
+						["GlobalID"] = "672495920",
+						["Bone"] = "right foot",
+						["Name"] = "right foot",
+						["ClassName"] = "model",
+					},
+				},
+				[7] = {
+					["children"] = {
+					},
+					["self"] = {
+						["Size"] = 0,
+						["Angles"] = Angle(0, 0, 90),
+						["Position"] = Vector(-8, 0, 0),
+						["UniqueID"] = "2558472022",
+						["GlobalID"] = "1787820196",
+						["Bone"] = "left hand",
+						["Name"] = "left hand",
+						["ClassName"] = "model",
+					},
+				},
+				[8] = {
+					["children"] = {
+					},
+					["self"] = {
+						["Size"] = 0,
+						["Angles"] = Angle(0, 0, 90),
+						["Position"] = Vector(-8, 0, 0),
+						["UniqueID"] = "4259035567",
+						["GlobalID"] = "1150075281",
+						["Bone"] = "right hand",
+						["Name"] = "right hand",
+						["ClassName"] = "model",
+					},
+				},
+			},
+			["self"] = {
+				["GlobalID"] = "273193212",
+				["UniqueID"] = "495335707",
+				["EditorExpand"] = true,
+				["Name"] = "dummy skeleton",
+				["ClassName"] = "group",
+			},
+		},
+		[3] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+					},
+					["self"] = {
+						["ClassName"] = "bone",
+						["Size"] = 0.4,
+						["UniqueID"] = "3767891771",
+						["GlobalID"] = "3893014168",
+						["Bone"] = "left calf",
+						["Name"] = "left calf",
+						["ScaleChildren"] = true,
+					},
+				},
+				[2] = {
+					["children"] = {
+					},
+					["self"] = {
+						["ClassName"] = "bone",
+						["Size"] = 0.4,
+						["UniqueID"] = "3080702787",
+						["GlobalID"] = "3893014168",
+						["Bone"] = "right calf",
+						["Name"] = "right calf",
+						["ScaleChildren"] = true,
+					},
+				},
+			},
+			["self"] = {
+				["GlobalID"] = "1780510150",
+				["UniqueID"] = "677173573",
+				["EditorExpand"] = true,
+				["Name"] = "player bones",
+				["ClassName"] = "group",
+			},
+		},
+	},
+	["self"] = {
+		["ClassName"] = "group",
+		["UniqueID"] = "36651421",
+		["EditorExpand"] = true,
+		["GlobalID"] = "3379187226",
+		["Name"] = "elf sneakers",
+		["Description"] = "add parts to me!",
+	},
+},
+}
+
 pace.example_outfits["realistic footsteps"] = {[1] = {
 	["children"] = {
 		[1] = {
