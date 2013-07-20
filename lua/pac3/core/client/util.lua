@@ -210,7 +210,7 @@ do -- get set and editor vars
 	
 	function pac.SetupPartName(PART, key)		
 		PART.PartNameResolvers = PART.PartNameResolvers or {}
-		
+				
 		local part_key = key
 		local part_set_key = "Set" .. part_key
 		
@@ -223,6 +223,10 @@ do -- get set and editor vars
 		local try_key = "try_" .. name_key:lower()
 		
 		local name_find_count_key = name_key:lower() .. "_try_count"
+		
+		-- these keys are ignored when table is set. it's kind of a hack..
+		PART.IngoreSetKeys = PART.IgnoreSetKeys or {}
+		PART.IngoreSetKeys[name_key] = true
 		
 		pac.EndStorableVars()
 			pac.GetSet(PART, part_key, pac.NULL)

@@ -45,15 +45,15 @@ function PART:OnThink()
 end
 
 for k,v in pairs(ents.GetAll()) do
-	v.pac_follow_bones = nil
+	v.pac_bone_setup_data = nil
 end
 
 function PART:OnHide()	
 	local owner = self:GetOwner()
 	
 	if owner:IsValid() then
-		owner.pac_follow_bones = owner.pac_follow_bones or {}
-		owner.pac_follow_bones[self.UniqueID] = nil
+		owner.pac_bone_setup_data = owner.pac_bone_setup_data or {}
+		owner.pac_bone_setup_data[self.UniqueID] = nil
 	end
 end
 
@@ -114,7 +114,6 @@ end
 
 function pac.build_bone_callback(ent)
 	if ent.pac_bone_setup_data then
-		local setup = false
 		for uid, data in pairs(ent.pac_bone_setup_data) do
 			local part = data.part or NULL
 			
@@ -122,16 +121,13 @@ function pac.build_bone_callback(ent)
 				local mat = ent:GetBoneMatrix(data.bone)
 				if mat then	
 					
-					if part.FollowPart:IsValid() then
-						
-						setup = true
-						
+					if part.FollowPart:IsValid() then						
 						if data.ang then
-							mat:SetAngles(data.ang)
+							mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart.cached_ang)
 						end		
 						
 						if data.pos then
-							mat:SetTranslation(data.pos)
+							mat:SetTranslation(part.Position + part.PositionOffset + part.FollowPart.cached_pos)
 						end							
 					else
 						if data.pos then
@@ -158,9 +154,6 @@ function pac.build_bone_callback(ent)
 				ent.pac_bone_setup_data[uid] = nil
 			end
 		end
-		
-		
-		ent.pac_setup_bones = setup
 	end
 end
 
@@ -190,12 +183,7 @@ function PART:OnBuildBonePositions()
 		owner.pac_follow_bones_function = pac.build_bone_callback
 	end
 	
-	if self.FollowPart:IsValid() then		
-		local pos, ang = self:GetBonePosition()
-				
-		owner.pac_bone_setup_data[self.UniqueID].pos = self.FollowPart.cached_pos + self.Position
-		owner.pac_bone_setup_data[self.UniqueID].ang = self.FollowPart.cached_ang + self.Angles
-	else	
+	if not self.FollowPart:IsValid() then			
 		if self.EyeAngles or self.AimPart:IsValid() then
 			ang.r = ang.y
 			ang.y = -ang.p			
@@ -216,11 +204,6 @@ function PART:OnBuildBonePositions()
 	owner:ManipulateBoneJiggle(self.BoneIndex, type(self.Jiggle) == "number" and self.Jiggle or (self.Jiggle and 1 or 0)) -- afaik anything but 1 is not doing anything at all
 	
 	manscale(owner, self.BoneIndex, self.Scale * self.Size, self)
-	
-	if owner.pac_setup_bones then
-		owner:SetupBones()
-		owner:InvalidateBoneCache()
-	end
 end
 
 pac.RegisterPart(PART)
