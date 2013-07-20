@@ -553,6 +553,12 @@ do -- serializing
 			if key == "ParentUID" then continue end
 			if key == "ParentName" then continue end
 			
+			-- ughhh
+			if key ~= "AimPartName" and self.IngoreSetKeys and self.IngoreSetKeys[key] then continue end
+			if key == "AimPartName" and table.HasValue(pac.AimPartNames, value) then
+				continue
+			end
+						
 			if self["Set" .. key] then
 				-- hack?? it effectively removes name confliction for other parts
 				if key:find("Name", nil, true) and key ~= "OwnerName" and key ~= "SequenceName" and key ~= "VariableName" then
