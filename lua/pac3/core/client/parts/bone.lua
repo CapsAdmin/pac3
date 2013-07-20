@@ -3,12 +3,12 @@ local PART = {}
 PART.ClassName = "bone"
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Modify", true)
-	pac.GetSet(PART, "RotateOrigin", true)
-
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
 	pac.GetSet(PART, "Size", 1)
 	pac.GetSet(PART, "Jiggle", false)
+	pac.GetSet(PART, "ScaleChildren", false)
+	pac.GetSet(PART, "AlternativeBones", false)
+	pac.GetSet(PART, "MoveChildrenToOrigin", false)
 	pac.SetupPartName(PART, "FollowPart")
 pac.EndStorableVars()
 
@@ -72,24 +72,95 @@ end
 
 local dt = 1
 
-local function manpos(ent, id, pos)
-	ent:ManipulateBonePosition(id, pos)
+local function manpos(ent, id, pos, self, force_set)
+	if self.AlternativeBones then
+		ent.pac_bone_setup_data[self.UniqueID].pos = self.Position + self.PositionOffset
+	else
+		ent:ManipulateBonePosition(id, ent:GetManipulateBonePosition(id) + pos)
+	end
 end
 
-local function manang(ent, i, ang)		
-	ent:ManipulateBoneAngles(i, ang)
+local function manang(ent, id, ang, self, force_set)		
+	if self.AlternativeBones then	
+		ent.pac_bone_setup_data[self.UniqueID].ang = self.Angles + self.AngleOffset		
+	else
+		ent:ManipulateBoneAngles(id, ent:GetManipulateBoneAngles(id) + ang)
+	end
+end
+
+local function manscale(ent, id, scale, self, force_set)
+	if self.AlternativeBones then		
+		ent.pac_bone_setup_data[self.UniqueID].scale = self.Scale * self.Size		
+	else
+		ent:ManipulateBoneScale(id, ent:GetManipulateBoneScale(id) * self.Scale * self.Size)
+	end
+end
+
+local VEC0 = Vector(0,0,0)
+
+local function scale_children(owner, id, scale, origin)
+	for _, id in pairs(owner:GetChildBones(id)) do
+		local mat = owner:GetBoneMatrix(id)
+		if mat then	
+			if origin then
+				mat:SetTranslation(origin)
+			end
+			mat:Scale(mat:GetScale() * scale)
+			owner:SetBoneMatrix(id, mat)
+		end
+		scale_children(owner, id, scale, origin)
+	end
 end
 
 function pac.build_bone_callback(ent)
-	if ent.pac_follow_bones then
-		for _, data in pairs(ent.pac_follow_bones) do
-			local mat = ent:GetBoneMatrix(data.bone)
-			if mat then
-				mat:SetAngles(data.ang)
-				mat:SetTranslation(data.pos)
-				ent:SetBoneMatrix(data.bone, mat)
+	if ent.pac_bone_setup_data then
+		local setup = false
+		for uid, data in pairs(ent.pac_bone_setup_data) do
+			local part = data.part or NULL
+			
+			if part:IsValid() then
+				local mat = ent:GetBoneMatrix(data.bone)
+				if mat then	
+					
+					if part.FollowPart:IsValid() then
+						
+						setup = true
+						
+						if data.ang then
+							mat:SetAngles(data.ang)
+						end		
+						
+						if data.pos then
+							mat:SetTranslation(data.pos)
+						end							
+					else
+						if data.pos then
+							mat:Translate(data.pos)
+						end				
+						
+						if data.ang then
+							mat:Rotate(data.ang)
+						end					
+					end
+				
+					if data.scale then	
+						mat:Scale(mat:GetScale() * data.scale)
+					end
+					
+					if part.ScaleChildren then						
+						local scale = part.Scale * part.Size
+						scale_children(ent, data.bone, scale, data.origin)
+					end
+									
+					ent:SetBoneMatrix(data.bone, mat)
+				end
+			else
+				ent.pac_bone_setup_data[uid] = nil
 			end
 		end
+		
+		
+		ent.pac_setup_bones = setup
 	end
 end
 
@@ -101,48 +172,55 @@ function PART:OnBuildBonePositions()
 	if not owner:IsValid() then return end
 	
 	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone)) or 0
+
+	owner.pac_bone_setup_data = owner.pac_bone_setup_data or {}
+	
+	if self.AlternativeBones or self.ScaleChildren or self.FollowPart:IsValid() then
+		owner.pac_bone_setup_data[self.UniqueID] = owner.pac_bone_setup_data[self.UniqueID] or {}
+		owner.pac_bone_setup_data[self.UniqueID].bone = self.BoneIndex
+		owner.pac_bone_setup_data[self.UniqueID].part = self
+	else
+		owner.pac_bone_setup_data[self.UniqueID] = nil
+	end
 	
 	local ang = self:CalcAngles(self.Angles) or self.Angles
 
-	owner.pac_follow_bones = owner.pac_follow_bones or {}
+	if not owner.pac_follow_bones_function then
+		owner:AddCallback("BuildBonePositions", function(ent) pac.build_bone_callback(ent) end)
+		owner.pac_follow_bones_function = pac.build_bone_callback
+	end
 	
 	if self.FollowPart:IsValid() then		
 		local pos, ang = self:GetBonePosition()
-		
-		owner.pac_follow_bones[self.UniqueID] = owner.pac_follow_bones[self.UniqueID] or {}
-		
-		owner.pac_follow_bones[self.UniqueID].pos = self.FollowPart.cached_pos + self.Position
-		owner.pac_follow_bones[self.UniqueID].ang = self.FollowPart.cached_ang + self.Angles
-		owner.pac_follow_bones[self.UniqueID].bone = self.BoneIndex
-		
-		if not owner.pac_follow_bones_function then
-			owner:AddCallback("BuildBonePositions", pac.build_bone_callback)
-			owner.pac_follow_bones_function = pac.build_bone_callback
-		end
-	else
-		owner.pac_follow_bones[self.UniqueID] = nil
-		
+				
+		owner.pac_bone_setup_data[self.UniqueID].pos = self.FollowPart.cached_pos + self.Position
+		owner.pac_bone_setup_data[self.UniqueID].ang = self.FollowPart.cached_ang + self.Angles
+	else	
 		if self.EyeAngles or self.AimPart:IsValid() then
 			ang.r = ang.y
 			ang.y = -ang.p			
 		end
 		
-		if self.Modify then
-			if self.RotateOrigin then
-				manpos(owner, self.BoneIndex, owner:GetManipulateBonePosition(self.BoneIndex) + self.Position + self.PositionOffset)
-				manang(owner, self.BoneIndex, owner:GetManipulateBoneAngles(self.BoneIndex) + ang + self.AngleOffset)
-			else
-				manang(owner, self.BoneIndex, owner:GetManipulateBoneAngles(self.BoneIndex) + ang + self.AngleOffset)
-				manpos(owner, self.BoneIndex, owner:GetManipulateBonePosition(self.BoneIndex) + self.Position + self.PositionOffset)
-			end
+		manpos(owner, self.BoneIndex, self.Position + self.PositionOffset, self)
+		manang(owner, self.BoneIndex, ang + self.AngleOffset, self)
+	end
+	
+	if owner.pac_bone_setup_data[self.UniqueID] then
+		if self.MoveChildrenToOrigin then
+			owner.pac_bone_setup_data[self.UniqueID].origin = self:GetBonePosition()
 		else
-			manang(owner, self.BoneIndex, ang + self.AngleOffset) -- this should be world
-			manpos(owner, self.BoneIndex, self.Position + self.PositionOffset) -- this should be world
+			owner.pac_bone_setup_data[self.UniqueID].origin = nil
 		end
 	end
 	
 	owner:ManipulateBoneJiggle(self.BoneIndex, type(self.Jiggle) == "number" and self.Jiggle or (self.Jiggle and 1 or 0)) -- afaik anything but 1 is not doing anything at all
-	owner:ManipulateBoneScale(self.BoneIndex, owner:GetManipulateBoneScale(self.BoneIndex) * self.Scale * self.Size)
+	
+	manscale(owner, self.BoneIndex, self.Scale * self.Size, self)
+	
+	if owner.pac_setup_bones then
+		owner:SetupBones()
+		owner:InvalidateBoneCache()
+	end
 end
 
 pac.RegisterPart(PART)
