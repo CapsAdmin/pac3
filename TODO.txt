@@ -5,4 +5,3 @@ fix sounds playing regardless of being hidden when overlap is ticked
 	make properties have tags that define what type they are so property translation become less of a mess
 	
 -- did it work?
-	fix lights (they become brighter and brighter over time)
