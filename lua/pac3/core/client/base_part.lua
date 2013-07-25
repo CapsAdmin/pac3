@@ -472,9 +472,33 @@ do -- parenting
 			self.EventHide = b
 		end
 
-		function PART:IsHidden()
-			return self.Hide == true or self.EventHide == true or self.cached_hide == true or false
+		function PART:IsHiddenEx()
+			return self.Hide == true or self.EventHide == true or false
 		end
+			
+		function PART:IsHidden()
+			if self.temp_hidden then return true end
+			if self:IsHiddenEx() then return true end
+			
+			local temp = self
+			
+			for i = 1, 100 do
+				local parent = temp:GetParent()
+				
+				if parent:IsValid() then
+					if parent:IsHiddenEx() then
+						return true
+					else
+						temp = parent
+					end
+				else
+					break
+				end
+			end
+			
+			return false
+		end
+	
 	end
 
 	function PART:RemoveChildren()
