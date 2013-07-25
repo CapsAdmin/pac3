@@ -22,10 +22,10 @@ end
 
 local render_EnableClipping = render.EnableClipping
 local render_PushCustomClipPlane = render.PushCustomClipPlane
-
+local LocalToWorld = LocalToWorld
 local bclip
 
-function PART:PreOnDraw(owner)
+function PART:PreOnDraw()
 	bclip = render_EnableClipping(true)
 
 	local pos, ang = LocalToWorld(self.Position, self:CalcAngles(self.Angles), self:GetBonePosition())
