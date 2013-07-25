@@ -28,6 +28,20 @@ function PART:GetNiceName()
 	return pac.PrettifyName(str)
 end
 
+function PART:OnRemove()
+	if self.AffectChildrenOnly then		
+		for _, child in pairs(self:GetChildren()) do
+			child:SetEventHide(false, self)
+		end
+	else
+		local parent = self:GetParent()
+		
+		if parent:IsValid() then			
+			parent:SetEventHide(false, self)
+		end
+	end
+end
+
 local function calc_velocity(part)
 	local diff = part.cached_pos - (part.last_pos or Vector(0, 0, 0))
 	part.last_pos = part.cached_pos
