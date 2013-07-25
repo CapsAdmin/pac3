@@ -139,10 +139,14 @@ function pac.RenderOverride(ent, type, draw_only)
 		
 		if max_render_time > 0 and ent ~= pac.LocalPlayer then	
 			ent.pac_render_times = ent.pac_render_times or {}
+			
+			local last = ent.pac_render_times[type] or 0
+			
 			TIME = (SysTime() - TIME) * 1000
-			ent.pac_render_times[type] = TIME
-					
-			if TIME > max_render_time then
+			last = last + ((TIME - last) * FrameTime())
+			ent.pac_render_times[type] = last
+			
+			if last > max_render_time then
 				ent.pac_render_time_stop = SysTime() + 2 + (math.random() * 2)
 				
 				hide_parts(ent)
