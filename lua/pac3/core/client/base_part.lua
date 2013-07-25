@@ -873,6 +873,7 @@ do -- drawing. this code is running every frame
 				
 				if ent:IsValid() then
 					-- if the parent part is a model, get the bone position of the parent model
+					ent:InvalidateBoneCache()
 					pos, ang = pac.GetBonePosAng(ent, bone_override or self.Bone)
 				else
 					-- else just get the origin of the part
@@ -884,6 +885,7 @@ do -- drawing. this code is running every frame
 				
 			elseif owner:IsValid() then
 				-- if there is no parent, default to owner bones
+				owner:InvalidateBoneCache()
 				pos, ang = pac.GetBonePosAng(owner, self.Bone)
 			end
 					
