@@ -1,3 +1,26 @@
+local function SETUP_CACHE_FUNC(tbl, func_name)
+	local old_func = tbl[func_name]
+	
+	local cached_key = "cached_" .. func_name
+	local last_key = "last_" .. func_name .. "_framenumber"
+	
+	tbl[func_name] = function(self, a,b,c,d,e)
+	
+		if self[last_key] ~= pac.FrameNumber or self[cached_key] == nil then
+			self[cached_key] = old_func(self, a,b,c,d,e)
+			self[last_key] = pac.FrameNumber
+		end
+		
+		return self[cached_key]
+	end
+end
+
+local pairs = pairs
+local pac = pac
+local table = table
+local Vector = Vector
+local Angle = Angle
+
 local PART = {}
 
 PART.ClassName = "base"
@@ -396,6 +419,8 @@ do -- parenting
 		return temp
 	end
 	
+	SETUP_CACHE_FUNC(PART, "GetRootPart")
+	
 	do
 		-- this doesn't work
 		--[[
@@ -436,42 +461,20 @@ do -- parenting
 			self.Hide = b
 			
 			self:CallRecursive(b and "OnHide" or "OnShow")
+			self:SetKeyValueRecursive("cached_hide", b)
 		end
 
 		function PART:SetEventHide(b)
 			if b ~= self.EventHide then
 				self:CallRecursive(b and "OnHide" or "OnShow", true)
+				self:SetKeyValueRecursive("cached_hide", b)
 			end
 			self.EventHide = b
 		end
 
-		function PART:IsHiddenEx()
-			return self.Hide == true or self.EventHide == true or false
-		end
-			
 		function PART:IsHidden()
-			if self.temp_hidden then return true end
-			if self:IsHiddenEx() then return true end
-			
-			local temp = self
-			
-			for i = 1, 100 do
-				local parent = temp:GetParent()
-				
-				if parent:IsValid() then
-					if parent:IsHiddenEx() then
-						return true
-					else
-						temp = parent
-					end
-				else
-					break
-				end
-			end
-			
-			return false
+			return self.Hide == true or self.EventHide == true or self.cached_hide == true or false
 		end
-	
 	end
 
 	function PART:RemoveChildren()
@@ -847,7 +850,6 @@ do -- drawing. this code is running every frame
 				if ent:IsValid() then
 					-- if the parent part is a model, get the bone position of the parent model
 					pos, ang = pac.GetBonePosAng(ent, bone_override or self.Bone)
-					ent:InvalidateBoneCache()
 				else
 					-- else just get the origin of the part
 					if not pos or not ang then 
@@ -858,7 +860,6 @@ do -- drawing. this code is running every frame
 				
 			elseif owner:IsValid() then
 				-- if there is no parent, default to owner bones
-				owner:InvalidateBoneCache()
 				pos, ang = pac.GetBonePosAng(owner, self.Bone)
 			end
 					
@@ -950,6 +951,8 @@ do -- drawing. this code is running every frame
 			
 		return ang or Angle(0,0,0)
 	end
+	
+	SETUP_CACHE_FUNC(PART, "CalcAngles")
 end
 	
 function PART:Think()	

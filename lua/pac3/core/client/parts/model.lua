@@ -326,6 +326,14 @@ local function RealDrawModel(self, ent, pos, ang)
 	end
 end
 
+local render_PushFlashlightMode = render.PushFlashlightMode
+local render_PopFlashlightMode = render.PopFlashlightMode
+
+local render_PopFilterMin = render.PopFilterMin
+local render_PopFilterMag = render.PopFilterMag
+local render_PushFilterMag = render.PushFilterMag 
+local render_PushFilterMin = render.PushFilterMin 
+
 function PART:DrawModel(ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 	
@@ -350,8 +358,8 @@ function PART:DrawModel(ent, pos, ang)
 		local filter = self.texfilter_enum
 		
 		if filter then
-			render.PushFilterMag(filter)
-			render.PushFilterMin(filter)
+			render_PushFilterMag(filter)
+			render_PushFilterMin(filter)
 		end
 		
 		render_MaterialOverride(self.Materialm) 
@@ -368,14 +376,14 @@ function PART:DrawModel(ent, pos, ang)
 			RealDrawModel(self, ent, pos, ang)
 		end		
 		
-		render.PushFlashlightMode(true)
+		render_PushFlashlightMode(true)
 			RealDrawModel(self, ent, pos, ang)
-		render.PopFlashlightMode()
+		render_PopFlashlightMode()
 		
 				
 		if filter then
-			render.PopFilterMin()
-			render.PopFilterMag()
+			render_PopFilterMin()
+			render_PopFilterMag()
 		end
 	end
 end
