@@ -978,7 +978,7 @@ do -- drawing. this code is running every frame
 		return ang or Angle(0,0,0)
 	end
 	
-	SETUP_CACHE_FUNC(PART, "CalcAngles")
+	--SETUP_CACHE_FUNC(PART, "CalcAngles")
 end
 	
 function PART:Think()	
