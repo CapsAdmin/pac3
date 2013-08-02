@@ -951,9 +951,9 @@ do -- drawing. this code is running every frame
 			
 			local a = self.AnglePart.cached_ang * 1
 			
-			a.p = self.AnglePartMultiplier.x
-			a.y = self.AnglePartMultiplier.y
-			a.r = self.AnglePartMultiplier.z
+			a.p = a.p * self.AnglePartMultiplier.x
+			a.y = a.y * self.AnglePartMultiplier.y
+			a.r = a.r * self.AnglePartMultiplier.z
 			
 			return self.AngleOffset + self.Angles + a
 			
