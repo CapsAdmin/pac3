@@ -98,6 +98,12 @@ function pac.GetAllBones(ent)
 			is_special = true,
 		}
 		
+		tbl.skirt = 
+		{
+			friendly = "skirt",
+			is_special = true,
+		}
+		
 		ent.pac_bone_count = count
 	end
 
@@ -168,7 +174,14 @@ function pac.GetBonePosAng(ent, id, parent)
 			return ent.pac_last_footstep_pos, UP
 		end
 	end
+	
+	if id == "skirt" then
+		local apos, aang = pac.GetBonePosAng(ent, "left thigh", parent)
+		local bpos, bang = pac.GetBonePosAng(ent, "right thigh", parent)
 		
+		return LerpVector(0.5, apos, bpos), LerpAngle(0.5, aang, bang)
+	end
+	
 	local pos, ang
 	
 	local bones = pac.GetModelBones(ent)
