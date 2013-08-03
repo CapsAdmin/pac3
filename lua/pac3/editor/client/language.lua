@@ -1,7 +1,7 @@
 pace.KnownGUIStrings = pace.KnownGUIStrings or {}
 pace.CurrentTranslation = {}
 
-local cvar = CreateConVar("pac_language", "english")
+local cvar = CreateClientConVar("pac_language", "english", true)
 
 function pace.LanguageString(val)
 	local key = val:Trim():lower()
