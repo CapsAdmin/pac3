@@ -13,7 +13,7 @@ end)
 local table_insert = table.insert
 local tonumber = tonumber
 
-function urlobj.ParseObj(data, merge_models)
+function urlobj.ParseObj(data, merge_models, hack)
 	debug.sethook()
 
 	local positions = {}
@@ -93,6 +93,12 @@ function urlobj.ParseObj(data, merge_models)
 					table_insert(submodel, v1)
 					table_insert(submodel, v2)
 					table_insert(submodel, v3)
+					
+					if hack then
+						table_insert(submodel, v1)
+						table_insert(submodel, v2)
+						table_insert(submodel, v3)
+					end
 				end
 
 				previous = current
@@ -104,11 +110,7 @@ function urlobj.ParseObj(data, merge_models)
 end
 
 function urlobj.CreateObj(obj_str, merge_models, hack)	
-	if hack then
-		obj_str = obj_str .. "\n" .. obj_str
-	end
-
-	local ok, res = pcall(urlobj.ParseObj, obj_str, merge_models)
+	local ok, res = pcall(urlobj.ParseObj, obj_str, merge_models, hack)
 	
 	if not ok then
 		MsgN("pac3 obj parse error %q ", res)
