@@ -410,15 +410,18 @@ function PART:SetModel(var)
 	self.Entity = self:GetEntity()
 
 	if var and var:find("http") and pac.urlobj then		
-		local skip_cache = var:sub(1,1) == "_"
+		local args, url = var:match("(.-)(http.+)")
 		
-		if skip_cache then
-			var = var:sub(2)
+		if args then 
+			args = args:Split("") 
+			for k,v in pairs(args) do 
+				args[v] = v 
+			end
 		end
-		
+				
 		self.loading_obj = true
 		
-		pac.urlobj.GetObjFromURL(var, function(meshes, err)
+		pac.urlobj.GetObjFromURL(url, function(meshes, err)
 			if not self:IsValid() then return end
 			
 			self.loading_obj = false
@@ -444,7 +447,7 @@ function PART:SetModel(var)
 				
 				self:SetAlpha(0)
 			end
-		end, skip_cache, true)
+		end, args["_"], args["*"], args["."])
 		
 		self.Model = var
 		return
