@@ -103,7 +103,11 @@ function urlobj.ParseObj(data, merge_models)
 	return outputs
 end
 
-function urlobj.CreateObj(obj_str, merge_models)	
+function urlobj.CreateObj(obj_str, merge_models, hack)	
+	if hack then
+		obj_str = obj_str .. "\n" .. obj_str
+	end
+
 	local ok, res = pcall(urlobj.ParseObj, obj_str, merge_models)
 	
 	if not ok then
@@ -122,7 +126,7 @@ end
 
 local enable = CreateConVar("pac_enable_urlobj", "1")
 
-function urlobj.GetObjFromURL(url, callback, skip_cache, merge_models)
+function urlobj.GetObjFromURL(url, callback, skip_cache, merge_models, hack)
 	if not enable:GetBool() then return end
 
 	url = url:gsub("https://", "http://")
@@ -145,7 +149,7 @@ function urlobj.GetObjFromURL(url, callback, skip_cache, merge_models)
 			old(...)
 		end
 	else
-		urlobj.Queue[url] = {callback = callback, tries = 0, merge_models = merge_models}
+		urlobj.Queue[url] = {callback = callback, tries = 0, merge_models = merge_models, hack = hack}
 	end
 end
 
@@ -177,7 +181,7 @@ function urlobj.Think()
 					
 					pac.dprint("%s", obj_str)
 
-					local obj = urlobj.CreateObj(obj_str, data.merge_models)
+					local obj = urlobj.CreateObj(obj_str, data.merge_models, data.hack)
 					
 					urlobj.Cache[url] = obj
 					urlobj.Queue[url] = nil
