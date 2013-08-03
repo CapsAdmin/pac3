@@ -411,11 +411,16 @@ function PART:SetModel(var)
 
 	if var and var:find("http") and pac.urlobj then		
 		local args, url = var:match("(.-)(http.+)")
+		local merge = true
 		
 		if args then 
 			args = args:Split("") 
 			for k,v in pairs(args) do 
 				args[v] = v 
+			end
+			
+			if args["*"] then
+				merge = false
 			end
 		end
 				
@@ -446,8 +451,9 @@ function PART:SetModel(var)
 				end
 				
 				self:SetAlpha(0)
-			end
-		end, args["_"], args["*"], args["."])
+			end	
+			
+		end, args["_"], merge, args["."])
 		
 		self.Model = var
 		return
