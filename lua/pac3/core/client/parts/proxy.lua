@@ -404,6 +404,12 @@ PART.Inputs =
 		
 		return 1
 	end,
+	
+	hsv_to_color = function(self, parent, h, s, v)
+		local c = HSVToColor(h, s, v)
+		
+		return c.r, c.g, c.b
+	end,
 }
 
 usermessage.Hook("pac_proxy", function(umr)
@@ -449,7 +455,7 @@ function PART:SetExpression(str)
 		local lib = {}
 
 		for name, func in pairs(PART.Inputs) do
-			lib[name] = function() return func(self, parent) end
+			lib[name] = function(...) return func(self, parent, ...) end
 		end
 
 		local ok, res = pac.CompileExpression(str, lib)
