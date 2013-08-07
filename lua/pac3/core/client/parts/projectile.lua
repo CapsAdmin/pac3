@@ -1,3 +1,5 @@
+language.add("pac_projectile", "Projectile")
+
 local PART = {}
 
 PART.ClassName = "projectile"
@@ -54,6 +56,8 @@ function PART:AttachToEntity(ent)
 	part:SetHide(false)
 	part:RemoveOnNULLOwner(true)
 	
+	ent:CallOnRemove("pac_projectile_" .. id, function() part:Remove() end)
+	
 	part.Owner = ent
 	
 	ent.pac_parts = {part}
@@ -74,12 +78,15 @@ function PART:AttachToEntity(ent)
 end
 
 function PART:Shoot(pos, ang)
-	if self.Physical then	
+	local physics = self.Physical
+
+	if physics and GetConVarNumber("pac_sv_projectiles") < 1  then
+		MsgC(Color(255, 0, 0), "[pac3] projectiles are not enabled on the server, using clientside projectiles instead!\n")
+		physics = false
+	end
+
+	if physics then	
 		if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
-		
-		if GetConVarNumber("pac_sv_projectiles") < 1  then
-			chat.AddText("[pac3] projectiles are not enabled on the server!")
-		end
 		
 		local tbl = {}
 		for key in pairs(self:GetStorableVars()) do

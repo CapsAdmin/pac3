@@ -995,8 +995,14 @@ function PART:Think()
 		if not owner.pac_bones then
 			self:GetModelBones()
 		end
-	elseif self.remove_on_null_owner then
-		self:Remove()
+	end
+	
+	if self.remove_on_null_owner then
+		if not self:HasParent() and not self:GetOwner():IsValid() then
+			self:Remove()
+		end
+		
+		print(self, self:GetOwner())
 	end
 	
 	if self.ResolvePartNames then
