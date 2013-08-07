@@ -1,4 +1,4 @@
-language.add("pac_projectile", "Projectile")
+language.Add("pac_projectile", "Projectile")
 
 local PART = {}
 
@@ -205,7 +205,7 @@ do -- physical
 				continue
 			end
 
-			local ent = Entity(data.id)	
+			local ent = data.ent
 
 			if ent:IsValid() then
 			
@@ -221,10 +221,12 @@ do -- physical
 		
 	net.Receive("pac_projectile_attach", function()
 		local ply = net.ReadEntity()
-		local id = tonumber(net.ReadString())
+		local ent = net.ReadEntity()
 		local partuid = net.ReadString()
 
-		table.insert(projectiles, {ply = ply, id = id, partuid = partuid})
+		if ent:IsValid() then
+			table.insert(projectiles, {ply = ply, ent = ent, partuid = partuid})
+		end
 	end)		
 end
 

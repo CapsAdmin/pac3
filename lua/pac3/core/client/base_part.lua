@@ -159,7 +159,7 @@ do -- modifiers
 					part.pre_draw_events[event] = part.pre_draw_events[event] or "Pre" .. event
 					
 					if part[part.pre_draw_events[event]] then
-						part[part.pre_draw_events[event]](part, owner, pos, ang)
+						part[part.pre_draw_events[event]](part)
 					end
 				end
 			end
@@ -174,7 +174,7 @@ do -- modifiers
 					part.post_draw_events[event] = part.post_draw_events[event] or "Post" .. event
 										
 					if part[part.post_draw_events[event]] then
-						part[part.post_draw_events[event]](part, owner, pos, ang)
+						part[part.post_draw_events[event]](part)
 					end
 				end
 			end
@@ -1001,8 +1001,6 @@ function PART:Think()
 		if not self:HasParent() and not self:GetOwner():IsValid() then
 			self:Remove()
 		end
-		
-		print(self, self:GetOwner())
 	end
 	
 	if self.ResolvePartNames then
