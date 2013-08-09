@@ -46,10 +46,6 @@ function SWEP:GetViewModelPosition(pos, ang)
 	return pos, ang
 end
 
-function SWEP:TranslateActivity(act)
-	return act
-end
-
 function SWEP:Deploy()
    self.Think = self._Think
    return true
