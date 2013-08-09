@@ -77,10 +77,12 @@ function PART:AttachToEntity(ent)
 	return true
 end
 
+local enable = CreateConVar("pac_sv_projectiles", 0, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
+
 function PART:Shoot(pos, ang)
 	local physics = self.Physical
 
-	if physics and GetConVarNumber("pac_sv_projectiles") < 1  then
+	if physics and not enable:GetBool() then
 		MsgC(Color(255, 0, 0), "[pac3] projectiles are not enabled on the server, using clientside projectiles instead!\n")
 		physics = false
 	end
