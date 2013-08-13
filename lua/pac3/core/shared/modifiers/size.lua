@@ -17,7 +17,7 @@ local def =
 function pac.SetPlayerSize(ply, f)	
 	--local TICKRATE = SERVER and 1/FrameTime() or 0
 	
-	local safe = math.max(f, 0.1)
+	local safe = math.Clamp(f, 0.1, 10)
 		
 	if ply.SetViewOffset then ply:SetViewOffset(def.view * safe) end
 	if ply.SetViewOffsetDucked then ply:SetViewOffsetDucked(def.viewducked * safe) end
