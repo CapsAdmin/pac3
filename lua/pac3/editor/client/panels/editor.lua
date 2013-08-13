@@ -17,6 +17,9 @@ function PANEL:Init()
 		div:SetDividerHeight(2)
 		div:Dock(FILL)
 		div:SetTopMin(0)
+		div:SetCookieName("pac3_editor")
+		div:SetTopHeight(ScrH()/1.4)
+		div:LoadCookies()
 	self.div = div
 	
 	self:SetTop(pace.CreatePanel("tree"))
@@ -68,12 +71,17 @@ function PANEL:Think(...)
 	end
 end
 
+local auto_size = CreateClientConVar("pac_auto_size_properties", 0, true)
+
 function PANEL:PerformLayout()
 	DFrame.PerformLayout(self)
 
-	self.div:SetTopHeight(ScrH() - self.bottom:GetHeight() - BAR_SIZE + 2)
-	
 	self.div:InvalidateLayout()
+	self.bottom:PerformLayout()
+	
+	if auto_size:GetBool() then
+		self.div:SetTopHeight(ScrH() - self.bottom:GetHeight() - BAR_SIZE + 2)
+	end
 end
 
 function PANEL:SetTop(pnl)

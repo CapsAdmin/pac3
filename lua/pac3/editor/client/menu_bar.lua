@@ -59,7 +59,9 @@ function pace.OnMenuBarPopulate(bar)
 						RunConsoleCommand("pac_grid_ang_size", val)
 					end) 
 				end)
-			menu:AddSpacer()
+		menu:AddSpacer()
+			
+		menu:AddCVar(L"automatic property size", "pac_auto_size_properties", "1", "0")
 		pace.AddLanguagesToMenu(menu)
 		pace.AddFontsToMenu(menu)
 		
