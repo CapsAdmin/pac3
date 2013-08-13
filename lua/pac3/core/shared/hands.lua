@@ -1,38 +1,92 @@
 local SWEP = {Primary = {}, Secondary = {}}
 
-SWEP.Author = "CapsAdmin"
-SWEP.Contact = ""
-SWEP.Purpose = ""
-SWEP.Instructions = ""
-SWEP.PrintName = "hands"   
-SWEP.DrawAmmo = false
-SWEP.DrawCrosshair = true
-SWEP.ViewModel = "models/weapons/v_hands.mdl"
-SWEP.WorldModel = "models/weapons/w_bugbait.mdl"
-SWEP.DrawWeaponInfoBox = true
-SWEP.Base = "weapon_base"
+if SERVER then
+   AddCSLuaFile()
+end
 
-SWEP.SlotPos = 1
-SWEP.Slot = 1
+SWEP.Author     	= ""
+SWEP.Contact      	= ""
+SWEP.Purpose      	= ""
+SWEP.Instructions   = "Right-Click to toggle crosshair"
+SWEP.PrintName      = "hands"   
+SWEP.DrawAmmo       = false
+SWEP.DrawCrosshair	= true
+SWEP.DrawWeaponInfoBox = false
 
-SWEP.Spawnable = true
-SWEP.AdminSpawnable	= true
+SWEP.SlotPos      	= 1
+SWEP.Slot         	= 1
 
-SWEP.AutoSwitchTo = true
+SWEP.Spawnable    	= false
+SWEP.AdminSpawnable	= false
+
+SWEP.AutoSwitchTo	= true
 SWEP.AutoSwitchFrom	= true
-SWEP.Weight = 1
+SWEP.Weight 		= 1
 
 SWEP.HoldType = "normal"
 
-SWEP.Primary.ClipSize = -1
-SWEP.Primary.DefaultClip = -1
-SWEP.Primary.Automatic = false
-SWEP.Primary.Ammo = "none"
+SWEP.Primary.ClipSize      = -1
+SWEP.Primary.DefaultClip   = -1
+SWEP.Primary.Automatic     = false
+SWEP.Primary.Ammo          = "none"
 
-SWEP.Secondary.ClipSize = -1
+SWEP.Secondary.ClipSize    = -1
 SWEP.Secondary.DefaultClip = -1
-SWEP.Secondary.Automatic = false
-SWEP.Secondary.Ammo = "none"
+SWEP.Secondary.Automatic   = false
+SWEP.Secondary.Ammo        = "none"
+
+
+function SWEP:DrawHUD() 			end
+function SWEP:PrintWeaponInfo() 	end
+
+function SWEP:DrawWeaponSelection(x,y,w,t,a)
+
+    draw.SimpleText("C","TitleFont2",x+w/2,y,Color(255, 220, 0,a),TEXT_ALIGN_CENTER)
+	
+end
+
+function SWEP:DrawWorldModel() 						 end
+function SWEP:DrawWorldModelTranslucent() 			 end
+function SWEP:CanPrimaryAttack()		return false end
+function SWEP:CanSecondaryAttack()		return false end
+function SWEP:Reload()					return false end
+function SWEP:Holster()					return true  end
+function SWEP:ShouldDropOnDie()			return false end
+
+function SWEP:Initialize()
+    self:SetWeaponHoldType( "normal" )
+end
+
+function SWEP:Deploy()
+	self.Thinking = true
+	return true
+end
+
+function SWEP:Think()
+
+	if self.Thinking and self.Owner and self.Owner:IsValid() and self.Owner:GetViewModel():IsValid() then
+		self.Thinking = false
+		
+		assert(self:GetClass()=="none","WTF WRONG SHIT: "..tostring(self:GetClass()))
+
+		self.Owner:GetViewModel():SetNoDraw(true)
+	
+	end
+end
+
+function SWEP:GetViewModelPosition( pos, ang )
+	if isthatyou then
+		return pos,ang
+	end
+	assert(self:GetClass()=="none","WTF WRONG SHIT: "..tostring(self:GetClass()))
+
+	pos.x=-3575
+	pos.y=-3575
+	pos.z=-3575 -- I don't want to see you ever again
+	return pos,ang
+
+end
+
 
 function SWEP:OnDrop()   
     if SERVER then
@@ -40,33 +94,10 @@ function SWEP:OnDrop()
 	end
 end
 
-function SWEP:GetViewModelPosition(pos, ang)
-	-- die
-	pos.z = 35575
-	return pos, ang
+function SWEP:SecondaryAttack()
+	if not IsFirstTimePredicted() then return end 
+	self.DrawCrosshair = not self.DrawCrosshair 
+	self:SetNextSecondaryFire(CurTime() + 0.3) 
 end
 
-function SWEP:Deploy()
-   self.Think = self._Think
-   return true
-end
-
-function SWEP:_Think()
-	if self.Owner:IsValid() and self.Owner:GetViewModel():IsValid() then
-		self.Owner:GetViewModel():SetNoDraw(true)
-		self.Think = nil
-	end
-end
-
-function SWEP:Initialize() end
-function SWEP:DrawHUD() end
-function SWEP:PrintWeaponInfo() end
-function SWEP:DrawWeaponSelection(x,y,w,t,a) end
-function SWEP:DrawWorldModel() return true end
-function SWEP:CanPrimaryAttack() return false end
-function SWEP:CanSecondaryAttack() return false end
-function SWEP:Reload() return false end
-function SWEP:Holster() return true end
-function SWEP:ShouldDropOnDie() return false end
-
-weapons.Register(SWEP, "hands", true)
+weapons.Register(SWEP, "none", true)

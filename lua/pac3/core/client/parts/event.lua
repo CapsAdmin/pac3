@@ -312,7 +312,14 @@ PART.Events =
 			local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 			
 			if wep:IsValid() then
-				if self:StringOperator(wep:GetClass(), find) then
+				local class_name = wep:GetClass()
+				local found = self:StringOperator(class_name, find)
+				
+				if class_name == "hands" and not found then
+					found = self:StringOperator("none", find)
+				end				
+				
+				if found then
 					if not self:IsHidden() then 
 						pac.HideWeapon(wep, hide)
 					end
