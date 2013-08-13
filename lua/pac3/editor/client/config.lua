@@ -364,7 +364,6 @@ function pace.TranslatePropertiesKey(key, obj)
 		key == "material" or
 		key == "sequence" or
 		key == "bodygroupname" or
-		key == "aimpartname" or
 		key == "code"
 	then
 		return key
@@ -388,6 +387,7 @@ function pace.TranslatePropertiesKey(key, obj)
 
 	if 
 		key == "parentname" or 
+		key == "aimpartname" or 
 		key == "followpartname" or 
 		key == "anglepartname" or 
 		key == "endpointname" or 
