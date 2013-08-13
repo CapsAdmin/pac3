@@ -92,30 +92,46 @@ do -- list
 	local PANEL = {}
 
 	PANEL.ClassName = "properties"
-	PANEL.Base = "DHorizontalDivider"
+	PANEL.Base = "Panel"
 
 	AccessorFunc(PANEL, "item_height", "ItemHeight")
 
 	function PANEL:Init()
 		self.List = {}
-		
-		DHorizontalDivider.Init(self)
-
-		local left = vgui.Create("DPanelList", self)
-			self:SetLeft(left)
+				
+		local divider = vgui.Create("DHorizontalDivider", self)
+		local left = vgui.Create("DPanelList", divider)
+			divider:SetLeft(left)
 		self.left = left
 
-		local right = vgui.Create("DPanelList", self)
-			self:SetRight(right)
+		local right = vgui.Create("DPanelList", divider)
+			divider:SetRight(right)
 		self.right = right
 
-		self:SetDividerWidth(3)
-		self:SetLeftWidth(110)
+		divider:SetDividerWidth(3)
+		divider:SetLeftWidth(110)
 		self:SetItemHeight(14)
+				
+		self.div = divider
+		
+		function divider:PerformLayout()
+			DHorizontalDivider.PerformLayout(self)
+			
+			if self.m_pLeft then
+				self.m_pLeft:SetWide( self.m_iLeftWidth + self.m_iDividerWidth )
+			end
+		end
+		
+		local scroll = vgui.Create("DVScrollBar", self)
+		scroll:Dock(RIGHT)
+		self.scr = scroll
+		
+		left.OnMouseWheeled = function(_, delta) scroll:OnMouseWheeled(delta) end
+		--right.OnMouseWheeled = function(_, delta) scroll:OnMouseWheeled(delta) end
 	end
 
 	function PANEL:GetHeight()
-		return (self.item_height * (#self.List + 1)) - (self:GetDividerWidth() + 1)
+		return (self.item_height * (#self.List + 1)) - (self.div:GetDividerWidth() + 1)
 	end
 
 	function PANEL:FixHeight()
@@ -124,10 +140,17 @@ do -- list
 			data.right:SetTall(self:GetItemHeight())
 		end
 	end
+	
+	function PANEL:PerformLayout()
+		self.scr:SetSize(10, self:GetHeight())
+		self.scr:SetUp(self:GetTall(), self:GetHeight() - 8)
+		self.div:SetPos(0,self.scr:GetOffset())
+		local w, h = self:GetSize()
+		self.div:SetSize(w - (self.scr.Enabled and self.scr:GetWide() or 0), self:GetHeight())
+	end
 
-	function PANEL:AddItem(key, var, pos, obj)
+	function PANEL:AddKeyValue(key, var, pos, obj)
 		local btn = pace.CreatePanel("properties_label")
-			btn:NoClipping(true)
 			btn:SetValue(L(key:gsub("%u", " %1"):lower()))
 			btn.pac3_sort_pos = pos
 			
@@ -140,6 +163,7 @@ do -- list
 
 		local pnl = pace.CreatePanel("properties_container")
 		pnl.right = true
+		
 		if type(var) == "Panel" then
 			pnl:SetContent(var)
 		end
@@ -229,60 +253,13 @@ do -- list
 					pace.Call("VariableChanged", obj, key, val)
 				end
 				
-				self:AddItem(key, pnl, pos, obj)
+				self:AddKeyValue(key, pnl, pos, obj)
 			end
 		end
 		
 		self:FixHeight()
 	end
-	
-	function PANEL:PopulateCustom(obj)
-		self:Clear()
 
-		local tbl = {}
-		local data = {}
-		
-		for key, val in pairs(obj) do
-			table.insert(data, {key = key, val = val.val, callback = val.callback})
-		end
-		
-		table.sort(data, function(a,b) return a.key > b.key end)
-		
-		for pos, str in pairs(pace.PropertyOrder) do
-			for i, val in pairs(data) do
-				if val.key == str then
-					table.insert(tbl, {pos = pos, key = val.key, val = val.val, callback = val.callback})
-					table.remove(data, i)
-				end
-			end
-		end
-
-		for pos, val in pairs(data) do
-			table.insert(tbl, {pos = pos, key = val.key, val = val.val, callback = val.callback})
-		end
-				
-		for pos, data in pairs(tbl) do
-			local key, val = data.key, data.val
-
-			local pnl
-			local T = (pace.TranslatePropertiesKey(key, obj) or type(val)):lower()
-			
-			if pace.PanelExists("properties_" .. T) then
-				pnl = pace.CreatePanel("properties_" .. T)
-			end
-
-			if pnl then	
-				pnl.CurrentKey = key
-				pnl:SetValue(val)
-				pnl.LimitValue = pace.PropertyLimits[key]
-				pnl.OnValueChanged = data.callback
-				self:AddItem(key, pnl, pos)
-			end
-		end
-		
-		self:FixHeight()
-	end
-	
 	pace.RegisterPanel(PANEL)
 end
 
