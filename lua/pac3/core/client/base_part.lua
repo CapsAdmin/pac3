@@ -633,8 +633,12 @@ do -- serializing
 	function PART:ToTable(make_copy_name, is_child)
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
-		for _, key in pairs(self:GetStorableVars()) do			
+		for _, key in pairs(self:GetStorableVars()) do
 			local var = COPY(self[key] and self["Get"..key](self) or self[key], key, make_copy_name)
+			
+			if key == "Name" and self[key] == "" then
+				var = ""
+			end
 			
 			-- these arent needed because parent system uses the tree structure
 			if 	
@@ -671,7 +675,6 @@ do -- serializing
 		part:SetTable(self:ToTable(true), true)
 		
 		part.ParentUID = self.ParentUID
-		part.ParentName = self.ParentName
 		
 		part:ResolveParentName()
 		return part
