@@ -77,7 +77,7 @@ function PART:AttachToEntity(ent)
 	return true
 end
 
-local enable = CreateConVar("pac_sv_projectiles", 0, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
+local enable = CreateClientConVar("pac_sv_projectiles", 0, true)
 
 function PART:Shoot(pos, ang)
 	local physics = self.Physical

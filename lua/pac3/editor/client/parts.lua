@@ -147,7 +147,7 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 end
 
 do -- menu
-	local cvar_submenu = CreateConVar("pac_submenu_parts", 1)
+	local cvar_submenu = CreateClientConVar("pac_submenu_parts", 1, true)
 	
 	function pace.AddRegisteredPartsToMenu(menu)
 		local temp = {}

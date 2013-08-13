@@ -14,7 +14,7 @@ if urltex.ActivePanel:IsValid() then
 	urltex.ActivePanel:Remove()
 end
 
-local enable = CreateConVar("pac_enable_urltex", "1")
+local enable = CreateClientConVar("pac_enable_urltex", "1", true)
 
 function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size_hack)
 	if size_hack == nil then
