@@ -82,10 +82,10 @@ local enable = CreateConVar("pac_sv_projectiles", 0, bit.bor(FCVAR_REPLICATED, F
 function PART:Shoot(pos, ang)
 	local physics = self.Physical
 
-	if physics and not enable:GetBool() then
+	--[[if physics and not enable:GetBool() then
 		MsgC(Color(255, 0, 0), "[pac3] projectiles are not enabled on the server, using clientside projectiles instead!\n")
 		physics = false
-	end
+	end]]
 
 	if physics then	
 		if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
