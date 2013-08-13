@@ -98,7 +98,7 @@ local function install_drag(node)
 		self:SetExpanded(true)
 		
 		if child.part and child.part:IsValid() then
-			if self.part and self.part:IsValid() then
+			if self.part and self.part:IsValid() and child.part:GetParent() ~= self.part then
 				child.part:SetParent(self.part)
 			end
 		end
@@ -115,7 +115,7 @@ local function install_drag(node)
 		end
 				
 		if child.part and child.part:IsValid() then
-			if self.part and self.part:IsValid() then
+			if self.part and self.part:IsValid() and self.part:GetParent() ~= child.part  then
 				self.part:SetParent(child.part)
 			end
 		end
