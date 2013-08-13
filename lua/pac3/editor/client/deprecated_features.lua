@@ -17,6 +17,7 @@ pace.DeprecatedProperties =
 	
 	AnglePartMultiplier = true, -- useless
 	AnglePartName = true, -- useless
+	Description = true, -- useless
 		
 	-- not ready for deprecation yet
 	--[[
