@@ -157,7 +157,7 @@ local function CalcDrag()
 	end]]
 end
 
-local follow_entity = CreateConVar("pac_camera_follow_entity", "0")
+local follow_entity = CreateClientConVar("pac_camera_follow_entity", "0", true)
 
 function pac.CalcView(ply, pos, ang, fov)
 	if pace.editing_viewmodel then 

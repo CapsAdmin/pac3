@@ -126,7 +126,7 @@ function urlobj.CreateObj(obj_str, merge_models, hack)
 	return res
 end
 
-local enable = CreateConVar("pac_enable_urlobj", "1")
+local enable = CreateClientConVar("pac_enable_urlobj", "1", true)
 
 function urlobj.GetObjFromURL(url, callback, skip_cache, merge_models, hack)
 	if not enable:GetBool() then return end

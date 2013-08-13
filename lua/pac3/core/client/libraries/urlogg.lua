@@ -332,7 +332,7 @@ do -- STREAM
     end
 end
 
-local cvar = CreateConVar("pac_ogg_volume", "1")
+local cvar = CreateClientConVar("pac_ogg_volume", "1", true)
 
 function webaudio.SetVolume(num)
     webaudio.html:QueueJavascript(string.format("gain.gain.value = %f", num))
@@ -416,36 +416,33 @@ hook.Add("Think", "webaudio", function()
 
     if not webaudio.initialized then return end
 
-    if mult ~= 0 then
+	local vol = GetConVarNumber("volume")
 
-        local vol = GetConVarNumber("volume")
+	if not system.HasFocus() and GetConVarNumber("snd_mute_losefocus") == 1 then
+		vol = 0
+	end
 
-        if not system.HasFocus() and GetConVarNumber("snd_mute_losefocus") == 1 then
-            vol = 0
-        end
+	vol = vol * mult
 
-        vol = vol * mult
+	webaudio.SetVolume(vol)
 
-        webaudio.SetVolume(vol)
+	for key, stream in pairs(webaudio.streams) do
+		if stream:IsValid() then
+			stream:Think()
+		else
+			stream:Stop()
+			webaudio.streams[key] = nil
+			webaudio.html:QueueJavascript(("destroyStream(%i)"):format(stream.id))
 
-        for key, stream in pairs(webaudio.streams) do
-            if stream:IsValid() then
-                stream:Think()
-            else
-                stream:Stop()
-                webaudio.streams[key] = nil
-                webaudio.html:QueueJavascript(("destroyStream(%i)"):format(stream.id))
+			setmetatable(stream, getmetatable(NULL))
+		end
+	end
 
-                setmetatable(stream, getmetatable(NULL))
-            end
-        end
-
-        local js = table.concat(webaudio.js_queue, "\n")
-        if #js > 0 then
-            webaudio.html:QueueJavascript(js)
-            webaudio.js_queue = {}
-         end
-    end
+	local js = table.concat(webaudio.js_queue, "\n")
+	if #js > 0 then
+		webaudio.html:QueueJavascript(js)
+		webaudio.js_queue = {}
+	 end
 end)
 
 pac.webaudio = webaudio
