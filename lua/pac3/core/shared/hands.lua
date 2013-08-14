@@ -16,7 +16,7 @@ SWEP.DrawWeaponInfoBox = false
 SWEP.SlotPos      	= 1
 SWEP.Slot         	= 1
 
-SWEP.Spawnable    	= false
+SWEP.Spawnable    	= true
 SWEP.AdminSpawnable	= false
 
 SWEP.AutoSwitchTo	= true
