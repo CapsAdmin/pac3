@@ -6,7 +6,7 @@ local L = pace.LanguageString
 
 function pace.PopulateProperties(part)
 	if pace.properties:IsValid() then
-		pace.properties:Populate(part)
+		pace.properties:Populate(part, pace.PropertySheets)
 	end
 end
 
