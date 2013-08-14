@@ -9,7 +9,7 @@ PART.ShaderParams =
 	
 	CloakPassEnabled  = "boolean",
 	CloakFactor = "number",
-	--CloakColorTint = "Vector",
+	CloakColorTint = "Vector",
 	RefractAmount = "number",
 	
 	BumpMap = "ITexture",
@@ -56,15 +56,15 @@ PART.ShaderParams =
 	ColorTint_Tmp = "Vector",
 	Color = "Vector",
 	Color2 = "Vector",
+	Additive = "boolean",
+	AlphaTest = "boolean",
+	TranslucentX = "boolean",
 
 	
 	HalfLambert = "boolean",
-	
-	-- feature bloat?
---[[
-	
+		
 	Selfillum = "boolean",
-	SelillumTint = "Vector",
+	SelfillumTint = "Vector",
 	SelfillumMask = "ITexture",
 	Selfillum_Envmapmask_Alpha = "ITexture",
 	SelfillumFresnel = "boolean",
@@ -79,10 +79,12 @@ PART.ShaderParams =
 	FleshCubeTexture = "ITexture", --"", "Flesh cubemap texture" )
 	FleshBorderNoiseScale = "number", --"1.5", "Flesh Noise UV scalar for border" )
 	FleshDebugForceFleshOn = "boolean", --"0", "Flesh Debug full flesh" )
+	
 	--FleshEFFECTCENTERRADIUS1, SHADER_PARAM_TYPE_VEC4, "[0 0 0 0.001]", "Flesh effect center and radius" )
 	--FleshEFFECTCENTERRADIUS2, SHADER_PARAM_TYPE_VEC4, "[0 0 0 0.001]", "Flesh effect center and radius" )
 	--FleshEFFECTCENTERRADIUS3, SHADER_PARAM_TYPE_VEC4, "[0 0 0 0.001]", "Flesh effect center and radius" )
 	--FleshEFFECTCENTERRADIUS4, SHADER_PARAM_TYPE_VEC4, "[0 0 0 0.001]", "Flesh effect center and radius" )
+	
 	FleshSubsurfaceTint = "Vector", --"[1 1 1]", "Subsurface Color" )
 	FleshBorderWidth = "number", --"0.3", "Flesh border" )
 	FleshBorderSoftness = "number", --"0.42", "Flesh border softness (> 0.0 && <= 0.5)" )
@@ -98,7 +100,9 @@ PART.ShaderParams =
 	EmissiveBlendTint = "Vector",
 	EmissiveBlendScrollVector = "Vector",
 	
-	HalfLambert = "boolean",]]
+	DistanceAlpha = "number",
+	VertexAlpha = "boolean",
+	Alpha = "number",
 }
 
 function PART:OnThink()
@@ -180,6 +184,10 @@ local function setup(PART)
 				local mat = self:GetMaterialFromParent()
 				
 				if mat then
+					if name == "TranslucentX" then
+						name = "Translucent"
+					end
+				
 					mat:SetInt("$" .. name, var and 1 or 0) -- setint crashes?
 				end
 			end
