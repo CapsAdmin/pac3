@@ -129,6 +129,12 @@ do -- list
 		left.OnMouseWheeled = function(_, delta) scroll:OnMouseWheeled(delta) end
 		--right.OnMouseWheeled = function(_, delta) scroll:OnMouseWheeled(delta) end
 	end
+	
+	function PANEL:Paint(w, h)
+		h = self:GetHeight()
+		surface.SetDrawColor(derma.Color("text_dark", self, color_black))
+		surface.DrawOutlinedRect(0,0,w,h-9)
+	end
 
 	function PANEL:GetHeight()
 		return (self.item_height * (#self.List + 1)) - (self.div:GetDividerWidth() + 1)
@@ -143,15 +149,59 @@ do -- list
 	
 	function PANEL:PerformLayout()
 		self.scr:SetSize(10, self:GetHeight())
-		self.scr:SetUp(self:GetTall(), self:GetHeight() - 8)
+		self.scr:SetUp(self:GetTall(), self:GetHeight() - 10)
 		self.div:SetPos(0,self.scr:GetOffset())
 		local w, h = self:GetSize()
 		self.div:SetSize(w - (self.scr.Enabled and self.scr:GetWide() or 0), self:GetHeight())
 	end
+	
+	pace.CollapsedProperties = pac.luadata.ReadFile("pac3_editor/collapsed.txt")
+	
+	function PANEL:AddCollapser(name)
+		local left = vgui.Create("DButton", self)
+		left:SetText("")
+		self.left:AddItem(left)
+		
+		left.DoClick = function()
+			pace.CollapsedProperties[name] = not pace.CollapsedProperties[name]
+			pace.PopulateProperties(pace.current_part)
+					
+			pace.Editor:InvalidateLayout()	
+			pac.luadata.WriteFile("pac3_editor/collapsed.txt", pace.CollapsedProperties)
+		end
+		
+		local right = vgui.Create("DButton", self)
+		right:SetText("")
+		self.right:AddItem(right)
+		
+		right.DoClick = left.DoClick
+		
+		left.Paint = function(_, w, h)
+			surface.SetDrawColor(derma.Color("control_color_bright", self, color_white))
+			surface.DrawRect(0,0,w,h)
+			
+			surface.SetTextPos(11, 0)
+			surface.SetTextColor(derma.Color("text_dark", self, color_black))
+			surface.SetFont(pace.CurrentFont)
+			surface.DrawText(L(name))
+			
+			local txt = (pace.CollapsedProperties[name] and "+" or "-")
+			local w = surface.GetTextSize(txt)
+			surface.SetTextPos(6-w*0.5,0)
+			surface.DrawText(txt)
+		end
+		
+		right.Paint = function(_,w,h)
+			surface.SetDrawColor(derma.Color("control_color_bright", self, color_white))
+			surface.DrawRect(0,0,w-1,h)
+		end
+		
+		table.insert(self.List, {left = left, right = right, panel = var, key = key})
+	end
 
 	function PANEL:AddKeyValue(key, var, pos, obj)
 		local btn = pace.CreatePanel("properties_label")
-			btn:SetValue(L(key:gsub("%u", " %1"):lower()))
+			btn:SetValue(" " .. L(key:gsub("%u", " %1"):lower()))
 			btn.pac3_sort_pos = pos
 			
 			if obj then
@@ -186,15 +236,51 @@ do -- list
 		self.List = {}
 	end
 
-	function PANEL:Populate(obj)
+	function PANEL:Populate(obj, filter)
 		self:Clear()
 
 		local tbl = {}
-		local data = {}
+		local data = {}		
 		
 		for key, val in pairs(obj:GetVars()) do
 			if (not pace.HiddenPropertyKeys[key] or pace.HiddenPropertyKeys[key] == obj.ClassName) and not pace.ShouldHideProperty(key) then
-				table.insert(data, {key = key, val = val})
+				local group = pace.ReversedPropertySheets[key:lower()]
+				if group == nil then group = L"generic" end
+				
+				if pace.PropertySheets[obj.ClassName] then
+					local reversed = {}
+					for group, properties in pairs(pace.PropertySheets[obj.ClassName]) do
+						for k,v in pairs(properties) do
+							reversed[k] = group
+						end
+					end
+					
+					group = reversed[key:lower()]
+					if group == nil then group = L"generic" end
+				end
+				
+				if pace.PropertySheetPatterns[obj.ClassName] then
+					for _group, pattern in pairs(pace.PropertySheetPatterns[obj.ClassName]) do
+						local found
+						
+						if type(pattern) == "table" then
+							for k,v in pairs(pattern) do 
+								if key:lower():find(v) then
+									found = true
+									break
+								end
+							end
+						else
+							found = key:lower():find(pattern)
+						end
+						
+						if found then
+							group = _group
+						end
+					end
+				end
+				
+				table.insert(data, {key = key, val = val, group = group})
 			end
 		end
 		
@@ -205,37 +291,69 @@ do -- list
 		for k,v in pairs(pace.PropertyOrder) do table.insert(ordered_list, v) end
 		for k,v in pairs(pac.VariableOrder) do table.insert(ordered_list, v) end
 		
-		for pos, str in pairs(ordered_list) do
-			for i, val in pairs(data) do
-				if val.key == str then
-					table.insert(tbl, {pos = pos, key = val.key, val = val.val})
-					table.remove(data, i)
+		local sorted_sheets = {}
+		table.insert(sorted_sheets, "generic")
+		
+		if pace.PropertySheetPatterns[obj.ClassName] then
+			for k,v in pairs(pace.PropertySheetPatterns[obj.ClassName]) do
+				table.insert(sorted_sheets, k)
+			end
+		end
+		
+		if pace.PropertySheets[obj.ClassName] then
+			for k,v in pairs(pace.PropertySheets[obj.ClassName]) do
+				table.insert(sorted_sheets, k)
+			end
+		end
+		
+		for k,v in pairs(pace.PropertySheets) do
+			table.insert(sorted_sheets, k)
+		end
+		
+		for _, group in pairs(sorted_sheets) do
+			for pos, str in pairs(ordered_list) do
+				for i, val in pairs(data) do
+					if val.key == str and val.group == group then
+						table.insert(tbl, {pos = pos, key = val.key, val = val.val, group = val.group})
+						table.remove(data, i)
+					end
 				end
 			end
 		end
 
 		for pos, val in pairs(data) do
-			table.insert(tbl, {pos = pos, key = val.key, val = val.val})
+			table.insert(tbl, {pos = pos, key = val.key, val = val.val, group = val.group})
 		end
 				
-		for pos, data in pairs(tbl) do
+		local current_group = nil
+
+		for pos, data in pairs(tbl) do		
 			local key, val = data.key, data.val
 			
 			if pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
+			
 			if not pace.IsShowingDeprecatedFeatures() then
 				local part = pace.DeprecatedProperties[key]
 				if part == true or part == obj.ClassName then
 					continue
 				end
 			end
-			
+						
 			local pnl
 			local T = (pace.TranslatePropertiesKey(key, obj) or type(val)):lower()
 			
 			if pace.PanelExists("properties_" .. T) then
+			
+				if data.group and data.group ~= current_group then
+					self:AddCollapser(data.group)
+					current_group = data.group
+				end
+			
+				if pace.CollapsedProperties[data.group] ~= nil and pace.CollapsedProperties[data.group] then continue end
+			
 				pnl = pace.CreatePanel("properties_" .. T)
 			end
-
+			
 			if pnl then
 				pnl.CurrentKey = key
 				obj.editor_pnl = pnl
@@ -254,6 +372,54 @@ do -- list
 				end
 				
 				self:AddKeyValue(key, pnl, pos, obj)
+			end
+		end
+		
+		self:FixHeight()
+	end
+	
+	
+	function PANEL:PopulateCustom(obj)
+		self:Clear()
+
+		local tbl = {}
+		local data = {}
+		
+		for key, val in pairs(obj) do
+			table.insert(data, {key = key, val = val.val, callback = val.callback})
+		end
+		
+		table.sort(data, function(a,b) return a.key > b.key end)
+		
+		for pos, str in pairs(pace.PropertyOrder) do
+			for i, val in pairs(data) do
+				if val.key == str then
+					table.insert(tbl, {pos = pos, key = val.key, val = val.val, callback = val.callback})
+					table.remove(data, i)
+				end
+			end
+		end
+
+		for pos, val in pairs(data) do
+			table.insert(tbl, {pos = pos, key = val.key, val = val.val, callback = val.callback})
+		end
+				
+		for pos, data in pairs(tbl) do
+			local key, val = data.key, data.val
+
+			local pnl
+			local T = (pace.TranslatePropertiesKey(key, obj) or type(val)):lower()
+			
+			if pace.PanelExists("properties_" .. T) then
+				pnl = pace.CreatePanel("properties_" .. T)
+			end
+
+			if pnl then	
+				pnl.CurrentKey = key
+				pnl:SetValue(val)
+				pnl.LimitValue = pace.PropertyLimits[key]
+				pnl.OnValueChanged = data.callback
+				self:AddItem(key, pnl, pos)
 			end
 		end
 		

@@ -8,6 +8,8 @@ PANEL.menu_bar = NULL
 
 local BAR_SIZE = 17
 
+local use_tabs = CreateClientConVar("pac_property_tabs", 1, true)
+
 function PANEL:Init()	
 	self:SetTitle("pac3 " .. L"editor")
 	self:SetSizable(true)
@@ -23,8 +25,10 @@ function PANEL:Init()
 	self.div = div
 	
 	self:SetTop(pace.CreatePanel("tree"))
-	local pnl = pace.CreatePanel("properties")
+	
+	local pnl = pace.CreatePanel("properties", div)
 	pace.properties = pnl
+	
 	self:SetBottom(pnl)
 	
 	self:SetCookieName("pac3_editor")
@@ -78,9 +82,10 @@ function PANEL:PerformLayout()
 
 	self.div:InvalidateLayout()
 	self.bottom:PerformLayout()
+	pace.properties:PerformLayout()
 	
 	if auto_size:GetBool() then
-		self.div:SetTopHeight(ScrH() - self.bottom:GetHeight() - BAR_SIZE + 2)
+		self.div:SetTopHeight(ScrH() - pace.properties:GetHeight() - BAR_SIZE + 4)
 	end
 end
 

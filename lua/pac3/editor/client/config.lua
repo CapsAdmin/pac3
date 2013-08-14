@@ -1,3 +1,157 @@
+pace.PropertySheets = {
+	orientation =
+	{
+		position = true,
+		angles = true,
+		positionoffset = true,
+		angleoffset = true,
+		size = true,
+		scale = true,
+		eyeangles = true,
+		aimpartname = true,
+		alternativescaling = true,
+		bone = true,
+		bonemerge = true,
+	},
+	
+	appearance = 
+	{
+		brightness = true,
+		alpha =  true,
+		fullbright =  true,
+		cellshade =  true,
+		translucent =  true,
+		color =  true,
+		tintcolor =  true,
+		invert =  true,
+		doubleface =  true,
+		texturefilter =  true,
+		passes =  true,
+		lightblend =  true,
+		skin =  true,
+		outline =  true,
+		outlinecolor =  true,
+		outlinealpha =  true,
+		font =  true,
+		startalpha =  true,
+		endalpha =  true,
+		startcolor =  true,
+		stretch =  true,
+		endcolor =  true,
+		draworder = true,
+		drawshadow=  true,
+	},
+	
+	other = 
+	{
+		ownerentity = true,
+		draworder = true,
+		showinfirstperson = true,
+		duplicate = true,
+	},
+	
+	event = {
+		
+	},
+	
+	entity = {
+		behavior =
+		{
+			mutefootsteps = true,
+			inversekinematics = true,
+			animationrate = true,
+			relativebones = true,
+			fallapartondeath = true,
+			movespeed = true,
+			weapon = true,
+		},
+	},
+	
+	proxy = {
+		["easy setup"] =
+		{
+			min = true,
+			max = true,
+			offset = true,
+			["function"] = true,
+			input = true,
+			inputdivider = true,
+			inputmultiplier = true,
+			pow = true,
+			axis = true,
+		},
+		["behavior"] =
+		{
+			velocityroughness = true,
+			resetvelocitiesonhide = true,
+			zeroeyepitch = true,
+			playerangles = true,
+			additive = true,
+		}
+	},
+	
+	particles = {
+		orientation =
+		{
+			position = true,
+			angles = true,
+			positionoffset = true,
+			angleoffset = true,
+			eyeangles = true,
+			aimpartname = true,
+			bone = true,
+		},
+		appearance = {
+			color1 = true,
+			color2 = true,
+			material = true,
+			startalpha = true,
+			endalpha = true,
+			randomcolour = true,
+			translucent = true,
+			draworder = true,
+			["3d"] = true,
+			drawmanual = true,
+			doublesided = true,
+			lighting = true,
+		},
+		rotation = {
+			rolldelta = true,
+			randomrollspeed = true,
+			particleanglevelocity = true,
+		},
+		movement = {
+			velocity = true,
+			spread = true,
+			gravity = true,
+			bounce = true,
+			collide = true,
+			ownervelocitymultiplier = true,
+			airresistance = true,
+			sliding = true,
+		},
+	}
+}
+
+pace.PropertySheets.entity.orientation = pace.PropertySheets.orientation
+pace.PropertySheets.entity.appearance = pace.PropertySheets.appearance
+
+pace.PropertySheetPatterns = {
+	material = {
+		["phong"] = "phong",
+		["env map"] = "envmap.+",
+		["ambient occlusion"] = {"ambientocclusion", "halflambert"},
+		["detail"] = "detail",
+		["rimlight"] = "rimlight",
+		["cloak"] = {"cloak", "refract"},
+		["colors"] = "color",
+		["textures"] = {"bumpmap", "basetexture", "envmap", "lightwarptexture"},
+	},
+	particles = {
+		["stick"] = {"stick", "align"},
+	}
+}
+
 pace.PartTree = {
 	entity = {
 		animation = true,
@@ -72,6 +226,8 @@ pace.MiscIcons = {
 	edit = "icon16/table_edit.png",
 	revert = "icon16/table_delete.png",
 	about = "icon16/star.png",
+	appearance = "icon16/paintcan.png",
+	orientation = "icon16/shape_handles.png",
 }
 pace.PartIcons =
 {
@@ -341,6 +497,15 @@ pace.HiddenPropertyKeys =
 	OwnerName = "group",
 }
 
+local temp = {}
+for group, properties in pairs(pace.PropertySheets) do
+	for k,v in pairs(properties) do
+		temp[k] = group
+	end
+end
+
+pace.ReversedPropertySheets = temp
+
 function pace.ShouldHideProperty(key)
 	return key:find("UID")
 end
@@ -351,6 +516,14 @@ function pace.TranslatePropertiesKey(key, obj)
 	
 	if obj.ClassName == "entity" and (key == "positionoffset" or key == "angleoffset") then
 		return ""
+	end
+	
+	if (
+		obj.ClassName == "effect" or 
+		obj.ClassName == "bone"
+		) 
+		and key == "translucent" then 
+		return "" 
 	end
 	
 	if 
