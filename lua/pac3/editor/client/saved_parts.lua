@@ -222,7 +222,7 @@ function pace.GetSavedParts(dir)
 end
 
 local function populate_part(menu, part, override_part, clear)
-	local name = part.self.Name
+	local name = part.self.Name or ""
 	
 	if name == "" then
 		name = part.self.ClassName .. " (no name)"
