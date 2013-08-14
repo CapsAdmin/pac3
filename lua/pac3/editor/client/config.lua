@@ -146,6 +146,9 @@ pace.PropertySheetPatterns = {
 		["cloak"] = {"cloak", "refract"},
 		["colors"] = "color",
 		["textures"] = {"bumpmap", "basetexture", "envmap", "lightwarptexture"},
+		["flesh"] = "flesh",
+		["selfillum"] = "selfillum",
+		["emissive"] = "emissive",
 	},
 	particles = {
 		["stick"] = {"stick", "align"},
