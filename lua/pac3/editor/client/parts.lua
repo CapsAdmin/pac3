@@ -72,9 +72,9 @@ function pace.OnPartSelected(part, is_selecting)
 		pace.editing_viewmodel = false
 	end
 
+	pace.current_part = part
 	pace.PopulateProperties(part)
 	pace.mctrl.SetTarget(part)
-	pace.current_part = part
 	
 	pace.SetViewPart(part)
 	
@@ -110,8 +110,10 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 		pace.CallChangeForUndo(obj, key, val, undo_delay)
 		
 		local node = obj.editor_node
-		if IsValid(node) then		
-			if key == "Name" then
+		if IsValid(node) then
+			if key == "Event" then
+				pace.PopulateProperties(obj)
+			elseif key == "Name" then
 				if not obj:HasParent() then
 					pace.RemovePartOnServer(obj:GetUniqueID(), false, true)
 				end
