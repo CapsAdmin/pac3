@@ -6,8 +6,14 @@ local L = pace.LanguageString
 
 function pace.PopulateProperties(part)
 	if pace.properties:IsValid() then
-		pace.properties:Populate(part, pace.PropertySheets)
-	end
+		pace.properties:Populate(part)
+		for k,v in pairs(pace.extra_populates) do
+			v()
+		end
+		pace.extra_populates = {}
+		
+		pace.Editor:InvalidateLayout()
+	end	
 end
 
 function pace.OnDraw()

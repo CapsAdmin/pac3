@@ -33,6 +33,7 @@ local function populate_part_menu(menu, part, func)
 end
 
 pace.ActiveSpecialPanel = NULL
+pace.extra_populates = {}
 
 function pace.SafeRemoveSpecialPanel()
 	if pace.ActiveSpecialPanel:IsValid() then
@@ -236,14 +237,20 @@ do -- list
 		self.List = {}
 	end
 
-	function PANEL:Populate(obj, filter)
-		self:Clear()
+	function PANEL:Populate(obj, dont_clear, group_override)	
+		if dont_clear == nil then self:Clear() end
 
 		local tbl = {}
 		local data = {}		
 		
-		for key, val in pairs(obj:GetVars()) do
-			if (not pace.HiddenPropertyKeys[key] or pace.HiddenPropertyKeys[key] == obj.ClassName) and not pace.ShouldHideProperty(key) then
+		for key, val in pairs(obj.ClassName and obj:GetVars() or obj) do
+			local callback
+			if not obj.ClassName then
+				callback = val.callback
+				val = val.val
+			end		
+							
+			if not obj.ClassName or (not pace.HiddenPropertyKeys[key] or pace.HiddenPropertyKeys[key] == obj.ClassName) and not pace.ShouldHideProperty(key) then
 				local group = pace.ReversedPropertySheets[key:lower()]
 				if group == nil then group = L"generic" end
 				
@@ -279,8 +286,8 @@ do -- list
 						end
 					end
 				end
-				
-				table.insert(data, {key = key, val = val, group = group})
+										
+				table.insert(data, {key = key, val = val, group = group_override or group, callback = callback})
 			end
 		end
 		
@@ -314,7 +321,7 @@ do -- list
 			for pos, str in pairs(ordered_list) do
 				for i, val in pairs(data) do
 					if val.key == str and val.group == group then
-						table.insert(tbl, {pos = pos, key = val.key, val = val.val, group = val.group})
+						table.insert(tbl, {pos = pos, key = val.key, val = val.val, group = val.group, callback = val.callback})
 						table.remove(data, i)
 					end
 				end
@@ -322,26 +329,28 @@ do -- list
 		end
 
 		for pos, val in pairs(data) do
-			table.insert(tbl, {pos = pos, key = val.key, val = val.val, group = val.group})
+			table.insert(tbl, {pos = pos, key = val.key, val = val.val, group = val.group, callback = val.callback})
 		end
 				
 		local current_group = nil
 
 		for pos, data in pairs(tbl) do		
 			local key, val = data.key, data.val
-			
-			if pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
-			
-			if not pace.IsShowingDeprecatedFeatures() then
-				local part = pace.DeprecatedProperties[key]
-				if part == true or part == obj.ClassName then
-					continue
+
+			if obj.ClassName then
+				if pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
+				
+				if not pace.IsShowingDeprecatedFeatures() then
+					local part = pace.DeprecatedProperties[key]
+					if part == true or part == obj.ClassName then
+						continue
+					end
 				end
 			end
-						
+
 			local pnl
 			local T = (pace.TranslatePropertiesKey(key, obj) or type(val)):lower()
-			
+
 			if pace.PanelExists("properties_" .. T) then
 			
 				if data.group and data.group ~= current_group then
@@ -355,23 +364,38 @@ do -- list
 			end
 			
 			if pnl then
-				pnl.CurrentKey = key
-				obj.editor_pnl = pnl
-				
-				local val = obj["Get" .. key](obj)
-				pnl:SetValue(val)
-				pnl.LimitValue = pace.PropertyLimits[key]
-				
-				pnl.OnValueChanged = function(val)
-					if T == "number" then
-						val = tonumber(val) or 0
-					elseif T == "string" then
-						val = tostring(val)
+				if obj.ClassName then
+					
+					if pnl.ExtraPopulate then
+						table.insert(pace.extra_populates, pnl.ExtraPopulate)
+						pnl:Remove()
+						continue
 					end
-					pace.Call("VariableChanged", obj, key, val)
-				end
 				
-				self:AddKeyValue(key, pnl, pos, obj)
+					pnl.CurrentKey = key
+					obj.editor_pnl = pnl
+					
+					local val = obj["Get" .. key](obj)
+					pnl:SetValue(val)
+					pnl.LimitValue = pace.PropertyLimits[key]
+					
+					pnl.OnValueChanged = function(val)
+						if T == "number" then
+							val = tonumber(val) or 0
+						elseif T == "string" then
+							val = tostring(val)
+						end
+						pace.Call("VariableChanged", obj, key, val)
+					end
+					
+					self:AddKeyValue(key, pnl, pos, obj)
+				else
+					pnl.CurrentKey = key
+					pnl:SetValue(val)
+					pnl.LimitValue = pace.PropertyLimits[key]
+					pnl.OnValueChanged = data.callback
+					self:AddKeyValue(key, pnl, pos)
+				end
 			end
 		end
 		
@@ -524,7 +548,7 @@ do -- base editable
 			btn.DoClick = function() self:SpecialCallback(self.CurrentKey) end
 			btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
 		end
-		
+				
 		if DLabel and DLabel.Init then
 			return DLabel.Init(self, ...)
 		end
@@ -1315,7 +1339,7 @@ do -- material
 	pace.RegisterPanel(PANEL)
 end
 
-local function create_search_list(self, name, add_columns, get_list, get_current, add_line, select_value)
+local function create_search_list(key, name, add_columns, get_list, get_current, add_line, select_value)
 	select_value = select_value or function(val, key) return val end
 	pace.SafeRemoveSpecialPanel()
 		
@@ -1333,8 +1357,10 @@ local function create_search_list(self, name, add_columns, get_list, get_current
 	
 	list.OnRowSelected = function(_, id, line) 
 		local val = select_value(line.list_val, line.list_key)
-		self:SetValue(val)
-		self.OnValueChanged(val)
+
+		if pace.current_part:IsValid() and pace.current_part["Set" .. key] then
+			pace.Call("VariableChanged", pace.current_part, key, val)
+		end
 	end
 	
 	local first = NULL
@@ -1384,7 +1410,7 @@ do -- sequence list
 		
 	function PANEL:SpecialCallback()
 		create_search_list(
-			self,
+			self.CurrentKey,
 			"animations", 
 			function(list) 	
 				list:AddColumn("id"):SetFixedWidth(25)
@@ -1413,7 +1439,7 @@ do -- pose parameter list
 		
 	function PANEL:SpecialCallback()		
 		create_search_list(
-			self,
+			self.CurrentKey,
 			"pose parameters", 
 			function(list) 	
 				list:AddColumn("id"):SetFixedWidth(25)
@@ -1445,7 +1471,7 @@ do -- event list
 		
 	function PANEL:SpecialCallback()	
 		local frame = create_search_list(
-			self,
+			self.CurrentKey,
 			"events", 
 			function(list) 	
 				list:AddColumn("name") 
@@ -1478,7 +1504,7 @@ do -- operator list
 		
 	function PANEL:SpecialCallback()			
 		local frame = create_search_list(
-			self,
+			self.CurrentKey,
 			"operators", 
 			function(list) 	
 				list:AddColumn("name") 
@@ -1509,23 +1535,12 @@ do -- arguments
 	PANEL.ClassName = "properties_arguments"
 	PANEL.Base = "pace_properties_base_type"
 		
-	function PANEL:SpecialCallback()
-		pace.SafeRemoveSpecialPanel()
-		 
+	function PANEL:ExtraPopulate()	 
 		local data = pace.current_part.Events[pace.current_part.Event]
 		data = data and data.arguments
 		
 		if not data then return end
-				
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"arguments")
-		SHOW_SPECIAL(frame, self, 250)
-		frame:SetSizable(true)
-		frame:MakePopup()
 
-		local list = vgui.Create("pace_properties", frame)
-		list:Dock(FILL)
-			
 		local tbl = {}
 		local args = {pace.current_part:GetParsedArguments(data)}
 		if args then
@@ -1546,13 +1561,12 @@ do -- arguments
 					local args = {pace.current_part:GetParsedArguments(data)}
 					args[pos] = val
 					pace.current_part:ParseArguments(unpack(args))
-					self:SetValue(pace.current_part.Arguments)
+					--self:SetValue(pace.current_part.Arguments)
 				end}
 			end
-			list:PopulateCustom(tbl)
+			pace.properties:Populate(tbl, true, L"arguments")
 		end
-		
-		pace.ActiveSpecialPanel = frame
+				
 	end
 	
 	pace.RegisterPanel(PANEL)
@@ -1605,7 +1619,7 @@ do -- Proxy Functions
 		
 	function PANEL:SpecialCallback()			
 		local frame = create_search_list(
-			self,
+			self.CurrentKey,
 			"operators", 
 			function(list) 	
 				list:AddColumn("name") 
