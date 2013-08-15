@@ -1,8 +1,6 @@
 local SWEP = {Primary = {}, Secondary = {}}
 
-if SERVER then
-   AddCSLuaFile()
-end
+SWEP.Base = "weapon_base"
 
 SWEP.Author     	= ""
 SWEP.Contact      	= ""
