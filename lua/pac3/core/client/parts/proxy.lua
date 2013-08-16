@@ -96,6 +96,18 @@ end
 
 PART.Inputs =
 {
+	owner_position = function(s, p)
+		local owner = s:GetOwner(s.RootOwner)
+		owner = try_viewmodel(owner)
+		
+		if owner:IsValid() then
+			local pos = owner:GetPos()
+			
+			return pos.x, pos.y, pos.z
+		end		
+		
+		return 0,0,0
+	end,
 	owner_fov = function(s, p)
 		local owner = s:GetOwner(s.RootOwner)
 		
