@@ -11,6 +11,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "NumberParticles", 1)
 	pac.GetSet(PART, "Velocity", 250)
 	pac.GetSet(PART, "Spread", 0.1)
+	pac.GetSet(PART, "PositionSpread", 0)
 	pac.GetSet(PART, "DieTime", 3)
 	pac.GetSet(PART, "StartAlpha", 255)
 	pac.GetSet(PART, "EndAlpha", 0)
@@ -170,6 +171,10 @@ function PART:EmitParticles(pos, ang)
 
 			local roll = math.Rand(-self.RollDelta, self.RollDelta)
 
+			if self.PositionSpread ~= 0 then 
+				pos = pos + Angle(math.Rand(-180, 180), math.Rand(-180, 180), math.Rand(-180, 180)):Forward() * self.PositionSpread
+			end
+			
 			for i = 1, double do
 				local particle = emt:Add(self.Material, pos)
 
