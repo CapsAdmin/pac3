@@ -176,7 +176,7 @@ function PART:Shoot(pos, ang)
 						end
 						
 						timer.Simple(0.5, function()
-							ent:Remove()
+							SafeRemoveEntity(ent)
 							pac.drawn_entities[id] = nil
 						end)
 					end
