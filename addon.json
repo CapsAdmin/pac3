@@ -1,0 +1,13 @@
+{
+	"title" : "PAC3",
+	"type" : "tool",
+	"tags" : [ "fun", "roleplay" ],
+	"ignore" :
+	[
+		".gitignore",
+		".git*",
+		"*.txt",
+		"*.md",
+		"*.bat"
+	]
+}
