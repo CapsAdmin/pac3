@@ -1,41 +1,38 @@
 local L = pace.LanguageString
 
-pace.Fonts = 
-{
-	"DermaDefault",
-}
-
-pace.ShadowedFonts = {}
+pace.Fonts = {}
 
 for i = 1, 5 do
 	surface.CreateFont("pac_font_"..i, 
 	{
-		font = "Tahoma",
+		font = "Arial",
 		size = 11 + i,
 		weight = 50,
 		antialias = true,
 	})
-	table.insert(pace.Fonts, i, "pac_font_"..i)
+	
+	table.insert(pace.Fonts, "pac_font_"..i)
 end
 
 for i = 1, 5 do
-	surface.CreateFont("pac_shadowed_font_"..i, 
+	surface.CreateFont("pac_font_bold"..i, 
 	{
-		font = "Tahoma",
+		font = "Arial",
 		size = 11 + i,
-		weight = 50,
+		weight = 800,
 		antialias = true,
-		shadow = true,
 	})
-	table.insert(pace.ShadowedFonts, i, "pac_shadowed_font_"..i)
+	table.insert(pace.Fonts, "pac_font_bold"..i)
 end
+
+table.insert(pace.Fonts, "DermaDefault")
 
 local font_cvar = CreateClientConVar("pac_editor_font", pace.Fonts[1])
 
 function pace.SetFont(fnt)
 	pace.CurrentFont = fnt or font_cvar:GetString()
 	
-	if not table.HasValue(pace.Fonts, pace.CurrentFont) and not table.HasValue(pace.ShadowedFonts, pace.CurrentFont) then
+	if not table.HasValue(pace.Fonts, pace.CurrentFont) then
 		pace.CurrentFont = "DermaDefault"
 	end
 	
@@ -53,21 +50,12 @@ function pace.AddFontsToMenu(menu)
 	local menu = menu:AddSubMenu(L"font")
 	menu.GetDeleteSelf = function() return false end
 	
-	for key, val in pairs(pace.Fonts) do
-		menu:AddOption(val, function()
+	for key, val in pairs(pace.Fonts) do		
+		local pnl = menu:AddOption(L"The quick brown fox jumps over the lazy dog.", function()
 			pace.SetFont(val)
 		end)
 		
-		local pnl = menu.Items and menu.Items[#menu.Items]
-		
-		if pnl and pnl:IsValid() then
-			pnl:SetFont(val)
-			if pace.ShadowedFonts[val] then
-				pnl:SetTextColor(derma.Color("text_bright", pnl, color_white))
-			else
-				pnl:SetTextColor(derma.Color("text_dark", pnl, color_black))
-			end
-		end
+		pnl:SetFont(val)
 	end
 end
 
