@@ -34,6 +34,11 @@ local font_cvar = CreateClientConVar("pac_editor_font", pace.Fonts[1])
 
 function pace.SetFont(fnt)
 	pace.CurrentFont = fnt or font_cvar:GetString()
+	
+	if not table.HasValue(pace.Fonts, pace.CurrentFont) and not table.HasValue(pace.ShadowedFonts, pace.CurrentFont) then
+		pace.CurrentFont = "DermaDefault"
+	end
+	
 	RunConsoleCommand("pac_editor_font", pace.CurrentFont)
 	
 	if pace.Editor and pace.Editor:IsValid() then
