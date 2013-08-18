@@ -148,11 +148,7 @@ local function node_layout(self, ...)
 	pace.pac_dtree_node.PerformLayout(self, ...)
 	if self.Label then
 		self.Label:SetFont(pace.CurrentFont)
-		if pace.ShadowedFonts[pace.CurrentFont] then
-			self.Label:SetTextColor(derma.Color("text_bright", self, color_white))
-		else
-			self.Label:SetTextColor(derma.Color("text_dark", self, color_black))
-		end
+		self.Label:SetTextColor(derma.Color("text_dark", self, color_black))
 	end			
 end
 
