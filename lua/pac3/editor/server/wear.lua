@@ -142,7 +142,7 @@ function pace.SubmitPartNotify(data)
 		umsg.Start("pac_submit_acknowledged", data.owner)
 			umsg.Bool(allowed)
 			umsg.String(reason or "")
-			umsg.String(data.part.self.Name)
+			umsg.String(data.part.self.Name or "no name")
 		umsg.End()
 	end
 end
