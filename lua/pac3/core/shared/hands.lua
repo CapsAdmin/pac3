@@ -37,10 +37,12 @@ SWEP.Secondary.Ammo        = "none"
 function SWEP:DrawHUD() 			end
 function SWEP:PrintWeaponInfo() 	end
 
-surface.CreateFont("pac_hands_font", {font = "HalfLife2", size = 120, weight = 400, antialias = true, additive = true})
+if CLIENT then
+	surface.CreateFont("pac_hands_font", {font = "HalfLife2", size = 120, weight = 400, antialias = true, additive = true})
 
-function SWEP:DrawWeaponSelection(x,y,w,t,a)
-    draw.SimpleText("C","pac_hands_font",x+w/2,y,Color(255, 220, 0,a),TEXT_ALIGN_CENTER)
+	function SWEP:DrawWeaponSelection(x,y,w,t,a)
+		draw.SimpleText("C","pac_hands_font",x+w/2,y,Color(255, 220, 0,a),TEXT_ALIGN_CENTER)
+	end
 end
 
 function SWEP:DrawWorldModel() 						 end
