@@ -284,6 +284,10 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 	sv_draw_dist = GetConVarNumber("pac_sv_draw_distance")
 	radius = 0
 	
+	if draw_dist == 0 then
+		draw_dist = 32768
+	end
+	
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
 			ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
@@ -308,7 +312,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 					(
 						(sv_draw_dist ~= 0 and (sv_draw_dist == -1 or dst < sv_draw_dist)) or
 						(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance < dst)) or
-						(draw_dist <= 0 or dst < draw_dist)
+						(dst < draw_dist)
 					)
 				)
 			then
