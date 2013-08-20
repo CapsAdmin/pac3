@@ -97,7 +97,7 @@ function PART:Think()
 		end
 		
 		if stream.owner_set ~= owner and owner:IsValid() then
-			stream:SetSourceEntity(owner)
+			stream:SetSourceEntity(owner, true)
 			stream.owner_set = owner
 		end
 	end
