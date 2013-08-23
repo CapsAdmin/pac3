@@ -172,25 +172,24 @@ function urlobj.Think()
 	end
 	
 	if table.Count(urlobj.Queue) > 0 then
-		for url, data in pairs(urlobj.Queue) do
-			if not data.Downloading then
-				pac.dprint("requesting model download %q", url)
+		local url, data = next(urlobj.Queue)
+		if not data.Downloading then
+			pac.dprint("requesting model download %q", url)
+			
+			data.Downloading = pac.RealTime + 15
+
+			http.Fetch(url, function(obj_str)	
+				pac.dprint("downloaded model %q %s", url, string.NiceSize(#obj_str))
 				
-				data.Downloading = pac.RealTime + 15
+				pac.dprint("%s", obj_str)
 
-				http.Fetch(url, function(obj_str)	
-					pac.dprint("downloaded model %q %s", url, string.NiceSize(#obj_str))
-					
-					pac.dprint("%s", obj_str)
+				local obj = urlobj.CreateObj(obj_str, data.merge_models, data.hack)
+				
+				urlobj.Cache[url] = obj
+				urlobj.Queue[url] = nil
 
-					local obj = urlobj.CreateObj(obj_str, data.merge_models, data.hack)
-					
-					urlobj.Cache[url] = obj
-					urlobj.Queue[url] = nil
-
-					data.callback(obj)
-				end)
-			end
+				data.callback(obj)
+			end)
 		end
 		urlobj.Busy = true
 	else
