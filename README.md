@@ -7,3 +7,6 @@ You can wear your outfit on any server with PAC3 and everyone should be able to 
 You can also load custom models (.obj), textures (.jpg and .png) and sounds (.ogg and .wav) from URL. 
 
 By default, PAC3 is in basic mode. You can change this by going to options enable advanced mode. 
+
+![ScreenShot](https://dl.dropbox.com/u/244444/ShareX/2013-08/2013-08-29_00-56-39.png)
+![ScreenShot](https://dl.dropbox.com/u/244444/ShareX/2013-08/2013-08-29_00-59-29.png)
