@@ -75,7 +75,7 @@ function PANEL:Think(...)
 	end
 end
 
-local auto_size = CreateClientConVar("pac_auto_size_properties", 0, true)
+local auto_size = CreateClientConVar("pac_auto_size_properties", 1, true)
 
 function PANEL:PerformLayout()
 	DFrame.PerformLayout(self)
@@ -85,7 +85,7 @@ function PANEL:PerformLayout()
 	pace.properties:PerformLayout()
 	
 	if auto_size:GetBool() then
-		self.div:SetTopHeight(ScrH() - math.min(pace.properties:GetHeight() - BAR_SIZE + 4, ScrH() / 2))
+		self.div:SetTopHeight(ScrH() - math.min(pace.properties:GetHeight(2), ScrH() / 2))
 	end
 end
 

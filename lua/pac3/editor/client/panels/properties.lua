@@ -111,7 +111,12 @@ do -- list
 
 		divider:SetDividerWidth(3)
 		divider:SetLeftWidth(110)
-		self:SetItemHeight(14)
+		
+		surface.SetFont(pace.CurrentFont)
+		local w,h = surface.GetTextSize("W")
+		local size = h + 2
+		
+		self:SetItemHeight(size)
 				
 		self.div = divider
 		
@@ -137,8 +142,8 @@ do -- list
 		surface.DrawOutlinedRect(0,0,w,h-9)
 	end
 
-	function PANEL:GetHeight()
-		return (self.item_height * (#self.List + 1)) - (self.div:GetDividerWidth() + 1)
+	function PANEL:GetHeight(hack)
+		return (self.item_height * (#self.List+(hack or 1))) - (self.div:GetDividerWidth() + 1)
 	end
 
 	function PANEL:FixHeight()
@@ -181,14 +186,18 @@ do -- list
 			surface.SetDrawColor(derma.Color("control_color_bright", self, color_white))
 			surface.DrawRect(0,0,w,h)
 			
-			surface.SetTextPos(11, 0)
+			local txt = L(name)
+			local _, _h = surface.GetTextSize(txt)
+			local middle = h/2 - _h/2
+			
+			surface.SetTextPos(11, middle)
 			surface.SetTextColor(derma.Color("text_dark", self, color_black))
 			surface.SetFont(pace.CurrentFont)
-			surface.DrawText(L(name))
+			surface.DrawText(txt)
 			
 			local txt = (pace.CollapsedProperties[name] and "+" or "-")
 			local w = surface.GetTextSize(txt)
-			surface.SetTextPos(6-w*0.5,0)
+			surface.SetTextPos(6-w*0.5,middle)
 			surface.DrawText(txt)
 		end
 		
