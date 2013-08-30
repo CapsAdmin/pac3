@@ -172,28 +172,32 @@ end
 local function add_files(tbl, dir)
 	local files, folders = file.Find("pac3/" .. dir .. "/*", "DATA")
 			
-	for key, folder in pairs(folders) do
-		if folder == "__backup" then continue end
-		tbl[folder] = {}
-		add_files(tbl[folder], dir .. "/" .. folder)
+	if folders then
+		for key, folder in pairs(folders) do
+			if folder == "__backup" then continue end
+			tbl[folder] = {}
+			add_files(tbl[folder], dir .. "/" .. folder)
+		end
 	end
 	
-	for i, name in pairs(files) do
-		if name:find("%.txt") then
-			local path = "pac3/" .. dir .. "/" .. name
-			
-			if file.Exists(path, "DATA") then
-				local data = {}
-					data.Name = name:gsub("%.txt", "")
-					data.FileName = name
-					data.Size = string.NiceSize(file.Size(path, "DATA"))
-					local time = file.Time(path, "DATA")
-					data.LastModified = os.date("%m/%d/%Y %H:%M", time)
-					data.Time = file.Time(path, "DATA")
-					data.Path = path
-					data.RelativePath = (dir .. "/" .. data.Name):sub(2)
-					data.Content = pac.luadata.ReadFile(path)
-				table.insert(tbl, data)
+	if files then
+		for i, name in pairs(files) do
+			if name:find("%.txt") then
+				local path = "pac3/" .. dir .. "/" .. name
+				
+				if file.Exists(path, "DATA") then
+					local data = {}
+						data.Name = name:gsub("%.txt", "")
+						data.FileName = name
+						data.Size = string.NiceSize(file.Size(path, "DATA"))
+						local time = file.Time(path, "DATA")
+						data.LastModified = os.date("%m/%d/%Y %H:%M", time)
+						data.Time = file.Time(path, "DATA")
+						data.Path = path
+						data.RelativePath = (dir .. "/" .. data.Name):sub(2)
+						data.Content = pac.luadata.ReadFile(path)
+					table.insert(tbl, data)
+				end
 			end
 		end
 	end
@@ -318,6 +322,16 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 			examples:AddOption(name, function() pace.LoadPartsFromTable(data) end)
 			:SetImage(pace.MiscIcons.outfit)
 		end
+	end	
+	
+	local backups, pnl = menu:AddSubMenu(L"backups")
+	pnl:SetImage(pace.MiscIcons.clone)
+	backups.GetDeleteSelf = function() return false end
+	for _, name in pairs(table.Reverse(file.Find("pac3/__backup/*", "DATA"))) do
+		local full_path = "pac3/__backup/" .. name
+		local friendly_name = os.date("%m/%d/%Y %H:%M:%S ", file.Time(full_path, "DATA")) .. string.NiceSize(file.Size(full_path, "DATA"))
+		backups:AddOption(friendly_name, function() pace.LoadParts("__backup/" .. name, true) end)
+		:SetImage(pace.MiscIcons.outfit)
 	end
 	
 	menu:AddSpacer()
