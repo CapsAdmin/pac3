@@ -137,15 +137,6 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 			end
 		end		
 	end
-	
-	timer.Create("autosave_Parts", 0.5, 1, function()
-		for k,v in pairs(pac.GetParts(true)) do
-			if v:HasChildren() then
-				pace.SaveParts("autosave")
-				break
-			end
-		end
-	end)
 end
 
 do -- menu
