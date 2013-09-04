@@ -2027,7 +2027,8 @@ pace.example_outfits["run leaning"] = {[1] = {
 	},
 },
 }
-pace.example_outfits["pet"] = {[1] = {
+pace.example_outfits["pet"] = {
+[1] = {
 	["children"] = {
 	[1] = {
 		["children"] = {
@@ -2269,6 +2270,7 @@ pace.example_outfits["pet"] = {[1] = {
 	["UniqueID"] = "3638855604",
 	["Name"] = "Pet",
 },
+}
 }
 pace.example_outfits["scout"] = {[1] = {
 	["children"] = {
