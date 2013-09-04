@@ -148,7 +148,9 @@ local function select_something(tblin, check, getpos, getfriendly, callback)
 		end
 	end
 
-	local function HUDPaint()		
+	local function HUDPaint()	
+
+		surface.SetAlphaMultiplier(1)
 		
 		x,y = gui.MousePos()
 		
