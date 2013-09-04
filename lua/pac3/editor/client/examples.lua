@@ -2029,159 +2029,245 @@ pace.example_outfits["run leaning"] = {[1] = {
 }
 pace.example_outfits["pet"] = {[1] = {
 	["children"] = {
-		[1] = {
-			["children"] = {
-				[1] = {
-					["children"] = {
-						[1] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentName"] = "aim dir",
-								["ClassName"] = "model",
-								["UniqueID"] = "1456065913",
-								["ParentUID"] = "950916165",
-								["Name"] = "aim point",
-								["Description"] = "the headcrab will aim at this",
-							},
-						},
-					},
-					["self"] = {
-						["ParentName"] = "follower",
-						["ClassName"] = "jiggle",
-						["UniqueID"] = "950916165",
-						["EditorExpand"] = true,
-						["ParentUID"] = "2515379712",
-						["Name"] = "aim dir",
-						["ResetOnHide"] = true,
-					},
+	[1] = {
+		["children"] = {
+			[1] = {
+				["children"] = {
 				},
-				[2] = {
-					["children"] = {
-						[1] = {
-							["children"] = {
-								[1] = {
-									["children"] = {
-										[1] = {
-											["children"] = {
-											},
-											["self"] = {
-												["ParentName"] = "idle",
-												["Invert"] = true,
-												["Name"] = "speed is 0",
-												["ClassName"] = "event",
-												["UniqueID"] = "2043829371",
-												["ParentUID"] = "2169290737",
-												["RootOwner"] = false,
-												["Operator"] = "below",
-												["Arguments"] = "0.1",
-												["Event"] = "parent_velocity_length",
-											},
-										},
-									},
-									["self"] = {
-										["ParentName"] = "headcrab",
-										["ClassName"] = "animation",
-										["UniqueID"] = "2169290737",
-										["EditorExpand"] = true,
-										["SequenceName"] = "Idle01",
-										["Name"] = "",
-										["ParentUID"] = "3307544024",
-									},
-								},
-								[2] = {
-									["children"] = {
-										[1] = {
-											["children"] = {
-											},
-											["self"] = {
-												["ParentName"] = "run",
-												["Invert"] = true,
-												["Name"] = "speed is not 0",
-												["ClassName"] = "event",
-												["UniqueID"] = "1269461479",
-												["ParentUID"] = "3569411133",
-												["RootOwner"] = false,
-												["Operator"] = "above",
-												["Arguments"] = "0.1",
-												["Event"] = "parent_velocity_length",
-											},
-										},
-										[2] = {
-											["children"] = {
-											},
-											["self"] = {
-												["ParentName"] = "run",
-												["ClassName"] = "proxy",
-												["UniqueID"] = "3318155074",
-												["Expression"] = "parent_velocity_forward() / 100",
-												["Additive"] = true,
-												["ParentUID"] = "3569411133",
-												["Name"] = "",
-												["VariableName"] = "Offset",
-											},
-										},
-									},
-									["self"] = {
-										["ParentName"] = "headcrab",
-										["UniqueID"] = "3569411133",
-										["SequenceName"] = "Run1",
-										["Name"] = "",
-										["ClassName"] = "animation",
-										["Rate"] = 0,
-										["ParentUID"] = "3307544024",
-										["Offset"] = 2.3992650508881,
-										["EditorExpand"] = true,
-									},
-								},
-							},
-							["self"] = {
-								["ParentName"] = "smoother",
-								["UniqueID"] = "3307544024",
-								["AimPartUID"] = "1456065913",
-								["AlternativeScaling"] = true,
-								["Name"] = "",
-								["Scale"] = Vector(0.20000000298023, 0.20000000298023, 0.20000000298023),
-								["ClassName"] = "model",
-								["Size"] = 3,
-								["AimPartName"] = "aim point",
-								["EditorExpand"] = true,
-								["Model"] = "models/Lamarr.mdl",
-								["ParentUID"] = "568719710",
-							},
-						},
-					},
-					["self"] = {
-						["ParentName"] = "follower",
-						["ClassName"] = "jiggle",
-						["UniqueID"] = "568719710",
-						["ParentUID"] = "2515379712",
-						["EditorExpand"] = true,
-						["Name"] = "smoother",
-						["Strain"] = 0.325,
-					},
+				["self"] = {
+					["GlobalID"] = "2134635455",
+					["UniqueID"] = "2841372084",
+					["Event"] = "sequence_name",
+					["ClassName"] = "event",
+					["Name"] = "Is not sitting",
+					["Arguments"] = "sit",
 				},
 			},
-			["self"] = {
-				["ParentName"] = "pet",
-				["UniqueID"] = "2515379712",
-				["Name"] = "follower",
-				["ClassName"] = "jiggle",
-				["EditorExpand"] = true,
-				["ParentUID"] = "3998996417",
-				["StopRadius"] = 100,
-				["Bone"] = "none",
-				["ResetOnHide"] = true,
-				["Ground"] = true,
+			[2] = {
+				["children"] = {
+					[1] = {
+						["children"] = {
+							[1] = {
+								["children"] = {
+									[1] = {
+										["children"] = {
+										},
+										["self"] = {
+											["ClassName"] = "proxy",
+											["UniqueID"] = "414998607",
+											["Function"] = "none",
+											["Pow"] = 1.1,
+											["GlobalID"] = "596270969",
+											["Name"] = "Speed",
+											["VariableName"] = "Offset",
+										},
+									},
+									[2] = {
+										["children"] = {
+										},
+										["self"] = {
+											["GlobalID"] = "432611923",
+											["ClassName"] = "event",
+											["Invert"] = true,
+											["UniqueID"] = "3806373689",
+											["Event"] = "parent_velocity_length",
+											["Operator"] = "equal or below",
+											["Name"] = "Idleing",
+											["Arguments"] = "0.1",
+										},
+									},
+								},
+								["self"] = {
+									["EditorExpand"] = true,
+									["Offset"] = 3576.2130471265,
+									["UniqueID"] = "2878575396",
+									["Rate"] = 2.07,
+									["GlobalID"] = "903385919",
+									["SequenceName"] = "zombie_run_fast",
+									["Name"] = "Idle-Animation",
+									["ClassName"] = "animation",
+								},
+							},
+							[2] = {
+								["children"] = {
+								},
+								["self"] = {
+									["Outline"] = 1,
+									["UniqueID"] = "1103917759",
+									["Angles"] = Angle(0, 90, 90),
+									["ClassName"] = "text",
+									["Name"] = "Pet-Name",
+									["Font"] = "HUDNumber",
+									["Bone"] = "",
+									["GlobalID"] = "1332676531",
+									["Size"] = 0.1,
+									["AimPartName"] = "LOCALEYES",
+									["Color"] = Vector(98, 212, 202),
+									["OutlineColor"] = Vector(0, 0, 0),
+									["Position"] = Vector(0, 0, 38.876953125),
+									["Text"] = "Name",
+								},
+							},
+							[3] = {
+								["children"] = {
+									[1] = {
+										["children"] = {
+										},
+										["self"] = {
+											["ClassName"] = "proxy",
+											["UniqueID"] = "1982702090",
+											["Expression"] = "-owner_velocity_right()",
+											["GlobalID"] = "1723229545",
+											["Name"] = "Pose-Range Y",
+											["VariableName"] = "Range",
+										},
+									},
+								},
+								["self"] = {
+									["ClassName"] = "poseparameter",
+									["UniqueID"] = "823754137",
+									["EditorExpand"] = true,
+									["GlobalID"] = "2873950645",
+									["Name"] = "Move_Y",
+									["PoseParameter"] = "move_y",
+								},
+							},
+							[4] = {
+								["children"] = {
+									[1] = {
+										["children"] = {
+										},
+										["self"] = {
+											["GlobalID"] = "2404294645",
+											["ClassName"] = "event",
+											["Invert"] = true,
+											["UniqueID"] = "2039768100",
+											["Event"] = "parent_velocity_length",
+											["Operator"] = "above",
+											["Name"] = "Running",
+											["Arguments"] = "0.1",
+										},
+									},
+									[2] = {
+										["children"] = {
+										},
+										["self"] = {
+											["ClassName"] = "proxy",
+											["UniqueID"] = "2163461662",
+											["Function"] = "none",
+											["Pow"] = 1.1,
+											["GlobalID"] = "1085958898",
+											["Name"] = "Running speed",
+											["VariableName"] = "Offset",
+										},
+									},
+								},
+								["self"] = {
+									["EditorExpand"] = true,
+									["Offset"] = 3468.769872777,
+									["UniqueID"] = "1941589296",
+									["Rate"] = 2,
+									["GlobalID"] = "2227511064",
+									["SequenceName"] = "zombie_run_fast",
+									["Name"] = "Run-Animation",
+									["ClassName"] = "animation",
+								},
+							},
+							[5] = {
+								["children"] = {
+									[1] = {
+										["children"] = {
+										},
+										["self"] = {
+											["ClassName"] = "proxy",
+											["UniqueID"] = "1585907437",
+											["Expression"] = "-owner_velocity_forward()",
+											["GlobalID"] = "1141213494",
+											["Name"] = "Pose-Range X",
+											["VariableName"] = "Range",
+										},
+									},
+								},
+								["self"] = {
+									["ClassName"] = "poseparameter",
+									["UniqueID"] = "695260429",
+									["EditorExpand"] = true,
+									["GlobalID"] = "1276326530",
+									["Name"] = "Move_X",
+									["PoseParameter"] = "move_x",
+								},
+							},
+							[6] = {
+								["children"] = {
+									[1] = {
+										["children"] = {
+										},
+										["self"] = {
+											["ClassName"] = "event",
+											["Invert"] = true,
+											["UniqueID"] = "3866365879",
+											["Event"] = "sequence_name",
+											["GlobalID"] = "1914555435",
+											["Name"] = "Owner Is Jumping",
+											["Arguments"] = "jump",
+										},
+									},
+								},
+								["self"] = {
+									["Offset"] = 1,
+									["UniqueID"] = "1591214338",
+									["EditorExpand"] = true,
+									["GlobalID"] = "1569666897",
+									["SequenceName"] = "swimming_all",
+									["Name"] = "Jump-Animation",
+									["ClassName"] = "animation",
+								},
+							},
+						},
+						["self"] = {
+							["Position"] = Vector(-35.3525390625, -0.20556640625, 0),
+							["AimPartUID"] = "2249661024",
+							["AlternativeScaling"] = true,
+							["Name"] = "Pet-Model",
+							["GlobalID"] = "2595735410",
+							["Size"] = 0.525,
+							["AimPartName"] = "Minin",
+							["UniqueID"] = "2120397005",
+							["Bone"] = "",
+							["Model"] = "models/player/mossman_arctic.mdl",
+							["ClassName"] = "model",
+						},
+					},
+				},
+				["self"] = {
+					["Position"] = Vector(-2.8173828125, -0.01153564453125, 0),
+					["Speed"] = 0.3,
+					["Name"] = "Ease",
+					["ClassName"] = "jiggle",
+					["ConstrainZ"] = true,
+					["StopRadius"] = 1,
+					["Bone"] = "",
+					["GlobalID"] = "645162701",
+					["UniqueID"] = "2249661024",
+				},
 			},
 		},
+		["self"] = {
+			["ClassName"] = "model",
+			["UniqueID"] = "2629496463",
+			["Size"] = 0,
+			["EditorExpand"] = true,
+			["Bone"] = "",
+			["Name"] = "Base",
+			["GlobalID"] = "1044408595",
+		},
 	},
-	["self"] = {
-		["Name"] = "pet",
-		["ClassName"] = "group",
-		["UniqueID"] = "3998996417",
-		["EditorExpand"] = true,
-	},
+},
+["self"] = {
+	["GlobalID"] = "899855999",
+	["ClassName"] = "group",
+	["UniqueID"] = "3638855604",
+	["Name"] = "Pet",
 },
 }
 pace.example_outfits["scout"] = {[1] = {
