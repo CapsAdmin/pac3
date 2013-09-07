@@ -23,6 +23,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "RollDelta", 0)
 	pac.GetSet(PART, "AirResistance", 5)
 	pac.GetSet(PART, "Bounce", 5)
+	pac.GetSet(PART, "ParticleAngle", Angle(0,0,0))
 	pac.GetSet(PART, "Gravity", Vector(0,0, -50))
 	pac.GetSet(PART, "Collide", true)
 	pac.GetSet(PART, "Lighting", true)
@@ -215,7 +216,8 @@ function PART:EmitParticles(pos, ang)
 				particle:SetGravity(self.Gravity)
 				particle:SetCollide(self.Collide)
 				particle:SetLighting(self.Lighting)
-
+				particle:SetAngles(particle:GetAngles() + self.ParticleAngle)
+				
 				if self.Sliding then
 					particle:SetCollideCallback(SlideCallback)
 				end
