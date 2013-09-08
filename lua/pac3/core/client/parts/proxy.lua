@@ -282,34 +282,42 @@ PART.Inputs =
 
 	-- parent part
 	parent_velocity_length = function(self, parent)
-		repeat
-			if not parent.Parent:IsValid() then break end
-			parent = parent.Parent
-		until parent.cached_pos ~= vector_origin
+		if not self.TargetPart:IsValid() then
+			repeat
+				if not parent.Parent:IsValid() then break end
+				parent = parent.Parent
+			until parent.cached_pos ~= vector_origin
+		end
 
 		return self:GetVelocity(parent):Length()
 	end,
 	parent_velocity_forward = function(self, parent)
-		repeat
-			if not parent.Parent:IsValid() then break end
-			parent = parent.Parent
-		until parent.cached_pos ~= vector_origin
+		if not self.TargetPart:IsValid() then
+			repeat
+				if not parent.Parent:IsValid() then break end
+				parent = parent.Parent
+			until parent.cached_pos ~= vector_origin
+		end
 
 		return -parent.cached_ang:Forward():Dot(self:GetVelocity(parent))
 	end,
 	parent_velocity_right = function(self, parent)
-		repeat
-			if not parent.Parent:IsValid() then break end
-			parent = parent.Parent
-		until parent.cached_pos ~= vector_origin
-
+		if not self.TargetPart:IsValid() then
+			repeat
+				if not parent.Parent:IsValid() then break end
+				parent = parent.Parent
+			until parent.cached_pos ~= vector_origin
+		end
+		
 		return parent.cached_ang:Right():Dot(self:GetVelocity(parent))
 	end,
 	parent_velocity_up = function(self, parent)
-		repeat
-			if not parent.Parent:IsValid() then break end
-			parent = parent.Parent
-		until parent.cached_pos ~= vector_origin
+		if not self.TargetPart:IsValid() then
+			repeat
+				if not parent.Parent:IsValid() then break end
+				parent = parent.Parent
+			until parent.cached_pos ~= vector_origin
+		end
 
 		return parent.cached_ang:Up():Dot(self:GetVelocity(parent))
 	end,
@@ -473,12 +481,19 @@ function PART:SetExpression(str)
 
 	if str and str ~= "" then
 		local parent = self.Parent
-		if not self.Parent:IsValid() then return end
+		
+		if not parent:IsValid() then return end
+		
+		local parentx = self.TargetPart
+		
+		if not parentx:IsValid() then
+			parentx = parent
+		end
 
 		local lib = {}
 
 		for name, func in pairs(PART.Inputs) do
-			lib[name] = function(...) return func(self, parent, ...) end
+			lib[name] = function(...) return func(self, parentx, ...) end
 		end
 
 		local ok, res = pac.CompileExpression(str, lib)
@@ -511,11 +526,17 @@ function PART:OnThink()
 
 	if self:IsHidden() then return end
 
-	local parent = self:GetParentEx()
+	local parent = self:GetParent()
+	local parentx = self.TargetPart
+		
 	if not parent:IsValid() then return end
 
 	if not self.ExpressionFunc then
 		self:SetExpression(self.Expression)
+	end
+	
+	if not parentx:IsValid() then
+		parentx = parent
 	end
 
 	if self.ExpressionFunc then
@@ -595,7 +616,7 @@ function PART:OnThink()
 			local I = self.Inputs[self.Input]
 
 			if F and I then
-				local num = self.Min + (self.Max - self.Min) * ((F(((I(self, parent) / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
+				local num = self.Min + (self.Max - self.Min) * ((F(((I(self, parentx) / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
 
 				if self.Additive then
 					self.vec_additive[1] = (self.vec_additive[1] or 0) + num
