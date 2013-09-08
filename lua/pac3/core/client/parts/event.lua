@@ -11,7 +11,18 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Invert", false)
 	pac.GetSet(PART, "RootOwner", true)
 	pac.GetSet(PART, "AffectChildrenOnly", false)
+	pac.SetupPartName(PART, "TargetPart")
 pac.EndStorableVars()
+
+function PART:GetParentEx()	
+	local parent = self:GetTargetPart()
+	
+	if parent:IsValid() then
+		return parent
+	end
+	
+	return self:GetParent()
+end
 
 function PART:GetNiceName()
 	local str = self:GetEvent()
@@ -217,7 +228,7 @@ PART.Events =
 	{
 		arguments = {{compare = "number"}, {distance = "number"}},
 		callback = function(self, ent, compare, distance)
-			local parent = self:GetParent()
+			local parent = self:GetParentEx()
 			
 			if parent:IsValid() then
 				distance = distance or 1
@@ -451,7 +462,7 @@ PART.Events =
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
 			local owner = self:GetOwner(self.RootOwner)
-			local parent = self:GetParent()
+			local parent = self:GetParentEx()
 			
 			owner = try_viewmodel(owner)
 			
@@ -467,7 +478,7 @@ PART.Events =
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
 			local owner = self:GetOwner(self.RootOwner)
-			local parent = self:GetParent()
+			local parent = self:GetParentEx()
 			
 			owner = try_viewmodel(owner)
 			
@@ -483,7 +494,7 @@ PART.Events =
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
 			local owner = self:GetOwner(self.RootOwner)
-			local parent = self:GetParent()
+			local parent = self:GetParentEx()
 			
 			owner = try_viewmodel(owner)
 			
@@ -499,7 +510,7 @@ PART.Events =
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
 			local owner = self:GetOwner(self.RootOwner)
-			local parent = self:GetParent()
+			local parent = self:GetParentEx()
 			
 			owner = try_viewmodel(owner)
 			
@@ -516,10 +527,12 @@ PART.Events =
 	{
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
-			local parent = self:GetParent()
+			local parent = self:GetParentEx()
 			
-			if parent:HasParent() then
-				parent = parent:GetParent()
+			if not self.TargetPart:IsValid() then
+				if parent:HasParent() then
+					parent = parent:GetParent()
+				end
 			end
 			
 			if parent:IsValid() then
@@ -535,8 +548,10 @@ PART.Events =
 		callback = function(self, ent, speed) 
 			local parent = self:GetParent()
 			
-			if parent:HasParent() then
-				parent = parent:GetParent()
+			if not self.TargetPart:IsValid() then
+				if parent:HasParent() then
+					parent = parent:GetParent()
+				end
 			end
 			
 			if parent:IsValid() then
@@ -552,8 +567,10 @@ PART.Events =
 		callback = function(self, ent, speed) 
 			local parent = self:GetParent()
 			
-			if parent:HasParent() then
-				parent = parent:GetParent()
+			if not self.TargetPart:IsValid() then
+				if parent:HasParent() then
+					parent = parent:GetParent()
+				end
 			end
 			
 			if parent:IsValid() then
@@ -569,8 +586,10 @@ PART.Events =
 		callback = function(self, ent, speed) 
 			local parent = self:GetParent()
 			
-			if parent:HasParent() then
-				parent = parent:GetParent()
+			if not self.TargetPart:IsValid() then
+				if parent:HasParent() then
+					parent = parent:GetParent()
+				end
 			end
 			
 			if parent:IsValid() then

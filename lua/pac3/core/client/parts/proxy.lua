@@ -24,7 +24,18 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "ZeroEyePitch", false)
 	pac.GetSet(PART, "ResetVelocitiesOnHide", true)
 	pac.GetSet(PART, "VelocityRoughness", 10)
+	pac.SetupPartName(PART, "TargetPart")
 pac.EndStorableVars()
+
+function PART:GetParentEx()
+	local parent = self:GetTargetPart()
+	
+	if parent:IsValid() then
+		return parent
+	end
+	
+	return self:GetParent()
+end
 
 function PART:GetNiceName()
 	if self:GetVariableName() == "" then
@@ -500,7 +511,7 @@ function PART:OnThink()
 
 	if self:IsHidden() then return end
 
-	local parent = self.Parent
+	local parent = self:GetParentEx()
 	if not parent:IsValid() then return end
 
 	if not self.ExpressionFunc then
