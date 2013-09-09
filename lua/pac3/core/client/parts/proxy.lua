@@ -9,6 +9,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Expression", "")
 	pac.GetSet(PART, "RootOwner", false)
 	pac.GetSet(PART, "Additive", false)
+	pac.GetSet(PART, "AffectChildren", false)
 	
 	pac.GetSet(PART, "Input", "time")
 	pac.GetSet(PART, "Function", "sin")
@@ -26,6 +27,14 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "VelocityRoughness", 10)
 	pac.SetupPartName(PART, "TargetPart")
 pac.EndStorableVars()
+
+function PART:SetVariableName(str)
+	if str:lower() == str then
+		str = (str .. " "):gsub("(.-) ", function(str) return str:sub(1,1):upper() .. str:sub(2) end)
+	end
+	
+	self.VariableName = str
+end
 
 function PART:GetParentEx()
 	local parent = self:GetTargetPart()
@@ -540,64 +549,74 @@ function PART:OnThink()
 	end
 
 	if self.ExpressionFunc then
-		local T = type(parent[self.VariableName])
-
-		if allowed[T] then
-			local ok, x,y,z = pcall(self.ExpressionFunc)
-			
-			if not ok then
-				if self:GetPlayerOwner() == pac.LocalPlayer then
-					chat.AddText("pac proxy error on " .. tostring(self) .. ": " .. x .. "\n")
-				end
-				return
+		local parts
+		
+		if self.AffectChildren then
+			parts = self:GetChildren()
+		else
+			parts = {parent}
+		end
+		
+		local ok, x,y,z = pcall(self.ExpressionFunc)
+		
+		if not ok then
+			if self:GetPlayerOwner() == pac.LocalPlayer then
+				chat.AddText("pac proxy error on " .. tostring(self) .. ": " .. x .. "\n")
 			end
+			return
+		end
+		
+		for _, part in pairs(parts) do
+			local T = type(part[self.VariableName])
 
-			if T == "boolean" then
+			if allowed[T] then
+				if T == "boolean" then
 
-				x = x or parent[self.VariableName] == true and 1 or 0
-				parent["Set" .. self.VariableName](parent, tonumber(x) > 0)
+					x = x or part[self.VariableName] == true and 1 or 0
+					part["Set" .. self.VariableName](part, tonumber(x) > 0)
 
-			elseif T == "number" then
+				elseif T == "number" then
 
-				if self.Additive then
-					self.vec_additive[1] = (self.vec_additive[1] or 0) + x
-					x = self.vec_additive[1]
-				end
-
-				x = x or parent[self.VariableName]
-				parent["Set" .. self.VariableName](parent, tonumber(x) or 0)
-
-			else
-				local val = parent[self.VariableName]
-
-				if self.Additive then
-					if x then
+					if self.Additive then
 						self.vec_additive[1] = (self.vec_additive[1] or 0) + x
 						x = self.vec_additive[1]
 					end
 
-					if y then
-						self.vec_additive[2] = (self.vec_additive[2] or 0) + y
-						y = self.vec_additive[2]
-					end
+					x = x or part[self.VariableName]
+					part["Set" .. self.VariableName](part, tonumber(x) or 0)
 
-					if z then
-						self.vec_additive[3] = (self.vec_additive[3] or 0) + z
-						z = self.vec_additive[3]
-					end
-				end
-
-				if T == "Angle" then
-					val.p = x or val.p
-					val.y = y or val.y
-					val.r = z or val.r
 				else
-					val.x = x or val.x
-					val.y = y or val.y
-					val.z = z or val.z
+					local val = part[self.VariableName]
+
+					if self.Additive then
+						if x then
+							self.vec_additive[1] = (self.vec_additive[1] or 0) + x
+							x = self.vec_additive[1]
+						end
+
+						if y then
+							self.vec_additive[2] = (self.vec_additive[2] or 0) + y
+							y = self.vec_additive[2]
+						end
+
+						if z then
+							self.vec_additive[3] = (self.vec_additive[3] or 0) + z
+							z = self.vec_additive[3]
+						end
+					end
+
+					if T == "Angle" then
+						val.p = x or val.p
+						val.y = y or val.y
+						val.r = z or val.r
+					else
+						val.x = x or val.x
+						val.y = y or val.y
+						val.z = z or val.z
+					end
+					
+					part["Set" .. self.VariableName](part, val)
 				end
-				
-				parent["Set" .. self.VariableName](parent, val)
 			end
 			
 			local str = ""
@@ -609,47 +628,59 @@ function PART:OnThink()
 			self.debug_var = str
 		end
 	else
-		local T = type(parent[self.VariableName])
 
-		if allowed[T] then
-			local F = self.Functions[self.Function]
-			local I = self.Inputs[self.Input]
+		local F = self.Functions[self.Function]
+		local I = self.Inputs[self.Input]
 
-			if F and I then
-				local num = self.Min + (self.Max - self.Min) * ((F(((I(self, parentx) / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
+		if F and I then
+			local num = self.Min + (self.Max - self.Min) * ((F(((I(self, parentx) / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
 
-				if self.Additive then
-					self.vec_additive[1] = (self.vec_additive[1] or 0) + num
-					num = self.vec_additive[1]
-				end
-
-				if T == "boolean" then
-					parent["Set" .. self.VariableName](parent, tonumber(num) > 0)
-				elseif T == "number" then
-					parent["Set" .. self.VariableName](parent, tonumber(num) or 0)
-				else
-					local val = parent[self.VariableName]
-					if self.Axis ~= "" and val[self.Axis] then
-						val[self.Axis] = num
-					else
-						if T == "Angle" then
-							val.p = num
-							val.y = num
-							val.r = num
-						else
-							val.x = num
-							val.y = num
-							val.z = num
-						end
-					end
-
-					parent["Set" .. self.VariableName](parent, val)
-				end
-			
-				self.debug_var = math.Round(num, 3)
+			if self.Additive then
+				self.vec_additive[1] = (self.vec_additive[1] or 0) + num
+				num = self.vec_additive[1]
 			end
+			
+			local parts
+	
+			if self.AffectChildren then
+				parts = self:GetChildren()
+			else
+				parts = {parent}
+			end
+			
+			for _, part in pairs(parts) do				
+				local T = type(part[self.VariableName])
+
+				if allowed[T] then
+					if T == "boolean" then
+						part["Set" .. self.VariableName](part, tonumber(num) > 0)
+					elseif T == "number" then
+						part["Set" .. self.VariableName](part, tonumber(num) or 0)
+					else
+						local val = part[self.VariableName]
+						if self.Axis ~= "" and val[self.Axis] then
+							val[self.Axis] = num
+						else
+							if T == "Angle" then
+								val.p = num
+								val.y = num
+								val.r = num
+							else
+								val.x = num
+								val.y = num
+								val.z = num
+							end
+						end
+
+						part["Set" .. self.VariableName](part, val)
+					end
+				end
+			end
+		
+			self.debug_var = math.Round(num, 3)
 		end
 	end
+	
 end
 
 pac.RegisterPart(PART)
