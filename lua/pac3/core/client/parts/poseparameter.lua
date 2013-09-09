@@ -19,7 +19,7 @@ function PART:GetPoseParameterList()
 	local out = {}
 	
 	if ent:IsValid() then
-		for i = 1, ent:GetNumPoseParameters()-1 do
+		for i = 0, ent:GetNumPoseParameters()-1 do
 			local name = ent:GetPoseParameterName(i)
 			if name ~= "" then
 				out[name] = {name = name, i = i, range = {ent:GetPoseParameterRange(i)}}
