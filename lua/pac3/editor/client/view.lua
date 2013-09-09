@@ -260,7 +260,7 @@ function pace.GetTPose()
 end
 
 function pace.SetViewPart(part, reset_campos)	
-	pace.SetViewEntity(part:GetOwner())
+	pace.SetViewEntity(part:GetOwner(true))
 
 	if reset_campos then
 		pace.ResetView()
