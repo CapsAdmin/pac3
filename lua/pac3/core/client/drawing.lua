@@ -1,3 +1,8 @@
+jit.on(true, true)
+
+local FrameNumber = FrameNumber
+local RealTime = RealTime
+local GetConVarNumber = GetConVarNumber
 local pac = pac
 
 pac.drawn_entities = pac.drawn_entities or {}
@@ -264,6 +269,8 @@ local function setup_suppress()
 		end
 	end
 end
+
+pac.SetupSuppress = setup_suppress
 -- hacky optimization
 
 local draw_dist = 0
@@ -271,9 +278,13 @@ local sv_draw_dist = 0
 local radius = 0
 local dst = 0
 
+--local garbage = 0
+
 local should_suppress = setup_suppress()
-function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)			
+function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)				
 	if should_suppress() then return end
+	
+	--garbage = collectgarbage("count")
 	
 	-- commonly used variables		
 	max_render_time = max_render_time_cvar:GetFloat()
@@ -360,6 +371,10 @@ function pac.PostDrawTranslucentRenderables()
 			pac.drawn_entities[key] = nil
 		end
 	end
+	
+	--collectgarbage("step", 512)
+	--print(collectgarbage("count") - garbage)
+	
 end
 pac.AddHook("PostDrawTranslucentRenderables")
 

@@ -1,3 +1,5 @@
+jit.on(true, true)
+
 local PART = {}
 
 PART.ClassName = "bone"
@@ -97,6 +99,7 @@ local function manscale(ent, id, scale, self, force_set)
 end
 
 local VEC0 = Vector(0,0,0)
+local pairs = pairs
 
 local function scale_children(owner, id, scale, origin)
 	for _, id in pairs(owner:GetChildBones(id)) do
