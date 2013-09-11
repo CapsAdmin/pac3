@@ -1,3 +1,7 @@
+jit.on(true, true)
+
+local pac = pac
+
 local function SETUP_CACHE_FUNC(tbl, func_name)
 	local old_func = tbl[func_name]
 	
@@ -778,6 +782,7 @@ end
 do -- drawing. this code is running every frame
 	local VEC0 = Vector(0,0,0)
 	local ANG0 = Angle(0,0,0)
+	local LocalToWorld = LocalToWorld
 
 	PART.cached_pos = Vector(0,0,0)
 	PART.cached_ang = Angle(0,0,0)

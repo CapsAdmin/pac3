@@ -1,4 +1,8 @@
-local PART = {}
+jit.on(true, true)
+
+local pac = pac
+
+local PART = pac.GetPart("model") or {} 
 
 PART.ClassName = "model"
 PART.ManualDraw = true
@@ -206,15 +210,15 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 
 			if self.LightBlend ~= 1 then
 				local 
-				v = render.GetLightColor(pos) * self.LightBlend
-				r = r * v.r
-				g = g * v.g
-				b = b * v.b
+				v = render.GetLightColor(pos) 
+				r = r * v.r * self.LightBlend
+				g = g * v.g * self.LightBlend
+				b = b * v.b * self.LightBlend
 				
-				v = render.GetAmbientLightColor(pos) * self.LightBlend
-				r = r * v.r
-				g = g * v.g
-				b = b * v.b
+				v = render.GetAmbientLightColor(pos)
+				r = r * v.r * self.LightBlend
+				g = g * v.g * self.LightBlend
+				b = b * v.b * self.LightBlend
 			end
 			
 			render_SetColorModulation(r,g,b) 
@@ -650,18 +654,18 @@ function PART:CheckBoneMerge()
 			local owner = self:GetOwner()
 			if ent:GetParent() ~= owner then	
 				ent:SetParent(owner)
-			end
-		
-			if not ent:IsEffectActive(EF_BONEMERGE) then
-				ent:AddEffects(EF_BONEMERGE)
+
+				if not ent:IsEffectActive(EF_BONEMERGE) then
+					ent:AddEffects(EF_BONEMERGE)
+				end
 			end
 		else
 			if ent:GetParent():IsValid() then	
 				ent:SetParent(NULL)
-			end
-		
-			if ent:IsEffectActive(EF_BONEMERGE) then
-				ent:RemoveEffects(EF_BONEMERGE)
+
+				if ent:IsEffectActive(EF_BONEMERGE) then
+					ent:RemoveEffects(EF_BONEMERGE)
+				end
 			end
 		end
 	end
@@ -696,6 +700,7 @@ local bad_bones =
 }
 
 local SCALE_NORMAL = Vector(1, 1, 1)
+local Vector = Vector
 
 function PART:OnBuildBonePositions()
 
