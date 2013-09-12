@@ -394,6 +394,13 @@ function pac.Think()
 			pac.drawn_entities[key] = nil
 		end
 	end
+	
+	if pac.next_frame_funcs then
+		for k, v in pairs(pac.next_frame_funcs) do
+			v()
+			pac.next_frame_funcs[k] = nil
+		end
+	end
 end
 pac.AddHook("Think")
 

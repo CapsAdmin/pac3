@@ -1,3 +1,9 @@
+pac.next_frame_funcs = {}
+
+function pac.RunNextFrame(id, func)
+	pac.next_frame_funcs[id] = func
+end
+
 local hue =
 {
 	"red",

@@ -82,13 +82,14 @@ do -- from server
 
 		for key, part in pairs(pac.GetParts()) do
 			if 
-				not part:HasParent() and 
-				part:GetPlayerOwner() == owner and 
 				part.UniqueID == part_data.self.UniqueID and 
+				part:GetPlayerOwner() == owner and 
+				not part:HasParent() and 
 				part.ClassName == part_data.self.ClassName 
 			then
 				pac.dprint("removing part %q to be replaced with the part previously received", part.Name)
 				part:Remove()
+				break
 			end
 		end
 	
