@@ -290,20 +290,30 @@ function PART:UpdateMaterial(now)
 		end
 	end
 	
-	for key, part in pairs(pac.GetParts()) do
-		if part.Materialm == self.Materialm and self ~= part then
-			part.force_translucent = self.Translucent
+	local mat = self.Materialm
+	local self = self
+	
+	pac.RunNextFrame("material translucent", function()
+		for key, part in pairs(pac.GetParts()) do
+			if part.Materialm == mat and self ~= part then
+				part.force_translucent = self.Translucent
+			end
 		end
-	end
+	end)
 end
 
 function PART:OnRemove()
-	for key, part in pairs(pac.GetParts()) do
-		if part.Materialm == self.Materialm and self ~= part then
-			part.force_translucent = nil
-			part.Materialm = nil
+	local mat = self.Materialm
+	local self = self
+	
+	pac.RunNextFrame("remove materials", function()
+		for key, part in pairs(pac.GetParts()) do
+			if part.Materialm == mat and self ~= part then
+				part.force_translucent = nil
+				part.Materialm = nil
+			end
 		end
-	end
+	end)
 end
 
 function PART:OnEvent(event, ...)
@@ -332,18 +342,18 @@ function PART:OnHide()
 	end
 end
 
-function PART:OnShow()
-	local parent = self:GetParent()
+function PART:OnShow()	
+	self:UpdateMaterial()
 	
-	if parent:IsValid() then
-		self:OnParent(parent)
-	end
+	local name = self.Name
 	
-	for key, part in pairs(pac.GetParts()) do
-		if part.Material and part.Material ~= "" and part.Material == self.Name then
-			part:SetMaterial(part:GetMaterial())
+	pac.RunNextFrame("refresh materials", function()
+		for key, part in pairs(pac.GetParts()) do
+			if part.Material and part.Material ~= "" and part.Material == name then
+				part:SetMaterial(name)
+			end
 		end
-	end
+	end)
 end
 
 pac.RegisterPart(PART)
