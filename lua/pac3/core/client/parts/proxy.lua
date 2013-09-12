@@ -34,6 +34,9 @@ function PART:SetVariableName(str)
 	end
 	
 	self.VariableName = str
+	
+	self.set_key = "Set" .. str
+	self.get_key = "Get" .. str
 end
 
 function PART:GetParentEx()
@@ -446,7 +449,11 @@ PART.Inputs =
 	end,
 	
 	hsv_to_color = function(self, parent, h, s, v)
-		local c = HSVToColor(h, s, v)
+		h = tonumber(h) or 0
+		s = tonumber(s) or 1
+		v = tonumber(v) or 1
+		
+		local c = HSVToColor(h%360, s, v)
 		
 		return c.r, c.g, c.b
 	end,
@@ -469,10 +476,10 @@ end)
 function PART:CheckLastVar(parent)
 	if self.last_var ~= self.VariableName then
 		if self.last_var then
-			parent["Set" .. self.VariableName](parent, self.last_var_val)
+			parent[self.set_key](parent, self.last_var_val)
 		end
 		self.last_var = self.VariableName
-		self.last_var_val = parent["Get" .. self.VariableName](parent)
+		self.last_var_val = parent[self.get_key](parent)
 	end
 end
 
@@ -530,6 +537,48 @@ function PART:OnShow()
 	self.vec_additive = Vector()
 end
 
+local function set(self, part, x, y, z, children)	
+	local T = type(part[self.VariableName])
+
+	if allowed[T] then
+		if T == "boolean" then
+		
+			x = x or part[self.VariableName] == true and 1 or 0
+			part[self.set_key](part, tonumber(x) > 0)
+			
+		elseif T == "number" then
+		
+			x = x or part[self.VariableName]
+			part[self.set_key](part, tonumber(x) or 0)
+
+		else
+			local val = part[self.VariableName]
+
+			if self.Axis ~= "" and val[self.Axis] then
+				val[self.Axis] = x
+			else
+				if T == "Angle" then
+					val.p = x or val.p
+					val.y = y or val.y
+					val.r = z or val.r
+				elseif T == "Vector" then
+					val.x = x or val.x
+					val.y = y or val.y
+					val.z = z or val.z
+				end
+			end
+			
+			part[self.set_key](part, val)
+		end
+	end	
+	
+	if children then
+		for _, part in pairs(part:GetChildren()) do
+			set(self, part, x, y, z, true)
+		end
+	end
+end
+
 function PART:OnThink()
 	self:CalcVelocity()
 
@@ -548,15 +597,7 @@ function PART:OnThink()
 		parentx = parent
 	end
 
-	if self.ExpressionFunc then
-		local parts
-		
-		if self.AffectChildren then
-			parts = self:GetChildren()
-		else
-			parts = {parent}
-		end
-		
+	if self.ExpressionFunc then		
 		local ok, x,y,z = pcall(self.ExpressionFunc)
 		
 		if not ok then
@@ -566,58 +607,32 @@ function PART:OnThink()
 			return
 		end
 		
-		for _, part in pairs(parts) do
-			local T = type(part[self.VariableName])
-
-			if allowed[T] then
-				if T == "boolean" then
-
-					x = x or part[self.VariableName] == true and 1 or 0
-					part["Set" .. self.VariableName](part, tonumber(x) > 0)
-
-				elseif T == "number" then
-
-					if self.Additive then
-						self.vec_additive[1] = (self.vec_additive[1] or 0) + x
-						x = self.vec_additive[1]
-					end
-
-					x = x or part[self.VariableName]
-					part["Set" .. self.VariableName](part, tonumber(x) or 0)
-
-				else
-					local val = part[self.VariableName]
-
-					if self.Additive then
-						if x then
-							self.vec_additive[1] = (self.vec_additive[1] or 0) + x
-							x = self.vec_additive[1]
-						end
-
-						if y then
-							self.vec_additive[2] = (self.vec_additive[2] or 0) + y
-							y = self.vec_additive[2]
-						end
-
-						if z then
-							self.vec_additive[3] = (self.vec_additive[3] or 0) + z
-							z = self.vec_additive[3]
-						end
-					end
-
-					if T == "Angle" then
-						val.p = x or val.p
-						val.y = y or val.y
-						val.r = z or val.r
-					else
-						val.x = x or val.x
-						val.y = y or val.y
-						val.z = z or val.z
-					end
-					
-					part["Set" .. self.VariableName](part, val)
-				end
+		if self.Additive then
+			if x then
+				self.vec_additive[1] = (self.vec_additive[1] or 0) + x
+				x = self.vec_additive[1]
 			end
+
+			if y then
+				self.vec_additive[2] = (self.vec_additive[2] or 0) + y
+				y = self.vec_additive[2]
+			end
+
+			if z then
+				self.vec_additive[3] = (self.vec_additive[3] or 0) + z
+				z = self.vec_additive[3]
+			end
+		end	
+		
+		if self.AffectChildren then
+			for _, part in pairs(self:GetChildren()) do
+				set(self, part, x, y, z, true)
+			end
+		else
+			set(self, parent, x, y, z)
+		end
+		
+		if pace and pace.IsActive() then
 			
 			local str = ""
 			
@@ -640,44 +655,17 @@ function PART:OnThink()
 				num = self.vec_additive[1]
 			end
 			
-			local parts
-	
 			if self.AffectChildren then
-				parts = self:GetChildren()
-			else
-				parts = {parent}
-			end
-			
-			for _, part in pairs(parts) do				
-				local T = type(part[self.VariableName])
-
-				if allowed[T] then
-					if T == "boolean" then
-						part["Set" .. self.VariableName](part, tonumber(num) > 0)
-					elseif T == "number" then
-						part["Set" .. self.VariableName](part, tonumber(num) or 0)
-					else
-						local val = part[self.VariableName]
-						if self.Axis ~= "" and val[self.Axis] then
-							val[self.Axis] = num
-						else
-							if T == "Angle" then
-								val.p = num
-								val.y = num
-								val.r = num
-							else
-								val.x = num
-								val.y = num
-								val.z = num
-							end
-						end
-
-						part["Set" .. self.VariableName](part, val)
-					end
+				for _, part in pairs(self:GetChildren()) do
+					set(self, part, x, nil, nil, true)
 				end
+			else
+				set(self, parent, num)
 			end
 		
-			self.debug_var = math.Round(num, 3)
+			if pace and pace.IsActive() then
+				self.debug_var = math.Round(num, 3)
+			end
 		end
 	end
 	
