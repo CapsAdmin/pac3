@@ -6,7 +6,7 @@ surface.CreateFont(font, {font = "Arial", outline = true, size = 14, antialias =
 
 
 hook.Add("HUDPaint", "pac_render_times", function()
-	if not pace.IsActive() not enable:GetBool() or pace.IsInBasicMode() or  then return end
+	if not pace.IsActive() or not enable:GetBool() or pace.IsInBasicMode() then return end
 			
 	for key, ply in pairs(player.GetHumans()) do
 		local data = pac.GetProfileTimes(ply)
