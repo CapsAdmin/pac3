@@ -31,7 +31,7 @@ include("wiki.lua")
 include("examples.lua")
 include("about.lua")
 include("animeditor.lua")
-include("profiling_info.lua")
+include("render_scores.lua")
 
 
 pace.ActivePanels = pace.ActivePanels or {}

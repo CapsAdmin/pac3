@@ -137,6 +137,10 @@ function pac.Disable()
 	pac.CallHook("Disable")
 end
 
+function pac.IsEnabled()
+	return GetConVarNumber("pac_enable") >= 1
+end
+
 if GetConVarNumber("pac_enable") == 0 then
 	pac.Disable()
 end

@@ -7,6 +7,7 @@ PANEL.Base = "DFrame"
 PANEL.menu_bar = NULL
 
 local BAR_SIZE = 17
+local RENDERSCORE_SIZE = 13
 
 local use_tabs = CreateClientConVar("pac_property_tabs", 1, true)
 
@@ -16,7 +17,7 @@ function PANEL:Init()
 	--self:DockPadding(2, 23, 2, 2)
 	
 	local div = vgui.Create("DVerticalDivider", self)
-		div:SetDividerHeight(2)
+		div:SetDividerHeight(RENDERSCORE_SIZE)
 		div:Dock(FILL)
 		div:SetTopMin(0)
 		div:SetCookieName("pac3_editor")
@@ -138,6 +139,28 @@ function pace.KillFocus(show_editor)
 				self.allowclick = true
 			end
 		end)
+	end
+end
+
+function PANEL:PaintOver(w, h)
+	local score = pace.RenderScores and pace.RenderScores[LocalPlayer():EntIndex()]
+	
+	if score then
+		local x, y = self.top:LocalToScreen()
+		y = y + self.top:GetTall()
+		
+		local str = string.format("%s: %s", L("render score"), score)
+		local _w, _h = surface.GetTextSize(str)
+
+		cam.IgnoreZ(true)
+		surface.SetDrawColor(255, 255, 255, 255)
+		surface.DrawRect(x, y, w-5, RENDERSCORE_SIZE-1)
+		
+		surface.SetFont(pace.CurrentFont)
+		surface.SetTextColor(0, 0, 0, 255)
+		surface.SetTextPos(x+5, y)
+		surface.DrawText(str)
+		cam.IgnoreZ(false)
 	end
 end
 
