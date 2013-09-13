@@ -70,7 +70,7 @@ local GARBAGE = math.huge
 pac.profile_info = {}
 pac.profile = true
 
-function pac.GetProfileTimes(ent)	
+function pac.GetProfilingData(ent)	
 	local data = pac.profile_info[ent:EntIndex()]
 	
 	if data then
