@@ -56,10 +56,38 @@ local render_SetColorModulation = render.SetColorModulation
 local render_SetBlend = render.SetBlend
 local render_ModelMaterialOverride = render.ModelMaterialOverride
 local render_MaterialOverride = render.MaterialOverride
-local TIME = math.huge
+local collectgarbage = collectgarbage
+local SysTime = SysTime
+local util_TimerCycle = util.TimerCycle
 
+local render_time = math.huge
 local max_render_time_cvar = CreateClientConVar("pac_max_render_time", 0)
 local max_render_time = 0
+
+local TIME = math.huge
+local GARBAGE = math.huge
+
+pac.profile_info = {}
+pac.profile = true
+
+function pac.GetProfileTimes(ent)	
+	local data = pac.profile_info[ent:EntIndex()]
+	
+	if data then
+		local out = {events = {}}
+		out.times_rendered = data.times_ran
+		
+		
+		for type, data in pairs(data.types) do
+			out.events[type] = {
+				average_garbage = data.total_garbage / out.times_rendered,
+				average_ms = data.total_render_time / out.times_rendered,
+			}
+		end
+		
+		return out
+	end
+end
 
 local function hide_parts(ent)
 	if ent.pac_parts and ent.pac_drawing == true then
@@ -73,17 +101,21 @@ local function hide_parts(ent)
 end
 
 function pac.RenderOverride(ent, type, draw_only)
-	if pac.debug then
-		TIME = SysTime()
-	else
-		if max_render_time > 0 and ent ~= pac.LocalPlayer then
-			TIME = SysTime()
-			
-			if ent.pac_render_time_stop and ent.pac_render_time_stop > TIME then
-				return
-			end
+	
+	if pac.profile then
+		TIME = util_TimerCycle()
+		GARBAGE = collectgarbage("count")
+	end
+	
+	if max_render_time > 0 and ent ~= pac.LocalPlayer then
+		render_time = SysTime()
+		
+		if ent.pac_render_time_stop and ent.pac_render_time_stop > render_time then
+			return
 		end
 	end
+
+	
 	if not ent.pac_parts then
 		pac.UnhookEntityRender(ent)
 	else
@@ -128,38 +160,38 @@ function pac.RenderOverride(ent, type, draw_only)
 		end
 	end
 
-	if pac.debug then
-		TIME = (SysTime() - TIME) * 1000
-	
-		local pos = ent:EyePos()
+	if pac.profile then
+		TIME = util_TimerCycle()
+		GARBAGE = collectgarbage("count") - GARBAGE
 		
-		if type == "viewmodel" then
-			pos = pos + Vector(0,0,-2)
-		elseif type == "translucent" then
-			pos = pos + Vector(0,0,2)
+		local id = ent:EntIndex()
+		pac.profile_info[id] = pac.profile_info[id] or {types = {}, times_ran = 0}
+		pac.profile_info[id].times_ran = pac.profile_info[id].times_ran + 1		
+
+		pac.profile_info[id].types[type] = pac.profile_info[id].types[type] or {}
+		
+		local data = pac.profile_info[id].types[type]
+		
+		data.total_render_time = (data.total_render_time or 0) + TIME
+		data.total_garbage = (data.total_garbage or 0) + GARBAGE
+	end	
+		
+	if max_render_time > 0 and ent ~= pac.LocalPlayer then	
+		ent.pac_render_times = ent.pac_render_times or {}
+		
+		local last = ent.pac_render_times[type] or 0
+		
+		render_time = (SysTime() - render_time) * 1000
+		last = last + ((render_time - last) * FrameTime())
+		ent.pac_render_times[type] = last
+		
+		if last > max_render_time then
+			ent.pac_render_time_stop = SysTime() + 2 + (math.random() * 2)
+			
+			hide_parts(ent)
 		end
-		
-		debugoverlay.Text(pos, type .. " - " .. math.Round(TIME, 3) .. " ms", 0)
-	else	
-		
-		if max_render_time > 0 and ent ~= pac.LocalPlayer then	
-			ent.pac_render_times = ent.pac_render_times or {}
-			
-			local last = ent.pac_render_times[type] or 0
-			
-			TIME = (SysTime() - TIME) * 1000
-			last = last + ((TIME - last) * FrameTime())
-			ent.pac_render_times[type] = last
-			
-			if last > max_render_time then
-				ent.pac_render_time_stop = SysTime() + 2 + (math.random() * 2)
-				
-				hide_parts(ent)
-			end
-		end
-		
 	end
-		
+	
 	render_SetColorModulation(1,1,1)
 	render_SetBlend(1)
 	
@@ -191,6 +223,8 @@ function pac.HookEntityRender(ent, part)
 				sortparts(pac.firstperson_parts)
 			end
 		end
+		
+		pac.profile_info[ent:EntIndex()] = nil
 	end
 end
 
@@ -205,10 +239,11 @@ function pac.UnhookEntityRender(ent, part)
 			end
 		end
 	else
-		pac.drawn_entities[ent:EntIndex()] = nil
-		
+		pac.drawn_entities[ent:EntIndex()] = nil		
 		ent.pac_parts = nil
 	end
+	
+	pac.profile_info[ent:EntIndex()] = nil
 end
 
 
