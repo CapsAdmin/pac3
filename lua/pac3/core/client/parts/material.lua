@@ -293,7 +293,7 @@ function PART:UpdateMaterial(now)
 	local mat = self.Materialm
 	local self = self
 	
-	pac.RunNextFrame("material translucent", function()
+	pac.RunNextFrame("material translucent " .. self.Id, function()
 		for key, part in pairs(pac.GetParts()) do
 			if part.Materialm == mat and self ~= part then
 				part.force_translucent = self.Translucent
@@ -306,7 +306,7 @@ function PART:OnRemove()
 	local mat = self.Materialm
 	local self = self
 	
-	pac.RunNextFrame("remove materials", function()
+	pac.RunNextFrame("remove materials" .. self.Id, function()
 		for key, part in pairs(pac.GetParts()) do
 			if part.Materialm == mat and self ~= part then
 				part.force_translucent = nil
@@ -347,7 +347,7 @@ function PART:OnShow()
 	
 	local name = self.Name
 	
-	pac.RunNextFrame("refresh materials", function()
+	pac.RunNextFrame("refresh materials" .. self.Id, function()
 		for key, part in pairs(pac.GetParts()) do
 			if part.Material and part.Material ~= "" and part.Material == name then
 				part:SetMaterial(name)
