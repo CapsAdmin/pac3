@@ -175,12 +175,14 @@ function pac.CalcView(ply, pos, ang, fov)
 		local ent = pace.GetViewEntity()
 		local dir = pace.ViewPos - ent:EyePos()
 		local dist = ent:BoundingRadius() * ent:GetModelScale() * 4
+		local filter = player.GetAll()
+		table.insert(filter, ent)
 				
 		if dir:Length() > dist then
 			pace.ViewPos = ent:EyePos() + (dir:GetNormalized() * dist)
 		end
 		
-		local res = util.TraceHull({start = ent:EyePos(), endpos = pace.ViewPos, filter = ent, mins = Vector(1,1,1)*-8, maxs = Vector(1,1,1)*8})
+		local res = util.TraceHull({start = ent:EyePos(), endpos = pace.ViewPos, filter = filter, mins = Vector(1,1,1)*-8, maxs = Vector(1,1,1)*8})
 		if res.Hit then
 			pace.ViewPos = res.HitPos
 		end
