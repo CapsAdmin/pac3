@@ -67,6 +67,14 @@ local function try_viewmodel(ent)
 	return ent == pac.LocalPlayer:GetViewModel() and pac.LocalPlayer or ent
 end
 
+local movetypes = {}
+
+for k,v in pairs(_G) do
+	if type(k) == "string" and type(v) == "number" and k:sub(0,9) == "MOVETYPE_" then
+		movetypes[v] = k:sub(10):lower()
+	end
+end
+
 PART.Events = 
 {	
 	random = 
@@ -613,6 +621,17 @@ PART.Events =
 			if punted and punted + time > pac.RealTime then
 				return true
 			end			
+		end,
+	},	
+	
+	movetype =
+	{
+		arguments = {{find = "string"}},
+		callback = function(self, ent, find)
+			local mt = ent:GetMoveType()
+			if movetypes[mt] then
+				return self:StringOperator(movetypes[mt], find)
+			end
 		end,
 	},
 }
