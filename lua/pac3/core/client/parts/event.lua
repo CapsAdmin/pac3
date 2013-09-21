@@ -314,6 +314,18 @@ PART.Events =
 		end,
 	},
 	
+	driver_name =
+	{
+		arguments = {{find = "string"}},
+		callback = function(self, ent, find)
+			local ent = ent.GetDriver and ent:GetDriver() or NULL
+			
+			if ent:IsValid() then
+				return self:StringOperator(ent:GetName(), find)
+			end
+		end,
+	},
+	
 	entity_class =
 	{
 		arguments = {{find = "string"}},
