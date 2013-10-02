@@ -41,15 +41,6 @@ function PART:GetNiceName()
 	return str and str:gsub("%d", "") or "error"
 end
 
-function PART:SetTextureFilter(num)
-	self.TextureFilter = num
-	self.texfilter_enum = math.Clamp(math.Round(num), 0, 3)
-end
-
-function PART:SetOverallSize(num)
-	self.OverallSize = num
-end
-
 pac.GetSet(PART, "Entity", NULL)
 
 function PART:GetEntity()
@@ -361,7 +352,12 @@ function PART:DrawModel(ent, pos, ang)
 			
 		local filter = self.texfilter_enum
 		
-		if filter then
+		if not filter then
+			filter = math.Clamp(math.Round(self.TextureFilter), 0, 3)
+			self.texfilter_enum = filter
+		end
+		
+		if filter ~= 3 or self.wavefront_mesh then
 			render_PushFilterMag(filter)
 			render_PushFilterMin(filter)
 		end
@@ -385,7 +381,7 @@ function PART:DrawModel(ent, pos, ang)
 		render_PopFlashlightMode()
 		
 				
-		if filter then
+		if filter ~= 3 or self.wavefront_mesh then
 			render_PopFilterMin()
 			render_PopFilterMag()
 		end
