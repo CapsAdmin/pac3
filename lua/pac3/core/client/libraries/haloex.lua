@@ -7,7 +7,7 @@ local matColor	= Material( "model_color" )
 local mat_Copy	= Material( "pp/copy" )
 local mat_Add	= Material( "pp/add" )
 local mat_Sub	= Material( "pp/sub" )
-local rt_Stencil	= GetRenderTarget("halo_ex_stencil" .. os.clock(), ScrW(), ScrH(), true)
+local rt_Stencil	= GetRenderTarget("halo_ex_stencil" .. os.clock(), ScrW()/8, ScrH()/8, true)
 local rt_Store		= GetRenderTarget("halo_ex_store" .. os.clock(), ScrW(), ScrH(), true)
 
 local List = {}
