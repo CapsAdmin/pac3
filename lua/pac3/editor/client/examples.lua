@@ -1,6 +1,38 @@
 pace.example_outfits = {}
 --pace.example_outfits[""] = {}
 
+pace.example_outfits["custom sprite"] = {["children"] = {
+	[1] = {
+		["children"] = {
+		},
+		["self"] = {
+			["Position"] = Vector(0, 0, 85),
+			["Model"] = "models/hunter/plates/plate1x1.mdl",
+			["UniqueID"] = "1351937832",
+			["Angles"] = Angle(90, 0, 0),
+			["Name"] = "plate",
+			["Scale"] = Vector(0.60000002384186, 1, 0.0099999997764826),
+			["Alpha"] = 0.998,
+			["GlobalID"] = "250763819",
+			["Bone"] = "none",
+			["AimPartName"] = "LOCALEYES",
+			["ClassName"] = "model",
+			["Fullbright"] = true,
+			["Translucent"] = true,
+			["Material"] = "http://th06.deviantart.net/fs71/200H/f/2012/271/e/0/you_belong_with_me_text_png_by_rachael1505-d5g4ish.png",
+		},
+	},
+},
+["self"] = {
+	["ClassName"] = "group",
+	["UniqueID"] = "2642178115",
+	["EditorExpand"] = true,
+	["GlobalID"] = "2955101745",
+	["Name"] = "sprite",
+	["Description"] = "add parts to me!",
+},
+}
+
 pace.example_outfits["custom face"] = {[1] = {
 	["children"] = {
 		[1] = {
