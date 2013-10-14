@@ -174,7 +174,6 @@ function PART:OnThink()
 			duration = ent:SequenceDuration(seq)
 		else
 			-- It's an invalid sequence. Don't bother
-			ent:SetSequence(0)
 			return
 		end
 		
