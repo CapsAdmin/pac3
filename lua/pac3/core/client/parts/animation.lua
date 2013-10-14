@@ -170,10 +170,11 @@ function PART:OnThink()
 		
 		local duration = 0
 		local count = ent:GetSequenceCount()
-		if seq > 0 and seq < count and count > 0 then
+		if seq >= 0 and seq < count and count > 0 then
 			duration = ent:SequenceDuration(seq)
 		else
 			-- It's an invalid sequence. Don't bother
+			ent:SetSequence(0)
 			return
 		end
 		
