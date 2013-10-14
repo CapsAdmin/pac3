@@ -168,6 +168,15 @@ function PART:OnThink()
 		
 		local seq = ent:LookupSequence(self.random_seqname)
 		
+		local duration = 0
+		local count = ent:GetSequenceCount()
+		if seq > 0 and seq < count and count > 0 then
+			duration = ent:SequenceDuration(seq)
+		else
+			-- It's an invalid sequence. Don't bother
+			return
+		end
+		
 		if self.OwnerCycle then
 			local owner = self.BaseClass.GetOwner(self, true)
 			ent:SetSequence(seq)
@@ -175,7 +184,7 @@ function PART:OnThink()
 			return
 		end
 		
-		local rate = math.min((self.Rate * (ent:SequenceDuration(seq) or 0)), 1)
+		local rate = math.min((self.Rate * duration), 1)
 				
 		if seq ~= -1 then
 			ent:SetSequence(seq)
