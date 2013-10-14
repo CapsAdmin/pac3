@@ -210,12 +210,10 @@ function PART:OnThink()
 		if self.PingPongLoop then
 			self.frame = self.frame + rate / 2
 			local cycle = min + math.abs(math.Round((self.frame + self.Offset)*0.5) - (self.frame + self.Offset)*0.5)*2 * (max - min)
-			if not math_isvalid(cycle) then print(self.frame, self.Offset, min, max) return end
 			ent:SetCycle(cycle)
 		else
 			self.frame = self.frame + rate
 			local cycle = min + ((self.frame + self.Offset)*0.5)%1 * (max - min)
-			if not math_isvalid(cycle) then print(self.frame, self.Offset, min, max) return end
 			ent:SetCycle(cycle)
 		end
 	end
