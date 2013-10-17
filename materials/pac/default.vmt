@@ -1,0 +1,10 @@
+"VertexlitGeneric"
+{
+	"$BaseTexture" "models\debug\debugwhite"
+	"$BumpMap" "dev\bump_normal"
+	
+	"$Phong" 1
+	"$PhongBoost" 2
+	"$PhongExponent" 5
+	"$PhongFresnelRanges" "[0 0.5 1]"
+}

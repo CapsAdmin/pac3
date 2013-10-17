@@ -39,7 +39,11 @@ function pace.OnCreatePart(class_name, name, desc, mdl)
 	end
 	
 	if desc then part:SetDescription(desc) end
-	if mdl then part:SetModel(mdl) end
+	if mdl then 
+		part:SetModel(mdl)
+	elseif class_name == "model" then
+		part:SetModel("models/pac/default.mdl")
+	end
 	
 	local ply = LocalPlayer()
 	
