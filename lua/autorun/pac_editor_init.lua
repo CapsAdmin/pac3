@@ -14,6 +14,9 @@ if SERVER then
 	add_files("pac3/editor/client/")
 
 	include("pac3/editor/server/init.lua")
+	
+	-- for the default models
+	resource.AddWorkshop("104691717")
 end
 
 if CLIENT then
