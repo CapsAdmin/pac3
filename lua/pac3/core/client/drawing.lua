@@ -259,7 +259,8 @@ pac.AddHook("RenderScene")
 
 -- hacky optimization
 -- allows only the last draw call
-local cvar_framesuppress = CreateClientConVar("pac_suppress_frames", "1")
+local cvar_framesuppress = CreateClientConVar("pac_suppress_frames", 1, false, false)
+RunConsoleCommand("pac_suppress_frames", "1") -- this should almost never be off..
 
 -- this needs to be called when before drawing things like minimaps and pac_suppress_frames is on
 function pac.SkipRendering(b)
