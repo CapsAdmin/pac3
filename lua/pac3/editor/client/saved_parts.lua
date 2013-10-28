@@ -318,8 +318,13 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 		local examples, pnl = menu:AddSubMenu(L"examples")
 		pnl:SetImage(pace.MiscIcons.help)
 		examples.GetDeleteSelf = function() return false end
-		for name, data in pairs(pace.example_outfits) do
-			examples:AddOption(name, function() pace.LoadPartsFromTable(data) end)
+		
+		local sorted = {}
+		for k,v in pairs(pace.example_outfits) do sorted[#sorted + 1] = {k = k, v = v} end
+		table.sort(sorted, function(a, b) return a.k < b.k end)
+		
+		for _, data in pairs(sorted) do
+			examples:AddOption(data.k, function() pace.LoadPartsFromTable(data.v) end)
 			:SetImage(pace.MiscIcons.outfit)
 		end
 	end	
