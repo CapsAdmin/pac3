@@ -1187,11 +1187,9 @@ do -- aimpart
 			menu:AddOption(L(key), function() pace.current_part:SetAimPartName(name) end):SetImage("icon16/eye.png")
 		end
 		
-		local parts = menu:AddSubMenu(L"parts", function() end)
-		parts.GetDeleteSelf = function() return false end
 		for _, part in pairs(pac.GetParts(true)) do
 			if not part:HasParent() then
-				populate_part_menu(parts, part, "SetAimPartName")
+				populate_part_menu(menu, part, "SetAimPartName")
 			end
 		end
 		
