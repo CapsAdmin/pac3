@@ -86,23 +86,11 @@ function pac.GetAllBones(ent)
 			end
 		end
 		
-		tbl.hitpos =
-		{
-			friendly = "hit position",		
-			is_special = true,
-		}
-		
-		tbl.footstep =
-		{
-			friendly = "footsteps",
-			is_special = true,
-		}
-		
-		tbl.skirt = 
-		{
-			friendly = "skirt",
-			is_special = true,
-		}
+		tbl.hitpos = {friendly = "hit position", is_special = true}
+		tbl.footstep = {friendly = "footsteps", is_special = true}	
+		tbl.skirt = {friendly = "skirt", is_special = true}	
+		tbl.hitpos_ent_ang = {friendly = "hitpos_ent_ang", is_special = true}
+		tbl.hitpos_ent_ang_zero_pitch = {friendly = "hitpos_ent_ang_zero_pitch", is_special = true}
 		
 		ent.pac_bone_count = count
 	end
@@ -166,6 +154,28 @@ function pac.GetBonePosAng(ent, id, parent)
 			local res = util.QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()})
 			
 			return res.HitPos, res.HitNormal:Angle()
+		end
+	end
+	
+	if id == "hitpos_ent_ang" then
+		if ent.pac_traceres then
+			return ent.pac_traceres.HitPos, ent:EyeAngles()
+		else
+			local res = util.QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()})
+			
+			return res.HitPos, ent:EyeAngles()
+		end
+	end
+	
+	if id == "hitpos_ent_ang_zero_pitch" then
+		if ent.pac_traceres then
+			local ang = ent:EyeAngles()
+			ang.p = 0
+			return ent.pac_traceres.HitPos, ang
+		else
+			local res = util.QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()})
+			
+			return res.HitPos, ent:EyeAngles()
 		end
 	end
 	

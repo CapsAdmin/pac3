@@ -11,6 +11,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "ScaleChildren", false)
 	pac.GetSet(PART, "AlternativeBones", false)
 	pac.GetSet(PART, "MoveChildrenToOrigin", false)
+	pac.GetSet(PART, "FollowAnglesOnly", false)
 	pac.SetupPartName(PART, "FollowPart")
 pac.EndStorableVars()
 
@@ -125,8 +126,14 @@ function pac.build_bone_callback(ent)
 				if mat then	
 					
 					if part.FollowPart:IsValid() then
-						mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart.cached_ang)									
-						mat:SetTranslation(part.Position + part.PositionOffset + part.FollowPart.cached_pos)
+						if part.FollowAnglesOnly then
+							local pos = mat:GetTranslation()
+							mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart.cached_ang)									
+							mat:SetTranslation(pos)
+						else
+							mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart.cached_ang)									
+							mat:SetTranslation(part.Position + part.PositionOffset + part.FollowPart.cached_pos)	
+						end
 					else
 						if data.pos then
 							mat:Translate(data.pos)
