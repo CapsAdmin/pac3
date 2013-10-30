@@ -314,6 +314,18 @@ PART.Events =
 		end,
 	},
 	
+	vehicle_model =
+	{
+		arguments = {{find = "string"}},
+		callback = function(self, ent, find)
+			ent = try_viewmodel(ent)
+			local ent = ent.GetVehicle and ent:GetVehicle() or NULL
+			if ent:IsValid() and ent:GetModel() then
+				return self:StringOperator(ent:GetModel():lower(), find)
+			end
+		end,
+	},
+	
 	driver_name =
 	{
 		arguments = {{find = "string"}},
