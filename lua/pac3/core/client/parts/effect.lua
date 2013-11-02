@@ -7,6 +7,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Loop", true)
 	pac.GetSet(PART, "Follow", true)
 	pac.GetSet(PART, "Rate", 1)
+	pac.GetSet(PART, "UseParticleTracer", false)
 	
 	pac.SetupPartName(PART, "PointA")
 	pac.SetupPartName(PART, "PointB")
@@ -150,6 +151,20 @@ function PART:Emit(pos, ang)
 		if not self.Effect then
 			ent:StopParticles()
 			ent:StopParticleEmission()
+			return
+		end
+		
+		if self.UseParticleTracer and self.PointA:IsValid() then
+			local ent2 = self.PointA.Entity and self.PointA.Entity or self.PointA:GetOwner()
+			
+			util.ParticleTracerEx(
+				self.Effect, 
+				ent:GetPos(), 
+				ent2:GetPos(),
+				true, 
+				ent:EntIndex(),
+				0
+			)
 			return
 		end
 		
