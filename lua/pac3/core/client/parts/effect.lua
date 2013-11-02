@@ -8,8 +8,11 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Follow", true)
 	pac.GetSet(PART, "Rate", 1)
 	
-	--pac.GetSet(PART, "ControlPointA", "")
-	--pac.GetSet(PART, "ControlPointB", "")
+	pac.SetupPartName(PART, "PointA")
+	pac.SetupPartName(PART, "PointB")
+	pac.SetupPartName(PART, "PointC")
+	pac.SetupPartName(PART, "PointD")
+	
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -106,8 +109,8 @@ end
 
 function PART:OnRemove()
 	local ent = self:GetOwner()
-
-	if ent:IsValid() and ent.IsPACEntity then
+	
+	if ent:IsValid() then
 		ent:StopParticles()
 		ent:StopParticleEmission()
 	end
@@ -150,18 +153,37 @@ function PART:Emit(pos, ang)
 			return
 		end
 		
-		if self.ControlPointAPart and self.ControlPointBPart then
-			ent:CreateParticleEffect(
-				self.Effect, 
-				{
-					entity = self.ControlPointAPart.Entity or self.ControlPointAPart:GetOwner(),
+		if self.PointA:IsValid() then
+			local points = {}
+			
+			table.insert(points, {
+				entity = self.PointA.Entity and self.PointA.Entity or self.PointA:GetOwner(),
+				attachtype = PATTACH_ABSORIGIN_FOLLOW,
+			})
+			
+			if self.PointB:IsValid() then
+				table.insert(points, {
+					entity = self.PointB.Entity and self.PointB.Entity or self.PointB:GetOwner(),
 					attachtype = PATTACH_ABSORIGIN_FOLLOW,
-				},
-				{
-					entity = self.ControlPointBPart.Entity or self.ControlPointBPart:GetOwner(),
+				})
+			end
+			
+			if self.PointC:IsValid() then
+				table.insert(points, {
+					entity = self.PointC.Entity and self.PointC.Entity or self.PointC:GetOwner(),
 					attachtype = PATTACH_ABSORIGIN_FOLLOW,
-				}
-			)
+				})
+			end
+
+			if self.PointD:IsValid() then
+				table.insert(points, {
+					entity = self.PointD.Entity and self.PointD.Entity or self.PointD:GetOwner(),
+					attachtype = PATTACH_ABSORIGIN_FOLLOW,
+				})
+			end
+			
+			
+			ent:CreateParticleEffect(self.Effect, points)
 		elseif self.Follow then
 			ent:StopParticles()
 			ent:StopParticleEmission()

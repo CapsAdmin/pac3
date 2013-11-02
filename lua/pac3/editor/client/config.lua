@@ -570,6 +570,10 @@ function pace.TranslatePropertiesKey(key, obj)
 		key == "followpartname" or 
 		key == "anglepartname" or 
 		key == "endpointname" or 
+		key == "pointaname" or 
+		key == "pointbname" or 
+		key == "pointcname" or 
+		key == "pointdname" or 
 		key == "targetpartname" or 
 		key == "outfitpartname" 
 	then
