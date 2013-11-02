@@ -66,20 +66,23 @@ local function make_copy(tbl, input)
 	end
 end
 
+pace.dupe_ents = {}
+
 duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 	local id = ent:EntIndex()
 	
 	if parts.part then
-		parts = {parts}
+		parts = {[parts.part.self.UniqueID] = parts}
 	end
 	
 	ent.pac_parts = parts
-	
+	pace.dupe_ents[ent:EntIndex()] = {owner = ply, ent = ent}
+
 	for uid, data in pairs(parts) do
 		
 		make_copy(data.part, id)
 		
-		data.part.self.Name = (data.part.self.Name or "no name ") .. " " .. id
+		data.part.self.Name = tostring(ent)
 		
 		data.owner = ply
 		data.uid = ply:UniqueID()
@@ -105,7 +108,6 @@ function pace.SubmitPart(data, filter)
 
 	if type(data.part) == "table" then	
 		local ent = Entity(tonumber(data.part.self.OwnerName) or -1)
-		
 		if ent:IsValid()then
 			if ent.CPPICanTool and (ent:CPPIGetOwner() ~= data.owner and not ent:CPPICanTool(data.owner)) then
 				allowed = false
@@ -113,6 +115,10 @@ function pace.SubmitPart(data, filter)
 			elseif not data.skip_dupe then
 				ent.pac_parts = ent.pac_parts or {}
 				ent.pac_parts[data.part.self.UniqueID] = data
+				
+				pace.dupe_ents[ent:EntIndex()] = {owner = data.owner, ent = ent}
+				
+				duplicator.ClearEntityModifier(ent, "pac_config")
 				duplicator.StoreEntityModifier(ent, "pac_config", ent.pac_parts)
 			end
 			
@@ -138,21 +144,47 @@ function pace.SubmitPart(data, filter)
 	
 	if type(data.part) == "table" then
 		pace.Parts[uid][data.part.self.UniqueID] = data	
-	else
+	else		
 		if data.part == "__ALL__" then
 			pace.Parts[uid] = {}
-			filter = true
+			filter = true			
 			
-			ent.pac_parts = {}
+			for key, v in pairs(pace.dupe_ents) do
+				if v.owner:IsValid() and v.owner == data.owner then
+					if v.ent:IsValid() and v.ent.pac_parts then
+						v.ent.pac_parts = {}
+						duplicator.ClearEntityModifier(v.ent, "pac_config")
+						duplicator.StoreEntityModifier(v.ent, "pac_config", v.ent.pac_parts)	
+						return
+					else
+						pace.dupe_ents[key] = nil
+					end
+				else
+					pace.dupe_ents[key] = nil
+				end
+			end
+			
 		else
 			pace.Parts[uid][data.part] = nil
 			
-			if ent.pac_parts then
-				ent.pac_parts[data.part] = nil
-			end
+			-- this doesn't work because the unique id is different for some reason
+			-- use clear for now if you wanna clear a dupes outfit
+			--[[for key, v in pairs(pace.dupe_ents) do
+				if v.owner:IsValid() and v.owner == data.owner then
+					if v.ent:IsValid() and v.ent.pac_parts then	
+						local id = util.CRC(data.part .. v.ent:EntIndex())
+						v.ent.pac_parts[id] = nil
+						duplicator.ClearEntityModifier(v.ent, "pac_config")
+						duplicator.StoreEntityModifier(v.ent, "pac_config", v.ent.pac_parts)		
+						return
+					else
+						pace.dupe_ents[key] = nil
+					end
+				else
+					pace.dupe_ents[key] = nil
+				end
+			end]]
 		end
-		
-		duplicator.StoreEntityModifier(ent, "pac_config", ent.pac_parts)
 	end
 	
 	if filter == false then
