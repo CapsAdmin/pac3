@@ -52,6 +52,44 @@ timer.Create("pac_check_stream_queue", 0.1, 0, function()
 	frame_number = frame_number + 1
 end)
 
+
+local function make_copy(tbl, input)
+	for key, val in pairs(tbl.self) do
+		if key == "ClassName" then continue end
+				
+		if key:find("UID", 0, true) or key == "UniqueID" then
+			tbl.self[key] = util.CRC(val .. input)
+		end
+	end
+	for key, val in pairs(tbl.children) do
+		make_copy(val, input)
+	end
+end
+
+duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
+	local id = ent:EntIndex()
+	
+	if parts.part then
+		parts = {parts}
+	end
+	
+	ent.pac_parts = parts
+	
+	for uid, data in pairs(parts) do
+		
+		make_copy(data.part, id)
+		
+		data.part.self.Name = (data.part.self.Name or "no name ") .. " " .. id
+		
+		data.owner = ply
+		data.uid = ply:UniqueID()
+		data.part.self.OwnerName = id
+		data.skip_dupe = true
+		
+		pace.SubmitPart(data, nil, true)
+	end	
+end)
+
 function pace.SubmitPart(data, filter)
 
 	if type(data.part) == "table" then	
@@ -67,13 +105,26 @@ function pace.SubmitPart(data, filter)
 
 	if type(data.part) == "table" then	
 		local ent = Entity(tonumber(data.part.self.OwnerName) or -1)
+		
 		if ent:IsValid()then
 			if ent.CPPICanTool and (ent:CPPIGetOwner() ~= data.owner and not ent:CPPICanTool(data.owner)) then
 				allowed = false
 				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
-			else
-				duplicator.StoreEntityModifier(ent, "pac_config", data)
+			elseif not data.skip_dupe then
+				ent.pac_parts = ent.pac_parts or {}
+				ent.pac_parts[data.part.self.UniqueID] = data
+				duplicator.StoreEntityModifier(ent, "pac_config", ent.pac_parts)
 			end
+			
+			ent:CallOnRemove("pac_config", function(ent)
+				if ent.pac_parts then
+					for _, data in pairs(ent.pac_parts) do
+						data.part = data.part.self.UniqueID
+						data.skip_dupe = true
+						pace.RemovePart(data)
+					end
+				end
+			end)
 		end
 	end
 	
@@ -91,9 +142,17 @@ function pace.SubmitPart(data, filter)
 		if data.part == "__ALL__" then
 			pace.Parts[uid] = {}
 			filter = true
+			
+			ent.pac_parts = {}
 		else
 			pace.Parts[uid][data.part] = nil
+			
+			if ent.pac_parts then
+				ent.pac_parts[data.part] = nil
+			end
 		end
+		
+		duplicator.StoreEntityModifier(ent, "pac_config", ent.pac_parts)
 	end
 	
 	if filter == false then
