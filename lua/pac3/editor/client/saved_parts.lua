@@ -43,34 +43,50 @@ function pace.SaveParts(name, prompt_name, override_part)
 			pac.luadata.WriteFile("pac3/" .. name .. ".txt", data)
 		end
 		
-		if #data > 0 then
-			local files, folders = file.Find("pac3/__backup/*", "DATA")
-						
-			if #files > 200 then
-				chat.AddText("PAC3 is trying to delete backup files (new system) but you have way too many for lua to delete because of the old system")
-				chat.AddText(
-					("Go to %s and delete everything in that folder! You should only get this warning once if you've used the SVN version of PAC3.")
-					:format(util.RelativePathToFull("lua/includes/init.lua"):gsub("\\", "/"):gsub("lua/includes/init.lua", "data/pac3/__backup/"))
-				)
-			elseif #files > 100 then
-				local temp = {}
-				for key, name in pairs(files) do
-					local time = file.Time("pac3/__backup/" .. name, "DATA")
-					table.insert(temp, {path = "pac3/__backup/" .. name, time = time})
-				end
-				
-				table.sort(temp, function(a, b)
-					return a.time > b.time
-				end)
-				
-				for i = 100, #files do
-					file.Delete(temp[i].path, "DATA")
-				end
+		pace.Backup(data, name)
+	end
+end
+
+function pace.Backup(data, name)
+	name = name or "no name"
+	
+	if not data then
+		data = {}
+		for key, part in pairs(pac.GetParts(true)) do
+			if not part:HasParent() then
+				table.insert(data, part:ToTable())
+			end
+		end
+	end
+	
+	if #data > 0 then
+		
+		local files, folders = file.Find("pac3/__backup/*", "DATA")
+					
+		if #files > 200 then
+			chat.AddText("PAC3 is trying to delete backup files (new system) but you have way too many for lua to delete because of the old system")
+			chat.AddText(
+				("Go to %s and delete everything in that folder! You should only get this warning once if you've used the SVN version of PAC3.")
+				:format(util.RelativePathToFull("lua/includes/init.lua"):gsub("\\", "/"):gsub("lua/includes/init.lua", "data/pac3/__backup/"))
+			)
+		elseif #files > 100 then
+			local temp = {}
+			for key, name in pairs(files) do
+				local time = file.Time("pac3/__backup/" .. name, "DATA")
+				table.insert(temp, {path = "pac3/__backup/" .. name, time = time})
 			end
 			
-			local date = os.date("___date_%m_%d_%Y___time_%H_%M_%S", time)
-			pac.luadata.WriteFile("pac3/__backup/" .. name .. date .. ".txt", data)
+			table.sort(temp, function(a, b)
+				return a.time > b.time
+			end)
+			
+			for i = 100, #files do
+				file.Delete(temp[i].path, "DATA")
+			end
 		end
+		
+		local date = os.date("___date_%m_%d_%Y___time_%H_%M_%S", time)
+		pac.luadata.WriteFile("pac3/__backup/" .. name .. date .. ".txt", data)
 	end
 end
 
@@ -332,7 +348,11 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 	local backups, pnl = menu:AddSubMenu(L"backups")
 	pnl:SetImage(pace.MiscIcons.clone)
 	backups.GetDeleteSelf = function() return false end
-	for _, name in pairs(table.Reverse(file.Find("pac3/__backup/*", "DATA"))) do
+	local files = file.Find("pac3/__backup/*", "DATA")
+	table.sort(files, function(a, b)
+		return file.Time("pac3/__backup/" .. a) > file.Time("pac3/__backup/" .. b)
+	end)
+	for _, name in pairs(files) do
 		local full_path = "pac3/__backup/" .. name
 		local friendly_name = os.date("%m/%d/%Y %H:%M:%S ", file.Time(full_path, "DATA")) .. string.NiceSize(file.Size(full_path, "DATA"))
 		backups:AddOption(friendly_name, function() pace.LoadParts("__backup/" .. name, true) end)

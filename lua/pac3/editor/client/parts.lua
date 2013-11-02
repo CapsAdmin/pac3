@@ -101,6 +101,8 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 	local func = obj["Set" .. key]
 	if func then
 	
+		timer.Create("pace_backup", 1, 1, function() pace.Backup() end)
+	
 		if key == "OwnerName" then
 			if val == "viewmodel" then
 				pace.editing_viewmodel = true
