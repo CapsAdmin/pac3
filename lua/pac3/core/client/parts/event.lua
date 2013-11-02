@@ -439,7 +439,7 @@ PART.Events =
 		callback = function(self, ent, find, time)
 			time = time or 0.1
 			
-			ent = try_viewmodel(ent)
+			local ent = self:GetPlayerOwner()
 			
 			local events = ent.pac_command_events
 			
