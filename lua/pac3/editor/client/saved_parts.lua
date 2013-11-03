@@ -350,7 +350,7 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 	backups.GetDeleteSelf = function() return false end
 	local files = file.Find("pac3/__backup/*", "DATA")
 	table.sort(files, function(a, b)
-		return file.Time("pac3/__backup/" .. a) > file.Time("pac3/__backup/" .. b)
+		return file.Time("pac3/__backup/" .. a, "DATA") > file.Time("pac3/__backup/" .. b, "DATA")
 	end)
 	for _, name in pairs(files) do
 		local full_path = "pac3/__backup/" .. name
