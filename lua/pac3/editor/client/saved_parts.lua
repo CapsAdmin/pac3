@@ -85,7 +85,7 @@ function pace.Backup(data, name)
 			end
 		end
 		
-		local date = os.date("___date_%m_%d_%Y___time_%H_%M_%S", time)
+		local date = os.date("___date_%m_%d_%Y___time_%H_%M_%S")
 		pac.luadata.WriteFile("pac3/__backup/" .. name .. date .. ".txt", data)
 	end
 end
