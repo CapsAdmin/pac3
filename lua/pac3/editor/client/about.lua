@@ -212,17 +212,31 @@ local cast = {
 	"dizrahk",
 	"kerahk",
 	"Nomad'Zorah vas Source",
-	"arctic",
-	"gigispahz",
+	"Verbal Silence",
+	"Madness",
+	"Techbot",
+	"Elmo",
+	"Arctic",
 	"krionikal",
-	"black tea",
-	"rocketmania",
+	"Gm Matsilagi",
+	"Daft Lad",
+	"GigiSpahz",
+	"Black Tea",
+	"RocketMania",
 	"ssogal",
-	"zeriga",
-	"aeo",
+	"Expresso",
+	"Ryokon!",
+	"Zeriga",
+	"Aeo",
 	"techbot",
+	"midori",
 	"sauer",
-	"sillytrenya",
+	"LilTrenya",
+	"maarc",
+	"dekota",
+	"liltrenya",
+	"nanori",
+	"svetlana",
 	"scud",
 }
 
@@ -234,6 +248,9 @@ local koreans = {
 	"명박오니●",
 	"rocketmania",
 	"maybe",
+	"lac",
+	"chupa",
+	"momo",
 	"천령씨",
 }
 
@@ -245,6 +262,7 @@ local japanese = {
 	"zaguya",
 	"acchan",
 	"cabin mild",
+	"enngawa",
 	"freeman",
 	"piichan",
 	"fia",
@@ -254,7 +272,7 @@ for _, text in RandomPairs(japanese) do
 	A(text, 1, 0)
 end
 
-A("ＷＷＷｗｗｗｗｗｗｗｗｗｗｗ？？？ ？ ？ ？ ？ ？ ？ ？？？？？", 2)
+A("00:06 - *DEAD* Bubu: おおおっきいいいいおおおおおおお", 2)
 
 for _, text in RandomPairs(koreans) do
 	A(text, 1, 0)
@@ -275,12 +293,15 @@ A("momo", 1.5)
 A("yomofox", 1)
 A("translations", 2)
 
+A("your imagination")
 A("garry")
 A("puush")
 A("gdrive")
 A("dropbox")
+A("metastruct")
 A("Production Management", 2)
 
+A("workshop")
 A("garrysmod.org")
 A("nexusmods")
 A("valve")
@@ -516,7 +537,16 @@ function pace.ShowAbout()
 	pnl:MakePopup()
 	
 	local html = vgui.Create("DHTML", pnl)
-	html:OpenURL("http://www.youtube.com/watch?v=iRyht4nYsU4")
+	html:OpenURL(table.Random({
+		"http://www.youtube.com/watch?v=iRyht4nYsU4",
+		"http://www.youtube.com/watch?v=JUu4p-Jg4Yc",
+		"http://www.youtube.com/watch?v=Io7ZSaB3sXg",
+		"http://www.youtube.com/watch?v=b0he_Xyr-Qw",
+		"http://www.youtube.com/watch?v=MS1SAIZaChk",
+		"http://www.youtube.com/watch?v=egRVAQNHc8c",
+		"http://www.youtube.com/watch?v=JqVG2f3828s",
+		
+	}))
 
 	local first = true
 	local start_time = RealTime()
