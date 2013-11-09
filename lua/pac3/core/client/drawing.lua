@@ -325,7 +325,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 	-- commonly used variables		
 	max_render_time = max_render_time_cvar:GetFloat()
 	pac.RealTime = RealTime()
-	pac.FrameNumber = pac.FrameNumber + 1
+	pac.FrameNumber = FrameNumber()
 
 	draw_dist = cvar_distance:GetInt()
 	sv_draw_dist = GetConVarNumber("pac_sv_draw_distance")
