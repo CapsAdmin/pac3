@@ -83,6 +83,10 @@ function PART:RemoveOnNULLOwner(b)
 end
 
 function PART:GetName()
+	if self.last_nice_name and self.last_nice_name_frame == pac.FrameNumber then
+		return self.last_nice_name
+	end
+
 	if self.Name == "" then
 		local nice = self:GetNiceName()
 		local num
@@ -103,6 +107,10 @@ function PART:GetName()
 		if num and count > 1 then
 			nice = nice .. " " .. num
 		end
+		
+		
+		self.last_nice_name = nice
+		self.last_nice_name_frame = pac.FrameNumber
 		
 		return nice
 	end
@@ -502,6 +510,8 @@ do -- parenting
 			
 			return false
 		end
+		
+		SETUP_CACHE_FUNC(PART, "IsHidden")
 	
 	end
 
