@@ -119,7 +119,6 @@ function PART:Disable()
 end
 
 function PART:Enable()
-	debug.Trace()
 	self:UpdateActTable()
 end
 

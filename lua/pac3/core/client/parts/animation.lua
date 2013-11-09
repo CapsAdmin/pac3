@@ -73,10 +73,7 @@ end
 
 function PART:OnShow()
 	self.random_seqname = table.Random(self.SequenceName:Split(";"))
-	
---	print(self, "show!!")
-	--debug.Trace()
-	
+		
 	self.last_holdtype = nil
 end
 
@@ -167,10 +164,7 @@ function PART:OnThink()
 					end
 					
 					ent.pac_animation_holdtypes[self.UniqueID] = params
-					
-					print("asdasdasd")
-					debug.Trace()
-					
+			
 					self.last_holdtype = t
 				end
 			end
