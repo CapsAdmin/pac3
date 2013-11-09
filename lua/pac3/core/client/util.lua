@@ -264,7 +264,7 @@ do -- get set and editor vars
 							part ~= self and 
 							self[part_key] ~= part and 
 							part:GetPlayerOwner() == self:GetPlayerOwner() and 
-							part:GetName() == self[name_key] 
+							part.Name == self[name_key] 
 						then
 							self[name_set_key](self, part)
 							break
@@ -308,7 +308,7 @@ do -- get set and editor vars
 			
 				PART.PartNameResolvers[part_key](self)
 			else
-				self[name_key] = var:GetName()
+				self[name_key] = var.Name
 				self[uid_key] = var.UniqueID
 				self[part_set_key](self, var)
 			end
@@ -317,9 +317,11 @@ do -- get set and editor vars
 end
 
 function pac.Material(str, part)
-	for key, part in pairs(pac.GetParts()) do
-		if str == part:GetName() and part.GetRawMaterial then
-			return part:GetRawMaterial()
+	if str ~= "" then
+		for key, part in pairs(pac.GetParts()) do
+			if part.GetRawMaterial and str == part.Name then
+				return part:GetRawMaterial()
+			end
 		end
 	end
 	

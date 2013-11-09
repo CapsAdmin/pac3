@@ -86,15 +86,14 @@ function PART:UpdateActTable()
 			self.ActTable[act] = ent:GetSequenceActivity(ent:LookupSequence(self[name]))
 		end
 		
-		ent.pac_acttable = self.ActTable
+		ent.pac_holdtypes = ent.pac_holdtypes or {}
+		ent.pac_holdtypes[self.UniqueID] = self.ActTable
 		
 		-- custom acts
-		ent.pac_acttable.fallback = ent:GetSequenceActivity(ent:LookupSequence(self.Fallback))
-		ent.pac_acttable.noclip = ent:GetSequenceActivity(ent:LookupSequence(self.Noclip))
-		ent.pac_acttable.air = ent:GetSequenceActivity(ent:LookupSequence(self.Air))
-		ent.pac_acttable.sitting = ent:GetSequenceActivity(ent:LookupSequence(self.Sitting))
-		
-		ent.pac_holdtype_part = self
+		self.ActTable.fallback = ent:GetSequenceActivity(ent:LookupSequence(self.Fallback))
+		self.ActTable.noclip = ent:GetSequenceActivity(ent:LookupSequence(self.Noclip))
+		self.ActTable.air = ent:GetSequenceActivity(ent:LookupSequence(self.Air))
+		self.ActTable.sitting = ent:GetSequenceActivity(ent:LookupSequence(self.Sitting))
 	end
 end
 
@@ -110,35 +109,29 @@ end
 function PART:Disable()
 	local ent = self:GetOwner(true)
 
-	if ent:IsValid() and ent.pac_holdtype_part == self then
-		ent.pac_acttable = nil
+	if ent:IsValid() then
+		if ent.pac_holdtypes then
+			ent.pac_holdtypes[self.UniqueID] = nil
+		end
+		
 		ent.pac_holdtype_alternative_animation_rate = nil
 	end
 end
 
 function PART:Enable()
+	debug.Trace()
 	self:UpdateActTable()
 end
 
 function PART:OnHide()
 	self:Disable()
-	self.invalidate = true
 end
 
 function PART:OnShow(from_event, from_drawing)
-	self:Enable()
-	self.invalidate = true
-end
-
-function PART:OnThink()
-	if self.invalidate then
-		if self:IsHidden() then
-			self:Disable()
-		else
-			self:Enable()
-		end
-		self.invalidate =  false
+	if from_event then
+		self:Enable()
 	end
 end
+
 
 pac.RegisterPart(PART)

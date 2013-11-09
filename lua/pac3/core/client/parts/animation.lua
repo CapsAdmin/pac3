@@ -52,9 +52,13 @@ function PART:OnHide()
 	local ent = self:GetOwner()
 		
 	if ent:IsValid() then
-		ent.pac_sequence = nil
-		ent.pac_holdtype = nil
-		ent.pac_pose_param = nil
+		if ent.pac_animation_sequences then
+			ent.pac_animation_sequences[self.UniqueID] = nil
+		end
+		
+		if ent.pac_animation_holdtypes then
+			ent.pac_animation_holdtypes[self.UniqueID] = nil
+		end
 	end
 	
 	self.last_holdtype = nil
@@ -69,6 +73,9 @@ end
 
 function PART:OnShow()
 	self.random_seqname = table.Random(self.SequenceName:Split(";"))
+	
+--	print(self, "show!!")
+	--debug.Trace()
 	
 	self.last_holdtype = nil
 end
@@ -117,7 +124,7 @@ local function math_isvalid(num)
 end
 
 function PART:OnThink()
-	if self:IsHidden() then return end
+	if self:IsHidden() then self:OnHide() return end
 	
 	local ent = self:GetOwner()
 
@@ -128,9 +135,11 @@ function PART:OnThink()
 			
 			if t ~= self.last_holdtype then			
 				local index = ActIndex[t]
-				
+
+				ent.pac_animation_holdtypes = ent.pac_animation_holdtypes or {}
+
 				if index == nil then
-					ent.pac_holdtype = nil
+					ent.pac_animation_holdtypes[self.UniqueID] = nil
 				else
 					local params = {}
 						params[ACT_MP_STAND_IDLE] = index
@@ -157,7 +166,10 @@ function PART:OnThink()
 						params[ACT_MP_CROUCH_IDLE] = nil
 					end
 					
-					ent.pac_holdtype = params
+					ent.pac_animation_holdtypes[self.UniqueID] = params
+					
+					print("asdasdasd")
+					debug.Trace()
 					
 					self.last_holdtype = t
 				end
@@ -185,10 +197,12 @@ function PART:OnThink()
 		end
 		
 		local rate = math.min((self.Rate * duration), 1)
+		
+		ent.pac_animation_sequences = ent.pac_animation_sequences or {}
 				
 		if seq ~= -1 then
 			ent:SetSequence(seq)
-			ent.pac_sequence = seq
+			ent.pac_animation_sequences[self.UniqueID] = seq
 			
 			if rate == 0 then
 				ent:SetCycle(self.Offset%1)
@@ -199,13 +213,13 @@ function PART:OnThink()
 			
 			if seq ~= -1 then
 				ent:SetSequence(seq)
-				ent.pac_sequence = seq
+				ent.pac_animation_sequences[self.UniqueID] = seq
 				if rate == 0 then
 					ent:SetCycle(self.Offset%1)
 					return
 				end			
 			else
-				ent.pac_sequence = nil
+				ent.pac_animation_sequences[self.UniqueID] = nil
 				return
 			end
 		end
@@ -227,17 +241,5 @@ function PART:OnThink()
 		end
 	end
 end
-
-hook.Add("TranslateActivity", "pac_holdtype", function(ply, act)
-	if IsEntity(ply) and ply:IsValid() and ply.pac_holdtype and ply.pac_holdtype[act] then
-		return ply.pac_holdtype[act]
-	end
-end)
-
-hook.Add("CalcMainActivity", "pac_player_animations", function(ply, act) 
-	if IsEntity(ply) and ply:IsValid() and ply.pac_sequence then
-		return ply.pac_sequence, ply.pac_sequence
-	end
-end)
 	
 pac.RegisterPart(PART)

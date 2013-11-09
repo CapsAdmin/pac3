@@ -184,8 +184,8 @@ function PART:OnBuildBonePositions()
 	local ang = self:CalcAngles(self.Angles) or self.Angles
 
 	if not owner.pac_follow_bones_function then
-		owner:AddCallback("BuildBonePositions", function(ent) pac.build_bone_callback(ent) end)
 		owner.pac_follow_bones_function = pac.build_bone_callback
+		owner:AddCallback("BuildBonePositions", function(ent) pac.build_bone_callback(ent) end)
 	end
 	
 	if not self.FollowPart:IsValid() then			
