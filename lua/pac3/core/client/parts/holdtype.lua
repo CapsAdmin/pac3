@@ -127,9 +127,7 @@ function PART:OnHide()
 end
 
 function PART:OnShow(from_event, from_drawing)
-	if from_event then
-		self:Enable()
-	end
+	self:Enable()
 end
 
 
