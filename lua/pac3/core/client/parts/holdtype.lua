@@ -106,7 +106,7 @@ function PART:GetSequenceList()
 	return {"none"}
 end
 
-function PART:Disable()
+function PART:OnHide()
 	local ent = self:GetOwner(true)
 
 	if ent:IsValid() then
@@ -118,16 +118,10 @@ function PART:Disable()
 	end
 end
 
-function PART:Enable()
-	self:UpdateActTable()
-end
-
-function PART:OnHide()
-	self:Disable()
-end
+PART.OnRemove = PART.OnHide
 
 function PART:OnShow(from_event, from_drawing)
-	self:Enable()
+	self:UpdateActTable()
 end
 
 
