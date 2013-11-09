@@ -63,30 +63,33 @@ function pac.TranslateActivity(ply, act)
 	if IsEntity(ply) and ply:IsValid() then
 	
 		-- animation part
-		if ply.pac_holdtype and ply.pac_holdtype[act] then
-			return ply.pac_holdtype[act]
+		if ply.pac_animation_holdtypes and next(ply.pac_animation_holdtypes) then
+			return select(2, next(ply.pac_animation_holdtypes))[act]
 		end
 		
 		-- holdtype part
-		if ply.pac_acttable then
-			if ply.pac_acttable[act] and ply.pac_acttable[act] ~= -1 then
-				return ply.pac_acttable[act]
-			end
+		if ply.pac_holdtypes then
+			local _, act_table = next(ply.pac_holdtypes)
+			if act_table then
+				if act_table[act] and act_table[act] ~= -1 then
+					return act_table[act]
+				end
+				
+				if ply:GetVehicle():IsValid() and ply:GetVehicle():GetClass() == "prop_vehicle_prisoner_pod" then
+					return act_table.sitting
+				end
+				
+				if act_table.noclip ~= -1 and ply:GetMoveType() == MOVETYPE_NOCLIP then
+					return act_table.noclip
+				end
+				
+				if act_table.air ~= -1 and ply:GetMoveType() ~= MOVETYPE_NOCLIP and not ply:IsOnGround() then
+					return act_table.air
+				end	
 			
-			if ply:GetVehicle():IsValid() and ply:GetVehicle():GetClass() == "prop_vehicle_prisoner_pod" then
-				return ply.pac_acttable.sitting
-			end
-			
-			if ply.pac_acttable.noclip ~= -1 and ply:GetMoveType() == MOVETYPE_NOCLIP then
-				return ply.pac_acttable.noclip
-			end
-			
-			if ply.pac_acttable.air ~= -1 and ply:GetMoveType() ~= MOVETYPE_NOCLIP and not ply:IsOnGround() then
-				return ply.pac_acttable.air
-			end	
-		
-			if ply.pac_acttable.fallback ~= -1 then
-				return ply.pac_acttable.fallback
+				if act_table.fallback ~= -1 then
+					return act_table.fallback
+				end
 			end
 		end
 	end
@@ -95,8 +98,9 @@ pac.AddHook("TranslateActivity")
 
 
 function pac.CalcMainActivity(ply, act) 
-	if IsEntity(ply) and ply:IsValid() and ply.pac_sequence then
-		return ply.pac_sequence, ply.pac_sequence
+	if IsEntity(ply) and ply:IsValid() and ply.pac_animation_sequences then
+		local _, seq = next(ply.pac_animation_sequences)
+		return seq, seq
 	end
 end
 pac.AddHook("CalcMainActivity")

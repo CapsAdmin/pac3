@@ -47,8 +47,8 @@ do
 			
 			if part.ClassName == "proxy" and part.Name == "" then
 				local node = part.editor_node
-				if node and node:IsValid() then
-					node:SetText(part:GetName())		
+				if node and node:IsValid() and node.m_bExpanded then
+					node:SetText(part:GetName())	
 				end
 			end
 		end

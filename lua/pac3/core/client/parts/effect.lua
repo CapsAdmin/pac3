@@ -121,14 +121,14 @@ PART.OnHide = PART.OnRemove
 
 function PART:ResolveControlPoints()
 	for key, part in pairs(pac.GetParts()) do	
-		if part:GetName() == self.ControlPointA then
+		if part.Name == self.ControlPointA then
 			self.ControlPointAPart = part
 			break
 		end
 	end
 	
 	for key, part in pairs(pac.GetParts()) do	
-		if part:GetName() == self.ControlPointB then
+		if part.Name == self.ControlPointB then
 			self.ControlPointBPart = part
 			break
 		end
