@@ -80,6 +80,14 @@ function pac.Restart()
 	
 	include("autorun/pac_init.lua")
 	include("autorun/pac_editor_init.lua")
+	
+	for _, ent in pairs(ents.GetAll()) do
+		for k, v in pairs(ent:GetTable()) do
+			if k:sub(0, 4) == "pac_" then
+				ent[k] = nil
+			end
+		end
+	end
 
 	if was_open then 
 		pace.OpenEditor() 
