@@ -114,8 +114,6 @@ end
 function PART:OnHide()
 	local ent = self:GetOwner(true)
 	
-	print("hiding")
-
 	if ent:IsValid() then
 		if ent.pac_holdtypes then
 			ent.pac_holdtypes[self.UniqueID] = nil
