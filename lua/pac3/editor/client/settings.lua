@@ -8,7 +8,7 @@ end
 
 function pace.SetTPose(b)
 	if b then
-		pac.AddHook("CalcMainActivity", function(ply) 
+		hook.Add("CalcMainActivity", "pace_tpose", function(ply) 
 			if ply == LocalPlayer() then
 				return 
 					ply:LookupSequence("ragdoll"), 
@@ -16,7 +16,7 @@ function pace.SetTPose(b)
 			end
 		end)
 	else
-		pac.RemoveHook("CalcMainActivity")
+		hook.Remove("CalcMainActivity", "pace_tpose")
 	end
 	
 	pace.tposed = b
