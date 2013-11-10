@@ -35,6 +35,12 @@ function PART:OnHide(from_event)
 	--if not from_event then return end
 	self.played_overlapping = false
 	self:StopSound()
+	
+	local ent = self:GetOwner()
+	
+	if ent:IsValid() then
+		ent.pac_footstep_override = nil
+	end
 end
 
 function PART:OnThink()
