@@ -63,6 +63,12 @@ function pac.TranslateActivity(ply, act)
 	if IsEntity(ply) and ply:IsValid() then
 	
 		-- animation part
+		if ply.pac_animation_sequences then
+			local _, seq = next(ply.pac_animation_sequences)
+			-- dont do any holdtype stuff if theres a sequence
+			if seq then return end 
+		end
+		
 		if ply.pac_animation_holdtypes and next(ply.pac_animation_holdtypes) then
 			return select(2, next(ply.pac_animation_holdtypes))[act]
 		end
