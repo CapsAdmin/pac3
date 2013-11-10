@@ -128,9 +128,6 @@ end
 PART.OnRemove = PART.OnHide
 
 function PART:OnShow(from_event, from_drawing)
-	print("showing")
-	
-	debug.Trace()
 	self:UpdateActTable()
 end
 
