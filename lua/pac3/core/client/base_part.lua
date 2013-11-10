@@ -1015,10 +1015,10 @@ function PART:Think()
 	local owner = self:GetOwner()
 	
 	if owner:IsValid() then
-		--if owner ~= self.last_owner then
-		--	self:CallRecursive("OnShow")
-		--	self.last_owner = owner
-		--end
+		if owner ~= self.last_owner then
+			self:CallRecursiveEx("OnShow")
+			self.last_owner = owner
+		end
 	
 		if not owner.pac_bones then
 			self:GetModelBones()
