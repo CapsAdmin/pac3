@@ -1,3 +1,4 @@
+setfenv(1, _G)
 local PART = {}
 
 PART.ClassName = "material"
@@ -110,6 +111,10 @@ function PART:OnThink()
 		self.delay_set()
 		self.delay_set = nil
 	end
+	
+	if self.EnvMap == "env_cubemap" then
+		self:SetEnvMap("env_cubemap")
+	end
 end
 
 local function setup(PART)
@@ -119,7 +124,11 @@ local function setup(PART)
 
 			PART["Set" .. name] = function(self, var)
 				self[name] = var
-								
+				
+				if var == "env_cubemap" then
+					var = "debug/env_cubemap_model"
+				end
+			
 				if 
 					self.SKIP or
 					pac.Handleurltex(
@@ -159,7 +168,7 @@ local function setup(PART)
 
 						if not tex or tex:GetName() == "error" then
 							tex = CreateMaterial("pac3_tex_" .. var .. "_" .. self.Id, "VertexLitGeneric", {["$basetexture"] = var}):GetTexture("$basetexture")
-														
+							
 							if not tex or tex:GetName() == "error" then
 								tex = _mat:GetTexture("$basetexture")
 							end
