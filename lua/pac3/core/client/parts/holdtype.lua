@@ -65,35 +65,40 @@ for name, act in pairs(act_mods) do
 	PART["Set" .. name] = function(self, str)
 		self[name] = str
 		
-		self:UpdateActTable()
+		if not self:IsHidden() then
+			self:UpdateActTable()
+		end
 	end
 end
 
 function PART:SetFallback(str)
 	self.Fallback = str
-	self:UpdateActTable()
+	if not self:IsHidden() then
+		self:UpdateActTable()
+	end
 end
 
-function PART:UpdateActTable()
-	self.ActTable = self.ActTable or {}
-	
+function PART:UpdateActTable()	
 	local ent = self:GetOwner(true)
 	
 	if ent:IsValid() then
+	
 		ent.pac_holdtype_alternative_animation_rate = self.AlternativeRate
 		
-		for name, act in pairs(act_mods) do
-			self.ActTable[act] = ent:GetSequenceActivity(ent:LookupSequence(self[name]))
-		end
-		
 		ent.pac_holdtypes = ent.pac_holdtypes or {}
-		ent.pac_holdtypes[self.UniqueID] = self.ActTable
+		ent.pac_holdtypes[self.UniqueID] = ent.pac_holdtypes[self.UniqueID] or {}
 		
+		local acts = ent.pac_holdtypes[self.UniqueID]
+		
+		for name, act in pairs(act_mods) do
+			acts[act] = ent:GetSequenceActivity(ent:LookupSequence(self[name]))
+		end
+				
 		-- custom acts
-		self.ActTable.fallback = ent:GetSequenceActivity(ent:LookupSequence(self.Fallback))
-		self.ActTable.noclip = ent:GetSequenceActivity(ent:LookupSequence(self.Noclip))
-		self.ActTable.air = ent:GetSequenceActivity(ent:LookupSequence(self.Air))
-		self.ActTable.sitting = ent:GetSequenceActivity(ent:LookupSequence(self.Sitting))
+		acts.fallback = ent:GetSequenceActivity(ent:LookupSequence(self.Fallback))
+		acts.noclip = ent:GetSequenceActivity(ent:LookupSequence(self.Noclip))
+		acts.air = ent:GetSequenceActivity(ent:LookupSequence(self.Air))
+		acts.sitting = ent:GetSequenceActivity(ent:LookupSequence(self.Sitting))
 	end
 end
 
@@ -108,6 +113,8 @@ end
 
 function PART:OnHide()
 	local ent = self:GetOwner(true)
+	
+	print("hiding")
 
 	if ent:IsValid() then
 		if ent.pac_holdtypes then
@@ -121,6 +128,9 @@ end
 PART.OnRemove = PART.OnHide
 
 function PART:OnShow(from_event, from_drawing)
+	print("showing")
+	
+	debug.Trace()
 	self:UpdateActTable()
 end
 

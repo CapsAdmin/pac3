@@ -92,7 +92,7 @@ end
 local function hide_parts(ent)
 	if ent.pac_parts and ent.pac_drawing == true then
 		for key, part in pairs(ent.pac_parts) do
-			part:CallRecursive("OnHide", false, true)
+			part:CallRecursiveEx("OnHide", false, true)
 		end
 		pac.ResetBones(ent)
 	end
@@ -365,7 +365,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 			then
 				if ent.pac_parts and ent.pac_drawing == false then
 					for key, part in pairs(ent.pac_parts) do
-						part:CallRecursive("OnShow", false, true)
+						part:CallRecursiveEx("OnShow", false, true)
 					end
 				end
 			

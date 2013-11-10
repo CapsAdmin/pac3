@@ -116,6 +116,10 @@ end
 
 function PART:ConVarEnabled()
 	if self.last_framenumber ~= pac.FrameNumber then
+		if self.last_enabled == nil then
+			self.last_enabled = true
+		end
+	
 		if not self.cvar_enable:GetBool() then 
 			if self.last_enabled ~= false then
 				self:CallRecursive("OnHide") 
@@ -711,6 +715,16 @@ function PART:CallRecursive(func, ...)
 	for k, v in pairs(self.Children) do	
 		v:CallRecursive(func, ...)
 	end
+end	
+
+function PART:CallRecursiveEx(func, ...)
+	if self[func] and not self.cached_hide then 
+		self[func](self, ...)
+	end
+	
+	for k, v in pairs(self.Children) do
+		v:CallRecursiveEx(func, ...)
+	end
 end
 
 function PART:SetKeyValueRecursive(key, val, filter)
@@ -1001,10 +1015,10 @@ function PART:Think()
 	local owner = self:GetOwner()
 	
 	if owner:IsValid() then
-		if owner ~= self.last_owner then
-			self:CallRecursive("OnShow")
-			self.last_owner = owner
-		end
+		--if owner ~= self.last_owner then
+		--	self:CallRecursive("OnShow")
+		--	self.last_owner = owner
+		--end
 	
 		if not owner.pac_bones then
 			self:GetModelBones()
