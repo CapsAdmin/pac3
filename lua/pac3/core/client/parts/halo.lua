@@ -33,7 +33,8 @@ end
 
 function PART:OnThink()
 	local parent = self:GetParent()
-	if parent.ClassName == "model" and parent.Entity:IsValid() and not parent:IsHidden() then
+	
+	if parent.ClassName == "model" and parent.Entity:IsValid() then
 		local tbl = {parent.Entity}
 		
 		if self.AffectChildren then

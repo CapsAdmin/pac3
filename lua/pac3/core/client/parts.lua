@@ -98,9 +98,20 @@ function pac.CreatePart(name, owner, skip_hook)
 end
 
 function pac.RegisterPart(META, name)
-	META.TypeBase = "base"
+	META.TypeBase = "base"	
+	local _, name = class.Register(META, "part", name)
 	
-	class.Register(META, "part", name)
+	-- update part functions only
+	-- updating variables might mess things up
+	for key, part in pairs(pac.GetParts()) do
+		if part.ClassName == name then
+			for k, v in pairs(META) do
+				if type(v) == "function" then
+					part[k] = v
+				end
+			end
+		end
+	end	
 end
 
 function pac.GetRegisteredParts()

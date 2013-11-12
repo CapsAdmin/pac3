@@ -580,15 +580,13 @@ local function set(self, part, x, y, z, children)
 end
 
 function PART:OnThink()
-	self:CalcVelocity()
-
-	if self:IsHidden() then return end
-
 	local parent = self:GetParent()
-	local parentx = self.TargetPart
 		
 	if not parent:IsValid() then return end
 
+	local parentx = self.TargetPart
+	self:CalcVelocity()
+	
 	if not self.ExpressionFunc then
 		self:SetExpression(self.Expression)
 	end

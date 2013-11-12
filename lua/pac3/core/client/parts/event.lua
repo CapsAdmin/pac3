@@ -3,6 +3,7 @@ local PART = {}
 PART.ClassName = "event"
 PART.NonPhysical = true
 PART.ThinkTime = 0
+PART.AlwaysThink = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Event", "")
@@ -13,45 +14,6 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "AffectChildrenOnly", false)
 	pac.SetupPartName(PART, "TargetPart")
 pac.EndStorableVars()
-
-function PART:GetParentEx()	
-	local parent = self:GetTargetPart()
-	
-	if parent:IsValid() then
-		return parent
-	end
-	
-	return self:GetParent()
-end
-
-function PART:GetNiceName()
-	local str = self:GetEvent()
-	
-	if self:GetArguments() ~= "" then
-		local args = self:GetArguments():gsub(";", " or ")
-		
-		if not tonumber(args) then
-			args = [["]] .. args .. [["]]
-		end
-		str = str .. " " .. self:GetOperator() .. args
-	end
-	
-	return pac.PrettifyName(str)
-end
-
-function PART:OnRemove()
-	if self.AffectChildrenOnly then		
-		for _, child in pairs(self:GetChildren()) do
-			child:SetEventHide(false, self)
-		end
-	else
-		local parent = self:GetParent()
-		
-		if parent:IsValid() then			
-			parent:SetEventHide(false, self)
-		end
-	end
-end
 
 local function calc_velocity(part)
 	local diff = part.cached_pos - (part.last_pos or Vector(0, 0, 0))
@@ -660,11 +622,49 @@ PART.Events =
 	},
 }
 
+function PART:GetParentEx()	
+	local parent = self:GetTargetPart()
+	
+	if parent:IsValid() then
+		return parent
+	end
+	
+	return self:GetParent()
+end
+
+function PART:GetNiceName()
+	local str = self:GetEvent()
+	
+	if self:GetArguments() ~= "" then
+		local args = self:GetArguments():gsub(";", " or ")
+		
+		if not tonumber(args) then
+			args = [["]] .. args .. [["]]
+		end
+		str = str .. " " .. self:GetOperator() .. args
+	end
+	
+	return pac.PrettifyName(str)
+end
+
+function PART:OnRemove()
+	if self.AffectChildrenOnly then		
+		for _, child in pairs(self:GetChildren()) do
+			child:SetEventHide(false)
+		end
+	else
+		local parent = self:GetParent()
+		
+		if parent:IsValid() then			
+			parent:SetEventHide(false)
+		end
+	end
+end
+
 local function should_hide(self, ent, data)
-	-- this should be the only case where we need this since IsHidden is modified to obey events
 	local b
 	
-	if self.Hide or self.EventHide then --self:IsHidden() then
+	if self.hidden or self.event_hidden then
 		b = self.Invert
 	else
 		b = data.callback(self, ent, self:GetParsedArguments(data.arguments)) or false
@@ -690,7 +690,7 @@ function PART:OnThink()
 				local b = should_hide(self, ent, data)
 				
 				for _, child in pairs(self:GetChildren()) do
-					child:SetEventHide(b, self)
+					child:SetEventHide(b)
 				end
 				
 				-- this is just used for the editor..
@@ -701,7 +701,7 @@ function PART:OnThink()
 				if parent:IsValid() then
 					local b = should_hide(self, ent, data)
 					
-					parent:SetEventHide(b, self)
+					parent:SetEventHide(b)
 					
 					-- this is just used for the editor..
 					self.event_triggered = b

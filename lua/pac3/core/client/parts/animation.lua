@@ -17,6 +17,47 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "WeaponHoldType", "none")
 	pac.GetSet(PART, "OwnerCycle", false)
 pac.EndStorableVars()
+
+
+local tonumber = tonumber
+
+PART.ValidHoldTypes = 
+{
+	pistol = ACT_HL2MP_IDLE_PISTOL,
+	smg = ACT_HL2MP_IDLE_SMG1,
+	grenade = ACT_HL2MP_IDLE_GRENADE,
+	ar2 = ACT_HL2MP_IDLE_AR2,
+	shotgun = ACT_HL2MP_IDLE_SHOTGUN,
+	rpg = ACT_HL2MP_IDLE_RPG,
+	physgun = ACT_HL2MP_IDLE_PHYSGUN,
+	crossbow = ACT_HL2MP_IDLE_CROSSBOW,
+	melee = ACT_HL2MP_IDLE_MELEE,
+	slam = ACT_HL2MP_IDLE_SLAM,
+	normal = ACT_HL2MP_IDLE,
+	fist = ACT_HL2MP_IDLE_FIST,
+	melee2 = ACT_HL2MP_IDLE_MELEE2,
+	passive = ACT_HL2MP_IDLE_PASSIVE,
+	knife = ACT_HL2MP_IDLE_KNIFE,
+	duel = ACT_HL2MP_IDLE_DUEL,
+	camera = ACT_HL2MP_IDLE_CAMERA,
+	revolver = ACT_HL2MP_IDLE_REVOLVER,
+	
+	zombie = ACT_HL2MP_IDLE_ZOMBIE,
+	magic = ACT_HL2MP_IDLE_MAGIC,
+	meleeangry = ACT_HL2MP_IDLE_MELEE_ANGRY,
+	angry = ACT_HL2MP_IDLE_ANGRY,
+	suitcase = ACT_HL2MP_IDLE_SUITCASE,
+	scared = ACT_HL2MP_IDLE_SCARED,
+}
+
+local function math_isvalid(num) 
+	return
+		num and
+		num ~= inf and
+		num ~= ninf and
+		(num >= 0 or num <= 0)
+end
+
  
 function PART:GetNiceName()
 	local str = self:GetSequenceName()
@@ -50,7 +91,7 @@ end
 
 function PART:OnHide()
 	local ent = self:GetOwner()
-		
+
 	if ent:IsValid() then
 		if ent.pac_animation_sequences then
 			ent.pac_animation_sequences[self.UniqueID] = nil
@@ -60,8 +101,6 @@ function PART:OnHide()
 			ent.pac_animation_holdtypes[self.UniqueID] = nil
 		end
 	end
-	
-	self.last_holdtype = nil
 end
 
 PART.random_seqname = ""
@@ -71,105 +110,86 @@ function PART:SetSequenceName(name)
 	self.random_seqname = table.Random(name:Split(";"))
 end
 
-function PART:OnShow()
-	self.random_seqname = table.Random(self.SequenceName:Split(";"))
+function PART:OnShow()	
+	local ent = self:GetOwner()	
+
+	if ent:IsValid() then	
+		self.random_seqname = table.Random(self.SequenceName:Split(";"))
+				
+		if self.random_seqname ~= "" then
+			local seq = ent:LookupSequence(self.random_seqname)
 		
-	self.last_holdtype = nil
-end
-
-PART.OnRemove = PART.OnHide
-
-local tonumber = tonumber
-
-local ActIndex = 
-{
-	pistol = ACT_HL2MP_IDLE_PISTOL,
-	smg = ACT_HL2MP_IDLE_SMG1,
-	grenade = ACT_HL2MP_IDLE_GRENADE,
-	ar2 = ACT_HL2MP_IDLE_AR2,
-	shotgun = ACT_HL2MP_IDLE_SHOTGUN,
-	rpg = ACT_HL2MP_IDLE_RPG,
-	physgun = ACT_HL2MP_IDLE_PHYSGUN,
-	crossbow = ACT_HL2MP_IDLE_CROSSBOW,
-	melee = ACT_HL2MP_IDLE_MELEE,
-	slam = ACT_HL2MP_IDLE_SLAM,
-	normal = ACT_HL2MP_IDLE,
-	fist = ACT_HL2MP_IDLE_FIST,
-	melee2 = ACT_HL2MP_IDLE_MELEE2,
-	passive = ACT_HL2MP_IDLE_PASSIVE,
-	knife = ACT_HL2MP_IDLE_KNIFE,
-	duel = ACT_HL2MP_IDLE_DUEL,
-	camera = ACT_HL2MP_IDLE_CAMERA,
-	revolver = ACT_HL2MP_IDLE_REVOLVER,
-	
-	zombie = ACT_HL2MP_IDLE_ZOMBIE,
-	magic = ACT_HL2MP_IDLE_MAGIC,
-	meleeangry = ACT_HL2MP_IDLE_MELEE_ANGRY,
-	angry = ACT_HL2MP_IDLE_ANGRY,
-	suitcase = ACT_HL2MP_IDLE_SUITCASE,
-	scared = ACT_HL2MP_IDLE_SCARED,
-}
-
-PART.ValidHoldTypes = ActIndex
-
-local function math_isvalid(num) 
-	return
-		num and
-		num ~= inf and
-		num ~= ninf and
-		(num >= 0 or num <= 0)
-end
-
-function PART:OnThink()
-	if self:IsHidden() then self:OnHide() return end
-	
-	local ent = self:GetOwner()
-
-	if ent:IsValid() then
-		if ent:IsPlayer() then
-			local t = self.WeaponHoldType
-			t = t:lower()
-			
-			if t ~= self.last_holdtype then			
-				local index = ActIndex[t]
-
-				ent.pac_animation_holdtypes = ent.pac_animation_holdtypes or {}
-
-				if index == nil then
-					ent.pac_animation_holdtypes[self.UniqueID] = nil
+			local duration = 0
+			local count = ent:GetSequenceCount()
+			if seq >= 0 and seq < count and count > 0 then
+				duration = ent:SequenceDuration(seq)
+			else
+				-- It's an invalid sequence. Don't bother
+				return
+			end
+				
+			ent.pac_animation_sequences = ent.pac_animation_sequences or {}
+					
+			if seq ~= -1 then
+				ent.pac_animation_sequences[self.UniqueID] = seq
+				ent:SetSequence(seq)
+			else
+				seq = tonumber(self.random_seqname) or -1
+				
+				if seq ~= -1 then
+					ent.pac_animation_sequences[self.UniqueID] = seq
+					ent:SetSequence(seq)
 				else
-					local params = {}
-						params[ACT_MP_STAND_IDLE] = index
-						params[ACT_MP_WALK] = index+1
-						params[ACT_MP_RUN] = index+2
-						params[ACT_MP_CROUCH_IDLE] = index+3
-						params[ACT_MP_CROUCHWALK] = index+4
-						params[ACT_MP_ATTACK_STAND_PRIMARYFIRE]	= index+5
-						params[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE] = index+5
-						params[ACT_MP_RELOAD_STAND ] = index+6
-						params[ACT_MP_RELOAD_CROUCH ] = index+6
-						params[ACT_MP_JUMP] = index+7
-						params[ACT_RANGE_ATTACK1] = index+8
-						params[ACT_MP_SWIM_IDLE] = index+8
-						params[ACT_MP_SWIM] = index+9
-					
-					-- "normal" jump animation doesn't exist
-					if t == "normal" then
-						params[ACT_MP_JUMP] = ACT_HL2MP_JUMP_SLAM
-					end
-					
-					-- these two aren't defined in ACTs for whatever reason
-					if t == "knife" or t == "melee2" then
-						params[ACT_MP_CROUCH_IDLE] = nil
-					end
-					
-					ent.pac_animation_holdtypes[self.UniqueID] = params
-			
-					self.last_holdtype = t
+					ent.pac_animation_sequences[self.UniqueID] = nil
 				end
 			end
-		end
+			
+		elseif ent:IsPlayer() then
+			local t = self.WeaponHoldType
+			t = t:lower()
 		
+			local index = self.ValidHoldTypes[t]
+
+			ent.pac_animation_holdtypes = ent.pac_animation_holdtypes or {}
+
+			if index == nil then
+				ent.pac_animation_holdtypes[self.UniqueID] = nil
+			else
+				local params = {}
+					params[ACT_MP_STAND_IDLE] = index
+					params[ACT_MP_WALK] = index+1
+					params[ACT_MP_RUN] = index+2
+					params[ACT_MP_CROUCH_IDLE] = index+3
+					params[ACT_MP_CROUCHWALK] = index+4
+					params[ACT_MP_ATTACK_STAND_PRIMARYFIRE]	= index+5
+					params[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE] = index+5
+					params[ACT_MP_RELOAD_STAND ] = index+6
+					params[ACT_MP_RELOAD_CROUCH ] = index+6
+					params[ACT_MP_JUMP] = index+7
+					params[ACT_RANGE_ATTACK1] = index+8
+					params[ACT_MP_SWIM_IDLE] = index+8
+					params[ACT_MP_SWIM] = index+9
+				
+				-- "normal" jump animation doesn't exist
+				if t == "normal" then
+					params[ACT_MP_JUMP] = ACT_HL2MP_JUMP_SLAM
+				end
+				
+				-- these two aren't defined in ACTs for whatever reason
+				if t == "knife" or t == "melee2" then
+					params[ACT_MP_CROUCH_IDLE] = nil
+				end
+				
+				ent.pac_animation_holdtypes[self.UniqueID] = params
+			end
+		end
+	end
+end
+
+function PART:OnThink()	
+	local ent = self:GetOwner()
+
+	if ent:IsValid() then		
 		if not self.random_seqname then return end
 		
 		local seq = ent:LookupSequence(self.random_seqname)
@@ -185,18 +205,13 @@ function PART:OnThink()
 		
 		if self.OwnerCycle then
 			local owner = self.BaseClass.GetOwner(self, true)
-			ent:SetSequence(seq)
 			ent:SetCycle(owner:GetCycle())
 			return
 		end
 		
 		local rate = math.min((self.Rate * duration), 1)
-		
-		ent.pac_animation_sequences = ent.pac_animation_sequences or {}
-				
+						
 		if seq ~= -1 then
-			ent:SetSequence(seq)
-			ent.pac_animation_sequences[self.UniqueID] = seq
 			
 			if rate == 0 then
 				ent:SetCycle(self.Offset%1)
@@ -206,14 +221,11 @@ function PART:OnThink()
 			seq = tonumber(self.random_seqname) or -1
 			
 			if seq ~= -1 then
-				ent:SetSequence(seq)
-				ent.pac_animation_sequences[self.UniqueID] = seq
 				if rate == 0 then
 					ent:SetCycle(self.Offset%1)
 					return
 				end			
 			else
-				ent.pac_animation_sequences[self.UniqueID] = nil
 				return
 			end
 		end

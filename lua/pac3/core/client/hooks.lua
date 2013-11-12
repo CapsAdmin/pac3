@@ -174,6 +174,10 @@ function pac.OnEntityCreated(ent)
 							local parts = ply.pac_parts
 							
 							for key, part in pairs(parts) do								
+								part:CallRecursive("OnHide", false, true)
+							end
+							
+							for key, part in pairs(parts) do								
 								part:SetOwner(ent)
 							end
 							
