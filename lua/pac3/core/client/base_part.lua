@@ -434,63 +434,38 @@ do -- parenting
 	SETUP_CACHE_FUNC(PART, "GetRootPart")
 	
 	do
-		-- this doesn't work
-		--[[
-		
-		function PART:IsHidden()
-			return 
-				self.temp_hidden or 
-				self._Hide or
-				self.Hide or
-				self.EventHide 
-			
-		end
-		
-		function PART:SetHide(b)
-			self:CallRecursive(b and "OnHide" or "OnShow")
-			
-			self.Hide = b
-			self:SetKeyValueRecursive("_Hide", b)
-		end
-		
-		function pac.InvalidateEvents()
-			for key, val in pairs(pac.GetParts()) do
-				val.last_eventhide = nil
+		function PART:CallRecursive(func, ...)
+			if self[func] then
+				self[func](self, ...)
 			end
-		end
+			
+			for k, v in pairs(self.Children) do	
+				v:CallRecursive(func, ...)
+			end
+		end	
 
-		function PART:SetEventHide(b, filter)
-			-- or is this needed for all the chilren children as well?
-			if self.last_eventhide ~= b then
-				self:CallRecursive(b and "OnHide" or "OnShow", true)
-				self.last_eventhide = b
-			end
+		function PART:SetKeyValueRecursive(key, val)
+			self[key] = val
 			
-			self:SetKeyValueRecursive("EventHide", b, filter)
-		end]]
-		
+			for k,v in pairs(self.Children) do
+				v:SetKeyValueRecursive(key, val)
+			end
+		end
+	
 		function PART:SetHide(b)
 			self.Hide = b
 			
-			self:CallRecursive(b and "OnHide" or "OnShow")
-			self:SetKeyValueRecursive("cached_hide", b)
+			self:SetKeyValueRecursive("hidden", b)
 		end
 
 		function PART:SetEventHide(b)
-			if b ~= self.EventHide then
-				self:CallRecursive(b and "OnHide" or "OnShow", true)
-				self:SetKeyValueRecursive("cached_hide", b)
-			end
-			self.EventHide = b
+			self.event_hidden = b
 		end
 
-		function PART:IsHiddenEx()
-			return self.Hide == true or self.EventHide == true or false
-		end
-			
 		function PART:IsHidden()
 			if self.temp_hidden then return true end
-			if self:IsHiddenEx() then return true end
+			if self.hidden then return true end			
+			if self.event_hidden then return true end			
 			
 			local temp = self
 			
@@ -498,7 +473,7 @@ do -- parenting
 				local parent = temp:GetParent()
 				
 				if parent:IsValid() then
-					if parent:IsHiddenEx() then
+					if parent.event_hidden then
 						return true
 					else
 						temp = parent
@@ -506,13 +481,12 @@ do -- parenting
 				else
 					break
 				end
-			end
+			end		
 			
 			return false
-		end
+		end	
 		
-		SETUP_CACHE_FUNC(PART, "IsHidden")
-	
+		--SETUP_CACHE_FUNC(PART, "IsHidden")
 	end
 
 	function PART:RemoveChildren()
@@ -701,41 +675,6 @@ function PART:CallEvent(event, ...)
 		part:CallEvent(event, ...)
 	end
 end
-	
-function PART:CallRecursive(func, ...)
-	if self[func] --[[and (not self.last_call_recurse or self.last_call_recurse[func] ~= pac.FrameNumber)]] then 
-		self[func](self, ...) 
-		
-		--self.last_call_recurse = self.last_call_recurse or {}
-		--self.last_call_recurse[func] = pac.FrameNumber
-	--else
-	--	print("prevented call!!", func)
-	end
-	
-	for k, v in pairs(self.Children) do	
-		v:CallRecursive(func, ...)
-	end
-end	
-
-function PART:CallRecursiveEx(func, ...)
-	if self[func] and not self.cached_hide then 
-		self[func](self, ...)
-	end
-	
-	for k, v in pairs(self.Children) do
-		v:CallRecursiveEx(func, ...)
-	end
-end
-
-function PART:SetKeyValueRecursive(key, val, filter)
-	self[key] = val
-	
-	for k,v in pairs(self.Children) do
-		if v ~= filter then
-			v:SetKeyValueRecursive(key, val)
-		end
-	end
-end
 
 do -- events
 	function PART:Initialize() end
@@ -743,7 +682,7 @@ do -- events
 	
 	function PART:Remove()		
 		pac.CallHook("OnPartRemove", self)
-		self:OnHide()
+		self:CallRecursive("OnHide")
 		self:OnRemove()
 		
 		if self:HasParent() then
@@ -1011,12 +950,32 @@ end
 	
 function PART:Think()	
 	if not self:ConVarEnabled() then return end
+	
+	local b = self:IsHidden()
+	
+	if b ~= self.last_hidden then
+		
+		if b then
+			self:OnHide()
+		else
+			self:OnShow(self.shown_from_event, self.shown_from_rendering)
+		end
+		
+		self.shown_from_event = nil
+		self.shown_from_rendering = nil
+		
+		self.last_hidden = b
+	end
+	
+	if not self.AlwaysThink and b then return end
 
 	local owner = self:GetOwner()
 	
 	if owner:IsValid() then
 		if owner ~= self.last_owner then
-			self:CallRecursiveEx("OnShow")
+			self:OnShow()
+			self:OnHide()
+			self.last_hidden = nil
 			self.last_owner = owner
 		end
 	
@@ -1044,7 +1003,6 @@ function PART:Think()
 		self.delayed_variables = nil
 	end
 	
-
 	self:OnThink()	
 	
 	self.supress_part_name_find = false

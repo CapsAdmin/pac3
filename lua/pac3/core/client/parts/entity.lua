@@ -320,16 +320,10 @@ function PART:OnThink()
 			ent = ent:GetActiveWeapon()
 		end
 					
-		-- holy shit why does shooting reset the scale
+		-- holy shit why does shooting reset the scale in singleplayer
 		-- dumb workaround
 		if ent:IsPlayer() and ent:GetModelScale() ~= self.Size then
 			self:UpdateScale(ent)
-		end
-				
-		if not self.current_ro or self.current_ro ~= ent.RenderOverride or ent ~= self.last_ent then
-			self:OnHide()
-			self:OnShow()
-			self.last_ent = ent
 		end
 	end
 end

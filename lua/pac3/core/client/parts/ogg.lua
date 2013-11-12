@@ -82,11 +82,7 @@ function PART:PlaySound(ovol)
 	end
 end
 
-function PART:Think()	
-	if self:IsHidden() then 
-		self:StopSound()
-	return end
-
+function PART:OnThink()
 	local owner = self:GetOwner(true) 
 	
 	for key, stream in pairs(self.streams) do
@@ -234,13 +230,12 @@ function PART:StopSound()
 	end
 end
 
-function PART:OnShow(from_event)	
-	if not from_event then return end
-
+function PART:OnShow(_, from_rendering)	
+	if from_rendering then return end
 	self:PlaySound()
 end
 
-function PART:OnHide(from_event)
+function PART:OnHide()
 	self:StopSound()
 end
 

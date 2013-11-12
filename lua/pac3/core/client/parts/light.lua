@@ -51,6 +51,4 @@ function PART:OnHide()
 	end
 end
 
-PART.OnRemove = OnHide
-
 pac.RegisterPart(PART)

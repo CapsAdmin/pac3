@@ -25,14 +25,13 @@ function PART:Initialize()
 	--self:PlaySound()
 end
 
-function PART:OnShow(from_event)
-	if not from_event then return end
+function PART:OnShow(_, from_rendering)
+	if from_rendering then return end
 	self.played_overlapping = false
 	self:PlaySound()
 end
 
-function PART:OnHide(from_event)
-	--if not from_event then return end
+function PART:OnHide()
 	self.played_overlapping = false
 	self:StopSound()
 	
@@ -44,12 +43,6 @@ function PART:OnHide(from_event)
 end
 
 function PART:OnThink()
-
-	if self:IsHidden() then
-		self:StopSound()
-		return
-	end
-
 	if self.last_playonfootstep ~= self.PlayOnFootstep then
 		local ent = self:GetOwner()
 		if ent:IsValid() and ent:IsPlayer() then

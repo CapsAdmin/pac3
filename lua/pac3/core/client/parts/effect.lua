@@ -98,17 +98,7 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
-function PART:OnThink()
-	if self:IsHidden() then
-		local ent = self:GetOwner()
-		if ent:IsValid() then
-			ent:StopParticles()
-			ent:StopParticleEmission()
-		end	
-	end
-end
-
-function PART:OnRemove()
+function PART:OnHide()
 	local ent = self:GetOwner()
 	
 	if ent:IsValid() then
@@ -116,8 +106,6 @@ function PART:OnRemove()
 		ent:StopParticleEmission()
 	end
 end
-
-PART.OnHide = PART.OnRemove
 
 function PART:ResolveControlPoints()
 	for key, part in pairs(pac.GetParts()) do	
