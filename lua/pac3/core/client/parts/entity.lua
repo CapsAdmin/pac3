@@ -1,6 +1,7 @@
 local PART = {}
 
-PART.ClassName = "entity"	
+PART.ClassName = "entity"
+PART.AlwaysThink = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Material", "")
@@ -236,6 +237,7 @@ local angle_origin = Angle()
 
 function PART:OnShow()
 	local ent = self:GetOwner()
+	
 	if ent:IsValid() then
 		if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
 			ent = ent:GetActiveWeapon()
@@ -308,9 +310,7 @@ function PART:SetModel(str)
 	end
 end
 
-function PART:OnThink()		
-	if self:IsHidden() then return end
-	
+function PART:OnThink()			
 	local ent = self:GetOwner()	
 	
 	if ent:IsValid() then
