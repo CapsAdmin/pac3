@@ -1,7 +1,6 @@
 local PART = {}
 
 PART.ClassName = "entity"
-PART.AlwaysThink = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Material", "")
@@ -324,6 +323,10 @@ function PART:OnThink()
 		-- dumb workaround
 		if ent:IsPlayer() and ent:GetModelScale() ~= self.Size then
 			self:UpdateScale(ent)
+		end
+		
+		if self.HideEntity and self.current_ro ~= ent.RenderOverride then
+			self:OnShow()
 		end
 	end
 end
