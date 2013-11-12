@@ -142,9 +142,9 @@ PART.Inputs =
 		
 		return 0
 	end,
-	visible = function(s, p)
+	visible = function(s, p, radius)
 		p.proxy_pixvis = p.proxy_pixvis or util.GetPixelVisibleHandle()
-		return util.PixelVisible(p.cached_pos, 16, p.proxy_pixvis) or 0
+		return util.PixelVisible(p.cached_pos, radius or 16, p.proxy_pixvis) or 0
 	end,
 	time = RealTime,
 	synced_time = CurTime,
