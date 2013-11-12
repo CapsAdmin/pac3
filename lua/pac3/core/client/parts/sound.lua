@@ -26,42 +26,45 @@ function PART:Initialize()
 end
 
 function PART:OnShow(_, from_rendering)
-	if from_rendering then return end
-	self.played_overlapping = false
-	self:PlaySound()
+	if not from_rendering then 
+		self.played_overlapping = false
+		self:PlaySound()
+	end
+	
+	local ent = self:GetOwner()
+	
+	if ent:IsValid() and ent:IsPlayer() then
+		ent.pac_footstep_override = ent.pac_footstep_override or {}
+		if self.PlayOnFootstep then
+			ent.pac_footstep_override[self.UniqueID] = self
+		else
+			ent.pac_footstep_override[self.UniqueID] = nil
+		end
+	end
 end
 
 function PART:OnHide()
 	self.played_overlapping = false
 	self:StopSound()
 	
-	local ent = self:GetOwner()
-	
-	if ent:IsValid() then
-		ent.pac_footstep_override = nil
+	if self.PlayOnFootstep then
+		
+		local ent = self:GetOwner()
+		
+		if ent:IsValid() then
+			ent.pac_footstep_override = nil
+			
+			if ent:IsPlayer() then
+				ent.pac_footstep_override = ent.pac_footstep_override or {}
+				
+		
+				ent.pac_footstep_override[self.UniqueID] = nil
+			end
+		end
 	end
 end
 
-function PART:OnThink()
-	if self.last_playonfootstep ~= self.PlayOnFootstep then
-		local ent = self:GetOwner()
-		if ent:IsValid() and ent:IsPlayer() then
-			ent.pac_footstep_override = ent.pac_footstep_override or {}
-			
-			if self.PlayOnFootstep then
-				ent.pac_footstep_override[self.UniqueID] = self
-			else
-				ent.pac_footstep_override[self.UniqueID] = nil
-			end
-			
-			if table.Count(ent.pac_footstep_override) == 0 then
-				ent.pac_footstep_override = nil
-			end
-			
-			self.last_playonfootstep = self.PlayOnFootstep
-		end
-	end
-	
+function PART:OnThink()	
 	if not self.csptch then
 		self:PlaySound()
 	else
