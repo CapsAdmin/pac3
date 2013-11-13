@@ -230,9 +230,10 @@ function PART:StopSound()
 	end
 end
 
-function PART:OnShow(_, from_rendering)	
-	if from_rendering then return end
-	self:PlaySound()
+function PART:OnShow(from_rendering)	
+	if not from_rendering then
+		self:PlaySound()
+	end
 end
 
 function PART:OnHide()
