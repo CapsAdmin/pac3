@@ -48,6 +48,12 @@ function PART:GetEntity()
 	return self.Entity
 end
 
+function PART:SetTextureFilter(num)
+	self.TextureFilter = num
+	
+	self.texfilter_enum = math.Clamp(math.Round(num), 0, 3)
+end
+
 function PART:Initialize()	
 	self.Entity = self:GetEntity()
 	self.Entity:SetNoDraw(true)
@@ -351,13 +357,7 @@ function PART:DrawModel(ent, pos, ang)
 			return
 		end
 		
-			
-		local filter = self.texfilter_enum
-		
-		if not filter then
-			filter = math.Clamp(math.Round(self.TextureFilter), 0, 3)
-			self.texfilter_enum = filter
-		end
+		local filter = self.texfilter_enum or 3
 		
 		if filter ~= 3 or self.wavefront_mesh then
 			render_PushFilterMag(filter)

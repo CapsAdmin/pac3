@@ -21,7 +21,7 @@ end
 
 PART.ThinkTime = 0
 
-function PART:OnShow(owner)
+function PART:OnShow()
 	self.BoneIndex = nil
 end
 

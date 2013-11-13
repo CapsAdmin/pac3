@@ -845,7 +845,7 @@ function PART:NumberOperator(a, b)
 	end	
 end
 
-function PART:OnHide(from_event)
+function PART:OnHide()
 	if self.timerx_reset then
 		self.time = nil
 	end
