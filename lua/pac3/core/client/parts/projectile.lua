@@ -22,8 +22,8 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "CollideWithOwner", false)
 pac.EndStorableVars()
 
-function PART:OnShow(from_event)
-	if from_event then
+function PART:OnShow(from_rendering)
+	if not from_rendering then
 		self.trigger = true
 	end
 end

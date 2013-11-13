@@ -25,7 +25,7 @@ function PART:Initialize()
 	--self:PlaySound()
 end
 
-function PART:OnShow(_, from_rendering)
+function PART:OnShow(from_rendering)
 	if not from_rendering then 
 		self.played_overlapping = false
 		self:PlaySound()

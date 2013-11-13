@@ -126,8 +126,8 @@ end
 local ParticleEffect = ParticleEffect
 local ParticleEffectAttach = ParticleEffectAttach
 
-function PART:OnShow(from_event)
-	if from_event then
+function PART:OnShow(from_rendering)
+	if from_rendering then
 		self:Emit(self:GetDrawPosition())
 	end
 end

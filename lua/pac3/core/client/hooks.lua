@@ -174,7 +174,7 @@ function pac.OnEntityCreated(ent)
 							local parts = ply.pac_parts
 							
 							for key, part in pairs(parts) do								
-								part:CallRecursive("OnHide", false, true)
+								part:CallRecursive("OnHide", true)
 							end
 							
 							for key, part in pairs(parts) do								
@@ -182,7 +182,7 @@ function pac.OnEntityCreated(ent)
 							end
 							
 							for key, part in pairs(parts) do								
-								part:CallRecursive("OnShow", false, true)
+								part:CallRecursive("OnShow", true)
 							end
 						end
 					end

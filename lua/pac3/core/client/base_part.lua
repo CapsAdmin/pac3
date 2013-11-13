@@ -958,10 +958,9 @@ function PART:Think()
 		if b then
 			self:OnHide()
 		else
-			self:OnShow(self.shown_from_event, self.shown_from_rendering)
+			self:OnShow(self.shown_from_rendering)
 		end
 		
-		self.shown_from_event = nil
 		self.shown_from_rendering = nil
 		
 		self.last_hidden = b

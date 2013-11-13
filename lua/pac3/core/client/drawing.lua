@@ -93,7 +93,7 @@ local function hide_parts(ent)
 	if ent.pac_parts and ent.pac_drawing == true then
 		for key, part in pairs(ent.pac_parts) do
 			part:SetKeyValueRecursive("last_hidden", nil)
-			part:CallRecursive("OnHide", false, true)
+			part:CallRecursive("OnHide", true)
 		end
 		pac.ResetBones(ent)
 	end
