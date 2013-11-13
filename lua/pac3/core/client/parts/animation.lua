@@ -108,6 +108,10 @@ PART.random_seqname = ""
 function PART:SetSequenceName(name)
 	self.SequenceName = name
 	self.random_seqname = table.Random(name:Split(";"))
+	
+	if not self:IsHidden() then
+		self:OnShow()
+	end
 end
 
 function PART:OnShow()	
