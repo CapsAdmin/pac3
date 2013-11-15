@@ -91,6 +91,10 @@ function pac.GetAllBones(ent)
 		tbl.skirt = {friendly = "skirt", is_special = true}	
 		tbl.hitpos_ent_ang = {friendly = "hitpos_ent_ang", is_special = true}
 		tbl.hitpos_ent_ang_zero_pitch = {friendly = "hitpos_ent_ang_zero_pitch", is_special = true}
+		tbl.pos_ang = {friendly = "pos_ang", is_special = true}
+		tbl.pos_eyeang = {friendly = "pos_eyeang", is_special = true}
+		tbl.pos_eyeang = {friendly = "eyepos_eyeang", is_special = true}
+		tbl.pos_eyeang = {friendly = "eyepos_ang", is_special = true}
 		
 		ent.pac_bone_count = count
 	end
@@ -145,6 +149,22 @@ function pac.GetBonePosAng(ent, id, parent)
 	
 	if ent.pac_owner_override and ent.pac_owner_override:IsValid() then
 		ent = ent.pac_owner_override
+	end
+	
+	if id == "pos_ang" then
+		return ent:GetPos(), ent:GetAngles()
+	end
+	
+	if id == "pos_eyeang" then
+		return ent:GetPos(), ent:EyeAngles()
+	end
+	
+	if id == "eyepos_eyeang" then
+		return ent:EyePos(), ent:EyeAngles()
+	end	
+	
+	if id == "eyepos_ang" then
+		return ent:EyePos(), ent:GetAngles()
 	end
 	
 	if id == "hitpos" or id == "hit position" then
