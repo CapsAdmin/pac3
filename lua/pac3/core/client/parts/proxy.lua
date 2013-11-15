@@ -291,6 +291,61 @@ PART.Inputs =
 
 		return 0
 	end,
+	
+
+	-- outfit owner vel increase
+	owner_velocity_length_increase = function(self, parent)
+		local owner = self:GetOwner(self.RootOwner)
+		
+		owner = try_viewmodel(owner)
+
+		if owner:IsValid() then
+			local vel = self:GetVelocity(owner):Length()
+			self.ov_length_i = (self.ov_length_i or 0) + vel * FrameTime()
+			return self.ov_length_i
+		end
+
+		return 0
+	end,
+	owner_velocity_forward_increase = function(self, parent)
+		local owner = self:GetOwner(self.RootOwner)
+
+		owner = try_viewmodel(owner)
+		
+		if owner:IsValid() then
+			local vel = self:CalcEyeAngles(owner):Forward():Dot(self:GetVelocity(owner))
+			self.ov_forward_i = (self.ov_forward_i or 0) + vel * FrameTime()
+			return self.ov_forward_i
+		end
+
+		return 0
+	end,
+	owner_velocity_right_increase = function(self, parent)
+		local owner = self:GetOwner(self.RootOwner)
+		
+		owner = try_viewmodel(owner)
+
+		if owner:IsValid() then
+			local vel = self:CalcEyeAngles(owner):Right():Dot(self:GetVelocity(owner))
+			self.ov_right_i = (self.ov_right_i or 0) + vel * FrameTime()
+			return self.ov_right_i
+		end
+
+		return 0
+	end,
+	owner_velocity_up_increase = function(self, parent)
+		local owner = self:GetOwner(self.RootOwner)
+		
+		owner = try_viewmodel(owner)
+
+		if owner:IsValid() then
+			local vel = self:CalcEyeAngles(owner):Up():Dot(self:GetVelocity(owner))
+			self.ov_up_i = (self.ov_up_i or 0) + vel * FrameTime()
+			return self.ov_up_i
+		end
+
+		return 0
+	end,
 
 	-- parent part
 	parent_velocity_length = function(self, parent)
