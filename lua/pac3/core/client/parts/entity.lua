@@ -70,12 +70,12 @@ function PART:GetNiceName()
 end
 
 function PART:SetWeapon(b)
-	self:OnHide()
-
 	self.Weapon = b
-	--self.HideGizmo = not b
-	
-	self:OnShow()
+	if b then
+		self:OnShow()
+	else
+		self:OnHide()
+	end
 end
 
 
@@ -238,6 +238,11 @@ function PART:OnShow()
 	local ent = self:GetOwner()
 	
 	if ent:IsValid() then
+		
+		if ent == pac.LocalPlayer and self.Model ~= "" then
+			RunConsoleCommand("pac_setmodel", self.Model)
+		end
+	
 		if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
 			ent = ent:GetActiveWeapon()
 		else		
@@ -303,9 +308,9 @@ end
 function PART:SetModel(str)
 	self.Model = str
 	
-	if str ~= "" and self:GetOwner() == pac.LocalPlayer then
-		self:OnShow()
-		RunConsoleCommand("pac_setmodel", str)
+	local ent = self:GetOwner()
+	if str ~= "" and ent:IsValid() and ent == pac.LocalPlayer then
+		RunConsoleCommand("pac_setmodel", self.Model)
 	end
 end
 
@@ -321,11 +326,11 @@ function PART:OnThink()
 					
 		-- holy shit why does shooting reset the scale in singleplayer
 		-- dumb workaround
-		if ent:IsPlayer() and ent:GetModelScale() ~= self.Size then
+		if game.SinglePlayer() and ent:IsPlayer() and ent:GetModelScale() ~= self.Size then
 			self:UpdateScale(ent)
 		end
 		
-		if self.HideEntity and self.current_ro ~= ent.RenderOverride then
+		if self.HideEntity or self.Weapon and self.current_ro ~= ent.RenderOverride then
 			self:OnShow()
 		end
 	end
@@ -360,11 +365,10 @@ end
 
 function PART:SetHideEntity(b)
 	self.HideEntity = b
-	
-	if b then 
-		self:OnShow()
-	else
+	if b then
 		self:OnHide()
+	else
+		self:OnShow()
 	end
 end
 
