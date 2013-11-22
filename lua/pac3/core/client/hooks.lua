@@ -50,11 +50,27 @@ function pac.UpdateAnimation(ply)
 end
 pac.AddHook("UpdateAnimation")
 
+local function mod_speed(cmd, mult)
+	if mult and mult ~= 0 then
+		local forward = cmd:GetForwardMove()
+		forward = forward > 0 and mult or forward < 0 and -mult or 0
+		
+		local side = cmd:GetSideMove()
+		side = side > 0 and mult or side < 0 and -mult or 0
+		
+		
+		cmd:SetForwardMove(forward)
+		cmd:SetSideMove(side)
+	end	
+end
+
 function pac.CreateMove(cmd)
-	local mult = pac.LocalPlayer.pac_movespeed
-	if mult and mult ~= 1 then
-		cmd:SetForwardMove(cmd:GetForwardMove() * mult)
-		cmd:SetSideMove(cmd:GetSideMove() * mult)
+	if cmd:KeyDown(IN_SPEED) then
+		mod_speed(cmd, pac.LocalPlayer.pac_runspeed)
+	elseif cmd:KeyDown(IN_WALK) then
+		mod_speed(cmd, pac.LocalPlayer.pac_walkspeed)
+	elseif cmd:KeyDown(IN_DUCK) then
+		mod_speed(cmd, pac.LocalPlayer.pac_crouchspeed)
 	end
 end
 pac.AddHook("CreateMove")
