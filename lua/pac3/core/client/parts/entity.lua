@@ -27,6 +27,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "InverseKinematics", false)
 	pac.GetSet(PART, "MuteFootsteps", false)
 	pac.GetSet(PART, "AnimationRate", 1)
+	pac.GetSet(PART, "SprintSpeed", 0)
 	pac.GetSet(PART, "RunSpeed", 0)
 	pac.GetSet(PART, "WalkSpeed", 0)
 	pac.GetSet(PART, "CrouchSpeed", 0)
@@ -50,9 +51,12 @@ end
 ENTFIELD(PART, "InverseKinematics", "pac_enable_ik")
 ENTFIELD(PART, "MuteFootsteps", "pac_hide_weapon")
 ENTFIELD(PART, "AnimationRate", "pac_global_animation_rate")
-ENTFIELD(PART, "RunSpeed", "pac_runspeed")
-ENTFIELD(PART, "WalkSpeed", "pac_walkspeed")
-ENTFIELD(PART, "CrouchSpeed", "pac_crouchspeed")
+
+ENTFIELD(PART, "RunSpeed", "pac_run_speed")
+ENTFIELD(PART, "WalkSpeed", "pac_walk_speed")
+ENTFIELD(PART, "CrouchSpeed", "pac_crouch_speed")
+ENTFIELD(PART, "SprintSpeed", "pac_sprint_speed")
+
 ENTFIELD(PART, "FallApartOnDeath", "pac_death_physics_parts")
 
 function PART:GetNiceName()
