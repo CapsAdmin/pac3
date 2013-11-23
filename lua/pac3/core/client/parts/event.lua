@@ -373,7 +373,7 @@ PART.Events =
 		callback = function(self, ent, interval, offset)
 			interval = interval or 1
 			offset = offset or 0
-			
+		
 			return (CurTime() + offset)%interval > (interval / 2)
 		end,
 	},
@@ -382,16 +382,31 @@ PART.Events =
 	{
 		arguments = {{find = "string"}, {time = "number"}},
 		callback = function(self, ent, find, time)
-			time = time or 0.1
+			time = time or 0
 			
 			ent = try_viewmodel(ent)
 			
 			local data = ent.pac_anim_event 
+			local b = false
 			
-			if data and (self:StringOperator(data.name, find) and data.time + time > pac.RealTime) then
+			if data and (self:StringOperator(data.name, find) and (time == 0 or data.time + time > pac.RealTime)) then
 				data.reset = false
-				return true
-			end			
+				b = true
+			end
+			
+			-- this requires a hack because animation event needs to play instantly
+			if b ~= self.animevent_last_b and not self.SUPPRESS_THINK then
+				self.SUPPRESS_THINK = true
+				if ent.pac_parts then
+					for k,v in pairs(ent.pac_parts) do
+						v:CallRecursive("Think")
+					end
+				end
+				self.animevent_last_b = b
+				self.SUPPRESS_THINK = false
+			end
+			
+			return b
 		end,
 	},
 
