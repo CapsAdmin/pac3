@@ -93,6 +93,7 @@ local function hide_parts(ent)
 	if ent.pac_parts and ent.pac_drawing == true then
 		for key, part in pairs(ent.pac_parts) do
 			part:SetKeyValueRecursive("last_hidden", nil)
+			part:SetKeyValueRecursive("draw_hidden", true)
 			part:CallRecursive("OnHide", true)
 		end
 		pac.ResetBones(ent)
@@ -369,6 +370,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 						part:CallRecursive("OnHide")
 						part:SetKeyValueRecursive("last_hidden", nil)
 						part:SetKeyValueRecursive("shown_from_rendering", true)
+						part:SetKeyValueRecursive("draw_hidden", false)
 					end
 				end
 			

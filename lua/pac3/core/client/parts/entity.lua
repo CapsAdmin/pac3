@@ -35,6 +35,11 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 local function ENTFIELD(PART, name, field)
+	
+	field = "pac_" .. field
+	
+	PART.ent_fields = PART.ent_fields or {}
+	PART.ent_fields[field] = name
 
 	PART["Set" .. name] = function(self, val)
 		self[name] = val
@@ -48,16 +53,16 @@ local function ENTFIELD(PART, name, field)
 
 end
 
-ENTFIELD(PART, "InverseKinematics", "pac_enable_ik")
-ENTFIELD(PART, "MuteFootsteps", "pac_hide_weapon")
-ENTFIELD(PART, "AnimationRate", "pac_global_animation_rate")
+ENTFIELD(PART, "InverseKinematics", "enable_ik")
+ENTFIELD(PART, "MuteFootsteps", "hide_weapon")
+ENTFIELD(PART, "AnimationRate", "global_animation_rate")
 
-ENTFIELD(PART, "RunSpeed", "pac_run_speed")
-ENTFIELD(PART, "WalkSpeed", "pac_walk_speed")
-ENTFIELD(PART, "CrouchSpeed", "pac_crouch_speed")
-ENTFIELD(PART, "SprintSpeed", "pac_sprint_speed")
+ENTFIELD(PART, "RunSpeed", "run_speed")
+ENTFIELD(PART, "WalkSpeed", "walk_speed")
+ENTFIELD(PART, "CrouchSpeed", "crouch_speed")
+ENTFIELD(PART, "SprintSpeed", "sprint_speed")
 
-ENTFIELD(PART, "FallApartOnDeath", "pac_death_physics_parts")
+ENTFIELD(PART, "FallApartOnDeath", "death_physics_parts")
 
 function PART:GetNiceName()
 	local ent = self:GetOwner()
@@ -207,10 +212,8 @@ function PART:UpdateWeaponDraw(ent)
 	
 	if wep:IsWeapon() then
 		local hide = not self.DrawWeapon
-		if hide == true then
-			wep.pac_hide_weapon = hide
-			pac.HideWeapon(wep, hide)
-		end
+		wep.pac_hide_weapon = hide
+		pac.HideWeapon(wep, hide)
 	end
 end
 
@@ -258,9 +261,12 @@ function PART:OnShow()
 				RunConsoleCommand("pac_setmodel", self.Model)
 			end
 		end
+
+		for key, field in pairs(self.ent_fields) do
+			self["Set" .. field](self, self[field])
+		end
 		
-		ent.pac_global_animation_rate = self.AnimationRate
-		ent.pac_enable_ik = self.InverseKinematics
+		
 		self:SetColor(self:GetColor())
 		ent:SetColor(self.Colorc)
 		self:UpdateWeaponDraw(self:GetOwner())
@@ -352,13 +358,18 @@ function PART:OnHide()
 			ent = ent:GetActiveWeapon()
 		end
 		
-		ent.pac_mute_footsteps = nil	
 		ent.RenderOverride = nil
-		ent.pac_global_animation_rate = nil
-		ent.pac_enable_ik = nil
 		ent:SetColor(Color(255, 255, 255, 255))
 		
-		pac.SetModelScale(ent, Vector(1,1,1))
+		for key in pairs(self.ent_fields) do
+			ent[key] = nil
+		end
+		
+		if ent:IsPlayer() then
+			pac.SetModelScale(ent, nil, 1)
+		else
+			pac.SetModelScale(ent, Vector(1,1,1))
+		end
 		
 		local weps = ent.GetWeapons and ent:GetWeapons()
 		

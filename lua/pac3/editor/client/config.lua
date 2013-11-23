@@ -65,6 +65,17 @@ pace.PropertySheets = {
 			movespeed = true,
 			weapon = true,
 		},
+		movement =
+		{
+			runspeed = true,
+			walkspeed = true,
+			crouchspeed = true,
+			sprintspeed = true,
+		},
+		appearance = {
+			drawweapon = true,
+			hideentity = true,
+		}
 	},
 	
 	proxy = {
