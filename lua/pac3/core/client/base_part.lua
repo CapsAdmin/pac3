@@ -463,9 +463,12 @@ do -- parenting
 		end
 
 		function PART:IsHidden()
-			if self.temp_hidden then return true end
-			if self.hidden then return true end			
-			if self.event_hidden then return true end			
+			if 
+				self.draw_hidden or 
+				self.temp_hidden or 
+				self.hidden or 
+				self.event_hidden 
+			then return true end
 			
 			local temp = self
 			
