@@ -212,8 +212,10 @@ function PART:UpdateWeaponDraw(ent)
 	
 	if wep:IsWeapon() then
 		local hide = not self.DrawWeapon
-		wep.pac_hide_weapon = hide
-		pac.HideWeapon(wep, hide)
+		if hide == true then
+			wep.pac_hide_weapon = hide
+			pac.HideWeapon(wep, hide)
+		end
 	end
 end
 
