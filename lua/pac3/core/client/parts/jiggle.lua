@@ -49,15 +49,15 @@ end
 function PART:OnDraw(owner, pos, ang)	
 	local delta = FrameTime() 
 	local speed = self.Speed * delta
+
+	self.vel = self.vel or VectorRand()
+	self.pos = self.pos or pos * 1
 	
 	if self.StopRadius ~= 0 and self.pos and self.pos:Distance(pos) < self.StopRadius then 
 		self.vel = Vector()
 	return end
-
-	if self.JigglePosition then	
-		self.vel = self.vel or VectorRand()
-		self.pos = self.pos or pos * 1
-		
+	
+	if self.JigglePosition then			
 		if not self.ConstrainX then 
 			self.vel.x = self.vel.x + (pos.x - self.pos.x) 
 			
