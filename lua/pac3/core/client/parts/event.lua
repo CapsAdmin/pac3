@@ -382,7 +382,7 @@ PART.Events =
 	{
 		arguments = {{find = "string"}, {time = "number"}},
 		callback = function(self, ent, find, time)
-			time = time or 0
+			time = time or 0.1
 			
 			ent = try_viewmodel(ent)
 			
