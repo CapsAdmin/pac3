@@ -1,31 +1,33 @@
-
 function pace.Ban(ply)
 
 	ply:ConCommand("pac_clear_parts")
-
-	umsg.Start("pac_submit_acknowledged", ply)
-		umsg.Bool(false)
-		umsg.String("You have been banned from using pac!")
-	umsg.End()
 	
-	local fil = file.Read("pac_bans.txt", "DATA")
+	timer.Simple( 1, function() -- made it a timer because the ConCommand din't run fast enough. - Bizzclaw
 	
-	local bans = {}
-	if fil and fil ~= "" then
+		umsg.Start("pac_submit_acknowledged", ply)
+			umsg.Bool(false)
+			umsg.String("You have been banned from using pac!")
+		umsg.End()
+	
+		local fil = file.Read("pac_bans.txt", "DATA")
+	
+		local bans = {}
+		if fil and fil ~= "" then
 		bans = util.KeyValuesToTable(fil)
-	end
-		
-	for name, steamid in pairs(bans) do
-		if ply:SteamID() == steamid then
-			bans[name] = nil
 		end
-	end
+		
+		for name, steamid in pairs(bans) do
+			if ply:SteamID() == steamid then
+			bans[name] = nil
+			end
+		end
 
-	bans[ply:Nick():lower():gsub("%A", "")] = ply:SteamID()
+		bans[ply:Nick():lower():gsub("%A", "")] = ply:SteamID()
 	
-	pace.Bans = bans
+		pace.Bans = bans
 	
-	file.Write("pac_bans.txt", util.TableToKeyValues(bans), "DATA")
+		file.Write("pac_bans.txt", util.TableToKeyValues(bans), "DATA")
+	end)
 end
 
 function pace.Unban(ply)
