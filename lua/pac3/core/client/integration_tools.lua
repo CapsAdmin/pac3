@@ -1,3 +1,43 @@
+do
+	local draw_localplayer = nil
+
+	function pac.DrawEntity2D(ent, x, y, w, h, cam_pos, cam_ang, cam_fov)
+		
+		if draw_localplayer == nil then
+			hook.Add("ShouldDrawLocalPlayer", "pac_draw_2d_entity", function()
+				if draw_localplayer == true then
+					return true
+				end
+			end)
+		end
+		
+		ent = ent or LocalPlayer()
+		x = x or 0
+		y = y or 0
+		w = w or 64
+		h = h or 64
+		cam_ang = cam_ang or Angle(0, RealTime() * 25,  0)
+		cam_pos = cam_pos or ent:LocalToWorld(ent:OBBCenter()) - cam_ang:Forward() * ent:BoundingRadius() * 2
+		cam_fov = cam_fov or 90
+
+		cam.Start2D()
+			cam.Start3D(cam_pos, cam_ang, cam_fov, x, y, w, h, 5, 4096)
+				cam.IgnoreZ(true)
+					pac.ForceRendering(true)						
+						draw_localplayer = true
+						
+							pac.RenderOverride(ent, "opaque")
+							pac.RenderOverride(ent, "translucent", true)
+							ent:DrawModel() 
+
+						draw_localplayer = false				
+					pac.ForceRendering(false)
+				cam.IgnoreZ(false)
+			cam.End3D()
+		cam.End2D()
+	end
+end 
+
 function pac.SetupENT(ENT, owner)	
 	ENT.pac_owner = ENT.pac_owner or owner or "self"
 	
