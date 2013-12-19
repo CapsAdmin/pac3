@@ -199,6 +199,7 @@ end
 PART.OnHide = OnRemove
 
 do -- physical
+	local Entity = Entity
 	local projectiles = {}	
 	hook.Add("Think", "pac_projectile", function()
 		for key, data in pairs(projectiles) do
@@ -207,7 +208,7 @@ do -- physical
 				continue
 			end
 
-			local ent = data.ent
+			local ent = Entity(data.ent_id)
 
 			if ent:IsValid() then
 			
@@ -223,11 +224,11 @@ do -- physical
 		
 	net.Receive("pac_projectile_attach", function()
 		local ply = net.ReadEntity()
-		local ent = net.ReadEntity()
+		local ent_id = net.ReadShort()
 		local partuid = net.ReadString()
-
-		if ent:IsValid() then
-			table.insert(projectiles, {ply = ply, ent = ent, partuid = partuid})
+		
+		if ply:IsValid() then
+			table.insert(projectiles, {ply = ply, ent_id = ent_id, partuid = partuid})
 		end
 	end)		
 end

@@ -132,7 +132,7 @@ if SERVER then
 				
 			net.Start("pac_projectile_attach")
 				net.WriteEntity(ply)
-				net.WriteEntity(ent)
+				net.WriteShort(ent:EntIndex())
 				net.WriteString(part.UniqueID)
 			net.Broadcast()
 		end)
