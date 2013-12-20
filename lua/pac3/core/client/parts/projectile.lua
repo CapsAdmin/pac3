@@ -224,7 +224,7 @@ do -- physical
 		
 	net.Receive("pac_projectile_attach", function()
 		local ply = net.ReadEntity()
-		local ent_id = net.ReadShort()
+		local ent_id = net.ReadInt(16)
 		local partuid = net.ReadString()
 		
 		if ply:IsValid() then
