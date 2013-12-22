@@ -352,6 +352,21 @@ hook.Add("Think", "webaudio", function()
             html:SetVisible(false)
             html:SetPos(ScrW(), ScrH())
             html:SetSize(1, 1)
+			
+			local lastmsg
+			
+			html.ConsoleMessage = function(self, msg)
+				-- why does awesomium crash in the first place?
+				if msg == "Uncaught ReferenceError: lua is not defined" then
+					webaudio.preinit = false
+				end
+
+				if lastmsg ~= msg then 
+					lastmsg = msg 
+					Msg("[PAC] ")
+					MsgN(msg) 
+				end 
+			end
 
             html:AddFunction("lua", "print", function(text)
                 dprint(text)
