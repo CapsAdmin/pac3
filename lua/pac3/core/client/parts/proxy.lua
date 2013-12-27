@@ -440,9 +440,7 @@ PART.Inputs =
 	end,
 
 	owner_health = function(self)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = self:GetPlayerOwner()
 		
 		if owner:IsValid() then
 			return owner:Health()
@@ -452,9 +450,7 @@ PART.Inputs =
 	end,
 
 	owner_armor = function(self)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = self:GetPlayerOwner()
 		
 		if owner:IsValid() then
 			return owner:Armor()
@@ -464,11 +460,9 @@ PART.Inputs =
 	end,
 	
 	player_color_r = function(self)
-		local vec = self:GetOwner(self.RootOwner)
+		local owner = self:GetPlayerOwner()		
 		
-		owner = try_viewmodel(owner)
-		
-		if owner:IsValid() and owner:IsPlayer() then
+		if owner:IsValid() then
 			local vec = Vector(GetConVarString("cl_playercolor"))
 			
 			return vec.r
@@ -477,11 +471,9 @@ PART.Inputs =
 		return 1
 	end,
 	player_color_g = function(self)
-		local vec = self:GetOwner(self.RootOwner)
+		local owner = self:GetPlayerOwner()
 		
-		owner = try_viewmodel(owner)
-		
-		if owner:IsValid() and owner:IsPlayer() then
+		if owner:IsValid() then
 			local vec = Vector(GetConVarString("cl_playercolor"))
 			
 			return vec.g
@@ -490,11 +482,9 @@ PART.Inputs =
 		return 1
 	end,	
 	player_color_b = function(self)
-		local vec = self:GetOwner(self.RootOwner)
+		local owner = self:GetPlayerOwner()
 		
-		owner = try_viewmodel(owner)
-		
-		if owner:IsValid() and owner:IsPlayer() then
+		if owner:IsValid() then
 			local vec = Vector(GetConVarString("cl_playercolor"))
 			
 			return vec.b
