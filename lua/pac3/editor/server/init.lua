@@ -9,5 +9,6 @@ include("wear.lua")
 include("bans.lua")
 include("contraption.lua")
 include("spawnmenu.lua")
+include("global_bans.lua")
 
 CreateConVar("has_pac3_editor", "1", {FCVAR_NOTIFY})

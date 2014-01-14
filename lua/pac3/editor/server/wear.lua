@@ -204,13 +204,37 @@ function pace.SubmitPart(data, filter)
 			data.player_uid = data.owner:UniqueID()
 		end
 	
-		if hook.Run("pac_SendData", filter or player.GetAll(), data) ~= false then
+		local players = filter or player.GetAll()
+		
+		if pace.GlobalBans then
+			if type(players) == "table" and data.owner:IsValid() then
+				local owner_steamid = data.owner:SteamID() 
+				for key, ply in pairs(players) do
+					local steamid = ply:SteamID()
+					local reason = pace.GlobalBans[steamid]
+					if reason then					
+						table.remove(players, key)
+						pac.dprint("not sending data to %s because he/her is globally banned from using pac", ply:Nick())
+						
+						if owner_steamid == steamid then
+							return false, "you have been globally banned from using pac. see global_bans.lua for more info"
+						end
+						
+						break
+					end
+				end
+			else
+				print(players)
+			end
+		end
+	
+		if hook.Run("pac_SendData", players, data) ~= false then
 			if pace.netstream then
-				pace.netstream.Start(filter or player.GetAll(), data)
+				pace.netstream.Start(players, data)
 			else
 				net.Start("pac_submit")
 					net.WriteTable(decimal_hack_pack(table.Copy(data)))
-				net.Send(filter or player.GetAll())	
+				net.Send(players)	
 			end
 			
 			if type(data.part) == "table" then	
