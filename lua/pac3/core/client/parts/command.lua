@@ -28,6 +28,18 @@ function PART:SetString(str)
 	self.String = str
 end
 
+function PART:GetCode()
+	return self.String
+end
+
+function PART:SetCode(str)
+	self.String = str
+end
+
+function PART:ShouldHighlight(str)
+	return _G[str] ~= nil
+end
+
 function PART:Execute()
 	local ent = self:GetPlayerOwner()
 

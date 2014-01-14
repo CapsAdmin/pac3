@@ -540,6 +540,10 @@ function pace.TranslatePropertiesKey(key, obj)
 		return "" 
 	end
 	
+	if key == "string" and obj.ClassName == "command" then
+		return key
+	end
+	
 	if 
 		key == "bone" or 
 		key == "model" or
