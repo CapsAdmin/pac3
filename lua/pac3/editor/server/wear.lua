@@ -223,8 +223,6 @@ function pace.SubmitPart(data, filter)
 						break
 					end
 				end
-			else
-				print(players)
 			end
 		end
 	
