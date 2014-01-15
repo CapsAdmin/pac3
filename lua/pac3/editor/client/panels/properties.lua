@@ -1056,15 +1056,14 @@ do -- bone
 	PANEL.Base = "pace_properties_base_type"
 	
 	function PANEL:SpecialCallback()
-		pace.SelectBone(pace.GetViewEntity(), function(data)
+		pace.SelectBone(pace.current_part:GetOwner(), function(data)
 			self:SetValue(L(data.friendly))
 			self.OnValueChanged(data.friendly)
 		end)
 	end
 	
 	function PANEL:SpecialCallback2()
-		local ent = pace.GetViewEntity()
-		local bones = pac.GetModelBones(ent)
+		local bones = pac.GetModelBones(pace.current_part:GetOwner())
 		
 		local menu = DermaMenu()
 		
@@ -1171,11 +1170,9 @@ do -- aimpart
 	PANEL.Base = "pace_properties_base_type"
 		
 	function PANEL:SpecialCallback()
-		pace.SelectEntity(function(ent)
-			pace.current_part:SetOwnerName(ent:EntIndex())
-			local name = pace.current_part:GetOwnerName()
-			self.OnValueChanged(name)
-			self:SetValue(L(name))
+		pace.SelectPart(pac.GetParts(true), function(part)
+			self:SetValue(part:GetName())
+			self.OnValueChanged(part)
 		end)
 	end
 		
