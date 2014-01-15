@@ -86,7 +86,7 @@ function PANEL:PerformLayout()
 	pace.properties:PerformLayout()
 	
 	if auto_size:GetBool() then
-		self.div:SetTopHeight(ScrH() - math.min(pace.properties:GetHeight(2), ScrH() / 2))
+		self.div:SetTopHeight(ScrH() - math.min(pace.properties:GetHeight() + RENDERSCORE_SIZE + BAR_SIZE - 6, ScrH() / 1.5))
 	end
 end
 
