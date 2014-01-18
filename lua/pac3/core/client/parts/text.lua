@@ -61,6 +61,14 @@ local render_CullMode = render.CullMode
 local cam_End3D2D = cam.End3D2D
 local cam_End3D = cam.End3D
 
+function PART:SetFont(str)
+	if pcall(surface.SetFont, str) then
+		str = "DermaDefault"
+	end
+	
+	self.Font = str
+end
+
 function PART:OnDraw(owner, pos, ang)
 	if self.Text ~= "" then
 		cam_Start3D(EyePos(), EyeAngles())
