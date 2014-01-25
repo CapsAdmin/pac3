@@ -4,65 +4,122 @@ function pac.RunNextFrame(id, func)
 	pac.next_frame_funcs[id] = func
 end
 
-local hue =
-{
-	"red",
-	"orange",
-	"yellow",
-	"green",
-	"turquoise",
-	"blue",
-	"purple",
-	"magenta",	
-}
-
-local sat =
-{
-	"pale",
-	"",
-	"strong",
-}
-
-local val =
-{
-	"dark",
-	"",
-	"bright"
-}
-
-function pac.HSVToNames(h,s,v)
-	return 
-		hue[math.Round((1+(h/360)*#hue))] or hue[1],
-		sat[math.ceil(s*#sat)] or sat[1],
-		val[math.ceil(v*#val)] or val[1]
-end
-
-function pac.ColorToNames(c)
-	if c.r == 255 and c.g == 255 and c.b == 255 then return "white", "", "bright" end
-	if c.r == 0 and c.g == 0 and c.b == 0 then return "black", "", "bright" end
-	return pac.HSVToNames(ColorToHSV(Color(c.r, c.g, c.b)))
-end
-	
-function pac.PrettifyName(str)
-	if not str then return end
-	str = str:lower()
-	str = str:gsub("_", " ")
-	return str
-end
-
-function pac.dprint(fmt, ...)
-	if pac.debug then
-		MsgN("\n")	
-		MsgN(">>>PAC3>>>")
-		MsgN(fmt:format(...))
-		if pac.debug_trace then
-			MsgN("==TRACE==")
-			debug.Trace()
-			MsgN("==TRACE==")
+do --dev util
+	function pac.RemoveAllPACEntities()
+		for key, ent in pairs(ents.GetAll()) do
+			if ent.pac_parts then
+				pac.UnhookEntityRender(ent)
+				--ent:Remove()
+			end
+			
+			if ent.IsPACEntity then
+				ent:Remove()
+			end
 		end
-		MsgN("<<<PAC3<<<")
-		MsgN("\n")
 	end
+
+	function pac.Panic()
+		pac.RemoveAllParts()
+		pac.RemoveAllPACEntities()
+		pac.Parts = {}
+	end
+
+
+	function pac.Restart()
+		if pac then pac.Panic() end
+		
+		local was_open
+		
+		if pace then 
+			was_open = pace.Editor:IsValid() 
+			pace.Panic() 
+		end
+
+		pac = {}
+		pace = {}
+		
+		include("autorun/pac_init.lua")
+		include("autorun/pac_editor_init.lua")
+		
+		for _, ent in pairs(ents.GetAll()) do
+			for k, v in pairs(ent:GetTable()) do
+				if k:sub(0, 4) == "pac_" then
+					ent[k] = nil
+				end
+			end
+		end
+
+		if was_open then 
+			pace.OpenEditor() 
+		end
+	end
+
+	concommand.Add("pac_restart", pac.Restart)
+	
+	function pac.dprint(fmt, ...)
+		if pac.debug then
+			MsgN("\n")	
+			MsgN(">>>PAC3>>>")
+			MsgN(fmt:format(...))
+			if pac.debug_trace then
+				MsgN("==TRACE==")
+				debug.Trace()
+				MsgN("==TRACE==")
+			end
+			MsgN("<<<PAC3<<<")
+			MsgN("\n")
+		end
+	end
+end
+		
+do
+	local hue =
+	{
+		"red",
+		"orange",
+		"yellow",
+		"green",
+		"turquoise",
+		"blue",
+		"purple",
+		"magenta",	
+	}
+
+	local sat =
+	{
+		"pale",
+		"",
+		"strong",
+	}
+
+	local val =
+	{
+		"dark",
+		"",
+		"bright"
+	}
+
+	function pac.HSVToNames(h,s,v)
+		return 
+			hue[math.Round((1+(h/360)*#hue))] or hue[1],
+			sat[math.ceil(s*#sat)] or sat[1],
+			val[math.ceil(v*#val)] or val[1]
+	end
+
+	function pac.ColorToNames(c)
+		if c.r == 255 and c.g == 255 and c.b == 255 then return "white", "", "bright" end
+		if c.r == 0 and c.g == 0 and c.b == 0 then return "black", "", "bright" end
+		return pac.HSVToNames(ColorToHSV(Color(c.r, c.g, c.b)))
+	end
+		
+		
+	function pac.PrettifyName(str)
+		if not str then return end
+		str = str:lower()
+		str = str:gsub("_", " ")
+		return str
+	end
+
 end
 
 function pac.CalcEntityCRC(ent)
@@ -75,14 +132,6 @@ function pac.CalcEntityCRC(ent)
 	local crc = x .. y .. z .. p .. _y .. r .. mdl
 
 	return util.CRC(crc)
-end
-
-function pac.IsValidEntity(var)
-	return IsEntity(var) and var:IsValid()
-end
-
-function pac.GetValidEntity(var)
-	return pac.IsValidEntity(var) and var
 end
 
 function pac.MakeNull(tbl)

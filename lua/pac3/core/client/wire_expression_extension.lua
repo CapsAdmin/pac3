@@ -1,3 +1,16 @@
+hook.Add("Think", "pac_e2_extension", function()
+	local ply = LocalPlayer()
+	if ply:IsValid() then
+		
+		-- uuumm
+		if E2Helper then
+			E2Helper.Descriptions["pacSetKeyValue"] = "Sets a property value on given part. Part unique id is recommended but you can also input name."
+		end
+		
+		hook.Remove("Think", "pac_e2_extension")
+	end
+end)
+
 local function SetKeyValue(ply, ent, global_id, key, val)
 	local set = "Set" .. key
 		
