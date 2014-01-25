@@ -34,6 +34,48 @@ include("animeditor.lua")
 include("render_scores.lua")
 
 
+do 
+	local hue =
+	{
+		"red",
+		"orange",
+		"yellow",
+		"green",
+		"turquoise",
+		"blue",
+		"purple",
+		"magenta",	
+	}
+
+	local sat =
+	{
+		"pale",
+		"",
+		"strong",
+	}
+
+	local val =
+	{
+		"dark",
+		"",
+		"bright"
+	}
+
+	function pace.HSVToNames(h,s,v)
+		return 
+			hue[math.Round((1+(h/360)*#hue))] or hue[1],
+			sat[math.ceil(s*#sat)] or sat[1],
+			val[math.ceil(v*#val)] or val[1]
+	end
+
+	function pace.ColorToNames(c)
+		if c.r == 255 and c.g == 255 and c.b == 255 then return "white", "", "bright" end
+		if c.r == 0 and c.g == 0 and c.b == 0 then return "black", "", "bright" end
+		return pace.HSVToNames(ColorToHSV(Color(c.r, c.g, c.b)))
+	end
+		
+end
+
 pace.ActivePanels = pace.ActivePanels or {}
 pace.Editor = NULL
 

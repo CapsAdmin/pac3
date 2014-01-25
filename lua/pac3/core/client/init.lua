@@ -4,6 +4,7 @@ include("libraries/null.lua")
 include("libraries/class.lua")
 include("libraries/luadata.lua")
 include("libraries/haloex.lua")
+include("libraries/expression.lua")
 
 include("pac3/core/shared/init.lua")
 
@@ -12,42 +13,6 @@ include("libraries/urlobj.lua")
 include("libraries/urlogg.lua")
 
 include("libraries/boneanimlib.lua")
-
-function pac.LoadParts()
-	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
-	
-	for _, name in pairs(files) do
-		include("pac3/core/client/parts/" .. name)
-	end
-end
-
-function pac.CheckParts()
-	for key, part in pairs(pac.ActiveParts) do
-		if not part:IsValid() then
-			pac.ActiveParts[key] = nil
-			pac.MakeNull(part)
-		end
-	end
-end
-
-function pac.RemoveAllPACEntities()
-	for key, ent in pairs(ents.GetAll()) do
-		if ent.pac_parts then
-			pac.UnhookEntityRender(ent)
-			--ent:Remove()
-		end
-		
-		if ent.IsPACEntity then
-			ent:Remove()
-		end
-	end
-end
-
-function pac.Panic()
-	pac.RemoveAllParts()
-	pac.RemoveAllPACEntities()
-	pac.Parts = {}
-end
 
 include("util.lua")
 include("parts.lua")
@@ -58,53 +23,11 @@ include("drawing.lua")
 
 include("owner_name.lua")
 
-include("expression.lua")
 include("integration_tools.lua")
 include("mat_proxies.lua")
 include("wire_expression_extension.lua")
 
 pac.LoadParts()
-
-function pac.Restart()
-	if pac then pac.Panic() end
-	
-	local was_open
-	
-	if pace then 
-		was_open = pace.Editor:IsValid() 
-		pace.Panic() 
-	end
-
-	pac = {}
-	pace = {}
-	
-	include("autorun/pac_init.lua")
-	include("autorun/pac_editor_init.lua")
-	
-	for _, ent in pairs(ents.GetAll()) do
-		for k, v in pairs(ent:GetTable()) do
-			if k:sub(0, 4) == "pac_" then
-				ent[k] = nil
-			end
-		end
-	end
-
-	if was_open then 
-		pace.OpenEditor() 
-	end
-end
-
-concommand.Add("pac_restart", pac.Restart)
-
-local cvar_enable = CreateClientConVar("pac_enable", "1")
-
-cvars.AddChangeCallback("pac_enable", function(name)
-	if GetConVarNumber(name) == 1 then
-		pac.Enable()
-	else
-		pac.Disable()
-	end
-end)
 
 function pac.Enable()
 	-- parts were marked as not drawing, so they will show on the next frame
@@ -145,24 +68,31 @@ function pac.Disable()
 	pac.CallHook("Disable")
 end
 
-function pac.IsEnabled()
-	return GetConVarNumber("pac_enable") >= 1
-end
+do
+	local cvar_enable = CreateClientConVar("pac_enable", "1")
 
-if GetConVarNumber("pac_enable") == 0 then
-	pac.Disable()
+	cvars.AddChangeCallback("pac_enable", function(name)
+		if GetConVarNumber(name) == 1 then
+			pac.Enable()
+		else
+			pac.Disable()
+		end
+	end)
+
+	function pac.IsEnabled()
+		return cvar_enable:GetInt() >= 1
+	end
+
+	if cvar_enable:GetInt() == 0 then
+		pac.Disable()
+	end
+
 end
 
 hook.Add("Think", "pac_localplayer", function()
 	local ply = LocalPlayer()
 	if ply:IsValid() then
-		pac.LocalPlayer = LocalPlayer() 
-		
-		-- uuumm
-		if E2Helper then
-			E2Helper.Descriptions["pacSetKeyValue"] = "Sets a property value on given part. Part unique id is recommended but you can also input name."
-		end
-		
+		pac.LocalPlayer = ply		
 		hook.Remove("Think", "pac_localplayer")
 	end
 end)

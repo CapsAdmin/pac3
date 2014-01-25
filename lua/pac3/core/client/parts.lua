@@ -114,6 +114,23 @@ function pac.RegisterPart(META, name)
 	end	
 end
 
+function pac.LoadParts()
+	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
+	
+	for _, name in pairs(files) do
+		include("pac3/core/client/parts/" .. name)
+	end
+end
+
+function pac.CheckParts()
+	for key, part in pairs(pac.ActiveParts) do
+		if not part:IsValid() then
+			pac.ActiveParts[key] = nil
+			pac.MakeNull(part)
+		end
+	end
+end
+
 function pac.GetRegisteredParts()
 	return class.GetAll("part")
 end
