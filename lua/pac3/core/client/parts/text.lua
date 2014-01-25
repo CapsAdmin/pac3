@@ -62,7 +62,7 @@ local cam_End3D2D = cam.End3D2D
 local cam_End3D = cam.End3D
 
 function PART:SetFont(str)
-	if pcall(surface.SetFont, str) then
+	if not pcall(surface.SetFont, str) then
 		str = "DermaDefault"
 	end
 	
