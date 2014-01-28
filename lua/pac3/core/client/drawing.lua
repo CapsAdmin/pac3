@@ -417,15 +417,12 @@ function pac.PostDrawTranslucentRenderables()
 end
 pac.AddHook("PostDrawTranslucentRenderables")
 
-local should_suppress = setup_suppress()
-function pac.Think()
-	if should_suppress() then return end
-	
+function pac.Think()	
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
 			if ent.pac_drawing and ent:IsPlayer() then
 			
-				ent.pac_traceres = ent:GetEyeTraceNoCursor()
+				ent.pac_traceres = util.QuickTrace(ent:EyePos(), ent:GetAimVector()*32000, {ent, ent:GetVehicle(), ent:GetOwner()})
 				ent.pac_hitpos = ent.pac_traceres.HitPos
 				
 			end
