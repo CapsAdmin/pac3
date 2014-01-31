@@ -33,8 +33,8 @@ function pac.Enable()
 	-- parts were marked as not drawing, so they will show on the next frame
 
 	-- add all the hooks back
-	for event in pairs(pac.added_hooks) do
-		pac.AddHook(event)
+	for event, data in pairs(pac.added_hooks) do
+		pac.AddHook(event, data.func)
 	end
 	
 	pac.CallHook("Enable")
