@@ -2,7 +2,7 @@ jit.on(true, true)
 
 local pac = pac
 
-local PART = pac.GetPart("model") or {} 
+local PART = {} 
 
 PART.ClassName = "model"
 PART.ManualDraw = true
@@ -57,14 +57,6 @@ end
 function PART:Initialize()	
 	self.Entity = self:GetEntity()
 	self.Entity:SetNoDraw(true)
-	--[[self.Entity:SetRenderMode(RENDERMODE_NONE)
-	self.Entity:AddEffects(EF_NOINTERP)
-	self.Entity:AddEffects(EF_NOSHADOW)
-	self.Entity:AddEffects(EF_NODRAW)
-	self.Entity:AddEffects(EF_NORECEIVESHADOW)
-	self.Entity:AddEFlags(EFL_NO_THINK_FUNCTION)
-	self.Entity:DrawShadow(false)
-	self.Entity:DestroyShadow()]]
 	self.Entity.PACPart = self
 end
 
@@ -94,30 +86,6 @@ function PART:OnThink()
 	if ent:IsValid() then
 		ent.pac_matproxies = ent.pac_matproxies or {}
 		ent.pac_matproxies.ItemTintColor = self.TintColor / 255
-	end
-end
-
-function PART:OnParent(part)
-	local ent = self:GetEntity()
-	local owner = self:GetOwner()
-	
-	if ent:IsValid() and owner:IsValid() then
-		if part.ClassName == self.ClassName and part:GetEntity():IsValid() and owner ~= ent then
-		--	ent:SetParent(self:GetParent():GetEntity())
-		--	ent:SetOwner(self:GetParent():GetEntity())
-		elseif owner ~= ent then
-			--ent:SetParent(owner)
-			--ent:SetOwner(owner)
-		end	
-	end
-end
-
-function PART:OnUnParent()
-	local ent = self:GetEntity()
-	
-	if ent:IsValid() and owner ~= ent then
-		--ent:SetParent(self:GetOwner())
-	--	ent:SetOwner(self:GetOwner())
 	end
 end
 
@@ -163,16 +131,6 @@ local MATERIAL_CULLMODE_CW = MATERIAL_CULLMODE_CW
 function PART:PreEntityDraw(owner, ent, pos, ang)	
 	
 	if not ent:IsPlayer() and pos and ang then
-		if self.OriginFix and ent.pac3_center then			
-			pos, ang = LocalToWorld(
-				ent.pac3_center * self.Scale * -self.Size, 
-				Angle(0,0,0), 
-				
-				pos, 
-				ang
-			)
-		end
-		
 		if not self.skip_orient then
 			ent:SetPos(pos)
 			ent:SetAngles(ang)
@@ -181,9 +139,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 			self.cached_ang = ang
 		end
 	end
-				
-	--ent:SetupBones(
-	
+					
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 	
 		self:ModifiersPreEvent("OnDraw")
@@ -273,9 +229,8 @@ local render_SetMaterial = render.SetMaterial
 
 function PART:OnDraw(owner, pos, ang)
 	local ent = self.Entity
-	
-	if ent:IsValid() then	
 		
+	if ent:IsValid() then		
 		self:PreEntityDraw(owner, ent, pos, ang)
 			self:DrawModel(ent, pos, ang)	
 		self:PostEntityDraw(owner, ent, pos, ang)
@@ -339,8 +294,8 @@ function PART:DrawModel(ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 	
 		if self.loading_obj then
-			cam.IgnoreZ(true)
 			cam.Start2D()
+			cam.IgnoreZ(true)
 				local pos2d = pos:ToScreen()
 			
 				surface.SetFont("pac_urlobj_loading")
@@ -352,8 +307,8 @@ function PART:DrawModel(ent, pos, ang)
 				
 				surface.SetTextPos(pos2d.x - w/2, pos2d.y - h/2)
 				surface.DrawText(str)
-			cam.End2D()
 			cam.IgnoreZ(false)
+			cam.End2D()
 			return
 		end
 		
@@ -471,9 +426,7 @@ function PART:SetModel(var)
 	self.Model = var
 	self.Entity.pac_bones = nil
 	self.Entity:SetModel(var)
-	
-	local min, max = self.Entity:GetRenderBounds()
-	self.Entity.pac3_center = (min + max) * 0.5
+
 end
 local NORMAL = Vector(1,1,1)
 function PART:CheckScale()
@@ -538,14 +491,11 @@ function PART:SetSize(var)
 end
 
 function PART:SetBrightness(num)
-	self.Brightness = num
-	
+	self.Brightness = num	
 	self:SetColor(self:GetColor())
 end
 
 function PART:SetColor(var)
-	var = var or Vector(255, 255, 255)
-
 	self.Color = var
 	self.Colorf = Color((var.r/255) * self.Brightness, (var.g/255) * self.Brightness, (var.b/255) * self.Brightness)
 end

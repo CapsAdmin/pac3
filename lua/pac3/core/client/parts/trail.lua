@@ -67,6 +67,7 @@ function PART:SetEndAlpha(n)
 end
 
 function PART:SetTrailPath(var)
+	self.TrailPath = var
 	self:SetMaterial(var)
 end
 
@@ -87,7 +88,7 @@ function PART:FixMaterial()
 			params["$vertexcolor"] = 1
 			params["$vertexalpha"] = 1
 			
-			self.Materialm = CreateMaterial("pac_fixmat_" .. os.clock(), "VertexLitGeneric", params)
+			self.Materialm = CreateMaterial("pac_fixmat_" .. os.clock() .. self.Id, "VertexLitGeneric", params)
 		end		
 	end
 end
@@ -106,8 +107,6 @@ function PART:SetMaterial(var)
 	end
 
 	self:FixMaterial()
-
-	self.TrailPath = var
 end
 
 function PART:OnShow()

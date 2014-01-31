@@ -186,37 +186,29 @@ end
 
 
 do -- hook helpers
-	pac.Errors = {}
-	pac.AddedHooks = {}
+	local added_hooks = {}
 
 	function pac.AddHook(str, func)
 		func = func or pac[str]
 		
-		local func = function(...)
-			local args = {pcall(func, ...)}
-			if not args[1] then
-				ErrorNoHalt("[pac3]" .. str .. " : " .. args[2] .. "\n")
-				--pac.RemoveHook(str)
-				table.insert(pac.Errors, args[2])
-			end
-			table.remove(args, 1)
-			return unpack(args)
-		end
+		local id = "pac_" .. str
 		
-		hook.Add(str, "pac_" .. str, func)
+		hook.Add(str, id, func)
 		
-		pac.AddedHooks[str] = func
+		added_hooks[str] = {func = func, event = str, id = id}
 	end
 
 	function pac.RemoveHook(str)
-		if hook.GetTable()[str] and hook.GetTable()[str]["pac_" .. str] then
-			hook.Remove(str, "pac_" .. str)
-		end
+		local data = added_hooks[str]
+		
+		hook.Remove(data.event, data.id)
 	end
 
 	function pac.CallHook(str, ...)
 		return hook.Call("pac_" .. str, GAMEMODE, ...)
 	end
+	
+	pac.added_hooks = added_hooks
 end
 
 do -- get set and editor vars
@@ -444,7 +436,7 @@ function pac.SetModelScale(ent, scale, size)
 end
 
 -- no need to rematch the same pattern
-pac.PatternCache = {{}}
+local pattern_cache = {{}}
 
 function pac.StringFind(a, b, simple, case_sensitive)
 	if not a or not b then return end
@@ -454,17 +446,17 @@ function pac.StringFind(a, b, simple, case_sensitive)
 		b = b:lower()
 	end
 		
-	pac.PatternCache[a] = pac.PatternCache[a] or {}
+	pattern_cache[a] = pattern_cache[a] or {}
 		
-	if pac.PatternCache[a][b] ~= nil then
-		return pac.PatternCache[a][b]
+	if pattern_cache[a][b] ~= nil then
+		return pattern_cache[a][b]
 	end
 		
 	if simple and a:find(b, nil, true) or not simple and a:find(b) then
-		pac.PatternCache[a][b] = true
+		pattern_cache[a][b] = true
 		return true
 	else
-		pac.PatternCache[a][b] = false
+		pattern_cache[a][b] = false
 		return false
 	end
 end

@@ -28,6 +28,8 @@ local function sortparts(parts)
 	table.sort(parts, sort)
 end
 
+pac.SortPartsForDrawing = sortparts
+
 local function think(part)
 	if part.ThinkTime == 0 then
 		if part.last_think ~= pac.FrameNumber then 
@@ -102,7 +104,7 @@ local function hide_parts(ent)
 	ent.pac_drawing = false
 end
 
-function pac.RenderOverride(ent, type, draw_only)
+local function render_override(ent, type, draw_only)
 	
 	if pac.profile then
 		TIME = util_TimerCycle()
@@ -201,6 +203,16 @@ function pac.RenderOverride(ent, type, draw_only)
 	render_ModelMaterialOverride()
 end
 
+function pac.RenderOverride(ent, type, draw_only)
+	local ok, err = pcall(render_override, ent, type, draw_only)
+	if not ok then
+		print("pac3 failed to render ", tostring(ent), ":")
+		print(err)
+		table.insert(pac.Errors, err)
+		hide_parts(ent)
+	end
+end
+
 pac.firstperson_parts = pac.firstperson_parts or {}
 
 function pac.HookEntityRender(ent, part)
@@ -219,11 +231,6 @@ function pac.HookEntityRender(ent, part)
 		
 			pac.drawn_entities[ent:EntIndex()] = ent
 			sortparts(ent.pac_parts)
-			
-			if part.ShowInFirstperson and part:GetOwner() == pac.LocalPlayer then
-				table.insert(pac.firstperson_parts, {ent = ent, part = part})
-				sortparts(pac.firstperson_parts)
-			end
 		end
 		
 		pac.profile_info[ent:EntIndex()] = nil
@@ -384,14 +391,13 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 		end
 	end
 	
-	for key, data in pairs(pac.firstperson_parts) do
-		if data.part:IsValid() and data.ent:IsValid() and data.part.ShowInFirstperson then
-			if not data.ent:ShouldDrawLocalPlayer() then
-				pac.RenderOverride(data.ent, "opaque")
+	if pac.LocalPlayer.pac_parts then		
+		for key, part in pairs(pac.LocalPlayer.pac_parts) do
+			if part.ShowInFirstperson then
+				if not pac.LocalPlayer:ShouldDrawLocalPlayer() then
+					pac.RenderOverride(pac.LocalPlayer, "opaque")
+				end
 			end
-		else
-			pac.firstperson_parts[key] = nil
-			sortparts(pac.firstperson_parts)
 		end
 	end
 end
@@ -411,9 +417,16 @@ function pac.PostDrawTranslucentRenderables()
 		end
 	end
 	
-	--collectgarbage("step", 512)
-	--print(collectgarbage("count") - garbage)
 	
+	if pac.LocalPlayer.pac_parts then		
+		for key, part in pairs(pac.LocalPlayer.pac_parts) do
+			if part.ShowInFirstperson then
+				if not pac.LocalPlayer:ShouldDrawLocalPlayer() then
+					pac.RenderOverride(pac.LocalPlayer, "translucent")
+				end
+			end
+		end
+	end	
 end
 pac.AddHook("PostDrawTranslucentRenderables")
 
