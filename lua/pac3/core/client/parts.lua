@@ -122,21 +122,8 @@ function pac.LoadParts()
 	end
 end
 
-function pac.CheckParts()
-	for key, part in pairs(pac.ActiveParts) do
-		if not part:IsValid() then
-			pac.ActiveParts[key] = nil
-			pac.MakeNull(part)
-		end
-	end
-end
-
 function pac.GetRegisteredParts()
 	return class.GetAll("part")
-end
-
-function pac.GetPart(name)
-	return class.Get("part", name)
 end
 
 function pac.GetParts(owned_only)

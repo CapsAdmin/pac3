@@ -43,7 +43,6 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Bone", "head")
 	pac.GetSet(PART, "Position", Vector(0,0,0))
 	pac.GetSet(PART, "Angles", Angle(0,0,0))
-	pac.GetSet(PART, "AngleVelocity", Angle(0, 0, 0))
 	pac.GetSet(PART, "EyeAngles", false)
 	pac.GetSet(PART, "Name", "")
 	pac.GetSet(PART, "Description", "")
@@ -115,7 +114,10 @@ function PART:GetName()
 end
 
 function PART:ConVarEnabled()
-	if self.last_framenumber ~= pac.FrameNumber then
+	if not self.last_cvar_check or self.last_cvar_check < pac.RealTime then
+	
+		self.last_cvar_check = pac.RealTime + 0.25
+
 		if self.last_enabled == nil then
 			self.last_enabled = true
 		end
@@ -127,7 +129,6 @@ function PART:ConVarEnabled()
 			end
 			
 			self.enabled = false
-			self.last_framenumber = pac.FrameNumber
 			
 			return false
 		else
@@ -138,11 +139,10 @@ function PART:ConVarEnabled()
 		end
 		
 		self.enabled = true
-		self.last_framenumber = pac.FrameNumber
 		
 		return true
 	end
-	
+		
 	return self.enabled 
 end
 
@@ -167,8 +167,9 @@ do -- modifiers
 		if #self.modifiers > 0 then
 			for _, part in pairs(self.modifiers) do
 				if not part:IsHidden() then
-					part.pre_draw_events = part.pre_draw_events or {}
-					part.pre_draw_events[event] = part.pre_draw_events[event] or "Pre" .. event
+					
+					if not part.pre_draw_events then part.pre_draw_events = {} end					
+					if not part.pre_draw_events[event] then part.pre_draw_events[event] = "Pre" .. event end
 					
 					if part[part.pre_draw_events[event]] then
 						part[part.pre_draw_events[event]](part)
@@ -182,8 +183,9 @@ do -- modifiers
 		if #self.modifiers > 0 then
 			for _, part in pairs(self.modifiers) do
 				if not part:IsHidden() then
-					part.post_draw_events = part.post_draw_events or {}
-					part.post_draw_events[event] = part.post_draw_events[event] or "Post" .. event
+				
+					if not part.post_draw_events then part.post_draw_events = {} end
+					if not part.post_draw_events[event] then part.post_draw_events[event] = "Post" .. event end
 										
 					if part[part.post_draw_events[event]] then
 						part[part.post_draw_events[event]](part)
@@ -536,7 +538,7 @@ do -- bones
 		
 		local bones = self:GetModelBones(owner)
 		
-		if owner:IsValid() and bones and bones[name] then
+		if owner:IsValid() and bones and bones[name] and not bones[name].is_special then
 			return bones[name].real
 		end
 		
@@ -880,10 +882,7 @@ do -- drawing. this code is running every frame
 		
 	function PART:CalcAngles(ang)
 		local owner = self:GetOwner(true)
-		
-		ang = self.calc_angvel and self:CalcAngleVelocity(ang) or ang
-		
-		
+			
 		if pac.StringFind(self.AimPartName, "LOCALEYES_YAW", true, true) then
 		
 			local ang = (pac.EyePos - self.cached_pos):Angle()
@@ -1022,31 +1021,6 @@ end
 
 function PART:IsValid()
 	return true
-end
-
-do -- this is kinda deprecated	
-	function PART:SetAngleVelocity(ang)
-		self.calc_angvel = ang.p == 0 and ang.y == 0 and ang.r == 0
-		
-		self.AngleVelocity = ang
-	end
-
-	function PART:CalcAngleVelocity(ang)
-		local v = self.AngleVelocity
-		
-		if self.calc_angvel then				
-			local delta = FrameTime() * 10
-			self.AnglesVel = self.AnglesVel or Angle(0, 0, 0)
-
-			self.AnglesVel.p = self.AnglesVel.p + (v.p * delta)
-			self.AnglesVel.y = self.AnglesVel.y + (v.y * delta)
-			self.AnglesVel.r = self.AnglesVel.r + (v.r * delta)
-				
-			return self.AnglesVel + ang	
-		end
-		
-		return ang
-	end
 end
 
 function PART:SetDrawOrder(num)
