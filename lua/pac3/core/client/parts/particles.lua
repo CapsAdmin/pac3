@@ -231,7 +231,7 @@ function PART:EmitParticles(pos, ang)
 						end
 					end
 
-					particle:SetAngleVelocity(Angle(self.AngleVelocity.x, self.AngleVelocity.y, self.AngleVelocity.z))
+					particle:SetAngleVelocity(Angle(self.ParticleAngleVelocity.x, self.ParticleAngleVelocity.y, self.ParticleAngleVelocity.z))
 
 					particle.Align = self.Align
 					particle.Stick = self.Stick
