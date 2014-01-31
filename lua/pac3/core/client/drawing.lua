@@ -203,6 +203,8 @@ local function render_override(ent, type, draw_only)
 	render_ModelMaterialOverride()
 end
 
+pac.Errors = {}
+
 function pac.RenderOverride(ent, type, draw_only)
 	local ok, err = pcall(render_override, ent, type, draw_only)
 	if not ok then
