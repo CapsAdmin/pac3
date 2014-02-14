@@ -374,6 +374,8 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 					)
 				)
 			then
+				ent.pac_model = ent:GetModel() -- used for cached functions
+				
 				if ent.pac_parts and ent.pac_drawing == false then
 					for key, part in pairs(ent.pac_parts) do
 						part:CallRecursive("OnHide")

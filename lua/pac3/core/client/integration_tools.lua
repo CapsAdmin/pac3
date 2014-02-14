@@ -156,7 +156,7 @@ function pac.SetupENT(ENT, owner)
 	function ENT:GetPACPartPosAng(outfit, name)
 		local part = self:FindPACPart(outfit, name)
 
-		if part then
+		if part:IsValid() then
 			return part.cached_pos, part.cached_ang
 		end
 	end

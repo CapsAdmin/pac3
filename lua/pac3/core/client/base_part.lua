@@ -68,6 +68,7 @@ pac.EndStorableVars()
 function PART:PreInitialize()
 	self.Children = {}
 	self.modifiers = {}
+	self.RootPart = NULL
 	
 	self.cached_pos = Vector(0,0,0)
 	self.cached_ang = Angle(0,0,0)
@@ -274,13 +275,12 @@ do -- owner
 	
 	-- always return the root owner
 	function PART:GetPlayerOwner()
-		local parent = self:GetParent()
-		
-		if parent:IsValid() then
-			return parent:GetPlayerOwner()
+		if not self.PlayerOwner then
+			print("wtf!!!")
+			return self:GetOwner(true) or NULL
 		end
 		
-		return self.PlayerOwner or self:GetOwner() or NULL
+		return self.PlayerOwner
 	end
 	
 	function PART:GetOwner(root)
@@ -326,6 +326,34 @@ do -- parenting
 		end
 	end
 	
+	function PART:BuildParentList()
+	
+		if not self:HasParent() then return end
+		
+		self.parent_list = {}
+		
+		local temp = self:GetParent()
+		
+		table.insert(self.parent_list, temp)
+		
+		for i = 1, 100 do
+			local parent = temp:GetParent()
+			
+			if parent:IsValid() then
+				table.insert(self.parent_list, parent)
+				temp = parent
+			else
+				break
+			end
+		end
+		
+		self.RootPart = temp
+		
+		for key, part in pairs(self.Children) do
+			part:BuildParentList()
+		end
+	end
+	
 	function PART:AddChild(var)
 		if not var or not var:IsValid() then 
 			self:UnParent()
@@ -352,13 +380,15 @@ do -- parenting
 		
 		var:OnParent(self)
 		self:OnChildAdd(var)
-		
+				
 		if self:HasParent() then 
 			self:GetParent():SortChildren() 
 		end
 		
 		var:SortChildren()
 		self:SortChildren()
+				
+		self:BuildParentList()
 		
 		pac.CallHook("OnPartParent", self, var)
 
@@ -383,7 +413,7 @@ do -- parenting
 	end
 
 	function PART:HasParent()
-		return self:GetParent() and self:GetParent():IsValid()
+		return self.Parent:IsValid()
 	end
 
 	function PART:HasChildren()
@@ -417,20 +447,12 @@ do -- parenting
 	function PART:GetRootPart()
 		
 		if not self:HasParent() then return self end
-	
-		local temp = self
 		
-		for i = 1, 100 do
-			local parent = temp:GetParent()
-
-			if parent:IsValid() then
-				temp = parent
-			else
-				break
-			end
+		if not self.RootPart:IsValid() then
+			self:BuildParentList()
 		end
 		
-		return temp
+		return self.RootPart
 	end
 	
 	SETUP_CACHE_FUNC(PART, "GetRootPart")
@@ -472,21 +494,18 @@ do -- parenting
 				self.event_hidden 
 			then return true end
 			
-			local temp = self
+			if not self:HasParent() then return false end
 			
-			for i = 1, 100 do
-				local parent = temp:GetParent()
-				
-				if parent:IsValid() then
-					if parent.event_hidden then
-						return true
-					else
-						temp = parent
-					end
-				else
-					break
+			if not self.parent_list then
+				self:BuildParentList()
+			end
+			
+			for i, parent in ipairs(self.parent_list) do
+				if not parent:IsValid() then print("!?") end
+				if parent.event_hidden then
+					return true
 				end
-			end		
+			end
 			
 			return false
 		end	

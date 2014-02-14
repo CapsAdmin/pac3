@@ -339,8 +339,8 @@ function PART:DrawModel(ent, pos, ang)
 		
 				
 		if filter ~= 3 or self.wavefront_mesh then
-			render_PopFilterMin()
 			render_PopFilterMag()
+			render_PopFilterMin()
 		end
 	end
 end
