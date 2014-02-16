@@ -121,6 +121,19 @@ PART.Events =
 			return ent.Crouching and ent:Crouching()
 		end,
 	},
+	
+	eyetrace_entity_class =
+	{
+		arguments = {{class = "string"}},
+		callback = function(self, ent, class)
+			if ent.GetEyeTrace then
+				ent = ent:GetEyeTrace().Entity
+				if ent:IsValid() then
+					return string.lower(class) == string.lower(ent:GetClass())
+				end
+			end
+		end,
+	},
 
 	owner_health =
 	{	
