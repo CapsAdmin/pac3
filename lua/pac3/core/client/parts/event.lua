@@ -125,7 +125,7 @@ PART.Events =
 	box_entity_class =
 	{
 		arguments = {{class = "string"}, {radius = "number"}},
-		callback = function(self, ent, class)
+		callback = function(self, ent, class, radius)
 			local entities = {}
 			for k,v in pairs(ents.FindInBox(ent:GetPos(),Vector(radius,radius,radius) or Vector(0,0,0)) do
 				if IsValid(v) and v:GetClass() == class then
