@@ -122,6 +122,20 @@ PART.Events =
 		end,
 	},
 	
+	box_entity_class =
+	{
+		arguments = {{class = "string"}, {radius = "number"}},
+		callback = function(self, ent, class)
+			local entities = {}
+			for k,v in pairs(ents.FindInBox(ent:GetPos(),Vector(radius,radius,radius) or Vector(0,0,0)) do
+				if IsValid(v) and v:GetClass() == class then
+					table.insert(entities,v:GetClass())
+				end
+			end
+			return string.lower(class) == string.lower(entities[1])
+		end,
+	},
+	
 	eyetrace_entity_class =
 	{
 		arguments = {{class = "string"}},
