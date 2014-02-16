@@ -126,10 +126,12 @@ PART.Events =
 	{
 		arguments = {{class = "string"}},
 		callback = function(self, ent, class)
-			if ent:IsValid() and ent.GetEyeTrace and IsValid(ent:GetEyeTrace().Entity) and ent:GetEyeTrace().Entity then
-				return string.lower(class) == string.lower(ent:GetEyeTrace().Entity:GetClass())
+			if ent.GetEyeTrace then
+				ent = ent:GetEyeTrace().Entity
+				if ent:IsValid() then
+					return string.lower(class) == string.lower(ent:GetClass())
+				end
 			end
-			
 		end,
 	},
 
