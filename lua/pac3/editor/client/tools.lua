@@ -34,6 +34,14 @@ function pace.AddTool(name, callback, ...)
 	table.insert(pace.Tools, {name = name, callback = callback, suboptions = {...}})
 end
 
+pace.AddTool(L"fix origin", function(part, suboption)
+	if part.ClassName ~= "model" then return end
+	
+	local ent = part:GetEntity()
+	
+	part:SetPositionOffset(part:GetPositionOffset() + -ent:OBBCenter() * part.Scale * part.Size)
+end)
+
 pace.AddTool(L"scale this and children", function(part, suboption)
 	Derma_StringRequest(L"scale", L"input the scale multiplier (does not work well with bones)", "1", function(scale)
 		scale = tonumber(scale)

@@ -236,6 +236,11 @@ function PART:OnDraw(owner, pos, ang)
 		self:PostEntityDraw(owner, ent, pos, ang)
 		
 		pac.ResetBones(ent)
+		
+		if self.OriginFix then
+			self:SetPositionOffset(self:GetPositionOffset() + -ent:OBBCenter() * self.Scale * self.Size)
+			self:SetOriginFix(false)
+		end
 	else
 		timer.Simple(0, function()
 			self:Initialize()
