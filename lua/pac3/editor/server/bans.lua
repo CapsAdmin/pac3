@@ -1,28 +1,48 @@
+local function get_bans()
+	local str = file.Read("pac_bans.txt", "DATA")
+	
+	local bans = {}
+	
+	if str and str ~= "" then
+		bans = util.KeyValuesToTable(str)
+	end
+	
+	do -- check if this needs to be rebuilt
+		local k,v = next(bans)
+		if type(v) == "string" then
+			local temp = {}
+			
+			for k,v in pairs(bans) do
+				temp[util.CRC("gm_" .. v .. "_gm")] = {steamid = v, name = k}
+			end
+			
+			bans = temp
+		end
+	end
+		
+	return bans
+end
+
 function pace.Ban(ply)
 
 	ply:ConCommand("pac_clear_parts")
 	
-	timer.Simple( 1, function() -- made it a timer because the ConCommand din't run fast enough. - Bizzclaw
+	timer.Simple( 1, function() -- made it a timer because the ConCommand don't run fast enough. - Bizzclaw
 	
 		umsg.Start("pac_submit_acknowledged", ply)
 			umsg.Bool(false)
 			umsg.String("You have been banned from using pac!")
 		umsg.End()
 	
-		local fil = file.Read("pac_bans.txt", "DATA")
-	
-		local bans = {}
-		if fil and fil ~= "" then
-		bans = util.KeyValuesToTable(fil)
-		end
+		local bans = get_bans()
 		
-		for name, steamid in pairs(bans) do
-			if ply:SteamID() == steamid then
-			bans[name] = nil
+		for key, data in pairs(bans) do
+			if ply:SteamID() == data.steamid then
+				bans[key] = nil
 			end
 		end
 
-		bans[ply:Nick():lower():gsub("%A", "")] = ply:SteamID()
+		bans[ply:UniqueID()] = {steamid = ply:SteamID(), nick = ply:Nick()}
 	
 		pace.Bans = bans
 	
@@ -37,16 +57,11 @@ function pace.Unban(ply)
 		umsg.String("You are now permitted to use pac!")
 	umsg.End()
 		
-	local fil = file.Read("pac_bans.txt", "DATA")
-	
-	local bans = {}
-	if fil and fil ~= "" then
-		bans = util.KeyValuesToTable(fil)
-	end
+	local bans = get_bans()
 		
-	for name, steamid in pairs(bans) do
-		if ply:SteamID() == steamid then
-			bans[name] = nil
+	for key, data in pairs(bans) do
+		if ply:SteamID() == data.steamid then
+			bans[key] = nil
 		end
 	end
 	
@@ -79,15 +94,10 @@ end)
 
 function pace.IsBanned(ply)
 	if not ply or not ply:IsValid() then return false end
-	if not pace.Bans then
-		local fil = file.Read("pac_bans.txt", "DATA")
 	
-		local bans = {}
-		if fil and fil ~= "" then
-			bans = util.KeyValuesToTable(fil)
-		end
-			
-		pace.Bans = bans
+	if not pace.Bans then
+		pace.Bans = get_bans()
 	end
-	return table.HasValue(pace.Bans, ply:SteamID())	
+	
+	return pace.Bans[ply:UniqueID()] ~= nil
 end
