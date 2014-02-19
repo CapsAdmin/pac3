@@ -129,6 +129,8 @@ local render_EndBeam = render.EndBeam
 local render_AddBeam = render.AddBeam
 local render_SetMaterial = render.SetMaterial
 
+local temp_color = Color(255, 255, 255)
+
 function PART:OnDraw(owner, pos, ang)
 	if self.Materialm and self.StartColorC and self.EndColorC then
 		self.points = self.points or {}
@@ -156,14 +158,13 @@ function PART:OnDraw(owner, pos, ang)
 				width = k / (len / self.StartSize)
 				
 				local coord = (1/count) * (k - 1)
-				local color = Color(255, 255, 255, 255)
 				
-				color.r = Lerp(coord, self.EndColorC.r, self.StartColorC.r)
-				color.g = Lerp(coord, self.EndColorC.g, self.StartColorC.g)
-				color.b = Lerp(coord, self.EndColorC.b, self.StartColorC.b)
-				color.a = Lerp(coord, self.EndColorC.a, self.StartColorC.a)
+				temp_color.r = Lerp(coord, self.EndColorC.r, self.StartColorC.r)
+				temp_color.g = Lerp(coord, self.EndColorC.g, self.StartColorC.g)
+				temp_color.b = Lerp(coord, self.EndColorC.b, self.StartColorC.b)
+				temp_color.a = Lerp(coord, self.EndColorC.a, self.StartColorC.a)
 								
-				render_AddBeam(k == count and pos or v, width + self.EndSize, self.Stretch and coord or width, color)
+				render_AddBeam(k == count and pos or v, width + self.EndSize, self.Stretch and coord or width, temp_color)
 			end
 		render_EndBeam()		
 		
