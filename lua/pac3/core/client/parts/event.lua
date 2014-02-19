@@ -125,11 +125,11 @@ PART.Events =
 	eyetrace_entity_class =
 	{
 		arguments = {{class = "string"}},
-		callback = function(self, ent, class)
+		callback = function(self, ent, find)
 			if ent.GetEyeTrace then
 				ent = ent:GetEyeTrace().Entity
-				if ent:IsValid() then
-					return string.lower(class) == string.lower(ent:GetClass())
+				if ent:IsValid() and self:StringOperator(ent:GetClass(), find) then
+					return true
 				end
 			end
 		end,
