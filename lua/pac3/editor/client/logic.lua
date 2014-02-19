@@ -67,10 +67,10 @@ end
 function pace.TrySelectPart()
 	local part = select(2, next(pac.GetParts(true)))
 	
-	for k,v in pairs(pac.GetParts(true)) do
-		if v.UniqueID == pace.current_part_uid then
-			part = v
-		end
+	local found = pac.GetPartFromUniqueID(pace.current_part_uid)
+	
+	if found:IsValid() and found:GetPlayerOwner() == part:GetPlayerOwner() then
+		part = found
 	end
 	
 	if part then

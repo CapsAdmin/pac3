@@ -2,6 +2,9 @@ local pac = pac
 local class = pac.class
 
 pac.ActiveParts = pac.ActiveParts or {}
+pac.UniqueIDParts = pac.UniqueIDParts or {}
+pac.OwnedParts = pac.OwnedParts or {}
+
 local part_count = 0 -- unique id thing
 local pairs = pairs
 
@@ -40,7 +43,7 @@ function pac.CreatePart(name, owner, skip_hook)
 	end
 		
 	part.cvar_enable = CreateClientConVar("pac_enable_" .. name, 1, true)
-	part.UniqueID = tostring(util.CRC(os.time() + pac.RealTime + part_count))
+	part:SetUniqueID(tostring(util.CRC(os.time() + pac.RealTime + part_count)))
 	part.GlobalID = util.CRC(part.UniqueID)
 	
 	merge_storable(part, part.BaseClass)
@@ -128,16 +131,14 @@ end
 
 function pac.GetParts(owned_only)
 	if owned_only then		
-		local tbl = {}
-		for key, part in pairs(pac.ActiveParts) do
-			if part:GetPlayerOwner() == pac.LocalPlayer and (part.show_in_editor == nil or part.show_in_editor == true) then
-				tbl[key] = part
-			end
-		end
-		return tbl
+		return pac.OwnedParts
 	end
 	
 	return pac.ActiveParts
+end
+
+function pac.GetPartFromUniqueID(id)
+	return pac.UniqueIDParts[id] or pac.NULL
 end
 
 function pac.RemoveAllParts(owned_only, server)
@@ -153,6 +154,8 @@ function pac.RemoveAllParts(owned_only, server)
 	
 	if not owned_only then
 		pac.ActiveParts = {}
+		pac.UniqueIDParts = {}
+		pac.OwnedParts = {}
 	end
 end
 

@@ -80,17 +80,15 @@ do -- from server
 	function pace.WearPartFromServer(owner, part_data)
 		pac.dprint("received outfit %q from %s with %i number of children to set on %s", part_data.self.Name or "", tostring(owner), table.Count(part_data.children), part_data.self.OwnerName or "")
 
-		for key, part in pairs(pac.GetParts()) do
-			if 
-				part.UniqueID == part_data.self.UniqueID and 
-				part:GetPlayerOwner() == owner and 
-				not part:HasParent() and 
-				part.ClassName == part_data.self.ClassName 
-			then
-				pac.dprint("removing part %q to be replaced with the part previously received", part.Name)
-				part:Remove()
-				break
-			end
+		local part = pac.GetPartFromUniqueID(part_data.self.UniqueID)
+		if 
+			part:IsValid() and
+			part:GetPlayerOwner() == owner and 
+			not part:HasParent() and 
+			part.ClassName == part_data.self.ClassName 
+		then
+			pac.dprint("removing part %q to be replaced with the part previously received", part.Name)
+			part:Remove()
 		end
 	
 		timer.Simple(0.25, function()
@@ -118,15 +116,13 @@ do -- from server
 			
 			pac.HandleModifiers(nil, owner)
 		else
-			for key, part in pairs(pac.GetParts()) do
-				if 
-					not part:HasParent() and 
-					part:GetPlayerOwner() == owner and 
-					part.UniqueID == part_name
-				then
-					part:Remove()
-					break
-				end
+			local part = pac.GetPartFromUniqueID(part_name)
+			if 
+				part:IsValid() and
+				not part:HasParent() and 
+				part:GetPlayerOwner() == owner
+			then
+				part:Remove()
 			end
 		end
 	end
