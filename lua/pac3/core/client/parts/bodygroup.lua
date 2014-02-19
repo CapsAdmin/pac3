@@ -14,40 +14,44 @@ end
 
 function PART:SetBodyGroupName(str)
 	self.BodyGroupName = str
-	
-	self.bodygroup_index = nil
-	
-	local ent = self:GetOwner()
-	
-	if ent:IsValid() then
-		str = str:lower()
-		for k,v in pairs(ent:GetBodyGroups()) do
-			if v.name == str then
-				self.bodygroup_index = v.id
-				break
-			end
-		end
-	end
-	
-	self:SetModelIndex(self:GetModelIndex())
+	self.bodygroup_info = nil
 end
 
 function PART:SetModelIndex(i)
 	self.ModelIndex = i
+	self.bodygroup_info = nil
+end
+
+function PART:OnThink()
+	local ent = self:GetOwner()
 	
-	if self.bodygroup_index then
-		local ent = self:GetOwner()
-		
-		if ent:IsValid() then
+	if ent:IsValid() then
+
+		if not self.bodygroup_info then			
 			for k,v in pairs(ent:GetBodyGroups()) do
-				if v.id == self.bodygroup_index then
-					i = math.Clamp(i, 0, v.num - 1)
+				if v.name == self.BodyGroupName:lower() then
+					self.bodygroup_info = v
+					self.bodygroup_info.model_index = math.Clamp(self.ModelIndex, 0, v.num - 1)
 					
-					ent:SetBodygroup(v.id, i)
+					if ent:IsPlayer() then
+						ent.pac_bodygroup_info = self.bodygroup_info
+					end
 					break
 				end
 			end
 		end
+	
+		if self.bodygroup_info and not ent:IsPlayer() then
+			ent:SetBodygroup(self.bodygroup_info.id, self.bodygroup_info.model_index)
+		end
+	end
+end
+
+function PART:OnRemove()
+	local ent = self:GetOwner()
+	
+	if ent:IsValid() and ent:IsPlayer() then
+		ent.pac_bodygroup_info = nil
 	end
 end
 
@@ -60,7 +64,7 @@ function PART:GetModelIndexList()
 	
 	if ent:IsValid() then
 		for k,v in pairs(ent:GetBodyGroups()) do
-			if v.id == self.bodygroup_index then
+			if v.id == self.bodygroup_info.id then
 				for k,v in pairs(v.submodels) do
 					table.insert(out, v)
 				end
