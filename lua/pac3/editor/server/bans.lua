@@ -82,6 +82,8 @@ concommand.Add("pac_ban", function(ply, cmd, args)
 	local target = GetPlayer(args[1])
 	if (not IsValid(ply) or ply:IsAdmin()) and target then
 		pace.Ban(target)
+		MsgC(Color(255,255,0), "[PAC3] ")
+		print(string.format("%s banned %s from PAC.", IsValid(ply) and ply:Nick() or "Console", target:Nick()))
 	end
 end)
 
@@ -89,6 +91,8 @@ concommand.Add("pac_unban", function(ply, cmd, args)
 	local target = GetPlayer(args[1])
 	if (not IsValid(ply) or ply:IsAdmin()) and target then
 		pace.Unban(target)
+		MsgC(Color(255,255,0), "[PAC3] ")
+		print(string.format("%s unbanned %s from PAC.", IsValid(ply) and ply:Nick() or "Console", target:Nick()))
 	end
 end)
 
