@@ -47,6 +47,10 @@ function pac.UpdateAnimation(ply)
 		
 		return true
 	end
+	
+	if ply.pac_bodygroup_info then
+		ply:SetBodygroup(ply.pac_bodygroup_info.id, ply.pac_bodygroup_info.model_index)
+	end
 end
 pac.AddHook("UpdateAnimation")
 
