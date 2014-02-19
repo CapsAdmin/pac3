@@ -315,19 +315,13 @@ do -- get set and editor vars
 					end
 					self[try_key] = false
 				else
-					for key, part in pairs(pac.GetParts()) do
-						if 
-							part ~= self and 
-							self[part_key] ~= part and 
-							part:GetPlayerOwner() == self:GetPlayerOwner() and 
-							part.UniqueID == self[uid_key] 
-						then
-							self[name_set_key](self, part)
-							break
-						end
-						
-						self[last_uid_key] = self[uid_key] 
+					local part = pac.GetPartFromUniqueID(self[uid_key])
+					
+					if part:IsValid() and part ~= self and self[part_key] ~= part then 
+						self[name_set_key](self, part)
 					end
+					
+					self[last_uid_key] = self[uid_key] 
 				end
 			end
 		end

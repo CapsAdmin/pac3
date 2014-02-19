@@ -212,10 +212,9 @@ do -- physical
 
 			if ent:IsValid() then
 			
-				for key, part in pairs(pac.GetParts()) do
-					if part.UniqueID == data.partuid and part:GetPlayerOwner() == data.ply then
-						part:AttachToEntity(ent)
-					end
+				local part = pac.GetPartFromUniqueID(data.partuid)
+				if part:IsValid() and part:GetPlayerOwner() == data.ply then
+					part:AttachToEntity(ent)
 				end
 				projectiles[key] = nil
 			end

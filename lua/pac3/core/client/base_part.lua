@@ -65,6 +65,12 @@ pac.StartStorableVars()
 	pac.SetupPartName(PART, "Parent")
 pac.EndStorableVars()
 
+function PART:SetUniqueID(id)
+	pac.UniqueIDParts[self.UniqueID] = nil
+	self.UniqueID = id
+	pac.UniqueIDParts[self.UniqueID] = self
+end
+
 function PART:PreInitialize()
 	self.Children = {}
 	self.modifiers = {}
@@ -199,6 +205,15 @@ do -- modifiers
 end
 
 do -- owner	
+	function PART:SetPlayerOwner(ply)
+		self.PlayerOwner = ply
+		
+		if ply == pac.LocalPlayer then
+			pac.OwnedParts[self.Id] = self
+		else
+			pac.OwnedParts[self.Id] = nil
+		end
+	end
 	function PART:SetOwnerName(name)
 		self.OwnerName = name
 		self:CheckOwner()
@@ -715,7 +730,9 @@ do -- events
 
 		self:RemoveChildren()
 		
+		pac.UniqueIDParts[self.UniqueID] = nil
 		pac.ActiveParts[self.Id] = nil
+		pac.OwnedParts[self.Id] = nil
 		
 		self.IsValid = function() return false end
 	end
