@@ -189,9 +189,41 @@ usermessage.Hook("pac_submit_acknowledged", function(umr)
 	pace.Notify(allowed, reason, name)
 end)
 
-hook.Add("KeyRelease", "pac_request_outfits", function()	
-	if pac.LocalPlayer:IsValid() and pac.LocalPlayer:GetVelocity():Length() > 5 then
-		RunConsoleCommand("pac_request_outfits")
+do -- python 1320
+	local t=0
+	local function Initialize()
+		
+		if not pac.LocalPlayer:IsValid() then return end
+		
+		t = false
+		hook.Remove("Think","pac_request_outfits")
 		hook.Remove("KeyRelease", "pac_request_outfits")
+		
+		Msg"[PAC3] " print"Requesting outfits..."
+		
+		RunConsoleCommand("pac_request_outfits")
+
 	end
-end)
+
+	hook.Add("Think","pac_request_outfits",function() 
+		
+		local ft = FrameTime()
+		
+		-- ignore long frames...
+		ft=ft<0 and 0 or ft>0.2 and 0.2 or ft
+		
+		t=t+ft
+		
+		if t>120 then
+			Initialize()
+			return
+		end
+		
+	end)
+
+	hook.Add("KeyRelease", "pac_request_outfits", function()	
+		if pac.LocalPlayer:IsValid() and pac.LocalPlayer:GetVelocity():Length() > 5 then
+			Initialize()
+		end
+	end)
+end
