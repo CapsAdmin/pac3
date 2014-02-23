@@ -97,4 +97,6 @@ hook.Add("Think", "pac_localplayer", function()
 	end
 end)
 
-hook.Run("pac_Initialized")
+timer.Simple(0.1, function()
+	hook.Run("pac_Initialized")
+end)
