@@ -602,7 +602,7 @@ do -- serializing
 		self.delayed_variables = self.delayed_variables or {}
 		
 		for key, value in pairs(tbl.self) do
-			
+					
 			-- these arent needed because parent system uses the tree structure
 			if key == "ParentUID" then continue end
 			if key == "ParentName" then continue end
@@ -614,6 +614,11 @@ do -- serializing
 			end
 						
 			if self["Set" .. key] then
+			
+				if key == "UniqueID" or key:find("UID") then
+					value = util.CRC(value .. self:GetPlayerOwner():UniqueID())
+				end
+			
 				-- hack?? it effectively removes name confliction for other parts
 				if key:find("Name", nil, true) and key ~= "OwnerName" and key ~= "SequenceName" and key ~= "VariableName" then
 					self["Set" .. key](self, pac.HandlePartName(self:GetPlayerOwner(), value, key))
