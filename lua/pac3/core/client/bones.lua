@@ -89,6 +89,7 @@ function pac.GetAllBones(ent)
 		tbl.hitpos = {friendly = "hit position", is_special = true}
 		tbl.footstep = {friendly = "footsteps", is_special = true}	
 		tbl.skirt = {friendly = "skirt", is_special = true}	
+		tbl.skirt = {friendly = "skirt2", is_special = true}	
 		tbl.hitpos_ent_ang = {friendly = "hitpos_ent_ang", is_special = true}
 		tbl.hitpos_ent_ang_zero_pitch = {friendly = "hitpos_ent_ang_zero_pitch", is_special = true}
 		tbl.pos_ang = {friendly = "pos_ang", is_special = true}
@@ -208,6 +209,13 @@ function pac.GetBonePosAng(ent, id, parent)
 	if id == "skirt" then
 		local apos, aang = pac.GetBonePosAng(ent, "left thigh", parent)
 		local bpos, bang = pac.GetBonePosAng(ent, "right thigh", parent)
+		
+		return LerpVector(0.5, apos, bpos), LerpAngle(0.5, aang, bang)
+	end
+	
+	if id == "skirt2" then
+		local apos, aang = pac.GetBonePosAng(ent, "left calf", parent)
+		local bpos, bang = pac.GetBonePosAng(ent, "right calf", parent)
 		
 		return LerpVector(0.5, apos, bpos), LerpAngle(0.5, aang, bang)
 	end
