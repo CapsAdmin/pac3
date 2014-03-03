@@ -320,8 +320,8 @@ function PART:DrawModel(ent, pos, ang)
 		local filter = self.texfilter_enum or 3
 		
 		if filter ~= 3 or self.wavefront_mesh then
-			render_PushFilterMag(filter)
 			render_PushFilterMin(filter)
+			render_PushFilterMag(filter)
 		end
 		
 		render_MaterialOverride(self.Materialm) 
@@ -369,6 +369,7 @@ local function set_mesh(part, mesh)
 end
 
 function PART:SetModel(var)
+	SafeRemoveEntity(self.Entity)
 	self.Entity = self:GetEntity()
 
 	if var and var:find("http") and pac.urlobj then		
