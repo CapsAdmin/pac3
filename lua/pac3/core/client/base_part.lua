@@ -616,7 +616,16 @@ do -- serializing
 			if self["Set" .. key] then
 			
 				if key == "UniqueID" or key:find("UID") then
-					value = util.CRC(value .. self:GetPlayerOwner():UniqueID())
+					local ent = self:GetPlayerOwner()
+					local id
+					
+					if ent:IsPlayer() then
+						id = ent:UniqueID()
+					else	
+						id = ent:EntIndex()
+					end
+					
+					value = util.CRC(value .. id)
 				end
 			
 				-- hack?? it effectively removes name confliction for other parts
