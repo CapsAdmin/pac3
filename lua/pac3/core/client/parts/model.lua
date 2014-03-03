@@ -369,7 +369,6 @@ local function set_mesh(part, mesh)
 end
 
 function PART:SetModel(var)
-	SafeRemoveEntity(self.Entity)
 	self.Entity = self:GetEntity()
 
 	if var and var:find("http") and pac.urlobj then		
