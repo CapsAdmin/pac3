@@ -72,7 +72,6 @@ function PART:SetUniqueID(id)
 end
 
 function PART:SetGlobalID(id)
-	print(self.OwnerID, self.GlobalID)
 	pac.GlobalIDParts[self.OwnerID] = pac.GlobalIDParts[self.OwnerID] or {}
 	pac.GlobalIDParts[self.OwnerID][self.GlobalID] = nil
 	
@@ -303,7 +302,6 @@ do -- owner
 	-- always return the root owner
 	function PART:GetPlayerOwner()
 		if not self.PlayerOwner then
-			print("wtf!!!")
 			return self:GetOwner(true) or NULL
 		end
 		
@@ -528,7 +526,6 @@ do -- parenting
 			end
 			
 			for i, parent in ipairs(self.parent_list) do
-				if not parent:IsValid() then print("!?") end
 				if parent.event_hidden then
 					return true
 				end
