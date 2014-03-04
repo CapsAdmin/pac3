@@ -309,7 +309,6 @@ function meta:SetLuaAnimation(sAnimation, fDieTime, fPower, fTimeScale)
 end
 
 function meta:SetLuaAnimationPower(sAnimation, fPower)
-	print(sAnimation, fPower)
 	if self.LuaAnimations and self.LuaAnimations[sAnimation] then
 		self.LuaAnimations[sAnimation].Power = fPower
 	end

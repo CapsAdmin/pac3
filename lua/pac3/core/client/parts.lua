@@ -40,9 +40,7 @@ function pac.CreatePart(name, owner, skip_hook)
 	
 	part.Id = part_count
 	part_count = part_count + 1
-	
-	print("owner", owner, pac.LocalPlayer)
-	
+		
 	if owner then
 		part:SetPlayerOwner(owner)
 	end
