@@ -52,7 +52,6 @@ function pac.CreatePart(name, owner, skip_hook)
 		
 	part.cvar_enable = CreateClientConVar("pac_enable_" .. name, 1, true)
 	part:SetUniqueID(tostring(util.CRC(os.time() + pac.RealTime + part_count)))
-	part.GlobalID = util.CRC(part.UniqueID)
 	
 	merge_storable(part, part.BaseClass)
 	
@@ -97,6 +96,8 @@ function pac.CreatePart(name, owner, skip_hook)
 	if not pac.SuppressCreatedEvents then
 		pac.CallHook("OnPartCreated", part, owner == pac.LocalPlayer)
 	end
+	
+	part:SetGlobalID(util.CRC(part.UniqueID))
 	
 	return part
 end
