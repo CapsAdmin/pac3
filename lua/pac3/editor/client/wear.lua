@@ -77,10 +77,10 @@ do -- to server
 end
 
 do -- from server
-	function pace.WearPartFromServer(owner, part_data)
+	function pace.WearPartFromServer(owner, part_data, data)
 		pac.dprint("received outfit %q from %s with %i number of children to set on %s", part_data.self.Name or "", tostring(owner), table.Count(part_data.children), part_data.self.OwnerName or "")
 		
-		local part = pac.GetPartFromGlobalID(owner:UniqueID(), part_data.self.GlobalID)
+		local part = pac.GetPartFromGlobalID(data.player_uid, part_data.self.GlobalID)
 		
 		if 
 			part:IsValid() and
@@ -105,7 +105,7 @@ do -- from server
 		end)
 	end
 
-	function pace.RemovePartFromServer(owner, part_name)
+	function pace.RemovePartFromServer(owner, part_name, data)
 		pac.dprint("%s removed %q", tostring(owner), part_name)
 
 		if part_name == "__ALL__" then					
@@ -117,7 +117,7 @@ do -- from server
 			
 			pac.HandleModifiers(nil, owner)
 		else
-			local part = pac.GetPartFromGlobalID(owner:UniqueID(), part_name)
+			local part = pac.GetPartFromGlobalID(data.player_uid, part_name)
 			
 			if 
 				part:IsValid() and
@@ -134,9 +134,9 @@ do
 	local function go(data)
 		local T = type(data.part)
 		if T == "table" then
-			pace.WearPartFromServer(data.owner, data.part)
+			pace.WearPartFromServer(data.owner, data.part, data)
 		elseif T ==  "string" then
-			pace.RemovePartFromServer(data.owner, data.part)
+			pace.RemovePartFromServer(data.owner, data.part, data)
 		end
 	end
 
