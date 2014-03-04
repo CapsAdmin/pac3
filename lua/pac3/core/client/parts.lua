@@ -3,6 +3,7 @@ local class = pac.class
 
 pac.ActiveParts = pac.ActiveParts or {}
 pac.UniqueIDParts = pac.UniqueIDParts or {}
+pac.GlobalIDParts = pac.GlobalIDParts or {}
 pac.OwnedParts = pac.OwnedParts or {}
 
 local part_count = 0 -- unique id thing
@@ -36,6 +37,15 @@ function pac.CreatePart(name, owner, skip_hook)
 	end
 		
 	local part = class.Create("part", name)
+	
+	part.Id = part_count
+	part_count = part_count + 1
+	
+	print("owner", owner, pac.LocalPlayer)
+	
+	if owner then
+		part:SetPlayerOwner(owner)
+	end
 	
 	if not part then
 		print("pac3 tried to create unknown part " .. name)
@@ -80,17 +90,10 @@ function pac.CreatePart(name, owner, skip_hook)
 		part:PreInitialize()
 	end
 		
-	part.Id = part_count
-	part_count = part_count + 1
-	
 	pac.ActiveParts[part.Id] = part
 	
 	part:Initialize()
-	
-	if owner then
-		part:SetPlayerOwner(owner)
-	end
-	
+		
 	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))
 	
 	if not pac.SuppressCreatedEvents then
@@ -141,6 +144,10 @@ function pac.GetPartFromUniqueID(id)
 	return pac.UniqueIDParts[id] or pac.NULL
 end
 
+function pac.GetPartFromGlobalID(owner_id, id)
+	return pac.GlobalIDParts[owner_id] and pac.GlobalIDParts[owner_id][id] or pac.NULL
+end
+
 function pac.RemoveAllParts(owned_only, server)
 	if server then
 		pace.RemovePartOnServer("__ALL__")
@@ -155,6 +162,7 @@ function pac.RemoveAllParts(owned_only, server)
 	if not owned_only then
 		pac.ActiveParts = {}
 		pac.UniqueIDParts = {}
+		pac.GlobalIDParts = {}
 		pac.OwnedParts = {}
 	end
 end

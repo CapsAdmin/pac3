@@ -71,6 +71,16 @@ function PART:SetUniqueID(id)
 	pac.UniqueIDParts[self.UniqueID] = self
 end
 
+function PART:SetGlobalID(id)
+	print(self.OwnerID, self.GlobalID)
+	pac.GlobalIDParts[self.OwnerID] = pac.GlobalIDParts[self.OwnerID] or {}
+	pac.GlobalIDParts[self.OwnerID][self.GlobalID] = nil
+	
+	self.GlobalID = id
+	
+	pac.GlobalIDParts[self.OwnerID][id] = self
+end
+
 function PART:PreInitialize()
 	self.Children = {}
 	self.modifiers = {}
@@ -213,6 +223,8 @@ do -- owner
 		else
 			pac.OwnedParts[self.Id] = nil
 		end
+		
+		self.OwnerID = ply:IsPlayer() and ply:UniqueID() or ply:EntIndex()
 	end
 	function PART:SetOwnerName(name)
 		self.OwnerName = name
@@ -745,6 +757,7 @@ do -- events
 		self:RemoveChildren()
 		
 		pac.UniqueIDParts[self.UniqueID] = nil
+		if self.OwnerID then pac.GlobalIDParts[self.OwnerID][self.GlobalID] = nil end
 		pac.ActiveParts[self.Id] = nil
 		pac.OwnedParts[self.Id] = nil
 		
