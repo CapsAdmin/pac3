@@ -79,8 +79,9 @@ end
 do -- from server
 	function pace.WearPartFromServer(owner, part_data)
 		pac.dprint("received outfit %q from %s with %i number of children to set on %s", part_data.self.Name or "", tostring(owner), table.Count(part_data.children), part_data.self.OwnerName or "")
-
-		local part = pac.GetPartFromUniqueID(part_data.self.UniqueID)
+		
+		local part = pac.GetPartFromGlobalID(owner:UniqueID(), part_data.self.GlobalID)
+		
 		if 
 			part:IsValid() and
 			part:GetPlayerOwner() == owner and 
@@ -116,7 +117,8 @@ do -- from server
 			
 			pac.HandleModifiers(nil, owner)
 		else
-			local part = pac.GetPartFromUniqueID(part_name)
+			local part = pac.GetPartFromGlobalID(owner:UniqueID(), part_name)
+			
 			if 
 				part:IsValid() and
 				not part:HasParent() and 

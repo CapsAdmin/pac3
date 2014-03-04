@@ -109,12 +109,12 @@ function pace.SubmitPart(data, filter)
 	if type(data.part) == "table" then	
 		local ent = Entity(tonumber(data.part.self.OwnerName) or -1)
 		if ent:IsValid()then
-			if ent.CPPICanTool and (ent:CPPIGetOwner() ~= data.owner and not ent:CPPICanTool(data.owner)) then
+			if ent.CPPICanTool and (ent:CPPIGetOwner() ~= data.owner and not ent:CPPICanTool(data.owner, "paint")) then
 				allowed = false
 				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
 			elseif not data.skip_dupe then
 				ent.pac_parts = ent.pac_parts or {}
-				ent.pac_parts[data.part.self.UniqueID] = data
+				ent.pac_parts[data.part.self.GlobalID] = data
 				
 				pace.dupe_ents[ent:EntIndex()] = {owner = data.owner, ent = ent}
 				
@@ -125,7 +125,7 @@ function pace.SubmitPart(data, filter)
 			ent:CallOnRemove("pac_config", function(ent)
 				if ent.pac_parts then
 					for _, data in pairs(ent.pac_parts) do
-						data.part = data.part.self.UniqueID
+						data.part = data.part.self.GlobalID
 						data.skip_dupe = true
 						pace.RemovePart(data)
 					end
@@ -143,7 +143,7 @@ function pace.SubmitPart(data, filter)
 	pace.Parts[uid] = pace.Parts[uid] or {}
 	
 	if type(data.part) == "table" then
-		pace.Parts[uid][data.part.self.UniqueID] = data	
+		pace.Parts[uid][data.part.self.GlobalID] = data	
 	else		
 		if data.part == "__ALL__" then
 			pace.Parts[uid] = {}
@@ -275,7 +275,7 @@ function pace.HandleReceivedData(ply, data)
 	data.uid = ply:UniqueID()
 	
 	if type(data.part) == "table" and data.part.self then
-		if type(data.part.self) == "table" and not data.part.self.UniqueID then return end -- bogus data
+		if type(data.part.self) == "table" and not data.part.self.GlobalID then return end -- bogus data
 		
 		pace.SubmitPartNotify(data)
 	elseif type(data.part) == "string" then
