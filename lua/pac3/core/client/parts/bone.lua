@@ -103,26 +103,24 @@ local VEC0 = Vector(0,0,0)
 local pairs = pairs
 
 local function scale_children(owner, id, scale, origin)
+	local count = owner:GetBoneCount()
 	
-	
-	if owner:GetModel() ~= owner.pac_lastmodel_childbones then
-		owner.pac_childbones = nil
-		owner.pac_lastmodel_childbones = owner:GetModel()
-	end
-	
-	owner.pac_childbones = owner.pac_childbones or {}	
-	owner.pac_childbones[id] = owner.pac_childbones[id] or owner:GetChildBones(id)
-	
-	for _, id in pairs(owner.pac_childbones[id]) do
-		local mat = owner:GetBoneMatrix(id)
+	if count == 0 or count < id then return end
+
+	for i = 0, count - 1 do
+		if owner:GetBoneParent(i) ~= id then continue end
+		
+		local mat = owner:GetBoneMatrix(i)
+		
 		if mat then	
 			if origin then
 				mat:SetTranslation(origin)
 			end
 			mat:Scale(mat:GetScale() * scale)
-			owner:SetBoneMatrix(id, mat)
+			owner:SetBoneMatrix(i, mat)
 		end
-		scale_children(owner, id, scale, origin)
+
+		scale_children(owner, i, scale, origin)
 	end
 end
 
