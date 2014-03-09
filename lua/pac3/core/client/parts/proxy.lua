@@ -502,6 +502,14 @@ PART.Inputs =
 		
 		return c.r, c.g, c.b
 	end,
+	
+	lerp = function(self, parent, m, a, b)
+		m = tonumber(m) or 0
+		a = tonumber(a) or -1
+		b = tonumber(b) or 1
+		
+		return (b - a) * m + a
+	end,
 }
 
 usermessage.Hook("pac_proxy", function(umr)
