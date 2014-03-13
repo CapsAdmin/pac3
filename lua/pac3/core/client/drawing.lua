@@ -347,7 +347,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 	end
 	
 	for key, ent in pairs(pac.drawn_entities) do
-		if ent:IsValid() then
+		if ent:IsValid() and ent ~= pac.LocalPlayer then
 			ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
 			dst = ent:EyePos():Distance(pac.EyePos)
 			radius = ent:BoundingRadius() * 3 * (ent:GetModelScale() or 1)
@@ -361,18 +361,13 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 			end
 			
 			if 		
-				ent.IsPACWorldEntity or
-				(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer()) or
-				
-				ent ~= pac.LocalPlayer and 
-				(					
-					(util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 or (dst < radius * 1.25)) and 
-					(
-						(sv_draw_dist ~= 0 and (sv_draw_dist == -1 or dst < sv_draw_dist)) or
-						(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance < dst)) or
-						(dst < draw_dist)
-					)
-				)
+				ent.IsPACWorldEntity or									
+				(util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 or (dst < radius * 1.25)) and 
+				(
+					(sv_draw_dist ~= 0 and (sv_draw_dist == -1 or dst < sv_draw_dist)) or
+					(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance < dst)) or
+					(dst < draw_dist)
+				)				
 			then
 				ent.pac_model = ent:GetModel() -- used for cached functions
 				
@@ -395,12 +390,25 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 		end
 	end
 	
-	if pac.LocalPlayer.pac_parts then		
-		for key, part in pairs(pac.LocalPlayer.pac_parts) do
-			if part.ShowInFirstperson then
-				if not pac.LocalPlayer:ShouldDrawLocalPlayer() then
-					pac.RenderOverride(pac.LocalPlayer, "opaque")
+	local ent = pac.LocalPlayer
+	if ent.pac_parts then		
+		for key, part in pairs(ent.pac_parts) do
+			if ent:ShouldDrawLocalPlayer() or part.ShowInFirstperson then
+				ent.pac_model = ent:GetModel() -- used for cached functions
+				
+				if ent.pac_parts and ent.pac_drawing == false then
+					for key, part in pairs(ent.pac_parts) do
+						part:CallRecursive("OnHide")
+						part:SetKeyValueRecursive("last_hidden", nil)
+						part:SetKeyValueRecursive("shown_from_rendering", true)
+						part:SetKeyValueRecursive("draw_hidden", false)
+					end
 				end
+			
+				pac.RenderOverride(ent, "opaque")
+				ent.pac_drawing = true
+			else
+				hide_parts(ent)
 			end
 		end
 	end
@@ -412,7 +420,7 @@ function pac.PostDrawTranslucentRenderables()
 	if should_suppress() then return end
 
 	for key, ent in pairs(pac.drawn_entities) do
-		if ent:IsValid() then
+		if ent:IsValid() and ent ~= pac.LocalPlayer then
 			if ent.pac_drawing and ent.pac_parts then
 				pac.RenderOverride(ent, "translucent", true)
 			end
@@ -422,13 +430,10 @@ function pac.PostDrawTranslucentRenderables()
 	end
 	
 	
-	if pac.LocalPlayer.pac_parts then		
-		for key, part in pairs(pac.LocalPlayer.pac_parts) do
-			if part.ShowInFirstperson then
-				if not pac.LocalPlayer:ShouldDrawLocalPlayer() then
-					pac.RenderOverride(pac.LocalPlayer, "translucent")
-				end
-			end
+	local ent = pac.LocalPlayer
+	if ent.pac_parts then		
+		if ent.pac_drawing and ent.pac_parts then
+			pac.RenderOverride(ent, "translucent", true)
 		end
 	end	
 end
