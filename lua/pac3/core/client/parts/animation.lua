@@ -133,19 +133,26 @@ function PART:OnShow()
 			end
 				
 			ent.pac_animation_sequences = ent.pac_animation_sequences or {}
-					
+			ent.pac_animation_sequences[self.UniqueID] = ent.pac_animation_sequences[self.UniqueID] or {}
+			
+			local tbl = ent.pac_animation_sequences[self.UniqueID]
+			
+			tbl.part = self
+			
 			if seq ~= -1 then
-				ent.pac_animation_sequences[self.UniqueID] = seq
-				ent:SetSequence(seq)
+				tbl.seq = seq
 			else
 				seq = tonumber(self.random_seqname) or -1
 				
 				if seq ~= -1 then
-					ent.pac_animation_sequences[self.UniqueID] = seq
-					ent:SetSequence(seq)
+					tbl.seq = seq
 				else
 					ent.pac_animation_sequences[self.UniqueID] = nil
 				end
+			end
+			
+			if seq ~= -1  then
+				ent:SetSequence(seq)
 			end
 			
 		elseif ent:IsPlayer() then
@@ -183,6 +190,8 @@ function PART:OnShow()
 				if t == "knife" or t == "melee2" then
 					params[ACT_MP_CROUCH_IDLE] = nil
 				end
+				
+				params.part = self
 				
 				ent.pac_animation_holdtypes[self.UniqueID] = params
 			end

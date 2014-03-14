@@ -211,8 +211,7 @@ do -- physical
 			local ent = Entity(data.ent_id)
 
 			if ent:IsValid() then
-			
-				local part = pac.GetPartFromUniqueID(data.partuid)
+				local part = pac.GetPartFromUniqueID(data.ply:UniqueID(), data.partuid)
 				if part:IsValid() and part:GetPlayerOwner() == data.ply then
 					part:AttachToEntity(ent)
 				end

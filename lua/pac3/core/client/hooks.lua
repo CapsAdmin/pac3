@@ -85,39 +85,51 @@ function pac.TranslateActivity(ply, act)
 	if IsEntity(ply) and ply:IsValid() then
 	
 		-- animation part
-		if ply.pac_animation_sequences then
-			local _, seq = next(ply.pac_animation_sequences)
+		if ply.pac_animation_sequences and next(ply.pac_animation_sequences) then
 			-- dont do any holdtype stuff if theres a sequence
-			if seq then return end 
+			return
 		end
 		
-		if ply.pac_animation_holdtypes and next(ply.pac_animation_holdtypes) then
-			return select(2, next(ply.pac_animation_holdtypes))[act]
+		if ply.pac_animation_holdtypes then
+			local key, val = next(ply.pac_animation_holdtypes)
+			if key then			
+				if not val.part:IsValid() then
+					ply.pac_animation_holdtypes[key] = nil
+				else
+					return val[act]
+				end
+			end
 		end
 		
 		-- holdtype part
 		if ply.pac_holdtypes then
-			local _, act_table = next(ply.pac_holdtypes)
-			if act_table then
-				if act_table[act] and act_table[act] ~= -1 then
-					return act_table[act]
-				end
-				
-				if ply:GetVehicle():IsValid() and ply:GetVehicle():GetClass() == "prop_vehicle_prisoner_pod" then
-					return act_table.sitting
-				end
-				
-				if act_table.noclip ~= -1 and ply:GetMoveType() == MOVETYPE_NOCLIP then
-					return act_table.noclip
-				end
-				
-				if act_table.air ~= -1 and ply:GetMoveType() ~= MOVETYPE_NOCLIP and not ply:IsOnGround() then
-					return act_table.air
-				end	
+			local key, act_table = next(ply.pac_holdtypes)
 			
-				if act_table.fallback ~= -1 then
-					return act_table.fallback
-				end
+			if key then
+				if not act_table.part:IsValid() then
+					ply.pac_holdtypes[key] = nil
+				else
+					
+					if act_table[act] and act_table[act] ~= -1 then
+						return act_table[act]
+					end
+					
+					if ply:GetVehicle():IsValid() and ply:GetVehicle():GetClass() == "prop_vehicle_prisoner_pod" then
+						return act_table.sitting
+					end
+					
+					if act_table.noclip ~= -1 and ply:GetMoveType() == MOVETYPE_NOCLIP then
+						return act_table.noclip
+					end
+					
+					if act_table.air ~= -1 and ply:GetMoveType() ~= MOVETYPE_NOCLIP and not ply:IsOnGround() then
+						return act_table.air
+					end	
+				
+					if act_table.fallback ~= -1 then
+						return act_table.fallback
+					end
+				end				
 			end
 		end
 	end
@@ -127,8 +139,16 @@ pac.AddHook("TranslateActivity")
 
 function pac.CalcMainActivity(ply, act) 
 	if IsEntity(ply) and ply:IsValid() and ply.pac_animation_sequences then
-		local _, seq = next(ply.pac_animation_sequences)
-		return seq, seq
+		local key, val = next(ply.pac_animation_sequences)
+		
+		if not key then return end
+		
+		if not val.part:IsValid() then
+			ply.pac_animation_sequences[key] = nil
+			return
+		end
+		
+		return val.seq, val.seq
 	end
 end
 pac.AddHook("CalcMainActivity")

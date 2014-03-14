@@ -3,8 +3,6 @@ local class = pac.class
 
 pac.ActiveParts = pac.ActiveParts or {}
 pac.UniqueIDParts = pac.UniqueIDParts or {}
-pac.GlobalIDParts = pac.GlobalIDParts or {}
-pac.OwnedParts = pac.OwnedParts or {}
 
 local part_count = 0 -- unique id thing
 local pairs = pairs
@@ -30,9 +28,6 @@ function pac.CreatePart(name, owner, skip_hook)
 	owner = owner or pac.LocalPlayer
 	
 	if not name then
-		print("[pac3] what the fuck is this")
-		debug.Trace()
-		
 		name = "base"
 	end
 		
@@ -40,11 +35,7 @@ function pac.CreatePart(name, owner, skip_hook)
 	
 	part.Id = part_count
 	part_count = part_count + 1
-		
-	if owner then
-		part:SetPlayerOwner(owner)
-	end
-	
+
 	if not part then
 		print("pac3 tried to create unknown part " .. name)
 		part = class.Create("part", "base")
@@ -81,13 +72,16 @@ function pac.CreatePart(name, owner, skip_hook)
 	end
 	
 	part.DefaultVars.UniqueID = "" -- uh
-	part.DefaultVars.GlobalID = "" -- uh
 	
 	if part.PreInitialize then 
 		part:PreInitialize()
 	end
 		
 	pac.ActiveParts[part.Id] = part
+	
+	if owner then
+		part:SetPlayerOwner(owner)
+	end
 	
 	part:Initialize()
 		
@@ -96,9 +90,7 @@ function pac.CreatePart(name, owner, skip_hook)
 	if not pac.SuppressCreatedEvents then
 		pac.CallHook("OnPartCreated", part, owner == pac.LocalPlayer)
 	end
-	
-	part:SetGlobalID(util.CRC(part.UniqueID))
-	
+		
 	return part
 end
 
@@ -133,18 +125,18 @@ end
 
 function pac.GetParts(owned_only)
 	if owned_only then		
-		return pac.OwnedParts
+		return pac.UniqueIDParts[pac.LocalPlayer:UniqueID()] or {}
 	end
 	
 	return pac.ActiveParts
 end
 
-function pac.GetPartFromUniqueID(id)
-	return pac.UniqueIDParts[id] or pac.NULL
+function pac.GetPartFromUniqueID(owner_id, id)
+	return pac.UniqueIDParts[owner_id] and pac.UniqueIDParts[owner_id][id] or pac.NULL
 end
 
-function pac.GetPartFromGlobalID(owner_id, id)
-	return pac.GlobalIDParts[owner_id] and pac.GlobalIDParts[owner_id][id] or pac.NULL
+function pac.GetPartsFromUniqueID(owner_id)
+	return pac.UniqueIDParts[owner_id] or {}
 end
 
 function pac.RemoveAllParts(owned_only, server)
@@ -161,8 +153,6 @@ function pac.RemoveAllParts(owned_only, server)
 	if not owned_only then
 		pac.ActiveParts = {}
 		pac.UniqueIDParts = {}
-		pac.GlobalIDParts = {}
-		pac.OwnedParts = {}
 	end
 end
 

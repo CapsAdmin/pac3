@@ -109,10 +109,16 @@ local function CalcDrag()
 			if not origin then
 				origin = owner:GetPos()
 			end
-		elseif pace.current_part.NonPhysical and owner:IsValid() then
-			origin = owner:GetPos()
 		else
-			origin = pace.current_part:GetDrawPosition()
+			if not owner:IsValid() then 
+				owner = pac.LocalPlayer 
+			end
+			
+			if pace.current_part.NonPhysical then
+				origin = owner:GetPos()
+			else
+				origin = pace.current_part:GetDrawPosition()
+			end
 		end
 		
 		mult = mult * (origin:Distance(pace.ViewPos) / 200)

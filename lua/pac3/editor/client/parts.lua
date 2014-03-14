@@ -265,8 +265,8 @@ do -- menu
 		
 		if not pace.IsInBasicMode() then
 			menu:AddOption(L"copy global id", function()
-				SetClipboardText("\""..obj.GlobalID.."\"")
-			end):SetImage(pace.MiscIcons.globalid)
+				SetClipboardText("\""..obj.UniqueID.."\"")
+			end):SetImage(pace.MiscIcons.uniqueid)
 		end
 		
 		menu:AddOption(L"help", function()

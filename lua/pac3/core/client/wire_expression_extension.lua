@@ -11,11 +11,11 @@ hook.Add("Think", "pac_e2_extension", function()
 	end
 end)
 
-local function SetKeyValue(ply, ent, global_id, key, val)
+local function SetKeyValue(ply, ent, unique_id, key, val)
 	local set = "Set" .. key
 		
 	for _, part in pairs(pac.GetParts()) do
-		if part:GetPlayerOwner() == ply and (not ent:IsValid() or part:GetOwner(true) == ent) and part.GlobalID == global_id then
+		if part:GetPlayerOwner() == ply and (not ent:IsValid() or part:GetOwner(true) == ent) and part.UniqueID == unique_id then
 			if key == "EventHide" then
 				part:SetEventHide(val > 0)
 			else		

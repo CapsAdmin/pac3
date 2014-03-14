@@ -55,7 +55,6 @@ pac.StartStorableVars()
 	
 	pac.GetSet(PART, "EditorExpand", false)
 	pac.GetSet(PART, "UniqueID", "")
-	pac.GetSet(PART, "GlobalID", "") -- this shit's getting entity
 	
 	pac.SetupPartName(PART, "AnglePart")
 	pac.GetSet(PART, "AnglePartMultiplier", Vector(1,1,1))
@@ -66,18 +65,16 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:SetUniqueID(id)
-	pac.UniqueIDParts[self.UniqueID] = nil
+	if self.owner_id then
+		pac.UniqueIDParts[self.owner_id] = pac.UniqueIDParts[self.owner_id] or {}
+		pac.UniqueIDParts[self.owner_id][self.UniqueID] = nil
+	end
+	
 	self.UniqueID = id
-	pac.UniqueIDParts[self.UniqueID] = self
-end
-
-function PART:SetGlobalID(id)
-	pac.GlobalIDParts[self.OwnerID] = pac.GlobalIDParts[self.OwnerID] or {}
-	pac.GlobalIDParts[self.OwnerID][self.GlobalID] = nil
 	
-	self.GlobalID = id
-	
-	pac.GlobalIDParts[self.OwnerID][id] = self
+	if self.owner_id then
+		pac.UniqueIDParts[self.owner_id][id] = self
+	end
 end
 
 function PART:PreInitialize()
@@ -217,13 +214,15 @@ do -- owner
 	function PART:SetPlayerOwner(ply)
 		self.PlayerOwner = ply
 		
-		if ply == pac.LocalPlayer then
-			pac.OwnedParts[self.Id] = self
-		else
-			pac.OwnedParts[self.Id] = nil
+		if ply:IsValid() then
+			self.owner_id = ply:IsPlayer() and ply:UniqueID() or ply:EntIndex()
+		end
+				
+		if not self:HasParent() then
+			self:CheckOwner()
 		end
 		
-		self.OwnerID = ply:IsPlayer() and ply:UniqueID() or ply:EntIndex()
+		self:SetUniqueID(self:GetUniqueID())
 	end
 	function PART:SetOwnerName(name)
 		self.OwnerName = name
@@ -231,10 +230,10 @@ do -- owner
 	end
 
 	function PART:CheckOwner(ent, removed)		
-		local parent = self:GetParent()
+		local part = self:GetRootPart()
 		
-		if parent:IsValid() then
-			return parent:CheckOwner(ent)
+		if part ~= self then
+			return part:CheckOwner(ent, removed)
 		end
 		
 		local prev_owner = self:GetOwner()
@@ -262,7 +261,6 @@ do -- owner
 			end
 		
 		else
-					
 			if removed and prev_owner == ent then
 				self:SetOwner()
 				self.temp_hidden = true
@@ -610,11 +608,17 @@ do -- serializing
 		self.supress_part_name_find = true
 		self.delayed_variables = self.delayed_variables or {}
 		
+		-- this needs to be set first
+		self:SetUniqueID(tbl.self.UniqueID)
+		
 		for key, value in pairs(tbl.self) do
 					
 			-- these arent needed because parent system uses the tree structure
 			if key == "ParentUID" then continue end
 			if key == "ParentName" then continue end
+			
+			-- already set
+			if key == "UniqueID" then continue end
 			
 			-- ughhh
 			if key ~= "AimPartName" and self.IngoreSetKeys and self.IngoreSetKeys[key] then continue end
@@ -622,25 +626,11 @@ do -- serializing
 				continue
 			end
 						
-			if self["Set" .. key] then
-			
-				if key == "UniqueID" or key:find("UID") then
-					local ent = self:GetPlayerOwner()
-					local id
-					
-					if ent:IsPlayer() then
-						id = ent:UniqueID()
-					else	
-						id = ent:EntIndex()
-					end
-					
-					value = util.CRC(value .. id)
-				end
-			
-				-- hack?? it effectively removes name confliction for other parts
+			if self["Set" .. key] then	
+				-- hacky
 				if key:find("Name", nil, true) and key ~= "OwnerName" and key ~= "SequenceName" and key ~= "VariableName" then
 					self["Set" .. key](self, pac.HandlePartName(self:GetPlayerOwner(), value, key))
-				else
+				else				
 					if key == "Material" then
 						if not value:find("/") then
 							value = pac.HandlePartName(self:GetPlayerOwner(), value, key)
@@ -671,20 +661,16 @@ do -- serializing
 		end
 	end
 	
-	local function COPY(var, key, make_copy_name) 								
-		
-		if make_copy_name and var and var ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
-			return util.CRC(var .. var)
-		end
-
-		return pac.class.Copy(var) or var
-	end
-
 	function PART:ToTable(make_copy_name, is_child)
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 		for _, key in pairs(self:GetStorableVars()) do
-			local var = COPY(self[key] and self["Get"..key](self) or self[key], key, make_copy_name)
+			local var = self[key] and self["Get"..key](self) or self[key], key
+			var = pac.class.Copy(var) or var			
+			
+			if make_copy_name and var ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
+				var = util.CRC(var .. var)
+			end
 			
 			if key == "Name" and self[key] == "" then
 				var = ""
@@ -713,20 +699,19 @@ do -- serializing
 		local tbl = {}
 
 		for _, key in pairs(self:GetStorableVars()) do
-			tbl[key] = COPY(self[key], key)
+			tbl[key] = pac.class.Copy(self[key])
 		end
 		
 		return tbl
 	end
 			
 	function PART:Clone()
-		local part = pac.CreatePart(self.ClassName)
+		local part = pac.CreatePart(self.ClassName, self:GetPlayerOwner())
 		if not part then return end
 		part:SetTable(self:ToTable(true), true)
 		
-		part.ParentUID = self.ParentUID
+		part:SetParent(self)
 		
-		part:ResolveParentName()
 		return part
 	end
 end
@@ -753,10 +738,11 @@ do -- events
 
 		self:RemoveChildren()
 		
-		pac.UniqueIDParts[self.UniqueID] = nil
-		if self.OwnerID then pac.GlobalIDParts[self.OwnerID][self.GlobalID] = nil end
+		if self.owner_id then 
+			pac.UniqueIDParts[self.owner_id][self.UniqueID] = nil 
+		end
+		
 		pac.ActiveParts[self.Id] = nil
-		pac.OwnedParts[self.Id] = nil
 		
 		self.IsValid = function() return false end
 	end
@@ -1010,7 +996,7 @@ do -- drawing. this code is running every frame
 	--SETUP_CACHE_FUNC(PART, "CalcAngles")
 end
 	
-function PART:Think()	
+function PART:Think()
 	if not self:ConVarEnabled() then return end
 	
 	local b = self:IsHidden()

@@ -303,7 +303,7 @@ function PART:CompileCode()
 				for key, part in pairs(pac.GetParts()) do
 					if 
 						part:GetPlayerOwner() == self:GetPlayerOwner() and 
-						(part.GlobalID == str or part.UniqueID == str or part:GetName() == str)
+						(part.UniqueID == str or part:GetName() == str)
 					then
 						return CreateDummy(part, store)
 					end
