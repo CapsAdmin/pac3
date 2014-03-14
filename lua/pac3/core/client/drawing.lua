@@ -361,13 +361,18 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 			end
 			
 			if 		
-				ent.IsPACWorldEntity or									
-				(util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 or (dst < radius * 1.25)) and 
-				(
-					(sv_draw_dist ~= 0 and (sv_draw_dist == -1 or dst < sv_draw_dist)) or
-					(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance < dst)) or
-					(dst < draw_dist)
-				)				
+				ent.IsPACWorldEntity or
+				(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer()) or
+				
+				ent ~= pac.LocalPlayer and 
+				(					
+					(util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 or (dst < radius * 1.25)) and 
+					(
+						(sv_draw_dist ~= 0 and (sv_draw_dist == -1 or dst < sv_draw_dist)) or
+						(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance < dst)) or
+						(dst < draw_dist)
+					)
+				)
 			then
 				ent.pac_model = ent:GetModel() -- used for cached functions
 				
