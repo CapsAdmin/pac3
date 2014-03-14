@@ -392,24 +392,23 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 	
 	local ent = pac.LocalPlayer
 	if ent.pac_parts then		
-		for key, part in pairs(ent.pac_parts) do
-			if ent:ShouldDrawLocalPlayer() or part.ShowInFirstperson then
-				ent.pac_model = ent:GetModel() -- used for cached functions
-				
-				if ent.pac_parts and ent.pac_drawing == false then
-					for key, part in pairs(ent.pac_parts) do
-						part:CallRecursive("OnHide")
-						part:SetKeyValueRecursive("last_hidden", nil)
-						part:SetKeyValueRecursive("shown_from_rendering", true)
-						part:SetKeyValueRecursive("draw_hidden", false)
-					end
-				end
+		if ent:ShouldDrawLocalPlayer() or part.ShowInFirstperson then
+			ent.pac_model = ent:GetModel() -- used for cached functions
 			
-				pac.RenderOverride(ent, "opaque")
-				ent.pac_drawing = true
-			else
-				hide_parts(ent)
+			if ent.pac_drawing == false then
+				for key, part in pairs(ent.pac_parts) do
+					part:CallRecursive("OnHide")
+					part:SetKeyValueRecursive("last_hidden", nil)
+					part:SetKeyValueRecursive("shown_from_rendering", true)
+					part:SetKeyValueRecursive("draw_hidden", false)
+				end
 			end
+					
+			pac.RenderOverride(ent, "opaque")
+			
+			ent.pac_drawing = true
+		else
+			hide_parts(ent)
 		end
 	end
 end
@@ -431,10 +430,9 @@ function pac.PostDrawTranslucentRenderables()
 	
 	
 	local ent = pac.LocalPlayer
-	if ent.pac_parts then		
-		if ent.pac_drawing and ent.pac_parts then
-			pac.RenderOverride(ent, "translucent", true)
-		end
+	
+	if ent.pac_parts and ent.pac_drawing then
+		pac.RenderOverride(ent, "translucent", true)
 	end	
 end
 pac.AddHook("PostDrawTranslucentRenderables")
