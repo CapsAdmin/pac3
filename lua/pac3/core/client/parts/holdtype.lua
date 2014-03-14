@@ -99,6 +99,8 @@ function PART:UpdateActTable()
 		acts.noclip = ent:GetSequenceActivity(ent:LookupSequence(self.Noclip))
 		acts.air = ent:GetSequenceActivity(ent:LookupSequence(self.Air))
 		acts.sitting = ent:GetSequenceActivity(ent:LookupSequence(self.Sitting))
+		
+		acts.part = self
 	end
 end
 
