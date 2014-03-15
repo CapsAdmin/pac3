@@ -145,7 +145,11 @@ do
 		for uid, queue in pairs(queue) do
 			local ply = player.GetByUniqueID(uid) or NULL
 			
+			
 			if ply:IsValid() then
+				
+				if ply:IsPlayer() and (not ply.pac_last_drawn or (ply.pac_last_drawn + 0.25) < pac.RealTime) then continue end
+				
 				for k,v in pairs(queue) do
 					go(v)
 					queue[k] = nil

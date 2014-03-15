@@ -254,10 +254,13 @@ end
 pac.AddHook("PlayerSpawned")
 
 function pac.EntityRemoved(ent)
-	if ent:IsValid() and ent:GetOwner():IsPlayer() then
-		for key, part in pairs(pac.GetPartsFromUniqueID(ent:GetOwner():UniqueID())) do
-			if not part:HasParent() then
-				part:CheckOwner(ent, true)
+	if ent:IsValid() then 
+		local owner = ent:GetOwner()
+		if owner:IsValid() and owner:IsPlayer() then
+			for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
+				if not part:HasParent() then
+					part:CheckOwner(ent, true)
+				end
 			end
 		end
 	end

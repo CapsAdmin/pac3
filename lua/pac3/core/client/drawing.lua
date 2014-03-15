@@ -250,12 +250,7 @@ function pac.HookEntityRender(ent, part)
 	
 	ent.pac_parts[part] = part
 	pac.drawn_entities[ent:EntIndex()] = ent	
-	pac.profile_info[ent:EntIndex()] = nil
-	
-	part:CallRecursive("OnHide")
-	part:SetKeyValueRecursive("last_hidden", nil)
-	part:SetKeyValueRecursive("shown_from_rendering", true)
-	part:SetKeyValueRecursive("draw_hidden", false)
+	pac.profile_info[ent:EntIndex()] = nil	
 end
 
 function pac.UnhookEntityRender(ent, part)
@@ -270,11 +265,6 @@ function pac.UnhookEntityRender(ent, part)
 	end
 	
 	pac.profile_info[ent:EntIndex()] = nil
-	
-	part:CallRecursive("OnHide", true)
-	part:SetKeyValueRecursive("last_hidden", nil)
-	part:SetKeyValueRecursive("shown_from_rendering", false)
-	part:SetKeyValueRecursive("draw_hidden", true)
 end
 
 
@@ -287,6 +277,11 @@ function pac.RenderScene(pos, ang)
 	pac.EyeAng = ang
 end
 pac.AddHook("RenderScene")
+
+function pac.PostPlayerDraw(ply)
+	ply.pac_last_drawn = pac.RealTime
+end
+pac.AddHook("PostPlayerDraw")
 
 -- hacky optimization
 -- allows only the last draw call
