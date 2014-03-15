@@ -24,12 +24,6 @@ local sort = function(a, b)
 	end
 end
 	
-local function sortparts(parts)
-	table.sort(parts, sort)
-end
-
-pac.SortPartsForDrawing = sortparts
-
 local function think(part)
 	if part.ThinkTime == 0 then
 		if part.last_think ~= pac.FrameNumber then 
@@ -92,21 +86,21 @@ function pac.GetProfilingData(ent)
 end
 
 local function hide_parts(ent)
-	if ent.pac_parts and ent.pac_drawing == true then
+	if ent.pac_parts and ent.pac_drawing then
 		for key, part in pairs(ent.pac_parts) do
-			part:SetKeyValueRecursive("last_hidden", nil)
-			part:SetKeyValueRecursive("draw_hidden", true)
 			part:CallRecursive("OnHide", true)
+			part:SetKeyValueRecursive("last_hidden", nil)
+			part:SetKeyValueRecursive("shown_from_rendering", false)
+			part:SetKeyValueRecursive("draw_hidden", true)
 		end
 		
-		pac.ResetBones(ent)
-		
+		pac.ResetBones(ent)		
 		ent.pac_drawing = false
 	end
 end
 
 local function show_parts(ent)
-	if ent.pac_parts and ent.pac_drawing == false then
+	if ent.pac_parts and not ent.pac_drawing then
 		for key, part in pairs(ent.pac_parts) do
 			part:CallRecursive("OnHide")
 			part:SetKeyValueRecursive("last_hidden", nil)
@@ -115,8 +109,8 @@ local function show_parts(ent)
 		end
 		
 		pac.ResetBones(ent)
+		ent.pac_drawing = true
 	end
-	ent.pac_drawing = true
 end
 
 pac.HideEntityParts = hide_parts
@@ -153,7 +147,6 @@ local function render_override(ent, type, draw_only)
 					end
 				else
 					ent.pac_parts[key] = nil
-					sortparts(ent.pac_parts)
 				end
 			end
 		end
@@ -177,7 +170,6 @@ local function render_override(ent, type, draw_only)
 				end
 			else
 				ent.pac_parts[key] = nil
-				sortparts(ent.pac_parts)
 			end
 		end
 	end
@@ -228,49 +220,61 @@ function pac.RenderOverride(ent, type, draw_only)
 	if not ok then
 		print("pac3 failed to render ", tostring(ent), ":")
 		print(err)
+		
+		if ent == pac.LocalPlayer then
+			chat.AddText("your pac3 outfit failed to render!")
+			chat.AddText(err)
+			chat.AddText("hiding your outfit to prevent further errors")
+		end
+		
+		ent.pac_error = err
 		table.insert(pac.Errors, err)
 		hide_parts(ent)
+	else
+		ent.pac_error = nil
 	end
 end
 
 pac.firstperson_parts = pac.firstperson_parts or {}
 
-function pac.HookEntityRender(ent, part)
-	if ent:IsValid() and part:IsValid() and not part:HasParent() then	
-		
-		if not ent.pac_parts then
-			ent.pac_parts = {}
-		elseif ent.pac_parts[part.UniqueID] then
-			 return 
-		end
-		
-		pac.dprint("hooking render on %s to draw part %s", tostring(ent), tostring(part))
-		
-		-- umm
-		-- it sometimes say ent.pac_parts is nil
-		-- why?
-		if ent.pac_parts then
-			ent.pac_parts[part.UniqueID] = part
-		
-			pac.drawn_entities[ent:EntIndex()] = ent
-			sortparts(ent.pac_parts)
-		end
-		
-		pac.profile_info[ent:EntIndex()] = nil
+function pac.HookEntityRender(ent, part)		
+	if not ent.pac_parts then
+		ent.pac_parts = {}
 	end
+	
+	if ent.pac_parts[part] then
+		return 
+	end
+	
+	pac.dprint("hooking render on %s to draw part %s", tostring(ent), tostring(part))
+	
+	ent.pac_parts[part] = part
+	pac.drawn_entities[ent:EntIndex()] = ent	
+	pac.profile_info[ent:EntIndex()] = nil
+	
+	part:CallRecursive("OnHide")
+	part:SetKeyValueRecursive("last_hidden", nil)
+	part:SetKeyValueRecursive("shown_from_rendering", true)
+	part:SetKeyValueRecursive("draw_hidden", false)
 end
 
-function pac.UnhookEntityRender(ent, part)	
-	if part then
-		if ent.pac_parts then
-			ent.pac_parts[part.UniqueID] = nil
-		end
-	else
-		pac.drawn_entities[ent:EntIndex()] = nil		
+function pac.UnhookEntityRender(ent, part)
+
+	if part and ent.pac_parts then
+		ent.pac_parts[part] = nil
+	end
+	
+	if ent.pac_parts and not next(ent.pac_parts) then
+		pac.drawn_entities[ent:EntIndex()] = nil
 		ent.pac_parts = nil
 	end
 	
 	pac.profile_info[ent:EntIndex()] = nil
+	
+	part:CallRecursive("OnHide", true)
+	part:SetKeyValueRecursive("last_hidden", nil)
+	part:SetKeyValueRecursive("shown_from_rendering", false)
+	part:SetKeyValueRecursive("draw_hidden", true)
 end
 
 
@@ -378,7 +382,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 			
 			if 		
 				ent.IsPACWorldEntity or
-				(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer()) or
+				(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or (ent.pac_camera and ent.pac_camera:IsValid())) or
 				
 				ent ~= pac.LocalPlayer and 
 				(					

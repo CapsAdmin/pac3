@@ -231,12 +231,13 @@ function PART:OnDraw(owner, pos, ang)
 	local ent = self.Entity
 		
 	if ent:IsValid() then		
+	
 		self:PreEntityDraw(owner, ent, pos, ang)
 			self:DrawModel(ent, pos, ang)	
 		self:PostEntityDraw(owner, ent, pos, ang)
 		
 		pac.ResetBones(ent)
-		
+				
 		if self.OriginFix then
 			self:SetPositionOffset(self:GetPositionOffset() + -ent:OBBCenter() * self.Scale * self.Size)
 			self:SetOriginFix(false)

@@ -210,13 +210,17 @@ function pac.OnEntityCreated(ent)
 								end
 								ply.pac_physics_died = true
 							end
-						else							
+						else
+							timer.Create("pac_" .. ply:UniqueID() .. "_ragttach", 0.25, 1, function()
+								local parts = ply.pac_parts
 							
-							local parts = ply.pac_parts
-						
-							for key, part in pairs(parts) do								
-								part:SetOwner(ent)
-							end
+								for key, part in pairs(parts) do
+									if not part.last_owner then
+										part:SetOwner(ent)
+										part.last_owner = ent
+									end
+								end
+							end)
 						end
 					end
 					
@@ -235,6 +239,19 @@ function pac.OnEntityCreated(ent)
 	end
 end
 pac.AddHook("OnEntityCreated")
+
+function pac.PlayerSpawned(ply)
+	if ply.pac_parts then
+		for key, part in pairs(ply.pac_parts) do
+			if part.last_owner and part.last_owner:IsValid() then
+				part:SetOwner(ent)
+				part.last_owner = nil
+			end
+		end
+	end
+	ply.pac_playerspawn = pac.RealTime -- used for events
+end
+pac.AddHook("PlayerSpawned")
 
 function pac.EntityRemoved(ent)
 	if ent:IsValid() and ent:GetOwner():IsPlayer() then

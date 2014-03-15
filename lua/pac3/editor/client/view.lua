@@ -51,7 +51,7 @@ local held_ang = Angle(0,0,0)
 local held_mpos = Vector(0,0,0)
 local mcode
 
-function pac.GUIMousePressed(mc)
+function pace.GUIMousePressed(mc)
 	if pace.mctrl.GUIMousePressed(mc) then return end
 	
 	if mc == MOUSE_LEFT and not pace.editing_viewmodel then
@@ -66,7 +66,7 @@ function pac.GUIMousePressed(mc)
 	mcode = mc
 end
 
-function pac.GUIMouseReleased(mc)
+function pace.GUIMouseReleased(mc)
 	if pace.mctrl.GUIMouseReleased(mc) then return end
 	
 	if pace.editing_viewmodel then return end
@@ -165,7 +165,7 @@ end
 
 local follow_entity = CreateClientConVar("pac_camera_follow_entity", "0", true)
 
-function pac.CalcView(ply, pos, ang, fov)
+function pace.CalcView(ply, pos, ang, fov)
 	if pace.editing_viewmodel then 
 		pace.ViewPos = pos
 		pace.ViewAngles = ang
@@ -202,7 +202,7 @@ function pac.CalcView(ply, pos, ang, fov)
 	}
 end
 
-function pac.ShouldDrawLocalPlayer()
+function pace.ShouldDrawLocalPlayer()
 	if not pace.editing_viewmodel then
 		return true
 	end
@@ -210,21 +210,21 @@ end
 
 function pace.EnableView(b)
 	if b then
-		pac.AddHook("GUIMousePressed")
-		pac.AddHook("GUIMouseReleased")
-		pac.AddHook("ShouldDrawLocalPlayer")
-		pac.AddHook("CalcView")
-		pac.AddHook("HUDPaint")
-		pac.AddHook("HUDShouldDraw")
+		pace.AddHook("GUIMousePressed")
+		pace.AddHook("GUIMouseReleased")
+		pace.AddHook("ShouldDrawLocalPlayer")
+		pace.AddHook("CalcView")
+		pace.AddHook("HUDPaint")
+		pace.AddHook("HUDShouldDraw")
 		pace.Focused = true
 		pace.ResetView()
 	else
-		pac.RemoveHook("GUIMousePressed")
-		pac.RemoveHook("GUIMouseReleased")
-		pac.RemoveHook("ShouldDrawLocalPlayer")
-		pac.RemoveHook("CalcView")
-		pac.RemoveHook("HUDPaint")
-		pac.RemoveHook("HUDShouldDraw")
+		pace.RemoveHook("GUIMousePressed")
+		pace.RemoveHook("GUIMouseReleased")
+		pace.RemoveHook("ShouldDrawLocalPlayer")
+		pace.RemoveHook("CalcView")
+		pace.RemoveHook("HUDPaint")
+		pace.RemoveHook("HUDShouldDraw")
 		pace.SetTPose(false)
 		pace.SetBreathing(false)
 	end
@@ -275,7 +275,7 @@ function pace.SetViewPart(part, reset_campos)
 	end	
 end
 
-function pac.HUDPaint()
+function pace.HUDPaint()
 	if mcode and not input.IsMouseDown(mcode) then
 		mcode = nil
 	end
@@ -291,7 +291,7 @@ function pac.HUDPaint()
 	end
 end
 
-function pac.HUDShouldDraw(typ)
+function pace.HUDShouldDraw(typ)
 	if 
 		typ == "CHudEPOE" or
 		(typ == "CHudCrosshair" and pace.editing_viewmodel)

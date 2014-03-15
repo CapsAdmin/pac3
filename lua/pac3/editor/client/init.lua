@@ -76,6 +76,34 @@ do
 		
 end
 
+do -- hook helpers
+	local added_hooks = pace.added_hooks or {}
+
+	function pace.AddHook(str, func)
+		func = func or pace[str]
+		
+		local id = "pace_" .. str
+		
+		hook.Add(str, id, func)
+		
+		added_hooks[str] = {func = func, event = str, id = id}
+	end
+
+	function pace.RemoveHook(str)
+		local data = added_hooks[str]
+		
+		if data then
+			hook.Remove(data.event, data.id)
+		end
+	end
+
+	function pace.CallHook(str, ...)
+		return hook.Call("pace_" .. str, GAMEMODE, ...)
+	end
+	
+	pace.added_hooks = added_hooks
+end
+
 pace.ActivePanels = pace.ActivePanels or {}
 pace.Editor = NULL
 
@@ -124,7 +152,7 @@ function pace.CloseEditor()
 	RunConsoleCommand("pac_in_editor", "0")
 end
 
-hook.Add("pac_Disable", "pac_editor_disable", function()
+hook.Add("pace_Disable", "pac_editor_disable", function()
 	pace.CloseEditor()
 end)
 
@@ -168,7 +196,7 @@ do -- forcing hooks
 				pace.OldHooks[event] = table.Copy(hooks)
 
 				for name in pairs(hooks) do
-					if name:sub(1, 4) ~= "pac_" then
+					if name:sub(1, 4) ~= "pace_" then
 						hook.Remove(event, name)
 					end
 				end
@@ -180,7 +208,7 @@ do -- forcing hooks
 		if pace.OldHooks then
 			for event, hooks in pairs(pace.OldHooks) do
 				for name, func in pairs(hooks) do
-					if name:sub(1, 4) ~= "pac_" then
+					if name:sub(1, 4) ~= "pace_" then
 						hook.Add(event, name, func)
 					end
 				end

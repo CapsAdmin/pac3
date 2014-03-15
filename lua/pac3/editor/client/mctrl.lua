@@ -114,6 +114,10 @@ do -- pace
 		if part.ClassName == "clip" then
 			part = part.Parent
 		end
+		
+		if part.ClassName == "camera" then
+			return 30
+		end
 				
 		if not part:IsValid() then return 3 end
 	

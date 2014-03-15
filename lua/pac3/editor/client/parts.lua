@@ -28,6 +28,11 @@ function pace.ClearParts()
 end
 
 function pace.OnCreatePart(class_name, name, desc, mdl)
+	
+	if class_name ~= "group" and not next(pac.GetParts(true)) then
+		pace.Call("CreatePart", "group")
+	end	
+
 	local part = pac.CreatePart(class_name)
 	
 	if name then part:SetName(name) end
@@ -36,6 +41,13 @@ function pace.OnCreatePart(class_name, name, desc, mdl)
 	
 	if parent:IsValid() then	
 		part:SetParent(parent)
+	elseif class_name ~= "group" then
+		for _, parent in pairs(pac.GetParts(true)) do
+			if parent.ClassName == "group" then
+				part:SetParent(parent)
+				break
+			end
+		end
 	end
 	
 	if desc then part:SetDescription(desc) end
@@ -70,6 +82,7 @@ end
 
 function pace.OnPartSelected(part, is_selecting)
 	local parent = part:GetRootPart()
+		
 	if parent:IsValid() and parent.OwnerName == "viewmodel" then
 		pace.editing_viewmodel = true
 	elseif pace.editing_viewmodel then

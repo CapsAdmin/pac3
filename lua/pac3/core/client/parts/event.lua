@@ -948,10 +948,6 @@ pac.AddHook("GravGunPunt", function(ply, ent)
 	ply.pac_gravgun_punt = pac.RealTime
 end)
 
-pac.AddHook("PlayerSpawned", function(ply)
-	ply.pac_playerspawn = pac.RealTime
-end)
-
 --[[
 attack primary
 swim

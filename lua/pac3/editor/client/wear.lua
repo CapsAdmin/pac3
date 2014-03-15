@@ -100,7 +100,7 @@ do -- from server
 			
 			pac.HandleModifiers(part_data, owner)
 			
-			pac.CallHook("OnWoreOutfit", part, owner == pac.LocalPlayer)
+			pace.CallHook("OnWoreOutfit", part, owner == pac.LocalPlayer)
 		end)
 	end
 
