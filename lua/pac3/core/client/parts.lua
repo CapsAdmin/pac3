@@ -33,14 +33,14 @@ function pac.CreatePart(name, owner, skip_hook)
 		
 	local part = class.Create("part", name)
 	
-	part.Id = part_count
-	part_count = part_count + 1
-
 	if not part then
 		print("pac3 tried to create unknown part " .. name)
 		part = class.Create("part", "base")
 	end
-		
+	
+	part.Id = part_count
+	part_count = part_count + 1	
+	
 	part.cvar_enable = CreateClientConVar("pac_enable_" .. name, 1, true)
 	part:SetUniqueID(tostring(util.CRC(os.time() + pac.RealTime + part_count)))
 	
