@@ -280,21 +280,25 @@ do -- owner
 	end
 
 	function PART:SetOwner(ent)
-		ent = ent or NULL
+		local root = self:GetRootPart()
 		
-		if ent:IsValid() then
-			local root = self:GetRootPart()
-		
-			if self.Owner ~= ent then
-				pac.UnhookEntityRender(self.Owner, root) 
+		pac.RunNextFrame(self, function()
+			local ent = self.Owner
+			
+			if ent:IsValid() then
+			
+				if self.last_owner and self.last_owner ~= ent then
+					pac.UnhookEntityRender(self.last_owner, root) 
+				end
+
+				pac.HookEntityRender(ent, root)
+				self.last_owner = ent
+			else
+				pac.UnhookEntityRender(ent, root) 
 			end
+		end)
 		
-			self.Owner = ent
-			pac.HookEntityRender(ent, root) 
-		else
-			pac.UnhookEntityRender(ent, self:GetRootPart()) 
-			self.Owner = ent
-		end
+		self.Owner = ent or NULL
 	end
 	
 	-- always return the root owner
@@ -321,11 +325,14 @@ do -- owner
 			then
 				return parent.Entity
 			end
+			
 			return parent:GetOwner()
 		end	
 		
 		return self.Owner or NULL
 	end
+	
+	--SETUP_CACHE_FUNC(PART, "GetOwner")
 end
 
 do -- parenting
@@ -710,7 +717,7 @@ do -- serializing
 		if not part then return end
 		part:SetTable(self:ToTable(true), true)
 		
-		part:SetParent(self)
+		part:SetParent(self:GetParent())
 		
 		return part
 	end
@@ -844,8 +851,8 @@ do -- drawing. this code is running every frame
 	
 	local LocalToWorld = LocalToWorld
 	
-	function PART:GetDrawPosition(bone_override)		
-		if pac.FrameNumber ~= self.last_drawpos_framenum or not self.last_drawpos then
+	function PART:GetDrawPosition(bone_override, skip_cache)		
+		if pac.FrameNumber ~= self.last_drawpos_framenum or not self.last_drawpos or skip_cache then
 			self.last_drawpos_framenum = pac.FrameNumber
 
 			local owner = self:GetOwner()

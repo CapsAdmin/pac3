@@ -24,7 +24,7 @@ end
 
 function pace.SetBreathing(b)
 	if b then
-		pac.AddHook("UpdateAnimation", function(ply) 
+		pace.AddHook("UpdateAnimation", function(ply) 
 			if ply == LocalPlayer() then
 				for k,v in pairs(reset_pose_params) do 
 					ply:SetPoseParameter(v, 0) 
@@ -33,7 +33,7 @@ function pace.SetBreathing(b)
 			end
 		end)
 	else
-		pac.RemoveHook("UpdateAnimation")
+		pace.RemoveHook("UpdateAnimation")
 	end
 	
 	pace.breathing = b

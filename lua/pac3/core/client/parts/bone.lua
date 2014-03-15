@@ -73,8 +73,6 @@ function PART:GetBonePosition()
 	return pos, ang
 end
 
-local dt = 1
-
 local function manpos(ent, id, pos, self, force_set)
 	if self.AlternativeBones then
 		ent.pac_bone_setup_data[self.UniqueID].pos = self.Position + self.PositionOffset
@@ -95,7 +93,7 @@ local function manscale(ent, id, scale, self, force_set)
 	if self.AlternativeBones then		
 		ent.pac_bone_setup_data[self.UniqueID].scale = self.Scale * self.Size		
 	else
-		ent:ManipulateBoneScale(id, ent:GetManipulateBoneScale(id) * self.Scale * self.Size)
+		ent:ManipulateBoneScale(id, ent:GetManipulateBoneScale(id) * self.Scale * self.Size) 
 	end
 end
 
@@ -170,13 +168,11 @@ function pac.build_bone_callback(ent)
 	end
 end
 
-function PART:OnBuildBonePositions()	
-
-	dt = FrameTime() * 2
+function PART:OnBuildBonePositions()
 	local owner = self:GetOwner()
 	
 	if not owner:IsValid() then return end
-	
+		
 	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone)) or 0
 
 	owner.pac_bone_setup_data = owner.pac_bone_setup_data or {}

@@ -12,10 +12,15 @@ pace.PropertySheets = {
 		alternativescaling = true,
 		bone = true,
 		bonemerge = true,
+		fov = true,
+		nearz = true,
+		farz = true,
+		eyeangleslerp = true,
 	},
 	
 	appearance = 
 	{
+		drawviewmodel = true,
 		brightness = true,
 		alpha =  true,
 		fullbright =  true,
@@ -175,6 +180,7 @@ pace.PartTree = {
 		material = true,
 		effect = true,
 		bodygroup = true,
+		camera = true,
 	},
 
 	model = {
@@ -210,6 +216,7 @@ pace.PartTree = {
 		trail = true,
 		sprite = true,
 		beam = true,
+		text = true,
 	},
 
 	advanced = {
@@ -278,6 +285,7 @@ pace.PartIcons =
 	script = "icon16/page_white_gear.png",
 	info = "icon16/help.png",
 	bodygroup = "icon16/user.png",
+	camera = "icon16/camera.png",
 }
 
 pace.PartIcons.effects = pace.PartIcons.effect
