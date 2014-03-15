@@ -98,11 +98,29 @@ local function hide_parts(ent)
 			part:SetKeyValueRecursive("draw_hidden", true)
 			part:CallRecursive("OnHide", true)
 		end
+		
+		pac.ResetBones(ent)
+		
+		ent.pac_drawing = false
+	end
+end
+
+local function show_parts(ent)
+	if ent.pac_parts and ent.pac_drawing == false then
+		for key, part in pairs(ent.pac_parts) do
+			part:CallRecursive("OnHide")
+			part:SetKeyValueRecursive("last_hidden", nil)
+			part:SetKeyValueRecursive("shown_from_rendering", true)
+			part:SetKeyValueRecursive("draw_hidden", false)
+		end
+		
 		pac.ResetBones(ent)
 	end
-
-	ent.pac_drawing = false
+	ent.pac_drawing = true
 end
+
+pac.HideEntityParts = hide_parts
+pac.ShowEntityParts = show_parts
 
 local function render_override(ent, type, draw_only)
 	
@@ -219,17 +237,20 @@ pac.firstperson_parts = pac.firstperson_parts or {}
 
 function pac.HookEntityRender(ent, part)
 	if ent:IsValid() and part:IsValid() and not part:HasParent() then	
-		pac.dprint("hooking render on %s to draw part %s", tostring(ent), tostring(part))
 		
 		if not ent.pac_parts then
 			ent.pac_parts = {}
+		elseif ent.pac_parts[part.UniqueID] then
+			 return 
 		end
+		
+		pac.dprint("hooking render on %s to draw part %s", tostring(ent), tostring(part))
 		
 		-- umm
 		-- it sometimes say ent.pac_parts is nil
 		-- why?
 		if ent.pac_parts then
-			table.insert(ent.pac_parts, part)
+			ent.pac_parts[part.UniqueID] = part
 		
 			pac.drawn_entities[ent:EntIndex()] = ent
 			sortparts(ent.pac_parts)
@@ -242,12 +263,7 @@ end
 function pac.UnhookEntityRender(ent, part)	
 	if part then
 		if ent.pac_parts then
-			for k,v in pairs(ent.pac_parts) do
-				if v == part then
-					ent.pac_parts[k] = nil
-					sortparts(ent.pac_parts)
-				end
-			end
+			ent.pac_parts[part.UniqueID] = nil
 		end
 	else
 		pac.drawn_entities[ent:EntIndex()] = nil		
@@ -376,17 +392,9 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 			then
 				ent.pac_model = ent:GetModel() -- used for cached functions
 				
-				if ent.pac_parts and ent.pac_drawing == false then
-					for key, part in pairs(ent.pac_parts) do
-						part:CallRecursive("OnHide")
-						part:SetKeyValueRecursive("last_hidden", nil)
-						part:SetKeyValueRecursive("shown_from_rendering", true)
-						part:SetKeyValueRecursive("draw_hidden", false)
-					end
-				end
+				show_parts(ent)
 			
 				pac.RenderOverride(ent, "opaque")
-				ent.pac_drawing = true
 			else
 				hide_parts(ent)
 			end

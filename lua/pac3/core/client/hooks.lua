@@ -172,15 +172,14 @@ pac.AddHook("pac_PlayerFootstep")
 
 function pac.OnEntityCreated(ent)
 	if ent and ent:IsValid() then
-	
 		if ent:GetClass() == "class C_HL2MPRagdoll" then
 			for key, ply in pairs(player.GetAll()) do
 				if ply:GetRagdollEntity() == ent then
 					if ply.pac_parts then
 						if ply.pac_death_physics_parts then
 							if not ply.pac_physics_died then
-								for _, part in pairs(pac.GetParts()) do
-									if part:GetPlayerOwner() == ply and part.ClassName == "model" then
+								for _, part in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
+									if part.ClassName == "model" then
 										ent:SetNoDraw(true)
 										
 										part.skip_orient = true
@@ -214,17 +213,9 @@ function pac.OnEntityCreated(ent)
 						else							
 							
 							local parts = ply.pac_parts
-							
-							for key, part in pairs(parts) do								
-								part:CallRecursive("OnHide", true)
-							end
-							
+						
 							for key, part in pairs(parts) do								
 								part:SetOwner(ent)
-							end
-							
-							for key, part in pairs(parts) do								
-								part:CallRecursive("OnShow", true)
 							end
 						end
 					end
@@ -235,8 +226,8 @@ function pac.OnEntityCreated(ent)
 		end
 		
 		if ent:GetOwner():IsPlayer() then
-			for key, part in pairs(pac.GetParts()) do
-				if not part:HasParent() and part:GetPlayerOwner() == ent:GetOwner() then
+			for key, part in pairs(pac.GetPartsFromUniqueID(ent:GetOwner():UniqueID())) do
+				if not part:HasParent() then
 					part:CheckOwner(ent, false)
 				end
 			end
@@ -247,8 +238,8 @@ pac.AddHook("OnEntityCreated")
 
 function pac.EntityRemoved(ent)
 	if ent:IsValid() and ent:GetOwner():IsPlayer() then
-		for key, part in pairs(pac.GetParts()) do
-			if not part:HasParent() and part:GetPlayerOwner() == ent:GetOwner() then
+		for key, part in pairs(pac.GetPartsFromUniqueID(ent:GetOwner():UniqueID())) do
+			if not part:HasParent() then
 				part:CheckOwner(ent, true)
 			end
 		end
