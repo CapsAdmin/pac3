@@ -315,7 +315,7 @@ do -- get set and editor vars
 					end
 					self[try_key] = false
 				else
-					local part = pac.GetPartFromUniqueID(self:GetPlayerOwner():UniqueID(), self[uid_key])
+					local part = pac.GetPartFromUniqueID(self.owner_id, self[uid_key])
 					
 					if part:IsValid() and part ~= self and self[part_key] ~= part then 
 						self[name_set_key](self, part)
