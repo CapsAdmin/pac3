@@ -108,8 +108,8 @@ do -- from server
 		pac.dprint("%s removed %q", tostring(owner), part_name)
 
 		if part_name == "__ALL__" then					
-			for key, part in pairs(pac.GetParts()) do
-				if not part:HasParent() and part:GetPlayerOwner() == owner then
+			for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
+				if not part:HasParent() then
 					part:Remove()
 				end
 			end 
@@ -118,11 +118,7 @@ do -- from server
 		else
 			local part = pac.GetPartFromUniqueID(data.player_uid, part_name)
 			
-			if 
-				part:IsValid() and
-				not part:HasParent() and 
-				part:GetPlayerOwner() == owner
-			then
+			if part:IsValid() then
 				part:Remove()
 			end
 		end
@@ -143,12 +139,11 @@ do
 
 	timer.Create("pac_wear_queue", 1, 0, function()
 		for uid, queue in pairs(queue) do
-			local ply = player.GetByUniqueID(uid) or NULL
-			
+			local ply = player.GetByUniqueID(uid) or NULL			
 			
 			if ply:IsValid() then
 				
-				if ply:IsPlayer() and (not ply.pac_last_drawn or (ply.pac_last_drawn + 0.25) < pac.RealTime) then continue end
+				--if ply:IsPlayer() and (not ply.pac_last_drawn or (ply.pac_last_drawn + 0.25) < pac.RealTime) then continue end
 				
 				for k,v in pairs(queue) do
 					go(v)
