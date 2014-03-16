@@ -94,12 +94,14 @@ function PART:OnHide()
 
 	if ent:IsValid() then
 		if ent.pac_animation_sequences then
-			ent.pac_animation_sequences[self.UniqueID] = nil
+			ent.pac_animation_sequences[self] = nil
 		end
 		
 		if ent.pac_animation_holdtypes then
-			ent.pac_animation_holdtypes[self.UniqueID] = nil
+			ent.pac_animation_holdtypes[self] = nil
 		end
+		
+		ent:SetSequence(ent:LookupSequence("reference"))
 	end
 end
 
@@ -133,9 +135,9 @@ function PART:OnShow()
 			end
 				
 			ent.pac_animation_sequences = ent.pac_animation_sequences or {}
-			ent.pac_animation_sequences[self.UniqueID] = ent.pac_animation_sequences[self.UniqueID] or {}
+			ent.pac_animation_sequences[self] = ent.pac_animation_sequences[self] or {}
 			
-			local tbl = ent.pac_animation_sequences[self.UniqueID]
+			local tbl = ent.pac_animation_sequences[self]
 			
 			tbl.part = self
 			
@@ -147,7 +149,7 @@ function PART:OnShow()
 				if seq ~= -1 then
 					tbl.seq = seq
 				else
-					ent.pac_animation_sequences[self.UniqueID] = nil
+					ent.pac_animation_sequences[self] = nil
 				end
 			end
 			
@@ -164,7 +166,7 @@ function PART:OnShow()
 			ent.pac_animation_holdtypes = ent.pac_animation_holdtypes or {}
 
 			if index == nil then
-				ent.pac_animation_holdtypes[self.UniqueID] = nil
+				ent.pac_animation_holdtypes[self] = nil
 			else
 				local params = {}
 					params[ACT_MP_STAND_IDLE] = index
@@ -193,7 +195,7 @@ function PART:OnShow()
 				
 				params.part = self
 				
-				ent.pac_animation_holdtypes[self.UniqueID] = params
+				ent.pac_animation_holdtypes[self] = params
 			end
 		end
 	end

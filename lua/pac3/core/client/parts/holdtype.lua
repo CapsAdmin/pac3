@@ -86,9 +86,9 @@ function PART:UpdateActTable()
 		ent.pac_holdtype_alternative_animation_rate = self.AlternativeRate
 		
 		ent.pac_holdtypes = ent.pac_holdtypes or {}
-		ent.pac_holdtypes[self.UniqueID] = ent.pac_holdtypes[self.UniqueID] or {}
+		ent.pac_holdtypes[self] = ent.pac_holdtypes[self] or {}
 		
-		local acts = ent.pac_holdtypes[self.UniqueID]
+		local acts = ent.pac_holdtypes[self]
 		
 		for name, act in pairs(act_mods) do
 			acts[act] = ent:GetSequenceActivity(ent:LookupSequence(self[name]))
@@ -118,7 +118,7 @@ function PART:OnHide()
 	
 	if ent:IsValid() then
 		if ent.pac_holdtypes then
-			ent.pac_holdtypes[self.UniqueID] = nil
+			ent.pac_holdtypes[self] = nil
 		end
 		
 		ent.pac_holdtype_alternative_animation_rate = nil
