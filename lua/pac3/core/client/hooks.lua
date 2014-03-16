@@ -174,6 +174,10 @@ local function IsActuallyValid(ent)
 	return IsEntity(ent) and pcall(ent.GetPos, ent)
 end
 
+local function IsActuallyPlayer(ent)
+	return IsEntity(ent) and pcall(ent.UniqueID, ent)
+end
+
 function pac.OnEntityCreated(ent)
 	if IsActuallyValid(ent) then
 		if ent:GetClass() == "class C_HL2MPRagdoll" then
@@ -235,7 +239,7 @@ function pac.OnEntityCreated(ent)
 		
 		local owner = ent:GetOwner()
 		
-		if IsActuallyValid(owner) and owner:IsPlayer() then
+		if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
 			for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
 				if not part:HasParent() then
 					part:CheckOwner(ent, false)
@@ -262,7 +266,7 @@ pac.AddHook("PlayerSpawned")
 function pac.EntityRemoved(ent)
 	if IsActuallyValid(ent)  then 
 		local owner = ent:GetOwner()
-		if IsActuallyValid(owner) and owner:IsPlayer() then
+		if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
 			for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
 				if not part:HasParent() then
 					part:CheckOwner(ent, true)
