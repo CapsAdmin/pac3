@@ -421,6 +421,8 @@ do -- parenting
 		self:BuildParentList()
 		
 		pac.CallHook("OnPartParent", self, var)
+		
+		var:SetKeyValueRecursive("last_hidden", nil)
 
 		return var.Id
 	end		
@@ -559,6 +561,8 @@ do -- parenting
 		self:ClearBone()
 		
 		self:OnUnParent(parent)
+		
+		self:CallRecursive("OnHide")
 	end
 end
 
