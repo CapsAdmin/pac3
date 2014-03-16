@@ -170,8 +170,12 @@ function pac.pac_PlayerFootstep(ply, pos, snd, vol)
 end
 pac.AddHook("pac_PlayerFootstep")
 
+local function IsActuallyValid(ent)
+	return IsEntity(ent) and pcall(ent.GetPos, ent)
+end
+
 function pac.OnEntityCreated(ent)
-	if ent and ent:IsValid() then
+	if IsActuallyValid(ent) then
 		if ent:GetClass() == "class C_HL2MPRagdoll" then
 			for key, ply in pairs(player.GetAll()) do
 				if ply:GetRagdollEntity() == ent then
@@ -229,8 +233,10 @@ function pac.OnEntityCreated(ent)
 			end
 		end
 		
-		if ent:GetOwner():IsPlayer() then
-			for key, part in pairs(pac.GetPartsFromUniqueID(ent:GetOwner():UniqueID())) do
+		local owner = ent:GetOwner()
+		
+		if IsActuallyValid(owner) and owner:IsPlayer() then
+			for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
 				if not part:HasParent() then
 					part:CheckOwner(ent, false)
 				end
@@ -254,9 +260,9 @@ end
 pac.AddHook("PlayerSpawned")
 
 function pac.EntityRemoved(ent)
-	if ent:IsValid() then 
+	if IsActuallyValid(ent)  then 
 		local owner = ent:GetOwner()
-		if owner:IsValid() and owner:IsPlayer() then
+		if IsActuallyValid(owner) and owner:IsPlayer() then
 			for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
 				if not part:HasParent() then
 					part:CheckOwner(ent, true)
