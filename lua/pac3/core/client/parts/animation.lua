@@ -101,7 +101,9 @@ function PART:OnHide()
 			ent.pac_animation_holdtypes[self] = nil
 		end
 		
-		ent:SetSequence(ent:LookupSequence("reference"))
+		if not ent:IsPlayer() then
+			ent:SetSequence(ent:LookupSequence("reference"))
+		end
 	end
 end
 
