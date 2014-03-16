@@ -58,7 +58,7 @@ function PART:SetTextureFilter(num)
 end
 
 function PART:Initialize()	
-	self.Entity = self:GetEntity()
+	self.Entity = pac.CreateEntity(self:GetModel())
 	self.Entity:SetNoDraw(true)
 	self.Entity.PACPart = self
 end
