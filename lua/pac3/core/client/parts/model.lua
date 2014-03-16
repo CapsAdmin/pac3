@@ -44,7 +44,10 @@ end
 pac.GetSet(PART, "Entity", NULL)
 
 function PART:GetEntity()
-	self.Entity = self.Entity:IsValid() and self.Entity or pac.CreateEntity(self:GetModel())
+	if not self.Entity:IsValid() then
+		self:Initialize()
+	end
+
 	return self.Entity
 end
 
