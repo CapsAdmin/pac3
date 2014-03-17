@@ -926,7 +926,9 @@ pac.AddHook("DoAnimationEvent", function(ply, event, data)
 	-- update all parts once so OnShow and OnHide are updated properly for animation events
 	if ply.pac_parts then
 		for k,v in pairs(ply.pac_parts) do
-			v:CallRecursive("Think")
+			if v:IsHidden() then
+				v:CallRecursive("Think")
+			end
 		end
 	end
 end)
