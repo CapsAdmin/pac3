@@ -177,7 +177,7 @@ function pace.CalcView(ply, pos, ang, fov)
 		pace.ViewPos = pace.ViewPos + (ent:GetVelocity() * FrameTime())
 	end
 	
-	if pac.GetRestrictionLevel() > 0 then
+	if pac.GetRestrictionLevel() > 0 and not ply:IsAdmin() then
 		local ent = pace.GetViewEntity()
 		local dir = pace.ViewPos - ent:EyePos()
 		local dist = ent:BoundingRadius() * ent:GetModelScale() * 4
