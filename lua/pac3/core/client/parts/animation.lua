@@ -102,7 +102,7 @@ function PART:OnHide()
 		end
 		
 		if not ent:IsPlayer() then
-			ent:SetSequence(ent:LookupSequence("reference"))
+			ent:SetSequence(0)
 		end
 	end
 end
