@@ -648,6 +648,40 @@ PART.Events =
 			end
 		end,
 	},
+	
+	dot_forward = 
+	{
+		arguments = {{normal = "number"}},
+		callback = function(self, ent, normal) 
+		
+			local owner = self:GetOwner(true)
+					
+			if owner:IsValid() then
+				local ang = owner:EyeAngles()
+				ang.p = 0
+				return self:NumberOperator(pac.EyeAng:Forward():Dot(ang:Forward()), normal)
+			end
+			
+			return 0
+		end,
+	},
+	
+	dot_right = 
+	{
+		arguments = {{normal = "number"}},
+		callback = function(self, ent, normal) 
+		
+			local owner = self:GetOwner(true)
+					
+			if owner:IsValid() then
+				local ang = owner:EyeAngles()
+				ang.p = 0
+				return self:NumberOperator(pac.EyeAng:Right():Dot(ang:Forward()), normal)
+			end
+			
+			return 0
+		end,
+	},
 }
 
 function PART:GetParentEx()	
