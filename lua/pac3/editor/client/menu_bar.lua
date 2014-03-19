@@ -19,12 +19,12 @@ function pace.OnMenuBarPopulate(bar)
 			
 			local clear, pnl = menu:AddSubMenu(L"clear", function() end)
 			pnl:SetImage(pace.MiscIcons.clear)	
-			clear.GetDeleteSelf = function() return true end
+			clear.GetDeleteSelf = function() return false end
 			clear:AddOption(L"OK", function() pace.ClearParts() end):SetImage(pace.MiscIcons.clear)
 		menu:AddSpacer()
 			
 			local help, pnl = menu:AddSubMenu(L"help", function() pace.ShowWiki() end)
-			help.GetDeleteSelf = function() return true end
+			help.GetDeleteSelf = function() return false end
 			pnl:SetImage(pace.MiscIcons.help)
 			
 			help:AddOption(
@@ -68,7 +68,7 @@ function pace.OnMenuBarPopulate(bar)
 		menu:AddSpacer()
 		
 		local rendering = menu:AddSubMenu(L"rendering", function() end)
-			rendering.GetDeleteSelf = function() return true end
+			rendering.GetDeleteSelf = function() return false end
 			rendering:AddCVar(L"draw in reflections", "pac_suppress_frames", "0", "1")
 		
 	local menu = bar:AddMenu(L"player")
@@ -76,7 +76,7 @@ function pace.OnMenuBarPopulate(bar)
 		menu:AddOption(L"reset eye angles", function() pace.ResetEyeAngles() end)		
 		
 		local mods = menu:AddSubMenu(L"modifiers", function() end)
-			mods.GetDeleteSelf = function() return true end
+			mods.GetDeleteSelf = function() return false end
 			for name in pairs(pac.GetServerModifiers()) do
 				mods:AddCVar(L(name), "pac_modifier_" .. name, "1", "0")
 			end
