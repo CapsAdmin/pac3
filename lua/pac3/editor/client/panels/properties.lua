@@ -1343,7 +1343,7 @@ do -- material
 	pace.RegisterPanel(PANEL)
 end
 
-local function create_search_list(key, name, add_columns, get_list, get_current, add_line, select_value)
+local function create_search_list(property, key, name, add_columns, get_list, get_current, add_line, select_value)
 	select_value = select_value or function(val, key) return val end
 	pace.SafeRemoveSpecialPanel()
 		
@@ -1361,9 +1361,14 @@ local function create_search_list(key, name, add_columns, get_list, get_current,
 	
 	list.OnRowSelected = function(_, id, line) 
 		local val = select_value(line.list_val, line.list_key)
-
-		if pace.current_part:IsValid() and pace.current_part["Set" .. key] then
-			pace.Call("VariableChanged", pace.current_part, key, val)
+		
+		if property then
+			property:SetValue(val)
+			property.OnValueChanged(val)
+		else
+			if pace.current_part:IsValid() and pace.current_part["Set" .. key] then
+				pace.Call("VariableChanged", pace.current_part, key, val)
+			end
 		end
 	end
 	
@@ -1414,6 +1419,7 @@ do -- sequence list
 		
 	function PANEL:SpecialCallback()
 		create_search_list(
+			self,
 			self.CurrentKey,
 			"animations", 
 			function(list) 	
@@ -1443,6 +1449,7 @@ do -- pose parameter list
 		
 	function PANEL:SpecialCallback()		
 		create_search_list(
+			self,
 			self.CurrentKey,
 			"pose parameters", 
 			function(list) 	
@@ -1475,6 +1482,7 @@ do -- event list
 		
 	function PANEL:SpecialCallback()	
 		local frame = create_search_list(
+			self,
 			self.CurrentKey,
 			"events", 
 			function(list) 	
@@ -1508,6 +1516,7 @@ do -- operator list
 		
 	function PANEL:SpecialCallback()			
 		local frame = create_search_list(
+			self,
 			self.CurrentKey,
 			"operators", 
 			function(list) 	
@@ -1623,6 +1632,7 @@ do -- Proxy Functions
 		
 	function PANEL:SpecialCallback()			
 		local frame = create_search_list(
+			self,
 			self.CurrentKey,
 			"operators", 
 			function(list) 	
