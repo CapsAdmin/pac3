@@ -253,7 +253,7 @@ do -- menu
 				tbl.self.Description = nil
 				tbl.self.ParentName = nil
 				tbl.self.Parent = nil
-				tbl.self.UniqueID = nil
+				tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. tostring(tbl))
 				
 				tbl.children = {}
 			pace.Clipboard = tbl
