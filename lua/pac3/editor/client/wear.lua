@@ -108,7 +108,7 @@ do -- from server
 		pac.dprint("%s removed %q", tostring(owner), part_name)
 
 		if part_name == "__ALL__" then					
-			for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
+			for key, part in pairs(pac.GetPartsFromUniqueID(data.player_uid)) do
 				if not part:HasParent() then
 					part:Remove()
 				end
