@@ -62,7 +62,7 @@ function pace.ClientOptionsMenu(pnl)
 	local browser = pnl:AddControl("pace_browser", {})
 	
 	browser.OnLoad = function(node)
-		pace.LoadParts(node.FileName)
+		pace.LoadParts(node.FileName, true)
 	end
 	
 	if #file.Find("pac3/sessions/*", "DATA") > 0 then
