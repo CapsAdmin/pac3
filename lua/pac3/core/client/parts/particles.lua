@@ -43,6 +43,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "OwnerVelocityMultiplier", 0)
 	pac.GetSet(PART, "Translucent", true)
 	pac.GetSet(PART, "DrawManual", false)
+	pac.GetSet(PART, "AddFrametimeLife", false)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -202,7 +203,13 @@ function PART:EmitParticles(pos, ang)
 				particle:SetVelocity((vec + ang) * self.Velocity)
 				particle:SetColor(unpack(color))
 				particle:SetColor(unpack(color))
-				particle:SetDieTime(math.Clamp(self.DieTime, 0.0001, 50))
+				
+				local life = math.Clamp(self.DieTime, 0.0001, 50)
+				if self.AddFrametimeLife then
+					life = life + FrameTime()
+				end
+				particle:SetDieTime(life)
+				
 				particle:SetStartAlpha(self.StartAlpha)
 				particle:SetEndAlpha(self.EndAlpha)
 				particle:SetStartSize(self.StartSize)
