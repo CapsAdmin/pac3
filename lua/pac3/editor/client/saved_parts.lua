@@ -163,15 +163,15 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 		if pace.use_current_part_for_saveload and pace.current_part:IsValid() then
 			override_part = pace.current_part
 		end
+
+		if clear then
+			pace.ClearParts()
+		end
 	
 		if data.self then			
 			local part = override_part or pac.CreatePart(data.self.ClassName)
 			part:SetTable(data)
-		else		
-			if clear then
-				pace.ClearParts()
-			end
-			
+		else			
 			data = pace.FixBadGrouping(data)
 			data = pace.FixUniqueIDs(data)
 		

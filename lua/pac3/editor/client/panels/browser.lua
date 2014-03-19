@@ -51,7 +51,7 @@ function PANEL:PopulateFromClient()
 	self:Clear()
 	
 	self:AddOutfits("pac3/" .. self.Dir, function(node)
-		pace.LoadParts(self.Dir .. node.FileName)
+		pace.LoadParts(self.Dir .. node.FileName, true)
 		pace.RefreshTree()
 	end)		
 end
