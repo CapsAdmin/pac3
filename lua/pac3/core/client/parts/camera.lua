@@ -45,7 +45,7 @@ local temp = {}
 function pac.CalcView(ply, pos, ang, fov, nearz, farz)
 	local self = ply.pac_camera or NULL
 	
-	if self:IsValid() then
+	if self:IsValid() and not self:IsHidden() then
 		local pos, ang, fov, nearz, farz = self:CalcView(ply, pos, ang, fov, nearz, farz)
 		temp.origin =  pos
 		temp.angles =  ang
