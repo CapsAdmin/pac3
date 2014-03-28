@@ -123,6 +123,14 @@ local function scale_children(owner, id, scale, origin)
 end
 
 function pac.build_bone_callback(ent)
+	
+	if ent.pac_matrixhack then
+		local mat0 = ent:GetBoneMatrix(0)
+		if mat0 then
+			ent:SetBoneMatrix(0, mat0 * ent.pac_matrixhack)
+		end
+	end
+
 	if ent.pac_bone_setup_data then
 		for uid, data in pairs(ent.pac_bone_setup_data) do
 			local part = data.part or NULL

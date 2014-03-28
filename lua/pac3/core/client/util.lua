@@ -399,7 +399,17 @@ function pac.SetModelScale(ent, scale, size)
 	if scale then
 		mat = Matrix()
 		mat:Scale(scale)
-		ent:EnableMatrix("RenderMultiply", mat)
+		
+		if VERSION >= 140328 then
+			ent.pac_matrixhack = mat
+			
+			if not ent.pac_follow_bones_function then
+				ent.pac_follow_bones_function = pac.build_bone_callback
+				ent:AddCallback("BuildBonePositions", function(ent) pac.build_bone_callback(ent) end)
+			end
+		else
+			ent:EnableMatrix("RenderMultiply", mat)
+		end
 	end
 	
 	if size then
