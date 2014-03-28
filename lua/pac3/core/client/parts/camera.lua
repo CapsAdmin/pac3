@@ -13,8 +13,8 @@ pac.EndStorableVars()
 
 function PART:Initialize()
 	local owner = self:GetOwner(true)
-	
-	owner.pac_camera = self
+	owner.pac_cameras = owner.pac_cameras or {}
+	owner.pac_cameras[self] = self
 end
 
 function PART:CalcView(ply, pos, eyeang, fov, nearz, farz)
@@ -43,17 +43,23 @@ pac.RegisterPart(PART)
 local temp = {}
 
 function pac.CalcView(ply, pos, ang, fov, nearz, farz)
-	local self = ply.pac_camera or NULL
+	if not ply.pac_cameras then return end
 	
-	if self:IsValid() and not self:IsHidden() then
-		local pos, ang, fov, nearz, farz = self:CalcView(ply, pos, ang, fov, nearz, farz)
-		temp.origin =  pos
-		temp.angles =  ang
-		temp.fov =  fov
-		temp.znear =  nearz
-		temp.zfar =  farz
-		temp.drawviewer =  not self.DrawViewModel
-		return temp
+	for _, self in pairs(ply.pac_cameras) do
+		if self:IsValid() then
+			if not self:IsHidden() then
+				local pos, ang, fov, nearz, farz = self:CalcView(ply, pos, ang, fov, nearz, farz)
+				temp.origin =  pos
+				temp.angles =  ang
+				temp.fov =  fov
+				temp.znear =  nearz
+				temp.zfar =  farz
+				temp.drawviewer =  not self.DrawViewModel
+				return temp
+			end
+		else
+			ply.pac_cameras[self] = nil
+		end
 	end
 end
 
