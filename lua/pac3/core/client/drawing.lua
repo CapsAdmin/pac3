@@ -376,6 +376,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 			end
 			
 			if 		
+				draw_dist == -1 or
 				ent.IsPACWorldEntity or
 				(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or (ent.pac_camera and ent.pac_camera:IsValid())) or
 				
