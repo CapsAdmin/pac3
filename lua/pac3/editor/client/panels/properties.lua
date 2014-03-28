@@ -658,6 +658,7 @@ do -- base editable
 		
 		local x,y = pnl:GetPos()
 		pnl:SetPos(x+3,y-4)
+		pnl:SetSize(pnl:GetParent():GetSize())
 				
 		pnl.OnEnter = function()
 			pace.BusyWithProperties = NULL
