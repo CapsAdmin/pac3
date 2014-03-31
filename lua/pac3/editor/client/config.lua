@@ -562,6 +562,7 @@ function pace.TranslatePropertiesKey(key, obj)
 		key == "material" or
 		key == "sequence" or
 		key == "bodygroupname" or
+		key == "effect" or
 		key == "code"
 	then
 		return key
