@@ -1753,33 +1753,73 @@ do -- holdtype
 	PANEL.Base = "pace_properties_base_type"
 		
 	function PANEL:SpecialCallback()	
-		pace.SafeRemoveSpecialPanel()
-		 
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"holdtype")
-		SHOW_SPECIAL(frame, self, 250)
-		frame:SetSizable(true)
-
-		local list = vgui.Create("DListView", frame)
-		list:Dock(FILL)
-		list:SetMultiSelect(false)
-		list:AddColumn(L"name")
-
-		list.OnRowSelected = function(_, id, line) 
-			self:SetValue(line.event_name)
-			self.OnValueChanged(line.event_name)
-		end
-
-		for name in pairs(pace.current_part.ValidHoldTypes) do
-			local pnl = list:AddLine(L(name))
-			pnl.event_name = name
-			
-			if cur == name then
-				list:SelectItem(pnl)
+		local frame = create_search_list(
+			self,
+			self.CurrentKey,
+			L"holdtypes", 
+			function(list) 	
+				list:AddColumn("name") 
+			end,
+			function() 
+				return pace.current_part.ValidHoldTypes
+			end,
+			function()
+				return pace.current_part.HoldType
+			end,
+			function(list, key, val)
+				return list:AddLine(key)
+			end,
+			function(val, key)
+				return key
 			end
-		end
+		)
 		
 		pace.ActiveSpecialPanel = frame
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
+do -- effect
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_effect"
+	PANEL.Base = "pace_properties_base_type"
+		
+	function PANEL:SpecialCallback()		
+		if not pace.particle_list then
+			local found = {}
+
+			for file_name in pairs(LOADED_PARTICLES) do
+				local data = file.Read("particles/"..file_name, "GAME", "b")
+				for str in data:gmatch("\3%c([%a_]+)%c") do
+					found[str] = true
+				end
+			end
+
+			pace.particle_list = found
+		end
+		
+		local frame = create_search_list(
+			self,
+			self.CurrentKey,
+			L"particle list", 
+			function(list) 	
+				list:AddColumn("name") 
+			end,
+			function() 
+				return pace.particle_list
+			end,
+			function()
+				return pace.current_part.Effect
+			end,
+			function(list, key, val)
+				return list:AddLine(key)
+			end,
+			function(val, key)
+				return key
+			end
+		)
 	end
 	
 	pace.RegisterPanel(PANEL)
