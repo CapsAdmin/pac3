@@ -52,8 +52,8 @@ function PART:OnThink()
 end
 
 function PART:OnDraw(ent, pos, ang)
-	for _, stream in pairs(self.streams) do
-		if not stream:IsValid() then continue end
+	for key, stream in pairs(self.streams) do
+		if not stream:IsValid() then self.streams[key] = nil continue end
 		
 		stream:SetPos(pos, ang:Forward())
 		
@@ -96,6 +96,8 @@ function PART:SetURL(URL)
 	end
 	
 	for _, stream in pairs(self.streams) do	
+		if not stream:IsValid() then self.streams[key] = nil continue end
+		
 		stream:Stop()
 	end
 	
@@ -142,7 +144,9 @@ function PART:PlaySound()
 end
 
 function PART:StopSound()
-	for key, stream in pairs(self.streams) do			
+	for key, stream in pairs(self.streams) do	
+		if not stream:IsValid() then self.streams[key] = nil continue end
+		
 		if self.StopOnHide then		
 			if self.PauseOnHide then
 				stream:Pause()
@@ -166,6 +170,8 @@ end
 
 function PART:OnRemove()
 	for key, stream in pairs(self.streams) do	
+		if not stream:IsValid() then self.streams[key] = nil continue end
+		
 		stream:Stop()
 	end
 end
