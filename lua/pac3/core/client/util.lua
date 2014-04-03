@@ -392,7 +392,7 @@ end
 local mat
 local Matrix = Matrix
 
-function pac.SetModelScale(ent, scale, size)
+function pac.SetModelScale(ent, scale, size, legacy_scale)
 	if not ent:IsValid() then return end
 	if ent.pac_bone_scaling then return end
 
@@ -400,7 +400,7 @@ function pac.SetModelScale(ent, scale, size)
 		mat = Matrix()
 		mat:Scale(scale)
 		
-		if VERSION >= 140328 then
+		if legacy_scale and ent:GetBoneCount() and ent:GetBoneCount() > 1 then
 			ent.pac_matrixhack = mat
 			
 			if not ent.pac_follow_bones_function then
@@ -408,6 +408,8 @@ function pac.SetModelScale(ent, scale, size)
 				ent:AddCallback("BuildBonePositions", function(ent) pac.build_bone_callback(ent) end)
 			end
 		else
+			ent.pac_matrixhack = nil
+			
 			ent:EnableMatrix("RenderMultiply", mat)
 		end
 	end
