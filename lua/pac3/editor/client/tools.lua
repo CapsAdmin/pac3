@@ -42,6 +42,29 @@ pace.AddTool(L"fix origin", function(part, suboption)
 	part:SetPositionOffset(part:GetPositionOffset() + -ent:OBBCenter() * part.Scale * part.Size)
 end)
 
+pace.AddTool(L"replace ogg with webaudio", function(part, suboption)
+	for _, part in pairs(pac.GetParts(true)) do
+		if part.ClassName == "ogg" then
+			local parent = part:GetParent()
+			
+			local audio = pac.CreatePart("webaudio")
+			audio:SetParent(parent)
+			
+			audio:SetURL(part:GetURL())
+			audio:SetVolume(part:GetVolume())
+			audio:SetPitch(part:GetPitch())
+			audio:SetStopOnHide(not part:GetStopOnHide())
+			audio:SetPauseOnHide(part:GetPauseOnHide())
+			
+			for k,v in pairs(part:GetChildren()) do
+				v:SetParent(audio)
+			end
+			
+			part:Remove()
+		end
+	end
+end) 
+
 pace.AddTool(L"scale this and children", function(part, suboption)
 	Derma_StringRequest(L"scale", L"input the scale multiplier (does not work well with bones)", "1", function(scale)
 		scale = tonumber(scale)

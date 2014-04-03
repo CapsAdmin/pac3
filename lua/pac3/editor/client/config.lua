@@ -210,6 +210,7 @@ pace.PartTree = {
 		light = true,
 		sound = true,
 		ogg = true,
+		webaudio = true,
 		sunbeams = true,
 		effect = true,
 		particles = true,
@@ -282,6 +283,7 @@ pace.PartIcons =
 	projectile = "icon16/bomb.png",
 	shake = "icon16/transmit.png",
 	ogg = "icon16/music.png",
+	webaudio = "icon16/sound_add.png",
 	script = "icon16/page_white_gear.png",
 	info = "icon16/help.png",
 	bodygroup = "icon16/user.png",
@@ -465,6 +467,11 @@ pace.PropertyLimits =
 		return num
 	end,	
 	Pitch = function(self, num)
+		self.sens = 0.125
+		num = tonumber(num)
+		return num
+	end,
+	RandomPitch = function(self, num)
 		self.sens = 0.125
 		num = tonumber(num)
 		return num

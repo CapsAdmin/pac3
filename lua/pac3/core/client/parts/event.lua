@@ -423,6 +423,70 @@ PART.Events =
 		end,
 	},
 
+	fire_bullets =
+	{
+		arguments = {{find_ammo = "string"}, {time = "number"}},
+		callback = function(self, ent, find, time, hide)
+			time = time or 0.1
+			
+			ent = try_viewmodel(ent)
+						
+			local data = ent.pac_fire_bullets 
+			local b = false
+			
+			if data and (self:StringOperator(data.name, find) and (time == 0 or data.time + time > pac.RealTime)) then
+				data.reset = false
+				b = true
+			end
+			
+			-- this requires a hack because animation event needs to play instantly
+			if b ~= self.bulletevent_last_b and not self.SUPPRESS_THINK then
+				self.SUPPRESS_THINK = true
+				if ent.pac_parts then
+					for k,v in pairs(ent.pac_parts) do
+						v:CallRecursive("Think")
+					end
+				end
+				self.bulletevent_last_b = b
+				self.SUPPRESS_THINK = false
+			end
+			
+			return b
+		end,
+	},
+	
+	emit_sound =
+	{
+		arguments = {{find_sound = "string"}, {time = "number"}},
+		callback = function(self, ent, find, time)
+			time = time or 0.1
+			
+			ent = try_viewmodel(ent)
+						
+			local data = ent.pac_emit_sound 
+			local b = false
+			
+			if data and (self:StringOperator(data.name, find) and (time == 0 or data.time + time > pac.RealTime)) then
+				data.reset = false
+				b = true
+			end
+			
+			-- this requires a hack because animation event needs to play instantly
+			if b ~= self.emitsoundevent_last_b and not self.SUPPRESS_THINK then
+				self.SUPPRESS_THINK = true
+				if ent.pac_parts then
+					for k,v in pairs(ent.pac_parts) do
+						v:CallRecursive("Think")
+					end
+				end
+				self.emitsoundevent_last_b = b
+				self.SUPPRESS_THINK = false
+			end
+			
+			return b
+		end,
+	},
+
 	command =
 	{
 		arguments = {{find = "string"}, {time = "number"}},
@@ -955,15 +1019,48 @@ usermessage.Hook("pac_event", function(umr)
 end)
 
 pac.AddHook("DoAnimationEvent", function(ply, event, data)
-	ply.pac_anim_event = {name = enums[event], time = pac.RealTime, reset = true}
-	
 	-- update all parts once so OnShow and OnHide are updated properly for animation events
 	if ply.pac_parts then
+		ply.pac_anim_event = {name = enums[event], time = pac.RealTime, reset = true}
+		
 		for k,v in pairs(ply.pac_parts) do
 			if v:IsHidden() then
 				v:CallRecursive("Think")
 			end
 		end
+	end
+end)
+
+pac.AddHook("EntityEmitSound", function(data)
+	local ent = data.Entity
+	
+	if not ent:IsValid() or not ent.pac_parts then return end
+
+	ent.pac_emit_sound = {name = data.SoundName, time = pac.RealTime, reset = true}
+	
+	for k,v in pairs(ent.pac_parts) do
+		if v:IsHidden() then
+			v:CallRecursive("Think")
+		end
+	end
+	
+	if ent.pac_mute_sounds then
+		return false
+	end
+end)
+
+pac.AddHook("EntityFireBullets", function(ent, data)
+	if not ent:IsValid() or not ent.pac_parts then return end
+	ent.pac_fire_bullets = {name = data.AmmoType, time = pac.RealTime, reset = true}
+	
+	for k,v in pairs(ent.pac_parts) do
+		if v:IsHidden() then
+			v:CallRecursive("Think")
+		end
+	end
+	
+	if ent.pac_hide_bullets then
+		return false
 	end
 end)
 

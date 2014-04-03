@@ -26,6 +26,8 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Weapon", false)
 	pac.GetSet(PART, "InverseKinematics", false)
 	pac.GetSet(PART, "MuteFootsteps", false)
+	pac.GetSet(PART, "MuteSounds", false)
+	pac.GetSet(PART, "HideBullets", false)
 	pac.GetSet(PART, "AnimationRate", 1)
 	pac.GetSet(PART, "SprintSpeed", 0)
 	pac.GetSet(PART, "RunSpeed", 0)
@@ -63,6 +65,9 @@ ENTFIELD(PART, "CrouchSpeed", "crouch_speed")
 ENTFIELD(PART, "SprintSpeed", "sprint_speed")
 
 ENTFIELD(PART, "FallApartOnDeath", "death_physics_parts")
+
+ENTFIELD(PART, "MuteSounds", "mute_sounds")
+ENTFIELD(PART, "HideBullets", "hide_bullets")
 
 function PART:GetNiceName()
 	local ent = self:GetOwner()
