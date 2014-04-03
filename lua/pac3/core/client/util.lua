@@ -400,7 +400,7 @@ function pac.SetModelScale(ent, scale, size, legacy_scale)
 		mat = Matrix()
 		mat:Scale(scale)
 		
-		if legacy_scale then
+		if legacy_scale and ent:GetBoneCount() > 1 then
 			ent.pac_matrixhack = mat
 			
 			if not ent.pac_follow_bones_function then
