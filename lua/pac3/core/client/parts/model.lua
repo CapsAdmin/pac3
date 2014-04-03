@@ -33,6 +33,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Model", "models/dav0r/hoverball.mdl")
 	pac.GetSet(PART, "OwnerEntity", false)
 	pac.GetSet(PART, "TextureFilter", 3)
+	pac.GetSet(PART, "UseLegacyScale", true)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -80,7 +81,7 @@ function PART:OnShow()
 end
 
 function PART:OnThink()
-	pac.SetModelScale(self:GetEntity(), self.Scale * self.Size)
+	pac.SetModelScale(self:GetEntity(), self.Scale * self.Size, nil, self.UseLegacyScale)
 	
 	self:CheckScale()
 	self:CheckBoneMerge()
@@ -113,7 +114,7 @@ function PART:SetOwnerEntity(b)
 			self.Entity = NULL
 			
 			ent.RenderOverride = nil
-			pac.SetModelScale(ent, Vector(1,1,1))
+			pac.SetModelScale(ent, Vector(1,1,1), nil, self.UseLegacyScale)
 		end
 	end
 	
@@ -212,7 +213,7 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 			self:CheckScale()
 			self:CheckBoneMerge()
 		
-			pac.SetModelScale(ent, self.Scale * self.Size * (1 + self.CellShade))
+			pac.SetModelScale(ent, self.Scale * self.Size * (1 + self.CellShade), nil, self.UseLegacyScale)
 				render_CullMode(MATERIAL_CULLMODE_CW)
 						render_SetColorModulation(0,0,0)
 							render_SuppressEngineLighting(true)
@@ -221,7 +222,7 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 								render_MaterialOverride()
 						render_SuppressEngineLighting(false)
 				render_CullMode(MATERIAL_CULLMODE_CCW)
-			pac.SetModelScale(ent, self.Scale * self.Size)
+			pac.SetModelScale(ent, self.Scale * self.Size, nil, self.UseLegacyScale)
 		end
 				
 		self:ModifiersPostEvent("OnDraw")
@@ -466,16 +467,16 @@ function PART:SetScale(var)
 		
 	if self.AlternativeScaling then	
 		if not self:CheckScale() then
-			pac.SetModelScale(self.Entity, self.Scale)
+			pac.SetModelScale(self.Entity, self.Scale, nil, self.UseLegacyScale)
 			self.used_alt_scale = true
 		end
 	else
 		if self.used_alt_scale then
-			pac.SetModelScale(self.Entity, nil, 1)
+			pac.SetModelScale(self.Entity, nil, 1, self.UseLegacyScale)
 			self.used_alt_scale = false
 		end
 		if not self:CheckScale() then
-			pac.SetModelScale(self.Entity, self.Scale * self.Size)
+			pac.SetModelScale(self.Entity, self.Scale * self.Size, nil, self.UseLegacyScale)
 		end
 	end
 end
@@ -486,15 +487,15 @@ function PART:SetSize(var)
 	self.Size = var
 	
 	if self.AlternativeScaling then	
-		pac.SetModelScale(self.Entity, nil, self.Size)
+		pac.SetModelScale(self.Entity, nil, self.Size, self.UseLegacyScale)
 		self.used_alt_scale = true
 	else
 		if self.used_alt_scale then
-			pac.SetModelScale(self.Entity, nil, 1)
+			pac.SetModelScale(self.Entity, nil, 1, self.UseLegacyScale)
 			self.used_alt_scale = false
 		end
 		if not self:CheckScale() then
-			pac.SetModelScale(self.Entity, self.Scale * self.Size)
+			pac.SetModelScale(self.Entity, self.Scale * self.Size, nil, self.UseLegacyScale)
 		end
 	end
 end
