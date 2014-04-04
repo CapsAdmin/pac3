@@ -1003,7 +1003,7 @@ pac.AddHook("EntityEmitSound", function(data)
 
 	ent.pac_emit_sound = {name = data.SoundName, time = pac.RealTime, reset = true}
 	
-	for k,v in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
+	for k,v in pairs(pac.GetPartsFromUniqueID(ent:IsPlayer() and ent:UniqueID() or ent:EntIndex())) do
 		if v.ClassName == "event" and v.Event == "emit_sound" then
 			v:GetParent():CallRecursive("Think")
 		end
@@ -1018,7 +1018,7 @@ pac.AddHook("EntityFireBullets", function(ent, data)
 	if not ent:IsValid() or not ent.pac_parts then return end
 	ent.pac_fire_bullets = {name = data.AmmoType, time = pac.RealTime, reset = true}
 	
-	for k,v in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
+	for k,v in pairs(pac.GetPartsFromUniqueID(ent:IsPlayer() and ent:UniqueID() or ent:EntIndex())) do
 		if v.ClassName == "event" and v.Event == "fire_bullets" then
 			v:GetParent():CallRecursive("Think")
 		end
