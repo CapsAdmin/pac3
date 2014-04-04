@@ -125,12 +125,7 @@ end
 function pac.build_bone_callback(ent)
 	
 	if ent.pac_matrixhack then
-		local mat0 = ent:GetBoneMatrix(0)
-		if mat0 then
-			local mat = Matrix()
-			mat:Scale(ent.pac_model_scale)
-			ent:SetBoneMatrix(0, mat0 * mat)
-		end
+		pac.LegacyScale(ent)
 	end
 
 	if ent.pac_bone_setup_data then
