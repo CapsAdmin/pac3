@@ -428,17 +428,7 @@ function pac.SetModelScale(ent, scale, size, legacy_scale)
 			ent.pac_follow_bones_function = pac.build_bone_callback
 			ent:AddCallback("BuildBonePositions", function(ent) pac.build_bone_callback(ent) end)
 		end
-		
-		if ent.pac_can_legacy_scale == nil then
-			ent:InvalidateBoneCache()
-			ent:SetupBones()
-			timer.Simple(0.25, function()
-				if ent:IsValid() then
-					ent.pac_can_legacy_scale = not not ent.pac_can_legacy_scale
-				end
-			end)
-		end
-				
+	
 		ent:DisableMatrix("RenderMultiply")
 	else	
 		ent.pac_matrixhack = false

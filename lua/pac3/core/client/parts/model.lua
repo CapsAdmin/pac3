@@ -246,6 +246,10 @@ function PART:OnDraw(owner, pos, ang)
 			self:SetPositionOffset(self:GetPositionOffset() + -ent:OBBCenter() * self.Scale * self.Size)
 			self:SetOriginFix(false)
 		end
+		
+		if ent.pac_can_legacy_scale ~= false then
+			ent.pac_can_legacy_scale = not not ent.pac_can_legacy_scale
+		end
 	else
 		timer.Simple(0, function()
 			self:Initialize()
