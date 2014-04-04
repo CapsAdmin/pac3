@@ -1,4 +1,4 @@
-pac.next_frame_funcs = {}
+pac.next_frame_funcs = pac.next_frame_funcs or {}
 
 function pac.RunNextFrame(id, func)
 	pac.next_frame_funcs[id] = func
@@ -186,7 +186,7 @@ end
 
 
 do -- hook helpers
-	local added_hooks = {}
+	local added_hooks = pac.added_hooks or {}
 
 	function pac.AddHook(str, func)
 		func = func or pac[str]
@@ -212,7 +212,7 @@ do -- hook helpers
 end
 
 do -- get set and editor vars
-	pac.VariableOrder = {}
+	pac.VariableOrder = pac.VariableOrder or {}
 	
 	local function insert_key(key)
 		for k,v in pairs(pac.VariableOrder) do
@@ -392,43 +392,23 @@ end
 local mat
 local Matrix = Matrix
 
+for k,v in pairs(ents.GetAll()) do
+	v.pac_can_legacy_scale = nil
+	v.pac_follow_bones_function = nil
+end
+
+function pac.LegacyScale(ent)
+	local mat0 = ent:GetBoneMatrix(0)
+	if mat0 then
+		local mat = Matrix()
+		mat:Scale(ent.pac_model_scale)
+		ent:SetBoneMatrix(0, mat0 * mat)
+	end
+	ent.pac_can_legacy_scale = true
+end
+ 
 function pac.SetModelScale(ent, scale, size, legacy_scale)
 	if not ent:IsValid() then return end
-	if ent.pac_bone_scaling then return end
-
-	if legacy_scale  then	
-		ent.pac_matrixhack = true
-	
-		if not ent.pac_follow_bones_function then
-			ent.pac_follow_bones_function = pac.build_bone_callback
-			ent:AddCallback("BuildBonePositions", function(ent) pac.build_bone_callback(ent) end)
-		end
-		
-		ent:DisableMatrix("RenderMultiply")
-	else	
-		if scale then
-			mat = Matrix()
-			mat:Scale(scale)
-				
-			ent:EnableMatrix("RenderMultiply", mat)
-		end
-		
-		ent.pac_matrixhack = false
-	end
-
-	if size then
-		if ent.pac_enable_ik then
-			ent:SetIK(true)
-			ent:SetModelScale(1, 0)
-		else
-			ent:SetIK(false)
-			ent:SetModelScale(size == 1 and 1.000001 or size, 0)
-		end
-	end
-	
-	if not scale and not size then
-		ent:DisableMatrix("RenderMultiply")
-	end
 	
 	if scale and size then
 		ent.pac_model_scale = scale * size
@@ -440,6 +420,53 @@ function pac.SetModelScale(ent, scale, size, legacy_scale)
 	
 	if not scale and size then
 		ent.pac_model_scale = Vector(size, size, size)
+	end
+	
+	if legacy_scale and (ent.pac_can_legacy_scale == nil or ent.pac_can_legacy_scale == true) then	
+
+		if not ent.pac_follow_bones_function then
+			ent.pac_follow_bones_function = pac.build_bone_callback
+			ent:AddCallback("BuildBonePositions", function(ent) pac.build_bone_callback(ent) end)
+		end
+		
+		if ent.pac_can_legacy_scale == nil then
+			ent:InvalidateBoneCache()
+			ent:SetupBones()
+			ent.pac_can_legacy_scale = not not ent.pac_can_legacy_scale
+		end
+				
+		ent:DisableMatrix("RenderMultiply")
+	else	
+		ent.pac_matrixhack = false
+		
+		if scale then
+			mat = Matrix()
+			
+			local x,y,z = scale.x, scale.y, scale.z
+			--local x,y,z = ent.pac_model_scale.x, ent.pac_model_scale.y, ent.pac_model_scale.z
+						
+			if x < 0 then x = -math.sqrt(-x) else x = math.sqrt(x) end
+			if y < 0 then y = -math.sqrt(-y) else y = math.sqrt(y) end
+			if z < 0 then z = -math.sqrt(-z) else z = math.sqrt(z) end
+									
+			mat:Scale(Vector(x,y,z))
+			ent:EnableMatrix("RenderMultiply", mat)
+		end
+		
+		if size then
+			if ent.pac_enable_ik then
+				ent:SetIK(true)
+				ent:SetModelScale(1, 0)
+			else
+				ent:SetIK(false)
+				ent:SetModelScale(size == 1 and 1.000001 or size, 0)
+			end
+		end
+		
+		if not scale and not size then
+			ent:DisableMatrix("RenderMultiply")
+		end
+
 	end
 end
 
