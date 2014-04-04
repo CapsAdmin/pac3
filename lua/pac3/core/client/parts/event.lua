@@ -407,18 +407,6 @@ PART.Events =
 				b = true
 			end
 			
-			-- this requires a hack because animation event needs to play instantly
-			if b ~= self.animevent_last_b and not self.SUPPRESS_THINK then
-				self.SUPPRESS_THINK = true
-				if ent.pac_parts then
-					for k,v in pairs(ent.pac_parts) do
-						v:CallRecursive("Think")
-					end
-				end
-				self.animevent_last_b = b
-				self.SUPPRESS_THINK = false
-			end
-			
 			return b
 		end,
 	},
@@ -439,18 +427,6 @@ PART.Events =
 				b = true
 			end
 			
-			-- this requires a hack because animation event needs to play instantly
-			if b ~= self.bulletevent_last_b and not self.SUPPRESS_THINK then
-				self.SUPPRESS_THINK = true
-				if ent.pac_parts then
-					for k,v in pairs(ent.pac_parts) do
-						v:CallRecursive("Think")
-					end
-				end
-				self.bulletevent_last_b = b
-				self.SUPPRESS_THINK = false
-			end
-			
 			return b
 		end,
 	},
@@ -469,18 +445,6 @@ PART.Events =
 			if data and (self:StringOperator(data.name, find) and (time == 0 or data.time + time > pac.RealTime)) then
 				data.reset = false
 				b = true
-			end
-			
-			-- this requires a hack because animation event needs to play instantly
-			if b ~= self.emitsoundevent_last_b and not self.SUPPRESS_THINK then
-				self.SUPPRESS_THINK = true
-				if ent.pac_parts then
-					for k,v in pairs(ent.pac_parts) do
-						v:CallRecursive("Think")
-					end
-				end
-				self.emitsoundevent_last_b = b
-				self.SUPPRESS_THINK = false
 			end
 			
 			return b
@@ -1023,24 +987,25 @@ pac.AddHook("DoAnimationEvent", function(ply, event, data)
 	if ply.pac_parts then
 		ply.pac_anim_event = {name = enums[event], time = pac.RealTime, reset = true}
 		
-		for k,v in pairs(ply.pac_parts) do
-			if v:IsHidden() then
-				v:CallRecursive("Think")
+		for k,v in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
+			if v.ClassName == "event" and v.Event == "animation_event" then
+				v:GetParent():CallRecursive("Think")
 			end
 		end
 	end
 end)
 
 pac.AddHook("EntityEmitSound", function(data)
+	if pac.playing_sound then return end
 	local ent = data.Entity
 	
 	if not ent:IsValid() or not ent.pac_parts then return end
 
 	ent.pac_emit_sound = {name = data.SoundName, time = pac.RealTime, reset = true}
 	
-	for k,v in pairs(ent.pac_parts) do
-		if v:IsHidden() then
-			v:CallRecursive("Think")
+	for k,v in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
+		if v.ClassName == "event" and v.Event == "emit_sound" then
+			v:GetParent():CallRecursive("Think")
 		end
 	end
 	
@@ -1053,9 +1018,9 @@ pac.AddHook("EntityFireBullets", function(ent, data)
 	if not ent:IsValid() or not ent.pac_parts then return end
 	ent.pac_fire_bullets = {name = data.AmmoType, time = pac.RealTime, reset = true}
 	
-	for k,v in pairs(ent.pac_parts) do
-		if v:IsHidden() then
-			v:CallRecursive("Think")
+	for k,v in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
+		if v.ClassName == "event" and v.Event == "fire_bullets" then
+			v:GetParent():CallRecursive("Think")
 		end
 	end
 	
