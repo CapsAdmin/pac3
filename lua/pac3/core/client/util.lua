@@ -394,7 +394,6 @@ local Matrix = Matrix
 
 for k,v in pairs(ents.GetAll()) do
 	v.pac_can_legacy_scale = nil
-	v.pac_follow_bones_function = nil
 end
 
 function pac.LegacyScale(ent)
@@ -403,8 +402,8 @@ function pac.LegacyScale(ent)
 		local mat = Matrix()
 		mat:Scale(ent.pac_model_scale)
 		ent:SetBoneMatrix(0, mat0 * mat)
+		ent.pac_can_legacy_scale = true
 	end
-	ent.pac_can_legacy_scale = true
 end
  
 function pac.SetModelScale(ent, scale, size, legacy_scale)
@@ -423,6 +422,7 @@ function pac.SetModelScale(ent, scale, size, legacy_scale)
 	end
 	
 	if legacy_scale and (ent.pac_can_legacy_scale == nil or ent.pac_can_legacy_scale == true) then	
+		ent.pac_matrixhack = true
 
 		if not ent.pac_follow_bones_function then
 			ent.pac_follow_bones_function = pac.build_bone_callback
@@ -432,7 +432,11 @@ function pac.SetModelScale(ent, scale, size, legacy_scale)
 		if ent.pac_can_legacy_scale == nil then
 			ent:InvalidateBoneCache()
 			ent:SetupBones()
-			ent.pac_can_legacy_scale = not not ent.pac_can_legacy_scale
+			timer.Simple(0.25, function()
+				if ent:IsValid() then
+					ent.pac_can_legacy_scale = not not ent.pac_can_legacy_scale
+				end
+			end)
 		end
 				
 		ent:DisableMatrix("RenderMultiply")
@@ -444,10 +448,6 @@ function pac.SetModelScale(ent, scale, size, legacy_scale)
 			
 			local x,y,z = scale.x, scale.y, scale.z
 			--local x,y,z = ent.pac_model_scale.x, ent.pac_model_scale.y, ent.pac_model_scale.z
-						
-			if x < 0 then x = -math.sqrt(-x) else x = math.sqrt(x) end
-			if y < 0 then y = -math.sqrt(-y) else y = math.sqrt(y) end
-			if z < 0 then z = -math.sqrt(-z) else z = math.sqrt(z) end
 									
 			mat:Scale(Vector(x,y,z))
 			ent:EnableMatrix("RenderMultiply", mat)
