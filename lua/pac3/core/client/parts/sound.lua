@@ -69,8 +69,10 @@ function PART:OnThink()
 		self:PlaySound()
 	else
 		if self.Loop then
+			pac.playing_sound = true
 			if not self.csptch:IsPlaying() then self.csptch:Play() end
 			self.csptch:ChangePitch((self.Pitch * 255) + math.sin(pac.RealTime)/2, 0)
+			pac.playing_sound = false
 		end
 	end
 	
@@ -193,6 +195,8 @@ function PART:PlaySound(osnd, ovol)
 			pitch = math.random(self.MinPitch, self.MaxPitch)
 		end
 		
+		pac.playing_sound = true
+
 		if self.Overlapping then
 			if not self.played_overlapping then
 				ent:EmitSound(snd, vol * 160, pitch)
@@ -205,11 +209,14 @@ function PART:PlaySound(osnd, ovol)
 			
 			local csptch = CreateSound(ent, snd)
 			
+			
 			csptch:SetSoundLevel(self.SoundLevel)
 			csptch:PlayEx(vol, pitch)		
 			ent.pac_csptch = csptch
 			self.csptch = csptch
 		end
+		
+		pac.playing_sound = false
 	end
 end
 
