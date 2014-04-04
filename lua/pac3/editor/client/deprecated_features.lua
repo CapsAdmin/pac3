@@ -1,7 +1,6 @@
 pace.DeprecatedParts = 
 {
 	woohoo = true,
-	ogg = true,
 	--command = true,
 }
 
