@@ -396,24 +396,26 @@ function pac.SetModelScale(ent, scale, size, legacy_scale)
 	if not ent:IsValid() then return end
 	if ent.pac_bone_scaling then return end
 
-	if scale then
-		mat = Matrix()
-		mat:Scale(scale)
+	if legacy_scale  then	
+		ent.pac_matrixhack = true
+	
+		if not ent.pac_follow_bones_function then
+			ent.pac_follow_bones_function = pac.build_bone_callback
+			ent:AddCallback("BuildBonePositions", function(ent) pac.build_bone_callback(ent) end)
+		end
 		
-		if legacy_scale and ent:GetBoneCount() > 1 then
-			ent.pac_matrixhack = mat
-			
-			if not ent.pac_follow_bones_function then
-				ent.pac_follow_bones_function = pac.build_bone_callback
-				ent:AddCallback("BuildBonePositions", function(ent) pac.build_bone_callback(ent) end)
-			end
-		else
-			ent.pac_matrixhack = nil
-			
+		ent:DisableMatrix("RenderMultiply")
+	else	
+		if scale then
+			mat = Matrix()
+			mat:Scale(scale)
+				
 			ent:EnableMatrix("RenderMultiply", mat)
 		end
+		
+		ent.pac_matrixhack = false
 	end
-	
+
 	if size then
 		if ent.pac_enable_ik then
 			ent:SetIK(true)
