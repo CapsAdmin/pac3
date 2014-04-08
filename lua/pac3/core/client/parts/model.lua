@@ -34,6 +34,9 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "OwnerEntity", false)
 	pac.GetSet(PART, "TextureFilter", 3)
 	pac.GetSet(PART, "UseLegacyScale", true)
+	
+	pac.GetSet(PART, "BlurLength", 0)
+	pac.GetSet(PART, "BlurSpacing", 0)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -304,6 +307,11 @@ local render_PopFilterMag = render.PopFilterMag
 local render_PushFilterMag = render.PushFilterMag 
 local render_PushFilterMin = render.PushFilterMin 
 
+local table_insert = table.insert
+local table_remove = table.remove
+local math_abs = math.abs
+local math_ceil = math.ceil
+
 function PART:DrawModel(ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 	
@@ -338,14 +346,59 @@ function PART:DrawModel(ent, pos, ang)
 		if self.Materialm then 
 			render_SetMaterial(self.Materialm) 
 		end
+		
 			
-		if self.Passes > 1 and self.Alpha < 1 then
-			for i = 1, self.Passes do
+			if self.Passes > 1 and self.Alpha < 1 then
+				for i = 1, self.Passes do
+					RealDrawModel(self, ent, pos, ang)
+				end
+			else
 				RealDrawModel(self, ent, pos, ang)
 			end
-		else
-			RealDrawModel(self, ent, pos, ang)
-		end		
+			
+			local ok, err = pcall(function()
+			
+			if self.BlurLength > 0 then
+				self.blur_history = self.blur_history or {}
+				
+				local len = self.BlurLength
+				local spc = self.BlurSpacing
+				
+				if spc == 0 or self.blur_last_add < pac.RealTime or not self.blur_last_add then
+					table_insert(self.blur_history, {pos, ang})
+					self.blur_last_add = pac.RealTime + spc / 1000
+				end
+				
+				local count = #self.blur_history
+				
+				if spc > 0 then
+					len = math_ceil(math_abs(len - spc))
+				end
+				
+				len = math.min(len, 20)
+						
+				local delta = FrameTime() * 5				
+				
+				for i = 1, count do
+					local pos, ang = self.blur_history[i][1], self.blur_history[i][2]
+					
+					render_SetBlend(self.Alpha * (i / count))
+					
+					ent:SetPos(pos)
+					ent:SetAngles(ang)
+					ent:SetupBones()
+					
+					RealDrawModel(self, ent, pos, ang)
+				end
+				
+				if count >= len then 
+					table_remove(self.blur_history, 1) 
+				end
+			end
+			
+			end)
+			
+			if not ok then print(err) end
 		
 		render_PushFlashlightMode(true)
 			RealDrawModel(self, ent, pos, ang)
