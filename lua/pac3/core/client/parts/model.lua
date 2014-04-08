@@ -81,6 +81,10 @@ function PART:OnShow()
 			self:SetOwnerEntity(self.OwnerEntity)
 		end
 	end
+	
+	if self.BlurLength > 0 then
+		self.blur_history = {}
+	end
 end
 
 function PART:OnThink()
