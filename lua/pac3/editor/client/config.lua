@@ -44,7 +44,9 @@ pace.PropertySheets = {
 		stretch =  true,
 		endcolor =  true,
 		draworder = true,
-		drawshadow=  true,
+		drawshadow = true,
+		blurlength = true,
+		blurspacing = true,
 	},
 	
 	other = 
