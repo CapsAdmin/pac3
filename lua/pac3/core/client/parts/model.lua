@@ -355,51 +355,7 @@ function PART:DrawModel(ent, pos, ang)
 			else
 				RealDrawModel(self, ent, pos, ang)
 			end
-			
-			local ok, err = pcall(function()
-			
-			if self.BlurLength > 0 then
-				self.blur_history = self.blur_history or {}
-				
-				local len = self.BlurLength
-				local spc = self.BlurSpacing
-				
-				if spc == 0 or self.blur_last_add < pac.RealTime or not self.blur_last_add then
-					table_insert(self.blur_history, {pos, ang})
-					self.blur_last_add = pac.RealTime + spc / 1000
-				end
-				
-				local count = #self.blur_history
-				
-				if spc > 0 then
-					len = math_ceil(math_abs(len - spc))
-				end
-				
-				len = math.min(len, 20)
-						
-				local delta = FrameTime() * 5				
-				
-				for i = 1, count do
-					local pos, ang = self.blur_history[i][1], self.blur_history[i][2]
-					
-					render_SetBlend(self.Alpha * (i / count))
-					
-					ent:SetPos(pos)
-					ent:SetAngles(ang)
-					ent:SetupBones()
-					
-					RealDrawModel(self, ent, pos, ang)
-				end
-				
-				if count >= len then 
-					table_remove(self.blur_history, 1) 
-				end
-			end
-			
-			end)
-			
-			if not ok then print(err) end
-		
+														
 		render_PushFlashlightMode(true)
 			RealDrawModel(self, ent, pos, ang)
 		render_PopFlashlightMode()
@@ -408,6 +364,42 @@ function PART:DrawModel(ent, pos, ang)
 		if filter ~= 3 or self.wavefront_mesh then
 			render_PopFilterMag()
 			render_PopFilterMin()
+		end
+		
+		if self.BlurLength > 0 then
+			self.blur_history = self.blur_history or {}
+			
+			local len = self.BlurLength
+			local spc = self.BlurSpacing
+			
+			if not self.blur_last_add or spc == 0 or self.blur_last_add < pac.RealTime then
+				table_insert(self.blur_history, {pos, ang})
+				self.blur_last_add = pac.RealTime + spc / 1000
+			end
+			
+			local count = #self.blur_history
+							
+			len = math.min(len, 20)
+					
+			local delta = FrameTime() * 5				
+			
+			for i = 1, count do
+				local pos, ang = self.blur_history[i][1], self.blur_history[i][2]
+				
+				render_SetBlend(self.Alpha * (i / count))
+				
+				ent:SetPos(pos)
+				ent:SetAngles(ang)
+				ent:SetupBones()
+				
+				RealDrawModel(self, ent, pos, ang)
+			end
+
+			while #self.blur_history >= len do
+			
+			
+				table_remove(self.blur_history, 1) 
+			end
 		end
 	end
 end
