@@ -84,6 +84,7 @@ function PART:OnShow()
 	
 	if self.BlurLength > 0 then
 		self.blur_history = {}
+		self.blur_last_add = 0
 	end
 end
 
@@ -400,8 +401,6 @@ function PART:DrawModel(ent, pos, ang)
 			end
 
 			while #self.blur_history >= len do
-			
-			
 				table_remove(self.blur_history, 1) 
 			end
 		end
