@@ -14,5 +14,16 @@ pace.GlobalBans = {
 		
 		This ban is mostly becasuse he's been running around taking credit for outfits he didn't make.
 		And the whole being a dick about it in the process.
+	]],
+	
+	["STEAM_0:1:49726468"] = [[
+		Constantly taking credit for outfits other people have made that he found on pastebins even though 
+		he has been called out for it countless of times and being an asshole about it at the same time.
+	]],
+	
+	["STEAM_0:1:86041797"] = [[
+		(alt of STEAM_0:1:49726468)
+		Constantly taking credit for outfits other people have made that he found on pastebins even though 
+		he has been called out for it countless of times and being an asshole about it at the same time.
 	]]
 }
