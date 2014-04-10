@@ -56,6 +56,14 @@ function PART:GetEntity()
 	return self.Entity
 end
 
+function PART:SetUseLegacyScale(b)
+	self.UseLegacyScale = b
+	if not b then
+		self.requires_bone_model_scale = false
+	end
+end
+
+
 function PART:SetTextureFilter(num)
 	self.TextureFilter = num
 	
@@ -494,7 +502,7 @@ end
 local NORMAL = Vector(1,1,1)
 function PART:CheckScale()
 	-- RenderMultiply doesn't work with this..
-	if self.UseLegacyScale and self.Entity:IsValid() and self.Entity:GetBoneCount() and self.Entity:GetBoneCount() > 1 then
+	if (self.UseLegacyScale or self.BoneMerge) and self.Entity:IsValid() and self.Entity:GetBoneCount() and self.Entity:GetBoneCount() > 1 then
 		if self.Scale * self.Size ~= NORMAL then
 			if not self.requires_bone_model_scale then
 				self.requires_bone_model_scale = true
@@ -682,6 +690,8 @@ function PART:CheckBoneMerge()
 				if ent:IsEffectActive(EF_BONEMERGE) then
 					ent:RemoveEffects(EF_BONEMERGE)
 				end
+				
+				self.requires_bone_model_scale = false
 			end
 		end
 	end

@@ -91,6 +91,7 @@ end
 
 function PART:SetUseLegacyScale(b)
 	self.UseLegacyScale = b
+	self:UpdateScale()
 end
 
 function PART:SetWeapon(b)
