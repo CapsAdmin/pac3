@@ -16,14 +16,8 @@ pace.GlobalBans = {
 		And the whole being a dick about it in the process.
 	]],
 	
-	["STEAM_0:1:49726468"] = [[
+	[{"STEAM_0:1:49726468", "STEAM_0:1:86041797", "STEAM_0:0:86122136", "77.103.108.245"}] = [[
 		Constantly taking credit for outfits other people have made that he found on pastebins even though 
 		he has been called out for it countless of times and being an asshole about it at the same time.
 	]],
-	
-	["STEAM_0:1:86041797"] = [[
-		(alt of STEAM_0:1:49726468)
-		Constantly taking credit for outfits other people have made that he found on pastebins even though 
-		he has been called out for it countless of times and being an asshole about it at the same time.
-	]]
 }

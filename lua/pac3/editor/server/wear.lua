@@ -66,7 +66,7 @@ local function make_copy(tbl, input)
 	end
 end
 
-pace.dupe_ents = {}
+pace.dupe_ents = pace.dupe_ents or {}
 
 duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 	local id = ent:EntIndex()
@@ -215,16 +215,15 @@ function pace.SubmitPart(data, filter)
 				local owner_steamid = data.owner:SteamID() 
 				for key, ply in pairs(players) do
 					local steamid = ply:SteamID()
-					local reason = pace.GlobalBans[steamid]
-					if reason then					
-						table.remove(players, key)
-						pac.dprint("not sending data to %s because he/her is globally banned from using pac", ply:Nick())
-						
-						if owner_steamid == steamid then
-							return false, "you have been globally banned from using pac. see global_bans.lua for more info"
+					for var, reason in pairs(pace.GlobalBans) do
+						if  var == steamid or type(var) == "table" and (table.HasValue(var, steamid) or table.HasValue(var, ply:IPAddress():match("(.+):"))) then
+							table.remove(players, key)
+							print("[pac3] not sending data to "..ply:Nick().." because he/her is globally banned from using pac")
+							
+							if owner_steamid == steamid then
+								return false, "you have been globally banned from using pac. see global_bans.lua for more info"
+							end
 						end
-						
-						break
 					end
 				end
 			end
