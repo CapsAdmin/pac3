@@ -305,7 +305,6 @@ function pace.HUDPaint()
 			draw.SimpleTextOutlined(text, "DermaDefault", x, y, i == 4 and Color(255, 150, 150) or Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, Color(0,0,0,255))
 			surface.SetFont("DermaDefault")
 			local w, h = surface.GetTextSize(text)
-			print(w,h , text)
 			y = y + h
 		end
 	end
