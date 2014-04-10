@@ -65,6 +65,14 @@ pace.AddTool(L"replace ogg with webaudio", function(part, suboption)
 	end
 end) 
 
+pace.AddTool(L"use legacy scale", function(part, suboption)
+	for _, part in pairs(pac.GetParts(true)) do
+		if part.UseLegacyScale ~= nil then
+			part:SetUseLegacyScale(suboption == 1)
+		end
+	end
+end, L"true", L"false") 
+
 pace.AddTool(L"scale this and children", function(part, suboption)
 	Derma_StringRequest(L"scale", L"input the scale multiplier (does not work well with bones)", "1", function(scale)
 		scale = tonumber(scale)

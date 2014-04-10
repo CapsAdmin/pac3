@@ -34,6 +34,8 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "WalkSpeed", 0)
 	pac.GetSet(PART, "CrouchSpeed", 0)
 	pac.GetSet(PART, "FallApartOnDeath", false)
+	
+	pac.GetSet(PART, "UseLegacyScale", false)
 pac.EndStorableVars()
 
 local function ENTFIELD(PART, name, field)
@@ -85,6 +87,10 @@ function PART:GetNiceName()
 	end
 	
 	return self.ClassName
+end
+
+function PART:SetUseLegacyScale(b)
+	self.UseLegacyScale = b
 end
 
 function PART:SetWeapon(b)
@@ -144,9 +150,13 @@ end
 
 function PART:UpdateScale(ent)
 	ent = ent or self:GetOwner()
-	if ent:IsValid() then				
-		if ent:IsPlayer() or ent:IsNPC() then
-			pac.SetModelScale(ent, nil, self.Size)
+	if ent:IsValid() then
+		if self.UseLegacyScale then
+			if ent:IsPlayer() or ent:IsNPC() then
+				pac.SetModelScale(ent, nil, self.Size)
+			else
+				pac.SetModelScale(ent, self.Scale * self.Size)
+			end
 		else
 			pac.SetModelScale(ent, self.Scale * self.Size)
 		end
@@ -372,8 +382,12 @@ function PART:OnHide()
 			ent[key] = nil
 		end
 		
-		if ent:IsPlayer() then
-			pac.SetModelScale(ent, nil, 1)
+		if self.UseLegacyScale then
+			if ent:IsPlayer() then
+				pac.SetModelScale(ent, nil, 1)
+			else
+				pac.SetModelScale(ent, Vector(1,1,1))
+			end
 		else
 			pac.SetModelScale(ent, Vector(1,1,1))
 		end

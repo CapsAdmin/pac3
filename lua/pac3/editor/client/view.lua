@@ -275,6 +275,16 @@ function pace.SetViewPart(part, reset_campos)
 	end	
 end
 
+local L = pace.LanguageString
+
+local legacy_text = {
+	L"Because of the recent gmod update scaling models have changed.",
+	L"If your outfits look wrong you should try and fix them.",
+	L"If you want to use the old method of scaling go to tools -> use legacy scale -> true (left of this text) to enable the old scaling again.",
+	L"The old method of scaling is slow and not perfect. \"cell shading\" wont work and some models may appear larger than they should be.",
+	L"Legacy scale has been on by default since the gmod update but now it's off by default.",
+}
+
 function pace.HUDPaint()
 	if mcode and not input.IsMouseDown(mcode) then
 		mcode = nil
@@ -287,6 +297,15 @@ function pace.HUDPaint()
 	
 		if ent:IsValid() then
 			pace.Call("Draw", ScrW(), ScrH())
+		end
+		
+		local x, y = pace.Editor:GetPos() + pace.Editor:GetWide() + 4, 0
+		for i, text in ipairs(legacy_text) do
+			draw.SimpleTextOutlined(text, "DermaDefault", x, y, Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, Color(0,0,0,255))
+			surface.SetFont("DermaDefault")
+			local w, h = surface.GetTextSize(text)
+			print(w,h , text)
+			y = y + h
 		end
 	end
 end

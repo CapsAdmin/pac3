@@ -33,10 +33,11 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Model", "models/dav0r/hoverball.mdl")
 	pac.GetSet(PART, "OwnerEntity", false)
 	pac.GetSet(PART, "TextureFilter", 3)
-	pac.GetSet(PART, "UseLegacyScale", true)
 	
 	pac.GetSet(PART, "BlurLength", 0)
 	pac.GetSet(PART, "BlurSpacing", 0)
+	
+	pac.GetSet(PART, "UseLegacyScale", false)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -493,7 +494,7 @@ end
 local NORMAL = Vector(1,1,1)
 function PART:CheckScale()
 	-- RenderMultiply doesn't work with this..
-	if self.Entity:IsValid() and self.Entity:GetBoneCount() and self.Entity:GetBoneCount() > 1 then
+	if self.UseLegacyScale and self.Entity:IsValid() and self.Entity:GetBoneCount() and self.Entity:GetBoneCount() > 1 then
 		if self.Scale * self.Size ~= NORMAL then
 			if not self.requires_bone_model_scale then
 				self.requires_bone_model_scale = true
