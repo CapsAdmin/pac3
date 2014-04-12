@@ -47,6 +47,8 @@ pace.PropertySheets = {
 		drawshadow = true,
 		blurlength = true,
 		blurspacing = true,
+		useweaponcolor = true,
+		useplayercolor = true,
 	},
 	
 	other = 
@@ -647,7 +649,7 @@ function pace.TranslatePropertiesKey(key, obj)
 		return "color"
 	end
 
-	if key:find("color") then
+	if key:find("color") and not key:find("use") then
 		return "color"
 	end
 end

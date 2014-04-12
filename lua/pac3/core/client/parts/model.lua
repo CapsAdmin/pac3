@@ -38,6 +38,9 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "BlurSpacing", 0)
 	
 	pac.GetSet(PART, "UseLegacyScale", false)
+	
+	pac.GetSet(PART, "UsePlayerColor", false)
+	pac.GetSet(PART, "UseWeaponColor", false)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -178,6 +181,23 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		if not pac.DisableColoring then
 			if not self.Colorf then 
 				self:SetColor(self:GetColor())
+			end
+		
+			if self.UseWeaponColor or self.UsePlayerColor then 
+				local owner = self:GetOwner(true)
+				if owner:IsPlayer() then
+					local c = owner:GetInfo("cl_playercolor")
+					if c ~= self.last_playercolor then
+						self:SetColor(self:GetColor())
+						self.last_playercolor = c
+					end
+					local c = owner:GetInfo("cl_weaponcolor")
+					if c ~= self.last_weaponcolor then
+						self:SetColor(self:GetColor())
+						self.last_weaponcolor = c
+					end
+					
+				end
 			end
 			
 			local r, g, b = self.Colorf.r, self.Colorf.g, self.Colorf.b
@@ -568,7 +588,27 @@ end
 
 function PART:SetColor(var)
 	self.Color = var
-	self.Colorf = Color((var.r/255) * self.Brightness, (var.g/255) * self.Brightness, (var.b/255) * self.Brightness)
+	local owner = self:GetPlayerOwner()
+	
+	if self.UsePlayerColor and owner:IsValid() then
+		local c = Vector(owner:GetInfo("cl_playercolor")) * self.Brightness
+		self.Colorf = Color(c.r, c.g, c.b)
+	elseif self.UseWeaponColor and owner:IsValid() then
+		local c = Vector(owner:GetInfo("cl_weaponcolor")) * self.Brightness
+		self.Colorf = Color(c.r, c.g, c.b)
+	else
+		self.Colorf = Color((var.r/255) * self.Brightness, (var.g/255) * self.Brightness, (var.b/255) * self.Brightness)
+	end
+end
+
+function PART:SetUseWeaponColor(b)
+	self.UseWeaponColor = b
+	self:SetColor(self:GetColor())
+end
+
+function PART:SetUsePlayerColor(b)
+	self.UsePlayerColor = b
+	self:SetColor(self:GetColor())
 end
 
 function PART:FixMaterial()
