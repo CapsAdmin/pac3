@@ -70,6 +70,10 @@ PART.Functions =
 	tan = math.tan,
 	abs = math.abs,
 	mod = function(n, s) return n%s.Max end,
+	sgn = function(n) return n>0 and 1 or n<0 and -1 or 0 end,
+	ceil = math.ceil,
+	floor = math.floor,
+	pi = math.pi,
 }
 
 local FrameTime = FrameTime
