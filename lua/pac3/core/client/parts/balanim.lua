@@ -34,10 +34,12 @@ function PART:Initialize()
 end
 
 function PART:OnThink() 
-	local function LoadBalAnim(str) --this function is called by http.Fetch below. str should contain the tInfo for the animation
+	local function LoadBalAnim(str)
 		local regstring="RegisterLuaAnimation("..addquotes(tostring(self:GetUniqueID()))..","..str..")"
-		local registeranim = CompileString(regstring,"registeranim") --if you can make this work better be my guest
-		registeranim()
+		local registeranim = CompileString(regstring,"registeranim")
+		animregenv = {RegisterLuaAnimation = RegisterLuaAnimation,} --create an environment where it's only possible to register animations
+		setfenv(registeranim, animregenv) --force registeranim() to run in the limited environment
+		pcall(registeranim) --run registeranim in the environment
 	end
 	--reregister animation when URL changes
 	if currenturl ~= self:GetURL() then
@@ -50,24 +52,18 @@ end
 function PART:OnShow(owner, pos, ang)
 	--play animation
 	local owner = self:GetOwner()
-	local setstring="Entity("..owner:EntIndex().."):SetLuaAnimation("..addquotes(tostring(self:GetUniqueID()))..")"
-	local setanim = CompileString(setstring,"setanim")
-	setanim()
+	owner:SetLuaAnimation(tostring(self:GetUniqueID()))
 end
 
 function PART:OnHide()
 	--stop animation
 	local owner = self:GetOwner()
-	local stopstring="Entity("..owner:EntIndex().."):StopLuaAnimation("..addquotes(tostring(self:GetUniqueID()))..")"
-	local stopanim = CompileString(stopstring,"stopanim")
-	stopanim()
+	owner:StopLuaAnimation(tostring(self:GetUniqueID()))
 end
 
 function PART:OnRemove() 
 	local owner = self:GetOwner()
-	local setstring="Entity("..owner:EntIndex().."):SetLuaAnimation("..addquotes("BlankAnim")..")"
-	local setanim = CompileString(setstring,"setanim")
-	setanim() --play BlankAnim so they don't get stuck
+	owner:SetLuaAnimation("BlankAnim") --play BlankAnim so they don't get stuck
 	UnRegisterLuaAnimation(tostring(self:GetUniqueID())) --unregister the anim
 end
 
