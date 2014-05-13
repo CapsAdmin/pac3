@@ -52,18 +52,24 @@ end
 function PART:OnShow(owner, pos, ang)
 	--play animation
 	local owner = self:GetOwner()
-	owner:SetLuaAnimation(tostring(self:GetUniqueID()))
+	if owner and owner:IsValid() then
+	  owner:SetLuaAnimation(tostring(self:GetUniqueID()))
+	end
 end
 
 function PART:OnHide()
 	--stop animation
 	local owner = self:GetOwner()
-	owner:StopLuaAnimation(tostring(self:GetUniqueID()))
+	if owner and owner:IsValid() then
+	  owner:StopLuaAnimation(tostring(self:GetUniqueID()))
+	end
 end
 
 function PART:OnRemove() 
 	local owner = self:GetOwner()
-	owner:SetLuaAnimation("BlankAnim") --play BlankAnim so they don't get stuck
+	if owner and owner:IsValid() then
+	  owner:SetLuaAnimation("BlankAnim") --play BlankAnim so they don't get stuck
+	end
 	UnRegisterLuaAnimation(tostring(self:GetUniqueID())) --unregister the anim
 end
 
