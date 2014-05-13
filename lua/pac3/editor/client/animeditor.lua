@@ -274,6 +274,8 @@ local function NewAnimation()
 	local begin = form:Button("Begin")
 	begin.DoClick = function()
 		animName = entry:GetValue()
+		if animName == nil then animName="unnamed" end
+		if animName == "" then animName="unnamed" end
 		animType = _G[type:GetText()]
 		
 		if animName == "" then help:SetText("Write a name for this animation") return end
@@ -581,7 +583,7 @@ local function SaveAnimation()
 					"Cancel" )
 
 
-
+--why is all this whitespace here wtf
 
 
 

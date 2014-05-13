@@ -43,7 +43,7 @@ function PART:OnThink()
 	end]]
 	local function LoadBalAnim(str) --this is so much better
 	    t = pcall(util.JSONToTable, str)
-		RegisterLuaAnimation(addquotes(tostring(self:GetUniqueID())),t)
+		RegisterLuaAnimation(addquotes("pac_"..tostring(self:GetUniqueID())),t)
 	end
 	--reregister animation when URL changes
 	if currenturl ~= self:GetURL() then
@@ -57,7 +57,7 @@ function PART:OnShow(owner, pos, ang)
 	--play animation
 	local owner = self:GetOwner()
 	if owner and owner:IsValid() then
-	  owner:SetLuaAnimation(tostring(self:GetUniqueID()))
+	  owner:SetLuaAnimation("pac_"..tostring(self:GetUniqueID()))
 	end
 end
 
@@ -65,7 +65,7 @@ function PART:OnHide()
 	--stop animation
 	local owner = self:GetOwner()
 	if owner and owner:IsValid() then
-	  owner:StopLuaAnimation(tostring(self:GetUniqueID()))
+	  owner:StopLuaAnimation("pac_"..tostring(self:GetUniqueID()))
 	end
 end
 
@@ -74,7 +74,7 @@ function PART:OnRemove()
 	if owner and owner:IsValid() then
 	  owner:SetLuaAnimation("BlankAnim") --play BlankAnim so they don't get stuck
 	end
-	UnRegisterLuaAnimation(tostring(self:GetUniqueID())) --unregister the anim
+	UnRegisterLuaAnimation("pac_"..tostring(self:GetUniqueID())) --unregister the anim
 end
 
 pac.RegisterPart(PART)
