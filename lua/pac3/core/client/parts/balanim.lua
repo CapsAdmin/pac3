@@ -36,12 +36,12 @@ end
 function PART:OnThink() 
 	local function LoadBalAnim(str)
 		local regstring="RegisterLuaAnimation("..addquotes(tostring(self:GetUniqueID()))..","..str..")"
-		if (string.find(regstring,"function") ~= -1) then --checking equal to nil isn't working?
+--		if (string.find(regstring,"function") ~= -1) then --checking equal to nil isn't working?
 			local registeranim = CompileString(regstring,"registeranim")
 			animregenv = {RegisterLuaAnimation = RegisterLuaAnimation,} --create an environment where it's only possible to register animations
 			setfenv(registeranim, animregenv) --force registeranim() to run in the limited environment
 			pcall(registeranim) --run registeranim in the environment
-		end
+--		end
 	end
 	--reregister animation when URL changes
 	if currenturl ~= self:GetURL() then
