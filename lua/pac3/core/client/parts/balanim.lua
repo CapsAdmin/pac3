@@ -36,7 +36,7 @@ end
 function PART:OnThink() 
 	local function LoadBalAnim(str)
 		local regstring="RegisterLuaAnimation("..addquotes(tostring(self:GetUniqueID()))..","..str..")"
-		if string.find(regstring,"function") == nil then
+		if (string.find(regstring,"function") == nil) then
 			local registeranim = CompileString(regstring,"registeranim")
 			animregenv = {RegisterLuaAnimation = RegisterLuaAnimation,} --create an environment where it's only possible to register animations
 			setfenv(registeranim, animregenv) --force registeranim() to run in the limited environment
