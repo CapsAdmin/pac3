@@ -1,5 +1,5 @@
 local PART = {}
---suchipi is kinda cool
+--suchipi is cool
 PART.ClassName = "balanim"
 PART.NonPhysical = true
 
