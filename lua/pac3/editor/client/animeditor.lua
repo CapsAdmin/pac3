@@ -271,15 +271,25 @@ local function NewAnimation()
 	type:AddChoice("TYPE_STANCE", TYPE_STANCE)
 	type:AddChoice("TYPE_SEQUENCE", TYPE_SEQUENCE, true)
 	local help = form:Help("Select your options")
+	help:SetColor(Color(255,255,255))
 	local begin = form:Button("Begin")
 	begin.DoClick = function()
 		animName = entry:GetValue()
-		if animName == nil then animName = "" end
 		animType = _G[type:GetText()]
 		
-		if animName == "" then help:SetText("Write a name for this animation") return end
-		if !animType then help:SetText("Select a valid animation type!") return end
-		if animType and animName ~= "" then --don't move on until these are set
+		if animName == "" then 
+			help:SetColor(Color(255,128,128))
+			help:SetText("Write a name for this animation") 
+			surface.PlaySound("ui/buttonrollover.wav")
+			return 
+		end
+		if !animType then 
+			help:SetColor(Color(255,128,128))
+			help:SetText("Select a valid animation type!") 
+			surface.PlaySound("ui/buttonrollover.wav")
+			return 
+		end
+		if (animType == nil) or (animName == nil) then --don't move on until these are set
 		  frame:Remove()
 		  AnimationStarted()
 		end
@@ -297,10 +307,11 @@ local function LoadAnimation()
 	local box = vgui.Create("DComboBox",frame)
 	--box:SetMultiple(false) adurp
 	box:StretchToParent(5,25,5,35)
-	
 	for i,v in pairs(GetLuaAnimations()) do
 		if i != "editortest" && i != "editingAnim" && !string.find(i,"subPosture_") then --anim editor uses this internally
-			box:AddChoice(i)
+			if !string.find(i,"pac_") then --animations made by balanim parts shouldn't be here
+				box:AddChoice(i)
+			end
 		end
 	end
 	
@@ -862,15 +873,17 @@ function TIMELINE:Init()
 			
 
 			local subtraction = 0
-			if firstPass && animationData.StartFrame then
-				for i=1,animationData.StartFrame do
-					local v = animationData.FrameData[i]
-					subtraction = subtraction+(1/(v.FrameRate or 1))
-				end
-			elseif !firstPass && animationData.RestartFrame then
-				for i=1,animationData.RestartFrame do
-					local v = animationData.FrameData[i]
-					subtraction = subtraction+(1/(v.FrameRate or 1))
+			if animationData then
+				if firstPass && animationData.StartFrame then
+					for i=1,animationData.StartFrame do
+						local v = animationData.FrameData[i]
+						subtraction = subtraction+(1/(v.FrameRate or 1))
+					end
+				elseif !firstPass && animationData.RestartFrame then
+					for i=1,animationData.RestartFrame do
+						local v = animationData.FrameData[i]
+						subtraction = subtraction+(1/(v.FrameRate or 1))
+					end
 				end
 			end
 
@@ -1481,17 +1494,19 @@ function SUBANIMS:Refresh()
 		
 		--no need to show these
 		if i != "editortest" && i != animName && i != "editingAnim" && !string.find(i,"subPosture_") then
-			local item = self.AnimList:AddChoice(i)
-			--[[local item = self.AnimList:AddItem(i)
-			item.DoClick = function() 
-				self.SelectedAnim = i
-				if subAnimationsLoaded[i] then
-					self.AddButton:SetText("Remove Animation")
-				else
-					self.AddButton:SetText("Add Animation")
-				end
-					
-			end]]
+			if !string.find(i,"pac_") then --animations made by balanim parts shouldn't be here
+				local item = self.AnimList:AddChoice(i)
+				--[[local item = self.AnimList:AddItem(i)
+				item.DoClick = function() 
+					self.SelectedAnim = i
+					if subAnimationsLoaded[i] then
+						self.AddButton:SetText("Remove Animation")
+					else
+						self.AddButton:SetText("Add Animation")
+					end
+						
+				end]]
+			end
 		end
 	end
 	

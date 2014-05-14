@@ -4,7 +4,7 @@ PART.ClassName = "balanim"
 PART.NonPhysical = true
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Animation", "")
+	pac.GetSet(PART, "URL", "")
 pac.EndStorableVars()
 
 RegisterLuaAnimation('BlankAnim', {
@@ -24,7 +24,7 @@ function UnRegisterLuaAnimation(sName)
 end
 
 function PART:GetNiceName()
-	return pac.PrettifyName(("/".. self:GetAnimation()):match(".+/(.-)%.")) or "no anim"
+	return pac.PrettifyName(("/".. self:GetURL()):match(".+/(.-)%.")) or "no anim"
 end
 
 function PART:Initialize()
@@ -36,25 +36,11 @@ function PART:OnThink()
 	    local thistable = util.JSONToTable(str)
 		RegisterLuaAnimation("pac_"..tostring(self:GetUniqueID()),thistable)
 	end
-	if currentpath ~= self:GetAnimation() then --reregister animation when input path/url changes
-		var = self:GetAnimation()
+	if currentpath ~= self:GetURL() then --reregister animation when input url changes
+		local var = self:GetURL()
 		if var and var:find("http") then
-			http.Fetch(self:GetAnimation(), LoadBalAnim)
-			currentpath = self:GetAnimation()
-		else
-		--[[if file.Exists(var,"GAME") then --data/animations/something.txt
-				local animfile = file.Read(var)
-				LoadBalAnim(animfile)
-			else if file.Exists(var,"DATA") then --animations/something.txt
-				local animfile = file.Read("data/"..var)
-				LoadBalAnim(animfile)
-			else if file.Exists("animations/"..var,"DATA") then --something.txt
-				local animfile = file.Read("data/animations/"..var)
-				LoadBalAnim(animfile)
-			else if file.Exists("animations/"..var..".txt","DATA") then --something
-				local animfile = file.Read("data/animations/"..var..".txt")
-				LoadBalAnim(animfile)
-			end]]
+			http.Fetch(self:GetURL(), LoadBalAnim)
+			currentpath = self:GetURL()
 		end
 	end
 end
