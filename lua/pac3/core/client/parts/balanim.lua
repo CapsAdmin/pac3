@@ -18,7 +18,7 @@ RegisterLuaAnimation('BlankAnim', {
 	Type = TYPE_GESTURE
 })
 
-function addquotes(str) return "\""..str.."\"" end
+--function addquotes(str) return "\""..str.."\"" end
 
 function UnRegisterLuaAnimation(sName)
 	local Animations = GetLuaAnimations()
@@ -43,7 +43,7 @@ function PART:OnThink()
 	end]]
 	local function LoadBalAnim(str) --this is so much better
 	    local thistable = util.JSONToTable(str)
-		RegisterLuaAnimation(addquotes("pac_"..tostring(self:GetUniqueID())),thistable)
+		RegisterLuaAnimation("pac_"..tostring(self:GetUniqueID()),thistable)
 	end
 	--reregister animation when URL changes
 	if currenturl ~= self:GetURL() then
