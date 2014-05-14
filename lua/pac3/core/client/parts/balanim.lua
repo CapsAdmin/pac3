@@ -49,25 +49,30 @@ end
 function PART:OnShow(owner, pos, ang)
 	--play animation
 	local owner = self:GetOwner()
-	if owner and owner:IsValid() then
-	  owner:SetLuaAnimation("pac_"..tostring(self:GetUniqueID()))
+	local Animations = GetLuaAnimations()
+	if owner and owner:IsValid() and Animations["pac_"..tostring(self:GetUniqueID())] then
+		owner:SetLuaAnimation("pac_"..tostring(self:GetUniqueID()))
 	end
 end
 
 function PART:OnHide()
 	--stop animation
 	local owner = self:GetOwner()
-	if owner and owner:IsValid() then
-	  owner:StopLuaAnimation("pac_"..tostring(self:GetUniqueID()))
+	local Animations = GetLuaAnimations()
+	if owner and owner:IsValid() and Animations["pac_"..tostring(self:GetUniqueID())] then
+		owner:StopLuaAnimation("pac_"..tostring(self:GetUniqueID()))
 	end
 end
 
 function PART:OnRemove() 
 	local owner = self:GetOwner()
+	local Animations = GetLuaAnimations()
 	if owner and owner:IsValid() then
-	  owner:SetLuaAnimation("BlankAnim") --play BlankAnim so they don't get stuck
+		owner:SetLuaAnimation("BlankAnim") --play BlankAnim so they don't get stuck
 	end
-	UnRegisterLuaAnimation("pac_"..tostring(self:GetUniqueID())) --unregister the anim
+	if Animations["pac_"..tostring(self:GetUniqueID())] then
+		UnRegisterLuaAnimation("pac_"..tostring(self:GetUniqueID())) --unregister the anim
+	end
 end
 
 pac.RegisterPart(PART)
