@@ -1,5 +1,5 @@
 local PART = {}
---testing webhook
+
 PART.ClassName = "balanim"
 PART.NonPhysical = true
 
@@ -18,8 +18,6 @@ RegisterLuaAnimation('BlankAnim', {
 	Type = TYPE_GESTURE
 })
 
---function addquotes(str) return "\""..str.."\"" end
-
 function UnRegisterLuaAnimation(sName)
 	local Animations = GetLuaAnimations()
 	Animations[sName] = nil
@@ -30,27 +28,21 @@ function PART:GetNiceName()
 end
 
 function PART:Initialize()
-	currenturl = ""
+	currentpath = ""
 end
 
 function PART:OnThink() 
-	--[[local function LoadBalAnim(str)
-		local regstring="RegisterLuaAnimation("..addquotes(tostring(self:GetUniqueID()))..","..str..")"
-		local registeranim = CompileString(regstring,"registeranim")
-		animregenv = {RegisterLuaAnimation = RegisterLuaAnimation,} --create an environment where it's only possible to register animations
-		setfenv(registeranim, animregenv) --force registeranim() to run in the limited environment
-		pcall(registeranim) --run registeranim in the environment
-	end]]
-	local function LoadBalAnim(str) --this is so much better
+	local function LoadBalAnim(str)
 	    local thistable = util.JSONToTable(str)
 		RegisterLuaAnimation("pac_"..tostring(self:GetUniqueID()),thistable)
 	end
-	--reregister animation when URL changes
-	if currenturl ~= self:GetURL() then
-		http.Fetch(self:GetURL(), LoadBalAnim)
-		currenturl = self:GetURL()
+	if currentpath ~= self:GetURL() then --reregister animation when input url changes
+		local var = self:GetURL()
+		if var and var:find("http") then
+			http.Fetch(self:GetURL(), LoadBalAnim)
+			currentpath = self:GetURL()
+		end
 	end
-
 end
 
 function PART:OnShow(owner, pos, ang)
