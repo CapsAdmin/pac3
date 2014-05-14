@@ -35,8 +35,8 @@ end
 
 function PART:OnThink() 
 	local function LoadBalAnim(str) --I didn't know we had this until now
-	    t = pcall(util.JSONToTable, str)
-		RegisterLuaAnimation(addquotes(tostring(self:GetUniqueID())),t)
+	    sometable = pcall(util.JSONToTable, str)
+		RegisterLuaAnimation(addquotes(tostring(self:GetUniqueID())),sometable)
 	end
 	--reregister animation when URL changes
 	if currenturl ~= self:GetURL() then
