@@ -274,12 +274,15 @@ local function NewAnimation()
 	local begin = form:Button("Begin")
 	begin.DoClick = function()
 		animName = entry:GetValue()
+		if animName == nil then animName = "" end
 		animType = _G[type:GetText()]
 		
 		if animName == "" then help:SetText("Write a name for this animation") return end
 		if !animType then help:SetText("Select a valid animation type!") return end
-		frame:Remove()
-		AnimationStarted()
+		if animType and animName ~= "" then --don't move on until these are set
+		  frame:Remove()
+		  AnimationStarted()
+		end
 	end
 	frame:MakePopup()
 	
