@@ -28,20 +28,21 @@ function PART:GetNiceName()
 end
 
 function PART:Initialize()
-	currentpath = ""
+--	currentpath = ""
 end
 
 function PART:OnThink() 
+-- nothing to do here
+end
+
+function PART:SetURL(url)
+	self.URL = url
 	local function LoadBalAnim(str)
 	    local thistable = util.JSONToTable(str)
 		RegisterLuaAnimation("pac_"..tostring(self:GetUniqueID()),thistable)
 	end
-	if currentpath ~= self:GetURL() then --reregister animation when input url changes
-		local var = self:GetURL()
-		if var and var:find("http") then
-			http.Fetch(self:GetURL(), LoadBalAnim)
-			currentpath = self:GetURL()
-		end
+	if url and url:find("http") then
+		http.Fetch(self:GetURL(), LoadBalAnim)
 	end
 end
 
