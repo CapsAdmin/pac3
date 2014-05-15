@@ -50,6 +50,9 @@ function PART:OnShow(owner, pos, ang)
 	--play animation
 	local owner = self:GetOwner()
 	local Animations = GetLuaAnimations()
+	if not Animations["pac_"..tostring(self:GetUniqueID())] then
+		self:SetURL(self:GetURL()) --I don't like this but it isn't /bad/ per se
+	end
 	if owner and owner:IsValid() and Animations["pac_"..tostring(self:GetUniqueID())] then
 		owner:SetLuaAnimation("pac_"..tostring(self:GetUniqueID()))
 	end
