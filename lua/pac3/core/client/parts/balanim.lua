@@ -65,13 +65,17 @@ function PART:OnHide()
 	if owner and owner:IsValid() and Animations["pac_"..tostring(self:GetUniqueID())] then
 		owner:StopLuaAnimation("pac_"..tostring(self:GetUniqueID()))
 	end
-end
+	if owner and owner:IsValid() then
+		owner:ResetBoneMatrix()
+	end
+ end
 
 function PART:OnRemove() 
 	local owner = self:GetOwner()
 	local Animations = GetLuaAnimations()
 	if owner and owner:IsValid() then
-		owner:SetLuaAnimation("BlankAnim") --play BlankAnim so they don't get stuck
+		--owner:SetLuaAnimation("BlankAnim") --play BlankAnim so they don't get stuck
+		owner:ResetBoneMatrix()
 	end
 	if Animations["pac_"..tostring(self:GetUniqueID())] then
 		UnRegisterLuaAnimation("pac_"..tostring(self:GetUniqueID())) --unregister the anim
