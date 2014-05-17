@@ -289,7 +289,7 @@ local function NewAnimation()
 			surface.PlaySound("ui/buttonrollover.wav")
 			return 
 		end
-		if (animType == nil) or (animName == nil) then --don't move on until these are set
+		if (animType ~= nil) and (animName ~= nil) then --don't move on until these are set
 		  frame:Remove()
 		  AnimationStarted()
 		end
