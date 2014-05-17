@@ -104,7 +104,7 @@ list.Set(
 
 hook.Add("PopulateToolMenu", "pac3_spawnmenu", function()
 	spawnmenu.AddToolMenuOption(
-		"Options", 
+		"Utilities", 
 		"PAC",  
 		"PAC3", 
 		L"PAC3", 
