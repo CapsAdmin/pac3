@@ -64,6 +64,17 @@ boneList["ValveBiped"] = {
 	"ValveBiped.bone2"
 	
 }
+local function ParseBones(ent)
+	local thisbone = -1
+	local bonetbl = {}
+	if ent:GetBoneCount() == nil then return {} end
+	while thisbone < ent:GetBoneCount() do
+		thisbone = thisbone + 1
+		realname = ent:GetBoneName(thisbone)
+		if realname ~= "__INVALIDBONE__" then table.insert(bonetbl,realname) end
+	end
+	return bonetbl
+end
 
 local animationData = {}
 
@@ -702,6 +713,7 @@ local function AnimationEditorOff()
 	hook.Remove("Think","FixMouse")
 	hook.Remove("ShouldDrawLocalPlayer","DrawMe")
 	LocalPlayer():StopAllLuaAnimations()
+	LocalPlayer():ResetBoneMatrix()
 	gui.EnableScreenClicker(false)
 	animating = false
 	animName = nil
@@ -778,6 +790,8 @@ function MAIN:Init()
 	self:SetName("Main Settings")
 	self:SetSize(200,315)
 	self:SetPos(0,22)
+	
+	boneList["ParsedSkeleton"] = ParseBones(LocalPlayer())
 	
 	local newanim = self:Button("New Animation")
 	newanim.DoClick = NewAnimation
