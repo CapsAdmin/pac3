@@ -64,6 +64,17 @@ boneList["ValveBiped"] = {
 	"ValveBiped.bone2"
 	
 }
+local function ParseBones(ent)
+	local thisbone = -1
+	local bonetbl = {}
+	if ent:GetBoneCount() == nil then return {} end
+	while thisbone < ent:GetBoneCount() do
+		thisbone = thisbone + 1
+		realname = ent:GetBoneName(thisbone)
+		if realname ~= "__INVALIDBONE__" then table.insert(bonetbl,realname) end
+	end
+	return bonetbl
+end
 
 local animationData = {}
 
@@ -220,6 +231,7 @@ local animEditorPanels = {}
 
 local function AnimationStarted(bLoaded)
 	subAnims:Refresh()
+	boneList["Parsed Skeleton"] = ParseBones(LocalPlayer())
 	if !bLoaded then
 		animationData = {}
 		animationData.FrameData = {}
