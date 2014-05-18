@@ -309,7 +309,7 @@ local function LoadAnimation()
 	box:StretchToParent(5,25,5,35)
 	for i,v in pairs(GetLuaAnimations()) do
 		if i != "editortest" && i != "editingAnim" && !string.find(i,"subPosture_") then --anim editor uses this internally
-			if !string.find(i,"pac_") then --animations made by balanim parts shouldn't be here
+			if !string.find(i,"pac_anim_") then --animations made by balanim parts shouldn't be here
 				box:AddChoice(i)
 			end
 		end
@@ -693,8 +693,8 @@ local function AnimationEditorView(pl,origin,angles,fov)
 end
 
 local function AnimationEditorOff()
-	
-	for i,v in pairs(animEditorPanels) do 
+--I want to eventually create a "save unsaved changes" dialog box when you close
+	for i,v in pairs(animEditorPanels) do 	
 		v:Remove()
 	end
 	hook.Remove("HUDPaint","PaintTopBar")
@@ -1494,7 +1494,7 @@ function SUBANIMS:Refresh()
 		
 		--no need to show these
 		if i != "editortest" && i != animName && i != "editingAnim" && !string.find(i,"subPosture_") then
-			if !string.find(i,"pac_") then --animations made by balanim parts shouldn't be here
+			if !string.find(i,"pac_anim_") then --animations made by balanim parts shouldn't be here
 				local item = self.AnimList:AddChoice(i)
 				--[[local item = self.AnimList:AddItem(i)
 				item.DoClick = function() 
