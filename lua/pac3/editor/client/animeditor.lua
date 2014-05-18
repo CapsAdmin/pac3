@@ -231,7 +231,6 @@ local animEditorPanels = {}
 
 local function AnimationStarted(bLoaded)
 	subAnims:Refresh()
-	boneList["Parsed Skeleton"] = ParseBones(LocalPlayer())
 	if !bLoaded then
 		animationData = {}
 		animationData.FrameData = {}
@@ -714,6 +713,7 @@ local function AnimationEditorOff()
 	hook.Remove("Think","FixMouse")
 	hook.Remove("ShouldDrawLocalPlayer","DrawMe")
 	LocalPlayer():StopAllLuaAnimations()
+	LocalPlayer():ResetBoneMatrix()
 	gui.EnableScreenClicker(false)
 	animating = false
 	animName = nil
@@ -790,6 +790,8 @@ function MAIN:Init()
 	self:SetName("Main Settings")
 	self:SetSize(200,315)
 	self:SetPos(0,22)
+	
+	boneList["ParsedSkeleton"] = ParseBones(LocalPlayer())
 	
 	local newanim = self:Button("New Animation")
 	newanim.DoClick = NewAnimation
