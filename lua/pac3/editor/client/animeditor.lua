@@ -705,6 +705,7 @@ end
 
 local function AnimationEditorOff()
 --I want to eventually create a "save unsaved changes" dialog box when you close
+	file.Write("animations/previous_session.txt", util.TableToJSON(animationData))
 	for i,v in pairs(animEditorPanels) do 	
 		v:Remove()
 	end
@@ -1380,7 +1381,7 @@ vgui.Register("AnimEditor_KeyFrame",KEYFRAME,"DPanel")
 local SLIDERS = {}
 function SLIDERS:Init()
 	self:SetName("Modify Bone")
-	self:SetMinimumSize(200,650)
+	self:SetMinimumSize(200,650) --properly size this later, this is a temporary fix
 	self:SetWide(200)
 	self.Sliders = {}
 	
