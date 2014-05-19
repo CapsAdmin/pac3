@@ -228,7 +228,8 @@ pace.PartTree = {
 		script = true,
 		command = true,
 		projectile = true,
-		balanim = true,
+		--balanim = true,
+		custom_animation = true
 	},  
 }
 
@@ -294,6 +295,7 @@ pace.PartIcons =
 	bodygroup = "icon16/user.png",
 	camera = "icon16/camera.png",
 	balanim = "icon16/film.png",
+	custom_animation = "icon16/film.png",
 }
 
 pace.PartIcons.effects = pace.PartIcons.effect
