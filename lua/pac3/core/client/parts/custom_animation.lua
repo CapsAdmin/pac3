@@ -28,9 +28,15 @@ end
 function PART:OnShow(owner)
 	--play animation
 	local owner = self:GetOwner()
+	local parent = self:GetParent()
 	
 	if not GetLuaAnimations()[self:GetAnimID()] then
 		self:SetURL(self:GetURL())
+	end
+	
+	if parent:IsValid() and parent.ClassName == "model" and parent.Entity:IsValid() then
+		print("Trying to run anim on Entity "..tostring(parent.Entity:EntIndex()).."!")
+		parent.Entity:SetLuaAnimation(self:GetAnimID())
 	elseif owner:IsValid() then
 		owner:SetLuaAnimation(self:GetAnimID())
 	end
@@ -39,11 +45,19 @@ end
 function PART:OnHide()
 	--stop animation
 	local owner = self:GetOwner()
+	local parent = self:GetParent()
 	
-	if owner:IsValid() and GetLuaAnimations()[self:GetAnimID()] then
-		owner:StopLuaAnimation(self:GetAnimID())
-		owner:ResetBoneMatrix()
-	elseif owner:IsValid() then --if, somehow, the owner is valid but the animation is not, their bones should still be reset
+	if parent:IsValid() and parent.ClassName == "model" and parent.Entity:IsValid() then
+		if GetLuaAnimations()[self:GetAnimID()] then
+			print("Trying to stop anim on Entity "..tostring(parent.Entity:EntIndex()).."!")
+			parent.Entity:StopLuaAnimation(self:GetAnimID())
+		end
+		print("Trying to reset bones on Entity "..tostring(parent.Entity:EntIndex()).."!")
+		parent.Entity:ResetBoneMatrix()
+	elseif owner:IsValid() then
+		if GetLuaAnimations()[self:GetAnimID()] then
+			owner:StopLuaAnimation(self:GetAnimID())
+		end
 		owner:ResetBoneMatrix()
 	end
 end
