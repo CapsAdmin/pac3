@@ -31,7 +31,7 @@ function PART:OnShow(owner)
 	
 	if not GetLuaAnimations()[self:GetAnimID()] then
 		self:SetURL(self:GetURL())
-	elseif IsValid(owner) then --according to the gmod wiki, owner:IsValid() checks if the owner is valid, but IsValid(owner) checks if the owner is valid and not nil
+	elseif owner:IsValid() then
 		owner:SetLuaAnimation(self:GetAnimID())
 	end
 end
@@ -40,10 +40,10 @@ function PART:OnHide()
 	--stop animation
 	local owner = self:GetOwner()
 	
-	if IsValid(owner) and GetLuaAnimations()[self:GetAnimID()] then
+	if owner:IsValid() and GetLuaAnimations()[self:GetAnimID()] then
 		owner:StopLuaAnimation(self:GetAnimID())
 		owner:ResetBoneMatrix()
-	elseif IsValid(owner) then --if, somehow, the owner is valid but the animation is not, their bones should still be reset
+	elseif owner:IsValid() then --if, somehow, the owner is valid but the animation is not, their bones should still be reset
 		owner:ResetBoneMatrix()
 	end
 end
@@ -51,7 +51,7 @@ end
 function PART:OnRemove() 
 	local owner = self:GetOwner()
 
-	if IsValid(owner) then
+	if owner:IsValid() then
 		owner:ResetBoneMatrix()
 	end
 	
