@@ -1,6 +1,6 @@
 local PART = {}
 
-PART.ClassName = "balanim"
+PART.ClassName = "custom_animation"
 PART.NonPhysical = true
 
 pac.StartStorableVars()
