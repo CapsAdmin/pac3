@@ -44,7 +44,7 @@ function pace.ClientOptionsMenu(pnl)
 	)
 
 	pnl:CheckBox(
-		L"Render objects outside visible fov",
+		L"render objects outside visible fov",
 		"pac_override_fov"
 	)	
 
