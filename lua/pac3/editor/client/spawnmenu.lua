@@ -41,6 +41,11 @@ function pace.ClientOptionsMenu(pnl)
 	pnl:CheckBox(
 		L"enable",
 		"pac_enable"
+	)
+
+	pnl:CheckBox(
+		L"Render objects outside visible fov",
+		"pac_override_fov"
 	)	
 
 	pnl:NumSlider(
