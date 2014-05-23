@@ -1010,7 +1010,9 @@ pac.AddHook("EntityEmitSound", function(data)
 	end
 	
 	if ent.pac_mute_sounds then
-		return false
+		if ent.pac_allow_ogg_sounds and string.find(data.SoundName,".ogg") then return
+		else return false
+		end
 	end
 end)
 
