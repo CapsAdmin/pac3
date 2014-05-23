@@ -705,9 +705,12 @@ end
 
 local function AnimationEditorOff()
 --I want to eventually create a "save unsaved changes" dialog box when you close
+	if(!file.Exists("animations/backups","DATA")) then file.CreateDir"animations/backups" end
+	file.Write("animations/backups/previous_session_"..os.date("%m%d%y%H%M%S")..".txt", util.TableToJSON(animationData))
 	for i,v in pairs(animEditorPanels) do 	
 		v:Remove()
 	end
+	RunConsoleCommand("animeditor_in_editor", "0")
 	hook.Remove("HUDPaint","PaintTopBar")
 	hook.Remove("CalcView","AnimationView")
 	hook.Remove("Think","FixMouse")
@@ -730,9 +733,10 @@ local function AnimationEditorOn()
 		v:Remove()
 	end
 	
+	RunConsoleCommand("animeditor_in_editor", "1")
 	
 	local close = vgui.Create("DButton")
-	close:SetText("C")
+	close:SetText("X")
 	close.DoClick = function(slf) AnimationEditorOff() end
 	close:SetSize(16,16)
 	close:SetPos(4,4)
@@ -1380,6 +1384,7 @@ vgui.Register("AnimEditor_KeyFrame",KEYFRAME,"DPanel")
 local SLIDERS = {}
 function SLIDERS:Init()
 	self:SetName("Modify Bone")
+	self:SetMinimumSize(200,650) --make sure all sliders are visible
 	self:SetWide(200)
 	self.Sliders = {}
 	
@@ -1526,3 +1531,14 @@ function SUBANIMS:Refresh()
 	
 end
 vgui.Register("AnimEditor_SubAnimations",SUBANIMS,"DFrame")
+
+hook.Add("HUDPaint", "animeditor_InAnimEditor", function()		
+	for key, ply in pairs(player.GetAll()) do
+		if ply ~= LocalPlayer() and ply:GetNWBool("animeditor_in_editor") then
+			local id = ply:LookupBone("ValveBiped.Bip01_Head1")
+			local pos_3d = id and ply:GetBonePosition(id) or ply:EyePos()
+			local pos_2d = (pos_3d + Vector(0,0,10)):ToScreen()
+			draw.DrawText("In Animation Editor", "ChatFont", pos_2d.x, pos_2d.y, Color(255,255,255,math.Clamp((pos_3d + Vector(0,0,10)):Distance(EyePos()) * -1 + 500, 0, 500)/500*255),1)
+		end
+	end
+end)
