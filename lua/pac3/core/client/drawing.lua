@@ -270,6 +270,7 @@ end
 
 local util_PixelVisible = util.PixelVisible
 local cvar_distance = CreateClientConVar("pac_draw_distance", "500")
+local cvar_fovoverride = CreateClientConVar("pac_override_fov", "0")
 
 pac.EyePos = vector_origin
 function pac.RenderScene(pos, ang)
@@ -354,6 +355,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 	pac.FrameNumber = FrameNumber()
 
 	draw_dist = cvar_distance:GetInt()
+	fovoverride = cvar_fovoverride:GetInt()
 	sv_draw_dist = GetConVarNumber("pac_sv_draw_distance")
 	radius = 0
 	
@@ -382,7 +384,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 				
 				ent ~= pac.LocalPlayer and 
 				(					
-					(util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 or (dst < radius * 1.25)) and 
+					((util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 or fovoverride ~= 0) or (dst < radius * 1.25)) and 
 					(
 						(sv_draw_dist ~= 0 and (sv_draw_dist == -1 or dst < sv_draw_dist)) or
 						(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance < dst)) or
