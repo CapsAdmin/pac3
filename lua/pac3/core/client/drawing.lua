@@ -113,8 +113,38 @@ local function show_parts(ent)
 	end
 end
 
+local function force_hide_parts(ent)
+	if ent.pac_parts then
+		for key, part in pairs(ent.pac_parts) do
+			part:CallRecursive("OnHide", true)
+			part:SetKeyValueRecursive("last_hidden", nil)
+			part:SetKeyValueRecursive("shown_from_rendering", false)
+			part:SetKeyValueRecursive("draw_hidden", true)
+		end
+		
+		pac.ResetBones(ent)		
+		ent.pac_drawing = false
+	end
+end
+
+local function force_show_parts(ent)
+	if ent.pac_parts then
+		for key, part in pairs(ent.pac_parts) do
+			part:CallRecursive("OnHide")
+			part:SetKeyValueRecursive("last_hidden", nil)
+			part:SetKeyValueRecursive("shown_from_rendering", true)
+			part:SetKeyValueRecursive("draw_hidden", false)
+		end
+		
+		pac.ResetBones(ent)
+		ent.pac_drawing = true
+	end
+end
+
 pac.HideEntityParts = hide_parts
 pac.ShowEntityParts = show_parts
+pac.ForceHideEntityParts = force_hide_parts
+pac.ForceShowEntityParts = force_show_parts
 
 local function render_override(ent, type, draw_only)
 	
