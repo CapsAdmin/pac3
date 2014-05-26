@@ -430,13 +430,13 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 					)
 				)
 			then 
-				if not (list.Get("pac_ignored_players")[ent:Nick()] or list.Get("pac_ignored_players")[ent:CPPIGetOwner():Nick()]) then
+				--if not (list.Get("pac_ignored_players")[ent:Nick()] or list.Get("pac_ignored_players")[ent:CPPIGetOwner():Nick()]) then
 					ent.pac_model = ent:GetModel() -- used for cached functions
 					
 					show_parts(ent)
 				
 					pac.RenderOverride(ent, "opaque")
-				end
+				--end
 			else
 				hide_parts(ent)
 			end
