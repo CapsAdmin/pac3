@@ -297,6 +297,15 @@ function pac.UnhookEntityRender(ent, part)
 	pac.profile_info[ent:EntIndex()] = nil
 end
 
+function pac.IgnorePlayer(ply)
+	list.Set("pac_ignored_players",ply:Nick(),1)
+	pac.HideEntityParts(ply)
+end
+
+function pac.UnIgnorePlayer(ply)
+	list.Set("pac_ignored_players",ply:Nick(),0)
+	pac.ShowEntityParts(ply)
+end
 
 local util_PixelVisible = util.PixelVisible
 local cvar_distance = CreateClientConVar("pac_draw_distance", "500")
@@ -407,12 +416,12 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 				radius = radius * 4
 			end
 			
-			if 		
+			if 	
 				draw_dist == -1 or
 				ent.IsPACWorldEntity or
 				(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or (ent.pac_camera and ent.pac_camera:IsValid())) or
 				
-				ent ~= pac.LocalPlayer and 
+				ent ~= pac.LocalPlayer and list.Get("pac_ignored_players")[ent:Nick()] ~= 1 and
 				(					
 					((util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 or fovoverride ~= 0) or (dst < radius * 1.25)) and 
 					(
