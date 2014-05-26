@@ -419,9 +419,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 			if 	
 				draw_dist == -1 or
 				ent.IsPACWorldEntity or
-				(not list.Get("pac_ignored_players")[ent:Nick()]) or (not list.Get("pac_ignored_players")[ent:CPPIGetOwner():Nick()]) or
 				(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or (ent.pac_camera and ent.pac_camera:IsValid())) or
-				
 				ent ~= pac.LocalPlayer and 
 				(					
 					((util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 or fovoverride ~= 0) or (dst < radius * 1.25)) and 
@@ -431,12 +429,14 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 						(dst < draw_dist)
 					)
 				)
-			then
-				ent.pac_model = ent:GetModel() -- used for cached functions
+			then 
+				if not (list.Get("pac_ignored_players")[ent:Nick()] or list.Get("pac_ignored_players")[ent:CPPIGetOwner():Nick()]) then
+					ent.pac_model = ent:GetModel() -- used for cached functions
+					
+					show_parts(ent)
 				
-				show_parts(ent)
-			
-				pac.RenderOverride(ent, "opaque")
+					pac.RenderOverride(ent, "opaque")
+				end
 			else
 				hide_parts(ent)
 			end
