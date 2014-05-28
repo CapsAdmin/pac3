@@ -33,15 +33,15 @@ function PART:OnThink()
 					self.bodygroup_info = v
 					self.bodygroup_info.model_index = math.Clamp(self.ModelIndex, 0, v.num - 1)
 					
-					if ent:IsPlayer() then
+					--[[if ent:IsPlayer() then
 						ent.pac_bodygroup_info = self.bodygroup_info
-					end
+					end]]
 					break
 				end
 			end
 		end
 	
-		if self.bodygroup_info and not ent:IsPlayer() then
+		if self.bodygroup_info --[[and not ent:IsPlayer()]] then
 			ent:SetBodygroup(self.bodygroup_info.id, self.bodygroup_info.model_index)
 		end
 	end
