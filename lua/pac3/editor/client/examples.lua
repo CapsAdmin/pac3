@@ -5596,7 +5596,7 @@ pace.example_outfits["engineer wrench viewmodel"] = {[1] = {
 		["Description"] = "add parts to me!",
 	},
 },
-},
+}
 
 pace.example_outfits["toggle visor"] = {[1] = {
 	["children"] = {
