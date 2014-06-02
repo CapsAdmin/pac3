@@ -301,6 +301,8 @@ local function NewAnimation()
 			return 
 		end
 		if (animType ~= nil) and (animName ~= nil) then --don't move on until these are set
+		  if animType == TYPE_SEQUENCE then pace.SetTPose(true) end
+		  if animType ~= TYPE_SEQUENCE then pace.SetTPose(false) end
 		  frame:Remove()
 		  AnimationStarted()
 		end
@@ -335,6 +337,8 @@ local function LoadAnimation()
 		animName = box:GetText()
 		animationData = GetLuaAnimations()[animName] or {}
 		animType = animationData.Type
+		if animType == TYPE_SEQUENCE then pace.SetTPose(true) end
+		if animType ~= TYPE_SEQUENCE then pace.SetTPose(false) end
 		frame:Remove()
 		AnimationStarted(true)
 		LocalPlayer():StopAllLuaAnimations()
@@ -568,6 +572,9 @@ local function LoadAnimationFromFile()
 		animName = name
 		animationData = GetLuaAnimations()[animName] or {}
 		animType = animationData.Type
+		
+		if animType == TYPE_SEQUENCE then pace.SetTPose(true) end
+		if animType ~= TYPE_SEQUENCE then pace.SetTPose(false) end
 		frame:Remove()
 		AnimationStarted(true)
 		LocalPlayer():StopAllLuaAnimations()
@@ -715,6 +722,7 @@ local function AnimationEditorOff()
 	hook.Remove("CalcView","AnimationView")
 	hook.Remove("Think","FixMouse")
 	hook.Remove("ShouldDrawLocalPlayer","DrawMe")
+	pace.SetTPose(false)
 	LocalPlayer():StopAllLuaAnimations()
 	LocalPlayer():ResetBoneMatrix()
 	gui.EnableScreenClicker(false)
