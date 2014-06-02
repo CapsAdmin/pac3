@@ -124,7 +124,7 @@ local function toggle_drawing_parts(ent, b)
 		ent.shouldnotdraw = true
 	end
 end
-
+ 
 pac.HideEntityParts = hide_parts
 pac.ShowEntityParts = show_parts
 pac.TogglePartDrawing = toggle_drawing_parts
