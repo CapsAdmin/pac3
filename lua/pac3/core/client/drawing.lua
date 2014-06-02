@@ -281,14 +281,10 @@ function pac.UnhookEntityRender(ent, part)
 end
 
 function pac.IgnorePlayer(ply)
-	--list.Set("pac_ignored_players",ply:Nick(),1)
-	--pac.HideEntityParts(ply)
 	toggle_drawing_parts(ply, false)
 end
 
 function pac.UnIgnorePlayer(ply)
-	--list.Set("pac_ignored_players",ply:Nick(),nil)
-	--pac.ShowEntityParts(ply)
 	toggle_drawing_parts(ply, true)
 end
 
@@ -415,13 +411,11 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 					)
 				)
 			then 
-				--if not (list.Get("pac_ignored_players")[ent:Nick()] or list.Get("pac_ignored_players")[ent:CPPIGetOwner():Nick()]) then
-					ent.pac_model = ent:GetModel() -- used for cached functions
+				ent.pac_model = ent:GetModel() -- used for cached functions
 					
-					show_parts(ent)
+				show_parts(ent)
 				
-					pac.RenderOverride(ent, "opaque")
-				--end
+				pac.RenderOverride(ent, "opaque")
 			else
 				hide_parts(ent)
 			end
