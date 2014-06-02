@@ -27,6 +27,8 @@ include("integration_tools.lua")
 include("mat_proxies.lua")
 include("wire_expression_extension.lua")
 
+include("netmessages.lua")
+
 pac.LoadParts()
 
 function pac.Enable()
