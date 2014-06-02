@@ -100,7 +100,7 @@ local function hide_parts(ent)
 end
 
 local function show_parts(ent)
-	if ent.pac_parts and (not ent.pac_drawing) and (not ent.shouldnotdraw) then
+	if ent.pac_parts and (not ent.pac_drawing) and (not ent.shouldnotdraw) and (not ent.pacignored) then
 		for key, part in pairs(ent.pac_parts) do
 			part:CallRecursive("OnHide")
 			part:SetKeyValueRecursive("last_hidden", nil)
@@ -282,10 +282,12 @@ end
 
 function pac.IgnorePlayer(ply)
 	toggle_drawing_parts(ply, false)
+	ply.pacignored = true
 end
 
 function pac.UnIgnorePlayer(ply)
 	toggle_drawing_parts(ply, true)
+	ply.pacignored = false
 end
 
 local util_PixelVisible = util.PixelVisible
