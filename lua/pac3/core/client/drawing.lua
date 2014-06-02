@@ -100,7 +100,7 @@ local function hide_parts(ent)
 end
 
 local function show_parts(ent)
-	if ent.pac_parts and not ent.pac_drawing then
+	if ent.pac_parts and (not ent.pac_drawing) and (not ent.shouldnotdraw) then
 		for key, part in pairs(ent.pac_parts) do
 			part:CallRecursive("OnHide")
 			part:SetKeyValueRecursive("last_hidden", nil)
@@ -113,38 +113,21 @@ local function show_parts(ent)
 	end
 end
 
-local function force_hide_parts(ent)
-	if ent.pac_parts then
-		for key, part in pairs(ent.pac_parts) do
-			part:CallRecursive("OnHide", true)
-			part:SetKeyValueRecursive("last_hidden", nil)
-			part:SetKeyValueRecursive("shown_from_rendering", false)
-			part:SetKeyValueRecursive("draw_hidden", true)
-		end
-		
-		pac.ResetBones(ent)		
+local function toggle_drawing_parts(ent, b)
+	if b then
 		ent.pac_drawing = false
-	end
-end
-
-local function force_show_parts(ent)
-	if ent.pac_parts then
-		for key, part in pairs(ent.pac_parts) do
-			part:CallRecursive("OnHide")
-			part:SetKeyValueRecursive("last_hidden", nil)
-			part:SetKeyValueRecursive("shown_from_rendering", true)
-			part:SetKeyValueRecursive("draw_hidden", false)
-		end
-		
-		pac.ResetBones(ent)
+		show_parts(ent)
+		ent.shouldnotdraw = false
+	else
 		ent.pac_drawing = true
+		hide_parts(ent)
+		ent.shouldnotdraw = true
 	end
 end
 
 pac.HideEntityParts = hide_parts
 pac.ShowEntityParts = show_parts
-pac.ForceHideEntityParts = force_hide_parts
-pac.ForceShowEntityParts = force_show_parts
+pac.TogglePartDrawing = toggle_drawing_parts
 
 local function render_override(ent, type, draw_only)
 	
@@ -298,13 +281,15 @@ function pac.UnhookEntityRender(ent, part)
 end
 
 function pac.IgnorePlayer(ply)
-	list.Set("pac_ignored_players",ply:Nick(),1)
-	pac.HideEntityParts(ply)
+	--list.Set("pac_ignored_players",ply:Nick(),1)
+	--pac.HideEntityParts(ply)
+	toggle_drawing_parts(ply, false)
 end
 
 function pac.UnIgnorePlayer(ply)
-	list.Set("pac_ignored_players",ply:Nick(),nil)
-	pac.ShowEntityParts(ply)
+	--list.Set("pac_ignored_players",ply:Nick(),nil)
+	--pac.ShowEntityParts(ply)
+	toggle_drawing_parts(ply, true)
 end
 
 local util_PixelVisible = util.PixelVisible
