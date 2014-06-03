@@ -717,7 +717,7 @@ local function AnimationEditorOff()
 	for i,v in pairs(animEditorPanels) do 	
 		v:Remove()
 	end
-	RunConsoleCommand("animeditor_in_editor", "0")
+	pac.SetInAnimEditor(false)
 	hook.Remove("HUDPaint","PaintTopBar")
 	hook.Remove("CalcView","AnimationView")
 	hook.Remove("Think","FixMouse")
@@ -741,7 +741,8 @@ local function AnimationEditorOn()
 		v:Remove()
 	end
 	
-	RunConsoleCommand("animeditor_in_editor", "1")
+	--RunConsoleCommand("animeditor_in_editor", "1")
+	pac.SetInAnimEditor(true)
 	
 	local close = vgui.Create("DButton")
 	close:SetText("X")
@@ -1542,7 +1543,7 @@ vgui.Register("AnimEditor_SubAnimations",SUBANIMS,"DFrame")
 
 hook.Add("HUDPaint", "animeditor_InAnimEditor", function()		
 	for key, ply in pairs(player.GetAll()) do
-		if ply ~= LocalPlayer() and ply:GetNWBool("animeditor_in_editor") then
+		if ply ~= LocalPlayer() and ply.InAnimEditor then
 			local id = ply:LookupBone("ValveBiped.Bip01_Head1")
 			local pos_3d = id and ply:GetBonePosition(id) or ply:EyePos()
 			local pos_2d = (pos_3d + Vector(0,0,10)):ToScreen()
