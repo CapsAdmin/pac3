@@ -280,14 +280,14 @@ function pac.UnhookEntityRender(ent, part)
 	pac.profile_info[ent:EntIndex()] = nil
 end
 
-function pac.IgnorePlayer(ply)
-	toggle_drawing_parts(ply, false)
-	ply.pac_ignored = true
+function pac.IgnoreEntity(ent)
+	toggle_drawing_parts(ent, false)
+	ent.pac_ignored = true
 end
 
-function pac.UnIgnorePlayer(ply)
-	toggle_drawing_parts(ply, true)
-	ply.pac_ignored = false
+function pac.UnIgnoreEntity(ent)
+	toggle_drawing_parts(ent, true)
+	ent.pac_ignored = false
 end
 
 local util_PixelVisible = util.PixelVisible
