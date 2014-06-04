@@ -100,7 +100,7 @@ local function hide_parts(ent)
 end
 
 local function show_parts(ent)
-	if ent.pac_parts and (not ent.pac_drawing) and (not ent.shouldnotdraw) and (not ent.pacignored) then
+	if ent.pac_parts and (not ent.pac_drawing) and (not ent.pac_shouldnotdraw) and (not ent.pac_ignored) then
 		for key, part in pairs(ent.pac_parts) do
 			part:CallRecursive("OnHide")
 			part:SetKeyValueRecursive("last_hidden", nil)
@@ -117,11 +117,11 @@ local function toggle_drawing_parts(ent, b)
 	if b then
 		ent.pac_drawing = false
 		show_parts(ent)
-		ent.shouldnotdraw = false
+		ent.pac_shouldnotdraw = false
 	else
 		ent.pac_drawing = true
 		hide_parts(ent)
-		ent.shouldnotdraw = true
+		ent.pac_shouldnotdraw = true
 	end
 end
  
@@ -280,14 +280,14 @@ function pac.UnhookEntityRender(ent, part)
 	pac.profile_info[ent:EntIndex()] = nil
 end
 
-function pac.IgnorePlayer(ply)
-	toggle_drawing_parts(ply, false)
-	ply.pacignored = true
+function pac.IgnoreEntity(ent)
+	toggle_drawing_parts(ent, false)
+	ent.pac_ignored = true
 end
 
-function pac.UnIgnorePlayer(ply)
-	toggle_drawing_parts(ply, true)
-	ply.pacignored = false
+function pac.UnIgnoreEntity(ent)
+	toggle_drawing_parts(ent, true)
+	ent.pac_ignored = false
 end
 
 local util_PixelVisible = util.PixelVisible
