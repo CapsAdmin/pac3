@@ -6,6 +6,7 @@ end
 if SERVER then
 
 	function pac.SetPlayerModel(ply, model)
+		if ClockWork then return end -- Clockwork fix
 		model = player_manager.AllValidModels()[model] or model
 		
 		if not util.IsValidModel(model) then
@@ -46,6 +47,7 @@ if SERVER then
 	end)
 	
 	hook.Add("Think", "pac_setmodel", function(ply)	
+		if ClockWork then return end -- Clockwork fix
 		for key, ply in pairs(player.GetAll()) do
 			if ply.pac_last_modifier_model and ply:GetModel():lower() ~= ply.pac_last_modifier_model then
 				ply:SetModel(ply.pac_last_modifier_model)
