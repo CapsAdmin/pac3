@@ -100,7 +100,7 @@ local function hide_parts(ent)
 end
 
 local function show_parts(ent)
-	if ent.pac_parts and not ent.pac_drawing then
+	if ent.pac_parts and (not ent.pac_drawing) and (not ent.pac_shouldnotdraw) and (not ent.pac_ignored) then
 		for key, part in pairs(ent.pac_parts) do
 			part:CallRecursive("OnHide")
 			part:SetKeyValueRecursive("last_hidden", nil)
@@ -113,8 +113,21 @@ local function show_parts(ent)
 	end
 end
 
+local function toggle_drawing_parts(ent, b)
+	if b then
+		ent.pac_drawing = false
+		show_parts(ent)
+		ent.pac_shouldnotdraw = false
+	else
+		ent.pac_drawing = true
+		hide_parts(ent)
+		ent.pac_shouldnotdraw = true
+	end
+end
+
 pac.HideEntityParts = hide_parts
 pac.ShowEntityParts = show_parts
+pac.TogglePartDrawing = toggle_drawing_parts
 
 local function render_override(ent, type, draw_only)
 	
@@ -267,9 +280,19 @@ function pac.UnhookEntityRender(ent, part)
 	pac.profile_info[ent:EntIndex()] = nil
 end
 
+function pac.IgnoreEntity(ent)
+	toggle_drawing_parts(ent, false)
+	ent.pac_ignored = true
+end
+
+function pac.UnIgnoreEntity(ent)
+	toggle_drawing_parts(ent, true)
+	ent.pac_ignored = false
+end
 
 local util_PixelVisible = util.PixelVisible
 local cvar_distance = CreateClientConVar("pac_draw_distance", "500")
+local cvar_fovoverride = CreateClientConVar("pac_override_fov", "0")
 
 pac.EyePos = vector_origin
 function pac.RenderScene(pos, ang)
@@ -354,6 +377,7 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 	pac.FrameNumber = FrameNumber()
 
 	draw_dist = cvar_distance:GetInt()
+	fovoverride = cvar_fovoverride:GetInt()
 	sv_draw_dist = GetConVarNumber("pac_sv_draw_distance")
 	radius = 0
 	
@@ -375,25 +399,24 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 				radius = radius * 4
 			end
 			
-			if 		
+			if 	
 				draw_dist == -1 or
 				ent.IsPACWorldEntity or
 				(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or (ent.pac_camera and ent.pac_camera:IsValid())) or
-				
 				ent ~= pac.LocalPlayer and 
 				(					
-					(util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 or (dst < radius * 1.25)) and 
+					((util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 or fovoverride ~= 0) or (dst < radius * 1.25)) and 
 					(
 						(sv_draw_dist ~= 0 and (sv_draw_dist == -1 or dst < sv_draw_dist)) or
 						(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance < dst)) or
 						(dst < draw_dist)
 					)
 				)
-			then
+			then 
 				ent.pac_model = ent:GetModel() -- used for cached functions
-				
+					
 				show_parts(ent)
-			
+				
 				pac.RenderOverride(ent, "opaque")
 			else
 				hide_parts(ent)

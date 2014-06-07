@@ -41,6 +41,11 @@ function pace.ClientOptionsMenu(pnl)
 	pnl:CheckBox(
 		L"enable",
 		"pac_enable"
+	)
+
+	pnl:CheckBox(
+		L"render objects outside visible fov",
+		"pac_override_fov"
 	)	
 
 	pnl:NumSlider(
@@ -120,7 +125,7 @@ list.Set(
 
 hook.Add("PopulateToolMenu", "pac3_spawnmenu", function()
 	spawnmenu.AddToolMenuOption(
-		"Options", 
+		"Utilities", 
 		"PAC",  
 		"PAC3", 
 		L"PAC3", 
