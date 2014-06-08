@@ -1349,6 +1349,7 @@ function KEYFRAME:OnMousePressed(mc)
 				data.BoneInfo[i].RR = v.RR
 				data.BoneInfo[i].RF = v.RF
 			end
+			keyframe:SetLength(1/(self:GetData().FrameRate))
 			sliders:SetFrameData()
 
 			--[[local tbl = animationData.FrameData
