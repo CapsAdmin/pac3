@@ -16,6 +16,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Max", 1)
 	pac.GetSet(PART, "WeaponHoldType", "none")
 	pac.GetSet(PART, "OwnerCycle", false)
+	pac.GetSet(PART, "ResetOnHide", true)
 pac.EndStorableVars()
 
 
@@ -101,7 +102,7 @@ function PART:OnHide()
 			ent.pac_animation_holdtypes[self] = nil
 		end
 		
-		if not ent:IsPlayer() then
+		if not ent:IsPlayer() and self:GetResetOnHide() then
 			ent:SetSequence(0)
 		end
 	end
