@@ -340,6 +340,9 @@ end
 
 local last
 
+local volume             = GetConVar("volume")
+local snd_mute_losefocus = GetConVar("snd_mute_losefocus")
+
 hook.Add("Think", "webaudio", function()
     local mult = cvar:GetFloat()
 
@@ -431,10 +434,11 @@ hook.Add("Think", "webaudio", function()
 
     if not webaudio.initialized then return end
 
-	local vol = GetConVarNumber("volume")
-
-	if not system.HasFocus() and GetConVarNumber("snd_mute_losefocus") == 1 then
+	local vol
+	if not system.HasFocus() and snd_mute_losefocus:GetBool() then
 		vol = 0
+	else
+		vol = volume:GetFloat()
 	end
 
 	vol = vol * mult
