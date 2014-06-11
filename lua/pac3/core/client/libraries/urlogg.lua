@@ -334,7 +334,11 @@ end
 
 local cvar = CreateClientConVar("pac_ogg_volume", "1", true)
 
+local webaudio_volume = nil
 function webaudio.SetVolume(num)
+	if webaudio_volume == num then return end
+	
+	webaudio_volume = num
     webaudio.html:QueueJavascript(string.format("gain.gain.value = %f", num))
 end
 
