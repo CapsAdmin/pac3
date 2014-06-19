@@ -11,7 +11,7 @@ include("effects.lua")
 include("event.lua")
 include("map_outfit.lua")
 include("boneanimlib.lua")
-include("animeditor.lua")
+
 include("netmessages.lua")
 
 CreateConVar("has_pac3", "1", {FCVAR_NOTIFY})
