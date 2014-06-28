@@ -64,6 +64,17 @@ boneList["ValveBiped"] = {
 	"ValveBiped.bone2"
 	
 }
+local function ParseBones(ent)
+	local thisbone = -1
+	local bonetbl = {}
+	if ent:GetBoneCount() == nil then return {} end
+	while thisbone < ent:GetBoneCount() do
+		thisbone = thisbone + 1
+		realname = ent:GetBoneName(thisbone)
+		if realname ~= "__INVALIDBONE__" then table.insert(bonetbl,realname) end
+	end
+	return bonetbl
+end
 
 local animationData = {}
 
@@ -271,15 +282,30 @@ local function NewAnimation()
 	type:AddChoice("TYPE_STANCE", TYPE_STANCE)
 	type:AddChoice("TYPE_SEQUENCE", TYPE_SEQUENCE, true)
 	local help = form:Help("Select your options")
+	help:SetColor(Color(255,255,255))
 	local begin = form:Button("Begin")
 	begin.DoClick = function()
 		animName = entry:GetValue()
 		animType = _G[type:GetText()]
 		
-		if animName == "" then help:SetText("Write a name for this animation") return end
-		if !animType then help:SetText("Select a valid animation type!") return end
-		frame:Remove()
-		AnimationStarted()
+		if animName == "" then 
+			help:SetColor(Color(255,128,128))
+			help:SetText("Write a name for this animation") 
+			surface.PlaySound("ui/buttonrollover.wav")
+			return 
+		end
+		if !animType then 
+			help:SetColor(Color(255,128,128))
+			help:SetText("Select a valid animation type!") 
+			surface.PlaySound("ui/buttonrollover.wav")
+			return 
+		end
+		if (animType ~= nil) and (animName ~= nil) then --don't move on until these are set
+		  if animType == TYPE_SEQUENCE then pace.SetTPose(true) end
+		  if animType ~= TYPE_SEQUENCE then pace.SetTPose(false) end
+		  frame:Remove()
+		  AnimationStarted()
+		end
 	end
 	frame:MakePopup()
 	
@@ -294,10 +320,11 @@ local function LoadAnimation()
 	local box = vgui.Create("DComboBox",frame)
 	--box:SetMultiple(false) adurp
 	box:StretchToParent(5,25,5,35)
-	
 	for i,v in pairs(GetLuaAnimations()) do
 		if i != "editortest" && i != "editingAnim" && !string.find(i,"subPosture_") then --anim editor uses this internally
-			box:AddChoice(i)
+			if !string.find(i,"pac_anim_") then --animations made by balanim parts shouldn't be here
+				box:AddChoice(i)
+			end
 		end
 	end
 	
@@ -310,6 +337,8 @@ local function LoadAnimation()
 		animName = box:GetText()
 		animationData = GetLuaAnimations()[animName] or {}
 		animType = animationData.Type
+		if animType == TYPE_SEQUENCE then pace.SetTPose(true) end
+		if animType ~= TYPE_SEQUENCE then pace.SetTPose(false) end
 		frame:Remove()
 		AnimationStarted(true)
 		LocalPlayer():StopAllLuaAnimations()
@@ -543,6 +572,9 @@ local function LoadAnimationFromFile()
 		animName = name
 		animationData = GetLuaAnimations()[animName] or {}
 		animType = animationData.Type
+		
+		if animType == TYPE_SEQUENCE then pace.SetTPose(true) end
+		if animType ~= TYPE_SEQUENCE then pace.SetTPose(false) end
 		frame:Remove()
 		AnimationStarted(true)
 		LocalPlayer():StopAllLuaAnimations()
@@ -679,15 +711,20 @@ local function AnimationEditorView(pl,origin,angles,fov)
 end
 
 local function AnimationEditorOff()
-	
-	for i,v in pairs(animEditorPanels) do 
+--I want to eventually create a "save unsaved changes" dialog box when you close
+	if(!file.Exists("animations/backups","DATA")) then file.CreateDir"animations/backups" end
+	file.Write("animations/backups/previous_session_"..os.date("%m%d%y%H%M%S")..".txt", util.TableToJSON(animationData))
+	for i,v in pairs(animEditorPanels) do 	
 		v:Remove()
 	end
+	pac.SetInAnimEditor(false)
 	hook.Remove("HUDPaint","PaintTopBar")
 	hook.Remove("CalcView","AnimationView")
 	hook.Remove("Think","FixMouse")
 	hook.Remove("ShouldDrawLocalPlayer","DrawMe")
+	pace.SetTPose(false)
 	LocalPlayer():StopAllLuaAnimations()
+	LocalPlayer():ResetBoneMatrix()
 	gui.EnableScreenClicker(false)
 	animating = false
 	animName = nil
@@ -697,16 +734,18 @@ local function AnimationEditorOff()
 end
 
 local function AnimationEditorOn()
-	if not LocalPlayer():IsSuperAdmin() and not game.SinglePlayer() then return end
+	--if not LocalPlayer():IsSuperAdmin() and not game.SinglePlayer() then return end
 
 	if animating then AnimationEditorOff() return end
 	for i,v in pairs(animEditorPanels) do 
 		v:Remove()
 	end
 	
+	--RunConsoleCommand("animeditor_in_editor", "1")
+	pac.SetInAnimEditor(true)
 	
 	local close = vgui.Create("DButton")
-	close:SetText("C")
+	close:SetText("X")
 	close.DoClick = function(slf) AnimationEditorOff() end
 	close:SetSize(16,16)
 	close:SetPos(4,4)
@@ -764,6 +803,8 @@ function MAIN:Init()
 	self:SetName("Main Settings")
 	self:SetSize(200,315)
 	self:SetPos(0,22)
+	
+	boneList["ParsedSkeleton"] = ParseBones(LocalPlayer())
 	
 	local newanim = self:Button("New Animation")
 	newanim.DoClick = NewAnimation
@@ -859,15 +900,17 @@ function TIMELINE:Init()
 			
 
 			local subtraction = 0
-			if firstPass && animationData.StartFrame then
-				for i=1,animationData.StartFrame do
-					local v = animationData.FrameData[i]
-					subtraction = subtraction+(1/(v.FrameRate or 1))
-				end
-			elseif !firstPass && animationData.RestartFrame then
-				for i=1,animationData.RestartFrame do
-					local v = animationData.FrameData[i]
-					subtraction = subtraction+(1/(v.FrameRate or 1))
+			if animationData then
+				if firstPass && animationData.StartFrame then
+					for i=1,animationData.StartFrame do
+						local v = animationData.FrameData[i]
+						subtraction = subtraction+(1/(v.FrameRate or 1))
+					end
+				elseif !firstPass && animationData.RestartFrame then
+					for i=1,animationData.RestartFrame do
+						local v = animationData.FrameData[i]
+						subtraction = subtraction+(1/(v.FrameRate or 1))
+					end
 				end
 			end
 
@@ -1306,6 +1349,7 @@ function KEYFRAME:OnMousePressed(mc)
 				data.BoneInfo[i].RR = v.RR
 				data.BoneInfo[i].RF = v.RF
 			end
+			keyframe:SetLength(1/(self:GetData().FrameRate))
 			sliders:SetFrameData()
 
 			--[[local tbl = animationData.FrameData
@@ -1350,6 +1394,7 @@ vgui.Register("AnimEditor_KeyFrame",KEYFRAME,"DPanel")
 local SLIDERS = {}
 function SLIDERS:Init()
 	self:SetName("Modify Bone")
+	self:SetMinimumSize(200,650) --properly size this later, this is a temporary fix
 	self:SetWide(200)
 	self.Sliders = {}
 	
@@ -1478,19 +1523,32 @@ function SUBANIMS:Refresh()
 		
 		--no need to show these
 		if i != "editortest" && i != animName && i != "editingAnim" && !string.find(i,"subPosture_") then
-			local item = self.AnimList:AddChoice(i)
-			--[[local item = self.AnimList:AddItem(i)
-			item.DoClick = function() 
-				self.SelectedAnim = i
-				if subAnimationsLoaded[i] then
-					self.AddButton:SetText("Remove Animation")
-				else
-					self.AddButton:SetText("Add Animation")
-				end
-					
-			end]]
+			if !string.find(i,"pac_anim_") then --animations made by balanim parts shouldn't be here
+				local item = self.AnimList:AddChoice(i)
+				--[[local item = self.AnimList:AddItem(i)
+				item.DoClick = function() 
+					self.SelectedAnim = i
+					if subAnimationsLoaded[i] then
+						self.AddButton:SetText("Remove Animation")
+					else
+						self.AddButton:SetText("Add Animation")
+					end
+						
+				end]]
+			end
 		end
 	end
 	
 end
 vgui.Register("AnimEditor_SubAnimations",SUBANIMS,"DFrame")
+
+hook.Add("HUDPaint", "animeditor_InAnimEditor", function()		
+	for key, ply in pairs(player.GetAll()) do
+		if ply ~= LocalPlayer() and ply.InAnimEditor then
+			local id = ply:LookupBone("ValveBiped.Bip01_Head1")
+			local pos_3d = id and ply:GetBonePosition(id) or ply:EyePos()
+			local pos_2d = (pos_3d + Vector(0,0,10)):ToScreen()
+			draw.DrawText("In Animation Editor", "ChatFont", pos_2d.x, pos_2d.y, Color(255,255,255,math.Clamp((pos_3d + Vector(0,0,10)):Distance(EyePos()) * -1 + 500, 0, 500)/500*255),1)
+		end
+	end
+end)

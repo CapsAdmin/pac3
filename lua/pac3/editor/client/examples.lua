@@ -5597,3 +5597,111 @@ pace.example_outfits["engineer wrench viewmodel"] = {[1] = {
 	},
 },
 }
+
+pace.example_outfits["toggle visor"] = {[1] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ClassName"] = "event",
+								["UniqueID"] = "322686765",
+								["Event"] = "is_flashlight_on",
+							},
+						},
+					},
+					["self"] = {
+						["ClassName"] = "proxy",
+						["UniqueID"] = "3911060605",
+						["Expression"] = "1.5-clamp(timeex()*0.75,0,1.5),nil,nil",
+						["EditorExpand"] = true,
+						["VariableName"] = "PositionOffset",
+					},
+				},
+				[2] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Event"] = "is_flashlight_on",
+								["ClassName"] = "event",
+								["Invert"] = true,
+								["UniqueID"] = "2946404636",
+							},
+						},
+					},
+					["self"] = {
+						["ClassName"] = "proxy",
+						["UniqueID"] = "1059528532",
+						["Expression"] = "clamp(timeex()*0.75,0,1.5),nil,nil",
+						["EditorExpand"] = true,
+						["VariableName"] = "PositionOffset",
+					},
+				},
+				[3] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ClassName"] = "event",
+								["UniqueID"] = "989968329",
+								["Event"] = "is_flashlight_on",
+							},
+						},
+					},
+					["self"] = {
+						["ClassName"] = "proxy",
+						["UniqueID"] = "11378563",
+						["Expression"] = "-20+clamp(timeex()*10,0,20),nil,nil",
+						["EditorExpand"] = true,
+						["VariableName"] = "AngleOffset",
+					},
+				},
+				[4] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Event"] = "is_flashlight_on",
+								["ClassName"] = "event",
+								["Invert"] = true,
+								["UniqueID"] = "1761752820",
+							},
+						},
+					},
+					["self"] = {
+						["ClassName"] = "proxy",
+						["UniqueID"] = "2769038604",
+						["Expression"] = "-clamp(timeex()*10,0,20),nil,nil",
+						["EditorExpand"] = true,
+						["VariableName"] = "AngleOffset",
+					},
+				},
+			},
+			["self"] = {
+				["EditorExpand"] = true,
+				["Position"] = Vector(0, 0.66455078125, 0.0146484375),
+				["UniqueID"] = "3708941127",
+				["ClassName"] = "model",
+				["Model"] = "models/player/items/engineer/drg_brainiac_goggles.mdl",
+				["Angles"] = Angle(0, -79.03125, -90),
+			},
+		},
+	},
+	["self"] = {
+		["EditorExpand"] = true,
+		["UniqueID"] = "599543498",
+		["ClassName"] = "group",
+		["Name"] = "my outfit",
+		["Description"] = "add parts to me!",
+	},
+},
+
+}
