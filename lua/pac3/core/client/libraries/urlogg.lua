@@ -3,7 +3,7 @@
 local webaudio = pac.webaudio or {}
 
 webaudio.preinit = false
-webaudio.debug = 0
+webaudio.debug = 1
 webaudio.initialized = false
 webaudio.rate = 0
 webaudio.SpeedOfSound = 6
@@ -311,7 +311,7 @@ do -- STREAM
     local stream_count = 0
 
     function webaudio.Stream(url)
-        url = url:gsub("http[s?]://", "http://")
+        --url = url:gsub("http[s?]://", "http://")
 
         if not url:find("http") then
             url = "asset://garrysmod/sound/" .. url
