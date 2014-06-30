@@ -3,7 +3,7 @@
 local webaudio = pac.webaudio or {}
 
 webaudio.preinit = false
-webaudio.debug = 1
+webaudio.debug = 0
 webaudio.initialized = false
 webaudio.rate = 0
 webaudio.SpeedOfSound = 6
@@ -24,7 +24,7 @@ local function dprint(str)
 
         MsgC(Color(0, 255, 0), "[WebAudio] ")
         MsgC(Color(255, 255, 255), str)
-        Msg("\b")
+        Msg("\n")
     end
 
     if webaudio.debug >= 2 then
