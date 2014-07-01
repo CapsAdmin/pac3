@@ -25,7 +25,7 @@ function GetLuaAnimations()
 end
 
 function RegisterLuaAnimation(sName, tInfo)
-	if tInfo.FrameData then
+	if tInfo and tInfo.FrameData then
 		local BonesUsed = {}
 		for iFrame, tFrame in ipairs(tInfo.FrameData) do
 			for iBoneID, tBoneTable in pairs(tFrame.BoneInfo) do
