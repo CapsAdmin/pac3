@@ -24,6 +24,41 @@ do --dev util
 		pac.Parts = {}
 	end
 
+	function pac.CreateClientConVarFast(cvar,initial,save,t,server)
+		local val
+		local c = CreateClientConVar(cvar,initial,save,server)
+		
+		local ConVarChanged
+		
+		if t=="string" or t=="str" then
+			ConVarChanged = function( cvar, old, new ) 
+				val= ( new ) 
+			end
+		elseif t=="boolean" or t=="bool" then
+			ConVarChanged = function( cvar, old, new ) 
+				val= (tonumber(new) or 0)>=1
+			end
+		
+		elseif t=="number" or t=="num" then
+			ConVarChanged = function( cvar, old, new ) 
+				val= tonumber( new ) or 0
+			end
+		
+		elseif t=="integer" or t=="int" then
+			ConVarChanged = function( cvar, old, new ) 
+				val= math.floor(tonumber( new ) or 0)
+			end
+		end
+
+		if not ConVarChanged then error("Invalid type: "..tostring(t)) end
+		cvars.AddChangeCallback(cvar,ConVarChanged)
+		ConVarChanged(cvar,nil,initial)
+		
+		local function GetConVarValue() return val end
+		
+		return GetConVarValue,c
+	end
+
 
 	function pac.Restart()
 		if pac then pac.Panic() end

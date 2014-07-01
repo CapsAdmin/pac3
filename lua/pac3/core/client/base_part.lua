@@ -126,37 +126,29 @@ function PART:GetName()
 	return self.Name
 end
 
-function PART:ConVarEnabled()
-	if not self.last_cvar_check or self.last_cvar_check < pac.RealTime then
+function PART:GetEnabled()
 	
-		self.last_cvar_check = pac.RealTime + 0.25
-
-		if self.last_enabled == nil then
-			self.last_enabled = true
-		end
+	local enabled = self.IsEnabled()
 	
-		if not self.cvar_enable:GetBool() then 
-			if self.last_enabled ~= false then
-				self:CallRecursive("OnHide") 
-				self.last_enabled = false
-			end
-			
-			self.enabled = false
-			
-			return false
-		else
-			if self.last_enabled ~= true then
-				self:CallRecursive("OnShow") 
-				self.last_enabled = true
-			end
-		end
-		
-		self.enabled = true
-		
-		return true
+	if self.last_enabled==enabled then
+		return enabled
 	end
+	
+	-- changed
+	
+	if self.last_enabled == nil then
+		self.last_enabled = enabled
+	else
+		self.last_enabled = enabled
 		
-	return self.enabled 
+		if enabled then
+			self:CallRecursive("OnShow") 
+		else
+			self:CallRecursive("OnHide") 
+		end
+		
+	end
+
 end
 
 do -- modifiers
@@ -811,7 +803,8 @@ do -- drawing. this code is running every frame
 	local pos, ang, owner
 	
 	function PART:Draw(event, pos, ang, draw_type)	
-		if not self:ConVarEnabled() then return end
+		-- only check the single value, Think takes care of thinking
+		if not self.last_enabled then return end
 		
 		if not self:IsHidden() then			
 			owner = self:GetOwner()	
@@ -1008,7 +1001,7 @@ do -- drawing. this code is running every frame
 end
 	
 function PART:Think()
-	if not self:ConVarEnabled() then return end
+	if not self:GetEnabled() then return end
 	
 	local b = self:IsHidden()
 	
