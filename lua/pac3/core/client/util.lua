@@ -52,7 +52,7 @@ do --dev util
 
 		if not ConVarChanged then error("Invalid type: "..tostring(t)) end
 		cvars.AddChangeCallback(cvar,ConVarChanged)
-		ConVarChanged(cvar,nil,initial)
+		ConVarChanged(cvar,nil,c:GetString())
 		
 		local function GetConVarValue() return val end
 		
