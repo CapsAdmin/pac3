@@ -803,9 +803,9 @@ do -- drawing. this code is running every frame
 	local pos, ang, owner
 	
 	function PART:Draw(event, pos, ang, draw_type)	
-		-- only check the single value, Think takes care of thinking
-		if not self.last_enabled then return end
 		
+		if not self:GetEnabled() then return end
+	
 		if not self:IsHidden() then			
 			owner = self:GetOwner()	
 										

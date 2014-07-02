@@ -27,6 +27,7 @@ do --dev util
 	function pac.CreateClientConVarFast(cvar,initial,save,t,server)
 		local val
 		local c = CreateClientConVar(cvar,initial,save,server)
+		Msg"[FCVar] "print(cvar,c:GetString(),initial)
 		
 		local ConVarChanged
 		
