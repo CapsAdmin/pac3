@@ -128,7 +128,7 @@ end
 
 function PART:GetEnabled()
 	
-	local enabled = self.IsEnabled()
+	local enabled = self:IsEnabled()
 	
 	if self.last_enabled==enabled then
 		return enabled
@@ -142,13 +142,17 @@ function PART:GetEnabled()
 		self.last_enabled = enabled
 		
 		if enabled then
-			self:CallRecursive("OnShow") 
+			self:CallRecursive("OnShow")
+			--Msg"OnShow"print(self)
 		else
 			self:CallRecursive("OnHide") 
+			--Msg"OnHide"print(self)
 		end
 		
 	end
 
+	return enabled
+	
 end
 
 do -- modifiers
@@ -804,46 +808,48 @@ do -- drawing. this code is running every frame
 	
 	function PART:Draw(event, pos, ang, draw_type)	
 		
-		if not self:GetEnabled() then return end
+		-- Think takes care of polling this
+		if not self.last_enabled then return end
 	
-		if not self:IsHidden() then			
-			owner = self:GetOwner()	
-										
-			if self[event] then	
-					
-				if 
-					draw_type == "viewmodel" or
-					((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
-					((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
-				then
-					
-					pos = pos or Vector(0,0,0)
-					ang = ang or Angle(0,0,0)
+		if self:IsHidden() then	return end
+		
+		owner = self:GetOwner()
+		
+		if self[event] then	
+				
+			if 
+				draw_type == "viewmodel" or
+				((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
+				((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
+			then
+				
+				pos = pos or Vector(0,0,0)
+				ang = ang or Angle(0,0,0)
 
-					pos, ang = self:GetDrawPosition()
-					
-					pos = pos or Vector(0,0,0)
-					ang = ang or Angle(0,0,0)
-					
-					self.cached_pos = pos
-					self.cached_ang = ang
-					
-					if self.PositionOffset ~= VEC0 or self.AngleOffset ~= ANG0 then
-						pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
-					end
-						
-					if not self.HandleModifiersManually then self:ModifiersPreEvent(event, draw_type) end
-									
-					self[event](self, owner, pos, ang) -- this is where it usually calls Ondraw on all the parts
-					
-					if not self.HandleModifiersManually then self:ModifiersPostEvent(event, draw_type) end
+				pos, ang = self:GetDrawPosition()
+				
+				pos = pos or Vector(0,0,0)
+				ang = ang or Angle(0,0,0)
+				
+				self.cached_pos = pos
+				self.cached_ang = ang
+				
+				if self.PositionOffset ~= VEC0 or self.AngleOffset ~= ANG0 then
+					pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
 				end
-			end
-
-			for _, part in pairs(self.Children) do
-				part:Draw(event, pos, ang, draw_type)
+					
+				if not self.HandleModifiersManually then self:ModifiersPreEvent(event, draw_type) end
+								
+				self[event](self, owner, pos, ang) -- this is where it usually calls Ondraw on all the parts
+				
+				if not self.HandleModifiersManually then self:ModifiersPostEvent(event, draw_type) end
 			end
 		end
+
+		for _, part in pairs(self.Children) do
+			part:Draw(event, pos, ang, draw_type)
+		end
+			
 	end
 	
 	local LocalToWorld = LocalToWorld
