@@ -312,26 +312,48 @@ local cvar_framesuppress = CreateClientConVar("pac_suppress_frames", 1, false, f
 RunConsoleCommand("pac_suppress_frames", "1") -- this should almost never be off..
 
 -- this needs to be called when before drawing things like minimaps and pac_suppress_frames is on
+local skip_rendering
 function pac.SkipRendering(b)
 	pac.skip_rendering = b
+		skip_rendering = b
 end
 
 -- this is if you want to force it
+local force_rendering
 function pac.ForceRendering(b)
 	pac.force_rendering = b
+		force_rendering = b
 end
 
+-- skybox hack --
+local in_skybox = false
+
+hook.Add("PreDrawSkyBox","pac",function()
+	if in_skybox==true then 
+		hook.Remove("PreDrawSkyBox","pac")
+		in_skybox = false
+		error"in_skybox was never disabled"
+	end
+	in_skybox = true
+end)
+hook.Add("PostDrawSkyBox","pac",function()
+	in_skybox = false
+end)
+-----------------
+	
 local function setup_suppress()
 	local last_framenumber = 0
 	local current_frame = 0
 	local current_frame_count = 0
 	
 	return function()
-		if pac.force_rendering then
+		if force_rendering then
 			return false
 		end
-	
-		if pac.skip_rendering then 
+		
+		if in_skybox then return end
+		
+		if skip_rendering then 
 			return true
 		end
 		
