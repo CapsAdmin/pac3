@@ -326,19 +326,19 @@ function pac.ForceRendering(b)
 end
 
 -- skybox hack --
---local in_skybox = false
---
---hook.Add("PreDrawSkyBox","pac",function()
---	if in_skybox==true then 
---		hook.Remove("PreDrawSkyBox","pac")
---		in_skybox = false
---		error"in_skybox was never disabled"
---	end
---	in_skybox = true
---end)
---hook.Add("PostDrawSkyBox","pac",function()
---	in_skybox = false
---end)
+local in_skybox = false
+
+hook.Add("PreDrawSkyBox","pac",function()
+	if in_skybox==true then 
+		hook.Remove("PreDrawSkyBox","pac")
+		in_skybox = false
+		error"in_skybox was never disabled"
+	end
+	in_skybox = true
+end)
+hook.Add("PostDrawSkyBox","pac",function()
+	in_skybox = false
+end)
 -----------------
 	
 local function setup_suppress()
@@ -389,7 +389,7 @@ local dst = 0
 
 local should_suppress = setup_suppress()
 function pac.PostDrawOpaqueRenderables(drawdepth,drawing_skybox)	
-	if drawing_skybox or should_suppress() then return end
+	if in_skybox or should_suppress() then return end
 	
 	--garbage = collectgarbage("count")
 	
@@ -452,7 +452,7 @@ pac.AddHook("PostDrawOpaqueRenderables")
 
 local should_suppress = setup_suppress()
 function pac.PostDrawTranslucentRenderables(drawing_depth,drawing_skybox)
-	if drawing_skybox or should_suppress() then return end
+	if in_skybox or should_suppress() then return end
 
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
