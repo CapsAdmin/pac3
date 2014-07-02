@@ -151,6 +151,7 @@ local render_MaterialOverride = render.ModelMaterialOverride
 local render_SuppressEngineLighting = render.SuppressEngineLighting
 local LocalToWorld = LocalToWorld
 local MATERIAL_CULLMODE_CW = MATERIAL_CULLMODE_CW
+local render=render
 
 function PART:PreEntityDraw(owner, ent, pos, ang)	
 	

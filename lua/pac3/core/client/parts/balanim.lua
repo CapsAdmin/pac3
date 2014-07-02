@@ -19,9 +19,9 @@ function PART:SetURL(url)
 		self.URL = url
 		
 		if url:find("http") then
-			http.Fetch(url, function(str)
+			pac.SimpleFetch(url, function(str)
 				RegisterLuaAnimation(self:GetAnimID(), util.JSONToTable(str))
-			end, function() return end) --should do nothing on invalid/inaccessible URL
+			end) --should do nothing on invalid/inaccessible URL
 		end
 end
 

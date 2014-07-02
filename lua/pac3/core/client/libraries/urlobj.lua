@@ -240,7 +240,7 @@ function urlobj.Think()
 			
 			data.Downloading = pac.RealTime + 15
 
-			http.Fetch(url, function(obj_str)	
+			pac.SimpleFetch(url, function(obj_str)	
 				pac.dprint("downloaded model %q %s", url, string.NiceSize(#obj_str))
 				
 				pac.dprint("%s", obj_str)

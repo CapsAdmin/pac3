@@ -21,7 +21,7 @@ function PART:SetURL(url)
 		if url:find("http") then
 			http.Fetch(url, function(str,len,hdr,code)
 				if not str or code~=200 then 
-					Msg"[PAC] Animation failed to load from "print(url)
+					Msg"[PAC] Animation failed to load from "print(url,code)
 					return
 				end
 				local tbl = util.JSONToTable(str)
@@ -30,7 +30,7 @@ function PART:SetURL(url)
 					return
 				end
 				RegisterLuaAnimation(self:GetAnimID(), tbl)
-			end, function() return end) --should do nothing on invalid/inaccessible URL
+			end, function(code) Msg"[PAC] Animation failed to load from "print(url,code) end) --should do nothing on invalid/inaccessible URL
 		end
 end
 
