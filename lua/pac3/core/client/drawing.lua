@@ -229,6 +229,8 @@ end
 pac.Errors = {}
 
 function pac.RenderOverride(ent, type, draw_only)
+	if Profiler then Profiler:Begin ("pac.RenderOverride [" .. tostring (ent) .. "]") end
+	
 	local ok, err = pcall(render_override, ent, type, draw_only)
 	if not ok then
 		print("pac3 failed to render ", tostring(ent), ":")
@@ -246,6 +248,8 @@ function pac.RenderOverride(ent, type, draw_only)
 	else
 		ent.pac_error = nil
 	end
+	
+	if Profiler then Profiler:End () end
 end
 
 pac.firstperson_parts = pac.firstperson_parts or {}
