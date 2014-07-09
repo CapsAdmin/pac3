@@ -105,9 +105,9 @@ function PART:SetURL(URL)
 		
 	for _, URL in pairs(urls) do			
 		local flags = "3d noplay noblock"
-		if self.Loop then
-			flags = flags .. " loop"
-		end
+		--[[if self.Loop then
+			flags = flags .. " loop" --sound.PlayURL has no loop flag are you high
+		end]]
 		
 		local callback callback = function (snd, ...)		
 			if not snd or not snd:IsValid() then 
@@ -116,6 +116,11 @@ function PART:SetURL(URL)
 			end
 
 			if pace and pace.Editor:IsValid() and pace.current_part:IsValid() and pace.current_part.ClassName == "webaudio" and self:GetPlayerOwner() == pac.LocalPlayer then
+				if self.Loop and (snd:GetLength() > 0) then
+					snd:EnableLooping(true)
+				else
+					snd:EnableLooping(false)
+				end
 				snd:Play()
 			end
 			
