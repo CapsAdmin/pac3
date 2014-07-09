@@ -99,7 +99,7 @@ pace.AddTool(L"scale this and children", function(part, suboption)
 end)
 
 pace.AddTool(L"square model scales", function(part, suboption)
-	Derma_StringRequest(L"model", L"input the model name that should get squared", "1", function(model)
+	Derma_StringRequest(L"model", L"input the model name that should get squared", "default.mdl", function(model)
 		for _, part in pairs(pac.GetParts(true)) do
 			if part:IsValid() and part.GetModel then
 				local function square_scale(part)	
