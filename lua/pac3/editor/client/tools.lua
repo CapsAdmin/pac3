@@ -98,6 +98,27 @@ pace.AddTool(L"scale this and children", function(part, suboption)
 	end)
 end)
 
+pace.AddTool(L"square model scales", function(part, suboption)
+	Derma_StringRequest(L"model", L"input the model name that should get squared", "1", function(model)
+		for _, part in pairs(pac.GetParts(true)) do
+			if part:IsValid() and part.GetModel then
+				local function square_scale(part)	
+					if part.SetSize then 
+						part:SetSize(part:GetSize() * part:GetSize()) 
+					end 
+							
+					if part.SetScale then
+						part:SetScale(part:GetScale() * part:GetScale())
+					end
+				end
+				if string.find(part:GetModel(),model) then
+					square_scale(part)
+				end
+			end			
+		end
+	end)
+end)
+
 pace.AddTool(L"show only with active weapon", function(part, suboption)
 	local event = part:CreatePart("event")
 	local owner = part:GetOwner(true)
