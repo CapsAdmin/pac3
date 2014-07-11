@@ -112,7 +112,7 @@ pace.AddTool(L"free children from part", function(part, suboption)
 	end			
 end)
 
-pace.AddTool(L"square model scales", function(part, suboption)
+pace.AddTool(L"square model scales...", function(part, suboption)
 	Derma_StringRequest(L"model", L"input the model name that should get squared", "default.mdl", function(model)
 		for _, part in pairs(pac.GetParts(true)) do
 			if part:IsValid() and part.GetModel then
@@ -150,6 +150,23 @@ pace.AddTool(L"show only with active weapon", function(part, suboption)
 	event:ParseArguments(class_name, suboption == 1)
 
 end, L"hide weapon", L"show weapon")
+
+pace.AddTool(L"import editor tool from file...", function()
+	if LocalPlayer():IsSuperAdmin() then
+		Derma_StringRequest(L"filename", L"relative to garrysmod/data/pac3_editor/tools/", "mytool.txt", function(toolfile)
+			if file.Exists("pac3_editor/tools/"..toolfile,"DATA") then
+				local toolstr = file.Read("pac3_editor/tools/"..toolfile,"DATA")
+				ctoolstr=[[pace.AddTool("]]..toolfile..[[",function(part, suboption) ]]..toolstr.." end)"
+				RunStringEx(ctoolstr, "pac_editor_import_tool")
+				LocalPlayer():ConCommand("pac_editor") --close and reopen editor
+			else
+				Derma_Message("File ".."garrysmod/data/pac3_editor/tools/"..toolfile.." not found.","Error: File Not Found","OK")
+			end
+		end)
+	else
+		Derma_Message("You must be a superadmin to import pac editor tools.","Error: Access Denied","OK")
+	end
+end)
 
 pace.AddTool(L"spawn as props", function(part)
 	local data = pace.PartToContraptionData(part)
@@ -237,7 +254,7 @@ do
 
 end
 	
-
+pace.AddTool("---------", function() end)
 do return end
 
 pace.AddTool(L"convert to expression2 holo", function(part)
