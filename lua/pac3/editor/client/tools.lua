@@ -168,6 +168,26 @@ pace.AddTool(L"import editor tool from file...", function()
 	end
 end)
 
+pace.AddTool(L"import editor tool from url...", function()
+	if LocalPlayer():IsSuperAdmin() then
+		Derma_StringRequest(L"URL", L"URL to PAC Editor tool txt file", "http://www.example.com/tool.txt", function(toolurl)
+		function ToolDLSuccess(body)
+			local toolname = pac.PrettifyName(toolurl:match(".+/(.-)%."))
+			local toolstr = body
+			ctoolstr=[[pace.AddTool("]]..toolname..[[",function(part, suboption) ]]..toolstr.." end)"
+			RunStringEx(ctoolstr, "pac_editor_import_tool")
+			LocalPlayer():ConCommand("pac_editor") --close and reopen editor
+		end
+		function ToolDLFail(body)
+			Derma_Message("HTTP Request Failed for "..toolurl,"Error: Request Failed","OK")
+		end
+		http.Fetch(toolurl,ToolDLSuccess,ToolDLFail)
+		end)
+	else
+		Derma_Message("You must be a superadmin to import pac editor tools.","Error: Access Denied","OK")
+	end
+end)
+
 pace.AddTool(L"spawn as props", function(part)
 	local data = pace.PartToContraptionData(part)
 	net.Start("pac_to_contraption")
