@@ -41,6 +41,8 @@ pac.StartStorableVars()
 	
 	pac.GetSet(PART, "UsePlayerColor", false)
 	pac.GetSet(PART, "UseWeaponColor", false)
+	
+	pac.GetSet(PART, "LodOverride", -1)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -704,6 +706,14 @@ function PART:SetBoneMergeAlternative(b)
 		else
 			ent:SetParent(NULL)
 		end
+	end
+end
+
+function PART:SetLodOverride(num)
+	local ent = self.Entity
+	if ent:IsValid() then
+		ent:SetLOD(num)
+		self.LodOverride = num
 	end
 end
 
