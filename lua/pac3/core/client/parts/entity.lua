@@ -421,7 +421,7 @@ function PART:OnHide()
 		end
 		
 		if self.LodOverride ~= -1 then
-			ent:SetLOD(backlod)
+			ent:SetLOD(-1)
 		end
 	end
 end
