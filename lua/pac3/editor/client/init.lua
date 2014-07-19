@@ -132,7 +132,8 @@ function pace.OpenEditor()
 		ctp:Disable()
 	end
 	
-	RunConsoleCommand("pac_in_editor", "1")
+	--RunConsoleCommand("pac_in_editor", "1")
+	pac.SetInPAC3Editor(true)
 	
 	pace.DisableExternalHooks()
 	
@@ -149,7 +150,8 @@ function pace.CloseEditor()
 		pace.Call("CloseEditor") 
 	end
 	
-	RunConsoleCommand("pac_in_editor", "0")
+	--RunConsoleCommand("pac_in_editor", "0")
+	pac.SetInPAC3Editor(false)
 end
 
 hook.Add("pace_Disable", "pac_editor_disable", function()
@@ -240,7 +242,7 @@ end
 
 hook.Add("HUDPaint", "pac_InPAC3Editor", function()		
 	for key, ply in pairs(player.GetAll()) do
-		if ply ~= LocalPlayer() and ply:GetNWBool("in pac3 editor") then
+		if ply ~= LocalPlayer() and ply.InPAC3Editor then
 			local id = ply:LookupBone("ValveBiped.Bip01_Head1")
 			local pos_3d = id and ply:GetBonePosition(id) or ply:EyePos()
 			local pos_2d = (pos_3d + Vector(0,0,10)):ToScreen()
