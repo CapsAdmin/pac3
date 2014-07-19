@@ -301,12 +301,12 @@ function pace.HUDPaint()
 		end
 		
 		local x, y = pace.Editor:GetPos() + pace.Editor:GetWide() + 4, 0
-		for i, text in ipairs(legacy_text) do
+		--[[for i, text in ipairs(legacy_text) do
 			draw.SimpleTextOutlined(text, "DermaDefault", x, y, i == 4 and Color(255, 150, 150) or Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, Color(0,0,0,255))
 			surface.SetFont("DermaDefault")
 			local w, h = surface.GetTextSize(text)
 			y = y + h
-		end
+		end]]
 	end
 end
 
