@@ -117,7 +117,8 @@ pace.AddTool(L"show only with active weapon", function(part, suboption)
 end, L"hide weapon", L"show weapon")
 
 pace.AddTool(L"import editor tool from file...", function()
-	if LocalPlayer():IsSuperAdmin() then
+	local allowcslua = GetConVar("sv_allowcslua")
+	if allowcslua:GetBool() then
 		Derma_StringRequest(L"filename", L"relative to garrysmod/data/pac3_editor/tools/", "mytool.txt", function(toolfile)
 			if file.Exists("pac3_editor/tools/"..toolfile,"DATA") then
 				local toolstr = file.Read("pac3_editor/tools/"..toolfile,"DATA")
@@ -129,12 +130,13 @@ pace.AddTool(L"import editor tool from file...", function()
 			end
 		end)
 	else
-		Derma_Message("You must be a superadmin to import pac editor tools.","Error: Access Denied","OK")
+		Derma_Message("Importing pac editor tools is disallowed on this server.","Error: Clientside Lua Disabled","OK")
 	end
 end)
 
 pace.AddTool(L"import editor tool from url...", function()
-	if LocalPlayer():IsSuperAdmin() then
+	local allowcslua = GetConVar("sv_allowcslua")
+	if allowcslua:GetBool() then
 		Derma_StringRequest(L"URL", L"URL to PAC Editor tool txt file", "http://www.example.com/tool.txt", function(toolurl)
 		function ToolDLSuccess(body)
 			local toolname = pac.PrettifyName(toolurl:match(".+/(.-)%."))
@@ -149,7 +151,7 @@ pace.AddTool(L"import editor tool from url...", function()
 		http.Fetch(toolurl,ToolDLSuccess,ToolDLFail)
 		end)
 	else
-		Derma_Message("You must be a superadmin to import pac editor tools.","Error: Access Denied","OK")
+		Derma_Message("Importing pac editor tools is disallowed on this server.","Error: Clientside Lua Disabled","OK")
 	end
 end)
 
