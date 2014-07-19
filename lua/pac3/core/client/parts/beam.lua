@@ -96,6 +96,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "EndColor", Vector(255, 255, 255))
 	pac.GetSet(PART, "StartAlpha", 1)
 	pac.GetSet(PART, "EndAlpha", 1)
+	pac.GetSet(PART, "UseEndpointOffsets", false)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -190,13 +191,18 @@ function PART:OnDraw(owner, pos, ang)
 	if self.Materialm and self.StartColorC and self.EndColorC and part:IsValid() then
 		render.SetMaterial(self.Materialm)
 		--(veca, vecb, dira, dirb, bend, res, width, start_color, end_color, frequency, tex_stretch, width_bend, width_bend_size)
+		local opos = Vector(0,0,0)
+		local oang = Angle(0,0,0)
+		if self.UseEndpointOffsets then
+			opos, oang = LocalToWorld(part.PositionOffset,part.AngleOffset,part.cached_pos,part.cached_ang) - part.cached_pos, part.cached_ang
+		end
 		pac.DrawBeam(
 		
 			pos, 
-			part.cached_pos, 
+			part.cached_pos + opos, 
 			
 			ang:Forward(), 			
-			part.cached_ang:Forward(), 
+			(part.cached_ang + oang):Forward(), 
 			
 			self.Bend, 
 			self.Resolution, 
