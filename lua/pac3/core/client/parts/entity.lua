@@ -34,6 +34,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "WalkSpeed", 0)
 	pac.GetSet(PART, "CrouchSpeed", 0)
 	pac.GetSet(PART, "FallApartOnDeath", false)
+	pac.GetSet(PART, "LodOverride", -1)
 	
 	pac.GetSet(PART, "UseLegacyScale", false)
 pac.EndStorableVars()
@@ -339,6 +340,8 @@ function PART:OnShow()
 		self.current_ro = ent.RenderOverride
 		
 		self:UpdateScale()
+		
+		if self.LodOverride ~= -1 then self:SetLodOverride(self.LodOverride) end
 	end	
 end
 
@@ -348,6 +351,14 @@ function PART:SetModel(str)
 	local ent = self:GetOwner()
 	if str ~= "" and ent:IsValid() and ent == pac.LocalPlayer then
 		RunConsoleCommand("pac_setmodel", self.Model)
+	end
+end
+
+function PART:SetLodOverride(num)
+	local owner = self:GetOwner()
+	if owner:IsValid() then
+		owner:SetLOD(num)
+		self.LodOverride = num
 	end
 end
 
@@ -405,6 +416,10 @@ function PART:OnHide()
 				wep.pac_hide_weapon = nil
 				pac.HideWeapon(wep, false)
 			end
+		end
+		
+		if self.LodOverride ~= -1 then
+			ent:SetLOD(-1)
 		end
 	end
 end
