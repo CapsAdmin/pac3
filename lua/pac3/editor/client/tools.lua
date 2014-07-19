@@ -137,6 +137,45 @@ pace.AddTool(L"show only with active weapon", function(part, suboption)
 
 end, L"hide weapon", L"show weapon")
 
+pace.AddTool(L"import editor tool from file...", function()
+	local allowcslua = GetConVar("sv_allowcslua")
+	if allowcslua:GetBool() then
+		Derma_StringRequest(L"filename", L"relative to garrysmod/data/pac3_editor/tools/", "mytool.txt", function(toolfile)
+			if file.Exists("pac3_editor/tools/"..toolfile,"DATA") then
+				local toolstr = file.Read("pac3_editor/tools/"..toolfile,"DATA")
+				ctoolstr=[[pace.AddTool("]]..toolfile..[[",function(part, suboption) ]]..toolstr.." end)"
+				RunStringEx(ctoolstr, "pac_editor_import_tool")
+				LocalPlayer():ConCommand("pac_editor") --close and reopen editor
+			else
+				Derma_Message("File ".."garrysmod/data/pac3_editor/tools/"..toolfile.." not found.","Error: File Not Found","OK")
+			end
+		end)
+	else
+		Derma_Message("Importing pac editor tools is disallowed on this server.","Error: Clientside Lua Disabled","OK")
+	end
+end)
+
+pace.AddTool(L"import editor tool from url...", function()
+	local allowcslua = GetConVar("sv_allowcslua")
+	if allowcslua:GetBool() then
+		Derma_StringRequest(L"URL", L"URL to PAC Editor tool txt file", "http://www.example.com/tool.txt", function(toolurl)
+		function ToolDLSuccess(body)
+			local toolname = pac.PrettifyName(toolurl:match(".+/(.-)%."))
+			local toolstr = body
+			ctoolstr=[[pace.AddTool("]]..toolname..[[",function(part, suboption) ]]..toolstr.." end)"
+			RunStringEx(ctoolstr, "pac_editor_import_tool")
+			LocalPlayer():ConCommand("pac_editor") --close and reopen editor
+		end
+		function ToolDLFail(body)
+			Derma_Message("HTTP Request Failed for "..toolurl,"Error: Request Failed","OK")
+		end
+		http.Fetch(toolurl,ToolDLSuccess,ToolDLFail)
+		end)
+	else
+		Derma_Message("Importing pac editor tools is disallowed on this server.","Error: Clientside Lua Disabled","OK")
+	end
+end)
+
 pace.AddTool(L"spawn as props", function(part)
 	local data = pace.PartToContraptionData(part)
 	net.Start("pac_to_contraption")
@@ -223,7 +262,7 @@ do
 
 end
 	
-
+pace.AddTool("---------", function() end) --just a divider so it's easy to see which tools were imported
 do return end
 
 pace.AddTool(L"convert to expression2 holo", function(part)
