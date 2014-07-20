@@ -230,7 +230,8 @@ pace.PartTree = {
 		command = true,
 		projectile = true,
 		--balanim = true,
-		custom_animation = true
+		custom_animation = true,
+		mdl_import = true,
 	},  
 }
 
@@ -297,6 +298,7 @@ pace.PartIcons =
 	camera = "icon16/camera.png",
 	balanim = "icon16/film.png",
 	custom_animation = "icon16/film.png",
+	mdl_import = "icon16/shape_square_add.png",
 }
 
 pace.PartIcons.effects = pace.PartIcons.effect
