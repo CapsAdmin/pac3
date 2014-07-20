@@ -522,8 +522,17 @@ function PART:SetModel(var,override)
 		self.Entity.pac_bones = nil
 		self.Entity:SetModel(var)
 	else
-		self:SetModel("models/pac/default.mdl")
-		self.loading_obj = "downloading mdl"
+		local uid = var:Left(28):Right(10)
+		if file.Exists(var,"GAME") and timer.Exists("pac_mdl_import_"..uid) then --still downloading
+			self:SetModel("models/pac/default.mdl")
+			self.loading_obj = "downloading mdl"
+		elseif file.Exists(var,"GAME") then
+			self.Model = var
+			self.Entity:SetModel(var)
+		else
+			self.Model = "models/error.mdl"
+			self.Entity:SetModel("models/error.mdl")
+		end
 	end
 
 end

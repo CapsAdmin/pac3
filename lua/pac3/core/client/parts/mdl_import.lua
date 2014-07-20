@@ -1,3 +1,12 @@
+if file.Exists("lua/bin/gmcl_vfs_win32.dll","GAME") or 
+   file.Exists("lua/bin/gmcl_vfs_linux.dll","GAME") or 
+   file.Exists("lua/bin/gmcl_vfs_osx.dll","GAME") then
+	require("vfs")
+else
+	Msg("[PAC3] VFS Module not installed. mdl_import part will not function.")
+end
+
+
 local PART = {}
 
 PART.ClassName = "mdl_import"
@@ -7,16 +16,6 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "URL", "")
 	pac.GetSet(PART, "IncludePhy", true)
 pac.EndStorableVars()
-
-function PART:Initialize()
-	if file.Exists("lua/bin/gmcl_vfs_win32.dll","GAME") or 
-       file.Exists("lua/bin/gmcl_vfs_linux.dll","GAME") or 
-       file.Exists("lua/bin/gmcl_vfs_osx.dll","GAME") then
-		require("vfs")
-	else
-		Msg("[PAC3] VFS Module not installed. mdl_import part will not function.")
-	end
-end
 
 local function HexMdlFile(mdlfile,newpath)
 	local filler = string.char(00)
@@ -141,4 +140,12 @@ end
 
 pac.RegisterPart(PART)
 
+local function RemoveImportedModels()
+	if not vfs then return end
+	local files,dirs = file.Find("/models/pac_import/*","GAME")
+	for _,filename in pairs(files) in  do
+		vfs.RemoveFile(filename)
+	end
+end
 
+concommand.Add("pac_remove_imported_models",RemoveImportedModels)
