@@ -143,7 +143,7 @@ pac.RegisterPart(PART)
 local function RemoveImportedModels()
 	if not vfs then return end
 	local files,dirs = file.Find("/models/pac_import/*","GAME")
-	for _,filename in pairs(files) in  do
+	for _,filename in pairs(files) do
 		vfs.RemoveFile(filename)
 	end
 end
