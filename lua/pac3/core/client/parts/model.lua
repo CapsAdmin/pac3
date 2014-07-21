@@ -530,8 +530,8 @@ function PART:SetModel(var,override)
 			self.Model = var
 			self.Entity:SetModel(var)
 		else
-			self.Model = "models/error.mdl"
-			self.Entity:SetModel("models/error.mdl")
+			self.Model = "models/editor/axis_helper.mdl"
+			self.Entity:SetModel("models/editor/axis_helper.mdl")
 		end
 	end
 
