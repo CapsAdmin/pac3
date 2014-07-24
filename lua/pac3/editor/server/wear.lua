@@ -216,7 +216,7 @@ function pace.SubmitPart(data, filter)
 				for key, ply in pairs(players) do
 					local steamid = ply:SteamID()
 					for var, reason in pairs(pace.GlobalBans) do
-						if  var == steamid or type(var) == "table" and (table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):")))) then
+						if  var == steamid or type(var) == "table" and (table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):") or ""))) then
 							table.remove(players, key)
 							print("[pac3] not sending data to "..ply:Nick().." because he/her is globally banned from using pac")
 							
