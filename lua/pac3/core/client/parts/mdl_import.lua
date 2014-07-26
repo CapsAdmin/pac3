@@ -14,7 +14,7 @@ PART.NonPhysical = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "URL", "")
-	pac.GetSet(PART, "IncludePhy", true)
+	pac.GetSet(PART, "IncludePhy", false)
 pac.EndStorableVars()
 
 local function HexMdlFile(mdlfile,newpath)
@@ -69,6 +69,12 @@ function PART:SetURL(url)
 	self.URL = url
 	
 	local exttbl = {"mdl","sw.vtx","dx90.vtx","dx80.vtx","vvd"}
+	
+	local extrequires = {}
+	extrequires["mdl"] = "IDST"
+	extrequires["phy"] = "VPHY"
+	extrequires["vvd"] = "IDSV"
+	
 	if self.IncludePhy then 
 		table.insert(exttbl,"phy")
 	end
@@ -87,20 +93,27 @@ function PART:SetURL(url)
 			local modelpath = self:GetModelPath(ext,url,true)
 			
 			if !(file.Exists(modelpath,"GAME")) then
-				local extfile = vfs.Open(modelpath,"wb")
-				extfile:Write(VFS_WRITE_DATA,mdlstr,length)
-				
-				if ext == "mdl" then
-					HexMdlFile(extfile,self:GetModelPath("mdl",url))
-				end
-				
-				timer.Create("pac_mdl_import_"..uid..ext,1,0,function()
-					local filesize = file.Size(modelpath,"GAME")
-					if filesize >= length then
-						processedfiles = processedfiles + 1
-						timer.Remove("pac_mdl_import_"..uid..ext)
+				local pass = true
+				if extrequires[ext] and !string.find(mdlstr,extrequires[ext]) then pass = false end
+				if pass then
+					local extfile = vfs.Open(modelpath,"wb")
+					extfile:Write(VFS_WRITE_DATA,mdlstr,length)
+					
+					if ext == "mdl" then
+						HexMdlFile(extfile,self:GetModelPath("mdl",url))
 					end
-				end)
+					
+					timer.Create("pac_mdl_import_"..uid..ext,1,0,function()
+						local filesize = file.Size(modelpath,"GAME")
+						if filesize >= length then
+							processedfiles = processedfiles + 1
+							timer.Remove("pac_mdl_import_"..uid..ext)
+						end
+					end)
+				else
+					print("[PAC3] WARNING: mdl_import "..uid.." did not pass file validation check.")
+					processedfiles = processedfiles + 1
+				end
 				
 			else
 				print("[PAC3] WARNING: Not writing "..uid.." because file exists.")
