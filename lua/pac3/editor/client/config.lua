@@ -74,6 +74,7 @@ pace.PropertySheets = {
 			fallapartondeath = true,
 			movespeed = true,
 			weapon = true,
+			playercollide = true,
 		},
 		movement =
 		{
