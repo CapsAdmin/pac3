@@ -1,3 +1,5 @@
+module("boneanimlib",package.seeall)
+
 surface.CreateFont("DefaultFontVerySmall", {font = "tahoma", size = 10, weight = 0, antialias = false})
 surface.CreateFont("DefaultFontSmall", {font = "tahoma", size = 11, weight = 0, antialias = false})
 surface.CreateFont("DefaultFontSmallDropShadow", {font = "tahoma", size = 11, weight = 0, shadow = true, antialias = false})
@@ -590,7 +592,7 @@ local function RegisterAll()
 		if !str then return end
 		local success,t = pcall(Deserialize, str)
 		if !success then 
-			ErrorNoHalt("WARNING: Animation '"..string.sub(v,1,-5).."' failed to load\n")
+			ErrorNoHalt("WARNING: Animation '"..string.sub(v,1,-5).."' failed to load: "..tostring(t).."\n")
 		else
 			RegisterLuaAnimation(string.sub(v,1,-5),t)
 		end
@@ -744,17 +746,10 @@ local function AnimationEditorOn()
 	--RunConsoleCommand("animeditor_in_editor", "1")
 	pac.SetInAnimEditor(true)
 	
-	local close = vgui.Create("DButton")
-	close:SetText("X")
-	close.DoClick = function(slf) AnimationEditorOff() end
-	close:SetSize(16,16)
-	close:SetPos(4,4)
-	table.insert(animEditorPanels,close)
-	
 	timeLine = vgui.Create("AnimEditor_TimeLine")
 	table.insert(animEditorPanels,timeLine)
 	
-	local frame=vgui.Create("DFrame")
+	local frame = vgui.Create("DFrame")
 	frame:SetTitle("Main Menu")
 	frame:ShowCloseButton(false)
 	table.insert(animEditorPanels,frame)
@@ -764,6 +759,12 @@ local function AnimationEditorOn()
 	table.insert(animEditorPanels,mainSettings)
 	
 
+	local close = vgui.Create("DButton",frame)
+	close:SetText("X")
+	close.DoClick = function(slf) AnimationEditorOff() end
+	close:SetSize(16,16)
+	close:Dock(RIGHT)
+	table.insert(animEditorPanels,close)
 	
 	
 	
@@ -819,8 +820,8 @@ function MAIN:Init()
 	local saveanim = self:Button("Save Animation To File")
 	saveanim.DoClick = SaveAnimation
 	
-	local register = self:Button("Register All Animations")
-	register.DoClick = RegisterAll
+	--local register = self:Button("Register All Animations")
+	--register.DoClick = RegisterAll
 	
 	local viewcode = self:Button("Copy Raw Lua To Clipboard")
 	viewcode.DoClick = function() local str = OutputCode() if !str then return end SetClipboardText(str) end
