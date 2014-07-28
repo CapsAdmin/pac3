@@ -746,10 +746,17 @@ local function AnimationEditorOn()
 	--RunConsoleCommand("animeditor_in_editor", "1")
 	pac.SetInAnimEditor(true)
 	
+	local close = vgui.Create("DButton")
+	close:SetText("X")
+	close.DoClick = function(slf) AnimationEditorOff() end
+	close:SetSize(16,16)
+	close:SetPos(ScrW() - 16-4,4)
+	table.insert(animEditorPanels,close)
+	
 	timeLine = vgui.Create("AnimEditor_TimeLine")
 	table.insert(animEditorPanels,timeLine)
 	
-	local frame = vgui.Create("DFrame")
+	local frame=vgui.Create("DFrame")
 	frame:SetTitle("Main Menu")
 	frame:ShowCloseButton(false)
 	table.insert(animEditorPanels,frame)
@@ -759,12 +766,6 @@ local function AnimationEditorOn()
 	table.insert(animEditorPanels,mainSettings)
 	
 
-	local close = vgui.Create("DButton",frame)
-	close:SetText("X")
-	close.DoClick = function(slf) AnimationEditorOff() end
-	close:SetSize(16,16)
-	close:Dock(RIGHT)
-	table.insert(animEditorPanels,close)
 	
 	
 	
