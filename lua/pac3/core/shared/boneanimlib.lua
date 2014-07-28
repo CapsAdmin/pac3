@@ -6,6 +6,8 @@ Because I wanted custom, dynamic animations.
 Give credit or reference if used in your creations.
 
 ]]
+local _G = _G
+
 module("boneanimlib",package.seeall)
 TYPE_GESTURE = 0 -- Gestures are keyframed animations that use the current position and angles of the bones. They play once and then stop automatically.
 TYPE_POSTURE = 1 -- Postures are static animations that use the current position and angles of the bones. They stay that way until manually stopped. Use TimeToArrive if you want to have a posture lerp.
@@ -59,6 +61,10 @@ end
 function Deserialize(str)
 	error"unsafe"
 end
+
+
+_G.GetLuaAnimations=GetLuaAnimations
+_G.RegisterLuaAnimation=RegisterLuaAnimation
 
 local allowedtypes = {}
 allowedtypes["string"] = true
