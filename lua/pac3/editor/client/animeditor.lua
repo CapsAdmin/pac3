@@ -324,7 +324,7 @@ local function LoadAnimation()
 	box:StretchToParent(5,25,5,35)
 	for i,v in pairs(GetLuaAnimations()) do
 		if i != "editortest" && i != "editingAnim" && !string.find(i,"subPosture_") then --anim editor uses this internally
-			if !string.find(i,"pac_anim_") then --animations made by balanim parts shouldn't be here
+			if !string.find(i,"pac_anim_") then --animations made by custom_animation parts shouldn't be here
 				box:AddChoice(i)
 			end
 		end
@@ -592,7 +592,7 @@ local function RegisterAll()
 		if !str then return end
 		local success,t = pcall(Deserialize, str)
 		if !success then 
-			ErrorNoHalt("WARNING: Animation '"..string.sub(v,1,-5).."' failed to load: "..tostring(t).."\n")
+			ErrorNoHalt("WARNING: Animation '"..string.sub(v,1,-5).."' failed to load\n")
 		else
 			RegisterLuaAnimation(string.sub(v,1,-5),t)
 		end
@@ -715,9 +715,9 @@ end
 local function AnimationEditorOff()
 --I want to eventually create a "save unsaved changes" dialog box when you close
 	if(!file.Exists("animations/backups","DATA")) then file.CreateDir"animations/backups" end
-	local tbl = util.TableToJSON(animationData)
-	if tbl then
-		file.Write("animations/backups/previous_session_"..os.date("%m%d%y%H%M%S")..".txt", tbl)
+	local convertedjson = util.TableToJSON(animationData)
+	if convertedjson then
+		file.Write("animations/backups/previous_session_"..os.date("%m%d%y%H%M%S")..".txt", convertedjson)
 	end
 	for i,v in pairs(animEditorPanels) do 	
 		v:Remove()
@@ -1399,7 +1399,7 @@ vgui.Register("AnimEditor_KeyFrame",KEYFRAME,"DPanel")
 local SLIDERS = {}
 function SLIDERS:Init()
 	self:SetName("Modify Bone")
-	self:SetMinimumSize(200,650) --properly size this later, this is a temporary fix
+	self:SetMinimumSize(200,650)
 	self:SetWide(200)
 	self.Sliders = {}
 	
@@ -1528,7 +1528,7 @@ function SUBANIMS:Refresh()
 		
 		--no need to show these
 		if i != "editortest" && i != animName && i != "editingAnim" && !string.find(i,"subPosture_") then
-			if !string.find(i,"pac_anim_") then --animations made by balanim parts shouldn't be here
+			if !string.find(i,"pac_anim_") then --animations made by custom_animation parts shouldn't be here
 				local item = self.AnimList:AddChoice(i)
 				--[[local item = self.AnimList:AddItem(i)
 				item.DoClick = function() 

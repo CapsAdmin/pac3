@@ -276,7 +276,7 @@ do
 
 end
 	
-pace.AddTool("---------", function() end)
+pace.AddTool("---------", function() end) --just a divider so it's easy to see which tools were imported
 do return end
 
 pace.AddTool(L"convert to expression2 holo", function(part)
