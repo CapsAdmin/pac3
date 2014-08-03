@@ -71,6 +71,7 @@ ENTFIELD(PART, "CrouchSpeed", "crouch_speed")
 ENTFIELD(PART, "SprintSpeed", "sprint_speed")
 
 ENTFIELD(PART, "FallApartOnDeath", "death_physics_parts")
+ENTFIELD(PART, "DeathRagdollizeParent", "death_ragdollize")
 
 ENTFIELD(PART, "MuteSounds", "mute_sounds")
 ENTFIELD(PART, "AllowOggWhenMuted", "allow_ogg_sounds")

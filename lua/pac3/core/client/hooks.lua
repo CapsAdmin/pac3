@@ -191,17 +191,29 @@ function pac.OnClientsideRagdoll(ent)
 		
 	if not ply.pac_parts then return end
 
+	-- 
 	if not ply.pac_death_physics_parts then
-		timer.Create("pac_" .. ply:UniqueID() .. "_ragttach", 0.25, 1, function()
-			local parts = ply.pac_parts
 		
-			for key, part in pairs(parts) do
+		-- make props draw on the ragdoll
+		if ply.death_ragdollize then
+			ply.pac_owner_override = ent
+		end
+		
+		-- recover ragdoll props?
+		local tid = "pac_" .. ply:UniqueID() .. "_ragttach"
+		timer.Create(tid, 0.25, 1, function()
+			local parts = ply.pac_parts
+			
+			if not parts then return end
+			
+			for key, part in next, parts do
 				if not part.last_owner then
 					part:SetOwner(ent)
 					part.last_owner = ent
 				end
 			end
 		end)
+		
 		return
 	end
 	
@@ -246,21 +258,22 @@ function pac.InitDeathPhysicsOnProp(part,ply,plyent)
 end
 
 function pac.OnEntityCreated(ent)
-	if IsActuallyValid(ent) then
-		if ent:GetClass() == "class C_HL2MPRagdoll" then
-			pac.OnClientsideRagdoll(ent)
-		end
-		
-		local owner = ent:GetOwner()
-		
-		if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
-			for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
-				if not part:HasParent() then
-					part:CheckOwner(ent, false)
-				end
+	if not IsActuallyValid(ent) then return end
+	
+	if ent:GetClass() == "class C_HL2MPRagdoll" then
+		pac.OnClientsideRagdoll(ent)
+	end
+	
+	local owner = ent:GetOwner()
+	
+	if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
+		for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
+			if not part:HasParent() then
+				part:CheckOwner(ent, false)
 			end
 		end
 	end
+
 end
 pac.AddHook("OnEntityCreated")
 
