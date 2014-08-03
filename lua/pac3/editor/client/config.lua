@@ -298,6 +298,7 @@ pace.PartIcons =
 	bodygroup = "icon16/user.png",
 	camera = "icon16/camera.png",
 	custom_animation = "icon16/film.png",
+	mdl_import = "icon16/shape_square_add.png",
 }
 
 pace.PartIcons.effects = pace.PartIcons.effect
