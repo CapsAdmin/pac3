@@ -288,7 +288,7 @@ local function NewAnimation()
 	local begin = form:Button("Begin")
 	begin.DoClick = function()
 		animName = entry:GetValue()
-		animType = _G[type:GetText()]
+		animType = _M[type:GetText()]
 		
 		if animName == "" then 
 			help:SetColor(Color(255,128,128))
