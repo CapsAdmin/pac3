@@ -1,9 +1,10 @@
 if file.Exists("lua/bin/gmcl_vfs_win32.dll","GAME") or 
    file.Exists("lua/bin/gmcl_vfs_linux.dll","GAME") or 
-   file.Exists("lua/bin/gmcl_vfs_osx.dll","GAME") then
+   file.Exists("lua/bin/gmcl_vfs_osx.dll","GAME") 
+then
 	require("vfs")
 else
-	Msg("[PAC3] VFS Module not installed. mdl_import part will not function.")
+	MsgN("[PAC3] VFS Module not installed. mdl_import part will not function.")
 end
 
 
@@ -55,7 +56,7 @@ function PART:SetURL(url)
 	
 	if not vfs then 
 		if self:GetOwner() == LocalPlayer() then
-			LocalPlayer():ChatPrint("[PAC3] You must install the VFS binary module to use the mdl_import part.")
+			LocalPlayer():ChatMsg"[PAC3] " print("You must install the VFS binary module to use the mdl_import part.")
 		end
 		return 
 	end
@@ -88,7 +89,8 @@ function PART:SetURL(url)
 		http.Fetch(url.."."..ext,
 		function(mdlstr,length,header,code)
 			if code ~= 200 then
-				print("[PAC3] ERROR: "..url.."."..ext.." failed to download. (UID:"..uid..") Error code "..code)
+				Msg	"[PAC3] " print("Download failed: "..url.."."..ext.." (UID:"..uid..") Error code "..code)
+				return
 			end
 			local modelpath = self:GetModelPath(ext,url,true)
 			
@@ -111,29 +113,29 @@ function PART:SetURL(url)
 						end
 					end)
 				else
-					print("[PAC3] WARNING: mdl_import "..uid.." did not pass file validation check.")
+					Msg"[PAC3] " print("WARNING: mdl_import "..uid.." did not pass file validation check.")
 					processedfiles = processedfiles + 1
 				end
 				
 			else
-				print("[PAC3] WARNING: Not writing "..uid.." because file exists.")
+				Msg"[PAC3] " print("WARNING: Not writing "..uid.." because file exists.")
 				processedfiles = processedfiles + 1
 			end
 		end,
 		function(error)
-			print("[PAC3] ERROR: "..url.."."..ext.." failed to download. (UID:"..uid..") Error code "..error)
+			Msg"[PAC3] " print("ERROR: "..url.."."..ext.." failed to download. (UID:"..uid..") Error code "..error)
 			processedfiles = processedfiles + 1
 		end)
 	end
 	
 	timer.Create("pac_mdl_import_"..uid,1,0,function()
 		if (processedfiles == #exttbl) then
-			--print("[PAC3] mdl_import download for "..uid.." complete!")
+			--Msg"[PAC3] " print("mdl_import download for "..uid.." complete!")
 			util.PrecacheModel(self:GetModelPath("mdl",url,true))
 			self:SetParentModel(self:GetModelPath("mdl",url,true))
 			timer.Remove("pac_mdl_import_"..uid)
 		else
-			--print("[PAC3] mdl_import download for "..uid.." in progress...")
+			--Msg"[PAC3] " print("mdl_import download for "..uid.." in progress...")
 		end
 	end)
 end
