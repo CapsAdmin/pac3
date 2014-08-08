@@ -1,12 +1,13 @@
 if file.Exists("lua/bin/gmcl_vfs_win32.dll","GAME") or 
    file.Exists("lua/bin/gmcl_vfs_linux.dll","GAME") or 
-   file.Exists("lua/bin/gmcl_vfs_osx.dll","GAME") 
-then
+   file.Exists("lua/bin/gmcl_vfs_osx.dll","GAME") then
 	require("vfs")
+	pac.vfsNotify(true)
 else
-	MsgN("[PAC3] VFS Module not installed. mdl_import part will not function.")
+	Msg("[PAC3] VFS Module not installed. mdl_import part will not function.")
+	pac.vfsNotify(false)
 end
-
+ 
 
 local PART = {}
 
@@ -56,7 +57,7 @@ function PART:SetURL(url)
 	
 	if not vfs then 
 		if self:GetOwner() == LocalPlayer() then
-			LocalPlayer():ChatMsg"[PAC3] " print("You must install the VFS binary module to use the mdl_import part.")
+			LocalPlayer():ChatPrint("[PAC3] You must install the VFS binary module to use the mdl_import part.")
 		end
 		return 
 	end

@@ -36,3 +36,9 @@ net.Receive( "pac.net.SetCollisionGroup.ClientNotify", function(ent,group)
 	local group = net.ReadInt(group,7)
 	Entity(index):SetCollisionGroup(group)
 end )
+
+util.AddNetworkString("pac.net.vfsNotify.ClientNotify")
+net.Receive( "pac.net.vfsNotify.ClientNotify", function(len,ply)
+	b = (net.ReadBit() == 1)
+	ply.has_vfs = b
+end )

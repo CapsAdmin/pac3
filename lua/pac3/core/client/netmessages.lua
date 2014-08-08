@@ -39,3 +39,9 @@ function pac.SetCollisionGroup(ent,group)
 	net.WriteInt(group,7)
 	net.SendToServer()
 end
+
+function pac.vfsNotify(bool)
+	net.start("pac.net.vfsNotify.ClientNotify")
+	net.writeBit(b)
+	net.SendToServer()
+end
