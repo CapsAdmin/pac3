@@ -40,8 +40,16 @@ function pac.SetCollisionGroup(ent,group)
 	net.SendToServer()
 end
 
-function pac.vfsNotify(bool)
-	net.start("pac.net.vfsNotify.ClientNotify")
-	net.writeBit(b)
+function pac.hasVfs(b)
+	net.Start("pac.net.hasVfs.ClientNotify")
+	net.WriteBit(b)
 	net.SendToServer()
 end
+
+net.Receive( "pac.net.hasVfs", function( length, client )
+    ent = net.ReadEntity()
+	b = (net.ReadBit() == 1)
+	if ent:IsValid() then 
+		ent.has_vfs = b
+	end
+end )
