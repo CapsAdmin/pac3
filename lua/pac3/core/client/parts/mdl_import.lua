@@ -2,10 +2,10 @@ if file.Exists("lua/bin/gmcl_vfs_win32.dll","GAME") or
    file.Exists("lua/bin/gmcl_vfs_linux.dll","GAME") or 
    file.Exists("lua/bin/gmcl_vfs_osx.dll","GAME") then
 	require("vfs")
-	pac.hasVfs(true)
+	pac.setHasVfs(true)
 else
 	Msg("[PAC3] VFS Module not installed. mdl_import part will not function.")
-	pac.hasVfs(false)
+	pac.setHasVfs(false)
 end
  
 
