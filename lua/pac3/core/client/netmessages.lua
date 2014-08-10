@@ -53,3 +53,12 @@ net.Receive( "pac.net.setHasVfs", function( length, client )
 		ent.has_vfs = b
 	end
 end )
+
+function pac.requestVfsStatus()
+	net.Start("pac.net.requestVfsStatus.ClientNotify")
+	net.SendToServer()
+end
+
+net.Receive("pac.net.PlayerInitialSpawn", function()
+    hook.Run("pac.net.PlayerInitialSpawn",LocalPlayer())
+end)
