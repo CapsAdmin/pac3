@@ -5,13 +5,13 @@ if file.Exists("lua/bin/gmcl_vfs_win32.dll","GAME") or
 	hook.Add("pac.net.PlayerInitialSpawn","pac_vfsnotify",function()
 		pac.setHasVfs(true)
 		pac.requestVfsStatus()
-	end
+	end)
 else
 	Msg("[PAC3] VFS Module not installed. mdl_import part will not function.")
 	hook.Add("pac.net.PlayerInitialSpawn","pac_vfsnotify",function()
 		pac.setHasVfs(true)
 		pac.requestVfsStatus()
-	end
+	end)
 end
  
 
