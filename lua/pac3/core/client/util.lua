@@ -23,6 +23,56 @@ do --dev util
 		pac.RemoveAllPACEntities()
 		pac.Parts = {}
 	end
+	
+	pac.convarcache = {}
+	function pac.CreateClientConVarFast(cvar,initial,save,t,server)
+		
+		local cached = pac.convarcache[cvar]
+		if cached then return cached[1],cached[2] end
+		
+		local val
+		local c = CreateClientConVar(cvar,initial,save,server)
+		--Msg("[FCVar] ",cvar,": ")
+		
+		local ConVarChanged
+		
+		if t=="string" or t=="str" then
+			ConVarChanged = function( cvar, old, new ) 
+				val = new 
+			end
+		elseif t=="boolean" or t=="bool" then
+			ConVarChanged = function( cvar, old, new ) 
+				if new == "0" then
+					val = false
+				elseif new == "1" then 
+					val = true
+				else
+					val = (tonumber(new) or 0)>=1
+				end
+			end
+		
+		elseif t=="number" or t=="num" then
+			ConVarChanged = function( cvar, old, new ) 
+				val= tonumber( new ) or 0
+			end
+		
+		elseif t=="integer" or t=="int" then
+			ConVarChanged = function( cvar, old, new ) 
+				val= math.floor(tonumber( new ) or 0)
+			end
+		end
+
+		if not ConVarChanged then error("Invalid type: "..tostring(t)) end
+		cvars.AddChangeCallback(cvar,ConVarChanged)
+		ConVarChanged(cvar,nil,c:GetString())
+		
+		local function GetConVarValue() return val end
+		
+		--print(c:GetString(),initial,c:GetBool(),GetConVarValue(),t,save,server)
+
+		pac.convarcache[cvar]={GetConVarValue,c}
+		return GetConVarValue,c
+	end
 
 
 	function pac.Restart()
@@ -143,12 +193,13 @@ end
 
 pac.EntityType = 2
 
+local pac_force_csmodel = CreateClientConVar("pac_force_csmodel","0",true)
 function pac.CreateEntity(model, type)
 	type = type or pac.EntityType or 1
 
 	local ent = NULL
 
-	if type == 1 then
+	if type == 1 or (type == 2 and pac_force_csmodel:GetBool()) then
 
 		ent = ClientsideModel(model)
 

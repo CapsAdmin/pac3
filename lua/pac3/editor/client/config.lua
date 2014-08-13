@@ -72,8 +72,10 @@ pace.PropertySheets = {
 			animationrate = true,
 			relativebones = true,
 			fallapartondeath = true,
+			deathragdollizeparent = true,
 			movespeed = true,
 			weapon = true,
+			playercollide = true,
 		},
 		movement =
 		{

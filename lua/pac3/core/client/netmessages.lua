@@ -31,3 +31,7 @@ net.Receive( "pac.net.InAnimEditor", function( length, client )
 		ent.InAnimEditor = b
 	end
 end )
+
+net.Receive("pac.net.PlayerInitialSpawn", function()
+    hook.Run("pac.net.PlayerInitialSpawn",LocalPlayer())
+end)
