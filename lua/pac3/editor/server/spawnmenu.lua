@@ -1,6 +1,6 @@
-concommand.Add("pac_in_editor", function(ply, _, args)
+--[[concommand.Add("pac_in_editor", function(ply, _, args)
 	ply:SetNWBool("in pac3 editor", tonumber(args[1]) == 1)
-end)
+end)]]
 
 function pace.SpawnPart(ply, model)
 	if model then

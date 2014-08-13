@@ -1,3 +1,5 @@
+module("boneanimlib",package.seeall)
+
 surface.CreateFont("DefaultFontVerySmall", {font = "tahoma", size = 10, weight = 0, antialias = false})
 surface.CreateFont("DefaultFontSmall", {font = "tahoma", size = 11, weight = 0, antialias = false})
 surface.CreateFont("DefaultFontSmallDropShadow", {font = "tahoma", size = 11, weight = 0, shadow = true, antialias = false})
@@ -286,7 +288,7 @@ local function NewAnimation()
 	local begin = form:Button("Begin")
 	begin.DoClick = function()
 		animName = entry:GetValue()
-		animType = _G[type:GetText()]
+		animType = _M[type:GetText()]
 		
 		if animName == "" then 
 			help:SetColor(Color(255,128,128))
@@ -751,7 +753,7 @@ local function AnimationEditorOn()
 	close:SetText("X")
 	close.DoClick = function(slf) AnimationEditorOff() end
 	close:SetSize(16,16)
-	close:SetPos(4,4)
+	close:SetPos(ScrW() - 16-4,4)
 	table.insert(animEditorPanels,close)
 	
 	timeLine = vgui.Create("AnimEditor_TimeLine")
@@ -822,8 +824,8 @@ function MAIN:Init()
 	local saveanim = self:Button("Save Animation To File")
 	saveanim.DoClick = SaveAnimation
 	
-	local register = self:Button("Register All Animations")
-	register.DoClick = RegisterAll
+	--local register = self:Button("Register All Animations")
+	--register.DoClick = RegisterAll
 	
 	local viewcode = self:Button("Copy Raw Lua To Clipboard")
 	viewcode.DoClick = function() local str = OutputCode() if !str then return end SetClipboardText(str) end

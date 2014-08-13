@@ -31,3 +31,11 @@ net.Receive( "pac.net.InAnimEditor", function( length, client )
 		ent.InAnimEditor = b
 	end
 end )
+
+function pac.SetCollisionGroup(ent,group)
+	local index = ent:EntIndex()
+	net.Start("pac.net.SetCollisionGroup.ClientNotify")
+	net.WriteInt(index,13)
+	net.WriteInt(group,7)
+	net.SendToServer()
+end

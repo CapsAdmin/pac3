@@ -27,6 +27,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "InverseKinematics", false)
 	pac.GetSet(PART, "MuteFootsteps", false)
 	pac.GetSet(PART, "MuteSounds", false)
+	pac.GetSet(PART, "AllowOggWhenMuted", false)
 	pac.GetSet(PART, "HideBullets", false)
 	pac.GetSet(PART, "AnimationRate", 1)
 	pac.GetSet(PART, "SprintSpeed", 0)
@@ -37,6 +38,8 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "LodOverride", -1)
 	
 	pac.GetSet(PART, "UseLegacyScale", false)
+	
+	pac.GetSet(PART, "PlayerCollide", true)
 pac.EndStorableVars()
 
 local function ENTFIELD(PART, name, field)
@@ -68,8 +71,10 @@ ENTFIELD(PART, "CrouchSpeed", "crouch_speed")
 ENTFIELD(PART, "SprintSpeed", "sprint_speed")
 
 ENTFIELD(PART, "FallApartOnDeath", "death_physics_parts")
+ENTFIELD(PART, "DeathRagdollizeParent", "death_ragdollize")
 
 ENTFIELD(PART, "MuteSounds", "mute_sounds")
+ENTFIELD(PART, "AllowOggWhenMuted", "allow_ogg_sounds")
 ENTFIELD(PART, "HideBullets", "hide_bullets")
 
 function PART:GetNiceName()
@@ -88,6 +93,17 @@ function PART:GetNiceName()
 	end
 	
 	return self.ClassName
+end
+
+function PART:SetPlayerCollide(bool)
+	local ent = self:GetOwner()
+	if ent:IsValid() and ent:IsPlayer() then
+		if bool then
+			pac.SetCollisionGroup(ent,COLLISION_GROUP_PLAYER)
+		else
+			pac.SetCollisionGroup(ent,COLLISION_GROUP_WEAPON)
+		end
+	end	
 end
 
 function PART:SetUseLegacyScale(b)

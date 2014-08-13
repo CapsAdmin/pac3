@@ -71,21 +71,23 @@ function pac.Disable()
 end
 
 do
-	local cvar_enable = CreateClientConVar("pac_enable", "1")
-
-	cvars.AddChangeCallback("pac_enable", function(name)
-		if GetConVarNumber(name) == 1 then
+	local pac_enable = CreateClientConVar("pac_enable", "1",true)
+	local pac_enable_bool = pac_enable:GetBool()
+	cvars.AddChangeCallback("pac_enable", function(name,old,new)
+		if (tonumber(new) or 0)>=1 then
+			pac_enable_bool=true
 			pac.Enable()
 		else
+			pac_enable_bool=false
 			pac.Disable()
 		end
 	end)
 
 	function pac.IsEnabled()
-		return cvar_enable:GetInt() >= 1
+		return pac_enable_bool
 	end
 
-	if cvar_enable:GetInt() == 0 then
+	if pac_enable:GetInt() == 0 then
 		pac.Disable()
 	end
 
