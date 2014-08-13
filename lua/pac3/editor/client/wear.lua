@@ -189,61 +189,41 @@ usermessage.Hook("pac_submit_acknowledged", function(umr)
 	pace.Notify(allowed, reason, name)
 end)
 
-
-do
+do -- python 1320
 	local t=0
-	local max_time = 123 -- timeout in seconds
-	local removed_req = false
 	local function Initialize()
-
-		if not pac.LocalPlayer:IsValid() then 
-			return 
-		end
-
+		
+		if not pac.LocalPlayer:IsValid() then return end
+		
 		t = false
-		
-		if not removed_req then 
-			hook.Remove("KeyRelease", "pac_request_outfits")
-			removed_req = true
-		end
-		
-		
-		if not pac.IsEnabled() then
-			-- check every 2 seconds, ugly hack
-			t = max_time - 2
-			return
-		end
-		
 		hook.Remove("Think","pac_request_outfits")
+		hook.Remove("KeyRelease", "pac_request_outfits")
+		
 		Msg"[PAC3] " print"Requesting outfits..."
-
+		
 		RunConsoleCommand("pac_request_outfits")
 
 	end
 
-	hook.Add("Think","pac_request_outfits",function()
-
+	hook.Add("Think","pac_request_outfits",function() 
+		
 		local ft = FrameTime()
-
+		
 		-- ignore long frames...
 		ft=ft<0 and 0 or ft>0.2 and 0.2 or ft
-
+		
 		t=t+ft
-
-		if t>max_time then
+		
+		if t>120 then
 			Initialize()
 			return
 		end
-
+		
 	end)
 
-	hook.Add("KeyRelease", "pac_request_outfits", function()
-		local me = pac.LocalPlayer
-		if me:IsValid() and me:GetVelocity():Length() > 5 then
+	hook.Add("KeyRelease", "pac_request_outfits", function()	
+		if pac.LocalPlayer:IsValid() and pac.LocalPlayer:GetVelocity():Length() > 5 then
 			Initialize()
 		end
 	end)
 end
-
-
-

@@ -126,33 +126,37 @@ function PART:GetName()
 	return self.Name
 end
 
-function PART:GetEnabled()
+function PART:ConVarEnabled()
+	if not self.last_cvar_check or self.last_cvar_check < pac.RealTime then
 	
-	local enabled = self:IsEnabled()
+		self.last_cvar_check = pac.RealTime + 0.25
+
+		if self.last_enabled == nil then
+			self.last_enabled = true
+		end
 	
-	if self.last_enabled==enabled then
-		return enabled
-	end
-	
-	-- changed
-	
-	if self.last_enabled == nil then
-		self.last_enabled = enabled
-	else
-		self.last_enabled = enabled
-		
-		if enabled then
-			self:CallRecursive("OnShow")
-			--Msg"OnShow"print(self)
+		if not self.cvar_enable:GetBool() then 
+			if self.last_enabled ~= false then
+				self:CallRecursive("OnHide") 
+				self.last_enabled = false
+			end
+			
+			self.enabled = false
+			
+			return false
 		else
-			self:CallRecursive("OnHide") 
-			--Msg"OnHide"print(self)
+			if self.last_enabled ~= true then
+				self:CallRecursive("OnShow") 
+				self.last_enabled = true
+			end
 		end
 		
+		self.enabled = true
+		
+		return true
 	end
-
-	return enabled
-	
+		
+	return self.enabled 
 end
 
 do -- modifiers
@@ -807,49 +811,46 @@ do -- drawing. this code is running every frame
 	local pos, ang, owner
 	
 	function PART:Draw(event, pos, ang, draw_type)	
+		if not self:ConVarEnabled() then return end
 		
-		-- Think takes care of polling this
-		if not self.last_enabled then return end
-	
-		if self:IsHidden() then	return end
-		
-		owner = self:GetOwner()
-		
-		if self[event] then	
-				
-			if 
-				draw_type == "viewmodel" or
-				((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
-				((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
-			then
-				
-				pos = pos or Vector(0,0,0)
-				ang = ang or Angle(0,0,0)
-
-				pos, ang = self:GetDrawPosition()
-				
-				pos = pos or Vector(0,0,0)
-				ang = ang or Angle(0,0,0)
-				
-				self.cached_pos = pos
-				self.cached_ang = ang
-				
-				if self.PositionOffset ~= VEC0 or self.AngleOffset ~= ANG0 then
-					pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
-				end
+		if not self:IsHidden() then			
+			owner = self:GetOwner()	
+										
+			if self[event] then	
 					
-				if not self.HandleModifiersManually then self:ModifiersPreEvent(event, draw_type) end
-								
-				self[event](self, owner, pos, ang) -- this is where it usually calls Ondraw on all the parts
-				
-				if not self.HandleModifiersManually then self:ModifiersPostEvent(event, draw_type) end
+				if 
+					draw_type == "viewmodel" or
+					((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
+					((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
+				then
+					
+					pos = pos or Vector(0,0,0)
+					ang = ang or Angle(0,0,0)
+
+					pos, ang = self:GetDrawPosition()
+					
+					pos = pos or Vector(0,0,0)
+					ang = ang or Angle(0,0,0)
+					
+					self.cached_pos = pos
+					self.cached_ang = ang
+					
+					if self.PositionOffset ~= VEC0 or self.AngleOffset ~= ANG0 then
+						pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
+					end
+						
+					if not self.HandleModifiersManually then self:ModifiersPreEvent(event, draw_type) end
+									
+					self[event](self, owner, pos, ang) -- this is where it usually calls Ondraw on all the parts
+					
+					if not self.HandleModifiersManually then self:ModifiersPostEvent(event, draw_type) end
+				end
+			end
+
+			for _, part in pairs(self.Children) do
+				part:Draw(event, pos, ang, draw_type)
 			end
 		end
-
-		for _, part in pairs(self.Children) do
-			part:Draw(event, pos, ang, draw_type)
-		end
-			
 	end
 	
 	local LocalToWorld = LocalToWorld
@@ -1007,7 +1008,7 @@ do -- drawing. this code is running every frame
 end
 	
 function PART:Think()
-	if not self:GetEnabled() then return end
+	if not self:ConVarEnabled() then return end
 	
 	local b = self:IsHidden()
 	

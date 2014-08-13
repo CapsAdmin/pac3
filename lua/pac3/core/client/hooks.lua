@@ -178,102 +178,75 @@ local function IsActuallyPlayer(ent)
 	return IsEntity(ent) and pcall(ent.UniqueID, ent)
 end
 
-function pac.OnClientsideRagdoll(ent)
-	
-	local ply
-	for key, pl in next,player.GetAll() do
-		if pl:GetRagdollEntity() == ent then
-			ply = pl
-			break
-		end
-	end
-	if not ply then return end
-		
-	if not ply.pac_parts then return end
-
-	-- 
-	if not ply.pac_death_physics_parts then
-		
-		-- make props draw on the ragdoll
-		if ply.death_ragdollize then
-			ply.pac_owner_override = ent
-		end
-		
-		-- recover ragdoll props?
-		local tid = "pac_" .. ply:UniqueID() .. "_ragttach"
-		timer.Create(tid, 0.25, 1, function()
-			local parts = ply.pac_parts
-			
-			if not parts then return end
-			
-			for key, part in next, parts do
-				if not part.last_owner then
-					part:SetOwner(ent)
-					part.last_owner = ent
+function pac.OnEntityCreated(ent)
+	if IsActuallyValid(ent) then
+		if ent:GetClass() == "class C_HL2MPRagdoll" then
+			for key, ply in pairs(player.GetAll()) do
+				if ply:GetRagdollEntity() == ent then
+					if ply.pac_parts then
+						if ply.pac_death_physics_parts then
+							if not ply.pac_physics_died then
+								for _, part in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
+									if part.ClassName == "model" then
+										ent:SetNoDraw(true)
+										
+										part.skip_orient = true
+										
+										local ent = part:GetEntity()
+										ent:SetParent(NULL)
+										ent:SetNoDraw(true)
+										ent:PhysicsInitBox(Vector(1,1,1) * -5, Vector(1,1,1) * 5)
+										ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS) 
+										
+										local phys = ent:GetPhysicsObject()
+										phys:AddAngleVelocity(VectorRand() * 1000)
+										phys:AddVelocity(ply:GetVelocity()  + VectorRand() * 30)
+										phys:Wake()
+										
+										function ent.RenderOverride(ent)
+											if part:IsValid() then
+												if not part.HideEntity then 
+													part:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
+													ent:DrawModel()
+													part:PostEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
+												end
+											else
+												ent.RenderOverride = nil
+											end
+										end
+									end	
+								end
+								ply.pac_physics_died = true
+							end
+						else
+							timer.Create("pac_" .. ply:UniqueID() .. "_ragttach", 0.25, 1, function()
+								local parts = ply.pac_parts
+							
+								for key, part in pairs(parts) do
+									if not part.last_owner then
+										part:SetOwner(ent)
+										part.last_owner = ent
+									end
+								end
+							end)
+						end
+					end
+					
+					break
 				end
 			end
-		end)
+		end
 		
-		return
-	end
-	
-	if ply.pac_physics_died then return end
-	
-	for _, part in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
-		if part.ClassName == "model" then
-			pac.InitDeathPhysicsOnProp(part,ply,ent)
-		end	
-	end
-	ply.pac_physics_died = true
-
-end
-
-function pac.InitDeathPhysicsOnProp(part,ply,plyent)
-	plyent:SetNoDraw(true)
-			
-	part.skip_orient = true
-	
-	local ent = part:GetEntity()
-	ent:SetParent(NULL)
-	ent:SetNoDraw(true)
-	ent:PhysicsInitBox(Vector(1,1,1) * -5, Vector(1,1,1) * 5)
-	ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS) 
-	
-	local phys = ent:GetPhysicsObject()
-	phys:AddAngleVelocity(VectorRand() * 1000)
-	phys:AddVelocity(ply:GetVelocity()  + VectorRand() * 30)
-	phys:Wake()
-	
-	function ent.RenderOverride(ent)
-		if part:IsValid() then
-			if not part.HideEntity then 
-				part:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
-				ent:DrawModel()
-				part:PostEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
-			end
-		else
-			ent.RenderOverride = nil
-		end
-	end
-end
-
-function pac.OnEntityCreated(ent)
-	if not IsActuallyValid(ent) then return end
-	
-	if ent:GetClass() == "class C_HL2MPRagdoll" then
-		pac.OnClientsideRagdoll(ent)
-	end
-	
-	local owner = ent:GetOwner()
-	
-	if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
-		for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
-			if not part:HasParent() then
-				part:CheckOwner(ent, false)
+		local owner = ent:GetOwner()
+		
+		if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
+			for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
+				if not part:HasParent() then
+					part:CheckOwner(ent, false)
+				end
 			end
 		end
 	end
-
 end
 pac.AddHook("OnEntityCreated")
 

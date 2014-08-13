@@ -40,19 +40,14 @@ function PART:ShouldHighlight(str)
 	return _G[str] ~= nil
 end
 
-local sv_allowcslua = GetConVar("sv_allowcslua")
 function PART:Execute()
 	local ent = self:GetPlayerOwner()
 
 	if ent == pac.LocalPlayer then
 		if self.UseLua and self.func then
-			if sv_allowcslua:GetBool() or pac.AllowClientsideLUA then
-				local status, err = pcall(self.func)
-				if not status then
-					ErrorNoHalt(err .. "\n")
-				end
-			else
-				ErrorNoHalt("[PAC] sv_allowcslua is 0\n")
+			local status, err = pcall(self.func)
+			if not status then
+				ErrorNoHalt(err .. "\n")
 			end
 		else
 			ent:ConCommand(self.String)

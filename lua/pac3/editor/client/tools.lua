@@ -98,20 +98,6 @@ pace.AddTool(L"scale this and children", function(part, suboption)
 	end)
 end)
 
-pace.AddTool(L"free children from part", function(part, suboption)
-	if part:IsValid() then
-		local grandparent = part:GetParent()
-		local parent = part
-		for _, child in pairs(parent:GetChildren()) do 
-				child:SetAngles(child.Angles + parent.Angles)
-				child:SetPosition(child.Position + parent.Position)
-				child:SetAngleOffset(child.AngleOffset + parent.AngleOffset)
-				child:SetPositionOffset(child.PositionOffset + parent.PositionOffset)
-				child:SetParent(grandparent)
-		end
-	end			
-end)
-
 pace.AddTool(L"square model scales...", function(part, suboption)
 	Derma_StringRequest(L"model", L"input the model name that should get squared", "default.mdl", function(model)
 		for _, part in pairs(pac.GetParts(true)) do
@@ -201,8 +187,8 @@ function round_pretty(val)
 	return math.Round(val, 2)
 end
 
-pace.AddTool(L"round numbers", function(part)
-	local function ify_parts(part)
+pace.AddTool(L"help i have ocd (rounding numbers)", function(part)
+	local function ocdify_parts(part)
 		for _, key in pairs(part:GetStorableVars()) do
 			local val = part["Get" .. key](part)
 			
@@ -216,11 +202,11 @@ pace.AddTool(L"round numbers", function(part)
 		end
 		
 		for _, part in pairs(part:GetChildren()) do
-			ify_parts(part)
+			ocdify_parts(part)
 		end
 	end
 	
-	ify_parts(part)
+	ocdify_parts(part)
 end)
 
 do
