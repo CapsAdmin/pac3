@@ -148,8 +148,9 @@ end
 function pac.GetBonePosAng(ent, id, parent)
 	if not ent:IsValid() then return Vector(), Angle() end
 	
-	if ent.pac_owner_override and ent.pac_owner_override:IsValid() then
-		ent = ent.pac_owner_override
+	local override = ent.pac_owner_override
+	if override and override:IsValid() then
+		ent = override
 	end
 	
 	if id == "pos_ang" then

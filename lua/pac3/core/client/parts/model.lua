@@ -153,6 +153,7 @@ local render_MaterialOverride = render.ModelMaterialOverride
 local render_SuppressEngineLighting = render.SuppressEngineLighting
 local LocalToWorld = LocalToWorld
 local MATERIAL_CULLMODE_CW = MATERIAL_CULLMODE_CW
+local render=render
 
 function PART:PreEntityDraw(owner, ent, pos, ang)	
 	
@@ -516,9 +517,9 @@ function PART:SetModel(var)
 	
 	self.wavefront_mesh = nil
 	
-	self.Model = var
-	self.Entity.pac_bones = nil
-	self.Entity:SetModel(var)
+		self.Model = var
+		self.Entity.pac_bones = nil
+		self.Entity:SetModel(var)
 
 end
 local NORMAL = Vector(1,1,1)

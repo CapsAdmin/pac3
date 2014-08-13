@@ -41,7 +41,7 @@ function pac.CreatePart(name, owner, skip_hook)
 	part.Id = part_count
 	part_count = part_count + 1	
 	
-	part.cvar_enable = CreateClientConVar("pac_enable_" .. name, 1, true)
+	part.IsEnabled = pac.CreateClientConVarFast("pac_enable_" .. name, "1", true,"boolean")
 	part:SetUniqueID(tostring(util.CRC(os.time() + pac.RealTime + part_count)))
 	
 	merge_storable(part, part.BaseClass)

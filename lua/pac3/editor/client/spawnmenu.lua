@@ -107,6 +107,22 @@ list.Set(
 	}
 )
 
+list.Set(
+	"DesktopWindows", 
+	"AnimEditor", 
+	{
+		title		= "Animation Editor",
+		icon		= "icon64/tool.png",
+		width		= 1,
+		height		= 1,
+		onewindow	= false,
+		init		= function( icon, window )
+			window:Remove()
+			RunConsoleCommand("animate")
+		end
+	}
+)
+
 hook.Add("PopulateToolMenu", "pac3_spawnmenu", function()
 	spawnmenu.AddToolMenuOption(
 		"Utilities", 
