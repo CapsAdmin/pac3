@@ -27,95 +27,100 @@ local opcode_checker
 do
 	local bcnames = "ISLT  ISGE  ISLE  ISGT  ISEQV ISNEV ISEQS ISNES ISEQN ISNEN ISEQP ISNEP ISTC  ISFC  IST   ISF   MOV   NOT   UNM   LEN   ADDVN SUBVN MULVN DIVVN MODVN ADDNV SUBNV MULNV DIVNV MODNV ADDVV SUBVV MULVV DIVVV MODVV POW   CAT   KSTR  KCDATAKSHORTKNUM  KPRI  KNIL  UGET  USETV USETS USETN USETP UCLO  FNEW  TNEW  TDUP  GGET  GSET  TGETV TGETS TGETB TSETV TSETS TSETB TSETM CALLM CALL  CALLMTCALLT ITERC ITERN VARG  ISNEXTRETM  RET   RET0  RET1  FORI  JFORI FORL  IFORL JFORL ITERL IITERLJITERLLOOP  ILOOP JLOOP JMP   FUNCF IFUNCFJFUNCFFUNCV IFUNCVJFUNCVFUNCC FUNCCW"
 	local jit = jit or require("jit")
-	assert(jit.version_num == 20003, "LuaJIT core/library version mismatch")
-	local jutil = jit.util or require'jit.util'
-	local band =  bit.band
+	if jit.version_num ~= 20003 then
+		ErrorNoHalt"SECURITY WARNING: LuaJIT core/library version mismatch, update luadata!!!\n"
+		opcode_checker = function() return function() return true end end
+	else
+		
+		
+		local jutil = jit.util or require'jit.util'
+		local band =  bit.band
 
 
 
-	local opcodes = {}
+		local opcodes = {}
 
-	--extract opcode names
-	for str in bcnames:gmatch "......" do
-		str = str:gsub("%s", "")
-		table.insert(opcodes, str)
-	end
-
-	local function getopnum(opname)
-		for k, v in next, opcodes do
-			if v == opname then
-				return k
-			end
-
+		--extract opcode names
+		for str in bcnames:gmatch "......" do
+			str = str:gsub("%s", "")
+			table.insert(opcodes, str)
 		end
 
-		error("not found: " .. opname)
-	end
-
-
-	local function getop(func, pc)
-		local ins = jutil.funcbc(func, pc)
-		return ins and (band(ins, 0xff)+1)
-	end
-
-
-	opcode_checker = function(white)
-		
-		local opwhite = {}
-		for i=0,#opcodes do table.insert(opwhite, false) end
-		
-		
-		local function iswhitelisted(opnum)
-			local ret = opwhite[opnum]
-			if ret == nil then
-				error("opcode not found " .. opnum)
-			end
-		
-			return ret
-		end
-		
-		local function add_whitelist(num)
-			if opwhite[num] == nil then
-				error "invalid opcode num"
-			end
-		
-			opwhite[num] = true
-		end
-		
-		for line in white:gmatch '[^\r\n]+' do
-			
-			local opstr_towhite = line:match '[%w]+'
-			
-			if opstr_towhite and opstr_towhite:len() > 0 then
-				local whiteopnum = getopnum(opstr_towhite)
-				add_whitelist(whiteopnum)
-				assert(iswhitelisted(whiteopnum))
-			end
-		
-		end
-		
-		
-		local function checker_function(func,max_opcodes)
-			max_opcodes = max_opcodes or math.huge
-			for i = 1, max_opcodes do
-				local ret = getop(func, i)
-				if not ret then
-					return true
-				end
-			
-				if not iswhitelisted(ret) then
-					--error("non-whitelisted: " .. )
-					return false,"non-whitelisted: "..opcodes[ret]
+		local function getopnum(opname)
+			for k, v in next, opcodes do
+				if v == opname then
+					return k
 				end
 
 			end
-			return false,"checked max_opcodes"
+
+			error("not found: " .. opname)
 		end
 
-		return checker_function
-	end
 
-	
+		local function getop(func, pc)
+			local ins = jutil.funcbc(func, pc)
+			return ins and (band(ins, 0xff)+1)
+		end
+
+
+		opcode_checker = function(white)
+			
+			local opwhite = {}
+			for i=0,#opcodes do table.insert(opwhite, false) end
+			
+			
+			local function iswhitelisted(opnum)
+				local ret = opwhite[opnum]
+				if ret == nil then
+					error("opcode not found " .. opnum)
+				end
+			
+				return ret
+			end
+			
+			local function add_whitelist(num)
+				if opwhite[num] == nil then
+					error "invalid opcode num"
+				end
+			
+				opwhite[num] = true
+			end
+			
+			for line in white:gmatch '[^\r\n]+' do
+				
+				local opstr_towhite = line:match '[%w]+'
+				
+				if opstr_towhite and opstr_towhite:len() > 0 then
+					local whiteopnum = getopnum(opstr_towhite)
+					add_whitelist(whiteopnum)
+					assert(iswhitelisted(whiteopnum))
+				end
+			
+			end
+			
+			
+			local function checker_function(func,max_opcodes)
+				max_opcodes = max_opcodes or math.huge
+				for i = 1, max_opcodes do
+					local ret = getop(func, i)
+					if not ret then
+						return true
+					end
+				
+					if not iswhitelisted(ret) then
+						--error("non-whitelisted: " .. )
+						return false,"non-whitelisted: "..opcodes[ret]
+					end
+
+				end
+				return false,"checked max_opcodes"
+			end
+
+			return checker_function
+		end
+
+	end
 
 end
 
