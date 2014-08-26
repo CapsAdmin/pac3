@@ -909,12 +909,16 @@ function TIMELINE:Init()
 				if firstPass && animationData.StartFrame then
 					for i=1,animationData.StartFrame do
 						local v = animationData.FrameData[i]
-						subtraction = subtraction+(1/(v.FrameRate or 1))
+						if v then
+							subtraction = subtraction+(1/(v.FrameRate or 1))
+						end
 					end
 				elseif !firstPass && animationData.RestartFrame then
 					for i=1,animationData.RestartFrame do
 						local v = animationData.FrameData[i]
-						subtraction = subtraction+(1/(v.FrameRate or 1))
+						if v then
+							subtraction = subtraction+(1/(v.FrameRate or 1))
+						end
 					end
 				end
 			end
