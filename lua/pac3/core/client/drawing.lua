@@ -413,8 +413,16 @@ function pac.PostDrawOpaqueRenderables(drawdepth,drawing_skybox)
 			dst = ent:EyePos():Distance(pac.EyePos)
 			radius = ent:BoundingRadius() * 3 * (ent:GetModelScale() or 1)
 			
-			if ent:IsPlayer() and radius < 32 then
-				radius = 128
+			if ent:IsPlayer() then
+				
+				if not ent:Alive() and GetConVarNumber("pac_sv_hide_outfit_on_death") == 1 then
+					hide_parts(ent)
+					return
+				end
+			
+				if radius < 32 then
+					radius = 128
+				end
 			end
 			
 			if not ent:IsPlayer() and not ent:IsNPC() then
