@@ -33,7 +33,7 @@ end )
 util.AddNetworkString("pac.net.SetCollisionGroup.ClientNotify")
 net.Receive( "pac.net.SetCollisionGroup.ClientNotify", function(ent,group)
 	local index = net.ReadInt(13)
-	local group = net.ReadInt(group,7)
+	local group = net.ReadInt(7)
 	Entity(index):SetCollisionGroup(group)
 end )
 
