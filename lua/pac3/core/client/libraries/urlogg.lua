@@ -2,46 +2,20 @@
 
 local webaudio = pac.webaudio or {}
 
-local webaudio_disable = CreateClientConVar("pac_ogg_disable","0",true,false)
-
 webaudio.preinit = false
-webaudio.debug = CreateClientConVar("pac_ogg_debug","0",false,false)
+webaudio.debug = 0
 webaudio.initialized = false
 webaudio.rate = 0
 webaudio.SpeedOfSound = 6
 
-concommand.Add("webaudio_kill",function()
-	local aw = webaudio.GetAwesomium()
-	if aw then 
-		aw:Remove() 
-	end
-	webaudio.preinit = false
-end)
-
+webaudio.js_queue = {}
 webaudio.streams = {}
 
-function webaudio.GetAwesomium()
-	
-	if webaudio_disable:GetBool() then return end
-	
-	local html = webaudio.html
-	html = html and html:IsValid() and html
-	
-	if not webaudio.preinit then
-		webaudio.Preinit()
-	end
-	
-	return html
-end
-
-webaudio.js_queue = {}
-local function QueueJavascript(script)
-	table.insert(webaudio.js_queue, script)
-end
-
 local function dprint(str)
-    local d = webaudio.debug:GetInt()
-	if d > 0 then
+
+    if webaudio.debug == 0 then return end
+
+    if webaudio.debug >= 1 then
         if epoe then
             epoe.MsgC(Color(0, 255, 0), "[WebAudio] ")
             epoe.MsgC(Color(255, 255, 255), str)
@@ -51,15 +25,12 @@ local function dprint(str)
         MsgC(Color(0, 255, 0), "[WebAudio] ")
         MsgC(Color(255, 255, 255), str)
         Msg("\n")
-		
-		if d > 1 then
-			easylua.PrintOnServer("[WebAudio] " .. str)
-		end
-			
+    end
+
+    if webaudio.debug >= 2 then
+        easylua.PrintOnServer("[WebAudio] " .. str)
     end
 end
-
-webaudio.dprint=dprint
 
 do -- STREAM
     local STREAM = {}
@@ -100,15 +71,20 @@ do -- STREAM
     end
 
     function STREAM:Call(fmt, ...)
-        local script = ('var s = streams[%d]; if (s) {s%s};')
-						:format(	self.id,
-									--webaudio.debug:GetInt()>0 and "|| true" or "", 
-									fmt:format(...))
-						
+        if not self.loaded then return end
+
+        local script = ("try { streams[%d]%s } catch(e) { lua.print(e.toString()) }"):format(self.id, fmt:format(...))
+
         table.insert(webaudio.js_queue, script)
     end
+	
+	function STREAM:CallNow(fmt, ...)
+        if not self.loaded then return end
 
-	STREAM.CallNow=STREAM.Call
+        local script = ("try { streams[%d]%s } catch(e) { lua.print(e.toString()) }"):format(self.id, fmt:format(...))
+
+		webaudio.html:RunJavascript(script)
+    end
 
     local function BIND(func_name, js_set, def, check)
         STREAM[func_name] = def
@@ -336,13 +312,11 @@ do -- STREAM
 
     function webaudio.Stream(url)
         --url = url:gsub("http[s?]://", "http://")
-		
-		webaudio.Preinit()
-        if not url:find("://",1,true) then
+
+        if not url:find("http") then
             url = "asset://garrysmod/sound/" .. url
         end
 
-		
         local stream = setmetatable({}, STREAM)
 
         stream_count = stream_count + 1
@@ -352,23 +326,20 @@ do -- STREAM
         
 		webaudio.streams[stream.id] = stream
 		
-		QueueJavascript(string.format("createStream(%q, %d)", url, stream.id))
-		
-		dprint("New Stream: "..url)
+        webaudio.html:QueueJavascript(string.format("createStream(%q, %d)", url, stream.id))
 		
         return stream
     end
 end
 
-local pac_ogg_volume = CreateClientConVar("pac_ogg_volume", "1", true)
+local cvar = CreateClientConVar("pac_ogg_volume", "1", true)
 
 local webaudio_volume = nil
 function webaudio.SetVolume(num)
 	if webaudio_volume == num then return end
 	
 	webaudio_volume = num
-	QueueJavascript(string.format("gain.gain.value = %f", num))
-	
+    webaudio.html:QueueJavascript(string.format("gain.gain.value = %f", num))
 end
 
 local last
@@ -376,111 +347,94 @@ local last
 local volume             = GetConVar("volume")
 local snd_mute_losefocus = GetConVar("snd_mute_losefocus")
 
-function webaudio.Preinit()
-	
-    if webaudio.preinit then return end
-	if webaudio_disable:GetBool() then return end
-	webaudio.preinit = true
-
-	local old = webaudio.html
-	if old and old:IsValid() then old:Remove() end
-	webaudio.html = false
-	
-	local html = vgui.Create("DHTML")
-	if not html or not html:IsValid() then return end
-	webaudio.html = html
-	
-	html:SetPos(0, 0)
-	html:SetSize(1, 1)
-	html:SetZPos(-31995)
-	html:SetPopupStayAtBack(true)
-	html:SetKeyboardInputEnabled(false)
-	html:SetMouseInputEnabled(false)
-	
-	html:SetVisible(false)
-	html.Paint = function() end
-	
-	local lastmsg
-	
-	html.ConsoleMessage = function(self, msg)
-		-- why does awesomium crash in the first place?
-		if msg == "Uncaught ReferenceError: lua is not defined" then
-			dprint("CRASHED, REINITING?!?")
-			webaudio.preinit = false
-		end
-
-		if lastmsg ~= msg then 
-			lastmsg = msg 
-			Msg("[PAC] ")
-			MsgN(msg) 
-		end 
-	end
-
-	html:AddFunction("lua", "print", function(text)
-		dprint(text)
-	end)
-
-	html:AddFunction("lua", "message", function(name, ...)
-		local args = {...}
-
-		if name == "initialized" then
-			webaudio.initialized = true
-			webaudio.rate = args[1]
-		elseif name == "stream" then
-			local stream = webaudio.streams[tonumber(args[2]) or 0]
-			if stream then
-				local t = args[1]
-				if t == "call" then
-					local func_name = args[3]
-					if stream[func_name] then
-						stream[func_name](stream, select(4, ...))
-					end
-				elseif t == "fft" then
-					local data = CompileString(args[2], "stream_fft_data")()
-					stream.OnFFT(data)
-				elseif t == "stop" then
-					stream.paused = true
-				elseif t == "return" then
-					stream.returned_var = {select(3, ...)}
-				elseif t == "loaded" then
-					stream.loaded = true
-					stream.Length = args[3]
-					stream:SetFilterType(0)
-
-					if not stream.paused then
-						stream:Play()
-					end
-
-					stream:SetMaxLoopCount(stream.MaxLoopCount)
-					
-					stream:SetEcho(stream:GetEcho())
-					stream:SetEchoFeedback(stream:GetEchoFeedback())
-					stream:SetEchoDelay(stream:GetEchoDelay())                            
-
-					if stream.OnLoad then
-						stream:OnLoad()
-					end
-				elseif t == "position" then
-					stream.position = args[3]
-				end
-			end
-		end
-
-		dprint(name .. " " .. table.concat({...}, ", "))
-	end)
-
-	--html:OpenURL("asset://garrysmod/lua/pac3/core/client/libraries/urlogg.lua")
-	html:SetHTML(webaudio.html_content)
-
-
-	webaudio.html = html
-	
-	dprint"INITED"
-	
-end
-
 hook.Add("Think", "webaudio", function()
-    local mult = pac_ogg_volume:GetFloat()
+    local mult = cvar:GetFloat()
+
+    if not webaudio.preinit then
+        if webaudio.html then webaudio.html:Remove() end
+
+        local html = vgui.Create("DHTML") or NULL
+        if html:IsValid() then
+
+            html:SetVisible(false)
+            html:SetPos(ScrW(), ScrH())
+            html:SetSize(1, 1)
+			
+			local lastmsg
+			
+			html.ConsoleMessage = function(self, msg)
+				-- why does awesomium crash in the first place?
+				if msg == "Uncaught ReferenceError: lua is not defined" then
+					webaudio.preinit = false
+				end
+
+				if lastmsg ~= msg then 
+					lastmsg = msg 
+					Msg("[PAC] ")
+					MsgN(msg) 
+				end 
+			end
+
+            html:AddFunction("lua", "print", function(text)
+                dprint(text)
+            end)
+
+            html:AddFunction("lua", "message", function(name, ...)
+                local args = {...}
+
+                if name == "initialized" then
+                    webaudio.initialized = true
+                    webaudio.rate = args[1]
+                elseif name == "stream" then
+                    local stream = webaudio.streams[tonumber(args[2]) or 0]
+                    if stream then
+                        local t = args[1]
+                        if t == "call" then
+                            local func_name = args[3]
+                            if stream[func_name] then
+                                stream[func_name](stream, select(4, ...))
+                            end
+                        elseif t == "fft" then
+                            local data = CompileString(args[2], "stream_fft_data")()
+                            stream.OnFFT(data)
+                        elseif t == "stop" then
+                            stream.paused = true
+                        elseif t == "return" then
+                            stream.returned_var = {select(3, ...)}
+                        elseif t == "loaded" then
+                            stream.loaded = true
+                            stream.Length = args[3]
+                            stream:SetFilterType(0)
+
+                            if not stream.paused then
+                                stream:Play()
+                            end
+
+                            stream:SetMaxLoopCount(stream.MaxLoopCount)
+                            
+                            stream:SetEcho(stream:GetEcho())
+                            stream:SetEchoFeedback(stream:GetEchoFeedback())
+                            stream:SetEchoDelay(stream:GetEchoDelay())                            
+
+                            if stream.OnLoad then
+                                stream:OnLoad()
+                            end
+                        elseif t == "position" then
+                            stream.position = args[3]
+                        end
+                    end
+                end
+
+                dprint(name .. " " .. table.concat({...}, ", "))
+            end)
+
+			--html:OpenURL("asset://garrysmod/lua/pac3/core/client/libraries/urlogg.lua")
+            html:SetHTML(webaudio.html_content)
+        end
+
+        webaudio.html = html
+        webaudio.preinit = true
+    end
 
     if not webaudio.initialized then return end
 
@@ -501,44 +455,17 @@ hook.Add("Think", "webaudio", function()
 		else
 			stream:Stop()
 			webaudio.streams[key] = nil
-			QueueJavascript(("destroyStream(%i)"):format(stream.id))
-			
+			webaudio.html:QueueJavascript(("destroyStream(%i)"):format(stream.id))
+
 			setmetatable(stream, getmetatable(NULL))
 		end
 	end
 
-	local js = webaudio.js_queue--table.concat(webaudio.js_queue, "\n")
-	local val
-	if next(js) then
-		
-		local aw = webaudio.GetAwesomium()
-		if aw and not aw:IsLoading() then
-			
-			for i=#js,1,-1 do
-				val,js[i]=js[i],nil
-				val = string.JavascriptSafe(val)
-				aw:RunJavascript(([[
-				var f = false;	
-				try {
-					var f = new Function("%s");
-				} catch (e) {
-					lua.print("SYNTAX: "+e.toString());
-				}
-				if (f) {
-					try {
-						f();
-					} catch (e) {
-						lua.print("FUNC: "+e.toString());
-					}
-				}
-				
-				]]):format(val))
-			end
-			
-		end
-		
+	local js = table.concat(webaudio.js_queue, "\n")
+	if #js > 0 then
+		webaudio.html:QueueJavascript(js)
+		webaudio.js_queue = {}
 	 end
-	 
 end)
 
 pac.webaudio = webaudio
@@ -546,29 +473,17 @@ pac.webaudio = webaudio
 webaudio.html_content = [==[
 <script>
 
-window.onerror = function(msg, url, line)
+window.onerror = function(description, url, line)
 {
-
-	if (typeof(msg) === 'object' && msg.srcElement && msg.target) {
-		if(msg.srcElement == '[object HTMLScriptElement]' && msg.target == '[object HTMLScriptElement]'){
-			msg = 'Error loading script';
-		}else{
-			msg = 'Event Error - target:' + msg.target + ' srcElement:' + msg.srcElement;
-		}
-	}
-
-	msg = "FAIL: "+msg.toString();
-
-    lua.print(msg);
-};
+    lua.print("Unhandled exception at line " + line + ": " + description)
+}
 
 function lerp(x, y, a)
 {
     return x * (1 - a) + y * a;
 }
 
-var audio, gain, processor, analyser, streams = [];
-
+var audio, gain, processor, analyser, streams = []
 
 function open()
 {
@@ -593,18 +508,18 @@ function open()
             outl[i] = 0;
             outr[i] = 0;
         }
-		
-        for(var stream_id in streams)
+
+        for(var i in streams)
         {
-            var stream = streams[stream_id]
+            var stream = streams[i]
 
             if(!stream.use_echo && (stream.paused || (stream.vol_left < 0.001 && stream.vol_right < 0.001)))
             {
                 continue;
             }
             
-            var echol;
-            var echor;
+            var echol
+            var echor
             
             if (stream.use_echo && stream.echo_buffer)
             {
@@ -612,26 +527,26 @@ function open()
                 echor = stream.echo_buffer.getChannelData(1);
             }
 
-            var inl = stream.buffer.getChannelData(0);
-            var inr = stream.buffer.numberOfChannels == 1 ? inl : stream.buffer.getChannelData(1);
+            var inl = stream.buffer.getChannelData(0)
+            var inr = stream.buffer.numberOfChannels == 1 ? inl : stream.buffer.getChannelData(1)
 
-            var sml = 0;
-            var smr = 0;
+            var sml = 0
+            var smr = 0
 
             for(var j = 0; j < event.outputBuffer.length; ++j)
             {
 
                 if (stream.use_smoothing)
                 {
-                    stream.speed_smooth = stream.speed_smooth + (stream.speed - stream.speed_smooth) * 0.001;
-                    stream.vol_left_smooth = stream.vol_left_smooth + (stream.vol_left - stream.vol_left_smooth) * 0.001;
-                    stream.vol_right_smooth = stream.vol_right_smooth + (stream.vol_right - stream.vol_right_smooth) * 0.001;
+                    stream.speed_smooth = stream.speed_smooth + (stream.speed - stream.speed_smooth) * 0.001
+                    stream.vol_left_smooth = stream.vol_left_smooth + (stream.vol_left - stream.vol_left_smooth) * 0.001
+                    stream.vol_right_smooth = stream.vol_right_smooth + (stream.vol_right - stream.vol_right_smooth) * 0.001
                 }
                 else
                 {
-                    stream.speed_smooth = stream.speed;
-                    stream.vol_left_smooth = stream.vol_left_smooth;
-                    stream.vol_right_smooth = stream.vol_right_smooth;
+                    stream.speed_smooth = stream.speed
+                    stream.vol_left_smooth = stream.vol_left_smooth
+                    stream.vol_right_smooth = stream.vol_right_smooth
                 }
 
                 var length = stream.buffer.length;
@@ -640,11 +555,11 @@ function open()
                 {
                     if (stream.use_echo)
                     {
-                        stream.done_playing = true;
+                        stream.done_playing = true
                     }
                     else
                     {
-                        break;
+                        break
                     }              
                 }
                 else
@@ -726,19 +641,20 @@ function download_buffer(url, callback, skip_cache, id)
 {
     if (!skip_cache && buffer_cache[url])
     {
-        callback(buffer_cache[url]);
+        callback(buffer_cache[url])
 
-        return;
+        return
     }
 
-    var request = new XMLHttpRequest;
-    request.open("GET", url);
-    request.responseType = "arraybuffer";
-    request.send();
+    var request = new XMLHttpRequest
+
+    request.open("GET", url)
+    request.responseType = "arraybuffer"
+    request.send()
 
     request.onload = function()
     {
-        lua.print("decoding " + url + " " + request.response.byteLength + " ...");
+        lua.print("decoding " + url + " " + request.response.byteLength + " ...")
 
         audio.decodeAudioData(request.response,
 
@@ -759,10 +675,10 @@ function download_buffer(url, callback, skip_cache, id)
         )
     }
 
-    //request.onprogress = function(event)
-    //{
-    //    lua.print("downloading " +  Math.round(event.loaded / event.total) * 100);
-    //}
+    request.onprogress = function(event)
+    {
+        lua.print("downloading " +  (event.loaded / event.total) * 100)
+    }
 
     request.onerror = function()
     {
@@ -773,7 +689,7 @@ function download_buffer(url, callback, skip_cache, id)
 
 function createStream(url, id, skip_cache)
 {
-    lua.print("Loading " + url);
+    lua.print("Loading " + url)
 
     download_buffer(url, function(buffer)
     {
@@ -836,7 +752,7 @@ function createStream(url, id, skip_cache)
             if(stream.use_echo && (!stream.echo_buffer || (x != stream.echo_buffer.length))) {
                 var size = 1;
                 
-                while((size <<= 1) < x) {};
+                while((size <<= 1) < x);
                 
 				stream.echo_buffer = audio.createBuffer(2, size, audio.sampleRate);
             }
@@ -844,9 +760,9 @@ function createStream(url, id, skip_cache)
             stream.echo_delay = x;
         }
         
-        streams[id] = stream;
+        streams[id] = stream
 
-        lua.message("stream", "loaded", id, buffer.length);
+        lua.message("stream", "loaded", id, buffer.length)
     }, skip_cache, id)
 }
 
@@ -854,7 +770,8 @@ function destroyStream(id)
 {
 }
 
-open();
+open()
+
 </script>
 
 ]==]
