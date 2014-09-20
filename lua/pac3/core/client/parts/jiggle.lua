@@ -41,7 +41,7 @@ function PART:Initialize()
 end
 
 function PART:OnShow()
-	if self.ResetOnHide and self:IsHidden() then
+	if self.ResetOnHide then
 		self:Reset()
 	end
 end
