@@ -324,6 +324,7 @@ end
 
 function pace.RequestOutfits(ply)
 	if ply:IsValid() and not ply.pac_requested_outfits then
+		ply.pac_requested_outfits = true
 		for id, outfits in pairs(pace.Parts) do
 			local owner = (player.GetByUniqueID(id) or NULL)
 			if id == false or owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
@@ -332,7 +333,6 @@ function pace.RequestOutfits(ply)
 				end
 			end
 		end
-		ply.pac_requested_outfits = true
 	end
 end
 
