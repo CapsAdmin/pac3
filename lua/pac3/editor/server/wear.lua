@@ -241,7 +241,9 @@ function pace.SubmitPart(data, filter)
 	
 		if hook.Run("pac_SendData", players, data) ~= false then
 			
-			if not next(players) then return end
+			if not players then return end
+			
+			if type(players) == "table" and not next(players) then return end
 			
 			if pace.netstream then
 				pace.netstream.Start(players, data)
