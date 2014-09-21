@@ -210,7 +210,17 @@ function pace.SubmitPart(data, filter)
 	
 		local players = filter or player.GetAll()
 		
-		if pace.GlobalBans then
+		if type(players) == "table" then
+			for key, ply in next,players do
+				if not ply.pac_requested_outfits and ply ~= data.owner then
+					table.remove(players, key)
+				end
+			end
+		elseif type(players)=="Player" then
+			if not players.pac_requested_outfits and players ~= data.owner then
+				return true
+			end
+		elseif pace.GlobalBans then
 			if type(players) == "table" and data.owner:IsValid() then
 				local owner_steamid = data.owner:SteamID() 
 				for key, ply in pairs(players) do
@@ -230,6 +240,9 @@ function pace.SubmitPart(data, filter)
 		end
 	
 		if hook.Run("pac_SendData", players, data) ~= false then
+			
+			if not next(players) then return end
+			
 			if pace.netstream then
 				pace.netstream.Start(players, data)
 			else
