@@ -35,8 +35,9 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "WalkSpeed", 0)
 	pac.GetSet(PART, "CrouchSpeed", 0)
 	pac.GetSet(PART, "FallApartOnDeath", false)
+	pac.GetSet(PART, "DeathRagdollizeParent", false)
 	pac.GetSet(PART, "LodOverride", -1)
-	
+
 	pac.GetSet(PART, "UseLegacyScale", false)
 	
 	pac.GetSet(PART, "PlayerCollide", true)
