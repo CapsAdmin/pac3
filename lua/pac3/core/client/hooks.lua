@@ -195,7 +195,7 @@ function pac.OnClientsideRagdoll(ent)
 	if not ply.pac_death_physics_parts then
 		
 		-- make props draw on the ragdoll
-		if ply.death_ragdollize then
+		if ply.pac_death_ragdollize then
 			ply.pac_owner_override = ent
 		end
 		
