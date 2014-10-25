@@ -284,6 +284,11 @@ local legacy_text = {
 	L"If it doesn't look right after turning on legacy scale, try re-wearing the outfit.",
 	L"The old method of scaling is slow and not perfect. \"cell shading\" wont work and some models may appear larger than they should be.",
 	L"Legacy scale has been on by default since the gmod update but now it's off by default.",
+	L"",
+	L"The balanim part has been renamed to custom_animation at caps' request.",
+	L"Please change your parts out as new features will only be added to the custom_animation part.",
+	L"Additionally, the balanim part will be removed once custom_animation is in caps' pac3 repo.",
+	L"Replace your balanims with custom_animations so that when this happens your stuff doesn't break.",
 }
 
 function pace.HUDPaint()

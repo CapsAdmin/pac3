@@ -457,7 +457,7 @@ local function set_mesh(part, mesh)
 	part.Entity:SetRenderBounds(Vector(1, 1, 1)*-300, Vector(1, 1, 1)*300)	
 end
 
-function PART:SetModel(var)
+function PART:SetModel(var,override)
 	self.Entity = self:GetEntity()
 
 	if var and var:find("http") and pac.urlobj then		
@@ -517,9 +517,23 @@ function PART:SetModel(var)
 	
 	self.wavefront_mesh = nil
 	
+	if (not string.find(var,"pac_import")) or override then
 		self.Model = var
 		self.Entity.pac_bones = nil
 		self.Entity:SetModel(var)
+	else
+		local uid = var:Left(28):Right(10)
+		if file.Exists(var,"GAME") and timer.Exists("pac_mdl_import_"..uid) then --still downloading
+			self:SetModel("models/pac/default.mdl")
+			self.loading_obj = "downloading mdl"
+		elseif file.Exists(var,"GAME") then
+			self.Model = var
+			self.Entity:SetModel(var)
+		else
+			self.Model = "models/editor/axis_helper.mdl"
+			self.Entity:SetModel("models/editor/axis_helper.mdl")
+		end
+	end
 
 end
 local NORMAL = Vector(1,1,1)
