@@ -1,13 +1,19 @@
 local urlobj = pac.urlobj or {}
 pac.urlobj = urlobj
 
-urlobj.Queue = {}--urlobj.Queue or {}
-urlobj.Cache = {}--urlobj.Cache or {}
+urlobj.Queue = {}
+urlobj.Cache = {}
+urlobj.QueueCount = 0
+urlobj.CacheCount = 0
 
-concommand.Add("pac_urlobj_clear_cache", function()
-	urlobj.Cache = {}
-	urlobj.Queue = {}
-end)
+concommand.Add("pac_urlobj_clear_cache",
+	function ()
+		urlobj.Cache = {}
+		urlobj.Queue = {}
+		urlobj.QueueCount = 0
+		urlobj.CacheCount = 0
+	end
+)
 
 -- parser made by animorten
 -- modified slightly by capsadmin
@@ -198,86 +204,101 @@ function urlobj.GetObjFromURL(url, skip_cache, generateNormals, callback, status
 		local queueItem = 
 		{
 			DownloadAttemptCount = 0,
-			GenerateNormals = generateNormals,
-			callbackSet = {},
-			statusCallbackSet = {},
+			DownloadTimeoutTime = 0,
+			IsDownloading = false,
 			
-			callback = nil,
-			statusCallback = nil
+			GenerateNormals = generateNormals,
+			CallbackSet = {},
+			StatusCallbackSet = {},
+			
+			Callback = nil,
+			StatusCallback = nil
 		}
 		urlobj.Queue[url] = queueItem
+		urlobj.QueueCount = urlobj.QueueCount + 1
 		
-		queueItem.callback = function (...)
-			for callback, _ in pairs (queueItem.callbackSet) do
+		queueItem.Callback = function (...)
+			for callback, _ in pairs (queueItem.CallbackSet) do
 				callback (...)
 			end
 			
 			-- Release reference (!!)
-			queueItem.callbackSet = nil
+			queueItem.CallbackSet = nil
 		end
 		
-		queueItem.statusCallback = function (...)
-			for statusCallback, _ in pairs (queueItem.statusCallbackSet) do
+		queueItem.StatusCallback = function (...)
+			for statusCallback, _ in pairs (queueItem.StatusCallbackSet) do
 				statusCallback (...)
 			end
 		end
 	end
 	
 	-- Add callbacks
-	if callback       then urlobj.Queue[url].callbacks[callback      ] = true end
-	if statusCallback then urlobj.Queue[url].callbacks[statusCallback] = true end
+	if callback       then urlobj.Queue[url].Callbacks      [callback      ] = true end
+	if statusCallback then urlobj.Queue[url].StatusCallbacks[statusCallback] = true end
 end
 
-local queue_count = 0
-
-function urlobj.Think()
+-- Download queuing
+function urlobj.DownloadQueueThink()
 	if pac.urltex and pac.urltex.Busy then return end
-
-	for url, queueItem in pairs(urlobj.Queue)  do
-		if not queueItem.Downloading and queueItem.statusCallback then
-			queueItem.statusCallback("queued (" .. queue_count .. " left)", false)
-		end
 	
-		if queueItem.Downloading and queueItem.Downloading < pac.RealTime then 
+	for url, queueItem in pairs(urlobj.Queue) do
+		if not queueItem.IsDownloading then
+			queueItem.StatusCallback("queued (" .. urlobj.QueueCount .. " left)", false)
+		end
+		
+		-- Check for download timeout
+		if queueItem.IsDownloading and
+		   pac.RealTime > queueItem.DownloadTimeoutTime then 
 			pac.dprint("model download timed out for the %s time %q", queueItem.DownloadAttemptCount, url)
+			
 			if queueItem.DownloadAttemptCount > 3 then
+				-- Give up
 				urlobj.Queue[url] = nil
+				urlobj.QueueCount = urlobj.QueueCount - 1
 				pac.dprint("model download timed out for good %q", url)
 			else
-				queueItem.Downloading = false
+				-- Prime for next attempt
+				queueItem.IsDownloading = false
 			end
+			
 			queueItem.DownloadAttemptCount = queueItem.DownloadAttemptCount + 1
 			return
 		end
 	end
 	
-	queue_count = table.Count(urlobj.Queue)
-	
-	if queue_count > 0 then
+	-- Start download of next item in queue
+	if next(urlobj.Queue) then
 		local url, queueItem = next(urlobj.Queue)
-		if not queueItem.Downloading then
-			if queueItem.statusCallback then queueItem.statusCallback("downloading", false) end
+		if not queueItem.IsDownloading then
+			queueItem.StatusCallback("downloading", false)
+			
 			pac.dprint("requesting model download %q", url)
 			
-			queueItem.Downloading = pac.RealTime + 15
+			queueItem.IsDownloading = true
+			queueItem.DownloadTimeoutTime = pac.RealTime + 15
 
-			pac.SimpleFetch(url, function(obj_str)	
-				pac.dprint("downloaded model %q %s", url, string.NiceSize(#obj_str))
-				
-				pac.dprint("%s", obj_str)
+			pac.SimpleFetch(url,
+				function(obj_str)	
+					pac.dprint("downloaded model %q %s", url, string.NiceSize(#obj_str))
+					
+					pac.dprint("%s", obj_str)
 
-				local obj = urlobj.CreateObj(obj_str, queueItem.GenerateNormals, queueItem.statusCallback)
-				
-				urlobj.Cache[url] = obj
-				urlobj.Queue[url] = nil
+					local obj = urlobj.CreateObj(obj_str, queueItem.GenerateNormals, queueItem.StatusCallback)
+					
+					urlobj.Cache[url] = obj
+					urlobj.CacheCount = urlobj.CacheCount + 1
+					
+					urlobj.Queue[url] = nil
+					urlobj.QueueCount = urlobj.QueueCount - 1
 
-				queueItem.callback(obj)
-			end)
+					queueItem.Callback(obj)
+				end
+			)
 		end
-		urlobj.Busy = true
-	else
-		urlobj.Busy = false
 	end
+	
+	urlobj.Busy = next (urlobj.Queue) ~= nil
 end
 
-timer.Create("urlobj_queue", 0.1, 0, urlobj.Think)
+timer.Create("urlobj_download_queue", 0.1, 0, urlobj.DownloadQueueThink)
