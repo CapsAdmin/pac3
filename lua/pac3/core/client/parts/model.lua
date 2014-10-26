@@ -492,11 +492,11 @@ function PART:SetModel(var,override)
 				end	
 				
 			end,
-			function(status, finished) 
+			function(finished, statusMessage) 
 				if finished then
 					self.loading_obj = nil
 				else
-					self.loading_obj = status
+					self.loading_obj = statusMessage
 				end
 			end
 		)

@@ -18,7 +18,7 @@ concommand.Add("pac_urlobj_clear_cache",
 local pac_enable_urlobj = CreateClientConVar("pac_enable_urlobj", "1", true)
 
 function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statusCallback)
-	statusCallback = statusCallback or function (status, finished) end
+	statusCallback = statusCallback or function (statusMessage, finished) end
 	
 	if not pac_enable_urlobj:GetBool() then return end
 	
@@ -87,6 +87,8 @@ local tonumber = tonumber
 local nextParsingHookId = 0 
 
 function urlobj.ParseObj(data, generateNormals, callback, statusCallback)
+	statusCallback = statusCallback or function (finished, statusMessage) end
+	
 	local co = coroutine.create(function()
 		debug.sethook()
 
@@ -208,18 +210,16 @@ function urlobj.ParseObj(data, generateNormals, callback, statusCallback)
 	
 	hook.Add("Think", "pac_parse_obj_" .. nextParsingHookId, function()
 		for i = 1, 512 do
-			local dead, finished, status, msg = coroutine.resume(co)
+			local dead, finished, statusMessage, msg = coroutine.resume(co)
 			if finished then
-				if dead == false and finished then
-					if statusCallback then statusCallback(finished, true) end
-					hook.Remove("Think", "pac_parse_obj_" .. nextParsingHookId)
-				end
+				if statusCallback then statusCallback(true, "finished") end
+				hook.Remove("Think", "pac_parse_obj_" .. nextParsingHookId)
 			else
 				if statusCallback and msg then
-					if status == "inserting lines" then
-						statusCallback(status .. " " .. msg, false)
+					if statusMessage == "inserting lines" then
+						statusCallback(false, statusMessage .. " " .. msg)
 					else
-						statusCallback(status .. " " .. math.Round(msg*100) .. " %", false)
+						statusCallback(false, statusMessage .. " " .. math.Round(msg*100) .. " %")
 					end
 				end
 			end
@@ -229,7 +229,9 @@ function urlobj.ParseObj(data, generateNormals, callback, statusCallback)
 	nextParsingHookId = nextParsingHookId + 1
 end
 
-function urlobj.CreateObj(obj_str, generateNormals, statusCallback)	
+function urlobj.CreateObj(obj_str, generateNormals, statusCallback)
+	statusCallback = statusCallback or function (finished, statusMessage) end
+	
 	local mesh = Mesh()
 	
 	urlobj.ParseObj(obj_str, generateNormals,
@@ -248,7 +250,7 @@ function urlobj.DownloadQueueThink()
 	
 	for url, queueItem in pairs(urlobj.Queue) do
 		if not queueItem.IsDownloading then
-			queueItem.StatusCallback("queued (" .. urlobj.QueueCount .. " left)", false)
+			queueItem.StatusCallback(false, "queued (" .. urlobj.QueueCount .. " left)")
 		end
 		
 		-- Check for download timeout
@@ -275,7 +277,7 @@ function urlobj.DownloadQueueThink()
 	if next(urlobj.Queue) then
 		local url, queueItem = next(urlobj.Queue)
 		if not queueItem.IsDownloading then
-			queueItem.StatusCallback("downloading", false)
+			queueItem.StatusCallback(false, "downloading")
 			
 			pac.dprint("requesting model download %q", url)
 			
