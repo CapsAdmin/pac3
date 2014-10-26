@@ -17,7 +17,7 @@ local tonumber = tonumber
 
 local i = 0 
 
-function urlobj.ParseObj(data, generate_normals, callback, statusCallback)
+function urlobj.ParseObj(data, generateNormals, callback, statusCallback)
 	local co = coroutine.create(function()
 		debug.sethook()
 
@@ -45,7 +45,7 @@ function urlobj.ParseObj(data, generate_normals, callback, statusCallback)
 				table_insert(positions, Vector(tonumber(parts[2]), tonumber(parts[3]), tonumber(parts[4])))
 			elseif parts[1] == "vt" and #parts >= 3 then
 				table_insert(texcoords, {u = tonumber(parts[2])%1, v = tonumber(1-parts[3])%1})
-			elseif not generate_normals and parts[1] == "vn" and #parts >= 4 then
+			elseif not generateNormals and parts[1] == "vn" and #parts >= 4 then
 				table_insert(normals, Vector(tonumber(parts[2]), tonumber(parts[3]), tonumber(parts[4])):GetNormalized())
 			end
 			
@@ -103,7 +103,7 @@ function urlobj.ParseObj(data, generate_normals, callback, statusCallback)
 			coroutine.yield(false, "solving indices", i/vert_count)
 		end
 		
-		if generate_normals then
+		if generateNormals then
 			local vertex_normals = {}
 			local count = #output/3
 			for i = 1, count do
@@ -163,10 +163,10 @@ function urlobj.ParseObj(data, generate_normals, callback, statusCallback)
 	i = i + 1
 end
 
-function urlobj.CreateObj(obj_str, generate_normals, statusCallback)	
+function urlobj.CreateObj(obj_str, generateNormals, statusCallback)	
 	local mesh = Mesh()
 	
-	urlobj.ParseObj(obj_str, generate_normals, function(data)
+	urlobj.ParseObj(obj_str, generateNormals, function(data)
 		mesh:BuildFromTriangles(data)
 	end, statusCallback)
 	
@@ -175,7 +175,7 @@ end
 
 local pac_enable_urlobj = CreateClientConVar("pac_enable_urlobj", "1", true)
 
-function urlobj.GetObjFromURL(url, skip_cache, generate_normals, callback, statusCallback)
+function urlobj.GetObjFromURL(url, skip_cache, generateNormals, callback, statusCallback)
 	statusCallback = statusCallback or function (status, finished) end
 	
 	if not pac_enable_urlobj:GetBool() then return end
@@ -197,8 +197,8 @@ function urlobj.GetObjFromURL(url, skip_cache, generate_normals, callback, statu
 	if not urlobj.Queue[url] then
 		local queueItem = 
 		{
-			downloadAttemptCount = 0,
-			generate_normals = generate_normals,
+			DownloadAttemptCount = 0,
+			GenerateNormals = generateNormals,
 			callbackSet = {},
 			statusCallbackSet = {},
 			
@@ -233,20 +233,20 @@ local queue_count = 0
 function urlobj.Think()
 	if pac.urltex and pac.urltex.Busy then return end
 
-	for url, data in pairs(urlobj.Queue)  do
-		if not data.Downloading and data.statusCallback then
-			data.statusCallback("queued (" .. queue_count .. " left)", false)
+	for url, queueItem in pairs(urlobj.Queue)  do
+		if not queueItem.Downloading and queueItem.statusCallback then
+			queueItem.statusCallback("queued (" .. queue_count .. " left)", false)
 		end
 	
-		if data.Downloading and data.Downloading < pac.RealTime then 
-			pac.dprint("model download timed out for the %s time %q", data.downloadAttemptCount, url)
-			if data.downloadAttemptCount > 3 then
+		if queueItem.Downloading and queueItem.Downloading < pac.RealTime then 
+			pac.dprint("model download timed out for the %s time %q", queueItem.DownloadAttemptCount, url)
+			if queueItem.DownloadAttemptCount > 3 then
 				urlobj.Queue[url] = nil
 				pac.dprint("model download timed out for good %q", url)
 			else
-				data.Downloading = false
+				queueItem.Downloading = false
 			end
-			data.downloadAttemptCount = data.downloadAttemptCount + 1
+			queueItem.DownloadAttemptCount = queueItem.DownloadAttemptCount + 1
 			return
 		end
 	end
@@ -254,24 +254,24 @@ function urlobj.Think()
 	queue_count = table.Count(urlobj.Queue)
 	
 	if queue_count > 0 then
-		local url, data = next(urlobj.Queue)
-		if not data.Downloading then
-			if data.statusCallback then data.statusCallback("downloading", false) end
+		local url, queueItem = next(urlobj.Queue)
+		if not queueItem.Downloading then
+			if queueItem.statusCallback then queueItem.statusCallback("downloading", false) end
 			pac.dprint("requesting model download %q", url)
 			
-			data.Downloading = pac.RealTime + 15
+			queueItem.Downloading = pac.RealTime + 15
 
 			pac.SimpleFetch(url, function(obj_str)	
 				pac.dprint("downloaded model %q %s", url, string.NiceSize(#obj_str))
 				
 				pac.dprint("%s", obj_str)
 
-				local obj = urlobj.CreateObj(obj_str, data.generate_normals, data.statusCallback)
+				local obj = urlobj.CreateObj(obj_str, queueItem.GenerateNormals, queueItem.statusCallback)
 				
 				urlobj.Cache[url] = obj
 				urlobj.Queue[url] = nil
 
-				data.callback(obj)
+				queueItem.callback(obj)
 			end)
 		end
 		urlobj.Busy = true
