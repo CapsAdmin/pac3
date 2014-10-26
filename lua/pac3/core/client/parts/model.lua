@@ -490,8 +490,8 @@ function PART:SetModel(var)
 				self:SetAlpha(0)
 			end	
 			
-		end, false, false, false, function(str, done) 
-			self.loading_obj = str
+		end, false, false, false, function(status, done) 
+			self.loading_obj = status
 			if done then
 				self.loading_obj = nil
 			end

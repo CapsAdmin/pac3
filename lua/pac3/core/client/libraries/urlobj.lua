@@ -1,4 +1,6 @@
 local urlobj = pac.urlobj or {}
+pac.urlobj = urlobj
+
 urlobj.Queue = {}--urlobj.Queue or {}
 urlobj.Cache = {}--urlobj.Cache or {}
 
@@ -13,13 +15,9 @@ end)
 local table_insert = table.insert
 local tonumber = tonumber
 
-
-jit.on(parse)
-jit.flush(parse)
-
 local i = 0 
 
-function urlobj.ParseObj(data, generate_normals, hack, callback, dbgprint)
+function urlobj.ParseObj(data, generate_normals, hack, callback, statusCallback)
 	local co = coroutine.create(function()
 		debug.sethook()
 
@@ -146,16 +144,16 @@ function urlobj.ParseObj(data, generate_normals, hack, callback, dbgprint)
 			local dead, done, why, msg = coroutine.resume(co)
 			if done then
 				if dead == false and done then
-					if dbgprint then dbgprint(done, true) end
+					if statusCallback then statusCallback(done, true) end
 					hook.Remove("Think", id)
 				end
 				return true
 			else
-				if dbgprint and msg then
+				if statusCallback and msg then
 					if why == "inserting lines" then
-						dbgprint(why .. " " .. msg, false)
+						statusCallback(why .. " " .. msg, false)
 					else
-						dbgprint(why .. " " .. math.Round(msg*100) .. " %", false)
+						statusCallback(why .. " " .. math.Round(msg*100) .. " %", false)
 					end
 				end
 			end
@@ -165,7 +163,7 @@ function urlobj.ParseObj(data, generate_normals, hack, callback, dbgprint)
 	i = i + 1
 end
 
-function urlobj.CreateObj(obj_str, generate_normals, hack, dbgprint)	
+function urlobj.CreateObj(obj_str, generate_normals, hack, statusCallback)	
 	local mesh = Mesh()
 	
 	if hack then
@@ -174,15 +172,15 @@ function urlobj.CreateObj(obj_str, generate_normals, hack, dbgprint)
 	
 	urlobj.ParseObj(obj_str, generate_normals, hack, function(data)
 		mesh:BuildFromTriangles(data)
-	end, dbgprint)
+	end, statusCallback)
 	
 	return {mesh}
 end
 
-local enable = CreateClientConVar("pac_enable_urlobj", "1", true)
+local pac_enable_urlobj = CreateClientConVar("pac_enable_urlobj", "1", true)
 
-function urlobj.GetObjFromURL(url, callback, skip_cache, generate_normals, hack, dbgprint)
-	if not enable:GetBool() then return end
+function urlobj.GetObjFromURL(url, callback, skip_cache, generate_normals, hack, statusCallback)
+	if not pac_enable_urlobj:GetBool() then return end
 
 	url = url:gsub("https://", "http://")
 
@@ -204,7 +202,7 @@ function urlobj.GetObjFromURL(url, callback, skip_cache, generate_normals, hack,
 			old(...)
 		end
 	else
-		urlobj.Queue[url] = {callback = callback, tries = 0, generate_normals = generate_normals, hack = hack, dbgprint = dbgprint}
+		urlobj.Queue[url] = {callback = callback, tries = 0, generate_normals = generate_normals, hack = hack, statusCallback = statusCallback}
 	end
 end
 
@@ -214,8 +212,8 @@ function urlobj.Think()
 	if pac.urltex and pac.urltex.Busy then return end
 
 	for url, data in pairs(urlobj.Queue)  do
-		if not data.Downloading and data.dbgprint then
-			data.dbgprint("queued (" .. queue_count .. " left)", false)
+		if not data.Downloading and data.statusCallback then
+			data.statusCallback("queued (" .. queue_count .. " left)", false)
 		end
 	
 		if data.Downloading and data.Downloading < pac.RealTime then 
@@ -235,7 +233,7 @@ function urlobj.Think()
 	if queue_count > 0 then
 		local url, data = next(urlobj.Queue)
 		if not data.Downloading then
-			if data.dbgprint then data.dbgprint("downloading", false) end
+			if data.statusCallback then data.statusCallback("downloading", false) end
 			pac.dprint("requesting model download %q", url)
 			
 			data.Downloading = pac.RealTime + 15
@@ -245,7 +243,7 @@ function urlobj.Think()
 				
 				pac.dprint("%s", obj_str)
 
-				local obj = urlobj.CreateObj(obj_str, data.generate_normals, data.hack, data.dbgprint)
+				local obj = urlobj.CreateObj(obj_str, data.generate_normals, data.hack, data.statusCallback)
 				
 				urlobj.Cache[url] = obj
 				urlobj.Queue[url] = nil
@@ -260,5 +258,3 @@ function urlobj.Think()
 end
 
 timer.Create("urlobj_queue", 0.1, 0, urlobj.Think)
-
-pac.urlobj = urlobj
