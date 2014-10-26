@@ -179,7 +179,7 @@ end
 
 local pac_enable_urlobj = CreateClientConVar("pac_enable_urlobj", "1", true)
 
-function urlobj.GetObjFromURL(url, callback, skip_cache, generate_normals, hack, statusCallback)
+function urlobj.GetObjFromURL(url, skip_cache, generate_normals, hack, callback, statusCallback)
 	if not pac_enable_urlobj:GetBool() then return end
 	
 	-- Rewrite URL
