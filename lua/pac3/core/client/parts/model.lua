@@ -489,8 +489,7 @@ function PART:SetModel(var,override)
 					end
 					
 					self:SetAlpha(0)
-				end	
-				
+				end
 			end,
 			function(finished, statusMessage) 
 				if finished then
