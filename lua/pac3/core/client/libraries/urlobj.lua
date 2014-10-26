@@ -180,13 +180,15 @@ end
 local pac_enable_urlobj = CreateClientConVar("pac_enable_urlobj", "1", true)
 
 function urlobj.GetObjFromURL(url, skip_cache, generate_normals, hack, callback, statusCallback)
+	statusCallback = statusCallback or function (status, finished) end
+	
 	if not pac_enable_urlobj:GetBool() then return end
 	
 	-- Rewrite URL
-	url = string.gsub (url, "^https://", "^http://")
 	-- pastebin.com/([a-zA-Z0-9]*) to pastebin.com/raw.php?i=%1
-	url = string.gsub (url, "pastebin.com/([a-zA-Z0-9]*)$", "pastebin.com/raw.php?i=%1")
 	-- github.com/(.*)/(.*)/blob/ to github.com/%1/%2/raw/
+	url = string.gsub (url, "^https://", "^http://")
+	url = string.gsub (url, "pastebin.com/([a-zA-Z0-9]*)$", "pastebin.com/raw.php?i=%1")
 	url = string.gsub (url, "github.com/([a-zA-Z0-9_]+)/([a-zA-Z0-9_]+)/blob/", "github.com/%1/%2/raw/")
 	
 	-- if it's already downloaded just return it
@@ -195,16 +197,40 @@ function urlobj.GetObjFromURL(url, skip_cache, generate_normals, hack, callback,
 		return
 	end
 	
-	-- if it's already being downloaded, append the callback to the current download
-	if urlobj.Queue[url] then
-		local old = urlobj.Queue[url].callback
-		urlobj.Queue[url].callback = function(...)	
-			callback(...)
-			old(...)
+	-- Add item to queue
+	if not urlobj.Queue[url] then
+		local queueItem = 
+		{
+			downloadAttemptCount = 0,
+			generate_normals = generate_normals,
+			hack = hack,
+			callbackSet = {},
+			statusCallbackSet = {},
+			
+			callback = nil,
+			statusCallback = nil
+		}
+		urlobj.Queue[url] = queueItem
+		
+		queueItem.callback = function (...)
+			for callback, _ in pairs (queueItem.callbackSet) do
+				callback (...)
+			end
+			
+			-- Release reference (!!)
+			queueItem.callbackSet = nil
 		end
-	else
-		urlobj.Queue[url] = {callback = callback, tries = 0, generate_normals = generate_normals, hack = hack, statusCallback = statusCallback}
+		
+		queueItem.statusCallback = function (...)
+			for statusCallback, _ in pairs (queueItem.statusCallbackSet) do
+				statusCallback (...)
+			end
+		end
 	end
+	
+	-- Add callbacks
+	if callback       then urlobj.Queue[url].callbacks[callback      ] = true end
+	if statusCallback then urlobj.Queue[url].callbacks[statusCallback] = true end
 end
 
 local queue_count = 0
@@ -218,15 +244,16 @@ function urlobj.Think()
 		end
 	
 		if data.Downloading and data.Downloading < pac.RealTime then 
-			pac.dprint("model download timed out for the %s time %q", data.tries, url)
-			if data.tries > 3 then
+			pac.dprint("model download timed out for the %s time %q", data.downloadAttemptCount, url)
+			if data.downloadAttemptCount > 3 then
 				urlobj.Queue[url] = nil
 				pac.dprint("model download timed out for good %q", url)
 			else
 				data.Downloading = false
 			end
-			data.tries = data.tries + 1
-		return end
+			data.downloadAttemptCount = data.downloadAttemptCount + 1
+			return
+		end
 	end
 	
 	queue_count = table.Count(urlobj.Queue)
