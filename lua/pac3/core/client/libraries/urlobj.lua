@@ -20,8 +20,6 @@ concommand.Add("pac_urlobj_clear_cache",
 local pac_enable_urlobj = CreateClientConVar("pac_enable_urlobj", "1", true)
 
 function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statusCallback)
-	statusCallback = statusCallback or function (statusMessage, finished) end
-	
 	if not pac_enable_urlobj:GetBool() then return end
 	
 	-- Rewrite URL
@@ -219,14 +217,16 @@ function urlobj.CreateObj(obj_str, generateNormals, statusCallback)
 	)
 	
 	-- Coroutine runner
-	hook.Add("Think", "pac_parse_obj_" .. nextParsingHookId,
+	local parsingHookId = "pac_parse_obj_" .. nextParsingHookId
+	hook.Add("Think", parsingHookId,
 		function()
 			local t0 = SysTime ()
 			while SysTime () - t0 < 0.002 do
 				local success, finished, statusMessage, msg = coroutine.resume(co)
 				if not success or finished then
-					if statusCallback then statusCallback(true, "finished") end
-					hook.Remove("Think", "pac_parse_obj_" .. nextParsingHookId)
+					statusCallback(true, "Finished")
+					hook.Remove("Think", parsingHookId)
+					break
 				else
 					if statusMessage == "inserting lines" then
 						statusCallback(false, statusMessage .. " " .. msg)
@@ -251,7 +251,7 @@ function urlobj.DownloadQueueThink()
 	
 	for url, queueItem in pairs(urlobj.Queue) do
 		if not queueItem.IsDownloading then
-			queueItem.StatusCallback(false, "queued (" .. urlobj.QueueCount .. " left)")
+			queueItem.StatusCallback(false, "Queued for download (" .. urlobj.QueueCount .. " items in queue)")
 		end
 		
 		-- Check for download timeout
@@ -278,7 +278,7 @@ function urlobj.DownloadQueueThink()
 	if next(urlobj.Queue) then
 		local url, queueItem = next(urlobj.Queue)
 		if not queueItem.IsDownloading then
-			queueItem.StatusCallback(false, "downloading")
+			queueItem.StatusCallback(false, "Downloading")
 			
 			pac.dprint("requesting model download %q", url)
 			
