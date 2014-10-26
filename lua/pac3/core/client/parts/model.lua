@@ -463,39 +463,43 @@ function PART:SetModel(var,override)
 	if var and var:find("http") and pac.urlobj then
 		self.loading_obj = "downloading"
 		
-		pac.urlobj.GetObjFromURL(url, function(meshes, err)
-			if not self:IsValid() then return end
-			
-			self.loading_obj = false
-			
-			self.Entity = self:GetEntity()
-			
-			if not meshes and err then
-				self.Entity:SetModel("error.mdl")
-				self.wavefront_mesh = nil
-				return
-			end
-			
-			if table.Count(meshes) == 1 then
-				set_mesh(self, select(2, next(meshes)))
-			else
-				for key, mesh in pairs(meshes) do
-					local part = pac.CreatePart("model", self:GetOwnerName())
-					part:SetName(key)
-					part:SetParent(self)
-					part:SetMaterial(self:GetMaterial())
-					set_mesh(part, mesh)
+		pac.urlobj.GetObjFromURL(url, false, false, false,
+			function(meshes, err)
+				if not self:IsValid() then return end
+				
+				self.loading_obj = false
+				
+				self.Entity = self:GetEntity()
+				
+				if not meshes and err then
+					self.Entity:SetModel("error.mdl")
+					self.wavefront_mesh = nil
+					return
 				end
 				
-				self:SetAlpha(0)
-			end	
-			
-		end, false, false, false, function(status, done) 
-			self.loading_obj = status
-			if done then
-				self.loading_obj = nil
+				if table.Count(meshes) == 1 then
+					set_mesh(self, select(2, next(meshes)))
+				else
+					for key, mesh in pairs(meshes) do
+						local part = pac.CreatePart("model", self:GetOwnerName())
+						part:SetName(key)
+						part:SetParent(self)
+						part:SetMaterial(self:GetMaterial())
+						set_mesh(part, mesh)
+					end
+					
+					self:SetAlpha(0)
+				end	
+				
+			end,
+			function(status, finished) 
+				if finished then
+					self.loading_obj = nil
+				else
+					self.loading_obj = status
+				end
 			end
-		end)
+		)
 		
 		self.Model = var
 		return
