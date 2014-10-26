@@ -460,21 +460,7 @@ end
 function PART:SetModel(var,override)
 	self.Entity = self:GetEntity()
 
-	if var and var:find("http") and pac.urlobj then		
-		local args, url = var:match("(.-)(http.+)")
-		local merge = true
-		
-		if args then 
-			args = args:Split("") 
-			for k,v in pairs(args) do 
-				args[v] = v 
-			end
-			
-			if args["*"] then
-				merge = false
-			end
-		end
-				
+	if var and var:find("http") and pac.urlobj then
 		self.loading_obj = "downloading"
 		
 		pac.urlobj.GetObjFromURL(url, function(meshes, err)
@@ -504,7 +490,7 @@ function PART:SetModel(var,override)
 				self:SetAlpha(0)
 			end	
 			
-		end, args["_"], args["<"], args["."], function(str, done) 
+		end, false, false, false, function(str, done) 
 			self.loading_obj = str
 			if done then
 				self.loading_obj = nil
