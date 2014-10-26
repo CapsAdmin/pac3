@@ -15,13 +15,76 @@ concommand.Add("pac_urlobj_clear_cache",
 	end
 )
 
+local pac_enable_urlobj = CreateClientConVar("pac_enable_urlobj", "1", true)
+
+function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statusCallback)
+	statusCallback = statusCallback or function (status, finished) end
+	
+	if not pac_enable_urlobj:GetBool() then return end
+	
+	-- Rewrite URL
+	-- pastebin.com/([a-zA-Z0-9]*) to pastebin.com/raw.php?i=%1
+	-- github.com/(.*)/(.*)/blob/ to github.com/%1/%2/raw/
+	url = string.gsub (url, "^https://", "^http://")
+	url = string.gsub (url, "pastebin.com/([a-zA-Z0-9]*)$", "pastebin.com/raw.php?i=%1")
+	url = string.gsub (url, "github.com/([a-zA-Z0-9_]+)/([a-zA-Z0-9_]+)/blob/", "github.com/%1/%2/raw/")
+	
+	-- if it's already downloaded just return it
+	if callback and not forceReload and urlobj.Cache[url] then
+		callback(urlobj.Cache[url])
+		return
+	end
+	
+	-- Add item to queue
+	if not urlobj.Queue[url] then
+		local queueItem = 
+		{
+			DownloadAttemptCount = 0,
+			DownloadTimeoutTime = 0,
+			IsDownloading = false,
+			
+			GenerateNormals = generateNormals,
+			CallbackSet = {},
+			StatusCallbackSet = {},
+			
+			Callback = nil,
+			StatusCallback = nil
+		}
+		urlobj.Queue[url] = queueItem
+		urlobj.QueueCount = urlobj.QueueCount + 1
+		
+		queueItem.Callback = function (...)
+			for callback, _ in pairs (queueItem.CallbackSet) do
+				callback (...)
+			end
+			
+			-- Release reference (!!)
+			queueItem.CallbackSet = nil
+		end
+		
+		queueItem.StatusCallback = function (...)
+			for statusCallback, _ in pairs (queueItem.StatusCallbackSet) do
+				statusCallback (...)
+			end
+		end
+	end
+	
+	-- Add callbacks
+	if callback       then urlobj.Queue[url].Callbacks      [callback      ] = true end
+	if statusCallback then urlobj.Queue[url].StatusCallbacks[statusCallback] = true end
+end
+
+-- ===========================================================================
+-- Everything below is internal and should only be called by code in this file
+-- ===========================================================================
+
 -- parser made by animorten
 -- modified slightly by capsadmin
 
 local table_insert = table.insert
 local tonumber = tonumber
 
-local i = 0 
+local nextParsingHookId = 0 
 
 function urlobj.ParseObj(data, generateNormals, callback, statusCallback)
 	local co = coroutine.create(function()
@@ -142,100 +205,41 @@ function urlobj.ParseObj(data, generateNormals, callback, statusCallback)
 		callback(output)
 		coroutine.yield(true)
 	end)
-
-	local id = "pac_parse_obj_" .. i
 	
-	hook.Add("Think", id, function()
+	hook.Add("Think", "pac_parse_obj_" .. nextParsingHookId, function()
 		for i = 1, 512 do
-			local dead, done, why, msg = coroutine.resume(co)
-			if done then
-				if dead == false and done then
-					if statusCallback then statusCallback(done, true) end
-					hook.Remove("Think", id)
+			local dead, finished, status, msg = coroutine.resume(co)
+			if finished then
+				if dead == false and finished then
+					if statusCallback then statusCallback(finished, true) end
+					hook.Remove("Think", "pac_parse_obj_" .. nextParsingHookId)
 				end
-				return true
 			else
 				if statusCallback and msg then
-					if why == "inserting lines" then
-						statusCallback(why .. " " .. msg, false)
+					if status == "inserting lines" then
+						statusCallback(status .. " " .. msg, false)
 					else
-						statusCallback(why .. " " .. math.Round(msg*100) .. " %", false)
+						statusCallback(status .. " " .. math.Round(msg*100) .. " %", false)
 					end
 				end
 			end
 		end
 	end)
 	
-	i = i + 1
+	nextParsingHookId = nextParsingHookId + 1
 end
 
 function urlobj.CreateObj(obj_str, generateNormals, statusCallback)	
 	local mesh = Mesh()
 	
-	urlobj.ParseObj(obj_str, generateNormals, function(data)
-		mesh:BuildFromTriangles(data)
-	end, statusCallback)
+	urlobj.ParseObj(obj_str, generateNormals,
+		function(data)
+			mesh:BuildFromTriangles(data)
+		end,
+		statusCallback
+	)
 	
-	return {mesh}
-end
-
-local pac_enable_urlobj = CreateClientConVar("pac_enable_urlobj", "1", true)
-
-function urlobj.GetObjFromURL(url, skip_cache, generateNormals, callback, statusCallback)
-	statusCallback = statusCallback or function (status, finished) end
-	
-	if not pac_enable_urlobj:GetBool() then return end
-	
-	-- Rewrite URL
-	-- pastebin.com/([a-zA-Z0-9]*) to pastebin.com/raw.php?i=%1
-	-- github.com/(.*)/(.*)/blob/ to github.com/%1/%2/raw/
-	url = string.gsub (url, "^https://", "^http://")
-	url = string.gsub (url, "pastebin.com/([a-zA-Z0-9]*)$", "pastebin.com/raw.php?i=%1")
-	url = string.gsub (url, "github.com/([a-zA-Z0-9_]+)/([a-zA-Z0-9_]+)/blob/", "github.com/%1/%2/raw/")
-	
-	-- if it's already downloaded just return it
-	if callback and not skip_cache and urlobj.Cache[url] then
-		callback(urlobj.Cache[url])
-		return
-	end
-	
-	-- Add item to queue
-	if not urlobj.Queue[url] then
-		local queueItem = 
-		{
-			DownloadAttemptCount = 0,
-			DownloadTimeoutTime = 0,
-			IsDownloading = false,
-			
-			GenerateNormals = generateNormals,
-			CallbackSet = {},
-			StatusCallbackSet = {},
-			
-			Callback = nil,
-			StatusCallback = nil
-		}
-		urlobj.Queue[url] = queueItem
-		urlobj.QueueCount = urlobj.QueueCount + 1
-		
-		queueItem.Callback = function (...)
-			for callback, _ in pairs (queueItem.CallbackSet) do
-				callback (...)
-			end
-			
-			-- Release reference (!!)
-			queueItem.CallbackSet = nil
-		end
-		
-		queueItem.StatusCallback = function (...)
-			for statusCallback, _ in pairs (queueItem.StatusCallbackSet) do
-				statusCallback (...)
-			end
-		end
-	end
-	
-	-- Add callbacks
-	if callback       then urlobj.Queue[url].Callbacks      [callback      ] = true end
-	if statusCallback then urlobj.Queue[url].StatusCallbacks[statusCallback] = true end
+	return { mesh }
 end
 
 -- Download queuing
@@ -286,8 +290,11 @@ function urlobj.DownloadQueueThink()
 
 					local obj = urlobj.CreateObj(obj_str, queueItem.GenerateNormals, queueItem.StatusCallback)
 					
+					-- Move from queue to cache
+					if not urlobj.Cache[url] then
+						urlobj.CacheCount = urlobj.CacheCount + 1
+					end
 					urlobj.Cache[url] = obj
-					urlobj.CacheCount = urlobj.CacheCount + 1
 					
 					urlobj.Queue[url] = nil
 					urlobj.QueueCount = urlobj.QueueCount - 1
