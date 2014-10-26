@@ -17,7 +17,7 @@ local tonumber = tonumber
 
 local i = 0 
 
-function urlobj.ParseObj(data, generate_normals, hack, callback, statusCallback)
+function urlobj.ParseObj(data, generate_normals, callback, statusCallback)
 	local co = coroutine.create(function()
 		debug.sethook()
 
@@ -163,14 +163,10 @@ function urlobj.ParseObj(data, generate_normals, hack, callback, statusCallback)
 	i = i + 1
 end
 
-function urlobj.CreateObj(obj_str, generate_normals, hack, statusCallback)	
+function urlobj.CreateObj(obj_str, generate_normals, statusCallback)	
 	local mesh = Mesh()
 	
-	if hack then
-		obj_str = obj_str .. "\n" .. obj_str
-	end
-	
-	urlobj.ParseObj(obj_str, generate_normals, hack, function(data)
+	urlobj.ParseObj(obj_str, generate_normals, function(data)
 		mesh:BuildFromTriangles(data)
 	end, statusCallback)
 	
@@ -179,7 +175,7 @@ end
 
 local pac_enable_urlobj = CreateClientConVar("pac_enable_urlobj", "1", true)
 
-function urlobj.GetObjFromURL(url, skip_cache, generate_normals, hack, callback, statusCallback)
+function urlobj.GetObjFromURL(url, skip_cache, generate_normals, callback, statusCallback)
 	statusCallback = statusCallback or function (status, finished) end
 	
 	if not pac_enable_urlobj:GetBool() then return end
@@ -203,7 +199,6 @@ function urlobj.GetObjFromURL(url, skip_cache, generate_normals, hack, callback,
 		{
 			downloadAttemptCount = 0,
 			generate_normals = generate_normals,
-			hack = hack,
 			callbackSet = {},
 			statusCallbackSet = {},
 			
@@ -271,7 +266,7 @@ function urlobj.Think()
 				
 				pac.dprint("%s", obj_str)
 
-				local obj = urlobj.CreateObj(obj_str, data.generate_normals, data.hack, data.statusCallback)
+				local obj = urlobj.CreateObj(obj_str, data.generate_normals, data.statusCallback)
 				
 				urlobj.Cache[url] = obj
 				urlobj.Queue[url] = nil
