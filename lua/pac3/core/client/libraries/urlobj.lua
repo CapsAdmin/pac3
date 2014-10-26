@@ -208,23 +208,26 @@ function urlobj.ParseObj(data, generateNormals, callback, statusCallback)
 		coroutine.yield(true)
 	end)
 	
-	hook.Add("Think", "pac_parse_obj_" .. nextParsingHookId, function()
-		for i = 1, 512 do
-			local dead, finished, statusMessage, msg = coroutine.resume(co)
-			if finished then
-				if statusCallback then statusCallback(true, "finished") end
-				hook.Remove("Think", "pac_parse_obj_" .. nextParsingHookId)
-			else
-				if statusCallback and msg then
+	hook.Add("Think", "pac_parse_obj_" .. nextParsingHookId,
+		function()
+			local t0 = SysTime ()
+			while SysTime () - t0 < 0.002 do
+				local dead, finished, statusMessage, msg = coroutine.resume(co)
+				if finished then
+					if statusCallback then statusCallback(true, "finished") end
+					hook.Remove("Think", "pac_parse_obj_" .. nextParsingHookId)
+				else
 					if statusMessage == "inserting lines" then
 						statusCallback(false, statusMessage .. " " .. msg)
-					else
+					elseif msg then
 						statusCallback(false, statusMessage .. " " .. math.Round(msg*100) .. " %")
+					else
+						statusCallback(false, statusMessage)
 					end
 				end
 			end
 		end
-	end)
+	)
 	
 	nextParsingHookId = nextParsingHookId + 1
 end
