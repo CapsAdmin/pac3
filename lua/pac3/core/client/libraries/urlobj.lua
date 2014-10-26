@@ -1,18 +1,19 @@
 pac.urlobj = pac.urlobj or {}
 local urlobj = pac.urlobj
 
-urlobj.Queue      = {}
-urlobj.QueueCount = 0
-
 urlobj.Cache      = urlobj.Cache      or {}
 urlobj.CacheCount = urlobj.CacheCount or 0
+
+urlobj.Queue      = {}
+urlobj.QueueCount = 0
 
 concommand.Add("pac_urlobj_clear_cache",
 	function ()
 		urlobj.Cache = {}
+		urlobj.CacheCount = 0
+		
 		urlobj.Queue = {}
 		urlobj.QueueCount = 0
-		urlobj.CacheCount = 0
 	end
 )
 
@@ -26,7 +27,7 @@ function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statu
 	-- Rewrite URL
 	-- pastebin.com/([a-zA-Z0-9]*) to pastebin.com/raw.php?i=%1
 	-- github.com/(.*)/(.*)/blob/ to github.com/%1/%2/raw/
-	url = string.gsub (url, "^https://", "^http://")
+	url = string.gsub (url, "^https://", "http://")
 	url = string.gsub (url, "pastebin.com/([a-zA-Z0-9]*)$", "pastebin.com/raw.php?i=%1")
 	url = string.gsub (url, "github.com/([a-zA-Z0-9_]+)/([a-zA-Z0-9_]+)/blob/", "github.com/%1/%2/raw/")
 	
@@ -57,10 +58,10 @@ function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statu
 		queueItem.Callback = function (...)
 			for callback, _ in pairs (queueItem.CallbackSet) do
 				callback (...)
+				
+				-- Release reference
+				queueItem.CallbackSet [callback] = nil
 			end
-			
-			-- Release reference (!!)
-			queueItem.CallbackSet = nil
 		end
 		
 		queueItem.StatusCallback = function (...)
@@ -71,8 +72,8 @@ function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statu
 	end
 	
 	-- Add callbacks
-	if callback       then urlobj.Queue[url].Callbacks      [callback      ] = true end
-	if statusCallback then urlobj.Queue[url].StatusCallbacks[statusCallback] = true end
+	if callback       then urlobj.Queue[url].CallbackSet      [callback      ] = true end
+	if statusCallback then urlobj.Queue[url].StatusCallbackSet[statusCallback] = true end
 end
 
 -- ===========================================================================
@@ -292,12 +293,12 @@ function urlobj.DownloadQueueThink()
 
 					local obj = urlobj.CreateObj(obj_str, queueItem.GenerateNormals, queueItem.StatusCallback)
 					
-					-- Move from queue to cache
 					if not urlobj.Cache[url] then
 						urlobj.CacheCount = urlobj.CacheCount + 1
 					end
 					urlobj.Cache[url] = obj
 					
+					-- Remove from queue
 					urlobj.Queue[url] = nil
 					urlobj.QueueCount = urlobj.QueueCount - 1
 
