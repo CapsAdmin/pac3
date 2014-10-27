@@ -1,8 +1,8 @@
 pac.urlobj = pac.urlobj or {}
 local urlobj = pac.urlobj
 
-urlobj.Cache      = urlobj.Cache      or {}
-urlobj.CacheCount = urlobj.CacheCount or 0
+urlobj.Cache      = {}
+urlobj.CacheCount = 0
 
 urlobj.Queue      = {}
 urlobj.QueueCount = 0
@@ -198,6 +198,8 @@ function urlobj.ParseObj(data, generateNormals)
 			coroutine.yield(false, "smoothing normals", i/count)
 		end
 	end
+	
+	return output
 end
 
 local nextParsingHookId = 0 
@@ -209,7 +211,7 @@ function urlobj.CreateObj(obj_str, generateNormals, statusCallback)
 	
 	local co = coroutine.create (
 		function ()
-			local meshData = urlobj.ParseObj(data, generateNormals)
+			local meshData = urlobj.ParseObj(obj_str, generateNormals)
 			mesh:BuildFromTriangles (meshData)
 			
 			coroutine.yield (true)
@@ -223,7 +225,11 @@ function urlobj.CreateObj(obj_str, generateNormals, statusCallback)
 			local t0 = SysTime ()
 			while SysTime () - t0 < 0.002 do
 				local success, finished, statusMessage, msg = coroutine.resume(co)
-				if not success or finished then
+				if not success then
+					hook.Remove("Think", parsingHookId)
+					error (finished)
+					break
+				elseif finished then
 					statusCallback(true, "Finished")
 					hook.Remove("Think", parsingHookId)
 					break
