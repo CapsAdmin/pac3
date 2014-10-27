@@ -225,9 +225,13 @@ function pace.IsActive()
 	return pace.Active == true
 end
 
-concommand.Add("pac_editor", function()
+concommand.Add("pac_editor_panic", function()
 	pace.Panic()
 	timer.Simple(0.1, function() pace.OpenEditor() end)
+end)
+
+concommand.Add("pac_editor", function()
+	pace.OpenEditor()
 end)
 
 function pace.Call(str, ...)
