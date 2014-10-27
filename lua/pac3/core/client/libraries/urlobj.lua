@@ -100,7 +100,7 @@ function urlobj.ParseObj(data, generateNormals)
 		local parts = line:gsub("%s+", " "):Trim():Split(" ")
 
 		table_insert(lines, parts)
-		coroutine.yield(false, "inserting lines", i)
+		coroutine_yield(false, "inserting lines", i)
 		i = i + 1
 	end
 
@@ -115,7 +115,7 @@ function urlobj.ParseObj(data, generateNormals)
 			table_insert(normals, Vector(tonumber(parts[2]), tonumber(parts[3]), tonumber(parts[4])):GetNormalized())
 		end
 		
-		coroutine.yield(false, "parsing lines", (i/vert_count))
+		coroutine_yield(false, "parsing lines", (i/vert_count))
 	end
 			
 	for i, parts in pairs(lines) do
@@ -166,7 +166,7 @@ function urlobj.ParseObj(data, generateNormals)
 			end
 		end
 		
-		coroutine.yield(false, "solving indices", i/vert_count)
+		coroutine_yield(false, "solving indices", i/vert_count)
 	end
 	
 	if generateNormals then
@@ -184,7 +184,7 @@ function urlobj.ParseObj(data, generateNormals)
 
 			vertex_normals[c.pos_index] = vertex_normals[c.pos_index] or Vector()
 			vertex_normals[c.pos_index] = (vertex_normals[c.pos_index] + normal)
-			coroutine.yield(false, "generating normals", i/count)
+			coroutine_yield(false, "generating normals", i/count)
 		end
 		
 		local default_normal = Vector(0, 0, -1)
@@ -195,7 +195,7 @@ function urlobj.ParseObj(data, generateNormals)
 			n:Normalize()
 			normals[i] = n
 			output[i].normal = n
-			coroutine.yield(false, "smoothing normals", i/count)
+			coroutine_yield(false, "smoothing normals", i/count)
 		end
 	end
 	
