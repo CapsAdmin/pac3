@@ -81,8 +81,18 @@ end
 -- parser made by animorten
 -- modified slightly by capsadmin
 
-local table_insert = table.insert
-local tonumber = tonumber
+local ipairs        = ipairs
+local pairs         = pairs
+local tonumber      = tonumber
+
+local Vector        = Vector
+
+local string_gmatch = string.gmatch
+local string_gsub   = string.gsub
+local string_match  = string.match
+local string_Split  = string.Split
+local string_Trim   = string.Trim
+local table_insert  = table.insert
 
 function urlobj.ParseObj(data, generateNormals)
 	local coroutine_yield = coroutine.running () and coroutine.yield or function () end
@@ -96,16 +106,20 @@ function urlobj.ParseObj(data, generateNormals)
 	local lines = {}
 	
 	local i = 1
-	for line in data:gmatch("(.-)\n") do
-		local parts = line:gsub("%s+", " "):Trim():Split(" ")
-
+	for line in string_gmatch (data, "(.-)\n") do
+		line = string_gsub (line, "%s+", " ")
+		line = string_gsub (line, "#.*$", "")
+		line = string_match (line, "^%s*(.-)%s*$")
+		
+		local parts = string_Split (line, " ")
+		
 		table_insert(lines, parts)
-		coroutine_yield(false, "inserting lines", i)
+		coroutine_yield(false, "Preprocessing lines", i)
 		i = i + 1
 	end
-
+	
 	local vert_count = #lines
-
+	
 	for i, parts in pairs(lines) do		
 		if parts[1] == "v" and #parts >= 4 then
 			table_insert(positions, Vector(tonumber(parts[2]), tonumber(parts[3]), tonumber(parts[4])))
@@ -115,58 +129,58 @@ function urlobj.ParseObj(data, generateNormals)
 			table_insert(normals, Vector(tonumber(parts[2]), tonumber(parts[3]), tonumber(parts[4])):GetNormalized())
 		end
 		
-		coroutine_yield(false, "parsing lines", (i/vert_count))
+		coroutine_yield(false, "Processing vertices", (i/vert_count))
 	end
-			
+	
 	for i, parts in pairs(lines) do
-		if parts[1] == "f" and #parts > 3 then
-			local first, previous
-
-			for i = 2, #parts do
-				local current = parts[i]:Split("/")
-
-				if i == 2 then
-					first = current
+		if parts[1] == "f" and #parts >= 4 then
+			local first    = string_Split(parts[2], "/")
+			local previous = string_Split(parts[3], "/")
+			first    [1], first    [2], first    [3] = tonumber (first    [1]), tonumber (first    [2]), tonumber (first    [3])
+			previous [1], previous [2], previous [3] = tonumber (previous [1]), tonumber (previous [2]), tonumber (previous [3])
+			
+			for i = 4, #parts do
+				local current = string_Split(parts[i], "/")
+				current [1], current [2], current [3] = tonumber (current [1]), tonumber (current [2]), tonumber (current [3])
+				
+				local v1 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil }
+				local v2 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil }
+				local v3 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil }
+				
+				v1.pos_index = first   [1]
+				v2.pos_index = current [1]
+				v3.pos_index = previous[1]
+				
+				v1.pos = positions[first   [1]]
+				v2.pos = positions[current [1]]
+				v3.pos = positions[previous[1]]
+				
+				if #texcoords > 0 then
+					v1.u = texcoords[first   [2]].u
+					v1.v = texcoords[first   [2]].v
+					
+					v2.u = texcoords[current [2]].u
+					v2.v = texcoords[current [2]].v
+					
+					v3.u = texcoords[previous[2]].u
+					v3.v = texcoords[previous[2]].v
 				end
 				
-				if i >= 4 then
-					local v1, v2, v3 = {}, {}, {}
-
-					v1.pos_index = tonumber(first[1])
-					v2.pos_index = tonumber(current[1])
-					v3.pos_index = tonumber(previous[1])
-					
-					v1.pos = positions[tonumber(first[1])]
-					v2.pos = positions[tonumber(current[1])]
-					v3.pos = positions[tonumber(previous[1])]
-					
-					if #texcoords > 0 then
-						v1.u = texcoords[tonumber(first[2])].u
-						v1.v = texcoords[tonumber(first[2])].v
-						
-						v2.u = texcoords[tonumber(current[2])].u
-						v2.v = texcoords[tonumber(current[2])].v
-						
-						v3.u = texcoords[tonumber(previous[2])].u
-						v3.v = texcoords[tonumber(previous[2])].v
-					end
-					
-					if #normals > 0 then
-						v1.normal = normals[tonumber(first[3])]
-						v2.normal = normals[tonumber(current[3])]
-						v3.normal = normals[tonumber(previous[3])]
-					end				
-					
-					table_insert(output, v1)
-					table_insert(output, v2)
-					table_insert(output, v3)
-				end
-
+				if #normals > 0 then
+					v1.normal = normals[first   [3]]
+					v2.normal = normals[current [3]]
+					v3.normal = normals[previous[3]]
+				end				
+				
+				output [#output + 1] = v1
+				output [#output + 1] = v2
+				output [#output + 1] = v3
+				
 				previous = current
 			end
 		end
 		
-		coroutine_yield(false, "solving indices", i/vert_count)
+		coroutine_yield(false, "Processing faces", i/vert_count)
 	end
 	
 	if generateNormals then
@@ -184,7 +198,7 @@ function urlobj.ParseObj(data, generateNormals)
 
 			vertex_normals[c.pos_index] = vertex_normals[c.pos_index] or Vector()
 			vertex_normals[c.pos_index] = (vertex_normals[c.pos_index] + normal)
-			coroutine_yield(false, "generating normals", i/count)
+			coroutine_yield(false, "Generating normals", i/count)
 		end
 		
 		local default_normal = Vector(0, 0, -1)
@@ -195,7 +209,7 @@ function urlobj.ParseObj(data, generateNormals)
 			n:Normalize()
 			normals[i] = n
 			output[i].normal = n
-			coroutine_yield(false, "smoothing normals", i/count)
+			coroutine_yield(false, "Normalizing normals", i/count)
 		end
 	end
 	
@@ -223,24 +237,27 @@ function urlobj.CreateObj(obj_str, generateNormals, statusCallback)
 	hook.Add("Think", parsingHookId,
 		function()
 			local t0 = SysTime ()
+			local success, finished, statusMessage, msg
 			while SysTime () - t0 < 0.002 do
-				local success, finished, statusMessage, msg = coroutine.resume(co)
-				if not success then
-					hook.Remove("Think", parsingHookId)
-					error (finished)
-					break
-				elseif finished then
-					statusCallback(true, "Finished")
-					hook.Remove("Think", parsingHookId)
-					break
+				success, finished, statusMessage, msg = coroutine.resume(co)
+				
+				if not success then break end
+				if finished    then break end
+			end
+			
+			if not success then
+				hook.Remove("Think", parsingHookId)
+				error (finished)
+			elseif finished then
+				statusCallback(true, "Finished")
+				hook.Remove("Think", parsingHookId)
+			else
+				if statusMessage == "Preprocessing lines" then
+					statusCallback(false, statusMessage .. " " .. msg)
+				elseif msg then
+					statusCallback(false, statusMessage .. " " .. math.Round(msg*100) .. " %")
 				else
-					if statusMessage == "inserting lines" then
-						statusCallback(false, statusMessage .. " " .. msg)
-					elseif msg then
-						statusCallback(false, statusMessage .. " " .. math.Round(msg*100) .. " %")
-					else
-						statusCallback(false, statusMessage)
-					end
+					statusCallback(false, statusMessage)
 				end
 			end
 		end
@@ -290,13 +307,13 @@ function urlobj.DownloadQueueThink()
 			
 			queueItem.IsDownloading = true
 			queueItem.DownloadTimeoutTime = pac.RealTime + 15
-
+			
 			pac.SimpleFetch(url,
 				function(obj_str)	
 					pac.dprint("downloaded model %q %s", url, string.NiceSize(#obj_str))
 					
 					pac.dprint("%s", obj_str)
-
+					
 					local obj = urlobj.CreateObj(obj_str, queueItem.GenerateNormals, queueItem.StatusCallback)
 					
 					if not urlobj.Cache[url] then
