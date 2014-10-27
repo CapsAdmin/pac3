@@ -463,7 +463,7 @@ function PART:SetModel(var,override)
 	if var and var:find("http") and pac.urlobj then
 		self.loading_obj = "downloading"
 		
-		pac.urlobj.GetObjFromURL(url, false, false,
+		pac.urlobj.GetObjFromURL(var, false, false,
 			function(meshes, err)
 				if not self:IsValid() then return end
 				
