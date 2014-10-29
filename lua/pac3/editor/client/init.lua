@@ -255,4 +255,26 @@ hook.Add("HUDPaint", "pac_InPAC3Editor", function()
 	end
 end)
 
+hook.Add("PrePACEditorOpen","Disclaimer",function()
+	local message = [[PAC3 is free software written by people who owe you nothing.
+Don't expect or feel entitled to certain features, and don't demand that developers add, fix, or change things.
+This software is provided "as is", without warranty of any kind, express or implied.
+What that means is that if stuff breaks, you lose stuff, or anything bad happens, you're just gonna have to suck it up because that's life.
+
+I'm not your babysitter or your mom. Your computer will lose power. People will steal from you. Developers will ignore you.
+I empathise with your sadness over these events, but don't have the time to acknowledge this to every single one of you.
+
+Garry's Mod is a game. PAC3 is a toy. Life is so much bigger than this.
+
+Enjoy.
+
+~Suchipi]]
+	
+	if not file.Exists("pac3_editor/disclaimer.txt","DATA") then
+		Derma_Message(message, "PAC3 Disclaimer", "Ok..." ) 
+		file.Write("pac3_editor/disclaimer.txt",message)
+	end
+	return true
+end)
+
 pace.RegisterPanels()
