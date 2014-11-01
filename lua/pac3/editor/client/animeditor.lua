@@ -830,8 +830,11 @@ function MAIN:Init()
 	local viewcode = self:Button("Copy Raw Lua To Clipboard")
 	viewcode.DoClick = function() local str = OutputCode() if !str then return end SetClipboardText(str) end
 	
-	local distSlider = self:NumSlider("Cam Distance", nil, 40, 200, 0 )
-	distSlider:SetValue(200)
+	local maxcamdist_cvar = CreateConVar("pac_animeditor_maxcamdist",200)
+	local maxcamdist = maxcamdist_cvar:GetInt()
+	
+	local distSlider = self:NumSlider("Cam Distance", nil, 40, maxcamdist, 0 )
+	distSlider:SetValue(maxcamdist)
 	distSlider.OnValueChanged = function(s,v) camDist = v end
 	
 	local boneSet = self:ComboBox("Bone Set")
