@@ -216,26 +216,27 @@ function pace.SubmitPart(data, filter)
 					table.remove(players, key)
 				end
 			end
-		elseif type(players)=="Player" then
-			if not players.pac_requested_outfits and players ~= data.owner then
-				return true
-			end
-		elseif pace.GlobalBans then
-			if type(players) == "table" and data.owner:IsValid() then
-				local owner_steamid = data.owner:SteamID() 
-				for key, ply in pairs(players) do
-					local steamid = ply:SteamID()
-					for var, reason in pairs(pace.GlobalBans) do
-						if  var == steamid or type(var) == "table" and (table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):") or ""))) then
-							table.remove(players, key)
-							print("[pac3] not sending data to "..ply:Nick().." because he/her is globally banned from using pac")
-							
-							if owner_steamid == steamid then
-								return false, "you have been globally banned from using pac. see global_bans.lua for more info"
+			if pace.GlobalBans then
+				if data.owner:IsValid() then
+					local owner_steamid = data.owner:SteamID() 
+					for key, ply in pairs(players) do
+						local steamid = ply:SteamID()
+						for var, reason in pairs(pace.GlobalBans) do
+							if  var == steamid or type(var) == "table" and (table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):") or ""))) then
+								table.remove(players, key)
+								print("[pac3] Not sending data to "..ply:Nick().." because they are globally banned from using PAC!")
+								
+								if owner_steamid == steamid then
+									return false, "You have been globally banned from using PAC. See global_bans.lua for more info."
+								end
 							end
 						end
 					end
 				end
+			end
+		elseif type(players)=="Player" then
+			if not players.pac_requested_outfits and players ~= data.owner then
+				return true
 			end
 		end
 	
