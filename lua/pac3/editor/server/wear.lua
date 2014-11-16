@@ -226,7 +226,7 @@ function pace.SubmitPart(data, filter)
 								table.remove(players, key)
 								
 								if owner_steamid == steamid then
-									print(string.format("[pac3] Dropping data transfer request by '%s' (%d) due to a global PAC ban.",
+									print(string.format("[pac3] Dropping data transfer request by '%s' (%s) due to a global PAC ban.",
 										ply:Nick(), ply:SteamID()))
 									return false, "You have been globally banned from using PAC. See global_bans.lua for more info."
 								end
