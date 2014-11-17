@@ -1,8 +1,10 @@
 --[[
-	I might remove these bans later on (maybe once a year)
-	If you feel you have been banned for the wrong reasons contact me (CapsAdmin) on steam.
+	If you feel you have been banned for the wrong reasons, contact us (Meta Construct) on Steam.
 	
-	You can also safely delete this file if you don't agree with it. :)
+	As a server admin, you can also safely delete this file if you don't agree with it.
+	
+	This file is part of the PAC3 fork maintained by Meta Construct and might merge
+	global bans from upstream PAC3.
 ]]
 
 pace.GlobalBans = {

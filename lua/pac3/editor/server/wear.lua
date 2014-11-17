@@ -224,9 +224,10 @@ function pace.SubmitPart(data, filter)
 						for var, reason in pairs(pace.GlobalBans) do
 							if  var == steamid or type(var) == "table" and (table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):") or ""))) then
 								table.remove(players, key)
-								print("[pac3] Not sending data to "..ply:Nick().." because they are globally banned from using PAC!")
 								
 								if owner_steamid == steamid then
+									print(string.format("[pac3] Dropping data transfer request by '%s' (%s) due to a global PAC ban.",
+										ply:Nick(), ply:SteamID()))
 									return false, "You have been globally banned from using PAC. See global_bans.lua for more info."
 								end
 							end
