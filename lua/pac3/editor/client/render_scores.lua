@@ -46,8 +46,10 @@ hook.Add("HUDPaint", "pac_show_render_times", function()
 				
 				local renderTime = pace.RenderTimes[ply:EntIndex()]
 				
-				surface.SetTextPos(pos.x, pos.y)
-				surface.DrawText(string.format("average render time : %.3f ms", renderTime * 1000))				
+				if renderTime then
+					surface.SetTextPos(pos.x, pos.y)
+					surface.DrawText(string.format("average render time : %.3f ms", renderTime * 1000))
+				end
 			end
 		end
 	end
