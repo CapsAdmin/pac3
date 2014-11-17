@@ -3,7 +3,7 @@ local font = "pac_render_score"
 
 surface.CreateFont(font, {font = "Arial", shadow = true, size = 14, antialias = false})
 
-pace.RenderTimes = {}
+pace.RenderTimes = {} -- render times in seconds
 
 timer.Create("pac_render_times", 0.1, 0, function()
 	if not pac.IsEnabled() then return end
@@ -13,15 +13,12 @@ timer.Create("pac_render_times", 0.1, 0, function()
 		
 		if data then
 			local renderTime = 0
-			local count = 0
 			
+			-- events are "opaque" and "translucent"
+			-- WE DO NOT CALCULATE AN AVERAGE
 			for k,v in pairs(data.events) do 
-				renderTime = renderTime + v.average_ms 
-				count = count + 1
+				renderTime = renderTime + v.average_ms * 0.001
 			end
-			
-			-- calculate average
-			renderTime = renderTime / count
 			
 			pace.RenderTimes[ply:EntIndex()] = renderTime
 		end
