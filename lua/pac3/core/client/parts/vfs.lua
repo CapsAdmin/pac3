@@ -32,7 +32,7 @@ end
 function vfs.DownloadJSONArchive(url,func)
 	local fullpath = "downloads/temp/"..string.GetFileFromFilename(url)
 	vfs.Download(url,fullpath,function(path)
-		vfs.JSONExtract(file.Read(path,"GAME"))
+		vfs.JSONExtract(file.Read(path,"GAME"),true)
 		vfs.RemoveFile(fullpath)
 		if func then func() end
 	end)
@@ -72,11 +72,21 @@ function vfs.JSONCompress(tbl,out)
 	end
 end
 
-function vfs.JSONExtract(container_json)
+function vfs.JSONExtract(container_json,safe)
 	if not vfs then return false end
 	local tbl = util.JSONToTable(container_json)
 	for filename,filedata in pairs(tbl) do
 		filedata = deserialize_string(filedata)
+		
+		if safe then
+			local whitelist = {"mdl","vtx","vvd","phy","vmt","vtf"}
+			local pass = false
+			for _,ext in pairs(whitelist) do
+				pass = pass or (fullpath:sub(-3) == ext)
+			end
+			if not pass then return end
+		end
+		
 		local file_handle = vfs.Open(filename,"wb")
 		file_handle:Write(VFS_WRITE_DATA,filedata,filedata:len())
 		file_handle:Close()
