@@ -1,4 +1,4 @@
-if file.Exists("lua/bin/gmcl_vfs_win32.dll","GAME") or 
+--[[if file.Exists("lua/bin/gmcl_vfs_win32.dll","GAME") or 
    file.Exists("lua/bin/gmcl_vfs_linux.dll","GAME") or 
    file.Exists("lua/bin/gmcl_vfs_osx.dll","GAME") then
 	require("vfs")
@@ -12,7 +12,7 @@ else
 		pac.setHasVfs(false)
 		pac.requestVfsStatus()
 	end)
-end
+end]]
  
 
 local PART = {}
