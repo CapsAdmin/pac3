@@ -19,7 +19,7 @@ end
 vfs = vfs or {}
 
 function vfs.Download(url,fullpath,complete)
-	if not vfs then return end
+	if not vfs.Open then return end
     if not fullpath then fullpath = "downloads/"..string.GetFileFromFilename(url) end
     http.Fetch(url,function(body,len,headers,code)
         local file_handle = vfs.Open(fullpath,"wb")
