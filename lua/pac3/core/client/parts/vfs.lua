@@ -16,6 +16,8 @@ else
 	end)
 end
 
+vfs = vfs or {}
+
 function vfs.Download(url,fullpath,complete)
 	if not vfs then return end
     if not fullpath then fullpath = "downloads/"..string.GetFileFromFilename(url) end
