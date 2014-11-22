@@ -22,8 +22,10 @@ pace.GlobalBans = {
 		Constantly taking credit for outfits other people have made that he found on pastebins even though 
 		he has been called out for it countless of times and being an asshole about it at the same time.
 	]],
+
+	-- punishments suspended: excessive consequences, both seem to have learned.
 	-- Tenrys
-	[{"STEAM_0:1:32476157", "STEAM_0:1:100216024"}] = [[Stealing outfits and trolling stolen people with stealing skills]],
+	--[{"STEAM_0:1:32476157", "STEAM_0:1:100216024"}] = [[Stealing outfits and trolling stolen people with stealing skills]],
 	-- Lapin
-	[{"STEAM_0:1:20593126"}] = [[Stealing outfits and trolling stolen people with stealing skills]],
+	--[{"STEAM_0:1:20593126"}] = [[Stealing outfits and trolling stolen people with stealing skills]],
 }
