@@ -144,7 +144,7 @@ function PART:SetURL(url)
 		local parent = self:GetParent()
 		parent.vfs_loading = nil
 		parent.loading_obj = nil
-		parent:SetModel(entry)
+		if parent.SetModel then parent:SetModel(entry) end
 	end)
 end
 
