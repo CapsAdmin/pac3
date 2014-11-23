@@ -58,13 +58,21 @@ local function deserialize_string(str)
 	return table.concat(out)
 end
 
-function vfs.JSONCompress(tbl,entry,out)
+function vfs.JSONCompress(tbl,entry,out,compression)
 	local container = {}
+	local prepare_string
+	if compression then
+		if type(compression) == "boolean" then compression = "lzma" end
+		prepare_string = function(str) return serialize_string(util.Compress(str)) end
+		container.compression = compression
+	else
+		prepare_string = serialize_string
+	end
 	for _,filename in pairs(tbl) do
 		local file_contents = file.Read(filename,"GAME")
-		container[filename] = serialize_string(file_contents)
+		container[filename] = prepare_string(file_contents)
 	end
-	container.entry = serialize_string(entry)
+	container.entry = prepare_string(entry)
 	local container_json = util.TableToJSON(container)
 	if out and vfs then
 		local file_handle = vfs.Open(out,"wb")
@@ -79,8 +87,20 @@ function vfs.JSONExtract(container_json,safe)
 	if not vfs then return false end
 	local entry = ""
 	local tbl = util.JSONToTable(container_json)
+	local examine_string
+	if tbl.compression then
+		local compression = tbl.compression
+		if compression == "lzma" then
+			examine_string = function(str) return util.Decompress(deserialize_string(str)) 
+		else
+			print("[PAC3] VFS JSON Extraction Error: Unknown compression method ("..compression..")")
+		end
+	else 
+		examine_string = deserialize_string 
+	end
+	
 	for filename,filedata in pairs(tbl) do
-		filedata = deserialize_string(filedata)
+		filedata = examine_string(filedata)
 		if filename ~= "entry" then
 			
 			if safe then
