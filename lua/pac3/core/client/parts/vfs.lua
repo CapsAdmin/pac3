@@ -34,9 +34,9 @@ end
 function vfs.DownloadJSONArchive(url,func)
 	local fullpath = "downloads/temp/"..string.GetFileFromFilename(url)
 	vfs.Download(url,fullpath,function(path)
-		vfs.JSONExtract(file.Read(path,"GAME"),true)
+		local entry = vfs.JSONExtract(file.Read(path,"GAME"),true)
 		vfs.RemoveFile(fullpath)
-		if func then func() end
+		if func then func(entry) end
 	end)
 end
 
@@ -58,12 +58,13 @@ local function deserialize_string(str)
 	return table.concat(out)
 end
 
-function vfs.JSONCompress(tbl,out)
+function vfs.JSONCompress(tbl,entry,out)
 	local container = {}
 	for _,filename in pairs(tbl) do
 		local file_contents = file.Read(filename,"GAME")
 		container[filename] = serialize_string(file_contents)
 	end
+	container.entry = serialize_string(entry)
 	local container_json = util.TableToJSON(container)
 	if out and vfs then
 		local file_handle = vfs.Open(out,"wb")
@@ -76,23 +77,29 @@ end
 
 function vfs.JSONExtract(container_json,safe)
 	if not vfs then return false end
+	local entry = ""
 	local tbl = util.JSONToTable(container_json)
 	for filename,filedata in pairs(tbl) do
 		filedata = deserialize_string(filedata)
-		
-		if safe then
-			local whitelist = {"mdl","vtx","vvd","phy","vmt","vtf"}
-			local pass = false
-			for _,ext in pairs(whitelist) do
-				pass = pass or (fullpath:sub(-3) == ext)
+		if filename ~= "entry" then
+			
+			if safe then
+				local whitelist = {"mdl","vtx","vvd","phy","vmt","vtf"}
+				local pass = false
+				for _,ext in pairs(whitelist) do
+					pass = pass or (filename:sub(-3) == ext)
+				end
+				if not pass then return end
 			end
-			if not pass then return end
+			
+			local file_handle = vfs.Open(filename,"wb")
+			file_handle:Write(VFS_WRITE_DATA,filedata,filedata:len())
+			file_handle:Close()
+		else
+			entry = filedata
 		end
-		
-		local file_handle = vfs.Open(filename,"wb")
-		file_handle:Write(VFS_WRITE_DATA,filedata,filedata:len())
-		file_handle:Close()
 	end
+	return entry
 end
 
 --vfs (part) stuff
@@ -104,11 +111,14 @@ PART.NonPhysical = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "URL", "")
-	pac.GetSet(PART, "ForwardValue", "models/pac/default.mdl")
 pac.EndStorableVars()
 
 function PART:GetNiceName()
 	return string.GetFileFromFilename(self:GetURL()) or "nothing"
+end
+
+function PART:Init()
+	if self.URL ~= "" then self:SetURL(url) end
 end
 
 function PART:SetURL(url)
@@ -116,6 +126,7 @@ function PART:SetURL(url)
 	local uid = self:GetUniqueID()
 	local parent = self:GetParent()
 	parent.vfs_loading = true
+	parent.loading_obj = "downloading (vfs)"
 	
 	--sanity checks
 	if not vfs then 
@@ -129,15 +140,56 @@ function PART:SetURL(url)
 	self.URL = url
 	
 	--let's do it
-	vfs.DownloadJSONArchive(url,function()
+	vfs.DownloadJSONArchive(url,function(entry)
+		local parent = self:GetParent()
 		parent.vfs_loading = nil
-		parent:SetModel(self.ForwardValue)
+		parent.loading_obj = nil
+		parent:SetModel(entry)
 	end)
 end
 
 function PART:OnRemove()
-	local uid = self:GetUniqueID()
-	parent.vfs_loading = nil
+	local parent = self:GetParent()
+	if parent then parent.vfs_loading = nil end
 end
 
 pac.RegisterPart(PART)
+
+--pac functionality Hooks
+
+hook.Add("pac_pace.SaveParts","vfs",function(tbl)
+	local function recurse_children(part,parent)
+		if part.children ~= {} then     --if this part has children
+			for _,child in pairs(part.children) do --for each child
+				recurse_children(child,part) --we need to go deeper
+			end
+		end
+		--but anyway, for every part
+		if part.self.ClassName == "vfs" and parent.self and parent.self.ClassName and parent.self.ClassName == "model" then --if it's a vfs whose parent is a model
+			parent.self.loading_obj = "downloading (vfs)" --for downloading... display
+			parent.self.vfs_loading = true
+			parent.self.Model = "models/editor/axis_helper.mdl" --placeholder
+		end
+		return parent
+	end
+		
+	for _,part in pairs(tbl) do
+		tbl = recurse_children(part,tbl)
+	end
+	
+	return tbl
+end)
+
+hook.Add("pac_model:SetModel","vfs",function(modelpart,var)
+	if not modelpart.vfs_loading then
+		return var
+	else
+		return "models/editor/axis_helper.mdl"
+	end
+end)
+
+hook.Add("pac_PART:SetTable","vfs",function(part,key,value)
+	if key == "vfs_loading" then part.vfs_loading = value end
+	if key == "loading_obj" then part.loading_obj = value end
+	return part
+end)

@@ -275,9 +275,6 @@ do
 	end)
 
 end
-	
-pace.AddTool("---------", function() end) --just a divider so it's easy to see which tools were imported
-do return end
 
 pace.AddTool(L"convert to expression2 holo", function(part)
 	local holo_str = 
@@ -389,3 +386,10 @@ pace.AddTool(L"record surrounding props to pac", function(part)
 		end
 	end
 end)
+
+pace.AddTool("Print Part Info",function(part)
+	PrintTable(part:ToTable())
+end)
+	
+pace.AddTool("---------", function() end) --just a divider so it's easy to see which tools were imported
+do return end

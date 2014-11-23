@@ -506,15 +506,10 @@ function PART:SetModel(var,override)
 	
 	self.wavefront_mesh = nil
 	
-	if not self.vfs_loading then
-		self.Model = var
-		--self.Entity.pac_bones = nil
-		self.Entity:SetModel(var)
-	else
-		self.vfsModel = var
-		self.Model = "models/editor/axis_helper.mdl"
-		self.Entity:SetModel("models/editor/axis_helper.mdl")
-	end
+	var = hook.Run("pac_model:SetModel",self,var) or var
+	
+	self.Model = var
+	self.Entity:SetModel(var)
 
 end
 local NORMAL = Vector(1,1,1)
