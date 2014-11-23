@@ -131,7 +131,7 @@ function PART:SetURL(url)
 	--sanity checks
 	if not vfs then 
 		if self:GetOwner() == LocalPlayer() then
-			LocalPlayer():ChatPrint("[PAC3] You must install the VFS binary module to use the vfs part.")
+			LocalPlayer():ChatPrint("[PAC3] You must install the VFS binary module to use the vfs part. See http://vfs.suchipi.com/")
 		end
 		return
 	end
