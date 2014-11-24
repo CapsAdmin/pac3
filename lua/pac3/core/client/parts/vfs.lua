@@ -91,7 +91,7 @@ function vfs.JSONExtract(container_json,safe)
 	if tbl.compression then
 		local compression = tbl.compression
 		if compression == "lzma" then
-			examine_string = function(str) return util.Decompress(deserialize_string(str)) 
+			examine_string = function(str) return util.Decompress(deserialize_string(str)) end
 		else
 			print("[PAC3] VFS JSON Extraction Error: Unknown compression method ("..compression..")")
 		end
