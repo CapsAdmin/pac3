@@ -1,3 +1,9 @@
+local verbose = false
+
+local function dprint(...)
+	if verbose then print("[PAC3]",...) end
+end
+
 --vfs (module) stuff
 
 if file.Exists("lua/bin/gmcl_vfs_win32.dll","GAME") or 
@@ -25,7 +31,7 @@ function vfs.Download(url,fullpath,complete)
         local file_handle = vfs.Open(fullpath,"wb")
         file_handle:Write(VFS_WRITE_DATA,body,len)
         file_handle:Close()
-		if complete then complete(fullpath) end
+		if complete then timer.Simple(0.1,function() complete(fullpath) end) end
     end,function(err)
 		
     end)
@@ -94,15 +100,19 @@ function vfs.JSONExtract(container_json,safe)
 			examine_string = function(str) return util.Decompress(deserialize_string(str)) end
 		else
 			print("[PAC3] VFS JSON Extraction Error: Unknown compression method ("..compression..")")
+			return
 		end
 	else 
 		examine_string = deserialize_string 
 	end
 	
+	if not tbl.entry then local keycache = {} end
+	
 	for filename,filedata in pairs(tbl) do
+		if keycache then table.insert(keycache,filename) end
 		filedata = examine_string(filedata)
-		if filename ~= "entry" then
-			
+		if filename ~= "entry" and filename ~= "compression" then
+			dprint("Attempting to create "..filename.."...")
 			if safe then
 				local whitelist = {"mdl","vtx","vvd","phy","vmt","vtf"}
 				local pass = false
@@ -118,6 +128,16 @@ function vfs.JSONExtract(container_json,safe)
 		else
 			entry = filedata
 		end
+	end
+	if not entry and keycache then
+		for _,filename in pairs(keycache) do
+			if filename:sub(-3) == "mdl" then 
+				entry = filename 
+				break
+			end
+		end
+	elseif not entry then
+		dprint("Warning: VFS JSON Archive entrypoint not specified and no mdl file found!")
 	end
 	return entry
 end
@@ -161,6 +181,7 @@ function PART:SetURL(url)
 	
 	--let's do it
 	vfs.DownloadJSONArchive(url,function(entry)
+		dprint("Attempting to load vfs model "..tostring(entry).."...")
 		local parent = self:GetParent()
 		parent.vfs_loading = nil
 		parent.loading_obj = nil
