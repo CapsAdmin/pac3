@@ -96,11 +96,12 @@ function vfs.JSONExtract(container_json,safe)
 	local examine_string
 	if tbl.compression then
 		local compression = tbl.compression
+		dprint("Compression method: "..tostring(compression))
 		if compression == "lzma" then
 			examine_string = function(str) return util.Decompress(deserialize_string(str)) end
 		else
 			print("[PAC3] VFS JSON Extraction Error: Unknown compression method ("..compression..")")
-			return
+			return "models/error.mdl"
 		end
 	else 
 		examine_string = deserialize_string 
@@ -125,7 +126,8 @@ function vfs.JSONExtract(container_json,safe)
 			local file_handle = vfs.Open(filename,"wb")
 			file_handle:Write(VFS_WRITE_DATA,filedata,filedata:len())
 			file_handle:Close()
-		else
+		elseif filename == "entry" then
+			dprint("Entrypoint was specified as "..filedata.."...")
 			entry = filedata
 		end
 	end
@@ -137,7 +139,7 @@ function vfs.JSONExtract(container_json,safe)
 			end
 		end
 	elseif not entry then
-		dprint("Warning: VFS JSON Archive entrypoint not specified and no mdl file found!")
+		dprint("Warning: Entrypoint not specified and no mdl file found!")
 	end
 	return entry
 end
