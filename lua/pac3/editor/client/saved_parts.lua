@@ -33,6 +33,8 @@ function pace.SaveParts(name, prompt_name, override_part)
 				end
 			end
 		end
+		
+		data = hook.Run("pac_pace.SaveParts",data) or data
 				
 		file.CreateDir("pac3")
 		file.CreateDir("pac3/__backup/")

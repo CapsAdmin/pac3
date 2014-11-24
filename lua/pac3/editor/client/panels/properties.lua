@@ -112,11 +112,10 @@ do -- list
 		divider:SetDividerWidth(3)
 		divider:SetLeftWidth(110)
 		
+		-- Set row height
 		surface.SetFont(pace.CurrentFont)
-		local w,h = surface.GetTextSize("W")
-		local size = h + 2
-		
-		self:SetItemHeight(size)
+		local _, h = surface.GetTextSize("W")
+		self:SetItemHeight(math.max (18, h + 2))
 				
 		self.div = divider
 		
@@ -154,7 +153,7 @@ do -- list
 	end
 	
 	function PANEL:PerformLayout()
-		self.scr:SetSize(10, self:GetHeight())
+		self.scr:SetSize(14, self:GetHeight())
 		self.scr:SetUp(self:GetTall(), self:GetHeight() - 10)
 		self.div:SetPos(0,self.scr:GetOffset())
 		local w, h = self:GetSize()
