@@ -569,7 +569,10 @@ function PART:SetExpression(str)
 		local ok, res = pac.CompileExpression(str, lib)
 		if ok then
 			self.ExpressionFunc = res
+			self.ExpressionError = nil
 		else
+			self.ExpressionFunc = true
+			self.ExpressionError = res
 			print(res)
 		end
 	end
@@ -633,6 +636,13 @@ local function set(self, part, x, y, z, children)
 	end
 end
 
+function PART:RunExpression(ExpressionFunc)
+	if ExpressionFunc==true then
+		return false,self.ExpressionError
+	end
+	return pcall(ExpressionFunc)
+end
+
 function PART:OnThink()
 	local parent = self:GetParent()
 		
@@ -641,16 +651,20 @@ function PART:OnThink()
 	local parentx = self.TargetPart
 	self:CalcVelocity()
 	
-	if not self.ExpressionFunc then
+	local ExpressionFunc = self.ExpressionFunc
+	
+	if not ExpressionFunc then
 		self:SetExpression(self.Expression)
+		ExpressionFunc = self.ExpressionFunc
 	end
 	
 	if not parentx:IsValid() then
 		parentx = parent
 	end
-
-	if self.ExpressionFunc then		
-		local ok, x,y,z = pcall(self.ExpressionFunc)
+	
+	if ExpressionFunc then
+		
+		local ok, x,y,z = self:RunExpression(ExpressionFunc)
 		
 		if not ok then
 			if self:GetPlayerOwner() == pac.LocalPlayer then
