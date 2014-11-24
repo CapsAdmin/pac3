@@ -334,9 +334,12 @@ do -- file extension
 		return encoded
 	end
 
-	function luadata.ReadFile(path)
-		local file = file.Read(path,'DATA')
-		if not file then return false,"invalid file" end
+	function luadata.ReadFile(path,location,noinvalid)
+		local file = file.Read(path,location or 'DATA')
+		if not file then 
+			if noinvalid then return end
+			return false,"invalid file" 
+		end
 		return luadata.Decode(file)
 	end
 end
