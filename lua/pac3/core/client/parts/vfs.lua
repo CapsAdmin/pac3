@@ -1,4 +1,5 @@
 local verbose = false
+pac.vfscache = pac.vfscache or {}
 
 local function dprint(...)
 	if verbose then print("[PAC3]",...) end
@@ -182,13 +183,16 @@ function PART:SetURL(url)
 	self.URL = url
 	
 	--let's do it
-	vfs.DownloadJSONArchive(url,function(entry)
-		dprint("Attempting to load vfs model "..tostring(entry).."...")
-		local parent = self:GetParent()
-		parent.vfs_loading = nil
-		parent.loading_obj = nil
-		if parent.SetModel then parent:SetModel(entry) end
-	end)
+	if not pac.vfscache[self:GetUniqueID()] then
+		vfs.DownloadJSONArchive(url,function(entry)
+			dprint("Attempting to load vfs model "..tostring(entry).."...")
+			local parent = self:GetParent()
+			parent.vfs_loading = nil
+			parent.loading_obj = nil
+			if parent.SetModel then parent:SetModel(entry) end
+			pac.vfscache[self:GetUniqueID()] = true
+		end)
+	end
 end
 
 function PART:OnRemove()
