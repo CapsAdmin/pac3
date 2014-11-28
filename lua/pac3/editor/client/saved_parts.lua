@@ -167,7 +167,7 @@ function pace.LoadParts(name, clear, override_part)
 			if name == "autoload" and (not data or not next(data)) then
 				local err
 				data,err = pac.luadata.ReadFile("pac3/sessions/" .. name .. ".txt",nil,true)
-				if not data then
+				if not data and err==nil then
 					ErrorNoHalt(("Autoload failed: %s\n"):format(err))
 					return
 				end
