@@ -160,7 +160,7 @@ do -- list
 		self.div:SetSize(w - (self.scr.Enabled and self.scr:GetWide() or 0), self:GetHeight())
 	end
 	
-	pace.CollapsedProperties = pac.luadata.ReadFile("pac3_editor/collapsed.txt")
+	pace.CollapsedProperties = pac.luadata.ReadFile("pac3_editor/collapsed.txt") or {}
 	
 	function PANEL:AddCollapser(name)
 		local left = vgui.Create("DButton", self)

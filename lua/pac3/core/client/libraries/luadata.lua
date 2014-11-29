@@ -282,9 +282,9 @@ function luadata.Decode(str,nojail)
 	local func = CompileString(string.format("return { %s }",str), "luadata_decode", false)
 	
 	if type(func) == "string" then
-		ErrorNoHalt("Luadata decode syntax: "..tostring(func):gsub("^luadata_decode","")..'\n')
+		--ErrorNoHalt("Luadata decode syntax: "..tostring(func):gsub("^luadata_decode","")..'\n')
 		
-		return {},func
+		return nil,func
 	end
 	
 	if not nojail then
@@ -299,17 +299,17 @@ function luadata.Decode(str,nojail)
 	local ok,err = is_func_ok( func )
 	if not ok or err then
 		err = err or "invalid opcodes detected"
-		ErrorNoHalt("Luadata opcode: "..tostring(err):gsub("^luadata_decode","")..'\n')
+		--ErrorNoHalt("Luadata opcode: "..tostring(err):gsub("^luadata_decode","")..'\n')
 		
-		return {},err
+		return nil,err
 	end
 	
-	local ok, err = pcall(func)
+	local ok, err = xpcall(func,debug.traceback)
 	
 	if not ok then		
-		ErrorNoHalt("Luadata decode: "..tostring(err):gsub("^luadata_decode","")..'\n')
+		--ErrorNoHalt("Luadata decode: "..tostring(err):gsub("^luadata_decode","")..'\n')
 		
-		return {},err
+		return nil,err
 	end
 	
 	if isfunction(nojail) then
@@ -321,11 +321,26 @@ end
 
 do -- file extension
 	function luadata.WriteFile(path, tbl)
-		file.Write(path, luadata.Encode(tbl))
+		if tbl==nil or false --[[empty table!?]] then
+			if file.Exists(path,'DATA') then
+				file.Delete(path,'DATA')
+				return true
+			end
+			return false,"file does not exist"
+		end
+		local encoded = luadata.Encode(tbl)
+		file.Write(path, encoded)
+		--if not file.Exists(path,'DATA') then return false,"could not write" end
+		return encoded
 	end
 
-	function luadata.ReadFile(path)
-		return luadata.Decode(file.Read(path) or "")
+	function luadata.ReadFile(path,location,noinvalid)
+		local file = file.Read(path,location or 'DATA')
+		if not file then 
+			if noinvalid then return end
+			return false,"invalid file" 
+		end
+		return luadata.Decode(file)
 	end
 end
 
