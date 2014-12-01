@@ -388,7 +388,8 @@ pace.AddTool(L"record surrounding props to pac", function(part)
 end)
 
 pace.AddTool("populate with bones",function(part,suboption)
-	local ent = part:GetEntity()
+	local target = part.GetEntity or part.GetOwner
+	local ent = target(part)
 	local bones = pac.GetModelBones(ent)
 	
 	for bone,tbl in pairs(bones) do
@@ -403,7 +404,8 @@ pace.AddTool("populate with bones",function(part,suboption)
 end)
 
 pace.AddTool("populate with dummy bones",function(part,suboption)
-	local ent = part:GetEntity()
+	local target = part.GetEntity or part.GetOwner
+	local ent = target(part)
 	local bones = pac.GetModelBones(ent)
 	
 	for bone,tbl in pairs(bones) do
