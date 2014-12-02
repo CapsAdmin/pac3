@@ -2,6 +2,8 @@ pace.DeprecatedParts =
 {
 	woohoo = true,
 	--command = true,
+	balanim = true,
+	mdl_import = true,
 }
 
 pace.DeprecatedProperties = 

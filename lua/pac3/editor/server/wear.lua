@@ -210,26 +210,43 @@ function pace.SubmitPart(data, filter)
 	
 		local players = filter or player.GetAll()
 		
-		if pace.GlobalBans then
-			if type(players) == "table" and data.owner:IsValid() then
-				local owner_steamid = data.owner:SteamID() 
-				for key, ply in pairs(players) do
-					local steamid = ply:SteamID()
-					for var, reason in pairs(pace.GlobalBans) do
-						if  var == steamid or type(var) == "table" and (table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):") or ""))) then
-							table.remove(players, key)
-							print("[pac3] not sending data to "..ply:Nick().." because he/her is globally banned from using pac")
-							
-							if owner_steamid == steamid then
-								return false, "you have been globally banned from using pac. see global_bans.lua for more info"
+		if type(players) == "table" then
+			for key, ply in next,players do
+				if not ply.pac_requested_outfits and ply ~= data.owner then
+					table.remove(players, key)
+				end
+			end
+			if pace.GlobalBans then
+				if data.owner:IsValid() then
+					local owner_steamid = data.owner:SteamID() 
+					for key, ply in pairs(players) do
+						local steamid = ply:SteamID()
+						for var, reason in pairs(pace.GlobalBans) do
+							if  var == steamid or type(var) == "table" and (table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):") or ""))) then
+								table.remove(players, key)
+								
+								if owner_steamid == steamid then
+									print(string.format("[pac3] Dropping data transfer request by '%s' (%s) due to a global PAC ban.",
+										ply:Nick(), ply:SteamID()))
+									return false, "You have been globally banned from using PAC. See global_bans.lua for more info."
+								end
 							end
 						end
 					end
 				end
 			end
+		elseif type(players)=="Player" then
+			if not players.pac_requested_outfits and players ~= data.owner then
+				return true
+			end
 		end
 	
 		if hook.Run("pac_SendData", players, data) ~= false then
+			
+			if not players then return end
+			
+			if type(players) == "table" and not next(players) then return end
+			
 			if pace.netstream then
 				pace.netstream.Start(players, data)
 			else
@@ -311,6 +328,7 @@ end
 
 function pace.RequestOutfits(ply)
 	if ply:IsValid() and not ply.pac_requested_outfits then
+		ply.pac_requested_outfits = true
 		for id, outfits in pairs(pace.Parts) do
 			local owner = (player.GetByUniqueID(id) or NULL)
 			if id == false or owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
@@ -319,7 +337,6 @@ function pace.RequestOutfits(ply)
 				end
 			end
 		end
-		ply.pac_requested_outfits = true
 	end
 end
 

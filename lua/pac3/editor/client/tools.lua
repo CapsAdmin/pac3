@@ -98,6 +98,20 @@ pace.AddTool(L"scale this and children", function(part, suboption)
 	end)
 end)
 
+pace.AddTool(L"free children from part", function(part, suboption)
+	if part:IsValid() then
+		local grandparent = part:GetParent()
+		local parent = part
+		for _, child in pairs(parent:GetChildren()) do 
+				child:SetAngles(child.Angles + parent.Angles)
+				child:SetPosition(child.Position + parent.Position)
+				child:SetAngleOffset(child.AngleOffset + parent.AngleOffset)
+				child:SetPositionOffset(child.PositionOffset + parent.PositionOffset)
+				child:SetParent(grandparent)
+		end
+	end			
+end)
+
 pace.AddTool(L"square model scales...", function(part, suboption)
 	Derma_StringRequest(L"model", L"input the model name that should get squared", "default.mdl", function(model)
 		for _, part in pairs(pac.GetParts(true)) do
@@ -261,9 +275,6 @@ do
 	end)
 
 end
-	
-pace.AddTool("---------", function() end) --just a divider so it's easy to see which tools were imported
-do return end
 
 pace.AddTool(L"convert to expression2 holo", function(part)
 	local holo_str = 
@@ -375,3 +386,43 @@ pace.AddTool(L"record surrounding props to pac", function(part)
 		end
 	end
 end)
+
+pace.AddTool("populate with bones",function(part,suboption)
+	local target = part.GetEntity or part.GetOwner
+	local ent = target(part)
+	local bones = pac.GetModelBones(ent)
+	
+	for bone,tbl in pairs(bones) do
+		if not tbl.is_special then 
+			local child = pac.CreatePart("bone")
+			child:SetParent(part)
+			child:SetBone(bone)
+		end
+	end
+	
+	pace.RefreshTree(true)
+end)
+
+pace.AddTool("populate with dummy bones",function(part,suboption)
+	local target = part.GetEntity or part.GetOwner
+	local ent = target(part)
+	local bones = pac.GetModelBones(ent)
+	
+	for bone,tbl in pairs(bones) do
+		if not tbl.is_special then 
+			local child = pac.CreatePart("model")
+			child:SetParent(part)
+			child:SetName(bone)
+			child:SetScale(Vector(0,0,0))
+		end
+	end
+	
+	pace.RefreshTree(true)
+end)
+
+pace.AddTool("print part info",function(part)
+	PrintTable(part:ToTable())
+end)
+	
+pace.AddTool("---------", function() end) --just a divider so it's easy to see which tools were imported
+do return end

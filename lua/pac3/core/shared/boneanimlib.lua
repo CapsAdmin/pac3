@@ -6,7 +6,9 @@ Because I wanted custom, dynamic animations.
 Give credit or reference if used in your creations.
 
 ]]
+local _G = _G
 
+module("boneanimlib",package.seeall)
 TYPE_GESTURE = 0 -- Gestures are keyframed animations that use the current position and angles of the bones. They play once and then stop automatically.
 TYPE_POSTURE = 1 -- Postures are static animations that use the current position and angles of the bones. They stay that way until manually stopped. Use TimeToArrive if you want to have a posture lerp.
 TYPE_STANCE = 2 -- Stances are keyframed animations that use the current position and angles of the bones. They play forever until manually stopped. Use RestartFrame to specify a frame to go to if the animation ends (instead of frame 1).
@@ -25,7 +27,7 @@ function GetLuaAnimations()
 end
 
 function RegisterLuaAnimation(sName, tInfo)
-	if tInfo.FrameData then
+	if tInfo and tInfo.FrameData then
 		local BonesUsed = {}
 		for iFrame, tFrame in ipairs(tInfo.FrameData) do
 			for iBoneID, tBoneTable in pairs(tFrame.BoneInfo) do
@@ -55,13 +57,14 @@ end
 -----------------------------
 -- Deserialize / Serialize --
 -----------------------------
-function Deserialize(sIn)
-	SRL = nil
 
-	RunString(sIn)
-
-	return SRL
+function Deserialize(str)
+	error"unsafe"
 end
+
+
+_G.GetLuaAnimations=GetLuaAnimations
+_G.RegisterLuaAnimation=RegisterLuaAnimation
 
 local allowedtypes = {}
 allowedtypes["string"] = true

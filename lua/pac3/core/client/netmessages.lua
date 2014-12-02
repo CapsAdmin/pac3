@@ -31,3 +31,34 @@ net.Receive( "pac.net.InAnimEditor", function( length, client )
 		ent.InAnimEditor = b
 	end
 end )
+
+function pac.SetCollisionGroup(ent,group)
+	local index = ent:EntIndex()
+	net.Start("pac.net.SetCollisionGroup.ClientNotify")
+	net.WriteInt(index,13)
+	net.WriteInt(group,7)
+	net.SendToServer()
+end
+
+function pac.setHasVfs(b)
+	net.Start("pac.net.setHasVfs.ClientNotify")
+	net.WriteBit(b)
+	net.SendToServer()
+end
+
+net.Receive( "pac.net.setHasVfs", function( length, client )
+    ent = net.ReadEntity()
+	b = (net.ReadBit() == 1)
+	if ent:IsValid() then 
+		ent.has_vfs = b
+	end
+end )
+
+function pac.requestVfsStatus()
+	net.Start("pac.net.requestVfsStatus.ClientNotify")
+	net.SendToServer()
+end
+
+net.Receive("pac.net.PlayerInitialSpawn", function()
+    hook.Run("pac.net.PlayerInitialSpawn",LocalPlayer())
+end)

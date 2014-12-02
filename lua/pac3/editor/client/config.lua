@@ -72,8 +72,10 @@ pace.PropertySheets = {
 			animationrate = true,
 			relativebones = true,
 			fallapartondeath = true,
+			deathragdollizeparent = true,
 			movespeed = true,
 			weapon = true,
+			playercollide = true,
 		},
 		movement =
 		{
@@ -230,6 +232,7 @@ pace.PartTree = {
 		command = true,
 		projectile = true,
 		custom_animation = true,
+		vfs = true,
 	},  
 }
 
@@ -295,6 +298,8 @@ pace.PartIcons =
 	bodygroup = "icon16/user.png",
 	camera = "icon16/camera.png",
 	custom_animation = "icon16/film.png",
+	mdl_import = "icon16/shape_square_add.png",
+	vfs = "icon16/shape_square_add.png",
 }
 
 pace.PartIcons.effects = pace.PartIcons.effect

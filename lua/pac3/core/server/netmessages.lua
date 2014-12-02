@@ -29,3 +29,45 @@ net.Receive( "pac.net.InAnimEditor.ClientNotify", function( length, client )
 	net.WriteBit(b)
 	net.Broadcast()
 end )
+
+util.AddNetworkString("pac.net.SetCollisionGroup.ClientNotify")
+net.Receive( "pac.net.SetCollisionGroup.ClientNotify", function(ent,group)
+	local index = net.ReadInt(13)
+	local group = net.ReadInt(7)
+	Entity(index):SetCollisionGroup(group)
+end )
+
+function pac.setHasVfs(b, ply, target)
+	ply.has_vfs = b
+	net.Start("pac.net.setHasVfs")
+	net.WriteEntity(ply)
+	net.WriteBit(b)
+	if not target then
+		net.Broadcast()
+	else 
+		net.Send(target)
+	end
+end
+
+util.AddNetworkString("pac.net.setHasVfs")
+util.AddNetworkString("pac.net.setHasVfs.ClientNotify")
+net.Receive( "pac.net.setHasVfs.ClientNotify", function( length, client )
+	local b = (net.ReadBit() == 1)
+	pac.setHasVfs(b,client)
+end )
+
+--util.AddNetworkString("pac.net.requestVfsStatus")
+util.AddNetworkString("pac.net.requestVfsStatus.ClientNotify")
+net.Receive( "pac.net.requestVfsStatus.ClientNotify", function(length, client)
+	for k,v in pairs(player.GetAll()) do
+		if v.has_vfs then
+			pac.setHasVfs(true, v, client)
+		end
+	end
+end)
+
+util.AddNetworkString("pac.net.PlayerInitialSpawn")
+hook.Add("PlayerInitialSpawn","pac.net.PlayerInitialSpawn",function(ply)
+	net.Start("pac.net.PlayerInitialSpawn")
+	net.Send(ply)
+end)

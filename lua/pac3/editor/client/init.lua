@@ -225,9 +225,13 @@ function pace.IsActive()
 	return pace.Active == true
 end
 
-concommand.Add("pac_editor", function()
+concommand.Add("pac_editor_panic", function()
 	pace.Panic()
 	timer.Simple(0.1, function() pace.OpenEditor() end)
+end)
+
+concommand.Add("pac_editor", function()
+	pace.OpenEditor()
 end)
 
 function pace.Call(str, ...)
@@ -249,6 +253,28 @@ hook.Add("HUDPaint", "pac_InPAC3Editor", function()
 			draw.DrawText("In PAC3 Editor", "ChatFont", pos_2d.x, pos_2d.y, Color(255,255,255,math.Clamp((pos_3d + Vector(0,0,10)):Distance(EyePos()) * -1 + 500, 0, 500)/500*255),1)
 		end
 	end
+end)
+
+hook.Add("PrePACEditorOpen","Disclaimer",function()
+	local message = [[PAC3 is free software written by people who owe you nothing.
+Don't expect or feel entitled to certain features, and don't demand that developers add, fix, or change things.
+This software is provided "as is", without warranty of any kind, express or implied.
+What that means is that if stuff breaks, you lose stuff, or anything bad happens, you're just gonna have to suck it up because that's life.
+
+I'm not your babysitter or your mom. Your computer will lose power. People will steal from you. Developers will ignore you.
+I empathise with your sadness over these events, but don't have the time to acknowledge this to every single one of you.
+
+Garry's Mod is a game. PAC3 is a toy. Life is so much bigger than this.
+
+Enjoy.
+
+~Suchipi]]
+	
+	if not file.Exists("pac3_editor/disclaimer.txt","DATA") then
+		Derma_Message(message, "PAC3 Disclaimer", "Ok..." ) 
+		file.Write("pac3_editor/disclaimer.txt",message)
+	end
+	return true
 end)
 
 pace.RegisterPanels()

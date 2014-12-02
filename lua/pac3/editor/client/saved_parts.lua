@@ -1,5 +1,6 @@
 local L = pace.LanguageString
 
+
 function pace.SaveParts(name, prompt_name, override_part)
 	if not name or prompt_name then
 		Derma_StringRequest(
@@ -32,6 +33,8 @@ function pace.SaveParts(name, prompt_name, override_part)
 				end
 			end
 		end
+		
+		data = hook.Run("pac_pace.SaveParts",data) or data
 				
 		file.CreateDir("pac3")
 		file.CreateDir("pac3/__backup/")
@@ -48,7 +51,7 @@ function pace.SaveParts(name, prompt_name, override_part)
 end
 
 function pace.Backup(data, name)
-	name = name or "no name"
+	name = name or ""
 	
 	if not data then
 		data = {}
@@ -62,7 +65,7 @@ function pace.Backup(data, name)
 	if #data > 0 then
 		
 		local files, folders = file.Find("pac3/__backup/*", "DATA")
-					
+		--local newest_time,newest_name	
 		if #files > 200 then
 			chat.AddText("PAC3 is trying to delete backup files (new system) but you have way too many for lua to delete because of the old system")
 			chat.AddText(
@@ -85,8 +88,18 @@ function pace.Backup(data, name)
 			end
 		end
 		
-		local date = os.date("___date_%m_%d_%Y___time_%H_%M_%S")
-		pac.luadata.WriteFile("pac3/__backup/" .. name .. date .. ".txt", data)
+		--if not newest_name then
+		--	for key, name in pairs(files) do
+		--		local time = file.Time("pac3/__backup/" .. name, "DATA")
+		--		if time > newest_time then
+		--			newest_time = time
+		--			newest_name = name
+		--		end
+		--	end
+		--end
+		
+		local date = os.date("%y-%m-%d-%H_%M_%S")
+		pac.luadata.WriteFile("pac3/__backup/" .. (name=="" and name or (name..'_')) .. date .. ".txt", data)
 	end
 end
 
@@ -137,21 +150,34 @@ function pace.LoadParts(name, clear, override_part)
 			end
 			
 			local function callback(str)
-				local data = pac.luadata.Decode(str)
-				
+				local data,err = pac.luadata.Decode(str)
+				if not data then
+					ErrorNoHalt(("URL fail: %s : %s\n"):format(name,err))
+					return
+				end
 				pace.LoadPartsFromTable(data, clear, override_part)
 			end
 			
-			http.Fetch(name, callback)		
+			pac.SimpleFetch(name, callback)		
 		else
 			name = name:gsub("%.txt", "")
 		
-			local data = pac.luadata.ReadFile("pac3/" .. name .. ".txt")
-			
-			if name == "autoload" and #data == 0 then
-				data = pac.luadata.ReadFile("pac3/sessions/" .. name .. ".txt")
-			end
+			local data,err = pac.luadata.ReadFile("pac3/" .. name .. ".txt")
 						
+			if name == "autoload" and (not data or not next(data)) then
+				local err
+				data,err = pac.luadata.ReadFile("pac3/sessions/" .. name .. ".txt",nil,true)
+				if not data then
+					if err then
+						ErrorNoHalt(("Autoload failed: %s\n"):format(err))
+					end
+					return
+				end
+			elseif not data then
+				ErrorNoHalt(("Decoding %s failed: %s\n"):format(name,err))
+				return
+			end
+			
 			pace.LoadPartsFromTable(data, clear, override_part)
 		end
 	end
@@ -211,8 +237,16 @@ local function add_files(tbl, dir)
 						data.Time = file.Time(path, "DATA")
 						data.Path = path
 						data.RelativePath = (dir .. "/" .. data.Name):sub(2)
-						data.Content = pac.luadata.ReadFile(path)
-					table.insert(tbl, data)
+					
+					local dat,err=pac.luadata.ReadFile(path)
+						data.Content = dat
+						
+					if dat then
+						table.insert(tbl, data)
+					else
+						ErrorNoHalt(("Decoding %s failed: %s\n"):format(path,err))
+					end
+						
 				end
 			end
 		end

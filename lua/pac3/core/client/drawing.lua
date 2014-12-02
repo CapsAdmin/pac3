@@ -229,6 +229,8 @@ end
 pac.Errors = {}
 
 function pac.RenderOverride(ent, type, draw_only)
+	if Profiler then Profiler:Begin ("pac.RenderOverride [" .. tostring (ent) .. "]") end
+	
 	local ok, err = pcall(render_override, ent, type, draw_only)
 	if not ok then
 		print("pac3 failed to render ", tostring(ent), ":")
@@ -246,6 +248,8 @@ function pac.RenderOverride(ent, type, draw_only)
 	else
 		ent.pac_error = nil
 	end
+	
+	if Profiler then Profiler:End () end
 end
 
 pac.firstperson_parts = pac.firstperson_parts or {}
@@ -312,26 +316,48 @@ local cvar_framesuppress = CreateClientConVar("pac_suppress_frames", 1, false, f
 RunConsoleCommand("pac_suppress_frames", "1") -- this should almost never be off..
 
 -- this needs to be called when before drawing things like minimaps and pac_suppress_frames is on
+local skip_rendering
 function pac.SkipRendering(b)
 	pac.skip_rendering = b
+		skip_rendering = b
 end
 
 -- this is if you want to force it
+local force_rendering
 function pac.ForceRendering(b)
 	pac.force_rendering = b
+		force_rendering = b
 end
 
+-- skybox hack --
+local in_skybox = false
+
+hook.Add("PreDrawSkyBox","pac",function()
+	if in_skybox==true then 
+		hook.Remove("PreDrawSkyBox","pac")
+		in_skybox = false
+		error"in_skybox was never disabled"
+	end
+	in_skybox = true
+end)
+hook.Add("PostDrawSkyBox","pac",function()
+	in_skybox = false
+end)
+-----------------
+	
 local function setup_suppress()
 	local last_framenumber = 0
 	local current_frame = 0
 	local current_frame_count = 0
 	
 	return function()
-		if pac.force_rendering then
+		if force_rendering then
 			return false
 		end
-	
-		if pac.skip_rendering then 
+		
+		--if in_skybox then return end
+		
+		if skip_rendering then 
 			return true
 		end
 		
@@ -366,8 +392,8 @@ local dst = 0
 --local garbage = 0
 
 local should_suppress = setup_suppress()
-function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)				
-	if should_suppress() then return end
+function pac.PostDrawOpaqueRenderables(drawdepth,drawing_skybox)	
+	if in_skybox or should_suppress() then return end
 	
 	--garbage = collectgarbage("count")
 	
@@ -391,8 +417,16 @@ function pac.PostDrawOpaqueRenderables(bool1, bool2, ...)
 			dst = ent:EyePos():Distance(pac.EyePos)
 			radius = ent:BoundingRadius() * 3 * (ent:GetModelScale() or 1)
 			
-			if ent:IsPlayer() and radius < 32 then
-				radius = 128
+			if ent:IsPlayer() then
+				
+				if not ent:Alive() and GetConVarNumber("pac_sv_hide_outfit_on_death") == 1 then
+					hide_parts(ent)
+					return
+				end
+			
+				if radius < 32 then
+					radius = 128
+				end
 			end
 			
 			if not ent:IsPlayer() and not ent:IsNPC() then
@@ -429,8 +463,8 @@ end
 pac.AddHook("PostDrawOpaqueRenderables")
 
 local should_suppress = setup_suppress()
-function pac.PostDrawTranslucentRenderables()
-	if should_suppress() then return end
+function pac.PostDrawTranslucentRenderables(drawing_depth,drawing_skybox)
+	if in_skybox or should_suppress() then return end
 
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
