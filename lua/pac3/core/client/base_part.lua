@@ -632,6 +632,8 @@ do -- serializing
 			if key == "AimPartName" and not table.HasValue(pac.AimPartNames, value) then
 				continue
 			end
+			
+			self = hook.Run("pac_PART:SetTable",self,key,value) or self
 						
 			if self["Set" .. key] then	
 				-- hacky
@@ -698,7 +700,7 @@ do -- serializing
 		for _, part in pairs(self.Children) do
 			table.insert(tbl.children, part:ToTable(make_copy_name, true))
 		end
-
+	
 		return tbl
 	end
 	

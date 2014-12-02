@@ -132,7 +132,7 @@ function pace.OpenEditor()
 		ctp:Disable()
 	end
 	
-	RunConsoleCommand("pac_in_editor", "1")
+	--RunConsoleCommand("pac_in_editor", "1")
 	pac.SetInPAC3Editor(true)
 	
 	pace.DisableExternalHooks()
@@ -150,7 +150,7 @@ function pace.CloseEditor()
 		pace.Call("CloseEditor") 
 	end
 	
-	RunConsoleCommand("pac_in_editor", "0")
+	--RunConsoleCommand("pac_in_editor", "0")
 	pac.SetInPAC3Editor(false)
 end
 
@@ -225,9 +225,13 @@ function pace.IsActive()
 	return pace.Active == true
 end
 
-concommand.Add("pac_editor", function()
+concommand.Add("pac_editor_panic", function()
 	pace.Panic()
 	timer.Simple(0.1, function() pace.OpenEditor() end)
+end)
+
+concommand.Add("pac_editor", function()
+	pace.OpenEditor()
 end)
 
 function pace.Call(str, ...)
@@ -250,5 +254,7 @@ hook.Add("HUDPaint", "pac_InPAC3Editor", function()
 		end
 	end
 end)
+
+
 
 pace.RegisterPanels()

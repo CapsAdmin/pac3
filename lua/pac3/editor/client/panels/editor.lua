@@ -143,13 +143,13 @@ function pace.KillFocus(show_editor)
 end
 
 function PANEL:PaintOver(w, h)
-	local score = pace.RenderScores and pace.RenderScores[LocalPlayer():EntIndex()]
+	local renderTime = pace.RenderTimes and pace.RenderTimes[LocalPlayer():EntIndex()]
 	
-	if score then
+	if renderTime then
 		local x, y = self.top:LocalToScreen()
 		y = y + self.top:GetTall()
 		
-		local str = string.format("%s: %s", L("render score"), score)
+		local str = string.format("%s: %.3f ms", L("average render time"), renderTime * 1000)
 		local _w, _h = surface.GetTextSize(str)
 
 		cam.IgnoreZ(true)
