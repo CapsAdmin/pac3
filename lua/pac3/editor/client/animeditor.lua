@@ -715,9 +715,9 @@ end
 local function AnimationEditorOff()
 --I want to eventually create a "save unsaved changes" dialog box when you close
 	if(!file.Exists("animations/backups","DATA")) then file.CreateDir"animations/backups" end
-	local convertedjson = util.TableToJSON(animationData)
-	if convertedjson then
-		file.Write("animations/backups/previous_session_"..os.date("%m%d%y%H%M%S")..".txt", convertedjson)
+	local tbl = util.TableToJSON(animationData)
+	if tbl then
+		file.Write("animations/backups/previous_session_"..os.date("%m%d%y%H%M%S")..".txt", tbl)
 	end
 	for i,v in pairs(animEditorPanels) do 	
 		v:Remove()
