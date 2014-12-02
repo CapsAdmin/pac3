@@ -150,6 +150,7 @@ local is_func_ok = opcode_checker(whitelist)
 
 local luadata = {} 
 local s = luadata
+luadata.is_func_ok = is_func_ok
 
 luadata.EscapeSequences = {
 	[("\a"):byte()] = [[\a]],
