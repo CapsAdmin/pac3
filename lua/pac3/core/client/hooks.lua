@@ -271,7 +271,7 @@ function pac.OnEntityCreated(ent)
 			if not part:HasParent() then
 				part:CheckOwner(ent, false)
 			end
-		end)
+		end
 		
 		return
 	end
