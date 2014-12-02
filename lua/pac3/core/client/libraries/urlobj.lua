@@ -322,9 +322,11 @@ function urlobj.DownloadQueueThink()
 					urlobj.Cache[url] = obj
 					
 					-- Remove from queue
-					urlobj.Queue[url] = nil
-					urlobj.QueueCount = urlobj.QueueCount - 1
-
+					if urlobj.Queue[url] == queueItem then
+						urlobj.Queue[url] = nil
+						urlobj.QueueCount = urlobj.QueueCount - 1
+					end
+					
 					queueItem.Callback(obj)
 				end
 			)

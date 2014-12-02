@@ -387,7 +387,40 @@ pace.AddTool(L"record surrounding props to pac", function(part)
 	end
 end)
 
-pace.AddTool("Print Part Info",function(part)
+pace.AddTool("populate with bones",function(part,suboption)
+	local target = part.GetEntity or part.GetOwner
+	local ent = target(part)
+	local bones = pac.GetModelBones(ent)
+	
+	for bone,tbl in pairs(bones) do
+		if not tbl.is_special then 
+			local child = pac.CreatePart("bone")
+			child:SetParent(part)
+			child:SetBone(bone)
+		end
+	end
+	
+	pace.RefreshTree(true)
+end)
+
+pace.AddTool("populate with dummy bones",function(part,suboption)
+	local target = part.GetEntity or part.GetOwner
+	local ent = target(part)
+	local bones = pac.GetModelBones(ent)
+	
+	for bone,tbl in pairs(bones) do
+		if not tbl.is_special then 
+			local child = pac.CreatePart("model")
+			child:SetParent(part)
+			child:SetName(bone)
+			child:SetScale(Vector(0,0,0))
+		end
+	end
+	
+	pace.RefreshTree(true)
+end)
+
+pace.AddTool("print part info",function(part)
 	PrintTable(part:ToTable())
 end)
 	

@@ -15,8 +15,9 @@ if file.Exists("lua/bin/gmcl_vfs_win32.dll","GAME") or
 		pac.setHasVfs(true)
 		pac.requestVfsStatus()
 	end)
+	if not vfs.RemoveFile then chat.AddText("[PAC3] VFS Module outdated. Expect breakage! Update at http://vfs.suchipi.com") end
 else
-	Msg("[PAC3] VFS Module not installed. mdl_import part will not function.")
+	chat.AddText("[PAC3] VFS Module not installed. vfs part will not function.")
 	hook.Add("pac.net.PlayerInitialSpawn","pac_vfsnotify",function()
 		pac.setHasVfs(false)
 		pac.requestVfsStatus()
