@@ -1,5 +1,6 @@
 local SWEP = {Primary = {}, Secondary = {}}
 
+SWEP.Base = "weapon_base"
 
 SWEP.Author     	= ""
 SWEP.Contact      	= ""
@@ -36,10 +37,12 @@ SWEP.Secondary.Ammo        = "none"
 function SWEP:DrawHUD() 			end
 function SWEP:PrintWeaponInfo() 	end
 
-function SWEP:DrawWeaponSelection(x,y,w,t,a)
+if CLIENT then
+	surface.CreateFont("pac_hands_font", {font = "HalfLife2", size = 120, weight = 400, antialias = true, additive = true})
 
-    draw.SimpleText("C","creditslogo",x+w/2,y,Color(255, 220, 0,a),TEXT_ALIGN_CENTER)
-	
+	function SWEP:DrawWeaponSelection(x,y,w,t,a)
+		draw.SimpleText("C","pac_hands_font",x+w/2,y,Color(255, 220, 0,a),TEXT_ALIGN_CENTER)
+	end
 end
 
 function SWEP:DrawWorldModel() 						 end
@@ -51,13 +54,7 @@ function SWEP:Holster()					return true  end
 function SWEP:ShouldDropOnDie()			return false end
 
 function SWEP:Initialize()
-    if self.SetHoldType then
-		self:SetHoldType"normal"
-	else
-		self:SetWeaponHoldType( "normal" )
-	end
-	
-	self:DrawShadow(false)
+    self:SetWeaponHoldType( "normal" )
 end
 
 function SWEP:Deploy()
@@ -71,17 +68,23 @@ function SWEP:Think()
 		self.Thinking = false
 		
 		assert(self:GetClass()=="none","WTF WRONG SHIT: "..tostring(self:GetClass()))
+
+		self.Owner:GetViewModel():SetNoDraw(true)
 	
 	end
 end
 
-local gtfo=Vector(1,1,1)*65000
 function SWEP:GetViewModelPosition( pos, ang )
-	return gtfo,ang
-end
+	if isthatyou then
+		return pos,ang
+	end
+	assert(self:GetClass()=="none","WTF WRONG SHIT: "..tostring(self:GetClass()))
 
-function SWEP:PreDrawViewModel( )
-	return true
+	pos.x=-3575
+	pos.y=-3575
+	pos.z=-3575 -- I don't want to see you ever again
+	return pos,ang
+
 end
 
 
@@ -96,6 +99,5 @@ function SWEP:SecondaryAttack()
 	self.DrawCrosshair = not self.DrawCrosshair 
 	self:SetNextSecondaryFire(CurTime() + 0.3) 
 end
-
 
 weapons.Register(SWEP, "none", true)

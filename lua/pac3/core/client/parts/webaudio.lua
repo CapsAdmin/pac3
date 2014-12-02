@@ -106,11 +106,8 @@ function PART:SetURL(URL)
 	for _, URL in pairs(urls) do			
 		local flags = "3d noplay noblock"
 		
-		local callback callback = function (snd, ...)		
-			if not snd or not snd:IsValid() then 
-				Msg"[PAC3] "print("Failed to load ",URL,"("..flags..")")
-				return
-			end
+		sound.PlayURL(URL, flags, function(snd, ...)		
+			if not snd or not snd:IsValid() then print(...) return end
 					
 			if pace and pace.Editor:IsValid() and pace.current_part:IsValid() and pace.current_part.ClassName == "webaudio" and self:GetPlayerOwner() == pac.LocalPlayer then
 				if self.Loop and (snd:GetLength() > 0) then
@@ -122,9 +119,7 @@ function PART:SetURL(URL)
 			end
 						
 			self.streams[URL] = snd
-		end
-		
-		sound.PlayURL(URL, flags, callback)
+		end)			
 		
 	end
 	

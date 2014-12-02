@@ -24,7 +24,7 @@ local function dprint(str)
 
         MsgC(Color(0, 255, 0), "[WebAudio] ")
         MsgC(Color(255, 255, 255), str)
-        Msg("\n")
+        Msg("\b")
     end
 
     if webaudio.debug >= 2 then
@@ -311,7 +311,7 @@ do -- STREAM
     local stream_count = 0
 
     function webaudio.Stream(url)
-        --url = url:gsub("http[s?]://", "http://")
+        url = url:gsub("http[s?]://", "http://")
 
         if not url:find("http") then
             url = "asset://garrysmod/sound/" .. url

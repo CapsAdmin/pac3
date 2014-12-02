@@ -142,7 +142,7 @@ function pace.LoadParts(name, clear, override_part)
 				pace.LoadPartsFromTable(data, clear, override_part)
 			end
 			
-			pac.SimpleFetch(name, callback)		
+			http.Fetch(name, callback)		
 		else
 			name = name:gsub("%.txt", "")
 		
