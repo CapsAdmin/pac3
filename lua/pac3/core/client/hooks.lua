@@ -195,7 +195,7 @@ function pac.OnClientsideRagdoll(ent)
 	if not ply.pac_death_physics_parts then
 		
 		-- make props draw on the ragdoll
-		if ply.death_ragdollize then
+		if ply.pac_death_ragdollize then
 			ply.pac_owner_override = ent
 		end
 		
@@ -255,6 +255,66 @@ function pac.InitDeathPhysicsOnProp(part,ply,plyent)
 			ent.RenderOverride = nil
 		end
 	end
+end
+
+function pac.OnEntityCreated(ent)
+	if not IsActuallyValid(ent) then return end
+	
+	if ent:GetClass() == "class C_HL2MPRagdoll" then
+		pac.OnClientsideRagdoll(ent)
+	end
+	
+	local owner = ent:GetOwner()
+	
+	if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
+		for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
+			if not part:HasParent() then
+				part:CheckOwner(ent, false)
+			end
+		end
+		
+		return
+	end
+	
+	if ply.pac_physics_died then return end
+	
+	for _, part in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
+		if part.ClassName == "model" then
+			pac.InitDeathPhysicsOnProp(part,ply,ent)
+		end	
+	end
+	ply.pac_physics_died = true
+
+end
+
+function pac.InitDeathPhysicsOnProp(part,ply,plyent)
+	plyent:SetNoDraw(true)
+			
+	part.skip_orient = true
+	
+	local ent = part:GetEntity()
+	ent:SetParent(NULL)
+	ent:SetNoDraw(true)
+	ent:PhysicsInitBox(Vector(1,1,1) * -5, Vector(1,1,1) * 5)
+	ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS) 
+	
+	local phys = ent:GetPhysicsObject()
+	phys:AddAngleVelocity(VectorRand() * 1000)
+	phys:AddVelocity(ply:GetVelocity()  + VectorRand() * 30)
+	phys:Wake()
+	
+	function ent.RenderOverride(ent)
+		if part:IsValid() then
+			if not part.HideEntity then 
+				part:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
+				ent:DrawModel()
+				part:PostEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
+			end
+		else
+			ent.RenderOverride = nil
+		end
+	end
+
 end
 
 function pac.OnEntityCreated(ent)
