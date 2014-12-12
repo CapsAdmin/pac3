@@ -592,7 +592,7 @@ local function RegisterAll()
 		if !str then return end
 		local success,t = pcall(Deserialize, str)
 		if !success then 
-			ErrorNoHalt("WARNING: Animation '"..string.sub(v,1,-5).."' failed to load\n")
+			ErrorNoHalt("WARNING: Animation '"..string.sub(v,1,-5).."' failed to load: "..tostring(t).."\n")
 		else
 			RegisterLuaAnimation(string.sub(v,1,-5),t)
 		end
@@ -715,9 +715,9 @@ end
 local function AnimationEditorOff()
 --I want to eventually create a "save unsaved changes" dialog box when you close
 	if(!file.Exists("animations/backups","DATA")) then file.CreateDir"animations/backups" end
-	local convertedjson = util.TableToJSON(animationData)
-	if convertedjson then
-		file.Write("animations/backups/previous_session_"..os.date("%m%d%y%H%M%S")..".txt", convertedjson)
+	local tbl = util.TableToJSON(animationData)
+	if tbl then
+		file.Write("animations/backups/previous_session_"..os.date("%m%d%y%H%M%S")..".txt", tbl)
 	end
 	for i,v in pairs(animEditorPanels) do 	
 		v:Remove()
@@ -830,8 +830,11 @@ function MAIN:Init()
 	local viewcode = self:Button("Copy Raw Lua To Clipboard")
 	viewcode.DoClick = function() local str = OutputCode() if !str then return end SetClipboardText(str) end
 	
-	local distSlider = self:NumSlider("Cam Distance", nil, 40, 200, 0 )
-	distSlider:SetValue(200)
+	local maxcamdist_cvar = CreateConVar("pac_animeditor_maxcamdist",200)
+	local maxcamdist = maxcamdist_cvar:GetInt()
+	
+	local distSlider = self:NumSlider("Cam Distance", nil, 40, maxcamdist, 0 )
+	distSlider:SetValue(maxcamdist)
 	distSlider.OnValueChanged = function(s,v) camDist = v end
 	
 	local boneSet = self:ComboBox("Bone Set")
@@ -909,12 +912,16 @@ function TIMELINE:Init()
 				if firstPass && animationData.StartFrame then
 					for i=1,animationData.StartFrame do
 						local v = animationData.FrameData[i]
-						subtraction = subtraction+(1/(v.FrameRate or 1))
+						if v then
+							subtraction = subtraction+(1/(v.FrameRate or 1))
+						end
 					end
 				elseif !firstPass && animationData.RestartFrame then
 					for i=1,animationData.RestartFrame do
 						local v = animationData.FrameData[i]
-						subtraction = subtraction+(1/(v.FrameRate or 1))
+						if v then
+							subtraction = subtraction+(1/(v.FrameRate or 1))
+						end
 					end
 				end
 			end

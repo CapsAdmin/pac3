@@ -32,6 +32,10 @@ net.Receive( "pac.net.InAnimEditor", function( length, client )
 	end
 end )
 
-net.Receive("pac.net.PlayerInitialSpawn", function()
-    hook.Run("pac.net.PlayerInitialSpawn",LocalPlayer())
-end)
+function pac.SetCollisionGroup(ent,group)
+	local index = ent:EntIndex()
+	net.Start("pac.net.SetCollisionGroup.ClientNotify")
+	net.WriteInt(index,13)
+	net.WriteInt(group,7)
+	net.SendToServer()
+end

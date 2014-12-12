@@ -460,56 +460,45 @@ end
 function PART:SetModel(var)
 	self.Entity = self:GetEntity()
 
-	if var and var:find("http") and pac.urlobj then		
-		local args, url = var:match("(.-)(http.+)")
-		local merge = true
-		
-		if args then 
-			args = args:Split("") 
-			for k,v in pairs(args) do 
-				args[v] = v 
-			end
-			
-			if args["*"] then
-				merge = false
-			end
-		end
-				
+	if var and var:find("http") and pac.urlobj then
 		self.loading_obj = "downloading"
 		
-		pac.urlobj.GetObjFromURL(url, function(meshes, err)
-			if not self:IsValid() then return end
-			
-			self.loading_obj = false
-			
-			self.Entity = self:GetEntity()
-			
-			if not meshes and err then
-				self.Entity:SetModel("error.mdl")
-				self.wavefront_mesh = nil
-				return
-			end
-			
-			if table.Count(meshes) == 1 then
-				set_mesh(self, select(2, next(meshes)))
-			else
-				for key, mesh in pairs(meshes) do
-					local part = pac.CreatePart("model", self:GetOwnerName())
-					part:SetName(key)
-					part:SetParent(self)
-					part:SetMaterial(self:GetMaterial())
-					set_mesh(part, mesh)
+		pac.urlobj.GetObjFromURL(var, false, false,
+			function(meshes, err)
+				if not self:IsValid() then return end
+				
+				self.loading_obj = false
+				
+				self.Entity = self:GetEntity()
+				
+				if not meshes and err then
+					self.Entity:SetModel("error.mdl")
+					self.wavefront_mesh = nil
+					return
 				end
 				
-				self:SetAlpha(0)
-			end	
-			
-		end, args["_"], args["<"], args["."], function(str, done) 
-			self.loading_obj = str
-			if done then
-				self.loading_obj = nil
+				if table.Count(meshes) == 1 then
+					set_mesh(self, select(2, next(meshes)))
+				else
+					for key, mesh in pairs(meshes) do
+						local part = pac.CreatePart("model", self:GetOwnerName())
+						part:SetName(key)
+						part:SetParent(self)
+						part:SetMaterial(self:GetMaterial())
+						set_mesh(part, mesh)
+					end
+					
+					self:SetAlpha(0)
+				end
+			end,
+			function(finished, statusMessage) 
+				if finished then
+					self.loading_obj = nil
+				else
+					self.loading_obj = statusMessage
+				end
 			end
-		end)
+		)
 		
 		self.Model = var
 		return
