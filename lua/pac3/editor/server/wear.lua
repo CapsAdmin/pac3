@@ -69,6 +69,10 @@ end
 pace.dupe_ents = pace.dupe_ents or {}
 
 duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
+	if parts.json then
+		parts = util.JSONToTable(parts.json)
+	end
+	
 	local id = ent:EntIndex()
 	
 	if parts.part then
@@ -121,7 +125,7 @@ function pace.SubmitPart(data, filter)
 				pace.dupe_ents[ent:EntIndex()] = {owner = data.owner, ent = ent}
 				
 				duplicator.ClearEntityModifier(ent, "pac_config")
-				duplicator.StoreEntityModifier(ent, "pac_config", ent.pac_parts)
+				duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(ent.pac_parts)})
 			end
 			
 			ent:CallOnRemove("pac_config", function(ent)
@@ -158,7 +162,7 @@ function pace.SubmitPart(data, filter)
 					if v.ent:IsValid() and v.ent.pac_parts then
 						v.ent.pac_parts = {}
 						duplicator.ClearEntityModifier(v.ent, "pac_config")
-						duplicator.StoreEntityModifier(v.ent, "pac_config", v.ent.pac_parts)	
+						duplicator.StoreEntityModifier(v.ent, "pac_config", {json = util.TableToJSON(v.ent.pac_parts)})
 						return
 					else
 						pace.dupe_ents[key] = nil
