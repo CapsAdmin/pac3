@@ -505,7 +505,9 @@ function PART:SetModel(var)
 	end
 	
 	self.wavefront_mesh = nil
-	
+		
+		var = hook.Run("pac_model:SetModel",self,var) or var
+		
 		self.Model = var
 		self.Entity.pac_bones = nil
 		self.Entity:SetModel(var)
