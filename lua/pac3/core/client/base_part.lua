@@ -632,7 +632,9 @@ do -- serializing
 			if key == "AimPartName" and not table.HasValue(pac.AimPartNames, value) then
 				continue
 			end
-						
+			
+			self = hook.Run("pac_PART:SetTable",self,key,value) or self
+			
 			if self["Set" .. key] then	
 				-- hacky
 				if key:find("Name", nil, true) and key ~= "OwnerName" and key ~= "SequenceName" and key ~= "VariableName" then
