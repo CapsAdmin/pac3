@@ -662,3 +662,5 @@ end
 function pace.GetIconFromClassName(class_name)
 	return pace.PartIcons[class_name] or "icon16/plugin.png"
 end
+
+hook.Run("pac_pace_postconfig")
