@@ -41,13 +41,13 @@ if SERVER then
 	end)
 			
 	concommand.Add("pac_setmodel", function(ply, _, args)
-		if GetConVarNumber("pac_modifier_model") ~= 0 and ply:GetInfo("pac_modifier_model") ~= 0 then
+		if GetConVarNumber("pac_modifier_model") ~= 0 and ply:GetInfo("pac_modifier_model") ~= 0 and !ClockWork then
 			pac.SetPlayerModel(ply, args[1])	
 		end
 	end)
 	
 	hook.Add("Think", "pac_setmodel", function(ply)	
-		if ClockWork then return end -- Clockwork fix
+		if ClockWork then hook.Remove("Think", "pac_setmodel") return end
 		for key, ply in pairs(player.GetAll()) do
 			if ply.pac_last_modifier_model and ply:GetModel():lower() ~= ply.pac_last_modifier_model then
 				ply:SetModel(ply.pac_last_modifier_model)
@@ -55,4 +55,3 @@ if SERVER then
 		end
 	end)
 end
-
