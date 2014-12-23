@@ -21,6 +21,7 @@ STREAM.Url                    = "" -- ??
 
 -- Playback speed
 STREAM.PlaybackSpeed          = 1
+STREAM.AdditivePitchModifier  = 0
 
 -- Volume
 STREAM.Panning                = 0
@@ -39,7 +40,7 @@ local function DECLARE_PROPERTY(propertyName, javascriptSetterCode, defaultValue
 
 	STREAM["Set" .. propertyName] = function(self, value)
 		if filterFunction then
-			value = filterFunction(var, self)
+			value = filterFunction(value, self)
 		end
 
 		self[propertyName] = value
@@ -109,9 +110,8 @@ end
 
 STREAM.SetLooping = STREAM.SetMaxLoopCount
 
--- SampleCount
-function STREAM:GetLength()
-	return self.Length
+function STREAM:GetSampleCount()
+	return self.SampleCount
 end
 
 function STREAM:Pause()
@@ -121,11 +121,19 @@ end
 
 function STREAM:Resume()
 	self.paused = false
+	
+	self:UpdatePlaybackSpeed()
+	self:UpdateVolume()
+	
 	self:CallNow(".play(true)")
 end
 
 function STREAM:Start()
 	self.paused = false
+	
+	self:UpdatePlaybackSpeed()
+	self:UpdateVolume()
+	
 	self:CallNow(".play(true, 0)")
 end
 STREAM.Play = STREAM.Start
@@ -140,15 +148,18 @@ function STREAM:Restart()
 end
 
 function STREAM:SetPosition(positionFraction)
-	self:SetSamplePosition((positionFraction % 1) * self:GetLength())
+	self:SetSamplePosition((positionFraction % 1) * self:GetSampleCount())
 end
-
-STREAM.pitch_mod = 0
 
 DECLARE_PROPERTY("SamplePosition", ".position = %f", 0)
 
+-- Playback speed
 function STREAM:GetPlaybackSpeed()
 	return self.PlaybackSpeed
+end
+
+function STREAM:GetAdditivePitchModifier()
+	return self.AdditivePitchModifier
 end
 
 function STREAM:SetPlaybackSpeed(playbackSpeedMultiplier)
@@ -156,11 +167,26 @@ function STREAM:SetPlaybackSpeed(playbackSpeedMultiplier)
 	
 	self.PlaybackSpeed = playbackSpeedMultiplier
 	
-	self:Call(".speed = %f", self.PlaybackSpeed + self.pitch_mod)
+	self:UpdatePlaybackSpeed()
 	
 	return self
 end
 
+function STREAM:SetAdditivePitchModifier(additivePitchModifier)
+	if self.AdditivePitchModifier == additivePitchModifier then return self end
+	
+	self.AdditivePitchModifier = additivePitchModifier
+	
+	self:UpdatePlaybackSpeed()
+	
+	return self
+end
+
+function STREAM:UpdatePlaybackSpeed()
+	self:Call(".speed = %f", self.PlaybackSpeed + self.AdditivePitchModifier)
+end
+
+-- Filtering
 DECLARE_PROPERTY("FilterType",     ".filter_type = %i")
 DECLARE_PROPERTY("FilterFraction", ".filter_fraction = %f", 0, function(num) return math.Clamp(num, 0, 1) end)
 
@@ -244,7 +270,7 @@ do -- 3d
 					local relative_velocity = self.vel3d - eye_vel
 					local meters_per_second = offset:GetNormalized():Dot(-relative_velocity) * 0.0254
 
-					self:Call(".speed = %f", (self.PlaybackSpeed + (meters_per_second / webaudio.SpeedOfSound)) + self.pitch_mod)
+					self:Call(".speed = %f", (self.PlaybackSpeed + (meters_per_second / webaudio.SpeedOfSound)) + self.AdditivePitchModifier)
 				end
 
 				self.out_of_reach = false

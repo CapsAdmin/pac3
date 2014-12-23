@@ -52,34 +52,34 @@ function webaudio.Browser.Initialize()
 
 	webaudio.Browser.Control:AddFunction("lua", "print", webaudio.DebugPrint)
 
-	webaudio.Browser.Control:AddFunction("lua", "message", function(name, ...)
+	webaudio.Browser.Control:AddFunction("lua", "message", function(messageType, ...)
 		local args = {...}
 		
-		webaudio.DebugPrint(name .. " " .. table.concat(args, ", "))
+		webaudio.DebugPrint(messageType .. " " .. table.concat(args, ", "))
 		
-		if name == "initialized" then
+		if messageType == "initialized" then
 			webaudio.Browser.State = webaudio.Browser.States.Initialized
 			webaudio.SampleRate = args[1]
-		elseif name == "stream" then
+		elseif messageType == "stream" then
 			local stream = webaudio.Streams.GetStream(tonumber(args[2]) or 0)
 			if not stream then return end
 			
-			local t = args[1]
-			if t == "call" then
-				local func_name = args[3]
-				if stream[func_name] then
-					stream[func_name](stream, select(4, ...))
+			local messageType = args[1]
+			if messageType == "call" then
+				local methodName = args[3]
+				if stream[methodName] then
+					stream[methodName](stream, select(4, ...))
 				end
-			elseif t == "fft" then
+			elseif messageType == "fft" then
 				local data = CompileString(args[2], "stream_fft_data")()
 				stream.OnFFT(data)
-			elseif t == "stop" then
+			elseif messageType == "stop" then
 				stream.paused = true
-			elseif t == "return" then
+			elseif messageType == "return" then
 				stream.returned_var = {select(3, ...)}
-			elseif t == "loaded" then
+			elseif messageType == "loaded" then
 				stream.loaded = true
-				stream.Length = args[3]
+				stream.SampleCount = args[3]
 				stream:SetFilterType(0)
 
 				if not stream.paused then

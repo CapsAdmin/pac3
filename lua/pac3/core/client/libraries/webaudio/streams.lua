@@ -17,11 +17,11 @@ function webaudio.Streams.CreateStream(url)
 
 	local stream = setmetatable({}, webaudio.Streams.STREAM)
 
-	webaudio.Streams.LastStreamId = webaudio.Streams..LastStreamId + 1
+	webaudio.Streams.LastStreamId = webaudio.Streams.LastStreamId + 1
 	stream:SetId(webaudio.Streams.LastStreamId)
 	stream:SetUrl(url)
 	
-	webaudio.Streams[stream.id] = stream
+	webaudio.Streams.Streams[stream:GetId()] = stream
 	
 	webaudio.Browser.QueueJavascript(string.format("createStream(%q, %d)", stream:GetUrl(), stream:GetId()))
 	
@@ -42,8 +42,8 @@ function webaudio.Streams.Think()
 			stream:Think()
 		else
 			stream:Stop()
-			webaudio.Streams[streamId] = nil
-			webaudio.Browser.QueueJavascript(string.format("destroyStream(%i)", stream.id))
+			webaudio.Streams.Streams[streamId] = nil
+			webaudio.Browser.QueueJavascript(string.format("destroyStream(%i)", stream:GetId()))
 
 			setmetatable(stream, getmetatable(NULL))
 		end

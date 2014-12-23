@@ -52,10 +52,12 @@ function PART:OnThink()
 end
 
 function PART:OnDraw(ent, pos, ang)
-	for key, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[key] = nil continue end
+	local forward = ang:Forward()
+	
+	for url, stream in pairs(self.streams) do
+		if not stream:IsValid() then self.streams[url] = nil continue end
 		
-		stream:SetPos(pos, ang:Forward())
+		stream:SetPos(pos, forward)
 		
 		if not self.random_pitch then self:SetRandomPitch(self.RandomPitch) end 
 		
@@ -103,12 +105,12 @@ function PART:SetURL(URL)
 	
 	self.streams = {}
 		
-	for _, URL in pairs(urls) do			
+	for _, url in pairs(urls) do			
 		local flags = "3d noplay noblock"
 		
 		local callback callback = function (snd, ...)		
 			if not snd or not snd:IsValid() then 
-				Msg"[PAC3] "print("Failed to load ",URL,"("..flags..")")
+				Msg"[PAC3] "print("Failed to load ",url,"("..flags..")")
 				return
 			end
 					
@@ -121,10 +123,10 @@ function PART:SetURL(URL)
 				snd:Play()
 			end
 						
-			self.streams[URL] = snd
+			self.streams[url] = snd
 		end
 		
-		sound.PlayURL(URL, flags, callback)
+		sound.PlayURL(url, flags, callback)
 		
 	end
 	
