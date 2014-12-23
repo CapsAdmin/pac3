@@ -85,6 +85,8 @@ local ipairs        = ipairs
 local pairs         = pairs
 local tonumber      = tonumber
 
+local math_sqrt     = math.sqrt
+
 local Vector        = Vector
 
 local string_gmatch = string.gmatch
@@ -97,9 +99,10 @@ local table_insert  = table.insert
 function urlobj.ParseObj(data, generateNormals)
 	local coroutine_yield = coroutine.running () and coroutine.yield or function () end
 	
-	local positions = {}
-	local texcoords = {}
-	local normals   = {}
+	local positions  = {}
+	local texCoordsU = {}
+	local texCoordsV = {}
+	local normals    = {}
 	
 	local triangleList = {}
 	
@@ -121,88 +124,145 @@ function urlobj.ParseObj(data, generateNormals)
 	local inverseLineCount = 1 / lineCount
 	local i = 1
 	while i <= lineCount do
-		local line = lines[i]
-		-- Position: v %f %f %f [%f]
-		local x, y, z = string_match(line, "^%s*v%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
-		if x then
-			positions[#positions + 1] = Vector(tonumber(x), tonumber(y), tonumber(z))
-		else
-			-- Texture coordinates: vt %f %f
-			local u, v = string_match(line, "^%s*vt%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
-			if u then
-				texcoords[#texcoords + 1] = {u = tonumber(u) % 1, v = (1 - tonumber(v)) % 1}
-			else
-				-- Normal: vn %f %f %f
-				local nx, ny, nz = string_match(line, "^%s*vn%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
-				if nx then
-					if not generateNormals then
-						normals[#normals + 1] = Vector(tonumber(nx), tonumber(ny), tonumber(ny)):GetNormalized()
-					end
-				else
-					-- Something else
-					line = string_gsub (line, "%s+", " ")
-					line = string_gsub (line, "#.*$", "")
-					line = string_match (line, "^%s*(.-)%s*$")
-					faceLines[#faceLines + 1] = string_Split(line, " ")
-				end
-			end
+		local processedLine = false
+		
+		-- Positions: v %f %f %f [%f]
+		-- local t0 = SysTime ()
+		while i <= lineCount do
+			local line = lines[i]
+			local x, y, z = string_match(line, "^%s*v%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
+			if not x then break end
+			
+			processedLine = true
+			x, y, z = tonumber(x), tonumber(y), tonumber(z)
+			positions[#positions + 1] = Vector(x, y, z)
+			
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			i = i + 1
 		end
+		-- if SysTime () - t0 > 0.001 then print ("v processing took " .. GLib.FormatDuration (SysTime () - t0)) end
 		
-		coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+		-- Texture coordinates: vt %f %f
+		-- local t0 = SysTime ()
+		while i <= lineCount do
+			local line = lines[i]
+			local u, v = string_match(line, "^%s*vt%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
+			if not u then break end
+			
+			processedLine = true
+			u, v = tonumber(u), tonumber(v)
+			
+			local texCoordIndex = #texCoordsU + 1
+			texCoordsU[texCoordIndex] =      u  % 1
+			texCoordsV[texCoordIndex] = (1 - v) % 1
+			
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			i = i + 1
+		end
+		-- if SysTime () - t0 > 0.001 then print ("vt processing took " .. GLib.FormatDuration (SysTime () - t0)) end
 		
-		i = i + 1
+		-- Normals: vn %f %f %f
+		-- local t0 = SysTime ()
+		while i <= lineCount do
+			local line = lines[i]
+			local nx, ny, nz = string_match(line, "^%s*vn%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
+			if not nx then break end
+			
+			processedLine = true
+			
+			if not generateNormals then
+				nx, ny, nz = tonumber(nx), tonumber(ny), tonumber(nz)
+				
+				local inverseLength = 1 / math_sqrt(nx * nx + ny * ny + nz * nz)
+				nx, ny, nz = nx * inverseLength, ny * inverseLength, nz * inverseLength
+				
+				local normal = Vector(nx, ny, nz)
+				normals[#normals + 1] = normal
+			end
+			
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			i = i + 1
+		end
+		-- if SysTime () - t0 > 0.001 then print ("vn processing took " .. GLib.FormatDuration (SysTime () - t0)) end
+		
+		-- Faces: f %f %f %f+
+		-- local t0 = SysTime ()
+		while i <= lineCount do
+			local line = lines[i]
+			if not string_match(line, "^%s*f%s+") then break end
+			
+			processedLine = true
+			line = string_match (line, "^%s*(.-)[#%s]*$")
+			
+			-- Explode line
+			local parts = {}
+			for part in string_gmatch(line, "[^%s]+") do
+				parts[#parts + 1] = part
+			end
+			faceLines[#faceLines + 1] = parts
+			
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			i = i + 1
+		end
+		-- if SysTime () - t0 > 0.001 then print ("f processing took " .. GLib.FormatDuration (SysTime () - t0)) end
+		
+		-- Something else
+		if not processedLine then
+			i = i + 1
+		end
 	end
 	-- print ("Vertex processing took " .. GLib.FormatDuration (SysTime () - t0))
-	-- print (string.format ("%d positions, %d texcoords, %d normals, %d faces", #positions, #texcoords, #normals, #faceLines))
+	-- print (string.format ("%d positions, %d texcoords, %d normals, %d faces", #positions, #texCoordsU, #normals, #faceLines))
 	
 	local t0 = SysTime ()
 	local faceLineCount = #faceLines
 	local inverseFaceLineCount = 1 / faceLineCount
 	for i, parts in ipairs(faceLines) do
-		if parts[1] == "f" and #parts >= 4 then
-			local first    = string_Split(parts[2], "/")
-			local previous = string_Split(parts[3], "/")
-			first    [1], first    [2], first    [3] = tonumber (first    [1]), tonumber (first    [2]), tonumber (first    [3])
-			previous [1], previous [2], previous [3] = tonumber (previous [1]), tonumber (previous [2]), tonumber (previous [3])
+		if #parts >= 4 then
+			local v1PositionIndex, v1TexCoordIndex, v1NormalIndex = string_match(parts[2], "(%d+)/?(%d*)/?(%d*)")
+			local v3PositionIndex, v3TexCoordIndex, v3NormalIndex = string_match(parts[3], "(%d+)/?(%d*)/?(%d*)")
+			
+			v1PositionIndex, v1TexCoordIndex, v1NormalIndex = tonumber(v1PositionIndex), tonumber(v1TexCoordIndex), tonumber(v1NormalIndex)
+			v3PositionIndex, v3TexCoordIndex, v3NormalIndex = tonumber(v3PositionIndex), tonumber(v3TexCoordIndex), tonumber(v3NormalIndex)
 			
 			for i = 4, #parts do
-				local current = string_Split(parts[i], "/")
-				current [1], current [2], current [3] = tonumber (current [1]), tonumber (current [2]), tonumber (current [3])
+				local v2PositionIndex, v2TexCoordIndex, v2NormalIndex = string_match(parts[4], "(%d+)/?(%d*)/?(%d*)")
+				v2PositionIndex, v2TexCoordIndex, v2NormalIndex = tonumber(v2PositionIndex), tonumber(v2TexCoordIndex), tonumber(v2NormalIndex)
 				
 				local v1 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil }
 				local v2 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil }
 				local v3 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil }
 				
-				v1.pos_index = first   [1]
-				v2.pos_index = current [1]
-				v3.pos_index = previous[1]
+				v1.pos_index = v1PositionIndex
+				v2.pos_index = v2PositionIndex
+				v3.pos_index = v3PositionIndex
 				
-				v1.pos = positions[first   [1]]
-				v2.pos = positions[current [1]]
-				v3.pos = positions[previous[1]]
+				v1.pos = positions[v1PositionIndex]
+				v2.pos = positions[v2PositionIndex]
+				v3.pos = positions[v3PositionIndex]
 				
-				if #texcoords > 0 then
-					v1.u = texcoords[first   [2]].u
-					v1.v = texcoords[first   [2]].v
+				if #texCoordsU > 0 then
+					v1.u = texCoordsU[v1TexCoordIndex]
+					v1.v = texCoordsV[v1TexCoordIndex]
 					
-					v2.u = texcoords[current [2]].u
-					v2.v = texcoords[current [2]].v
+					v2.u = texCoordsU[v2TexCoordIndex]
+					v2.v = texCoordsV[v2TexCoordIndex]
 					
-					v3.u = texcoords[previous[2]].u
-					v3.v = texcoords[previous[2]].v
+					v3.u = texCoordsU[v3TexCoordIndex]
+					v3.v = texCoordsV[v3TexCoordIndex]
 				end
 				
 				if #normals > 0 then
-					v1.normal = normals[first   [3]]
-					v2.normal = normals[current [3]]
-					v3.normal = normals[previous[3]]
+					v1.normal = normals[v1NormalIndex]
+					v2.normal = normals[v2NormalIndex]
+					v3.normal = normals[v3NormalIndex]
 				end				
 				
 				triangleList [#triangleList + 1] = v1
 				triangleList [#triangleList + 1] = v2
 				triangleList [#triangleList + 1] = v3
 				
-				previous = current
+				v3PositionIndex, v3TexCoordIndex, v3NormalIndex = v2PositionIndex, v2TexCoordIndex, v2NormalIndex
 			end
 		end
 		
