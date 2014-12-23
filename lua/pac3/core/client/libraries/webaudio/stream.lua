@@ -16,8 +16,20 @@ webaudio.Streams.STREAM = {}
 STREAM = webaudio.Streams.STREAM
 STREAM.__index = STREAM
 
+-- Identity
 STREAM.Id                     = nil
 STREAM.Url                    = "" -- ??
+
+-- State
+STREAM.Loaded                 = false
+
+-- Audio
+STREAM.SampleCount            = 0
+
+-- Playback
+STREAM.Paused                 = true
+STREAM.SamplePosition         = 0
+STREAM.MaxLoopCount           = nil
 
 -- Playback speed
 STREAM.PlaybackSpeed          = 1
@@ -28,12 +40,16 @@ STREAM.Panning                = 0
 STREAM.Volume                 = 1
 STREAM.AdditiveVolumeFraction = 0
 
-STREAM.loaded                 = false
-STREAM.duration               = 0
-STREAM.position               = 0
-STREAM.rad3d                  = 1000
-STREAM.usedoppler             = true
-STREAM.paused                 = true
+-- 3d
+STREAM.Use3d                  = nil
+STREAM.UseDoppler             = true
+
+STREAM.SourceEntity           = NULL
+STREAM.SourcePosition         = nil
+STREAM.LastSourcePosition     = nil
+STREAM.SourceVelocity         = nil
+STREAM.SourceRadius           = 1000
+STREAM.ListenerOutOfRadius    = false
 
 local function DECLARE_PROPERTY(propertyName, javascriptSetterCode, defaultValue, filterFunction)
 	STREAM[propertyName] = defaultValue
@@ -74,7 +90,7 @@ end
 
 -- State
 function STREAM:IsLoaded()
-	return self.loaded
+	return self.Loaded
 end
 
 function STREAM:IsValid()
@@ -87,7 +103,7 @@ end
 
 -- Browser
 function STREAM:Call(fmt, ...)
-	if not self.loaded then return end
+	if not self.Loaded then return end
 
 	local code = string.format("try { streams[%d]%s } catch(e) { lua.print(e.toString()) }", self:GetId(), string.format(fmt, ...))
 
@@ -95,14 +111,34 @@ function STREAM:Call(fmt, ...)
 end
 
 function STREAM:CallNow(fmt, ...)
-	if not self.loaded then return end
+	if not self.Loaded then return end
 
 	local code = string.format("try { streams[%d]%s } catch(e) { lua.print(e.toString()) }", self:GetId(), string.format(fmt, ...))
 
 	webaudio.Browser.RunJavascript(code)
 end
 
+function STREAM:HandleBrowserMessage(messageType, ...)
+	if messageType == "call" then
+		self:HandleCallBrowserMessage(...)
+	elseif messageType == "fft" then
+		self:HandleFFTBrowserMessage(...)
+	elseif messageType == "stop" then
+		self.Paused = true
+	elseif messageType == "return" then
+		self.ReturnedValues = {...}
+	elseif messageType == "loaded" then
+		self:HandleLoadedBrowserMessage(...)
+	elseif t == "position" then
+		self:HandlePositionBrowserMessage(...)
+	end
+end
+
 -- Playback
+function STREAM:GetMaxLoopCount()
+	return self.MaxLoopCount
+end
+
 function STREAM:SetMaxLoopCount(maxLoopCount)
 	self:Call(".max_loop = %i", maxLoopCount == true and -1 or maxLoopCount == false and 1 or tonumber(maxLoopCount) or 1)
 	self.MaxLoopCount = maxLoopCount
@@ -115,12 +151,12 @@ function STREAM:GetSampleCount()
 end
 
 function STREAM:Pause()
-	self.paused = true
+	self.Paused = true
 	self:CallNow(".play(false)")
 end
 
 function STREAM:Resume()
-	self.paused = false
+	self.Paused = false
 	
 	self:UpdatePlaybackSpeed()
 	self:UpdateVolume()
@@ -129,7 +165,7 @@ function STREAM:Resume()
 end
 
 function STREAM:Start()
-	self.paused = false
+	self.Paused = false
 	
 	self:UpdatePlaybackSpeed()
 	self:UpdateVolume()
@@ -139,7 +175,7 @@ end
 STREAM.Play = STREAM.Start
 
 function STREAM:Stop()
-	self.paused = true
+	self.Paused = true
 	self:CallNow(".play(false, 0)")
 end
 
@@ -186,119 +222,6 @@ function STREAM:UpdatePlaybackSpeed()
 	self:Call(".speed = %f", self.PlaybackSpeed + self.AdditivePitchModifier)
 end
 
--- Filtering
-DECLARE_PROPERTY("FilterType",     ".filter_type = %i")
-DECLARE_PROPERTY("FilterFraction", ".filter_fraction = %f", 0, function(num) return math.Clamp(num, 0, 1) end)
-
-DECLARE_PROPERTY("Echo",         ".useEcho(%s)", false)
-DECLARE_PROPERTY("EchoDelay",    ".setEchoDelay(Math.ceil(audio.sampleRate * %f))", 1, function(num) return math.max(num, 0) end)
-DECLARE_PROPERTY("EchoFeedback", ".echo_feedback = %f", 0.75)
-
-
-do -- 3d
-	function STREAM:Enable3D(b)
-		self.use3d = b
-	end
-
-	function STREAM:EnableDoppler(b)
-		self.usedoppler = b
-	end
-
-	function STREAM:Set3DPos(vec)
-		self.pos3d = vec
-	end
-
-	function STREAM:Get3DPos(vec)
-		return self.pos3d
-	end
-
-	function STREAM:Set3DRadius(num)
-		self.rad3d = num
-	end
-
-	function STREAM:Get3DRadius(num)
-		return self.rad3d
-	end
-
-	function STREAM:Set3DVelocity(vec)
-		self.vel3d = vec
-	end
-
-	function STREAM:Get3DVelocity(vec)
-		return self.vel3d
-	end
-
-	local eye_pos, eye_ang, eye_vel, last_eye_pos
-
-	hook.Add("RenderScene", "webaudio_3d", function(pos, ang)
-		eye_pos = pos
-		eye_ang = ang
-		eye_vel = eye_pos - (last_eye_pos or eye_pos)
-
-		last_eye_pos = eye_pos
-	end)
-
-	function STREAM:Think()
-		if self.paused then return end
-
-		local ent = self.source_ent
-
-		if ent:IsValid() then
-			self.pos3d = ent:GetPos()
-		end
-
-		if self.use3d then
-			self.pos3d = self.pos3d or Vector()
-			self.vel3d = self.vel3d or Vector()
-
-			self.vel3d = self.pos3d - (self.last_ent_pos or self.pos3d)
-			self.last_ent_pos = self.pos3d
-
-			local offset = self.pos3d - eye_pos
-			local len = offset:Length()
-
-			if len < self.rad3d then
-				local pan = (offset):GetNormalized():Dot(eye_ang:Right())
-				local vol = math.Clamp((-len + self.rad3d) / self.rad3d, 0, 1) ^ 1.5
-				vol = vol * 0.75 * self.Volume
-
-				self:Call(".vol_right = %f", (math.Clamp(1 + pan, 0, 1) * vol) + self.AdditiveVolumeFraction)
-				self:Call(".vol_left  = %f", (math.Clamp(1 - pan, 0, 1) * vol) + self.AdditiveVolumeFraction)
-
-				if self.usedoppler then
-					local offset = self.pos3d - eye_pos
-					local relative_velocity = self.vel3d - eye_vel
-					local meters_per_second = offset:GetNormalized():Dot(-relative_velocity) * 0.0254
-
-					self:Call(".speed = %f", (self.PlaybackSpeed + (meters_per_second / webaudio.SpeedOfSound)) + self.AdditivePitchModifier)
-				end
-
-				self.out_of_reach = false
-			else
-				if not self.out_of_reach then
-					self:Call(".vol_right = 0")
-					self:Call(".vol_left = 0")
-					self.out_of_reach = true
-				end
-			end
-		end
-	end
-
-	STREAM.source_ent = NULL
-
-	function STREAM:SetSourceEntity(ent, dont_remove)
-		self.source_ent = ent
-
-		if not dont_remove then
-			ent:CallOnRemove("webaudio_remove_stream_" .. tostring(self), function()
-				if self:IsValid() then
-					self:Remove()
-				end
-			end)
-		end
-	end
-end
-
 -- Volume
 function STREAM:GetPanning()
 	return self.Panning
@@ -317,7 +240,7 @@ function STREAM:SetPanning(panning)
 	
 	self.Panning = panning
 
-	if not self.use3d then
+	if not self.Use3d then
 		self:UpdateVolume()
 	end
 	
@@ -329,7 +252,7 @@ function STREAM:SetVolume(volumeFraction)
 	
 	self.Volume = volumeFraction
 
-	if not self.use3d then
+	if not self.Use3d then
 		self:UpdateVolume()
 	end
 	
@@ -341,7 +264,7 @@ function STREAM:SetAdditiveVolumeModifier (additiveVolumeFraction)
 	
 	self.AdditiveVolumeFraction = additiveVolumeFraction
 
-	if not self.use3d then
+	if not self.Use3d then
 		self:UpdateVolume()
 	end
 	
@@ -351,6 +274,116 @@ end
 function STREAM:UpdateVolume()
 	self:Call(".vol_right = %f", (math.Clamp(1 + self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
 	self:Call(".vol_left  = %f", (math.Clamp(1 - self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
+end
+
+-- Filtering
+DECLARE_PROPERTY("FilterType",     ".filter_type = %i")
+DECLARE_PROPERTY("FilterFraction", ".filter_fraction = %f", 0, function(num) return math.Clamp(num, 0, 1) end)
+
+DECLARE_PROPERTY("Echo",         ".useEcho(%s)", false)
+DECLARE_PROPERTY("EchoDelay",    ".setEchoDelay(Math.ceil(audio.sampleRate * %f))", 1, function(num) return math.max(num, 0) end)
+DECLARE_PROPERTY("EchoFeedback", ".echo_feedback = %f", 0.75)
+
+-- 3D
+function STREAM:Enable3D(b)
+	self.Use3d = b
+end
+
+function STREAM:EnableDoppler(b)
+	self.UseDoppler = b
+end
+
+function STREAM:GetSourceEntity()
+	return self.SourceEntity
+end
+
+function STREAM:SetSourceEntity(sourceEntity, doNotRemove)
+	self.SourceEntity = sourceEntity
+	
+	if not doNotRemove then
+		sourceEntity:CallOnRemove("webaudio_remove_stream_" .. tostring(self), function()
+			if self:IsValid() then
+				self:Remove()
+			end
+		end)
+	end
+end
+
+function STREAM:GetSourcePosition(vec)
+	return self.SourcePosition
+end
+
+function STREAM:SetSourcePosition(vec)
+	self.SourcePosition = vec
+end
+
+function STREAM:GetSourceVelocity(vec)
+	return self.SourceVelocity
+end
+
+function STREAM:SetSourceVelocity(vec)
+	self.SourceVelocity = vec
+end
+
+function STREAM:GetSourceRadius(sourceRadius)
+	return self.SourceRadius
+end
+
+function STREAM:SetSourceRadius(sourceRadius)
+	self.SourceRadius = num
+end
+
+local listenerPosition, listenerAngle, listenerVelocity
+local lastListenerPosition
+
+hook.Add("RenderScene", "webaudio_3d", function(position, angle)
+	listenerPosition = position
+	listenerAngle    = angle
+	listenerVelocity = listenerPosition - (lastListenerPosition or listenerPosition)
+	
+	lastListenerPosition = listenerPosition
+end)
+
+function STREAM:Think()
+	if self.Paused then return end
+	
+	if self.SourceEntity:IsValid() then
+		self.SourcePosition = self.SourceEntity:GetPos()
+	end
+	
+	if self.Use3d then
+		self.SourcePosition     = self.SourcePosition or Vector()
+		self.SourceVelocity     = self.SourcePosition - (self.LastSourcePosition or self.SourcePosition)
+		self.LastSourcePosition = self.SourcePosition
+		
+		local relativeSourcePosition = self.SourcePosition - listenerPosition
+		local distanceToSource       = relativeSourcePosition:Length()
+		
+		if distanceToSource < self.SourceRadius then
+			local pan = relativeSourcePosition:GetNormalized():Dot(listenerAngle:Right())
+			local volumeFraction = math.Clamp(1 - distanceToSource / self.SourceRadius, 0, 1) ^ 1.5
+			volumeFraction = volumeFraction * 0.75 * self.Volume
+			
+			self:Call(".vol_right = %f", (math.Clamp(1 + pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
+			self:Call(".vol_left  = %f", (math.Clamp(1 - pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
+			
+			if self.UseDoppler then
+				local relativeSourcePosition = self.SourcePosition - listenerPosition
+				local relativeSourceVelocity = self.SourceVelocity - listenerVelocity
+				local relativeSourceSpeed    = relativeSourcePosition:GetNormalized():Dot(-relativeSourceVelocity) * 0.0254
+				
+				self:Call(".speed = %f", (self.PlaybackSpeed + (relativeSourceSpeed / webaudio.SpeedOfSound)) + self.AdditivePitchModifier)
+			end
+			
+			self.ListenerOutOfRadius = false
+		else
+			if not self.ListenerOutOfRadius then
+				self:Call(".vol_right = 0")
+				self:Call(".vol_left  = 0")
+				self.ListenerOutOfRadius = true
+			end
+		end
+	end
 end
 
 function STREAM:__newindex(key, val)
@@ -367,4 +400,40 @@ end
 
 function STREAM:__tostring()
 	return string.format("stream[%p][%d][%s]", self, self:GetId(), self:GetUrl())
+end
+
+-- Internal browser message handlers
+function STREAM:HandleCallBrowserMessage(methodName, ...)
+	if not self[methodName] then return end
+	
+	self[methodName](self, ...)
+end
+
+function STREAM:HandleFFTBrowserMessage(serializeFFTData)
+	local fftArray = CompileString(serializeFFTData, "stream_fft_data")()
+	self.OnFFT(fftArray)
+end
+
+function STREAM:HandleLoadedBrowserMessage(sampleCount)
+	self.Loaded = true
+	
+	self.SampleCount = sampleCount
+	self:SetFilterType(0)
+
+	if not self.Paused then
+		self:Play()
+	end
+
+	self:SetMaxLoopCount(self:GetMaxLoopCount())
+	self:SetEcho        (self:GetEcho        ())
+	self:SetEchoFeedback(self:GetEchoFeedback())
+	self:SetEchoDelay   (self:GetEchoDelay   ())
+
+	if self.OnLoad then
+		self:OnLoad()
+	end
+end
+
+function STREAM:HandlePositionBrowserMessage(samplePosition)
+	self.SamplePosition = samplePosition
 end
