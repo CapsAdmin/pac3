@@ -99,40 +99,66 @@ function urlobj.ParseObj(data, generateNormals)
 	
 	local positions = {}
 	local texcoords = {}
-	local normals = {}
+	local normals   = {}
 	
-	local output = {}
+	local triangleList = {}
 	
 	local lines = {}
+	local faceLines = {}
 	
+	local t0 = SysTime ()
 	local i = 1
 	for line in string_gmatch (data, "(.-)\n") do
-		line = string_gsub (line, "%s+", " ")
-		line = string_gsub (line, "#.*$", "")
-		line = string_match (line, "^%s*(.-)%s*$")
-		
-		local parts = string_Split (line, " ")
-		
-		table_insert(lines, parts)
+		lines[#lines + 1] = line
 		coroutine_yield(false, "Preprocessing lines", i)
 		i = i + 1
 	end
+	-- print ("Preprocessing took " .. GLib.FormatDuration (SysTime () - t0))
+	-- print (tostring (#lines) .. " lines")
 	
-	local vert_count = #lines
-	
-	for i, parts in pairs(lines) do		
-		if parts[1] == "v" and #parts >= 4 then
-			table_insert(positions, Vector(tonumber(parts[2]), tonumber(parts[3]), tonumber(parts[4])))
-		elseif parts[1] == "vt" and #parts >= 3 then
-			table_insert(texcoords, {u = tonumber(parts[2])%1, v = tonumber(1-parts[3])%1})
-		elseif not generateNormals and parts[1] == "vn" and #parts >= 4 then
-			table_insert(normals, Vector(tonumber(parts[2]), tonumber(parts[3]), tonumber(parts[4])):GetNormalized())
+	local t0 = SysTime ()
+	local lineCount = #lines
+	local inverseLineCount = 1 / lineCount
+	local i = 1
+	while i <= lineCount do
+		local line = lines[i]
+		-- Position: v %f %f %f [%f]
+		local x, y, z = string_match(line, "^%s*v%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
+		if x then
+			positions[#positions + 1] = Vector(tonumber(x), tonumber(y), tonumber(z))
+		else
+			-- Texture coordinates: vt %f %f
+			local u, v = string_match(line, "^%s*vt%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
+			if u then
+				texcoords[#texcoords + 1] = {u = tonumber(u) % 1, v = (1 - tonumber(v)) % 1}
+			else
+				-- Normal: vn %f %f %f
+				local nx, ny, nz = string_match(line, "^%s*vn%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
+				if nx then
+					if not generateNormals then
+						normals[#normals + 1] = Vector(tonumber(nx), tonumber(ny), tonumber(ny)):GetNormalized()
+					end
+				else
+					-- Something else
+					line = string_gsub (line, "%s+", " ")
+					line = string_gsub (line, "#.*$", "")
+					line = string_match (line, "^%s*(.-)%s*$")
+					faceLines[#faceLines + 1] = string_Split(line, " ")
+				end
+			end
 		end
 		
-		coroutine_yield(false, "Processing vertices", (i/vert_count))
+		coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+		
+		i = i + 1
 	end
+	-- print ("Vertex processing took " .. GLib.FormatDuration (SysTime () - t0))
+	-- print (string.format ("%d positions, %d texcoords, %d normals, %d faces", #positions, #texcoords, #normals, #faceLines))
 	
-	for i, parts in pairs(lines) do
+	local t0 = SysTime ()
+	local faceLineCount = #faceLines
+	local inverseFaceLineCount = 1 / faceLineCount
+	for i, parts in ipairs(faceLines) do
 		if parts[1] == "f" and #parts >= 4 then
 			local first    = string_Split(parts[2], "/")
 			local previous = string_Split(parts[3], "/")
@@ -172,22 +198,25 @@ function urlobj.ParseObj(data, generateNormals)
 					v3.normal = normals[previous[3]]
 				end				
 				
-				output [#output + 1] = v1
-				output [#output + 1] = v2
-				output [#output + 1] = v3
+				triangleList [#triangleList + 1] = v1
+				triangleList [#triangleList + 1] = v2
+				triangleList [#triangleList + 1] = v3
 				
 				previous = current
 			end
 		end
 		
-		coroutine_yield(false, "Processing faces", i/vert_count)
+		coroutine_yield(false, "Processing faces", i * inverseFaceLineCount)
 	end
+	-- print ("Face processing took " .. GLib.FormatDuration (SysTime () - t0))
 	
+	local t0 = SysTime ()
 	if generateNormals then
 		local vertex_normals = {}
-		local count = #output/3
-		for i = 1, count do
-			local a, b, c = output[1+(i-1)*3+0], output[1+(i-1)*3+1], output[1+(i-1)*3+2] 
+		local triangleCount = #triangleList / 3
+		local inverseTriangleCount = 1 / triangleCount
+		for i = 1, triangleCount do
+			local a, b, c = triangleList[1+(i-1)*3+0], triangleList[1+(i-1)*3+1], triangleList[1+(i-1)*3+2] 
 			local normal = (c.pos - a.pos):Cross(b.pos - a.pos):GetNormalized()
 
 			vertex_normals[a.pos_index] = vertex_normals[a.pos_index] or Vector()
@@ -198,22 +227,24 @@ function urlobj.ParseObj(data, generateNormals)
 
 			vertex_normals[c.pos_index] = vertex_normals[c.pos_index] or Vector()
 			vertex_normals[c.pos_index] = (vertex_normals[c.pos_index] + normal)
-			coroutine_yield(false, "Generating normals", i/count)
+			coroutine_yield(false, "Generating normals", i * inverseTriangleCount)
 		end
 		
 		local default_normal = Vector(0, 0, -1)
 
-		local count = #output
-		for i = 1, count do
-			local n = vertex_normals[output[i].pos_index] or default_normal
+		local vertexCount = #triangleList
+		local inverseVertexCount = 1 / vertexCount
+		for i = 1, vertexCount do
+			local n = vertex_normals[triangleList[i].pos_index] or default_normal
 			n:Normalize()
 			normals[i] = n
-			output[i].normal = n
-			coroutine_yield(false, "Normalizing normals", i/count)
+			triangleList[i].normal = n
+			coroutine_yield(false, "Normalizing normals", i * inverseVertexCount)
 		end
 	end
+	-- print ("Normal generation took " .. GLib.FormatDuration (SysTime () - t0))
 	
-	return output
+	return triangleList
 end
 
 local nextParsingHookId = 0 
