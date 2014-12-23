@@ -56,7 +56,7 @@ end
 BIND("Pitch",     "SetPlaybackSpeed")
 BIND("PlayCount", "SetMaxLoopCount" )
 BIND("Volume",    nil, function(n) return math.Clamp(n, 0, 4) end)
-BIND("Radius",    "Set3DRadius"     )
+BIND("Radius",    "SetSourceRadius" )
 
 BIND("FilterType")
 BIND("FilterFraction")

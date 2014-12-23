@@ -65,39 +65,7 @@ function webaudio.Browser.Initialize()
 			if not stream then return end
 			
 			local messageType = args[1]
-			if messageType == "call" then
-				local methodName = args[3]
-				if stream[methodName] then
-					stream[methodName](stream, select(4, ...))
-				end
-			elseif messageType == "fft" then
-				local data = CompileString(args[2], "stream_fft_data")()
-				stream.OnFFT(data)
-			elseif messageType == "stop" then
-				stream.paused = true
-			elseif messageType == "return" then
-				stream.returned_var = {select(3, ...)}
-			elseif messageType == "loaded" then
-				stream.loaded = true
-				stream.SampleCount = args[3]
-				stream:SetFilterType(0)
-
-				if not stream.paused then
-					stream:Play()
-				end
-
-				stream:SetMaxLoopCount(stream.MaxLoopCount)
-				
-				stream:SetEcho(stream:GetEcho())
-				stream:SetEchoFeedback(stream:GetEchoFeedback())
-				stream:SetEchoDelay(stream:GetEchoDelay())                            
-
-				if stream.OnLoad then
-					stream:OnLoad()
-				end
-			elseif t == "position" then
-				stream.position = args[3]
-			end
+			stream:HandleBrowserMessage(messageType, unpack(args, 3, table.maxn(args)))
 		end
 	end)
 
