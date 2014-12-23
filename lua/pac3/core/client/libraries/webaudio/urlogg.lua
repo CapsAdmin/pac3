@@ -3,11 +3,11 @@
 pac.webaudio = pac.webaudio or {}
 local webaudio = pac.webaudio
 
-webaudio.Debug = 0
+webaudio.Debug        = 0
 
-webaudio.SampleRate = nil
+webaudio.SampleRate   = nil
 
-webaudio.SpeedOfSound = 6
+webaudio.SpeedOfSound = 340.29 -- metres per second
 
 function webaudio.DebugPrint(str)
     if webaudio.Debug == 0 then return end
