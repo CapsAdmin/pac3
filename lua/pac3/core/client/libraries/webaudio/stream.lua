@@ -47,6 +47,7 @@ STREAM.UseDoppler             = true
 STREAM.SourceEntity           = NULL
 STREAM.SourcePosition         = nil
 STREAM.LastSourcePosition     = nil
+STREAM.LastSourcePositionTime = nil
 STREAM.SourceVelocity         = nil
 STREAM.SourceRadius           = 1000
 STREAM.ListenerOutOfRadius    = false
@@ -334,14 +335,19 @@ function STREAM:SetSourceRadius(sourceRadius)
 end
 
 local listenerPosition, listenerAngle, listenerVelocity
-local lastListenerPosition
+local lastListenerPosition, lastListenerPositionTime
 
 hook.Add("RenderScene", "webaudio_3d", function(position, angle)
-	listenerPosition = position
-	listenerAngle    = angle
-	listenerVelocity = listenerPosition - (lastListenerPosition or listenerPosition)
+	listenerPosition         = position
+	listenerAngle            = angle
 	
-	lastListenerPosition = listenerPosition
+	lastListenerPosition     = lastListenerPosition     or listenerPosition
+	lastListenerPositionTime = lastListenerPositionTime or (CurTime() - FrameTime())
+	
+	listenerVelocity         = (listenerPosition - lastListenerPosition) / (CurTime() - lastListenerPositionTime)
+	
+	lastListenerPosition     = listenerPosition
+	lastListenerPositionTime = CurTime()
 end)
 
 function STREAM:Think()
@@ -352,9 +358,15 @@ function STREAM:Think()
 	end
 	
 	if self.Use3d then
-		self.SourcePosition     = self.SourcePosition or Vector()
-		self.SourceVelocity     = self.SourcePosition - (self.LastSourcePosition or self.SourcePosition)
-		self.LastSourcePosition = self.SourcePosition
+		self.SourcePosition         = self.SourcePosition or Vector()
+		
+		self.LastSourcePosition     = self.LastSourcePosition     or self.SourcePosition
+		self.LastSourcePositionTime = self.LastSourcePositionTime or (CurTime() - FrameTime())
+		
+		self.SourceVelocity         = (self.SourcePosition - self.LastSourcePosition) / (CurTime() - self.LastSourcePositionTime)
+		
+		self.LastSourcePosition     = self.SourcePosition
+		self.LastSourcePositionTime = CurTime()
 		
 		local relativeSourcePosition = self.SourcePosition - listenerPosition
 		local distanceToSource       = relativeSourcePosition:Length()
