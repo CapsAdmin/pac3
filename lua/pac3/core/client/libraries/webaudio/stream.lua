@@ -5,18 +5,73 @@ local webaudio = pac.webaudio
 
 webaudio.Streams = webaudio.Streams or {}
 
+webaudio.FilterType =
+{
+	None     = 0,
+	LowPass  = 1,
+	HighPass = 2,
+}
+
 webaudio.Streams.STREAM = {}
 STREAM = webaudio.Streams.STREAM
 STREAM.__index = STREAM
 
-STREAM.loaded = false
-STREAM.duration = 0
-STREAM.position = 0
-STREAM.rad3d = 1000
-STREAM.usedoppler = true
-STREAM.url = "" -- ??
-STREAM.paused = true
+STREAM.Id                     = nil
+STREAM.Url                    = "" -- ??
 
+-- Playback speed
+STREAM.PlaybackSpeed          = 1
+
+-- Volume
+STREAM.Panning                = 0
+STREAM.Volume                 = 1
+STREAM.AdditiveVolumeFraction = 0
+
+STREAM.loaded                 = false
+STREAM.duration               = 0
+STREAM.position               = 0
+STREAM.rad3d                  = 1000
+STREAM.usedoppler             = true
+STREAM.paused                 = true
+
+local function DECLARE_PROPERTY(propertyName, javascriptSetterCode, defaultValue, filterFunction)
+	STREAM[propertyName] = defaultValue
+
+	STREAM["Set" .. propertyName] = function(self, value)
+		if filterFunction then
+			value = filterFunction(var, self)
+		end
+
+		self[propertyName] = value
+		
+		self:Call(javascriptSetterCode, value)
+	end
+
+	STREAM["Get" .. propertyName] = function(self, ...)
+		return self[propertyName]
+	end
+end
+
+-- Identity
+function STREAM:GetId()
+	return self.Id
+end
+
+function STREAM:SetId(id)
+	self.Id = id
+	return self
+end
+
+function STREAM:GetUrl()
+	return self.Url
+end
+
+function STREAM:SetUrl(url)
+	self.Url = url
+	return self
+end
+
+-- State
 function STREAM:IsLoaded()
 	return self.loaded
 end
@@ -29,10 +84,11 @@ function STREAM:Remove()
 	self.IsValid = function() return false end
 end
 
+-- Browser
 function STREAM:Call(fmt, ...)
 	if not self.loaded then return end
 
-	local code = ("try { streams[%d]%s } catch(e) { lua.print(e.toString()) }"):format(self.id, fmt:format(...))
+	local code = string.format("try { streams[%d]%s } catch(e) { lua.print(e.toString()) }", self:GetId(), string.format(fmt, ...))
 
 	webaudio.Browser.QueueJavascript(code)
 end
@@ -40,64 +96,20 @@ end
 function STREAM:CallNow(fmt, ...)
 	if not self.loaded then return end
 
-	local code = ("try { streams[%d]%s } catch(e) { lua.print(e.toString()) }"):format(self.id, fmt:format(...))
+	local code = string.format("try { streams[%d]%s } catch(e) { lua.print(e.toString()) }", self:GetId(), string.format(fmt, ...))
 
 	webaudio.Browser.RunJavascript(code)
 end
 
-local function BIND(propertyName, js_set, def, check)
-	STREAM[propertyName] = def
-
-	STREAM["Set" .. propertyName] = function(self, var)
-		if check then
-			var = check(var, self)
-		end
-
-		self[propertyName] = var
-		
-		-- ewww
-		if propertyName == "Speed" then
-			var = var + self.pitch_mod
-		end	
-		
-		self:Call(js_set, var)
-	end
-
-	STREAM["Get" .. propertyName] = function(self, ...)
-		return self[propertyName]
-	end
-end
-
-STREAM.pitch_mod = 0
-STREAM.volume_mod = 0
-
-BIND("SamplePosition", ".position = %f", 0)
-BIND("Speed", ".speed = %f", 1)
-
-STREAM.SetPitch = STREAM.SetSpeed
-STREAM.GetPitch = STREAM.GetSpeed
-
-webaudio.FILTER =
-{
-	NONE = 0,
-	LOWPASS = 1,
-	HIGHPASS = 2,
-}
-
-BIND("FilterType", ".filter_type = %i")
-BIND("FilterFraction", ".filter_fraction = %f", 0, function(num) return math.Clamp(num, 0, 1) end)
-
-BIND("Echo", ".useEcho(%s)", false)
-BIND("EchoDelay", ".setEchoDelay(Math.ceil(audio.sampleRate * %f))", 1, function(num) return math.max(num, 0) end)
-BIND("EchoFeedback", ".echo_feedback = %f", 0.75)
-
-function STREAM:SetMaxLoopCount(var)
-	self:Call(".max_loop = %i", var == true and -1 or var == false and 1 or tonumber(var) or 1)
-	self.MaxLoopCount= var
+-- Playback
+function STREAM:SetMaxLoopCount(maxLoopCount)
+	self:Call(".max_loop = %i", maxLoopCount == true and -1 or maxLoopCount == false and 1 or tonumber(maxLoopCount) or 1)
+	self.MaxLoopCount = maxLoopCount
 end
 
 STREAM.SetLooping = STREAM.SetMaxLoopCount
 
+-- SampleCount
 function STREAM:GetLength()
 	return self.Length
 end
@@ -112,25 +124,50 @@ function STREAM:Resume()
 	self:CallNow(".play(true)")
 end
 
+function STREAM:Start()
+	self.paused = false
+	self:CallNow(".play(true, 0)")
+end
+STREAM.Play = STREAM.Start
+
 function STREAM:Stop()
 	self.paused = true
 	self:CallNow(".play(false, 0)")
 end
 
-function STREAM:Start()
-	self.paused = false
-	self:CallNow(".play(true, 0)")
-end
-
-STREAM.Play = STREAM.Start
-
 function STREAM:Restart()
 	self:SetSamplePosition(0)
 end
 
-function STREAM:SetPosition(num)
-	self:SetSamplePosition((num%1) * self:GetLength())
+function STREAM:SetPosition(positionFraction)
+	self:SetSamplePosition((positionFraction % 1) * self:GetLength())
 end
+
+STREAM.pitch_mod = 0
+
+DECLARE_PROPERTY("SamplePosition", ".position = %f", 0)
+
+function STREAM:GetPlaybackSpeed()
+	return self.PlaybackSpeed
+end
+
+function STREAM:SetPlaybackSpeed(playbackSpeedMultiplier)
+	if self.PlaybackSpeed == playbackSpeedMultiplier then return self end
+	
+	self.PlaybackSpeed = playbackSpeedMultiplier
+	
+	self:Call(".speed = %f", self.PlaybackSpeed + self.pitch_mod)
+	
+	return self
+end
+
+DECLARE_PROPERTY("FilterType",     ".filter_type = %i")
+DECLARE_PROPERTY("FilterFraction", ".filter_fraction = %f", 0, function(num) return math.Clamp(num, 0, 1) end)
+
+DECLARE_PROPERTY("Echo",         ".useEcho(%s)", false)
+DECLARE_PROPERTY("EchoDelay",    ".setEchoDelay(Math.ceil(audio.sampleRate * %f))", 1, function(num) return math.max(num, 0) end)
+DECLARE_PROPERTY("EchoFeedback", ".echo_feedback = %f", 0.75)
+
 
 do -- 3d
 	function STREAM:Enable3D(b)
@@ -199,15 +236,15 @@ do -- 3d
 				local vol = math.Clamp((-len + self.rad3d) / self.rad3d, 0, 1) ^ 1.5
 				vol = vol * 0.75 * self.Volume
 
-				self:Call(".vol_right = %f", (math.Clamp(1 + pan, 0, 1) * vol) + self.volume_mod)
-				self:Call(".vol_left = %f", (math.Clamp(1 - pan, 0, 1) * vol) + self.volume_mod)
+				self:Call(".vol_right = %f", (math.Clamp(1 + pan, 0, 1) * vol) + self.AdditiveVolumeFraction)
+				self:Call(".vol_left  = %f", (math.Clamp(1 - pan, 0, 1) * vol) + self.AdditiveVolumeFraction)
 
 				if self.usedoppler then
 					local offset = self.pos3d - eye_pos
 					local relative_velocity = self.vel3d - eye_vel
 					local meters_per_second = offset:GetNormalized():Dot(-relative_velocity) * 0.0254
 
-					self:Call(".speed = %f", (self.Speed + (meters_per_second / webaudio.SpeedOfSound)) + self.pitch_mod)
+					self:Call(".speed = %f", (self.PlaybackSpeed + (meters_per_second / webaudio.SpeedOfSound)) + self.pitch_mod)
 				end
 
 				self.out_of_reach = false
@@ -236,34 +273,58 @@ do -- 3d
 	end
 end
 
-do -- panning
-	STREAM.Panning = 0
-
-	function STREAM:SetPanning(num)
-		self.Panning = num
-
-		if not self.use3d then
-			self:Call(".vol_right = %f", (math.Clamp(1 + num, 0, 1) * self.Volume) + self.volume_mod)
-			self:Call(".vol_left = %f", (math.Clamp(1 - num, 0, 1) * self.Volume) + self.volume_mod)
-		end
-	end
-
-	function STREAM:GetPanning()
-		return self.Panning
-	end
+-- Volume
+function STREAM:GetPanning()
+	return self.Panning
 end
 
-do -- gain
-	STREAM.Volume = 1
+function STREAM:GetVolume()
+	return self.Volume
+end
 
-	function STREAM:SetVolume(num)
-		self.Volume = num
-		self:SetPanning(self:GetPanning())
-	end
+function STREAM:GetAdditiveVolumeModifier ()
+	return self.AdditiveVolumeModifier
+end
 
-	function STREAM:GetVolume()
-		return self.Volume
+function STREAM:SetPanning(panning)
+	if self.Panning == panning then return self end
+	
+	self.Panning = panning
+
+	if not self.use3d then
+		self:UpdateVolume()
 	end
+	
+	return self
+end
+
+function STREAM:SetVolume(volumeFraction)
+	if self.Volume == volumeFraction then return self end
+	
+	self.Volume = volumeFraction
+
+	if not self.use3d then
+		self:UpdateVolume()
+	end
+	
+	return self
+end
+
+function STREAM:SetAdditiveVolumeModifier (additiveVolumeFraction)
+	if self.AdditiveVolumeFraction == additiveVolumeFraction then return self end
+	
+	self.AdditiveVolumeFraction = additiveVolumeFraction
+
+	if not self.use3d then
+		self:UpdateVolume()
+	end
+	
+	return self
+end
+
+function STREAM:UpdateVolume()
+	self:Call(".vol_right = %f", (math.Clamp(1 + self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
+	self:Call(".vol_left  = %f", (math.Clamp(1 - self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
 end
 
 function STREAM:__newindex(key, val)
@@ -278,4 +339,6 @@ function STREAM:__newindex(key, val)
 	rawset(self, key, val)
 end
 
-STREAM.__tostring = function(s) return string.format("stream[%p][%d][%s]", s, s.id, s.url) end
+function STREAM:__tostring()
+	return string.format("stream[%p][%d][%s]", self, self:GetId(), self:GetUrl())
+end
