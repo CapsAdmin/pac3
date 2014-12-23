@@ -53,10 +53,10 @@ local BIND = function(propertyName, setterMethodName, check)
 	end
 end
 
-BIND("Pitch")
-BIND("PlayCount", "SetMaxLoopCount")
-BIND("Volume", nil, function(n) return math.Clamp(n, 0, 4) end)
-BIND("Radius", "Set3DRadius")
+BIND("Pitch",     "SetPlaybackSpeed")
+BIND("PlayCount", "SetMaxLoopCount" )
+BIND("Volume",    nil, function(n) return math.Clamp(n, 0, 4) end)
+BIND("Radius",    "Set3DRadius"     )
 
 BIND("FilterType")
 BIND("FilterFraction")
@@ -130,7 +130,7 @@ function PART:SetURL(URL)
 	self.streams = {}
 		
 	for _, url in pairs(urls) do	
-		local stream = pac.webaudio.CreateStream(url)
+		local stream = pac.webaudio.Streams.CreateStream(url)
 		self.streams[url] = stream
 		
 		stream:Enable3D(true)
@@ -175,16 +175,16 @@ function PART:PlaySound(_, additiveVolumeFraction)
 	
 	if not stream:IsValid() then return end
 	
-	stream:SetAdditiveVolumeFraction (additiveVolumeFraction)
+	stream:SetAdditiveVolumeModifier (additiveVolumeFraction)
 	
 	if self.last_stream:IsValid() and not self.Overlapping then
 		self.last_stream:Stop()
 	end	
 	
 	if self.MinPitch ~= self.MaxPitch then
-		stream.pitch_mod = math.Rand(self.MinPitch, self.MaxPitch)
+		stream:SetAdditivePitchModifier(math.Rand(self.MinPitch, self.MaxPitch))
 	else
-		stream.pitch_mod = 0
+		stream:SetAdditivePitchModifier(0)
 	end
 	
 	if self.PauseOnHide then
