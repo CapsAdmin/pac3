@@ -25,7 +25,9 @@ function webaudio.DebugPrint(str)
     end
 
     if webaudio.Debug >= 2 then
-        easylua.PrintOnServer("[WebAudio] " .. str)
+		if easylua then
+			easylua.PrintOnServer("[WebAudio] " .. str)
+		end
     end
 end
 
