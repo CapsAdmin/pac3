@@ -114,142 +114,147 @@ window.onerror = function(description, url, line)
     lua.print("Unhandled exception at line " + line + ": " + description)
 }
 
-function lerp(x, y, a)
+function lerp(x0, x1, t)
 {
-    return x * (1 - a) + y * a;
+    return x0 * (1 - t) + x1 * t;
 }
 
-var audio, gain, processor, analyser, streams = []
+var audio, gain, processor, analyser, streams = [];
 
 function open()
 {
     if(audio)
     {
-        audio.destination.disconnect()
-        delete audio
-        delete gain
+        audio.destination.disconnect();
+        delete audio;
+        delete gain;
     }
 
-    audio = new webkitAudioContext
+    audio = new webkitAudioContext;
     processor = audio.createJavaScriptNode(4096, 0, 1);
-    gain = audio.createGainNode()
+    gain = audio.createGainNode();
 
     processor.onaudioprocess = function(event)
     {
-        var outl = event.outputBuffer.getChannelData(0);
-        var outr = event.outputBuffer.getChannelData(1);
+        var outputLeft  = event.outputBuffer.getChannelData(0);
+        var outputRight = event.outputBuffer.getChannelData(1);
     
         for(var i = 0; i < event.outputBuffer.length; ++i)
         {
-            outl[i] = 0;
-            outr[i] = 0;
+            outputLeft [i] = 0;
+            outputRight[i] = 0;
         }
 
         for(var i in streams)
         {
-            var stream = streams[i]
+            var stream = streams[i];
 
             if(!stream.use_echo && (stream.paused || (stream.vol_left < 0.001 && stream.vol_right < 0.001)))
             {
                 continue;
             }
             
-            var echol
-            var echor
+            var echol;
+            var echor;
             
             if (stream.use_echo && stream.echo_buffer)
             {
                 echol = stream.echo_buffer.getChannelData(0);
                 echor = stream.echo_buffer.getChannelData(1);
             }
+            
+            var inputLength = stream.buffer.length;
+            var inputLeft   = stream.buffer.getChannelData(0);
+            var inputRight  = stream.buffer.numberOfChannels == 1 ? inputLeft : stream.buffer.getChannelData(1);
 
-            var inl = stream.buffer.getChannelData(0)
-            var inr = stream.buffer.numberOfChannels == 1 ? inl : stream.buffer.getChannelData(1)
-
-            var sml = 0
-            var smr = 0
+            var sml = 0;
+            var smr = 0;
 
             for(var j = 0; j < event.outputBuffer.length; ++j)
             {
-
                 if (stream.use_smoothing)
                 {
-                    stream.speed_smooth = stream.speed_smooth + (stream.speed - stream.speed_smooth) * 0.001
-                    stream.vol_left_smooth = stream.vol_left_smooth + (stream.vol_left - stream.vol_left_smooth) * 0.001
-                    stream.vol_right_smooth = stream.vol_right_smooth + (stream.vol_right - stream.vol_right_smooth) * 0.001
+                    stream.speed_smooth     = stream.speed_smooth + (stream.speed - stream.speed_smooth) * 0.001;
+                    stream.vol_left_smooth  = stream.vol_left_smooth  + (stream.vol_left  - stream.vol_left_smooth ) * 0.001;
+                    stream.vol_right_smooth = stream.vol_right_smooth + (stream.vol_right - stream.vol_right_smooth) * 0.001;
                 }
                 else
                 {
-                    stream.speed_smooth = stream.speed
-                    stream.vol_left_smooth = stream.vol_left_smooth
-                    stream.vol_right_smooth = stream.vol_right_smooth
+                    stream.speed_smooth     = stream.speed;
+                    stream.vol_left_smooth  = stream.vol_left_smooth;
+                    stream.vol_right_smooth = stream.vol_right_smooth;
                 }
 
-                var length = stream.buffer.length;
-
-                if (stream.paused || stream.max_loop > 0 && stream.position > length * stream.max_loop)
+                if (stream.paused || stream.max_loop > 0 && stream.position > inputLength * stream.max_loop)
                 {
-                    if (stream.use_echo)
+                    stream.done_playing = true;
+					
+					if (!stream.paused)
+					{
+                        lua.message("stream", "stop", stream.id);
+					    stream.paused = true;
+					}
+					
+                    if (!stream.use_echo)
                     {
-                        stream.done_playing = true
-                    }
-                    else
-                    {
-                        break
+                        break;
                     }              
                 }
                 else
                 {
-                    stream.done_playing = false
+                    stream.done_playing = false;
                 }                
 
-                var index = (stream.position >> 0) % length;                
+                var index      = (stream.position >> 0) % inputLength;                
                 var echo_index = (stream.position >> 0) % stream.echo_delay;
                 
-                var left = 0
-                var right = 0
+                var left  = 0;
+                var right = 0;
                 
                 if (!stream.done_playing)
                 {
                     // filters
-                    if (stream.filter_type != 0)
+					if (stream.filter_type == 0)
+					{
+						// None
+                        left  = inputLeft [index] * stream.vol_left_smooth;
+                        right = inputRight[index] * stream.vol_right_smooth;
+					}
+					else
                     {
-                        sml = sml + (inl[index] - sml) * stream.filter_fraction
-                        smr = smr + (inr[index] - smr) * stream.filter_fraction
+                        sml = sml + (inputLeft [index] - sml) * stream.filter_fraction;
+                        smr = smr + (inputRight[index] - smr) * stream.filter_fraction;
     
-                        if (stream.filter_type == 2)
+                        if (stream.filter_type == 1)
                         {
-                            left = (inl[index] - sml) * stream.vol_left_smooth
-                            right = (inr[index] - smr) * stream.vol_right_smooth
+							// Low pass
+                            left  = sml * stream.vol_left_smooth;
+                            right = smr * stream.vol_right_smooth;
                         }
-                        else
+                        else if (stream.filter_type == 2)
                         {
-                            left = sml * stream.vol_left_smooth
-                            right = smr * stream.vol_right_smooth
+							// High pass
+                            left  = (inputLeft [index] - sml) * stream.vol_left_smooth;
+                            right = (inputRight[index] - smr) * stream.vol_right_smooth;
                         }
-                    }
-                    else
-                    {
-                        left = inl[index] * stream.vol_left_smooth
-                        right = inr[index] * stream.vol_right_smooth
                     }
                 }
                 
                 if (stream.use_echo)
                 {   
-                    echol[echo_index] = echol[echo_index] * stream.echo_feedback + left
-                    echor[echo_index] = echor[echo_index] * stream.echo_feedback + right
+                    echol[echo_index] = echol[echo_index] * stream.echo_feedback + left;
+                    echor[echo_index] = echor[echo_index] * stream.echo_feedback + right;
                     
-                    outl[j] += echol[echo_index]
-                    outr[j] += echor[echo_index]
+                    outputLeft [j] += echol[echo_index];
+                    outputRight[j] += echor[echo_index];
                 }
                 else
                 {
-                    outl[j] += left
-                    outr[j] += right
+                    outputLeft [j] += left;
+                    outputRight[j] += right;
                 }                                
                 
-                stream.position += stream.speed_smooth
+                stream.position += stream.speed_smooth;
             }
         }
     };
