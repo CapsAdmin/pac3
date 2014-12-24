@@ -19,6 +19,11 @@ concommand.Add("pac_urlobj_clear_cache",
 
 local pac_enable_urlobj = CreateClientConVar("pac_enable_urlobj", "1", true)
 
+function urlobj.ClearCache()
+	urlobj.Cache      = {}
+	urlobj.CacheCount = 0
+end
+
 function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statusCallback)
 	if not pac_enable_urlobj:GetBool() then return end
 	
