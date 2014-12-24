@@ -86,15 +86,14 @@ local pairs         = pairs
 local tonumber      = tonumber
 
 local math_sqrt     = math.sqrt
-
-local Vector        = Vector
-
 local string_gmatch = string.gmatch
 local string_gsub   = string.gsub
 local string_match  = string.match
 local string_Split  = string.Split
 local string_Trim   = string.Trim
 local table_insert  = table.insert
+
+local Vector        = Vector
 
 function urlobj.ParseObj(data, generateNormals)
 	local coroutine_yield = coroutine.running () and coroutine.yield or function () end
@@ -109,17 +108,13 @@ function urlobj.ParseObj(data, generateNormals)
 	local lines = {}
 	local faceLines = {}
 	
-	local t0 = SysTime ()
 	local i = 1
 	for line in string_gmatch (data, "(.-)\n") do
 		lines[#lines + 1] = line
 		coroutine_yield(false, "Preprocessing lines", i)
 		i = i + 1
 	end
-	-- print ("Preprocessing took " .. GLib.FormatDuration (SysTime () - t0))
-	-- print (tostring (#lines) .. " lines")
 	
-	local t0 = SysTime ()
 	local lineCount = #lines
 	local inverseLineCount = 1 / lineCount
 	local i = 1
@@ -127,7 +122,6 @@ function urlobj.ParseObj(data, generateNormals)
 		local processedLine = false
 		
 		-- Positions: v %f %f %f [%f]
-		-- local t0 = SysTime ()
 		while i <= lineCount do
 			local line = lines[i]
 			local x, y, z = string_match(line, "^%s*v%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
@@ -140,10 +134,8 @@ function urlobj.ParseObj(data, generateNormals)
 			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
 			i = i + 1
 		end
-		-- if SysTime () - t0 > 0.001 then print ("v processing took " .. GLib.FormatDuration (SysTime () - t0)) end
 		
 		-- Texture coordinates: vt %f %f
-		-- local t0 = SysTime ()
 		while i <= lineCount do
 			local line = lines[i]
 			local u, v = string_match(line, "^%s*vt%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
@@ -159,10 +151,8 @@ function urlobj.ParseObj(data, generateNormals)
 			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
 			i = i + 1
 		end
-		-- if SysTime () - t0 > 0.001 then print ("vt processing took " .. GLib.FormatDuration (SysTime () - t0)) end
 		
 		-- Normals: vn %f %f %f
-		-- local t0 = SysTime ()
 		while i <= lineCount do
 			local line = lines[i]
 			local nx, ny, nz = string_match(line, "^%s*vn%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
@@ -183,10 +173,8 @@ function urlobj.ParseObj(data, generateNormals)
 			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
 			i = i + 1
 		end
-		-- if SysTime () - t0 > 0.001 then print ("vn processing took " .. GLib.FormatDuration (SysTime () - t0)) end
 		
 		-- Faces: f %f %f %f+
-		-- local t0 = SysTime ()
 		while i <= lineCount do
 			local line = lines[i]
 			if not string_match(line, "^%s*f%s+") then break end
@@ -204,20 +192,18 @@ function urlobj.ParseObj(data, generateNormals)
 			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
 			i = i + 1
 		end
-		-- if SysTime () - t0 > 0.001 then print ("f processing took " .. GLib.FormatDuration (SysTime () - t0)) end
 		
 		-- Something else
 		if not processedLine then
 			i = i + 1
 		end
 	end
-	-- print ("Vertex processing took " .. GLib.FormatDuration (SysTime () - t0))
-	-- print (string.format ("%d positions, %d texcoords, %d normals, %d faces", #positions, #texCoordsU, #normals, #faceLines))
 	
-	local t0 = SysTime ()
 	local faceLineCount = #faceLines
 	local inverseFaceLineCount = 1 / faceLineCount
-	for i, parts in ipairs(faceLines) do
+	for i = 1, #faceLines do
+		local parts = faceLines [i]
+		
 		if #parts >= 4 then
 			local v1PositionIndex, v1TexCoordIndex, v1NormalIndex = string_match(parts[2], "(%d+)/?(%d*)/?(%d*)")
 			local v3PositionIndex, v3TexCoordIndex, v3NormalIndex = string_match(parts[3], "(%d+)/?(%d*)/?(%d*)")
@@ -268,41 +254,38 @@ function urlobj.ParseObj(data, generateNormals)
 		
 		coroutine_yield(false, "Processing faces", i * inverseFaceLineCount)
 	end
-	-- print ("Face processing took " .. GLib.FormatDuration (SysTime () - t0))
 	
-	local t0 = SysTime ()
 	if generateNormals then
-		local vertex_normals = {}
+		local vertexNormals = {}
 		local triangleCount = #triangleList / 3
 		local inverseTriangleCount = 1 / triangleCount
 		for i = 1, triangleCount do
 			local a, b, c = triangleList[1+(i-1)*3+0], triangleList[1+(i-1)*3+1], triangleList[1+(i-1)*3+2] 
 			local normal = (c.pos - a.pos):Cross(b.pos - a.pos):GetNormalized()
 
-			vertex_normals[a.pos_index] = vertex_normals[a.pos_index] or Vector()
-			vertex_normals[a.pos_index] = (vertex_normals[a.pos_index] + normal)
+			vertexNormals[a.pos_index] = vertexNormals[a.pos_index] or Vector()
+			vertexNormals[a.pos_index] = (vertexNormals[a.pos_index] + normal)
 
-			vertex_normals[b.pos_index] = vertex_normals[b.pos_index] or Vector()
-			vertex_normals[b.pos_index] = (vertex_normals[b.pos_index] + normal)
+			vertexNormals[b.pos_index] = vertexNormals[b.pos_index] or Vector()
+			vertexNormals[b.pos_index] = (vertexNormals[b.pos_index] + normal)
 
-			vertex_normals[c.pos_index] = vertex_normals[c.pos_index] or Vector()
-			vertex_normals[c.pos_index] = (vertex_normals[c.pos_index] + normal)
+			vertexNormals[c.pos_index] = vertexNormals[c.pos_index] or Vector()
+			vertexNormals[c.pos_index] = (vertexNormals[c.pos_index] + normal)
 			coroutine_yield(false, "Generating normals", i * inverseTriangleCount)
 		end
 		
-		local default_normal = Vector(0, 0, -1)
+		local defaultNormal = Vector(0, 0, -1)
 
 		local vertexCount = #triangleList
 		local inverseVertexCount = 1 / vertexCount
 		for i = 1, vertexCount do
-			local n = vertex_normals[triangleList[i].pos_index] or default_normal
-			n:Normalize()
-			normals[i] = n
-			triangleList[i].normal = n
+			local normal = vertexNormals[triangleList[i].pos_index] or defaultNormal
+			normal:Normalize()
+			normals[i] = normal
+			triangleList[i].normal = normal
 			coroutine_yield(false, "Normalizing normals", i * inverseVertexCount)
 		end
 	end
-	-- print ("Normal generation took " .. GLib.FormatDuration (SysTime () - t0))
 	
 	return triangleList
 end
