@@ -217,7 +217,7 @@ function urlobj.ParseObj(data, generateNormals)
 			v3PositionIndex, v3TexCoordIndex, v3NormalIndex = tonumber(v3PositionIndex), tonumber(v3TexCoordIndex), tonumber(v3NormalIndex)
 			
 			for i = 4, #parts do
-				local v2PositionIndex, v2TexCoordIndex, v2NormalIndex = string_match(parts[4], "(%d+)/?(%d*)/?(%d*)")
+				local v2PositionIndex, v2TexCoordIndex, v2NormalIndex = string_match(parts[i], "(%d+)/?(%d*)/?(%d*)")
 				v2PositionIndex, v2TexCoordIndex, v2NormalIndex = tonumber(v2PositionIndex), tonumber(v2TexCoordIndex), tonumber(v2NormalIndex)
 				
 				local v1 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil }
