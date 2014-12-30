@@ -276,7 +276,7 @@ function crypto.XorArrays (array1, array1StartIndex, array2, array2StartIndex, l
 end
 
 function crypto.XorArrays2 (array1, array1StartIndex, array2, array2StartIndex, length, out, outStartIndex)
-	local out = out or {}
+	out = out or {}
 	
 	array1StartIndex = array1StartIndex or 1
 	array2StartIndex = array2StartIndex or 1
@@ -296,7 +296,7 @@ function crypto.XorArrays2 (array1, array1StartIndex, array2, array2StartIndex, 
 end
 
 function crypto.XorArrays3 (array1, array1StartIndex, array2, array2StartIndex, array3, array3StartIndex, length, out, outStartIndex)
-	local out = out or {}
+	out = out or {}
 	
 	array1StartIndex = array1StartIndex or 1
 	array2StartIndex = array2StartIndex or 1
