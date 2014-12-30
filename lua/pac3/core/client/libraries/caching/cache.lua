@@ -10,7 +10,7 @@ function pac.CreateCache (cacheId)
 end
 
 function CACHE:Initialize (cacheId)	
-	self.Version = 2 -- Update this if the crypto library changes
+	self.Version = 3 -- Update this if the crypto library changes
 	
 	self.Path    = "pac3/" .. string.lower (cacheId)
 	
@@ -28,13 +28,14 @@ function CACHE:AddItem (itemId, data)
 	f:WriteLong (self.Version)
 	
 	-- Header
-	local entryItemId = pac.crypto.EncryptString (itemId, key)
+	local compressedItemId = util.Compress (itemId)
+	local entryItemId = pac.crypto.EncryptString (compressedItemId, key)
 	f:WriteLong (#entryItemId)
 	f:Write (entryItemId, #entryItemId)
 	
 	-- Data
-	local data = util.Compress (data)
-	data = pac.crypto.EncryptString (data, key)
+	local compressedData = util.Compress (data)
+	data = pac.crypto.EncryptString (compressedData, key)
 	f:WriteLong (#data)
 	f:Write (data, #data)
 	
@@ -72,6 +73,7 @@ function CACHE:GetItem (itemId)
 	-- Header
 	local entryItemIdLength = f:ReadLong ()
 	local entryItemId = pac.crypto.DecryptString (f:Read (entryItemIdLength), key)
+	entryItemId = util.Decompress (entryItemId)
 	
 	if itemId ~= entryItemId then
 		f:Close ()
