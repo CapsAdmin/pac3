@@ -353,7 +353,8 @@ function urlobj.DownloadQueueThink()
 	if pac.urltex and pac.urltex.Busy then return end
 	
 	for url, queueItem in pairs(urlobj.DownloadQueue) do
-		if not queueItem:IsDownloading() then
+		if not queueItem:IsDownloading() and
+		   not queueItem:IsCacheDecodeFinished () then
 			queueItem:SetStatus("Queued for download (" .. urlobj.DownloadQueueCount .. " items in queue)")
 		end
 		
