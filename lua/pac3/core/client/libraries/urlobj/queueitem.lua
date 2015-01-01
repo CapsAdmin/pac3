@@ -79,6 +79,10 @@ function QUEUEITEM:BeginCacheRetrieval ()
 	self:DispatchCallbacks (self.Model)
 end
 
+function QUEUEITEM:IsCacheDecodeFinished ()
+	return self.CacheDecodeFinished
+end
+
 -- Download
 function QUEUEITEM:AbortDownload ()
 	self.Downloading = false
