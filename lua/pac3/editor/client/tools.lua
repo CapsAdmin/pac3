@@ -423,6 +423,11 @@ end)
 pace.AddTool("print part info",function(part)
 	PrintTable(part:ToTable())
 end)
+
+pace.AddTool("stop all custom animations",function()
+	LocalPlayer():StopAllLuaAnimations()
+	LocalPlayer():ResetBoneMatrix()
+end)
 	
 pace.AddTool("---------", function() end) --just a divider so it's easy to see which tools were imported
 do return end
