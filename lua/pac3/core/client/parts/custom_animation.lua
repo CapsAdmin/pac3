@@ -5,6 +5,7 @@ PART.NonPhysical = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "URL", "")
+	pac.GetSet(PART, "StopOnHide", true)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -43,6 +44,11 @@ function PART:OnShow(owner)
 	end
 	
 	if owner:IsValid() then
+		if not self:GetStopOnHide() then 
+			if GetLuaAnimations()[self:GetAnimID()] then 
+				owner:StopLuaAnimation(self:GetAnimID()) 
+			end 
+		end
 		owner:SetLuaAnimation(self:GetAnimID())
 	end
 end
@@ -51,7 +57,7 @@ function PART:OnHide()
 	--stop animation
 	local owner = self:GetOwner()
 	
-	if owner:IsValid() then
+	if owner:IsValid() and self:GetStopOnHide() then
 		if GetLuaAnimations()[self:GetAnimID()] then
 			owner:StopLuaAnimation(self:GetAnimID())
 		end
