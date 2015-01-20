@@ -69,6 +69,7 @@ function PART:OnRemove()
 	local owner = self:GetOwner()
 
 	if owner:IsValid() then
+		owner:StopLuaAnimation(self:GetAnimID())
 		owner:ResetBoneMatrix()
 	end
 	
