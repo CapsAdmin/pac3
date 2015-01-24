@@ -27,7 +27,7 @@ function PART:UpdateFlex(flex,weight)
 	if not owner:HasFlexManipulator() then return end
 	
 	local count = owner:GetFlexNum()
-	if flex % 1 ~= 0 then flex = math.floor(flex) --if not integer then make integer
+	if flex % 1 ~= 0 then flex = math.floor(flex) end --if not integer then make integer
 	if flex > count then flex = count end
 
 	if flex < 0 then return end
