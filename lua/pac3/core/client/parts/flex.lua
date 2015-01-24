@@ -68,5 +68,5 @@ pac.RegisterPart(PART)
 
 hook.Add("pac_pace_postconfig","vfs",function()
 	pace.PartTree.entity.flex = true
-	pace.PartIcons.flex = "icon16/user_red.png"
+	pace.PartIcons.flex = "icon16/emoticon_smile.png"
 end)
