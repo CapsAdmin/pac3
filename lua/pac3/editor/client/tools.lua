@@ -428,6 +428,15 @@ pace.AddTool("stop all custom animations",function()
 	LocalPlayer():StopAllLuaAnimations()
 	LocalPlayer():ResetBoneMatrix()
 end)
+
+pace.AddTool("print player flex ids",function()
+	local t = {} 
+	local ply = LocalPlayer()
+	for i=1,ply:GetFlexNum() do 
+		t[i]=ply:GetFlexName(i)
+	end 
+	PrintTable(t)
+end)
 	
 pace.AddTool("---------", function() end) --just a divider so it's easy to see which tools were imported
 do return end
