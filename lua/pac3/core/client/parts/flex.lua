@@ -17,6 +17,7 @@ end
 function PART:GetFlexName()
 	local name
 	local owner = self:GetOwner(self.RootOwner)
+	if not owner:IsValid() then return end
 	local flex = self:ResolveFlex(self:GetFlex())
 	if flex ~= -1 and (owner:GetFlexNum() > 0) then name = owner:GetFlexName(flex) end
 	return name
@@ -33,6 +34,7 @@ end
 function PART:UpdateFlex(flex,weight)
 	flex = self:ResolveFlex(flex)
 	local owner = self:GetOwner(self.RootOwner)
+	if not owner:IsValid() then return end
 	if not owner.GetFlexNum then return end
 	if not (owner:GetFlexNum() > 0) then return end
 	
