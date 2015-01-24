@@ -37,6 +37,9 @@ function PART:UpdateFlex(flex,weight)
 end
 
 function PART:SetFlex(flex)
+	local oldflex = self.Flex
+	self:UpdateFlex(oldflex, 0)
+	
 	self.Flex = flex
 	
 	self:UpdateFlex(flex, self:GetWeight())
