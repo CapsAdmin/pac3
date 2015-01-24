@@ -64,6 +64,11 @@ function PART:OnRemove()
 	self:OnHide(true)
 end
 
+function PART:Clear()
+	self:RemoveChildren()
+	self:UpdateFlex(self:GetFlex(), 0)
+end
+
 pac.RegisterPart(PART)
 
 hook.Add("pac_pace_postconfig","flex",function()
