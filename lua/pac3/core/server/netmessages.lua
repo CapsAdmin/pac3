@@ -38,3 +38,10 @@ net.Receive( "pac.net.SetCollisionGroup.ClientNotify", function(len,ply)
 		target:SetCollisionGroup(group)
 	end
 end )
+
+util.AddNetworkString("pac.net.TouchFlexes.ClientNotify")
+net.Receive( "pac.net.TouchFlexes.ClientNotify", function( length, client )
+	local index = net.ReadInt(13)
+	local ent = Entity(index)
+	if ent and ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() > 0 then ent:SetFlexWeight(1,0) end
+end )
