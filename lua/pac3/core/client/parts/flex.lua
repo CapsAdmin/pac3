@@ -26,6 +26,9 @@ end
 function PART:Initialize()
 	local owner = self:GetOwner(self.RootOwner)
 	if not owner:IsValid() then return end
+	
+	if pac.TouchFlexes then pac.TouchFlexes(owner) end
+	
 	local t = {}
 	for i=1,owner:GetFlexNum() do t[owner:GetFlexName(i)] = i end
 	self.FlexList = t
