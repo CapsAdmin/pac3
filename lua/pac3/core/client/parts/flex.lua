@@ -33,7 +33,6 @@ function PART:UpdateFlex(flex,weight)
 
 	if flex < 0 then return end
 	
-	print("Setting weight of flex "..tostring(flex).." on entity "..tostring(owner).." to "..tostring(weight))
 	owner:SetFlexWeight(flex,weight)
 end
 
