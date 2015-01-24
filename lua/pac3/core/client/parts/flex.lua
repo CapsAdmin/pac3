@@ -24,6 +24,7 @@ end
 
 function PART:UpdateFlex(flex,weight)
 	local owner = self:GetOwner(self.RootOwner)
+	if not owner.HasFlexManipulator then return end
 	if not owner:HasFlexManipulator() then return end
 	
 	local count = owner:GetFlexNum()
