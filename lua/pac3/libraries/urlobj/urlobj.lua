@@ -200,17 +200,9 @@ function urlobj.ParseObj(data, generateNormals)
 	local inContinuation    = false
 	local continuationLines = nil
 	for line in string_gmatch (data, "(.-)\n") do
-		local passOne, passTwo = string_sub(line, #line), string_sub(line, #line - 1)
-		if passOne == '\\' then
-			line = string_sub (line, 1, -2)
-			if inContinuation then
-				continuationLines[#continuationLines + 1] = line
-			else
-				inContinuation    = true
-				continuationLines = { line }
-			end
-		elseif passTwo == '\\\r' then
-			line = string_sub (line, 1, -3)
+		local continuation = string_match (line, "\\\r?$")
+		if continuation then
+			line = string_sub (line, 1, -#continuation - 1)
 			if inContinuation then
 				continuationLines[#continuationLines + 1] = line
 			else
