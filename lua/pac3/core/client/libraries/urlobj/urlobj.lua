@@ -147,8 +147,10 @@ local math_sqrt     = math.sqrt
 local string_gmatch = string.gmatch
 local string_gsub   = string.gsub
 local string_match  = string.match
+local string_sub    = string.sub
 local string_Split  = string.Split
 local string_Trim   = string.Trim
+local table_concat  = table.concat
 local table_insert  = table.insert
 
 local Vector        = Vector
@@ -167,10 +169,38 @@ function urlobj.ParseObj(data, generateNormals)
 	local faceLines = {}
 	
 	local i = 1
+	local inContinuation    = false
+	local continuationLines = nil
 	for line in string_gmatch (data, "(.-)\n") do
-		lines[#lines + 1] = line
+		local continuation = string_match (line, "\\\r?$")
+		if continuation then
+			line = string_sub (line, 1, -#continuation - 1)
+			if inContinuation then
+				continuationLines[#continuationLines + 1] = line
+			else
+				inContinuation    = true
+				continuationLines = { line }
+			end
+		else
+			if inContinuation then
+				continuationLines[#continuationLines + 1] = line
+				lines[#lines + 1] = table_concat (continuationLines)
+				inContinuation    = false
+				continuationLines = nil
+			else
+				lines[#lines + 1] = line
+			end
+		end
+		
 		coroutine_yield(false, "Preprocessing lines", i)
 		i = i + 1
+	end
+	
+	if inContinuation then
+		continuationLines[#continuationLines + 1] = line
+		lines[#lines + 1] = table.concat (continuationLines)
+		inContinuation    = false
+		continuationLines = nil
 	end
 	
 	local lineCount = #lines
@@ -186,7 +216,7 @@ function urlobj.ParseObj(data, generateNormals)
 			if not x then break end
 			
 			processedLine = true
-			x, y, z = tonumber(x), tonumber(y), tonumber(z)
+			x, y, z = tonumber(x) or 0, tonumber(y) or 0, tonumber(z) or 0
 			positions[#positions + 1] = Vector(x, y, z)
 			
 			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
@@ -200,7 +230,7 @@ function urlobj.ParseObj(data, generateNormals)
 			if not u then break end
 			
 			processedLine = true
-			u, v = tonumber(u), tonumber(v)
+			u, v = tonumber(u) or 0, tonumber(v) or 0
 			
 			local texCoordIndex = #texCoordsU + 1
 			texCoordsU[texCoordIndex] =      u  % 1
@@ -219,7 +249,7 @@ function urlobj.ParseObj(data, generateNormals)
 			processedLine = true
 			
 			if not generateNormals then
-				nx, ny, nz = tonumber(nx), tonumber(ny), tonumber(nz)
+				nx, ny, nz = tonumber(nx) or 0, tonumber(ny) or 0, tonumber(nz) or 0
 				
 				local inverseLength = 1 / math_sqrt(nx * nx + ny * ny + nz * nz)
 				nx, ny, nz = nx * inverseLength, ny * inverseLength, nz * inverseLength
