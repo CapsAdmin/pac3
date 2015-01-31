@@ -12,6 +12,22 @@ webaudio.FilterType =
 	HighPass = 2,
 }
 
+local listenerPosition, listenerAngle, listenerVelocity
+local lastListenerPosition, lastListenerPositionTime
+
+hook.Add("RenderScene", "webaudio_3d", function(position, angle)
+	listenerPosition         = position
+	listenerAngle            = angle
+	
+	lastListenerPosition     = lastListenerPosition     or listenerPosition
+	lastListenerPositionTime = lastListenerPositionTime or (CurTime() - FrameTime())
+	
+	listenerVelocity         = (listenerPosition - lastListenerPosition) / (CurTime() - lastListenerPositionTime)
+	
+	lastListenerPosition     = listenerPosition
+	lastListenerPositionTime = CurTime()
+end)
+
 webaudio.Streams.STREAM = {}
 STREAM = webaudio.Streams.STREAM
 STREAM.__index = STREAM
@@ -232,7 +248,7 @@ function STREAM:GetVolume()
 	return self.Volume
 end
 
-function STREAM:GetAdditiveVolumeModifier ()
+function STREAM:GetAdditiveVolumeModifier()
 	return self.AdditiveVolumeModifier
 end
 
@@ -240,10 +256,8 @@ function STREAM:SetPanning(panning)
 	if self.Panning == panning then return self end
 	
 	self.Panning = panning
-
-	if not self.Use3d then
-		self:UpdateVolume()
-	end
+	
+	self:UpdateVolume()
 	
 	return self
 end
@@ -252,10 +266,8 @@ function STREAM:SetVolume(volumeFraction)
 	if self.Volume == volumeFraction then return self end
 	
 	self.Volume = volumeFraction
-
-	if not self.Use3d then
-		self:UpdateVolume()
-	end
+	
+	self:UpdateVolume()
 	
 	return self
 end
@@ -264,17 +276,71 @@ function STREAM:SetAdditiveVolumeModifier (additiveVolumeFraction)
 	if self.AdditiveVolumeFraction == additiveVolumeFraction then return self end
 	
 	self.AdditiveVolumeFraction = additiveVolumeFraction
-
-	if not self.Use3d then
-		self:UpdateVolume()
-	end
+	
+	self:UpdateVolume()
 	
 	return self
 end
 
+function STREAM:UpdateSourcePosition()
+	if not self.SourceEntity:IsValid() then return end
+	
+	self.SourcePosition = self.SourceEntity:GetPos()
+end
+
 function STREAM:UpdateVolume()
+	if self.Use3d then
+		self:UpdateVolume3d()
+	else
+		self:UpdateVolumeFlat()
+	end
+end
+
+function STREAM:UpdateVolumeFlat()
 	self:Call(".vol_right = %f", (math.Clamp(1 + self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
 	self:Call(".vol_left  = %f", (math.Clamp(1 - self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
+end
+
+function STREAM:UpdateVolume3d()
+	self:UpdateSourcePosition()
+	
+	self.SourcePosition         = self.SourcePosition or Vector()
+	
+	self.LastSourcePosition     = self.LastSourcePosition     or self.SourcePosition
+	self.LastSourcePositionTime = self.LastSourcePositionTime or (CurTime() - FrameTime())
+	
+	self.SourceVelocity         = (self.SourcePosition - self.LastSourcePosition) / (CurTime() - self.LastSourcePositionTime)
+	
+	self.LastSourcePosition     = self.SourcePosition
+	self.LastSourcePositionTime = CurTime()
+	
+	local relativeSourcePosition = self.SourcePosition - listenerPosition
+	local distanceToSource       = relativeSourcePosition:Length()
+	
+	if distanceToSource < self.SourceRadius then
+		local pan = relativeSourcePosition:GetNormalized():Dot(listenerAngle:Right())
+		local volumeFraction = math.Clamp(1 - distanceToSource / self.SourceRadius, 0, 1) ^ 1.5
+		volumeFraction = volumeFraction * 0.75 * self.Volume
+		
+		self:Call(".vol_right = %f", (math.Clamp(1 + pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
+		self:Call(".vol_left  = %f", (math.Clamp(1 - pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
+		
+		if self.UseDoppler then
+			local relativeSourcePosition = self.SourcePosition - listenerPosition
+			local relativeSourceVelocity = self.SourceVelocity - listenerVelocity
+			local relativeSourceSpeed    = relativeSourcePosition:GetNormalized():Dot(-relativeSourceVelocity) * 0.0254
+			
+			self:Call(".speed = %f", (self.PlaybackSpeed + (relativeSourceSpeed / webaudio.SpeedOfSound)) + self.AdditivePitchModifier)
+		end
+		
+		self.ListenerOutOfRadius = false
+	else
+		if not self.ListenerOutOfRadius then
+			self:Call(".vol_right = 0")
+			self:Call(".vol_left  = 0")
+			self.ListenerOutOfRadius = true
+		end
+	end
 end
 
 -- Filtering
@@ -334,67 +400,13 @@ function STREAM:SetSourceRadius(sourceRadius)
 	self.SourceRadius = num
 end
 
-local listenerPosition, listenerAngle, listenerVelocity
-local lastListenerPosition, lastListenerPositionTime
-
-hook.Add("RenderScene", "webaudio_3d", function(position, angle)
-	listenerPosition         = position
-	listenerAngle            = angle
-	
-	lastListenerPosition     = lastListenerPosition     or listenerPosition
-	lastListenerPositionTime = lastListenerPositionTime or (CurTime() - FrameTime())
-	
-	listenerVelocity         = (listenerPosition - lastListenerPosition) / (CurTime() - lastListenerPositionTime)
-	
-	lastListenerPosition     = listenerPosition
-	lastListenerPositionTime = CurTime()
-end)
-
 function STREAM:Think()
 	if self.Paused then return end
 	
-	if self.SourceEntity:IsValid() then
-		self.SourcePosition = self.SourceEntity:GetPos()
-	end
-	
 	if self.Use3d then
-		self.SourcePosition         = self.SourcePosition or Vector()
-		
-		self.LastSourcePosition     = self.LastSourcePosition     or self.SourcePosition
-		self.LastSourcePositionTime = self.LastSourcePositionTime or (CurTime() - FrameTime())
-		
-		self.SourceVelocity         = (self.SourcePosition - self.LastSourcePosition) / (CurTime() - self.LastSourcePositionTime)
-		
-		self.LastSourcePosition     = self.SourcePosition
-		self.LastSourcePositionTime = CurTime()
-		
-		local relativeSourcePosition = self.SourcePosition - listenerPosition
-		local distanceToSource       = relativeSourcePosition:Length()
-		
-		if distanceToSource < self.SourceRadius then
-			local pan = relativeSourcePosition:GetNormalized():Dot(listenerAngle:Right())
-			local volumeFraction = math.Clamp(1 - distanceToSource / self.SourceRadius, 0, 1) ^ 1.5
-			volumeFraction = volumeFraction * 0.75 * self.Volume
-			
-			self:Call(".vol_right = %f", (math.Clamp(1 + pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
-			self:Call(".vol_left  = %f", (math.Clamp(1 - pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
-			
-			if self.UseDoppler then
-				local relativeSourcePosition = self.SourcePosition - listenerPosition
-				local relativeSourceVelocity = self.SourceVelocity - listenerVelocity
-				local relativeSourceSpeed    = relativeSourcePosition:GetNormalized():Dot(-relativeSourceVelocity) * 0.0254
-				
-				self:Call(".speed = %f", (self.PlaybackSpeed + (relativeSourceSpeed / webaudio.SpeedOfSound)) + self.AdditivePitchModifier)
-			end
-			
-			self.ListenerOutOfRadius = false
-		else
-			if not self.ListenerOutOfRadius then
-				self:Call(".vol_right = 0")
-				self:Call(".vol_left  = 0")
-				self.ListenerOutOfRadius = true
-			end
-		end
+		self:UpdateVolume3d() -- updates source position internally
+	else
+		self:UpdateSourcePosition()
 	end
 end
 
@@ -433,7 +445,7 @@ function STREAM:HandleLoadedBrowserMessage(sampleCount)
 	self:SetFilterType(0)
 
 	if not self.Paused then
-		self:Play()
+		-- self:Play()
 	end
 
 	self:SetMaxLoopCount(self:GetMaxLoopCount())
