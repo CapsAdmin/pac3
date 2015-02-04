@@ -376,7 +376,7 @@ function STREAM:SetSourceEntity(sourceEntity, doNotRemove)
 	end
 end
 
-function STREAM:GetSourcePosition(vec)
+function STREAM:GetSourcePosition()
 	return self.SourcePosition
 end
 
@@ -384,7 +384,7 @@ function STREAM:SetSourcePosition(vec)
 	self.SourcePosition = vec
 end
 
-function STREAM:GetSourceVelocity(vec)
+function STREAM:GetSourceVelocity()
 	return self.SourceVelocity
 end
 
@@ -392,12 +392,12 @@ function STREAM:SetSourceVelocity(vec)
 	self.SourceVelocity = vec
 end
 
-function STREAM:GetSourceRadius(sourceRadius)
+function STREAM:GetSourceRadius()
 	return self.SourceRadius
 end
 
 function STREAM:SetSourceRadius(sourceRadius)
-	self.SourceRadius = num
+	self.SourceRadius = sourceRadius
 end
 
 function STREAM:Think()
