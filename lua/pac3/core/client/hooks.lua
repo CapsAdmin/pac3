@@ -187,11 +187,22 @@ function pac.OnClientsideRagdoll(ent)
 			break
 		end
 	end
-	if not ply then return end
+	if not ply then
+		--Msg"[PAC] No player for "print(ent)
+		return 
+	end
 		
 	if not ply.pac_parts then return end
-
-	-- 
+	
+	if ply.pac_death_hide_ragdoll then
+		Msg"[PAC] Hiding death ragdoll for "print(ply,"rag:",ent)
+		ent:SetRenderMode(RENDERMODE_TRANSALPHA)
+		local c = ent:GetColor()
+		c.a = 0
+		ent:SetColor(c)
+		ent:SetNoDraw(true)
+	end
+	
 	if not ply.pac_death_physics_parts then
 		
 		-- make props draw on the ragdoll
