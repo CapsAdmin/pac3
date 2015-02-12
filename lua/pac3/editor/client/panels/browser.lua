@@ -56,7 +56,21 @@ function PANEL:PopulateFromClient()
 	end)		
 end
 
-function PANEL:OnRowRightClick(id, line)
+function PANEL.OnRowRightClick(_self,id, self)
+	local m=DermaMenu()
+		m:AddOption(L"View",function()
+			self:GetListView():OnClickLine(self, true)
+			self:OnSelect()
+		end)
+		m:AddOption(L"wear on server",function()
+			self:GetListView():OnClickLine(self, true)
+			self:OnSelect()
+			timer.Simple(0,function()
+				RunConsoleCommand"pac_wear_parts"
+			end)
+		end)
+
+	m:Open()
 end
 
 pace.RegisterPanel(PANEL)
