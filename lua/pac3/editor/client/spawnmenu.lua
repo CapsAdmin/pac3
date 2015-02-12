@@ -42,7 +42,62 @@ function pace.ClientOptionsMenu(pnl)
 		L"enable",
 		"pac_enable"
 	)
+	
+	pnl:Help''
+	
+	pnl:Button(
+		L"clear",
+		"pac_clear_parts"
+	)
+	
+	pnl:Button(
+		L"wear on server",
+		"pac_wear_parts"
+	)	
+	
+	
+	local browser = pnl:AddControl("pace_browser", {})
+	
+	browser.OnLoad = function(node)
+		pace.LoadParts(node.FileName, true)
+	end
+	
+	if #file.Find("pac3/sessions/*", "DATA") > 0 then
+		browser:SetDir("sessions/")
+	else
+		browser:SetDir("")
+	end
+	
+	browser:SetSize(400,480)
+	
+	pace.SpawnlistBrowser = browser
+		
+end
 
+function pace.ClientSettingsMenu(pnl)
+	
+	pnl:CheckBox(
+		L"Enable PAC",
+		"pac_enable"
+	)
+
+	pnl:NumSlider(
+		L"PAC Volume",
+		"pac_ogg_volume",
+		0,
+		1,
+		2
+	)
+	
+	
+	pnl:Help''
+	pnl:Help(L'Performance')
+	
+	pnl:CheckBox(
+		L"No outfit reflections",
+		"pac_suppress_frames"
+	)
+	
 	pnl:CheckBox(
 		L"render objects outside visible fov",
 		"pac_override_fov"
@@ -64,31 +119,42 @@ function pace.ClientOptionsMenu(pnl)
 		0
 	)
 	
-	local browser = pnl:AddControl("pace_browser", {})
 	
-	browser.OnLoad = function(node)
-		pace.LoadParts(node.FileName, true)
+	
+	pnl:Help''
+	pnl:Help(L'Misc')
+	
+	pnl:CheckBox(
+		L"Custom error model",
+		"pac_error_mdl"
+	)
+
+	pnl:CheckBox(
+		L"Force cs model entity",
+		"pac_force_csmodel"
+	)
+	
+	pnl:Help''
+	pnl:Help(L'Enable')
+	local t={
+		"urlobj",
+		"urltex"
+	}
+	for k,v in next,pac.convarcache or {} do
+		local str = k:match'^pac_enable_(.*)'
+		if str then
+			t[#t+1]=str
+		end
 	end
-	
-	if #file.Find("pac3/sessions/*", "DATA") > 0 then
-		browser:SetDir("sessions/")
-	else
-		browser:SetDir("")
+	table.sort(t)
+	for _,str in next,t do
+		pnl:CheckBox(
+					L(str),
+					'pac_enable_'..str
+				)
 	end
+		
 	
-	browser:SetSize(400,700)
-	
-	pace.SpawnlistBrowser = browser
-	
-	pnl:Button(
-		L"wear on server",
-		"pac_wear_parts"
-	)	
-	
-	pnl:Button(
-		L"clear",
-		"pac_clear_parts"
-	)	
 end
 
 list.Set(
@@ -134,6 +200,17 @@ hook.Add("PopulateToolMenu", "pac3_spawnmenu", function()
 		pace.ClientOptionsMenu,  
 		{ 
 			SwitchConVar = "pac_enable",
+		}
+	)
+	spawnmenu.AddToolMenuOption(
+		"Utilities", 
+		"PAC",  
+		"PAC3S", 
+		L"Settings", 
+		"", 
+		"",
+		pace.ClientSettingsMenu,  
+		{
 		}
 	)
 end)
