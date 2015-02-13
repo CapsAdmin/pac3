@@ -29,6 +29,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "OverallSize", 1)
 	pac.GetSet(PART, "OriginFix", false)
 	pac.GetSet(PART, "Model", "models/dav0r/hoverball.mdl")
+	pac.GetSet(PART, "ModelFallback", "")
 	pac.GetSet(PART, "OwnerEntity", false)
 	pac.GetSet(PART, "TextureFilter", 3)
 	
@@ -507,13 +508,13 @@ function PART:SetModel(modelPath)
 	self.Mesh = nil
 	
 	local real_model = modelPath
-	local ret,ret2 = hook.Run("pac_model:SetModel", self, modelPath)
+	local ret,ret2 = hook.Run("pac_model:SetModel", self, modelPath, self.ModelFallback)
 	if ret == nil then
-		real_model = pac.FilterInvalidModel(real_model)
+		real_model = pac.FilterInvalidModel(real_model,self.ModelFallback)
 	else
 		modelPath = ret or modelPath
 		real_model = modelPath
-		real_model = pac.FilterInvalidModel(real_model)
+		real_model = pac.FilterInvalidModel(real_model,self.ModelFallback)
 	end
 	
 	self.Model = modelPath

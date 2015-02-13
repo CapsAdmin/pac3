@@ -49,6 +49,7 @@ pace.PropertySheets = {
 		blurspacing = true,
 		useweaponcolor = true,
 		useplayercolor = true,
+		modelfallback = true,
 		lodoverride = true,
 	},
 	

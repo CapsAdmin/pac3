@@ -199,7 +199,7 @@ function pac.FilterInvalidModel(mdl,fallback)
 	-- IsValidModel doesn't always return true... this is expensive though :(
 	if file.Exists ( mdl , 'GAME' ) then return mdl end
 	
-	if fallback then
+	if fallback and fallback:len()>0 then
 		if util.IsValidModel(fallback) then return fallback end
 		if file.Exists(fallback , 'GAME' ) then return fallback end
 	end
@@ -217,9 +217,9 @@ function pac.FilterInvalidModel(mdl,fallback)
 	end
 	
 	if tc == nil then
-		tc = util.IsValidModel('models/props_junk/TrafficCone001a.mdl') 
-							and'models/props_junk/TrafficCone001a.mdl' 
-							or 'models/props_junk/trafficcone001a.mdl'
+		tc = util.IsValidModel('models/props_junk/PopCan01a.mdl') 
+							and'models/props_junk/PopCan01a.mdl' 
+							or 'models/props_junk/popcan01a.mdl'
 	end
 	
 	return tc
