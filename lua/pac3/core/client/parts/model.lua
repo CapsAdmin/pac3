@@ -506,16 +506,19 @@ function PART:SetModel(modelPath)
 	
 	self.Mesh = nil
 	
+	local real_model = modelPath
 	local ret,ret2 = hook.Run("pac_model:SetModel", self, modelPath)
 	if ret == nil then
-		modelPath = pac.FilterInvalidModel(modelPath)
+		real_model = pac.FilterInvalidModel(real_model)
 	else
 		modelPath = ret or modelPath
+		real_model = modelPath
+		real_model = pac.FilterInvalidModel(real_model)
 	end
 	
 	self.Model = modelPath
 	self.Entity.pac_bones = nil
-	self.Entity:SetModel(modelPath)
+	self.Entity:SetModel(real_model)
 end
 
 local NORMAL = Vector(1,1,1)
