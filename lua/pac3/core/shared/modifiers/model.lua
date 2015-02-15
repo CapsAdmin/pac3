@@ -45,13 +45,21 @@ if SERVER then
 			pac.SetPlayerModel(ply, args[1])	
 		end
 	end)
+	local function PlayerCheckModel(ply)
+		if ply.pac_last_modifier_model and ply:GetModel():lower() ~= ply.pac_last_modifier_model then
+			ply:SetModel(ply.pac_last_modifier_model)
+		end
+	end
 	
 	hook.Add("Think", "pac_setmodel", function(ply)	
 		if Clockwork then hook.Remove("Think", "pac_setmodel") return end
 		for key, ply in pairs(player.GetAll()) do
-			if ply.pac_last_modifier_model and ply:GetModel():lower() ~= ply.pac_last_modifier_model then
-				ply:SetModel(ply.pac_last_modifier_model)
-			end
+			PlayerCheckModel(ply)
 		end
+	end)
+	
+	hook.Add("PlayerSlowThink", "pac_setmodel", function(ply)	
+		hook.Remove("Think", "pac_setmodel")
+		hook.Add("PlayerSlowThink", "pac_setmodel", PlayerCheckModel)
 	end)
 end

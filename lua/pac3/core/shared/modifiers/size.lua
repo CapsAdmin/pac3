@@ -13,6 +13,41 @@ local def =
 	max = Vector(16, 16, 72),
 	maxduck = Vector(16, 16, 36),
 }
+local added
+local function AddChecking()
+	if added then return end
+	added = false
+	
+	local function PlayerCheckScale(ply)
+		local siz = ply.pac_player_size or 1
+		if siz ~= 1 and (ply:GetModelScale() ~= siz or ply:GetViewOffset() ~= def.view * siz) then
+			pac.SetPlayerSize(ply, siz)
+		end
+	end
+
+	if SERVER then
+
+		
+		hook.Add("Think", "pac_check_scale", function(ply)
+			for key, ply in pairs(player.GetAll()) do
+				PlayerCheckScale(ply)
+			end
+		end)
+		
+		hook.Add("PlayerSlowThink", "pac_check_scale", function(ply)	
+			hook.Remove("Think", "pac_check_scale")
+			hook.Add("PlayerSlowThink", "pac_check_scale", PlayerCheckScale)
+		end)
+		
+	end
+	
+	if CLIENT then
+		hook.Add("UpdateAnimation", "pac_check_scale", function(ply)
+			local ply = pac.LocalPlayer
+			PlayerCheckScale(ply)
+		end)
+	end
+end
 
 function pac.SetPlayerSize(ply, f)	
 	--local TICKRATE = SERVER and 1/FrameTime() or 0
@@ -50,28 +85,7 @@ function pac.SetPlayerSize(ply, f)
 	
 	ply.pac_player_size = f
 	
-	if SERVER then
-		hook.Add("Think", "pac_check_scale", function()
-			for key, ply in pairs(player.GetAll()) do 
-				local siz = ply.pac_player_size or 1
-								
-				if siz ~= 1 and (ply:GetModelScale() ~= siz or ply:GetViewOffset() ~= def.view * siz) then
-					pac.SetPlayerSize(ply, siz)
-				end
-			end
-		end)
-	end
-	
-	if CLIENT then
-		hook.Add("UpdateAnimation", "pac_check_scale", function(ply)
-			local ply = pac.LocalPlayer
-			local siz = ply.pac_player_size or 1
-		
-			if siz ~= 1 and (ply:GetModelScale() ~= siz or ply:GetViewOffset() ~= def.view * siz) then
-				pac.SetPlayerSize(ply, ply.pac_player_size)
-			end	
-		end)
-	end
+	AddChecking()
 	
 end
 
