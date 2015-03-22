@@ -966,6 +966,8 @@ do -- number
 	end
 
 	function PANEL:Think()
+		self:SetFGColor(0,0,0,255) -- gmod update fix: no idea
+		
 		if self:IsMouseDown() then			
 			local sens = self.sens
 			
