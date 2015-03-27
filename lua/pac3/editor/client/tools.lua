@@ -437,6 +437,14 @@ pace.AddTool("print player flex ids",function()
 	end 
 	PrintTable(t)
 end)
+
+pace.AddTool("print player submaterial indexs",function()
+	local t = {}
+	local ply = LocalPlayer()
+	for _,mat in pairs(ply:GetMaterials()) do
+		print(_-1,mat)
+	end
+end)
 	
 pace.AddTool("---------", function() end) --just a divider so it's easy to see which tools were imported
 do return end
