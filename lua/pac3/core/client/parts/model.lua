@@ -29,6 +29,11 @@ local render_PushFilterMin          = render.PushFilterMin
 local render_PushFlashlightMode     = render.PushFlashlightMode
 local render_SuppressEngineLighting = render.SuppressEngineLighting
 
+local IMaterial_GetFloat            = debug.getregistry ().IMaterial.GetFloat
+local IMaterial_GetVector           = debug.getregistry ().IMaterial.GetVector
+local IMaterial_SetFloat            = debug.getregistry ().IMaterial.SetFloat
+local IMaterial_SetVector           = debug.getregistry ().IMaterial.SetVector
+
 local EF_BONEMERGE                  = EF_BONEMERGE
 
 local MATERIAL_CULLMODE_CW          = MATERIAL_CULLMODE_CW
@@ -216,6 +221,13 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 				end
 			end
 			
+			-- Save existing material color and alpha
+			if self.Materialm then
+				-- this is so bad for GC performance
+				self.OriginalMaterialColor = self.OriginalMaterialColor or IMaterial_GetVector (self.Materialm, "$color")
+				self.OriginalMaterialAlpha = self.OriginalMaterialAlpha or IMaterial_GetFloat  (self.Materialm, "$alpha")
+			end
+			
 			local r, g, b = self.Colorf.r, self.Colorf.g, self.Colorf.b
 			
 			if self.LightBlend ~= 1 then
@@ -232,20 +244,21 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 				b = b * v.b * self.LightBlend
 			end
 			
+			-- render.SetColorModulation and render.SetAlpha set the material $color and $alpha.
 			render_SetColorModulation(r,g,b) 
 			render_SetBlend(self.Alpha)
 		end
-			
+		
 		if self.Fullbright then
 			render_SuppressEngineLighting(true) 
 		end
 	end
 end
 
-local WHITE = Material("models/debug/debugwhite")
+local DEFAULT_COLOR = Vector(1, 1, 1)
+local WHITE         = Material("models/debug/debugwhite")
 function PART:PostEntityDraw(owner, ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
-	
 		if not pac.DisableDoubleFace then
 			if self.DoubleFace then
 				render_CullMode(MATERIAL_CULLMODE_CCW)
@@ -274,7 +287,15 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 				render_CullMode(MATERIAL_CULLMODE_CCW)
 			pac.SetModelScale(ent, self.Scale * self.Size, nil, self.UseLegacyScale)
 		end
-				
+		
+		-- Restore material color and alpha
+		if self.Materialm then
+			IMaterial_SetVector (self.Materialm, "$color", self.OriginalMaterialColor or DEFAULT_COLOR)
+			IMaterial_SetFloat  (self.Materialm, "$alpha", self.OriginalMaterialAlpha or 1)
+			self.OriginalMaterialColor = nil
+			self.OriginalMaterialAlpha = nil
+		end
+		
 		self:ModifiersPostEvent("OnDraw")
 	end
 end
