@@ -190,12 +190,8 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		self:ModifiersPreEvent("OnDraw")
 	
 		if not pac.DisableDoubleFace then
-			if self.DoubleFace then
+			if self.DoubleFace or self.Invert then
 				render_CullMode(MATERIAL_CULLMODE_CW)
-			else
-				if self.Invert then
-					render_CullMode(MATERIAL_CULLMODE_CW)
-				end
 			end
 		end
 		
@@ -217,14 +213,15 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 						self:SetColor(self:GetColor())
 						self.last_weaponcolor = c
 					end
-					
 				end
 			end
 			
 			local r, g, b = self.Colorf.r, self.Colorf.g, self.Colorf.b
 			
 			if self.LightBlend ~= 1 then
-				local v = render.GetLightColor(pos) 
+				-- what the fucking fuck is this lighting code
+				-- it doesn't even look physically correct
+				local v = render.GetLightColor(pos)
 				r = r * v.r * self.LightBlend
 				g = g * v.g * self.LightBlend
 				b = b * v.b * self.LightBlend
@@ -249,14 +246,12 @@ local WHITE = Material("models/debug/debugwhite")
 function PART:PostEntityDraw(owner, ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 	
-		if not pac.DisableDoubleFace then		
+		if not pac.DisableDoubleFace then
 			if self.DoubleFace then
 				render_CullMode(MATERIAL_CULLMODE_CCW)
 				self:DrawModel(ent, pos, ang)
-			else
-				if self.Invert then
-					render_CullMode(MATERIAL_CULLMODE_CCW)
-				end
+			elseif self.Invert then
+				render_CullMode(MATERIAL_CULLMODE_CCW)
 			end
 		end
 			
@@ -270,12 +265,12 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 		
 			pac.SetModelScale(ent, self.Scale * self.Size * (1 + self.CellShade), nil, self.UseLegacyScale)
 				render_CullMode(MATERIAL_CULLMODE_CW)
-						render_SetColorModulation(0,0,0)
-							render_SuppressEngineLighting(true)
-								render_MaterialOverride(WHITE)
-									self:DrawModel(ent, pos, ang)														
-								render_MaterialOverride()
-						render_SuppressEngineLighting(false)
+					render_SetColorModulation(0,0,0)
+						render_SuppressEngineLighting(true)
+							render_MaterialOverride(WHITE)
+								self:DrawModel(ent, pos, ang)														
+							render_MaterialOverride()
+					render_SuppressEngineLighting(false)
 				render_CullMode(MATERIAL_CULLMODE_CCW)
 			pac.SetModelScale(ent, self.Scale * self.Size, nil, self.UseLegacyScale)
 		end
