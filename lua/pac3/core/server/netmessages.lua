@@ -33,10 +33,12 @@ end )
 util.AddNetworkString("pac.net.SetCollisionGroup.ClientNotify")
 net.Receive( "pac.net.SetCollisionGroup.ClientNotify", function(len,ply)
 	local target = Entity(net.ReadInt(13))
-	local group = net.ReadInt(7)
-	if ply==target and (group == COLLISION_GROUP_PLAYER or group == COLLISION_GROUP_WEAPON) then
-		target:SetCollisionGroup(group)
-	end
+	local collisionGroup = net.ReadInt(7)
+	
+	if ply ~= target then return end
+	if collisionGroup ~= COLLISION_GROUP_PLAYER and collisionGroup ~= COLLISION_GROUP_WEAPON then return end
+	
+	target:SetCollisionGroup(collisionGroup)
 end )
 
 util.AddNetworkString("pac.net.TouchFlexes.ClientNotify")
