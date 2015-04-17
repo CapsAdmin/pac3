@@ -424,11 +424,10 @@ pace.AddTool("print part info",function(part)
 	PrintTable(part:ToTable())
 end)
 
-pace.AddTool("print player submaterial indexs",function()
-	local t = {}
+pace.AddTool("dump player submaterials",function()
 	local ply = LocalPlayer()
-	for _,mat in pairs(ply:GetMaterials()) do
-		print(_-1,mat)
+	for id,mat in pairs(ply:GetMaterials()) do
+		chat.AddText(("%d %s"):format(id,tostring(mat)))
 	end
 end)
 	
