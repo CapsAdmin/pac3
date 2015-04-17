@@ -31,8 +31,10 @@ net.Receive( "pac.net.InAnimEditor.ClientNotify", function( length, client )
 end )
 
 util.AddNetworkString("pac.net.SetCollisionGroup.ClientNotify")
-net.Receive( "pac.net.SetCollisionGroup.ClientNotify", function(ent,group)
-	local index = net.ReadInt(13)
+net.Receive( "pac.net.SetCollisionGroup.ClientNotify", function(len,ply)
+	local target = Entity(net.ReadInt(13))
 	local group = net.ReadInt(7)
-	Entity(index):SetCollisionGroup(group)
+	if ply==target and (group == COLLISION_GROUP_PLAYER or group == COLLISION_GROUP_WEAPON) then
+		target:SetCollisionGroup(group)
+	end
 end )
