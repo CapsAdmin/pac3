@@ -1,6 +1,137 @@
 pace.example_outfits = {}
 --pace.example_outfits[""] = {}
-
+pace.example_outfits["Hitpos & Second Head"] = {[1] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+								[1] = {
+									["children"] = {
+										[1] = {
+											["children"] = {
+											},
+											["self"] = {
+												["EndPointName"] = "Rope for effect",
+												["ClassName"] = "beam",
+												["Frequency"] = 4.1,
+												["UniqueID"] = "1053510544",
+												["WidthBend"] = 0.1,
+												["Bend"] = -1.1,
+												["EndPointUID"] = "2358293445",
+												["Position"] = Vector(0.00634765625, -0.000732421875, -20.6767578125),
+											},
+										},
+									},
+									["self"] = {
+										["Alpha"] = 0,
+										["ClassName"] = "model",
+										["Position"] = Vector(0.00048828125, -0.0013427734375, 0.46875),
+										["Model"] = "models/pac/default.mdl",
+										["EditorExpand"] = true,
+										["Name"] = "Rope for effect",
+										["UniqueID"] = "2358293445",
+									},
+								},
+							},
+							["self"] = {
+								["ClassName"] = "model",
+								["UniqueID"] = "3252937828",
+								["AimPartUID"] = "24880209",
+								["Model"] = "models/maxofs2d/balloon_gman.mdl",
+								["EditorExpand"] = true,
+								["Name"] = "This aims at the hitpos model.",
+								["AimPartName"] = "The model. The head aims at this.",
+							},
+						},
+					},
+					["self"] = {
+						["ClassName"] = "jiggle",
+						["UniqueID"] = "2245707605",
+						["EditorExpand"] = true,
+						["Bone"] = "invalidbone",
+						["Name"] = "Makes the head float behind.",
+						["Position"] = Vector(-0.001953125, -25.370361328125, 56.828125),
+					},
+				},
+			},
+			["self"] = {
+				["Name"] = "The Head",
+				["ClassName"] = "group",
+				["UniqueID"] = "2053457589",
+				["EditorExpand"] = true,
+			},
+		},
+		[2] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+								[1] = {
+									["children"] = {
+									},
+									["self"] = {
+										["ClassName"] = "event",
+										["UniqueID"] = "3899494357",
+										["Event"] = "animation_event",
+										["Arguments"] = "attack primary",
+										["Invert"] = true,
+									},
+								},
+								[2] = {
+									["children"] = {
+									},
+									["self"] = {
+										["Effect"] = "manmelter_impact_flare",
+										["ClassName"] = "effect",
+										["UniqueID"] = "3223733502",
+										["Rate"] = 0.1,
+									},
+								},
+							},
+							["self"] = {
+								["Alpha"] = 0,
+								["ClassName"] = "model",
+								["UniqueID"] = "1169353982",
+								["Model"] = "models/pac/default.mdl",
+								["Name"] = "The effects",
+								["EditorExpand"] = true,
+							},
+						},
+					},
+					["self"] = {
+						["UniqueID"] = "24880209",
+						["Name"] = "The model. The head aims at this.",
+						["Alpha"] = 0.725,
+						["ClassName"] = "model",
+						["Size"] = 0.2,
+						["Color"] = Vector(255, 0, 0),
+						["Bone"] = "hitpos",
+						["Model"] = "models/pac/default.mdl",
+						["EditorExpand"] = true,
+					},
+				},
+			},
+			["self"] = {
+				["Name"] = "The hitpos. This is always where you aim.",
+				["ClassName"] = "group",
+				["UniqueID"] = "3768347404",
+				["EditorExpand"] = true,
+			},
+		},
+	},
+	["self"] = {
+		["EditorExpand"] = true,
+		["UniqueID"] = "860513635",
+		["ClassName"] = "group",
+		["Name"] = "Second Head & Hitpos effects",
+		["Description"] = "add parts to me!",
+	},
+},
+} 
 
 pace.example_outfits["chell engineer"] = {[1] = {
 	["children"] = {
