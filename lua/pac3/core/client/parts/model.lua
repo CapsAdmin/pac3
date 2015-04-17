@@ -1,5 +1,39 @@
 local pac = pac
 
+local math_abs                      = math.abs
+local math_ceil                     = math.ceil
+local math_max                      = math.max
+local math_min                      = math.min
+local table_insert                  = table.insert
+local table_remove                  = table.remove
+
+local LocalToWorld                  = LocalToWorld
+local Matrix                        = Matrix
+local Vector                        = Vector
+
+local cam_PushModelMatrix           = cam.PushModelMatrix
+local cam_PopModelMatrix            = cam.PopModelMatrix
+
+local render                        = render
+local render_CullMode               = render.CullMode
+local render_SetColorModulation     = render.SetColorModulation
+local render_SetBlend               = render.SetBlend
+local render_SetMaterial            = render.SetMaterial
+local render_ModelMaterialOverride  = render.MaterialOverride
+local render_MaterialOverride       = render.ModelMaterialOverride
+local render_PopFilterMag           = render.PopFilterMag
+local render_PopFilterMin           = render.PopFilterMin
+local render_PopFlashlightMode      = render.PopFlashlightMode
+local render_PushFilterMag          = render.PushFilterMag 
+local render_PushFilterMin          = render.PushFilterMin 
+local render_PushFlashlightMode     = render.PushFlashlightMode
+local render_SuppressEngineLighting = render.SuppressEngineLighting
+
+local EF_BONEMERGE                  = EF_BONEMERGE
+
+local MATERIAL_CULLMODE_CW          = MATERIAL_CULLMODE_CW
+local MATERIAL_CULLMODE_CCW         = MATERIAL_CULLMODE_CCW
+
 local PART = {} 
 
 PART.ClassName = "model"
@@ -141,23 +175,6 @@ function PART:SetOwnerEntity(b)
 	self.OwnerEntity = b
 end
 
-local LocalToWorld                  = LocalToWorld
-
-local render                        = render
-
-local render_CullMode               = render.CullMode
-local render_SetColorModulation     = render.SetColorModulation
-local render_SetBlend               = render.SetBlend
-local render_SetMaterial            = render.SetMaterial
-local render_ModelMaterialOverride  = render.MaterialOverride
-local render_MaterialOverride       = render.ModelMaterialOverride
-local render_SuppressEngineLighting = render.SuppressEngineLighting
-
-local MATERIAL_CULLMODE_CW          = MATERIAL_CULLMODE_CW
-local MATERIAL_CULLMODE_CCW         = MATERIAL_CULLMODE_CCW
-
-local WHITE                         = Material("models/debug/debugwhite")
-
 function PART:PreEntityDraw(owner, ent, pos, ang)
 	if not ent:IsPlayer() and pos and ang then
 		if not self.skip_orient then
@@ -228,6 +245,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 	end
 end
 
+local WHITE = Material("models/debug/debugwhite")
 function PART:PostEntityDraw(owner, ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 	
@@ -292,11 +310,6 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
-local Matrix              = Matrix
-
-local cam_PushModelMatrix = cam.PushModelMatrix
-local cam_PopModelMatrix  = cam.PopModelMatrix
-
 surface.CreateFont("pac_urlobj_loading", 
 	{
 		font      = "Arial",
@@ -331,21 +344,6 @@ local function RealDrawModel(self, ent, pos, ang)
 		ent:DrawModel()
 	end
 end
-
-local math_abs                  = math.abs
-local math_ceil                 = math.ceil
-local math_max                  = math.max
-local math_min                  = math.min
-local table_insert              = table.insert
-local table_remove              = table.remove
-
-local render_PushFlashlightMode = render.PushFlashlightMode
-local render_PopFlashlightMode  = render.PopFlashlightMode
-
-local render_PopFilterMin       = render.PopFilterMin
-local render_PopFilterMag       = render.PopFilterMag
-local render_PushFilterMag      = render.PushFilterMag 
-local render_PushFilterMin      = render.PushFilterMin 
 
 function PART:DrawModel(ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
@@ -543,8 +541,6 @@ function PART:SetAlternativeScaling(b)
 	self:SetScale(self.Scale)
 end
 
-local VEC3_NOMRAL = Vector(1,1,1)
-
 function PART:SetScale(var)
 	var = var or Vector(1,1,1)
 
@@ -718,8 +714,6 @@ function PART:SetLodOverride(num)
 	end
 end
 
-local EF_BONEMERGE = EF_BONEMERGE
-
 function PART:CheckBoneMerge()
 	local ent = self.Entity
 	
@@ -778,8 +772,6 @@ local bad_bones =
 }
 
 local SCALE_NORMAL = Vector(1, 1, 1)
-local Vector = Vector
-
 function PART:OnBuildBonePositions()
 	if self.AlternativeScaling then return end
 
