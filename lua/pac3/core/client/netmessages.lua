@@ -39,3 +39,11 @@ function pac.SetCollisionGroup(ent,group)
 	net.WriteInt(group,7)
 	net.SendToServer()
 end
+
+function pac.TouchFlexes(ent)
+	local index = ent:EntIndex()
+	if index == -1 then return end
+	net.Start("pac.net.TouchFlexes.ClientNotify")
+	net.WriteInt(index,13)
+	net.SendToServer()
+end
