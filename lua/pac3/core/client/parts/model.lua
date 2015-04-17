@@ -1,5 +1,44 @@
 local pac = pac
 
+local math_abs                      = math.abs
+local math_ceil                     = math.ceil
+local math_max                      = math.max
+local math_min                      = math.min
+local table_insert                  = table.insert
+local table_remove                  = table.remove
+
+local LocalToWorld                  = LocalToWorld
+local Matrix                        = Matrix
+local Vector                        = Vector
+
+local cam_PushModelMatrix           = cam.PushModelMatrix
+local cam_PopModelMatrix            = cam.PopModelMatrix
+
+local render                        = render
+local render_CullMode               = render.CullMode
+local render_SetColorModulation     = render.SetColorModulation
+local render_SetBlend               = render.SetBlend
+local render_SetMaterial            = render.SetMaterial
+local render_ModelMaterialOverride  = render.MaterialOverride
+local render_MaterialOverride       = render.ModelMaterialOverride
+local render_PopFilterMag           = render.PopFilterMag
+local render_PopFilterMin           = render.PopFilterMin
+local render_PopFlashlightMode      = render.PopFlashlightMode
+local render_PushFilterMag          = render.PushFilterMag 
+local render_PushFilterMin          = render.PushFilterMin 
+local render_PushFlashlightMode     = render.PushFlashlightMode
+local render_SuppressEngineLighting = render.SuppressEngineLighting
+
+local IMaterial_GetFloat            = debug.getregistry ().IMaterial.GetFloat
+local IMaterial_GetVector           = debug.getregistry ().IMaterial.GetVector
+local IMaterial_SetFloat            = debug.getregistry ().IMaterial.SetFloat
+local IMaterial_SetVector           = debug.getregistry ().IMaterial.SetVector
+
+local EF_BONEMERGE                  = EF_BONEMERGE
+
+local MATERIAL_CULLMODE_CW          = MATERIAL_CULLMODE_CW
+local MATERIAL_CULLMODE_CCW         = MATERIAL_CULLMODE_CCW
+
 local PART = {} 
 
 PART.ClassName = "model"
@@ -29,6 +68,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "OverallSize", 1)
 	pac.GetSet(PART, "OriginFix", false)
 	pac.GetSet(PART, "Model", "models/dav0r/hoverball.mdl")
+	pac.GetSet(PART, "ModelFallback", "")
 	pac.GetSet(PART, "OwnerEntity", false)
 	pac.GetSet(PART, "TextureFilter", 3)
 	
@@ -140,23 +180,6 @@ function PART:SetOwnerEntity(b)
 	self.OwnerEntity = b
 end
 
-local LocalToWorld                  = LocalToWorld
-
-local render                        = render
-
-local render_CullMode               = render.CullMode
-local render_SetColorModulation     = render.SetColorModulation
-local render_SetBlend               = render.SetBlend
-local render_SetMaterial            = render.SetMaterial
-local render_ModelMaterialOverride  = render.MaterialOverride
-local render_MaterialOverride       = render.ModelMaterialOverride
-local render_SuppressEngineLighting = render.SuppressEngineLighting
-
-local MATERIAL_CULLMODE_CW          = MATERIAL_CULLMODE_CW
-local MATERIAL_CULLMODE_CCW         = MATERIAL_CULLMODE_CCW
-
-local WHITE                         = Material("models/debug/debugwhite")
-
 function PART:PreEntityDraw(owner, ent, pos, ang)
 	if not ent:IsPlayer() and pos and ang then
 		if not self.skip_orient then
@@ -172,12 +195,8 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		self:ModifiersPreEvent("OnDraw")
 	
 		if not pac.DisableDoubleFace then
-			if self.DoubleFace then
+			if self.DoubleFace or self.Invert then
 				render_CullMode(MATERIAL_CULLMODE_CW)
-			else
-				if self.Invert then
-					render_CullMode(MATERIAL_CULLMODE_CW)
-				end
 			end
 		end
 		
@@ -199,14 +218,22 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 						self:SetColor(self:GetColor())
 						self.last_weaponcolor = c
 					end
-					
 				end
+			end
+			
+			-- Save existing material color and alpha
+			if self.Materialm then
+				-- this is so bad for GC performance
+				self.OriginalMaterialColor = self.OriginalMaterialColor or IMaterial_GetVector (self.Materialm, "$color")
+				self.OriginalMaterialAlpha = self.OriginalMaterialAlpha or IMaterial_GetFloat  (self.Materialm, "$alpha")
 			end
 			
 			local r, g, b = self.Colorf.r, self.Colorf.g, self.Colorf.b
 			
 			if self.LightBlend ~= 1 then
-				local v = render.GetLightColor(pos) 
+				-- what the fucking fuck is this lighting code
+				-- it doesn't even look physically correct
+				local v = render.GetLightColor(pos)
 				r = r * v.r * self.LightBlend
 				g = g * v.g * self.LightBlend
 				b = b * v.b * self.LightBlend
@@ -217,27 +244,27 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 				b = b * v.b * self.LightBlend
 			end
 			
+			-- render.SetColorModulation and render.SetAlpha set the material $color and $alpha.
 			render_SetColorModulation(r,g,b) 
 			render_SetBlend(self.Alpha)
 		end
-			
+		
 		if self.Fullbright then
 			render_SuppressEngineLighting(true) 
 		end
 	end
 end
 
+local DEFAULT_COLOR = Vector(1, 1, 1)
+local WHITE         = Material("models/debug/debugwhite")
 function PART:PostEntityDraw(owner, ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
-	
-		if not pac.DisableDoubleFace then		
+		if not pac.DisableDoubleFace then
 			if self.DoubleFace then
 				render_CullMode(MATERIAL_CULLMODE_CCW)
 				self:DrawModel(ent, pos, ang)
-			else
-				if self.Invert then
-					render_CullMode(MATERIAL_CULLMODE_CCW)
-				end
+			elseif self.Invert then
+				render_CullMode(MATERIAL_CULLMODE_CCW)
 			end
 		end
 			
@@ -251,16 +278,24 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 		
 			pac.SetModelScale(ent, self.Scale * self.Size * (1 + self.CellShade), nil, self.UseLegacyScale)
 				render_CullMode(MATERIAL_CULLMODE_CW)
-						render_SetColorModulation(0,0,0)
-							render_SuppressEngineLighting(true)
-								render_MaterialOverride(WHITE)
-									self:DrawModel(ent, pos, ang)														
-								render_MaterialOverride()
-						render_SuppressEngineLighting(false)
+					render_SetColorModulation(0,0,0)
+						render_SuppressEngineLighting(true)
+							render_MaterialOverride(WHITE)
+								self:DrawModel(ent, pos, ang)
+							render_MaterialOverride()
+					render_SuppressEngineLighting(false)
 				render_CullMode(MATERIAL_CULLMODE_CCW)
 			pac.SetModelScale(ent, self.Scale * self.Size, nil, self.UseLegacyScale)
 		end
-				
+		
+		-- Restore material color and alpha
+		if self.Materialm then
+			IMaterial_SetVector (self.Materialm, "$color", self.OriginalMaterialColor or DEFAULT_COLOR)
+			IMaterial_SetFloat  (self.Materialm, "$alpha", self.OriginalMaterialAlpha or 1)
+			self.OriginalMaterialColor = nil
+			self.OriginalMaterialAlpha = nil
+		end
+		
 		self:ModifiersPostEvent("OnDraw")
 	end
 end
@@ -290,11 +325,6 @@ function PART:OnDraw(owner, pos, ang)
 		ent.pac_can_legacy_scale = not not ent.pac_can_legacy_scale
 	end
 end
-
-local Matrix              = Matrix
-
-local cam_PushModelMatrix = cam.PushModelMatrix
-local cam_PopModelMatrix  = cam.PopModelMatrix
 
 surface.CreateFont("pac_urlobj_loading", 
 	{
@@ -330,21 +360,6 @@ local function RealDrawModel(self, ent, pos, ang)
 		ent:DrawModel()
 	end
 end
-
-local math_abs                  = math.abs
-local math_ceil                 = math.ceil
-local math_max                  = math.max
-local math_min                  = math.min
-local table_insert              = table.insert
-local table_remove              = table.remove
-
-local render_PushFlashlightMode = render.PushFlashlightMode
-local render_PopFlashlightMode  = render.PopFlashlightMode
-
-local render_PopFilterMin       = render.PopFilterMin
-local render_PopFilterMag       = render.PopFilterMag
-local render_PushFilterMag      = render.PushFilterMag 
-local render_PushFilterMin      = render.PushFilterMin 
 
 function PART:DrawModel(ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
@@ -506,11 +521,19 @@ function PART:SetModel(modelPath)
 	
 	self.Mesh = nil
 	
-	modelPath = hook.Run("pac_model:SetModel", self, modelPath) or modelPath
+	local real_model = modelPath
+	local ret,ret2 = hook.Run("pac_model:SetModel", self, modelPath, self.ModelFallback)
+	if ret == nil then
+		real_model = pac.FilterInvalidModel(real_model,self.ModelFallback)
+	else
+		modelPath = ret or modelPath
+		real_model = modelPath
+		real_model = pac.FilterInvalidModel(real_model,self.ModelFallback)
+	end
 	
 	self.Model = modelPath
 	self.Entity.pac_bones = nil
-	self.Entity:SetModel(modelPath)
+	self.Entity:SetModel(real_model)
 end
 
 local NORMAL = Vector(1,1,1)
@@ -533,8 +556,6 @@ function PART:SetAlternativeScaling(b)
 	self.AlternativeScaling = b
 	self:SetScale(self.Scale)
 end
-
-local VEC3_NOMRAL = Vector(1,1,1)
 
 function PART:SetScale(var)
 	var = var or Vector(1,1,1)
@@ -709,8 +730,6 @@ function PART:SetLodOverride(num)
 	end
 end
 
-local EF_BONEMERGE = EF_BONEMERGE
-
 function PART:CheckBoneMerge()
 	local ent = self.Entity
 	
@@ -769,8 +788,6 @@ local bad_bones =
 }
 
 local SCALE_NORMAL = Vector(1, 1, 1)
-local Vector = Vector
-
 function PART:OnBuildBonePositions()
 	if self.AlternativeScaling then return end
 
