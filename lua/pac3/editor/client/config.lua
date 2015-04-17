@@ -663,3 +663,5 @@ end
 function pace.GetIconFromClassName(class_name)
 	return pace.PartIcons[class_name] or "gui/silkicons/plugin"
 end
+
+hook.Run("pac_EditorPostConfig")
