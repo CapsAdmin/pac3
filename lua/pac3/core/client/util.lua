@@ -191,12 +191,50 @@ function pac.MakeNull(tbl)
 	end
 end
 
+local pac_error_mdl = CreateClientConVar("pac_error_mdl","1",true,false,"0 = default error, 1=traffic cone, models/....mdl=custom model")
+local tc
+function pac.FilterInvalidModel(mdl,fallback)
+	if util.IsValidModel(mdl) or (not mdl) or (mdl=="") then return mdl end
+	
+	-- IsValidModel doesn't always return true... this is expensive though :(
+	if file.Exists ( mdl , 'GAME' ) then return mdl end
+	
+	if fallback then
+		if util.IsValidModel(fallback) then return fallback end
+		if file.Exists(fallback , 'GAME' ) then return fallback end
+	end
+	
+	Msg"[PAC] mdl invalid! " print(mdl)
+
+	local str = pac_error_mdl:GetString()
+	
+	if str=="1" or str=="" then
+		--passthrough
+	elseif str=="0" then
+		return mdl
+	elseif util.IsValidModel(str) then
+		return str
+	end
+	
+	if tc == nil then
+		tc = util.IsValidModel('models/props_junk/TrafficCone001a.mdl') 
+							and'models/props_junk/TrafficCone001a.mdl' 
+							or 'models/props_junk/trafficcone001a.mdl'
+	end
+	
+	return tc
+	
+end
+
 pac.EntityType = 2
 
 local pac_force_csmodel = CreateClientConVar("pac_force_csmodel","0",true)
+
 function pac.CreateEntity(model, type)
 	type = type or pac.EntityType or 1
-
+	
+	model = pac.FilterInvalidModel(model)
+	
 	local ent = NULL
 
 	if type == 1 or (type == 2 and pac_force_csmodel:GetBool()) then
@@ -205,8 +243,7 @@ function pac.CreateEntity(model, type)
 
 	elseif type == 2 then
 
-		ent = ents.CreateClientProp()
-		ent:SetModel(model)
+		ent = ents.CreateClientProp(model)
 
 	elseif type == 3 then
 
