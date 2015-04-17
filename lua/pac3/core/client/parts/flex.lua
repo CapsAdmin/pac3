@@ -101,7 +101,7 @@ end
 
 pac.RegisterPart(PART)
 
-hook.Add("pac_pace_postconfig","flex",function()
+hook.Add("pac_EditorPostConfig","flex",function()
 	pace.PartTree.entity.flex = true
 	pace.PartIcons.flex = "icon16/emoticon_smile.png"
 end)
