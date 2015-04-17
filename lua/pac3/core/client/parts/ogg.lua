@@ -185,6 +185,7 @@ function PART:PlaySound(_, additiveVolumeFraction)
 		else
 			MsgC(warningColor, warningMessage)
 		end]]
+		pac.dprint(warningMessage)
 	end
 
 	local stream = table.Random(self.streams) or NULL
