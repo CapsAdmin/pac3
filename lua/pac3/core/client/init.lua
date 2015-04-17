@@ -9,8 +9,20 @@ include("libraries/expression.lua")
 include("pac3/core/shared/init.lua")
 
 include("libraries/urltex.lua")
-include("libraries/urlobj.lua")
-include("libraries/urlogg.lua")
+
+-- Caching
+include("libraries/caching/crypto.lua")
+include("libraries/caching/cache.lua")
+
+-- "urlobj"
+include("libraries/urlobj/urlobj.lua")
+include("libraries/urlobj/queueitem.lua")
+
+-- WebAudio
+include("libraries/webaudio/urlogg.lua")
+include("libraries/webaudio/browser.lua")
+include("libraries/webaudio/stream.lua")
+include("libraries/webaudio/streams.lua")
 
 include("libraries/boneanimlib.lua")
 

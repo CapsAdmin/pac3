@@ -1,5 +1,3 @@
-jit.on(true, true)
-
 local pac = pac
 
 local PART = {} 
@@ -67,7 +65,6 @@ function PART:SetUseLegacyScale(b)
 		self.requires_bone_model_scale = false
 	end
 end
-
 
 function PART:SetTextureFilter(num)
 	self.TextureFilter = num
@@ -143,20 +140,24 @@ function PART:SetOwnerEntity(b)
 	self.OwnerEntity = b
 end
 
-local pac = pac
+local LocalToWorld                  = LocalToWorld
 
-local render_CullMode = render.CullMode
-local render_SetColorModulation = render.SetColorModulation
-local render_SetBlend = render.SetBlend
-local render_ModelMaterialOverride = render.MaterialOverride
-local render_MaterialOverride = render.ModelMaterialOverride
+local render                        = render
+
+local render_CullMode               = render.CullMode
+local render_SetColorModulation     = render.SetColorModulation
+local render_SetBlend               = render.SetBlend
+local render_SetMaterial            = render.SetMaterial
+local render_ModelMaterialOverride  = render.MaterialOverride
+local render_MaterialOverride       = render.ModelMaterialOverride
 local render_SuppressEngineLighting = render.SuppressEngineLighting
-local LocalToWorld = LocalToWorld
-local MATERIAL_CULLMODE_CW = MATERIAL_CULLMODE_CW
-local render=render
 
-function PART:PreEntityDraw(owner, ent, pos, ang)	
-	
+local MATERIAL_CULLMODE_CW          = MATERIAL_CULLMODE_CW
+local MATERIAL_CULLMODE_CCW         = MATERIAL_CULLMODE_CCW
+
+local WHITE                         = Material("models/debug/debugwhite")
+
+function PART:PreEntityDraw(owner, ent, pos, ang)
 	if not ent:IsPlayer() and pos and ang then
 		if not self.skip_orient then
 			ent:SetPos(pos)
@@ -166,9 +167,8 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 			self.cached_ang = ang
 		end
 	end
-					
-	if self.Alpha ~= 0 and self.Size ~= 0 then
 	
+	if self.Alpha ~= 0 and self.Size ~= 0 then
 		self:ModifiersPreEvent("OnDraw")
 	
 		if not pac.DisableDoubleFace then
@@ -204,10 +204,9 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 			end
 			
 			local r, g, b = self.Colorf.r, self.Colorf.g, self.Colorf.b
-
+			
 			if self.LightBlend ~= 1 then
-				local 
-				v = render.GetLightColor(pos) 
+				local v = render.GetLightColor(pos) 
 				r = r * v.r * self.LightBlend
 				g = g * v.g * self.LightBlend
 				b = b * v.b * self.LightBlend
@@ -227,9 +226,6 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		end
 	end
 end
-
-local MATERIAL_CULLMODE_CCW = MATERIAL_CULLMODE_CCW
-local WHITE = Material("models/debug/debugwhite")
 
 function PART:PostEntityDraw(owner, ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
@@ -269,51 +265,50 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 	end
 end
 
-local render_SetMaterial = render.SetMaterial
-
 function PART:OnDraw(owner, pos, ang)
 	local ent = self.Entity
-		
-	if ent:IsValid() then		
 	
-		self:PreEntityDraw(owner, ent, pos, ang)
-			self:DrawModel(ent, pos, ang)	
-		self:PostEntityDraw(owner, ent, pos, ang)
-		
-		pac.ResetBones(ent)
-				
-		if self.OriginFix then
-			self:SetPositionOffset(self:GetPositionOffset() + -ent:OBBCenter() * self.Scale * self.Size)
-			self:SetOriginFix(false)
-		end
-		
-		if ent.pac_can_legacy_scale ~= false then
-			ent.pac_can_legacy_scale = not not ent.pac_can_legacy_scale
-		end
-	else
+	if not ent:IsValid() then
 		timer.Simple(0, function()
 			self:Initialize()
 		end)
+		return
+	end
+	
+	self:PreEntityDraw(owner, ent, pos, ang)
+		self:DrawModel(ent, pos, ang)	
+	self:PostEntityDraw(owner, ent, pos, ang)
+	
+	pac.ResetBones(ent)
+			
+	if self.OriginFix then
+		self:SetPositionOffset(self:GetPositionOffset() + -ent:OBBCenter() * self.Scale * self.Size)
+		self:SetOriginFix(false)
+	end
+	
+	if ent.pac_can_legacy_scale ~= false then
+		ent.pac_can_legacy_scale = not not ent.pac_can_legacy_scale
 	end
 end
 
-local Matrix = Matrix
+local Matrix              = Matrix
+
 local cam_PushModelMatrix = cam.PushModelMatrix
-local cam_PopModelMatrix = cam.PopModelMatrix
+local cam_PopModelMatrix  = cam.PopModelMatrix
 
 surface.CreateFont("pac_urlobj_loading", 
 	{
-		font = "Arial",
-		size = 20,
-		weight = 10,
+		font      = "Arial",
+		size      = 20,
+		weight    = 10,
 		antialias = true,
-		outline = true,
+		outline   = true,
 	}
 )
 
 -- ugh lol
 local function RealDrawModel(self, ent, pos, ang) 
-	if self.wavefront_mesh then
+	if self.Mesh then
 		ent:SetModelScale(0,0)
 		ent:DrawModel()
 		
@@ -329,53 +324,40 @@ local function RealDrawModel(self, ent, pos, ang)
 		end
 						
 		cam_PushModelMatrix(matrix)
-			self.wavefront_mesh:Draw()
+			self.Mesh:Draw()
 		cam_PopModelMatrix()
 	else
 		ent:DrawModel()
 	end
 end
 
+local math_abs                  = math.abs
+local math_ceil                 = math.ceil
+local math_max                  = math.max
+local math_min                  = math.min
+local table_insert              = table.insert
+local table_remove              = table.remove
+
 local render_PushFlashlightMode = render.PushFlashlightMode
-local render_PopFlashlightMode = render.PopFlashlightMode
+local render_PopFlashlightMode  = render.PopFlashlightMode
 
-local render_PopFilterMin = render.PopFilterMin
-local render_PopFilterMag = render.PopFilterMag
-local render_PushFilterMag = render.PushFilterMag 
-local render_PushFilterMin = render.PushFilterMin 
-
-local table_insert = table.insert
-local table_remove = table.remove
-local math_abs = math.abs
-local math_ceil = math.ceil
+local render_PopFilterMin       = render.PopFilterMin
+local render_PopFilterMag       = render.PopFilterMag
+local render_PushFilterMag      = render.PushFilterMag 
+local render_PushFilterMin      = render.PushFilterMin 
 
 function PART:DrawModel(ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
-	
 		if self.loading_obj then
-			cam.Start2D()
-			cam.IgnoreZ(true)
-				local pos2d = pos:ToScreen()
-			
-				surface.SetFont("pac_urlobj_loading")
-				surface.SetTextColor(255, 255, 255, 255)
-				
-				
-				local str = self.loading_obj .. ("."):rep(pac.RealTime*3%3)
-				local w, h = surface.GetTextSize(self.loading_obj .. "...")
-				
-				surface.SetTextPos(pos2d.x - w/2, pos2d.y - h/2)
-				surface.DrawText(str)
-			cam.IgnoreZ(false)
-			cam.End2D()
-			return
+			self:DrawLoadingText(ent, pos, ang)
 		end
 		
-		local filter = self.texfilter_enum or 3
+		if self.loading_obj and not self.Mesh then return end
 		
-		if filter ~= 3 or self.wavefront_mesh then
-			render_PushFilterMin(filter)
-			render_PushFilterMag(filter)
+		local textureFilter = self.texfilter_enum or TEXFILTER.ANISOTROPIC
+		if textureFilter ~= TEXFILTER.ANISOTROPIC or self.Mesh then
+			render_PushFilterMin(textureFilter)
+			render_PushFilterMag(textureFilter)
 		end
 		
 		render_MaterialOverride(self.Materialm) 
@@ -384,63 +366,81 @@ function PART:DrawModel(ent, pos, ang)
 			render_SetMaterial(self.Materialm) 
 		end
 		
-			
-			if self.Passes > 1 and self.Alpha < 1 then
-				for i = 1, self.Passes do
-					RealDrawModel(self, ent, pos, ang)
-				end
-			else
-				RealDrawModel(self, ent, pos, ang)
-			end
-														
+		-- Render model
+		local passCount = math_max (1, self.Passes)
+		if self.Alpha >= 1 then
+			passCount = math_min (passCount, 1)
+		end
+		
+		for i = 1, passCount do
+			RealDrawModel(self, ent, pos, ang)
+		end
+		
+		-- Flashlight(?)
 		render_PushFlashlightMode(true)
 			RealDrawModel(self, ent, pos, ang)
 		render_PopFlashlightMode()
 		
-				
-		if filter ~= 3 or self.wavefront_mesh then
+		if textureFilter ~= TEXFILTER.ANISOTROPIC or self.Mesh then
 			render_PopFilterMag()
 			render_PopFilterMin()
 		end
 		
+		-- Render "blur"
 		if self.BlurLength > 0 then
-			self.blur_history = self.blur_history or {}
-			
-			local len = self.BlurLength
-			local spc = self.BlurSpacing
-			
-			if not self.blur_last_add or spc == 0 or self.blur_last_add < pac.RealTime then
-				table_insert(self.blur_history, {pos, ang})
-				self.blur_last_add = pac.RealTime + spc / 1000
-			end
-			
-			local count = #self.blur_history
-							
-			len = math.min(len, 20)
-					
-			local delta = FrameTime() * 5				
-			
-			for i = 1, count do
-				local pos, ang = self.blur_history[i][1], self.blur_history[i][2]
-				
-				render_SetBlend(self.Alpha * (i / count))
-				
-				ent:SetPos(pos)
-				ent:SetAngles(ang)
-				ent:SetupBones()
-				
-				RealDrawModel(self, ent, pos, ang)
-			end
-
-			while #self.blur_history >= len do
-				table_remove(self.blur_history, 1) 
-			end
+			self:DrawBlur(ent, pos, ang)
 		end
 	end
 end
 
+function PART:DrawLoadingText(ent, pos, ang)
+	cam.Start2D()
+	cam.IgnoreZ(true)
+		local pos2d = pos:ToScreen()
+	
+		surface.SetFont("pac_urlobj_loading")
+		surface.SetTextColor(255, 255, 255, 255)
+		
+		local str = self.loading_obj .. string.rep(".", pac.RealTime * 3 % 3)
+		local w, h = surface.GetTextSize(self.loading_obj .. "...")
+		
+		surface.SetTextPos(pos2d.x - w/2, pos2d.y - h/2)
+		surface.DrawText(str)
+	cam.IgnoreZ(false)
+	cam.End2D()
+end
+
+function PART:DrawBlur(ent, pos, ang)
+	self.blur_history = self.blur_history or {}
+	
+	local blurSpacing = self.BlurSpacing
+	
+	if not self.blur_last_add or blurSpacing == 0 or self.blur_last_add < pac.RealTime then
+		table_insert(self.blur_history, {pos, ang})
+		self.blur_last_add = pac.RealTime + blurSpacing / 1000
+	end
+	
+	local blurHistoryLength = #self.blur_history
+	for i = 1, blurHistoryLength do
+		local pos, ang = self.blur_history[i][1], self.blur_history[i][2]
+		
+		render_SetBlend(self.Alpha * (i / blurHistoryLength))
+		
+		ent:SetPos(pos)
+		ent:SetAngles(ang)
+		ent:SetupBones()
+		
+		RealDrawModel(self, ent, pos, ang)
+	end
+
+	local maximumBlurHistoryLength = math.min(self.BlurLength, 20)
+	while #self.blur_history >= maximumBlurHistoryLength do
+		table_remove(self.blur_history, 1) 
+	end
+end
+
 local function set_mesh(part, mesh)		
-	part.wavefront_mesh = mesh
+	part.Mesh = mesh
 	part.Entity.pac_bones = nil
 	
 	if not part.Materialm then
@@ -457,13 +457,13 @@ local function set_mesh(part, mesh)
 	part.Entity:SetRenderBounds(Vector(1, 1, 1)*-300, Vector(1, 1, 1)*300)	
 end
 
-function PART:SetModel(var)
+function PART:SetModel(modelPath)
 	self.Entity = self:GetEntity()
 
-	if var and var:find("http") and pac.urlobj then
+	if modelPath and modelPath:find("http") and pac.urlobj then
 		self.loading_obj = "downloading"
 		
-		pac.urlobj.GetObjFromURL(var, false, false,
+		pac.urlobj.GetObjFromURL(modelPath, false, false,
 			function(meshes, err)
 				if not self:IsValid() then return end
 				
@@ -473,7 +473,7 @@ function PART:SetModel(var)
 				
 				if not meshes and err then
 					self.Entity:SetModel("error.mdl")
-					self.wavefront_mesh = nil
+					self.Mesh = nil
 					return
 				end
 				
@@ -500,20 +500,21 @@ function PART:SetModel(var)
 			end
 		)
 		
-		self.Model = var
+		self.Model = modelPath
 		return
 	end
 	
-	self.wavefront_mesh = nil
-		
-		var = hook.Run("pac_model:SetModel",self,var) or var
-		
-		self.Model = var
-		self.Entity.pac_bones = nil
-		self.Entity:SetModel(var)
-
+	self.Mesh = nil
+	
+	modelPath = hook.Run("pac_model:SetModel", self, modelPath) or modelPath
+	
+	self.Model = modelPath
+	self.Entity.pac_bones = nil
+	self.Entity:SetModel(modelPath)
 end
+
 local NORMAL = Vector(1,1,1)
+
 function PART:CheckScale()
 	-- RenderMultiply doesn't work with this..
 	if (self.UseLegacyScale or self.BoneMerge) and self.Entity:IsValid() and self.Entity:GetBoneCount() and self.Entity:GetBoneCount() > 1 then
@@ -558,7 +559,7 @@ end
 
 function PART:SetSize(var)
 	var = var or 1
-
+	
 	self.Size = var
 	
 	if self.AlternativeScaling then	
@@ -771,7 +772,6 @@ local SCALE_NORMAL = Vector(1, 1, 1)
 local Vector = Vector
 
 function PART:OnBuildBonePositions()
-
 	if self.AlternativeScaling then return end
 
 	local ent = self:GetEntity()
