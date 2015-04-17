@@ -661,5 +661,5 @@ function pace.TranslatePropertiesKey(key, obj)
 end
 
 function pace.GetIconFromClassName(class_name)
-	return pace.PartIcons[class_name] or "gui/silkicons/plugin"
+	return pace.PartIcons[class_name] or "icon16/plugin.png"
 end
