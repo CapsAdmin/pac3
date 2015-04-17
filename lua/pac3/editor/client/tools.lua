@@ -423,6 +423,13 @@ end)
 pace.AddTool("print part info",function(part)
 	PrintTable(part:ToTable())
 end)
+
+pace.AddTool("dump player submaterials",function()
+	local ply = LocalPlayer()
+	for id,mat in pairs(ply:GetMaterials()) do
+		chat.AddText(("%d %s"):format(id,tostring(mat)))
+	end
+end)
 	
 pace.AddTool("---------", function() end) --just a divider so it's easy to see which tools were imported
 do return end
