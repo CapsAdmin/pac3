@@ -960,7 +960,7 @@ do -- number
 	function PANEL:OnMouseWheeled(delta)
 		if not input.IsKeyDown(KEY_LCONTROL) then delta = delta / 10 end
 		if input.IsKeyDown(KEY_LALT) then delta = delta / 10 end 
-		local val = self:GetValue() + (self.oldval or 0) + (delta * self.sens)
+		local val = self:GetValue() + (delta * self.sens)
 		
 		self:SetNumberValue(val)
 	end
