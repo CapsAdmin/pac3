@@ -34,29 +34,29 @@ function PART:GetNiceName()
 	return pac.PrettifyName(("/".. self:GetURL()):match(".+/(.-)%.")) or "no sound"
 end
 
-local BIND = function(name, set, check)
-	set = set or "Set" .. name
-	PART["Set" .. name] = function(self, var)				
+local BIND = function(propertyName, setterMethodName, check)
+	setterMethodName = setterMethodName or "Set" .. propertyName
+	PART["Set" .. propertyName] = function(self, value)				
 		if check then
-			var = check(var)
+			value = check(value)
 		end
 		
-		for key, stream in pairs(self.streams) do
+		for url, stream in pairs(self.streams) do
 			if stream:IsValid() then
-				stream[set](stream, var)
+				stream[setterMethodName](stream, value)
 			else
-				self.streams[key] = nil
+				self.streams[url] = nil
 			end
 		end
 		
-		self[name] = var
+		self[propertyName] = value
 	end
 end
 
-BIND("Pitch")
-BIND("PlayCount", "SetMaxLoopCount")
-BIND("Volume", nil, function(n) return math.Clamp(n, 0, 4) end)
-BIND("Radius", "Set3DRadius")
+BIND("Pitch",     "SetPlaybackSpeed")
+BIND("PlayCount", "SetMaxLoopCount" )
+BIND("Volume",    nil, function(n) return math.Clamp(n, 0, 4) end)
+BIND("Radius",    "SetSourceRadius" )
 
 BIND("FilterType")
 BIND("FilterFraction")
@@ -66,27 +66,11 @@ BIND("Echo")
 BIND("EchoDelay")
 BIND("EchoFeedback", nil, function(n) return math.Clamp(n, 0, 0.99) end)
 
-function PART:PlaySound(ovol)
-	local ent = self:GetOwner(self.RootOwner)
-
-	if ent:IsValid() then						
-		local vol
-		
-		if osnd and self.Volume == -1 then
-			vol = ovol or 1
-		else
-			vol = self.Volume
-		end
-		
-		self:PlaySound(nil, vol)
-	end
-end
-
 function PART:OnThink()
 	local owner = self:GetOwner(true) 
 	
-	for key, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[key] = nil continue end
+	for url, stream in pairs(self.streams) do
+		if not stream:IsValid() then self.streams[url] = nil continue end
 			
 		if self.PlayCount == 0 then
 			stream:Resume()
@@ -145,8 +129,10 @@ function PART:SetURL(URL)
 	
 	self.streams = {}
 		
-	for _, URL in pairs(urls) do	
-		local stream = pac.webaudio.Stream(URL)
+	for _, url in pairs(urls) do	
+		local stream = pac.webaudio.Streams.CreateStream(url)
+		self.streams[url] = stream
+		
 		stream:Enable3D(true)
 		stream.OnLoad = function()
 			for key in pairs(self.StorableVars) do
@@ -164,8 +150,6 @@ function PART:SetURL(URL)
 		if pace and pace.Editor:IsValid() and pace.current_part:IsValid() and pace.current_part.ClassName == "ogg" and self:GetPlayerOwner() == pac.LocalPlayer then
 			stream:Play()
 		end
-			
-		self.streams[URL] = stream
 	end
 	
 	self.URL = URL
@@ -179,35 +163,29 @@ function PART:PlaySound(_, additiveVolumeFraction)
 	if pac.webaudio.GetSampleRate() > 48000 then
 		local warningColor   = Color(255, 0, 0)
 		local warningMessage = "[PAC3] The ogg part (custom sounds) might not work because you have your sample rate set to " .. pac.webaudio.GetSampleRate() .. " Hz. Set it to 48000 or below if you experience any issues.\n"
-		--[[
+	
 		if self:GetPlayerOwner() == pac.LocalPlayer then
-			chat.AddText(clr, str)
+			chat.AddText(warningColor, warningMessage)
 		else
 			MsgC(warningColor, warningMessage)
-		end]]
-		pac.dprint(warningMessage)
+		end
 	end
-
+	
 	local stream = table.Random(self.streams) or NULL
 	
 	if not stream:IsValid() then return end
-		
-	vol = vol or 0
 	
-	self.volume_mod = vol
-		
+	stream:SetAdditiveVolumeModifier (additiveVolumeFraction)
+	
 	if self.last_stream:IsValid() and not self.Overlapping then
 		self.last_stream:Stop()
 	end	
 	
 	if self.MinPitch ~= self.MaxPitch then
-		stream.pitch_mod = math.Rand(self.MinPitch, self.MaxPitch)
+		stream:SetAdditivePitchModifier(math.Rand(self.MinPitch, self.MaxPitch))
 	else
-		stream.pitch_mod = 0
+		stream:SetAdditivePitchModifier(0)
 	end
-	
-	stream:SetVolume(stream:GetVolume())
-	stream:SetPitch(stream:GetPitch())
 	
 	if self.PauseOnHide then
 		stream:Resume()

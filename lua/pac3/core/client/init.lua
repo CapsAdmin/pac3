@@ -19,7 +19,10 @@ include("libraries/urlobj/urlobj.lua")
 include("libraries/urlobj/queueitem.lua")
 
 -- WebAudio
-include("libraries/urlogg.lua")
+include("libraries/webaudio/urlogg.lua")
+include("libraries/webaudio/browser.lua")
+include("libraries/webaudio/stream.lua")
+include("libraries/webaudio/streams.lua")
 
 include("libraries/boneanimlib.lua")
 
