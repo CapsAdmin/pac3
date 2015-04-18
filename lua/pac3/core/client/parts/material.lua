@@ -242,7 +242,6 @@ end
 
 pac.StartStorableVars()
 	setup(PART)
-	pac.GetSet(PART, "MaterialIndex", -1)
 pac.EndStorableVars()
 
 
@@ -347,11 +346,7 @@ function PART:OnHide()
 	
 	if parent:IsValid() and parent.SetMaterial then
 		self.suppress_event = true
-		if self.MaterialIndex ~= -1 then
-			parent:SetSubMaterial(self.MaterialIndex, parent.Material)
-		else
-			parent:SetMaterial(parent.Material)
-		end
+		parent:SetMaterial(parent.Material)
 		self.suppress_event = nil
 	end
 end
@@ -364,11 +359,7 @@ function PART:OnShow()
 	pac.RunNextFrame("refresh materials" .. self.Id, function()
 		for key, part in pairs(pac.GetParts()) do
 			if part.Material and part.Material ~= "" and part.Material == name then
-				if self.MaterialIndex ~= -1 then
-					part:SetSubMaterial(self.MaterialIndex, name)
-				else
-					part:SetMaterial(name)
-				end
+				part:SetMaterial(name)
 			end
 		end
 	end)
