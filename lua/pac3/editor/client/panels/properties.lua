@@ -608,16 +608,30 @@ do -- base editable
 			--end
 		end
 		
-		if false and mcode == MOUSE_RIGHT then
+		if mcode == MOUSE_RIGHT then
 			local menu = DermaMenu()
 			menu:SetPos(gui.MousePos())
 			menu:MakePopup()
-			menu:AddOption(L"reset", function()
-				self:Restart()
-			end)
+			self:PopulateContextMenu(menu)
 		end
 	end
 
+	function PANEL:PopulateContextMenu(menu)
+		menu:AddOption(L"copy", function()
+			pace.clipboard = pac.class.Copy(self:GetValue())
+		end):SetImage(pace.MiscIcons.copy)
+		menu:AddOption(L"paste", function()
+			self:SetValue(pac.class.Copy(pace.clipboard))
+			self.OnValueChanged(self:GetValue())
+		end):SetImage(pace.MiscIcons.paste)
+		menu:AddSpacer()
+		menu:AddOption(L"reset", function()
+			if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
+				self:SetValue(pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey]))
+			end
+		end):SetImage(pace.MiscIcons.clear)
+	end
+	
 	function PANEL:OnMouseReleased()
 		self:MousePress(false)
 		self.MousePressing = false
@@ -744,6 +758,10 @@ do -- vector
 			local middle = pace.CreatePanel("properties_number", self)
 			local right = pace.CreatePanel("properties_number", self)
 			
+			left.PopulateContextMenu = function(_, menu) self:PopulateContextMenu(menu) end
+			middle.PopulateContextMenu = function(_, menu) self:PopulateContextMenu(menu) end
+			right.PopulateContextMenu = function(_, menu) self:PopulateContextMenu(menu) end
+			
 			if encode then
 				left.Encode = encode
 				middle.Encode = encode
@@ -836,6 +854,34 @@ do -- vector
 			self.right:SetValue(0)
 			
 			self.OnValueChanged(self.vector)
+		end
+		
+		function PANEL:PopulateContextMenu(menu)
+			menu:AddOption(L"copy", function()
+				pace.clipboard = pac.class.Copy(self.vector)
+			end):SetImage(pace.MiscIcons.copy)	
+			menu:AddOption(L"paste", function()
+				local val = pac.class.Copy(pace.clipboard)
+				if _G.type(val) == "number" then
+					val = ctor(val, val, val)
+				elseif _G.type(val) == "Vector" and type == "angle" then
+					val = ctor(val.x, val.y, val.z)
+				elseif _G.type(val) == "Angle" and type == "vector" then
+					val = ctor(val.p, val.y, val.r)
+				end
+				
+				if _G.type(val):lower() == type or type == "color" then
+					self:SetValue(val)
+					
+					self.OnValueChanged(self.vector)
+				end
+			end):SetImage(pace.MiscIcons.paste)
+			menu:AddSpacer()
+			menu:AddOption(L"reset", function()
+				if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
+					self:SetValue(pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey]))
+				end
+			end):SetImage(pace.MiscIcons.clear)
 		end
 
 		function PANEL:SetValue(vec)
