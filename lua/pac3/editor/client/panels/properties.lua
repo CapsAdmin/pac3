@@ -979,6 +979,16 @@ do -- number
 			local val = (self.oldval or 0) + (delta * sens)
 			
 			self:SetNumberValue(val)
+			
+			if gui.MouseY()+1 >= ScrH() then
+				self.mousey = 0
+				self.oldval = val
+				gui.SetMousePos(gui.MouseX(), 0)
+			elseif gui.MouseY() <= 0 then
+				self.mousey = ScrH()
+				self.oldval = val
+				gui.SetMousePos(gui.MouseX(), ScrH())
+			end
 		end
 	end
 
