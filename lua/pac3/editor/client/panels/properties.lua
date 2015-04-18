@@ -68,6 +68,12 @@ do -- container
 		else
 			surface.SetDrawColor(derma.Color("text_bright", self, color_white))
 			surface.DrawRect(0,0,w,h)
+			
+			if self.vector_type == "color" then
+				surface.SetDrawColor(self.vector.x, self.vector.y, self.vector.z)
+				surface.DrawRect(w-30,0,15,h)
+			end
+			
 			surface.SetDrawColor(derma.Color("text_dark", self, color_black))
 			surface.DrawOutlinedRect(0,0,w,h+2)
 		end
@@ -751,6 +757,8 @@ do -- vector
 		PANEL.ClassName = "properties_" .. type
 		PANEL.Base = "pace_properties_container"
 
+		PANEL.vector_type = type
+		
 		function PANEL:Init(...)
 			self.vector = ctor(0,0,0)
 
