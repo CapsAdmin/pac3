@@ -441,7 +441,7 @@ end)
 pace.AddTool("dump player submaterials",function()
 	local ply = LocalPlayer()
 	for id,mat in pairs(ply:GetMaterials()) do
-		chat.AddText(("%d %s"):format(id,tostring(mat)))
+		chat.AddText(("%d %s"):format(id-1,tostring(mat)))
 	end
 end)
 	
