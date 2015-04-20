@@ -579,6 +579,7 @@ function pace.TranslatePropertiesKey(key, obj)
 		key == "poseparameter" or
 		key == "material" or
 		key == "sequence" or
+		key == "flex" or
 		key == "bodygroupname" or
 		key == "effect" or
 		key == "code"
