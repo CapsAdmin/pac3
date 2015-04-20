@@ -1796,11 +1796,56 @@ do -- bodygroup names
 			self.OnValueChanged(line.name)
 		end
 
+		local cur = pace.current_part:GetBodyGroupName()
+		
 		for _, name in pairs(pace.current_part:GetBodyGroupNameList()) do
 			local pnl = list:AddLine(L(name))
 			pnl.name = name
 			
 			if cur == name then
+				list:SelectItem(pnl)
+			end
+		end
+		
+		pace.ActiveSpecialPanel = frame
+	end
+	
+	pace.RegisterPanel(PANEL)
+
+end
+
+do -- flex
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_flex"
+	PANEL.Base = "pace_properties_base_type"
+		
+	function PANEL:SpecialCallback()	
+		pace.SafeRemoveSpecialPanel()
+		 
+		local frame = vgui.Create("DFrame")
+		frame:SetTitle(L"flex names")
+		SHOW_SPECIAL(frame, self, 250)
+		frame:SetSizable(true)
+
+		local list = vgui.Create("DListView", frame)
+		list:Dock(FILL)
+		list:SetMultiSelect(false)
+		list:AddColumn(L"id")
+		list:AddColumn(L"name")
+
+		list.OnRowSelected = function(_, id, line) 
+			self:SetValue(line.name)
+			self.OnValueChanged(line.name)
+		end
+		
+		local cur = pace.current_part:GetFlex()
+
+		for _, v in pairs(pace.current_part:GetFlexList()) do
+			local pnl = list:AddLine(v.i, L(v.name))
+			pnl.name = v.name
+			
+			if cur == v.name then
 				list:SelectItem(pnl)
 			end
 		end
