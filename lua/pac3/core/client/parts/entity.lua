@@ -40,8 +40,6 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "LodOverride", -1)
 
 	pac.GetSet(PART, "UseLegacyScale", false)
-	
-	pac.GetSet(PART, "PlayerCollide", true)
 pac.EndStorableVars()
 
 local function ENTFIELD(PART, name, field)
@@ -98,16 +96,6 @@ function PART:GetNiceName()
 	return self.ClassName
 end
 
-function PART:SetPlayerCollide(bool)
-	local ent = self:GetOwner()
-	if ent:IsValid() and ent:IsPlayer() then
-		if bool then
-			pac.SetCollisionGroup(ent,COLLISION_GROUP_PLAYER)
-		else
-			pac.SetCollisionGroup(ent,COLLISION_GROUP_WEAPON)
-		end
-	end	
-end
 
 function PART:SetUseLegacyScale(b)
 	self.UseLegacyScale = b
