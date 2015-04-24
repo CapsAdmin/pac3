@@ -122,6 +122,15 @@ PART.Events =
 		end,
 	},
 	
+	is_typing = 
+	{       
+		callback = function(self, ent)
+			local ent = self:GetPlayerOwner()
+
+			return ent:IsTyping()
+		end,
+	},
+	
 	eyetrace_entity_class =
 	{
 		arguments = {{class = "string"}},
