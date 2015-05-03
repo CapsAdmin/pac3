@@ -1,12 +1,10 @@
-PAC3 is a gmod addon.
+# NOTICE
 
-PAC3 gives you the ability to personalize your player model's look by placing objects and effects on yourself. You can go from putting just a hat on your head to creating an entire new player model. PAC works on any entity and can also be used as a way to make custom weapons and npcs for your gamemode easily. 
+This repository is being deprecated in favor of the original [CapsAdmin/pac3](https://github.com/CapsAdmin/pac3).
 
-You can wear your outfit on any server with PAC3 and everyone should be able to see it on you as long as they have the content you used. If you're using content from Episode 2 (which very few people have mounted) they might see your models as errors. 
+Trying to maintain two separate codebases has resulted in many problems and headaches.
 
-You can also load custom models (.obj), textures (.jpg and .png) and sounds (.ogg and .wav) from URL. 
+If you are using this repository, please change your origin remote to the new URL and force pull back down (or add a new remote and hard reset onto the remote branch).
+If you run into issues, you can also delete the folder and clone [CapsAdmin/pac3](https://github.com/CapsAdmin/pac3).
 
-By default, PAC3 is in basic mode. You can change this by going to options enable advanced mode. 
-
-![ScreenShot](https://dl.dropbox.com/u/244444/ShareX/2013-08/2013-08-29_00-56-39.png)
-![ScreenShot](https://dl.dropbox.com/u/244444/ShareX/2013-08/2013-08-29_00-59-29.png)
+If you want to submit code to this project, please fork [CapsAdmin/pac3](https://github.com/CapsAdmin/pac3), make a topical branch, and submit a PR there (normal github flow). 
