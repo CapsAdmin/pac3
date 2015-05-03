@@ -1,7 +1,7 @@
 do
 	local draw_localplayer = nil
 
-	function pac.DrawEntity2D(ent, x, y, w, h, cam_pos, cam_ang, cam_fov)
+	function pac.DrawEntity2D(ent, x, y, w, h, cam_pos, cam_ang, cam_fov, cam_nearz, cam_farz)
 		
 		if draw_localplayer == nil then
 			hook.Add("ShouldDrawLocalPlayer", "pac_draw_2d_entity", function()
@@ -21,7 +21,7 @@ do
 		cam_fov = cam_fov or 90
 
 		cam.Start2D()
-			cam.Start3D(cam_pos, cam_ang, cam_fov, x, y, w, h, 5, 4096)
+			cam.Start3D(cam_pos, cam_ang, cam_fov, x, y, w, h, cam_nearz or 5, cam_farz or 4096)
 				cam.IgnoreZ(true)
 					pac.ForceRendering(true)						
 						draw_localplayer = true
