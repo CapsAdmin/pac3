@@ -25,6 +25,12 @@ function pac.LoadModifiers()
 	for key, val in pairs(files) do
 		local name = val:match("(.-)%.")
 		
+		local default = 1
+		
+		if GAMEMODE and GAMEMODE.FolderName and not GAMEMODE.FolderName:lower():find("sandbox") then
+			default = 0
+		end
+				
 		if SERVER then
 			CreateConVar("pac_modifier_" .. name, 1, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
 		end
@@ -37,4 +43,7 @@ function pac.LoadModifiers()
 	end
 end
 
-pac.LoadModifiers()
+hook.Add("PostGamemodeLoaded", "pac.LoadModifiers", function() 
+	pac.LoadModifiers()
+	hook.Remove("PostGamemodeLoaded", "pac.LoadModifiers")
+end)
