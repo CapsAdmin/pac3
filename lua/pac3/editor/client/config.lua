@@ -421,6 +421,10 @@ pace.PropertyLimits =
 		return math.Round(math.max(num, 0))
 	end,
 	
+	BaseTextureAngle = function(self, num) self.sens = 0.25 return num end,
+	BumpAngle = function(self, num) self.sens = 0.25 return num end,
+	EnvMapMaskAngle = function(self, num) self.sens = 0.25 return num end,
+	
 	Size = function(self, num)
 		self.sens = 0.25
 		
