@@ -32,11 +32,11 @@ function pac.LoadModifiers()
 		end
 				
 		if SERVER then
-			CreateConVar("pac_modifier_" .. name, 1, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
+			CreateConVar("pac_modifier_" .. name, default, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
 		end
 		
 		if CLIENT then
-			CreateClientConVar("pac_modifier_" .. name, 1, true, true)
+			CreateClientConVar("pac_modifier_" .. name, default, true, true)
 		end
 		
 		include(pac.ModifiersPath .. val)
