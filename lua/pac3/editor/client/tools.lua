@@ -157,7 +157,7 @@ pace.AddTool(L"import editor tool from file...", function()
 		Derma_StringRequest(L"filename", L"relative to garrysmod/data/pac3_editor/tools/", "mytool.txt", function(toolfile)
 			if file.Exists("pac3_editor/tools/"..toolfile,"DATA") then
 				local toolstr = file.Read("pac3_editor/tools/"..toolfile,"DATA")
-				ctoolstr=[[pace.AddTool("]]..toolfile..[[",function(part, suboption) ]]..toolstr.." end)"
+				ctoolstr=[[pace.AddTool(L"]]..toolfile..[[",function(part, suboption) ]]..toolstr.." end)"
 				RunStringEx(ctoolstr, "pac_editor_import_tool")
 				LocalPlayer():ConCommand("pac_editor") --close and reopen editor
 			else
@@ -176,7 +176,7 @@ pace.AddTool(L"import editor tool from url...", function()
 		function ToolDLSuccess(body)
 			local toolname = pac.PrettifyName(toolurl:match(".+/(.-)%."))
 			local toolstr = body
-			ctoolstr=[[pace.AddTool("]]..toolname..[[",function(part, suboption) ]]..toolstr.." end)"
+			ctoolstr=[[pace.AddTool(L"]]..toolname..[[",function(part, suboption) ]]..toolstr.." end)"
 			RunStringEx(ctoolstr, "pac_editor_import_tool")
 			LocalPlayer():ConCommand("pac_editor") --close and reopen editor
 		end
@@ -387,7 +387,7 @@ pace.AddTool(L"record surrounding props to pac", function(part)
 	end
 end)
 
-pace.AddTool("populate with bones",function(part,suboption)
+pace.AddTool(L"populate with bones",function(part,suboption)
 	local target = part.GetEntity or part.GetOwner
 	local ent = target(part)
 	local bones = pac.GetModelBones(ent)
@@ -403,7 +403,7 @@ pace.AddTool("populate with bones",function(part,suboption)
 	pace.RefreshTree(true)
 end)
 
-pace.AddTool("populate with dummy bones",function(part,suboption)
+pace.AddTool(L"populate with dummy bones",function(part,suboption)
 	local target = part.GetEntity or part.GetOwner
 	local ent = target(part)
 	local bones = pac.GetModelBones(ent)
@@ -420,30 +420,34 @@ pace.AddTool("populate with dummy bones",function(part,suboption)
 	pace.RefreshTree(true)
 end)
 
-pace.AddTool("print part info",function(part)
+pace.AddTool(L"print part info",function(part)
 	PrintTable(part:ToTable())
 end)
 
-pace.AddTool("stop all custom animations",function()
+pace.AddTool(L"dump player submaterials",function()
+	local ply = LocalPlayer()
+	for id,mat in pairs(ply:GetMaterials()) do
+		chat.AddText(("%d %s"):format(id,tostring(mat)))
+	end
+end)
+
+pace.AddTool(L"stop all custom animations",function()
 	LocalPlayer():StopAllLuaAnimations()
 	LocalPlayer():ResetBoneMatrix()
 end)
 
-pace.AddTool("print player flex ids",function()
-	local t = {} 
-	local ply = LocalPlayer()
-	for i=1,ply:GetFlexNum() do 
-		t[i]=ply:GetFlexName(i)
-	end 
-	PrintTable(t)
-end)
+pace.AddTool(L"copy from faceposer tool", function(part, suboption)		
+	local group = pac.CreatePart("group")
+	local ent = LocalPlayer()
 
-pace.AddTool("dump player submaterials",function()
-	local ply = LocalPlayer()
-	for id,mat in pairs(ply:GetMaterials()) do
-		chat.AddText(("%d %s"):format(id-1,tostring(mat)))
+	for i = 0, ent:GetFlexNum() - 1 do
+		local name = ent:GetFlexName(i)
+		local weight = GetConVarNumber("faceposer_flex" .. i) * GetConVarNumber("faceposer_scale")
+		print(name, weight)
+		if weight ~= 0 then
+			local flex = group:CreatePart("flex")
+			flex:SetFlex(name)
+			flex:SetWeight(weight)
+		end
 	end
 end)
-	
-pace.AddTool("---------", function() end) --just a divider so it's easy to see which tools were imported
-do return end

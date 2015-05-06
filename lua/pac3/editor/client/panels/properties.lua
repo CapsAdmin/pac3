@@ -68,6 +68,12 @@ do -- container
 		else
 			surface.SetDrawColor(derma.Color("text_bright", self, color_white))
 			surface.DrawRect(0,0,w,h)
+			
+			if self.vector_type == "color" then
+				surface.SetDrawColor(self.vector.x, self.vector.y, self.vector.z)
+				surface.DrawRect(w-30,0,15,h)
+			end
+			
 			surface.SetDrawColor(derma.Color("text_dark", self, color_black))
 			surface.DrawOutlinedRect(0,0,w,h+2)
 		end
@@ -608,16 +614,30 @@ do -- base editable
 			--end
 		end
 		
-		if false and mcode == MOUSE_RIGHT then
+		if mcode == MOUSE_RIGHT then
 			local menu = DermaMenu()
 			menu:SetPos(gui.MousePos())
 			menu:MakePopup()
-			menu:AddOption(L"reset", function()
-				self:Restart()
-			end)
+			self:PopulateContextMenu(menu)
 		end
 	end
 
+	function PANEL:PopulateContextMenu(menu)
+		menu:AddOption(L"copy", function()
+			pace.clipboard = pac.class.Copy(self:GetValue())
+		end):SetImage(pace.MiscIcons.copy)
+		menu:AddOption(L"paste", function()
+			self:SetValue(pac.class.Copy(pace.clipboard))
+			self.OnValueChanged(self:GetValue())
+		end):SetImage(pace.MiscIcons.paste)
+		menu:AddSpacer()
+		menu:AddOption(L"reset", function()
+			if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
+				self:SetValue(pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey]))
+			end
+		end):SetImage(pace.MiscIcons.clear)
+	end
+	
 	function PANEL:OnMouseReleased()
 		self:MousePress(false)
 		self.MousePressing = false
@@ -737,12 +757,18 @@ do -- vector
 		PANEL.ClassName = "properties_" .. type
 		PANEL.Base = "pace_properties_container"
 
+		PANEL.vector_type = type
+		
 		function PANEL:Init(...)
 			self.vector = ctor(0,0,0)
 
 			local left = pace.CreatePanel("properties_number", self)
 			local middle = pace.CreatePanel("properties_number", self)
 			local right = pace.CreatePanel("properties_number", self)
+			
+			left.PopulateContextMenu = function(_, menu) self:PopulateContextMenu(menu) end
+			middle.PopulateContextMenu = function(_, menu) self:PopulateContextMenu(menu) end
+			right.PopulateContextMenu = function(_, menu) self:PopulateContextMenu(menu) end
 			
 			if encode then
 				left.Encode = encode
@@ -836,6 +862,34 @@ do -- vector
 			self.right:SetValue(0)
 			
 			self.OnValueChanged(self.vector)
+		end
+		
+		function PANEL:PopulateContextMenu(menu)
+			menu:AddOption(L"copy", function()
+				pace.clipboard = pac.class.Copy(self.vector)
+			end):SetImage(pace.MiscIcons.copy)	
+			menu:AddOption(L"paste", function()
+				local val = pac.class.Copy(pace.clipboard)
+				if _G.type(val) == "number" then
+					val = ctor(val, val, val)
+				elseif _G.type(val) == "Vector" and type == "angle" then
+					val = ctor(val.x, val.y, val.z)
+				elseif _G.type(val) == "Angle" and type == "vector" then
+					val = ctor(val.p, val.y, val.r)
+				end
+				
+				if _G.type(val):lower() == type or type == "color" then
+					self:SetValue(val)
+					
+					self.OnValueChanged(self.vector)
+				end
+			end):SetImage(pace.MiscIcons.paste)
+			menu:AddSpacer()
+			menu:AddOption(L"reset", function()
+				if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
+					self:SetValue(pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey]))
+				end
+			end):SetImage(pace.MiscIcons.clear)
 		end
 
 		function PANEL:SetValue(vec)
@@ -960,12 +1014,14 @@ do -- number
 	function PANEL:OnMouseWheeled(delta)
 		if not input.IsKeyDown(KEY_LCONTROL) then delta = delta / 10 end
 		if input.IsKeyDown(KEY_LALT) then delta = delta / 10 end 
-		local val = self:GetValue() + (self.oldval or 0) + (delta * self.sens)
+		local val = self:GetValue() + (delta * self.sens)
 		
 		self:SetNumberValue(val)
 	end
 
 	function PANEL:Think()
+		self:SetFGColor(0,0,0,255) -- gmod update fix: no idea
+		
 		if self:IsMouseDown() then			
 			local sens = self.sens
 			
@@ -977,6 +1033,16 @@ do -- number
 			local val = (self.oldval or 0) + (delta * sens)
 			
 			self:SetNumberValue(val)
+			
+			if gui.MouseY()+1 >= ScrH() then
+				self.mousey = 0
+				self.oldval = val
+				gui.SetMousePos(gui.MouseX(), 0)
+			elseif gui.MouseY() <= 0 then
+				self.mousey = ScrH()
+				self.oldval = val
+				gui.SetMousePos(gui.MouseX(), ScrH())
+			end
 		end
 	end
 
@@ -1730,11 +1796,56 @@ do -- bodygroup names
 			self.OnValueChanged(line.name)
 		end
 
+		local cur = pace.current_part:GetBodyGroupName()
+		
 		for _, name in pairs(pace.current_part:GetBodyGroupNameList()) do
 			local pnl = list:AddLine(L(name))
 			pnl.name = name
 			
 			if cur == name then
+				list:SelectItem(pnl)
+			end
+		end
+		
+		pace.ActiveSpecialPanel = frame
+	end
+	
+	pace.RegisterPanel(PANEL)
+
+end
+
+do -- flex
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_flex"
+	PANEL.Base = "pace_properties_base_type"
+		
+	function PANEL:SpecialCallback()	
+		pace.SafeRemoveSpecialPanel()
+		 
+		local frame = vgui.Create("DFrame")
+		frame:SetTitle(L"flex names")
+		SHOW_SPECIAL(frame, self, 250)
+		frame:SetSizable(true)
+
+		local list = vgui.Create("DListView", frame)
+		list:Dock(FILL)
+		list:SetMultiSelect(false)
+		list:AddColumn(L"id")
+		list:AddColumn(L"name")
+
+		list.OnRowSelected = function(_, id, line) 
+			self:SetValue(line.name)
+			self.OnValueChanged(line.name)
+		end
+		
+		local cur = pace.current_part:GetFlex()
+
+		for _, v in pairs(pace.current_part:GetFlexList()) do
+			local pnl = list:AddLine(v.i, L(v.name))
+			pnl.name = v.name
+			
+			if cur == v.name then
 				list:SelectItem(pnl)
 			end
 		end

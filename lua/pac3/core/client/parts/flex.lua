@@ -11,97 +11,80 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	return self:GetFlexName() or "no flex"
+	return self:GetFlex() ~= "" and self:GetFlex() or "no flex"
 end
 
-function PART:GetFlexName()
-	local name
-	local owner = self:GetOwner(self.RootOwner)
-	if not owner:IsValid() then return end
-	local flex = self:ResolveFlex(self:GetFlex())
-	if flex ~= -1 and (owner:GetFlexNum() > 0) then name = owner:GetFlexName(flex) end
-	return name
-end
-
-function PART:Initialize()
-	local owner = self:GetOwner(self.RootOwner)
-	if not owner:IsValid() then return end
+function PART:GetFlexList()
+	local out = {}
 	
-	if pac.TouchFlexes then pac.TouchFlexes(owner) end
+	local ent = self:GetOwner(self.RootOwner)
 	
-	local t = {}
-	for i=1,owner:GetFlexNum() do t[owner:GetFlexName(i)] = i end
-	self.FlexList = t
-end
-
-function PART:UpdateFlex(flex,weight)
-	flex = self:ResolveFlex(flex)
-	local owner = self:GetOwner(self.RootOwner)
-	if not owner:IsValid() then return end
-	if not owner.GetFlexNum then return end
-	if not (owner:GetFlexNum() > 0) then return end
-	
-	local count = owner:GetFlexNum()
-	if flex % 1 ~= 0 then flex = math.floor(flex) end --if not integer then make integer
-	if flex > count then flex = count end
-
-	if flex < 0 then return end
-	
-	owner:SetFlexWeight(flex,weight)
-end
-
-function PART:ResolveFlex(str)
-		
-	local internal_flex = tonumber(str)
-	
-	if internal_flex == nil then --they entered a string
-		if str == "" then internal_flex = -1
-		else internal_flex = self.FlexList[str] or -1
+	if ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() > 0 then
+		for i = 0, ent:GetFlexNum() - 1 do
+			local name = ent:GetFlexName(i)
+			out[name:lower()] = {i = i, name = name}
 		end
 	end
 	
-	return internal_flex
+	return out
 end
 
-function PART:SetFlex(flex)
-	local oldflex = self.Flex
-	self:UpdateFlex(oldflex, 0)
+function PART:UpdateFlex(flex, weight)
+	local ent = self:GetOwner(self.RootOwner)
 	
-	self.Flex = flex
-	
-	self:UpdateFlex(flex, self:GetWeight())
-	
-	self:SetName(self:GetNiceName())
+	if ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() > 0 then	
+		ent.pac_flex_list = ent.pac_flex_list or self:GetFlexList()
+		
+		local flex = flex or self.Flex
+		local weight = weight or self.Weight
+		
+		flex = ent.pac_flex_list[flex] and ent.pac_flex_list[flex].i or tonumber(flex)
+		
+		if type(flex) == "number" then
+			ent:SetFlexWeight(flex, weight)
+		end
+	end
 end
 
-function PART:SetWeight(weight)
-	self.Weight = weight
-	
-	self:UpdateFlex(self:GetFlex(), weight)
+function PART:SetFlex(num)
+	self:UpdateFlex(self.Flex, 0)
+
+	self.Flex = num
+	self:UpdateFlex()
+end
+
+function PART:SetWeight(num)
+	self.Weight = num	
+	self:UpdateFlex()
 end
 
 function PART:OnShow()
-	self:UpdateFlex(self:GetFlex(), self:GetWeight())
+	local ent = self:GetOwner(self.RootOwner)
+	
+	if ent:IsValid() then
+		pac.TouchFlexes(ent)
+		self:UpdateFlex()
+	end
 end
 
 function PART:OnHide(force)
 	if self.DefaultOnHide or force then
-		self:UpdateFlex(self:GetFlex(), 0)
+		self:UpdateFlex(nil, 0)
 	end
 end
 
-function PART:OnRemove() 
+function PART:OnRemove()
 	self:OnHide(true)
 end
 
 function PART:Clear()
 	self:RemoveChildren()
-	self:UpdateFlex(self:GetFlex(), 0)
+	self:UpdateFlex(nil, 0)
 end
 
 pac.RegisterPart(PART)
 
-hook.Add("pac_pace_postconfig","flex",function()
+hook.Add("pac_EditorPostConfig","flex",function()
 	pace.PartTree.entity.flex = true
 	pace.PartIcons.flex = "icon16/emoticon_smile.png"
 end)

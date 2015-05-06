@@ -129,11 +129,6 @@ function pace.ClientSettingsMenu(pnl)
 		"pac_error_mdl"
 	)
 
-	pnl:CheckBox(
-		L"Force cs model entity",
-		"pac_force_csmodel"
-	)
-	
 	pnl:Help''
 	pnl:Help(L'Enable')
 	local t={
