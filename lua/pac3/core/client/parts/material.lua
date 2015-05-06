@@ -240,97 +240,10 @@ local function setup(PART)
 	end
 end
 
-local function add_transform(texture_name)
-	pac.GetSet(PART, texture_name.."Position", Vector(0, 0, 0))
-	pac.GetSet(PART, texture_name.."Scale", Vector(1, 1, 1))
-	pac.GetSet(PART, texture_name.."Angle", 0)	
-	pac.GetSet(PART, texture_name.."AngleCenter", Vector(0.5, 0.5, 0))
-	
-	PART.TransformVars = PART.TransformVars or {}
-	PART.TransformVars[texture_name.."Position"] = true
-	PART.TransformVars[texture_name.."Scale"] = true
-	PART.TransformVars[texture_name.."Angle"] = true
-	PART.TransformVars[texture_name.."AngleCenter"] = true
-	
-	local position_key = texture_name.."Position"
-	local scale_key = texture_name.."Scale"
-	local angle_key = texture_name.."Angle"
-	local angle_center_key = texture_name.."AngleCenter"
-	local shader_key = "$"..texture_name.."transform"
-		
-	local function setup_matrix(self)
-		self.matrix:Identity()
-		self.matrix:Translate(self.translation_vector)
-		
-		self.matrix:Translate(self[angle_center_key])
-		self.matrix:Rotate(self.rotation_angle)
-		self.matrix:Translate(-self[angle_center_key])
-		
-		self.matrix:SetScale(self[scale_key])
-	end
-		
-	PART["Set" .. position_key] = function(self, vec)
-		self[position_key] = vec
-		
-		self.matrix = self.matrix or Matrix()
-		self.translation_vector = self.translation_vector or Vector(0, 0, 0)
-		self.rotation_angle = self.rotation_angle or Angle(0, 0, 0)
-		
-		self.translation_vector.x = self[position_key].x%1
-		self.translation_vector.y = self[position_key].y%1
-		
-		setup_matrix(self)
-		
-		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
-	end
-
-	PART["Set" .. scale_key] = function(self, vec)
-		self[scale_key] = vec
-		
-		self.matrix = self.matrix or Matrix()		
-		self.translation_vector = self.translation_vector or Vector(0, 0, 0)
-		self.rotation_angle = self.rotation_angle or Angle(0, 0, 0)
-		
-		setup_matrix(self)
-
-		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
-	end
-		
-	PART["Set" .. angle_key] = function(self, num)
-		self[angle_key] = num
-		
-		self.matrix = self.matrix or Matrix()
-		self.translation_vector = self.translation_vector or Vector(0, 0, 0)
-		self.rotation_angle = self.rotation_angle or Angle(0, 0, 0)
-		
-		self.rotation_angle.y = self[angle_key]*360
-		
-		setup_matrix(self)
-		
-		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
-	end
-	
-	PART["Set" .. angle_center_key] = function(self, vec)
-		self[angle_center_key] = vec
-		
-		self.matrix = self.matrix or Matrix()
-		self.translation_vector = self.translation_vector or Vector(0, 0, 0)
-		self.rotation_angle = self.rotation_angle or Angle(0, 0, 0)
-
-		setup_matrix(self)
-		
-		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
-	end
-
-end
-
-
 pac.StartStorableVars()
 	setup(PART)
-	add_transform("BaseTexture")
-	add_transform("Bump")
-	add_transform("EnvMapMask")
 pac.EndStorableVars()
+
 
 function PART:GetMaterialFromParent()
 	if self:GetParent():IsValid() then
@@ -381,7 +294,7 @@ end
 function PART:UpdateMaterial(now)
 	self:GetMaterialFromParent()
 	for key, val in pairs(self.StorableVars) do
-		if self.ShaderParams[key] or self.TransformVars[key] then
+		if self.ShaderParams[key] then
 			self["Set" .. key](self, self[key])
 		end
 	end
