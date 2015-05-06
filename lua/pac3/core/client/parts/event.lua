@@ -46,7 +46,50 @@ PART.Events =
 			return self:NumberOperator(math.random(), compare)
 		end,
 	},
+	randint = 
+	{	
+		arguments = {{compare = "number"},{min = "number"},{max = "number"}},
+		callback = function(self, ent, compare, min, max)
+			min = min or 0
+			max = max or 1
+			if min > max then return 0 end
+			return self:NumberOperator(math.random(min,max), compare)
+		end,
+	},
+	random_timer = 
+	{	
+		arguments = {{min = "number"},{max = "number"},{holdtime = "number"}},
+		callback = function(self, ent, min, max, holdtime)
+		
+			holdtime = holdtime or 0.1
+			min = min or 0
+			max = max or 1
+			
+			if min > max then return false end
+			
+			if self.RndTime == nil then
+				self.RndTime = 0
+			end
 
+			if !self.SetRandom then
+				self.RndTime = CurTime() + math.random(min,max)
+				self.SetRandom = true
+			elseif self.SetRandom then
+			
+				if CurTime() > self.RndTime then
+					if !(CurTime() > self.RndTime + holdtime) then 
+						return true
+					else
+						self.SetRandom = false
+						return false
+					end
+				end
+				
+			end
+			
+			return false
+		end,
+	},
 	timerx = 
 	{
 		arguments = {{seconds = "number"}, {reset_on_hide = "boolean"}, {synced_time = "boolean"}},
@@ -74,29 +117,44 @@ PART.Events =
 			return 0
 		end,
 	},
-
 	health_lost = 
 	{
 		arguments = {{amount = "number"}},
 		callback = function(self, ent, amount)
+		
 			ent = try_viewmodel(ent)
 			
 			if ent:IsValid() and ent.Health then
-				local health = ent:Health()
 				
-				local diff = (ent.pac_last_health or health) - health
+				local dmg = self.pac_lastdamage or 0
+	
+				if self.dmgCD == nil then
+					self.dmgCD = 0
+				end
 				
-				-- set it a frame later or else youll abort the other events of this type this frame..
-				timer.Simple(0, function() 
-					if ent:IsValid() then
-						ent.pac_last_health = health
-					end
-				end)
-				
-				return self:NumberOperator(diff, amount)
-			end
 
-			return 0
+				if !self.pac_wasdmg then
+					
+					local dmgDone = dmg - ent:Health()
+					self.pac_lastdamage = ent:Health()
+						
+					if self:NumberOperator(dmgDone,amount) then
+						self.pac_wasdmg = true
+						self.dmgCD = pac.RealTime + 0.2
+					end
+						
+				else
+					
+					if self.pac_wasdmg and pac.RealTime > self.dmgCD then
+						self.pac_wasdmg = false
+					end
+				
+				end
+					
+				return self.pac_wasdmg
+			end
+			
+			return false
 		end,
 	},
 
@@ -119,15 +177,6 @@ PART.Events =
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
 			return ent.Crouching and ent:Crouching()
-		end,
-	},
-	
-	is_typing = 
-	{       
-		callback = function(self, ent)
-			local ent = self:GetPlayerOwner()
-
-			return ent:IsTyping()
 		end,
 	},
 	
@@ -156,7 +205,16 @@ PART.Events =
 			return 0
 		end,
 	},
-
+	owner_Alive = 
+	{	
+		callback = function(self, ent)
+			ent = try_viewmodel(ent)
+			if ent:IsValid() and ent.Alive then
+				return ent:Alive()
+			end
+			return 0
+		end,
+	},
 	owner_armor =
 	{	
 		arguments = {{armor = "number"}},
@@ -1051,6 +1109,7 @@ end)
 pac.AddHook("GravGunOnDropped", function(ply, ent)
 	ply.pac_gravgun_ent = ent
 end)
+-- ####
 
 pac.AddHook("GravGunPunt", function(ply, ent)
 	ply.pac_gravgun_ent = ent
@@ -1082,4 +1141,5 @@ die
 reload end
 reload
 custom gesture
+--]]
 ]]
