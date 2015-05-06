@@ -226,24 +226,18 @@ function pac.FilterInvalidModel(mdl,fallback)
 	
 end
 
-pac.EntityType = 2
-
-local pac_force_csmodel = CreateClientConVar("pac_force_csmodel","0",true)
-
-function pac.CreateEntity(model, type)
-	type = type or pac.EntityType or 1
-	
+function pac.CreateEntity(model)	
 	model = pac.FilterInvalidModel(model)
 	
-	local ent = NULL
-
-	if type == 1 or (type == 2 and pac_force_csmodel:GetBool()) then
+	local ent = ClientsideModel(model)
+	
+	--[[if type == 1 then
 
 		ent = ClientsideModel(model)
 
 	elseif type == 2 then
 
-		ent = ents.CreateClientProp(model)
+		ent = ents.CreateClientProp(model) -- doesn't render properly
 
 	elseif type == 3 then
 
@@ -267,7 +261,7 @@ function pac.CreateEntity(model, type)
 		)
 
 		util.Effect("pac_model", EffectData())
-	end
+	end]]
 
 	return ent
 end

@@ -722,7 +722,7 @@ local function AnimationEditorOff()
 	for i,v in pairs(animEditorPanels) do 	
 		v:Remove()
 	end
-	pac.SetInAnimEditor(false)
+	pace.SetInAnimEditor(false)
 	hook.Remove("HUDPaint","PaintTopBar")
 	hook.Remove("CalcView","AnimationView")
 	hook.Remove("Think","FixMouse")
@@ -747,7 +747,7 @@ local function AnimationEditorOn()
 	end
 	
 	--RunConsoleCommand("animeditor_in_editor", "1")
-	pac.SetInAnimEditor(true)
+	pace.SetInAnimEditor(true)
 	
 	local close = vgui.Create("DButton")
 	close:SetText("X")

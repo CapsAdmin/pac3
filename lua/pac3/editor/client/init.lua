@@ -32,6 +32,7 @@ include("examples.lua")
 include("about.lua")
 include("animeditor.lua")
 include("render_scores.lua")
+include("net_messages.lua")
 
 
 do 
@@ -133,7 +134,7 @@ function pace.OpenEditor()
 	end
 	
 	RunConsoleCommand("pac_in_editor", "1")
-	pac.SetInPAC3Editor(true)
+	pace.SetInPAC3Editor(true)
 	
 	pace.DisableExternalHooks()
 	
@@ -151,7 +152,7 @@ function pace.CloseEditor()
 	end
 	
 	RunConsoleCommand("pac_in_editor", "0")
-	pac.SetInPAC3Editor(false)
+	pace.SetInPAC3Editor(false)
 end
 
 hook.Add("pace_Disable", "pac_editor_disable", function()
