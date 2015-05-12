@@ -1,9 +1,9 @@
---[[
-	I might remove these bans later on (maybe once a year)
-	If you feel you have been banned for the wrong reasons contact me (CapsAdmin) on steam.
-	
-	You can also safely delete this file if you don't agree with it. :)
-]]
+--[[ 
+
+This used to be uncommented for a long time but I don't believe it's ethical anymore.
+Bans should be between servers.
+
+example:
 
 pace.GlobalBans = {
 	["STEAM_0:1:27361650"] = [[
@@ -23,3 +23,4 @@ pace.GlobalBans = {
 
 	[{"STEAM_0:0:90942401"}] = [[PAC Stealing.]]
 }
+]]

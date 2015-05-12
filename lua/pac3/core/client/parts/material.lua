@@ -240,10 +240,82 @@ local function setup(PART)
 	end
 end
 
+local function add_transform(texture_name)
+	local position_key = texture_name.."Position"
+	local scale_key = texture_name.."Scale"
+	local angle_key = texture_name.."Angle"
+	local angle_center_key = texture_name.."AngleCenter"
+	
+	pac.GetSet(PART, position_key, Vector(0, 0, 0))
+	pac.GetSet(PART, scale_key, Vector(1, 1, 1))
+	pac.GetSet(PART, angle_key, 0)	
+	pac.GetSet(PART, angle_center_key, Vector(0.5, 0.5, 0))
+	
+	PART.TransformVars = PART.TransformVars or {}
+	PART.TransformVars[position_key] = true
+	PART.TransformVars[scale_key] = true
+	PART.TransformVars[angle_key] = true
+	PART.TransformVars[angle_center_key] = true
+	
+	local shader_key = "$"..texture_name.."transform"
+		
+	local function setup_matrix(self)
+		self.matrix = self.matrix or Matrix()
+		self.translation_vector = self.translation_vector or Vector(0, 0, 0)
+		self.rotation_angle = self.rotation_angle or Angle(0, 0, 0)
+	
+		self.matrix:Identity()
+		self.matrix:Translate(self.translation_vector)
+		
+		self.matrix:Translate(self[angle_center_key])
+		self.matrix:Rotate(self.rotation_angle)
+		self.matrix:Translate(-self[angle_center_key])
+		
+		self.matrix:SetScale(self[scale_key])
+	end
+		
+	PART["Set" .. position_key] = function(self, vec)
+		self[position_key] = vec		
+		setup_matrix(self)
+		
+		self.translation_vector.x = self[position_key].x%1
+		self.translation_vector.y = self[position_key].y%1
+		
+		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
+	end
+
+	PART["Set" .. scale_key] = function(self, vec)
+		self[scale_key] = vec
+		setup_matrix(self)
+
+		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
+	end
+		
+	PART["Set" .. angle_key] = function(self, num)
+		self[angle_key] = num
+		setup_matrix(self)
+		
+		self.rotation_angle.y = self[angle_key]*360
+		
+		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
+	end
+	
+	PART["Set" .. angle_center_key] = function(self, vec)
+		self[angle_center_key] = vec
+		setup_matrix(self)		
+		
+		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
+	end
+
+end
+
+
 pac.StartStorableVars()
 	setup(PART)
+	add_transform("BaseTexture")
+	--add_transform("Bump") -- doesn't work
+	--add_transform("EnvMapMask")
 pac.EndStorableVars()
-
 
 function PART:GetMaterialFromParent()
 	if self:GetParent():IsValid() then
@@ -294,8 +366,8 @@ end
 function PART:UpdateMaterial(now)
 	self:GetMaterialFromParent()
 	for key, val in pairs(self.StorableVars) do
-		if self.ShaderParams[key] then
-			self["Set" .. key](self, self[key])
+		if self.ShaderParams[key] or self.TransformVars[key] then
+			self["Set" .. key](self, self["Get"..key](self))
 		end
 	end
 	
