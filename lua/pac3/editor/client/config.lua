@@ -421,6 +421,10 @@ pace.PropertyLimits =
 		return math.Round(math.max(num, 0))
 	end,
 	
+	BaseTextureAngle = function(self, num) self.sens = 0.25 return num end,
+	BumpAngle = function(self, num) self.sens = 0.25 return num end,
+	EnvMapMaskAngle = function(self, num) self.sens = 0.25 return num end,
+	
 	Size = function(self, num)
 		self.sens = 0.25
 		
@@ -580,6 +584,7 @@ function pace.TranslatePropertiesKey(key, obj)
 		key == "poseparameter" or
 		key == "material" or
 		key == "sequence" or
+		key == "flex" or
 		key == "bodygroupname" or
 		key == "effect" or
 		key == "code"
@@ -666,4 +671,4 @@ function pace.GetIconFromClassName(class_name)
 	return pace.PartIcons[class_name] or "icon16/plugin.png"
 end
 
-hook.Run("pac_pace_postconfig")
+hook.Run("pac_EditorPostConfig")

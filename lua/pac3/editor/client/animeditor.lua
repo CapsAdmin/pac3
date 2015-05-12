@@ -1406,7 +1406,7 @@ vgui.Register("AnimEditor_KeyFrame",KEYFRAME,"DPanel")
 local SLIDERS = {}
 function SLIDERS:Init()
 	self:SetName("Modify Bone")
-	self:SetMinimumSize(200,300)
+	self:SetMinimumSize(200,650)
 	self:SetWide(200)
 	self.Sliders = {}
 	
