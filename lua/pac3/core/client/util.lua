@@ -226,10 +226,16 @@ function pac.FilterInvalidModel(mdl,fallback)
 	
 end
 
-function pac.CreateEntity(model)	
+function pac.CreateEntity(model, for_obj)	
 	model = pac.FilterInvalidModel(model)
 	
-	local ent = ClientsideModel(model)
+	local ent
+	
+	if for_obj then	
+		ent = ClientsideModel(model)
+	else
+		ent = ents.CreateClientProp(model)
+	end
 	
 	--[[if type == 1 then
 
