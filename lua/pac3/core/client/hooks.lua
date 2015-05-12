@@ -194,14 +194,7 @@ function pac.OnClientsideRagdoll(ent)
 		
 	if not ply.pac_parts then return end
 	
-	if ply.pac_death_hide_ragdoll then
-		Msg"[PAC] Hiding death ragdoll for "print(ply,"rag:",ent)
-		ent:SetRenderMode(RENDERMODE_TRANSALPHA)
-		local c = ent:GetColor()
-		c.a = 0
-		ent:SetColor(c)
-		ent:SetNoDraw(true)
-	end
+	ply.pac_ragdoll = ent
 	
 	if not ply.pac_death_physics_parts then
 		
