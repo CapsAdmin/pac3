@@ -48,7 +48,7 @@ PART.Events =
 	},
 	randint = 
 	{	
-		arguments = {{compare = "number"},{min = "number"},{max = "number"}},
+		arguments = {{compare = "number"}, {min = "number"}, {max = "number"}},
 		callback = function(self, ent, compare, min, max)
 			min = min or 0
 			max = max or 1
@@ -58,7 +58,7 @@ PART.Events =
 	},
 	random_timer = 
 	{	
-		arguments = {{min = "number"},{max = "number"},{holdtime = "number"}},
+		arguments = {{min = "number"}, {max = "number"}, {holdtime = "number"}},
 		callback = function(self, ent, min, max, holdtime)
 		
 			holdtime = holdtime or 0.1
@@ -71,13 +71,13 @@ PART.Events =
 				self.RndTime = 0
 			end
 
-			if !self.SetRandom then
+			if not self.SetRandom then
 				self.RndTime = CurTime() + math.random(min,max)
 				self.SetRandom = true
 			elseif self.SetRandom then
 			
 				if CurTime() > self.RndTime then
-					if !(CurTime() > self.RndTime + holdtime) then 
+					if not CurTime() > self.RndTime + holdtime then 
 						return true
 					else
 						self.SetRandom = false
@@ -133,7 +133,7 @@ PART.Events =
 				end
 				
 
-				if !self.pac_wasdmg then
+				if not self.pac_wasdmg then
 					
 					local dmgDone = dmg - ent:Health()
 					self.pac_lastdamage = ent:Health()
@@ -205,7 +205,7 @@ PART.Events =
 			return 0
 		end,
 	},
-	owner_Alive = 
+	owner_alive = 
 	{	
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)

@@ -570,6 +570,7 @@ function pace.TranslatePropertiesKey(key, obj)
 	end
 	
 	if 
+		key == "damagetype" or 
 		key == "bone" or 
 		key == "model" or
 		key == "event" or
