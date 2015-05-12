@@ -14,12 +14,16 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "LifeTime", 5)
 	pac.GetSet(PART, "AimDir", false)
 	pac.GetSet(PART, "Sticky", false)
+	pac.GetSet(PART, "BulletImpact", false)
+	pac.GetSet(PART, "Damage", 0)
+	pac.GetSet(PART, "DamageType", "generic")
 	pac.GetSet(PART, "Spread", 0)
 	pac.GetSet(PART, "Delay", 0)
 	pac.GetSet(PART, "Mass", 100)
 	pac.SetupPartName(PART, "OutfitPart")
 	pac.GetSet(PART, "Physical", false)
 	pac.GetSet(PART, "CollideWithOwner", false)
+	pac.GetSet(PART, "RemoveOnCollide", false)
 pac.EndStorableVars()
 
 function PART:OnShow(from_rendering)
@@ -120,9 +124,35 @@ function PART:Shoot(pos, ang)
 			local ent = pac.CreateEntity("models/props_junk/popcan01a.mdl")
 			local idx = table.insert(self.projectiles, ent)
 			
+			ent:AddCallback("PhysicsCollide", function(ent, data) 
+				if self.Sticky and data.HitEntity:IsWorld() then
+					local phys = ent:GetPhysicsObject()
+					phys:SetVelocity(Vector(0,0,0))
+					phys:Sleep()
+					phys:EnableMotion(false)
+					ent.pac_stuck = true
+				end
+				
+				if self.BulletImpact then
+					ent:FireBullets{
+						Attacker = ent:GetOwner(),
+						Damage = 0,
+						Force = 0,
+						Num = 1,
+						Src = data.HitPos - data.HitNormal,
+						Dir = data.HitNormal,
+					}
+				end
+				
+				if self.RemoveOnCollide then
+					timer.Simple(0.01, function() SafeRemoveEntity(ent) end)
+				end
+			end)
+			
 			ent:SetOwner(self:GetPlayerOwner(true))
 			ent:SetPos(pos)
 			ent:SetAngles(ang)
+			ent:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
 			
 			if self.Sphere then
 				ent:PhysicsInitSphere(math.Clamp(self.Radius, 1, 30))
@@ -140,22 +170,12 @@ function PART:Shoot(pos, ang)
 				end
 			
 				if self.AimDir then 
-					ent:SetRenderAngles(ent:GetVelocity():Angle()) 
-				end 
-				
-				if self.Sticky then
-					if ent.pac_projectile_stuck then
-						ent:SetPos(ent.pac_projectile_stuck.pos)
-						ent:SetAngles(ent.pac_projectile_stuck.ang)
-					end
-				
-					local ang = ent:GetRenderAngles() or ent:GetAngles()
-					local trace = util.QuickTrace(ent:GetPos(), ang:Forward() * ent:GetVelocity():Length() / 10, ent)
-					
-					if trace.Hit then
-						local phys = ent:GetPhysicsObject()
-						phys:EnableGravity(false)
-						ent.pac_projectile_stuck = {pos = trace.HitPos, ang = trace.HitNormal:Angle()}
+					if ent.pac_stuck then
+						ent:SetRenderAngles(ent.last_angle) 
+					else
+						local angle = ent:GetVelocity():Angle()
+						ent:SetRenderAngles(angle) 
+						ent.last_angle = angle
 					end
 				end
 			end
@@ -165,6 +185,8 @@ function PART:Shoot(pos, ang)
 			phys:AddVelocity((ang:Forward() + (VectorRand():Angle():Forward() * self.Spread)) * self.Speed * 1000)
 			phys:EnableCollisions(self.Collisions)	
 			phys:SetDamping(self.Damping, 0)			
+			
+			ent:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
 			
 			if self:AttachToEntity(ent) then
 				timer.Simple(math.Clamp(self.LifeTime, 0, 10), function()
