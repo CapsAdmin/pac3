@@ -1,6 +1,52 @@
 pace.example_outfits = {}
 --pace.example_outfits[""] = {}
-pace.example_outfits["Hitpos & Second Head"] = {[1] = {
+
+pace.example_outfits["custom death animations"] = {[1] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+			},
+			["self"] = {
+				["DrawPlayerOnDeath"] = true,
+				["ClassName"] = "entity",
+				["UniqueID"] = "672119311",
+				["HideRagdollOnDeath"] = true,
+			},
+		},
+		[2] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+					},
+					["self"] = {
+						["ClassName"] = "animation",
+						["UniqueID"] = "1613280023",
+						["SequenceName"] = "death_01;death_02;death_03;death_04",
+						["ResetOnHide"] = false,
+						["OwnerCycle"] = true,
+					},
+				},
+			},
+			["self"] = {
+				["AffectChildrenOnly"] = true,
+				["ClassName"] = "event",
+				["UniqueID"] = "3013021887",
+				["Event"] = "owner_alive",
+				["EditorExpand"] = true,
+			},
+		},
+	},
+	["self"] = {
+		["EditorExpand"] = true,
+		["UniqueID"] = "1026455901",
+		["ClassName"] = "group",
+		["Name"] = "custom death animation",
+		["Description"] = "add parts to me!",
+	},
+},
+}
+
+pace.example_outfits["hitpos and second head"] = {[1] = {
 	["children"] = {
 		[1] = {
 			["children"] = {
