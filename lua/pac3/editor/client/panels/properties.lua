@@ -1936,6 +1936,72 @@ do -- effect
 	pace.RegisterPanel(PANEL)
 end
 
+do -- damage type
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_damagetype"
+	PANEL.Base = "pace_properties_base_type"
+	
+	local damage_types = {
+		generic = 0, --generic damage
+		crush = 1, --caused by physics interaction
+		bullet = 2, --bullet damage
+		slash = 4, --sharp objects, such as manhacks or other npcs attacks
+		burn = 8, --damage from fire
+		vehicle = 16, --hit by a vehicle
+		fall = 32, --fall damage
+		blast = 64, --explosion damage
+		club = 128, --crowbar damage
+		shock = 256, --electrical damage, shows smoke at the damage position
+		sonic = 512, --sonic damage,used by the gargantua and houndeye npcs
+		energybeam = 1024, --laser
+		nevergib = 4096, --don't create gibs
+		alwaysgib = 8192, --always create gibs
+		drown = 16384, --drown damage
+		paralyze = 32768, --same as dmg_poison
+		nervegas = 65536, --neurotoxin damage
+		poison = 131072, --poison damage
+		acid = 1048576, --
+		airboat = 33554432, --airboat gun damage
+		blast_surface = 134217728, --this won't hurt the player underwater
+		buckshot = 536870912, --the pellets fired from a shotgun
+		direct = 268435456, --
+		dissolve = 67108864, --forces the entity to dissolve on death
+		drownrecover = 524288, --damage applied to the player to restore health after drowning
+		physgun = 8388608, --damage done by the gravity gun
+		plasma = 16777216, --
+		prevent_physics_force = 2048, --
+		radiation = 262144, --radiation
+		removenoragdoll = 4194304, --don't create a ragdoll on death
+		slowburn = 2097152, --
+	}
+		
+	function PANEL:SpecialCallback()				
+		local frame = create_search_list(
+			self,
+			self.CurrentKey,
+			L"damage type list", 
+			function(list) 	
+				list:AddColumn("name") 
+			end,
+			function() 
+				return damage_types
+			end,
+			function()
+				return pace.current_part.DamageType
+			end,
+			function(list, key, val)
+				return list:AddLine(key)
+			end,
+			function(val, key)
+				return key
+			end
+		)
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
 do -- script
 	local PANEL = {}
 
