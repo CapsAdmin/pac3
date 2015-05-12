@@ -417,7 +417,28 @@ function pac.PostDrawOpaqueRenderables(drawdepth,drawing_skybox)
 				
 				if not ent:Alive() and GetConVarNumber("pac_sv_hide_outfit_on_death") == 1 then
 					hide_parts(ent)
-					return
+					continue
+				end
+			
+				-- :(
+				if ent.pac_death_hide_ragdoll then
+					local ply = ent
+					local ent = ply.pac_ragdoll or NULL
+					if ent:IsValid() then
+						ent:SetRenderMode(RENDERMODE_TRANSALPHA)
+						local c = ent:GetColor()
+						c.a = 0
+						ent:SetColor(c)
+						ent:SetNoDraw(true)
+						if ent:GetParent() ~= ply then
+							ent:SetParent(ply)
+							ent:AddEffects(EF_BONEMERGE)
+						end
+						
+						if ply.pac_draw_player_on_death then
+							ply:DrawModel()
+						end
+					end
 				end
 			
 				if radius < 32 then
