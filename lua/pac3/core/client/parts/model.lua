@@ -112,10 +112,11 @@ function PART:SetTextureFilter(num)
 	self.texfilter_enum = math.Clamp(math.Round(num), 0, 3)
 end
 
-function PART:Initialize()	
-	self.Entity = pac.CreateEntity(self:GetModel())
+function PART:Initialize(is_obj)
+	self.Entity = pac.CreateEntity(self:GetModel(), is_obj)
 	self.Entity:SetNoDraw(true)
 	self.Entity.PACPart = self
+	self.is_obj = is_obj
 end
 
 function PART:OnShow()
@@ -478,6 +479,10 @@ function PART:SetModel(modelPath)
 	if modelPath and modelPath:find("http") and pac.urlobj then
 		self.loading_obj = "downloading"
 		
+		if not self.is_obj then
+			self:Initialize(true)
+		end
+		
 		pac.urlobj.GetObjFromURL(modelPath, false, false,
 			function(meshes, err)
 				if not self:IsValid() then return end
@@ -517,6 +522,10 @@ function PART:SetModel(modelPath)
 		
 		self.Model = modelPath
 		return
+	end
+	
+	if self.is_obj then
+		self:Initialize(false)
 	end
 	
 	self.Mesh = nil
