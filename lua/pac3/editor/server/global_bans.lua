@@ -1,4 +1,4 @@
---[[ 
+--[==[ 
 
 This used to be uncommented for a long time but I don't believe it's ethical anymore.
 Bans should be between servers.
@@ -21,4 +21,4 @@ pace.GlobalBans = {
 		he has been called out for it countless of times and being an asshole about it at the same time.
 	]],
 }
-]]
+]==]
