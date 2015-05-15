@@ -3093,29 +3093,17 @@ pace.example_outfits["staff"] = {[1] = {
 	["children"] = {
 		[1] = {
 			["children"] = {
-				[1] = {
-					["children"] = {
-					},
-					["self"] = {
-						["ParentName"] = "weapon class equal \"weapon crowbar@@1\"",
-						["ClassName"] = "event",
-						["UniqueID"] = "4152703468",
-						["Event"] = "is_voice_chatting",
-						["Name"] = "",
-						["ParentUID"] = "3915329507",
-					},
-				},
 			},
 			["self"] = {
-				["ParentName"] = "staff",
-				["Invert"] = true,
-				["Name"] = "",
-				["ClassName"] = "event",
-				["UniqueID"] = "3915329507",
-				["ParentUID"] = "3166345426",
-				["Operator"] = "equal",
-				["Event"] = "weapon_class",
-				["Arguments"] = "weapon_crowbar@@1",
+				["Position"] = Vector(3.4189453125, -1.826171875, 0.180908203125),
+				["AimPartUID"] = "1736154830",
+				["AngleOffset"] = Angle(90, 0, 0),
+				["AimPartName"] = "aimpoint",
+				["PositionOffset"] = Vector(-38.599998474121, 0, 0),
+				["ClassName"] = "model",
+				["Bone"] = "right hand",
+				["Model"] = "models/props_c17/signpole001.mdl",
+				["UniqueID"] = "1959830642",
 			},
 		},
 		[2] = {
@@ -3124,184 +3112,32 @@ pace.example_outfits["staff"] = {[1] = {
 					["children"] = {
 					},
 					["self"] = {
-						["ParentName"] = "tree poplar ",
-						["ClassName"] = "clip",
-						["UniqueID"] = "3474919683",
-						["ParentUID"] = "3286429643",
-						["Angles"] = Angle(90, -180, -180),
-						["Name"] = "",
-						["Position"] = Vector(-0.048583984375, 0.033203125, 41.35546875),
-					},
-				},
-				[2] = {
-					["children"] = {
-						[1] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "1712940288",
-								["ClassName"] = "bone",
-								["UniqueID"] = "980300913",
-								["ParentName"] = "strider back leg",
-								["Bone"] = "combine strider lefteg hind bone 1",
-								["Name"] = "",
-								["Size"] = 0.2,
-							},
-						},
-						[2] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentName"] = "strider back leg",
-								["ClassName"] = "clip",
-								["UniqueID"] = "3036047950",
-								["ParentUID"] = "1712940288",
-								["Bone"] = "combine strider lefteg hind bone 1",
-								["Name"] = "",
-								["Position"] = Vector(51.8203125, 0.00634765625, -0.0029296875),
-							},
-						},
-						[3] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentName"] = "strider back leg",
-								["ClassName"] = "clip",
-								["UniqueID"] = "793466959",
-								["ParentUID"] = "1712940288",
-								["Angles"] = Angle(45.75, -179.96875, -179.96875),
-								["Name"] = "",
-								["Position"] = Vector(-157.318359375, -1.6025390625, 346.39599609375),
-							},
-						},
-						[4] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "1712940288",
-								["ClassName"] = "bone",
-								["UniqueID"] = "369704787",
-								["ParentName"] = "strider back leg",
-								["Bone"] = "combine strider lefteg hind bone",
-								["Name"] = "",
-								["Size"] = 0.225,
-							},
-						},
-					},
-					["self"] = {
-						["ParentName"] = "tree poplar ",
-						["Position"] = Vector(2, 0, 65),
-						["Name"] = "",
-						["Scale"] = Vector(2, 1, 1),
-						["ClassName"] = "model",
-						["Angles"] = Angle(-12, 180, 0),
-						["PositionOffset"] = Vector(123.90000152588, -0.69999998807907, -297),
-						["UniqueID"] = "1712940288",
-						["EditorExpand"] = true,
-						["Model"] = "models/Gibs/Strider_Back_Leg.mdl",
-						["ParentUID"] = "3286429643",
-					},
-				},
-				[3] = {
-					["children"] = {
-						[1] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentName"] = "strider back leg",
-								["ClassName"] = "clip",
-								["UniqueID"] = "2018584050",
-								["ParentUID"] = "2629413721",
-								["Angles"] = Angle(45.75, -179.96875, -179.96875),
-								["Name"] = "",
-								["Position"] = Vector(-157.318359375, -1.6025390625, 346.39599609375),
-							},
-						},
-						[2] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2629413721",
-								["ClassName"] = "bone",
-								["UniqueID"] = "2916632511",
-								["ParentName"] = "strider back leg",
-								["Bone"] = "combine strider lefteg hind bone 1",
-								["Name"] = "",
-								["Size"] = 0.2,
-							},
-						},
-						[3] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2629413721",
-								["ClassName"] = "bone",
-								["UniqueID"] = "799960072",
-								["ParentName"] = "strider back leg",
-								["Bone"] = "combine strider lefteg hind bone",
-								["Name"] = "",
-								["Size"] = 0.225,
-							},
-						},
-						[4] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentName"] = "strider back leg",
-								["ClassName"] = "clip",
-								["UniqueID"] = "3397390257",
-								["ParentUID"] = "2629413721",
-								["Bone"] = "combine strider lefteg hind bone 1",
-								["Name"] = "",
-								["Position"] = Vector(51.8203125, 0.00634765625, -0.0029296875),
-							},
-						},
-					},
-					["self"] = {
-						["ParentName"] = "tree poplar ",
-						["Position"] = Vector(-7, 0, -19),
-						["Name"] = "",
-						["Scale"] = Vector(2, 1, 1),
-						["ClassName"] = "model",
-						["Angles"] = Angle(0, -180, 180),
-						["PositionOffset"] = Vector(123.90000152588, -0.69999998807907, -297),
-						["UniqueID"] = "2629413721",
-						["EditorExpand"] = true,
-						["Model"] = "models/Gibs/Strider_Back_Leg.mdl",
-						["ParentUID"] = "3286429643",
+						["ClassName"] = "event",
+						["UniqueID"] = "4152703468",
+						["Event"] = "is_voice_chatting",
 					},
 				},
 			},
 			["self"] = {
-				["ParentName"] = "staff",
-				["Position"] = Vector(2.1700000762939, -1.0800000429153, -0.40999999642372),
-				["AimPartUID"] = "1736154830",
-				["AimPartName"] = "aimpoint",
-				["UniqueID"] = "3286429643",
-				["Name"] = "",
-				["Scale"] = Vector(1, 1.5700000524521, 1.1900000572205),
+				["Arguments"] = "weapon_crowbar@@1",
+				["Invert"] = true,
+				["UniqueID"] = "3915329507",
+				["Event"] = "weapon_class",
+				["Operator"] = "equal",
 				["EditorExpand"] = true,
-				["ClassName"] = "model",
-				["Size"] = 0,
-				["PositionOffset"] = Vector(5.0999999046326, 0, -7.1999998092651),
-				["Angles"] = Angle(86.25, 6, 4),
-				["Bone"] = "right hand",
-				["Model"] = "models/props_foliage/tree_poplar_01.mdl",
-				["ParentUID"] = "3166345426",
+				["ClassName"] = "event",
 			},
 		},
 		[3] = {
 			["children"] = {
 			},
 			["self"] = {
-				["ParentName"] = "staff",
 				["ClassName"] = "model",
-				["Position"] = Vector(1.7999999523163, -1.5, 0),
 				["UniqueID"] = "1736154830",
 				["Size"] = 0,
 				["Bone"] = "left hand",
 				["Name"] = "aimpoint",
-				["ParentUID"] = "3166345426",
+				["Position"] = Vector(1.7999999523163, -1.5, 0),
 			},
 		},
 	},
@@ -3318,155 +3154,120 @@ pace.example_outfits["staff"] = {[1] = {
 			["children"] = {
 				[1] = {
 					["children"] = {
-						[1] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2548552443",
-								["ClassName"] = "bone",
-								["UniqueID"] = "1673164210",
-								["ParentName"] = "group",
-								["Angles"] = Angle(-38.09375, -24.1875, 73.5),
-								["Bone"] = "left hand",
-								["Name"] = "",
-								["EditorExpand"] = true,
-							},
-						},
-						[2] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2548552443",
-								["ClassName"] = "bone",
-								["UniqueID"] = "1444995674",
-								["ParentName"] = "group",
-								["Bone"] = "left forearm",
-								["Name"] = "",
-								["Angles"] = Angle(25, 55.375, 0),
-							},
-						},
-						[3] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2548552443",
-								["ClassName"] = "bone",
-								["UniqueID"] = "1677482011",
-								["ParentName"] = "group",
-								["Angles"] = Angle(0, 11.59375, 0),
-								["Bone"] = "right forearm",
-								["Name"] = "",
-								["EditorExpand"] = true,
-							},
-						},
-						[4] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentName"] = "group",
-								["Invert"] = true,
-								["Name"] = "",
-								["ClassName"] = "event",
-								["UniqueID"] = "1674777836",
-								["ParentUID"] = "2548552443",
-								["Operator"] = "below",
-								["Event"] = "speed",
-								["Arguments"] = "30",
-							},
-						},
-						[5] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2548552443",
-								["ClassName"] = "bone",
-								["UniqueID"] = "484853236",
-								["ParentName"] = "group",
-								["Bone"] = "left upperarm",
-								["Name"] = "",
-								["Angles"] = Angle(-15.78125, -21.6875, 7.28125),
-							},
-						},
-						[6] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2548552443",
-								["ClassName"] = "bone",
-								["UniqueID"] = "3973710705",
-								["ParentName"] = "group",
-								["Bone"] = "right upperarm",
-								["Name"] = "",
-								["Angles"] = Angle(36.59375, -34.375, 41.375),
-							},
-						},
-						[7] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2548552443",
-								["ClassName"] = "bone",
-								["UniqueID"] = "3137964571",
-								["ParentName"] = "group",
-								["Angles"] = Angle(74.75, -35.09375, 87.78125),
-								["Bone"] = "right hand",
-								["Name"] = "",
-								["EditorExpand"] = true,
-							},
-						},
 					},
 					["self"] = {
-						["ParentName"] = "holdtype",
-						["ClassName"] = "group",
-						["UniqueID"] = "2548552443",
-						["EditorExpand"] = true,
-						["Name"] = "",
-						["ParentUID"] = "3980234911",
+						["ClassName"] = "event",
+						["UniqueID"] = "577637106",
+						["Event"] = "is_in_noclip",
 					},
 				},
 			},
 			["self"] = {
-				["Walk"] = "walk_dual",
-				["Fallback"] = "run_all_charging",
-				["UniqueID"] = "3980234911",
-				["Jump"] = "swimming_all",
-				["AttackStandPrimaryfire"] = "zombie_attack_01",
-				["Name"] = "",
-				["ClassName"] = "holdtype",
-				["ParentName"] = "bones",
+				["Arguments"] = "weapon_crowbar;wowozela@@1",
+				["Invert"] = true,
+				["UniqueID"] = "3792909328",
+				["Event"] = "weapon_class",
+				["Operator"] = "equal",
 				["EditorExpand"] = true,
-				["CrouchIdle"] = "cidle_melee2",
-				["ParentUID"] = "1744634544",
-				["StandIdle"] = "walk_dual",
-				["ActLand"] = "jump_land",
+				["ClassName"] = "event",
 			},
 		},
 		[2] = {
 			["children"] = {
 				[1] = {
 					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Angles"] = Angle(36.59375, -34.375, 41.375),
+								["Bone"] = "right upperarm",
+								["UniqueID"] = "3973710705",
+								["ClassName"] = "bone",
+							},
+						},
+						[2] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Angles"] = Angle(74.75, -35.09375, 87.78125),
+								["UniqueID"] = "3137964571",
+								["Bone"] = "right hand",
+								["ClassName"] = "bone",
+								["EditorExpand"] = true,
+							},
+						},
+						[3] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Angles"] = Angle(-15.78125, -21.6875, 7.28125),
+								["Bone"] = "left upperarm",
+								["UniqueID"] = "484853236",
+								["ClassName"] = "bone",
+							},
+						},
+						[4] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Angles"] = Angle(-38.09375, -24.1875, 73.5),
+								["UniqueID"] = "1673164210",
+								["Bone"] = "left hand",
+								["ClassName"] = "bone",
+								["EditorExpand"] = true,
+							},
+						},
+						[5] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Angles"] = Angle(0, 11.59375, 0),
+								["UniqueID"] = "1677482011",
+								["Bone"] = "right forearm",
+								["ClassName"] = "bone",
+								["EditorExpand"] = true,
+							},
+						},
+						[6] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Angles"] = Angle(25, 55.375, 0),
+								["Bone"] = "left forearm",
+								["UniqueID"] = "1444995674",
+								["ClassName"] = "bone",
+							},
+						},
+						[7] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ClassName"] = "event",
+								["UniqueID"] = "1674777836",
+								["Event"] = "speed",
+								["Operator"] = "below",
+								["Arguments"] = "30",
+								["Invert"] = true,
+							},
+						},
 					},
 					["self"] = {
-						["ParentName"] = "weapon class equal \"weapon crowbar or wowozela@@1\"",
-						["ClassName"] = "event",
-						["UniqueID"] = "577637106",
-						["Event"] = "is_in_noclip",
-						["Name"] = "",
-						["ParentUID"] = "3792909328",
+						["ClassName"] = "group",
+						["UniqueID"] = "2548552443",
+						["EditorExpand"] = true,
 					},
 				},
 			},
 			["self"] = {
-				["ParentName"] = "bones",
-				["Invert"] = true,
-				["Name"] = "",
-				["ClassName"] = "event",
-				["UniqueID"] = "3792909328",
-				["Arguments"] = "weapon_crowbar;wowozela@@1",
-				["ParentUID"] = "1744634544",
-				["Operator"] = "equal",
-				["Event"] = "weapon_class",
+				["Walk"] = "walk_dual",
+				["ClassName"] = "holdtype",
+				["UniqueID"] = "3980234911",
 				["EditorExpand"] = true,
+				["ActLand"] = "jump_land",
+				["AttackStandPrimaryfire"] = "zombie_attack_01",
+				["StandIdle"] = "walk_dual",
+				["CrouchIdle"] = "cidle_melee2",
 			},
 		},
 	},
