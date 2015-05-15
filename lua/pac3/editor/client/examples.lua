@@ -1,5 +1,338 @@
 pace.example_outfits = {}
 --pace.example_outfits[""] = {}
+pace.example_outfits["projectile gun advanced"] = {[1] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+			},
+			["self"] = {
+				["ClassName"] = "model",
+				["Position"] = Vector(21.794189453125, -0.0023193359375, 31.116744995117),
+				["Model"] = "models/props_combine/combine_barricade_short01a.mdl",
+				["Bone"] = "None",
+				["Name"] = "Stand",
+				["UniqueID"] = "3327276730",
+			},
+		},
+		[2] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["UniqueID"] = "501117373",
+								["Delay"] = 0.3,
+								["Physical"] = true,
+								["Name"] = "Multiple projectiles can be shot at once",
+								["Sticky"] = true,
+								["ClassName"] = "projectile",
+								["Spread"] = 0.05,
+								["OutfitPartUID"] = "2361506147",
+								["OutfitPartName"] = "Fire",
+								["EditorExpand"] = true,
+								["Gravity"] = false,
+							},
+						},
+						[2] = {
+							["children"] = {
+								[1] = {
+									["children"] = {
+									},
+									["self"] = {
+										["Effect"] = "muzzle_minigun",
+										["ClassName"] = "effect",
+										["UniqueID"] = "643206501",
+										["Rate"] = 0.1,
+									},
+								},
+							},
+							["self"] = {
+								["Alpha"] = 0,
+								["ClassName"] = "model",
+								["Position"] = Vector(35.404052734375, -0.00048828125, 0),
+								["Model"] = "models/pac/default.mdl",
+								["EditorExpand"] = true,
+								["Name"] = "Muzzle effects",
+								["UniqueID"] = "2824542135",
+							},
+						},
+						[3] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ClassName"] = "event",
+								["UniqueID"] = "68147785",
+								["Event"] = "animation_event",
+								["Arguments"] = "attack primary",
+								["Name"] = "Projectiles are tirggered by events",
+								["Invert"] = true,
+							},
+						},
+						[4] = {
+							["children"] = {
+							},
+							["self"] = {
+								["UniqueID"] = "2520114528",
+								["Delay"] = 0.2,
+								["Physical"] = true,
+								["Name"] = "Mass and speed controls damage",
+								["Sticky"] = true,
+								["ClassName"] = "projectile",
+								["Spread"] = 0.05,
+								["OutfitPartUID"] = "2361506147",
+								["OutfitPartName"] = "Fire",
+								["EditorExpand"] = true,
+								["Gravity"] = false,
+							},
+						},
+						[5] = {
+							["children"] = {
+							},
+							["self"] = {
+								["UniqueID"] = "1069681707",
+								["Physical"] = true,
+								["Name"] = "Delay adds a delay to the shot.",
+								["Sticky"] = true,
+								["ClassName"] = "projectile",
+								["OutfitPartUID"] = "2361506147",
+								["OutfitPartName"] = "Fire",
+								["EditorExpand"] = true,
+								["Gravity"] = false,
+							},
+						},
+					},
+					["self"] = {
+						["Alpha"] = 0,
+						["ClassName"] = "model",
+						["UniqueID"] = "2557787785",
+						["Model"] = "models/pac/default.mdl",
+						["Name"] = "Physical tickbox makes them kill",
+						["EditorExpand"] = true,
+					},
+				},
+			},
+			["self"] = {
+				["Model"] = "models/airboatgun.mdl",
+				["ClassName"] = "model",
+				["Position"] = Vector(18.18505859375, 31.786865234375, 45.897933959961),
+				["EditorExpand"] = true,
+				["UniqueID"] = "2818191603",
+				["Bone"] = "None",
+				["Name"] = "This gun aims with eye angles",
+				["EyeAngles"] = true,
+			},
+		},
+	},
+	["self"] = {
+		["EditorExpand"] = true,
+		["UniqueID"] = "2370197831",
+		["ClassName"] = "group",
+		["Name"] = "The gun",
+		["Description"] = "add parts to me!",
+	},
+},
+[2] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ClassName"] = "sound",
+								["UniqueID"] = "162303831",
+								["SoundLevel"] = 70,
+								["Sound"] = "weapons/diamond_back_01.wav",
+								["MaxPitch"] = 110,
+								["Name"] = "They can include sounds",
+								["MinPitch"] = 90,
+							},
+						},
+						[2] = {
+							["children"] = {
+								[1] = {
+									["children"] = {
+										[1] = {
+											["children"] = {
+											},
+											["self"] = {
+												["EditorExpand"] = true,
+												["UniqueID"] = "1837104160",
+												["Rate"] = 0.5,
+												["Effect"] = "taunt_pyro_balloon_explosion",
+												["ClassName"] = "effect",
+											},
+										},
+										[2] = {
+											["children"] = {
+											},
+											["self"] = {
+												["ClassName"] = "sound",
+												["UniqueID"] = "1017367923",
+												["SoundLevel"] = 70,
+												["Pitch"] = 0.5,
+												["Sound"] = "weapons/air_burster_explode2.wav",
+											},
+										},
+									},
+									["self"] = {
+										["AffectChildrenOnly"] = true,
+										["Invert"] = true,
+										["Name"] = "is ranger below 5?",
+										["ClassName"] = "event",
+										["UniqueID"] = "3181550699",
+										["RootOwner"] = false,
+										["EditorExpand"] = true,
+										["Operator"] = "below",
+										["Arguments"] = "5@@10",
+										["Event"] = "ranger",
+									},
+								},
+							},
+							["self"] = {
+								["Alpha"] = 0,
+								["ClassName"] = "model",
+								["UniqueID"] = "1704152275",
+								["Model"] = "models/pac/default.mdl",
+								["Name"] = "Projectiles can have events too",
+								["EditorExpand"] = true,
+							},
+						},
+					},
+					["self"] = {
+						["EditorExpand"] = true,
+						["UniqueID"] = "1874802794",
+						["Model"] = "models/Items/AR2_Grenade.mdl",
+						["Name"] = "Projectile models can be anything you want.",
+						["ClassName"] = "model",
+					},
+				},
+			},
+			["self"] = {
+				["Name"] = "Fire",
+				["ClassName"] = "group",
+				["UniqueID"] = "2361506147",
+				["EditorExpand"] = true,
+			},
+		},
+	},
+	["self"] = {
+		["ClassName"] = "group",
+		["UniqueID"] = "448539766",
+		["Hide"] = true,
+		["Name"] = "The projectile itself. Must be in a group within a group",
+		["EditorExpand"] = true,
+	},
+},
+}
+pace.example_outfits["projectile gun"] = {[1] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["StartColor"] = Vector(255, 93, 0),
+								["ClassName"] = "trail",
+								["UniqueID"] = "883293869",
+								["Name"] = "Trails and effects can bug, but are mostly stable.",
+							},
+						},
+						[2] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ClassName"] = "sound",
+								["UniqueID"] = "162303831",
+								["SoundLevel"] = 70,
+								["Name"] = "They can include sounds",
+								["Sound"] = "weapons/diamond_back_01.wav",
+							},
+						},
+					},
+					["self"] = {
+						["EditorExpand"] = true,
+						["UniqueID"] = "1874802794",
+						["Model"] = "models/Items/AR2_Grenade.mdl",
+						["Name"] = "Projectile models can be anything you want.",
+						["ClassName"] = "model",
+					},
+				},
+			},
+			["self"] = {
+				["Name"] = "Fire",
+				["ClassName"] = "group",
+				["UniqueID"] = "2361506147",
+				["EditorExpand"] = true,
+			},
+		},
+	},
+	["self"] = {
+		["ClassName"] = "group",
+		["UniqueID"] = "448539766",
+		["Hide"] = true,
+		["Name"] = "The projectile itself. Must be in a group within a group",
+		["EditorExpand"] = true,
+	},
+},
+[2] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Arguments"] = "attack primary",
+								["UniqueID"] = "68147785",
+								["Event"] = "animation_event",
+								["Name"] = "Projectiles are tirggered by events",
+								["ClassName"] = "event",
+							},
+						},
+					},
+					["self"] = {
+						["EditorExpand"] = true,
+						["ClassName"] = "projectile",
+						["UniqueID"] = "501117373",
+						["Sticky"] = true,
+						["OutfitPartUID"] = "2361506147",
+						["OutfitPartName"] = "Fire",
+						["Name"] = "In outfit name, put fire.",
+						["Gravity"] = false,
+					},
+				},
+			},
+			["self"] = {
+				["Model"] = "models/airboatgun.mdl",
+				["ClassName"] = "model",
+				["Position"] = Vector(-0.000732421875, 31.787841796875, 50.024978637695),
+				["EditorExpand"] = true,
+				["UniqueID"] = "2818191603",
+				["Bone"] = "None",
+				["Name"] = "This gun aims with eye angles",
+				["EyeAngles"] = true,
+			},
+		},
+	},
+	["self"] = {
+		["EditorExpand"] = true,
+		["UniqueID"] = "2370197831",
+		["ClassName"] = "group",
+		["Name"] = "The gun",
+		["Description"] = "add parts to me!",
+	},
+},
+}
 
 pace.example_outfits["custom death animations"] = {[1] = {
 	["children"] = {
