@@ -3451,115 +3451,93 @@ pace.example_outfits["robotic arm with aimpart"] = {[1] = {
 	},
 },
 }
-pace.example_outfits["cloaking"] = {[1] = {
-	["children"] = {
-		[1] = {
-			["children"] = {
-				[1] = {
-					["children"] = {
-					},
-					["self"] = {
-						["ParentName"] = "hoverball",
-						["ClassName"] = "model",
-						["Position"] = Vector(-0.00048828125, 0.001953125, -30.1435546875),
-						["UniqueID"] = "263578771",
-						["Translucent"] = true,
-						["ParentUID"] = "1778920631",
-						["Name"] = "",
-						["Material"] = "testmat",
-					},
-				},
-			},
-			["self"] = {
-				["ParentName"] = "bind p \"+pac_event cloak\"",
-				["ClassName"] = "model",
-				["UniqueID"] = "1778920631",
-				["EditorExpand"] = true,
-				["Translucent"] = true,
-				["ParentUID"] = "512753821",
-				["Name"] = "",
-				["Material"] = "testmat",
-			},
-		},
-		[2] = {
-			["children"] = {
-				[1] = {
-					["children"] = {
-						[1] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentName"] = "cloakfactor = ? proxy",
-								["Invert"] = true,
-								["Name"] = "command find simple cloakon@@1",
-								["ClassName"] = "event",
-								["UniqueID"] = "3680420824",
-								["ParentUID"] = "3171310209",
-								["Arguments"] = "cloak_on@@1",
-								["Event"] = "command",
-								["EditorExpand"] = true,
-							},
+pace.example_outfits["cloaking"] = {["children"] = {
+	[1] = {
+		["children"] = {
+			[1] = {
+				["children"] = {
+					[1] = {
+						["children"] = {
+						},
+						["self"] = {
+							["Arguments"] = "p",
+							["UniqueID"] = "3408215400",
+							["Event"] = "button",
+							["Operator"] = "equal",
+							["ClassName"] = "event",
+							["EditorExpand"] = true,
 						},
 					},
-					["self"] = {
-						["ParentName"] = "testmat",
-						["ClassName"] = "proxy",
-						["UniqueID"] = "3171310209",
-						["Expression"] = "(timeex()+0.1) ^ 5",
-						["EditorExpand"] = true,
-						["ParentUID"] = "3721614203",
-						["Name"] = "",
-						["VariableName"] = "CloakFactor",
-					},
 				},
-				[2] = {
-					["children"] = {
-						[1] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentName"] = "cloakfactor = ? proxy",
-								["Invert"] = true,
-								["Name"] = "",
-								["ClassName"] = "event",
-								["UniqueID"] = "3408215400",
-								["ParentUID"] = "2836747662",
-								["Arguments"] = "cloak_off@@1",
-								["Event"] = "command",
-								["EditorExpand"] = true,
-							},
+				["self"] = {
+					["ClassName"] = "proxy",
+					["UniqueID"] = "2836747662",
+					["Expression"] = "max((-timeex()+1) ^ 5, 0)",
+					["EditorExpand"] = true,
+					["VariableName"] = "CloakFactor",
+				},
+			},
+			[2] = {
+				["children"] = {
+					[1] = {
+						["children"] = {
+						},
+						["self"] = {
+							["Arguments"] = "p",
+							["Invert"] = true,
+							["UniqueID"] = "3680420824",
+							["Event"] = "button",
+							["Operator"] = "equal",
+							["EditorExpand"] = true,
+							["ClassName"] = "event",
 						},
 					},
-					["self"] = {
-						["ParentName"] = "testmat",
-						["ClassName"] = "proxy",
-						["UniqueID"] = "2836747662",
-						["Expression"] = "(-timeex()+1) ^ 5",
-						["EditorExpand"] = true,
-						["ParentUID"] = "3721614203",
-						["Name"] = "",
-						["VariableName"] = "CloakFactor",
-					},
+				},
+				["self"] = {
+					["ClassName"] = "proxy",
+					["UniqueID"] = "3171310209",
+					["Expression"] = "min((timeex()+0.1) ^ 5, 1)",
+					["EditorExpand"] = true,
+					["VariableName"] = "CloakFactor",
 				},
 			},
-			["self"] = {
-				["ParentUID"] = "512753821",
-				["ClassName"] = "material",
-				["UniqueID"] = "3721614203",
-				["Name"] = "testmat",
-				["CloakPassEnabled"] = true,
-				["EditorExpand"] = true,
-				["CloakFactor"] = 9.3132257461548e-010,
-				["ParentName"] = "bind p \"+pac_event cloak\"",
-			},
+		},
+		["self"] = {
+			["EditorExpand"] = true,
+			["UniqueID"] = "3721614203",
+			["CloakPassEnabled"] = true,
+			["Name"] = "testmat",
+			["ClassName"] = "material",
 		},
 	},
-	["self"] = {
-		["Name"] = "bind p \"+pac_event cloak\"",
-		["ClassName"] = "group",
-		["UniqueID"] = "512753821",
-		["EditorExpand"] = true,
+	[2] = {
+		["children"] = {
+			[1] = {
+				["children"] = {
+				},
+				["self"] = {
+					["ClassName"] = "model",
+					["UniqueID"] = "263578771",
+					["Position"] = Vector(-0.00048828125, 0.001953125, -30.1435546875),
+					["Translucent"] = true,
+					["Material"] = "testmat",
+				},
+			},
+		},
+		["self"] = {
+			["ClassName"] = "model",
+			["UniqueID"] = "1778920631",
+			["EditorExpand"] = true,
+			["Translucent"] = true,
+			["Material"] = "testmat",
+		},
 	},
+},
+["self"] = {
+	["Name"] = "press p",
+	["ClassName"] = "group",
+	["UniqueID"] = "512753821",
+	["EditorExpand"] = true,
 },
 }
 pace.example_outfits["direction aim"] = {[1] = {
