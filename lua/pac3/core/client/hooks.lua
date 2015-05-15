@@ -51,6 +51,26 @@ function pac.UpdateAnimation(ply)
 	if ply.pac_bodygroup_info then
 		ply:SetBodygroup(ply.pac_bodygroup_info.id, ply.pac_bodygroup_info.model_index)
 	end
+	
+	local vehicle = ply:GetVehicle()
+	
+	if ply.pac_last_vehicle ~= vehicle then
+		if ply.pac_last_vehicle ~= nil then
+			if ply.pac_parts then
+				local done = {}
+				for key, part in pairs(ply.pac_parts) do
+					local part = part:GetRootPart()
+					if not done[part] then
+						if part.OwnerName == "active vehicle" then
+							part:CheckOwner()
+						end
+						done[part] = true
+					end
+				end
+			end
+		end
+		ply.pac_last_vehicle = vehicle
+	end
 end
 pac.AddHook("UpdateAnimation")
 
