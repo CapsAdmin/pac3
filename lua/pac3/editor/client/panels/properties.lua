@@ -2002,6 +2002,47 @@ do -- damage type
 	pace.RegisterPanel(PANEL)
 end
 
+do -- damage type
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_buttons"
+	PANEL.Base = "pace_properties_base_type"
+	
+	local enums = {}
+
+	for key, val in pairs(_G) do
+		if type(key) == "string" and type(val) == "number" and key:sub(0,4) == "KEY_" then
+			enums[key:sub(5):lower()] = val
+		end
+	end
+	
+		
+	function PANEL:SpecialCallback()				
+		local frame = create_search_list(
+			self,
+			self.CurrentKey,
+			L"keyboard buttons", 
+			function(list) 	
+				list:AddColumn("name") 
+			end,
+			function() 
+				return enums
+			end,
+			function()
+				return pace.current_part.Arguments
+			end,
+			function(list, key, val)
+				return list:AddLine(key)
+			end,
+			function(val, key)
+				return key
+			end
+		)
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
 do -- script
 	local PANEL = {}
 
