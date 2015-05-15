@@ -27,6 +27,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Gravity", Vector(0,0, -50))
 	pac.GetSet(PART, "Collide", true)
 	pac.GetSet(PART, "Lighting", true)
+	pac.GetSet(PART, "Additive", false)
 	pac.GetSet(PART, "Sliding", true)
 	pac.GetSet(PART, "3D", false)
 	pac.GetSet(PART, "AlignToSurface", true)
@@ -129,6 +130,32 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
+function PART:SetAdditive(b)
+	self.Additive = b
+	
+	self:SetMaterial(self:GetMaterial())
+end
+
+function PART:SetMaterial(var)
+	var = var or ""
+	
+	if not pac.Handleurltex(self, var, function(mat) 
+		mat:SetFloat("$alpha", 0.999)
+		mat:SetInt("$spriterendermode", self.Additive and 3 or 1)
+		self.Materialm = mat
+		self:CallEvent("material_changed")
+	end, "Sprite") then
+		if var == "" then
+			self.Materialm = nil
+		else			
+			self.Materialm = pac.Material(var, self)
+			self:CallEvent("material_changed")
+		end
+	end
+		
+	self.Material = var
+end
+
 function PART:EmitParticles(pos, ang)
 	local emt = self.emitter
 	if not emt then return end
@@ -178,7 +205,7 @@ function PART:EmitParticles(pos, ang)
 			end
 			
 			for i = 1, double do
-				local particle = emt:Add(self.Material, pos)
+				local particle = emt:Add(self.Materialm or self.Material, pos)
 
 				if self.DoubleSided then
 					local ang_
