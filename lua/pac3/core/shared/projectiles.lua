@@ -20,9 +20,25 @@ do -- projectile entity
 	end
 	
 	if SERVER then
+		
+		--fix missing attacker
+		hook.Add("EntityTakeDamage", "pac_projectile", function(ent, dmg)
 			
+			local a, i = dmg:GetAttacker(), dmg:GetInflictor()
+			
+			if a == i and a:IsValid() and a.projectile_owner then
+				local owner = a.projectile_owner
+				if owner:IsValid() then
+					dmg:SetAttacker(a.projectile_owner)
+				end
+			end
+			
+		end)
+		
 		function ENT:SetData(ply, pos, ang, part)			
 
+			self.projectile_owner = ply
+			
 			if part.Sphere then
 				self:PhysicsInitSphere(math.Clamp(part.Radius, 1, 30))
 			else
@@ -123,26 +139,33 @@ if SERVER then
 	
 	util.AddNetworkString("pac_projectile")
 	util.AddNetworkString("pac_projectile_attach")
-		
+	
 	net.Receive("pac_projectile", function(len, ply)			
 		if not enable:GetBool() then return end
 	
 		local pos = net.ReadVector()
 		local ang = net.ReadAngle()
 			
+		-- Is this even used???
+		ply.pac_projectiles = ply.pac_projectiles or {}		
+		if table.Count( ply.pac_projectiles ) >= 30 then
+			return
+		end
+		
 		local part = net.ReadTable()
 
 		if pos:Distance(ply:EyePos()) > 200 * ply:GetModelScale() then
 			pos = ply:EyePos()
 		end
 			
-		ply.pac_projectiles = ply.pac_projectiles or {}		
-		if table.Count(ply.pac_projectiles) >= 30 then
-			return
-		end		
 		
 		timer.Simple(part.Delay, function()				
+			
+			if not ply:IsValid() then return end
+			
 			local ent = ents.Create("pac_projectile")
+			SafeRemoveEntityDelayed(ent,math.Clamp(part.LifeTime, 0, 10))
+			
 			ent:SetModel("models/props_junk/popcan01a.mdl")
 			
 			ent:SetPos(pos)
@@ -156,11 +179,11 @@ if SERVER then
 			ent:SetData(ply, pos, ang, part)
 			
 			ent:SetPhysicsAttacker(ply)
-				
-			timer.Simple(math.Clamp(part.LifeTime, 0, 10), function()
-				SafeRemoveEntity(ent)
-			end)	
-				
+			
+			if ent.CPPISetOwner then
+				ent:CPPISetOwner(ply)
+			end
+			
 			net.Start("pac_projectile_attach")
 				net.WriteEntity(ply)
 				net.WriteInt(ent:EntIndex(), 16)
