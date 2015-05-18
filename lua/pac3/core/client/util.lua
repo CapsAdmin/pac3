@@ -451,7 +451,7 @@ function pac.Material(str, part)
 	return Material(str)
 end
 
-function pac.Handleurltex(part, url, callback)
+function pac.Handleurltex(part, url, callback, shader)
 	if url and pac.urltex and url:find("http") then	
 		local skip_cache = url:sub(1,1) == "_"
 		url = url:gsub("https://", "http://")
@@ -470,7 +470,8 @@ function pac.Handleurltex(part, url, callback)
 						pac.dprint("set custom material texture %q to %s", url, part:GetName())
 					end
 				end,
-				skip_cache
+				skip_cache,
+				shader
 			)
 			return true
 		end

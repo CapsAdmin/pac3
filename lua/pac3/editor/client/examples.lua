@@ -1,5 +1,338 @@
 pace.example_outfits = {}
 --pace.example_outfits[""] = {}
+pace.example_outfits["projectile gun advanced"] = {[1] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+			},
+			["self"] = {
+				["ClassName"] = "model",
+				["Position"] = Vector(21.794189453125, -0.0023193359375, 31.116744995117),
+				["Model"] = "models/props_combine/combine_barricade_short01a.mdl",
+				["Bone"] = "None",
+				["Name"] = "Stand",
+				["UniqueID"] = "3327276730",
+			},
+		},
+		[2] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["UniqueID"] = "501117373",
+								["Delay"] = 0.3,
+								["Physical"] = true,
+								["Name"] = "Multiple projectiles can be shot at once",
+								["Sticky"] = true,
+								["ClassName"] = "projectile",
+								["Spread"] = 0.05,
+								["OutfitPartUID"] = "2361506147",
+								["OutfitPartName"] = "Fire",
+								["EditorExpand"] = true,
+								["Gravity"] = false,
+							},
+						},
+						[2] = {
+							["children"] = {
+								[1] = {
+									["children"] = {
+									},
+									["self"] = {
+										["Effect"] = "muzzle_minigun",
+										["ClassName"] = "effect",
+										["UniqueID"] = "643206501",
+										["Rate"] = 0.1,
+									},
+								},
+							},
+							["self"] = {
+								["Alpha"] = 0,
+								["ClassName"] = "model",
+								["Position"] = Vector(35.404052734375, -0.00048828125, 0),
+								["Model"] = "models/pac/default.mdl",
+								["EditorExpand"] = true,
+								["Name"] = "Muzzle effects",
+								["UniqueID"] = "2824542135",
+							},
+						},
+						[3] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ClassName"] = "event",
+								["UniqueID"] = "68147785",
+								["Event"] = "animation_event",
+								["Arguments"] = "attack primary",
+								["Name"] = "Projectiles are tirggered by events",
+								["Invert"] = true,
+							},
+						},
+						[4] = {
+							["children"] = {
+							},
+							["self"] = {
+								["UniqueID"] = "2520114528",
+								["Delay"] = 0.2,
+								["Physical"] = true,
+								["Name"] = "Mass and speed controls damage",
+								["Sticky"] = true,
+								["ClassName"] = "projectile",
+								["Spread"] = 0.05,
+								["OutfitPartUID"] = "2361506147",
+								["OutfitPartName"] = "Fire",
+								["EditorExpand"] = true,
+								["Gravity"] = false,
+							},
+						},
+						[5] = {
+							["children"] = {
+							},
+							["self"] = {
+								["UniqueID"] = "1069681707",
+								["Physical"] = true,
+								["Name"] = "Delay adds a delay to the shot.",
+								["Sticky"] = true,
+								["ClassName"] = "projectile",
+								["OutfitPartUID"] = "2361506147",
+								["OutfitPartName"] = "Fire",
+								["EditorExpand"] = true,
+								["Gravity"] = false,
+							},
+						},
+					},
+					["self"] = {
+						["Alpha"] = 0,
+						["ClassName"] = "model",
+						["UniqueID"] = "2557787785",
+						["Model"] = "models/pac/default.mdl",
+						["Name"] = "Physical tickbox makes them kill",
+						["EditorExpand"] = true,
+					},
+				},
+			},
+			["self"] = {
+				["Model"] = "models/airboatgun.mdl",
+				["ClassName"] = "model",
+				["Position"] = Vector(18.18505859375, 31.786865234375, 45.897933959961),
+				["EditorExpand"] = true,
+				["UniqueID"] = "2818191603",
+				["Bone"] = "None",
+				["Name"] = "This gun aims with eye angles",
+				["EyeAngles"] = true,
+			},
+		},
+	},
+	["self"] = {
+		["EditorExpand"] = true,
+		["UniqueID"] = "2370197831",
+		["ClassName"] = "group",
+		["Name"] = "The gun",
+		["Description"] = "add parts to me!",
+	},
+},
+[2] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ClassName"] = "sound",
+								["UniqueID"] = "162303831",
+								["SoundLevel"] = 70,
+								["Sound"] = "weapons/diamond_back_01.wav",
+								["MaxPitch"] = 110,
+								["Name"] = "They can include sounds",
+								["MinPitch"] = 90,
+							},
+						},
+						[2] = {
+							["children"] = {
+								[1] = {
+									["children"] = {
+										[1] = {
+											["children"] = {
+											},
+											["self"] = {
+												["EditorExpand"] = true,
+												["UniqueID"] = "1837104160",
+												["Rate"] = 0.5,
+												["Effect"] = "taunt_pyro_balloon_explosion",
+												["ClassName"] = "effect",
+											},
+										},
+										[2] = {
+											["children"] = {
+											},
+											["self"] = {
+												["ClassName"] = "sound",
+												["UniqueID"] = "1017367923",
+												["SoundLevel"] = 70,
+												["Pitch"] = 0.5,
+												["Sound"] = "weapons/air_burster_explode2.wav",
+											},
+										},
+									},
+									["self"] = {
+										["AffectChildrenOnly"] = true,
+										["Invert"] = true,
+										["Name"] = "is ranger below 5?",
+										["ClassName"] = "event",
+										["UniqueID"] = "3181550699",
+										["RootOwner"] = false,
+										["EditorExpand"] = true,
+										["Operator"] = "below",
+										["Arguments"] = "5@@10",
+										["Event"] = "ranger",
+									},
+								},
+							},
+							["self"] = {
+								["Alpha"] = 0,
+								["ClassName"] = "model",
+								["UniqueID"] = "1704152275",
+								["Model"] = "models/pac/default.mdl",
+								["Name"] = "Projectiles can have events too",
+								["EditorExpand"] = true,
+							},
+						},
+					},
+					["self"] = {
+						["EditorExpand"] = true,
+						["UniqueID"] = "1874802794",
+						["Model"] = "models/Items/AR2_Grenade.mdl",
+						["Name"] = "Projectile models can be anything you want.",
+						["ClassName"] = "model",
+					},
+				},
+			},
+			["self"] = {
+				["Name"] = "Fire",
+				["ClassName"] = "group",
+				["UniqueID"] = "2361506147",
+				["EditorExpand"] = true,
+			},
+		},
+	},
+	["self"] = {
+		["ClassName"] = "group",
+		["UniqueID"] = "448539766",
+		["Hide"] = true,
+		["Name"] = "The projectile itself. Must be in a group within a group",
+		["EditorExpand"] = true,
+	},
+},
+}
+pace.example_outfits["projectile gun"] = {[1] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["StartColor"] = Vector(255, 93, 0),
+								["ClassName"] = "trail",
+								["UniqueID"] = "883293869",
+								["Name"] = "Trails and effects can bug, but are mostly stable.",
+							},
+						},
+						[2] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ClassName"] = "sound",
+								["UniqueID"] = "162303831",
+								["SoundLevel"] = 70,
+								["Name"] = "They can include sounds",
+								["Sound"] = "weapons/diamond_back_01.wav",
+							},
+						},
+					},
+					["self"] = {
+						["EditorExpand"] = true,
+						["UniqueID"] = "1874802794",
+						["Model"] = "models/Items/AR2_Grenade.mdl",
+						["Name"] = "Projectile models can be anything you want.",
+						["ClassName"] = "model",
+					},
+				},
+			},
+			["self"] = {
+				["Name"] = "Fire",
+				["ClassName"] = "group",
+				["UniqueID"] = "2361506147",
+				["EditorExpand"] = true,
+			},
+		},
+	},
+	["self"] = {
+		["ClassName"] = "group",
+		["UniqueID"] = "448539766",
+		["Hide"] = true,
+		["Name"] = "The projectile itself. Must be in a group within a group",
+		["EditorExpand"] = true,
+	},
+},
+[2] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Arguments"] = "attack primary",
+								["UniqueID"] = "68147785",
+								["Event"] = "animation_event",
+								["Name"] = "Projectiles are tirggered by events",
+								["ClassName"] = "event",
+							},
+						},
+					},
+					["self"] = {
+						["EditorExpand"] = true,
+						["ClassName"] = "projectile",
+						["UniqueID"] = "501117373",
+						["Sticky"] = true,
+						["OutfitPartUID"] = "2361506147",
+						["OutfitPartName"] = "Fire",
+						["Name"] = "In outfit name, put fire.",
+						["Gravity"] = false,
+					},
+				},
+			},
+			["self"] = {
+				["Model"] = "models/airboatgun.mdl",
+				["ClassName"] = "model",
+				["Position"] = Vector(-0.000732421875, 31.787841796875, 50.024978637695),
+				["EditorExpand"] = true,
+				["UniqueID"] = "2818191603",
+				["Bone"] = "None",
+				["Name"] = "This gun aims with eye angles",
+				["EyeAngles"] = true,
+			},
+		},
+	},
+	["self"] = {
+		["EditorExpand"] = true,
+		["UniqueID"] = "2370197831",
+		["ClassName"] = "group",
+		["Name"] = "The gun",
+		["Description"] = "add parts to me!",
+	},
+},
+}
 
 pace.example_outfits["custom death animations"] = {[1] = {
 	["children"] = {
@@ -3093,29 +3426,17 @@ pace.example_outfits["staff"] = {[1] = {
 	["children"] = {
 		[1] = {
 			["children"] = {
-				[1] = {
-					["children"] = {
-					},
-					["self"] = {
-						["ParentName"] = "weapon class equal \"weapon crowbar@@1\"",
-						["ClassName"] = "event",
-						["UniqueID"] = "4152703468",
-						["Event"] = "is_voice_chatting",
-						["Name"] = "",
-						["ParentUID"] = "3915329507",
-					},
-				},
 			},
 			["self"] = {
-				["ParentName"] = "staff",
-				["Invert"] = true,
-				["Name"] = "",
-				["ClassName"] = "event",
-				["UniqueID"] = "3915329507",
-				["ParentUID"] = "3166345426",
-				["Operator"] = "equal",
-				["Event"] = "weapon_class",
-				["Arguments"] = "weapon_crowbar@@1",
+				["Position"] = Vector(3.4189453125, -1.826171875, 0.180908203125),
+				["AimPartUID"] = "1736154830",
+				["AngleOffset"] = Angle(90, 0, 0),
+				["AimPartName"] = "aimpoint",
+				["PositionOffset"] = Vector(-38.599998474121, 0, 0),
+				["ClassName"] = "model",
+				["Bone"] = "right hand",
+				["Model"] = "models/props_c17/signpole001.mdl",
+				["UniqueID"] = "1959830642",
 			},
 		},
 		[2] = {
@@ -3124,184 +3445,32 @@ pace.example_outfits["staff"] = {[1] = {
 					["children"] = {
 					},
 					["self"] = {
-						["ParentName"] = "tree poplar ",
-						["ClassName"] = "clip",
-						["UniqueID"] = "3474919683",
-						["ParentUID"] = "3286429643",
-						["Angles"] = Angle(90, -180, -180),
-						["Name"] = "",
-						["Position"] = Vector(-0.048583984375, 0.033203125, 41.35546875),
-					},
-				},
-				[2] = {
-					["children"] = {
-						[1] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "1712940288",
-								["ClassName"] = "bone",
-								["UniqueID"] = "980300913",
-								["ParentName"] = "strider back leg",
-								["Bone"] = "combine strider lefteg hind bone 1",
-								["Name"] = "",
-								["Size"] = 0.2,
-							},
-						},
-						[2] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentName"] = "strider back leg",
-								["ClassName"] = "clip",
-								["UniqueID"] = "3036047950",
-								["ParentUID"] = "1712940288",
-								["Bone"] = "combine strider lefteg hind bone 1",
-								["Name"] = "",
-								["Position"] = Vector(51.8203125, 0.00634765625, -0.0029296875),
-							},
-						},
-						[3] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentName"] = "strider back leg",
-								["ClassName"] = "clip",
-								["UniqueID"] = "793466959",
-								["ParentUID"] = "1712940288",
-								["Angles"] = Angle(45.75, -179.96875, -179.96875),
-								["Name"] = "",
-								["Position"] = Vector(-157.318359375, -1.6025390625, 346.39599609375),
-							},
-						},
-						[4] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "1712940288",
-								["ClassName"] = "bone",
-								["UniqueID"] = "369704787",
-								["ParentName"] = "strider back leg",
-								["Bone"] = "combine strider lefteg hind bone",
-								["Name"] = "",
-								["Size"] = 0.225,
-							},
-						},
-					},
-					["self"] = {
-						["ParentName"] = "tree poplar ",
-						["Position"] = Vector(2, 0, 65),
-						["Name"] = "",
-						["Scale"] = Vector(2, 1, 1),
-						["ClassName"] = "model",
-						["Angles"] = Angle(-12, 180, 0),
-						["PositionOffset"] = Vector(123.90000152588, -0.69999998807907, -297),
-						["UniqueID"] = "1712940288",
-						["EditorExpand"] = true,
-						["Model"] = "models/Gibs/Strider_Back_Leg.mdl",
-						["ParentUID"] = "3286429643",
-					},
-				},
-				[3] = {
-					["children"] = {
-						[1] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentName"] = "strider back leg",
-								["ClassName"] = "clip",
-								["UniqueID"] = "2018584050",
-								["ParentUID"] = "2629413721",
-								["Angles"] = Angle(45.75, -179.96875, -179.96875),
-								["Name"] = "",
-								["Position"] = Vector(-157.318359375, -1.6025390625, 346.39599609375),
-							},
-						},
-						[2] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2629413721",
-								["ClassName"] = "bone",
-								["UniqueID"] = "2916632511",
-								["ParentName"] = "strider back leg",
-								["Bone"] = "combine strider lefteg hind bone 1",
-								["Name"] = "",
-								["Size"] = 0.2,
-							},
-						},
-						[3] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2629413721",
-								["ClassName"] = "bone",
-								["UniqueID"] = "799960072",
-								["ParentName"] = "strider back leg",
-								["Bone"] = "combine strider lefteg hind bone",
-								["Name"] = "",
-								["Size"] = 0.225,
-							},
-						},
-						[4] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentName"] = "strider back leg",
-								["ClassName"] = "clip",
-								["UniqueID"] = "3397390257",
-								["ParentUID"] = "2629413721",
-								["Bone"] = "combine strider lefteg hind bone 1",
-								["Name"] = "",
-								["Position"] = Vector(51.8203125, 0.00634765625, -0.0029296875),
-							},
-						},
-					},
-					["self"] = {
-						["ParentName"] = "tree poplar ",
-						["Position"] = Vector(-7, 0, -19),
-						["Name"] = "",
-						["Scale"] = Vector(2, 1, 1),
-						["ClassName"] = "model",
-						["Angles"] = Angle(0, -180, 180),
-						["PositionOffset"] = Vector(123.90000152588, -0.69999998807907, -297),
-						["UniqueID"] = "2629413721",
-						["EditorExpand"] = true,
-						["Model"] = "models/Gibs/Strider_Back_Leg.mdl",
-						["ParentUID"] = "3286429643",
+						["ClassName"] = "event",
+						["UniqueID"] = "4152703468",
+						["Event"] = "is_voice_chatting",
 					},
 				},
 			},
 			["self"] = {
-				["ParentName"] = "staff",
-				["Position"] = Vector(2.1700000762939, -1.0800000429153, -0.40999999642372),
-				["AimPartUID"] = "1736154830",
-				["AimPartName"] = "aimpoint",
-				["UniqueID"] = "3286429643",
-				["Name"] = "",
-				["Scale"] = Vector(1, 1.5700000524521, 1.1900000572205),
+				["Arguments"] = "weapon_crowbar@@1",
+				["Invert"] = true,
+				["UniqueID"] = "3915329507",
+				["Event"] = "weapon_class",
+				["Operator"] = "equal",
 				["EditorExpand"] = true,
-				["ClassName"] = "model",
-				["Size"] = 0,
-				["PositionOffset"] = Vector(5.0999999046326, 0, -7.1999998092651),
-				["Angles"] = Angle(86.25, 6, 4),
-				["Bone"] = "right hand",
-				["Model"] = "models/props_foliage/tree_poplar_01.mdl",
-				["ParentUID"] = "3166345426",
+				["ClassName"] = "event",
 			},
 		},
 		[3] = {
 			["children"] = {
 			},
 			["self"] = {
-				["ParentName"] = "staff",
 				["ClassName"] = "model",
-				["Position"] = Vector(1.7999999523163, -1.5, 0),
 				["UniqueID"] = "1736154830",
 				["Size"] = 0,
 				["Bone"] = "left hand",
 				["Name"] = "aimpoint",
-				["ParentUID"] = "3166345426",
+				["Position"] = Vector(1.7999999523163, -1.5, 0),
 			},
 		},
 	},
@@ -3318,155 +3487,120 @@ pace.example_outfits["staff"] = {[1] = {
 			["children"] = {
 				[1] = {
 					["children"] = {
-						[1] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2548552443",
-								["ClassName"] = "bone",
-								["UniqueID"] = "1673164210",
-								["ParentName"] = "group",
-								["Angles"] = Angle(-38.09375, -24.1875, 73.5),
-								["Bone"] = "left hand",
-								["Name"] = "",
-								["EditorExpand"] = true,
-							},
-						},
-						[2] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2548552443",
-								["ClassName"] = "bone",
-								["UniqueID"] = "1444995674",
-								["ParentName"] = "group",
-								["Bone"] = "left forearm",
-								["Name"] = "",
-								["Angles"] = Angle(25, 55.375, 0),
-							},
-						},
-						[3] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2548552443",
-								["ClassName"] = "bone",
-								["UniqueID"] = "1677482011",
-								["ParentName"] = "group",
-								["Angles"] = Angle(0, 11.59375, 0),
-								["Bone"] = "right forearm",
-								["Name"] = "",
-								["EditorExpand"] = true,
-							},
-						},
-						[4] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentName"] = "group",
-								["Invert"] = true,
-								["Name"] = "",
-								["ClassName"] = "event",
-								["UniqueID"] = "1674777836",
-								["ParentUID"] = "2548552443",
-								["Operator"] = "below",
-								["Event"] = "speed",
-								["Arguments"] = "30",
-							},
-						},
-						[5] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2548552443",
-								["ClassName"] = "bone",
-								["UniqueID"] = "484853236",
-								["ParentName"] = "group",
-								["Bone"] = "left upperarm",
-								["Name"] = "",
-								["Angles"] = Angle(-15.78125, -21.6875, 7.28125),
-							},
-						},
-						[6] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2548552443",
-								["ClassName"] = "bone",
-								["UniqueID"] = "3973710705",
-								["ParentName"] = "group",
-								["Bone"] = "right upperarm",
-								["Name"] = "",
-								["Angles"] = Angle(36.59375, -34.375, 41.375),
-							},
-						},
-						[7] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentUID"] = "2548552443",
-								["ClassName"] = "bone",
-								["UniqueID"] = "3137964571",
-								["ParentName"] = "group",
-								["Angles"] = Angle(74.75, -35.09375, 87.78125),
-								["Bone"] = "right hand",
-								["Name"] = "",
-								["EditorExpand"] = true,
-							},
-						},
 					},
 					["self"] = {
-						["ParentName"] = "holdtype",
-						["ClassName"] = "group",
-						["UniqueID"] = "2548552443",
-						["EditorExpand"] = true,
-						["Name"] = "",
-						["ParentUID"] = "3980234911",
+						["ClassName"] = "event",
+						["UniqueID"] = "577637106",
+						["Event"] = "is_in_noclip",
 					},
 				},
 			},
 			["self"] = {
-				["Walk"] = "walk_dual",
-				["Fallback"] = "run_all_charging",
-				["UniqueID"] = "3980234911",
-				["Jump"] = "swimming_all",
-				["AttackStandPrimaryfire"] = "zombie_attack_01",
-				["Name"] = "",
-				["ClassName"] = "holdtype",
-				["ParentName"] = "bones",
+				["Arguments"] = "weapon_crowbar;wowozela@@1",
+				["Invert"] = true,
+				["UniqueID"] = "3792909328",
+				["Event"] = "weapon_class",
+				["Operator"] = "equal",
 				["EditorExpand"] = true,
-				["CrouchIdle"] = "cidle_melee2",
-				["ParentUID"] = "1744634544",
-				["StandIdle"] = "walk_dual",
-				["ActLand"] = "jump_land",
+				["ClassName"] = "event",
 			},
 		},
 		[2] = {
 			["children"] = {
 				[1] = {
 					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Angles"] = Angle(36.59375, -34.375, 41.375),
+								["Bone"] = "right upperarm",
+								["UniqueID"] = "3973710705",
+								["ClassName"] = "bone",
+							},
+						},
+						[2] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Angles"] = Angle(74.75, -35.09375, 87.78125),
+								["UniqueID"] = "3137964571",
+								["Bone"] = "right hand",
+								["ClassName"] = "bone",
+								["EditorExpand"] = true,
+							},
+						},
+						[3] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Angles"] = Angle(-15.78125, -21.6875, 7.28125),
+								["Bone"] = "left upperarm",
+								["UniqueID"] = "484853236",
+								["ClassName"] = "bone",
+							},
+						},
+						[4] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Angles"] = Angle(-38.09375, -24.1875, 73.5),
+								["UniqueID"] = "1673164210",
+								["Bone"] = "left hand",
+								["ClassName"] = "bone",
+								["EditorExpand"] = true,
+							},
+						},
+						[5] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Angles"] = Angle(0, 11.59375, 0),
+								["UniqueID"] = "1677482011",
+								["Bone"] = "right forearm",
+								["ClassName"] = "bone",
+								["EditorExpand"] = true,
+							},
+						},
+						[6] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Angles"] = Angle(25, 55.375, 0),
+								["Bone"] = "left forearm",
+								["UniqueID"] = "1444995674",
+								["ClassName"] = "bone",
+							},
+						},
+						[7] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ClassName"] = "event",
+								["UniqueID"] = "1674777836",
+								["Event"] = "speed",
+								["Operator"] = "below",
+								["Arguments"] = "30",
+								["Invert"] = true,
+							},
+						},
 					},
 					["self"] = {
-						["ParentName"] = "weapon class equal \"weapon crowbar or wowozela@@1\"",
-						["ClassName"] = "event",
-						["UniqueID"] = "577637106",
-						["Event"] = "is_in_noclip",
-						["Name"] = "",
-						["ParentUID"] = "3792909328",
+						["ClassName"] = "group",
+						["UniqueID"] = "2548552443",
+						["EditorExpand"] = true,
 					},
 				},
 			},
 			["self"] = {
-				["ParentName"] = "bones",
-				["Invert"] = true,
-				["Name"] = "",
-				["ClassName"] = "event",
-				["UniqueID"] = "3792909328",
-				["Arguments"] = "weapon_crowbar;wowozela@@1",
-				["ParentUID"] = "1744634544",
-				["Operator"] = "equal",
-				["Event"] = "weapon_class",
+				["Walk"] = "walk_dual",
+				["ClassName"] = "holdtype",
+				["UniqueID"] = "3980234911",
 				["EditorExpand"] = true,
+				["ActLand"] = "jump_land",
+				["AttackStandPrimaryfire"] = "zombie_attack_01",
+				["StandIdle"] = "walk_dual",
+				["CrouchIdle"] = "cidle_melee2",
 			},
 		},
 	},
@@ -3650,115 +3784,93 @@ pace.example_outfits["robotic arm with aimpart"] = {[1] = {
 	},
 },
 }
-pace.example_outfits["cloaking"] = {[1] = {
-	["children"] = {
-		[1] = {
-			["children"] = {
-				[1] = {
-					["children"] = {
-					},
-					["self"] = {
-						["ParentName"] = "hoverball",
-						["ClassName"] = "model",
-						["Position"] = Vector(-0.00048828125, 0.001953125, -30.1435546875),
-						["UniqueID"] = "263578771",
-						["Translucent"] = true,
-						["ParentUID"] = "1778920631",
-						["Name"] = "",
-						["Material"] = "testmat",
-					},
-				},
-			},
-			["self"] = {
-				["ParentName"] = "bind p \"+pac_event cloak\"",
-				["ClassName"] = "model",
-				["UniqueID"] = "1778920631",
-				["EditorExpand"] = true,
-				["Translucent"] = true,
-				["ParentUID"] = "512753821",
-				["Name"] = "",
-				["Material"] = "testmat",
-			},
-		},
-		[2] = {
-			["children"] = {
-				[1] = {
-					["children"] = {
-						[1] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentName"] = "cloakfactor = ? proxy",
-								["Invert"] = true,
-								["Name"] = "command find simple cloakon@@1",
-								["ClassName"] = "event",
-								["UniqueID"] = "3680420824",
-								["ParentUID"] = "3171310209",
-								["Arguments"] = "cloak_on@@1",
-								["Event"] = "command",
-								["EditorExpand"] = true,
-							},
+pace.example_outfits["cloaking"] = {["children"] = {
+	[1] = {
+		["children"] = {
+			[1] = {
+				["children"] = {
+					[1] = {
+						["children"] = {
+						},
+						["self"] = {
+							["Arguments"] = "p",
+							["UniqueID"] = "3408215400",
+							["Event"] = "button",
+							["Operator"] = "equal",
+							["ClassName"] = "event",
+							["EditorExpand"] = true,
 						},
 					},
-					["self"] = {
-						["ParentName"] = "testmat",
-						["ClassName"] = "proxy",
-						["UniqueID"] = "3171310209",
-						["Expression"] = "(timeex()+0.1) ^ 5",
-						["EditorExpand"] = true,
-						["ParentUID"] = "3721614203",
-						["Name"] = "",
-						["VariableName"] = "CloakFactor",
-					},
 				},
-				[2] = {
-					["children"] = {
-						[1] = {
-							["children"] = {
-							},
-							["self"] = {
-								["ParentName"] = "cloakfactor = ? proxy",
-								["Invert"] = true,
-								["Name"] = "",
-								["ClassName"] = "event",
-								["UniqueID"] = "3408215400",
-								["ParentUID"] = "2836747662",
-								["Arguments"] = "cloak_off@@1",
-								["Event"] = "command",
-								["EditorExpand"] = true,
-							},
+				["self"] = {
+					["ClassName"] = "proxy",
+					["UniqueID"] = "2836747662",
+					["Expression"] = "max((-timeex()+1) ^ 5, 0)",
+					["EditorExpand"] = true,
+					["VariableName"] = "CloakFactor",
+				},
+			},
+			[2] = {
+				["children"] = {
+					[1] = {
+						["children"] = {
+						},
+						["self"] = {
+							["Arguments"] = "p",
+							["Invert"] = true,
+							["UniqueID"] = "3680420824",
+							["Event"] = "button",
+							["Operator"] = "equal",
+							["EditorExpand"] = true,
+							["ClassName"] = "event",
 						},
 					},
-					["self"] = {
-						["ParentName"] = "testmat",
-						["ClassName"] = "proxy",
-						["UniqueID"] = "2836747662",
-						["Expression"] = "(-timeex()+1) ^ 5",
-						["EditorExpand"] = true,
-						["ParentUID"] = "3721614203",
-						["Name"] = "",
-						["VariableName"] = "CloakFactor",
-					},
+				},
+				["self"] = {
+					["ClassName"] = "proxy",
+					["UniqueID"] = "3171310209",
+					["Expression"] = "min((timeex()+0.1) ^ 5, 1)",
+					["EditorExpand"] = true,
+					["VariableName"] = "CloakFactor",
 				},
 			},
-			["self"] = {
-				["ParentUID"] = "512753821",
-				["ClassName"] = "material",
-				["UniqueID"] = "3721614203",
-				["Name"] = "testmat",
-				["CloakPassEnabled"] = true,
-				["EditorExpand"] = true,
-				["CloakFactor"] = 9.3132257461548e-010,
-				["ParentName"] = "bind p \"+pac_event cloak\"",
-			},
+		},
+		["self"] = {
+			["EditorExpand"] = true,
+			["UniqueID"] = "3721614203",
+			["CloakPassEnabled"] = true,
+			["Name"] = "testmat",
+			["ClassName"] = "material",
 		},
 	},
-	["self"] = {
-		["Name"] = "bind p \"+pac_event cloak\"",
-		["ClassName"] = "group",
-		["UniqueID"] = "512753821",
-		["EditorExpand"] = true,
+	[2] = {
+		["children"] = {
+			[1] = {
+				["children"] = {
+				},
+				["self"] = {
+					["ClassName"] = "model",
+					["UniqueID"] = "263578771",
+					["Position"] = Vector(-0.00048828125, 0.001953125, -30.1435546875),
+					["Translucent"] = true,
+					["Material"] = "testmat",
+				},
+			},
+		},
+		["self"] = {
+			["ClassName"] = "model",
+			["UniqueID"] = "1778920631",
+			["EditorExpand"] = true,
+			["Translucent"] = true,
+			["Material"] = "testmat",
+		},
 	},
+},
+["self"] = {
+	["Name"] = "press p",
+	["ClassName"] = "group",
+	["UniqueID"] = "512753821",
+	["EditorExpand"] = true,
 },
 }
 pace.example_outfits["direction aim"] = {[1] = {

@@ -91,11 +91,11 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 	end
 	
 	if owner:IsValid() then		
-		if name == "active weapon" and owner.GetActiveWeapon then
+		if name == "active weapon" and owner.GetActiveWeapon and owner:GetActiveWeapon():IsValid() then
 			return owner:GetActiveWeapon()
 		end
 		
-		if name == "active vehicle" and owner.GetVehicle then
+		if name == "active vehicle" and owner.GetVehicle and owner:GetVehicle():IsValid() then
 			return owner:GetVehicle()
 		end
 		
