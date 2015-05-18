@@ -1049,6 +1049,60 @@ usermessage.Hook("pac_event", function(umr)
 	end
 end)
 
+do
+	local enums = {}
+
+	for key, val in pairs(_G) do
+		if type(key) == "string" and type(val) == "number" and key:sub(0,4) == "KEY_" then
+			enums[val] = key:sub(5):lower()
+		end
+	end
+	
+	pac.key_enums = enums
+	
+	net.Receive("pac.net.BroadcastPlayerButton", function()
+		local ply = net.ReadEntity()
+		
+		if ply:IsValid() then
+			local key = net.ReadUInt(8)
+			local down = net.ReadBool()
+			
+			key = pac.key_enums[key] or key
+			
+			ply.pac_buttons = ply.pac_buttons or {}
+			ply.pac_buttons[key] = down
+		end
+	end)
+	
+	PART.Events.button =
+	{
+		arguments = {{button = "string"}},
+		callback = function(self, ent, button)			
+			local ply = self:GetPlayerOwner()
+			
+			if ply == LocalPlayer() then
+				
+				ply.pac_broadcast_buttons = pac_broadcast_buttons or {}
+				if not ply.pac_broadcast_buttons[button] then 
+					local val = _G["KEY_" .. button:upper()]
+					if val then
+						net.Start("pac.net.AllowPlayerButtons")
+						net.WriteUInt(val, 8)
+						net.SendToServer()					
+					end
+					ply.pac_broadcast_buttons[button] = true
+				end
+			end
+			
+			local buttons = ply.pac_buttons
+			
+			if buttons then
+				return buttons[button]
+			end
+		end,
+	}
+end
+
 pac.AddHook("DoAnimationEvent", function(ply, event, data)
 	-- update all parts once so OnShow and OnHide are updated properly for animation events
 	if ply.pac_parts then

@@ -1,4 +1,4 @@
---[[ 
+--[==[ 
 
 This used to be uncommented for a long time but I don't believe it's ethical anymore.
 Bans should be between servers.
@@ -20,7 +20,5 @@ pace.GlobalBans = {
 		Constantly taking credit for outfits other people have made that he found on pastebins even though 
 		he has been called out for it countless of times and being an asshole about it at the same time.
 	]],
-
-	[{"STEAM_0:0:90942401"}] = [[PAC Stealing.]]
 }
-]]
+]==]

@@ -5,7 +5,7 @@ concommand.Add("pac_event", function(ply, _, args)
 	local event = args[1]
 	local extra = args[2] or 0
 	
-	if extra == "2" then	
+	if extra == "2" or extra == "toggle" then	
 		ply.pac_event_toggles = ply.pac_event_toggles or {}
 		ply.pac_event_toggles[event] = not ply.pac_event_toggles[event]
 		
@@ -21,18 +21,43 @@ end)
 
 concommand.Add("+pac_event", function(ply, _, args)
 	if not args[1] then return end
-	umsg.Start("pac_event")
-		umsg.Entity(ply)
-		umsg.String(args[1] .. "_on")
-	umsg.End()
+		
+	if args[2] == "2" or args[2] == "toggle" then
+		local event = args[1]
+		ply.pac_event_toggles = ply.pac_event_toggles or {}
+		ply.pac_event_toggles[event] = true
+			
+		umsg.Start("pac_event")
+			umsg.Entity(ply)
+			umsg.String(event)
+			umsg.Char("1")
+		umsg.End()
+	else
+		umsg.Start("pac_event")
+			umsg.Entity(ply)
+			umsg.String(args[1] .. "_on")
+		umsg.End()
+	end
 end)
 
 concommand.Add("-pac_event", function(ply, _, args)
 	if not args[1] then return end
-	umsg.Start("pac_event")
-		umsg.Entity(ply)
-		umsg.String(args[1] .. "_off")
-	umsg.End()
+	
+	if args[2] == "2" or args[2] == "toggle" then
+		local event = args[1]
+		ply.pac_event_toggles = ply.pac_event_toggles or {}
+		ply.pac_event_toggles[event] = false
+		umsg.Start("pac_event")
+			umsg.Entity(ply)
+			umsg.String(args[1])
+			umsg.Char("0")
+		umsg.End()
+	else
+		umsg.Start("pac_event")
+			umsg.Entity(ply)
+			umsg.String(args[1] .. "_off")
+		umsg.End()
+	end
 end)
 
 -- proxy

@@ -51,6 +51,7 @@ pace.PropertySheets = {
 		useplayercolor = true,
 		modelfallback = true,
 		lodoverride = true,
+		additive = true,
 	},
 	
 	other = 
