@@ -50,7 +50,7 @@ do -- projectile entity
 			phys:AddVelocity((ang:Forward() + (VectorRand():Angle():Forward() * part.Spread)) * part.Speed * 1000)
 			phys:EnableCollisions(part.Collisions)	
 			phys:SetDamping(part.Damping, 0)
-			phys:SetMass(part.Mass)
+			phys:SetMass(math.Clamp(part.Mass, 0.001, 50000))
 			
 			self.dt.AimDir = part.AimDir
 			
