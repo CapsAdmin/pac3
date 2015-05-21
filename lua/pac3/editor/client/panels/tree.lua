@@ -205,6 +205,8 @@ function PANEL:PopulateParts(node, parts, children)
 	
 	for key, part in pairs(tbl) do
 		key = part.Id
+		
+		if part:GetRootPart().show_in_editor == false then continue end
 				
 		if not part:HasParent() or children then
 			local part_node
@@ -313,6 +315,8 @@ end
 pace.RegisterPanel(PANEL)
 
 local function remove_node(obj)
+	if part:GetRootPart().show_in_editor == false then return end
+
 	if (obj.editor_node or NULL):IsValid() then
 		obj.editor_node:SetForceShowExpander()
 		obj.editor_node:GetRoot().m_pSelectedItem = nil
@@ -324,7 +328,7 @@ end
 hook.Add("pac_OnPartRemove", "pace_remove_tree_nodes", remove_node)
 
 local function refresh(part, localplayer)
-	if part.show_in_editor == false then return end
+	if part:GetRootPart().show_in_editor == false then return end
 		
 	if localplayer then
 		pace.RefreshTree(true)
@@ -333,7 +337,7 @@ end
 hook.Add("pac_OnWoreOutfit", "pace_create_tree_nodes", refresh)
 
 local function refresh(part, localplayer)
-	if part.show_in_editor == false then return end
+	if part:GetRootPart().show_in_editor == false then return end
 	
 	if localplayer then
 		pace.RefreshTree(true)

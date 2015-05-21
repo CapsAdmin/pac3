@@ -87,10 +87,8 @@ function pac.CreatePart(name, owner, skip_hook)
 		
 	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))
 	
-	if not pac.SuppressCreatedEvents then
-		pac.CallHook("OnPartCreated", part, owner == pac.LocalPlayer)
-	end
-		
+	pac.CallHook("OnPartCreated", part, owner == pac.LocalPlayer)
+	
 	return part
 end
 

@@ -3,6 +3,7 @@ concommand.Add("pac_in_editor", function(ply, _, args)
 end)
 
 function pace.SpawnPart(ply, model)
+	if pace.suppress_prop_spawn then return end
 	if model then
 		if IsValid(ply) and ply:GetNWBool("in pac3 editor") then
 			net.Start("pac_spawn_part")

@@ -670,7 +670,7 @@ do -- serializing
 		end
 	end
 	
-	function PART:ToTable(make_copy_name, is_child)
+	function PART:ToTable(make_copy_name)
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 		for _, key in pairs(self:GetStorableVars()) do
@@ -698,7 +698,7 @@ do -- serializing
 		end
 
 		for _, part in pairs(self.Children) do
-			table.insert(tbl.children, part:ToTable(make_copy_name, true))
+			table.insert(tbl.children, part:ToTable(make_copy_name))
 		end
 
 		return tbl
@@ -1040,12 +1040,6 @@ function PART:Think()
 	
 		if not owner.pac_bones then
 			self:GetModelBones()
-		end
-	end
-	
-	if self.remove_on_null_owner then
-		if not self:HasParent() and not self:GetOwner():IsValid() then
-			self:Remove()
 		end
 	end
 	

@@ -39,30 +39,27 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
-function PART:AttachToEntity(ent)
+function PART:AttachToEntity(ent)	
 	if not self.OutfitPart:IsValid() then return false end
-				
+
 	ent.pac_draw_distance = 0			
-			
+
 	local tbl = self.OutfitPart:ToTable()
-			
-	tbl.self.Name = "projectile " .. self:GetPlayerOwner():UniqueID() .. os.clock()
-	
-	pac.SuppressCreatedEvents = true
+	tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. tbl.self.UniqueID)
+		
 	local part = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner())
 	
 	local id = part.Id + self:GetPlayerOwner():UniqueID()
 	
 	part.show_in_editor = false
-	part.CheckOwner = function() end
+	part.CheckOwner = function(s) s.Owner = ent end
 	part:SetPlayerOwner(self:GetPlayerOwner())
 	part:SetTable(tbl, true)
 	part:SetHide(false)
-	part:RemoveOnNULLOwner(true)
-	
+		
+	part:SetOwner(ent)
+		
 	ent:CallOnRemove("pac_projectile_" .. id, function() part:Remove() end)
-	
-	part.Owner = ent
 	
 	ent.pac_parts = {part}
 	pac.drawn_entities[id] = ent
@@ -75,8 +72,6 @@ function PART:AttachToEntity(ent)
 	
 	ent.pac_projectile_id = id
 	ent.pac_projectile_part = part
-
-	pac.SuppressCreatedEvents = false	
 	
 	return true
 end
@@ -113,7 +108,7 @@ function PART:Shoot(pos, ang)
 			end
 		end
 		
-		if table.Count(self.projectiles) >= 30 then
+		if table.Count(self.projectiles) >= 100 then
 			return
 		end
 		
