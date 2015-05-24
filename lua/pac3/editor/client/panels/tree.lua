@@ -205,6 +205,8 @@ function PANEL:PopulateParts(node, parts, children)
 	
 	for key, part in pairs(tbl) do
 		key = part.Id
+		
+		if part:GetRootPart().show_in_editor == false then continue end
 				
 		if not part:HasParent() or children then
 			local part_node
@@ -312,11 +314,11 @@ end
 
 pace.RegisterPanel(PANEL)
 
-local function remove_node(obj)
-	if (obj.editor_node or NULL):IsValid() then
-		obj.editor_node:SetForceShowExpander()
-		obj.editor_node:GetRoot().m_pSelectedItem = nil
-		obj.editor_node:Remove()		
+local function remove_node(part)
+	if (part.editor_node or NULL):IsValid() and part:GetRootPart().show_in_editor ~= false then
+		part.editor_node:SetForceShowExpander()
+		part.editor_node:GetRoot().m_pSelectedItem = nil
+		part.editor_node:Remove()		
 		pace.RefreshTree()
 	end
 end
@@ -324,18 +326,14 @@ end
 hook.Add("pac_OnPartRemove", "pace_remove_tree_nodes", remove_node)
 
 local function refresh(part, localplayer)
-	if part.show_in_editor == false then return end
-		
-	if localplayer then
+	if localplayer and part:GetRootPart().show_in_editor ~= false then
 		pace.RefreshTree(true)
 	end
 end
 hook.Add("pac_OnWoreOutfit", "pace_create_tree_nodes", refresh)
 
-local function refresh(part, localplayer)
-	if part.show_in_editor == false then return end
-	
-	if localplayer then
+local function refresh(part, localplayer)	
+	if localplayer and part:GetRootPart().show_in_editor ~= false then
 		pace.RefreshTree(true)
 	end
 end
@@ -343,7 +341,7 @@ hook.Add("pac_OnPartCreated", "pace_create_tree_nodes", refresh)
 
 function pace.RefreshTree(reset)
 	if pace.tree:IsValid() then
-		timer.Create("pace_refresh_tree",  0.2, 1, function()
+		timer.Create("pace_refresh_tree",  0.01, 1, function()
 			if pace.tree:IsValid() then
 				pace.tree:Populate(reset)
 				pace.tree.RootNode:SetExpanded(true, true) -- why do I have to do this?

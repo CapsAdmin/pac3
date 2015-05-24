@@ -412,7 +412,8 @@ pace.AddTool(L"populate with dummy bones",function(part,suboption)
 		if not tbl.is_special then 
 			local child = pac.CreatePart("model")
 			child:SetParent(part)
-			child:SetName(bone)
+			child:SetName(bone.."_dummy")
+			child:SetBone(bone)
 			child:SetScale(Vector(0,0,0))
 		end
 	end
