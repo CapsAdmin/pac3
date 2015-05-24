@@ -50,7 +50,7 @@ do -- projectile entity
 			phys:AddVelocity((ang:Forward() + (VectorRand():Angle():Forward() * part.Spread)) * part.Speed * 1000)
 			phys:EnableCollisions(part.Collisions)	
 			phys:SetDamping(part.Damping, 0)
-			phys:SetMass(part.Mass)
+			phys:SetMass(math.Clamp(part.Mass, 0.001, 50000))
 			
 			self.dt.AimDir = part.AimDir
 			
@@ -143,9 +143,15 @@ if SERVER then
 	net.Receive("pac_projectile", function(len, ply)			
 		if not enable:GetBool() then return end
 	
+		if pace then pace.suppress_prop_spawn = true end
+		if hook.Run("PlayerSpawnProp", ply, "models/props_junk/popcan01a.mdl") == false then
+			if pace then pace.suppress_prop_spawn = nil end
+			return
+		end
+		if pace then pace.suppress_prop_spawn = nil end
+	
 		local pos = net.ReadVector()
-		local ang = net.ReadAngle()
-			
+		local ang = net.ReadAngle()		
 		-- Is this even used???
 		ply.pac_projectiles = ply.pac_projectiles or {}		
 		if table.Count( ply.pac_projectiles ) >= 30 then
@@ -155,9 +161,16 @@ if SERVER then
 		local part = net.ReadTable()
 
 		if pos:Distance(ply:EyePos()) > 200 * ply:GetModelScale() then
-			pos = ply:EyePos()
+			if FindMetaTable("Entity").CPPIGetOwner then
+				for _, ent in ipairs(ents.FindInSphere(pos, 200)) do
+					if ent:CPPIGetOwner() == ply then
+						break
+					end
+				end
+			else
+				pos = ply:EyePos()
+			end
 		end
-			
 		
 		timer.Simple(part.Delay, function()				
 			

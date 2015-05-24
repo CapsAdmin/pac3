@@ -46,7 +46,8 @@ do -- to server
 		
 		-- if it's (ok not very exact) the "my outfit" part without anything added to it, don't bother sending it
 		if part.ClassName == "group" and not part:HasChildren() then return end
-	
+		if not part.show_in_editor == false then return end
+
 		local data = {part = part:ToTable()}
 		data.owner = part:GetOwner()
 

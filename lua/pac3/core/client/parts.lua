@@ -24,7 +24,7 @@ local function merge_storable(tbl, base)
 	end
 end
 
-function pac.CreatePart(name, owner, skip_hook)
+function pac.CreatePart(name, owner)
 	owner = owner or pac.LocalPlayer
 	
 	if not name then
@@ -87,10 +87,12 @@ function pac.CreatePart(name, owner, skip_hook)
 		
 	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))
 	
-	if not pac.SuppressCreatedEvents then
-		pac.CallHook("OnPartCreated", part, owner == pac.LocalPlayer)
-	end
-		
+	timer.Simple(0.1, function()
+		if part:IsValid() then
+			pac.CallHook("OnPartCreated", part, owner == pac.LocalPlayer)
+		end
+	end)
+	
 	return part
 end
 

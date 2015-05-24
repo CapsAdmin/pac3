@@ -6,7 +6,7 @@ function pace.WearParts(file, clear)
 	end
 
 	for key, part in pairs(pac.GetParts(true)) do
-		if not part:HasParent() then
+		if not part:HasParent() and part.show_in_editor ~= false then
 			pace.SendPartToServer(part)
 		end
 	end
