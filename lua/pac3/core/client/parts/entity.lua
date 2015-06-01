@@ -6,6 +6,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Material", "")
 	pac.GetSet(PART, "Model", "")
 	pac.GetSet(PART, "Color", Vector(255, 255, 255))
+	pac.GetSet(PART, "PlayerColor", PART:GetOwner():GetPlayerColor()*255)
 	pac.GetSet(PART, "Brightness", 1)
 	pac.GetSet(PART, "Alpha", 1)
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
@@ -201,6 +202,19 @@ function PART:SetColor(var)
 	self.Colorc.r = var.r
 	self.Colorc.g = var.g
 	self.Colorc.b = var.b
+end
+
+function PART:SetPlayerColor(var)
+	var = var or Vector(255,255,255)
+	
+	self.PColor = var
+	self.PColorf = Vector(var.r,var.g,var.b)/255
+	self.PColorc = self.Colorc or Color(var.r, var.g, var.b, self.Alpha)
+	self.PColorc.r = var.r
+	self.PColorc.g = var.g
+	self.PColorc.b = var.b
+	
+	self.Owner:SetPlayerColor(self.PColorf)	
 end
 
 function PART:SetAlpha(var)
