@@ -473,7 +473,7 @@ do -- non editable string
 	if DTooltip and DTooltip.PositionTooltip then
 		pace_Old_PositionTooltip = pace_Old_PositionTooltip or DTooltip.PositionTooltip
 		function DTooltip.PositionTooltip(self, ...)
-			if self.TargetPanel and self.TargetPanel.pac_tooltip_hack then
+			if self.TargetPanel.pac_tooltip_hack then
 				local args = {pace_Old_PositionTooltip(self, ...)}
 									
 				if ( !IsValid( self.TargetPanel ) ) then
@@ -553,7 +553,7 @@ do -- base editable
 	function PANEL:OnCursorMoved()
 		self:SetCursor("hand")
 	end
-
+	
 	function PANEL:Init(...)
 		timer.Simple(0,function()
 			if self.SpecialCallback then
@@ -565,7 +565,7 @@ do -- base editable
 				btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
 			end
 		end)
-
+		
 		if DLabel and DLabel.Init then
 			return DLabel.Init(self, ...)
 		end
