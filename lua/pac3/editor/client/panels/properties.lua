@@ -473,7 +473,7 @@ do -- non editable string
 	if DTooltip and DTooltip.PositionTooltip then
 		pace_Old_PositionTooltip = pace_Old_PositionTooltip or DTooltip.PositionTooltip
 		function DTooltip.PositionTooltip(self, ...)
-			if self.TargetPanel.pac_tooltip_hack then
+			if self.TargetPanel and self.TargetPanel.pac_tooltip_hack then
 				local args = {pace_Old_PositionTooltip(self, ...)}
 									
 				if ( !IsValid( self.TargetPanel ) ) then
