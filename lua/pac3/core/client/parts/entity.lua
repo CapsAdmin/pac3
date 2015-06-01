@@ -205,14 +205,10 @@ function PART:SetColor(var)
 end
 
 function PART:SetPlayerColor(var)
-	var = var or Vector(255,255,255)
+	var = var or self.Owner:GetPlayerColor()
 	
 	self.PColor = var
 	self.PColorf = Vector(var.r,var.g,var.b)/255
-	self.PColorc = self.Colorc or Color(var.r, var.g, var.b, self.Alpha)
-	self.PColorc.r = var.r
-	self.PColorc.g = var.g
-	self.PColorc.b = var.b
 	
 	self.Owner:SetPlayerColor(self.PColorf)	
 end
