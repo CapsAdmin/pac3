@@ -36,6 +36,7 @@ function PANEL:Init()
 	self:SetPos(self:GetCookieNumber("x"), BAR_SIZE)
 	
 	self:MakeBar()
+	self:ShowCloseButton(false)
 end
 
 function PANEL:MakeBar()	
