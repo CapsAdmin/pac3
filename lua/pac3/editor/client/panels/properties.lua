@@ -555,14 +555,16 @@ do -- base editable
 	end
 	
 	function PANEL:Init(...)
-		if self.SpecialCallback then
-			local btn = vgui.Create("DButton", self)
-			btn:SetSize(16, 16)
-			btn:Dock(RIGHT)
-			btn:SetText("...")
-			btn.DoClick = function() self:SpecialCallback(self.CurrentKey) end
-			btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
-		end
+		timer.Simple(1,function()
+			if self.SpecialCallback then
+				local btn = vgui.Create("DButton", self)
+				btn:SetSize(16, 16)
+				btn:Dock(RIGHT)
+				btn:SetText("...")
+				btn.DoClick = function() self:SpecialCallback(self.CurrentKey) end
+				btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
+			end
+		end)
 				
 		if DLabel and DLabel.Init then
 			return DLabel.Init(self, ...)
