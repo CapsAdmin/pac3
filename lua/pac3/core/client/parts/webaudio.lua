@@ -126,7 +126,7 @@ function PART:SetURL(URL)
 			self.streams[url] = snd
 		end
 		
-		sound.PlayURL(url, flags, callback)
+		sound.PlayURL(url, flags, callback,pac.oggfix.enabled)
 		
 	end
 	
