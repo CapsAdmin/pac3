@@ -24,7 +24,7 @@ function ogg.Download(url,callback,nocache)
     http.Fetch( url,
         function( body, len, headers, code )
             file.Write("scache/" .. urlsum .. ".txt",body)
-            if debug then 
+            if ogg.debug then 
                MsgC(Color(255,255,0),"[OGG]: WRITE - > ") MsgC(Color(255,0,0), urlsum .. ".txt \n" )
             end
             callback(true,urlsum,code)
@@ -43,7 +43,9 @@ function ogg.enable(enabled)
         sound._OldPlayURL = sound.PlayURL
         function sound.PlayURL(url,args,func,median)
             if median then 
-                print(url,args,func)
+                if ogg.debug then
+                        print(url,args,func)
+                end
                 assert(type(func)=="function","Argument #3 to sound.PlayURL. Function expected, got " .. type(func))
                 assert(type(url)=="string","Argument #1 to sound.PlayURL. String expected, got " .. type(url))
                 assert(type(args)=="string","Argument #2 to sound.PlayURL. String expected, got " .. type(args))
@@ -77,7 +79,7 @@ ogg.cvar = CreateConVar( "pac_ogg_fix", "0", FCVAR_ARCHIVE , "Enable the broken 
 
 
 cvars.AddChangeCallback( "pac_ogg_fix", function( convar_name, value_old, value_new )
-    if convar_name = "pac_ogg_fix" then 
+    if convar_name == "pac_ogg_fix" then 
             if tonumber(value_new)==1 then 
                 ogg.enable(true)
             else
