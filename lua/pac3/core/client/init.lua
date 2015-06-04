@@ -19,10 +19,11 @@ include("libraries/urlobj/urlobj.lua")
 include("libraries/urlobj/queueitem.lua")
 
 -- WebAudio
+include("libraries/webaudio/ogg_fix.lua")
 include("libraries/webaudio/urlogg.lua")
 include("libraries/webaudio/browser.lua")
 include("libraries/webaudio/stream.lua")
-include("libraries/webaudio/streams.lua")
+include("libraries/webaudio/streams.lua") 
 
 include("libraries/boneanimlib.lua")
 
@@ -32,6 +33,7 @@ include("parts.lua")
 include("bones.lua")
 include("hooks.lua")
 include("drawing.lua")
+
 
 include("owner_name.lua")
 
