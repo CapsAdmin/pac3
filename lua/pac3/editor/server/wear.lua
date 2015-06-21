@@ -285,7 +285,7 @@ function pace.SubmitPartNotify(data)
 end
 
 function pace.RemovePart(data)
-	pace.dprint("%s is removed %q", data.owner:GetName(), data.part)
+	pace.dprint("%s is removed %q", data.owner and data.owner:IsValid() and data.owner:GetName(), data.part)
 	
 	if data.part == "__ALL__" then
 		pac.HandleModifiers(nil, data.owner)
