@@ -29,10 +29,10 @@ local render_PushFilterMin          = render.PushFilterMin
 local render_PushFlashlightMode     = render.PushFlashlightMode
 local render_SuppressEngineLighting = render.SuppressEngineLighting
 
-local IMaterial_GetFloat            = debug.getregistry ().IMaterial.GetFloat
-local IMaterial_GetVector           = debug.getregistry ().IMaterial.GetVector
-local IMaterial_SetFloat            = debug.getregistry ().IMaterial.SetFloat
-local IMaterial_SetVector           = debug.getregistry ().IMaterial.SetVector
+local IMaterial_GetFloat            = FindMetaTable("IMaterial").GetFloat
+local IMaterial_GetVector           = FindMetaTable("IMaterial").GetVector
+local IMaterial_SetFloat            = FindMetaTable("IMaterial").SetFloat
+local IMaterial_SetVector           = FindMetaTable("IMaterial").SetVector
 
 local EF_BONEMERGE                  = EF_BONEMERGE
 
@@ -89,14 +89,16 @@ function PART:GetNiceName()
 	return str and str:gsub("%d", "") or "error"
 end
 
-pac.GetSet(PART, "Entity", NULL)
-
-function PART:GetEntity()
-	if not self.Entity:IsValid() then
-		self:Initialize()
+function PART:Reset()
+	self:SetModel(self:GetModel())
+	for _, key in pairs(self:GetStorableVars()) do
+		if key ~= "Model" and key ~= "OwnerEntity" then
+			local var = self[key] and self["Get"..key](self) or self[key], key
+			var = pac.class.Copy(var) or var	
+			
+			self["Set" .. key](self, var)
+		end
 	end
-
-	return self.Entity
 end
 
 function PART:SetUseLegacyScale(b)
@@ -114,9 +116,16 @@ end
 
 function PART:Initialize(is_obj)
 	self.Entity = pac.CreateEntity(self:GetModel(), is_obj)
+	if not self.Entity:IsValid() then
+		print("pac3 failed to create entity!")
+	end
 	self.Entity:SetNoDraw(true)
 	self.Entity.PACPart = self
 	self.is_obj = is_obj
+end
+
+function PART:GetEntity()
+	return self.Entity or NULL
 end
 
 function PART:OnShow()
@@ -154,6 +163,8 @@ function PART:OnThink()
 end
 
 function PART:SetOwnerEntity(b)
+	self.OwnerEntity = b
+	
 	local ent = self:GetOwner()
 	if ent:IsValid() then
 		if b then
@@ -177,8 +188,6 @@ function PART:SetOwnerEntity(b)
 			pac.SetModelScale(ent, Vector(1,1,1), nil, self.UseLegacyScale)
 		end
 	end
-	
-	self.OwnerEntity = b
 end
 
 function PART:PreEntityDraw(owner, ent, pos, ang)
@@ -302,13 +311,15 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 end
 
 function PART:OnDraw(owner, pos, ang)
-	local ent = self.Entity
+	local ent = self:GetEntity()
 	
-	if not ent:IsValid() then
-		timer.Simple(0, function()
-			self:Initialize()
-		end)
-		return
+	if not ent:IsValid() then 
+		self:Reset()
+		ent = self:GetEntity()
+		if not ent:IsValid() then
+			print("WTF", ent, self.Entity)
+			return
+		end
 	end
 	
 	self:PreEntityDraw(owner, ent, pos, ang)
@@ -524,7 +535,7 @@ function PART:SetModel(modelPath)
 		return
 	end
 	
-	if self.is_obj then
+	if self.is_obj or not self.Entity:IsValid() then
 		self:Initialize(false)
 	end
 	
