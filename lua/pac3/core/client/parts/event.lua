@@ -1051,10 +1051,16 @@ end)
 
 do
 	local enums = {}
-
+	local enums2 = {}
 	for key, val in pairs(_G) do
-		if type(key) == "string" and type(val) == "number" and key:sub(0,4) == "KEY_" then
-			enums[val] = key:sub(5):lower()
+		if type(key) == "string" and type(val) == "number" then
+			if key:sub(0,4) == "KEY_" then
+				enums[val] = key:sub(5):lower()
+				enums2[enums[val]] = val
+			elseif key:sub(0,6) == "MOUSE_" or key:sub(0,9) == "JOYSTICK_" then
+				enums[val] = key:lower()
+				enums2[enums[val]] = val
+			end
 		end
 	end
 	
@@ -1084,7 +1090,7 @@ do
 				
 				ply.pac_broadcast_buttons = pac_broadcast_buttons or {}
 				if not ply.pac_broadcast_buttons[button] then 
-					local val = _G["KEY_" .. button:upper()]
+					local val = enums2[button:lower()]
 					if val then
 						net.Start("pac.net.AllowPlayerButtons")
 						net.WriteUInt(val, 8)
