@@ -555,7 +555,7 @@ concommand.Add("pac_convert_pac2_outfits", function()
 			
 			if data then
 				pace.ClearParts()
-				local ok, res = pcall(pac.ConvertPAC2Config, glon.decode(data), name)
+				local ok, res = pcall(function() pac.ConvertPAC2Config(glon.decode(data), name) end)
 				if ok then
 					file.CreateDir("pac3/pac2_outfits/")
 					file.CreateDir("pac3/pac2_outfits/" .. uniqueid .. "/")
