@@ -33,6 +33,7 @@ include("about.lua")
 include("animeditor.lua")
 include("render_scores.lua")
 include("net_messages.lua")
+include("pac2_compat.lua")
 
 
 do 
