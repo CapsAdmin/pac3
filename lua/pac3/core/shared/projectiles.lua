@@ -113,7 +113,7 @@ do -- projectile entity
 			if self.part_data.Damage > 0 and data.HitEntity.Health then
 				local info = DamageInfo()
 				
-				info:SetAttacker(self:GetOwner())
+				info:SetAttacker(self:GetOwner():IsValid() and self:GetOwner() or self)
 				info:SetInflictor(self)
 				info:SetDamageForce(data.OurOldVelocity)
 				info:SetDamagePosition(data.HitPos)
