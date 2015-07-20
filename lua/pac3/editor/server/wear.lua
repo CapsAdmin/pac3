@@ -320,8 +320,9 @@ util.AddNetworkString("pac_precache_effect")
 
 pac.vnet.Watch("pac_submit",function(o) 
 	local data = o:Table()
+	local ply = o.Source
 	o:Discard()
-	pace.HandleReceivedData(o.Source,data)
+	pace.HandleReceivedData(ply,data)
 end,pac.vnet.OPTION_WATCH_OVERRIDE)
 
 
