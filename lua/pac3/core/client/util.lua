@@ -191,7 +191,7 @@ function pac.MakeNull(tbl)
 	end
 end
 
-local pac_error_mdl = CreateClientConVar("pac_error_mdl","1",true,false,"0 = default error, 1=traffic cone, models/....mdl=custom model")
+local pac_error_mdl = CreateClientConVar("pac_error_mdl","1",true,false,"0 = default error, 1=custom error model, models/yourmodel.mdl")
 local tc
 function pac.FilterInvalidModel(mdl,fallback)
 	if util.IsValidModel(mdl) or (not mdl) or (mdl=="") then return mdl end
@@ -204,7 +204,7 @@ function pac.FilterInvalidModel(mdl,fallback)
 		if file.Exists(fallback , 'GAME' ) then return fallback end
 	end
 	
-	Msg"[PAC] mdl invalid! " print(mdl)
+	Msg"[PAC] Invalid model " print(mdl)
 
 	local str = pac_error_mdl:GetString()
 	
@@ -226,6 +226,7 @@ function pac.FilterInvalidModel(mdl,fallback)
 	
 end
 
+local pac_debug_clmdl = CreateClientConVar("pac_debug_clmdl","0",true)
 function pac.CreateEntity(model, for_obj)	
 	model = pac.FilterInvalidModel(model)
 	
@@ -234,7 +235,7 @@ function pac.CreateEntity(model, for_obj)
 	if for_obj then	
 		ent = ClientsideModel(model)
 	else
-		ent = ents.CreateClientProp(model)
+		ent = pac_debug_clmdl:GetBool() and ClientsideModel(model) or ents.CreateClientProp(model)
 	end
 	
 	--[[if type == 1 then
