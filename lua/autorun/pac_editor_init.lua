@@ -1,3 +1,8 @@
+if not pac then 
+	include'pac_init.lua'
+	PAC_EDITOR_INITED_PAC=true
+end
+
 if SERVER then				
 	local function add_files(dir)
 		local files, folders = file.Find(dir .. "*", "LUA")
