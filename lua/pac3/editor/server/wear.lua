@@ -215,11 +215,15 @@ function pace.SubmitPart(data, filter)
 		local players = filter or player.GetAll()
 		
 		if type(players) == "table" then
-			for key, ply in next,players do
+		
+			--remove players from list who haven't requested outfits...
+			for key=#players,1,-1 do
+				local ply= players[key]
 				if not ply.pac_requested_outfits and ply ~= data.owner then
 					table.remove(players, key)
 				end
 			end
+			
 			if pace.GlobalBans then
 				if data.owner:IsValid() then
 					local owner_steamid = data.owner:SteamID() 
@@ -245,25 +249,21 @@ function pace.SubmitPart(data, filter)
 			end
 		end
 	
-		if hook.Run("pac_SendData", players, data) ~= false then
-			
-			if not players then return end
-			
-			if type(players) == "table" and not next(players) then return end
-			
-			if pace.netstream then
-				pace.netstream.Start(players, data)
-			else
-				net.Start("pac_submit")
-					net.WriteTable(decimal_hack_pack(table.Copy(data)))
-				net.Send(players)	
-			end
-			
-			if type(data.part) == "table" then	
-				last_frame = frame_number
-				pac.HandleModifiers(data.part, data.owner)
-			end
+		
+		if not players then return end
+		
+		if type(players) == "table" and not next(players) then return end
+	
+		--net.Start("pac_submit")
+		--	net.WriteTable(decimal_hack_pack(table.Copy(data)))
+		--net.Send(players)
+		pac.vnet.CreatePacket("pac_submit"):Table(data):AddTargets(players):Send()
+	
+		if type(data.part) == "table" then	
+			last_frame = frame_number
+			pac.HandleModifiers(data.part, data.owner)
 		end
+		
 	end
 	
 	return true
@@ -311,17 +311,19 @@ util.AddNetworkString("pac_submit")
 util.AddNetworkString("pac_effect_precached")
 util.AddNetworkString("pac_precache_effect")
 
-if pace.netstream then
-	pace.netstream.Hook("pac_submit", function(ply, data)
-		pace.HandleReceivedData(ply, data)
-	end)
-else
-	net.Receive("pac_submit", function(_, ply)
-		local data = net.ReadTable()
-		decimal_hack_unpack(data)
-		pace.HandleReceivedData(ply, data)
-	end)
-end
+
+--net.Receive("pac_submit", function(_, ply)
+--	local data = net.ReadTable()
+--	decimal_hack_unpack(data)
+--	pace.HandleReceivedData(ply, data)
+--end)
+
+pac.vnet.Watch("pac_submit",function(o) 
+	local data = o:Table()
+	o:Discard()
+	pace.HandleReceivedData(o.Source,data)
+end,pac.vnet.OPTION_WATCH_OVERRIDE)
+
 
 function pace.ClearOutfit(ply)
 	local uid = ply:UniqueID()
