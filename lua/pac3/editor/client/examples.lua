@@ -6749,3 +6749,61 @@ pace.example_outfits["manual bonemerge base"] = {[1] = { --thanks KombatWaffle!
 		["EditorExpand"] = true,
 	},
 },}
+pace.example_outfits["weapon sound replacement"] = {[1] = {
+	["children"] = {
+		[1] = {
+			["children"] = {
+				[1] = {
+					["children"] = {
+						[1] = {
+							["children"] = {
+							},
+							["self"] = {
+								["Name"] = "Sound being used",
+								["ClassName"] = "sound",
+								["UniqueID"] = "508902514",
+								["Sound"] = "weapons/alyx_gun/alyx_gun_fire[3,6].wav",
+							},
+						},
+						[2] = {
+							["children"] = {
+							},
+							["self"] = {
+								["ClassName"] = "sound",
+								["UniqueID"] = "598369995",
+								["Volume"] = 0.05,
+								["Name"] = "Sound being replaced (Usually Weapon_Name.Single), Volume at 0.05",
+								["Sound"] = "Weapon_Crowbar.Single",
+							},
+						},
+					},
+					["self"] = {
+						["AffectChildrenOnly"] = true,
+						["ClassName"] = "event",
+						["UniqueID"] = "1328612190",
+						["Event"] = "animation_event",
+						["EditorExpand"] = true,
+						["Name"] = "Animation Event to get if we're attacking (use reload instead of attack primary for crossbow)",
+						["Arguments"] = "attack primary@@0.01",
+					},
+				},
+			},
+			["self"] = {
+				["Arguments"] = "crowbar",
+				["Invert"] = true,
+				["Event"] = "weapon_class",
+				["EditorExpand"] = true,
+				["UniqueID"] = "1301957784",
+				["Name"] = "Weapon (crowbar)",
+				["ClassName"] = "event",
+			},
+		},
+	},
+	["self"] = {
+		["Name"] = "Sound Replacement",
+		["ClassName"] = "group",
+		["UniqueID"] = "2836933954",
+		["EditorExpand"] = true,
+	},
+},
+}
