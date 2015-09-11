@@ -464,7 +464,7 @@ PART.Inputs =
 		local owner = self:GetPlayerOwner()		
 		
 		if owner:IsValid() then
-			local vec = Vector(GetConVarString("cl_playercolor"))
+			local vec = owner:GetPlayerColor()
 			
 			return vec.r
 		end
@@ -475,7 +475,7 @@ PART.Inputs =
 		local owner = self:GetPlayerOwner()
 		
 		if owner:IsValid() then
-			local vec = Vector(GetConVarString("cl_playercolor"))
+			local vec = owner:GetPlayerColor()
 			
 			return vec.g
 		end
@@ -486,7 +486,7 @@ PART.Inputs =
 		local owner = self:GetPlayerOwner()
 		
 		if owner:IsValid() then
-			local vec = Vector(GetConVarString("cl_playercolor"))
+			local vec = owner:GetPlayerColor()
 			
 			return vec.b
 		end

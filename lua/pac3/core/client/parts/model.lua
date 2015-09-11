@@ -218,12 +218,12 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 			if self.UseWeaponColor or self.UsePlayerColor then 
 				local owner = self:GetOwner(true)
 				if owner:IsPlayer() then
-					local c = owner:GetInfo("cl_playercolor")
+					local c = owner:GetPlayerColor()
 					if c ~= self.last_playercolor then
 						self:SetColor(self:GetColor())
 						self.last_playercolor = c
 					end
-					local c = owner:GetInfo("cl_weaponcolor")
+					local c = owner:GetWeaponColor()
 					if c ~= self.last_weaponcolor then
 						self:SetColor(self:GetColor())
 						self.last_weaponcolor = c
@@ -627,10 +627,10 @@ function PART:SetColor(var)
 	local owner = self:GetPlayerOwner()
 	
 	if self.UsePlayerColor and owner:IsValid() then
-		local c = Vector(owner:GetInfo("cl_playercolor")) * self.Brightness
+		local c = owner:GetPlayerColor() * self.Brightness
 		self.Colorf = Color(c.r, c.g, c.b)
 	elseif self.UseWeaponColor and owner:IsValid() then
-		local c = Vector(owner:GetInfo("cl_weaponcolor")) * self.Brightness
+		local c = owner:GetWeaponColor() * self.Brightness
 		self.Colorf = Color(c.r, c.g, c.b)
 	else
 		self.Colorf = Color((var.r/255) * self.Brightness, (var.g/255) * self.Brightness, (var.b/255) * self.Brightness)
