@@ -239,9 +239,9 @@ function PART:SetDrawWeapon(b)
 end
 
 function PART:UpdateWeaponDraw(ent)
-	local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
+	local wep = ent and ent:IsValid() and ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 	
-	if wep:IsWeapon() then
+	if wep and wep:IsWeapon() then
 		local hide = not self.DrawWeapon
 		if hide == true then
 			wep.pac_hide_weapon = hide
