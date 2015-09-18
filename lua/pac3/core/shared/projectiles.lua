@@ -113,7 +113,7 @@ do -- projectile entity
 			if self.part_data.Damage > 0 and data.HitEntity.Health then
 				local info = DamageInfo()
 				
-				info:SetAttacker(self:GetOwner())
+				info:SetAttacker(self:GetOwner():IsValid() and self:GetOwner() or self)
 				info:SetInflictor(self)
 				info:SetDamageForce(data.OurOldVelocity)
 				info:SetDamagePosition(data.HitPos)
@@ -152,6 +152,12 @@ if SERVER then
 	
 		local pos = net.ReadVector()
 		local ang = net.ReadAngle()		
+		-- Is this even used???
+		ply.pac_projectiles = ply.pac_projectiles or {}		
+		if table.Count( ply.pac_projectiles ) >= 30 then
+			return
+		end
+		
 		local part = net.ReadTable()
 
 		if pos:Distance(ply:EyePos()) > 200 * ply:GetModelScale() then
