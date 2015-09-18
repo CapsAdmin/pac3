@@ -8,8 +8,12 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "ModelIndex", 0)
 pac.EndStorableVars()
 
+function PART:GetNiceBodyGroupName()
+	return self:GetBodyGroupName():gsub("^(%d+)",""):Trim()
+end
+
 function PART:OnShow()
-	self:SetBodyGroupName(self:GetBodyGroupName())
+	self:SetBodyGroupName(self:GetNiceBodyGroupName())
 end
 
 function PART:SetBodyGroupName(str)
@@ -26,12 +30,11 @@ function PART:OnThink()
 	local ent = self:GetOwner()
 	
 	if ent:IsValid() then
-
-		if not self.bodygroup_info then			
+		if not self.bodygroup_info then
 			for k,v in pairs(ent:GetBodyGroups()) do
-				if v.name == self.BodyGroupName:lower() then
+				if v.name:lower() == self:GetNiceBodyGroupName() then
 					self.bodygroup_info = v
-					self.bodygroup_info.model_index = math.Clamp(self.ModelIndex, 0, v.num - 1)
+					self.bodygroup_info.model_index = math.Clamp(self:GetModelIndex(), 0, v.num - 1)
 					
 					if ent:IsPlayer() then
 						ent.pac_bodygroup_info = self.bodygroup_info
