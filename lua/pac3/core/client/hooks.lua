@@ -361,6 +361,35 @@ function pac.OnEntityCreated(ent)
 end
 pac.AddHook("OnEntityCreated")
 
+
+function pac.NetworkEntityCreated(ply)
+	if not ply:IsPlayer() then return end
+
+	if ply.pac_player_size then
+		pac.SetPlayerSize(ply,ply.pac_player_size,true)
+	end
+	
+end
+pac.AddHook("NetworkEntityCreated")
+
+function pac.NotifyShouldTransmit(ent,st)
+	if not st then return end
+	if ent:IsPlayer() then
+		local ply = ent
+		if ply.pac_player_size then
+			pac.SetPlayerSize(ply,ply.pac_player_size,true)
+			timer.Simple(0,function()
+				if not ply:IsValid() then return end
+				if ply.pac_player_size then
+					pac.SetPlayerSize(ply,ply.pac_player_size,true)
+				end
+			end)
+		end
+	end
+end
+pac.AddHook("NotifyShouldTransmit")
+
+
 function pac.PlayerSpawned(ply)
 	if ply.pac_parts then
 		for key, part in pairs(ply.pac_parts) do
