@@ -170,8 +170,11 @@ function PART:Disable()
 	if part.ClassName ~= "model" then return end
 		
 	local ent = part:GetEntity()
-	ent:SetNoDraw(true)
-	ent:PhysicsInit(SOLID_NONE)
+	if ent:IsValid() then
+		-- SetNoDraw does not care of validity but PhysicsInit does?
+		ent:SetNoDraw(true)
+		ent:PhysicsInit(SOLID_NONE)
+	end
 	part.skip_orient = false
 end
 
