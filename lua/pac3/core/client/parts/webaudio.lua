@@ -160,7 +160,7 @@ function PART:StopSound()
 			if self.PauseOnHide then
 				stream:Pause()
 			else
-				stream:SetTime(0)
+				pcall(function() stream:SetTime(0) end)
 				stream:Pause()
 			end
 		end

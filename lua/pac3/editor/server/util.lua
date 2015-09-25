@@ -18,19 +18,21 @@ function pace.CallHook(str, ...)
 	hook.Call("pac_" .. str, GAMEMODE, ...)
 end
 
+
+local function wrap_err(ok,...)
+	if not ok then
+		ErrorNoHalt(tostring((...)) .. "\n")
+	end
+	return ...
+end
+
 function pace.AddHook(str, func)
 	func = func or pac[str]
-	hook.Add(str, "pac_" .. str, function(...)
-		local args = {pcall(func, ...)}
-		if not args[1] then
-			ErrorNoHalt(args[2] .. "\n")
-			--table.insert(pace.Errors, args[2])
-		end
-		table.remove(args, 1)
-		return unpack(args)
+	hook.Add(str, "pac", function(...)
+		return wrap_err(pcall(func, ...))
 	end)
 end
 
 function pace.RemoveHook(str)
-	hook.Remove(str, "pac_" .. str)
+	hook.Remove(str, "pac")
 end
