@@ -11,8 +11,8 @@ function pace.SetTPose(b)
 		hook.Add("CalcMainActivity", "pace_tpose", function(ply) 
 			if ply == LocalPlayer() then
 				return 
-					ply:LookupSequence("ragdoll"), 
-					ply:LookupSequence("ragdoll") 
+					ply:LookupSequence("reference"), 
+					ply:LookupSequence("reference") 
 			end
 		end)
 	else
