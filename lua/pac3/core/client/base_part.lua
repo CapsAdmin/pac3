@@ -637,7 +637,7 @@ do -- serializing
 			
 			if self["Set" .. key] then	
 				-- hacky
-				if key:find("Name", nil, true) and key ~= "OwnerName" and key ~= "SequenceName" and key ~= "VariableName" then
+				if key:find("Name", nil, true) and key ~= "OwnerName" and key ~= "SequenceName" and key ~= "VariableName" and key ~= "BodyGroupName" then
 					self["Set" .. key](self, pac.HandlePartName(self:GetPlayerOwner(), value, key))
 				else				
 					if key == "Material" then
