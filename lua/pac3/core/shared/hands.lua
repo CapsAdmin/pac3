@@ -5,7 +5,7 @@ SWEP.Author     	= ""
 SWEP.Contact      	= ""
 SWEP.Purpose      	= ""
 SWEP.Instructions   = "Right-Click to toggle crosshair"
-SWEP.PrintName      = "hands"   
+SWEP.PrintName      = "hands"
 SWEP.DrawAmmo       = false
 SWEP.DrawCrosshair	= true
 SWEP.DrawWeaponInfoBox = false
@@ -37,9 +37,7 @@ function SWEP:DrawHUD() 			end
 function SWEP:PrintWeaponInfo() 	end
 
 function SWEP:DrawWeaponSelection(x,y,w,t,a)
-
     draw.SimpleText("C","creditslogo",x+w/2,y,Color(255, 220, 0,a),TEXT_ALIGN_CENTER)
-	
 end
 
 function SWEP:DrawWorldModel() 						 end
@@ -56,7 +54,7 @@ function SWEP:Initialize()
 	else
 		self:SetWeaponHoldType( "normal" )
 	end
-	
+
 	self:DrawShadow(false)
 end
 
@@ -69,32 +67,48 @@ function SWEP:Think()
 
 	if self.Thinking and self.Owner and self.Owner:IsValid() and self.Owner:GetViewModel():IsValid() then
 		self.Thinking = false
-		
+
 		assert(self:GetClass()=="none","WTF WRONG SHIT: "..tostring(self:GetClass()))
-	
+
 	end
 end
 
-local gtfo=Vector(1,1,1)*65000
-function SWEP:GetViewModelPosition( pos, ang )
-	return gtfo,ang
+function SWEP:PostDrawViewModel(vm,ply,wep)
+    if not IsValid(vm) then return end
+    vm:SetMaterial("engine/occlusionproxy")
+end
+
+function SWEP:OnRemove()
+	if CLIENT then
+		local owner = self:GetOwner() or LocalPlayer()
+
+		if IsValid(owner) then
+			local vm = owner:GetViewModel() or NULL
+			if IsValid(vm) then vm:SetMaterial() end
+		end
+	end
 end
 
 function SWEP:PreDrawViewModel( )
 	return true
 end
 
-
-function SWEP:OnDrop()   
+function SWEP:OnDrop()
+    self:OnRemove()
     if SERVER then
-		self:Remove()
-	end
+        self:Remove()
+    end
+end
+
+function SWEP:Holster(wep)
+	self:OnRemove()
+	return true
 end
 
 function SWEP:SecondaryAttack()
-	if not IsFirstTimePredicted() then return end 
-	self.DrawCrosshair = not self.DrawCrosshair 
-	self:SetNextSecondaryFire(CurTime() + 0.3) 
+	if not IsFirstTimePredicted() then return end
+	self.DrawCrosshair = not self.DrawCrosshair
+	self:SetNextSecondaryFire(CurTime() + 0.3)
 end
 
 
