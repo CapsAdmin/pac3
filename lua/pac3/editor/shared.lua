@@ -51,11 +51,11 @@ function net.WriteColor( col )
 
 end
 
-function net.ReadVector = function()
+net.ReadVector = function()
 	return Vector( net.ReadFloat(), net.ReadFloat(), net.ReadFloat() )
 end
 
-function net.ReadAngle = function()
+net.ReadAngle = function()
 		return Angle( net.ReadFloat(), net.ReadFloat(), net.ReadFloat() )
 	end
 
