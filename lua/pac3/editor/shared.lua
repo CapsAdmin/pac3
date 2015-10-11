@@ -56,8 +56,8 @@ net.ReadVector = function()
 end
 
 net.ReadAngle = function()
-		return Angle( net.ReadFloat(), net.ReadFloat(), net.ReadFloat() )
-	end
+	return Angle( net.ReadFloat(), net.ReadFloat(), net.ReadFloat() )
+end
 
 
 net.WriteVector = function( v )
@@ -69,7 +69,9 @@ net.WriteVector = function( v )
 end
 
 net.WriteAngle = function( a )
-
+	
+	a:Normalize()
+	
 	net.WriteFloat( a.p )
 	net.WriteFloat( a.y )
 	net.WriteFloat( a.r )
