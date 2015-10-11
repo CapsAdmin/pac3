@@ -824,9 +824,11 @@ end
 
 
 function pac.NetSerializeTable(data)
+	local written1 = net.BytesWritten()
 	netx.WriteTable(data)
-	if net.BytesWritten()==65536 then return nil,"table too big" end
-	return true
+	local written2 = net.BytesWritten()
+	if written2==65536 then return nil,"table too big" end
+	return written2-written1
 end
 
 function pac.NetDeserializeTable()

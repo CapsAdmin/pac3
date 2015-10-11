@@ -9,9 +9,19 @@ do -- to server
 		data.owner = part:GetOwner()
 
 		net.Start("pac_submit")
-			pac.NetSerializeTable(data)
+		
+			local ret,err = pac.NetSerializeTable(data)
+			if ret==nil then 
+				pace.Notify(false,"unable to transfer data to server: "..tostring(err or "too big"))
+				return false
+			end
+			
 		net.SendToServer()
-
+		
+		Msg"[PAC] " print("Transmitting outfit ("..string.NiceSize(ret)..')')
+		
+		return true
+		
 	end
 
 	function pace.RemovePartOnServer(name, server_only, filter)
@@ -22,9 +32,15 @@ do -- to server
 		end
 		
 		net.Start("pac_submit")
-			pac.NetSerializeTable(data)
+			local ret,err = pac.NetSerializeTable(data)
+			if ret==nil then 
+				pace.Notify(false,"unable to transfer data to server: "..tostring(err or "too big"))
+				return false
+			end
 		net.SendToServer()
-
+		
+		return true
+		
 	end
 end
 
