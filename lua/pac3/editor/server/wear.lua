@@ -212,8 +212,12 @@ function pace.SubmitPart(data, filter)
 		if type(players) == "table" and not next(players) then return end
 	
 		net.Start("pac_submit")
-			pac.NetSerializeTable(data)
+			local ok,err = pac.NetSerializeTable(data)
+			if ok == nil then
+				ErrorNoHalt("[PAC3] "..tostring(err)..'\n')
+			end
 		net.Send(players)
+		
 		
 		if type(data.part) == "table" then	
 			last_frame = frame_number
