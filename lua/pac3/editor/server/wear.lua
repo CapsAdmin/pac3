@@ -1,46 +1,3 @@
-local function decimal_hack_unpack(tbl)
-	for key, val in pairs(tbl) do
-		local t = type(val)
-		if t == "table" then 
-			if val.__type then
-				t = val.__type 
-				
-				if t == "Vector" then
-					tbl[key] = Vector()
-					tbl[key].x = tostring(val.x)
-					tbl[key].y = tonumber(val.y)
-					tbl[key].z = tonumber(val.z)
-				elseif t == "number" then
-					tbl[key] = tonumber(val.val)
-				end
-			else
-				decimal_hack_unpack(val)
-			end
-		end
-	end
-	
-	return tbl
-end
-
-local function decimal_hack_pack(tbl)
-	for key, val in pairs(tbl) do
-		local t = type(val)
-		if t == "Vector" then
-			tbl[key] = {}
-			tbl[key].x = tostring(val.x)
-			tbl[key].y = tostring(val.y)
-			tbl[key].z = tostring(val.z)
-			tbl[key].__type = "Vector"
-		elseif t == "number" then
-			tbl[key] = {__type = "number", val = tostring(val)}
-		elseif t == "table" then
-			decimal_hack_pack(val)
-		end
-	end
-	
-	return tbl
-end
-
 pace.StreamQueue = pace.StreamQueue or {}
 
 local frame_number = 0
@@ -254,11 +211,10 @@ function pace.SubmitPart(data, filter)
 		
 		if type(players) == "table" and not next(players) then return end
 	
-		--net.Start("pac_submit")
-		--	net.WriteTable(decimal_hack_pack(table.Copy(data)))
-		--net.Send(players)
-		pac.vnet.CreatePacket("pac_submit"):Table(data):AddTargets(players):Send()
-	
+		net.Start("pac_submit")
+			pac.NetSerializeTable(data)
+		net.Send(players)
+		
 		if type(data.part) == "table" then	
 			last_frame = frame_number
 			pac.HandleModifiers(data.part, data.owner)
@@ -312,18 +268,10 @@ util.AddNetworkString("pac_effect_precached")
 util.AddNetworkString("pac_precache_effect")
 
 
---net.Receive("pac_submit", function(_, ply)
---	local data = net.ReadTable()
---	decimal_hack_unpack(data)
---	pace.HandleReceivedData(ply, data)
---end)
-
-pac.vnet.Watch("pac_submit",function(o) 
-	local data = o:Table()
-	local ply = o.Source
-	o:Discard()
-	pace.HandleReceivedData(ply,data)
-end,pac.vnet.OPTION_WATCH_OVERRIDE)
+net.Receive("pac_submit", function(_, ply)
+	local data = pac.NetDeserializeTable()
+	pace.HandleReceivedData(ply, data)
+end)
 
 
 function pace.ClearOutfit(ply)
