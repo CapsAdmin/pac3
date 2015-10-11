@@ -1,5 +1,3 @@
-include("libraries/vnet.lua")
-
 include("hands.lua")
 include("pac_weapon.lua")
 include("modifiers.lua")

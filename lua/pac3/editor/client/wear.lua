@@ -8,8 +8,9 @@ do -- to server
 		local data = {part = part:ToTable()}
 		data.owner = part:GetOwner()
 
-
-		pac.vnet.CreatePacket("pac_submit"):Table(data):AddServer():Send()
+		net.Start("pac_submit")
+			pac.NetSerializeTable(data)
+		net.SendToServer()
 
 	end
 
@@ -19,8 +20,10 @@ do -- to server
 		if name == "__ALL__" then
 			pac.HandleModifiers(nil, LocalPlayer())
 		end
-	
-		pac.vnet.CreatePacket("pac_submit"):Table(data):AddServer():Send()
+		
+		net.Start("pac_submit")
+			pac.NetSerializeTable(data)
+		net.SendToServer()
 
 	end
 end
@@ -84,17 +87,13 @@ do
 end
 
 
---net.Receive("pac_submit", function()
---	local data = net.ReadTable()
---	decimal_hack_unpack(data)
---	
---	pace.HandleReceivedData(data)
---end)
-pac.vnet.Watch("pac_submit",function(o) 
-	local data = o:Table()
-	o:Discard()
+net.Receive("pac_submit", function()
+	local data = pac.NetDeserializeTable()
+	
 	pace.HandleReceivedData(data)
-end,pac.vnet.OPTION_WATCH_OVERRIDE)
+end)
+
+
 
 
 function pace.Notify(allowed, reason, name)
