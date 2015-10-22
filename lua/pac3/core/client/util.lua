@@ -88,6 +88,8 @@ do --dev util
 		pac = {}
 		pace = {}
 		
+		PAC_EDITOR_INITED_PAC = nil
+		
 		include("autorun/pac_init.lua")
 		include("autorun/pac_editor_init.lua")
 		

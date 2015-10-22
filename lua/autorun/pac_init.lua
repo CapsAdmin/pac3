@@ -1,3 +1,6 @@
+
+if PAC_EDITOR_INITED_PAC then return end
+
 if SERVER then				
 	local function add_files(dir)
 		local files, folders = file.Find(dir .. "*", "LUA")
@@ -20,3 +23,4 @@ end
 if CLIENT then
 	include("pac3/core/client/init.lua")
 end
+

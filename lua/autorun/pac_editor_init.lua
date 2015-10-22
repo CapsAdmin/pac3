@@ -1,4 +1,12 @@
-if SERVER then				
+if not pac then 
+	include'pac_init.lua'
+	PAC_EDITOR_INITED_PAC=true
+end
+
+if SERVER then AddCSLuaFile("pac3/editor/shared.lua") end
+include("pac3/editor/shared.lua")
+
+if SERVER then		
 	local function add_files(dir)
 		local files, folders = file.Find(dir .. "*", "LUA")
 		
