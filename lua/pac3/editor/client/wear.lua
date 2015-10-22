@@ -1,46 +1,3 @@
-local function decimal_hack_unpack(tbl)
-	for key, val in pairs(tbl) do
-		local t = type(val)
-		if t == "table" then 
-			if val.__type then
-				t = val.__type 
-				
-				if t == "Vector" then
-					tbl[key] = Vector()
-					tbl[key].x = tostring(val.x)
-					tbl[key].y = tonumber(val.y)
-					tbl[key].z = tonumber(val.z)
-				elseif t == "number" then
-					tbl[key] = tonumber(val.val)
-				end
-			else
-				decimal_hack_unpack(val)
-			end
-		end
-	end
-	
-	return tbl
-end
-
-local function decimal_hack_pack(tbl)
-	for key, val in pairs(tbl) do
-		local t = type(val)
-		if t == "Vector" then
-			tbl[key] = {}
-			tbl[key].x = tostring(val.x)
-			tbl[key].y = tostring(val.y)
-			tbl[key].z = tostring(val.z)
-			tbl[key].__type = "Vector"
-		elseif t == "number" then
-			tbl[key] = {__type = "number", val = tostring(val)}
-		elseif t == "table" then
-			decimal_hack_pack(val)
-		end
-	end
-	
-	return tbl
-end
-
 do -- to server
 	function pace.SendPartToServer(part)
 		
@@ -51,16 +8,20 @@ do -- to server
 		local data = {part = part:ToTable()}
 		data.owner = part:GetOwner()
 
-		if hook.Run("pac_SendData", filter or player.GetAll(), data) ~= false then
-			if pac.netstream then
-				pac.netstream.Start("pac_submit", data)
-			else
-				net.Start("pac_submit")
-					decimal_hack_pack(data)
-					net.WriteTable(data)
-				net.SendToServer()
+		net.Start("pac_submit")
+		
+			local ret,err = pac.NetSerializeTable(data)
+			if ret==nil then 
+				pace.Notify(false,"unable to transfer data to server: "..tostring(err or "too big"))
+				return false
 			end
-		end
+			
+		net.SendToServer()
+		
+		Msg"[PAC] " print("Transmitting outfit ("..string.NiceSize(ret)..')')
+		
+		return true
+		
 	end
 
 	function pace.RemovePartOnServer(name, server_only, filter)
@@ -70,14 +31,16 @@ do -- to server
 			pac.HandleModifiers(nil, LocalPlayer())
 		end
 		
-		if pac.netstream then
-			pac.netstream.Start("pac_submit", data)
-		else
-			net.Start("pac_submit")
-				decimal_hack_pack(data)
-				net.WriteTable(data)
-			net.SendToServer()
-		end
+		net.Start("pac_submit")
+			local ret,err = pac.NetSerializeTable(data)
+			if ret==nil then 
+				pace.Notify(false,"unable to transfer data to server: "..tostring(err or "too big"))
+				return false
+			end
+		net.SendToServer()
+		
+		return true
+		
 	end
 end
 
@@ -127,51 +90,27 @@ do -- from server
 end
 
 do
-	local function go(data)
+	function pace.HandleReceivedData(data)		
 		local T = type(data.part)
 		if T == "table" then
 			pace.WearPartFromServer(data.owner, data.part, data)
 		elseif T ==  "string" then
 			pace.RemovePartFromServer(data.owner, data.part, data)
+		else
+			ErrorNoHalt("PAC: Unhandled "..T..'!?\n')
 		end
-	end
-
-	local queue = {}
-
-	timer.Create("pac_wear_queue", 1, 0, function()
-		for uid, queue in pairs(queue) do
-			local ply = player.GetByUniqueID(uid) or NULL			
-			
-			if ply:IsValid() then
-				
-				--if ply:IsPlayer() and (not ply.pac_last_drawn or (ply.pac_last_drawn + 0.25) < pac.RealTime) then continue end
-				
-				for k,v in pairs(queue) do
-					go(v)
-					queue[k] = nil
-				end
-			end
-		end
-	end)
-
-	function pace.HandleReceivedData(data)		
-		queue[data.player_uid] = queue[data.player_uid] or {}
-		table.insert(queue[data.player_uid], data)
 	end
 end
 
-if pac.netstream then
-	pac.netstream.Hook("pac_submit", function(data)
-		pace.HandleReceivedData(data)
-	end)
-else
-	net.Receive("pac_submit", function()
-		local data = net.ReadTable()
-		decimal_hack_unpack(data)
-		
-		pace.HandleReceivedData(data)
-	end)
-end
+
+net.Receive("pac_submit", function()
+	local data = pac.NetDeserializeTable()
+	
+	pace.HandleReceivedData(data)
+end)
+
+
+
 
 function pace.Notify(allowed, reason, name)
 	 if allowed then
