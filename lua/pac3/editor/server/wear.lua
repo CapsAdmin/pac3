@@ -212,11 +212,15 @@ function pace.SubmitPart(data, filter)
 		if type(players) == "table" and not next(players) then return end
 	
 		net.Start("pac_submit")
-			local ok,err = pac.NetSerializeTable(data)
-			if ok == nil then
-				ErrorNoHalt("[PAC3] "..tostring(err)..'\n')
+		local ok,err = pac.NetSerializeTable(data)
+		if ok == nil then
+			ErrorNoHalt("[PAC3] Outfit broadcast failed for "..tostring(data.owner)..": "..tostring(err)..'\n')
+			if data.owner and data.owner:IsValid() then
+				data.owner:ChatPrint('[PAC3] ERROR: Could not broadcast your outfit: '..tostring(err))
 			end
-		net.Send(players)
+		else
+			net.Send(players)
+		end
 		
 		
 		if type(data.part) == "table" then	
