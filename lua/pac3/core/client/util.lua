@@ -457,7 +457,6 @@ end
 function pac.Handleurltex(part, url, callback, shader)
 	if url and pac.urltex and url:find("http") then	
 		local skip_cache = url:sub(1,1) == "_"
-		url = url:gsub("https://", "http://")
 		url = url:match("http[s]-://.+/.-%.%a+")
 		if url then
 			pac.urltex.GetMaterialFromURL(

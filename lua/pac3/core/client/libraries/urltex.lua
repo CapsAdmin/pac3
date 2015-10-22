@@ -23,7 +23,6 @@ function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size
 	shader = shader or "VertexLitGeneric"
 	if not enable:GetBool() then return end
 	
-	url = url:gsub("https://", "http://")
 	
 	if type(callback) == "function" and not skip_cache and urltex.Cache[url] then
 		local tex = urltex.Cache[url]
