@@ -143,7 +143,6 @@ function pace.LoadParts(name, clear, override_part)
 		pac.dprint("loading Parts %s",  name)
 		
 		if name:find("http") then	
-			name = name:gsub("https://", "http://")
 			
 			if name:lower():find("pastebin.com") then
 				name = name:gsub(".com/", ".com/raw.php?i=")
