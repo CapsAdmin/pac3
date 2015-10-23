@@ -11,7 +11,9 @@ webaudio.Streams.Streams      = {}
 function webaudio.Streams.CreateStream(url)
 	--url = url:gsub("http[s?]://", "http://")
 
-	if not string.find(url, "http") then
+	if url:find("http",1,true) then
+		url = pac.FixupURL(url)
+	else
 		url = "asset://garrysmod/sound/" .. url
 	end
 
