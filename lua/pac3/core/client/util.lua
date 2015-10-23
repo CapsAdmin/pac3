@@ -454,11 +454,26 @@ function pac.Material(str, part)
 	return Material(str)
 end
 
+function pac.FixupURL(url)
+	if url and isstring(url) then
+		url = url:Trim()
+		url = url:gsub([[^https?://www.dropbox.com/s/(.+)%?dl%=[01]$]],[[https://dl.dropboxusercontent.com/s/%1]])
+		url = url:gsub( "pastebin.com/([a-zA-Z0-9]*)$", "pastebin.com/raw.php?i=%1")
+		url = url:gsub( "github.com/([a-zA-Z0-9_]+)/([a-zA-Z0-9_]+)/blob/", "github.com/%1/%2/raw/")
+	end
+	return url
+end
+
 function pac.Handleurltex(part, url, callback, shader)
 	if url and pac.urltex and url:find("http") then	
 		local skip_cache = url:sub(1,1) == "_"
+		
 		url = url:match("http[s]-://.+/.-%.%a+")
+		
 		if url then
+			
+			pac.FixupURL(url)
+			
 			pac.urltex.GetMaterialFromURL(
 				url, 
 				function(mat, tex)
