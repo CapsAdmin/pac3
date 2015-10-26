@@ -14,6 +14,8 @@ end
 function pac.SimpleFetch(url,cb,failcb)
 	if not url or url:len()<4 then return end
 	
+	url = pac.FixupURL(url)
+	
 	http.Fetch(url,
 	function(data,len,headers,code)
 		if code~=200 then
