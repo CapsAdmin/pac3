@@ -50,7 +50,7 @@ function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statu
 	-- Rewrite URL
 	-- pastebin.com/([a-zA-Z0-9]*) to pastebin.com/raw.php?i=%1
 	-- github.com/(.*)/(.*)/blob/ to github.com/%1/%2/raw/
-	url = string.gsub (url, "^https://", "http://")
+	--url = string.gsub (url, "^https://", "http://")
 	url = string.gsub (url, "pastebin.com/([a-zA-Z0-9]*)$", "pastebin.com/raw.php?i=%1")
 	url = string.gsub (url, "github.com/([a-zA-Z0-9_]+)/([a-zA-Z0-9_]+)/blob/", "github.com/%1/%2/raw/")
 	
