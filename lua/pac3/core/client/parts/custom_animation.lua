@@ -20,6 +20,9 @@ function PART:SetURL(url)
 		self.URL = url
 		
 		if url:find("http") then
+		
+			url = pac.FixupURL(url)
+		
 			http.Fetch(url, function(str,len,hdr,code)
 				if not str or code~=200 then 
 					Msg"[PAC] Animation failed to load from "print(url,code)

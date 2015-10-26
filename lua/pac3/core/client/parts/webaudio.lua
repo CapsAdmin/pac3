@@ -126,6 +126,8 @@ function PART:SetURL(URL)
 			self.streams[url] = snd
 		end
 		
+		url = pac.FixupURL(url)
+	
 		sound.PlayURL(url, flags, callback)
 		
 	end
