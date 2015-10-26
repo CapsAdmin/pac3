@@ -142,13 +142,10 @@ function pace.LoadParts(name, clear, override_part)
 	else
 		pac.dprint("loading Parts %s",  name)
 		
-		if name:find("http") then	
-			name = name:gsub("https://", "http://")
+		if name:find("https?://") then	
 			
-			if name:lower():find("pastebin.com") then
-				name = name:gsub(".com/", ".com/raw.php?i=")
-			end
-			
+			name = pac.FixupURL(name)
+
 			local function callback(str)
 				local data,err = pac.luadata.Decode(str)
 				if not data then

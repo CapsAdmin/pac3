@@ -47,12 +47,7 @@ end
 function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statusCallback)
 	if not pac_enable_urlobj:GetBool() then return end
 	
-	-- Rewrite URL
-	-- pastebin.com/([a-zA-Z0-9]*) to pastebin.com/raw.php?i=%1
-	-- github.com/(.*)/(.*)/blob/ to github.com/%1/%2/raw/
-	--url = string.gsub (url, "^https://", "http://")
-	url = string.gsub (url, "pastebin.com/([a-zA-Z0-9]*)$", "pastebin.com/raw.php?i=%1")
-	url = string.gsub (url, "github.com/([a-zA-Z0-9_]+)/([a-zA-Z0-9_]+)/blob/", "github.com/%1/%2/raw/")
+	url = pac.FixupURL(url)
 	
 	-- if it's already downloaded just return it
 	if callback and not forceReload and urlobj.Cache[url] then

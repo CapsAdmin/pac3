@@ -23,8 +23,8 @@ function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size
 	shader = shader or "VertexLitGeneric"
 	if not enable:GetBool() then return end
 	
-	url = url:gsub("https://", "http://")
-	
+	url = pac.FixupURL(url)
+
 	if type(callback) == "function" and not skip_cache and urltex.Cache[url] then
 		local tex = urltex.Cache[url]
 		local mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), shader)
