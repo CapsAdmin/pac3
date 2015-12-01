@@ -42,6 +42,9 @@ function PANEL:OnMouseReleased(mc)
 	if mc==MOUSE_RIGHT then
 		self:Close()
 	end
+	
+	self.BaseClass.OnMouseReleased(self,mc)
+	
 end
 
 function PANEL:MakeBar()	
