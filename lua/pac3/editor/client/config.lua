@@ -187,6 +187,7 @@ pace.PartTree = {
 		holdtype = true,
 		bone = true,
 		poseparameter = true,
+		submaterial = true,
 		material = true,
 		effect = true,
 		bodygroup = true,
@@ -202,6 +203,7 @@ pace.PartTree = {
 		bone = true,
 		effect = true,
 		material = true,
+		submaterial = true,
 		bodygroup = true,
 	},
 
@@ -341,6 +343,7 @@ pace.PropertyOrder =
 	"Bodygroup",
 	"BodygroupState",
 	"Material",	
+	"SubMaterialId",	
 	"TrailPath",
 	"Color",
 	"StartColor",
@@ -413,6 +416,18 @@ pace.PropertyLimits =
 		num = tonumber(num)
 		return math.Round(math.max(num, 0))
 	end,
+	
+	SubMaterialId = function(self, num)
+		
+		num = tonumber(num) or 0
+
+		local ent = self:GetOwner(self.RootOwner)
+
+		local maxnum = 16
+
+		return math.floor(math.Clamp(num, 0, maxnum))
+	end,
+	
 	Bodygroup = function(self, num)
 		num = tonumber(num)
 		return math.Round(math.max(num, 0))
@@ -666,6 +681,8 @@ function pace.TranslatePropertiesKey(key, obj)
 	if key:find("color") and not key:find("use") then
 		return "color"
 	end
+	
+	return obj and obj.TranslatePropertiesKey and obj:TranslatePropertiesKey(key)
 end
 
 function pace.GetIconFromClassName(class_name)

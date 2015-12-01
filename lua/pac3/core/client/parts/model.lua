@@ -664,7 +664,7 @@ function PART:FixMaterial()
 			params["$vertexcolor"] = 1
 			params["$additive"] = 1
 			
-			self.Materialm = CreateMaterial("pac_fixmat_" .. os.clock(), "VertexLitGeneric", params)
+			self.Materialm = CreateMaterial(pac.uid"pac_fixmat_", "VertexLitGeneric", params)
 		end		
 	end
 end

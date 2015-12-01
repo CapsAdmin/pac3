@@ -88,7 +88,7 @@ function PART:FixMaterial()
 			params["$vertexcolor"] = 1
 			params["$vertexalpha"] = 1
 			
-			self.Materialm = CreateMaterial("pac_fixmat_" .. os.clock() .. self.Id, "VertexLitGeneric", params)
+			self.Materialm = CreateMaterial(pac.uid"pac_fixmat_" .. self.Id, "VertexLitGeneric", params)
 		end		
 	end
 end

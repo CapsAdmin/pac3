@@ -454,11 +454,26 @@ function pac.Material(str, part)
 	return Material(str)
 end
 
+do
+	--TODO: Table keeping id -> idx mapping
+	local idx = 0
+	function pac.uid(id)
+		idx = idx + 1
+		if idx>=2^53 then
+			ErrorNoHalt("?????BUG???? Pac UIDs exhausted\n")
+			idx = 0
+		end
+
+		return ('%s%d'):format(id, idx)
+	end
+end
+
 function pac.FixupURL(url)
 	if url and isstring(url) then
 		url = url:Trim()
 		if url:find("dropbox",1,true) then
 			url = url:gsub([[^http%://dl%.dropboxusercontent%.com/]],[[https://dl.dropboxusercontent.com/]])
+			url = url:gsub([[^http%://onedrive%.live%.com/redir?]],[[https://onedrive.live.com/download?]])
 			url = url:gsub([[^https?://www.dropbox.com/s/(.+)%?dl%=[01]$]],[[https://dl.dropboxusercontent.com/s/%1]])
 		end
 		
