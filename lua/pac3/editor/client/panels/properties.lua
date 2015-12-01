@@ -510,7 +510,8 @@ do -- non editable string
 		local lbl = vgui.Create("DLabel")
 			lbl:SetTextColor(derma.Color("text_dark", self, color_black))
 			lbl:SetFont(pace.CurrentFont)
-			lbl:SetText("  " .. str) -- ugh
+			lbl:SetText(str)
+			lbl:SetTextInset(4,0)
 			lbl:SizeToContents()
 			lbl.pac_tooltip_hack = true
 		self:SetContent(lbl)
@@ -1389,6 +1390,35 @@ do -- model
 	
 	pace.RegisterPanel(PANEL)
 end
+
+
+do -- submaterial
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_submaterialid"
+	PANEL.Base = "pace_properties_base_type"
+	
+	function PANEL:SpecialCallback()
+		
+		local submaterials = pace.current_part:GetSubMaterialIdList()
+		
+		local menu = DermaMenu()
+		
+		menu:MakePopup()
+		
+		for num, path in next,submaterials do
+			menu:AddOption(L(path), function()
+				self:SetValue(num)
+				self.OnValueChanged(num)
+			end)
+		end
+		
+		FIX_MENU(menu)
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
 
 do -- material
 	local PANEL = {}

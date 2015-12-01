@@ -311,6 +311,7 @@ end
 
 
 pac.StartStorableVars()
+
 	setup(PART)
 	add_transform("BaseTexture")
 	--add_transform("Bump") -- doesn't work
@@ -321,7 +322,7 @@ function PART:GetMaterialFromParent()
 	if self:GetParent():IsValid() then
 		--print(self.Materialm and self.Materialm:GetName(), self.Parent.Materialm:GetName(), self.last_mat and self.last_mat:GetName())
 		if not self.Materialm then
-			local mat = CreateMaterial("pac_material_" .. SysTime(), "VertexLitGeneric", {})
+			local mat = CreateMaterial(pac.uid"pac_material_", "VertexLitGeneric", {})
 			
 			if self.Parent.Materialm then
 				local tex
@@ -352,7 +353,7 @@ end
 
 function PART:GetRawMaterial()
 	if not self.Materialm then
-		local mat = CreateMaterial("pac_material_" .. SysTime(), "VertexLitGeneric", {})
+		local mat = CreateMaterial(pac.uid"pac_material_", "VertexLitGeneric", {})
 		self.Materialm = mat
 	end
 	

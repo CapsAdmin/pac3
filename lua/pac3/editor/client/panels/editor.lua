@@ -38,6 +38,12 @@ function PANEL:Init()
 	self:MakeBar()
 end
 
+function PANEL:OnMouseReleased(mc)
+	if mc==MOUSE_RIGHT then
+		self:Close()
+	end
+end
+
 function PANEL:MakeBar()	
 	if self.menu_bar:IsValid() then self.menu_bar:Remove() end
 
@@ -84,9 +90,17 @@ function PANEL:PerformLayout()
 	self.div:InvalidateLayout()
 	self.bottom:PerformLayout()
 	pace.properties:PerformLayout()
-	
-	if auto_size:GetBool() then
-		self.div:SetTopHeight(ScrH() - math.min(pace.properties:GetHeight() + RENDERSCORE_SIZE + BAR_SIZE - 6, ScrH() / 1.5))
+	local sz = auto_size:GetInt() 
+	local newh = sz >0 and 	(
+								ScrH() - math.min(pace.properties:GetHeight() + RENDERSCORE_SIZE + BAR_SIZE - 6, ScrH() / 1.5)
+							)
+	if sz >= 2 then
+		local oldh = self.div:GetTopHeight()
+		if newh<oldh then
+			self.div:SetTopHeight(newh)
+		end
+	elseif sz >= 1 then
+		self.div:SetTopHeight(newh)
 	end
 end
 
