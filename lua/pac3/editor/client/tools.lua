@@ -300,13 +300,15 @@ pace.AddTool(L"convert to expression2 holo", function(part)
 
 	local function part_to_holo(part)
 		local scale = part:GetSize() * part:GetScale()
-				
-		for key, clip in pairs(part.ClipPlanes) do
-			if clip:IsValid() and not clip:IsHidden() then
-				local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
-				local normal = ang:Forward()
-				holo_str = holo_str .. 
-				"holoClip(HOLO_NAME, " .. tovec(pos) .. ", " .. tovec(normal) ..  ", 1)\n"
+	
+		if part.ClipPlanes then
+			for key, clip in pairs(part.ClipPlanes) do
+				if clip:IsValid() and not clip:IsHidden() then
+					local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
+					local normal = ang:Forward()
+					holo_str = holo_str .. 
+					"holoClip(HOLO_NAME, " .. tovec(pos) .. ", " .. tovec(normal) ..  ", 1)\n"
+				end
 			end
 		end
 		
@@ -317,7 +319,7 @@ pace.AddTool(L"convert to expression2 holo", function(part)
 		:gsub("SCALE", tovec(Vector(scale.y, scale.x, scale.z)))
 		:gsub("ANGLES", toang(part:GetAngles()))
 		:gsub("POSITION", tovec(part:GetPosition()))
-		:gsub("MATERIAL", ("%q"):format(part:GetModel()))
+		:gsub("MATERIAL", ("%q"):format(part:GetMaterial()))
 		:gsub("MODEL", ("%q"):format(part:GetModel()))
 		:gsub("SKIN", part:GetSkin())
 		
@@ -334,6 +336,8 @@ pace.AddTool(L"convert to expression2 holo", function(part)
 
 		holo = holo:Replace("HOLO_NAME", "PAC_" ..part:GetName():gsub("%p", ""):gsub(" ", "_"))
 		
+		LocalPlayer():ChatPrint("PAC -> E2 holo code printed to console.")
+		print(holo)
 		return holo
 	end
 
