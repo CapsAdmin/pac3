@@ -510,7 +510,7 @@ pace.example_outfits["hitpos and second head"] = {[1] = {
 		["Description"] = "add parts to me!",
 	},
 },
-} 
+}
 
 pace.example_outfits["chell engineer"] = {[1] = {
 	["children"] = {
@@ -1753,7 +1753,7 @@ pace.example_outfits["skis"] = {
 							["PhongExponent"] = 1.5,
 							["PhongTint"] = Vector(0.30000001192093, 0.30000001192093, 0.30000001192093),
 							["RimlightExponent"] = 0.5,
-							["BaseTexture"] = "https://dl.dropboxusercontent.com/u/244444/FG/norwegian_flag.png",
+							["BaseTexture"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/objects/norwegian_flag.png",
 							["ClassName"] = "material",
 							["PhongBoost"] = 0.21,
 							["BumpMap"] = "models/player/items/soldier/dappertopper",
@@ -1818,7 +1818,7 @@ pace.example_outfits["skis"] = {
 				["children"] = {
 				},
 				["self"] = {
-					["BaseTexture"] = "https://dl.dropboxusercontent.com/u/244444/FG/backpack_norwegian.png",
+					["BaseTexture"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/objects/backpack_norwegian.png",
 					["ClassName"] = "material",
 					["UniqueID"] = "2356710271",
 					["BumpMap"] = "models\\player\\items\\sniper\\xms_sniper_commandobackpack_phongmask",
@@ -1996,7 +1996,7 @@ pace.example_outfits["southpark"] = {
 						["Bone"] = "none",
 						["Fullbright"] = true,
 						["Translucent"] = true,
-						["Material"] = "_https://dl.dropboxusercontent.com/u/244444/FG/kyle/side.png",
+						["Material"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/male/kyle/side.png",
 					},
 				},
 				[2] = {
@@ -2052,7 +2052,7 @@ pace.example_outfits["southpark"] = {
 						["ClassName"] = "model",
 						["Bone"] = "none",
 						["Translucent"] = true,
-						["Material"] = "_https://dl.dropboxusercontent.com/u/244444/FG/kyle/back.png",
+						["Material"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/male/kyle/back.png",
 					},
 				},
 				[4] = {
@@ -2095,7 +2095,7 @@ pace.example_outfits["southpark"] = {
 						["ClassName"] = "model",
 						["Bone"] = "none",
 						["Translucent"] = true,
-						["Material"] = "_https://dl.dropboxusercontent.com/u/244444/FG/kyle/side.png",
+						["Material"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/male/kyle/side.png",
 					},
 				},
 				[5] = {
@@ -2138,7 +2138,7 @@ pace.example_outfits["southpark"] = {
 						["ClassName"] = "model",
 						["Bone"] = "none",
 						["Translucent"] = true,
-						["Material"] = "_https://dl.dropboxusercontent.com/u/244444/FG/kyle/front.png",
+						["Material"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/male/kyle/front.png",
 					},
 				},
 			},
@@ -2220,7 +2220,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 				["self"] = {
 					["UniqueID"] = "1866261967",
 					["Name"] = "left eye",
-					["Model"] = "http://dl.dropboxusercontent.com/u/244444/FG/Eye.obj",
+					["Model"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/eye.obj",
 					["EditorExpand"] = true,
 					["GlobalID"] = "2673971993",
 					["Size"] = 0.19945035257042,
@@ -2237,7 +2237,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 				["self"] = {
 					["UniqueID"] = "884148990",
 					["Name"] = "right eye",
-					["Model"] = "http://dl.dropboxusercontent.com/u/244444/FG/Eye.obj",
+					["Model"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/eye.obj",
 					["EditorExpand"] = true,
 					["GlobalID"] = "2673971993",
 					["Size"] = 0.19945035257042,
@@ -2256,7 +2256,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 						["self"] = {
 							["DrawOrder"] = 2,
 							["Position"] = Vector(0.061999998986721, 1.4270000457764, 1.7189999818802),
-							["Model"] = "http://dl.dropboxusercontent.com/u/244444/FG/lashes.obj",
+							["Model"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/lashes.obj",
 							["EditorExpand"] = true,
 							["Passes"] = 0,
 							["Name"] = "lash left top",
@@ -2277,7 +2277,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 						["self"] = {
 							["DrawOrder"] = 2,
 							["Position"] = Vector(-0.061999998986721, 1.1770000457764, 1.9190000295639),
-							["Model"] = "http://dl.dropboxusercontent.com/u/244444/FG/lashes.obj",
+							["Model"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/lashes.obj",
 							["EditorExpand"] = true,
 							["Passes"] = 0,
 							["Name"] = "lash right bottom",
@@ -2298,7 +2298,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 						["self"] = {
 							["DrawOrder"] = 2,
 							["Position"] = Vector(-0.061999998986721, 1.4270000457764, 1.7189999818802),
-							["Model"] = "http://dl.dropboxusercontent.com/u/244444/FG/lashes.obj",
+							["Model"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/lashes.obj",
 							["EditorExpand"] = true,
 							["Passes"] = 0,
 							["Name"] = "lash right top",
@@ -2319,7 +2319,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 						["self"] = {
 							["DrawOrder"] = 2,
 							["Position"] = Vector(0.061999998986721, 1.2569999694824, 1.9190000295639),
-							["Model"] = "http://dl.dropboxusercontent.com/u/244444/FG/lashes.obj",
+							["Model"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/lashes.obj",
 							["EditorExpand"] = true,
 							["Passes"] = 0,
 							["Name"] = "lash left bottom",
@@ -2381,7 +2381,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 							["Alpha"] = 0.99,
 							["Material"] = "mat hair",
 							["Position"] = Vector(-3.9423828125, 0.05322265625, 4.2568359375),
-							["Model"] = "http://dl.dropboxusercontent.com/u/244444/FG/hair23_2.obj",
+							["Model"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/hair/hair1.obj",
 							["DoubleFace"] = true,
 							["ClassName"] = "model",
 							["Name"] = "tail",
@@ -2403,7 +2403,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 					["Alpha"] = 0.99,
 					["Material"] = "mat hair",
 					["Position"] = Vector(0, -2.2530000209808, -1.0089999437332),
-					["Model"] = "http://dl.dropboxusercontent.com/u/244444/FG/hair23_3.obj",
+					["Model"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/hair/hair2.obj",
 					["Angles"] = Angle(0, -180, 127.59375),
 					["Name"] = "hair",
 					["Scale"] = Vector(0.94999998807907, 1, 1),
@@ -2430,7 +2430,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 			["Position"] = Vector(1.539999961853, -2.3099999427795, 0.050000000745058),
 			["Color"] = Vector(220, 198, 184),
 			["Material"] = "mat face",
-			["Model"] = "http://dl.dropboxusercontent.com/u/244444/FG/face1.obj",
+			["Model"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/face1.obj",
 			["GlobalID"] = "3070286632",
 		},
 	},
@@ -2446,7 +2446,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 			["PhongTint"] = Vector(27, 27, 27),
 			["Name"] = "mat eye",
 			["ClassName"] = "material",
-			["BaseTexture"] = "_https://dl.dropboxusercontent.com/u/244444/FG/eyelightning.png",
+			["BaseTexture"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/eye1.png",
 			["DetailBlendMode"] = 1,
 			["OwnerName"] = "",
 			["PhongBoost"] = 4,
@@ -2466,7 +2466,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 			["Rimlight"] = true,
 			["Name"] = "mat face",
 			["RimlightExponent"] = 34.700000762939,
-			["BaseTexture"] = "http://dl.dropboxusercontent.com/u/244444/FG/faceao2.jpg",
+			["BaseTexture"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/hair/face1.jpg",
 			["ClassName"] = "material",
 			["OwnerName"] = "",
 			["PhongBoost"] = 0.05,
@@ -2485,7 +2485,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 			["UniqueID"] = "2481252630",
 			["DetailTint"] = Vector(29, 29, 29),
 			["PhongTint"] = Vector(1, 1, 1),
-			["BaseTexture"] = "https://dl.dropbox.com/u/244444/FG/hair16.png",
+			["BaseTexture"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/hair/hair3.obj",
 			["BumpMap"] = "models/player/items/soldier/dappertopper",
 			["Phong"] = true,
 			["RimlightBoost"] = 0.21,
