@@ -2485,7 +2485,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 			["UniqueID"] = "2481252630",
 			["DetailTint"] = Vector(29, 29, 29),
 			["PhongTint"] = Vector(1, 1, 1),
-			["BaseTexture"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/hair/hair3.obj",
+			["BaseTexture"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/hair/hair1.png",
 			["BumpMap"] = "models/player/items/soldier/dappertopper",
 			["Phong"] = true,
 			["RimlightBoost"] = 0.21,
