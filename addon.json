@@ -9,6 +9,10 @@
 		"*.txt",
 		"*.md",
 		"*.bat",
-		"*.7z"
+		"*.7z",
+		"COPYING",
+		"README.md",
+		"TODO.txt",
+		"boneanimlib.txt"
 	]
 }
