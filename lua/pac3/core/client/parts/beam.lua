@@ -205,7 +205,7 @@ function PART:OnDraw(owner, pos, ang)
 			(part.cached_ang + oang):Forward(), 
 			
 			self.Bend, 
-			self.Resolution, 
+			math.Clamp(self.Resolution, 1, 256), 
 			self.Width, 
 			self.StartColorC, 
 			self.EndColorC, 

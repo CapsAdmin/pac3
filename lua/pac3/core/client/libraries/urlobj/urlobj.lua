@@ -47,11 +47,8 @@ end
 function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statusCallback)
 	if not pac_enable_urlobj:GetBool() then return end
 	
-	-- Rewrite URL
-	-- pastebin.com/([a-zA-Z0-9]*) to pastebin.com/raw.php?i=%1
-	-- github.com/(.*)/(.*)/blob/ to github.com/%1/%2/raw/
 	url = pac.FixupURL(url)
-
+	
 	-- if it's already downloaded just return it
 	if callback and not forceReload and urlobj.Cache[url] then
 		callback(urlobj.Cache[url])
