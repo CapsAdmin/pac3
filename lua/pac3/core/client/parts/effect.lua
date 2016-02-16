@@ -57,13 +57,21 @@ for key, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
 	LOADED_PARTICLES[file_name] = true
 end
 
+local already = {}
+local function pac_request_precache(name)
+	if already[name] then return end
+	already[name] = true
+	net.Start "pac_request_precache"
+		net.WriteString(name)
+	net.SendToServer()
+end	
+
 function PART:SetEffect(name)
 	self.Effect = name
 	self.Ready = false
 	
-	net.Start("pac_request_precache")
-		net.WriteString(name)
-	net.SendToServer()
+	pac_request_precache(name)
+	
 end
 
 net.Receive("pac_effect_precached", function()
