@@ -245,7 +245,7 @@ function pace.SubmitPartNotify(data)
 			umsg.String(reason or "")
 			umsg.String(data.part.self.Name or "no name")
 		umsg.End()
-		hook.Run("PACSubmitAcknowledged", data.owner, util.tobool(allowed), reason or "", data.part.self.Name or "no name")
+		hook.Run("PACSubmitAcknowledged", data.owner, util.tobool(allowed), reason or "", data.part.self.Name or "no name", data)
 	end
 end
 
