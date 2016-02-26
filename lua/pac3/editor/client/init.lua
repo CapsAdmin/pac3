@@ -200,7 +200,7 @@ do -- forcing hooks
 				pace.OldHooks[event] = table.Copy(hooks)
 
 				for name in pairs(hooks) do
-					if isstring(name) and name:sub(1, 4) ~= "pace_" then
+					if type(name) == "string" and name:sub(1, 4) ~= "pace_" then
 						hook.Remove(event, name)
 					end
 				end
@@ -212,7 +212,7 @@ do -- forcing hooks
 		if pace.OldHooks then
 			for event, hooks in pairs(pace.OldHooks) do
 				for name, func in pairs(hooks) do
-					if isstring(name) and name:sub(1, 4) ~= "pace_" then
+					if type(name) == "string" and name:sub(1, 4) ~= "pace_" then
 						hook.Add(event, name, func)
 					end
 				end
