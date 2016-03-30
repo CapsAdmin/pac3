@@ -419,6 +419,11 @@ function pac.PostDrawOpaqueRenderables(drawdepth,drawing_skybox)
 					hide_parts(ent)
 					continue
 				end
+				
+				if ent:GetNoDraw() then
+					hide_parts(ent)
+					continue
+				end
 			
 				-- :(
 				if ent.pac_death_hide_ragdoll then
