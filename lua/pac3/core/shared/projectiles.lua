@@ -1,4 +1,4 @@
-local enable = CreateConVar("pac_sv_projectiles", 0, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
+local enable = CreateConVar("pac_sv_projectiles", 0, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE, FCVAR_SERVER_CAN_EXECUTE))
 
 do -- projectile entity
 	local ENT = {}
