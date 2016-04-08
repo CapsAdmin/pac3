@@ -1054,18 +1054,23 @@ do
 	local enums2 = {}
 	for key, val in pairs(_G) do
 		if type(key) == "string" and type(val) == "number" then
-			if key:sub(0,4) == "KEY_" then
+			if key:sub(0,4) == "KEY_" and not key:find("_LAST$")and not key:find("_FIRST$")  and not key:find("_COUNT$")  then
 				enums[val] = key:sub(5):lower()
 				enums2[enums[val]] = val
-			elseif key:sub(0,6) == "MOUSE_" or key:sub(0,9) == "JOYSTICK_" then
-				enums[val] = key:lower()
-				enums2[enums[val]] = val
+			elseif (key:sub(0,6) == "MOUSE_" or key:sub(0,9) == "JOYSTICK_") and not key:find("_LAST$")and not key:find("_FIRST$")  and not key:find("_COUNT$")  then
+				--if enums[val] then
+					--print("conflict",val,key,'-',enums[val])
+				--else
+					enums[val] = key:lower()
+					enums2[enums[val]] = val
+				--end
 			end
 		end
 	end
-	
+
 	pac.key_enums = enums
 	
+	--TODO: Rate limit!!!
 	net.Receive("pac.net.BroadcastPlayerButton", function()
 		local ply = net.ReadEntity()
 		
