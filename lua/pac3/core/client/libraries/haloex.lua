@@ -1,14 +1,28 @@
+--TODO: Remake from current halo code
+
 local haloex = {}
 
 local render = render
 local cam = cam
 
-local matColor	= Material( "model_color" )
-local mat_Copy	= Material( "pp/copy" )
-local mat_Add	= Material( "pp/add" )
-local mat_Sub	= Material( "pp/sub" )
-local rt_Stencil	= GetRenderTarget("halo_ex_stencil" .. os.clock(), ScrW()/8, ScrH()/8, true)
-local rt_Store		= GetRenderTarget("halo_ex_store" .. os.clock(), ScrW(), ScrH(), true)
+local lazyload 
+	local matColor	
+	local mat_Copy	
+	local mat_Add	
+	local mat_Sub	
+	local rt_Stencil
+	local rt_Store	
+
+-- loading these only when needed, should not be too costly
+lazyload = function()
+	lazyload = nil
+	matColor	= Material( "model_color" )
+	mat_Copy	= Material( "pp/copy" )
+	mat_Add	= Material( "pp/add" )
+	mat_Sub	= Material( "pp/sub" )
+	rt_Stencil	= GetRenderTarget("halo_ex_stencil" .. os.clock(), ScrW()/8, ScrH()/8, true)
+	rt_Store		= GetRenderTarget("halo_ex_store" .. os.clock(), ScrW(), ScrH(), true)
+end
 
 local List = {}
 
@@ -37,7 +51,8 @@ function haloex.Add( ents, color, blurx, blury, passes, add, ignorez, amount, sp
 end
 
 function haloex.Render( entry )
-
+	
+	
 	local OldRT = render.GetRenderTarget()
 	
 	-- Copy what's currently on the screen to another texture
@@ -184,7 +199,9 @@ end
 
 hook.Add( "PostDrawEffects", "RenderHaloexs", function()
 
-	if ( #List == 0 ) then return end
+	if not List[1] then return end
+	
+	if lazyload then lazyload() end
 	
 	for k, v in pairs( List ) do
 		haloex.Render( v )
