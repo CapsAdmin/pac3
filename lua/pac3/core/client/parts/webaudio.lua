@@ -71,6 +71,7 @@ function PART:OnDraw(ent, pos, ang)
 		stream:Set3DCone(self.InnerAngle, self.OuterAngle, self.OuterVolume)
 		
 		stream:SetVolume(shouldMute and not hasFocus and 0 or self:GetVolume())
+		stream:SetPlaybackRate(self:GetPitch() + self.random_pitch)
 	end
 end
 
