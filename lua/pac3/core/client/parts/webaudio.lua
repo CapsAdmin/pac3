@@ -70,17 +70,7 @@ function PART:OnDraw(ent, pos, ang)
 		stream:Set3DFadeDistance(self.MinimumRadius, self.MaximumRadius)
 		stream:Set3DCone(self.InnerAngle, self.OuterAngle, self.OuterVolume)
 		
-		if shouldMute then
-			if hasFocus then
-				stream:SetVolume(self:GetVolume())
-			else
-				stream:SetVolume(0)
-			end
-		else
-			stream:SetVolume(self:GetVolume())
-		end
-		
-		stream:SetPlaybackRate(self:GetPitch() + self.random_pitch)
+		stream:SetVolume(shouldMute and not hasFocus and 0 or self:GetVolume())
 	end
 end
 
