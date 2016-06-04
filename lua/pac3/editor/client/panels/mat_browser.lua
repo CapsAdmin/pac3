@@ -1,3 +1,7 @@
+if not file.Exists("pac3_editor/mats_favorite.txt","DATA") then
+	luadata.WriteFile("pac3_editor/mats_favorite.txt",{})
+end
+
 pace.Materials = {}
 
 pace.Materials.materials =
@@ -550,6 +554,8 @@ pace.Materials.sprites =
 	"particles/smokey",
 }
 
+pace.Materials.favorites = pace.Materials.favorites or luadata.ReadFile("pac3_editor/mats_favorite.txt") or {}
+
 local PANEL = {}
 
 PANEL.Base = "DFrame"
@@ -582,6 +588,7 @@ function PANEL:Init()
 	self.nodes = {}
 
 	self.nodes.pac_mats    = self.Tree:AddNode("Materials"):SetIcon("icon16/image.png")
+	self.nodes.favorites   = self.Tree:AddNode("Favorites"):SetIcon("icon16/star.png")
 	self.nodes.pac_trails  = self.Tree:AddNode("Trails"):SetIcon("icon16/image.png")
 	self.nodes.pac_sprites = self.Tree:AddNode("Sprites"):SetIcon("icon16/image.png")
 	self.nodes.toolgun     = self.Tree:AddNode("Toolgun"):SetIcon("icon16/image.png")
@@ -608,6 +615,22 @@ function PANEL:Init()
 	self.btnClear.DoClick = function(s)
 		self:MaterialSelected("")
 		self.Entry:SetText("")
+	end
+
+	self.btnFave = vgui.Create("DButton",path_pnl)
+	self.btnFave:Dock(RIGHT)
+	self.btnFave:SetWide(24)
+	self.btnFave:SetImage("icon16/star.png")
+	self.btnFave:SetText("")
+	self.btnFave:SetToolTip("Favorite Material")
+	self.btnFave.DoClick = function(s)
+		local fm = DermaMenu()
+		if table.HasValue(pace.Materials.favorites,self.Entry:GetText()) then
+			fm:AddOption("Remove from Favorites",function() table.RemoveByValue(pace.Materials.favorites,self.Entry:GetText()) self.Icons:Clear() self.Icons:Fill(pace.Materials.favorites) luadata.WriteFile("pac3_editor/mats_favorite.txt",pace.Materials.favorites) end):SetIcon("icon16/delete.png")
+		else
+			fm:AddOption("Add to Favorites",function() table.insert(pace.Materials.favorites,self.Entry:GetText()) luadata.WriteFile("pac3_editor/mats_favorite.txt",pace.Materials.favorites) end):SetIcon("icon16/star.png")
+		end
+		fm:Open()
 	end
 
 	self.btnCopy = vgui.Create("DButton",path_pnl)
@@ -675,6 +698,8 @@ function PANEL:Init()
 			self.Icons:Fill(list.Get("OverrideMaterials"))
 		elseif node:GetText() == "Materials" then
 			self.Icons:Fill(pace.Materials.materials)
+		elseif node:GetText() == "Favorites" then
+			self.Icons:Fill(pace.Materials.favorites)
 		elseif node:GetText() == "Trails" then
 			self.Icons:Fill(pace.Materials.trails)
 		elseif node:GetText() == "Sprites" then
