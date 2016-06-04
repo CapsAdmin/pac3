@@ -1401,7 +1401,7 @@ do -- material
 		
 		local pnl = pace.CreatePanel("mat_browser")
 		
-		SHOW_SPECIAL(pnl, self, 300)
+		pnl:SetPos(pace.Editor:GetWide(), select(2, self:LocalToScreen()))
 		
 		function pnl.MaterialSelected(_, path)
 			self:SetValue(path)
