@@ -1,7 +1,3 @@
-if not file.Exists("pac3_editor/mats_favorite.txt","DATA") then
-	luadata.WriteFile("pac3_editor/mats_favorite.txt",{})
-end
-
 pace.Materials = {}
 
 pace.Materials.materials =
@@ -20,7 +16,7 @@ pace.Materials.materials =
 	"models/stalker/stalker_sheet",
 	"models/zombie_poison/poisonzombie_sheet",
 	"models/zombie_fast/fast_zombie_sheet",
-
+	
 	"models/gunship/gunshipsheet",
 	"models/shield_scanner/minelayer_sheet",
 	"models/roller/rollermine_sheet",
@@ -44,17 +40,17 @@ pace.Materials.materials =
 	"models/combine_strider/strider_brain",
 	"models/combine_advisor_pod/combine_advisor_pod",
 	"models/magnusson_device/magnusson_device_basecolor",
-
+	
 	"models/antlion_grub/antlion_grub",
 	"models/antlion/antlion_worker_wing",
 	"models/antlion/antlion_worker",
 	"models/ministrider/mini_skin_basecolor",
 	"models/ministrider/mini_armor_basecolor",
 	"models/spitball/spitball",
-
+	
 	"models/mossman/mossman_hair",
 	"models/alyx/hairbits",
-
+	
 	"models/brokenglass/glassbroken_piece1",
 	"models/props_halloween/flask",
 	"models/props_halloween/flask_liquid",
@@ -65,7 +61,7 @@ pace.Materials.materials =
 	"models/effects/partyhat",
 	"models/props_gameplay/ball001",
 	"models/props_gameplay/orange_cone001",
-
+	
 	"models/player/items/soldier/dappertopper",
 	"models/weapons/c_items/c_candy_cane_red",
 	"models/props_halloween/halloween_blk",
@@ -89,7 +85,7 @@ pace.Materials.materials =
 	"models/weapons/v_baseball/baseball_sheet",
 	"hunter/myplastic",
 	"models/player/items/all_class/all_class_ring_diamond",
-
+	
 	"models/effects/invulnfx_blue",
 	"models/effects/invulnfx_red",
 	"models/effects/goldenwrench",
@@ -111,7 +107,7 @@ pace.Materials.materials =
 	"models/thundermountain_fx/wood_beam03_vert",
 	"models/thundermountain_fx/wood_bridge001_vert",
 	"models/thundermountain_fx/wood_wall002_vert",
-
+	
 	"models/shadertest/envball_1",
 	"models/shadertest/envball_2",
 	"models/shadertest/envball_3",
@@ -125,11 +121,11 @@ pace.Materials.materials =
 	"models/shadertest/shield",
 	"models/shadertest/unlitgenericmodel",
 	"models/shadertest/vertexlitalphatestedtexture",
-
+	
 	"models/ihvtest/arm",
 	"models/ihvtest/boot",
 	"models/ihvtest/eyeball_l",
-
+	
 	-- zpankr's material list
 	-- http://www.garrysmod.org/downloads/?a=view&id=18470
 	"models/wireframe",
@@ -161,7 +157,7 @@ pace.Materials.materials =
 	"models/flesh",
 	"models/airboat/airboat_blur02",
 	"models/alyx/emptool_glow",
-	"models/antlion/antlion_innards",
+	"models/antlion/antlion_innards",	
 	"models/barnacle/roots",
 	"models/combine_advisor/body9",
 	"models/combine_advisor/mask",
@@ -333,7 +329,7 @@ pace.Materials.trails =
 	"particle/Particle_Square_Gradient_NoFog",
 }
 
-pace.Materials.sprites =
+pace.Materials.sprites = 
 {
 	"sprites/glow04_noz",
 	"sprites/grip",
@@ -554,7 +550,67 @@ pace.Materials.sprites =
 	"particles/smokey",
 }
 
-pace.Materials.favorites = pace.Materials.favorites or luadata.ReadFile("pac3_editor/mats_favorite.txt") or {}
+local PANEL = {}
+
+PANEL.ClassName = "mat_browser_sheet"
+PANEL.Base = "DPanel"
+
+AccessorFunc(PANEL, "m_Selected", "Selected")
+
+function PANEL:Init()
+	local list = vgui.Create("DPanelList", self)
+		list:SetPadding(2)
+		list:SetSpacing(2)
+		list:EnableVerticalScrollbar(true)
+		list:EnableHorizontal(true)
+		list:Dock(FILL)		
+	self.MatList = list
+end
+
+function PANEL:Paint(w, h)
+	surface.SetDrawColor(0,0,0, 255)
+	surface.DrawRect(0, 0, w, h)
+end
+
+local cache = {}
+local function IsError(path)
+	if cache[path] then return true end
+	if Material(path):IsError() then
+		cache[path] = truer
+		return true
+	end
+end
+
+function PANEL:SetMaterialList(tbl)
+	self:SetSelected()
+	
+	self.MaterialList = tbl
+	
+	self.MatList:Clear(true)
+	
+	for i, material in pairs(self.MaterialList) do
+		-- if IsError(material) then continue end
+		
+		local image = vgui.Create("DImageButton")
+		image.m_Image.LoadMaterial = function(s) s:DoLoadMaterial() end
+		image:SetOnViewMaterial(material, material)
+		image:SetSize(64, 64)
+		image.Value = material
+		
+		self.MatList:AddItem(image)
+		
+		image.DoClick = function(image) self:SetSelected(image.Value) end
+		
+		if self:GetSelected() then
+			image.PaintOver = HighlightedButtonPaint
+			self:SetSelected(material)
+		end
+	end
+	
+	self:InvalidateLayout(true)
+end
+
+pace.RegisterPanel(PANEL)
 
 local PANEL = {}
 
@@ -562,163 +618,44 @@ PANEL.Base = "DFrame"
 PANEL.ClassName = "mat_browser"
 
 function PANEL:Init()
-	self:SetSize(768,512)
-	self:Center()
-	self:SetTitle("Material Browser")
-	self:SetIcon("icon16/application_view_tile.png")
+	self:SetTitle("materials")
+
+	local list = 
+	{
+		{key = "default", val = table.Merge(list.Get("OverrideMaterials"), pace.Materials.materials)},
+		{key = "sprites", val = pace.Materials.sprites},
+		{key = "trails", val = pace.Materials.trails},
+	}
+
+	local sheet = vgui.Create("DPropertySheet", self)
+	sheet:Dock(FILL)
+	
+	for _, data in pairs(list) do
+		local name, tbl = data.key, data.val
+		local pnl = pace.CreatePanel("mat_browser_sheet", self)
+		pnl:SetMaterialList(tbl)
+		pnl.SetSelected = function(_, path) self:SetSelected(path) end
+		sheet:AddSheet(name, pnl)
+	end
+
+	local entry = vgui.Create("DTextEntry", self)
+		entry.OnEnter = function() self:SetSelected(self.Entry:GetValue()) end
+		entry:Dock(BOTTOM)
+		entry:SetTall(20)
+	self.Entry = entry
+	
+	self:SetDrawOnTop(true)
+	self:SetSize(300, 300)
 	self:SetSizable(true)
-	self:SetMinWidth(384)
-	self:SetMinHeight(256)
-	self:MakePopup()
+	self:Center()
+end
 
-	self.Tree = vgui.Create("DTree",self)
-	self.Container = vgui.Create("EditablePanel",self)
+function PANEL:SetSelected(value)
+	self.Entry:SetText(value or "")
 
-	self.Divider = vgui.Create("DHorizontalDivider",self)
-	self.Divider:Dock(FILL)
-	self.Divider:SetDividerWidth(4)
-	self.Divider:SetLeftMin(128)
-	self.Divider:SetRightMin(384)
-	self.Divider:SetLeftWidth(128)
-	self.Divider:SetLeft(self.Tree)
-	self.Divider:SetRight(self.Container)
-
-	local _
-
-	self.nodes = {}
-
-	self.nodes.pac_mats    = self.Tree:AddNode("Materials"):SetIcon("icon16/image.png")
-	self.nodes.favorites   = self.Tree:AddNode("Favorites"):SetIcon("icon16/star.png")
-	self.nodes.pac_trails  = self.Tree:AddNode("Trails"):SetIcon("icon16/image.png")
-	self.nodes.pac_sprites = self.Tree:AddNode("Sprites"):SetIcon("icon16/image.png")
-	self.nodes.toolgun     = self.Tree:AddNode("Toolgun"):SetIcon("icon16/image.png")
-	self.nodes.browse,_    = self.Tree:AddNode("Browse")
-	self.nodes.browse:SetIcon("icon16/folder_image.png")
-	self.nodes.browse:MakeFolder("materials","GAME")
-
-	local path_pnl = vgui.Create("EditablePanel",self.Container)
-	path_pnl:Dock(TOP)
-	path_pnl:DockMargin(4,0,4,4)
-	path_pnl:SetTall(24)
-
-	self.Entry = vgui.Create("DTextEntry",path_pnl)
-	self.Entry:SetText("")
-	self.Entry:Dock(FILL)
-	self.Entry:SetEditable(false)
-
-	self.btnClear = vgui.Create("DButton",path_pnl)
-	self.btnClear:Dock(RIGHT)
-	self.btnClear:SetWide(24)
-	self.btnClear:SetImage("icon16/cross.png")
-	self.btnClear:SetText("")
-	self.btnClear:SetToolTip("Clear Material")
-	self.btnClear.DoClick = function(s)
-		self:MaterialSelected("")
-		self.Entry:SetText("")
-	end
-
-	self.btnFave = vgui.Create("DButton",path_pnl)
-	self.btnFave:Dock(RIGHT)
-	self.btnFave:SetWide(24)
-	self.btnFave:SetImage("icon16/star.png")
-	self.btnFave:SetText("")
-	self.btnFave:SetToolTip("Favorite Material")
-	self.btnFave.DoClick = function(s)
-		local fm = DermaMenu()
-		if table.HasValue(pace.Materials.favorites,self.Entry:GetText()) then
-			fm:AddOption("Remove from Favorites",function() table.RemoveByValue(pace.Materials.favorites,self.Entry:GetText()) self.Icons:Clear() self.Icons:Fill(pace.Materials.favorites) luadata.WriteFile("pac3_editor/mats_favorite.txt",pace.Materials.favorites) end):SetIcon("icon16/delete.png")
-		else
-			fm:AddOption("Add to Favorites",function() table.insert(pace.Materials.favorites,self.Entry:GetText()) luadata.WriteFile("pac3_editor/mats_favorite.txt",pace.Materials.favorites) end):SetIcon("icon16/star.png")
-		end
-		fm:Open()
-	end
-
-	self.btnCopy = vgui.Create("DButton",path_pnl)
-	self.btnCopy:Dock(RIGHT)
-	self.btnCopy:SetWide(24)
-	self.btnCopy:SetImage("icon16/page_copy.png")
-	self.btnCopy:SetText("")
-	self.btnCopy:SetToolTip("Copy Path")
-	self.btnCopy.DoClick = function(s)
-		SetClipboardText(self.Entry:GetText())
-	end
-
-	self.Icons = vgui.Create("DIconBrowser",self.Container)
-	self.Icons:Dock(FILL)
-	self.Icons:DockMargin(4,0,4,4)
-	self.Icons.OnChange = function(s)
-		self.Entry:SetText(s:GetSelectedIcon())
-		self:MaterialSelected(s:GetSelectedIcon())
-	end
-
-	local local_IconList = {}
-	self.Icons.Fill = function(s,tbl)
-		s.Filled = true
-		if ( s.m_bManual ) then return end
-
-		local_IconList = tbl and tbl or {}
-
-		for k, v in SortedPairs(local_IconList) do
-			timer.Simple(k * 0.001,function()
-				if not IsValid(s) then return end
-				if not IsValid(s.IconLayout) then return end
-
-				local btn = s.IconLayout:Add( "DImageButton" )
-				btn.FilterText = string.lower(v)
-				btn:SetOnViewMaterial(v)
-				btn:SetSize(64,64)
-				btn:SetPos(-64,-64)
-				btn:SetStretchToFit(true)
-				btn:SetTooltip(v)
-
-				btn.DoClick = function()
-					s.m_pSelectedIcon = btn
-					s.m_strSelectedIcon = btn:GetImage()
-					s:OnChangeInternal()
-				end
-
-				btn.Paint = function( btn, w, h )
-					if s.m_pSelectedIcon != btn then return end
-					derma.SkinHook( "Paint", "Selection", btn, w, h )
-				end
-
-				if not s.m_pSelectedIcon or s.m_strSelectedIcon == btn:GetImage() then
-					s.m_pSelectedIcon = btn
-				end
-
-				s.IconLayout:Layout()
-			end)
-		end
-	end
-	self.Icons:Fill(pace.Materials.materials)
-
-	self.Tree.OnNodeSelected = function(s,node)
-		self.Icons:Clear()
-		if node:GetText() == "Toolgun" then
-			self.Icons:Fill(list.Get("OverrideMaterials"))
-		elseif node:GetText() == "Materials" then
-			self.Icons:Fill(pace.Materials.materials)
-		elseif node:GetText() == "Favorites" then
-			self.Icons:Fill(pace.Materials.favorites)
-		elseif node:GetText() == "Trails" then
-			self.Icons:Fill(pace.Materials.trails)
-		elseif node:GetText() == "Sprites" then
-			self.Icons:Fill(pace.Materials.sprites)
-		else
-			local path = node:GetFolder()
-
-			local files = file.Find( path .. "/*.vmt", node:GetPathID() )
-			files = table.Add( files, file.Find( path .. "/*.png", node:GetPathID() ) )
-			local files2 = {}
-			path = path:gsub("^materials%/","")
-
-			for _,f in next,files do
-				f = f:gsub("%.vmt","")
-				table.insert(files2,path.."/"..f)
-			end
-			self.Icons:Fill(files2)
-		end
-	end
+	self.m_Selected = value
+	
+	self:MaterialSelected(value)
 end
 
 function PANEL:MaterialSelected(path) end
