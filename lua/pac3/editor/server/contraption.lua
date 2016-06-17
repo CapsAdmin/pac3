@@ -6,7 +6,7 @@ local function spawn(val,player)
 	
 	local model = val.mdl
 	
-	if not model or model=="" or model:find"\n" or model:find".." then return end
+	if not model or model=="" or model:find"\n" or model:find("..",1,true) then return end
 	
 	if ( !gamemode.Call( "PlayerSpawnProp", player, model ) ) then return end
 
