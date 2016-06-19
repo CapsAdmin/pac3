@@ -31,28 +31,34 @@ function PART:GetNiceName()
 end
 
 function PART:OnThink()
-	if self.last_playonfootstep ~= self.PlayOnFootstep then
-		local ent = self:GetOwner()
-		if ent:IsValid() and ent:IsPlayer() then
-			ent.pac_footstep_override = ent.pac_footstep_override or {}
-			
-			if self.PlayOnFootstep then
-				ent.pac_footstep_override[self.UniqueID] = self
-			else
-				ent.pac_footstep_override[self.UniqueID] = nil
-			end
-			
-			if table.Count(ent.pac_footstep_override) == 0 then
-				ent.pac_footstep_override = nil
-			end
-			
-			self.last_playonfootstep = self.PlayOnFootstep
-		end
+	if self.last_playonfootstep == self.PlayOnFootstep then return end
+	
+	local ent = self:GetOwner()
+	if not (ent:IsValid() and ent:IsPlayer()) then return end
+	
+	ent.pac_footstep_override = ent.pac_footstep_override or {}
+	
+	if self.PlayOnFootstep then
+		ent.pac_footstep_override[self.UniqueID] = self
+	else
+		ent.pac_footstep_override[self.UniqueID] = nil
 	end
+	
+	if table.Count(ent.pac_footstep_override) == 0 then
+		ent.pac_footstep_override = nil
+	end
+	
+	self.last_playonfootstep = self.PlayOnFootstep
 end
+
+local snd_mute_losefocus
 
 function PART:OnDraw(ent, pos, ang)
 	local forward = ang:Forward()
+	
+	snd_mute_losefocus = snd_mute_losefocus or GetConVar('snd_mute_losefocus')
+	local shouldMute = snd_mute_losefocus:GetBool()
+	local hasFocus = system.HasFocus()
 	
 	for url, stream in pairs(self.streams) do
 		if not stream:IsValid() then self.streams[url] = nil continue end
@@ -63,7 +69,8 @@ function PART:OnDraw(ent, pos, ang)
 		
 		stream:Set3DFadeDistance(self.MinimumRadius, self.MaximumRadius)
 		stream:Set3DCone(self.InnerAngle, self.OuterAngle, self.OuterVolume)
-		stream:SetVolume(self:GetVolume())
+		
+		stream:SetVolume(shouldMute and not hasFocus and 0 or self:GetVolume())
 		stream:SetPlaybackRate(self:GetPitch() + self.random_pitch)
 	end
 end
