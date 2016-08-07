@@ -20,14 +20,14 @@ function pace.CreatePanel(class_name, parent)
 end
 
 function pace.RegisterPanels()
-	local files 
-	
+	local files
+
 	if file.FindInLua then
 		files = file.FindInLua("pac3/editor/client/panels/*.lua")
 	else
 		files = file.Find("pac3/editor/client/panels/*.lua", "LUA")
 	end
-	
+
 	for _, name in pairs(files) do
 		include("pac3/editor/client/panels/" .. name)
 	end

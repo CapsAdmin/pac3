@@ -7,12 +7,12 @@ PART.NonPhysical = true
 PART.ShaderParams =
 {
 	BaseTexture = "ITexture",
-	
+
 	CloakPassEnabled  = "boolean",
 	CloakFactor = "number",
 	CloakColorTint = "Vector",
 	RefractAmount = "number",
-	
+
 	BumpMap = "ITexture",
 	LightWarpTexture = "ITexture",
 
@@ -21,7 +21,7 @@ PART.ShaderParams =
 	DetailScale = "number",
 	DetailBlendMode = "number",
 	DetailBlendFactor = "number",
-	
+
 	Phong = "boolean",
 	PhongBoost = "number",
 	PhongExponent = "number",
@@ -30,11 +30,11 @@ PART.ShaderParams =
 	PhongWarpTexture = "ITexture",
 	PhongAlbedoTint = "boolean",
 	PhongExponentTexture = "ITexture",
-	
-	Rimlight = "boolean",	
-	RimlightBoost = "number",	
+
+	Rimlight = "boolean",
+	RimlightBoost = "number",
 	RimlightExponent = "number",
-	
+
 	-- doesn't do anything i think
 	EnvMap = "ITexture",
 	EnvMapMask = "ITexture",
@@ -46,13 +46,13 @@ PART.ShaderParams =
 	NormalMapAlphaEnvMapMask = "boolean",
 	BaseAlphaEnvMapMask = "boolean",
 	Selfillum_EnvMapMask_Alpha = "number",
-	
+
 	AmbientOcclusion = "boolean",
 	AmbientOcclusionColor = "Vector",
 	AmbientOcclusionTexture = "ITexture",
-	
-	BlendTintByBaseAlpha = "boolean", 
-	BlendTintColorOverBase = "Vector",  
+
+	BlendTintByBaseAlpha = "boolean",
+	BlendTintColorOverBase = "Vector",
 	ColorTint_Base = "Vector",
 	ColorTint_Tmp = "Vector",
 	Color = "Vector",
@@ -61,9 +61,9 @@ PART.ShaderParams =
 	AlphaTest = "boolean",
 	TranslucentX = "boolean",
 
-	
+
 	HalfLambert = "boolean",
-		
+
 	Selfillum = "boolean",
 	SelfillumTint = "Vector",
 	SelfillumMask = "ITexture",
@@ -80,12 +80,12 @@ PART.ShaderParams =
 	FleshCubeTexture = "ITexture", --"", "Flesh cubemap texture" )
 	FleshBorderNoiseScale = "number", --"1.5", "Flesh Noise UV scalar for border" )
 	FleshDebugForceFleshOn = "boolean", --"0", "Flesh Debug full flesh" )
-	
+
 	--FleshEFFECTCENTERRADIUS1, SHADER_PARAM_TYPE_VEC4, "[0 0 0 0.001]", "Flesh effect center and radius" )
 	--FleshEFFECTCENTERRADIUS2, SHADER_PARAM_TYPE_VEC4, "[0 0 0 0.001]", "Flesh effect center and radius" )
 	--FleshEFFECTCENTERRADIUS3, SHADER_PARAM_TYPE_VEC4, "[0 0 0 0.001]", "Flesh effect center and radius" )
 	--FleshEFFECTCENTERRADIUS4, SHADER_PARAM_TYPE_VEC4, "[0 0 0 0.001]", "Flesh effect center and radius" )
-	
+
 	FleshSubsurfaceTint = "Vector", --"[1 1 1]", "Subsurface Color" )
 	FleshBorderWidth = "number", --"0.3", "Flesh border" )
 	FleshBorderSoftness = "number", --"0.42", "Flesh border softness (> 0.0 && <= 0.5)" )
@@ -93,14 +93,14 @@ PART.ShaderParams =
 	FleshGlobalOpacity = "number", --"1.0", "Flesh global opacity" )
 	FleshGlossBrightness = "number", --"0.66", "Flesh gloss brightness" )
 	FleshScrollSpeed = "number", --"1.0", "Flesh scroll speed" )
-	
+
 	EmissiveBlendEnabled = "boolean",
 	EmissiveBlendTexture = "ITexture",
 	EmissiveBlendBaseTexture = "ITexture",
 	EmissiveBlendFlowTexture = "ITexture",
 	EmissiveBlendTint = "Vector",
 	EmissiveBlendScrollVector = "Vector",
-	
+
 	DistanceAlpha = "number",
 	VertexAlpha = "boolean",
 	Alpha = "number",
@@ -111,34 +111,34 @@ function PART:OnThink()
 		self.delay_set()
 		self.delay_set = nil
 	end
-	
+
 	if self.EnvMap == "env_cubemap" then
 		self:SetEnvMap("env_cubemap")
 	end
 end
 
 local function setup(PART)
-	for name, T in pairs(PART.ShaderParams) do		
+	for name, T in pairs(PART.ShaderParams) do
 		if T == "ITexture" then
 			pac.GetSet(PART, name, "")
 
 			PART["Set" .. name] = function(self, var)
 				self[name] = var
-				
+
 				if var == "env_cubemap" then
 					var = "debug/env_cubemap_model"
 				end
-			
-				if 
+
+				if
 					self.SKIP or
 					pac.Handleurltex(
-						self, 
-						var, 
-						function(_, tex) 
+						self,
+						var,
+						function(_, tex)
 							local mat = self:GetMaterialFromParent()
 							if mat then
 								mat:SetTexture("$" .. name, tex)
-								
+
 								self.SKIP = true
 								self:UpdateMaterial()
 								self.SKIP = false
@@ -158,23 +158,23 @@ local function setup(PART)
 				then
 					return
 				end
-				
+
 				local mat = self:GetMaterialFromParent()
-				
-				if mat then				
+
+				if mat then
 					if var ~= "" then
 						local _mat = Material(var)
-						local tex = _mat:GetTexture("$" .. name) 
+						local tex = _mat:GetTexture("$" .. name)
 
 						if not tex or tex:GetName() == "error" then
 							tex = CreateMaterial("pac3_tex_" .. var .. "_" .. self.Id, "VertexLitGeneric", {["$basetexture"] = var}):GetTexture("$basetexture")
-							
+
 							if not tex or tex:GetName() == "error" then
 								tex = _mat:GetTexture("$basetexture")
 							end
 						end
-						
-						if tex then						
+
+						if tex then
 							mat:SetTexture("$" .. name, tex)
 						end
 					else
@@ -184,55 +184,55 @@ local function setup(PART)
 					end
 				end
 			end
-		elseif T == "boolean" then	
+		elseif T == "boolean" then
 			pac.GetSet(PART, name, false)
-			
+
 			PART["Set" .. name] = function(self, var)
 				self[name] = var
-				
+
 				local mat = self:GetMaterialFromParent()
-				
+
 				if mat then
 					if name == "TranslucentX" then
 						name = "Translucent"
 					end
-				
+
 					mat:SetInt("$" .. name, var and 1 or 0) -- setint crashes?
 				end
 			end
 		elseif T == "number" then
 			pac.GetSet(PART, name, 0)
-			
+
 			PART["Set" .. name] = function(self, var)
 				self[name] = var
-				
+
 				local mat = self:GetMaterialFromParent()
-				
+
 				if mat then
 					mat:SetFloat("$" .. name, var)
 				end
 			end
 		elseif T == "Vector" then
 			local def = Vector(0,0,0)
-			
+
 			-- hack
 			local key = name:lower()
 			if key == "color" or key == "color2" then
 				def = Vector(1,1,1)
 			end
-			
+
 			pac.GetSet(PART, name, def)
-			
+
 			PART["Set" .. name] = function(self, var)
 				self[name] = var
-				
+
 				local mat = self:GetMaterialFromParent()
-				
-				if mat then	
+
+				if mat then
 					if key == "color" or key == "color2" then
 						timer.Simple(0.1, function() mat:SetVector("$" .. name, var) end)
 					end
-				
+
 					mat:SetVector("$" .. name, var)
 				end
 			end
@@ -245,42 +245,42 @@ local function add_transform(texture_name)
 	local scale_key = texture_name.."Scale"
 	local angle_key = texture_name.."Angle"
 	local angle_center_key = texture_name.."AngleCenter"
-	
+
 	pac.GetSet(PART, position_key, Vector(0, 0, 0))
 	pac.GetSet(PART, scale_key, Vector(1, 1, 1))
-	pac.GetSet(PART, angle_key, 0)	
+	pac.GetSet(PART, angle_key, 0)
 	pac.GetSet(PART, angle_center_key, Vector(0.5, 0.5, 0))
-	
+
 	PART.TransformVars = PART.TransformVars or {}
 	PART.TransformVars[position_key] = true
 	PART.TransformVars[scale_key] = true
 	PART.TransformVars[angle_key] = true
 	PART.TransformVars[angle_center_key] = true
-	
+
 	local shader_key = "$"..texture_name.."transform"
-		
+
 	local function setup_matrix(self)
 		self.matrix = self.matrix or Matrix()
 		self.translation_vector = self.translation_vector or Vector(0, 0, 0)
 		self.rotation_angle = self.rotation_angle or Angle(0, 0, 0)
-	
+
 		self.matrix:Identity()
 		self.matrix:Translate(self.translation_vector)
-		
+
 		self.matrix:Translate(self[angle_center_key])
 		self.matrix:Rotate(self.rotation_angle)
 		self.matrix:Translate(-self[angle_center_key])
-		
+
 		self.matrix:SetScale(self[scale_key])
 	end
-		
+
 	PART["Set" .. position_key] = function(self, vec)
-		self[position_key] = vec		
+		self[position_key] = vec
 		setup_matrix(self)
-		
+
 		self.translation_vector.x = self[position_key].x%1
 		self.translation_vector.y = self[position_key].y%1
-		
+
 		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
 	end
 
@@ -290,20 +290,20 @@ local function add_transform(texture_name)
 
 		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
 	end
-		
+
 	PART["Set" .. angle_key] = function(self, num)
 		self[angle_key] = num
 		setup_matrix(self)
-		
+
 		self.rotation_angle.y = self[angle_key]*360
-		
+
 		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
 	end
-	
+
 	PART["Set" .. angle_center_key] = function(self, vec)
 		self[angle_center_key] = vec
-		setup_matrix(self)		
-		
+		setup_matrix(self)
+
 		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
 	end
 
@@ -322,25 +322,25 @@ function PART:GetMaterialFromParent()
 		--print(self.Materialm and self.Materialm:GetName(), self.Parent.Materialm:GetName(), self.last_mat and self.last_mat:GetName())
 		if not self.Materialm then
 			local mat = CreateMaterial("pac_material_" .. SysTime(), "VertexLitGeneric", {})
-			
+
 			if self.Parent.Materialm then
 				local tex
 				tex = self.Parent.Materialm:GetTexture("$bumpmap")
 				if tex and not tex:IsError() then
 					mat:SetTexture("$bumpmap", tex)
 				end
-				
+
 				local tex = self.Parent.Materialm:GetTexture("$basetexture")
 				if tex and not tex:IsError() then
 					mat:SetTexture("$basetexture", tex)
 				end
 			end
-			
+
 			self.Materialm = mat
 		end
-		
+
 		self.Parent.Materialm = self.Materialm
-		
+
 		return self.Materialm
 	end
 end
@@ -355,7 +355,7 @@ function PART:GetRawMaterial()
 		local mat = CreateMaterial("pac_material_" .. SysTime(), "VertexLitGeneric", {})
 		self.Materialm = mat
 	end
-	
+
 	return self.Materialm
 end
 
@@ -370,10 +370,10 @@ function PART:UpdateMaterial(now)
 			self["Set" .. key](self, self["Get"..key](self))
 		end
 	end
-	
+
 	local mat = self.Materialm
 	local self = self
-	
+
 	pac.RunNextFrame("material translucent " .. self.Id, function()
 		for key, part in pairs(pac.GetParts()) do
 			if part.Materialm == mat and self ~= part then
@@ -386,7 +386,7 @@ end
 function PART:OnRemove()
 	local mat = self.Materialm
 	local self = self
-	
+
 	pac.RunNextFrame("remove materials" .. self.Id, function()
 		for key, part in pairs(pac.GetParts()) do
 			if part.Materialm == mat and self ~= part then
@@ -415,7 +415,7 @@ end
 
 function PART:OnHide()
 	local parent = self:GetParent()
-	
+
 	if parent:IsValid() and parent.SetMaterial then
 		self.suppress_event = true
 		parent:SetMaterial(parent.Material)
@@ -423,11 +423,11 @@ function PART:OnHide()
 	end
 end
 
-function PART:OnShow()	
+function PART:OnShow()
 	self:UpdateMaterial()
-	
+
 	local name = self.Name
-	
+
 	pac.RunNextFrame("refresh materials" .. self.Id, function()
 		for key, part in pairs(pac.GetParts()) do
 			if part.Material and part.Material ~= "" and part.Material == name then

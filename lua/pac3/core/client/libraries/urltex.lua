@@ -22,7 +22,7 @@ function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size
 	end
 	shader = shader or "VertexLitGeneric"
 	if not enable:GetBool() then return end
-	
+
 	url = pac.FixupURL(url)
 
 	if type(callback) == "function" and not skip_cache and urltex.Cache[url] then
@@ -34,7 +34,7 @@ function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size
 	end
 	if urltex.Queue[url] then
 		local old = urltex.Queue[url].callback
-		urltex.Queue[url].callback = function(...)	
+		urltex.Queue[url].callback = function(...)
 			callback(...)
 			old(...)
 		end
@@ -64,11 +64,11 @@ function urltex.StartDownload(url, data)
 	if urltex.ActivePanel:IsValid() then
 		urltex.ActivePanel:Remove()
 	end
-	
+
 	local size = data.size or urltex.TextureSize
 
 	local id = "urltex_download_" .. url
-	
+
 	local pnl = vgui.Create("HTML")
 	pnl:SetVisible(true)
 	--pnl:SetPos(50,50)
@@ -77,19 +77,19 @@ function urltex.StartDownload(url, data)
 	pnl:SetHTML(
 		[[
 			<style type="text/css">
-				html 
-				{			
+				html
+				{
 					overflow:hidden;
 					]].. (data.size_hack and "margin: -8px -8px;" or "margin: 0px 0px;") ..[[
 				}
 			</style>
-			
+
 			<body>
 				<img src="]] .. url .. [[" alt="" width="]] .. size..[[" height="]] .. size .. [[" />
 			</body>
 		]]
 	)
-	
+
 
 	local function start()
 		local go = false
@@ -98,56 +98,56 @@ function urltex.StartDownload(url, data)
 		-- restart the timeout
 		timer.Stop(id)
 		timer.Start(id)
-	
+
 		hook.Add("Think", id, function()
-		
+
 			-- panel is no longer valid
 			if not pnl:IsValid() then
 				hook.Remove("Think", id)
 				-- let the timeout handle it
 				return
 			end
-			
+
 			local html_mat = pnl:GetHTMLMaterial()
-					
+
 			-- give it some time.. IsLoading is sometimes lying
 			if not go and html_mat and not pnl:IsLoading() then
 				time = pac.RealTime + 0.1
 				go = true
 			end
-				
+
 			if go and time < pac.RealTime then
 				local vertex_mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), "VertexLitGeneric")
-				
+
 				local tex = html_mat:GetTexture("$basetexture")
 				tex:Download()
-				vertex_mat:SetTexture("$basetexture", tex)				
-				
+				vertex_mat:SetTexture("$basetexture", tex)
+
 				tex:Download()
-				
+
 				urltex.Cache[url] = tex
-				
+
 				hook.Remove("Think", id)
 				timer.Remove(id)
 				urltex.Queue[url] = nil
 				timer.Simple(0, function() pnl:Remove() end)
-								
+
 				if data.callback then
 					data.callback(vertex_mat, tex)
 				end
 			end
-			
+
 		end)
 	end
 
 	start()
-	
+
 	-- 5 sec max timeout
 	timer.Create(id, 5, 1, function()
 		timer.Remove(id)
 		urltex.Queue[url] = nil
 		pnl:Remove()
-		
+
 		if hook.GetTable().Think[id] then
 			hook.Remove("Think", id)
 		end
@@ -162,7 +162,7 @@ function urltex.StartDownload(url, data)
 			pac.dprint("material download %q timed out for good", url, data.tries)
 		end
 	end)
-	
+
 	urltex.ActivePanel = pnl
 end
 

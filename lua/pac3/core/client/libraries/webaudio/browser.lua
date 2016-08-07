@@ -26,16 +26,16 @@ webaudio.Browser.Volume          = nil
 
 function webaudio.Browser.Initialize()
 	if webaudio.Browser.State ~= webaudio.Browser.States.Uninitialized then return end
-	
+
 	webaudio.Browser.State = webaudio.Browser.States.Initializing
-	
+
 	if webaudio.Browser.Control then webaudio.Browser.Control:Remove() end
 
 	webaudio.Browser.Control = vgui.Create("DHTML")
 	webaudio.Browser.Control:SetVisible(false)
 	webaudio.Browser.Control:SetPos(ScrW(), ScrH())
 	webaudio.Browser.Control:SetSize(1, 1)
-	
+
 	local lastMessage = nil
 	webaudio.Browser.Control.ConsoleMessage = function(self, message)
 		-- why does awesomium crash in the first place?
@@ -43,27 +43,27 @@ function webaudio.Browser.Initialize()
 			webaudio.Browser.State = webaudio.Browser.States.Uninitialized
 		end
 
-		if lastMessage ~= message then 
-			lastMessage = message 
+		if lastMessage ~= message then
+			lastMessage = message
 			Msg("[PAC] ")
-			MsgN(message) 
-		end 
+			MsgN(message)
+		end
 	end
 
 	webaudio.Browser.Control:AddFunction("lua", "print", webaudio.DebugPrint)
 
 	webaudio.Browser.Control:AddFunction("lua", "message", function(messageType, ...)
 		local args = {...}
-		
+
 		webaudio.DebugPrint(messageType .. " " .. table.concat(args, ", "))
-		
+
 		if messageType == "initialized" then
 			webaudio.Browser.State = webaudio.Browser.States.Initialized
 			webaudio.SampleRate = args[1]
 		elseif messageType == "stream" then
 			local stream = webaudio.Streams.GetStream(tonumber(args[2]) or 0)
 			if not stream then return end
-			
+
 			local messageType = args[1]
 			stream:HandleBrowserMessage(messageType, unpack(args, 3, table.maxn(args)))
 		end
@@ -92,7 +92,7 @@ end
 
 function webaudio.Browser.Think()
 	if #webaudio.Browser.JavascriptQueue == 0 then return end
-	
+
 	local code = table.concat(webaudio.Browser.JavascriptQueue, "\n")
 	webaudio.Browser.RunJavascript(code)
 	webaudio.Browser.JavascriptQueue = {}
@@ -101,7 +101,7 @@ end
 -- Audio
 function webaudio.Browser.SetVolume (volumeFraction)
 	if webaudio.Browser.Volume == volumeFraction then return end
-	
+
 	webaudio.Browser.Volume = volumeFraction
     webaudio.Browser.QueueJavascript(string.format("gain.gain.value = %f", volumeFraction))
 end
@@ -138,7 +138,7 @@ function open()
     {
         var outputLeft  = event.outputBuffer.getChannelData(0);
         var outputRight = event.outputBuffer.getChannelData(1);
-    
+
         for(var i = 0; i < event.outputBuffer.length; ++i)
         {
             outputLeft [i] = 0;
@@ -153,16 +153,16 @@ function open()
             {
                 continue;
             }
-            
+
             var echol;
             var echor;
-            
+
             if (stream.use_echo && stream.echo_buffer)
             {
                 echol = stream.echo_buffer.getChannelData(0);
                 echor = stream.echo_buffer.getChannelData(1);
             }
-            
+
             var inputLength = stream.buffer.length;
             var inputLeft   = stream.buffer.getChannelData(0);
             var inputRight  = stream.buffer.numberOfChannels == 1 ? inputLeft : stream.buffer.getChannelData(1);
@@ -188,29 +188,29 @@ function open()
                 if (stream.paused || stream.max_loop > 0 && stream.position > inputLength * stream.max_loop)
                 {
                     stream.done_playing = true;
-					
+
 					if (!stream.paused)
 					{
                         lua.message("stream", "stop", stream.id);
 					    stream.paused = true;
 					}
-					
+
                     if (!stream.use_echo)
                     {
                         break;
-                    }              
+                    }
                 }
                 else
                 {
                     stream.done_playing = false;
-                }                
+                }
 
-                var index      = (stream.position >> 0) % inputLength;                
+                var index      = (stream.position >> 0) % inputLength;
                 var echo_index = (stream.position >> 0) % stream.echo_delay;
-                
+
                 var left  = 0;
                 var right = 0;
-                
+
                 if (!stream.done_playing)
                 {
                     // filters
@@ -224,7 +224,7 @@ function open()
                     {
                         sml = sml + (inputLeft [index] - sml) * stream.filter_fraction;
                         smr = smr + (inputRight[index] - smr) * stream.filter_fraction;
-    
+
                         if (stream.filter_type == 1)
                         {
 							// Low pass
@@ -239,12 +239,12 @@ function open()
                         }
                     }
                 }
-                
+
                 if (stream.use_echo)
-                {   
+                {
                     echol[echo_index] = echol[echo_index] * stream.echo_feedback + left;
                     echor[echo_index] = echor[echo_index] * stream.echo_feedback + right;
-                    
+
                     outputLeft [j] += echol[echo_index];
                     outputRight[j] += echor[echo_index];
                 }
@@ -252,8 +252,8 @@ function open()
                 {
                     outputLeft [j] += left;
                     outputRight[j] += right;
-                }                                
-                
+                }
+
                 stream.position += stream.speed_smooth;
             }
         }
@@ -351,7 +351,7 @@ function createStream(url, id, skip_cache)
         stream.filter_type = 0
         stream.filter_fraction = 1
         stream.done_playing = false
-        
+
         stream.use_echo = false
         stream.echo_feedback = 0.75
         stream.echo_buffer = false
@@ -374,10 +374,10 @@ function createStream(url, id, skip_cache)
         {
             // later
         }
-		
+
 		stream.useEcho = function(b) {
 			stream.use_echo = b
-			
+
 			if (b)
 			{
 				stream.setEchoDelay(stream.echo_delay)
@@ -387,20 +387,20 @@ function createStream(url, id, skip_cache)
 				stream.echo_buffer = undefined
 			}
 		}
-		        
+
         stream.setEchoDelay = function(x) {
-		
+
             if(stream.use_echo && (!stream.echo_buffer || (x != stream.echo_buffer.length))) {
                 var size = 1;
-                
+
                 while((size <<= 1) < x);
-                
+
 				stream.echo_buffer = audio.createBuffer(2, size, audio.sampleRate);
             }
-            
+
             stream.echo_delay = x;
         }
-        
+
         streams[id] = stream
 
         lua.message("stream", "loaded", id, buffer.length)

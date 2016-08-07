@@ -64,7 +64,7 @@ boneList["ValveBiped"] = {
 	"ValveBiped.bone",
 	"ValveBiped.bone1",
 	"ValveBiped.bone2"
-	
+
 }
 local function ParseBones(ent)
 	local thisbone = -1
@@ -120,28 +120,28 @@ local function DistFromPointToLine(x,y,x1,y1,x2,y2)
 	local B = y - y1;
 	local C = x2 - x1;
 	local D = y2 - y1;
-	 
+
 	local dot = A * C + B * D;
 	local len_sq = C * C + D * D;
 	local param = dot / len_sq;
-	 
+
 	local xx,yy;
-	 
+
 	if(param < 0) then
-	
+
 	    xx = x1;
 	    yy = y1;
 	elseif(param > 1) then
-	
+
 	    xx = x2;
 	    yy = y2;
-	
+
 	else
 	    xx = x1 + param * C;
 	    yy = y1 + param * D;
 	end
 	return math.Dist(x,y,xx,yy)
-	
+
 
 
 end
@@ -156,12 +156,12 @@ local function PaintTopBar()
 	else
 		draw.SimpleText("No Animation Loaded!","DefaultFont",wide*0.5,13,Color(255,255,255,255),1,1)
 	end
-	
-	
+
+
 	if selectedBone && selectedBone != "" then
-			
+
 			local boneID = LocalPlayer():LookupBone(selectedBone)
-		
+
 			if boneID then
 				local matrix = LocalPlayer():GetBoneMatrix(boneID)
 				local vec = matrix:GetTranslation()
@@ -170,16 +170,16 @@ local function PaintTopBar()
 				local upDir = ang:Up()*20
 				local rightDir = ang:Right()*20
 				local forwardDir = ang:Forward()*20
-				
+
 				local origin = vec:ToScreen()
-				
+
 				if !leftDown && draggingDir then
 					draggingDir = nil
 				end
 
 				surface.SetDrawColor(255,0,0,255)
 				local p1 = (vec+rightDir):ToScreen()
-				
+
 				local dist = DistFromPointToLine(gui.MouseX(),gui.MouseY(),origin.x,origin.y,p1.x,p1.y)
 				if (dist < 10 && !draggingDir) ||  draggingDir == "RR" then
 					surface.SetDrawColor(255,255,255,255)
@@ -187,14 +187,14 @@ local function PaintTopBar()
 					tblLineEndPoints[1] = {x=origin.x,origin.y}
 					tblLineEndPoints[1] = {p1.x,p1.y}
 				end
-					
-				
-				
+
+
+
 				surface.DrawLine(origin.x,origin.y,p1.x,p1.y)
-				
+
 				surface.SetDrawColor(0,255,0,255)
 				local p2 = (vec+upDir):ToScreen()
-				
+
 				local dist = DistFromPointToLine(gui.MouseX(),gui.MouseY(),origin.x,origin.y,p2.x,p2.y)
 				if (dist < 10 && !draggingDir) || draggingDir == "RU" then
 					surface.SetDrawColor(255,255,255,255)
@@ -202,12 +202,12 @@ local function PaintTopBar()
 					tblLineEndPoints[1] = {x=origin.x,origin.y}
 					tblLineEndPoints[1] = {p1.x,p1.y}
 				end
-				
+
 				surface.DrawLine(origin.x,origin.y,p2.x,p2.y)
-				
+
 				surface.SetDrawColor(0,0,255,255)
 				local p3 = (vec+forwardDir):ToScreen()
-				
+
 				local dist = DistFromPointToLine(gui.MouseX(),gui.MouseY(),origin.x,origin.y,p3.x,p3.y)
 				if (dist < 10 && !draggingDir) || draggingDir == "RF" then
 					surface.SetDrawColor(255,255,255,255)
@@ -216,13 +216,13 @@ local function PaintTopBar()
 					tblLineEndPoints[1] = {p1.x,p1.y}
 				end
 				surface.DrawLine(origin.x,origin.y,p3.x,p3.y)
-				
-				
+
+
 			end
-		
-			
+
+
 	end
-	
+
 end
 
 
@@ -260,25 +260,25 @@ end
 
 local function NewAnimation()
 	local frame = vgui.Create("DFrame")
-	
+
 	form = vgui.Create("DForm",frame)
 	form:SetPos(5,25)
 	form:SetWide(300)
 	form:SetTall(300)
 	form:SetName("Animation Properties")
 	local entry = form:TextEntry("Animation Name")
-	
+
 	local info = form:Help([[Gestures are keyframed animations that use the current position and angles of the bones. They play once and then stop automatically.
-	
+
 	Postures are static animations that use the current position and angles of the bones. They stay that way until manually stopped. Use TimeToArrive if you want to have a posture lerp.
-	
+
 	Stances are keyframed animations that use the current position and angles of the bones. They play forever until manually stopped. Use RestartFrame to specify a frame to go to if the animation ends (instead of frame 1).
-	
+
 	Sequences are keyframed animations that use the origin and angles of the entity. They play forever until manually stopped. Use RestartFrame to specify a frame to go to if the animation ends (instead of frame 1).
 	You can also use StartFrame to specify a starting frame for the first loop.]])
 	local type = form:ComboBox("Animation Type")
 	type:SetTall(100)
-	
+
 	type:AddChoice("TYPE_GESTURE", TYPE_GESTURE)
 	type:AddChoice("TYPE_POSTURE", TYPE_POSTURE)
 	type:AddChoice("TYPE_STANCE", TYPE_STANCE)
@@ -289,18 +289,18 @@ local function NewAnimation()
 	begin.DoClick = function()
 		animName = entry:GetValue()
 		animType = _M[type:GetText()]
-		
-		if animName == "" then 
+
+		if animName == "" then
 			help:SetColor(Color(255,128,128))
-			help:SetText("Write a name for this animation") 
+			help:SetText("Write a name for this animation")
 			surface.PlaySound("ui/buttonrollover.wav")
-			return 
+			return
 		end
-		if !animType then 
+		if !animType then
 			help:SetColor(Color(255,128,128))
-			help:SetText("Select a valid animation type!") 
+			help:SetText("Select a valid animation type!")
 			surface.PlaySound("ui/buttonrollover.wav")
-			return 
+			return
 		end
 		if (animType ~= nil) and (animName ~= nil) then --don't move on until these are set
 		  if animType == TYPE_SEQUENCE then pace.SetTPose(true) end
@@ -310,7 +310,7 @@ local function NewAnimation()
 		end
 	end
 	frame:MakePopup()
-	
+
 	timer.Simple(0.01,function()frame:SetSize(form:GetWide()+10,450) frame:Center() end)
 end
 
@@ -329,13 +329,13 @@ local function LoadAnimation()
 			end
 		end
 	end
-	
+
 	local button = vgui.Create("DButton",frame)
 	button:SetWide(frame:GetWide()-10)
 	button:SetPos(5,frame:GetTall()-25)
 	button:SetText("Load Animation")
 	button.DoClick = function()
-	
+
 		animName = box:GetText()
 		animationData = GetLuaAnimations()[animName] or {}
 		animType = animationData.Type
@@ -345,7 +345,7 @@ local function LoadAnimation()
 		AnimationStarted(true)
 		LocalPlayer():StopAllLuaAnimations()
 	end
-	
+
 	frame:Center()
 end
 
@@ -353,37 +353,37 @@ end
 local function OutputCode()
 	if !animName then surface.PlaySound("buttons/button10.wav") return end
 	local animData = table.Copy(animationData)
-	
+
 	--clean out unneeded entries
 	for i,v in pairs(animData.FrameData) do
 		for BoneName,BoneData in pairs(v.BoneInfo) do
-			for MoveRot,Val in pairs(BoneData) do 
+			for MoveRot,Val in pairs(BoneData) do
 				if Val == 0 then
 					animData.FrameData[i].BoneInfo[BoneName][MoveRot] = nil
 				end
 			end
 		end
 	end
-	
-	
-	
-	
+
+
+
+
 	local str = "RegisterLuaAnimation('"..animName.."', {\r\n"
 	str = str .. "\tFrameData = {\r\n"
 	local numFrames = table.Count(animData.FrameData)
 	local numFrame = 1
 	for frameIndex,frameData in pairs(animData.FrameData) do
-		
+
 		local commaFrame = ","
 		if numFrame == numFrames then commaFrame = "" end
-	
-	
-	
+
+
+
 		str = str .. "\t\t{\r\n"
 		str = str .. "\t\t\tBoneInfo = {\r\n"
 		local numBones = table.Count(frameData.BoneInfo)
 		local numBone = 1
-		
+
 		for boneName,boneData in pairs(frameData.BoneInfo) do
 			local commaBone = ","
 			if numBones == numBone then
@@ -394,36 +394,36 @@ local function OutputCode()
 			local numInner = 1
 
 			for MoveRot,Value in pairs(boneData) do
-				
+
 				local commaInner = ","
 				if numChanges == numInner then commaInner = "" end
-				
+
 				local innerStr = "\t\t\t\t\t"..MoveRot.." = "..Value..commaInner.."\r\n"
 				str = str..innerStr
 				numInner = numInner + 1
-				
-				
-				
+
+
+
 			end
-			
-			
+
+
 			str = str .. "\t\t\t\t}"..commaBone.."\r\n"
-			
+
 			numBone = numBone + 1
 		end
-		
-		
-		
+
+
+
 		numFrame = numFrame + 1
-		
+
 		str = str .. "\t\t\t},\r\n"
 		if frameData.FrameRate then
 			str = str .. "\t\t\tFrameRate = "..frameData.FrameRate.."\r\n"
 		end
-		
-		
+
+
 		str = str .. "\t\t}"..commaFrame.."\r\n"
-		
+
 	end
 	str = str .. "\t},\r\n"
 
@@ -433,11 +433,11 @@ local function OutputCode()
 	if animData.StartFrame then
 		str = str .. "\tStartFrame = "..animData.StartFrame..",\r\n"
 	end
-	
+
 	str = str .. "\tType = "..TypeTable[animData.Type].."\r\n})"
-	
-	
-	
+
+
+
 	return str
 end
 
@@ -466,54 +466,54 @@ local function ApplyEndResults()
 	--[[local subPostures = {}
 	--load all the sub animations up to the exact point where the keyframe in the main animation ends...
 	for i,v in pairs(subAnimationsLoaded) do
-	
+
 		local subPostureAnim = {Type = TYPE_POSTURE,FrameData = {{BoneInfo = {}}}}
-		
-		
+
+
 		local anim = GetLuaAnimations()[i]
 		local totalAnimTimeInSeconds = 0
 		local timeToStart = 0
 		local timeSoFar = 0
-		
+
 		--get the time from the actual start(0) to the animation start (StartFrame)
 		if anim.StartFrame && anim.StartFrame > 1 then
 			for i=1,anim.StartFrame-1 do
-			
+
 				timeToStart = timeToStart + 1/(anim.FrameData[i].FrameRate or 1)
-			end		
+			end
 		end
-		
-		
+
+
 		--pregather animation time
 		for i=anim.StartFrame or 1,table.getn(anim.FrameData) do
-		
+
 			totalAnimTimeInSeconds = totalAnimTimeInSeconds + 1/(anim.FrameData[i].FrameRate or 1)
 		end
-		
+
 		for frameIndex=1,table.getn(anim.FrameData) do
-		
-		
+
+
 			local frameData = anim.FrameData[frameIndex]
-			
-			
+
+
 			--this frame starts before the selected main keyframe ends
 			if timeSoFar < timeInSeconds then
-			
-			
+
+
 				local prevTime = timeSoFar
 				timeSoFar = timeSoFar + 1/(frameData.FrameRate or 1)
-				
-				
-				
-			
-			
+
+
+
+
+
 				--we've reached a keyframe that extends beyond our main animation's current keyframe endpos
 				local delta = 1
 				if timeSoFar > timeInSeconds && (anim.StartFrame or 1) <= frameIndex then
 					--thanks sassafrass
 					delta = (timeInSeconds-prevTime)/(timeSoFar-prevTime)
 				end
-				
+
 				for boneName,boneData in pairs(frameData.BoneInfo) do
 					subPostureAnim.FrameData[1].BoneInfo[boneName] = subPostureAnim.FrameData[1].BoneInfo[boneName] or {}
 					for moveType,moveVal in pairs(boneData) do
@@ -529,11 +529,11 @@ local function ApplyEndResults()
 		end
 		RegisterLuaAnimation("subPosture_"..i,subPostureAnim)
 		table.insert(subPostures,"subPosture_"..i)
-		
+
 	end]]
-	
+
 	RegisterLuaAnimation("editingAnim",postureAnim)
-	
+
 
 	LocalPlayer():StopAllLuaAnimations()
 	LocalPlayer():SetLuaAnimation("editingAnim")
@@ -553,28 +553,28 @@ local function LoadAnimationFromFile()
 	for i,v in pairs(file.Find("animations/*.txt", "DATA")) do
 		box:AddChoice(string.sub(v,1,-5))
 	end
-	
+
 	local button = vgui.Create("DButton",frame)
 	button:SetWide(frame:GetWide()-10)
 	button:SetPos(5,frame:GetTall()-25)
 	button:SetText("Load Animation")
 	button.DoClick = function()
-	
+
 		local name = box:GetText()
-		
+
 		local str = file.Read("animations/"..name..".txt", "DATA")
 		if !str then return end
 		local success, t = pcall(util.JSONToTable, str)
-		if !success then 
+		if !success then
 			ErrorNoHalt("WARNING: Animation '"..name.."' failed to load\n")
 		else
 			RegisterLuaAnimation(name,t)
-		
+
 
 		animName = name
 		animationData = GetLuaAnimations()[animName] or {}
 		animType = animationData.Type
-		
+
 		if animType == TYPE_SEQUENCE then pace.SetTPose(true) end
 		if animType ~= TYPE_SEQUENCE then pace.SetTPose(false) end
 		frame:Remove()
@@ -591,7 +591,7 @@ local function RegisterAll()
 		local str = file.Read("animations/"..string.sub(v,1,-5)..".txt", "DATA")
 		if !str then return end
 		local success,t = pcall(Deserialize, str)
-		if !success then 
+		if !success then
 			ErrorNoHalt("WARNING: Animation '"..string.sub(v,1,-5).."' failed to load: "..tostring(t).."\n")
 		else
 			RegisterLuaAnimation(string.sub(v,1,-5),t)
@@ -606,12 +606,12 @@ end
 local function SaveAnimation()
 	if(!file.Exists("animations","DATA")) then file.CreateDir"animations" end
 
-			Derma_StringRequest( "Question", 
-					"Save as...", 
-					animName or "", 
+			Derma_StringRequest( "Question",
+					"Save as...",
+					animName or "",
 					function( strTextOut ) RegisterLuaAnimation(strTextOut,animationData) file.Write("animations/"..strTextOut..".txt", util.TableToJSON(animationData)) end,
 					function( strTextOut ) end,
-					"Save", 
+					"Save",
 					"Cancel" )
 
 
@@ -629,10 +629,10 @@ local function IsMouseOverPanel()
 	local mouseY = gui.MouseY()
 	for i,v in pairs(topLevelPanels) do
 		if ValidPanel(v) && v:IsVisible() then
-		
+
 			local bChild = IsChildOfHiddenParent(v)
 			if !bChild then
-				
+
 				local x,y = v:GetPos()
 				local w = v:GetWide()
 				local h = v:GetTall()
@@ -648,47 +648,47 @@ local function IsMouseOverPanel()
 end
 
 
-local function FixMouse() 
+local function FixMouse()
 	if !animating then return end
 	local notOverPanel = !IsMouseOverPanel()
-	
-	if !input.IsMouseDown(MOUSE_RIGHT) && rightDown then 
+
+	if !input.IsMouseDown(MOUSE_RIGHT) && rightDown then
 		rightDown = false
 	elseif input.IsMouseDown(MOUSE_RIGHT) && !rightDown && notOverPanel then
-		rightDown = true 
+		rightDown = true
 		pressedPos[1] = gui.MouseX()
 		pressedPos[2] = gui.MouseY()
-		
+
 	elseif input.IsMouseDown(MOUSE_RIGHT) && rightDown then
 		local mvmtX = gui.MouseX()-pressedPos[1]
 		angToPlayer.yaw = angToPlayer.yaw + mvmtX
-		
+
 		local mvmtY = (gui.MouseY()-pressedPos[2])*0.1
 		camHeight = math.max(10,camHeight - mvmtY)
 
 		gui.SetMousePos(pressedPos[1],pressedPos[2])
 	end
 	if input.IsMouseDown(MOUSE_LEFT) && !leftDown && notOverPanel then
-	
+
 		if draggingDir then
 			pressedPos[1] = gui.MouseX()
 			pressedPos[2] = gui.MouseY()
 			leftDown = true
 		end
-		
+
 	elseif !input.IsMouseDown(MOUSE_LEFT) && leftDown then
 		leftDown = false
 	elseif input.IsMouseDown(MOUSE_LEFT) && leftDown then
-		
+
 		local mvmtX = gui.MouseX()-pressedPos[1]
 		local mvmtY = gui.MouseY()-pressedPos[2]
 		local dist = math.Distance(gui.MouseX(),gui.MouseY(),pressedPos[1],pressedPos[2])
 		if mvmtX < 0 then
 			dist = dist * -1
 		end
-		
+
 		sliders:Dragged3D(dist,draggingDir)
-		
+
 		gui.SetMousePos(pressedPos[1],pressedPos[2])
 	end
 	if(input.IsMouseDown(MOUSE_WHEEL_DOWN)) then
@@ -699,17 +699,17 @@ end
 
 local function AnimationEditorView(pl,origin,angles,fov)
 
-	
+
 	local t = {}
 	local vec = pl:GetForward()*camDist
-	
+
 	local camTarget = pl:GetPos()+Vector(0,0,camHeight)
-	
+
 	vec:Rotate(angToPlayer)
 	t.origin=camTarget+vec
 	t.angles=(camTarget-t.origin):Angle()
 	return t
-	
+
 end
 
 local function AnimationEditorOff()
@@ -719,7 +719,7 @@ local function AnimationEditorOff()
 	if tbl then
 		file.Write("animations/backups/previous_session_"..os.date("%m%d%y%H%M%S")..".txt", tbl)
 	end
-	for i,v in pairs(animEditorPanels) do 	
+	for i,v in pairs(animEditorPanels) do
 		v:Remove()
 	end
 	pace.SetInAnimEditor(false)
@@ -742,23 +742,23 @@ local function AnimationEditorOn()
 	if hook.Call("PrePACEditorOpen", GAMEMODE, LocalPlayer()) == false then return end
 
 	if animating then AnimationEditorOff() return end
-	for i,v in pairs(animEditorPanels) do 
+	for i,v in pairs(animEditorPanels) do
 		v:Remove()
 	end
-	
+
 	--RunConsoleCommand("animeditor_in_editor", "1")
 	pace.SetInAnimEditor(true)
-	
+
 	local close = vgui.Create("DButton")
 	close:SetText("X")
 	close.DoClick = function(slf) AnimationEditorOff() end
 	close:SetSize(16,16)
 	close:SetPos(ScrW() - 16-4,4)
 	table.insert(animEditorPanels,close)
-	
+
 	timeLine = vgui.Create("AnimEditor_TimeLine")
 	table.insert(animEditorPanels,timeLine)
-	
+
 	local frame=vgui.Create("DFrame")
 	frame:SetTitle("Main Menu")
 	frame:ShowCloseButton(false)
@@ -767,33 +767,33 @@ local function AnimationEditorOn()
 	frame:SetSize(mainSettings:GetWide(), mainSettings:GetTall()+22)
 	timer.Simple(0.01, function() frame:SetPos(ScrW()-200,ScrH()-mainSettings:GetTall()-timeLine:GetTall()*1.7) end)
 	table.insert(animEditorPanels,mainSettings)
-	
 
-	
-	
-	
+
+
+
+
 	local sliderFrame = vgui.Create("DFrame")
 	sliderFrame:ShowCloseButton(false)
 	sliderFrame:SetTitle("Sliders")
 	sliderFrame:MakePopup()
 	sliders = vgui.Create("AnimEditor_Sliders",sliderFrame)
-	
-	
+
+
 	table.insert(animEditorPanels,sliderFrame)
-	
-		
+
+
 	subAnims = vgui.Create("AnimEditor_SubAnimations")
 
-	
-	
+
+
 	table.insert(animEditorPanels,subAnims)
-	
+
 	hook.Add("HUDPaint","PaintTopBar",PaintTopBar)
 	hook.Add("CalcView","AnimationView",AnimationEditorView)
 	hook.Add("Think","FixMouse",FixMouse)
 	hook.Add("ShouldDrawLocalPlayer","DrawMe",function() return true end)
 	gui.EnableScreenClicker(true)
-	
+
 	animating = true
 end
 concommand.Add("animate",AnimationEditorOn)
@@ -808,35 +808,35 @@ function MAIN:Init()
 	self:SetName("Main Settings")
 	self:SetSize(200,315)
 	self:SetPos(0,22)
-	
+
 	boneList["ParsedSkeleton"] = ParseBones(LocalPlayer())
-	
+
 	local newanim = self:Button("New Animation")
 	newanim.DoClick = NewAnimation
-	
-	
+
+
 	local loadanim = self:Button("Load Registered Animation")
 	loadanim.DoClick = LoadAnimation
-	
+
 	local loadanim = self:Button("Load Animation From File")
 	loadanim.DoClick = LoadAnimationFromFile
 
 	local saveanim = self:Button("Save Animation To File")
 	saveanim.DoClick = SaveAnimation
-	
+
 	--local register = self:Button("Register All Animations")
 	--register.DoClick = RegisterAll
-	
+
 	local viewcode = self:Button("Copy Raw Lua To Clipboard")
 	viewcode.DoClick = function() local str = OutputCode() if !str then return end SetClipboardText(str) end
-	
+
 	local maxcamdist_cvar = CreateConVar("pac_animeditor_maxcamdist",200)
 	local maxcamdist = maxcamdist_cvar:GetInt()
-	
+
 	local distSlider = self:NumSlider("Cam Distance", nil, 40, maxcamdist, 0 )
 	distSlider:SetValue(maxcamdist)
 	distSlider.OnValueChanged = function(s,v) camDist = v end
-	
+
 	local boneSet = self:ComboBox("Bone Set")
 	for i,v in pairs(boneList) do
 		boneSet:AddChoice(i)
@@ -854,7 +854,7 @@ function MAIN:Init()
 
 	self:RefreshBoneSet()
 
-	
+
 end
 
 function MAIN:RefreshBoneSet()
@@ -879,13 +879,13 @@ function TIMELINE:Init()
 	self:SetSize(ScrW(),150)
 	self:SetPos(0,ScrH()-150)
 	self:SetDraggable(false)
-	
+
 	local timeLine = vgui.Create("DHorizontalScroller",self)
 	timeLine:SetPos(5,45)
 	timeLine:SetSize(self:GetWide()-self:GetTall()-30,20)
 	self.timeLine = timeLine
-	
-	
+
+
 	self.subAnims = vgui.Create("DPanelList",self)
 	self.subAnims:SetSize(timeLine:GetWide(),self:GetTall()-75)
 	self.subAnims:SetPos(5,50+timeLine:GetTall())
@@ -894,18 +894,18 @@ function TIMELINE:Init()
 	timeLineTop:SetPos(5,25)
 	timeLineTop:SetSize(self:GetWide()-self:GetTall(),20)
 	timeLineTop.Paint = function(s)
-	
-	
-	
+
+
+
 		local XPos = timeLine.OffsetX
-		
+
 		draw.RoundedBox(0,0,0,self:GetWide(),16,Color(200,200,200,255))
-		
+
 		if animName then
 			if playingAnimation then
 				playBarOffset = playBarOffset + FrameTime()*secondDistance
 			end
-			
+
 
 			local subtraction = 0
 			if animationData then
@@ -926,14 +926,14 @@ function TIMELINE:Init()
 				end
 			end
 
-			
+
 			if (playBarOffset-subtraction)/secondDistance > self:GetAnimationTime() then
 				local restartPos = self:ResolveRestart()
 				playBarOffset = restartPos*secondDistance
 			end
 			draw.RoundedBox(0,playBarOffset-1,0,2,16,Color(255,0,0,240))
 		end
-		
+
 		local previousSecond = XPos-(XPos%secondDistance)
 		for i=previousSecond,previousSecond+s:GetWide(),secondDistance/4 do
 			if i-XPos > 0 && i-XPos < ScrW() then
@@ -941,11 +941,11 @@ function TIMELINE:Init()
 				draw.SimpleText(sec,"DefaultFontSmall",i-XPos,6,Color(0,0,0,255),1,1)
 			end
 		end
-	
+
 	end
-	
-	
-	
+
+
+
 	local addKeyButton = vgui.Create("DButton",self)
 	addKeyButton:SetText("Add KeyFrame")
 	addKeyButton.DoClick = function() self:AddKeyFrame() end
@@ -953,7 +953,7 @@ function TIMELINE:Init()
 	addKeyButton:SetPos(self:GetWide()-self:GetTall()+10,30)
 	self.addKeyButton = addKeyButton
 	addKeyButton:SetDisabled(true)
-	
+
 	self.isPlaying = false
 	local play = vgui.Create("DButton",self)
 	play:SetPos(self:GetWide()-self:GetTall()+10,self:GetTall()-25)
@@ -961,12 +961,12 @@ function TIMELINE:Init()
 	play:SetText("Play")
 	play.DoClick = function()
 		self:Toggle()
-		
-		
+
+
 	end
 	self.play = play
 	self.play:SetDisabled(true)
-	
+
 end
 function TIMELINE:Toggle(bForce)
 		if bForce != nil then
@@ -975,30 +975,30 @@ function TIMELINE:Toggle(bForce)
 			self.isPlaying = !self.isPlaying
 		end
 		if self.isPlaying then
-		
-		
+
+
 			RegisterLuaAnimation("editortest",animationData)
 			LocalPlayer():StopAllLuaAnimations()
 			LocalPlayer():SetLuaAnimation("editortest")
 			for i,v in pairs(subAnimationsLoaded) do
 				LocalPlayer():SetLuaAnimation(i)
 			end
-			
+
 			playingAnimation = true
 			playBarOffset = self:ResolveStart()*secondDistance
-			
+
 			self.play:SetText("Stop")
-			
+
 			for i,v in pairs(subAnimationsLoaded) do
 				v.subPlayBarOffset = v.storedTimeTillStart
 			end
 		else
-		
-		
+
+
 			LocalPlayer():StopAllLuaAnimations()
 			playingAnimation = false
-			
-			
+
+
 			playBarOffset = self:ResolveStart()*secondDistance
 			self.play:SetText("Play")
 			for i,v in pairs(subAnimationsLoaded) do
@@ -1025,24 +1025,24 @@ function TIMELINE:OnLoadAnimation()
 	end
 	self.addKeyButton:SetDisabled(false)
 	self.play:SetDisabled(false)
-	
-	
+
+
 	addFrame = false
 	for i,v in pairs(animationData.FrameData) do
-		
+
 		local keyframe = self:AddKeyFrame() --helper add first frame
 		keyframe:SetFrameData(i,v)
-		
+
 	end
 	addFrame = true
-		
+
 end
 local flip = false
 function TIMELINE:LoadSubAnimation(name)
 
 	local anim = GetLuaAnimations()[name]
 	if !anim then return end
-	
+
 	if subAnimationsLoaded[name] then
 		self.subAnims:RemoveItem(subAnimationsLoaded[name])
 		subAnimationsLoaded[name] = nil
@@ -1051,9 +1051,9 @@ function TIMELINE:LoadSubAnimation(name)
 		local timeLine = vgui.Create("DHorizontalScroller")
 		timeLine:SetPos(5,45)
 		timeLine:SetSize(self:GetWide()-self:GetTall()-30,20)
-		
-		
-		
+
+
+
 		local dataCache = {} --holds key frame size for sub anims
 		timeLine.subPlayBarOffset = 0
 
@@ -1063,9 +1063,9 @@ function TIMELINE:LoadSubAnimation(name)
 		local restartPos = 0
 		local totalAnimationTime = 0
 		local firstPass = true
-		
+
 		for i,v in ipairs(anim.FrameData) do
-		
+
 			local frameLen = 1/(v.FrameRate or 1)
 			if anim.StartFrame && anim.StartFrame > i then
 				timeLine.subPlayBarOffset = timeLine.subPlayBarOffset + frameLen*secondDistance
@@ -1077,18 +1077,18 @@ function TIMELINE:LoadSubAnimation(name)
 			table.insert(dataCache,secondDistance/v.FrameRate)
 		end
 		timeLine.storedTimeTillStart = timeLine.subPlayBarOffset
-		
-		
+
+
 		timeLine.Paint = function(s)
 			local XPos = self.timeLine.OffsetX
-			
+
 
 			local total = 0
 			local drawnName = false
-			
-			
+
+
 			for i,v in ipairs(dataCache) do
-					
+
 					local col
 					if i%2 == 0 then
 						if tempFlip then
@@ -1105,7 +1105,7 @@ function TIMELINE:LoadSubAnimation(name)
 					end
 					local leftStart = total-XPos
 					draw.RoundedBox(0,leftStart,0,v,self:GetTall(),col)
-					
+
 					draw.SimpleText(name,"DefaultFontSmall",leftStart+20,5,Color(0,0,0,255),0,3)
 					draw.SimpleText(i,"DefaultFontSmall",total-XPos+5,5,Color(0,0,0,255),0,3)
 					local rightBound = leftStart+v
@@ -1118,14 +1118,14 @@ function TIMELINE:LoadSubAnimation(name)
 					total = total + v
 
 			end
-			
-			
-			
-				
+
+
+
+
 				if playingAnimation then
 					timeLine.subPlayBarOffset = timeLine.subPlayBarOffset + FrameTime()*secondDistance
 				end
-				
+
 
 				local subtraction = 0
 				if firstPass && animationData.StartFrame then
@@ -1137,22 +1137,22 @@ function TIMELINE:LoadSubAnimation(name)
 					end
 				end
 
-				
+
 				if (timeLine.subPlayBarOffset-subtraction)/secondDistance > totalAnimationTime then
 					timeLine.subPlayBarOffset = restartPos*secondDistance
 				end
 				draw.RoundedBox(0,timeLine.subPlayBarOffset-1,0,2,16,Color(0,255,0,240))
-			
-		end		
+
+		end
 		self.subAnims:AddItem(timeLine)
-		
-		
-		
-		
+
+
+
+
 		subAnimationsLoaded[name] = timeLine
 	end
-	
-	
+
+
 end
 
 
@@ -1163,16 +1163,16 @@ function TIMELINE:GetAnimationTime()
 	local tempTime = 0
 	local globalAnims = GetLuaAnimations()
 	local startIndex = 1
-	
+
 	if animationData and animationData.FrameData then
 		for i=startIndex, #animationData.FrameData do
 			local v = animationData.FrameData[i]
 			tempTime = tempTime+(1/(v.FrameRate or 1))
 		end
 	end
-	
 
-	
+
+
 	return tempTime
 
 end
@@ -1182,7 +1182,7 @@ function TIMELINE:ResolveRestart() --get restart pos in seconds
 	local timeInSeconds = 0
 	local restartFrame = animationData.RestartFrame
 	if !restartFrame then return 0 end --no restart pos? start at the start
-	
+
 	for i,v in pairs(animationData.FrameData) do
 		if i == restartFrame then return timeInSeconds end
 		timeInSeconds = timeInSeconds+(1/(v.FrameRate or 1))
@@ -1195,32 +1195,32 @@ function TIMELINE:ResolveStart() --get restart pos in seconds
 	local timeInSeconds = 0
 	local startFrame = animationData.StartFrame
 	if !startFrame then return 0 end --no restart pos? start at the start
-	
+
 	for i,v in pairs(animationData.FrameData) do
 		if i == startFrame then return timeInSeconds end
 		timeInSeconds = timeInSeconds+(1/(v.FrameRate or 1))
 	end
 
 end
-	
+
 local flippedBool = false
 function TIMELINE:AddKeyFrame()
 	flippedBool = !flippedBool
 	local keyframe = vgui.Create("AnimEditor_KeyFrame")
 	keyframe:SetWide(secondDistance) --default to 1 second animations
-	
+
 	keyframe.Alternate = flippedBool
-	
-	
+
+
 	--[[if keyframe:GetAnimationIndex() && keyframe:GetAnimationIndex() > 1 then
 		keyframe:CopyPreviousKey()
 	end]]
-	
+
 	self.timeLine:AddPanel(keyframe)
 	self.timeLine:InvalidateLayout()
-	
-	
-	
+
+
+
 	if animType == TYPE_POSTURE then self.addKeyButton:SetDisabled(true) end --postures have only one keyframe
 
 	return keyframe
@@ -1257,9 +1257,9 @@ function KEYFRAME:CopyPreviousKey()
 	local iKeyIndex = self:GetAnimationIndex()-1
 	local tFrameData = table.Copy(animationData.FrameData[iKeyIndex])
 	if !tFrameData then return end
-	
-	
-	
+
+
+
 end
 function KEYFRAME:GetAnimationIndex()
 	return self.AnimationKeyIndex
@@ -1290,47 +1290,47 @@ function KEYFRAME:OnMousePressed(mc)
 		ApplyEndResults()
 	elseif mc == MOUSE_RIGHT then
 		local menu = DermaMenu()
-		menu:AddOption("Change Frame Length",function() 	
-			Derma_StringRequest( "Question", 
-					"How long should this frame be (seconds)?", 
-					"1.0", 
+		menu:AddOption("Change Frame Length",function()
+			Derma_StringRequest( "Question",
+					"How long should this frame be (seconds)?",
+					"1.0",
 					function( strTextOut ) self:SetLength(tonumber(strTextOut)) end,
 					function( strTextOut ) end,
-					"Set Length", 
+					"Set Length",
 					"Cancel" )
 			end)
-		menu:AddOption("Change Frame Rate",function() 	
-			Derma_StringRequest( "Question", 
-					"Set frame "..self:GetAnimationIndex().."'s framerate", 
-					"1.0", 
+		menu:AddOption("Change Frame Rate",function()
+			Derma_StringRequest( "Question",
+					"Set frame "..self:GetAnimationIndex().."'s framerate",
+					"1.0",
 					function( strTextOut ) self:SetLength(1/tonumber(strTextOut)) end,
 					function( strTextOut ) end,
-					"Set Frame Rate", 
+					"Set Frame Rate",
 					"Cancel" )
 			end)
 		if animationData.Type != TYPE_GESTURE then
-			menu:AddOption("Set Restart Pos",function() 
-				
+			menu:AddOption("Set Restart Pos",function()
+
 				for i,v in pairs(timeLine.timeLine.Panels) do
 					if v.RestartPos then v.RestartPos = nil end
 				end
-				self.RestartPos = true 
+				self.RestartPos = true
 				animationData.RestartFrame = self:GetAnimationIndex()
 			end)
 		end
 		if animationData.Type == TYPE_SEQUENCE then
-			menu:AddOption("Set Start Pos",function() 
-				
+			menu:AddOption("Set Start Pos",function()
+
 				for i,v in pairs(timeLine.timeLine.Panels) do
 					if v.StartPos then v.StartPos = nil end
 				end
-				self.StartPos = true 
+				self.StartPos = true
 				animationData.StartFrame = self:GetAnimationIndex()
 			end)
 		end
-		
 
-		
+
+
 		if self:GetAnimationIndex() > 1 then
 			menu:AddOption("Reverse Previous Frame",function()
 				local tbl = animationData.FrameData[self:GetAnimationIndex() - 1].BoneInfo
@@ -1346,7 +1346,7 @@ function KEYFRAME:OnMousePressed(mc)
 				sliders:SetFrameData()
 			end)
 		end
-		
+
 		menu:AddOption("Duplicate Frame To End", function()
 			local keyframe = timeLine:AddKeyFrame()
 
@@ -1370,9 +1370,9 @@ function KEYFRAME:OnMousePressed(mc)
 			selectedFrame = keyframe
 			sliders:SetFrameData()]]
 		end)
-				
-			
-		menu:AddOption("Remove Frame",function() 
+
+
+		menu:AddOption("Remove Frame",function()
 			local frameNum = self:GetAnimationIndex()
 			if frameNum == 1 and !animationData.FrameData[2] then return end --can't delete the frame when it's the only one
 			table.remove(animationData.FrameData,frameNum)
@@ -1384,14 +1384,14 @@ function KEYFRAME:OnMousePressed(mc)
 					v.Alternate = !v.Alternate
 				end
 			end
-		
+
 			timeLine.timeLine:InvalidateLayout()
 			self:Remove()
-			
+
 		end)
-					
+
 		menu:Open()
-		
+
 	end
 end
 function KEYFRAME:SetLength(int)
@@ -1409,34 +1409,34 @@ function SLIDERS:Init()
 	self:SetMinimumSize(200,650)
 	self:SetWide(200)
 	self.Sliders = {}
-	
+
 	self.Sliders.MU = self:NumSlider("Translate UP", nil, -100, 100, 0 )
 	self.Sliders.MU.OnValueChanged = function(s,v) self:OnSliderChanged("MU",v) end
 	self.Sliders.MU.Label:SetTextColor(Color(0,0,255,255))
-	
+
 	local oldEnter = self.Sliders.MU.Wang.OnEnter
 	self.Sliders.MU.Wang.OnEnter = function(s) self:OnSliderChanged("MU",self.Sliders.MU.Wang:GetValue()) self.Sliders.MU.Slider:InvalidateLayout() oldEnter(s) end
-	
+
 	self.Sliders.MR = self:NumSlider("Translate RIGHT", nil, -100, 100, 0 )
 	self.Sliders.MR.OnValueChanged = function(s,v) self:OnSliderChanged("MR",v) end
 	self.Sliders.MR.Label:SetTextColor(Color(255,0,0,255))
 	self.Sliders.MR.Wang.OnEnter = function(s) self:OnSliderChanged("MR",self.Sliders.MR.Wang:GetValue()) self.Sliders.MR.Slider:InvalidateLayout() oldEnter(s) end
-	
+
 	self.Sliders.MF = self:NumSlider("Translate FORWARD", nil, -100, 100, 0 )
 	self.Sliders.MF.OnValueChanged = function(s,v) self:OnSliderChanged("MF",v) end
 	self.Sliders.MF.Label:SetTextColor(Color(0,255,0,255))
 	self.Sliders.MF.Wang.OnEnter = function(s) self:OnSliderChanged("MF",self.Sliders.MF.Wang:GetValue()) self.Sliders.MF.Slider:InvalidateLayout() oldEnter(s) end
-		
+
 	self.Sliders.RU = self:NumSlider("Rotate UP", nil, -360, 360, 0 )
 	self.Sliders.RU.OnValueChanged = function(s,v) self:OnSliderChanged("RU",v) end
 	self.Sliders.RU.Label:SetTextColor(Color(0,255,0,255))
 	self.Sliders.RU.Wang.OnEnter = function(s) self:OnSliderChanged("RU",self.Sliders.RU.Wang:GetValue()) self.Sliders.RU.Slider:InvalidateLayout() oldEnter(s) end
-	
+
 	self.Sliders.RR = self:NumSlider("Rotate RIGHT", nil, -360, 360, 0 )
 	self.Sliders.RR.OnValueChanged = function(s,v) self:OnSliderChanged("RR",v) end
 	self.Sliders.RR.Label:SetTextColor(Color(255,0,0,255))
 	self.Sliders.RR.Wang.OnEnter = function(s) self:OnSliderChanged("RR",self.Sliders.RR.Wang:GetValue()) self.Sliders.RR.Slider:InvalidateLayout() oldEnter(s) end
-	
+
 	self.Sliders.RF = self:NumSlider("Rotate FORWARD", nil, -360, 360, 0 )
 	self.Sliders.RF.OnValueChanged = function(s,v) self:OnSliderChanged("RF",v) end
 	self.Sliders.RF.Label:SetTextColor(Color(0,0,255,255))
@@ -1445,30 +1445,30 @@ function SLIDERS:Init()
 	--self:GetParent():KillFocus()
 	--self:GetParent():SetKeyboardInputEnabled(false)
 	--self:GetParent():SetMouseInputEnabled(false)
-	
-	timer.Simple(0.01,function() 
-		local x,y = self:GetSize() 
-		self:GetParent():SetSize(x+10,y+200) 
-		self:SetPos(5,25) 
+
+	timer.Simple(0.01,function()
+		local x,y = self:GetSize()
+		self:GetParent():SetSize(x+10,y+200)
+		self:SetPos(5,25)
 		self:GetParent():SetPos(0,ScrH()-timeLine:GetTall()-self:GetParent():GetTall())
 		x,y = self:GetParent():GetPos()
 		subAnims:SetPos(0,y-subAnims:GetTall())
-	
-	
-	end)	
+
+
+	end)
 end
 local needsUpdate = true
 function SLIDERS:SetFrameData()
 	--print(selectedFrame,selectedBone,selectedFrame:GetData().BoneInfo[selectedBone])
 	needsUpdate = false
-	if !ValidPanel(selectedFrame) || !selectedBone || !selectedFrame:GetData().BoneInfo[selectedBone] then 
-	
+	if !ValidPanel(selectedFrame) || !selectedBone || !selectedFrame:GetData().BoneInfo[selectedBone] then
+
 		for i,v in pairs(self.Sliders) do
 			v:SetValue(0)
 		end
 		needsUpdate = true
 	return end
-	
+
 	for i,v in pairs(self.Sliders) do
 		v:SetValue(selectedFrame:GetData().BoneInfo[selectedBone][i] or 0)
 	end
@@ -1482,12 +1482,12 @@ end
 function SLIDERS:OnSliderChanged(moveType,value)
 	if !ValidPanel(selectedFrame) || !table.HasValue(boneList[selectedBoneSet],selectedBone) then return end --no keyframe/bone selected
 	if (tonumber(value) == 0 && selectedFrame:GetData().BoneInfo[selectedBone] == nil) || !needsUpdate then return end
-	
+
 	--[[if selectedFrame:GetAnimationIndex() > 1 then
 		local prevBoneData = animationData.FrameData[self:GetAnimationIndex()-1][selectedBone]
 		if prevBoneData then]]
-			
-	
+
+
 	selectedFrame:GetData().BoneInfo = selectedFrame:GetData().BoneInfo or {}
 	selectedFrame:GetData().BoneInfo[selectedBone] = selectedFrame:GetData().BoneInfo[selectedBone] or {}
 	selectedFrame:GetData().BoneInfo[selectedBone][moveType] = tonumber(value)
@@ -1513,48 +1513,48 @@ function SUBANIMS:Init()
 			self.AddButton:SetText("Add Animation")
 		end
 	end
-	
+
 	self.AddButton = vgui.Create("DButton",self)
 	self.AddButton:SetPos(5,self:GetTall()-25)
 	self.AddButton:SetSize(self:GetWide()-10,20)
-	self.AddButton.DoClick = function() timeLine:LoadSubAnimation(self.SelectedAnim,self.AnimList) 				
+	self.AddButton.DoClick = function() timeLine:LoadSubAnimation(self.SelectedAnim,self.AnimList)
 				if subAnimationsLoaded[i] then
 					self.AddButton:SetText("Remove Animation")
 				else
 					self.AddButton:SetText("Add Animation")
-				end 
+				end
 	end
 	self.AddButton:SetText("Click an Animation...")
-	
+
 	self:Refresh()
 
 end
 function SUBANIMS:Refresh()
 	self.AnimList:Clear()
 	for i,v in pairs(GetLuaAnimations()) do
-		
+
 		--no need to show these
 		if i != "editortest" && i != animName && i != "editingAnim" && !string.find(i,"subPosture_") then
 			if !string.find(i,"pac_anim_") then --animations made by custom_animation parts shouldn't be here
 				local item = self.AnimList:AddChoice(i)
 				--[[local item = self.AnimList:AddItem(i)
-				item.DoClick = function() 
+				item.DoClick = function()
 					self.SelectedAnim = i
 					if subAnimationsLoaded[i] then
 						self.AddButton:SetText("Remove Animation")
 					else
 						self.AddButton:SetText("Add Animation")
 					end
-						
+
 				end]]
 			end
 		end
 	end
-	
+
 end
 vgui.Register("AnimEditor_SubAnimations",SUBANIMS,"DFrame")
 
-hook.Add("HUDPaint", "animeditor_InAnimEditor", function()		
+hook.Add("HUDPaint", "animeditor_InAnimEditor", function()
 	for key, ply in pairs(player.GetAll()) do
 		if ply ~= LocalPlayer() and ply.InAnimEditor then
 			local id = ply:LookupBone("ValveBiped.Bip01_Head1")

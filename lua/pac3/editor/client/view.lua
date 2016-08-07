@@ -1,7 +1,7 @@
-local acsfnc = function(key, def) 
+local acsfnc = function(key, def)
 	pace["View" .. key] = def
-	pace["SetView" .. key] = function(val) pace["View" .. key] = val end 
-	pace["GetView" .. key] = function() return pace["View" .. key] or def end 
+	pace["SetView" .. key] = function(val) pace["View" .. key] = val end
+	pace["GetView" .. key] = function() return pace["View" .. key] or def end
 end
 
 acsfnc("Entity", NULL)
@@ -16,14 +16,14 @@ end
 function pace.ResetView()
 	if pace.Focused then
 		local ent = pace.GetViewEntity()
-		
+
 		if not ent:IsValid() then
 			local _, part = next(pac.GetParts(true))
 			if part then
 				ent = part:GetOwner()
 			end
 		end
-		
+
 		if ent:IsValid() then
 			pace.ViewPos = ent:EyePos() + Vector(50, 0, 0)
 			pace.ViewAngles = (ent:EyePos() - pace.ViewPos):Angle()
@@ -33,7 +33,7 @@ end
 
 function pace.OnMouseWheeled(delta)
 	local mult = 5
-	
+
 	if input.IsKeyDown(KEY_LCONTROL) then
 		mult = 1
 	end
@@ -41,9 +41,9 @@ function pace.OnMouseWheeled(delta)
 	if input.IsKeyDown(KEY_LSHIFT) then
 		mult = 10
 	end
-	
+
 	delta = delta * mult
-	
+
 	pace.ViewFOV = math.Clamp(pace.ViewFOV - delta, 1, 75)
 end
 
@@ -53,7 +53,7 @@ local mcode
 
 function pace.GUIMousePressed(mc)
 	if pace.mctrl.GUIMousePressed(mc) then return end
-	
+
 	if mc == MOUSE_LEFT and not pace.editing_viewmodel then
 		held_ang = pace.ViewAngles*1
 		held_mpos = Vector(gui.MousePos())
@@ -68,32 +68,32 @@ end
 
 function pace.GUIMouseReleased(mc)
 	if pace.mctrl.GUIMouseReleased(mc) then return end
-	
+
 	if pace.editing_viewmodel then return end
 
 	mcode = nil
 end
 
 local function CalcDrag()
-	if 
+	if
 		pace.BusyWithProperties:IsValid() or
 		pace.ActiveSpecialPanel:IsValid() or
-		pace.editing_viewmodel 
+		pace.editing_viewmodel
 	then return end
 
-	
+
 	local ftime = FrameTime() * 50
 	local mult = 5
-	
+
 	if input.IsKeyDown(KEY_LCONTROL) then
 		mult = 0.1
 	end
-	
-	if pace.current_part:IsValid() then		
+
+	if pace.current_part:IsValid() then
 		local origin
-		
+
 		local owner = pace.current_part:GetOwner(true)
-		
+
 		if owner == pac.WorldEntity and owner:IsValid() then
 			if pace.current_part:HasChildren() then
 				for key, child in pairs(pace.current_part:GetChildren()) do
@@ -104,36 +104,36 @@ local function CalcDrag()
 				end
 			else
 				origin = LocalPlayer():GetPos()
-			end			
-			
+			end
+
 			if not origin then
 				origin = owner:GetPos()
 			end
 		else
-			if not owner:IsValid() then 
-				owner = pac.LocalPlayer 
+			if not owner:IsValid() then
+				owner = pac.LocalPlayer
 			end
-			
+
 			if pace.current_part.NonPhysical then
 				origin = owner:GetPos()
 			else
 				origin = pace.current_part:GetDrawPosition()
 			end
 		end
-		
+
 		mult = mult * (origin:Distance(pace.ViewPos) / 200)
 	end
-	
+
 	if input.IsKeyDown(KEY_LSHIFT) then
 		mult = mult + 5
 	end
-	
+
 	if input.IsKeyDown(KEY_UP) or input.IsMouseDown(MOUSE_WHEEL_UP) then
 		pace.OnMouseWheeled(0.25)
 	elseif input.IsKeyDown(KEY_DOWN) or input.IsMouseDown(MOUSE_WHEEL_DOWN) then
 		pace.OnMouseWheeled(-0.25)
 	end
-	
+
 	if not pace.IsSelecting then
 		if mcode == MOUSE_LEFT then
 			local delta = (held_mpos - Vector(gui.MousePos())) / 5 * math.rad(pace.ViewFOV)
@@ -157,7 +157,7 @@ local function CalcDrag()
 	if input.IsKeyDown(KEY_SPACE) then
 		pace.ViewPos = pace.ViewPos + pace.ViewAngles:Up() * mult * ftime
 	end
-	
+
 	--[[if input.IsKeyDown(KEY_LALT) then
 		pace.ViewPos = pace.ViewPos + pace.ViewAngles:Up() * -mult * ftime
 	end]]
@@ -166,7 +166,7 @@ end
 local follow_entity = CreateClientConVar("pac_camera_follow_entity", "0", true)
 
 function pace.CalcView(ply, pos, ang, fov)
-	if pace.editing_viewmodel then 
+	if pace.editing_viewmodel then
 		pace.ViewPos = pos
 		pace.ViewAngles = ang
 		pace.ViewFOV = fov
@@ -176,23 +176,23 @@ function pace.CalcView(ply, pos, ang, fov)
 		local ent = pace.GetViewEntity()
 		pace.ViewPos = pace.ViewPos + (ent:GetVelocity() * FrameTime())
 	end
-	
+
 	if pac.GetRestrictionLevel() > 0 and not ply:IsAdmin() then
 		local ent = pace.GetViewEntity()
 		local dir = pace.ViewPos - ent:EyePos()
 		local dist = ent:BoundingRadius() * ent:GetModelScale() * 4
 		local filter = player.GetAll()
 		table.insert(filter, ent)
-				
+
 		if dir:Length() > dist then
 			pace.ViewPos = ent:EyePos() + (dir:GetNormalized() * dist)
 		end
-		
+
 		local res = util.TraceHull({start = ent:EyePos(), endpos = pace.ViewPos, filter = filter, mins = Vector(1,1,1)*-8, maxs = Vector(1,1,1)*8})
 		if res.Hit then
 			pace.ViewPos = res.HitPos
 		end
-	end	
+	end
 
 	return
 	{
@@ -267,12 +267,12 @@ function pace.GetTPose()
 	return pace.tposed
 end
 
-function pace.SetViewPart(part, reset_campos)	
+function pace.SetViewPart(part, reset_campos)
 	pace.SetViewEntity(part:GetOwner(true))
 
 	if reset_campos then
 		pace.ResetView()
-	end	
+	end
 end
 
 local L = pace.LanguageString
@@ -290,16 +290,16 @@ function pace.HUDPaint()
 	if mcode and not input.IsMouseDown(mcode) then
 		mcode = nil
 	end
-	
+
 	local ent = pace.GetViewEntity()
-	
+
 	if pace.IsFocused() then
 		CalcDrag()
-	
+
 		if ent:IsValid() then
 			pace.Call("Draw", ScrW(), ScrH())
 		end
-		
+
 		local x, y = pace.Editor:GetPos() + pace.Editor:GetWide() + 4, 0
 		--[[for i, text in ipairs(legacy_text) do
 			draw.SimpleTextOutlined(text, "DermaDefault", x, y, ((i == 4) or (i == 8)) and Color(255, 150, 150) or Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, Color(0,0,0,255))
@@ -311,7 +311,7 @@ function pace.HUDPaint()
 end
 
 function pace.HUDShouldDraw(typ)
-	if 
+	if
 		typ == "CHudEPOE" or
 		(typ == "CHudCrosshair" and pace.editing_viewmodel)
 	then

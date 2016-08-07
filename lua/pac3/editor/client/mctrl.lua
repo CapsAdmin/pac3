@@ -63,12 +63,12 @@ do -- pace
 	function mctrl.GetCameraOrigin()
 		return pace.GetViewPos()
 	end
-	
+
 	function mctrl.GetCameraFOV()
 		if pace.editing_viewmodel then
 			return LocalPlayer():GetActiveWeapon().ViewModelFOV or 55
 		end
-		
+
 		return pace.GetViewFOV()
 	end
 
@@ -106,30 +106,30 @@ do -- pace
 
 	function mctrl.GetCalculatedScale()
 		local part = pace.current_part
-		
+
 		if pace.editing_viewmodel then
 			return 5
 		end
-		
+
 		if part.ClassName == "clip" then
 			part = part.Parent
 		end
-		
+
 		if part.ClassName == "camera" then
 			return 30
 		end
-				
+
 		if not part:IsValid() then return 3 end
-	
+
 		local dist = (part.cached_pos:Distance(pace.GetViewPos()) / 50)
-		
-		if dist > 1 then 
-			dist = 1 / dist 
+
+		if dist > 1 then
+			dist = 1 / dist
 		end
-		
+
 		return 5 * math.rad(pace.GetViewFOV()) / dist
 	end
-	
+
 	local cvar_pos_grid = CreateClientConVar("pac_grid_pos_size", "4")
 
 	function mctrl.OnMove(part, pos)
@@ -139,13 +139,13 @@ do -- pace
 			pos.y = math.Round(pos.y/num) * num
 			pos.z = math.Round(pos.z/num) * num
 		end
-	
+
 		pace.Call("VariableChanged", part, "Position", pos, 0.25)
 		timer.Create("pace_refresh_properties", 0.1, 1, function()
 			pace.PopulateProperties(part)
 		end)
 	end
-	
+
 	local cvar_ang_grid = CreateClientConVar("pac_grid_ang_size", "45")
 
 	function mctrl.OnRotate(part, ang)
@@ -155,7 +155,7 @@ do -- pace
 			ang.y = math.Round(ang.y/num) * num
 			ang.r = math.Round(ang.r/num) * num
 		end
-		
+
 		pace.Call("VariableChanged", part, "Angles", ang, 0.25)
 		timer.Create("pace_refresh_properties", 0.1, 1, function()
 			pace.PopulateProperties(part)
@@ -437,14 +437,14 @@ local white = surface.GetTextureID("gui/center_gradient.vtf")
 local function DrawLineEx(x1,y1, x2,y2, w, skip_tex)
 	w = w or 1
 	if not skip_tex then surface.SetTexture(white) end
-	
+
 	local dx,dy = x1-x2, y1-y2
 	local ang = math.atan2(dx, dy)
 	local dst = math.sqrt((dx * dx) + (dy * dy))
-	
+
 	x1 = x1 - dx * 0.5
 	y1 = y1 - dy * 0.5
-	
+
 	surface.DrawTexturedRectRotated(x1, y1, w, dst, math.deg(ang))
 end
 
@@ -459,24 +459,24 @@ end
 
 local function DrawCircleEx(x, y, rad, res, ...)
 	res = res or 16
-			
+
 	local spacing = (res/rad) - 0.1
-	
-	for i = 0, res do		
+
+	for i = 0, res do
 		local i1 = ((i+0) / res) * math.pi * 2
 		local i2 = ((i+1 + spacing) / res) * math.pi * 2
-		
+
 		DrawLineEx(
-			x + math.sin(i1) * rad, 
-			y + math.cos(i1) * rad, 
-			
-			x + math.sin(i2) * rad, 
-			y + math.cos(i2) * rad, 
+			x + math.sin(i1) * rad,
+			y + math.cos(i1) * rad,
+
+			x + math.sin(i2) * rad,
+			y + math.cos(i2) * rad,
 			...
 		)
 	end
 end
-	
+
 
 function mctrl.LineToBox(origin, point, siz)
 	siz = siz or 7
@@ -494,7 +494,7 @@ end
 
 function mctrl.HUDPaint()
 	if pace.IsSelecting then return end
-	
+
 	local target = mctrl.GetTarget()
 	if not target then return end
 
@@ -504,7 +504,7 @@ function mctrl.HUDPaint()
 
 		local r = mctrl.GetCalculatedScale()
 		local o = mctrl.VecToScreen(pos)
-		
+
 		if true or o.visible then
 			if mctrl.grab.axis == AXIS_X or mctrl.grab.axis == AXIS_VIEW then
 				surface.SetDrawColor(255, 200, 0, 255)
@@ -542,7 +542,7 @@ end
 
 function mctrl.Think()
 	if pace.IsSelecting then return end
-	
+
 	local x, y = mctrl.GetMousePos()
 	if mctrl.grab.axis and mctrl.grab.mode == MODE_MOVE then
 		mctrl.Move(mctrl.grab.axis, x, y, mctrl.GetCalculatedScale())

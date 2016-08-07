@@ -16,7 +16,7 @@ pace.Materials.materials =
 	"models/stalker/stalker_sheet",
 	"models/zombie_poison/poisonzombie_sheet",
 	"models/zombie_fast/fast_zombie_sheet",
-	
+
 	"models/gunship/gunshipsheet",
 	"models/shield_scanner/minelayer_sheet",
 	"models/roller/rollermine_sheet",
@@ -40,17 +40,17 @@ pace.Materials.materials =
 	"models/combine_strider/strider_brain",
 	"models/combine_advisor_pod/combine_advisor_pod",
 	"models/magnusson_device/magnusson_device_basecolor",
-	
+
 	"models/antlion_grub/antlion_grub",
 	"models/antlion/antlion_worker_wing",
 	"models/antlion/antlion_worker",
 	"models/ministrider/mini_skin_basecolor",
 	"models/ministrider/mini_armor_basecolor",
 	"models/spitball/spitball",
-	
+
 	"models/mossman/mossman_hair",
 	"models/alyx/hairbits",
-	
+
 	"models/brokenglass/glassbroken_piece1",
 	"models/props_halloween/flask",
 	"models/props_halloween/flask_liquid",
@@ -61,7 +61,7 @@ pace.Materials.materials =
 	"models/effects/partyhat",
 	"models/props_gameplay/ball001",
 	"models/props_gameplay/orange_cone001",
-	
+
 	"models/player/items/soldier/dappertopper",
 	"models/weapons/c_items/c_candy_cane_red",
 	"models/props_halloween/halloween_blk",
@@ -85,7 +85,7 @@ pace.Materials.materials =
 	"models/weapons/v_baseball/baseball_sheet",
 	"hunter/myplastic",
 	"models/player/items/all_class/all_class_ring_diamond",
-	
+
 	"models/effects/invulnfx_blue",
 	"models/effects/invulnfx_red",
 	"models/effects/goldenwrench",
@@ -107,7 +107,7 @@ pace.Materials.materials =
 	"models/thundermountain_fx/wood_beam03_vert",
 	"models/thundermountain_fx/wood_bridge001_vert",
 	"models/thundermountain_fx/wood_wall002_vert",
-	
+
 	"models/shadertest/envball_1",
 	"models/shadertest/envball_2",
 	"models/shadertest/envball_3",
@@ -121,11 +121,11 @@ pace.Materials.materials =
 	"models/shadertest/shield",
 	"models/shadertest/unlitgenericmodel",
 	"models/shadertest/vertexlitalphatestedtexture",
-	
+
 	"models/ihvtest/arm",
 	"models/ihvtest/boot",
 	"models/ihvtest/eyeball_l",
-	
+
 	-- zpankr's material list
 	-- http://www.garrysmod.org/downloads/?a=view&id=18470
 	"models/wireframe",
@@ -157,7 +157,7 @@ pace.Materials.materials =
 	"models/flesh",
 	"models/airboat/airboat_blur02",
 	"models/alyx/emptool_glow",
-	"models/antlion/antlion_innards",	
+	"models/antlion/antlion_innards",
 	"models/barnacle/roots",
 	"models/combine_advisor/body9",
 	"models/combine_advisor/mask",
@@ -329,7 +329,7 @@ pace.Materials.trails =
 	"particle/Particle_Square_Gradient_NoFog",
 }
 
-pace.Materials.sprites = 
+pace.Materials.sprites =
 {
 	"sprites/glow04_noz",
 	"sprites/grip",
@@ -563,7 +563,7 @@ function PANEL:Init()
 		list:SetSpacing(2)
 		list:EnableVerticalScrollbar(true)
 		list:EnableHorizontal(true)
-		list:Dock(FILL)		
+		list:Dock(FILL)
 	self.MatList = list
 end
 
@@ -583,30 +583,30 @@ end
 
 function PANEL:SetMaterialList(tbl)
 	self:SetSelected()
-	
+
 	self.MaterialList = tbl
-	
+
 	self.MatList:Clear(true)
-	
+
 	for i, material in pairs(self.MaterialList) do
 		-- if IsError(material) then continue end
-		
+
 		local image = vgui.Create("DImageButton")
 		image.m_Image.LoadMaterial = function(s) s:DoLoadMaterial() end
 		image:SetOnViewMaterial(material, material)
 		image:SetSize(64, 64)
 		image.Value = material
-		
+
 		self.MatList:AddItem(image)
-		
+
 		image.DoClick = function(image) self:SetSelected(image.Value) end
-		
+
 		if self:GetSelected() then
 			image.PaintOver = HighlightedButtonPaint
 			self:SetSelected(material)
 		end
 	end
-	
+
 	self:InvalidateLayout(true)
 end
 
@@ -620,7 +620,7 @@ PANEL.ClassName = "mat_browser"
 function PANEL:Init()
 	self:SetTitle("materials")
 
-	local list = 
+	local list =
 	{
 		{key = "default", val = table.Merge(list.Get("OverrideMaterials"), pace.Materials.materials)},
 		{key = "sprites", val = pace.Materials.sprites},
@@ -629,7 +629,7 @@ function PANEL:Init()
 
 	local sheet = vgui.Create("DPropertySheet", self)
 	sheet:Dock(FILL)
-	
+
 	for _, data in pairs(list) do
 		local name, tbl = data.key, data.val
 		local pnl = pace.CreatePanel("mat_browser_sheet", self)
@@ -643,7 +643,7 @@ function PANEL:Init()
 		entry:Dock(BOTTOM)
 		entry:SetTall(20)
 	self.Entry = entry
-	
+
 	self:SetDrawOnTop(true)
 	self:SetSize(300, 300)
 	self:SetSizable(true)
@@ -654,7 +654,7 @@ function PANEL:SetSelected(value)
 	self.Entry:SetText(value or "")
 
 	self.m_Selected = value
-	
+
 	self:MaterialSelected(value)
 end
 

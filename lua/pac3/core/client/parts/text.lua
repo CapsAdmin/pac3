@@ -20,35 +20,35 @@ end
 
 function PART:SetColor(v)
 	self.ColorC = self.ColorC or Color(255, 255, 255, 255)
-	
+
 	self.ColorC.r = v.r
 	self.ColorC.g = v.g
 	self.ColorC.b = v.b
-	
+
 	self.Color = v
 end
 
 function PART:SetAlpha(n)
 	self.ColorC = self.ColorC or Color(255, 255, 255, 255)
 	self.ColorC.a = n * 255
-	
+
 	self.Alpha = n
 end
 
 function PART:SetOutlineColor(v)
 	self.OutlineColorC = self.OutlineColorC or Color(255, 255, 255, 255)
-	
+
 	self.OutlineColorC.r = v.r
 	self.OutlineColorC.g = v.g
 	self.OutlineColorC.b = v.b
-	
+
 	self.OutlineColor = v
 end
 
 function PART:SetOutlineAlpha(n)
 	self.OutlineColorC = self.OutlineColorC or Color(255, 255, 255, 255)
 	self.OutlineColorC.a = n * 255
-	
+
 	self.OutlineAlpha = n
 end
 
@@ -65,7 +65,7 @@ function PART:SetFont(str)
 	if not pcall(surface.SetFont, str) then
 		str = "DermaDefault"
 	end
-	
+
 	self.Font = str
 end
 
@@ -73,13 +73,13 @@ function PART:OnDraw(owner, pos, ang)
 	if self.Text ~= "" then
 		cam_Start3D(EyePos(), EyeAngles())
 			cam_Start3D2D(pos, ang, self.Size)
-				
+
 			draw_SimpleTextOutlined(self.Text, self.Font, 0,0, self.ColorC, TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER, self.Outline, self.OutlineColorC)
 			render_CullMode(1) -- MATERIAL_CULLMODE_CW
-			
+
 			draw_SimpleTextOutlined(self.Text, self.Font, 0,0, self.ColorC, TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER, self.Outline, self.OutlineColorC)
 			render_CullMode(0) -- MATERIAL_CULLMODE_CCW
-				
+
 			cam_End3D2D()
 		cam_End3D()
 	end

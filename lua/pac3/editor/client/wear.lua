@@ -1,6 +1,6 @@
 do -- to server
 	function pace.SendPartToServer(part)
-		
+
 		-- if it's (ok not very exact) the "my outfit" part without anything added to it, don't bother sending it
 		if part.ClassName == "group" and not part:HasChildren() then return end
 		if not part.show_in_editor == false then return end
@@ -9,61 +9,61 @@ do -- to server
 		data.owner = part:GetOwner()
 
 		net.Start("pac_submit")
-		
+
 			local ret,err = pac.NetSerializeTable(data)
-			if ret==nil then 
+			if ret==nil then
 				pace.Notify(false,"unable to transfer data to server: "..tostring(err or "too big"))
 				return false
 			end
-			
+
 		net.SendToServer()
-		
+
 		Msg"[PAC] " print("Transmitting outfit ("..string.NiceSize(ret)..')')
-		
+
 		return true
-		
+
 	end
 
 	function pace.RemovePartOnServer(name, server_only, filter)
 		local data = {part = name, server_only = server_only, filter = filter}
-		
+
 		if name == "__ALL__" then
 			pac.HandleModifiers(nil, LocalPlayer())
 		end
-		
+
 		net.Start("pac_submit")
 			local ret,err = pac.NetSerializeTable(data)
-			if ret==nil then 
+			if ret==nil then
 				pace.Notify(false,"unable to transfer data to server: "..tostring(err or "too big"))
 				return false
 			end
 		net.SendToServer()
-		
+
 		return true
-		
+
 	end
 end
 
 do -- from server
 	function pace.WearPartFromServer(owner, part_data, data)
 		pac.dprint("received outfit %q from %s with %i number of children to set on %s", part_data.self.Name or "", tostring(owner), table.Count(part_data.children), part_data.self.OwnerName or "")
-				
+
 		local part = pac.GetPartFromUniqueID(data.player_uid, part_data.self.UniqueID)
-		
+
 		if part:IsValid() then
 			pac.dprint("removing part %q to be replaced with the part previously received", part.Name)
 			part:Remove()
 		end
-		
+
 		timer.Simple(0.25, function()
 			if not owner:IsValid() then return end
-			
+
 			local part = pac.CreatePart(part_data.self.ClassName, owner)
-			
+
 			part:SetTable(part_data)
-			
+
 			pac.HandleModifiers(part_data, owner)
-			
+
 			pace.CallHook("OnWoreOutfit", part, owner == pac.LocalPlayer)
 		end)
 	end
@@ -71,17 +71,17 @@ do -- from server
 	function pace.RemovePartFromServer(owner, part_name, data)
 		pac.dprint("%s removed %q", tostring(owner), part_name)
 
-		if part_name == "__ALL__" then					
+		if part_name == "__ALL__" then
 			for key, part in pairs(pac.GetPartsFromUniqueID(data.player_uid)) do
 				if not part:HasParent() then
 					part:Remove()
 				end
-			end 
-			
+			end
+
 			pac.HandleModifiers(nil, owner)
 		else
 			local part = pac.GetPartFromUniqueID(data.player_uid, part_name)
-			
+
 			if part:IsValid() then
 				part:Remove()
 			end
@@ -90,7 +90,7 @@ do -- from server
 end
 
 do
-	function pace.HandleReceivedData(data)		
+	function pace.HandleReceivedData(data)
 		local T = type(data.part)
 		if T == "table" then
 			pace.WearPartFromServer(data.owner, data.part, data)
@@ -105,7 +105,7 @@ end
 
 net.Receive("pac_submit", function()
 	local data = pac.NetDeserializeTable()
-	
+
 	pace.HandleReceivedData(data)
 end)
 
@@ -136,24 +136,24 @@ do
 	local removed_req = false
 	local function Initialize()
 
-		if not pac.LocalPlayer:IsValid() then 
-			return 
+		if not pac.LocalPlayer:IsValid() then
+			return
 		end
 
 		t = false
-		
-		if not removed_req then 
+
+		if not removed_req then
 			hook.Remove("KeyRelease", "pac_request_outfits")
 			removed_req = true
 		end
-		
-		
+
+
 		if not pac.IsEnabled() then
 			-- check every 2 seconds, ugly hack
 			t = max_time - 2
 			return
 		end
-		
+
 		hook.Remove("Think","pac_request_outfits")
 		Msg"[PAC3] " print"Requesting outfits..."
 

@@ -4,13 +4,13 @@ local function BIND_MATPROXY(NAME, TYPE)
 
 	matproxy.Add(
 		{
-			name = NAME, 
-			
-			init = function(self, mat, values) 
+			name = NAME,
+
+			init = function(self, mat, values)
 				self.result = values.resultvar
-			end, 
-			
-			bind = function(self, mat, ent) 
+			end,
+
+			bind = function(self, mat, ent)
 				ent = ent or NULL
 				if ent:IsValid() then
 					if ent.pac_matproxies and ent.pac_matproxies[NAME] then
@@ -19,7 +19,7 @@ local function BIND_MATPROXY(NAME, TYPE)
 				end
 			end
 		}
-	) 
+	)
 
 end
 

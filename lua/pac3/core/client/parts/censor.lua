@@ -22,31 +22,31 @@ end
 
 function PART:SetResolution(num)
 	self.Resolution = math.Clamp(num, 8, 128)
-end	
+end
 
 function PART:OnDraw(owner, pos, ang)
 	local spos = pos:ToScreen()
 	local size = self.Size
-	
+
 	if self.FixedSize then
 		size = size / pos:Distance(pac.EyePos) * 100
 	end
-	
+
 	cam.Start2D()
-    
+
     render_CapturePixels()
-	
+
     for x = -64 * size, 64 * size, self.Resolution * size do
 		for y = -64 * size, 64 * size, self.Resolution * size do
-			x2 = spos.x + x 
-			y2 = spos.y + y 
-			
+			x2 = spos.x + x
+			y2 = spos.y + y
+
 			r, g, b = render_ReadPixel(x2, y2)
 			surface_SetDrawColor(r, g, b, 255)
 			surface_DrawRect(x2, y2, (self.Resolution * size) + 1, (self.Resolution * size) + 1)
 		end
     end
-	
+
 	cam.End2D()
 end
 

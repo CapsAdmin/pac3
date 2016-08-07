@@ -10,9 +10,9 @@ local QUEUEITEM = {}
 function urlobj.CreateQueueItem (url)
 	local queueItem = {}
 	setmetatable (queueItem, { __index = QUEUEITEM })
-	
+
 	queueItem:Initialize (url)
-	
+
 	return queueItem
 end
 
@@ -20,26 +20,26 @@ function QUEUEITEM:Initialize (url)
 	self.Url                  = url
 	self.Data                 = nil
 	self.UsingCachedData      = false
-	
+
 	-- Cache
 	self.CacheDecodeFinished  = false
-	
+
 	-- Download
 	self.DownloadAttemptCount = 0
 	self.DownloadTimeoutTime  = 0
 	self.Downloading          = false
 	self.DownloadFinished     = false
-	
+
 	-- Status
 	self.Status               = nil
 	self.Finished             = false
-	
+
 	-- Model
 	self.Model                = nil
-	
+
 	-- Decoding parameters
 	self.GenerateNormals      = false
-	
+
 	-- Callbacks
 	self.CallbackSet          = {}
 	self.DownloadCallbackSet  = {}
@@ -54,28 +54,28 @@ end
 function QUEUEITEM:BeginCacheRetrieval ()
 	self.Data = urlobj.DataCache:GetItem(self.Url)
 	if not self.Data then return end
-	
+
 	self.Model = urlobj.CreateModelFromObjData(self.Data, self.GenerateNormals,
 		function (finished, statusMessage)
 			if self:IsFinished ()    then return end
 			if self.DownloadFinished and not self.UsingCachedData then return end
-			
+
 			if finished and not self.DownloadFinished then
 				self:SetStatus ("")
 			else
 				self:SetStatus ("Cached model: " .. statusMessage)
 			end
-			
+
 			if self.DownloadFinished and self.UsingCachedData then
 				self:SetFinished (finished)
 			end
-			
+
 			if finished then
 				self.CacheDecodeFinished = true
 			end
 		end
 	)
-	
+
 	self:DispatchCallbacks (self.Model)
 end
 
@@ -86,54 +86,54 @@ end
 -- Download
 function QUEUEITEM:AbortDownload ()
 	self.Downloading = false
-	
+
 	self:SetStatus ("Download aborted")
 end
 
 function QUEUEITEM:BeginDownload ()
 	if self:IsDownloading () then return end
-	
+
 	self:SetStatus ("Downloading")
-	
+
 	self.Downloading          = true
 	self.DownloadTimeoutTime  = pac.RealTime + 15
 	self.DownloadAttemptCount = self.DownloadAttemptCount + 1
-	
+
 	pac.SimpleFetch(self.Url,
 		function(data)
 			if not self.Downloading then return end
 			self.Downloading      = false
 			self.DownloadFinished = true
-			
+
 			pac.dprint("downloaded model %q %s", self.Url, string.NiceSize(#data))
 			pac.dprint("%s", data)
-			
+
 			self:DispatchDownloadCallbacks ()
 			self:ClearDownloadCallbacks ()
-			
+
 			self.UsingCachedData = self.Data == data
-			
+
 			if self.UsingCachedData then
 				if self.CacheDecodeFinished then
 					self:SetFinished (true)
 				end
 			else
 				self.Data = data
-				
+
 				urlobj.DataCache:AddItem (self.Url, self.Data)
-				
+
 				self.Model = urlobj.CreateModelFromObjData(self.Data, self.GenerateNormals,
 					function (finished, statusMessage)
 						self:SetStatus (statusMessage)
 						self:SetFinished (finished)
-						
+
 						if self:IsFinished () then
 							self:ClearStatusCallbacks ()
 						end
 					end
 				)
 			end
-			
+
 			self:DispatchCallbacks (self.Model)
 			self:ClearCallbacks ()
 		end
@@ -163,21 +163,21 @@ end
 
 function QUEUEITEM:SetStatus (status)
 	if self.Status == status then return self end
-	
+
 	self.Status = status
-	
+
 	self:DispatchStatusCallbacks (self.Finished, self.Status)
-	
+
 	return self
 end
 
 function QUEUEITEM:SetFinished (finished)
 	if self.Finished == finished then return self end
-	
+
 	self.Finished = finished
-	
+
 	self:DispatchStatusCallbacks (self.Finished, self.Status)
-	
+
 	return self
 end
 
@@ -189,7 +189,7 @@ end
 -- Callbacks
 function QUEUEITEM:AddCallback (callback)
 	self.CallbackSet [callback] = true
-	
+
 	if self.Model then
 		callback (self.Model)
 	end
@@ -201,7 +201,7 @@ end
 
 function QUEUEITEM:AddStatusCallback (statusCallback)
 	self.StatusCallbackSet [statusCallback] = true
-	
+
 	statusCallback (self.Finished, self.Status)
 end
 

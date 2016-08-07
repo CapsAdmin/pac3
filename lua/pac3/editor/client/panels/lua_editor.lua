@@ -749,7 +749,7 @@ function PANEL:_OnKeyCodeTyped(code)
 	local control = input.IsKeyDown(KEY_LCONTROL) or input.IsKeyDown(KEY_RCONTROL)
 
 	if(alt) then return end
-	
+
 	if(control) then
 		if(code == KEY_A) then
 			self:SelectAll()

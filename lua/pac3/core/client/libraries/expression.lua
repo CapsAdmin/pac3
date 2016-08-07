@@ -1,4 +1,4 @@
-local lib = 
+local lib =
 {
 	PI = math.pi,
 	rand = math.random,
@@ -7,7 +7,7 @@ local lib =
 		b = b or 1
 		return math.Rand(a, b)
 	end,
-	
+
 	abs = math.abs,
 	acos = math.acos,
 	asin = math.asin,
@@ -32,7 +32,7 @@ local lib =
 	tanh = math.tanh,
 	tan = math.tan,
 	sgn = function(n) return n>0 and 1 or n<0 and -1 or 0 end,
-	
+
 	clamp = math.Clamp,
 }
 
@@ -44,20 +44,20 @@ local function compile_expression(str, extra_lib)
 			return false, string.format("illegal characters used %q", word)
 		end
 	end
-	
+
 	local functions = {}
-	
+
 	for k,v in pairs(lib) do functions[k] = v end
-	
+
 	if extra_lib then
 		for k,v in pairs(extra_lib) do functions[k] = v end
 	end
-	
+
 	functions.select = select
 	str = "local IN = select(1, ...) return " .. str
-	
+
 	local func = CompileString(str, "pac_expression", false)
-	
+
 	if type(func) == "string" then
 		return false, func
 	else

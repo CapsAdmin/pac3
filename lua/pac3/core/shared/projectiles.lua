@@ -2,61 +2,61 @@ local enable = CreateConVar("pac_sv_projectiles", 0, bit.bor(FCVAR_REPLICATED, F
 
 do -- projectile entity
 	local ENT = {}
-	
+
 	ENT.Type = "anim"
 	ENT.Base = "base_anim"
 	ENT.ClassName = "pac_projectile"
-	
+
 	function ENT:SetupDataTables()
-		self:SetDTBool(0, "AimDir")	
+		self:SetDTBool(0, "AimDir")
 	end
-	
+
 	if CLIENT then
 		function ENT:Draw()
-			if self.dt.AimDir then 
-				self:SetRenderAngles(self:GetVelocity():Angle()) 
-			end 
+			if self.dt.AimDir then
+				self:SetRenderAngles(self:GetVelocity():Angle())
+			end
 		end
 	end
-	
+
 	if SERVER then
-		
+
 		--fix missing attacker
 		hook.Add("EntityTakeDamage", "pac_projectile", function(ent, dmg)
-			
+
 			local a, i = dmg:GetAttacker(), dmg:GetInflictor()
-			
+
 			if a == i and a:IsValid() and a.projectile_owner then
 				local owner = a.projectile_owner
 				if owner:IsValid() then
 					dmg:SetAttacker(a.projectile_owner)
 				end
 			end
-			
+
 		end)
-		
-		function ENT:SetData(ply, pos, ang, part)			
+
+		function ENT:SetData(ply, pos, ang, part)
 
 			self.projectile_owner = ply
-			
+
 			if part.Sphere then
 				self:PhysicsInitSphere(math.Clamp(part.Radius, 1, 30))
 			else
 				self:PhysicsInitBox(Vector(1,1,1) * - math.Clamp(part.Radius, 1, 30), Vector(1,1,1) * math.Clamp(part.Radius, 1, 30))
 			end
-						
+
 			local phys = self:GetPhysicsObject()
 			phys:EnableGravity(part.Gravity)
 			phys:AddVelocity((ang:Forward() + (VectorRand():Angle():Forward() * part.Spread)) * part.Speed * 1000)
-			phys:EnableCollisions(part.Collisions)	
+			phys:EnableCollisions(part.Collisions)
 			phys:SetDamping(part.Damping, 0)
 			phys:SetMass(math.Clamp(part.Mass, 0.001, 50000))
-			
+
 			self.dt.AimDir = part.AimDir
-			
+
 			self.part_data = part
 		end
-		
+
 		local damage_types = {
 			generic = 0, --generic damage
 			crush = 1, --caused by physics interaction
@@ -90,7 +90,7 @@ do -- projectile entity
 			removenoragdoll = 4194304, --don't create a ragdoll on death
 			slowburn = 2097152, --
 		}
-		
+
 		function ENT:PhysicsCollide(data)
 			if self.part_data and self.part_data.Sticky and data.HitEntity:IsWorld() then
 				local phys = self:GetPhysicsObject()
@@ -98,7 +98,7 @@ do -- projectile entity
 				phys:Sleep()
 				phys:EnableMotion(false)
 			end
-			
+
 			if self.part_data.BulletImpact then
 				self:FireBullets{
 					Attacker = self:GetOwner(),
@@ -109,26 +109,26 @@ do -- projectile entity
 					Dir = data.HitNormal,
 				}
 			end
-			
+
 			if self.part_data.Damage > 0 and data.HitEntity.Health then
 				local info = DamageInfo()
-				
+
 				info:SetAttacker(self:GetOwner():IsValid() and self:GetOwner() or self)
 				info:SetInflictor(self)
 				info:SetDamageForce(data.OurOldVelocity)
 				info:SetDamagePosition(data.HitPos)
 				info:SetDamage(math.min(self.part_data.Damage, data.HitEntity:Health())) -- just making sure
 				info:SetDamageType(damage_types[self.part_data.DamageType] or damage_types.generic)
-				
+
 				data.HitEntity:TakeDamageInfo(info)
 			end
-			
+
 			if self.part_data.RemoveOnCollide then
 				timer.Simple(0.01, function() SafeRemoveEntity(self) end)
 			end
 		end
 	end
-	
+
 	scripted_ents.Register(ENT, ENT.ClassName)
 end
 
@@ -136,28 +136,28 @@ if SERVER then
 	for key, ent in pairs(ents.FindByClass("pac_projectile")) do
 		ent:Remove()
 	end
-	
+
 	util.AddNetworkString("pac_projectile")
 	util.AddNetworkString("pac_projectile_attach")
-	
-	net.Receive("pac_projectile", function(len, ply)			
+
+	net.Receive("pac_projectile", function(len, ply)
 		if not enable:GetBool() then return end
-	
+
 		if pace then pace.suppress_prop_spawn = true end
 		if hook.Run("PlayerSpawnProp", ply, "models/props_junk/popcan01a.mdl") == false then
 			if pace then pace.suppress_prop_spawn = nil end
 			return
 		end
 		if pace then pace.suppress_prop_spawn = nil end
-	
+
 		local pos = net.ReadVector()
-		local ang = net.ReadAngle()		
+		local ang = net.ReadAngle()
 		-- Is this even used???
-		ply.pac_projectiles = ply.pac_projectiles or {}		
+		ply.pac_projectiles = ply.pac_projectiles or {}
 		if table.Count( ply.pac_projectiles ) >= 30 then
 			return
 		end
-		
+
 		local part = net.ReadTable()
 
 		if pos:Distance(ply:EyePos()) > 200 * ply:GetModelScale() then
@@ -171,32 +171,32 @@ if SERVER then
 				pos = ply:EyePos()
 			end
 		end
-		
-		timer.Simple(part.Delay, function()				
-			
+
+		timer.Simple(part.Delay, function()
+
 			if not ply:IsValid() then return end
-			
+
 			local ent = ents.Create("pac_projectile")
 			SafeRemoveEntityDelayed(ent,math.Clamp(part.LifeTime, 0, 10))
-			
+
 			ent:SetModel("models/props_junk/popcan01a.mdl")
-			
+
 			ent:SetPos(pos)
 			ent:SetAngles(ang)
 			ent:Spawn()
-			
-			if not part.CollideWithOwner then 
+
+			if not part.CollideWithOwner then
 				ent:SetOwner(ply)
 			end
-			
+
 			ent:SetData(ply, pos, ang, part)
-			
+
 			ent:SetPhysicsAttacker(ply)
-			
+
 			if ent.CPPISetOwner then
 				ent:CPPISetOwner(ply)
 			end
-			
+
 			net.Start("pac_projectile_attach")
 				net.WriteEntity(ply)
 				net.WriteInt(ent:EntIndex(), 16)

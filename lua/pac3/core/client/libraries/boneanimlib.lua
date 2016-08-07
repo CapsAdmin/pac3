@@ -274,7 +274,7 @@ hook.Add("CalcMainActivity", "LuaAnimationSequence", function(pl)
 	if pl.InSequence then
 		pl:ResetInSequence()
 		return 0, 0
-	end	
+	end
 end)
 
 local meta = FindMetaTable("Entity")

@@ -8,16 +8,16 @@ function pace.AddToolsToMenu(menu)
 			local menu = menu:AddSubMenu(L(data.name))
 			menu.GetDeleteSelf = function() return false end
 			for key, option in pairs(data.suboptions) do
-				menu:AddOption(option, function() 
+				menu:AddOption(option, function()
 					if pace.current_part:IsValid() then
-						data.callback(pace.current_part, key) 
+						data.callback(pace.current_part, key)
 					end
 				end)
 			end
 		else
-			menu:AddOption(L(data.name), function() 
+			menu:AddOption(L(data.name), function()
 				if pace.current_part:IsValid() then
-					data.callback(pace.current_part) 
+					data.callback(pace.current_part)
 				end
 			end)
 		end
@@ -25,20 +25,20 @@ function pace.AddToolsToMenu(menu)
 end
 
 function pace.AddTool(name, callback, ...)
-	for i,v in pairs(pace.Tools) do 
+	for i,v in pairs(pace.Tools) do
 		if v.name == name then
 			table.remove(pace.Tools, i)
 		end
 	end
-	
+
 	table.insert(pace.Tools, {name = name, callback = callback, suboptions = {...}})
 end
 
 pace.AddTool(L"fix origin", function(part, suboption)
 	if part.ClassName ~= "model" then return end
-	
+
 	local ent = part:GetEntity()
-	
+
 	part:SetPositionOffset(part:GetPositionOffset() + -ent:OBBCenter() * part.Scale * part.Size)
 end)
 
@@ -46,24 +46,24 @@ pace.AddTool(L"replace ogg with webaudio", function(part, suboption)
 	for _, part in pairs(pac.GetParts(true)) do
 		if part.ClassName == "ogg" then
 			local parent = part:GetParent()
-			
+
 			local audio = pac.CreatePart("webaudio")
 			audio:SetParent(parent)
-			
+
 			audio:SetURL(part:GetURL())
 			audio:SetVolume(part:GetVolume())
 			audio:SetPitch(part:GetPitch())
 			audio:SetStopOnHide(not part:GetStopOnHide())
 			audio:SetPauseOnHide(part:GetPauseOnHide())
-			
+
 			for k,v in pairs(part:GetChildren()) do
 				v:SetParent(audio)
 			end
-			
+
 			part:Remove()
 		end
 	end
-end) 
+end)
 
 pace.AddTool(L"use legacy scale", function(part, suboption)
 	for _, part in pairs(pac.GetParts(true)) do
@@ -71,30 +71,30 @@ pace.AddTool(L"use legacy scale", function(part, suboption)
 			part:SetUseLegacyScale(suboption == 1)
 		end
 	end
-end, L"true", L"false") 
+end, L"true", L"false")
 
 pace.AddTool(L"scale this and children", function(part, suboption)
 	Derma_StringRequest(L"scale", L"input the scale multiplier (does not work well with bones)", "1", function(scale)
 		scale = tonumber(scale)
-		
+
 		if scale and part:IsValid() then
 			local function scale_parts(part, scale)
-				if part.SetPosition then 
+				if part.SetPosition then
 					part:SetPosition(part:GetPosition() * scale)
 					part:SetPositionOffset(part:GetPositionOffset() * scale)
-				end 
-						
-				if part.SetSize then 
-					part:SetSize(part:GetSize() * scale) 
-				end 
-						
-				for _, part in pairs(part:GetChildren()) do 
+				end
+
+				if part.SetSize then
+					part:SetSize(part:GetSize() * scale)
+				end
+
+				for _, part in pairs(part:GetChildren()) do
 					scale_parts(part, scale)
 				end
 			end
-			
+
 			scale_parts(part, scale)
-		end			
+		end
 	end)
 end)
 
@@ -102,25 +102,25 @@ pace.AddTool(L"free children from part", function(part, suboption)
 	if part:IsValid() then
 		local grandparent = part:GetParent()
 		local parent = part
-		for _, child in pairs(parent:GetChildren()) do 
+		for _, child in pairs(parent:GetChildren()) do
 				child:SetAngles(child.Angles + parent.Angles)
 				child:SetPosition(child.Position + parent.Position)
 				child:SetAngleOffset(child.AngleOffset + parent.AngleOffset)
 				child:SetPositionOffset(child.PositionOffset + parent.PositionOffset)
 				child:SetParent(grandparent)
 		end
-	end			
+	end
 end)
 
 pace.AddTool(L"square model scales...", function(part, suboption)
 	Derma_StringRequest(L"model", L"input the model name that should get squared", "default.mdl", function(model)
 		for _, part in pairs(pac.GetParts(true)) do
 			if part:IsValid() and part.GetModel then
-				local function square_scale(part)	
-					if part.SetSize then 
-						part:SetSize(part:GetSize() * part:GetSize()) 
-					end 
-							
+				local function square_scale(part)
+					if part.SetSize then
+						part:SetSize(part:GetSize() * part:GetSize())
+					end
+
 					if part.SetScale then
 						part:SetScale(part:GetScale() * part:GetScale())
 					end
@@ -128,7 +128,7 @@ pace.AddTool(L"square model scales...", function(part, suboption)
 				if string.find(part:GetModel(),model) then
 					square_scale(part)
 				end
-			end			
+			end
 		end
 	end)
 end)
@@ -146,7 +146,7 @@ pace.AddTool(L"show only with active weapon", function(part, suboption)
 	event:SetOperator("equal")
 	event:SetInvert(true)
 	event:SetRootOwner(true)
-		
+
 	event:ParseArguments(class_name, suboption == 1)
 
 end, L"hide weapon", L"show weapon")
@@ -205,8 +205,8 @@ pace.AddTool(L"round numbers", function(part)
 	local function ify_parts(part)
 		for _, key in pairs(part:GetStorableVars()) do
 			local val = part["Get" .. key](part)
-			
-			if type(val) == "number" then		
+
+			if type(val) == "number" then
 				part["Set" .. key](part, round_pretty(val))
 			elseif type(val) == "Vector" then
 				part["Set" .. key](part, Vector(round_pretty(val.x), round_pretty(val.y), round_pretty(val.z)))
@@ -214,12 +214,12 @@ pace.AddTool(L"round numbers", function(part)
 				part["Set" .. key](part, Angle(round_pretty(val.p), round_pretty(val.y), round_pretty(val.r)))
 			end
 		end
-		
+
 		for _, part in pairs(part:GetChildren()) do
 			ify_parts(part)
 		end
 	end
-	
+
 	ify_parts(part)
 end)
 
@@ -240,7 +240,7 @@ do
 		"turquoise",
 		"blue",
 		"purple",
-		"magenta",	
+		"magenta",
 	}
 
 	local sat =
@@ -258,7 +258,7 @@ do
 	}
 
 	local function HSVToNames(h,s,v)
-		return 
+		return
 			hue[math.Round((1+(h/360)*#hue))] or hue[1],
 			sat[math.ceil(s*#sat)] or sat[1],
 			val[math.ceil(v*#val)] or val[1]
@@ -277,9 +277,9 @@ do
 end
 
 pace.AddTool(L"convert to expression2 holo", function(part)
-	local holo_str = 
+	local holo_str =
 	[[
-	
+
 	HOLO_NAME = IDX
 	holoCreate(HOLO_NAME)
 		PARENT
@@ -300,19 +300,19 @@ pace.AddTool(L"convert to expression2 holo", function(part)
 
 	local function part_to_holo(part)
 		local scale = part:GetSize() * part:GetScale()
-	
+
 		if part.ClipPlanes then
 			for key, clip in pairs(part.ClipPlanes) do
 				if clip:IsValid() and not clip:IsHidden() then
 					local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
 					local normal = ang:Forward()
-					holo_str = holo_str .. 
+					holo_str = holo_str ..
 					"holoClip(HOLO_NAME, " .. tovec(pos) .. ", " .. tovec(normal) ..  ", 1)\n"
 				end
 			end
 		end
-		
-		local holo = holo_str			
+
+		local holo = holo_str
 		:gsub("IDX", part.UniqueID)
 		:gsub("ALPHA", part:GetAlpha()*255)
 		:gsub("COLOR", tovec(part:GetColor()))
@@ -322,12 +322,12 @@ pace.AddTool(L"convert to expression2 holo", function(part)
 		:gsub("MATERIAL", ("%q"):format(part:GetMaterial()))
 		:gsub("MODEL", ("%q"):format(part:GetModel()))
 		:gsub("SKIN", part:GetSkin())
-		
+
 		-- not yet implemented
 		--:gsub("FULLBRIGHT", part:GetFullbright()) -- forgot to implement this in pac lol
 		--:gsub("ANIMATION_NAME", tovec(part:GetScale()))
 		--:gsub("ANIMATION_FRAME", tovec(part:GetScale()))
-		
+
 		if part:HasParent() and part:GetParent().ClassName == "model" then
 			holo = holo:gsub("PARENT", ("holoParent(HOLO_NAME, %s)"):format(part.Parent.UniqueID))
 		else
@@ -335,25 +335,25 @@ pace.AddTool(L"convert to expression2 holo", function(part)
 		end
 
 		holo = holo:Replace("HOLO_NAME", "PAC_" ..part:GetName():gsub("%p", ""):gsub(" ", "_"))
-		
+
 		LocalPlayer():ChatPrint("PAC -> E2 holo code printed to console.")
 		print(holo)
 		return holo
 	end
 
-	local function convert(part)	
+	local function convert(part)
 		local out = ""
-			
+
 		if part.ClassName == "model" then
 			out = part_to_holo(part)
 		end
-		
+
 		for key, part in pairs(part:GetChildren()) do
 			if part.ClassName == "model" and not part:IsHidden() and not part.wavefront_mesh then
 				out = out .. convert(part)
 			end
 		end
-		
+
 		return out
 	end
 	file.CreateDir("expression2/pac")
@@ -370,16 +370,16 @@ pace.AddTool(L"record surrounding props to pac", function(part)
 	origin:SetModel("models/dav0r/hoverball.mdl")
 
 	for key, ent in pairs(ents.FindInSphere(pac.EyePos, 1000)) do
-		if 
+		if
 			not ent:IsPlayer() and
 			not ent:IsNPC() and
-			not ent:GetOwner():IsPlayer() 
+			not ent:GetOwner():IsPlayer()
 		then
 			local mdl = origin:CreatePart("model")
 			mdl:SetModel(ent:GetModel())
-			
+
 			local lpos, lang = WorldToLocal(ent:GetPos(), ent:GetAngles(), pac.EyePos, pac.EyeAng)
-			
+
 			mdl:SetMaterial(ent:GetMaterial())
 			mdl:SetPosition(lpos)
 			mdl:SetAngles(lang)
@@ -395,15 +395,15 @@ pace.AddTool(L"populate with bones",function(part,suboption)
 	local target = part.GetEntity or part.GetOwner
 	local ent = target(part)
 	local bones = pac.GetModelBones(ent)
-	
+
 	for bone,tbl in pairs(bones) do
-		if not tbl.is_special then 
+		if not tbl.is_special then
 			local child = pac.CreatePart("bone")
 			child:SetParent(part)
 			child:SetBone(bone)
 		end
 	end
-	
+
 	pace.RefreshTree(true)
 end)
 
@@ -411,9 +411,9 @@ pace.AddTool(L"populate with dummy bones",function(part,suboption)
 	local target = part.GetEntity or part.GetOwner
 	local ent = target(part)
 	local bones = pac.GetModelBones(ent)
-	
+
 	for bone,tbl in pairs(bones) do
-		if not tbl.is_special then 
+		if not tbl.is_special then
 			local child = pac.CreatePart("model")
 			child:SetParent(part)
 			child:SetName(bone.."_dummy")
@@ -421,7 +421,7 @@ pace.AddTool(L"populate with dummy bones",function(part,suboption)
 			child:SetScale(Vector(0,0,0))
 		end
 	end
-	
+
 	pace.RefreshTree(true)
 end)
 
@@ -441,7 +441,7 @@ pace.AddTool(L"stop all custom animations",function()
 	LocalPlayer():ResetBoneMatrix()
 end)
 
-pace.AddTool(L"copy from faceposer tool", function(part, suboption)		
+pace.AddTool(L"copy from faceposer tool", function(part, suboption)
 	local group = pac.CreatePart("group")
 	local ent = LocalPlayer()
 

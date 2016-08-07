@@ -50,7 +50,7 @@ function pac.Enable()
 	for event, data in pairs(pac.added_hooks) do
 		pac.AddHook(event, data.func)
 	end
-	
+
 	pac.CallHook("Enable")
 end
 
@@ -58,27 +58,27 @@ function pac.Disable()
 	-- turn off all parts
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
-		
+
 			if ent.pac_parts then
 				for key, part in pairs(ent.pac_parts) do
 					part:CallRecursive("OnHide")
 				end
-				
-				pac.ResetBones(ent)				
+
+				pac.ResetBones(ent)
 			end
-			
+
 			ent.pac_drawing = false
-			
+
 		else
 			pac.drawn_entities[key] = nil
 		end
 	end
-	
+
 	-- disable all hooks
 	for event in pairs(pac.added_hooks) do
 		pac.RemoveHook(event)
 	end
-	
+
 	pac.CallHook("Disable")
 end
 
@@ -108,7 +108,7 @@ end
 hook.Add("Think", "pac_localplayer", function()
 	local ply = LocalPlayer()
 	if ply:IsValid() then
-		pac.LocalPlayer = ply		
+		pac.LocalPlayer = ply
 		hook.Remove("Think", "pac_localplayer")
 	end
 end)
