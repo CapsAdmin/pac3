@@ -18,19 +18,19 @@ end
 
 function PART:SetColor(v)
 	self.ColorC = self.ColorC or Color(255, 255, 255, 255)
-	
+
 	self.ColorC.r = v.r
 	self.ColorC.g = v.g
 	self.ColorC.b = v.b
-	
+
 	self.Color = v
 end
 
 function PART:SetAlpha(n)
 	self.ColorC = self.ColorC or Color(255, 255, 255, 255)
-	
+
 	self.ColorC.a = n * 255
-	
+
 	self.Alpha = n
 end
 
@@ -44,29 +44,29 @@ end
 
 function PART:FixMaterial()
 	local mat = self.Materialm
-	
+
 	if not mat then return end
-	
+
 	local shader = mat:GetShader()
-	
+
 	if shader == "VertexLitGeneric" or shader == "Cable" then
 		local tex_path = mat:GetString("$basetexture")
-		
-		if tex_path then		
+
+		if tex_path then
 			local params = {}
-			
+
 			params["$basetexture"] = tex_path
 			params["$vertexcolor"] = 1
 			params["$vertexalpha"] = 1
-			
+
 			self.Materialm = CreateMaterial("pac_fixmat_" .. os.clock(), "VertexLitGeneric", params)
-		end		
+		end
 	end
 end
 
 function PART:SetMaterial(var)
 	var = var or ""
-	
+
 	if not pac.Handleurltex(self, var) then
 		if type(var) == "string" then
 			self.Materialm = pac.Material(var, self)
@@ -76,7 +76,7 @@ function PART:SetMaterial(var)
 			self:CallEvent("material_changed")
 		end
 	end
-	
+
 	self:FixMaterial()
 
 	self.SpritePath = var

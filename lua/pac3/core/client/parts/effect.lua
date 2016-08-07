@@ -8,12 +8,12 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Follow", true)
 	pac.GetSet(PART, "Rate", 1)
 	pac.GetSet(PART, "UseParticleTracer", false)
-	
+
 	pac.SetupPartName(PART, "PointA")
 	pac.SetupPartName(PART, "PointB")
 	pac.SetupPartName(PART, "PointC")
 	pac.SetupPartName(PART, "PointD")
-	
+
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -36,13 +36,13 @@ end
 
 function PART:GetOwner()
 	local parent = self:GetParent()
-	
-	if parent:IsValid() then		
+
+	if parent:IsValid() then
 		if parent.ClassName == "model" and parent.Entity:IsValid() then
 			return parent.Entity
 		end
 	end
-	
+
 	return self.BaseClass.GetOwner(self)
 end
 
@@ -60,7 +60,7 @@ end
 function PART:SetEffect(name)
 	self.Effect = name
 	self.Ready = false
-	
+
 	net.Start("pac_request_precache")
 		net.WriteString(name)
 	net.SendToServer()
@@ -82,7 +82,7 @@ local CurTime = CurTime
 
 function PART:OnDraw(owner, pos, ang)
 	if not self.Ready then return end
-	
+
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
@@ -100,7 +100,7 @@ end
 
 function PART:OnHide()
 	local ent = self:GetOwner()
-	
+
 	if ent:IsValid() then
 		ent:StopParticles()
 		ent:StopParticleEmission()
@@ -108,14 +108,14 @@ function PART:OnHide()
 end
 
 function PART:ResolveControlPoints()
-	for key, part in pairs(pac.GetParts()) do	
+	for key, part in pairs(pac.GetParts()) do
 		if part.Name == self.ControlPointA then
 			self.ControlPointAPart = part
 			break
 		end
 	end
-	
-	for key, part in pairs(pac.GetParts()) do	
+
+	for key, part in pairs(pac.GetParts()) do
 		if part.Name == self.ControlPointB then
 			self.ControlPointBPart = part
 			break
@@ -134,43 +134,43 @@ end
 
 function PART:Emit(pos, ang)
 	local ent = self:GetOwner()
-	
+
 	if ent:IsValid() then
 		if not self.Effect then
 			ent:StopParticles()
 			ent:StopParticleEmission()
 			return
 		end
-		
+
 		if self.UseParticleTracer and self.PointA:IsValid() then
 			local ent2 = self.PointA.Entity and self.PointA.Entity or self.PointA:GetOwner()
-			
+
 			util.ParticleTracerEx(
-				self.Effect, 
-				ent:GetPos(), 
+				self.Effect,
+				ent:GetPos(),
 				ent2:GetPos(),
-				true, 
+				true,
 				ent:EntIndex(),
 				0
 			)
 			return
 		end
-		
+
 		if self.PointA:IsValid() then
 			local points = {}
-			
+
 			table.insert(points, {
 				entity = self.PointA.Entity and self.PointA.Entity or self.PointA:GetOwner(),
 				attachtype = PATTACH_ABSORIGIN_FOLLOW,
 			})
-			
+
 			if self.PointB:IsValid() then
 				table.insert(points, {
 					entity = self.PointB.Entity and self.PointB.Entity or self.PointB:GetOwner(),
 					attachtype = PATTACH_ABSORIGIN_FOLLOW,
 				})
 			end
-			
+
 			if self.PointC:IsValid() then
 				table.insert(points, {
 					entity = self.PointC.Entity and self.PointC.Entity or self.PointC:GetOwner(),
@@ -184,8 +184,8 @@ function PART:Emit(pos, ang)
 					attachtype = PATTACH_ABSORIGIN_FOLLOW,
 				})
 			end
-			
-			
+
+
 			ent:CreateParticleEffect(self.Effect, points)
 		elseif self.Follow then
 			ent:StopParticles()

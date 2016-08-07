@@ -4,7 +4,7 @@ PART.ClassName = "clip"
 
 function PART:OnParent(part)
 	part:AddModifier(self)
-	
+
 	-- this is only really for halos..
 	if IsEntity(part.Entity) and part.Entity:IsValid() then
 		function part.Entity.pacDrawModel(ent)
@@ -30,7 +30,7 @@ function PART:PreOnDraw()
 
 	local pos, ang = LocalToWorld(self.Position, self:CalcAngles(self.Angles), self:GetBonePosition())
 	local normal = ang:Forward()
-		
+
 	render_PushCustomClipPlane(normal, normal:Dot(pos + normal))
 end
 
@@ -38,7 +38,7 @@ local render_PopCustomClipPlane = render.PopCustomClipPlane
 
 function PART:PostOnDraw()
 	render_PopCustomClipPlane()
-	
+
 	render_EnableClipping(bclip)
 end
 

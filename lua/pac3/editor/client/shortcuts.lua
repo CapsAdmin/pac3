@@ -24,22 +24,22 @@ function pace.CheckShortcuts()
 			pace.Call("ShortcutSave")
 			last = CurTime() + 0.2
 		end
-		
+
 		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_N) then
 			pace.Call("ShortcutWear")
 			last = CurTime() + 0.2
 		end
-		
+
 		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_E) then
 			pace.Call("ToggleFocus")
 			last = CurTime() + 0.2
-		end		
-		
+		end
+
 		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_T) then
 			pace.SetTPose(not pace.GetTPose())
 			last = CurTime() + 0.2
 		end
-		
+
 		if input.IsKeyDown(KEY_LALT) and input.IsKeyDown(KEY_E) then
 			pace.Call("ToggleFocus", true)
 			last = CurTime() + 0.2

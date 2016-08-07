@@ -35,8 +35,8 @@ function PANEL:AddOutfits(folder, callback)
 			local outfit = folder .. name
 			if file.Exists(outfit, "DATA") then
 				local filenode = self:AddLine(
-					name:gsub("%.txt", ""), 
-					string.NiceSize(file.Size(outfit, "DATA")), 
+					name:gsub("%.txt", ""),
+					string.NiceSize(file.Size(outfit, "DATA")),
 					os.date("%m/%d/%Y %H:%M", file.Time(outfit, "DATA"))
 				)
 				filenode.FileName = name
@@ -49,11 +49,11 @@ end
 
 function PANEL:PopulateFromClient()
 	self:Clear()
-	
+
 	self:AddOutfits("pac3/" .. self.Dir, function(node)
 		pace.LoadParts(self.Dir .. node.FileName, true)
 		pace.RefreshTree()
-	end)		
+	end)
 end
 
 function PANEL.OnRowRightClick(_self,id, self)

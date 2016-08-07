@@ -26,13 +26,13 @@ function PART:Initialize()
 end
 
 function PART:OnShow(from_rendering)
-	if not from_rendering then 
+	if not from_rendering then
 		self.played_overlapping = false
 		self:PlaySound()
 	end
-	
+
 	local ent = self:GetOwner()
-	
+
 	if ent:IsValid() and ent:IsPlayer() then
 		ent.pac_footstep_override = ent.pac_footstep_override or {}
 		if self.PlayOnFootstep then
@@ -46,25 +46,25 @@ end
 function PART:OnHide()
 	self.played_overlapping = false
 	self:StopSound()
-	
+
 	if self.PlayOnFootstep then
-		
+
 		local ent = self:GetOwner()
-		
+
 		if ent:IsValid() then
 			ent.pac_footstep_override = nil
-			
+
 			if ent:IsPlayer() then
 				ent.pac_footstep_override = ent.pac_footstep_override or {}
-				
-		
+
+
 				ent.pac_footstep_override[self.UniqueID] = nil
 			end
 		end
 	end
 end
 
-function PART:OnThink()	
+function PART:OnThink()
 	if not self.csptch then
 		self:PlaySound()
 	else
@@ -75,7 +75,7 @@ function PART:OnThink()
 			pac.playing_sound = false
 		end
 	end
-	
+
 end
 
 -- fixes by Python 1320
@@ -86,10 +86,10 @@ end
 -- TODO: Beta new sound functions
 
 -- https://developer.valvesoftware.com/wiki/Soundscripts#Sound_Characters
--- we are using this for bad replacements as it won't break stuff too badly ["*"]=true,   
+-- we are using this for bad replacements as it won't break stuff too badly ["*"]=true,
 
-local bad = 
-{ 
+local bad =
+{
 	["#"]=true,
 	["@"]=true,
 	[">"]=true,
@@ -108,10 +108,10 @@ local function fix(snd)
 	end
 	if bad[snd:sub(2,2)] then
 		snd = snd:gsub("^(..)",function(a) return a[1].."*" end)
-	end	
+	end
 	return snd
 end
-	
+
 function PART:SetSound(str)
 	if type(str) ~= "string" then self.Sound = "" return end
 
@@ -120,17 +120,17 @@ function PART:SetSound(str)
 	end
 
 	self.Sound = str:gsub("\\", "/")
-	
+
 	self:PlaySound()
 end
 
 function PART:SetVolume(num)
 	self.Volume = num
-	
+
 	if not self.csptch then
 		self:PlaySound()
 	end
-	
+
 	if self.csptch then
 		self.csptch:ChangeVolume(math.Clamp(self.Volume, 0.001, 1), 0)
 	end
@@ -138,63 +138,63 @@ end
 
 function PART:SetPitch(num)
 	self.Pitch = num
-	
+
 	if not self.csptch then
 		self:PlaySound()
 	end
-	
+
 	if self.csptch then
 		self.csptch:ChangePitch(math.Clamp(self.Pitch*255, 1, 255), 0)
 	end
 end
 
-function PART:PlaySound(osnd, ovol)	
+function PART:PlaySound(osnd, ovol)
 	local ent = self:GetOwner(self.RootOwner)
 
 	if ent:IsValid() then
 		if ent:GetClass() == "viewmodel" then
 			ent = pac.LocalPlayer
 		end
-	
+
 		local snd
-		
+
 		if osnd and self.Sound == "" then
 			snd = osnd
 		else
 			local sounds = self.Sound:Split(";")
-			
+
 			if #sounds > 1 then
 				snd = table.Random(sounds)
 			else
 				snd = self.Sound:gsub(
-					"(%[%d-,%d-%])", 
-					function(minmax) 
+					"(%[%d-,%d-%])",
+					function(minmax)
 						local min, max = minmax:match("%[(%d-),(%d-)%]")
 						if max < min then
 							max = min
 						end
-						return math.random(min, max) 
+						return math.random(min, max)
 					end
 				)
 			end
 		end
-						
+
 		local vol
-		
+
 		if osnd and self.Volume == -1 then
 			vol = ovol or 1
 		else
 			vol = self.Volume
 		end
-											
+
 		local pitch
-		
+
 		if self.MinPitch == self.MaxPitch then
 			pitch = self.Pitch * 255
 		else
 			pitch = math.random(self.MinPitch, self.MaxPitch)
 		end
-		
+
 		pac.playing_sound = true
 
 		if self.Overlapping then
@@ -206,16 +206,16 @@ function PART:PlaySound(osnd, ovol)
 			if self.csptch then
 				self.csptch:Stop()
 			end
-			
+
 			local csptch = CreateSound(ent, snd)
-			
-			
+
+
 			csptch:SetSoundLevel(self.SoundLevel)
-			csptch:PlayEx(vol, pitch)		
+			csptch:PlayEx(vol, pitch)
 			ent.pac_csptch = csptch
 			self.csptch = csptch
 		end
-		
+
 		pac.playing_sound = false
 	end
 end
@@ -226,7 +226,7 @@ function PART:StopSound()
 	end
 end
 
-local channels = 
+local channels =
 {
 	CHAN_AUTO = 0,
 	CHAN_WEAPON = 1,
@@ -238,7 +238,7 @@ local channels =
 }
 
 for key, CHAN in pairs(channels) do
-	sound.Add( 
+	sound.Add(
 	{
 		name = "pac_silence_" .. key:lower(),
 		channel = CHAN,

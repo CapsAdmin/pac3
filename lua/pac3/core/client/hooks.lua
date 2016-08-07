@@ -1,6 +1,6 @@
 function pac.UpdateAnimation(ply)
 	if not IsEntity(ply) or not ply:IsValid() then return end
-		
+
 	if ply.pac_death_physics_parts and ply:Alive() and ply.pac_physics_died then
 		for _, part in pairs(pac.GetParts()) do
 			if part:GetPlayerOwner() == ply and part.ClassName == "model" then
@@ -9,51 +9,51 @@ function pac.UpdateAnimation(ply)
 				ent:SetMoveType(MOVETYPE_NONE)
 				ent:SetNoDraw(true)
 				ent.RenderOverride = nil
-				
+
 				part.skip_orient = false
-			end	
+			end
 		end
 		ply.pac_physics_died = false
 	end
-		
+
 	local tbl = ply.pac_pose_params
-	
+
 	if tbl then
 		for _, data in pairs(ply.pac_pose_params) do
 			ply:SetPoseParameter(data.key, data.val)
 		end
 	end
-	
-	if ply.pac_global_animation_rate and ply.pac_global_animation_rate ~= 1 then 
-	
+
+	if ply.pac_global_animation_rate and ply.pac_global_animation_rate ~= 1 then
+
 		if ply.pac_global_animation_rate == 0 then
 			ply:SetCycle((pac.RealTime * ply:GetModelScale() * 2)%1)
 		elseif ply.pac_global_animation_rate ~= 1 then
 			ply:SetCycle((pac.RealTime * ply.pac_global_animation_rate)%1)
 		end
-		
+
 		return true
 	end
-	
+
 	if ply.pac_holdtype_alternative_animation_rate then
 		local length = ply:GetVelocity():Dot(ply:EyeAngles():Forward()) > 0 and 1 or -1
 		local scale = ply:GetModelScale() * 2
-		
-		if scale ~= 0 then		
+
+		if scale ~= 0 then
 			ply:SetCycle(pac.RealTime / scale * length)
 		else
 			ply:SetCycle(0)
 		end
-		
+
 		return true
 	end
-	
+
 	if ply.pac_bodygroup_info then
 		ply:SetBodygroup(ply.pac_bodygroup_info.id, ply.pac_bodygroup_info.model_index)
 	end
-	
+
 	local vehicle = ply:GetVehicle()
-	
+
 	if ply.pac_last_vehicle ~= vehicle then
 		if ply.pac_last_vehicle ~= nil then
 			if ply.pac_parts then
@@ -78,14 +78,14 @@ local function mod_speed(cmd, speed)
 	if speed and speed ~= 0 then
 		local forward = cmd:GetForwardMove()
 		forward = forward > 0 and speed or forward < 0 and -speed or 0
-		
+
 		local side = cmd:GetSideMove()
 		side = side > 0 and speed or side < 0 and -speed or 0
-		
-		
+
+
 		cmd:SetForwardMove(forward)
 		cmd:SetSideMove(side)
-	end	
+	end
 end
 
 function pac.CreateMove(cmd)
@@ -103,16 +103,16 @@ pac.AddHook("CreateMove")
 
 function pac.TranslateActivity(ply, act)
 	if IsEntity(ply) and ply:IsValid() then
-	
+
 		-- animation part
 		if ply.pac_animation_sequences and next(ply.pac_animation_sequences) then
 			-- dont do any holdtype stuff if theres a sequence
 			return
 		end
-		
+
 		if ply.pac_animation_holdtypes then
 			local key, val = next(ply.pac_animation_holdtypes)
-			if key then			
+			if key then
 				if not val.part:IsValid() then
 					ply.pac_animation_holdtypes[key] = nil
 				else
@@ -120,36 +120,36 @@ function pac.TranslateActivity(ply, act)
 				end
 			end
 		end
-		
+
 		-- holdtype part
 		if ply.pac_holdtypes then
 			local key, act_table = next(ply.pac_holdtypes)
-			
+
 			if key then
 				if not act_table.part:IsValid() then
 					ply.pac_holdtypes[key] = nil
 				else
-					
+
 					if act_table[act] and act_table[act] ~= -1 then
 						return act_table[act]
 					end
-					
+
 					if ply:GetVehicle():IsValid() and ply:GetVehicle():GetClass() == "prop_vehicle_prisoner_pod" then
 						return act_table.sitting
 					end
-					
+
 					if act_table.noclip ~= -1 and ply:GetMoveType() == MOVETYPE_NOCLIP then
 						return act_table.noclip
 					end
-					
+
 					if act_table.air ~= -1 and ply:GetMoveType() ~= MOVETYPE_NOCLIP and not ply:IsOnGround() then
 						return act_table.air
-					end	
-				
+					end
+
 					if act_table.fallback ~= -1 then
 						return act_table.fallback
 					end
-				end				
+				end
 			end
 		end
 	end
@@ -157,24 +157,24 @@ end
 pac.AddHook("TranslateActivity")
 
 
-function pac.CalcMainActivity(ply, act) 
+function pac.CalcMainActivity(ply, act)
 	if IsEntity(ply) and ply:IsValid() and ply.pac_animation_sequences then
 		local key, val = next(ply.pac_animation_sequences)
-		
+
 		if not key then return end
-		
+
 		if not val.part:IsValid() then
 			ply.pac_animation_sequences[key] = nil
 			return
 		end
-		
+
 		return val.seq, val.seq
 	end
 end
 pac.AddHook("CalcMainActivity")
 
 function pac.pac_PlayerFootstep(ply, pos, snd, vol)
-	ply.pac_last_footstep_pos = pos	
+	ply.pac_last_footstep_pos = pos
 
 	if ply.pac_footstep_override then
 		for key, part in pairs(ply.pac_footstep_override) do
@@ -183,7 +183,7 @@ function pac.pac_PlayerFootstep(ply, pos, snd, vol)
 			end
 		end
 	end
-	
+
 	if ply.pac_mute_footsteps then
 		return true
 	end
@@ -199,7 +199,7 @@ local function IsActuallyPlayer(ent)
 end
 
 function pac.OnClientsideRagdoll(ent)
-	
+
 	local ply
 	for key, pl in next,player.GetAll() do
 		if pl:GetRagdollEntity() == ent then
@@ -209,27 +209,27 @@ function pac.OnClientsideRagdoll(ent)
 	end
 	if not ply then
 		--Msg"[PAC] No player for "print(ent)
-		return 
+		return
 	end
-		
+
 	if not ply.pac_parts then return end
-	
+
 	ply.pac_ragdoll = ent
-	
+
 	if not ply.pac_death_physics_parts then
-		
+
 		-- make props draw on the ragdoll
 		if ply.pac_death_ragdollize then
 			ply.pac_owner_override = ent
 		end
-		
+
 		-- recover ragdoll props?
 		local tid = "pac_" .. ply:UniqueID() .. "_ragttach"
 		timer.Create(tid, 0.25, 1, function()
 			local parts = ply.pac_parts
-			
+
 			if not parts then return end
-			
+
 			for key, part in next, parts do
 				if not part.last_owner then
 					part:SetOwner(ent)
@@ -237,16 +237,16 @@ function pac.OnClientsideRagdoll(ent)
 				end
 			end
 		end)
-		
+
 		return
 	end
-	
+
 	if ply.pac_physics_died then return end
-	
+
 	for _, part in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
 		if part.ClassName == "model" then
 			pac.InitDeathPhysicsOnProp(part,ply,ent)
-		end	
+		end
 	end
 	ply.pac_physics_died = true
 
@@ -254,23 +254,23 @@ end
 
 function pac.InitDeathPhysicsOnProp(part,ply,plyent)
 	plyent:SetNoDraw(true)
-			
+
 	part.skip_orient = true
-	
+
 	local ent = part:GetEntity()
 	ent:SetParent(NULL)
 	ent:SetNoDraw(true)
 	ent:PhysicsInitBox(Vector(1,1,1) * -5, Vector(1,1,1) * 5)
-	ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS) 
-	
+	ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+
 	local phys = ent:GetPhysicsObject()
 	phys:AddAngleVelocity(VectorRand() * 1000)
 	phys:AddVelocity(ply:GetVelocity()  + VectorRand() * 30)
 	phys:Wake()
-	
+
 	function ent.RenderOverride(ent)
 		if part:IsValid() then
-			if not part.HideEntity then 
+			if not part.HideEntity then
 				part:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
 				ent:DrawModel()
 				part:PostEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
@@ -283,29 +283,29 @@ end
 
 function pac.OnEntityCreated(ent)
 	if not IsActuallyValid(ent) then return end
-	
+
 	if ent:GetClass() == "class C_HL2MPRagdoll" then
 		pac.OnClientsideRagdoll(ent)
 	end
-	
+
 	local owner = ent:GetOwner()
-	
+
 	if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
 		for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
 			if not part:HasParent() then
 				part:CheckOwner(ent, false)
 			end
 		end
-		
+
 		return
 	end
-	
+
 	if ply.pac_physics_died then return end
-	
+
 	for _, part in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
 		if part.ClassName == "model" then
 			pac.InitDeathPhysicsOnProp(part,ply,ent)
-		end	
+		end
 	end
 	ply.pac_physics_died = true
 
@@ -313,23 +313,23 @@ end
 
 function pac.InitDeathPhysicsOnProp(part,ply,plyent)
 	plyent:SetNoDraw(true)
-			
+
 	part.skip_orient = true
-	
+
 	local ent = part:GetEntity()
 	ent:SetParent(NULL)
 	ent:SetNoDraw(true)
 	ent:PhysicsInitBox(Vector(1,1,1) * -5, Vector(1,1,1) * 5)
-	ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS) 
-	
+	ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+
 	local phys = ent:GetPhysicsObject()
 	phys:AddAngleVelocity(VectorRand() * 1000)
 	phys:AddVelocity(ply:GetVelocity()  + VectorRand() * 30)
 	phys:Wake()
-	
+
 	function ent.RenderOverride(ent)
 		if part:IsValid() then
-			if not part.HideEntity then 
+			if not part.HideEntity then
 				part:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
 				ent:DrawModel()
 				part:PostEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
@@ -343,13 +343,13 @@ end
 
 function pac.OnEntityCreated(ent)
 	if not IsActuallyValid(ent) then return end
-	
+
 	if ent:GetClass() == "class C_HL2MPRagdoll" then
 		pac.OnClientsideRagdoll(ent)
 	end
-	
+
 	local owner = ent:GetOwner()
-	
+
 	if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
 		for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
 			if not part:HasParent() then
@@ -368,7 +368,7 @@ function pac.NetworkEntityCreated(ply)
 	if ply.pac_player_size then
 		pac.SetPlayerSize(ply,ply.pac_player_size,true)
 	end
-	
+
 end
 pac.AddHook("NetworkEntityCreated")
 
@@ -404,7 +404,7 @@ end
 pac.AddHook("PlayerSpawned")
 
 function pac.EntityRemoved(ent)
-	if IsActuallyValid(ent)  then 
+	if IsActuallyValid(ent)  then
 		local owner = ent:GetOwner()
 		if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
 			for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do

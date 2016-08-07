@@ -4,22 +4,22 @@ local table = {insert = table.insert}
 
 do -- table copy
 	local lookup_table = {}
-	
+
 	local function copy(obj, skip_meta)
-	
+
 		if type(obj) == "Vector" or type(obj) == "Angle" then
 			return obj * 1
 		elseif lookup_table[obj] then
 			return lookup_table[obj]
 		elseif type(obj) == "table" then
 			local new_table = {}
-			
+
 			lookup_table[obj] = new_table
-					
+
 			for key, val in pairs(obj) do
 				new_table[copy(key, skip_meta)] = copy(val, skip_meta)
 			end
-			
+
 			return skip_meta and new_table or setmetatable(new_table, getmetatable(obj))
 		else
 			return obj
@@ -38,7 +38,7 @@ class.Registered = {}
 
 local function checkfield(tbl, key, def)
     tbl[key] = tbl[key] or def
-	
+
     if not tbl[key] then
         error(string.format("The type field %q was not found!", key), 3)
     end
@@ -58,7 +58,7 @@ function class.GetSet(tbl, name, def)
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
 		tbl["Get" .. name] = tbl["Get" .. name] or function(self, var) return self[name] end
 	end
-		
+
     tbl[name] = def
 end
 
@@ -84,7 +84,7 @@ end
 function class.Get(type_name, class_name)
     check(type_name, "string")
     check(class_name, "string")
-	
+
     return class.Registered[type_name] and class.Registered[type_name][class_name] or nil
 end
 
@@ -105,9 +105,9 @@ end
 
 function class.HandleBaseField(META, var)
 	if not var then return end
-	
+
 	local t = type(var)
-	
+
 	if t == "string" then
 		class.HandleBaseField(META, class.Get(META.Type, var))
 	elseif t == "table" then
@@ -119,9 +119,9 @@ function class.HandleBaseField(META, var)
 		else
 			-- make a copy of it so we don't alter the meta template
 			var = table.copy(var)
-			
+
 			META.BaseList = META.BaseList or {}
-			
+
 			table.insert(META.BaseList, var)
 		end
 	end
@@ -129,23 +129,23 @@ end
 
 function class.Create(type_name, class_name)
     local META = class.Get(type_name, class_name)
-	
+
     if not META then
         printf("tried to create unknown %s %q!", type or "no type", class_name or "no class")
         return
     end
-	
+
 	local obj = table.copy(META)
 	class.HandleBaseField(obj, obj.Base)
 	class.HandleBaseField(obj, obj.TypeBase)
 
-	if obj.BaseList then	
+	if obj.BaseList then
 		if #obj.BaseList == 1 then
 			for key, val in pairs(obj.BaseList[1]) do
 				obj[key] = obj[key] or val
 			end
 			obj.BaseClass = obj.BaseList[1]
-		else		
+		else
 			local current = obj
 			for i, base in pairs(obj.BaseList) do
 				for key, val in pairs(base) do
@@ -156,11 +156,11 @@ function class.Create(type_name, class_name)
 			end
 		end
 	end
-		
+
 	obj.MetaTable = META
 
 	setmetatable(obj, obj)
-	
+
 	return obj
 end
 

@@ -11,9 +11,9 @@ function pace.PopulateProperties(part)
 			v()
 		end
 		pace.extra_populates = {}
-		
+
 		pace.Editor:InvalidateLayout()
-	end	
+	end
 end
 
 function pace.OnDraw()
@@ -30,7 +30,7 @@ hook.Add("PostDrawViewModel", "pace_viewmodel_edit", function()
 	end
 end)
 
-hook.Add("InitPostEntity", "pace_autoload_parts", function()	
+hook.Add("InitPostEntity", "pace_autoload_parts", function()
 	timer.Simple(5, function()
 		pace.LoadParts("autoload")
 		timer.Simple(3, function()
@@ -48,13 +48,13 @@ function pace.OnOpenEditor()
 	pace.SetViewPos(LocalPlayer():EyePos())
 	pace.SetViewAngles(LocalPlayer():EyeAngles())
 	pace.EnableView(true)
-	
+
 	if table.Count(pac.GetParts(true)) == 0 then
 		pace.Call("CreatePart", "group", L"my outfit", L"add parts to me!")
-	end	
-		
+	end
+
 	pace.TrySelectPart()
-	
+
 	pace.ResetView()
 end
 
@@ -66,13 +66,13 @@ end
 
 function pace.TrySelectPart()
 	local part = select(2, next(pac.GetParts(true)))
-	
+
 	local found = pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), pace.current_part_uid)
-	
+
 	if found:IsValid() and found:GetPlayerOwner() == part:GetPlayerOwner() then
 		part = found
 	end
-	
+
 	if part then
 		pace.Call("PartSelected", part)
 	end

@@ -10,20 +10,20 @@ end)
 
 net.Receive("pac_spawn_part", function()
 	if not pace.current_part:IsValid() then return end
-	
+
 	local mdl = net.ReadString()
-	
+
 	if pace.close_spawn_menu then
 		pace.Call("VariableChanged", pace.current_part, "Model", mdl)
-	
+
 		if g_SpawnMenu:IsVisible() then
 			g_SpawnMenu:Close()
 		end
-		
+
 		pace.close_spawn_menu = false
 	elseif pace.current_part.ClassName ~= "model" then
 		local name = mdl:match(".+/(.+)%.mdl")
-		
+
 		pace.Call("CreatePart", "model", name, nil, mdl)
 	else
 		pace.Call("VariableChanged", pace.current_part, "Model", mdl)
@@ -37,45 +37,45 @@ function pace.ClientOptionsMenu(pnl)
 		L"show editor",
 		"pac_editor"
 	)
-	
+
 	pnl:CheckBox(
 		L"enable",
 		"pac_enable"
 	)
-	
+
 	pnl:Help''
-	
+
 	pnl:Button(
 		L"clear",
 		"pac_clear_parts"
 	)
-	
+
 	pnl:Button(
 		L"wear on server",
 		"pac_wear_parts"
-	)	
-	
-	
+	)
+
+
 	local browser = pnl:AddControl("pace_browser", {})
-	
+
 	browser.OnLoad = function(node)
 		pace.LoadParts(node.FileName, true)
 	end
-	
+
 	if #file.Find("pac3/sessions/*", "DATA") > 0 then
 		browser:SetDir("sessions/")
 	else
 		browser:SetDir("")
 	end
-	
+
 	browser:SetSize(400,480)
-	
+
 	pace.SpawnlistBrowser = browser
-		
+
 end
 
 function pace.ClientSettingsMenu(pnl)
-	
+
 	pnl:CheckBox(
 		L"Enable PAC",
 		"pac_enable"
@@ -88,20 +88,20 @@ function pace.ClientSettingsMenu(pnl)
 		1,
 		2
 	)
-	
-	
+
+
 	pnl:Help''
 	pnl:Help(L'Performance')
-	
+
 	pnl:CheckBox(
 		L"No outfit reflections",
 		"pac_suppress_frames"
 	)
-	
+
 	pnl:CheckBox(
 		L"render objects outside visible fov",
 		"pac_override_fov"
-	)	
+	)
 
 	pnl:NumSlider(
 		L"draw distance",
@@ -110,7 +110,7 @@ function pace.ClientSettingsMenu(pnl)
 		20000,
 		0
 	)
-	
+
 	pnl:NumSlider(
 		L"max render time (in ms)",
 		"pac_max_render_time",
@@ -118,12 +118,12 @@ function pace.ClientSettingsMenu(pnl)
 		50,
 		0
 	)
-	
-	
-	
+
+
+
 	pnl:Help''
 	pnl:Help(L'Misc')
-	
+
 	pnl:CheckBox(
 		L"Custom error model",
 		"pac_error_mdl"
@@ -148,12 +148,12 @@ function pace.ClientSettingsMenu(pnl)
 					'pac_enable_'..str
 				)
 	end
-		
-	
+
+
 end
 
 list.Set(
-	"DesktopWindows", 
+	"DesktopWindows",
 	"PACEditor",
 	{
 		title = "PAC Editor",
@@ -169,8 +169,8 @@ list.Set(
 )
 
 list.Set(
-	"DesktopWindows", 
-	"AnimEditor", 
+	"DesktopWindows",
+	"AnimEditor",
 	{
 		title		= "Animation Editor",
 		icon		= "icon64/tool.png",
@@ -186,25 +186,25 @@ list.Set(
 
 hook.Add("PopulateToolMenu", "pac3_spawnmenu", function()
 	spawnmenu.AddToolMenuOption(
-		"Utilities", 
-		"PAC",  
-		"PAC3", 
-		L"PAC3", 
-		"", 
+		"Utilities",
+		"PAC",
+		"PAC3",
+		L"PAC3",
 		"",
-		pace.ClientOptionsMenu,  
-		{ 
+		"",
+		pace.ClientOptionsMenu,
+		{
 			SwitchConVar = "pac_enable",
 		}
 	)
 	spawnmenu.AddToolMenuOption(
-		"Utilities", 
-		"PAC",  
-		"PAC3S", 
-		L"Settings", 
-		"", 
+		"Utilities",
+		"PAC",
+		"PAC3S",
+		L"Settings",
 		"",
-		pace.ClientSettingsMenu,  
+		"",
+		pace.ClientSettingsMenu,
 		{
 		}
 	)

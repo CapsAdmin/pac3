@@ -14,7 +14,7 @@ pac.EndStorableVars()
 
 function PART:GetNiceName()
 	local h,s,v = pac.ColorToNames(self:GetColor())
-	
+
 	return h .. " fog"
 end
 
@@ -38,7 +38,7 @@ function PART:PreOnDraw(owner, pos)
 	render.FogEnd(self.End*100)
 	render.FogMaxDensity(self.Alpha)
 	if self.clr then render.FogColor(unpack(self.clr)) end
-	
+
 	if self.Height > 0 then
 		render.FogMode(MATERIAL_FOG_LINEAR_BELOW_FOG_Z)
 		render.SetFogZ(self.cached_pos.z + self.Height * 10)

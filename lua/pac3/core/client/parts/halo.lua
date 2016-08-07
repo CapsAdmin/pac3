@@ -19,7 +19,7 @@ pac.EndStorableVars()
 
 function PART:GetNiceName()
 	local h,s,v = pac.ColorToNames(self:GetColor())
-	
+
 	return h .. " halo"
 end
 
@@ -33,10 +33,10 @@ end
 
 function PART:OnThink()
 	local parent = self:GetParent()
-	
+
 	if parent.ClassName == "model" and parent.Entity:IsValid() then
 		local tbl = {parent.Entity}
-		
+
 		if self.AffectChildren then
 			for key, part in pairs(parent:GetChildren()) do
 				if part.ClassName == "model" and part.Entity:IsValid() and not part:IsHidden() then
@@ -44,7 +44,7 @@ function PART:OnThink()
 				end
 			end
 		end
-		
+
 		pac.haloex.Add(tbl, Color(self.Color.r, self.Color.g, self.Color.b), self.BlurX, self.BlurY, self.Passes, self.Additive, self.IgnoreZ, self.Amount, self.SphericalSize, self.Shape)
 	end
 end

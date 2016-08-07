@@ -39,7 +39,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "StickEndSize", 0)
 	pac.GetSet(PART, "StickStartAlpha", 255)
 	pac.GetSet(PART, "StickEndAlpha", 0)
-	
+
 	--pac.GetSet(PART, "AddVelocityFromOwner", false)
 	pac.GetSet(PART, "OwnerVelocityMultiplier", 0)
 	pac.GetSet(PART, "Translucent", true)
@@ -97,7 +97,7 @@ end
 function PART:CreateEmitter()
 	self.NextShot = pac.RealTime
 	self.Created = pac.RealTime + 0.1
-	
+
 	if self.last_3d ~= self["3D"] then
 		self.emitter = ParticleEmitter(self.cached_pos, self["3D"])
 		self.last_3d = self["3D"]
@@ -116,14 +116,14 @@ function PART:SetNumberParticles(num)
 end
 
 function PART:Set3D(b)
-	self["3D"] = b 
+	self["3D"] = b
 	self:CreateEmitter()
 end
 
 function PART:OnDraw(owner, pos, ang)
 	if not self:IsHidden() then
 		self.emitter:SetPos(pos)
-		if self.DrawManual then 
+		if self.DrawManual then
 			self.emitter:Draw()
 		end
 		self:EmitParticles(pos, ang)
@@ -132,14 +132,14 @@ end
 
 function PART:SetAdditive(b)
 	self.Additive = b
-	
+
 	self:SetMaterial(self:GetMaterial())
 end
 
 function PART:SetMaterial(var)
 	var = var or ""
-	
-	if not pac.Handleurltex(self, var, function(mat) 
+
+	if not pac.Handleurltex(self, var, function(mat)
 		mat:SetFloat("$alpha", 0.999)
 		mat:SetInt("$spriterendermode", self.Additive and 3 or 1)
 		self.Materialm = mat
@@ -147,25 +147,25 @@ function PART:SetMaterial(var)
 	end, "Sprite") then
 		if var == "" then
 			self.Materialm = nil
-		else			
+		else
 			self.Materialm = pac.Material(var, self)
 			self:CallEvent("material_changed")
 		end
 	end
-		
+
 	self.Material = var
 end
 
 function PART:EmitParticles(pos, ang)
 	local emt = self.emitter
 	if not emt then return end
-	
+
 	if self.NextShot < pac.RealTime then
 		local spread = self.Spread / 180
-		
+
 		if self.Material == "" then return end
 		if self.Velocity == 500.01 then return end
-		
+
 		ang = ang:Forward()
 
 		local double = 1
@@ -176,22 +176,22 @@ function PART:EmitParticles(pos, ang)
 		for i = 1, self.NumberParticles do
 
 			local vec = Vector()
-			
+
 			if self.Spread ~= 0 then
 				vec = Vector(
-					math.sin(math.Rand(0, 360)) * math.Rand(-self.Spread, self.Spread), 
-					math.cos(math.Rand(0, 360)) * math.Rand(-self.Spread, self.Spread), 
+					math.sin(math.Rand(0, 360)) * math.Rand(-self.Spread, self.Spread),
+					math.cos(math.Rand(0, 360)) * math.Rand(-self.Spread, self.Spread),
 					math.sin(math.random()) * math.Rand(-self.Spread, self.Spread)
 				)
 			end
-			
+
 			local color
-			
+
 			if self.RandomColor then
-				color = 
+				color =
 				{
-					math.random(math.min(self.Color1.r, self.Color2.r), math.max(self.Color1.r, self.Color2.r)), 
-					math.random(math.min(self.Color1.g, self.Color2.g), math.max(self.Color1.g, self.Color2.g)), 
+					math.random(math.min(self.Color1.r, self.Color2.r), math.max(self.Color1.r, self.Color2.r)),
+					math.random(math.min(self.Color1.g, self.Color2.g), math.max(self.Color1.g, self.Color2.g)),
 					math.random(math.min(self.Color1.b, self.Color2.b), math.max(self.Color1.b, self.Color2.b))
 				}
 			else
@@ -200,10 +200,10 @@ function PART:EmitParticles(pos, ang)
 
 			local roll = math.Rand(-self.RollDelta, self.RollDelta)
 
-			if self.PositionSpread ~= 0 then 
+			if self.PositionSpread ~= 0 then
 				pos = pos + Angle(math.Rand(-180, 180), math.Rand(-180, 180), math.Rand(-180, 180)):Forward() * self.PositionSpread
 			end
-			
+
 			for i = 1, double do
 				local particle = emt:Add(self.Materialm or self.Material, pos)
 
@@ -214,12 +214,12 @@ function PART:EmitParticles(pos, ang)
 					elseif i == 2 then
 						ang_ = ang:Angle()
 					end
-					
+
 					particle:SetAngles(ang_)
 				else
 					particle:SetAngles(ang:Angle())
 				end
-				
+
 				if self.OwnerVelocityMultiplier ~= 0 then
 					local owner = self:GetOwner(true)
 					if owner:IsValid() then
@@ -230,13 +230,13 @@ function PART:EmitParticles(pos, ang)
 				particle:SetVelocity((vec + ang) * self.Velocity)
 				particle:SetColor(unpack(color))
 				particle:SetColor(unpack(color))
-				
+
 				local life = math.Clamp(self.DieTime, 0.0001, 50)
 				if self.AddFrametimeLife then
 					life = life + FrameTime()
 				end
 				particle:SetDieTime(life)
-				
+
 				particle:SetStartAlpha(self.StartAlpha)
 				particle:SetEndAlpha(self.EndAlpha)
 				particle:SetStartSize(self.StartSize)
@@ -251,7 +251,7 @@ function PART:EmitParticles(pos, ang)
 				particle:SetCollide(self.Collide)
 				particle:SetLighting(self.Lighting)
 				particle:SetAngles(particle:GetAngles() + self.ParticleAngle)
-				
+
 				if self.Sliding then
 					particle:SetCollideCallback(SlideCallback)
 				end

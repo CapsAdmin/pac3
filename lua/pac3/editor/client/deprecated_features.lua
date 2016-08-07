@@ -1,11 +1,11 @@
-pace.DeprecatedParts = 
+pace.DeprecatedParts =
 {
 	woohoo = true,
 	--command = true,
 	balanim = true
 }
 
-pace.DeprecatedProperties = 
+pace.DeprecatedProperties =
 {
 	BodygroupState = true, -- we have a bodygroup part now
 	Bodygroup = true, -- we have a bodygroup part now
@@ -15,11 +15,11 @@ pace.DeprecatedProperties =
 	OverallSize = true, -- use Size instead!
 	BoneMergeAlternative = true, -- broken
 	FollowBone = true, -- broken
-	
+
 	AnglePartMultiplier = true, -- useless
 	AnglePartName = true, -- useless
 	Description = true, -- useless
-		
+
 	-- not ready for deprecation yet
 	--[[
 	InputMultiplier = "proxy",

@@ -87,7 +87,7 @@ local function MakeTable(tab, done)
 			if sequential then
 				key = ""
 			else
-				if keytype == "number" or keytype == "boolean" then 
+				if keytype == "number" or keytype == "boolean" then
 					key ="["..tostring(key).."]="
 				else
 					key = "["..string.format("%q", tostring(key)).."]="
@@ -102,7 +102,7 @@ local function MakeTable(tab, done)
 					str = str..key.."{"..MakeTable(value, done).."},"
 				end
 			else
-				if valuetype == "string" then 
+				if valuetype == "string" then
 					value = string.format("%q", value)
 				elseif valuetype == "Vector" then
 					value = "Vector("..value.x..","..value.y..","..value.z..")"
