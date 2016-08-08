@@ -72,7 +72,7 @@ function pace.SubmitPart(data, filter)
 	if type(data.part) == "table" then	
 		local ent = Entity(tonumber(data.part.self.OwnerName) or -1)
 		if ent:IsValid()then
-			if ent.CPPICanTool and (ent:CPPIGetOwner() ~= data.owner and not ent:CPPICanTool(data.owner, "paint")) then
+			if ent.CPPICanTool and (ent:CPPIGetOwner() ~= data.owner and data.owner:IsValid() and not ent:CPPICanTool(data.owner, "paint")) then
 				allowed = false
 				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
 			elseif not data.skip_dupe then

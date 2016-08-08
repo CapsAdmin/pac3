@@ -404,9 +404,13 @@ function PART:DrawModel(ent, pos, ang)
 		end
 		
 		-- Flashlight(?)
+		if not pac.flashlight_disabled then
 		render_PushFlashlightMode(true)
+		end
 			RealDrawModel(self, ent, pos, ang)
+		if not pac.flashlight_disabled then
 		render_PopFlashlightMode()
+		end
 		
 		if textureFilter ~= TEXFILTER.ANISOTROPIC or self.Mesh then
 			render_PopFilterMag()

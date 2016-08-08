@@ -22,11 +22,11 @@ function webaudio.Streams.CreateStream(url)
 	webaudio.Streams.LastStreamId = webaudio.Streams.LastStreamId + 1
 	stream:SetId(webaudio.Streams.LastStreamId)
 	stream:SetUrl(url)
-	
+
 	webaudio.Streams.Streams[stream:GetId()] = stream
-	
+
 	webaudio.Browser.QueueJavascript(string.format("createStream(%q, %d)", stream:GetUrl(), stream:GetId()))
-	
+
 	return stream
 end
 

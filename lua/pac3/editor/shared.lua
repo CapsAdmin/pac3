@@ -1,4 +1,4 @@
-local netx=setmetatable({},{__index=net}) 
+local netx=setmetatable({},{__index=net})
 
 do local net=netx
 
@@ -12,7 +12,7 @@ net.WriteBool = net.WriteBit
 function net.ReadBool()
 
 	return net.ReadBit() == 1
-	
+
 end
 
 --
@@ -20,7 +20,7 @@ end
 --
 function net.WriteEntity( ent )
 
-	if ( !IsValid( ent ) ) then 
+	if ( !IsValid( ent ) ) then
 		net.WriteUInt( 0, 16 )
 	else
 		net.WriteUInt( ent:EntIndex(), 16 )
@@ -32,9 +32,9 @@ function net.ReadEntity()
 
 	local i = net.ReadUInt( 16 )
 	if ( !i ) then return end
-	
+
 	return Entity( i )
-	
+
 end
 
 --
@@ -69,9 +69,9 @@ net.WriteVector = function( v )
 end
 
 net.WriteAngle = function( a )
-	
+
 	a:Normalize()
-	
+
 	net.WriteFloat( a.p )
 	net.WriteFloat( a.y )
 	net.WriteFloat( a.r )
@@ -80,7 +80,7 @@ end
 
 function net.ReadColor()
 
-	local r, g, b, a = 
+	local r, g, b, a =
 		net.ReadUInt( 8 ),
 		net.ReadUInt( 8 ),
 		net.ReadUInt( 8 ),
@@ -99,12 +99,12 @@ end
 function net.WriteTable( tab )
 
 	for k, v in pairs( tab ) do
-	
+
 		net.WriteType( k )
 		net.WriteType( v )
-	
+
 	end
-	
+
 	-- End of table
 	net.WriteType( nil )
 
@@ -113,19 +113,19 @@ end
 function net.ReadTable()
 
 	local tab = {}
-	
+
 	while true do
-	
+
 		local k = net.ReadType()
 		if ( k == nil ) then return tab end
-		
+
 		tab[ k ] = net.ReadType()
-		
+
 	end
 
 end
 
-net.WriteVars = 
+net.WriteVars =
 {
 	[TYPE_NIL]			= function ( t, v )	net.WriteUInt( t, 8 )								end,
 	[TYPE_STRING]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteString( v )		end,
@@ -136,7 +136,7 @@ net.WriteVars =
 	[TYPE_VECTOR]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteVector( v )		end,
 	[TYPE_ANGLE]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteAngle( v )			end,
 	[TYPE_COLOR]		= function ( t, v ) net.WriteUInt( t, 8 )	net.WriteColor( v )			end,
-		
+
 }
 
 function net.WriteType( v )
@@ -150,12 +150,12 @@ function net.WriteType( v )
 
 	local wv = net.WriteVars[ typeid ]
 	if ( wv ) then return wv( typeid, v ) end
-	
+
 	error( "net.WriteType: Couldn't write " .. type( v ) .. " (type " .. typeid .. ")" )
 
 end
 
-net.ReadVars = 
+net.ReadVars =
 {
 	[TYPE_NIL]		= function ()	return end,
 	[TYPE_STRING]	= function ()	return net.ReadString() end,

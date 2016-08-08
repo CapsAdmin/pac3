@@ -46,7 +46,7 @@ hook.Add("Think", "webaudio", function()
 		end
 		return
 	end
-	
+
 	-- Update volume
 	if not system.HasFocus() and snd_mute_losefocus:GetBool() then
 		-- Garry's Mod not in foreground and we're not supposed to be making any sound
@@ -54,7 +54,7 @@ hook.Add("Think", "webaudio", function()
 	else
 		webaudio.Browser.SetVolume(pac_ogg_volume:GetFloat() * volume:GetFloat())
 	end
-	
+
 	webaudio.Streams.Think()
 	webaudio.Browser.Think()
 end)

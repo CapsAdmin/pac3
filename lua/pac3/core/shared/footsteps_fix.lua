@@ -9,14 +9,14 @@ if game.SinglePlayer() then
 			umsg.End()
 		end)
 	end
-	
+
 	if CLIENT then
 		usermessage.Hook("pac_footstep", function(umr)
 			local ply = umr:ReadEntity()
 			local pos = umr:ReadVector()
 			local snd = umr:ReadString()
 			local vol = umr:ReadFloat()
-			
+
 			if ply:IsValid() then
 				hook.Run("pac_PlayerFootstep", ply, pos, snd, vol)
 			end

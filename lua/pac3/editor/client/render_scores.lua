@@ -7,19 +7,19 @@ pace.RenderTimes = {} -- render times in seconds
 
 timer.Create("pac_render_times", 0.1, 0, function()
 	if not pac.IsEnabled() then return end
-			
+
 	for key, ply in pairs(player.GetHumans()) do
 		local data = pac.GetProfilingData(ply)
-		
+
 		if data then
 			local renderTime = 0
-			
+
 			-- events are "opaque" and "translucent"
 			-- WE DO NOT CALCULATE AN AVERAGE
-			for k,v in pairs(data.events) do 
+			for k,v in pairs(data.events) do
 				renderTime = renderTime + v.average_ms * 0.001
 			end
-			
+
 			pace.RenderTimes[ply:EntIndex()] = renderTime
 		end
 	end
@@ -27,22 +27,22 @@ end)
 
 hook.Add("HUDPaint", "pac_show_render_times", function()
 	if not pace.IsActive() or not pace.IsFocused() or not enable:GetBool() or pace.IsInBasicMode() then return end
-			
+
 	for key, ply in pairs(player.GetHumans()) do
 		if ply == LocalPlayer() then continue end
-	
+
 		local pos = ply:EyePos()
-		
+
 		if pos:Distance(pac.EyePos) < 100 then
 			local pos = pos:ToScreen()
-			
+
 			if pos.visible then
 
 				surface.SetFont(font)
 				surface.SetTextColor(255, 255, 255, 255)
-				
+
 				local renderTime = pace.RenderTimes[ply:EntIndex()]
-				
+
 				if renderTime then
 					surface.SetTextPos(pos.x, pos.y)
 					surface.DrawText(string.format("average render time : %.3f ms", renderTime * 1000))

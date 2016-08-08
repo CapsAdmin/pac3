@@ -1,4 +1,4 @@
-local bones = 
+local bones =
 {
 	["pelvis"] = "valvebiped.bip01_pelvis",
 	["spine"] = "valvebiped.bip01_spine",
@@ -36,37 +36,37 @@ local function translate_bone(bone)
 			return key
 		end
 	end
-	
+
 	return bone
 end
 
 function pac.ConvertPAC2Config(data, name)
 	local _out = {}
-	
+
 	local base = pac.CreatePart("group")
 		base:SetName(name or "pac2 outfit")
-		
+
 	for key, data in pairs(data.parts) do
 		if data.sprite.Enabled then
-			local part = pac.CreatePart("sprite") 
+			local part = pac.CreatePart("sprite")
 				part:SetParent(base)
 				part.pac2_part = data
 				part:SetName(data.name .. " sprite")
-				
+
 				part:SetBone(translate_bone(data.bone))
-				
+
 				part:SetColor(Vector(data.sprite.color.r, data.sprite.color.g, data.sprite.color.b))
 				part:SetAlpha(data.sprite.color.a / 255)
-				
+
 				part:SetPosition(data.offset*1)
 				part:SetAngles(data.angles*1)
 				--part:SetAngleVelocity(Angle(data.anglevelocity.p, -data.anglevelocity.r, data.anglevelocity.y)*0.5)
-				
+
 				part:SetMaterial(data.sprite.material)
 				part:SetSizeX(data.sprite.x)
 				part:SetSizeY(data.sprite.y)
 				part:SetEyeAngles(data.eyeangles)
-				if data.weaponclass and data.weaponclass ~= "" then  
+				if data.weaponclass and data.weaponclass ~= "" then
 					local part_ = pac.CreatePart("event")
 					part_:SetName(part.Name .. " weapon class")
 					part_:SetParent(part)
@@ -76,25 +76,25 @@ function pac.ConvertPAC2Config(data, name)
 					part_:SetArguments(data.weaponclass .. "@@" .. (data.hideweaponclass and "1" or "0"))
 				end
 		end
-		
+
 		if data.light.Enabled then
-			local part = pac.CreatePart("light")		
+			local part = pac.CreatePart("light")
 				part:SetParent(base)
 				part.pac2_part = data
 				part:SetName(data.name .. " light")
-												
+
 				part:SetBone(translate_bone(data.bone))
-				
+
 				part:SetColor(Vector(data.light.r, data.light.g, data.light.b))
-				
+
 				part:SetPosition(data.offset*1)
 				part:SetAngles(data.angles*1)
 				--part:SetAngleVelocity(Angle(data.anglevelocity.p, -data.anglevelocity.r, data.anglevelocity.y)*0.5)
-				
+
 				part:SetBrightness(data.light.Brightness)
 				part:SetSize(data.light.Size)
-				
-				if data.weaponclass and data.weaponclass ~= "" then  
+
+				if data.weaponclass and data.weaponclass ~= "" then
 					local part_ = pac.CreatePart("event")
 					part_:SetName(part.Name .. " weapon class")
 					part_:SetParent(part)
@@ -104,31 +104,31 @@ function pac.ConvertPAC2Config(data, name)
 					part_:SetArguments(data.weaponclass .. "@@" .. (data.hideweaponclass and "1" or "0"))
 				end
 		end
-		
+
 		if data.text.Enabled then
-			local part = pac.CreatePart("text")	
+			local part = pac.CreatePart("text")
 				part:SetParent(base)
-				part.pac2_part = data	
+				part.pac2_part = data
 				part:SetName(data.name .. " text")
-				
+
 				part:SetBone(translate_bone(data.bone))
-				
+
 				part:SetColor(Vector(data.text.color.r, data.text.color.g, data.text.color.b))
 				part:SetAlpha(data.text.color.a / 255)
-				
+
 				part:SetColor(Vector(data.text.outlinecolor.r, data.text.outlinecolor.g, data.text.outlinecolor.b))
 				part:SetAlpha(data.text.outlinecolor.a / 255)
-				
+
 				part:SetPosition(data.offset*1)
 				part:SetAngles(data.angles*1)
 				--part:SetAngleVelocity(Angle(data.anglevelocity.p, -data.anglevelocity.r, data.anglevelocity.y)*0.5)
-				
+
 				part:SetOutline(data.text.outline)
 				part:SetText(data.text.text)
 				part:SetFont(data.text.font)
 				part:SetSize(data.text.size)
 				part:SetEyeAngles(data.eyeangles)
-				if data.weaponclass and data.weaponclass ~= "" then  
+				if data.weaponclass and data.weaponclass ~= "" then
 					local part_ = pac.CreatePart("event")
 					part_:SetName(part.Name .. " weapon class")
 					part_:SetParent(part)
@@ -138,31 +138,31 @@ function pac.ConvertPAC2Config(data, name)
 					part_:SetArguments(data.weaponclass .. "@@" .. (data.hideweaponclass and "1" or "0"))
 				end
 		end
-		
+
 		if data.trail.Enabled then
 			local part = pac.CreatePart("trail")
 				part:SetParent(base)
-				part.pac2_part = data	
+				part.pac2_part = data
 				part:SetName(data.name .. " trail")
 				part:SetBone(translate_bone(data.bone))
-				
+
 				part:SetPosition(data.offset*1)
 				part:SetAngles(data.angles*1)
 				--part:SetAngleVelocity(Angle(data.anglevelocity.p, -data.anglevelocity.r, data.anglevelocity.y)*0.5)
-				
+
 				part:SetStartSize(data.trail.startsize)
-				
+
 				part:SetStartColor(Vector(data.trail.color.r, data.trail.color.g, data.trail.color.b))
 				part:SetEndColor(Vector(data.trail.color.r, data.trail.color.g, data.trail.color.b))
-				
+
 				part:SetStartAlpha(data.trail.color.a/255)
 				part:SetEndAlpha(data.trail.color.a/255)
-				
+
 				part:SetSpacing(0)
-				
+
 				part:SetMaterial(data.trail.material)
-				part:SetLength(data.trail.length)		
-				if data.weaponclass and data.weaponclass ~= "" then  
+				part:SetLength(data.trail.length)
+				if data.weaponclass and data.weaponclass ~= "" then
 					local part_ = pac.CreatePart("event")
 					part_:SetName(part.Name .. " weapon class")
 					part_:SetParent(part)
@@ -170,9 +170,9 @@ function pac.ConvertPAC2Config(data, name)
 					part_:SetOperator("find simple")
 					part_:SetInvert(true)
 					part_:SetArguments(data.weaponclass .. "@@" .. (data.hideweaponclass and "1" or "0"))
-				end		
+				end
 		end
-			
+
 		if true or  data.color.a ~= 0 and data.size ~= 0 and data.scale ~= vector_origin or data.effect.Enabled then
 			local part = pac.CreatePart("model")
 				part:SetParent(base)
@@ -180,20 +180,20 @@ function pac.ConvertPAC2Config(data, name)
 				part:SetName(data.name .. " model")
 				part:SetBone(translate_bone(data.bone))
 				part:SetOriginFix(data.originfix)
-				
+
 				part:SetMaterial(data.material)
-				
+
 				part:SetColor(Vector(data.color.r, data.color.g, data.color.b))
 				part:SetAlpha(data.color.a / 255)
-				
+
 				part:SetModel(data.model)
 				part:SetSize(data.size)
 				part:SetScale(data.scale*1)
-				
+
 				part:SetPosition(data.offset*1)
 				part:SetAngles(data.angles*1)
 				--part:SetAngleVelocity(Angle(data.anglevelocity.p, -data.anglevelocity.r, data.anglevelocity.y)*0.5)
-				
+
 				part:SetInvert(data.mirrored)
 				part:SetFullbright(data.fullbright)
 				part:SetEyeAngles(data.eyeangles)
@@ -203,11 +203,11 @@ function pac.ConvertPAC2Config(data, name)
 					part2:SetName(data.name .. " effect")
 					part2:SetParent(part)
 					part2:SetBone(translate_bone(data.bone))
-										
+
 					part2:SetLoop(data.effect.loop)
 					part2:SetRate(data.effect.rate)
 					part2:SetEffect(data.effect.effect)
-					if data.weaponclass and data.weaponclass ~= "" then  
+					if data.weaponclass and data.weaponclass ~= "" then
 						local part_ = pac.CreatePart("event")
 						part_:SetName(part2.Name .. " weapon class")
 						part_:SetParent(part2)
@@ -216,23 +216,23 @@ function pac.ConvertPAC2Config(data, name)
 						part_:SetInvert(true)
 						part_:SetArguments(data.weaponclass .. "@@" .. (data.hideweaponclass and "1" or "0"))
 					end
-				end				
-								
+				end
+
 				if data.clip.Enabled then
 					local part2 = part:CreatePart("clip")
-						part2:SetName(data.name .. " clip")	
-						if data.clip.bone and data.clip.bone ~= "" then 
+						part2:SetName(data.name .. " clip")
+						if data.clip.bone and data.clip.bone ~= "" then
 							part2:SetBone(data.clip.bone)
 						end
 						part2:SetParent(part)
 						part2:SetPosition(data.clip.angles:Forward() * data.clip.distance)
 						part2:SetAngles(data.clip.angles*-1)
 				end
-				
+
 				if data.animation.Enabled then
-					local part2 = part:CreatePart("animation")		
+					local part2 = part:CreatePart("animation")
 						part2:SetParent(part)
-						part2:SetName(data.name .. " animation")				
+						part2:SetName(data.name .. " animation")
 						part2:SetSequenceName(data.animation.sequence)
 						part2:SetRate(data.animation.rate)
 						part2:SetMin(data.animation.min)
@@ -241,35 +241,35 @@ function pac.ConvertPAC2Config(data, name)
 						part2:SetPingPongLoop(data.animation.loopmode)
 					part:AddChild(part2)
 				end
-				
+
 				if data.modelbones.Enabled then
 					part:SetOverallSize(tonumber(data.modelbones.overallsize))
 					part:SetBoneMerge(data.modelbones.merge)
 					part.pac2_modelbone = data.modelbones.redirectparent
-					
+
 					for key, bone in pairs(data.modelbones.bones) do
 						bone.size = tonumber(bone.size)
-						if 
+						if
 							bone.scale == Vector(1,1,1) and
 							bone.angles == Vector(0,0,0) and
 							bone.offset == Vector(0,0,0) and
 							bone.size == 1
 						then continue end
-						
+
 						local part2 = pac.CreatePart("bone")
 							part2:SetName("model bone " .. part:GetName() .. " " .. key)
 							part2:SetParent(part)
 							part2:SetBone(part:GetEntity():GetBoneName(key))
-							
+
 							part2:SetScale(bone.scale*1)
 							part2:SetAngles(bone.angles*1)
 							part2:SetPosition(bone.offset*1)
-							
+
 							part2:SetSize(bone.size)
 					end
 				end
-				
-				if data.weaponclass and data.weaponclass ~= "" then 
+
+				if data.weaponclass and data.weaponclass ~= "" then
 					local part_ = pac.CreatePart("event")
 					part_:SetName(part.Name .. " weapon class")
 					part_:SetParent(part)
@@ -280,19 +280,19 @@ function pac.ConvertPAC2Config(data, name)
 				end
 		end
 	end
-	
+
 	local part = pac.CreatePart("entity")
 		part:SetParent(base)
 		part:SetName("player")
-		
+
 		part:SetColor(Vector(data.player_color.r, data.player_color.g, data.player_color.b))
 		part:SetAlpha(data.player_color.a/255)
 		part:SetMaterial(data.player_material)
 		part:SetScale(data.overall_scale*1)
 		part:SetDrawWeapon(data.drawwep)
-		
+
 	for bone, data in pairs(data.bones) do
-		local part_ = pac.CreatePart("bone")			
+		local part_ = pac.CreatePart("bone")
 			part_:SetParent(part)
 			part_:SetName(bone .. " bone")
 			part_:SetBone(translate_bone(bone))
@@ -301,7 +301,7 @@ function pac.ConvertPAC2Config(data, name)
 			part_:SetPosition(data.offset*1)
 			part_:SetAngles(data.angles*1)
 	end
-	
+
 	for key, part in pairs(pac.GetParts(true)) do
 		if part.pac2_part and part.pac2_part.parent and part.pac2_part.parent ~= "none" then
 			for key, parent in pairs(pac.GetParts(true)) do
@@ -314,9 +314,9 @@ function pac.ConvertPAC2Config(data, name)
 			end
 		end
 	end
-	
+
 	-- hacks
-	
+
 	for key, part in pairs(pac.GetParts(true)) do
 		part:SetParent(part:GetParent())
 	end
@@ -326,7 +326,7 @@ end
 
 local glon = {}
 
-do 	
+do
 	local decode_types
 	decode_types = {
 		-- \2\6omg\1\6omgavalue\1\1
@@ -506,8 +506,8 @@ do
 		elseif data:len() == 0 then
 			return nil
 		end
-		
-		
+
+
 		return Read(setmetatable({
 			s = data,
 			i = 0,
@@ -522,44 +522,44 @@ concommand.Add("pac_convert_pac2_outfits", function()
 		print("garrysmod/data/pac2_outfits/ does not exist")
 		return
 	end
-	
+
 	local folders = select(2, file.Find("pac2_outfits/*", "DATA"))
-	
+
 	if #folders == 0 then
 		print("garrysmod/data/pac2_outfits/ is empty")
 		return
 	end
-	
+
 	for _, uniqueid in ipairs(folders) do
 		local owner_nick = file.Read("pac2_outfits/" .. uniqueid .. "/__owner.txt", "DATA")
-		
+
 		if not owner_nick then
 			owner_nick = LocalPlayer():Nick()
 			print("garrysmod/data/pac2_outfits/" .. uniqueid .. "/__owner.txt does not exist (it contains the player nickname) defaulting to " .. owner_nick)
 		end
-		
+
 		local folders = select(2, file.Find("pac2_outfits/" .. uniqueid .. "/*", "DATA"))
-		
+
 		if #folders == 0 then
 			print("garrysmod/data/pac2_outfits/" .. uniqueid .. "/ is empty")
 			return
 		end
-		
+
 		for _, folder_name in ipairs(folders) do
 			local name = file.Read("pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "/name.txt", "DATA")
 			local data = file.Read("pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "/outfit.txt", "DATA")
-			
+
 			if not name then
 				print("garrysmod/data/pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "/name.txt does not exist. defaulting to: " .. folder_name)
 			end
-			
+
 			if data then
 				pace.ClearParts()
 				local ok, res = pcall(function() pac.ConvertPAC2Config(glon.decode(data), name) end)
 				if ok then
 					file.CreateDir("pac3/pac2_outfits/")
 					file.CreateDir("pac3/pac2_outfits/" .. uniqueid .. "/")
-					
+
 					pace.SaveParts("pac2_outfits/" .. uniqueid .. "/" .. folder_name)
 				else
 					print("garrysmod/data/pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "(" .. name .. ") failed to convert : " .. res)
@@ -569,9 +569,9 @@ concommand.Add("pac_convert_pac2_outfits", function()
 			end
 		end
 	end
-	
+
 	pace.ClearParts()
-	
+
 	print("pac2 outfits are stored under pac > load > pac2_outfits in the editor")
 	print("you may need to restart the editor to see them")
 end)
