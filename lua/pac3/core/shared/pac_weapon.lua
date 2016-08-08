@@ -5,7 +5,7 @@ SWEP.Author = "CapsAdmin"
 SWEP.Contact = ""
 SWEP.Purpose = ""
 SWEP.Instructions = ""
-SWEP.PrintName = "pac weapon"   
+SWEP.PrintName = "pac weapon"
 SWEP.DrawAmmo = false
 SWEP.DrawCrosshair = false
 SWEP.ViewModel = "models/weapons/v_pistol.mdl"
@@ -35,7 +35,7 @@ SWEP.Secondary.DefaultClip = 10
 SWEP.Secondary.Automatic = false
 SWEP.Secondary.Ammo = "pistol"
 
-function SWEP:OnDrop()   
+function SWEP:OnDrop()
 end
 
 function SWEP:GetViewModelPosition(pos, ang)
@@ -75,11 +75,11 @@ if CLIENT then
 				pac.GetSet(PART, key, val)
 			end
 		end
-		
+
 		for key, val in pairs(SWEP.Primary) do
 			pac.GetSet(PART, "Primary"..key, val)
 		end
-		
+
 		for key, val in pairs(SWEP.Secondary) do
 			pac.GetSet(PART, "Secondary"..key, val)
 		end

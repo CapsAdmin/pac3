@@ -1,4 +1,4 @@
-pace.BasicParts = 
+pace.BasicParts =
 {
 	model = true,
 	light = true,
@@ -6,7 +6,7 @@ pace.BasicParts =
 	bone = true,
 }
 
-pace.BasicProperties = 
+pace.BasicProperties =
 {
 	Position = true,
 	Model = true,

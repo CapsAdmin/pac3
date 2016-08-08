@@ -31,19 +31,19 @@ do
 		key = "_" .. key
 		key = key:gsub("ACT_MP_", "")
 		key = key :lower()
-		key = key:gsub("_(.)", function(char) 
-			return char:upper() 
+		key = key:gsub("_(.)", function(char)
+			return char:upper()
 		end)
-		
+
 		temp[key] = _G[act]
 	end
-	
+
 	-- ew
 	if temp.Crouchwalk then
 		temp.CrouchWalk = temp.Crouchwalk
 		temp.Crouchwalk = nil
 	end
-	
+
 	act_mods = temp
 end
 
@@ -53,7 +53,7 @@ pac.StartStorableVars()
 	for name in pairs(act_mods) do
 		pac.GetSet(PART, name, "")
 	end
-	
+
 	pac.GetSet(PART, "Fallback", "")
 	pac.GetSet(PART, "Noclip", "")
 	pac.GetSet(PART, "Air", "")
@@ -64,7 +64,7 @@ pac.EndStorableVars()
 for name, act in pairs(act_mods) do
 	PART["Set" .. name] = function(self, str)
 		self[name] = str
-		
+
 		if not self:IsHidden() then
 			self:UpdateActTable()
 		end
@@ -78,28 +78,28 @@ function PART:SetFallback(str)
 	end
 end
 
-function PART:UpdateActTable()	
+function PART:UpdateActTable()
 	local ent = self:GetOwner(true)
-	
+
 	if ent:IsValid() then
-	
+
 		ent.pac_holdtype_alternative_animation_rate = self.AlternativeRate
-		
+
 		ent.pac_holdtypes = ent.pac_holdtypes or {}
 		ent.pac_holdtypes[self] = ent.pac_holdtypes[self] or {}
-		
+
 		local acts = ent.pac_holdtypes[self]
-		
+
 		for name, act in pairs(act_mods) do
 			acts[act] = ent:GetSequenceActivity(ent:LookupSequence(self[name]))
 		end
-				
+
 		-- custom acts
 		acts.fallback = ent:GetSequenceActivity(ent:LookupSequence(self.Fallback))
 		acts.noclip = ent:GetSequenceActivity(ent:LookupSequence(self.Noclip))
 		acts.air = ent:GetSequenceActivity(ent:LookupSequence(self.Air))
 		acts.sitting = ent:GetSequenceActivity(ent:LookupSequence(self.Sitting))
-		
+
 		acts.part = self
 	end
 end
@@ -107,7 +107,7 @@ end
 function PART:GetSequenceList()
 	local ent = self:GetOwner()
 
-	if ent:IsValid() then	
+	if ent:IsValid() then
 		return ent:GetSequenceList()
 	end
 	return {"none"}
@@ -115,12 +115,12 @@ end
 
 function PART:OnHide()
 	local ent = self:GetOwner(true)
-	
+
 	if ent:IsValid() then
 		if ent.pac_holdtypes then
 			ent.pac_holdtypes[self] = nil
 		end
-		
+
 		ent.pac_holdtype_alternative_animation_rate = nil
 	end
 end

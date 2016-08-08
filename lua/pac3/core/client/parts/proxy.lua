@@ -10,7 +10,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "RootOwner", false)
 	pac.GetSet(PART, "Additive", false)
 	pac.GetSet(PART, "AffectChildren", false)
-	
+
 	pac.GetSet(PART, "Input", "time")
 	pac.GetSet(PART, "Function", "sin")
 	pac.GetSet(PART, "Offset", 0)
@@ -20,7 +20,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Max", 1)
 	pac.GetSet(PART, "Pow", 1)
 	pac.GetSet(PART, "Axis", "")
-	
+
 	pac.GetSet(PART, "PlayerAngles", false)
 	pac.GetSet(PART, "ZeroEyePitch", false)
 	pac.GetSet(PART, "ResetVelocitiesOnHide", true)
@@ -32,20 +32,20 @@ function PART:SetVariableName(str)
 	if str:lower() == str then
 		str = (str .. " "):gsub("(.-) ", function(str) return str:sub(1,1):upper() .. str:sub(2) end)
 	end
-	
+
 	self.VariableName = str
-	
+
 	self.set_key = "Set" .. str
 	self.get_key = "Get" .. str
 end
 
 function PART:GetParentEx()
 	local parent = self:GetTargetPart()
-	
+
 	if parent:IsValid() then
 		return parent
 	end
-	
+
 	return self:GetParent()
 end
 
@@ -78,7 +78,7 @@ local FrameTime = FrameTime
 function PART:CalcVelocity()
 	self.last_vel = self.last_vel or Vector()
 	self.last_vel_smooth = self.last_vel_smooth or self.last_vel or Vector()
-	
+
 	self.last_vel_smooth = (self.last_vel_smooth + (self.last_vel - self.last_vel_smooth) * FrameTime() * math.max(self.VelocityRoughness, 0.1))
 end
 
@@ -106,11 +106,11 @@ end
 
 function PART:CalcEyeAngles(ent)
 	local ang = self.PlayerAngles and ent:GetAngles() or ent:EyeAngles()
-	
+
 	if self.ZeroEyePitch then
 		ang.p = 0
 	end
-	
+
 	return ang
 end
 
@@ -123,24 +123,24 @@ PART.Inputs =
 	owner_position = function(s, p)
 		local owner = s:GetOwner(s.RootOwner)
 		owner = try_viewmodel(owner)
-		
+
 		if owner:IsValid() then
 			local pos = owner:GetPos()
-			
+
 			return pos.x, pos.y, pos.z
-		end		
-		
+		end
+
 		return 0,0,0
 	end,
 	owner_fov = function(s, p)
 		local owner = s:GetOwner(s.RootOwner)
-		
+
 		owner = try_viewmodel(owner)
 
 		if owner:IsValid() and owner.GetFOV then
 			return owner:GetFOV()
 		end
-		
+
 		return 0
 	end,
 	visible = function(s, p, radius)
@@ -154,38 +154,38 @@ PART.Inputs =
 	end,
 	timeex = function(s, p)
 		s.time = s.time or pac.RealTime
-		
+
 		return pac.RealTime - s.time
 	end,
 
 	eye_position_distance = function(self, parent)
 		local pos = parent.cached_pos
-		
+
 		if parent.NonPhysical then
 			local owner = parent:GetOwner(self.RootOwner)
 			if owner:IsValid() then
 				pos = owner:GetPos()
 			end
 		end
-		
+
 		return pos:Distance(pac.EyePos)
 	end,
 	eye_angle_distance = function(self, parent)
 		local pos = parent.cached_pos
-		
+
 		if parent.NonPhysical then
 			local owner = parent:GetOwner(self.RootOwner)
 			if owner:IsValid() then
 				pos = owner:GetPos()
 			end
 		end
-	
+
 		return math.Clamp(math.abs(pac.EyeAng:Forward():DotProduct((pos - pac.EyePos):GetNormalized())) - 0.5, 0, 1)
 	end,
 
 	aim_length = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
-		
+
 		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
@@ -198,7 +198,7 @@ PART.Inputs =
 	end,
 	aim_length_fraction = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
-		
+
 		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
@@ -212,7 +212,7 @@ PART.Inputs =
 
 	owner_eye_angle_pitch = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
-		
+
 		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
@@ -224,7 +224,7 @@ PART.Inputs =
 	end,
 	owner_eye_angle_yaw = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
-		
+
 		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
@@ -236,7 +236,7 @@ PART.Inputs =
 	end,
 	owner_eye_angle_roll = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
-		
+
 		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
@@ -250,7 +250,7 @@ PART.Inputs =
 	-- outfit owner
 	owner_velocity_length = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
-		
+
 		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
@@ -263,7 +263,7 @@ PART.Inputs =
 		local owner = self:GetOwner(self.RootOwner)
 
 		owner = try_viewmodel(owner)
-		
+
 		if owner:IsValid() then
 			return self:CalcEyeAngles(owner):Forward():Dot(self:GetVelocity(owner))
 		end
@@ -272,7 +272,7 @@ PART.Inputs =
 	end,
 	owner_velocity_right = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
-		
+
 		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
@@ -283,7 +283,7 @@ PART.Inputs =
 	end,
 	owner_velocity_up = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
-		
+
 		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
@@ -292,12 +292,12 @@ PART.Inputs =
 
 		return 0
 	end,
-	
+
 
 	-- outfit owner vel increase
 	owner_velocity_length_increase = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
-		
+
 		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
@@ -312,7 +312,7 @@ PART.Inputs =
 		local owner = self:GetOwner(self.RootOwner)
 
 		owner = try_viewmodel(owner)
-		
+
 		if owner:IsValid() then
 			local vel = self:CalcEyeAngles(owner):Forward():Dot(self:GetVelocity(owner))
 			self.ov_forward_i = (self.ov_forward_i or 0) + vel * FrameTime()
@@ -323,7 +323,7 @@ PART.Inputs =
 	end,
 	owner_velocity_right_increase = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
-		
+
 		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
@@ -336,7 +336,7 @@ PART.Inputs =
 	end,
 	owner_velocity_up_increase = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
-		
+
 		owner = try_viewmodel(owner)
 
 		if owner:IsValid() then
@@ -376,7 +376,7 @@ PART.Inputs =
 				parent = parent.Parent
 			until parent.cached_pos ~= vector_origin
 		end
-		
+
 		return parent.cached_ang:Right():Dot(self:GetVelocity(parent))
 	end,
 	parent_velocity_up = function(self, parent)
@@ -397,17 +397,17 @@ PART.Inputs =
 		if events then
 			for key, data in pairs(events) do
 				if pac.HandlePartName(ply, data.name) == self.Name then
-					
+
 					data.x = data.x or 0
 					data.y = data.y or 0
 					data.z = data.z or 0
-			
+
 					return data.x, data.y, data.z
 				end
 			end
 		end
 
-		return 0, 0, 0			
+		return 0, 0, 0
 	end,
 
 	voice_volume = function(self)
@@ -442,7 +442,7 @@ PART.Inputs =
 
 	owner_health = function(self)
 		local owner = self:GetPlayerOwner()
-		
+
 		if owner:IsValid() then
 			return owner:Health()
 		end
@@ -452,63 +452,63 @@ PART.Inputs =
 
 	owner_armor = function(self)
 		local owner = self:GetPlayerOwner()
-		
+
 		if owner:IsValid() then
 			return owner:Armor()
 		end
 
 		return 0
 	end,
-	
+
 	player_color_r = function(self)
-		local owner = self:GetPlayerOwner()		
-		
+		local owner = self:GetPlayerOwner()
+
 		if owner:IsValid() then
 			local vec = owner:GetPlayerColor()
-			
+
 			return vec.r
 		end
-		
+
 		return 1
 	end,
 	player_color_g = function(self)
 		local owner = self:GetPlayerOwner()
-		
+
 		if owner:IsValid() then
 			local vec = owner:GetPlayerColor()
-			
+
 			return vec.g
 		end
-		
-		return 1
-	end,	
-	player_color_b = function(self)
-		local owner = self:GetPlayerOwner()
-		
-		if owner:IsValid() then
-			local vec = owner:GetPlayerColor()
-			
-			return vec.b
-		end
-		
+
 		return 1
 	end,
-	
+	player_color_b = function(self)
+		local owner = self:GetPlayerOwner()
+
+		if owner:IsValid() then
+			local vec = owner:GetPlayerColor()
+
+			return vec.b
+		end
+
+		return 1
+	end,
+
 	hsv_to_color = function(self, parent, h, s, v)
 		h = tonumber(h) or 0
 		s = tonumber(s) or 1
 		v = tonumber(v) or 1
-		
+
 		local c = HSVToColor(h%360, s, v)
-		
+
 		return c.r, c.g, c.b
 	end,
-	
+
 	lerp = function(self, parent, m, a, b)
 		m = tonumber(m) or 0
 		a = tonumber(a) or -1
 		b = tonumber(b) or 1
-		
+
 		return (b - a) * m + a
 	end,
 }
@@ -516,11 +516,11 @@ PART.Inputs =
 usermessage.Hook("pac_proxy", function(umr)
 	local ply = umr:ReadEntity()
 	local str = umr:ReadString()
-	
+
 	local x = umr:ReadFloat()
 	local y = umr:ReadFloat()
 	local z = umr:ReadFloat()
-		
+
 	if ply:IsValid() then
 		ply.pac_proxy_events = ply.pac_proxy_events or {}
 		ply.pac_proxy_events[str] = {name = str, x = x, y = y, z = z}
@@ -551,11 +551,11 @@ function PART:SetExpression(str)
 
 	if str and str ~= "" then
 		local parent = self.Parent
-		
+
 		if not parent:IsValid() then return end
-		
+
 		local parentx = self.TargetPart
-		
+
 		if not parentx:IsValid() then
 			parentx = parent
 		end
@@ -581,7 +581,7 @@ end
 function PART:OnHide()
 	self.time = nil
 	self.vec_additive = Vector()
-	
+
 	if self.ResetVelocitiesOnHide then
 		self.last_vel = nil
 		self.last_pos = nil
@@ -594,17 +594,17 @@ function PART:OnShow()
 	self.vec_additive = Vector()
 end
 
-local function set(self, part, x, y, z, children)	
+local function set(self, part, x, y, z, children)
 	local T = type(part[self.VariableName])
 
 	if allowed[T] then
 		if T == "boolean" then
-		
+
 			x = x or part[self.VariableName] == true and 1 or 0
 			part[self.set_key](part, tonumber(x) > 0)
-			
+
 		elseif T == "number" then
-		
+
 			x = x or part[self.VariableName]
 			part[self.set_key](part, tonumber(x) or 0)
 
@@ -624,11 +624,11 @@ local function set(self, part, x, y, z, children)
 					val.z = z or val.z
 				end
 			end
-			
+
 			part[self.set_key](part, val)
 		end
-	end	
-	
+	end
+
 	if children then
 		for _, part in pairs(part:GetChildren()) do
 			set(self, part, x, y, z, true)
@@ -645,34 +645,34 @@ end
 
 function PART:OnThink()
 	local parent = self:GetParent()
-		
+
 	if not parent:IsValid() then return end
 
 	local parentx = self.TargetPart
 	self:CalcVelocity()
-	
+
 	local ExpressionFunc = self.ExpressionFunc
-	
+
 	if not ExpressionFunc then
 		self:SetExpression(self.Expression)
 		ExpressionFunc = self.ExpressionFunc
 	end
-	
+
 	if not parentx:IsValid() then
 		parentx = parent
 	end
-	
+
 	if ExpressionFunc then
-		
+
 		local ok, x,y,z = self:RunExpression(ExpressionFunc)
-		
+
 		if not ok then
 			if self:GetPlayerOwner() == pac.LocalPlayer then
 				chat.AddText("pac proxy error on " .. tostring(self) .. ": " .. x .. "\n")
 			end
 			return
 		end
-		
+
 		if self.Additive then
 			if x then
 				self.vec_additive[1] = (self.vec_additive[1] or 0) + x
@@ -688,8 +688,8 @@ function PART:OnThink()
 				self.vec_additive[3] = (self.vec_additive[3] or 0) + z
 				z = self.vec_additive[3]
 			end
-		end	
-		
+		end
+
 		if self.AffectChildren then
 			for _, part in pairs(self:GetChildren()) do
 				set(self, part, x, y, z, true)
@@ -697,15 +697,15 @@ function PART:OnThink()
 		else
 			set(self, parent, x, y, z)
 		end
-		
+
 		if pace and pace.IsActive() then
-			
+
 			local str = ""
-			
+
 			if x then str = str .. math.Round(x, 3) end
 			if y then str = str .. ", " .. math.Round(y, 3) end
 			if z then str = str .. ", " .. math.Round(z, 3) end
-			
+
 			self.debug_var = str
 		end
 	else
@@ -720,7 +720,7 @@ function PART:OnThink()
 				self.vec_additive[1] = (self.vec_additive[1] or 0) + num
 				num = self.vec_additive[1]
 			end
-			
+
 			if self.AffectChildren then
 				for _, part in pairs(self:GetChildren()) do
 					set(self, part, x, nil, nil, true)
@@ -728,13 +728,13 @@ function PART:OnThink()
 			else
 				set(self, parent, num)
 			end
-		
+
 			if pace and pace.IsActive() then
 				self.debug_var = math.Round(num, 3)
 			end
 		end
 	end
-	
+
 end
 
 pac.RegisterPart(PART)

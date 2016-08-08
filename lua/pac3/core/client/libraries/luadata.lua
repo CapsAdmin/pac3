@@ -32,8 +32,8 @@ do
 		ErrorNoHalt"LUADATA SECURITY WARNING: Unable to load verifier, update me!\n"
 		opcode_checker = function() return function() return true end end
 	else
-		
-		
+
+
 		local jutil = jit.util or require'jit.util'
 		local band =  bit.band
 
@@ -66,41 +66,41 @@ do
 
 
 		opcode_checker = function(white)
-			
+
 			local opwhite = {}
 			for i=0,#opcodes do table.insert(opwhite, false) end
-			
-			
+
+
 			local function iswhitelisted(opnum)
 				local ret = opwhite[opnum]
 				if ret == nil then
 					error("opcode not found " .. opnum)
 				end
-			
+
 				return ret
 			end
-			
+
 			local function add_whitelist(num)
 				if opwhite[num] == nil then
 					error "invalid opcode num"
 				end
-			
+
 				opwhite[num] = true
 			end
-			
+
 			for line in white:gmatch '[^\r\n]+' do
-				
+
 				local opstr_towhite = line:match '[%w]+'
-				
+
 				if opstr_towhite and opstr_towhite:len() > 0 then
 					local whiteopnum = getopnum(opstr_towhite)
 					add_whitelist(whiteopnum)
 					assert(iswhitelisted(whiteopnum))
 				end
-			
+
 			end
-			
-			
+
+
 			local function checker_function(func,max_opcodes)
 				max_opcodes = max_opcodes or math.huge
 				for i = 1, max_opcodes do
@@ -108,7 +108,7 @@ do
 					if not ret then
 						return true
 					end
-				
+
 					if not iswhitelisted(ret) then
 						--error("non-whitelisted: " .. )
 						return false,"non-whitelisted: "..opcodes[ret]
@@ -156,7 +156,7 @@ local is_func_ok = opcode_checker(whitelist)
 
 
 
-local luadata = {} 
+local luadata = {}
 local s = luadata
 luadata.is_func_ok = is_func_ok
 
@@ -280,13 +280,13 @@ local env = {
 -- TODO: Bytecode analysis for bad loop and string functions?
 function luadata.Decode(str,nojail)
 	local func = CompileString(string.format("return { %s }",str), "luadata_decode", false)
-	
+
 	if type(func) == "string" then
 		--ErrorNoHalt("Luadata decode syntax: "..tostring(func):gsub("^luadata_decode","")..'\n')
-		
+
 		return nil,func
 	end
-	
+
 	if not nojail then
 		setfenv(func,env)
 	elseif istable(nojail) then
@@ -294,28 +294,28 @@ function luadata.Decode(str,nojail)
 	elseif isfunction(nojail) then
 		nojail( func )
 	end
-	
-	
+
+
 	local ok,err = is_func_ok( func )
 	if not ok or err then
 		err = err or "invalid opcodes detected"
 		--ErrorNoHalt("Luadata opcode: "..tostring(err):gsub("^luadata_decode","")..'\n')
-		
+
 		return nil,err
 	end
-	
+
 	local ok, err = xpcall(func,debug.traceback)
-	
-	if not ok then		
+
+	if not ok then
 		--ErrorNoHalt("Luadata decode: "..tostring(err):gsub("^luadata_decode","")..'\n')
-		
+
 		return nil,err
 	end
-	
+
 	if isfunction(nojail) then
 		nojail( func, err )
 	end
-	
+
 	return err
 end
 
@@ -336,9 +336,9 @@ do -- file extension
 
 	function luadata.ReadFile(path,location,noinvalid)
 		local file = file.Read(path,location or 'DATA')
-		if not file then 
+		if not file then
 			if noinvalid then return end
-			return false,"invalid file" 
+			return false,"invalid file"
 		end
 		return luadata.Decode(file)
 	end

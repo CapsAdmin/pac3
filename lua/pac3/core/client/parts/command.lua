@@ -24,7 +24,7 @@ end
 function PART:SetString(str)
 	if self.UseLua and self:GetPlayerOwner() == pac.LocalPlayer then
 		self.func = CompileString(str, "pac_event")
-	end	
+	end
 	self.String = str
 end
 

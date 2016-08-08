@@ -1463,7 +1463,7 @@ local function create_search_list(property, key, name, add_columns, get_list, ge
 	list.OnRowSelected = function(_, id, line) 
 		local val = select_value(line.list_val, line.list_key)
 		
-		if property then
+		if property and property:IsValid() then
 			property:SetValue(val)
 			property.OnValueChanged(val)
 		else

@@ -22,14 +22,14 @@ do -- button event
 	util.AddNetworkString("pac.net.AllowPlayerButtons")
 	net.Receive("pac.net.AllowPlayerButtons", function(length, client)
 		local key = net.ReadUInt(8)
-		
+
 		client.pac_broadcast_buttons = client.pac_broadcast_buttons or {}
 		client.pac_broadcast_buttons[key] = true
 	end)
-	
+
 	util.AddNetworkString("pac.net.BroadcastPlayerButton")
 	local function broadcast_key(ply, key, down)
-		if ply.pac_broadcast_buttons and ply.pac_broadcast_buttons[key] then			
+		if ply.pac_broadcast_buttons and ply.pac_broadcast_buttons[key] then
 			net.Start("pac.net.BroadcastPlayerButton")
 			net.WriteEntity(ply)
 			net.WriteUInt(key, 8)
@@ -37,11 +37,11 @@ do -- button event
 			net.Broadcast()
 		end
 	end
-	
+
 	hook.Add("PlayerButtonDown", "pac_event", function(ply, key)
 		broadcast_key(ply, key, true)
 	end)
-	
+
 	hook.Add("PlayerButtonUp", "pac_event", function(ply, key)
 		broadcast_key(ply, key, false)
 	end)

@@ -11,48 +11,48 @@ function pace.SaveParts(name, prompt_name, override_part)
 			function(name)
 				pace.LastSaveName = name
 				pace.SaveParts(name, nil, override_part)
-				
+
 				pace.RefreshFiles()
 			end
 		)
 	else
 		pac.dprint("saving parts %s", name)
-		
+
 		local data = {}
-		
+
 		if pace.use_current_part_for_saveload and pace.current_part:IsValid() then
 			override_part = pace.current_part
 		end
-				
+
 		if override_part then
 			data = override_part:ToTable()
-		else		
+		else
 			for key, part in pairs(pac.GetParts(true)) do
 				if not part:HasParent() then
 					table.insert(data, part:ToTable())
 				end
 			end
 		end
-		
+
 		data = hook.Run("pac_pace.SaveParts",data) or data
-				
+
 		file.CreateDir("pac3")
 		file.CreateDir("pac3/__backup/")
-		
-		
+
+
 		if not override_part and #file.Find("pac3/sessions/*", "DATA") > 0 and not name:find("/") then
 			pac.luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
 		else
 			pac.luadata.WriteFile("pac3/" .. name .. ".txt", data)
 		end
-		
+
 		pace.Backup(data, name)
 	end
 end
 
 function pace.Backup(data, name)
 	name = name or ""
-	
+
 	if not data then
 		data = {}
 		for key, part in pairs(pac.GetParts(true)) do
@@ -61,11 +61,11 @@ function pace.Backup(data, name)
 			end
 		end
 	end
-	
+
 	if #data > 0 then
-		
+
 		local files, folders = file.Find("pac3/__backup/*", "DATA")
-		--local newest_time,newest_name	
+		--local newest_time,newest_name
 		if #files > 200 then
 			chat.AddText("PAC3 is trying to delete backup files (new system) but you have way too many for lua to delete because of the old system")
 			chat.AddText(
@@ -78,16 +78,16 @@ function pace.Backup(data, name)
 				local time = file.Time("pac3/__backup/" .. name, "DATA")
 				table.insert(temp, {path = "pac3/__backup/" .. name, time = time})
 			end
-			
+
 			table.sort(temp, function(a, b)
 				return a.time > b.time
 			end)
-			
+
 			for i = 100, #files do
 				file.Delete(temp[i].path, "DATA")
 			end
 		end
-		
+
 		--if not newest_name then
 		--	for key, name in pairs(files) do
 		--		local time = file.Time("pac3/__backup/" .. name, "DATA")
@@ -97,7 +97,7 @@ function pace.Backup(data, name)
 		--		end
 		--	end
 		--end
-		
+
 		local date = os.date("%y-%m-%d-%H_%M_%S")
 		pac.luadata.WriteFile("pac3/__backup/" .. (name=="" and name or (name..'_')) .. date .. ".txt", data)
 	end
@@ -108,23 +108,23 @@ function pace.LoadParts(name, clear, override_part)
 		local frm = vgui.Create("DFrame")
 		frm:SetTitle(L"parts")
 		local pnl = pace.CreatePanel("browser", frm)
-		
+
 		pnl.OnLoad = function(node)
 			pace.LoadParts(node.FileName, clear, override_part)
 		end
-		
+
 		if #file.Find("pac3/sessions/*", "DATA") > 0 then
 			pnl:SetDir("sessions/")
 		else
 			pnl:SetDir("")
 		end
-			
+
 		pnl:Dock(FILL)
-		
+
 		frm:SetSize(300, 500)
 		frm:MakePopup()
 		frm:Center()
-				
+
 		local btn = vgui.Create("DButton", frm)
 		btn:Dock(BOTTOM)
 		btn:SetText(L"load from url")
@@ -138,12 +138,12 @@ function pace.LoadParts(name, clear, override_part)
 				end
 			)
 		end
-		
+
 	else
 		pac.dprint("loading Parts %s",  name)
-		
-		if name:find("https?://") then	
-			
+
+		if name:find("https?://") then
+
 			name = pac.FixupURL(name)
 
 			local function callback(str)
@@ -154,13 +154,13 @@ function pace.LoadParts(name, clear, override_part)
 				end
 				pace.LoadPartsFromTable(data, clear, override_part)
 			end
-			
-			pac.SimpleFetch(name, callback)		
+
+			pac.SimpleFetch(name, callback)
 		else
 			name = name:gsub("%.txt", "")
-		
+
 			local data,err = pac.luadata.ReadFile("pac3/" .. name .. ".txt")
-						
+
 			if name == "autoload" and (not data or not next(data)) then
 				local err
 				data,err = pac.luadata.ReadFile("pac3/sessions/" .. name .. ".txt",nil,true)
@@ -174,14 +174,14 @@ function pace.LoadParts(name, clear, override_part)
 				ErrorNoHalt(("Decoding %s failed: %s\n"):format(name,err))
 				return
 			end
-			
+
 			pace.LoadPartsFromTable(data, clear, override_part)
 		end
 	end
 end
 
 function pace.LoadPartsFromTable(data, clear, override_part)
-			
+
 	--timer.Simple(0.1, function()
 		if pace.use_current_part_for_saveload and pace.current_part:IsValid() then
 			override_part = pace.current_part
@@ -190,27 +190,27 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 		if clear then
 			pace.ClearParts()
 		end
-	
-		if data.self then			
+
+		if data.self then
 			local part = override_part or pac.CreatePart(data.self.ClassName)
 			part:SetTable(data)
-		else			
+		else
 			data = pace.FixBadGrouping(data)
 			data = pace.FixUniqueIDs(data)
-		
+
 			for key, tbl in pairs(data) do
 				local part = pac.CreatePart(tbl.self.ClassName)
 				part:SetTable(tbl, true)
 			end
 		end
-		
+
 		pace.RefreshTree(true)
 --	end)
 end
 
 local function add_files(tbl, dir)
 	local files, folders = file.Find("pac3/" .. dir .. "/*", "DATA")
-			
+
 	if folders then
 		for key, folder in pairs(folders) do
 			if folder == "__backup" then continue end
@@ -219,12 +219,12 @@ local function add_files(tbl, dir)
 			add_files(tbl[folder], dir .. "/" .. folder)
 		end
 	end
-	
+
 	if files then
 		for i, name in pairs(files) do
 			if name:find("%.txt") then
 				local path = "pac3/" .. dir .. "/" .. name
-				
+
 				if file.Exists(path, "DATA") then
 					local data = {}
 						data.Name = name:gsub("%.txt", "")
@@ -235,28 +235,28 @@ local function add_files(tbl, dir)
 						data.Time = file.Time(path, "DATA")
 						data.Path = path
 						data.RelativePath = (dir .. "/" .. data.Name):sub(2)
-					
+
 					local dat,err=pac.luadata.ReadFile(path)
 						data.Content = dat
-						
+
 					if dat then
 						table.insert(tbl, data)
 					else
 						ErrorNoHalt(("Decoding %s failed: %s\n"):format(path,err))
 					end
-						
+
 				end
 			end
 		end
 	end
-	
-	table.sort(tbl, function(a,b) 
-		if a.Time and b.Time then 
+
+	table.sort(tbl, function(a,b)
+		if a.Time and b.Time then
 			return a.Name < b.Name
 		end
-		
+
 		return true
-	end)	
+	end)
 end
 
 function pace.GetSavedParts(dir)
@@ -265,21 +265,21 @@ function pace.GetSavedParts(dir)
 	end
 
 	local out = {}
-	
+
 	add_files(out, dir or "")
-		
+
 	pace.CachedFiles = out
-		
+
 	return out
 end
 
 local function populate_part(menu, part, override_part, clear)
 	local name = part.self.Name or ""
-	
+
 	if name == "" then
 		name = part.self.ClassName .. " (no name)"
 	end
-	
+
 	if #part.children > 0 then
 		local menu, pnl = menu:AddSubMenu(name, function() pace.LoadPartsFromTable(part, nil, override_part) end)
 		pnl:SetImage(pace.GetIconFromClassName(part.self.ClassName))
@@ -292,12 +292,12 @@ local function populate_part(menu, part, override_part, clear)
 				end
 				menu.pac_opened = true
 			end
-			
+
 			return old(...)
-		end		
+		end
 	else
-		menu:AddOption(name, function() 
-			pace.LoadPartsFromTable(part, clear, override_part) 
+		menu:AddOption(name, function()
+			pace.LoadPartsFromTable(part, clear, override_part)
 		end):SetImage(pace.GetIconFromClassName(part.self.ClassName))
 	end
 end
@@ -314,24 +314,24 @@ local function populate_parts(menu, tbl, override_part, clear)
 					populate_parts(menu, data, override_part, clear)
 					menu.pac_opened = true
 				end
-				
+
 				return old(...)
 			end
 		else
 			local icon = pace.MiscIcons.outfit
 			local parts = data.Content
-			
+
 			if parts.self then
 				icon = pace.GetIconFromClassName(parts.self.ClassName)
 				parts = {parts}
 			end
-			
-			local outfit, pnl = menu:AddSubMenu(data.Name, function() 
-				pace.LoadParts(data.RelativePath, clear, override_part) 
+
+			local outfit, pnl = menu:AddSubMenu(data.Name, function()
+				pace.LoadParts(data.RelativePath, clear, override_part)
 			end)
 			pnl:SetImage(icon)
 			outfit.GetDeleteSelf = function() return false end
-			
+
 			local old = outfit.Open
 			outfit.Open = function(...)
 				if not outfit.pac_opened then
@@ -340,16 +340,16 @@ local function populate_parts(menu, tbl, override_part, clear)
 					end
 					outfit.pac_opened = true
 				end
-				
+
 				return old(...)
-			end			
+			end
 		end
 	end
 end
 
 function pace.AddSavedPartsToMenu(menu, clear, override_part)
 	menu.GetDeleteSelf = function() return false end
-	
+
 	menu:AddOption(L"load from url", function()
 		Derma_StringRequest(
 			L"load parts",
@@ -361,22 +361,22 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 			end
 		)
 	end):SetImage(pace.MiscIcons.url)
-	
+
 	if not override_part and pace.example_outfits then
 		local examples, pnl = menu:AddSubMenu(L"examples")
 		pnl:SetImage(pace.MiscIcons.help)
 		examples.GetDeleteSelf = function() return false end
-		
+
 		local sorted = {}
 		for k,v in pairs(pace.example_outfits) do sorted[#sorted + 1] = {k = k, v = v} end
 		table.sort(sorted, function(a, b) return a.k < b.k end)
-		
+
 		for _, data in pairs(sorted) do
 			examples:AddOption(data.k, function() pace.LoadPartsFromTable(data.v) end)
 			:SetImage(pace.MiscIcons.outfit)
 		end
-	end	
-	
+	end
+
 	local backups, pnl = menu:AddSubMenu(L"backups")
 	pnl:SetImage(pace.MiscIcons.clone)
 	backups.GetDeleteSelf = function() return false end
@@ -390,9 +390,9 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 		backups:AddOption(friendly_name, function() pace.LoadParts("__backup/" .. name, true) end)
 		:SetImage(pace.MiscIcons.outfit)
 	end
-	
+
 	menu:AddSpacer()
-	
+
 	local tbl = pace.GetSavedParts()
 	populate_parts(menu, tbl, override_part, clear)
 end
@@ -402,15 +402,15 @@ local function populate_parts(menu, tbl, dir, override_part)
 	menu:AddOption(L"new file", function() pace.SaveParts(nil, dir .. "/", override_part) end)
 	:SetImage(pace.MiscIcons.new)
 	menu:AddSpacer()
-	for key, data in pairs(tbl) do	
+	for key, data in pairs(tbl) do
 		if not data.Path then
 			local menu, pnl = menu:AddSubMenu(key, function()end, data)
 			pnl:SetImage(pace.MiscIcons.load)
 			menu.GetDeleteSelf = function() return false end
 			populate_parts(menu, data, dir .. "/" .. key, override_part)
-		else			
+		else
 			local parts = data.Content
-			
+
 			if parts[1] then
 				local pnl = menu:AddOption(data.Name, function() pace.SaveParts(nil, data.RelativePath, override_part) end)
 				pnl:SetImage(pace.MiscIcons.outfit)
@@ -424,16 +424,16 @@ end
 
 function pace.AddSaveMenuToMenu(menu, override_part)
 	menu.GetDeleteSelf = function() return false end
-	
-	if not override_part then 
-		menu:AddOption(L"auto load (your spawn outfit)", function() 
-			pace.SaveParts("autoload", nil, override_part) 
+
+	if not override_part then
+		menu:AddOption(L"auto load (your spawn outfit)", function()
+			pace.SaveParts("autoload", nil, override_part)
 			pace.RefreshFiles()
 		end)
 		:SetImage(pace.MiscIcons.autoload)
 		menu:AddSpacer()
-	end	
-	
+	end
+
 	local tbl = pace.GetSavedParts()
 	populate_parts(menu, tbl, nil, override_part)
 end
@@ -441,21 +441,21 @@ end
 -- this fixes parts that are using the same uniqueid as other parts because of some bugs in older versions
 function pace.FixUniqueIDs(data)
 	local ids = {}
-	
+
 	local function iterate(part)
 		ids[part.self.UniqueID] = ids[part.self.UniqueID] or {}
-		
+
 		table.insert(ids[part.self.UniqueID], part)
-		
+
 		for key, part in pairs(part.children) do
 			iterate(part)
 		end
 	end
-	
+
 	for key, part in pairs(data) do
 		iterate(part)
 	end
-	
+
 	for key, val in pairs(ids) do
 		if #val > 1 then
 			for key, part in pairs(val) do
@@ -464,7 +464,7 @@ function pace.FixUniqueIDs(data)
 			end
 		end
 	end
-	
+
 	return data
 end
 
@@ -473,7 +473,7 @@ end
 function pace.FixBadGrouping(data)
 	local parts = {}
 	local other = {}
-	
+
 	for key, part in pairs(data) do
 		if part.self.ClassName ~= "group" then
 			table.insert(parts, part)
@@ -481,28 +481,28 @@ function pace.FixBadGrouping(data)
 			table.insert(other, part)
 		end
 	end
-	
+
 	if #parts > 0 then
 		local out = {
-			{		
+			{
 				["self"] = {
 					["EditorExpand"] = true,
 					["ClassName"] = "group",
 					["UniqueID"] = util.CRC(tostring(data)),
 					["Name"] = "automatic group",
-					["Description"] = "Please put your parts in groups!",				
+					["Description"] = "Please put your parts in groups!",
 				},
-				
+
 				["children"] = parts,
 			},
 		}
-		
+
 		for k,v in pairs(other) do
 			table.insert(out, v)
 		end
-		
+
 		return out
 	end
-	
+
 	return data
 end

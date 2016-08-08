@@ -36,7 +36,7 @@ include("net_messages.lua")
 include("pac2_compat.lua")
 
 
-do 
+do
 	local hue =
 	{
 		"red",
@@ -46,7 +46,7 @@ do
 		"turquoise",
 		"blue",
 		"purple",
-		"magenta",	
+		"magenta",
 	}
 
 	local sat =
@@ -64,7 +64,7 @@ do
 	}
 
 	function pace.HSVToNames(h,s,v)
-		return 
+		return
 			hue[math.Round((1+(h/360)*#hue))] or hue[1],
 			sat[math.ceil(s*#sat)] or sat[1],
 			val[math.ceil(v*#val)] or val[1]
@@ -75,7 +75,7 @@ do
 		if c.r == 0 and c.g == 0 and c.b == 0 then return "black", "", "bright" end
 		return pace.HSVToNames(ColorToHSV(Color(c.r, c.g, c.b)))
 	end
-		
+
 end
 
 do -- hook helpers
@@ -83,17 +83,17 @@ do -- hook helpers
 
 	function pace.AddHook(str, func)
 		func = func or pace[str]
-		
+
 		local id = "pace_" .. str
-		
+
 		hook.Add(str, id, func)
-		
+
 		added_hooks[str] = {func = func, event = str, id = id}
 	end
 
 	function pace.RemoveHook(str)
 		local data = added_hooks[str]
-		
+
 		if data then
 			hook.Remove(data.event, data.id)
 		end
@@ -102,7 +102,7 @@ do -- hook helpers
 	function pace.CallHook(str, ...)
 		return hook.Call("pace_" .. str, GAMEMODE, ...)
 	end
-	
+
 	pace.added_hooks = added_hooks
 end
 
@@ -111,34 +111,34 @@ pace.Editor = NULL
 
 function pace.OpenEditor()
 	pace.CloseEditor()
-	
+
 	if hook.Call("PrePACEditorOpen", GAMEMODE, LocalPlayer()) == false then return end
-	
+
 	pac.Enable()
-	
+
 	pace.RefreshFiles()
-	
+
 	pace.SetLanguage()
-	
+
 	local editor = pace.CreatePanel("editor")
 		editor:SetSize(240, ScrH())
 		editor:MakePopup()
-		editor.Close = function() 
+		editor.Close = function()
 			editor:OnRemove()
 			pace.CloseEditor()
 		end
 	pace.Editor = editor
 	pace.Active = true
-	
+
 	if ctp and ctp.Disable then
 		ctp:Disable()
 	end
-	
+
 	RunConsoleCommand("pac_in_editor", "1")
 	pace.SetInPAC3Editor(true)
-	
+
 	pace.DisableExternalHooks()
-	
+
 	pace.Call("OpenEditor")
 end
 
@@ -147,11 +147,11 @@ function pace.CloseEditor()
 
 	if pace.Editor:IsValid() then
 		pace.Editor:OnRemove()
-		pace.Editor:Remove() 
+		pace.Editor:Remove()
 		pace.Active = false
-		pace.Call("CloseEditor") 
+		pace.Call("CloseEditor")
 	end
-	
+
 	RunConsoleCommand("pac_in_editor", "0")
 	pace.SetInPAC3Editor(false)
 end
@@ -166,7 +166,7 @@ function pace.RefreshFiles()
 	if pace.Editor:IsValid() then
 		pace.Editor:MakeBar()
 	end
-			
+
 	if pace.SpawnlistBrowser:IsValid() then
 		pace.SpawnlistBrowser:PopulateFromClient()
 	end
@@ -184,7 +184,7 @@ function pace.Panic()
 end
 
 do -- forcing hooks
-	pace.ExternalHooks = 
+	pace.ExternalHooks =
 	{
 		"CalcView",
 		"ShouldDrawLocalPlayer",
@@ -218,7 +218,7 @@ do -- forcing hooks
 				end
 			end
 		end
-		
+
 		pace.OldHooks = nil
 	end
 end
@@ -246,7 +246,7 @@ function pace.Call(str, ...)
 	end
 end
 
-hook.Add("HUDPaint", "pac_InPAC3Editor", function()		
+hook.Add("HUDPaint", "pac_InPAC3Editor", function()
 	for key, ply in pairs(player.GetAll()) do
 		if ply ~= LocalPlayer() and ply.InPAC3Editor then
 			local id = ply:LookupBone("ValveBiped.Bip01_Head1")
