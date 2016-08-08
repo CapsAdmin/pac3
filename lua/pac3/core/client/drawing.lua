@@ -52,6 +52,8 @@ local render_SetColorModulation = render.SetColorModulation
 local render_SetBlend = render.SetBlend
 local render_ModelMaterialOverride = render.ModelMaterialOverride
 local render_MaterialOverride = render.MaterialOverride
+local render_CullMode = render.CullMode
+local render_SuppressEngineLighting = render.SuppressEngineLighting
 local collectgarbage = collectgarbage
 local SysTime = SysTime
 local util_TimerCycle = util.TimerCycle
@@ -430,23 +432,45 @@ function pac.PostDrawOpaqueRenderables(drawdepth,drawing_skybox)
 					continue
 				end
 
-				-- :(
-				if ent.pac_death_hide_ragdoll then
-					local ply = ent
-					local ent = ply.pac_ragdoll or NULL
-					if ent:IsValid() then
-						ent:SetRenderMode(RENDERMODE_TRANSALPHA)
-						local c = ent:GetColor()
+				local rag = ent.pac_ragdoll or NULL
+				if rag:IsValid() then
+					if ent.pac_death_hide_ragdoll then
+						rag:SetRenderMode(RENDERMODE_TRANSALPHA)
+						local c = rag:GetColor()
 						c.a = 0
-						ent:SetColor(c)
-						ent:SetNoDraw(true)
-						if ent:GetParent() ~= ply then
-							ent:SetParent(ply)
-							ent:AddEffects(EF_BONEMERGE)
+						rag:SetColor(c)
+						rag:SetNoDraw(true)
+						if rag:GetParent() ~= ply then
+							rag:SetParent(ply)
+							rag:AddEffects(EF_BONEMERGE)
 						end
-
-						if ply.pac_draw_player_on_death then
-							ply:DrawModel()
+						
+						if ent.pac_draw_player_on_death then
+							ent:DrawModel()
+						end
+					elseif ent.pac_death_ragdollize then
+						rag:SetNoDraw(true)
+						
+						if not ent.pac_hide_entity then
+							local col = ent.pac_color
+							local bri = ent.pac_brightness
+							
+							render_ModelMaterialOverride(ent.pac_materialm)
+							render_SetColorModulation(col.x * bri, col.y * bri, col.z * bri)
+							render_SetBlend(ent.pac_alpha)
+							
+							if ent.pac_invert then render_CullMode(1) end
+							if ent.pac_fullbright then render_SuppressEngineLighting(true) end
+							
+							rag:DrawModel()
+							rag:CreateShadow()
+							
+							render_ModelMaterialOverride()
+							render_SetColorModulation(1,1,1)
+							render_SetBlend(1)
+							
+							render_CullMode(0)
+							render_SuppressEngineLighting(false)
 						end
 					end
 				end

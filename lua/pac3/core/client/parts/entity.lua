@@ -390,6 +390,16 @@ function PART:OnThink()
 		if self.HideEntity or self.Weapon and self.current_ro ~= ent.RenderOverride then
 			self:OnShow()
 		end
+		
+		ent.pac_material = self.Material
+		ent.pac_materialm = self.Materialm
+		ent.pac_color = self.Colorf
+		ent.pac_alpha = self.Alpha
+		ent.pac_brightness = self.Brightness
+		
+		ent.pac_hide_entity = self.HideEntity
+		ent.pac_fullbright = self.Fullbright
+		ent.pac_invert = self.Invert
 	end
 end
 
@@ -403,6 +413,16 @@ function PART:OnHide()
 
 		ent.RenderOverride = nil
 		ent:SetColor(Color(255, 255, 255, 255))
+		
+		ent.pac_material = nil
+		ent.pac_materialm = nil
+		ent.pac_color = nil
+		ent.pac_alpha = nil
+		ent.pac_brightness = nil
+		
+		ent.pac_hide_entity = nil
+		ent.pac_fullbright = nil
+		ent.pac_invert = nil
 
 		for key in pairs(self.ent_fields) do
 			ent[key] = nil
