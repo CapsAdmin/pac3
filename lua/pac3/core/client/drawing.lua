@@ -566,5 +566,11 @@ function pac.PostDrawViewModel()
 		end
 	end
 end
-
 pac.AddHook("PostDrawViewModel")
+
+function pac.DrawPhysgunBeam(ent)
+	if ent.pac_hide_physgun_beam then
+		return false
+	end
+end
+pac.AddHook("DrawPhysgunBeam")
