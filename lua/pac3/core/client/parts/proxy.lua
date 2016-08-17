@@ -667,8 +667,9 @@ function PART:OnThink()
 		local ok, x,y,z = self:RunExpression(ExpressionFunc)
 
 		if not ok then
-			if self:GetPlayerOwner() == pac.LocalPlayer then
-				chat.AddText("pac proxy error on " .. tostring(self) .. ": " .. x .. "\n")
+			if self:GetPlayerOwner() == pac.LocalPlayer and self.Expression != self.LastBadExpression then
+				chat.AddText(Color(255,180,180),"============\n[ERR] PAC Proxy error on "..tostring(self)..":\n"..x.."\n============\n")
+				self.LastBadExpression = self.Expression
 			end
 			return
 		end
