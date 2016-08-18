@@ -511,6 +511,42 @@ PART.Inputs =
 
 		return (b - a) * m + a
 	end,
+	
+	weapon_color_r = function(self)
+		local owner = self:GetPlayerOwner()
+		
+		if owner:IsValid() then
+			local vec = owner:GetWeaponColor()
+			
+			return vec.r
+		end
+		
+		return 1
+	end,
+	
+	weapon_color_g = function(self)
+		local owner = self:GetPlayerOwner()
+		
+		if owner:IsValid() then
+			local vec = owner:GetWeaponColor()
+			
+			return vec.g
+		end
+		
+		return 1
+	end, 
+	
+	weapon_color_b = function(self)
+		local owner = self:GetPlayerOwner()
+		
+		if owner:IsValid() then
+			local vec = owner:GetWeaponColor()
+			
+			return vec.b 
+		end 
+		
+		return 1 
+	end, 
 }
 
 usermessage.Hook("pac_proxy", function(umr)
