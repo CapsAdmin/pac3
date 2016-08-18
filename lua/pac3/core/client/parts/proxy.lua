@@ -417,27 +417,33 @@ PART.Inputs =
 	end,
 
 	light_amount_r = function(self, parent)
-		parent = parent.Parent
-
+		parent = self.TargetPart:IsValid() and self.TargetPart or parent
+		
 		if parent:IsValid() then
-			return render.GetAmbientLightColor(parent.cached_pos) * render.GetLightColor(parent.cached_pos).r
+			return render.GetAmbientLightColor(parent.cached_pos).r * render.GetLightColor(parent.cached_pos).r
 		end
+		
+		return 0
 	end,
 
 	light_amount_g = function(self, parent)
-		parent = parent.Parent
-
+		parent = self.TargetPart:IsValid() and self.TargetPart or parent
+		
 		if parent:IsValid() then
-			return render.GetAmbientLightColor(parent.cached_pos) * render.GetLightColor(parent.cached_pos).g
+			return render.GetAmbientLightColor(parent.cached_pos).g * render.GetLightColor(parent.cached_pos).g
 		end
+		
+		return 0
 	end,
 
 	light_amount_b = function(self, parent)
-		parent = parent.Parent
-
+		parent = self.TargetPart:IsValid() and self.TargetPart or parent
+		
 		if parent:IsValid() then
-			return render.GetAmbientLightColor(parent.cached_pos) * render.GetLightColor(parent.cached_pos).b
+			return render.GetAmbientLightColor(parent.cached_pos).b * render.GetLightColor(parent.cached_pos).b
 		end
+		
+		return 0
 	end,
 
 	owner_health = function(self)
@@ -464,9 +470,7 @@ PART.Inputs =
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			local vec = owner:GetPlayerColor()
-
-			return vec.r
+			return owner:GetPlayerColor().r
 		end
 
 		return 1
@@ -475,9 +479,7 @@ PART.Inputs =
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			local vec = owner:GetPlayerColor()
-
-			return vec.g
+			return owner:GetPlayerColor().g
 		end
 
 		return 1
@@ -486,9 +488,35 @@ PART.Inputs =
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			local vec = owner:GetPlayerColor()
+			return owner:GetPlayerColor().b
+		end
 
-			return vec.b
+		return 1
+	end,
+	
+	weapon_color_r = function(self)
+		local owner = self:GetPlayerOwner()
+
+		if owner:IsValid() then
+			return owner:GetWeaponColor().r
+		end
+
+		return 1
+	end,
+	weapon_color_g = function(self)
+		local owner = self:GetPlayerOwner()
+
+		if owner:IsValid() then
+			return owner:GetWeaponColor().g
+		end
+
+		return 1
+	end,
+	weapon_color_b = function(self)
+		local owner = self:GetPlayerOwner()
+
+		if owner:IsValid() then
+			return owner:GetWeaponColor().b
 		end
 
 		return 1
@@ -511,42 +539,6 @@ PART.Inputs =
 
 		return (b - a) * m + a
 	end,
-	
-	weapon_color_r = function(self)
-		local owner = self:GetPlayerOwner()
-		
-		if owner:IsValid() then
-			local vec = owner:GetWeaponColor()
-			
-			return vec.r
-		end
-		
-		return 1
-	end,
-	
-	weapon_color_g = function(self)
-		local owner = self:GetPlayerOwner()
-		
-		if owner:IsValid() then
-			local vec = owner:GetWeaponColor()
-			
-			return vec.g
-		end
-		
-		return 1
-	end, 
-	
-	weapon_color_b = function(self)
-		local owner = self:GetPlayerOwner()
-		
-		if owner:IsValid() then
-			local vec = owner:GetWeaponColor()
-			
-			return vec.b 
-		end 
-		
-		return 1 
-	end, 
 }
 
 usermessage.Hook("pac_proxy", function(umr)
