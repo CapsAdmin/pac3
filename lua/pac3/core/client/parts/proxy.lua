@@ -420,31 +420,72 @@ PART.Inputs =
 		parent = self.TargetPart:IsValid() and self.TargetPart or parent
 		
 		if parent:IsValid() then
-			return render.GetAmbientLightColor(parent.cached_pos).r * render.GetLightColor(parent.cached_pos).r
-		end
+			return render.GetLightColor(parent.cached_pos):ToColor().r
+		end 
 		
 		return 0
-	end,
-
-	light_amount_g = function(self, parent)
+	end, 
+	
+	light_amount_g = function(self,parent)
 		parent = self.TargetPart:IsValid() and self.TargetPart or parent
 		
 		if parent:IsValid() then
-			return render.GetAmbientLightColor(parent.cached_pos).g * render.GetLightColor(parent.cached_pos).g
-		end
+			return render.GetLightColor(parent.cached_pos):ToColor().g
+		end 
 		
 		return 0
-	end,
-
-	light_amount_b = function(self, parent)
+	end, 
+	
+	light_amount_b = function(self,parent)
 		parent = self.TargetPart:IsValid() and self.TargetPart or parent
 		
 		if parent:IsValid() then
-			return render.GetAmbientLightColor(parent.cached_pos).b * render.GetLightColor(parent.cached_pos).b
-		end
+			return render.GetLightColor(parent.cached_pos):ToColor().b
+		end 
+		
+		return 0
+	end, 
+	
+	light_value = function(self,parent)
+		parent = self.TargetPart:IsValid() and self.TargetPart or parent 
+		
+		if parent:IsValid() then 
+			local h, s, v = ColorToHSV(render.GetLightColor(parent.cached_pos):ToColor())
+			return v
+		end 
+		
+		return 0
+	end, 
+	
+	ambient_light_r = function(self,parent)
+		parent = self.TargetPart:IsValid() and self.TargetPart or parent
+		
+		if parent:IsValid() then
+			return render.GetAmbientLightColor():ToColor().r
+		end 
 		
 		return 0
 	end,
+	
+	ambient_light_g = function(self,parent)
+		parent = self.TargetPart:IsValid() and self.TargetPart or parent
+		
+		if parent:IsValid() then
+			return render.GetAmbientLightColor():ToColor().g
+		end 
+		
+		return 0
+	end,
+	
+	ambient_light_b = function(self,parent)
+		parent = self.TargetPart:IsValid() and self.TargetPart or parent
+		
+		if parent:IsValid() then
+			return render.GetAmbientLightColor():ToColor().b
+		end 
+		
+		return 0
+ 	end,
 
 	owner_health = function(self)
 		local owner = self:GetPlayerOwner()
