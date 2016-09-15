@@ -537,16 +537,7 @@ function pace.ShowAbout()
 	pnl:MakePopup()
 
 	local html = vgui.Create("DHTML", pnl)
-	html:OpenURL(table.Random({
-		"http://www.youtube.com/watch?v=iRyht4nYsU4",
-		"http://www.youtube.com/watch?v=JUu4p-Jg4Yc",
-		"http://www.youtube.com/watch?v=Io7ZSaB3sXg",
-		"http://www.youtube.com/watch?v=b0he_Xyr-Qw",
-		"http://www.youtube.com/watch?v=MS1SAIZaChk",
-		"http://www.youtube.com/watch?v=egRVAQNHc8c",
-		"http://www.youtube.com/watch?v=JqVG2f3828s",
-
-	}))
+	html:OpenURL("https://www.youtube.com/watch?v=Kvg7oTfGhYg")
 
 	local first = true
 	local start_time = RealTime()
