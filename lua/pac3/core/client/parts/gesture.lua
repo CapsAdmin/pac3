@@ -85,7 +85,6 @@ function PART:OnShow()
 		local gesture = self.random_gestlist and table.Random(self.random_gestlist) or self.GestureName
 		
 		ent:AnimRestartGesture(self:GetSlotID(), ent:GetSequenceActivity(ent:LookupSequence(gesture)), not self.Loop)
-		print(self,ent,self:GetSlotID(),ent:GetSequenceActivity(ent:LookupSequence(gesture)),ent:LookupSequence(gesture),"|",gesture,self.GestureName)
 	end
 end
 
