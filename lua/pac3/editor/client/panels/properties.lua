@@ -2036,7 +2036,47 @@ do -- damage type
 	pace.RegisterPanel(PANEL)
 end
 
-do -- damage type
+do -- gesture slots
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_gestureslot"
+	PANEL.Base = "pace_properties_base_type"
+	
+	function PANEL:SpecialCallback()
+		local frame = create_search_list(
+			self,
+			self.CurrentKey,
+			L"gesture slots list", 
+			function(list) 	
+				list:AddColumn("name") 
+			end,
+			function() 
+				return {
+					attackreload = GESTURE_SLOT_ATTACK_AND_RELOAD,
+					grenade = GESTURE_SLOT_GRENADE,
+					jump = GESTURE_SLOT_JUMP,
+					swim = GESTURE_SLOT_SWIM,
+					flinch = GESTURE_SLOT_FLINCH,
+					vcd = GESTURE_SLOT_VCD,
+					custom = GESTURE_SLOT_CUSTOM
+				}
+			end,
+			function()
+				return pace.current_part.SlotName
+			end,
+			function(list, key, val)
+				return list:AddLine(key)
+			end,
+			function(val, key)
+				return key
+			end
+		)
+	end
+	
+	pace.RegisterPanel(PANEL)
+end
+
+do
 	local PANEL = {}
 
 	PANEL.ClassName = "properties_buttons"
