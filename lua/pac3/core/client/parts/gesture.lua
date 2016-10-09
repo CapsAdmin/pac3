@@ -8,6 +8,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Loop", false)
 	pac.GetSet(PART, "GestureName", "")
 	pac.GetSet(PART, "SlotName", "attackreload")
+	pac.GetSet(PART, "SlotWeight", 1)
 pac.EndStorableVars()
 
 PART.random_gestlist = {}
@@ -39,11 +40,11 @@ function PART:GetSlotID()
 	return self.ValidGestureSlots[self.SlotName] or GESTURE_SLOT_CUSTOM
 end
 
-function PART:OnHide()
-	local ent = self:GetOwner()
+function PART:SetLoop(bool)
+	self.Loop = bool
 	
-	if ent:IsValid() and ent:IsPlayer() and self.Loop then
-		ent:AnimResetGestureSlot(self:GetSlotID())
+	if not self:IsHidden() then
+		self:OnShow()
 	end
 end
 
@@ -78,14 +79,37 @@ function PART:SetSlotName(name)
 	end
 end
 
+function PART:SetSlotWeight(num)
+	local ent = self:GetOwner()
+	
+	if ent:IsValid() and ent:IsPlayer() then
+		ent:AnimSetGestureWeight(self:GetSlotID(), num)
+	end
+	
+	self.SlotWeight = num
+end
+
 function PART:OnShow()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() and ent:IsPlayer() then		-- function is for players only :(
 		local gesture = self.random_gestlist and table.Random(self.random_gestlist) or self.GestureName
+		local slot = self:GetSlotID()
 		
-		ent:AnimRestartGesture(self:GetSlotID(), ent:GetSequenceActivity(ent:LookupSequence(gesture)), not self.Loop)
+		ent:AnimResetGestureSlot(slot)
+		ent:AnimRestartGesture(slot, ent:GetSequenceActivity(ent:LookupSequence(gesture)), not self.Loop)
+		ent:AnimSetGestureWeight(slot, self.SlotWeight or 1)
 	end
 end
+
+function PART:OnHide()
+	local ent = self:GetOwner()
+	
+	if ent:IsValid() and ent:IsPlayer() and self.Loop then
+		ent:AnimResetGestureSlot(self:GetSlotID())
+	end
+end
+
+PART.OnRemove = PART.OnHide
 
 pac.RegisterPart(PART)
