@@ -246,6 +246,40 @@ PART.Inputs =
 
 		return 0
 	end,
+	
+	owner_scale_x = function(self, parent)
+		local owner = self:GetPlayerOwner()
+
+		owner = try_viewmodel(owner)
+
+		if owner:IsValid() then
+			return owner.pac_model_scale and owner.pac_model_scale.x or (owner.GetModelScale and owner:GetModelScale()) or 1
+		end
+
+		return 1
+	end,
+	owner_scale_y = function(self, parent)
+		local owner = self:GetPlayerOwner()
+
+		owner = try_viewmodel(owner)
+
+		if owner:IsValid() then
+			return owner.pac_model_scale and owner.pac_model_scale.y or (owner.GetModelScale and owner:GetModelScale()) or 1
+		end
+
+		return 1
+	end,
+	owner_scale_z = function(self, parent)
+		local owner = self:GetPlayerOwner()
+
+		owner = try_viewmodel(owner)
+
+		if owner:IsValid() then
+			return owner.pac_model_scale and owner.pac_model_scale.z or (owner.GetModelScale and owner:GetModelScale()) or 1
+		end
+
+		return 1
+	end,
 
 	-- outfit owner
 	owner_velocity_length = function(self, parent)
@@ -388,6 +422,46 @@ PART.Inputs =
 		end
 
 		return parent.cached_ang:Up():Dot(self:GetVelocity(parent))
+	end,
+	
+	parent_scale_x = function(self, parent)
+		if not self.TargetPart:IsValid() then
+			if parent:HasParent() then
+				parent = parent:GetParent()
+			end
+		end
+		
+		if parent:IsValid() then
+			return parent.Scale and parent.Scale.x*parent.Size or 1
+		end
+		
+		return 1
+	end,
+	parent_scale_y = function(self, parent)
+		if not self.TargetPart:IsValid() then
+			if parent:HasParent() then
+				parent = parent:GetParent()
+			end
+		end
+		
+		if parent:IsValid() then
+			return parent.Scale and parent.Scale.y*parent.Size or 1
+		end
+		
+		return 1
+	end,
+	parent_scale_z = function(self, parent)
+		if not self.TargetPart:IsValid() then
+			if parent:HasParent() then
+				parent = parent:GetParent()
+			end
+		end
+		
+		if parent:IsValid() then
+			return parent.Scale and parent.Scale.z*parent.Size or 1
+		end
+		
+		return 1
 	end,
 
 	command = function(self, index)
