@@ -40,14 +40,14 @@ end
 PART.Events = 
 {	
 	random = 
-	{	
+	{
 		arguments = {{compare = "number"}},
 		callback = function(self, ent, compare)
 			return self:NumberOperator(math.random(), compare)
 		end,
 	},
 	randint = 
-	{	
+	{
 		arguments = {{compare = "number"}, {min = "number"}, {max = "number"}},
 		callback = function(self, ent, compare, min, max)
 			min = min or 0
@@ -57,7 +57,7 @@ PART.Events =
 		end,
 	},
 	random_timer = 
-	{	
+	{
 		arguments = {{min = "number"}, {max = "number"}, {holdtime = "number"}},
 		callback = function(self, ent, min, max, holdtime)
 		
@@ -101,6 +101,13 @@ PART.Events =
 			self.timerx_reset = reset_on_hide
 			
 			return self:NumberOperator(time - self.time, seconds)
+		end,
+	},
+	map_name =
+	{
+		arguments = {{find = "string"}},
+		callback = function(self, ent, find)
+			return self:StringOperator(game.GetMap(), find)
 		end,
 	},
 
@@ -194,7 +201,7 @@ PART.Events =
 	},
 
 	owner_health =
-	{	
+	{
 		arguments = {{health = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
@@ -206,7 +213,7 @@ PART.Events =
 		end,
 	},
 	owner_alive = 
-	{	
+	{
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
 			if ent:IsValid() and ent.Alive then
@@ -216,7 +223,7 @@ PART.Events =
 		end,
 	},
 	owner_armor =
-	{	
+	{
 		arguments = {{armor = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
@@ -225,6 +232,46 @@ PART.Events =
 			end
 
 			return 0
+		end,
+	},
+	
+	owner_scale_x =
+	{
+		arguments = {{scale = "number"}},
+		callback = function(self, ent, num)
+			ent = try_viewmodel(ent)
+			
+			if ent:IsValid() then
+				return self:NumberOperator(ent.pac_model_scale and ent.pac_model_scale.x or (ent.GetModelScale and ent:GetModelScale()) or 1, num)
+			end
+			
+			return 1
+		end,
+	},
+	owner_scale_y =
+	{
+		arguments = {{scale = "number"}},
+		callback = function(self, ent, num)
+			ent = try_viewmodel(ent)
+			
+			if ent:IsValid() then
+				return self:NumberOperator(ent.pac_model_scale and ent.pac_model_scale.y or (ent.GetModelScale and ent:GetModelScale()) or 1, num)
+			end
+			
+			return 1
+		end,
+	},
+	owner_scale_z =
+	{
+		arguments = {{scale = "number"}},
+		callback = function(self, ent, num)
+			ent = try_viewmodel(ent)
+			
+			if ent:IsValid() then
+				return self:NumberOperator(ent.pac_model_scale and ent.pac_model_scale.z or (ent.GetModelScale and ent:GetModelScale()) or 1, num)
+			end
+			
+			return 1
 		end,
 	},
 
@@ -259,7 +306,7 @@ PART.Events =
 	},
 	
 	is_client = 
-	{ 	
+	{
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
 			return self:GetPlayerOwner() == ent
@@ -267,7 +314,7 @@ PART.Events =
 	},
 	
 	is_flashlight_on = 
-	{ 		
+	{
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
 			return ent.FlashlightIsOn and ent:FlashlightIsOn()
@@ -289,14 +336,14 @@ PART.Events =
 					endpos = parent.cached_pos + parent.cached_ang:Forward() * distance,
 					filter = ent,
 				})
-								
+				
 				return self:NumberOperator(res.Fraction * distance, compare)
 			end
 		end,
 	},
 	
 	is_on_ground = 
-	{ 
+	{
 		arguments = {{exclude_noclip = "boolean"}},
 		callback = function(self, ent, exclude_noclip)
 			ent = try_viewmodel(ent)
@@ -317,7 +364,7 @@ PART.Events =
 	},
 	
 	is_in_noclip = 
-	{ 		
+	{
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
 			return ent:GetMoveType() == MOVETYPE_NOCLIP and (not ent.GetVehicle or not ent:GetVehicle():IsValid())
@@ -325,7 +372,7 @@ PART.Events =
 	},
 	
 	is_voice_chatting =
-	{ 		
+	{
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
 			return ent.IsSpeaking and ent:IsSpeaking()
@@ -595,12 +642,11 @@ PART.Events =
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
 			local owner = self:GetOwner(self.RootOwner)
-			local parent = self:GetParentEx()
 			
 			owner = try_viewmodel(owner)
 			
-			if parent:IsValid() and owner:IsValid() then
-				return self:NumberOperator(owner:EyeAngles():Forward():Dot(calc_velocity(parent)), speed)
+			if owner:IsValid() then
+				return self:NumberOperator(owner:EyeAngles():Forward():Dot(owner:GetVelocity()), speed)
 			end
 			
 			return 0
@@ -611,12 +657,11 @@ PART.Events =
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
 			local owner = self:GetOwner(self.RootOwner)
-			local parent = self:GetParentEx()
 			
 			owner = try_viewmodel(owner)
 			
-			if parent:IsValid() and owner:IsValid() then
-				return self:NumberOperator(owner:EyeAngles():Right():Dot(calc_velocity(parent)), speed)
+			if owner:IsValid() then
+				return self:NumberOperator(owner:EyeAngles():Right():Dot(owner:GetVelocity()), speed)
 			end
 			
 			return 0
@@ -627,12 +672,11 @@ PART.Events =
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
 			local owner = self:GetOwner(self.RootOwner)
-			local parent = self:GetParentEx()
 			
 			owner = try_viewmodel(owner)
 			
-			if parent:IsValid() and owner:IsValid() then
-				return self:NumberOperator(owner:EyeAngles():Up():Dot(calc_velocity(parent)), speed)
+			if owner:IsValid() then
+				return self:NumberOperator(owner:EyeAngles():Up():Dot(owner:GetVelocity()), speed)
 			end
 			
 			return 0
@@ -663,7 +707,7 @@ PART.Events =
 	{
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
-			local parent = self:GetParent()
+			local parent = self:GetParentEx()
 			
 			if not self.TargetPart:IsValid() then
 				if parent:HasParent() then
@@ -672,7 +716,7 @@ PART.Events =
 			end
 			
 			if parent:IsValid() then
-				return self:NumberOperator( parent.cached_ang:Forward():Dot(calc_velocity(parent)), speed)
+				return self:NumberOperator(parent.cached_ang:Forward():Dot(calc_velocity(parent)), speed)
 			end
 			
 			return 0
@@ -682,7 +726,7 @@ PART.Events =
 	{
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
-			local parent = self:GetParent()
+			local parent = self:GetParentEx()
 			
 			if not self.TargetPart:IsValid() then
 				if parent:HasParent() then
@@ -691,7 +735,7 @@ PART.Events =
 			end
 			
 			if parent:IsValid() then
-				return self:NumberOperator( parent.cached_ang:Right():Dot(calc_velocity(parent)), speed)
+				return self:NumberOperator(parent.cached_ang:Right():Dot(calc_velocity(parent)), speed)
 			end
 			
 			return 0
@@ -701,7 +745,7 @@ PART.Events =
 	{
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
-			local parent = self:GetParent()
+			local parent = self:GetParentEx()
 			
 			if not self.TargetPart:IsValid() then
 				if parent:HasParent() then
@@ -710,13 +754,71 @@ PART.Events =
 			end
 			
 			if parent:IsValid() then
-				return self:NumberOperator( parent.cached_ang:Up():Dot(calc_velocity(parent)), speed)
+				return self:NumberOperator(parent.cached_ang:Up():Dot(calc_velocity(parent)), speed)
 			end
 			
 			return 0
 		end,
 	},
-		
+	
+	parent_scale_x =
+	{
+		arguments = {{scale = "number"}},
+		callback = function(self, ent, num)
+			local parent = self:GetParentEx()
+			
+			if not self.TargetPart:IsValid() then
+				if parent:HasParent() then
+					parent = parent:GetParent()
+				end
+			end
+			
+			if parent:IsValid() then
+				return self:NumberOperator((parent.Type == "part" and parent.Scale and parent.Scale.x*parent.Size) or (parent.pac_model_scale and parent.pac_model_scale.x) or (parent.GetModelScale and parent:GetModelScale()) or 1, num)
+			end
+			
+			return 1
+		end,
+	},
+	parent_scale_y =
+	{
+		arguments = {{scale = "number"}},
+		callback = function(self, ent, num)
+			local parent = self:GetParentEx()
+			
+			if not self.TargetPart:IsValid() then
+				if parent:HasParent() then
+					parent = parent:GetParent()
+				end
+			end
+			
+			if parent:IsValid() then
+				return self:NumberOperator((parent.Type == "part" and parent.Scale and parent.Scale.y*parent.Size) or (parent.pac_model_scale and parent.pac_model_scale.y) or (parent.GetModelScale and parent:GetModelScale()) or 1, num)
+			end
+			
+			return 1
+		end,
+	},
+	parent_scale_z =
+	{
+		arguments = {{scale = "number"}},
+		callback = function(self, ent, num)
+			local parent = self:GetParentEx()
+			
+			if not self.TargetPart:IsValid() then
+				if parent:HasParent() then
+					parent = parent:GetParent()
+				end
+			end
+			
+			if parent:IsValid() then
+				return self:NumberOperator((parent.Type == "part" and parent.Scale and parent.Scale.z*parent.Size) or (parent.pac_model_scale and parent.pac_model_scale.z) or (parent.GetModelScale and parent:GetModelScale()) or 1, num)
+			end
+			
+			return 1
+		end,
+	},
+	
 	gravitygun_punt =
 	{
 		arguments = {{time = "number"}},
@@ -779,7 +881,7 @@ PART.Events =
 	},
 }
 
-function PART:GetParentEx()	
+function PART:GetParentEx()
 	local parent = self:GetTargetPart()
 	
 	if parent:IsValid() then
