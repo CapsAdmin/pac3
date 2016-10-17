@@ -384,9 +384,22 @@ PART.Events =
 		arguments = {{primary = "boolean"}, {amount = "number"}},
 		callback = function(self, ent, primary, amount)
 			ent = try_viewmodel(ent)
-			local ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
+			ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or ent
+			
 			if ent:IsValid() then
-				return self:NumberOperator(primary and ent:Clip1() or ent:Clip2(), amount)
+				return self:NumberOperator(ent.Clip1 and (primary and ent:Clip1() or ent:Clip2()) or 0, amount)
+			end
+		end,
+	},
+	clipsize = 
+	{
+		arguments = {{primary = "boolean"}, {amount = "number"}},
+		callback = function(self, ent, primary, amount)
+			ent = try_viewmodel(ent)
+			ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or ent
+			
+			if ent:IsValid() then
+				return self:NumberOperator(ent.GetMaxClip1 and (primary and ent:GetMaxClip1() or ent:GetMaxClip2()) or 0, amount)
 			end
 		end,
 	},
@@ -396,7 +409,8 @@ PART.Events =
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find)
 			ent = try_viewmodel(ent)
-			local ent = ent.GetVehicle and ent:GetVehicle() or NULL
+			ent = ent.GetVehicle and ent:GetVehicle() or NULL
+			
 			if ent:IsValid() then
 				return self:StringOperator(ent:GetClass(), find)
 			end
@@ -408,7 +422,8 @@ PART.Events =
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find)
 			ent = try_viewmodel(ent)
-			local ent = ent.GetVehicle and ent:GetVehicle() or NULL
+			ent = ent.GetVehicle and ent:GetVehicle() or NULL
+			
 			if ent:IsValid() and ent:GetModel() then
 				return self:StringOperator(ent:GetModel():lower(), find)
 			end
@@ -419,7 +434,7 @@ PART.Events =
 	{
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find)
-			local ent = ent.GetDriver and ent:GetDriver() or NULL
+			ent = ent.GetDriver and ent:GetDriver() or NULL
 			
 			if ent:IsValid() then
 				return self:StringOperator(ent:GetName(), find)

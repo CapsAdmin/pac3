@@ -247,8 +247,8 @@ PART.Inputs =
 		return 0
 	end,
 	
-	owner_scale_x = function(self, parent)
-		local owner = self:GetPlayerOwner()
+	owner_scale_x = function(self)
+		local owner = self:GetOwner(self.RootOwner)
 
 		owner = try_viewmodel(owner)
 
@@ -258,8 +258,8 @@ PART.Inputs =
 
 		return 1
 	end,
-	owner_scale_y = function(self, parent)
-		local owner = self:GetPlayerOwner()
+	owner_scale_y = function(self)
+		local owner = self:GetOwner(self.RootOwner)
 
 		owner = try_viewmodel(owner)
 
@@ -269,8 +269,8 @@ PART.Inputs =
 
 		return 1
 	end,
-	owner_scale_z = function(self, parent)
-		local owner = self:GetPlayerOwner()
+	owner_scale_z = function(self)
+		local owner = self:GetOwner(self.RootOwner)
 
 		owner = try_viewmodel(owner)
 
@@ -491,7 +491,7 @@ PART.Inputs =
 	end,
 
 	light_amount_r = function(self, parent)
-		parent = self.TargetPart:IsValid() and self.TargetPart or parent
+		parent = self:GetParentEx()
 		
 		if parent:IsValid() then
 			return render.GetLightColor(parent.cached_pos):ToColor().r
@@ -500,8 +500,8 @@ PART.Inputs =
 		return 0
 	end, 
 	
-	light_amount_g = function(self,parent)
-		parent = self.TargetPart:IsValid() and self.TargetPart or parent
+	light_amount_g = function(self, parent)
+		parent = self:GetParentEx()
 		
 		if parent:IsValid() then
 			return render.GetLightColor(parent.cached_pos):ToColor().g
@@ -510,8 +510,8 @@ PART.Inputs =
 		return 0
 	end, 
 	
-	light_amount_b = function(self,parent)
-		parent = self.TargetPart:IsValid() and self.TargetPart or parent
+	light_amount_b = function(self, parent)
+		parent = self:GetParentEx()
 		
 		if parent:IsValid() then
 			return render.GetLightColor(parent.cached_pos):ToColor().b
@@ -520,8 +520,8 @@ PART.Inputs =
 		return 0
 	end, 
 	
-	light_value = function(self,parent)
-		parent = self.TargetPart:IsValid() and self.TargetPart or parent 
+	light_value = function(self, parent)
+		parent = self:GetParentEx()
 		
 		if parent:IsValid() then 
 			local h, s, v = ColorToHSV(render.GetLightColor(parent.cached_pos):ToColor())
@@ -531,8 +531,8 @@ PART.Inputs =
 		return 0
 	end, 
 	
-	ambient_light_r = function(self,parent)
-		parent = self.TargetPart:IsValid() and self.TargetPart or parent
+	ambient_light_r = function(self, parent)
+		parent = self:GetParentEx()
 		
 		if parent:IsValid() then
 			return render.GetAmbientLightColor():ToColor().r
@@ -541,8 +541,8 @@ PART.Inputs =
 		return 0
 	end,
 	
-	ambient_light_g = function(self,parent)
-		parent = self.TargetPart:IsValid() and self.TargetPart or parent
+	ambient_light_g = function(self, parent)
+		parent = self:GetParentEx()
 		
 		if parent:IsValid() then
 			return render.GetAmbientLightColor():ToColor().g
@@ -551,8 +551,8 @@ PART.Inputs =
 		return 0
 	end,
 	
-	ambient_light_b = function(self,parent)
-		parent = self.TargetPart:IsValid() and self.TargetPart or parent
+	ambient_light_b = function(self, parent)
+		parent = self:GetParentEx()
 		
 		if parent:IsValid() then
 			return render.GetAmbientLightColor():ToColor().b
@@ -635,6 +635,51 @@ PART.Inputs =
 		end
 
 		return 1
+	end,
+	
+	weapon_primary_ammo = function(self)
+		local owner = self:GetOwner(true)
+		
+		if owner:IsValid() then
+			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
+			
+			return owner.Clip1 and owner:Clip1() or 0
+		end
+
+		return 0
+	end,
+	weapon_primary_clipsize = function(self)
+		local owner = self:GetOwner(true)
+		
+		if owner:IsValid() then
+			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
+			
+			return owner.GetMaxClip1 and owner:GetMaxClip1() or 0
+		end
+
+		return 0
+	end,
+	weapon_secondary_ammo = function(self)
+		local owner = self:GetOwner(true)
+		
+		if owner:IsValid() then
+			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
+			
+			return owner.Clip2 and owner:Clip2() or 0
+		end
+
+		return 0
+	end,
+	weapon_secondary_clipsize = function(self)
+		local owner = self:GetOwner(true)
+		
+		if owner:IsValid() then
+			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
+			
+			return owner.GetMaxClip2 and owner:GetMaxClip2() or 0
+		end
+
+		return 0
 	end,
 
 	hsv_to_color = function(self, parent, h, s, v)
