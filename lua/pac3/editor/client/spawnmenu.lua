@@ -152,12 +152,16 @@ function pace.ClientSettingsMenu(pnl)
 
 end
 
+
+local icon = "icon64/pac3.png"
+icon = file.Exists("materials/"..icon,'GAME') and icon or "icon64/playermodel.png"
+
 list.Set(
 	"DesktopWindows",
 	"PACEditor",
 	{
 		title = "PAC Editor",
-		icon = "icon64/playermodel.png",
+		icon = icon,
 		width = 960,
 		height = 700,
 		onewindow = true,
