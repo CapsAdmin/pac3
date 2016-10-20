@@ -37,16 +37,16 @@ for k,v in pairs(_G) do
 	end
 end
 
-PART.Events = 
+PART.Events =
 {	
-	random = 
+	random =
 	{
 		arguments = {{compare = "number"}},
 		callback = function(self, ent, compare)
 			return self:NumberOperator(math.random(), compare)
 		end,
 	},
-	randint = 
+	randint =
 	{
 		arguments = {{compare = "number"}, {min = "number"}, {max = "number"}},
 		callback = function(self, ent, compare, min, max)
@@ -56,7 +56,7 @@ PART.Events =
 			return self:NumberOperator(math.random(min,max), compare)
 		end,
 	},
-	random_timer = 
+	random_timer =
 	{
 		arguments = {{min = "number"}, {max = "number"}, {holdtime = "number"}},
 		callback = function(self, ent, min, max, holdtime)
@@ -90,7 +90,7 @@ PART.Events =
 			return false
 		end,
 	},
-	timerx = 
+	timerx =
 	{
 		arguments = {{seconds = "number"}, {reset_on_hide = "boolean"}, {synced_time = "boolean"}},
 		
@@ -111,7 +111,7 @@ PART.Events =
 		end,
 	},
 
-	fov = 
+	fov =
 	{
 		arguments = {{fov = "number"}},
 		callback = function(self, ent, fov)
@@ -124,7 +124,7 @@ PART.Events =
 			return 0
 		end,
 	},
-	health_lost = 
+	health_lost =
 	{
 		arguments = {{amount = "number"}},
 		callback = function(self, ent, amount)
@@ -165,7 +165,7 @@ PART.Events =
 		end,
 	},
 
-	holdtype = 
+	holdtype =
 	{
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find, hide)
@@ -212,7 +212,19 @@ PART.Events =
 			return 0
 		end,
 	},
-	owner_alive = 
+	owner_max_health =
+	{
+		arguments = {{health = "number"}},
+		callback = function(self, ent, num)
+			ent = try_viewmodel(ent)
+			if ent:IsValid() and ent.GetMaxHealth then
+				return self:NumberOperator(ent:GetMaxHealth(), num)
+			end
+
+			return 0
+		end,
+	},
+	owner_alive =
 	{
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
@@ -275,7 +287,7 @@ PART.Events =
 		end,
 	},
 
-	speed = 
+	speed =
 	{
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, num)
@@ -284,7 +296,7 @@ PART.Events =
 		end,
 	},
 	
-	is_under_water = 
+	is_under_water =
 	{
 		arguments = {{level = "number"}},
 		callback = function(self, ent, num) 
@@ -293,7 +305,7 @@ PART.Events =
 		end,
 	},
 	
-	client_spawned = 
+	client_spawned =
 	{
 		arguments = {{time = "number"}},
 		callback = function(self, ent, time)
@@ -305,7 +317,7 @@ PART.Events =
 		end,	
 	},
 	
-	is_client = 
+	is_client =
 	{
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
@@ -313,7 +325,7 @@ PART.Events =
 		end,
 	},
 	
-	is_flashlight_on = 
+	is_flashlight_on =
 	{
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
@@ -321,7 +333,7 @@ PART.Events =
 		end,
 	},
 	
-	ranger = 
+	ranger =
 	{
 		arguments = {{compare = "number"}, {distance = "number"}},
 		callback = function(self, ent, compare, distance)
@@ -342,7 +354,7 @@ PART.Events =
 		end,
 	},
 	
-	is_on_ground = 
+	is_on_ground =
 	{
 		arguments = {{exclude_noclip = "boolean"}},
 		callback = function(self, ent, exclude_noclip)
@@ -363,7 +375,7 @@ PART.Events =
 		end,
 	},
 	
-	is_in_noclip = 
+	is_in_noclip =
 	{
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
@@ -379,7 +391,7 @@ PART.Events =
 		end,
 	},
 	
-	ammo = 
+	ammo =
 	{
 		arguments = {{primary = "boolean"}, {amount = "number"}},
 		callback = function(self, ent, primary, amount)
@@ -391,7 +403,7 @@ PART.Events =
 			end
 		end,
 	},
-	clipsize = 
+	clipsize =
 	{
 		arguments = {{primary = "boolean"}, {amount = "number"}},
 		callback = function(self, ent, primary, amount)
@@ -636,7 +648,7 @@ PART.Events =
 	},
 	
 	-- outfit owner
-	owner_velocity_length = 
+	owner_velocity_length =
 	{
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
@@ -652,7 +664,7 @@ PART.Events =
 			return 0
 		end,
 	},
-	owner_velocity_forward = 
+	owner_velocity_forward =
 	{
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
@@ -667,7 +679,7 @@ PART.Events =
 			return 0
 		end,
 	},
-	owner_velocity_right = 
+	owner_velocity_right =
 	{
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
@@ -682,7 +694,7 @@ PART.Events =
 			return 0
 		end,
 	},
-	owner_velocity_up = 
+	owner_velocity_up =
 	{
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
@@ -699,7 +711,7 @@ PART.Events =
 	},
 	
 	-- parent part
-	parent_velocity_length = 
+	parent_velocity_length =
 	{
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
@@ -718,7 +730,7 @@ PART.Events =
 			return 0
 		end,
 	},
-	parent_velocity_forward = 
+	parent_velocity_forward =
 	{
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
@@ -737,7 +749,7 @@ PART.Events =
 			return 0
 		end,
 	},
-	parent_velocity_right = 
+	parent_velocity_right =
 	{
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
@@ -756,7 +768,7 @@ PART.Events =
 			return 0
 		end,
 	},
-	parent_velocity_up = 
+	parent_velocity_up =
 	{
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed) 
@@ -861,7 +873,7 @@ PART.Events =
 		end,
 	},
 	
-	dot_forward = 
+	dot_forward =
 	{
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal) 
@@ -878,7 +890,7 @@ PART.Events =
 		end,
 	},
 	
-	dot_right = 
+	dot_right =
 	{
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal) 
