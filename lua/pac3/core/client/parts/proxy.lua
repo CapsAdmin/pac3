@@ -498,7 +498,7 @@ PART.Inputs =
 		end 
 		
 		return 0
-	end, 
+	end,
 	
 	light_amount_g = function(self, parent)
 		parent = self:GetParentEx()
@@ -508,7 +508,7 @@ PART.Inputs =
 		end 
 		
 		return 0
-	end, 
+	end,
 	
 	light_amount_b = function(self, parent)
 		parent = self:GetParentEx()
@@ -518,7 +518,7 @@ PART.Inputs =
 		end 
 		
 		return 0
-	end, 
+	end,
 	
 	light_value = function(self, parent)
 		parent = self:GetParentEx()
@@ -529,7 +529,7 @@ PART.Inputs =
 		end 
 		
 		return 0
-	end, 
+	end,
 	
 	ambient_light_r = function(self, parent)
 		parent = self:GetParentEx()
@@ -566,6 +566,16 @@ PART.Inputs =
 
 		if owner:IsValid() then
 			return owner:Health()
+		end
+
+		return 0
+	end,
+	
+	owner_max_health = function(self)
+		local owner = self:GetPlayerOwner()
+
+		if owner:IsValid() then
+			return owner:GetMaxHealth()
 		end
 
 		return 0
