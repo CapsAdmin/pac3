@@ -210,18 +210,21 @@ function pace.SubmitPart(data, filter)
 		if not players then return end
 		
 		if type(players) == "table" and not next(players) then return end
-	
-		net.Start("pac_submit")
-		local ok,err = pac.NetSerializeTable(data)
-		if ok == nil then
-			ErrorNoHalt("[PAC3] Outfit broadcast failed for "..tostring(data.owner)..": "..tostring(err)..'\n')
-			if data.owner and data.owner:IsValid() then
-				data.owner:ChatPrint('[PAC3] ERROR: Could not broadcast your outfit: '..tostring(err))
-			end
-		else
-			net.Send(players)
-		end
 		
+		-- Alternative transmission system
+		local ret = hook.Run("pac_SendData",players,data)
+		if ret==nil then
+			net.Start "pac_submit"
+			local ok,err = pac.NetSerializeTable(data)
+			if ok == nil then
+				ErrorNoHalt("[PAC3] Outfit broadcast failed for "..tostring(data.owner)..": "..tostring(err)..'\n')
+				if data.owner and data.owner:IsValid() then
+					data.owner:ChatPrint('[PAC3] ERROR: Could not broadcast your outfit: '..tostring(err))
+				end
+			else
+				net.Send(players)
+			end
+		end
 		
 		if type(data.part) == "table" then	
 			last_frame = frame_number
