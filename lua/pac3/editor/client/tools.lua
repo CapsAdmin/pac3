@@ -276,84 +276,64 @@ do
 
 end
 
-pace.AddTool(L"convert to expression2 holo", function(part)
-	local holo_str =
+pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part)
+	local holo_str = 
 	[[
-
-	HOLO_NAME = IDX
-	holoCreate(HOLO_NAME)
+		holoCreate(I) #HOLO_NAME
 		PARENT
-		holoColor(HOLO_NAME, COLOR)
-		holoAlpha(HOLO_NAME, ALPHA)
-		holoScale(HOLO_NAME, SCALE)
-		holoPos(HOLO_NAME, entity():toWorld(POSITION))
-		holoAng(HOLO_NAME, entity():toWorld(ANGLES))
-		#holoAnim(HOLO_NAME, ANIMATION_NAME, ANIMATION_FRAME, ANIMATION_RATE)
-		#holoDisableShading(HOLO_NAME, FULLBRIGHT)
-		holoMaterial(HOLO_NAME, MATERIAL)
-		holoModel(HOLO_NAME, MODEL)
-		holoSkin(HOLO_NAME, SKIN)
+		holoColor(I, COLOR)
+		holoAlpha(I, ALPHA)
+		holoScale(I, SCALE)
+		holoPos(I, entity():toWorld(POSITION))
+		holoAng(I, entity():toWorld(ANGLES))
+		holoMaterial(I, MATERIAL)
+		holoModel(I, MODEL)
+		holoSkin(I, SKIN)
+		I++
 	]]
-
 	local function tovec(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
 	local function toang(vec) return ("ang(%s, %s, %s)"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
-
 	local function part_to_holo(part)
 		local scale = part:GetSize() * part:GetScale()
-
 		if part.ClipPlanes then
 			for key, clip in pairs(part.ClipPlanes) do
 				if clip:IsValid() and not clip:IsHidden() then
 					local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
 					local normal = ang:Forward()
-					holo_str = holo_str ..
-					"holoClip(HOLO_NAME, " .. tovec(pos) .. ", " .. tovec(normal) ..  ", 1)\n"
+					holo_str = holo_str .. 
+					"holoClip(I, " .. tovec(pos) .. ", " .. tovec(normal) ..  ", 1)\n"
 				end
 			end
 		end
-
-		local holo = holo_str
-		:gsub("IDX", part.UniqueID)
+		local holo = holo_str			
 		:gsub("ALPHA", part:GetAlpha()*255)
 		:gsub("COLOR", tovec(part:GetColor()))
-		:gsub("SCALE", tovec(Vector(scale.y, scale.x, scale.z)))
+		:gsub("SCALE", tovec(Vector(scale.x, scale.y, scale.z)))
 		:gsub("ANGLES", toang(part:GetAngles()))
 		:gsub("POSITION", tovec(part:GetPosition()))
 		:gsub("MATERIAL", ("%q"):format(part:GetMaterial()))
 		:gsub("MODEL", ("%q"):format(part:GetModel()))
 		:gsub("SKIN", part:GetSkin())
-
-		-- not yet implemented
-		--:gsub("FULLBRIGHT", part:GetFullbright()) -- forgot to implement this in pac lol
-		--:gsub("ANIMATION_NAME", tovec(part:GetScale()))
-		--:gsub("ANIMATION_FRAME", tovec(part:GetScale()))
-
 		if part:HasParent() and part:GetParent().ClassName == "model" then
-			holo = holo:gsub("PARENT", ("holoParent(HOLO_NAME, %s)"):format(part.Parent.UniqueID))
+			holo = holo:gsub("PARENT", ("holoParent(I, %s)"):format(part.Parent.UniqueID))
 		else
-			holo = holo:gsub("PARENT", "holoParent(HOLO_NAME, entity())")
+			holo = holo:gsub("PARENT", "holoParent(I, entity())")
 		end
-
-		holo = holo:Replace("HOLO_NAME", "PAC_" ..part:GetName():gsub("%p", ""):gsub(" ", "_"))
-
-		LocalPlayer():ChatPrint("PAC -> E2 holo code printed to console.")
+		holo = holo:Replace("HOLO_NAME", part:GetName())
+		LocalPlayer():ChatPrint("PAC > Code printed to console and saved in your Expression 2 folder.")
 		print(holo)
 		return holo
 	end
-
-	local function convert(part)
+	local function convert(part)	
 		local out = ""
-
 		if part.ClassName == "model" then
 			out = part_to_holo(part)
 		end
-
 		for key, part in pairs(part:GetChildren()) do
 			if part.ClassName == "model" and not part:IsHidden() and not part.wavefront_mesh then
 				out = out .. convert(part)
 			end
 		end
-
 		return out
 	end
 	file.CreateDir("expression2/pac")
