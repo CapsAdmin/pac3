@@ -391,7 +391,7 @@ local draw_dist = 0
 local sv_draw_dist = 0
 local radius = 0
 local dst = 0
-
+local dummyv=Vector(0.577350,0.577350,0.577350)
 --local garbage = 0
 
 local should_suppress = setup_suppress()
@@ -452,12 +452,12 @@ function pac.PostDrawOpaqueRenderables(drawdepth,drawing_skybox)
 						rag:SetNoDraw(true)
 						
 						if not ent.pac_hide_entity then
-							local col = ent.pac_color
-							local bri = ent.pac_brightness
+							local col = ent.pac_color or dummyv
+							local bri = ent.pac_brightness or 1
 							
-							render_ModelMaterialOverride(ent.pac_materialm)
+							render_ModelMaterialOverride(m)
 							render_SetColorModulation(col.x * bri, col.y * bri, col.z * bri)
-							render_SetBlend(ent.pac_alpha)
+							render_SetBlend(ent.pac_alpha or 1)
 							
 							if ent.pac_invert then render_CullMode(1) end
 							if ent.pac_fullbright then render_SuppressEngineLighting(true) end
