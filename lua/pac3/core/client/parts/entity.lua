@@ -38,6 +38,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "DeathRagdollizeParent", false)
 	pac.GetSet(PART, "HideRagdollOnDeath", false)
 	pac.GetSet(PART, "DrawPlayerOnDeath", false)
+	pac.GetSet(PART, "HidePhysgunBeam", false)
 	pac.GetSet(PART, "LodOverride", -1)
 
 	pac.GetSet(PART, "UseLegacyScale", false)
@@ -75,6 +76,7 @@ ENTFIELD(PART, "FallApartOnDeath", "death_physics_parts")
 ENTFIELD(PART, "DeathRagdollizeParent", "death_ragdollize")
 ENTFIELD(PART, "HideRagdollOnDeath", "death_hide_ragdoll")
 ENTFIELD(PART, "DrawPlayerOnDeath", "draw_player_on_death")
+ENTFIELD(PART, "HidePhysgunBeam", "hide_physgun_beam")
 
 ENTFIELD(PART, "MuteSounds", "mute_sounds")
 ENTFIELD(PART, "AllowOggWhenMuted", "allow_ogg_sounds")
@@ -390,6 +392,16 @@ function PART:OnThink()
 		if self.HideEntity or self.Weapon and self.current_ro ~= ent.RenderOverride then
 			self:OnShow()
 		end
+		
+		ent.pac_material = self.Material
+		ent.pac_materialm = self.Materialm
+		ent.pac_color = self.Colorf
+		ent.pac_alpha = self.Alpha
+		ent.pac_brightness = self.Brightness
+		
+		ent.pac_hide_entity = self.HideEntity
+		ent.pac_fullbright = self.Fullbright
+		ent.pac_invert = self.Invert
 	end
 end
 
@@ -403,6 +415,16 @@ function PART:OnHide()
 
 		ent.RenderOverride = nil
 		ent:SetColor(Color(255, 255, 255, 255))
+		
+		ent.pac_material = nil
+		ent.pac_materialm = nil
+		ent.pac_color = nil
+		ent.pac_alpha = nil
+		ent.pac_brightness = nil
+		
+		ent.pac_hide_entity = nil
+		ent.pac_fullbright = nil
+		ent.pac_invert = nil
 
 		for key in pairs(self.ent_fields) do
 			ent[key] = nil

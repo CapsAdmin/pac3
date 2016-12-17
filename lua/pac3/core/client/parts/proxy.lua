@@ -246,6 +246,40 @@ PART.Inputs =
 
 		return 0
 	end,
+	
+	owner_scale_x = function(self)
+		local owner = self:GetOwner(self.RootOwner)
+
+		owner = try_viewmodel(owner)
+
+		if owner:IsValid() then
+			return owner.pac_model_scale and owner.pac_model_scale.x or (owner.GetModelScale and owner:GetModelScale()) or 1
+		end
+
+		return 1
+	end,
+	owner_scale_y = function(self)
+		local owner = self:GetOwner(self.RootOwner)
+
+		owner = try_viewmodel(owner)
+
+		if owner:IsValid() then
+			return owner.pac_model_scale and owner.pac_model_scale.y or (owner.GetModelScale and owner:GetModelScale()) or 1
+		end
+
+		return 1
+	end,
+	owner_scale_z = function(self)
+		local owner = self:GetOwner(self.RootOwner)
+
+		owner = try_viewmodel(owner)
+
+		if owner:IsValid() then
+			return owner.pac_model_scale and owner.pac_model_scale.z or (owner.GetModelScale and owner:GetModelScale()) or 1
+		end
+
+		return 1
+	end,
 
 	-- outfit owner
 	owner_velocity_length = function(self, parent)
@@ -389,6 +423,46 @@ PART.Inputs =
 
 		return parent.cached_ang:Up():Dot(self:GetVelocity(parent))
 	end,
+	
+	parent_scale_x = function(self, parent)
+		if not self.TargetPart:IsValid() then
+			if parent:HasParent() then
+				parent = parent:GetParent()
+			end
+		end
+		
+		if parent:IsValid() then
+			return parent.Scale and parent.Scale.x*parent.Size or 1
+		end
+		
+		return 1
+	end,
+	parent_scale_y = function(self, parent)
+		if not self.TargetPart:IsValid() then
+			if parent:HasParent() then
+				parent = parent:GetParent()
+			end
+		end
+		
+		if parent:IsValid() then
+			return parent.Scale and parent.Scale.y*parent.Size or 1
+		end
+		
+		return 1
+	end,
+	parent_scale_z = function(self, parent)
+		if not self.TargetPart:IsValid() then
+			if parent:HasParent() then
+				parent = parent:GetParent()
+			end
+		end
+		
+		if parent:IsValid() then
+			return parent.Scale and parent.Scale.z*parent.Size or 1
+		end
+		
+		return 1
+	end,
 
 	command = function(self, index)
 		local ply = self:GetPlayerOwner()
@@ -417,34 +491,91 @@ PART.Inputs =
 	end,
 
 	light_amount_r = function(self, parent)
-		parent = parent.Parent
-
+		parent = self:GetParentEx()
+		
 		if parent:IsValid() then
-			return render.GetAmbientLightColor(parent.cached_pos) * render.GetLightColor(parent.cached_pos).r
-		end
+			return render.GetLightColor(parent.cached_pos):ToColor().r
+		end 
+		
+		return 0
 	end,
-
+	
 	light_amount_g = function(self, parent)
-		parent = parent.Parent
-
+		parent = self:GetParentEx()
+		
 		if parent:IsValid() then
-			return render.GetAmbientLightColor(parent.cached_pos) * render.GetLightColor(parent.cached_pos).g
-		end
+			return render.GetLightColor(parent.cached_pos):ToColor().g
+		end 
+		
+		return 0
 	end,
-
+	
 	light_amount_b = function(self, parent)
-		parent = parent.Parent
-
+		parent = self:GetParentEx()
+		
 		if parent:IsValid() then
-			return render.GetAmbientLightColor(parent.cached_pos) * render.GetLightColor(parent.cached_pos).b
-		end
+			return render.GetLightColor(parent.cached_pos):ToColor().b
+		end 
+		
+		return 0
 	end,
+	
+	light_value = function(self, parent)
+		parent = self:GetParentEx()
+		
+		if parent:IsValid() then 
+			local h, s, v = ColorToHSV(render.GetLightColor(parent.cached_pos):ToColor())
+			return v
+		end 
+		
+		return 0
+	end,
+	
+	ambient_light_r = function(self, parent)
+		parent = self:GetParentEx()
+		
+		if parent:IsValid() then
+			return render.GetAmbientLightColor():ToColor().r
+		end 
+		
+		return 0
+	end,
+	
+	ambient_light_g = function(self, parent)
+		parent = self:GetParentEx()
+		
+		if parent:IsValid() then
+			return render.GetAmbientLightColor():ToColor().g
+		end 
+		
+		return 0
+	end,
+	
+	ambient_light_b = function(self, parent)
+		parent = self:GetParentEx()
+		
+		if parent:IsValid() then
+			return render.GetAmbientLightColor():ToColor().b
+		end 
+		
+		return 0
+ 	end,
 
 	owner_health = function(self)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
 			return owner:Health()
+		end
+
+		return 0
+	end,
+	
+	owner_max_health = function(self)
+		local owner = self:GetPlayerOwner()
+
+		if owner:IsValid() then
+			return owner:GetMaxHealth()
 		end
 
 		return 0
@@ -464,9 +595,7 @@ PART.Inputs =
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			local vec = owner:GetPlayerColor()
-
-			return vec.r
+			return owner:GetPlayerColor().r
 		end
 
 		return 1
@@ -475,9 +604,7 @@ PART.Inputs =
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			local vec = owner:GetPlayerColor()
-
-			return vec.g
+			return owner:GetPlayerColor().g
 		end
 
 		return 1
@@ -486,12 +613,83 @@ PART.Inputs =
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			local vec = owner:GetPlayerColor()
-
-			return vec.b
+			return owner:GetPlayerColor().b
 		end
 
 		return 1
+	end,
+	
+	weapon_color_r = function(self)
+		local owner = self:GetPlayerOwner()
+
+		if owner:IsValid() then
+			return owner:GetWeaponColor().r
+		end
+
+		return 1
+	end,
+	weapon_color_g = function(self)
+		local owner = self:GetPlayerOwner()
+
+		if owner:IsValid() then
+			return owner:GetWeaponColor().g
+		end
+
+		return 1
+	end,
+	weapon_color_b = function(self)
+		local owner = self:GetPlayerOwner()
+
+		if owner:IsValid() then
+			return owner:GetWeaponColor().b
+		end
+
+		return 1
+	end,
+	
+	weapon_primary_ammo = function(self)
+		local owner = self:GetOwner(true)
+		
+		if owner:IsValid() then
+			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
+			
+			return owner.Clip1 and owner:Clip1() or 0
+		end
+
+		return 0
+	end,
+	weapon_primary_clipsize = function(self)
+		local owner = self:GetOwner(true)
+		
+		if owner:IsValid() then
+			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
+			
+			return owner.GetMaxClip1 and owner:GetMaxClip1() or 0
+		end
+
+		return 0
+	end,
+	weapon_secondary_ammo = function(self)
+		local owner = self:GetOwner(true)
+		
+		if owner:IsValid() then
+			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
+			
+			return owner.Clip2 and owner:Clip2() or 0
+		end
+
+		return 0
+	end,
+	weapon_secondary_clipsize = function(self)
+		local owner = self:GetOwner(true)
+		
+		if owner:IsValid() then
+			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
+			
+			return owner.GetMaxClip2 and owner:GetMaxClip2() or 0
+		end
+
+		return 0
 	end,
 
 	hsv_to_color = function(self, parent, h, s, v)
@@ -667,8 +865,9 @@ function PART:OnThink()
 		local ok, x,y,z = self:RunExpression(ExpressionFunc)
 
 		if not ok then
-			if self:GetPlayerOwner() == pac.LocalPlayer then
-				chat.AddText("pac proxy error on " .. tostring(self) .. ": " .. x .. "\n")
+			if self:GetPlayerOwner() == pac.LocalPlayer and self.Expression != self.LastBadExpression then
+				chat.AddText(Color(255,180,180),"============\n[ERR] PAC Proxy error on "..tostring(self)..":\n"..x.."\n============\n")
+				self.LastBadExpression = self.Expression
 			end
 			return
 		end

@@ -1,3 +1,4 @@
+include("pac3/core/shared/libraries/luadata.lua")
 include("hands.lua")
 include("pac_weapon.lua")
 include("modifiers.lua")
