@@ -184,6 +184,7 @@ pace.PropertySheetPatterns = {
 pace.PartTree = {
 	entity = {
 		animation = true,
+		gesture = true,
 		holdtype = true,
 		bone = true,
 		poseparameter = true,
@@ -302,6 +303,7 @@ pace.PartIcons =
 	bodygroup = "icon16/user.png",
 	camera = "icon16/camera.png",
 	custom_animation = "icon16/film.png",
+	gesture = "icon16/thumb_up.png"
 }
 
 pace.PartIcons.effects = pace.PartIcons.effect
@@ -612,6 +614,10 @@ function pace.TranslatePropertiesKey(key, obj)
 		return "weaponholdtype"
 	end
 	
+	if key == "slotname" and obj.ClassName == "gesture" then
+		return "gestureslot"
+	end
+	
 	if key == "function" and obj.ClassName == "proxy" then
 		return "proxyfunctions"
 	end
@@ -644,7 +650,8 @@ function pace.TranslatePropertiesKey(key, obj)
 	end
 		
 	if 
-		key == "sequencename" or 
+		key == "sequencename" or
+		key == "gesturename" or
 		(
 			obj.ClassName == "holdtype" and 
 			(
