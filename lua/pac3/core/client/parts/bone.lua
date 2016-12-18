@@ -12,6 +12,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "AlternativeBones", false)
 	pac.GetSet(PART, "MoveChildrenToOrigin", false)
 	pac.GetSet(PART, "FollowAnglesOnly", false)
+	pac.GetSet(PART, "HideMesh", false)
 	pac.SetupPartName(PART, "FollowPart")
 pac.EndStorableVars()
 
@@ -89,11 +90,19 @@ local function manang(ent, id, ang, self, force_set)
 	end
 end
 
+local inf_scale = Vector(math.huge, math.huge, math.huge)
+
 local function manscale(ent, id, scale, self, force_set)
-	if self.AlternativeBones then
-		ent.pac_bone_setup_data[self.UniqueID].scale = self.Scale * self.Size
+	local scale
+	if self.HideMesh then
+		scale = inf_scale
 	else
-		ent:ManipulateBoneScale(id, ent:GetManipulateBoneScale(id) * self.Scale * self.Size)
+		scale = self.Scale * self.Size
+	end
+	if self.AlternativeBones then
+		ent.pac_bone_setup_data[self.UniqueID].scale = scale
+	else
+		ent:ManipulateBoneScale(id, ent:GetManipulateBoneScale(id) * scale)
 	end
 end
 
