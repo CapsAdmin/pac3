@@ -34,7 +34,7 @@ function pace.OnMenuBarPopulate(bar)
 
 			local chat_pnl = help:AddOption(
 				L"Discord / PAC3 Chat",
-				function() gui.OpenURL("https://discord.gg/789sD") cookie.Set("pac3_discord_ad", 3)  end
+				function() gui.OpenURL("https://discord.gg/utpR3gJ") cookie.Set("pac3_discord_ad", 3)  end
 			) chat_pnl:SetImage(pace.MiscIcons.chat)
 
 			if cookie.GetNumber("pac3_discord_ad", 0) < 3 then
