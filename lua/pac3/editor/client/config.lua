@@ -264,6 +264,7 @@ pace.MiscIcons = {
 	about = "icon16/star.png",
 	appearance = "icon16/paintcan.png",
 	orientation = "icon16/shape_handles.png",
+	chat = "icon16/comment.png",
 }
 pace.PartIcons =
 {
