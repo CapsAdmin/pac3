@@ -23,7 +23,7 @@ function pace.OnMenuBarPopulate(bar)
 			clear:AddOption(L"OK", function() pace.ClearParts() end):SetImage(pace.MiscIcons.clear)
 		menu:AddSpacer()
 
-			local help, pnl = menu:AddSubMenu(L"help", function() pace.ShowWiki() end)
+			local help, help_pnl = menu:AddSubMenu(L"help", function() pace.ShowWiki() end)
 			help.GetDeleteSelf = function() return false end
 			pnl:SetImage(pace.MiscIcons.help)
 
@@ -31,6 +31,17 @@ function pace.OnMenuBarPopulate(bar)
 				L"Getting Started",
 				function() pace.ShowWiki(pace.WikiURL .. "Beginners-FAQ") end
 			):SetImage(pace.MiscIcons.help)
+
+			local chat_pnl = help:AddOption(
+				L"Discord / PAC3 Chat",
+				function() gui.OpenURL("https://discord.gg/789sD") cookie.Set("pac3_discord_ad", 3)  end
+			) chat_pnl:SetImage(pace.MiscIcons.chat)
+
+			if cookie.GetNumber("pac3_discord_ad", 0) < 3 then
+				help_pnl.PaintOver = function(_,w,h) surface.SetDrawColor(255,255,0,50 + math.sin(SysTime()*20)*20) surface.DrawRect(0,0,w,h) end
+				chat_pnl.PaintOver = help_pnl.PaintOver
+				cookie.Set("pac3_discord_ad", cookie.GetNumber("pac3_discord_ad", 0) + 1)
+			end
 
 			menu:AddOption(
 				L"about",
