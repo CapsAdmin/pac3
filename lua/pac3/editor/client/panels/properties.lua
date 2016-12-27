@@ -66,11 +66,6 @@ do -- container
 		else
 			surface.SetDrawColor(derma.Color("text_bright", self, color_white))
 			surface.DrawRect(0,0,w,h)
-
-			if self.vector_type == "color" then
-				surface.SetDrawColor(self.vector.x, self.vector.y, self.vector.z)
-				surface.DrawRect(w-30,0,15,h)
-			end
 		end
 
 		local c = self.alt_line and self:GetSkin().Colours.Category.LineAlt.Text or self:GetSkin().Colours.Category.Line.Text
@@ -850,6 +845,17 @@ do -- vector
 					btn:SetText("...")
 					btn.DoClick = function() self:SpecialCallback() end
 					btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
+
+					if type == "color" then
+						btn:SetText("")
+						btn.Paint = function(_,w,h)
+							print(self.vector.x, self.vector.y, self.vector.z,w ,h)
+							surface.SetDrawColor(self.vector.x, self.vector.y, self.vector.z, 255)
+							surface.DrawRect(0,0,w,h)
+							surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
+							surface.DrawOutlinedRect(0,0,w,h)
+						end
+					end
 				end
 			end)
 
