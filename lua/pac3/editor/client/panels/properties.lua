@@ -136,12 +136,6 @@ do -- list
 		--right.OnMouseWheeled = function(_, delta) scroll:OnMouseWheeled(delta) end
 	end
 
-	function PANEL:Paint(w, h)
-		h = self:GetHeight()
-		surface.SetDrawColor(derma.Color("text_dark", self, color_black))
-		surface.DrawOutlinedRect(0,0,w,h-9)
-	end
-
 	function PANEL:GetHeight(hack)
 		return (self.item_height * (#self.List+(hack or 1))) - (self.div:GetDividerWidth() + 1)
 	end
