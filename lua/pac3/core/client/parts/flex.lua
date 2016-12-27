@@ -38,6 +38,7 @@ function PART:UpdateFlex(flex, weight)
 		local flex = flex or self.Flex
 		local weight = weight or self.Weight
 
+		flex = flex:lower()
 		flex = ent.pac_flex_list[flex] and ent.pac_flex_list[flex].i or tonumber(flex)
 
 		if type(flex) == "number" then
