@@ -63,8 +63,6 @@ do -- container
 		if not self.right then
 			surface.SetDrawColor(derma.Color("text_bright", self, color_white))
 			surface.DrawRect(0,0,w+5,h)
-			surface.SetDrawColor(derma.Color("text_dark", self, color_black))
-			surface.DrawOutlinedRect(0,0,w+5,h+2)
 		else
 			surface.SetDrawColor(derma.Color("text_bright", self, color_white))
 			surface.DrawRect(0,0,w,h)
@@ -73,10 +71,11 @@ do -- container
 				surface.SetDrawColor(self.vector.x, self.vector.y, self.vector.z)
 				surface.DrawRect(w-30,0,15,h)
 			end
-
-			surface.SetDrawColor(derma.Color("text_dark", self, color_black))
-			surface.DrawOutlinedRect(0,0,w,h+2)
 		end
+
+		local c = self.alt_line and self:GetSkin().Colours.Category.LineAlt.Text or self:GetSkin().Colours.Category.Line.Text
+		surface.SetDrawColor(c.r, c.g, c.b, self.alt_line and 75 or 25)
+		surface.DrawRect(0,0,w,h)
 	end
 
 	function PANEL:SetContent(pnl)
@@ -189,8 +188,7 @@ do -- list
 		right.DoClick = left.DoClick
 
 		left.Paint = function(_, w, h)
-			surface.SetDrawColor(derma.Color("control_color_bright", self, color_white))
-			surface.DrawRect(0,0,w,h)
+			left:GetSkin().tex.CategoryList.Header(0,0,w*2,h)
 
 			local txt = L(name)
 			local _, _h = surface.GetTextSize(txt)
@@ -208,8 +206,7 @@ do -- list
 		end
 
 		right.Paint = function(_,w,h)
-			surface.SetDrawColor(derma.Color("control_color_bright", self, color_white))
-			surface.DrawRect(0,0,w-1,h)
+			right:GetSkin().tex.CategoryList.Header(-w,0,w*2,h)
 		end
 
 		table.insert(self.List, {left = left, right = right, panel = var, key = key})
@@ -229,6 +226,8 @@ do -- list
 
 		local pnl = pace.CreatePanel("properties_container")
 		pnl.right = true
+		pnl.alt_line = #self.List%2 == 1
+		btn.alt_line = pnl.alt_line
 
 		if type(var) == "Panel" then
 			pnl:SetContent(var)
@@ -839,10 +838,6 @@ do -- vector
 				self:InvalidateLayout()
 			end
 
-			left:SetPaintBorderEnabled(true)
-			middle:SetPaintBorderEnabled(true)
-			right:SetPaintBorderEnabled(true)
-
 			self.left = left
 			self.middle = middle
 			self.right = right
@@ -857,6 +852,8 @@ do -- vector
 					btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
 				end
 			end)
+
+			self.Paint = function() end
 		end
 
 		PANEL.SpecialCallback = special_callback
