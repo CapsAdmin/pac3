@@ -97,7 +97,10 @@ function PART:OnShow()
 		local slot = self:GetSlotID()
 
 		ent:AnimResetGestureSlot(slot)
-		ent:AnimRestartGesture(slot, ent:GetSequenceActivity(ent:LookupSequence(gesture)), not self.Loop)
+		local act = ent:GetSequenceActivity(ent:LookupSequence(gesture))
+		if act ~= 1 then
+			ent:AnimRestartGesture(slot, act, not self.Loop)
+		end
 		ent:AnimSetGestureWeight(slot, self.SlotWeight or 1)
 	end
 end
