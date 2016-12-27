@@ -74,6 +74,13 @@ function pace.GUIMouseReleased(mc)
 	mcode = nil
 end
 
+local function set_mouse_pos(x, y)
+	gui.SetMousePos(x, y)
+	held_ang = pace.ViewAngles * 1
+	held_mpos = Vector(x, y)
+	return held_mpos * 1
+end
+
 local function CalcDrag()
 	if
 		pace.BusyWithProperties:IsValid() or
@@ -136,7 +143,21 @@ local function CalcDrag()
 
 	if not pace.IsSelecting then
 		if mcode == MOUSE_LEFT then
-			local delta = (held_mpos - Vector(gui.MousePos())) / 5 * math.rad(pace.ViewFOV)
+			local mpos = Vector(gui.MousePos())
+
+			if mpos.x >= ScrW() - 1 then
+				mpos = set_mouse_pos(1, gui.MouseY())
+			elseif mpos.x < 1 then
+				mpos = set_mouse_pos(ScrW() - 2, gui.MouseY())
+			end
+
+			if mpos.y >= ScrH() - 1 then
+				mpos = set_mouse_pos(gui.MouseX(), 1)
+			elseif mpos.y < 1 then
+				mpos = set_mouse_pos(gui.MouseX(), ScrH() - 2)
+			end
+
+			local delta = (held_mpos - mpos) / 5 * math.rad(pace.ViewFOV)
 			pace.ViewAngles.p = math.Clamp(held_ang.p - delta.y, -90, 90)
 			pace.ViewAngles.y = held_ang.y + delta.x
 		end
