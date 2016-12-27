@@ -16,6 +16,10 @@ function PANEL:Init()
 	self:SetSizable(true)
 	--self:DockPadding(2, 23, 2, 2)
 
+	surface.SetFont(pace.CurrentFont)
+	local _, h = surface.GetTextSize("|")
+	RENDERSCORE_SIZE = h+1
+
 	local div = vgui.Create("DVerticalDivider", self)
 		div:SetDividerHeight(RENDERSCORE_SIZE)
 		div:Dock(FILL)
@@ -163,17 +167,20 @@ function PANEL:PaintOver(w, h)
 	local renderTime = pace.RenderTimes and pace.RenderTimes[LocalPlayer():EntIndex()]
 
 	if renderTime then
-		local x, y = self.top:LocalToScreen()
+		--local x, y = self.top:LocalToScreen()
+		local x = 2
+		local y = 2
+		y = y + self.menu_bar:GetTall()
 		y = y + self.top:GetTall()
 
+		surface.SetFont(pace.CurrentFont)
 		local str = string.format("%s: %.3f ms", L("average render time"), renderTime * 1000)
 		local _w, _h = surface.GetTextSize(str)
 
 		cam.IgnoreZ(true)
-		surface.SetDrawColor(255, 255, 255, 255)
-		surface.DrawRect(x, y, w-5, RENDERSCORE_SIZE-1)
+		--surface.SetDrawColor(255, 255, 255, 255)
+		self:GetSkin().tex.Panels.Bright(x,y,w-5, RENDERSCORE_SIZE-1)
 
-		surface.SetFont(pace.CurrentFont)
 		surface.SetTextColor(0, 0, 0, 255)
 		surface.SetTextPos(x+5, y)
 		surface.DrawText(str)
