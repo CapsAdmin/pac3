@@ -200,7 +200,7 @@ function PANEL:PaintOver(w, h)
 		--surface.SetDrawColor(255, 255, 255, 255)
 		self:GetSkin().tex.Panels.Bright(x,y,w-5, RENDERSCORE_SIZE-1)
 
-		surface.SetTextColor(0, 0, 0, 255)
+		surface.SetTextColor(self:GetSkin().Colours.Tree.Normal)
 		surface.SetTextPos(x+5, y)
 		surface.DrawText(str)
 		cam.IgnoreZ(false)

@@ -68,7 +68,7 @@ do -- container
 			surface.DrawRect(0,0,w,h)
 		end
 
-		local c = self.alt_line and self:GetSkin().Colours.Category.LineAlt.Text or self:GetSkin().Colours.Category.Line.Text
+		local c = self.alt_line and self:GetSkin().Colours.Tree.Normal or self:GetSkin().Colours.Tree.Normal
 		surface.SetDrawColor(c.r, c.g, c.b, self.alt_line and 75 or 25)
 		surface.DrawRect(0,0,w,h)
 	end
@@ -183,15 +183,16 @@ do -- list
 			local _, _h = surface.GetTextSize(txt)
 			local middle = h/2 - _h/2
 
-			surface.SetTextPos(11, middle)
-			surface.SetTextColor(derma.Color("text_dark", self, color_black))
-			surface.SetFont(pace.CurrentFont)
-			surface.DrawText(txt)
+			--surface.SetTextPos(11, middle)
+			--surface.SetTextColor(derma.Color("text_dark", self, color_black))
+			--surface.SetFont(pace.CurrentFont)
+			--surface.DrawText(txt)
+			draw.TextShadow({text = txt, font = pace.CurrentFont, pos = {11, middle}, color = self:GetSkin().Colours.Category.Header}, 1, 100)
 
 			local txt = (pace.CollapsedProperties[name] and "+" or "-")
 			local w = surface.GetTextSize(txt)
-			surface.SetTextPos(6-w*0.5,middle)
-			surface.DrawText(txt)
+			draw.TextShadow({text = txt, font = pace.CurrentFont, pos = {6-w*0.5, middle}, color = self:GetSkin().Colours.Category.Header}, 1, 100)
+
 		end
 
 		right.Paint = function(_,w,h)
@@ -496,7 +497,7 @@ do -- non editable string
 
 	function PANEL:SetValue(str)
 		local lbl = vgui.Create("DLabel")
-			lbl:SetTextColor(derma.Color("text_dark", self, color_black))
+			lbl:SetTextColor(self:GetSkin().Colours.Tree.Normal)
 			lbl:SetFont(pace.CurrentFont)
 			lbl:SetText(str)
 			lbl:SetTextInset(4,0)
@@ -565,7 +566,7 @@ do -- base editable
 
 		local str = tostring(skip_encode and var or self:Encode(var))
 
-		self:SetTextColor(derma.Color("text_dark", self, color_black))
+		self:SetTextColor(self:GetSkin().Colours.Tree.Normal)
 		self:SetFont(pace.CurrentFont)
 		self:SetText("  " .. str) -- ugh
 		self:SizeToContents()
@@ -1081,7 +1082,7 @@ do -- boolean
 
 		local lbl = vgui.Create("DLabel", self)
 		lbl:SetFont(pace.CurrentFont)
-		lbl:SetTextColor(derma.Color("text_dark", self, color_black))
+		lbl:SetTextColor(self:GetSkin().Colours.Tree.Normal)
 		self.lbl = lbl
 	end
 
