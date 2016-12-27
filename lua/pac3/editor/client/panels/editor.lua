@@ -42,6 +42,20 @@ function PANEL:Init()
 	self:MakeBar()
 end
 
+function PANEL:OnMousePressed()
+	if self.m_bSizable && gui.MouseX() > ( self.x + self:GetWide() - 20 ) then
+		self.Sizing = { gui.MouseX() - self:GetWide(), gui.MouseY() - self:GetTall() }
+		self:MouseCapture( true )
+		return
+	end
+
+	if ( self:GetDraggable() && gui.MouseY() < (self.y + 24) ) then
+		self.Dragging = { gui.MouseX() - self.x, gui.MouseY() - self.y }
+		self:MouseCapture( true )
+		return
+	end
+end
+
 function PANEL:OnMouseReleased(mc)
 	if mc==MOUSE_RIGHT then
 		self:Close()
@@ -73,6 +87,11 @@ end
 
 function PANEL:Think(...)
 	DFrame.Think(self, ...)
+
+	if self.Hovered && self.m_bSizable && gui.MouseX() > ( self.x + self:GetWide() - 20 ) then
+		self:SetCursor("sizewe")
+		return
+	end
 
 	local bar = self.menu_bar
 
