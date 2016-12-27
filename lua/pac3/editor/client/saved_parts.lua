@@ -412,7 +412,15 @@ local function populate_parts(menu, tbl, dir, override_part)
 			local parts = data.Content
 
 			if parts[1] then
-				local pnl = menu:AddOption(data.Name, function() pace.SaveParts(nil, data.RelativePath, override_part) end)
+				local menu, pnl = menu:AddSubMenu(data.Name, function() pace.SaveParts(nil, data.RelativePath, override_part) end)
+				menu.GetDeleteSelf = function() return false end
+				pnl:SetImage(pace.MiscIcons.outfit)
+
+				menu:AddOption(L"delete", function()
+					file.Delete("pac3/" .. data.RelativePath .. ".txt", "DATA")
+					pace.RefreshFiles()
+				end):SetImage(pace.MiscIcons.clear)
+
 				pnl:SetImage(pace.MiscIcons.outfit)
 			elseif parts.self then
 				menu:AddOption(data.Name, function() pace.SaveParts(nil, data.RelativePath, override_part)  end)
