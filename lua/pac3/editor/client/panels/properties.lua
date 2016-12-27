@@ -849,7 +849,6 @@ do -- vector
 					if type == "color" then
 						btn:SetText("")
 						btn.Paint = function(_,w,h)
-							print(self.vector.x, self.vector.y, self.vector.z,w ,h)
 							surface.SetDrawColor(self.vector.x, self.vector.y, self.vector.z, 255)
 							surface.DrawRect(0,0,w,h)
 							surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
