@@ -151,6 +151,10 @@ function pace.CloseEditor()
 		pace.Editor:Remove()
 		pace.Active = false
 		pace.Call("CloseEditor")
+
+		if pace.timeline.IsActive() then
+			pace.timeline.Close()
+		end
 	end
 
 	RunConsoleCommand("pac_in_editor", "0")

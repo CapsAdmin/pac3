@@ -3,11 +3,6 @@ local L = pace.LanguageString
 pace.timeline = pace.timeline or {}
 local timeline = pace.timeline
 
-timeline.play_bar_offset = 0
-timeline.playing_animation = false
-timeline.editing = false
-timeline.first_pass = true
-
 local secondDistance = 200 --100px per second on timeline
 
 local animation_types = {
@@ -115,12 +110,12 @@ function timeline.Load(data)
 			keyframe:SetFrameData(i, v)
 		end
 
-		timeline.selected_keyframe = timeline.frame.keyframe_scroll.Panels[1]
+		timeline.SelectKeyframe(timeline.frame.keyframe_scroll.Panels[1])
 	else
 		timeline.data = {FrameData = {}, Type = timeline.animation_type}
 		timeline.frame:Clear()
 
-		timeline.selected_keyframe = timeline.frame:AddKeyFrame()
+		timeline.SelectKeyframe(timeline.frame:AddKeyFrame())
 		timeline.Save()
 	end
 
@@ -129,7 +124,17 @@ function timeline.Load(data)
 end
 
 function timeline.Save()
+	boneanimlib.RegisterLuaAnimation(timeline.animation_part:GetAnimID(), timeline.data)
 	timeline.animation_part.Data = util.TableToJSON(timeline.data)
+	timer.Create("pace_backup", 1, 1, function() pace.Backup() end)
+end
+
+function timeline.SelectKeyframe(keyframe)
+	timeline.selected_keyframe = keyframe
+	timeline.UpdateFrameData()
+	timeline.UpdateBones()
+	timeline.EditBone()
+	timeline.Save()
 end
 
 function timeline.Close()
@@ -151,6 +156,11 @@ function timeline.Close()
 end
 
 function timeline.Open(part)
+	timeline.play_bar_offset = 0
+	timeline.playing_animation = false
+	timeline.editing = false
+	timeline.first_pass = true
+
 	timeline.editing = true
 	timeline.animation_part = part
 	timeline.entity = part:GetOwner()
@@ -159,6 +169,7 @@ function timeline.Open(part)
 	timeline.frame:SetPos(pace.Editor:GetWide(),ScrH()-150)
 	timeline.frame:SetSize(ScrW()-pace.Editor:GetWide(),150)
 	timeline.frame:SetTitle(L"animation editor")
+	timeline.frame:ShowCloseButton(false)
 
 	timeline.SetAnimationType(part.AnimationType)
 
@@ -166,7 +177,6 @@ function timeline.Open(part)
 	timeline.dummy_bone = pac.CreatePart("timeline_dummy_bone", timeline.entity)
 
 	hook.Add("pace_OnVariableChanged", "pac3_timeline", function(part, key, val)
-
 		if part == timeline.dummy_bone then
 			if key == "Bone" then
 				timeline.selected_bone = pac.GetModelBones(timeline.entity)[val].real
@@ -187,6 +197,7 @@ function timeline.Open(part)
 
 				timeline.UpdateBones()
 			end
+			timer.Create("pace_timeline_save", 0.1, 1, function() timeline.Save() end)
 		elseif part == timeline.animation_part then
 			if key == "Data" or key == "URL" then
 				timeline.Load(boneanimlib.GetLuaAnimations()[part:GetAnimID()])
@@ -227,7 +238,7 @@ do
 
 		local pnl = vgui.Create("DButton",button_area)
 		pnl:SetText(L"add keyframe")
-		pnl.DoClick = function() timeline.selected_keyframe = self:AddKeyFrame() timeline.Save() end
+		pnl.DoClick = function() timeline.SelectKeyframe(self:AddKeyFrame()) timeline.Save() end
 		pnl:Dock(TOP)
 		pnl:SetDisabled(true)
 		self.add_keyframe_button = pnl
@@ -494,10 +505,7 @@ do
 			end
 
 			timeline.frame:Toggle(false)
-			timeline.selected_keyframe = self
-			timeline.UpdateFrameData()
-			timeline.EditBone()
-			timeline.UpdateBones()
+			timeline.SelectKeyframe(self)
 		elseif mc == MOUSE_RIGHT then
 			local menu = DermaMenu()
 			menu:AddOption(L"set length",function()
@@ -569,9 +577,7 @@ do
 					data.BoneInfo[i].RF = v.RF
 				end
 				keyframe:SetLength(1/(self:GetData().FrameRate))
-				timeline.selected_keyframe = keyframe
-				timeline.UpdateFrameData()
-				timeline.Save()
+				timeline.SelectKeyframe(keyframe)
 			end)
 
 			menu:AddOption(L"remove",function()
@@ -594,8 +600,7 @@ do
 
 				self:Remove()
 
-				timeline.selected_keyframe = timeline.frame.keyframe_scroll.Panels[#timeline.frame.keyframe_scroll.Panels]
-				timeline.Save()
+				timeline.SelectKeyframe(timeline.frame.keyframe_scroll.Panels[#timeline.frame.keyframe_scroll.Panels])
 			end)
 
 			menu:Open()
