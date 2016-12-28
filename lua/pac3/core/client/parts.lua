@@ -88,7 +88,7 @@ function pac.CreatePart(name, owner)
 	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))
 
 	timer.Simple(0.1, function()
-		if part:IsValid() then
+		if part:IsValid() and part.show_in_editor ~= false then
 			pac.CallHook("OnPartCreated", part, owner == pac.LocalPlayer)
 		end
 	end)

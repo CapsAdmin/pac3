@@ -17,8 +17,8 @@ pace.PropertySheets = {
 		farz = true,
 		eyeangleslerp = true,
 	},
-	
-	appearance = 
+
+	appearance =
 	{
 		drawviewmodel = true,
 		brightness = true,
@@ -53,19 +53,19 @@ pace.PropertySheets = {
 		lodoverride = true,
 		additive = true,
 	},
-	
-	other = 
+
+	other =
 	{
 		ownerentity = true,
 		draworder = true,
 		showinfirstperson = true,
 		duplicate = true,
 	},
-	
+
 	event = {
-		
+
 	},
-	
+
 	entity = {
 		behavior =
 		{
@@ -92,7 +92,7 @@ pace.PropertySheets = {
 			hideentity = true,
 		}
 	},
-	
+
 	proxy = {
 		["easy setup"] =
 		{
@@ -115,7 +115,7 @@ pace.PropertySheets = {
 			additive = true,
 		}
 	},
-	
+
 	particles = {
 		orientation =
 		{
@@ -200,7 +200,7 @@ pace.PartTree = {
 		halo = true,
 		animation = true,
 		physics = true,
-		jiggle = true, 
+		jiggle = true,
 		bone = true,
 		effect = true,
 		material = true,
@@ -214,8 +214,8 @@ pace.PartTree = {
 		proxy = true,
 		material = true,
 		poseparameter = true,
-		fog = true,   
-		clip = true,     
+		fog = true,
+		clip = true,
 	},
 
 	effects = {
@@ -238,7 +238,7 @@ pace.PartTree = {
 		command = true,
 		projectile = true,
 		custom_animation = true,
-	},  
+	},
 }
 
 
@@ -318,12 +318,12 @@ pace.PropertyOrder =
 	"Hide",
 	"ParentName",
 	"OwnerName",
-	
+
 	"Input",
 	"Function",
-	
+
 	"AimPartName",
-	
+
 	"Bone",
 	"VariableName",
 	"Axis",
@@ -337,16 +337,16 @@ pace.PropertyOrder =
 	"EyeAngles",
 	"Size",
 	"Scale",
-	
+
 	"OriginFix",
 	"PositionOffset",
 	"AngleOffset",
-	
+
 	"Model",
 	"Bodygroup",
 	"BodygroupState",
-	"Material",	
-	"SubMaterialId",	
+	"Material",
+	"SubMaterialId",
 	"TrailPath",
 	"Color",
 	"StartColor",
@@ -361,10 +361,10 @@ pace.PropertyOrder =
 	"Max",
 	"Loop",
 	"PingPongLoop",
-		
+
 	"BaseTexture",
 	"BumpMap",
-	
+
 	"Phong",
 	"PhongTint",
 	"PhongBoost",
@@ -373,32 +373,32 @@ pace.PropertyOrder =
 	"PhongExponent",
 	"PhongAlbedoTint",
 	"PhongWarpTexture",
-	
+
 	"Rimlight",
 	"RimlightBoost",
 	"RimlightExponent",
-		
+
 	"EnvMap",
 	"EnvMapMask",
 	"EnvMapContrast",
 	"EnvMapSaturation",
 	"EnvMapTint",
 	"EnvMapMode",
-	
+
 	"Detail",
 	"DetailTint",
 	"DetailScale",
 	"DetailBlendMode",
 	"DetailBlendFactor",
-	
+
 	"CloakPassEnabled",
 	"CloakFactor",
 	"RefractAmount",
-	
+
 	"AmbientOcclusion",
 	"AmbientOcclusionTexture",
-	"AmbientOcclusionColor",	
-	
+	"AmbientOcclusionColor",
+
 	"ConstrainSphere",
 	"ConstrainX",
 	"ConstrainY",
@@ -408,20 +408,20 @@ pace.PropertyOrder =
 	"ConstrainRoll",
 }
 
-pace.PropertyLimits = 
+pace.PropertyLimits =
 {
 	Sequence = function(self, num)
 		num = tonumber(num)
 		return math.Round(math.min(num, -1))
 	end,
-	
+
 	Skin = function(self, num)
 		num = tonumber(num)
 		return math.Round(math.max(num, 0))
 	end,
-	
+
 	SubMaterialId = function(self, num)
-		
+
 		num = tonumber(num) or 0
 
 		local ent = self:GetOwner(self.RootOwner)
@@ -430,7 +430,7 @@ pace.PropertyLimits =
 
 		return math.floor(math.Clamp(num, 0, maxnum))
 	end,
-	
+
 	Bodygroup = function(self, num)
 		num = tonumber(num)
 		return math.Round(math.max(num, 0))
@@ -439,28 +439,28 @@ pace.PropertyLimits =
 		num = tonumber(num)
 		return math.Round(math.max(num, 0))
 	end,
-	
+
 	BaseTextureAngle = function(self, num) self.sens = 0.25 return num end,
 	BumpAngle = function(self, num) self.sens = 0.25 return num end,
 	EnvMapMaskAngle = function(self, num) self.sens = 0.25 return num end,
-	
+
 	Size = function(self, num)
 		self.sens = 0.25
-		
+
 		return num
 	end,
-	
+
 	Strain = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
 		return math.Clamp(num, 0, 1) * 0.999
 	end,
-	
+
 	Style = function(self, num)
 		num = tonumber(num)
 		return math.Clamp(num, 0, 16)
 	end,
-	
+
 	Alpha = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
@@ -471,35 +471,35 @@ pace.PropertyLimits =
 		num = tonumber(num)
 		return math.Clamp(num, 0, 1)
 	end,
-	
+
 	Rate = function(self, num)
 		self.sens = 0.1
 		num = tonumber(num)
 		return num
 	end,
-	
+
 	CellShade = function(self, num)
 		self.sens = 0.1
 		num = tonumber(num)
 		return num
 	end,
-	
+
 	CloakFactor = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
 		return math.Clamp(num, 0, 1)
 	end,
-	
+
 	DetailBlendMode = function(self, num)
 		num = tonumber(num)
 		return math.Round(math.max(num, 0))
 	end,
-	
+
 	Volume = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
 		return num
-	end,	
+	end,
 	Pitch = function(self, num)
 		self.sens = 0.125
 		num = tonumber(num)
@@ -575,26 +575,26 @@ end
 function pace.TranslatePropertiesKey(key, obj)
 	local key_ = key
 	key = key:lower()
-	
+
 	if obj.ClassName == "entity" and (key == "positionoffset" or key == "angleoffset") then
 		return ""
 	end
-	
+
 	if (
-		obj.ClassName == "effect" or 
+		obj.ClassName == "effect" or
 		obj.ClassName == "bone"
-		) 
-		and key == "translucent" then 
-		return "" 
+		)
+		and key == "translucent" then
+		return ""
 	end
-	
+
 	if key == "string" and obj.ClassName == "command" then
 		return key
 	end
-	
-	if 
-		key == "damagetype" or 
-		key == "bone" or 
+
+	if
+		key == "damagetype" or
+		key == "bone" or
 		key == "model" or
 		key == "event" or
 		key == "operator" or
@@ -610,23 +610,23 @@ function pace.TranslatePropertiesKey(key, obj)
 	then
 		return key
 	end
-		
+
 	if key == "weaponholdtype" and obj.ClassName == "animation" then
 		return "weaponholdtype"
 	end
-	
+
 	if key == "slotname" and obj.ClassName == "gesture" then
 		return "gestureslot"
 	end
-	
+
 	if key == "function" and obj.ClassName == "proxy" then
 		return "proxyfunctions"
 	end
-	
+
 	if key == "input" and obj.ClassName == "proxy" then
 		return "proxyinputs"
-	end	
-	
+	end
+
 	if key == "variablename" and obj.ClassName == "proxy" then
 		return "proxyvars"
 	end
@@ -634,48 +634,52 @@ function pace.TranslatePropertiesKey(key, obj)
 	if key == "aimpartname" then
 		return "aimpartname"
 	end
-	
-	if 
-		key == "parentname" or 
-		key == "followpartname" or 
-		key == "anglepartname" or 
-		key == "endpointname" or 
-		key == "pointaname" or 
-		key == "pointbname" or 
-		key == "pointcname" or 
-		key == "pointdname" or 
-		key == "targetpartname" or 
-		key == "outfitpartname" 
+
+	if key == "animationtype" and obj.ClassName == "custom_animation" then
+		return "custom_animation_type"
+	end
+
+	if
+		key == "parentname" or
+		key == "followpartname" or
+		key == "anglepartname" or
+		key == "endpointname" or
+		key == "pointaname" or
+		key == "pointbname" or
+		key == "pointcname" or
+		key == "pointdname" or
+		key == "targetpartname" or
+		key == "outfitpartname"
 	then
 		return "part"
 	end
-		
-	if 
+
+	if
 		key == "sequencename" or
 		key == "gesturename" or
 		(
-			obj.ClassName == "holdtype" and 
+			obj.ClassName == "holdtype" and
 			(
-				obj.ActMods[key_] or 
-				key == "fallback" or 
-				key == "noclip" or 
+				obj.ActMods[key_] or
+				key == "fallback" or
+				key == "noclip" or
 				key == "sitting" or
 				key == "air"
 			)
-		) 
+		)
 	then
 		return "sequence"
 	end
-	
+
 	if key == "spritepath" or key == "trailpath" then
 		return "material"
 	end
-	
+
 	if obj.ClassName == "material" and obj.ShaderParams[key_] == "ITexture" then
 		return "material"
 	end
-		
-	if obj.ClassName == "material" and obj.ShaderParams[key_] == "Vector" and 
+
+	if obj.ClassName == "material" and obj.ShaderParams[key_] == "Vector" and
 		(
 			key ~= "phongfresnelranges" and
 			key ~= "color2" and
@@ -689,7 +693,7 @@ function pace.TranslatePropertiesKey(key, obj)
 	if key:find("color") and not key:find("use") then
 		return "color"
 	end
-	
+
 	return obj and obj.TranslatePropertiesKey and obj:TranslatePropertiesKey(key)
 end
 
