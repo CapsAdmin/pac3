@@ -1,21 +1,21 @@
 local L = pace.LanguageString
 
-module("boneanimlib",package.seeall)
+pace.timeline = pace.timeline or {}
+local timeline = pace.timeline
 
-local animationData = {}
-local animType
-local playBarOffset = 0
-local playingAnimation = false
-local animating = false
+timeline.play_bar_offset = 0
+timeline.playing_animation = false
+timeline.editing = false
+timeline.first_pass = true
 
 local secondDistance = 200 --100px per second on timeline
-local firstPass = true
 
-local TypeTable = {}
-TypeTable[0] = "TYPE_GESTURE"
-TypeTable[1] = "TYPE_POSTURE"
-TypeTable[2] = "TYPE_STANCE"
-TypeTable[3] = "TYPE_SEQUENCE"
+local animation_types = {
+	[0] = "TYPE_GESTURE",
+	[1] = "TYPE_POSTURE",
+	[2] = "TYPE_STANCE",
+	[3] = "TYPE_SEQUENCE",
+}
 
 do
 	local PART = {}
@@ -39,44 +39,51 @@ do
 	pac.RegisterPart(PART)
 end
 
-local function set_anim_type(str)
+function timeline.IsActive()
+	return timeline.editing
+end
+
+function timeline.SetAnimationType(str)
 	if type(str) == "string" then
-		for i,v in pairs(TypeTable) do
+		for i,v in pairs(animation_types) do
 			if v == "TYPE_" .. str:upper() then
-				animType = i
+				timeline.animation_type = i
 				break
 			end
 		end
 	end
 
-	if animType == TYPE_POSTURE then
-		self.add_keyframe_button:SetDisabled(true)
-	elseif animType == TYPE_SEQUENCE then
+	if timeline.animation_type == boneanimlib.TYPE_POSTURE then
+		timeline.frame.add_keyframe_button:SetDisabled(true)
+	elseif timeline.animation_type == boneanimlib.TYPE_SEQUENCE then
 		pace.SetTPose(true)
 	else
 		pace.SetTPose(false)
 	end
 
-	animationData.Type = animType
+	timeline.data = timeline.data or {}
+	timeline.data.Type = timeline.animation_type
+
+	timeline.Save()
 end
 
-local function update_bones()
-	if not selected_keyframe or not selected_keyframe:IsValid() then return end -- WHAT
-	local currentFrame = selected_keyframe:GetAnimationIndex()
-	local postureAnim = {Type = TYPE_POSTURE, FrameData = {{BoneInfo = {}}}}
+function timeline.UpdateBones()
+	if not timeline.selected_keyframe or not timeline.selected_keyframe:IsValid() then return end -- WHAT
+	local currentFrame = timeline.selected_keyframe:GetAnimationIndex()
+	local postureAnim = {Type = boneanimlib.TYPE_POSTURE, FrameData = {{BoneInfo = {}}}}
 
-	postureAnim.FrameData[1] = table.Copy(animationData.FrameData[currentFrame])
+	postureAnim.FrameData[1] = table.Copy(timeline.data.FrameData[currentFrame])
 
-	RegisterLuaAnimation("editingAnim",postureAnim)
+	boneanimlib.RegisterLuaAnimation("editingAnim",postureAnim)
 
-	entity:StopAllLuaAnimations()
-	entity:SetLuaAnimation("editingAnim")
+	timeline.entity:StopAllLuaAnimations()
+	timeline.entity:SetLuaAnimation("editingAnim")
 end
 
-local function update_frame_data()
-	if not selected_keyframe or not selected_bone then return end
+function timeline.UpdateFrameData()
+	if not timeline.selected_keyframe or not timeline.selected_bone then return end
 
-	local data = selected_keyframe:GetData().BoneInfo[selected_bone] or {}
+	local data = timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone] or {}
 
 	data.MF = data.MF or 0
 	data.MR = data.MR or 0
@@ -86,119 +93,119 @@ local function update_frame_data()
 	data.RU = data.RU or 0
 	data.RF = data.RF or 0
 
-	dummy_bone:SetPosition(Vector(data.MF, -data.MR, data.MU))
-	dummy_bone:SetAngles(Angle(data.RR, data.RU, data.RF))
+	timeline.dummy_bone:SetPosition(Vector(data.MF, -data.MR, data.MU))
+	timeline.dummy_bone:SetAngles(Angle(data.RR, data.RU, data.RF))
 end
 
-local function edit_bone()
-	pace.Call("PartSelected", dummy_bone)
-	selected_bone = pac.GetModelBones(entity)[dummy_bone:GetBone()].real
-	update_frame_data()
+function timeline.EditBone()
+	pace.Call("PartSelected", timeline.dummy_bone)
+	timeline.selected_bone = pac.GetModelBones(timeline.entity)[timeline.dummy_bone:GetBone()].real
+	timeline.UpdateFrameData()
 end
 
-local function load(data)
-	animationData = data or util.JSONToTable(animation_part:GetData())
+function timeline.Load(data)
+	timeline.data = data
 
-	if animationData then
-		set_anim_type(animationData.Type)
-		timeline:Clear()
+	if timeline.data then
+		timeline.SetAnimationType(timeline.data.Type)
+		timeline.frame:Clear()
 
-		for i, v in pairs(animationData.FrameData) do
-			local keyframe = timeline:AddKeyFrame(true)
+		for i, v in pairs(timeline.data.FrameData) do
+			local keyframe = timeline.frame:AddKeyFrame(true)
 			keyframe:SetFrameData(i, v)
 		end
 
-		selected_keyframe = timeline.keyframe_scroll.Panels[1]
+		timeline.selected_keyframe = timeline.frame.keyframe_scroll.Panels[1]
 	else
-		animationData = {FrameData = {}, Type = animType}
-		timeline:Clear()
+		timeline.data = {FrameData = {}, Type = timeline.animation_type}
+		timeline.frame:Clear()
 
-		selected_keyframe = timeline:AddKeyFrame()
+		timeline.selected_keyframe = timeline.frame:AddKeyFrame()
+		timeline.Save()
 	end
 
-	update_frame_data()
-	update_bones()
+	timeline.UpdateFrameData()
+	timeline.UpdateBones()
 end
 
-local function save()
-	animation_part:SetData(util.TableToJSON(animationData))
+function timeline.Save()
+	timeline.animation_part.Data = util.TableToJSON(timeline.data)
 end
 
-local function close_timeline()
-	save()
+function timeline.Close()
+	timeline.Save()
 
-	animating = false
+	timeline.editing = false
 
-	animation_part = nil
-	timeline:Remove()
+	timeline.animation_part = nil
+	timeline.frame:Remove()
 
-	entity:StopAllLuaAnimations()
-	entity:ResetBoneMatrix()
+	timeline.entity:StopAllLuaAnimations()
+	timeline.entity:ResetBoneMatrix()
 
-	if dummy_bone and dummy_bone:IsValid() then
-		dummy_bone:Remove()
+	if timeline.dummy_bone and timeline.dummy_bone:IsValid() then
+		timeline.dummy_bone:Remove()
 	end
 
 	hook.Remove("pace_OnVariableChanged", "pac3_timeline")
 end
 
-local function open_timeline(part)
-	animating = true
-	animation_part = part
-	entity = part:GetOwner()
+function timeline.Open(part)
+	timeline.editing = true
+	timeline.animation_part = part
+	timeline.entity = part:GetOwner()
 
-	timeline = vgui.Create("pac3_timeline")
-	timeline:SetPos(pace.Editor:GetWide(),ScrH()-150)
-	timeline:SetSize(ScrW()-pace.Editor:GetWide(),150)
+	timeline.frame = vgui.Create("pac3_timeline")
+	timeline.frame:SetPos(pace.Editor:GetWide(),ScrH()-150)
+	timeline.frame:SetSize(ScrW()-pace.Editor:GetWide(),150)
+	timeline.frame:SetTitle(L"animation editor")
 
-	set_anim_type(part.AnimationType)
+	timeline.SetAnimationType(part.AnimationType)
 
-	if dummy_bone and dummy_bone:IsValid() then dummy_bone:Remove() end
-	dummy_bone = pac.CreatePart("timeline_dummy_bone", entity)
+	if timeline.dummy_bone and timeline.dummy_bone:IsValid() then timeline.dummy_bone:Remove() end
+	timeline.dummy_bone = pac.CreatePart("timeline_dummy_bone", timeline.entity)
 
 	hook.Add("pace_OnVariableChanged", "pac3_timeline", function(part, key, val)
 
-		if part == dummy_bone then
+		if part == timeline.dummy_bone then
 			if key == "Bone" then
-				selected_bone = pac.GetModelBones(entity)[val].real
-				update_frame_data()
+				timeline.selected_bone = pac.GetModelBones(timeline.entity)[val].real
+				timeline.UpdateFrameData()
 			else
-				selected_keyframe:GetData().BoneInfo = selected_keyframe:GetData().BoneInfo or {}
-				selected_keyframe:GetData().BoneInfo[selected_bone] = selected_keyframe:GetData().BoneInfo[selected_bone] or {}
+				timeline.selected_keyframe:GetData().BoneInfo = timeline.selected_keyframe:GetData().BoneInfo or {}
+				timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone] = timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone] or {}
 
 				if key == "Position" then
-					selected_keyframe:GetData().BoneInfo[selected_bone].MF = val.x
-					selected_keyframe:GetData().BoneInfo[selected_bone].MR = -val.y
-					selected_keyframe:GetData().BoneInfo[selected_bone].MU = val.z
+					timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone].MF = val.x
+					timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone].MR = -val.y
+					timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone].MU = val.z
 				elseif key == "Angles" then
-					selected_keyframe:GetData().BoneInfo[selected_bone].RR = val.p
-					selected_keyframe:GetData().BoneInfo[selected_bone].RU = val.y
-					selected_keyframe:GetData().BoneInfo[selected_bone].RF = val.r
+					timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone].RR = val.p
+					timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone].RU = val.y
+					timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone].RF = val.r
 				end
 
-				update_bones()
+				timeline.UpdateBones()
 			end
-		elseif part == animation_part then
-			if key == "AnimationType" then
-				set_anim_type(val)
-			elseif key == "Data" then
-				load()
+		elseif part == timeline.animation_part then
+			if key == "Data" or key == "URL" then
+				timeline.Load(boneanimlib.GetLuaAnimations()[part:GetAnimID()])
 			end
 		end
 	end)
 
-	load()
+	timeline.Load(boneanimlib.GetLuaAnimations()[part:GetAnimID()])
 end
 
 hook.Add("pace_OnPartSelected", "pac3_timeline", function(part)
 	if part.ClassName == "timeline_dummy_bone" then return end
 	if part.ClassName == "custom_animation" then
-		if animating then
-			close_timeline()
+		if timeline.editing then
+			timeline.Close()
 		end
-		open_timeline(part)
-	elseif animating then
-		close_timeline()
+		timeline.Open(part)
+	elseif timeline.editing then
+		timeline.Close()
 	end
 end)
 
@@ -215,12 +222,12 @@ do
 		pnl:SetText(L"edit bone")
 		pnl:Dock(TOP)
 		pnl.DoClick = function()
-			edit_bone()
+			timeline.EditBone()
 		end
 
 		local pnl = vgui.Create("DButton",button_area)
 		pnl:SetText(L"add keyframe")
-		pnl.DoClick = function() selected_keyframe = self:AddKeyFrame() end
+		pnl.DoClick = function() timeline.selected_keyframe = self:AddKeyFrame() timeline.Save() end
 		pnl:Dock(TOP)
 		pnl:SetDisabled(true)
 		self.add_keyframe_button = pnl
@@ -238,16 +245,16 @@ do
 		pnl.DoClick = function()
 			Derma_StringRequest(
 				L"question",
-				L"save as",
-				animName or "",
+				L"timeline.Save as",
+				timeline.animation_part:GetName(),
 				function(name)
-					RegisterLuaAnimation(name, animationData)
+					boneanimlib.RegisterLuaAnimation(name, timeline.data)
 					if not file.Exists("animations", "DATA") then
 						file.CreateDir("animations")
 					end
-					file.Write("animations/" .. name .. ".txt", util.TableToJSON(animationData)) end,
-				function(name) end,
-				L"save",
+					file.Write("animations/" .. name .. ".txt", util.TableToJSON(timeline.data)) end,
+				function() end,
+				L"timeline.Save",
 				L"cancel"
 			)
 		end
@@ -261,7 +268,7 @@ do
 
 			for _, name in pairs(file.Find("animations/*.txt", "DATA")) do
 				menu:AddOption(name:match("(.+)%.txt"), function()
-					load(util.JSONToTable(file.Read("animations/" .. name)))
+					timeline.Load(util.JSONToTable(file.Read("animations/" .. name)))
 				end)
 			end
 		end
@@ -274,22 +281,22 @@ do
 
 			derma.SkinHook( "Paint", "Panel", s, w, h )
 
-			if playingAnimation then
-				playBarOffset = playBarOffset + FrameTime()*secondDistance
+			if timeline.playing_animation then
+				timeline.play_bar_offset = timeline.play_bar_offset + FrameTime()*secondDistance
 			end
 
 			local subtraction = 0
-			if animationData then
-				if firstPass and animationData.StartFrame then
-					for i=1,animationData.StartFrame do
-						local v = animationData.FrameData[i]
+			if timeline.data then
+				if timeline.first_pass and timeline.data.StartFrame then
+					for i=1,timeline.data.StartFrame do
+						local v = timeline.data.FrameData[i]
 						if v then
 							subtraction = subtraction+(1/(v.FrameRate or 1))
 						end
 					end
-				elseif not firstPass and animationData.RestartFrame then
-					for i=1,animationData.RestartFrame do
-						local v = animationData.FrameData[i]
+				elseif not timeline.first_pass and timeline.data.RestartFrame then
+					for i=1,timeline.data.RestartFrame do
+						local v = timeline.data.FrameData[i]
 						if v then
 							subtraction = subtraction+(1/(v.FrameRate or 1))
 						end
@@ -297,11 +304,11 @@ do
 				end
 			end
 
-			if (playBarOffset-subtraction)/secondDistance > self:GetAnimationTime() then
+			if (timeline.play_bar_offset-subtraction)/secondDistance > self:GetAnimationTime() then
 				local restartPos = self:ResolveRestart()
-				playBarOffset = restartPos*secondDistance
+				timeline.play_bar_offset = restartPos*secondDistance
 			end
-			draw.RoundedBox(0,playBarOffset-1,0,2,16,Color(255,0,0,240))
+			draw.RoundedBox(0,timeline.play_bar_offset-1,0,2,16,Color(255,0,0,240))
 
 			local previousSecond = XPos-(XPos%secondDistance)
 			for i=previousSecond,previousSecond+s:GetWide(),secondDistance/4 do
@@ -316,10 +323,9 @@ do
 		local pnl = vgui.Create("DHorizontalScroller",self)
 		pnl:Dock(TOP)
 		self.keyframe_scroll = pnl
-
 	end
-	function TIMELINE:Toggle(bForce)
 
+	function TIMELINE:Toggle(bForce)
 		if bForce ~= nil then
 			self.isPlaying = bForce
 		else
@@ -327,22 +333,19 @@ do
 		end
 
 		if self.isPlaying then
-			RegisterLuaAnimation("editortest",animationData)
-			entity:StopAllLuaAnimations()
-			entity:SetLuaAnimation("editortest")
+			boneanimlib.RegisterLuaAnimation("editortest", timeline.data)
+			timeline.entity:StopAllLuaAnimations()
+			timeline.entity:SetLuaAnimation("editortest")
 
-			playingAnimation = true
-			playBarOffset = self:ResolveStart()*secondDistance
+			timeline.playing_animation = true
+			timeline.play_bar_offset = self:ResolveStart()*secondDistance
 
 			self.play_button:SetText("Stop")
 		else
+			timeline.entity:StopAllLuaAnimations()
+			timeline.playing_animation = false
 
-
-			entity:StopAllLuaAnimations()
-			playingAnimation = false
-
-
-			playBarOffset = self:ResolveStart()*secondDistance
+			timeline.play_bar_offset = self:ResolveStart()*secondDistance
 			self.play_button:SetText("Play")
 		end
 	end
@@ -357,31 +360,26 @@ do
 	end
 
 	function TIMELINE:GetAnimationTime()
-
 		local tempTime = 0
-		local globalAnims = GetLuaAnimations()
 		local startIndex = 1
 
-		if animationData and animationData.FrameData then
-			for i=startIndex, #animationData.FrameData do
-				local v = animationData.FrameData[i]
+		if timeline.data and timeline.data.FrameData then
+			for i=startIndex, #timeline.data.FrameData do
+				local v = timeline.data.FrameData[i]
 				tempTime = tempTime+(1/(v.FrameRate or 1))
 			end
 		end
 
-
-
 		return tempTime
-
 	end
 
 	function TIMELINE:ResolveRestart() --get restart pos in seconds
-		firstPass = false
+		timeline.first_pass = false
 		local timeInSeconds = 0
-		local restartFrame = animationData.RestartFrame
+		local restartFrame = timeline.data.RestartFrame
 		if not restartFrame then return 0 end --no restart pos? start at the start
 
-		for i,v in pairs(animationData.FrameData) do
+		for i,v in pairs(timeline.data.FrameData) do
 			if i == restartFrame then return timeInSeconds end
 			timeInSeconds = timeInSeconds+(1/(v.FrameRate or 1))
 		end
@@ -389,12 +387,12 @@ do
 	end
 
 	function TIMELINE:ResolveStart() --get restart pos in seconds
-		firstPass = true
+		timeline.first_pass = true
 		local timeInSeconds = 0
-		local startFrame = animationData.StartFrame
+		local startFrame = timeline.data.StartFrame
 		if not startFrame then return 0 end --no restart pos? start at the start
 
-		for i,v in pairs(animationData.FrameData) do
+		for i,v in pairs(timeline.data.FrameData) do
 			if i == startFrame then return timeInSeconds end
 			timeInSeconds = timeInSeconds+(1/(v.FrameRate or 1))
 		end
@@ -405,8 +403,8 @@ do
 		local keyframe = vgui.Create("pac3_timeline_keyframe")
 
 		if not raw then
-			keyframe.AnimationKeyIndex = table.insert(animationData.FrameData, {FrameRate = 1, BoneInfo = {}})
-			keyframe.DataTable = animationData.FrameData[keyframe.AnimationKeyIndex]
+			keyframe.AnimationKeyIndex = table.insert(timeline.data.FrameData, {FrameRate = 1, BoneInfo = {}})
+			keyframe.DataTable = timeline.data.FrameData[keyframe.AnimationKeyIndex]
 		end
 
 		keyframe:SetWide(secondDistance) --default to 1 second animations
@@ -414,7 +412,7 @@ do
 		self.keyframe_scroll:AddPanel(keyframe)
 		self.keyframe_scroll:InvalidateLayout()
 
-		keyframe.Alternate = #timeline.keyframe_scroll.Panels%2 == 1
+		keyframe.Alternate = #timeline.frame.keyframe_scroll.Panels%2 == 1
 
 		return keyframe
 
@@ -433,10 +431,10 @@ do
 		self.AnimationKeyIndex = index
 		self:SetWide(1/self:GetData().FrameRate*secondDistance)
 		self:GetParent():GetParent():InvalidateLayout() --rebuild the timeline
-		if animationData.RestartFrame == index then
+		if timeline.data.RestartFrame == index then
 			self.RestartPos = true
 		end
-		if animationData.StartFrame == index then
+		if timeline.data.StartFrame == index then
 			self.StartPos = true
 		end
 	end
@@ -451,7 +449,7 @@ do
 			col = Color(200,200,200,255)
 		end
 		draw.RoundedBox(0,0,0,self:GetWide(),self:GetTall(),col)
-		if selected_keyframe == self then
+		if timeline.selected_keyframe == self then
 			surface.SetDrawColor(255,0,0,255)
 			surface.DrawOutlinedRect(1,1,self:GetWide()-2,self:GetTall()-2)
 		end
@@ -479,13 +477,14 @@ do
 				self.size_w = nil
 				self:MouseCapture(false)
 				self:SetCursor("none")
+				timeline.Save()
 			end
 		end
 	end
 
 	function KEYFRAME:OnMousePressed(mc)
 		if mc == MOUSE_LEFT then
-			local x,y = self:CursorPos()
+			local x = self:CursorPos()
 
 			if x >= self:GetWide() - 4 then
 				self.size_x = gui.MouseX()
@@ -494,19 +493,19 @@ do
 				self:SetCursor("sizewe")
 			end
 
-			timeline:Toggle(false)
-			selected_keyframe = self
-			update_frame_data()
-			edit_bone()
-			update_bones()
+			timeline.frame:Toggle(false)
+			timeline.selected_keyframe = self
+			timeline.UpdateFrameData()
+			timeline.EditBone()
+			timeline.UpdateBones()
 		elseif mc == MOUSE_RIGHT then
 			local menu = DermaMenu()
 			menu:AddOption(L"set length",function()
 				Derma_StringRequest(L"question",
 						L"how long should this frame be in seconds?",
 						tostring(self:GetWide()/secondDistance),
-						function( strTextOut ) self:SetLength(tonumber(strTextOut)) end,
-						function( strTextOut ) end,
+						function(str) self:SetLength(tonumber(str)) end,
+						function() end,
 						L"set length",
 						L"cancel" )
 				end)
@@ -514,34 +513,34 @@ do
 				Derma_StringRequest(L"question",
 						L"multiply "..self:GetAnimationIndex().."'s length",
 						"1.0",
-						function( strTextOut ) self:SetLength(1/tonumber(strTextOut)) end,
-						function( strTextOut ) end,
+						function(str) self:SetLength(1/tonumber(str)) end,
+						function() end,
 						L"multiply length",
 						L"cancel" )
 				end)
-			if animationData.Type ~= TYPE_GESTURE then
+			if timeline.data.Type ~= boneanimlib.TYPE_GESTURE then
 				menu:AddOption(L"set restart",function()
-					for i,v in pairs(timeline.keyframe_scroll.Panels) do
+					for _,v in pairs(timeline.frame.keyframe_scroll.Panels) do
 						if v.RestartPos then v.RestartPos = nil end
 					end
 					self.RestartPos = true
-					animationData.RestartFrame = self:GetAnimationIndex()
+					timeline.data.RestartFrame = self:GetAnimationIndex()
 				end)
 			end
-			if animationData.Type == TYPE_SEQUENCE then
+			if timeline.data.Type == boneanimlib.TYPE_SEQUENCE then
 				menu:AddOption(L"set start",function()
 
-					for i,v in pairs(timeline.keyframe_scroll.Panels) do
+					for _,v in pairs(timeline.frame.keyframe_scroll.Panels) do
 						if v.StartPos then v.StartPos = nil end
 					end
 					self.StartPos = true
-					animationData.StartFrame = self:GetAnimationIndex()
+					timeline.data.StartFrame = self:GetAnimationIndex()
 				end)
 			end
 
 			if self:GetAnimationIndex() > 1 then
 				menu:AddOption(L"reverse last frame",function()
-					local tbl = animationData.FrameData[self:GetAnimationIndex() - 1].BoneInfo
+					local tbl = timeline.data.FrameData[self:GetAnimationIndex() - 1].BoneInfo
 					for i, v in pairs(tbl) do
 						self:GetData().BoneInfo[i] = table.Copy(self:GetData().BoneInfo[i] or {})
 						self:GetData().BoneInfo[i].MU = v.MU * -1
@@ -551,12 +550,12 @@ do
 						self:GetData().BoneInfo[i].RR = v.RR * -1
 						self:GetData().BoneInfo[i].RF = v.RF * -1
 					end
-					update_frame_data()
+					timeline.UpdateFrameData()
 				end)
 			end
 
 			menu:AddOption(L"duplicate to end", function()
-				local keyframe = timeline:AddKeyFrame()
+				local keyframe = timeline.frame:AddKeyFrame()
 
 				local tbl = self:GetData().BoneInfo
 				for i, v in pairs(tbl) do
@@ -570,16 +569,17 @@ do
 					data.BoneInfo[i].RF = v.RF
 				end
 				keyframe:SetLength(1/(self:GetData().FrameRate))
-				selected_keyframe = keyframe
-				update_frame_data()
+				timeline.selected_keyframe = keyframe
+				timeline.UpdateFrameData()
+				timeline.Save()
 			end)
 
 			menu:AddOption(L"remove",function()
 				local frameNum = self:GetAnimationIndex()
-				if frameNum == 1 and not animationData.FrameData[2] then return end
-				table.remove(animationData.FrameData, frameNum)
+				if frameNum == 1 and not timeline.data.FrameData[2] then return end
+				table.remove(timeline.data.FrameData, frameNum)
 				local remove_i
-				for i,v in pairs(timeline.keyframe_scroll.Panels) do
+				for i,v in pairs(timeline.frame.keyframe_scroll.Panels) do
 					if v == self then
 						remove_i = i
 					elseif v:GetAnimationIndex() > frameNum then
@@ -588,13 +588,14 @@ do
 					end
 				end
 
-				table.remove(timeline.keyframe_scroll.Panels, remove_i)
+				table.remove(timeline.frame.keyframe_scroll.Panels, remove_i)
 
-				timeline.keyframe_scroll:InvalidateLayout()
+				timeline.frame.keyframe_scroll:InvalidateLayout()
 
 				self:Remove()
 
-				selected_keyframe = timeline.keyframe_scroll.Panels[#timeline.keyframe_scroll.Panels]
+				timeline.selected_keyframe = timeline.frame.keyframe_scroll.Panels[#timeline.frame.keyframe_scroll.Panels]
+				timeline.Save()
 			end)
 
 			menu:Open()
