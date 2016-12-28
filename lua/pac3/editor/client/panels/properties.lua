@@ -2071,6 +2071,43 @@ do -- gesture slots
 	pace.RegisterPanel(PANEL)
 end
 
+do -- gesture properties
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_custom_animation_type"
+	PANEL.Base = "pace_properties_base_type"
+
+	function PANEL:SpecialCallback()
+		local frame = create_search_list(
+			self,
+			self.CurrentKey,
+			L"animation type",
+			function(list)
+				list:AddColumn("name")
+			end,
+			function()
+				return {
+					gesture = "gesture",
+					posture = "posture",
+					sequence = "sequence",
+					stance = "stance",
+				}
+			end,
+			function()
+				return pace.current_part.AnimationType
+			end,
+			function(list, key, val)
+				return list:AddLine(key)
+			end,
+			function(val, key)
+				return key
+			end
+		)
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
 do
 	local PANEL = {}
 
