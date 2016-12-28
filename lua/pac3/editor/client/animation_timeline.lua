@@ -101,7 +101,7 @@ end
 function timeline.Load(data)
 	timeline.data = data
 
-	if timeline.data then
+	if timeline.data and timeline.data.FrameData and timeline.data.Type then
 		timeline.SetAnimationType(timeline.data.Type)
 		timeline.frame:Clear()
 
@@ -124,9 +124,15 @@ function timeline.Load(data)
 end
 
 function timeline.Save()
-	boneanimlib.RegisterLuaAnimation(timeline.animation_part:GetAnimID(), timeline.data)
-	timeline.animation_part.Data = util.TableToJSON(timeline.data)
-	timer.Create("pace_backup", 1, 1, function() pace.Backup() end)
+	local data = table.Copy(timeline.data)
+	local part = timeline.animation_part
+	timer.Create("pace_timeline_save", 0.1, 1, function()
+		if part:IsValid() then
+			boneanimlib.RegisterLuaAnimation(part:GetAnimID(), data)
+			part.Data = util.TableToJSON(data)
+			timer.Create("pace_backup", 1, 1, function() pace.Backup() end)
+		end
+	end)
 end
 
 function timeline.SelectKeyframe(keyframe)
@@ -197,7 +203,7 @@ function timeline.Open(part)
 
 				timeline.UpdateBones()
 			end
-			timer.Create("pace_timeline_save", 0.1, 1, function() timeline.Save() end)
+			timeline.Save()
 		elseif part == timeline.animation_part then
 			if key == "Data" or key == "URL" then
 				timeline.Load(boneanimlib.GetLuaAnimations()[part:GetAnimID()])
@@ -259,7 +265,7 @@ do
 				L"timeline.Save as",
 				timeline.animation_part:GetName(),
 				function(name)
-					boneanimlib.RegisterLuaAnimation(name, timeline.data)
+					boneanimlib.RegisterLuaAnimation(name, table.Copy(timeline.data))
 					if not file.Exists("animations", "DATA") then
 						file.CreateDir("animations")
 					end
