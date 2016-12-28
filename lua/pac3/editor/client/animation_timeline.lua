@@ -351,13 +351,13 @@ do
 			timeline.playing_animation = true
 			timeline.play_bar_offset = self:ResolveStart()*secondDistance
 
-			self.play_button:SetText("Stop")
+			self.play_button:SetText(L"stop")
 		else
 			timeline.entity:StopAllLuaAnimations()
 			timeline.playing_animation = false
 
 			timeline.play_bar_offset = self:ResolveStart()*secondDistance
-			self.play_button:SetText("Play")
+			self.play_button:SetText(L"play")
 		end
 	end
 
@@ -454,17 +454,19 @@ do
 		return self.AnimationKeyIndex
 	end
 
-	function KEYFRAME:Paint()
-		local col = Color(150,150,150,255)
-		if self.Alternate then
-			col = Color(200,200,200,255)
-		end
-		draw.RoundedBox(0,0,0,self:GetWide(),self:GetTall(),col)
+	function KEYFRAME:Paint(w,h)
+		local c = self:GetSkin().Colours.Tree.Normal
+
+		derma.SkinHook( "Paint", "ListBox", self, w, h )
+
+		draw.RoundedBox(0,0,0,w,h, Color(c.r, c.g, c.b, self.Alternate and 75 or 25))
+
 		if timeline.selected_keyframe == self then
-			surface.SetDrawColor(255,0,0,255)
-			surface.DrawOutlinedRect(1,1,self:GetWide()-2,self:GetTall()-2)
+			derma.SkinHook( "Paint", "Selection", self, w, h )
 		end
-		draw.SimpleText(self:GetAnimationIndex(),pace.CurrentFont,5,5,Color(0,0,0,255),0,3)
+
+		draw.SimpleText(self:GetAnimationIndex(),pace.CurrentFont,5,5,self:GetSkin().Colours.Tree.Normal,0,3)
+
 		if self.RestartPos then
 			draw.SimpleText("Restart",pace.CurrentFont,self:GetWide()-30,5,Color(0,0,0,255),2,3)
 		end
