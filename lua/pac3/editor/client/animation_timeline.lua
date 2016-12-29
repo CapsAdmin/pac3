@@ -43,6 +43,20 @@ function timeline.IsActive()
 	return timeline.editing
 end
 
+local function check_tpose()
+	if timeline.data.Type == boneanimlib.TYPE_SEQUENCE then
+		hook.Add("CalcMainActivity", "pac3_timeline", function(ply)
+			if ply == LocalPlayer() then
+				return
+					ply:LookupSequence("reference"),
+					ply:LookupSequence("reference")
+			end
+		end)
+	else
+		hook.Remove("CalcMainActivity", "pac3_timeline")
+	end
+end
+
 function timeline.SetAnimationType(str)
 	if type(str) == "string" then
 		for i,v in pairs(animation_types) do
@@ -99,6 +113,8 @@ function timeline.EditBone()
 	timeline.selected_bone = pac.GetModelBones(timeline.entity)[timeline.dummy_bone:GetBone()].real
 	timeline.UpdateFrameData()
 	pace.PopulateProperties(timeline.dummy_bone)
+
+	check_tpose()
 end
 
 function timeline.Load(data)
@@ -162,6 +178,7 @@ function timeline.Close()
 	end
 
 	hook.Remove("pace_OnVariableChanged", "pac3_timeline")
+	hook.Remove("CalcMainActivity", "pac3_timeline")
 end
 
 function timeline.Open(part)
@@ -226,6 +243,7 @@ hook.Add("pace_OnPartSelected", "pac3_timeline", function(part)
 			timeline.Close()
 		end
 		timeline.Open(part)
+		hook.Remove("CalcMainActivity", "pac3_timeline")
 	elseif timeline.editing then
 		timeline.Close()
 	end
