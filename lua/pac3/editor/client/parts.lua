@@ -168,6 +168,7 @@ do -- menu
 
 			if pace.IsInBasicMode() and not pace.BasicParts[class_name] then continue end
 			if not pace.IsShowingDeprecatedFeatures() and pace.DeprecatedParts[class_name] then continue end
+			if tbl.show_in_editor == false then continue end
 
 			if not tbl.Internal then
 				table.insert(temp, class_name)
