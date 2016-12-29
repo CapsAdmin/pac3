@@ -148,8 +148,13 @@ function timeline.Save()
 	timer.Create("pace_timeline_save", 0.1, 1, function()
 		if part:IsValid() then
 			boneanimlib.RegisterLuaAnimation(part:GetAnimID(), data)
-			part.Data = util.TableToJSON(data)
-			timer.Create("pace_backup", 1, 1, function() pace.Backup() end)
+			if part:GetURL() ~= "" then
+				file.Write("pac3/__animations/" .. part:GetName() .. ".txt", util.TableToJSON(data))
+				part:SetData("")
+			else
+				part.Data = util.TableToJSON(data)
+				timer.Create("pace_backup", 1, 1, function() pace.Backup() end)
+			end
 		end
 	end)
 end
@@ -169,6 +174,11 @@ end
 function timeline.Close()
 	timeline.Save()
 
+	-- old animeditor behavior
+	if part:GetURL() ~= "" then
+		file.Write("pac3/__animations/backups/previous_session_"..os.date("%m%d%y%H%M%S")..".txt", util.TableToJSON(timeline.data))
+	end
+
 	timeline.editing = false
 
 	timeline.animation_part = nil
@@ -186,6 +196,10 @@ function timeline.Close()
 end
 
 function timeline.Open(part)
+	file.CreateDir("pac3")
+	file.CreateDir("pac3/__animations")
+	file.CreateDir("pac3/__animations/backups")
+
 	timeline.play_bar_offset = 0
 	timeline.playing_animation = false
 	timeline.editing = false
@@ -292,16 +306,13 @@ do
 		pnl.DoClick = function()
 			Derma_StringRequest(
 				L"question",
-				L"timeline.Save as",
+				L"save as",
 				timeline.animation_part:GetName(),
 				function(name)
 					boneanimlib.RegisterLuaAnimation(name, table.Copy(timeline.data))
-					if not file.Exists("animations", "DATA") then
-						file.CreateDir("animations")
-					end
-					file.Write("animations/" .. name .. ".txt", util.TableToJSON(timeline.data)) end,
+					file.Write("pac3/__animations/" .. name .. ".txt", util.TableToJSON(timeline.data)) end,
 				function() end,
-				L"timeline.Save",
+				L"save",
 				L"cancel"
 			)
 		end
@@ -316,6 +327,12 @@ do
 			for _, name in pairs(file.Find("animations/*.txt", "DATA")) do
 				menu:AddOption(name:match("(.+)%.txt"), function()
 					timeline.Load(util.JSONToTable(file.Read("animations/" .. name)))
+				end)
+			end
+
+			for _, name in pairs(file.Find("pac3/__animations/*.txt", "DATA")) do
+				menu:AddOption(name:match("(.+)%.txt"), function()
+					timeline.Load(util.JSONToTable(file.Read("pac3/__animations/" .. name)))
 				end)
 			end
 		end
