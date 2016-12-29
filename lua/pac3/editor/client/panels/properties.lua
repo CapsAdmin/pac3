@@ -179,6 +179,8 @@ do -- list
 		left.Paint = function(_, w, h)
 			left:GetSkin().tex.CategoryList.Header(0,0,w*2,h)
 
+			surface.SetFont(pace.CurrentFont)
+
 			local txt = L(name)
 			local _, _h = surface.GetTextSize(txt)
 			local middle = h/2 - _h/2
