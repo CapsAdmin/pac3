@@ -48,16 +48,13 @@ function timeline.SetAnimationType(str)
 		end
 	end
 
-	if timeline.animation_type == boneanimlib.TYPE_POSTURE then
-		timeline.frame.add_keyframe_button:SetDisabled(true)
-	elseif timeline.animation_type == boneanimlib.TYPE_SEQUENCE then
-		pace.SetTPose(true)
-	else
-		pace.SetTPose(false)
-	end
+	timeline.frame.add_keyframe_button:SetDisabled(timeline.animation_type == boneanimlib.TYPE_POSTURE)
 
 	timeline.data = timeline.data or {}
 	timeline.data.Type = timeline.animation_type
+
+	timeline.frame:Toggle()
+	timeline.frame:Toggle()
 
 	timeline.Save()
 end
@@ -208,6 +205,8 @@ function timeline.Open(part)
 		elseif part == timeline.animation_part then
 			if key == "Data" or key == "URL" then
 				timeline.Load(boneanimlib.GetLuaAnimations()[part:GetAnimID()])
+			elseif key == "AnimationType" then
+				timeline.SetAnimationType(val)
 			end
 		end
 	end)
