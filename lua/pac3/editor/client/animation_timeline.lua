@@ -175,7 +175,7 @@ function timeline.Close()
 	timeline.Save()
 
 	-- old animeditor behavior
-	if part:GetURL() ~= "" then
+	if timeline.animation_part:GetURL() ~= "" then
 		file.Write("pac3/__animations/backups/previous_session_"..os.date("%m%d%y%H%M%S")..".txt", util.TableToJSON(timeline.data))
 	end
 
