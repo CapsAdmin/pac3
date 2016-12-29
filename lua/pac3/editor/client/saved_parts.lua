@@ -213,8 +213,7 @@ local function add_files(tbl, dir)
 
 	if folders then
 		for key, folder in pairs(folders) do
-			if folder == "__backup" then continue end
-			if folder == "objcache" then continue end
+			if folder == "__backup" or folder == "objcache" or folder == "__animation" then continue end
 			tbl[folder] = {}
 			add_files(tbl[folder], dir .. "/" .. folder)
 		end
