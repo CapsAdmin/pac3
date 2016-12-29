@@ -485,7 +485,11 @@ do
 		if self.size_x then
 			local delta = self.size_x - gui.MouseX()
 
-			self:SetLength((self.size_w - delta)/secondDistance)
+			self:SetLength((self.size_w - delta) / secondDistance)
+		elseif self.move then
+			local x, y = self:GetPos()
+			local delta = gui.MouseX() - self.move
+			self:SetPos(self.move_x + delta, y)
 		end
 	end
 
@@ -497,6 +501,36 @@ do
 				self:MouseCapture(false)
 				self:SetCursor("none")
 				timeline.Save()
+			elseif self.move then
+				local panels = {}
+				local frames = {}
+
+				for k, v in pairs(timeline.frame.keyframe_scroll.Panels) do
+					table.insert(panels, v)
+					v:SetParent()
+					timeline.frame.keyframe_scroll.Panels[k] = nil
+				end
+
+				table.sort(panels, function(a, b)
+					return (a:GetPos() + a:GetWide() / 2) < (b:GetPos() + b:GetWide() / 2)
+				end)
+
+				for i,v in ipairs(panels) do
+					timeline.frame.keyframe_scroll:AddPanel(v)
+					v.Alternate = #timeline.frame.keyframe_scroll.Panels%2 == 1
+
+					frames[i] = timeline.data.FrameData[v:GetAnimationIndex()]
+				end
+
+				for i,v in ipairs(frames) do
+					timeline.data.FrameData[i] = v
+					panels[i].AnimationKeyIndex = i
+				end
+
+				self:MouseCapture(false)
+				self:SetCursor("none")
+				self.move = nil
+				self.move_x = nil
 			end
 		end
 	end
@@ -510,6 +544,12 @@ do
 				self.size_w = self:GetWide()
 				self:MouseCapture(true)
 				self:SetCursor("sizewe")
+			else
+				self.move = gui.MouseX()
+				self.move_x = self:GetPos()
+				self:SetZPos(10)
+				self:MouseCapture(true)
+				self:SetCursor("sizeall")
 			end
 
 			timeline.frame:Toggle(false)
@@ -592,7 +632,9 @@ do
 				local frameNum = self:GetAnimationIndex()
 				if frameNum == 1 and not timeline.data.FrameData[2] then return end
 				table.remove(timeline.data.FrameData, frameNum)
+
 				local remove_i
+
 				for i,v in pairs(timeline.frame.keyframe_scroll.Panels) do
 					if v == self then
 						remove_i = i
