@@ -162,6 +162,10 @@ function timeline.SelectKeyframe(keyframe)
 	timeline.Save()
 end
 
+function timeline.IsEditingBone()
+	return timeline.dummy_bone == pace.current_part
+end
+
 function timeline.Close()
 	timeline.Save()
 
@@ -234,6 +238,10 @@ function timeline.Open(part)
 	end)
 
 	timeline.Load(boneanimlib.GetLuaAnimations()[part:GetAnimID()])
+
+	hook.Remove("CalcMainActivity", "pac3_timeline")
+	timeline.entity:StopAllLuaAnimations()
+	timeline.entity:ResetBoneMatrix()
 end
 
 hook.Add("pace_OnPartSelected", "pac3_timeline", function(part)
@@ -243,7 +251,6 @@ hook.Add("pace_OnPartSelected", "pac3_timeline", function(part)
 			timeline.Close()
 		end
 		timeline.Open(part)
-		hook.Remove("CalcMainActivity", "pac3_timeline")
 	elseif timeline.editing then
 		timeline.Close()
 	end
@@ -383,6 +390,12 @@ do
 			self.play_button:SetText(L"stop")
 		else
 			timeline.entity:StopAllLuaAnimations()
+
+			if not timeline.IsEditingBone() then
+				timeline.entity:ResetBoneMatrix()
+				hook.Remove("CalcMainActivity", "pac3_timeline")
+			end
+
 			timeline.playing_animation = false
 
 			timeline.play_bar_offset = self:ResolveStart()*secondDistance
