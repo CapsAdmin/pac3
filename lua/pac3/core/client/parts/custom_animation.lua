@@ -34,7 +34,21 @@ function PART:SetURL(url)
 				Msg"[PAC] Animation failed to parse from "print(url)
 				return
 			end
+
+			if tbl.Type then
+				if tbl.Type == boneanimlib.TYPE_GESTURE then
+					self:SetAnimationType("gesture")
+				elseif tbl.Type == boneanimlib.TYPE_POSTURE then
+					self:SetAnimationType("posture")
+				elseif tbl.Type == boneanimlib.TYPE_STANCE then
+					self:SetAnimationType("stance")
+				elseif tbl.Type == boneanimlib.TYPE_SEQUENCE then
+					self:SetAnimationType("sequence")
+				end
+			end
+
 			boneanimlib.RegisterLuaAnimation(self:GetAnimID(), tbl)
+
 			if pace.timeline.IsActive() and pace.timeline.animation_part == self then
 				pace.timeline.Load(tbl)
 			end
