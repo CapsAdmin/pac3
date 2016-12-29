@@ -17,6 +17,11 @@ do
 
 	PART.ClassName = "timeline_dummy_bone"
 	PART.show_in_editor = false
+	PART.PropertyWhitelist = {
+		"Position",
+		"Angles",
+		"Bone",
+	}
 
 	function PART:GetBonePosition()
 		local owner = self:GetOwner()
