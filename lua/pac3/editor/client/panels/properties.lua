@@ -256,7 +256,12 @@ do -- list
 				val = val.val
 			end
 
-			if not obj.ClassName or (not pace.HiddenPropertyKeys[key] or pace.HiddenPropertyKeys[key] == obj.ClassName) and not pace.ShouldHideProperty(key) then
+			if
+				not obj.ClassName or
+				(not pace.HiddenPropertyKeys[key] or pace.HiddenPropertyKeys[key] == obj.ClassName) and
+				not pace.ShouldHideProperty(key) and
+				(not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key))
+			then
 				local group = pace.ReversedPropertySheets[key:lower()]
 				if group == nil then group = L"generic" end
 
