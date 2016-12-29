@@ -96,6 +96,7 @@ function timeline.EditBone()
 	pace.Call("PartSelected", timeline.dummy_bone)
 	timeline.selected_bone = pac.GetModelBones(timeline.entity)[timeline.dummy_bone:GetBone()].real
 	timeline.UpdateFrameData()
+	pace.PopulateProperties(timeline.dummy_bone)
 end
 
 function timeline.Load(data)
@@ -186,7 +187,7 @@ function timeline.Open(part)
 		if part == timeline.dummy_bone then
 			if key == "Bone" then
 				timeline.selected_bone = pac.GetModelBones(timeline.entity)[val].real
-				timeline.UpdateFrameData()
+				timer.Simple(0, function() timeline.EditBone() end) -- post variable changed?
 			else
 				timeline.selected_keyframe:GetData().BoneInfo = timeline.selected_keyframe:GetData().BoneInfo or {}
 				timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone] = timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone] or {}
