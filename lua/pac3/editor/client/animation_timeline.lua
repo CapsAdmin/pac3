@@ -547,7 +547,7 @@ do
 			else
 				self.move = gui.MouseX()
 				self.move_x = self:GetPos()
-				self:SetZPos(10)
+				self:MoveToFront()
 				self:MouseCapture(true)
 				self:SetCursor("sizeall")
 			end
