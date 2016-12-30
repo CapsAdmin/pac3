@@ -44,9 +44,10 @@ function timeline.IsActive()
 end
 
 local function check_tpose()
+	if not timeline.entity:IsPlayer() then return end
 	if timeline.data.Type == boneanimlib.TYPE_SEQUENCE then
 		hook.Add("CalcMainActivity", "pac3_timeline", function(ply)
-			if ply == LocalPlayer() then
+			if ply == timeline.entity then
 				return
 					ply:LookupSequence("reference"),
 					ply:LookupSequence("reference")
@@ -184,8 +185,10 @@ function timeline.Close()
 	timeline.animation_part = nil
 	timeline.frame:Remove()
 
-	timeline.entity:StopAllLuaAnimations()
-	timeline.entity:ResetBoneMatrix()
+	if timeline.entity:IsValid() then
+		timeline.entity:StopAllLuaAnimations()
+		timeline.entity:ResetBoneMatrix()
+	end
 
 	if timeline.dummy_bone and timeline.dummy_bone:IsValid() then
 		timeline.dummy_bone:Remove()
