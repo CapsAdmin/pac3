@@ -74,6 +74,13 @@ function pace.GUIMouseReleased(mc)
 	mcode = nil
 end
 
+local function set_mouse_pos(x, y)
+	gui.SetMousePos(x, y)
+	held_ang = pace.ViewAngles * 1
+	held_mpos = Vector(x, y)
+	return held_mpos * 1
+end
+
 local function CalcDrag()
 	if
 		pace.BusyWithProperties:IsValid() or
@@ -136,7 +143,21 @@ local function CalcDrag()
 
 	if not pace.IsSelecting then
 		if mcode == MOUSE_LEFT then
-			local delta = (held_mpos - Vector(gui.MousePos())) / 5 * math.rad(pace.ViewFOV)
+			local mpos = Vector(gui.MousePos())
+
+			if mpos.x >= ScrW() - 1 then
+				mpos = set_mouse_pos(1, gui.MouseY())
+			elseif mpos.x < 1 then
+				mpos = set_mouse_pos(ScrW() - 2, gui.MouseY())
+			end
+
+			if mpos.y >= ScrH() - 1 then
+				mpos = set_mouse_pos(gui.MouseX(), 1)
+			elseif mpos.y < 1 then
+				mpos = set_mouse_pos(gui.MouseX(), ScrH() - 2)
+			end
+
+			local delta = (held_mpos - mpos) / 5 * math.rad(pace.ViewFOV)
 			pace.ViewAngles.p = math.Clamp(held_ang.p - delta.y, -90, 90)
 			pace.ViewAngles.y = held_ang.y + delta.x
 		end
@@ -275,17 +296,6 @@ function pace.SetViewPart(part, reset_campos)
 	end
 end
 
-local L = pace.LanguageString
-
-local legacy_text = {
-	L"Because of the recent gmod update scaling models have changed.",
-	L"If your outfits look wrong you should try and fix them.",
-	L"If you want to use the old method of scaling go to tools -> use legacy scale -> true (left of this text) to enable the old scaling again.",
-	L"If it doesn't look right after turning on legacy scale, try re-wearing the outfit.",
-	L"The old method of scaling is slow and not perfect. \"cell shading\" wont work and some models may appear larger than they should be.",
-	L"Legacy scale has been on by default since the gmod update but now it's off by default.",
-}
-
 function pace.HUDPaint()
 	if mcode and not input.IsMouseDown(mcode) then
 		mcode = nil
@@ -299,14 +309,6 @@ function pace.HUDPaint()
 		if ent:IsValid() then
 			pace.Call("Draw", ScrW(), ScrH())
 		end
-
-		local x, y = pace.Editor:GetPos() + pace.Editor:GetWide() + 4, 0
-		--[[for i, text in ipairs(legacy_text) do
-			draw.SimpleTextOutlined(text, "DermaDefault", x, y, ((i == 4) or (i == 8)) and Color(255, 150, 150) or Color(255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM, 1, Color(0,0,0,255))
-			surface.SetFont("DermaDefault")
-			local w, h = surface.GetTextSize(text)
-			y = y + h
-		end]]
 	end
 end
 

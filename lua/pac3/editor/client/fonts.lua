@@ -26,6 +26,7 @@ for i = 1, 5 do
 end
 
 table.insert(pace.Fonts, "DermaDefault")
+table.insert(pace.Fonts, "DermaDefaultBold")
 
 local font_cvar = CreateClientConVar("pac_editor_font", pace.Fonts[1])
 
@@ -51,7 +52,7 @@ function pace.AddFontsToMenu(menu)
 	menu.GetDeleteSelf = function() return false end
 
 	for key, val in pairs(pace.Fonts) do
-		local pnl = menu:AddOption(L"The quick brown fox jumps over the lazy dog.", function()
+		local pnl = menu:AddOption(L"The quick brown fox jumps over the lazy dog. (" ..val ..")", function()
 			pace.SetFont(val)
 		end)
 

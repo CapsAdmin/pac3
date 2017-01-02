@@ -28,7 +28,7 @@ function pace.SaveParts(name, prompt_name, override_part)
 			data = override_part:ToTable()
 		else
 			for key, part in pairs(pac.GetParts(true)) do
-				if not part:HasParent() then
+				if not part:HasParent() and part.show_in_editor ~= false then
 					table.insert(data, part:ToTable())
 				end
 			end
@@ -213,8 +213,7 @@ local function add_files(tbl, dir)
 
 	if folders then
 		for key, folder in pairs(folders) do
-			if folder == "__backup" then continue end
-			if folder == "objcache" then continue end
+			if folder == "__backup" or folder == "objcache" or folder == "__animations" then continue end
 			tbl[folder] = {}
 			add_files(tbl[folder], dir .. "/" .. folder)
 		end
@@ -412,7 +411,15 @@ local function populate_parts(menu, tbl, dir, override_part)
 			local parts = data.Content
 
 			if parts[1] then
-				local pnl = menu:AddOption(data.Name, function() pace.SaveParts(nil, data.RelativePath, override_part) end)
+				local menu, pnl = menu:AddSubMenu(data.Name, function() pace.SaveParts(nil, data.RelativePath, override_part) end)
+				menu.GetDeleteSelf = function() return false end
+				pnl:SetImage(pace.MiscIcons.outfit)
+
+				menu:AddOption(L"delete", function()
+					file.Delete("pac3/" .. data.RelativePath .. ".txt", "DATA")
+					pace.RefreshFiles()
+				end):SetImage(pace.MiscIcons.clear)
+
 				pnl:SetImage(pace.MiscIcons.outfit)
 			elseif parts.self then
 				menu:AddOption(data.Name, function() pace.SaveParts(nil, data.RelativePath, override_part)  end)
