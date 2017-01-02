@@ -42,7 +42,7 @@ end
 
 function PART:SetLoop(bool)
 	self.Loop = bool
-	
+
 	if not self:IsHidden() then
 		self:OnShow()
 	end
@@ -50,14 +50,14 @@ end
 
 function PART:SetGestureName(name)
 	self.GestureName = name
-	
+
 	local list = name:Split(";")
 	for k,v in next,list do
 		if v:Trim() == "" then list[k] = nil end
 	end
-	
+
 	self.random_gestlist = list
-	
+
 	if not self:IsHidden() then
 		self:OnShow()
 	end
@@ -65,15 +65,15 @@ end
 
 function PART:SetSlotName(name)
 	local ent = self:GetOwner()
-	
+
 	if ent:IsValid() and ent:IsPlayer() then		-- to stop gestures getting stuck
 		for k,v in next,self.ValidGestureSlots do
 			ent:AnimResetGestureSlot(v)
 		end
 	end
-	
+
 	self.SlotName = name
-	
+
 	if not self:IsHidden() then
 		self:OnShow()
 	end
@@ -81,11 +81,11 @@ end
 
 function PART:SetSlotWeight(num)
 	local ent = self:GetOwner()
-	
+
 	if ent:IsValid() and ent:IsPlayer() then
 		ent:AnimSetGestureWeight(self:GetSlotID(), num)
 	end
-	
+
 	self.SlotWeight = num
 end
 
@@ -95,16 +95,19 @@ function PART:OnShow()
 	if ent:IsValid() and ent:IsPlayer() then		-- function is for players only :(
 		local gesture = self.random_gestlist and table.Random(self.random_gestlist) or self.GestureName
 		local slot = self:GetSlotID()
-		
+
 		ent:AnimResetGestureSlot(slot)
-		ent:AnimRestartGesture(slot, ent:GetSequenceActivity(ent:LookupSequence(gesture)), not self.Loop)
+		local act = ent:GetSequenceActivity(ent:LookupSequence(gesture))
+		if act ~= 1 then
+			ent:AnimRestartGesture(slot, act, not self.Loop)
+		end
 		ent:AnimSetGestureWeight(slot, self.SlotWeight or 1)
 	end
 end
 
 function PART:OnHide()
 	local ent = self:GetOwner()
-	
+
 	if ent:IsValid() and ent:IsPlayer() and self.Loop then
 		ent:AnimResetGestureSlot(self:GetSlotID())
 	end

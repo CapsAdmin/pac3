@@ -31,6 +31,7 @@ include("wiki.lua")
 include("examples.lua")
 include("about.lua")
 include("animeditor.lua")
+include("animation_timeline.lua")
 include("render_scores.lua")
 include("net_messages.lua")
 include("pac2_compat.lua")
@@ -150,6 +151,10 @@ function pace.CloseEditor()
 		pace.Editor:Remove()
 		pace.Active = false
 		pace.Call("CloseEditor")
+
+		if pace.timeline.IsActive() then
+			pace.timeline.Close()
+		end
 	end
 
 	RunConsoleCommand("pac_in_editor", "0")
