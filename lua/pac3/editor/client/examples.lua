@@ -2558,7 +2558,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 },
 }
 
-pace.example_outfits["manual bone merge"] = {[1] = {
+pace.example_outfits["manual bonemerge"] = {[1] = {
 	["children"] = {
 		[1] = {
 			["children"] = {
@@ -2662,8 +2662,7 @@ pace.example_outfits["manual bone merge"] = {[1] = {
 				},
 			},
 			["self"] = {
-				["Model"] = "models/player/items/scout/xms_scout_elf_sneakers.mdl",
-				["Model"] = "models/player/items/scout/xms_scout_elf_sneakers.mdl",
+				["Model"] = "models/workshop/player/items/scout/xms_scout_elf_sneakers/xms_scout_elf_sneakers.mdl",
 				["ClassName"] = "model",
 				["UniqueID"] = "2394819278",
 				["EditorExpand"] = true,
@@ -2789,7 +2788,7 @@ pace.example_outfits["manual bone merge"] = {[1] = {
 					},
 					["self"] = {
 						["ClassName"] = "bone",
-						["Size"] = 0.4,
+						["Size"] = 0.05,
 						["UniqueID"] = "3767891771",
 						["Bone"] = "left calf",
 						["Name"] = "left calf",
@@ -2801,7 +2800,7 @@ pace.example_outfits["manual bone merge"] = {[1] = {
 					},
 					["self"] = {
 						["ClassName"] = "bone",
-						["Size"] = 0.4,
+						["Size"] = 0.05,
 						["UniqueID"] = "3080702787",
 						["Bone"] = "right calf",
 						["Name"] = "right calf",
