@@ -338,6 +338,12 @@ do
 					timeline.Load(util.JSONToTable(file.Read("pac3/__animations/" .. name)))
 				end)
 			end
+			
+			-- LOL
+			timer.Simple(0, function()
+				local x, y = menu:GetPos()
+				menu:SetPos(x, y - menu:GetTall())
+			end)
 		end
 
 		local pnl = vgui.Create("DPanel",self)
