@@ -747,7 +747,7 @@ do -- events
 
 		self:RemoveChildren()
 
-		if self.owner_id then
+		if self.owner_id and self.UniqueID then
 			pac.UniqueIDParts[self.owner_id][self.UniqueID] = nil
 		end
 
