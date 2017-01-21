@@ -1,0 +1,22 @@
+sudo: false
+
+language: c
+
+addons:
+  apt:
+    packages:
+    - libc6:i386
+    - libstdc++6:i386
+    
+before_install:
+ # Download the lua 
+ - wget https://github.com/Metastruct/gtravis/releases/download/travisbins/gluac.tar.xz
+ - tar -xf gluac.tar.xz
+ - export LD_LIBRARY_PATH=`pwd`/gluac${LD_LIBRARY_PATH:+:}${LD_LIBRARY_PATH:-}
+
+ # Set the $PATH so gluac can be executed
+ - export PATH=$PATH:`pwd`/gluac
+ 
+ - echo $PWD
+
+script: find lua/ -iname '*.lua' -print0 | xargs -0 -- gluac -p --
