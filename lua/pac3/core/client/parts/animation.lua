@@ -51,15 +51,6 @@ PART.ValidHoldTypes =
 	scared = ACT_HL2MP_IDLE_SCARED,
 }
 
-local function math_isvalid(num)
-	return
-		num and
-		num ~= inf and
-		num ~= ninf and
-		(num >= 0 or num <= 0)
-end
-
-
 function PART:GetNiceName()
 	local str = self:GetSequenceName()
 
@@ -89,6 +80,8 @@ function PART:GetSequenceList()
 	end
 	return {"none"}
 end
+
+PART.GetSequenceNameList = PART.GetSequenceList
 
 function PART:OnHide()
 	local ent = self:GetOwner()
