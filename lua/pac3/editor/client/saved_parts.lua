@@ -241,7 +241,8 @@ local function add_files(tbl, dir)
 					if dat then
 						table.insert(tbl, data)
 					else
-						ErrorNoHalt(("Decoding %s failed: %s\n"):format(path,err))
+						pac.dprint(("Decoding %s failed: %s\n"):format(path,err))
+						chat.AddText(("Could not load: %s\n"):format(path))
 					end
 
 				end
