@@ -13,6 +13,7 @@
 		"COPYING",
 		"README.md",
 		"TODO.txt",
-		"boneanimlib.txt"
+		"boneanimlib.txt",
+		".travis.yml"
 	]
 }
