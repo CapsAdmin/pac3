@@ -455,7 +455,7 @@ function pac.PostDrawOpaqueRenderables(drawdepth,drawing_skybox)
 							local col = ent.pac_color or dummyv
 							local bri = ent.pac_brightness or 1
 							
-							render_ModelMaterialOverride(m)
+							render_ModelMaterialOverride(ent.pac_materialm)
 							render_SetColorModulation(col.x * bri, col.y * bri, col.z * bri)
 							render_SetBlend(ent.pac_alpha or 1)
 							
