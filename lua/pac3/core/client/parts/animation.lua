@@ -258,14 +258,12 @@ function PART:OnThink()
 			self.frame = self.frame + rate / 2
 			local cycle = min + math.abs(math.Round((self.frame + self.Offset)*0.5) - (self.frame + self.Offset)*0.5)*2 * (max - min)
 			if pac.IsNumberValid(cycle) then
-				print(cycle)
 				ent:SetCycle(cycle)
 			end
 		else
 			self.frame = self.frame + rate
 			local cycle = min + ((self.frame + self.Offset)*0.5)%1 * (max - min)
 			if pac.IsNumberValid(cycle) then
-				print(cycle)
 				ent:SetCycle(cycle)
 			end
 		end
