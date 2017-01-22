@@ -19,4 +19,4 @@ before_install:
  
  - echo $PWD
 
-script: find lua/ -iname '*.lua' -print0 | xargs -0 -- gluac -p --
+script: find lua/ -iname '*.lua' -not -path 'lua/entities/gmod_wire_expression2/core/custom/*' -print0 | xargs -0 -- gluac -p --
