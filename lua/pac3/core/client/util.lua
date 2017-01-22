@@ -1,7 +1,21 @@
-pac.next_frame_funcs = pac.next_frame_funcs or {}
+do
+	local inf, ninf = math.huge, -math.huge
 
-function pac.RunNextFrame(id, func)
-	pac.next_frame_funcs[id] = func
+	function pac.IsNumberValid(num)
+		return
+			num and
+			num ~= inf and
+			num ~= ninf and
+			(num >= 0 or num <= 0)
+	end
+end
+
+do
+	pac.next_frame_funcs = pac.next_frame_funcs or {}
+
+	function pac.RunNextFrame(id, func)
+		pac.next_frame_funcs[id] = func
+	end
 end
 
 do --dev util
@@ -11,7 +25,7 @@ do --dev util
 				pac.UnhookEntityRender(ent)
 				--ent:Remove()
 			end
-			
+
 			if ent.IsPACEntity then
 				ent:Remove()
 			end
@@ -23,41 +37,41 @@ do --dev util
 		pac.RemoveAllPACEntities()
 		pac.Parts = {}
 	end
-	
+
 	pac.convarcache = {}
 	function pac.CreateClientConVarFast(cvar,initial,save,t,server)
-		
+
 		local cached = pac.convarcache[cvar]
 		if cached then return cached[1],cached[2] end
-		
+
 		local val
 		local c = CreateClientConVar(cvar,initial,save,server)
 		--Msg("[FCVar] ",cvar,": ")
-		
+
 		local ConVarChanged
-		
+
 		if t=="string" or t=="str" then
-			ConVarChanged = function( cvar, old, new ) 
-				val = new 
+			ConVarChanged = function( cvar, old, new )
+				val = new
 			end
 		elseif t=="boolean" or t=="bool" then
-			ConVarChanged = function( cvar, old, new ) 
+			ConVarChanged = function( cvar, old, new )
 				if new == "0" then
 					val = false
-				elseif new == "1" then 
+				elseif new == "1" then
 					val = true
 				else
 					val = (tonumber(new) or 0)>=1
 				end
 			end
-		
+
 		elseif t=="number" or t=="num" then
-			ConVarChanged = function( cvar, old, new ) 
+			ConVarChanged = function( cvar, old, new )
 				val= tonumber( new ) or 0
 			end
-		
+
 		elseif t=="integer" or t=="int" then
-			ConVarChanged = function( cvar, old, new ) 
+			ConVarChanged = function( cvar, old, new )
 				val= math.floor(tonumber( new ) or 0)
 			end
 		end
@@ -65,9 +79,9 @@ do --dev util
 		if not ConVarChanged then error("Invalid type: "..tostring(t)) end
 		cvars.AddChangeCallback(cvar,ConVarChanged)
 		ConVarChanged(cvar,nil,c:GetString())
-		
+
 		local function GetConVarValue() return val end
-		
+
 		--print(c:GetString(),initial,c:GetBool(),GetConVarValue(),t,save,server)
 
 		pac.convarcache[cvar]={GetConVarValue,c}
@@ -77,22 +91,22 @@ do --dev util
 
 	function pac.Restart()
 		if pac then pac.Panic() end
-		
+
 		local was_open
-		
-		if pace then 
-			was_open = pace.Editor:IsValid() 
-			pace.Panic() 
+
+		if pace then
+			was_open = pace.Editor:IsValid()
+			pace.Panic()
 		end
 
 		pac = {}
 		pace = {}
-		
+
 		PAC_EDITOR_INITED_PAC = nil
-		
+
 		include("autorun/pac_init.lua")
 		include("autorun/pac_editor_init.lua")
-		
+
 		for _, ent in pairs(ents.GetAll()) do
 			for k, v in pairs(ent:GetTable()) do
 				if k:sub(0, 4) == "pac_" then
@@ -101,16 +115,16 @@ do --dev util
 			end
 		end
 
-		if was_open then 
-			pace.OpenEditor() 
+		if was_open then
+			pace.OpenEditor()
 		end
 	end
 
 	concommand.Add("pac_restart", pac.Restart)
-	
+
 	function pac.dprint(fmt, ...)
 		if pac.debug then
-			MsgN("\n")	
+			MsgN("\n")
 			MsgN(">>>PAC3>>>")
 			MsgN(fmt:format(...))
 			if pac.debug_trace then
@@ -123,7 +137,7 @@ do --dev util
 		end
 	end
 end
-		
+
 do
 	local hue =
 	{
@@ -134,7 +148,7 @@ do
 		"turquoise",
 		"blue",
 		"purple",
-		"magenta",	
+		"magenta",
 	}
 
 	local sat =
@@ -152,7 +166,7 @@ do
 	}
 
 	function pac.HSVToNames(h,s,v)
-		return 
+		return
 			hue[math.Round((1+(h/360)*#hue))] or hue[1],
 			sat[math.ceil(s*#sat)] or sat[1],
 			val[math.ceil(v*#val)] or val[1]
@@ -163,8 +177,8 @@ do
 		if c.r == 0 and c.g == 0 and c.b == 0 then return "black", "", "bright" end
 		return pac.HSVToNames(ColorToHSV(Color(c.r, c.g, c.b)))
 	end
-		
-		
+
+
 	function pac.PrettifyName(str)
 		if not str then return end
 		str = str:lower()
@@ -197,19 +211,19 @@ local pac_error_mdl = CreateClientConVar("pac_error_mdl","1",true,false,"0 = def
 local tc
 function pac.FilterInvalidModel(mdl,fallback)
 	if util.IsValidModel(mdl) or (not mdl) or (mdl=="") then return mdl end
-	
+
 	-- IsValidModel doesn't always return true... this is expensive though :(
 	if file.Exists ( mdl , 'GAME' ) then return mdl end
-	
+
 	if fallback and fallback:len()>0 then
 		if util.IsValidModel(fallback) then return fallback end
 		if file.Exists(fallback , 'GAME' ) then return fallback end
 	end
-	
+
 	Msg"[PAC] Invalid model " print(mdl)
 
 	local str = pac_error_mdl:GetString()
-	
+
 	if str=="1" or str=="" then
 		--passthrough
 	elseif str=="0" then
@@ -217,29 +231,29 @@ function pac.FilterInvalidModel(mdl,fallback)
 	elseif util.IsValidModel(str) then
 		return str
 	end
-	
+
 	if tc == nil then
-		tc = util.IsValidModel('models/props_junk/PopCan01a.mdl') 
-							and'models/props_junk/PopCan01a.mdl' 
+		tc = util.IsValidModel('models/props_junk/PopCan01a.mdl')
+							and'models/props_junk/PopCan01a.mdl'
 							or 'models/props_junk/popcan01a.mdl'
 	end
-	
+
 	return tc
-	
+
 end
 
 local pac_debug_clmdl = CreateClientConVar("pac_debug_clmdl","0",true)
-function pac.CreateEntity(model, for_obj)	
+function pac.CreateEntity(model, for_obj)
 	model = pac.FilterInvalidModel(model)
-	
+
 	local ent
-	
-	if for_obj then	
+
+	if for_obj then
 		ent = ClientsideModel(model)
 	else
 		ent = pac_debug_clmdl:GetBool() and ClientsideModel(model) or ents.CreateClientProp(model)
 	end
-	
+
 	--[[if type == 1 then
 
 		ent = ClientsideModel(model)
@@ -281,40 +295,40 @@ do -- hook helpers
 
 	function pac.AddHook(str, func)
 		func = func or pac[str]
-		
+
 		local id = "pac_" .. str
-		
+
 		hook.Add(str, id, func)
-		
+
 		added_hooks[str] = {func = func, event = str, id = id}
 	end
 
 	function pac.RemoveHook(str)
 		local data = added_hooks[str]
-		
+
 		hook.Remove(data.event, data.id)
 	end
 
 	function pac.CallHook(str, ...)
 		return hook.Call("pac_" .. str, GAMEMODE, ...)
 	end
-	
+
 	pac.added_hooks = added_hooks
 end
 
 do -- get set and editor vars
 	pac.VariableOrder = pac.VariableOrder or {}
-	
+
 	local function insert_key(key)
 		for k,v in pairs(pac.VariableOrder) do
 			if k == key then
 				return
 			end
 		end
-		
+
 		table.insert(pac.VariableOrder, key)
 	end
-	
+
 	local __store = false
 
 	function pac.StartStorableVars()
@@ -327,7 +341,7 @@ do -- get set and editor vars
 
 	function pac.GetSet(tbl, key, ...)
 		insert_key(key)
-		
+
 		pac.class.GetSet(tbl, key, ...)
 
 		if __store then
@@ -345,83 +359,83 @@ do -- get set and editor vars
 			tbl.StorableVars[key] = key
 		end
 	end
-	
-	function pac.SetupPartName(PART, key)		
+
+	function pac.SetupPartName(PART, key)
 		PART.PartNameResolvers = PART.PartNameResolvers or {}
-				
+
 		local part_key = key
 		local part_set_key = "Set" .. part_key
-		
+
 		local uid_key = part_key .. "UID"
 		local name_key = key.."Name"
 		local name_set_key = "Set" .. name_key
-		
+
 		local last_name_key = "last_" .. name_key:lower()
 		local last_uid_key = "last_" .. uid_key:lower()
 		local try_key = "try_" .. name_key:lower()
-		
+
 		local name_find_count_key = name_key:lower() .. "_try_count"
-		
+
 		-- these keys are ignored when table is set. it's kind of a hack..
 		PART.IngoreSetKeys = PART.IgnoreSetKeys or {}
 		PART.IngoreSetKeys[name_key] = true
-		
+
 		pac.EndStorableVars()
 			pac.GetSet(PART, part_key, pac.NULL)
 		pac.StartStorableVars()
-		
+
 		pac.GetSet(PART, name_key, "")
 		pac.GetSet(PART, uid_key, "")
-					
+
 		PART.ResolvePartNames = PART.ResolvePartNames or function(self, force)
 			for key, func in pairs(self.PartNameResolvers) do
 				func(self, force)
 			end
-		end		
-				
+		end
+
 		PART["Resolve" .. name_key] = function(self, force)
 			PART.PartNameResolvers[part_key](self, force)
 		end
-		
+
 		PART.PartNameResolvers[part_key] = function(self, force)
-	
-			if self[uid_key] == "" and self[name_key] == "" then return end 
-	
+
+			if self[uid_key] == "" and self[name_key] == "" then return end
+
 			if force or self[try_key] or self[uid_key] ~= "" and not self[part_key]:IsValid() then
-				
+
 				-- match by name instead
 				if self[try_key] and not self.supress_part_name_find then
 					for key, part in pairs(pac.GetParts()) do
-						if 
-							part ~= self and 
-							self[part_key] ~= part and 
-							part:GetPlayerOwner() == self:GetPlayerOwner() and 
-							part.Name == self[name_key] 
+						if
+							part ~= self and
+							self[part_key] ~= part and
+							part:GetPlayerOwner() == self:GetPlayerOwner() and
+							part.Name == self[name_key]
 						then
 							self[name_set_key](self, part)
 							break
 						end
-						
-						self[last_uid_key] = self[uid_key] 
+
+						self[last_uid_key] = self[uid_key]
 					end
 					self[try_key] = false
 				else
 					local part = pac.GetPartFromUniqueID(self.owner_id, self[uid_key])
-					
-					if part:IsValid() and part ~= self and self[part_key] ~= part then 
+
+					if part:IsValid() and part ~= self and self[part_key] ~= part then
 						self[name_set_key](self, part)
 					end
-					
-					self[last_uid_key] = self[uid_key] 
+
+					self[last_uid_key] = self[uid_key]
 				end
 			end
 		end
-		
+
 		PART[name_set_key] = function(self, var)
 			self[name_find_count_key] = 0
-			
+
 			if type(var) == "string" then
-				
+
 				self[name_key] = var
 
 				if var == "" then
@@ -431,14 +445,14 @@ do -- get set and editor vars
 				else
 					self[try_key] = true
 				end
-			
+
 				PART.PartNameResolvers[part_key](self)
 			else
 				self[name_key] = var.Name
 				self[uid_key] = var.UniqueID
 				self[part_set_key](self, var)
 			end
-		end			
+		end
 	end
 end
 
@@ -450,7 +464,7 @@ function pac.Material(str, part)
 			end
 		end
 	end
-	
+
 	return Material(str)
 end
 
@@ -475,7 +489,7 @@ function pac.FixupURL(url)
 			url = url:gsub([[^http%://dl%.dropboxusercontent%.com/]],[[https://dl.dropboxusercontent.com/]])
 			url = url:gsub([[^https?://www.dropbox.com/s/(.+)%?dl%=[01]$]],[[https://dl.dropboxusercontent.com/s/%1]])
 		end
-		
+
 		url = url:gsub([[^http%://onedrive%.live%.com/redir?]],[[https://onedrive.live.com/download?]])
 		url = url:gsub( "pastebin.com/([a-zA-Z0-9]*)$", "pastebin.com/raw.php?i=%1")
 		url = url:gsub( "github.com/([a-zA-Z0-9_]+)/([a-zA-Z0-9_]+)/blob/", "github.com/%1/%2/raw/")
@@ -484,17 +498,17 @@ function pac.FixupURL(url)
 end
 
 function pac.Handleurltex(part, url, callback, shader)
-	if url and pac.urltex and url:find("http") then	
+	if url and pac.urltex and url:find("http") then
 		local skip_cache = url:sub(1,1) == "_"
-		
+
 		url = url:match("http[s]-://.+/.-%.%a+")
-		
+
 		if url then
-			
+
 			pac.FixupURL(url)
-			
+
 			pac.urltex.GetMaterialFromURL(
-				url, 
+				url,
 				function(mat, tex)
 					if part:IsValid() then
 						if callback then
@@ -511,7 +525,7 @@ function pac.Handleurltex(part, url, callback, shader)
 			)
 			return true
 		end
-	end	
+	end
 end
 
 local mat
@@ -530,44 +544,44 @@ function pac.LegacyScale(ent)
 		ent.pac_can_legacy_scale = true
 	end
 end
- 
+
 function pac.SetModelScale(ent, scale, size, legacy_scale)
 	if not ent:IsValid() then return end
-	
+
 	if scale and size then
 		ent.pac_model_scale = scale * size
 	end
-	
+
 	if scale and not size then
 		ent.pac_model_scale = scale
 	end
-	
+
 	if not scale and size then
 		ent.pac_model_scale = Vector(size, size, size)
 	end
-	
-	if legacy_scale and (ent.pac_can_legacy_scale == nil or ent.pac_can_legacy_scale == true) then	
+
+	if legacy_scale and (ent.pac_can_legacy_scale == nil or ent.pac_can_legacy_scale == true) then
 		ent.pac_matrixhack = true
 
 		if not ent.pac_follow_bones_function then
 			ent.pac_follow_bones_function = pac.build_bone_callback
 			ent:AddCallback("BuildBonePositions", function(ent) pac.build_bone_callback(ent) end)
 		end
-	
+
 		ent:DisableMatrix("RenderMultiply")
-	else	
+	else
 		ent.pac_matrixhack = false
-		
+
 		if scale then
 			mat = Matrix()
-			
+
 			local x,y,z = scale.x, scale.y, scale.z
 			--local x,y,z = ent.pac_model_scale.x, ent.pac_model_scale.y, ent.pac_model_scale.z
-									
+
 			mat:Scale(Vector(x,y,z))
 			ent:EnableMatrix("RenderMultiply", mat)
 		end
-		
+
 		if size then
 			if ent.pac_enable_ik then
 				ent:SetIK(true)
@@ -577,7 +591,7 @@ function pac.SetModelScale(ent, scale, size, legacy_scale)
 				ent:SetModelScale(size == 1 and 1.000001 or size, 0)
 			end
 		end
-		
+
 		if not scale and not size then
 			ent:DisableMatrix("RenderMultiply")
 		end
@@ -590,18 +604,18 @@ local pattern_cache = {{}}
 
 function pac.StringFind(a, b, simple, case_sensitive)
 	if not a or not b then return end
-	
+
 	if simple and not case_sensitive then
 		a = a:lower()
 		b = b:lower()
 	end
-		
+
 	pattern_cache[a] = pattern_cache[a] or {}
-		
+
 	if pattern_cache[a][b] ~= nil then
 		return pattern_cache[a][b]
 	end
-		
+
 	if simple and a:find(b, nil, true) or not simple and a:find(b) then
 		pattern_cache[a][b] = true
 		return true
@@ -636,11 +650,11 @@ function pac.HandlePartName(ply, name)
 		if ply:IsPlayer() and ply ~= pac.LocalPlayer then
 			return ply:UniqueID() .. " " .. name
 		end
-		
-		if not ply:IsPlayer() then	
+
+		if not ply:IsPlayer() then
 			return pac.CallHook("HandlePartName", ply, name) or (ply:EntIndex() .. " " .. name)
 		end
 	end
-	
+
 	return name
 end
