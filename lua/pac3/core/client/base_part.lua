@@ -20,7 +20,6 @@ local function SETUP_CACHE_FUNC(tbl, func_name)
 end
 
 local pairs = pairs
-local pac = pac
 local table = table
 local Vector = Vector
 local Angle = Angle
@@ -130,7 +129,7 @@ function PART:GetEnabled()
 
 	local enabled = self:IsEnabled()
 
-	if self.last_enabled==enabled then
+	if self.last_enabled == enabled then
 		return enabled
 	end
 
@@ -236,7 +235,7 @@ do -- owner
 
 		if self.Duplicate then
 
-			local ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self, function(ent) return ent.pac_duplicate_attach_uid ~= self.UniqueID end) or NULL
+			ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self, function(ent) return ent.pac_duplicate_attach_uid ~= self.UniqueID end) or NULL
 
 			if ent ~= prev_owner and ent:IsValid() then
 
