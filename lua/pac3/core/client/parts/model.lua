@@ -1,13 +1,10 @@
 local pac = pac
 
-local math_abs                      = math.abs
-local math_ceil                     = math.ceil
 local math_max                      = math.max
 local math_min                      = math.min
 local table_insert                  = table.insert
 local table_remove                  = table.remove
 
-local LocalToWorld                  = LocalToWorld
 local Matrix                        = Matrix
 local Vector                        = Vector
 
@@ -38,6 +35,10 @@ local EF_BONEMERGE                  = EF_BONEMERGE
 
 local MATERIAL_CULLMODE_CW          = MATERIAL_CULLMODE_CW
 local MATERIAL_CULLMODE_CCW         = MATERIAL_CULLMODE_CCW
+
+local TEXFILTER = TEXFILTER
+local NULL = NULL
+local Color = Color
 
 local PART = {}
 
@@ -84,7 +85,7 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	local str = pac.PrettifyName(("/".. self:GetModel()):match(".+/(.-)%."))
+	local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%."))
 
 	return str and str:gsub("%d", "") or "error"
 end
@@ -93,7 +94,7 @@ function PART:Reset()
 	self:SetModel(self:GetModel())
 	for _, key in pairs(self:GetStorableVars()) do
 		if key ~= "Model" and key ~= "OwnerEntity" then
-			local var = self[key] and self["Get"..key](self) or self[key], key
+			local var = self[key] and self["Get" .. key](self) or self[key]
 			var = pac.class.Copy(var) or var
 
 			self["Set" .. key](self, var)
@@ -170,7 +171,7 @@ function PART:SetOwnerEntity(b)
 		if b then
 			self.Entity = ent
 
-			function ent.RenderOverride(ent)
+			function ent.RenderOverride()
 				if self:IsValid() then
 					if not self.HideEntity then
 						self:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
@@ -204,10 +205,8 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 		self:ModifiersPreEvent("OnDraw")
 
-		if not pac.DisableDoubleFace then
-			if self.DoubleFace or self.Invert then
-				render_CullMode(MATERIAL_CULLMODE_CW)
-			end
+		if not pac.DisableDoubleFace and (self.DoubleFace or self.Invert) then
+			render_CullMode(MATERIAL_CULLMODE_CW)
 		end
 
 		if not pac.DisableColoring then
@@ -216,14 +215,17 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 			end
 
 			if self.UseWeaponColor or self.UsePlayerColor then
-				local owner = self:GetOwner(true)
-				if owner:IsPlayer() then
-					local c = owner:GetPlayerColor()
+				local ply = self:GetPlayerOwner()
+				if ply:IsValid() then
+					local c
+
+					c = ply:GetPlayerColor()
 					if c ~= self.last_playercolor then
 						self:SetColor(self:GetColor())
 						self.last_playercolor = c
 					end
-					local c = owner:GetWeaponColor()
+
+					c = ply:GetWeaponColor()
 					if c ~= self.last_weaponcolor then
 						self:SetColor(self:GetColor())
 						self.last_weaponcolor = c
@@ -399,7 +401,7 @@ function PART:DrawModel(ent, pos, ang)
 			passCount = math_min (passCount, 1)
 		end
 
-		for i = 1, passCount do
+		for _ = 1, passCount do
 			RealDrawModel(self, ent, pos, ang)
 		end
 
@@ -435,7 +437,7 @@ function PART:DrawLoadingText(ent, pos, ang)
 		local str = self.loading_obj .. string.rep(".", pac.RealTime * 3 % 3)
 		local w, h = surface.GetTextSize(self.loading_obj .. "...")
 
-		surface.SetTextPos(pos2d.x - w/2, pos2d.y - h/2)
+		surface.SetTextPos(pos2d.x - w / 2, pos2d.y - h / 2)
 		surface.DrawText(str)
 	cam.IgnoreZ(false)
 	cam.End2D()
@@ -453,7 +455,7 @@ function PART:DrawBlur(ent, pos, ang)
 
 	local blurHistoryLength = #self.blur_history
 	for i = 1, blurHistoryLength do
-		local pos, ang = self.blur_history[i][1], self.blur_history[i][2]
+		pos, ang = self.blur_history[i][1], self.blur_history[i][2]
 
 		render_SetBlend(self.Alpha * (i / blurHistoryLength))
 
@@ -485,7 +487,7 @@ local function set_mesh(part, mesh)
 	end
 
 	-- temp
-	part.Entity:SetRenderBounds(Vector(1, 1, 1)*-300, Vector(1, 1, 1)*300)
+	part.Entity:SetRenderBounds(Vector(1, 1, 1) * -300, Vector(1, 1, 1) * 300)
 end
 
 function PART:SetModel(modelPath)
@@ -546,7 +548,7 @@ function PART:SetModel(modelPath)
 	self.Mesh = nil
 
 	local real_model = modelPath
-	local ret,ret2 = hook.Run("pac_model:SetModel", self, modelPath, self.ModelFallback)
+	local ret = hook.Run("pac_model:SetModel", self, modelPath, self.ModelFallback)
 	if ret == nil then
 		real_model = pac.FilterInvalidModel(real_model,self.ModelFallback)
 	else
@@ -637,7 +639,7 @@ function PART:SetColor(var)
 		local c = owner:GetWeaponColor() * self.Brightness
 		self.Colorf = Color(c.r, c.g, c.b)
 	else
-		self.Colorf = Color((var.r/255) * self.Brightness, (var.g/255) * self.Brightness, (var.b/255) * self.Brightness)
+		self.Colorf = Color((var.r / 255) * self.Brightness, (var.g / 255) * self.Brightness, (var.b / 255) * self.Brightness)
 	end
 end
 
@@ -783,34 +785,6 @@ function PART:CheckBoneMerge()
 	end
 end
 
-local bad_bones =
-{
-	["ValveBiped.Bip01_L_Finger0"] = true,
-	["ValveBiped.Bip01_L_Finger01"] = true,
-	["ValveBiped.Bip01_L_Finger02"] = true,
-
-	["ValveBiped.Bip01_L_Finger1"] = true,
-	["ValveBiped.Bip01_L_Finger11"] = true,
-	["ValveBiped.Bip01_L_Finger12"] = true,
-
-	["ValveBiped.Bip01_L_Finger2"] = true,
-	["ValveBiped.Bip01_L_Finger21"] = true,
-	["ValveBiped.Bip01_L_Finger22"] = true,
-
-
-	["ValveBiped.Bip01_R_Finger0"] = true,
-	["ValveBiped.Bip01_R_Finger01"] = true,
-	["ValveBiped.Bip01_R_Finger02"] = true,
-
-	["ValveBiped.Bip01_R_Finger1"] = true,
-	["ValveBiped.Bip01_R_Finger11"] = true,
-	["ValveBiped.Bip01_R_Finger12"] = true,
-
-	["ValveBiped.Bip01_R_Finger2"] = true,
-	["ValveBiped.Bip01_R_Finger21"] = true,
-	["ValveBiped.Bip01_R_Finger22"] = true,
-}
-
 local SCALE_NORMAL = Vector(1, 1, 1)
 function PART:OnBuildBonePositions()
 	if self.AlternativeScaling then return end
@@ -821,7 +795,7 @@ function PART:OnBuildBonePositions()
 	if not ent:IsValid() or not owner:IsValid() or not ent:GetBoneCount() or ent:GetBoneCount() < 1 then return end
 
 	if self.OverallSize ~= 1 then
-		for i = 0, ent:GetBoneCount()-1 do
+		for i = 0, ent:GetBoneCount() - 1 do
 			ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * SCALE_NORMAL * self.OverallSize)
 		end
 	end
@@ -829,7 +803,7 @@ function PART:OnBuildBonePositions()
 	if self.requires_bone_model_scale then
 		local scale = self.Scale * self.Size
 
-		for i = 0, ent:GetBoneCount()-1 do
+		for i = 0, ent:GetBoneCount() - 1 do
 			if i == 0 then
 				ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * Vector(scale.x ^ 0.25, scale.y ^ 0.25, scale.z ^ 0.25))
 			else
