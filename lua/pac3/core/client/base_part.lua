@@ -263,7 +263,7 @@ do -- owner
 			end
 
 			if not removed and self.OwnerName ~= "" then
-				local ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self) or NULL
+				ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self) or NULL
 				if ent ~= prev_owner then
 					self:SetOwner(ent)
 					self.temp_hidden = false
@@ -636,17 +636,24 @@ do -- serializing
 
 			if self["Set" .. key] then
 				-- hacky
-				if key:find("Name", nil, true) and key ~= "OwnerName" and key ~= "SequenceName" and key ~= "GestureName" and key ~= "VariableName" and key ~= "BodyGroupName" then
+				if
+					key:find("Name", nil, true) and
+					key ~= "OwnerName" and
+					key ~= "SequenceName" and
+					key ~= "GestureName" and
+					key ~= "VariableName" and
+					key ~= "BodyGroupName"
+				then
 					self["Set" .. key](self, pac.HandlePartName(self:GetPlayerOwner(), value, key))
-				else
-					if key == "Material" then
-						if not value:find("/") then
-							value = pac.HandlePartName(self:GetPlayerOwner(), value, key)
-						end
-
-						table.insert(self.delayed_variables, {key = key, val = value})
+				elseif key == "Material" then
+					if not value:find("/") then
+						value = pac.HandlePartName(self:GetPlayerOwner(), value, key)
 					end
 
+					table.insert(self.delayed_variables, {key = key, val = value})
+
+					self:SetMaterial(value)
+				else
 					self["Set" .. key](self, value)
 				end
 			elseif key ~= "ClassName" then
@@ -673,7 +680,7 @@ do -- serializing
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 		for _, key in pairs(self:GetStorableVars()) do
-			local var = self[key] and self["Get"..key](self) or self[key], key
+			local var = self[key] and self["Get" .. key](self) or self[key], key
 			var = pac.class.Copy(var) or var
 
 			if make_copy_name and var ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
@@ -790,7 +797,7 @@ function PART:Highlight(skip_children, data)
 		if data then
 			pac.haloex.Add(tbl, unpack(data))
 		else
-			local pulse = math.abs(1+math.sin(pac.RealTime*20) * 255)
+			local pulse = math.abs(1 + math.sin(pac.RealTime * 20) * 255)
 			pulse = pulse + 2
 			pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
 		end
@@ -805,8 +812,6 @@ do -- drawing. this code is running every frame
 	PART.cached_pos = Vector(0,0,0)
 	PART.cached_ang = Angle(0,0,0)
 
-	local pos, ang, owner
-
 	function PART:Draw(event, pos, ang, draw_type)
 
 		-- Think takes care of polling this
@@ -816,35 +821,35 @@ do -- drawing. this code is running every frame
 
 		owner = self:GetOwner()
 
-		if self[event] then
-
-			if
+		if
+			self[event] and
+			(
 				draw_type == "viewmodel" or
 				((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
 				((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
-			then
+			)
+		then
 
-				pos = pos or Vector(0,0,0)
-				ang = ang or Angle(0,0,0)
+			pos = pos or Vector(0,0,0)
+			ang = ang or Angle(0,0,0)
 
-				pos, ang = self:GetDrawPosition()
+			pos, ang = self:GetDrawPosition()
 
-				pos = pos or Vector(0,0,0)
-				ang = ang or Angle(0,0,0)
+			pos = pos or Vector(0,0,0)
+			ang = ang or Angle(0,0,0)
 
-				self.cached_pos = pos
-				self.cached_ang = ang
+			self.cached_pos = pos
+			self.cached_ang = ang
 
-				if self.PositionOffset ~= VEC0 or self.AngleOffset ~= ANG0 then
-					pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
-				end
-
-				if not self.HandleModifiersManually then self:ModifiersPreEvent(event, draw_type) end
-
-				self[event](self, owner, pos, ang) -- this is where it usually calls Ondraw on all the parts
-
-				if not self.HandleModifiersManually then self:ModifiersPostEvent(event, draw_type) end
+			if self.PositionOffset ~= VEC0 or self.AngleOffset ~= ANG0 then
+				pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
 			end
+
+			if not self.HandleModifiersManually then self:ModifiersPreEvent(event, draw_type) end
+
+			self[event](self, owner, pos, ang) -- this is where it usually calls Ondraw on all the parts
+
+			if not self.HandleModifiersManually then self:ModifiersPostEvent(event, draw_type) end
 		end
 
 		for _, part in pairs(self.Children) do
@@ -852,8 +857,6 @@ do -- drawing. this code is running every frame
 		end
 
 	end
-
-	local LocalToWorld = LocalToWorld
 
 	function PART:GetDrawPosition(bone_override, skip_cache)
 		if pac.FrameNumber ~= self.last_drawpos_framenum or not self.last_drawpos or skip_cache then
@@ -941,40 +944,33 @@ do -- drawing. this code is running every frame
 		local owner = self:GetOwner(true)
 
 		if pac.StringFind(self.AimPartName, "LOCALEYES_YAW", true, true) then
-
-			local ang = (pac.EyePos - self.cached_pos):Angle()
+			ang = (pac.EyePos - self.cached_pos):Angle()
 			ang.p = 0
 			return self.Angles + ang
-
 		end
 
 		if pac.StringFind(self.AimPartName, "LOCALEYES_PITCH", true, true) then
-
-			local ang = (pac.EyePos - self.cached_pos):Angle()
+			ang = (pac.EyePos - self.cached_pos):Angle()
 			ang.y = 0
 			return self.Angles + ang
-
 		end
 
 		if pac.StringFind(self.AimPartName, "LOCALEYES", true, true) then
-
 			return self.Angles + (pac.EyePos - self.cached_pos):Angle()
-
 		end
 
 
 		if pac.StringFind(self.AimPartName, "PLAYEREYES", true, true) then
-
 			local ent = owner.pac_traceres and owner.pac_traceres.Entity or NULL
+
 			if ent:IsValid() then
 				return self.Angles + (ent:EyePos() - self.cached_pos):Angle()
-			else
-				return self.Angles + (pac.EyePos - self.cached_pos):Angle()
 			end
+
+			return self.Angles + (pac.EyePos - self.cached_pos):Angle()
 		end
 
 		if self.AnglePart:IsValid() then
-
 			local a = self.AnglePart.cached_ang * 1
 
 			a.p = a.p * self.AnglePartMultiplier.x
@@ -982,23 +978,18 @@ do -- drawing. this code is running every frame
 			a.r = a.r * self.AnglePartMultiplier.z
 
 			return self.AngleOffset + self.Angles + a
-
 		end
 
 		if self.AimPart:IsValid() then
-
 			return self.Angles + (self.AimPart.cached_pos - self.cached_pos):Angle()
-
 		end
 
 		if self.EyeAngles then
-
 			if owner:IsPlayer() then
 				return self.Angles + ((owner.pac_hitpos or owner:GetEyeTraceNoCursor().HitPos) - self.cached_pos):Angle()
 			elseif owner:IsNPC() then
 				return self.Angles + ((owner:EyePos() + owner:GetForward() * 100) - self.cached_pos):Angle()
 			end
-
 		end
 
 		return ang or Angle(0,0,0)
