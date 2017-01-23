@@ -1284,7 +1284,10 @@ do -- model
 	function PANEL:SpecialCallback()
 		pace.close_spawn_menu = true
 		pace.SafeRemoveSpecialPanel()
-		g_SpawnMenu:Open()
+		--g_SpawnMenu:Open()
+		pace.ModelBrowser(function(path)
+			pace.current_part:SetModel(path)
+		end)
 	end
 
 	-- this is so lame
