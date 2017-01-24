@@ -1,6 +1,6 @@
 local ScrW = ScrW
 local ScrH = ScrH
-local DrawSunbeams = DrawSunbeams
+local DrawSunbeams
 
 local PART = {}
 
@@ -19,6 +19,8 @@ function PART:GetNiceName()
 end
 
 function PART:OnDraw(owner, pos, ang)
+	if not DrawSunbeams then DrawSunbeams = _G.DrawSunbeams end
+
 	cam.Start2D()
 	local spos = pos:ToScreen()
 
