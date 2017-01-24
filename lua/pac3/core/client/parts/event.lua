@@ -973,6 +973,12 @@ function PART:OnThink()
 
 				-- this is just used for the editor..
 				self.event_triggered = b
+
+				if not self.suppress_event_think then
+					self.suppress_event_think = true
+					self:CallRecursive("Think")
+					self.suppress_event_think = nil
+				end
 			else
 				local parent = self:GetParent()
 
@@ -983,6 +989,12 @@ function PART:OnThink()
 
 					-- this is just used for the editor..
 					self.event_triggered = b
+
+					if not self.suppress_event_think then
+						self.suppress_event_think = true
+						parent:CallRecursive("Think")
+						self.suppress_event_think = nil
+					end
 				end
 			end
 		end
