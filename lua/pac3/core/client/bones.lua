@@ -1,3 +1,9 @@
+local NULL = NULL
+local LerpVector = LerpVector
+local LerpAngle = LerpAngle
+local Angle = Angle
+local Vector = Vector
+local util_QuickTrace = util.QuickTrace
 local pac = pac
 
 pac.BoneNameReplacements =
@@ -62,7 +68,7 @@ function pac.GetAllBones(ent)
 
 		local attachments = ent:GetAttachments()
 		if attachments then
-			for key, data in pairs(attachments) do
+			for _, data in pairs(attachments) do
 				local parent_i = ent:GetParentAttachment(data.id)
 				if parent_i == -1 then
 					parent_i = nil
@@ -116,18 +122,6 @@ end
 local UP = Vector(0,0,1):Angle()
 
 local function GetBonePosition(ent, id)
-	if pac.MatrixBoneMethod then
-		local mat = ent:GetBoneMatrix(id)
-
-		if mat then
-			return mat:GetTranslation(), mat:GetAngles()
-		end
-	end
-
-	return ent:GetBonePosition(id)
-end
-
-local function GetBonePosition(ent, id)
 	local pos, ang, mat = ent:GetBonePosition(id)
 
 	if pos == ent:GetPos() then
@@ -173,7 +167,7 @@ function pac.GetBonePosAng(ent, id, parent)
 		if ent.pac_traceres then
 			return ent.pac_traceres.HitPos, ent.pac_traceres.HitNormal:Angle()
 		else
-			local res = util.QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()})
+			local res = util_QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()})
 
 			return res.HitPos, res.HitNormal:Angle()
 		end
@@ -183,7 +177,7 @@ function pac.GetBonePosAng(ent, id, parent)
 		if ent.pac_traceres then
 			return ent.pac_traceres.HitPos, ent:EyeAngles()
 		else
-			local res = util.QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()})
+			local res = util_QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()})
 
 			return res.HitPos, ent:EyeAngles()
 		end
@@ -195,7 +189,7 @@ function pac.GetBonePosAng(ent, id, parent)
 			ang.p = 0
 			return ent.pac_traceres.HitPos, ang
 		else
-			local res = util.QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()})
+			local res = util_QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()})
 
 			return res.HitPos, ent:EyeAngles()
 		end

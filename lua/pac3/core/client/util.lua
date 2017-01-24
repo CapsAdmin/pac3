@@ -1,3 +1,7 @@
+local Vector = Vector
+local Matrix = Matrix
+local isstring = isstring
+
 do
 	local inf, ninf = math.huge, -math.huge
 
@@ -20,7 +24,7 @@ end
 
 do --dev util
 	function pac.RemoveAllPACEntities()
-		for key, ent in pairs(ents.GetAll()) do
+		for _, ent in pairs(ents.GetAll()) do
 			if ent.pac_parts then
 				pac.UnhookEntityRender(ent)
 				--ent:Remove()
@@ -50,11 +54,11 @@ do --dev util
 
 		local ConVarChanged
 
-		if t=="string" or t=="str" then
+		if t == "string" or t == "str" then
 			ConVarChanged = function( cvar, old, new )
 				val = new
 			end
-		elseif t=="boolean" or t=="bool" then
+		elseif t == "boolean" or t == "bool" then
 			ConVarChanged = function( cvar, old, new )
 				if new == "0" then
 					val = false
@@ -65,20 +69,20 @@ do --dev util
 				end
 			end
 
-		elseif t=="number" or t=="num" then
+		elseif t == "number" or t == "num" then
 			ConVarChanged = function( cvar, old, new )
 				val= tonumber( new ) or 0
 			end
 
-		elseif t=="integer" or t=="int" then
+		elseif t == "integer" or t == "int" then
 			ConVarChanged = function( cvar, old, new )
 				val= math.floor(tonumber( new ) or 0)
 			end
 		end
 
-		if not ConVarChanged then error("Invalid type: "..tostring(t)) end
-		cvars.AddChangeCallback(cvar,ConVarChanged)
-		ConVarChanged(cvar,nil,c:GetString())
+		if not ConVarChanged then error("Invalid type: " .. tostring(t)) end
+		cvars.AddChangeCallback(cvar, ConVarChanged)
+		ConVarChanged(cvar, nil, c:GetString())
 
 		local function GetConVarValue() return val end
 
@@ -108,7 +112,7 @@ do --dev util
 		include("autorun/pac_editor_init.lua")
 
 		for _, ent in pairs(ents.GetAll()) do
-			for k, v in pairs(ent:GetTable()) do
+			for k in pairs(ent:GetTable()) do
 				if k:sub(0, 4) == "pac_" then
 					ent[k] = nil
 				end
@@ -202,44 +206,53 @@ end
 
 function pac.MakeNull(tbl)
 	if tbl then
-		for k,v in pairs(tbl) do tbl[k] = nil end
+		for k in pairs(tbl) do
+			tbl[k] = nil
+		end
 		setmetatable(tbl, pac.NULLMeta)
 	end
 end
 
-local pac_error_mdl = CreateClientConVar("pac_error_mdl","1",true,false,"0 = default error, 1=custom error model, models/yourmodel.mdl")
-local tc
-function pac.FilterInvalidModel(mdl,fallback)
-	if util.IsValidModel(mdl) or (not mdl) or (mdl=="") then return mdl end
+do
+	local pac_error_mdl = CreateClientConVar("pac_error_mdl","1",true,false,"0 = default error, 1=custom error model, models/yourmodel.mdl")
+	local tc
 
-	-- IsValidModel doesn't always return true... this is expensive though :(
-	if file.Exists ( mdl , 'GAME' ) then return mdl end
+	function pac.FilterInvalidModel(mdl,fallback)
+		if util.IsValidModel(mdl) or (not mdl) or (mdl == "") then
+			return mdl
+		end
 
-	if fallback and fallback:len()>0 then
-		if util.IsValidModel(fallback) then return fallback end
-		if file.Exists(fallback , 'GAME' ) then return fallback end
+		-- IsValidModel doesn't always return true... this is expensive though :(
+		if file.Exists(mdl , "GAME") then
+			return mdl
+		end
+
+		if fallback and fallback:len() > 0 and (util.IsValidModel(fallback) or file.Exists(fallback , "GAME")) then
+			return fallback
+		end
+
+		print("[PAC] Invalid model ", mdl)
+
+		local str = pac_error_mdl:GetString()
+
+		if str == "1" or str == "" then
+			--passthrough
+		elseif str == "0" then
+			return mdl
+		elseif util.IsValidModel(str) then
+			return str
+		end
+
+		if tc == nil then
+			if util.IsValidModel("models/props_junk/PopCan01a.mdl") then
+				tc = "models/props_junk/PopCan01a.mdl"
+			else
+				tc = "models/props_junk/popcan01a.mdl"
+			end
+		end
+
+		return tc
 	end
-
-	Msg"[PAC] Invalid model " print(mdl)
-
-	local str = pac_error_mdl:GetString()
-
-	if str=="1" or str=="" then
-		--passthrough
-	elseif str=="0" then
-		return mdl
-	elseif util.IsValidModel(str) then
-		return str
-	end
-
-	if tc == nil then
-		tc = util.IsValidModel('models/props_junk/PopCan01a.mdl')
-							and'models/props_junk/PopCan01a.mdl'
-							or 'models/props_junk/popcan01a.mdl'
-	end
-
-	return tc
-
 end
 
 local pac_debug_clmdl = CreateClientConVar("pac_debug_clmdl","0",true)
@@ -320,7 +333,7 @@ do -- get set and editor vars
 	pac.VariableOrder = pac.VariableOrder or {}
 
 	local function insert_key(key)
-		for k,v in pairs(pac.VariableOrder) do
+		for k in pairs(pac.VariableOrder) do
 			if k == key then
 				return
 			end
@@ -370,7 +383,6 @@ do -- get set and editor vars
 		local name_key = key.."Name"
 		local name_set_key = "Set" .. name_key
 
-		local last_name_key = "last_" .. name_key:lower()
 		local last_uid_key = "last_" .. uid_key:lower()
 		local try_key = "try_" .. name_key:lower()
 
@@ -388,7 +400,7 @@ do -- get set and editor vars
 		pac.GetSet(PART, uid_key, "")
 
 		PART.ResolvePartNames = PART.ResolvePartNames or function(self, force)
-			for key, func in pairs(self.PartNameResolvers) do
+			for _, func in pairs(self.PartNameResolvers) do
 				func(self, force)
 			end
 		end
@@ -405,7 +417,7 @@ do -- get set and editor vars
 
 				-- match by name instead
 				if self[try_key] and not self.supress_part_name_find then
-					for key, part in pairs(pac.GetParts()) do
+					for _, part in pairs(pac.GetParts()) do
 						if
 							part ~= self and
 							self[part_key] ~= part and
@@ -458,7 +470,7 @@ end
 
 function pac.Material(str, part)
 	if str ~= "" then
-		for key, part in pairs(pac.GetParts()) do
+		for _, part in pairs(pac.GetParts()) do
 			if part.GetRawMaterial and str == part.Name then
 				return part:GetRawMaterial()
 			end
@@ -478,7 +490,7 @@ do
 			idx = 0
 		end
 
-		return ('%s%d'):format(id, idx)
+		return ("%s%d"):format(id, idx)
 	end
 end
 
@@ -531,8 +543,8 @@ end
 local mat
 local Matrix = Matrix
 
-for k,v in pairs(ents.GetAll()) do
-	v.pac_can_legacy_scale = nil
+for _, ent in pairs(ents.GetAll()) do
+	ent.pac_can_legacy_scale = nil
 end
 
 function pac.LegacyScale(ent)

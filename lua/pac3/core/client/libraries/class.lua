@@ -50,13 +50,13 @@ function class.GetSet(tbl, name, def)
 
     if type(def) == "number" then
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = tonumber(var) end
-		tbl["Get" .. name] = tbl["Get" .. name] or function(self, var) return tonumber(self[name]) end
+		tbl["Get" .. name] = tbl["Get" .. name] or function(self) return tonumber(self[name]) end
 	elseif type(def) == "string" then
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = tostring(var) end
-		tbl["Get" .. name] = tbl["Get" .. name] or function(self, var) return tostring(self[name]) end
+		tbl["Get" .. name] = tbl["Get" .. name] or function(self) return tostring(self[name]) end
 	else
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
-		tbl["Get" .. name] = tbl["Get" .. name] or function(self, var) return self[name] end
+		tbl["Get" .. name] = tbl["Get" .. name] or function(self) return self[name] end
 	end
 
     tbl[name] = def
@@ -68,7 +68,7 @@ function class.IsSet(tbl, name, def)
 	else
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
 	end
-    tbl["Is" .. name] = tbl["Is" .. name] or function(self, var) return self[name] end
+    tbl["Is" .. name] = tbl["Is" .. name] or function(self) return self[name] end
 
     tbl[name] = def
 end
@@ -113,7 +113,7 @@ function class.HandleBaseField(META, var)
 	elseif t == "table" then
 		-- if it's a table and does not have the Type field we assume it's a table of bases
 		if not var.Type then
-			for key, base in pairs(var) do
+			for _, base in pairs(var) do
 				class.HandleBaseField(META, base)
 			end
 		else
@@ -147,7 +147,7 @@ function class.Create(type_name, class_name)
 			obj.BaseClass = obj.BaseList[1]
 		else
 			local current = obj
-			for i, base in pairs(obj.BaseList) do
+			for _, base in pairs(obj.BaseList) do
 				for key, val in pairs(base) do
 					obj[key] = obj[key] or val
 				end
