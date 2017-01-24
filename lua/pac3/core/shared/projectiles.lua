@@ -39,10 +39,12 @@ do -- projectile entity
 
 			self.projectile_owner = ply
 
+			local radius = math.Clamp(part.Radius, 1, 100)
+
 			if part.Sphere then
-				self:PhysicsInitSphere(math.Clamp(part.Radius, 1, 30))
+				self:PhysicsInitSphere(radius)
 			else
-				self:PhysicsInitBox(Vector(1,1,1) * - math.Clamp(part.Radius, 1, 30), Vector(1,1,1) * math.Clamp(part.Radius, 1, 30))
+				self:PhysicsInitBox(Vector(1,1,1) * - radius, Vector(1,1,1) * radius)
 			end
 
 			local phys = self:GetPhysicsObject()
