@@ -14,8 +14,10 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "LifeTime", 5)
 	pac.GetSet(PART, "AimDir", false)
 	pac.GetSet(PART, "Sticky", false)
+	pac.GetSet(PART, "Bounce", 0)
 	pac.GetSet(PART, "BulletImpact", false)
 	pac.GetSet(PART, "Damage", 0)
+	pac.GetSet(PART, "Heal", false)
 	pac.GetSet(PART, "DamageType", "generic")
 	pac.GetSet(PART, "Spread", 0)
 	pac.GetSet(PART, "Delay", 0)
@@ -120,8 +122,14 @@ function PART:Shoot(pos, ang)
 			local idx = table.insert(self.projectiles, ent)
 
 			ent:AddCallback("PhysicsCollide", function(ent, data)
-				if self.Sticky and data.HitEntity:IsWorld() then
-					local phys = ent:GetPhysicsObject()
+				local phys = ent:GetPhysicsObject()
+				if self.Bounce > 0 then
+					timer.Simple(0, function()
+						if phys:IsValid() then
+							phys:SetVelocity(data.OurOldVelocity - 2 * (data.HitNormal:Dot(data.OurOldVelocity) * data.HitNormal) * self.Bounce)
+						end
+					end)
+				elseif self.Sticky and data.HitEntity:IsWorld() then
 					phys:SetVelocity(Vector(0,0,0))
 					phys:Sleep()
 					phys:EnableMotion(false)
