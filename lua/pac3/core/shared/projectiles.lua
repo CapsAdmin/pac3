@@ -91,9 +91,12 @@ do -- projectile entity
 			slowburn = 2097152, --
 		}
 
-		function ENT:PhysicsCollide(data)
-			if self.part_data and self.part_data.Sticky and data.HitEntity:IsWorld() then
-				local phys = self:GetPhysicsObject()
+		function ENT:PhysicsCollide(data, phys)
+			if not self.part_data then return end
+
+			if self.part_data.Bounce > 0 then
+				phys:SetVelocity(data.OurOldVelocity - 2 * (data.HitNormal:Dot(data.OurOldVelocity) * data.HitNormal) * self.part_data.Bounce)
+			elseif self.part_data.Sticky and data.HitEntity:IsWorld() then
 				phys:SetVelocity(Vector(0,0,0))
 				phys:Sleep()
 				phys:EnableMotion(false)
@@ -110,17 +113,21 @@ do -- projectile entity
 				}
 			end
 
-			if self.part_data.Damage > 0 and data.HitEntity.Health then
-				local info = DamageInfo()
+			if data.HitEntity.Health then
+				if self.part_data.Heal then
+					data.HitEntity:SetHealth(math.min(self.part_data.Damage, data.HitEntity:GetMaxHealth()))
+				elseif self.part_data.Damage > 0 then
+					local info = DamageInfo()
 
-				info:SetAttacker(self:GetOwner():IsValid() and self:GetOwner() or self)
-				info:SetInflictor(self)
-				info:SetDamageForce(data.OurOldVelocity)
-				info:SetDamagePosition(data.HitPos)
-				info:SetDamage(math.min(self.part_data.Damage, data.HitEntity:Health())) -- just making sure
-				info:SetDamageType(damage_types[self.part_data.DamageType] or damage_types.generic)
+					info:SetAttacker(self:GetOwner():IsValid() and self:GetOwner() or self)
+					info:SetInflictor(self)
+					info:SetDamageForce(data.OurOldVelocity)
+					info:SetDamagePosition(data.HitPos)
+					info:SetDamage(math.min(self.part_data.Damage, data.HitEntity:Health())) -- just making sure
+					info:SetDamageType(damage_types[self.part_data.DamageType] or damage_types.generic)
 
-				data.HitEntity:TakeDamageInfo(info)
+					data.HitEntity:TakeDamageInfo(info)
+				end
 			end
 
 			if self.part_data.RemoveOnCollide then
