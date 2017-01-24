@@ -77,7 +77,7 @@ local function translate_xyz(x, y, z, T, def)
 	end
 end
 
-local function translate_value(val, T, def)
+local function translate_value(val, T)
 	if T == "Vector" then
 		return val.x, val.y, val.z
 	elseif T == "Angle" then
@@ -93,20 +93,18 @@ local function CreateDummies(parts)
 		SetProperty = function(_, key, x, y, z)
 			if not key then return end
 
-			for k, v in pairs(parts) do
-				if v:IsValid() then
-					if v.StorableVars[key] then
-						local def = v[key]
-						local val = translate_xyz(x ,y, z, type(def), def)
+			for _, v in pairs(parts) do
+				if v:IsValid() and v.StorableVars[key] then
+					local def = v[key]
+					local val = translate_xyz(x ,y, z, type(def), def)
 
-						v["Set" .. key](v, val)
-					end
+					v["Set" .. key](v, val)
 				end
 			end
 		end,
 
 		EventHide = function(_, b)
-			for k, v in pairs(parts) do
+			for _, v in pairs(parts) do
 				if v:IsValid() then
 					v:SetEventHide(not not b)
 				end
@@ -114,7 +112,7 @@ local function CreateDummies(parts)
 		end,
 
 		EventShow = function(_, b)
-			for k, v in pairs(parts) do
+			for _, v in pairs(parts) do
 				if v:IsValid() then
 					v:SetEventHide(not b)
 				end
@@ -197,7 +195,7 @@ local function CreateDummy(part, store)
 end
 
 local function get_entity(part)
-	local ent = self:GetOwner(true)
+	local ent = part:GetOwner(true)
 	return ent == pac.LocalPlayer:GetViewModel() and pac.LocalPlayer or ent
 end
 
@@ -261,7 +259,7 @@ function PART:CompileCode()
 				level = level or 1
 				local parent = self
 
-				for i = 1, math.Clamp(level, 1, 30) do
+				for _ = 1, math.Clamp(level, 1, 30) do
 					parent = parent:GetParent()
 				end
 
@@ -271,7 +269,7 @@ function PART:CompileCode()
 			FindMultiple = function(str)
 				local parts = {}
 
-				for key, part in pairs(pac.GetParts()) do
+				for _, part in pairs(pac.GetParts()) do
 					if
 						part:GetPlayerOwner() == self:GetPlayerOwner() and
 						pac.StringFind(part:GetName(), str)
@@ -283,7 +281,7 @@ function PART:CompileCode()
 				return CreateDummies(parts)
 			end,
 
-			FindMultipleWithProperty = function(key, str)
+			FindMultipleWithProperty = function()
 				local parts = {}
 
 				for key, part in pairs(pac.GetParts()) do
@@ -300,7 +298,7 @@ function PART:CompileCode()
 			end,
 
 			Find = function(str)
-				for key, part in pairs(pac.GetParts()) do
+				for _, part in pairs(pac.GetParts()) do
 					if
 						part:GetPlayerOwner() == self:GetPlayerOwner() and
 						(part.UniqueID == str or part:GetName() == str)
@@ -340,7 +338,7 @@ function PART:CompileCode()
 		end
 	end
 
-	env.__newindex = function(self, key, val)
+	env.__newindex = function(_, key, val)
 		store[key] = val
 	end
 

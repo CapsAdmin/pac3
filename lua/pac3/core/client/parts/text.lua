@@ -1,3 +1,15 @@
+local cam_Start3D = cam.Start3D
+local cam_Start3D2D = cam.Start3D2D
+local EyePos = EyePos
+local EyeAngles = EyeAngles
+local draw_SimpleTextOutlined = draw.SimpleTextOutlined
+local render_CullMode = render.CullMode
+local cam_End3D2D = cam.End3D2D
+local cam_End3D = cam.End3D
+local TEXT_ALIGN_CENTER = TEXT_ALIGN_CENTER
+local surface_SetFont = surface.SetFont
+local Color = Color
+
 local PART = {}
 
 PART.ClassName = "text"
@@ -52,17 +64,8 @@ function PART:SetOutlineAlpha(n)
 	self.OutlineAlpha = n
 end
 
-local cam_Start3D = cam.Start3D
-local cam_Start3D2D = cam.Start3D2D
-local EyePos = EyePos
-local EyeAngles = EyeAngles
-local draw_SimpleTextOutlined = draw.SimpleTextOutlined
-local render_CullMode = render.CullMode
-local cam_End3D2D = cam.End3D2D
-local cam_End3D = cam.End3D
-
 function PART:SetFont(str)
-	if not pcall(surface.SetFont, str) then
+	if not pcall(surface_SetFont, str) then
 		str = "DermaDefault"
 	end
 

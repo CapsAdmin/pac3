@@ -1,4 +1,9 @@
-jit.on(true, true)
+local NULL = NULL
+local pairs = pairs
+
+for _, v in pairs(ents.GetAll()) do
+	v.pac_bone_setup_data = nil
+end
 
 local PART = {}
 
@@ -31,10 +36,8 @@ PART.OnParent = PART.OnShow
 function PART:GetOwner()
 	local parent = self:GetParent()
 
-	if parent:IsValid() then
-		if parent.ClassName == "model" and parent.Entity:IsValid() then
-			return parent.Entity
-		end
+	if parent:IsValid() and parent.ClassName == "model" and parent.Entity:IsValid() then
+		return parent.Entity
 	end
 
 	return self.BaseClass.GetOwner(self)
@@ -46,10 +49,6 @@ function PART:OnThink()
 		self:GetBonePosition()
 		self.first_getbpos = true
 	end
-end
-
-for k,v in pairs(ents.GetAll()) do
-	v.pac_bone_setup_data = nil
 end
 
 function PART:OnHide()
@@ -74,17 +73,17 @@ function PART:GetBonePosition()
 	return pos, ang
 end
 
-local function manpos(ent, id, pos, self, force_set)
-	if self.AlternativeBones then
-		ent.pac_bone_setup_data[self.UniqueID].pos = self.Position + self.PositionOffset
+local function manpos(ent, id, pos, part)
+	if part.AlternativeBones then
+		ent.pac_bone_setup_data[part.UniqueID].pos = part.Position + part.PositionOffset
 	else
 		ent:ManipulateBonePosition(id, ent:GetManipulateBonePosition(id) + pos)
 	end
 end
 
-local function manang(ent, id, ang, self, force_set)
-	if self.AlternativeBones then
-		ent.pac_bone_setup_data[self.UniqueID].ang = self.Angles + self.AngleOffset
+local function manang(ent, id, ang, part)
+	if part.AlternativeBones then
+		ent.pac_bone_setup_data[part.UniqueID].ang = part.Angles + part.AngleOffset
 	else
 		ent:ManipulateBoneAngles(id, ent:GetManipulateBoneAngles(id) + ang)
 	end
@@ -92,22 +91,13 @@ end
 
 local inf_scale = Vector(math.huge, math.huge, math.huge)
 
-local function manscale(ent, id, scale, self, force_set)
-	local scale
-	if self.HideMesh then
-		scale = inf_scale
-	else
-		scale = self.Scale * self.Size
-	end
-	if self.AlternativeBones then
-		ent.pac_bone_setup_data[self.UniqueID].scale = scale
+local function manscale(ent, id, scale, part)
+	if part.AlternativeBones then
+		ent.pac_bone_setup_data[part.UniqueID].scale = scale
 	else
 		ent:ManipulateBoneScale(id, ent:GetManipulateBoneScale(id) * scale)
 	end
 end
-
-local VEC0 = Vector(0,0,0)
-local pairs = pairs
 
 local function scale_children(owner, id, scale, origin)
 	local count = owner:GetBoneCount()
@@ -144,7 +134,6 @@ function pac.build_bone_callback(ent)
 			if part:IsValid() then
 				local mat = ent:GetBoneMatrix(data.bone)
 				if mat then
-
 					if part.FollowPart:IsValid() then
 						if part.FollowAnglesOnly then
 							local pos = mat:GetTranslation()
@@ -226,7 +215,15 @@ function PART:OnBuildBonePositions()
 
 	owner:ManipulateBoneJiggle(self.BoneIndex, type(self.Jiggle) == "number" and self.Jiggle or (self.Jiggle and 1 or 0)) -- afaik anything but 1 is not doing anything at all
 
-	manscale(owner, self.BoneIndex, self.Scale * self.Size, self)
+	local scale
+
+	if self.HideMesh then
+		scale = inf_scale
+	else
+		scale = self.Scale * self.Size
+	end
+
+	manscale(owner, self.BoneIndex, scale, self)
 end
 
 pac.RegisterPart(PART)

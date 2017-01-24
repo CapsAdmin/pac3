@@ -1,3 +1,12 @@
+local MATERIAL_FOG_NONE = MATERIAL_FOG_NONE
+local MATERIAL_FOG_LINEAR = MATERIAL_FOG_LINEAR
+local MATERIAL_FOG_LINEAR_BELOW_FOG_Z = MATERIAL_FOG_LINEAR_BELOW_FOG_Z
+local render_FogStart = render.FogStart
+local render_FogEnd = render.FogEnd
+local render_FogMaxDensity = render.FogMaxDensity
+local render_SetFogZ = render.SetFogZ
+local render_FogMode = render.FogMode
+
 local PART = {}
 
 PART.ClassName = "fog"
@@ -13,7 +22,7 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	local h,s,v = pac.ColorToNames(self:GetColor())
+	local h = pac.ColorToNames(self:GetColor())
 
 	return h .. " fog"
 end
@@ -33,17 +42,17 @@ function PART:OnUnParent(part)
 	part:RemoveModifier(self)
 end
 
-function PART:PreOnDraw(owner, pos)
-	render.FogStart(self.Start*100)
-	render.FogEnd(self.End*100)
-	render.FogMaxDensity(self.Alpha)
+function PART:PreOnDraw()
+	render_FogStart(self.Start * 100)
+	render_FogEnd(self.End * 100)
+	render_FogMaxDensity(self.Alpha)
 	if self.clr then render.FogColor(unpack(self.clr)) end
 
 	if self.Height > 0 then
-		render.FogMode(MATERIAL_FOG_LINEAR_BELOW_FOG_Z)
-		render.SetFogZ(self.cached_pos.z + self.Height * 10)
+		render_FogMode(MATERIAL_FOG_LINEAR_BELOW_FOG_Z)
+		render_SetFogZ(self.cached_pos.z + self.Height * 10)
 	else
-		render.FogMode(MATERIAL_FOG_LINEAR)
+		render_FogMode(MATERIAL_FOG_LINEAR)
 	end
 end
 

@@ -25,7 +25,7 @@ local act_mods =
 do
 	local temp = {}
 
-	for key, act in pairs(act_mods) do
+	for _, act in pairs(act_mods) do
 
 		local key = act
 		key = "_" .. key
@@ -61,7 +61,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "AlternativeRate", false)
 pac.EndStorableVars()
 
-for name, act in pairs(act_mods) do
+for name in pairs(act_mods) do
 	PART["Set" .. name] = function(self, str)
 		self[name] = str
 

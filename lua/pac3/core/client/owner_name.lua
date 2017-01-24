@@ -23,16 +23,12 @@ local function check_owner(a, b)
 	return a:GetOwner() == b or (not b.CPPIGetOwner or b:CPPIGetOwner() == a or b:CPPIGetOwner() == true)
 end
 
-local function check_outfits(ent, part)
-	return not ent.pac_outfits-- or not ent.pac_outfits[part.UniqueID]
-end
-
 function pac.CalcEntityCRC(ent)
 	local pos = ent:GetPos()
 	local ang = ent:GetAngles()
 	local mdl = ent:GetModel():lower():gsub("\\", "/")
-	local x,y,z = math.Round(pos.x/10)*10, math.Round(pos.y/10)*10, math.Round(pos.z/10)*10
-	local p,_y,r = math.Round(ang.p/10)*10, math.Round(ang.y/10)*10, math.Round(ang.r/10)*10
+	local x, y, z = math.Round(pos.x / 10) * 10, math.Round(pos.y / 10) * 10, math.Round(pos.z / 10) * 10
+	local p, _y, r = math.Round(ang.p / 10) * 10, math.Round(ang.y / 10) * 10, math.Round(ang.r / 10) * 10
 
 	local crc = x .. y .. z .. p .. _y .. r .. mdl
 
@@ -47,7 +43,7 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 	local idx = tonumber(name)
 
 	if idx then
-		local ent = Entity(idx)
+		ent = Entity(idx)
 
 		if ent:IsValid() then
 			if owner:IsValid() and owner.GetViewModel and ent == owner:GetViewModel() then
@@ -71,7 +67,7 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 
 	if name == "world" or (pac.WorldEntity:IsValid() and ent == pac.WorldEntity) then
 		if not pac.WorldEntity:IsValid() then
-			local ent = pac.CreateEntity("error.mdl")
+			ent = pac.CreateEntity("error.mdl")
 
 			ent:SetPos(Vector(0,0,0))
 
@@ -106,22 +102,20 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 
 	if name:find("persist ", nil, true) then
 		local crc = name:match("persist (.+)")
-		for key, ent in pairs(ents.GetAll()) do
-			if ent.GetPersistent and ent:GetModel() and ent:GetPersistent() and crc == pac.CalcEntityCRC(ent) then
-				return ent
+		for _, val in pairs(ents.GetAll()) do
+			if val.GetPersistent and val:GetModel() and val:GetPersistent() and crc == pac.CalcEntityCRC(val) then
+				return val
 			end
 		end
 	end
 
-	if IsValid(ent) then
-		if (not check_func or check_func(ent)) and check_owner(ent, owner) and find_ent(ent, name) then
-			return ent
-		end
+	if IsValid(ent) and (not check_func or check_func(ent)) and check_owner(ent, owner) and find_ent(ent, name) then
+		return ent
 	end
 
-	for key, ent in pairs(ents.GetAll()) do
-		if ent:IsValid() and (not check_func or check_func(ent)) and check_owner(ent, owner) and find_ent(ent, name) then
-			return ent
+	for _, val in pairs(ents.GetAll()) do
+		if val:IsValid() and (not check_func or check_func(val)) and check_owner(val, owner) and find_ent(val, name) then
+			return val
 		end
 	end
 
