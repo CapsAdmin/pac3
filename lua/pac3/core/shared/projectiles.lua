@@ -91,7 +91,27 @@ do -- projectile entity
 			radiation = 262144, --radiation
 			removenoragdoll = 4194304, --don't create a ragdoll on death
 			slowburn = 2097152, --
+
+			explosion = -1, -- util.BlastDamageInfo
+			fire = -1, -- ent:Ignite(5)
+
+			-- env_entity_dissolver
+			dissolve_energy = 0,
+			dissolve_heavy_electrical = 1,
+			dissolve_light_electrical = 2,
+			dissolve_core_effect = 3,
 		}
+
+		local dissolver_entity = NULL
+		local function dissolve(target, attacker, typ)
+			local ent = dissolver_entity:IsValid() and dissolver_entity or ents.Create("env_entity_dissolver")
+			ent:Spawn()
+			target:SetName(tostring({}))
+			ent:SetKeyValue("dissolvetype", tostring(typ))
+			ent:Fire("Dissolve", target:GetName())
+			timer.Simple(5, function() SafeRemoveEntity(ent) end)
+			dissolver_entity = ent
+		end
 
 		function ENT:PhysicsCollide(data, phys)
 			if not self.part_data then return end
@@ -115,20 +135,54 @@ do -- projectile entity
 				}
 			end
 
-			if data.HitEntity.Health then
-				if self.part_data.Heal then
-					data.HitEntity:SetHealth(math.min(self.part_data.Damage, data.HitEntity:GetMaxHealth()))
-				elseif self.part_data.Damage > 0 then
-					local info = DamageInfo()
+			local owner = self:GetOwner()
 
-					info:SetAttacker(self:GetOwner():IsValid() and self:GetOwner() or self)
+			if
+				self.part_data.DamageType:sub(0, 9) == "dissolve_" and
+				damage_types[self.part_data.DamageType] and
+				owner:IsValid() and
+				owner:IsPlayer()
+			then
+				if data.HitEntity:IsPlayer() then
+					local info = DamageInfo()
+					info:SetAttacker(owner)
 					info:SetInflictor(self)
 					info:SetDamageForce(data.OurOldVelocity)
 					info:SetDamagePosition(data.HitPos)
-					info:SetDamage(math.min(self.part_data.Damage, data.HitEntity:Health())) -- just making sure
-					info:SetDamageType(damage_types[self.part_data.DamageType] or damage_types.generic)
+					info:SetDamage(100000)
+					info:SetDamageType(damage_types.dissolve)
 
 					data.HitEntity:TakeDamageInfo(info)
+				elseif hook.Call("CanTool", owner, util.TraceLine({start = owner:EyePos(), endpos = data.HitEntity:GetPos(), filter = {owner}}), "remover") ~= false then
+					dissolve(data.HitEntity, owner, damage_types[self.part_data.DamageType])
+				end
+			end
+
+			if self.part_data.Damage > 0 then
+				if self.part_data.Heal then
+					data.HitEntity:SetHealth(math.min(data.HitEntity:Health() + self.part_data.Damage, data.HitEntity:GetMaxHealth()))
+				else
+					local info = DamageInfo()
+
+					info:SetAttacker(owner:IsValid() and owner or self)
+					info:SetInflictor(self)
+
+					local damage_radius = math.Clamp(self.part_data.DamageRadius, 0, 300)
+
+					if self.part_data.DamageType == "fire" then
+						data.HitEntity:Ignite(math.min(self.part_data.Damage, 5), damage_radius)
+					elseif self.part_data.DamageType == "explosion" then
+						info:SetDamageType(damage_types.blast)
+						info:SetDamage(math.Clamp(self.part_data.Damage, 0, 100000))
+						util.BlastDamageInfo(info, data.HitPos, damage_radius)
+					else
+						info:SetDamageForce(data.OurOldVelocity)
+						info:SetDamagePosition(data.HitPos)
+						info:SetDamage(math.min(self.part_data.Damage, 100000))
+						info:SetDamageType(damage_types[self.part_data.DamageType] or damage_types.generic)
+
+						data.HitEntity:TakeDamageInfo(info)
+					end
 				end
 			end
 

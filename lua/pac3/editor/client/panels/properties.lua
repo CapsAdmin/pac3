@@ -2013,6 +2013,15 @@ do -- damage type
 		radiation = 262144, --radiation
 		removenoragdoll = 4194304, --don't create a ragdoll on death
 		slowburn = 2097152, --
+
+		explosion = -1, -- util.BlastDamage
+		fire = -1, -- ent:Ignite(5)
+
+		-- env_entity_dissolver
+		dissolve_energy = 0,
+		dissolve_heavy_electrical = 1,
+		dissolve_light_electrical = 2,
+		dissolve_core_effect = 3,
 	}
 
 	function PANEL:SpecialCallback()
