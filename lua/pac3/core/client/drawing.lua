@@ -440,8 +440,8 @@ function pac.PostDrawOpaqueRenderables(drawdepth,drawing_skybox)
 						c.a = 0
 						rag:SetColor(c)
 						rag:SetNoDraw(true)
-						if rag:GetParent() ~= ply then
-							rag:SetParent(ply)
+						if rag:GetParent() ~= ent then
+							rag:SetParent(ent)
 							rag:AddEffects(EF_BONEMERGE)
 						end
 						
