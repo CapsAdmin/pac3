@@ -67,7 +67,7 @@ function pac.CreatePart(name, owner)
 
 	part.DefaultVars = {}
 
-	for key, val in pairs(part.StorableVars) do
+	for key in pairs(part.StorableVars) do
 		part.DefaultVars[key] = pac.class.Copy(part[key])
 	end
 
@@ -102,7 +102,7 @@ function pac.RegisterPart(META, name)
 
 	-- update part functions only
 	-- updating variables might mess things up
-	for key, part in pairs(pac.GetParts()) do
+	for _, part in pairs(pac.GetParts()) do
 		if part.ClassName == name then
 			for k, v in pairs(META) do
 				if type(v) == "function" then
@@ -146,7 +146,7 @@ function pac.RemoveAllParts(owned_only, server)
 		pace.RemovePartOnServer("__ALL__")
 	end
 
-	for key, part in pairs(pac.GetParts(owned_only)) do
+	for _, part in pairs(pac.GetParts(owned_only)) do
 		if part:IsValid() then
 			part:Remove()
 		end
@@ -162,7 +162,7 @@ function pac.GetPartCount(class, children)
 	class = class:lower()
 	local count = 0
 
-	for key, part in pairs(children or pac.GetParts(true)) do
+	for _, part in pairs(children or pac.GetParts(true)) do
 		if part.ClassName:lower() == class then
 			count = count + 1
 		end
@@ -172,7 +172,7 @@ function pac.GetPartCount(class, children)
 end
 
 function pac.CallPartHook(name, ...)
-	for key, part in pairs(pac.GetParts()) do
+	for _, part in pairs(pac.GetParts()) do
 		if part[name] then
 			part[name](part, ...)
 		end
@@ -190,7 +190,7 @@ function pac.GenerateNewUniqueID(part_data, base)
 			end
 		end
 
-		for key, part in pairs(part.children) do
+		for _, part in pairs(part.children) do
 			fixpart(part)
 		end
 	end

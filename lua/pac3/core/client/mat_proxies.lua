@@ -1,6 +1,8 @@
+local NULL = NULL
+
 local function BIND_MATPROXY(NAME, TYPE)
 
-	set = "Set" .. TYPE
+	local set = "Set" .. TYPE
 
 	matproxy.Add(
 		{
