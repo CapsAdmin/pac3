@@ -644,8 +644,8 @@ PART.Events =
 					end
 				end
 			else
-				for key, ply in pairs(player.GetAll()) do
-					local data = ent.pac_say_event 
+				for _, ply in pairs(player.GetAll()) do
+					local data = ply.pac_say_event
 
 					if data and self:StringOperator(data.str, find) and data.time + time > pac.RealTime then
 						return true
