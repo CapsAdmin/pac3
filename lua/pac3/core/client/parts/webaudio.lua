@@ -27,7 +27,7 @@ function PART:Initialize()
 end
 
 function PART:GetNiceName()
-	return pac.PrettifyName(("/".. self:GetURL()):match(".+/(.-)%.")) or "no sound"
+	return pac.PrettifyName(("/" .. self:GetURL()):match(".+/(.-)%.")) or "no sound"
 end
 
 function PART:OnThink()
@@ -110,7 +110,7 @@ function PART:SetURL(URL)
 
 		local callback callback = function (snd, ...)
 			if not snd or not snd:IsValid() then
-				Msg"[PAC3] "print("Failed to load ",url,"("..flags..")")
+				print("[PAC3] Failed to load ", url, "(" .. flags .. ")")
 				return
 			end
 

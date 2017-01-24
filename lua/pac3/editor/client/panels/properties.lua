@@ -1940,7 +1940,7 @@ do -- effect
 		if not pace.particle_list then
 			local found = {}
 
-			for file_name in pairs(LOADED_PARTICLES) do
+			for file_name in pairs(pac.loaded_particle_effects) do
 				local data = file.Read("particles/"..file_name, "GAME", "b")
 				for str in data:gmatch("\3%c([%a_]+)%c") do
 					found[str] = true

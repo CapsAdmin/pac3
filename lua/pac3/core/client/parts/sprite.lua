@@ -1,3 +1,8 @@
+local render_SetMaterial = render.SetMaterial
+local render_DrawSprite = render.DrawSprite
+local Color = Color
+local Vector = Vector
+
 local PART = {}
 
 PART.ClassName = "sprite"
@@ -13,7 +18,7 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	return pac.PrettifyName(("/".. self:GetSpritePath()):match(".+/(.+)"):gsub("%..+", "")) or "error"
+	return pac.PrettifyName(("/" .. self:GetSpritePath()):match(".+/(.+)"):gsub("%..+", "")) or "error"
 end
 
 function PART:SetColor(v)
@@ -81,9 +86,6 @@ function PART:SetMaterial(var)
 
 	self.SpritePath = var
 end
-
-local render_SetMaterial = render.SetMaterial
-local render_DrawSprite = render.DrawSprite
 
 function PART:OnDraw(owner, pos, ang)
 	if self.Materialm then

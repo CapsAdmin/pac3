@@ -1,3 +1,7 @@
+local ScrW = ScrW
+local ScrH = ScrH
+local DrawSunbeams = DrawSunbeams
+
 local PART = {}
 
 PART.ClassName = "sunbeams"
@@ -22,7 +26,7 @@ function PART:OnDraw(owner, pos, ang)
 
 	DrawSunbeams(
 		self.Darken,
-		dist_mult * self.Multiplier * (math.Clamp(pac.EyeAng:Forward():DotProduct((pos - pac.EyePos):GetNormalized()) - 0.5, 0, 1) * 2) ^ 5,
+		dist_mult * self.Multiplier * (math.Clamp(pac.EyeAng:Forward():Dot((pos - pac.EyePos):GetNormalized()) - 0.5, 0, 1) * 2) ^ 5,
 		self.Size,
 		spos.x / ScrW(),
 		spos.y / ScrH()

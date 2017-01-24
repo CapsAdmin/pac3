@@ -20,7 +20,7 @@ local function calc_velocity(part)
 	part.last_pos = part.cached_pos
 
 	part.last_vel_smooth = part.last_vel_smooth or Vector(0, 0, 0)
-	part.last_vel_smooth = (part.last_vel_smooth + (diff - part.last_vel_smooth) * FrameTime() * 4)
+	part.last_vel_smooth = part.last_vel_smooth + (diff - part.last_vel_smooth) * FrameTime() * 4
 
 	return part.last_vel_smooth
 end
@@ -77,12 +77,12 @@ PART.Events =
 			elseif self.SetRandom then
 
 				if CurTime() > self.RndTime then
-					if not CurTime() > self.RndTime + holdtime then 
+					if CurTime() < self.RndTime + holdtime then
 						return true
-					else
+					end
+
 					self.SetRandom = false
 					return false
-				end
 				end
 
 			end
@@ -95,7 +95,7 @@ PART.Events =
 		arguments = {{seconds = "number"}, {reset_on_hide = "boolean"}, {synced_time = "boolean"}},
 
 		callback = function(self, ent, seconds, reset_on_hide, synced_time)
-			local time = (synced_time and CurTime() or RealTime())
+			local time = synced_time and CurTime() or RealTime()
 
 			self.time = self.time or time
 			self.timerx_reset = reset_on_hide
@@ -168,13 +168,11 @@ PART.Events =
 	holdtype =
 	{
 		arguments = {{find = "string"}},
-		callback = function(self, ent, find, hide)
+		callback = function(self, ent, find)
 			ent = try_viewmodel(ent)
-			local ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
-			if ent:IsValid() then			
-				if self:StringOperator(ent:GetHoldType(), find) then
+			local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
+			if wep:IsValid() and self:StringOperator(wep:GetHoldType(), find) then
 				return true
-			end
 			end
 		end,
 	},
@@ -503,7 +501,7 @@ PART.Events =
 			ent = try_viewmodel(ent)
 			local tbl = ent.GetWeapons and ent:GetWeapons()
 			if tbl then
-				for key, val in pairs(tbl) do
+				for _, val in pairs(tbl) do
 					val = val:GetClass()
 					if self:StringOperator(val, find) then
 						return true
@@ -563,7 +561,7 @@ PART.Events =
 	fire_bullets =
 	{
 		arguments = {{find_ammo = "string"}, {time = "number"}},
-		callback = function(self, ent, find, time, hide)
+		callback = function(self, ent, find, time)
 			time = time or 0.1
 
 			ent = try_viewmodel(ent)
@@ -606,12 +604,12 @@ PART.Events =
 		callback = function(self, ent, find, time)
 			time = time or 0.1
 
-			local ent = self:GetPlayerOwner()
+			local ply = self:GetPlayerOwner()
 
-			local events = ent.pac_command_events
+			local events = ply.pac_command_events
 
 			if events then
-				for key, data in pairs(events) do
+				for _, data in pairs(events) do
 					if self:StringOperator(data.name, find) then
 						if data.on > 0 then
 							return data.on == 1
@@ -725,10 +723,8 @@ PART.Events =
 		callback = function(self, ent, speed)
 			local parent = self:GetParentEx()
 
-			if not self.TargetPart:IsValid() then
-				if parent:HasParent() then
+			if not self.TargetPart:IsValid() and parent:HasParent() then
 				parent = parent:GetParent()
-			end
 			end
 
 			if parent:IsValid() then
@@ -744,10 +740,8 @@ PART.Events =
 		callback = function(self, ent, speed)
 			local parent = self:GetParentEx()
 
-			if not self.TargetPart:IsValid() then
-				if parent:HasParent() then
+			if not self.TargetPart:IsValid() and parent:HasParent() then
 				parent = parent:GetParent()
-			end
 			end
 
 			if parent:IsValid() then
@@ -763,10 +757,8 @@ PART.Events =
 		callback = function(self, ent, speed)
 			local parent = self:GetParentEx()
 
-			if not self.TargetPart:IsValid() then
-				if parent:HasParent() then
+			if not self.TargetPart:IsValid() and parent:HasParent() then
 				parent = parent:GetParent()
-			end
 			end
 
 			if parent:IsValid() then
@@ -782,10 +774,8 @@ PART.Events =
 		callback = function(self, ent, speed)
 			local parent = self:GetParentEx()
 
-			if not self.TargetPart:IsValid() then
-				if parent:HasParent() then
+			if not self.TargetPart:IsValid() and  parent:HasParent() then
 				parent = parent:GetParent()
-			end
 			end
 
 			if parent:IsValid() then
@@ -802,10 +792,8 @@ PART.Events =
 		callback = function(self, ent, num)
 			local parent = self:GetParentEx()
 
-			if not self.TargetPart:IsValid() then
-				if parent:HasParent() then
+			if not self.TargetPart:IsValid() and parent:HasParent() then
 				parent = parent:GetParent()
-			end
 			end
 
 			if parent:IsValid() then
@@ -821,10 +809,8 @@ PART.Events =
 		callback = function(self, ent, num)
 			local parent = self:GetParentEx()
 
-			if not self.TargetPart:IsValid() then
-				if parent:HasParent() then
+			if not self.TargetPart:IsValid() and parent:HasParent() then
 				parent = parent:GetParent()
-			end
 			end
 
 			if parent:IsValid() then
@@ -840,10 +826,8 @@ PART.Events =
 		callback = function(self, ent, num)
 			local parent = self:GetParentEx()
 
-			if not self.TargetPart:IsValid() then
-				if parent:HasParent() then
+			if not self.TargetPart:IsValid() and parent:HasParent() then
 				parent = parent:GetParent()
-			end
 			end
 
 			if parent:IsValid() then
@@ -1060,7 +1044,7 @@ function PART:GetParsedArguments(data)
 	local args = line:Split("@@")
 
 	for pos, arg in pairs(data) do
-		local nam, typ = next(arg)
+		local typ = select(2, next(arg))
 		if not args[pos] then
 			break
 		elseif typ == "boolean" then
@@ -1101,9 +1085,9 @@ function PART:StringOperator(a, b)
 	if not self.Operator or not a or not b then
 		return false
 	elseif self.Operator == "equal" then
-		return CompareBTable(a, args, function(a, b) return a == b end)
+		return CompareBTable(a, args, function(x, y) return x == y end)
 	elseif self.Operator == "not equal" then
-		return CompareBTable(a, args, function(a, b) return a ~= b end)
+		return CompareBTable(a, args, function(x, y) return x ~= y end)
 	elseif self.Operator == "find" then
 		return CompareBTable(a, args, pac.StringFind)
 	elseif self.Operator == "find simple" then
@@ -1161,14 +1145,6 @@ function PART:OnShow()
 end
 
 pac.RegisterPart(PART)
-
-local enums = {}
-
-for key, val in pairs(_G) do
-	if type(key) == "string" and key:find("PLAYERANIMEVENT_", nil, true) then
-		enums[val] = key:gsub("PLAYERANIMEVENT_", ""):gsub("_", " "):lower()
-	end
-end
 
 usermessage.Hook("pac_event", function(umr)
 	local ply = umr:ReadEntity()
@@ -1250,18 +1226,29 @@ do
 	}
 end
 
+do
+	local enums = {}
+
+	for key, val in pairs(_G) do
+		if type(key) == "string" and key:find("PLAYERANIMEVENT_", nil, true) then
+			enums[val] = key:gsub("PLAYERANIMEVENT_", ""):gsub("_", " "):lower()
+		end
+	end
+
 	pac.AddHook("DoAnimationEvent", function(ply, event, data)
 		-- update all parts once so OnShow and OnHide are updated properly for animation events
 		if ply.pac_parts then
 			ply.pac_anim_event = {name = enums[event], time = pac.RealTime, reset = true}
 
-		for k,v in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
+			for _, v in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
 				if v.ClassName == "event" and v.Event == "animation_event" then
 					v:GetParent():CallRecursive("Think")
 				end
 			end
 		end
 	end)
+
+end
 
 pac.AddHook("EntityEmitSound", function(data)
 	if pac.playing_sound then return end
@@ -1271,7 +1258,7 @@ pac.AddHook("EntityEmitSound", function(data)
 
 	ent.pac_emit_sound = {name = data.SoundName, time = pac.RealTime, reset = true}
 
-	for k,v in pairs(pac.GetPartsFromUniqueID(ent:IsPlayer() and ent:UniqueID() or ent:EntIndex())) do
+	for _, v in pairs(pac.GetPartsFromUniqueID(ent:IsPlayer() and ent:UniqueID() or ent:EntIndex())) do
 		if v.ClassName == "event" and v.Event == "emit_sound" then
 			v:GetParent():CallRecursive("Think")
 		end
@@ -1288,7 +1275,7 @@ pac.AddHook("EntityFireBullets", function(ent, data)
 	if not ent:IsValid() or not ent.pac_parts then return end
 	ent.pac_fire_bullets = {name = data.AmmoType, time = pac.RealTime, reset = true}
 
-	for k,v in pairs(pac.GetPartsFromUniqueID(ent:IsPlayer() and ent:UniqueID() or ent:EntIndex())) do
+	for _, v in pairs(pac.GetPartsFromUniqueID(ent:IsPlayer() and ent:UniqueID() or ent:EntIndex())) do
 		if v.ClassName == "event" and v.Event == "fire_bullets" then
 			v:GetParent():CallRecursive("Think")
 		end

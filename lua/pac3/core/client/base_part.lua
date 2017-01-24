@@ -235,7 +235,7 @@ do -- owner
 
 		if self.Duplicate then
 
-			ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self, function(ent) return ent.pac_duplicate_attach_uid ~= self.UniqueID end) or NULL
+			ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self, function(e) return e.pac_duplicate_attach_uid ~= self.UniqueID end) or NULL
 
 			if ent ~= prev_owner and ent:IsValid() then
 
@@ -277,23 +277,23 @@ do -- owner
 	function PART:SetOwner(ent)
 		local root = self:GetRootPart()
 
+		self.Owner = ent or NULL
+
 		pac.RunNextFrame(self, function()
-			local ent = self.Owner
+			local owner = self.Owner
 
-			if ent:IsValid() then
+			if owner:IsValid() then
 
-				if self.last_owner and self.last_owner ~= ent then
+				if self.last_owner and self.last_owner ~= owner then
 					pac.UnhookEntityRender(self.last_owner, root)
 				end
 
-				pac.HookEntityRender(ent, root)
-				self.last_owner = ent
+				pac.HookEntityRender(owner, root)
+				self.last_owner = owner
 			else
-				pac.UnhookEntityRender(ent, root)
+				pac.UnhookEntityRender(owner, root)
 			end
 		end)
-
-		self.Owner = ent or NULL
 	end
 
 	-- always return the root owner

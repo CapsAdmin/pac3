@@ -67,7 +67,7 @@ function PART:SetSlotName(name)
 	local ent = self:GetOwner()
 
 	if ent:IsValid() and ent:IsPlayer() then		-- to stop gestures getting stuck
-		for k,v in next,self.ValidGestureSlots do
+		for _, v in next,self.ValidGestureSlots do
 			ent:AnimResetGestureSlot(v)
 		end
 	end

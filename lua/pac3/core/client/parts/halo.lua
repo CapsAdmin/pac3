@@ -1,3 +1,6 @@
+local Color = Color
+local Vector = Vector
+
 local PART = {}
 
 PART.ClassName = "halo"
@@ -18,7 +21,7 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	local h,s,v = pac.ColorToNames(self:GetColor())
+	local h = pac.ColorToNames(self:GetColor())
 
 	return h .. " halo"
 end
@@ -38,7 +41,7 @@ function PART:OnThink()
 		local tbl = {parent.Entity}
 
 		if self.AffectChildren then
-			for key, part in pairs(parent:GetChildren()) do
+			for _, part in pairs(parent:GetChildren()) do
 				if part.ClassName == "model" and part.Entity:IsValid() and not part:IsHidden() then
 					table.insert(tbl, part.Entity)
 				end

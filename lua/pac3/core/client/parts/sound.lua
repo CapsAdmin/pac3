@@ -18,7 +18,7 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	return pac.PrettifyName(("/".. self:GetSound()):match(".+/(.-)%.")) or "no sound"
+	return pac.PrettifyName(("/" .. self:GetSound()):match(".+/(.-)%.")) or "no sound"
 end
 
 function PART:Initialize()
@@ -71,7 +71,7 @@ function PART:OnThink()
 		if self.Loop then
 			pac.playing_sound = true
 			if not self.csptch:IsPlaying() then self.csptch:Play() end
-			self.csptch:ChangePitch((self.Pitch * 255) + math.sin(pac.RealTime)/2, 0)
+			self.csptch:ChangePitch((self.Pitch * 255) + math.sin(pac.RealTime) / 2, 0)
 			pac.playing_sound = false
 		end
 	end
@@ -90,16 +90,16 @@ end
 
 local bad =
 {
-	["#"]=true,
-	["@"]=true,
-	[">"]=true,
-	["<"]=true,
-	["^"]=true,
-	[")"]=true,
-	["}"]=true,
-	["$"]=true,
-	["!"]=true,
-	["?"]=true, -- especially bad
+	["#"] = true,
+	["@"] = true,
+	[">"] = true,
+	["<"] = true,
+	["^"] = true,
+	[")"] = true,
+	["}"] = true,
+	["$"] = true,
+	["!"] = true,
+	["?"] = true, -- especially bad
 }
 
 local function fix(snd)
@@ -107,7 +107,7 @@ local function fix(snd)
 		snd = snd:gsub("^(.)",function() return "*" end)
 	end
 	if bad[snd:sub(2,2)] then
-		snd = snd:gsub("^(..)",function(a) return a[1].."*" end)
+		snd = snd:gsub("^(..)",function(a) return a[1] .. "*" end)
 	end
 	return snd
 end
@@ -144,7 +144,7 @@ function PART:SetPitch(num)
 	end
 
 	if self.csptch then
-		self.csptch:ChangePitch(math.Clamp(self.Pitch*255, 1, 255), 0)
+		self.csptch:ChangePitch(math.Clamp(self.Pitch * 255, 1, 255), 0)
 	end
 end
 
