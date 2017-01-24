@@ -153,7 +153,7 @@ do -- projectile entity
 					info:SetDamageType(damage_types.dissolve)
 
 					data.HitEntity:TakeDamageInfo(info)
-				elseif hook.Call("CanTool", owner, util.TraceLine({start = owner:EyePos(), endpos = data.HitEntity:GetPos(), filter = {owner}}), "remover") ~= false then
+				elseif hook.Run("CanTool", owner, util.TraceLine({start = owner:EyePos(), endpos = data.HitEntity:GetPos(), filter = {owner}}), "remover") ~= false then
 					dissolve(data.HitEntity, owner, damage_types[self.part_data.DamageType])
 				end
 			end
@@ -169,7 +169,7 @@ do -- projectile entity
 
 					local damage_radius = math.Clamp(self.part_data.DamageRadius, 0, 300)
 
-					if self.part_data.DamageType == "fire" then
+					if self.part_data.DamageType == "fire" and owner:IsPlayer() and owner:IsValid() and hook.Run("CanProperty", owner, "ignite", data.HitEntity) ~= false then
 						data.HitEntity:Ignite(math.min(self.part_data.Damage, 5), damage_radius)
 					elseif self.part_data.DamageType == "explosion" then
 						info:SetDamageType(damage_types.blast)
