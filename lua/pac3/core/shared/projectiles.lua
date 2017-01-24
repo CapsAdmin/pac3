@@ -94,7 +94,7 @@ do -- projectile entity
 		function ENT:PhysicsCollide(data, phys)
 			if not self.part_data then return end
 
-			if self.part_data.Bounce > 0 then
+			if self.part_data.Bounce ~= 0 then
 				phys:SetVelocity(data.OurOldVelocity - 2 * (data.HitNormal:Dot(data.OurOldVelocity) * data.HitNormal) * self.part_data.Bounce)
 			elseif self.part_data.Sticky and data.HitEntity:IsWorld() then
 				phys:SetVelocity(Vector(0,0,0))
