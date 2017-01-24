@@ -922,7 +922,7 @@ function PART:OnThink()
 
 			if self.AffectChildren then
 				for _, part in pairs(self:GetChildren()) do
-					set(self, part, x, nil, nil, true)
+					set(self, part, num, nil, nil, true)
 				end
 			else
 				set(self, parent, num)
