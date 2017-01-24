@@ -133,7 +133,9 @@ do -- projectile entity
 			end
 
 			if self.part_data.RemoveOnCollide then
-				timer.Simple(0.01, function() SafeRemoveEntity(self) end)
+				timer.Simple(0, function()
+					SafeRemoveEntity(self)
+				end)
 			end
 		end
 	end
