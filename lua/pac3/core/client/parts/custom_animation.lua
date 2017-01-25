@@ -8,6 +8,9 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Data", "")
 	pac.GetSet(PART, "StopOnHide", true)
 	pac.GetSet(PART, "AnimationType", "sequence")
+	pac.GetSet(PART, "Rate", 1)
+	pac.GetSet(PART, "BonePower", 1)
+	pac.GetSet(PART, "Offset", 0)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -16,6 +19,39 @@ end
 
 function PART:GetAnimID()
 	return "pac_anim_" .. self:GetUniqueID()
+end
+
+function PART:SetRate(num)	
+	self.Rate = num
+	local owner = self:GetOwner()
+	if owner:IsValid() and owner.LuaAnimations then
+		local anim = owner.LuaAnimations[self:GetAnimID()]
+		if anim then
+			anim.TimeScale = self.Rate
+		end
+	end
+end
+
+function PART:SetPower(num)
+	self.BonePower = num
+	local owner = self:GetOwner()
+	if owner:IsValid() and owner.LuaAnimations then
+		local anim = owner.LuaAnimations[self:GetAnimID()]
+		if anim then
+			anim.Power = self.BonePower
+		end
+	end
+end
+
+function PART:SetOffset(num)
+	self.Offset = num
+	local owner = self:GetOwner()
+	if owner:IsValid() and owner.LuaAnimations then
+		local anim = owner.LuaAnimations[self:GetAnimID()]
+		if anim then
+			anim.Offset = num
+		end	
+	end
 end
 
 function PART:SetURL(url)
