@@ -22,7 +22,7 @@ local function populate_part_menu(menu, part, func)
 
 		pnl:SetImage(pace.GetIconFromClassName(part.ClassName))
 
-		for key, part in pairs(part:GetChildren()) do
+		for key, part in ipairs(part:GetChildren()) do
 			populate_part_menu(menu, part, func)
 		end
 	else

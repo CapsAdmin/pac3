@@ -927,7 +927,7 @@ end
 
 function PART:OnRemove()
 	if self.AffectChildrenOnly then
-		for _, child in pairs(self:GetChildren()) do
+		for _, child in ipairs(self:GetChildren()) do
 			child:SetEventHide(false)
 		end
 	else
@@ -967,7 +967,7 @@ function PART:OnThink()
 			if self.AffectChildrenOnly then
 				local b = should_hide(self, ent, data)
 
-				for _, child in pairs(self:GetChildren()) do
+				for _, child in ipairs(self:GetChildren()) do
 					child:SetEventHide(b)
 				end
 

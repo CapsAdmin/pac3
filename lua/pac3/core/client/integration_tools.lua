@@ -49,7 +49,7 @@ function pac.SetupENT(ENT, owner)
 	ENT.pac_owner = ENT.pac_owner or owner or "self"
 
 	local function find(parent, name)
-		for _, part in pairs(parent:GetChildren()) do
+		for _, part in ipairs(parent:GetChildren()) do
 
 			if part:GetName():lower():find(name) then
 				return part
