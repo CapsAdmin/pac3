@@ -33,7 +33,7 @@ local function think(part)
 		part.last_think = pac.RealTime + (part.ThinkTime or 0.1)
 	end
 
-	for _, val in pairs(part.Children) do
+	for _, val in ipairs(part:GetChildren()) do
 		think(val)
 	end
 end
@@ -41,7 +41,7 @@ end
 local function buildbones(part)
 	part:BuildBonePositions()
 
-	for _, val in pairs(part.Children) do
+	for _, val in ipairs(part:GetChildren()) do
 		buildbones(val)
 	end
 end

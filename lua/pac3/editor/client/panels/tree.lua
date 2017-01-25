@@ -183,7 +183,11 @@ local enable_model_icons = CreateClientConVar("pac_editor_model_icons", "1")
 function PANEL:PopulateParts(node, parts, children)
 	fix_folder_funcs(node)
 
-	parts = table.ClearKeys(parts)
+	local temp = {}
+	for k,v in pairs(parts) do
+		table.insert(temp, v)
+	end
+	parts = temp
 
 	local tbl = {}
 
