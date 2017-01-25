@@ -243,8 +243,6 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 			local r, g, b = self.Colorf.r, self.Colorf.g, self.Colorf.b
 
 			if self.LightBlend ~= 1 then
-				-- what the fucking fuck is this lighting code
-				-- it doesn't even look physically correct
 				local v = render.GetLightColor(pos)
 				r = r * v.r * self.LightBlend
 				g = g * v.g * self.LightBlend
@@ -268,7 +266,8 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 end
 
 local DEFAULT_COLOR = Vector(1, 1, 1)
-local WHITE         = Material("models/debug/debugwhite")
+local WHITE = Material("models/debug/debugwhite")
+
 function PART:PostEntityDraw(owner, ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 		if not pac.DisableDoubleFace then
