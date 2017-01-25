@@ -85,6 +85,7 @@ function PART:PreInitialize()
 	self.Children2 = {}
 	self.modifiers = {}
 	self.RootPart = NULL
+	self.DrawOrder = 0
 
 	self.cached_pos = Vector(0,0,0)
 	self.cached_ang = Angle(0,0,0)
@@ -426,11 +427,6 @@ do -- parenting
 		end
 
 		function PART:SortChildren()
-			self.DrawOrder = self.DrawOrder or 0
-			do return end
-			for _, part in ipairs(self:GetChildren()) do
-				part:SortChildren()
-			end
 			table.sort(self.Children, sort)
 		end
 	end
