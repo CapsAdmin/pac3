@@ -4,6 +4,12 @@ local ipairs = ipairs
 local table = table
 local Vector = Vector
 local Angle = Angle
+local Color = Color
+local NULL = NULL
+
+local VEC0 = Vector(0,0,0)
+local ANG0 = Angle(0,0,0)
+local LocalToWorld = LocalToWorld
 
 local function SETUP_CACHE_FUNC(tbl, func_name)
 	local old_func = tbl[func_name]
@@ -100,7 +106,7 @@ function PART:GetName()
 		local count = 0
 
 		if self:HasParent() then
-			for key, val in ipairs(self:GetParent():GetChildren()) do
+			for _, val in ipairs(self:GetParent():GetChildren()) do
 				if val:GetNiceName() == self:GetNiceName() then
 					count = count + 1
 
@@ -360,7 +366,7 @@ do -- parenting
 
 		table.insert(self.parent_list, temp)
 
-		for i = 1, 100 do
+		for _ = 1, 100 do
 			local parent = temp:GetParent()
 			if not parent:IsValid() then break end
 
@@ -371,7 +377,7 @@ do -- parenting
 
 		self.RootPart = temp
 
-		for key, part in ipairs(self:GetChildren()) do
+		for _, part in ipairs(self:GetChildren()) do
 			part:BuildParentList()
 		end
 	end
@@ -478,16 +484,16 @@ do -- parenting
 				self[func](self, ...)
 			end
 
-			for k, v in ipairs(self:GetChildren()) do
-				v:CallRecursive(func, ...)
+			for _, part in ipairs(self:GetChildren()) do
+				part:CallRecursive(func, ...)
 			end
 		end
 
 		function PART:SetKeyValueRecursive(key, val)
 			self[key] = val
 
-			for k,v in ipairs(self:GetChildren()) do
-				v:SetKeyValueRecursive(key, val)
+			for _, part in ipairs(self:GetChildren()) do
+				part:SetKeyValueRecursive(key, val)
 			end
 		end
 
@@ -515,7 +521,7 @@ do -- parenting
 				self:BuildParentList()
 			end
 
-			for i, parent in ipairs(self.parent_list) do
+			for _, parent in ipairs(self.parent_list) do
 				if parent.event_hidden then
 					return true
 				end
@@ -646,11 +652,11 @@ do -- serializing
 					self["Set" .. key](self, value)
 				end
 			elseif key ~= "ClassName" then
-				pac.dprint("settable: unhandled key [%q] = %q", key, tostring(val))
+				pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
 			end
 		end
 
-		for key, value in pairs(tbl.children) do
+		for _, value in pairs(tbl.children) do
 			local function create()
 				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
 				part:SetTable(value, instant)
@@ -669,7 +675,7 @@ do -- serializing
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 		for _, key in pairs(self:GetStorableVars()) do
-			local var = self[key] and self["Get" .. key](self) or self[key], key
+			local var = self[key] and self["Get" .. key](self) or self[key]
 			var = pac.class.Copy(var) or var
 
 			if make_copy_name and var ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
@@ -777,7 +783,7 @@ function PART:Highlight(skip_children, data)
 	local tbl = {self.Entity and self.Entity:IsValid() and self.Entity or nil}
 
 	if not skip_children then
-		for key, part in ipairs(self:GetChildren()) do
+		for _, part in ipairs(self:GetChildren()) do
 			local ent = part.Entity
 
 			if ent and ent:IsValid() then
@@ -798,10 +804,6 @@ function PART:Highlight(skip_children, data)
 end
 
 do -- drawing. this code is running every frame
-	local VEC0 = Vector(0,0,0)
-	local ANG0 = Angle(0,0,0)
-	local LocalToWorld = LocalToWorld
-
 	PART.cached_pos = Vector(0,0,0)
 	PART.cached_ang = Angle(0,0,0)
 
@@ -811,8 +813,6 @@ do -- drawing. this code is running every frame
 		if not self.last_enabled then return end
 
 		if self:IsHidden() then	return end
-
-		owner = self:GetOwner()
 
 		if
 			self[event] and
@@ -840,7 +840,7 @@ do -- drawing. this code is running every frame
 
 			if not self.HandleModifiersManually then self:ModifiersPreEvent(event, draw_type) end
 
-			self[event](self, owner, pos, ang) -- this is where it usually calls Ondraw on all the parts
+			self[event](self, self:GetOwner(), pos, ang) -- this is where it usually calls Ondraw on all the parts
 
 			if not self.HandleModifiersManually then self:ModifiersPostEvent(event, draw_type) end
 		end
@@ -891,6 +891,8 @@ do -- drawing. this code is running every frame
 			if parent:IsValid() and parent.ClassName == "jiggle" then
 				return parent.pos, parent.ang
 			end
+
+			local pos, ang
 
 			if parent:IsValid() and not parent.NonPhysical then
 
