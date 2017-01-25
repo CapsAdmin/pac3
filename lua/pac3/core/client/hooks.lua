@@ -398,7 +398,7 @@ function pac.PlayerSpawned(ply)
 	if ply.pac_parts then
 		for _, part in pairs(ply.pac_parts) do
 			if part.last_owner and part.last_owner:IsValid() then
-				part:SetOwner(ent)
+				part:SetOwner(ply)
 				part.last_owner = nil
 			end
 		end
