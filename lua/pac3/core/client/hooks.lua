@@ -216,7 +216,7 @@ function pac.OnClientsideRagdoll(ent)
 		end
 	end
 
-	if not ply.pac_parts or not ply then return end
+	if not ply or not ply.pac_parts then return end
 
 	ply.pac_ragdoll = ent
 
