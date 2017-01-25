@@ -368,10 +368,10 @@ function PART:SetModel(str)
 end
 
 function PART:SetLodOverride(num)
+	self.LodOverride = num
 	local owner = self:GetOwner()
 	if owner:IsValid() then
 		owner:SetLOD(num)
-		self.LodOverride = num
 	end
 end
 
