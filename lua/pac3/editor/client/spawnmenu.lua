@@ -81,6 +81,11 @@ function pace.ClientSettingsMenu(pnl)
 		"pac_enable"
 	)
 
+	pnl:CheckBox(
+		L"Friend only",
+		"pac_friendonly"
+	)
+
 	pnl:NumSlider(
 		L"PAC Volume",
 		"pac_ogg_volume",
