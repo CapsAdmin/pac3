@@ -541,7 +541,6 @@ function pac.Handleurltex(part, url, callback, shader)
 end
 
 local mat
-local Matrix = Matrix
 
 for _, ent in pairs(ents.GetAll()) do
 	ent.pac_can_legacy_scale = nil
