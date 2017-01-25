@@ -112,7 +112,7 @@ do
 				if v:GetFriendStatus() == "friend" and v.pac_ignored == true then
 					pac.UnIgnoreEntity(v)
 					v.pac_friendonly = false
-				elseif v:GetFriendStatus() != "friend" and not v.pac_ignored and v != LocalPlayer() then
+				elseif v:GetFriendStatus() ~= "friend" and not v.pac_ignored and v ~= LocalPlayer() then
 					pac.IgnoreEntity(v)	
 					v.pac_friendonly = true
 				end
@@ -132,7 +132,7 @@ do
 
 	hook.Add("PlayerInitialSpawn", "PacFriendOnlySpawn", function(ply)
 		timer.Simple(0, function()
-			if pac_friendonly:GetBool() and ply:GetFriendStatus() != "friend" then
+			if pac_friendonly:GetBool() and ply:GetFriendStatus() ~= "friend" then
 				pac.IgnoreEntity(ply)	
 				ply.pac_friendonly = true
 			end
