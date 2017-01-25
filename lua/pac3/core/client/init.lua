@@ -105,8 +105,7 @@ do
 
 	local pac_friendonly = CreateClientConVar("pac_friendonly", 0, true)
 
-	--Made to respect manual unignore
-	local function PacFriendOnlyUpdate()
+	function pac.FriendOnlyUpdate()
 		if pac_friendonly:GetBool() then
 			for k,v in pairs(player.GetAll()) do
 				if v:GetFriendStatus() == "friend" and v.pac_ignored == true then
@@ -128,9 +127,9 @@ do
 		end
 	end
 
-	cvars.AddChangeCallback("pac_friendonly", PacFriendOnlyUpdate)
+	cvars.AddChangeCallback("pac_friendonly", pac.FriendOnlyUpdate)
 
-	hook.Add("PlayerInitialSpawn", "PacFriendOnlySpawn", function(ply)
+	hook.Add("PlayerInitialSpawn", "pac_friendonly", function(ply)
 		timer.Simple(0, function()
 			if pac_friendonly:GetBool() and ply:GetFriendStatus() ~= "friend" then
 				pac.IgnoreEntity(ply)	
@@ -138,6 +137,7 @@ do
 			end
 		end)
 	end)
+	hook.Add("pac_Initialized", "pac_friendonly", pac.FriendOnlyUpdate)
 
 end
 
