@@ -626,24 +626,24 @@ PART.Events =
 
 	say =
 	{
-		arguments = {{find = "string"}, {time = "number"}, {owner = "boolean"}},
-		callback = function(self, ent, find, time, owner)
+		arguments = {{find = "string"}, {time = "number"}, {all_players = "boolean"}},
+		callback = function(self, ent, find, time, all_players)
 			time = time or 0.1
 
 			ent = try_viewmodel(ent)
 
-			if owner then
-				owner = self:GetOwner(true)
-				if owner:IsValid() then
-					local data = owner.pac_say_event
+			if all_players then
+				for _, ply in pairs(player.GetAll()) do
+					local data = ply.pac_say_event
 
 					if data and self:StringOperator(data.str, find) and data.time + time > pac.RealTime then
 						return true
 					end
-				end
-			else
-				for _, ply in pairs(player.GetAll()) do
-					local data = ply.pac_say_event
+				end	
+			else			
+				local owner = self:GetOwner(true)
+				if owner:IsValid() then
+					local data = owner.pac_say_event
 
 					if data and self:StringOperator(data.str, find) and data.time + time > pac.RealTime then
 						return true
