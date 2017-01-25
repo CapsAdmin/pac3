@@ -1,3 +1,5 @@
+local pac = pac
+
 local render_SetColorModulation = render.SetColorModulation
 local render_SetBlend = render.SetBlend
 local render_ModelMaterialOverride = render.ModelMaterialOverride
@@ -9,8 +11,8 @@ local SysTime = SysTime
 local util_TimerCycle = util.TimerCycle
 local FrameNumber = FrameNumber
 local RealTime = RealTime
+local FrameTime = FrameTime
 local GetConVar = GetConVar
-local pac = pac
 local NULL = NULL
 local EF_BONEMERGE = EF_BONEMERGE
 local RENDERMODE_TRANSALPHA = RENDERMODE_TRANSALPHA
@@ -385,7 +387,7 @@ do
 	local fovoverride
 
 	local should_suppress = setup_suppress()
-	function pac.PostDrawOpaqueRenderables(drawdepth, drawing_skybox)
+	function pac.PostDrawOpaqueRenderables()
 		if in_skybox or should_suppress() then return end
 
 		--garbage = collectgarbage("count")
@@ -507,7 +509,7 @@ end
 do
 	local should_suppress = setup_suppress()
 
-	function pac.PostDrawTranslucentRenderables(drawing_depth, drawing_skybox)
+	function pac.PostDrawTranslucentRenderables()
 		if in_skybox or should_suppress() then return end
 
 		for key, ent in pairs(pac.drawn_entities) do

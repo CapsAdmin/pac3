@@ -142,7 +142,7 @@ function pac.GetPartsFromUniqueID(owner_id)
 end
 
 function pac.RemoveAllParts(owned_only, server)
-	if server then
+	if server and pace then
 		pace.RemovePartOnServer("__ALL__")
 	end
 
