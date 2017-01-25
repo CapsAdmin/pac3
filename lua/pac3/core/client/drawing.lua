@@ -6,7 +6,6 @@ local render_ModelMaterialOverride = render.ModelMaterialOverride
 local render_MaterialOverride = render.MaterialOverride
 local render_CullMode = render.CullMode
 local render_SuppressEngineLighting = render.SuppressEngineLighting
-local collectgarbage = collectgarbage
 local SysTime = SysTime
 local util_TimerCycle = util.TimerCycle
 local FrameNumber = FrameNumber
@@ -53,7 +52,6 @@ local max_render_time_cvar = CreateClientConVar("pac_max_render_time", 0)
 local max_render_time = 0
 
 local TIME = math.huge
-local GARBAGE = math.huge
 
 pac.profile_info = {}
 pac.profile = true
@@ -68,7 +66,6 @@ function pac.GetProfilingData(ent)
 
 		for type, data in pairs(profile_data.types) do
 			out.events[type] = {
-				average_garbage = data.total_garbage / out.times_rendered,
 				average_ms = data.total_render_time / out.times_rendered,
 			}
 		end
@@ -125,7 +122,6 @@ local function render_override(ent, type, draw_only)
 
 	if pac.profile then
 		TIME = util_TimerCycle()
-		GARBAGE = collectgarbage("count")
 	end
 
 	if max_render_time > 0 and ent ~= pac.LocalPlayer then
@@ -181,7 +177,6 @@ local function render_override(ent, type, draw_only)
 
 	if pac.profile then
 		TIME = util_TimerCycle()
-		GARBAGE = collectgarbage("count") - GARBAGE
 
 		local id = ent:EntIndex()
 		pac.profile_info[id] = pac.profile_info[id] or {types = {}, times_ran = 0}
@@ -192,7 +187,6 @@ local function render_override(ent, type, draw_only)
 		local data = pac.profile_info[id].types[type]
 
 		data.total_render_time = (data.total_render_time or 0) + TIME
-		data.total_garbage = (data.total_garbage or 0) + GARBAGE
 	end
 
 	if max_render_time > 0 and ent ~= pac.LocalPlayer then
@@ -383,14 +377,11 @@ do
 	local radius = 0
 	local dst = 0
 	local dummyv = Vector(0.577350,0.577350,0.577350)
-	--local garbage = 0
 	local fovoverride
 
 	local should_suppress = setup_suppress()
 	function pac.PostDrawOpaqueRenderables()
 		if in_skybox or should_suppress() then return end
-
-		--garbage = collectgarbage("count")
 
 		-- commonly used variables
 		max_render_time = max_render_time_cvar:GetFloat()
@@ -412,14 +403,13 @@ do
 				dst = ent:EyePos():Distance(pac.EyePos)
 				radius = ent:BoundingRadius() * 3 * (ent:GetModelScale() or 1)
 
+				if ent:GetNoDraw() then
+					hide_parts(ent)
+					continue
+				end
+
 				if ent:IsPlayer() then
-
 					if not ent:Alive() and GetConVar("pac_sv_hide_outfit_on_death"):GetFloat() == 1 then
-						hide_parts(ent)
-						continue
-					end
-
-					if ent:GetNoDraw() then
 						hide_parts(ent)
 						continue
 					end
@@ -470,9 +460,7 @@ do
 					if radius < 32 then
 						radius = 128
 					end
-				end
-
-				if not ent:IsPlayer() and not ent:IsNPC() then
+				elseif not ent:IsNPC() then
 					radius = radius * 4
 				end
 
@@ -482,11 +470,11 @@ do
 					(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or (ent.pac_camera and ent.pac_camera:IsValid())) or
 					ent ~= pac.LocalPlayer and
 					(
-						((util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0 or fovoverride ~= 0) or (dst < radius * 1.25)) and
+						((fovoverride ~= 0 or util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0) or (dst < radius * 1.25)) and
 						(
-							(sv_draw_dist ~= 0 and (sv_draw_dist == -1 or dst < sv_draw_dist)) or
-							(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance < dst)) or
-							(dst < draw_dist)
+							(sv_draw_dist ~= 0 and (sv_draw_dist == -1 or dst <= sv_draw_dist)) or
+							(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance <= dst)) or
+							(dst <= draw_dist)
 						)
 					)
 				then
