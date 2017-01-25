@@ -280,25 +280,19 @@ do -- owner
 	end
 
 	function PART:SetOwner(ent)
-		local root = self:GetRootPart()
+		self.last_owner = self.Owner
+
+		if ent:IsValid() then
+			local root = self:GetRootPart()
+
+			if self.last_owner:IsValid() and self.last_owner ~= ent then
+				pac.UnhookEntityRender(self.last_owner, root)
+			end
+
+			pac.HookEntityRender(ent, root)
+		end
 
 		self.Owner = ent or NULL
-
-		pac.RunNextFrame(self, function()
-			local owner = self.Owner
-
-			if owner:IsValid() then
-
-				if self.last_owner and self.last_owner ~= owner then
-					pac.UnhookEntityRender(self.last_owner, root)
-				end
-
-				pac.HookEntityRender(owner, root)
-				self.last_owner = owner
-			else
-				pac.UnhookEntityRender(owner, root)
-			end
-		end)
 	end
 
 	-- always return the root owner
