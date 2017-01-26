@@ -2038,6 +2038,7 @@ do -- damage type
 		dissolve_core_effect = 3,
 
 		heal = -1,
+		armor = -1,
 	}
 
 	function PANEL:SpecialCallback()
