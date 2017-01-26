@@ -1,5 +1,15 @@
 local L = pace.LanguageString
 
+-- load only when hovered above
+local function add_expensive_submenu_load(pnl, callback)
+	local old = pnl.OnCursorEntered
+	pnl.OnCursorEntered = function(...)
+		callback()
+		pnl.OnCursorEntered = old
+		return old(...)
+	end
+end
+
 function pace.WearParts(file, clear)
 	if file then
 		pace.LoadParts(file, clear)
@@ -260,11 +270,12 @@ do -- menu
 
 		local save, pnl = menu:AddSubMenu(L"save", function() pace.SaveParts() end)
 		pnl:SetImage(pace.MiscIcons.save)
-		pace.AddSaveMenuToMenu(save, obj)
+		add_expensive_submenu_load(pnl, function() pace.AddSaveMenuToMenu(save, obj) end)
 
 		local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
+		add_expensive_submenu_load(pnl, function() pace.AddSavedPartsToMenu(load, false, obj) end)
+
 		pnl:SetImage(pace.MiscIcons.load)
-		pace.AddSavedPartsToMenu(load, false, obj)
 
 		menu:AddSpacer()
 
@@ -292,7 +303,7 @@ do -- menu
 
 		local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
 		pnl:SetImage(pace.MiscIcons.load)
-		pace.AddSavedPartsToMenu(load, false, obj)
+		add_expensive_submenu_load(pnl, function() pace.AddSavedPartsToMenu(load, false, obj) end)
 
 		menu:AddOption(L"clear", function()
 			pace.ClearParts()
