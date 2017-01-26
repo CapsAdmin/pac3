@@ -264,10 +264,6 @@ do -- menu
 			end):SetImage(pace.MiscIcons.uniqueid)
 		end
 
-		menu:AddOption(L"help", function()
-			pace.ShowHelp(obj.ClassName)
-		end):SetImage(pace.MiscIcons.help)
-
 		local save, pnl = menu:AddSubMenu(L"save", function() pace.SaveParts() end)
 		pnl:SetImage(pace.MiscIcons.save)
 		pace.AddSaveMenuToMenu(save, obj)
