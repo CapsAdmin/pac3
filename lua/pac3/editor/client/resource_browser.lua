@@ -78,7 +78,7 @@ local function create_model_icon(path, on_click)
 end
 
 function pace.ResourceBrowser(callback, browse_types_str)
-	browse_types_str = browse_types_str or "models;materials;sound"
+	browse_types_str = browse_types_str or "models;materials;textures;sound"
 	local browse_types = browse_types_str:Split(";")
 
 	local texture_view = false
@@ -213,8 +213,9 @@ function pace.ResourceBrowser(callback, browse_types_str)
 
 
 	local sound_list = vgui.Create("DListView", frame.PropPanel)
-	sound_list:AddColumn("path")
-	sound_list:AddColumn("size")
+	sound_list:AddColumn(L"path")
+	sound_list:AddColumn(L"byte size")
+	sound_list:AddColumn(L"duration")
 	sound_list:Dock(FILL)
 	sound_list:SetVisible(false)
 
@@ -420,7 +421,10 @@ function pace.ResourceBrowser(callback, browse_types_str)
 						for k, v in pairs(files) do
 							local path = node:GetFolder() ..  "/" .. v
 
-							local line = sound_list:AddLine(path, file.Size(path, pathid))
+							local sound_path = path:match("sound/(.+)")
+							local duration = SoundDuration(sound_path)
+
+							local line = sound_list:AddLine(path, file.Size(path, pathid), duration)
 
 							local play = vgui.Create("DImageButton", line)
 							play:SetImage("icon16/control_play.png")
@@ -441,9 +445,9 @@ function pace.ResourceBrowser(callback, browse_types_str)
 							label:SetTextInset(play:GetWide() + 5, 0)
 
 							play.DoClick = function()
-								local sound_path = path:match("sound/(.+)")
-								if play.snd and play.snd:IsPlaying() then
+								if play.snd then
 									play.snd:Stop()
+									play.snd = nil
 									play:SetImage("icon16/control_play.png")
 									timer.Remove("pac_resource_browser_play_" .. path)
 								else
@@ -453,7 +457,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 
 									play:SetImage("icon16/control_stop.png")
 
-									timer.Create("pac_resource_browser_play_" .. path, 1, SoundDuration(sound_path), function()
+									timer.Create("pac_resource_browser_play_" .. path, duration, 1, function()
 										if play:IsValid() then
 											play:DoClick()
 										end
@@ -651,3 +655,5 @@ if pace.model_browser and pace.model_browser:IsValid() then pace.model_browser:R
 concommand.Add("pac_resource_browser", function()
 	pace.ResourceBrowser(print)
 end)
+
+pace.ResourceBrowser(print)
