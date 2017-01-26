@@ -1367,9 +1367,9 @@ do -- model
 		pace.close_spawn_menu = true
 		pace.SafeRemoveSpecialPanel()
 		--g_SpawnMenu:Open()
-		pace.ModelBrowser(function(path)
+		pace.ResourceBrowser(function(path)
 			pace.current_part:SetModel(path)
-		end)
+		end, "models")
 	end
 
 	-- this is so lame
@@ -1514,6 +1514,14 @@ do -- material
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:SpecialCallback()
+		pace.ResourceBrowser(function(path)
+			path = path:match("materials/(.+)%.vmt")
+			self:SetValue(path)
+			self.OnValueChanged(path)
+		end, "materials")
+	end
+
+	function PANEL:SpecialCallback2()
 		pace.SafeRemoveSpecialPanel()
 
 		local pnl = pace.CreatePanel("mat_browser")
@@ -1526,6 +1534,56 @@ do -- material
 		end
 
 		pace.ActiveSpecialPanel = pnl
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
+do -- textures
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_textures"
+	PANEL.Base = "pace_properties_base_type"
+
+	function PANEL:SpecialCallback()
+		pace.ResourceBrowser(function(path)
+			path = path:match("materials/(.+)%.vtf")
+			self:SetValue(path)
+			self.OnValueChanged(path)
+		end, "textures")
+	end
+
+	function PANEL:SpecialCallback2()
+		pace.SafeRemoveSpecialPanel()
+
+		local pnl = pace.CreatePanel("mat_browser")
+
+		SHOW_SPECIAL(pnl, self, 300)
+
+		function pnl.MaterialSelected(_, path)
+			self:SetValue(path)
+			self.OnValueChanged(path)
+		end
+
+		pace.ActiveSpecialPanel = pnl
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
+
+do -- sound
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_sound"
+	PANEL.Base = "pace_properties_base_type"
+
+	function PANEL:SpecialCallback()
+		pace.ResourceBrowser(function(path)
+			path = path:match("sound/(.+)")
+			self:SetValue(path)
+			self.OnValueChanged(path)
+		end, "sound")
 	end
 
 	pace.RegisterPanel(PANEL)
