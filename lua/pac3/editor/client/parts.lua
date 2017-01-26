@@ -258,12 +258,6 @@ do -- menu
 
 		menu:AddSpacer()
 
-		if not pace.IsInBasicMode() then
-			menu:AddOption(L"copy global id", function()
-				SetClipboardText("\""..obj.UniqueID.."\"")
-			end):SetImage(pace.MiscIcons.uniqueid)
-		end
-
 		local save, pnl = menu:AddSubMenu(L"save", function() pace.SaveParts() end)
 		pnl:SetImage(pace.MiscIcons.save)
 		pace.AddSaveMenuToMenu(save, obj)
