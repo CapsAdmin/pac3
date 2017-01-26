@@ -2022,6 +2022,8 @@ do -- damage type
 		dissolve_heavy_electrical = 1,
 		dissolve_light_electrical = 2,
 		dissolve_core_effect = 3,
+
+		heal = -1,
 	}
 
 	function PANEL:SpecialCallback()
