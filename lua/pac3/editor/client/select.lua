@@ -231,9 +231,19 @@ local function select_something(tblin, check, getpos, getfriendly, callback)
 	hook.Add("HUDPaint", "pac_draw_select", HUDPaint)
 end
 
-function pace.SelectBone(ent, callback)
+function pace.SelectBone(ent, callback, only_movable)
+	local tbl = table.Copy(pac.GetModelBones(ent))
+
+	if only_movable then
+		for k, v in pairs(tbl) do
+			if v.is_special or v.is_attachment then
+				tbl[k] = nil
+			end
+		end
+	end
+
 	select_something(
-		pac.GetModelBones(ent),
+		tbl,
 
 		function() end,
 

@@ -1203,7 +1203,7 @@ do -- bone
 		pace.SelectBone(pace.current_part:GetOwner(), function(data)
 			self:SetValue(L(data.friendly))
 			self.OnValueChanged(data.friendly)
-		end)
+		end, true)
 	end
 
 	function PANEL:SpecialCallback2()
