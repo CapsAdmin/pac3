@@ -69,21 +69,22 @@ local TYPE_SEQUENCE = TYPE_SEQUENCE
 local Animations = GetLuaAnimations()
 
 local function AdvanceFrame(tGestureTable, tFrameData)
-	
+
 	if tGestureTable.TimeScale == 0 then
 		local max = #tGestureTable.FrameData
 		local offset = tGestureTable.Offset
-		
-		offset = offset * max
-				
-		tGestureTable.Frame = 1 + math.floor(offset)%max
+		local start = tGestureTable.RestartFrame or 1
+
+		offset = Lerp(offset%1, start, max + 1)
+
+		tGestureTable.Frame = math.floor(offset)
 		tGestureTable.FrameDelta = offset%1
-		
+
 		return true
 	end
 
 	tGestureTable.FrameDelta = tGestureTable.FrameDelta + FrameTime() * tFrameData.FrameRate * tGestureTable.TimeScale
-	
+
 	if tGestureTable.FrameDelta > 1 then
 		tGestureTable.Frame = tGestureTable.Frame + 1
 		tGestureTable.FrameDelta = math.min(1, tGestureTable.FrameDelta - 1)
@@ -204,7 +205,7 @@ local function ProcessAnimations(pl)
 			if tGestureTable.ShouldPlay and not tGestureTable.ShouldPlay(pl, sGestureName, tGestureTable, iCurFrame, tFrameData, fFrameDelta, fPower) then
 				pl:StopLuaAnimation(sGestureName, 0.2)
 			end
-			
+
 			if tGestureTable.Type == TYPE_GESTURE then
 				if AdvanceFrame(tGestureTable, tFrameData) then
 					pl:StopLuaAnimation(sGestureName)
@@ -263,18 +264,18 @@ function meta:ResetLuaAnimation(sAnimation, fDieTime, fPower, fTimeScale)
 		self.LuaAnimations[sAnimation] = {
 			Frame = animtable.StartFrame or 1,
 			Offset = 0,
-			FrameDelta = framedelta, 
-			FrameData = animtable.FrameData, 
+			FrameDelta = framedelta,
+			FrameData = animtable.FrameData,
 			TimeScale = fTimeScale or animtable.TimeScale or 1,
-			Type = animtable.Type, 
-			RestartFrame = animtable.RestartFrame, 
-			TimeToArrive = animtable.TimeToArrive, 
-			Callback = animtable.Callback, 
+			Type = animtable.Type,
+			RestartFrame = animtable.RestartFrame,
+			TimeToArrive = animtable.TimeToArrive,
+			Callback = animtable.Callback,
 			ShouldPlay = animtable.ShouldPlay,
-			PreCallback = animtable.PreCallback, 
-			Power = fPower or animtable.Power or 1, 
-			DieTime = fDieTime or animtable.DieTime, 
-			Group = animtable.Group, 
+			PreCallback = animtable.PreCallback,
+			Power = fPower or animtable.Power or 1,
+			DieTime = fDieTime or animtable.DieTime,
+			Group = animtable.Group,
 			UseReferencePose = animtable.UseReferencePose
 		}
 
