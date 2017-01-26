@@ -88,6 +88,9 @@ local function CalcDrag()
 		pace.editing_viewmodel
 	then return end
 
+	if not system.HasFocus() then
+		held_mpos = Vector(gui.MousePos())
+	end
 
 	local ftime = FrameTime() * 50
 	local mult = 5
