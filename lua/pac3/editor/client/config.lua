@@ -606,7 +606,8 @@ function pace.TranslatePropertiesKey(key, obj)
 		key == "flex" or
 		key == "bodygroupname" or
 		key == "effect" or
-		key == "code"
+		key == "code" or
+		key == "sound"
 	then
 		return key
 	end
@@ -676,7 +677,7 @@ function pace.TranslatePropertiesKey(key, obj)
 	end
 
 	if obj.ClassName == "material" and obj.ShaderParams[key_] == "ITexture" then
-		return "material"
+		return "textures"
 	end
 
 	if obj.ClassName == "material" and obj.ShaderParams[key_] == "Vector" and

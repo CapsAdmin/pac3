@@ -2,371 +2,643 @@
 
 local L = pace.LanguageString
 
-function pace.ModelBrowser(callback)
+local function create_texture_icon(path, on_click)
+	local icon = vgui.Create("DButton")
+	icon:SetSize(128,128)
+	icon:SetWrap(true)
+	icon:SetText("")
+
+	local mat
+
+	if path:find("%.png$") then
+		mat = Material(path:match("materials/(.+)"))
+	else
+		mat = CreateMaterial(path .. "_pac_resource_browser", "UnlitGeneric", {["$basetexture"] = path:match("materials/(.+)%.vtf")})
+	end
+
+	icon.DoClick = on_click
+
+	icon.Paint = function(self,w,h)
+		surface.SetDrawColor(1,1,1,1)
+		surface.SetMaterial(mat)
+		surface.DrawTexturedRect(0,0,w,h)
+		return true
+	end
+
+	return icon
+end
+
+local function create_material_icon(path, on_click)
+	local mat_path = path:match("materials/(.+)%.vmt")
+	local mat = Material(mat_path)
+	local shader = mat:GetShader():lower()
+
+	if shader == "vertexlitgeneric" then
+		local SPAWNICON = vgui.GetControlTable("SpawnIcon")
+		local icon = vgui.Create("DButton")
+		icon:SetSize(128,128)
+		icon:SetWrap(true)
+		icon:SetText("")
+
+		local pnl =  vgui.Create("DModelPanel", icon)
+		pnl:SetMouseInputEnabled(false)
+		pnl:Dock(FILL)
+		pnl:SetModel("models/pac/default.mdl")
+		pnl:SetLookAt( Vector( 0, 0, 0 ) )
+		pnl:SetFOV(13)
+		pnl:GetEntity():SetMaterial(mat_path)
+
+		icon.DoClick = on_click
+
+		return icon
+	elseif shader == "unlitgeneric" then
+		return create_texture_icon("materials/" .. (mat:GetString("$basetexture") or mat:GetString("$flashlighttexture")) .. ".vtf", on_click)
+	end
+end
+
+local function create_model_icon(path, on_click)
+	local icon = vgui.Create("SpawnIcon")
+
+	icon:SetSize(64, 64)
+	icon:InvalidateLayout(true)
+	icon:SetModel(path)
+	icon:SetTooltip(path)
+
+	icon.DoClick = on_click
+
+	icon.OpenMenu = function (icon)
+		local menu = DermaMenu()
+		menu:AddOption("copy", function() SetClipboardText(path) end)
+		menu:Open()
+	end
+
+	icon:InvalidateLayout(true)
+
+	return icon
+end
+
+function pace.ResourceBrowser(callback, browse_types_str)
+	browse_types_str = browse_types_str or "models;materials;sound"
+	local browse_types = browse_types_str:Split(";")
+
+	local texture_view = false
+	local material_view = table.HasValue(browse_types, "materials")
+
+	if table.RemoveByValue(browse_types, "textures") then
+		texture_view = true
+	end
+
+	if pace.model_browser_browse_types ~= browse_types_str and pace.model_browser and pace.model_browser:IsValid() then
+		pace.model_browser:Remove()
+	end
+
 	local addModel
 
-	pace.model_browser_callback = callback
+	pace.model_browser_callback = callback or print
+	pace.model_browser_browse_types = browse_types_str
+
 	if pace.model_browser and pace.model_browser:IsValid() then
 		pace.model_browser:SetVisible(true)
 		pace.model_browser:MakePopup()
 		return
 	end
 
-	local frame = vgui.Create( "DFrame" )
-	frame:SetTitle( L"Model Viewer - Click an icon to insert model filename into editor" )
+	local frame = vgui.Create("DFrame")
+	frame:SetTitle(L"resource browser")
 	frame:SetSize(ScrW()/1.5, ScrH()/1.5)
 	frame:Center()
 	frame:SetDeleteOnClose(false)
+	frame:SetSizable(true)
 
 	function frame:OnClose()
 		self:SetVisible(false)
 	end
-	local sidebarPanel = vgui.Create( "DPanel", frame )
-	sidebarPanel:Dock( LEFT )
-	sidebarPanel:SetSize( 190, 10 )
-	sidebarPanel:DockMargin( 0, 0, 4, 0 )
-	sidebarPanel.Paint = function () end
 
-	frame.ContentNavBar = vgui.Create( "ContentSidebar", sidebarPanel )
-	frame.ContentNavBar:Dock( FILL )
-	frame.ContentNavBar:DockMargin( 0, 0, 0, 0 )
-	frame.ContentNavBar.Tree:SetBackgroundColor( Color( 240, 240, 240 ) )
-	frame.ContentNavBar.Tree.OnNodeSelected = function ( self, node )
-		if not IsValid( node.propPanel ) then return end
+	--[[
 
-		if IsValid( frame.PropPanel.selected ) then
-			frame.PropPanel.selected:SetVisible( false )
+	local menu_bar = vgui.Create("DMenuBar", frame)
+	menu_bar:Dock(TOP)
+	menu_bar:AddMenu("file")
+	local view_menu = menu_bar:AddMenu("view")
+	view_menu:SetDeleteSelf(false)
+
+	local tool_bar = vgui.Create("DPanel", frame)
+	tool_bar:Dock(TOP)
+
+	local browse_back = vgui.Create("DImageButton", tool_bar)
+	browse_back:SetImage("icon16/arrow_left.png")
+	browse_back:SizeToContents()
+	browse_back.DoClick = function()
+
+	end
+
+
+	do
+		local ChangeIconSize = function(w, h)
+			frame.icon_size = {w, h}
+		end
+
+		local submenu = view_menu:AddSubMenu("Resize")
+			submenu:SetDeleteSelf(false)
+
+		submenu:AddOption("64 x 64 (default)", function () ChangeIconSize(64, 64) end)
+		submenu:AddOption("64 x 128", function () ChangeIconSize(64, 128) end)
+		submenu:AddOption("64 x 256", function () ChangeIconSize(64, 256) end)
+		submenu:AddOption("64 x 512", function () ChangeIconSize(64, 512) end)
+		submenu:AddSpacer()
+		submenu:AddOption("128 x 64", function () ChangeIconSize(128, 64) end)
+		submenu:AddOption("128 x 128", function () ChangeIconSize(128, 128) end)
+		submenu:AddOption("128 x 256", function () ChangeIconSize(128, 256) end)
+		submenu:AddOption("128 x 512", function () ChangeIconSize(128, 512) end)
+		submenu:AddSpacer()
+		submenu:AddOption("256 x 64", function () ChangeIconSize(256, 64) end)
+		submenu:AddOption("256 x 128", function () ChangeIconSize(256, 128) end)
+		submenu:AddOption("256 x 256", function () ChangeIconSize(256, 256) end)
+		submenu:AddOption("256 x 512", function () ChangeIconSize(256, 512) end)
+		submenu:AddSpacer()
+		submenu:AddOption("512 x 64", function () ChangeIconSize(512, 64) end)
+		submenu:AddOption("512 x 128", function () ChangeIconSize(512, 128) end)
+		submenu:AddOption("512 x 256", function () ChangeIconSize(512, 256) end)
+		submenu:AddOption("512 x 512", function () ChangeIconSize(512, 512) end)
+
+	end
+]]
+	local left_panel = vgui.Create("DPanel", frame)
+	left_panel:Dock(LEFT)
+	left_panel:SetSize(190, 10)
+	left_panel:DockMargin(0, 0, 4, 0)
+	left_panel.Paint = function () end
+
+	local divider
+
+	local tree = vgui.Create("ContentSidebar", left_panel)
+	tree:Dock(FILL)
+	tree:DockMargin(0, 0, 0, 0)
+	tree.Tree:SetBackgroundColor(Color(240, 240, 240))
+	tree.Tree.OnNodeSelected = function (self, node)
+		if not IsValid(node.propPanel) then return end
+
+		if IsValid(frame.PropPanel.selected) then
+			frame.PropPanel.selected:SetVisible(false)
 			frame.PropPanel.selected = nil
 		end
 
 		frame.PropPanel.selected = node.propPanel
 
-		frame.PropPanel.selected:Dock( FILL )
-		frame.PropPanel.selected:SetVisible( true )
+		frame.PropPanel.selected:Dock(FILL)
+		frame.PropPanel.selected:SetVisible(true)
 		frame.PropPanel:InvalidateParent()
 
-		frame.HorizontalDivider:SetRight( frame.PropPanel.selected )
+		divider:SetRight(frame.PropPanel.selected)
 	end
 
-	frame.PropPanel = vgui.Create( "DPanel", frame )
-	frame.PropPanel:Dock( FILL )
-	function frame.PropPanel:Paint ( w, h )
-		draw.RoundedBox( 0, 0, 0, w, h, Color( 240, 240, 240 ) )
+	local root_node = tree.Tree:AddNode("content", "icon16/folder_database.png")
+	root_node:SetExpanded(true)
+
+	frame.PropPanel = vgui.Create("DPanel", frame)
+	frame.PropPanel:Dock(FILL)
+
+	function frame.PropPanel:Paint (w, h)
+		draw.RoundedBox(0, 0, 0, w, h, Color(240, 240, 240))
 	end
 
-	frame.HorizontalDivider = vgui.Create( "DHorizontalDivider", frame )
-	frame.HorizontalDivider:Dock( FILL )
-	frame.HorizontalDivider:SetLeftWidth( 175 )
-	frame.HorizontalDivider:SetLeftMin( 175 )
-	frame.HorizontalDivider:SetRightMin( 450 )
+	divider = vgui.Create("DHorizontalDivider", frame)
+	divider:Dock(FILL)
+	divider:SetLeftWidth(175)
+	divider:SetLeftMin(175)
+	divider:SetRightMin(450)
 
-	frame.HorizontalDivider:SetLeft( sidebarPanel )
-	frame.HorizontalDivider:SetRight( frame.PropPanel )
+	divider:SetLeft(left_panel)
+	divider:SetRight(frame.PropPanel)
 
-	local root = frame.ContentNavBar.Tree:AddNode( "Spawnlists" )
-	root.info = {}
-	root.info.id = 0
 
-	local function hasGame ( name )
-		for k, v in pairs( engine.GetGames() ) do
-			if v.folder == name and v.mounted then
-				return true
-			end
-		end
-		return false
-	end
+	local sound_list = vgui.Create("DListView", frame.PropPanel)
+	sound_list:AddColumn("path")
+	sound_list:AddColumn("size")
+	sound_list:Dock(FILL)
+	sound_list:SetVisible(false)
 
-	function addModel ( container, obj )
 
-		local icon = vgui.Create( "SpawnIcon", container )
+	if texture_view or material_view then
+		local node = root_node:AddNode("materials", "icon16/folder_database.png")
 
-		if ( obj.body ) then
-			obj.body = string.Trim( tostring(obj.body), "B" )
-		end
+		local viewPanel = vgui.Create("ContentContainer", frame.PropPanel)
+		viewPanel:DockMargin(5, 0, 0, 0)
+		viewPanel:SetVisible(false)
 
-		if ( obj.wide ) then
-			icon:SetWide( obj.wide )
-		end
+		for list_name, materials in pairs(pace.Materials) do
+			local list = node:AddNode(list_name)
+			list.propPanel = viewPanel
 
-		if ( obj.tall ) then
-			icon:SetTall( obj.tall )
-		end
+			list.OnNodeSelected = function()
+				if viewPanel and viewPanel.currentNode and viewPanel.currentNode == list then return end
 
-		icon:InvalidateLayout( true )
+				viewPanel:Clear(true)
+				viewPanel.currentNode = list
 
-		icon:SetModel( obj.model, obj.skin or 0, obj.body )
+				if material_view then
+					for _, material_name in ipairs(materials) do
+						local path = "materials/" .. material_name .. ".vmt"
+						local icon = create_material_icon(path, function()
+							pace.model_browser:SetVisible(false)
+							pace.model_browser_callback(path, "GAME")
+						end)
 
-		icon:SetTooltip( string.Replace( string.GetFileFromFilename( obj.model ), ".mdl", "" ) )
-
-		icon.DoClick = function ( icon )
-			pace.model_browser:SetVisible(false)
-			pace.model_browser_callback(obj.model)
-		end
-		icon.OpenMenu = function ( icon )
-
-			local menu = DermaMenu()
-			menu:AddOption("Copy to clipboard", function() SetClipboardText(obj.model) end)
-
-			local submenu = menu:AddSubMenu( "Re-Render", function () icon:RebuildSpawnIcon() end )
-				submenu:AddOption( "This Icon", function () icon:RebuildSpawnIcon() end )
-				submenu:AddOption( "All Icons", function () container:RebuildAll() end )
-
-			local ChangeIconSize = function ( w, h )
-
-				icon:SetSize( w, h )
-				icon:InvalidateLayout( true )
-				container:OnModified()
-				container:Layout()
-				icon:SetModel( obj.model, obj.skin or 0, obj.body )
-
-			end
-
-			local submenu = menu:AddSubMenu( "Resize", function () end )
-				submenu:AddOption( "64 x 64 (default)", function () ChangeIconSize( 64, 64 ) end )
-				submenu:AddOption( "64 x 128", function () ChangeIconSize( 64, 128 ) end )
-				submenu:AddOption( "64 x 256", function () ChangeIconSize( 64, 256 ) end )
-				submenu:AddOption( "64 x 512", function () ChangeIconSize( 64, 512 ) end )
-				submenu:AddSpacer()
-				submenu:AddOption( "128 x 64", function () ChangeIconSize( 128, 64 ) end )
-				submenu:AddOption( "128 x 128", function () ChangeIconSize( 128, 128 ) end )
-				submenu:AddOption( "128 x 256", function () ChangeIconSize( 128, 256 ) end )
-				submenu:AddOption( "128 x 512", function () ChangeIconSize( 128, 512 ) end )
-				submenu:AddSpacer()
-				submenu:AddOption( "256 x 64", function () ChangeIconSize( 256, 64 ) end )
-				submenu:AddOption( "256 x 128", function () ChangeIconSize( 256, 128 ) end )
-				submenu:AddOption( "256 x 256", function () ChangeIconSize( 256, 256 ) end )
-				submenu:AddOption( "256 x 512", function () ChangeIconSize( 256, 512 ) end )
-				submenu:AddSpacer()
-				submenu:AddOption( "512 x 64", function () ChangeIconSize( 512, 64 ) end )
-				submenu:AddOption( "512 x 128", function () ChangeIconSize( 512, 128 ) end )
-				submenu:AddOption( "512 x 256", function () ChangeIconSize( 512, 256 ) end )
-				submenu:AddOption( "512 x 512", function () ChangeIconSize( 512, 512 ) end )
-
-			menu:AddSpacer()
-			menu:AddOption( "Delete", function () icon:Remove() end )
-			menu:Open()
-
-		end
-
-		icon:InvalidateLayout( true )
-
-		if ( IsValid( container ) ) then
-			container:Add( icon )
-		end
-
-		return icon
-
-	end
-
-	local function addBrowseContent ( viewPanel, node, name, icon, path, pathid )
-		local models = node:AddFolder( name, path .. "models", pathid, false )
-		models:SetIcon( icon )
-
-		models.OnNodeSelected = function ( self, node )
-
-			if viewPanel and viewPanel.currentNode and viewPanel.currentNode == node then return end
-
-			viewPanel:Clear( true )
-			viewPanel.currentNode = node
-
-			local path = node:GetFolder()
-			local searchString = path .. "/*.mdl"
-
-			local Models = file.Find( searchString, node:GetPathID() )
-			for k, v in pairs( Models ) do
-				if not IsUselessModel( v ) then
-					addModel( viewPanel, { model = path .. "/" .. v } )
-				end
-			end
-
-			node.propPanel = viewPanel
-			frame.ContentNavBar.Tree:OnNodeSelected( node )
-
-			viewPanel.currentNode = node
-
-		end
-	end
-
-	local function addAddonContent ( panel, folder, path )
-		local files, folders = file.Find( folder .. "*", path )
-
-		for k, v in pairs( files ) do
-			if string.EndsWith( v, ".mdl" ) then
-				addModel( panel, { model = folder .. v } )
-			end
-		end
-
-		for k, v in pairs( folders ) do
-			addAddonContent( panel, folder .. v .. "/", path )
-		end
-	end
-
-	local function fillNavBar ( propTable, parentNode )
-		for k, v in SortedPairs( propTable ) do
-			if v.parentid == parentNode.info.id and ( v.needsapp ~= "" and hasGame( v.needsapp ) or v.needsapp == "" ) then
-				local node = parentNode:AddNode( v.name, v.icon )
-				node:SetExpanded( true )
-				node.info = v
-
-				node.propPanel = vgui.Create( "ContentContainer", frame.PropPanel )
-				node.propPanel:DockMargin( 5, 0, 0, 0 )
-				node.propPanel:SetVisible( false )
-
-				for i, object in SortedPairs( node.info.contents ) do
-					if object.type == "model" then
-						addModel( node.propPanel, object )
-					elseif object.type == "header" then
-						if not object.text or type( object.text ) ~= "string" then return end
-
-						local label = vgui.Create( "ContentHeader", node.propPanel )
-						label:SetText( object.text )
-
-						node.propPanel:Add( label )
+						if icon then
+							viewPanel:Add(icon)
+						end
 					end
 				end
 
-				fillNavBar( propTable, node )
+				if texture_view then
+					local done = {}
+					local textures = {}
+
+					for _, material_name in ipairs(materials) do
+						local mat = Material(material_name)
+						for k, v in pairs(mat:GetKeyValues()) do
+							if type(v) == "ITexture" then
+								local name = v:GetName()
+								if not done[name] then
+									done[name] = true
+									table.insert(textures, "materials/" .. name .. ".vtf")
+								end
+							end
+						end
+					end
+
+					for _, path in ipairs(textures) do
+						viewPanel:Add(create_texture_icon(path, function()
+							pace.model_browser:SetVisible(false)
+							pace.model_browser_callback(path, pathid)
+						end))
+					end
+				end
+
+				tree.Tree:OnNodeSelected(list)
+				viewPanel.currentNode = list
+			end
+
+			if texture_view or material_view and #browse_types == 1 then
+				node:SetExpanded(true)
+				list:SetExpanded(true)
+				tree.Tree:SetSelectedItem(list)
 			end
 		end
 	end
 
-	fillNavBar( spawnmenu.GetPropTable(), root )
 
-	-- Games
-	local gamesNode = frame.ContentNavBar.Tree:AddNode( "#spawnmenu.category.games", "icon16/folder_database.png" )
+	if table.HasValue(browse_types, "models") then
 
-	local viewPanel = vgui.Create( "ContentContainer", frame.PropPanel )
-	viewPanel:DockMargin( 5, 0, 0, 0 )
-	viewPanel:SetVisible( false )
+		local spawnlists = root_node:AddFolder("Spawnlists")
+		spawnlists.info = {}
+		spawnlists.info.id = 0
 
-	local games = engine.GetGames()
-	table.insert( games, {
-		title = "All",
-		folder = "GAME",
-		icon = "all",
-		mounted = true
-	} )
-	table.insert( games, {
-		title = "Garry's Mod",
-		folder = "garrysmod",
-		mounted = true
-	} )
-	table.insert( games, {
-		title = "Downlaoded",
-		folder = "DOWNLOAD",
-		mounted = true
-	} )
-
-	for _, game in SortedPairsByMemberValue( games, "title" ) do
-
-		if game.mounted then
-			addBrowseContent( viewPanel, gamesNode, game.title, "games/16/" .. ( game.icon or game.folder ) .. ".png", "", game.folder )
-		end
-	end
-
-	-- Addons
-	local addonsNode = frame.ContentNavBar.Tree:AddNode( "#spawnmenu.category.addons", "icon16/folder_database.png" )
-
-	local viewPanel = vgui.Create( "ContentContainer", frame.PropPanel )
-	viewPanel:DockMargin( 5, 0, 0, 0 )
-	viewPanel:SetVisible( false )
-
-	function addonsNode:OnNodeSelected ( node )
-		if node == addonsNode then return end
-		viewPanel:Clear( true )
-		addAddonContent( viewPanel, "models/", node.addon.title )
-		node.propPanel = viewPanel
-		frame.ContentNavBar.Tree:OnNodeSelected( node )
-	end
-	for _, addon in SortedPairsByMemberValue( engine.GetAddons(), "title" ) do
-		if addon.downloaded and addon.mounted and addon.models > 0 then
-			local node = addonsNode:AddNode( addon.title .. " ("..addon.models..")", "icon16/bricks.png" )
-			node.addon = addon
-		end
-	end
-
-	-- Search box
-	local viewPanel = vgui.Create( "ContentContainer", frame.PropPanel )
-	viewPanel:DockMargin( 5, 0, 0, 0 )
-	viewPanel:SetVisible( false )
-
-	frame.searchBox = vgui.Create( "DTextEntry", sidebarPanel )
-	frame.searchBox:Dock( TOP )
-	frame.searchBox:SetValue( "Search..." )
-	frame.searchBox:SetTooltip( "Press enter to search" )
-	frame.searchBox.propPanel = viewPanel
-
-	frame.searchBox._OnGetFocus = frame.searchBox.OnGetFocus
-	function frame.searchBox:OnGetFocus ()
-		if self:GetValue() == "Search..." then
-			self:SetValue( "" )
-		end
-		frame.searchBox:_OnGetFocus()
-	end
-
-	frame.searchBox._OnLoseFocus = frame.searchBox.OnLoseFocus
-	function frame.searchBox:OnLoseFocus ()
-		if self:GetValue() == "" then
-			self:SetText( "Search..." )
-		end
-		frame.searchBox:_OnLoseFocus()
-	end
-
-	function frame.searchBox:updateHeader ()
-		self.header:SetText( frame.searchBox.results .. " Results for \"" .. self.search .. "\"" )
-	end
-
-	local searchTime = nil
-
-	function frame.searchBox:getAllModels ( time, folder, extension, path )
-		if searchTime and time ~= searchTime then return end
-		if self.results and self.results >= 256 then return end
-		self.load = self.load + 1
-		local files, folders = file.Find( folder .. "/*", path )
-
-		for k, v in pairs( files ) do
-			local file = folder .. v
-			if v:EndsWith( extension ) and file:find( self.search:PatternSafe() ) and not IsUselessModel( file ) then
-				addModel( self.propPanel, { model = file } )
-				self.results = self.results + 1
-				self:updateHeader()
+		local function hasGame (name)
+			for k, v in pairs(engine.GetGames()) do
+				if v.folder == name and v.mounted then
+					return true
+				end
 			end
-			if self.results >= 256 then break end
+			return false
 		end
 
-		for k, v in pairs( folders ) do
-			timer.Simple( k * 0.02, function()
-				if searchTime and time ~= searchTime then return end
-				if self.results >= 256 then return end
-				self:getAllModels( time, folder .. v .. "/", extension, path )
-			end )
+		local function fillNavBar(propTable, parentNode)
+			for k, v in SortedPairs(propTable) do
+				if v.parentid == parentNode.info.id and (v.needsapp ~= "" and hasGame(v.needsapp) or v.needsapp == "") then
+					local node = parentNode:AddNode(v.name, v.icon)
+					node:SetExpanded(true)
+					node.info = v
+
+					node.propPanel = vgui.Create("ContentContainer", frame.PropPanel)
+					node.propPanel:DockMargin(5, 0, 0, 0)
+					node.propPanel:SetVisible(false)
+
+					for i, object in SortedPairs(node.info.contents) do
+						if object.type == "model" then
+							node.propPanel:Add(create_model_icon(object.model, function()
+								pace.model_browser:SetVisible(false)
+								pace.model_browser_callback(object.model, "GAME")
+							end))
+						elseif object.type == "header" then
+							if not object.text or type(object.text) ~= "string" then return end
+
+							local label = vgui.Create("ContentHeader", node.propPanel)
+							label:SetText(object.text)
+
+							node.propPanel:Add(label)
+						end
+					end
+
+					fillNavBar(propTable, node)
+				end
+			end
 		end
-		timer.Simple( 1, function ()
+
+		fillNavBar(spawnmenu.GetPropTable(), spawnlists)
+	end
+
+	do -- mounted
+		local function addBrowseContent(viewPanel, node, name, icon, path, pathid)
+			local function on_select(self, node)
+				if viewPanel and viewPanel.currentNode and viewPanel.currentNode == node then return end
+
+				sound_list:Clear()
+				viewPanel:Clear(true)
+				viewPanel.currentNode = node
+
+				local searchString = node:GetFolder()
+
+				if searchString == "" then
+					searchString = "*"
+				else
+					searchString = searchString .. "/*"
+				end
+
+				local files, folders = file.Find(searchString, node:GetPathID())
+
+				if files then
+					--[[
+					for _, dir in pairs(folders) do
+
+						local SPAWNICON = vgui.GetControlTable("SpawnIcon")
+						local icon = vgui.Create("DButton", viewPanel)
+						icon:SetSize(64,64)
+						icon:SetText(dir)
+						icon:SetWrap(true)
+
+						icon.Paint = SPAWNICON.Paint
+						icon.PaintOver = SPAWNICON.PaintOver
+
+						icon.DoClick = function()
+							for _, child in pairs(node.ChildNodes:GetChildren()) do
+								if child:GetFolder() == ((node:GetFolder() == "" and dir) or (node:GetFolder() .. "/" .. dir)) then
+									prev_node = tree.Tree:GetSelectedItem()
+									tree.Tree:SetSelectedItem(child)
+									node:SetExpanded(true)
+									break
+								end
+							end
+						end
+
+						viewPanel:Add(icon)
+					end
+					]]
+					if self.dir == "models" then
+						for k, v in pairs(files) do
+							local path = node:GetFolder() ..  "/" .. v
+
+							if not IsUselessModel(path) then
+								viewPanel:Add(create_model_icon(path, function()
+									pace.model_browser:SetVisible(false)
+									pace.model_browser_callback(path)
+								end))
+							end
+						end
+					elseif self.dir == "materials" then
+						for k, v in pairs(files) do
+							local path = node:GetFolder() ..  "/" .. v
+
+							if material_view and v:find("%.vmt$") then
+								local icon = create_material_icon(path, function()
+									pace.model_browser:SetVisible(false)
+									pace.model_browser_callback(path)
+								end)
+
+								if icon then
+									viewPanel:Add(icon)
+								end
+							elseif texture_view then
+								viewPanel:Add(create_texture_icon(path, function()
+									pace.model_browser:SetVisible(false)
+									pace.model_browser_callback(path, pathid)
+								end))
+							end
+
+						end
+					elseif self.dir == "sound" then
+						for k, v in pairs(files) do
+							local path = node:GetFolder() ..  "/" .. v
+
+							local line = sound_list:AddLine(path, file.Size(path, pathid))
+
+							local play = vgui.Create("DImageButton", line)
+							play:SetImage("icon16/control_play.png")
+							play:SizeToContents()
+							play:Dock(LEFT)
+
+							line.OnSelect = function()
+								if input.IsMouseDown(MOUSE_RIGHT) then
+									play:DoClick()
+								else
+									pace.model_browser:SetVisible(false)
+									pace.model_browser_callback(path, pathid)
+								end
+							end
+
+
+							local label = line.Columns[1]
+							label:SetTextInset(play:GetWide() + 5, 0)
+
+							play.DoClick = function()
+								local sound_path = path:match("sound/(.+)")
+								if play.snd and play.snd:IsPlaying() then
+									play.snd:Stop()
+									play:SetImage("icon16/control_play.png")
+									timer.Remove("pac_resource_browser_play_" .. path)
+								else
+									local snd = play.snd or CreateSound(LocalPlayer(), sound_path)
+									snd:Play()
+									play.snd = snd
+
+									play:SetImage("icon16/control_stop.png")
+
+									timer.Create("pac_resource_browser_play_" .. path, 1, SoundDuration(sound_path), function()
+										if play:IsValid() then
+											play:DoClick()
+										end
+									end)
+								end
+							end
+						end
+					end
+
+					if self.dir == "sound" then
+						node.propPanel = sound_list
+					else
+						node.propPanel = viewPanel
+					end
+					tree.Tree:OnNodeSelected(node)
+					viewPanel.currentNode = node
+				end
+			end
+
+			if #browse_types == 1 then
+				node = node:AddFolder( name, path .. browse_types[1], pathid, false )
+				node:SetIcon( icon )
+				node.dir = browse_types[1]
+				node.OnNodeSelected = on_select
+			else
+				local _, dirs = file.Find("*", pathid)
+				node = node:AddNode(name, icon)
+				node.OnNodeSelected = on_select
+				node:SetFolder("")
+				node:SetPathID(pathid)
+				node.viewPanel = viewPanel
+
+				for _, dir in ipairs(dirs) do
+					if table.HasValue(browse_types, dir:lower()) then
+						local node = node:AddFolder(dir, path .. dir, pathid, false)
+						node.dir = dir
+						node.OnNodeSelected = on_select
+					end
+				end
+			end
+		end
+
+		local viewPanel = vgui.Create("ContentContainer", frame.PropPanel)
+		viewPanel:DockMargin(5, 0, 0, 0)
+		viewPanel:SetVisible(false)
+
+		do
+			local special = {
+				{
+					title = "All",
+					folder = "GAME",
+					icon = "games/16/all.png",
+				},
+				{
+					title = "Downloaded",
+					folder = "DOWNLOAD",
+					icon = "materials/icon16/server_go.png",
+				},
+				{
+					title = "Workshop",
+					folder = "WORKSHOP",
+					icon = "materials/icon16/plugin.png",
+				},
+				{
+					title = "Thirdparty",
+					folder = "THIRDPARTY",
+					icon = "materials/icon16/folder_brick.png",
+				},
+				{
+					title = "Mod",
+					folder = "MOD",
+					icon = "materials/icon16/folder_brick.png",
+				},
+			}
+
+			for _, info in ipairs(special) do
+				addBrowseContent(viewPanel, root_node, info.title, info.icon, "", info.folder)
+			end
+		end
+
+		do
+			local games = engine.GetGames()
+			table.insert(games, {
+				title = "Garry's Mod",
+				folder = "garrysmod",
+				mounted = true
+			})
+
+			for _, game in SortedPairsByMemberValue(games, "title") do
+				if game.mounted then
+					addBrowseContent(viewPanel, root_node, game.title, "games/16/" .. (game.icon or game.folder) .. ".png", "", game.folder)
+				end
+			end
+		end
+
+		for _, addon in SortedPairsByMemberValue(engine.GetAddons(), "title") do
+			if addon.downloaded and addon.mounted then
+				addBrowseContent(viewPanel, root_node, addon.title, "icon16/bricks.png", "", addon.title)
+			end
+		end
+	end
+
+	if table.HasValue(browse_types, "models") then
+		local view = vgui.Create("ContentContainer", frame.PropPanel)
+		view:DockMargin(5, 0, 0, 0)
+		view:SetVisible(false)
+
+		local search = vgui.Create("DTextEntry", left_panel)
+		search:Dock(TOP)
+		search:SetValue("Search...")
+		search:SetTooltip("Press enter to search")
+		search.propPanel = view
+
+		search._OnGetFocus = search.OnGetFocus
+		function search:OnGetFocus ()
+			if self:GetValue() == "Search..." then
+				self:SetValue("")
+			end
+			search:_OnGetFocus()
+		end
+
+		search._OnLoseFocus = search.OnLoseFocus
+		function search:OnLoseFocus ()
+			if self:GetValue() == "" then
+				self:SetText("Search...")
+			end
+			search:_OnLoseFocus()
+		end
+
+		function search:updateHeader ()
+			self.header:SetText(search.results .. " Results for \"" .. self.search .. "\"")
+		end
+
+		local searchTime = nil
+
+		function search:StartSearch(time, folder, extension, path)
 			if searchTime and time ~= searchTime then return end
+			if self.results and self.results >= 256 then return end
+			self.load = self.load + 1
+			local files, folders = file.Find(folder .. "/*", path)
+
+			for k, v in pairs(files) do
+				local file = folder .. v
+				if v:EndsWith(extension) and file:find(self.search:PatternSafe()) and not IsUselessModel(file) then
+					addModel(self.propPanel, { model = file })
+					self.results = self.results + 1
+					self:updateHeader()
+				end
+				if self.results >= 256 then break end
+			end
+
+			for k, v in pairs(folders) do
+				timer.Simple(k * 0.02, function()
+					if searchTime and time ~= searchTime then return end
+					if self.results >= 256 then return end
+					self:StartSearch(time, folder .. v .. "/", extension, path)
+				end)
+			end
+			timer.Simple(1, function ()
+				if searchTime and time ~= searchTime then return end
+				self.load = self.load - 1
+			end)
+		end
+
+		function search:OnEnter ()
+			if self:GetValue() == "" then return end
+
+			self.propPanel:Clear()
+
+			self.results = 0
+			self.load = 1
+			self.search = self:GetText()
+
+			self.header = vgui.Create("ContentHeader", self.propPanel)
+			self.loading = vgui.Create("ContentHeader", self.propPanel)
+			self:updateHeader()
+			self.propPanel:Add(self.header)
+			self.propPanel:Add(self.loading)
+
+			searchTime = CurTime()
+			self:StartSearch(searchTime, "models/", ".mdl", "GAME")
 			self.load = self.load - 1
-		end )
-	end
 
-	function frame.searchBox:OnEnter ()
-		if self:GetValue() == "" then return end
-
-		self.propPanel:Clear()
-
-		self.results = 0
-		self.load = 1
-		self.search = self:GetText()
-
-		self.header = vgui.Create( "ContentHeader", self.propPanel )
-		self.loading = vgui.Create( "ContentHeader", self.propPanel )
-		self:updateHeader()
-		self.propPanel:Add( self.header )
-		self.propPanel:Add( self.loading )
-
-		searchTime = CurTime()
-		self:getAllModels( searchTime, "models/", ".mdl", "GAME" )
-		self.load = self.load - 1
-
-		frame.ContentNavBar.Tree:OnNodeSelected( self )
+			tree.Tree:OnNodeSelected(self)
+		end
 	end
 
 	frame:MakePopup()
@@ -375,3 +647,7 @@ function pace.ModelBrowser(callback)
 end
 
 if pace.model_browser and pace.model_browser:IsValid() then pace.model_browser:Remove() end
+
+concommand.Add("pac_resource_browser", function()
+	pace.ResourceBrowser(print)
+end)
