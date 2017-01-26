@@ -65,6 +65,10 @@ pace.AddTool(L"replace ogg with webaudio", function(part, suboption)
 	end
 end)
 
+pace.AddTool(L"copy global id", function(obj)
+	SetClipboardText("\""..obj.UniqueID.."\"")
+end)
+
 pace.AddTool(L"use legacy scale", function(part, suboption)
 	for _, part in pairs(pac.GetParts(true)) do
 		if part.UseLegacyScale ~= nil then
