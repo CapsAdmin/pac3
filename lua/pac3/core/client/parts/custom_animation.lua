@@ -21,7 +21,7 @@ function PART:GetAnimID()
 	return "pac_anim_" .. self:GetUniqueID()
 end
 
-function PART:SetRate(num)	
+function PART:SetRate(num)
 	self.Rate = num
 	local owner = self:GetOwner()
 	if owner:IsValid() and owner.LuaAnimations then
@@ -50,7 +50,7 @@ function PART:SetOffset(num)
 		local anim = owner.LuaAnimations[self:GetAnimID()]
 		if anim then
 			anim.Offset = num
-		end	
+		end
 	end
 end
 
@@ -85,7 +85,7 @@ function PART:SetURL(url)
 
 			boneanimlib.RegisterLuaAnimation(self:GetAnimID(), tbl)
 
-			if pace.timeline.IsActive() and pace.timeline.animation_part == self then
+			if pace and pace.timeline.IsActive() and pace.timeline.animation_part == self then
 				pace.timeline.Load(tbl)
 			end
 		end, function(code)
@@ -119,6 +119,9 @@ function PART:OnShow(owner)
 			end
 		end
 		owner:SetLuaAnimation(self:GetAnimID())
+		self:SetOffset(self:GetOffset())
+		self:SetRate(self:GetRate())
+		self:SetBonePower(self:GetBonePower())
 	end
 end
 
