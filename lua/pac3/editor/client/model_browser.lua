@@ -105,6 +105,8 @@ function pace.ModelBrowser(callback)
 		icon.OpenMenu = function ( icon )
 
 			local menu = DermaMenu()
+			menu:AddOption("Copy to clipboard", function() SetClipboardText(obj.model) end)
+
 			local submenu = menu:AddSubMenu( "Re-Render", function () icon:RebuildSpawnIcon() end )
 				submenu:AddOption( "This Icon", function () icon:RebuildSpawnIcon() end )
 				submenu:AddOption( "All Icons", function () container:RebuildAll() end )
