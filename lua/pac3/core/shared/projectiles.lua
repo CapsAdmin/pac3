@@ -175,9 +175,11 @@ do -- projectile entity
 				elseif self.part_data.DamageType == "armor" then
 					if damage_radius > 0 then
 						for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
-							ent:SetArmor(math.min(ent:Armor() + self.part_data.Damage, ent.GetMaxArmor and ent:GetMaxArmor() or 100))
+							if ent.SetArmor and ent.Armor then
+								ent:SetArmor(math.min(ent:Armor() + self.part_data.Damage, ent.GetMaxArmor and ent:GetMaxArmor() or 100))
+							end
 						end
-					else
+					elseif data.HitEntity.SetArmor and data.HitEntity.Armor then
 						data.HitEntity:SetArmor(math.min(data.HitEntity:Armor() + self.part_data.Damage, data.HitEntity.GetMaxArmor and data.HitEntity:GetMaxArmor() or 100))
 					end
 				else
