@@ -159,8 +159,6 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 end
 
 do -- menu
-	local cvar_submenu = CreateClientConVar("pac_submenu_parts", 1, true)
-
 	function pace.AddRegisteredPartsToMenu(menu)
 		local temp = {}
 
@@ -175,8 +173,7 @@ do -- menu
 			end
 		end
 
-		if pace.IsInBasicMode() or not cvar_submenu:GetBool() then
-
+		if pace.IsInBasicMode() then
 			table.sort(temp)
 
 			for _, class_name in pairs(temp) do
@@ -185,22 +182,6 @@ do -- menu
 				end):SetImage(pace.PartIcons[class_name])
 			end
 		else
-			if not file.Exists("pac3_editor/seen_submenus.txt", "DATA") then
-				file.CreateDir("pac3_editor", "DATA")
-
-				menu:AddOption(L"GET RID OF", function()
-					RunConsoleCommand("pac_submenu_parts", 0)
-					file.Write("pac3_editor/seen_submenus.txt", "I HATE SUBMENUS", "DATA")
-				end)
-
-				menu:AddOption(L"THE SUBMENU", function()
-					RunConsoleCommand("pac_submenu_parts", 0)
-					file.Write("pac3_editor/seen_submenus.txt", "I HATE SUBMENUS", "DATA")
-				end)
-
-				file.Write("pac3_editor/seen_submenus.txt", "I don't mind submenus", "DATA")
-			end
-
 			local added = {}
 
 			for key, tbl in pairs(pace.PartTree) do
