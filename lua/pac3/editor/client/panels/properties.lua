@@ -14,6 +14,76 @@ local function FIX_MENU(menu)
 	menu:SetPos(pace.Editor:GetPos() + pace.Editor:GetWide(), gui.MouseY() - (menu:GetTall() * 0.5))
 end
 
+
+local function create_search_list(property, key, name, add_columns, get_list, get_current, add_line, select_value)
+	select_value = select_value or function(val, key) return val end
+	pace.SafeRemoveSpecialPanel()
+
+	local frame = vgui.Create("DFrame")
+	frame:SetTitle(L(name))
+	frame:SetSize(300, 300)
+	frame:Center()
+	frame:SetSizable(true)
+
+	local list = vgui.Create("DListView", frame)
+	list:Dock(FILL)
+	list:SetMultiSelect(false)
+
+	add_columns(list)
+
+	list.OnRowSelected = function(_, id, line)
+		local val = select_value(line.list_val, line.list_key)
+
+		if property and property:IsValid() then
+			property:SetValue(val)
+			property.OnValueChanged(val)
+		else
+			if pace.current_part:IsValid() and pace.current_part["Set" .. key] then
+				pace.Call("VariableChanged", pace.current_part, key, val)
+			end
+		end
+	end
+
+	local first = NULL
+
+	local function build(find)
+		list:Clear()
+
+		local cur = get_current()
+
+		for key, val in pairs(get_list()) do
+			if (not find or find == "") or tostring(select_value(val, key)):lower():find(find) then
+
+				local pnl = add_line(list, key, val)
+				pnl.list_key = key
+				pnl.list_val = val
+
+				if not first:IsValid() then
+					first = pnl
+				end
+
+				if cur == name then
+					list:SelectItem(pnl)
+				end
+			end
+		end
+	end
+
+	local search = vgui.Create("DTextEntry", frame)
+	search:Dock(BOTTOM)
+	search.OnTextChanged = function() build(search:GetValue()) end
+	search.OnEnter = function() if first:IsValid() then list:SelectItem(first) end frame:Remove() end
+	search:RequestFocus()
+	frame:MakePopup()
+
+	build()
+
+	pace.ActiveSpecialPanel = frame
+
+	return frame
+end
+
+
 local function populate_part_menu(menu, part, func)
 	if part:HasChildren() then
 		local menu, pnl = menu:AddSubMenu(part:GetName(), function()
@@ -1143,16 +1213,28 @@ do -- bone
 
 		menu:MakePopup()
 
-		bones = table.ClearKeys(bones)
-		table.sort(bones, function(a,b) return a.friendly > b.friendly end)
-		for _, data in pairs(bones) do
-			menu:AddOption(L(data.friendly), function()
-				self:SetValue(L(data.friendly))
-				self.OnValueChanged(data.friendly)
-			end)
+		local list = {}
+		for k,v in pairs(bones) do
+			table.insert(list, v.friendly)
 		end
 
-		FIX_MENU(menu)
+		create_search_list(
+			self,
+			self.CurrentKey,
+			L"bones",
+			function(list)
+				list:AddColumn(L"name")
+			end,
+			function()
+				return list
+			end,
+			function()
+				return pace.current_part:GetBone()
+			end,
+			function(list, key, val)
+				return list:AddLine(val)
+			end
+		)
 	end
 
 	pace.RegisterPanel(PANEL)
@@ -1447,74 +1529,6 @@ do -- material
 	end
 
 	pace.RegisterPanel(PANEL)
-end
-
-local function create_search_list(property, key, name, add_columns, get_list, get_current, add_line, select_value)
-	select_value = select_value or function(val, key) return val end
-	pace.SafeRemoveSpecialPanel()
-
-	local frame = vgui.Create("DFrame")
-	frame:SetTitle(L(name))
-	frame:SetSize(300, 300)
-	frame:Center()
-	frame:SetSizable(true)
-
-	local list = vgui.Create("DListView", frame)
-	list:Dock(FILL)
-	list:SetMultiSelect(false)
-
-	add_columns(list)
-
-	list.OnRowSelected = function(_, id, line)
-		local val = select_value(line.list_val, line.list_key)
-
-		if property and property:IsValid() then
-			property:SetValue(val)
-			property.OnValueChanged(val)
-		else
-			if pace.current_part:IsValid() and pace.current_part["Set" .. key] then
-				pace.Call("VariableChanged", pace.current_part, key, val)
-			end
-		end
-	end
-
-	local first = NULL
-
-	local function build(find)
-		list:Clear()
-
-		local cur = get_current()
-
-		for key, val in pairs(get_list()) do
-			if (not find or find == "") or tostring(select_value(val, key)):lower():find(find) then
-
-				local pnl = add_line(list, key, val)
-				pnl.list_key = key
-				pnl.list_val = val
-
-				if not first:IsValid() then
-					first = pnl
-				end
-
-				if cur == name then
-					list:SelectItem(pnl)
-				end
-			end
-		end
-	end
-
-	local search = vgui.Create("DTextEntry", frame)
-	search:Dock(BOTTOM)
-	search.OnTextChanged = function() build(search:GetValue()) end
-	search.OnEnter = function() if first:IsValid() then list:SelectItem(first) end frame:Remove() end
-	search:RequestFocus()
-	frame:MakePopup()
-
-	build()
-
-	pace.ActiveSpecialPanel = frame
-
-	return frame
 end
 
 do -- sequence list
