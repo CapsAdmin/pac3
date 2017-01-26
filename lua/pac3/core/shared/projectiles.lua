@@ -102,6 +102,7 @@ do -- projectile entity
 			dissolve_core_effect = 3,
 
 			heal = -1,
+			armor = -1,
 		}
 
 		local dissolver_entity = NULL
@@ -170,6 +171,14 @@ do -- projectile entity
 						end
 					else
 						data.HitEntity:SetHealth(math.min(data.HitEntity:Health() + self.part_data.Damage, data.HitEntity:GetMaxHealth()))
+					end
+				elseif self.part_data.DamageType == "armor" then
+					if damage_radius > 0 then
+						for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
+							ent:SetArmor(math.min(ent:Armor() + self.part_data.Damage, ent.GetMaxArmor and ent:GetMaxArmor() or 100))
+						end
+					else
+						data.HitEntity:SetArmor(math.min(data.HitEntity:Armor() + self.part_data.Damage, data.HitEntity.GetMaxArmor and data.HitEntity:GetMaxArmor() or 100))
 					end
 				else
 					local info = DamageInfo()
