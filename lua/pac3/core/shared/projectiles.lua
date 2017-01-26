@@ -100,6 +100,8 @@ do -- projectile entity
 			dissolve_heavy_electrical = 1,
 			dissolve_light_electrical = 2,
 			dissolve_core_effect = 3,
+
+			heal = -1,
 		}
 
 		local dissolver_entity = NULL
@@ -161,7 +163,7 @@ do -- projectile entity
 			local damage_radius = math.Clamp(self.part_data.DamageRadius, 0, 300)
 
 			if self.part_data.Damage > 0 then
-				if self.part_data.Heal then
+				if self.part_data.DamageType == "heal" then
 					if damage_radius > 0 then
 						for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
 							ent:SetHealth(math.min(ent:Health() + self.part_data.Damage, ent:GetMaxHealth()))
