@@ -32,7 +32,7 @@ function PART:SetRate(num)
 	end
 end
 
-function PART:SetPower(num)
+function PART:SetBonePower(num)
 	self.BonePower = num
 	local owner = self:GetOwner()
 	if owner:IsValid() and owner.LuaAnimations then
