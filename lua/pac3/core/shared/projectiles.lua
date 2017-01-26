@@ -158,16 +158,22 @@ do -- projectile entity
 				end
 			end
 
+			local damage_radius = math.Clamp(self.part_data.DamageRadius, 0, 300)
+
 			if self.part_data.Damage > 0 then
 				if self.part_data.Heal then
-					data.HitEntity:SetHealth(math.min(data.HitEntity:Health() + self.part_data.Damage, data.HitEntity:GetMaxHealth()))
+					if damage_radius > 0 then
+						for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
+							ent:SetHealth(math.min(ent:Health() + self.part_data.Damage, ent:GetMaxHealth()))
+						end
+					else
+						data.HitEntity:SetHealth(math.min(data.HitEntity:Health() + self.part_data.Damage, data.HitEntity:GetMaxHealth()))
+					end
 				else
 					local info = DamageInfo()
 
 					info:SetAttacker(owner:IsValid() and owner or self)
 					info:SetInflictor(self)
-
-					local damage_radius = math.Clamp(self.part_data.DamageRadius, 0, 300)
 
 					if self.part_data.DamageType == "fire" and owner:IsPlayer() and owner:IsValid() and hook.Run("CanProperty", owner, "ignite", data.HitEntity) ~= false then
 						data.HitEntity:Ignite(math.min(self.part_data.Damage, 5), damage_radius)
@@ -181,7 +187,13 @@ do -- projectile entity
 						info:SetDamage(math.min(self.part_data.Damage, 100000))
 						info:SetDamageType(damage_types[self.part_data.DamageType] or damage_types.generic)
 
-						data.HitEntity:TakeDamageInfo(info)
+						if damage_radius > 0 then
+							for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
+								ent:TakeDamageInfo(info)
+							end
+						else
+							data.HitEntity:TakeDamageInfo(info)
+						end
 					end
 				end
 			end
