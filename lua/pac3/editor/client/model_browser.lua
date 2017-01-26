@@ -252,7 +252,7 @@ function pace.ModelBrowser(callback)
 		mounted = true
 	} )
 	table.insert( games, {
-		title = "Downlaoded",
+		title = "Downloaded",
 		folder = "DOWNLOAD",
 		mounted = true
 	} )
