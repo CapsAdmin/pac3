@@ -320,6 +320,13 @@ function pace.ResourceBrowser(callback, browse_types_str)
 								pace.model_browser:SetVisible(false)
 								pace.model_browser_callback(object.model, "GAME")
 							end))
+
+							if not frame.selected_construction_props and #browse_types == 1 and v.name == "Construction Props" then
+								node:SetExpanded(true)
+								parentNode:SetExpanded(true)
+								tree.Tree:SetSelectedItem(node)
+								frame.selected_construction_props = true
+							end
 						elseif object.type == "header" then
 							if not object.text or type(object.text) ~= "string" then return end
 
