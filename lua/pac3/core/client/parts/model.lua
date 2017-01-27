@@ -40,6 +40,9 @@ local TEXFILTER = TEXFILTER
 local NULL = NULL
 local Color = Color
 
+pac.DisableColoring = false
+pac.DisableDoubleFace = false
+
 local PART = {}
 
 PART.ClassName = "model"
