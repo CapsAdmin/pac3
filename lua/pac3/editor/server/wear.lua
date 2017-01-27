@@ -2,10 +2,16 @@ pace.StreamQueue = pace.StreamQueue or {}
 
 local frame_number = 0
 
+local function catchError(err)
+	print('[PAC3] Error: ', err)
+	print(debug.traceback())
+end
+
 timer.Create("pac_check_stream_queue", 0.1, 0, function()
 	if not pace.BusyStreaming and #pace.StreamQueue ~= 0 then
-		pace.SubmitPart(unpack(table.remove(pace.StreamQueue)))
+		xpcall(pace.SubmitPart, catchError, unpack(table.remove(pace.StreamQueue)))
 	end
+	
 	frame_number = frame_number + 1
 end)
 
