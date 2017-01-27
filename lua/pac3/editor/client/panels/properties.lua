@@ -1366,7 +1366,6 @@ do -- model
 	function PANEL:SpecialCallback()
 		pace.close_spawn_menu = true
 		pace.SafeRemoveSpecialPanel()
-		--g_SpawnMenu:Open()
 		pace.ResourceBrowser(function(path)
 			self:SetValue(path)
 			self.OnValueChanged(path)
