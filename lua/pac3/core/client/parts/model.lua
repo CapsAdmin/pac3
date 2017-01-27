@@ -404,13 +404,14 @@ function PART:DrawModel(ent, pos, ang)
 			RealDrawModel(self, ent, pos, ang)
 		end
 
-		-- Flashlight(?)
-		if not pac.flashlight_disabled then
-		render_PushFlashlightMode(true)
+		if pac.projected_texture_enabled and not pac.flashlight_disabled then
+			render_PushFlashlightMode(true)
 		end
-			RealDrawModel(self, ent, pos, ang)
-		if not pac.flashlight_disabled then
-		render_PopFlashlightMode()
+
+		RealDrawModel(self, ent, pos, ang)
+
+		if pac.projected_texture_enabled and not pac.flashlight_disabled then
+			render_PopFlashlightMode()
 		end
 
 		if textureFilter ~= TEXFILTER.ANISOTROPIC or self.Mesh then
