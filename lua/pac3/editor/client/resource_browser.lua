@@ -86,6 +86,9 @@ function pace.ResourceBrowser(callback, browse_types_str)
 
 	if table.RemoveByValue(browse_types, "textures") then
 		texture_view = true
+		if not material_view then
+			table.insert(browse_types, "materials")
+		end
 	end
 
 	if pace.model_browser_browse_types ~= browse_types_str and pace.model_browser and pace.model_browser:IsValid() then
