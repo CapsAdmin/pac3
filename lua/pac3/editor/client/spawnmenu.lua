@@ -75,78 +75,35 @@ function pace.ClientOptionsMenu(pnl)
 end
 
 function pace.ClientSettingsMenu(pnl)
+	pnl:Help(L"Performance"):SetFont("DermaDefaultBold")
+		pnl:CheckBox(L"Enable PAC", "pac_enable")
+		pnl:NumSlider(L"Draw distance:", "pac_draw_distance", 0, 20000, 0)
+		pnl:NumSlider(L"Max render time: ", "pac_max_render_time", 0, 50, 0)
 
-	pnl:CheckBox(
-		L"Enable PAC",
-		"pac_enable"
-	)
-
-	pnl:NumSlider(
-		L"PAC Volume",
-		"pac_ogg_volume",
-		0,
-		1,
-		2
-	)
-
-
-	pnl:Help''
-	pnl:Help(L'Performance')
-
-	pnl:CheckBox(
-		L"No outfit reflections",
-		"pac_suppress_frames"
-	)
-
-	pnl:CheckBox(
-		L"render objects outside visible fov",
-		"pac_override_fov"
-	)
-
-	pnl:NumSlider(
-		L"draw distance",
-		"pac_draw_distance",
-		0,
-		20000,
-		0
-	)
-
-	pnl:NumSlider(
-		L"max render time (in ms)",
-		"pac_max_render_time",
-		0,
-		50,
-		0
-	)
+		pnl:CheckBox(L"no outfit reflections", "pac_suppress_frames")
+		pnl:CheckBox(L"render objects outside visible fov", "pac_override_fov")
+		pnl:CheckBox(L"render projected textures (flashlight)", "pac_render_projected_texture")
 
 
 
-	pnl:Help''
-	pnl:Help(L'Misc')
+	pnl:Help(L"Misc"):SetFont("DermaDefaultBold")
+		pnl:NumSlider(L"PAC Volume", "pac_ogg_volume", 0, 1, 2)
+		pnl:CheckBox(L"Custom error model", "pac_error_mdl")
 
-	pnl:CheckBox(
-		L"Custom error model",
-		"pac_error_mdl"
-	)
-
-	pnl:Help''
-	pnl:Help(L'Enable')
-	local t={
+	pnl:Help(L"Enable"):SetFont("DermaDefaultBold")
+	local t = {
 		"urlobj",
 		"urltex"
 	}
-	for k,v in next,pac.convarcache or {} do
-		local str = k:match'^pac_enable_(.*)'
+	for k in pairs(pac.convarcache or {}) do
+		local str = k:match("^pac_enable_(.*)")
 		if str then
-			t[#t+1]=str
+			table.insert(t, str)
 		end
 	end
 	table.sort(t)
-	for _,str in next,t do
-		pnl:CheckBox(
-					L(str),
-					'pac_enable_'..str
-				)
+	for _,str in pairs(t) do
+		pnl:CheckBox(L(str), "pac_enable_" .. str)
 	end
 
 
