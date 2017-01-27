@@ -2,6 +2,28 @@
 
 local L = pace.LanguageString
 
+local function install_click(icon, path, pattern, on_menu)
+	local old = icon.OnMouseReleased
+	icon.OnMouseReleased = function(_, code)
+		if code == MOUSE_LEFT then
+			pace.model_browser:SetVisible(false)
+			pace.model_browser_callback(path, "GAME")
+		elseif code == MOUSE_RIGHT then
+			local menu = DermaMenu()
+			menu:AddOption(L"copy path", function()
+				if pattern then
+					path = path:match(pattern)
+				end
+				SetClipboardText(path)
+			end)
+			if on_menu then on_menu(menu) end
+			menu:Open()
+		end
+
+		return old(_, code)
+	end
+end
+
 local function create_texture_icon(path, on_click)
 	local icon = vgui.Create("DButton")
 	icon:SetSize(128,128)
@@ -16,7 +38,7 @@ local function create_texture_icon(path, on_click)
 		mat = CreateMaterial(path .. "_pac_resource_browser", "UnlitGeneric", {["$basetexture"] = path:match("materials/(.+)%.vtf")})
 	end
 
-	icon.DoClick = on_click
+	install_click(icon, path)
 
 	icon.Paint = function(self,w,h)
 		surface.SetDrawColor(1,1,1,1)
@@ -28,7 +50,11 @@ local function create_texture_icon(path, on_click)
 	return icon
 end
 
-local function create_material_icon(path, on_click)
+surface.CreateFont("pace_resource_browser_fixed_width", {
+	font = "dejavusansmono",
+})
+
+local function create_material_icon(path)
 	local mat_path = path:match("materials/(.+)%.vmt")
 	local mat = Material(mat_path)
 	local shader = mat:GetShader():lower()
@@ -48,15 +74,63 @@ local function create_material_icon(path, on_click)
 		pnl:SetFOV(13)
 		pnl:GetEntity():SetMaterial(mat_path)
 
-		icon.DoClick = on_click
+		install_click(icon, path, "^materials/(.+)%.vmt$", function(menu)
+			local function create_text_view(str)
+				local frame = vgui.Create("DFrame")
+				frame:SetTitle(path)
+				frame:SetSize(500, 500)
+				frame:Center()
+				frame:SetSizable(true)
+
+				local scroll = vgui.Create("DScrollPanel", frame)
+				scroll:Dock(FILL)
+				scroll:DockMargin( 0, 5, 5, 5 )
+
+				local text = vgui.Create("DTextEntry", scroll)
+				text:SetMultiline(true)
+				text:SetFont("pace_resource_browser_fixed_width")
+
+				text:SetText(str)
+
+				surface.SetFont(text:GetFont())
+				local _,h = surface.GetTextSize(str)
+				text:SetTall(h+50)
+				text:SetWide(frame:GetWide())
+
+				frame:MakePopup()
+			end
+
+			menu:AddOption("view .vmt", function()
+				create_text_view(file.Read(path, "GAME"):gsub("\t", "    "))
+			end)
+
+			menu:AddOption("view keyvalues", function()
+				local tbl = {}
+				for k,v in pairs(Material(mat_path):GetKeyValues()) do
+					table.insert(tbl, {k = k, v = v})
+				end
+				table.sort(tbl, function(a,b) return a.k < b.k end)
+
+				local str = ""
+				for _, v in ipairs(tbl) do
+					str = str .. v.k:sub(2) .. ":\n" .. tostring(v.v) .. "\n\n"
+				end
+
+				create_text_view(str)
+			end)
+		end)
 
 		return icon
 	elseif shader == "unlitgeneric" then
-		return create_texture_icon("materials/" .. (mat:GetString("$basetexture") or mat:GetString("$flashlighttexture")) .. ".vtf", on_click)
+		local icon = create_texture_icon("materials/" .. (mat:GetString("$basetexture") or mat:GetString("$flashlighttexture")) .. ".vtf")
+
+		install_click(icon, path, "^materials/(.+)%.vmt$")
+
+		return icon
 	end
 end
 
-local function create_model_icon(path, on_click)
+local function create_model_icon(path)
 	local icon = vgui.Create("SpawnIcon")
 
 	icon:SetSize(64, 64)
@@ -64,13 +138,7 @@ local function create_model_icon(path, on_click)
 	icon:SetModel(path)
 	icon:SetTooltip(path)
 
-	icon.DoClick = on_click
-
-	icon.OpenMenu = function (icon)
-		local menu = DermaMenu()
-		menu:AddOption("copy", function() SetClipboardText(path) end)
-		menu:Open()
-	end
+	install_click(icon, path)
 
 	icon:InvalidateLayout(true)
 
@@ -212,10 +280,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 				if material_view then
 					for _, material_name in ipairs(materials) do
 						local path = "materials/" .. material_name .. ".vmt"
-						local icon = create_material_icon(path, function()
-							pace.model_browser:SetVisible(false)
-							pace.model_browser_callback(path, "GAME")
-						end)
+						local icon = create_material_icon(path)
 
 						if icon then
 							viewPanel:Add(icon)
@@ -241,10 +306,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 					end
 
 					for _, path in ipairs(textures) do
-						viewPanel:Add(create_texture_icon(path, function()
-							pace.model_browser:SetVisible(false)
-							pace.model_browser_callback(path, pathid)
-						end))
+						viewPanel:Add(create_texture_icon(path))
 					end
 				end
 
@@ -288,10 +350,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 
 					for i, object in SortedPairs(node.info.contents) do
 						if object.type == "model" then
-							node.propPanel:Add(create_model_icon(object.model, function()
-								pace.model_browser:SetVisible(false)
-								pace.model_browser_callback(object.model, "GAME")
-							end))
+							node.propPanel:Add(create_model_icon(object.model))
 
 							if not frame.selected_construction_props and #browse_types == 1 and v.name == "Construction Props" then
 								node:SetExpanded(true)
@@ -368,10 +427,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 							local path = node:GetFolder() ..  "/" .. v
 
 							if not IsUselessModel(path) then
-								viewPanel:Add(create_model_icon(path, function()
-									pace.model_browser:SetVisible(false)
-									pace.model_browser_callback(path)
-								end))
+								viewPanel:Add(create_model_icon(path))
 							end
 						end
 					elseif self.dir == "materials" then
@@ -380,20 +436,14 @@ function pace.ResourceBrowser(callback, browse_types_str)
 
 							if v:find("%.vmt$") then
 								if material_view then
-									local icon = create_material_icon(path, function()
-										pace.model_browser:SetVisible(false)
-										pace.model_browser_callback(path)
-									end)
+									local icon = create_material_icon(path)
 
 									if icon then
 										viewPanel:Add(icon)
 									end
 								end
 							elseif texture_view then
-								viewPanel:Add(create_texture_icon(path, function()
-									pace.model_browser:SetVisible(false)
-									pace.model_browser_callback(path, pathid)
-								end))
+								viewPanel:Add(create_texture_icon(path))
 							end
 
 						end
