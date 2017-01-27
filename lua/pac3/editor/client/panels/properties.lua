@@ -1368,7 +1368,8 @@ do -- model
 		pace.SafeRemoveSpecialPanel()
 		--g_SpawnMenu:Open()
 		pace.ResourceBrowser(function(path)
-			pace.current_part:SetModel(path)
+			self:SetValue(path)
+			self.OnValueChanged(path)
 		end, "models")
 	end
 
