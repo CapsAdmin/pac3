@@ -378,14 +378,16 @@ function pace.ResourceBrowser(callback, browse_types_str)
 						for k, v in pairs(files) do
 							local path = node:GetFolder() ..  "/" .. v
 
-							if material_view and v:find("%.vmt$") then
-								local icon = create_material_icon(path, function()
-									pace.model_browser:SetVisible(false)
-									pace.model_browser_callback(path)
-								end)
+							if v:find("%.vmt$") then
+								if material_view then
+									local icon = create_material_icon(path, function()
+										pace.model_browser:SetVisible(false)
+										pace.model_browser_callback(path)
+									end)
 
-								if icon then
-									viewPanel:Add(icon)
+									if icon then
+										viewPanel:Add(icon)
+									end
 								end
 							elseif texture_view then
 								viewPanel:Add(create_texture_icon(path, function()
