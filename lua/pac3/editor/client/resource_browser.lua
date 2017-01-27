@@ -107,7 +107,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 	end
 
 	local frame = vgui.Create("DFrame")
-	frame:SetTitle(L"resource browser")
+	frame:SetTitle(L"resource browser" .. " - " .. (browse_types_str:gsub(";", " ")))
 	frame:SetSize(ScrW()/1.5, ScrH()/1.5)
 	frame:Center()
 	frame:SetDeleteOnClose(false)
