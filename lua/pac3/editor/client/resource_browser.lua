@@ -288,7 +288,6 @@ function pace.ResourceBrowser(callback, browse_types_str)
 		end
 	end
 
-
 	if table.HasValue(browse_types, "models") then
 
 		local spawnlists = root_node:AddFolder("Spawnlists")
@@ -655,5 +654,3 @@ if pace.model_browser and pace.model_browser:IsValid() then pace.model_browser:R
 concommand.Add("pac_resource_browser", function()
 	pace.ResourceBrowser(print)
 end)
-
-pace.ResourceBrowser(print)
