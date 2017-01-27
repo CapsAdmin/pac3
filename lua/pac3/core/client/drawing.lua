@@ -512,7 +512,22 @@ do
 	end
 	pac.AddHook("PostDrawTranslucentRenderables")
 end
+
+local cvar_projected_texture = CreateClientConVar("pac_render_projected_texture", "0")
+
 function pac.Think()
+	do
+		local mode = cvar_projected_texture:GetInt()
+
+		if mode <= 0 then
+			pac.projected_texture_enabled = false
+		elseif mode == 1 then
+			pac.projected_texture_enabled = true
+		elseif mode >= 2 then
+			pac.projected_texture_enabled = LocalPlayer():FlashlightIsOn()
+		end
+	end
+
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
 			if ent.pac_drawing and ent:IsPlayer() then
