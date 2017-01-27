@@ -131,37 +131,6 @@ function pace.ResourceBrowser(callback, browse_types_str)
 	browse_back.DoClick = function()
 
 	end
-
-
-	do
-		local ChangeIconSize = function(w, h)
-			frame.icon_size = {w, h}
-		end
-
-		local submenu = view_menu:AddSubMenu("Resize")
-			submenu:SetDeleteSelf(false)
-
-		submenu:AddOption("64 x 64 (default)", function () ChangeIconSize(64, 64) end)
-		submenu:AddOption("64 x 128", function () ChangeIconSize(64, 128) end)
-		submenu:AddOption("64 x 256", function () ChangeIconSize(64, 256) end)
-		submenu:AddOption("64 x 512", function () ChangeIconSize(64, 512) end)
-		submenu:AddSpacer()
-		submenu:AddOption("128 x 64", function () ChangeIconSize(128, 64) end)
-		submenu:AddOption("128 x 128", function () ChangeIconSize(128, 128) end)
-		submenu:AddOption("128 x 256", function () ChangeIconSize(128, 256) end)
-		submenu:AddOption("128 x 512", function () ChangeIconSize(128, 512) end)
-		submenu:AddSpacer()
-		submenu:AddOption("256 x 64", function () ChangeIconSize(256, 64) end)
-		submenu:AddOption("256 x 128", function () ChangeIconSize(256, 128) end)
-		submenu:AddOption("256 x 256", function () ChangeIconSize(256, 256) end)
-		submenu:AddOption("256 x 512", function () ChangeIconSize(256, 512) end)
-		submenu:AddSpacer()
-		submenu:AddOption("512 x 64", function () ChangeIconSize(512, 64) end)
-		submenu:AddOption("512 x 128", function () ChangeIconSize(512, 128) end)
-		submenu:AddOption("512 x 256", function () ChangeIconSize(512, 256) end)
-		submenu:AddOption("512 x 512", function () ChangeIconSize(512, 512) end)
-
-	end
 ]]
 	local left_panel = vgui.Create("DPanel", frame)
 	left_panel:Dock(LEFT)
