@@ -1,3 +1,5 @@
+-- automate me!
+
 pace.PropertySheets = {
 	orientation =
 	{
