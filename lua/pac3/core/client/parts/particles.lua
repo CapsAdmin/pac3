@@ -1,3 +1,5 @@
+local cam_IgnoreZ = cam.IgnoreZ
+
 local PART = {}
 
 PART.ClassName = "particles"
@@ -45,6 +47,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Translucent", true)
 	pac.GetSet(PART, "DrawManual", false)
 	pac.GetSet(PART, "AddFrametimeLife", false)
+	pac.GetSet(PART, "IgnoreZ", false)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -109,6 +112,15 @@ function PART:SetDrawManual(b)
 	self.emitter:SetNoDraw(b)
 end
 
+function PART:SetIgnoreZ(b)
+	self.IgnoreZ = b
+	if b then
+		self.emitter:SetNoDraw(true)
+	else
+		self:SetDrawManual(self:GetDrawManual())
+	end
+end
+
 PART.Initialize = PART.CreateEmitter
 
 function PART:SetNumberParticles(num)
@@ -123,8 +135,15 @@ end
 function PART:OnDraw(owner, pos, ang)
 	if not self:IsHidden() then
 		self.emitter:SetPos(pos)
-		if self.DrawManual then
+		if self.DrawManual or self.IgnoreZ then
+			if self.IgnoreZ then
+				cam_IgnoreZ(true)
+			end
 			self.emitter:Draw()
+
+			if self.IgnoreZ then
+				cam_IgnoreZ(false)
+			end
 		end
 		self:EmitParticles(pos, ang)
 	end
