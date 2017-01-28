@@ -1,4 +1,9 @@
 local cam_IgnoreZ = cam.IgnoreZ
+local vector_origin = vector_origin
+local RealTime = RealTime
+local FrameTime = FrameTime
+local EyeAngles = EyeAngles
+local Matrix = Matrix
 
 local PART = {}
 
@@ -48,6 +53,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "DrawManual", false)
 	pac.GetSet(PART, "AddFrametimeLife", false)
 	pac.GetSet(PART, "IgnoreZ", false)
+	pac.GetSet(PART, "Follow", false)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -121,6 +127,17 @@ function PART:SetIgnoreZ(b)
 	end
 end
 
+function PART:SetFollow(b)
+	self.Follow = b
+	if b then
+		self.emitter = ParticleEmitter(self.cached_pos, true)
+		self.emitter:SetNoDraw(true)
+	else
+		self.emitter = ParticleEmitter(self.cached_pos, self["3D"])
+		self:SetDrawManual(self:GetDrawManual())
+	end
+end
+
 PART.Initialize = PART.CreateEmitter
 
 function PART:SetNumberParticles(num)
@@ -134,18 +151,28 @@ end
 
 function PART:OnDraw(owner, pos, ang)
 	if not self:IsHidden() then
-		self.emitter:SetPos(pos)
-		if self.DrawManual or self.IgnoreZ then
+		--self.emitter:SetPos(pos)
+		if self.DrawManual or self.IgnoreZ or self.Follow then
 			if self.IgnoreZ then
 				cam_IgnoreZ(true)
 			end
+			if self.Follow then
+				local mat = Matrix()
+				mat:Translate(pos)
+				cam.PushModelMatrix(mat)
+			end
+
 			self.emitter:Draw()
+
+			if self.Follow then
+				cam.PopModelMatrix()
+			end
 
 			if self.IgnoreZ then
 				cam_IgnoreZ(false)
 			end
 		end
-		self:EmitParticles(pos, ang)
+		self:EmitParticles(self.Follow and vector_origin or pos, ang)
 	end
 end
 
@@ -178,6 +205,8 @@ end
 function PART:EmitParticles(pos, ang)
 	local emt = self.emitter
 	if not emt then return end
+
+	local current_time = self.Follow and RealTime()
 
 	if self.NextShot < pac.RealTime then
 		local spread = self.Spread / 180
@@ -294,10 +323,26 @@ function PART:EmitParticles(pos, ang)
 					particle.StickStartAlpha = self.StickStartAlpha
 					particle.StickEndAlpha = self.StickEndAlpha
 				end
+
+				if self.Follow then
+					self.follow_particles = self.follow_particles or {}
+					self.follow_particles[#self.follow_particles + 1] = {particle = particle, time = current_time + particle:GetDieTime()}
+				end
 			end
 		end
 
 		self.NextShot = pac.RealTime + self.FireDelay
+	end
+
+	if self.Follow and self.follow_particles then
+		local ang = EyeAngles()+Angle(180,0,90)+self.ParticleAngle
+		for i, data in ipairs(self.follow_particles) do
+			if data.time < current_time then
+				table.remove(self.follow_particles, i)
+			else
+				data.particle:SetAngles(ang)
+			end
+		end
 	end
 end
 
