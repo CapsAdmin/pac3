@@ -101,7 +101,7 @@ local function populate_options(menu)
 end
 
 local function populate_player(menu)
-	local pnl = menu:AddCVar(L"t pose") pnl:SetImage("icon16/user_go.png") pnl.OnChecked = function(s, b) pace.SetTPose(b) end
+	local pnl = menu:AddOption(L"t pose", function() pace.SetTPose(not pace.GetTPose()) end):SetImage("icon16/user_go.png")
 	menu:AddOption(L"reset eye angles", function() pace.ResetEyeAngles() end):SetImage("icon16/user_delete.png")
 
 	local mods, pnl = menu:AddSubMenu(L"modifiers", function() end)
