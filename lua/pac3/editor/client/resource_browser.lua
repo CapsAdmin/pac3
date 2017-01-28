@@ -24,24 +24,31 @@ local function install_click(icon, path, pattern, on_menu)
 	end
 end
 
-local function create_texture_icon(path, on_click)
+local function get_unlit_mat(path)
+	if path:find("%.png$") then
+		return Material(path:match("materials/(.+)"))
+	elseif path:find("%.vmt$") then
+		local mat = CreateMaterial(path .. "_pac_resource_browser", "UnlitGeneric")
+		mat:SetTexture("$basetexture", Material(path:match("materials/(.+)%.vmt")):GetTexture("$basetexture"))
+		return mat
+	else
+		return CreateMaterial(path .. "_pac_resource_browser", "UnlitGeneric", {["$basetexture"] = path:match("materials/(.+)%.vtf")})
+	end
+end
+
+local function create_texture_icon(path)
 	local icon = vgui.Create("DButton")
+	icon:SetTooltip(path)
 	icon:SetSize(128,128)
 	icon:SetWrap(true)
 	icon:SetText("")
 
-	local mat
-
-	if path:find("%.png$") then
-		mat = Material(path:match("materials/(.+)"))
-	else
-		mat = CreateMaterial(path .. "_pac_resource_browser", "UnlitGeneric", {["$basetexture"] = path:match("materials/(.+)%.vtf")})
-	end
-
 	install_click(icon, path)
 
+	local mat = get_unlit_mat(path)
+
 	icon.Paint = function(self,w,h)
-		surface.SetDrawColor(1,1,1,1)
+		surface.SetDrawColor(255,255,255,255)
 		surface.SetMaterial(mat)
 		surface.DrawTexturedRect(0,0,w,h)
 		return true
@@ -59,75 +66,92 @@ local function create_material_icon(path)
 	local mat = Material(mat_path)
 	local shader = mat:GetShader():lower()
 
-	if shader == "vertexlitgeneric" then
-		local SPAWNICON = vgui.GetControlTable("SpawnIcon")
-		local icon = vgui.Create("DButton")
-		icon:SetSize(128,128)
-		icon:SetWrap(true)
-		icon:SetText("")
+	local SPAWNICON = vgui.GetControlTable("SpawnIcon")
+	local icon = vgui.Create("DButton")
+	icon:SetTooltip(path)
+	icon:SetSize(128,128)
+	icon:SetWrap(true)
+	icon:SetText("")
+	local old = icon.Paint
+	icon.Paint = function(_,w,h) old(_,w,h) surface.SetDrawColor(0,0,0,240) surface.DrawRect(0,0,w,h) end
 
+	if shader == "vertexlitgeneric" then
 		local pnl =  vgui.Create("DModelPanel", icon)
 		pnl:SetMouseInputEnabled(false)
 		pnl:Dock(FILL)
 		pnl:SetModel("models/pac/default.mdl")
 		pnl:SetLookAt( Vector( 0, 0, 0 ) )
-		pnl:SetFOV(13)
-		pnl:GetEntity():SetMaterial(mat_path)
+		pnl:SetFOV(1)
+		pnl:SetCamPos(Vector(1,1,1) * 600)
+		pnl:GetEntity():SetMaterial(mat_path, "error")
+	elseif shader == "lightmappedgeneric" then
+		local pnl = vgui.Create("DPanel", icon)
+		pnl:SetMouseInputEnabled(false)
+		pnl:Dock(FILL)
 
-		install_click(icon, path, "^materials/(.+)%.vmt$", function(menu)
-			local function create_text_view(str)
-				local frame = vgui.Create("DFrame")
-				frame:SetTitle(path)
-				frame:SetSize(500, 500)
-				frame:Center()
-				frame:SetSizable(true)
+		local mat = get_unlit_mat(path)
 
-				local scroll = vgui.Create("DScrollPanel", frame)
-				scroll:Dock(FILL)
-				scroll:DockMargin( 0, 5, 5, 5 )
+		pnl.Paint = function(self,w,h)
+			surface.SetDrawColor(255,255,255,255)
+			surface.SetMaterial(mat)
+			surface.DrawTexturedRect(0,0,w,h)
+		end
 
-				local text = vgui.Create("DTextEntry", scroll)
-				text:SetMultiline(true)
-				text:SetFont("pace_resource_browser_fixed_width")
+	else
+		local pnl = vgui.Create("DImage", icon)
+		pnl:SetMouseInputEnabled(false)
+		pnl:Dock(FILL)
+		pnl:SetImage(mat_path)
+	end
 
-				text:SetText(str)
 
-				surface.SetFont(text:GetFont())
-				local _,h = surface.GetTextSize(str)
-				text:SetTall(h+50)
-				text:SetWide(frame:GetWide())
+	install_click(icon, path, "^materials/(.+)%.vmt$", function(menu)
+		local function create_text_view(str)
+			local frame = vgui.Create("DFrame")
+			frame:SetTitle(path)
+			frame:SetSize(500, 500)
+			frame:Center()
+			frame:SetSizable(true)
 
-				frame:MakePopup()
-			end
+			local scroll = vgui.Create("DScrollPanel", frame)
+			scroll:Dock(FILL)
+			scroll:DockMargin( 0, 5, 5, 5 )
 
-			menu:AddOption("view .vmt", function()
-				create_text_view(file.Read(path, "GAME"):gsub("\t", "    "))
-			end)
+			local text = vgui.Create("DTextEntry", scroll)
+			text:SetMultiline(true)
+			text:SetFont("pace_resource_browser_fixed_width")
 
-			menu:AddOption("view keyvalues", function()
-				local tbl = {}
-				for k,v in pairs(Material(mat_path):GetKeyValues()) do
-					table.insert(tbl, {k = k, v = v})
-				end
-				table.sort(tbl, function(a,b) return a.k < b.k end)
+			text:SetText(str)
 
-				local str = ""
-				for _, v in ipairs(tbl) do
-					str = str .. v.k:sub(2) .. ":\n" .. tostring(v.v) .. "\n\n"
-				end
+			surface.SetFont(text:GetFont())
+			local _,h = surface.GetTextSize(str)
+			text:SetTall(h+50)
+			text:SetWide(frame:GetWide())
 
-				create_text_view(str)
-			end)
+			frame:MakePopup()
+		end
+
+		menu:AddOption("view .vmt", function()
+			create_text_view(file.Read(path, "GAME"):gsub("\t", "    "))
 		end)
 
-		return icon
-	elseif shader == "unlitgeneric" then
-		local icon = create_texture_icon("materials/" .. (mat:GetString("$basetexture") or mat:GetString("$flashlighttexture")) .. ".vtf")
+		menu:AddOption("view keyvalues", function()
+			local tbl = {}
+			for k,v in pairs(Material(mat_path):GetKeyValues()) do
+				table.insert(tbl, {k = k, v = v})
+			end
+			table.sort(tbl, function(a,b) return a.k < b.k end)
 
-		install_click(icon, path, "^materials/(.+)%.vmt$")
+			local str = ""
+			for _, v in ipairs(tbl) do
+				str = str .. v.k:sub(2) .. ":\n" .. tostring(v.v) .. "\n\n"
+			end
 
-		return icon
-	end
+			create_text_view(str)
+		end)
+	end)
+
+	return icon
 end
 
 local function create_model_icon(path)
