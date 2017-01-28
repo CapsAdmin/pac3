@@ -141,7 +141,7 @@ function PART:SetMaterial(var)
 
 	if not pac.Handleurltex(self, var, function(mat)
 		mat:SetFloat("$alpha", 0.999)
-		mat:SetInt("$spriterendermode", self.Additive and 3 or 1)
+		mat:SetInt("$spriterendermode", self.Additive and 5 or 1)
 		self.Materialm = mat
 		self:CallEvent("material_changed")
 	end, "Sprite") then
