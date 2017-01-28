@@ -18,7 +18,7 @@ function PART:GetNiceName()
 end
 
 function PART:GetAnimID()
-	return "pac_anim_" .. self:GetUniqueID()
+	return "pac_anim_" .. self:GetPlayerOwner():UniqueID() .. self:GetUniqueID()
 end
 
 function PART:SetRate(num)
