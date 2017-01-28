@@ -129,11 +129,10 @@ function PART:Shoot(pos, ang)
 							phys:SetVelocity(data.OurOldVelocity - 2 * (data.HitNormal:Dot(data.OurOldVelocity) * data.HitNormal) * self.Bounce)
 						end
 					end)
-				elseif self.Sticky and data.HitEntity:IsWorld() then
+				elseif self.Sticky then
 					phys:SetVelocity(Vector(0,0,0))
-					phys:Sleep()
 					phys:EnableMotion(false)
-					ent.pac_stuck = true
+					ent.pac_stuck = data.OurOldVelocity
 				end
 
 				if self.BulletImpact then
@@ -144,6 +143,7 @@ function PART:Shoot(pos, ang)
 						Num = 1,
 						Src = data.HitPos - data.HitNormal,
 						Dir = data.HitNormal,
+						Distance = 10,
 					}
 				end
 
@@ -174,7 +174,7 @@ function PART:Shoot(pos, ang)
 
 				if self.AimDir then
 					if ent.pac_stuck then
-						ent:SetRenderAngles(ent.last_angle)
+						ent:SetRenderAngles(ent.pac_stuck:Angle())
 					else
 						local angle = ent:GetVelocity():Angle()
 						ent:SetRenderAngles(angle)

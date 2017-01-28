@@ -8,13 +8,23 @@ do -- projectile entity
 	ENT.ClassName = "pac_projectile"
 
 	function ENT:SetupDataTables()
-		self:SetDTBool(0, "AimDir")
+		self:NetworkVar("Bool", 0, "AimDir")
+		self:NetworkVar("Vector", 0, "OldVelocity")
 	end
 
 	if CLIENT then
 		function ENT:Draw()
-			if self.dt.AimDir then
-				self:SetRenderAngles(self:GetVelocity():Angle())
+			if self:GetAimDir() then
+				if self:GetOldVelocity() ~= vector_origin then
+					self:SetRenderAngles(self:GetOldVelocity():Angle())
+				elseif self:GetVelocity() ~= vector_origin then
+					self:SetRenderAngles(self:GetVelocity():Angle())
+				end
+			end
+
+			if self:GetParent():IsValid() and not self.done then
+				self:SetPredictable(true)
+				self.done = true
 			end
 		end
 	end
@@ -50,7 +60,7 @@ do -- projectile entity
 			phys:SetDamping(part.Damping, 0)
 			phys:SetMass(math.Clamp(part.Mass, 0.001, 50000))
 
-			self.dt.AimDir = part.AimDir
+			self:SetAimDir(part.AimDir)
 
 			self.part_data = part
 		end
@@ -117,10 +127,34 @@ do -- projectile entity
 
 			if self.part_data.Bounce ~= 0 then
 				phys:SetVelocity(data.OurOldVelocity - 2 * (data.HitNormal:Dot(data.OurOldVelocity) * data.HitNormal) * self.part_data.Bounce)
-			elseif self.part_data.Sticky and data.HitEntity:IsWorld() then
+			end
+
+			if self.part_data.Sticky and (self.part_data.Bounce == 0 or not data.HitEntity:IsWorld()) then
 				phys:SetVelocity(Vector(0,0,0))
 				phys:Sleep()
 				phys:EnableMotion(false)
+				phys:EnableCollisions(false)
+				self:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+
+				 if not data.HitEntity:IsWorld() then
+					local closest = {}
+					for id = 1, data.HitEntity:GetBoneCount() do
+						local pos = data.HitEntity:GetBonePosition(id)
+						if pos then
+							table.insert(closest, {dist = pos:Distance(data.HitPos), id = id, pos = pos})
+						end
+					end
+					if closest[1] then
+						table.sort(closest, function(a, b) return a.dist < b.dist end)
+						self:FollowBone(data.HitEntity, closest[1].id)
+						self:SetLocalPos(util.TraceLine({start = data.HitPos, endpos = closest[1].pos}).HitPos - closest[1].pos)
+					else
+						self:SetPos(data.HitPos)
+						self:SetParent(data.HitEntity)
+					end
+				end
+
+				self:SetOldVelocity(data.OurOldVelocity)
 			end
 
 			if self.part_data.BulletImpact then
@@ -131,6 +165,7 @@ do -- projectile entity
 					Num = 1,
 					Src = data.HitPos - data.HitNormal,
 					Dir = data.HitNormal,
+					Distance = 10,
 				}
 			end
 
