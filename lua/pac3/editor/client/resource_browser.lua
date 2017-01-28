@@ -617,7 +617,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 			search:_OnLoseFocus()
 		end
 
-		function search:updateHeader ()
+		function search:updateHeader()
 			self.header:SetText(search.results .. " Results for \"" .. self.search .. "\"")
 		end
 
@@ -632,7 +632,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 			for k, v in pairs(files) do
 				local file = folder .. v
 				if v:EndsWith(extension) and file:find(self.search:PatternSafe()) and not IsUselessModel(file) then
-					addModel(self.propPanel, { model = file })
+					self.propPanel:Add(create_model_icon(file))
 					self.results = self.results + 1
 					self:updateHeader()
 				end
@@ -662,10 +662,8 @@ function pace.ResourceBrowser(callback, browse_types_str)
 			self.search = self:GetText()
 
 			self.header = vgui.Create("ContentHeader", self.propPanel)
-			self.loading = vgui.Create("ContentHeader", self.propPanel)
 			self:updateHeader()
 			self.propPanel:Add(self.header)
-			self.propPanel:Add(self.loading)
 
 			searchTime = CurTime()
 			self:StartSearch(searchTime, "models/", ".mdl", "GAME")
