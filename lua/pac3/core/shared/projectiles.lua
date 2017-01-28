@@ -20,10 +20,7 @@ do -- projectile entity
 	end
 
 	if SERVER then
-
-		--fix missing attacker
 		hook.Add("EntityTakeDamage", "pac_projectile", function(ent, dmg)
-
 			local a, i = dmg:GetAttacker(), dmg:GetInflictor()
 
 			if a == i and a:IsValid() and a.projectile_owner then
@@ -32,7 +29,6 @@ do -- projectile entity
 					dmg:SetAttacker(a.projectile_owner)
 				end
 			end
-
 		end)
 
 		function ENT:SetData(ply, pos, ang, part)
@@ -242,22 +238,19 @@ if SERVER then
 
 		local pos = net.ReadVector()
 		local ang = net.ReadAngle()
-		-- Is this even used???
-		ply.pac_projectiles = ply.pac_projectiles or {}
-		if table.Count( ply.pac_projectiles ) >= 30 then
-			return
-		end
-
 		local part = net.ReadTable()
 
 		if pos:Distance(ply:EyePos()) > 200 * ply:GetModelScale() then
-			if FindMetaTable("Entity").CPPIGetOwner then
-				for _, ent in ipairs(ents.FindInSphere(pos, 200)) do
-					if ent:CPPIGetOwner() == ply then
-						break
-					end
+			local ok = false
+
+			for _, ent in ipairs(ents.FindInSphere(pos, 200)) do
+				if (ent.CPPIGetOwner and ent:CPPIGetOwner() == ply) or ent.projectile_owner == ply or ent:GetOwner() == ply then
+					ok = true
+					break
 				end
-			else
+			end
+
+			if not ok then
 				pos = ply:EyePos()
 			end
 		end
