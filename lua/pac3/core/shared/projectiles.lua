@@ -163,7 +163,8 @@ do -- projectile entity
 							pos = self:GetOwner():GetEyeTrace().HitPos
 						end
 
-						local closest = {}
+						local closest_1 = {}
+						local closest_2 = {}
 
 						for _, ent in ipairs(ents.FindInSphere(pos, radius)) do
 							if
@@ -172,13 +173,21 @@ do -- projectile entity
 								ent:GetPhysicsObject():IsValid() and
 								ent:GetClass() ~= self:GetClass()
 							then
-								table.insert(closest, {dist = ent:GetPos():Distance(pos), ent = ent})
+								local data = {dist = ent:NearestPoint(ent:GetPos()):Distance(pos), ent = ent}
+								if ent:IsPlayer() or ent:IsNPC() then
+									table.insert(closest_1, data)
+								else
+									table.insert(closest_2, data)
+								end
 							end
 						end
 
-						if closest[1] then
-							table.sort(closest, function(a, b) return a.dist < b.dist end)
-							self.target_ent = closest[1].ent
+						if closest_1[1] then
+							table.sort(closest_1, function(a, b) return a.dist < b.dist end)
+							self.target_ent = closest_1[1].ent
+						elseif closest_2[1] then
+							table.sort(closest_2, function(a, b) return a.dist < b.dist end)
+							self.target_ent = closest_2[1].ent
 						end
 
 						self.next_target = CurTime() + 0.15
@@ -207,21 +216,26 @@ do -- projectile entity
 				phys:Sleep()
 				phys:EnableMotion(false)
 				phys:EnableCollisions(false)
-				--data.HitObject:SetVelocity(data.TheirOldVelocity)
+
 				timer.Simple(0, function() if self:IsValid() then self:SetCollisionGroup(COLLISION_GROUP_DEBRIS) end end)
 
 				 if not data.HitEntity:IsWorld() then
-					local closest = {}
-					for id = 1, data.HitEntity:GetBoneCount() do
-						local pos = data.HitEntity:GetBonePosition(id)
-						if pos then
-							table.insert(closest, {dist = pos:Distance(data.HitPos), id = id, pos = pos})
+					if data.HitEntity:GetBoneCount() then
+						local closest = {}
+						for id = 1, data.HitEntity:GetBoneCount() do
+							local pos = data.HitEntity:GetBonePosition(id)
+							if pos then
+								table.insert(closest, {dist = pos:Distance(data.HitPos), id = id, pos = pos})
+							end
 						end
-					end
-					if closest[1] then
-						table.sort(closest, function(a, b) return a.dist < b.dist end)
-						self:FollowBone(data.HitEntity, closest[1].id)
-						self:SetLocalPos(util.TraceLine({start = data.HitPos, endpos = closest[1].pos}).HitPos - closest[1].pos)
+						if closest[1] then
+							table.sort(closest, function(a, b) return a.dist < b.dist end)
+							self:FollowBone(data.HitEntity, closest[1].id)
+							self:SetLocalPos(util.TraceLine({start = data.HitPos, endpos = closest[1].pos}).HitPos - closest[1].pos)
+						else
+							self:SetPos(data.HitPos)
+							self:SetParent(data.HitEntity)
+						end
 					else
 						self:SetPos(data.HitPos)
 						self:SetParent(data.HitEntity)
