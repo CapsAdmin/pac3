@@ -534,11 +534,6 @@ PART.Events =
 			interval = interval or 1
 			offset = offset or 0
 
-			if interval == 0 or interval < FrameTime() then
-				self.timer_hack = not self.timer_hack
-				return self.timer_hack
-			end
-
 			return (CurTime() + offset) % interval > (interval / 2)
 		end,
 	},
@@ -644,8 +639,8 @@ PART.Events =
 					if data and self:StringOperator(data.str, find) and data.time + time > pac.RealTime then
 						return true
 					end
-				end
-			else
+				end	
+			else			
 				local owner = self:GetOwner(true)
 				if owner:IsValid() then
 					local data = owner.pac_say_event
@@ -982,7 +977,7 @@ function PART:OnThink()
 				if self.last_event_triggered ~= self.event_triggered then
 					if not self.suppress_event_think then
 						self.suppress_event_think = true
-						self:CallRecursive("CalcShowHide")
+						self:CallRecursive("Think")
 						self.suppress_event_think = nil
 					end
 					self.last_event_triggered = self.event_triggered
@@ -1001,7 +996,7 @@ function PART:OnThink()
 					if self.last_event_triggered ~= self.event_triggered then
 						if not self.suppress_event_think then
 							self.suppress_event_think = true
-							parent:CallRecursive("CalcShowHide")
+							parent:CallRecursive("Think")
 							self.suppress_event_think = nil
 						end
 						self.last_event_triggered = self.event_triggered
