@@ -221,6 +221,7 @@ pace.PartTree = {
 	},
 
 	effects = {
+		decal = true,
 		shake = true,
 		light = true,
 		sound = true,
@@ -307,7 +308,8 @@ pace.PartIcons =
 	bodygroup = "icon16/user.png",
 	camera = "icon16/camera.png",
 	custom_animation = "icon16/film.png",
-	gesture = "icon16/thumb_up.png"
+	gesture = "icon16/thumb_up.png",
+	decal = "icon16/paintbrush.png",
 }
 
 pace.PartIcons.effects = pace.PartIcons.effect
