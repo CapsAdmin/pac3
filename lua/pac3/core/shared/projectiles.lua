@@ -41,6 +41,10 @@ do -- projectile entity
 			end
 		end)
 
+		function ENT:Initialize()
+			self.next_target = 0
+		end
+
 		function ENT:SetData(ply, pos, ang, part)
 
 			self.projectile_owner = ply
@@ -131,9 +135,7 @@ do -- projectile entity
 
 			phys:SetVelocity(phys:GetVelocity() / math.max(1 + (self.part_data.Damping / 100), 1))
 
-			if self.part_data.Attract ~= 0 and self.part_data.Attract then
-				self.next_target = self.next_target or 0
-
+			if self.part_data.Attract ~= 0 then
 				if self.part_data.AttractMode == "hitpos" then
 					local pos = self:GetOwner():GetEyeTrace().HitPos
 
@@ -143,7 +145,7 @@ do -- projectile entity
 
 					phys:SetVelocity(phys:GetVelocity() + dir)
 				elseif self.part_data.AttractMode == "hitpos_radius" then
-					local pos = self:GetOwner():EyePos() + self:GetOwner():GetAimVector() * self.part_data.DamageRadius
+					local pos = self:GetOwner():EyePos() + self:GetOwner():GetAimVector() * self.part_data.AttractRadius
 
 					local dir = pos - phys:GetPos()
 					dir:Normalize()
@@ -152,16 +154,17 @@ do -- projectile entity
 					phys:SetVelocity(phys:GetVelocity() + dir)
 				elseif self.part_data.AttractMode == "closest_to_projectile" or self.part_data.AttractMode == "closest_to_hitpos" then
 					if self.next_target < CurTime() then
-						local radius = math.Clamp(self.part_data.DamageRadius, 0, 300)
+						local radius = math.Clamp(self.part_data.AttractRadius, 0, 300)
 						local pos
 
 						if self.part_data.AttractMode == "closest_to_projectile" then
 							pos = phys:GetPos()
-						elseif self.part_data.AttractMode == "closest_to_hitpos" then
+						else
 							pos = self:GetOwner():GetEyeTrace().HitPos
 						end
 
 						local closest = {}
+
 						for _, ent in ipairs(ents.FindInSphere(pos, radius)) do
 							if
 								ent ~= self and
@@ -178,7 +181,7 @@ do -- projectile entity
 							self.target_ent = closest[1].ent
 						end
 
-						self.next_target = self.next_target + CurTime() + 0.15
+						self.next_target = CurTime() + 0.15
 					end
 
 					if self.target_ent and self.target_ent:IsValid() then
