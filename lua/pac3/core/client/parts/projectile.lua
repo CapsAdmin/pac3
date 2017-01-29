@@ -59,7 +59,7 @@ function PART:AttachToEntity(ent)
 	part.show_in_editor = false
 	part.CheckOwner = function(s) s.Owner = ent end
 	part:SetPlayerOwner(self:GetPlayerOwner())
-	part:SetTable(tbl, true)
+	part:SetTable(tbl)
 	part:SetHide(false)
 
 	part:SetOwner(ent)

@@ -1,6 +1,7 @@
 pace.StreamQueue = pace.StreamQueue or {}
 
 local frame_number = 0
+local last_frame
 
 local function catchError(err)
 	print('[PAC3] Error: ', err)
@@ -18,7 +19,7 @@ end)
 
 local function make_copy(tbl, input)
 	for key, val in pairs(tbl.self) do
-		if key == "ClassName" then continue end
+--		if key == "ClassName" then continue end
 
 		if key:find("UID", 0, true) or key == "UniqueID" then
 			tbl.self[key] = util.CRC(val .. input)
@@ -56,9 +57,9 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 
 		data.owner = ply
 		data.uid = ply:UniqueID()
-		data.skip_dupe = true
+		data.is_dupe = true
 
-		pace.SubmitPart(data, nil, true)
+		pace.SubmitPart(data)
 	end
 end)
 
@@ -81,7 +82,7 @@ function pace.SubmitPart(data, filter)
 			if ent.CPPICanTool and (ent:CPPIGetOwner() ~= data.owner and data.owner:IsValid() and not ent:CPPICanTool(data.owner, "paint")) then
 				allowed = false
 				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
-			elseif not data.skip_dupe then
+			elseif not data.is_dupe then
 				ent.pac_parts = ent.pac_parts or {}
 				ent.pac_parts[data.part.self.UniqueID] = data
 
@@ -97,7 +98,7 @@ function pace.SubmitPart(data, filter)
 						if type(data.part) == "table" then
 							data.part = data.part.self.UniqueID
 						end
-						data.skip_dupe = true
+						data.is_dupe = true
 						pace.RemovePart(data)
 					end
 				end

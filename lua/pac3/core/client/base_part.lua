@@ -263,7 +263,7 @@ do -- owner
 
 		else
 			if removed and prev_owner == ent then
-				self:SetOwner()
+				self:SetOwner(NULL)
 				self.temp_hidden = true
 				return
 			end
@@ -595,7 +595,7 @@ do -- serializing
 		self:RemoveChildren()
 	end
 
-	function PART:SetTable(tbl, instant)
+	function PART:SetTable(tbl)
 		self.supress_part_name_find = true
 		self.delayed_variables = self.delayed_variables or {}
 
@@ -647,17 +647,9 @@ do -- serializing
 		end
 
 		for _, value in pairs(tbl.children) do
-			local function create()
-				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
-				part:SetTable(value, instant)
-				part:SetParent(self)
-			end
-
-			if instant then
-				create()
-			else
-				timer.Simple(math.random(), create)
-			end
+			local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
+			part:SetTable(value)
+			part:SetParent(self)
 		end
 	end
 
@@ -708,7 +700,7 @@ do -- serializing
 	function PART:Clone()
 		local part = pac.CreatePart(self.ClassName, self:GetPlayerOwner())
 		if not part then return end
-		part:SetTable(self:ToTable(true), true)
+		part:SetTable(self:ToTable(true))
 
 		part:SetParent(self:GetParent())
 
