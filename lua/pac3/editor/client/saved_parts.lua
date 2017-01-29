@@ -200,7 +200,7 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 
 			for key, tbl in pairs(data) do
 				local part = pac.CreatePart(tbl.self.ClassName)
-				part:SetTable(tbl, true)
+				part:SetTable(tbl)
 			end
 		end
 

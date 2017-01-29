@@ -1,3 +1,10 @@
+local FrameTime = FrameTime
+local util_QuickTrace = util.QuickTrace
+local VectorRand = VectorRand
+local Vector = Vector
+local Angle = Angle
+local physenv_GetGravity = physenv.GetGravity
+
 local PART = {}
 
 PART.ClassName = "jiggle"
@@ -104,7 +111,7 @@ function PART:OnDraw(owner, pos, ang)
 		end
 
 		if self.Ground then
-			self.pos.z = util.QuickTrace(pos, physenv.GetGravity()*100).HitPos.z
+			self.pos.z = util_QuickTrace(pos, physenv_GetGravity() * 100).HitPos.z
 		end
 	else
 		self.pos = pos

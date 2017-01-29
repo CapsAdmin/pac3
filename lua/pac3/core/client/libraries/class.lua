@@ -1,17 +1,20 @@
-local printf = function(fmt, ...) MsgN(string.format(fmt, ...)) end
-local check = function() end
 local table = {insert = table.insert}
 
 do -- table copy
-	local lookup_table = {}
+	local lookup_table
 
 	local function copy(obj, skip_meta)
+		local t = type(obj)
 
-		if type(obj) == "Vector" or type(obj) == "Angle" then
+		if t == "number" or t == "string" or t == "function" or t == "boolean" then
+			return obj
+		end
+
+		if t == "Vector" or t == "Angle" then
 			return obj * 1
 		elseif lookup_table[obj] then
 			return lookup_table[obj]
-		elseif type(obj) == "table" then
+		elseif t == "table" then
 			local new_table = {}
 
 			lookup_table[obj] = new_table
@@ -21,9 +24,9 @@ do -- table copy
 			end
 
 			return skip_meta and new_table or setmetatable(new_table, getmetatable(obj))
-		else
-			return obj
 		end
+
+		return obj
 	end
 
 	function table.copy(obj, skip_meta)
@@ -50,13 +53,13 @@ function class.GetSet(tbl, name, def)
 
     if type(def) == "number" then
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = tonumber(var) end
-		tbl["Get" .. name] = tbl["Get" .. name] or function(self, var) return tonumber(self[name]) end
+		tbl["Get" .. name] = tbl["Get" .. name] or function(self) return tonumber(self[name]) end
 	elseif type(def) == "string" then
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = tostring(var) end
-		tbl["Get" .. name] = tbl["Get" .. name] or function(self, var) return tostring(self[name]) end
+		tbl["Get" .. name] = tbl["Get" .. name] or function(self) return tostring(self[name]) end
 	else
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
-		tbl["Get" .. name] = tbl["Get" .. name] or function(self, var) return self[name] end
+		tbl["Get" .. name] = tbl["Get" .. name] or function(self) return self[name] end
 	end
 
     tbl[name] = def
@@ -68,7 +71,7 @@ function class.IsSet(tbl, name, def)
 	else
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
 	end
-    tbl["Is" .. name] = tbl["Is" .. name] or function(self, var) return self[name] end
+    tbl["Is" .. name] = tbl["Is" .. name] or function(self) return self[name] end
 
     tbl[name] = def
 end
@@ -82,14 +85,10 @@ function class.RemoveField(tbl, name)
 end
 
 function class.Get(type_name, class_name)
-    check(type_name, "string")
-    check(class_name, "string")
-
     return class.Registered[type_name] and class.Registered[type_name][class_name] or nil
 end
 
 function class.GetAll(type_name)
-	check(type_name, "string")
 	return class.Registered[type_name]
 end
 
@@ -113,7 +112,7 @@ function class.HandleBaseField(META, var)
 	elseif t == "table" then
 		-- if it's a table and does not have the Type field we assume it's a table of bases
 		if not var.Type then
-			for key, base in pairs(var) do
+			for _, base in pairs(var) do
 				class.HandleBaseField(META, base)
 			end
 		else
@@ -131,7 +130,7 @@ function class.Create(type_name, class_name)
     local META = class.Get(type_name, class_name)
 
     if not META then
-        printf("tried to create unknown %s %q!", type or "no type", class_name or "no class")
+        MsgN(string.format("tried to create unknown %s %q!", type or "no type", class_name or "no class"))
         return
     end
 
@@ -147,7 +146,7 @@ function class.Create(type_name, class_name)
 			obj.BaseClass = obj.BaseList[1]
 		else
 			local current = obj
-			for i, base in pairs(obj.BaseList) do
+			for _, base in pairs(obj.BaseList) do
 				for key, val in pairs(base) do
 					obj[key] = obj[key] or val
 				end

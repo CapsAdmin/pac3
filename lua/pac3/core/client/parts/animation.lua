@@ -1,3 +1,6 @@
+local FrameTime = FrameTime
+
+
 local PART = {}
 
 PART.ClassName = "animation"
@@ -51,15 +54,6 @@ PART.ValidHoldTypes =
 	scared = ACT_HL2MP_IDLE_SCARED,
 }
 
-local function math_isvalid(num)
-	return
-		num and
-		num ~= inf and
-		num ~= ninf and
-		(num >= 0 or num <= 0)
-end
-
-
 function PART:GetNiceName()
 	local str = self:GetSequenceName()
 
@@ -73,10 +67,8 @@ end
 function PART:GetOwner()
 	local parent = self:GetParent()
 
-	if parent:IsValid() then
-		if parent.ClassName == "model" and parent.Entity:IsValid() then
-			return parent.Entity
-		end
+	if parent:IsValid() and parent.ClassName == "model" and parent.Entity:IsValid() then
+		return parent.Entity
 	end
 
 	return self.BaseClass.GetOwner(self)
@@ -89,6 +81,8 @@ function PART:GetSequenceList()
 	end
 	return {"none"}
 end
+
+PART.GetSequenceNameList = PART.GetSequenceList
 
 function PART:OnHide()
 	local ent = self:GetOwner()
@@ -128,12 +122,9 @@ function PART:OnShow()
 		if self.random_seqname ~= "" then
 			local seq = ent:LookupSequence(self.random_seqname)
 
-			local duration = 0
 			local count = ent:GetSequenceCount()
-			if seq >= 0 and seq < count and count > 0 then
-				duration = ent:SequenceDuration(seq)
-			else
-				-- It's an invalid sequence. Don't bother
+
+			if seq < 0 or seq > count or count < 0 then
 				return
 			end
 
@@ -172,19 +163,19 @@ function PART:OnShow()
 				ent.pac_animation_holdtypes[self] = nil
 			else
 				local params = {}
-					params[ACT_MP_STAND_IDLE] = index
-					params[ACT_MP_WALK] = index+1
-					params[ACT_MP_RUN] = index+2
-					params[ACT_MP_CROUCH_IDLE] = index+3
-					params[ACT_MP_CROUCHWALK] = index+4
-					params[ACT_MP_ATTACK_STAND_PRIMARYFIRE]	= index+5
-					params[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE] = index+5
-					params[ACT_MP_RELOAD_STAND ] = index+6
-					params[ACT_MP_RELOAD_CROUCH ] = index+6
-					params[ACT_MP_JUMP] = index+7
-					params[ACT_RANGE_ATTACK1] = index+8
-					params[ACT_MP_SWIM_IDLE] = index+8
-					params[ACT_MP_SWIM] = index+9
+					params[ACT_MP_STAND_IDLE] = index + 0
+					params[ACT_MP_WALK] = index + 1
+					params[ACT_MP_RUN] = index + 2
+					params[ACT_MP_CROUCH_IDLE] = index + 3
+					params[ACT_MP_CROUCHWALK] = index + 4
+					params[ACT_MP_ATTACK_STAND_PRIMARYFIRE]	= index + 5
+					params[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE] = index + 5
+					params[ACT_MP_RELOAD_STAND] = index + 6
+					params[ACT_MP_RELOAD_CROUCH] = index + 7
+					params[ACT_MP_JUMP] = index + 8
+					params[ACT_RANGE_ATTACK1] = index + 9
+					params[ACT_MP_SWIM_IDLE] = index + 10
+					params[ACT_MP_SWIM] = index + 11
 
 				-- "normal" jump animation doesn't exist
 				if t == "normal" then
@@ -227,12 +218,12 @@ function PART:OnThink()
 			return
 		end
 
-		local rate = math.min((self.Rate * duration), 1)
+		local rate = math.min(self.Rate * duration, 1)
 
 		if seq ~= -1 then
 
 			if rate == 0 then
-				ent:SetCycle(self.Offset%1)
+				ent:SetCycle(self.Offset % 1)
 				return
 			end
 		else
@@ -240,7 +231,7 @@ function PART:OnThink()
 
 			if seq ~= -1 then
 				if rate == 0 then
-					ent:SetCycle(self.Offset%1)
+					ent:SetCycle(self.Offset % 1)
 					return
 				end
 			else
@@ -256,12 +247,16 @@ function PART:OnThink()
 
 		if self.PingPongLoop then
 			self.frame = self.frame + rate / 2
-			local cycle = min + math.abs(math.Round((self.frame + self.Offset)*0.5) - (self.frame + self.Offset)*0.5)*2 * (max - min)
-			ent:SetCycle(cycle)
+			local cycle = min + math.abs(math.Round((self.frame + self.Offset) * 0.5) - (self.frame + self.Offset) * 0.5) * 2 * (max - min)
+			if pac.IsNumberValid(cycle) then
+				ent:SetCycle(cycle)
+			end
 		else
 			self.frame = self.frame + rate
-			local cycle = min + ((self.frame + self.Offset)*0.5)%1 * (max - min)
-			ent:SetCycle(cycle)
+			local cycle = min + ((self.frame + self.Offset) * 0.5) % 1 * (max - min)
+			if pac.IsNumberValid(cycle) then
+				ent:SetCycle(cycle)
+			end
 		end
 	end
 end

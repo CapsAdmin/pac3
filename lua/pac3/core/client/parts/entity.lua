@@ -1,3 +1,15 @@
+local render_CullMode = render.CullMode
+local render_SuppressEngineLighting = render.SuppressEngineLighting
+local render_SetBlend = render.SetBlend
+local render_SetColorModulation = render.SetColorModulation
+local render_MaterialOverride = render.MaterialOverride
+local game_SinglePlayer = game.SinglePlayer
+local RunConsoleCommand = RunConsoleCommand
+local Angle = Angle
+local Vector = Vector
+local NULL = NULL
+local Color = Color
+
 local PART = {}
 
 PART.ClassName = "entity"
@@ -120,7 +132,7 @@ function PART:OnBuildBonePositions()
 	local ent = self:GetOwner()
 
 	if self.OverallSize ~= 1 then
-		for i = 0, ent:GetBoneCount() do
+		for _ = 0, ent:GetBoneCount() do
 			ent:ManipulateBoneScale(0, Vector(1, 1, 1) * self.OverallSize)
 		end
 	end
@@ -252,18 +264,12 @@ function PART:UpdateWeaponDraw(ent)
 	end
 end
 
-local render_CullMode = render.CullMode
-local render_SuppressEngineLighting = render.SuppressEngineLighting
-local render_SetBlend = render.SetBlend
-local render_SetColorModulation = render.SetColorModulation
-local render_MaterialOverride = render.MaterialOverride
-
-function PART:UpdateColor(ent)
+function PART:UpdateColor()
 	render_SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness)
 	render_SetBlend(self.Alpha)
 end
 
-function PART:UpdateMaterial(ent)
+function PART:UpdateMaterial()
 	if self.Materialm then
 		render_MaterialOverride(self.Materialm)
 	end
@@ -274,8 +280,6 @@ function PART:UpdateAll(ent)
 	self:UpdateMaterial(ent)
 	self:UpdateScale(ent)
 end
-
-local blank_mat = Material("models/wireframe")
 
 local vector_origin = Vector()
 local angle_origin = Angle()
@@ -297,7 +301,7 @@ function PART:OnShow()
 			end
 		end
 
-		for key, field in pairs(self.ent_fields) do
+		for _, field in pairs(self.ent_fields) do
 			self["Set" .. field](self, self[field])
 		end
 
@@ -306,7 +310,7 @@ function PART:OnShow()
 		ent:SetColor(self.Colorc)
 		self:UpdateWeaponDraw(self:GetOwner())
 
-		function ent.RenderOverride(ent, skip)
+		function ent.RenderOverride()
 			if self:IsValid() then
 				if not self.HideEntity then
 
@@ -319,12 +323,10 @@ function PART:OnShow()
 					if modpos then
 						pos = ent:GetPos()
 
-						local pos, ang = self:GetDrawPosition(not self.Weapon and "none" or nil)
-						self.cached_pos = pos
-						self.cached_ang = ang
+						self.cached_pos, self.cached_ang = self:GetDrawPosition(not self.Weapon and "none" or nil)
 
-						ent:SetPos(pos)
-						ent:SetRenderAngles(ang)
+						ent:SetPos(self.cached_pos)
+						ent:SetRenderAngles(self.cached_ang)
 						ent:SetupBones()
 					else
 						self.cached_pos = ent:GetPos()
@@ -366,10 +368,10 @@ function PART:SetModel(str)
 end
 
 function PART:SetLodOverride(num)
+	self.LodOverride = num
 	local owner = self:GetOwner()
 	if owner:IsValid() then
 		owner:SetLOD(num)
-		self.LodOverride = num
 	end
 end
 
@@ -385,20 +387,20 @@ function PART:OnThink()
 
 		-- holy shit why does shooting reset the scale in singleplayer
 		-- dumb workaround
-		if game.SinglePlayer() and ent:IsPlayer() and ent:GetModelScale() ~= self.Size then
+		if game_SinglePlayer() and ent:IsPlayer() and ent:GetModelScale() ~= self.Size then
 			self:UpdateScale(ent)
 		end
 
 		if self.HideEntity or self.Weapon and self.current_ro ~= ent.RenderOverride then
 			self:OnShow()
 		end
-		
+
 		ent.pac_material = self.Material
 		ent.pac_materialm = self.Materialm
 		ent.pac_color = self.Colorf
 		ent.pac_alpha = self.Alpha
 		ent.pac_brightness = self.Brightness
-		
+
 		ent.pac_hide_entity = self.HideEntity
 		ent.pac_fullbright = self.Fullbright
 		ent.pac_invert = self.Invert
@@ -415,13 +417,13 @@ function PART:OnHide()
 
 		ent.RenderOverride = nil
 		ent:SetColor(Color(255, 255, 255, 255))
-		
+
 		ent.pac_material = nil
 		ent.pac_materialm = nil
 		ent.pac_color = nil
 		ent.pac_alpha = nil
 		ent.pac_brightness = nil
-		
+
 		ent.pac_hide_entity = nil
 		ent.pac_fullbright = nil
 		ent.pac_invert = nil
@@ -443,7 +445,7 @@ function PART:OnHide()
 		local weps = ent.GetWeapons and ent:GetWeapons()
 
 		if weps then
-			for key, wep in pairs(weps) do
+			for _, wep in pairs(weps) do
 				wep.pac_hide_weapon = nil
 				pac.HideWeapon(wep, false)
 			end
@@ -479,7 +481,7 @@ function PART:PreEntityDraw(ent)
 	end
 end
 
-function PART:PostEntityDraw(ent)
+function PART:PostEntityDraw()
 	if self.Invert then
 		render_CullMode(0) -- MATERIAL_CULLMODE_CCW
 	end

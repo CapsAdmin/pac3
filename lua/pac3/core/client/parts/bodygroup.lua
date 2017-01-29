@@ -28,10 +28,10 @@ function PART:OnThink()
 	if ent:IsValid() then
 
 		if not self.bodygroup_info then
-			for k,v in pairs(ent:GetBodyGroups()) do
-				if v.name == self.BodyGroupName:lower() then
-					self.bodygroup_info = v
-					self.bodygroup_info.model_index = math.Clamp(self.ModelIndex, 0, v.num - 1)
+			for _, info in pairs(ent:GetBodyGroups()) do
+				if info.name == self.BodyGroupName:lower() then
+					self.bodygroup_info = info
+					self.bodygroup_info.model_index = math.Clamp(self.ModelIndex, 0, info.num - 1)
 
 					if ent:IsPlayer() then
 						ent.pac_bodygroup_info = self.bodygroup_info
@@ -63,10 +63,10 @@ function PART:GetModelIndexList()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
-		for k,v in pairs(ent:GetBodyGroups()) do
-			if v.id == self.bodygroup_info.id then
-				for k,v in pairs(v.submodels) do
-					table.insert(out, v)
+		for _, info in pairs(ent:GetBodyGroups()) do
+			if info.id == self.bodygroup_info.id then
+				for _, model in pairs(info.submodels) do
+					table.insert(out, model)
 				end
 				break
 			end
@@ -82,8 +82,8 @@ function PART:GetBodyGroupNameList()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
-		for k,v in pairs(ent:GetBodyGroups()) do
-			table.insert(out, v.name:lower())
+		for _, info in pairs(ent:GetBodyGroups()) do
+			table.insert(out, info.name:lower())
 		end
 	end
 

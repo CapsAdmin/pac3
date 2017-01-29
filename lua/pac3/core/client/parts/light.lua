@@ -10,7 +10,7 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	local hue, sat, val = pac.ColorToNames(self:GetColor())
+	local hue = pac.ColorToNames(self:GetColor())
 	return hue .. " light"
 end
 

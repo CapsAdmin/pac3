@@ -10,9 +10,8 @@
 		"*.md",
 		"*.bat",
 		"*.7z",
-		"COPYING",
-		"README.md",
-		"TODO.txt",
-		"boneanimlib.txt"
+		"*.md",
+		"*.yml",
+		"COPYING"
 	]
 }

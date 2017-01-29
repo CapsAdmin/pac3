@@ -47,9 +47,9 @@ end
 do -- from server
 	function pace.WearPartFromServer(owner, part_data, data)
 		pac.dprint("received outfit %q from %s with %i number of children to set on %s", part_data.self.Name or "", tostring(owner), table.Count(part_data.children), part_data.self.OwnerName or "")
-		
+
 		if pace.CallHook("WearPartFromServer",owner, part_data, data)==false then return end
-		
+
 		local part = pac.GetPartFromUniqueID(data.player_uid, part_data.self.UniqueID)
 
 		if part:IsValid() then
@@ -57,17 +57,24 @@ do -- from server
 			part:Remove()
 		end
 
-		timer.Simple(0.25, function()
-			if not owner:IsValid() then return end
+		-- safe guard
+		if data.is_dupe then
+			local id = tonumber(part_data.self.OwnerName)
+			if id and not Entity(id):IsValid() then
+				return
+			end
+		end
 
-			local part = pac.CreatePart(part_data.self.ClassName, owner)
+		local part = pac.CreatePart(part_data.self.ClassName, owner)
+		part:SetTable(part_data)
 
-			part:SetTable(part_data)
+		if data.is_dupe then
+			part.dupe_remove = true
+		end
 
-			pac.HandleModifiers(part_data, owner)
+		pac.HandleModifiers(part_data, owner)
 
-			pace.CallHook("OnWoreOutfit", part, owner == pac.LocalPlayer)
-		end)
+		pace.CallHook("OnWoreOutfit", part, owner == pac.LocalPlayer)
 	end
 
 	function pace.RemovePartFromServer(owner, part_name, data)

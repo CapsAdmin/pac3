@@ -1,5 +1,15 @@
 local L = pace.LanguageString
 
+-- load only when hovered above
+local function add_expensive_submenu_load(pnl, callback)
+	local old = pnl.OnCursorEntered
+	pnl.OnCursorEntered = function(...)
+		callback()
+		pnl.OnCursorEntered = old
+		return old(...)
+	end
+end
+
 function pace.WearParts(file, clear)
 	if file then
 		pace.LoadParts(file, clear)
@@ -159,8 +169,6 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 end
 
 do -- menu
-	local cvar_submenu = CreateClientConVar("pac_submenu_parts", 1, true)
-
 	function pace.AddRegisteredPartsToMenu(menu)
 		local temp = {}
 
@@ -175,8 +183,7 @@ do -- menu
 			end
 		end
 
-		if pace.IsInBasicMode() or not cvar_submenu:GetBool() then
-
+		if pace.IsInBasicMode() then
 			table.sort(temp)
 
 			for _, class_name in pairs(temp) do
@@ -185,22 +192,6 @@ do -- menu
 				end):SetImage(pace.PartIcons[class_name])
 			end
 		else
-			if not file.Exists("pac3_editor/seen_submenus.txt", "DATA") then
-				file.CreateDir("pac3_editor", "DATA")
-
-				menu:AddOption(L"GET RID OF", function()
-					RunConsoleCommand("pac_submenu_parts", 0)
-					file.Write("pac3_editor/seen_submenus.txt", "I HATE SUBMENUS", "DATA")
-				end)
-
-				menu:AddOption(L"THE SUBMENU", function()
-					RunConsoleCommand("pac_submenu_parts", 0)
-					file.Write("pac3_editor/seen_submenus.txt", "I HATE SUBMENUS", "DATA")
-				end)
-
-				file.Write("pac3_editor/seen_submenus.txt", "I don't mind submenus", "DATA")
-			end
-
 			local added = {}
 
 			for key, tbl in pairs(pace.PartTree) do
@@ -277,23 +268,14 @@ do -- menu
 
 		menu:AddSpacer()
 
-		if not pace.IsInBasicMode() then
-			menu:AddOption(L"copy global id", function()
-				SetClipboardText("\""..obj.UniqueID.."\"")
-			end):SetImage(pace.MiscIcons.uniqueid)
-		end
-
-		menu:AddOption(L"help", function()
-			pace.ShowHelp(obj.ClassName)
-		end):SetImage(pace.MiscIcons.help)
-
 		local save, pnl = menu:AddSubMenu(L"save", function() pace.SaveParts() end)
 		pnl:SetImage(pace.MiscIcons.save)
-		pace.AddSaveMenuToMenu(save, obj)
+		add_expensive_submenu_load(pnl, function() pace.AddSaveMenuToMenu(save, obj) end)
 
 		local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
+		add_expensive_submenu_load(pnl, function() pace.AddSavedPartsToMenu(load, false, obj) end)
+
 		pnl:SetImage(pace.MiscIcons.load)
-		pace.AddSavedPartsToMenu(load, false, obj)
 
 		menu:AddSpacer()
 
@@ -321,7 +303,7 @@ do -- menu
 
 		local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
 		pnl:SetImage(pace.MiscIcons.load)
-		pace.AddSavedPartsToMenu(load, false, obj)
+		add_expensive_submenu_load(pnl, function() pace.AddSavedPartsToMenu(load, false, obj) end)
 
 		menu:AddOption(L"clear", function()
 			pace.ClearParts()

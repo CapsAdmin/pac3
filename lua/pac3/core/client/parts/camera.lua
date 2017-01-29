@@ -1,3 +1,5 @@
+local LerpAngle = LerpAngle
+
 local PART = {}
 
 PART.ClassName = "camera"
@@ -17,10 +19,10 @@ function PART:Initialize()
 	owner.pac_cameras[self] = self
 end
 
-function PART:CalcView(ply, pos, eyeang, fov, nearz, farz)
+function PART:CalcView(_, _, eyeang, fov, nearz, farz)
 	local pos, ang = self:GetDrawPosition(nil, true)
 
-	ang = LerpAngle(self.EyeAnglesLerp, ang,eyeang)
+	ang = LerpAngle(self.EyeAnglesLerp, ang, eyeang)
 
 	if self.NearZ > 0 then
 		nearz = self.NearZ
@@ -45,20 +47,20 @@ local temp = {}
 function pac.CalcView(ply, pos, ang, fov, nearz, farz)
 	if not ply.pac_cameras then return end
 
-	for _, self in pairs(ply.pac_cameras) do
-		if self:IsValid() then
-			if not self:IsHidden() then
-				local pos, ang, fov, nearz, farz = self:CalcView(ply, pos, ang, fov, nearz, farz)
-				temp.origin =  pos
-				temp.angles =  ang
-				temp.fov =  fov
-				temp.znear =  nearz
-				temp.zfar =  farz
-				temp.drawviewer =  not self.DrawViewModel
+	for _, part in pairs(ply.pac_cameras) do
+		if part:IsValid() then
+			if not part:IsHidden() then
+				pos, ang, fov, nearz, farz = part:CalcView(ply, pos, ang, fov, nearz, farz)
+				temp.origin = pos
+				temp.angles = ang
+				temp.fov = fov
+				temp.znear = nearz
+				temp.zfar = farz
+				temp.drawviewer = not part.DrawViewModel
 				return temp
 			end
 		else
-			ply.pac_cameras[self] = nil
+			ply.pac_cameras[part] = nil
 		end
 	end
 end

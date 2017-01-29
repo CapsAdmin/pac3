@@ -8,22 +8,29 @@ do -- projectile entity
 	ENT.ClassName = "pac_projectile"
 
 	function ENT:SetupDataTables()
-		self:SetDTBool(0, "AimDir")
+		self:NetworkVar("Bool", 0, "AimDir")
+		self:NetworkVar("Vector", 0, "OldVelocity")
 	end
 
 	if CLIENT then
 		function ENT:Draw()
-			if self.dt.AimDir then
-				self:SetRenderAngles(self:GetVelocity():Angle())
+			if self:GetAimDir() then
+				if self:GetOldVelocity() ~= vector_origin then
+					self:SetRenderAngles(self:GetOldVelocity():Angle())
+				elseif self:GetVelocity() ~= vector_origin then
+					self:SetRenderAngles(self:GetVelocity():Angle())
+				end
+			end
+
+			if self:GetParent():IsValid() and not self.done then
+				self:SetPredictable(true)
+				self.done = true
 			end
 		end
 	end
 
 	if SERVER then
-
-		--fix missing attacker
 		hook.Add("EntityTakeDamage", "pac_projectile", function(ent, dmg)
-
 			local a, i = dmg:GetAttacker(), dmg:GetInflictor()
 
 			if a == i and a:IsValid() and a.projectile_owner then
@@ -32,27 +39,36 @@ do -- projectile entity
 					dmg:SetAttacker(a.projectile_owner)
 				end
 			end
-
 		end)
+
+		function ENT:Initialize()
+			self.next_target = 0
+		end
 
 		function ENT:SetData(ply, pos, ang, part)
 
 			self.projectile_owner = ply
 
+			local radius = math.Clamp(part.Radius, 1, 100)
+
 			if part.Sphere then
-				self:PhysicsInitSphere(math.Clamp(part.Radius, 1, 30))
+				self:PhysicsInitSphere(radius)
 			else
-				self:PhysicsInitBox(Vector(1,1,1) * - math.Clamp(part.Radius, 1, 30), Vector(1,1,1) * math.Clamp(part.Radius, 1, 30))
+				self:PhysicsInitBox(Vector(1,1,1) * - radius, Vector(1,1,1) * radius)
 			end
 
 			local phys = self:GetPhysicsObject()
 			phys:EnableGravity(part.Gravity)
 			phys:AddVelocity((ang:Forward() + (VectorRand():Angle():Forward() * part.Spread)) * part.Speed * 1000)
 			phys:EnableCollisions(part.Collisions)
-			phys:SetDamping(part.Damping, 0)
-			phys:SetMass(math.Clamp(part.Mass, 0.001, 50000))
+			if not part.Collisions then
+				self:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+			end
 
-			self.dt.AimDir = part.AimDir
+			phys:SetMass(math.Clamp(part.Mass, 0.001, 50000))
+			phys:SetDamping(0, 0)
+
+			self:SetAimDir(part.AimDir)
 
 			self.part_data = part
 		end
@@ -89,14 +105,144 @@ do -- projectile entity
 			radiation = 262144, --radiation
 			removenoragdoll = 4194304, --don't create a ragdoll on death
 			slowburn = 2097152, --
+
+			explosion = -1, -- util.BlastDamageInfo
+			fire = -1, -- ent:Ignite(5)
+
+			-- env_entity_dissolver
+			dissolve_energy = 0,
+			dissolve_heavy_electrical = 1,
+			dissolve_light_electrical = 2,
+			dissolve_core_effect = 3,
+
+			heal = -1,
+			armor = -1,
 		}
 
-		function ENT:PhysicsCollide(data)
-			if self.part_data and self.part_data.Sticky and data.HitEntity:IsWorld() then
-				local phys = self:GetPhysicsObject()
+		local dissolver_entity = NULL
+		local function dissolve(target, attacker, typ)
+			local ent = dissolver_entity:IsValid() and dissolver_entity or ents.Create("env_entity_dissolver")
+			ent:Spawn()
+			target:SetName(tostring({}))
+			ent:SetKeyValue("dissolvetype", tostring(typ))
+			ent:Fire("Dissolve", target:GetName())
+			timer.Simple(5, function() SafeRemoveEntity(ent) end)
+			dissolver_entity = ent
+		end
+
+		function ENT:PhysicsUpdate(phys)
+			if not self.part_data then return end
+
+			phys:SetVelocity(phys:GetVelocity() / math.max(1 + (self.part_data.Damping / 100), 1))
+
+			if self.part_data.Attract ~= 0 then
+				if self.part_data.AttractMode == "hitpos" then
+					local pos = self:GetOwner():GetEyeTrace().HitPos
+
+					local dir = pos - phys:GetPos()
+					dir:Normalize()
+					dir = dir * self.part_data.Attract
+
+					phys:SetVelocity(phys:GetVelocity() + dir)
+				elseif self.part_data.AttractMode == "hitpos_radius" then
+					local pos = self:GetOwner():EyePos() + self:GetOwner():GetAimVector() * self.part_data.AttractRadius
+
+					local dir = pos - phys:GetPos()
+					dir:Normalize()
+					dir = dir * self.part_data.Attract
+
+					phys:SetVelocity(phys:GetVelocity() + dir)
+				elseif self.part_data.AttractMode == "closest_to_projectile" or self.part_data.AttractMode == "closest_to_hitpos" then
+					if self.next_target < CurTime() then
+						local radius = math.Clamp(self.part_data.AttractRadius, 0, 300)
+						local pos
+
+						if self.part_data.AttractMode == "closest_to_projectile" then
+							pos = phys:GetPos()
+						else
+							pos = self:GetOwner():GetEyeTrace().HitPos
+						end
+
+						local closest_1 = {}
+						local closest_2 = {}
+
+						for _, ent in ipairs(ents.FindInSphere(pos, radius)) do
+							if
+								ent ~= self and
+								(ent ~= self:GetOwner() or self.part_data.CollideWithOwner) and
+								ent:GetPhysicsObject():IsValid() and
+								ent:GetClass() ~= self:GetClass()
+							then
+								local data = {dist = ent:NearestPoint(ent:GetPos()):Distance(pos), ent = ent}
+								if ent:IsPlayer() or ent:IsNPC() then
+									table.insert(closest_1, data)
+								else
+									table.insert(closest_2, data)
+								end
+							end
+						end
+
+						if closest_1[1] then
+							table.sort(closest_1, function(a, b) return a.dist < b.dist end)
+							self.target_ent = closest_1[1].ent
+						elseif closest_2[1] then
+							table.sort(closest_2, function(a, b) return a.dist < b.dist end)
+							self.target_ent = closest_2[1].ent
+						end
+
+						self.next_target = CurTime() + 0.15
+					end
+
+					if self.target_ent and self.target_ent:IsValid() then
+						local dir = self.target_ent:NearestPoint(phys:GetPos()) - phys:GetPos()
+						dir:Normalize()
+						dir = dir * self.part_data.Attract
+
+						phys:SetVelocity(phys:GetVelocity() + dir)
+					end
+				end
+			end
+		end
+
+		function ENT:PhysicsCollide(data, phys)
+			if not self.part_data then return end
+
+			if self.part_data.Bounce ~= 0 then
+				phys:SetVelocity(data.OurOldVelocity - 2 * (data.HitNormal:Dot(data.OurOldVelocity) * data.HitNormal) * self.part_data.Bounce)
+			end
+
+			if self.part_data.Sticky and (self.part_data.Bounce == 0 or not data.HitEntity:IsWorld()) then
 				phys:SetVelocity(Vector(0,0,0))
 				phys:Sleep()
 				phys:EnableMotion(false)
+				phys:EnableCollisions(false)
+
+				timer.Simple(0, function() if self:IsValid() then self:SetCollisionGroup(COLLISION_GROUP_DEBRIS) end end)
+
+				 if not data.HitEntity:IsWorld() then
+					if data.HitEntity:GetBoneCount() then
+						local closest = {}
+						for id = 1, data.HitEntity:GetBoneCount() do
+							local pos = data.HitEntity:GetBonePosition(id)
+							if pos then
+								table.insert(closest, {dist = pos:Distance(data.HitPos), id = id, pos = pos})
+							end
+						end
+						if closest[1] then
+							table.sort(closest, function(a, b) return a.dist < b.dist end)
+							self:FollowBone(data.HitEntity, closest[1].id)
+							self:SetLocalPos(util.TraceLine({start = data.HitPos, endpos = closest[1].pos}).HitPos - closest[1].pos)
+						else
+							self:SetPos(data.HitPos)
+							self:SetParent(data.HitEntity)
+						end
+					else
+						self:SetPos(data.HitPos)
+						self:SetParent(data.HitEntity)
+					end
+				end
+
+				self:SetOldVelocity(data.OurOldVelocity)
 			end
 
 			if self.part_data.BulletImpact then
@@ -107,24 +253,87 @@ do -- projectile entity
 					Num = 1,
 					Src = data.HitPos - data.HitNormal,
 					Dir = data.HitNormal,
+					Distance = 10,
 				}
 			end
 
-			if self.part_data.Damage > 0 and data.HitEntity.Health then
-				local info = DamageInfo()
+			local owner = self:GetOwner()
 
-				info:SetAttacker(self:GetOwner():IsValid() and self:GetOwner() or self)
-				info:SetInflictor(self)
-				info:SetDamageForce(data.OurOldVelocity)
-				info:SetDamagePosition(data.HitPos)
-				info:SetDamage(math.min(self.part_data.Damage, data.HitEntity:Health())) -- just making sure
-				info:SetDamageType(damage_types[self.part_data.DamageType] or damage_types.generic)
+			if
+				self.part_data.DamageType:sub(0, 9) == "dissolve_" and
+				damage_types[self.part_data.DamageType] and
+				owner:IsValid() and
+				owner:IsPlayer()
+			then
+				if data.HitEntity:IsPlayer() then
+					local info = DamageInfo()
+					info:SetAttacker(owner)
+					info:SetInflictor(self)
+					info:SetDamageForce(data.OurOldVelocity)
+					info:SetDamagePosition(data.HitPos)
+					info:SetDamage(100000)
+					info:SetDamageType(damage_types.dissolve)
 
-				data.HitEntity:TakeDamageInfo(info)
+					data.HitEntity:TakeDamageInfo(info)
+				elseif hook.Run("CanTool", owner, util.TraceLine({start = owner:EyePos(), endpos = data.HitEntity:GetPos(), filter = {owner}}), "remover") ~= false then
+					dissolve(data.HitEntity, owner, damage_types[self.part_data.DamageType])
+				end
+			end
+
+			local damage_radius = math.Clamp(self.part_data.DamageRadius, 0, 300)
+
+			if self.part_data.Damage > 0 then
+				if self.part_data.DamageType == "heal" then
+					if damage_radius > 0 then
+						for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
+							ent:SetHealth(math.min(ent:Health() + self.part_data.Damage, ent:GetMaxHealth()))
+						end
+					else
+						data.HitEntity:SetHealth(math.min(data.HitEntity:Health() + self.part_data.Damage, data.HitEntity:GetMaxHealth()))
+					end
+				elseif self.part_data.DamageType == "armor" then
+					if damage_radius > 0 then
+						for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
+							if ent.SetArmor and ent.Armor then
+								ent:SetArmor(math.min(ent:Armor() + self.part_data.Damage, ent.GetMaxArmor and ent:GetMaxArmor() or 100))
+							end
+						end
+					elseif data.HitEntity.SetArmor and data.HitEntity.Armor then
+						data.HitEntity:SetArmor(math.min(data.HitEntity:Armor() + self.part_data.Damage, data.HitEntity.GetMaxArmor and data.HitEntity:GetMaxArmor() or 100))
+					end
+				else
+					local info = DamageInfo()
+
+					info:SetAttacker(owner:IsValid() and owner or self)
+					info:SetInflictor(self)
+
+					if self.part_data.DamageType == "fire" and owner:IsPlayer() and owner:IsValid() and hook.Run("CanProperty", owner, "ignite", data.HitEntity) ~= false then
+						data.HitEntity:Ignite(math.min(self.part_data.Damage, 5), damage_radius)
+					elseif self.part_data.DamageType == "explosion" then
+						info:SetDamageType(damage_types.blast)
+						info:SetDamage(math.Clamp(self.part_data.Damage, 0, 100000))
+						util.BlastDamageInfo(info, data.HitPos, damage_radius)
+					else
+						info:SetDamageForce(data.OurOldVelocity)
+						info:SetDamagePosition(data.HitPos)
+						info:SetDamage(math.min(self.part_data.Damage, 100000))
+						info:SetDamageType(damage_types[self.part_data.DamageType] or damage_types.generic)
+
+						if damage_radius > 0 then
+							for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
+								ent:TakeDamageInfo(info)
+							end
+						else
+							data.HitEntity:TakeDamageInfo(info)
+						end
+					end
+				end
 			end
 
 			if self.part_data.RemoveOnCollide then
-				timer.Simple(0.01, function() SafeRemoveEntity(self) end)
+				timer.Simple(0, function()
+					SafeRemoveEntity(self)
+				end)
 			end
 		end
 	end
@@ -152,22 +361,19 @@ if SERVER then
 
 		local pos = net.ReadVector()
 		local ang = net.ReadAngle()
-		-- Is this even used???
-		ply.pac_projectiles = ply.pac_projectiles or {}
-		if table.Count( ply.pac_projectiles ) >= 30 then
-			return
-		end
-
 		local part = net.ReadTable()
 
 		if pos:Distance(ply:EyePos()) > 200 * ply:GetModelScale() then
-			if FindMetaTable("Entity").CPPIGetOwner then
-				for _, ent in ipairs(ents.FindInSphere(pos, 200)) do
-					if ent:CPPIGetOwner() == ply then
-						break
-					end
+			local ok = false
+
+			for _, ent in ipairs(ents.FindInSphere(pos, 200)) do
+				if (ent.CPPIGetOwner and ent:CPPIGetOwner() == ply) or ent.projectile_owner == ply or ent:GetOwner() == ply then
+					ok = true
+					break
 				end
-			else
+			end
+
+			if not ok then
 				pos = ply:EyePos()
 			end
 		end
@@ -180,7 +386,7 @@ if SERVER then
 			SafeRemoveEntityDelayed(ent,math.Clamp(part.LifeTime, 0, 10))
 
 			ent:SetModel("models/props_junk/popcan01a.mdl")
-
+			ent:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE_DEBRIS)
 			ent:SetPos(pos)
 			ent:SetAngles(ang)
 			ent:Spawn()

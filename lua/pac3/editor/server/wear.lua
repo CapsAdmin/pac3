@@ -1,19 +1,26 @@
 pace.StreamQueue = pace.StreamQueue or {}
 
 local frame_number = 0
+local last_frame
+
+local function catchError(err)
+	print('[PAC3] Error: ', err)
+	print(debug.traceback())
+end
 
 timer.Create("pac_check_stream_queue", 0.1, 0, function()
 	if not pace.BusyStreaming and #pace.StreamQueue ~= 0 then
-		pace.SubmitPart(unpack(table.remove(pace.StreamQueue)))
+		xpcall(pace.SubmitPart, catchError, unpack(table.remove(pace.StreamQueue)))
 	end
+
 	frame_number = frame_number + 1
 end)
 
 
 local function make_copy(tbl, input)
 	for key, val in pairs(tbl.self) do
-		if key == "ClassName" then continue end
-				
+--		if key == "ClassName" then continue end
+
 		if key:find("UID", 0, true) or key == "UniqueID" then
 			tbl.self[key] = util.CRC(val .. input)
 		end
@@ -29,36 +36,36 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 	if parts.json then
 		parts = util.JSONToTable(parts.json)
 	end
-	
+
 	local id = ent:EntIndex()
-	
+
 	if parts.part then
 		parts = {[parts.part.self.UniqueID] = parts}
 	end
-	
+
 	ent.pac_parts = parts
 	pace.dupe_ents[ent:EntIndex()] = {owner = ply, ent = ent}
 
 	for uid, data in pairs(parts) do
-		
+
 		if type(data.part) == "table" then
 			make_copy(data.part, id)
-		
+
 			data.part.self.Name = tostring(ent)
 			data.part.self.OwnerName = id
 		end
-		
+
 		data.owner = ply
 		data.uid = ply:UniqueID()
-		data.skip_dupe = true
-		
-		pace.SubmitPart(data, nil, true)
-	end	
+		data.is_dupe = true
+
+		pace.SubmitPart(data)
+	end
 end)
 
 function pace.SubmitPart(data, filter)
 
-	if type(data.part) == "table" then	
+	if type(data.part) == "table" then
 		if last_frame == frame_number then
 			table.insert(pace.StreamQueue, {data, filter})
 			pace.dprint("queuing part %q from %s", data.part.self.Name, tostring(data.owner))
@@ -69,36 +76,36 @@ function pace.SubmitPart(data, filter)
 	-- last arg "true" is pac3 only in case you need to do your checking differnetly from pac2
 	local allowed, reason = hook.Call("PrePACConfigApply", GAMEMODE, data.owner, data, true)
 
-	if type(data.part) == "table" then	
+	if type(data.part) == "table" then
 		local ent = Entity(tonumber(data.part.self.OwnerName) or -1)
 		if ent:IsValid()then
 			if ent.CPPICanTool and (ent:CPPIGetOwner() ~= data.owner and data.owner:IsValid() and not ent:CPPICanTool(data.owner, "paint")) then
 				allowed = false
 				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
-			elseif not data.skip_dupe then
+			elseif not data.is_dupe then
 				ent.pac_parts = ent.pac_parts or {}
 				ent.pac_parts[data.part.self.UniqueID] = data
-				
+
 				pace.dupe_ents[ent:EntIndex()] = {owner = data.owner, ent = ent}
-				
+
 				duplicator.ClearEntityModifier(ent, "pac_config")
 				duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(ent.pac_parts)})
 			end
-			
+
 			ent:CallOnRemove("pac_config", function(ent)
 				if ent.pac_parts then
 					for _, data in pairs(ent.pac_parts) do
 						if type(data.part) == "table" then
 							data.part = data.part.self.UniqueID
 						end
-						data.skip_dupe = true
+						data.is_dupe = true
 						pace.RemovePart(data)
 					end
 				end
 			end)
 		end
 	end
-	
+
 	if data.uid ~= false then
 		if allowed == false then return allowed, reason end
 		if pace.IsBanned(data.owner) then return false, "you are banned from using pac" end
@@ -106,14 +113,14 @@ function pace.SubmitPart(data, filter)
 
 	local uid = data.uid
 	pace.Parts[uid] = pace.Parts[uid] or {}
-	
+
 	if type(data.part) == "table" then
-		pace.Parts[uid][data.part.self.UniqueID] = data	
-	else		
+		pace.Parts[uid][data.part.self.UniqueID] = data
+	else
 		if data.part == "__ALL__" then
 			pace.Parts[uid] = {}
-			filter = true			
-			
+			filter = true
+
 			for key, v in pairs(pace.dupe_ents) do
 				if v.owner:IsValid() and v.owner == data.owner then
 					if v.ent:IsValid() and v.ent.pac_parts then
@@ -128,19 +135,19 @@ function pace.SubmitPart(data, filter)
 					pace.dupe_ents[key] = nil
 				end
 			end
-			
+
 		else
 			pace.Parts[uid][data.part] = nil
-			
+
 			-- this doesn't work because the unique id is different for some reason
 			-- use clear for now if you wanna clear a dupes outfit
 			--[[for key, v in pairs(pace.dupe_ents) do
 				if v.owner:IsValid() and v.owner == data.owner then
-					if v.ent:IsValid() and v.ent.pac_parts then	
+					if v.ent:IsValid() and v.ent.pac_parts then
 						local id = util.CRC(data.part .. v.ent:EntIndex())
 						v.ent.pac_parts[id] = nil
 						duplicator.ClearEntityModifier(v.ent, "pac_config")
-						duplicator.StoreEntityModifier(v.ent, "pac_config", v.ent.pac_parts)		
+						duplicator.StoreEntityModifier(v.ent, "pac_config", v.ent.pac_parts)
 						return
 					else
 						pace.dupe_ents[key] = nil
@@ -151,7 +158,7 @@ function pace.SubmitPart(data, filter)
 			end]]
 		end
 	end
-	
+
 	if filter == false then
 		filter = data.owner
 	elseif filter == true then
@@ -163,16 +170,16 @@ function pace.SubmitPart(data, filter)
 		end
 		filter = tbl
 	end
-	
+
 	if not data.server_only then
 		if data.owner:IsValid() then
 			data.player_uid = data.owner:UniqueID()
 		end
-	
+
 		local players = filter or player.GetAll()
-		
+
 		if type(players) == "table" then
-		
+
 			--remove players from list who haven't requested outfits...
 			for key=#players,1,-1 do
 				local ply= players[key]
@@ -180,16 +187,16 @@ function pace.SubmitPart(data, filter)
 					table.remove(players, key)
 				end
 			end
-			
+
 			if pace.GlobalBans then
 				if data.owner:IsValid() then
-					local owner_steamid = data.owner:SteamID() 
+					local owner_steamid = data.owner:SteamID()
 					for key, ply in pairs(players) do
 						local steamid = ply:SteamID()
 						for var, reason in pairs(pace.GlobalBans) do
 							if  var == steamid or type(var) == "table" and (table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):") or ""))) then
 								table.remove(players, key)
-								
+
 								if owner_steamid == steamid then
 									print(string.format("[pac3] Dropping data transfer request by '%s' (%s) due to a global PAC ban.",
 										ply:Nick(), ply:SteamID()))
@@ -205,12 +212,12 @@ function pace.SubmitPart(data, filter)
 				return true
 			end
 		end
-	
-		
+
+
 		if not players then return end
-		
+
 		if type(players) == "table" and not next(players) then return end
-		
+
 		-- Alternative transmission system
 		local ret = hook.Run("pac_SendData",players,data)
 		if ret==nil then
@@ -225,22 +232,22 @@ function pace.SubmitPart(data, filter)
 				net.Send(players)
 			end
 		end
-		
-		if type(data.part) == "table" then	
+
+		if type(data.part) == "table" then
 			last_frame = frame_number
 			pac.HandleModifiers(data.part, data.owner)
 		end
-		
+
 	end
-	
+
 	return true
 end
 
 function pace.SubmitPartNotify(data)
 	pace.dprint("submitted outfit %q from %s with %i number of children to set on %s", data.part.self.Name or "", data.owner:GetName(), table.Count(data.part.children), data.part.self.OwnerName or "")
-	
+
 	local allowed, reason = pace.SubmitPart(data)
-	
+
 	if data.owner:IsPlayer() then
 		if allowed == "queue" then return end
 		umsg.Start("pac_submit_acknowledged", data.owner)
@@ -254,21 +261,21 @@ end
 
 function pace.RemovePart(data)
 	pace.dprint("%s is removed %q", data.owner and data.owner:IsValid() and data.owner:GetName(), data.part)
-	
+
 	if data.part == "__ALL__" then
 		pac.HandleModifiers(nil, data.owner)
 	end
-	
+
 	pace.SubmitPart(data, data.filter)
 end
 
 function pace.HandleReceivedData(ply, data)
 	data.owner = ply
 	data.uid = ply:UniqueID()
-	
+
 	if type(data.part) == "table" and data.part.self then
 		if type(data.part.self) == "table" and not data.part.self.UniqueID then return end -- bogus data
-		
+
 		pace.SubmitPartNotify(data)
 	elseif type(data.part) == "string" then
 		pace.RemovePart(data)
@@ -288,7 +295,7 @@ end)
 
 function pace.ClearOutfit(ply)
 	local uid = ply:UniqueID()
-	
+
 	pace.SubmitPart({part = "__ALL__", uid = ply:UniqueID(), owner = ply})
 	pac.HandleModifiers(nil, ply)
 end

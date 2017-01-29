@@ -1,6 +1,15 @@
-jit.on(true, true)
-
 local pac = pac
+local pairs = pairs
+local ipairs = ipairs
+local table = table
+local Vector = Vector
+local Angle = Angle
+local Color = Color
+local NULL = NULL
+
+local VEC0 = Vector(0,0,0)
+local ANG0 = Angle(0,0,0)
+local LocalToWorld = LocalToWorld
 
 local function SETUP_CACHE_FUNC(tbl, func_name)
 	local old_func = tbl[func_name]
@@ -18,12 +27,6 @@ local function SETUP_CACHE_FUNC(tbl, func_name)
 		return self[cached_key]
 	end
 end
-
-local pairs = pairs
-local pac = pac
-local table = table
-local Vector = Vector
-local Angle = Angle
 
 local PART = {}
 
@@ -79,8 +82,10 @@ end
 
 function PART:PreInitialize()
 	self.Children = {}
+	self.Children2 = {}
 	self.modifiers = {}
 	self.RootPart = NULL
+	self.DrawOrder = 0
 
 	self.cached_pos = Vector(0,0,0)
 	self.cached_ang = Angle(0,0,0)
@@ -102,7 +107,7 @@ function PART:GetName()
 		local count = 0
 
 		if self:HasParent() then
-			for key, val in pairs(self:GetParent():GetChildren()) do
+			for _, val in ipairs(self:GetParent():GetChildren()) do
 				if val:GetNiceName() == self:GetNiceName() then
 					count = count + 1
 
@@ -130,7 +135,7 @@ function PART:GetEnabled()
 
 	local enabled = self:IsEnabled()
 
-	if self.last_enabled==enabled then
+	if self.last_enabled == enabled then
 		return enabled
 	end
 
@@ -164,9 +169,9 @@ do -- modifiers
 	end
 
 	function PART:RemoveModifier(part)
-		for k,v in pairs(self.modifiers) do
+		for i, v in ipairs(self.modifiers) do
 			if v == part then
-				table.remove(self.modifiers, k)
+				table.remove(self.modifiers, i)
 				break
 			end
 		end
@@ -174,7 +179,7 @@ do -- modifiers
 
 	function PART:ModifiersPreEvent(event)
 		if #self.modifiers > 0 then
-			for _, part in pairs(self.modifiers) do
+			for _, part in ipairs(self.modifiers) do
 				if not part:IsHidden() then
 
 					if not part.pre_draw_events then part.pre_draw_events = {} end
@@ -190,7 +195,7 @@ do -- modifiers
 
 	function PART:ModifiersPostEvent(event)
 		if #self.modifiers > 0 then
-			for _, part in pairs(self.modifiers) do
+			for _, part in ipairs(self.modifiers) do
 				if not part:IsHidden() then
 
 					if not part.post_draw_events then part.post_draw_events = {} end
@@ -236,7 +241,7 @@ do -- owner
 
 		if self.Duplicate then
 
-			local ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self, function(ent) return ent.pac_duplicate_attach_uid ~= self.UniqueID end) or NULL
+			ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self, function(e) return e.pac_duplicate_attach_uid ~= self.UniqueID end) or NULL
 
 			if ent ~= prev_owner and ent:IsValid() then
 
@@ -258,13 +263,13 @@ do -- owner
 
 		else
 			if removed and prev_owner == ent then
-				self:SetOwner()
+				self:SetOwner(NULL)
 				self.temp_hidden = true
 				return
 			end
 
 			if not removed and self.OwnerName ~= "" then
-				local ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self) or NULL
+				ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self) or NULL
 				if ent ~= prev_owner then
 					self:SetOwner(ent)
 					self.temp_hidden = false
@@ -276,23 +281,17 @@ do -- owner
 	end
 
 	function PART:SetOwner(ent)
-		local root = self:GetRootPart()
+		self.last_owner = self.Owner
 
-		pac.RunNextFrame(self, function()
-			local ent = self.Owner
+		if ent:IsValid() then
+			local root = self:GetRootPart()
 
-			if ent:IsValid() then
-
-				if self.last_owner and self.last_owner ~= ent then
-					pac.UnhookEntityRender(self.last_owner, root)
-				end
-
-				pac.HookEntityRender(ent, root)
-				self.last_owner = ent
-			else
-				pac.UnhookEntityRender(ent, root)
+			if self.last_owner:IsValid() and self.last_owner ~= ent then
+				pac.UnhookEntityRender(self.last_owner, root)
 			end
-		end)
+
+			pac.HookEntityRender(ent, root)
+		end
 
 		self.Owner = ent or NULL
 	end
@@ -343,12 +342,12 @@ do -- parenting
 		return part
 	end
 
-	function PART:SetParent(var)
-		if not var or not var:IsValid() then
+	function PART:SetParent(part)
+		if not part or not part:IsValid() then
 			self:UnParent()
 			return false
 		else
-			return var:AddChild(self)
+			return part:AddChild(self)
 		end
 	end
 
@@ -362,82 +361,74 @@ do -- parenting
 
 		table.insert(self.parent_list, temp)
 
-		for i = 1, 100 do
+		for _ = 1, 100 do
 			local parent = temp:GetParent()
+			if not parent:IsValid() then break end
 
-			if parent:IsValid() then
-				table.insert(self.parent_list, parent)
-				temp = parent
-			else
-				break
-			end
+			table.insert(self.parent_list, parent)
+
+			temp = parent
 		end
 
 		self.RootPart = temp
 
-		for key, part in pairs(self.Children) do
+		for _, part in ipairs(self:GetChildren()) do
 			part:BuildParentList()
 		end
 	end
 
-	function PART:AddChild(var)
-		if not var or not var:IsValid() then
+	function PART:AddChild(part)
+		if not part or not part:IsValid() then
 			self:UnParent()
 			return
 		end
 
-		if self == var or var:HasChild(self) then
+		if self == part or part:HasChild(self) then
 			return false
 		end
 
-		var:UnParent()
+		part:UnParent()
 
-		var.Parent = self
+		part.Parent = self
 
-		if not table.HasValue(self.Children, var) then
-			table.insert(self.Children, var)
+		if not part:HasChild(self) then
+			self.Children2[part] = part
+			table.insert(self.Children, part)
 		end
 
-		var.ParentName = self:GetName()
-		var.ParentUID = self:GetUniqueID()
+		part.ParentName = self:GetName()
+		part.ParentUID = self:GetUniqueID()
 
 		self:ClearBone()
-		var:ClearBone()
+		part:ClearBone()
 
-		var:OnParent(self)
-		self:OnChildAdd(var)
+		part:OnParent(self)
+		self:OnChildAdd(part)
 
 		if self:HasParent() then
 			self:GetParent():SortChildren()
 		end
 
-		var:SortChildren()
+		part:SortChildren()
 		self:SortChildren()
 
 		self:BuildParentList()
 
-		pac.CallHook("OnPartParent", self, var)
+		pac.CallHook("OnPartParent", self, part)
 
-		var:SetKeyValueRecursive("last_hidden", nil)
+		part:SetKeyValueRecursive("last_hidden", nil)
 
-		return var.Id
+		return part.Id
 	end
 
-	local sort = function(a, b)
-		if a and b then
+	do
+		local sort = function(a, b)
 			return a.DrawOrder < b.DrawOrder
 		end
-	end
 
-	function PART:SortChildren()
-		self.DrawOrder = self.DrawOrder or 0
-		local new = {}
-		for key, val in pairs(self.Children) do
-			table.insert(new, val)
-			val:SortChildren()
+		function PART:SortChildren()
+			table.sort(self.Children, sort)
 		end
-		self.Children = new
-		table.sort(self.Children, sort)
 	end
 
 	function PART:HasParent()
@@ -445,31 +436,23 @@ do -- parenting
 	end
 
 	function PART:HasChildren()
-		return next(self.Children) ~= nil
+		return self.Children[1] ~= nil
 	end
 
 	function PART:HasChild(part)
-		for key, child in pairs(self.Children) do
-			if child == part or child:HasChild(part) then
-				return true
-			end
-		end
-		return false
+		return self.Children2[part] ~= nil
 	end
 
-	function PART:RemoveChild(var)
-		for key, part in pairs(self.Children) do
-			if part == var then
-				self.Children[key] = nil
-				if self:HasParent() then
-					self:GetParent():SortChildren()
-				end
+	function PART:RemoveChild(part)
+		self.Children2[part] = nil
+
+		for i, val in ipairs(self:GetChildren()) do
+			if val == part then
+				table.remove(self.Children, i)
 				part:OnUnParent(self)
 				break
 			end
 		end
-
-		self:SortChildren()
 	end
 
 	function PART:GetRootPart()
@@ -491,16 +474,16 @@ do -- parenting
 				self[func](self, ...)
 			end
 
-			for k, v in pairs(self.Children) do
-				v:CallRecursive(func, ...)
+			for _, part in ipairs(self:GetChildren()) do
+				part:CallRecursive(func, ...)
 			end
 		end
 
 		function PART:SetKeyValueRecursive(key, val)
 			self[key] = val
 
-			for k,v in pairs(self.Children) do
-				v:SetKeyValueRecursive(key, val)
+			for _, part in ipairs(self:GetChildren()) do
+				part:SetKeyValueRecursive(key, val)
 			end
 		end
 
@@ -528,7 +511,7 @@ do -- parenting
 				self:BuildParentList()
 			end
 
-			for i, parent in ipairs(self.parent_list) do
+			for _, parent in ipairs(self.parent_list) do
 				if parent.event_hidden then
 					return true
 				end
@@ -541,10 +524,11 @@ do -- parenting
 	end
 
 	function PART:RemoveChildren()
-		for key, part in pairs(self.Children) do
-			part:Remove()
+		for i, part in ipairs(self:GetChildren()) do
+			part:Remove(true)
+			self.Children[i] = nil
+			self.Children2[part] = nil
 		end
-		self.Children = {}
 	end
 
 	function PART:UnParent()
@@ -611,7 +595,7 @@ do -- serializing
 		self:RemoveChildren()
 	end
 
-	function PART:SetTable(tbl, instant)
+	function PART:SetTable(tbl)
 		self.supress_part_name_find = true
 		self.delayed_variables = self.delayed_variables or {}
 
@@ -637,36 +621,35 @@ do -- serializing
 
 			if self["Set" .. key] then
 				-- hacky
-				if key:find("Name", nil, true) and key ~= "OwnerName" and key ~= "SequenceName" and key ~= "GestureName" and key ~= "VariableName" and key ~= "BodyGroupName" then
+				if
+					key:find("Name", nil, true) and
+					key ~= "OwnerName" and
+					key ~= "SequenceName" and
+					key ~= "GestureName" and
+					key ~= "VariableName" and
+					key ~= "BodyGroupName"
+				then
 					self["Set" .. key](self, pac.HandlePartName(self:GetPlayerOwner(), value, key))
-				else
-					if key == "Material" then
-						if not value:find("/") then
-							value = pac.HandlePartName(self:GetPlayerOwner(), value, key)
-						end
-
-						table.insert(self.delayed_variables, {key = key, val = value})
+				elseif key == "Material" then
+					if not value:find("/") then
+						value = pac.HandlePartName(self:GetPlayerOwner(), value, key)
 					end
 
+					table.insert(self.delayed_variables, {key = key, val = value})
+
+					self:SetMaterial(value)
+				else
 					self["Set" .. key](self, value)
 				end
 			elseif key ~= "ClassName" then
-				pac.dprint("settable: unhandled key [%q] = %q", key, tostring(val))
+				pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
 			end
 		end
 
-		for key, value in pairs(tbl.children) do
-			local function create()
-				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
-				part:SetTable(value, instant)
-				part:SetParent(self)
-			end
-
-			if instant then
-				create()
-			else
-				timer.Simple(math.random(), create)
-			end
+		for _, value in pairs(tbl.children) do
+			local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
+			part:SetTable(value)
+			part:SetParent(self)
 		end
 	end
 
@@ -674,7 +657,7 @@ do -- serializing
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 		for _, key in pairs(self:GetStorableVars()) do
-			local var = self[key] and self["Get"..key](self) or self[key], key
+			local var = self[key] and self["Get" .. key](self) or self[key]
 			var = pac.class.Copy(var) or var
 
 			if make_copy_name and var ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
@@ -697,7 +680,7 @@ do -- serializing
 			tbl.self[key] = var
 		end
 
-		for _, part in pairs(self.Children) do
+		for _, part in ipairs(self:GetChildren()) do
 			table.insert(tbl.children, part:ToTable(make_copy_name))
 		end
 
@@ -717,7 +700,7 @@ do -- serializing
 	function PART:Clone()
 		local part = pac.CreatePart(self.ClassName, self:GetPlayerOwner())
 		if not part then return end
-		part:SetTable(self:ToTable(true), true)
+		part:SetTable(self:ToTable(true))
 
 		part:SetParent(self:GetParent())
 
@@ -727,7 +710,7 @@ end
 
 function PART:CallEvent(event, ...)
 	self:OnEvent(event, ...)
-	for _, part in pairs(self.Children) do
+	for _, part in ipairs(self:GetChildren()) do
 		part:CallEvent(event, ...)
 	end
 end
@@ -736,24 +719,28 @@ do -- events
 	function PART:Initialize() end
 	function PART:OnRemove() end
 
-	function PART:Remove()
-		pac.CallHook("OnPartRemove", self)
-		self:CallRecursive("OnHide")
-		self:OnRemove()
+	do
+		local is_valid = function() return false end
 
-		if self:HasParent() then
-			self:GetParent():RemoveChild(self)
+		function PART:Remove(skip_removechild)
+			pac.CallHook("OnPartRemove", self)
+			self:CallRecursive("OnHide")
+			self:OnRemove()
+
+			if not skip_removechild and self:HasParent() then
+				self:GetParent():RemoveChild(self)
+			end
+
+			self:RemoveChildren()
+
+			if self.owner_id and self.UniqueID then
+				pac.UniqueIDParts[self.owner_id][self.UniqueID] = nil
+			end
+
+			pac.ActiveParts[self.Id] = nil
+
+			self.IsValid = is_valid
 		end
-
-		self:RemoveChildren()
-
-		if self.owner_id and self.UniqueID then
-			pac.UniqueIDParts[self.owner_id][self.UniqueID] = nil
-		end
-
-		pac.ActiveParts[self.Id] = nil
-
-		self.IsValid = function() return false end
 	end
 
 	function PART:OnStore()	end
@@ -778,7 +765,7 @@ function PART:Highlight(skip_children, data)
 	local tbl = {self.Entity and self.Entity:IsValid() and self.Entity or nil}
 
 	if not skip_children then
-		for key, part in pairs(self.Children) do
+		for _, part in ipairs(self:GetChildren()) do
 			local ent = part.Entity
 
 			if ent and ent:IsValid() then
@@ -791,7 +778,7 @@ function PART:Highlight(skip_children, data)
 		if data then
 			pac.haloex.Add(tbl, unpack(data))
 		else
-			local pulse = math.abs(1+math.sin(pac.RealTime*20) * 255)
+			local pulse = math.abs(1 + math.sin(pac.RealTime * 20) * 255)
 			pulse = pulse + 2
 			pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
 		end
@@ -799,14 +786,8 @@ function PART:Highlight(skip_children, data)
 end
 
 do -- drawing. this code is running every frame
-	local VEC0 = Vector(0,0,0)
-	local ANG0 = Angle(0,0,0)
-	local LocalToWorld = LocalToWorld
-
 	PART.cached_pos = Vector(0,0,0)
 	PART.cached_ang = Angle(0,0,0)
-
-	local pos, ang, owner
 
 	function PART:Draw(event, pos, ang, draw_type)
 
@@ -815,46 +796,42 @@ do -- drawing. this code is running every frame
 
 		if self:IsHidden() then	return end
 
-		owner = self:GetOwner()
-
-		if self[event] then
-
-			if
+		if
+			self[event] and
+			(
 				draw_type == "viewmodel" or
 				((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
 				((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
-			then
+			)
+		then
 
-				pos = pos or Vector(0,0,0)
-				ang = ang or Angle(0,0,0)
+			pos = pos or Vector(0,0,0)
+			ang = ang or Angle(0,0,0)
 
-				pos, ang = self:GetDrawPosition()
+			pos, ang = self:GetDrawPosition()
 
-				pos = pos or Vector(0,0,0)
-				ang = ang or Angle(0,0,0)
+			pos = pos or Vector(0,0,0)
+			ang = ang or Angle(0,0,0)
 
-				self.cached_pos = pos
-				self.cached_ang = ang
+			self.cached_pos = pos
+			self.cached_ang = ang
 
-				if self.PositionOffset ~= VEC0 or self.AngleOffset ~= ANG0 then
-					pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
-				end
-
-				if not self.HandleModifiersManually then self:ModifiersPreEvent(event, draw_type) end
-
-				self[event](self, owner, pos, ang) -- this is where it usually calls Ondraw on all the parts
-
-				if not self.HandleModifiersManually then self:ModifiersPostEvent(event, draw_type) end
+			if self.PositionOffset ~= VEC0 or self.AngleOffset ~= ANG0 then
+				pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
 			end
+
+			if not self.HandleModifiersManually then self:ModifiersPreEvent(event, draw_type) end
+
+			self[event](self, self:GetOwner(), pos, ang) -- this is where it usually calls Ondraw on all the parts
+
+			if not self.HandleModifiersManually then self:ModifiersPostEvent(event, draw_type) end
 		end
 
-		for _, part in pairs(self.Children) do
+		for _, part in ipairs(self:GetChildren()) do
 			part:Draw(event, pos, ang, draw_type)
 		end
 
 	end
-
-	local LocalToWorld = LocalToWorld
 
 	function PART:GetDrawPosition(bone_override, skip_cache)
 		if pac.FrameNumber ~= self.last_drawpos_framenum or not self.last_drawpos or skip_cache then
@@ -896,6 +873,8 @@ do -- drawing. this code is running every frame
 			if parent:IsValid() and parent.ClassName == "jiggle" then
 				return parent.pos, parent.ang
 			end
+
+			local pos, ang
 
 			if parent:IsValid() and not parent.NonPhysical then
 
@@ -942,40 +921,33 @@ do -- drawing. this code is running every frame
 		local owner = self:GetOwner(true)
 
 		if pac.StringFind(self.AimPartName, "LOCALEYES_YAW", true, true) then
-
-			local ang = (pac.EyePos - self.cached_pos):Angle()
+			ang = (pac.EyePos - self.cached_pos):Angle()
 			ang.p = 0
 			return self.Angles + ang
-
 		end
 
 		if pac.StringFind(self.AimPartName, "LOCALEYES_PITCH", true, true) then
-
-			local ang = (pac.EyePos - self.cached_pos):Angle()
+			ang = (pac.EyePos - self.cached_pos):Angle()
 			ang.y = 0
 			return self.Angles + ang
-
 		end
 
 		if pac.StringFind(self.AimPartName, "LOCALEYES", true, true) then
-
 			return self.Angles + (pac.EyePos - self.cached_pos):Angle()
-
 		end
 
 
 		if pac.StringFind(self.AimPartName, "PLAYEREYES", true, true) then
-
 			local ent = owner.pac_traceres and owner.pac_traceres.Entity or NULL
+
 			if ent:IsValid() then
 				return self.Angles + (ent:EyePos() - self.cached_pos):Angle()
-			else
-				return self.Angles + (pac.EyePos - self.cached_pos):Angle()
 			end
+
+			return self.Angles + (pac.EyePos - self.cached_pos):Angle()
 		end
 
 		if self.AnglePart:IsValid() then
-
 			local a = self.AnglePart.cached_ang * 1
 
 			a.p = a.p * self.AnglePartMultiplier.x
@@ -983,23 +955,18 @@ do -- drawing. this code is running every frame
 			a.r = a.r * self.AnglePartMultiplier.z
 
 			return self.AngleOffset + self.Angles + a
-
 		end
 
 		if self.AimPart:IsValid() then
-
 			return self.Angles + (self.AimPart.cached_pos - self.cached_pos):Angle()
-
 		end
 
 		if self.EyeAngles then
-
 			if owner:IsPlayer() then
 				return self.Angles + ((owner.pac_hitpos or owner:GetEyeTraceNoCursor().HitPos) - self.cached_pos):Angle()
 			elseif owner:IsNPC() then
 				return self.Angles + ((owner:EyePos() + owner:GetForward() * 100) - self.cached_pos):Angle()
 			end
-
 		end
 
 		return ang or Angle(0,0,0)
@@ -1008,9 +975,7 @@ do -- drawing. this code is running every frame
 	--SETUP_CACHE_FUNC(PART, "CalcAngles")
 end
 
-function PART:Think()
-	if not self:GetEnabled() then return end
-
+function PART:CalcShowHide()
 	local b = self:IsHidden()
 
 	if b ~= self.last_hidden then
@@ -1025,6 +990,12 @@ function PART:Think()
 
 		self.last_hidden = b
 	end
+end
+
+function PART:Think()
+	if not self:GetEnabled() then return end
+
+	self:CalcShowHide()
 
 	if not self.AlwaysThink and b then return end
 
@@ -1049,7 +1020,7 @@ function PART:Think()
 
 	if self.delayed_variables then
 
-		for _, data in pairs(self.delayed_variables) do
+		for _, data in ipairs(self.delayed_variables) do
 			self["Set" .. data.key](self, data.val)
 		end
 

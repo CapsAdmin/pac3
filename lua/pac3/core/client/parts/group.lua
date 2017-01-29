@@ -5,20 +5,16 @@ PART.NonPhysical = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Duplicate", false)
---	pac.GetSet(PART, "ShowInFirstperson", false)
 pac.EndStorableVars()
 
-function PART:Initialize()
-	-- hacks
-	timer.Simple(0.1, function()
-		if not self:IsValid() then return end
+function PART:SetOwnerName(name)
+	if name == "" then
+		name = "self"
+	end
 
-		if self.OwnerName == "" then
-			self:SetOwnerName("self")
-		else
-			self:CheckOwner()
-		end
-	end)
+	self.OwnerName = name
+
+	self:CheckOwner()
 end
 
 pac.RegisterPart(PART)

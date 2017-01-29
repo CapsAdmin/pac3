@@ -60,7 +60,7 @@ function pac.Disable()
 		if ent:IsValid() then
 
 			if ent.pac_parts then
-				for key, part in pairs(ent.pac_parts) do
+				for _, part in pairs(ent.pac_parts) do
 					part:CallRecursive("OnHide")
 				end
 
@@ -85,7 +85,7 @@ end
 do
 	local pac_enable = CreateClientConVar("pac_enable", "1",true)
 	local pac_enable_bool = pac_enable:GetBool()
-	cvars.AddChangeCallback("pac_enable", function(name,old,new)
+	cvars.AddChangeCallback("pac_enable", function(_, _, new)
 		if (tonumber(new) or 0)>=1 then
 			pac_enable_bool=true
 			pac.Enable()
