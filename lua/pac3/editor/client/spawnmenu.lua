@@ -41,6 +41,7 @@ function pace.ClientOptionsMenu(pnl)
 	pnl:CheckBox(L"enable", "pac_enable")
 	pnl:Button(L"clear", "pac_clear_parts")
 	pnl:Button(L"wear on server", "pac_wear_parts"	)
+	pnl:Button(L"request outfits", "pac_request_outfits")
 	pnl:Button(L"panic", "pac_panic")
 
 	local browser = pnl:AddControl("pace_browser", {})
