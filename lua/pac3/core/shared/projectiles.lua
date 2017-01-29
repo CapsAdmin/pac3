@@ -57,8 +57,12 @@ do -- projectile entity
 			phys:EnableGravity(part.Gravity)
 			phys:AddVelocity((ang:Forward() + (VectorRand():Angle():Forward() * part.Spread)) * part.Speed * 1000)
 			phys:EnableCollisions(part.Collisions)
-			phys:SetDamping(part.Damping, 0)
+			if not part.Collisions then
+				self:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+			end
+
 			phys:SetMass(math.Clamp(part.Mass, 0.001, 50000))
+			phys:SetDamping(0, 0)
 
 			self:SetAimDir(part.AimDir)
 
@@ -122,6 +126,72 @@ do -- projectile entity
 			dissolver_entity = ent
 		end
 
+		function ENT:PhysicsUpdate(phys)
+			if not self.part_data then return end
+
+			phys:SetVelocity(phys:GetVelocity() / math.max(1 + (self.part_data.Damping / 100), 1))
+
+			if self.part_data.Attract ~= 0 and self.part_data.Attract then
+				self.next_target = self.next_target or 0
+
+				if self.part_data.AttractMode == "hitpos" then
+					local pos = self:GetOwner():GetEyeTrace().HitPos
+
+					local dir = pos - phys:GetPos()
+					dir:Normalize()
+					dir = dir * self.part_data.Attract
+
+					phys:SetVelocity(phys:GetVelocity() + dir)
+				elseif self.part_data.AttractMode == "hitpos_radius" then
+					local pos = self:GetOwner():EyePos() + self:GetOwner():GetAimVector() * self.part_data.DamageRadius
+
+					local dir = pos - phys:GetPos()
+					dir:Normalize()
+					dir = dir * self.part_data.Attract
+
+					phys:SetVelocity(phys:GetVelocity() + dir)
+				elseif self.part_data.AttractMode == "closest_to_projectile" or self.part_data.AttractMode == "closest_to_hitpos" then
+					if self.next_target < CurTime() then
+						local radius = math.Clamp(self.part_data.DamageRadius, 0, 300)
+						local pos
+
+						if self.part_data.AttractMode == "closest_to_projectile" then
+							pos = phys:GetPos()
+						elseif self.part_data.AttractMode == "closest_to_hitpos" then
+							pos = self:GetOwner():GetEyeTrace().HitPos
+						end
+
+						local closest = {}
+						for _, ent in ipairs(ents.FindInSphere(pos, radius)) do
+							if
+								ent ~= self and
+								(ent ~= self:GetOwner() or self.part_data.CollideWithOwner) and
+								ent:GetPhysicsObject():IsValid() and
+								ent:GetClass() ~= self:GetClass()
+							then
+								table.insert(closest, {dist = ent:GetPos():Distance(pos), ent = ent})
+							end
+						end
+
+						if closest[1] then
+							table.sort(closest, function(a, b) return a.dist < b.dist end)
+							self.target_ent = closest[1].ent
+						end
+
+						self.next_target = self.next_target + CurTime() + 0.15
+					end
+
+					if self.target_ent and self.target_ent:IsValid() then
+						local dir = self.target_ent:NearestPoint(phys:GetPos()) - phys:GetPos()
+						dir:Normalize()
+						dir = dir * self.part_data.Attract
+
+						phys:SetVelocity(phys:GetVelocity() + dir)
+					end
+				end
+			end
+		end
+
 		function ENT:PhysicsCollide(data, phys)
 			if not self.part_data then return end
 
@@ -134,7 +204,6 @@ do -- projectile entity
 				phys:Sleep()
 				phys:EnableMotion(false)
 				phys:EnableCollisions(false)
-				self:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
 
 				 if not data.HitEntity:IsWorld() then
 					local closest = {}
@@ -298,7 +367,7 @@ if SERVER then
 			SafeRemoveEntityDelayed(ent,math.Clamp(part.LifeTime, 0, 10))
 
 			ent:SetModel("models/props_junk/popcan01a.mdl")
-
+			ent:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE_DEBRIS)
 			ent:SetPos(pos)
 			ent:SetAngles(ang)
 			ent:Spawn()

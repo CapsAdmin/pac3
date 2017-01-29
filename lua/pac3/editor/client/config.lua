@@ -639,6 +639,10 @@ function pace.TranslatePropertiesKey(key, obj)
 		return "aimpartname"
 	end
 
+	if key == "attractmode" then
+		return "attract_mode"
+	end
+
 	if key == "animationtype" and obj.ClassName == "custom_animation" then
 		return "custom_animation_type"
 	end
