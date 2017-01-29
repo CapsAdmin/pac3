@@ -975,9 +975,7 @@ do -- drawing. this code is running every frame
 	--SETUP_CACHE_FUNC(PART, "CalcAngles")
 end
 
-function PART:Think()
-	if not self:GetEnabled() then return end
-
+function PART:CalcShowHide()
 	local b = self:IsHidden()
 
 	if b ~= self.last_hidden then
@@ -992,15 +990,19 @@ function PART:Think()
 
 		self.last_hidden = b
 	end
+end
 
-	if not self.AlwaysThink and b then return end
+function PART:Think()
+	if not self:GetEnabled() then return end
+
+	self:CalcShowHide()
+
+	if not self.AlwaysThink and self:IsHidden() then return end
 
 	local owner = self:GetOwner()
 
 	if owner:IsValid() then
 		if owner ~= self.last_owner then
-			self:OnShow()
-			self:OnHide()
 			self.last_hidden = nil
 			self.last_owner = owner
 		end
