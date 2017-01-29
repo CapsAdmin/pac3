@@ -14,7 +14,8 @@ end
 local L = pace.LanguageString
 
 function pace.AddLanguagesToMenu(menu)
-	local menu = menu:AddSubMenu(L"language")
+	local menu, pnl = menu:AddSubMenu(L"language")
+	pnl:SetImage("icon16/world_edit.png")
 	menu.GetDeleteSelf = function() return false end
 	menu:AddOption("english", function()
 		pace.SetLanguage("english")

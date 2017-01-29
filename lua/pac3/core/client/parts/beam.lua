@@ -1,7 +1,17 @@
+local LocalToWorld = LocalToWorld
+local render_StartBeam = render.StartBeam
+local render_AddBeam = render.AddBeam
+local render_EndBeam = render.EndBeam
+local color_white = color_white
+local math_sin = math.sin
+local math_pi = math.pi
+local Angle = Angle
+local Lerp = Lerp
+local Vector = Vector
+local Color = Color
+
 -- feel free to use this wherever!
 do
-	local r,g,b,a = 0,0,0,0
-
 	local ax,ay,az = 0,0,0
 	local bx,by,bz = 0,0,0
 	local adx,ady,adz = 0,0,0
@@ -11,19 +21,8 @@ do
 	local wave = 0
 	local bendmult = 0
 
-	local StartBeam = render.StartBeam
-	local AddBeam = render.AddBeam
-	local EndBeam = render.EndBeam
-
-	local pi = math.pi
-	local sin = math.sin
-
-	local color_white = color_white
-
 	local vector = Vector()
 	local color = Color(255, 255, 255, 255)
-
-	local lerp = function(m, a, b) return (b - a) * m + a end
 
 	function pac.DrawBeam(veca, vecb, dira, dirb, bend, res, width, start_color, end_color, frequency, tex_stretch, tex_scroll, width_bend, width_bend_size)
 
@@ -46,33 +45,33 @@ do
 		width_bend_size = width_bend_size or 1
 		tex_scroll = tex_scroll or 0
 
-		StartBeam(res + 1)
+		render_StartBeam(res + 1)
 
 			for i = 0, res do
 
 				frac = i / res
-				wave = frac * pi * frequency
-				bendmult = sin(wave) * bend
+				wave = frac * math_pi * frequency
+				bendmult = math_sin(wave) * bend
 
-				vector.x = lerp(frac, ax, bx) + lerp(frac, adx * bendmult, bdx * bendmult)
-				vector.y = lerp(frac, ay, by) + lerp(frac, ady * bendmult, bdy * bendmult)
-				vector.z = lerp(frac, az, bz) + lerp(frac, adz * bendmult, bdz * bendmult)
+				vector.x = Lerp(frac, ax, bx) + Lerp(frac, adx * bendmult, bdx * bendmult)
+				vector.y = Lerp(frac, ay, by) + Lerp(frac, ady * bendmult, bdy * bendmult)
+				vector.z = Lerp(frac, az, bz) + Lerp(frac, adz * bendmult, bdz * bendmult)
 
-				color.r = start_color.r == end_color.r and start_color.r or lerp(frac, start_color.r, end_color.r)
-				color.g = start_color.g == end_color.g and start_color.g or lerp(frac, start_color.g, end_color.g)
-				color.b = start_color.b == end_color.b and start_color.b or lerp(frac, start_color.b, end_color.b)
-				color.a = start_color.a == end_color.a and start_color.a or lerp(frac, start_color.a, end_color.a)
+				color.r = start_color.r == end_color.r and start_color.r or Lerp(frac, start_color.r, end_color.r)
+				color.g = start_color.g == end_color.g and start_color.g or Lerp(frac, start_color.g, end_color.g)
+				color.b = start_color.b == end_color.b and start_color.b or Lerp(frac, start_color.b, end_color.b)
+				color.a = start_color.a == end_color.a and start_color.a or Lerp(frac, start_color.a, end_color.a)
 
-				AddBeam(
+				render_AddBeam(
 					vector,
-					width + ((sin(wave) ^ width_bend_size) * width_bend),
+					width + ((math_sin(wave) ^ width_bend_size) * width_bend),
 					(i / tex_stretch) + tex_scroll,
 					color
 				)
 
 			end
 
-		EndBeam()
+		render_EndBeam()
 	end
 end
 
@@ -100,7 +99,7 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	return pac.PrettifyName(("/".. self:GetMaterial()):match(".+/(.+)"):gsub("%..+", "")) or "error"
+	return pac.PrettifyName(("/" .. self:GetMaterial()):match(".+/(.+)"):gsub("%..+", "")) or "error"
 end
 
 function PART:Initialize()

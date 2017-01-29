@@ -17,7 +17,7 @@ function pace.PartToContraptionData(part, tbl)
 		table.insert(tbl, data)
 	end
 
-	for key, part in pairs(part:GetChildren()) do
+	for key, part in ipairs(part:GetChildren()) do
 		if part.ClassName == "model" then
 			pace.PartToContraptionData(part, tbl)
 		end

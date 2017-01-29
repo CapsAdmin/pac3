@@ -1,3 +1,10 @@
+local MOVETYPE_NOCLIP = MOVETYPE_NOCLIP
+local IN_SPEED = IN_SPEED
+local SOLID_NONE = SOLID_NONE
+local MOVETYPE_NONE = MOVETYPE_NONE
+local IN_WALK = IN_WALK
+local IN_DUCK = IN_DUCK
+
 function pac.UpdateAnimation(ply)
 	if not IsEntity(ply) or not ply:IsValid() then return end
 
@@ -58,7 +65,7 @@ function pac.UpdateAnimation(ply)
 		if ply.pac_last_vehicle ~= nil then
 			if ply.pac_parts then
 				local done = {}
-				for key, part in pairs(ply.pac_parts) do
+				for _, part in pairs(ply.pac_parts) do
 					local part = part:GetRootPart()
 					if not done[part] then
 						if part.OwnerName == "active vehicle" then
@@ -177,7 +184,7 @@ function pac.pac_PlayerFootstep(ply, pos, snd, vol)
 	ply.pac_last_footstep_pos = pos
 
 	if ply.pac_footstep_override then
-		for key, part in pairs(ply.pac_footstep_override) do
+		for _, part in pairs(ply.pac_footstep_override) do
 			if not part:IsHidden() then
 				part:PlaySound(snd, vol)
 			end
@@ -201,18 +208,15 @@ end
 function pac.OnClientsideRagdoll(ent)
 
 	local ply
-	for key, pl in next,player.GetAll() do
+
+	for _, pl in pairs(player.GetAll()) do
 		if pl:GetRagdollEntity() == ent then
 			ply = pl
 			break
 		end
 	end
-	if not ply then
-		--Msg"[PAC] No player for "print(ent)
-		return
-	end
 
-	if not ply.pac_parts then return end
+	if not ply or not ply.pac_parts then return end
 
 	ply.pac_ragdoll = ent
 
@@ -230,7 +234,7 @@ function pac.OnClientsideRagdoll(ent)
 
 			if not parts then return end
 
-			for key, part in next, parts do
+			for _, part in next, parts do
 				if not part.last_owner then
 					part:SetOwner(ent)
 					part.last_owner = ent
@@ -281,36 +285,6 @@ function pac.InitDeathPhysicsOnProp(part,ply,plyent)
 	end
 end
 
-function pac.OnEntityCreated(ent)
-	if not IsActuallyValid(ent) then return end
-
-	if ent:GetClass() == "class C_HL2MPRagdoll" then
-		pac.OnClientsideRagdoll(ent)
-	end
-
-	local owner = ent:GetOwner()
-
-	if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
-		for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
-			if not part:HasParent() then
-				part:CheckOwner(ent, false)
-			end
-		end
-
-		return
-	end
-
-	if ply.pac_physics_died then return end
-
-	for _, part in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
-		if part.ClassName == "model" then
-			pac.InitDeathPhysicsOnProp(part,ply,ent)
-		end
-	end
-	ply.pac_physics_died = true
-
-end
-
 function pac.InitDeathPhysicsOnProp(part,ply,plyent)
 	plyent:SetNoDraw(true)
 
@@ -351,13 +325,12 @@ function pac.OnEntityCreated(ent)
 	local owner = ent:GetOwner()
 
 	if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
-		for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
+		for _, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
 			if not part:HasParent() then
 				part:CheckOwner(ent, false)
 			end
 		end
 	end
-
 end
 pac.AddHook("OnEntityCreated")
 
@@ -392,9 +365,9 @@ pac.AddHook("NotifyShouldTransmit")
 
 function pac.PlayerSpawned(ply)
 	if ply.pac_parts then
-		for key, part in pairs(ply.pac_parts) do
+		for _, part in pairs(ply.pac_parts) do
 			if part.last_owner and part.last_owner:IsValid() then
-				part:SetOwner(ent)
+				part:SetOwner(ply)
 				part.last_owner = nil
 			end
 		end
@@ -407,8 +380,16 @@ function pac.EntityRemoved(ent)
 	if IsActuallyValid(ent)  then
 		local owner = ent:GetOwner()
 		if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
-			for key, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
+			for _, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
 				if not part:HasParent() then
+					part:CheckOwner(ent, true)
+				end
+			end
+		elseif ent.pac_parts then
+			for _, part in pairs(ent.pac_parts) do
+				if part.dupe_remove then
+					part:Remove()
+				elseif not part:HasParent() then
 					part:CheckOwner(ent, true)
 				end
 			end
@@ -418,7 +399,7 @@ end
 pac.AddHook("EntityRemoved")
 
 timer.Create("pac_gc", 2, 0, function()
-	for key, part in pairs(pac.GetParts()) do
+	for _, part in pairs(pac.GetParts()) do
 		if not part:GetPlayerOwner():IsValid() then
 			part:Remove()
 		end

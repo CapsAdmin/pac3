@@ -1,4 +1,5 @@
 local PART = {}
+local snd_mute_losefocus = GetConVar('snd_mute_losefocus')
 
 PART.ClassName = "webaudio"
 
@@ -27,7 +28,7 @@ function PART:Initialize()
 end
 
 function PART:GetNiceName()
-	return pac.PrettifyName(("/".. self:GetURL()):match(".+/(.-)%.")) or "no sound"
+	return pac.PrettifyName(("/" .. self:GetURL()):match(".+/(.-)%.")) or "no sound"
 end
 
 function PART:OnThink()
@@ -53,6 +54,10 @@ end
 
 function PART:OnDraw(ent, pos, ang)
 	local forward = ang:Forward()
+	
+	local shouldMute = snd_mute_losefocus:GetBool()
+	local focus = system.HasFocus()
+	local volume = shouldMute and not focus and 0 or self:GetVolume()
 
 	for url, stream in pairs(self.streams) do
 		if not stream:IsValid() then self.streams[url] = nil continue end
@@ -63,7 +68,7 @@ function PART:OnDraw(ent, pos, ang)
 
 		stream:Set3DFadeDistance(self.MinimumRadius, self.MaximumRadius)
 		stream:Set3DCone(self.InnerAngle, self.OuterAngle, self.OuterVolume)
-		stream:SetVolume(self:GetVolume())
+		stream:SetVolume(volume)
 		stream:SetPlaybackRate(self:GetPitch() + self.random_pitch)
 	end
 end
@@ -110,7 +115,7 @@ function PART:SetURL(URL)
 
 		local callback callback = function (snd, ...)
 			if not snd or not snd:IsValid() then
-				Msg"[PAC3] "print("Failed to load ",url,"("..flags..")")
+				print("[PAC3] Failed to load ", url, "(" .. flags .. ")")
 				return
 			end
 

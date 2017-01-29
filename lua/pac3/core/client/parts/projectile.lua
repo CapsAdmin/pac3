@@ -11,15 +11,20 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Collisions", true)
 	pac.GetSet(PART, "Sphere", false)
 	pac.GetSet(PART, "Radius", 1)
+	pac.GetSet(PART, "DamageRadius", 50)
 	pac.GetSet(PART, "LifeTime", 5)
 	pac.GetSet(PART, "AimDir", false)
 	pac.GetSet(PART, "Sticky", false)
+	pac.GetSet(PART, "Bounce", 0)
 	pac.GetSet(PART, "BulletImpact", false)
 	pac.GetSet(PART, "Damage", 0)
 	pac.GetSet(PART, "DamageType", "generic")
 	pac.GetSet(PART, "Spread", 0)
 	pac.GetSet(PART, "Delay", 0)
 	pac.GetSet(PART, "Mass", 100)
+	pac.GetSet(PART, "Attract", 0)
+	pac.GetSet(PART, "AttractMode", "projectile_nearest")
+	pac.GetSet(PART, "AttractRadius", 200)
 	pac.SetupPartName(PART, "OutfitPart")
 	pac.GetSet(PART, "Physical", false)
 	pac.GetSet(PART, "CollideWithOwner", false)
@@ -54,7 +59,7 @@ function PART:AttachToEntity(ent)
 	part.show_in_editor = false
 	part.CheckOwner = function(s) s.Owner = ent end
 	part:SetPlayerOwner(self:GetPlayerOwner())
-	part:SetTable(tbl, true)
+	part:SetTable(tbl)
 	part:SetHide(false)
 
 	part:SetOwner(ent)
@@ -120,12 +125,17 @@ function PART:Shoot(pos, ang)
 			local idx = table.insert(self.projectiles, ent)
 
 			ent:AddCallback("PhysicsCollide", function(ent, data)
-				if self.Sticky and data.HitEntity:IsWorld() then
-					local phys = ent:GetPhysicsObject()
+				local phys = ent:GetPhysicsObject()
+				if self.Bounce > 0 then
+					timer.Simple(0, function()
+						if phys:IsValid() then
+							phys:SetVelocity(data.OurOldVelocity - 2 * (data.HitNormal:Dot(data.OurOldVelocity) * data.HitNormal) * self.Bounce)
+						end
+					end)
+				elseif self.Sticky then
 					phys:SetVelocity(Vector(0,0,0))
-					phys:Sleep()
 					phys:EnableMotion(false)
-					ent.pac_stuck = true
+					ent.pac_stuck = data.OurOldVelocity
 				end
 
 				if self.BulletImpact then
@@ -136,6 +146,7 @@ function PART:Shoot(pos, ang)
 						Num = 1,
 						Src = data.HitPos - data.HitNormal,
 						Dir = data.HitNormal,
+						Distance = 10,
 					}
 				end
 
@@ -166,7 +177,7 @@ function PART:Shoot(pos, ang)
 
 				if self.AimDir then
 					if ent.pac_stuck then
-						ent:SetRenderAngles(ent.last_angle)
+						ent:SetRenderAngles(ent.pac_stuck:Angle())
 					else
 						local angle = ent:GetVelocity():Angle()
 						ent:SetRenderAngles(angle)

@@ -35,8 +35,8 @@ function PART:UpdateFlex(flex, weight)
 	if ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() > 0 then
 		ent.pac_flex_list = ent.pac_flex_list or self:GetFlexList()
 
-		local flex = flex or self.Flex
-		local weight = weight or self.Weight
+		flex = flex or self.Flex
+		weight = weight or self.Weight
 
 		flex = flex:lower()
 		flex = ent.pac_flex_list[flex] and ent.pac_flex_list[flex].i or tonumber(flex)

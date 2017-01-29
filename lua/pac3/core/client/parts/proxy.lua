@@ -246,7 +246,7 @@ PART.Inputs =
 
 		return 0
 	end,
-	
+
 	owner_scale_x = function(self)
 		local owner = self:GetOwner(self.RootOwner)
 
@@ -423,18 +423,18 @@ PART.Inputs =
 
 		return parent.cached_ang:Up():Dot(self:GetVelocity(parent))
 	end,
-	
+
 	parent_scale_x = function(self, parent)
 		if not self.TargetPart:IsValid() then
 			if parent:HasParent() then
 				parent = parent:GetParent()
 			end
 		end
-		
+
 		if parent:IsValid() then
 			return parent.Scale and parent.Scale.x*parent.Size or 1
 		end
-		
+
 		return 1
 	end,
 	parent_scale_y = function(self, parent)
@@ -443,11 +443,11 @@ PART.Inputs =
 				parent = parent:GetParent()
 			end
 		end
-		
+
 		if parent:IsValid() then
 			return parent.Scale and parent.Scale.y*parent.Size or 1
 		end
-		
+
 		return 1
 	end,
 	parent_scale_z = function(self, parent)
@@ -456,11 +456,11 @@ PART.Inputs =
 				parent = parent:GetParent()
 			end
 		end
-		
+
 		if parent:IsValid() then
 			return parent.Scale and parent.Scale.z*parent.Size or 1
 		end
-		
+
 		return 1
 	end,
 
@@ -492,72 +492,72 @@ PART.Inputs =
 
 	light_amount_r = function(self, parent)
 		parent = self:GetParentEx()
-		
+
 		if parent:IsValid() then
 			return render.GetLightColor(parent.cached_pos):ToColor().r
-		end 
-		
+		end
+
 		return 0
 	end,
-	
+
 	light_amount_g = function(self, parent)
 		parent = self:GetParentEx()
-		
+
 		if parent:IsValid() then
 			return render.GetLightColor(parent.cached_pos):ToColor().g
-		end 
-		
+		end
+
 		return 0
 	end,
-	
+
 	light_amount_b = function(self, parent)
 		parent = self:GetParentEx()
-		
+
 		if parent:IsValid() then
 			return render.GetLightColor(parent.cached_pos):ToColor().b
-		end 
-		
+		end
+
 		return 0
 	end,
-	
+
 	light_value = function(self, parent)
 		parent = self:GetParentEx()
-		
-		if parent:IsValid() then 
+
+		if parent:IsValid() then
 			local h, s, v = ColorToHSV(render.GetLightColor(parent.cached_pos):ToColor())
 			return v
-		end 
-		
+		end
+
 		return 0
 	end,
-	
+
 	ambient_light_r = function(self, parent)
 		parent = self:GetParentEx()
-		
+
 		if parent:IsValid() then
 			return render.GetAmbientLightColor():ToColor().r
-		end 
-		
+		end
+
 		return 0
 	end,
-	
+
 	ambient_light_g = function(self, parent)
 		parent = self:GetParentEx()
-		
+
 		if parent:IsValid() then
 			return render.GetAmbientLightColor():ToColor().g
-		end 
-		
+		end
+
 		return 0
 	end,
-	
+
 	ambient_light_b = function(self, parent)
 		parent = self:GetParentEx()
-		
+
 		if parent:IsValid() then
 			return render.GetAmbientLightColor():ToColor().b
-		end 
-		
+		end
+
 		return 0
  	end,
 
@@ -570,7 +570,7 @@ PART.Inputs =
 
 		return 0
 	end,
-	
+
 	owner_max_health = function(self)
 		local owner = self:GetPlayerOwner()
 
@@ -618,7 +618,7 @@ PART.Inputs =
 
 		return 1
 	end,
-	
+
 	weapon_color_r = function(self)
 		local owner = self:GetPlayerOwner()
 
@@ -646,13 +646,13 @@ PART.Inputs =
 
 		return 1
 	end,
-	
+
 	weapon_primary_ammo = function(self)
 		local owner = self:GetOwner(true)
-		
+
 		if owner:IsValid() then
 			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
-			
+
 			return owner.Clip1 and owner:Clip1() or 0
 		end
 
@@ -660,10 +660,10 @@ PART.Inputs =
 	end,
 	weapon_primary_clipsize = function(self)
 		local owner = self:GetOwner(true)
-		
+
 		if owner:IsValid() then
 			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
-			
+
 			return owner.GetMaxClip1 and owner:GetMaxClip1() or 0
 		end
 
@@ -671,10 +671,10 @@ PART.Inputs =
 	end,
 	weapon_secondary_ammo = function(self)
 		local owner = self:GetOwner(true)
-		
+
 		if owner:IsValid() then
 			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
-			
+
 			return owner.Clip2 and owner:Clip2() or 0
 		end
 
@@ -682,10 +682,10 @@ PART.Inputs =
 	end,
 	weapon_secondary_clipsize = function(self)
 		local owner = self:GetOwner(true)
-		
+
 		if owner:IsValid() then
 			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
-			
+
 			return owner.GetMaxClip2 and owner:GetMaxClip2() or 0
 		end
 
@@ -828,7 +828,7 @@ local function set(self, part, x, y, z, children)
 	end
 
 	if children then
-		for _, part in pairs(part:GetChildren()) do
+		for _, part in ipairs(part:GetChildren()) do
 			set(self, part, x, y, z, true)
 		end
 	end
@@ -865,7 +865,7 @@ function PART:OnThink()
 		local ok, x,y,z = self:RunExpression(ExpressionFunc)
 
 		if not ok then
-			if self:GetPlayerOwner() == pac.LocalPlayer and self.Expression != self.LastBadExpression then
+			if self:GetPlayerOwner() == pac.LocalPlayer and self.Expression ~= self.LastBadExpression then
 				chat.AddText(Color(255,180,180),"============\n[ERR] PAC Proxy error on "..tostring(self)..":\n"..x.."\n============\n")
 				self.LastBadExpression = self.Expression
 			end
@@ -890,7 +890,7 @@ function PART:OnThink()
 		end
 
 		if self.AffectChildren then
-			for _, part in pairs(self:GetChildren()) do
+			for _, part in ipairs(self:GetChildren()) do
 				set(self, part, x, y, z, true)
 			end
 		else
@@ -921,8 +921,8 @@ function PART:OnThink()
 			end
 
 			if self.AffectChildren then
-				for _, part in pairs(self:GetChildren()) do
-					set(self, part, x, nil, nil, true)
+				for _, part in ipairs(self:GetChildren()) do
+					set(self, part, num, nil, nil, true)
 				end
 			else
 				set(self, parent, num)

@@ -1,3 +1,5 @@
+-- automate me!
+
 pace.PropertySheets = {
 	orientation =
 	{
@@ -219,6 +221,7 @@ pace.PartTree = {
 	},
 
 	effects = {
+		decal = true,
 		shake = true,
 		light = true,
 		sound = true,
@@ -258,7 +261,8 @@ pace.MiscIcons = {
 	save = "icon16/disk.png",
 	exit = "icon16/cancel.png",
 	wear = "icon16/transmit.png",
-	help = "icon16/information.png",
+	help = "icon16/help.png",
+	info = "icon16/information.png",
 	edit = "icon16/table_edit.png",
 	revert = "icon16/table_delete.png",
 	about = "icon16/star.png",
@@ -304,7 +308,8 @@ pace.PartIcons =
 	bodygroup = "icon16/user.png",
 	camera = "icon16/camera.png",
 	custom_animation = "icon16/film.png",
-	gesture = "icon16/thumb_up.png"
+	gesture = "icon16/thumb_up.png",
+	decal = "icon16/paintbrush.png",
 }
 
 pace.PartIcons.effects = pace.PartIcons.effect
@@ -606,7 +611,8 @@ function pace.TranslatePropertiesKey(key, obj)
 		key == "flex" or
 		key == "bodygroupname" or
 		key == "effect" or
-		key == "code"
+		key == "code" or
+		key == "sound"
 	then
 		return key
 	end
@@ -633,6 +639,10 @@ function pace.TranslatePropertiesKey(key, obj)
 
 	if key == "aimpartname" then
 		return "aimpartname"
+	end
+
+	if key == "attractmode" then
+		return "attract_mode"
 	end
 
 	if key == "animationtype" and obj.ClassName == "custom_animation" then
@@ -676,7 +686,7 @@ function pace.TranslatePropertiesKey(key, obj)
 	end
 
 	if obj.ClassName == "material" and obj.ShaderParams[key_] == "ITexture" then
-		return "material"
+		return "textures"
 	end
 
 	if obj.ClassName == "material" and obj.ShaderParams[key_] == "Vector" and

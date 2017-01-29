@@ -1,3 +1,8 @@
+local Angle = Angle
+local LocalPlayer = LocalPlayer
+local RealTime = RealTime
+local NULL = NULL
+
 do
 	local draw_localplayer = nil
 
@@ -44,7 +49,7 @@ function pac.SetupENT(ENT, owner)
 	ENT.pac_owner = ENT.pac_owner or owner or "self"
 
 	local function find(parent, name)
-		for key, part in pairs(parent:GetChildren()) do
+		for _, part in ipairs(parent:GetChildren()) do
 
 			if part:GetName():lower():find(name) then
 				return part
@@ -60,7 +65,7 @@ function pac.SetupENT(ENT, owner)
 		name = name:lower()
 
 		if not outfit.self then
-			for key, val in pairs(outfit) do
+			for _, val in pairs(outfit) do
 				local part = self:FindPACPart(val, name)
 				if part:IsValid() then
 					return part
@@ -123,7 +128,7 @@ function pac.SetupENT(ENT, owner)
 		end
 
 		part = pac.CreatePart(outfit.self.ClassName, owner)
-		part:SetTable(outfit, true)
+		part:SetTable(outfit)
 
 		self.pac_outfits[outfit.self.UniqueID] = part
 
@@ -186,7 +191,7 @@ function pac.SetupENT(ENT, owner)
 	function ENT:SetShowPACPartsInEditor(b)
 		self.pac_outfits = self.pac_outfits or {}
 
-		for key, part in pairs(self.pac_outfits) do
+		for _, part in pairs(self.pac_outfits) do
 			part.show_in_editor = b
 		end
 
@@ -266,7 +271,7 @@ function pac.AddEntityClassListener(class, session, check_func, draw_dist)
 		end
 	end
 
-	for key, ent in pairs(ents.GetAll()) do
+	for _, ent in pairs(ents.GetAll()) do
 		created(ent)
 	end
 
@@ -281,7 +286,7 @@ function pac.RemoveEntityClassListener(class, session, check_func)
 
 	check_func = check_func or function(ent) return ent:GetClass() == class end
 
-	for key, ent in pairs(ents.GetAll()) do
+	for _, ent in pairs(ents.GetAll()) do
 		if check_func(ent) and ent.pac_outfits then
 			ent:RemovePACSession(session)
 		end

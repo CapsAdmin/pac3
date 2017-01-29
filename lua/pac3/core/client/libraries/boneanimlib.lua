@@ -5,57 +5,6 @@ include("pac3/core/shared/boneanimlib.lua")
 
 local ANIMATIONFADEOUTTIME = 0.125
 
---[[usermessage.Hook("resetluaanim", function(um)
-	local ent = um:ReadEntity()
-	local anim = um:ReadString()
-	local time = um:ReadFloat()
-	local power = um:ReadFloat()
-	local timescale = um:ReadFloat()
-	if ent:IsValid() then
-		ent:ResetLuaAnimation(anim, time ~= -1 and time, power ~= -1 and power, timescale ~= -1 and timescale)
-	end
-end)
-
-usermessage.Hook("setluaanim", function(um)
-	local ent = um:ReadEntity()
-	local anim = um:ReadString()
-	local time = um:ReadFloat()
-	local power = um:ReadFloat()
-	local timescale = um:ReadFloat()
-	if ent:IsValid() then
-		ent:SetLuaAnimation(anim, time ~= -1 and time, power ~= -1 and power, timescale ~= -1 and timescale)
-	end
-end)
-
-usermessage.Hook("stopluaanim", function(um)
-	local ent = um:ReadEntity()
-	local anim = um:ReadString()
-	local tim = um:ReadFloat()
-	if tim == 0 then tim = nil end
-	if ent:IsValid() then
-		ent:StopLuaAnimation(anim, tim)
-	end
-end)
-
-usermessage.Hook("stopluaanimgp", function(um)
-	local ent = um:ReadEntity()
-	local animgroup = um:ReadString()
-	local tim = um:ReadFloat()
-	if tim == 0 then tim = nil end
-	if ent:IsValid() then
-		ent:StopLuaAnimationGroup(animgroup, tim)
-	end
-end)
-
-usermessage.Hook("stopallluaanim", function(um)
-	local ent = um:ReadEntity()
-	local tim = um:ReadFloat()
-	if tim == 0 then tim = nil end
-	if ent:IsValid() then
-		ent:StopAllLuaAnimations(tim)
-	end
-end)]]
-
 net.Receive("bal_reset", function(length)
 	local ent = net.ReadEntity()
 	local anim = net.ReadString()
@@ -120,7 +69,22 @@ local TYPE_SEQUENCE = TYPE_SEQUENCE
 local Animations = GetLuaAnimations()
 
 local function AdvanceFrame(tGestureTable, tFrameData)
+
+	if tGestureTable.TimeScale == 0 then
+		local max = #tGestureTable.FrameData
+		local offset = tGestureTable.Offset
+		local start = tGestureTable.RestartFrame or 1
+
+		offset = Lerp(offset%1, start, max + 1)
+
+		tGestureTable.Frame = math.floor(offset)
+		tGestureTable.FrameDelta = offset%1
+
+		return true
+	end
+
 	tGestureTable.FrameDelta = tGestureTable.FrameDelta + FrameTime() * tFrameData.FrameRate * tGestureTable.TimeScale
+
 	if tGestureTable.FrameDelta > 1 then
 		tGestureTable.Frame = tGestureTable.Frame + 1
 		tGestureTable.FrameDelta = math.min(1, tGestureTable.FrameDelta - 1)
@@ -297,9 +261,23 @@ function meta:ResetLuaAnimation(sAnimation, fDieTime, fPower, fTimeScale)
 			framedelta = 1
 		end
 
-		self.LuaAnimations[sAnimation] = {Frame = animtable.StartFrame or 1, FrameDelta = framedelta, FrameData = animtable.FrameData, TimeScale = fTimeScale or animtable.TimeScale or 1,
-		Type = animtable.Type, RestartFrame = animtable.RestartFrame, TimeToArrive = animtable.TimeToArrive, Callback = animtable.Callback, ShouldPlay = animtable.ShouldPlay,
-		PreCallback = animtable.PreCallback, Power = fPower or animtable.Power or 1, DieTime = fDieTime or animtable.DieTime, Group = animtable.Group, UseReferencePose = animtable.UseReferencePose}
+		self.LuaAnimations[sAnimation] = {
+			Frame = animtable.StartFrame or 1,
+			Offset = 0,
+			FrameDelta = framedelta,
+			FrameData = animtable.FrameData,
+			TimeScale = fTimeScale or animtable.TimeScale or 1,
+			Type = animtable.Type,
+			RestartFrame = animtable.RestartFrame,
+			TimeToArrive = animtable.TimeToArrive,
+			Callback = animtable.Callback,
+			ShouldPlay = animtable.ShouldPlay,
+			PreCallback = animtable.PreCallback,
+			Power = fPower or animtable.Power or 1,
+			DieTime = fDieTime or animtable.DieTime,
+			Group = animtable.Group,
+			UseReferencePose = animtable.UseReferencePose
+		}
 
 		self:ResetLuaAnimationProperties()
 	end

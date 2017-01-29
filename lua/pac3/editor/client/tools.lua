@@ -56,13 +56,17 @@ pace.AddTool(L"replace ogg with webaudio", function(part, suboption)
 			audio:SetStopOnHide(not part:GetStopOnHide())
 			audio:SetPauseOnHide(part:GetPauseOnHide())
 
-			for k,v in pairs(part:GetChildren()) do
+			for k,v in ipairs(part:GetChildren()) do
 				v:SetParent(audio)
 			end
 
 			part:Remove()
 		end
 	end
+end)
+
+pace.AddTool(L"copy global id", function(obj)
+	SetClipboardText("\""..obj.UniqueID.."\"")
 end)
 
 pace.AddTool(L"use legacy scale", function(part, suboption)
@@ -88,7 +92,7 @@ pace.AddTool(L"scale this and children", function(part, suboption)
 					part:SetSize(part:GetSize() * scale)
 				end
 
-				for _, part in pairs(part:GetChildren()) do
+				for _, part in ipairs(part:GetChildren()) do
 					scale_parts(part, scale)
 				end
 			end
@@ -102,7 +106,7 @@ pace.AddTool(L"free children from part", function(part, suboption)
 	if part:IsValid() then
 		local grandparent = part:GetParent()
 		local parent = part
-		for _, child in pairs(parent:GetChildren()) do
+		for _, child in ipairs(parent:GetChildren()) do
 				child:SetAngles(child.Angles + parent.Angles)
 				child:SetPosition(child.Position + parent.Position)
 				child:SetAngleOffset(child.AngleOffset + parent.AngleOffset)
@@ -215,7 +219,7 @@ pace.AddTool(L"round numbers", function(part)
 			end
 		end
 
-		for _, part in pairs(part:GetChildren()) do
+		for _, part in ipairs(part:GetChildren()) do
 			ify_parts(part)
 		end
 	end
@@ -277,7 +281,7 @@ do
 end
 
 pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part)
-	local holo_str = 
+	local holo_str =
 	[[
 		holoCreate(I) #HOLO_NAME
 		PARENT
@@ -300,12 +304,12 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 				if clip:IsValid() and not clip:IsHidden() then
 					local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
 					local normal = ang:Forward()
-					holo_str = holo_str .. 
+					holo_str = holo_str ..
 					"holoClip(I, " .. tovec(pos) .. ", " .. tovec(normal) ..  ", 1)\n"
 				end
 			end
 		end
-		local holo = holo_str			
+		local holo = holo_str
 		:gsub("ALPHA", part:GetAlpha()*255)
 		:gsub("COLOR", tovec(part:GetColor()))
 		:gsub("SCALE", tovec(Vector(scale.x, scale.y, scale.z)))
@@ -324,12 +328,12 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 		print(holo)
 		return holo
 	end
-	local function convert(part)	
+	local function convert(part)
 		local out = ""
 		if part.ClassName == "model" then
 			out = part_to_holo(part)
 		end
-		for key, part in pairs(part:GetChildren()) do
+		for key, part in ipairs(part:GetChildren()) do
 			if part.ClassName == "model" and not part:IsHidden() and not part.wavefront_mesh then
 				out = out .. convert(part)
 			end
