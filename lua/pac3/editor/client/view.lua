@@ -88,6 +88,9 @@ local function CalcDrag()
 		pace.editing_viewmodel
 	then return end
 
+	if not system.HasFocus() then
+		held_mpos = Vector(gui.MousePos())
+	end
 
 	local ftime = FrameTime() * 50
 	local mult = 5
@@ -103,7 +106,7 @@ local function CalcDrag()
 
 		if owner == pac.WorldEntity and owner:IsValid() then
 			if pace.current_part:HasChildren() then
-				for key, child in pairs(pace.current_part:GetChildren()) do
+				for key, child in ipairs(pace.current_part:GetChildren()) do
 					if not child.NonPhysical then
 						origin = child:GetDrawPosition()
 						break

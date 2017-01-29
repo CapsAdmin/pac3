@@ -828,7 +828,7 @@ local function set(self, part, x, y, z, children)
 	end
 
 	if children then
-		for _, part in pairs(part:GetChildren()) do
+		for _, part in ipairs(part:GetChildren()) do
 			set(self, part, x, y, z, true)
 		end
 	end
@@ -890,7 +890,7 @@ function PART:OnThink()
 		end
 
 		if self.AffectChildren then
-			for _, part in pairs(self:GetChildren()) do
+			for _, part in ipairs(self:GetChildren()) do
 				set(self, part, x, y, z, true)
 			end
 		else
@@ -921,7 +921,7 @@ function PART:OnThink()
 			end
 
 			if self.AffectChildren then
-				for _, part in pairs(self:GetChildren()) do
+				for _, part in ipairs(self:GetChildren()) do
 					set(self, part, num, nil, nil, true)
 				end
 			else

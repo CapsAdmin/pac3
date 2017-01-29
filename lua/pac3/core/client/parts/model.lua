@@ -40,6 +40,9 @@ local TEXFILTER = TEXFILTER
 local NULL = NULL
 local Color = Color
 
+pac.DisableColoring = false
+pac.DisableDoubleFace = false
+
 local PART = {}
 
 PART.ClassName = "model"
@@ -243,8 +246,6 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 			local r, g, b = self.Colorf.r, self.Colorf.g, self.Colorf.b
 
 			if self.LightBlend ~= 1 then
-				-- what the fucking fuck is this lighting code
-				-- it doesn't even look physically correct
 				local v = render.GetLightColor(pos)
 				r = r * v.r * self.LightBlend
 				g = g * v.g * self.LightBlend
@@ -268,7 +269,8 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 end
 
 local DEFAULT_COLOR = Vector(1, 1, 1)
-local WHITE         = Material("models/debug/debugwhite")
+local WHITE = Material("models/debug/debugwhite")
+
 function PART:PostEntityDraw(owner, ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 		if not pac.DisableDoubleFace then
@@ -405,13 +407,14 @@ function PART:DrawModel(ent, pos, ang)
 			RealDrawModel(self, ent, pos, ang)
 		end
 
-		-- Flashlight(?)
-		if not pac.flashlight_disabled then
-		render_PushFlashlightMode(true)
+		if pac.projected_texture_enabled and not pac.flashlight_disabled then
+			render_PushFlashlightMode(true)
 		end
-			RealDrawModel(self, ent, pos, ang)
-		if not pac.flashlight_disabled then
-		render_PopFlashlightMode()
+
+		RealDrawModel(self, ent, pos, ang)
+
+		if pac.projected_texture_enabled and not pac.flashlight_disabled then
+			render_PopFlashlightMode()
 		end
 
 		if textureFilter ~= TEXFILTER.ANISOTROPIC or self.Mesh then

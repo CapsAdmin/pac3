@@ -2,6 +2,7 @@ local render_SetMaterial = render.SetMaterial
 local render_DrawSprite = render.DrawSprite
 local Color = Color
 local Vector = Vector
+local cam_IgnoreZ = cam.IgnoreZ
 
 local PART = {}
 
@@ -15,6 +16,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Alpha", 1)
 	pac.GetSet(PART, "SpritePath", "sprites/grip")
 	pac.GetSet(PART, "Translucent", true)
+	pac.GetSet(PART, "IgnoreZ", false)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -89,8 +91,16 @@ end
 
 function PART:OnDraw(owner, pos, ang)
 	if self.Materialm then
+		if self.IgnoreZ then
+			cam_IgnoreZ(true)
+		end
+
 		render_SetMaterial(self.Materialm)
 		render_DrawSprite(pos, self.SizeX * self.Size, self.SizeY * self.Size, self.ColorC)
+
+		if self.IgnoreZ then
+			cam_IgnoreZ(false)
+		end
 	end
 end
 

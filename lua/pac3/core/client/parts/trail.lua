@@ -82,28 +82,6 @@ function PART:SetTrailPath(var)
 	self:SetMaterial(var)
 end
 
-function PART:FixMaterial()
-	local mat = self.Materialm
-
-	if not mat then return end
-
-	local shader = mat:GetShader()
-
-	if shader == "VertexLitGeneric" or shader == "Cable" then
-		local tex_path = mat:GetString("$basetexture")
-
-		if tex_path then
-			local params = {}
-
-			params["$basetexture"] = tex_path
-			params["$vertexcolor"] = 1
-			params["$vertexalpha"] = 1
-
-			self.Materialm = CreateMaterial(pac.uid("pac_fixmat_") .. self.Id, "VertexLitGeneric", params)
-		end
-	end
-end
-
 function PART:SetMaterial(var)
 	var = var or ""
 
@@ -117,7 +95,12 @@ function PART:SetMaterial(var)
 		end
 	end
 
-	self:FixMaterial()
+	if self.Materialm then
+		local shader = self.Materialm:GetShader()
+		if shader == "VertexLitGeneric" or shader == "Cable" or shader == "LightmappedGeneric" then
+			self.Materialm = pac.MakeMaterialUnlitGeneric(self.Materialm, self.Id)
+		end
+	end
 end
 
 function PART:OnShow()

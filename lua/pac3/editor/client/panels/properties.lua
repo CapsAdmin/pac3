@@ -14,6 +14,76 @@ local function FIX_MENU(menu)
 	menu:SetPos(pace.Editor:GetPos() + pace.Editor:GetWide(), gui.MouseY() - (menu:GetTall() * 0.5))
 end
 
+
+local function create_search_list(property, key, name, add_columns, get_list, get_current, add_line, select_value)
+	select_value = select_value or function(val, key) return val end
+	pace.SafeRemoveSpecialPanel()
+
+	local frame = vgui.Create("DFrame")
+	frame:SetTitle(L(name))
+	frame:SetSize(300, 300)
+	frame:Center()
+	frame:SetSizable(true)
+
+	local list = vgui.Create("DListView", frame)
+	list:Dock(FILL)
+	list:SetMultiSelect(false)
+
+	add_columns(list)
+
+	list.OnRowSelected = function(_, id, line)
+		local val = select_value(line.list_val, line.list_key)
+
+		if property and property:IsValid() then
+			property:SetValue(val)
+			property.OnValueChanged(val)
+		else
+			if pace.current_part:IsValid() and pace.current_part["Set" .. key] then
+				pace.Call("VariableChanged", pace.current_part, key, val)
+			end
+		end
+	end
+
+	local first = NULL
+
+	local function build(find)
+		list:Clear()
+
+		local cur = get_current()
+
+		for key, val in pairs(get_list()) do
+			if (not find or find == "") or tostring(select_value(val, key)):lower():find(find) then
+
+				local pnl = add_line(list, key, val)
+				pnl.list_key = key
+				pnl.list_val = val
+
+				if not first:IsValid() then
+					first = pnl
+				end
+
+				if cur == name then
+					list:SelectItem(pnl)
+				end
+			end
+		end
+	end
+
+	local search = vgui.Create("DTextEntry", frame)
+	search:Dock(BOTTOM)
+	search.OnTextChanged = function() build(search:GetValue()) end
+	search.OnEnter = function() if first:IsValid() then list:SelectItem(first) end frame:Remove() end
+	search:RequestFocus()
+	frame:MakePopup()
+
+	build()
+
+	pace.ActiveSpecialPanel = frame
+
+	return frame
+end
+
+
 local function populate_part_menu(menu, part, func)
 	if part:HasChildren() then
 		local menu, pnl = menu:AddSubMenu(part:GetName(), function()
@@ -22,7 +92,7 @@ local function populate_part_menu(menu, part, func)
 
 		pnl:SetImage(pace.GetIconFromClassName(part.ClassName))
 
-		for key, part in pairs(part:GetChildren()) do
+		for key, part in ipairs(part:GetChildren()) do
 			populate_part_menu(menu, part, func)
 		end
 	else
@@ -1133,7 +1203,7 @@ do -- bone
 		pace.SelectBone(pace.current_part:GetOwner(), function(data)
 			self:SetValue(L(data.friendly))
 			self.OnValueChanged(data.friendly)
-		end)
+		end, true)
 	end
 
 	function PANEL:SpecialCallback2()
@@ -1143,16 +1213,28 @@ do -- bone
 
 		menu:MakePopup()
 
-		bones = table.ClearKeys(bones)
-		table.sort(bones, function(a,b) return a.friendly > b.friendly end)
-		for _, data in pairs(bones) do
-			menu:AddOption(L(data.friendly), function()
-				self:SetValue(L(data.friendly))
-				self.OnValueChanged(data.friendly)
-			end)
+		local list = {}
+		for k,v in pairs(bones) do
+			table.insert(list, v.friendly)
 		end
 
-		FIX_MENU(menu)
+		create_search_list(
+			self,
+			self.CurrentKey,
+			L"bones",
+			function(list)
+				list:AddColumn(L"name")
+			end,
+			function()
+				return list
+			end,
+			function()
+				return pace.current_part:GetBone()
+			end,
+			function(list, key, val)
+				return list:AddLine(val)
+			end
+		)
 	end
 
 	pace.RegisterPanel(PANEL)
@@ -1284,114 +1366,11 @@ do -- model
 	function PANEL:SpecialCallback()
 		pace.close_spawn_menu = true
 		pace.SafeRemoveSpecialPanel()
-		--g_SpawnMenu:Open()
-		pace.ModelBrowser(function(path)
-			pace.current_part:SetModel(path)
-		end)
+		pace.ResourceBrowser(function(path)
+			self:SetValue(path)
+			self.OnValueChanged(path)
+		end, "models")
 	end
-
-	-- this is so lame
-
-	--[[function PANEL:SpecialCallback()
-		pace.SafeRemoveSpecialPanel()
-
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"models")
-		frame:SetPos(pace.Editor:GetWide(), 0)
-		frame:SetSize(pace.Editor:GetWide(), ScrH())
-
-		local divider = vgui.Create("DVerticalDivider", frame)
-		divider:Dock(FILL)
-
-		local top = vgui.Create("DPanelList")
-			top:EnableVerticalScrollbar(true)
-		divider:SetTop(top)
-
-		local bottom = vgui.Create("DPanelList")
-			bottom:Dock(FILL)
-			bottom:EnableHorizontal(true)
-			bottom:EnableVerticalScrollbar(true)
-			bottom:SetSpacing(4, 4)
-		divider:SetBottom(bottom)
-
-		local function GetParentFolder(str)
-			return str:match("(.*/)" .. (".*/"):rep(1)) or ""
-		end
-
-		local function populate(dir)
-			frame:SetTitle(dir)
-
-			local a,b = file.Find(dir .. "*", "GAME")
-			local files = table.Merge(a or {}, b or {})
-
-			if GetParentFolder(dir):find("/", nil, true) then
-				local btn = vgui.Create("DButton")
-					btn:SetText("..")
-					top:AddItem(btn)
-
-				function btn:DoClick()
-					for k,v in pairs(top:GetItems()) do v:Remove() end
-					for k,v in pairs(bottom:GetItems()) do v:Remove() end
-					populate(GetParentFolder(dir))
-				end
-			end
-
-			for _, name in pairs(files) do
-				if not name:find("%.", nil, true) then
-					local btn = vgui.Create("DButton")
-					btn:SetText(name)
-					top:AddItem(btn)
-
-					function btn:DoClick()
-						for k,v in pairs(top:GetItems()) do v:Remove() end
-						for k,v in pairs(bottom:GetItems()) do v:Remove() end
-						populate(dir .. name .. "/")
-					end
-				end
-			end
-
-			for _, name in pairs(files) do
-				local dir = dir:match("../.-/(.+)")
-
-				if name:find(".mdl", nil, true) then
-					local btn = vgui.Create("SpawnIcon")
-					btn:SetIconSize(64)
-					btn:SetSize(64, 64)
-
-					btn:SetModel(dir .. name)
-					bottom:AddItem(btn)
-
-					function btn.DoClick()
-						pace.current_part:SetModel(dir .. name)
-					end
-				end
-
-				-- umm
-
-				if name:find(".vmt", nil, true) then
-					local image = vgui.Create("DImageButton")
-					image:SetSize(64, 64)
-					local path = (dir .. name):match("materials/(.-)%.vmt")
-					image:SetMaterial(path)
-					image:SetTooltip(path)
-					bottom:AddItem(image)
-
-					function image.DoClick()
-						pace.current_part:SetMaterial(path)
-					end
-				end
-
-
-			end
-
-			top:InvalidateLayout(true)
-			bottom:InvalidateLayout(true)
-		end
-
-		populate("")
-
-		pace.ActiveSpecialPanel = frame
-	end]]
 
 	pace.RegisterPanel(PANEL)
 end
@@ -1432,6 +1411,14 @@ do -- material
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:SpecialCallback()
+		pace.ResourceBrowser(function(path)
+			path = path:match("materials/(.+)%.vmt")
+			self:SetValue(path)
+			self.OnValueChanged(path)
+		end, "materials")
+	end
+
+	function PANEL:SpecialCallback2()
 		pace.SafeRemoveSpecialPanel()
 
 		local pnl = pace.CreatePanel("mat_browser")
@@ -1449,72 +1436,54 @@ do -- material
 	pace.RegisterPanel(PANEL)
 end
 
-local function create_search_list(property, key, name, add_columns, get_list, get_current, add_line, select_value)
-	select_value = select_value or function(val, key) return val end
-	pace.SafeRemoveSpecialPanel()
+do -- textures
+	local PANEL = {}
 
-	local frame = vgui.Create("DFrame")
-	frame:SetTitle(L(name))
-	frame:SetSize(300, 300)
-	frame:Center()
-	frame:SetSizable(true)
+	PANEL.ClassName = "properties_textures"
+	PANEL.Base = "pace_properties_base_type"
 
-	local list = vgui.Create("DListView", frame)
-	list:Dock(FILL)
-	list:SetMultiSelect(false)
-
-	add_columns(list)
-
-	list.OnRowSelected = function(_, id, line)
-		local val = select_value(line.list_val, line.list_key)
-
-		if property and property:IsValid() then
-			property:SetValue(val)
-			property.OnValueChanged(val)
-		else
-			if pace.current_part:IsValid() and pace.current_part["Set" .. key] then
-				pace.Call("VariableChanged", pace.current_part, key, val)
-			end
-		end
+	function PANEL:SpecialCallback()
+		pace.ResourceBrowser(function(path)
+			path = path:match("materials/(.+)%.vtf")
+			self:SetValue(path)
+			self.OnValueChanged(path)
+		end, "textures")
 	end
 
-	local first = NULL
+	function PANEL:SpecialCallback2()
+		pace.SafeRemoveSpecialPanel()
 
-	local function build(find)
-		list:Clear()
+		local pnl = pace.CreatePanel("mat_browser")
 
-		local cur = get_current()
+		SHOW_SPECIAL(pnl, self, 300)
 
-		for key, val in pairs(get_list()) do
-			if (not find or find == "") or tostring(select_value(val, key)):lower():find(find) then
-
-				local pnl = add_line(list, key, val)
-				pnl.list_key = key
-				pnl.list_val = val
-
-				if not first:IsValid() then
-					first = pnl
-				end
-
-				if cur == name then
-					list:SelectItem(pnl)
-				end
-			end
+		function pnl.MaterialSelected(_, path)
+			self:SetValue(path)
+			self.OnValueChanged(path)
 		end
+
+		pace.ActiveSpecialPanel = pnl
 	end
 
-	local search = vgui.Create("DTextEntry", frame)
-	search:Dock(BOTTOM)
-	search.OnTextChanged = function() build(search:GetValue()) end
-	search.OnEnter = function() if first:IsValid() then list:SelectItem(first) end frame:Remove() end
-	search:RequestFocus()
-	frame:MakePopup()
+	pace.RegisterPanel(PANEL)
+end
 
-	build()
 
-	pace.ActiveSpecialPanel = frame
+do -- sound
+	local PANEL = {}
 
-	return frame
+	PANEL.ClassName = "properties_sound"
+	PANEL.Base = "pace_properties_base_type"
+
+	function PANEL:SpecialCallback()
+		pace.ResourceBrowser(function(path)
+			path = path:match("sound/(.+)")
+			self:SetValue(path)
+			self.OnValueChanged(path)
+		end, "sound")
+	end
+
+	pace.RegisterPanel(PANEL)
 end
 
 do -- sequence list
@@ -2022,6 +1991,9 @@ do -- damage type
 		dissolve_heavy_electrical = 1,
 		dissolve_light_electrical = 2,
 		dissolve_core_effect = 3,
+
+		heal = -1,
+		armor = -1,
 	}
 
 	function PANEL:SpecialCallback()
@@ -2114,6 +2086,43 @@ do -- gesture properties
 			end,
 			function()
 				return pace.current_part.AnimationType
+			end,
+			function(list, key, val)
+				return list:AddLine(key)
+			end,
+			function(val, key)
+				return key
+			end
+		)
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
+do -- gesture properties
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_attract_mode"
+	PANEL.Base = "pace_properties_base_type"
+
+	function PANEL:SpecialCallback()
+		local frame = create_search_list(
+			self,
+			self.CurrentKey,
+			L"attract mode",
+			function(list)
+				list:AddColumn("name")
+			end,
+			function()
+				return {
+					hitpos = "hitpos",
+					hitpos_radius = "hitpos_radius",
+					closest_to_projectile = "closest_to_projectile",
+					closest_to_hitpos = "closest_to_hitpos",
+				}
+			end,
+			function()
+				return pace.current_part.AttractMode
 			end,
 			function(list, key, val)
 				return list:AddLine(key)

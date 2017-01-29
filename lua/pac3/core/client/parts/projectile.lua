@@ -18,11 +18,13 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Bounce", 0)
 	pac.GetSet(PART, "BulletImpact", false)
 	pac.GetSet(PART, "Damage", 0)
-	pac.GetSet(PART, "Heal", false)
 	pac.GetSet(PART, "DamageType", "generic")
 	pac.GetSet(PART, "Spread", 0)
 	pac.GetSet(PART, "Delay", 0)
 	pac.GetSet(PART, "Mass", 100)
+	pac.GetSet(PART, "Attract", 0)
+	pac.GetSet(PART, "AttractMode", "projectile_nearest")
+	pac.GetSet(PART, "AttractRadius", 200)
 	pac.SetupPartName(PART, "OutfitPart")
 	pac.GetSet(PART, "Physical", false)
 	pac.GetSet(PART, "CollideWithOwner", false)
@@ -130,11 +132,10 @@ function PART:Shoot(pos, ang)
 							phys:SetVelocity(data.OurOldVelocity - 2 * (data.HitNormal:Dot(data.OurOldVelocity) * data.HitNormal) * self.Bounce)
 						end
 					end)
-				elseif self.Sticky and data.HitEntity:IsWorld() then
+				elseif self.Sticky then
 					phys:SetVelocity(Vector(0,0,0))
-					phys:Sleep()
 					phys:EnableMotion(false)
-					ent.pac_stuck = true
+					ent.pac_stuck = data.OurOldVelocity
 				end
 
 				if self.BulletImpact then
@@ -145,6 +146,7 @@ function PART:Shoot(pos, ang)
 						Num = 1,
 						Src = data.HitPos - data.HitNormal,
 						Dir = data.HitNormal,
+						Distance = 10,
 					}
 				end
 
@@ -175,7 +177,7 @@ function PART:Shoot(pos, ang)
 
 				if self.AimDir then
 					if ent.pac_stuck then
-						ent:SetRenderAngles(ent.last_angle)
+						ent:SetRenderAngles(ent.pac_stuck:Angle())
 					else
 						local angle = ent:GetVelocity():Angle()
 						ent:SetRenderAngles(angle)

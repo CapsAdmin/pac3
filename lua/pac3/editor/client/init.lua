@@ -18,7 +18,7 @@ include("basic_mode.lua")
 include("deprecated_features.lua")
 include("settings.lua")
 include("shortcuts.lua")
-include("model_browser.lua")
+include("resource_browser.lua")
 include("menu_bar.lua")
 
 include("mctrl.lua")
