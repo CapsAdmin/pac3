@@ -975,9 +975,7 @@ do -- drawing. this code is running every frame
 	--SETUP_CACHE_FUNC(PART, "CalcAngles")
 end
 
-function PART:Think()
-	if not self:GetEnabled() then return end
-
+function PART:CalcShowHide()
 	local b = self:IsHidden()
 
 	if b ~= self.last_hidden then
@@ -992,6 +990,12 @@ function PART:Think()
 
 		self.last_hidden = b
 	end
+end
+
+function PART:Think()
+	if not self:GetEnabled() then return end
+
+	self:CalcShowHide()
 
 	if not self.AlwaysThink and b then return end
 
