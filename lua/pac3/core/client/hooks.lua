@@ -385,6 +385,14 @@ function pac.EntityRemoved(ent)
 					part:CheckOwner(ent, true)
 				end
 			end
+		elseif ent.pac_parts then
+			for _, part in pairs(ent.pac_parts) do
+				if part.dupe_remove then
+					part:Remove()
+				elseif not part:HasParent() then
+					part:CheckOwner(ent, true)
+				end
+			end
 		end
 	end
 end
