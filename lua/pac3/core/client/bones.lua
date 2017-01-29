@@ -95,13 +95,14 @@ function pac.GetAllBones(ent)
 		tbl.hitpos = {friendly = "hit position", is_special = true}
 		tbl.footstep = {friendly = "footsteps", is_special = true}
 		tbl.skirt = {friendly = "skirt", is_special = true}
-		tbl.skirt = {friendly = "skirt2", is_special = true}
+		tbl.skirt2 = {friendly = "skirt2", is_special = true}
 		tbl.hitpos_ent_ang = {friendly = "hitpos_ent_ang", is_special = true}
 		tbl.hitpos_ent_ang_zero_pitch = {friendly = "hitpos_ent_ang_zero_pitch", is_special = true}
 		tbl.pos_ang = {friendly = "pos_ang", is_special = true}
 		tbl.pos_eyeang = {friendly = "pos_eyeang", is_special = true}
-		tbl.pos_eyeang = {friendly = "eyepos_eyeang", is_special = true}
-		tbl.pos_eyeang = {friendly = "eyepos_ang", is_special = true}
+		tbl.eyepos_eyeang = {friendly = "eyepos_eyeang", is_special = true}
+		tbl.eyepos_ang = {friendly = "eyepos_ang", is_special = true}
+		tbl.pos_noang = {friendly = "pos_noang", is_special = true}
 
 		ent.pac_bone_count = count
 	end
@@ -139,6 +140,8 @@ local function GetBonePosition(ent, id)
 	return pos, ang
 end
 
+local angle_origin = Angle(0,0,0)
+
 function pac.GetBonePosAng(ent, id, parent)
 	if not ent:IsValid() then return Vector(), Angle() end
 
@@ -149,6 +152,10 @@ function pac.GetBonePosAng(ent, id, parent)
 
 	if id == "pos_ang" then
 		return ent:GetPos(), ent:GetAngles()
+	end
+
+	if id == "pos_noang" then
+		return ent:GetPos(), angle_origin
 	end
 
 	if id == "pos_eyeang" then
