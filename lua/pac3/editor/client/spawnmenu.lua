@@ -8,6 +8,10 @@ concommand.Add("pac_clear_parts", function()
 	pace.ClearParts()
 end)
 
+concommand.Add("pac_panic", function()
+	pac.Panic()
+end)
+
 net.Receive("pac_spawn_part", function()
 	if not pace.current_part:IsValid() then return end
 
@@ -33,28 +37,11 @@ end)
 pace.SpawnlistBrowser = NULL
 
 function pace.ClientOptionsMenu(pnl)
-	pnl:Button(
-		L"show editor",
-		"pac_editor"
-	)
-
-	pnl:CheckBox(
-		L"enable",
-		"pac_enable"
-	)
-
-	pnl:Help''
-
-	pnl:Button(
-		L"clear",
-		"pac_clear_parts"
-	)
-
-	pnl:Button(
-		L"wear on server",
-		"pac_wear_parts"
-	)
-
+	pnl:Button(L"show editor", "pac_editor")
+	pnl:CheckBox(L"enable", "pac_enable")
+	pnl:Button(L"clear", "pac_clear_parts")
+	pnl:Button(L"wear on server", "pac_wear_parts"	)
+	pnl:Button(L"panic", "pac_panic")
 
 	local browser = pnl:AddControl("pace_browser", {})
 
