@@ -48,7 +48,8 @@ function pace.SetFont(fnt)
 end
 
 function pace.AddFontsToMenu(menu)
-	local menu = menu:AddSubMenu(L"font")
+	local menu,pnl = menu:AddSubMenu(L"font")
+	pnl:SetImage("icon16/text_bold.png")
 	menu.GetDeleteSelf = function() return false end
 
 	for key, val in pairs(pace.Fonts) do

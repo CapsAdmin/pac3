@@ -1,17 +1,20 @@
-local printf = function(fmt, ...) MsgN(string.format(fmt, ...)) end
-local check = function() end
 local table = {insert = table.insert}
 
 do -- table copy
-	local lookup_table = {}
+	local lookup_table
 
 	local function copy(obj, skip_meta)
+		local t = type(obj)
 
-		if type(obj) == "Vector" or type(obj) == "Angle" then
+		if t == "number" or t == "string" or t == "function" or t == "boolean" then
+			return obj
+		end
+
+		if t == "Vector" or t == "Angle" then
 			return obj * 1
 		elseif lookup_table[obj] then
 			return lookup_table[obj]
-		elseif type(obj) == "table" then
+		elseif t == "table" then
 			local new_table = {}
 
 			lookup_table[obj] = new_table
@@ -21,9 +24,9 @@ do -- table copy
 			end
 
 			return skip_meta and new_table or setmetatable(new_table, getmetatable(obj))
-		else
-			return obj
 		end
+
+		return obj
 	end
 
 	function table.copy(obj, skip_meta)
@@ -82,14 +85,10 @@ function class.RemoveField(tbl, name)
 end
 
 function class.Get(type_name, class_name)
-    check(type_name, "string")
-    check(class_name, "string")
-
     return class.Registered[type_name] and class.Registered[type_name][class_name] or nil
 end
 
 function class.GetAll(type_name)
-	check(type_name, "string")
 	return class.Registered[type_name]
 end
 
@@ -131,7 +130,7 @@ function class.Create(type_name, class_name)
     local META = class.Get(type_name, class_name)
 
     if not META then
-        printf("tried to create unknown %s %q!", type or "no type", class_name or "no class")
+        MsgN(string.format("tried to create unknown %s %q!", type or "no type", class_name or "no class"))
         return
     end
 

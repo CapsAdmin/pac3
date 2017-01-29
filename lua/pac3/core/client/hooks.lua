@@ -216,7 +216,7 @@ function pac.OnClientsideRagdoll(ent)
 		end
 	end
 
-	if not ply.pac_parts or not ply then return end
+	if not ply or not ply.pac_parts then return end
 
 	ply.pac_ragdoll = ent
 
@@ -285,36 +285,6 @@ function pac.InitDeathPhysicsOnProp(part,ply,plyent)
 	end
 end
 
-function pac.OnEntityCreated(ent)
-	if not IsActuallyValid(ent) then return end
-
-	if ent:GetClass() == "class C_HL2MPRagdoll" then
-		pac.OnClientsideRagdoll(ent)
-	end
-
-	local owner = ent:GetOwner()
-
-	if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
-		for _, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
-			if not part:HasParent() then
-				part:CheckOwner(ent, false)
-			end
-		end
-
-		return
-	end
-
-	if ply.pac_physics_died then return end
-
-	for _, part in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
-		if part.ClassName == "model" then
-			pac.InitDeathPhysicsOnProp(part,ply,ent)
-		end
-	end
-	ply.pac_physics_died = true
-
-end
-
 function pac.InitDeathPhysicsOnProp(part,ply,plyent)
 	plyent:SetNoDraw(true)
 
@@ -361,7 +331,6 @@ function pac.OnEntityCreated(ent)
 			end
 		end
 	end
-
 end
 pac.AddHook("OnEntityCreated")
 
@@ -398,7 +367,7 @@ function pac.PlayerSpawned(ply)
 	if ply.pac_parts then
 		for _, part in pairs(ply.pac_parts) do
 			if part.last_owner and part.last_owner:IsValid() then
-				part:SetOwner(ent)
+				part:SetOwner(ply)
 				part.last_owner = nil
 			end
 		end
