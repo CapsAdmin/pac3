@@ -207,6 +207,8 @@ do -- projectile entity
 				phys:Sleep()
 				phys:EnableMotion(false)
 				phys:EnableCollisions(false)
+				--data.HitObject:SetVelocity(data.TheirOldVelocity)
+				timer.Simple(0, function() if self:IsValid() then self:SetCollisionGroup(COLLISION_GROUP_DEBRIS) end end)
 
 				 if not data.HitEntity:IsWorld() then
 					local closest = {}
