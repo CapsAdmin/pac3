@@ -2099,6 +2099,43 @@ do -- gesture properties
 	pace.RegisterPanel(PANEL)
 end
 
+do -- gesture properties
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_attract_mode"
+	PANEL.Base = "pace_properties_base_type"
+
+	function PANEL:SpecialCallback()
+		local frame = create_search_list(
+			self,
+			self.CurrentKey,
+			L"attract mode",
+			function(list)
+				list:AddColumn("name")
+			end,
+			function()
+				return {
+					hitpos = "hitpos",
+					hitpos_radius = "hitpos_radius",
+					closest_to_projectile = "closest_to_projectile",
+					closest_to_hitpos = "closest_to_hitpos",
+				}
+			end,
+			function()
+				return pace.current_part.AttractMode
+			end,
+			function(list, key, val)
+				return list:AddLine(key)
+			end,
+			function(val, key)
+				return key
+			end
+		)
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
 do
 	local PANEL = {}
 
