@@ -713,28 +713,24 @@ do -- events
 	function PART:Initialize() end
 	function PART:OnRemove() end
 
-	do
-		local is_valid = function() return false end
+	function PART:Remove(skip_removechild)
+		pac.CallHook("OnPartRemove", self)
+		self:CallRecursive("OnHide")
+		self:OnRemove()
 
-		function PART:Remove(skip_removechild)
-			pac.CallHook("OnPartRemove", self)
-			self:CallRecursive("OnHide")
-			self:OnRemove()
-
-			if not skip_removechild and self:HasParent() then
-				self:GetParent():RemoveChild(self)
-			end
-
-			self:RemoveChildren()
-
-			if self.owner_id and self.UniqueID then
-				pac.UniqueIDParts[self.owner_id][self.UniqueID] = nil
-			end
-
-			pac.ActiveParts[self.Id] = nil
-
-			self.IsValid = is_valid
+		if not skip_removechild and self:HasParent() then
+			self:GetParent():RemoveChild(self)
 		end
+
+		self:RemoveChildren()
+
+		if self.owner_id and self.UniqueID then
+			pac.UniqueIDParts[self.owner_id][self.UniqueID] = nil
+		end
+
+		pac.ActiveParts[self.Id] = nil
+
+		self.is_valid = false
 	end
 
 	function PART:OnStore()	end
@@ -995,6 +991,7 @@ function PART:HookEntityRender()
 	if root.last_owner:IsValid() then
 		pac.UnhookEntityRender(root.last_owner, root)
 	end
+
 	if owner:IsValid() then
 		pac.HookEntityRender(owner, root)
 	end
@@ -1048,8 +1045,10 @@ function PART:SubmitToServer()
 	pac.SubmitPart(self:ToTable())
 end
 
+PART.is_valid = true
+
 function PART:IsValid()
-	return true
+	return self.is_valid
 end
 
 function PART:SetDrawOrder(num)
