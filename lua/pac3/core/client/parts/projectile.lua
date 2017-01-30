@@ -190,7 +190,7 @@ function PART:Shoot(pos, ang)
 			local phys = ent:GetPhysicsObject()
 			phys:EnableGravity(self.Gravity)
 			phys:AddVelocity((ang:Forward() + (VectorRand():Angle():Forward() * self.Spread)) * self.Speed * 1000)
-			if self.AddOwnerSpeed then
+			if self.AddOwnerSpeed and ent:GetOwner():IsValid() then
 				phys:AddVelocity(ent:GetOwner():GetVelocity())
 			end
 			phys:EnableCollisions(self.Collisions)
