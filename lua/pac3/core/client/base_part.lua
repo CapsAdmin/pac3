@@ -283,7 +283,7 @@ do -- owner
 	function PART:SetOwner(ent)
 		self.last_owner = self.Owner
 		self.Owner = ent or NULL
-		pac.RunNextFrame(tostring(ent), function()
+		pac.RunNextFrame(self:GetRootPart().Id .. "_hook_render", function()
 			if self:IsValid() then
 				self:HookEntityRender()
 			end
