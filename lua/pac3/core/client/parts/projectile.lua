@@ -6,6 +6,7 @@ PART.ClassName = "projectile"
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Speed", 1)
+	pac.GetSet(PART, "AddOwnerSpeed", false)
 	pac.GetSet(PART, "Damping", 0)
 	pac.GetSet(PART, "Gravity", true)
 	pac.GetSet(PART, "Collisions", true)
@@ -189,6 +190,9 @@ function PART:Shoot(pos, ang)
 			local phys = ent:GetPhysicsObject()
 			phys:EnableGravity(self.Gravity)
 			phys:AddVelocity((ang:Forward() + (VectorRand():Angle():Forward() * self.Spread)) * self.Speed * 1000)
+			if self.AddOwnerSpeed and ent:GetOwner():IsValid() then
+				phys:AddVelocity(ent:GetOwner():GetVelocity())
+			end
 			phys:EnableCollisions(self.Collisions)
 			phys:SetDamping(self.Damping, 0)
 

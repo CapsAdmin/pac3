@@ -18,7 +18,7 @@ local function populate_pac(menu)
 	local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts(nil, true) end)
 	load:SetDeleteSelf(false)
 	pnl:SetImage(pace.MiscIcons.load)
-	add_expensive_submenu_load(pnl, function() pace.AddSavedPartsToMenu(load, false) end)
+	add_expensive_submenu_load(pnl, function() pace.AddSavedPartsToMenu(load, true) end)
 
 	menu:AddOption(L"wear", function() pace.WearParts() end):SetImage(pace.MiscIcons.wear)
 
