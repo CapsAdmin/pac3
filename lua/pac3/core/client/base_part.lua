@@ -282,18 +282,12 @@ do -- owner
 
 	function PART:SetOwner(ent)
 		self.last_owner = self.Owner
-
-		if ent:IsValid() then
-			local root = self:GetRootPart()
-
-			if self.last_owner:IsValid() and self.last_owner ~= ent then
-				pac.UnhookEntityRender(self.last_owner, root)
-			end
-
-			pac.HookEntityRender(ent, root)
-		end
-
 		self.Owner = ent or NULL
+		pac.RunNextFrame(tostring(ent), function()
+			if self:IsValid() then
+				self:HookEntityRender()
+			end
+		end)
 	end
 
 	-- always return the root owner
@@ -989,6 +983,20 @@ function PART:CalcShowHide()
 		self.shown_from_rendering = nil
 
 		self.last_hidden = b
+	end
+end
+
+function PART:HookEntityRender()
+	local root = self:GetRootPart()
+	local owner = root:GetOwner()
+
+	if root.ClassName ~= "group" then return end -- FIX ME
+
+	if root.last_owner:IsValid() then
+		pac.UnhookEntityRender(root.last_owner, root)
+	end
+	if owner:IsValid() then
+		pac.HookEntityRender(owner, root)
 	end
 end
 
