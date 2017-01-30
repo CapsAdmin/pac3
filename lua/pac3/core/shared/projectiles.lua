@@ -60,6 +60,9 @@ do -- projectile entity
 			local phys = self:GetPhysicsObject()
 			phys:EnableGravity(part.Gravity)
 			phys:AddVelocity((ang:Forward() + (VectorRand():Angle():Forward() * part.Spread)) * part.Speed * 1000)
+			if part.AddOwnerSpeed then
+				phys:AddVelocity(ply:GetVelocity())
+			end
 			phys:EnableCollisions(part.Collisions)
 			if not part.Collisions then
 				self:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
@@ -307,8 +310,16 @@ do -- projectile entity
 					info:SetAttacker(owner:IsValid() and owner or self)
 					info:SetInflictor(self)
 
-					if self.part_data.DamageType == "fire" and owner:IsPlayer() and owner:IsValid() and hook.Run("CanProperty", owner, "ignite", data.HitEntity) ~= false then
-						data.HitEntity:Ignite(math.min(self.part_data.Damage, 5), damage_radius)
+					if self.part_data.DamageType == "fire" then
+						if damage_radius > 0 then
+							for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
+								if owner:IsPlayer() and owner:IsValid() and hook.Run("CanProperty", owner, "ignite", ent) ~= false and ent ~= self then
+									ent:Ignite(math.min(self.part_data.Damage, 5))
+								end
+							end
+						elseif owner:IsPlayer() and owner:IsValid() and hook.Run("CanProperty", owner, "ignite", ent) ~= false then
+							ent:Ignite(math.min(self.part_data.Damage, 5))
+						end
 					elseif self.part_data.DamageType == "explosion" then
 						info:SetDamageType(damage_types.blast)
 						info:SetDamage(math.Clamp(self.part_data.Damage, 0, 100000))
