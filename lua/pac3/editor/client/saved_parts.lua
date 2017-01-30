@@ -181,31 +181,28 @@ function pace.LoadParts(name, clear, override_part)
 end
 
 function pace.LoadPartsFromTable(data, clear, override_part)
+	if pace.use_current_part_for_saveload and pace.current_part:IsValid() then
+		override_part = pace.current_part
+	end
 
-	--timer.Simple(0.1, function()
-		if pace.use_current_part_for_saveload and pace.current_part:IsValid() then
-			override_part = pace.current_part
+	if clear then
+		pace.ClearParts()
+	end
+
+	if data.self then
+		local part = override_part or pac.CreatePart(data.self.ClassName)
+		part:SetTable(data)
+	else
+		data = pace.FixBadGrouping(data)
+		data = pace.FixUniqueIDs(data)
+
+		for key, tbl in pairs(data) do
+			local part = pac.CreatePart(tbl.self.ClassName)
+			part:SetTable(tbl)
 		end
+	end
 
-		if clear then
-			pace.ClearParts()
-		end
-
-		if data.self then
-			local part = override_part or pac.CreatePart(data.self.ClassName)
-			part:SetTable(data)
-		else
-			data = pace.FixBadGrouping(data)
-			data = pace.FixUniqueIDs(data)
-
-			for key, tbl in pairs(data) do
-				local part = pac.CreatePart(tbl.self.ClassName)
-				part:SetTable(tbl)
-			end
-		end
-
-		pace.RefreshTree(true)
---	end)
+	pace.RefreshTree(true)
 end
 
 local function add_files(tbl, dir)
