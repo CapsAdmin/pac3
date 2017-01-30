@@ -77,7 +77,7 @@ end
 local function hide_parts(ent)
 	if ent.pac_parts and ent.pac_drawing then
 		for _, part in pairs(ent.pac_parts) do
-			part:CallRecursive("OnHide", true)
+			part:CallRecursive("OnHide")
 			part:SetKeyValueRecursive("last_hidden", nil)
 			part:SetKeyValueRecursive("shown_from_rendering", false)
 			part:SetKeyValueRecursive("draw_hidden", true)
@@ -91,7 +91,6 @@ end
 local function show_parts(ent)
 	if ent.pac_parts and (not ent.pac_drawing) and (not ent.pac_shouldnotdraw) and (not ent.pac_ignored) then
 		for _, part in pairs(ent.pac_parts) do
-			part:CallRecursive("OnHide")
 			part:SetKeyValueRecursive("last_hidden", nil)
 			part:SetKeyValueRecursive("shown_from_rendering", true)
 			part:SetKeyValueRecursive("draw_hidden", false)

@@ -1,3 +1,6 @@
+local LocalPlayer = LocalPlayer
+local FrameTime = FrameTime
+
 local PART = {}
 
 PART.ClassName = "event"
@@ -638,7 +641,7 @@ PART.Events =
 			ent = try_viewmodel(ent)
 
 			if all_players then
-				for _, ply in pairs(player.GetAll()) do
+				for _, ply in ipairs(player.GetAll()) do
 					local data = ply.pac_say_event
 
 					if data and self:StringOperator(data.str, find) and data.time + time > pac.RealTime then

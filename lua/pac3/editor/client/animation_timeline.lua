@@ -338,7 +338,7 @@ do
 					timeline.Load(util.JSONToTable(file.Read("pac3/__animations/" .. name)))
 				end)
 			end
-			
+
 			-- LOL
 			timer.Simple(0, function()
 				local x, y = menu:GetPos()
@@ -620,13 +620,14 @@ do
 			local menu = DermaMenu()
 			menu:AddOption(L"set length",function()
 				Derma_StringRequest(L"question",
-						L"how long should this frame be in seconds?",
-						tostring(self:GetWide()/secondDistance),
-						function(str) self:SetLength(tonumber(str)) end,
-						function() end,
-						L"set length",
-						L"cancel" )
-				end)
+					L"how long should this frame be in seconds?",
+					tostring(self:GetWide()/secondDistance),
+					function(str) self:SetLength(tonumber(str)) end,
+					function() end,
+					L"set length",
+					L"cancel" )
+			end)
+
 			menu:AddOption(L"multiply length",function()
 				Derma_StringRequest(L"question",
 						L"multiply "..self:GetAnimationIndex().."'s length",
@@ -636,25 +637,24 @@ do
 						L"multiply length",
 						L"cancel" )
 				end)
-			if timeline.data.Type ~= boneanimlib.TYPE_GESTURE then
-				menu:AddOption(L"set restart",function()
-					for _,v in pairs(timeline.frame.keyframe_scroll.Panels) do
-						if v.RestartPos then v.RestartPos = nil end
-					end
-					self.RestartPos = true
-					timeline.data.RestartFrame = self:GetAnimationIndex()
-				end)
-			end
-			if timeline.data.Type == boneanimlib.TYPE_SEQUENCE then
-				menu:AddOption(L"set start",function()
 
-					for _,v in pairs(timeline.frame.keyframe_scroll.Panels) do
-						if v.StartPos then v.StartPos = nil end
+			menu:AddOption(L"set restart",function()
+				for _,v in pairs(timeline.frame.keyframe_scroll.Panels) do
+					if v.RestartPos then v.RestartPos = nil end
+				end
+				self.RestartPos = true
+				timeline.data.RestartFrame = self:GetAnimationIndex()
+			end)
+
+			menu:AddOption(L"set start",function()
+				for _,v in pairs(timeline.frame.keyframe_scroll.Panels) do
+					if v.StartPos then
+						v.StartPos = nil
 					end
-					self.StartPos = true
-					timeline.data.StartFrame = self:GetAnimationIndex()
-				end)
-			end
+				end
+				self.StartPos = true
+				timeline.data.StartFrame = self:GetAnimationIndex()
+			end)
 
 			if self:GetAnimationIndex() > 1 then
 				menu:AddOption(L"reverse last frame",function()
