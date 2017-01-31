@@ -126,7 +126,7 @@ function PART:OnShow(owner)
 		if self.StopOtherAnimations then
 			for id in pairs(owner.LuaAnimations) do
 				if id ~= self:GetAnimID() then
-					owner:StopLuaAnimation()
+					owner:StopLuaAnimation(id)
 				end
 			end
 		end
