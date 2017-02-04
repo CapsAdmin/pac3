@@ -588,8 +588,8 @@ PART.Events =
 
 	emit_sound =
 	{
-		arguments = {{find_sound = "string"}, {time = "number"}},
-		callback = function(self, ent, find, time)
+		arguments = {{find_sound = "string"}, {time = "number"}, {mute = "boolean"}},
+		callback = function(self, ent, find, time, mute)
 			time = time or 0.1
 
 			ent = try_viewmodel(ent)
@@ -600,6 +600,9 @@ PART.Events =
 			if data and (self:StringOperator(data.name, find) and (time == 0 or data.time + time > pac.RealTime)) then
 				data.reset = false
 				b = true
+				if mute then
+					data.mute_me = true
+				end
 			end
 
 			return b
@@ -1287,13 +1290,15 @@ pac.AddHook("EntityEmitSound", function(data)
 	for _, v in pairs(pac.GetPartsFromUniqueID(ent:IsPlayer() and ent:UniqueID() or ent:EntIndex())) do
 		if v.ClassName == "event" and v.Event == "emit_sound" then
 			v:GetParent():CallRecursive("Think")
+
+			if ent.pac_emit_sound.mute_me then
+				return false
+			end
 		end
 	end
 
 	if ent.pac_mute_sounds then
-		if ent.pac_allow_ogg_sounds and string.find(data.SoundName,".ogg") then return
-		else return false
-		end
+		return false
 	end
 end)
 
