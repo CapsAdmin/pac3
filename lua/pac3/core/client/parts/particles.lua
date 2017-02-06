@@ -2,6 +2,7 @@ local cam_IgnoreZ = cam.IgnoreZ
 local vector_origin = vector_origin
 local FrameTime = FrameTime
 local angle_origin = Angle(0,0,0)
+local WorldToLocal = WorldToLocal
 
 local PART = {}
 
@@ -154,7 +155,9 @@ function PART:OnDraw(owner, pos, ang)
 			end
 
 			if self.Follow then
-				self.emitter:DrawAt(pos, ang)
+				cam.Start3D(WorldToLocal(EyePos(), EyeAngles(), pos, ang))
+				self.emitter:DrawAt()
+				cam.End3D()
 			end
 
 			self.emitter:Draw()
