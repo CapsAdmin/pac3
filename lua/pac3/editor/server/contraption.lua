@@ -3,12 +3,19 @@ util.AddNetworkString("pac_to_contraption")
 local receieved = {}
 
 local function spawn(val,player)
-
 	local model = val.mdl
 
-	if not model or model=="" or model:find"\n" or model:find("..",1,true) then return end
+	if not model or model == "" or model:find("\n") or model:find("..", 1, true) then
+		return
+	end
 
-	if ( !gamemode.Call( "PlayerSpawnProp", player, model ) ) then return end
+	pace.suppress_prop_spawn = true
+	local ok = hook.Run("PlayerSpawnProp", player, model)
+	pace.suppress_prop_spawn = false
+
+	if not ok then
+		return
+	end
 
 	local ent = ents.Create("prop_physics")
 
@@ -24,11 +31,14 @@ local function spawn(val,player)
 	ent:Spawn()
 	ent:SetHealth(9999999)
 
-	if ent.CPPISetOwner and (ent:CPPIGetOwner()==nil or ent:CPPIGetOwner()==NULL) then
+	hook.Run("PlayerSpawnedProp", player, model, ent)
+
+	if ent.CPPISetOwner and not (ent:CPPIGetOwner() or NULL):IsValid() then
 		ent:CPPISetOwner(ply)
 	end
 
 	local phys = ent:GetPhysicsObject()
+
 	if phys:IsValid() then
 		phys:EnableMotion(false)
 
@@ -46,9 +56,9 @@ local function spawn(val,player)
 
 end
 
-local pac_to_contraption_allow = CreateConVar("pac_to_contraption_allow","1")
-net.Receive("pac_to_contraption", function(len, ply)
+local pac_to_contraption_allow = CreateConVar("pac_to_contraption_allow", "1")
 
+net.Receive("pac_to_contraption", function(len, ply)
 	if not pac_to_contraption_allow:GetBool() then
 		ply:ChatPrint("This server does not allow spawning PAC contraptions")
 		return
@@ -56,11 +66,9 @@ net.Receive("pac_to_contraption", function(len, ply)
 
 	local data = net.ReadTable()
 
-	Msg"[PAC3] Spawning contraption by "print(ply,
-		" with " ..table.Count(data).." entities")
+	print("[PAC3] Spawning contraption by ", ply, " with " .. table.Count(data) .. " entities")
 
 	for key, val in pairs(data) do
 		spawn(val,ply)
 	end
-
 end)

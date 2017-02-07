@@ -7,6 +7,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "URL", "")
 	pac.GetSet(PART, "Data", "")
 	pac.GetSet(PART, "StopOnHide", true)
+	pac.GetSet(PART, "StopOtherAnimations", false)
 	pac.GetSet(PART, "AnimationType", "sequence")
 	pac.GetSet(PART, "Rate", 1)
 	pac.GetSet(PART, "BonePower", 1)
@@ -122,6 +123,13 @@ function PART:OnShow(owner)
 		self:SetOffset(self:GetOffset())
 		self:SetRate(self:GetRate())
 		self:SetBonePower(self:GetBonePower())
+		if self.StopOtherAnimations then
+			for id in pairs(owner.LuaAnimations) do
+				if id ~= self:GetAnimID() then
+					owner:StopLuaAnimation(id)
+				end
+			end
+		end
 	end
 end
 

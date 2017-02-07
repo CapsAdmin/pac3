@@ -1,30 +1,8 @@
 local cam_IgnoreZ = cam.IgnoreZ
 local vector_origin = vector_origin
-local RealTime = RealTime
 local FrameTime = FrameTime
-local EyeAngles = EyeAngles
-local Matrix = Matrix
 local angle_origin = Angle(0,0,0)
-
--- 12:34 - <mniip> http://codepad.org/cLaX7lVn
-local function table_multiremove(tbl, locations)
-
-	if locations[1] then
-		local off = 0
-		local idx = 1
-
-		for i = 1, #tbl do
-			while i + off == locations[idx] do
-				off = off + 1
-				idx = idx + 1
-			end
-
-			tbl[i] = tbl[i + off]
-		end
-	end
-
-	return tbl
-end
+local WorldToLocal = WorldToLocal
 
 local PART = {}
 
@@ -151,10 +129,8 @@ end
 function PART:SetFollow(b)
 	self.Follow = b
 	if b then
-		self.emitter = ParticleEmitter(self.cached_pos, true)
 		self.emitter:SetNoDraw(true)
 	else
-		self.emitter = ParticleEmitter(self.cached_pos, self["3D"])
 		self:SetDrawManual(self:GetDrawManual())
 	end
 end
@@ -177,18 +153,14 @@ function PART:OnDraw(owner, pos, ang)
 			if self.IgnoreZ then
 				cam_IgnoreZ(true)
 			end
+
 			if self.Follow then
-				local mat = Matrix()
-				mat:Translate(pos)
-				mat:Rotate(ang)
-				cam.PushModelMatrix(mat)
+				cam.Start3D(WorldToLocal(EyePos(), EyeAngles(), pos, ang))
+				self.emitter:Draw()
+				cam.End3D()
 			end
 
 			self.emitter:Draw()
-
-			if self.Follow then
-				cam.PopModelMatrix()
-			end
 
 			if self.IgnoreZ then
 				cam_IgnoreZ(false)
@@ -228,22 +200,18 @@ function PART:EmitParticles(pos, ang, real_ang)
 	local emt = self.emitter
 	if not emt then return end
 
-	local current_time = self.Follow and RealTime()
-
 	if self.NextShot < pac.RealTime then
-		local spread = self.Spread / 180
-
 		if self.Material == "" then return end
 		if self.Velocity == 500.01 then return end
 
 		ang = ang:Forward()
 
 		local double = 1
-		if self.DoubleSided and not self.Follow then
+		if self.DoubleSided then
 			double = 2
 		end
 
-		for i = 1, self.NumberParticles do
+		for _ = 1, self.NumberParticles do
 
 			local vec = Vector()
 
@@ -318,10 +286,6 @@ function PART:EmitParticles(pos, ang, real_ang)
 				particle:SetAirResistance(self.AirResistance)
 				particle:SetBounce(self.Bounce)
 				particle:SetGravity(self.Gravity)
-				if not self.Follow then
-					particle:SetCollide(self.Collide)
-					particle:SetLighting(self.Lighting)
-				end
 				particle:SetAngles(particle:GetAngles() + self.ParticleAngle)
 
 				if self.Sliding then
@@ -347,54 +311,10 @@ function PART:EmitParticles(pos, ang, real_ang)
 					particle.StickStartAlpha = self.StickStartAlpha
 					particle.StickEndAlpha = self.StickEndAlpha
 				end
-
-				if self.Follow then
-					self.follow_particles = self.follow_particles or {}
-					table.insert(self.follow_particles, {
-						particle = particle,
-						time = current_time + particle:GetDieTime(),
-						ang = particle:GetAngles(),
-					})
-				end
 			end
 		end
 
 		self.NextShot = pac.RealTime + self.FireDelay
-	end
-
-	if self.Follow and self.follow_particles then
-		local ang = EyeAngles()
-		ang:RotateAroundAxis(Vector(0,0,1), -real_ang.y)
-		ang:RotateAroundAxis(Vector(0,1,0), -real_ang.p)
-		ang:RotateAroundAxis(Vector(1,0,0), -real_ang.r)
-
-		local f = ang:Forward()
-		local r = ang:Right()
-		local u = ang:Up()
-
-		ang:RotateAroundAxis(f, 90)
-		ang:RotateAroundAxis(r, 180)
-
-		local remove_these = {}
-
-		for i, data in ipairs(self.follow_particles) do
-			if data.time < current_time then
-				table.insert(remove_these, i)
-			else
-				local ang = ang * 1
-				if data.ang.p ~= 0 or data.ang.y ~= 0 or data.ang.r ~= 0 then
-					ang:RotateAroundAxis(f, data.ang.r)
-					ang:RotateAroundAxis(r, data.ang.y)
-					ang:RotateAroundAxis(u, data.ang.p)
-				end
-
-				data.particle:SetAngles(ang)
-			end
-		end
-
-		if remove_these[1] then
-			table_multiremove(self.follow_particles, remove_these)
-		end
 	end
 end
 
