@@ -28,12 +28,15 @@ local function get_unlit_mat(path)
 	if path:find("%.png$") then
 		return Material(path:match("materials/(.+)"))
 	elseif path:find("%.vmt$") then
-		local mat = CreateMaterial(path .. "_pac_resource_browser", "UnlitGeneric")
-		mat:SetTexture("$basetexture", Material(path:match("materials/(.+)%.vmt")):GetTexture("$basetexture"))
-		return mat
-	else
-		return CreateMaterial(path .. "_pac_resource_browser", "UnlitGeneric", {["$basetexture"] = path:match("materials/(.+)%.vtf")})
+		local tex = Material(path:match("materials/(.+)%.vmt")):GetTexture("$basetexture")
+		if tex then
+			local mat = CreateMaterial(path .. "_pac_resource_browser", "UnlitGeneric")
+			mat:SetTexture("$basetexture", tex)
+			return mat
+		end
 	end
+
+	return CreateMaterial(path .. "_pac_resource_browser", "UnlitGeneric", {["$basetexture"] = path:match("materials/(.+)%.vtf")})
 end
 
 local function create_texture_icon(path)
@@ -84,7 +87,7 @@ local function create_material_icon(path)
 		pnl:SetFOV(1)
 		pnl:SetCamPos(Vector(1,1,1) * 600)
 		pnl:GetEntity():SetMaterial(mat_path, "error")
-	elseif shader == "lightmappedgeneric" then
+	elseif shader == "lightmappedgeneric" or shader == "spritecard" then
 		local pnl = vgui.Create("DPanel", icon)
 		pnl:SetMouseInputEnabled(false)
 		pnl:Dock(FILL)
@@ -169,6 +172,42 @@ local function create_model_icon(path)
 	return icon
 end
 
+do
+	local PANEL = {}
+
+	DEFINE_BASECLASS( "DScrollPanel" )
+
+	function PANEL:Init()
+		self:SetPaintBackground( false )
+
+		self.IconList = vgui.Create( "DTileLayout", self:GetCanvas())
+		self.IconList:SetBaseSize( 64 )
+		self.IconList:SetSelectionCanvas( true )
+		self.IconList:Dock( TOP )
+	end
+
+	function PANEL:Add(pnl)
+		self.IconList:Add(pnl)
+		self:Layout()
+	end
+
+	function PANEL:Layout()
+		self.IconList:Layout()
+		self:InvalidateLayout()
+	end
+
+	function PANEL:PerformLayout()
+		BaseClass.PerformLayout( self )
+		self.IconList:SetMinHeight( self:GetTall() - 16 )
+	end
+
+	function PANEL:Clear()
+		self.IconList:Clear( true )
+	end
+
+	vgui.Register( "pac_ResourceBrowser_ContentContainer", PANEL, "DScrollPanel" )
+end
+
 function pace.ResourceBrowser(callback, browse_types_str)
 	browse_types_str = browse_types_str or "models;materials;textures;sound"
 	local browse_types = browse_types_str:Split(";")
@@ -235,11 +274,11 @@ function pace.ResourceBrowser(callback, browse_types_str)
 
 	local divider
 
-	local tree = vgui.Create("ContentSidebar", left_panel)
+	local tree = vgui.Create("DTree", left_panel)
 	tree:Dock(FILL)
 	tree:DockMargin(0, 0, 0, 0)
-	tree.Tree:SetBackgroundColor(Color(240, 240, 240))
-	tree.Tree.OnNodeSelected = function (self, node)
+	tree:SetBackgroundColor(Color(240, 240, 240))
+	tree.OnNodeSelected = function (self, node)
 		if not IsValid(node.propPanel) then return end
 
 		if IsValid(frame.PropPanel.selected) then
@@ -256,7 +295,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 		divider:SetRight(frame.PropPanel.selected)
 	end
 
-	local root_node = tree.Tree:AddNode("content", "icon16/folder_database.png")
+	local root_node = tree:AddNode("content", "icon16/folder_database.png")
 	root_node:SetExpanded(true)
 
 	frame.PropPanel = vgui.Create("DPanel", frame)
@@ -287,7 +326,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 	if texture_view or material_view then
 		local node = root_node:AddNode("materials", "icon16/folder_database.png")
 
-		local viewPanel = vgui.Create("ContentContainer", frame.PropPanel)
+		local viewPanel = vgui.Create("pac_ResourceBrowser_ContentContainer", frame.PropPanel)
 		viewPanel:DockMargin(5, 0, 0, 0)
 		viewPanel:SetVisible(false)
 
@@ -334,14 +373,14 @@ function pace.ResourceBrowser(callback, browse_types_str)
 					end
 				end
 
-				tree.Tree:OnNodeSelected(list)
+				tree:OnNodeSelected(list)
 				viewPanel.currentNode = list
 			end
 
 			if texture_view or material_view and #browse_types == 1 then
 				node:SetExpanded(true)
 				list:SetExpanded(true)
-				tree.Tree:SetSelectedItem(list)
+				tree:SetSelectedItem(list)
 			end
 		end
 	end
@@ -368,7 +407,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 					node:SetExpanded(true)
 					node.info = v
 
-					node.propPanel = vgui.Create("ContentContainer", frame.PropPanel)
+					node.propPanel = vgui.Create("pac_ResourceBrowser_ContentContainer", frame.PropPanel)
 					node.propPanel:DockMargin(5, 0, 0, 0)
 					node.propPanel:SetVisible(false)
 
@@ -379,7 +418,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 							if not frame.selected_construction_props and #browse_types == 1 and v.name == "Construction Props" then
 								node:SetExpanded(true)
 								parentNode:SetExpanded(true)
-								tree.Tree:SetSelectedItem(node)
+								tree:SetSelectedItem(node)
 								frame.selected_construction_props = true
 							end
 						elseif object.type == "header" then
@@ -526,7 +565,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 					else
 						node.propPanel = viewPanel
 					end
-					tree.Tree:OnNodeSelected(node)
+					tree:OnNodeSelected(node)
 					viewPanel.currentNode = node
 				end
 			end
@@ -554,7 +593,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 			end
 		end
 
-		local viewPanel = vgui.Create("ContentContainer", frame.PropPanel)
+		local viewPanel = vgui.Create("pac_ResourceBrowser_ContentContainer", frame.PropPanel)
 		viewPanel:DockMargin(5, 0, 0, 0)
 		viewPanel:SetVisible(false)
 
@@ -615,7 +654,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 	end
 
 	if table.HasValue(browse_types, "models") then
-		local view = vgui.Create("ContentContainer", frame.PropPanel)
+		local view = vgui.Create("pac_ResourceBrowser_ContentContainer", frame.PropPanel)
 		view:DockMargin(5, 0, 0, 0)
 		view:SetVisible(false)
 
@@ -685,7 +724,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 			self.load = 1
 			self.search = self:GetText()
 
-			self.header = vgui.Create("ContentHeader", self.propPanel)
+			self.header = vgui.Create("DLabel", self.propPanel)
 			self:updateHeader()
 			self.propPanel:Add(self.header)
 
@@ -693,7 +732,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 			self:StartSearch(searchTime, "models/", ".mdl", "GAME")
 			self.load = self.load - 1
 
-			tree.Tree:OnNodeSelected(self)
+			tree:OnNodeSelected(self)
 		end
 	end
 

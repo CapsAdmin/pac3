@@ -289,7 +289,9 @@ do -- projectile entity
 				if self.part_data.DamageType == "heal" then
 					if damage_radius > 0 then
 						for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
-							ent:SetHealth(math.min(ent:Health() + self.part_data.Damage, ent:GetMaxHealth()))
+							if ent ~= owner or self.part_data.CollideWithOwner then
+								ent:SetHealth(math.min(ent:Health() + self.part_data.Damage, ent:GetMaxHealth()))
+							end
 						end
 					else
 						data.HitEntity:SetHealth(math.min(data.HitEntity:Health() + self.part_data.Damage, data.HitEntity:GetMaxHealth()))
@@ -313,7 +315,7 @@ do -- projectile entity
 					if self.part_data.DamageType == "fire" then
 						if damage_radius > 0 then
 							for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
-								if owner:IsPlayer() and owner:IsValid() and hook.Run("CanProperty", owner, "ignite", ent) ~= false and ent ~= self then
+								if owner:IsPlayer() and owner:IsValid() and hook.Run("CanProperty", owner, "ignite", ent) ~= false and ent ~= self and (ent ~= owner or self.part_data.CollideWithOwner) then
 									ent:Ignite(math.min(self.part_data.Damage, 5))
 								end
 							end
@@ -332,7 +334,9 @@ do -- projectile entity
 
 						if damage_radius > 0 then
 							for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
-								ent:TakeDamageInfo(info)
+								if ent ~= owner or self.part_data.CollideWithOwner then
+									ent:TakeDamageInfo(info)
+								end
 							end
 						else
 							data.HitEntity:TakeDamageInfo(info)
