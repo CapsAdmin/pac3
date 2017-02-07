@@ -156,7 +156,7 @@ function PART:OnDraw(owner, pos, ang)
 
 			if self.Follow then
 				cam.Start3D(WorldToLocal(EyePos(), EyeAngles(), pos, ang))
-				self.emitter:DrawAt()
+				self.emitter:Draw()
 				cam.End3D()
 			end
 
