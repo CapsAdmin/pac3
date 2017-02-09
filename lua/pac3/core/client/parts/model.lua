@@ -767,6 +767,11 @@ function PART:CheckBoneMerge()
 	if ent:IsValid() and not ent:IsPlayer() then
 		if self.BoneMerge and not self.BoneMergeAlternative then
 			local owner = self:GetOwner()
+
+			if owner.pac_owner_override and owner.pac_owner_override:IsValid() then
+				owner = owner.pac_owner_override
+			end
+
 			if ent:GetParent() ~= owner then
 				ent:SetParent(owner)
 
