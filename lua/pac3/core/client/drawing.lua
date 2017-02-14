@@ -516,6 +516,20 @@ local cvar_projected_texture = CreateClientConVar("pac_render_projected_texture"
 
 function pac.Think()
 	do
+		for _, ply in ipairs(player.GetAll()) do
+			if ply.pac_parts and not ply:Alive() then
+				local ent = ply:GetRagdollEntity()
+
+				if ent and ent:IsValid() then
+					if ply.pac_ragdoll ~= ent then
+						pac.OnClientsideRagdoll(ply, ent)
+					end
+				end
+			end
+		end
+	end
+
+	do
 		local mode = cvar_projected_texture:GetInt()
 
 		if mode <= 0 then
