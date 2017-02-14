@@ -86,7 +86,8 @@ local function create_material_icon(path)
 		pnl:SetLookAt( Vector( 0, 0, 0 ) )
 		pnl:SetFOV(1)
 		pnl:SetCamPos(Vector(1,1,1) * 600)
-		pnl:GetEntity():SetMaterial(mat_path, "error")
+		pnl.PreDrawModel = function() render.ModelMaterialOverride(mat) end
+		pnl.PostDrawModel = function() render.ModelMaterialOverride() end
 	elseif shader == "lightmappedgeneric" or shader == "spritecard" then
 		local pnl = vgui.Create("DPanel", icon)
 		pnl:SetMouseInputEnabled(false)
