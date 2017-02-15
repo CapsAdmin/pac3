@@ -207,7 +207,16 @@ end
 
 function pac.OnClientsideRagdoll(ply, ent)
 	ply.pac_ragdoll = ent
-	if not ply.pac_death_physics_parts then
+	if ply.pac_death_physics_parts then
+		if ply.pac_physics_died then return end
+
+		for _, part in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
+			if part.ClassName == "model" then
+				pac.InitDeathPhysicsOnProp(part,ply,ent)
+			end
+		end
+		ply.pac_physics_died = true
+	elseif ply.pac_death_ragdollize then
 
 		-- make props draw on the ragdoll
 		if ply.pac_death_ragdollize then
@@ -220,19 +229,7 @@ function pac.OnClientsideRagdoll(ply, ent)
 				part.last_owner = ent
 			end
 		end
-
-		return
 	end
-
-	if ply.pac_physics_died then return end
-
-	for _, part in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
-		if part.ClassName == "model" then
-			pac.InitDeathPhysicsOnProp(part,ply,ent)
-		end
-	end
-	ply.pac_physics_died = true
-
 end
 
 function pac.InitDeathPhysicsOnProp(part,ply,plyent)
