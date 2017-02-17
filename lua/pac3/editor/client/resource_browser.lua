@@ -46,7 +46,7 @@ local function create_texture_icon(path)
 	icon:SetWrap(true)
 	icon:SetText("")
 
-	install_click(icon, path)
+	install_click(icon, path, "^materials/(.+)%.vtf$")
 
 	local mat = get_unlit_mat(path)
 
@@ -86,7 +86,8 @@ local function create_material_icon(path)
 		pnl:SetLookAt( Vector( 0, 0, 0 ) )
 		pnl:SetFOV(1)
 		pnl:SetCamPos(Vector(1,1,1) * 600)
-		pnl:GetEntity():SetMaterial(mat_path, "error")
+		pnl.PreDrawModel = function() render.ModelMaterialOverride(mat) end
+		pnl.PostDrawModel = function() render.ModelMaterialOverride() end
 	elseif shader == "lightmappedgeneric" or shader == "spritecard" then
 		local pnl = vgui.Create("DPanel", icon)
 		pnl:SetMouseInputEnabled(false)
@@ -320,6 +321,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 	sound_list:AddColumn(L"byte size")
 	sound_list:AddColumn(L"duration")
 	sound_list:Dock(FILL)
+	sound_list:SetMultiSelect(false)
 	sound_list:SetVisible(false)
 
 
@@ -524,39 +526,59 @@ function pace.ResourceBrowser(callback, browse_types_str)
 							play:SizeToContents()
 							play:Dock(LEFT)
 
-							line.OnSelect = function()
-								if input.IsMouseDown(MOUSE_RIGHT) then
-									play:DoClick()
+							function play:Start()
+								for _, v in pairs(sound_list:GetLines()) do
+									v.play:Stop()
+								end
+
+								self:SetImage("icon16/control_stop.png")
+
+								local snd = CreateSound(LocalPlayer(), sound_path)
+								snd:Play()
+								pace.resource_browser_snd = snd
+
+								timer.Create("pac_resource_browser_play", duration, 1, function()
+									if self:IsValid() then
+										self:Stop()
+									end
+								end)
+							end
+
+							function play:Stop()
+								self:SetImage("icon16/control_play.png")
+
+								if pace.resource_browser_snd then
+									pace.resource_browser_snd:Stop()
+									timer.Remove("pac_resource_browser_play")
+								end
+							end
+
+							line.OnMousePressed = function(_, code)
+								if code == MOUSE_RIGHT then
+									play:Start()
+									sound_list:ClearSelection()
+									sound_list:SelectItem(line)
 								else
 									pace.model_browser:SetVisible(false)
 									pace.model_browser_callback(path, pathid)
 								end
 							end
 
-
 							local label = line.Columns[1]
 							label:SetTextInset(play:GetWide() + 5, 0)
 
 							play.DoClick = function()
-								if play.snd then
-									play.snd:Stop()
-									play.snd = nil
-									play:SetImage("icon16/control_play.png")
-									timer.Remove("pac_resource_browser_play_" .. path)
-								else
-									local snd = play.snd or CreateSound(LocalPlayer(), sound_path)
-									snd:Play()
-									play.snd = snd
-
-									play:SetImage("icon16/control_stop.png")
-
-									timer.Create("pac_resource_browser_play_" .. path, duration, 1, function()
-										if play:IsValid() then
-											play:DoClick()
-										end
-									end)
+								if timer.Exists("pac_resource_browser_play") and sound_list:GetLines()[sound_list:GetSelectedLine()] == line then
+									play:Stop()
+									return
 								end
+								sound_list:ClearSelection()
+								sound_list:SelectItem(line)
+
+								play:Start()
 							end
+
+							line.play = play
 						end
 					end
 
