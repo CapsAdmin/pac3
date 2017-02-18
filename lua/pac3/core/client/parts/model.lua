@@ -100,7 +100,6 @@ function PART:Reset()
 			self["Set" .. key](self, self["Get" .. key](self))
 		end
 	end
-	self:GetRootPart():CallRecursive("OnShow", true)
 end
 
 function PART:SetUseLegacyScale(b)
