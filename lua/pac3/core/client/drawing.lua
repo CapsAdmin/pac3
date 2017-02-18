@@ -39,14 +39,6 @@ local function think(part)
 	end
 end
 
-local function buildbones(part)
-	part:BuildBonePositions()
-
-	for _, val in ipairs(part:GetChildren()) do
-		buildbones(val)
-	end
-end
-
 local render_time = math.huge
 local max_render_time_cvar = CreateClientConVar("pac_max_render_time", 0)
 local max_render_time = 0
@@ -143,7 +135,7 @@ local function render_override(ent, type, draw_only)
 			for key, part in pairs(ent.pac_parts) do
 				if part:IsValid() then
 					if not part:HasParent() then
-						buildbones(part)
+						part:CallRecursive("BuildBonePositions")
 					end
 				else
 					ent.pac_parts[key] = nil
