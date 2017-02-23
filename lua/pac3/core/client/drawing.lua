@@ -33,10 +33,6 @@ local function think(part)
 		part:Think()
 		part.last_think = pac.RealTime + (part.ThinkTime or 0.1)
 	end
-
-	for _, val in ipairs(part:GetChildren()) do
-		think(val)
-	end
 end
 
 local render_time = math.huge
@@ -148,6 +144,9 @@ local function render_override(ent, type, draw_only)
 				if not part:HasParent() then
 					if not draw_only then
 						think(part)
+						for _, val in ipairs(part:GetChildrenList()) do
+							think(val)
+						end
 					end
 
 					if part.OwnerName == "viewmodel" and type ~= "viewmodel" then
@@ -529,7 +528,7 @@ function pac.Think()
 		elseif mode == 1 then
 			pac.projected_texture_enabled = true
 		elseif mode >= 2 then
-			pac.projected_texture_enabled = LocalPlayer():FlashlightIsOn()
+			pac.projected_texture_enabled = pac.LocalPlayer:FlashlightIsOn()
 		end
 	end
 
