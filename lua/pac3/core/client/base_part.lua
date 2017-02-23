@@ -410,7 +410,7 @@ do -- parenting
 			table.insert(self.Children, part)
 		end
 
-		self.children_list = nil
+		self:InvalidateChildrenList()
 
 		part.ParentName = self:GetName()
 		part.ParentUID = self:GetUniqueID()
@@ -464,9 +464,9 @@ do -- parenting
 
 		for i, val in ipairs(self:GetChildren()) do
 			if val == part then
+				self:InvalidateChildrenList()
 				table.remove(self.Children, i)
 				part:OnUnParent(self)
-				part.children_list = nil
 				break
 			end
 		end
@@ -501,8 +501,8 @@ do -- parenting
 		function PART:SetKeyValueRecursive(key, val)
 			self[key] = val
 
-			for _, part in ipairs(self:GetChildren()) do
-				part:SetKeyValueRecursive(key, val)
+			for _, part in ipairs(self:GetChildrenList()) do
+				part[key] = val
 			end
 		end
 
@@ -542,7 +542,17 @@ do -- parenting
 		SETUP_CACHE_FUNC(PART, "IsHidden")
 	end
 
+	function PART:InvalidateChildrenList()
+		self.children_list = nil
+		if self.parent_list then
+			for _, part in ipairs(self.parent_list) do
+				part.children_list = nil
+			end
+		end
+	end
+
 	function PART:RemoveChildren()
+		self:InvalidateChildrenList()
 		for i, part in ipairs(self:GetChildren()) do
 			part:Remove(true)
 			self.Children[i] = nil
