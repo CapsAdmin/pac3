@@ -388,7 +388,7 @@ PART.Inputs =
 			repeat
 				if not parent.Parent:IsValid() then break end
 				parent = parent.Parent
-			until parent.cached_pos ~= vector_origin
+			until not parent.cached_pos:IsZero()
 		end
 
 		return self:GetVelocity(parent):Length()
@@ -398,7 +398,7 @@ PART.Inputs =
 			repeat
 				if not parent.Parent:IsValid() then break end
 				parent = parent.Parent
-			until parent.cached_pos ~= vector_origin
+			until not parent.cached_pos:IsZero()
 		end
 
 		return -parent.cached_ang:Forward():Dot(self:GetVelocity(parent))
@@ -408,7 +408,7 @@ PART.Inputs =
 			repeat
 				if not parent.Parent:IsValid() then break end
 				parent = parent.Parent
-			until parent.cached_pos ~= vector_origin
+			until not parent.cached_pos:IsZero()
 		end
 
 		return parent.cached_ang:Right():Dot(self:GetVelocity(parent))
@@ -418,7 +418,7 @@ PART.Inputs =
 			repeat
 				if not parent.Parent:IsValid() then break end
 				parent = parent.Parent
-			until parent.cached_pos ~= vector_origin
+			until not parent.cached_pos:IsZero()
 		end
 
 		return parent.cached_ang:Up():Dot(self:GetVelocity(parent))
