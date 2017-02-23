@@ -834,7 +834,7 @@ do -- drawing. this code is running every frame
 			self.cached_pos = pos
 			self.cached_ang = ang
 
-			if not self.PositionOffset:IsZero() or self.AngleOffset:IsZero() then
+			if not self.PositionOffset:IsZero() or not self.AngleOffset:IsZero() then
 				pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
 			end
 
