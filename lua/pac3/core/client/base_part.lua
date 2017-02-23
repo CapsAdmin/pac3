@@ -319,7 +319,7 @@ do -- owner
 		return self.Owner or NULL
 	end
 
-	SETUP_CACHE_FUNC(PART, "GetOwner")
+	--SETUP_CACHE_FUNC(PART, "GetOwner")
 end
 
 do -- parenting
