@@ -94,13 +94,10 @@ function PART:GetNiceName()
 end
 
 function PART:Reset()
-	self:SetModel(self:GetModel())
+	self:Initialize(self.is_obj)
 	for _, key in pairs(self:GetStorableVars()) do
-		if key ~= "Model" and key ~= "OwnerEntity" then
-			local var = self[key] and self["Get" .. key](self) or self[key]
-			var = pac.class.Copy(var) or var
-
-			self["Set" .. key](self, var)
+		if PART[key] then
+			self["Set" .. key](self, self["Get" .. key](self))
 		end
 	end
 end
@@ -167,8 +164,6 @@ function PART:OnThink()
 end
 
 function PART:SetOwnerEntity(b)
-	self.OwnerEntity = b
-
 	local ent = self:GetOwner()
 	if ent:IsValid() then
 		if b then
@@ -185,13 +180,15 @@ function PART:SetOwnerEntity(b)
 					ent.RenderOverride = nil
 				end
 			end
-		else
+		elseif self.OwnerEntity then
 			self.Entity = NULL
 
 			ent.RenderOverride = nil
 			pac.SetModelScale(ent, Vector(1,1,1), nil, self.UseLegacyScale)
 		end
 	end
+
+	self.OwnerEntity = b
 end
 
 function PART:PreEntityDraw(owner, ent, pos, ang)

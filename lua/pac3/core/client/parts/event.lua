@@ -1233,7 +1233,7 @@ do
 		callback = function(self, ent, button)
 			local ply = self:GetPlayerOwner()
 
-			if ply == LocalPlayer() then
+			if ply == pac.LocalPlayer then
 				ply.pac_broadcast_buttons = ply.pac_broadcast_buttons or {}
 				if not ply.pac_broadcast_buttons[button] then
 					local val = enums2[button:lower()]

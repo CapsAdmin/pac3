@@ -287,6 +287,11 @@ function PART:EmitParticles(pos, ang, real_ang)
 				particle:SetBounce(self.Bounce)
 				particle:SetGravity(self.Gravity)
 				particle:SetAngles(particle:GetAngles() + self.ParticleAngle)
+				particle:SetLighting(self.Lighting)
+
+				if not self.Follow then
+					particle:SetCollide(self.Collide)
+				end
 
 				if self.Sliding then
 					particle:SetCollideCallback(SlideCallback)
