@@ -33,14 +33,14 @@ end
 
 PART.OnParent = PART.OnShow
 
-function PART:GetOwner()
+function PART:GetOwner(root)
 	local parent = self:GetParent()
 
-	if parent:IsValid() and parent.ClassName == "model" and parent.Entity:IsValid() then
+	if parent:IsValid() and parent.ClassName == "model" then
 		return parent.Entity
 	end
 
-	return self.BaseClass.GetOwner(self)
+	return self.BaseClass.GetOwner(self, root)
 end
 
 function PART:OnThink()

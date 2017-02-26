@@ -7,8 +7,6 @@ local Angle = Angle
 local Color = Color
 local NULL = NULL
 
-local VEC0 = Vector(0,0,0)
-local ANG0 = Angle(0,0,0)
 local LocalToWorld = LocalToWorld
 
 local function SETUP_CACHE_FUNC(tbl, func_name)
@@ -329,6 +327,28 @@ do -- parenting
 		return self.Children
 	end
 
+	function PART:GetChildrenList()
+		if not self.children_list then
+			self:BuildChildrenList()
+		end
+
+		return self.children_list
+	end
+
+
+	local function add_children_to_list(parent, list)
+		for _, child in ipairs(parent:GetChildren()) do
+			table.insert(list, child)
+			add_children_to_list(child, list)
+		end
+	end
+
+	function PART:BuildChildrenList()
+		self.children_list = {}
+
+		add_children_to_list(self, self.children_list)
+	end
+
 	function PART:CreatePart(name)
 		local part = pac.CreatePart(name, self:GetPlayerOwner())
 		if not part then return end
@@ -390,6 +410,8 @@ do -- parenting
 			table.insert(self.Children, part)
 		end
 
+		self:InvalidateChildrenList()
+
 		part.ParentName = self:GetName()
 		part.ParentUID = self:GetUniqueID()
 
@@ -442,6 +464,7 @@ do -- parenting
 
 		for i, val in ipairs(self:GetChildren()) do
 			if val == part then
+				self:InvalidateChildrenList()
 				table.remove(self.Children, i)
 				part:OnUnParent(self)
 				break
@@ -468,16 +491,18 @@ do -- parenting
 				self[func](self, ...)
 			end
 
-			for _, part in ipairs(self:GetChildren()) do
-				part:CallRecursive(func, ...)
+			for _, part in ipairs(self:GetChildrenList()) do
+				if part[func] then
+					part[func](part, ...)
+				end
 			end
 		end
 
 		function PART:SetKeyValueRecursive(key, val)
 			self[key] = val
 
-			for _, part in ipairs(self:GetChildren()) do
-				part:SetKeyValueRecursive(key, val)
+			for _, part in ipairs(self:GetChildrenList()) do
+				part[key] = val
 			end
 		end
 
@@ -514,10 +539,20 @@ do -- parenting
 			return false
 		end
 
-		--SETUP_CACHE_FUNC(PART, "IsHidden")
+		SETUP_CACHE_FUNC(PART, "IsHidden")
+	end
+
+	function PART:InvalidateChildrenList()
+		self.children_list = nil
+		if self.parent_list then
+			for _, part in ipairs(self.parent_list) do
+				part.children_list = nil
+			end
+		end
 	end
 
 	function PART:RemoveChildren()
+		self:InvalidateChildrenList()
 		for i, part in ipairs(self:GetChildren()) do
 			part:Remove(true)
 			self.Children[i] = nil
@@ -794,19 +829,12 @@ do -- drawing. this code is running every frame
 				((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
 			)
 		then
-
-			pos = pos or Vector(0,0,0)
-			ang = ang or Angle(0,0,0)
-
 			pos, ang = self:GetDrawPosition()
-
-			pos = pos or Vector(0,0,0)
-			ang = ang or Angle(0,0,0)
 
 			self.cached_pos = pos
 			self.cached_ang = ang
 
-			if self.PositionOffset ~= VEC0 or self.AngleOffset ~= ANG0 then
+			if not self.PositionOffset:IsZero() or not self.AngleOffset:IsZero() then
 				pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
 			end
 

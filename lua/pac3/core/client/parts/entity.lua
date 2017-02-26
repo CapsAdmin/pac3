@@ -281,7 +281,6 @@ function PART:UpdateAll(ent)
 	self:UpdateScale(ent)
 end
 
-local vector_origin = Vector()
 local angle_origin = Angle()
 
 function PART:OnShow()
@@ -317,7 +316,7 @@ function PART:OnShow()
 					self:ModifiersPostEvent("PreDraw")
 					self:PreEntityDraw(ent)
 
-					local modpos = self.Position ~= vector_origin or self.Angles ~= angle_origin
+					local modpos = not self.Position:IsZero() or not self.Angles:IsZero()
 					local pos
 
 					if modpos then
