@@ -293,8 +293,10 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 			 holoAlpha(I, ALPHA)
 			 holoMaterial(I, MATERIAL)
 			 holoSkin(I, SKIN)
+		
 			 holoPos(I, entity():toWorld(POSITION))
 			 holoAng(I, entity():toWorld(ANGLES))
+		
 			 holoModel(I, MODEL)
 			 holoScale(I, SCALE)
 	]]
