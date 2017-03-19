@@ -283,17 +283,18 @@ end
 pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part)
 	local holo_str =
 	[[
-		holoCreate(I) #HOLO_NAME
-		PARENT
-		holoColor(I, COLOR)
-		holoAlpha(I, ALPHA)
-		holoScale(I, SCALE)
-		holoPos(I, entity():toWorld(POSITION))
-		holoAng(I, entity():toWorld(ANGLES))
-		holoMaterial(I, MATERIAL)
-		holoModel(I, MODEL)
-		holoSkin(I, SKIN)
-		I++
+			  holoCreate(I) #HOLO_NAME
+			  PARENT
+			  holoColor(I, COLOR)
+			  holoAlpha(I, ALPHA)
+			  holoScale(I, SCALE)
+			  holoPos(I, entity():toWorld(POSITION))
+			  holoAng(I, entity():toWorld(ANGLES))
+			  holoMaterial(I, MATERIAL)
+			  holoModel(I, MODEL)
+			  holoSkin(I, SKIN)
+			  I++
+	
 	]]
 	local function tovec(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
 	local function toang(vec) return ("ang(%s, %s, %s)"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
