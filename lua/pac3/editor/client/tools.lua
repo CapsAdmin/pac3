@@ -283,33 +283,39 @@ end
 pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part)
 	local holo_str =
 	[[
-			  holoCreate(I) #HOLO_NAME
-			  PARENT
-			  holoColor(I, COLOR)
-			  holoAlpha(I, ALPHA)
-			  holoScale(I, SCALE)
-			  holoPos(I, entity():toWorld(POSITION))
-			  holoAng(I, entity():toWorld(ANGLES))
-			  holoMaterial(I, MATERIAL)
-			  holoModel(I, MODEL)
-			  holoSkin(I, SKIN)
-			  I++
+	  
+	     ########################### HOLO_NAME ###########################
 	
+			 I++
+			 holoCreate(I) #HOLO_NAME
+			 PARENT
+			 holoColor(I, COLOR)
+			 holoAlpha(I, ALPHA)
+			 holoMaterial(I, MATERIAL)
+			 holoSkin(I, SKIN)
+		
+			 holoPos(I, entity():toWorld(POSITION))
+			 holoAng(I, entity():toWorld(ANGLES))
+		
+			 holoModel(I, MODEL)
+			 holoScale(I, SCALE)
 	]]
 	local function tovec(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
 	local function toang(vec) return ("ang(%s, %s, %s)"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
+	local function toang2(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
 	local function part_to_holo(part)
-		local scale = part:GetSize() * part:GetScale()
-		if part.ClipPlanes then
-			for key, clip in pairs(part.ClipPlanes) do
-				if clip:IsValid() and not clip:IsHidden() then
-					local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
-					local normal = ang:Forward()
-					holo_str = holo_str ..
-					"holoClip(I, " .. tovec(pos) .. ", " .. tovec(normal) ..  ", 1)\n"
-				end
-			end
+	
+	local scale = part:GetSize() * part:GetScale()
+		
+	--[[for _, clip in ipairs(part:GetChildren()) do
+		if clip.ClassName == "clip" and not clip:IsHidden() then
+			local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
+			local normal = ang:Forward()
+			holo_str = holo_str .. "\n"
+			holo_str = holo_str .. "holoClipEnabled(I, CI, 1)\n"
+			holo_str = holo_str .. "holoClip(I, " .. tovec(pos + normal) .. ", " .. toang2(normal) ..  ", 1)\n"
 		end
+	end]]--
 		local holo = holo_str
 		:gsub("ALPHA", part:GetAlpha()*255)
 		:gsub("COLOR", tovec(part:GetColor()))
@@ -331,6 +337,12 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 	end
 	local function convert(part)
 		local out = ""
+		out = out .. "@name \n"
+		out = out .. "@inputs \n"
+		out = out .. "@outputs \n"
+		out = out .. "\n		  I   = 0 # Hologram index starting at 0\n"
+		out = out .. "		  CI  = 0 # Clip index starting at 0\n"
+		
 		if part.ClassName == "model" then
 			out = part_to_holo(part)
 		end
