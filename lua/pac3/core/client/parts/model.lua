@@ -480,10 +480,14 @@ local function set_mesh(part, mesh)
 		part.Materialm = Material("error")
 	end
 
-	function part.Entity.pacDrawModel(ent)
-		part:ModifiersPreEvent("OnDraw")
-		part:DrawModel(ent, ent:GetPos(), ent:GetAngles())
-		part:ModifiersPostEvent("OnDraw")
+	function part.Entity.pacDrawModel(ent, simple)
+		if simple then
+			RealDrawModel(part, ent, ent:GetPos(), ent:GetAngles())
+		else
+			part:ModifiersPreEvent("OnDraw")
+			part:DrawModel(ent, ent:GetPos(), ent:GetAngles())
+			part:ModifiersPostEvent("OnDraw")
+		end
 	end
 
 	-- temp
