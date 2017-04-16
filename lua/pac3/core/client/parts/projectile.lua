@@ -173,7 +173,7 @@ function PART:Shoot(pos, ang)
 				end
 
 				if not self:GetOwner(true):IsValid() then
-					timer.Simple(0, function() SafeRemoveEntity(self) end)
+					timer.Simple(0, function() SafeRemoveEntity(ent) end)
 				end
 
 				if self.AimDir then
