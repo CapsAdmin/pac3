@@ -278,8 +278,11 @@ do -- projectile entity
 					info:SetDamageType(damage_types.dissolve)
 
 					data.HitEntity:TakeDamageInfo(info)
-				elseif hook.Run("CanTool", owner, util.TraceLine({start = owner:EyePos(), endpos = data.HitEntity:GetPos(), filter = {owner}}), "remover") ~= false then
-					dissolve(data.HitEntity, owner, damage_types[self.part_data.DamageType])
+				else 
+					local can = hook.Run("CanProperty", owner, "remover", data.HitEntity)
+					if can ~= false then
+						dissolve(data.HitEntity, owner, damage_types[self.part_data.DamageType])
+					end
 				end
 			end
 
@@ -315,11 +318,11 @@ do -- projectile entity
 					if self.part_data.DamageType == "fire" then
 						if damage_radius > 0 then
 							for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
-								if owner:IsPlayer() and owner:IsValid() and hook.Run("CanProperty", owner, "ignite", ent) ~= false and ent ~= self and (ent ~= owner or self.part_data.CollideWithOwner) then
+								if owner:IsPlayer() and ent:IsSolid() and owner:IsValid() and hook.Run("CanProperty", owner, "ignite", ent) ~= false and ent ~= self and (ent ~= owner or self.part_data.CollideWithOwner) then
 									ent:Ignite(math.min(self.part_data.Damage, 5))
 								end
 							end
-						elseif owner:IsPlayer() and owner:IsValid() and hook.Run("CanProperty", owner, "ignite", ent) ~= false then
+						elseif owner:IsPlayer() and ent:IsSolid() and owner:IsValid() and hook.Run("CanProperty", owner, "ignite", ent) ~= false then
 							ent:Ignite(math.min(self.part_data.Damage, 5))
 						end
 					elseif self.part_data.DamageType == "explosion" then
