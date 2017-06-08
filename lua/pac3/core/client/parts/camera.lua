@@ -14,10 +14,11 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:Initialize()
-	if not IsValid(self) then return end
 	local owner = self:GetOwner(true)
-	owner.pac_cameras = owner.pac_cameras or {}
-	owner.pac_cameras[tostring(self)] = self
+	if owner ~= NULL then 
+		owner.pac_cameras = owner.pac_cameras or {}
+		owner.pac_cameras[self] = self
+	end
 end
 
 function PART:CalcView(_, _, eyeang, fov, nearz, farz)
@@ -61,7 +62,7 @@ function pac.CalcView(ply, pos, ang, fov, nearz, farz)
 				return temp
 			end
 		else
-			ply.pac_cameras[tostring(part)] = nil
+			ply.pac_cameras[part] = nil
 		end
 	end
 end
