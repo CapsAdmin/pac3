@@ -15,8 +15,10 @@ pac.EndStorableVars()
 
 function PART:Initialize()
 	local owner = self:GetOwner(true)
-	owner.pac_cameras = owner.pac_cameras or {}
-	owner.pac_cameras[self] = self
+	if owner ~= NULL then 
+		owner.pac_cameras = owner.pac_cameras or {}
+		owner.pac_cameras[self] = self
+	end
 end
 
 function PART:CalcView(_, _, eyeang, fov, nearz, farz)

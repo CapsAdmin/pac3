@@ -301,14 +301,15 @@ function pace.ClearOutfit(ply)
 end
 
 function pace.RequestOutfits(ply)
-	if ply:IsValid() and not ply.pac_requested_outfits then
-		ply.pac_requested_outfits = true
-		for id, outfits in pairs(pace.Parts) do
-			local owner = (player.GetByUniqueID(id) or NULL)
-			if id == false or owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
-				for key, outfit in pairs(outfits) do
-					pace.SubmitPart(outfit, ply)
-				end
+	if not ply:IsValid() then return end
+	if ply.pac_requested_outfits_time and ply.pac_requested_outfits_time > RealTime() then return end
+	ply.pac_requested_outfits_time = RealTime() + 30
+	ply.pac_requested_outfits = true
+	for id, outfits in pairs(pace.Parts) do
+		local owner = player.GetByUniqueID(id) or NULL
+		if id == false or owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
+			for key, outfit in pairs(outfits) do
+				pace.SubmitPart(outfit, ply)
 			end
 		end
 	end

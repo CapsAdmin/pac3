@@ -15,6 +15,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Overlapping", false)
 	pac.GetSet(PART, "SoundLevel", 100)
 	pac.GetSet(PART, "Loop", false)
+	pac.GetSet(PART, "LocalPlayerOnly", false)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -155,6 +156,8 @@ function PART:PlaySound(osnd, ovol)
 		if ent:GetClass() == "viewmodel" then
 			ent = pac.LocalPlayer
 		end
+
+		if self:GetLocalPlayerOnly() and ent ~= pac.LocalPlayer then return end
 
 		local snd
 

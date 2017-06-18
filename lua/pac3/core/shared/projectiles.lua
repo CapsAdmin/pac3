@@ -381,10 +381,12 @@ if SERVER then
 		local ang = net.ReadAngle()
 		local part = net.ReadTable()
 
-		if pos:Distance(ply:EyePos()) > 200 * ply:GetModelScale() then
+		local radius_limit = 600
+
+		if pos:Distance(ply:EyePos()) > radius_limit * ply:GetModelScale() then
 			local ok = false
 
-			for _, ent in ipairs(ents.FindInSphere(pos, 200)) do
+			for _, ent in ipairs(ents.FindInSphere(pos, radius_limit)) do
 				if (ent.CPPIGetOwner and ent:CPPIGetOwner() == ply) or ent.projectile_owner == ply or ent:GetOwner() == ply then
 					ok = true
 					break
