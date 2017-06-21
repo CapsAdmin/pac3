@@ -296,6 +296,8 @@ do -- bone manipulation for boneanimlib
 				ent:ManipulateBoneJiggle(i, 0)
 			end
 		end
+
+		hook.Call("PAC3ResetBones", nil, ent)
 	end
 
 	function pac.ManipulateBonePosition(ply, id, var)
