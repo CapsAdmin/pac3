@@ -6,13 +6,17 @@ PANEL.ClassName = "editor"
 PANEL.Base = "DFrame"
 PANEL.menu_bar = NULL
 
+PANEL.pac3_PanelsToRemove = {
+	'btnClose', 'btnMaxim', 'btnMinim'
+}
+
 local BAR_SIZE = 17
 local RENDERSCORE_SIZE = 13
 
 local use_tabs = CreateClientConVar("pac_property_tabs", 1, true)
 
 function PANEL:Init()
-	self:SetTitle("pac3 " .. L"editor")
+	self:SetTitle("")
 	self:SetSizable(true)
 	--self:DockPadding(2, 23, 2, 2)
 
@@ -112,6 +116,12 @@ local auto_size = CreateClientConVar("pac_auto_size_properties", 1, true)
 
 function PANEL:PerformLayout()
 	DFrame.PerformLayout(self)
+
+	for i, val in pairs(self.pac3_PanelsToRemove) do
+		if IsValid(self[val]) then
+			self[val].SetSize(self[val], 0, 0) -- Hacky
+		end
+	end
 
 	self.div:InvalidateLayout()
 	self.bottom:PerformLayout()
