@@ -383,6 +383,13 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 		end
 	end
 
+	menu:AddSpacer()
+
+	local tbl = pace.GetSavedParts()
+	populate_parts(menu, tbl, override_part, clear)
+
+	menu:AddSpacer()
+
 	local backups, pnl = menu:AddSubMenu(L"backups")
 	pnl:SetImage(pace.MiscIcons.clone)
 	backups.GetDeleteSelf = function() return false end
@@ -401,11 +408,6 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 			:SetImage(pace.MiscIcons.outfit)
 		end
 	end)
-
-	menu:AddSpacer()
-
-	local tbl = pace.GetSavedParts()
-	populate_parts(menu, tbl, override_part, clear)
 end
 
 local function populate_parts(menu, tbl, dir, override_part)
