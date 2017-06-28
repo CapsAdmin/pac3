@@ -249,6 +249,7 @@ function pace.EnableView(b)
 		pace.Focused = true
 		pace.ResetView()
 	else
+		lastEntityPos = nil
 		pace.RemoveHook("GUIMousePressed")
 		pace.RemoveHook("GUIMouseReleased")
 		pace.RemoveHook("ShouldDrawLocalPlayer")
