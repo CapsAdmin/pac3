@@ -240,23 +240,31 @@ do -- menu
 		end
 
 		menu:AddOption(L"copy", function()
-			local tbl = obj:ToTable()
-				tbl.self.Name = nil
-				tbl.self.Description = nil
-				tbl.self.ParentName = nil
-				tbl.self.Parent = nil
-				tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. tostring(tbl))
-
-				tbl.children = {}
-			pace.Clipboard = tbl
+			pace.Clipboard = obj
 		end):SetImage(pace.MiscIcons.copy)
 
 		menu:AddOption(L"paste", function()
 			if pace.Clipboard then
-				obj:SetTable(pace.Clipboard)
+				local newObj = pace.Clipboard:Clone()
+				newObj:SetParent(obj)
 			end
 			--pace.Clipboard = nil
 		end):SetImage(pace.MiscIcons.paste)
+
+		menu:AddOption(L"paste properties", function()
+			if pace.Clipboard then
+				local tbl = pace.Clipboard:ToTable()
+					tbl.self.Name = nil
+					tbl.self.Description = nil
+					tbl.self.ParentName = nil
+					tbl.self.Parent = nil
+					tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. tostring(tbl))
+
+					tbl.children = {}
+				obj:SetTable(tbl)
+			end
+			--pace.Clipboard = nil
+		end):SetImage(pace.MiscIcons.replace)
 
 		menu:AddOption(L"clone", function()
 			obj:Clone()

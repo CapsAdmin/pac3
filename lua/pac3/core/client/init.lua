@@ -103,6 +103,43 @@ do
 		pac.Disable()
 	end
 
+	local pac_friendonly = CreateClientConVar("pac_friendonly", 0, true)
+
+	function pac.FriendOnlyUpdate()
+		if pac_friendonly:GetBool() then
+			for k,v in pairs(player.GetAll()) do
+				if v:GetFriendStatus() == "friend" and v.pac_ignored == true then
+					pac.UnIgnoreEntity(v)
+					v.pac_friendonly = false
+				elseif v:GetFriendStatus() ~= "friend" and not v.pac_ignored and v ~= LocalPlayer() then
+					pac.IgnoreEntity(v)	
+					v.pac_friendonly = true
+				end
+			end
+			
+		else	
+			for k,v in pairs(player.GetAll()) do
+				if v.pac_friendonly and v.pac_ignored then
+					pac.UnIgnoreEntity(v)
+					v.pac_friendonly = false					
+				end
+			end
+		end
+	end
+
+	cvars.AddChangeCallback("pac_friendonly", pac.FriendOnlyUpdate)
+
+	hook.Add("NetworkEntityCreated", "pac_friendonly", function(ply)
+		if not IsValid(ply) or not ply:IsPlayer() then return end
+		timer.Simple(0, function()
+			if pac_friendonly:GetBool() and ply:GetFriendStatus() ~= "friend" then
+				pac.IgnoreEntity(ply)	
+				ply.pac_friendonly = true
+			end
+		end)
+	end)
+	hook.Add("pac_Initialized", "pac_friendonly", pac.FriendOnlyUpdate)
+
 end
 
 hook.Add("Think", "pac_localplayer", function()
