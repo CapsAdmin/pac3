@@ -62,11 +62,12 @@ function PART:FixMaterial()
 		if tex_path then
 			local params = {}
 
-			params["$basetexture"] = tex_path
+			params["$basetexture"] = tex_path:GetName()
 			params["$vertexcolor"] = 1
 			params["$vertexalpha"] = 1
 
 			self.Materialm = CreateMaterial("pac_fixmat_" .. os.clock(), "UnlitGeneric", params)
+			self.Materialm:SetTexture("$basetexture", tex_path)
 		end
 	end
 end
