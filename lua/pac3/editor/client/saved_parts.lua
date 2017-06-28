@@ -1,5 +1,14 @@
 local L = pace.LanguageString
 
+-- load only when hovered above
+local function add_expensive_submenu_load(pnl, callback)
+	local old = pnl.OnCursorEntered
+	pnl.OnCursorEntered = function(...)
+		callback()
+		pnl.OnCursorEntered = old
+		return old(...)
+	end
+end
 
 function pace.SaveParts(name, prompt_name, override_part)
 	if not name or prompt_name then
@@ -374,24 +383,31 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 		end
 	end
 
-	local backups, pnl = menu:AddSubMenu(L"backups")
-	pnl:SetImage(pace.MiscIcons.clone)
-	backups.GetDeleteSelf = function() return false end
-	local files = file.Find("pac3/__backup/*", "DATA")
-	table.sort(files, function(a, b)
-		return file.Time("pac3/__backup/" .. a, "DATA") > file.Time("pac3/__backup/" .. b, "DATA")
-	end)
-	for _, name in pairs(files) do
-		local full_path = "pac3/__backup/" .. name
-		local friendly_name = os.date("%m/%d/%Y %H:%M:%S ", file.Time(full_path, "DATA")) .. string.NiceSize(file.Size(full_path, "DATA"))
-		backups:AddOption(friendly_name, function() pace.LoadParts("__backup/" .. name, true) end)
-		:SetImage(pace.MiscIcons.outfit)
-	end
-
 	menu:AddSpacer()
 
 	local tbl = pace.GetSavedParts()
 	populate_parts(menu, tbl, override_part, clear)
+
+	menu:AddSpacer()
+
+	local backups, pnl = menu:AddSubMenu(L"backups")
+	pnl:SetImage(pace.MiscIcons.clone)
+	backups.GetDeleteSelf = function() return false end
+
+	add_expensive_submenu_load(pnl, function()
+		local files = file.Find("pac3/__backup/*", "DATA")
+
+		table.sort(files, function(a, b)
+			return file.Time("pac3/__backup/" .. a, "DATA") > file.Time("pac3/__backup/" .. b, "DATA")
+		end)
+
+		for _, name in pairs(files) do
+			local full_path = "pac3/__backup/" .. name
+			local friendly_name = os.date("%m/%d/%Y %H:%M:%S ", file.Time(full_path, "DATA")) .. string.NiceSize(file.Size(full_path, "DATA"))
+			backups:AddOption(friendly_name, function() pace.LoadParts("__backup/" .. name, true) end)
+			:SetImage(pace.MiscIcons.outfit)
+		end
+	end)
 end
 
 local function populate_parts(menu, tbl, dir, override_part)

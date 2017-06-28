@@ -6,13 +6,17 @@ PANEL.ClassName = "editor"
 PANEL.Base = "DFrame"
 PANEL.menu_bar = NULL
 
+PANEL.pac3_PanelsToRemove = {
+	'btnClose', 'btnMaxim', 'btnMinim'
+}
+
 local BAR_SIZE = 17
 local RENDERSCORE_SIZE = 13
 
 local use_tabs = CreateClientConVar("pac_property_tabs", 1, true)
 
 function PANEL:Init()
-	self:SetTitle("pac3 " .. L"editor")
+	self:SetTitle("")
 	self:SetSizable(true)
 	--self:DockPadding(2, 23, 2, 2)
 
@@ -29,10 +33,17 @@ function PANEL:Init()
 		div:LoadCookies()
 	self.div = div
 
-	self:SetTop(pace.CreatePanel("tree"))
+	self.treePanel = pace.CreatePanel("tree")
+	self:SetTop(self.treePanel)
 
 	local pnl = pace.CreatePanel("properties", div)
 	pace.properties = pnl
+
+	self.pac3CloseButton = vgui.Create("DButton")
+	self.pac3CloseButton:SetText("")
+	self.pac3CloseButton.DoClick = function() self:Close() end
+	self.pac3CloseButton.Paint = function(self, w, h) derma.SkinHook("Paint", "WindowCloseButton", self, w, h) end
+	self.pac3CloseButton:SetSize(31, 31)
 
 	self:SetBottom(pnl)
 
@@ -40,6 +51,7 @@ function PANEL:Init()
 	self:SetPos(self:GetCookieNumber("x"), BAR_SIZE)
 
 	self:MakeBar()
+	self.lastTopBarHover = 0
 end
 
 function PANEL:OnMousePressed()
@@ -83,6 +95,10 @@ function PANEL:OnRemove()
 	if self.menu_bar:IsValid() then
 		self.menu_bar:Remove()
 	end
+	
+	if self.pac3CloseButton:IsValid() then
+		self.pac3CloseButton:Remove()
+	end
 end
 
 function PANEL:Think(...)
@@ -106,12 +122,36 @@ function PANEL:Think(...)
 		self:SetCookie("x", x)
 		self.last_x = x
 	end
+
+	if self.pac3CloseButton:IsValid() then
+		if self.menu_bar:IsHovered() or self.menu_bar:IsChildHovered() or self.pac3CloseButton:IsHovered() then
+			self.pac3CloseButton:SetVisible(true)
+			self.pac3CloseButton:MakePopup()
+			self.lastTopBarHover = RealTime() + 0.5 -- hack for 1 pixel gap
+			local x, y = self:GetPos()
+			local w, h = self:GetSize()
+			
+			if self.last_x + w + 31 < ScrW() then
+				self.pac3CloseButton:SetPos(x + w, y)
+			else
+				self.pac3CloseButton:SetPos(x - 31, y)
+			end
+		elseif self.lastTopBarHover < RealTime() then
+			self.pac3CloseButton:SetVisible(false)
+		end
+	end
 end
 
 local auto_size = CreateClientConVar("pac_auto_size_properties", 1, true)
 
 function PANEL:PerformLayout()
 	DFrame.PerformLayout(self)
+
+	for i, val in pairs(self.pac3_PanelsToRemove) do
+		if IsValid(self[val]) then
+			self[val].SetSize(self[val], 0, 0) -- Hacky
+		end
+	end
 
 	self.div:InvalidateLayout()
 	self.bottom:PerformLayout()

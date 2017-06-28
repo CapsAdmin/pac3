@@ -68,11 +68,27 @@ function pace.ClientSettingsMenu(pnl)
 		pnl:NumSlider(L"Draw distance:", "pac_draw_distance", 0, 20000, 0)
 		pnl:NumSlider(L"Max render time: ", "pac_max_render_time", 0, 50, 0)
 
-		pnl:CheckBox(L"no outfit reflections", "pac_suppress_frames")
-		pnl:CheckBox(L"render objects outside visible fov", "pac_override_fov")
-		pnl:CheckBox(L"render projected textures (flashlight)", "pac_render_projected_texture")
+	pnl:CheckBox(
+		L"Enable PAC",
+		"pac_enable"
+	)
 
+	pnl:CheckBox(
+		L"Friend only",
+		"pac_friendonly"
+	)
 
+	pnl:NumSlider(
+		L"PAC Volume",
+		"pac_ogg_volume",
+		0,
+		1,
+		2
+	)
+
+	pnl:CheckBox(L"no outfit reflections", "pac_suppress_frames")
+	pnl:CheckBox(L"render objects outside visible fov", "pac_override_fov")
+	pnl:CheckBox(L"render projected textures (flashlight)", "pac_render_projected_texture")
 
 	pnl:Help(L"Misc"):SetFont("DermaDefaultBold")
 		pnl:NumSlider(L"PAC Volume", "pac_ogg_volume", 0, 1, 2)

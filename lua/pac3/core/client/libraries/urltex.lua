@@ -15,11 +15,14 @@ if urltex.ActivePanel:IsValid() then
 end
 
 local enable = CreateClientConVar("pac_enable_urltex", "1", true)
+local EMPTY_FUNC = function() end
 
-function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size_hack)
+function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size_hack, additionalData)
 	if size_hack == nil then
 		size_hack = true
 	end
+
+	additionalData = additionalData or {}
 	shader = shader or "VertexLitGeneric"
 	if not enable:GetBool() then return end
 
@@ -27,19 +30,25 @@ function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size
 
 	if type(callback) == "function" and not skip_cache and urltex.Cache[url] then
 		local tex = urltex.Cache[url]
-		local mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), shader)
+		local mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), shader, additionalData)
 		mat:SetTexture("$basetexture", tex)
 		callback(mat, tex)
 		return
 	end
+
+	callback = callback or EMPTY_FUNC
+
 	if urltex.Queue[url] then
-		local old = urltex.Queue[url].callback
-		urltex.Queue[url].callback = function(...)
-			callback(...)
-			old(...)
-		end
+		table.insert(urltex.Queue[url].callbacks, callback)
 	else
-		urltex.Queue[url] = {callback = callback, tries = 0, size = size, size_hack = size_hack}
+		urltex.Queue[url] = {
+			callbacks = {callback},
+			tries = 0,
+			size = size,
+			size_hack = size_hack,
+			shader = shader,
+			additionalData = additionalData
+		}
 	end
 end
 
@@ -117,7 +126,7 @@ function urltex.StartDownload(url, data)
 			end
 
 			if go and time < pac.RealTime then
-				local vertex_mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), "VertexLitGeneric")
+				local vertex_mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), data.shader, data.additionalData)
 
 				local tex = html_mat:GetTexture("$basetexture")
 				tex:Download()
@@ -132,8 +141,10 @@ function urltex.StartDownload(url, data)
 				urltex.Queue[url] = nil
 				timer.Simple(0, function() pnl:Remove() end)
 
-				if data.callback then
-					data.callback(vertex_mat, tex)
+				if data.callbacks then
+					for i, callback in pairs(data.callbacks) do
+						callback(vertex_mat, tex)
+					end
 				end
 			end
 
