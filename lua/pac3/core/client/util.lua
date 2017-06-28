@@ -546,7 +546,7 @@ function pac.FixupURL(url)
 	return url
 end
 
-function pac.Handleurltex(part, url, callback, shader)
+function pac.Handleurltex(part, url, callback, shader, additionalData)
 	if url and pac.urltex and url:find("http") then
 		local skip_cache = url:sub(1,1) == "_"
 
@@ -570,7 +570,10 @@ function pac.Handleurltex(part, url, callback, shader)
 					end
 				end,
 				skip_cache,
-				shader
+				shader,
+				nil,
+				nil,
+				additionalData
 			)
 			return true
 		end
