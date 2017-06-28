@@ -129,7 +129,8 @@ do
 
 	cvars.AddChangeCallback("pac_friendonly", pac.FriendOnlyUpdate)
 
-	hook.Add("PlayerInitialSpawn", "pac_friendonly", function(ply)
+	hook.Add("NetworkEntityCreated", "pac_friendonly", function(ply)
+		if not IsValid(ply) or not ply:IsPlayer() then return end
 		timer.Simple(0, function()
 			if pac_friendonly:GetBool() and ply:GetFriendStatus() ~= "friend" then
 				pac.IgnoreEntity(ply)	
