@@ -57,7 +57,7 @@ function PART:FixMaterial()
 	local shader = mat:GetShader()
 
 	if shader == "VertexLitGeneric" or shader == "Cable" then
-		local tex_path = mat:GetString("$basetexture")
+		local tex_path = mat:GetTexture("$basetexture")
 
 		if tex_path then
 			local params = {}
@@ -66,7 +66,7 @@ function PART:FixMaterial()
 			params["$vertexcolor"] = 1
 			params["$vertexalpha"] = 1
 
-			self.Materialm = CreateMaterial("pac_fixmat_" .. os.clock(), "VertexLitGeneric", params)
+			self.Materialm = CreateMaterial("pac_fixmat_" .. os.clock(), "UnlitGeneric", params)
 		end
 	end
 end
@@ -74,7 +74,7 @@ end
 function PART:SetMaterial(var)
 	var = var or ""
 
-	if not pac.Handleurltex(self, var) then
+	if not pac.Handleurltex(self, var, nil, "UnlitGeneric", {["$translucent"] = "1"}) then
 		if type(var) == "string" then
 			self.Materialm = pac.Material(var, self)
 			self:CallEvent("material_changed")
