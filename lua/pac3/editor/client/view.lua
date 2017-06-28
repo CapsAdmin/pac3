@@ -188,6 +188,7 @@ local function CalcDrag()
 end
 
 local follow_entity = CreateClientConVar("pac_camera_follow_entity", "0", true)
+local lastEntityPos
 
 function pace.CalcView(ply, pos, ang, fov)
 	if pace.editing_viewmodel then
@@ -198,7 +199,12 @@ function pace.CalcView(ply, pos, ang, fov)
 
 	if follow_entity:GetBool() then
 		local ent = pace.GetViewEntity()
-		pace.ViewPos = pace.ViewPos + (ent:GetVelocity() * FrameTime())
+		local pos = ent:GetPos()
+		lastEntityPos = lastEntityPos or pos
+		pace.ViewPos = pace.ViewPos + pos - lastEntityPos
+		lastEntityPos = pos
+	else
+		lastEntityPos = nil
 	end
 
 	if pac.GetRestrictionLevel() > 0 and not ply:IsAdmin() then
