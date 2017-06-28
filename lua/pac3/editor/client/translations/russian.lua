@@ -150,4 +150,5 @@ return {
 ["sprite"] = "спрайт",
 ["offset"] = "смещение",
 ["toggle t pose"] = "переключить т-позу",
+["paste properties"] = "вставить свойства",
 }
