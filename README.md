@@ -1,4 +1,6 @@
-PAC3 is a gmod addon.
+# PAC3
+
+---
 
 PAC3 gives you the ability to personalize your player model's look by placing objects and effects on yourself. You can go from putting just a hat on your head to creating an entire new player model. PAC works on any entity and can also be used as a way to make custom weapons and npcs for your gamemode easily. 
 
@@ -8,5 +10,16 @@ You can also load custom models (.obj), textures (.jpg and .png) and sounds (.og
 
 By default, PAC3 is in basic mode. You can change this by going to options enable advanced mode. 
 
-![ScreenShot](https://dl.dropbox.com/u/244444/ShareX/2013-08/2013-08-29_00-56-39.png)
-![ScreenShot](https://dl.dropbox.com/u/244444/ShareX/2013-08/2013-08-29_00-59-29.png)
+---
+
+The Wiki for PAC3 can be found 
+[here](https://github.com/CapsAdmin/pac3/wiki "PAC3 Wiki")
+
+If you're completely new to PAC check out the [Beginners FAQ](https://github.com/CapsAdmin/pac3/wiki/Beginners-FAQ "Beginners FAQ") 
+
+If you know the basics check out the [Intermediate FAQ](https://github.com/CapsAdmin/pac3/wiki/Intermediate-FAQ "Intermediate FAQ") 
+
+You can join the official PAC3 Discord Guild [here](https://discord.gg/utpR3gJ "Join PAC3 Discord Guild") 
+
+---
+
