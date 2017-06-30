@@ -15,6 +15,8 @@ By default, PAC3 is in basic mode. You can change this by going to options enabl
 The Wiki for PAC3 can be found 
 [here](https://github.com/CapsAdmin/pac3/wiki "PAC3 Wiki")
 
+This addon is also on the [workshop](http://steamcommunity.com/sharedfiles/filedetails/?id=104691717 "Workshop Version") 
+
 If you're completely new to PAC check out the [Beginners FAQ](https://github.com/CapsAdmin/pac3/wiki/Beginners-FAQ "Beginners FAQ") 
 
 If you know the basics check out the [Intermediate FAQ](https://github.com/CapsAdmin/pac3/wiki/Intermediate-FAQ "Intermediate FAQ") 
