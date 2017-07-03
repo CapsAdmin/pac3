@@ -7,7 +7,7 @@ PANEL.Base = "DFrame"
 PANEL.menu_bar = NULL
 
 PANEL.pac3_PanelsToRemove = {
-	'btnClose', 'btnMaxim', 'btnMinim'
+	'btnMaxim', 'btnMinim'
 }
 
 local BAR_SIZE = 17
@@ -33,10 +33,19 @@ function PANEL:Init()
 		div:LoadCookies()
 	self.div = div
 
-	self:SetTop(pace.CreatePanel("tree"))
+	self.treePanel = pace.CreatePanel("tree")
+	self:SetTop(self.treePanel)
 
 	local pnl = pace.CreatePanel("properties", div)
 	pace.properties = pnl
+
+	self.pac3CloseButton = vgui.Create("DButton")
+	self.pac3CloseButton:SetText("")
+	self.pac3CloseButton.DoClick = function() self:Close() end
+	self.pac3CloseButton.Paint = function(self, w, h) derma.SkinHook("Paint", "WindowCloseButton", self, w, h) end
+	self.pac3CloseButton:SetSize(31, 31)
+
+	self.btnClose.Paint = function() end
 
 	self:SetBottom(pnl)
 
@@ -44,6 +53,7 @@ function PANEL:Init()
 	self:SetPos(self:GetCookieNumber("x"), BAR_SIZE)
 
 	self:MakeBar()
+	self.lastTopBarHover = 0
 end
 
 function PANEL:OnMousePressed()
@@ -87,6 +97,10 @@ function PANEL:OnRemove()
 	if self.menu_bar:IsValid() then
 		self.menu_bar:Remove()
 	end
+	
+	if self.pac3CloseButton:IsValid() then
+		self.pac3CloseButton:Remove()
+	end
 end
 
 function PANEL:Think(...)
@@ -109,6 +123,17 @@ function PANEL:Think(...)
 	if x ~= self.last_x then
 		self:SetCookie("x", x)
 		self.last_x = x
+	end
+
+	if self.pac3CloseButton:IsValid() then
+		local x, y = self:GetPos()
+		local w, h = self:GetSize()
+		
+		if self.last_x + w + 31 < ScrW() then
+			self.pac3CloseButton:SetPos(x + w, y)
+		else
+			self.pac3CloseButton:SetPos(x - 31, y)
+		end
 	end
 end
 
