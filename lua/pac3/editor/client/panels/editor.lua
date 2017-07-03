@@ -7,7 +7,7 @@ PANEL.Base = "DFrame"
 PANEL.menu_bar = NULL
 
 PANEL.pac3_PanelsToRemove = {
-	'btnClose', 'btnMaxim', 'btnMinim'
+	'btnMaxim', 'btnMinim'
 }
 
 local BAR_SIZE = 17
@@ -44,6 +44,8 @@ function PANEL:Init()
 	self.pac3CloseButton.DoClick = function() self:Close() end
 	self.pac3CloseButton.Paint = function(self, w, h) derma.SkinHook("Paint", "WindowCloseButton", self, w, h) end
 	self.pac3CloseButton:SetSize(31, 31)
+
+	self.btnClose.Paint = function() end
 
 	self:SetBottom(pnl)
 
