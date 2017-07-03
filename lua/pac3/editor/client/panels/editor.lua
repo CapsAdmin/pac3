@@ -124,20 +124,13 @@ function PANEL:Think(...)
 	end
 
 	if self.pac3CloseButton:IsValid() then
-		if self.menu_bar:IsHovered() or self.menu_bar:IsChildHovered() or self.pac3CloseButton:IsHovered() then
-			self.pac3CloseButton:SetVisible(true)
-			self.pac3CloseButton:MakePopup()
-			self.lastTopBarHover = RealTime() + 0.5 -- hack for 1 pixel gap
-			local x, y = self:GetPos()
-			local w, h = self:GetSize()
-			
-			if self.last_x + w + 31 < ScrW() then
-				self.pac3CloseButton:SetPos(x + w, y)
-			else
-				self.pac3CloseButton:SetPos(x - 31, y)
-			end
-		elseif self.lastTopBarHover < RealTime() then
-			self.pac3CloseButton:SetVisible(false)
+		local x, y = self:GetPos()
+		local w, h = self:GetSize()
+		
+		if self.last_x + w + 31 < ScrW() then
+			self.pac3CloseButton:SetPos(x + w, y)
+		else
+			self.pac3CloseButton:SetPos(x - 31, y)
 		end
 	end
 end
