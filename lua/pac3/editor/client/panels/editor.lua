@@ -39,11 +39,11 @@ function PANEL:Init()
 	local pnl = pace.CreatePanel("properties", div)
 	pace.properties = pnl
 
-	self.pac3CloseButton = vgui.Create("DButton")
-	self.pac3CloseButton:SetText("")
-	self.pac3CloseButton.DoClick = function() self:Close() end
-	self.pac3CloseButton.Paint = function(self, w, h) derma.SkinHook("Paint", "WindowCloseButton", self, w, h) end
-	self.pac3CloseButton:SetSize(31, 31)
+	self.exit_button = vgui.Create("DButton")
+	self.exit_button:SetText("")
+	self.exit_button.DoClick = function() self:Close() end
+	self.exit_button.Paint = function(self, w, h) derma.SkinHook("Paint", "WindowCloseButton", self, w, h) end
+	self.exit_button:SetSize(31, 31)
 
 	self.btnClose.Paint = function() end
 
@@ -97,9 +97,9 @@ function PANEL:OnRemove()
 	if self.menu_bar:IsValid() then
 		self.menu_bar:Remove()
 	end
-	
-	if self.pac3CloseButton:IsValid() then
-		self.pac3CloseButton:Remove()
+
+	if self.exit_button:IsValid() then
+		self.exit_button:Remove()
 	end
 end
 
@@ -125,15 +125,11 @@ function PANEL:Think(...)
 		self.last_x = x
 	end
 
-	if self.pac3CloseButton:IsValid() then
+	if self.exit_button:IsValid() then
 		local x, y = self:GetPos()
 		local w, h = self:GetSize()
-		
-		if self.last_x + w + 31 < ScrW() then
-			self.pac3CloseButton:SetPos(x + w, y)
-		else
-			self.pac3CloseButton:SetPos(x - 31, y)
-		end
+
+		self.exit_button:SetPos(ScrW() - self.exit_button:GetWide() + 4, -4)
 	end
 end
 
@@ -189,6 +185,7 @@ function pace.GainFocus(show_editor)
 			pace.Focused = true
 			if not show_editor then
 				self:AlphaTo(255, 0.1, 0)
+				self.exit_button:AlphaTo(255, 0.1, 0)
 			end
 		end
 	end
@@ -205,6 +202,7 @@ function pace.KillFocus(show_editor)
 
 		if not show_editor then
 			self:AlphaTo(0, 0.1, 0)
+			self.exit_button:AlphaTo(0, 0.1, 0)
 		end
 
 		self.allowclick = false
@@ -235,7 +233,7 @@ function PANEL:PaintOver(w, h)
 		--surface.SetDrawColor(255, 255, 255, 255)
 		self:GetSkin().tex.Panels.Bright(x,y,w-5, RENDERSCORE_SIZE-1)
 
-		surface.SetTextColor(self:GetSkin().Colours.Tree.Normal)
+		surface.SetTextColor(self:GetSkin().Colours.Category.Line.Text)
 		surface.SetTextPos(x+5, y)
 		surface.DrawText(str)
 		cam.IgnoreZ(false)
