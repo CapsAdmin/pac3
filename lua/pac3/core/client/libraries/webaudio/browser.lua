@@ -130,9 +130,15 @@ function open()
         delete gain;
     }
 
-    audio = new webkitAudioContext;
-    processor = audio.createJavaScriptNode(4096, 0, 1);
-    gain = audio.createGainNode();
+    if(typeof AudioContext != "undefined"){
+        audio = new AudioContext;
+        processor = audio.createScriptProcessor(4096, 0, 2);
+        gain = audio.createGain();
+    }else{
+        audio = new webkitAudioContext;
+        processor = audio.createJavaScriptNode(4096, 0, 1);
+        gain = audio.createGainNode();
+    }
 
     processor.onaudioprocess = function(event)
     {
