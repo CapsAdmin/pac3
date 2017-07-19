@@ -129,18 +129,22 @@ do -- container
 	PANEL.Base = "DPanel"
 
 	function PANEL:Paint(w, h)
+		--surface.SetDrawColor(255, 255, 255, 255)
+		--surface.DrawRect(0,0,w,h)
+		--self:GetSkin().tex.CategoryList.Outer(0, 0, w, h)
+
 		--self:GetSkin().tex.MenuBG(0, 0, w + (self.right and -1 or 3), h + 1)
+
 		if not self.right then
-			surface.SetDrawColor(derma.Color("text_bright", self, color_white))
-			surface.DrawRect(0,0,w+5,h)
+			--surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
+			--surface.DrawRect(0,0,w+5,h)
 		else
-			surface.SetDrawColor(derma.Color("text_bright", self, color_white))
-			surface.DrawRect(0,0,w,h)
+			--surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
+			--surface.DrawRect(0,0,w,h)
 		end
 
-		local c = self.alt_line and self:GetSkin().Colours.Tree.Normal or self:GetSkin().Colours.Tree.Normal
-		surface.SetDrawColor(c.r, c.g, c.b, self.alt_line and 75 or 25)
-		surface.DrawRect(0,0,w,h)
+		self.AltLine = self.alt_line
+		derma.SkinHook( "Paint", "CategoryButton", self, w, h )
 	end
 
 	function PANEL:SetContent(pnl)
@@ -225,6 +229,10 @@ do -- list
 		self.div:SetSize(w - (self.scr.Enabled and self.scr:GetWide() or 0), self:GetHeight())
 	end
 
+	function PANEL:Paint(w, h)
+		self:GetSkin().tex.CategoryList.Outer(0, 0, w, h)
+	end
+
 	pace.CollapsedProperties = pac.luadata.ReadFile("pac3_editor/collapsed.txt") or {}
 
 	function PANEL:AddCollapser(name)
@@ -247,7 +255,9 @@ do -- list
 		right.DoClick = left.DoClick
 
 		left.Paint = function(_, w, h)
-			left:GetSkin().tex.CategoryList.Header(0,0,w*2,h)
+			--surface.SetDrawColor(left:GetSkin().Colours.Category.Header)
+			--surface.DrawRect(0,0,w*2,h)
+			left:GetSkin().tex.CategoryList.Header( 0, 0, w*2, h )
 
 			surface.SetFont(pace.CurrentFont)
 
@@ -259,16 +269,16 @@ do -- list
 			--surface.SetTextColor(derma.Color("text_dark", self, color_black))
 			--surface.SetFont(pace.CurrentFont)
 			--surface.DrawText(txt)
-			draw.TextShadow({text = txt, font = pace.CurrentFont, pos = {11, middle}, color = self:GetSkin().Colours.Category.Header}, 1, 100)
+			draw.TextShadow({text = txt, font = pace.CurrentFont, pos = {11, middle}, color = left:GetSkin().Colours.Category.Header}, 1, 100)
 
 			local txt = (pace.CollapsedProperties[name] and "+" or "-")
 			local w = surface.GetTextSize(txt)
-			draw.TextShadow({text = txt, font = pace.CurrentFont, pos = {6-w*0.5, middle}, color = self:GetSkin().Colours.Category.Header}, 1, 100)
+			draw.TextShadow({text = txt, font = pace.CurrentFont, pos = {6-w*0.5, middle}, color = left:GetSkin().Colours.Category.Header}, 1, 100)
 
 		end
 
 		right.Paint = function(_,w,h)
-			right:GetSkin().tex.CategoryList.Header(-w,0,w*2,h)
+			left:GetSkin().tex.CategoryList.Header(-w,0,w*2,h)
 		end
 
 		table.insert(self.List, {left = left, right = right, panel = var, key = key})
@@ -574,7 +584,7 @@ do -- non editable string
 
 	function PANEL:SetValue(str)
 		local lbl = vgui.Create("DLabel")
-			lbl:SetTextColor(self:GetSkin().Colours.Tree.Normal)
+			lbl:SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text)
 			lbl:SetFont(pace.CurrentFont)
 			lbl:SetText(str)
 			lbl:SetTextInset(4,0)
@@ -643,7 +653,7 @@ do -- base editable
 
 		local str = tostring(skip_encode and var or self:Encode(var))
 
-		self:SetTextColor(self:GetSkin().Colours.Tree.Normal)
+		self:SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text)
 		self:SetFont(pace.CurrentFont)
 		self:SetText("  " .. str) -- ugh
 		self:SizeToContents()
@@ -1159,7 +1169,7 @@ do -- boolean
 
 		local lbl = vgui.Create("DLabel", self)
 		lbl:SetFont(pace.CurrentFont)
-		lbl:SetTextColor(self:GetSkin().Colours.Tree.Normal)
+		lbl:SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text)
 		self.lbl = lbl
 	end
 

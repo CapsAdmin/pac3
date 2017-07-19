@@ -7,7 +7,7 @@ PANEL.Base = "DFrame"
 PANEL.menu_bar = NULL
 
 PANEL.pac3_PanelsToRemove = {
-	'btnClose', 'btnMaxim', 'btnMinim'
+	'btnMaxim', 'btnMinim'
 }
 
 local BAR_SIZE = 17
@@ -33,10 +33,19 @@ function PANEL:Init()
 		div:LoadCookies()
 	self.div = div
 
-	self:SetTop(pace.CreatePanel("tree"))
+	self.treePanel = pace.CreatePanel("tree")
+	self:SetTop(self.treePanel)
 
 	local pnl = pace.CreatePanel("properties", div)
 	pace.properties = pnl
+
+	self.exit_button = vgui.Create("DButton")
+	self.exit_button:SetText("")
+	self.exit_button.DoClick = function() self:Close() end
+	self.exit_button.Paint = function(self, w, h) derma.SkinHook("Paint", "WindowCloseButton", self, w, h) end
+	self.exit_button:SetSize(31, 31)
+
+	self.btnClose.Paint = function() end
 
 	self:SetBottom(pnl)
 
@@ -44,6 +53,7 @@ function PANEL:Init()
 	self:SetPos(self:GetCookieNumber("x"), BAR_SIZE)
 
 	self:MakeBar()
+	self.lastTopBarHover = 0
 end
 
 function PANEL:OnMousePressed()
@@ -87,6 +97,10 @@ function PANEL:OnRemove()
 	if self.menu_bar:IsValid() then
 		self.menu_bar:Remove()
 	end
+
+	if self.exit_button:IsValid() then
+		self.exit_button:Remove()
+	end
 end
 
 function PANEL:Think(...)
@@ -109,6 +123,13 @@ function PANEL:Think(...)
 	if x ~= self.last_x then
 		self:SetCookie("x", x)
 		self.last_x = x
+	end
+
+	if self.exit_button:IsValid() then
+		local x, y = self:GetPos()
+		local w, h = self:GetSize()
+
+		self.exit_button:SetPos(ScrW() - self.exit_button:GetWide() + 4, -4)
 	end
 end
 
@@ -164,6 +185,7 @@ function pace.GainFocus(show_editor)
 			pace.Focused = true
 			if not show_editor then
 				self:AlphaTo(255, 0.1, 0)
+				self.exit_button:AlphaTo(255, 0.1, 0)
 			end
 		end
 	end
@@ -180,6 +202,7 @@ function pace.KillFocus(show_editor)
 
 		if not show_editor then
 			self:AlphaTo(0, 0.1, 0)
+			self.exit_button:AlphaTo(0, 0.1, 0)
 		end
 
 		self.allowclick = false
@@ -210,7 +233,7 @@ function PANEL:PaintOver(w, h)
 		--surface.SetDrawColor(255, 255, 255, 255)
 		self:GetSkin().tex.Panels.Bright(x,y,w-5, RENDERSCORE_SIZE-1)
 
-		surface.SetTextColor(self:GetSkin().Colours.Tree.Normal)
+		surface.SetTextColor(self:GetSkin().Colours.Category.Line.Text)
 		surface.SetTextPos(x+5, y)
 		surface.DrawText(str)
 		cam.IgnoreZ(false)
