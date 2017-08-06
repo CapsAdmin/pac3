@@ -242,7 +242,7 @@ do -- physical
 
 			local ent = Entity(data.ent_id)
 
-			if ent:IsValid() then
+			if ent:IsValid() and ent:GetClass()=='pac_projectile' then
 				local part = pac.GetPartFromUniqueID(data.ply:UniqueID(), data.partuid)
 				if part:IsValid() and part:GetPlayerOwner() == data.ply then
 					part:AttachToEntity(ent)
