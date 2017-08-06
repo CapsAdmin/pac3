@@ -2,7 +2,7 @@ util.AddNetworkString("pac_to_contraption")
 
 local receieved = {}
 
-local function spawn(val,player)
+local function spawn(val,ply)
 	local model = val.mdl
 
 	if not model or model == "" or model:find("\n") or model:find("..", 1, true) then
@@ -10,7 +10,7 @@ local function spawn(val,player)
 	end
 
 	pace.suppress_prop_spawn = true
-	local ok = hook.Run("PlayerSpawnProp", player, model)
+	local ok = hook.Run("PlayerSpawnProp", ply, model)
 	pace.suppress_prop_spawn = false
 
 	if not ok then
@@ -31,7 +31,7 @@ local function spawn(val,player)
 	ent:Spawn()
 	ent:SetHealth(9999999)
 
-	hook.Run("PlayerSpawnedProp", player, model, ent)
+	hook.Run("PlayerSpawnedProp", ply, model, ent)
 
 	if ent.CPPISetOwner and not (ent:CPPIGetOwner() or NULL):IsValid() then
 		ent:CPPISetOwner(ply)
@@ -43,13 +43,13 @@ local function spawn(val,player)
 		phys:EnableMotion(false)
 
 		undo.Create("Prop")
-			undo.SetPlayer(player)
+			undo.SetPlayer(ply)
 			undo.AddEntity(ent)
-		undo.Finish( "Prop ("..tostring(model)..")" )
+		undo.Finish("Prop ("..tostring(model)..")")
 
-		player:AddCleanup( "props", ent )
+		ply:AddCleanup("props", ent)
 
-		gamemode.Call( "PlayerSpawnedProp", player, model, ent )
+		gamemode.Call("PlayerSpawnedProp", ply, model, ent)
 	else
 		ent:Remove()
 	end
@@ -62,7 +62,11 @@ local max_contraptions = CreateConVar("pac_max_contraption_entities", 60)
 
 net.Receive("pac_to_contraption", function(len, ply)
 	if not pac_to_contraption_allow:GetBool() then
-		ply:ChatPrint("This server does not allow spawning PAC contraptions")
+		umsg.Start("pac_submit_acknowledged", ply)
+			umsg.Bool(false)
+			umsg.String("This server does not allow spawning PAC contraptions.")
+		umsg.End()
+
 		return
 	end
 
@@ -71,12 +75,16 @@ net.Receive("pac_to_contraption", function(len, ply)
 	local max = max_contraptions:GetInt()
 	local count = table.Count(data)
 	if count > max then
-		ply:ChatPrint("You can max spawn " .. max .. " props at the time!")
-		print("[PAC3] ",ply, "might have tried to crash the server by attempting to spawn " .. count .. " entities with the contraption system")
+		umsg.Start("pac_submit_acknowledged", ply)
+			umsg.Bool(false)
+			umsg.String("You can only spawn "..max.." props at a time!")
+		umsg.End()
+
+		print("[PAC3] ", ply, " might have tried to crash the server by attempting to spawn "..count.." entities with the contraption system!")
 		return
 	end
 
-	print("[PAC3] Spawning contraption by ", ply, " with ", count, " entities")
+	print("[PAC3] Spawning contraption by ", ply, " with "..count.." entities")
 
 	for key, val in pairs(data) do
 		spawn(val,ply)
