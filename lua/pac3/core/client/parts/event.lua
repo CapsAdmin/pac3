@@ -412,6 +412,27 @@ PART.Events =
 			end
 		end,
 	},
+	total_ammo =
+	{
+		arguments = {{ammo_id = "string"}, {amount = "number"}},
+		callback = function(self, ent, ammo_id, amount)
+			ent = try_viewmodel(ent)
+
+			ammo_id = tonumber(ammo_id) or ammo_id:lower()
+
+			if ent:IsValid() and ent.GetAmmoCount then
+				if ammo_id == "primary" then
+					local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
+					return self:NumberOperator(wep:IsValid() and ent:GetAmmoCount(wep:GetPrimaryAmmoType()) or 0, amount)
+				elseif ammo_id == "secondary" then
+					local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
+					return self:NumberOperator(wep:IsValid() and ent:GetAmmoCount(wep:GetSecondaryAmmoType()) or 0, amount)
+				else
+					return self:NumberOperator(ent:GetAmmoCount(ammo_id), amount)
+				end
+			end
+		end,
+	},
 	clipsize =
 	{
 		arguments = {{primary = "boolean"}, {amount = "number"}},
