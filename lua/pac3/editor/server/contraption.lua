@@ -58,6 +58,8 @@ end
 
 local pac_to_contraption_allow = CreateConVar("pac_to_contraption_allow", "1")
 
+local max_contraptions = CreateConVar("pac_max_contraption_spawn", 60)
+
 net.Receive("pac_to_contraption", function(len, ply)
 	if not pac_to_contraption_allow:GetBool() then
 		ply:ChatPrint("This server does not allow spawning PAC contraptions")
@@ -66,7 +68,15 @@ net.Receive("pac_to_contraption", function(len, ply)
 
 	local data = net.ReadTable()
 
-	print("[PAC3] Spawning contraption by ", ply, " with " .. table.Count(data) .. " entities")
+	local max = max_contraptions:GetInt()
+	local count = table.Count(data)
+	if count > max then
+		ply:ChatPrint("You can max spawn " .. max .. " props at the time!")
+		print("[PAC3] ",ply, "might have tried to crash the server by attempting to spawn " .. count .. " entities with the contraption system")
+		return
+	end
+
+	print("[PAC3] Spawning contraption by ", ply, " with ", count, " entities")
 
 	for key, val in pairs(data) do
 		spawn(val,ply)
