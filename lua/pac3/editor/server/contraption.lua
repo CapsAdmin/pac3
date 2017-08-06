@@ -58,7 +58,7 @@ end
 
 local pac_to_contraption_allow = CreateConVar("pac_to_contraption_allow", "1")
 
-local max_contraptions = CreateConVar("pac_max_contraption_spawn", 60)
+local max_contraptions = CreateConVar("pac_max_contraption_entities", 60)
 
 net.Receive("pac_to_contraption", function(len, ply)
 	if not pac_to_contraption_allow:GetBool() then
