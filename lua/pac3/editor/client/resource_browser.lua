@@ -61,7 +61,7 @@ local function create_texture_icon(path)
 end
 
 surface.CreateFont("pace_resource_browser_fixed_width", {
-	font = "dejavusansmono",
+	font = "dejavu sans mono",
 })
 
 local function create_material_icon(path)
