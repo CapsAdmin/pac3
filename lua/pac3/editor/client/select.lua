@@ -6,7 +6,7 @@ local font_scale = 0.05
 surface.CreateFont(
 	font_name,
 	{
-		font 		= "Tahoma",
+		font 		= "DejaVu Sans",
 		size 		= 500 * font_scale,
 		weight 		= 800,
 		antialias 	= true,
@@ -19,7 +19,7 @@ local font_name_blur = font_name.."_blur"
 surface.CreateFont(
 	font_name_blur,
 	{
-		font 		= "Tahoma",
+		font 		= "DejaVu Sans",
 		size 		= 500 * font_scale,
 		weight 		= 800,
 		antialias 	= true,
