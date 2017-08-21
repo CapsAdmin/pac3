@@ -499,7 +499,6 @@ PART.Inputs =
 
 		return 0
 	end,
-
 	light_amount_g = function(self, parent)
 		parent = self:GetParentEx()
 
@@ -509,7 +508,6 @@ PART.Inputs =
 
 		return 0
 	end,
-
 	light_amount_b = function(self, parent)
 		parent = self:GetParentEx()
 
@@ -519,7 +517,6 @@ PART.Inputs =
 
 		return 0
 	end,
-
 	light_value = function(self, parent)
 		parent = self:GetParentEx()
 
@@ -540,7 +537,6 @@ PART.Inputs =
 
 		return 0
 	end,
-
 	ambient_light_g = function(self, parent)
 		parent = self:GetParentEx()
 
@@ -550,7 +546,6 @@ PART.Inputs =
 
 		return 0
 	end,
-
 	ambient_light_b = function(self, parent)
 		parent = self:GetParentEx()
 
@@ -570,7 +565,6 @@ PART.Inputs =
 
 		return 0
 	end,
-
 	owner_max_health = function(self)
 		local owner = self:GetPlayerOwner()
 
@@ -580,12 +574,21 @@ PART.Inputs =
 
 		return 0
 	end,
-
 	owner_armor = function(self)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
 			return owner:Armor()
+		end
+
+		return 0
+	end,
+	owner_total_ammo = function(self, parent, id)
+		local owner = self:GetPlayerOwner()
+		id = id and id:lower()
+
+		if owner:IsValid() then
+			return (owner.GetAmmoCount and id) and owner:GetAmmoCount(id) or 0
 		end
 
 		return 0
@@ -658,6 +661,17 @@ PART.Inputs =
 
 		return 0
 	end,
+	weapon_primary_total_ammo = function(self)
+		local owner = self:GetOwner(true)
+
+		if owner:IsValid() then
+			local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
+
+			return (wep.GetPrimaryAmmoType and owner.GetAmmoCount) and owner:GetAmmoCount(wep:GetPrimaryAmmoType()) or 0
+		end
+
+		return 0
+	end,
 	weapon_primary_clipsize = function(self)
 		local owner = self:GetOwner(true)
 
@@ -676,6 +690,17 @@ PART.Inputs =
 			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
 
 			return owner.Clip2 and owner:Clip2() or 0
+		end
+
+		return 0
+	end,
+	weapon_secondary_total_ammo = function(self)
+		local owner = self:GetOwner(true)
+
+		if owner:IsValid() then
+			local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
+
+			return (wep.GetSecondaryAmmoType and owner.GetAmmoCount) and owner:GetAmmoCount(wep:GetSecondaryAmmoType()) or 0
 		end
 
 		return 0

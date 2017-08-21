@@ -278,8 +278,11 @@ do -- projectile entity
 					info:SetDamageType(damage_types.dissolve)
 
 					data.HitEntity:TakeDamageInfo(info)
-				elseif hook.Run("CanTool", owner, util.TraceLine({start = owner:EyePos(), endpos = data.HitEntity:GetPos(), filter = {owner}}), "remover") ~= false then
-					dissolve(data.HitEntity, owner, damage_types[self.part_data.DamageType])
+				else 
+					local can = hook.Run("CanProperty", owner, "remover", data.HitEntity)
+					if can ~= false then
+						dissolve(data.HitEntity, owner, damage_types[self.part_data.DamageType])
+					end
 				end
 			end
 
@@ -313,13 +316,16 @@ do -- projectile entity
 					info:SetInflictor(self)
 
 					if self.part_data.DamageType == "fire" then
+						local ownerok = owner:IsValid() and owner:IsPlayer() 
+						local ent = data.HitEntity
 						if damage_radius > 0 then
+							-- this should also use blast damage to find which entities it can damage
 							for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
-								if owner:IsPlayer() and owner:IsValid() and hook.Run("CanProperty", owner, "ignite", ent) ~= false and ent ~= self and (ent ~= owner or self.part_data.CollideWithOwner) then
+								if ownerok and ent ~= self and ent:IsSolid() and hook.Run("CanProperty", owner, "ignite", ent) ~= false and (ent ~= owner or self.part_data.CollideWithOwner) then
 									ent:Ignite(math.min(self.part_data.Damage, 5))
 								end
 							end
-						elseif owner:IsPlayer() and owner:IsValid() and hook.Run("CanProperty", owner, "ignite", ent) ~= false then
+						elseif ownerok and ent:IsSolid() and hook.Run("CanProperty", owner, "ignite", ent) ~= false then
 							ent:Ignite(math.min(self.part_data.Damage, 5))
 						end
 					elseif self.part_data.DamageType == "explosion" then
@@ -377,7 +383,7 @@ if SERVER then
 		local pos = net.ReadVector()
 		local ang = net.ReadAngle()
 		local part = net.ReadTable()
-			
+
 		local radius_limit = 600
 
 		if pos:Distance(ply:EyePos()) > radius_limit * ply:GetModelScale() then
