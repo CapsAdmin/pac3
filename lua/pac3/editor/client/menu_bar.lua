@@ -59,7 +59,7 @@ end
 
 local function populate_view(menu)
 	menu:AddOption(L"hide editor",
-		function() pace.Call("ToggleFocus") chat.AddText("[pac3] \"ctrl + e\" to get the editor back")
+		function() pace.Call("ToggleFocus") chat.AddText("[PAC3] \"ctrl + e\" to get the editor back")
 	end):SetImage("icon16/application_delete.png")
 
 	menu:AddCVar(L"camera follow", "pac_camera_follow_entity", "1", "0"):SetImage("icon16/camera_go.png")
