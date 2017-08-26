@@ -77,7 +77,7 @@ local function manpos(ent, id, pos, part)
 	if part.AlternativeBones then
 		ent.pac_bone_setup_data[part.UniqueID].pos = part.Position + part.PositionOffset
 	else
-		ent:ManipulateBonePosition(id, pos)
+		ent:ManipulateBonePosition(id, ent:GetManipulateBonePosition(id) + pos)
 	end
 end
 
@@ -85,7 +85,7 @@ local function manang(ent, id, ang, part)
 	if part.AlternativeBones then
 		ent.pac_bone_setup_data[part.UniqueID].ang = part.Angles + part.AngleOffset
 	else
-		ent:ManipulateBoneAngles(id, ang)
+		ent:ManipulateBoneAngles(id, ent:GetManipulateBoneAngles(id) + ang)
 	end
 end
 
@@ -95,7 +95,7 @@ local function manscale(ent, id, scale, part)
 	if part.AlternativeBones then
 		ent.pac_bone_setup_data[part.UniqueID].scale = scale
 	else
-		ent:ManipulateBoneScale(id, scale)
+		ent:ManipulateBoneScale(id, ent:GetManipulateBoneScale(id) * scale)
 	end
 end
 
