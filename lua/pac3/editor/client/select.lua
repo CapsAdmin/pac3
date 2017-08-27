@@ -1,5 +1,11 @@
 local L = pace.LanguageString
 
+local RENDER_ATTACHMENTS = CreateConVar('pac_render_attachments', '0', {FCVAR_ARCHIVE}, 'Render attachments when selecting bones')
+
+function pace.ToggleRenderAttachments()
+	RunConsoleCommand('pac_render_attachments', RENDER_ATTACHMENTS:GetBool() and '0' or '1')
+end
+
 local font_name = "pac_select"
 local font_scale = 0.05
 
@@ -236,7 +242,7 @@ function pace.SelectBone(ent, callback, only_movable)
 
 	if only_movable then
 		for k, v in pairs(tbl) do
-			if v.is_special or v.is_attachment then
+			if v.is_special or not RENDER_ATTACHMENTS:GetBool() and v.is_attachment then
 				tbl[k] = nil
 			end
 		end
