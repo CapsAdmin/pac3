@@ -4,6 +4,7 @@ if CLIENT then
 end
 
 if SERVER then
+	local ALLOW_TO_CHANGE_MODEL = CreateConVar('pac_modifier_model', '1', {FCVAR_ARCHIVE, FCVAR_NOTIFY}, 'Allow players to change model using PAC3')
 
 	function pac.SetPlayerModel(ply, model)
 		if ClockWork then return end -- Clockwork fix
@@ -41,10 +42,11 @@ if SERVER then
 	end)
 
 	concommand.Add("pac_setmodel", function(ply, _, args)
-		if GetConVarNumber("pac_modifier_model") ~= 0 and ply:GetInfo("pac_modifier_model") ~= 0 and !ClockWork then
+		if ALLOW_TO_CHANGE_MODEL:GetBool() and not ClockWork then
 			pac.SetPlayerModel(ply, args[1])
 		end
 	end)
+
 	local function PlayerCheckModel(ply)
 		if ply.pac_last_modifier_model and ply:GetModel():lower() ~= ply.pac_last_modifier_model then
 			ply:SetModel(ply.pac_last_modifier_model)
