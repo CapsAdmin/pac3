@@ -3,6 +3,8 @@ pace = pace or {}
 pace.Parts = pace.Parts or {}
 pace.Errors = {}
 
+util.AddNetworkString('pac_submit_acknowledged')
+
 include("util.lua")
 
 include("wear.lua")
