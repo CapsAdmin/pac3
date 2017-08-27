@@ -736,13 +736,13 @@ PART.Inputs =
 	end,
 }
 
-usermessage.Hook("pac_proxy", function(umr)
-	local ply = umr:ReadEntity()
-	local str = umr:ReadString()
+net.Receive("pac_proxy", function()
+	local ply = net.ReadEntity()
+	local str = net.ReadString()
 
-	local x = umr:ReadFloat()
-	local y = umr:ReadFloat()
-	local z = umr:ReadFloat()
+	local x = net.ReadFloat()
+	local y = net.ReadFloat()
+	local z = net.ReadFloat()
 
 	if ply:IsValid() then
 		ply.pac_proxy_events = ply.pac_proxy_events or {}

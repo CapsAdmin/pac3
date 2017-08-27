@@ -1196,10 +1196,10 @@ end
 
 pac.RegisterPart(PART)
 
-usermessage.Hook("pac_event", function(umr)
-	local ply = umr:ReadEntity()
-	local str = umr:ReadString()
-	local on = umr:ReadChar()
+net.Receive("pac_event", function(umr)
+	local ply = net.ReadEntity()
+	local str = net.ReadString()
+	local on = net.ReadInt(8)
 
 	-- ^ resets all other events
 	if str:find("^", 0, true) then
