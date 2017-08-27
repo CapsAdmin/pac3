@@ -283,7 +283,6 @@ function pace.HandleReceivedData(ply, data)
 end
 
 util.AddNetworkString("pac_submit")
-util.AddNetworkString("pac_precache_effect")
 
 net.Receive("pac_submit", function(_, ply)
 	local data = pac.NetDeserializeTable()
