@@ -359,7 +359,7 @@ do -- hook helpers
 	end
 
 	function pac.CallHook(str, ...)
-		return hook.Call("pac_" .. str, GAMEMODE, ...)
+		return hook.Run("pac_" .. str, ...)
 	end
 
 	pac.added_hooks = added_hooks

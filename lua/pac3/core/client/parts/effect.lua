@@ -60,34 +60,45 @@ for _, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
 end
 
 local already = {}
+local alreadyServer = {}
 local function pac_request_precache(name)
 	if already[name] then return end
 	already[name] = true
-	net.Start "pac_request_precache"
-		net.WriteString(name)
+	PrecacheParticleSystem(name)
+	net.Start("pac_request_precache")
+	net.WriteString(name)
 	net.SendToServer()
 end
 
 function PART:SetEffect(name)
+	self.waitingForServer = true
 	self.Effect = name
-	self.Ready = false
+	self.Ready = alreadyServer[name] or false
 
-	pac_request_precache(name)
-
+	if not alreadyServer[name] then
+		pac_request_precache(name)
+	else
+		self.waitingForServer = false
+	end
 end
 
-net.Receive("pac_effect_precached", function()
-	local name = net.ReadString()
+hook.Add("pac_EffectPrecached", "pac_Effects", function(name)
+	if alreadyServer[name] then return end
+	alreadyServer[name] = true
 	pac.dprint("effect %q precached!", name)
 	for _, part in pairs(pac.GetParts()) do
 		if part.ClassName == "effect" and part.Effect == name then
 			part.Ready = true
+			part.waitingForServer = false
 		end
 	end
 end)
 
 function PART:OnDraw(owner, pos, ang)
-	if not self.Ready then return end
+	if not self.Ready then
+		if not self.waitingForServer then self:SetEffect(self.Effect) end
+		return
+	end
 
 	local ent = self:GetOwner()
 
@@ -186,12 +197,11 @@ function PART:Emit(pos, ang)
 				})
 			end
 
-
 			ent:CreateParticleEffect(self.Effect, points)
 		elseif self.Follow then
 			ent:StopParticles()
 			ent:StopParticleEmission()
-			ParticleEffectAttach(self.Effect, PATTACH_ABSORIGIN_FOLLOW, ent, 0)
+			CreateParticleSystem(ent, self.Effect, PATTACH_ABSORIGIN_FOLLOW, 0)
 		else
 			ent:StopParticles()
 			ent:StopParticleEmission()
