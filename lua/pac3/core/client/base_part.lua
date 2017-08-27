@@ -491,9 +491,11 @@ do -- parenting
 				self[func](self, ...)
 			end
 
-			for _, part in ipairs(self:GetChildrenList()) do
-				if part[func] then
-					part[func](part, ...)
+			local child = self:GetChildrenList()
+
+			for i = 1, #child do
+				if child[i][func] then
+					child[i][func](child[i], part, ...)
 				end
 			end
 		end
@@ -501,8 +503,10 @@ do -- parenting
 		function PART:SetKeyValueRecursive(key, val)
 			self[key] = val
 
-			for _, part in ipairs(self:GetChildrenList()) do
-				part[key] = val
+			local child = self:GetChildrenList()
+
+			for i = 1, #child do
+				child[i][key] = val
 			end
 		end
 
