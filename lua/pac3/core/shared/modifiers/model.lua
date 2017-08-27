@@ -4,10 +4,9 @@ if CLIENT then
 end
 
 if SERVER then
-	local ALLOW_TO_CHANGE_MODEL = CreateConVar('pac_modifier_model', '1', {FCVAR_ARCHIVE, FCVAR_NOTIFY}, 'Allow players to change model using PAC3')
-
 	function pac.SetPlayerModel(ply, model)
 		if ClockWork then return end -- Clockwork fix
+		if not model then return end
 		model = player_manager.AllValidModels()[model] or model
 
 		if not util.IsValidModel(model) then
@@ -19,7 +18,7 @@ if SERVER then
 		ply.pac_last_modifier_model = model:lower()
 	end
 
-	pac.AddServerModifier("model", function(data, owner)
+	local ALLOW_TO_CHANGE_MODEL = pac.AddServerModifier("model", function(data, owner)
 		if not data then
 			pac.SetPlayerModel(owner, player_manager.TranslatePlayerModel(owner:GetInfo("cl_playermodel")))
 		else
