@@ -845,10 +845,25 @@ do -- drawing. this code is running every frame
 			if not self.HandleModifiersManually then self:ModifiersPostEvent(event, draw_type) end
 		end
 
-		for _, part in ipairs(self:GetChildren()) do
-			part:Draw(event, pos, ang, draw_type)
+		local boneParts = {}
+		local otherParts = {}
+		local children = self:GetChildren()
+
+		for i = 1, #children do
+			if children[i].ClassName == 'bone' then
+				boneParts[#boneParts + 1] = children[i]
+			else
+				otherParts[#otherParts + 1] = children[i]
+			end
 		end
 
+		for i = 1, #boneParts do
+			boneParts[i].Draw(boneParts[i], event, pos, ang, draw_type)
+		end
+
+		for i = 1, #otherParts do
+			otherParts[i].Draw(otherParts[i], event, pos, ang, draw_type)
+		end
 	end
 
 	function PART:GetDrawPosition(bone_override, skip_cache)
