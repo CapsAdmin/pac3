@@ -254,7 +254,7 @@ function pace.SubmitPartNotify(data)
 			net.WriteBool(allowed)
 			net.WriteString(reason or "")
 			net.WriteString(data.part.self.Name or "no name")
-		net.Send(ply)
+		net.Send(data.owner)
 		hook.Run("PACSubmitAcknowledged", data.owner, util.tobool(allowed), reason or "", data.part.self.Name or "no name", data)
 	end
 end
@@ -283,15 +283,12 @@ function pace.HandleReceivedData(ply, data)
 end
 
 util.AddNetworkString("pac_submit")
-util.AddNetworkString("pac_effect_precached")
 util.AddNetworkString("pac_precache_effect")
-
 
 net.Receive("pac_submit", function(_, ply)
 	local data = pac.NetDeserializeTable()
 	pace.HandleReceivedData(ply, data)
 end)
-
 
 function pace.ClearOutfit(ply)
 	local uid = ply:UniqueID()
