@@ -1009,6 +1009,10 @@ do
 		return true
 	end
 
+	function eventMeta:IsAvaliable()
+		return true
+	end
+
 	function eventMeta:GetArguments()
 		self.__registeredArguments = self.__registeredArguments or {}
 		return self.__registeredArguments
@@ -1192,6 +1196,10 @@ function PART:OnRemove()
 end
 
 local function should_hide(self, ent, eventObject)
+	if not eventObject:IsAvaliable() then
+		return true
+	end
+
 	local b
 
 	if self.hidden or self.event_hidden then
@@ -1210,7 +1218,6 @@ local function should_hide(self, ent, eventObject)
 
 	return b
 end
-
 
 function PART:OnThink()
 	local ent = self:GetOwner(self.RootOwner)
