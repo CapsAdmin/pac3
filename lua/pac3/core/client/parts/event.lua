@@ -1111,6 +1111,7 @@ do
 
 		newObj.__registeredArguments = {}
 		newObj.__registeredArgumentsParse = {}
+		newObj:SetName(nClassName)
 
 		if defArguments then
 			for i, data in pairs(defArguments) do
