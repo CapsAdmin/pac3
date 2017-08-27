@@ -1009,7 +1009,7 @@ do
 		return true
 	end
 
-	function eventMeta:IsAvaliable()
+	function eventMeta:IsAvaliable(eventPart)
 		return true
 	end
 
@@ -1196,11 +1196,11 @@ function PART:OnRemove()
 end
 
 local function should_hide(self, ent, eventObject)
-	if not eventObject:IsAvaliable() then
+	if not eventObject:IsAvaliable(self) then
 		return true
 	end
 
-	local b
+	local b = false
 
 	if self.hidden or self.event_hidden then
 		b = self.Invert

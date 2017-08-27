@@ -1570,18 +1570,31 @@ do -- event list
 			self,
 			self.CurrentKey,
 			"events",
+
 			function(list)
 				list:AddColumn("name")
 			end,
+
 			function()
-				return pace.current_part.Events
+				local output = {}
+
+				for i, event in pairs(pace.current_part.Events) do
+					if not event.IsAvaliable or event:IsAvaliable(pace.current_part) then
+						output[i] = event
+					end
+				end
+
+				return output
 			end,
+
 			function()
 				return pace.current_part.Event
 			end,
+
 			function(list, key, val)
 				return list:AddLine(L(key:gsub("_", " ")))
 			end,
+
 			function(val, key)
 				return key
 			end
