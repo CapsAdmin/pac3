@@ -1648,9 +1648,8 @@ do -- arguments
 
 	function PANEL:ExtraPopulate()
 		local data = pace.current_part.Events[pace.current_part.Event]
-		data = data and data.arguments
-
 		if not data then return end
+		data = data:GetArgumentsForParse()
 
 		local tbl = {}
 		local args = {pace.current_part:GetParsedArguments(data)}
