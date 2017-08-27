@@ -1197,7 +1197,11 @@ local function should_hide(self, ent, eventObject)
 	if self.hidden or self.event_hidden then
 		b = self.Invert
 	else
-		b = eventObject:Think(self, ent, self:GetParsedArgumentsForObject(eventObject)) or false
+		if eventObject.ParseArguments then
+			b = eventObject:Think(self, ent, eventObject:ParseArguments(self)) or false
+		else
+			b = eventObject:Think(self, ent, self:GetParsedArgumentsForObject(eventObject)) or false
+		end
 
 		if self.Invert then
 			b = not b
