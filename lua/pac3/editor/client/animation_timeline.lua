@@ -111,7 +111,26 @@ end
 
 function timeline.EditBone()
 	pace.Call("PartSelected", timeline.dummy_bone)
-	timeline.selected_bone = pac.GetModelBones(timeline.entity)[timeline.dummy_bone:GetBone()].real
+	local boneData = pac.GetModelBones(timeline.entity)
+	timeline.selected_bone = timeline.dummy_bone and
+		timeline.dummy_bone:GetBone() and
+		boneData[timeline.dummy_bone:GetBone()] and
+		boneData[timeline.dummy_bone:GetBone()].real
+		or false
+	
+	if not timeline.selected_bone then
+		for k, v in pairs(boneData) do
+			if not v.is_special and not v.is_attachment then
+				timeline.selected_bone = v.real
+				break
+			end
+		end
+
+		if not timeline.selected_bone then
+			timeline.selected_bone = '????'
+		end
+	end
+
 	timeline.UpdateFrameData()
 	pace.PopulateProperties(timeline.dummy_bone)
 
@@ -147,7 +166,7 @@ function timeline.Save()
 	local data = table.Copy(timeline.data)
 	local part = timeline.animation_part
 	timer.Create("pace_timeline_save", 0.1, 1, function()
-		if part:IsValid() then
+		if part and part:IsValid() then
 			boneanimlib.RegisterLuaAnimation(part:GetAnimID(), data)
 			if part:GetURL() ~= "" then
 				file.Write("pac3/__animations/" .. part:GetName() .. ".txt", util.TableToJSON(data))
@@ -226,7 +245,21 @@ function timeline.Open(part)
 	hook.Add("pace_OnVariableChanged", "pac3_timeline", function(part, key, val)
 		if part == timeline.dummy_bone then
 			if key == "Bone" then
-				timeline.selected_bone = pac.GetModelBones(timeline.entity)[val].real
+				local boneData = pac.GetModelBones(timeline.entity)
+				timeline.selected_bone = boneData[val] and boneData[val].real or false
+				if not timeline.selected_bone then
+					for k, v in pairs(boneData) do
+						if not v.is_special and not v.is_attachment then
+							timeline.selected_bone = v.real
+							break
+						end
+					end
+
+					if not timeline.selected_bone then
+						timeline.selected_bone = '????'
+					end
+				end
+
 				timer.Simple(0, function() timeline.EditBone() end) -- post variable changed?
 			else
 				timeline.selected_keyframe:GetData().BoneInfo = timeline.selected_keyframe:GetData().BoneInfo or {}
