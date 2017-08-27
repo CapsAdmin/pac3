@@ -1115,7 +1115,7 @@ do
 
 		if defArguments then
 			for i, data in pairs(defArguments) do
-				eventObject:AppendArgument(data[1], data[2])
+				newObj:AppendArgument(data[1], data[2])
 			end
 		end
 
@@ -1155,6 +1155,107 @@ do
 	timer.Simple(0, function() -- After all addons has loaded
 		hook.Call('PAC3RegisterEvents', nil, pac.CreateEvent, pac.RegisterEvent)
 	end)
+end
+
+-- DarkRP default events
+do
+	local plyMeta = FindMetaTable('Player')
+	local gamemode = engine.ActiveGamemode
+	local isDarkRP = function() return gamemode() == 'darkrp' end
+
+	local events = {
+		{
+			name = 'is_arrested',
+			args = {},
+			avaliable = function() return plyMeta.isArrested ~= nil end,
+			func = function(self, eventPart, ent)
+				ent = try_viewmodel(ent)
+				return ent.isArrested and ent:isArrested() or false
+			end
+		},
+
+		{
+			name = 'is_wanted',
+			args = {},
+			avaliable = function() return plyMeta.isWanted ~= nil end,
+			func = function(self, eventPart, ent)
+				ent = try_viewmodel(ent)
+				return ent.isWanted and ent:isWanted() or false
+			end
+		},
+
+		{
+			name = 'is_police',
+			args = {},
+			avaliable = function() return plyMeta.isCP ~= nil end,
+			func = function(self, eventPart, ent)
+				ent = try_viewmodel(ent)
+				return ent.isCP and ent:isCP() or false
+			end
+		},
+
+		{
+			name = 'wanted_reason',
+			args = {{'find', 'string'}},
+			avaliable = function() return plyMeta.getWantedReason ~= nil and plyMeta.isWanted ~= nil end,
+			func = function(self, eventPart, ent, find)
+				ent = try_viewmodel(ent)
+				return eventPart:StringOperator(ent.isWanted and ent.getWantedReason and ent:isWanted() and ent:getWantedReason() or '', find)
+			end
+		},
+
+		{
+			name = 'is_cook',
+			args = {},
+			avaliable = function() return plyMeta.isCook ~= nil end,
+			func = function(self, eventPart, ent)
+				ent = try_viewmodel(ent)
+				return ent.isCook and ent:isCook() or false
+			end
+		},
+
+		{
+			name = 'is_hitman',
+			args = {},
+			avaliable = function() return plyMeta.isHitman ~= nil end,
+			func = function(self, eventPart, ent)
+				ent = try_viewmodel(ent)
+				return ent.isHitman and ent:isHitman() or false
+			end
+		},
+
+		{
+			name = 'has_hit',
+			args = {},
+			avaliable = function() return plyMeta.hasHit ~= nil end,
+			func = function(self, eventPart, ent)
+				ent = try_viewmodel(ent)
+				return ent.hasHit and ent:hasHit() or false
+			end
+		},
+
+		{
+			name = 'hit_price',
+			args = {{'amount', 'number'}},
+			avaliable = function() return plyMeta.getHitPrice ~= nil end,
+			func = function(self, eventPart, ent, amount)
+				ent = try_viewmodel(ent)
+				return eventPart:NumberOperator(ent.getHitPrice and ent:getHitPrice() or 0, amount)
+			end
+		},
+	}
+
+	for k, v in ipairs(events) do
+		local avaliable = v.avaliable
+		local eventObject = pac.CreateEvent(v.name, v.args)
+		eventObject.Think = v.func
+
+		function eventObject:IsAvaliable()
+			return isDarkRP() and avaliable()
+		end
+		
+		pac.RegisterEvent(eventObject)
+	end
 end
 
 function PART:GetParentEx()
