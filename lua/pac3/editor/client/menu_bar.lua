@@ -84,6 +84,7 @@ local function populate_options(menu)
 					RunConsoleCommand("pac_grid_ang_size", val)
 				end)
 			end)
+	menu:AddCVar(L"render attachments as bones", "pac_render_attachments", "1", "0").DoClick = function() pace.ToggleRenderAttachments() end
 	menu:AddSpacer()
 
 	menu:AddCVar(L"automatic property size", "pac_auto_size_properties", "1", "0")

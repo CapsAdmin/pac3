@@ -80,15 +80,17 @@ function pac.GetAllBones(ent)
 				:lower()
 				:gsub("(.-)(%d+)", "%1 %2")
 
-				tbl[friendly] =
-				{
-					friendly = friendly,
-					real = data.name or "?????",
-					id = data.id,
-					i = data.id,
-					parent_i = parent_i,
-					is_attachment = true,
-				}
+				if not tbl[friendly] then -- Some of bones CAN be attachments! So we defined them before already.
+					tbl[friendly] =
+					{
+						friendly = friendly,
+						real = data.name or "?????",
+						id = data.id,
+						i = data.id,
+						parent_i = parent_i,
+						is_attachment = true,
+					}
+				end
 			end
 		end
 
