@@ -5,7 +5,7 @@ PART.NonPhysical = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Material", "")
-	pac.GetSet(PART, "SubMaterialId", 0)
+	pac.GetSet(PART, "SubMaterialId", 1)
 	pac.GetSet(PART, "RootOwner", false)
 pac.EndStorableVars()
 
@@ -28,68 +28,51 @@ function PART:GetSubMaterialIdList()
 end
 
 function PART:UpdateSubMaterialId(id, material)
+	id = tonumber(id) or self.SubMaterialId
 	local ent = self:GetOwner(self.RootOwner)
-	--print("UpdateSubMaterialId",ent,id,material)
 
-	if ent:IsValid() and ent.GetMaterials then
-		ent.pac_submaterials = ent.pac_submaterials or {}
+	if not ent:IsValid() or not ent.GetMaterials then return end
+	ent.pac_submaterials = ent.pac_submaterials or {}
 
-		id = id or self.SubMaterialId
-		local mat = self.Materialm
-		if not material and self.Material and self.Material ~= "" and mat and not mat:IsError() then
+	local mat = self.Materialm
 
-			mat = mat:GetName()
-
-			local has_slash = mat:find("/",1,true)
-			--if has_slash then
-			--	--print("\tSlash on self.Materialm?",mat)
-			--end
-			material = has_slash and mat or "!" .. mat
+	if not material then
+		if self.Material and self.Material ~= "" and mat and not mat:IsError() then
+			local matName = mat:GetName()
+			material = matName:find("/", 1, true) and matName or "!" .. matName
+		else
+			material = ''
 		end
+	end
 
-		material = material or self.Material or ""
-
-		--print("\t Now: ",ent,id,material)
-
-		if type(id) == "number" and id > 0 then -- and ent:GetMaterials()[id] then
-			ent.pac_submaterials[id] = material
-			ent:SetSubMaterial(id-1, material)
-			--print("\t -> APPLY: ",ent,id-1,material)
-		end
+	if id > 0 then
+		ent.pac_submaterials[id] = material
+		ent:SetSubMaterial(id - 1, material)
 	end
 end
 
 function PART:SetSubMaterialId(num)
-	self:UpdateSubMaterialId(self.SubMaterialId,"")
-
-	self.SubMaterialId = num
+	self:UpdateSubMaterialId(self.SubMaterialId, "")
+	self.SubMaterialId = tonumber(num) or 1
 	self:UpdateSubMaterialId()
 end
 
-
-
 function PART:FixMaterial()
 	local mat = self.Materialm
-
 	if not mat then return end
 
 	local shader = mat:GetShader()
+	if shader ~= "UnlitGeneric" then return end
+	local tex_path = mat:GetString("$basetexture")
 
-	if shader == "UnlitGeneric" then
-		--print("=== FixMaterial ===")
+	if not tex_path then return end
+	local params = {}
 
-		local tex_path = mat:GetString("$basetexture")
+	params["$basetexture"] = tex_path
+	params["$vertexcolor"] = 1
+	params["$additive"] = 1
 
-		if tex_path then
-			local params = {}
-
-			params["$basetexture"] = tex_path
-			params["$vertexcolor"] = 1
-			params["$additive"] = 1
-
-			self.Materialm = CreateMaterial(pac.uid"pac_fixmat_", "VertexLitGeneric", params)
-		end
-	end
+	self.Materialm = CreateMaterial('pac_submat_fix_' .. util.CRC(mat:GetName()), "VertexLitGeneric", params)
 end
 
 function PART:UrlTextHandler()
@@ -98,33 +81,30 @@ function PART:UrlTextHandler()
 	end
 end
 
-function PART:Handleurltex(mat,tex)
-
+function PART:Handleurltex(mat, tex)
+	if not IsValid(self) then return end
 	if not mat or mat:IsError() or tex:IsError() then self.Materialm = nil return end
 
 	self.Materialm = mat
 	self:CallEvent("material_changed")
 
 	self:UpdateSubMaterialId()
-
 end
 
 function PART:SetMaterial(var)
 	var = var or ""
 
-	if not pac.Handleurltex(self, var,self:UrlTextHandler()) then
+	if not pac.Handleurltex(self, var, self:UrlTextHandler()) then
 		if var == "" then
 			self.Materialm = nil
 		else
 			self.Materialm = pac.Material(var, self)
-			--print("pac.Material IsError",self.Materialm:IsError(),self.Materialm:GetName(),self.Materialm:GetShader())
 			self:FixMaterial()
 			self:CallEvent("material_changed")
 		end
 	end
 
 	self.Material = var
-
 	self:UpdateSubMaterialId()
 end
 
@@ -143,11 +123,8 @@ function PART:OnHide(force)
 end
 
 function PART:OnRemove()
-	--print("OnRemove",self:GetOwner())
 	self:OnHide(true)
 end
-
-
 
 function PART:OnUnParent(part)
 	if not part:IsValid() then return end
@@ -155,7 +132,6 @@ function PART:OnUnParent(part)
 end
 
 function PART:Clear()
-	--print("CLEAR",self:GetOwner())
 	self:RemoveChildren()
 	self:UpdateSubMaterialId(nil, "")
 end
