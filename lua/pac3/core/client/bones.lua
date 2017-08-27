@@ -113,7 +113,6 @@ function pac.GetAllBones(ent)
 end
 
 function pac.GetModelBones(ent)
-
 	if not ent.pac_bones or ent:GetModel() ~= ent.pac_last_model then
 		ent.pac_bones = pac.GetAllBones(ent)
 		ent.pac_last_model = ent:GetModel()

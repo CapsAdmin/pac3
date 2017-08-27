@@ -915,7 +915,10 @@ do -- drawing. this code is running every frame
 
 				if ent:IsValid() then
 					-- if the parent part is a model, get the bone position of the parent model
-					ent:InvalidateBoneCache()
+					if ent.pac_bone_affected ~= FrameNumber() then
+						ent:InvalidateBoneCache()
+					end
+
 					pos, ang = pac.GetBonePosAng(ent, bone_override or self.Bone)
 				else
 					-- else just get the origin of the part
