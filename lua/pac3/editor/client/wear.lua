@@ -130,10 +130,10 @@ function pace.Notify(allowed, reason, name)
 	end
 end
 
-usermessage.Hook("pac_submit_acknowledged", function(umr)
-	local allowed = umr:ReadBool()
-	local reason = umr:ReadString()
-	local name = umr:ReadString()
+net.Receive("pac_submit_acknowledged", function(umr)
+	local allowed = net.ReadBool()
+	local reason = net.ReadString()
+	local name = net.ReadString()
 
 	pace.Notify(allowed, reason, name)
 end)

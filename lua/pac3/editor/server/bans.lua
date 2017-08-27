@@ -29,10 +29,10 @@ function pace.Ban(ply)
 
 	timer.Simple( 1, function() -- made it a timer because the ConCommand don't run fast enough. - Bizzclaw
 
-		umsg.Start("pac_submit_acknowledged", ply)
-			umsg.Bool(false)
-			umsg.String("You have been banned from using pac!")
-		umsg.End()
+		net.Start("pac_submit_acknowledged")
+			net.WriteBool(false)
+			net.WriteString("You have been banned from using pac!")
+		net.Send(ply)
 
 		local bans = get_bans()
 
@@ -52,10 +52,10 @@ end
 
 function pace.Unban(ply)
 
-	umsg.Start("pac_submit_acknowledged", ply)
-		umsg.Bool(false)
-		umsg.String("You are now permitted to use pac!")
-	umsg.End()
+	net.Start("pac_submit_acknowledged")
+		net.WriteBool(true)
+		net.WriteString("You are now permitted to use pac!")
+	net.Send(ply)
 
 	local bans = get_bans()
 

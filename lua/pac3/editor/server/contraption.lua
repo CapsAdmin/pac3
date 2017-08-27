@@ -62,10 +62,10 @@ local max_contraptions = CreateConVar("pac_max_contraption_entities", 60)
 
 net.Receive("pac_to_contraption", function(len, ply)
 	if not pac_to_contraption_allow:GetBool() then
-		umsg.Start("pac_submit_acknowledged", ply)
-			umsg.Bool(false)
-			umsg.String("This server does not allow spawning PAC contraptions.")
-		umsg.End()
+		net.Start("pac_submit_acknowledged")
+			net.WriteBool(false)
+			net.WriteString("This server does not allow spawning PAC contraptions.")
+		net.Send(ply)
 
 		return
 	end
@@ -75,10 +75,10 @@ net.Receive("pac_to_contraption", function(len, ply)
 	local max = max_contraptions:GetInt()
 	local count = table.Count(data)
 	if count > max then
-		umsg.Start("pac_submit_acknowledged", ply)
-			umsg.Bool(false)
-			umsg.String("You can only spawn "..max.." props at a time!")
-		umsg.End()
+		net.Start("pac_submit_acknowledged")
+			net.WriteBool(false)
+			net.WriteString("You can only spawn " .. max .. " props at a time!")
+		net.Send(ply)
 
 		print("[PAC3] ", ply, " might have tried to crash the server by attempting to spawn "..count.." entities with the contraption system!")
 		return
