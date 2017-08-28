@@ -75,64 +75,80 @@ function urltex.StartDownload(url, data)
 	end
 
 	local size = data.size or urltex.TextureSize
-
 	local id = "urltex_download_" .. url
+	local pnl
 
-	local pnl = vgui.Create("HTML")
-	pnl:SetVisible(true)
-	--pnl:SetPos(50,50)
-	pnl:SetPos(ScrW()-1, ScrH()-1)
-	pnl:SetSize(size, size)
-	pnl:SetHTML(
-		[[
-			<style type="text/css">
-				html
-				{
-					overflow:hidden;
-					]].. (data.size_hack and "margin: -8px -8px;" or "margin: 0px 0px;") ..[[
-				}
-			</style>
+	local function createDownloadPanel()
+		pnl = vgui.Create("DHTML")
+		-- Tested in PPM/2, this code works perfectly
+		pnl:SetVisible(false)
+		pnl:SetSize(size, size)
+		pnl:SetHTML(
+			[[
+				<style type="text/css">
+					html
+					{
+						overflow:hidden;
+						]] .. (data.size_hack and "margin: -8px -8px;" or "margin: 0px 0px;") .. [[
+					}
+				</style>
 
-			<body>
-				<img src="]] .. url .. [[" alt="" width="]] .. size..[[" height="]] .. size .. [[" />
-			</body>
-		]]
-	)
+				<body>
+					<img src="]] .. url .. [[" alt="" width="]] .. size..[[" height="]] .. size .. [[" />
+				</body>
+			]]
+		)
+		pnl:Refresh()
+		urltex.ActivePanel = pnl
+	end
 
+	local go = false
+	local time = 0
+	local timeoutNum = 0
+	local think
 
-	local function start()
-		local go = false
-		local time = 0
+	local function onTimeout()
+		timeoutNum = timeoutNum + 1
+		if IsValid(pnl) then pnl:Remove() end
 
-		-- restart the timeout
-		timer.Stop(id)
-		timer.Start(id)
+		if timeoutNum < 5 then
+			pac.dprint("material download %q timed out.. trying again for the %ith time", url, timeoutNum)
+			-- try again
+			go = false
+			time = 0
+			createDownloadPanel()
+		else
+			pac.dprint("material download %q timed out for good", url, timeoutNum)
+			hook.Remove("Think", id)
+			timer.Remove(id)
+			urltex.Queue[url] = nil
+		end
+	end
 
-		hook.Add("Think", id, function()
+	function think()
+		-- panel is no longer valid
+		if not pnl:IsValid() then
+			onTimeout()
+			return
+		end
 
-			-- panel is no longer valid
-			if not pnl:IsValid() then
-				hook.Remove("Think", id)
-				-- let the timeout handle it
-				return
-			end
+		-- give it some time.. IsLoading is sometimes lying
+		if not go and not pnl:IsLoading() then
+			time = pac.RealTime + 0.1
+			go = true
+		end
 
+		if go and time < pac.RealTime then
+			pnl:UpdateHTMLTexture()
 			local html_mat = pnl:GetHTMLMaterial()
 
-			-- give it some time.. IsLoading is sometimes lying
-			if not go and html_mat and not pnl:IsLoading() then
-				time = pac.RealTime + 0.1
-				go = true
-			end
-
-			if go and time < pac.RealTime then
+			if html_mat then
 				local vertex_mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), data.shader, data.additionalData)
 
 				local tex = html_mat:GetTexture("$basetexture")
 				tex:Download()
 				vertex_mat:SetTexture("$basetexture", tex)
-
-				tex:Download()
+				-- tex:Download()
 
 				urltex.Cache[url] = tex
 
@@ -147,34 +163,14 @@ function urltex.StartDownload(url, data)
 					end
 				end
 			end
-
-		end)
+		end
 	end
 
-	start()
+	hook.Add("Think", id, think)
 
-	-- 5 sec max timeout
-	timer.Create(id, 5, 1, function()
-		timer.Remove(id)
-		urltex.Queue[url] = nil
-		pnl:Remove()
-
-		if hook.GetTable().Think[id] then
-			hook.Remove("Think", id)
-		end
-
-		if data.tries < 5 then
-			pac.dprint("material download %q timed out.. trying again for the %ith time", url, data.tries)
-			-- try again
-			data.tries = data.tries + 1
-			urltex.GetMaterialFromURL(url, data)
-			urltex.Queue[url] = data
-		else
-			pac.dprint("material download %q timed out for good", url, data.tries)
-		end
-	end)
-
-	urltex.ActivePanel = pnl
+	-- 5 sec max timeout, 5 maximal timeouts
+	timer.Create(id, 5, 5, onTimeout)
+	createDownloadPanel()
 end
 
 pac.urltex = urltex
