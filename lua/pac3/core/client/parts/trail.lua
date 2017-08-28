@@ -5,6 +5,7 @@ local table_remove = table.remove
 local math_ceil = math.ceil
 local math_abs = math.abs
 local render_StartBeam = render.StartBeam
+local cam_IgnoreZ = cam.IgnoreZ
 local render_EndBeam = render.EndBeam
 local render_AddBeam = render.AddBeam
 local render_SetMaterial = render.SetMaterial
@@ -23,6 +24,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "StartAlpha", 1)
 	pac.GetSet(PART, "EndAlpha", 1)
 	pac.GetSet(PART, "Stretch", false)
+	pac.GetSet(PART, "IgnoreZ", false)
 	pac.GetSet(PART, "TrailPath", "trails/laser")
 	pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
@@ -30,7 +32,6 @@ pac.EndStorableVars()
 function PART:GetNiceName()
 	return pac.PrettifyName(("/" .. self:GetTrailPath()):match(".+/(.+)"):gsub("%..+", "")) or "error"
 end
-
 
 PART.LastAdd = 0
 
@@ -133,6 +134,11 @@ function PART:OnDraw(owner, pos, ang)
 
 		render_SetMaterial(self.Materialm)
 
+		local IgnoreZ = tobool(self.IgnoreZ)
+		if IgnoreZ then
+			cam_IgnoreZ(true)
+		end
+
 		render_StartBeam(count)
 			for k, v in pairs(self.points) do
 				local width = k / (len / self.StartSize)
@@ -147,6 +153,10 @@ function PART:OnDraw(owner, pos, ang)
 				render_AddBeam(k == count and pos or v, width + self.EndSize, self.Stretch and coord or width, temp_color)
 			end
 		render_EndBeam()
+
+		if IgnoreZ then
+			cam_IgnoreZ(false)
+		end
 
 		if count >= len then
 			table_remove(self.points, 1)
