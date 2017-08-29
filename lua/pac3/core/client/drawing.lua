@@ -260,10 +260,10 @@ function pac.IgnoreEntity(ent, strID)
 	local newStatus = true
 
 	if newStatus ~= ent.pac_ignored then
-		toggle_drawing_parts(ent, false)
+		ent.pac_ignored = newStatus
+		toggle_drawing_parts(ent, not newStatus)
 	end
 
-	ent.pac_ignored = newStatus
 	return true
 end
 
@@ -282,10 +282,10 @@ function pac.UnIgnoreEntity(ent, strID)
 	end
 
 	if newStatus ~= ent.pac_ignored then
+		ent.pac_ignored = newStatus
 		toggle_drawing_parts(ent, not newStatus)
 	end
 
-	ent.pac_ignored = newStatus
 	return newStatus
 end
 
@@ -438,7 +438,7 @@ do
 				end
 
 				if ent:IsPlayer() then
-					if not ent:Alive() and pac_sv_hide_outfit_on_death:GetFloat() == 1 then
+					if not ent:Alive() and pac_sv_hide_outfit_on_death:GetBool() then
 						hide_parts(ent)
 						continue
 					end
