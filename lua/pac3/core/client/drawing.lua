@@ -252,14 +252,49 @@ function pac.UnhookEntityRender(ent, part)
 	pac.profile_info[ent:EntIndex()] = nil
 end
 
-function pac.IgnoreEntity(ent)
-	toggle_drawing_parts(ent, false)
-	ent.pac_ignored = true
+function pac.IgnoreEntity(ent, strID)
+	strID = strID or 'generic'
+	ent.pac_ignored = ent.pac_ignored or false
+	ent.pac_ignored_data = ent.pac_ignored_data or {}
+	ent.pac_ignored_data[strID] = true
+	local newStatus = true
+
+	if newStatus ~= ent.pac_ignored then
+		toggle_drawing_parts(ent, false)
+	end
+
+	ent.pac_ignored = newStatus
+	return true
 end
 
-function pac.UnIgnoreEntity(ent)
-	toggle_drawing_parts(ent, true)
-	ent.pac_ignored = false
+function pac.UnIgnoreEntity(ent, strID)
+	strID = strID or 'generic'
+	ent.pac_ignored = ent.pac_ignored or false
+	ent.pac_ignored_data = ent.pac_ignored_data or {}
+	ent.pac_ignored_data[strID] = false
+	local newStatus = false
+
+	for k, v in pairs(ent.pac_ignored_data) do
+		if v then
+			newStatus = true
+			break
+		end
+	end
+
+	if newStatus ~= ent.pac_ignored then
+		toggle_drawing_parts(ent, not newStatus)
+	end
+
+	ent.pac_ignored = newStatus
+	return newStatus
+end
+
+function pac.ToggleIgnoreEntity(ent, status, strID)
+	if status then
+		return pac.IgnoreEntity(ent, strID)
+	else
+		return pac.UnIgnoreEntity(ent, strID)
+	end
 end
 
 local util_PixelVisible = util.PixelVisible
