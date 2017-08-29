@@ -969,7 +969,7 @@ do
 		end
 	end)
 
-	PART.Events.button =
+	PART.OldEvents.button =
 	{
 		arguments = {{button = "string"}},
 		callback = function(self, ent, button)
