@@ -123,8 +123,10 @@ function PART:Shoot(pos, ang)
 			if not self:IsValid() then return end
 
 			local ent = pac.CreateEntity("models/props_junk/popcan01a.mdl")
+			if not ent:IsValid() then return end
+			
 			local idx = table.insert(self.projectiles, ent)
-
+			
 			ent:AddCallback("PhysicsCollide", function(ent, data)
 				local phys = ent:GetPhysicsObject()
 				if self.Bounce > 0 then

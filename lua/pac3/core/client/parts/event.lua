@@ -40,7 +40,8 @@ for k,v in pairs(_G) do
 	end
 end
 
-PART.Events =
+PART.Events = {}
+PART.OldEvents =
 {
 	random =
 	{
@@ -932,6 +933,331 @@ PART.Events =
 	},
 }
 
+do
+	local enums = {}
+	local enums2 = {}
+	for key, val in pairs(_G) do
+		if type(key) == "string" and type(val) == "number" then
+			if key:sub(0,4) == "KEY_" and not key:find("_LAST$") and not key:find("_FIRST$")  and not key:find("_COUNT$")  then
+				enums[val] = key:sub(5):lower()
+				enums2[enums[val]] = val
+			elseif (key:sub(0,6) == "MOUSE_" or key:sub(0,9) == "JOYSTICK_") and not key:find("_LAST$") and not key:find("_FIRST$")  and not key:find("_COUNT$")  then
+				--if enums[val] then
+					--print("conflict",val,key,'-',enums[val])
+				--else
+					enums[val] = key:lower()
+					enums2[enums[val]] = val
+				--end
+			end
+		end
+	end
+
+	pac.key_enums = enums
+
+	--TODO: Rate limit!!!
+	net.Receive("pac.net.BroadcastPlayerButton", function()
+		local ply = net.ReadEntity()
+
+		if ply:IsValid() then
+			local key = net.ReadUInt(8)
+			local down = net.ReadBool()
+
+			key = pac.key_enums[key] or key
+
+			ply.pac_buttons = ply.pac_buttons or {}
+			ply.pac_buttons[key] = down
+		end
+	end)
+
+	PART.OldEvents.button =
+	{
+		arguments = {{button = "string"}},
+		callback = function(self, ent, button)
+			local ply = self:GetPlayerOwner()
+
+			if ply == pac.LocalPlayer then
+				ply.pac_broadcast_buttons = ply.pac_broadcast_buttons or {}
+				if not ply.pac_broadcast_buttons[button] then
+					local val = enums2[button:lower()]
+					if val then
+						net.Start("pac.net.AllowPlayerButtons")
+						net.WriteUInt(val, 8)
+						net.SendToServer()
+					end
+					ply.pac_broadcast_buttons[button] = true
+				end
+			end
+
+			local buttons = ply.pac_buttons
+
+			if buttons then
+				return buttons[button]
+			end
+		end,
+	}
+end
+
+do
+	local eventMeta = {}
+
+	eventMeta.__name = 'undefined'
+	AccessorFunc(eventMeta, '__name', 'Name')
+	AccessorFunc(eventMeta, '__name', 'EventName')
+	AccessorFunc(eventMeta, '__name', 'Nick')
+
+	function eventMeta:IsValid(event)
+		return true
+	end
+
+	function eventMeta:IsAvaliable(eventPart)
+		return true
+	end
+
+	function eventMeta:GetArguments()
+		self.__registeredArguments = self.__registeredArguments or {}
+		return self.__registeredArguments
+	end
+
+	function eventMeta:GetArgumentsForParse()
+		return self.__registeredArgumentsParse
+	end
+
+	function eventMeta:AppendArgument(keyName, keyType)
+		self.__registeredArguments = self.__registeredArguments or {}
+		if not keyType then
+			error('No Type of argument was specified!')
+		end
+
+		if keyType ~= 'number' and keyType ~= 'string' and keyType ~= 'boolean' then
+			error('Invalid Type of argument was passed. Valids are number, string or boolean')
+		end
+
+		for i, data in ipairs(self.__registeredArguments) do
+			if data[1] == keyName then
+				error('Argument with key ' .. keyName .. ' already exists!')
+			end
+		end
+
+		self.__registeredArguments = self.__registeredArguments or {}
+		table.insert(self.__registeredArguments, {keyName, keyType})
+		table.insert(self.__registeredArgumentsParse, {[keyName] = keyType})
+	end
+
+	function eventMeta:PopArgument(keyName)
+		for i, data in ipairs(self.__registeredArguments) do
+			if data[1] == keyName then
+				return true, i, table.remove(self.__registeredArguments, i), table.remove(self.__registeredArgumentsParse, i)
+			end
+		end
+
+		return false
+	end
+
+	eventMeta.RemoveArgument = eventMeta.PopArgument
+	eventMeta.SpliceArgument = eventMeta.PopArgument
+
+	function eventMeta:GetClass()
+		return self.__classname
+	end
+
+	function eventMeta:Think(event, ent, ...)
+		return false
+	end
+
+	local eventMetaTable = {
+		__index = function(self, key)
+			if key == '__class' or key == '__classname' then
+				return rawget(getmetatable(self), '__classname')
+			end
+
+			if rawget(self, key) ~= nil then
+				return rawget(self, key)
+			end
+
+			return eventMeta[key]
+		end,
+
+		__call = function(self)
+			local newObj = pac.CreateEvent(self:GetClass())
+
+			for k, v in pairs(self) do
+				if type(v) ~= 'table' then
+					newObj[k] = v
+				else
+					newObj[k] = table.Copy(v)
+				end
+			end
+
+			return newObj
+		end,
+
+		-- __newindex = function(self, key, val)
+		-- 	rawset(self, key, val)
+		-- end
+	}
+
+	function pac.GetEventMetatable()
+		return eventMeta
+	end
+
+	function pac.CreateEvent(nClassName, defArguments)
+		if not nClassName then error('No classname was specified!') end
+
+		local newObj = setmetatable({}, {
+			__index = eventMetaTable.__index,
+			__call = eventMetaTable.__call,
+			__classname = nClassName
+		})
+
+		newObj.__registeredArguments = {}
+		newObj.__registeredArgumentsParse = {}
+		newObj:SetName(nClassName)
+
+		if defArguments then
+			for i, data in pairs(defArguments) do
+				newObj:AppendArgument(data[1], data[2])
+			end
+		end
+
+		return newObj
+	end
+
+	function pac.RegisterEvent(nRegister)
+		local classname = nRegister:GetClass()
+		
+		if PART.Events[classname] then
+			print('[PAC3] WARN: Registering event with already existing classname!: '.. classname)
+		end
+
+		PART.Events[classname] = nRegister
+	end
+
+	for classname, data in pairs(PART.OldEvents) do
+		local arguments = data.arguments
+		local think = data.callback
+		local eventObject = pac.CreateEvent(classname)
+
+		if arguments then
+			for i, data2 in ipairs(arguments) do
+				for key, Type in pairs(data2) do
+					eventObject:AppendArgument(key, Type)
+				end
+			end
+		end
+
+		function eventObject:Think(event, ent, ...)
+			return think(event, ent, ...)
+		end
+
+		pac.RegisterEvent(eventObject)
+	end
+
+	timer.Simple(0, function() -- After all addons has loaded
+		hook.Call('PAC3RegisterEvents', nil, pac.CreateEvent, pac.RegisterEvent)
+	end)
+end
+
+-- DarkRP default events
+do
+	local plyMeta = FindMetaTable('Player')
+	local gamemode = engine.ActiveGamemode
+	local isDarkRP = function() return gamemode() == 'darkrp' end
+
+	local events = {
+		{
+			name = 'is_arrested',
+			args = {},
+			avaliable = function() return plyMeta.isArrested ~= nil end,
+			func = function(self, eventPart, ent)
+				ent = try_viewmodel(ent)
+				return ent.isArrested and ent:isArrested() or false
+			end
+		},
+
+		{
+			name = 'is_wanted',
+			args = {},
+			avaliable = function() return plyMeta.isWanted ~= nil end,
+			func = function(self, eventPart, ent)
+				ent = try_viewmodel(ent)
+				return ent.isWanted and ent:isWanted() or false
+			end
+		},
+
+		{
+			name = 'is_police',
+			args = {},
+			avaliable = function() return plyMeta.isCP ~= nil end,
+			func = function(self, eventPart, ent)
+				ent = try_viewmodel(ent)
+				return ent.isCP and ent:isCP() or false
+			end
+		},
+
+		{
+			name = 'wanted_reason',
+			args = {{'find', 'string'}},
+			avaliable = function() return plyMeta.getWantedReason ~= nil and plyMeta.isWanted ~= nil end,
+			func = function(self, eventPart, ent, find)
+				ent = try_viewmodel(ent)
+				return eventPart:StringOperator(ent.isWanted and ent.getWantedReason and ent:isWanted() and ent:getWantedReason() or '', find)
+			end
+		},
+
+		{
+			name = 'is_cook',
+			args = {},
+			avaliable = function() return plyMeta.isCook ~= nil end,
+			func = function(self, eventPart, ent)
+				ent = try_viewmodel(ent)
+				return ent.isCook and ent:isCook() or false
+			end
+		},
+
+		{
+			name = 'is_hitman',
+			args = {},
+			avaliable = function() return plyMeta.isHitman ~= nil end,
+			func = function(self, eventPart, ent)
+				ent = try_viewmodel(ent)
+				return ent.isHitman and ent:isHitman() or false
+			end
+		},
+
+		{
+			name = 'has_hit',
+			args = {},
+			avaliable = function() return plyMeta.hasHit ~= nil end,
+			func = function(self, eventPart, ent)
+				ent = try_viewmodel(ent)
+				return ent.hasHit and ent:hasHit() or false
+			end
+		},
+
+		{
+			name = 'hit_price',
+			args = {{'amount', 'number'}},
+			avaliable = function() return plyMeta.getHitPrice ~= nil end,
+			func = function(self, eventPart, ent, amount)
+				ent = try_viewmodel(ent)
+				return eventPart:NumberOperator(ent.getHitPrice and ent:getHitPrice() or 0, amount)
+			end
+		},
+	}
+
+	for k, v in ipairs(events) do
+		local avaliable = v.avaliable
+		local eventObject = pac.CreateEvent(v.name, v.args)
+		eventObject.Think = v.func
+
+		function eventObject:IsAvaliable()
+			return isDarkRP() and avaliable()
+		end
+		
+		pac.RegisterEvent(eventObject)
+	end
+end
+
 function PART:GetParentEx()
 	local parent = self:GetTargetPart()
 
@@ -971,13 +1297,21 @@ function PART:OnRemove()
 	end
 end
 
-local function should_hide(self, ent, data)
-	local b
+local function should_hide(self, ent, eventObject)
+	if not eventObject:IsAvaliable(self) then
+		return true
+	end
+
+	local b = false
 
 	if self.hidden or self.event_hidden then
 		b = self.Invert
 	else
-		b = data.callback(self, ent, self:GetParsedArguments(data.arguments)) or false
+		if eventObject.ParseArguments then
+			b = eventObject:Think(self, ent, eventObject:ParseArguments(self)) or false
+		else
+			b = eventObject:Think(self, ent, self:GetParsedArgumentsForObject(eventObject)) or false
+		end
 
 		if self.Invert then
 			b = not b
@@ -986,7 +1320,6 @@ local function should_hide(self, ent, data)
 
 	return b
 end
-
 
 function PART:OnThink()
 	local ent = self:GetOwner(self.RootOwner)
@@ -1111,6 +1444,36 @@ function PART:GetParsedArguments(data)
 	return unpack(args)
 end
 
+function PART:GetParsedArgumentsForObject(eventObject)
+	if not eventObject then return end
+
+	local line = self.Arguments
+	local hash = line .. tostring(eventObject)
+
+	if pac.EventArgumentCache[hash] then
+		return unpack(pac.EventArgumentCache[hash])
+	end
+
+	local args = line:Split("@@")
+
+	for i, argData in pairs(eventObject:GetArguments()) do
+		local typ = argData[2]
+		if not args[i] then
+			break
+		elseif typ == "boolean" then
+			args[i] = tonumber(args[i]) ~= 0
+		elseif typ == "number" then
+			args[i] = tonumber(args[i]) or 0
+		elseif typ == "string" then
+			args[i] = tostring(args[i]) or ""
+		end
+	end
+
+	pac.EventArgumentCache[hash] = args
+
+	return unpack(args)
+end
+
 local cache = {}
 
 local function CompareBTable(a, btbl, func, ...)
@@ -1196,10 +1559,10 @@ end
 
 pac.RegisterPart(PART)
 
-usermessage.Hook("pac_event", function(umr)
-	local ply = umr:ReadEntity()
-	local str = umr:ReadString()
-	local on = umr:ReadChar()
+net.Receive("pac_event", function(umr)
+	local ply = net.ReadEntity()
+	local str = net.ReadString()
+	local on = net.ReadInt(8)
 
 	-- ^ resets all other events
 	if str:find("^", 0, true) then
@@ -1211,70 +1574,6 @@ usermessage.Hook("pac_event", function(umr)
 		ply.pac_command_events[str] = {name = str, time = pac.RealTime, on = on}
 	end
 end)
-
-do
-	local enums = {}
-	local enums2 = {}
-	for key, val in pairs(_G) do
-		if type(key) == "string" and type(val) == "number" then
-			if key:sub(0,4) == "KEY_" and not key:find("_LAST$") and not key:find("_FIRST$")  and not key:find("_COUNT$")  then
-				enums[val] = key:sub(5):lower()
-				enums2[enums[val]] = val
-			elseif (key:sub(0,6) == "MOUSE_" or key:sub(0,9) == "JOYSTICK_") and not key:find("_LAST$") and not key:find("_FIRST$")  and not key:find("_COUNT$")  then
-				--if enums[val] then
-					--print("conflict",val,key,'-',enums[val])
-				--else
-					enums[val] = key:lower()
-					enums2[enums[val]] = val
-				--end
-			end
-		end
-	end
-
-	pac.key_enums = enums
-
-	--TODO: Rate limit!!!
-	net.Receive("pac.net.BroadcastPlayerButton", function()
-		local ply = net.ReadEntity()
-
-		if ply:IsValid() then
-			local key = net.ReadUInt(8)
-			local down = net.ReadBool()
-
-			key = pac.key_enums[key] or key
-
-			ply.pac_buttons = ply.pac_buttons or {}
-			ply.pac_buttons[key] = down
-		end
-	end)
-
-	PART.Events.button =
-	{
-		arguments = {{button = "string"}},
-		callback = function(self, ent, button)
-			local ply = self:GetPlayerOwner()
-
-			if ply == pac.LocalPlayer then
-				ply.pac_broadcast_buttons = ply.pac_broadcast_buttons or {}
-				if not ply.pac_broadcast_buttons[button] then
-					local val = enums2[button:lower()]
-					if val then
-						net.Start("pac.net.AllowPlayerButtons")
-						net.WriteUInt(val, 8)
-						net.SendToServer()
-					end
-					ply.pac_broadcast_buttons[button] = true
-				end
-			end
-
-			local buttons = ply.pac_buttons
-
-			if buttons then
-				return buttons[button]
-			end
-		end,
-	}
-end
 
 do
 	local enums = {}

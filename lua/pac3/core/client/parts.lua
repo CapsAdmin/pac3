@@ -148,7 +148,8 @@ function pac.RemoveAllParts(owned_only, server)
 
 	for _, part in pairs(pac.GetParts(owned_only)) do
 		if part:IsValid() then
-			part:Remove()
+			local status, err = pcall(part.Remove, part)
+			if not status then print('[PAC3] Failed to remove part: ' .. err) end
 		end
 	end
 

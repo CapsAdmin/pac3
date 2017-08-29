@@ -25,8 +25,11 @@ function pace.ResetView()
 		end
 
 		if ent:IsValid() then
-			pace.ViewPos = ent:EyePos() + Vector(50, 0, 0)
+			local fwd = ent.EyeAngles and ent:EyeAngles():Forward() or ent:GetAngles():Forward()
+			fwd.z = 0
+			pace.ViewPos = ent:EyePos() + fwd * 128
 			pace.ViewAngles = (ent:EyePos() - pace.ViewPos):Angle()
+			pace.ViewAngles:Normalize()
 		end
 	end
 end
@@ -50,12 +53,13 @@ end
 local held_ang = Angle(0,0,0)
 local held_mpos = Vector(0,0,0)
 local mcode
+local hoveredPanelCursor
 
 function pace.GUIMousePressed(mc)
 	if pace.mctrl.GUIMousePressed(mc) then return end
 
 	if mc == MOUSE_LEFT and not pace.editing_viewmodel then
-		held_ang = pace.ViewAngles*1
+		held_ang = pace.ViewAngles * 1
 		held_mpos = Vector(gui.MousePos())
 	end
 
@@ -63,10 +67,21 @@ function pace.GUIMousePressed(mc)
 		pace.Call("OpenMenu")
 	end
 
+	hoveredPanelCursor = vgui.GetHoveredPanel()
+
+	if IsValid(hoveredPanelCursor) then
+		hoveredPanelCursor:SetCursor('sizeall')
+	end
+
 	mcode = mc
 end
 
 function pace.GUIMouseReleased(mc)
+	if IsValid(hoveredPanelCursor) then
+		hoveredPanelCursor:SetCursor('none')
+		hoveredPanelCursor = nil
+	end
+
 	if pace.mctrl.GUIMouseReleased(mc) then return end
 
 	if pace.editing_viewmodel then return end
@@ -80,6 +95,8 @@ local function set_mouse_pos(x, y)
 	held_mpos = Vector(x, y)
 	return held_mpos * 1
 end
+
+local WORLD_ORIGIN = Vector(0, 0, 0)
 
 local function CalcDrag()
 	if
@@ -95,11 +112,11 @@ local function CalcDrag()
 	local ftime = FrameTime() * 50
 	local mult = 5
 
-	if input.IsKeyDown(KEY_LCONTROL) then
+	if input.IsKeyDown(KEY_LCONTROL) or input.IsKeyDown(KEY_RCONTROL) then
 		mult = 0.1
 	end
 
-	if pace.current_part:IsValid() then
+	if IsValid(pace.current_part) then
 		local origin
 
 		local owner = pace.current_part:GetOwner(true)
@@ -109,6 +126,7 @@ local function CalcDrag()
 				for key, child in ipairs(pace.current_part:GetChildren()) do
 					if not child.NonPhysical then
 						origin = child:GetDrawPosition()
+						if origin == WORLD_ORIGIN then origin = LocalPlayer():GetPos() end
 						break
 					end
 				end
@@ -117,7 +135,7 @@ local function CalcDrag()
 			end
 
 			if not origin then
-				origin = owner:GetPos()
+				origin = LocalPlayer():GetPos()
 			end
 		else
 			if not owner:IsValid() then
@@ -131,7 +149,9 @@ local function CalcDrag()
 			end
 		end
 
-		mult = mult * (origin:Distance(pace.ViewPos) / 200)
+		mult = mult * math.min(origin:Distance(pace.ViewPos) / 200, 3)
+	else
+		mult = mult * math.min(LocalPlayer():GetPos():Distance(pace.ViewPos) / 200, 3)
 	end
 
 	if input.IsKeyDown(KEY_LSHIFT) then

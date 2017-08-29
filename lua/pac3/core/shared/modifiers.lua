@@ -1,7 +1,10 @@
+
 pac.ServerModifiers = {}
+local cvarModifiers = {}
 
 function pac.AddServerModifier(id, func)
 	pac.ServerModifiers[id] = func
+	return cvarModifiers[id]
 end
 
 function pac.GetServerModifiers()
@@ -31,19 +34,20 @@ function pac.LoadModifiers()
 			default = 0
 		end
 
+		local cvar
+
 		if SERVER then
-			CreateConVar("pac_modifier_" .. name, default, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
+			cvar = CreateConVar("pac_modifier_" .. name, default, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
 		end
 
 		if CLIENT then
-			CreateClientConVar("pac_modifier_" .. name, default, true, true)
+			cvar = CreateClientConVar("pac_modifier_" .. name, default, true, true)
 		end
+
+		cvarModifiers[name] = cvar
 
 		include(pac.ModifiersPath .. val)
 	end
 end
 
-hook.Add("PostGamemodeLoaded", "pac.LoadModifiers", function()
-	pac.LoadModifiers()
-	hook.Remove("PostGamemodeLoaded", "pac.LoadModifiers")
-end)
+timer.Simple(0, pac.LoadModifiers)

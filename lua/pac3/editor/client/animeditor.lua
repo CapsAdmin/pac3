@@ -1,11 +1,11 @@
 module("boneanimlib",package.seeall)
 
-surface.CreateFont("DefaultFontVerySmall", {font = "tahoma", size = 10, weight = 0, antialias = false})
-surface.CreateFont("DefaultFontSmall", {font = "tahoma", size = 11, weight = 0, antialias = false})
-surface.CreateFont("DefaultFontSmallDropShadow", {font = "tahoma", size = 11, weight = 0, shadow = true, antialias = false})
-surface.CreateFont("DefaultFont", {font = "tahoma", size = 13, weight = 500, antialias = false})
-surface.CreateFont("DefaultFontBold", {font = "tahoma", size = 13, weight = 1000, antialias = false})
-surface.CreateFont("DefaultFontLarge", {font = "tahoma", size = 16, weight = 0, antialias = false})
+surface.CreateFont("DefaultFontVerySmall", {font = "DejaVu Sans", size = 10, weight = 0, antialias = false})
+surface.CreateFont("DefaultFontSmall", {font = "DejaVu Sans", size = 11, weight = 0, antialias = false})
+surface.CreateFont("DefaultFontSmallDropShadow", {font = "DejaVu Sans", size = 11, weight = 0, shadow = true, antialias = false})
+surface.CreateFont("DefaultFont", {font = "DejaVu Sans", size = 13, weight = 500, antialias = false})
+surface.CreateFont("DefaultFontBold", {font = "DejaVu Sans", size = 13, weight = 1000, antialias = false})
+surface.CreateFont("DefaultFontLarge", {font = "DejaVu Sans", size = 16, weight = 0, antialias = false})
 
 local boneList = {}
 

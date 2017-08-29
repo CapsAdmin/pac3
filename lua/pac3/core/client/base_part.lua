@@ -491,9 +491,11 @@ do -- parenting
 				self[func](self, ...)
 			end
 
-			for _, part in ipairs(self:GetChildrenList()) do
-				if part[func] then
-					part[func](part, ...)
+			local child = self:GetChildrenList()
+
+			for i = 1, #child do
+				if child[i][func] then
+					child[i][func](child[i], part, ...)
 				end
 			end
 		end
@@ -501,8 +503,10 @@ do -- parenting
 		function PART:SetKeyValueRecursive(key, val)
 			self[key] = val
 
-			for _, part in ipairs(self:GetChildrenList()) do
-				part[key] = val
+			local child = self:GetChildrenList()
+
+			for i = 1, #child do
+				child[i][key] = val
 			end
 		end
 
@@ -845,10 +849,25 @@ do -- drawing. this code is running every frame
 			if not self.HandleModifiersManually then self:ModifiersPostEvent(event, draw_type) end
 		end
 
-		for _, part in ipairs(self:GetChildren()) do
-			part:Draw(event, pos, ang, draw_type)
+		local boneParts = {}
+		local otherParts = {}
+		local children = self:GetChildren()
+
+		for i = 1, #children do
+			if children[i].ClassName == 'bone' then
+				boneParts[#boneParts + 1] = children[i]
+			else
+				otherParts[#otherParts + 1] = children[i]
+			end
 		end
 
+		for i = 1, #boneParts do
+			boneParts[i].Draw(boneParts[i], event, pos, ang, draw_type)
+		end
+
+		for i = 1, #otherParts do
+			otherParts[i].Draw(otherParts[i], event, pos, ang, draw_type)
+		end
 	end
 
 	function PART:GetDrawPosition(bone_override, skip_cache)
@@ -900,7 +919,10 @@ do -- drawing. this code is running every frame
 
 				if ent:IsValid() then
 					-- if the parent part is a model, get the bone position of the parent model
-					ent:InvalidateBoneCache()
+					if ent.pac_bone_affected ~= FrameNumber() then
+						ent:InvalidateBoneCache()
+					end
+
 					pos, ang = pac.GetBonePosAng(ent, bone_override or self.Bone)
 				else
 					-- else just get the origin of the part

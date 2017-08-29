@@ -359,7 +359,7 @@ do -- hook helpers
 	end
 
 	function pac.CallHook(str, ...)
-		return hook.Call("pac_" .. str, GAMEMODE, ...)
+		return hook.Run("pac_" .. str, ...)
 	end
 
 	pac.added_hooks = added_hooks
@@ -416,7 +416,7 @@ do -- get set and editor vars
 		local part_set_key = "Set" .. part_key
 
 		local uid_key = part_key .. "UID"
-		local name_key = key.."Name"
+		local name_key = key .. "Name"
 		local name_set_key = "Set" .. name_key
 
 		local last_uid_key = "last_" .. uid_key:lower()
@@ -446,13 +446,15 @@ do -- get set and editor vars
 		end
 
 		PART.PartNameResolvers[part_key] = function(self, force)
-
 			if self[uid_key] == "" and self[name_key] == "" then return end
 
-			if force or self[try_key] or self[uid_key] ~= "" and not self[part_key]:IsValid() then
+			if force or self[try_key] or self[uid_key] ~= "" and not IsValid(self[part_key]) then
+				local part = pac.GetPartFromUniqueID(self.owner_id, self[uid_key])
 
-				-- match by name instead
-				if self[try_key] and not self.supress_part_name_find then
+				if IsValid(part) and part ~= self and self[part_key] ~= part then
+					self[name_set_key](self, part)
+					self[last_uid_key] = self[uid_key]
+				elseif self[try_key] and not self.supress_part_name_find then -- match by name instead
 					for _, part in pairs(pac.GetParts()) do
 						if
 							part ~= self and
@@ -466,15 +468,8 @@ do -- get set and editor vars
 
 						self[last_uid_key] = self[uid_key]
 					end
+
 					self[try_key] = false
-				else
-					local part = pac.GetPartFromUniqueID(self.owner_id, self[uid_key])
-
-					if part:IsValid() and part ~= self and self[part_key] ~= part then
-						self[name_set_key](self, part)
-					end
-
-					self[last_uid_key] = self[uid_key]
 				end
 			end
 		end
@@ -483,7 +478,6 @@ do -- get set and editor vars
 			self[name_find_count_key] = 0
 
 			if type(var) == "string" then
-
 				self[name_key] = var
 
 				if var == "" then
@@ -494,9 +488,9 @@ do -- get set and editor vars
 					self[try_key] = true
 				end
 
-				PART.PartNameResolvers[part_key](self)
+				timer.Simple(0, function() PART.PartNameResolvers[part_key](self) end)
 			else
-				self[name_key] = var.Name
+				self[name_key] = var.Name and var.Name ~= '' and var.Name or var:GetName()
 				self[uid_key] = var.UniqueID
 				self[part_set_key](self, var)
 			end

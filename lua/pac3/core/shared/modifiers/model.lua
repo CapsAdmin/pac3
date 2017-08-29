@@ -4,9 +4,9 @@ if CLIENT then
 end
 
 if SERVER then
-
 	function pac.SetPlayerModel(ply, model)
 		if ClockWork then return end -- Clockwork fix
+		if not model then return end
 		model = player_manager.AllValidModels()[model] or model
 
 		if not util.IsValidModel(model) then
@@ -18,7 +18,7 @@ if SERVER then
 		ply.pac_last_modifier_model = model:lower()
 	end
 
-	pac.AddServerModifier("model", function(data, owner)
+	local ALLOW_TO_CHANGE_MODEL = pac.AddServerModifier("model", function(data, owner)
 		if not data then
 			pac.SetPlayerModel(owner, player_manager.TranslatePlayerModel(owner:GetInfo("cl_playermodel")))
 		else
@@ -41,10 +41,11 @@ if SERVER then
 	end)
 
 	concommand.Add("pac_setmodel", function(ply, _, args)
-		if GetConVarNumber("pac_modifier_model") ~= 0 and ply:GetInfo("pac_modifier_model") ~= 0 and !ClockWork then
+		if ALLOW_TO_CHANGE_MODEL:GetBool() and not ClockWork then
 			pac.SetPlayerModel(ply, args[1])
 		end
 	end)
+
 	local function PlayerCheckModel(ply)
 		if ply.pac_last_modifier_model and ply:GetModel():lower() ~= ply.pac_last_modifier_model then
 			ply:SetModel(ply.pac_last_modifier_model)

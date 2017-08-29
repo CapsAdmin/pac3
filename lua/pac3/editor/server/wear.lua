@@ -250,11 +250,11 @@ function pace.SubmitPartNotify(data)
 
 	if data.owner:IsPlayer() then
 		if allowed == "queue" then return end
-		umsg.Start("pac_submit_acknowledged", data.owner)
-			umsg.Bool(allowed)
-			umsg.String(reason or "")
-			umsg.String(data.part.self.Name or "no name")
-		umsg.End()
+		net.Start("pac_submit_acknowledged")
+			net.WriteBool(allowed)
+			net.WriteString(reason or "")
+			net.WriteString(data.part.self.Name or "no name")
+		net.Send(data.owner)
 		hook.Run("PACSubmitAcknowledged", data.owner, util.tobool(allowed), reason or "", data.part.self.Name or "no name", data)
 	end
 end
@@ -283,15 +283,11 @@ function pace.HandleReceivedData(ply, data)
 end
 
 util.AddNetworkString("pac_submit")
-util.AddNetworkString("pac_effect_precached")
-util.AddNetworkString("pac_precache_effect")
-
 
 net.Receive("pac_submit", function(_, ply)
 	local data = pac.NetDeserializeTable()
 	pace.HandleReceivedData(ply, data)
 end)
-
 
 function pace.ClearOutfit(ply)
 	local uid = ply:UniqueID()

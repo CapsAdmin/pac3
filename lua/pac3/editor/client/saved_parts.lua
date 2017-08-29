@@ -189,6 +189,15 @@ function pace.LoadParts(name, clear, override_part)
 	end
 end
 
+concommand.Add('pac_load_url', function(ply, cmd, args)
+	if not args[1] then return print('[PAC3] No URL specified') end
+	local url = args[1]:Trim()
+	if not url:find("https?://") then return print('[PAC3] Invalid URL specified') end
+	print('[PAC3] Loading specified URL')
+	if args[2] == nil then args[2] = '1' end
+	pace.LoadParts(url, tobool(args[2]))
+end)
+
 function pace.LoadPartsFromTable(data, clear, override_part)
 	if pace.use_current_part_for_saveload and pace.current_part:IsValid() then
 		override_part = pace.current_part

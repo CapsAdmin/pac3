@@ -18,6 +18,9 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Velocity", 250)
 	pac.GetSet(PART, "Spread", 0.1)
 	pac.GetSet(PART, "PositionSpread", 0)
+	pac.GetSet(PART, "PositionSpreadX", 0)
+	pac.GetSet(PART, "PositionSpreadY", 0)
+	pac.GetSet(PART, "PositionSpreadZ", 0)
 	pac.GetSet(PART, "DieTime", 3)
 	pac.GetSet(PART, "StartAlpha", 255)
 	pac.GetSet(PART, "EndAlpha", 0)
@@ -204,6 +207,7 @@ function PART:EmitParticles(pos, ang, real_ang)
 		if self.Material == "" then return end
 		if self.Velocity == 500.01 then return end
 
+		local originalAng = ang
 		ang = ang:Forward()
 
 		local double = 1
@@ -240,6 +244,15 @@ function PART:EmitParticles(pos, ang, real_ang)
 
 			if self.PositionSpread ~= 0 then
 				pos = pos + Angle(math.Rand(-180, 180), math.Rand(-180, 180), math.Rand(-180, 180)):Forward() * self.PositionSpread
+			end
+
+			do
+				local x = self.PositionSpreadX and self.PositionSpreadX >= 0 and self.PositionSpreadX or 0
+				local y = self.PositionSpreadY and self.PositionSpreadY >= 0 and self.PositionSpreadY or 0
+				local z = self.PositionSpreadZ and self.PositionSpreadZ >= 0 and self.PositionSpreadZ or 0
+				local vecAdd = Vector(math.Rand(-x, x), math.Rand(-y, y), math.Rand(-z, z))
+				vecAdd:Rotate(originalAng)
+				pos = pos + vecAdd
 			end
 
 			for i = 1, double do

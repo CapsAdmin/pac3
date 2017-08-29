@@ -106,7 +106,6 @@ pac.ShowEntityParts = show_parts
 pac.TogglePartDrawing = toggle_drawing_parts
 
 local function render_override(ent, type, draw_only)
-
 	if pac.profile then
 		TIME = util_TimerCycle()
 	end
@@ -118,7 +117,6 @@ local function render_override(ent, type, draw_only)
 			return
 		end
 	end
-
 
 	if not ent.pac_parts then
 		pac.UnhookEntityRender(ent)
@@ -144,16 +142,14 @@ local function render_override(ent, type, draw_only)
 				if not part:HasParent() then
 					if not draw_only then
 						think(part)
-						for _, val in ipairs(part:GetChildrenList()) do
-							think(val)
+
+						local child = part:GetChildrenList()
+						for i = 1, #child do
+							think(child[i])
 						end
 					end
 
-					if part.OwnerName == "viewmodel" and type ~= "viewmodel" then
-						continue
-					end
-
-					if part.OwnerName ~= "viewmodel" and type == "viewmodel" then
+					if part.OwnerName == "viewmodel" and type ~= "viewmodel" or part.OwnerName ~= "viewmodel" and type == "viewmodel" then
 						continue
 					end
 
@@ -195,7 +191,7 @@ local function render_override(ent, type, draw_only)
 		end
 	end
 
-	render_SetColorModulation(1,1,1)
+	render_SetColorModulation(1, 1, 1)
 	render_SetBlend(1)
 
 	render_MaterialOverride()
@@ -256,14 +252,49 @@ function pac.UnhookEntityRender(ent, part)
 	pac.profile_info[ent:EntIndex()] = nil
 end
 
-function pac.IgnoreEntity(ent)
-	toggle_drawing_parts(ent, false)
-	ent.pac_ignored = true
+function pac.IgnoreEntity(ent, strID)
+	strID = strID or 'generic'
+	ent.pac_ignored = ent.pac_ignored or false
+	ent.pac_ignored_data = ent.pac_ignored_data or {}
+	ent.pac_ignored_data[strID] = true
+	local newStatus = true
+
+	if newStatus ~= ent.pac_ignored then
+		ent.pac_ignored = newStatus
+		toggle_drawing_parts(ent, not newStatus)
+	end
+
+	return true
 end
 
-function pac.UnIgnoreEntity(ent)
-	toggle_drawing_parts(ent, true)
-	ent.pac_ignored = false
+function pac.UnIgnoreEntity(ent, strID)
+	strID = strID or 'generic'
+	ent.pac_ignored = ent.pac_ignored or false
+	ent.pac_ignored_data = ent.pac_ignored_data or {}
+	ent.pac_ignored_data[strID] = false
+	local newStatus = false
+
+	for k, v in pairs(ent.pac_ignored_data) do
+		if v then
+			newStatus = true
+			break
+		end
+	end
+
+	if newStatus ~= ent.pac_ignored then
+		ent.pac_ignored = newStatus
+		toggle_drawing_parts(ent, not newStatus)
+	end
+
+	return newStatus
+end
+
+function pac.ToggleIgnoreEntity(ent, status, strID)
+	if status then
+		return pac.IgnoreEntity(ent, strID)
+	else
+		return pac.UnIgnoreEntity(ent, strID)
+	end
 end
 
 local util_PixelVisible = util.PixelVisible
@@ -308,18 +339,23 @@ end
 
 -- skybox hack --
 local in_skybox = false
+local in_skybox_message = false
 
-hook.Add("PreDrawSkyBox","pac",function()
-	if in_skybox == true then
-		hook.Remove("PreDrawSkyBox","pac")
-		in_skybox = false
-		error("in_skybox was never disabled")
+hook.Add("PreDrawSkyBox", "pac", function()
+	if in_skybox then
+		if not in_skybox_message then
+			in_skybox_message = true
+			error("in_skybox was never disabled")
+		end
 	end
+
 	in_skybox = true
 end)
-hook.Add("PostDrawSkyBox","pac",function()
+
+hook.Add("PostDrawSkyBox", "pac", function()
 	in_skybox = false
 end)
+
 -----------------
 
 local function setup_suppress()
@@ -369,8 +405,11 @@ do
 	local dummyv = Vector(0.577350,0.577350,0.577350)
 	local fovoverride
 
+	local pac_sv_hide_outfit_on_death = GetConVar("pac_sv_hide_outfit_on_death")
+
 	local should_suppress = setup_suppress()
-	function pac.PostDrawOpaqueRenderables()
+	function pac.PostDrawOpaqueRenderables(a, b)
+		if a or b then return end -- Extra Check
 		if in_skybox or should_suppress() then return end
 
 		-- commonly used variables
@@ -399,7 +438,7 @@ do
 				end
 
 				if ent:IsPlayer() then
-					if not ent:Alive() and GetConVar("pac_sv_hide_outfit_on_death"):GetFloat() == 1 then
+					if not ent:Alive() and pac_sv_hide_outfit_on_death:GetBool() then
 						hide_parts(ent)
 						continue
 					end

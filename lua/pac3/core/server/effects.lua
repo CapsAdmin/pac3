@@ -24,7 +24,7 @@ util.AddNetworkString("pac_request_precache")
 function pac.PrecacheEffect(name)
 	PrecacheParticleSystem(name)
 	net.Start("pac_effect_precached")
-		net.WriteString(name)
+	net.WriteString(name)
 	net.Broadcast()
 end
 
