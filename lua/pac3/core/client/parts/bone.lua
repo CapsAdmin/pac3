@@ -98,7 +98,7 @@ local function manscale(ent, id, scale, part)
 		ent.pac_bone_setup_data[part.UniqueID].scale = scale
 	else
 		ent:ManipulateBoneScale(id, ent:GetManipulateBoneScale(id) * scale)
-		if ent:EntIndex() == -1 then ent.pac_bone_affected = FrameNumber() end
+		if not part.HideMesh and ent:EntIndex() == -1 then ent.pac_bone_affected = FrameNumber() end
 	end
 end
 
