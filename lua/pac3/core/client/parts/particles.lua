@@ -207,6 +207,7 @@ function PART:EmitParticles(pos, ang, real_ang)
 		if self.Material == "" then return end
 		if self.Velocity == 500.01 then return end
 
+		local originalAng = ang
 		ang = ang:Forward()
 
 		local double = 1
@@ -250,7 +251,7 @@ function PART:EmitParticles(pos, ang, real_ang)
 				local y = self.PositionSpreadY and self.PositionSpreadY >= 0 and self.PositionSpreadY or 0
 				local z = self.PositionSpreadZ and self.PositionSpreadZ >= 0 and self.PositionSpreadZ or 0
 				local vecAdd = Vector(math.Rand(-x, x), math.Rand(-y, y), math.Rand(-z, z))
-				vecAdd:Rotate(ang)
+				vecAdd:Rotate(originalAng)
 				pos = pos + vecAdd
 			end
 
