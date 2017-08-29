@@ -106,23 +106,10 @@ do
 	local pac_friendonly = CreateClientConVar("pac_friendonly", 0, true)
 
 	function pac.FriendOnlyUpdate()
-		if pac_friendonly:GetBool() then
-			for k,v in pairs(player.GetAll()) do
-				if v:GetFriendStatus() == "friend" and v.pac_ignored == true then
-					pac.UnIgnoreEntity(v)
-					v.pac_friendonly = false
-				elseif v:GetFriendStatus() ~= "friend" and not v.pac_ignored and v ~= LocalPlayer() then
-					pac.IgnoreEntity(v)	
-					v.pac_friendonly = true
-				end
-			end
-			
-		else	
-			for k,v in pairs(player.GetAll()) do
-				if v.pac_friendonly and v.pac_ignored then
-					pac.UnIgnoreEntity(v)
-					v.pac_friendonly = false					
-				end
+		local lply = LocalPlayer()
+		for k, v in pairs(player.GetAll()) do
+			if v ~= lply then
+				pac.ToggleIgnoreEntity(v, v:GetFriendStatus() ~= "friend", 'pac_friendonly')
 			end
 		end
 	end
