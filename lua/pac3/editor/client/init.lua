@@ -4,6 +4,7 @@ pace = pace or {}
 
 include("language.lua")
 
+include("util.lua")
 include("wear.lua")
 
 include("select.lua")
