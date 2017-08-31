@@ -52,26 +52,23 @@ end
 
 local holding
 local area = 20
-local x,y = 0,0
+local x, y = 0, 0
 local siz = 5
+local sizeSelected = 12
+local sizeHovered = 7
+local currentSizeSelected = 5
+
+local hR = 83
+local hG = 167
+local hB = 213
+
+local sR = 148
+local sG = 67
+local sB = 201
 
 local white = surface.GetTextureID("gui/center_gradient.vtf")
 
-local function DrawLineEx(x1,y1, x2,y2, w, skip_tex)
-	w = w or 1
-	if not skip_tex then surface.SetTexture(white) end
-
-	local dx,dy = x1-x2, y1-y2
-	local ang = math.atan2(dx, dy)
-	local dst = math.sqrt((dx * dx) + (dy * dy))
-
-	x1 = x1 - dx * 0.5
-	y1 = y1 - dy * 0.5
-
-	surface.DrawTexturedRectRotated(x1, y1, w, dst, math.deg(ang))
-end
-
-function pace.DrawHUDText(x,y, text, lx,ly, mx,my, selected, line_color)
+function pace.DrawHUDText(x, y, text, lx, ly, mx, my, selected, line_color)
 	mx = mx or gui.MouseX()
 	my = my or gui.MouseY()
 
@@ -79,35 +76,48 @@ function pace.DrawHUDText(x,y, text, lx,ly, mx,my, selected, line_color)
 
 	surface.SetDrawColor(line_color or color)
 
-	DrawLineEx(
-		Lerp(0.025, mx, x+lx),
-		Lerp(0.025, my, y+ly),
+	pace.util.DrawLine(
+		Lerp(0.025, mx, x + lx),
+		Lerp(0.025, my, y + ly),
 
-		Lerp(0.05, x+lx, mx),
-		Lerp(0.05, y+ly, my),
+		Lerp(0.05, x + lx, mx),
+		Lerp(0.05, y + ly, my),
 		selected and 4 or 1
 	)
 
 	surface.SetFont(font_name)
 
 	local w, h = surface.GetTextSize(text)
-	draw_text(text, color, (x+lx)-w/2,(y+ly)-h/2)
+	draw_text(text, color, (x + lx) - w / 2, (y + ly) - h / 2)
 end
 
+local function checkVisible(pos)
+	return
+		x > pos.x - area and x < pos.x + area and
+		y > pos.y - area and y < pos.y + area
+end
+
+local function DrawSelection(pos, r, g, b, sizeToUse)
+	if not pos.visible then return false end
+	surface.SetDrawColor(r, g, b, 255)
+	surface.DrawOutlinedRect(pos.x - (sizeToUse * 0.5), pos.y - (sizeToUse * 0.5), sizeToUse, sizeToUse)
+	surface.SetDrawColor(0, 0, 0, 255)
+	surface.DrawOutlinedRect(pos.x - (sizeToUse * 0.5) - 1, pos.y - (sizeToUse * 0.5) - 1, sizeToUse + 2, sizeToUse + 2)
+
+	return checkVisible(pos)
+end
 
 function pace.DrawSelection(pos)
-	if pos.visible then
-		surface.SetDrawColor(255, 255, 255, 255)
-		surface.DrawOutlinedRect(pos.x-(siz*0.5), pos.y-(siz*0.5), siz, siz)
-		surface.SetDrawColor(0, 0, 0, 255)
-		surface.DrawOutlinedRect(pos.x-(siz*0.5)-1, pos.y-(siz*0.5)-1, siz+2, siz+2)
-
-		return
-			x > pos.x - area and x < pos.x + area and
-			y > pos.y - area and y < pos.y + area
-	end
+	return DrawSelection(pos, 255, 255, 255, siz)
 end
 
+function pace.DrawSelectionHovered(pos)
+	return DrawSelection(pos, hR, hG, hB, sizeHovered)
+end
+
+function pace.DrawSelectionSelected(pos)
+	return DrawSelection(pos, sR, sG, sB, sizeSelected + math.sin(RealTime() * 4) * 3)
+end
 
 local function get_friendly_name(ent)
 	local name = ent.Nick and ent:Nick()
@@ -118,11 +128,10 @@ local function get_friendly_name(ent)
 	return ent:EntIndex() .. " - " .. name
 end
 
-local R = function(event, name) if hook.GetTable()[event] and hook.GetTable()[event][name] then hook.Remove(event, name) end end
 function pace.StopSelect()
-	R("GUIMouseReleased", "pac_draw_select")
-	R("GUIMousePressed", "pac_draw_select")
-	R("HUDPaint", "pac_draw_select")
+	hook.Remove("GUIMouseReleased", "pac_draw_select")
+	hook.Remove("GUIMousePressed", "pac_draw_select")
+	hook.Remove("HUDPaint", "pac_draw_select")
 
 	timer.Simple(0.1, function()
 		pace.IsSelecting = false
@@ -155,10 +164,9 @@ local function select_something(tblin, check, getpos, getfriendly, callback)
 	end
 
 	local function HUDPaint()
-
 		surface.SetAlphaMultiplier(1)
 
-		x,y = gui.MousePos()
+		x, y = gui.MousePos()
 
 		local tbl = {}
 
@@ -170,11 +178,24 @@ local function select_something(tblin, check, getpos, getfriendly, callback)
 			local pos = getpos(key, value):ToScreen()
 			local friendly = getfriendly(key, value)
 
-			if pace.DrawSelection(pos) then
-				table.insert(tbl, {pos = pos, friendly = friendly, dist = Vector(pos.x, pos.y, 0):Distance(Vector(x, y, 0)), key = key, value = value})
+			if checkVisible(pos) then
+				table.insert(tbl, {pos = pos, friendly = friendly, dist = pace.util.FastDistance2D(pos.x, pos.y, x, y), key = key, value = value})
+			else
+				local hit = false
+				if selected then
+					for i, val in ipairs(selected) do
+						if val.key == key and val.value == value then
+							hit = true
+							break
+						end
+					end
+				end
+
+				if not hit then
+					pace.DrawSelection(pos)
+				end
 			end
 		end
-
 
 		if tbl[1] then
 			table.sort(tbl, function(a, b) return a.dist < b.dist end)
@@ -184,15 +205,15 @@ local function select_something(tblin, check, getpos, getfriendly, callback)
 
 				local first = tbl[1]
 
-				for i,v in pairs(tbl) do
-					if math.Round(v.dist/200) == math.Round(first.dist/200) then
+				for i, v in ipairs(tbl) do
+					if math.Round(v.dist / 200) == math.Round(first.dist / 200) then
 						table.insert(selected, v)
 					else
 						break
 					end
 				end
 
-				if #selected < 3 and first.dist < area/4 then
+				if #selected < 3 and first.dist < area / 4 then
 					selected = {first}
 				end
 			end
@@ -203,6 +224,7 @@ local function select_something(tblin, check, getpos, getfriendly, callback)
 		if selected then
 			if #selected == 1 then
 				local v = selected[1]
+				pace.DrawSelectionSelected(v.pos)
 				pace.DrawHUDText(v.pos.x, v.pos.y, L(v.friendly), 0, -30, v.pos.x, v.pos.y)
 				data = v
 			else
@@ -211,16 +233,18 @@ local function select_something(tblin, check, getpos, getfriendly, callback)
 				local found
 				local rad = math.min(#selected * 30, 400)
 
-				for k,v in pairs(selected) do
-					local sx = math.sin((k/#selected) * math.pi * 2) * rad
-					local sy = math.cos((k/#selected) * math.pi * 2) * rad
+				for k, v in ipairs(selected) do
+					local sx = math.sin((k / #selected) * math.pi * 2) * rad
+					local sy = math.cos((k / #selected) * math.pi * 2) * rad
 
 					v.pos = getpos(v.key, v.value):ToScreen()
 
-					if holding and Vector(v.pos.x+sx,v.pos.y+sy,0):Distance(Vector(x,y,0)) < area then
+					if holding and pace.util.FastDistance2D(v.pos.x + sx, v.pos.y + sy, x, y) < area then
+						pace.DrawSelectionSelected(v.pos)
 						pace.DrawHUDText(v.pos.x, v.pos.y, L(v.friendly), sx, sy, v.pos.x, v.pos.y, true)
 						found = v
 					else
+						pace.DrawSelectionHovered(v.pos)
 						pace.DrawHUDText(v.pos.x, v.pos.y, L(v.friendly), sx, sy, v.pos.x, v.pos.y, false, Color(255, 255, 255, 128))
 					end
 				end
