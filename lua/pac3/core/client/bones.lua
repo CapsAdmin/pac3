@@ -126,6 +126,12 @@ local UP = Vector(0,0,1):Angle()
 local function GetBonePosition(ent, id)
 	local pos, ang, mat = ent:GetBonePosition(id)
 
+	if not pos then return end
+
+	if ang.p ~= ang.p then ang.p = 0 end
+	if ang.y ~= ang.y then ang.y = 0 end
+	if ang.r ~= ang.r then ang.r = 0 end
+
 	if pos == ent:GetPos() then
 		mat = ent:GetBoneMatrix(id)
 		if mat then
@@ -134,7 +140,7 @@ local function GetBonePosition(ent, id)
 		end
 	end
 
-	if ang and ent:GetClass() == "viewmodel" and ent:GetOwner():IsPlayer() and ent:GetOwner():GetActiveWeapon().ViewModelFlip then
+	if ent:GetClass() == "viewmodel" and ent:GetOwner():IsPlayer() and ent:GetOwner():GetActiveWeapon().ViewModelFlip then
 		ang.r = -ang.r
 	end
 
