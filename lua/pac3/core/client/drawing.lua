@@ -409,7 +409,6 @@ do
 
 	local should_suppress = setup_suppress()
 	function pac.PostDrawOpaqueRenderables(a, b)
-		if a or b then return end -- Extra Check
 		if in_skybox or should_suppress() then return end
 
 		-- commonly used variables
