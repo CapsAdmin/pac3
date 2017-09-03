@@ -502,25 +502,26 @@ do
 	end
 	pac.AddHook("PostDrawTranslucentRenderables")
 end
+do
+	
+	local pp_bokeh = CreateClientConVar( "pp_bokeh", "0", false, false )
 
-local pp_bokeh = CreateClientConVar( "pp_bokeh", "0", false, false )
+
+	function pac.NeedsDepthPass()
+		last_DOR_Window = true -- sets the flag to notify the postdrawopaquerenderables that this is our last opportunity to draw. 
+		return pp_bokeh:GetBool() -- this is DISGUSTING.  They're completely eating the hook because they're always returning in it. 
+		-- see https://github.com/Facepunch/garrysmod/blob/master/garrysmod/lua/postprocess/bokeh_dof.lua#L49 Blame that for this. 
+	end
 
 
-function pac.NeedsDepthPass()
-	last_DOR_Window = true -- sets the flag to notify the postdrawopaquerenderables that this is our last opportunity to draw. 
-	return pp_bokeh:GetBool() -- this is DISGUSTING.  They're completely eating the hook because they're always returning in it. 
-	-- see https://github.com/Facepunch/garrysmod/blob/master/garrysmod/lua/postprocess/bokeh_dof.lua#L49 Blame that for this. 
+	hook.Add('NeedsDepthPass','pac_NeedsDepthPass',pac.NeedsDepthPass)
+
+	function pac.PostRender()
+		last_DOR_Window = false  -- end of this render cycle, so we can reset the flag (Always called)
+		hook.Remove('NeedsDepthPass','NeedsDepthPass_Bokeh')
+	end 
+	pac.AddHook("PostRender")
 end
-
-
-hook.Add('NeedsDepthPass','pac_NeedsDepthPass',pac.NeedsDepthPass)
-
-function pac.PostRender()
-	last_DOR_Window = false  -- end of this render cycle, so we can reset the flag (Always called)
-	hook.Remove('NeedsDepthPass','NeedsDepthPass_Bokeh')
-end 
-pac.AddHook("PostRender")
-
 
 local cvar_projected_texture = CreateClientConVar("pac_render_projected_texture", "0")
 
