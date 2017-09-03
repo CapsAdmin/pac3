@@ -130,7 +130,7 @@ do --dev util
 
 
 	function pac.Restart()
-		if pac then pac.Panic() end
+		pac.Panic()
 
 		local was_open
 
@@ -139,20 +139,32 @@ do --dev util
 			pace.Panic()
 		end
 
-		pac = {}
-		pace = {}
-
-		PAC_EDITOR_INITED_PAC = nil
-
-		include("autorun/pac_init.lua")
-		include("autorun/pac_editor_init.lua")
-
 		for _, ent in pairs(ents.GetAll()) do
 			for k in pairs(ent:GetTable()) do
 				if k:sub(0, 4) == "pac_" then
 					ent[k] = nil
 				end
 			end
+		end
+
+		collectgarbage()
+
+		_G.pac = nil
+		_G.pace = nil
+
+		if GetConVar("sv_allowcslua"):GetBool() then
+			local _, dirs = file.Find("addons/*", "MOD")
+			for _, dir in ipairs(dirs) do
+				if file.Exists("addons/" .. dir .. "/lua/autorun/pac_editor_init.lua", "MOD") then
+					local str = file.Read("addons/" .. dir .. "/lua/autorun/pac_editor_init.lua", "MOD")
+					CompileString(str, "lua/autorun/pac_editor_init.lua")()
+					break
+				end
+			end
+		end
+
+		if not _G.pac then
+			include("autorun/pac_editor_init.lua")
 		end
 
 		if was_open then
