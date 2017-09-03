@@ -257,7 +257,7 @@ function pac.MakeNull(tbl)
 		for k in pairs(tbl) do
 			tbl[k] = nil
 		end
-		setmetatable(tbl, pac.NULLMeta)
+		setmetatable(tbl, getmetatable(pac.NULL))
 	end
 end
 

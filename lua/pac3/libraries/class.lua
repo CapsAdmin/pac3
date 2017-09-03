@@ -165,4 +165,4 @@ end
 
 class.Copy = table.copy
 
-pac.class = class
+return class

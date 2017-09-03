@@ -117,7 +117,7 @@ function timeline.EditBone()
 		boneData[timeline.dummy_bone:GetBone()] and
 		boneData[timeline.dummy_bone:GetBone()].real
 		or false
-	
+
 	if not timeline.selected_bone then
 		for k, v in pairs(boneData) do
 			if not v.is_special and not v.is_attachment then

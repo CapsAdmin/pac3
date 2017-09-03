@@ -2,9 +2,6 @@ if not pac then
 	include("autorun/pac_init.lua")
 end
 
-if SERVER then AddCSLuaFile("pac3/editor/shared.lua") end
-include("pac3/editor/shared.lua")
-
 if SERVER then
 	local function add_files(dir)
 		local files, folders = file.Find(dir .. "*", "LUA")
@@ -19,6 +16,7 @@ if SERVER then
 	end
 
 	add_files("pac3/editor/client/")
+	add_files("pac3/editor/shared/")
 
 	include("pac3/editor/server/init.lua")
 

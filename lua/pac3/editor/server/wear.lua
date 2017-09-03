@@ -222,7 +222,7 @@ function pace.SubmitPart(data, filter)
 		local ret = hook.Run("pac_SendData",players,data)
 		if ret==nil then
 			net.Start "pac_submit"
-			local ok,err = pac.NetSerializeTable(data)
+			local ok,err = pace.net.SerializeTable(data)
 			if ok == nil then
 				ErrorNoHalt("[PAC3] Outfit broadcast failed for "..tostring(data.owner)..": "..tostring(err)..'\n')
 				if data.owner and data.owner:IsValid() then
@@ -235,7 +235,7 @@ function pace.SubmitPart(data, filter)
 
 		if type(data.part) == "table" then
 			last_frame = frame_number
-			pac.HandleModifiers(data.part, data.owner)
+			pace.HandleModifiers(data.part, data.owner)
 		end
 
 	end
@@ -263,7 +263,7 @@ function pace.RemovePart(data)
 	pace.dprint("%s is removed %q", data.owner and data.owner:IsValid() and data.owner:GetName(), data.part)
 
 	if data.part == "__ALL__" then
-		pac.HandleModifiers(nil, data.owner)
+		pace.HandleModifiers(nil, data.owner)
 	end
 
 	pace.SubmitPart(data, data.filter)
@@ -285,7 +285,7 @@ end
 util.AddNetworkString("pac_submit")
 
 net.Receive("pac_submit", function(_, ply)
-	local data = pac.NetDeserializeTable()
+	local data = pace.net.DeserializeTable()
 	pace.HandleReceivedData(ply, data)
 end)
 
@@ -293,7 +293,7 @@ function pace.ClearOutfit(ply)
 	local uid = ply:UniqueID()
 
 	pace.SubmitPart({part = "__ALL__", uid = ply:UniqueID(), owner = ply})
-	pac.HandleModifiers(nil, ply)
+	pace.HandleModifiers(nil, ply)
 end
 
 function pace.RequestOutfits(ply)

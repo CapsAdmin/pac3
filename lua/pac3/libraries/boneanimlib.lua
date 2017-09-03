@@ -1,7 +1,7 @@
 
 module("boneanimlib",package.seeall)
 
-include("pac3/core/shared/boneanimlib.lua")
+include("pac3/libraries/sh_boneanimlib.lua")
 
 local ANIMATIONFADEOUTTIME = 0.125
 

@@ -233,7 +233,7 @@ do -- list
 		self:GetSkin().tex.CategoryList.Outer(0, 0, w, h)
 	end
 
-	pace.CollapsedProperties = pac.luadata.ReadFile("pac3_editor/collapsed.txt") or {}
+	pace.CollapsedProperties = pace.luadata.ReadFile("pac3_editor/collapsed.txt") or {}
 
 	function PANEL:AddCollapser(name)
 		local left = vgui.Create("DButton", self)
@@ -245,7 +245,7 @@ do -- list
 			pace.PopulateProperties(pace.current_part)
 
 			pace.Editor:InvalidateLayout()
-			pac.luadata.WriteFile("pac3_editor/collapsed.txt", pace.CollapsedProperties)
+			pace.luadata.WriteFile("pac3_editor/collapsed.txt", pace.CollapsedProperties)
 		end
 
 		local right = vgui.Create("DButton", self)

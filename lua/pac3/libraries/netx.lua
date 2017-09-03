@@ -183,7 +183,7 @@ end
 
 
 
-function pac.NetSerializeTable(data)
+function netx.SerializeTable(data)
 	local written1 = net.BytesWritten()
 	netx.WriteTable(data)
 	local written2 = net.BytesWritten()
@@ -191,6 +191,8 @@ function pac.NetSerializeTable(data)
 	return written2-written1
 end
 
-function pac.NetDeserializeTable()
+function netx.DeserializeTable()
 	return netx.ReadTable()
 end
+
+return netx

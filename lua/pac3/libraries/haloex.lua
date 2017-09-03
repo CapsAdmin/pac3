@@ -211,4 +211,4 @@ hook.Add( "PostDrawEffects", "RenderHaloexs", function()
 
 end )
 
-pac.haloex = haloex
+return haloex

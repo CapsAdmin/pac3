@@ -66,4 +66,4 @@ local function compile_expression(str, extra_lib)
 	end
 end
 
-pac.CompileExpression = compile_expression
+return compile_expression

@@ -108,7 +108,7 @@ local function populate_player(menu)
 	local mods, pnl = menu:AddSubMenu(L"modifiers", function() end)
 		pnl:SetImage("icon16/user_edit.png")
 		mods.GetDeleteSelf = function() return false end
-		for name in pairs(pac.GetServerModifiers()) do
+		for name in pairs(pace.GetServerModifiers()) do
 			mods:AddCVar(L(name), "pac_modifier_" .. name, "1", "0")
 		end
 end

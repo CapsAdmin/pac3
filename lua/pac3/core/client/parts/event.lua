@@ -955,7 +955,7 @@ do
 	pac.key_enums = enums
 
 	--TODO: Rate limit!!!
-	net.Receive("pac.net.BroadcastPlayerButton", function()
+	net.Receive("pac.BroadcastPlayerButton", function()
 		local ply = net.ReadEntity()
 
 		if ply:IsValid() then
@@ -980,7 +980,7 @@ do
 				if not ply.pac_broadcast_buttons[button] then
 					local val = enums2[button:lower()]
 					if val then
-						net.Start("pac.net.AllowPlayerButtons")
+						net.Start("pac.AllowPlayerButtons")
 						net.WriteUInt(val, 8)
 						net.SendToServer()
 					end

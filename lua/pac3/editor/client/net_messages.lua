@@ -1,10 +1,10 @@
 function pace.SetInPAC3Editor(b)
-	net.Start("pac.net.InPAC3Editor.ClientNotify")
+	net.Start("pace.InPAC3Editor.ClientNotify")
 	net.WriteBit(b)
 	net.SendToServer()
 end
 
-net.Receive( "pac.net.InPAC3Editor", function( length, client )
+net.Receive( "pace.InPAC3Editor", function( length, client )
     ent = net.ReadEntity()
 	b = (net.ReadBit() == 1)
 	if ent:IsValid() then
@@ -13,12 +13,12 @@ net.Receive( "pac.net.InPAC3Editor", function( length, client )
 end )
 
 function pace.SetInAnimEditor(b)
-	net.Start("pac.net.InAnimEditor.ClientNotify")
+	net.Start("pace.InAnimEditor.ClientNotify")
 	net.WriteBit(b)
 	net.SendToServer()
 end
 
-net.Receive( "pac.net.InAnimEditor", function( length, client )
+net.Receive( "pace.InAnimEditor", function( length, client )
     ent = net.ReadEntity()
 	b = (net.ReadBit() == 1)
 	if ent:IsValid() then

@@ -1,16 +1,6 @@
-include("pac3/core/shared/libraries/luadata.lua")
-include("hands.lua")
-include("pac_weapon.lua")
-include("modifiers.lua")
+include("pac3/libraries/sh_boneanimlib.lua")
+
 include("footsteps_fix.lua")
-include("projectiles.lua")
-include("boneanimlib.lua")
-
-local cvar = CreateConVar("pac_restrictions", "0", FCVAR_REPLICATED)
-
-function pac.GetRestrictionLevel()
-	return cvar:GetInt()
-end
 
 function pac.SimpleFetch(url,cb,failcb)
 	if not url or url:len()<4 then return end

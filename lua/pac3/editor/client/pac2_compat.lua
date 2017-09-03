@@ -40,7 +40,7 @@ local function translate_bone(bone)
 	return bone
 end
 
-function pac.ConvertPAC2Config(data, name)
+function pace.ConvertPAC2Config(data, name)
 	local _out = {}
 
 	local base = pac.CreatePart("group")
@@ -555,7 +555,7 @@ concommand.Add("pac_convert_pac2_outfits", function()
 
 			if data then
 				pace.ClearParts()
-				local ok, res = pcall(function() pac.ConvertPAC2Config(glon.decode(data), name) end)
+				local ok, res = pcall(function() pace.ConvertPAC2Config(glon.decode(data), name) end)
 				if ok then
 					file.CreateDir("pac3/pac2_outfits/")
 					file.CreateDir("pac3/pac2_outfits/" .. uniqueid .. "/")

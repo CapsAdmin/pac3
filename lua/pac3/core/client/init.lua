@@ -1,30 +1,30 @@
 pac = pac or {}
 
-include("libraries/null.lua")
-include("libraries/class.lua")
+pac.NULL = include("pac3/libraries/null.lua")
+pac.class = include("pac3/libraries/class.lua")
 
-include("libraries/haloex.lua")
-include("libraries/expression.lua")
+pac.haloex = include("pac3/libraries/haloex.lua")
+pac.CompileExpression = include("pac3/libraries/expression.lua")
 
 include("pac3/core/shared/init.lua")
 
-include("libraries/urltex.lua")
+pac.urltex = include("pac3/libraries/urltex.lua")
 
 -- Caching
-include("libraries/caching/crypto.lua")
-include("libraries/caching/cache.lua")
+include("pac3/libraries/caching/crypto.lua")
+include("pac3/libraries/caching/cache.lua")
 
 -- "urlobj"
-include("libraries/urlobj/urlobj.lua")
-include("libraries/urlobj/queueitem.lua")
+include("pac3/libraries/urlobj/urlobj.lua")
+include("pac3/libraries/urlobj/queueitem.lua")
 
 -- WebAudio
-include("libraries/webaudio/urlogg.lua")
-include("libraries/webaudio/browser.lua")
-include("libraries/webaudio/stream.lua")
-include("libraries/webaudio/streams.lua")
+include("pac3/libraries/webaudio/urlogg.lua")
+include("pac3/libraries/webaudio/browser.lua")
+include("pac3/libraries/webaudio/stream.lua")
+include("pac3/libraries/webaudio/streams.lua")
 
-include("libraries/boneanimlib.lua")
+include("pac3/libraries/boneanimlib.lua")
 
 include("util.lua")
 include("parts.lua")
@@ -36,10 +36,6 @@ include("drawing.lua")
 include("owner_name.lua")
 
 include("integration_tools.lua")
-include("mat_proxies.lua")
-include("wire_expression_extension.lua")
-
-include("net_messages.lua")
 
 pac.LoadParts()
 
@@ -120,7 +116,7 @@ do
 		if not IsValid(ply) or not ply:IsPlayer() then return end
 		timer.Simple(0, function()
 			if pac_friendonly:GetBool() and ply:GetFriendStatus() ~= "friend" then
-				pac.IgnoreEntity(ply)	
+				pac.IgnoreEntity(ply)
 				ply.pac_friendonly = true
 			end
 		end)
@@ -136,6 +132,54 @@ hook.Add("Think", "pac_localplayer", function()
 		hook.Remove("Think", "pac_localplayer")
 	end
 end)
+
+do
+	local NULL = NULL
+
+	local function BIND_MATPROXY(NAME, TYPE)
+
+		local set = "Set" .. TYPE
+
+		matproxy.Add(
+			{
+				name = NAME,
+
+				init = function(self, mat, values)
+					self.result = values.resultvar
+				end,
+
+				bind = function(self, mat, ent)
+					ent = ent or NULL
+					if ent:IsValid() then
+						if ent.pac_matproxies and ent.pac_matproxies[NAME] then
+							mat[set](mat, self.result, ent.pac_matproxies[NAME])
+						end
+					end
+				end
+			}
+		)
+
+	end
+
+	-- tf2
+	BIND_MATPROXY("ItemTintColor", "Vector")
+end
+
+net.Receive("pac.TogglePartDrawing", function()
+	local ent = net.ReadEntity()
+	if ent:IsValid() then
+		local b = (net.ReadBit() == 1)
+		pac.TogglePartDrawing(ent, b)
+	end
+end )
+
+function pac.TouchFlexes(ent)
+	local index = ent:EntIndex()
+	if index == -1 then return end
+	net.Start("pac.TouchFlexes.ClientNotify")
+	net.WriteInt(index,13)
+	net.SendToServer()
+end
 
 timer.Simple(0.1, function()
 	hook.Run("pac_Initialized")

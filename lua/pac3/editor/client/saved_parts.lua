@@ -50,9 +50,9 @@ function pace.SaveParts(name, prompt_name, override_part)
 
 
 		if not override_part and #file.Find("pac3/sessions/*", "DATA") > 0 and not name:find("/") then
-			pac.luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
+			pace.luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
 		else
-			pac.luadata.WriteFile("pac3/" .. name .. ".txt", data)
+			pace.luadata.WriteFile("pac3/" .. name .. ".txt", data)
 		end
 
 		pace.Backup(data, name)
@@ -108,7 +108,7 @@ function pace.Backup(data, name)
 		--end
 
 		local date = os.date("%y-%m-%d-%H_%M_%S")
-		pac.luadata.WriteFile("pac3/__backup/" .. (name=="" and name or (name..'_')) .. date .. ".txt", data)
+		pace.luadata.WriteFile("pac3/__backup/" .. (name=="" and name or (name..'_')) .. date .. ".txt", data)
 	end
 end
 
@@ -156,7 +156,7 @@ function pace.LoadParts(name, clear, override_part)
 			name = pac.FixupURL(name)
 
 			local function callback(str)
-				local data,err = pac.luadata.Decode(str)
+				local data,err = pace.luadata.Decode(str)
 				if not data then
 					ErrorNoHalt(("URL fail: %s : %s\n"):format(name,err))
 					return
@@ -168,11 +168,11 @@ function pace.LoadParts(name, clear, override_part)
 		else
 			name = name:gsub("%.txt", "")
 
-			local data,err = pac.luadata.ReadFile("pac3/" .. name .. ".txt")
+			local data,err = pace.luadata.ReadFile("pac3/" .. name .. ".txt")
 
 			if name == "autoload" and (not data or not next(data)) then
 				local err
-				data,err = pac.luadata.ReadFile("pac3/sessions/" .. name .. ".txt",nil,true)
+				data,err = pace.luadata.ReadFile("pac3/sessions/" .. name .. ".txt",nil,true)
 				if not data then
 					if err then
 						ErrorNoHalt(("Autoload failed: %s\n"):format(err))
@@ -250,7 +250,7 @@ local function add_files(tbl, dir)
 						data.Path = path
 						data.RelativePath = (dir .. "/" .. data.Name):sub(2)
 
-					local dat,err=pac.luadata.ReadFile(path)
+					local dat,err=pace.luadata.ReadFile(path)
 						data.Content = dat
 
 					if dat then

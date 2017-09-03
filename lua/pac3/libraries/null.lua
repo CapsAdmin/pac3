@@ -31,5 +31,4 @@ function NULL:__index(key)
 	error(("tried to index %q on a null part"):format(key), 2)
 end
 
-pac.NULLMeta = NULL
-pac.NULL = setmetatable({}, NULL)
+return NULL

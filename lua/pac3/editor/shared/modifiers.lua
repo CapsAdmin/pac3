@@ -1,29 +1,29 @@
 
-pac.ServerModifiers = {}
+pace.ServerModifiers = {}
 local cvarModifiers = {}
 
-function pac.AddServerModifier(id, func)
-	pac.ServerModifiers[id] = func
+function pace.AddServerModifier(id, func)
+	pace.ServerModifiers[id] = func
 	return cvarModifiers[id]
 end
 
-function pac.GetServerModifiers()
-	return pac.ServerModifiers
+function pace.GetServerModifiers()
+	return pace.ServerModifiers
 end
 
-function pac.HandleModifiers(data, owner)
+function pace.HandleModifiers(data, owner)
 	if not owner:IsValid() then return end
-	for key, func in pairs(pac.GetServerModifiers()) do
+	for key, func in pairs(pace.GetServerModifiers()) do
 		if GetConVarNumber("pac_modifier_" .. key) ~= 0 then
 			func(data, owner)
 		end
 	end
 end
 
-pac.ModifiersPath = "pac3/core/shared/modifiers/"
+pace.ModifiersPath = "pac3/editor/shared/modifiers/"
 
-function pac.LoadModifiers()
-	local files = file.Find(pac.ModifiersPath .. "*", "LUA")
+function pace.LoadModifiers()
+	local files = file.Find(pace.ModifiersPath .. "*", "LUA")
 
 	for key, val in pairs(files) do
 		local name = val:match("(.-)%.")
@@ -46,8 +46,8 @@ function pac.LoadModifiers()
 
 		cvarModifiers[name] = cvar
 
-		include(pac.ModifiersPath .. val)
+		include(pace.ModifiersPath .. val)
 	end
 end
 
-timer.Simple(0, pac.LoadModifiers)
+timer.Simple(0, pace.LoadModifiers)

@@ -1,4 +1,4 @@
-local urltex = pac.urltex or {}
+local urltex = {}
 
 urltex.TextureSize = 1024
 urltex.ActivePanel = urltex.ActivePanel or NULL
@@ -173,4 +173,4 @@ function urltex.StartDownload(url, data)
 	createDownloadPanel()
 end
 
-pac.urltex = urltex
+return urltex

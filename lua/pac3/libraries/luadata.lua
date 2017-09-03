@@ -344,4 +344,4 @@ do -- file extension
 	end
 end
 
-pac.luadata = luadata
+return luadata

@@ -10,7 +10,7 @@ do -- to server
 
 		net.Start("pac_submit")
 
-			local ret,err = pac.NetSerializeTable(data)
+			local ret,err = pace.net.SerializeTable(data)
 			if ret==nil then
 				pace.Notify(false,"unable to transfer data to server: "..tostring(err or "too big"))
 				return false
@@ -28,11 +28,11 @@ do -- to server
 		local data = {part = name, server_only = server_only, filter = filter}
 
 		if name == "__ALL__" then
-			pac.HandleModifiers(nil, LocalPlayer())
+			pace.HandleModifiers(nil, LocalPlayer())
 		end
 
 		net.Start("pac_submit")
-			local ret,err = pac.NetSerializeTable(data)
+			local ret,err = pace.net.SerializeTable(data)
 			if ret==nil then
 				pace.Notify(false,"unable to transfer data to server: "..tostring(err or "too big"))
 				return false
@@ -72,7 +72,7 @@ do -- from server
 			part.dupe_remove = true
 		end
 
-		pac.HandleModifiers(part_data, owner)
+		pace.HandleModifiers(part_data, owner)
 
 		pace.CallHook("OnWoreOutfit", part, owner == pac.LocalPlayer)
 	end
@@ -87,7 +87,7 @@ do -- from server
 				end
 			end
 
-			pac.HandleModifiers(nil, owner)
+			pace.HandleModifiers(nil, owner)
 		else
 			local part = pac.GetPartFromUniqueID(data.player_uid, part_name)
 
@@ -113,7 +113,7 @@ end
 
 
 net.Receive("pac_submit", function()
-	local data = pac.NetDeserializeTable()
+	local data = pace.net.DeserializeTable()
 
 	pace.HandleReceivedData(data)
 end)
