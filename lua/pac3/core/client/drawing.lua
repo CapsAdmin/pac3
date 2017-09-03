@@ -149,11 +149,9 @@ local function render_override(ent, type, draw_only)
 						end
 					end
 
-					if part.OwnerName == "viewmodel" and type ~= "viewmodel" or part.OwnerName ~= "viewmodel" and type == "viewmodel" then
-						continue
+					if not (part.OwnerName == "viewmodel" and type ~= "viewmodel" or part.OwnerName ~= "viewmodel" and type == "viewmodel") then
+						part:Draw("OnDraw", nil, nil, type)
 					end
-
-					part:Draw("OnDraw", nil, nil, type)
 				end
 			else
 				ent.pac_parts[key] = nil
@@ -353,86 +351,84 @@ do
 
 				if ent:GetNoDraw() then
 					hide_parts(ent)
-					continue
-				end
+				else
+					if ent:IsPlayer() then
+						if not ent:Alive() and pac_sv_hide_outfit_on_death:GetBool() then
+							hide_parts(ent)
+						else
+							local rag = ent.pac_ragdoll or NULL
+							if rag:IsValid() then
+								if ent.pac_death_hide_ragdoll then
+									rag:SetRenderMode(RENDERMODE_TRANSALPHA)
+									local c = rag:GetColor()
+									c.a = 0
+									rag:SetColor(c)
+									rag:SetNoDraw(true)
+									if rag:GetParent() ~= ent then
+										rag:SetParent(ent)
+										rag:AddEffects(EF_BONEMERGE)
+									end
 
-				if ent:IsPlayer() then
-					if not ent:Alive() and pac_sv_hide_outfit_on_death:GetBool() then
-						hide_parts(ent)
-						continue
-					end
+									if ent.pac_draw_player_on_death then
+										ent:DrawModel()
+									end
+								elseif ent.pac_death_ragdollize then
+									rag:SetNoDraw(true)
 
-					local rag = ent.pac_ragdoll or NULL
-					if rag:IsValid() then
-						if ent.pac_death_hide_ragdoll then
-							rag:SetRenderMode(RENDERMODE_TRANSALPHA)
-							local c = rag:GetColor()
-							c.a = 0
-							rag:SetColor(c)
-							rag:SetNoDraw(true)
-							if rag:GetParent() ~= ent then
-								rag:SetParent(ent)
-								rag:AddEffects(EF_BONEMERGE)
+									if not ent.pac_hide_entity then
+										local col = ent.pac_color or dummyv
+										local bri = ent.pac_brightness or 1
+
+										render_ModelMaterialOverride(ent.pac_materialm)
+										render_SetColorModulation(col.x * bri, col.y * bri, col.z * bri)
+										render_SetBlend(ent.pac_alpha or 1)
+
+										if ent.pac_invert then render_CullMode(1) end
+										if ent.pac_fullbright then render_SuppressEngineLighting(true) end
+
+										rag:DrawModel()
+										rag:CreateShadow()
+
+										render_ModelMaterialOverride()
+										render_SetColorModulation(1,1,1)
+										render_SetBlend(1)
+
+										render_CullMode(0)
+										render_SuppressEngineLighting(false)
+									end
+								end
 							end
 
-							if ent.pac_draw_player_on_death then
-								ent:DrawModel()
-							end
-						elseif ent.pac_death_ragdollize then
-							rag:SetNoDraw(true)
-
-							if not ent.pac_hide_entity then
-								local col = ent.pac_color or dummyv
-								local bri = ent.pac_brightness or 1
-
-								render_ModelMaterialOverride(ent.pac_materialm)
-								render_SetColorModulation(col.x * bri, col.y * bri, col.z * bri)
-								render_SetBlend(ent.pac_alpha or 1)
-
-								if ent.pac_invert then render_CullMode(1) end
-								if ent.pac_fullbright then render_SuppressEngineLighting(true) end
-
-								rag:DrawModel()
-								rag:CreateShadow()
-
-								render_ModelMaterialOverride()
-								render_SetColorModulation(1,1,1)
-								render_SetBlend(1)
-
-								render_CullMode(0)
-								render_SuppressEngineLighting(false)
+							if radius < 32 then
+								radius = 128
 							end
 						end
+					elseif not ent:IsNPC() then
+						radius = radius * 4
 					end
 
-					if radius < 32 then
-						radius = 128
-					end
-				elseif not ent:IsNPC() then
-					radius = radius * 4
-				end
-
-				if
-					draw_dist == -1 or
-					ent.IsPACWorldEntity or
-					(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or (ent.pac_camera and ent.pac_camera:IsValid())) or
-					ent ~= pac.LocalPlayer and
-					(
-						((fovoverride ~= 0 or util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0) or (dst < radius * 1.25)) and
+					if
+						draw_dist == -1 or
+						ent.IsPACWorldEntity or
+						(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or (ent.pac_camera and ent.pac_camera:IsValid())) or
+						ent ~= pac.LocalPlayer and
 						(
-							(sv_draw_dist ~= 0 and (sv_draw_dist == -1 or dst <= sv_draw_dist)) or
-							(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance <= dst)) or
-							(dst <= draw_dist)
+							((fovoverride ~= 0 or util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0) or (dst < radius * 1.25)) and
+							(
+								(sv_draw_dist ~= 0 and (sv_draw_dist == -1 or dst <= sv_draw_dist)) or
+								(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance <= dst)) or
+								(dst <= draw_dist)
+							)
 						)
-					)
-				then
-					ent.pac_model = ent:GetModel() -- used for cached functions
+					then
+						ent.pac_model = ent:GetModel() -- used for cached functions
 
-					show_parts(ent)
+						show_parts(ent)
 
-					pac.RenderOverride(ent, "opaque")
-				else
-					hide_parts(ent)
+						pac.RenderOverride(ent, "opaque")
+					else
+						hide_parts(ent)
+					end
 				end
 			else
 				pac.drawn_entities[key] = nil
