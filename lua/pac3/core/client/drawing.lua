@@ -509,7 +509,9 @@ do
 
 	function pac.NeedsDepthPass()
 		last_DOR_Window = true -- sets the flag to notify the postdrawopaquerenderables that this is our last opportunity to draw. 
-		return pp_bokeh:GetBool() -- this is DISGUSTING.  They're completely eating the hook because they're always returning in it. 
+		if pp_bokeh:GetBool() then
+			return true	
+		end-- this is DISGUSTING.  They're completely eating the hook because they're always returning in it. 
 		-- see https://github.com/Facepunch/garrysmod/blob/master/garrysmod/lua/postprocess/bokeh_dof.lua#L49 Blame that for this. 
 	end
 
