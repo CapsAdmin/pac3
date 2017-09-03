@@ -16,6 +16,7 @@ if SERVER then
 
 	add_files("pac3/core/client/")
 	add_files("pac3/core/shared/")
+	add_files("pac3/libraries/")
 
 	include("pac3/core/server/init.lua")
 end
