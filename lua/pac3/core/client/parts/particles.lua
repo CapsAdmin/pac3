@@ -151,7 +151,7 @@ end
 
 function PART:OnDraw(owner, pos, ang)
 	if not self:IsHidden() then
-		--self.emitter:SetPos(pos)
+		self.emitter:SetPos(pos)
 		if self.DrawManual or self.IgnoreZ or self.Follow then
 			if self.IgnoreZ then
 				cam_IgnoreZ(true)
@@ -162,8 +162,6 @@ function PART:OnDraw(owner, pos, ang)
 				self.emitter:Draw()
 				cam.End3D()
 			end
-
-			self.emitter:Draw()
 
 			if self.IgnoreZ then
 				cam_IgnoreZ(false)
