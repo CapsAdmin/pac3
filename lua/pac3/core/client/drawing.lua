@@ -337,66 +337,6 @@ function pac.FlashlightDisable(b)
 	pac.flashlight_disabled = b
 end
 
--- skybox hack --
-local in_skybox = false
-local in_skybox_message = false
-
-hook.Add("PreDrawSkyBox", "pac", function()
-	if in_skybox then
-		if not in_skybox_message then
-			in_skybox_message = true
-			error("in_skybox was never disabled")
-		end
-	end
-
-	in_skybox = true
-end)
-
-hook.Add("PostDrawSkyBox", "pac", function()
-	in_skybox = false
-end)
-
------------------
-
-local function setup_suppress()
-	local last_framenumber = 0
-	local current_frame = 0
-	local current_frame_count = 0
-
-	return function()
-		if force_rendering then
-			return false
-		end
-
-		--if in_skybox then return end
-
-		if skip_rendering then
-			return true
-		end
-
-		if cvar_framesuppress:GetBool() then
-			local frame_number = FrameNumber()
-
-			if frame_number == last_framenumber then
-				current_frame = current_frame + 1
-			else
-				last_framenumber = frame_number
-
-				if current_frame_count ~= current_frame then
-					current_frame_count = current_frame
-				end
-
-				current_frame = 1
-			end
-
-			return current_frame < current_frame_count
-		end
-	end
-end
-
-pac.SetupSuppress = setup_suppress
--- hacky optimization
-
 do
 	local draw_dist = 0
 	local sv_draw_dist = 0
@@ -407,9 +347,8 @@ do
 
 	local pac_sv_hide_outfit_on_death = GetConVar("pac_sv_hide_outfit_on_death")
 
-	local should_suppress = setup_suppress()
-	function pac.PostDrawOpaqueRenderables(a, b)
-		if in_skybox or should_suppress() then return end
+	function pac.RenderScreenspaceEffects()
+		cam.Start3D()
 
 		-- commonly used variables
 		max_render_time = max_render_time_cvar:GetFloat()
@@ -518,15 +457,6 @@ do
 				pac.drawn_entities[key] = nil
 			end
 		end
-	end
-	pac.AddHook("PostDrawOpaqueRenderables")
-end
-
-do
-	local should_suppress = setup_suppress()
-
-	function pac.PostDrawTranslucentRenderables()
-		if in_skybox or should_suppress() then return end
 
 		for key, ent in pairs(pac.drawn_entities) do
 			if ent:IsValid() then
@@ -537,8 +467,11 @@ do
 				pac.drawn_entities[key] = nil
 			end
 		end
+
+		cam.End3D()
 	end
-	pac.AddHook("PostDrawTranslucentRenderables")
+
+	pac.AddHook("RenderScreenspaceEffects")
 end
 
 local cvar_projected_texture = CreateClientConVar("pac_render_projected_texture", "0")
