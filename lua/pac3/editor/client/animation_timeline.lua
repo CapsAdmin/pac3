@@ -140,11 +140,21 @@ end
 function timeline.Load(data)
 	timeline.data = data
 
-	if timeline.data and timeline.data.FrameData and timeline.data.Type then
-		timeline.SetAnimationType(timeline.data.Type)
+	if data and data.FrameData then
+		if not data.Type then
+			data.Type = 0
+
+			local frames = {}
+			for k, v in pairs(data.FrameData) do
+				table.insert(frames, v)
+			end
+			data.FrameData = frames
+		end
+
+		timeline.SetAnimationType(data.Type)
 		timeline.frame:Clear()
 
-		for i, v in pairs(timeline.data.FrameData) do
+		for i, v in ipairs(data.FrameData) do
 			local keyframe = timeline.frame:AddKeyFrame(true)
 			keyframe:SetFrameData(i, v)
 		end
@@ -491,7 +501,7 @@ do
 		local restartFrame = timeline.data.RestartFrame
 		if not restartFrame then return 0 end --no restart pos? start at the start
 
-		for i,v in pairs(timeline.data.FrameData) do
+		for i,v in ipairs(timeline.data.FrameData) do
 			if i == restartFrame then return timeInSeconds end
 			timeInSeconds = timeInSeconds+(1/(v.FrameRate or 1))
 		end
@@ -504,7 +514,7 @@ do
 		local startFrame = timeline.data.StartFrame
 		if not startFrame then return 0 end --no restart pos? start at the start
 
-		for i,v in pairs(timeline.data.FrameData) do
+		for i,v in ipairs(timeline.data.FrameData) do
 			if i == startFrame then return timeInSeconds end
 			timeInSeconds = timeInSeconds+(1/(v.FrameRate or 1))
 		end
