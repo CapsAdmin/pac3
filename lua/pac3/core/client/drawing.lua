@@ -274,7 +274,7 @@ function pac.UnIgnoreEntity(ent, strID)
 	ent.pac_ignored_data[strID] = false
 	local newStatus = false
 
-	for k, v in pairs(ent.pac_ignored_data) do
+	for _, v in pairs(ent.pac_ignored_data) do
 		if v then
 			newStatus = true
 			break
@@ -312,25 +312,6 @@ function pac.PostPlayerDraw(ply)
 	ply.pac_last_drawn = pac.RealTime
 end
 pac.AddHook("PostPlayerDraw")
-
--- hacky optimization
--- allows only the last draw call
-local cvar_framesuppress = CreateClientConVar("pac_suppress_frames", 1, false, false)
-RunConsoleCommand("pac_suppress_frames", "1") -- this should almost never be off..
-
--- this needs to be called when before drawing things like minimaps and pac_suppress_frames is on
-local skip_rendering
-function pac.SkipRendering(b)
-	pac.skip_rendering = b
-		skip_rendering = b
-end
-
--- this is if you want to force it
-local force_rendering
-function pac.ForceRendering(b)
-	pac.force_rendering = b
-		force_rendering = b
-end
 
 -- disable pop/push flashlight modes (used for stability in 2D context)
 function pac.FlashlightDisable(b)
