@@ -310,13 +310,10 @@ pac.AddHook("RenderScene")
 
 function pac.PostPlayerDraw(ply)
 	ply.pac_last_drawn = pac.RealTime
+	
 end
 pac.AddHook("PostPlayerDraw")
 
--- hacky optimization
--- allows only the last draw call
-local cvar_framesuppress = CreateClientConVar("pac_suppress_frames", 1, false, false)
-RunConsoleCommand("pac_suppress_frames", "1") -- this should almost never be off..
 
 -- this needs to be called when before drawing things like minimaps and pac_suppress_frames is on
 local skip_rendering
@@ -358,45 +355,9 @@ end)
 
 -----------------
 
-local function setup_suppress()
-	local last_framenumber = 0
-	local current_frame = 0
-	local current_frame_count = 0
 
-	return function()
-		if force_rendering then
-			return false
-		end
 
-		--if in_skybox then return end
-
-		if skip_rendering then
-			return true
-		end
-
-		if cvar_framesuppress:GetBool() then
-			local frame_number = FrameNumber()
-
-			if frame_number == last_framenumber then
-				current_frame = current_frame + 1
-			else
-				last_framenumber = frame_number
-
-				if current_frame_count ~= current_frame then
-					current_frame_count = current_frame
-				end
-
-				current_frame = 1
-			end
-
-			return current_frame < current_frame_count
-		end
-	end
-end
-
-pac.SetupSuppress = setup_suppress
--- hacky optimization
-
+local last_DOR_Window = false -- Last Draw Opaque Renderables Window
 do
 	local draw_dist = 0
 	local sv_draw_dist = 0
@@ -407,15 +368,17 @@ do
 
 	local pac_sv_hide_outfit_on_death = GetConVar("pac_sv_hide_outfit_on_death")
 
-	local should_suppress = setup_suppress()
-	function pac.PostDrawOpaqueRenderables(a, b)
-		if in_skybox or should_suppress() then return end
 
-		-- commonly used variables
+	function pac.PostDrawOpaqueRenderables(a, b)
+	
+		if not last_DOR_Window then return end -- don't draw if drawing skybox only or if we're not on the last available draw call.
+		
+	
+		
 		max_render_time = max_render_time_cvar:GetFloat()
 		pac.RealTime = RealTime()
 		pac.FrameNumber = FrameNumber()
-
+	
 		draw_dist = cvar_distance:GetInt()
 		fovoverride = cvar_fovoverride:GetInt()
 		sv_draw_dist = GetConVar("pac_sv_draw_distance"):GetFloat()
@@ -424,7 +387,7 @@ do
 		if draw_dist == 0 then
 			draw_dist = 32768
 		end
-
+ 
 		for key, ent in pairs(pac.drawn_entities) do
 			if ent:IsValid() then
 				ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
@@ -523,11 +486,9 @@ do
 end
 
 do
-	local should_suppress = setup_suppress()
-
 	function pac.PostDrawTranslucentRenderables()
-		if in_skybox or should_suppress() then return end
-
+		if not last_DOR_Window then return end
+		
 		for key, ent in pairs(pac.drawn_entities) do
 			if ent:IsValid() then
 				if ent.pac_drawing and ent.pac_parts then
@@ -537,9 +498,29 @@ do
 				pac.drawn_entities[key] = nil
 			end
 		end
+		
 	end
 	pac.AddHook("PostDrawTranslucentRenderables")
 end
+
+local pp_bokeh = CreateClientConVar( "pp_bokeh", "0", false, false )
+
+
+function pac.NeedsDepthPass()
+	last_DOR_Window = true -- sets the flag to notify the postdrawopaquerenderables that this is our last opportunity to draw. 
+	return pp_bokeh:GetBool() -- this is DISGUSTING.  They're completely eating the hook because they're always returning in it. 
+	-- see https://github.com/Facepunch/garrysmod/blob/master/garrysmod/lua/postprocess/bokeh_dof.lua#L49 Blame that for this. 
+end
+
+
+hook.Add('NeedsDepthPass','pac_NeedsDepthPass',pac.NeedsDepthPass)
+
+function pac.PostRender()
+	last_DOR_Window = false  -- end of this render cycle, so we can reset the flag (Always called)
+	hook.Remove('NeedsDepthPass','NeedsDepthPass_Bokeh')
+end 
+pac.AddHook("PostRender")
+
 
 local cvar_projected_texture = CreateClientConVar("pac_render_projected_texture", "0")
 
