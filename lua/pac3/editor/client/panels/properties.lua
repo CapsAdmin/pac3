@@ -342,6 +342,8 @@ do -- list
 				not pace.ShouldHideProperty(key) and
 				(not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key))
 			then
+
+				-- remove this
 				local group = pace.ReversedPropertySheets[key:lower()]
 				if group == nil then group = L"generic" end
 
@@ -376,6 +378,18 @@ do -- list
 							group = _group
 						end
 					end
+				end
+				-- remove this
+
+				if obj.PropertyGroups then
+					local reversed = {}
+					for group, properties in pairs(obj.PropertyGroups) do
+						for k,v in pairs(properties) do
+							reversed[k:lower()] = group
+						end
+					end
+
+					group = reversed[key:lower()] or group
 				end
 
 				table.insert(data, {key = key, val = val, group = group_override or group, callback = callback})

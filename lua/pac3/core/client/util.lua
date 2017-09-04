@@ -400,6 +400,13 @@ do -- get set and editor vars
 		__store = false
 	end
 
+
+	local __group = nil
+
+	function pac.SetPropertyGroup(name)
+		__group = name
+	end
+
 	function pac.GetSet(tbl, key, ...)
 		insert_key(key)
 
@@ -408,6 +415,12 @@ do -- get set and editor vars
 		if __store then
 			tbl.StorableVars = tbl.StorableVars or {}
 			tbl.StorableVars[key] = key
+		end
+
+		if __group then
+			tbl.PropertyGroups = tbl.PropertyGroups or {}
+			tbl.PropertyGroups[__group] = tbl.PropertyGroups[__group] or {}
+			tbl.PropertyGroups[__group][key] = true
 		end
 	end
 
