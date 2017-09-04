@@ -701,7 +701,7 @@ function pace.TranslatePropertiesKey(key, obj)
 		return "color"
 	end
 
-	if key:find("color") and not key:find("use") then
+	if key:find("color") and not key:find("use") and isvector(obj[key_]) then
 		return "color"
 	end
 
