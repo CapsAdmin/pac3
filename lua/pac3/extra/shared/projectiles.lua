@@ -278,7 +278,7 @@ do -- projectile entity
 					info:SetDamageType(damage_types.dissolve)
 
 					data.HitEntity:TakeDamageInfo(info)
-				else 
+				else
 					local can = hook.Run("CanProperty", owner, "remover", data.HitEntity)
 					if can ~= false then
 						dissolve(data.HitEntity, owner, damage_types[self.part_data.DamageType])
@@ -316,7 +316,7 @@ do -- projectile entity
 					info:SetInflictor(self)
 
 					if self.part_data.DamageType == "fire" then
-						local ownerok = owner:IsValid() and owner:IsPlayer() 
+						local ownerok = owner:IsValid() and owner:IsPlayer()
 						local ent = data.HitEntity
 						if damage_radius > 0 then
 							-- this should also use blast damage to find which entities it can damage
@@ -373,12 +373,12 @@ if SERVER then
 	net.Receive("pac_projectile", function(len, ply)
 		if not enable:GetBool() then return end
 
-		if pace then pace.suppress_prop_spawn = true end
+		pace.suppress_prop_spawn = true
 		if hook.Run("PlayerSpawnProp", ply, "models/props_junk/popcan01a.mdl") == false then
-			if pace then pace.suppress_prop_spawn = nil end
+			pace.suppress_prop_spawn = nil
 			return
 		end
-		if pace then pace.suppress_prop_spawn = nil end
+		pace.suppress_prop_spawn = nil
 
 		local pos = net.ReadVector()
 		local ang = net.ReadAngle()

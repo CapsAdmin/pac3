@@ -194,13 +194,6 @@ pace.AddTool(L"import editor tool from url...", function()
 	end
 end)
 
-pace.AddTool(L"spawn as props", function(part)
-	local data = pace.PartToContraptionData(part)
-	net.Start("pac_to_contraption")
-		net.WriteTable(data)
-	net.SendToServer()
-end)
-
 function round_pretty(val)
 	return math.Round(val, 2)
 end
@@ -283,9 +276,9 @@ end
 pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part)
 	local holo_str =
 	[[
-	  
+
 	     ########################### HOLO_NAME ###########################
-	
+
 			 I++
 			 holoCreate(I) #HOLO_NAME
 			 PARENT
@@ -293,10 +286,10 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 			 holoAlpha(I, ALPHA)
 			 holoMaterial(I, MATERIAL)
 			 holoSkin(I, SKIN)
-		
+
 			 holoPos(I, entity():toWorld(POSITION))
 			 holoAng(I, entity():toWorld(ANGLES))
-		
+
 			 holoModel(I, MODEL)
 			 holoScale(I, SCALE)
 	]]
@@ -304,9 +297,9 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 	local function toang(vec) return ("ang(%s, %s, %s)"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
 	local function toang2(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
 	local function part_to_holo(part)
-	
+
 	local scale = part:GetSize() * part:GetScale()
-		
+
 	--[[for _, clip in ipairs(part:GetChildren()) do
 		if clip.ClassName == "clip" and not clip:IsHidden() then
 			local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
@@ -342,7 +335,7 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 		out = out .. "@outputs \n"
 		out = out .. "\n		  I   = 0 # Hologram index starting at 0\n"
 		out = out .. "		  CI  = 0 # Clip index starting at 0\n"
-		
+
 		if part.ClassName == "model" then
 			out = part_to_holo(part)
 		end

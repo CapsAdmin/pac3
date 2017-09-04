@@ -1,4 +1,13 @@
-function pace.PartToContraptionData(part, tbl)
+local L = pace.LanguageString
+
+pace.AddTool(L"spawn as props", function(part)
+	local data = pace.PartToContraptionData(part)
+	net.Start("pac_to_contraption")
+		net.WriteTable(data)
+	net.SendToServer()
+end)
+
+function pacx.PartToContraptionData(part, tbl)
 	tbl = tbl or {}
 
 	if part.ClassName == "model" then

@@ -235,7 +235,7 @@ function pace.SubmitPart(data, filter)
 
 		if type(data.part) == "table" then
 			last_frame = frame_number
-			pace.HandleModifiers(data.part, data.owner)
+			pace.CallHook("WearOutfit", data.owner, data.part)
 		end
 
 	end
@@ -263,7 +263,7 @@ function pace.RemovePart(data)
 	pace.dprint("%s is removed %q", data.owner and data.owner:IsValid() and data.owner:GetName(), data.part)
 
 	if data.part == "__ALL__" then
-		pace.HandleModifiers(nil, data.owner)
+		pace.CallHook("RemoveOutfit", data.owner)
 	end
 
 	pace.SubmitPart(data, data.filter)
@@ -293,7 +293,7 @@ function pace.ClearOutfit(ply)
 	local uid = ply:UniqueID()
 
 	pace.SubmitPart({part = "__ALL__", uid = ply:UniqueID(), owner = ply})
-	pace.HandleModifiers(nil, ply)
+	pace.CallHook("RemoveOutfit", ply)
 end
 
 function pace.RequestOutfits(ply)

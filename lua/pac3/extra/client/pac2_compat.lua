@@ -40,7 +40,7 @@ local function translate_bone(bone)
 	return bone
 end
 
-function pace.ConvertPAC2Config(data, name)
+function pacx.ConvertPAC2Config(data, name)
 	local _out = {}
 
 	local base = pac.CreatePart("group")

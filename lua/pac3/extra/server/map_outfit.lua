@@ -1,4 +1,4 @@
-pace.SpawnedMapEntities = pace.SpawnedMapEntities or {}
+pacx.SpawnedMapEntities = pacx.SpawnedMapEntities or {}
 
 local VEC0 = Vector(0, 0, 0)
 local ANG0 = Angle(0, 0, 0)
@@ -38,7 +38,7 @@ local spawn_handlers = {
 			(not part.self.Size or part.self.Size ~= 0) and
 			(not part.self.Scale or part.self.Scale ~= VEC0)
 		then
-			SafeRemoveEntity(pace.SpawnedMapEntities[part.self.UniqueID])
+			SafeRemoveEntity(pacx.SpawnedMapEntities[part.self.UniqueID])
 
 				local ent = ents.Create("prop_dynamic")
 
@@ -63,7 +63,7 @@ local spawn_handlers = {
 
 				ent:Spawn()
 
-			pace.SpawnedMapEntities[part.self.UniqueID] = ent
+			pacx.SpawnedMapEntities[part.self.UniqueID] = ent
 
 			return ent
 		end
@@ -71,7 +71,7 @@ local spawn_handlers = {
 
 	light = function(part, parent)
 
-		SafeRemoveEntity(pace.SpawnedMapEntities[part.self.UniqueID])
+		SafeRemoveEntity(pacx.SpawnedMapEntities[part.self.UniqueID])
 
 			local ent = ents.Create("light_dynamic")
 
@@ -89,7 +89,7 @@ local spawn_handlers = {
 			ent:Spawn()
 			ent:Activate()
 
-		pace.SpawnedMapEntities[part.self.UniqueID] = ent
+		pacx.SpawnedMapEntities[part.self.UniqueID] = ent
 
 	end,
 
@@ -121,7 +121,7 @@ local function parse_part_data(part, parent)
 	end
 end
 
-function pace.SpawnMapOutfit(data)
+function pacx.SpawnMapOutfit(data)
 	if data.self then
 		data = {data}
 	end
@@ -134,11 +134,11 @@ end
 concommand.Add("pac_spawn_map", function(ply, _, args)
 	if not ply:IsAdmin() then return end
 
-	for k,v in pairs(pace.SpawnedMapEntities) do
+	for k,v in pairs(pacx.SpawnedMapEntities) do
 		SafeRemoveEntity(v)
 	end
 
-	pace.SpawnedMapEntities = {}
+	pacx.SpawnedMapEntities = {}
 
 	local data = file.Read("pac3/" .. args[1] .. ".txt", "DATA")
 
@@ -146,7 +146,7 @@ concommand.Add("pac_spawn_map", function(ply, _, args)
 		data = CompileString("return {" .. data .. "}", "luadata", true)
 
 		if type(data) == "function" then
-			pace.SpawnMapOutfit(data())
+			pacx.SpawnMapOutfit(data())
 		else
 			print(data)
 		end

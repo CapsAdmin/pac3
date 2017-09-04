@@ -28,7 +28,7 @@ do -- to server
 		local data = {part = name, server_only = server_only, filter = filter}
 
 		if name == "__ALL__" then
-			pace.HandleModifiers(nil, LocalPlayer())
+			pace.CallHook("RemoveOutfit", LocalPlayer())
 		end
 
 		net.Start("pac_submit")
@@ -72,9 +72,8 @@ do -- from server
 			part.dupe_remove = true
 		end
 
-		pace.HandleModifiers(part_data, owner)
-
 		pace.CallHook("OnWoreOutfit", part, owner == pac.LocalPlayer)
+		pace.CallHook("WearOutfit", owner, part) -- ugh
 	end
 
 	function pace.RemovePartFromServer(owner, part_name, data)
@@ -87,7 +86,7 @@ do -- from server
 				end
 			end
 
-			pace.HandleModifiers(nil, owner)
+			pace.CallHook("RemoveOutfit", owner)
 		else
 			local part = pac.GetPartFromUniqueID(data.player_uid, part_name)
 

@@ -1,8 +1,6 @@
-include("autorun/pac_init.lua")
+include("autorun/pac_core_init.lua")
 
 pace = pace or {}
-
-include("pac3/editor/shared/init.lua")
 
 pace.luadata = include("pac3/libraries/luadata.lua")
 
@@ -31,7 +29,6 @@ include("screenvec.lua")
 
 include("panels.lua")
 include("tools.lua")
-include("contraption.lua")
 include("spawnmenu.lua")
 include("wiki.lua")
 include("examples.lua")
@@ -40,8 +37,6 @@ include("animeditor.lua")
 include("animation_timeline.lua")
 include("render_scores.lua")
 include("net_messages.lua")
-include("pac2_compat.lua")
-include("wire_expression_extension.lua")
 
 
 do

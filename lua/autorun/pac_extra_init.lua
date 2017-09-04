@@ -1,9 +1,9 @@
-if not pac then
-	include("autorun/pac_core_init.lua")
+if not pace then
+	include("autorun/pac_editor_init.lua")
 end
 
-if not pac then
-	error("pac editor requires pac core")
+if not pace then
+	error("pac extra requires the pac editor")
 end
 
 if SERVER then
@@ -19,12 +19,13 @@ if SERVER then
 		end
 	end
 
-	add_files("pac3/editor/client/")
-	add_files("pac3/editor/shared/")
+	add_files("pac3/extra/client/")
+	add_files("pac3/extra/shared/")
 
-	include("pac3/editor/server/init.lua")
+	include("pac3/extra/server/init.lua")
 end
 
 if CLIENT then
-	include("pac3/editor/client/init.lua")
+	include("pac3/extra/client/init.lua")
 end
+

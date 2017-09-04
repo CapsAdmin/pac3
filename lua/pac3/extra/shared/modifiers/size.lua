@@ -16,13 +16,13 @@ local def =
 	MAX_PL_SIZE = 10.0,
 }
 
-pace.size_constants = def
+pacx.size_constants = def
 
-function pace.GetPlayerSize(ply)
+function pacx.GetPlayerSize(ply)
 	return ply.pac_player_size or 1
 end
 
-function pace.SetPlayerSize(ply, f, force)
+function pacx.SetPlayerSize(ply, f, force)
 
 	local scale = math.Clamp(f, def.MIN_PL_SIZE, def.MAX_PL_SIZE)
 	local olds = ply.pac_player_size or 1
@@ -30,8 +30,6 @@ function pace.SetPlayerSize(ply, f, force)
 	if olds==scale and not force then return end
 
 	ply.pac_player_size = scale
-
-	pace.dprint("pace.SetPlayerSize",ply, f,scale)
 
 	if ply.SetViewOffset then ply:SetViewOffset(def.view * scale) end
 	if ply.SetViewOffsetDucked then ply:SetViewOffsetDucked(def.viewducked * scale) end
@@ -54,7 +52,7 @@ function pace.SetPlayerSize(ply, f, force)
 
 end
 
-pace.AddServerModifier("size", function(data, owner)
+pacx.AddServerModifier("size", function(data, owner)
 	if data and tonumber(data.self.OwnerName) then
 		 local ent = Entity(tonumber(data.self.OwnerName))
 		 if ent and ent:IsValid() and ent:IsPlayer() then
@@ -77,7 +75,7 @@ pace.AddServerModifier("size", function(data, owner)
 	end
 
 	if size then
-		pace.SetPlayerSize(owner, size)
+		pacx.SetPlayerSize(owner, size)
 	end
 
 end)
