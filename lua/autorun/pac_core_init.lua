@@ -1,4 +1,5 @@
-if pac then return end
+
+-- if pac then return end
 
 if SERVER then
 	local function add_files(dir)
@@ -15,6 +16,7 @@ if SERVER then
 
 	add_files("pac3/core/client/")
 	add_files("pac3/core/shared/")
+	add_files("pac3/libraries/")
 
 	include("pac3/core/server/init.lua")
 end
