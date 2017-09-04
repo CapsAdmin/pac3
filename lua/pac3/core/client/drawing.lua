@@ -149,11 +149,9 @@ local function render_override(ent, type, draw_only)
 						end
 					end
 
-					if part.OwnerName == "viewmodel" and type ~= "viewmodel" or part.OwnerName ~= "viewmodel" and type == "viewmodel" then
-						continue
+					if not (part.OwnerName == "viewmodel" and type ~= "viewmodel" or part.OwnerName ~= "viewmodel" and type == "viewmodel") then
+						part:Draw("OnDraw", nil, nil, type)
 					end
-
-					part:Draw("OnDraw", nil, nil, type)
 				end
 			else
 				ent.pac_parts[key] = nil
@@ -274,7 +272,7 @@ function pac.UnIgnoreEntity(ent, strID)
 	ent.pac_ignored_data[strID] = false
 	local newStatus = false
 
-	for k, v in pairs(ent.pac_ignored_data) do
+	for _, v in pairs(ent.pac_ignored_data) do
 		if v then
 			newStatus = true
 			break
@@ -313,89 +311,10 @@ function pac.PostPlayerDraw(ply)
 end
 pac.AddHook("PostPlayerDraw")
 
--- hacky optimization
--- allows only the last draw call
-local cvar_framesuppress = CreateClientConVar("pac_suppress_frames", 1, false, false)
-RunConsoleCommand("pac_suppress_frames", "1") -- this should almost never be off..
-
--- this needs to be called when before drawing things like minimaps and pac_suppress_frames is on
-local skip_rendering
-function pac.SkipRendering(b)
-	pac.skip_rendering = b
-		skip_rendering = b
-end
-
--- this is if you want to force it
-local force_rendering
-function pac.ForceRendering(b)
-	pac.force_rendering = b
-		force_rendering = b
-end
-
 -- disable pop/push flashlight modes (used for stability in 2D context)
 function pac.FlashlightDisable(b)
 	pac.flashlight_disabled = b
 end
-
--- skybox hack --
-local in_skybox = false
-local in_skybox_message = false
-
-hook.Add("PreDrawSkyBox", "pac", function()
-	if in_skybox then
-		if not in_skybox_message then
-			in_skybox_message = true
-			error("in_skybox was never disabled")
-		end
-	end
-
-	in_skybox = true
-end)
-
-hook.Add("PostDrawSkyBox", "pac", function()
-	in_skybox = false
-end)
-
------------------
-
-local function setup_suppress()
-	local last_framenumber = 0
-	local current_frame = 0
-	local current_frame_count = 0
-
-	return function()
-		if force_rendering then
-			return false
-		end
-
-		--if in_skybox then return end
-
-		if skip_rendering then
-			return true
-		end
-
-		if cvar_framesuppress:GetBool() then
-			local frame_number = FrameNumber()
-
-			if frame_number == last_framenumber then
-				current_frame = current_frame + 1
-			else
-				last_framenumber = frame_number
-
-				if current_frame_count ~= current_frame then
-					current_frame_count = current_frame
-				end
-
-				current_frame = 1
-			end
-
-			return current_frame < current_frame_count
-		end
-	end
-end
-
-pac.SetupSuppress = setup_suppress
--- hacky optimization
 
 do
 	local draw_dist = 0
@@ -407,10 +326,8 @@ do
 
 	local pac_sv_hide_outfit_on_death = GetConVar("pac_sv_hide_outfit_on_death")
 
-	local should_suppress = setup_suppress()
-	function pac.PostDrawOpaqueRenderables(a, b)
-		if a or b then return end -- Extra Check
-		if in_skybox or should_suppress() then return end
+	function pac.RenderScreenspaceEffects()
+		cam.Start3D()
 
 		-- commonly used variables
 		max_render_time = max_render_time_cvar:GetFloat()
@@ -434,100 +351,89 @@ do
 
 				if ent:GetNoDraw() then
 					hide_parts(ent)
-					continue
-				end
+				else
+					if ent:IsPlayer() then
+						if not ent:Alive() and pac_sv_hide_outfit_on_death:GetBool() then
+							hide_parts(ent)
+						else
+							local rag = ent.pac_ragdoll or NULL
+							if rag:IsValid() then
+								if ent.pac_death_hide_ragdoll then
+									rag:SetRenderMode(RENDERMODE_TRANSALPHA)
+									local c = rag:GetColor()
+									c.a = 0
+									rag:SetColor(c)
+									rag:SetNoDraw(true)
+									if rag:GetParent() ~= ent then
+										rag:SetParent(ent)
+										rag:AddEffects(EF_BONEMERGE)
+									end
 
-				if ent:IsPlayer() then
-					if not ent:Alive() and pac_sv_hide_outfit_on_death:GetBool() then
-						hide_parts(ent)
-						continue
-					end
+									if ent.pac_draw_player_on_death then
+										ent:DrawModel()
+									end
+								elseif ent.pac_death_ragdollize then
+									rag:SetNoDraw(true)
 
-					local rag = ent.pac_ragdoll or NULL
-					if rag:IsValid() then
-						if ent.pac_death_hide_ragdoll then
-							rag:SetRenderMode(RENDERMODE_TRANSALPHA)
-							local c = rag:GetColor()
-							c.a = 0
-							rag:SetColor(c)
-							rag:SetNoDraw(true)
-							if rag:GetParent() ~= ent then
-								rag:SetParent(ent)
-								rag:AddEffects(EF_BONEMERGE)
+									if not ent.pac_hide_entity then
+										local col = ent.pac_color or dummyv
+										local bri = ent.pac_brightness or 1
+
+										render_ModelMaterialOverride(ent.pac_materialm)
+										render_SetColorModulation(col.x * bri, col.y * bri, col.z * bri)
+										render_SetBlend(ent.pac_alpha or 1)
+
+										if ent.pac_invert then render_CullMode(1) end
+										if ent.pac_fullbright then render_SuppressEngineLighting(true) end
+
+										rag:DrawModel()
+										rag:CreateShadow()
+
+										render_ModelMaterialOverride()
+										render_SetColorModulation(1,1,1)
+										render_SetBlend(1)
+
+										render_CullMode(0)
+										render_SuppressEngineLighting(false)
+									end
+								end
 							end
 
-							if ent.pac_draw_player_on_death then
-								ent:DrawModel()
-							end
-						elseif ent.pac_death_ragdollize then
-							rag:SetNoDraw(true)
-
-							if not ent.pac_hide_entity then
-								local col = ent.pac_color or dummyv
-								local bri = ent.pac_brightness or 1
-
-								render_ModelMaterialOverride(ent.pac_materialm)
-								render_SetColorModulation(col.x * bri, col.y * bri, col.z * bri)
-								render_SetBlend(ent.pac_alpha or 1)
-
-								if ent.pac_invert then render_CullMode(1) end
-								if ent.pac_fullbright then render_SuppressEngineLighting(true) end
-
-								rag:DrawModel()
-								rag:CreateShadow()
-
-								render_ModelMaterialOverride()
-								render_SetColorModulation(1,1,1)
-								render_SetBlend(1)
-
-								render_CullMode(0)
-								render_SuppressEngineLighting(false)
+							if radius < 32 then
+								radius = 128
 							end
 						end
+					elseif not ent:IsNPC() then
+						radius = radius * 4
 					end
 
-					if radius < 32 then
-						radius = 128
-					end
-				elseif not ent:IsNPC() then
-					radius = radius * 4
-				end
-
-				if
-					draw_dist == -1 or
-					ent.IsPACWorldEntity or
-					(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or (ent.pac_camera and ent.pac_camera:IsValid())) or
-					ent ~= pac.LocalPlayer and
-					(
-						((fovoverride ~= 0 or util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0) or (dst < radius * 1.25)) and
+					if
+						draw_dist == -1 or
+						ent.IsPACWorldEntity or
+						(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or (ent.pac_camera and ent.pac_camera:IsValid())) or
+						ent ~= pac.LocalPlayer and
 						(
-							(sv_draw_dist ~= 0 and (sv_draw_dist == -1 or dst <= sv_draw_dist)) or
-							(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance <= dst)) or
-							(dst <= draw_dist)
+							((fovoverride ~= 0 or util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0) or (dst < radius * 1.25)) and
+							(
+								(sv_draw_dist ~= 0 and (sv_draw_dist == -1 or dst <= sv_draw_dist)) or
+								(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance <= dst)) or
+								(dst <= draw_dist)
+							)
 						)
-					)
-				then
-					ent.pac_model = ent:GetModel() -- used for cached functions
+					then
+						ent.pac_model = ent:GetModel() -- used for cached functions
 
-					show_parts(ent)
+						show_parts(ent)
 
-					pac.RenderOverride(ent, "opaque")
-				else
-					hide_parts(ent)
+						pac.RenderOverride(ent, "opaque")
+					else
+						hide_parts(ent)
+					end
 				end
 			else
 				pac.drawn_entities[key] = nil
 			end
 		end
-	end
-	pac.AddHook("PostDrawOpaqueRenderables")
-end
-
-do
-	local should_suppress = setup_suppress()
-
-	function pac.PostDrawTranslucentRenderables()
-		if in_skybox or should_suppress() then return end
 
 		for key, ent in pairs(pac.drawn_entities) do
 			if ent:IsValid() then
@@ -538,8 +444,11 @@ do
 				pac.drawn_entities[key] = nil
 			end
 		end
+
+		cam.End3D()
 	end
-	pac.AddHook("PostDrawTranslucentRenderables")
+
+	pac.AddHook("RenderScreenspaceEffects")
 end
 
 local cvar_projected_texture = CreateClientConVar("pac_render_projected_texture", "0")

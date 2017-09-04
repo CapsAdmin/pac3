@@ -1,6 +1,5 @@
 if not pac then
-	include'pac_init.lua'
-	PAC_EDITOR_INITED_PAC=true
+	include("autorun/pac_init.lua")
 end
 
 if SERVER then AddCSLuaFile("pac3/editor/shared.lua") end
