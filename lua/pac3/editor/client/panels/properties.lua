@@ -1213,7 +1213,7 @@ do -- bone
 		pace.SelectBone(pace.current_part:GetOwner(), function(data)
 			self:SetValue(L(data.friendly))
 			self.OnValueChanged(data.friendly)
-		end, true)
+		end, pace.current_part.ClassName == "bone")
 	end
 
 	function PANEL:SpecialCallback2()
