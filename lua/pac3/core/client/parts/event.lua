@@ -143,11 +143,12 @@ PART.OldEvents =
 					self.dmgCD = 0
 				end
 
-
 				if not self.pac_wasdmg then
 
 					local dmgDone = dmg - ent:Health()
 					self.pac_lastdamage = ent:Health()
+						
+					if dmgDone == 0 then return false end
 
 					if self:NumberOperator(dmgDone,amount) then
 						self.pac_wasdmg = true
