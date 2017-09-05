@@ -460,7 +460,7 @@ do -- list
 
 			if udata then
 				if udata.enums then
-					local pnl = pace.CreatePanel("pace_properties_base_type")
+					pnl = pace.CreatePanel("properties_base_type")
 
 					function pnl:SpecialCallback()
 						local frame = create_search_list(
@@ -473,13 +473,16 @@ do -- list
 							function()
 								local tbl
 								if type(udata.enums) == "function" then
-									tbl = udata.enums()
+									tbl = udata.enums(pace.current_part)
 								else
 									tbl = udata.enums
 								end
 
 								local enums = {}
 								for k,v in pairs(tbl) do
+									if type(k) == "number" then
+										k = v
+									end
 									enums[L(k)] = v
 								end
 
