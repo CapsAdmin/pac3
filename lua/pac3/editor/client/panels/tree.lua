@@ -40,7 +40,7 @@ do
 					if part.event_triggered then
 						node.Icon:SetImage("icon16/clock_red.png")
 					else
-						node.Icon:SetImage(pace.PartIcons[part.ClassName])
+						node.Icon:SetImage(part.Icon)
 					end
 				end
 			end
@@ -251,7 +251,7 @@ function PANEL:PopulateParts(node, parts, children)
 			if enable_model_icons:GetBool() and part.ClassName == "model" and part.GetModel then
 				part_node:SetModel(part:GetModel())
 			else
-				part_node.Icon:SetImage(pace.GetIconFromClassName(part.ClassName))
+				part_node.Icon:SetImage(part.Icon)
 			end
 
 			self:PopulateParts(part_node, part:GetChildren(), true)

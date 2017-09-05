@@ -609,8 +609,4 @@ function pace.TranslatePropertiesKey(key, obj)
 	return obj and obj.TranslatePropertiesKey and obj:TranslatePropertiesKey(key)
 end
 
-function pace.GetIconFromClassName(class_name)
-	return pace.PartIcons[class_name] or "icon16/plugin.png"
-end
-
 hook.Run("pac_EditorPostConfig")

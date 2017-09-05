@@ -90,7 +90,7 @@ local function populate_part_menu(menu, part, func)
 			pace.current_part[func](pace.current_part, part)
 		end)
 
-		pnl:SetImage(pace.GetIconFromClassName(part.ClassName))
+		pnl:SetImage(part.Icon)
 
 		for key, part in ipairs(part:GetChildren()) do
 			populate_part_menu(menu, part, func)
@@ -98,7 +98,7 @@ local function populate_part_menu(menu, part, func)
 	else
 		menu:AddOption(part:GetName(), function()
 			pace.current_part[func](pace.current_part, part)
-		end):SetImage(pace.GetIconFromClassName(part.ClassName))
+		end):SetImage(part.Icon)
 	end
 end
 

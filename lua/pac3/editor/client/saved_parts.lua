@@ -297,7 +297,7 @@ local function populate_part(menu, part, override_part, clear)
 
 	if #part.children > 0 then
 		local menu, pnl = menu:AddSubMenu(name, function() pace.LoadPartsFromTable(part, nil, override_part) end)
-		pnl:SetImage(pace.GetIconFromClassName(part.self.ClassName))
+		pnl:SetImage(part.self.Icon)
 		menu.GetDeleteSelf = function() return false end
 		local old = menu.Open
 		menu.Open = function(...)
@@ -313,7 +313,7 @@ local function populate_part(menu, part, override_part, clear)
 	else
 		menu:AddOption(name, function()
 			pace.LoadPartsFromTable(part, clear, override_part)
-		end):SetImage(pace.GetIconFromClassName(part.self.ClassName))
+		end):SetImage(part.self.Icon)
 	end
 end
 
@@ -337,7 +337,7 @@ local function populate_parts(menu, tbl, override_part, clear)
 			local parts = data.Content
 
 			if parts.self then
-				icon = pace.GetIconFromClassName(parts.self.ClassName)
+				icon = parts.self.Icon
 				parts = {parts}
 			end
 
@@ -446,7 +446,7 @@ local function populate_parts(menu, tbl, dir, override_part)
 				pnl:SetImage(pace.MiscIcons.outfit)
 			elseif parts.self then
 				menu:AddOption(data.Name, function() pace.SaveParts(nil, data.RelativePath, override_part)  end)
-				:SetImage(pace.GetIconFromClassName(parts.self.ClassName))
+				:SetImage(parts.self.Icon)
 			end
 		end
 	end
