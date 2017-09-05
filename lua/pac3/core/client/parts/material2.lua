@@ -71,6 +71,8 @@ for shader_name, params in pairs(shader_params) do
 
 	PART.ClassName = "material_" .. shader_name
 	PART.NonPhysical = true
+	PART.Group = {'modifiers', 'model', 'entity'}
+	PART.Icon = 'icon16/paintcan.png'
 
 	pac.StartStorableVars()
 
