@@ -219,11 +219,30 @@ do -- menu
 				end
 			end
 
-			for _, class_name in pairs(temp) do
-				if not added[class_name] then
-					menu:AddOption(L(class_name), function()
-						pace.Call("CreatePart", class_name)
-					end):SetImage(pace.PartIcons[class_name])
+			local cur = menu
+
+			for class_name, part in pairs(pac.GetRegisteredParts()) do
+				if part.Category then
+					local sub, pnl = menu:AddSubMenu(L(part.Category), function()
+						if pac.GetRegisteredParts()[part.Category] then
+							pace.Call("CreatePart", part.Category)
+						end
+					end)
+					sub.GetDeleteSelf = function() return false end
+					if pace.PartIcons[part.Category] then
+						pnl:SetImage(pace.PartIcons[part.Category])
+					end
+					cur = sub
+				else
+					cur = menu
+				end
+
+				local pnl = cur:AddOption(L(class_name), function()
+					pace.Call("CreatePart", class_name)
+				end)
+
+				if pace.PartIcons[class_name] then
+					pnl:SetImage(pace.PartIcons[class_name])
 				end
 			end
 		end

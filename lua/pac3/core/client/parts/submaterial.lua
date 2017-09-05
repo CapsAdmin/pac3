@@ -5,7 +5,15 @@ PART.NonPhysical = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Material", "")
-	pac.GetSet(PART, "SubMaterialId", 1)
+	pac.GetSet(PART, "SubMaterialId", 1, {on_change = function(self, num)
+		num = tonumber(num) or 0
+
+		local ent = self:GetOwner(self.RootOwner)
+
+		local maxnum = 16
+
+		return math.floor(math.Clamp(num, 0, maxnum))
+	end, enums = function(part) return part:GetSubMaterialIdList() end})
 	pac.GetSet(PART, "RootOwner", false)
 pac.EndStorableVars()
 
@@ -137,8 +145,3 @@ function PART:Clear()
 end
 
 pac.RegisterPart(PART)
-
-hook.Add("pac_EditorPostConfig","submaterial",function()
-	pace.PartTree.entity.submaterial = true
-	pace.PartIcons.submaterial = "icon16/picture_edit.png"
-end)

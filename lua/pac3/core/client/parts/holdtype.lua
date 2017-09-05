@@ -51,13 +51,13 @@ PART.ActMods = act_mods
 
 pac.StartStorableVars()
 	for name in pairs(act_mods) do
-		pac.GetSet(PART, name, "")
+		pac.GetSet(PART, name, "", {editor_type = "sequence"})
 	end
 
-	pac.GetSet(PART, "Fallback", "")
-	pac.GetSet(PART, "Noclip", "")
-	pac.GetSet(PART, "Air", "")
-	pac.GetSet(PART, "Sitting", "")
+	pac.GetSet(PART, "Fallback", "", {editor_type = "sequence"})
+	pac.GetSet(PART, "Noclip", "", {editor_type = "sequence"})
+	pac.GetSet(PART, "Air", "", {editor_type = "sequence"})
+	pac.GetSet(PART, "Sitting", "", {editor_type = "sequence"})
 	pac.GetSet(PART, "AlternativeRate", false)
 pac.EndStorableVars()
 

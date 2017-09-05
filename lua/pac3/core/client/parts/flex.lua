@@ -4,7 +4,13 @@ PART.ClassName = "flex"
 PART.NonPhysical = true
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Flex", "")
+	pac.GetSet(PART, "Flex", "", {enums = function(part)
+		local tbl = {}
+		for _, v in pairs(part:GetFlexList()) do
+			tbl[v.name] = v.name
+		end
+		return tbl
+	end})
 	pac.GetSet(PART, "Weight", 0)
 	pac.GetSet(PART, "RootOwner", true)
 	pac.GetSet(PART, "DefaultOnHide", true)
@@ -84,8 +90,3 @@ function PART:Clear()
 end
 
 pac.RegisterPart(PART)
-
-hook.Add("pac_EditorPostConfig","flex",function()
-	pace.PartTree.entity.flex = true
-	pace.PartIcons.flex = "icon16/emoticon_smile.png"
-end)

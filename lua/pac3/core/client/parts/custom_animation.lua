@@ -8,7 +8,12 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Data", "")
 	pac.GetSet(PART, "StopOnHide", true)
 	pac.GetSet(PART, "StopOtherAnimations", false)
-	pac.GetSet(PART, "AnimationType", "sequence")
+	pac.GetSet(PART, "AnimationType", "sequence", {enums = {
+		gesture = "gesture",
+		posture = "posture",
+		sequence = "sequence",
+		stance = "stance",
+	}})
 	pac.GetSet(PART, "Rate", 1)
 	pac.GetSet(PART, "BonePower", 1)
 	pac.GetSet(PART, "Offset", 0)

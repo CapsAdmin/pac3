@@ -5,8 +5,8 @@ PART.ClassName = "webaudio"
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "URL", "")
-	pac.GetSet(PART, "Volume", 1)
-	pac.GetSet(PART, "Pitch", 1)
+	pac.GetSet(PART, "Volume", 1, {editor_sensitivity = 0.125})
+	pac.GetSet(PART, "Pitch", 1, {editor_sensitivity = 0.125})
 	pac.GetSet(PART, "MinimumRadius", 0)
 	pac.GetSet(PART, "MaximumRadius", 0)
 
@@ -20,7 +20,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Overlapping", false)
 
 	pac.GetSet(PART, "PlayOnFootstep", false)
-	pac.GetSet(PART, "RandomPitch", 0)
+	pac.GetSet(PART, "RandomPitch", 0, {editor_sensitivity = 0.125})
 pac.EndStorableVars()
 
 function PART:Initialize()
@@ -54,7 +54,7 @@ end
 
 function PART:OnDraw(ent, pos, ang)
 	local forward = ang:Forward()
-	
+
 	local shouldMute = snd_mute_losefocus:GetBool()
 	local focus = system.HasFocus()
 	local volume = shouldMute and not focus and 0 or self:GetVolume()

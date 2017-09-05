@@ -5,7 +5,7 @@ PART.NonPhysical = true
 PART.ThinkTime = 0
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "PoseParameter", "")
+	pac.GetSet(PART, "PoseParameter", "", {enums = function(part) part:GetPoseParameterList() end})
 	pac.GetSet(PART, "Range", 0)
 pac.EndStorableVars()
 

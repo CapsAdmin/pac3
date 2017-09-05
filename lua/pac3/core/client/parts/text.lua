@@ -22,7 +22,11 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Color", Vector(255, 255, 255))
 	pac.GetSet(PART, "Alpha", 1)
 	pac.GetSet(PART, "OutlineColor", Vector(255, 255, 255))
-	pac.GetSet(PART, "OutlineAlpha", 1)
+	pac.GetSet(PART, "OutlineAlpha", 1, {editor_onchange = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Clamp(num, 0, 1)
+	end})
 	pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
 
