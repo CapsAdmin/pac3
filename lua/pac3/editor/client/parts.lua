@@ -243,7 +243,7 @@ do -- menu
 
 				table.sort(groupData.parts, function(a, b) return a[1] < b[1] end)
 				for i, partData in ipairs(groupData.parts) do
-					local newMenuEntry = sub:AddOption(L(partData[1]), function()
+					local newMenuEntry = sub:AddOption(L(partData[1]:Replace('_', ' ')), function()
 						pace.Call("CreatePart", partData[1])
 					end)
 
@@ -254,7 +254,7 @@ do -- menu
 			end
 
 			for class_name, part in pairs(partsToShow) do
-				local newMenuEntry = menu:AddOption(L(class_name), function()
+				local newMenuEntry = menu:AddOption(L(class_name:Replace('_', ' ')), function()
 					pace.Call("CreatePart", class_name)
 				end)
 
