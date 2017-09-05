@@ -135,12 +135,12 @@ unlitgeneric = {
 		description = "Disables SRGB conversion of shader results.",
 		gmod_default = "0",
 	},
-	Flags_defined2 = {
+	--[[Flags_defined2 = {
 		type = "integer",
 		friendly = "_FlagsDefined2",
 		default = "0",
 		description = "flags2_defined",
-	},
+	},]]
 	glowx = {
 		friendly = "GlowX",
 		type = "float",
@@ -388,12 +388,12 @@ unlitgeneric = {
 		description = "flag",
 		friendly = "Decal",
 	},
-	Flags_defined = {
+	--[[Flags_defined = {
 		type = "integer",
 		friendly = "_FlagsDefined",
 		default = "0",
 		description = "flags_defined",
-	},
+	},]]
 	needs_software_skinning = {
 		is_flag = true,
 		type = "integer",
@@ -594,7 +594,7 @@ unlitgeneric = {
 		description = "Enable outline for distance coded textures.",
 		gmod_default = "0",
 	},
-	Flags = {
+	--[[Flags = {
 		type = "integer",
 		friendly = "Flags",
 		default = "0",
@@ -605,7 +605,7 @@ unlitgeneric = {
 		friendly = "Flags2",
 		default = "0",
 		description = "flags2",
-	},
+	},]]
 	Color = {
 		type = "color",
 		friendly = "Color",
@@ -808,12 +808,12 @@ vertexlitgeneric = {
 		description = "detail texture tint",
 		gmod_default = "[ 1.000000 1.000000 1.000000 ]",
 	},
-	Flags_defined2 = {
+	--[[Flags_defined2 = {
 		type = "integer",
 		friendly = "_FlagsDefined2",
 		default = "0",
 		description = "flags2_defined",
-	},
+	},]]
 	detailblendfactor = {
 		friendly = "DetailTextureBlendFactor",
 		type = "float",
@@ -1127,12 +1127,12 @@ vertexlitgeneric = {
 		description = "Phong tint for local specular lights",
 		gmod_default = "[ 0.000000 0.000000 0.000000 ]",
 	},
-	Flags = {
+	--[[Flags = {
 		type = "integer",
 		friendly = "Flags",
 		default = "0",
 		description = "flags",
-	},
+	},]]
 	sheenmap = {
 		type = "texture",
 		description = "sheenmap",
@@ -1355,12 +1355,12 @@ vertexlitgeneric = {
 		description = "flag",
 		friendly = "NormalmapAlphaEnvmapMask",
 	},
-	Flags_defined = {
+	--[[Flags_defined = {
 		type = "integer",
 		friendly = "_FlagsDefined",
 		default = "0",
 		description = "flags_defined",
-	},
+	},]]
 	bumpframe = {
 		friendly = "BumpFrame",
 		type = "integer",
@@ -1368,12 +1368,12 @@ vertexlitgeneric = {
 		description = "frame number for $bumpmap",
 		gmod_default = "0",
 	},
-	Flags2 = {
+	--[[Flags2 = {
 		type = "integer",
 		friendly = "Flags2",
 		default = "0",
 		description = "flags2",
-	},
+	},]]
 	fleshbordernoisescale = {
 		friendly = "flBorderNoiseScale",
 		type = "float",
