@@ -5,6 +5,8 @@ local DrawSunbeams
 local PART = {}
 
 PART.ClassName = "sunbeams"
+PART.Group = 'effects'
+PART.Icon = 'icon16/weather_sun.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Darken", 0)

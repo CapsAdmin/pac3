@@ -3,6 +3,8 @@ local PART = {}
 PART.ClassName = "proxy"
 PART.NonPhysical = true
 PART.ThinkTime = 0
+PART.Group = 'modifiers'
+PART.Icon = 'icon16/calculator.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "VariableName", "")

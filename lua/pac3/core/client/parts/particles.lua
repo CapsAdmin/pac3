@@ -7,6 +7,8 @@ local WorldToLocal = WorldToLocal
 local PART = {}
 
 PART.ClassName = "particles"
+PART.Group = 'effects'
+PART.Icon = 'icon16/water.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Color1", Vector(255, 255, 255))

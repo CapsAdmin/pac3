@@ -2,6 +2,8 @@ local PART = {}
 
 PART.ClassName = "command"
 PART.NonPhysical = true
+PART.Group = 'advanced'
+PART.Icon = 'icon16/application_xp_terminal.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "String", "")

@@ -48,6 +48,8 @@ local PART = {}
 PART.ClassName = "model"
 PART.ManualDraw = true
 PART.HandleModifiersManually = true
+PART.Icon = 'icon16/shape_square.png'
+PART.Group = 'model'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "BoneMerge", false)

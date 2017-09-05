@@ -3,6 +3,8 @@ local PART = {}
 PART.ClassName = "gesture"
 PART.NonPhysical = true
 PART.ThinkTime = 0
+PART.Group = 'entity'
+PART.Icon = 'icon16/thumb_up.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Loop", false)

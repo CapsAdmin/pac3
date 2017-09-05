@@ -13,6 +13,8 @@ local Color = Color
 local PART = {}
 
 PART.ClassName = "text"
+PART.Group = 'effects'
+PART.Icon = 'icon16/text_align_center.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Text", "")

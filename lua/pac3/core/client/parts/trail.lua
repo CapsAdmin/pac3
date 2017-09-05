@@ -13,6 +13,8 @@ local render_SetMaterial = render.SetMaterial
 local PART = {}
 
 PART.ClassName = "trail"
+PART.Group = 'effects'
+PART.Icon = 'icon16/arrow_undo.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Length", 100)

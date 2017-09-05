@@ -6,6 +6,8 @@ local PART = {}
 PART.ClassName = "animation"
 PART.NonPhysical = true
 PART.ThinkTime = 0
+PART.Groups = {'entity', 'model', 'modifiers'}
+PART.Icon = 'icon16/eye.png'
 
 PART.frame = 0
 

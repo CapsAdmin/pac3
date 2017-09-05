@@ -3,6 +3,9 @@ local snd_mute_losefocus = GetConVar('snd_mute_losefocus')
 
 PART.ClassName = "webaudio"
 
+PART.Group = 'effects'
+PART.Icon = 'icon16/sound_add.png'
+
 pac.StartStorableVars()
 	pac.GetSet(PART, "URL", "")
 	pac.GetSet(PART, "Volume", 1)

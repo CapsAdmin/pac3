@@ -3,6 +3,8 @@ local PART = {}
 
 PART.ClassName = "material"
 PART.NonPhysical = true
+PART.Group = {'modifiers', 'model', 'entity'}
+PART.Icon = 'icon16/paintcan.png'
 
 PART.ShaderParams =
 {

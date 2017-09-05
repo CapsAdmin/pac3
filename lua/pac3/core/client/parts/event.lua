@@ -7,6 +7,7 @@ PART.ClassName = "event"
 PART.NonPhysical = true
 PART.ThinkTime = 0
 PART.AlwaysThink = true
+PART.Icon = 'icon16/clock.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Event", "")

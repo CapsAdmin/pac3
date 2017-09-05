@@ -3,6 +3,8 @@
 local PART = {}
 
 PART.ClassName = "decal"
+PART.Group = 'effects'
+PART.Icon = 'icon16/paintbrush.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Color", Vector(255, 255, 255))

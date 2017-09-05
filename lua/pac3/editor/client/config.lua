@@ -3,65 +3,65 @@
 pace.PropertySheets = {
 	orientation =
 	{
-		position = true,
-		angles = true,
-		positionoffset = true,
-		angleoffset = true,
-		size = true,
-		scale = true,
-		eyeangles = true,
 		aimpartname = true,
 		alternativescaling = true,
+		angleoffset = true,
+		angles = true,
 		bone = true,
 		bonemerge = true,
+		eyeangles = true,
+		eyeangleslerp = true,
+		farz = true,
 		fov = true,
 		nearz = true,
-		farz = true,
-		eyeangleslerp = true,
+		position = true,
+		positionoffset = true,
+		scale = true,
+		size = true,
 	},
 
 	appearance =
 	{
-		drawviewmodel = true,
-		brightness = true,
+		additive = true,
 		alpha =  true,
-		fullbright =  true,
-		cellshade =  true,
-		translucent =  true,
-		color =  true,
-		tintcolor =  true,
-		invert =  true,
-		doubleface =  true,
-		texturefilter =  true,
-		passes =  true,
-		lightblend =  true,
-		skin =  true,
-		outline =  true,
-		outlinecolor =  true,
-		outlinealpha =  true,
-		font =  true,
-		startalpha =  true,
-		endalpha =  true,
-		startcolor =  true,
-		stretch =  true,
-		endcolor =  true,
-		draworder = true,
-		drawshadow = true,
 		blurlength = true,
 		blurspacing = true,
-		useweaponcolor = true,
-		useplayercolor = true,
-		modelfallback = true,
+		brightness = true,
+		cellshade =  true,
+		color =  true,
+		doubleface =  true,
+		draworder = true,
+		drawshadow = true,
+		drawviewmodel = true,
+		endalpha =  true,
+		endcolor =  true,
+		font =  true,
+		fullbright =  true,
+		invert =  true,
+		lightblend =  true,
 		lodoverride = true,
-		additive = true,
+		modelfallback = true,
+		outline =  true,
+		outlinealpha =  true,
+		outlinecolor =  true,
+		passes =  true,
+		skin =  true,
+		startalpha =  true,
+		startcolor =  true,
+		stretch =  true,
+		texturefilter =  true,
+		tintcolor =  true,
+		translucent =  true,
+		useplayercolor = true,
+		useweaponcolor = true,
 	},
 
 	other =
 	{
-		ownerentity = true,
 		draworder = true,
-		showinfirstperson = true,
 		duplicate = true,
+		ownerentity = true,
+		showinfirstperson = true,
 	},
 
 	event = {
@@ -71,23 +71,23 @@ pace.PropertySheets = {
 	entity = {
 		behavior =
 		{
-			mutefootsteps = true,
-			inversekinematics = true,
 			animationrate = true,
-			relativebones = true,
-			fallapartondeath = true,
 			deathragdollizeparent = true,
+			fallapartondeath = true,
 			hideragdollondeath = true,
+			inversekinematics = true,
 			movespeed = true,
-			weapon = true,
+			mutefootsteps = true,
 			playercollide = true,
+			relativebones = true,
+			weapon = true,
 		},
 		movement =
 		{
-			runspeed = true,
-			walkspeed = true,
 			crouchspeed = true,
+			runspeed = true,
 			sprintspeed = true,
+			walkspeed = true,
 		},
 		appearance = {
 			drawweapon = true,
@@ -98,65 +98,65 @@ pace.PropertySheets = {
 	proxy = {
 		["easy setup"] =
 		{
-			min = true,
-			max = true,
-			offset = true,
 			["function"] = true,
+			axis = true,
 			input = true,
 			inputdivider = true,
 			inputmultiplier = true,
+			max = true,
+			min = true,
+			offset = true,
 			pow = true,
-			axis = true,
 		},
 		["behavior"] =
 		{
-			velocityroughness = true,
-			resetvelocitiesonhide = true,
-			zeroeyepitch = true,
-			playerangles = true,
 			additive = true,
+			playerangles = true,
+			resetvelocitiesonhide = true,
+			velocityroughness = true,
+			zeroeyepitch = true,
 		}
 	},
 
 	particles = {
 		orientation =
 		{
-			position = true,
-			angles = true,
-			positionoffset = true,
-			angleoffset = true,
-			eyeangles = true,
 			aimpartname = true,
+			angleoffset = true,
+			angles = true,
 			bone = true,
+			eyeangles = true,
+			position = true,
+			positionoffset = true,
 		},
 		appearance = {
+			["3d"] = true,
 			color1 = true,
 			color2 = true,
-			material = true,
-			startalpha = true,
-			endalpha = true,
-			randomcolour = true,
-			translucent = true,
-			draworder = true,
-			["3d"] = true,
-			drawmanual = true,
 			doublesided = true,
+			drawmanual = true,
+			draworder = true,
+			endalpha = true,
 			lighting = true,
+			material = true,
+			randomcolour = true,
+			startalpha = true,
+			translucent = true,
 		},
 		rotation = {
-			rolldelta = true,
-			randomrollspeed = true,
 			particleanglevelocity = true,
+			randomrollspeed = true,
+			rolldelta = true,
 		},
 		movement = {
-			velocity = true,
-			spread = true,
-			gravity = true,
+			airresistance = true,
 			bounce = true,
 			collide = true,
+			gravity = true,
 			ownervelocitymultiplier = true,
-			airresistance = true,
 			sliding = true,
+			spread = true,
+			velocity = true,
 		},
 	}
 }
@@ -166,156 +166,57 @@ pace.PropertySheets.entity.appearance = pace.PropertySheets.appearance
 
 pace.PropertySheetPatterns = {
 	material = {
-		["phong"] = "phong",
-		["env map"] = "envmap.+",
 		["ambient occlusion"] = {"ambientocclusion", "halflambert"},
-		["detail"] = "detail",
-		["rimlight"] = "rimlight",
 		["cloak"] = {"cloak", "refract"},
 		["colors"] = "color",
-		["textures"] = {"bumpmap", "basetexture", "envmap", "lightwarptexture"},
-		["flesh"] = "flesh",
-		["selfillum"] = "selfillum",
+		["detail"] = "detail",
 		["emissive"] = "emissive",
+		["env map"] = "envmap.+",
+		["flesh"] = "flesh",
+		["phong"] = "phong",
+		["rimlight"] = "rimlight",
+		["selfillum"] = "selfillum",
+		["textures"] = {"bumpmap", "basetexture", "envmap", "lightwarptexture"},
 	},
 	particles = {
 		["stick"] = {"stick", "align"},
 	}
 }
 
-pace.PartTree = {
-	entity = {
-		animation = true,
-		gesture = true,
-		holdtype = true,
-		bone = true,
-		poseparameter = true,
-		submaterial = true,
-		material = true,
-		effect = true,
-		bodygroup = true,
-		camera = true,
-	},
-
-	model = {
-		clip = true,
-		halo = true,
-		animation = true,
-		physics = true,
-		jiggle = true,
-		bone = true,
-		effect = true,
-		material = true,
-		submaterial = true,
-		bodygroup = true,
-	},
-
-	modifiers = {
-		animation = true,
-		bodygroup = true,
-		proxy = true,
-		material = true,
-		poseparameter = true,
-		fog = true,
-		clip = true,
-	},
-
-	effects = {
-		decal = true,
-		shake = true,
-		light = true,
-		sound = true,
-		ogg = true,
-		webaudio = true,
-		sunbeams = true,
-		effect = true,
-		particles = true,
-		trail = true,
-		sprite = true,
-		beam = true,
-		text = true,
-	},
-
-	advanced = {
-		script = true,
-		command = true,
-		projectile = true,
-		custom_animation = true,
-	},
-}
-
-
 pace.MiscIcons = {
-	copy = "icon16/page_white_text.png",
-	uniqueid = "icon16/vcard.png",
-	paste = "icon16/paste_plain.png",
-	clone = "icon16/page_copy.png",
-	new = "icon16/add.png",
-	autoload = "icon16/transmit_go.png",
-	url = "icon16/server_go.png",
-	outfit = "icon16/group.png",
-	clear = "icon16/cross.png",
-	language = "icon16/user_comment.png",
-	font = "icon16/text_smallcaps.png",
-	load = "icon16/folder.png",
-	save = "icon16/disk.png",
-	exit = "icon16/cancel.png",
-	wear = "icon16/transmit.png",
-	help = "icon16/help.png",
-	info = "icon16/information.png",
-	edit = "icon16/table_edit.png",
-	revert = "icon16/table_delete.png",
 	about = "icon16/star.png",
 	appearance = "icon16/paintcan.png",
-	orientation = "icon16/shape_handles.png",
+	autoload = "icon16/transmit_go.png",
 	chat = "icon16/comment.png",
+	clear = "icon16/cross.png",
+	clone = "icon16/page_copy.png",
+	copy = "icon16/page_white_text.png",
+	edit = "icon16/table_edit.png",
+	exit = "icon16/cancel.png",
+	font = "icon16/text_smallcaps.png",
+	help = "icon16/help.png",
+	info = "icon16/information.png",
+	language = "icon16/user_comment.png",
+	load = "icon16/folder.png",
+	new = "icon16/add.png",
+	orientation = "icon16/shape_handles.png",
+	outfit = "icon16/group.png",
+	paste = "icon16/paste_plain.png",
 	replace = "icon16/arrow_refresh.png",
-}
-pace.PartIcons =
-{
-	text = "icon16/text_align_center.png",
-	bone = "widgets/bone_small.png",
-	clip = "icon16/cut.png",
-	light = "icon16/lightbulb.png",
-	sprite = "icon16/layers.png",
-	bone = "icon16/connect.png",
-	effect = "icon16/wand.png",
-	model = "icon16/shape_square.png",
-	animation = "icon16/eye.png",
-	holdtype = "icon16/user_edit.png",
-	entity = "icon16/brick.png",
-	group = "icon16/world.png",
-	trail = "icon16/arrow_undo.png",
-	event = "icon16/clock.png",
-	sunbeams = "icon16/weather_sun.png",
-	jiggle = "icon16/chart_line.png",
-	sound = "icon16/sound.png",
-	command = "icon16/application_xp_terminal.png",
-	material = "icon16/paintcan.png",
-	proxy = "icon16/calculator.png",
-	particles = "icon16/water.png",
-	woohoo = "icon16/webcam_delete.png",
-	halo = "icon16/shading.png",
-	poseparameter = "icon16/disconnect.png",
-	fog = "icon16/weather_clouds.png",
-	physics = "icon16/shape_handles.png",
-	beam = "icon16/vector.png",
-	projectile = "icon16/bomb.png",
-	shake = "icon16/transmit.png",
-	ogg = "icon16/music.png",
-	webaudio = "icon16/sound_add.png",
-	script = "icon16/page_white_gear.png",
-	info = "icon16/help.png",
-	bodygroup = "icon16/user.png",
-	camera = "icon16/camera.png",
-	custom_animation = "icon16/film.png",
-	gesture = "icon16/thumb_up.png",
-	decal = "icon16/paintbrush.png",
+	revert = "icon16/table_delete.png",
+	save = "icon16/disk.png",
+	uniqueid = "icon16/vcard.png",
+	url = "icon16/server_go.png",
+	wear = "icon16/transmit.png",
 }
 
-pace.PartIcons.effects = pace.PartIcons.effect
-pace.PartIcons.advanced = pace.PartIcons.script
-pace.PartIcons.modifiers = pace.PartIcons.poseparameter
+pace.GroupsIcons = {
+	effects = 'icon16/wand.png',
+	model = 'icon16/shape_square.png',
+	entity = 'icon16/brick.png',
+	modifiers = 'icon16/disconnect.png',
+	advanced = 'icon16/page_white_gear.png'
+}
 
 pace.PropertyOrder =
 {
@@ -599,20 +500,20 @@ function pace.TranslatePropertiesKey(key, obj)
 	end
 
 	if
-		key == "damagetype" or
-		key == "bone" or
-		key == "model" or
-		key == "event" or
-		key == "operator" or
 		key == "arguments" or
+		key == "bodygroupname" or
+		key == "bone" or
+		key == "code" or
+		key == "damagetype" or
+		key == "effect" or
+		key == "event" or
+		key == "flex" or
+		key == "material" or
+		key == "model" or
+		key == "operator" or
 		key == "ownername" or
 		key == "poseparameter" or
-		key == "material" or
 		key == "sequence" or
-		key == "flex" or
-		key == "bodygroupname" or
-		key == "effect" or
-		key == "code" or
 		key == "sound"
 	then
 		return key
@@ -651,16 +552,16 @@ function pace.TranslatePropertiesKey(key, obj)
 	end
 
 	if
-		key == "parentname" or
-		key == "followpartname" or
 		key == "anglepartname" or
 		key == "endpointname" or
+		key == "followpartname" or
+		key == "outfitpartname" or
+		key == "parentname" or
 		key == "pointaname" or
 		key == "pointbname" or
 		key == "pointcname" or
 		key == "pointdname" or
-		key == "targetpartname" or
-		key == "outfitpartname"
+		key == "targetpartname"
 	then
 		return "part"
 	end

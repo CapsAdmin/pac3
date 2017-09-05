@@ -3,6 +3,8 @@ local PART = {}
 PART.ThinkTime = 0
 PART.ClassName = "physics"
 PART.NonPhysical = true
+PART.Group = 'model'
+PART.Icon = 'icon16/shape_handles.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Box", true)

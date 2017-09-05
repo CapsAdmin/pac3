@@ -170,60 +170,96 @@ end
 
 do -- menu
 	function pace.AddRegisteredPartsToMenu(menu)
-		local temp = {}
+		local partsToShow = {}
 
-		for class_name, tbl in pairs(pac.GetRegisteredParts()) do
+		for class_name, part in pairs(pac.GetRegisteredParts()) do
+			local cond = (not pace.IsInBasicMode() or not pace.BasicParts[class_name]) and
+				not part.Internal and
+				(not pace.IsShowingDeprecatedFeatures() or not pace.DeprecatedParts[class_name]) and
+				part.show_in_editor ~= false
 
-			if pace.IsInBasicMode() and not pace.BasicParts[class_name] then continue end
-			if not pace.IsShowingDeprecatedFeatures() and pace.DeprecatedParts[class_name] then continue end
-			if tbl.show_in_editor == false then continue end
-
-			if not tbl.Internal then
-				table.insert(temp, class_name)
+			if cond then
+				partsToShow[class_name] = part
 			end
 		end
 
 		if pace.IsInBasicMode() then
-			table.sort(temp)
+			table.sort(partsToShow)
 
-			for _, class_name in pairs(temp) do
-				menu:AddOption(L(class_name), function()
+			for class_name, part in pairs(partsToShow) do
+				local newMenuEntry = menu:AddOption(L(class_name), function()
 					pace.Call("CreatePart", class_name)
-				end):SetImage(pace.PartIcons[class_name])
+				end)
+				
+				if part.Icon then
+					newMenuEntry:SetImage(part.Icon)
+				end
 			end
 		else
-			local added = {}
+			local sortedTree = {}
 
-			for key, tbl in pairs(pace.PartTree) do
-				if type(tbl) == "table" then
-					added[key] = true
-					local sub, pnl = menu:AddSubMenu(L(key), function()
-						if pac.GetRegisteredParts()[key] then
-							pace.Call("CreatePart", key)
-						end
-					end)
-					sub.GetDeleteSelf = function() return false end
+			for class, part in pairs(partsToShow) do
+				local group = part.Group or part.Groups
+				local groups
 
-					pnl:SetImage(pace.PartIcons[key])
-
-					for class_name in pairs(tbl) do
-						added[class_name] = true
-						sub:AddOption(L(class_name), function()
-							pace.Call("CreatePart", class_name)
-						end):SetImage(pace.PartIcons[class_name])
-					end
+				if type(group) == 'string' then
+					groups = {group}
 				else
-					menu:AddOption(L(key), function()
-						pace.Call("CreatePart", key)
-					end):SetImage(pace.PartIcons[key])
+					groups = group
+				end
+
+				if groups then
+					for i, groupName in ipairs(groups) do
+						if not sortedTree[groupName] then
+							sortedTree[groupName] = {}
+							sortedTree[groupName].parts = {}
+							sortedTree[groupName].icon = pace.GroupsIcons[groupName]
+							sortedTree[groupName].name = L(groupName)
+						end
+
+						partsToShow[class] = nil
+
+						if groupName == class then
+							sortedTree[groupName].hasPart = true
+						else
+							table.insert(sortedTree[groupName].parts, {class, part})
+						end
+					end
 				end
 			end
 
-			for _, class_name in pairs(temp) do
-				if not added[class_name] then
-					menu:AddOption(L(class_name), function()
-						pace.Call("CreatePart", class_name)
-					end):SetImage(pace.PartIcons[class_name])
+			for group, groupData in pairs(sortedTree) do
+				local sub, pnl = menu:AddSubMenu(groupData.name, function()
+					if groupData.hasPart then
+						pace.Call("CreatePart", group)
+					end
+				end)
+
+				sub.GetDeleteSelf = function() return false end
+
+				if groupData.icon then
+					pnl:SetImage(groupData.icon)
+				end
+
+				table.sort(groupData.parts, function(a, b) return a[1] < b[1] end)
+				for i, partData in ipairs(groupData.parts) do
+					local newMenuEntry = sub:AddOption(L(partData[1]), function()
+						pace.Call("CreatePart", partData[1])
+					end)
+
+					if partData[2].Icon then
+						newMenuEntry:SetImage(partData[2].Icon)
+					end
+				end
+			end
+
+			for class_name, part in pairs(partsToShow) do
+				local newMenuEntry = menu:AddOption(L(class_name), function()
+					pace.Call("CreatePart", class_name)
+				end)
+
+				if part.Icon then
+					newMenuEntry:SetImage(part.Icon)
 				end
 			end
 		end

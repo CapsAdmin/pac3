@@ -5,6 +5,8 @@ local ParticleEffectAttach = ParticleEffectAttach
 local PART = {}
 
 PART.ClassName = "effect"
+PART.Groups = {'effects', 'model', 'entity'}
+PART.Icon = 'icon16/wand.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Effect", "default")

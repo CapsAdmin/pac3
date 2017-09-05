@@ -8,6 +8,8 @@ local physenv_GetGravity = physenv.GetGravity
 local PART = {}
 
 PART.ClassName = "jiggle"
+PART.Group = 'model'
+PART.Icon = 'icon16/chart_line.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Strain", 0.5)

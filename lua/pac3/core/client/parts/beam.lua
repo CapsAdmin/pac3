@@ -78,6 +78,8 @@ end
 local PART = {}
 
 PART.ClassName = "beam"
+PART.Group = 'effects'
+PART.Icon = 'icon16/vector.png'
 
 pac.StartStorableVars()
 	pac.SetupPartName(PART, "EndPoint")

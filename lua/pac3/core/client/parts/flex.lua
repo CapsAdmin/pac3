@@ -2,6 +2,8 @@ local PART = {}
 
 PART.ClassName = "flex"
 PART.NonPhysical = true
+PART.Icon = 'icon16/emoticon_smile.png'
+PART.Group = 'entity'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Flex", "")
@@ -84,8 +86,3 @@ function PART:Clear()
 end
 
 pac.RegisterPart(PART)
-
-hook.Add("pac_EditorPostConfig","flex",function()
-	pace.PartTree.entity.flex = true
-	pace.PartIcons.flex = "icon16/emoticon_smile.png"
-end)

@@ -11,6 +11,8 @@ local PART = {}
 
 PART.ClassName = "fog"
 PART.NonPhysical = true
+PART.Group = 'modifiers'
+PART.Icon = 'icon16/weather_clouds.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Color", Vector(255, 255, 255))

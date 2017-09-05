@@ -1,6 +1,8 @@
 local PART = {}
 
 PART.ClassName = "light"
+PART.Group = 'effects'
+PART.Icon = 'icon16/lightbulb.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Brightness", 1)

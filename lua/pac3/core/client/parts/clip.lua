@@ -6,6 +6,8 @@ local IsEntity = IsEntity
 local PART = {}
 
 PART.ClassName = "clip"
+PART.Groups = {'model', 'modifiers'}
+PART.Icon = 'icon16/cut.png'
 
 function PART:OnParent(part)
 	part:AddModifier(self)

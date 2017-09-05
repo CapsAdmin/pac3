@@ -1,6 +1,9 @@
 local PART = {}
 
 PART.ClassName = "woohoo"
+-- PART.ClassName = "pixelate"
+PART.Group = 'modifiers'
+PART.Icon = 'icon16/webcam_delete.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Resolution", 8)

@@ -6,6 +6,8 @@ local PART = {}
 PART.ClassName = "halo"
 PART.NonPhysical = true
 PART.ThinkTime = 0
+PART.Group = {'effects', 'model'}
+PART.Icon = 'icon16/shading.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Color", Vector(255, 255, 255))

@@ -3,6 +3,8 @@ local PART = {}
 PART.ClassName = "holdtype"
 PART.NonPhysical = true
 PART.ThinkTime = 0
+PART.Group = 'entity'
+PART.Icon = 'icon16/user_edit.png'
 
 local act_mods =
 {

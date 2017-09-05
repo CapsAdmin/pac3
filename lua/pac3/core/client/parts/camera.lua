@@ -3,6 +3,8 @@ local LerpAngle = LerpAngle
 local PART = {}
 
 PART.ClassName = "camera"
+PART.Group = 'entity'
+PART.Icon = 'icon16/camera.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "EyeAnglesLerp", 1)

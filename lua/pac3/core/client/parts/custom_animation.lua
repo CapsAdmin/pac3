@@ -2,6 +2,8 @@ local PART = {}
 
 PART.ClassName = "custom_animation"
 PART.NonPhysical = true
+PART.Group = 'advanced'
+PART.Icon = 'icon16/film.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "URL", "")

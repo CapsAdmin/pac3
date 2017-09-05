@@ -3,6 +3,8 @@ language.Add("pac_projectile", "Projectile")
 local PART = {}
 
 PART.ClassName = "projectile"
+PART.Group = 'advanced'
+PART.Icon = 'icon16/bomb.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Speed", 1)

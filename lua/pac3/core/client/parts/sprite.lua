@@ -7,6 +7,8 @@ local cam_IgnoreZ = cam.IgnoreZ
 local PART = {}
 
 PART.ClassName = "sprite"
+PART.Group = 'effects'
+PART.Icon = 'icon16/layers.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "SizeX", 1)

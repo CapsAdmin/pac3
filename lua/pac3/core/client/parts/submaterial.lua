@@ -2,6 +2,8 @@ local PART = {}
 
 PART.ClassName = "submaterial"
 PART.NonPhysical = true
+PART.Icon = 'icon16/picture_edit.png'
+PART.Group = {'model', 'entity'}
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Material", "")
@@ -137,8 +139,3 @@ function PART:Clear()
 end
 
 pac.RegisterPart(PART)
-
-hook.Add("pac_EditorPostConfig","submaterial",function()
-	pace.PartTree.entity.submaterial = true
-	pace.PartIcons.submaterial = "icon16/picture_edit.png"
-end)

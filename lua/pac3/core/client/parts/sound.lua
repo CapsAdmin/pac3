@@ -3,6 +3,8 @@ local PART = {}
 PART.ClassName = "sound"
 PART.NonPhysical = true
 PART.ThinkTime = 0
+PART.Group = 'effects'
+PART.Icon = 'icon16/sound.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Sound", "")
