@@ -17,7 +17,7 @@ pac.EndStorableVars()
 
 function PART:Initialize()
 	local owner = self:GetOwner(true)
-	if owner ~= NULL then 
+	if owner ~= NULL then
 		owner.pac_cameras = owner.pac_cameras or {}
 		owner.pac_cameras[self] = self
 	end
