@@ -1607,7 +1607,7 @@ pac.AddHook("EntityEmitSound", function(data)
 
 	if not ent:IsValid() or not ent.pac_parts then return end
 
-	ent.pac_emit_sound = {name = data.SoundName, time = pac.RealTime, reset = true}
+	ent.pac_emit_sound = {name = data.SoundName, time = pac.RealTime, reset = true, mute_me = ent.pac_emit_sound and ent.pac_emit_sound.mute_me or false}
 
 	for _, v in pairs(pac.GetPartsFromUniqueID(ent:IsPlayer() and ent:UniqueID() or ent:EntIndex())) do
 		if v.ClassName == "event" and v.Event == "emit_sound" then
