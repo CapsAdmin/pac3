@@ -20,6 +20,10 @@ function PART:OnShow()
 	self:SetBodyGroupName(self:GetBodyGroupName())
 end
 
+function PART:GetNiceName()
+	return self.BodyGroupName ~= "" and self.BodyGroupName or "no bodygroup"
+end
+
 function PART:SetBodyGroupName(str)
 	self.BodyGroupName = str
 	self:UpdateBodygroupData()
