@@ -60,7 +60,7 @@ function PART:Draw(event, pos, ang, draw_type)
 	if self.ModelIndex < self.minIndex or self.ModelIndex > self.maxIndex then return self:DrawChildren(event, pos, ang, draw_type) end
 	ent:SetBodygroup(self.bodygroup_index, self.ModelIndex)
 	self:DrawChildren(event, pos, ang, draw_type)
-	if type(ent) == 'Player' then
+	if ent:IsPlayer() then
 		ent.pac_bodygroups_torender = ent.pac_bodygroups_torender or {}
 		ent.pac_bodygroups_torender[self.bodygroup_index] = self.ModelIndex
 	end
