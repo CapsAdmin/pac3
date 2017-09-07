@@ -70,7 +70,7 @@ function pace.util.FriendlyName(strIn)
 			prevChar = charIn
 			table.insert(outputTab, ' ')
 		elseif isUpperCase(charIn) then
-			if prevChar == '_' and iterableArray[i + 1] and not isUpperCase(iterableArray[i + 1]) then
+			if prevChar == '_' and (not iterableArray[i + 1] or isUpperCase(iterableArray[i + 1])) then
 				if charIn == 'L' then
 					prevChar = ' '
 					table.insert(outputTab, 'Left ')
