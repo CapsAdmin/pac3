@@ -24,7 +24,6 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Alpha", 1)
 	pac.GetSet(PART, "Scale", Vector(1,1,1))
 	pac.GetSet(PART, "Size", 1)
-	pac.GetSet(PART, "OverallSize", 1)
 	pac.GetSet(PART, "HideEntity", false)
 	pac.GetSet(PART, "Invert", false)
 	pac.GetSet(PART, "DoubleFace", false)
@@ -34,8 +33,6 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "RelativeBones", true)
 
 	pac.GetSet(PART, "Skin", 0, {editor_onchange = function(self, num) return math.Round(math.max(tonumber(num), 0)) end})
-	pac.GetSet(PART, "Bodygroup", 0)
-	pac.GetSet(PART, "BodygroupState", 0)
 	pac.GetSet(PART, "DrawShadow", true)
 	pac.GetSet(PART, "Weapon", false)
 	pac.GetSet(PART, "InverseKinematics", false)
@@ -131,13 +128,6 @@ end
 
 
 function PART:OnBuildBonePositions()
-	local ent = self:GetOwner()
-
-	if self.OverallSize ~= 1 then
-		for _ = 0, ent:GetBoneCount() do
-			ent:ManipulateBoneScale(0, Vector(1, 1, 1) * self.OverallSize)
-		end
-	end
 end
 
 function PART:SetDrawShadow(b)
@@ -147,32 +137,6 @@ function PART:SetDrawShadow(b)
 	if ent:IsValid() then
 		ent:DrawShadow(b)
 	end
-end
-
-function PART:SetBodygroupState(var)
-	var = var or 0
-
-	self.BodygroupState = var
-
-	local ent = self:GetOwner()
-	timer.Simple(0, function()
-		if self:IsValid() and ent:IsValid() then
-			ent:SetBodygroup(self.Bodygroup, var)
-		end
-	end)
-end
-
-function PART:SetBodygroup(var)
-	var = var or 0
-
-	self.Bodygroup = var
-
-	local ent = self:GetOwner()
-	timer.Simple(0, function()
-		if self:IsValid() and ent:IsValid() then
-			ent:SetBodygroup(var, self.BodygroupState)
-		end
-	end)
 end
 
 function PART:UpdateScale(ent)

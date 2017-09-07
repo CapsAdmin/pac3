@@ -41,7 +41,6 @@ return {
 ["right clavicle"] = "右 鎖骨",
 ["outline"] = "概要",
 ["string"] = "文字列",
-["description"] = "説明",
 ["left clavicle"] = "左 鎖骨",
 ["color"] = "色",
 ["save"] = "保存",

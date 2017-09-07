@@ -452,13 +452,6 @@ do -- list
 
 			if obj.ClassName then
 				if pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
-
-				if not pace.IsShowingDeprecatedFeatures() then
-					local part = pace.DeprecatedProperties[key]
-					if part == true or part == obj.ClassName then
-						continue
-					end
-				end
 			end
 
 			local pnl
@@ -467,6 +460,7 @@ do -- list
 			local udata = pac.PropertyUserdata[obj.ClassName] and pac.PropertyUserdata[obj.ClassName][key]
 
 			if udata then
+				if type(udata) ~= 'table' then error('Invalid udata of ' .. obj.ClassName .. ' for ' .. key .. ' (' .. type(udata) .. ')!') end
 				if udata.enums then
 					pnl = pace.CreatePanel("properties_base_type")
 

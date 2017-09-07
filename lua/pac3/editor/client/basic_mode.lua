@@ -18,7 +18,6 @@ pace.BasicProperties =
 	Skin = true,
 	Material = true,
 	Name = true,
-	Description = true,
 	Hide = true,
 	SpritePath = true,
 	Brightness = true,

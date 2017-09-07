@@ -41,7 +41,6 @@ return {
 ["right clavicle"] = "오른쪽 쇄골",
 ["outline"] = "윤곽선",
 ["string"] = "문자열",
-["description"] = "설명",
 ["left clavicle"] = "왼쪽 쇄골",
 ["color"] = "색상",
 ["save"] = "저장",

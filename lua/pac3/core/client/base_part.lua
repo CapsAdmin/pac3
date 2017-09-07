@@ -43,7 +43,6 @@ pac.GetSet(PART, "Owner", NULL)
 pac.StartStorableVars()
 	pac.GetSet(PART, "OwnerName", "self")
 	pac.GetSet(PART, "Name", "")
-	pac.GetSet(PART, "Description", "")
 	pac.GetSet(PART, "Hide", false)
 	pac.GetSet(PART, "EditorExpand", false)
 	pac.GetSet(PART, "UniqueID", "")
@@ -58,13 +57,14 @@ pac.StartStorableVars()
 		pac.SetupPartName(PART, "AimPart")
 		pac.SetupPartName(PART, "Parent")
 
-		pac.GetSet(PART, "AnglePartMultiplier", Vector(1,1,1))
 		pac.SetupPartName(PART, "AnglePart")
 
 	pac.SetPropertyGroup("appearance")
 		pac.GetSet(PART, "DrawOrder", 0)
 		pac.GetSet(PART, "Translucent", false)
 pac.EndStorableVars()
+
+pac.GetSet(PART, "Description", "")
 
 function PART:SetUniqueID(id)
 	if self.owner_id then
@@ -988,13 +988,7 @@ do -- drawing. this code is running every frame
 		end
 
 		if self.AnglePart:IsValid() then
-			local a = self.AnglePart.cached_ang * 1
-
-			a.p = a.p * self.AnglePartMultiplier.x
-			a.y = a.y * self.AnglePartMultiplier.y
-			a.r = a.r * self.AnglePartMultiplier.z
-
-			return self.AngleOffset + self.Angles + a
+			return self.AngleOffset + self.Angles + self.AnglePart.cached_ang -- __add always creates new angle
 		end
 
 		if self.AimPart:IsValid() then

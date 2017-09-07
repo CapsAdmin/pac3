@@ -67,11 +67,6 @@ local function populate_view(menu)
 end
 
 local function populate_options(menu)
-	local pnl = menu:AddCVar(L"show deprecated features", "pac_show_deprecated", "1", "0")
-	pnl:SetImage("icon16/bin.png")
-	pnl.DoClick = function() pace.ToggleDeprecatedFeatures() end
-
-
 	menu:AddCVar(L"advanced mode", "pac_basic_mode", "0", "1").DoClick = function() pace.ToggleBasicMode() end
 		menu:AddSpacer()
 			menu:AddOption(L"position grid size", function()

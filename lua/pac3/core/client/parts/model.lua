@@ -58,12 +58,9 @@ pac.StartStorableVars()
 
 	pac.SetPropertyGroup("orientation")
 		pac.GetSet(PART, "BoneMerge", false)
-		pac.GetSet(PART, "BoneMergeAlternative", false)
 		pac.GetSet(PART, "Scale", Vector(1,1,1))
 		pac.GetSet(PART, "Size", 1)
 		pac.GetSet(PART, "AlternativeScaling", false)
-		pac.GetSet(PART, "OverallSize", 1)
-		pac.GetSet(PART, "OriginFix", false)
 		pac.GetSet(PART, "UseLegacyScale", false)
 
 	pac.SetPropertyGroup("appearance")
@@ -87,15 +84,6 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "LodOverride", -1)
 
 	pac.SetPropertyGroup("entity")
-		pac.GetSet(PART, "Bodygroup", 0, function(self, num)
-			num = tonumber(num)
-			return math.Round(math.max(num, 0))
-		end)
-
-		pac.GetSet(PART, "BodygroupState", 0, function(self, num)
-			num = tonumber(num)
-			return math.Round(math.max(num, 0))
-		end)
 
 	pac.SetPropertyGroup("other")
 		pac.GetSet(PART, "OwnerEntity", false)
@@ -343,11 +331,6 @@ function PART:OnDraw(owner, pos, ang)
 	self:PostEntityDraw(owner, ent, pos, ang)
 
 	pac.ResetBones(ent)
-
-	if self.OriginFix then
-		self:SetPositionOffset(self:GetPositionOffset() + -ent:OBBCenter() * self.Scale * self.Size)
-		self:SetOriginFix(false)
-	end
 
 	if ent.pac_can_legacy_scale ~= false then
 		ent.pac_can_legacy_scale = not not ent.pac_can_legacy_scale
@@ -710,28 +693,6 @@ function PART:SetMaterial(var)
 	self.Material = var
 end
 
-function PART:SetBodygroupState(var)
-	var = var or 0
-
-	self.BodygroupState = var
-	timer.Simple(0, function()
-		if self:IsValid() and self.Entity:IsValid() then
-			self.Entity:SetBodygroup(self.Bodygroup, var)
-		end
-	end)
-end
-
-function PART:SetBodygroup(var)
-	var = var or 0
-
-	self.Bodygroup = var
-	timer.Simple(0, function()
-		if self:IsValid() and self.Entity:IsValid() then
-			self.Entity:SetBodygroup(var, self.BodygroupState)
-		end
-	end)
-end
-
 function PART:SetSkin(var)
 	var = var or 0
 
@@ -744,26 +705,6 @@ function PART:OnRemove()
 		timer.Simple(0, function()
 			SafeRemoveEntity(self.Entity)
 		end)
-	end
-end
-
-function PART:SetBoneMergeAlternative(b)
-
-	self.BoneMergeAlternative = b
-
-	local ent = self.Entity
-	if ent:IsValid() then
-		ent.pac_bones = nil
-		local owner = self:GetOwner()
-		if owner:IsValid() then
-			owner.pac_bones = nil
-		end
-
-		if b then
-			ent:SetParent(owner)
-		else
-			ent:SetParent(NULL)
-		end
 	end
 end
 
@@ -781,7 +722,7 @@ function PART:CheckBoneMerge()
 	if self.skip_orient then return end
 
 	if ent:IsValid() and not ent:IsPlayer() then
-		if self.BoneMerge and not self.BoneMergeAlternative then
+		if self.BoneMerge then
 			local owner = self:GetOwner()
 
 			if owner.pac_owner_override and owner.pac_owner_override:IsValid() then
@@ -817,12 +758,6 @@ function PART:OnBuildBonePositions()
 	local owner = self:GetOwner()
 
 	if not ent:IsValid() or not owner:IsValid() or not ent:GetBoneCount() or ent:GetBoneCount() < 1 then return end
-
-	if self.OverallSize ~= 1 then
-		for i = 0, ent:GetBoneCount() - 1 do
-			ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * SCALE_NORMAL * self.OverallSize)
-		end
-	end
 
 	if self.requires_bone_model_scale then
 		local scale = self.Scale * self.Size

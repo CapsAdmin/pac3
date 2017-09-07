@@ -225,7 +225,7 @@ function PANEL:PopulateParts(node, parts, children)
 
 			fix_folder_funcs(part_node)
 
-			part_node:SetTooltip(part:GetDescription())
+			if part.GetDescription then part_node:SetTooltip(part:GetDescription()) end
 
 			part.editor_node = part_node
 			part_node.part = part

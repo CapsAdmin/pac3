@@ -179,7 +179,6 @@ function pacx.ConvertPAC2Config(data, name)
 				part.pac2_part = data
 				part:SetName(data.name .. " model")
 				part:SetBone(translate_bone(data.bone))
-				part:SetOriginFix(data.originfix)
 
 				part:SetMaterial(data.material)
 
@@ -243,7 +242,6 @@ function pacx.ConvertPAC2Config(data, name)
 				end
 
 				if data.modelbones.Enabled then
-					part:SetOverallSize(tonumber(data.modelbones.overallsize))
 					part:SetBoneMerge(data.modelbones.merge)
 					part.pac2_modelbone = data.modelbones.redirectparent
 

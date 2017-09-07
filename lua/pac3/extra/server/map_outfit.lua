@@ -54,7 +54,6 @@ local spawn_handlers = {
 
 				if data.Color then ent:SetColor(tocolor(c, (data.Alpha or 1) * 255)) end
 				if data.Skin then ent:SetSkin(data.Skin) end
-				if data.Bodygroup or data.BodygroupState then ent:SetBodygroup(data.Bodygroup, data.BodygroupState) end
 				if data.Material then ent:SetMaterial(data.Material) end
 				if data.Size then ent:SetModelScale(data.Size, 0) end
 				ent:PhysicsInit(SOLID_VPHYSICS)

@@ -60,7 +60,7 @@ function pace.OnCreatePart(class_name, name, desc, mdl)
 		end
 	end
 
-	if desc then part:SetDescription(desc) end
+	if desc and part.SetDescription then part:SetDescription(desc) end
 	if mdl then
 		part:SetModel(mdl)
 	elseif class_name == "model" then
@@ -175,8 +175,8 @@ do -- menu
 		for class_name, part in pairs(pac.GetRegisteredParts()) do
 			local cond = (not pace.IsInBasicMode() or not pace.BasicParts[class_name]) and
 				not part.Internal and
-				(not pace.IsShowingDeprecatedFeatures() or not pace.DeprecatedParts[class_name]) and
-				part.show_in_editor ~= false
+				part.show_in_editor ~= false and
+				part.is_deprecated ~= false
 
 			if cond then
 				partsToShow[class_name] = part
@@ -291,7 +291,6 @@ do -- menu
 			if pace.Clipboard then
 				local tbl = pace.Clipboard:ToTable()
 					tbl.self.Name = nil
-					tbl.self.Description = nil
 					tbl.self.ParentName = nil
 					tbl.self.Parent = nil
 					tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. tostring(tbl))

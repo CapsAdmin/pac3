@@ -520,7 +520,6 @@ function pace.FixBadGrouping(data)
 					["ClassName"] = "group",
 					["UniqueID"] = util.CRC(tostring(data)),
 					["Name"] = "automatic group",
-					["Description"] = "Please put your parts in groups!",
 				},
 
 				["children"] = parts,
