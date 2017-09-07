@@ -190,7 +190,7 @@ do -- menu
 				local newMenuEntry = menu:AddOption(L(class_name), function()
 					pace.Call("CreatePart", class_name)
 				end)
-				
+
 				if part.Icon then
 					newMenuEntry:SetImage(part.Icon)
 				end

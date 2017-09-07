@@ -9,10 +9,10 @@ PART.Groups = {'effects', 'model', 'entity'}
 PART.Icon = 'icon16/wand.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Effect", "default")
+	pac.GetSet(PART, "Effect", "default", {enums = function() return pac.particle_list end})
 	pac.GetSet(PART, "Loop", true)
 	pac.GetSet(PART, "Follow", true)
-	pac.GetSet(PART, "Rate", 1)
+	pac.GetSet(PART, "Rate", 1, {editor_sensitivity = 0.1})
 	pac.GetSet(PART, "UseParticleTracer", false)
 
 	pac.SetupPartName(PART, "PointA")
@@ -28,6 +28,19 @@ end
 
 function PART:Initialize()
 	self:SetEffect(self.Effect)
+
+	if not pac.particle_list then
+		local found = {}
+
+		for file_name in pairs(pac.loaded_particle_effects) do
+			local data = file.Read("particles/"..file_name, "GAME", "b")
+			for str in data:gmatch("\3%c([%a_]+)%c") do
+				found[str] = true
+			end
+		end
+
+		pac.particle_list = found
+	end
 end
 
 function PART:SetControlPointA(var)

@@ -27,7 +27,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "EndAlpha", 1)
 	pac.GetSet(PART, "Stretch", false)
 	pac.GetSet(PART, "IgnoreZ", false)
-	pac.GetSet(PART, "TrailPath", "trails/laser")
+	pac.GetSet(PART, "TrailPath", "trails/laser", {editor_type = "material"})
 	pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
 

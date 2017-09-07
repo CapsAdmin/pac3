@@ -33,7 +33,7 @@ pac.StartStorableVars()
 
 	pac.GetSet(PART, "RelativeBones", true)
 
-	pac.GetSet(PART, "Skin", 0)
+	pac.GetSet(PART, "Skin", 0, {editor_onchange = function(self, num) return math.Round(math.max(tonumber(num), 0)) end})
 	pac.GetSet(PART, "Bodygroup", 0)
 	pac.GetSet(PART, "BodygroupState", 0)
 	pac.GetSet(PART, "DrawShadow", true)

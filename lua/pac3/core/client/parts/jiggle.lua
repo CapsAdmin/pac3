@@ -12,7 +12,11 @@ PART.Group = 'model'
 PART.Icon = 'icon16/chart_line.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Strain", 0.5)
+	pac.GetSet(PART, "Strain", 0.5, function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Clamp(num, 0, 1) * 0.999
+	end)
 	pac.GetSet(PART, "Speed", 1)
 	pac.GetSet(PART, "ConstantVelocity", Vector(0, 0, 0))
 	pac.GetSet(PART, "LocalVelocity", true)

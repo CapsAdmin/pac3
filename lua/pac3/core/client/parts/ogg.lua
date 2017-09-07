@@ -7,10 +7,14 @@ PART.Icon = 'icon16/music.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "URL", "")
-	pac.GetSet(PART, "Volume", 1)
-	pac.GetSet(PART, "Pitch", 1)
+	pac.GetSet(PART, "Volume", 1, {editor_sensitivity = 0.25})
+	pac.GetSet(PART, "Pitch", 1, {editor_sensitivity = 0.125})
 	pac.GetSet(PART, "Radius", 1500)
-	pac.GetSet(PART, "PlayCount", 1)
+	pac.GetSet(PART, "PlayCount", 1, {editor_onchange = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Round(math.max(num, 0))
+	end})
 	pac.GetSet(PART, "Doppler", false)
 	pac.GetSet(PART, "StopOnHide", false)
 	pac.GetSet(PART, "PauseOnHide", false)
@@ -24,8 +28,8 @@ pac.StartStorableVars()
 	--pac.GetSet(PART, "EchoFeedback", 0.75)
 
 	pac.GetSet(PART, "PlayOnFootstep", false)
-	pac.GetSet(PART, "MinPitch", 0)
-	pac.GetSet(PART, "MaxPitch", 0)
+	pac.GetSet(PART, "MinPitch", 0, {editor_sensitivity = 0.125})
+	pac.GetSet(PART, "MaxPitch", 0, {editor_sensitivity = 0.125})
 pac.EndStorableVars()
 
 function PART:Initialize()

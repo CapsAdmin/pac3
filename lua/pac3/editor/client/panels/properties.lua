@@ -456,7 +456,56 @@ do -- list
 			local pnl
 			local T = (pace.TranslatePropertiesKey(key, obj) or type(val)):lower()
 
-			if pace.PanelExists("properties_" .. T) then
+			local udata = pac.PropertyUserdata[obj.ClassName] and pac.PropertyUserdata[obj.ClassName][key]
+
+			if udata then
+				if udata.enums then
+					pnl = pace.CreatePanel("properties_base_type")
+
+					function pnl:SpecialCallback()
+						local frame = create_search_list(
+							self,
+							self.CurrentKey,
+							L(key),
+							function(list)
+								list:AddColumn("enum")
+							end,
+							function()
+								local tbl
+								if type(udata.enums) == "function" then
+									tbl = udata.enums(pace.current_part)
+								else
+									tbl = udata.enums
+								end
+
+								local enums = {}
+								for k,v in pairs(tbl) do
+									if type(k) == "number" then
+										k = v
+									end
+									enums[L(k)] = v
+								end
+
+								return enums
+							end,
+							function()
+								return pace.current_part[key]
+							end,
+							function(list, key, val)
+								return list:AddLine(key)
+							end,
+							function(val, key)
+								return key
+							end
+						)
+					end
+				end
+				if udata.editor_type then
+					T = udata.editor_type or T
+				end
+			end
+
+			if not pnl and pace.PanelExists("properties_" .. T) then
 
 				if data.group and data.group ~= current_group then
 					self:AddCollapser(data.group)
@@ -483,6 +532,24 @@ do -- list
 					local val = obj["Get" .. key](obj)
 					pnl:SetValue(val)
 					pnl.LimitValue = pace.PropertyLimits[key]
+
+					local udata = pac.PropertyUserdata[obj.ClassName] and pac.PropertyUserdata[obj.ClassName][key]
+
+					if udata then
+						if udata.editor_sensitivity or udata.editor_clamp then
+							pnl.LimitValue = function(self, num)
+								if udata.editor_sensitivity then
+									self.sens = udata.editor_sensitivity
+								end
+								if udata.editor_clamp then
+									num = math.Clamp(num, unpack(udata.editor_clamp))
+								end
+								return num
+							end
+						elseif udata.editor_onchange then
+							pnl.LimitValue = udata.editor_onchange
+						end
+					end
 
 					pnl.OnValueChanged = function(val)
 						if T == "number" then
@@ -1399,35 +1466,6 @@ do -- model
 	pace.RegisterPanel(PANEL)
 end
 
-
-do -- submaterial
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_submaterialid"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-
-		local submaterials = pace.current_part:GetSubMaterialIdList()
-
-		local menu = DermaMenu()
-
-		menu:MakePopup()
-
-		for num, path in next,submaterials do
-			menu:AddOption(L(path), function()
-				self:SetValue(num)
-				self.OnValueChanged(num)
-			end)
-		end
-
-		FIX_MENU(menu)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-
 do -- material
 	local PANEL = {}
 
@@ -1505,69 +1543,6 @@ do -- sound
 			self:SetValue(path)
 			self.OnValueChanged(path)
 		end, "sound")
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- sequence list
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_sequence"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		create_search_list(
-			self,
-			self.CurrentKey,
-			"animations",
-			function(list)
-				list:AddColumn("id"):SetFixedWidth(25)
-				list:AddColumn("name")
-			end,
-			function()
-				return pace.current_part:GetSequenceList()
-			end,
-			function()
-				return pace.current_part.ClassName == "animation" and pace.current_part:GetSequenceName()
-			end,
-			function(list, key, val)
-				return list:AddLine(key, val)
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- pose parameter list
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_poseparameter"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		create_search_list(
-			self,
-			self.CurrentKey,
-			"pose parameters",
-			function(list)
-				list:AddColumn("id"):SetFixedWidth(25)
-				list:AddColumn("name")
-			end,
-			function()
-				return pace.current_part:GetPoseParameterList()
-			end,
-			function()
-				return pace.current_part:GetPoseParameter()
-			end,
-			function(list, key, val)
-				return list:AddLine(key, val.name)
-			end,
-			function(val)
-				return val.name
-			end
-		)
 	end
 
 	pace.RegisterPanel(PANEL)
@@ -1691,482 +1666,6 @@ do -- arguments
 			pace.properties:Populate(tbl, true, L"arguments")
 		end
 
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- Proxy Functions
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_proxyfunctions"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SafeRemoveSpecialPanel()
-
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"functions")
-		SHOW_SPECIAL(frame, self, 250)
-		frame:SetSizable(true)
-
-		local list = vgui.Create("DListView", frame)
-		list:Dock(FILL)
-		list:SetMultiSelect(false)
-		list:AddColumn(L"function")
-
-		list.OnRowSelected = function(_, id, line)
-			self:SetValue(line.event_name)
-			self.OnValueChanged(line.event_name)
-		end
-
-		for name, _ in pairs(pace.current_part.Functions) do
-			local pnl = list:AddLine(L(name))
-			pnl.event_name = name
-
-			if cur == name then
-				list:SelectItem(pnl)
-			end
-		end
-
-		pace.ActiveSpecialPanel = frame
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- Proxy Functions
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_proxyinputs"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			"operators",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return pace.current_part.Inputs
-			end,
-			function()
-				return pace.current_part.Input
-			end,
-			function(list, key, val)
-				return list:AddLine(L(key))
-			end,
-			function(val, key)
-				return key
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- Proxy Variables
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_proxyvars"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local parent = pace.current_part.Parent
-
-		if not parent:IsValid() then return end
-
-		pace.SafeRemoveSpecialPanel()
-
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"functions")
-		SHOW_SPECIAL(frame, self, 250)
-		frame:SetSizable(true)
-
-		local list = vgui.Create("DListView", frame)
-		list:Dock(FILL)
-		list:SetMultiSelect(false)
-		list:AddColumn(L"parent variables")
-
-		list.OnRowSelected = function(_, id, line)
-			self:SetValue(line.event_name)
-			self.OnValueChanged(line.event_name)
-		end
-
-		for key, _ in pairs(parent.StorableVars) do
-			if key == "UniqueID" then continue end
-
-			local T = type(parent[key])
-			if T == "number" or T == "Vector" or T == "Angle" or T == "boolean" then
-				local pnl = list:AddLine(L(key:gsub("%u", " %1"):lower()))
-				pnl.event_name = key
-
-				if cur == key then
-					list:SelectItem(pnl)
-				end
-			end
-		end
-
-		pace.ActiveSpecialPanel = frame
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-
-do -- bodygroup names
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_bodygroupname"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SafeRemoveSpecialPanel()
-
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"bodygroup names")
-		SHOW_SPECIAL(frame, self, 250)
-		frame:SetSizable(true)
-
-		local list = vgui.Create("DListView", frame)
-		list:Dock(FILL)
-		list:SetMultiSelect(false)
-		list:AddColumn(L"name")
-
-		list.OnRowSelected = function(_, id, line)
-			self:SetValue(line.name)
-			self.OnValueChanged(line.name)
-		end
-
-		local cur = pace.current_part:GetBodyGroupName()
-
-		for _, name in pairs(pace.current_part:GetBodyGroupNameList()) do
-			local pnl = list:AddLine(L(name))
-			pnl.name = name
-
-			if cur == name then
-				list:SelectItem(pnl)
-			end
-		end
-
-		pace.ActiveSpecialPanel = frame
-	end
-
-	pace.RegisterPanel(PANEL)
-
-end
-
-do -- flex
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_flex"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SafeRemoveSpecialPanel()
-
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"flex names")
-		SHOW_SPECIAL(frame, self, 250)
-		frame:SetSizable(true)
-
-		local list = vgui.Create("DListView", frame)
-		list:Dock(FILL)
-		list:SetMultiSelect(false)
-		list:AddColumn(L"id")
-		list:AddColumn(L"name")
-
-		list.OnRowSelected = function(_, id, line)
-			self:SetValue(line.name)
-			self.OnValueChanged(line.name)
-		end
-
-		local cur = pace.current_part:GetFlex()
-
-		for _, v in pairs(pace.current_part:GetFlexList()) do
-			local pnl = list:AddLine(v.i, L(v.name))
-			pnl.name = v.name
-
-			if cur == v.name then
-				list:SelectItem(pnl)
-			end
-		end
-
-		pace.ActiveSpecialPanel = frame
-	end
-
-	pace.RegisterPanel(PANEL)
-
-end
-
-do -- holdtype
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_weaponholdtype"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			L"holdtypes",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return pace.current_part.ValidHoldTypes
-			end,
-			function()
-				return pace.current_part.HoldType
-			end,
-			function(list, key, val)
-				return list:AddLine(key)
-			end,
-			function(val, key)
-				return key
-			end
-		)
-
-		pace.ActiveSpecialPanel = frame
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- effect
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_effect"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		if not pace.particle_list then
-			local found = {}
-
-			for file_name in pairs(pac.loaded_particle_effects) do
-				local data = file.Read("particles/"..file_name, "GAME", "b")
-				for str in data:gmatch("\3%c([%a_]+)%c") do
-					found[str] = true
-				end
-			end
-
-			pace.particle_list = found
-		end
-
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			L"particle list",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return pace.particle_list
-			end,
-			function()
-				return pace.current_part.Effect
-			end,
-			function(list, key, val)
-				return list:AddLine(key)
-			end,
-			function(val, key)
-				return key
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- damage type
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_damagetype"
-	PANEL.Base = "pace_properties_base_type"
-
-	local damage_types = {
-		generic = 0, --generic damage
-		crush = 1, --caused by physics interaction
-		bullet = 2, --bullet damage
-		slash = 4, --sharp objects, such as manhacks or other npcs attacks
-		burn = 8, --damage from fire
-		vehicle = 16, --hit by a vehicle
-		fall = 32, --fall damage
-		blast = 64, --explosion damage
-		club = 128, --crowbar damage
-		shock = 256, --electrical damage, shows smoke at the damage position
-		sonic = 512, --sonic damage,used by the gargantua and houndeye npcs
-		energybeam = 1024, --laser
-		nevergib = 4096, --don't create gibs
-		alwaysgib = 8192, --always create gibs
-		drown = 16384, --drown damage
-		paralyze = 32768, --same as dmg_poison
-		nervegas = 65536, --neurotoxin damage
-		poison = 131072, --poison damage
-		acid = 1048576, --
-		airboat = 33554432, --airboat gun damage
-		blast_surface = 134217728, --this won't hurt the player underwater
-		buckshot = 536870912, --the pellets fired from a shotgun
-		direct = 268435456, --
-		dissolve = 67108864, --forces the entity to dissolve on death
-		drownrecover = 524288, --damage applied to the player to restore health after drowning
-		physgun = 8388608, --damage done by the gravity gun
-		plasma = 16777216, --
-		prevent_physics_force = 2048, --
-		radiation = 262144, --radiation
-		removenoragdoll = 4194304, --don't create a ragdoll on death
-		slowburn = 2097152, --
-
-		explosion = -1, -- util.BlastDamage
-		fire = -1, -- ent:Ignite(5)
-
-		-- env_entity_dissolver
-		dissolve_energy = 0,
-		dissolve_heavy_electrical = 1,
-		dissolve_light_electrical = 2,
-		dissolve_core_effect = 3,
-
-		heal = -1,
-		armor = -1,
-	}
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			L"damage type list",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return damage_types
-			end,
-			function()
-				return pace.current_part.DamageType
-			end,
-			function(list, key, val)
-				return list:AddLine(key)
-			end,
-			function(val, key)
-				return key
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- gesture slots
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_gestureslot"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			L"gesture slots list",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return {
-					attackreload = GESTURE_SLOT_ATTACK_AND_RELOAD,
-					grenade = GESTURE_SLOT_GRENADE,
-					jump = GESTURE_SLOT_JUMP,
-					swim = GESTURE_SLOT_SWIM,
-					flinch = GESTURE_SLOT_FLINCH,
-					vcd = GESTURE_SLOT_VCD,
-					custom = GESTURE_SLOT_CUSTOM
-				}
-			end,
-			function()
-				return pace.current_part.SlotName
-			end,
-			function(list, key, val)
-				return list:AddLine(key)
-			end,
-			function(val, key)
-				return key
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- gesture properties
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_custom_animation_type"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			L"animation type",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return {
-					gesture = "gesture",
-					posture = "posture",
-					sequence = "sequence",
-					stance = "stance",
-				}
-			end,
-			function()
-				return pace.current_part.AnimationType
-			end,
-			function(list, key, val)
-				return list:AddLine(key)
-			end,
-			function(val, key)
-				return key
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- gesture properties
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_attract_mode"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			L"attract mode",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return {
-					hitpos = "hitpos",
-					hitpos_radius = "hitpos_radius",
-					closest_to_projectile = "closest_to_projectile",
-					closest_to_hitpos = "closest_to_hitpos",
-				}
-			end,
-			function()
-				return pace.current_part.AttractMode
-			end,
-			function(list, key, val)
-				return list:AddLine(key)
-			end,
-			function(val, key)
-				return key
-			end
-		)
 	end
 
 	pace.RegisterPanel(PANEL)

@@ -7,14 +7,28 @@ PART.Group = 'modifiers'
 PART.Icon = 'icon16/calculator.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "VariableName", "")
+	pac.GetSet(PART, "VariableName", "", {enums = function(part)
+		local parent = part:GetParent()
+		if not parent:IsValid() then return end
+		local tbl = {}
+		for key, _ in pairs(parent.StorableVars) do
+			if key == "UniqueID" then continue end
+
+			local T = type(parent[key])
+			if T == "number" or T == "Vector" or T == "Angle" or T == "boolean" then
+				tbl[key:gsub("%u", " %1"):lower()] = key
+			end
+		end
+
+		return tbl
+	end})
 	pac.GetSet(PART, "Expression", "")
 	pac.GetSet(PART, "RootOwner", false)
 	pac.GetSet(PART, "Additive", false)
 	pac.GetSet(PART, "AffectChildren", false)
 
-	pac.GetSet(PART, "Input", "time")
-	pac.GetSet(PART, "Function", "sin")
+	pac.GetSet(PART, "Input", "time", {enums = function(part) return part.Inputs end})
+	pac.GetSet(PART, "Function", "sin", {enums = function(part) return part.Functions end})
 	pac.GetSet(PART, "Offset", 0)
 	pac.GetSet(PART, "InputMultiplier", 1)
 	pac.GetSet(PART, "InputDivider", 1)

@@ -6,7 +6,13 @@ PART.Icon = 'icon16/emoticon_smile.png'
 PART.Group = 'entity'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Flex", "")
+	pac.GetSet(PART, "Flex", "", {enums = function(part)
+		local tbl = {}
+		for _, v in pairs(part:GetFlexList()) do
+			tbl[v.name] = v.name
+		end
+		return tbl
+	end})
 	pac.GetSet(PART, "Weight", 0)
 	pac.GetSet(PART, "RootOwner", true)
 	pac.GetSet(PART, "DefaultOnHide", true)

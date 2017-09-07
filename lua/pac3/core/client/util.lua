@@ -379,6 +379,7 @@ end
 
 do -- get set and editor vars
 	pac.VariableOrder = pac.VariableOrder or {}
+	pac.PropertyUserdata = pac.PropertyUserdata or {}
 
 	local function insert_key(key)
 		for k in pairs(pac.VariableOrder) do
@@ -407,10 +408,15 @@ do -- get set and editor vars
 		__group = name
 	end
 
-	function pac.GetSet(tbl, key, ...)
+	function pac.GetSet(tbl, key, def, udata)
 		insert_key(key)
 
-		pac.class.GetSet(tbl, key, ...)
+		pac.class.GetSet(tbl, key, def)
+
+		if udata then
+			pac.PropertyUserdata[tbl.ClassName] = pac.PropertyUserdata[tbl.ClassName] or {}
+			pac.PropertyUserdata[tbl.ClassName][key] = udata
+		end
 
 		if __store then
 			tbl.StorableVars = tbl.StorableVars or {}
@@ -457,7 +463,7 @@ do -- get set and editor vars
 			pac.GetSet(PART, part_key, pac.NULL)
 		pac.StartStorableVars()
 
-		pac.GetSet(PART, name_key, "")
+		pac.GetSet(PART, name_key, "", {editor_type = "part"})
 		pac.GetSet(PART, uid_key, "")
 
 		PART.ResolvePartNames = PART.ResolvePartNames or function(self, force)

@@ -6,7 +6,9 @@ PART.Groups = {'entity', 'model', 'modifiers'}
 PART.Icon = 'icon16/user.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "BodyGroupName", "")
+	pac.GetSet(PART, "BodyGroupName", "", {enums = function()
+		return pace.current_part:GetBodyGroupNameList()
+	end})
 	pac.GetSet(PART, "ModelIndex", 0)
 pac.EndStorableVars()
 
@@ -85,7 +87,7 @@ function PART:GetBodyGroupNameList()
 
 	if ent:IsValid() then
 		for _, info in pairs(ent:GetBodyGroups()) do
-			table.insert(out, info.name:lower())
+			out[info.name] = info.name:lower()
 		end
 	end
 

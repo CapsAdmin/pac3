@@ -118,7 +118,7 @@ end
 local function setup(PART)
 	for name, T in pairs(PART.ShaderParams) do
 		if T == "ITexture" then
-			pac.GetSet(PART, name, "")
+			pac.GetSet(PART, name, "", {editor_type = "textures"})
 
 			PART["Set" .. name] = function(self, var)
 				self[name] = var
