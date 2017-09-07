@@ -303,6 +303,14 @@ function PART:OnShow()
 
 					ent:SetSkin(self.Skin)
 
+					if ent.pac_bodygroups_torender then
+						for bgID, bgVal in pairs(ent.pac_bodygroups_torender) do
+							ent:SetBodygroup(bgID, bgVal)
+						end
+					end
+
+					ent.pac_bodygroups_torender = nil
+
 					ent:DrawModel()
 
 					if modpos then
