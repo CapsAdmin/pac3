@@ -7,7 +7,7 @@ PART.Icon = 'icon16/webcam_delete.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Resolution", 8)
-	pac.GetSet(PART, "Size", 1)
+	pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
 	pac.GetSet(PART, "FixedSize", true)
 pac.EndStorableVars()
 

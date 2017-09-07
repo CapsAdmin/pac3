@@ -40,62 +40,7 @@ pace.GroupsIcons = {
 }
 
 pace.PropertyOrder = {}
-
-pace.PropertyLimits =
-{
-	Sequence = function(self, num)
-		num = tonumber(num)
-		return math.Round(math.min(num, -1))
-	end,
-
-
-	BaseTextureAngle = function(self, num) self.sens = 0.25 return num end,
-	BumpAngle = function(self, num) self.sens = 0.25 return num end,
-	EnvMapMaskAngle = function(self, num) self.sens = 0.25 return num end,
-
-	Size = function(self, num)
-		self.sens = 0.25
-
-		return num
-	end,
-
-	Alpha = function(self, num)
-		self.sens = 0.25
-		num = tonumber(num)
-		return math.Clamp(num, 0, 1)
-	end,
-
-	CloakFactor = function(self, num)
-		self.sens = 0.25
-		num = tonumber(num)
-		return math.Clamp(num, 0, 1)
-	end,
-
-	DetailBlendMode = function(self, num)
-		num = tonumber(num)
-		return math.Round(math.max(num, 0))
-	end,
-	EchoDelay = function(self, num)
-		self.sens = 0.25
-		num = tonumber(num)
-		return num
-	end,
-	EchoFeedback = function(self, num)
-		self.sens = 0.25
-		num = tonumber(num)
-		return math.Clamp(num, 0, 1)
-	end,
-	FilterFraction = function(self, num)
-		self.sens = 0.25
-		num = tonumber(num)
-		return math.Clamp(num, 0, 1)
-	end,
-	FilterType = function(self, num)
-		self.sens = 0.25
-		num = tonumber(num)
-		return math.Round(math.Clamp(num, 0, 2))
-	end,
-}
+pace.PropertyLimits = {}
 
 local temp = {}
 for group, properties in pairs(pace.PropertySheets) do

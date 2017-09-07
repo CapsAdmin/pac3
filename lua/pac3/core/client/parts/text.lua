@@ -19,10 +19,10 @@ PART.Icon = 'icon16/text_align_center.png'
 pac.StartStorableVars()
 	pac.GetSet(PART, "Text", "")
 	pac.GetSet(PART, "Font", "default")
-	pac.GetSet(PART, "Size", 1)
+	pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
 	pac.GetSet(PART, "Outline", 0)
 	pac.GetSet(PART, "Color", Vector(255, 255, 255))
-	pac.GetSet(PART, "Alpha", 1)
+	pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
 	pac.GetSet(PART, "OutlineColor", Vector(255, 255, 255))
 	pac.GetSet(PART, "OutlineAlpha", 1, {editor_onchange = function(self, num)
 		self.sens = 0.25

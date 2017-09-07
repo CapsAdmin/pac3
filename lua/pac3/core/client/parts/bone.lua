@@ -13,8 +13,8 @@ PART.Icon = 'icon16/connect.png'
 PART.RenderPriority = 10
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Scale", Vector(1,1,1))
-	pac.GetSet(PART, "Size", 1)
+	pac.GetSet(PART, "Scale", Vector(1,1,1), {editor_sensitivity = 0.25})
+	pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
 	pac.GetSet(PART, "Jiggle", false)
 	pac.GetSet(PART, "ScaleChildren", false)
 	pac.GetSet(PART, "AlternativeBones", false)

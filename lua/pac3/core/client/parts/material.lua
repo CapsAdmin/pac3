@@ -11,7 +11,7 @@ PART.ShaderParams =
 	BaseTexture = "ITexture",
 
 	CloakPassEnabled  = "boolean",
-	CloakFactor = "number",
+	CloakFactor = {type = "number", extra = {editor_sensitivity = 0.25, editor_clamp = {0, 1}}},
 	CloakColorTint = "Vector",
 	RefractAmount = "number",
 
@@ -21,7 +21,7 @@ PART.ShaderParams =
 	Detail = "ITexture",
 	DetailTint = "Vector",
 	DetailScale = "number",
-	DetailBlendMode = "number",
+	DetailBlendMode = {type = "number", extra = {on_change = function(pnl, num) return math.Round(math.max(num, 0)) end}
 	DetailBlendFactor = "number",
 
 	Phong = "boolean",
@@ -240,7 +240,7 @@ local function add_transform(texture_name)
 
 	pac.GetSet(PART, position_key, Vector(0, 0, 0))
 	pac.GetSet(PART, scale_key, Vector(1, 1, 1))
-	pac.GetSet(PART, angle_key, 0)
+	pac.GetSet(PART, angle_key, 0, {editor_sensitivity = 0.25})
 	pac.GetSet(PART, angle_center_key, Vector(0.5, 0.5, 0))
 
 	PART.TransformVars = PART.TransformVars or {}

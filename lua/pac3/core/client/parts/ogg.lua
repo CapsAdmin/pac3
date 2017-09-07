@@ -20,8 +20,12 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "PauseOnHide", false)
 	pac.GetSet(PART, "Overlapping", false)
 
-	pac.GetSet(PART, "FilterType", 0)
-	pac.GetSet(PART, "FilterFraction", 1)
+	pac.GetSet(PART, "FilterType", 0, {editor_onchange = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Round(math.Clamp(num, 0, 2))
+	end})
+	pac.GetSet(PART, "FilterFraction", 1, {editor_sensitivity = 0.125, editor_clamp = {0, 1}})
 
 	--pac.GetSet(PART, "Echo", false)
 	--pac.GetSet(PART, "EchoDelay", 0.5)
