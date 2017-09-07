@@ -344,9 +344,12 @@ do -- list
 				val = val.val
 			end
 
+			local uData = obj.ClassName and pac.PropertyUserdata[obj.ClassName]
+
 			if
 				not obj.ClassName or
-				(not pace.HiddenPropertyKeys[key] or pace.HiddenPropertyKeys[key] == obj.ClassName) and
+				(obj.ClassName ~= 'group' or key ~= 'OwnerName') and
+				(not uData or not uData[key] or not uData[key].hidden) and
 				not pace.ShouldHideProperty(key) and
 				(not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key))
 			then

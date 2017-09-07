@@ -97,18 +97,6 @@ pace.PropertyLimits =
 	end,
 }
 
-pace.HiddenProperties =
-{
-	Arguments = true,
-}
-
-pace.HiddenPropertyKeys =
-{
-	EditorExpand = true,
-	UniqueID = true,
-	OwnerName = "group",
-}
-
 local temp = {}
 for group, properties in pairs(pace.PropertySheets) do
 	for k,v in pairs(properties) do
@@ -119,6 +107,8 @@ end
 pace.ReversedPropertySheets = temp
 
 function pace.ShouldHideProperty(key)
+	local status = hook.Call('PACShouldHideProperty', nil, key)
+	if status ~= nil then return status end
 	return key:find("UID")
 end
 

@@ -380,6 +380,7 @@ end
 do -- get set and editor vars
 	pac.VariableOrder = pac.VariableOrder or {}
 	pac.PropertyUserdata = pac.PropertyUserdata or {}
+	pac.PropertyUserdata['base'] = pac.PropertyUserdata['base'] or {}
 
 	local function insert_key(key)
 		for k in pairs(pac.VariableOrder) do
@@ -408,13 +409,26 @@ do -- get set and editor vars
 		__group = name
 	end
 
+	local propertyMeta = {
+		__index = function(self, key)
+			local getSelf = rawget(self, key)
+
+			if getSelf ~= nil then
+				return getSelf
+			end
+
+			return pac.PropertyUserdata['base'][key]
+		end
+	}
+
 	function pac.GetSet(tbl, key, def, udata)
 		insert_key(key)
 
 		pac.class.GetSet(tbl, key, def)
+		pac.PropertyUserdata[tbl.ClassName] = pac.PropertyUserdata[tbl.ClassName] or {}
+		if tbl.ClassName ~= 'base' then setmetatable(pac.PropertyUserdata[tbl.ClassName], propertyMeta) end
 
 		if udata then
-			pac.PropertyUserdata[tbl.ClassName] = pac.PropertyUserdata[tbl.ClassName] or {}
 			pac.PropertyUserdata[tbl.ClassName][key] = udata
 		end
 
