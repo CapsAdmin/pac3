@@ -505,7 +505,7 @@ do -- list
 							end,
 
 							function(list, key, val)
-								return list:AddLine(key)
+								return list:AddLine(pace.util.FriendlyName(key))
 							end,
 
 							function(val, key)
