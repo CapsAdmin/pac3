@@ -28,7 +28,7 @@ PART.ShaderParams =
 	PhongBoost = "number",
 	PhongExponent = "number",
 	PhongTint = "Vector",
-	PhongFresnelRanges = "Vector",
+	PhongFresnelRanges = {type = "Vector", extra = {editor_panel = "color"}}
 	PhongWarpTexture = "ITexture",
 	PhongAlbedoTint = "boolean",
 	PhongExponentTexture = "ITexture",
@@ -117,6 +117,11 @@ end
 
 local function setup(PART)
 	for name, T in pairs(PART.ShaderParams) do
+		local extra
+		if type(T) == "table" then
+			extra = T.extra
+			T = T.type
+		end
 		if T == "ITexture" then
 			pac.GetSet(PART, name, "", {editor_type = "textures"})
 

@@ -7,23 +7,23 @@ PART.Group = {'model', 'entity'}
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Material", "")
-	pac.GetSet(PART, "SubMaterialId", 1, {on_change = function(self, num)
-		num = tonumber(num) or 0
+	pac.GetSet(PART, "SubMaterialId", 1, {
+		editor_panel = "submaterialid",
+		on_change = function(self, num)
+			num = tonumber(num) or 0
 
-		local ent = self:GetOwner(self.RootOwner)
+			local ent = self:GetOwner(self.RootOwner)
 
-		local maxnum = 16
+			local maxnum = 16
 
-		return math.floor(math.Clamp(num, 0, maxnum))
-	end, enums = function(part) return part:GetSubMaterialIdList() end})
+			return math.floor(math.Clamp(num, 0, maxnum))
+		end,
+		enums = function(part)
+			return part:GetSubMaterialIdList()
+		end,
+	})
 	pac.GetSet(PART, "RootOwner", false)
 pac.EndStorableVars()
-
-function PART:TranslatePropertiesKey(key)
-	if key and key:lower() == "submaterialid" then
-		return "submaterialid"
-	end
-end
 
 function PART:GetSubMaterialIdList()
 	local out = {}

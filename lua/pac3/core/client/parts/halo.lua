@@ -10,7 +10,7 @@ PART.Group = {'effects', 'model'}
 PART.Icon = 'icon16/shading.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Color", Vector(255, 255, 255))
+	pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
 	pac.GetSet(PART, "BlurX", 2)
 	pac.GetSet(PART, "BlurY", 2)
 	pac.GetSet(PART, "Passes", 1)

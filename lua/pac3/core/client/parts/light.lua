@@ -8,7 +8,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Brightness", 1)
 	pac.GetSet(PART, "Size", 5, {editor_sensitivity = 0.25})
 	pac.GetSet(PART, "Style", 0, {editor_clamp = {0, 16}})
-	pac.GetSet(PART, "Color", Vector(255, 255, 255))
+	pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
 pac.EndStorableVars()
 
 function PART:GetNiceName()

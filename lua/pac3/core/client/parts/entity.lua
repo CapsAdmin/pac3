@@ -19,7 +19,7 @@ PART.Icon = 'icon16/brick.png'
 pac.StartStorableVars()
 	pac.GetSet(PART, "Material", "")
 	pac.GetSet(PART, "Model", "")
-	pac.GetSet(PART, "Color", Vector(255, 255, 255))
+	pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
 	pac.GetSet(PART, "Brightness", 1)
 	pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
 	pac.GetSet(PART, "Scale", Vector(1,1,1))

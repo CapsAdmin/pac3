@@ -7,7 +7,7 @@ PART.Group = 'effects'
 PART.Icon = 'icon16/paintbrush.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Color", Vector(255, 255, 255))
+	pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
 	--pac.GetSet(PART, "Width", 1)
 	--pac.GetSet(PART, "Height", 1)
 	pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})

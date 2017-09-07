@@ -11,8 +11,8 @@ PART.Group = 'effects'
 PART.Icon = 'icon16/water.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Color1", Vector(255, 255, 255))
-	pac.GetSet(PART, "Color2", Vector(255, 255, 255))
+	pac.GetSet(PART, "Color1", Vector(255, 255, 255), {editor_panel = "color"})
+	pac.GetSet(PART, "Color2", Vector(255, 255, 255), {editor_panel = "color"})
 	pac.GetSet(PART, "Material", "effects/slime1")
 	pac.GetSet(PART, "RandomColour", true) -- haaaa
 	pac.GetSet(PART, "FireDelay", 0.2)
