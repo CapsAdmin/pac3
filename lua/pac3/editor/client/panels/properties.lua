@@ -340,10 +340,7 @@ do -- list
 
 			local udata = pac.GetPropertyUserdata(obj, key)
 
-			if udata and udata.hidden then
-				print(key, "HIDDEN")
-				continue
-			end
+			if udata and udata.hidden then continue end
 
 			if not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key) then
 				local group = group_override or (udata and udata.group) or "generic"
