@@ -55,10 +55,6 @@ function pac.UpdateAnimation(ply)
 		return true
 	end
 
-	if ply.pac_bodygroup_info then
-		ply:SetBodygroup(ply.pac_bodygroup_info.id, ply.pac_bodygroup_info.model_index)
-	end
-
 	local vehicle = ply:GetVehicle()
 
 	if ply.pac_last_vehicle ~= vehicle then

@@ -4,6 +4,7 @@ PART.ClassName = "flex"
 PART.NonPhysical = true
 PART.Icon = 'icon16/emoticon_smile.png'
 PART.Group = 'entity'
+PART.RenderPriority = 5
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Flex", "", {

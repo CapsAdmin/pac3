@@ -1,14 +1,18 @@
+
 local PART = {}
 
 PART.ClassName = "bodygroup"
 PART.NonPhysical = true
 PART.Groups = {'entity', 'model', 'modifiers'}
 PART.Icon = 'icon16/user.png'
+PART.RenderPriority = 2
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "BodyGroupName", "", {enums = function()
-		return pace.current_part:GetBodyGroupNameList()
-	end})
+	pac.GetSet(PART, "BodyGroupName", "", {
+		enums = function()
+			return pace.current_part:GetBodyGroupNameList()
+		end
+	})
 	pac.GetSet(PART, "ModelIndex", 0)
 pac.EndStorableVars()
 
@@ -18,45 +22,40 @@ end
 
 function PART:SetBodyGroupName(str)
 	self.BodyGroupName = str
-	self.bodygroup_info = nil
+	self:UpdateBodygroupData()
 end
 
 function PART:SetModelIndex(i)
-	self.ModelIndex = i
-	self.bodygroup_info = nil
+	self.ModelIndex = math.floor(tonumber(i) or 0)
+	self:UpdateBodygroupData()
 end
 
-function PART:OnThink()
+function PART:UpdateBodygroupData()
+	self.bodygroup_index = nil
+	self.minIndex = 0
+	self.maxIndex = 0
 	local ent = self:GetOwner()
 
-	if ent:IsValid() then
+	if not IsValid(ent) then return end
+	local fName = self.BodyGroupName:lower()
 
-		if not self.bodygroup_info then
-			for _, info in pairs(ent:GetBodyGroups()) do
-				if info.name == self.BodyGroupName:lower() then
-					self.bodygroup_info = info
-					self.bodygroup_info.model_index = math.Clamp(self.ModelIndex, 0, info.num - 1)
-
-					if ent:IsPlayer() then
-						ent.pac_bodygroup_info = self.bodygroup_info
-					end
-					break
-				end
-			end
-		end
-
-		if self.bodygroup_info and not ent:IsPlayer() then
-			ent:SetBodygroup(self.bodygroup_info.id, self.bodygroup_info.model_index)
+	for i, info in ipairs(ent:GetBodyGroups()) do
+		if info.name == fName then
+			self.bodygroup_index = info.id
+			self.maxIndex = info.num - 1
+			break
 		end
 	end
 end
 
-function PART:OnRemove()
+function PART:Draw(event, pos, ang, draw_type)
+	if not self.last_enabled or self:IsHidden() then return end
+	if not self.bodygroup_index then return self:DrawChildren(event, pos, ang, draw_type) end
 	local ent = self:GetOwner()
-
-	if ent:IsValid() and ent:IsPlayer() then
-		ent.pac_bodygroup_info = nil
-	end
+	if not IsValid(ent) then return self:DrawChildren(event, pos, ang, draw_type) end
+	if self.ModelIndex < self.minIndex or self.ModelIndex > self.maxIndex then return self:DrawChildren(event, pos, ang, draw_type) end
+	ent:SetBodygroup(self.bodygroup_index, self.ModelIndex)
+	self:DrawChildren(event, pos, ang, draw_type)
 end
 
 -- for the editor

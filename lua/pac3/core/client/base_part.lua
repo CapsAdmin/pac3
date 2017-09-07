@@ -30,6 +30,7 @@ local PART = {}
 
 PART.ClassName = "base"
 PART.Internal = true
+PART.RenderPriority = 1
 
 function PART:__tostring()
 	return string.format("%s[%s][%s][%i]", self.Type, self.ClassName, self.Name, self.Id)
@@ -815,8 +816,21 @@ function PART:Highlight(skip_children, data)
 end
 
 do -- drawing. this code is running every frame
-	PART.cached_pos = Vector(0,0,0)
-	PART.cached_ang = Angle(0,0,0)
+	PART.cached_pos = Vector(0, 0, 0)
+	PART.cached_ang = Angle(0, 0, 0)
+
+	local function sortRenderPriority(a, b)
+		return a.RenderPriority > b.RenderPriority
+	end
+
+	function PART:DrawChildren(event, pos, ang, draw_type)
+		local children = self:GetChildren()
+		table.sort(children, sortRenderPriority)
+
+		for i, child in ipairs(children) do
+			child:Draw(event, pos, ang, draw_type)
+		end
+	end
 
 	function PART:Draw(event, pos, ang, draw_type)
 
@@ -849,24 +863,11 @@ do -- drawing. this code is running every frame
 			if not self.HandleModifiersManually then self:ModifiersPostEvent(event, draw_type) end
 		end
 
-		local boneParts = {}
-		local otherParts = {}
 		local children = self:GetChildren()
+		table.sort(children, sortRenderPriority)
 
-		for i = 1, #children do
-			if children[i].ClassName == 'bone' then
-				boneParts[#boneParts + 1] = children[i]
-			else
-				otherParts[#otherParts + 1] = children[i]
-			end
-		end
-
-		for i = 1, #boneParts do
-			boneParts[i].Draw(boneParts[i], event, pos, ang, draw_type)
-		end
-
-		for i = 1, #otherParts do
-			otherParts[i].Draw(otherParts[i], event, pos, ang, draw_type)
+		for i, child in ipairs(children) do
+			child:Draw(event, pos, ang, draw_type)
 		end
 	end
 
@@ -914,7 +915,6 @@ do -- drawing. this code is running every frame
 			local pos, ang
 
 			if parent:IsValid() and not parent.NonPhysical then
-
 				local ent = parent.Entity or NULL
 
 				if ent:IsValid() then
