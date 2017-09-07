@@ -24,6 +24,8 @@ pac.StartStorableVars()
 	pac.SetupPartName(PART, "FollowPart")
 pac.EndStorableVars()
 
+pac.RemoveProperty(PART, "Translucent")
+
 function PART:GetNiceName()
 	return self:GetBone()
 end

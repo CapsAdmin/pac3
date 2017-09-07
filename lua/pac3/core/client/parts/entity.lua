@@ -55,6 +55,9 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "UseLegacyScale", false)
 pac.EndStorableVars()
 
+pac.RemoveProperty(PART, "PositionOffset")
+pac.RemoveProperty(PART, "AngleOffset")
+
 local function ENTFIELD(PART, name, field)
 
 	field = "pac_" .. field

@@ -478,7 +478,7 @@ do -- get set and editor vars
 		pac.StartStorableVars()
 
 		pac.GetSet(PART, name_key, "", {editor_type = "part"})
-		pac.GetSet(PART, uid_key, "")
+		pac.GetSet(PART, uid_key, "", {editor_hidden = true})
 
 		PART.ResolvePartNames = PART.ResolvePartNames or function(self, force)
 			for _, func in pairs(self.PartNameResolvers) do
@@ -539,6 +539,13 @@ do -- get set and editor vars
 				self[uid_key] = var.UniqueID
 				self[part_set_key](self, var)
 			end
+		end
+	end
+
+	function pac.RemoveProperty(PART, key)
+		pac.class.RemoveField(PART, key)
+		if pac.PropertyUserdata[PART.ClassName] then
+			pac.PropertyUserdata[PART.ClassName][key] = nil
 		end
 	end
 end

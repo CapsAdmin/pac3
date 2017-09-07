@@ -22,6 +22,8 @@ pac.StartStorableVars()
 
 pac.EndStorableVars()
 
+pac.RemoveProperty(PART, "Translucent")
+
 function PART:GetNiceName()
 	return pac.PrettifyName(self:GetEffect())
 end

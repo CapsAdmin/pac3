@@ -1,9 +1,5 @@
 -- automate me!
 
-pace.PropertySheets = {}
-pace.PropertySheetPatterns = {}
-pace.PartTree = {}
-
 pace.MiscIcons = {
 	about = "icon16/star.png",
 	appearance = "icon16/paintcan.png",
@@ -38,64 +34,5 @@ pace.GroupsIcons = {
 	modifiers = 'icon16/disconnect.png',
 	advanced = 'icon16/page_white_gear.png'
 }
-
-pace.PropertyOrder = {}
-pace.PropertyLimits = {}
-
-local temp = {}
-for group, properties in pairs(pace.PropertySheets) do
-	for k,v in pairs(properties) do
-		temp[k] = group
-	end
-end
-
-pace.ReversedPropertySheets = temp
-
-function pace.ShouldHideProperty(key)
-	local status = hook.Call('PACShouldHideProperty', nil, key)
-	if status ~= nil then return status end
-	return key:find("UID")
-end
-
-function pace.TranslatePropertiesKey(key, obj)
-	local key_ = key
-	key = key:lower()
-
-	if obj.ClassName == "entity" and (key == "positionoffset" or key == "angleoffset") then
-		return ""
-	end
-
-	if (
-		obj.ClassName == "effect" or
-		obj.ClassName == "bone"
-		)
-		and key == "translucent" then
-		return ""
-	end
-
-	if key == "string" and obj.ClassName == "command" then
-		return key
-	end
-
-	if
-		key == "bone" or
-		key == "code" or
-		key == "damagetype" or
-		key == "effect" or
-		key == "event" or
-		key == "flex" or
-		key == "material" or
-		key == "model" or
-		key == "operator" or
-		key == "ownername" or
-		key == "poseparameter" or
-		key == "sequence" or
-		key == "sound"
-	then
-		return key
-	end
-
-	return obj and obj.TranslatePropertiesKey and obj:TranslatePropertiesKey(key)
-end
 
 hook.Run("pac_EditorPostConfig")

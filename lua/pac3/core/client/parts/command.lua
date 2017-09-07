@@ -6,7 +6,7 @@ PART.Group = 'advanced'
 PART.Icon = 'icon16/application_xp_terminal.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "String", "")
+	pac.GetSet(PART, "String", "", {editor_panel = "string"})
 	pac.GetSet(PART, "UseLua", false)
 pac.EndStorableVars()
 
