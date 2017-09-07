@@ -409,27 +409,15 @@ do -- get set and editor vars
 		__group = name
 	end
 
-	local propertyMeta = {
-		__index = function(self, key)
-			local getSelf = rawget(self, key)
-
-			if getSelf ~= nil then
-				return getSelf
-			end
-
-			return pac.PropertyUserdata['base'][key]
-		end
-	}
-
 	function pac.GetSet(tbl, key, def, udata)
 		insert_key(key)
 
 		pac.class.GetSet(tbl, key, def)
-		pac.PropertyUserdata[tbl.ClassName] = pac.PropertyUserdata[tbl.ClassName] or {}
-		if tbl.ClassName ~= 'base' then setmetatable(pac.PropertyUserdata[tbl.ClassName], propertyMeta) end
 
 		if udata then
-			pac.PropertyUserdata[tbl.ClassName][key] = udata
+			pac.PropertyUserdata[tbl.ClassName] = pac.PropertyUserdata[tbl.ClassName] or {}
+			pac.PropertyUserdata[tbl.ClassName][key] = pac.PropertyUserdata[tbl.ClassName][key] or {}
+			table.Merge(pac.PropertyUserdata[tbl.ClassName][key], udata)
 		end
 
 		if __store then
@@ -438,9 +426,9 @@ do -- get set and editor vars
 		end
 
 		if __group then
-			tbl.PropertyGroups = tbl.PropertyGroups or {}
-			tbl.PropertyGroups[__group] = tbl.PropertyGroups[__group] or {}
-			tbl.PropertyGroups[__group][key] = true
+			pac.PropertyUserdata[tbl.ClassName] = pac.PropertyUserdata[tbl.ClassName] or {}
+			pac.PropertyUserdata[tbl.ClassName][key] = pac.PropertyUserdata[tbl.ClassName][key] or {}
+			pac.PropertyUserdata[tbl.ClassName][key].group = __group
 		end
 	end
 
@@ -478,7 +466,7 @@ do -- get set and editor vars
 		pac.StartStorableVars()
 
 		pac.GetSet(PART, name_key, "", {editor_type = "part"})
-		pac.GetSet(PART, uid_key, "", {editor_hidden = true})
+		pac.GetSet(PART, uid_key, "", {hidden = true})
 
 		PART.ResolvePartNames = PART.ResolvePartNames or function(self, force)
 			for _, func in pairs(self.PartNameResolvers) do
@@ -546,6 +534,19 @@ do -- get set and editor vars
 		pac.class.RemoveField(PART, key)
 		if pac.PropertyUserdata[PART.ClassName] then
 			pac.PropertyUserdata[PART.ClassName][key] = nil
+		end
+		if PART.StorableVars then
+			PART.StorableVars[key] = nil
+		end
+	end
+
+	function pac.GetPropertyUserdata(obj, key)
+		if pac.PropertyUserdata[obj.ClassName] and pac.PropertyUserdata[obj.ClassName][key] then
+			return pac.PropertyUserdata[obj.ClassName][key]
+		end
+
+		if pac.PropertyUserdata.base and pac.PropertyUserdata.base[key] then
+			return pac.PropertyUserdata.base[key]
 		end
 	end
 end

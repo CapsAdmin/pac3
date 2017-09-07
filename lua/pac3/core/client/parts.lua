@@ -7,13 +7,6 @@ pac.UniqueIDParts = pac.UniqueIDParts or {}
 local part_count = 0 -- unique id thing
 local pairs = pairs
 
-local function remove(part, field)
-	if part.StorableVars then
-		part.StorableVars[field] = nil
-	end
-	class.RemoveField(part, field)
-end
-
 local function merge_storable(tbl, base)
 	if not base then return end
 	if base.StorableVars then
@@ -47,19 +40,19 @@ function pac.CreatePart(name, owner)
 	merge_storable(part, part.BaseClass)
 
 	if part.NonPhysical then
-		remove(part, "Bone")
-		remove(part, "Position")
-		remove(part, "Angles")
-		remove(part, "AngleVelocity")
-		remove(part, "EyeAngles")
-		remove(part, "AimName")
-		remove(part, "AimPartName")
-		remove(part, "PositionOffset")
-		remove(part, "AngleOffset")
-		remove(part, "Translucent")
+		pac.RemoveProperty(part, "Bone")
+		pac.RemoveProperty(part, "Position")
+		pac.RemoveProperty(part, "Angles")
+		pac.RemoveProperty(part, "AngleVelocity")
+		pac.RemoveProperty(part, "EyeAngles")
+		pac.RemoveProperty(part, "AimName")
+		pac.RemoveProperty(part, "AimPartName")
+		pac.RemoveProperty(part, "PositionOffset")
+		pac.RemoveProperty(part, "AngleOffset")
+		pac.RemoveProperty(part, "Translucent")
 
 		if part.ClassName ~= "group" then
-			remove(part, "DrawOrder")
+			pac.RemoveProperty(part, "DrawOrder")
 		end
 	end
 

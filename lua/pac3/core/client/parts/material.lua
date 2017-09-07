@@ -1,4 +1,3 @@
-setfenv(1, _G)
 local PART = {}
 
 PART.ClassName = "material"
@@ -21,14 +20,14 @@ PART.ShaderParams =
 	Detail = "ITexture",
 	DetailTint = "Vector",
 	DetailScale = "number",
-	DetailBlendMode = {type = "number", extra = {on_change = function(pnl, num) return math.Round(math.max(num, 0)) end}
+	DetailBlendMode = {type = "number", extra = {on_change = function(pnl, num) return math.Round(math.max(num, 0)) end}},
 	DetailBlendFactor = "number",
 
 	Phong = "boolean",
 	PhongBoost = "number",
 	PhongExponent = "number",
 	PhongTint = "Vector",
-	PhongFresnelRanges = {type = "Vector", extra = {editor_panel = "color"}}
+	PhongFresnelRanges = {type = "Vector", extra = {editor_panel = "color"}},
 	PhongWarpTexture = "ITexture",
 	PhongAlbedoTint = "boolean",
 	PhongExponentTexture = "ITexture",

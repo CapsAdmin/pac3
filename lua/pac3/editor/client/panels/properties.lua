@@ -335,60 +335,46 @@ do -- list
 		if dont_clear == nil then self:Clear() end
 
 		local tbl = {}
-		local data = {}
 
-		for key, val in pairs(obj.ClassName and obj:GetVars() or obj) do
-			local callback
-			if not obj.ClassName then
-				callback = val.callback
-				val = val.val
+		for key, val in pairs(obj:GetVars()) do
+
+			local udata = pac.GetPropertyUserdata(obj, key)
+
+			if udata and udata.hidden then
+				print(key, "HIDDEN")
+				continue
 			end
 
-			local uData = obj.ClassName and pac.PropertyUserdata[obj.ClassName]
-
-			if
-				not obj.ClassName or
-				(obj.ClassName ~= 'group' or key ~= 'OwnerName') and
-				(not uData or not uData[key] or not uData[key].hidden) and
-				(not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key))
-			then
-				if obj.PropertyGroups then
-					local reversed = {}
-					for group, properties in pairs(obj.PropertyGroups) do
-						for k,v in pairs(properties) do
-							reversed[k:lower()] = group
-						end
-					end
-
-					group = reversed[key:lower()] or group
-				end
-
-				table.insert(data, {key = key, val = val, group = group_override or group, callback = callback})
+			if not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key) then
+				local group = group_override or (udata and udata.group) or "generic"
+				tbl[group] = tbl[group] or {}
+				table.insert(tbl[group], {key = key, val = val})
 			end
 		end
 
-		table.sort(data, function(a,b) return a.key > b.key end)
-
-		for pos, val in ipairs(data) do
-			table.insert(tbl, {pos = pos, key = val.key, val = val.val, group = val.group or "generic", callback = val.callback})
+		for group, tbl in pairs(tbl) do
+			table.sort(tbl, function(a,b) return a.key > b.key end)
 		end
 
 		local current_group = nil
 
+		for group, tbl in pairs(tbl) do
 		for pos, data in pairs(tbl) do
 			local key, val = data.key, data.val
 
-			if obj.ClassName then
-				if pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
-			end
+			if pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
 
 			local pnl
-			local T
+			local T = type(val):lower()
 
-			local udata = pac.PropertyUserdata[obj.ClassName] and pac.PropertyUserdata[obj.ClassName][key]
+			if current_group ~= group then
+				self:AddCollapser(group)
+				current_group = group
+			end
+
+			local udata = pac.GetPropertyUserdata(obj, key)
 
 			if udata then
-				if type(udata) ~= 'table' then error('Invalid udata of ' .. obj.ClassName .. ' for ' .. key .. ' (' .. type(udata) .. ')!') end
 				if udata.enums then
 					pnl = pace.CreatePanel("properties_base_type")
 
@@ -441,23 +427,17 @@ do -- list
 				end
 			end
 
-			if not T and pace.PanelExists("properties_" .. key:lower()) then
-				T = key:lower()
-			end
-
-			if not pnl and pace.PanelExists("properties_" .. T) then
-
-				if data.group and data.group ~= current_group then
-					self:AddCollapser(data.group)
-					current_group = data.group
+			if not pace.PanelExists("properties_" .. T) then
+				if pace.PanelExists("properties_" .. key:lower()) then
+					T = key:lower()
+				else
+					T = "string"
 				end
-
-				if pace.CollapsedProperties[data.group] ~= nil and pace.CollapsedProperties[data.group] then continue end
-
-				pnl = pace.CreatePanel("properties_" .. T)
 			end
 
-			if pnl and obj.ClassName then
+			pnl = pace.CreatePanel("properties_" .. T)
+
+			if pnl then
 				if pnl.ExtraPopulate then
 					table.insert(pace.extra_populates, pnl.ExtraPopulate)
 					pnl:Remove()
@@ -469,8 +449,6 @@ do -- list
 
 				local val = obj["Get" .. key](obj)
 				pnl:SetValue(val)
-
-				local udata = pac.PropertyUserdata[obj.ClassName] and pac.PropertyUserdata[obj.ClassName][key]
 
 				if udata then
 					if udata.editor_sensitivity or udata.editor_clamp then
@@ -499,6 +477,7 @@ do -- list
 
 				self:AddKeyValue(key, pnl, pos, obj)
 			end
+		end
 		end
 
 		self:FixHeight()
