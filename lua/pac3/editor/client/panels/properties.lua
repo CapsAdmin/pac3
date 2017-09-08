@@ -370,15 +370,27 @@ do -- list
 		end
 
 		for group, tbl in pairs(tbl) do
-			table.sort(tbl, function(a,b) return a.key > b.key end)
+			local sorted_variables = {}
+			for i, name in ipairs(pac.VariableOrder) do
+				for k, v in pairs(tbl) do
+					if name == k then
+						table.insert(sorted_variables, {key = k, val = v})
+						break
+					end
+				end
+			end
+			tbl[group] = sorted_variables
 		end
 
 		local sorted_groups = {}
-		for k, v in pairs(tbl) do
-			table.insert(sorted_groups, {key = k, val = v})
+		for i, name in ipairs(pac.GroupOrder) do
+			for k, v in pairs(tbl) do
+				if name == k then
+					table.insert(sorted_groups, {key = k, val = v})
+					break
+				end
+			end
 		end
-		table.sort(sorted_groups, function(a,b) return a.key > b.key end)
-
 
 		local current_group = nil
 

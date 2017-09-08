@@ -450,17 +450,18 @@ end
 
 do -- get set and editor vars
 	pac.VariableOrder = pac.VariableOrder or {}
+	pac.GroupOrder = pac.GroupOrder or {}
 	pac.PropertyUserdata = pac.PropertyUserdata or {}
 	pac.PropertyUserdata['base'] = pac.PropertyUserdata['base'] or {}
 
-	local function insert_key(key)
-		for k in pairs(pac.VariableOrder) do
+	local function insert_key(tbl, key)
+		for _, k in ipairs(tbl) do
 			if k == key then
 				return
 			end
 		end
 
-		table.insert(pac.VariableOrder, key)
+		table.insert(tbl, key)
 	end
 
 	local __store = false
@@ -473,15 +474,15 @@ do -- get set and editor vars
 		__store = false
 	end
 
-
 	local __group = nil
 
 	function pac.SetPropertyGroup(name)
 		__group = name
+		insert_key(pac.GroupOrder, name)
 	end
 
 	function pac.GetSet(tbl, key, def, udata)
-		insert_key(key)
+		insert_key(pac.VariableOrder, key)
 
 		pac.class.GetSet(tbl, key, def)
 

@@ -41,11 +41,13 @@ pac.GetSet(PART, "PlayerOwner", NULL)
 pac.GetSet(PART, "Owner", NULL)
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "OwnerName", "self")
-	pac.GetSet(PART, "Name", "")
-	pac.GetSet(PART, "Hide", false)
-	pac.GetSet(PART, "EditorExpand", false, {hidden = true})
-	pac.GetSet(PART, "UniqueID", "", {hidden = true})
+
+	pac.SetPropertyGroup("generic")
+		pac.GetSet(PART, "OwnerName", "self")
+		pac.GetSet(PART, "Name", "")
+		pac.GetSet(PART, "Hide", false)
+		pac.GetSet(PART, "EditorExpand", false, {hidden = true})
+		pac.GetSet(PART, "UniqueID", "", {hidden = true})
 
 	pac.SetPropertyGroup("orientation")
 		pac.GetSet(PART, "Bone", "head")
@@ -60,6 +62,7 @@ pac.StartStorableVars()
 	pac.SetPropertyGroup("appearance")
 		pac.GetSet(PART, "DrawOrder", 0)
 		pac.GetSet(PART, "Translucent", false)
+
 pac.EndStorableVars()
 
 pac.GetSet(PART, "Description", "")
