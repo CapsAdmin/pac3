@@ -369,12 +369,12 @@ do -- list
 			end
 		end
 
-		for group, tbl in pairs(tbl) do
+		for group, vars in pairs(tbl) do
 			local sorted_variables = {}
 			for i, name in ipairs(pac.VariableOrder) do
-				for k, v in pairs(tbl) do
-					if name == k then
-						table.insert(sorted_variables, {key = k, val = v})
+				for _, v in ipairs(vars) do
+					if name == v.key then
+						table.insert(sorted_variables, v)
 						break
 					end
 				end
