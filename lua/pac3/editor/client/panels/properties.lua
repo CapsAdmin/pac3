@@ -1492,7 +1492,6 @@ do -- arguments
 					--self:SetValue(pace.current_part.Arguments)
 				end}
 			end
-			print("?!?!?")
 			pace.properties:Populate(tbl, true, L"arguments")
 		end
 
