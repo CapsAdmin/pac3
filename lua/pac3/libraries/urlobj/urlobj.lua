@@ -3,6 +3,9 @@ local urlobj = pac.urlobj
 
 urlobj.DataCache  = pac.CreateCache("objcache")
 
+local SIMULATENOUS_DOWNLOADS = CreateConVar('pac_objdl_streams', '4', {FCVAR_ARCHIVE}, 'OBJ files download streams')
+local CURRENTLY_DOWNLOADING = 0
+
 urlobj.Cache              = {}
 urlobj.CacheCount         = 0
 
@@ -42,6 +45,7 @@ function urlobj.ClearQueue()
 
 	urlobj.DownloadQueue      = {}
 	urlobj.DownloadQueueCount = 0
+	CURRENTLY_DOWNLOADING = 0
 end
 
 function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statusCallback)
@@ -453,9 +457,6 @@ function urlobj.ParseObj(data, generateNormals)
 	return triangleList
 end
 
-local SIMULATENOUS_DOWNLOADS = CreateConVar('pac_objdl_streams', '4', {FCVAR_ARCHIVE}, 'OBJ files download streams')
-local CURRENTLY_DOWNLOADING = 0
-
 -- Download queuing
 function urlobj.DownloadQueueThink()
 	if pac.urltex and pac.urltex.Busy then return end
@@ -487,31 +488,32 @@ function urlobj.DownloadQueueThink()
 				-- Reattempt download
 				queueItem:BeginDownload()
 			end
-
-			if CURRENTLY_DOWNLOADING >= SIMULATENOUS_DOWNLOADS:GetInt() then return end
-		end
-	end
-
-	-- Start download of next item in queue
-	if next(urlobj.DownloadQueue) then
-		local url, queueItem = next(urlobj.DownloadQueue)
-		if not queueItem:IsDownloading() then
-			queueItem:BeginDownload()
-
-			queueItem:AddDownloadCallback(
-				function()
-					urlobj.DownloadQueue[url] = nil
-					urlobj.DownloadQueueCount = urlobj.DownloadQueueCount - 1
-					CURRENTLY_DOWNLOADING = CURRENTLY_DOWNLOADING - 1
-				end
-			)
-
-			CURRENTLY_DOWNLOADING = CURRENTLY_DOWNLOADING + 1
-			pac.dprint("requesting model download %q", url)
 		end
 	end
 
 	urlobj.Busy = next (urlobj.Queue) ~= nil
+	if CURRENTLY_DOWNLOADING >= SIMULATENOUS_DOWNLOADS:GetInt() then return end
+
+	-- Start download of next item in queue
+	if next(urlobj.DownloadQueue) then
+		for url, queueItem in pairs(urlobj.DownloadQueue) do
+			if not queueItem:IsDownloading() then
+				queueItem:BeginDownload()
+
+				queueItem:AddDownloadCallback(
+					function()
+						urlobj.DownloadQueue[url] = nil
+						urlobj.DownloadQueueCount = urlobj.DownloadQueueCount - 1
+						CURRENTLY_DOWNLOADING = CURRENTLY_DOWNLOADING - 1
+					end
+				)
+
+				CURRENTLY_DOWNLOADING = CURRENTLY_DOWNLOADING + 1
+				pac.dprint("requesting model download %q", url)
+				if CURRENTLY_DOWNLOADING >= SIMULATENOUS_DOWNLOADS:GetInt() then return end
+			end
+		end
+	end
 end
 
 timer.Create("urlobj_download_queue", 0.1, 0, urlobj.DownloadQueueThink)

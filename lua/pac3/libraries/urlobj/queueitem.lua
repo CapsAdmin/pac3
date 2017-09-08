@@ -101,45 +101,50 @@ function QUEUEITEM:BeginDownload ()
 	self.DownloadTimeoutTime  = pac.RealTime + TIMEOUT_VALUE:GetFloat()
 	self.DownloadAttemptCount = self.DownloadAttemptCount + 1
 
-	pac.SimpleFetch(self.Url,
-		function(data)
-			if not self.Downloading then return end
-			self.Downloading      = false
-			self.DownloadFinished = true
+	local function success(data)
+		if not self.Downloading then return end
+		self.Downloading      = false
+		self.DownloadFinished = true
 
-			pac.dprint("downloaded model %q %s", self.Url, string.NiceSize(#data))
-			pac.dprint("%s", data)
+		pac.dprint("downloaded model %q %s", self.Url, string.NiceSize(#data))
+		pac.dprint("%s", data)
 
-			self:DispatchDownloadCallbacks ()
-			self:ClearDownloadCallbacks ()
+		self:DispatchDownloadCallbacks ()
+		self:ClearDownloadCallbacks ()
 
-			self.UsingCachedData = self.Data == data
+		self.UsingCachedData = self.Data == data
 
-			if self.UsingCachedData then
-				if self.CacheDecodeFinished then
-					self:SetFinished (true)
-				end
-			else
-				self.Data = data
-
-				urlobj.DataCache:AddItem (self.Url, self.Data)
-
-				self.Model = urlobj.CreateModelFromObjData(self.Data, self.GenerateNormals,
-					function (finished, statusMessage)
-						self:SetStatus (statusMessage)
-						self:SetFinished (finished)
-
-						if self:IsFinished () then
-							self:ClearStatusCallbacks ()
-						end
-					end
-				)
+		if self.UsingCachedData then
+			if self.CacheDecodeFinished then
+				self:SetFinished (true)
 			end
+		else
+			self.Data = data
 
-			self:DispatchCallbacks (self.Model)
-			self:ClearCallbacks ()
+			urlobj.DataCache:AddItem (self.Url, self.Data)
+
+			self.Model = urlobj.CreateModelFromObjData(self.Data, self.GenerateNormals,
+				function (finished, statusMessage)
+					self:SetStatus (statusMessage)
+					self:SetFinished (finished)
+
+					if self:IsFinished () then
+						self:ClearStatusCallbacks ()
+					end
+				end
+			)
 		end
-	)
+
+		self:DispatchCallbacks (self.Model)
+		self:ClearCallbacks ()
+	end
+
+	local function failure(code, data, len, headers)
+		self.DownloadTimeoutTime = 0
+		self:SetStatus ("Failed - " .. code)
+	end
+
+	pac.SimpleFetch(self.Url, success, failure)
 end
 
 function QUEUEITEM:GetDownloadAttemptCount ()
