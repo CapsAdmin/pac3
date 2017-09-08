@@ -373,131 +373,141 @@ do -- list
 			table.sort(tbl, function(a,b) return a.key > b.key end)
 		end
 
+		local sorted_groups = {}
+		for k, v in pairs(tbl) do
+			table.insert(sorted_groups, {key = k, val = v})
+		end
+		table.sort(sorted_groups, function(a,b) return a.key > b.key end)
+
+
 		local current_group = nil
 
-		for group, tbl in pairs(tbl) do
-		for pos, data in pairs(tbl) do
-			local key, val = data.key, data.val
+		for i, tbl in ipairs(sorted_groups) do
+			local group, tbl = tbl.key, tbl.val
+			for pos, data in ipairs(tbl) do
+				local key, val = data.key, data.val
 
-			if obj.ClassName and pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
+				if obj.ClassName and pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
 
-			local pnl
-			local T = type(val):lower()
+				local pnl
+				local T = type(val):lower()
 
-			if current_group ~= group then
-				self:AddCollapser(group)
-				current_group = group
-			end
-
-			local udata = pac.GetPropertyUserdata(obj, key)
-
-			if udata.editor_panel then
-				T = udata.editor_panel or T
-			elseif not pace.PanelExists("properties_" .. T) then
-				if pace.PanelExists("properties_" .. key:lower()) then
-					T = key:lower()
-				else
-					T = "string"
+				if current_group ~= group then
+					self:AddCollapser(group)
+					current_group = group
 				end
-			end
 
-			pnl = pace.CreatePanel("properties_" .. T)
+				local udata = pac.GetPropertyUserdata(obj, key)
 
-			if pnl then
-				if udata.enums then
-					DefineSpecialCallback(pnl, function(self)
-						create_search_list(
-							self,
-							self.CurrentKey,
-							L(key),
+				if udata.editor_panel then
+					T = udata.editor_panel or T
+				elseif not pace.PanelExists("properties_" .. T) then
+					if pace.PanelExists("properties_" .. key:lower()) then
+						T = key:lower()
+					else
+						T = "string"
+					end
+				end
 
-							function(list)
-								list:AddColumn("enum")
-							end,
+				if pace.CollapsedProperties[group] ~= nil and pace.CollapsedProperties[group] then continue end
 
-							function()
-								local tbl
-								if type(udata.enums) == "function" then
-									tbl = udata.enums(pace.current_part)
-								else
-									tbl = udata.enums
-								end
+				pnl = pace.CreatePanel("properties_" .. T)
 
-								local enums = {}
+				if pnl then
+					if udata.enums then
+						DefineSpecialCallback(pnl, function(self)
+							create_search_list(
+								self,
+								self.CurrentKey,
+								L(key),
 
-								for k, v in pairs(tbl) do
-									if type(k) == "number" then
-										k = v
+								function(list)
+									list:AddColumn("enum")
+								end,
+
+								function()
+									local tbl
+									if type(udata.enums) == "function" then
+										tbl = udata.enums(pace.current_part)
+									else
+										tbl = udata.enums
 									end
-									enums[L(k)] = v
+
+									local enums = {}
+
+									for k, v in pairs(tbl) do
+										if type(k) == "number" then
+											k = v
+										end
+										enums[L(k)] = v
+									end
+
+									return enums
+								end,
+
+								function()
+									return pace.current_part[key]
+								end,
+
+								function(list, key, val)
+									return list:AddLine(pace.util.FriendlyName(key))
+								end,
+
+								function(val, key)
+									return key
 								end
-
-								return enums
-							end,
-
-							function()
-								return pace.current_part[key]
-							end,
-
-							function(list, key, val)
-								return list:AddLine(pace.util.FriendlyName(key))
-							end,
-
-							function(val, key)
-								return key
-							end
-						)
-					end)
-				end
-
-				if obj.ClassName then
-
-					if pnl.ExtraPopulate then
-						table.insert(pace.extra_populates, pnl.ExtraPopulate)
-						pnl:Remove()
-						continue
+							)
+						end)
 					end
 
-					pnl.CurrentKey = key
-					obj.editor_pnl = pnl
+					if obj.ClassName then
 
-					local val = obj["Get" .. key](obj)
-					pnl:SetValue(val)
-
-					if udata then
-						if udata.editor_sensitivity or udata.editor_clamp then
-							pnl.LimitValue = function(self, num)
-								if udata.editor_sensitivity then
-									self.sens = udata.editor_sensitivity
-								end
-								if udata.editor_clamp then
-									num = math.Clamp(num, unpack(udata.editor_clamp))
-								end
-								return num
-							end
-						elseif udata.editor_onchange then
-							pnl.LimitValue = udata.editor_onchange
+						if pnl.ExtraPopulate then
+							table.insert(pace.extra_populates, pnl.ExtraPopulate)
+							pnl:Remove()
+							continue
 						end
-					end
 
-					pnl.OnValueChanged = function(val)
-						if T == "number" then
-							val = tonumber(val) or 0
-						elseif T == "string" then
-							val = tostring(val)
+						pnl.CurrentKey = key
+						obj.editor_pnl = pnl
+
+						local val = obj["Get" .. key](obj)
+						pnl:SetValue(val)
+
+						if udata then
+							if udata.editor_sensitivity or udata.editor_clamp then
+								pnl.LimitValue = function(self, num)
+									if udata.editor_sensitivity then
+										self.sens = udata.editor_sensitivity
+									end
+									if udata.editor_clamp then
+										num = math.Clamp(num, unpack(udata.editor_clamp))
+									end
+									return num
+								end
+							elseif udata.editor_onchange then
+								pnl.LimitValue = udata.editor_onchange
+							end
 						end
-						pace.Call("VariableChanged", obj, key, val)
-					end
 
-					self:AddKeyValue(key, pnl, pos, obj)
-				else
-					pnl.CurrentKey = key
-					pnl:SetValue(val)
-					pnl.OnValueChanged = data.callback
-					self:AddKeyValue(key, pnl, pos)
+						pnl.OnValueChanged = function(val)
+							if T == "number" then
+								val = tonumber(val) or 0
+							elseif T == "string" then
+								val = tostring(val)
+							end
+							pace.Call("VariableChanged", obj, key, val)
+						end
+
+						self:AddKeyValue(key, pnl, pos, obj)
+					else
+						pnl.CurrentKey = key
+						pnl:SetValue(val)
+						pnl.OnValueChanged = data.callback
+						self:AddKeyValue(key, pnl, pos)
+					end
 				end
 			end
-		end
 		end
 
 		self:FixHeight()
