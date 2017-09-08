@@ -64,10 +64,11 @@ function pace.util.FriendlyName(strIn)
 
 	for i, charIn in ipairs(iterableArray) do
 		if not prevChar and not isUpperCase(charIn) or prevChar == ' ' and not isUpperCase(charIn) then
-			prevChar = charIn
-			table.insert(outputTab, string.upper(charIn))
+			prevChar = string.upper(charIn)
+			table.insert(outputTab, prevChar)
 		elseif charIn == '_' then
-			prevChar = charIn
+			iterableArray[i] = ' '
+			prevChar = ' '
 			table.insert(outputTab, ' ')
 		elseif isUpperCase(charIn) then
 			if prevChar == '_' and (not iterableArray[i + 1] or isUpperCase(iterableArray[i + 1])) then
@@ -93,8 +94,22 @@ function pace.util.FriendlyName(strIn)
 				table.insert(outputTab, charIn)
 			end
 		else
-			prevChar = charIn
-			table.insert(outputTab, charIn)
+			local condUpper =
+				charIn == 'm' and iterableArray[i + 1] == 'p' and iterableArray[i - 1] == ' ' or
+				charIn == 'p' and iterableArray[i - 1] == 'm' and iterableArray[i - 2] == ' ' or
+				charIn == 'w' and (iterableArray[i - 1] == 'C' or iterableArray[i - 1] == 'c') or
+				charIn == 'c' and iterableArray[i + 1] == 'w' or
+				charIn == 'i' and (iterableArray[i - 1] == 'C' or iterableArray[i - 1] == 'c') or
+				charIn == 'c' and iterableArray[i + 1] == 'i' or
+				(charIn == 'x' or charIn == 'y' or charIn == 'z') and not iterableArray[i + 1]
+
+			if condUpper then
+				prevChar = string.upper(charIn)
+				table.insert(outputTab, prevChar)
+			else
+				prevChar = charIn
+				table.insert(outputTab, charIn)
+			end
 		end
 	end
 
