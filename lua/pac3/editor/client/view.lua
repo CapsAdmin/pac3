@@ -227,21 +227,18 @@ function pace.CalcView(ply, pos, ang, fov)
 		lastEntityPos = nil
 	end
 
-	if pac.GetRestrictionLevel() > 0 and not ply:IsAdmin() then
-		local ent = pace.GetViewEntity()
-		local dir = pace.ViewPos - ent:EyePos()
-		local dist = ent:BoundingRadius() * ent:GetModelScale() * 4
-		local filter = player.GetAll()
-		table.insert(filter, ent)
+	local pos, ang, fov = pac.CallHook("EditorCalcView", pace.ViewPos, pace.ViewAngles, pace.ViewFOV)
 
-		if dir:Length() > dist then
-			pace.ViewPos = ent:EyePos() + (dir:GetNormalized() * dist)
-		end
+	if pos then
+		pace.ViewPos = pos
+	end
 
-		local res = util.TraceHull({start = ent:EyePos(), endpos = pace.ViewPos, filter = filter, mins = Vector(1,1,1)*-8, maxs = Vector(1,1,1)*8})
-		if res.Hit then
-			pace.ViewPos = res.HitPos
-		end
+	if ang then
+		pace.ViewAngles = ang
+	end
+
+	if fov then
+		pace.ViewFOV = fov
 	end
 
 	return
