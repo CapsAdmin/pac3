@@ -275,7 +275,7 @@ unlitgeneric = {
 	},
 	vertexalpha = {
 		is_flag = true,
-		type = "integer",
+		type = "bool",
 		default = "0",
 		description = "flag",
 		friendly = "VertexAlpha",
@@ -320,8 +320,7 @@ unlitgeneric = {
 		description = "Base Texture with lighting built in",
 	},
 	nolod = {
-		is_flag = true,
-		type = "integer",
+		type = "bool",
 		default = "0",
 		description = "flag",
 		friendly = "nolod",
@@ -499,7 +498,7 @@ unlitgeneric = {
 	},
 	vertexcolor = {
 		is_flag = true,
-		type = "integer",
+		type = "bool",
 		default = "0",
 		description = "flag",
 		friendly = "VertexColor",
@@ -547,7 +546,7 @@ unlitgeneric = {
 	},
 	vertexalphatest = {
 		friendly = "VertexAlphaTest",
-		type = "integer",
+		type = "bool",
 		default = "0",
 		description = "",
 		gmod_default = "0",
@@ -561,14 +560,14 @@ unlitgeneric = {
 	},
 	receiveflashlight = {
 		friendly = "ReceiveFlashlight",
-		type = "integer",
+		type = "bool",
 		default = "0",
 		description = "Forces this material to receive flashlights.",
 		gmod_default = "0",
 	},
 	halflambert = {
 		is_flag = true,
-		type = "integer",
+		type = "bool",
 		default = "0",
 		description = "flag",
 		friendly = "HalfLambert",
@@ -744,6 +743,7 @@ vertexlitgeneric = {
 		gmod_default = "0",
 		description = "Enables cloak render in a second pass",
 		default = "0",
+		friendly = "CloakPassEnabled",
 	},
 	seamless_scale = {
 		friendly = "SeamlessScale",
@@ -767,7 +767,7 @@ vertexlitgeneric = {
 		gmod_default = "0.000000",
 	},
 	flesheffectcenterradius4 = {
-		friendly = "vEffectCenterRadius4",
+		friendly = "FleshEffectCenterRadius4",
 		type = "vec4",
 		default = "[0 0 0 0.001]",
 		description = "Flesh effect center and radius",
@@ -781,7 +781,7 @@ vertexlitgeneric = {
 		gmod_default = "0.000000",
 	},
 	fleshscrollspeed = {
-		friendly = "flScrollSpeed",
+		friendly = "FleshScrollSpeed",
 		type = "float",
 		default = "1.0",
 		description = "Flesh scroll speed",
@@ -795,7 +795,7 @@ vertexlitgeneric = {
 		friendly = "Znearer",
 	},
 	fleshborderwidth = {
-		friendly = "flBorderWidth",
+		friendly = "FleshBorderWidth",
 		type = "float",
 		default = "0.3",
 		description = "Flesh border",
@@ -832,6 +832,7 @@ vertexlitgeneric = {
 		type = "integer",
 		description = "",
 		default = "0",
+		friendly = "SheenmapMaskFrame",
 	},
 	selfillum = {
 		is_flag = true,
@@ -871,11 +872,13 @@ vertexlitgeneric = {
 		type = "float",
 		description = "X Scale the size of the map mask to the size of the target",
 		default = "1",
+		friendly = "SheenmapMaskScaleX",
 	},
 	sheenindex = {
 		type = "integer",
 		description = "Index of the Effect Type (Color Additive, Override etc...)",
 		default = "0",
+		friendly = "SheenmapIndex",
 	},
 	BaseTexture = {
 		type = "texture",
@@ -884,14 +887,13 @@ vertexlitgeneric = {
 		description = "Base Texture with lighting built in",
 	},
 	nolod = {
-		is_flag = true,
-		type = "integer",
+		type = "bool",
 		default = "0",
 		description = "flag",
 		friendly = "nolod",
 	},
 	fleshbordersoftness = {
-		friendly = "flBorderSoftness",
+		friendly = "FleshBorderSoftness",
 		type = "float",
 		default = "0.42",
 		description = "Flesh border softness (> 0.0 && <= 0.5)",
@@ -901,6 +903,7 @@ vertexlitgeneric = {
 		type = "float",
 		description = "X Offset of the mask relative to model space coords of target",
 		default = "0",
+		friendly = "SheenmapMaskOffsetX",
 	},
 	emissiveblendflowtexture = {
 		type = "texture",
@@ -972,6 +975,7 @@ vertexlitgeneric = {
 		gmod_default = "0.000000",
 		description = "",
 		default = "2",
+		friendly = "CloakRefractAmount",
 	},
 	phongexponent = {
 		friendly = "PhongExponent",
@@ -998,17 +1002,18 @@ vertexlitgeneric = {
 		type = "float",
 		description = "Y Offset of the mask relative to model space coords of target",
 		default = "0",
+		friendly = "SheenmapMaskOffsetY",
 	},
 	halflambert = {
 		is_flag = true,
-		type = "integer",
+		type = "bool",
 		default = "0",
 		description = "flag",
 		friendly = "HalfLambert",
 	},
 	ambientonly = {
 		friendly = "AmbientOnly",
-		type = "integer",
+		type = "bool",
 		default = "0",
 		description = "Control drawing of non-ambient light ()",
 		gmod_default = "0",
@@ -1094,7 +1099,7 @@ vertexlitgeneric = {
 		gmod_default = "0",
 	},
 	fleshglossbrightness = {
-		friendly = "flGlossBrightness",
+		friendly = "FleshGlossBrightness",
 		type = "float",
 		default = "0.66",
 		description = "Flesh gloss brightness",
@@ -1137,6 +1142,7 @@ vertexlitgeneric = {
 		type = "texture",
 		description = "sheenmap",
 		default = "shadertest/shadertest_env",
+		friendly = "Sheenmap",
 	},
 	SrgbTint = {
 		type = "color",
@@ -1167,6 +1173,7 @@ vertexlitgeneric = {
 		type = "float",
 		description = "Y Scale the size of the map mask to the size of the target",
 		default = "1",
+		friendly = "SheenmapMaskScaleY",
 	},
 	nocull = {
 		is_flag = true,
@@ -1186,6 +1193,7 @@ vertexlitgeneric = {
 		type = "color",
 		description = "sheenmap tint",
 		default = "[1 1 1]",
+		friendly = "SheenmapTint",
 	},
 	no_draw = {
 		is_flag = true,
@@ -1198,12 +1206,14 @@ vertexlitgeneric = {
 		type = "bool",
 		description = "Enables weapon sheen render in a second pass",
 		default = "0",
+		firendly = "SheenmapPassEnabled",
 	},
 	cloakcolortint = {
 		type = "color",
 		gmod_default = "[ 1.000000 1.000000 1.000000 ]",
 		description = "Cloak color tint",
 		default = "[1 1 1]",
+		friendly = "CloakColorTint",
 	},
 	use_in_fillrate_mode = {
 		is_flag = true,
@@ -1280,7 +1290,7 @@ vertexlitgeneric = {
 		description = "base texture",
 	},
 	flesheffectcenterradius3 = {
-		friendly = "vEffectCenterRadius3",
+		friendly = "FleshEffectCenterRadius3",
 		type = "vec4",
 		default = "[0 0 0 0.001]",
 		description = "Flesh effect center and radius",
@@ -1308,7 +1318,7 @@ vertexlitgeneric = {
 		friendly = "IgnoreAlphaModulation",
 	},
 	fleshsubsurfacetint = {
-		friendly = "cSubsurfaceTint",
+		friendly = "FleshSubsurfaceTint",
 		type = "color",
 		default = "[1 1 1]",
 		description = "Subsurface Color",
@@ -1375,7 +1385,7 @@ vertexlitgeneric = {
 		description = "flags2",
 	},]]
 	fleshbordernoisescale = {
-		friendly = "flBorderNoiseScale",
+		friendly = "FleshBorderNoiseScale",
 		type = "float",
 		default = "1.5",
 		description = "Flesh Noise UV scalar for border",
@@ -1396,14 +1406,14 @@ vertexlitgeneric = {
 		friendly = "Decal",
 	},
 	fleshglobalopacity = {
-		friendly = "flGlobalOpacity",
+		friendly = "FleshGlobalOpacity",
 		type = "float",
 		default = "1.0",
 		description = "Flesh global opacity",
 		gmod_default = "0.000000",
 	},
 	fleshdebugforcefleshon = {
-		friendly = "flDebugForceFleshOn",
+		friendly = "FleshDebugForceFleshOn",
 		type = "bool",
 		default = "0",
 		description = "Flesh Debug full flesh",
@@ -1411,7 +1421,7 @@ vertexlitgeneric = {
 	},
 	invertphongmask = {
 		friendly = "InvertPhongMask",
-		type = "integer",
+		type = "bool",
 		default = "0",
 		description = "invert the phong mask (0=full phong, 1=no phong)",
 		gmod_default = "0",
@@ -1429,6 +1439,7 @@ vertexlitgeneric = {
 		default = "0",
 		description = "mode for combining detail texture with base. 0=normal, 1= additive, 2=alpha blend detail over base, 3=crossfade",
 		gmod_default = "0",
+		enums = {"normal", "additive", "alphablend", "crossfade"},
 	},
 	flashlightnolambert = {
 		friendly = "FlashlightNoLambert",
@@ -1450,7 +1461,7 @@ vertexlitgeneric = {
 		default = "",
 	},
 	flesheffectcenterradius2 = {
-		friendly = "vEffectCenterRadius2",
+		friendly = "FleshEffectCenterRadius2",
 		type = "vec4",
 		default = "[0 0 0 0.001]",
 		description = "Flesh effect center and radius",
@@ -1461,6 +1472,7 @@ vertexlitgeneric = {
 		gmod_default = "0.000000",
 		description = "",
 		default = "0.0",
+		friendly = "CloakFactor",
 	},
 	FlashLightTexture = {
 		type = "texture",
@@ -1506,6 +1518,7 @@ vertexlitgeneric = {
 		type = "texture",
 		description = "sheenmap mask",
 		default = "shadertest/shadertest_envmask",
+		friendly = "SheenmapMask",
 	},
 	selfillumfresnel = {
 		friendly = "SelfIllumFresnel",
@@ -1544,6 +1557,7 @@ vertexlitgeneric = {
 		type = "integer",
 		description = "The direction the sheen should move (length direction of weapon) XYZ, 0,1,2",
 		default = "0",
+		friendly = "SheenmapDirection",
 	},
 	rimlightboost = {
 		friendly = "RimLightBoost",
@@ -1585,7 +1599,7 @@ vertexlitgeneric = {
 		default = "0",
 	},
 	flesheffectcenterradius1 = {
-		friendly = "vEffectCenterRadius1",
+		friendly = "FleshEffectCenterRadius1",
 		type = "vec4",
 		default = "[0 0 0 0.001]",
 		description = "Flesh effect center and radius",
@@ -1593,7 +1607,7 @@ vertexlitgeneric = {
 	},
 	vertexalpha = {
 		is_flag = true,
-		type = "integer",
+		type = "bool",
 		default = "0",
 		description = "flag",
 		friendly = "VertexAlpha",
@@ -1606,7 +1620,7 @@ vertexlitgeneric = {
 		gmod_default = "0",
 	},
 	fleshbordertint = {
-		friendly = "cBorderTint",
+		friendly = "FleshBorderTint",
 		type = "color",
 		default = "[1 1 1]",
 		description = "Flesh border Color",
@@ -1620,21 +1634,21 @@ vertexlitgeneric = {
 		gmod_default = "0.000000",
 	},
 	depthblend = {
-		type = "integer",
+		type = "bool",
 		gmod_default = "0",
 		description = "fade at intersection boundaries. Only supported without bumpmaps",
 		default = "0",
 	},
 	linearwrite = {
 		friendly = "LinearWrite",
-		type = "integer",
+		type = "bool",
 		default = "0",
 		description = "Disables SRGB conversion of shader results.",
 		gmod_default = "0",
 	},
 	vertexcolor = {
 		is_flag = true,
-		type = "integer",
+		type = "bool",
 		default = "0",
 		description = "flag",
 		friendly = "VertexColor",

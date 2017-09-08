@@ -386,10 +386,12 @@ function PART:DrawModel(ent, pos, ang)
 			render_PushFilterMag(textureFilter)
 		end
 
-		render_MaterialOverride(self.Materialm)
-		render_ModelMaterialOverride(self.Materialm)
-		if self.Materialm then
-			render_SetMaterial(self.Materialm)
+		local mat = self.MaterialOverride or self.Materialm
+
+		render_MaterialOverride(mat)
+		render_ModelMaterialOverride(mat)
+		if mat then
+			render_SetMaterial(mat)
 		end
 
 		-- Render model

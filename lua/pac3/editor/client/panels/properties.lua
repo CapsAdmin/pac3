@@ -309,9 +309,9 @@ do -- list
 		table.insert(self.List, {left = left, right = right, panel = var, key = key})
 	end
 
-	function PANEL:AddKeyValue(key, var, pos, obj)
+	function PANEL:AddKeyValue(key, var, pos, obj, udata)
 		local btn = pace.CreatePanel("properties_label")
-			btn:SetValue(" " .. L(key:gsub("%u", " %1"):lower()))
+			btn:SetValue(" " .. L((udata and udata.editor_friendly or key):gsub("%u", " %1"):lower()))
 			btn.pac3_sort_pos = pos
 
 			if obj then
@@ -428,6 +428,10 @@ do -- list
 				pnl = pace.CreatePanel("properties_" .. T)
 
 				if pnl then
+					if udata.description then
+						pnl:SetTooltip(L(udata.description))
+					end
+
 					if udata.enums then
 						DefineSpecialCallback(pnl, function(self)
 							create_search_list(
@@ -515,12 +519,12 @@ do -- list
 							pace.Call("VariableChanged", obj, key, val)
 						end
 
-						self:AddKeyValue(key, pnl, pos, obj)
+						self:AddKeyValue(key, pnl, pos, obj, udata)
 					else
 						pnl.CurrentKey = key
 						pnl:SetValue(val)
 						pnl.OnValueChanged = data.callback
-						self:AddKeyValue(key, pnl, pos)
+						self:AddKeyValue(key, pnl, pos, nil, udata)
 					end
 				end
 			end
