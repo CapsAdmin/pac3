@@ -5,13 +5,13 @@ pace = pace or {}
 pace.luadata = include("pac3/libraries/luadata.lua")
 
 include("language.lua")
+include("icons.lua")
 
 include("util.lua")
 include("wear.lua")
 
 include("select.lua")
 include("view.lua")
-include("config.lua")
 include("parts.lua")
 include("saved_parts.lua")
 include("logic.lua")
