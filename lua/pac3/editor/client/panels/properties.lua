@@ -14,6 +14,21 @@ local function FIX_MENU(menu)
 	menu:SetPos(pace.Editor:GetPos() + pace.Editor:GetWide(), gui.MouseY() - (menu:GetTall() * 0.5))
 end
 
+local function DefineSpecialCallback(self, callFuncLeft, callFuncRight)
+	local btn = vgui.Create("DButton", self)
+	btn:SetSize(16, 16)
+	btn:Dock(RIGHT)
+	btn:SetText("...")
+	btn.DoClick = function() callFuncLeft(self, self.CurrentKey) end
+
+	if callFuncRight then
+		btn.DoRightClick = function() callFuncRight(self, self.CurrentKey) end
+	else
+		btn.DoRightClick = btn.DoClick
+	end
+
+	return btn
+end
 
 local function create_search_list(property, key, name, add_columns, get_list, get_current, add_line, select_value)
 	select_value = select_value or function(val, key) return val end
@@ -371,12 +386,24 @@ do -- list
 
 			local udata = pac.GetPropertyUserdata(obj, key)
 
-			if udata then
-				if udata.enums then
-					pnl = pace.CreatePanel("properties_base_type")
+			if udata.editor_type then
+				T = udata.editor_type or T
+			end
 
-					function pnl:SpecialCallback()
-						local frame = create_search_list(
+			if not pace.PanelExists("properties_" .. T) then
+				if pace.PanelExists("properties_" .. key:lower()) then
+					T = key:lower()
+				else
+					T = "string"
+				end
+			end
+
+			pnl = pace.CreatePanel("properties_" .. T)
+
+			if pnl then
+				if udata.enums then
+					DefineSpecialCallback(pnl, function(self)
+						create_search_list(
 							self,
 							self.CurrentKey,
 							L(key),
@@ -417,24 +444,9 @@ do -- list
 								return key
 							end
 						)
-					end
+					end)
 				end
-				if udata.editor_type then
-					T = udata.editor_type or T
-				end
-			end
 
-			if not pace.PanelExists("properties_" .. T) then
-				if pace.PanelExists("properties_" .. key:lower()) then
-					T = key:lower()
-				else
-					T = "string"
-				end
-			end
-
-			pnl = pace.CreatePanel("properties_" .. T)
-
-			if pnl then
 				if pnl.ExtraPopulate then
 					table.insert(pace.extra_populates, pnl.ExtraPopulate)
 					pnl:Remove()
@@ -570,21 +582,27 @@ do -- base editable
 		self:SetCursor("hand")
 	end
 
+	function PANEL:OnValueChanged()
+
+	end
+
 	function PANEL:Init(...)
 		timer.Simple(0,function()
-			if self.SpecialCallback then
-				local btn = vgui.Create("DButton", self)
-				btn:SetSize(16, 16)
-				btn:Dock(RIGHT)
-				btn:SetText("...")
-				btn.DoClick = function() self:SpecialCallback(self.CurrentKey) end
-				btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
+			if self:IsValid() and self.SpecialCallback then
+				self:DefineSpecialCallback(self.SpecialCallback, self.SpecialCallback2)
 			end
 		end)
 
 		if DLabel and DLabel.Init then
-			return DLabel.Init(self, ...)
+			local status = DLabel.Init(self, ...)
+			self:SetText('')
+			self:SetMouseInputEnabled(true)
+			return status
 		end
+	end
+
+	function PANEL:DefineSpecialCallback(callFuncLeft, callFuncRight)
+		return DefineSpecialCallback(self, callFuncLeft, callFuncRight)
 	end
 
 	function PANEL:SetValue(var, skip_encode)

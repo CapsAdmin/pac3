@@ -548,6 +548,8 @@ do -- get set and editor vars
 		if pac.PropertyUserdata.base and pac.PropertyUserdata.base[key] then
 			return pac.PropertyUserdata.base[key]
 		end
+
+		return {}
 	end
 end
 

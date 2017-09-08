@@ -1,4 +1,6 @@
+
 pace.RegisteredPanels = {}
+local TRACK_UNUSED_PANELS = false
 
 function pace.RegisterPanel(PANEL)
 	pace.RegisteredPanels[PANEL.ClassName] = PANEL
@@ -16,6 +18,20 @@ end
 function pace.CreatePanel(class_name, parent)
 	local pnl = vgui.Create("pace_" .. class_name, parent)
 	table.insert(pace.ActivePanels, pnl)
+
+	if TRACK_UNUSED_PANELS and class_name ~= 'editor' then
+		local debugTrace = debug.traceback()
+
+		timer.Simple(0, function()
+			if not IsValid(pnl) then return end
+			local parent = pnl:GetParent()
+			if not IsValid(parent) or parent:GetClassName() == 'CGModBase' then
+				print('[PAC3] Panel was created without valid parent! ' .. class_name)
+				print(debugTrace)
+			end
+		end)
+	end
+
 	return pnl
 end
 
