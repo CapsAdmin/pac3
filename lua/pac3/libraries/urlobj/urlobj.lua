@@ -85,6 +85,51 @@ function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statu
 	if statusCallback then urlobj.Queue[url]:AddStatusCallback(statusCallback) end
 end
 
+local thinkThreads = {}
+local PARSING_THERSOLD = CreateConVar('pac_parse_runtime', '0.01', {FCVAR_ARCHIVE}, 'Maximal parse runtime in seconds')
+local PARSE_CHECK_LINES = 50
+
+local function Think()
+	local PARSING_THERSOLD = PARSING_THERSOLD:GetFloat()
+
+	for i, threadData in ipairs(thinkThreads) do
+		threadData.statusCallback(false, 'Queued for processing')
+	end
+
+	for i, threadData in ipairs(thinkThreads) do
+		local statusCallback, co = threadData.statusCallback, threadData.co
+		local t0 = SysTime ()
+		local success, finished, statusMessage, msg
+		while SysTime () - t0 < PARSING_THERSOLD do
+			success, finished, statusMessage, msg = coroutine.resume(co)
+
+			if not success then break end
+			if finished    then break end
+		end
+
+		if not success then
+			table.remove(thinkThreads, i)
+			error(finished)
+			statusCallback(true, "Decoding error")
+		elseif finished then
+			statusCallback(true, "Finished")
+			table.remove(thinkThreads, i)
+		else
+			if statusMessage == "Preprocessing lines" then
+				statusCallback(false, statusMessage .. " " .. msg)
+			elseif msg then
+				statusCallback(false, statusMessage .. " " .. math.Round(msg*100) .. " %")
+			else
+				statusCallback(false, statusMessage)
+			end
+		end
+
+		break
+	end
+end
+
+hook.Add('Think', 'pac_parse_obj', Think)
+
 local nextParsingHookId = 0
 function urlobj.CreateModelFromObjData(objData, generateNormals, statusCallback)
 	local mesh = Mesh()
@@ -98,41 +143,13 @@ function urlobj.CreateModelFromObjData(objData, generateNormals, statusCallback)
 		end
 	)
 
-	-- Coroutine runner
-	local parsingHookId = "pac_parse_obj_" .. nextParsingHookId
-	hook.Add("Think", parsingHookId,
-		function()
-			local t0 = SysTime ()
-			local success, finished, statusMessage, msg
-			while SysTime () - t0 < 0.002 do
-				success, finished, statusMessage, msg = coroutine.resume(co)
-
-				if not success then break end
-				if finished    then break end
-			end
-
-			if not success then
-				hook.Remove("Think", parsingHookId)
-				error(finished)
-
-				statusCallback(true, "Decoding error")
-			elseif finished then
-				statusCallback(true, "Finished")
-
-				hook.Remove("Think", parsingHookId)
-			else
-				if statusMessage == "Preprocessing lines" then
-					statusCallback(false, statusMessage .. " " .. msg)
-				elseif msg then
-					statusCallback(false, statusMessage .. " " .. math.Round(msg*100) .. " %")
-				else
-					statusCallback(false, statusMessage)
-				end
-			end
-		end
-	)
-
-	nextParsingHookId = nextParsingHookId + 1
+	table.insert(thinkThreads, {
+		objData = objData,
+		generateNormals = generateNormals,
+		statusCallback = statusCallback,
+		co = co,
+		mesh = mesh
+	})
 
 	return { mesh }
 end
@@ -177,9 +194,17 @@ function urlobj.ParseObj(data, generateNormals)
 	local inContinuation    = false
 	local continuationLines = nil
 	for line in string_gmatch (data, "(.-)\n") do
-		local continuation = string_match (line, "\\\r?$")
-		if continuation then
-			line = string_sub (line, 1, -#continuation - 1)
+		local passOne, passTwo = string_sub(line, #line), string_sub(line, #line - 1)
+		if passOne == '\\' then
+			line = string_sub (line, 1, -2)
+			if inContinuation then
+				continuationLines[#continuationLines + 1] = line
+			else
+				inContinuation    = true
+				continuationLines = { line }
+			end
+		elseif passTwo == '\\\r' then
+			line = string_sub (line, 1, -3)
 			if inContinuation then
 				continuationLines[#continuationLines + 1] = line
 			else
@@ -197,7 +222,10 @@ function urlobj.ParseObj(data, generateNormals)
 			end
 		end
 
-		coroutine_yield(false, "Preprocessing lines", i)
+		if i % PARSE_CHECK_LINES == 0 then
+			coroutine_yield(false, "Preprocessing lines", i)
+		end
+
 		i = i + 1
 	end
 
@@ -224,9 +252,14 @@ function urlobj.ParseObj(data, generateNormals)
 			x, y, z = tonumber(x) or 0, tonumber(y) or 0, tonumber(z) or 0
 			positions[#positions + 1] = Vector(x, y, z)
 
-			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			if i % PARSE_CHECK_LINES == 0 then
+				coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			end
+
 			i = i + 1
 		end
+
+		coroutine_yield(false, "Processing vertices", i * inverseLineCount)
 
 		-- Texture coordinates: vt %f %f
 		while i <= lineCount do
@@ -241,9 +274,14 @@ function urlobj.ParseObj(data, generateNormals)
 			texCoordsU[texCoordIndex] =      u  % 1
 			texCoordsV[texCoordIndex] = (1 - v) % 1
 
-			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			if i % PARSE_CHECK_LINES == 0 then
+				coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			end
+
 			i = i + 1
 		end
+
+		coroutine_yield(false, "Processing vertices", i * inverseLineCount)
 
 		-- Normals: vn %f %f %f
 		while i <= lineCount do
@@ -263,9 +301,14 @@ function urlobj.ParseObj(data, generateNormals)
 				normals[#normals + 1] = normal
 			end
 
-			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			if i % PARSE_CHECK_LINES == 0 then
+				coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			end
+
 			i = i + 1
 		end
+
+		coroutine_yield(false, "Processing vertices", i * inverseLineCount)
 
 		-- Faces: f %f %f %f+
 		while i <= lineCount do
@@ -282,9 +325,14 @@ function urlobj.ParseObj(data, generateNormals)
 			end
 			faceLines[#faceLines + 1] = parts
 
-			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			if i % PARSE_CHECK_LINES == 0 then
+				coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			end
+
 			i = i + 1
 		end
+
+		coroutine_yield(false, "Processing vertices", i * inverseLineCount)
 
 		-- Something else
 		if not processedLine then
@@ -345,8 +393,12 @@ function urlobj.ParseObj(data, generateNormals)
 			end
 		end
 
-		coroutine_yield(false, "Processing faces", i * inverseFaceLineCount)
+		if i % PARSE_CHECK_LINES == 0 then
+			coroutine_yield(false, "Processing faces", i * inverseFaceLineCount)
+		end
 	end
+
+	coroutine_yield(false, "Processing faces", faceLineCount)
 
 	if generateNormals then
 		local vertexNormals = {}
@@ -364,8 +416,13 @@ function urlobj.ParseObj(data, generateNormals)
 
 			vertexNormals[c.pos_index] = vertexNormals[c.pos_index] or Vector()
 			vertexNormals[c.pos_index] = (vertexNormals[c.pos_index] + normal)
-			coroutine_yield(false, "Generating normals", i * inverseTriangleCount)
+
+			if i % PARSE_CHECK_LINES == 0 then
+				coroutine_yield(false, "Generating normals", i * inverseTriangleCount)
+			end
 		end
+
+		coroutine_yield(false, "Generating normals", triangleCount)
 
 		local defaultNormal = Vector(0, 0, -1)
 
