@@ -51,15 +51,17 @@ end
 
 PART.ActMods = act_mods
 
+local udata = {enums = function(part) return part:GetSequenceList() end}
+
 pac.StartStorableVars()
 	for name in pairs(act_mods) do
-		pac.GetSet(PART, name, "", {editor_type = "sequence"})
+		pac.GetSet(PART, name, "", udata)
 	end
 
-	pac.GetSet(PART, "Fallback", "", {editor_type = "sequence"})
-	pac.GetSet(PART, "Noclip", "", {editor_type = "sequence"})
-	pac.GetSet(PART, "Air", "", {editor_type = "sequence"})
-	pac.GetSet(PART, "Sitting", "", {editor_type = "sequence"})
+	pac.GetSet(PART, "Fallback", "", udata)
+	pac.GetSet(PART, "Noclip", "", udata)
+	pac.GetSet(PART, "Air", "", udata)
+	pac.GetSet(PART, "Sitting", "", udata)
 	pac.GetSet(PART, "AlternativeRate", false)
 pac.EndStorableVars()
 

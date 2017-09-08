@@ -10,9 +10,19 @@ PART.AlwaysThink = true
 PART.Icon = 'icon16/clock.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Event", "")
-	pac.GetSet(PART, "Operator", "find simple")
-	pac.GetSet(PART, "Arguments", "")
+	pac.GetSet(PART, "Event", "", {enums = function(part)
+		local output = {}
+
+		for i, event in pairs(part.Events) do
+			if not event.IsAvaliable or event:IsAvaliable(part) then
+				output[i] = event
+			end
+		end
+
+		return output
+	end})
+	pac.GetSet(PART, "Operator", "find simple", {enums = function(part) return part.Operators end})
+	pac.GetSet(PART, "Arguments", "", {editor_panel = "event_arguments"})
 	pac.GetSet(PART, "Invert", false)
 	pac.GetSet(PART, "RootOwner", true)
 	pac.GetSet(PART, "AffectChildrenOnly", false)

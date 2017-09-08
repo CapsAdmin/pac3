@@ -122,7 +122,7 @@ local function setup(PART)
 			T = T.type
 		end
 		if T == "ITexture" then
-			pac.GetSet(PART, name, "", {editor_type = "textures"})
+			pac.GetSet(PART, name, "", {editor_panel = "textures"})
 
 			PART["Set" .. name] = function(self, var)
 				self[name] = var

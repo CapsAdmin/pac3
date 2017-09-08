@@ -536,7 +536,7 @@ do -- get set and editor vars
 			pac.GetSet(PART, part_key, pac.NULL)
 		pac.StartStorableVars()
 
-		pac.GetSet(PART, name_key, "", {editor_type = "part"})
+		pac.GetSet(PART, name_key, "", {editor_panel = "part"})
 		pac.GetSet(PART, uid_key, "", {hidden = true})
 
 		PART.ResolvePartNames = PART.ResolvePartNames or function(self, force)
@@ -564,7 +564,7 @@ do -- get set and editor vars
 							part ~= self and
 							self[part_key] ~= part and
 							part:GetPlayerOwner() == self:GetPlayerOwner() and
-							part.Name == self[name_key]
+							part:GetName() == self[name_key]
 						then
 							self[name_set_key](self, part)
 							break
