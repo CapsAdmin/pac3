@@ -128,16 +128,26 @@ do --dev util
 
 
 	function pac.Restart()
+		local editor_was_open
+		local prev_parts = {}
+
+		if pace and pace.Editor and pace.Editor:IsValid() then
+			editor_was_open = true
+
+			for key, part in pairs(pac.GetParts(true)) do
+				if not part:HasParent() and part.show_in_editor ~= false then
+					table.insert(prev_parts, part:ToTable())
+				end
+			end
+		end
 
 		if pac and pac.Disable then
 			print("removing all traces of pac3 from lua")
 			pac.Disable()
 			pac.Panic()
 
-			local was_open
-
 			if pace then
-				was_open = pace.Editor:IsValid()
+				editor_was_open = pace.Editor:IsValid()
 				pace.Panic()
 			end
 
@@ -235,11 +245,15 @@ do --dev util
 			end
 		end
 
-		if was_open then
+		if editor_was_open then
 			pace.OpenEditor()
 		end
 
 		pac.Enable()
+
+		if prev_parts[1] then
+			pace.LoadPartsFromTable(prev_parts, true)
+		end
 
 		print("pac_restart: done")
 	end
