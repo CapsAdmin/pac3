@@ -82,7 +82,11 @@ function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statu
 
 	-- Add callbacks
 	if callback       then urlobj.Queue[url]:AddCallback      (callback      ) end
-	if statusCallback then urlobj.Queue[url]:AddStatusCallback(statusCallback) end
+	if statusCallback then
+		urlobj.Queue[url]:AddStatusCallback(function(isFinished, mStatus)
+			statusCallback(isFinished, mStatus ~= '' and mStatus or 'Queued for processing')
+		end)
+	end
 end
 
 local thinkThreads = {}
@@ -91,12 +95,6 @@ local PARSE_CHECK_LINES = 50
 
 local function Think()
 	local PARSING_THERSOLD = PARSING_THERSOLD:GetFloat()
-
-	for i, threadData in ipairs(thinkThreads) do
-		if i ~= 1 then
-			threadData.statusCallback(false, 'Queued for processing')
-		end
-	end
 
 	for i, threadData in ipairs(thinkThreads) do
 		local statusCallback, co = threadData.statusCallback, threadData.co
@@ -152,6 +150,8 @@ function urlobj.CreateModelFromObjData(objData, generateNormals, statusCallback)
 		co = co,
 		mesh = mesh
 	})
+
+	statusCallback(false, 'Queued')
 
 	return { mesh }
 end
