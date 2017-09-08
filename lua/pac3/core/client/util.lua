@@ -128,46 +128,120 @@ do --dev util
 
 
 	function pac.Restart()
-		pac.Panic()
 
-		local was_open
+		if pac and pac.Disable then
+			print("removing all traces of pac3 from lua")
+			pac.Disable()
+			pac.Panic()
 
-		if pace then
-			was_open = pace.Editor:IsValid()
-			pace.Panic()
-		end
+			local was_open
 
-		for _, ent in pairs(ents.GetAll()) do
-			for k in pairs(ent:GetTable()) do
-				if k:sub(0, 4) == "pac_" then
-					ent[k] = nil
+			if pace then
+				was_open = pace.Editor:IsValid()
+				pace.Panic()
+			end
+
+			for _, ent in pairs(ents.GetAll()) do
+				for k in pairs(ent:GetTable()) do
+					if k:sub(0, 4) == "pac_" then
+						ent[k] = nil
+					end
 				end
 			end
+
+			for hook_name, hooks in pairs(hook.GetTable()) do
+				for id, func in pairs(hooks) do
+					if isstring(id) and (id:StartWith("pace_") or id:StartWith("pac_") or id:StartWith("pac3_") or id:StartWith("pacx_")) then
+						hook.Remove(hook_name, id)
+					end
+				end
+			end
+
+			timer.Remove("pac_gc")
+			timer.Remove("pac_render_times")
+			timer.Remove("urlobj_download_queue")
+
+			_G.pac = nil
+			_G.pace = nil
+
+			collectgarbage()
 		end
 
-		collectgarbage()
-
-		_G.pac = nil
-		_G.pace = nil
-
 		if GetConVar("sv_allowcslua"):GetBool() then
+			print("pac_restart: sv_allowcslua is on, looking for pac3 addon..")
 			local _, dirs = file.Find("addons/*", "MOD")
 			for _, dir in ipairs(dirs) do
 				if file.Exists("addons/" .. dir .. "/lua/autorun/pac_editor_init.lua", "MOD") then
-					local str = file.Read("addons/" .. dir .. "/lua/autorun/pac_editor_init.lua", "MOD")
-					CompileString(str, "lua/autorun/pac_editor_init.lua")()
+					print("found pac3 in garrysmod/addons/" .. dir)
+					local old_include = _G.include
+
+					local function include(path, ...)
+						local new_path = path
+						if not file.Exists("addons/" .. dir .. "/lua/" .. path, "MOD") then
+							local src = debug.getinfo(2).source
+							local lua_dir = src:sub(2):match("(.+/)")
+							if lua_dir:StartWith("addons/" .. dir) then
+								lua_dir = lua_dir:match("addons/.-/lua/(.+)")
+							end
+							new_path = lua_dir .. path
+						end
+
+						if file.Exists("addons/" .. dir .. "/lua/" .. new_path, "MOD") then
+							local str = file.Read("addons/" .. dir .. "/lua/" .. new_path, "MOD")
+							if str then
+								local func = CompileString(str, "addons/" .. dir .. "/lua/" .. new_path)
+								if type(func) == "function" then
+									local res = {pcall(func, ...)}
+
+									if res[1] then
+										return unpack(res, 2)
+									end
+
+									print("pac_restart: pcall error: " .. res[2])
+								else
+									print("pac_restart: compile string error: " .. func)
+								end
+							end
+						end
+						print("pac_restart: couldn't include " .. new_path .. " reverting to normal include")
+						return old_include(path, ...)
+					end
+
+					_G.include = include
+
+						for _, path in ipairs((file.Find("autorun/pac_*", "LUA"))) do
+							if path:EndsWith("_init.lua") and path ~= "pac_init.lua" then
+								print("pac_restart: including autorun/" .. path .. "...")
+								local ok, err = pcall(function()
+									include("autorun/" .. path)
+								end)
+
+								if not ok then
+									print("pac_restart: error when reloading pac " .. err)
+								end
+							end
+						end
+
+					_G.include = old_include
 					break
 				end
 			end
-		end
-
-		if not _G.pac then
-			include("autorun/pac_editor_init.lua")
+		else
+			print("sv_allowcslua is not enabled, loading pac3 again from server lua")
+			for _, path in ipairs((file.Find("autorun/pac*", "LUA"))) do
+				if path:EndsWith("_init.lua") and path ~= "pac_init.lua" then
+					include("autorun/" .. path)
+				end
+			end
 		end
 
 		if was_open then
 			pace.OpenEditor()
 		end
+
+		pac.Enable()
+
+		print("pac_restart: done")
 	end
 
 	concommand.Add("pac_restart", pac.Restart)
