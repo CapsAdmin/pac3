@@ -106,7 +106,7 @@ local function try_spawn(part, parent)
 	if func then
 		return func(part, parent)
 	else
-		print(part.self.ClassName)
+		pac.Message(part.self.ClassName)
 	end
 
 	return NULL
@@ -147,9 +147,9 @@ concommand.Add("pac_spawn_map", function(ply, _, args)
 		if type(data) == "function" then
 			pacx.SpawnMapOutfit(data())
 		else
-			print(data)
+			pac.Message(data)
 		end
 	else
-		print(data)
+		pac.Message(data)
 	end
 end)

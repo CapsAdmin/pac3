@@ -82,20 +82,19 @@ function PANEL:Init()
 		self.browser = browser
 		browser:Dock(FILL)
 		browser.Paint = function() end
-		browser.OpeningURL = print
-		browser.FinishedURL = print
+		browser.OpeningURL = pac.Message
+		browser.FinishedURL = pac.Message
 		browser:AddFunction("gmod", "LoadedURL", function(url, title)
 			self:LoadedURL(url,title)
 		end)
 		browser:AddFunction("gmod", "dbg", function(...)
-			Msg("[Browser] ") print(...)
+			pac.Message('[Browser] ', ...)
 		end)
 		browser:AddFunction("gmod", "status", function(txt)
 			self:StatusChanged(txt)
 		end)
 		browser.ActionSignal = function(...)
-			Msg("[BrowserACT] ")
-			print(...)
+			pac.Message('[BrowserACT] ', ...)
 		end
 
 		browser.OnKeyCodePressed = function(browser,code)
@@ -138,11 +137,9 @@ function PANEL:Think(w,h)
 
 	if not self.wasloading and self.browser:IsLoading() then
 		self.wasloading = true
-		--print"Loading..."
 	end
 	if self.wasloading and not self.browser:IsLoading() then
 		self.wasloading = false
-		--print("WAS LOADING")
 		self.browser:QueueJavascript[[gmod.LoadedURL(document.location.href,document.title); gmod.status(""); ]]
 		self.browser:QueueJavascript[[function alert(str) { console.log("Alert: "+str); }]]
 		self.browser:QueueJavascript[[if (!document.body.style.background) { document.body.style.background = 'white'; }; void 0;]]

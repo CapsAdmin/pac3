@@ -116,8 +116,6 @@ for shader_name, params in pairs(shader_params) do
 				end
 			elseif info.type == "bool" or info.is_flag then
 				def = temp:GetInt("$" .. key) == 1
-			else
-				--print(key, info.type)
 			end
 
 			pac.GetSet(PART, friendly, def)

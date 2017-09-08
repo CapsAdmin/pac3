@@ -148,7 +148,7 @@ PART.OldEvents =
 
 					local dmgDone = dmg - ent:Health()
 					self.pac_lastdamage = ent:Health()
-						
+
 					if dmgDone == 0 then return false end
 
 					if self:NumberOperator(dmgDone,amount) then
@@ -944,12 +944,8 @@ do
 				enums[val] = key:sub(5):lower()
 				enums2[enums[val]] = val
 			elseif (key:sub(0,6) == "MOUSE_" or key:sub(0,9) == "JOYSTICK_") and not key:find("_LAST$") and not key:find("_FIRST$")  and not key:find("_COUNT$")  then
-				--if enums[val] then
-					--print("conflict",val,key,'-',enums[val])
-				--else
-					enums[val] = key:lower()
-					enums2[enums[val]] = val
-				--end
+				enums[val] = key:lower()
+				enums2[enums[val]] = val
 			end
 		end
 	end
@@ -1126,9 +1122,9 @@ do
 
 	function pac.RegisterEvent(nRegister)
 		local classname = nRegister:GetClass()
-		
+
 		if PART.Events[classname] then
-			print('[PAC3] WARN: Registering event with already existing classname!: '.. classname)
+			pac.Message('WARN: Registering event with already existing classname!: '.. classname)
 		end
 
 		PART.Events[classname] = nRegister
@@ -1255,7 +1251,7 @@ do
 		function eventObject:IsAvaliable()
 			return isDarkRP() and avaliable()
 		end
-		
+
 		pac.RegisterEvent(eventObject)
 	end
 end

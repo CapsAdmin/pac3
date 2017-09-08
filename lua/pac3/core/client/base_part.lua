@@ -147,10 +147,8 @@ function PART:GetEnabled()
 
 		if enabled then
 			self:CallRecursive("OnShow")
-			--Msg"OnShow"print(self)
 		else
 			self:CallRecursive("OnHide")
-			--Msg"OnHide"print(self)
 		end
 
 	end

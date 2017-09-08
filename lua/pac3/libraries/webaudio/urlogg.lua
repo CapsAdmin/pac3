@@ -19,9 +19,7 @@ function webaudio.DebugPrint(str)
             epoe.Print("")
         end
 
-        MsgC(Color(0, 255, 0), "[WebAudio] ")
-        MsgC(Color(255, 255, 255), str)
-        Msg("\n")
+        pac.Message(Color(0, 255, 0), "[WebAudio] ", Color(255, 255, 255), str)
     end
 
     if webaudio.Debug >= 2 then

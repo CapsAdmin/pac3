@@ -438,7 +438,7 @@ pace.AddTool(L"copy from faceposer tool", function(part, suboption)
 	for i = 0, ent:GetFlexNum() - 1 do
 		local name = ent:GetFlexName(i)
 		local weight = GetConVarNumber("faceposer_flex" .. i) * GetConVarNumber("faceposer_scale")
-		print(name, weight)
+		pac.Message(name, weight)
 		if weight ~= 0 then
 			local flex = group:CreatePart("flex")
 			flex:SetFlex(name)

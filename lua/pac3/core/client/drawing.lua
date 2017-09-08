@@ -201,7 +201,7 @@ pac.Errors = {}
 function pac.RenderOverride(ent, type, draw_only)
 	local ok, err = pcall(render_override, ent, type, draw_only)
 	if not ok then
-		print("pac3 failed to render ", tostring(ent), ":")
+		pac.Message("failed to render ", tostring(ent), ":")
 		print(err)
 
 		if ent == pac.LocalPlayer then

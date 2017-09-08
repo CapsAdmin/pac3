@@ -517,14 +517,14 @@ end
 
 concommand.Add("pac_convert_pac2_outfits", function()
 	if not file.IsDir("pac2_outfits", "DATA") then
-		print("garrysmod/data/pac2_outfits/ does not exist")
+		pac.Message("garrysmod/data/pac2_outfits/ does not exist")
 		return
 	end
 
 	local folders = select(2, file.Find("pac2_outfits/*", "DATA"))
 
 	if #folders == 0 then
-		print("garrysmod/data/pac2_outfits/ is empty")
+		pac.Message("garrysmod/data/pac2_outfits/ is empty")
 		return
 	end
 
@@ -533,13 +533,13 @@ concommand.Add("pac_convert_pac2_outfits", function()
 
 		if not owner_nick then
 			owner_nick = LocalPlayer():Nick()
-			print("garrysmod/data/pac2_outfits/" .. uniqueid .. "/__owner.txt does not exist (it contains the player nickname) defaulting to " .. owner_nick)
+			pac.Message("garrysmod/data/pac2_outfits/" .. uniqueid .. "/__owner.txt does not exist (it contains the player nickname) defaulting to " .. owner_nick)
 		end
 
 		local folders = select(2, file.Find("pac2_outfits/" .. uniqueid .. "/*", "DATA"))
 
 		if #folders == 0 then
-			print("garrysmod/data/pac2_outfits/" .. uniqueid .. "/ is empty")
+			pac.Message("garrysmod/data/pac2_outfits/" .. uniqueid .. "/ is empty")
 			return
 		end
 
@@ -548,7 +548,7 @@ concommand.Add("pac_convert_pac2_outfits", function()
 			local data = file.Read("pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "/outfit.txt", "DATA")
 
 			if not name then
-				print("garrysmod/data/pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "/name.txt does not exist. defaulting to: " .. folder_name)
+				pac.Message("garrysmod/data/pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "/name.txt does not exist. defaulting to: " .. folder_name)
 			end
 
 			if data then
@@ -560,16 +560,16 @@ concommand.Add("pac_convert_pac2_outfits", function()
 
 					pace.SaveParts("pac2_outfits/" .. uniqueid .. "/" .. folder_name)
 				else
-					print("garrysmod/data/pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "(" .. name .. ") failed to convert : " .. res)
+					pac.Message("garrysmod/data/pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "(" .. name .. ") failed to convert : " .. res)
 				end
 			else
-				print("garrysmod/data/pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "/data.txt does not exist. this file contains the outfit data")
+				pac.Message("garrysmod/data/pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "/data.txt does not exist. this file contains the outfit data")
 			end
 		end
 	end
 
 	pace.ClearParts()
 
-	print("pac2 outfits are stored under pac > load > pac2_outfits in the editor")
-	print("you may need to restart the editor to see them")
+	pac.Message("pac2 outfits are stored under pac > load > pac2_outfits in the editor")
+	pac.Message("you may need to restart the editor to see them")
 end)

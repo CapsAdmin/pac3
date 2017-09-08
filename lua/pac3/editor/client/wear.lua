@@ -122,8 +122,7 @@ end)
 
 function pace.Notify(allowed, reason, name)
 	 if allowed then
-		MsgC(Color(255,255,0), "[PAC3] ")
-		MsgC(Color(0,255,0), "Your part " .. name .. " has been applied.\n")
+		pac.Message("Your part " .. name .. " has been applied.")
 	else
 		chat.AddText(Color(255,255,0), "[PAC3] ", Color(255,0,0), reason)
 	end
@@ -163,7 +162,7 @@ do
 		end
 
 		hook.Remove("Think","pac_request_outfits")
-		Msg"[PAC3] " print"Requesting outfits..."
+		pac.Message("Requesting outfits...")
 
 		RunConsoleCommand("pac_request_outfits")
 

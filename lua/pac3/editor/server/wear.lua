@@ -2,10 +2,11 @@ pace.StreamQueue = pace.StreamQueue or {}
 
 local frame_number = 0
 local last_frame
+local ERROR_COLOR = Color(228, 37, 37)
 
 local function catchError(err)
-	print('[PAC3] Error: ', err)
-	print(debug.traceback())
+	pac.Message(ERROR_COLOR, 'Error: ', err)
+	pac.Message(debug.traceback())
 end
 
 timer.Create("pac_check_stream_queue", 0.1, 0, function()
@@ -198,8 +199,7 @@ function pace.SubmitPart(data, filter)
 								table.remove(players, key)
 
 								if owner_steamid == steamid then
-									print(string.format("[PAC3] Dropping data transfer request by '%s' (%s) due to a global PAC ban.",
-										ply:Nick(), ply:SteamID()))
+									pac.Message("Dropping data transfer request by '", ply:Nick(), "' due to a global PAC ban.")
 									return false, "You have been globally banned from using PAC. See global_bans.lua for more info."
 								end
 							end

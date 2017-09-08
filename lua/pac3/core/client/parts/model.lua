@@ -121,7 +121,7 @@ end
 function PART:Initialize(is_obj)
 	self.Entity = pac.CreateEntity(self:GetModel(), is_obj)
 	if not self.Entity:IsValid() then
-		print("pac3 failed to create entity!")
+		pac.Message("Failed to create entity!")
 	end
 	self.Entity:SetNoDraw(true)
 	self.Entity.PACPart = self
@@ -321,7 +321,7 @@ function PART:OnDraw(owner, pos, ang)
 		self:Reset()
 		ent = self:GetEntity()
 		if not ent:IsValid() then
-			print("WTF", ent, self.Entity)
+			pac.Message("WTF", ent, self.Entity)
 			return
 		end
 	end

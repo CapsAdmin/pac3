@@ -118,7 +118,7 @@ function PART:SetURL(URL)
 
 		local callback callback = function (snd, ...)
 			if not snd or not snd:IsValid() then
-				print("[PAC3] Failed to load ", url, "(" .. flags .. ")")
+				pac.Message("Failed to load ", url, " (" .. flags .. ")")
 				return
 			end
 

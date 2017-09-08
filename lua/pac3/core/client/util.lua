@@ -122,8 +122,6 @@ do --dev util
 
 		local function GetConVarValue() return val end
 
-		--print(c:GetString(),initial,c:GetBool(),GetConVarValue(),t,save,server)
-
 		pac.convarcache[cvar]={GetConVarValue,c}
 		return GetConVarValue,c
 	end
@@ -173,21 +171,6 @@ do --dev util
 	end
 
 	concommand.Add("pac_restart", pac.Restart)
-
-	function pac.dprint(fmt, ...)
-		if pac.debug then
-			MsgN("\n")
-			MsgN(">>>PAC3>>>")
-			MsgN(fmt:format(...))
-			if pac.debug_trace then
-				MsgN("==TRACE==")
-				debug.Trace()
-				MsgN("==TRACE==")
-			end
-			MsgN("<<<PAC3<<<")
-			MsgN("\n")
-		end
-	end
 end
 
 do
@@ -279,7 +262,7 @@ do
 			return fallback
 		end
 
-		print("[PAC] Invalid model ", mdl)
+		pac.Message("Invalid model - ", mdl)
 
 		local str = pac_error_mdl:GetString()
 

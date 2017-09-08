@@ -812,7 +812,6 @@ function PART:SetExpression(str)
 		else
 			self.ExpressionFunc = true
 			self.ExpressionError = res
-			print(res)
 		end
 	end
 end

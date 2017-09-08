@@ -70,12 +70,12 @@ function PART:SetURL(url)
 
 		http.Fetch(url, function(str,len,hdr,code)
 			if not str or code~=200 then
-				Msg"[PAC] Animation failed to load from "print(url,code)
+				pac.Message("Animation failed to load from ", url, ': ', code)
 				return
 			end
 			local tbl = util.JSONToTable(str)
 			if not tbl then
-				Msg"[PAC] Animation failed to parse from "print(url)
+				pac.Message("Animation failed to parse from ", url)
 				return
 			end
 
@@ -97,7 +97,7 @@ function PART:SetURL(url)
 				pace.timeline.Load(tbl)
 			end
 		end, function(code)
-			Msg"[PAC] Animation failed to load from "print(url,code)
+			pac.Message("Animation failed to load from ", url, ': ', code)
 		end) --should do nothing on invalid/inaccessible URL
 	end
 end

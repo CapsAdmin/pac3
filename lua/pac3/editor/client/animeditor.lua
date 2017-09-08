@@ -692,7 +692,7 @@ local function FixMouse()
 		gui.SetMousePos(pressedPos[1],pressedPos[2])
 	end
 	if(input.IsMouseDown(MOUSE_WHEEL_DOWN)) then
-		print":O"
+		pac.Message(":O") -- ???
 	end
 end
 
@@ -1459,7 +1459,6 @@ function SLIDERS:Init()
 end
 local needsUpdate = true
 function SLIDERS:SetFrameData()
-	--print(selectedFrame,selectedBone,selectedFrame:GetData().BoneInfo[selectedBone])
 	needsUpdate = false
 	if !ValidPanel(selectedFrame) || !selectedBone || !selectedFrame:GetData().BoneInfo[selectedBone] then
 

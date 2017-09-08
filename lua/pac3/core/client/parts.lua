@@ -27,7 +27,7 @@ function pac.CreatePart(name, owner)
 	local part = class.Create("part", name)
 
 	if not part then
-		print("pac3 tried to create unknown part " .. name)
+		pac.Message("Tried to create unknown part: " .. name .. '!')
 		part = class.Create("part", "base")
 	end
 
@@ -140,7 +140,7 @@ function pac.RemoveAllParts(owned_only, server)
 	for _, part in pairs(pac.GetParts(owned_only)) do
 		if part:IsValid() then
 			local status, err = pcall(part.Remove, part)
-			if not status then print('[PAC3] Failed to remove part: ' .. err) end
+			if not status then pac.Message('Failed to remove part: ' .. err .. '!') end
 		end
 	end
 

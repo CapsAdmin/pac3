@@ -1,3 +1,4 @@
+include("util.lua")
 include("pac3/libraries/sh_boneanimlib.lua")
 
 include("footsteps_fix.lua")
@@ -12,7 +13,7 @@ function pac.SimpleFetch(url, cb, failcb)
 
 		function(data, len, headers, code)
 			if code ~= 200 then
-				print(string.format('[PAC3] URL %s failed to download: server returned %s', url, tostring(code)))
+				pac.Message('URL ', url, ' failed to download: server returned ', code)
 
 				if failcb then
 					failcb(code, data, len, headers)
@@ -25,7 +26,7 @@ function pac.SimpleFetch(url, cb, failcb)
 		end,
 
 		function(err)
-			print(string.format('[PAC3] URL %s failed to download: stream error: %s', url, err))
+			pac.Message('URL ', url, ' failed to download: stream error ', err)
 
 			if failcb then
 				failcb(err)

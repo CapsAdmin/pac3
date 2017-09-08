@@ -26,8 +26,8 @@ function pace.CreatePanel(class_name, parent)
 			if not IsValid(pnl) then return end
 			local parent = pnl:GetParent()
 			if not IsValid(parent) or parent:GetClassName() == 'CGModBase' then
-				print('[PAC3] Panel was created without valid parent! ' .. class_name)
-				print(debugTrace)
+				pac.Message('Panel was created without valid parent! ' .. class_name)
+				pac.Message(debugTrace)
 			end
 		end)
 	end

@@ -77,14 +77,14 @@ net.Receive("pac_to_contraption", function(len, ply)
 	if count > max then
 		net.Start("pac_submit_acknowledged")
 			net.WriteBool(false)
-			net.WriteString("You can only spawn " .. max .. " props at a time!")
+			net.WriteString("You can only spawn ", max, " props at a time!")
 		net.Send(ply)
 
-		print("[PAC3] ", ply, " might have tried to crash the server by attempting to spawn "..count.." entities with the contraption system!")
+		pac.Message(ply, " might have tried to crash the server by attempting to spawn ", count, " entities with the contraption system!")
 		return
 	end
 
-	print("[PAC3] Spawning contraption by ", ply, " with "..count.." entities")
+	pac.Message("Spawning contraption by ", ply, " with ", count, " entities")
 
 	for key, val in pairs(data) do
 		spawn(val,ply)
