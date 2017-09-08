@@ -21,9 +21,9 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Max", 1)
 	pac.GetSet(PART, "WeaponHoldType", "none", {enums = function(part) return part.ValidHoldTypes end})
 	pac.GetSet(PART, "OwnerCycle", false)
+	pac.GetSet(PART, "InvertFrames", false)
 	pac.GetSet(PART, "ResetOnHide", true)
 pac.EndStorableVars()
-
 
 local tonumber = tonumber
 
@@ -75,12 +75,14 @@ function PART:GetOwner()
 
 	return self.BaseClass.GetOwner(self)
 end
+
 function PART:GetSequenceList()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
 		return ent:GetSequenceList()
 	end
+
 	return {"none"}
 end
 
@@ -90,6 +92,11 @@ function PART:OnHide()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
+		if not self:GetResetOnHide() then
+			self.SequenceCycle = ent:GetCycle()
+			self.storeFrame = self.frame
+		end
+
 		if ent.pac_animation_sequences then
 			ent.pac_animation_sequences[self] = nil
 		end
@@ -98,8 +105,9 @@ function PART:OnHide()
 			ent.pac_animation_holdtypes[self] = nil
 		end
 
-		if not ent:IsPlayer() and self:GetResetOnHide() then
-			ent:SetSequence(0)
+		if not ent:IsPlayer() and self.prevSequence then
+			ent:ResetSequence(self.prevSequence)
+			self.prevSequence = nil
 		end
 	end
 end
@@ -116,9 +124,11 @@ function PART:SetSequenceName(name)
 end
 
 function PART:OnShow()
+	self.PlayingSequenceFrom = RealTime()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
+		self.prevSequence = ent:GetSequence()
 		self.random_seqname = table.Random(self.SequenceName:Split(";"))
 
 		if self.random_seqname ~= "" then
@@ -150,7 +160,17 @@ function PART:OnShow()
 			end
 
 			if seq ~= -1  then
+				ent:ResetSequence(seq)
 				ent:SetSequence(seq)
+				if not self:GetResetOnHide() then
+					ent:ResetSequenceInfo()
+
+					for i = 1, 10 do
+						ent:FrameAdvance(1)
+					end
+
+					ent:ResetSequenceInfo()
+				end
 			end
 
 		elseif ent:IsPlayer() then
@@ -192,6 +212,16 @@ function PART:OnShow()
 				params.part = self
 
 				ent.pac_animation_holdtypes[self] = params
+			end
+		end
+
+		if not self:GetResetOnHide() and self.SequenceCycle then
+			ent:SetCycle(self.SequenceCycle)
+			self.SequenceCycle = nil
+
+			if self.storeFrame then
+				self.frame = self.storeFrame
+				self.storeFrame = nil
 			end
 		end
 	end
@@ -250,14 +280,16 @@ function PART:OnThink()
 		if self.PingPongLoop then
 			self.frame = self.frame + rate / 2
 			local cycle = min + math.abs(math.Round((self.frame + self.Offset) * 0.5) - (self.frame + self.Offset) * 0.5) * 2 * (max - min)
+
 			if pac.IsNumberValid(cycle) then
-				ent:SetCycle(cycle)
+				ent:SetCycle(not self.InvertFrames and cycle or (1 - cycle))
 			end
 		else
 			self.frame = self.frame + rate
 			local cycle = min + ((self.frame + self.Offset) * 0.5) % 1 * (max - min)
+
 			if pac.IsNumberValid(cycle) then
-				ent:SetCycle(cycle)
+				ent:SetCycle(not self.InvertFrames and cycle or (1 - cycle))
 			end
 		end
 	end
