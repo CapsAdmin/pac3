@@ -30,8 +30,9 @@ local function DefineSpecialCallback(self, callFuncLeft, callFuncRight)
 	return btn
 end
 
-local function create_search_list(property, key, name, add_columns, get_list, get_current, add_line, select_value)
+local function create_search_list(property, key, name, add_columns, get_list, get_current, add_line, select_value, select_value_search)
 	select_value = select_value or function(val, key) return val end
+	select_value_search = select_value_search or select_value
 	pace.SafeRemoveSpecialPanel()
 
 	local frame = vgui.Create("DFrame")
@@ -72,10 +73,11 @@ local function create_search_list(property, key, name, add_columns, get_list, ge
 		end
 
 		table.sort(newList, function(a, b) return a[1] < b[1] end)
+		if find then find = find:lower() end
 
 		for i, data in ipairs(newList) do
 			local key, val = data[1], data[2]
-			if (not find or find == "") or tostring(select_value(val, key)):lower():find(find) then
+			if (not find or find == "") or tostring(select_value_search(val, key)):lower():find(find) then
 
 				local pnl = add_line(list, key, val)
 				pnl.list_key = key
@@ -439,6 +441,7 @@ do -- list
 
 								function()
 									local tbl
+
 									if type(udata.enums) == "function" then
 										tbl = udata.enums(pace.current_part)
 									else
@@ -451,7 +454,8 @@ do -- list
 										if type(k) == "number" then
 											k = v
 										end
-										enums[L(k)] = v
+
+										enums[pace.util.FriendlyName(L(k))] = v
 									end
 
 									return enums
@@ -462,7 +466,11 @@ do -- list
 								end,
 
 								function(list, key, val)
-									return list:AddLine(pace.util.FriendlyName(key))
+									return list:AddLine(key)
+								end,
+
+								function(val, key)
+									return val
 								end,
 
 								function(val, key)
