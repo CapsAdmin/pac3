@@ -93,7 +93,9 @@ local function Think()
 	local PARSING_THERSOLD = PARSING_THERSOLD:GetFloat()
 
 	for i, threadData in ipairs(thinkThreads) do
-		threadData.statusCallback(false, 'Queued for processing')
+		if i ~= 1 then
+			threadData.statusCallback(false, 'Queued for processing')
+		end
 	end
 
 	for i, threadData in ipairs(thinkThreads) do
@@ -245,7 +247,7 @@ function urlobj.ParseObj(data, generateNormals)
 		-- Positions: v %f %f %f [%f]
 		while i <= lineCount do
 			local line = lines[i]
-			local x, y, z = string_match(line, "^%s*v%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
+			local x, y, z = string_match(line, "^ *v *(-?[0-9.]+) *(-?[0-9.]+) *(-?[0-9.]+)")
 			if not x then break end
 
 			processedLine = true
@@ -259,12 +261,14 @@ function urlobj.ParseObj(data, generateNormals)
 			i = i + 1
 		end
 
-		coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+		if processedLine then
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+		end
 
 		-- Texture coordinates: vt %f %f
 		while i <= lineCount do
 			local line = lines[i]
-			local u, v = string_match(line, "^%s*vt%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
+			local u, v = string_match(line, "^ *vt *(-?[0-9.]+) *(-?[0-9.]+)")
 			if not u then break end
 
 			processedLine = true
@@ -281,12 +285,14 @@ function urlobj.ParseObj(data, generateNormals)
 			i = i + 1
 		end
 
-		coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+		if processedLine then
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+		end
 
 		-- Normals: vn %f %f %f
 		while i <= lineCount do
 			local line = lines[i]
-			local nx, ny, nz = string_match(line, "^%s*vn%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
+			local nx, ny, nz = string_match(line, "^ *vn *(-?[0-9.]+) *(-?[0-9.]+) *(-?[0-9.]+)")
 			if not nx then break end
 
 			processedLine = true
@@ -308,7 +314,9 @@ function urlobj.ParseObj(data, generateNormals)
 			i = i + 1
 		end
 
-		coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+		if processedLine then
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+		end
 
 		-- Faces: f %f %f %f+
 		while i <= lineCount do
@@ -332,7 +340,9 @@ function urlobj.ParseObj(data, generateNormals)
 			i = i + 1
 		end
 
-		coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+		if processedLine then
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+		end
 
 		-- Something else
 		if not processedLine then
