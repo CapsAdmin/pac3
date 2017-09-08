@@ -57,8 +57,6 @@ pac.StartStorableVars()
 		pac.SetupPartName(PART, "AimPart")
 		pac.SetupPartName(PART, "Parent")
 
-		pac.SetupPartName(PART, "AnglePart")
-
 	pac.SetPropertyGroup("appearance")
 		pac.GetSet(PART, "DrawOrder", 0)
 		pac.GetSet(PART, "Translucent", false)
@@ -983,10 +981,6 @@ do -- drawing. this code is running every frame
 			end
 
 			return self.Angles + (pac.EyePos - self.cached_pos):Angle()
-		end
-
-		if self.AnglePart:IsValid() then
-			return self.AngleOffset + self.Angles + self.AnglePart.cached_ang -- __add always creates new angle
 		end
 
 		if self.AimPart:IsValid() then
