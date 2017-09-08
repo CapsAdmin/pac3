@@ -321,16 +321,18 @@ function urlobj.ParseObj(data, generateNormals)
 		-- Faces: f %f %f %f+
 		while i <= lineCount do
 			local line = lines[i]
-			if not string_match(line, "^%s*f%s+") then break end
+			local matchLine = string_match(line, "^ *f *(.*)")
+			if not matchLine then break end
 
 			processedLine = true
-			line = string_match (line, "^%s*(.-)[#%s]*$")
 
 			-- Explode line
 			local parts = {}
-			for part in string_gmatch(line, "[^%s]+") do
+
+			for part in string_gmatch(matchLine, "[^ ]+") do
 				parts[#parts + 1] = part
 			end
+
 			faceLines[#faceLines + 1] = parts
 
 			if i % PARSE_CHECK_LINES == 0 then
@@ -355,15 +357,16 @@ function urlobj.ParseObj(data, generateNormals)
 	for i = 1, #faceLines do
 		local parts = faceLines [i]
 
-		if #parts >= 4 then
-			local v1PositionIndex, v1TexCoordIndex, v1NormalIndex = string_match(parts[2], "(%d+)/?(%d*)/?(%d*)")
-			local v3PositionIndex, v3TexCoordIndex, v3NormalIndex = string_match(parts[3], "(%d+)/?(%d*)/?(%d*)")
+		if #parts >= 3 then
+			-- are they always integers?
+			local v1PositionIndex, v1TexCoordIndex, v1NormalIndex = string_match(parts[1], "(-?[0-9]+)/(-?[0-9]+)/(-?[0-9]+)")
+			local v3PositionIndex, v3TexCoordIndex, v3NormalIndex = string_match(parts[2], "(-?[0-9]+)/(-?[0-9]+)/(-?[0-9]+)")
 
 			v1PositionIndex, v1TexCoordIndex, v1NormalIndex = tonumber(v1PositionIndex), tonumber(v1TexCoordIndex), tonumber(v1NormalIndex)
 			v3PositionIndex, v3TexCoordIndex, v3NormalIndex = tonumber(v3PositionIndex), tonumber(v3TexCoordIndex), tonumber(v3NormalIndex)
 
-			for i = 4, #parts do
-				local v2PositionIndex, v2TexCoordIndex, v2NormalIndex = string_match(parts[i], "(%d+)/?(%d*)/?(%d*)")
+			for i = 3, #parts do
+				local v2PositionIndex, v2TexCoordIndex, v2NormalIndex = string_match(parts[i], "(-?[0-9]+)/(-?[0-9]+)/(-?[0-9]+)")
 				v2PositionIndex, v2TexCoordIndex, v2NormalIndex = tonumber(v2PositionIndex), tonumber(v2TexCoordIndex), tonumber(v2NormalIndex)
 
 				local v1 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil }
