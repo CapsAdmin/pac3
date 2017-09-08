@@ -101,7 +101,7 @@ function pace.util.FriendlyName(strIn)
 				charIn == 'c' and iterableArray[i + 1] == 'w' or
 				charIn == 'i' and (iterableArray[i - 1] == 'C' or iterableArray[i - 1] == 'c') or
 				charIn == 'c' and iterableArray[i + 1] == 'i' or
-				(charIn == 'x' or charIn == 'y' or charIn == 'z') and not iterableArray[i + 1]
+				(charIn == 'x' or charIn == 'y' or charIn == 'z') and not iterableArray[i + 1] and iterableArray[i - 1] == ' '
 
 			if condUpper then
 				prevChar = string.upper(charIn)
