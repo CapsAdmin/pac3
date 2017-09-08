@@ -1,6 +1,8 @@
+
 pac.urlobj = pac.urlobj or {}
 local urlobj = pac.urlobj
 
+local TIMEOUT_VALUE = CreateConVar('pac_objdl_timeout', '15', {FCVAR_ARCHIVE}, 'OBJ download timeout in seconds')
 local QUEUEITEM = {}
 
 -- Warning: This code is concurrency hell
@@ -96,7 +98,7 @@ function QUEUEITEM:BeginDownload ()
 	self:SetStatus ("Downloading")
 
 	self.Downloading          = true
-	self.DownloadTimeoutTime  = pac.RealTime + 15
+	self.DownloadTimeoutTime  = pac.RealTime + TIMEOUT_VALUE:GetFloat()
 	self.DownloadAttemptCount = self.DownloadAttemptCount + 1
 
 	pac.SimpleFetch(self.Url,

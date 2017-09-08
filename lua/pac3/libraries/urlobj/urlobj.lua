@@ -453,6 +453,9 @@ function urlobj.ParseObj(data, generateNormals)
 	return triangleList
 end
 
+local SIMULATENOUS_DOWNLOADS = CreateConVar('pac_objdl_streams', '4', {FCVAR_ARCHIVE}, 'OBJ files download streams')
+local CURRENTLY_DOWNLOADING = 0
+
 -- Download queuing
 function urlobj.DownloadQueueThink()
 	if pac.urltex and pac.urltex.Busy then return end
@@ -478,12 +481,14 @@ function urlobj.DownloadQueueThink()
 				urlobj.DownloadQueue[url] = nil
 				urlobj.DownloadQueueCount = urlobj.DownloadQueueCount - 1
 
+				CURRENTLY_DOWNLOADING = CURRENTLY_DOWNLOADING - 1
 				pac.dprint("model download timed out for good %q", url)
 			else
 				-- Reattempt download
 				queueItem:BeginDownload()
 			end
-			return
+
+			if CURRENTLY_DOWNLOADING >= SIMULATENOUS_DOWNLOADS:GetInt() then return end
 		end
 	end
 
@@ -497,9 +502,11 @@ function urlobj.DownloadQueueThink()
 				function()
 					urlobj.DownloadQueue[url] = nil
 					urlobj.DownloadQueueCount = urlobj.DownloadQueueCount - 1
+					CURRENTLY_DOWNLOADING = CURRENTLY_DOWNLOADING - 1
 				end
 			)
 
+			CURRENTLY_DOWNLOADING = CURRENTLY_DOWNLOADING + 1
 			pac.dprint("requesting model download %q", url)
 		end
 	end
