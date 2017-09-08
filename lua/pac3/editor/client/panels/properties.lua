@@ -69,15 +69,15 @@ local function create_search_list(property, key, name, add_columns, get_list, ge
 		local newList = {}
 
 		for k, v in pairs(get_list()) do
-			table.insert(newList, {k, v})
+			table.insert(newList, {k, v, pace.util.FriendlyName(tostring(k)), pace.util.FriendlyName(tostring(v))})
 		end
 
 		table.sort(newList, function(a, b) return a[1] < b[1] end)
 		if find then find = find:lower() end
 
 		for i, data in ipairs(newList) do
-			local key, val = data[1], data[2]
-			if (not find or find == "") or tostring(select_value_search(val, key)):lower():find(find) then
+			local key, val, keyFriendly, valFriendly = data[1], data[2], data[3], data[4]
+			if (not find or find == "") or tostring(select_value_search(valFriendly, keyFriendly)):lower():find(find) then
 
 				local pnl = add_line(list, key, val)
 				pnl.list_key = key
@@ -455,7 +455,7 @@ do -- list
 											k = v
 										end
 
-										enums[pace.util.FriendlyName(L(k))] = v
+										enums[k] = v
 									end
 
 									return enums
@@ -466,11 +466,7 @@ do -- list
 								end,
 
 								function(list, key, val)
-									return list:AddLine(key)
-								end,
-
-								function(val, key)
-									return val
+									return list:AddLine(pace.util.FriendlyName(key))
 								end,
 
 								function(val, key)
