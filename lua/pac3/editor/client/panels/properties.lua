@@ -351,30 +351,55 @@ do -- list
 
 		local tbl = {}
 
-		for key, val in pairs(obj:GetVars()) do
+		for key, val in pairs(obj.ClassName and obj:GetVars() or obj) do
+			local callback
+			if not obj.ClassName then
+				callback = val.callback
+				val = val.val
+			end
 
 			local udata = pac.GetPropertyUserdata(obj, key)
 
 			if udata and udata.hidden then continue end
 
-			if not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key) then
+			if not obj.ClassName or not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key) then
 				local group = group_override or (udata and udata.group) or "generic"
 				tbl[group] = tbl[group] or {}
-				table.insert(tbl[group], {key = key, val = val})
+				table.insert(tbl[group], {key = key, val = val, callback = callback})
 			end
 		end
 
-		for group, tbl in pairs(tbl) do
-			table.sort(tbl, function(a,b) return a.key > b.key end)
+		for group, vars in pairs(tbl) do
+			local sorted_variables = {}
+			for i, name in ipairs(pac.VariableOrder) do
+				for _, v in ipairs(vars) do
+					if name == v.key then
+						table.insert(sorted_variables, v)
+						break
+					end
+				end
+			end
+			tbl[group] = sorted_variables
+		end
+
+		local sorted_groups = {}
+		for i, name in ipairs(pac.GroupOrder) do
+			for k, v in pairs(tbl) do
+				if name == k then
+					table.insert(sorted_groups, {key = k, val = v})
+					break
+				end
+			end
 		end
 
 		local current_group = nil
 
-		for group, tbl in pairs(tbl) do
-			for pos, data in pairs(tbl) do
+		for i, tbl in ipairs(sorted_groups) do
+			local group, tbl = tbl.key, tbl.val
+			for pos, data in ipairs(tbl) do
 				local key, val = data.key, data.val
 
-				if pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
+				if obj.ClassName and pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
 
 				local pnl
 				local T = type(val):lower()
@@ -386,17 +411,17 @@ do -- list
 
 				local udata = pac.GetPropertyUserdata(obj, key)
 
-				if udata.editor_type then
-					T = udata.editor_type or T
-				end
-
-				if not pace.PanelExists("properties_" .. T) then
+				if udata.editor_panel then
+					T = udata.editor_panel or T
+				elseif not pace.PanelExists("properties_" .. T) then
 					if pace.PanelExists("properties_" .. key:lower()) then
 						T = key:lower()
 					else
 						T = "string"
 					end
 				end
+
+				if pace.CollapsedProperties[group] ~= nil and pace.CollapsedProperties[group] then continue end
 
 				pnl = pace.CreatePanel("properties_" .. T)
 
@@ -447,42 +472,52 @@ do -- list
 						end)
 					end
 
-					if pnl.ExtraPopulate then
-						table.insert(pace.extra_populates, pnl.ExtraPopulate)
-						pnl:Remove()
-						continue
-					end
+					if obj.ClassName then
 
-					pnl.CurrentKey = key
-					obj.editor_pnl = pnl
-
-					local val = obj["Get" .. key](obj)
-					pnl:SetValue(val)
-
-					if udata.editor_sensitivity or udata.editor_clamp then
-						pnl.LimitValue = function(self, num)
-							if udata.editor_sensitivity then
-								self.sens = udata.editor_sensitivity
-							end
-							if udata.editor_clamp then
-								num = math.Clamp(num, unpack(udata.editor_clamp))
-							end
-							return num
+						if pnl.ExtraPopulate then
+							table.insert(pace.extra_populates, pnl.ExtraPopulate)
+							pnl:Remove()
+							continue
 						end
-					elseif udata.editor_onchange then
-						pnl.LimitValue = udata.editor_onchange
-					end
 
-					pnl.OnValueChanged = function(val)
-						if T == "number" then
-							val = tonumber(val) or 0
-						elseif T == "string" then
-							val = tostring(val)
+						pnl.CurrentKey = key
+						obj.editor_pnl = pnl
+
+						local val = obj["Get" .. key](obj)
+						pnl:SetValue(val)
+
+						if udata then
+							if udata.editor_sensitivity or udata.editor_clamp then
+								pnl.LimitValue = function(self, num)
+									if udata.editor_sensitivity then
+										self.sens = udata.editor_sensitivity
+									end
+									if udata.editor_clamp then
+										num = math.Clamp(num, unpack(udata.editor_clamp))
+									end
+									return num
+								end
+							elseif udata.editor_onchange then
+								pnl.LimitValue = udata.editor_onchange
+							end
 						end
-						pace.Call("VariableChanged", obj, key, val)
-					end
 
-					self:AddKeyValue(key, pnl, pos, obj)
+						pnl.OnValueChanged = function(val)
+							if T == "number" then
+								val = tonumber(val) or 0
+							elseif T == "string" then
+								val = tostring(val)
+							end
+							pace.Call("VariableChanged", obj, key, val)
+						end
+
+						self:AddKeyValue(key, pnl, pos, obj)
+					else
+						pnl.CurrentKey = key
+						pnl:SetValue(val)
+						pnl.OnValueChanged = data.callback
+						self:AddKeyValue(key, pnl, pos)
+					end
 				end
 			end
 		end
@@ -1422,91 +1457,11 @@ do -- sound
 	pace.RegisterPanel(PANEL)
 end
 
-do -- event list
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_event"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			"events",
-
-			function(list)
-				list:AddColumn("name")
-			end,
-
-			function()
-				local output = {}
-
-				for i, event in pairs(pace.current_part.Events) do
-					if not event.IsAvaliable or event:IsAvaliable(pace.current_part) then
-						output[i] = event
-					end
-				end
-
-				return output
-			end,
-
-			function()
-				return pace.current_part.Event
-			end,
-
-			function(list, key, val)
-				return list:AddLine(L(key:gsub("_", " ")))
-			end,
-
-			function(val, key)
-				return key
-			end
-		)
-
-		SHOW_SPECIAL(frame, self, 250)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- operator list
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_operator"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			"operators",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return pace.current_part.Operators
-			end,
-			function()
-				return pace.current_part.Operator
-			end,
-			function(list, key, val)
-				return list:AddLine(L(val:gsub("_", " ")))
-			end,
-			function(val, key)
-				return val
-			end
-		)
-
-		SHOW_SPECIAL(frame, self, 250)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
 
 do -- arguments
 	local PANEL = {}
 
-	PANEL.ClassName = "properties_arguments"
+	PANEL.ClassName = "properties_event_arguments"
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:ExtraPopulate()
@@ -1537,6 +1492,7 @@ do -- arguments
 					--self:SetValue(pace.current_part.Arguments)
 				end}
 			end
+			print("?!?!?")
 			pace.properties:Populate(tbl, true, L"arguments")
 		end
 

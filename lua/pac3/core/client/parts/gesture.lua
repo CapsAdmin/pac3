@@ -8,7 +8,7 @@ PART.Icon = 'icon16/thumb_up.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Loop", false)
-	pac.GetSet(PART, "GestureName", "", {editor_type = "sequence"})
+	pac.GetSet(PART, "GestureName", "", {editor_panel = "sequence"})
 	pac.GetSet(PART, "SlotName", "attackreload", {enums = function(part) return part.ValidGestureSlots end})
 	pac.GetSet(PART, "SlotWeight", 1)
 pac.EndStorableVars()

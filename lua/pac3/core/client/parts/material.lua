@@ -115,14 +115,21 @@ function PART:OnThink()
 end
 
 local function setup(PART)
-	for name, T in pairs(PART.ShaderParams) do
+	local sorted = {}
+	for k,v in pairs(PART.ShaderParams) do
+		table.insert(sorted, {k = k, v = v})
+	end
+	table.sort(sorted, function(a, b) return a.k > b.k end)
+
+	for _, v in ipairs(sorted) do
+		local name, T = v.k, v.v
 		local extra
 		if type(T) == "table" then
 			extra = T.extra
 			T = T.type
 		end
 		if T == "ITexture" then
-			pac.GetSet(PART, name, "", {editor_type = "textures"})
+			pac.GetSet(PART, name, "", {editor_panel = "textures"})
 
 			PART["Set" .. name] = function(self, var)
 				self[name] = var

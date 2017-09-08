@@ -45,6 +45,9 @@ function pace.CheckShortcuts()
 			last = RealTime() + 0.2
 		end
 
+		if input.IsKeyDown(KEY_LALT) and input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_P) then
+			RunConsoleCommand("pac_restart")
+		end
 	end
 end
 
