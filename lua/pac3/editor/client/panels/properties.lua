@@ -371,95 +371,94 @@ do -- list
 		local current_group = nil
 
 		for group, tbl in pairs(tbl) do
-		for pos, data in pairs(tbl) do
-			local key, val = data.key, data.val
+			for pos, data in pairs(tbl) do
+				local key, val = data.key, data.val
 
-			if pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
+				if pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
 
-			local pnl
-			local T = type(val):lower()
+				local pnl
+				local T = type(val):lower()
 
-			if current_group ~= group then
-				self:AddCollapser(group)
-				current_group = group
-			end
-
-			local udata = pac.GetPropertyUserdata(obj, key)
-
-			if udata.editor_type then
-				T = udata.editor_type or T
-			end
-
-			if not pace.PanelExists("properties_" .. T) then
-				if pace.PanelExists("properties_" .. key:lower()) then
-					T = key:lower()
-				else
-					T = "string"
+				if current_group ~= group then
+					self:AddCollapser(group)
+					current_group = group
 				end
-			end
 
-			pnl = pace.CreatePanel("properties_" .. T)
+				local udata = pac.GetPropertyUserdata(obj, key)
 
-			if pnl then
-				if udata.enums then
-					DefineSpecialCallback(pnl, function(self)
-						create_search_list(
-							self,
-							self.CurrentKey,
-							L(key),
+				if udata.editor_type then
+					T = udata.editor_type or T
+				end
 
-							function(list)
-								list:AddColumn("enum")
-							end,
+				if not pace.PanelExists("properties_" .. T) then
+					if pace.PanelExists("properties_" .. key:lower()) then
+						T = key:lower()
+					else
+						T = "string"
+					end
+				end
 
-							function()
-								local tbl
-								if type(udata.enums) == "function" then
-									tbl = udata.enums(pace.current_part)
-								else
-									tbl = udata.enums
-								end
+				pnl = pace.CreatePanel("properties_" .. T)
 
-								local enums = {}
+				if pnl then
+					if udata.enums then
+						DefineSpecialCallback(pnl, function(self)
+							create_search_list(
+								self,
+								self.CurrentKey,
+								L(key),
 
-								for k, v in pairs(tbl) do
-									if type(k) == "number" then
-										k = v
+								function(list)
+									list:AddColumn("enum")
+								end,
+
+								function()
+									local tbl
+									if type(udata.enums) == "function" then
+										tbl = udata.enums(pace.current_part)
+									else
+										tbl = udata.enums
 									end
-									enums[L(k)] = v
+
+									local enums = {}
+
+									for k, v in pairs(tbl) do
+										if type(k) == "number" then
+											k = v
+										end
+										enums[L(k)] = v
+									end
+
+									return enums
+								end,
+
+								function()
+									return pace.current_part[key]
+								end,
+
+								function(list, key, val)
+									return list:AddLine(pace.util.FriendlyName(key))
+								end,
+
+								function(val, key)
+									return key
 								end
+							)
+						end)
+					end
 
-								return enums
-							end,
+					if pnl.ExtraPopulate then
+						table.insert(pace.extra_populates, pnl.ExtraPopulate)
+						pnl:Remove()
+						continue
+					end
 
-							function()
-								return pace.current_part[key]
-							end,
+					pnl.CurrentKey = key
+					obj.editor_pnl = pnl
 
-							function(list, key, val)
-								return list:AddLine(pace.util.FriendlyName(key))
-							end,
+					local val = obj["Get" .. key](obj)
+					pnl:SetValue(val)
 
-							function(val, key)
-								return key
-							end
-						)
-					end)
-				end
-
-				if pnl.ExtraPopulate then
-					table.insert(pace.extra_populates, pnl.ExtraPopulate)
-					pnl:Remove()
-					continue
-				end
-
-				pnl.CurrentKey = key
-				obj.editor_pnl = pnl
-
-				local val = obj["Get" .. key](obj)
-				pnl:SetValue(val)
-
-				if udata then
 					if udata.editor_sensitivity or udata.editor_clamp then
 						pnl.LimitValue = function(self, num)
 							if udata.editor_sensitivity then
@@ -473,20 +472,19 @@ do -- list
 					elseif udata.editor_onchange then
 						pnl.LimitValue = udata.editor_onchange
 					end
-				end
 
-				pnl.OnValueChanged = function(val)
-					if T == "number" then
-						val = tonumber(val) or 0
-					elseif T == "string" then
-						val = tostring(val)
+					pnl.OnValueChanged = function(val)
+						if T == "number" then
+							val = tonumber(val) or 0
+						elseif T == "string" then
+							val = tostring(val)
+						end
+						pace.Call("VariableChanged", obj, key, val)
 					end
-					pace.Call("VariableChanged", obj, key, val)
-				end
 
-				self:AddKeyValue(key, pnl, pos, obj)
+					self:AddKeyValue(key, pnl, pos, obj)
+				end
 			end
-		end
 		end
 
 		self:FixHeight()
