@@ -53,8 +53,8 @@ PART.Icon = 'icon16/shape_square.png'
 PART.Group = 'model'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Model", "models/dav0r/hoverball.mdl")
-	pac.GetSet(PART, "ModelFallback", "")
+	pac.GetSet(PART, "Model", "models/dav0r/hoverball.mdl", {editor_panel = "model"})
+	pac.GetSet(PART, "ModelFallback", "", {editor_panel = "model"})
 
 	pac.SetPropertyGroup("orientation")
 		pac.GetSet(PART, "BoneMerge", false)
