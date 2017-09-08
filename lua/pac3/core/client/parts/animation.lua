@@ -95,6 +95,9 @@ function PART:OnHide()
 		if not self:GetResetOnHide() then
 			self.SequenceCycle = ent:GetCycle()
 			self.storeFrame = self.frame
+		else
+			self.SequenceCycle = nil
+			self.frame = 0
 		end
 
 		if ent.pac_animation_sequences then
