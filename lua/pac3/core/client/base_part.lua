@@ -60,8 +60,10 @@ pac.StartStorableVars()
 		pac.SetupPartName(PART, "Parent")
 
 	pac.SetPropertyGroup("appearance")
-		pac.GetSet(PART, "DrawOrder", 0)
 		pac.GetSet(PART, "Translucent", false)
+
+	pac.SetPropertyGroup("other")
+		pac.GetSet(PART, "DrawOrder", 0)
 
 pac.EndStorableVars()
 
