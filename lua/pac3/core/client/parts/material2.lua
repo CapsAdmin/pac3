@@ -73,6 +73,7 @@ local fixup = {
 	"flashlight",
 	"alphatest",
 	"rimlight",
+	"emissiveblend",
 }
 
 local material_flags = {
@@ -159,7 +160,7 @@ for shader_name, params in pairs(shader_params) do
 	local group_count = {}
 	for key, info in pairs(params) do
 		local friendly = info.friendly or key
-		local group = friendly:match("^(%u.-)%u")
+		local group = friendly:match("^(%u.-)%u") or friendly
 
 		for _, str in ipairs(fixup) do
 			if friendly:lower():StartWith(str) then
@@ -168,7 +169,7 @@ for shader_name, params in pairs(shader_params) do
 			end
 		end
 
-		if group and group:lower() ~= "no" then
+		if group:lower() ~= "no" then
 			group = group:lower()
 			group_count[group] = (group_count[group] or 0) + 1
 			groups[key] = group
@@ -177,7 +178,9 @@ for shader_name, params in pairs(shader_params) do
 
 	local sorted_params = {}
 	for k, v in pairs(params) do
-		table.insert(sorted_params, {k = k, v = v})
+		if not k:find("frame") then
+			table.insert(sorted_params, {k = k, v = v})
+		end
 	end
 	table.sort(sorted_params, function(a, b) return a.k:lower() < b.k:lower() end)
 
@@ -201,7 +204,7 @@ for shader_name, params in pairs(shader_params) do
 		if info.type == "matrix" then
 			add_matrix(PART, property_name, friendly_name:gsub("Transform", ""), info.description)
 		elseif info.type == "texture" then
-			pac.GetSet(PART, property_name, "", {editor_panel = "textures", editor_friendly = friendly_name, description = info.description, shader_param_info = info})
+			pac.GetSet(PART, property_name, info.default or "", {editor_panel = "textures", editor_friendly = friendly_name, description = info.description, shader_param_info = info})
 			local key = "$" .. key
 
 			PART["Set" .. property_name] = function(self, val)
@@ -227,10 +230,23 @@ for shader_name, params in pairs(shader_params) do
 				local r,g,b,a = unpack(temp:GetString("$" .. key):sub(3, -3):Split(" "))
 				def = Color(tonumber(r), tonumber(g), tonumber(b), tonumber(a))
 			elseif info.type == "vec3" or info.type == "color" then
-				def = temp:GetVector("$" .. key) or tonumber(info.default) or Vector(info.default:sub(2, -2))
+				def = temp:GetVector("$" .. key)
+				if def == Vector(0, 0, 0) then
+					def = Vector(info.default:sub(2, -2))
+
+					if def == Vector(0, 0, 0) then
+						def = Vector(info.default:sub(1, -1))
+
+						if def == Vector(0, 0, 0) then
+							def = tonumber(info.default)
+						end
+					end
+				end
+
 				if type(def) == "number" then
 					def = Vector(def, def, def)
 				end
+
 				editor_sensitivity = 0.25
 			elseif info.type == "bool" or info.is_flag then
 				def = temp:GetInt("$" .. key) == 1
@@ -244,34 +260,45 @@ for shader_name, params in pairs(shader_params) do
 			if type(def) == "number" then
 				PART["Set" .. property_name] = function(self, val)
 					self[property_name] = val
-					self:GetRawMaterial():SetFloat(key, val)
+					local mat = self:GetRawMaterial()
+					mat:SetFloat(key, val)
+					if info.recompute then
+						mat:Recompute()
+					end
 				end
 			elseif type(def) == "boolean" then
 				if info.is_flag then
 					PART["Set" .. property_name] = function(self, val)
 						self[property_name] = val
 
-						local num = self:GetRawMaterial():GetInt("$flags")
-						local tbl = FlagsToTable(num, material_flags)
+						local mat = self:GetRawMaterial()
+
+						local tbl = FlagsToTable(mat:GetInt("$flags"), material_flags)
 						tbl[flag_key] = val
-						local num = TableToFlags(tbl, material_flags)
-						self:GetRawMaterial():SetInt("$flags", num)
+						mat:SetInt("$flags", TableToFlags(tbl, material_flags))
+
+						if info.recompute then mat:Recompute() end
 					end
 				else
 					PART["Set" .. property_name] = function(self, val)
 						self[property_name] = val
-						self:GetRawMaterial():SetInt(key, val and 1 or 0)
+						local mat = self:GetRawMaterial()
+						mat:SetInt(key, val and 1 or 0)
+						if info.recompute then mat:Recompute() end
 					end
 				end
 			elseif type(def) == "Vector" then
 				PART["Set" .. property_name] = function(self, val)
 					self[property_name] = val
-					self:GetRawMaterial():SetVector(key, val)
+					local mat = self:GetRawMaterial()
+					mat:SetVector(key, val)
 				end
 			elseif IsColor(def) then
 				PART["Set" .. property_name] = function(self, val)
 					self[property_name] = val
-					self:GetMaterialFromParent():SetString(key, ("[%f %f %f %f]"):format(val.r, val.g, val.b, val.a))
+					local mat = self:GetRawMaterial()
+					mat:SetString(key, ("[%f %f %f %f]"):format(val.r, val.g, val.b, val.a))
+					if info.recompute then mat:Recompute() end
 				end
 			end
 		end
@@ -285,6 +312,10 @@ for shader_name, params in pairs(shader_params) do
 		if not self.Materialm then
 			local mat = CreateMaterial(tostring({}), shader_name, {})
 			self.Materialm = mat
+
+			for k,v in pairs(self:GetVars()) do
+				self["Set" .. k](self, v)
+			end
 		end
 
 		return self.Materialm

@@ -32,7 +32,7 @@ unlitgeneric = {
 		type = "texture",
 		friendly = "EnvmapMask",
 		description = "envmap mask",
-		default = "shadertest/shadertest_envmask",
+		--default = "shadertest/shadertest_envmask",
 	},
 	phongwarptexture = {
 		type = "texture",
@@ -126,7 +126,7 @@ unlitgeneric = {
 		type = "texture",
 		friendly = "Envmap",
 		description = "envmap",
-		default = "shadertest/shadertest_env",
+		--default = "shadertest/shadertest_env",
 	},
 	linearwrite = {
 		friendly = "LinearWrite",
@@ -192,7 +192,7 @@ unlitgeneric = {
 	},
 	albedo = {
 		type = "texture",
-		friendly = "Albedo",
+		friendly = "PhongAlbedo",
 		description = "albedo (Base texture with no baked lighting)",
 		default = "shadertest/BaseTexture",
 	},
@@ -216,6 +216,7 @@ unlitgeneric = {
 	basetexture = {
 		type = "texture",
 		description = "base texture",
+		default = "models/effects/comball_glow1"
 	},
 	scaleedgesoftnessbasedonscreenres = {
 		friendly = "ScaleEdgeSoftnessBasedOnScreenRes",
@@ -637,6 +638,7 @@ unlitgeneric = {
 		default = "0.7",
 		description = "",
 		gmod_default = "0.000000",
+		recompute = true,
 	},
 	allowalphatocoverage = {
 		is_flag = true,
@@ -907,7 +909,7 @@ vertexlitgeneric = {
 	},
 	emissiveblendflowtexture = {
 		type = "texture",
-		friendly = "FlowTexture",
+		friendly = "EmissiveBlendFlowTexture",
 		description = "flow map",
 		default = "",
 	},
@@ -1043,6 +1045,7 @@ vertexlitgeneric = {
 		default = "0.0",
 		description = "",
 		gmod_default = "0.000000",
+		recompute = true,
 	},
 	allowalphatocoverage = {
 		is_flag = true,
@@ -1072,7 +1075,7 @@ vertexlitgeneric = {
 		gmod_default = "[ 1.000 0.000 0.000 0.000 0.000 1.000 0.000 0.000 0.000 0.000 1.000 0.000 0.000 0.000 0.000 1.000 ]",
 	},
 	emissiveblendtint = {
-		friendly = "EmissiveTint",
+		friendly = "EmissiveBlendTint",
 		type = "color",
 		default = "[1 1 1]",
 		description = "Self-illumination tint",
@@ -1224,7 +1227,7 @@ vertexlitgeneric = {
 	},
 	albedo = {
 		type = "texture",
-		friendly = "Albedo",
+		friendly = "PhongAlbedo",
 		description = "albedo (Base texture with no baked lighting)",
 		default = "shadertest/BaseTexture",
 	},
@@ -1281,10 +1284,10 @@ vertexlitgeneric = {
 		description = "flag",
 		friendly = "Nofog",
 	},
-	texture = {
+	--[[texture = {
 		type = "texture",
 		description = "base texture",
-	},
+	},]]
 	basetexture = {
 		type = "texture",
 		description = "base texture",
@@ -1306,10 +1309,10 @@ vertexlitgeneric = {
 		type = "texture",
 		description = "base texture",
 	},
-	texture2 = {
+	--[[texture2 = {
 		type = "texture",
 		description = "base texture",
-	},
+	},]]
 	ignore_alpha_modulation = {
 		is_flag = true,
 		type = "integer",
@@ -1439,7 +1442,7 @@ vertexlitgeneric = {
 		default = "0",
 		description = "mode for combining detail texture with base. 0=normal, 1= additive, 2=alpha blend detail over base, 3=crossfade",
 		gmod_default = "0",
-		enums = {"normal", "additive", "alphablend", "crossfade"},
+		enums = {normal = 0, additive = 1, alphablend = 2, crossfade = 3},
 	},
 	flashlightnolambert = {
 		friendly = "FlashlightNoLambert",
@@ -1456,7 +1459,7 @@ vertexlitgeneric = {
 	},
 	emissiveblendtexture = {
 		type = "texture",
-		friendly = "EmissiveTexture",
+		friendly = "EmissiveBlendTexture",
 		description = "self-illumination map",
 		default = "",
 	},
@@ -1481,7 +1484,7 @@ vertexlitgeneric = {
 		description = "flashlight spotlight shape texture",
 	},
 	emissiveblendstrength = {
-		friendly = "BlendStrength",
+		friendly = "EmissiveBlendStrength",
 		type = "float",
 		default = "1.0",
 		description = "Emissive blend strength",
@@ -1495,7 +1498,7 @@ vertexlitgeneric = {
 		gmod_default = "[ 1.000 0.000 0.000 0.000 0.000 1.000 0.000 0.000 0.000 0.000 1.000 0.000 0.000 0.000 0.000 1.000 ]",
 	},
 	emissiveblendscrollvector = {
-		friendly = "EmissiveScrollVector",
+		friendly = "EmissiveBlendScrollVector",
 		type = "vec2",
 		default = "[0.11 0.124]",
 		description = "Emissive scroll vec",
@@ -1549,7 +1552,7 @@ vertexlitgeneric = {
 	},
 	emissiveblendbasetexture = {
 		type = "texture",
-		friendly = "BaseTexture",
+		friendly = "EmissiveBlendBaseTexture",
 		description = "self-illumination map",
 		default = "",
 	},
@@ -1585,6 +1588,7 @@ vertexlitgeneric = {
 		gmod_default = "0",
 		description = "Enable emissive blend pass",
 		default = "0",
+		friendly = "EmissiveBlendEnabled",
 	},
 	Frame = {
 		type = "integer",
@@ -1597,6 +1601,7 @@ vertexlitgeneric = {
 		gmod_default = "0",
 		description = "Enable Flesh interior blend pass",
 		default = "0",
+		friendly = "FleshInteriorEnabled",
 	},
 	flesheffectcenterradius1 = {
 		friendly = "FleshEffectCenterRadius1",

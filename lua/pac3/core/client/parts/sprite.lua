@@ -93,12 +93,13 @@ function PART:SetMaterial(var)
 end
 
 function PART:OnDraw(owner, pos, ang)
-	if self.Materialm then
+	local mat = self.MaterialOverride or self.Materialm
+	if mat then
 		if self.IgnoreZ then
 			cam_IgnoreZ(true)
 		end
 
-		render_SetMaterial(self.Materialm)
+		render_SetMaterial(mat)
 		render_DrawSprite(pos, self.SizeX * self.Size, self.SizeY * self.Size, self.ColorC)
 
 		if self.IgnoreZ then
