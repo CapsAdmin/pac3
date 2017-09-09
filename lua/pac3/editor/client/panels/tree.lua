@@ -250,7 +250,7 @@ function PANEL:PopulateParts(node, parts, children)
 
 			if enable_model_icons:GetBool() and part.ClassName == "model" and part.GetModel then
 				part_node:SetModel(part:GetModel())
-			else
+			elseif type(part.Icon) == "string" then
 				part_node.Icon:SetImage(part.Icon)
 			end
 
