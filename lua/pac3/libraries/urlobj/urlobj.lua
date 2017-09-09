@@ -363,14 +363,14 @@ function urlobj.ParseObj(data, generateNormals)
 
 		if #parts >= 3 then
 			-- are they always integers?
-			local v1PositionIndex, v1TexCoordIndex, v1NormalIndex = string_match(parts[1], "(-?[0-9]+)/(-?[0-9]+)/(-?[0-9]+)")
-			local v3PositionIndex, v3TexCoordIndex, v3NormalIndex = string_match(parts[2], "(-?[0-9]+)/(-?[0-9]+)/(-?[0-9]+)")
+			local v1PositionIndex, v1TexCoordIndex, v1NormalIndex = string_match(parts[1], "(-?[0-9]+)/?(-?[0-9]*)/?(-?[0-9]*)")
+			local v3PositionIndex, v3TexCoordIndex, v3NormalIndex = string_match(parts[2], "(-?[0-9]+)/?(-?[0-9]*)/?(-?[0-9]*)")
 
 			v1PositionIndex, v1TexCoordIndex, v1NormalIndex = tonumber(v1PositionIndex), tonumber(v1TexCoordIndex), tonumber(v1NormalIndex)
 			v3PositionIndex, v3TexCoordIndex, v3NormalIndex = tonumber(v3PositionIndex), tonumber(v3TexCoordIndex), tonumber(v3NormalIndex)
 
 			for i = 3, #parts do
-				local v2PositionIndex, v2TexCoordIndex, v2NormalIndex = string_match(parts[i], "(-?[0-9]+)/(-?[0-9]+)/(-?[0-9]+)")
+				local v2PositionIndex, v2TexCoordIndex, v2NormalIndex = string_match(parts[i], "(-?[0-9]+)/?(-?[0-9]*)/?(-?[0-9]*)")
 				v2PositionIndex, v2TexCoordIndex, v2NormalIndex = tonumber(v2PositionIndex), tonumber(v2TexCoordIndex), tonumber(v2NormalIndex)
 
 				local v1 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil }
