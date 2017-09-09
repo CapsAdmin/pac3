@@ -12,7 +12,7 @@ webaudio.FilterType =
 	HighPass = 2,
 }
 
-local listenerPosition, listenerAngle, listenerVelocity
+local listenerPosition, listenerAngle, listenerVelocity = Vector(), Angle(), Vector()
 local lastListenerPosition, lastListenerPositionTime
 
 hook.Add("RenderScene", "webaudio_3d", function(position, angle)
