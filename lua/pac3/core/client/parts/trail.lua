@@ -117,7 +117,9 @@ end
 local temp_color = Color(255, 255, 255)
 
 function PART:OnDraw(owner, pos, ang)
-	if self.Materialm and self.StartColorC and self.EndColorC then
+	local mat = self.MaterialOverride or self.Materialm
+
+	if mat and self.StartColorC and self.EndColorC then
 		self.points = self.points or {}
 
 		local len = tonumber(self.Length)
@@ -134,7 +136,7 @@ function PART:OnDraw(owner, pos, ang)
 			len = math_ceil(math_abs(len - spc))
 		end
 
-		render_SetMaterial(self.Materialm)
+		render_SetMaterial(mat)
 
 		local IgnoreZ = tobool(self.IgnoreZ)
 		if IgnoreZ then

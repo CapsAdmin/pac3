@@ -210,7 +210,7 @@ for shader_name, params in pairs(shader_params) do
 			PART["Set" .. property_name] = function(self, val)
 				self[property_name] = val
 
-				if not pac.Handleurltex(self, val, function(_, tex)
+				if not pac.resource.DownloadTexture(val, function(tex)
 					self:GetRawMaterial():SetTexture(key, tex)
 				end) then
 

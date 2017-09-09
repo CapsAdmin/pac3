@@ -239,8 +239,9 @@ function PART:UpdateColor()
 end
 
 function PART:UpdateMaterial()
-	if self.Materialm then
-		render_MaterialOverride(self.Materialm)
+	local mat = self.MaterialOverride or self.Materialm
+	if mat then
+		render_MaterialOverride(mat)
 	end
 end
 
