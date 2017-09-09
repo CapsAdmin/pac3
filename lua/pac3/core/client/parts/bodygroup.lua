@@ -5,7 +5,6 @@ PART.ClassName = "bodygroup"
 PART.NonPhysical = true
 PART.Groups = {'entity', 'model', 'modifiers'}
 PART.Icon = 'icon16/user.png'
-PART.RenderPriority = 2
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "BodyGroupName", "", {

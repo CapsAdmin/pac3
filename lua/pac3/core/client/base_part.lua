@@ -30,7 +30,6 @@ local PART = {}
 
 PART.ClassName = "base"
 PART.Internal = true
-PART.RenderPriority = 1
 
 function PART:__tostring()
 	return string.format("%s[%s][%s][%i]", self.Type, self.ClassName, self.Name, self.Id)
@@ -820,15 +819,8 @@ do -- drawing. this code is running every frame
 	PART.cached_pos = Vector(0, 0, 0)
 	PART.cached_ang = Angle(0, 0, 0)
 
-	local function sortRenderPriority(a, b)
-		return a.RenderPriority > b.RenderPriority
-	end
-
 	function PART:DrawChildren(event, pos, ang, draw_type)
-		local children = self:GetChildren()
-		table.sort(children, sortRenderPriority)
-
-		for i, child in ipairs(children) do
+		for i, child in ipairs(self:GetChildren()) do
 			child:Draw(event, pos, ang, draw_type)
 		end
 	end
@@ -864,10 +856,7 @@ do -- drawing. this code is running every frame
 			if not self.HandleModifiersManually then self:ModifiersPostEvent(event, draw_type) end
 		end
 
-		local children = self:GetChildren()
-		table.sort(children, sortRenderPriority)
-
-		for i, child in ipairs(children) do
+		for i, child in ipairs(self:GetChildren()) do
 			child:Draw(event, pos, ang, draw_type)
 		end
 	end

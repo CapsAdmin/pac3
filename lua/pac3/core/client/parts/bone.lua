@@ -10,7 +10,6 @@ local PART = {}
 PART.ClassName = "bone"
 PART.Groups = {'entity', 'model'}
 PART.Icon = 'icon16/connect.png'
-PART.RenderPriority = 10
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Scale", Vector(1,1,1), {editor_sensitivity = 0.25})
