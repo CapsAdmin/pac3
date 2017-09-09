@@ -25,7 +25,7 @@ do -- bone
 			table.insert(list, v.friendly)
 		end
 
-		create_search_list(
+		pace.CreateSearchList(
 			self,
 			self.CurrentKey,
 			L"bones",
@@ -71,7 +71,7 @@ do -- part
 			end
 		end
 
-		FIX_MENU(menu)
+		pace.FixMenu(menu)
 	end
 
 	pace.RegisterPanel(PANEL)
@@ -120,7 +120,7 @@ do -- owner
 			end
 		end
 
-		FIX_MENU(menu)
+		pace.FixMenu(menu)
 	end
 
 	pace.RegisterPanel(PANEL)
@@ -153,7 +153,7 @@ do -- aimpart
 			end
 		end
 
-		FIX_MENU(menu)
+		pace.FixMenu(menu)
 	end
 
 	pace.RegisterPanel(PANEL)
@@ -201,7 +201,7 @@ do -- material
 
 		local pnl = pace.CreatePanel("mat_browser")
 
-		SHOW_SPECIAL(pnl, self, 300)
+		pace.ShowSpecial(pnl, self, 300)
 
 		function pnl.MaterialSelected(_, path)
 			self:SetValue(path)
@@ -233,7 +233,7 @@ do -- textures
 
 		local pnl = pace.CreatePanel("mat_browser")
 
-		SHOW_SPECIAL(pnl, self, 300)
+		pace.ShowSpecial(pnl, self, 300)
 
 		function pnl.MaterialSelected(_, path)
 			self:SetValue(path)
@@ -328,7 +328,7 @@ do -- script
 
 		local frame = vgui.Create("DFrame")
 		frame:SetTitle(L"script")
-		SHOW_SPECIAL(frame, self, 512)
+		pace.ShowSpecial(frame, self, 512)
 		frame:SetSizable(true)
 
 		local editor = vgui.Create("pace_luapad", frame)

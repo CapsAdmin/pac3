@@ -1,6 +1,6 @@
 local L = pace.LanguageString
 
-local function SHOW_SPECIAL(pnl, parent, size)
+function pace.ShowSpecial(pnl, parent, size)
 	size = size or 150
 
 	pnl:SetPos(pace.Editor:GetWide(), select(2, parent:LocalToScreen()) - size + 25)
@@ -8,7 +8,7 @@ local function SHOW_SPECIAL(pnl, parent, size)
 	pnl:MakePopup()
 end
 
-local function FIX_MENU(menu)
+function pace.FixMenu(menu)
 	menu:SetMaxHeight(500)
 	menu:InvalidateLayout(true, true)
 	menu:SetPos(pace.Editor:GetPos() + pace.Editor:GetWide(), gui.MouseY() - (menu:GetTall() * 0.5))
@@ -30,7 +30,7 @@ local function DefineSpecialCallback(self, callFuncLeft, callFuncRight)
 	return btn
 end
 
-local function create_search_list(property, key, name, add_columns, get_list, get_current, add_line, select_value, select_value_search)
+function pace.CreateSearchList(property, key, name, add_columns, get_list, get_current, add_line, select_value, select_value_search)
 	select_value = select_value or function(val, key) return val end
 	select_value_search = select_value_search or select_value
 	pace.SafeRemoveSpecialPanel()
@@ -522,7 +522,7 @@ do -- list
 					if udata then
 						if udata.enums then
 							DefineSpecialCallback(pnl, function(self)
-								create_search_list(
+								pace.CreateSearchList(
 									self,
 									self.CurrentKey,
 									L(key),
@@ -1116,7 +1116,7 @@ do -- vector
 			local frm = vgui.Create("DFrame")
 			frm:SetTitle("color")
 
-			SHOW_SPECIAL(frm, self, 300)
+			pace.ShowSpecial(frm, self, 300)
 
 			local clr = vgui.Create("DColorMixer", frm)
 			clr:Dock(FILL)
