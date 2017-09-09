@@ -5,6 +5,20 @@ PART.NonPhysical = true
 PART.Group = {'modifiers', 'model', 'entity'}
 PART.Icon = 'icon16/paintcan.png'
 
+local group_ordering = {
+	{pattern = "phong", group = "phong"},
+	{pattern = "envmap", group = "env map"},
+	{pattern = {"ambientocclusion", "halflambert"}, group = "ambient occlusion"},
+	{pattern = "detail", group = "detail"},
+	{pattern = "rimlight", group = "rimlight"},
+	{pattern = {"cloak", "refract"}, group = "cloak"},
+	{pattern = "color", group = "colors"},
+	{pattern = {"bumpmap", "basetexture", "^envmapmask$", "lightwarptexture"}, group = "textures"},
+	{pattern = "flesh", group = "flesh"},
+	{pattern = "selfillum", group = "selfillum"},
+	{pattern = "emissive", group ="emissive"},
+}
+
 PART.ShaderParams =
 {
 	BaseTexture = "ITexture",
@@ -121,122 +135,156 @@ local function setup(PART)
 	end
 	table.sort(sorted, function(a, b) return a.k > b.k end)
 
-	for _, v in ipairs(sorted) do
-		local name, T = v.k, v.v
-		local extra
-		if type(T) == "table" then
-			extra = T.extra
-			T = T.type
-		end
-		if T == "ITexture" then
-			pac.GetSet(PART, name, "", {editor_panel = "textures"})
+	for pass = 1, 2 do
+		for _, info in ipairs(group_ordering) do
+			for _, v in ipairs(sorted) do
+				local name, T = v.k, v.v
 
-			PART["Set" .. name] = function(self, var)
-				self[name] = var
+				local found
 
-				if
-					self.SKIP or
-					pac.Handleurltex(
-						self,
-						var,
-						function(_, tex)
-							local mat = self:GetMaterialFromParent()
-							if mat then
-								mat:SetTexture("$" .. name, tex)
+				if type(info.pattern) == "table" then
+					for k,v in pairs(info.pattern) do
+						if name:lower():find(v) then
+							found = true
+							break
+						end
+					end
+				else
+					found = name:lower():find(info.pattern)
+				end
 
-								self.SKIP = true
-								self:UpdateMaterial()
-								self.SKIP = false
-							else
-								self.delay_set = function()
-									local mat = self:GetMaterialFromParent()
-									if mat then
-										mat:SetTexture("$" .. name, tex)
-										self.SKIP = true
-										self:UpdateMaterial()
-										self.SKIP = false
+				if pass == 1 then
+					if found then
+						pac.SetPropertyGroup(info.group)
+					else
+						continue
+					end
+				elseif pass == 2 then
+					if not found then
+						pac.SetPropertyGroup()
+					else
+						continue
+					end
+				end
+
+				do
+					local extra
+					if type(T) == "table" then
+						extra = T.extra
+						T = T.type
+					end
+					if T == "ITexture" then
+						pac.GetSet(PART, name, "", {editor_panel = "textures"})
+
+						PART["Set" .. name] = function(self, var)
+							self[name] = var
+
+							if
+								self.SKIP or
+								pac.Handleurltex(
+									self,
+									var,
+									function(_, tex)
+										local mat = self:GetMaterialFromParent()
+										if mat then
+											mat:SetTexture("$" .. name, tex)
+
+											self.SKIP = true
+											self:UpdateMaterial()
+											self.SKIP = false
+										else
+											self.delay_set = function()
+												local mat = self:GetMaterialFromParent()
+												if mat then
+													mat:SetTexture("$" .. name, tex)
+													self.SKIP = true
+													self:UpdateMaterial()
+													self.SKIP = false
+												end
+											end
+										end
 									end
+								)
+							then
+								return
+							end
+
+							local mat = self:GetMaterialFromParent()
+
+							if mat then
+								if var ~= "" then
+									local _mat = Material(var)
+									local tex = _mat:GetTexture("$" .. name)
+
+									if not tex or tex:GetName() == "error" then
+										tex = CreateMaterial("pac3_tex_" .. var .. "_" .. self.Id, "VertexLitGeneric", {["$basetexture"] = var}):GetTexture("$basetexture")
+
+										if not tex or tex:GetName() == "error" then
+											tex = _mat:GetTexture("$basetexture")
+										end
+									end
+
+									if tex then
+										mat:SetTexture("$" .. name, tex)
+									end
+								else
+									mat:SetUndefined("$" .. name)
 								end
 							end
 						end
-					)
-				then
-					return
-				end
+					elseif T == "boolean" then
+						pac.GetSet(PART, name, false)
 
-				local mat = self:GetMaterialFromParent()
+						PART["Set" .. name] = function(self, var)
+							self[name] = var
 
-				if mat then
-					if var ~= "" then
-						local _mat = Material(var)
-						local tex = _mat:GetTexture("$" .. name)
+							local mat = self:GetMaterialFromParent()
 
-						if not tex or tex:GetName() == "error" then
-							tex = CreateMaterial("pac3_tex_" .. var .. "_" .. self.Id, "VertexLitGeneric", {["$basetexture"] = var}):GetTexture("$basetexture")
+							if mat then
+								if name == "TranslucentX" then
+									name = "Translucent"
+								end
 
-							if not tex or tex:GetName() == "error" then
-								tex = _mat:GetTexture("$basetexture")
+								mat:SetInt("$" .. name, var and 1 or 0) -- setint crashes?
 							end
 						end
+					elseif T == "number" then
+						pac.GetSet(PART, name, 0)
 
-						if tex then
-							mat:SetTexture("$" .. name, tex)
+						PART["Set" .. name] = function(self, var)
+							self[name] = var
+
+							local mat = self:GetMaterialFromParent()
+
+							if mat then
+								mat:SetFloat("$" .. name, var)
+							end
 						end
-					else
-						mat:SetUndefined("$" .. name)
+					elseif T == "Vector" then
+						local def = Vector(0,0,0)
+
+						-- hack
+						local key = name:lower()
+						if key == "color" or key == "color2" then
+							def = Vector(1,1,1)
+						end
+
+						pac.GetSet(PART, name, def)
+
+						PART["Set" .. name] = function(self, var)
+							self[name] = var
+
+							local mat = self:GetMaterialFromParent()
+
+							if mat then
+								if key == "color" or key == "color2" then
+									timer.Simple(0.1, function() mat:SetVector("$" .. name, var) end)
+								end
+
+								mat:SetVector("$" .. name, var)
+							end
+						end
 					end
-				end
-			end
-		elseif T == "boolean" then
-			pac.GetSet(PART, name, false)
-
-			PART["Set" .. name] = function(self, var)
-				self[name] = var
-
-				local mat = self:GetMaterialFromParent()
-
-				if mat then
-					if name == "TranslucentX" then
-						name = "Translucent"
-					end
-
-					mat:SetInt("$" .. name, var and 1 or 0) -- setint crashes?
-				end
-			end
-		elseif T == "number" then
-			pac.GetSet(PART, name, 0)
-
-			PART["Set" .. name] = function(self, var)
-				self[name] = var
-
-				local mat = self:GetMaterialFromParent()
-
-				if mat then
-					mat:SetFloat("$" .. name, var)
-				end
-			end
-		elseif T == "Vector" then
-			local def = Vector(0,0,0)
-
-			-- hack
-			local key = name:lower()
-			if key == "color" or key == "color2" then
-				def = Vector(1,1,1)
-			end
-
-			pac.GetSet(PART, name, def)
-
-			PART["Set" .. name] = function(self, var)
-				self[name] = var
-
-				local mat = self:GetMaterialFromParent()
-
-				if mat then
-					if key == "color" or key == "color2" then
-						timer.Simple(0.1, function() mat:SetVector("$" .. name, var) end)
-					end
-
-					mat:SetVector("$" .. name, var)
 				end
 			end
 		end
