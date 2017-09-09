@@ -355,41 +355,56 @@ do -- list
 
 		for key, val in pairs(obj.ClassName and obj:GetVars() or obj) do
 			local callback
+			local udata
+
 			if not obj.ClassName then
 				callback = val.callback
+				udata = val.userdata
 				val = val.val
+			else
+				udata = pac.GetPropertyUserdata(obj, key)
 			end
-
-			local udata = pac.GetPropertyUserdata(obj, key)
 
 			if udata and udata.hidden then continue end
 
 			if not obj.ClassName or not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key) then
 				local group = group_override or (udata and udata.group) or "generic"
 				tbl[group] = tbl[group] or {}
-				table.insert(tbl[group], {key = key, val = val, callback = callback})
+				table.insert(tbl[group], {key = key, val = val, callback = callback, udata = udata})
 			end
 		end
 
 		for group, vars in pairs(tbl) do
-			local sorted_variables = {}
-			for i, name in ipairs(pac.VariableOrder) do
-				for _, v in ipairs(vars) do
-					if name == v.key then
-						table.insert(sorted_variables, v)
-						break
+			if not obj.ClassName then
+				table.sort(tbl[group], function(a, b) return a.key > b.key end)
+			else
+				local sorted_variables = {}
+				for i, name in ipairs(pac.VariableOrder) do
+					for _, v in ipairs(vars) do
+						if name == v.key then
+							table.insert(sorted_variables, v)
+							break
+						end
 					end
 				end
+				tbl[group] = sorted_variables
 			end
-			tbl[group] = sorted_variables
 		end
 
 		local sorted_groups = {}
-		for i, name in ipairs(pac.GroupOrder) do
+
+		if not obj.ClassName then
 			for k, v in pairs(tbl) do
-				if name == k then
-					table.insert(sorted_groups, {key = k, val = v})
-					break
+				table.insert(sorted_groups, {key = k, val = v})
+			end
+			table.sort(sorted_groups, function(a, b) return a.key > b.key end)
+		else
+			for i, name in ipairs(pac.GroupOrder) do
+				for k, v in pairs(tbl) do
+					if name == k then
+						table.insert(sorted_groups, {key = k, val = v})
+						break
+					end
 				end
 			end
 		end
@@ -399,7 +414,7 @@ do -- list
 		for i, tbl in ipairs(sorted_groups) do
 			local group, tbl = tbl.key, tbl.val
 			for pos, data in ipairs(tbl) do
-				local key, val = data.key, data.val
+				local key, val, udata = data.key, data.val, data.udata
 
 				if obj.ClassName and pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
 
@@ -411,16 +426,12 @@ do -- list
 					current_group = group
 				end
 
-				local udata = pac.GetPropertyUserdata(obj, key)
-
-				if udata.editor_panel then
+				if udata and udata.editor_panel then
 					T = udata.editor_panel or T
+				elseif pace.PanelExists("properties_" .. key:lower()) then
+					T = key:lower()
 				elseif not pace.PanelExists("properties_" .. T) then
-					if pace.PanelExists("properties_" .. key:lower()) then
-						T = key:lower()
-					else
-						T = "string"
-					end
+					T = "string"
 				end
 
 				if pace.CollapsedProperties[group] ~= nil and pace.CollapsedProperties[group] then continue end
@@ -428,60 +439,74 @@ do -- list
 				pnl = pace.CreatePanel("properties_" .. T)
 
 				if pnl then
-					if udata.description then
+					if udata and udata.description then
 						pnl:SetTooltip(L(udata.description))
 					end
 
-					if udata.enums then
-						DefineSpecialCallback(pnl, function(self)
-							create_search_list(
-								self,
-								self.CurrentKey,
-								L(key),
+					if udata then
+						if udata.enums then
+							DefineSpecialCallback(pnl, function(self)
+								create_search_list(
+									self,
+									self.CurrentKey,
+									L(key),
 
-								function(list)
-									list:AddColumn("enum")
-								end,
+									function(list)
+										list:AddColumn("enum")
+									end,
 
-								function()
-									local tbl
+									function()
+										local tbl
 
-									if type(udata.enums) == "function" then
-										tbl = udata.enums(pace.current_part)
-									else
-										tbl = udata.enums
-									end
-
-									local enums = {}
-
-									for k, v in pairs(tbl) do
-										if type(k) == "number" then
-											k = v
+										if type(udata.enums) == "function" then
+											tbl = udata.enums(pace.current_part)
+										else
+											tbl = udata.enums
 										end
 
-										enums[k] = v
+										local enums = {}
+
+										for k, v in pairs(tbl) do
+											if type(k) == "number" then
+												k = v
+											end
+
+											enums[k] = v
+										end
+
+										return enums
+									end,
+
+									function()
+										return pace.current_part[key]
+									end,
+
+									function(list, key, val)
+										return list:AddLine(pace.util.FriendlyName(key))
+									end,
+
+									function(val, key)
+										return key
 									end
-
-									return enums
-								end,
-
-								function()
-									return pace.current_part[key]
-								end,
-
-								function(list, key, val)
-									return list:AddLine(pace.util.FriendlyName(key))
-								end,
-
-								function(val, key)
-									return key
+								)
+							end)
+						end
+						if udata.editor_sensitivity or udata.editor_clamp then
+							pnl.LimitValue = function(self, num)
+								if udata.editor_sensitivity then
+									self.sens = udata.editor_sensitivity
 								end
-							)
-						end)
+								if udata.editor_clamp then
+									num = math.Clamp(num, unpack(udata.editor_clamp))
+								end
+								return num
+							end
+						elseif udata.editor_onchange then
+							pnl.LimitValue = udata.editor_onchange
+						end
 					end
 
 					if obj.ClassName then
-
 						if pnl.ExtraPopulate then
 							table.insert(pace.extra_populates, pnl.ExtraPopulate)
 							pnl:Remove()
@@ -493,22 +518,6 @@ do -- list
 
 						local val = obj["Get" .. key](obj)
 						pnl:SetValue(val)
-
-						if udata then
-							if udata.editor_sensitivity or udata.editor_clamp then
-								pnl.LimitValue = function(self, num)
-									if udata.editor_sensitivity then
-										self.sens = udata.editor_sensitivity
-									end
-									if udata.editor_clamp then
-										num = math.Clamp(num, unpack(udata.editor_clamp))
-									end
-									return num
-								end
-							elseif udata.editor_onchange then
-								pnl.LimitValue = udata.editor_onchange
-							end
-						end
 
 						pnl.OnValueChanged = function(val)
 							if T == "number" then
@@ -1196,424 +1205,6 @@ do -- boolean
 		self.lbl:CenterVertical()
 		local w,h = self:GetParent():GetSize()
 		self:SetSize(w-2,h)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- bone
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_bone"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SelectBone(pace.current_part:GetOwner(), function(data)
-			self:SetValue(L(data.friendly))
-			self.OnValueChanged(data.friendly)
-		end, pace.current_part.ClassName == "bone")
-	end
-
-	function PANEL:SpecialCallback2()
-		local bones = pac.GetModelBones(pace.current_part:GetOwner())
-
-		local menu = DermaMenu()
-
-		menu:MakePopup()
-
-		local list = {}
-		for k,v in pairs(bones) do
-			table.insert(list, v.friendly)
-		end
-
-		create_search_list(
-			self,
-			self.CurrentKey,
-			L"bones",
-			function(list)
-				list:AddColumn(L"name")
-			end,
-			function()
-				return list
-			end,
-			function()
-				return pace.current_part:GetBone()
-			end,
-			function(list, key, val)
-				return list:AddLine(val)
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- part
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_part"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SelectPart(pac.GetParts(true), function(part)
-			self:SetValue(part:GetName())
-			self.OnValueChanged(part)
-		end)
-	end
-
-	function PANEL:SpecialCallback2(key)
-		local menu = DermaMenu()
-
-		menu:MakePopup()
-
-		for _, part in pairs(pac.GetParts(true)) do
-			if not part:HasParent() then
-				populate_part_menu(menu, part, "Set" .. key)
-			end
-		end
-
-		FIX_MENU(menu)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- owner
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_ownername"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SelectEntity(function(ent)
-			pace.current_part:SetOwnerName(ent:EntIndex())
-			local name = pace.current_part:GetOwnerName()
-			self.OnValueChanged(name)
-			self:SetValue(L(name))
-		end)
-	end
-
-	function PANEL:SpecialCallback2()
-		local menu = DermaMenu()
-		menu:MakePopup()
-
-		local function get_friendly_name(ent)
-			local name = ent.GetName and ent:GetName()
-			if not name or name == "" then
-				name = ent:GetClass()
-			end
-
-			return ent:EntIndex() .. " - " .. name
-		end
-
-		for key, name in pairs(pac.OwnerNames) do
-			menu:AddOption(name, function() pace.current_part:SetOwnerName(name) end)
-		end
-
-		local entities = menu:AddSubMenu(L"entities", function() end)
-		entities.GetDeleteSelf = function() return false end
-		for _, ent in pairs(ents.GetAll()) do
-			if ent:EntIndex() > 0 then
-				entities:AddOption(get_friendly_name(ent), function()
-					pace.current_part:SetOwnerName(ent:EntIndex())
-					self.OnValueChanged(ent:EntIndex())
-				end)
-			end
-		end
-
-		FIX_MENU(menu)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- aimpart
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_aimpartname"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SelectPart(pac.GetParts(true), function(part)
-			self:SetValue(part:GetName())
-			self.OnValueChanged(part)
-		end)
-	end
-
-	function PANEL:SpecialCallback2(key)
-		local menu = DermaMenu()
-		menu:MakePopup()
-
-		for key, name in pairs(pac.AimPartNames) do
-			menu:AddOption(L(key), function() pace.current_part:SetAimPartName(name) end):SetImage("icon16/eye.png")
-		end
-
-		for _, part in pairs(pac.GetParts(true)) do
-			if not part:HasParent() then
-				populate_part_menu(menu, part, "SetAimPartName")
-			end
-		end
-
-		FIX_MENU(menu)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- model
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_model"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback2()
-		pace.SafeRemoveSpecialPanel()
-		g_SpawnMenu:Open()
-	end
-
-	function PANEL:SpecialCallback()
-		pace.close_spawn_menu = true
-		pace.SafeRemoveSpecialPanel()
-		pace.ResourceBrowser(function(path)
-			self:SetValue(path)
-			self.OnValueChanged(path)
-		end, "models")
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- material
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_material"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.ResourceBrowser(function(path)
-			path = path:match("materials/(.+)%.vmt")
-			self:SetValue(path)
-			self.OnValueChanged(path)
-		end, "materials")
-	end
-
-	function PANEL:SpecialCallback2()
-		pace.SafeRemoveSpecialPanel()
-
-		local pnl = pace.CreatePanel("mat_browser")
-
-		SHOW_SPECIAL(pnl, self, 300)
-
-		function pnl.MaterialSelected(_, path)
-			self:SetValue(path)
-			self.OnValueChanged(path)
-		end
-
-		pace.ActiveSpecialPanel = pnl
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- textures
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_textures"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.ResourceBrowser(function(path)
-			path = path:match("materials/(.+)%.vtf")
-			self:SetValue(path)
-			self.OnValueChanged(path)
-		end, "textures")
-	end
-
-	function PANEL:SpecialCallback2()
-		pace.SafeRemoveSpecialPanel()
-
-		local pnl = pace.CreatePanel("mat_browser")
-
-		SHOW_SPECIAL(pnl, self, 300)
-
-		function pnl.MaterialSelected(_, path)
-			self:SetValue(path)
-			self.OnValueChanged(path)
-		end
-
-		pace.ActiveSpecialPanel = pnl
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-
-do -- sound
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_sound"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.ResourceBrowser(function(path)
-			path = path:match("sound/(.+)")
-			self:SetValue(path)
-			self.OnValueChanged(path)
-		end, "sound")
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-
-do -- arguments
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_event_arguments"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:ExtraPopulate()
-		local data = pace.current_part.Events[pace.current_part.Event]
-		if not data then return end
-		data = data:GetArgumentsForParse()
-
-		local tbl = {}
-		local args = {pace.current_part:GetParsedArguments(data)}
-		if args then
-			for pos, arg in pairs(data) do
-				local nam, typ = next(arg)
-				if args[pos] then
-					arg = args[pos]
-				else
-					if typ == "string" then
-						arg = ""
-					elseif typ == "number" then
-						arg = 0
-					elseif typ == "boolean" then
-						arg = false
-					end
-				end
-				tbl[nam] = {val = arg, callback = function(val)
-					local args = {pace.current_part:GetParsedArguments(data)}
-					args[pos] = val
-					pace.current_part:ParseArguments(unpack(args))
-					--self:SetValue(pace.current_part.Arguments)
-				end}
-			end
-			pace.properties:Populate(tbl, true, L"arguments")
-		end
-
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_buttons"
-	PANEL.Base = "pace_properties_base_type"
-
-	local enums = {}
-
-	for key, val in pairs(_G) do
-		if type(key) == "string" and type(val) == "number" and key:sub(0,4) == "KEY_" then
-			enums[key:sub(5):lower()] = val
-		end
-	end
-
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			L"keyboard buttons",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return enums
-			end,
-			function()
-				return pace.current_part.Arguments
-			end,
-			function(list, key, val)
-				return list:AddLine(key)
-			end,
-			function(val, key)
-				return key
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- script
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_code"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SafeRemoveSpecialPanel()
-
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"script")
-		SHOW_SPECIAL(frame, self, 512)
-		frame:SetSizable(true)
-
-		local editor = vgui.Create("pace_luapad", frame)
-		editor:Dock(FILL)
-
-		editor:SetText(pace.current_part:GetCode())
-		editor.OnTextChanged = function(self)
-			pace.current_part:SetCode(self:GetValue())
-		end
-
-		editor.last_error = ""
-
-		function editor:CheckGlobal(str)
-			local part = pace.current_part
-
-			if not part:IsValid() then frame:Remove() return end
-
-			return part:ShouldHighlight(str)
-		end
-
-		function editor:Think()
-			local part = pace.current_part
-
-			if not part:IsValid() then frame:Remove() return end
-
-			local title = L"script editor"
-
-			if part.Error then
-				title = part.Error
-
-				local line = tonumber(title:match("SCRIPT_ENV:(%d-):"))
-
-				if line then
-					title = title:match("SCRIPT_ENV:(.+)")
-					if self.last_error ~= title then
-						editor:SetScrollPosition(line)
-						editor:SetErrorLine(line)
-						self.last_error = title
-					end
-				end
-			else
-				editor:SetErrorLine(nil)
-
-				if part.script_printing then
-					title = part.script_printing
-					part.script_printing = nil
-				end
-			end
-
-			frame:SetTitle(title)
-		end
-
-		pace.ActiveSpecialPanel = frame
 	end
 
 	pace.RegisterPanel(PANEL)

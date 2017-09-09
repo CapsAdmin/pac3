@@ -56,7 +56,7 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "EyeAngles", false)
 		pac.GetSet(PART, "PositionOffset", Vector(0,0,0))
 		pac.GetSet(PART, "AngleOffset", Angle(0,0,0))
-		pac.SetupPartName(PART, "AimPart")
+		pac.SetupPartName(PART, "AimPart", {editor_panel = "aimpartname"})
 		pac.SetupPartName(PART, "Parent")
 
 	pac.SetPropertyGroup("appearance")

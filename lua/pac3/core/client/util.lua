@@ -514,7 +514,7 @@ do -- get set and editor vars
 		end
 	end
 
-	function pac.SetupPartName(PART, key)
+	function pac.SetupPartName(PART, key, udata)
 		PART.PartNameResolvers = PART.PartNameResolvers or {}
 
 		local part_key = key
@@ -537,7 +537,7 @@ do -- get set and editor vars
 			pac.GetSet(PART, part_key, pac.NULL)
 		pac.StartStorableVars()
 
-		pac.GetSet(PART, name_key, "", {editor_panel = "part"})
+		pac.GetSet(PART, name_key, "", udata or {editor_panel = "part"})
 		pac.GetSet(PART, uid_key, "", {hidden = true})
 
 		PART.ResolvePartNames = PART.ResolvePartNames or function(self, force)

@@ -416,6 +416,7 @@ PART.OldEvents =
 	ammo =
 	{
 		arguments = {{primary = "boolean"}, {amount = "number"}},
+		userdata = {{editor_onchange = function(part, num) return math.Round(num) end}},
 		callback = function(self, ent, primary, amount)
 			ent = try_viewmodel(ent)
 			ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or ent
@@ -980,6 +981,17 @@ do
 	PART.OldEvents.button =
 	{
 		arguments = {{button = "string"}},
+		userdata = {{enums = function()
+			local enums = {}
+
+			for key, val in pairs(_G) do
+				if type(key) == "string" and type(val) == "number" and key:sub(0,4) == "KEY_" then
+					enums[key:sub(5):lower()] = val
+				end
+			end
+
+			return enums
+		end}},
 		callback = function(self, ent, button)
 			local ply = self:GetPlayerOwner()
 
@@ -1026,11 +1038,7 @@ do
 		return self.__registeredArguments
 	end
 
-	function eventMeta:GetArgumentsForParse()
-		return self.__registeredArgumentsParse
-	end
-
-	function eventMeta:AppendArgument(keyName, keyType)
+	function eventMeta:AppendArgument(keyName, keyType, userdata)
 		self.__registeredArguments = self.__registeredArguments or {}
 		if not keyType then
 			error('No Type of argument was specified!')
@@ -1047,14 +1055,13 @@ do
 		end
 
 		self.__registeredArguments = self.__registeredArguments or {}
-		table.insert(self.__registeredArguments, {keyName, keyType})
-		table.insert(self.__registeredArgumentsParse, {[keyName] = keyType})
+		table.insert(self.__registeredArguments, {keyName, keyType, userdata})
 	end
 
 	function eventMeta:PopArgument(keyName)
 		for i, data in ipairs(self.__registeredArguments) do
 			if data[1] == keyName then
-				return true, i, table.remove(self.__registeredArguments, i), table.remove(self.__registeredArgumentsParse, i)
+				return true, i, table.remove(self.__registeredArguments, i)
 			end
 		end
 
@@ -1118,12 +1125,11 @@ do
 		})
 
 		newObj.__registeredArguments = {}
-		newObj.__registeredArgumentsParse = {}
 		newObj:SetName(nClassName)
 
 		if defArguments then
 			for i, data in pairs(defArguments) do
-				newObj:AppendArgument(data[1], data[2])
+				newObj:AppendArgument(data[1], data[2], data[3])
 			end
 		end
 
@@ -1147,9 +1153,8 @@ do
 
 		if arguments then
 			for i, data2 in ipairs(arguments) do
-				for key, Type in pairs(data2) do
-					eventObject:AppendArgument(key, Type)
-				end
+				local key, Type = next(data2)
+				eventObject:AppendArgument(key, Type, data.userdata and data.userdata[i] or nil)
 			end
 		end
 
