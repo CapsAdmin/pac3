@@ -66,13 +66,7 @@ function PART:SetURL(url)
 	self.URL = url
 
 	if url:find("http") then
-		url = pac.FixupURL(url)
-
-		http.Fetch(url, function(str,len,hdr,code)
-			if not str or code~=200 then
-				pac.Message("Animation failed to load from ", url, ': ', code)
-				return
-			end
+		pac.SimpleFetch(url, function(str)
 			local tbl = util.JSONToTable(str)
 			if not tbl then
 				pac.Message("Animation failed to parse from ", url)
@@ -96,9 +90,10 @@ function PART:SetURL(url)
 			if pace and pace.timeline.IsActive() and pace.timeline.animation_part == self then
 				pace.timeline.Load(tbl)
 			end
-		end, function(code)
+		end,
+		function(code)
 			pac.Message("Animation failed to load from ", url, ': ', code)
-		end) --should do nothing on invalid/inaccessible URL
+		end)
 	end
 end
 
@@ -130,7 +125,7 @@ function PART:OnShow(owner)
 		self:SetOffset(self:GetOffset())
 		self:SetRate(self:GetRate())
 		self:SetBonePower(self:GetBonePower())
-		if self.StopOtherAnimations then
+		if self.StopOtherAnimations and owner.LuaAnimations then
 			for id in pairs(owner.LuaAnimations) do
 				if id ~= self:GetAnimID() then
 					owner:StopLuaAnimation(id)
