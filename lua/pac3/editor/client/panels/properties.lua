@@ -269,7 +269,6 @@ do -- list
 		self.List = {}
 
 		local divider = vgui.Create("DHorizontalDivider", self)
-		divider:Dock(TOP)
 
 		local left = vgui.Create("DPanelList", divider)
 			divider:SetLeft(left)
@@ -320,7 +319,7 @@ do -- list
 		self.scr:SetSize(10, self:GetHeight())
 		self.scr:SetUp(self:GetTall(), self:GetHeight() - 10)
 		self.search:SetZPos(-1)
-		self.div:SetPos(0,self.search:GetTall())
+		self.div:SetPos(0,self.search:IsVisible() and self.search:GetTall() or 0)
 		local w, h = self:GetSize()
 		local scroll_width = self.scr.Enabled and self.scr:GetWide() or 0
 		self.div:SetLeftWidth((w/2) - scroll_width)
