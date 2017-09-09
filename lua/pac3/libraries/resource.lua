@@ -349,7 +349,7 @@ function resource.DownloadTexture(url, callback)
 				temp:SetTexture("$basetexture", "../data/" .. path)
 				callback(temp:GetTexture("$basetexture"))
 			else
-				callback(Material("../data/" .. path):GetTexture("$basetexture"))
+				callback(Material("../data/" .. path, "mips smooth noclamp"):GetTexture("$basetexture"))
 			end
 		end,
 		function()
