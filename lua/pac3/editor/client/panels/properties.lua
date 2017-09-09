@@ -197,9 +197,80 @@ do -- list
 	AccessorFunc(PANEL, "item_height", "ItemHeight")
 
 	function PANEL:Init()
+
+		local search = vgui.Create("DTextEntry", self)
+		search:Dock(TOP)
+		search.OnLoseFocus = function()
+			search:SetVisible(false)
+			search.searched_something = false
+			search:SetText("")
+			search:SetEnabled(false)
+
+			for i,v in ipairs(self.List) do
+				v.left:SetVisible(true)
+				v.right:SetVisible(true)
+			end
+		end
+
+		search.OnEnter = search.OnLoseFocus
+
+		search.OnTextChanged = function()
+			local pattern = search:GetValue()
+			if pattern == "" and search.searched_something then
+				search:OnLoseFocus()
+				search:KillFocus()
+			else
+				search.searched_something = true
+				for i,v in ipairs(self.List) do
+					local found = false
+					if v.panel then
+						if v.panel:GetText():find(pattern) then
+							found = true
+						end
+
+						if v.left:GetValue():find(pattern) then
+							found = true
+						end
+					end
+
+					if not found and v.panel then
+						v.left:SetVisible(false)
+						v.right:SetVisible(false)
+					end
+				end
+
+				for i,v in ipairs(self.List) do
+					if not v.panel then
+						local hide_group = true
+
+						for i = i+1, #self.List do
+							local val = self.List[i]
+							if not val.panel then
+								break
+							end
+
+							if val.left:IsVisible() then
+								hide_group = false
+								break
+							end
+						end
+
+						if hide_group then
+							v.left:SetVisible(false)
+							v.right:SetVisible(false)
+						end
+					end
+				end
+			end
+		end
+		search:SetVisible(false)
+		self.search = search
+
 		self.List = {}
 
 		local divider = vgui.Create("DHorizontalDivider", self)
+		divider:Dock(TOP)
+
 		local left = vgui.Create("DPanelList", divider)
 			divider:SetLeft(left)
 		self.left = left
@@ -209,7 +280,6 @@ do -- list
 		self.right = right
 
 		divider:SetDividerWidth(3)
-		divider:SetLeftWidth(110)
 
 		surface.SetFont(pace.CurrentFont)
 		local w,h = surface.GetTextSize("W")
@@ -249,9 +319,12 @@ do -- list
 	function PANEL:PerformLayout()
 		self.scr:SetSize(10, self:GetHeight())
 		self.scr:SetUp(self:GetTall(), self:GetHeight() - 10)
-		self.div:SetPos(0,self.scr:GetOffset())
+		self.search:SetZPos(-1)
+		self.div:SetPos(0,self.search:GetTall())
 		local w, h = self:GetSize()
-		self.div:SetSize(w - (self.scr.Enabled and self.scr:GetWide() or 0), self:GetHeight())
+		local scroll_width = self.scr.Enabled and self.scr:GetWide() or 0
+		self.div:SetLeftWidth((w/2) - scroll_width)
+		self.div:SetSize(w - scroll_width, self:GetHeight())
 	end
 
 	function PANEL:Paint(w, h)
@@ -263,6 +336,7 @@ do -- list
 	function PANEL:AddCollapser(name)
 		local left = vgui.Create("DButton", self)
 		left:SetText("")
+		left.text = name
 		self.left:AddItem(left)
 
 		left.DoClick = function()
@@ -272,6 +346,8 @@ do -- list
 			pace.Editor:InvalidateLayout()
 			pace.luadata.WriteFile("pac3_editor/collapsed.txt", pace.CollapsedProperties)
 		end
+
+		left.GetValue = function() return name end
 
 		local right = vgui.Create("DButton", self)
 		right:SetText("")
@@ -311,7 +387,7 @@ do -- list
 
 	function PANEL:AddKeyValue(key, var, pos, obj, udata)
 		local btn = pace.CreatePanel("properties_label")
-			btn:SetValue(" " .. L((udata and udata.editor_friendly or key):gsub("%u", " %1"):lower()))
+			btn:SetValue(L((udata and udata.editor_friendly or key):gsub("%u", " %1"):lower()):Trim())
 			btn.pac3_sort_pos = pos
 
 			if obj then
@@ -516,6 +592,7 @@ do -- list
 						pnl.CurrentKey = key
 						obj.editor_pnl = pnl
 
+
 						local val = obj["Get" .. key](obj)
 						pnl:SetValue(val)
 
@@ -588,9 +665,10 @@ do -- non editable string
 			lbl:SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text)
 			lbl:SetFont(pace.CurrentFont)
 			lbl:SetText(str)
-			lbl:SetTextInset(4,0)
+			lbl:SetTextInset(10, 0)
 			lbl:SizeToContents()
 			lbl.pac_tooltip_hack = true
+			self.lbl = lbl
 		self:SetContent(lbl)
 
 		if self.part_name and self.key_name then
@@ -615,6 +693,10 @@ do -- non editable string
 				end
 			end
 		end
+	end
+
+	function PANEL:GetValue()
+		return self.lbl:GetValue()
 	end
 
 	pace.RegisterPanel(PANEL)
