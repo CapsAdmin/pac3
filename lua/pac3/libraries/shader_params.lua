@@ -704,7 +704,7 @@ vertexlitgeneric = {
 	},
 	bumpstretch = {
 		type = "texture",
-		friendly = "NormalStretch",
+		friendly = "WrinkleBumpStretch",
 		description = "expansion bump map",
 		default = "models/shadertest/shader1_normal",
 	},
@@ -723,7 +723,7 @@ vertexlitgeneric = {
 	},
 	stretch = {
 		type = "texture",
-		friendly = "Stretch",
+		friendly = "WrinkleStretch",
 		description = "expansion wrinklemap",
 		default = "shadertest/BaseTexture",
 	},
@@ -1301,7 +1301,7 @@ vertexlitgeneric = {
 	},
 	compress = {
 		type = "texture",
-		friendly = "Wrinkle",
+		friendly = "WrinkleCompress",
 		description = "compression wrinklemap",
 		default = "shadertest/BaseTexture",
 	},
@@ -1546,7 +1546,7 @@ vertexlitgeneric = {
 	},
 	bumpcompress = {
 		type = "texture",
-		friendly = "NormalWrinkle",
+		friendly = "WrinkleBumpCompress",
 		description = "compression bump map",
 		default = "models/shadertest/shader3_normal",
 	},

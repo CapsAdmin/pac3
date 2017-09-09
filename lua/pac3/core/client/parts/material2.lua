@@ -13,7 +13,7 @@ local function add_matrix(META, key, friendly_name, description, udata)
 
 	pac.GetSet(META, position_key, Vector(0, 0, 0))
 	pac.GetSet(META, scale_key, Vector(1, 1, 1))
-	pac.GetSet(META, angle_key, 0)
+	pac.GetSet(META, angle_key, 0, {editor_panel = "number"})
 	pac.GetSet(META, angle_center_key, Vector(0.5, 0.5, 0))
 
 	local shader_key = "$" .. key
@@ -169,7 +169,7 @@ for shader_name, params in pairs(shader_params) do
 			end
 		end
 
-		if group:lower() ~= "no" then
+		if group:lower() ~= "no" and group:lower() ~= "base" then
 			group = group:lower()
 			group_count[group] = (group_count[group] or 0) + 1
 			groups[key] = group
@@ -178,7 +178,7 @@ for shader_name, params in pairs(shader_params) do
 
 	local sorted_params = {}
 	for k, v in pairs(params) do
-		if not k:find("frame") then
+		if not k:lower():find("frame") then
 			table.insert(sorted_params, {k = k, v = v})
 		end
 	end
