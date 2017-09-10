@@ -34,9 +34,9 @@ function pac.GetAllBones(ent)
 		ent:InvalidateBoneCache()
 		ent:SetupBones()
 
-		local count = ent:GetBoneCount()
+		local count = (ent:GetBoneCount() or 0) - 1
 
-		for bone = 0, count or 1 do
+		for bone = 0, count do
 			local name = ent:GetBoneName(bone)
 			local friendly = name
 
@@ -106,11 +106,18 @@ function pac.GetAllBones(ent)
 		tbl.eyepos_ang = {friendly = "eyepos_ang", is_special = true}
 		tbl.pos_noang = {friendly = "pos_noang", is_special = true}
 
-		ent.pac_bone_count = count
+		ent.pac_bone_count = count + 1
 	end
 
 	return tbl
 end
+
+timer.Simple(0, function()
+	for k, v in ipairs(ents.GetAll()) do
+		v.pac_bones = nil
+		v.pac_last_model = nil
+	end
+end)
 
 function pac.GetModelBones(ent)
 	if not ent.pac_bones or ent:GetModel() ~= ent.pac_last_model then
@@ -293,21 +300,20 @@ do -- bone manipulation for boneanimlib
 	function pac.ResetBones(ent)
 		ent.pac_boneanim = ent.pac_boneanim or {positions = {}, angles = {}}
 
-		local count = ent:GetBoneCount() or -1
+		local count = (ent:GetBoneCount() or 0) - 1
 
-		if count > 1 then
-			for i = 0, count do
-				ent:ManipulateBoneScale(i, SCALE_RESET)
-				ent:ManipulateBonePosition(i, ent.pac_boneanim.positions[i] or ORIGIN_RESET)
-				ent:ManipulateBoneAngles(i, ent.pac_boneanim.angles[i] or ANGLE_RESET)
-				ent:ManipulateBoneJiggle(i, 0)
-			end
+		for i = 0, count do
+			ent:ManipulateBoneScale(i, SCALE_RESET)
+			ent:ManipulateBonePosition(i, ent.pac_boneanim.positions[i] or ORIGIN_RESET)
+			ent:ManipulateBoneAngles(i, ent.pac_boneanim.angles[i] or ANGLE_RESET)
+			ent:ManipulateBoneJiggle(i, 0)
 		end
 
 		hook.Call("PAC3ResetBones", nil, ent)
 
-		if ent.pac_bones_select_target and count > 1 then
-			ent:ManipulateBoneScale(ent.pac_bones_select_target, SCALE_RESET * (1 + math.sin(RealTime() * 4) * 0.1))
+		local i = ent.pac_bones_select_target
+		if i and count >= i then
+			ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * (1 + math.sin(RealTime() * 4) * 0.1))
 			ent.pac_bones_select_target = nil
 		end
 	end
