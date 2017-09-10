@@ -346,11 +346,18 @@ function resource.DownloadTexture(url, callback)
 		url,
 		function(path)
 			if path:EndsWith(".vtf") then
+				local f = file.Open(path, "rb", "DATA")
+				f:Seek(24)
+				local frames = f:ReadShort()
+				f:Close()
+
 				temp:SetTexture("$basetexture", "../data/" .. path)
-				callback(temp:GetTexture("$basetexture"))
+
+				callback(temp:GetTexture("$basetexture"), frames)
 			else
 				callback(Material("../data/" .. path, "mips smooth noclamp"):GetTexture("$basetexture"))
 			end
+			--file.Delete(path) -- lol
 		end,
 		function()
 

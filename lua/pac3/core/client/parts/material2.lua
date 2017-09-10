@@ -178,9 +178,7 @@ for shader_name, params in pairs(shader_params) do
 
 	local sorted_params = {}
 	for k, v in pairs(params) do
-		if not k:lower():find("frame") then
-			table.insert(sorted_params, {k = k, v = v})
-		end
+		table.insert(sorted_params, {k = k, v = v})
 	end
 	table.sort(sorted_params, function(a, b) return a.k:lower() < b.k:lower() end)
 
@@ -210,7 +208,8 @@ for shader_name, params in pairs(shader_params) do
 			PART["Set" .. property_name] = function(self, val)
 				self[property_name] = val
 
-				if not pac.resource.DownloadTexture(val, function(tex)
+				if not pac.resource.DownloadTexture(val, function(tex, frames)
+					self.vtf_frame_limit = frames
 					self:GetRawMaterial():SetTexture(key, tex)
 				end) then
 
@@ -264,6 +263,14 @@ for shader_name, params in pairs(shader_params) do
 					mat:SetFloat(key, val)
 					if info.recompute then
 						mat:Recompute()
+					end
+				end
+				if property_name:lower():find("frame") then
+					PART["Set" .. property_name] = function(self, val)
+						self[property_name] = val
+						if self.vtf_frame_limit then
+							self:GetRawMaterial():SetInt(key, math.abs(val)%self.vtf_frame_limit)
+						end
 					end
 				end
 			elseif type(def) == "boolean" then

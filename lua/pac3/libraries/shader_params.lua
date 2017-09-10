@@ -1115,13 +1115,13 @@ vertexlitgeneric = {
 		description = "flag",
 		friendly = "NoDebugOverride",
 	},
-	time = {
+	--[[time = {
 		friendly = "Time",
 		type = "float",
 		default = "0.0",
 		description = "Needs CurrentTime Proxy",
 		gmod_default = "0.000000",
-	},
+	},]]
 	fleshbordertexture1d = {
 		type = "texture",
 		friendly = "FleshBorderTexture1D",
