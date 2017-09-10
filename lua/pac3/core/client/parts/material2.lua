@@ -1,20 +1,15 @@
 local shader_params = include("pac3/libraries/shader_params.lua")
 
-local temp = CreateMaterial("pac3_dummy_mat", "vertexlitgeneric", {})
-
-
 local function add_matrix(META, key, friendly_name, description, udata)
-	key = key or friendly_name
+	local position_key = key .. "Position"
+	local scale_key = key .. "Scale"
+	local angle_key = key .. "Angle"
+	local angle_center_key = key .. "AngleCenter"
 
-	local position_key = friendly_name .. "Position"
-	local scale_key = friendly_name .. "Scale"
-	local angle_key = friendly_name .. "Angle"
-	local angle_center_key = friendly_name .. "AngleCenter"
-
-	pac.GetSet(META, position_key, Vector(0, 0, 0))
-	pac.GetSet(META, scale_key, Vector(1, 1, 1))
-	pac.GetSet(META, angle_key, 0, {editor_panel = "number"})
-	pac.GetSet(META, angle_center_key, Vector(0.5, 0.5, 0))
+	pac.GetSet(META, position_key, Vector(0, 0, 0), {editor_friendly = friendly_name .. "Position"})
+	pac.GetSet(META, scale_key, Vector(1, 1, 1), {editor_friendly = friendly_name .. "Scale"})
+	pac.GetSet(META, angle_key, 0, {editor_panel = "number", editor_friendly = friendly_name .. "Angle"})
+	pac.GetSet(META, angle_center_key, Vector(0.5, 0.5, 0), {editor_friendly = friendly_name .. "AngleCenter"})
 
 	local shader_key = "$" .. key
 
@@ -35,10 +30,13 @@ local function add_matrix(META, key, friendly_name, description, udata)
 
 	META["Set" .. position_key] = function(self, vec)
 		self[position_key] = vec
-		setup_matrix(self)
+
+		self.translation_vector = self.translation_vector or Vector()
 
 		self.translation_vector.x = self[position_key].x
 		self.translation_vector.y = self[position_key].y
+
+		setup_matrix(self)
 
 		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
 	end
@@ -52,29 +50,23 @@ local function add_matrix(META, key, friendly_name, description, udata)
 
 	META["Set" .. angle_key] = function(self, num)
 		self[angle_key] = num
-		setup_matrix(self)
 
 		self.rotation_angle.y = self[angle_key]*360
+
+		setup_matrix(self)
 
 		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
 	end
 
 	META["Set" .. angle_center_key] = function(self, vec)
 		self[angle_center_key] = vec
+
 		setup_matrix(self)
 
 		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
 	end
 
 end
-
-local fixup = {
-	"selfillum",
-	"flashlight",
-	"alphatest",
-	"rimlight",
-	"emissiveblend",
-}
 
 local material_flags = {
 	debug = bit.lshift(1, 0),
@@ -146,171 +138,160 @@ local function FlagsToTable(flags, valid_flags)
 	return out
 end
 
-for shader_name, params in pairs(shader_params) do
+local shader_name_translate = {
+	vertexlitgeneric = "3d",
+	unlitgeneric = "2d",
+}
+
+for shader_name, groups in pairs(shader_params.shaders) do
+	for group_name, base_group in pairs(shader_params.base) do
+		if groups[group_name] then
+			for k,v in pairs(base_group) do
+				groups[group_name][k] = v
+			end
+		else
+			groups[group_name] = base_group
+		end
+	end
+end
+
+for shader_name, groups in pairs(shader_params.shaders) do
+	local temp = CreateMaterial(tostring({}), shader_name, {})
+
 	local PART = {}
 
-	PART.ClassName = "material_" .. shader_name
+	PART.ClassName = "material_" .. (shader_name_translate[shader_name] or shader_name)
+	PART.Description = shader_name
 	PART.NonPhysical = true
-	PART.Group = {'modifiers', 'model', 'entity'}
-	PART.Icon = 'icon16/paintcan.png'
+	PART.Group = "advanced"
+	PART.Icon = "icon16/paintcan.png"
 
 	pac.StartStorableVars()
 
-	local groups = {}
-	local group_count = {}
-	for key, info in pairs(params) do
-		local friendly = info.friendly or key
-		local group = friendly:match("^(%u.-)%u") or friendly
-
-		for _, str in ipairs(fixup) do
-			if friendly:lower():StartWith(str) then
-				group = str
-				break
-			end
-		end
-
-		if group:lower() ~= "no" and group:lower() ~= "base" then
-			group = group:lower()
-			group_count[group] = (group_count[group] or 0) + 1
-			groups[key] = group
-		end
+	local sorted_groups = {}
+	for k, v in pairs(groups) do
+		table.insert(sorted_groups, {k = k, v = v})
 	end
+	table.sort(sorted_groups, function(a, b) return a.k:lower() < b.k:lower() end)
 
-	local sorted_params = {}
-	for k, v in pairs(params) do
-		table.insert(sorted_params, {k = k, v = v})
-	end
-	table.sort(sorted_params, function(a, b) return a.k:lower() < b.k:lower() end)
+	for _, v in ipairs(sorted_groups) do
+		local group, params =  v.k, v.v
 
-	for _, v in ipairs(sorted_params) do
-		local key, info =  v.k, v.v
-		if groups[key] and group_count[groups[key]] > 1 then
-			pac.SetPropertyGroup(groups[key])
-		elseif info.is_flag then
-			pac.SetPropertyGroup("flags")
+		local sorted_params = {}
+		for k, v in pairs(params) do
+			table.insert(sorted_params, {k = k, v = v})
 		end
+		table.sort(sorted_params, function(a, b) return a.k:lower() < b.k:lower() end)
 
-		local property_name = info.friendly or key
-		local friendly_name = property_name
-		if groups[key] and groups[key] ~= "generic" and groups[key] and group_count[groups[key]] > 1 then
-			friendly_name = friendly_name:sub(#groups[key] + 1)
-			if friendly_name == "" then
-				friendly_name = property_name
+		for _, v in ipairs(sorted_params) do
+			local key, info = v.k, v.v
+
+			if info.is_flag and group == "generic" then
+				pac.SetPropertyGroup("flags")
+			else
+				pac.SetPropertyGroup(group)
 			end
-		end
 
-		if info.type == "matrix" then
-			add_matrix(PART, property_name, friendly_name:gsub("Transform", ""), info.description)
-		elseif info.type == "texture" then
-			pac.GetSet(PART, property_name, info.default or "", {editor_panel = "textures", editor_friendly = friendly_name, description = info.description, shader_param_info = info})
-			local key = "$" .. key
+			local property_name = key
 
-			PART["Set" .. property_name] = function(self, val)
-				self[property_name] = val
+			if info.type == "matrix" then
+				add_matrix(PART, property_name, info.friendly:gsub("Transform", ""), info.description)
+			elseif info.type == "texture" then
+				pac.GetSet(PART, property_name, info.default or "", {
+					editor_panel = "textures",
+					editor_friendly = info.friendly,
+					description = info.description,
+					shader_param_info = info
+				})
 
-				if not pac.resource.DownloadTexture(val, function(tex, frames)
-					self.vtf_frame_limit = frames
-					self:GetRawMaterial():SetTexture(key, tex)
-				end) then
+				local key = "$" .. key
+
+				PART["Set" .. property_name] = function(self, val)
+					self[property_name] = val
 
 					if val == "" then
 						self:GetRawMaterial():SetUndefined(key)
 					else
-						self:GetRawMaterial():SetTexture(key, val)
-					end
-				end
-			end
-		else
-			local def
-			local editor_sensitivity
-			if (info.type == "integer" or info.type == "float") and not info.is_flag then
-				def = temp:GetInt("$" .. key) or tonumber(info.default)
-			elseif info.type == "vec4" then
-				local r,g,b,a = unpack(temp:GetString("$" .. key):sub(3, -3):Split(" "))
-				def = Color(tonumber(r), tonumber(g), tonumber(b), tonumber(a))
-			elseif info.type == "vec3" or info.type == "color" then
-				def = temp:GetVector("$" .. key)
-				if def == Vector(0, 0, 0) then
-					def = Vector(info.default:sub(2, -2))
-
-					if def == Vector(0, 0, 0) then
-						def = Vector(info.default:sub(1, -1))
-
-						if def == Vector(0, 0, 0) then
-							def = tonumber(info.default)
+						if not pac.resource.DownloadTexture(val, function(tex, frames)
+							if frames then
+								self.vtf_frame_limit = self.vtf_frame_limit or {}
+								self.vtf_frame_limit[property_name] = frames
+							end
+							self:GetRawMaterial():SetTexture(key, tex)
+						end) then
+							self:GetRawMaterial():SetTexture(key, val)
 						end
 					end
 				end
+			else
+				pac.GetSet(PART, property_name, info.default, {
+					editor_friendly = info.friendly,
+					enums = info.enums,
+					description = info.description,
+					editor_sensitivity = (info.type == "vec3" or info.type == "color") and 0.25 or nil,
+					editor_panel = property_name == "model" and "boolean" or nil,
+				})
 
-				if type(def) == "number" then
-					def = Vector(def, def, def)
-				end
+				local flag_key = key
+				local key = "$" .. key
 
-				editor_sensitivity = 0.25
-			elseif info.type == "bool" or info.is_flag then
-				def = temp:GetInt("$" .. key) == 1
-			end
-
-			pac.GetSet(PART, property_name, def, {editor_friendly = friendly_name, enums = info.enums, description = info.description, editor_sensitivity = editor_sensitivity})
-
-			local flag_key = key:lower()
-			local key = "$" .. key
-
-			if type(def) == "number" then
-				PART["Set" .. property_name] = function(self, val)
-					self[property_name] = val
-					local mat = self:GetRawMaterial()
-					mat:SetFloat(key, val)
-					if info.recompute then
-						mat:Recompute()
-					end
-				end
-				if property_name:lower():find("frame") then
+				if type(info.default) == "number" then
 					PART["Set" .. property_name] = function(self, val)
 						self[property_name] = val
-						if self.vtf_frame_limit then
-							self:GetRawMaterial():SetInt(key, math.abs(val)%self.vtf_frame_limit)
+						local mat = self:GetRawMaterial()
+						mat:SetFloat(key, val)
+						if info.recompute then
+							mat:Recompute()
 						end
 					end
-				end
-			elseif type(def) == "boolean" then
-				if info.is_flag then
+					if property_name:lower():find("frame") then
+						PART["Set" .. property_name] = function(self, val)
+							self[property_name] = val
+							if self.vtf_frame_limit and self.vtf_frame_limit[property_name] then
+								self:GetRawMaterial():SetInt(key, math.abs(val)%self.vtf_frame_limit[property_name])
+							end
+						end
+					end
+				elseif type(info.default) == "boolean" then
+					if info.is_flag then
+						PART["Set" .. property_name] = function(self, val)
+							self[property_name] = val
+
+							local mat = self:GetRawMaterial()
+
+							local tbl = FlagsToTable(mat:GetInt("$flags"), material_flags)
+							tbl[flag_key] = val
+							mat:SetInt("$flags", TableToFlags(tbl, material_flags))
+
+							mat:Recompute()
+						end
+					else
+						PART["Set" .. property_name] = function(self, val)
+							self[property_name] = val
+							local mat = self:GetRawMaterial()
+							mat:SetInt(key, val and 1 or 0)
+							if info.recompute then mat:Recompute() end
+						end
+					end
+				elseif type(info.default) == "Vector" then
 					PART["Set" .. property_name] = function(self, val)
 						self[property_name] = val
-
 						local mat = self:GetRawMaterial()
-
-						local tbl = FlagsToTable(mat:GetInt("$flags"), material_flags)
-						tbl[flag_key] = val
-						mat:SetInt("$flags", TableToFlags(tbl, material_flags))
-
-						if info.recompute then mat:Recompute() end
+						mat:SetVector(key, val)
 					end
-				else
+				elseif IsColor(info.default) then
 					PART["Set" .. property_name] = function(self, val)
+						if type(val) == "string" then
+							val = Color(unpack(val:Split(" ")))
+						end
 						self[property_name] = val
 						local mat = self:GetRawMaterial()
-						mat:SetInt(key, val and 1 or 0)
+						mat:SetString(key, ("[%f %f %f %f]"):format(val.r, val.g, val.b, val.a))
 						if info.recompute then mat:Recompute() end
 					end
-				end
-			elseif type(def) == "Vector" then
-				PART["Set" .. property_name] = function(self, val)
-					self[property_name] = val
-					local mat = self:GetRawMaterial()
-					mat:SetVector(key, val)
-				end
-			elseif IsColor(def) then
-				PART["Set" .. property_name] = function(self, val)
-					self[property_name] = val
-					local mat = self:GetRawMaterial()
-					mat:SetString(key, ("[%f %f %f %f]"):format(val.r, val.g, val.b, val.a))
-					if info.recompute then mat:Recompute() end
 				end
 			end
 		end
-
-		pac.SetPropertyGroup()
 	end
 
 	pac.EndStorableVars()

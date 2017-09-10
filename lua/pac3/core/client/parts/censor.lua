@@ -1,14 +1,15 @@
 local PART = {}
 
 PART.ClassName = "woohoo"
--- PART.ClassName = "pixelate"
-PART.Group = 'modifiers'
-PART.Icon = 'icon16/webcam_delete.png'
+PART.Group = "effects"
+PART.Icon = "icon16/webcam_delete.png"
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Resolution", 8)
 	pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
 	pac.GetSet(PART, "FixedSize", true)
+	pac.GetSet(PART, "BlurFiltering", false)
+	pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
 
 local render_ReadPixel = render.ReadPixel
@@ -23,11 +24,38 @@ function PART:SetSize(size)
 	self.Size = math.Clamp(size, 1, 32)
 end
 
+local function create_rt(self)
+	self.rt = GetRenderTargetEx(
+		"pac3_woohoo_rt_" .. math.Round(self.Resolution) .. "_" .. tostring(self.BlurFiltering),
+		self.Resolution,
+		self.Resolution,
+		RT_SIZE_NO_CHANGE,
+		MATERIAL_RT_DEPTH_NONE,
+		self.BlurFiltering and 2 or 1, -- TEXTUREFLAGS_POINTSAMPLE,
+		CREATERENDERTARGETFLAGS_AUTOMIPMAP,
+		IMAGE_FORMAT_RGB888
+	)
+
+	collectgarbage()
+end
+
+function PART:SetBlurFiltering(b)
+	self.BlurFiltering = b
+	create_rt(self)
+end
+
 function PART:SetResolution(num)
-	self.Resolution = math.Clamp(num, 8, 128)
+	self.Resolution = math.Clamp(num, 4, 1024)
+	create_rt(self)
 end
 
 function PART:OnDraw(owner, pos, ang)
+	if not self.rt then create_rt(self) end
+
+	render.CopyTexture(render.GetScreenEffectTexture(), self.rt)
+
+	cam.Start2D()
+
 	local spos = pos:ToScreen()
 	local size = self.Size
 
@@ -35,20 +63,13 @@ function PART:OnDraw(owner, pos, ang)
 		size = size / pos:Distance(pac.EyePos) * 100
 	end
 
-	cam.Start2D()
+	size = size * 64
 
-    render_CapturePixels()
+	local x, y, w, h = spos.x-size, spos.y-size, spos.x + size, spos.y + size
 
-    for x = -64 * size, 64 * size, self.Resolution * size do
-		for y = -64 * size, 64 * size, self.Resolution * size do
-			x2 = spos.x + x
-			y2 = spos.y + y
-
-			r, g, b = render_ReadPixel(x2, y2)
-			surface_SetDrawColor(r, g, b, 255)
-			surface_DrawRect(x2, y2, (self.Resolution * size) + 1, (self.Resolution * size) + 1)
-		end
-    end
+	render.SetScissorRect(x,y,w,h, true)
+	render.DrawTextureToScreenRect(self.rt, 0, 0, ScrW(), ScrH())
+	render.SetScissorRect(0, 0, 0, 0, false)
 
 	cam.End2D()
 end

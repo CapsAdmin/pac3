@@ -28,7 +28,7 @@ net.Receive("pac_spawn_part", function()
 	elseif pace.current_part.ClassName ~= "model" then
 		local name = mdl:match(".+/(.+)%.mdl")
 
-		pace.Call("CreatePart", "model", name, nil, mdl)
+		pace.Call("CreatePart", "model", name, mdl)
 	else
 		pace.Call("VariableChanged", pace.current_part, "Model", mdl)
 	end
