@@ -340,16 +340,37 @@ function resource.CheckDownloadedFiles()
 end
 
 local temp = CreateMaterial(tostring({}), "VertexLitGeneric", {})
+local memory = {}
 
 function resource.DownloadTexture(url, callback)
+	local skip_cache = url:sub(1,1) == "_"
+	if skip_cache then url = url:sub(2) end
+
+	if not url:find("^.-://") then return end
+
+	local cache = not skip_cache and memory[url:lower()] or nil
+
+	if cache then
+		file.Write(cache.path, cache.buffer)
+	end
+
 	return resource.Download(
 		url,
 		function(path)
+			local cache = memory[url:lower()]
+			local frames = cache and cache.frames or nil
+
+			print(frames, cache, "wtf",  memory[url:lower()] and memory[url:lower()].frames)
+
 			if path:EndsWith(".vtf") then
-				local f = file.Open(path, "rb", "DATA")
-				f:Seek(24)
-				local frames = f:ReadShort()
-				f:Close()
+				if not frames then
+					local f = file.Open(path, "rb", "DATA")
+					if f then
+						f:Seek(24)
+						frames = f:ReadShort()
+						f:Close()
+					end
+				end
 
 				temp:SetTexture("$basetexture", "../data/" .. path)
 
@@ -357,7 +378,12 @@ function resource.DownloadTexture(url, callback)
 			else
 				callback(Material("../data/" .. path, "mips smooth noclamp"):GetTexture("$basetexture"))
 			end
-			--file.Delete(path) -- lol
+
+			if not cache then
+				memory[url:lower()] = {buffer = file.Read(path, "DATA"), path = path, frames = frames}
+			end
+
+			file.Delete(path)
 		end,
 		function()
 
