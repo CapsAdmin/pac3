@@ -146,7 +146,7 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 					pace.RemovePartOnServer(obj:GetUniqueID(), false, true)
 				end
 				node:SetText(val)
-			elseif key == "Model" and val and val ~= "" then
+			elseif key == "Model" and val and val ~= "" and type(val) == "string" then
 				node:SetModel(val)
 			elseif key == "Parent" then
 				local tree = obj.editor_node
