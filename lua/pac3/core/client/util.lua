@@ -126,10 +126,12 @@ do --dev util
 		return GetConVarValue,c
 	end
 
+	local sv_allowcslua = GetConVar('sv_allowcslua')
 
 	function pac.Restart()
 		local editor_was_open
 		local prev_parts = {}
+		local pacLocal = _G.pac
 
 		if pace and pace.Editor and pace.Editor:IsValid() then
 			editor_was_open = true
@@ -142,7 +144,7 @@ do --dev util
 		end
 
 		if pac and pac.Disable then
-			print("removing all traces of pac3 from lua")
+			pacLocal.Message("removing all traces of pac3 from lua")
 			pac.Disable()
 			pac.Panic()
 
@@ -177,12 +179,15 @@ do --dev util
 			collectgarbage()
 		end
 
-		if GetConVar("sv_allowcslua"):GetBool() then
-			print("pac_restart: sv_allowcslua is on, looking for pac3 addon..")
+		local loadingHit = false
+
+		if sv_allowcslua:GetBool() then
+			pacLocal.Message("pac_restart: sv_allowcslua is on, looking for PAC3 addon..")
+
 			local _, dirs = file.Find("addons/*", "MOD")
 			for _, dir in ipairs(dirs) do
 				if file.Exists("addons/" .. dir .. "/lua/autorun/pac_editor_init.lua", "MOD") then
-					print("found pac3 in garrysmod/addons/" .. dir)
+					pacLocal.Message("found PAC3 in garrysmod/addons/" .. dir)
 					local old_include = _G.include
 
 					local function include(path, ...)
@@ -207,37 +212,45 @@ do --dev util
 										return unpack(res, 2)
 									end
 
-									print("pac_restart: pcall error: " .. res[2])
+									pacLocal.Message("pac_restart: pcall error: " .. res[2])
 								else
-									print("pac_restart: compile string error: " .. func)
+									pacLocal.Message("pac_restart: compile string error: " .. func)
 								end
 							end
 						end
-						print("pac_restart: couldn't include " .. new_path .. " reverting to normal include")
+
+						pacLocal.Message("pac_restart: couldn't include " .. new_path .. " reverting to normal include")
+
 						return old_include(path, ...)
 					end
 
 					_G.include = include
 
-						for _, path in ipairs((file.Find("autorun/pac_*", "LUA"))) do
-							if path:EndsWith("_init.lua") and path ~= "pac_init.lua" then
-								print("pac_restart: including autorun/" .. path .. "...")
-								local ok, err = pcall(function()
-									include("autorun/" .. path)
-								end)
+					for _, path in ipairs((file.Find("autorun/pac_*", "LUA"))) do
+						if path:EndsWith("_init.lua") and path ~= "pac_init.lua" then
+							pacLocal.Message("pac_restart: including autorun/" .. path .. "...")
 
-								if not ok then
-									print("pac_restart: error when reloading pac " .. err)
-								end
+							local ok, err = pcall(function()
+								include("autorun/" .. path)
+							end)
+
+							if not ok then
+								pacLocal.Message("pac_restart: error when reloading pac " .. err)
 							end
 						end
+					end
 
 					_G.include = old_include
+
+					loadingHit = true
 					break
 				end
 			end
-		else
-			print("sv_allowcslua is not enabled, loading pac3 again from server lua")
+		end
+
+		if not loadingHit then
+			pacLocal.Message("sv_allowcslua is not enabled or unable to find PAC3 in addons/, loading PAC3 again from server lua")
+
 			for _, path in ipairs((file.Find("autorun/pac*", "LUA"))) do
 				if path:EndsWith("_init.lua") and path ~= "pac_init.lua" then
 					include("autorun/" .. path)
@@ -255,7 +268,7 @@ do --dev util
 			pace.LoadPartsFromTable(prev_parts, true)
 		end
 
-		print("pac_restart: done")
+		pacLocal.Message("pac_restart: done")
 	end
 
 	concommand.Add("pac_restart", pac.Restart)

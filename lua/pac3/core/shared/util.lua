@@ -11,7 +11,7 @@ local FUNCTION_COLOR = Color(62, 106, 255)
 local TABLE_COLOR = Color(107, 200, 224)
 local URL_COLOR = Color(174, 124, 192)
 
-function pac.FormatMessage(tabIn)
+local function FormatMessage(tabIn)
 	local prevColor = DEFAULT_TEXT_COLOR
 	local output = {prevColor}
 
@@ -76,8 +76,10 @@ function pac.FormatMessage(tabIn)
 	return output
 end
 
+pac.FormatMessage = FormatMessage
+
 function pac.Message(...)
-	local formatted = pac.FormatMessage({...})
+	local formatted = FormatMessage({...})
 	MsgC(PREFIX_COLOR, PREFIX, unpack(formatted))
 	MsgC('\n')
 	return formatted
