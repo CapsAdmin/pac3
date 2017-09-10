@@ -213,7 +213,10 @@ for shader_name, groups in pairs(shader_params.shaders) do
 						self:GetRawMaterial():SetUndefined(key)
 					else
 						if not pac.resource.DownloadTexture(val, function(tex, frames)
-							self.vtf_frame_limit = frames
+							if frames then
+								self.vtf_frame_limit = self.vtf_frame_limit or {}
+								self.vtf_frame_limit[property_name] = frames
+							end
 							self:GetRawMaterial():SetTexture(key, tex)
 						end) then
 							self:GetRawMaterial():SetTexture(key, val)
@@ -244,8 +247,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 					if property_name:lower():find("frame") then
 						PART["Set" .. property_name] = function(self, val)
 							self[property_name] = val
-							if self.vtf_frame_limit then
-								self:GetRawMaterial():SetInt(key, math.abs(val)%self.vtf_frame_limit)
+							if self.vtf_frame_limit and self.vtf_frame_limit[property_name] then
+								self:GetRawMaterial():SetInt(key, math.abs(val)%self.vtf_frame_limit[property_name])
 							end
 						end
 					end
@@ -260,7 +263,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 							tbl[flag_key] = val
 							mat:SetInt("$flags", TableToFlags(tbl, material_flags))
 
-							if info.recompute then mat:Recompute() end
+							mat:Recompute()
 						end
 					else
 						PART["Set" .. property_name] = function(self, val)

@@ -387,12 +387,6 @@ return {
 					default = false,
 					description = "flag",
 				},
-				alpha = {
-					type = "float",
-					friendly = "Alpha",
-					default = 1,
-					description = "alpha",
-				},
 				use_in_fillrate_mode = {
 					is_flag = true,
 					type = "integer",
@@ -534,23 +528,6 @@ return {
 					friendly = "RefractAmount",
 					default = 0.5,
 					description = "How strong the refraction effect should be when the material is partially cloaked (default = 2).",
-				},
-			},
-
-			vertex = {
-				vertexalpha = {
-					is_flag = true,
-					type = "bool",
-					friendly = "Alpha",
-					default = false,
-					description = "flag",
-				},
-				vertexcolor = {
-					is_flag = true,
-					type = "bool",
-					friendly = "Color",
-					default = false,
-					description = "flag",
 				},
 			},
 			blend = {
@@ -1086,6 +1063,12 @@ return {
 					default = Vector(1, 1, 1),
 					description = "The pattern of refraction is defined by a normal map (DX9+) or DUDV map (DX8-). May be animated.",
 				},
+				refractamount = {
+					type = "float",
+					friendly = "RefractAmount",
+					default = 0.5,
+					description = "How strong the refraction effect should be when the material is partially cloaked (default = 2).",
+				},
 			},
 			generic = {
 				vertexcolormodulate = {
@@ -1098,6 +1081,7 @@ return {
 					friendly = "BlurAmount",
 					default = 0,
 					description = "Adds a blur effect. Valid values are 0, 1 and 2 (0 and 1 for DX8-).",
+					recompute = true,
 				},
 				masked = {
 					type = "bool",
@@ -1149,17 +1133,17 @@ return {
 			normal = {
 				normalmap2 = {
 					type = "texture",
-					friendly = "Map2",
+					friendly = "NormalMap2",
 					description = "If a second normal map is specified, it will be blended with the first one.",
 				},
 				dudvmap = {
 					type = "texture",
-					friendly = "Map",
+					friendly = "DudvMap",
 					description = "The pattern of refraction is defined by a normal map (DX9+) or DUDV map (DX8-). May be animated.",
 				},
 				normalmap = {
 					type = "texture",
-					friendly = "Map",
+					friendly = "NormalMap",
 				},
 			},
 		},
@@ -1247,6 +1231,12 @@ return {
 				default = false,
 				description = "Use texcoord1 for detail texture",
 			},
+			alpha = {
+				type = "float",
+				friendly = "Alpha",
+				default = 1,
+				description = "alpha",
+			},
 		},
 		srgb = {
 			linearwrite = {
@@ -1300,7 +1290,7 @@ return {
 		flashlight = {
 			flashlighttexture = {
 				type = "texture",
-				friendly = "FlashLightTexture",
+				friendly = "Texture",
 				description = "flashlight spotlight shape texture",
 			},
 			flashlightnolambert = {
@@ -1311,7 +1301,7 @@ return {
 			},
 			flashlighttextureframe = {
 				type = "integer",
-				friendly = "Textureframe",
+				friendly = "Frame",
 				default = 0,
 				description = "Animation Frame for $flashlight",
 			},
@@ -1394,5 +1384,21 @@ return {
 				description = "envmap frame number",
 			},
 		},
+		vertex = {
+				vertexalpha = {
+					is_flag = true,
+					type = "bool",
+					friendly = "Alpha",
+					default = false,
+					description = "flag",
+				},
+				vertexcolor = {
+					is_flag = true,
+					type = "bool",
+					friendly = "Color",
+					default = false,
+					description = "flag",
+				},
+			},
 	}
 }
