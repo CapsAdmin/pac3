@@ -1131,7 +1131,7 @@ vertexlitgeneric = {
 	phongtint = {
 		friendly = "PhongTint",
 		type = "vec3",
-		default = "5.0",
+		default = "[ 1 1 1 ]",
 		description = "Phong tint for local specular lights",
 		gmod_default = "[ 0.000000 0.000000 0.000000 ]",
 	},

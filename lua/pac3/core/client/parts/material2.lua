@@ -1,8 +1,5 @@
 local shader_params = include("pac3/libraries/shader_params.lua")
 
-local temp = CreateMaterial("pac3_dummy_mat", "vertexlitgeneric", {})
-
-
 local function add_matrix(META, key, friendly_name, description, udata)
 	key = key or friendly_name
 
@@ -147,13 +144,21 @@ local function FlagsToTable(flags, valid_flags)
 	return out
 end
 
+local shader_name_translate = {
+	vertexlitgeneric = "3d",
+	unlitgeneric = "2d",
+}
+
 for shader_name, params in pairs(shader_params) do
+	local temp = CreateMaterial(tostring({}), shader_name, {})
+
 	local PART = {}
 
-	PART.ClassName = "material_" .. shader_name
+	PART.ClassName = "material_" .. shader_name_translate[shader_name]
+	PART.Description = shader_name
 	PART.NonPhysical = true
-	PART.Group = {'modifiers', 'model', 'entity'}
-	PART.Icon = 'icon16/paintcan.png'
+	PART.Group = "advanced"
+	PART.Icon = "icon16/paintcan.png"
 
 	pac.StartStorableVars()
 
