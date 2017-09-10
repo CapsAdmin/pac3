@@ -18,7 +18,7 @@ do -- to server
 
 		net.SendToServer()
 
-		Msg"[PAC] " print("Transmitting outfit ("..string.NiceSize(ret)..')')
+		pac.Message("Transmitting outfit ("..string.NiceSize(ret)..')')
 
 		return true
 
