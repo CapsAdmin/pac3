@@ -74,6 +74,7 @@ local fixup = {
 	"alphatest",
 	"rimlight",
 	"emissiveblend",
+	"depthblend",
 }
 
 local material_flags = {
@@ -208,14 +209,13 @@ for shader_name, params in pairs(shader_params) do
 			PART["Set" .. property_name] = function(self, val)
 				self[property_name] = val
 
-				if not pac.resource.DownloadTexture(val, function(tex, frames)
-					self.vtf_frame_limit = frames
-					self:GetRawMaterial():SetTexture(key, tex)
-				end) then
-
-					if val == "" then
-						self:GetRawMaterial():SetUndefined(key)
-					else
+				if val == "" then
+					self:GetRawMaterial():SetUndefined(key)
+				else
+					if not pac.resource.DownloadTexture(val, function(tex, frames)
+						self.vtf_frame_limit = frames
+						self:GetRawMaterial():SetTexture(key, tex)
+					end) then
 						self:GetRawMaterial():SetTexture(key, val)
 					end
 				end
@@ -302,6 +302,9 @@ for shader_name, params in pairs(shader_params) do
 				end
 			elseif IsColor(def) then
 				PART["Set" .. property_name] = function(self, val)
+					if type(val) == "string" then
+						val = Color(unpack(val:Split(" ")))
+					end
 					self[property_name] = val
 					local mat = self:GetRawMaterial()
 					mat:SetString(key, ("[%f %f %f %f]"):format(val.r, val.g, val.b, val.a))

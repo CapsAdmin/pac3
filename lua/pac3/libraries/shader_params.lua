@@ -213,11 +213,7 @@ unlitgeneric = {
 		description = "If we bind a texture here, it overrides base alpha (if any) for self illum",
 		default = "shadertest/BaseTexture",
 	},
-	basetexture = {
-		type = "texture",
-		description = "base texture",
-		default = "models/effects/comball_glow1"
-	},
+
 	scaleedgesoftnessbasedonscreenres = {
 		friendly = "ScaleEdgeSoftnessBasedOnScreenRes",
 		type = "bool",
@@ -228,6 +224,7 @@ unlitgeneric = {
 	basetexture2 = {
 		type = "texture",
 		description = "base texture",
+		friendly = "BaseTexture2"
 	},
 	texture2 = {
 		type = "texture",
@@ -314,7 +311,7 @@ unlitgeneric = {
 		default = "0",
 		description = "Animation Frame",
 	},
-	BaseTexture = {
+	basetexture = {
 		type = "texture",
 		friendly = "BaseTexture",
 		default = "shadertest/BaseTexture",
@@ -519,7 +516,7 @@ unlitgeneric = {
 		gmod_default = "0.000000",
 	},
 	separatedetailuvs = {
-		friendly = "SeparateDetailUVs",
+		friendly = "SeparateDetailUv",
 		type = "bool",
 		default = "0",
 		description = "Use texcoord1 for detail texture",
@@ -666,6 +663,7 @@ unlitgeneric = {
 		gmod_default = "0",
 		description = "fade at intersection boundaries",
 		default = "0",
+		friendly = "DepthBlend",
 	},
 	outlinecolor = {
 		friendly = "OutlineColor",
@@ -679,6 +677,7 @@ unlitgeneric = {
 		gmod_default = "50.000000",
 		description = "Amplify or reduce DEPTHBLEND fading. Lower values make harder edges.",
 		default = "50.0",
+		friendly = "DepthBlendScale"
 	},
 	translucent = {
 		is_flag = true,
@@ -698,7 +697,7 @@ unlitgeneric = {
 vertexlitgeneric = {
 	bumpmap = {
 		type = "texture",
-		friendly = "Bumpmap",
+		friendly = "BumpMap",
 		description = "bump map",
 		default = "models/shadertest/shader1_normal",
 	},
@@ -882,7 +881,7 @@ vertexlitgeneric = {
 		default = "0",
 		friendly = "SheenmapIndex",
 	},
-	BaseTexture = {
+	basetexture = {
 		type = "texture",
 		friendly = "BaseTexture",
 		default = "shadertest/BaseTexture",
@@ -932,6 +931,7 @@ vertexlitgeneric = {
 		gmod_default = "0.000000",
 		description = "blend between tint acting as a multiplication versus a replace",
 		default = "0",
+		friendly = "BlendTintColorOverBase",
 	},
 	Color = {
 		type = "color",
@@ -987,7 +987,7 @@ vertexlitgeneric = {
 		gmod_default = "0.000000",
 	},
 	separatedetailuvs = {
-		friendly = "SeparateDetailUVs",
+		friendly = "DetailSeparateDetailUVs",
 		type = "bool",
 		default = "0",
 		description = "Use texcoord1 for detail texture",
@@ -1042,7 +1042,7 @@ vertexlitgeneric = {
 	alphatestreference = {
 		friendly = "AlphaTestReference",
 		type = "float",
-		default = "0.0",
+		default = "0.7",
 		description = "",
 		gmod_default = "0.000000",
 		recompute = true,
@@ -1095,8 +1095,8 @@ vertexlitgeneric = {
 		friendly = "EnvmapCameraSpace",
 	},
 	basemapalphaphongmask = {
-		friendly = "BaseMapAlphaPhongMask",
-		type = "integer",
+		friendly = "PhongBaseMapAlphaPhongMask",
+		type = "bool",
 		default = "0",
 		description = "indicates that there is no normal map and that the phong mask is in base alpha",
 		gmod_default = "0",
@@ -1209,7 +1209,7 @@ vertexlitgeneric = {
 		type = "bool",
 		description = "Enables weapon sheen render in a second pass",
 		default = "0",
-		firendly = "SheenmapPassEnabled",
+		friendly = "SheenmapPassEnabled",
 	},
 	cloakcolortint = {
 		type = "color",
@@ -1259,7 +1259,7 @@ vertexlitgeneric = {
 		friendly = "Wireframe",
 	},
 	rimmask = {
-		friendly = "RimMask",
+		friendly = "RimlightMask",
 		type = "bool",
 		default = "0",
 		description = "Indicates whether or not to use alpha channel of exponent texture to mask the rim term",
@@ -1288,10 +1288,6 @@ vertexlitgeneric = {
 		type = "texture",
 		description = "base texture",
 	},]]
-	basetexture = {
-		type = "texture",
-		description = "base texture",
-	},
 	flesheffectcenterradius3 = {
 		friendly = "FleshEffectCenterRadius3",
 		type = "vec4",
@@ -1308,6 +1304,7 @@ vertexlitgeneric = {
 	basetexture2 = {
 		type = "texture",
 		description = "base texture",
+		friendly = "BaseTexture2",
 	},
 	--[[texture2 = {
 		type = "texture",
@@ -1423,7 +1420,7 @@ vertexlitgeneric = {
 		gmod_default = "0",
 	},
 	invertphongmask = {
-		friendly = "InvertPhongMask",
+		friendly = "PhongInvertPhongMask",
 		type = "bool",
 		default = "0",
 		description = "invert the phong mask (0=full phong, 1=no phong)",
@@ -1453,7 +1450,7 @@ vertexlitgeneric = {
 	},
 	lightwarptexture = {
 		type = "texture",
-		friendly = "DiffuseWarpTexture",
+		friendly = "LightWarpTexture",
 		description = "1D ramp texture for tinting scalar diffuse term",
 		default = "shadertest/BaseTexture",
 	},
@@ -1474,7 +1471,7 @@ vertexlitgeneric = {
 		type = "float",
 		gmod_default = "0.000000",
 		description = "",
-		default = "0.0",
+		default = "0.5",
 		friendly = "CloakFactor",
 	},
 	FlashLightTexture = {
@@ -1536,6 +1533,7 @@ vertexlitgeneric = {
 		default = "0",
 		description = "Use the base alpha to blend in the $color modulation",
 		gmod_default = "0",
+		friendly = "BlendTintByBaseAlpha",
 	},
 	selfillumfresnelminmaxexp = {
 		friendly = "SelfIllumFresnelMinMaxExp",
@@ -1590,11 +1588,11 @@ vertexlitgeneric = {
 		default = "0",
 		friendly = "EmissiveBlendEnabled",
 	},
-	Frame = {
+	frame = {
 		type = "integer",
 		friendly = "Frame",
 		default = "0",
-		description = "Animation Frame",
+		description = "Base Texture Animation Frame",
 	},
 	fleshinteriorenabled = {
 		type = "bool",
