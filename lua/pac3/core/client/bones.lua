@@ -286,9 +286,9 @@ function pac.GetBonePosAng(ent, id, parent)
 end
 
 do -- bone manipulation for boneanimlib
-	local SCALE_RESET = Vector(1,1,1)
-	local ORIGIN_RESET = Vector(0,0,0)
-	local ANGLE_RESET = Angle(0,0,0)
+	local SCALE_RESET = Vector(1, 1, 1)
+	local ORIGIN_RESET = Vector(0, 0, 0)
+	local ANGLE_RESET = Angle(0, 0, 0)
 
 	function pac.ResetBones(ent)
 		ent.pac_boneanim = ent.pac_boneanim or {positions = {}, angles = {}}
@@ -305,6 +305,11 @@ do -- bone manipulation for boneanimlib
 		end
 
 		hook.Call("PAC3ResetBones", nil, ent)
+
+		if ent.pac_bones_select_target and count > 1 then
+			ent:ManipulateBoneScale(ent.pac_bones_select_target, SCALE_RESET * (1 + math.sin(RealTime() * 4) * 0.1))
+			ent.pac_bones_select_target = nil
+		end
 	end
 
 	function pac.ManipulateBonePosition(ply, id, var)
