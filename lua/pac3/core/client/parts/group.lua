@@ -3,6 +3,7 @@ local PART = {}
 PART.ClassName = "group"
 PART.NonPhysical = true
 PART.Icon = 'icon16/world.png'
+PART.Description = "right click to add parts"
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Duplicate", false)

@@ -30,14 +30,14 @@ function pace.ClearParts()
 		if not pace.Editor:IsValid() then return end
 
 		if table.Count(pac.GetParts(true)) == 0 then
-			pace.Call("CreatePart", "group", L"my outfit", L"add parts to me!")
+			pace.Call("CreatePart", "group", L"my outfit")
 		end
 
 		pace.TrySelectPart()
 	end)
 end
 
-function pace.OnCreatePart(class_name, name, desc, mdl)
+function pace.OnCreatePart(class_name, name, mdl)
 
 	if class_name ~= "group" and not next(pac.GetParts(true)) then
 		pace.Call("CreatePart", "group")
@@ -60,7 +60,6 @@ function pace.OnCreatePart(class_name, name, desc, mdl)
 		end
 	end
 
-	if desc and part.SetDescription then part:SetDescription(desc) end
 	if mdl then
 		part:SetModel(mdl)
 	elseif class_name == "model" then

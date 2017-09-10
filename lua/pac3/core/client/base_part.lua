@@ -66,8 +66,6 @@ pac.StartStorableVars()
 
 pac.EndStorableVars()
 
-pac.GetSet(PART, "Description", "")
-
 function PART:SetUniqueID(id)
 	if self.owner_id then
 		pac.UniqueIDParts[self.owner_id] = pac.UniqueIDParts[self.owner_id] or {}
