@@ -86,6 +86,11 @@ function pace.ClientSettingsMenu(pnl)
 		2
 	)
 
+	pnl:CheckBox(
+		L"Process OBJ in background",
+		"pac_obj_async"
+	)
+
 	pnl:CheckBox(L"no outfit reflections", "pac_suppress_frames")
 	pnl:CheckBox(L"render objects outside visible fov", "pac_override_fov")
 	pnl:CheckBox(L"render projected textures (flashlight)", "pac_render_projected_texture")

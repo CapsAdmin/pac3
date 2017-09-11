@@ -94,8 +94,8 @@ function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statu
 end
 
 local thinkThreads = {}
-local PARSING_THERSOLD = CreateConVar('pac_parse_runtime', '0.01', {FCVAR_ARCHIVE}, 'Maximal parse runtime in seconds')
-local PARSE_CHECK_LINES = 50
+local PARSING_THERSOLD = CreateConVar('pac_obj_runtime', '0.002', {FCVAR_ARCHIVE}, 'Maximal parse runtime in seconds')
+local PARSE_CHECK_LINES = 30
 
 local function Think()
 	local PARSING_THERSOLD = PARSING_THERSOLD:GetFloat()
@@ -188,9 +188,13 @@ local numberMatch = '(-?[0-9.+-e0-9]+)'
 local vMatch = '^ *v *' .. numberMatch .. ' +' .. numberMatch .. ' +' .. numberMatch
 local vtMatch = '^ *vt *' .. numberMatch .. ' +' .. numberMatch
 local vnMatch = '^ *vn *' .. numberMatch .. ' +' .. numberMatch .. ' +' .. numberMatch
+local ASYNC_PROCESSING = CreateConVar('pac_obj_async', '1', {FCVAR_ARCHIVE}, 'Process OBJ files in background')
 
 function urlobj.ParseObj(data, generateNormals)
 	local coroutine_yield = coroutine.running () and coroutine.yield or function () end
+	if not ASYNC_PROCESSING:GetBool() then
+		coroutine_yield = function () end
+	end
 
 	local positions  = {}
 	local texCoordsU = {}
@@ -270,6 +274,7 @@ function urlobj.ParseObj(data, generateNormals)
 
 	local lineCount = #vtLines + #vnLines + #vLines + #facesPreprocess
 	local inverseLineCount = 1 / lineCount
+	local lineProcessed = 0
 
 	for i, line in ipairs(vLines) do
 		local x, y, z = string_match(line, vMatch)
@@ -281,6 +286,8 @@ function urlobj.ParseObj(data, generateNormals)
 		end
 	end
 
+	lineProcessed = #vLines
+
 	for i, line in ipairs(vtLines) do
 		local u, v = string_match(line, vtMatch)
 		u, v = tonumber(u) or 0, tonumber(v) or 0
@@ -290,9 +297,11 @@ function urlobj.ParseObj(data, generateNormals)
 		texCoordsV[texCoordIndex] = (1 - v) % 1
 
 		if i % PARSE_CHECK_LINES == 0 then
-			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			coroutine_yield(false, "Processing vertices", (i + lineProcessed) * inverseLineCount)
 		end
 	end
+
+	lineProcessed = #vLines + #vtLines
 
 	for i, line in ipairs(vnLines) do
 		local nx, ny, nz = string_match(line, vnMatch)
@@ -308,9 +317,11 @@ function urlobj.ParseObj(data, generateNormals)
 		end
 
 		if i % PARSE_CHECK_LINES == 0 then
-			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			coroutine_yield(false, "Processing vertices", (i + lineProcessed) * inverseLineCount)
 		end
 	end
+
+	lineProcessed = #vLines + #vtLines + #vnLines
 
 	for i, line in ipairs(facesPreprocess) do
 		local matchLine = string_match(line, "^ *f +(.*)")
@@ -325,7 +336,7 @@ function urlobj.ParseObj(data, generateNormals)
 		faceLines[#faceLines + 1] = parts
 
 		if i % PARSE_CHECK_LINES == 0 then
-			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			coroutine_yield(false, "Processing vertices", (i + lineProcessed) * inverseLineCount)
 		end
 	end
 
