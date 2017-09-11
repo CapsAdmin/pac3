@@ -336,7 +336,7 @@ do
 	local pac_error_mdl = CreateClientConVar("pac_error_mdl","1",true,false,"0 = default error, 1=custom error model, models/yourmodel.mdl")
 	local tc
 
-	function pac.FilterInvalidModel(mdl,fallback)
+	function pac.FilterInvalidModel(mdl, fallback)
 		if util.IsValidModel(mdl) or (not mdl) or (mdl == "") then
 			return mdl
 		end
@@ -829,4 +829,104 @@ function pac.HandlePartName(ply, name)
 	end
 
 	return name
+end
+
+function pac.DownloadMDL(url, callback, onfail, ply)
+	return pac.resource.Download(url, function(path)
+		local id = util.CRC(ply:UniqueID() .. url)
+		local mdl_dir = "models/pac3/" .. id .. "/"
+
+		local f = file.Open(path, "rb", "DATA")
+
+		local found = false
+		local files = {}
+
+		local ok, err = pcall(function()
+			for i = 1, 10 do
+				local pos = f:Tell()
+
+				local sig = f:ReadLong()
+
+				if sig == 0x02014b50 then break end
+
+				assert(sig == 0x04034b50, "bad signature")
+				f:Seek(pos+6) assert(f:ReadShort() == 0, "general purpose bitflag is set")
+				f:Seek(pos+8) assert(f:ReadShort() == 0, "compression method is not 0")
+				f:Seek(pos+14) local crc = f:ReadShort()
+				f:Seek(pos+18) local size2 = f:ReadLong()
+				f:Seek(pos+22) local size = f:ReadLong()
+				assert(size == size2, "compression?")
+				f:Seek(pos+26) local file_name_length = f:ReadShort()
+				local extra_field_length = f:ReadShort()
+
+				local name = f:Read(file_name_length)
+				name = name:gsub(".-(%..+)", "model%1"):lower()
+
+				f:Skip(extra_field_length)
+
+				local buffer = f:Read(size)
+
+				if name:EndsWith(".mdl") then
+					local path = buffer:sub(13, 12+64)
+					--buffer = buffer:gsub(path, mdl_dir .. "model.mdl")
+					found = true
+				end
+
+				table.insert(files, {file_name = name, buffer = buffer, crc = crc})
+			end
+		end)
+
+		if not ok then
+			onfail(err)
+		end
+
+		if not found then
+			onfail("mdl not found in archive")
+			return
+		end
+
+		local f = file.Open("pac3_cache/downloads/" .. id .. ".dat", "wb", "DATA")
+		f:Write("GMAD")
+		f:WriteByte(3)
+		f:WriteLong(0)f:WriteLong(0)
+		f:WriteLong(0)f:WriteLong(0)
+		f:WriteByte(0)
+		f:Write("name here")f:WriteByte(0)
+		f:Write("description here")f:WriteByte(0)
+		f:Write("author here")f:WriteByte(0)
+		f:WriteLong(1)
+
+		for i, data in ipairs(files) do
+			f:WriteLong(i)
+			f:Write(mdl_dir .. data.file_name:lower())f:WriteByte(0)
+			f:WriteLong(#data.buffer)f:WriteLong(0)
+			f:WriteLong(data.crc)
+		end
+
+		f:WriteLong(0)
+
+		for i, data in ipairs(files) do
+			f:Write(data.buffer)
+		end
+
+		f:Flush()
+
+		local content = file.Read("pac3_cache/downloads/" .. id .. ".dat", "DATA")
+		f:Write(util.CRC(content))
+		f:Close()
+
+		local ok, tbl = game.MountGMA("data/pac3_cache/downloads/" .. id .. ".dat")
+
+		if not ok then
+			onfail("failed to mount gma mdl")
+			return
+		end
+
+		for k,v in pairs(tbl) do
+			if v:EndsWith("mdl") then
+				callback(v)
+				break
+			end
+		end
+	end)
 end
