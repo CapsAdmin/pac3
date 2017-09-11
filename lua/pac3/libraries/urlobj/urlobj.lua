@@ -184,6 +184,10 @@ local table_insert  = table.insert
 local Vector        = Vector
 
 local facesMapper = '([0-9]+)/?([0-9]*)/?([0-9]*)'
+local numberMatch = '(-?[0-9.+-e0-9]+)'
+local vMatch = '^ *v *' .. numberMatch .. ' +' .. numberMatch .. ' +' .. numberMatch
+local vtMatch = '^ *vt *' .. numberMatch .. ' +' .. numberMatch
+local vnMatch = '^ *vn *' .. numberMatch .. ' +' .. numberMatch .. ' +' .. numberMatch
 
 function urlobj.ParseObj(data, generateNormals)
 	local coroutine_yield = coroutine.running () and coroutine.yield or function () end
@@ -202,30 +206,32 @@ function urlobj.ParseObj(data, generateNormals)
 	local inContinuation    = false
 	local continuationLines = nil
 	for line in string_gmatch (data, "(.-)\r?\n") do
-		if string_sub(line, #line) == '\\' then
-			line = string_sub (line, 1, #line - 1)
-			if inContinuation then
-				continuationLines[#continuationLines + 1] = line
+		if string_sub(line, 1, 1) ~= '#' then
+			if string_sub(line, #line) == '\\' then
+				line = string_sub (line, 1, #line - 1)
+				if inContinuation then
+					continuationLines[#continuationLines + 1] = line
+				else
+					inContinuation    = true
+					continuationLines = { line }
+				end
 			else
-				inContinuation    = true
-				continuationLines = { line }
+				if inContinuation then
+					continuationLines[#continuationLines + 1] = line
+					lines[#lines + 1] = table_concat (continuationLines)
+					inContinuation    = false
+					continuationLines = nil
+				else
+					lines[#lines + 1] = line
+				end
 			end
-		else
-			if inContinuation then
-				continuationLines[#continuationLines + 1] = line
-				lines[#lines + 1] = table_concat (continuationLines)
-				inContinuation    = false
-				continuationLines = nil
-			else
-				lines[#lines + 1] = line
+
+			if i % PARSE_CHECK_LINES == 0 then
+				coroutine_yield(false, "Preprocessing lines", i)
 			end
-		end
 
-		if i % PARSE_CHECK_LINES == 0 then
-			coroutine_yield(false, "Preprocessing lines", i)
+			i = i + 1
 		end
-
-		i = i + 1
 	end
 
 	if inContinuation then
@@ -244,7 +250,7 @@ function urlobj.ParseObj(data, generateNormals)
 		-- Positions: v %f %f %f [%f]
 		while i <= lineCount do
 			local line = lines[i]
-			local x, y, z = string_match(line, "^ *v +(-?[0-9.]+) +(-?[0-9.]+) +(-?[0-9.]+)")
+			local x, y, z = string_match(line, vMatch)
 			if not x then break end
 
 			processedLine = true
@@ -265,7 +271,7 @@ function urlobj.ParseObj(data, generateNormals)
 		-- Texture coordinates: vt %f %f
 		while i <= lineCount do
 			local line = lines[i]
-			local u, v = string_match(line, "^ *vt *(-?[0-9.]+) +(-?[0-9.]+)")
+			local u, v = string_match(line, vtMatch)
 			if not u then break end
 
 			processedLine = true
@@ -289,7 +295,7 @@ function urlobj.ParseObj(data, generateNormals)
 		-- Normals: vn %f %f %f
 		while i <= lineCount do
 			local line = lines[i]
-			local nx, ny, nz = string_match(line, "^ *vn *(-?[0-9.]+) +(-?[0-9.]+) +(-?[0-9.]+)")
+			local nx, ny, nz = string_match(line, vnMatch)
 			if not nx then break end
 
 			processedLine = true
@@ -318,7 +324,7 @@ function urlobj.ParseObj(data, generateNormals)
 		-- Faces: f %f %f %f+
 		while i <= lineCount do
 			local line = lines[i]
-			local matchLine = string_match(line, "^ *f *(.*)")
+			local matchLine = string_match(line, "^ *f +(.*)")
 			if not matchLine then break end
 
 			processedLine = true
