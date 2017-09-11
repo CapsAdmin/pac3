@@ -360,8 +360,6 @@ function resource.DownloadTexture(url, callback)
 			local cache = memory[url:lower()]
 			local frames = cache and cache.frames or nil
 
-			print(frames, cache, "wtf",  memory[url:lower()] and memory[url:lower()].frames)
-
 			if path:EndsWith(".vtf") then
 				if not frames then
 					local f = file.Open(path, "rb", "DATA")

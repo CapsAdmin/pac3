@@ -1,10 +1,5 @@
-local webaudio = _G.webaudio or {}
-_G.webaudio = webaudio
-
-if me then
-	webaudio.debug = true
-end
-
+local webaudio = {}
+--webaudio.debug = true
 webaudio.sample_rate = nil
 webaudio.speed_of_sound = 340.29 -- metres per
 
@@ -131,15 +126,15 @@ function webaudio.Initialize()
 		end
 	end)
 
-	file.Write("webaudio_html.txt", webaudio.html)
-	webaudio.browser_panel:OpenURL("asset://garrysmod/data/webaudio_html.txt")
+	file.Write("pac3_webaudio_html.txt", webaudio.html)
+	webaudio.browser_panel:OpenURL("asset://garrysmod/data/pac3_webaudio_html.txt")
 
-	hook.Add("RenderScene", "webaudio2", function(pos, ang)
+	hook.Add("RenderScene", "webaudio_pac3", function(pos, ang)
 		webaudio.eye_pos = pos
 		webaudio.eye_ang = ang
 	end)
 
-	hook.Add("Think", "webaudio2", webaudio.Update)
+	hook.Add("Think", "webaudio_pac3", webaudio.Update)
 end
 
 -- Audio
@@ -628,6 +623,10 @@ do
 
 	function META:Pause()
 		self.Paused = true
+
+		self:UpdatePlaybackSpeed()
+		self:UpdateVolume()
+
 		self:Call(".play(false)")
 	end
 
@@ -695,8 +694,16 @@ do
 		local speed = self.PlaybackSpeed + self.AdditivePitchModifier
 
 		if speed < 0 then
-			self:Call(".reverse = true")
+			if not self.reversed then
+				self:Call(".reverse = true")
+				self.reversed = true
+			end
 			speed = math.abs(speed)
+		else
+			if self.reversed then
+				self:Call(".reverse = false")
+				self.reversed = false
+			end
 		end
 
 		if add then
@@ -805,6 +812,8 @@ do
 				local relativeSourceSpeed    = relativeSourcePosition:GetNormalized():Dot(-relativeSourceVelocity) * 0.0254
 
 				self:UpdatePlaybackSpeed(relativeSourceSpeed / webaudio.speed_of_sound)
+			else
+				self:UpdatePlaybackSpeed()
 			end
 
 			self.ListenerOutOfRadius = false
@@ -900,8 +909,6 @@ webaudio.streams = webaudio.streams or {}
 webaudio.last_stream_id = 0
 
 function webaudio.CreateStream(path)
-	webaudio.Initialize()
-
 	path = "../" .. path
 	local self = setmetatable({}, webaudio.stream_meta)
 
@@ -910,9 +917,10 @@ function webaudio.CreateStream(path)
 	self:SetUrl(path)
 
 	self.__gcobj = newproxy()
+	local name = tostring(self)
 	debug.setmetatable(self.__gcobj, {__gc = function()
 		if self:IsValid() then
-			dprint("destroying  " .. tostring(self) .. " because it has no references")
+			dprint("destroying  " .. name .. " because it has no references")
 			self:Remove()
 		end
 	end})
@@ -936,11 +944,6 @@ end
 
 function webaudio.StreamExists(streamId)
 	return webaudio.streams[streamId] ~= nil
-end
-
-if me then
-	--local snd = webaudio.CreateStream("sound/vo/breencast/br_overwatch07.wav")
-	--snd:Play()
 end
 
 return webaudio
