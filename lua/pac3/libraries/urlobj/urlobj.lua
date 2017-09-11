@@ -201,36 +201,61 @@ function urlobj.ParseObj(data, generateNormals)
 
 	local lines = {}
 	local faceLines = {}
+	local vLines = {}
+	local vtLines = {}
+	local vnLines = {}
+	local facesPreprocess = {}
 
 	local i = 1
 	local inContinuation    = false
 	local continuationLines = nil
+
 	for line in string_gmatch (data, "(.-)\r?\n") do
-		if string_sub(line, 1, 1) ~= '#' then
-			if string_sub(line, #line) == '\\' then
-				line = string_sub (line, 1, #line - 1)
-				if inContinuation then
-					continuationLines[#continuationLines + 1] = line
+		if #line > 3 then
+			local first = string_sub(line, 1, 1)
+			if first ~= '#' and first ~= 'l' and first ~= 'g' and first ~= 'u' then
+				if string_sub(line, #line) == '\\' then
+					line = string_sub (line, 1, #line - 1)
+					if inContinuation then
+						continuationLines[#continuationLines + 1] = line
+					else
+						inContinuation    = true
+						continuationLines = { line }
+					end
 				else
-					inContinuation    = true
-					continuationLines = { line }
-				end
-			else
-				if inContinuation then
-					continuationLines[#continuationLines + 1] = line
-					lines[#lines + 1] = table_concat (continuationLines)
-					inContinuation    = false
-					continuationLines = nil
-				else
-					lines[#lines + 1] = line
-				end
-			end
+					local currLine
 
-			if i % PARSE_CHECK_LINES == 0 then
-				coroutine_yield(false, "Preprocessing lines", i)
-			end
+					if inContinuation then
+						continuationLines[#continuationLines + 1] = line
+						currLine = table_concat (continuationLines)
+						first = string_sub(currLine, 1, 1)
+						inContinuation    = false
+						continuationLines = nil
+					else
+						currLine = line
+					end
 
-			i = i + 1
+					local second = string_sub(currLine, 1, 2)
+
+					if second == 'vt' then
+						vtLines[#vtLines + 1] = currLine
+					elseif second == 'vn' then
+						vnLines[#vnLines + 1] = currLine
+					elseif first == 'v' then
+						vLines[#vLines + 1] = currLine
+					elseif first == 'f' then
+						facesPreprocess[#facesPreprocess + 1] = currLine
+					else
+						lines[#lines + 1] = currLine
+					end
+				end
+
+				if i % PARSE_CHECK_LINES == 0 then
+					coroutine_yield(false, "Preprocessing lines", i)
+				end
+
+				i = i + 1
+			end
 		end
 	end
 
@@ -241,9 +266,73 @@ function urlobj.ParseObj(data, generateNormals)
 		continuationLines = nil
 	end
 
+	coroutine_yield(false, "Preprocessing lines", i)
+
+	local lineCount = #vtLines + #vnLines + #vLines + #facesPreprocess
+	local inverseLineCount = 1 / lineCount
+
+	for i, line in ipairs(vLines) do
+		local x, y, z = string_match(line, vMatch)
+		x, y, z = tonumber(x) or 0, tonumber(y) or 0, tonumber(z) or 0
+		positions[#positions + 1] = Vector(x, y, z)
+
+		if i % PARSE_CHECK_LINES == 0 then
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+		end
+	end
+
+	for i, line in ipairs(vtLines) do
+		local u, v = string_match(line, vtMatch)
+		u, v = tonumber(u) or 0, tonumber(v) or 0
+
+		local texCoordIndex = #texCoordsU + 1
+		texCoordsU[texCoordIndex] =      u  % 1
+		texCoordsV[texCoordIndex] = (1 - v) % 1
+
+		if i % PARSE_CHECK_LINES == 0 then
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+		end
+	end
+
+	for i, line in ipairs(vnLines) do
+		local nx, ny, nz = string_match(line, vnMatch)
+
+		if not generateNormals then
+			nx, ny, nz = tonumber(nx) or 0, tonumber(ny) or 0, tonumber(nz) or 0
+
+			local inverseLength = 1 / math_sqrt(nx * nx + ny * ny + nz * nz)
+			nx, ny, nz = nx * inverseLength, ny * inverseLength, nz * inverseLength
+
+			local normal = Vector(nx, ny, nz)
+			normals[#normals + 1] = normal
+		end
+
+		if i % PARSE_CHECK_LINES == 0 then
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+		end
+	end
+
+	for i, line in ipairs(facesPreprocess) do
+		local matchLine = string_match(line, "^ *f +(.*)")
+
+		-- Explode line
+		local parts = {}
+
+		for part in string_gmatch(matchLine, "[^ ]+") do
+			parts[#parts + 1] = part
+		end
+
+		faceLines[#faceLines + 1] = parts
+
+		if i % PARSE_CHECK_LINES == 0 then
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+		end
+	end
+
 	local lineCount = #lines
 	local inverseLineCount = 1 / lineCount
 	local i = 1
+
 	while i <= lineCount do
 		local processedLine = false
 
