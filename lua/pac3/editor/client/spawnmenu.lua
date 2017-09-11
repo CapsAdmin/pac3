@@ -69,11 +69,6 @@ function pace.ClientSettingsMenu(pnl)
 		pnl:NumSlider(L"Max render time: ", "pac_max_render_time", 0, 50, 0)
 
 	pnl:CheckBox(
-		L"Enable PAC",
-		"pac_enable"
-	)
-
-	pnl:CheckBox(
 		L"Friend only",
 		"pac_friendonly"
 	)
@@ -91,7 +86,6 @@ function pace.ClientSettingsMenu(pnl)
 		"pac_obj_async"
 	)
 
-	pnl:CheckBox(L"no outfit reflections", "pac_suppress_frames")
 	pnl:CheckBox(L"render objects outside visible fov", "pac_override_fov")
 	pnl:CheckBox(L"render projected textures (flashlight)", "pac_render_projected_texture")
 
