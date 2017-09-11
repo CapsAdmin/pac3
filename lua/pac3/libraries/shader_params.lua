@@ -150,7 +150,7 @@ return {
 				flesheffectcenterradius3 = {
 					type = "vec4",
 					friendly = "EffectCenterRadius3",
-					default = Color(0, 0, 0, 0),
+					default = "[ 0 0 0 0 ]",
 					description = "Flesh effect center and radius",
 				},
 				fleshglossbrightness = {
@@ -185,13 +185,13 @@ return {
 				flesheffectcenterradius1 = {
 					type = "vec4",
 					friendly = "EffectCenterRadius1",
-					default = Color(0, 0, 0, 0),
+					default = "[ 0 0 0 0 ]",
 					description = "Flesh effect center and radius",
 				},
 				flesheffectcenterradius4 = {
 					type = "vec4",
 					friendly = "EffectCenterRadius4",
-					default = Color(0, 0, 0, 0),
+					default = "[ 0 0 0 0 ]",
 					description = "Flesh effect center and radius",
 				},
 				fleshinteriorenabled = {
@@ -243,7 +243,7 @@ return {
 				flesheffectcenterradius2 = {
 					type = "vec4",
 					friendly = "EffectCenterRadius2",
-					default = Color(0, 0, 0, 0),
+					default = "[ 0 0 0 0 ]",
 					description = "Flesh effect center and radius",
 				},
 				fleshinteriornoisetexture = {
@@ -273,7 +273,7 @@ return {
 				selfillumfresnelminmaxexp = {
 					type = "vec4",
 					friendly = "FresnelMinMaxExp",
-					default = Color(0, 0, 0, 0),
+					default = "[ 0 0 0 0 ]",
 					description = "Self illum fresnel min, max, exp",
 				},
 				selfillum = {
@@ -1240,9 +1240,9 @@ return {
 		},
 		srgb = {
 			linearwrite = {
-				type = "integer",
+				type = "bool",
 				friendly = "LinearWrite",
-				default = 0,
+				default = false,
 				description = "Disables SRGB conversion of shader results.",
 			},
 			srgbtint = {
@@ -1254,7 +1254,7 @@ return {
 		},
 		phong = {
 			phongtint = {
-				type = "vec3",
+				type = "color",
 				friendly = "Tint",
 				description = "Phong tint for local specular lights",
 			},

@@ -163,10 +163,120 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	PART.ClassName = "material_" .. (shader_name_translate[shader_name] or shader_name)
 	PART.Description = shader_name
 	PART.NonPhysical = true
-	PART.Group = "advanced"
+	PART.Group = "pac4"
 	PART.Icon = "icon16/paintcan.png"
 
 	pac.StartStorableVars()
+
+	pac.SetPropertyGroup("generic")
+
+	-- move this to tools or something
+	pac.GetSet(PART, "LoadVmt", "", {editor_panel = "material"})
+	function PART:SetLoadVmt(path)
+		if not path or path == "" then return end
+
+		local str = file.Read("materials/" .. path .. ".vmt", "GAME")
+		local vmt = util.KeyValuesToTable(str)
+		local shader = str:match("^(.-)%{"):gsub("%p", ""):Trim()
+
+
+		for k,v in pairs(self:GetVars()) do
+			if PART.ShaderParams[k] and PART.ShaderParams[k].default ~= nil then
+				self["Set" .. k](self, PART.ShaderParams[k].default)
+			end
+		end
+		print(str)
+		print("======")
+		PrintTable(vmt)
+		print("======")
+
+		for k,v in pairs(vmt) do
+			if k:StartWith("$") then k = k:sub(2) end
+
+			local func = self["Set" .. k]
+			if func then
+				local t = type(v)
+				local info = PART.ShaderParams[k]
+
+				if type(v) == "string" then
+					if v:find("[", nil, true) then
+						v = Vector(v:gsub("[%[%]]", ""):gsub("%s+", " "):Trim())
+
+						if type(info.default) == "number" then
+							v = v.x
+						end
+					end
+				end
+
+				if type(v) == "number" then
+					if info.type == "bool" or info.is_flag then
+						v = v == 1
+					end
+				end
+
+				func(self, v)
+			else
+				pac.Message("cannot convert material parameter " .. k)
+			end
+		end
+	end
+
+	pac.GetSet(PART, "MaterialOverride", "all", {enums = function(self, str)
+
+		local materials = {}
+
+		if pace.current_part:HasParent() and pace.current_part:GetParent().GetEntity and pace.current_part:GetParent():GetEntity():IsValid() then
+			materials = pace.current_part:GetParent():GetEntity():GetMaterials()
+		end
+
+		table.insert(materials, "all")
+
+		return materials
+	end})
+
+	local function update_submaterial(self, remove, parent)
+		local str = self.MaterialOverride
+		parent = parent or self:GetParent()
+
+		local num = 0
+
+		if parent:IsValid() then
+			if tonumber(str) then
+				num = tonumber(str)
+			elseif str ~= "all" and parent.GetEntity and parent:GetEntity():IsValid() then
+				for i, v in ipairs(parent:GetEntity():GetMaterials()) do
+					if v == str then
+						num = i
+						break
+					end
+				end
+			end
+
+			parent.material_override = parent.material_override or {}
+			parent.material_override[num] = parent.material_override[num] or {}
+
+			for _, stack in pairs(parent.material_override) do
+				for i, v in ipairs(stack) do
+					if v == self then
+						table.remove(stack, i)
+						break
+					end
+				end
+			end
+
+			if not remove then
+				table.insert(parent.material_override[num], self)
+			end
+		end
+	end
+
+	function PART:SetMaterialOverride(num)
+		self.MaterialOverride = num
+
+		update_submaterial(self)
+	end
+
+	PART.ShaderParams = {}
 
 	local sorted_groups = {}
 	for k, v in pairs(groups) do
@@ -186,6 +296,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 		for _, v in ipairs(sorted_params) do
 			local key, info = v.k, v.v
 
+			PART.ShaderParams[key] = info
+
 			if info.is_flag and group == "generic" then
 				pac.SetPropertyGroup("flags")
 			else
@@ -197,7 +309,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 			if info.type == "matrix" then
 				add_matrix(PART, property_name, info.friendly:gsub("Transform", ""), info.description)
 			elseif info.type == "texture" then
-				pac.GetSet(PART, property_name, info.default or "", {
+				info.default = info.default or ""
+				pac.GetSet(PART, property_name, info.default, {
 					editor_panel = "textures",
 					editor_friendly = info.friendly,
 					description = info.description,
@@ -231,7 +344,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 					enums = info.enums,
 					description = info.description,
 					editor_sensitivity = (info.type == "vec3" or info.type == "color") and 0.25 or nil,
-					editor_panel = property_name == "model" and "boolean" or nil,
+					editor_panel = (info.type == "color" and "color2") or (property_name == "model" and "boolean") or nil,
 				})
 
 				local flag_key = key
@@ -281,14 +394,44 @@ for shader_name, groups in pairs(shader_params.shaders) do
 						local mat = self:GetRawMaterial()
 						mat:SetVector(key, val)
 					end
-				elseif IsColor(info.default) then
+				elseif info.type == "vec2" then
+					-- need vec2 type
 					PART["Set" .. property_name] = function(self, val)
+						local x,y
 						if type(val) == "string" then
-							val = Color(unpack(val:Split(" ")))
+							x,y = unpack(val:Split(" "))
+							x = tonumber(x) or 0
+							y = tonumber(y) or 0
+						else
+							x,y = val.x, val.y
 						end
-						self[property_name] = val
+
+						self[property_name] = ("%f %f"):format(x, y)
 						local mat = self:GetRawMaterial()
-						mat:SetString(key, ("[%f %f %f %f]"):format(val.r, val.g, val.b, val.a))
+						mat:SetString(key, ("[%f %f]"):format(x,y))
+
+						if info.recompute then mat:Recompute() end
+					end
+				elseif info.type == "vec4" then
+					-- need vec4 type
+					PART["Set" .. property_name] = function(self, val)
+
+						local x,y,z,w
+						if type(val) == "string" then
+							x,y,z,w = unpack(val:Split(" "))
+							x = tonumber(x) or 0
+							y = tonumber(y) or 0
+							z = tonumber(z) or 0
+							w = tonumber(w) or 0
+						else
+							x,y,z = val.x, val.y, val.z
+							w = 0
+						end
+
+						self[property_name] = ("%f %f %f %f"):format(x, y, z, w)
+						local mat = self:GetRawMaterial()
+						mat:SetString(key, ("[%f %f %f %f]"):format(x,y,z,w))
+
 						if info.recompute then mat:Recompute() end
 					end
 				end
@@ -300,7 +443,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 	function PART:GetRawMaterial()
 		if not self.Materialm then
-			local mat = CreateMaterial(tostring({}), shader_name, {})
+			self.material_name = tostring({})
+			local mat = CreateMaterial(self.material_name, shader_name, {})
 			self.Materialm = mat
 
 			for k,v in pairs(self:GetVars()) do
@@ -312,39 +456,23 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	end
 
 	function PART:OnParent(parent)
-		parent.MaterialOverride = self:GetRawMaterial()
+		update_submaterial(self)
 	end
 
 	function PART:OnRemove()
-		local mat = self:GetRawMaterial()
-
-		for key, part in pairs(pac.GetParts()) do
-			if part.MaterialOverride == mat then
-				part.MaterialOverride = nil
-			end
-		end
+		update_submaterial(self, true)
 	end
 
 	function PART:OnUnParent(parent)
-		if parent.MaterialOverride == self:GetRawMaterial() then
-			parent.MaterialOverride = nil
-		end
+		update_submaterial(self, true, parent)
 	end
 
 	function PART:OnHide()
-		local parent = self:GetParent()
-		if parent:IsValid() then
-			if parent.MaterialOverride == self:GetRawMaterial() then
-				parent.MaterialOverride = nil
-			end
-		end
+		update_submaterial(self, true)
 	end
 
 	function PART:OnShow()
-		local parent = self:GetParent()
-		if parent:IsValid() then
-			parent.MaterialOverride = self:GetRawMaterial()
-		end
+		update_submaterial(self)
 	end
 
 	pac.RegisterPart(PART)

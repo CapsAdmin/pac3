@@ -146,7 +146,7 @@ do --dev util
 			pac.Disable()
 			pac.Panic()
 
-			if pace then
+			if pace and pace.Editor then
 				editor_was_open = pace.Editor:IsValid()
 				pace.Panic()
 			end
@@ -384,6 +384,10 @@ function pac.CreateEntity(model, for_obj)
 		ent = ClientsideModel(model)
 	else
 		ent = pac_debug_clmdl:GetBool() and ClientsideModel(model) or ents.CreateClientProp(model)
+	end
+
+	if not ent:IsValid() then
+		pac.Message("Failed to create entity!")
 	end
 
 	--[[if type == 1 then
@@ -626,11 +630,11 @@ do -- get set and editor vars
 end
 
 function pac.Material(str, part)
-	if str ~= "" then
-		for _, part in pairs(pac.GetParts()) do
-			if part.GetRawMaterial and str == part.Name then
-				return part:GetRawMaterial()
-			end
+	if str == "" then return end
+
+	for _, part in pairs(pac.GetParts()) do
+		if part.GetRawMaterial and str == part.Name then
+			return part:GetRawMaterial()
 		end
 	end
 
