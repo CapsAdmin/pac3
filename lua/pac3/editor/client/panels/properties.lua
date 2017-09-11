@@ -1016,10 +1016,14 @@ do -- vector
 					btn.DoClick = function() self:SpecialCallback() end
 					btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
 
-					if type == "color" then
+					if type == "color" or type == "color2" then
 						btn:SetText("")
 						btn.Paint = function(_,w,h)
-							surface.SetDrawColor(self.vector.x, self.vector.y, self.vector.z, 255)
+							if type == "color2" then
+								surface.SetDrawColor(self.vector.x*255, self.vector.y*255, self.vector.z*255, 255)
+							else
+								surface.SetDrawColor(self.vector.x, self.vector.y, self.vector.z, 255)
+							end
 							surface.DrawRect(0,0,w,h)
 							surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
 							surface.DrawOutlinedRect(0,0,w,h)
@@ -1099,6 +1103,7 @@ do -- vector
 
 	VECTOR(Vector, "vector", "x", "y", "z")
 	VECTOR(Angle, "angle", "p", "y", "r")
+
 	VECTOR(Vector, "color", "x", "y", "z",
 		function(_, num)
 			num = tonumber(num) or 0
@@ -1151,6 +1156,61 @@ do -- vector
 			pace.ActiveSpecialPanel = frm
 		end,
 		10
+	)
+
+	VECTOR(Vector, "color2", "x", "y", "z",
+		function(_, num)
+			num = tonumber(num) or 0
+
+			if input.IsKeyDown(KEY_LCONTROL) then
+				num = math.Round(num)
+			end
+
+			return tostring(num)
+		end,
+
+		function(self)
+			pace.SafeRemoveSpecialPanel()
+
+			local frm = vgui.Create("DFrame")
+			frm:SetTitle("color")
+
+			pace.ShowSpecial(frm, self, 300)
+
+			local clr = vgui.Create("DColorMixer", frm)
+			clr:Dock(FILL)
+			clr:SetColor(Color(self.vector.x * 255, self.vector.y * 255, self.vector.z * 255))
+
+			local function tohex(vec)
+				return ("#%X%X%X"):format(vec.x * 255, vec.y * 255, vec.z * 255)
+			end
+
+			local function fromhex(str)
+				local x,y,z = str:match("#?(..)(..)(..)")
+				return Vector(tonumber("0x" .. x), tonumber("0x" .. y), tonumber("0x" .. z)) / 255
+			end
+
+			local html_color = vgui.Create("DTextEntry", frm)
+			html_color:Dock(BOTTOM)
+			html_color:SetText(tohex(self.vector))
+			html_color.OnEnter = function()
+				local vec = fromhex(html_color:GetValue())
+				clr:SetColor(Color(vec.x * 255, vec.y * 255, vec.z * 255))
+				self.OnValueChanged(vec)
+				self:SetValue(vec)
+			end
+
+			function clr.Think()
+				local clr = clr:GetColor() or Color(255, 255, 255, 255)
+				local vec = Vector(clr.r, clr.g, clr.b) / 255
+				self.OnValueChanged(vec)
+				self:SetValue(vec)
+				html_color:SetText(tohex(vec))
+			end
+
+			pace.ActiveSpecialPanel = frm
+		end,
+		0.25
 	)
 end
 

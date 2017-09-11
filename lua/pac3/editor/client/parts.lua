@@ -62,7 +62,7 @@ function pace.OnCreatePart(class_name, name, mdl)
 
 	if mdl then
 		part:SetModel(mdl)
-	elseif class_name == "model" then
+	elseif class_name == "model" or class_name == "model2" then
 		part:SetModel("models/pac/default.mdl")
 	end
 

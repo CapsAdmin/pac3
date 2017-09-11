@@ -2,9 +2,9 @@ local webaudio = include("pac3/libraries/webaudio.lua")
 pac.webaudio2 = webaudio
 local PART = {}
 
-PART.ClassName = "ogg2"
+PART.ClassName = "sound2"
 PART.NonPhysical = true
-PART.Group = 'effects'
+PART.Group = 'pac4'
 PART.Icon = 'icon16/music.png'
 
 pac.StartStorableVars()
