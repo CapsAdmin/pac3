@@ -497,6 +497,19 @@ end
 function PART:SetModel(modelPath)
 	self.Entity = self:GetEntity()
 
+	if modelPath:find("^mdlhttp") then
+		self.Model = modelPath
+
+		modelPath = modelPath:gsub("^mdl", "")
+
+		pac.DownloadMDL(modelPath, function(path)
+			self.Entity.pac_bones = nil
+			self.Entity:SetModel(path)
+		end, pac.Message, self:GetPlayerOwner())
+
+		return
+	end
+
 	if modelPath and modelPath:find("http") and pac.urlobj then
 		self.loading_obj = "downloading"
 

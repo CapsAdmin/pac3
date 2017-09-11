@@ -211,6 +211,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 					if val == "" then
 						self:GetRawMaterial():SetUndefined(key)
+						self:GetRawMaterial():Recompute()
+
 					else
 						if not pac.resource.DownloadTexture(val, function(tex, frames)
 							if frames then
