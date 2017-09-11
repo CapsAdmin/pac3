@@ -171,12 +171,6 @@ PART.last_stream = NULL
 
 function PART:PlaySound(_, additiveVolumeFraction)
 	additiveVolumeFraction = additiveVolumeFraction or 0
-
-	if pac.webaudio.GetSampleRate() > 48000 then
-		local warningColor   = Color(255, 0, 0)
-		local warningMessage = "[PAC3] The ogg part (custom sounds) might not work because you have your sample rate set to " .. pac.webaudio.GetSampleRate() .. " Hz. Set it to 48000 or below if you experience any issues.\n"
-	end
-
 	local stream = table.Random(self.streams) or NULL
 
 	if not stream:IsValid() then return end
