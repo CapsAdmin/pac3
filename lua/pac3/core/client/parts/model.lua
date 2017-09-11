@@ -503,9 +503,15 @@ function PART:SetModel(modelPath)
 		modelPath = modelPath:gsub("^mdl", "")
 
 		pac.DownloadMDL(modelPath, function(path)
+			self.loading = nil
 			self.Entity.pac_bones = nil
 			self.Entity:SetModel(path)
-		end, pac.Message, self:GetPlayerOwner())
+		end, function(err)
+			pac.Message(err)
+			self.loading = nil
+			self.Entity.pac_bones = nil
+			self.Entity:SetModel("error.mdl")
+		end, self:GetPlayerOwner())
 
 		return
 	end
