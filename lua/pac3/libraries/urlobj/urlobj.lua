@@ -244,7 +244,7 @@ function urlobj.ParseObj(data, generateNormals)
 		-- Positions: v %f %f %f [%f]
 		while i <= lineCount do
 			local line = lines[i]
-			local x, y, z = string_match(line, "^ *v *(-?[0-9.]+) *(-?[0-9.]+) *(-?[0-9.]+)")
+			local x, y, z = string_match(line, "^ *v +(-?[0-9.]+) +(-?[0-9.]+) +(-?[0-9.]+)")
 			if not x then break end
 
 			processedLine = true
@@ -265,7 +265,7 @@ function urlobj.ParseObj(data, generateNormals)
 		-- Texture coordinates: vt %f %f
 		while i <= lineCount do
 			local line = lines[i]
-			local u, v = string_match(line, "^ *vt *(-?[0-9.]+) *(-?[0-9.]+)")
+			local u, v = string_match(line, "^ *vt *(-?[0-9.]+) +(-?[0-9.]+)")
 			if not u then break end
 
 			processedLine = true
@@ -289,7 +289,7 @@ function urlobj.ParseObj(data, generateNormals)
 		-- Normals: vn %f %f %f
 		while i <= lineCount do
 			local line = lines[i]
-			local nx, ny, nz = string_match(line, "^ *vn *(-?[0-9.]+) *(-?[0-9.]+) *(-?[0-9.]+)")
+			local nx, ny, nz = string_match(line, "^ *vn *(-?[0-9.]+) +(-?[0-9.]+) +(-?[0-9.]+)")
 			if not nx then break end
 
 			processedLine = true
