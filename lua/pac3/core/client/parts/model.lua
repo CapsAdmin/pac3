@@ -498,10 +498,11 @@ function PART:SetModel(modelPath)
 	self.Entity = self:GetEntity()
 
 	if modelPath:find("^mdlhttp") then
+		self.Model = modelPath
+
 		modelPath = modelPath:gsub("^mdl", "")
 
 		pac.DownloadMDL(modelPath, function(path)
-			self.Model = path
 			self.Entity.pac_bones = nil
 			self.Entity:SetModel(path)
 		end, pac.Message, self:GetPlayerOwner())
