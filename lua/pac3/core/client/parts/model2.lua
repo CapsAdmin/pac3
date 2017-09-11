@@ -193,7 +193,13 @@ function PART:SetModel(path)
 			self.loading = nil
 			self.Entity.pac_bones = nil
 			self.Entity:SetModel(path)
-		end, pac.Message, self:GetPlayerOwner())
+			PrintTable(self.Entity:GetMaterials())
+		end, function(err)
+			pac.Message(err)
+			self.loading = nil
+			self.Entity.pac_bones = nil
+			self.Entity:SetModel("error.mdl")
+		end, self:GetPlayerOwner())
 	else
 		self.Entity.pac_bones = nil
 		self.Entity:SetModel(path)

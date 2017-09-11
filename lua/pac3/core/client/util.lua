@@ -835,10 +835,33 @@ function pac.HandlePartName(ply, name)
 	return name
 end
 
+local function int_to_bytes(num,endian,signed)
+    if num<0 and not signed then num=-num print"warning, dropping sign from number converting to unsigned" end
+    local res={}
+    local n = math.ceil(select(2,math.frexp(num))/8) -- number of bytes to be used.
+    if signed and num < 0 then
+        num = num + 2^n
+    end
+    for k=n,1,-1 do -- 256 = 2^8 bits per char.
+        local mul=2^(8*(k-1))
+        res[k]=math.floor(num/mul)
+        num=num-res[k]*mul
+    end
+    assert(num==0)
+    if endian == "big" then
+        local t={}
+        for k=1,n do
+            t[k]=res[n-k+1]
+        end
+        res=t
+    end
+    return string.char(unpack(res))
+end
+
 function pac.DownloadMDL(url, callback, onfail, ply)
 	return pac.resource.Download(url, function(path)
 		local id = util.CRC(ply:UniqueID() .. url)
-		local mdl_dir = "models/pac3/" .. id .. "/"
+		local dir = "pac3/" .. id .. "/"
 
 		local f = file.Open(path, "rb", "DATA")
 
@@ -846,16 +869,16 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 		local files = {}
 
 		local ok, err = pcall(function()
-			for i = 1, 10 do
+			for i = 1, 128 do
 				local pos = f:Tell()
 
 				local sig = f:ReadLong()
 
 				if sig == 0x02014b50 then break end
 
-				assert(sig == 0x04034b50, "bad signature")
+				assert(sig == 0x04034b50, "bad zip signature (file is not a zip?)")
 				f:Seek(pos+6) assert(f:ReadShort() == 0, "general purpose bitflag is set")
-				f:Seek(pos+8) assert(f:ReadShort() == 0, "compression method is not 0")
+				f:Seek(pos+8) assert(f:ReadShort() == 0, "compression method is not 0 (don't use compression)")
 				f:Seek(pos+14) local crc = f:ReadShort()
 				f:Seek(pos+18) local size2 = f:ReadLong()
 				f:Seek(pos+22) local size = f:ReadLong()
@@ -864,14 +887,17 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				local extra_field_length = f:ReadShort()
 
 				local name = f:Read(file_name_length)
-				name = name:gsub(".-(%..+)", "model%1"):lower()
+
+				if not name:EndsWith(".vtf") and not name:EndsWith(".vmt") then
+					name = name:gsub(".-(%..+)", "model%1"):lower()
+				end
 
 				f:Skip(extra_field_length)
 
 				local buffer = f:Read(size)
 
 				if name:EndsWith(".mdl") then
-					local path = buffer:sub(13, 12+64)
+					--local path = buffer:sub(13, 12+64)
 					--buffer = buffer:gsub(path, mdl_dir .. "model.mdl")
 					found = true
 				end
@@ -882,14 +908,113 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 		if not ok then
 			onfail(err)
+			return
 		end
 
 		if not found then
+			for k,v in pairs(files) do
+				print(v.file_name, string.NiceSize(#v.buffer))
+			end
 			onfail("mdl not found in archive")
 			return
 		end
 
+		do -- hex models
+			local found_directories = {}
+
+			for i, data in ipairs(files) do
+				if data.file_name:EndsWith(".mdl") then
+					file.Write("pac3_cache/temp.dat", data.buffer)
+
+					local f = file.Open("pac3_cache/temp.dat", "rb", "DATA")
+					local id = f:Read(4)
+					local version = f:ReadLong()
+					local checksum = f:ReadLong()
+					local name = f:Read(64):match("^(.+%.mdl)")
+					local size = f:ReadLong()
+
+					f:Skip(12 * 6) -- skips over all the vec3 stuff
+
+					f:Skip(4) -- flags
+					f:Skip(8 * 7)
+
+					local vtf_dir_count = f:ReadLong()
+					local vtf_dir_offset = f:ReadLong()
+
+					f:Seek(vtf_dir_offset)
+
+					for i = 1, vtf_dir_count do
+						local offset = f:ReadLong()
+						f:Seek(offset)
+
+						local chars = {}
+						for i = 1, 64 do
+							local b = f:ReadByte()
+							if not b or b == 0 then break end
+							table.insert(chars, string.char(b))
+						end
+
+
+						local dir = table.concat(chars)
+						table.insert(found_directories, {offset = offset, dir = dir})
+					end
+
+					f:Close()
+
+					local buffer = file.Read("pac3_cache/temp.dat")
+					file.Delete("pac3_cache/temp.dat")
+
+					local newdir = dir
+					newdir = newdir:gsub("/", "\\")
+
+					for i,v in ipairs(found_directories) do
+						if #newdir < #v.dir then
+							newdir = newdir .. ("\0"):rep(#v.dir - #newdir)
+						elseif #newdir > #v.dir then
+							error("directory is too long")
+						end
+
+						buffer = buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)
+					end
+
+					local newname = dir .. data.file_name:lower()
+
+					if #newname < #name then
+						newname = newname .. ("\0"):rep(#name - #newname)
+					end
+
+					buffer = buffer:Replace(name, newname)
+
+					data.buffer = buffer
+					data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
+					break
+				end
+			end
+
+			for i, data in ipairs(files) do
+				if not data.file_name:EndsWith(".mdl") then
+					if data.file_name:EndsWith(".vmt") then
+						local newdir = dir
+
+						data.buffer = data.buffer:lower():gsub("\\", "/")
+
+						for _, info in ipairs(found_directories) do
+							data.buffer = data.buffer:gsub(info.dir:gsub("\\", "/"):lower(), newdir)
+						end
+
+						data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
+					end
+				end
+			end
+		end
+
 		local f = file.Open("pac3_cache/downloads/" .. id .. ".dat", "wb", "DATA")
+
+		if not f then
+			onfail("unable to open file for writing")
+			return
+		end
+
 		f:Write("GMAD")
 		f:WriteByte(3)
 		f:WriteLong(0)f:WriteLong(0)
@@ -902,7 +1027,11 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 		for i, data in ipairs(files) do
 			f:WriteLong(i)
-			f:Write(mdl_dir .. data.file_name:lower())f:WriteByte(0)
+			if data.file_name:EndsWith(".vtf") or data.file_name:EndsWith(".vmt") then
+				f:Write("materials/" .. dir .. data.file_name:lower())f:WriteByte(0)
+			else
+				f:Write("models/" .. dir .. data.file_name:lower())f:WriteByte(0)
+			end
 			f:WriteLong(#data.buffer)f:WriteLong(0)
 			f:WriteLong(data.crc)
 		end
@@ -927,7 +1056,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 		end
 
 		for k,v in pairs(tbl) do
-			if v:EndsWith("mdl") then
+			if v:EndsWith(".mdl") then
 				callback(v)
 				break
 			end
