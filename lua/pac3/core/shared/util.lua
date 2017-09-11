@@ -61,7 +61,7 @@ local function FormatMessage(tabIn)
 			table.insert(output, val:SteamID())
 			table.insert(output, '>')
 			table.insert(output, prevColor)
-		elseif valType == 'Entity' or valType == 'NPC' or valType == 'Player' or valType == 'Vehicle' then
+		elseif valType == 'Entity' or valType == 'NPC' or valType == 'Vehicle' then
 			table.insert(output, ENTITY_COLOR)
 			table.insert(output, tostring(val))
 			table.insert(output, prevColor)

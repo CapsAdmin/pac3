@@ -198,7 +198,7 @@ function PART:PlaySound(_, additiveVolumeFraction)
 	additiveVolumeFraction = additiveVolumeFraction or 0
 
 	if webaudio.sample_rate and webaudio.sample_rate > 48000 then
-		pac.Message(Color(255, 0, 0), "The ogg part (custom sounds) might not work because you have your sample rate set to " .. webaudio.sample_rate .. " Hz. Set it to 48000 or below if you experience any issues.")
+		pac.Message(Color(255, 0, 0), "The ogg2 part (custom sounds) might not work because you have your sample rate set to ", webaudio.sample_rate, " Hz. Set it to 48000 or below if you experience any issues.")
 	end
 
 	local stream = table.Random(self.streams) or NULL
