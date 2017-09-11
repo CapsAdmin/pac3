@@ -24,6 +24,9 @@ webaudio.Browser.JavascriptQueue = {}
 
 webaudio.Browser.Volume          = nil
 
+local CONSOLE_MESSAGE_PREFIX = Color(121, 221, 203)
+local CONSOLE_MESSAGE_COLOR = Color(200, 200, 200)
+
 function webaudio.Browser.Initialize()
 	if webaudio.Browser.State ~= webaudio.Browser.States.Uninitialized then return end
 
@@ -45,8 +48,7 @@ function webaudio.Browser.Initialize()
 
 		if lastMessage ~= message then
 			lastMessage = message
-			Msg("[PAC] ")
-			MsgN(message)
+			pac.Message(CONSOLE_MESSAGE_PREFIX, '[OGG] ', CONSOLE_MESSAGE_COLOR, unpack(pac.RepackMessage(message)))
 		end
 	end
 

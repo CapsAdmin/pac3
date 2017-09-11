@@ -11,6 +11,20 @@ local FUNCTION_COLOR = Color(62, 106, 255)
 local TABLE_COLOR = Color(107, 200, 224)
 local URL_COLOR = Color(174, 124, 192)
 
+function pac.RepackMessage(strIn)
+	local output = {}
+
+	for line in string.gmatch(strIn, '([^ ]+)') do
+		if #output ~= 0 then
+			table.insert(output, ' ')
+		end
+
+		table.insert(output, line)
+	end
+
+	return output
+end
+
 local function FormatMessage(tabIn)
 	local prevColor = DEFAULT_TEXT_COLOR
 	local output = {prevColor}
@@ -52,7 +66,7 @@ local function FormatMessage(tabIn)
 			table.insert(output, tostring(val))
 			table.insert(output, prevColor)
 		elseif valType == 'table' then
-			if val.r and val.g and vag.b then
+			if val.r and val.g and val.b then
 				table.insert(output, val)
 				prevColor = val
 			else
