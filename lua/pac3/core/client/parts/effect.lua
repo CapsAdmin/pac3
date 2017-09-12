@@ -34,7 +34,7 @@ function PART:Initialize()
 	if not pac.particle_list then
 		local found = {}
 
-		for file_name in pairs(pac.loaded_particle_effects) do
+		for file_name in pairs(pac_loaded_particle_effects) do
 			local data = file.Read("particles/"..file_name, "GAME", "b")
 			for str in data:gmatch("\3%c([%a_]+)%c") do
 				found[str] = true
@@ -67,13 +67,15 @@ end
 
 PART.last_spew = 0
 
-pac.loaded_particle_effects = pac.loaded_particle_effects or {}
+if not pac_loaded_particle_effects then
+	pac_loaded_particle_effects = {}
 
-for _, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
-	if not pac.loaded_particle_effects[file_name] then
-		game.AddParticles("particles/" .. file_name)
+	for _, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
+		if not pac_loaded_particle_effects[file_name] then
+			game.AddParticles("particles/" .. file_name)
+		end
+		pac_loaded_particle_effects[file_name] = true
 	end
-	pac.loaded_particle_effects[file_name] = true
 end
 
 local already = {}
