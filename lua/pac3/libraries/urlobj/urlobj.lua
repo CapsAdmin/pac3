@@ -278,6 +278,7 @@ function urlobj.ParseObj(data, generateNormals)
 
 	for i, line in ipairs(vLines) do
 		local x, y, z = string_match(line, vMatch)
+
 		x, y, z = tonumber(x) or 0, tonumber(y) or 0, tonumber(z) or 0
 		positions[#positions + 1] = Vector(x, y, z)
 
@@ -290,6 +291,7 @@ function urlobj.ParseObj(data, generateNormals)
 
 	for i, line in ipairs(vtLines) do
 		local u, v = string_match(line, vtMatch)
+
 		u, v = tonumber(u) or 0, tonumber(v) or 0
 
 		local texCoordIndex = #texCoordsU + 1
@@ -303,21 +305,23 @@ function urlobj.ParseObj(data, generateNormals)
 
 	lineProcessed = #vLines + #vtLines
 
-	for i, line in ipairs(vnLines) do
-		local nx, ny, nz = string_match(line, vnMatch)
+	if not generateNormals then
+		for i, line in ipairs(vnLines) do
+			local nx, ny, nz = string_match(line, vnMatch)
 
-		if not generateNormals then
-			nx, ny, nz = tonumber(nx) or 0, tonumber(ny) or 0, tonumber(nz) or 0
+			if nx and ny and nz then
+				nx, ny, nz = tonumber(nx) or 0, tonumber(ny) or 0, tonumber(nz) or 0 -- possible / by zero
 
-			local inverseLength = 1 / math_sqrt(nx * nx + ny * ny + nz * nz)
-			nx, ny, nz = nx * inverseLength, ny * inverseLength, nz * inverseLength
+				local inverseLength = 1 / math_sqrt(nx * nx + ny * ny + nz * nz)
+				nx, ny, nz = nx * inverseLength, ny * inverseLength, nz * inverseLength
 
-			local normal = Vector(nx, ny, nz)
-			normals[#normals + 1] = normal
-		end
+				local normal = Vector(nx, ny, nz)
+				normals[#normals + 1] = normal
+			end
 
-		if i % PARSE_CHECK_LINES == 0 then
-			coroutine_yield(false, "Processing vertices", (i + lineProcessed) * inverseLineCount)
+			if i % PARSE_CHECK_LINES == 0 then
+				coroutine_yield(false, "Processing vertices", (i + lineProcessed) * inverseLineCount)
+			end
 		end
 	end
 
@@ -326,17 +330,19 @@ function urlobj.ParseObj(data, generateNormals)
 	for i, line in ipairs(facesPreprocess) do
 		local matchLine = string_match(line, "^ *f +(.*)")
 
-		-- Explode line
-		local parts = {}
+		if matchLine then
+			-- Explode line
+			local parts = {}
 
-		for part in string_gmatch(matchLine, "[^ ]+") do
-			parts[#parts + 1] = part
-		end
+			for part in string_gmatch(matchLine, "[^ ]+") do
+				parts[#parts + 1] = part
+			end
 
-		faceLines[#faceLines + 1] = parts
+			faceLines[#faceLines + 1] = parts
 
-		if i % PARSE_CHECK_LINES == 0 then
-			coroutine_yield(false, "Processing vertices", (i + lineProcessed) * inverseLineCount)
+			if i % PARSE_CHECK_LINES == 0 then
+				coroutine_yield(false, "Processing vertices", (i + lineProcessed) * inverseLineCount)
+			end
 		end
 	end
 
