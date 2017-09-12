@@ -139,7 +139,7 @@ end
 
 function pac.DownloadMDL(url, callback, onfail, ply)
 	return pac.resource.Download(url, function(path)
-		local id = util.CRC(ply:UniqueID() .. url .. file.Read(path) .. os.clock())
+		local id = util.CRC(ply:UniqueID() .. url .. file.Read(path))
 		local dir = "pac3/" .. id .. "/"
 
 		local f = file.Open(path, "rb", "DATA")
@@ -187,6 +187,25 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 		if not ok then
 			onfail(err)
+			local str = file.Read(path)
+			pac.Message(Color(255, 50,50), "the zip file downloaded (", string.NiceSize(#str) ,") could not be parsed")
+
+			local is_binary = false
+			for i = 1, #str do
+				local b = str:byte(i)
+				if b == 0 then
+					is_binary = true
+					break
+				end
+			end
+
+			if not is_binary then
+				pac.Message(Color(255, 50,50), "the zip doesn't appear to be binary:")
+				print(str)
+			end
+
+			pac.Message(Color(255, 50,50), "the zip file is saved to pac3_cache/failed_zip_download.dat for inspection")
+			file.Write("pac3_cache/failed_zip_download.dat", str)
 			return
 		end
 
@@ -200,6 +219,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 		do -- hex models
 			local found_directories = {}
+			local found_materials = {}
 
 			for i, data in ipairs(files) do
 				if data.file_name:EndsWith(".mdl") then
@@ -217,7 +237,47 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					f:Skip(12 * 6) -- skips over all the vec3 stuff
 
 					f:Skip(4) -- flags
-					f:Skip(8 * 7)
+					f:Skip(8 * 6)
+
+					do
+						local vmt_dir_count = f:ReadLong()
+						local vmt_dir_offset = f:ReadLong()
+
+						if ply == pac.LocalPlayer then
+
+							local old_pos = f:Tell()
+							f:Seek(vmt_dir_offset)
+								local offset = f:ReadLong()
+								if offset > -1 then
+									f:Seek(vmt_dir_offset + offset)
+									for i = 1, vmt_dir_count do
+										local chars = {}
+										for i = 1, 64 do
+											local b = f:ReadByte()
+											if not b or b == 0 then break end
+											table.insert(chars, string.char(b))
+										end
+
+										local mat = table.concat(chars) .. ".vmt"
+										local found = false
+
+										for i, v in pairs(files) do
+											if v.file_name:EndsWith(mat) then
+												found = true
+												break
+											end
+										end
+
+										if not found then
+											pac.Message(Color(255, 50,50), url, " the model wants to find ", mat, " but it was not found in the zip archive")
+										end
+
+										table.insert(found_materials, mat)
+									end
+								end
+							f:Seek(old_pos)
+						end
+					end
 
 					local vtf_dir_count = f:ReadLong()
 					local vtf_dir_offset = f:ReadLong()
@@ -291,6 +351,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						data.buffer = data.buffer:lower():gsub("\\", "/")
 
 						for _, info in ipairs(found_directories) do
+							data.buffer = data.buffer:gsub("[\"\']%S-" .. info.dir:gsub("\\", "/"):lower(), "\"" .. newdir)
 							data.buffer = data.buffer:gsub(info.dir:gsub("\\", "/"):lower(), newdir)
 						end
 

@@ -1,21 +1,38 @@
 if CLIENT then
 	-- so the client knows it exists
 	pacx.AddServerModifier("model", function(data, owner) end)
+
+	function pacx.SetModel(path)
+		net.Start("pac_setmodel")
+			net.WriteString(path)
+		net.SendToServer()
+	end
 end
 
 if SERVER then
 	function pacx.SetPlayerModel(ply, model)
-		if ClockWork then return end -- Clockwork fix
-		if not model then return end
-		model = player_manager.AllValidModels()[model] or model
+		if model:find("^http") then
+			pac.Message(ply, " wants to use ", model, " as player model")
+			pac.DownloadMDL(model, function(path)
+				pac.Message(model, " downloaded for ", ply)
 
-		if not util.IsValidModel(model) then
-			model = player_manager.TranslatePlayerModel(ply:GetInfo("cl_playermodel"))
+				ply:SetModel(path)
+				ply.pac_last_modifier_model = path:lower()
+				ply.pac_url_playermodel = true
+			end, function(err)
+				pac.Message(err)
+			end, ply)
+		else
+			model = player_manager.AllValidModels()[model] or model
+
+			if not util.IsValidModel(model) then
+				model = player_manager.TranslatePlayerModel(ply:GetInfo("cl_playermodel"))
+			end
+
+			ply:SetModel(model)
+			ply.pac_last_modifier_model = model:lower()
+			ply.pac_url_playermodel = false
 		end
-
-		ply:SetModel(model)
-
-		ply.pac_last_modifier_model = model:lower()
 	end
 
 	local ALLOW_TO_CHANGE_MODEL = pacx.AddServerModifier("model", function(data, owner)
@@ -38,29 +55,26 @@ if SERVER then
 				pacx.SetPlayerModel(owner, model)
 			end
 		end
-	end)
 
-	concommand.Add("pac_setmodel", function(ply, _, args)
-		if ALLOW_TO_CHANGE_MODEL:GetBool() and not ClockWork then
-			pacx.SetPlayerModel(ply, args[1])
+		if not hook.GetTable().Think and not hook.GetTable().Think.pac_setmodel then
+			timer.Create("pac_setmodel", 0.25, 0, function()
+				if not ALLOW_TO_CHANGE_MODEL:GetBool() then return end
+
+				for _, ply in ipairs(player.GetAll()) do
+					if ply.pac_last_modifier_model and ply:GetModel():lower() ~= ply.pac_last_modifier_model then
+						ply:SetModel(ply.pac_last_modifier_model)
+					end
+				end
+			end)
 		end
 	end)
 
-	local function PlayerCheckModel(ply)
-		if ply.pac_last_modifier_model and ply:GetModel():lower() ~= ply.pac_last_modifier_model then
-			ply:SetModel(ply.pac_last_modifier_model)
-		end
-	end
+	util.AddNetworkString("pac_setmodel")
 
-	hook.Add("Think", "pac_setmodel", function(ply)
-		if ClockWork then hook.Remove("Think", "pac_setmodel") return end
-		for key, ply in pairs(player.GetAll()) do
-			PlayerCheckModel(ply)
+	net.Receive("pac_setmodel", function(_, ply)
+		if ALLOW_TO_CHANGE_MODEL:GetBool() then
+			local path = net.ReadString()
+			pacx.SetPlayerModel(ply, path)
 		end
-	end)
-
-	hook.Add("PlayerSlowThink", "pac_setmodel", function(ply)
-		hook.Remove("Think", "pac_setmodel")
-		hook.Add("PlayerSlowThink", "pac_setmodel", PlayerCheckModel)
 	end)
 end

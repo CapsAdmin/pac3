@@ -258,22 +258,13 @@ function PART:OnShow()
 
 	if ent:IsValid() then
 
-		if ent == pac.LocalPlayer and self.Model ~= "" then
-			RunConsoleCommand("pac_setmodel", self.Model)
-		end
-
 		if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
 			ent = ent:GetActiveWeapon()
-		else
-			if self.Model ~= "" and self:GetOwner() == pac.LocalPlayer and self.Model:lower() ~= self:GetOwner():GetModel():lower() then
-				RunConsoleCommand("pac_setmodel", self.Model)
-			end
 		end
 
 		for _, field in pairs(self.ent_fields) do
 			self["Set" .. field](self, self[field])
 		end
-
 
 		self:SetColor(self:GetColor())
 		ent:SetColor(self.Colorc)
@@ -342,31 +333,65 @@ function PART:SetModel(path)
 	self.Model = path
 
 	if path:find("^http") then
+<<<<<<< HEAD
 		local status, reason = hook.Run('PAC3AllowMDLDownload', self:GetPlayerOwner(), self, path)
 		local status2, reason2 = hook.Run('PAC3AllowEntityMDLDownload', self:GetPlayerOwner(), self, path)
 
 		if ALLOW_TO_USE_MDL:GetBool() and ALLOW_TO_MDL:GetBool() and status ~= false and status2 ~= false then
-			self.loading = "downloading mdl zip"
+			local ent = self:GetOwner()
 
-			pac.DownloadMDL(path, function(_)
-				local ent = self:GetOwner()
-				if path ~= "" and ent:IsValid() and ent == pac.LocalPlayer then
-					net.Start("pac_setmodel")
-						net.WriteString(path)
-					net.SendToServer()
+			if ent == pac.LocalPlayer then
+				pac.Message("downloading ", path, " to use as player model")
+			end
+
+			pac.DownloadMDL(path, function(real_path)
+				if ent:IsValid() then
+					if ent == pac.LocalPlayer then
+						pac.Message("finished downloading ", path)
+						pacx.SetModel(path)
+					else
+						ent:SetModel(real_path)
+					end
 				end
 			end, function(err)
 				pac.Message(err)
 			end, self:GetPlayerOwner())
+			self.mdl_zip = true
 		else
 			self.loading = reason2 or reason or "mdl is not allowed"
 			pac.Message(self:GetPlayerOwner(), ' - mdl files are not allowed')
 		end
+=======
+		local ent = self:GetOwner()
+
+		if ent == pac.LocalPlayer then
+			pac.Message("downloading ", path, " to use as player model")
+		end
+
+		pac.DownloadMDL(path, function(real_path)
+			if ent:IsValid() then
+				if ent == pac.LocalPlayer then
+					pac.Message("finished downloading ", path)
+					pacx.SetModel(path)
+				else
+					ent:SetModel(real_path)
+				end
+			end
+		end, function(err)
+			pac.Message(err)
+		end, self:GetPlayerOwner())
+		self.mdl_zip = true
+>>>>>>> origin/master
 	else
 		local ent = self:GetOwner()
-		if path ~= "" and ent:IsValid() and ent == pac.LocalPlayer then
-			RunConsoleCommand("pac_setmodel", self.Model)
+		if ent:IsValid() then
+			if ent == pac.LocalPlayer then
+				pacx.SetModel(self.Model)
+			else
+				ent:SetModel(self.Model)
+			end
 		end
+		self.mdl_zip = false
 	end
 end
 
