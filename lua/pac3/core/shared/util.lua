@@ -432,9 +432,19 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 							data.buffer = data.buffer:lower():gsub("\\", "/")
 
+							local temp = data.buffer
 							for _, info in ipairs(found_directories) do
 								data.buffer = data.buffer:gsub("[\"\']%S-" .. info.dir:gsub("\\", "/"):lower(), "\"" .. newdir)
 								data.buffer = data.buffer:gsub(info.dir:gsub("\\", "/"):lower(), newdir)
+							end
+
+							if data.buffer == temp then
+								for _, val in ipairs(files) do
+									if val.file_name:EndsWith(".vtf") then
+										local vtf_name = val.file_name:lower():sub(0, -5)
+										data.buffer = data.buffer:gsub(vtf_name, newdir .. vtf_name)
+									end
+								end
 							end
 
 							data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
