@@ -333,7 +333,6 @@ function PART:SetModel(path)
 	self.Model = path
 
 	if path:find("^http") then
-<<<<<<< HEAD
 		local status, reason = hook.Run('PAC3AllowMDLDownload', self:GetPlayerOwner(), self, path)
 		local status2, reason2 = hook.Run('PAC3AllowEntityMDLDownload', self:GetPlayerOwner(), self, path)
 
@@ -361,27 +360,6 @@ function PART:SetModel(path)
 			self.loading = reason2 or reason or "mdl is not allowed"
 			pac.Message(self:GetPlayerOwner(), ' - mdl files are not allowed')
 		end
-=======
-		local ent = self:GetOwner()
-
-		if ent == pac.LocalPlayer then
-			pac.Message("downloading ", path, " to use as player model")
-		end
-
-		pac.DownloadMDL(path, function(real_path)
-			if ent:IsValid() then
-				if ent == pac.LocalPlayer then
-					pac.Message("finished downloading ", path)
-					pacx.SetModel(path)
-				else
-					ent:SetModel(real_path)
-				end
-			end
-		end, function(err)
-			pac.Message(err)
-		end, self:GetPlayerOwner())
-		self.mdl_zip = true
->>>>>>> origin/master
 	else
 		local ent = self:GetOwner()
 		if ent:IsValid() then
