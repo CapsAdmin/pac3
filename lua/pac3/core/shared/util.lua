@@ -113,6 +113,7 @@ function pac.dprint(fmt, ...)
 	MsgN("\n")
 end
 
+local DEBUG_MDL = false
 
 local function int_to_bytes(num,endian,signed)
     if num<0 and not signed then num=-num print"warning, dropping sign from number converting to unsigned" end
@@ -280,13 +281,18 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 				for i, data in ipairs(files) do
 					if data.file_name:EndsWith(".mdl") then
+
+						if DEBUG_MDL then
+							file.Write("debug_mdl_original.dat", data.buffer)
+						end
+
 						file.Write("pac3_cache/temp.dat", data.buffer)
-						file.Write("lol2.dat", data.buffer)
 
 						local f = file.Open("pac3_cache/temp.dat", "rb", "DATA")
 						local id = f:Read(4)
 						local version = f:ReadLong()
 						local checksum = f:ReadLong()
+
 						local name_offset = f:Tell()
 						local name = f:Read(64)
 						local size_offset = f:Tell()
@@ -380,7 +386,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 						for i,v in ipairs(found_directories) do
 							if #newdir < #v.dir then
-								newdir = newdir .. ("\0"):rep(#v.dir - #newdir + 1)
+								local newdir = newdir .. ("\0"):rep(#v.dir - #newdir + 1)
 								buffer = (buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)):sub(0, size)
 							else
 								buffer = buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)
@@ -401,12 +407,16 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 						--buffer = buffer:Replace(name:match("^(.+%.mdl)"), newname)
 
-
 						if had_to_extend then
 							buffer = buffer:sub(0, size_offset) .. int_to_bytes(#buffer) .. buffer:sub(size_offset + 4 - 1)
+							if DEBUG_MDL then
+								print("extended mdl")
+							end
 						end
 
-						file.Write("lol.dat", buffer)
+						if DEBUG_MDL then
+							file.Write("debug_mdl_new.dat", buffer)
+						end
 
 						data.buffer = buffer
 						data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
@@ -497,7 +507,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 		for k,v in pairs(tbl) do
 			if v:EndsWith(".mdl") then
-				callback(v)
+				callback(DEBUG_MDL and "error.mdl" or v)
 				file.Delete("pac3_cache/downloads/" .. id .. ".dat")
 				break
 			end
