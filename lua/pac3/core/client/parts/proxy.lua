@@ -45,10 +45,6 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:SetVariableName(str)
-	if str:lower() == str then
-		str = (str .. " "):gsub("(.-) ", function(str) return str:sub(1,1):upper() .. str:sub(2) end)
-	end
-
 	self.VariableName = str
 
 	self.set_key = "Set" .. str
