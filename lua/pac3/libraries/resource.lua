@@ -214,6 +214,13 @@ function resource.Download(path, callback, on_fail, crc, check_etag)
 	local need_extension
 
 	if path:find("^.-://") then
+		local redownload = false
+
+		if path:StartWith("_") then
+			path = path:sub(2)
+			redownload = true
+		end
+
 		if not resource.url_cache_lookup then
 			resource.BuildCacheFolderList()
 		end
@@ -221,7 +228,7 @@ function resource.Download(path, callback, on_fail, crc, check_etag)
 		url = path
 		local crc = (crc or util.CRC(path))
 
-		if resource.url_cache_lookup[crc] then
+		if not redownload and resource.url_cache_lookup[crc] then
 			path = resource.url_cache_lookup[crc]
 			existing_path = R(DOWNLOAD_FOLDER .. path)
 			need_extension = false

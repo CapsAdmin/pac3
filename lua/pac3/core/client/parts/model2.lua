@@ -223,7 +223,7 @@ function PART:SetModel(path)
 	self.Model = path
 	self.Entity = self:GetEntity()
 
-	if path:find("^http") then
+	if path:find("^.-://") then
 		self.loading = "downloading mdl zip"
 
 		pac.DownloadMDL(path, function(path)
