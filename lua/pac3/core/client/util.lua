@@ -875,7 +875,7 @@ end
 
 function pac.DownloadMDL(url, callback, onfail, ply)
 	return pac.resource.Download(url, function(path)
-		local id = util.CRC(ply:UniqueID() .. url .. file.Read(path))
+		local id = util.CRC(ply:UniqueID() .. url .. file.Read(path) .. os.clock())
 		local dir = "pac3/" .. id .. "/"
 
 		local f = file.Open(path, "rb", "DATA")
@@ -945,7 +945,9 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					local id = f:Read(4)
 					local version = f:ReadLong()
 					local checksum = f:ReadLong()
-					local name = f:Read(64):match("^(.+%.mdl)")
+					local name_offset = f:Tell()
+					local name = f:Read(64)
+					local size_offset = f:Tell()
 					local size = f:ReadLong()
 
 					f:Skip(12 * 6) -- skips over all the vec3 stuff
@@ -958,8 +960,13 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 					f:Seek(vtf_dir_offset)
 
+					local done = {}
+
 					for i = 1, vtf_dir_count do
 						local offset = f:ReadLong()
+						local old_pos = f:Tell()
+						if not offset then break end
+
 						f:Seek(offset)
 
 						local chars = {}
@@ -969,9 +976,10 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							table.insert(chars, string.char(b))
 						end
 
-
 						local dir = table.concat(chars)
 						table.insert(found_directories, {offset = offset, dir = dir})
+
+						f:Seek(old_pos)
 					end
 
 					f:Close()
@@ -984,25 +992,32 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 					for i,v in ipairs(found_directories) do
 						if #newdir < #v.dir then
-							newdir = newdir .. ("\0"):rep(#v.dir - #newdir)
+							newdir = newdir .. ("\0"):rep(#v.dir - #newdir + 1)
 						end
 
-						buffer = buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)
+						buffer = (buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)):sub(0, size)
 					end
 
-					local newname = dir .. data.file_name:lower()
+					local newname = (dir .. data.file_name:lower()):gsub("/", "\\")
 
-					if #newname < #name then
-						newname = newname .. ("\0"):rep(#name - #newname)
+					do
+						local newname = newname
+						if #newname < #name then
+							newname = newname .. ("\0"):rep(#name - #newname)
+						end
+
+						buffer = buffer:sub(0, name_offset) .. newname .. buffer:sub(name_offset + #name + 1)
 					end
 
-					buffer = buffer:Replace(name, newname)
+					--buffer = buffer:Replace(name:match("^(.+%.mdl)"), newname)
+					--buffer = buffer:sub(0, size_offset) .. int_to_bytes(#buffer) .. buffer:sub(size_offset + 4 - 1)
 
 					data.buffer = buffer
 					data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
 					break
 				end
 			end
+
 
 			for i, data in ipairs(files) do
 				if not data.file_name:EndsWith(".mdl") then
