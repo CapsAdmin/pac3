@@ -139,6 +139,12 @@ end
 
 function pac.DownloadMDL(url, callback, onfail, ply)
 	return pac.resource.Download(url, function(path)
+		if not ply:IsValid() then
+			pac.Message(Color(255, 50, 50), "player is no longer valid")
+			file.Delete(path)
+			return
+		end
+
 		local id = util.CRC(ply:UniqueID() .. url .. file.Read(path))
 		local dir = "pac3/" .. id .. "/"
 
