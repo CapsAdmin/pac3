@@ -342,6 +342,7 @@ function PART:SetModel(path)
 		self.loading = "downloading mdl zip"
 
 		pac.DownloadMDL(path, function(_)
+			local ent = self:GetOwner()
 			if path ~= "" and ent:IsValid() and ent == pac.LocalPlayer then
 				net.Start("pac_setmodel")
 					net.WriteString(path)
