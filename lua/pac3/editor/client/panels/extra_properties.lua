@@ -1,5 +1,23 @@
 local L = pace.LanguageString
 
+local function populate_part_menu(menu, part, func)
+	if part:HasChildren() then
+		local menu, pnl = menu:AddSubMenu(part:GetName(), function()
+			pace.current_part[func](pace.current_part, part)
+		end)
+
+		pnl:SetImage(part.Icon)
+
+		for key, part in ipairs(part:GetChildren()) do
+			populate_part_menu(menu, part, func)
+		end
+	else
+		menu:AddOption(part:GetName(), function()
+			pace.current_part[func](pace.current_part, part)
+		end):SetImage(part.Icon)
+	end
+end
+
 do -- bone
 	local PANEL = {}
 
