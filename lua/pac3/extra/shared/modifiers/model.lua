@@ -65,7 +65,7 @@ if SERVER then
 		end
 
 		if ALLOW_TO_CHANGE_MODEL:GetBool() then
-			pacx.SetPlayerModel(ply, args[1])
+			pacx.SetPlayerModel(ply, path)
 		end
 	end)
 
