@@ -193,7 +193,6 @@ function PART:SetModel(path)
 			self.loading = nil
 			self.Entity.pac_bones = nil
 			self.Entity:SetModel(path)
-			PrintTable(self.Entity:GetMaterials())
 		end, function(err)
 			pac.Message(err)
 			self.loading = nil
