@@ -235,10 +235,10 @@ function PART:OnThink()
 	if ent:IsValid() then
 		if not self.random_seqname then return end
 
-		local seq = ent:LookupSequence(self.random_seqname)
+		local seq = ent:LookupSequence(self.random_seqname) or 0
 
 		local duration = 0
-		local count = ent:GetSequenceCount()
+		local count = ent:GetSequenceCount() or 0
 		if seq >= 0 and seq < count and count > 0 then
 			duration = ent:SequenceDuration(seq)
 		else
