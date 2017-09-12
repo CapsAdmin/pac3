@@ -367,16 +367,29 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			end
 		end
 
-		local f = file.Open("pac3_cache/downloads/" .. id .. ".dat", "wb", "DATA")
+		local path = "pac3_cache/downloads/" .. id .. ".dat"
+		local f = file.Open(path, "wb", "DATA")
 
 		if not f then
-			file.Delete("pac3_cache/downloads/" .. id .. ".dat")
+			file.Delete(path)
+			pac.Message("unable to open file " .. path .. " for writing")
 			id = id .. "_"
-			f = file.Open("pac3_cache/downloads/" .. id .. ".dat", "wb", "DATA")
+			path = "pac3_cache/downloads/" .. id .. ".dat"
+			pac.Message("trying " .. path .. " for writing instead")
+			f = file.Open(path, "wb", "DATA")
 		end
 
 		if not f then
-			onfail("unable to open file for writing")
+			onfail("unable to open file " .. path .. " for writing")
+
+			pac.Message(Color(255, 50, 50), "unable to write to ", path, " for some reason")
+			if file.Exists(path, "DATA") then
+				pac.Message(Color(255, 50, 50), "the file exists and its size is ", string.NiceSize(file.Size(path, "DATA")))
+				pac.Message(Color(255, 50, 50), "is it locked or in use by something else?")
+			else
+				pac.Message(Color(255, 50, 50), "the file does not exist")
+				pac.Message(Color(255, 50, 50), "are you out of space?")
+			end
 			return
 		end
 
