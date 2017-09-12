@@ -34,7 +34,7 @@ PART.ShaderParams =
 	Detail = "ITexture",
 	DetailTint = "Vector",
 	DetailScale = "number",
-	DetailBlendMode = {type = "number", extra = {on_change = function(pnl, num) return math.Round(math.max(num, 0)) end}},
+	DetailBlendMode = {type = "number", extra = {editor_onchange = function(pnl, num) return math.Round(math.max(num, 0)) end}},
 	DetailBlendFactor = "number",
 
 	Phong = "boolean",
