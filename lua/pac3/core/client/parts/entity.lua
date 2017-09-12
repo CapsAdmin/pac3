@@ -260,14 +260,11 @@ function PART:OnShow()
 
 		if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
 			ent = ent:GetActiveWeapon()
-		elseif not self.mdl_zip and self.Model ~= "" and self:GetOwner() == pac.LocalPlayer and self.Model:lower() ~= self:GetOwner():GetModel():lower() then
-			pacx.SetModel(self.Model)
 		end
 
 		for _, field in pairs(self.ent_fields) do
 			self["Set" .. field](self, self[field])
 		end
-
 
 		self:SetColor(self:GetColor())
 		ent:SetColor(self.Colorc)
@@ -333,10 +330,20 @@ function PART:SetModel(path)
 	self.Model = path
 
 	if path:find("^http") then
-		pac.DownloadMDL(path, function(_)
-			local ent = self:GetOwner()
-			if ent:IsValid() and ent == pac.LocalPlayer then
-				pacx.SetModel(path)
+		local ent = self:GetOwner()
+
+		if ent == pac.LocalPlayer then
+			pac.Message("downloading ", path, " to use as player model")
+		end
+
+		pac.DownloadMDL(path, function(real_path)
+			if ent:IsValid() then
+				if ent == pac.LocalPlayer then
+					pac.Message("finished downloading ", path)
+					pacx.SetModel(path)
+				else
+					ent:SetModel(real_path)
+				end
 			end
 		end, function(err)
 			pac.Message(err)
@@ -344,8 +351,12 @@ function PART:SetModel(path)
 		self.mdl_zip = true
 	else
 		local ent = self:GetOwner()
-		if ent:IsValid() and ent == pac.LocalPlayer then
-			pacx.SetModel(self.Model)
+		if ent:IsValid() then
+			if ent == pac.LocalPlayer then
+				pacx.SetModel(self.Model)
+			else
+				ent:SetModel(self.Model)
+			end
 		end
 		self.mdl_zip = false
 	end

@@ -139,7 +139,7 @@ end
 
 function pac.DownloadMDL(url, callback, onfail, ply)
 	return pac.resource.Download(url, function(path)
-		local id = util.CRC(ply:UniqueID() .. url .. file.Read(path) .. os.clock())
+		local id = util.CRC(ply:UniqueID() .. url .. file.Read(path))
 		local dir = "pac3/" .. id .. "/"
 
 		local f = file.Open(path, "rb", "DATA")
