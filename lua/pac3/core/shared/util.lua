@@ -210,7 +210,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 			if ply == pac.LocalPlayer then
 				file.Write("pac3_cache/failed_zip_download.dat", str)
-				pac.Message(Color(255, 50,50), "the zip archive was stored to pac3_cache/failed_zip_download.dat (rename extension to .zip) if you want to inspect it")
+				pac.Message(Color(255, 50,50), "the zip archive was stored to garrysmod/data/pac3_cache/failed_zip_download.dat (rename extension to .zip) if you want to inspect it")
 			end
 			return
 		end
