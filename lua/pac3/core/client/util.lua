@@ -970,8 +970,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					for i,v in ipairs(found_directories) do
 						if #newdir < #v.dir then
 							newdir = newdir .. ("\0"):rep(#v.dir - #newdir)
-						elseif #newdir > #v.dir then
-							error("directory is too long")
 						end
 
 						buffer = buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)
