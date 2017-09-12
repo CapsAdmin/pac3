@@ -472,10 +472,12 @@ do -- get set and editor vars
 
 	function pac.StartStorableVars()
 		__store = true
+		__group = nil
 	end
 
 	function pac.EndStorableVars()
 		__store = false
+		__group = nil
 	end
 
 	local __group = nil
