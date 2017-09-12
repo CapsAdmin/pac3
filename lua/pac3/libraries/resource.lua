@@ -223,15 +223,13 @@ function resource.Download(path, callback, on_fail, crc, check_etag)
 
 		if resource.url_cache_lookup[crc] then
 			path = resource.url_cache_lookup[crc]
-			existing_path = R(path)
+			existing_path = R(DOWNLOAD_FOLDER .. path)
 			need_extension = false
 		else
 			path = crc
 			existing_path = false
 			need_extension = true
 		end
-	else
-		existing_path = R(path)
 	end
 
 	if not existing_path then
