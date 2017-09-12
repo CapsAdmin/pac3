@@ -145,9 +145,23 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			return
 		end
 
+		for _, name in ipairs((file.Find("pac3_cache/downloads/*_temp.dat", "DATA"))) do
+			file.Delete("pac3_cache/downloads/" .. name)
+		end
+
+		local skip_cache = false
+		if url:StartWith("_") then
+			skip_cache = true
+			url = url:sub(2)
+		end
+
 		local id = util.CRC(ply:UniqueID() .. url .. file.Read(path))
 
-		if not file.Exists("pac3_cache/downloads/"..id..".dat", "DATA") then
+		if skip_cache then
+			id = util.CRC(id .. os.clock())
+		end
+
+		if skip_cache or not file.Exists("pac3_cache/downloads/"..id..".dat", "DATA") then
 
 			local dir = "pac3/" .. id .. "/"
 
@@ -175,9 +189,10 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					local extra_field_length = f:ReadShort()
 
 					local name = f:Read(file_name_length)
+					local file_path = name
 
 					if compression_method ~= 0 then
-						error("compression method for "..name.." is not 0 / store! (maybe you drag dropped files into the archive)")
+						error(name.." is compressed! (use compression method 0 / store, or maybe you drag dropped files into the archive)")
 					end
 
 					if not name:EndsWith(".vtf") and not name:EndsWith(".vmt") then
@@ -194,7 +209,29 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						found = true
 					end
 
-					table.insert(files, {file_name = name, buffer = buffer, crc = crc})
+					name = name:match(".+/(.+)") or name
+
+					if not buffer then
+						if not file_path:EndsWith("/") then
+							pac.Message(Color(255, 50,50), file_path .. " is empty")
+						end
+					else
+						local ok = true
+						for i,v in ipairs(files) do
+							if v.name == name then
+								if ply == pac.LocalPlayer then
+									pac.Message(Color(255, 200,50), url, ": contains ", name, " more than once")
+									pac.Message(Color(255, 200,50), file_path)
+									pac.Message(Color(255, 200,50), v.file_path)
+								end
+								ok = false
+								break
+							end
+						end
+						if ok then
+							table.insert(files, {file_name = name, buffer = buffer, crc = crc, file_path = file_path})
+						end
+					end
 				end
 			end)
 
@@ -205,6 +242,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				local str = file.Read(path)
 				file.Delete(path)
 
+				pac.Message(Color(255, 50,50), err)
 				pac.Message(Color(255, 50,50), "the zip archive downloaded (", string.NiceSize(#str) ,") could not be parsed")
 
 				local is_binary = false
@@ -217,13 +255,13 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				end
 
 				if not is_binary then
-					pac.Message(Color(255, 50,50), "the zip archive doesn't appear to be binary:")
+					pac.Message("the zip archive doesn't appear to be binary:")
 					print(str)
 				end
 
 				if ply == pac.LocalPlayer then
 					file.Write("pac3_cache/failed_zip_download.dat", str)
-					pac.Message(Color(255, 50,50), "the zip archive was stored to garrysmod/data/pac3_cache/failed_zip_download.dat (rename extension to .zip) if you want to inspect it")
+					pac.Message("the zip archive was stored to garrysmod/data/pac3_cache/failed_zip_download.dat (rename extension to .zip) if you want to inspect it")
 				end
 				return
 			end
@@ -243,6 +281,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				for i, data in ipairs(files) do
 					if data.file_name:EndsWith(".mdl") then
 						file.Write("pac3_cache/temp.dat", data.buffer)
+						file.Write("lol2.dat", data.buffer)
 
 						local f = file.Open("pac3_cache/temp.dat", "rb", "DATA")
 						local id = f:Read(4)
@@ -263,7 +302,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							local vmt_dir_offset = f:ReadLong()
 
 							if ply == pac.LocalPlayer then
-
 								local old_pos = f:Tell()
 								f:Seek(vmt_dir_offset)
 									local offset = f:ReadLong()
@@ -295,6 +333,10 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 										end
 									end
 								f:Seek(old_pos)
+
+								if #found_materials == 0 then
+									pac.Message(Color(255, 200,50), url, ": could not find any materials in this model")
+								end
 							end
 						end
 
@@ -320,6 +362,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							end
 
 							local dir = table.concat(chars)
+
 							table.insert(found_directories, {offset = offset, dir = dir})
 
 							f:Seek(old_pos)
@@ -333,12 +376,16 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						local newdir = dir
 						newdir = newdir:gsub("/", "\\")
 
+						local had_to_extend = false
+
 						for i,v in ipairs(found_directories) do
 							if #newdir < #v.dir then
 								newdir = newdir .. ("\0"):rep(#v.dir - #newdir + 1)
+								buffer = (buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)):sub(0, size)
+							else
+								buffer = buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)
+								had_to_extend = true
 							end
-
-							buffer = (buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)):sub(0, size)
 						end
 
 						local newname = (dir .. data.file_name:lower()):gsub("/", "\\")
@@ -353,7 +400,13 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						end
 
 						--buffer = buffer:Replace(name:match("^(.+%.mdl)"), newname)
-						--buffer = buffer:sub(0, size_offset) .. int_to_bytes(#buffer) .. buffer:sub(size_offset + 4 - 1)
+
+
+						if had_to_extend then
+							buffer = buffer:sub(0, size_offset) .. int_to_bytes(#buffer) .. buffer:sub(size_offset + 4 - 1)
+						end
+
+						file.Write("lol.dat", buffer)
 
 						data.buffer = buffer
 						data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
@@ -380,17 +433,12 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				end
 			end
 
+			if skip_cache then
+				id = id .. "_temp"
+			end
+
 			local path = "pac3_cache/downloads/" .. id .. ".dat"
 			local f = file.Open(path, "wb", "DATA")
-
-			if not f then
-				file.Delete(path)
-				pac.Message("unable to open file " .. path .. " for writing")
-				id = id .. "_"
-				path = "pac3_cache/downloads/" .. id .. ".dat"
-				pac.Message("trying " .. path .. " for writing instead")
-				f = file.Open(path, "wb", "DATA")
-			end
 
 			if not f then
 				onfail("unable to open file " .. path .. " for writing")
@@ -401,7 +449,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					pac.Message(Color(255, 50, 50), "is it locked or in use by something else?")
 				else
 					pac.Message(Color(255, 50, 50), "the file does not exist")
-					pac.Message(Color(255, 50, 50), "are you out of space?")
+					pac.Message(Color(255, 50, 50), "are you out of disk space?")
 				end
 				return
 			end
