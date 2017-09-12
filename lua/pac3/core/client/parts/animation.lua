@@ -135,9 +135,8 @@ function PART:OnShow()
 		self.random_seqname = table.Random(self.SequenceName:Split(";"))
 
 		if self.random_seqname ~= "" then
-			local seq = ent:LookupSequence(self.random_seqname)
-
-			local count = ent:GetSequenceCount()
+			local seq = ent:LookupSequence(self.random_seqname) or 0
+			local count = ent:GetSequenceCount() or 0
 
 			if seq < 0 or seq > count or count < 0 then
 				return
