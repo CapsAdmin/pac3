@@ -337,54 +337,57 @@ function resource.CheckDownloadedFiles()
 	end
 end
 
-local temp = CreateMaterial(tostring({}), "VertexLitGeneric", {})
-local memory = {}
+if CLIENT then
 
-function resource.DownloadTexture(url, callback)
-	local skip_cache = url:sub(1,1) == "_"
-	if skip_cache then url = url:sub(2) end
+	local temp = CreateMaterial(tostring({}), "VertexLitGeneric", {})
+	local memory = {}
 
-	if not url:find("^.-://") then return end
+	function resource.DownloadTexture(url, callback)
+		local skip_cache = url:sub(1,1) == "_"
+		if skip_cache then url = url:sub(2) end
 
-	local cache = not skip_cache and memory[url:lower()] or nil
+		if not url:find("^.-://") then return end
 
-	if cache then
-		file.Write(cache.path, cache.buffer)
-	end
+		local cache = not skip_cache and memory[url:lower()] or nil
 
-	return resource.Download(
-		url,
-		function(path)
-			local cache = memory[url:lower()]
-			local frames = cache and cache.frames or nil
+		if cache then
+			file.Write(cache.path, cache.buffer)
+		end
 
-			if path:EndsWith(".vtf") then
-				if not frames then
-					local f = file.Open(path, "rb", "DATA")
-					if f then
-						f:Seek(24)
-						frames = f:ReadShort()
-						f:Close()
+		return resource.Download(
+			url,
+			function(path)
+				local cache = memory[url:lower()]
+				local frames = cache and cache.frames or nil
+
+				if path:EndsWith(".vtf") then
+					if not frames then
+						local f = file.Open(path, "rb", "DATA")
+						if f then
+							f:Seek(24)
+							frames = f:ReadShort()
+							f:Close()
+						end
 					end
+
+					temp:SetTexture("$basetexture", "../data/" .. path)
+
+					callback(temp:GetTexture("$basetexture"), frames)
+				else
+					callback(Material("../data/" .. path, "mips smooth noclamp"):GetTexture("$basetexture"))
 				end
 
-				temp:SetTexture("$basetexture", "../data/" .. path)
+				if not cache then
+					memory[url:lower()] = {buffer = file.Read(path, "DATA"), path = path, frames = frames}
+				end
 
-				callback(temp:GetTexture("$basetexture"), frames)
-			else
-				callback(Material("../data/" .. path, "mips smooth noclamp"):GetTexture("$basetexture"))
+				file.Delete(path)
+			end,
+			function()
+
 			end
-
-			if not cache then
-				memory[url:lower()] = {buffer = file.Read(path, "DATA"), path = path, frames = frames}
-			end
-
-			file.Delete(path)
-		end,
-		function()
-
-		end
-	)
+		)
+	end
 end
 
 return resource

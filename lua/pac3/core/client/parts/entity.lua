@@ -335,12 +335,26 @@ function PART:OnShow()
 	end
 end
 
-function PART:SetModel(str)
-	self.Model = str
+function PART:SetModel(path)
+	self.Model = path
 
-	local ent = self:GetOwner()
-	if str ~= "" and ent:IsValid() and ent == pac.LocalPlayer then
-		RunConsoleCommand("pac_setmodel", self.Model)
+	if path:find("^http") then
+		self.loading = "downloading mdl zip"
+
+		pac.DownloadMDL(path, function(_)
+			if path ~= "" and ent:IsValid() and ent == pac.LocalPlayer then
+				net.Start("pac_setmodel")
+					net.WriteString(path)
+				net.SendToServer()
+			end
+		end, function(err)
+			pac.Message(err)
+		end, self:GetPlayerOwner())
+	else
+		local ent = self:GetOwner()
+		if path ~= "" and ent:IsValid() and ent == pac.LocalPlayer then
+			RunConsoleCommand("pac_setmodel", self.Model)
+		end
 	end
 end
 

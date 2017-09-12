@@ -2,6 +2,7 @@ pac = pac or {}
 
 pac.Parts = pac.Parts or {}
 pac.Errors = {}
+pac.resource = include("pac3/libraries/resource.lua")
 
 include("pac3/core/shared/init.lua")
 
