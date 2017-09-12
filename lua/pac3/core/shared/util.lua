@@ -156,7 +156,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			url = url:sub(2)
 		end
 
-		local id = util.CRC(ply:UniqueID() .. url .. file.Read(path))
+		local id = util.CRC(url .. file.Read(path))
 
 		if skip_cache then
 			id = util.CRC(id .. os.clock())
