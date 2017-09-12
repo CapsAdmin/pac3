@@ -335,22 +335,33 @@ function PART:OnShow()
 	end
 end
 
+local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs')
+local ALLOW_TO_USE_MDL = CreateConVar('pac_allow_mdl_entity', '1', {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs as Entity')
+
 function PART:SetModel(path)
 	self.Model = path
 
 	if path:find("^http") then
-		self.loading = "downloading mdl zip"
+		local status, reason = hook.Run('PAC3AllowMDLDownload', self:GetPlayerOwner(), self, path)
+		local status2, reason2 = hook.Run('PAC3AllowEntityMDLDownload', self:GetPlayerOwner(), self, path)
 
-		pac.DownloadMDL(path, function(_)
-			local ent = self:GetOwner()
-			if path ~= "" and ent:IsValid() and ent == pac.LocalPlayer then
-				net.Start("pac_setmodel")
-					net.WriteString(path)
-				net.SendToServer()
-			end
-		end, function(err)
-			pac.Message(err)
-		end, self:GetPlayerOwner())
+		if ALLOW_TO_USE_MDL:GetBool() and ALLOW_TO_MDL:GetBool() and status ~= false and status2 ~= false then
+			self.loading = "downloading mdl zip"
+
+			pac.DownloadMDL(path, function(_)
+				local ent = self:GetOwner()
+				if path ~= "" and ent:IsValid() and ent == pac.LocalPlayer then
+					net.Start("pac_setmodel")
+						net.WriteString(path)
+					net.SendToServer()
+				end
+			end, function(err)
+				pac.Message(err)
+			end, self:GetPlayerOwner())
+		else
+			self.loading = reason2 or reason or "mdl is not allowed"
+			pac.Message(self:GetPlayerOwner(), ' - mdl files are not allowed')
+		end
 	else
 		local ent = self:GetOwner()
 		if path ~= "" and ent:IsValid() and ent == pac.LocalPlayer then

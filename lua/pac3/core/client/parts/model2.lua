@@ -219,23 +219,33 @@ function PART:DrawLoadingText(ent, pos, ang)
 	cam.End2D()
 end
 
+local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs')
+
 function PART:SetModel(path)
 	self.Model = path
 	self.Entity = self:GetEntity()
 
 	if path:find("^http") then
-		self.loading = "downloading mdl zip"
+		local status, reason = hook.Run('PAC3AllowMDLDownload', self:GetPlayerOwner(), self, path)
 
-		pac.DownloadMDL(path, function(path)
-			self.loading = nil
-			self.Entity.pac_bones = nil
-			self.Entity:SetModel(path)
-		end, function(err)
-			pac.Message(err)
-			self.loading = nil
-			self.Entity.pac_bones = nil
+		if ALLOW_TO_MDL:GetBool() and status ~= false then
+			self.loading = "downloading mdl zip"
+
+			pac.DownloadMDL(path, function(path)
+				self.loading = nil
+				self.Entity.pac_bones = nil
+				self.Entity:SetModel(path)
+			end, function(err)
+				pac.Message(err)
+				self.loading = nil
+				self.Entity.pac_bones = nil
+				self.Entity:SetModel("error.mdl")
+			end, self:GetPlayerOwner())
+		else
+			self.loading = reason or "mdl is not allowed"
 			self.Entity:SetModel("error.mdl")
-		end, self:GetPlayerOwner())
+			pac.Message(self, ' mdl files are not allowed')
+		end
 	else
 		self.Entity.pac_bones = nil
 		self.Entity:SetModel(path)
