@@ -370,6 +370,12 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 		local f = file.Open("pac3_cache/downloads/" .. id .. ".dat", "wb", "DATA")
 
 		if not f then
+			file.Delete("pac3_cache/downloads/" .. id .. ".dat")
+			id = id .. "_"
+			f = file.Open("pac3_cache/downloads/" .. id .. ".dat", "wb", "DATA")
+		end
+
+		if not f then
 			onfail("unable to open file for writing")
 			return
 		end
