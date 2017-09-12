@@ -49,11 +49,6 @@ local function populate_pac(menu)
 		cookie.Set("pac3_discord_ad", cookie.GetNumber("pac3_discord_ad", 0) + 1)
 	end
 
-	menu:AddOption(
-		L"about",
-		function() pace.ShowAbout() end
-	):SetImage(pace.MiscIcons.about)
-
 	menu:AddOption(L"exit", function() pace.CloseEditor() end):SetImage(pace.MiscIcons.exit)
 end
 
@@ -64,6 +59,12 @@ local function populate_view(menu)
 
 	menu:AddCVar(L"camera follow", "pac_camera_follow_entity", "1", "0"):SetImage("icon16/camera_go.png")
 	menu:AddOption(L"reset view position", function() pace.ResetView() end):SetImage("icon16/camera_link.png")
+
+	menu:AddOption(
+		L"about",
+		function() pace.ShowAbout() end
+	):SetImage(pace.MiscIcons.about)
+
 end
 
 local function populate_options(menu)
