@@ -156,16 +156,20 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				if sig == 0x02014b50 then break end
 
 				assert(sig == 0x04034b50, "bad zip signature (file is not a zip?)")
-				f:Seek(pos+6) assert(f:ReadShort() == 0, "general purpose bitflag is set")
-				f:Seek(pos+8) assert(f:ReadShort() == 0, "compression method is not 0 (don't use compression)")
+
+				f:Seek(pos+6) local bitflag = f:ReadShort()
+				f:Seek(pos+8) local compression_method = f:ReadShort()
 				f:Seek(pos+14) local crc = f:ReadShort()
 				f:Seek(pos+18) local size2 = f:ReadLong()
 				f:Seek(pos+22) local size = f:ReadLong()
-				assert(size == size2, "compression?")
 				f:Seek(pos+26) local file_name_length = f:ReadShort()
 				local extra_field_length = f:ReadShort()
 
 				local name = f:Read(file_name_length)
+
+				if compression_method ~= 0 then
+					error("compression method for "..name.." is not 0 / store! (maybe you drag dropped files into the archive)")
+				end
 
 				if not name:EndsWith(".vtf") and not name:EndsWith(".vmt") then
 					name = name:gsub(".-(%..+)", "model%1"):lower()
@@ -204,8 +208,10 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				print(str)
 			end
 
-			pac.Message(Color(255, 50,50), "the zip file is saved to pac3_cache/failed_zip_download.dat for inspection")
-			file.Write("pac3_cache/failed_zip_download.dat", str)
+			if ply == pac.LocalPlayer then
+				file.Write("pac3_cache/failed_zip_download.dat", str)
+				pac.Message(Color(255, 50,50), "the zip was stored to pac3_cache/failed_zip_download.dat for inspection")
+			end
 			return
 		end
 
