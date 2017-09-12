@@ -192,7 +192,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 		if not ok then
 			onfail(err)
 			local str = file.Read(path)
-			pac.Message(Color(255, 50,50), "the zip file downloaded (", string.NiceSize(#str) ,") could not be parsed")
+			pac.Message(Color(255, 50,50), "the zip archive downloaded (", string.NiceSize(#str) ,") could not be parsed")
 
 			local is_binary = false
 			for i = 1, #str do
@@ -204,13 +204,13 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			end
 
 			if not is_binary then
-				pac.Message(Color(255, 50,50), "the zip doesn't appear to be binary:")
+				pac.Message(Color(255, 50,50), "the zip archive doesn't appear to be binary:")
 				print(str)
 			end
 
 			if ply == pac.LocalPlayer then
 				file.Write("pac3_cache/failed_zip_download.dat", str)
-				pac.Message(Color(255, 50,50), "the zip was stored to pac3_cache/failed_zip_download.dat for inspection")
+				pac.Message(Color(255, 50,50), "the zip archive was stored to pac3_cache/failed_zip_download.dat (rename extension to .zip) if you want to inspect it")
 			end
 			return
 		end
