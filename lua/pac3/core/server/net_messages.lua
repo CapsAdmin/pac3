@@ -46,15 +46,3 @@ do -- button event
 		broadcast_key(ply, key, false)
 	end)
 end
-
-util.AddNetworkString("pac_setmodel")
-
-net.Receive("pac_setmodel", function(_, ply)
-	local url = net.ReadString()
-	pac.Message(ply, " wants to use ", url, " as player model")
-	pac.DownloadMDL(url, function(path)
-		ply:SetModel(path)
-	end, function(err)
-		pac.Message(err)
-	end, ply)
-end)

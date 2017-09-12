@@ -258,16 +258,10 @@ function PART:OnShow()
 
 	if ent:IsValid() then
 
-		if ent == pac.LocalPlayer and self.Model ~= "" then
-			RunConsoleCommand("pac_setmodel", self.Model)
-		end
-
 		if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
 			ent = ent:GetActiveWeapon()
-		else
-			if self.Model ~= "" and self:GetOwner() == pac.LocalPlayer and self.Model:lower() ~= self:GetOwner():GetModel():lower() then
-				RunConsoleCommand("pac_setmodel", self.Model)
-			end
+		elseif not self.mdl_zip and self.Model ~= "" and self:GetOwner() == pac.LocalPlayer and self.Model:lower() ~= self:GetOwner():GetModel():lower() then
+			pacx.SetModel(self.Model)
 		end
 
 		for _, field in pairs(self.ent_fields) do
@@ -339,23 +333,21 @@ function PART:SetModel(path)
 	self.Model = path
 
 	if path:find("^http") then
-		self.loading = "downloading mdl zip"
-
 		pac.DownloadMDL(path, function(_)
 			local ent = self:GetOwner()
-			if path ~= "" and ent:IsValid() and ent == pac.LocalPlayer then
-				net.Start("pac_setmodel")
-					net.WriteString(path)
-				net.SendToServer()
+			if ent:IsValid() and ent == pac.LocalPlayer then
+				pacx.SetModel(path)
 			end
 		end, function(err)
 			pac.Message(err)
 		end, self:GetPlayerOwner())
+		self.mdl_zip = true
 	else
 		local ent = self:GetOwner()
-		if path ~= "" and ent:IsValid() and ent == pac.LocalPlayer then
-			RunConsoleCommand("pac_setmodel", self.Model)
+		if ent:IsValid() and ent == pac.LocalPlayer then
+			pacx.SetModel(self.Model)
 		end
+		self.mdl_zip = false
 	end
 end
 
