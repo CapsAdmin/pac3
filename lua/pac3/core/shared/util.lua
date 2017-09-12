@@ -146,291 +146,299 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 		end
 
 		local id = util.CRC(ply:UniqueID() .. url .. file.Read(path))
-		local dir = "pac3/" .. id .. "/"
 
-		local f = file.Open(path, "rb", "DATA")
+		if not file.Exists("pac3_cache/downloads/"..id..".dat", "DATA") then
 
-		local found = false
-		local files = {}
+			local dir = "pac3/" .. id .. "/"
 
-		local ok, err = pcall(function()
-			for i = 1, 128 do
-				local pos = f:Tell()
+			local f = file.Open(path, "rb", "DATA")
 
-				local sig = f:ReadLong()
+			local found = false
+			local files = {}
 
-				if sig == 0x02014b50 then break end
+			local ok, err = pcall(function()
+				for i = 1, 128 do
+					local pos = f:Tell()
 
-				assert(sig == 0x04034b50, "bad zip signature (file is not a zip?)")
+					local sig = f:ReadLong()
 
-				f:Seek(pos+6) local bitflag = f:ReadShort()
-				f:Seek(pos+8) local compression_method = f:ReadShort()
-				f:Seek(pos+14) local crc = f:ReadShort()
-				f:Seek(pos+18) local size2 = f:ReadLong()
-				f:Seek(pos+22) local size = f:ReadLong()
-				f:Seek(pos+26) local file_name_length = f:ReadShort()
-				local extra_field_length = f:ReadShort()
+					if sig == 0x02014b50 then break end
 
-				local name = f:Read(file_name_length)
+					assert(sig == 0x04034b50, "bad zip signature (file is not a zip?)")
 
-				if compression_method ~= 0 then
-					error("compression method for "..name.." is not 0 / store! (maybe you drag dropped files into the archive)")
+					f:Seek(pos+6) local bitflag = f:ReadShort()
+					f:Seek(pos+8) local compression_method = f:ReadShort()
+					f:Seek(pos+14) local crc = f:ReadShort()
+					f:Seek(pos+18) local size2 = f:ReadLong()
+					f:Seek(pos+22) local size = f:ReadLong()
+					f:Seek(pos+26) local file_name_length = f:ReadShort()
+					local extra_field_length = f:ReadShort()
+
+					local name = f:Read(file_name_length)
+
+					if compression_method ~= 0 then
+						error("compression method for "..name.." is not 0 / store! (maybe you drag dropped files into the archive)")
+					end
+
+					if not name:EndsWith(".vtf") and not name:EndsWith(".vmt") then
+						name = name:gsub(".-(%..+)", "model%1"):lower()
+					end
+
+					f:Skip(extra_field_length)
+
+					local buffer = f:Read(size)
+
+					if name:EndsWith(".mdl") then
+						--local path = buffer:sub(13, 12+64)
+						--buffer = buffer:gsub(path, mdl_dir .. "model.mdl")
+						found = true
+					end
+
+					table.insert(files, {file_name = name, buffer = buffer, crc = crc})
+				end
+			end)
+
+			f:Close()
+
+			if not ok then
+				onfail(err)
+				local str = file.Read(path)
+				file.Delete(path)
+
+				pac.Message(Color(255, 50,50), "the zip archive downloaded (", string.NiceSize(#str) ,") could not be parsed")
+
+				local is_binary = false
+				for i = 1, #str do
+					local b = str:byte(i)
+					if b == 0 then
+						is_binary = true
+						break
+					end
 				end
 
-				if not name:EndsWith(".vtf") and not name:EndsWith(".vmt") then
-					name = name:gsub(".-(%..+)", "model%1"):lower()
+				if not is_binary then
+					pac.Message(Color(255, 50,50), "the zip archive doesn't appear to be binary:")
+					print(str)
 				end
 
-				f:Skip(extra_field_length)
-
-				local buffer = f:Read(size)
-
-				if name:EndsWith(".mdl") then
-					--local path = buffer:sub(13, 12+64)
-					--buffer = buffer:gsub(path, mdl_dir .. "model.mdl")
-					found = true
+				if ply == pac.LocalPlayer then
+					file.Write("pac3_cache/failed_zip_download.dat", str)
+					pac.Message(Color(255, 50,50), "the zip archive was stored to garrysmod/data/pac3_cache/failed_zip_download.dat (rename extension to .zip) if you want to inspect it")
 				end
-
-				table.insert(files, {file_name = name, buffer = buffer, crc = crc})
+				return
 			end
-		end)
 
-		if not ok then
-			onfail(err)
-			local str = file.Read(path)
-			pac.Message(Color(255, 50,50), "the zip archive downloaded (", string.NiceSize(#str) ,") could not be parsed")
-
-			local is_binary = false
-			for i = 1, #str do
-				local b = str:byte(i)
-				if b == 0 then
-					is_binary = true
-					break
+			if not found then
+				for k,v in pairs(files) do
+					print(v.file_name, string.NiceSize(#v.buffer))
 				end
+				onfail("mdl not found in archive")
+				return
 			end
 
-			if not is_binary then
-				pac.Message(Color(255, 50,50), "the zip archive doesn't appear to be binary:")
-				print(str)
-			end
+			do -- hex models
+				local found_directories = {}
+				local found_materials = {}
 
-			if ply == pac.LocalPlayer then
-				file.Write("pac3_cache/failed_zip_download.dat", str)
-				pac.Message(Color(255, 50,50), "the zip archive was stored to garrysmod/data/pac3_cache/failed_zip_download.dat (rename extension to .zip) if you want to inspect it")
-			end
-			return
-		end
+				for i, data in ipairs(files) do
+					if data.file_name:EndsWith(".mdl") then
+						file.Write("pac3_cache/temp.dat", data.buffer)
 
-		if not found then
-			for k,v in pairs(files) do
-				print(v.file_name, string.NiceSize(#v.buffer))
-			end
-			onfail("mdl not found in archive")
-			return
-		end
+						local f = file.Open("pac3_cache/temp.dat", "rb", "DATA")
+						local id = f:Read(4)
+						local version = f:ReadLong()
+						local checksum = f:ReadLong()
+						local name_offset = f:Tell()
+						local name = f:Read(64)
+						local size_offset = f:Tell()
+						local size = f:ReadLong()
 
-		do -- hex models
-			local found_directories = {}
-			local found_materials = {}
+						f:Skip(12 * 6) -- skips over all the vec3 stuff
 
-			for i, data in ipairs(files) do
-				if data.file_name:EndsWith(".mdl") then
-					file.Write("pac3_cache/temp.dat", data.buffer)
+						f:Skip(4) -- flags
+						f:Skip(8 * 6)
 
-					local f = file.Open("pac3_cache/temp.dat", "rb", "DATA")
-					local id = f:Read(4)
-					local version = f:ReadLong()
-					local checksum = f:ReadLong()
-					local name_offset = f:Tell()
-					local name = f:Read(64)
-					local size_offset = f:Tell()
-					local size = f:ReadLong()
+						do
+							local vmt_dir_count = f:ReadLong()
+							local vmt_dir_offset = f:ReadLong()
 
-					f:Skip(12 * 6) -- skips over all the vec3 stuff
+							if ply == pac.LocalPlayer then
 
-					f:Skip(4) -- flags
-					f:Skip(8 * 6)
-
-					do
-						local vmt_dir_count = f:ReadLong()
-						local vmt_dir_offset = f:ReadLong()
-
-						if ply == pac.LocalPlayer then
-
-							local old_pos = f:Tell()
-							f:Seek(vmt_dir_offset)
-								local offset = f:ReadLong()
-								if offset > -1 then
-									f:Seek(vmt_dir_offset + offset)
-									for i = 1, vmt_dir_count do
-										local chars = {}
-										for i = 1, 64 do
-											local b = f:ReadByte()
-											if not b or b == 0 then break end
-											table.insert(chars, string.char(b))
-										end
-
-										local mat = table.concat(chars) .. ".vmt"
-										local found = false
-
-										for i, v in pairs(files) do
-											if v.file_name:EndsWith(mat) then
-												found = true
-												break
+								local old_pos = f:Tell()
+								f:Seek(vmt_dir_offset)
+									local offset = f:ReadLong()
+									if offset > -1 then
+										f:Seek(vmt_dir_offset + offset)
+										for i = 1, vmt_dir_count do
+											local chars = {}
+											for i = 1, 64 do
+												local b = f:ReadByte()
+												if not b or b == 0 then break end
+												table.insert(chars, string.char(b))
 											end
-										end
 
-										if not found then
-											pac.Message(Color(255, 50,50), url, " the model wants to find ", mat, " but it was not found in the zip archive")
-										end
+											local mat = table.concat(chars) .. ".vmt"
+											local found = false
 
-										table.insert(found_materials, mat)
+											for i, v in pairs(files) do
+												if v.file_name:EndsWith(mat) then
+													found = true
+													break
+												end
+											end
+
+											if not found then
+												pac.Message(Color(255, 50,50), url, " the model wants to find ", mat, " but it was not found in the zip archive")
+											end
+
+											table.insert(found_materials, mat)
+										end
 									end
-								end
+								f:Seek(old_pos)
+							end
+						end
+
+						local vtf_dir_count = f:ReadLong()
+						local vtf_dir_offset = f:ReadLong()
+
+						f:Seek(vtf_dir_offset)
+
+						local done = {}
+
+						for i = 1, vtf_dir_count do
+							local offset = f:ReadLong()
+							local old_pos = f:Tell()
+							if not offset then break end
+
+							f:Seek(offset)
+
+							local chars = {}
+							for i = 1, 64 do
+								local b = f:ReadByte()
+								if not b or b == 0 then break end
+								table.insert(chars, string.char(b))
+							end
+
+							local dir = table.concat(chars)
+							table.insert(found_directories, {offset = offset, dir = dir})
+
 							f:Seek(old_pos)
 						end
-					end
 
-					local vtf_dir_count = f:ReadLong()
-					local vtf_dir_offset = f:ReadLong()
+						f:Close()
 
-					f:Seek(vtf_dir_offset)
+						local buffer = file.Read("pac3_cache/temp.dat")
+						file.Delete("pac3_cache/temp.dat")
 
-					local done = {}
+						local newdir = dir
+						newdir = newdir:gsub("/", "\\")
 
-					for i = 1, vtf_dir_count do
-						local offset = f:ReadLong()
-						local old_pos = f:Tell()
-						if not offset then break end
+						for i,v in ipairs(found_directories) do
+							if #newdir < #v.dir then
+								newdir = newdir .. ("\0"):rep(#v.dir - #newdir + 1)
+							end
 
-						f:Seek(offset)
-
-						local chars = {}
-						for i = 1, 64 do
-							local b = f:ReadByte()
-							if not b or b == 0 then break end
-							table.insert(chars, string.char(b))
+							buffer = (buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)):sub(0, size)
 						end
 
-						local dir = table.concat(chars)
-						table.insert(found_directories, {offset = offset, dir = dir})
+						local newname = (dir .. data.file_name:lower()):gsub("/", "\\")
 
-						f:Seek(old_pos)
-					end
+						do
+							local newname = newname
+							if #newname < #name then
+								newname = newname .. ("\0"):rep(#name - #newname)
+							end
 
-					f:Close()
-
-					local buffer = file.Read("pac3_cache/temp.dat")
-					file.Delete("pac3_cache/temp.dat")
-
-					local newdir = dir
-					newdir = newdir:gsub("/", "\\")
-
-					for i,v in ipairs(found_directories) do
-						if #newdir < #v.dir then
-							newdir = newdir .. ("\0"):rep(#v.dir - #newdir + 1)
+							buffer = buffer:sub(0, name_offset) .. newname .. buffer:sub(name_offset + #name + 1)
 						end
 
-						buffer = (buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)):sub(0, size)
+						--buffer = buffer:Replace(name:match("^(.+%.mdl)"), newname)
+						--buffer = buffer:sub(0, size_offset) .. int_to_bytes(#buffer) .. buffer:sub(size_offset + 4 - 1)
+
+						data.buffer = buffer
+						data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
+						break
 					end
+				end
 
-					local newname = (dir .. data.file_name:lower()):gsub("/", "\\")
 
-					do
-						local newname = newname
-						if #newname < #name then
-							newname = newname .. ("\0"):rep(#name - #newname)
+				for i, data in ipairs(files) do
+					if not data.file_name:EndsWith(".mdl") then
+						if data.file_name:EndsWith(".vmt") then
+							local newdir = dir
+
+							data.buffer = data.buffer:lower():gsub("\\", "/")
+
+							for _, info in ipairs(found_directories) do
+								data.buffer = data.buffer:gsub("[\"\']%S-" .. info.dir:gsub("\\", "/"):lower(), "\"" .. newdir)
+								data.buffer = data.buffer:gsub(info.dir:gsub("\\", "/"):lower(), newdir)
+							end
+
+							data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
 						end
-
-						buffer = buffer:sub(0, name_offset) .. newname .. buffer:sub(name_offset + #name + 1)
 					end
-
-					--buffer = buffer:Replace(name:match("^(.+%.mdl)"), newname)
-					--buffer = buffer:sub(0, size_offset) .. int_to_bytes(#buffer) .. buffer:sub(size_offset + 4 - 1)
-
-					data.buffer = buffer
-					data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
-					break
 				end
 			end
 
+			local path = "pac3_cache/downloads/" .. id .. ".dat"
+			local f = file.Open(path, "wb", "DATA")
+
+			if not f then
+				file.Delete(path)
+				pac.Message("unable to open file " .. path .. " for writing")
+				id = id .. "_"
+				path = "pac3_cache/downloads/" .. id .. ".dat"
+				pac.Message("trying " .. path .. " for writing instead")
+				f = file.Open(path, "wb", "DATA")
+			end
+
+			if not f then
+				onfail("unable to open file " .. path .. " for writing")
+
+				pac.Message(Color(255, 50, 50), "unable to write to ", path, " for some reason")
+				if file.Exists(path, "DATA") then
+					pac.Message(Color(255, 50, 50), "the file exists and its size is ", string.NiceSize(file.Size(path, "DATA")))
+					pac.Message(Color(255, 50, 50), "is it locked or in use by something else?")
+				else
+					pac.Message(Color(255, 50, 50), "the file does not exist")
+					pac.Message(Color(255, 50, 50), "are you out of space?")
+				end
+				return
+			end
+
+			f:Write("GMAD")
+			f:WriteByte(3)
+			f:WriteLong(0)f:WriteLong(0)
+			f:WriteLong(0)f:WriteLong(0)
+			f:WriteByte(0)
+			f:Write("name here")f:WriteByte(0)
+			f:Write("description here")f:WriteByte(0)
+			f:Write("author here")f:WriteByte(0)
+			f:WriteLong(1)
 
 			for i, data in ipairs(files) do
-				if not data.file_name:EndsWith(".mdl") then
-					if data.file_name:EndsWith(".vmt") then
-						local newdir = dir
-
-						data.buffer = data.buffer:lower():gsub("\\", "/")
-
-						for _, info in ipairs(found_directories) do
-							data.buffer = data.buffer:gsub("[\"\']%S-" .. info.dir:gsub("\\", "/"):lower(), "\"" .. newdir)
-							data.buffer = data.buffer:gsub(info.dir:gsub("\\", "/"):lower(), newdir)
-						end
-
-						data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
-					end
+				f:WriteLong(i)
+				if data.file_name:EndsWith(".vtf") or data.file_name:EndsWith(".vmt") then
+					f:Write("materials/" .. dir .. data.file_name:lower())f:WriteByte(0)
+				else
+					f:Write("models/" .. dir .. data.file_name:lower())f:WriteByte(0)
 				end
+				f:WriteLong(#data.buffer)f:WriteLong(0)
+				f:WriteLong(data.crc)
 			end
-		end
 
-		local path = "pac3_cache/downloads/" .. id .. ".dat"
-		local f = file.Open(path, "wb", "DATA")
+			f:WriteLong(0)
 
-		if not f then
-			file.Delete(path)
-			pac.Message("unable to open file " .. path .. " for writing")
-			id = id .. "_"
-			path = "pac3_cache/downloads/" .. id .. ".dat"
-			pac.Message("trying " .. path .. " for writing instead")
-			f = file.Open(path, "wb", "DATA")
-		end
-
-		if not f then
-			onfail("unable to open file " .. path .. " for writing")
-
-			pac.Message(Color(255, 50, 50), "unable to write to ", path, " for some reason")
-			if file.Exists(path, "DATA") then
-				pac.Message(Color(255, 50, 50), "the file exists and its size is ", string.NiceSize(file.Size(path, "DATA")))
-				pac.Message(Color(255, 50, 50), "is it locked or in use by something else?")
-			else
-				pac.Message(Color(255, 50, 50), "the file does not exist")
-				pac.Message(Color(255, 50, 50), "are you out of space?")
+			for i, data in ipairs(files) do
+				f:Write(data.buffer)
 			end
-			return
+
+			f:Flush()
+
+			local content = file.Read("pac3_cache/downloads/" .. id .. ".dat", "DATA")
+			f:Write(util.CRC(content))
+			f:Close()
 		end
-
-		f:Write("GMAD")
-		f:WriteByte(3)
-		f:WriteLong(0)f:WriteLong(0)
-		f:WriteLong(0)f:WriteLong(0)
-		f:WriteByte(0)
-		f:Write("name here")f:WriteByte(0)
-		f:Write("description here")f:WriteByte(0)
-		f:Write("author here")f:WriteByte(0)
-		f:WriteLong(1)
-
-		for i, data in ipairs(files) do
-			f:WriteLong(i)
-			if data.file_name:EndsWith(".vtf") or data.file_name:EndsWith(".vmt") then
-				f:Write("materials/" .. dir .. data.file_name:lower())f:WriteByte(0)
-			else
-				f:Write("models/" .. dir .. data.file_name:lower())f:WriteByte(0)
-			end
-			f:WriteLong(#data.buffer)f:WriteLong(0)
-			f:WriteLong(data.crc)
-		end
-
-		f:WriteLong(0)
-
-		for i, data in ipairs(files) do
-			f:Write(data.buffer)
-		end
-
-		f:Flush()
-
-		local content = file.Read("pac3_cache/downloads/" .. id .. ".dat", "DATA")
-		f:Write(util.CRC(content))
-		f:Close()
 
 		local ok, tbl = game.MountGMA("data/pac3_cache/downloads/" .. id .. ".dat")
 
