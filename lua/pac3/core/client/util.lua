@@ -1058,6 +1058,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 		for k,v in pairs(tbl) do
 			if v:EndsWith(".mdl") then
 				callback(v)
+				file.Delete("pac3_cache/downloads/" .. id .. ".dat")
 				break
 			end
 		end

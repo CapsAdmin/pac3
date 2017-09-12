@@ -39,12 +39,12 @@ end
 function PART:OnThink()
 	local parent = self:GetParent()
 
-	if parent.ClassName == "model" and parent.Entity:IsValid() then
+	if parent.is_model_part and parent.Entity:IsValid() then
 		local tbl = {parent.Entity}
 
 		if self.AffectChildren then
 			for _, part in ipairs(parent:GetChildren()) do
-				if part.ClassName == "model" and part.Entity:IsValid() and not part:IsHidden() then
+				if part.is_model_part and part.Entity:IsValid() and not part:IsHidden() then
 					table.insert(tbl, part.Entity)
 				end
 			end

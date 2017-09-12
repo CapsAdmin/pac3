@@ -10,7 +10,7 @@ end)
 function pacx.PartToContraptionData(part, tbl)
 	tbl = tbl or {}
 
-	if part.ClassName == "model" then
+	if part.is_model_part then
 		local data = {}
 
 		local c = part:GetColor()
@@ -27,7 +27,7 @@ function pacx.PartToContraptionData(part, tbl)
 	end
 
 	for key, part in ipairs(part:GetChildren()) do
-		if part.ClassName == "model" then
+		if part.is_model_part then
 			pace.PartToContraptionData(part, tbl)
 		end
 	end

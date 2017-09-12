@@ -19,6 +19,7 @@ PART.ManualDraw = true
 PART.HandleModifiersManually = true
 PART.Icon = 'icon16/shape_square.png'
 PART.Group = 'pac4'
+PART.is_model_part = true
 
 pac.StartStorableVars()
 

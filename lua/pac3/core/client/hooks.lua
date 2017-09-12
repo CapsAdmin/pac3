@@ -10,7 +10,7 @@ function pac.UpdateAnimation(ply)
 
 	if ply.pac_death_physics_parts and ply:Alive() and ply.pac_physics_died then
 		for _, part in pairs(pac.GetParts()) do
-			if part:GetPlayerOwner() == ply and part.ClassName == "model" then
+			if part:GetPlayerOwner() == ply and part.is_model_part then
 				local ent = part:GetEntity()
 				ent:PhysicsInit(SOLID_NONE)
 				ent:SetMoveType(MOVETYPE_NONE)
@@ -207,7 +207,7 @@ function pac.OnClientsideRagdoll(ply, ent)
 		if ply.pac_physics_died then return end
 
 		for _, part in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
-			if part.ClassName == "model" then
+			if part.is_model_part then
 				pac.InitDeathPhysicsOnProp(part,ply,ent)
 			end
 		end

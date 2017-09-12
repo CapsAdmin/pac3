@@ -317,7 +317,7 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 		:gsub("MATERIAL", ("%q"):format(part:GetMaterial()))
 		:gsub("MODEL", ("%q"):format(part:GetModel()))
 		:gsub("SKIN", part:GetSkin())
-		if part:HasParent() and part:GetParent().ClassName == "model" then
+		if part:HasParent() and part:GetParent().is_model_part then
 			holo = holo:gsub("PARENT", ("holoParent(I, %s)"):format(part.Parent.UniqueID))
 		else
 			holo = holo:gsub("PARENT", "holoParent(I, entity())")
@@ -335,11 +335,11 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 		out = out .. "\n		  I   = 0 # Hologram index starting at 0\n"
 		out = out .. "		  CI  = 0 # Clip index starting at 0\n"
 
-		if part.ClassName == "model" then
+		if part.is_model_part then
 			out = part_to_holo(part)
 		end
 		for key, part in ipairs(part:GetChildren()) do
-			if part.ClassName == "model" and not part:IsHidden() and not part.wavefront_mesh then
+			if part.is_model_part and not part:IsHidden() and not part.wavefront_mesh then
 				out = out .. convert(part)
 			end
 		end

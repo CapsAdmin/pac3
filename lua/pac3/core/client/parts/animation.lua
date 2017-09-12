@@ -69,7 +69,7 @@ end
 function PART:GetOwner()
 	local parent = self:GetParent()
 
-	if parent:IsValid() and parent.ClassName == "model" and parent.Entity:IsValid() then
+	if parent:IsValid() and parent.is_model_part and parent.Entity:IsValid() then
 		return parent.Entity
 	end
 

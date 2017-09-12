@@ -306,7 +306,7 @@ do -- owner
 		if parent:IsValid() then
 			if
 				self.ClassName ~= "event" and
-				parent.ClassName == "model" and
+				parent.is_model_part and
 				parent.Entity:IsValid()
 			then
 				return parent.Entity

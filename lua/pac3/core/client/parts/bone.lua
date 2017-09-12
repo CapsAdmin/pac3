@@ -40,7 +40,7 @@ PART.OnParent = PART.OnShow
 function PART:GetOwner(root)
 	local parent = self:GetParent()
 
-	if parent:IsValid() and parent.ClassName == "model" then
+	if parent:IsValid() and parent.is_model_part then
 		return parent.Entity
 	end
 
