@@ -346,10 +346,24 @@ end
 
 if CLIENT then
 
-	local temp = CreateMaterial(tostring({}), "VertexLitGeneric", {})
 	local memory = {}
 
-	function resource.DownloadTexture(url, callback)
+	timer.Create("pac3_resource_gc", 0.25, 0, function()
+		for k,v in pairs(memory) do
+			if not v.ply:IsValid() then
+				memory[k] = nil
+				file.Delete(v.path)
+			end
+		end
+	end)
+
+	hook.Add("ShutDown", "pac3_resource_gc", function()
+		for _, name in ipairs((file.Find(DOWNLOAD_FOLDER .. "*", "DATA"))) do
+			file.Delete(DOWNLOAD_FOLDER .. name)
+		end
+	end)
+
+	function resource.DownloadTexture(url, callback, ply)
 		local skip_cache = url:sub(1,1) == "_"
 		if skip_cache then url = url:sub(2) end
 
@@ -364,31 +378,39 @@ if CLIENT then
 		return resource.Download(
 			url,
 			function(path)
-				local cache = memory[url:lower()]
-				local frames = cache and cache.frames or nil
+				local frames
+				local tex
+				local mat
 
 				if path:EndsWith(".vtf") then
-					if not frames then
-						local f = file.Open(path, "rb", "DATA")
-						if f then
-							f:Seek(24)
-							frames = f:ReadShort()
-							f:Close()
-						end
-					end
+					local f = file.Open(path, "rb", "DATA")
+					f:Seek(24)
+					frames = f:ReadShort()
+					f:Close()
 
-					temp:SetTexture("$basetexture", "../data/" .. path)
-
-					callback(temp:GetTexture("$basetexture"), frames)
+					mat = CreateMaterial(tostring({}), "VertexLitGeneric", {})
+					mat:SetTexture("$basetexture", "../data/" .. path)
 				else
-					callback(Material("../data/" .. path, "mips smooth noclamp"):GetTexture("$basetexture"))
+					mat = Material("../data/" .. path, "mips smooth noclamp")
 				end
 
-				if not cache then
-					memory[url:lower()] = {buffer = file.Read(path, "DATA"), path = path, frames = frames}
-				end
+				timer.Create(url, 0.1, 50, function()
+					tex = mat:GetTexture("$basetexture")
+					if tex then
+						callback(tex, frames)
 
-				file.Delete(path)
+						if not cache then
+							memory[url:lower()] = {buffer = file.Read(path, "DATA"), path = path, frames = frames, ply = ply}
+						end
+
+						-- we can't delete vtf files because source engine will unload
+						if not path:EndsWith(".vtf") then
+							file.Delete(path)
+						end
+
+						timer.Remove(url)
+					end
+				end)
 			end,
 			function()
 
