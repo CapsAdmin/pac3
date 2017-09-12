@@ -264,6 +264,45 @@ do -- sound
 	pace.RegisterPanel(PANEL)
 end
 
+do -- model modifiers
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_model_modifiers"
+	PANEL.Base = "pace_properties_base_type"
+
+	function PANEL:ExtraPopulate()
+		local part = pace.current_part
+		local ent = part:GetEntity()
+		if not ent:IsValid() or not ent:GetBodyGroups() then return end
+
+		local tbl = {}
+
+		tbl.skin = {
+			val = ent:GetSkin(),
+			callback = function(val)
+				local tbl = part:ModelModifiersToTable(part:GetModelModifiers())
+				tbl.skin = val
+				part:SetModelModifiers(part:ModelModifiersToString(tbl))
+			end,
+			userdata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, ent:SkinCount()) end},
+		}
+
+		for _, info in ipairs(ent:GetBodyGroups()) do
+			tbl[info.name] = {
+				val = info.num,
+				callback = function(val)
+					local tbl = part:ModelModifiersToTable(part:GetModelModifiers())
+					tbl.skin = val
+					part:SetModelModifiers(part:ModelModifiersToString(tbl))
+				end,
+				userdata = {editor_onchange = function(self, num) return math.max(math.Round(num), 0) end},
+			}
+		end
+		pace.properties:Populate(tbl, true)
+	end
+
+	pace.RegisterPanel(PANEL)
+end
 
 do -- arguments
 	local PANEL = {}
@@ -281,7 +320,6 @@ do -- arguments
 		if args then
 			for pos, arg in ipairs(data) do
 				local nam, typ, userdata = unpack(arg)
-				print(pos, args[pos], nam, typ, userdata)
 				if args[pos] then
 					arg = args[pos]
 				else

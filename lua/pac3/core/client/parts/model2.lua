@@ -1,13 +1,13 @@
 local pac = pac
 
-local render_SetColorModulation     = render.SetColorModulation
-local render_SetBlend               = render.SetBlend
-local render_SetMaterial            = render.SetMaterial
-local render_ModelMaterialOverride  = render.MaterialOverride
-local render_MaterialOverride       = render.ModelMaterialOverride
+local render_SetColorModulation = render.SetColorModulation
+local render_SetBlend = render.SetBlend
+local render_SetMaterial = render.SetMaterial
+local render_ModelMaterialOverride = render.MaterialOverride
+local render_MaterialOverride = render.ModelMaterialOverride
 
-local Vector                        = Vector
-local EF_BONEMERGE                  = EF_BONEMERGE
+local Vector = Vector
+local EF_BONEMERGE = EF_BONEMERGE
 local NULL = NULL
 local Color = Color
 
@@ -26,17 +26,15 @@ pac.StartStorableVars()
 	pac.SetPropertyGroup("generic")
 		pac.GetSet(PART, "Model", "", {editor_panel = "model"})
 
-		pac.GetSet(PART, "UseLegacyScale", false)
-
 	pac.SetPropertyGroup("orientation")
 		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
 		pac.GetSet(PART, "Scale", Vector(1,1,1))
 		pac.GetSet(PART, "BoneMerge", false)
-		pac.GetSet(PART, "AlternativeScaling", false)
 
 	pac.SetPropertyGroup("appearance")
 		pac.GetSet(PART, "Color", Vector(1, 1, 1), {editor_panel = "color2"})
 		pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
+		pac.GetSet(PART, "ModelModifiers", "", {editor_panel = "model_modifiers"})
 
 pac.EndStorableVars()
 
@@ -46,19 +44,64 @@ function PART:GetNiceName()
 	return str and str:gsub("%d", "") or "error"
 end
 
+function PART:SetSkin(var)
+	self.Skin = var
+	self.Entity:SetSkin(var)
+end
+
+function PART:ModelModifiersToTable(str)
+	if str == "" or (not str:find(";", nil, true) and not str:find("=", nil, true)) then return {} end
+
+	local tbl = {}
+	for _, data in ipairs(str:Split(";")) do
+		local key, val = data:match("(.+)=(.+)")
+		if key then
+			key = key:Trim()
+			val = tonumber(val:Trim())
+
+			tbl[key] = val
+		else
+			print(data)
+		end
+	end
+
+	return tbl
+end
+
+function PART:ModelModifiersToString(tbl)
+	local str = ""
+	for k,v in pairs(tbl) do
+		str = str .. k .. "=" .. v .. ";"
+	end
+	return str
+end
+
+function PART:SetModelModifiers(str)
+	self.ModelModifiers = str
+
+	if not self.Entity:GetBodyGroups() then return end
+
+	local tbl = self:ModelModifiersToTable(str)
+
+	if tbl.skin then
+		self.Entity:SetSkin(tbl.skin)
+		tbl.skin = nil
+	end
+
+	for i, info in ipairs(self.Entity:GetBodyGroups()) do
+		local val = tbl[info.name:lower()]
+		if val then
+			self.Entity:SetBodygroup(info.id, val)
+		end
+	end
+end
+
 function PART:Reset()
 	self:Initialize()
 	for _, key in pairs(self:GetStorableVars()) do
 		if PART[key] then
 			self["Set" .. key](self, self["Get" .. key](self))
 		end
-	end
-end
-
-function PART:SetUseLegacyScale(b)
-	self.UseLegacyScale = b
-	if not b then
-		self.requires_bone_model_scale = false
 	end
 end
 
@@ -83,9 +126,6 @@ function PART:OnShow()
 end
 
 function PART:OnThink()
-	pac.SetModelScale(self:GetEntity(), self.Scale * self.Size, nil, self.UseLegacyScale)
-
-	self:CheckScale()
 	self:CheckBoneMerge()
 end
 
@@ -135,10 +175,6 @@ function PART:OnDraw(owner, pos, ang)
 	self:PostEntityDraw(owner, ent, pos, ang)
 
 	pac.ResetBones(ent)
-
-	if ent.pac_can_legacy_scale ~= false then
-		ent.pac_can_legacy_scale = not not ent.pac_can_legacy_scale
-	end
 end
 
 function PART:DrawModel(ent, pos, ang)
@@ -210,7 +246,7 @@ local NORMAL = Vector(1,1,1)
 
 function PART:CheckScale()
 	-- RenderMultiply doesn't work with this..
-	if (self.UseLegacyScale or self.BoneMerge) and self.Entity:IsValid() and self.Entity:GetBoneCount() and self.Entity:GetBoneCount() > 1 then
+	if self.BoneMerge and self.Entity:IsValid() and self.Entity:GetBoneCount() and self.Entity:GetBoneCount() > 1 then
 		if self.Scale * self.Size ~= NORMAL then
 			if not self.requires_bone_model_scale then
 				self.requires_bone_model_scale = true
@@ -232,19 +268,8 @@ function PART:SetScale(var)
 
 	self.Scale = var
 
-	if self.AlternativeScaling then
-		if not self:CheckScale() then
-			pac.SetModelScale(self.Entity, self.Scale, nil, self.UseLegacyScale)
-			self.used_alt_scale = true
-		end
-	else
-		if self.used_alt_scale then
-			pac.SetModelScale(self.Entity, nil, 1, self.UseLegacyScale)
-			self.used_alt_scale = false
-		end
-		if not self:CheckScale() then
-			pac.SetModelScale(self.Entity, self.Scale * self.Size, nil, self.UseLegacyScale)
-		end
+	if not self:CheckScale() then
+		pac.SetModelScale(self.Entity, self.Scale * self.Size, nil)
 	end
 end
 
@@ -253,17 +278,8 @@ function PART:SetSize(var)
 
 	self.Size = var
 
-	if self.AlternativeScaling then
-		pac.SetModelScale(self.Entity, nil, self.Size, self.UseLegacyScale)
-		self.used_alt_scale = true
-	else
-		if self.used_alt_scale then
-			pac.SetModelScale(self.Entity, nil, 1, self.UseLegacyScale)
-			self.used_alt_scale = false
-		end
-		if not self:CheckScale() then
-			pac.SetModelScale(self.Entity, self.Scale * self.Size, nil, self.UseLegacyScale)
-		end
+	if not self:CheckScale() then
+		pac.SetModelScale(self.Entity, self.Scale * self.Size, nil)
 	end
 end
 
