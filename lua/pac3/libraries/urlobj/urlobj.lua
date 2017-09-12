@@ -94,8 +94,8 @@ function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statu
 end
 
 local thinkThreads = {}
-local PARSING_THERSOLD = CreateConVar('pac_parse_runtime', '0.01', {FCVAR_ARCHIVE}, 'Maximal parse runtime in seconds')
-local PARSE_CHECK_LINES = 50
+local PARSING_THERSOLD = CreateConVar('pac_obj_runtime', '0.002', {FCVAR_ARCHIVE}, 'Maximal parse runtime in seconds')
+local PARSE_CHECK_LINES = 30
 
 local function Think()
 	local PARSING_THERSOLD = PARSING_THERSOLD:GetFloat()
@@ -143,7 +143,6 @@ function urlobj.CreateModelFromObjData(objData, generateNormals, statusCallback)
 			local meshData = urlobj.ParseObj(objData, generateNormals)
 			mesh:BuildFromTriangles (meshData)
 
-
 			coroutine.yield (true)
 		end
 	)
@@ -184,8 +183,18 @@ local table_insert  = table.insert
 
 local Vector        = Vector
 
+local facesMapper = '([0-9]+)/?([0-9]*)/?([0-9]*)'
+local numberMatch = '(-?[0-9.+-e0-9]+)'
+local vMatch = '^ *v *' .. numberMatch .. ' +' .. numberMatch .. ' +' .. numberMatch
+local vtMatch = '^ *vt *' .. numberMatch .. ' +' .. numberMatch
+local vnMatch = '^ *vn *' .. numberMatch .. ' +' .. numberMatch .. ' +' .. numberMatch
+local ASYNC_PROCESSING = CreateConVar('pac_obj_async', '1', {FCVAR_ARCHIVE}, 'Process OBJ files in background')
+
 function urlobj.ParseObj(data, generateNormals)
 	local coroutine_yield = coroutine.running () and coroutine.yield or function () end
+	if not ASYNC_PROCESSING:GetBool() then
+		coroutine_yield = function () end
+	end
 
 	local positions  = {}
 	local texCoordsU = {}
@@ -196,33 +205,62 @@ function urlobj.ParseObj(data, generateNormals)
 
 	local lines = {}
 	local faceLines = {}
+	local vLines = {}
+	local vtLines = {}
+	local vnLines = {}
+	local facesPreprocess = {}
 
 	local i = 1
 	local inContinuation    = false
 	local continuationLines = nil
-	for line in string_gmatch (data, "(.-)\n") do
-		local continuation = string_match (line, "\\\r?$")
-		if continuation then
-			line = string_sub (line, 1, -#continuation - 1)
-			if inContinuation then
-				continuationLines[#continuationLines + 1] = line
-			else
-				inContinuation    = true
-				continuationLines = { line }
-			end
-		else
-			if inContinuation then
-				continuationLines[#continuationLines + 1] = line
-				lines[#lines + 1] = table_concat (continuationLines)
-				inContinuation    = false
-				continuationLines = nil
-			else
-				lines[#lines + 1] = line
+
+	for line in string_gmatch (data, "(.-)\r?\n") do
+		if #line > 3 then
+			local first = string_sub(line, 1, 1)
+			if first ~= '#' and first ~= 'l' and first ~= 'g' and first ~= 'u' then
+				if string_sub(line, #line) == '\\' then
+					line = string_sub (line, 1, #line - 1)
+					if inContinuation then
+						continuationLines[#continuationLines + 1] = line
+					else
+						inContinuation    = true
+						continuationLines = { line }
+					end
+				else
+					local currLine
+
+					if inContinuation then
+						continuationLines[#continuationLines + 1] = line
+						currLine = table_concat (continuationLines)
+						first = string_sub(currLine, 1, 1)
+						inContinuation    = false
+						continuationLines = nil
+					else
+						currLine = line
+					end
+
+					local second = string_sub(currLine, 1, 2)
+
+					if second == 'vt' then
+						vtLines[#vtLines + 1] = currLine
+					elseif second == 'vn' then
+						vnLines[#vnLines + 1] = currLine
+					elseif first == 'v' then
+						vLines[#vLines + 1] = currLine
+					elseif first == 'f' then
+						facesPreprocess[#facesPreprocess + 1] = currLine
+					else
+						lines[#lines + 1] = currLine
+					end
+				end
+
+				if i % PARSE_CHECK_LINES == 0 then
+					coroutine_yield(false, "Preprocessing lines", i)
+				end
+
+				i = i + 1
 			end
 		end
-
-		coroutine_yield(false, "Preprocessing lines", i)
-		i = i + 1
 	end
 
 	if inContinuation then
@@ -232,30 +270,108 @@ function urlobj.ParseObj(data, generateNormals)
 		continuationLines = nil
 	end
 
+	coroutine_yield(false, "Preprocessing lines", i)
+
+	local lineCount = #vtLines + #vnLines + #vLines + #facesPreprocess
+	local inverseLineCount = 1 / lineCount
+	local lineProcessed = 0
+
+	for i, line in ipairs(vLines) do
+		local x, y, z = string_match(line, vMatch)
+		x, y, z = tonumber(x) or 0, tonumber(y) or 0, tonumber(z) or 0
+		positions[#positions + 1] = Vector(x, y, z)
+
+		if i % PARSE_CHECK_LINES == 0 then
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+		end
+	end
+
+	lineProcessed = #vLines
+
+	for i, line in ipairs(vtLines) do
+		local u, v = string_match(line, vtMatch)
+		u, v = tonumber(u) or 0, tonumber(v) or 0
+
+		local texCoordIndex = #texCoordsU + 1
+		texCoordsU[texCoordIndex] =      u  % 1
+		texCoordsV[texCoordIndex] = (1 - v) % 1
+
+		if i % PARSE_CHECK_LINES == 0 then
+			coroutine_yield(false, "Processing vertices", (i + lineProcessed) * inverseLineCount)
+		end
+	end
+
+	lineProcessed = #vLines + #vtLines
+
+	for i, line in ipairs(vnLines) do
+		local nx, ny, nz = string_match(line, vnMatch)
+
+		if not generateNormals then
+			nx, ny, nz = tonumber(nx) or 0, tonumber(ny) or 0, tonumber(nz) or 0
+
+			local inverseLength = 1 / math_sqrt(nx * nx + ny * ny + nz * nz)
+			nx, ny, nz = nx * inverseLength, ny * inverseLength, nz * inverseLength
+
+			local normal = Vector(nx, ny, nz)
+			normals[#normals + 1] = normal
+		end
+
+		if i % PARSE_CHECK_LINES == 0 then
+			coroutine_yield(false, "Processing vertices", (i + lineProcessed) * inverseLineCount)
+		end
+	end
+
+	lineProcessed = #vLines + #vtLines + #vnLines
+
+	for i, line in ipairs(facesPreprocess) do
+		local matchLine = string_match(line, "^ *f +(.*)")
+
+		-- Explode line
+		local parts = {}
+
+		for part in string_gmatch(matchLine, "[^ ]+") do
+			parts[#parts + 1] = part
+		end
+
+		faceLines[#faceLines + 1] = parts
+
+		if i % PARSE_CHECK_LINES == 0 then
+			coroutine_yield(false, "Processing vertices", (i + lineProcessed) * inverseLineCount)
+		end
+	end
+
 	local lineCount = #lines
 	local inverseLineCount = 1 / lineCount
 	local i = 1
+
 	while i <= lineCount do
 		local processedLine = false
 
 		-- Positions: v %f %f %f [%f]
 		while i <= lineCount do
 			local line = lines[i]
-			local x, y, z = string_match(line, "^%s*v%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
+			local x, y, z = string_match(line, vMatch)
 			if not x then break end
 
 			processedLine = true
 			x, y, z = tonumber(x) or 0, tonumber(y) or 0, tonumber(z) or 0
 			positions[#positions + 1] = Vector(x, y, z)
 
-			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			if i % PARSE_CHECK_LINES == 0 then
+				coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			end
+
 			i = i + 1
+		end
+
+		if processedLine then
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
 		end
 
 		-- Texture coordinates: vt %f %f
 		while i <= lineCount do
 			local line = lines[i]
-			local u, v = string_match(line, "^%s*vt%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
+			local u, v = string_match(line, vtMatch)
 			if not u then break end
 
 			processedLine = true
@@ -265,14 +381,21 @@ function urlobj.ParseObj(data, generateNormals)
 			texCoordsU[texCoordIndex] =      u  % 1
 			texCoordsV[texCoordIndex] = (1 - v) % 1
 
-			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			if i % PARSE_CHECK_LINES == 0 then
+				coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			end
+
 			i = i + 1
+		end
+
+		if processedLine then
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
 		end
 
 		-- Normals: vn %f %f %f
 		while i <= lineCount do
 			local line = lines[i]
-			local nx, ny, nz = string_match(line, "^%s*vn%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)%s+(%-?%d*%.?%d*e?[+-]?%d*%.?%d*)")
+			local nx, ny, nz = string_match(line, vnMatch)
 			if not nx then break end
 
 			processedLine = true
@@ -287,27 +410,43 @@ function urlobj.ParseObj(data, generateNormals)
 				normals[#normals + 1] = normal
 			end
 
-			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			if i % PARSE_CHECK_LINES == 0 then
+				coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			end
+
 			i = i + 1
+		end
+
+		if processedLine then
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
 		end
 
 		-- Faces: f %f %f %f+
 		while i <= lineCount do
 			local line = lines[i]
-			if not string_match(line, "^%s*f%s+") then break end
+			local matchLine = string_match(line, "^ *f +(.*)")
+			if not matchLine then break end
 
 			processedLine = true
-			line = string_match (line, "^%s*(.-)[#%s]*$")
 
 			-- Explode line
 			local parts = {}
-			for part in string_gmatch(line, "[^%s]+") do
+
+			for part in string_gmatch(matchLine, "[^ ]+") do
 				parts[#parts + 1] = part
 			end
+
 			faceLines[#faceLines + 1] = parts
 
-			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			if i % PARSE_CHECK_LINES == 0 then
+				coroutine_yield(false, "Processing vertices", i * inverseLineCount)
+			end
+
 			i = i + 1
+		end
+
+		if processedLine then
+			coroutine_yield(false, "Processing vertices", i * inverseLineCount)
 		end
 
 		-- Something else
@@ -321,15 +460,16 @@ function urlobj.ParseObj(data, generateNormals)
 	for i = 1, #faceLines do
 		local parts = faceLines [i]
 
-		if #parts >= 4 then
-			local v1PositionIndex, v1TexCoordIndex, v1NormalIndex = string_match(parts[2], "(%d+)/?(%d*)/?(%d*)")
-			local v3PositionIndex, v3TexCoordIndex, v3NormalIndex = string_match(parts[3], "(%d+)/?(%d*)/?(%d*)")
+		if #parts >= 3 then
+			-- are they always integers?
+			local v1PositionIndex, v1TexCoordIndex, v1NormalIndex = string_match(parts[1], facesMapper)
+			local v3PositionIndex, v3TexCoordIndex, v3NormalIndex = string_match(parts[2], facesMapper)
 
 			v1PositionIndex, v1TexCoordIndex, v1NormalIndex = tonumber(v1PositionIndex), tonumber(v1TexCoordIndex), tonumber(v1NormalIndex)
 			v3PositionIndex, v3TexCoordIndex, v3NormalIndex = tonumber(v3PositionIndex), tonumber(v3TexCoordIndex), tonumber(v3NormalIndex)
 
-			for i = 4, #parts do
-				local v2PositionIndex, v2TexCoordIndex, v2NormalIndex = string_match(parts[i], "(%d+)/?(%d*)/?(%d*)")
+			for i = 3, #parts do
+				local v2PositionIndex, v2TexCoordIndex, v2NormalIndex = string_match(parts[i], facesMapper)
 				v2PositionIndex, v2TexCoordIndex, v2NormalIndex = tonumber(v2PositionIndex), tonumber(v2TexCoordIndex), tonumber(v2NormalIndex)
 
 				local v1 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil }
@@ -369,8 +509,12 @@ function urlobj.ParseObj(data, generateNormals)
 			end
 		end
 
-		coroutine_yield(false, "Processing faces", i * inverseFaceLineCount)
+		if i % PARSE_CHECK_LINES == 0 then
+			coroutine_yield(false, "Processing faces", i * inverseFaceLineCount)
+		end
 	end
+
+	coroutine_yield(false, "Processing faces", faceLineCount)
 
 	if generateNormals then
 		local vertexNormals = {}
@@ -388,8 +532,13 @@ function urlobj.ParseObj(data, generateNormals)
 
 			vertexNormals[c.pos_index] = vertexNormals[c.pos_index] or Vector()
 			vertexNormals[c.pos_index] = (vertexNormals[c.pos_index] + normal)
-			coroutine_yield(false, "Generating normals", i * inverseTriangleCount)
+
+			if i % PARSE_CHECK_LINES == 0 then
+				coroutine_yield(false, "Generating normals", i * inverseTriangleCount)
+			end
 		end
+
+		coroutine_yield(false, "Generating normals", triangleCount)
 
 		local defaultNormal = Vector(0, 0, -1)
 

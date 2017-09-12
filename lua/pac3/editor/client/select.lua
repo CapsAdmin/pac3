@@ -138,7 +138,7 @@ function pace.StopSelect()
 	end)
 end
 
-local function select_something(tblin, check, getpos, getfriendly, callback)
+local function select_something(tblin, check, getpos, getfriendly, callback, selectCallback)
 	local data
 	local selected = {}
 	holding = nil
@@ -227,6 +227,7 @@ local function select_something(tblin, check, getpos, getfriendly, callback)
 				pace.DrawSelectionSelected(v.pos)
 				pace.DrawHUDText(v.pos.x, v.pos.y, L(v.friendly), 0, -30, v.pos.x, v.pos.y)
 				data = v
+				if selectCallback then selectCallback(v.key, v.value) end
 			else
 				table.sort(selected, function(a,b) return L(a.friendly) > L(b.friendly) end)
 
@@ -243,6 +244,7 @@ local function select_something(tblin, check, getpos, getfriendly, callback)
 						pace.DrawSelectionSelected(v.pos)
 						pace.DrawHUDText(v.pos.x, v.pos.y, L(v.friendly), sx, sy, v.pos.x, v.pos.y, true)
 						found = v
+						if selectCallback then selectCallback(v.key, v.value) end
 					else
 						pace.DrawSelectionHovered(v.pos)
 						pace.DrawHUDText(v.pos.x, v.pos.y, L(v.friendly), sx, sy, v.pos.x, v.pos.y, false, Color(255, 255, 255, 128))
@@ -285,7 +287,12 @@ function pace.SelectBone(ent, callback, only_movable)
 			return k
 		end,
 
-		callback
+		callback,
+
+		function (key, val)
+			if val.is_special or val.is_attachment then return end
+			ent.pac_bones_select_target = val.i
+		end
 	)
 end
 

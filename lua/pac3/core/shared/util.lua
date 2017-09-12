@@ -11,7 +11,21 @@ local FUNCTION_COLOR = Color(62, 106, 255)
 local TABLE_COLOR = Color(107, 200, 224)
 local URL_COLOR = Color(174, 124, 192)
 
-function pac.FormatMessage(tabIn)
+function pac.RepackMessage(strIn)
+	local output = {}
+
+	for line in string.gmatch(strIn, '([^ ]+)') do
+		if #output ~= 0 then
+			table.insert(output, ' ')
+		end
+
+		table.insert(output, line)
+	end
+
+	return output
+end
+
+local function FormatMessage(tabIn)
 	local prevColor = DEFAULT_TEXT_COLOR
 	local output = {prevColor}
 
@@ -47,12 +61,12 @@ function pac.FormatMessage(tabIn)
 			table.insert(output, val:SteamID())
 			table.insert(output, '>')
 			table.insert(output, prevColor)
-		elseif valType == 'Entity' or valType == 'NPC' or valType == 'Player' or valType == 'Vehicle' then
+		elseif valType == 'Entity' or valType == 'NPC' or valType == 'Vehicle' then
 			table.insert(output, ENTITY_COLOR)
 			table.insert(output, tostring(val))
 			table.insert(output, prevColor)
 		elseif valType == 'table' then
-			if val.r and val.g and vag.b then
+			if val.r and val.g and val.b then
 				table.insert(output, val)
 				prevColor = val
 			else
@@ -76,8 +90,10 @@ function pac.FormatMessage(tabIn)
 	return output
 end
 
+pac.FormatMessage = FormatMessage
+
 function pac.Message(...)
-	local formatted = pac.FormatMessage({...})
+	local formatted = FormatMessage({...})
 	MsgC(PREFIX_COLOR, PREFIX, unpack(formatted))
 	MsgC('\n')
 	return formatted
