@@ -185,7 +185,7 @@ do -- list
 
 		local search = vgui.Create("DTextEntry", self)
 		search:Dock(TOP)
-		search.OnLoseFocus = function()
+		search.Kill = function()
 			search:SetVisible(false)
 			search.searched_something = false
 			search:SetText("")
@@ -197,12 +197,12 @@ do -- list
 			end
 		end
 
-		search.OnEnter = search.OnLoseFocus
+		search.OnEnter = search.Kill
 
 		search.OnTextChanged = function()
 			local pattern = search:GetValue()
 			if pattern == "" and search.searched_something then
-				search:OnLoseFocus()
+				search:Kill()
 				search:KillFocus()
 			else
 				search.searched_something = true
