@@ -176,6 +176,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 		if not path or path == "" then return end
 
 		local str = file.Read("materials/" .. path .. ".vmt", "GAME")
+
+		if not str then return end
+
 		local vmt = util.KeyValuesToTable(str)
 		local shader = str:match("^(.-)%{"):gsub("%p", ""):Trim()
 
