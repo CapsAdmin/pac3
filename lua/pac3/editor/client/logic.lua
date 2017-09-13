@@ -8,7 +8,7 @@ function pace.PopulateProperties(part)
 	if pace.properties:IsValid() then
 		pace.properties:Populate(part)
 		for k,v in pairs(pace.extra_populates) do
-			v()
+			v.func(v.pnl)
 		end
 		pace.extra_populates = {}
 

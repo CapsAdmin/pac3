@@ -194,6 +194,8 @@ do -- model
 		pace.ResourceBrowser(function(path)
 			self:SetValue(path)
 			self.OnValueChanged(path)
+			pace.PopulateProperties(pace.current_part)
+
 		end, "models")
 	end
 
@@ -381,27 +383,70 @@ do -- model modifiers
 		local ent = part:GetEntity()
 		if not ent:IsValid() or not ent:GetBodyGroups() then return end
 
+		local group = pac.PropertyUserdata[part.ClassName] and pac.PropertyUserdata[part.ClassName][self.CurrentKey] and pac.PropertyUserdata[part.ClassName][self.CurrentKey].group
+
 		local tbl = {}
 
-		tbl.skin = {
-			val = ent:GetSkin(),
-			callback = function(val)
-				local tbl = part:ModelModifiersToTable(part:GetModelModifiers())
-				tbl.skin = val
-				part:SetModelModifiers(part:ModelModifiersToString(tbl))
-			end,
-			userdata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, ent:SkinCount()) end},
-		}
-
-		for _, info in ipairs(ent:GetBodyGroups()) do
-			tbl[info.name] = {
-				val = info.num,
+		if ent:SkinCount() > 1 then
+			tbl.skin = {
+				val = ent:GetSkin(),
 				callback = function(val)
 					local tbl = part:ModelModifiersToTable(part:GetModelModifiers())
 					tbl.skin = val
 					part:SetModelModifiers(part:ModelModifiersToString(tbl))
 				end,
-				userdata = {editor_onchange = function(self, num) return math.max(math.Round(num), 0) end},
+				userdata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, ent:SkinCount() - 1) end, group = group},
+			}
+		end
+
+		for _, info in ipairs(ent:GetBodyGroups()) do
+			if info.num > 1 then
+				tbl[info.name] = {
+					val = 0,
+					callback = function(val)
+						local tbl = part:ModelModifiersToTable(part:GetModelModifiers())
+						tbl[info.name] = val
+						part:SetModelModifiers(part:ModelModifiersToString(tbl))
+					end,
+					userdata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, info.num - 1) end, group = "bodygroups"},
+				}
+			end
+		end
+		pace.properties:Populate(tbl, true)
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
+do -- model modifiers
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_model_materials"
+	PANEL.Base = "pace_properties_base_type"
+
+	function PANEL:ExtraPopulate()
+		local part = pace.current_part
+		local ent = part:GetEntity()
+		if not ent:IsValid() or not ent:GetMaterials() then return end
+
+		if #ent:GetMaterials() == 1 then return end
+
+		local tbl = {}
+		local cur = part.Materials:Split(";")
+
+		for i, name in ipairs(ent:GetMaterials()) do
+			name = name:match(".+/(.+)") or name
+			tbl[name] = {
+				val = cur[i] or "",
+				callback = function(val)
+					local tbl = part.Materials:Split(";")
+					tbl[i] = val
+					for i, name in ipairs(ent:GetMaterials()) do
+						tbl[i] = tbl[i] or ""
+					end
+					part:SetMaterials(table.concat(tbl, ";"))
+				end,
+				userdata = {editor_panel = "material", editor_friendly = name, group = "sub materials"},
 			}
 		end
 		pace.properties:Populate(tbl, true)

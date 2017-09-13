@@ -19,6 +19,7 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "MoveChildrenToOrigin", false)
 		pac.GetSet(PART, "FollowAnglesOnly", false)
 		pac.GetSet(PART, "HideMesh", false)
+		pac.GetSet(PART, "InvertHideMesh", false)
 		pac.SetupPartName(PART, "FollowPart")
 
 	pac.SetPropertyGroup("orientation")
@@ -230,6 +231,18 @@ function PART:OnBuildBonePositions()
 
 	if self.HideMesh then
 		scale = inf_scale
+
+		if self.InvertHideMesh then
+			local count = owner:GetBoneCount()
+
+			for i = 0, count - 1 do
+				if i ~= self.BoneIndex then
+					manscale(owner, i, inf_scale, self)
+				end
+			end
+
+			return
+		end
 	else
 		scale = self.Scale * self.Size
 	end
