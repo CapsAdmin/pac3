@@ -200,13 +200,13 @@ do -- model
 	pace.RegisterPanel(PANEL)
 end
 
-do -- material
-	local PANEL = {}
+do -- materials and textures
+	local PANEL_MATERIAL = {}
 
-	PANEL.ClassName = "properties_material"
-	PANEL.Base = "pace_properties_base_type"
+	PANEL_MATERIAL.ClassName = "properties_material"
+	PANEL_MATERIAL.Base = "pace_properties_base_type"
 
-	function PANEL:SpecialCallback()
+	function PANEL_MATERIAL:SpecialCallback()
 		pace.ResourceBrowser(function(path)
 			path = path:match("materials/(.+)%.vmt")
 			self:SetValue(path)
@@ -214,7 +214,7 @@ do -- material
 		end, "materials")
 	end
 
-	function PANEL:SpecialCallback2()
+	function PANEL_MATERIAL:SpecialCallback2()
 		pace.SafeRemoveSpecialPanel()
 
 		local pnl = pace.CreatePanel("mat_browser")
@@ -229,10 +229,6 @@ do -- material
 		pace.ActiveSpecialPanel = pnl
 	end
 
-	pace.RegisterPanel(PANEL)
-end
-
-do -- textures
 	local PANEL = {}
 	local pace_material_display
 
@@ -289,6 +285,8 @@ do -- textures
 		surface.DrawTexturedRect(x, y, w, h)
 	end
 
+	PANEL_MATERIAL.HUDPaint = PANEL.HUDPaint
+
 	function PANEL:MustShowTexture()
 		if self.isShownTexture then return end
 
@@ -313,11 +311,15 @@ do -- textures
 		self.isShownTexture = true
 	end
 
+	PANEL_MATERIAL.MustShowTexture = PANEL.MustShowTexture
+
 	function PANEL:MustHideTexture()
 		if not self.isShownTexture then return end
 		self.isShownTexture = false
 		hook.Remove('PostRenderVGUI', self, self.HUDPaint)
 	end
+
+	PANEL_MATERIAL.MustHideTexture = PANEL.MustHideTexture
 
 	function PANEL:ThinkTextureDisplay()
 		if self.preTextureThink then self:preTextureThink() end
@@ -336,13 +338,18 @@ do -- textures
 		end
 	end
 
+	PANEL_MATERIAL.ThinkTextureDisplay = PANEL.ThinkTextureDisplay
+
 	function PANEL:OnSpecialCallbackButton(btn)
 		self.preTextureThink = self.Think
 		self.Think = self.ThinkTextureDisplay
 		self.textureButton = btn
 	end
 
+	PANEL_MATERIAL.OnSpecialCallbackButton = PANEL.OnSpecialCallbackButton
+
 	pace.RegisterPanel(PANEL)
+	pace.RegisterPanel(PANEL_MATERIAL)
 end
 
 
