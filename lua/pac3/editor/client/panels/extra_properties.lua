@@ -269,10 +269,19 @@ do -- textures
 		-- local x, y = self:LocalToScreen(w, 0)
 
 		-- Near cursor
+		local W, H = ScrW(), ScrH()
 		local x, y = gui.MousePos()
-		local w, h = 128, 128
+		local w, h = 256, 256
 		x = x + 12
 		y = y + 4
+
+		if x + w > W then
+			x = x - w - 24
+		end
+
+		if y + h > H then
+			y = y - h - 8
+		end
 
 		surface.SetDrawColor(255, 255, 255, 255)
 		surface.SetAlphaMultiplier(1)
@@ -288,7 +297,16 @@ do -- textures
 		end
 
 		if pace.current_part[self.CurrentKey] and pace.current_part[self.CurrentKey] ~= "" then
-			pace_material_display:SetTexture("$basetexture", pace.current_part[self.CurrentKey])
+			if not string.find(pace.current_part[self.CurrentKey], '^https?://') then
+				pace_material_display:SetTexture("$basetexture", pace.current_part[self.CurrentKey])
+			else
+				local function callback(mat, tex)
+					if not tex then return end
+					pace_material_display:SetTexture("$basetexture", tex)
+				end
+
+				pac.urltex.GetMaterialFromURL(pace.current_part[self.CurrentKey], callback, false, 'UnlitGeneric')
+			end
 		end
 
 		hook.Add('PostRenderVGUI', self, self.HUDPaint)
