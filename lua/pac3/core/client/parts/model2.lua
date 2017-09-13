@@ -230,15 +230,18 @@ function PART:SetModel(path)
 			self.loading = nil
 			self.Entity.pac_bones = nil
 			self.Entity:SetModel(path)
+			self:SetModelModifiers("")
 		end, function(err)
 			pac.Message(err)
 			self.loading = nil
 			self.Entity.pac_bones = nil
 			self.Entity:SetModel("error.mdl")
+			self:SetModelModifiers("")
 		end, self:GetPlayerOwner())
 	else
 		self.Entity.pac_bones = nil
 		self.Entity:SetModel(path)
+		self:SetModelModifiers("")
 	end
 end
 
