@@ -369,6 +369,43 @@ do -- model modifiers
 	pace.RegisterPanel(PANEL)
 end
 
+do -- model modifiers
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_model_materials"
+	PANEL.Base = "pace_properties_base_type"
+
+	function PANEL:ExtraPopulate()
+		local part = pace.current_part
+		local ent = part:GetEntity()
+		if not ent:IsValid() or not ent:GetMaterials() then return end
+
+		if #ent:GetMaterials() == 1 then return end
+
+		local tbl = {}
+		local cur = part.Materials:Split(";")
+
+		for i, name in ipairs(ent:GetMaterials()) do
+			name = name:match(".+/(.+)") or name
+			tbl[name] = {
+				val = cur[i] or "",
+				callback = function(val)
+					local tbl = part.Materials:Split(";")
+					tbl[i] = val
+					for i, name in ipairs(ent:GetMaterials()) do
+						tbl[i] = tbl[i] or ""
+					end
+					part:SetMaterials(table.concat(tbl, ";"))
+				end,
+				userdata = {editor_panel = "material", editor_friendly = name, group = "sub materials"},
+			}
+		end
+		pace.properties:Populate(tbl, true)
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
 do -- arguments
 	local PANEL = {}
 

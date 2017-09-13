@@ -460,7 +460,6 @@ do -- list
 
 			if not obj.ClassName or not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key) then
 				local group = group_override or (udata and udata.group) or "generic"
-				print(group, obj.ClassName)
 				tbl[group] = tbl[group] or {}
 				table.insert(tbl[group], {key = key, val = val, callback = callback, udata = udata})
 			end

@@ -35,6 +35,8 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "Color", Vector(1, 1, 1), {editor_panel = "color2"})
 		pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
 		pac.GetSet(PART, "ModelModifiers", "", {editor_panel = "model_modifiers"})
+		pac.GetSet(PART, "Material", "", {editor_panel = "material"})
+		pac.GetSet(PART, "Materials", "", {editor_panel = "model_materials"})
 
 pac.EndStorableVars()
 
@@ -60,8 +62,6 @@ function PART:ModelModifiersToTable(str)
 			val = tonumber(val:Trim())
 
 			tbl[key] = val
-		else
-			print(data)
 		end
 	end
 
@@ -93,6 +93,48 @@ function PART:SetModelModifiers(str)
 		if val then
 			self.Entity:SetBodygroup(info.id, val)
 		end
+	end
+end
+
+function PART:SetMaterial(str)
+	self.Material = str
+
+	if str == "" then
+		if self.material_override_self then
+			self.material_override_self[0] = nil
+		end
+	else
+		self.material_override_self = self.material_override_self or {}
+		self.material_override_self[0] = pac.Material(str, self)
+	end
+
+	if not next(self.material_override_self) then
+		self.material_override_self = nil
+	end
+end
+
+function PART:SetMaterials(str)
+	self.Materials = str
+
+	local materials = self:GetEntity():GetMaterials()
+
+	if not materials then return end
+
+	self.material_override_self = self.material_override_self or {}
+
+	local tbl = str:Split(";")
+
+	for i = 1, #materials do
+		local path = tbl[i]
+		if path and path ~= "" then
+			self.material_override_self[i] = pac.Material(path, self)
+		else
+			self.material_override_self[i] = nil
+		end
+	end
+
+	if not next(self.material_override_self) then
+		self.material_override_self = nil
 	end
 end
 
@@ -179,13 +221,29 @@ end
 
 function PART:DrawModel(ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
-		if self.material_override then
-			if self.material_override[0] and self.material_override[0][1] then
-				render_MaterialOverride(self.material_override[0][1]:GetRawMaterial())
+		local materials = self.material_override_self or self.material_override
+
+		if self.material_override_self then
+			if materials[0] then
+				render_MaterialOverride(materials[0])
 			end
 
 			for i = 1, #ent:GetMaterials() do
-				local stack = self.material_override[i]
+				local mat = materials[i]
+
+				if mat then
+					render.MaterialOverrideByIndex(i-1, mat)
+				else
+					render.MaterialOverrideByIndex(i-1, nil)
+				end
+			end
+		elseif self.material_override then
+			if materials[0] and materials[0][1] then
+				render_MaterialOverride(materials[0][1]:GetRawMaterial())
+			end
+
+			for i = 1, #ent:GetMaterials() do
+				local stack = materials[i]
 				if stack then
 					local mat = stack[1]
 
@@ -219,6 +277,13 @@ function PART:DrawLoadingText(ent, pos, ang)
 	cam.End2D()
 end
 
+function PART:RealSetModel(path)
+	self.Entity.pac_bones = nil
+	self:SetModelModifiers("")
+	self:SetMaterials("")
+	self.Entity:SetModel(path)
+end
+
 function PART:SetModel(path)
 	self.Model = path
 	self.Entity = self:GetEntity()
@@ -228,20 +293,14 @@ function PART:SetModel(path)
 
 		pac.DownloadMDL(path, function(path)
 			self.loading = nil
-			self.Entity.pac_bones = nil
-			self.Entity:SetModel(path)
-			self:SetModelModifiers("")
+			self:RealSetModel(path)
 		end, function(err)
 			pac.Message(err)
 			self.loading = nil
-			self.Entity.pac_bones = nil
-			self.Entity:SetModel("error.mdl")
-			self:SetModelModifiers("")
+			self:RealSetModel("error.mdl")
 		end, self:GetPlayerOwner())
 	else
-		self.Entity.pac_bones = nil
-		self.Entity:SetModel(path)
-		self:SetModelModifiers("")
+		self:RealSetModel(path)
 	end
 end
 
