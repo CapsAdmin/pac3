@@ -318,9 +318,16 @@ do -- list
 	pace.CollapsedProperties = pace.luadata.ReadFile("pac3_editor/collapsed.txt") or {}
 
 	function PANEL:AddCollapser(name)
+		for i,v in ipairs(self.List) do
+			if v.group == name then
+				return
+			end
+		end
+
 		local left = vgui.Create("DButton", self)
 		left:SetText("")
 		left.text = name
+
 		self.left:AddItem(left)
 
 		left.DoClick = function()
@@ -366,20 +373,21 @@ do -- list
 			left:GetSkin().tex.CategoryList.Header(-w,0,w*2,h)
 		end
 
-		table.insert(self.List, {left = left, right = right, panel = var, key = key})
+		table.insert(self.List, {left = left, right = right, panel = var, key = key, group = name})
+
+		return #self.List
 	end
 
-	function PANEL:AddKeyValue(key, var, pos, obj, udata)
+	function PANEL:AddKeyValue(key, var, pos, obj, udata, group)
 		local btn = pace.CreatePanel("properties_label")
 			btn:SetValue(L((udata and udata.editor_friendly or key):gsub("%u", " %1"):lower()):Trim())
-			btn.pac3_sort_pos = pos
 
 			if obj then
 				btn.key_name = key
 				btn.part_namepart_name = obj.ClassName
 			end
 
-		self.left:AddItem(btn)
+
 
 		local pnl = pace.CreatePanel("properties_container")
 		pnl.right = true
@@ -390,10 +398,33 @@ do -- list
 			pnl:SetContent(var)
 		end
 
-		pnl.pac3_sort_pos = pos
+		self.left:AddItem(btn)
 		self.right:AddItem(pnl)
 
-		table.insert(self.List, {left = btn, right = pnl, panel = var, key = key})
+		local pos
+
+		if group then
+			for i, v in ipairs(self.List) do
+				if v.group == group then
+					for i = i + 1, #self.List do
+						local v = self.List[i]
+						if v.group or not v then
+							pos = i
+							break
+						end
+					end
+				end
+			end
+		end
+
+		if pos then
+			table.insert(self.left.Items, pos, table.remove(self.left.Items))
+			table.insert(self.right.Items, pos, table.remove(self.right.Items))
+
+			table.insert(self.List, pos, {left = btn, right = pnl, panel = var, key = key})
+		else
+			table.insert(self.List, {left = btn, right = pnl, panel = var, key = key})
+		end
 	end
 
 	function PANEL:Clear()
@@ -429,6 +460,7 @@ do -- list
 
 			if not obj.ClassName or not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key) then
 				local group = group_override or (udata and udata.group) or "generic"
+				print(group, obj.ClassName)
 				tbl[group] = tbl[group] or {}
 				table.insert(tbl[group], {key = key, val = val, callback = callback, udata = udata})
 			end
@@ -475,6 +507,7 @@ do -- list
 			local group, tbl = tbl.key, tbl.val
 			for pos, data in ipairs(tbl) do
 				local key, val, udata = data.key, data.val, data.udata
+				local group_pos = 0
 
 				if obj.ClassName and pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
 
@@ -482,7 +515,7 @@ do -- list
 				local T = type(val):lower()
 
 				if current_group ~= group then
-					self:AddCollapser(group)
+					group_pos = self:AddCollapser(group)
 					current_group = group
 				end
 
@@ -567,15 +600,15 @@ do -- list
 					end
 
 					if obj.ClassName then
+						pnl.CurrentKey = key
+
 						if pnl.ExtraPopulate then
-							table.insert(pace.extra_populates, pnl.ExtraPopulate)
+							table.insert(pace.extra_populates, {pnl = pnl, func = pnl.ExtraPopulate})
 							pnl:Remove()
 							continue
 						end
 
-						pnl.CurrentKey = key
 						obj.editor_pnl = pnl
-
 
 						local val = obj["Get" .. key](obj)
 						pnl:SetValue(val)
@@ -594,7 +627,7 @@ do -- list
 						pnl.CurrentKey = key
 						pnl:SetValue(val)
 						pnl.OnValueChanged = data.callback
-						self:AddKeyValue(key, pnl, pos, nil, udata)
+						self:AddKeyValue(key, pnl, pos, nil, udata, group)
 					end
 				end
 			end

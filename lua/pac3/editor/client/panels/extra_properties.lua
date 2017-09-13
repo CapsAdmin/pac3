@@ -334,6 +334,8 @@ do -- model modifiers
 		local ent = part:GetEntity()
 		if not ent:IsValid() or not ent:GetBodyGroups() then return end
 
+		local group = pac.PropertyUserdata[part.ClassName] and pac.PropertyUserdata[part.ClassName][self.CurrentKey] and pac.PropertyUserdata[part.ClassName][self.CurrentKey].group
+
 		local tbl = {}
 
 		tbl.skin = {
@@ -343,18 +345,18 @@ do -- model modifiers
 				tbl.skin = val
 				part:SetModelModifiers(part:ModelModifiersToString(tbl))
 			end,
-			userdata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, ent:SkinCount()) end},
+			userdata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, ent:SkinCount()) end, group = group},
 		}
 
 		for _, info in ipairs(ent:GetBodyGroups()) do
 			tbl[info.name] = {
-				val = info.num,
+				val = 0,
 				callback = function(val)
 					local tbl = part:ModelModifiersToTable(part:GetModelModifiers())
-					tbl.skin = val
+					tbl[info.name] = val
 					part:SetModelModifiers(part:ModelModifiersToString(tbl))
 				end,
-				userdata = {editor_onchange = function(self, num) return math.max(math.Round(num), 0) end},
+				userdata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, info.num - 1) end, group = "bodygroups"},
 			}
 		end
 		pace.properties:Populate(tbl, true)
