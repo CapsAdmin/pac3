@@ -27,6 +27,10 @@ local function DefineSpecialCallback(self, callFuncLeft, callFuncRight)
 		btn.DoRightClick = btn.DoClick
 	end
 
+	if self.OnSpecialCallbackButton then
+		self:OnSpecialCallbackButton(btn)
+	end
+
 	return btn
 end
 
@@ -699,7 +703,7 @@ do -- base editable
 	end
 
 	function PANEL:Init(...)
-		timer.Simple(0,function()
+		timer.Simple(0, function()
 			if self:IsValid() and self.SpecialCallback then
 				self:DefineSpecialCallback(self.SpecialCallback, self.SpecialCallback2)
 			end
@@ -814,7 +818,7 @@ do -- base editable
 	function PANEL:EditText()
 		self:SetText("")
 
-		local pnl = vgui.Create("DTextEntry", self)
+		local pnl = vgui.Create("DTextEntry")
 		self.editing = pnl
 		pnl:SetFont(pace.CurrentFont)
 		pnl:SetDrawBackground(false)
@@ -824,9 +828,14 @@ do -- base editable
 		pnl:RequestFocus()
 		pnl:SelectAllOnFocus(true)
 
-		local x,y = pnl:GetPos()
-		pnl:SetPos(x+3,y-4)
-		pnl:Dock(FILL)
+		--local x,y = pnl:GetPos()
+		--pnl:SetPos(x+3,y-4)
+		--pnl:Dock(FILL)
+		local x, y = self:LocalToScreen()
+		pnl:SetPos(x+5, y)
+		pnl:SetSize(self:GetSize())
+		pnl:SetWide(ScrW())
+		pnl:MakePopup()
 
 		pnl.OnEnter = function()
 			pace.BusyWithProperties = NULL
@@ -837,6 +846,20 @@ do -- base editable
 			self:SetValue(pnl:GetValue() or "", true)
 			self.OnValueChanged(self:Decode(pnl:GetValue()))
 		end
+
+		local old = pnl.Paint
+		pnl.Paint = function(...)
+			if not self:IsValid() then pnl:Remove() return end
+
+			surface.SetFont(pnl:GetFont())
+			local w = surface.GetTextSize(pnl:GetValue()) + 6
+
+			surface.DrawRect(0,0,w,pnl:GetTall())
+			surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
+			surface.DrawOutlinedRect(0,0,w,pnl:GetTall())
+			old(...)
+		end
+
 
 		pace.BusyWithProperties = pnl
 	end
