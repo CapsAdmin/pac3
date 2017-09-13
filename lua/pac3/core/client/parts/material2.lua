@@ -243,7 +243,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 		if parent:IsValid() then
 			if tonumber(str) then
 				num = tonumber(str)
-			elseif str ~= "all" and parent.GetEntity and parent:GetEntity():IsValid() then
+			elseif str ~= "all" and parent.GetEntity and parent:GetEntity():IsValid() and parent:GetEntity():GetMaterials() then
 				for i, v in ipairs(parent:GetEntity():GetMaterials()) do
 					if v == str then
 						num = i
