@@ -9,6 +9,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Material", "")
 	pac.GetSet(PART, "SubMaterialId", 1, {
 		editor_panel = "submaterialid",
+
 		on_change = function(self, num)
 			num = tonumber(num) or 0
 
@@ -18,6 +19,7 @@ pac.StartStorableVars()
 
 			return math.floor(math.Clamp(num, 0, maxnum))
 		end,
+
 		enums = function(part)
 			return part:GetSubMaterialIdList()
 		end,
