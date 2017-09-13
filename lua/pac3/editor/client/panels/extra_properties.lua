@@ -194,6 +194,8 @@ do -- model
 		pace.ResourceBrowser(function(path)
 			self:SetValue(path)
 			self.OnValueChanged(path)
+			pace.PopulateProperties(pace.current_part)
+
 		end, "models")
 	end
 
