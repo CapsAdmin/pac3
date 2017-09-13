@@ -85,7 +85,7 @@ end
 
 -- Javascript
 function webaudio.Browser.RunJavascript(code)
-	webaudio.Browser.Control:QueueJavascript(code)
+	if IsValid(webaudio.Browser.Control) then webaudio.Browser.Control:QueueJavascript(code) end
 end
 
 function webaudio.Browser.QueueJavascript(code)
