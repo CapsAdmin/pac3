@@ -816,6 +816,7 @@ do -- base editable
 	end
 
 	function PANEL:EditText()
+		local oldText = self:GetText()
 		self:SetText("")
 
 		local pnl = vgui.Create("DTextEntry")
@@ -827,6 +828,19 @@ do -- base editable
 		pnl:SetKeyboardInputEnabled(true)
 		pnl:RequestFocus()
 		pnl:SelectAllOnFocus(true)
+
+		local hookID = tostring(self) .. math.random(1, 1000)
+		local textEntry = pnl
+
+		hook.Add('GUIMousePressed', hookID, function(code)
+			if not IsValid(self) or not IsValid(textEntry) then return hook.Remove('GUIMousePressed', hookID) end
+			if textEntry:IsHovered() then return end
+			hook.Remove('GUIMousePressed', hookID)
+			self.editing = false
+			pace.BusyWithProperties = NULL
+			textEntry:Remove()
+			self:SetText(oldText)
+		end)
 
 		--local x,y = pnl:GetPos()
 		--pnl:SetPos(x+3,y-4)
@@ -854,12 +868,11 @@ do -- base editable
 			surface.SetFont(pnl:GetFont())
 			local w = surface.GetTextSize(pnl:GetValue()) + 6
 
-			surface.DrawRect(0,0,w,pnl:GetTall())
+			surface.DrawRect(0, 0, w, pnl:GetTall())
 			surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
-			surface.DrawOutlinedRect(0,0,w,pnl:GetTall())
+			surface.DrawOutlinedRect(0, 0, w, pnl:GetTall())
 			old(...)
 		end
-
 
 		pace.BusyWithProperties = pnl
 	end
