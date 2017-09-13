@@ -338,26 +338,30 @@ do -- model modifiers
 
 		local tbl = {}
 
-		tbl.skin = {
-			val = ent:GetSkin(),
-			callback = function(val)
-				local tbl = part:ModelModifiersToTable(part:GetModelModifiers())
-				tbl.skin = val
-				part:SetModelModifiers(part:ModelModifiersToString(tbl))
-			end,
-			userdata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, ent:SkinCount()) end, group = group},
-		}
-
-		for _, info in ipairs(ent:GetBodyGroups()) do
-			tbl[info.name] = {
-				val = 0,
+		if ent:SkinCount() > 1 then
+			tbl.skin = {
+				val = ent:GetSkin(),
 				callback = function(val)
 					local tbl = part:ModelModifiersToTable(part:GetModelModifiers())
-					tbl[info.name] = val
+					tbl.skin = val
 					part:SetModelModifiers(part:ModelModifiersToString(tbl))
 				end,
-				userdata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, info.num - 1) end, group = "bodygroups"},
+				userdata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, ent:SkinCount() - 1) end, group = group},
 			}
+		end
+
+		for _, info in ipairs(ent:GetBodyGroups()) do
+			if info.num > 1 then
+				tbl[info.name] = {
+					val = 0,
+					callback = function(val)
+						local tbl = part:ModelModifiersToTable(part:GetModelModifiers())
+						tbl[info.name] = val
+						part:SetModelModifiers(part:ModelModifiersToString(tbl))
+					end,
+					userdata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, info.num - 1) end, group = "bodygroups"},
+				}
+			end
 		end
 		pace.properties:Populate(tbl, true)
 	end
