@@ -551,9 +551,13 @@ do -- get set and editor vars
 		PART.IngoreSetKeys = PART.IgnoreSetKeys or {}
 		PART.IngoreSetKeys[name_key] = true
 
+		local group = __group
+
 		pac.EndStorableVars()
 			pac.GetSet(PART, part_key, pac.NULL)
 		pac.StartStorableVars()
+
+		__group = group
 
 		pac.GetSet(PART, name_key, "", udata or {editor_panel = "part"})
 		pac.GetSet(PART, uid_key, "", {hidden = true})
