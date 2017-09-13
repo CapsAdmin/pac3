@@ -168,7 +168,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 			local f = file.Open(path, "rb", "DATA")
 
-			local found = false
 			local files = {}
 
 			local ok, err = pcall(function()
@@ -204,12 +203,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 					local buffer = f:Read(size)
 
-					if name:EndsWith(".mdl") then
-						--local path = buffer:sub(13, 12+64)
-						--buffer = buffer:gsub(path, mdl_dir .. "model.mdl")
-						found = true
-					end
-
 					name = name:match(".+/(.+)") or name
 
 					if not buffer then
@@ -220,6 +213,11 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						local ok = true
 						for i,v in ipairs(files) do
 							if v.name == name then
+
+								if v.name:EndsWith(".mdl") then
+									error("zip archive contains more than 1 mdl file (" .. v.file_path .. " and " .. file_path .. ")")
+								end
+
 								if ply == pac.LocalPlayer then
 									pac.Message(Color(255, 200,50), url, ": contains ", name, " more than once")
 									pac.Message(Color(255, 200,50), file_path)
@@ -267,11 +265,32 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				return
 			end
 
-			if not found then
-				for k,v in pairs(files) do
-					print(v.file_name, string.NiceSize(#v.buffer))
+			local required = {
+				".mdl",
+				".vvd",
+				".dx90.vtx",
+			}
+			local found = {}
+			for k,v in pairs(files) do
+				for _, ext in ipairs(required) do
+					if v.file_name:EndsWith(ext) then
+						table.insert(found, ext)
+						break
+					end
 				end
-				onfail("mdl not found in archive")
+			end
+
+			if #found ~= #required then
+				local str = {}
+
+				for _, ext in ipairs(required) do
+					if not table.HasValue(found, ext) then
+						table.insert(str, ext)
+					end
+				end
+
+				onfail("could not find " .. table.concat(str, " or ") .. " in zip archive")
+
 				return
 			end
 
