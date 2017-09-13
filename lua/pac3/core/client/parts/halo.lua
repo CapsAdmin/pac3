@@ -10,16 +10,19 @@ PART.Group = {'effects', 'model'}
 PART.Icon = 'icon16/shading.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
-	pac.GetSet(PART, "BlurX", 2)
-	pac.GetSet(PART, "BlurY", 2)
-	pac.GetSet(PART, "Passes", 1)
-	pac.GetSet(PART, "Amount", 1)
-	pac.GetSet(PART, "Additive", true) -- haaaa
-	pac.GetSet(PART, "IgnoreZ", false)
-	pac.GetSet(PART, "SphericalSize", 1)
-	pac.GetSet(PART, "Shape", 1)
-	pac.GetSet(PART, "AffectChildren", false)
+	pac.SetPropertyGroup()
+		pac.GetSet(PART, "BlurX", 2)
+		pac.GetSet(PART, "BlurY", 2)
+		pac.GetSet(PART, "Amount", 1)
+		pac.GetSet(PART, "IgnoreZ", false)
+		pac.GetSet(PART, "SphericalSize", 1)
+		pac.GetSet(PART, "Shape", 1)
+		pac.GetSet(PART, "AffectChildren", false)
+
+	pac.SetPropertyGroup("appearance")
+		pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
+		pac.GetSet(PART, "Passes", 1)
+		pac.GetSet(PART, "Additive", true) -- haaaa
 pac.EndStorableVars()
 
 function PART:GetNiceName()

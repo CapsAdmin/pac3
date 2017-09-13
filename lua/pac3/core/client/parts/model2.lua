@@ -225,7 +225,7 @@ function PART:SetModel(path)
 	self.Model = path
 	self.Entity = self:GetEntity()
 
-	if path:find("^http") then
+	if path:find("^.-://") then
 		local status, reason = hook.Run('PAC3AllowMDLDownload', self:GetPlayerOwner(), self, path)
 
 		if ALLOW_TO_MDL:GetBool() and status ~= false then

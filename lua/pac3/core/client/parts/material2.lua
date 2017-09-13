@@ -330,10 +330,10 @@ for shader_name, groups in pairs(shader_params.shaders) do
 						if not pac.resource.DownloadTexture(val, function(tex, frames)
 							if frames then
 								self.vtf_frame_limit = self.vtf_frame_limit or {}
-								self.vtf_frame_limit[property_name] = frames
+								self.vtf_frame_limit[group] = frames
 							end
 							self:GetRawMaterial():SetTexture(key, tex)
-						end) then
+						end, self:GetPlayerOwner()) then
 							self:GetRawMaterial():SetTexture(key, val)
 						end
 					end
@@ -362,8 +362,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 					if property_name:lower():find("frame") then
 						PART["Set" .. property_name] = function(self, val)
 							self[property_name] = val
-							if self.vtf_frame_limit and self.vtf_frame_limit[property_name] then
-								self:GetRawMaterial():SetInt(key, math.abs(val)%self.vtf_frame_limit[property_name])
+							if self.vtf_frame_limit and self.vtf_frame_limit[group] then
+								self:GetRawMaterial():SetInt(key, math.abs(val)%self.vtf_frame_limit[group])
 							end
 						end
 					end
