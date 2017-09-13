@@ -8,11 +8,10 @@ PART.Group = {'model', 'entity'}
 pac.StartStorableVars()
 	pac.GetSet(PART, "Material", "")
 	pac.GetSet(PART, "SubMaterialId", 1, {
-		editor_panel = "submaterialid",
-		on_change = function(self, num)
+		editor_onchange = function(self, num)
 			num = tonumber(num) or 0
 
-			local ent = self:GetOwner(self.RootOwner)
+			local ent = pace.current_part:GetOwner(pace.current_part.RootOwner)
 
 			local maxnum = 16
 
