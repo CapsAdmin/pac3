@@ -261,6 +261,47 @@ do -- textures
 		pace.ActiveSpecialPanel = pnl
 	end
 
+	function PANEL:OnSpecialCallbackButton(btn)
+		local temp = CreateMaterial(tostring({}), "UnlitGeneric", {})
+		local old = btn.Paint
+		btn.Paint = function(_,w,h)
+			if pace.current_part[self.CurrentKey] and pace.current_part[self.CurrentKey] ~= ""	 then
+				temp:SetTexture("$basetexture", pace.current_part[self.CurrentKey])
+				surface.SetDrawColor(255, 255, 255, 255)
+				surface.SetMaterial(temp)
+				surface.DrawTexturedRect(0, 0, w, h)
+
+				surface.SetAlphaMultiplier(0.1)
+				old(_,w,h)
+				surface.SetAlphaMultiplier(1)
+			else
+				old(_,w,h)
+			end
+		end
+		local old = btn.OnCursorEntered
+		btn.OnCursorEntered = function()
+			hook.Add("PostRenderVGUI", "pace_texture_tooltip", function()
+				if pace.current_part[self.CurrentKey] and pace.current_part[self.CurrentKey] ~= ""	 then
+					temp:SetTexture("$basetexture", pace.current_part[self.CurrentKey])
+
+					surface.SetAlphaMultiplier(1)
+					surface.SetDrawColor(255, 255, 255, 255)
+					surface.SetMaterial(temp)
+					local x, y = gui.MouseX(), gui.MouseY()
+					local size = 128
+					y = y - size - 32 - 16
+					x = x - size / 2
+					surface.DrawTexturedRect(x, y, size, size)
+				end
+			end)
+		end
+
+		local old = btn.OnCursorEntered
+		btn.OnCursorExited = function()
+			hook.Remove("PostRenderVGUI", "pace_texture_tooltip")
+		end
+	end
+
 	pace.RegisterPanel(PANEL)
 end
 
