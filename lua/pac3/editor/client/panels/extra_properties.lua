@@ -234,6 +234,7 @@ end
 
 do -- textures
 	local PANEL = {}
+	local pace_material_display
 
 	PANEL.ClassName = "properties_textures"
 	PANEL.Base = "pace_properties_base_type"
@@ -261,45 +262,66 @@ do -- textures
 		pace.ActiveSpecialPanel = pnl
 	end
 
+	function PANEL:HUDPaint()
+		if IsValid(self.editing) then return self:MustHideTexture() end
+		-- Near Button?
+		-- local w, h = self:GetSize()
+		-- local x, y = self:LocalToScreen(w, 0)
+
+		-- Near cursor
+		local x, y = gui.MousePos()
+		local w, h = 128, 128
+		x = x + 12
+		y = y + 4
+
+		surface.SetDrawColor(255, 255, 255, 255)
+		surface.SetAlphaMultiplier(1)
+		surface.SetMaterial(pace_material_display)
+		surface.DrawTexturedRect(x, y, w, h)
+	end
+
+	function PANEL:MustShowTexture()
+		if self.isShownTexture then return end
+
+		if not pace_material_display then
+			pace_material_display = CreateMaterial('pace_material_display', "UnlitGeneric", {})
+		end
+
+		if pace.current_part[self.CurrentKey] and pace.current_part[self.CurrentKey] ~= "" then
+			pace_material_display:SetTexture("$basetexture", pace.current_part[self.CurrentKey])
+		end
+
+		hook.Add('PostRenderVGUI', self, self.HUDPaint)
+		self.isShownTexture = true
+	end
+
+	function PANEL:MustHideTexture()
+		if not self.isShownTexture then return end
+		self.isShownTexture = false
+		hook.Remove('PostRenderVGUI', self, self.HUDPaint)
+	end
+
+	function PANEL:ThinkTextureDisplay()
+		if self.preTextureThink then self:preTextureThink() end
+		if not IsValid(self.textureButton) or IsValid(self.editing) then return end
+		local rTime = RealTime()
+		self.lastHovered = self.lastHovered or rTime
+
+		if not self.textureButton:IsHovered() and not self:IsHovered() then
+			self.lastHovered = rTime
+		end
+
+		if self.lastHovered + 0.5 < rTime then
+			self:MustShowTexture()
+		else
+			self:MustHideTexture()
+		end
+	end
+
 	function PANEL:OnSpecialCallbackButton(btn)
-		local temp = CreateMaterial(tostring({}), "UnlitGeneric", {})
-		local old = btn.Paint
-		btn.Paint = function(_,w,h)
-			if pace.current_part[self.CurrentKey] and pace.current_part[self.CurrentKey] ~= ""	 then
-				temp:SetTexture("$basetexture", pace.current_part[self.CurrentKey])
-				surface.SetDrawColor(255, 255, 255, 255)
-				surface.SetMaterial(temp)
-				surface.DrawTexturedRect(0, 0, w, h)
-
-				surface.SetAlphaMultiplier(0.1)
-				old(_,w,h)
-				surface.SetAlphaMultiplier(1)
-			else
-				old(_,w,h)
-			end
-		end
-		local old = btn.OnCursorEntered
-		btn.OnCursorEntered = function()
-			hook.Add("PostRenderVGUI", "pace_texture_tooltip", function()
-				if pace.current_part[self.CurrentKey] and pace.current_part[self.CurrentKey] ~= ""	 then
-					temp:SetTexture("$basetexture", pace.current_part[self.CurrentKey])
-
-					surface.SetAlphaMultiplier(1)
-					surface.SetDrawColor(255, 255, 255, 255)
-					surface.SetMaterial(temp)
-					local x, y = gui.MouseX(), gui.MouseY()
-					local size = 128
-					y = y - size - 32 - 16
-					x = x - size / 2
-					surface.DrawTexturedRect(x, y, size, size)
-				end
-			end)
-		end
-
-		local old = btn.OnCursorEntered
-		btn.OnCursorExited = function()
-			hook.Remove("PostRenderVGUI", "pace_texture_tooltip")
-		end
+		self.preTextureThink = self.Think
+		self.Think = self.ThinkTextureDisplay
+		self.textureButton = btn
 	end
 
 	pace.RegisterPanel(PANEL)
