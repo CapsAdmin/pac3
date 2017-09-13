@@ -176,6 +176,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 		if not path or path == "" then return end
 
 		local str = file.Read("materials/" .. path .. ".vmt", "GAME")
+
+		if not str then return end
+
 		local vmt = util.KeyValuesToTable(str)
 		local shader = str:match("^(.-)%{"):gsub("%p", ""):Trim()
 
@@ -243,7 +246,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 		if parent:IsValid() then
 			if tonumber(str) then
 				num = tonumber(str)
-			elseif str ~= "all" and parent.GetEntity and parent:GetEntity():IsValid() then
+			elseif str ~= "all" and parent.GetEntity and parent:GetEntity():IsValid() and parent:GetEntity():GetMaterials() then
 				for i, v in ipairs(parent:GetEntity():GetMaterials()) do
 					if v == str then
 						num = i
