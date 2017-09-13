@@ -12,15 +12,19 @@ PART.Groups = {'entity', 'model'}
 PART.Icon = 'icon16/connect.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Scale", Vector(1,1,1), {editor_sensitivity = 0.25})
-	pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, "Jiggle", false)
-	pac.GetSet(PART, "ScaleChildren", false)
-	pac.GetSet(PART, "AlternativeBones", false)
-	pac.GetSet(PART, "MoveChildrenToOrigin", false)
-	pac.GetSet(PART, "FollowAnglesOnly", false)
-	pac.GetSet(PART, "HideMesh", false)
-	pac.SetupPartName(PART, "FollowPart")
+	pac.SetPropertyGroup()
+		pac.GetSet(PART, "Jiggle", false)
+		pac.GetSet(PART, "ScaleChildren", false)
+		pac.GetSet(PART, "AlternativeBones", false)
+		pac.GetSet(PART, "MoveChildrenToOrigin", false)
+		pac.GetSet(PART, "FollowAnglesOnly", false)
+		pac.GetSet(PART, "HideMesh", false)
+		pac.SetupPartName(PART, "FollowPart")
+
+	pac.SetPropertyGroup("orientation")
+		pac.GetSet(PART, "Scale", Vector(1,1,1), {editor_sensitivity = 0.25})
+		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
+
 pac.EndStorableVars()
 
 pac.RemoveProperty(PART, "Translucent")

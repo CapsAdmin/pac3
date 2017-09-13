@@ -482,6 +482,7 @@ do -- get set and editor vars
 	end
 
 	local __store = false
+	local __group = nil
 
 	function pac.StartStorableVars()
 		__store = true
@@ -492,8 +493,6 @@ do -- get set and editor vars
 		__store = false
 		__group = nil
 	end
-
-	local __group = nil
 
 	function pac.SetPropertyGroup(name)
 		__group = name

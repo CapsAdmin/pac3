@@ -11,14 +11,19 @@ PART.Group = 'effects'
 PART.Icon = 'icon16/layers.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "SizeX", 1, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, "SizeY", 1, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
-	pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
-	pac.GetSet(PART, "SpritePath", "sprites/grip", {editor_panel = "material"})
-	pac.GetSet(PART, "Translucent", true)
-	pac.GetSet(PART, "IgnoreZ", false)
+	pac.SetPropertyGroup()
+		pac.GetSet(PART, "IgnoreZ", false)
+		pac.GetSet(PART, "SizeX", 1, {editor_sensitivity = 0.25})
+		pac.GetSet(PART, "SizeY", 1, {editor_sensitivity = 0.25})
+		pac.GetSet(PART, "SpritePath", "sprites/grip", {editor_panel = "material"})
+
+	pac.SetPropertyGroup("orientation")
+		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
+
+	pac.SetPropertyGroup("appearance")
+		pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
+		pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
+		pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
 
 function PART:GetNiceName()

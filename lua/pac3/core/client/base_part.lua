@@ -42,9 +42,9 @@ pac.GetSet(PART, "Owner", NULL)
 pac.StartStorableVars()
 
 	pac.SetPropertyGroup("generic")
-		pac.GetSet(PART, "OwnerName", "self")
 		pac.GetSet(PART, "Name", "")
 		pac.GetSet(PART, "Hide", false)
+		pac.GetSet(PART, "OwnerName", "self")
 		pac.GetSet(PART, "EditorExpand", false, {hidden = true})
 		pac.GetSet(PART, "UniqueID", "", {hidden = true})
 
