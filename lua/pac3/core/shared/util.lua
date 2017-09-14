@@ -138,6 +138,8 @@ local function int_to_bytes(num,endian,signed)
     return string.char(unpack(res))
 end
 
+local salt = os.clock()
+
 function pac.DownloadMDL(url, callback, onfail, ply)
 	return pac.resource.Download(url, function(path)
 		if not ply:IsValid() then
@@ -156,7 +158,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			url = url:sub(2)
 		end
 
-		local id = util.CRC(url .. file.Read(path))
+		local id = util.CRC(url .. file.Read(path) .. salt)
 
 		if skip_cache then
 			id = util.CRC(id .. os.clock())
@@ -427,10 +429,13 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						--buffer = buffer:Replace(name:match("^(.+%.mdl)"), newname)
 
 						if had_to_extend then
-							buffer = buffer:sub(0, size_offset) .. int_to_bytes(#buffer) .. buffer:sub(size_offset + 4 - 1)
-							if DEBUG_MDL then
-								print("extended mdl")
+							local size_bytes = int_to_bytes(#buffer)
+
+							if #size_bytes ~= 4 then
+								size_bytes = size_bytes .. ("\0"):rep(4 - #size_bytes)
 							end
+
+							buffer = buffer:sub(0, size_offset) .. size_bytes .. buffer:sub(size_offset + 4 + 1)
 						end
 
 						if DEBUG_MDL then
