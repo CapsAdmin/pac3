@@ -192,7 +192,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					local file_path = name
 
 					if compression_method ~= 0 then
-						error(name.." is compressed! (use compression method 0 / store, or maybe you drag dropped files into the archive)")
+						error("the file " .. name .. " is compressed! (use compression method 0 / store, or maybe you drag dropped files into the archive)")
 					end
 
 					if not name:EndsWith(".vtf") and not name:EndsWith(".vmt") then
