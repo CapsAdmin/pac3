@@ -214,17 +214,12 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					else
 						local ok = true
 						for i,v in ipairs(files) do
-							if v.name == name then
+							if v.file_name == name then
 
-								if v.name:EndsWith(".mdl") then
+								if v.file_name:EndsWith(".mdl") then
 									error("zip archive contains more than 1 mdl file (" .. v.file_path .. " and " .. file_path .. ")")
 								end
 
-								if ply == pac.LocalPlayer then
-									pac.Message(Color(255, 200,50), url, ": contains ", name, " more than once")
-									pac.Message(Color(255, 200,50), file_path)
-									pac.Message(Color(255, 200,50), v.file_path)
-								end
 								ok = false
 								break
 							end
