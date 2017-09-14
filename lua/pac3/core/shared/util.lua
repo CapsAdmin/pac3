@@ -354,6 +354,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 											if not found then
 												pac.Message(Color(255, 50,50), url, " the model wants to find ", mat, " but it was not found in the zip archive")
+												local dummy = "VertexLitGeneric\n{\n\t$basetexture \"error\"\n}"
+												table.insert(files, {file_name = mat, buffer = dummy, crc = util.CRC(dummy)})
 											end
 
 											table.insert(found_materials, mat)
