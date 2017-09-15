@@ -44,7 +44,10 @@ function PART:GetNiceName()
 	return pac.PrettifyName(("/".. self:GetURL()):match(".+/(.-)%.")) or "no sound"
 end
 
+local stream_vars = {"Doppler", "Radius"}
+
 local BIND = function(propertyName, setterMethodName, check)
+	table.insert(stream_vars, propertyName)
 	setterMethodName = setterMethodName or "Set" .. propertyName
 	PART["Set" .. propertyName] = function(self, value)
 		if check then
@@ -70,11 +73,10 @@ BIND("Radius",    "SetSourceRadius" )
 
 BIND("FilterType")
 BIND("FilterFraction")
-BIND("Echo")
 
-BIND("Echo")
-BIND("EchoDelay")
-BIND("EchoFeedback", nil, function(n) return math.Clamp(n, 0, 0.99) end)
+--BIND("Echo")
+--BIND("EchoDelay")
+--BIND("EchoFeedback", nil, function(n) return math.Clamp(n, 0, 0.99) end)
 
 function PART:OnThink()
 	local owner = self:GetOwner(true)
@@ -148,10 +150,9 @@ function PART:SetURL(URL)
 
 		stream:Enable3D(true)
 		stream.OnLoad = function()
-			for key in pairs(self.StorableVars) do
-				if key ~= "URL" then
-					self["Set" .. key](self, self["Get" .. key](self))
-				end
+			for _, key in ipairs(stream_vars) do
+				print(key)
+				self["Set" .. key](self, self["Get" .. key](self))
 			end
 		end
 		stream.OnError =  function(err, info)
