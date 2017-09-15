@@ -21,7 +21,7 @@ pac.StartStorableVars()
 
 		return output
 	end})
-	pac.GetSet(PART, "Operator", "find simple", {enums = function(part) return part.Operators end})
+	pac.GetSet(PART, "Operator", "find simple", {enums = function(part) local tbl = {} for i,v in ipairs(part.Operators) do tbl[v] = v end return tbl end})
 	pac.GetSet(PART, "Arguments", "", {editor_panel = "event_arguments"})
 	pac.GetSet(PART, "Invert", false)
 	pac.GetSet(PART, "RootOwner", true)
