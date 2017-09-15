@@ -51,7 +51,7 @@ end
 
 PART.ActMods = act_mods
 
-local udata = {enums = function(part) return part:GetSequenceList() end}
+local udata = {enums = function(part) local tbl = {} for k,v in pairs(part:GetSequenceList()) do tbl[v] = v end return tbl end}
 
 pac.StartStorableVars()
 	for name in pairs(act_mods) do
@@ -114,6 +114,7 @@ function PART:GetSequenceList()
 	if ent:IsValid() then
 		return ent:GetSequenceList()
 	end
+
 	return {"none"}
 end
 

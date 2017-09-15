@@ -73,6 +73,7 @@ function pace.CreateSearchList(property, key, name, add_columns, get_list, get_c
 		local newList = {}
 
 		for k, v in pairs(get_list()) do
+			print(k,v, "!??!")
 			table.insert(newList, {k, v, pace.util.FriendlyName(tostring(k)), pace.util.FriendlyName(tostring(v))})
 		end
 
@@ -559,8 +560,8 @@ do -- list
 										local enums = {}
 
 										for k, v in pairs(tbl) do
-											if type(k) == "number" then
-												k = v
+											if type(v) ~= "string" then
+												v = k
 											end
 
 											enums[k] = v
@@ -578,7 +579,7 @@ do -- list
 									end,
 
 									function(val, key)
-										return key
+										return val
 									end
 								)
 							end)

@@ -18,7 +18,7 @@ pac.StartStorableVars()
 
 				local T = type(parent[key])
 				if T == "number" or T == "Vector" or T == "Angle" or T == "boolean" then
-					tbl[key:gsub("%u", " %1"):lower()] = key
+					tbl[key] = key
 				end
 			end
 

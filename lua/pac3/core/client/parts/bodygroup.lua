@@ -93,7 +93,7 @@ function PART:GetBodyGroupNameList()
 
 	if ent:IsValid() then
 		for _, info in pairs(ent:GetBodyGroups()) do
-			out[info.name] = info.name:lower()
+			out[info.name] = info.name
 		end
 	end
 

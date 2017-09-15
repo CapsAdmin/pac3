@@ -14,7 +14,7 @@ PART.frame = 0
 pac.StartStorableVars()
 	pac.GetSet(PART, "Loop", true)
 	pac.GetSet(PART, "PingPongLoop", false)
-	pac.GetSet(PART, "SequenceName", "", {enums = function(part) return part:GetSequenceList() end})
+	pac.GetSet(PART, "SequenceName", "", {enums = function(part) local tbl = {} for k,v in pairs(part:GetSequenceList()) do tbl[v] = v end return tbl end})
 	pac.GetSet(PART, "Rate", 1, {editor_sensitivity = 0.1})
 	pac.GetSet(PART, "Offset", 0)
 	pac.GetSet(PART, "Min", 0)
