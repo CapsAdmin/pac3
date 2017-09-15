@@ -892,7 +892,7 @@ do
 
 
 		if self.wants_to_play then
-			timer.Simple(0.1, function() self:Play() end)
+			timer.Simple(0.1, function() if self:IsValid() then self:Play() end end)
 			self.wants_to_play = nil
 		end
 	end

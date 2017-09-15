@@ -56,6 +56,8 @@ function PART:GetNiceName()
 	return pac.PrettifyName(("/".. self:GetPath()):match(".+/(.-)%.")) or "no sound"
 end
 
+PART.stream_vars = {}
+
 local BIND = function(propertyName, setterMethodName, check)
 	setterMethodName = setterMethodName or "Set" .. propertyName
 	PART["Set" .. propertyName] = function(self, value)
@@ -92,6 +94,8 @@ BIND("PitchLFOTime")
 
 BIND("VolumeLFOAmount")
 BIND("VolumeLFOTime")
+
+BIND("Doppler")
 
 function PART:OnThink()
 	local owner = self:GetOwner(true)
@@ -163,10 +167,8 @@ function PART:SetPath(path)
 
 		stream:Set3D(true)
 		stream.OnLoad = function()
-			for key in pairs(self.StorableVars) do
-				if key ~= "Path" then
-					self["Set" .. key](self, self["Get" .. key](self))
-				end
+			for _, key in ipairs(stream_vars) do
+				self["Set" .. key](self, self["Get" .. key](self))
 			end
 		end
 		stream.OnError =  function(err, info)
@@ -256,16 +258,6 @@ function PART:OnRemove()
 
 		stream:Remove()
 	end
-end
-
-function PART:SetDoppler(num)
-	for key, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[key] = nil continue end
-
-		stream:SetDoppler(num)
-	end
-
-	self.Doppler = num
 end
 
 pac.RegisterPart(PART)
