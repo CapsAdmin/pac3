@@ -138,7 +138,8 @@ local function int_to_bytes(num,endian,signed)
     return string.char(unpack(res))
 end
 
-local salt = os.clock()
+-- for pac_restart
+PAC_MDL_SALT = (PAC_MDL_SALT or 0) + 1
 
 function pac.DownloadMDL(url, callback, onfail, ply)
 	return pac.resource.Download(url, function(path)
@@ -166,7 +167,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			url = url:sub(2)
 		end
 
-		local id = util.CRC(url .. file_content .. salt)
+		local id = util.CRC(url .. file_content .. PAC_MDL_SALT)
 
 		if skip_cache then
 			id = util.CRC(id .. os.clock())
