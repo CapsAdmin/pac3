@@ -108,6 +108,15 @@ function PART:UpdateActTable()
 	end
 end
 
+function PART:OnThink()
+	local ent = self:GetOwner(true)
+
+	if ent:IsValid() and ent:GetModel() ~= self.last_model then
+		self:UpdateActTable()
+		self.last_model = ent:GetModel()
+	end
+end
+
 function PART:GetSequenceList()
 	local ent = self:GetOwner()
 
