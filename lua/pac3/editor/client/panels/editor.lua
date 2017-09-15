@@ -234,9 +234,13 @@ function PANEL:PaintOver(w, h)
 
 	if IsValid(part) then
 		local selfTime = part.selfDrawTime
+		local selfTimeB = part.BuildBonePositionsRuntime
+		local selfTimeT = part.CThinkRuntime
 		local childTimeO = part.childrenOpaqueDrawTime or 0
 		local childTimeT = part.childrenTranslucentDrawTime or 0
-		local childTime = childTimeO + childTimeT
+		local childTimeB = part.BuildBonePositionsRuntimeChildren or 0
+		local childTimeT = part.CThinkRuntimeChildren or 0
+		local childTime = childTimeO + childTimeT + childTimeB + childTimeT
 
 		part.childEditorAverageTime = Lerp(0.03, part.childEditorAverageTime or 0, childTime)
 		local str = string.format("%s: %.3f ms", L("children render time"), part.childEditorAverageTime * 1000)
@@ -247,8 +251,9 @@ function PANEL:PaintOver(w, h)
 
 		y = y - RENDERSCORE_SIZE
 
-		if selfTime then
-			part.selfEditorAverageTime = Lerp(0.03, part.selfEditorAverageTime or 0, selfTime)
+		if selfTime or selfTimeB or selfTimeT then
+			local selfTime2 = (selfTime or 0) + (selfTimeB or 0) + (selfTimeT + 0)
+			part.selfEditorAverageTime = Lerp(0.03, part.selfEditorAverageTime or 0, selfTime2)
 			local str = string.format("%s: %.3f ms", L("part render time"), part.selfEditorAverageTime * 1000)
 			drawBox(x, y, w - 5, RENDERSCORE_SIZE - 1)
 

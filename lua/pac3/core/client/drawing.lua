@@ -131,39 +131,68 @@ local function render_override(ent, type, draw_only)
 		pac.UnhookEntityRender(ent)
 	else
 		if not draw_only then
-
-			pac.ResetBones(ent)
+			if type == 'opaque' or type == 'viewmodel' then pac.ResetBones(ent) end
 
 			-- bones MUST be setup before drawing or else unexpected/random results might happen
+
+			if pac.profile then
+				for key, part in pairs(ent.pac_parts) do
+					if part:IsValid() then
+						if not part:HasParent() then
+							part:CallRecursiveProfiled("BuildBonePositions")
+						end
+					else
+						ent.pac_parts[key] = nil
+					end
+				end
+			else
+				for key, part in pairs(ent.pac_parts) do
+					if part:IsValid() then
+						if not part:HasParent() then
+							part:CallRecursive("BuildBonePositions")
+						end
+					else
+						ent.pac_parts[key] = nil
+					end
+				end
+			end
+		end
+
+		if pac.profile then
 			for key, part in pairs(ent.pac_parts) do
 				if part:IsValid() then
 					if not part:HasParent() then
-						part:CallRecursive("BuildBonePositions")
+						if not draw_only then
+							part:CallRecursiveProfiled('CThink')
+						end
+
+						if not (part.OwnerName == "viewmodel" and type ~= "viewmodel" or part.OwnerName ~= "viewmodel" and type == "viewmodel") then
+							part:Draw(nil, nil, type)
+						end
 					end
 				else
 					ent.pac_parts[key] = nil
 				end
 			end
-		end
+		else
+			for key, part in pairs(ent.pac_parts) do
+				if part:IsValid() then
+					if not part:HasParent() then
+						if not draw_only then
+							think(part)
 
-		for key, part in pairs(ent.pac_parts) do
-			if part:IsValid() then
-				if not part:HasParent() then
-					if not draw_only then
-						think(part)
+							for i, child in ipairs(part:GetChildrenList()) do
+								think(child)
+							end
+						end
 
-						local child = part:GetChildrenList()
-						for i = 1, #child do
-							think(child[i])
+						if not (part.OwnerName == "viewmodel" and type ~= "viewmodel" or part.OwnerName ~= "viewmodel" and type == "viewmodel") then
+							part:Draw(nil, nil, type)
 						end
 					end
-
-					if not (part.OwnerName == "viewmodel" and type ~= "viewmodel" or part.OwnerName ~= "viewmodel" and type == "viewmodel") then
-						part:Draw(nil, nil, type)
-					end
+				else
+					ent.pac_parts[key] = nil
 				end
-			else
-				ent.pac_parts[key] = nil
 			end
 		end
 	end
