@@ -57,13 +57,13 @@ function PANEL:Init()
 end
 
 function PANEL:OnMousePressed()
-	if self.m_bSizable && gui.MouseX() > ( self.x + self:GetWide() - 20 ) then
+	if self.m_bSizable and gui.MouseX() > ( self.x + self:GetWide() - 20 ) then
 		self.Sizing = { gui.MouseX() - self:GetWide(), gui.MouseY() - self:GetTall() }
 		self:MouseCapture( true )
 		return
 	end
 
-	if ( self:GetDraggable() && gui.MouseY() < (self.y + 24) ) then
+	if ( self:GetDraggable() and gui.MouseY() < (self.y + 24) ) then
 		self.Dragging = { gui.MouseX() - self.x, gui.MouseY() - self.y }
 		self:MouseCapture( true )
 		return
@@ -106,7 +106,7 @@ end
 function PANEL:Think(...)
 	DFrame.Think(self, ...)
 
-	if self.Hovered && self.m_bSizable && gui.MouseX() > ( self.x + self:GetWide() - 20 ) then
+	if self.Hovered and self.m_bSizable and gui.MouseX() > ( self.x + self:GetWide() - 20 ) then
 		self:SetCursor("sizewe")
 		return
 	end
