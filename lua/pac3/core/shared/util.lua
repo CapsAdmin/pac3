@@ -138,6 +138,8 @@ local function int_to_bytes(num,endian,signed)
     return string.char(unpack(res))
 end
 
+local salt = os.clock()
+
 function pac.DownloadMDL(url, callback, onfail, ply)
 	return pac.resource.Download(url, function(path)
 		if not ply:IsValid() then
@@ -156,7 +158,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			url = url:sub(2)
 		end
 
-		local id = util.CRC(url .. file.Read(path))
+		local id = util.CRC(url .. file.Read(path) .. salt)
 
 		if skip_cache then
 			id = util.CRC(id .. os.clock())
@@ -192,7 +194,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					local file_path = name
 
 					if compression_method ~= 0 then
-						error(name.." is compressed! (use compression method 0 / store, or maybe you drag dropped files into the archive)")
+						error("the file " .. name .. " is compressed! (use compression method 0 / store, or maybe you drag dropped files into the archive)")
 					end
 
 					if not name:EndsWith(".vtf") and not name:EndsWith(".vmt") then
@@ -212,17 +214,12 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					else
 						local ok = true
 						for i,v in ipairs(files) do
-							if v.name == name then
+							if v.file_name == name then
 
-								if v.name:EndsWith(".mdl") then
+								if v.file_name:EndsWith(".mdl") then
 									error("zip archive contains more than 1 mdl file (" .. v.file_path .. " and " .. file_path .. ")")
 								end
 
-								if ply == pac.LocalPlayer then
-									pac.Message(Color(255, 200,50), url, ": contains ", name, " more than once")
-									pac.Message(Color(255, 200,50), file_path)
-									pac.Message(Color(255, 200,50), v.file_path)
-								end
 								ok = false
 								break
 							end
@@ -352,6 +349,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 											if not found then
 												pac.Message(Color(255, 50,50), url, " the model wants to find ", mat, " but it was not found in the zip archive")
+												local dummy = "VertexLitGeneric\n{\n\t$basetexture \"error\"\n}"
+												table.insert(files, {file_name = mat, buffer = dummy, crc = util.CRC(dummy)})
 											end
 
 											table.insert(found_materials, mat)
@@ -427,10 +426,13 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						--buffer = buffer:Replace(name:match("^(.+%.mdl)"), newname)
 
 						if had_to_extend then
-							buffer = buffer:sub(0, size_offset) .. int_to_bytes(#buffer) .. buffer:sub(size_offset + 4 - 1)
-							if DEBUG_MDL then
-								print("extended mdl")
+							local size_bytes = int_to_bytes(#buffer)
+
+							if #size_bytes ~= 4 then
+								size_bytes = size_bytes .. ("\0"):rep(4 - #size_bytes)
 							end
+
+							buffer = buffer:sub(0, size_offset) .. size_bytes .. buffer:sub(size_offset + 4 + 1)
 						end
 
 						if DEBUG_MDL then
