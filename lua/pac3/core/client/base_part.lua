@@ -6,6 +6,7 @@ local Vector = Vector
 local Angle = Angle
 local Color = Color
 local NULL = NULL
+local SysTime = SysTime
 
 local LocalToWorld = LocalToWorld
 
@@ -646,44 +647,40 @@ do -- serializing
 		for key, value in pairs(tbl.self) do
 
 			-- these arent needed because parent system uses the tree structure
-			if key == "ParentUID" then continue end
-			if key == "ParentName" then continue end
+			local cond = key ~= "ParentUID" and
+				key ~= "ParentName" and
+				key ~= "UniqueID" and
+				(key ~= "AimPartName" and not (self.IngoreSetKeys and self.IngoreSetKeys[key]) or
+				key == "AimPartName" and table.HasValue(pac.AimPartNames, value))
 
-			-- already set
-			if key == "UniqueID" then continue end
+			if cond then
+				self = hook.Run("pac_PART:SetTable",self,key,value) or self
 
-			-- ughhh
-			if key ~= "AimPartName" and self.IngoreSetKeys and self.IngoreSetKeys[key] then continue end
-			if key == "AimPartName" and not table.HasValue(pac.AimPartNames, value) then
-				continue
-			end
+				if self["Set" .. key] then
+					-- hacky
+					if
+						key:find("Name", nil, true) and
+						key ~= "OwnerName" and
+						key ~= "SequenceName" and
+						key ~= "GestureName" and
+						key ~= "VariableName" and
+						key ~= "BodyGroupName"
+					then
+						self["Set" .. key](self, pac.HandlePartName(self:GetPlayerOwner(), value, key))
+					elseif key == "Material" then
+						if not value:find("/") then
+							value = pac.HandlePartName(self:GetPlayerOwner(), value, key)
+						end
 
-			self = hook.Run("pac_PART:SetTable",self,key,value) or self
+						table.insert(self.delayed_variables, {key = key, val = value})
 
-			if self["Set" .. key] then
-				-- hacky
-				if
-					key:find("Name", nil, true) and
-					key ~= "OwnerName" and
-					key ~= "SequenceName" and
-					key ~= "GestureName" and
-					key ~= "VariableName" and
-					key ~= "BodyGroupName"
-				then
-					self["Set" .. key](self, pac.HandlePartName(self:GetPlayerOwner(), value, key))
-				elseif key == "Material" then
-					if not value:find("/") then
-						value = pac.HandlePartName(self:GetPlayerOwner(), value, key)
+						self:SetMaterial(value)
+					else
+						self["Set" .. key](self, value)
 					end
-
-					table.insert(self.delayed_variables, {key = key, val = value})
-
-					self:SetMaterial(value)
-				else
-					self["Set" .. key](self, value)
+				elseif key ~= "ClassName" then
+					pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
 				end
-			elseif key ~= "ClassName" then
-				pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
 			end
 		end
 
@@ -711,14 +708,12 @@ do -- serializing
 
 			-- these arent needed because parent system uses the tree structure
 			if
-				key == "ParentUID" or
-				key == "ParentName" or
-				var == self.DefaultVars[key]
+				key ~= "ParentUID" and
+				key ~= "ParentName" and
+				var ~= self.DefaultVars[key]
 			then
-				continue
+				tbl.self[key] = var
 			end
-
-			tbl.self[key] = var
 		end
 
 		for _, part in ipairs(self:GetChildren()) do
