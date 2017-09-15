@@ -142,6 +142,14 @@ local salt = os.clock()
 
 function pac.DownloadMDL(url, callback, onfail, ply)
 	return pac.resource.Download(url, function(path)
+		local file_content = file.Read(path)
+
+		if not file_content then
+			pac.Message(Color(255, 50, 50), "content is empty")
+			file.Delete(path)
+			return
+		end
+
 		if not ply:IsValid() then
 			pac.Message(Color(255, 50, 50), "player is no longer valid")
 			file.Delete(path)
@@ -158,7 +166,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			url = url:sub(2)
 		end
 
-		local id = util.CRC(url .. file.Read(path) .. salt)
+		local id = util.CRC(url .. file_content .. salt)
 
 		if skip_cache then
 			id = util.CRC(id .. os.clock())
