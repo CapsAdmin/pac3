@@ -139,7 +139,7 @@ local function int_to_bytes(num,endian,signed)
 end
 
 -- for pac_restart
-PAC_MDL_SALT = PAC_MDL_SALT or 0
+PAC_MDL_SALT = (PAC_MDL_SALT or 0) + 1
 
 function pac.DownloadMDL(url, callback, onfail, ply)
 	return pac.resource.Download(url, function(path)
