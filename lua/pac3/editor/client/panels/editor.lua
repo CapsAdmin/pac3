@@ -31,6 +31,7 @@ function PANEL:Init()
 		div:SetCookieName("pac3_editor")
 		div:SetTopHeight(ScrH()/1.4)
 		div:LoadCookies()
+
 	self.div = div
 
 	self.treePanel = pace.CreatePanel("tree")
@@ -89,8 +90,8 @@ function PANEL:MakeBar()
 
 	self.menu_bar = bar
 
-	self:DockMargin(2,2,2,2)
-	self:DockPadding(2,2,2,2)
+	self:DockMargin(2, 2, 2, 2)
+	self:DockPadding(2, 2, 2, 2)
 end
 
 function PANEL:OnRemove()
@@ -233,18 +234,18 @@ function PANEL:PaintOver(w, h)
 
 	if IsValid(part) then
 		local selfTime = part.selfDrawTime
-		local childTime = part.childrenDrawTime
+		local childTimeO = part.childrenOpaqueDrawTime or 0
+		local childTimeT = part.childrenTranslucentDrawTime or 0
+		local childTime = childTimeO + childTimeT
 
-		if childTime then
-			part.childEditorAverageTime = Lerp(0.03, part.childEditorAverageTime or 0, childTime)
-			local str = string.format("%s: %.3f ms", L("children render time"), part.childEditorAverageTime * 1000)
-			drawBox(x, y, w - 5, RENDERSCORE_SIZE - 1)
+		part.childEditorAverageTime = Lerp(0.03, part.childEditorAverageTime or 0, childTime)
+		local str = string.format("%s: %.3f ms", L("children render time"), part.childEditorAverageTime * 1000)
+		drawBox(x, y, w - 5, RENDERSCORE_SIZE - 1)
 
-			surface.SetTextPos(x + 5, y)
-			surface.DrawText(str)
+		surface.SetTextPos(x + 5, y)
+		surface.DrawText(str)
 
-			y = y - RENDERSCORE_SIZE
-		end
+		y = y - RENDERSCORE_SIZE
 
 		if selfTime then
 			part.selfEditorAverageTime = Lerp(0.03, part.selfEditorAverageTime or 0, selfTime)

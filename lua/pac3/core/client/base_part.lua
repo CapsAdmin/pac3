@@ -878,7 +878,11 @@ do -- drawing. this code is running every frame
 			child:Draw(pos, ang, draw_type)
 		end
 
-		self.childrenDrawTime = SysTime() - sysTime
+		if draw_type == "translucent" then
+			self.childrenTranslucentDrawTime = SysTime() - sysTime
+		elseif draw_type == "opaque" then
+			self.childrenOpaqueDrawTime = SysTime() - sysTime
+		end
 	end
 
 	function PART:GetDrawPosition(bone_override, skip_cache)
