@@ -285,7 +285,7 @@ do -- physical
 		for key, data in pairs(projectiles) do
 			if not data.ply:IsValid() then
 				projectiles[key] = nil
-				continue
+				goto CONTINUE
 			end
 
 			local ent = Entity(data.ent_id)
@@ -297,6 +297,7 @@ do -- physical
 				end
 				projectiles[key] = nil
 			end
+			::CONTINUE::
 		end
 	end)
 

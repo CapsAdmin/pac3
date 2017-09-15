@@ -176,7 +176,7 @@ end
 do
 	local PANEL = {}
 
-	DEFINE_BASECLASS( "DScrollPanel" )
+	local BaseClass = baseclass.Get( "DScrollPanel" )
 
 	function PANEL:Init()
 		self:SetPaintBackground( false )

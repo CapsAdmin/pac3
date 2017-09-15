@@ -210,7 +210,7 @@ function PANEL:PopulateParts(node, parts, children)
 	for key, part in pairs(tbl) do
 		key = part.Id
 
-		if part:GetRootPart().show_in_editor == false then continue end
+		if part:GetRootPart().show_in_editor == false then goto CONTINUE end
 
 		if not part:HasParent() or children then
 			local part_node
@@ -275,6 +275,7 @@ function PANEL:PopulateParts(node, parts, children)
 				part_node:SetExpanded(part:GetEditorExpand())
 			end
 		end
+		::CONTINUE::
 	end
 end
 

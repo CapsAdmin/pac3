@@ -172,7 +172,7 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 
 		for key, value in pairs(tblin) do
 			if check(key, value) then
-				continue
+				goto CONTINUE
 			end
 
 			local pos = getpos(key, value):ToScreen()
@@ -195,6 +195,7 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 					pace.DrawSelection(pos)
 				end
 			end
+			::CONTINUE::
 		end
 
 		if tbl[1] then

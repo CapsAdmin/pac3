@@ -85,7 +85,7 @@ function haloex.Render( entry )
 
 		for k, v in pairs( entry.Ents ) do
 
-			if ( !IsValid( v ) ) then continue end
+			if (  not IsValid( v ) ) then goto CONTINUE end
 
 			render.PushFlashlightMode( true )
 				if v.pacDrawModel then
@@ -95,6 +95,7 @@ function haloex.Render( entry )
 				end
 			render.PopFlashlightMode()
 
+			::CONTINUE::
 		end
 
 	cam.End3D()
@@ -117,7 +118,7 @@ function haloex.Render( entry )
 
 		for k, v in pairs( entry.Ents ) do
 
-			if ( !IsValid( v ) ) then continue end
+			if (  not IsValid( v ) ) then goto CONTINUE end
 
 			render.SetColorModulation( entry.Color.r/255, entry.Color.g/255, entry.Color.b/255 )
 			render.SetBlend( entry.Color.a/255 );
@@ -128,6 +129,7 @@ function haloex.Render( entry )
 				v:DrawModel()
 			end
 
+			::CONTINUE::
 		end
 
 		render.MaterialOverride( nil )

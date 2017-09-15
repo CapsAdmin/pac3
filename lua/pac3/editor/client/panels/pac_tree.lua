@@ -143,7 +143,7 @@ function PANEL:Init()
 	self.Label.DragHover = function(s, t) self:DragHover(t) end
 
 	self.Expander = vgui.Create("DExpandButton", self)
-	self.Expander.DoClick = function() self:SetExpanded(!self.m_bExpanded) end
+	self.Expander.DoClick = function() self:SetExpanded( not self.m_bExpanded) end
 	self.Expander:SetVisible(false)
 
 	self.Icon = vgui.Create("DImage", self)
@@ -167,7 +167,7 @@ function PANEL:InternalDoClick()
 	if self:GetRoot():DoClick(self) then return end
 
 	if not self.m_bDoubleClickToOpen or (SysTime() - self.fLastClick < 0.3) then
-		self:SetExpanded(!self.m_bExpanded)
+		self:SetExpanded( not self.m_bExpanded)
 	end
 
 	self.fLastClick = SysTime()
@@ -175,7 +175,7 @@ end
 
 function PANEL:OnNodeSelected(node)
 	local parent = self:GetParentNode()
-	if IsValid(parent) && parent.OnNodeSelected then
+	if IsValid(parent)  and  parent.OnNodeSelected then
 		parent:OnNodeSelected(node)
 	end
 end
@@ -365,7 +365,7 @@ function PANEL:AddNode(strName, strIcon)
 		pNode:SetParentNode(self)
 		pNode:SetRoot(self:GetRoot())
 		pNode:SetIcon(strIcon)
-		pNode:SetDrawLines(!self:IsRootNode())
+		pNode:SetDrawLines( not self:IsRootNode())
 
 		self:InstallDraggable(pNode)
 

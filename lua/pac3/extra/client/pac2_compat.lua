@@ -252,7 +252,7 @@ function pacx.ConvertPAC2Config(data, name)
 							bone.angles == Vector(0,0,0) and
 							bone.offset == Vector(0,0,0) and
 							bone.size == 1
-						then continue end
+						then goto CONTINUE end
 
 						local part2 = pac.CreatePart("bone")
 							part2:SetName("model bone " .. part:GetName() .. " " .. key)
@@ -264,6 +264,7 @@ function pacx.ConvertPAC2Config(data, name)
 							part2:SetPosition(bone.offset*1)
 
 							part2:SetSize(bone.size)
+							::CONTINUE::
 					end
 				end
 
@@ -413,7 +414,7 @@ do
 				elseif c == "\2" then
 					e = true
 				elseif c == "\1" then
-					s = string.gsub(s, "\4", "\"") // unescape quotes
+					s = string.gsub(s, "\4", "\"") -- unescape quotes
 					return s
 				else
 					s = s..c
