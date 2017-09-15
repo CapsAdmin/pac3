@@ -151,7 +151,6 @@ function PART:SetURL(URL)
 		stream:Enable3D(true)
 		stream.OnLoad = function()
 			for _, key in ipairs(stream_vars) do
-				print(key)
 				self["Set" .. key](self, self["Get" .. key](self))
 			end
 		end
