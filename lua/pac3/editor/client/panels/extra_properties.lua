@@ -192,6 +192,8 @@ do -- model
 		pace.close_spawn_menu = true
 		pace.SafeRemoveSpecialPanel()
 		pace.ResourceBrowser(function(path)
+			if not self:IsValid() then return end
+
 			self:SetValue(path)
 			self.OnValueChanged(path)
 			pace.PopulateProperties(pace.current_part)
