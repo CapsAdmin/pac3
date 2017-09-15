@@ -318,8 +318,8 @@ do
 
 	local pac_sv_hide_outfit_on_death = GetConVar("pac_sv_hide_outfit_on_death")
 
-	function pac.RenderScreenspaceEffects()
-		cam.Start3D()
+	function pac.PostDrawTranslucentRenderables(bDrawingDepth, bDrawingSkybox)
+		if bDrawingDepth or bDrawingSkybox then return end
 
 		-- commonly used variables
 		max_render_time = max_render_time_cvar:GetFloat()
@@ -436,23 +436,17 @@ do
 				pac.drawn_entities[key] = nil
 			end
 		end
-
-		cam.End3D()
 	end
-
-	pac.AddHook("RenderScreenspaceEffects")
 end
 
 function pac.Think()
-	do
-		for _, ply in ipairs(player.GetAll()) do
-			if ply.pac_parts and not ply:Alive() then
-				local ent = ply:GetRagdollEntity()
+	for _, ply in ipairs(player.GetAll()) do
+		if ply.pac_parts and not ply:Alive() then
+			local ent = ply:GetRagdollEntity()
 
-				if ent and ent:IsValid() then
-					if ply.pac_ragdoll ~= ent then
-						pac.OnClientsideRagdoll(ply, ent)
-					end
+			if ent and ent:IsValid() then
+				if ply.pac_ragdoll ~= ent then
+					pac.OnClientsideRagdoll(ply, ent)
 				end
 			end
 		end
@@ -518,3 +512,4 @@ pac.AddHook("PostDrawViewModel")
 pac.AddHook("Think")
 pac.AddHook("PostPlayerDraw")
 pac.AddHook("RenderScene")
+pac.AddHook("PostDrawTranslucentRenderables")
