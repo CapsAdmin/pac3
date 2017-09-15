@@ -299,10 +299,6 @@ function pac.RenderScene(pos, ang)
 	pac.EyeAng = ang
 end
 
-function pac.PostPlayerDraw(ply)
-	ply.pac_last_drawn = pac.RealTime
-end
-
 -- disable pop/push flashlight modes (used for stability in 2D context)
 function pac.FlashlightDisable(b)
 	pac.flashlight_disabled = b
@@ -510,6 +506,5 @@ pac.TogglePartDrawing = toggle_drawing_parts
 pac.AddHook("DrawPhysgunBeam")
 pac.AddHook("PostDrawViewModel")
 pac.AddHook("Think")
-pac.AddHook("PostPlayerDraw")
 pac.AddHook("RenderScene")
 pac.AddHook("PostDrawTranslucentRenderables")
