@@ -108,7 +108,7 @@ function PART:SetMaterial(str)
 		self.material_override_self[0] = pac.Material(str, self)
 	end
 
-	if not next(self.material_override_self) then
+	if self.material_override_self and not next(self.material_override_self) then
 		self.material_override_self = nil
 	end
 end
@@ -222,10 +222,12 @@ end
 function PART:DrawModel(ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 		local materials = self.material_override_self or self.material_override
+		local set_material = false
 
 		if self.material_override_self then
 			if materials[0] then
 				render_MaterialOverride(materials[0])
+				set_material = true
 			end
 
 			for i = 1, #ent:GetMaterials() do
@@ -240,6 +242,7 @@ function PART:DrawModel(ent, pos, ang)
 		elseif self.material_override then
 			if materials[0] and materials[0][1] then
 				render_MaterialOverride(materials[0][1]:GetRawMaterial())
+				set_material = true
 			end
 
 			for i = 1, #ent:GetMaterials() do
@@ -254,6 +257,10 @@ function PART:DrawModel(ent, pos, ang)
 					end
 				end
 			end
+		end
+
+		if pac.render_material and not set_material then
+			render_MaterialOverride()
 		end
 
 		ent:DrawModel()
