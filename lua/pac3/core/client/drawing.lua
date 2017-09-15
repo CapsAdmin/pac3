@@ -29,6 +29,12 @@ local max_render_time = 0
 
 local TIME = math.huge
 
+local entMeta = FindMetaTable('Entity')
+local plyMeta = FindMetaTable('Player')
+local IsValid = entMeta.IsValid
+local GetTable = entMeta.GetTable
+local Alive = plyMeta.Alive
+
 pac.Errors = {}
 pac.firstperson_parts = pac.firstperson_parts or {}
 pac.EyePos = vector_origin
@@ -332,7 +338,7 @@ do
 		end
 
 		for key, ent in pairs(pac.drawn_entities) do
-			if ent:IsValid() then
+			if IsValid(ent) then
 				ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
 				dst = ent:EyePos():Distance(pac.EyePos)
 				radius = ent:BoundingRadius() * 3 * (ent:GetModelScale() or 1)
@@ -340,14 +346,18 @@ do
 				if ent:GetNoDraw() then
 					hide_parts(ent)
 				else
-					if ent:IsPlayer() then
-						if not ent:Alive() and pac_sv_hide_outfit_on_death:GetBool() then
+					local isply = type(ent) == 'Player'
+
+					if isply then
+						if not Alive(ent) and pac_sv_hide_outfit_on_death:GetBool() then
 							hide_parts(ent)
 						else
 							local rag = ent.pac_ragdoll or NULL
-							if rag:IsValid() then
+
+							if IsValid(rag) then
 								if ent.pac_death_hide_ragdoll then
 									rag:SetRenderMode(RENDERMODE_TRANSALPHA)
+
 									local c = rag:GetColor()
 									c.a = 0
 									rag:SetColor(c)
@@ -395,8 +405,7 @@ do
 						radius = radius * 4
 					end
 
-					if
-						draw_dist == -1 or
+					local cond = draw_dist == -1 or
 						ent.IsPACWorldEntity or
 						(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or (ent.pac_camera and ent.pac_camera:IsValid())) or
 						ent ~= pac.LocalPlayer and
@@ -408,7 +417,10 @@ do
 								(dst <= draw_dist)
 							)
 						)
-					then
+
+					ent.pac_draw_cond = cond
+
+					if cond then
 						ent.pac_model = ent:GetModel() -- used for cached functions
 
 						show_parts(ent)
@@ -424,23 +436,19 @@ do
 		end
 
 		for key, ent in pairs(pac.drawn_entities) do
-			if ent:IsValid() then
-				if ent.pac_drawing and ent.pac_parts then
-					pac.RenderOverride(ent, "translucent", true)
-				end
-			else
-				pac.drawn_entities[key] = nil
+			if ent.pac_draw_cond and ent.pac_parts then -- accessing table of NULL doesn't do anything
+				pac.RenderOverride(ent, "translucent", true)
 			end
 		end
 	end
 end
 
 function pac.Think()
-	for _, ply in ipairs(player.GetAll()) do
-		if ply.pac_parts and not ply:Alive() then
+	for i, ply in ipairs(player.GetAll()) do
+		if ply.pac_parts and not Alive(ply) then
 			local ent = ply:GetRagdollEntity()
 
-			if ent and ent:IsValid() then
+			if IsValid(ent) then
 				if ply.pac_ragdoll ~= ent then
 					pac.OnClientsideRagdoll(ply, ent)
 				end
@@ -461,7 +469,7 @@ function pac.Think()
 	end
 
 	for key, ent in pairs(pac.drawn_entities) do
-		if ent:IsValid() then
+		if IsValid(ent) then
 			if ent.pac_drawing and ent:IsPlayer() then
 
 				ent.pac_traceres = util.QuickTrace(ent:EyePos(), ent:GetAimVector() * 32000, {ent, ent:GetVehicle(), ent:GetOwner()})
@@ -483,7 +491,7 @@ end
 
 function pac.PostDrawViewModel()
 	for key, ent in pairs(pac.drawn_entities) do
-		if ent:IsValid() then
+		if IsValid(ent) then
 			if ent.pac_drawing and ent.pac_parts then
 				pac.RenderOverride(ent, "viewmodel", true)
 			end

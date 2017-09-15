@@ -203,6 +203,7 @@ end
 
 function pac.OnClientsideRagdoll(ply, ent)
 	ply.pac_ragdoll = ent
+
 	if ply.pac_death_physics_parts then
 		if ply.pac_physics_died then return end
 
