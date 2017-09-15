@@ -1,3 +1,4 @@
+
 local pac = pac
 
 local render_SetColorModulation = render.SetColorModulation
@@ -15,13 +16,28 @@ local GetConVar = GetConVar
 local NULL = NULL
 local EF_BONEMERGE = EF_BONEMERGE
 local RENDERMODE_TRANSALPHA = RENDERMODE_TRANSALPHA
-
-pac.drawn_entities = pac.drawn_entities or {}
 local pairs = pairs
+local util_PixelVisible = util.PixelVisible
 
+local cvar_distance = CreateClientConVar("pac_draw_distance", "500")
+local cvar_fovoverride = CreateClientConVar("pac_override_fov", "0")
+local cvar_projected_texture = CreateClientConVar("pac_render_projected_texture", "0")
+
+local render_time = math.huge
+local max_render_time_cvar = CreateClientConVar("pac_max_render_time", 0)
+local max_render_time = 0
+
+local TIME = math.huge
+
+pac.Errors = {}
+pac.firstperson_parts = pac.firstperson_parts or {}
+pac.EyePos = vector_origin
+pac.drawn_entities = pac.drawn_entities or {}
 pac.LocalPlayer = LocalPlayer()
 pac.RealTime = 0
 pac.FrameNumber = 0
+pac.profile_info = {}
+pac.profile = true
 
 local function think(part)
 	if part.ThinkTime == 0 then
@@ -34,15 +50,6 @@ local function think(part)
 		part.last_think = pac.RealTime + (part.ThinkTime or 0.1)
 	end
 end
-
-local render_time = math.huge
-local max_render_time_cvar = CreateClientConVar("pac_max_render_time", 0)
-local max_render_time = 0
-
-local TIME = math.huge
-
-pac.profile_info = {}
-pac.profile = true
 
 function pac.GetProfilingData(ent)
 	local profile_data = pac.profile_info[ent:EntIndex()]
@@ -100,10 +107,6 @@ local function toggle_drawing_parts(ent, b)
 		ent.pac_shouldnotdraw = true
 	end
 end
-
-pac.HideEntityParts = hide_parts
-pac.ShowEntityParts = show_parts
-pac.TogglePartDrawing = toggle_drawing_parts
 
 local function render_override(ent, type, draw_only)
 	if pac.profile then
@@ -196,8 +199,6 @@ local function render_override(ent, type, draw_only)
 	render_ModelMaterialOverride()
 end
 
-pac.Errors = {}
-
 function pac.RenderOverride(ent, type, draw_only)
 	local ok, err = pcall(render_override, ent, type, draw_only)
 	if not ok then
@@ -217,8 +218,6 @@ function pac.RenderOverride(ent, type, draw_only)
 		ent.pac_error = nil
 	end
 end
-
-pac.firstperson_parts = pac.firstperson_parts or {}
 
 function pac.HookEntityRender(ent, part)
 	if not ent.pac_parts then
@@ -295,21 +294,14 @@ function pac.ToggleIgnoreEntity(ent, status, strID)
 	end
 end
 
-local util_PixelVisible = util.PixelVisible
-local cvar_distance = CreateClientConVar("pac_draw_distance", "500")
-local cvar_fovoverride = CreateClientConVar("pac_override_fov", "0")
-
-pac.EyePos = vector_origin
 function pac.RenderScene(pos, ang)
 	pac.EyePos = pos
 	pac.EyeAng = ang
 end
-pac.AddHook("RenderScene")
 
 function pac.PostPlayerDraw(ply)
 	ply.pac_last_drawn = pac.RealTime
 end
-pac.AddHook("PostPlayerDraw")
 
 -- disable pop/push flashlight modes (used for stability in 2D context)
 function pac.FlashlightDisable(b)
@@ -451,8 +443,6 @@ do
 	pac.AddHook("RenderScreenspaceEffects")
 end
 
-local cvar_projected_texture = CreateClientConVar("pac_render_projected_texture", "0")
-
 function pac.Think()
 	do
 		for _, ply in ipairs(player.GetAll()) do
@@ -500,22 +490,17 @@ function pac.Think()
 		end
 	end
 end
-pac.AddHook("Think")
 
-do
-	function pac.PostDrawViewModel()
-		for key, ent in pairs(pac.drawn_entities) do
-			if ent:IsValid() then
-				if ent.pac_drawing and ent.pac_parts then
-					pac.RenderOverride(ent, "viewmodel", true)
-				end
-			else
-				pac.drawn_entities[key] = nil
+function pac.PostDrawViewModel()
+	for key, ent in pairs(pac.drawn_entities) do
+		if ent:IsValid() then
+			if ent.pac_drawing and ent.pac_parts then
+				pac.RenderOverride(ent, "viewmodel", true)
 			end
+		else
+			pac.drawn_entities[key] = nil
 		end
 	end
-	pac.AddHook("PostDrawViewModel")
-
 end
 
 function pac.DrawPhysgunBeam(ent)
@@ -523,4 +508,13 @@ function pac.DrawPhysgunBeam(ent)
 		return false
 	end
 end
+
+pac.HideEntityParts = hide_parts
+pac.ShowEntityParts = show_parts
+pac.TogglePartDrawing = toggle_drawing_parts
+
 pac.AddHook("DrawPhysgunBeam")
+pac.AddHook("PostDrawViewModel")
+pac.AddHook("Think")
+pac.AddHook("PostPlayerDraw")
+pac.AddHook("RenderScene")
