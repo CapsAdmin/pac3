@@ -218,26 +218,55 @@ end
 function PANEL:PaintOver(w, h)
 	local renderTime = pace.RenderTimes and pace.RenderTimes[LocalPlayer():EntIndex()]
 
-	if renderTime then
-		--local x, y = self.top:LocalToScreen()
-		local x = 2
-		local y = 2
-		y = y + self.menu_bar:GetTall()
-		y = y + self.top:GetTall()
+	local x = 2
+	local y = 2
+	y = y + self.menu_bar:GetTall()
+	y = y + self.top:GetTall()
 
-		surface.SetFont(pace.CurrentFont)
-		local str = string.format("%s: %.3f ms", L("average render time"), renderTime * 1000)
-		local _w, _h = surface.GetTextSize(str)
+	surface.SetFont(pace.CurrentFont)
 
-		cam.IgnoreZ(true)
-		--surface.SetDrawColor(255, 255, 255, 255)
-		self:GetSkin().tex.Panels.Bright(x,y,w-5, RENDERSCORE_SIZE-1)
+	local part = pace.current_part
+	local textCol = self:GetSkin().Colours.Category.Line.Text
+	local drawBox = self:GetSkin().tex.Panels.Bright
+	surface.SetTextColor(textCol)
+	cam.IgnoreZ(true)
 
-		surface.SetTextColor(self:GetSkin().Colours.Category.Line.Text)
-		surface.SetTextPos(x+5, y)
-		surface.DrawText(str)
-		cam.IgnoreZ(false)
+	if IsValid(part) then
+		local selfTime = part.selfDrawTime
+		local childTime = part.childrenDrawTime
+
+		if childTime then
+			part.childEditorAverageTime = Lerp(0.03, part.childEditorAverageTime or 0, childTime)
+			local str = string.format("%s: %.3f ms", L("children render time"), part.childEditorAverageTime * 1000)
+			drawBox(x, y, w - 5, RENDERSCORE_SIZE - 1)
+
+			surface.SetTextPos(x + 5, y)
+			surface.DrawText(str)
+
+			y = y - RENDERSCORE_SIZE
+		end
+
+		if selfTime then
+			part.selfEditorAverageTime = Lerp(0.03, part.selfEditorAverageTime or 0, selfTime)
+			local str = string.format("%s: %.3f ms", L("part render time"), part.selfEditorAverageTime * 1000)
+			drawBox(x, y, w - 5, RENDERSCORE_SIZE - 1)
+
+			surface.SetTextPos(x + 5, y)
+			surface.DrawText(str)
+
+			y = y - RENDERSCORE_SIZE
+		end
 	end
+
+	if renderTime then
+		local str = string.format("%s: %.3f ms", L("average render time"), renderTime * 1000)
+		drawBox(x, y, w - 5, RENDERSCORE_SIZE - 1)
+
+		surface.SetTextPos(x + 5, y)
+		surface.DrawText(str)
+	end
+
+	cam.IgnoreZ(false)
 end
 
 pace.RegisterPanel(PANEL)
