@@ -117,7 +117,7 @@ local function scale_children(owner, id, scale, origin)
 	if count == 0 or count < id then return end
 
 	for i = 0, count - 1 do
-		if owner:GetBoneParent(i) ~= id then continue end
+		if owner:GetBoneParent(i) ~= id then goto CONTINUE end
 
 		local mat = owner:GetBoneMatrix(i)
 
@@ -130,6 +130,7 @@ local function scale_children(owner, id, scale, origin)
 		end
 
 		scale_children(owner, i, scale, origin)
+		::CONTINUE::
 	end
 end
 

@@ -162,8 +162,9 @@ function PART:Enable()
 	self:SetRadius(self.Radius)
 
 	for key, val in pairs(self.StorableVars) do
-		if self.BaseClass.StorableVars[key] then continue end
+		if self.BaseClass.StorableVars[key] then goto CONTINUE end
 		self["Set" .. key](self, self[key])
+		::CONTINUE::
 	end
 end
 

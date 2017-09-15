@@ -20,7 +20,7 @@ end
 --
 function net.WriteEntity( ent )
 
-	if ( !IsValid( ent ) ) then
+	if (  not IsValid( ent ) ) then
 		net.WriteUInt( 0, 16 )
 	else
 		net.WriteUInt( ent:EntIndex(), 16 )
@@ -31,7 +31,7 @@ end
 function net.ReadEntity()
 
 	local i = net.ReadUInt( 16 )
-	if ( !i ) then return end
+	if (  not i ) then return end
 
 	return Entity( i )
 

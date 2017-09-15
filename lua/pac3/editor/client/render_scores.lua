@@ -29,7 +29,7 @@ hook.Add("HUDPaint", "pac_show_render_times", function()
 	if not pace.IsActive() or not pace.IsFocused() or not enable:GetBool() or pace.IsInBasicMode() then return end
 
 	for key, ply in pairs(player.GetHumans()) do
-		if ply == LocalPlayer() then continue end
+		if ply == LocalPlayer() then goto CONTINUE end
 
 		local pos = ply:EyePos()
 
@@ -49,5 +49,6 @@ hook.Add("HUDPaint", "pac_show_render_times", function()
 				end
 			end
 		end
+		::CONTINUE::
 	end
 end)

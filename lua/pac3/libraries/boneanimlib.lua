@@ -124,7 +124,7 @@ local function DoCurrentFrame(tGestureTable, tFrameData, iCurFrame, pl, fAmount,
 		if type(iBoneID) ~= "number" then
 			iBoneID = pl:LookupBone(iBoneID)
 		end
-		if not iBoneID then continue end
+		if not iBoneID then goto CONTINUE end
 
 		if not tBuffer[iBoneID] then tBuffer[iBoneID] = Matrix() end
 		local mBoneMatrix = tBuffer[iBoneID]
@@ -154,6 +154,7 @@ local function DoCurrentFrame(tGestureTable, tFrameData, iCurFrame, pl, fAmount,
 				mBoneMatrix:Rotate(CosineInterpolation(Angle(bi1.RR, bi1.RU, bi1.RF), Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF), fFrameDelta) * fPower)
 			end
 		end
+		::CONTINUE::
 	end
 end
 

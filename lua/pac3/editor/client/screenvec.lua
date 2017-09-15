@@ -70,7 +70,7 @@ function pace.VectorToLPCameraScreen( vDir, iScreenW, iScreenH, angCamRot, fFoV 
     local iVisibility
     if fdp < 0 then          --Simple check to see if the object is in front of the camera
         iVisibility = -1;
-    elseif x < 0 || x > iScreenW || y < 0 || y > iScreenH then  --We've already determined the object is in front of us, but it may be lurking just outside our field of vision.
+    elseif x < 0  or  x > iScreenW  or  y < 0  or  y > iScreenH then  --We've already determined the object is in front of us, but it may be lurking just outside our field of vision.
         iVisibility = 0;
     else
         iVisibility = 1;

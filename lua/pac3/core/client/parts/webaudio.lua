@@ -63,7 +63,7 @@ function PART:OnDraw(ent, pos, ang)
 	local volume = shouldMute and not focus and 0 or self:GetVolume()
 
 	for url, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[url] = nil continue end
+		if not stream:IsValid() then self.streams[url] = nil goto CONTINUE end
 
 		stream:SetPos(pos, forward)
 
@@ -73,6 +73,7 @@ function PART:OnDraw(ent, pos, ang)
 		stream:Set3DCone(self.InnerAngle, self.OuterAngle, self.OuterVolume)
 		stream:SetVolume(volume)
 		stream:SetPlaybackRate(self:GetPitch() + self.random_pitch)
+		::CONTINUE::
 	end
 end
 
@@ -106,9 +107,10 @@ function PART:SetURL(URL)
 	end
 
 	for _, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[key] = nil continue end
+		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
 
 		stream:Stop()
+		::CONTINUE::
 	end
 
 	self.streams = {}
@@ -164,7 +166,7 @@ end
 
 function PART:StopSound()
 	for key, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[key] = nil continue end
+		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
 
 		if self.StopOnHide then
 			if self.PauseOnHide then
@@ -174,6 +176,7 @@ function PART:StopSound()
 				stream:Pause()
 			end
 		end
+		::CONTINUE::
 	end
 end
 
@@ -189,9 +192,10 @@ end
 
 function PART:OnRemove()
 	for key, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[key] = nil continue end
+		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
 
 		stream:Stop()
+		::CONTINUE::
 	end
 end
 

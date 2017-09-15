@@ -82,7 +82,7 @@ function PART:OnThink()
 	local owner = self:GetOwner(true)
 
 	for url, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[url] = nil continue end
+		if not stream:IsValid() then self.streams[url] = nil goto CONTINUE end
 
 		if self.PlayCount == 0 then
 			stream:Resume()
@@ -92,6 +92,7 @@ function PART:OnThink()
 			stream:SetSourceEntity(owner, true)
 			stream.owner_set = owner
 		end
+		::CONTINUE::
 	end
 
 	if self.last_playonfootstep ~= self.PlayOnFootstep then
@@ -202,7 +203,7 @@ end
 
 function PART:StopSound()
 	for key, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[key] = nil continue end
+		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
 
 		if not self.StopOnHide then
 			if self.PauseOnHide then
@@ -211,6 +212,7 @@ function PART:StopSound()
 				stream:Stop()
 			end
 		end
+		::CONTINUE::
 	end
 end
 
@@ -226,17 +228,19 @@ end
 
 function PART:OnRemove()
 	for key, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[key] = nil continue end
+		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
 
 		stream:Remove()
+		::CONTINUE::
 	end
 end
 
 function PART:SetDoppler(num)
 	for key, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[key] = nil continue end
+		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
 
 		stream:EnableDoppler(num)
+		::CONTINUE::
 	end
 
 	self.Doppler = num

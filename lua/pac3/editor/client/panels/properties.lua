@@ -456,13 +456,14 @@ do -- list
 				udata = pac.GetPropertyUserdata(obj, key)
 			end
 
-			if udata and udata.hidden then continue end
+			if udata and udata.hidden then goto CONTINUE end
 
 			if not obj.ClassName or not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key) then
 				local group = group_override or (udata and udata.group) or "generic"
 				tbl[group] = tbl[group] or {}
 				table.insert(tbl[group], {key = key, val = val, callback = callback, udata = udata})
 			end
+			::CONTINUE::
 		end
 
 		for group, vars in pairs(tbl) do
@@ -508,7 +509,7 @@ do -- list
 				local key, val, udata = data.key, data.val, data.udata
 				local group_pos = 0
 
-				if obj.ClassName and pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
+				if obj.ClassName and pace.IsInBasicMode() and not pace.BasicProperties[key] then goto CONTINUE end
 
 				local pnl
 				local T = type(val):lower()
@@ -526,7 +527,7 @@ do -- list
 					T = "string"
 				end
 
-				if pace.CollapsedProperties[group] ~= nil and pace.CollapsedProperties[group] then continue end
+				if pace.CollapsedProperties[group] ~= nil and pace.CollapsedProperties[group] then goto CONTINUE end
 
 				pnl = pace.CreatePanel("properties_" .. T)
 
@@ -604,7 +605,7 @@ do -- list
 						if pnl.ExtraPopulate then
 							table.insert(pace.extra_populates, {pnl = pnl, func = pnl.ExtraPopulate})
 							pnl:Remove()
-							continue
+							goto CONTINUE
 						end
 
 						obj.editor_pnl = pnl
@@ -629,6 +630,7 @@ do -- list
 						self:AddKeyValue(key, pnl, pos, nil, udata, group)
 					end
 				end
+				::CONTINUE::
 			end
 		end
 
@@ -646,7 +648,7 @@ do -- non editable string
 			if self.TargetPanel.pac_tooltip_hack then
 				local args = {pace_Old_PositionTooltip(self, ...)}
 
-				if ( !IsValid( self.TargetPanel ) ) then
+				if (  not IsValid( self.TargetPanel ) ) then
 					self:Remove()
 					return;
 				end

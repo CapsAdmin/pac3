@@ -157,13 +157,13 @@ local function setup(PART)
 					if found then
 						pac.SetPropertyGroup(info.group)
 					else
-						continue
+						goto CONTINUE
 					end
 				elseif pass == 2 then
 					if not found then
 						pac.SetPropertyGroup()
 					else
-						continue
+						goto CONTINUE
 					end
 				end
 
@@ -286,6 +286,7 @@ local function setup(PART)
 						end
 					end
 				end
+				::CONTINUE::
 			end
 		end
 	end
