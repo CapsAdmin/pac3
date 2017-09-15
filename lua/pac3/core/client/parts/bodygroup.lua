@@ -51,14 +51,14 @@ function PART:UpdateBodygroupData()
 	end
 end
 
-function PART:Draw(event, pos, ang, draw_type)
+function PART:Draw(pos, ang, draw_type)
 	if not self.last_enabled or self:IsHidden() then return end
 	if not self.bodygroup_index then return self:DrawChildren(event, pos, ang, draw_type) end
 	local ent = self:GetOwner()
 	if not IsValid(ent) then return self:DrawChildren(event, pos, ang, draw_type) end
 	if self.ModelIndex < self.minIndex or self.ModelIndex > self.maxIndex then return self:DrawChildren(event, pos, ang, draw_type) end
 	ent:SetBodygroup(self.bodygroup_index, self.ModelIndex)
-	self:DrawChildren(event, pos, ang, draw_type)
+	self:DrawChildren(pos, ang, draw_type)
 	if ent:IsPlayer() then
 		ent.pac_bodygroups_torender = ent.pac_bodygroups_torender or {}
 		ent.pac_bodygroups_torender[self.bodygroup_index] = self.ModelIndex

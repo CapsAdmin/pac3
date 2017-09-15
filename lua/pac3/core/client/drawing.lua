@@ -159,7 +159,7 @@ local function render_override(ent, type, draw_only)
 					end
 
 					if not (part.OwnerName == "viewmodel" and type ~= "viewmodel" or part.OwnerName ~= "viewmodel" and type == "viewmodel") then
-						part:Draw("OnDraw", nil, nil, type)
+						part:Draw(nil, nil, type)
 					end
 				end
 			else

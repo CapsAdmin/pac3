@@ -334,18 +334,27 @@ do -- parenting
 		return self.children_list
 	end
 
-
-	local function add_children_to_list(parent, list)
+	local function add_children_to_list(parent, list, drawOrder)
 		for _, child in ipairs(parent:GetChildren()) do
-			table.insert(list, child)
-			add_children_to_list(child, list)
+			table.insert(list, {child, child.DrawOrder + drawOrder})
+			add_children_to_list(child, list, drawOrder + child.DrawOrder)
 		end
 	end
 
 	function PART:BuildChildrenList()
-		self.children_list = {}
+		local child = {}
+		self.children_list = child
 
-		add_children_to_list(self, self.children_list)
+		local tableToSort = {}
+		add_children_to_list(self, tableToSort, self.DrawOrder)
+
+		table.sort(tableToSort, function(a, b)
+			return a[2] < b[2]
+		end)
+
+		for i, data in ipairs(tableToSort) do
+			child[#child + 1] = data[1]
+		end
 	end
 
 	function PART:CreatePart(name)
@@ -817,27 +826,34 @@ do -- drawing. this code is running every frame
 	PART.cached_pos = Vector(0, 0, 0)
 	PART.cached_ang = Angle(0, 0, 0)
 
-	function PART:DrawChildren(event, pos, ang, draw_type)
-		for i, child in ipairs(self:GetChildren()) do
-			child:Draw(event, pos, ang, draw_type)
+	function PART:DrawChildren(event, pos, ang, draw_type, drawAll)
+		if drawAll then
+			for i, child in ipairs(self:GetChildrenList()) do
+				child:Draw(pos, ang, draw_type, true)
+			end
+		else
+			for i, child in ipairs(self:GetChildren()) do
+				child:Draw(pos, ang, draw_type)
+			end
 		end
 	end
 
-	function PART:Draw(event, pos, ang, draw_type)
-
+	--function PART:Draw(pos, ang, draw_type, isNonRoot)
+	function PART:Draw(pos, ang, draw_type)
 		-- Think takes care of polling this
 		if not self.last_enabled then return end
 
 		if self:IsHidden() then	return end
 
 		if
-			self[event] and
+			self.OnDraw and
 			(
 				draw_type == "viewmodel" or
 				((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
 				((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
 			)
 		then
+			local sysTime = SysTime()
 			pos, ang = self:GetDrawPosition()
 
 			self.cached_pos = pos
@@ -847,16 +863,27 @@ do -- drawing. this code is running every frame
 				pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
 			end
 
-			if not self.HandleModifiersManually then self:ModifiersPreEvent(event, draw_type) end
+			if not self.HandleModifiersManually then self:ModifiersPreEvent('OnDraw', draw_type) end
 
-			self[event](self, self:GetOwner(), pos, ang) -- this is where it usually calls Ondraw on all the parts
+			self:OnDraw(self:GetOwner(), pos, ang)
 
-			if not self.HandleModifiersManually then self:ModifiersPostEvent(event, draw_type) end
+			if not self.HandleModifiersManually then self:ModifiersPostEvent('OnDraw', draw_type) end
+			self.selfDrawTime = SysTime() - sysTime
 		end
+
+		-- if not isNonRoot then
+		-- 	for i, child in ipairs(self:GetChildrenList()) do
+		-- 		child:Draw(pos, ang, draw_type, true)
+		-- 	end
+		-- end
+
+		local sysTime = SysTime()
 
 		for i, child in ipairs(self:GetChildren()) do
-			child:Draw(event, pos, ang, draw_type)
+			child:Draw(pos, ang, draw_type)
 		end
+
+		self.childrenDrawTime = SysTime() - sysTime
 	end
 
 	function PART:GetDrawPosition(bone_override, skip_cache)
