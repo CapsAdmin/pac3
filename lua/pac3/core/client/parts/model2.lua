@@ -79,8 +79,6 @@ end
 function PART:SetModelModifiers(str)
 	self.ModelModifiers = str
 
-	if not self.Entity:GetBodyGroups() then return end
-
 	local tbl = self:ModelModifiersToTable(str)
 
 	if tbl.skin then
@@ -88,10 +86,14 @@ function PART:SetModelModifiers(str)
 		tbl.skin = nil
 	end
 
+	if not self.Entity:GetBodyGroups() then return end
+
+	self.draw_bodygroups = {}
+
 	for i, info in ipairs(self.Entity:GetBodyGroups()) do
 		local val = tbl[info.name:lower()]
 		if val then
-			self.Entity:SetBodygroup(info.id, val)
+			table.insert(self.draw_bodygroups, {info.id, val})
 		end
 	end
 end
@@ -108,7 +110,7 @@ function PART:SetMaterial(str)
 		self.material_override_self[0] = pac.Material(str, self)
 	end
 
-	if not next(self.material_override_self) then
+	if self.material_override_self and not next(self.material_override_self) then
 		self.material_override_self = nil
 	end
 end
@@ -191,6 +193,12 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		render_SetColorModulation(r,g,b)
 		render_SetBlend(self.Alpha)
 	end
+
+	if self.draw_bodygroups then
+		for _, v in ipairs(self.draw_bodygroups) do
+			ent:SetBodygroup(v[1], v[2])
+		end
+	end
 end
 
 function PART:PostEntityDraw(owner, ent, pos, ang)
@@ -222,10 +230,12 @@ end
 function PART:DrawModel(ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 		local materials = self.material_override_self or self.material_override
+		local set_material = false
 
 		if self.material_override_self then
 			if materials[0] then
 				render_MaterialOverride(materials[0])
+				set_material = true
 			end
 
 			for i = 1, #ent:GetMaterials() do
@@ -240,6 +250,7 @@ function PART:DrawModel(ent, pos, ang)
 		elseif self.material_override then
 			if materials[0] and materials[0][1] then
 				render_MaterialOverride(materials[0][1]:GetRawMaterial())
+				set_material = true
 			end
 
 			for i = 1, #ent:GetMaterials() do
@@ -254,6 +265,10 @@ function PART:DrawModel(ent, pos, ang)
 					end
 				end
 			end
+		end
+
+		if pac.render_material and not set_material then
+			render_MaterialOverride()
 		end
 
 		ent:DrawModel()
@@ -281,9 +296,9 @@ local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', {FCVAR_ARCHIVE, FCVAR_RE
 
 function PART:RealSetModel(path)
 	self.Entity.pac_bones = nil
-	self:SetModelModifiers("")
-	self:SetMaterials("")
 	self.Entity:SetModel(path)
+	self:SetModelModifiers(self:GetModelModifiers())
+	self:SetMaterials("")
 end
 
 function PART:SetModel(path)

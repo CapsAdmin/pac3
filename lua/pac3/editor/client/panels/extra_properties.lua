@@ -192,6 +192,8 @@ do -- model
 		pace.close_spawn_menu = true
 		pace.SafeRemoveSpecialPanel()
 		pace.ResourceBrowser(function(path)
+			if not self:IsValid() then return end
+
 			self:SetValue(path)
 			self.OnValueChanged(path)
 			pace.PopulateProperties(pace.current_part)
@@ -402,7 +404,7 @@ do -- model modifiers
 		for _, info in ipairs(ent:GetBodyGroups()) do
 			if info.num > 1 then
 				tbl[info.name] = {
-					val = 0,
+					val = part:ModelModifiersToTable(part:GetModelModifiers())[info.name] or 0,
 					callback = function(val)
 						local tbl = part:ModelModifiersToTable(part:GetModelModifiers())
 						tbl[info.name] = val

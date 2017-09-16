@@ -39,7 +39,7 @@ function PART:UpdateBodygroupData()
 	self.maxIndex = 0
 	local ent = self:GetOwner()
 
-	if not IsValid(ent) then return end
+	if not IsValid(ent) or not ent:GetBodyGroups() then return end
 	local fName = self.BodyGroupName:lower()
 
 	for i, info in ipairs(ent:GetBodyGroups()) do
@@ -93,7 +93,7 @@ function PART:GetBodyGroupNameList()
 
 	if ent:IsValid() then
 		for _, info in pairs(ent:GetBodyGroups()) do
-			out[info.name] = info.name:lower()
+			out[info.name] = info.name
 		end
 	end
 

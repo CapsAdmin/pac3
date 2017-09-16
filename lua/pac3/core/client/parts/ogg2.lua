@@ -26,10 +26,10 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "MaxPitch", 0, {editor_sensitivity = 0.125})
 
 	pac.SetPropertyGroup("filter")
-		pac.GetSet(PART, "FilterType", 0, {editor_enums = {
-			none = 0,
-			lowpass = 0,
-			highpass = 0,
+		pac.GetSet(PART, "FilterType", 0, {enums = {
+			none = "0",
+			lowpass = "1",
+			highpass = "2",
 		}})
 		pac.GetSet(PART, "FilterFraction", 1, {editor_sensitivity = 0.125, editor_clamp = {0, 1}})
 
@@ -59,6 +59,7 @@ end
 PART.stream_vars = {}
 
 local BIND = function(propertyName, setterMethodName, check)
+	table.insert(PART.stream_vars, propertyName)
 	setterMethodName = setterMethodName or "Set" .. propertyName
 	PART["Set" .. propertyName] = function(self, value)
 		if check then
@@ -168,7 +169,7 @@ function PART:SetPath(path)
 
 		stream:Set3D(true)
 		stream.OnLoad = function()
-			for _, key in ipairs(stream_vars) do
+			for _, key in ipairs(PART.stream_vars) do
 				self["Set" .. key](self, self["Get" .. key](self))
 			end
 		end

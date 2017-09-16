@@ -560,8 +560,8 @@ do -- list
 										local enums = {}
 
 										for k, v in pairs(tbl) do
-											if type(k) == "number" then
-												k = v
+											if type(v) ~= "string" then
+												v = k
 											end
 
 											enums[k] = v
@@ -579,7 +579,7 @@ do -- list
 									end,
 
 									function(val, key)
-										return key
+										return val
 									end
 								)
 							end)

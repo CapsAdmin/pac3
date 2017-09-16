@@ -129,6 +129,8 @@ do --dev util
 	local sv_allowcslua = GetConVar('sv_allowcslua')
 
 	function pac.Restart()
+		PAC_MDL_SALT = PAC_MDL_SALT + 1
+
 		local editor_was_open
 		local prev_parts = {}
 		local pacLocal = _G.pac

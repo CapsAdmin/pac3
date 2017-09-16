@@ -390,10 +390,11 @@ function PART:DrawModel(ent, pos, ang)
 		local mat = self.MaterialOverride or self.Materialm
 
 		render_MaterialOverride(mat)
-		render_ModelMaterialOverride(mat)
 		if mat then
 			render_SetMaterial(mat)
 		end
+
+		pac.render_material = mat
 
 		-- Render model
 		local passCount = math_max (1, self.Passes)
