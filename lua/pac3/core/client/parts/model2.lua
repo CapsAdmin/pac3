@@ -79,8 +79,6 @@ end
 function PART:SetModelModifiers(str)
 	self.ModelModifiers = str
 
-	if not self.Entity:GetBodyGroups() then return end
-
 	local tbl = self:ModelModifiersToTable(str)
 
 	if tbl.skin then
@@ -88,10 +86,14 @@ function PART:SetModelModifiers(str)
 		tbl.skin = nil
 	end
 
+	if not self.Entity:GetBodyGroups() then return end
+
+	self.draw_bodygroups = {}
+
 	for i, info in ipairs(self.Entity:GetBodyGroups()) do
 		local val = tbl[info.name:lower()]
 		if val then
-			self.Entity:SetBodygroup(info.id, val)
+			table.insert(self.draw_bodygroups, {info.id, val})
 		end
 	end
 end
@@ -191,6 +193,12 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		render_SetColorModulation(r,g,b)
 		render_SetBlend(self.Alpha)
 	end
+
+	if self.draw_bodygroups then
+		for _, v in ipairs(self.draw_bodygroups) do
+			ent:SetBodygroup(v[1], v[2])
+		end
+	end
 end
 
 function PART:PostEntityDraw(owner, ent, pos, ang)
@@ -286,9 +294,9 @@ end
 
 function PART:RealSetModel(path)
 	self.Entity.pac_bones = nil
-	self:SetModelModifiers("")
-	self:SetMaterials("")
 	self.Entity:SetModel(path)
+	self:SetModelModifiers(self:GetModelModifiers())
+	self:SetMaterials("")
 end
 
 function PART:SetModel(path)

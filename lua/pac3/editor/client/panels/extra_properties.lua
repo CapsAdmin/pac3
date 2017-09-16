@@ -357,7 +357,7 @@ do -- model modifiers
 		for _, info in ipairs(ent:GetBodyGroups()) do
 			if info.num > 1 then
 				tbl[info.name] = {
-					val = 0,
+					val = part:ModelModifiersToTable(part:GetModelModifiers())[info.name] or 0,
 					callback = function(val)
 						local tbl = part:ModelModifiersToTable(part:GetModelModifiers())
 						tbl[info.name] = val
