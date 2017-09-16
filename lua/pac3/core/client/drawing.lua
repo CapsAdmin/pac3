@@ -349,9 +349,8 @@ do
 
 	local pac_sv_hide_outfit_on_death = GetConVar("pac_sv_hide_outfit_on_death")
 
-	function pac.PostDrawTranslucentRenderables(bDrawingDepth, bDrawingSkybox)
+	function pac.PostDrawOpaqueRenderables(bDrawingDepth, bDrawingSkybox)
 		if bDrawingDepth or bDrawingSkybox then return end
-
 		-- commonly used variables
 		max_render_time = max_render_time_cvar:GetFloat()
 		pac.RealTime = RealTime()
@@ -463,6 +462,10 @@ do
 				pac.drawn_entities[key] = nil
 			end
 		end
+	end
+
+	function pac.PostDrawTranslucentRenderables(bDrawingDepth, bDrawingSkybox)
+		if bDrawingDepth or bDrawingSkybox then return end
 
 		for key, ent in pairs(pac.drawn_entities) do
 			if ent.pac_draw_cond and ent.pac_parts then -- accessing table of NULL doesn't do anything
@@ -545,3 +548,4 @@ pac.AddHook("PostDrawViewModel")
 pac.AddHook("Think")
 pac.AddHook("RenderScene")
 pac.AddHook("PostDrawTranslucentRenderables")
+pac.AddHook("PostDrawOpaqueRenderables")
