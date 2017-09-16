@@ -8,8 +8,6 @@ PART.Group = {'model', 'entity'}
 pac.StartStorableVars()
 	pac.GetSet(PART, "Material", "")
 	pac.GetSet(PART, "SubMaterialId", 1, {
-		editor_panel = "submaterialid",
-
 		editor_onchange = function(self, num)
 			num = tonumber(num) or 0
 
@@ -21,7 +19,11 @@ pac.StartStorableVars()
 		end,
 
 		enums = function(part)
-			return part:GetSubMaterialIdList()
+			local tbl = {}
+			for i,v in ipairs(part:GetSubMaterialIdList()) do
+				tbl[v] = tostring(i)
+			end
+			return tbl
 		end,
 	})
 	pac.GetSet(PART, "RootOwner", false)
