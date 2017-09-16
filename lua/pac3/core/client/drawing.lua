@@ -351,18 +351,21 @@ do
 	local lastDrawFrame = 0
 	local currentFrameDrawCount = 0
 	local lastFrameDrawCount = 0
+	local skip_frames = CreateConVar('pac_suppress_frames', '1', {FCVA_ARCHIVE}, 'Skip frames (reflections)')
 
 	function pac.PostDrawOpaqueRenderables(bDrawingDepth, bDrawingSkybox)
 		if bDrawingDepth or bDrawingSkybox then return end
 
-		if lastDrawFrame == FrameNumber() then
-			currentFrameDrawCount = currentFrameDrawCount + 1
-			if lastFrameDrawCount > currentFrameDrawCount then return end
-		else
-			lastFrameDrawCount = currentFrameDrawCount
-			currentFrameDrawCount = 0
-			lastDrawFrame = FrameNumber()
-			if lastFrameDrawCount > 1 then return end
+		if skip_frames:GetBool() then
+			if lastDrawFrame == FrameNumber() then
+				currentFrameDrawCount = currentFrameDrawCount + 1
+				if lastFrameDrawCount > currentFrameDrawCount then return end
+			else
+				lastFrameDrawCount = currentFrameDrawCount
+				currentFrameDrawCount = 0
+				lastDrawFrame = FrameNumber()
+				if lastFrameDrawCount > 1 then return end
+			end
 		end
 
 		-- commonly used variables
@@ -485,14 +488,16 @@ do
 	function pac.PostDrawTranslucentRenderables(bDrawingDepth, bDrawingSkybox)
 		if bDrawingDepth or bDrawingSkybox then return end
 
-		if lastDrawFrame == FrameNumber() then
-			currentFrameDrawCount = currentFrameDrawCount + 1
-			if lastFrameDrawCount > currentFrameDrawCount then return end
-		else
-			lastFrameDrawCount = currentFrameDrawCount
-			currentFrameDrawCount = 0
-			lastDrawFrame = FrameNumber()
-			if lastFrameDrawCount > 1 then return end
+		if skip_frames:GetBool() then
+			if lastDrawFrame == FrameNumber() then
+				currentFrameDrawCount = currentFrameDrawCount + 1
+				if lastFrameDrawCount > currentFrameDrawCount then return end
+			else
+				lastFrameDrawCount = currentFrameDrawCount
+				currentFrameDrawCount = 0
+				lastDrawFrame = FrameNumber()
+				if lastFrameDrawCount > 1 then return end
+			end
 		end
 
 		for key, ent in pairs(pac.drawn_entities) do
