@@ -346,7 +346,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 												table.insert(chars, string.char(b))
 											end
 
-											local mat = table.concat(chars) .. ".vmt"
+											local mat = (table.concat(chars) .. ".vmt"):lower()
 											local found = false
 
 											for i, v in pairs(files) do
