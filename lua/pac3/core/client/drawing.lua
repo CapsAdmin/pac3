@@ -348,9 +348,23 @@ do
 	local fovoverride
 
 	local pac_sv_hide_outfit_on_death = GetConVar("pac_sv_hide_outfit_on_death")
+	local lastDrawFrame = 0
+	local currentFrameDrawCount = 0
+	local lastFrameDrawCount = 0
 
 	function pac.PostDrawOpaqueRenderables(bDrawingDepth, bDrawingSkybox)
 		if bDrawingDepth or bDrawingSkybox then return end
+
+		if lastDrawFrame == FrameNumber() then
+			currentFrameDrawCount = currentFrameDrawCount + 1
+			if lastFrameDrawCount > currentFrameDrawCount then return end
+		else
+			lastFrameDrawCount = currentFrameDrawCount
+			currentFrameDrawCount = 0
+			lastDrawFrame = FrameNumber()
+			if lastFrameDrawCount > 1 then return end
+		end
+
 		-- commonly used variables
 		max_render_time = max_render_time_cvar:GetFloat()
 		pac.RealTime = RealTime()
@@ -464,8 +478,22 @@ do
 		end
 	end
 
+	local lastDrawFrame = 0
+	local currentFrameDrawCount = 0
+	local lastFrameDrawCount = 0
+
 	function pac.PostDrawTranslucentRenderables(bDrawingDepth, bDrawingSkybox)
 		if bDrawingDepth or bDrawingSkybox then return end
+
+		if lastDrawFrame == FrameNumber() then
+			currentFrameDrawCount = currentFrameDrawCount + 1
+			if lastFrameDrawCount > currentFrameDrawCount then return end
+		else
+			lastFrameDrawCount = currentFrameDrawCount
+			currentFrameDrawCount = 0
+			lastDrawFrame = FrameNumber()
+			if lastFrameDrawCount > 1 then return end
+		end
 
 		for key, ent in pairs(pac.drawn_entities) do
 			if ent.pac_draw_cond and ent.pac_parts then -- accessing table of NULL doesn't do anything
