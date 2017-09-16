@@ -63,6 +63,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Air", "", udata)
 	pac.GetSet(PART, "Sitting", "", udata)
 	pac.GetSet(PART, "AlternativeRate", false)
+	pac.GetSet(PART, "Override", false)
 pac.EndStorableVars()
 
 for name in pairs(act_mods) do
@@ -90,6 +91,11 @@ function PART:UpdateActTable()
 		ent.pac_holdtype_alternative_animation_rate = self.AlternativeRate
 
 		ent.pac_holdtypes = ent.pac_holdtypes or {}
+
+		if self.Override then
+			table.Empty(ent.pac_holdtypes)
+		end
+
 		ent.pac_holdtypes[self] = ent.pac_holdtypes[self] or {}
 
 		local acts = ent.pac_holdtypes[self]
