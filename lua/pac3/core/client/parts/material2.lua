@@ -234,7 +234,13 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 		table.insert(materials, "all")
 
-		return materials
+		local tbl = {}
+
+		for k,v in ipairs(materials) do
+			tbl[v] = v
+		end
+
+		return tbl
 	end})
 
 	local function update_submaterial(self, remove, parent)
