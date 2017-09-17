@@ -348,7 +348,7 @@ function PART:SetModel(path)
 
 			pac.DownloadMDL(path, function(real_path)
 				if ent:IsValid() then
-					if ent == pac.LocalPlayer then
+					if ent == pac.LocalPlayer and pacx and pacx.SetModel then
 						pac.Message("finished downloading ", path)
 						pacx.SetModel(path)
 					else
@@ -366,7 +366,7 @@ function PART:SetModel(path)
 	else
 		local ent = self:GetOwner()
 		if ent:IsValid() then
-			if ent == pac.LocalPlayer then
+			if ent == pac.LocalPlayer and pacx and pacx.SetModel then
 				pacx.SetModel(self.Model)
 			else
 				ent:SetModel(self.Model)
