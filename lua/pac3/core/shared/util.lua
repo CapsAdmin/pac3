@@ -143,16 +143,16 @@ PAC_MDL_SALT = PAC_MDL_SALT or 0
 
 function pac.DownloadMDL(url, callback, onfail, ply)
 	return pac.resource.Download(url, function(path)
-		local file_content = file.Read(path)
-
-		if not file_content then
-			pac.Message(Color(255, 50, 50), "content is empty")
+		if not ply:IsValid() then
+			pac.Message(Color(255, 50, 50), "player is no longer valid")
 			file.Delete(path)
 			return
 		end
 
-		if not ply:IsValid() then
-			pac.Message(Color(255, 50, 50), "player is no longer valid")
+		local file_content = file.Read(path)
+
+		if not file_content then
+			pac.Message(Color(255, 50, 50), "content is empty")
 			file.Delete(path)
 			return
 		end
@@ -394,9 +394,11 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								table.insert(chars, string.char(b))
 							end
 
-							local dir = table.concat(chars)
+							if chars[1] then
+								local dir = table.concat(chars)
 
-							table.insert(found_directories, {offset = offset, dir = dir})
+								table.insert(found_directories, {offset = offset, dir = dir})
+							end
 
 							f:Seek(old_pos)
 						end
