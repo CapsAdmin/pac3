@@ -199,7 +199,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					f:Seek(pos+26) local file_name_length = f:ReadShort()
 					local extra_field_length = f:ReadShort()
 
-					local name = f:Read(file_name_length)
+					local name = f:Read(file_name_length):lower()
 					local file_path = name
 
 					if compression_method ~= 0 then
