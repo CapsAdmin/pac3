@@ -394,7 +394,7 @@ if CLIENT then
 					mat = Material("../data/" .. path, "mips smooth noclamp")
 				end
 
-				timer.Create(url, 0.1, 50, function()
+				timer.Create(url .. tostring(callback), 0.1, 50, function()
 					tex = mat:GetTexture("$basetexture")
 					if tex then
 						callback(tex, frames)
