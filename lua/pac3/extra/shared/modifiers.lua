@@ -1,10 +1,26 @@
 
 pacx.ServerModifiers = {}
-local cvarModifiers = {}
 
 function pacx.AddServerModifier(id, func)
+	local cvar
+
+	local default = 1
+
+	if GAMEMODE and GAMEMODE.FolderName and not GAMEMODE.FolderName:lower():find("sandbox") then
+		default = 0
+	end
+
+	if SERVER then
+		cvar = CreateConVar("pac_modifier_" .. id, default, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
+	end
+
+	if CLIENT then
+		cvar = CreateClientConVar("pac_modifier_" .. id, default, true, true)
+	end
+
 	pacx.ServerModifiers[id] = func
-	return cvarModifiers[id]
+
+	return cvar
 end
 
 function pacx.GetServerModifiers()
@@ -26,26 +42,6 @@ function pacx.LoadModifiers()
 	local files = file.Find(pacx.ModifiersPath .. "*", "LUA")
 
 	for key, val in pairs(files) do
-		local name = val:match("(.-)%.")
-
-		local default = 1
-
-		if GAMEMODE and GAMEMODE.FolderName and not GAMEMODE.FolderName:lower():find("sandbox") then
-			default = 0
-		end
-
-		local cvar
-
-		if SERVER then
-			cvar = CreateConVar("pac_modifier_" .. name, default, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
-		end
-
-		if CLIENT then
-			cvar = CreateClientConVar("pac_modifier_" .. name, default, true, true)
-		end
-
-		cvarModifiers[name] = cvar
-
 		include(pacx.ModifiersPath .. val)
 	end
 end
