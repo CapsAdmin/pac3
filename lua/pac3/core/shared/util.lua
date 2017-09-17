@@ -475,6 +475,9 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 									if val.file_name:EndsWith(".vtf") then
 										local vtf_name = val.file_name:lower():sub(0, -5)
 										data.buffer = data.buffer:gsub(vtf_name, newdir .. vtf_name)
+										if data.buffer ~= temp then
+											break
+										end
 									end
 								end
 							end
