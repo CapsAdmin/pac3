@@ -228,7 +228,12 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 		local materials = {}
 
-		if pace.current_part:HasParent() and pace.current_part:GetParent().GetEntity and pace.current_part:GetParent():GetEntity():IsValid() then
+		if
+			pace.current_part:HasParent() and
+			pace.current_part:GetParent().GetEntity and
+			pace.current_part:GetParent():GetEntity():IsValid() and
+			pace.current_part:GetParent():GetEntity():GetMaterials()
+		then
 			materials = pace.current_part:GetParent():GetEntity():GetMaterials()
 		end
 
@@ -236,8 +241,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 		local tbl = {}
 
-		for k,v in ipairs(materials) do
-			tbl[v] = v
+		for _, v in ipairs(materials) do
+			v = v:match(".+/(.+)") or v
+			tbl[v] = v:lower()
 		end
 
 		return tbl
@@ -254,7 +260,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				num = tonumber(str)
 			elseif str ~= "all" and parent.GetEntity and parent:GetEntity():IsValid() and parent:GetEntity():GetMaterials() then
 				for i, v in ipairs(parent:GetEntity():GetMaterials()) do
-					if v == str then
+					if (v:match(".+/(.+)") or v):lower() == str:lower() then
 						num = i
 						break
 					end
