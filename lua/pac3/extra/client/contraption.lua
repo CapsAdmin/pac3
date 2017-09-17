@@ -1,7 +1,7 @@
 local L = pace.LanguageString
 
 pace.AddTool(L"spawn as props", function(part)
-	local data = pace.PartToContraptionData(part)
+	local data = pacx.PartToContraptionData(part)
 	net.Start("pac_to_contraption")
 		net.WriteTable(data)
 	net.SendToServer()
@@ -28,7 +28,7 @@ function pacx.PartToContraptionData(part, tbl)
 
 	for key, part in ipairs(part:GetChildren()) do
 		if part.is_model_part then
-			pace.PartToContraptionData(part, tbl)
+			pacx.PartToContraptionData(part, tbl)
 		end
 	end
 
