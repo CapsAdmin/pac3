@@ -11,6 +11,11 @@ local function add_matrix(META, key, friendly_name, description, udata)
 	pac.GetSet(META, angle_key, 0, {editor_panel = "number", editor_friendly = friendly_name .. "Angle"})
 	pac.GetSet(META, angle_center_key, Vector(0.5, 0.5, 0), {editor_friendly = friendly_name .. "AngleCenter"})
 
+	META.TransformVars[position_key] = true
+	META.TransformVars[scale_key] = true
+	META.TransformVars[angle_key] = true
+	META.TransformVars[angle_center_key] = true
+
 	local shader_key = "$" .. key
 
 	local function setup_matrix(self)
@@ -250,39 +255,53 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	end})
 
 	local function update_submaterial(self, remove, parent)
-		local str = self.MaterialOverride
-		parent = parent or self:GetParent()
-
-		local num = 0
-
-		if parent:IsValid() then
-			if tonumber(str) then
-				num = tonumber(str)
-			elseif str ~= "all" and parent.GetEntity and parent:GetEntity():IsValid() and parent:GetEntity():GetMaterials() then
-				for i, v in ipairs(parent:GetEntity():GetMaterials()) do
-					if (v:match(".+/(.+)") or v):lower() == str:lower() then
-						num = i
-						break
+		pac.RunNextFrame("refresh materials" .. self.Id, function()
+			--[[
+			for key, val in pairs(self.StorableVars) do
+				if self.ShaderParams[key] and self.ShaderParams[key].type == "texture" then
+					local str = self["Get"..key](self)
+					if str and str ~= "" then
+						self["Set" .. key](self, str)
 					end
 				end
 			end
+	]]
 
-			parent.material_override = parent.material_override or {}
-			parent.material_override[num] = parent.material_override[num] or {}
+			local str = self.MaterialOverride
+			parent = parent or self:GetParent()
 
-			for _, stack in pairs(parent.material_override) do
-				for i, v in ipairs(stack) do
-					if v == self then
-						table.remove(stack, i)
-						break
+			local num = 0
+
+			if parent:IsValid() then
+				if tonumber(str) then
+					num = tonumber(str)
+				elseif str ~= "all" and parent.GetEntity and parent:GetEntity():IsValid() and parent:GetEntity():GetMaterials() then
+					for i, v in ipairs(parent:GetEntity():GetMaterials()) do
+						if (v:match(".+/(.+)") or v):lower() == str:lower() then
+							num = i
+							break
+						end
 					end
+				end
+
+				parent.material_override = parent.material_override or {}
+				parent.material_override[num] = parent.material_override[num] or {}
+
+				for _, stack in pairs(parent.material_override) do
+					for i, v in ipairs(stack) do
+						if v == self then
+							table.remove(stack, i)
+							break
+						end
+					end
+				end
+
+				if not remove then
+					table.insert(parent.material_override[num], self)
 				end
 			end
 
-			if not remove then
-				table.insert(parent.material_override[num], self)
-			end
-		end
+		end)
 	end
 
 	function PART:SetMaterialOverride(num)
@@ -292,6 +311,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	end
 
 	PART.ShaderParams = {}
+	PART.TransformVars = {}
 
 	local sorted_groups = {}
 	for k, v in pairs(groups) do
@@ -414,11 +434,13 @@ for shader_name, groups in pairs(shader_params.shaders) do
 					PART["Set" .. property_name] = function(self, val)
 						local x,y
 						if type(val) == "string" then
-							x,y = unpack(val:Split(" "))
+							x, y = unpack(val:Split(" "))
 							x = tonumber(x) or 0
 							y = tonumber(y) or 0
+						elseif type(val) == "Vector" then
+							x, y = val.x, val.y
 						else
-							x,y = val.x, val.y
+							x, y = 0, 0
 						end
 
 						self[property_name] = ("%f %f"):format(x, y)
@@ -438,9 +460,11 @@ for shader_name, groups in pairs(shader_params.shaders) do
 							y = tonumber(y) or 0
 							z = tonumber(z) or 0
 							w = tonumber(w) or 0
-						else
+						elseif type(val) == "Vector" then
 							x,y,z = val.x, val.y, val.z
 							w = 0
+						else
+							x, y, z, w = 0, 0, 0, 0
 						end
 
 						self[property_name] = ("%f %f %f %f"):format(x, y, z, w)
