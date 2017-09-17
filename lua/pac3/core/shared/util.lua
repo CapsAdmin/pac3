@@ -332,44 +332,44 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							local vmt_dir_count = f:ReadLong()
 							local vmt_dir_offset = f:ReadLong()
 
-							if ply == pac.LocalPlayer then
-								local old_pos = f:Tell()
-								f:Seek(vmt_dir_offset)
-									local offset = f:ReadLong()
-									if offset > -1 then
-										f:Seek(vmt_dir_offset + offset)
-										for i = 1, vmt_dir_count do
-											local chars = {}
-											for i = 1, 64 do
-												local b = f:ReadByte()
-												if not b or b == 0 then break end
-												table.insert(chars, string.char(b))
-											end
-
-											local mat = (table.concat(chars) .. ".vmt"):lower()
-											local found = false
-
-											for i, v in pairs(files) do
-												if v.file_name:EndsWith(mat) then
-													found = true
-													break
-												end
-											end
-
-											if not found then
-												pac.Message(Color(255, 50,50), url, " the model wants to find ", mat, " but it was not found in the zip archive")
-												local dummy = "VertexLitGeneric\n{\n\t$basetexture \"error\"\n}"
-												table.insert(files, {file_name = mat, buffer = dummy, crc = util.CRC(dummy)})
-											end
-
-											table.insert(found_materials, mat)
+							local old_pos = f:Tell()
+							f:Seek(vmt_dir_offset)
+								local offset = f:ReadLong()
+								if offset > -1 then
+									f:Seek(vmt_dir_offset + offset)
+									for i = 1, vmt_dir_count do
+										local chars = {}
+										for i = 1, 64 do
+											local b = f:ReadByte()
+											if not b or b == 0 then break end
+											table.insert(chars, string.char(b))
 										end
-									end
-								f:Seek(old_pos)
 
-								if #found_materials == 0 then
-									pac.Message(Color(255, 200,50), url, ": could not find any materials in this model")
+										local mat = (table.concat(chars) .. ".vmt"):lower()
+										local found = false
+
+										for i, v in pairs(files) do
+											if v.file_name:EndsWith(mat) then
+												found = true
+												break
+											end
+										end
+
+										if not found then
+											if ply == pac.LocalPlayer then
+												pac.Message(Color(255, 50,50), url, " the model wants to find ", mat, " but it was not found in the zip archive")
+											end
+											local dummy = "VertexLitGeneric\n{\n\t$basetexture \"error\"\n}"
+											table.insert(files, {file_name = mat, buffer = dummy, crc = util.CRC(dummy)})
+										end
+
+										table.insert(found_materials, mat)
+									end
 								end
+							f:Seek(old_pos)
+
+							if ply == pac.LocalPlayer and #found_materials == 0 then
+								pac.Message(Color(255, 200,50), url, ": could not find any materials in this model")
 							end
 						end
 
