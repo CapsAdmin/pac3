@@ -227,10 +227,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						error("the file " .. name .. " is compressed! (use compression method 0 / store, or maybe you drag dropped files into the archive)")
 					end
 
-					if not name:EndsWith(".vtf") and not name:EndsWith(".vmt") then
-						name = name:gsub(".-(%..+)", "model%1"):lower()
-					end
-
 					f:Skip(extra_field_length)
 
 					local buffer = f:Read(size)
@@ -245,11 +241,9 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						local ok = true
 						for i,v in ipairs(files) do
 							if v.file_name == name then
-
-								if v.file_name:EndsWith(".mdl") then
-									error("zip archive contains more than 1 mdl file (" .. v.file_path .. " and " .. file_path .. ")")
+								if ply == pac.LocalPlayer then
+									pac.Message(Color(255, 50,50), file_path .. " is already a file at " .. v.file_path)
 								end
-
 								ok = false
 								break
 							end
@@ -262,6 +256,29 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			end)
 
 			f:Close()
+
+			local count = 0
+
+			for i, v in ipairs(files) do
+				if v.file_name:EndsWith(".mdl") then
+					local name = v.file_name:match("(.+)%.mdl")
+					for _, v2 in ipairs(files) do
+						if v2.file_name:EndsWith(name .. ".ani") then
+							v.ani = v2
+							break
+						end
+					end
+					if v.ani then
+						v.file_name = v.file_name:gsub(".-(%..+)", "i"..count.."%1"):lower()
+						v.ani.file_name = v.ani.file_name:gsub(".-(%..+)", "i"..count.."%1"):lower()
+						count = count + 1
+					else
+						v.file_name = v.file_name:gsub(".-(%..+)", "model%1"):lower()
+					end
+				elseif v.file_name:EndsWith(".vtx") or v.file_name:EndsWith(".vvd") or v.file_name:EndsWith(".phy") then
+					v.file_name = v.file_name:gsub(".-(%..+)", "model%1"):lower()
+				end
+			end
 
 			if not ok then
 				onfail(err)
@@ -307,7 +324,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				end
 			end
 
-			if #found ~= #required then
+			if #found < #required then
 				local str = {}
 
 				for _, ext in ipairs(required) do
@@ -325,9 +342,10 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				local found_directories = {}
 				local found_materials = {}
 				local found_activities = {}
+				local found_mdl_includes = {}
 
 				for i, data in ipairs(files) do
-					if data.file_name:EndsWith(".mdl") then
+					if data.file_name:EndsWith("model.mdl") then
 
 						if DEBUG_MDL then
 							file.Write("debug_mdl_original.dat", data.buffer)
@@ -497,7 +515,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 						local vtf_dir_count = f:ReadLong()
 						local vtf_dir_offset = f:ReadLong()
-
+						local old_pos = f:Tell()
 						f:Seek(vtf_dir_offset)
 
 						local done = {}
@@ -524,6 +542,44 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 							f:Seek(old_pos)
 						end
+						f:Seek(old_pos)
+
+						f:Skip(4 + 8) -- skin
+						f:Skip(8) -- bodypart
+						f:Skip(8) -- attachment
+						f:Skip(4 + 8) -- localnode
+						f:Skip(8) -- flex
+						f:Skip(8) -- flex rules
+						f:Skip(8) -- ik
+						f:Skip(8) -- mouth
+						f:Skip(8) -- localpose
+						f:Skip(4) -- render2dprop
+						f:Skip(8) -- keyvalues
+						f:Skip(8) -- iklock
+						f:Skip(12) -- mass
+						f:Skip(4) -- contents
+
+						local include_mdl_dir_count = f:ReadLong()
+						local include_mdl_dir_offset = f:ReadLong()
+
+						f:Seek(include_mdl_dir_offset)
+						for i = 1, include_mdl_dir_count do
+							local base_pos = f:Tell()
+
+							local label_offset = f:ReadLong()
+							if label_offset > 0 then
+								local old_pos = f:Tell()
+								f:Seek(base_pos + label_offset)
+								print(label_offset, read_string(f))
+								f:Seek(old_pos)
+							end
+
+							local file_name_offset = f:ReadLong()
+							local old_pos = f:Tell()
+							f:Seek(base_pos + file_name_offset)
+							table.insert(found_mdl_includes, {offset = base_pos + file_name_offset, path = read_string(f)})
+							f:Seek(old_pos)
+						end
 
 						f:Close()
 
@@ -541,6 +597,26 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								buffer = (buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)):sub(0, size)
 							else
 								buffer = buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)
+								had_to_extend = true
+							end
+						end
+
+						for i,v in ipairs(found_mdl_includes) do
+							local file_name = (v.path:match(".+/(.+)") or v.path)
+							for _, info in ipairs(files) do
+								if info.file_path:EndsWith(file_name) then
+									file_name = info.file_name
+									break
+								end
+							end
+
+							local path = "models\\" .. newdir .. file_name
+
+							if #path < #v.path then
+								local path = path .. ("\0"):rep(#v.path - #path)
+								buffer = (buffer:sub(0, v.offset) .. path .. buffer:sub(v.offset + #v.path + 1)):sub(0, size)
+							else
+								buffer = buffer:sub(0, v.offset) .. path .. buffer:sub(v.offset + #v.path + 1)
 								had_to_extend = true
 							end
 						end
@@ -585,32 +661,30 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 
 				for i, data in ipairs(files) do
-					if not data.file_name:EndsWith(".mdl") then
-						if data.file_name:EndsWith(".vmt") then
-							local newdir = dir
+					if data.file_name:EndsWith(".vmt") then
+						local newdir = dir
 
-							data.buffer = data.buffer:lower():gsub("\\", "/")
+						data.buffer = data.buffer:lower():gsub("\\", "/")
 
-							local temp = data.buffer
-							for _, info in ipairs(found_directories) do
-								data.buffer = data.buffer:gsub("[\"\']%S-" .. info.dir:gsub("\\", "/"):lower(), "\"" .. newdir)
-								data.buffer = data.buffer:gsub(info.dir:gsub("\\", "/"):lower(), newdir)
-							end
+						local temp = data.buffer
+						for _, info in ipairs(found_directories) do
+							data.buffer = data.buffer:gsub("[\"\']%S-" .. info.dir:gsub("\\", "/"):lower(), "\"" .. newdir)
+							data.buffer = data.buffer:gsub(info.dir:gsub("\\", "/"):lower(), newdir)
+						end
 
-							if data.buffer == temp then
-								for _, val in ipairs(files) do
-									if val.file_name:EndsWith(".vtf") then
-										local vtf_name = val.file_name:lower():sub(0, -5)
-										data.buffer = data.buffer:gsub(vtf_name, newdir .. vtf_name)
-										if data.buffer ~= temp then
-											break
-										end
+						if data.buffer == temp then
+							for _, val in ipairs(files) do
+								if val.file_name:EndsWith(".vtf") then
+									local vtf_name = val.file_name:lower():sub(0, -5)
+									data.buffer = data.buffer:gsub(vtf_name, newdir .. vtf_name)
+									if data.buffer ~= temp then
+										break
 									end
 								end
 							end
-
-							data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
 						end
+
+						data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
 					end
 				end
 			end
@@ -678,7 +752,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 		end
 
 		for k,v in pairs(tbl) do
-			if v:EndsWith(".mdl") then
+			if v:EndsWith("model.mdl") then
 				callback(DEBUG_MDL and "error.mdl" or v)
 				file.Delete("pac3_cache/downloads/" .. id .. ".dat")
 				break
