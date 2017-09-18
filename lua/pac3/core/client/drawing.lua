@@ -348,25 +348,40 @@ do
 	local fovoverride
 
 	local pac_sv_hide_outfit_on_death = GetConVar("pac_sv_hide_outfit_on_death")
-	local lastDrawFrame = 0
-	local currentFrameDrawCount = 0
-	local lastFrameDrawCount = 0
 	local skip_frames = CreateConVar('pac_suppress_frames', '1', {FCVA_ARCHIVE}, 'Skip frames (reflections)')
+
+	local function setup_suppress()
+		local last_framenumber = 0
+		local current_frame = 0
+		local current_frame_count = 0
+
+		return function()
+			if skip_frames:GetBool() then
+				local frame_number = FrameNumber()
+
+				if frame_number == last_framenumber then
+					current_frame = current_frame + 1
+				else
+					last_framenumber = frame_number
+
+					if current_frame_count ~= current_frame then
+						current_frame_count = current_frame
+					end
+
+					current_frame = 1
+				end
+
+				return current_frame < current_frame_count
+			end
+		end
+	end
+
+	local should_suppress = setup_suppress()
 
 	function pac.PostDrawOpaqueRenderables(bDrawingDepth, bDrawingSkybox)
 		if bDrawingDepth or bDrawingSkybox then return end
 
-		if skip_frames:GetBool() then
-			if lastDrawFrame == FrameNumber() then
-				currentFrameDrawCount = currentFrameDrawCount + 1
-				if lastFrameDrawCount > currentFrameDrawCount then return end
-			else
-				lastFrameDrawCount = currentFrameDrawCount
-				currentFrameDrawCount = 0
-				lastDrawFrame = FrameNumber()
-				if lastFrameDrawCount > 1 then return end
-			end
-		end
+		if should_suppress() then return end
 
 		-- commonly used variables
 		max_render_time = max_render_time_cvar:GetFloat()
@@ -481,24 +496,12 @@ do
 		end
 	end
 
-	local lastDrawFrame = 0
-	local currentFrameDrawCount = 0
-	local lastFrameDrawCount = 0
+	local should_suppress = setup_suppress()
 
 	function pac.PostDrawTranslucentRenderables(bDrawingDepth, bDrawingSkybox)
 		if bDrawingDepth or bDrawingSkybox then return end
 
-		if skip_frames:GetBool() then
-			if lastDrawFrame == FrameNumber() then
-				currentFrameDrawCount = currentFrameDrawCount + 1
-				if lastFrameDrawCount > currentFrameDrawCount then return end
-			else
-				lastFrameDrawCount = currentFrameDrawCount
-				currentFrameDrawCount = 0
-				lastDrawFrame = FrameNumber()
-				if lastFrameDrawCount > 1 then return end
-			end
-		end
+		if should_suppress() then return end
 
 		for key, ent in pairs(pac.drawn_entities) do
 			if ent.pac_draw_cond and ent.pac_parts then -- accessing table of NULL doesn't do anything
