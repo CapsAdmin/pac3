@@ -348,104 +348,107 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						f:Skip(12 * 6) -- skips over all the vec3 stuff
 
 						f:Skip(4) -- flags
-						f:Skip(8 * 3)
+						f:Skip(8) -- bone
+						f:Skip(8) -- bone controller
+						f:Skip(8) -- hitbox
+						f:Skip(8) -- local anim
 
 						do
-							local localanim_count = f:ReadLong()
-							local localanim_offset = f:ReadLong()
-
 							local sequence_count = f:ReadLong()
 							local sequence_offset = f:ReadLong()
 
-							local enums = table.Copy(act_enums)
+							if sequence_count > 0 then
+								local enums = table.Copy(act_enums)
 
-							local old_pos = f:Tell()
-							f:Seek(sequence_offset)
-								for i = 1, sequence_count do
-									local tbl = {}
-									local seek_offset = f:Tell()
-									local base_header_offset = f:ReadLong()
-									tbl.name_offset = f:ReadLong()
-									local activity_name_offset = f:ReadLong()
+								local old_pos = f:Tell()
+								f:Seek(sequence_offset)
+									for i = 1, sequence_count do
+										local tbl = {}
+										local seek_offset = f:Tell()
+										local base_header_offset = f:ReadLong()
+										tbl.name_offset = f:ReadLong()
+										local activity_name_offset = f:ReadLong()
 
-									local oldpos = f:Tell()
-									f:Seek(seek_offset + activity_name_offset)
-									local str = read_string(f)
-									if _G[str] == nil then
-										for i, v in ipairs(enums) do
-											if #v.k <= #str then
-												table.insert(found_activities, {from = str, to = v.k, offset = seek_offset + activity_name_offset})
-												table.remove(enums, i)
-												break
+										local oldpos = f:Tell()
+										f:Seek(seek_offset + activity_name_offset)
+										local str = read_string(f)
+										if _G[str] == nil then
+											for i, v in ipairs(enums) do
+												if #v.k <= #str then
+													table.insert(found_activities, {from = str, to = v.k, offset = seek_offset + activity_name_offset})
+													table.remove(enums, i)
+													break
+												end
 											end
 										end
+										f:Seek(oldpos)
+
+										tbl.flags = f:ReadLong()
+										tbl.activity = f:ReadLong()
+										tbl.activity_weight = f:ReadLong()
+										tbl.event_count = f:ReadLong()
+										tbl.event_offset = f:ReadLong()
+
+										tbl.bbminx = f:ReadFloat()
+										tbl.bbminy = f:ReadFloat()
+										tbl.bbminz = f:ReadFloat()
+
+										tbl.bbmaxx = f:ReadFloat()
+										tbl.bbmaxy = f:ReadFloat()
+										tbl.bbmaxz = f:ReadFloat()
+
+										tbl.blend_count = f:ReadLong()
+										tbl.anim_index_offset = f:ReadLong()
+										tbl.movement_index = f:ReadLong()
+										tbl.group_size_0 = f:ReadLong()
+										tbl.group_size_1 = f:ReadLong()
+
+										tbl.param_index_0 = f:ReadLong()
+										tbl.param_index_1 = f:ReadLong()
+
+										tbl.param_start_0 = f:ReadFloat()
+										tbl.param_start_1 = f:ReadFloat()
+
+										tbl.param_end_0 = f:ReadFloat()
+										tbl.param_end_1 = f:ReadFloat()
+
+										tbl.param_parent = f:ReadLong()
+
+										tbl.fade_in_time = f:ReadFloat()
+										tbl.fade_out_time = f:ReadFloat()
+
+										tbl.local_entry_node_index = f:ReadLong()
+										tbl.local_exit_node_index = f:ReadLong()
+										tbl.node_flags = f:ReadLong()
+
+										tbl.entry_phase = f:ReadFloat()
+										tbl.exit_phase = f:ReadFloat()
+										tbl.last_frame = f:ReadFloat()
+
+										tbl.next_seq = f:ReadLong()
+										tbl.pose = f:ReadLong()
+
+										tbl.ikRuleCount = f:ReadLong()
+										tbl.autoLayerCount = f:ReadLong()
+										tbl.autoLayerOffset = f:ReadLong()
+										tbl.weightOffset = f:ReadLong()
+										tbl.poseKeyOffset = f:ReadLong()
+
+										tbl.ikLockCount = f:ReadLong()
+										tbl.ikLockOffset = f:ReadLong()
+										tbl.keyValueOffset = f:ReadLong()
+										tbl.keyValueSize = f:ReadLong()
+										tbl.cyclePoseIndex = f:ReadLong()
+
+										f:Skip(4*7)
+
 									end
-									f:Seek(oldpos)
+								f:Seek(old_pos)
 
-									tbl.flags = f:ReadLong()
-									tbl.activity = f:ReadLong()
-									tbl.activity_weight = f:ReadLong()
-									tbl.event_count = f:ReadLong()
-									tbl.event_offset = f:ReadLong()
-
-									tbl.bbminx = f:ReadFloat()
-									tbl.bbminy = f:ReadFloat()
-									tbl.bbminz = f:ReadFloat()
-
-									tbl.bbmaxx = f:ReadFloat()
-									tbl.bbmaxy = f:ReadFloat()
-									tbl.bbmaxz = f:ReadFloat()
-
-									tbl.blend_count = f:ReadLong()
-									tbl.anim_index_offset = f:ReadLong()
-									tbl.movement_index = f:ReadLong()
-									tbl.group_size_0 = f:ReadLong()
-									tbl.group_size_1 = f:ReadLong()
-
-									tbl.param_index_0 = f:ReadLong()
-									tbl.param_index_1 = f:ReadLong()
-
-									tbl.param_start_0 = f:ReadFloat()
-									tbl.param_start_1 = f:ReadFloat()
-
-									tbl.param_end_0 = f:ReadFloat()
-									tbl.param_end_1 = f:ReadFloat()
-
-									tbl.param_parent = f:ReadLong()
-
-									tbl.fade_in_time = f:ReadFloat()
-									tbl.fade_out_time = f:ReadFloat()
-
-									tbl.local_entry_node_index = f:ReadLong()
-									tbl.local_exit_node_index = f:ReadLong()
-									tbl.node_flags = f:ReadLong()
-
-									tbl.entry_phase = f:ReadFloat()
-									tbl.exit_phase = f:ReadFloat()
-									tbl.last_frame = f:ReadFloat()
-
-									tbl.next_seq = f:ReadLong()
-									tbl.pose = f:ReadLong()
-
-									tbl.ikRuleCount = f:ReadLong()
-									tbl.autoLayerCount = f:ReadLong()
-									tbl.autoLayerOffset = f:ReadLong()
-									tbl.weightOffset = f:ReadLong()
-									tbl.poseKeyOffset = f:ReadLong()
-
-									tbl.ikLockCount = f:ReadLong()
-									tbl.ikLockOffset = f:ReadLong()
-									tbl.keyValueOffset = f:ReadLong()
-									tbl.keyValueSize = f:ReadLong()
-									tbl.cyclePoseIndex = f:ReadLong()
-
-									f:Skip(4*7)
-
-								end
-							f:Seek(old_pos)
+							end
 						end
 
-						f:Skip(8 * 2)
+						f:Skip(8) -- activitylistversion + eventsindexed
 
 						do
 							local vmt_dir_count = f:ReadLong()
