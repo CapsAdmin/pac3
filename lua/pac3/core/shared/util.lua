@@ -298,11 +298,9 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				end
 
 				if not is_binary then
-					pac.Message("the zip archive doesn't appear to be binary:")
+					pac.Message(Color(255, 50,50), "the url isn't a binary zip archive. Is it a html website? here's the content:")
 					print(str)
-				end
-
-				if ply == pac.LocalPlayer then
+				elseif ply == pac.LocalPlayer then
 					file.Write("pac3_cache/failed_zip_download.dat", str)
 					pac.Message("the zip archive was stored to garrysmod/data/pac3_cache/failed_zip_download.dat (rename extension to .zip) if you want to inspect it")
 				end
@@ -489,8 +487,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 										local found = false
 
 										for i, v in pairs(files) do
-											if v.file_name:EndsWith(mat) then
-												found = true
+											if v.file_name == mat then
+												found = v.file_path
 												break
 											end
 										end
@@ -500,7 +498,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 												pac.Message(Color(255, 50,50), url, " the model wants to find ", mat, " but it was not found in the zip archive")
 											end
 											local dummy = "VertexLitGeneric\n{\n\t$basetexture \"error\"\n}"
-											table.insert(files, {file_name = mat, buffer = dummy, crc = util.CRC(dummy)})
+											table.insert(files, {file_name = mat, buffer = dummy, crc = util.CRC(dummy), file_path = mat})
 										end
 
 										table.insert(found_materials, mat)
@@ -659,7 +657,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					end
 				end
 
-
 				for i, data in ipairs(files) do
 					if data.file_name:EndsWith(".vmt") then
 						local newdir = dir
@@ -675,11 +672,9 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						if data.buffer == temp then
 							for _, val in ipairs(files) do
 								if val.file_name:EndsWith(".vtf") then
+
 									local vtf_name = val.file_name:lower():sub(0, -5)
-									data.buffer = data.buffer:gsub(vtf_name, newdir .. vtf_name)
-									if data.buffer ~= temp then
-										break
-									end
+									data.buffer = data.buffer:gsub("\"%S*"..vtf_name .. "\"", "\"" .. newdir .. vtf_name .. "\"")
 								end
 							end
 						end
@@ -688,7 +683,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					end
 				end
 			end
-
 			if skip_cache then
 				id = id .. "_temp"
 			end
