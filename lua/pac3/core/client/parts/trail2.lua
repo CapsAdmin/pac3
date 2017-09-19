@@ -15,7 +15,7 @@ local RealTime = RealTime
 
 local temp_color = Color(255, 255, 255)
 
-function pac.DrawTrail(self, len, spc, pos, mat, scr,scg,scb,sca, ecr,ecg,ecb,eca, start_size, end_size, stretch)
+function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,ecb,eca, start_size, end_size, stretch)
 	self.trail_points = self.trail_points or {}
 
 	local time = RealTime()
@@ -69,6 +69,7 @@ function pac.DrawTrail(self, len, spc, pos, mat, scr,scg,scb,sca, ecr,ecg,ecb,ec
 
 	if not self.Gravity:IsZero() then
 		local gravity = self.Gravity * FrameTime()
+		gravity:Rotate(ang)
 		for _, data in ipairs(self.trail_points) do
 			data.pos:Add(gravity)
 		end
@@ -148,6 +149,7 @@ function PART:OnDraw(owner, pos, ang)
 		math.min(self.Duration, 10),
 		self.Spacing + (self.StartSize/10),
 		pos,
+		ang,
 		self.material_override and self.material_override[0][1] and self.material_override[0][1]:GetRawMaterial() or self.Materialm,
 
 		self.StartColor.x*255, self.StartColor.y*255, self.StartColor.z*255,self.StartAlpha*255,
