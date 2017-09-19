@@ -878,9 +878,16 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							print("created and removed model")
 							RunConsoleCommand("developer", "0")
 						end)
+					else
+						if CLIENT then
+							ClientsideModel(v):Remove()
+						else
+							local ent = ents.Create("prop_dynamic")
+							ent:SetModel(v)
+							ent:Spawn()
+							ent:Remove()
+						end
 					end
-				else
-					ClientsideModel(v):Remove()
 				end
 
 				callback(DEBUG_MDL and "error.mdl" or v)
