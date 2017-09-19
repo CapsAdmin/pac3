@@ -386,24 +386,26 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 			do -- hex models
 				local found_vmt_directories = {}
-				local found_materials = {}
-				local found_activities = {}
-				local found_mdl_includes = {}
-
-				local vtf_dir_offset
-				local vtf_dir_count
-
-				local vmt_dir_offset
-				local vmt_dir_count
-
-				local include_mdl_dir_offset
-				local include_mdl_dir_count
+				local anim_name_offset
+				local anim_name_str
 
 				for i, data in ipairs(files) do
-					if data.file_name:EndsWith("model.mdl") then
+					if data.file_name:EndsWith(".mdl") then
+						local found_materials = {}
+						local found_activities = {}
+						local found_mdl_includes = {}
+
+						local vtf_dir_offset
+						local vtf_dir_count
+
+						local vmt_dir_offset
+						local vmt_dir_count
+
+						local include_mdl_dir_offset
+						local include_mdl_dir_count
 
 						if DEBUG_MDL then
-							file.Write("debug_mdl_original.dat", data.buffer)
+							file.Write(data.file_name..".debug.old.dat", data.buffer)
 						end
 
 						file.Write("pac3_cache/temp.dat", data.buffer)
@@ -531,7 +533,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							f:Seek(vmt_dir_offset)
 								local offset = f:ReadLong()
 								if offset > -1 then
-									if VERBOSE then print("MATERIAL OFFSET:", vmt_dir_offset + offset) end
+									if VERBOSE then print(data.file_name, "MATERIAL OFFSET:", vmt_dir_offset + offset) end
 									f:Seek(vmt_dir_offset + offset)
 									for i = 1, vmt_dir_count do
 										local chars = {}
@@ -569,87 +571,95 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							end
 						end
 
-						vtf_dir_count = f:ReadLong()
-						vtf_dir_offset = f:ReadLong()
-						local old_pos = f:Tell()
-						f:Seek(vtf_dir_offset)
 
-						local done = {}
-
-						for i = 1, vtf_dir_count do
-							local offset = f:ReadLong()
+						do
+							vtf_dir_count = f:ReadLong()
+							vtf_dir_offset = f:ReadLong()
 							local old_pos = f:Tell()
-							if not offset then break end
+							f:Seek(vtf_dir_offset)
 
-							f:Seek(offset)
+							local done = {}
 
-							local chars = {}
-							for i = 1, 64 do
-								local b = f:ReadByte()
-								if not b or b == 0 then break end
-								table.insert(chars, string.char(b))
+							for i = 1, vtf_dir_count do
+								local offset = f:ReadLong()
+								local old_pos = f:Tell()
+								if not offset then break end
+
+								f:Seek(offset)
+
+								local chars = {}
+								for i = 1, 64 do
+									local b = f:ReadByte()
+									if not b or b == 0 then break end
+									table.insert(chars, string.char(b))
+								end
+
+								if chars[1] then
+									local dir = table.concat(chars)
+
+									table.insert(found_vmt_directories, {offset = offset, dir = dir})
+								end
+
+								f:Seek(old_pos)
 							end
-
-							if chars[1] then
-								local dir = table.concat(chars)
-
-								table.insert(found_vmt_directories, {offset = offset, dir = dir})
-							end
-
 							f:Seek(old_pos)
 						end
-						f:Seek(old_pos)
+							f:Skip(4 + 8) -- skin
+							f:Skip(8) -- bodypart
+							f:Skip(8) -- attachment
+							f:Skip(4 + 8) -- localnode
+							f:Skip(8) -- flex
+							f:Skip(8) -- flex rules
+							f:Skip(8) -- ik
+							f:Skip(8) -- mouth
+							f:Skip(8) -- localpose
+							f:Skip(4) -- render2dprop
+							f:Skip(8) -- keyvalues
+							f:Skip(8) -- iklock
+							f:Skip(12) -- mass
+							f:Skip(4) -- contents
 
-						f:Skip(4 + 8) -- skin
-						f:Skip(8) -- bodypart
-						f:Skip(8) -- attachment
-						f:Skip(4 + 8) -- localnode
-						f:Skip(8) -- flex
-						f:Skip(8) -- flex rules
-						f:Skip(8) -- ik
-						f:Skip(8) -- mouth
-						f:Skip(8) -- localpose
-						f:Skip(4) -- render2dprop
-						f:Skip(8) -- keyvalues
-						f:Skip(8) -- iklock
-						f:Skip(12) -- mass
-						f:Skip(4) -- contents
+						do
+							include_mdl_dir_count = f:ReadLong()
+							include_mdl_dir_offset = f:ReadLong()
 
-						include_mdl_dir_count = f:ReadLong()
-						include_mdl_dir_offset = f:ReadLong()
+							local old_pos = f:Tell()
 
-						f:Seek(include_mdl_dir_offset)
-						for i = 1, include_mdl_dir_count do
-							local base_pos = f:Tell()
+							f:Seek(include_mdl_dir_offset)
+							for i = 1, include_mdl_dir_count do
+								local base_pos = f:Tell()
 
-							local label_offset = f:ReadLong()
-							if label_offset > 0 then
+								f:Skip(4)
+
+								local file_name_offset = f:ReadLong()
 								local old_pos = f:Tell()
-								f:Seek(base_pos + label_offset)
-								print(label_offset, read_string(f))
+								f:Seek(base_pos + file_name_offset)
+								table.insert(found_mdl_includes, {offset = base_pos + file_name_offset, path = read_string(f)})
 								f:Seek(old_pos)
 							end
 
-							local file_name_offset = f:ReadLong()
-							local old_pos = f:Tell()
-							f:Seek(base_pos + file_name_offset)
-							table.insert(found_mdl_includes, {offset = base_pos + file_name_offset, path = read_string(f)})
 							f:Seek(old_pos)
 						end
+
+						f:Skip(4) -- virtual pointer
+
+						anim_name_offset = f:ReadLong()
+						f:Seek(anim_name_offset)
+						anim_name_str = read_string(f)
 
 						f:Close()
 
 						if VERBOSE or DEBUG_MDL then
-							print("MATERIAL DIRECTORIES:")
+							print(data.file_name, "MATERIAL DIRECTORIES:")
 							PrintTable(found_vmt_directories)
 							print("============")
-							print("MATERIALS:")
+							print(data.file_name, "MATERIALS:")
 							PrintTable(found_materials)
 							print("============")
-							print("ACTIVITIES:")
+							print(data.file_name, "ACTIVITIES:")
 							PrintTable(found_activities)
 							print("============")
-							print("MDL_INCLUDES:")
+							print(data.file_name, "MDL_INCLUDES:")
 							PrintTable(found_mdl_includes)
 							print("============")
 						end
@@ -706,8 +716,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								buffer = buffer:sub(0, vmt_dir_offset) .. int_bytes .. buffer:sub(vmt_dir_offset + 4 + 1)
 
 								if VERBOSE then
-									print("vmt_dir_offset: ", vmt_dir_offset)
-									print("NEW MATERIAL OFFSET:", vmt_dir_offset + offset)
+									print(data.file_name, "vmt_dir_offset: ", vmt_dir_offset)
+									print(data.file_name, "NEW MATERIAL OFFSET:", vmt_dir_offset + offset)
 								end
 
 								local pos = vtf_dir_offset
@@ -724,9 +734,15 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						end
 
 						-- if we extend the mdl file with vmt directories we don't have to change any offsets cause nothing else comes after it
-						for i,v in ipairs(found_vmt_directories) do
-							local newdir = newdir .. ("\0"):rep(#v.dir - #newdir + 1)
-							buffer = buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)
+						if data.file_name == "model.mdl" then
+							for i,v in ipairs(found_vmt_directories) do
+								local newdir = newdir .. ("\0"):rep(#v.dir - #newdir + 1)
+								buffer = buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)
+							end
+						else
+							local new_name = newdir .. data.file_name:gsub("mdl$", "ani")
+
+							buffer = buffer:sub(0, anim_name_offset) .. new_name .. buffer:sub(anim_name_offset + #anim_name_str + 1)
 						end
 
 						if #buffer ~= original_size then
@@ -736,12 +752,11 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						end
 
 						if DEBUG_MDL then
-							file.Write("debug_mdl_new.dat", buffer)
+							file.Write(data.file_name..".debug.new.dat", buffer)
 						end
 
 						data.buffer = buffer
 						data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
-						break
 					end
 				end
 
@@ -859,7 +874,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 		for k,v in pairs(tbl) do
 			if v:EndsWith("model.mdl") then
-				if VERBOSE then
+				if VERBOSE and not DEBUG_MDL then
 					print("util.IsValidModel: ", tostring(util.IsValidModel(v)))
 
 					local dev = GetConVar("developer"):GetFloat()
