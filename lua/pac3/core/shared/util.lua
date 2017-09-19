@@ -114,6 +114,7 @@ function pac.dprint(fmt, ...)
 end
 
 local DEBUG_MDL = false
+local VERBOSE = false
 
 local function int_to_bytes(num,endian,signed)
     if num<0 and not signed then num=-num print"warning, dropping sign from number converting to unsigned" end
@@ -135,7 +136,33 @@ local function int_to_bytes(num,endian,signed)
         end
         res=t
     end
-    return string.char(unpack(res))
+
+	local bytes =  string.char(unpack(res))
+
+	if #bytes ~= 4 then
+		bytes = bytes .. ("\0"):rep(4 - #bytes)
+	end
+
+	return bytes
+end
+
+local function bytes_to_int(str,endian,signed) -- use length of string to determine 8,16,32,64 bits
+    local t={str:byte(1,-1)}
+    if endian=="big" then --reverse bytes
+        local tt={}
+        for k=1,#t do
+            tt[#t-k+1]=t[k]
+        end
+        t=tt
+    end
+    local n=0
+    for k=1,#t do
+        n=n+t[k]*2^((k-1)*8)
+    end
+    if signed then
+        n = (n > 2^(#t*8-1) -1) and (n - 2^(#t*8)) or n -- if last bit set, negative.
+    end
+    return n
 end
 
 local function read_string(f)
@@ -147,6 +174,27 @@ local function read_string(f)
 	end
 
 	return table.concat(chars)
+end
+
+local shader_params = include("pac3/libraries/shader_params.lua")
+local texture_keys = {}
+
+for _, shader in pairs(shader_params.shaders) do
+	for _, params in pairs(shader) do
+		for key, info in pairs(params) do
+			if info.type == "texture" then
+				texture_keys[key] = key
+			end
+		end
+	end
+end
+
+for _, params in pairs(shader_params.base) do
+	for key, info in pairs(params) do
+		if info.type == "texture" then
+			texture_keys[key] = key
+		end
+	end
 end
 
 -- for pac_restart
@@ -337,10 +385,19 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			end
 
 			do -- hex models
-				local found_directories = {}
+				local found_vmt_directories = {}
 				local found_materials = {}
 				local found_activities = {}
 				local found_mdl_includes = {}
+
+				local vtf_dir_offset
+				local vtf_dir_count
+
+				local vmt_dir_offset
+				local vmt_dir_count
+
+				local include_mdl_dir_offset
+				local include_mdl_dir_count
 
 				for i, data in ipairs(files) do
 					if data.file_name:EndsWith("model.mdl") then
@@ -467,13 +524,14 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						f:Skip(8) -- activitylistversion + eventsindexed
 
 						do
-							local vmt_dir_count = f:ReadLong()
-							local vmt_dir_offset = f:ReadLong()
+							vmt_dir_count = f:ReadLong()
+							vmt_dir_offset = f:ReadLong()
 
 							local old_pos = f:Tell()
 							f:Seek(vmt_dir_offset)
 								local offset = f:ReadLong()
 								if offset > -1 then
+									if VERBOSE then print("MATERIAL OFFSET:", vmt_dir_offset + offset) end
 									f:Seek(vmt_dir_offset + offset)
 									for i = 1, vmt_dir_count do
 										local chars = {}
@@ -511,8 +569,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							end
 						end
 
-						local vtf_dir_count = f:ReadLong()
-						local vtf_dir_offset = f:ReadLong()
+						vtf_dir_count = f:ReadLong()
+						vtf_dir_offset = f:ReadLong()
 						local old_pos = f:Tell()
 						f:Seek(vtf_dir_offset)
 
@@ -535,7 +593,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							if chars[1] then
 								local dir = table.concat(chars)
 
-								table.insert(found_directories, {offset = offset, dir = dir})
+								table.insert(found_vmt_directories, {offset = offset, dir = dir})
 							end
 
 							f:Seek(old_pos)
@@ -557,8 +615,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						f:Skip(12) -- mass
 						f:Skip(4) -- contents
 
-						local include_mdl_dir_count = f:ReadLong()
-						local include_mdl_dir_offset = f:ReadLong()
+						include_mdl_dir_count = f:ReadLong()
+						include_mdl_dir_offset = f:ReadLong()
 
 						f:Seek(include_mdl_dir_offset)
 						for i = 1, include_mdl_dir_count do
@@ -581,47 +639,30 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 						f:Close()
 
+						if VERBOSE or DEBUG_MDL then
+							print("MATERIAL DIRECTORIES:")
+							PrintTable(found_vmt_directories)
+							print("============")
+							print("MATERIALS:")
+							PrintTable(found_materials)
+							print("============")
+							print("ACTIVITIES:")
+							PrintTable(found_activities)
+							print("============")
+							print("MDL_INCLUDES:")
+							PrintTable(found_mdl_includes)
+							print("============")
+						end
+
 						local buffer = file.Read("pac3_cache/temp.dat")
+						local original_size = #buffer
 						file.Delete("pac3_cache/temp.dat")
 
 						local newdir = dir
-						newdir = newdir:gsub("/", "\\")
-
-						local had_to_extend = false
-
-						for i,v in ipairs(found_directories) do
-							if #newdir < #v.dir then
-								local newdir = newdir .. ("\0"):rep(#v.dir - #newdir + 1)
-								buffer = (buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)):sub(0, size)
-							else
-								buffer = buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)
-								had_to_extend = true
-							end
-						end
-
-						for i,v in ipairs(found_mdl_includes) do
-							local file_name = (v.path:match(".+/(.+)") or v.path)
-							for _, info in ipairs(files) do
-								if info.file_path:EndsWith(file_name) then
-									file_name = info.file_name
-									break
-								end
-							end
-
-							local path = "models\\" .. newdir .. file_name
-
-							if #path < #v.path then
-								local path = path .. ("\0"):rep(#v.path - #path)
-								buffer = (buffer:sub(0, v.offset) .. path .. buffer:sub(v.offset + #v.path + 1)):sub(0, size)
-							else
-								buffer = buffer:sub(0, v.offset) .. path .. buffer:sub(v.offset + #v.path + 1)
-								had_to_extend = true
-							end
-						end
-
 						local newname = (dir .. data.file_name:lower()):gsub("/", "\\")
+						newdir = newdir:gsub("\\", "/")
 
-						do
+						do -- replace the mdl name (max size is 64 bytes)
 							local newname = newname
 							if #newname < #name then
 								newname = newname .. ("\0"):rep(#name - #newname)
@@ -630,19 +671,66 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							buffer = buffer:sub(0, name_offset) .. newname .. buffer:sub(name_offset + #name + 1)
 						end
 
-						--buffer = buffer:Replace(name:match("^(.+%.mdl)"), newname)
-
+						-- replace bad activity names with ones that gmod is okay with (should never extend size)
 						for i,v in ipairs(found_activities) do
 							local newname = v.to .. ("\0"):rep(#v.from - #v.to)
 							buffer = buffer:sub(0, v.offset) .. newname .. buffer:sub(v.offset + #v.from + 1)
 						end
 
-						if had_to_extend then
-							local size_bytes = int_to_bytes(#buffer)
+						for i,v in ipairs(found_mdl_includes) do
+							local file_name = (v.path:match(".+/(.+)") or v.path)
+							local found = false
 
-							if #size_bytes ~= 4 then
-								size_bytes = size_bytes .. ("\0"):rep(4 - #size_bytes)
+							for _, info in ipairs(files) do
+								if info.file_path == file_name then
+									file_name = info.file_name
+									found = true
+									break
+								end
 							end
+
+							local path = "models/" .. newdir .. file_name
+
+							if found then
+								buffer = buffer:sub(0, v.offset) .. path .. buffer:sub(v.offset + #v.path + 1)
+
+								local new_offset = #path - #v.path
+
+								for i,v in ipairs(found_vmt_directories) do
+									v.offset = v.offset + new_offset
+								end
+
+								local int_bytes = buffer:sub(vmt_dir_offset + 1, vmt_dir_offset + 4)
+								local offset = bytes_to_int(int_bytes) + new_offset
+								int_bytes = int_to_bytes(offset)
+								buffer = buffer:sub(0, vmt_dir_offset) .. int_bytes .. buffer:sub(vmt_dir_offset + 4 + 1)
+
+								if VERBOSE then
+									print("vmt_dir_offset: ", vmt_dir_offset)
+									print("NEW MATERIAL OFFSET:", vmt_dir_offset + offset)
+								end
+
+								local pos = vtf_dir_offset
+								for i = 1, vtf_dir_count do
+									local int_bytes = int_to_bytes(bytes_to_int(buffer:sub(pos + 1, pos + 4)) + new_offset)
+									buffer = buffer:sub(0, pos) .. int_bytes .. buffer:sub(pos + 4 + 1)
+									pos = pos + 4
+								end
+							else
+								if ply == pac.LocalPlayer then
+									pac.Message(Color(255, 50, 50), "the model want to include ", path, " but it doesn't exist")
+								end
+							end
+						end
+
+						-- if we extend the mdl file with vmt directories we don't have to change any offsets cause nothing else comes after it
+						for i,v in ipairs(found_vmt_directories) do
+							local newdir = newdir .. ("\0"):rep(#v.dir - #newdir + 1)
+							buffer = buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)
+						end
+
+						if #buffer ~= original_size then
+							local size_bytes = int_to_bytes(#buffer)
 
 							buffer = buffer:sub(0, size_offset) .. size_bytes .. buffer:sub(size_offset + 4 + 1)
 						end
@@ -663,20 +751,44 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 						data.buffer = data.buffer:lower():gsub("\\", "/")
 
-						local temp = data.buffer
-						for _, info in ipairs(found_directories) do
-							data.buffer = data.buffer:gsub("[\"\']%S-" .. info.dir:gsub("\\", "/"):lower(), "\"" .. newdir)
-							data.buffer = data.buffer:gsub(info.dir:gsub("\\", "/"):lower(), newdir)
-						end
-
-						if data.buffer == temp then
-							for _, val in ipairs(files) do
-								if val.file_name:EndsWith(".vtf") then
-
-									local vtf_name = val.file_name:lower():sub(0, -5)
-									data.buffer = data.buffer:gsub("\"%S*"..vtf_name .. "\"", "\"" .. newdir .. vtf_name .. "\"")
+						for shader_param in pairs(texture_keys) do
+							data.buffer = data.buffer:gsub('("%$' .. shader_param .. '"%s-")(.-)(")', function(l, vtf_path, r)
+								if vtf_path == "env_cubemap" then
+									return
 								end
-							end
+
+								local new_path
+								for _, info in ipairs(found_vmt_directories) do
+									new_path, count = vtf_path:gsub("^" .. info.dir:gsub("\\", "/"):lower(), newdir)
+									if count == 0 then
+										new_path = nil
+									else
+										break
+									end
+								end
+
+								for _, info in ipairs(files) do
+									if info.file_name:EndsWith(".vtf") then
+										local vtf_name = (vtf_path:match(".+/(.+)") or vtf_path)
+										if info.file_name == vtf_name .. ".vtf" then
+											new_path = newdir .. vtf_name
+											break
+										end
+									end
+								end
+
+								if not new_path then
+									if not file.Exists("materials/" .. vtf_path .. ".vtf", "GAME") then
+										if ply == pac.LocalPlayer then
+											pac.Message(Color(255, 50, 50), "vmt ", data.file_name, " wants to find texture materials/", vtf_path, ".vtf for $", shader_param ," but it doesn't exist")
+											print(data.buffer)
+										end
+									end
+									new_path = vtf_path -- maybe it's a special texture? in that case i need to it
+								end
+
+								return l .. new_path .. r
+							end)
 						end
 
 						data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
@@ -747,6 +859,30 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 		for k,v in pairs(tbl) do
 			if v:EndsWith("model.mdl") then
+				if VERBOSE then
+					print("util.IsValidModel: ", tostring(util.IsValidModel(v)))
+
+					local dev = GetConVar("developer"):GetFloat()
+					if dev == 0 then
+						RunConsoleCommand("developer", "3")
+
+						timer.Simple(0.1, function()
+							if CLIENT then
+								ClientsideModel(v):Remove()
+							else
+								local ent = ents.Create("prop_dynamic")
+								ent:SetModel(v)
+								ent:Spawn()
+								ent:Remove()
+							end
+							print("created and removed model")
+							RunConsoleCommand("developer", "0")
+						end)
+					end
+				else
+					ClientsideModel(v):Remove()
+				end
+
 				callback(DEBUG_MDL and "error.mdl" or v)
 				file.Delete("pac3_cache/downloads/" .. id .. ".dat")
 				break
