@@ -221,18 +221,14 @@ end
 
 function PART:SetDrawWeapon(b)
 	self.DrawWeapon = b
-	self:UpdateWeaponDraw(self:GetOwner())
+	self:OnShow()
 end
 
 function PART:UpdateWeaponDraw(ent)
 	local wep = ent and ent:IsValid() and ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 
-	if wep and wep:IsWeapon() then
-		local hide = not self.DrawWeapon
-		if hide == true then
-			wep.pac_hide_weapon = hide
-			pac.HideWeapon(wep, hide)
-		end
+	if wep:IsWeapon() then
+		pac.HideWeapon(wep, not self.DrawWeapon)
 	end
 end
 
@@ -455,7 +451,6 @@ function PART:OnHide()
 
 		if weps then
 			for _, wep in pairs(weps) do
-				wep.pac_hide_weapon = nil
 				pac.HideWeapon(wep, false)
 			end
 		end
