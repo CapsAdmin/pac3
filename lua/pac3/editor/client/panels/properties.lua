@@ -592,6 +592,9 @@ do -- list
 								if udata.editor_clamp then
 									num = math.Clamp(num, unpack(udata.editor_clamp))
 								end
+								if udata.editor_round then
+									num = math.Round(num)
+								end
 								return num
 							end
 						elseif udata.editor_onchange then

@@ -62,6 +62,7 @@ pac.StartStorableVars()
 	pac.SetPropertyGroup("appearance")
 		pac.GetSet(PART, "Translucent", false)
 		pac.GetSet(PART, "IgnoreZ", false)
+		pac.GetSet(PART, "NoTextureFiltering", false)
 		pac.GetSet(PART, "BlendMode", "", {enums = {
 			none = "one;zero;one;zero",
 			alpha = "src_alpha;one_minus_src_alpha;one;one_minus_src_alpha",
@@ -345,6 +346,10 @@ do -- owner
 	end
 
 	function PART:GetOwner(root)
+		if self.owner_override then
+			return self.owner_override
+		end
+
 		if root then
 			return self:GetRootPart():GetOwner()
 		end
@@ -908,7 +913,7 @@ do -- drawing. this code is running every frame
 	end
 
 	--function PART:Draw(pos, ang, draw_type, isNonRoot)
-	function PART:Draw(pos, ang, draw_type)
+	function PART:Draw(pos, ang, draw_type, owner_override)
 		-- Think takes care of polling this
 		if not self.last_enabled then return end
 
@@ -951,8 +956,17 @@ do -- drawing. this code is running every frame
 					render.OverrideColorWriteEnable(true, self.blend_override[6] == "write_color")
 				end
 			end
+			if self.NoTextureFiltering then
+				render.PushFilterMin(TEXFILTER.POINT)
+				render.PushFilterMag(TEXFILTER.POINT)
+			end
 
 			self:OnDraw(self:GetOwner(), pos, ang)
+
+			if self.NoTextureFiltering then
+				render.PopFilterMin()
+				render.PopFilterMag()
+			end
 
 			if self.blend_override then
 				render.OverrideBlendFunc(false)

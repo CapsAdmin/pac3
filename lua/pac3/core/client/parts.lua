@@ -56,6 +56,9 @@ function pac.CreatePart(name, owner)
 		pac.RemoveProperty(part, "PositionOffset")
 		pac.RemoveProperty(part, "AngleOffset")
 		pac.RemoveProperty(part, "Translucent")
+		pac.RemoveProperty(part, "IgnoreZ")
+		pac.RemoveProperty(part, "BlendMode")
+		pac.RemoveProperty(part, "NoTextureFiltering")
 
 		if part.ClassName ~= "group" then
 			pac.RemoveProperty(part, "DrawOrder")
