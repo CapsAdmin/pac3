@@ -523,9 +523,7 @@ PART.OldEvents =
 				end
 
 				if found then
-					if not self:IsHidden() then
-						pac.HideWeapon(wep, hide)
-					end
+					pac.HideWeapon(wep, hide, true)
 					return true
 				end
 			end
@@ -1559,8 +1557,7 @@ function PART:OnHide()
 		if ent:IsValid() then
 			ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 			if ent:IsValid() then
-				ent.pac_wep_hiding = false
-				pac.HideWeapon(ent, false)
+				pac.HideWeapon(ent, false, true)
 			end
 		end
 	end

@@ -821,19 +821,20 @@ function pac.StringFind(a, b, simple, case_sensitive)
 	end
 end
 
-function pac.HideWeapon(wep, hide)
-	if wep.pac_hide_weapon == true then
-		wep:SetNoDraw(true)
-		wep.pac_wep_hiding = true
-		return
+function pac.HideWeapon(wep, hide, override)
+	if hide == nil or override then
+		wep.pac_hide_weapon = nil
 	end
+
 	if hide then
-		wep:SetNoDraw(true)
-		wep.pac_wep_hiding = true
+		if not wep.pac_hide_weapon then
+			wep:SetNoDraw(true)
+			wep.pac_hide_weapon = true
+		end
 	else
-		if wep.pac_wep_hiding then
+		if wep.pac_hide_weapon == true or wep.pac_hide_weapon == nil then
 			wep:SetNoDraw(false)
-			wep.pac_wep_hiding = false
+			wep.pac_hide_weapon = false
 		end
 	end
 end
