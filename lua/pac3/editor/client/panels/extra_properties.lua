@@ -25,10 +25,12 @@ do -- bone
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:SpecialCallback()
-		pace.SelectBone(pace.current_part:GetOwner(), function(data)
-			self:SetValue(L(data.friendly))
-			self.OnValueChanged(data.friendly)
-		end, pace.current_part.ClassName == "bone")
+		if IsValid(pace.current_part:GetOwner()) then
+			pace.SelectBone(pace.current_part:GetOwner(), function(data)
+				self:SetValue(L(data.friendly))
+				self.OnValueChanged(data.friendly)
+			end, pace.current_part.ClassName == "bone")
+		end
 	end
 
 	function PANEL:SpecialCallback2()

@@ -265,6 +265,7 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 end
 
 function pace.SelectBone(ent, callback, only_movable)
+	if not ent or not ent:IsValid() then return end
 	local tbl = table.Copy(pac.GetModelBones(ent))
 
 	if only_movable then
