@@ -88,7 +88,7 @@ do -- pace
 			EyeAngles(),
 			math.rad(mctrl.GetCameraFOV())
 		)
-		return {x=x-1,y=y-1, visible = vis > 0}
+		return {x=x-1,y=y-1, visible = vis == 1}
 	end
 
 	function mctrl.ScreenToVec(x,y)
@@ -502,18 +502,21 @@ function mctrl.HUDPaint()
 	if pos and ang then
 		local forward, right, up = mctrl.GetAxes(ang)
 
-		local r = mctrl.GetCalculatedScale()
-		local o = mctrl.VecToScreen(pos)
+		local radius = mctrl.GetCalculatedScale()
+		local origin = mctrl.VecToScreen(pos)
+		local forward_point = mctrl.VecToScreen(pos + forward * radius)
+		local right_point = mctrl.VecToScreen(pos + right * radius)
+		local up_point = mctrl.VecToScreen(pos + up * radius)
 
-		if true or o.visible then
+		if origin.visible or forward_point.visible or right_point.visible or up_point.visible then
 			if mctrl.grab.axis == AXIS_X or mctrl.grab.axis == AXIS_VIEW then
 				surface.SetDrawColor(255, 200, 0, 255)
 			else
 				surface.SetDrawColor(255, 80, 80, 255)
 			end
-			mctrl.LineToBox(o, mctrl.VecToScreen(pos + forward * r))
+			mctrl.LineToBox(origin, forward_point)
 			--mctrl.LineToBox(o, mctrl.VecToScreen(pos + forward * r * mctrl.scale_pos), 8)
-			mctrl.RotationLines(pos, forward, up, r)
+			mctrl.RotationLines(pos, forward, up, radius)
 
 
 			if mctrl.grab.axis == AXIS_Y or mctrl.grab.axis == AXIS_VIEW then
@@ -521,21 +524,21 @@ function mctrl.HUDPaint()
 			else
 				surface.SetDrawColor(80, 255, 80, 255)
 			end
-			mctrl.LineToBox(o, mctrl.VecToScreen(pos + right * r))
+			mctrl.LineToBox(origin, right_point)
 			--mctrl.LineToBox(o, mctrl.VecToScreen(pos + right * r * mctrl.scale_pos), 8)
-			mctrl.RotationLines(pos, right, forward, r)
+			mctrl.RotationLines(pos, right, forward, radius)
 
 			if mctrl.grab.axis == AXIS_Z or mctrl.grab.axis == AXIS_VIEW then
 				surface.SetDrawColor(255, 200, 0, 255)
 			else
 				surface.SetDrawColor(80, 80, 255, 255)
 			end
-			mctrl.LineToBox(o, mctrl.VecToScreen(pos + up * r))
+			mctrl.LineToBox(origin, up_point)
 			--mctrl.LineToBox(o, mctrl.VecToScreen(pos + up * r * mctrl.scale_pos), 8)
-			mctrl.RotationLines(pos, up, right, r)
+			mctrl.RotationLines(pos, up, right, radius)
 
 			surface.SetDrawColor(255, 200, 0, 255)
-			DrawCircleEx(o.x, o.y, 4, 32, 2)
+			DrawCircleEx(origin.x, origin.y, 4, 32, 2)
 		end
 	end
 end
