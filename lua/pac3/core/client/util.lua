@@ -821,24 +821,6 @@ function pac.StringFind(a, b, simple, case_sensitive)
 	end
 end
 
-function pac.HideWeapon(wep, hide, override)
-	if hide == nil or override then
-		wep.pac_hide_weapon = nil
-	end
-
-	if hide then
-		if not wep.pac_hide_weapon then
-			wep:SetNoDraw(true)
-			wep.pac_hide_weapon = true
-		end
-	else
-		if wep.pac_hide_weapon == true or wep.pac_hide_weapon == nil then
-			wep:SetNoDraw(false)
-			wep.pac_hide_weapon = false
-		end
-	end
-end
-
 -- this function adds the unique id of the owner to the part name to resolve name conflicts
 -- hack??
 

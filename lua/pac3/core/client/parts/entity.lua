@@ -219,16 +219,13 @@ function PART:SetRelativeBones(b)
 	end
 end
 
-function PART:SetDrawWeapon(b)
-	self.DrawWeapon = b
-	self:OnShow()
-end
-
 function PART:UpdateWeaponDraw(ent)
 	local wep = ent and ent:IsValid() and ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 
 	if wep:IsWeapon() then
-		pac.HideWeapon(wep, not self.DrawWeapon)
+		if not wep.pac_weapon_class then
+			wep:SetNoDraw(not self.DrawWeapon)
+		end
 	end
 end
 
@@ -451,7 +448,9 @@ function PART:OnHide()
 
 		if weps then
 			for _, wep in pairs(weps) do
-				pac.HideWeapon(wep, false)
+				if not wep.pac_weapon_class then
+					wep:SetNoDraw(false)
+				end
 			end
 		end
 

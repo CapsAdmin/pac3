@@ -523,7 +523,8 @@ PART.OldEvents =
 				end
 
 				if found then
-					pac.HideWeapon(wep, hide, true)
+					wep:SetNoDraw(hide)
+					wep.pac_weapon_class = true
 					return true
 				end
 			end
@@ -1557,7 +1558,8 @@ function PART:OnHide()
 		if ent:IsValid() then
 			ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 			if ent:IsValid() then
-				pac.HideWeapon(ent, false, true)
+				ent.pac_weapon_class = nil
+				ent:SetNoDraw(false)
 			end
 		end
 	end
