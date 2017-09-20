@@ -273,8 +273,12 @@ function PART:DrawModel(ent, pos, ang)
 		end
 
 		if self.EyeTarget.cached_pos then
-			local attachment = ent:GetAttachment( ent:LookupAttachment( "eyes" ) )
-			ent:SetEyeTarget(WorldToLocal( self.EyeTarget.cached_pos, self.EyeTarget.cached_ang, attachment.Pos, attachment.Ang ))
+			if self.ClassName == "model2" then
+				local attachment = ent:GetAttachment( ent:LookupAttachment( "eyes" ) )
+				ent:SetEyeTarget(WorldToLocal( self.EyeTarget.cached_pos, self.EyeTarget.cached_ang, attachment.Pos, attachment.Ang ))
+			else
+				ent:SetEyeTarget(self.EyeTarget.cached_pos)
+			end
 		end
 
 		ent:DrawModel()
@@ -444,6 +448,71 @@ function PART:OnBuildBonePositions()
 				ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * scale)
 			end
 		end
+	end
+end
+
+pac.RegisterPart(PART)
+
+
+local PART = {}
+
+PART.ClassName = "entity2"
+PART.Base = "model2"
+PART.Category = "model"
+PART.ManualDraw = true
+PART.HandleModifiersManually = true
+PART.Icon = 'icon16/shape_square.png'
+PART.Group = 'pac4'
+PART.is_model_part = false
+
+pac.RemoveProperty(PART, "BoneMerge")
+pac.RemoveProperty(PART, "Bone")
+pac.RemoveProperty(PART, "Position")
+pac.RemoveProperty(PART, "Angles")
+pac.RemoveProperty(PART, "PositionOffset")
+pac.RemoveProperty(PART, "AngleOffset")
+pac.RemoveProperty(PART, "EyeAngles")
+pac.RemoveProperty(PART, "AimPartName")
+
+function PART:Initialize() end
+function PART:OnDraw(ent, pos, ang)
+	self:PreEntityDraw(ent, ent, pos, ang)
+		self:DrawModel(ent, pos, ang)
+	self:PostEntityDraw(ent, ent, pos, ang)
+	pac.ResetBones(ent)
+end
+
+function PART:OnShow()
+	local ent = self:GetOwner()
+	self.Entity = ent
+
+	self.Model = ent:GetModel()
+
+	if ent:IsValid() then
+		function ent.RenderOverride()
+			if self:IsValid() then
+				self:Draw(ent:GetPos(), ent:GetAngles(), self.Translucent and "translucent" or "opaque")
+			else
+				ent.RenderOverride = nil
+			end
+		end
+
+	end
+end
+
+function PART:OnHide()
+	local ent = self:GetOwner()
+
+	if ent:IsValid() then
+		ent.RenderOverride = nil
+	end
+end
+
+function PART:RealSetModel(path)
+	if ent == pac.LocalPlayer and pacx and pacx.SetModel then
+		pacx.SetModel(path)
+	else
+		ent:SetModel(path)
 	end
 end
 

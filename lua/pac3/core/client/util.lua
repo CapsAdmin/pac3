@@ -628,9 +628,11 @@ do -- get set and editor vars
 
 	function pac.RemoveProperty(PART, key)
 		pac.class.RemoveField(PART, key)
-		if pac.PropertyUserdata[PART.ClassName] then
-			pac.PropertyUserdata[PART.ClassName][key] = nil
-		end
+
+		pac.PropertyUserdata[PART.ClassName] = pac.PropertyUserdata[PART.ClassName] or {}
+		pac.PropertyUserdata[PART.ClassName][key] = false
+		PART.RemovedStorableVars = PART.RemovedStorableVars or {}
+		PART.RemovedStorableVars[key] = true
 		if PART.StorableVars then
 			PART.StorableVars[key] = nil
 		end
@@ -639,6 +641,10 @@ do -- get set and editor vars
 	function pac.GetPropertyUserdata(obj, key)
 		if pac.PropertyUserdata[obj.ClassName] and pac.PropertyUserdata[obj.ClassName][key] then
 			return pac.PropertyUserdata[obj.ClassName][key]
+		end
+
+		if pac.PropertyUserdata[obj.Base] and pac.PropertyUserdata[obj.Base][key] then
+			return pac.PropertyUserdata[obj.Base][key]
 		end
 
 		if pac.PropertyUserdata.base and pac.PropertyUserdata.base[key] then
