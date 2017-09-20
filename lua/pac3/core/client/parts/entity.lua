@@ -56,6 +56,7 @@ pac.SetPropertyGroup("behavior")
 	pac.GetSet(PART, "FallApartOnDeath", false)
 	pac.GetSet(PART, "DeathRagdollizeParent", false)
 	pac.GetSet(PART, "HideRagdollOnDeath", false)
+	pac.SetupPartName(PART, "EyeTarget")
 pac.EndStorableVars()
 
 pac.RemoveProperty(PART, "PositionOffset")
@@ -219,16 +220,13 @@ function PART:SetRelativeBones(b)
 	end
 end
 
-function PART:SetDrawWeapon(b)
-	self.DrawWeapon = b
-	self:OnShow()
-end
-
 function PART:UpdateWeaponDraw(ent)
 	local wep = ent and ent:IsValid() and ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 
 	if wep:IsWeapon() then
-		pac.HideWeapon(wep, not self.DrawWeapon)
+		if not wep.pac_weapon_class then
+			wep:SetNoDraw(not self.DrawWeapon)
+		end
 	end
 end
 
@@ -301,6 +299,10 @@ function PART:OnShow()
 					end
 
 					ent.pac_bodygroups_torender = nil
+
+					if self.EyeTarget.cached_pos then
+						ent:SetEyeTarget(self.EyeTarget.cached_pos)
+					end
 
 					ent:DrawModel()
 
@@ -451,7 +453,9 @@ function PART:OnHide()
 
 		if weps then
 			for _, wep in pairs(weps) do
-				pac.HideWeapon(wep, false)
+				if not wep.pac_weapon_class then
+					wep:SetNoDraw(false)
+				end
 			end
 		end
 

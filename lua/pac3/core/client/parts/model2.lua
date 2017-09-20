@@ -2,6 +2,9 @@ local pac = pac
 
 local render_SetColorModulation = render.SetColorModulation
 local render_SetBlend = render.SetBlend
+local render_CullMode = render.CullMode
+local MATERIAL_CULLMODE_CW = MATERIAL_CULLMODE_CW
+local MATERIAL_CULLMODE_CCW = MATERIAL_CULLMODE_CCW
 local render_SetMaterial = render.SetMaterial
 local render_ModelMaterialOverride = render.MaterialOverride
 local render_MaterialOverride = render.ModelMaterialOverride
@@ -33,10 +36,17 @@ pac.StartStorableVars()
 
 	pac.SetPropertyGroup("appearance")
 		pac.GetSet(PART, "Color", Vector(1, 1, 1), {editor_panel = "color2"})
+		pac.GetSet(PART, "NoLighting", false)
+		pac.GetSet(PART, "NoCulling", false)
+		pac.GetSet(PART, "Invert", false)
 		pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
 		pac.GetSet(PART, "ModelModifiers", "", {editor_panel = "model_modifiers"})
 		pac.GetSet(PART, "Material", "", {editor_panel = "material"})
 		pac.GetSet(PART, "Materials", "", {editor_panel = "model_materials"})
+		--pac.GetSet(PART, "LightMap", "", {editor_panel = "textures"})
+		pac.GetSet(PART, "LevelOfDetail", 0, {editor_clamp = {-1, 8}, editor_round = true})
+
+		pac.SetupPartName(PART, "EyeTarget")
 
 pac.EndStorableVars()
 
@@ -44,6 +54,31 @@ function PART:GetNiceName()
 	local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%."))
 
 	return str and str:gsub("%d", "") or "error"
+end
+
+local temp = CreateMaterial(tostring({}), "VertexLitGeneric", {})
+
+function PART:SetLevelOfDetail(val)
+	self.LevelOfDetail = val
+	local ent = self:GetEntity()
+	if ent:IsValid() then
+		ent:SetLOD(val)
+	end
+end
+
+function PART:SetLightMap(val)
+	self.LightMap = val
+
+	if val == "" then
+		self.lightmap_tex = nil
+	else
+		if not pac.resource.DownloadTexture(val, function(tex)
+			self.lightmap_tex = tex
+		end, self:GetPlayerOwner()) then
+			temp:SetTexture("$basetexture", val)
+			self.lightmap_tex = temp:GetTexture("$basetexture")
+		end
+	end
 end
 
 function PART:SetSkin(var)
@@ -78,6 +113,8 @@ end
 
 function PART:SetModelModifiers(str)
 	self.ModelModifiers = str
+
+	if not self.Entity:IsValid() then return end
 
 	local tbl = self:ModelModifiersToTable(str)
 
@@ -192,6 +229,14 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		-- render.SetColorModulation and render.SetAlpha set the material $color and $alpha.
 		render_SetColorModulation(r,g,b)
 		render_SetBlend(self.Alpha)
+
+		if self.NoLighting then
+			render.SuppressEngineLighting(true)
+		end
+
+		if self.NoCulling or self.Invert then
+			render_CullMode(MATERIAL_CULLMODE_CW)
+		end
 	end
 
 	if self.draw_bodygroups then
@@ -204,6 +249,17 @@ end
 function PART:PostEntityDraw(owner, ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 		self:ModifiersPostEvent("OnDraw")
+
+		if self.NoLighting then
+			render.SuppressEngineLighting(false)
+		end
+
+		if self.NoCulling then
+			render_CullMode(MATERIAL_CULLMODE_CCW)
+			self:DrawModel(ent, pos, ang)
+		elseif self.Invert then
+			render_CullMode(MATERIAL_CULLMODE_CCW)
+		end
 	end
 end
 
@@ -270,6 +326,17 @@ function PART:DrawModel(ent, pos, ang)
 		if pac.render_material and not set_material then
 			render_MaterialOverride()
 		end
+
+		if self.EyeTarget.cached_pos then
+			if self.ClassName == "model2" then
+				local attachment = ent:GetAttachment( ent:LookupAttachment( "eyes" ) )
+				ent:SetEyeTarget(WorldToLocal( self.EyeTarget.cached_pos, self.EyeTarget.cached_ang, attachment.Pos, attachment.Ang ))
+			else
+				ent:SetEyeTarget(self.EyeTarget.cached_pos)
+			end
+		end
+
+		--if self.lightmap_tex then render.SetLightmapTexture(self.lightmap_tex) end
 
 		ent:DrawModel()
 	end
@@ -377,6 +444,13 @@ function PART:CheckBoneMerge()
 
 	if ent:IsValid() and not ent:IsPlayer() then
 		if self.BoneMerge then
+			if not self.ragdoll then
+				self.Entity = ClientsideRagdoll(self:GetModel())
+				self.requires_bone_model_scale = true
+				ent = self.Entity
+				self.ragdoll = true
+			end
+
 			local owner = self:GetOwner()
 
 			if owner.pac_owner_override and owner.pac_owner_override:IsValid() then
@@ -391,6 +465,13 @@ function PART:CheckBoneMerge()
 				end
 			end
 		else
+			if self.ragdoll then
+				self.Entity:Remove()
+				ent = self:GetEntity()
+				self.requires_bone_model_scale = true
+				self.ragdoll = false
+			end
+
 			if ent:GetParent():IsValid() then
 				ent:SetParent(NULL)
 
@@ -424,6 +505,128 @@ function PART:OnBuildBonePositions()
 				ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * scale)
 			end
 		end
+	end
+end
+
+pac.RegisterPart(PART)
+
+
+local PART = {}
+
+PART.ClassName = "entity2"
+PART.Base = "model2"
+PART.Category = "model"
+PART.ManualDraw = true
+PART.HandleModifiersManually = true
+PART.Icon = 'icon16/shape_square.png'
+PART.Group = 'pac4'
+PART.is_model_part = false
+
+pac.RemoveProperty(PART, "BoneMerge")
+pac.RemoveProperty(PART, "Bone")
+pac.RemoveProperty(PART, "Position")
+pac.RemoveProperty(PART, "Angles")
+pac.RemoveProperty(PART, "PositionOffset")
+pac.RemoveProperty(PART, "AngleOffset")
+pac.RemoveProperty(PART, "EyeAngles")
+pac.RemoveProperty(PART, "AimPartName")
+
+function PART:Initialize() end
+function PART:OnDraw(ent, pos, ang)
+	self:PreEntityDraw(ent, ent, pos, ang)
+		self:DrawModel(ent, pos, ang)
+	self:PostEntityDraw(ent, ent, pos, ang)
+	pac.ResetBones(ent)
+end
+
+function PART:OnShow()
+	local ent = self:GetOwner()
+	self.Entity = ent
+
+	self.Model = ent:GetModel()
+
+	if ent:IsValid() then
+		function ent.RenderOverride()
+			if self:IsValid() then
+				self:Draw(ent:GetPos(), ent:GetAngles(), self.Translucent and "translucent" or "opaque")
+			else
+				ent.RenderOverride = nil
+			end
+		end
+
+	end
+end
+
+function PART:OnHide()
+	local ent = self:GetOwner()
+
+	if ent:IsValid() then
+		ent.RenderOverride = nil
+	end
+end
+
+function PART:RealSetModel(path)
+	local ent = self:GetEntity()
+	if not ent:IsValid() then return end
+	if ent == pac.LocalPlayer and pacx and pacx.SetModel then
+		pacx.SetModel(path)
+	else
+		ent:SetModel(path)
+	end
+end
+
+pac.RegisterPart(PART)
+
+
+local PART = {}
+
+PART.ClassName = "weapon"
+PART.Base = "model2"
+PART.Category = "model"
+PART.ManualDraw = true
+PART.HandleModifiersManually = true
+PART.Icon = 'icon16/shape_square.png'
+PART.Group = 'pac4'
+PART.is_model_part = false
+
+function PART:Initialize()
+	self.Entity = NULL
+end
+function PART:OnDraw(ent, pos, ang)
+	local ent = self:GetEntity()
+	self:PreEntityDraw(ent, ent, pos, ang)
+		self:DrawModel(ent, pos, ang)
+	self:PostEntityDraw(ent, ent, pos, ang)
+	pac.ResetBones(ent)
+end
+
+function PART:OnThink()
+	self:OnShow()
+end
+
+function PART:OnShow()
+	local ent = self:GetOwner(true)
+	if ent:IsValid() and ent.GetActiveWeapon then
+		local wep = ent:GetActiveWeapon()
+		if wep:IsValid() and wep ~= self.Entity then
+			self.Entity = wep
+			wep:SetNoDraw(true)
+		end
+	end
+end
+
+function PART:OnHide()
+	local ent = self.Entity
+
+	if ent:IsValid() then
+		ent:SetNoDraw(false)
+	end
+end
+
+function PART:RealSetModel(path)
+	local ent = self:GetEntity()
+	if ent:IsValid() then
+		ent:SetModel(path)
 	end
 end
 

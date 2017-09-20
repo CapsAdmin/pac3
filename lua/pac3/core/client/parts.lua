@@ -39,6 +39,12 @@ function pac.CreatePart(name, owner)
 
 	merge_storable(part, part.BaseClass)
 
+	if part.RemovedStorableVars then
+		for k in pairs(part.RemovedStorableVars) do
+			part.StorableVars[k] = nil
+		end
+	end
+
 	if part.NonPhysical then
 		pac.RemoveProperty(part, "Bone")
 		pac.RemoveProperty(part, "Position")
@@ -50,6 +56,9 @@ function pac.CreatePart(name, owner)
 		pac.RemoveProperty(part, "PositionOffset")
 		pac.RemoveProperty(part, "AngleOffset")
 		pac.RemoveProperty(part, "Translucent")
+		pac.RemoveProperty(part, "IgnoreZ")
+		pac.RemoveProperty(part, "BlendMode")
+		pac.RemoveProperty(part, "NoTextureFiltering")
 
 		if part.ClassName ~= "group" then
 			pac.RemoveProperty(part, "DrawOrder")

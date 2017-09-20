@@ -628,9 +628,11 @@ do -- get set and editor vars
 
 	function pac.RemoveProperty(PART, key)
 		pac.class.RemoveField(PART, key)
-		if pac.PropertyUserdata[PART.ClassName] then
-			pac.PropertyUserdata[PART.ClassName][key] = nil
-		end
+
+		pac.PropertyUserdata[PART.ClassName] = pac.PropertyUserdata[PART.ClassName] or {}
+		pac.PropertyUserdata[PART.ClassName][key] = false
+		PART.RemovedStorableVars = PART.RemovedStorableVars or {}
+		PART.RemovedStorableVars[key] = true
 		if PART.StorableVars then
 			PART.StorableVars[key] = nil
 		end
@@ -639,6 +641,10 @@ do -- get set and editor vars
 	function pac.GetPropertyUserdata(obj, key)
 		if pac.PropertyUserdata[obj.ClassName] and pac.PropertyUserdata[obj.ClassName][key] then
 			return pac.PropertyUserdata[obj.ClassName][key]
+		end
+
+		if pac.PropertyUserdata[obj.Base] and pac.PropertyUserdata[obj.Base][key] then
+			return pac.PropertyUserdata[obj.Base][key]
 		end
 
 		if pac.PropertyUserdata.base and pac.PropertyUserdata.base[key] then
@@ -818,24 +824,6 @@ function pac.StringFind(a, b, simple, case_sensitive)
 	else
 		pattern_cache[a][b] = false
 		return false
-	end
-end
-
-function pac.HideWeapon(wep, hide, override)
-	if hide == nil or override then
-		wep.pac_hide_weapon = nil
-	end
-
-	if hide then
-		if not wep.pac_hide_weapon then
-			wep:SetNoDraw(true)
-			wep.pac_hide_weapon = true
-		end
-	else
-		if wep.pac_hide_weapon == true or wep.pac_hide_weapon == nil then
-			wep:SetNoDraw(false)
-			wep.pac_hide_weapon = false
-		end
 	end
 end
 

@@ -10,6 +10,7 @@ function pace.SetTPose(b)
 	if b then
 		hook.Add("CalcMainActivity", "pace_tpose", function(ply)
 			if ply == LocalPlayer() then
+				ply:SetRenderAngles(ply:GetAngles())
 				return
 					ply:LookupSequence("reference"),
 					ply:LookupSequence("reference")
@@ -22,22 +23,45 @@ function pace.SetTPose(b)
 	pace.tposed = b
 end
 
-function pace.SetBreathing(b)
+function pace.SetResetPoseParameters(b)
 	if b then
-		pace.AddHook("UpdateAnimation", function(ply)
+		hook.Add("UpdateAnimation", "pace_reset_pose_parameters", function(ply)
 			if ply == LocalPlayer() then
-				for k,v in pairs(reset_pose_params) do
-					ply:SetPoseParameter(v, 0)
-				end
 				ply:ClearPoseParameters()
+				ply:InvalidateBoneCache()
+
 			end
 		end)
 	else
-		pace.RemoveHook("UpdateAnimation")
+		hook.Remove("UpdateAnimation", "pace_reset_pose_parameters")
+	end
+
+	pace.reset_pose_parameters = b
+end
+
+
+function pace.SetBreathing(b)
+	if b then
+		hook.Add("UpdateAnimation", "pace_stop_breathing", function(ply)
+			if ply == LocalPlayer() then
+				for i = 0, 6 do
+					--ply:AddVCDSequenceToGestureSlot(0, 4, math.random(), false)
+				end
+				--return true
+			end
+		end)
+	else
+		hook.Remove("UpdateAnimation", "pace_stop_breathing")
 	end
 
 	pace.breathing = b
 end
+
+pace.SetTPose(false)
+pace.SetResetPoseParameters(false)
+pace.SetBreathing(false)
+
+pace.SetBreathing(true)
 
 function pace.ToggleCameraFollow()
 	local c = GetConVar("pac_camera_follow_entity")

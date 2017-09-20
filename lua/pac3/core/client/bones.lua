@@ -105,6 +105,8 @@ function pac.GetAllBones(ent)
 		tbl.eyepos_eyeang = {friendly = "eyepos_eyeang", is_special = true}
 		tbl.eyepos_ang = {friendly = "eyepos_ang", is_special = true}
 		tbl.pos_noang = {friendly = "pos_noang", is_special = true}
+		tbl.camera = {friendly = "camera", is_special = true}
+		tbl.player_eyes = {friendly = "player_eyes", is_special = true}
 
 		ent.pac_bone_count = count + 1
 	end
@@ -164,6 +166,20 @@ function pac.GetBonePosAng(ent, id, parent)
 	local override = ent.pac_owner_override
 	if override and override:IsValid() then
 		ent = override
+	end
+
+	if id == "camera" then
+		return pac.EyePos, pac.EyeAng
+	end
+
+	if id == "player_eyes" then
+		local ent = ent.pac_traceres and ent.pac_traceres.Entity or util_QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()}).Entity
+
+		if ent:IsValid() then
+			return ent:EyePos(), ent:EyeAngles()
+		end
+
+		return pac.EyePos, pac.EyeAng
 	end
 
 	if id == "pos_ang" then

@@ -387,7 +387,7 @@ do -- model modifiers
 		local ent = part:GetEntity()
 		if not ent:IsValid() or not ent:GetBodyGroups() then return end
 
-		local group = pac.PropertyUserdata[part.ClassName] and pac.PropertyUserdata[part.ClassName][self.CurrentKey] and pac.PropertyUserdata[part.ClassName][self.CurrentKey].group
+		local group = pac.GetPropertyUserdata(part, self.CurrentKey) and pac.GetPropertyUserdata(part, self.CurrentKey).group
 
 		local tbl = {}
 
