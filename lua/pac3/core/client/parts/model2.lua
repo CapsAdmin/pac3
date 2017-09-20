@@ -37,6 +37,7 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "ModelModifiers", "", {editor_panel = "model_modifiers"})
 		pac.GetSet(PART, "Material", "", {editor_panel = "material"})
 		pac.GetSet(PART, "Materials", "", {editor_panel = "model_materials"})
+		pac.SetupPartName(PART, "EyeTarget")
 
 pac.EndStorableVars()
 
@@ -271,6 +272,11 @@ function PART:DrawModel(ent, pos, ang)
 			render_MaterialOverride()
 		end
 
+		if self.EyeTarget.cached_pos then
+			local attachment = ent:GetAttachment( ent:LookupAttachment( "eyes" ) )
+			ent:SetEyeTarget(WorldToLocal( self.EyeTarget.cached_pos, self.EyeTarget.cached_ang, attachment.Pos, attachment.Ang ))
+		end
+
 		ent:DrawModel()
 	end
 end
@@ -377,6 +383,13 @@ function PART:CheckBoneMerge()
 
 	if ent:IsValid() and not ent:IsPlayer() then
 		if self.BoneMerge then
+			if not self.ragdoll then
+				self.Entity = ClientsideRagdoll(self:GetModel())
+				self.requires_bone_model_scale = true
+				ent = self.Entity
+				self.ragdoll = true
+			end
+
 			local owner = self:GetOwner()
 
 			if owner.pac_owner_override and owner.pac_owner_override:IsValid() then
@@ -391,6 +404,13 @@ function PART:CheckBoneMerge()
 				end
 			end
 		else
+			if self.ragdoll then
+				self.Entity:Remove()
+				ent = self:GetEntity()
+				self.requires_bone_model_scale = true
+				self.ragdoll = false
+			end
+
 			if ent:GetParent():IsValid() then
 				ent:SetParent(NULL)
 

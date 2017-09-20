@@ -56,6 +56,7 @@ pac.SetPropertyGroup("behavior")
 	pac.GetSet(PART, "FallApartOnDeath", false)
 	pac.GetSet(PART, "DeathRagdollizeParent", false)
 	pac.GetSet(PART, "HideRagdollOnDeath", false)
+	pac.SetupPartName(PART, "EyeTarget")
 pac.EndStorableVars()
 
 pac.RemoveProperty(PART, "PositionOffset")
@@ -298,6 +299,10 @@ function PART:OnShow()
 					end
 
 					ent.pac_bodygroups_torender = nil
+
+					if self.EyeTarget.cached_pos then
+						ent:SetEyeTarget(self.EyeTarget.cached_pos)
+					end
 
 					ent:DrawModel()
 
