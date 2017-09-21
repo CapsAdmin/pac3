@@ -442,7 +442,7 @@ function PART:CheckBoneMerge()
 
 	if self.skip_orient then return end
 
-	if ent:IsValid() and not ent:IsPlayer() then
+	if ent:IsValid() and not ent:IsPlayer() and ent:GetModel() then
 		if self.BoneMerge then
 			if not self.ragdoll then
 				self.Entity = ClientsideRagdoll(ent:GetModel())
@@ -549,7 +549,7 @@ function PART:OnShow()
 	local ent = self:GetOwner()
 	self.Entity = ent
 
-	self.Model = ent:GetModel()
+	self.Model = ent:GetModel() or ""
 
 	if ent:IsValid() then
 		function ent.RenderOverride()
