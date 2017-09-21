@@ -442,10 +442,10 @@ function PART:CheckBoneMerge()
 
 	if self.skip_orient then return end
 
-	if ent:IsValid() and not ent:IsPlayer() then
+	if ent:IsValid() and not ent:IsPlayer() and ent:GetModel() then
 		if self.BoneMerge then
 			if not self.ragdoll then
-				self.Entity = ClientsideRagdoll(self:GetModel())
+				self.Entity = ClientsideRagdoll(ent:GetModel())
 				self.requires_bone_model_scale = true
 				ent = self.Entity
 				self.ragdoll = true
@@ -510,124 +510,212 @@ end
 
 pac.RegisterPart(PART)
 
+do
+	local PART = {}
 
-local PART = {}
+	PART.ClassName = "entity2"
+	PART.Base = "model2"
+	PART.Category = "model"
+	PART.ManualDraw = true
+	PART.HandleModifiersManually = true
+	PART.Icon = 'icon16/shape_square.png'
+	PART.Group = 'pac4'
+	PART.is_model_part = false
 
-PART.ClassName = "entity2"
-PART.Base = "model2"
-PART.Category = "model"
-PART.ManualDraw = true
-PART.HandleModifiersManually = true
-PART.Icon = 'icon16/shape_square.png'
-PART.Group = 'pac4'
-PART.is_model_part = false
+	pac.StartStorableVars()
+		pac.GetSet(PART, "NoDraw", false)
+	pac.EndStorableVars()
 
-pac.RemoveProperty(PART, "BoneMerge")
-pac.RemoveProperty(PART, "Bone")
-pac.RemoveProperty(PART, "Position")
-pac.RemoveProperty(PART, "Angles")
-pac.RemoveProperty(PART, "PositionOffset")
-pac.RemoveProperty(PART, "AngleOffset")
-pac.RemoveProperty(PART, "EyeAngles")
-pac.RemoveProperty(PART, "AimPartName")
+	pac.RemoveProperty(PART, "BoneMerge")
+	pac.RemoveProperty(PART, "Bone")
+	pac.RemoveProperty(PART, "Position")
+	pac.RemoveProperty(PART, "Angles")
+	pac.RemoveProperty(PART, "PositionOffset")
+	pac.RemoveProperty(PART, "AngleOffset")
+	pac.RemoveProperty(PART, "EyeAngles")
+	pac.RemoveProperty(PART, "AimPartName")
 
-function PART:Initialize() end
-function PART:OnDraw(ent, pos, ang)
-	self:PreEntityDraw(ent, ent, pos, ang)
-		self:DrawModel(ent, pos, ang)
-	self:PostEntityDraw(ent, ent, pos, ang)
-	pac.ResetBones(ent)
+	function PART:Initialize() end
+	function PART:OnDraw(ent, pos, ang)
+		self:PreEntityDraw(ent, ent, pos, ang)
+			self:DrawModel(ent, pos, ang)
+		self:PostEntityDraw(ent, ent, pos, ang)
+		pac.ResetBones(ent)
+	end
+
+		local temp_mat = Material( "models/error/new light1" )
+
+	function PART:OnShow()
+		local ent = self:GetOwner()
+		self.Entity = ent
+
+		self.Model = ent:GetModel() or ""
+
+		if ent:IsValid() then
+			function ent.RenderOverride()
+				if self:IsValid() then
+					-- so eyes work
+					if self.NoDraw then
+						render.SetBlend(0)
+						render.ModelMaterialOverride(temp_mat)
+						ent:DrawModel()
+						render.SetBlend(1)
+						render.ModelMaterialOverride()
+						return
+					end
+					self:Draw(ent:GetPos(), ent:GetAngles(), self.Translucent and "translucent" or "opaque")
+				else
+					ent.RenderOverride = nil
+				end
+			end
+
+		end
+	end
+
+	function PART:OnHide()
+		local ent = self:GetOwner()
+
+		if ent:IsValid() then
+			ent.RenderOverride = nil
+		end
+	end
+
+	function PART:RealSetModel(path)
+		local ent = self:GetEntity()
+		if not ent:IsValid() then return end
+		if ent == pac.LocalPlayer and pacx and pacx.SetModel then
+			pacx.SetModel(path)
+		else
+			ent:SetModel(path)
+		end
+	end
+
+	pac.RegisterPart(PART)
 end
 
-function PART:OnShow()
-	local ent = self:GetOwner()
-	self.Entity = ent
+do
+	local PART = {}
 
-	self.Model = ent:GetModel()
+	PART.ClassName = "weapon"
+	PART.Base = "model2"
+	PART.Category = "model"
+	PART.ManualDraw = true
+	PART.HandleModifiersManually = true
+	PART.Icon = 'icon16/shape_square.png'
+	PART.Group = 'pac4'
+	PART.is_model_part = false
 
-	if ent:IsValid() then
-		function ent.RenderOverride()
-			if self:IsValid() then
-				self:Draw(ent:GetPos(), ent:GetAngles(), self.Translucent and "translucent" or "opaque")
-			else
-				ent.RenderOverride = nil
+	pac.StartStorableVars()
+		pac.SetPropertyGroup("generic")
+			pac.GetSet(PART, "OverridePosition", false)
+
+			pac.GetSet(PART, "Class", "all", {enums = function()
+				local out = {
+					["physgun"] = "weapon_physgun",
+					["357"] = "weapon_357",
+					["alyxgun"] = "weapon_alyxgun",
+					["annabelle"] = "weapon_annabelle",
+					["ar2"] = "weapon_ar2",
+					["brickbat"] = "weapon_brickbat",
+					["bugbait"] = "weapon_bugbait",
+					["crossbow"] = "weapon_crossbow",
+					["crowbar"] = "weapon_crowbar",
+					["frag"] = "weapon_frag",
+					["physcannon"] = "weapon_physcannon",
+					["pistol"] = "weapon_pistol",
+					["rpg"] = "weapon_rpg",
+					["shotgun"] = "weapon_shotgun",
+					["smg1"] = "weapon_smg1",
+					["striderbuster"] = "weapon_striderbuster",
+					["stunstick"] = "weapon_stunstick",
+				}
+				for _, tbl in pairs(weapons.GetList()) do
+					if not tbl.ClassName:StartWith("ai_") then
+						local friendly = tbl.ClassName:match("weapon_(.+)") or tbl.ClassName
+						out[friendly] = tbl.ClassName
+					end
+				end
+				return out
+			end})
+	pac.EndStorableVars()
+
+	pac.RemoveProperty(PART, "Model")
+
+	function PART:GetNiceName()
+		return self.Class
+	end
+
+	function PART:Initialize()
+		self.Entity = NULL
+	end
+	function PART:OnDraw(ent, pos, ang)
+		local ent = self:GetEntity()
+		if not ent:IsValid() then return end
+
+		local old
+		if self.OverridePosition then
+			old = ent:GetParent()
+			ent:SetParent(NULL)
+			ent:SetRenderOrigin(pos)
+			ent:SetRenderAngles(ang)
+			ent:SetupBones()
+		end
+		ent.pac_render = true
+
+		self:PreEntityDraw(ent, ent, pos, ang)
+			self:DrawModel(ent, pos, ang)
+		self:PostEntityDraw(ent, ent, pos, ang)
+		pac.ResetBones(ent)
+
+		if self.OverridePosition then
+			ent:MarkShadowAsDirty()
+			--ent:SetParent(old)
+		end
+		ent.pac_render = nil
+	end
+
+	PART.AlwaysThink = true
+
+	function PART:OnThink()
+		local ent = self:GetOwner(true)
+		if ent:IsValid() and ent.GetActiveWeapon then
+			local wep = ent:GetActiveWeapon()
+			if wep:IsValid() then
+				if wep ~= self.Entity then
+					if self.Class == "all" or (self.Class:lower() == wep:GetClass():lower()) then
+						self:OnHide()
+						self.Entity = wep
+						self:SetEventHide(false)
+						wep.RenderOverride = function()
+							wep:DrawShadow(false)
+							if wep.pac_render then
+								wep:DrawModel()
+							end
+						end
+						wep.pac_weapon_part = self
+					else
+						self:SetEventHide(true)
+						self:OnHide()
+					end
+				end
 			end
 		end
-
 	end
-end
 
-function PART:OnHide()
-	local ent = self:GetOwner()
+	function PART:OnHide()
+		local ent = self:GetOwner(true)
 
-	if ent:IsValid() then
-		ent.RenderOverride = nil
-	end
-end
-
-function PART:RealSetModel(path)
-	local ent = self:GetEntity()
-	if not ent:IsValid() then return end
-	if ent == pac.LocalPlayer and pacx and pacx.SetModel then
-		pacx.SetModel(path)
-	else
-		ent:SetModel(path)
-	end
-end
-
-pac.RegisterPart(PART)
-
-
-local PART = {}
-
-PART.ClassName = "weapon"
-PART.Base = "model2"
-PART.Category = "model"
-PART.ManualDraw = true
-PART.HandleModifiersManually = true
-PART.Icon = 'icon16/shape_square.png'
-PART.Group = 'pac4'
-PART.is_model_part = false
-
-function PART:Initialize()
-	self.Entity = NULL
-end
-function PART:OnDraw(ent, pos, ang)
-	local ent = self:GetEntity()
-	self:PreEntityDraw(ent, ent, pos, ang)
-		self:DrawModel(ent, pos, ang)
-	self:PostEntityDraw(ent, ent, pos, ang)
-	pac.ResetBones(ent)
-end
-
-function PART:OnThink()
-	self:OnShow()
-end
-
-function PART:OnShow()
-	local ent = self:GetOwner(true)
-	if ent:IsValid() and ent.GetActiveWeapon then
-		local wep = ent:GetActiveWeapon()
-		if wep:IsValid() and wep ~= self.Entity then
-			self.Entity = wep
-			wep:SetNoDraw(true)
+		if ent:IsValid() and ent.GetActiveWeapon then
+			for k,v in pairs(ent:GetWeapons()) do
+				if v.pac_weapon_part == self then
+					v.RenderOverride = nil
+					v:DrawShadow(true)
+					v:SetParent(ent)
+				end
+			end
+			self.Entity = NULL
 		end
 	end
+
+	pac.RegisterPart(PART)
 end
-
-function PART:OnHide()
-	local ent = self.Entity
-
-	if ent:IsValid() then
-		ent:SetNoDraw(false)
-	end
-end
-
-function PART:RealSetModel(path)
-	local ent = self:GetEntity()
-	if ent:IsValid() then
-		ent:SetModel(path)
-	end
-end
-
-pac.RegisterPart(PART)
