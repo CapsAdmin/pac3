@@ -730,6 +730,7 @@ return {
 					type = "vec2",
 					friendly = "ScrollVector",
 					description = "Emissive scroll vec",
+					default = Vector(0, 0),
 				},
 			},
 		},
@@ -1398,6 +1399,7 @@ return {
 				type = "vec3",
 				friendly = "FresnelRanges",
 				description = "Parameters for remapping fresnel output",
+				default = Vector(0.05, 0.5, 1),
 			},
 			phongalbedotint = {
 				type = "bool",

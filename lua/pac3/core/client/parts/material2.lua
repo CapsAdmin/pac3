@@ -272,6 +272,18 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				pac.SetPropertyGroup(group)
 			end
 
+			if info.default == nil then
+				if info.type == "vec3" then
+					info.default = Vector(0,0,0)
+				elseif info.type == "color" then
+					info.default = Vector(1,1,1)
+				elseif info.type == "float" then
+					info.default = 0
+				elseif info.type == "vec2" then
+					info.default = Vector(0, 0)
+				end
+			end
+
 			local property_name = key
 
 			if info.type == "matrix" then
@@ -422,31 +434,12 @@ for shader_name, groups in pairs(shader_params.shaders) do
 							if info.recompute then mat:Recompute() end
 						end
 					end
-				elseif type(info.default) == "Vector" then
+				elseif type(info.default) == "Vector" or info.type == "vec3" or info.type == "vec2" then
 					PART["Set" .. property_name] = function(self, val)
+						if type(val) == "string" then val = Vector() end
 						self[property_name] = val
 						local mat = self:GetRawMaterial()
 						mat:SetVector(key, val)
-					end
-				elseif info.type == "vec2" then
-					-- need vec2 type
-					PART["Set" .. property_name] = function(self, val)
-						local x,y
-						if type(val) == "string" then
-							x, y = unpack(val:Split(" "))
-							x = tonumber(x) or 0
-							y = tonumber(y) or 0
-						elseif type(val) == "Vector" then
-							x, y = val.x, val.y
-						else
-							x, y = 0, 0
-						end
-
-						self[property_name] = ("%f %f"):format(x, y)
-						local mat = self:GetRawMaterial()
-						mat:SetString(key, ("[%f %f]"):format(x,y))
-
-						if info.recompute then mat:Recompute() end
 					end
 				elseif info.type == "vec4" then
 					-- need vec4 type
