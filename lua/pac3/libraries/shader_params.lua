@@ -1,5 +1,141 @@
 return {
 	shaders = {
+		eyerefract = {
+			generic = {
+				lightwarptexture = {
+					type = "texture",
+					friendly = "LightWarpTexture",
+					description = "1D ramp texture for tinting scalar diffuse term",
+				},
+				warpparam = {
+					type = "float",
+					default = 0,
+					friendly = "WarpParam",
+					description = "animation param between 0 and 1",
+				},
+				entityorigin = {
+					type = "vec3",
+					default = Vector(0,0,0),
+					friendly = "EntityOrigin",
+					description = "center if the model in world space",
+				},
+				corneatexture = {
+					type = "texture",
+					description = "cornea texture",
+					default = "shadertest/BaseTexture",
+				},
+				ambientoccltexture = {
+					type = "texture",
+					description = "reflection texture",
+					default = "shadertest/BaseTexture",
+				},
+				envmap = {
+					type = "texture",
+					friendly = "Envmap",
+					description = "envmap",
+					default = "shadertest/shadertest_env",
+				},
+				ambientocclcolor = {
+					type = "vec3",
+					description = "Ambient occlusion color",
+					default = Vector(1,1,1),
+				},
+			},
+			eye = {
+				intro = {
+					friendly = "Episode1Intro",
+					description = "center if the model in world space",
+					type = "bool",
+					default = false,
+				},
+				eyeballradius = {
+					type = "float",
+					description = "Eyeball radius for ray casting",
+					default = 0,
+					friendly = "EyeballRadius",
+				},
+				raytracesphere = {
+					type = "bool",
+					description = "Raytrace sphere",
+					default = true,
+					friendly = "RayTraceSphere",
+				},
+				irisframe = {
+					type = "integer",
+					description = "frame for the iris texture",
+					default = 0,
+					friendly = "IrisFrame",
+				},
+				eyeorigin = {
+					type = "vec3",
+					description = "origin for the eyes",
+					default = Vector(0,0,0),
+					friendly = "EyeOrigin",
+				},
+				iris = {
+					type = "texture",
+					description = "iris texture",
+					default = "shadertest/BaseTexture",
+					friendly = "Iris",
+				},
+				dilation = {
+					type = "float",
+					description = "Pupil dilation (0 is none, 1 is maximal)",
+					default = 0,
+					friendly = "Dilation",
+				},
+				irisu = {
+					type = "vec4",
+					description = "U projection vector for the iris",
+					default = "[0 1 0 0 ]",
+					friendly = "IrisU",
+				},
+				irisv = {
+					type = "vec4",
+					description = "V projection vector for the iris",
+					default = "[0 0 1 0]",
+					friendly = "IrisV",
+				},
+				parallaxstrength = {
+					type = "float",
+					description = "Parallax strength",
+					default = 1,
+					friendly = "ParallaxStrength",
+				},
+				corneabumpstrength = {
+					type = "float",
+					description = "Cornea strength",
+					default = 1,
+					friendly = "CorneaBumpStrength",
+				},
+			},
+			cloak = {
+				cloakpassenabled = {
+					friendly = "PassEnabled",
+					type = "bool",
+					description = "Enables cloak render in a second pass",
+					default = false,
+				},
+				cloakfactor = {
+					friendly = "Factor",
+					type = "float",
+					description = "",
+					default = 0,
+				},
+				cloakcolortint = {
+					friendly = "ColorTint",
+					type = "color",
+					description = "Cloak color tint",
+					default = Vector(1, 1, 1),
+				},
+				refractamount = {
+					type = "float",
+					friendly = "RefractAmount",
+					default = 0.5,
+					description = "How strong the refraction effect should be when the material is partially cloaked (default = 2).",
+				},
+			},
+		},
 		vertexlitgeneric = {
 			wrinkle = {
 				compress = {

@@ -444,7 +444,7 @@ function PART:CheckBoneMerge()
 
 	if ent:IsValid() and not ent:IsPlayer() then
 		if self.BoneMerge then
-			if not self.ragdoll then
+			if false and not self.ragdoll then
 				self.Entity = ClientsideRagdoll(self:GetModel())
 				self.requires_bone_model_scale = true
 				ent = self.Entity
@@ -522,6 +522,10 @@ PART.Icon = 'icon16/shape_square.png'
 PART.Group = 'pac4'
 PART.is_model_part = false
 
+pac.StartStorableVars()
+	pac.GetSet(PART, "NoDraw", false)
+pac.EndStorableVars()
+
 pac.RemoveProperty(PART, "BoneMerge")
 pac.RemoveProperty(PART, "Bone")
 pac.RemoveProperty(PART, "Position")
@@ -539,6 +543,8 @@ function PART:OnDraw(ent, pos, ang)
 	pac.ResetBones(ent)
 end
 
+local temp_mat = Material( "models/error/new light1" )
+
 function PART:OnShow()
 	local ent = self:GetOwner()
 	self.Entity = ent
@@ -548,6 +554,15 @@ function PART:OnShow()
 	if ent:IsValid() then
 		function ent.RenderOverride()
 			if self:IsValid() then
+				-- so eyes work
+				if self.NoDraw then
+					render.SetBlend(0)
+					render.ModelMaterialOverride(temp_mat)
+					ent:DrawModel()
+					render.SetBlend(1)
+					render.ModelMaterialOverride()
+					return
+				end
 				self:Draw(ent:GetPos(), ent:GetAngles(), self.Translucent and "translucent" or "opaque")
 			else
 				ent.RenderOverride = nil
