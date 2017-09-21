@@ -606,6 +606,8 @@ PART.is_model_part = false
 
 pac.StartStorableVars()
 	pac.SetPropertyGroup("generic")
+		pac.GetSet(PART, "OverridePosition", false)
+
 		pac.GetSet(PART, "Class", "all", {enums = function()
 			local out = {
 				["physgun"] = "weapon_physgun",
@@ -649,11 +651,14 @@ function PART:OnDraw(ent, pos, ang)
 	local ent = self:GetEntity()
 	if not ent:IsValid() then return end
 
-	local old = ent:GetParent()
-	ent:SetParent(NULL)
-	ent:SetRenderOrigin(pos)
-	ent:SetRenderAngles(ang)
-	ent:SetupBones()
+	local old
+	if self.OverridePosition then
+		old = ent:GetParent()
+		ent:SetParent(NULL)
+		ent:SetRenderOrigin(pos)
+		ent:SetRenderAngles(ang)
+		ent:SetupBones()
+	end
 	ent.pac_render = true
 
 	self:PreEntityDraw(ent, ent, pos, ang)
@@ -661,7 +666,9 @@ function PART:OnDraw(ent, pos, ang)
 	self:PostEntityDraw(ent, ent, pos, ang)
 	pac.ResetBones(ent)
 
-	ent:SetParent(old)
+	if self.OverridePosition then
+		ent:SetParent(old)
+	end
 	ent.pac_render = nil
 end
 
