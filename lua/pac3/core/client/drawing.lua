@@ -577,8 +577,8 @@ function pac.DrawPhysgunBeam(ply, wep, enabled, target, bone, hitpos)
 		ply.pac_drawphysgun_event = nil
 	end
 
-	if ent.pac_drawphysgun_event_part and ent.pac_drawphysgun_event_part:IsValid() then
-		ent.pac_drawphysgun_event_part:OnThink()
+	if ply.pac_drawphysgun_event_part and ply.pac_drawphysgun_event_part:IsValid() then
+		ply.pac_drawphysgun_event_part:OnThink()
 	end
 
 
