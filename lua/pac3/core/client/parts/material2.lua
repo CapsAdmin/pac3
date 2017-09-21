@@ -1,9 +1,5 @@
 local shader_params = include("pac3/libraries/shader_params.lua")
 
-local function add_matrix(META, key, friendly_name, description, udata)
-
-end
-
 local material_flags = {
 	debug = bit.lshift(1, 0),
 	no_debug_override = bit.lshift(1, 1),
@@ -77,6 +73,7 @@ end
 local shader_name_translate = {
 	vertexlitgeneric = "3d",
 	unlitgeneric = "2d",
+	eyerefract = "eye refract",
 }
 
 for shader_name, groups in pairs(shader_params.shaders) do
