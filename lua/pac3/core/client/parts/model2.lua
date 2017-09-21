@@ -604,44 +604,101 @@ PART.Icon = 'icon16/shape_square.png'
 PART.Group = 'pac4'
 PART.is_model_part = false
 
+pac.StartStorableVars()
+	pac.SetPropertyGroup("generic")
+		pac.GetSet(PART, "Class", "all", {enums = function()
+			local out = {
+				["physgun"] = "weapon_physgun",
+				["357"] = "weapon_357",
+				["alyxgun"] = "weapon_alyxgun",
+				["annabelle"] = "weapon_annabelle",
+				["ar2"] = "weapon_ar2",
+				["brickbat"] = "weapon_brickbat",
+				["bugbait"] = "weapon_bugbait",
+				["crossbow"] = "weapon_crossbow",
+				["crowbar"] = "weapon_crowbar",
+				["frag"] = "weapon_frag",
+				["physcannon"] = "weapon_physcannon",
+				["pistol"] = "weapon_pistol",
+				["rpg"] = "weapon_rpg",
+				["shotgun"] = "weapon_shotgun",
+				["smg1"] = "weapon_smg1",
+				["striderbuster"] = "weapon_striderbuster",
+				["stunstick"] = "weapon_stunstick",
+			}
+			for _, tbl in pairs(weapons.GetList()) do
+				if not tbl.ClassName:StartWith("ai_") then
+					local friendly = tbl.ClassName:match("weapon_(.+)") or tbl.ClassName
+					out[friendly] = tbl.ClassName
+				end
+			end
+			return out
+		end})
+pac.EndStorableVars()
+
+pac.RemoveProperty(PART, "Model")
+
+function PART:GetNiceName()
+	return self.Class
+end
+
 function PART:Initialize()
 	self.Entity = NULL
 end
 function PART:OnDraw(ent, pos, ang)
 	local ent = self:GetEntity()
+	if not ent:IsValid() then return end
+
+	local old = ent:GetParent()
+	ent:SetParent(NULL)
+	ent:SetRenderOrigin(pos)
+	ent:SetRenderAngles(ang)
+	ent:SetupBones()
+	ent.pac_render = true
+
 	self:PreEntityDraw(ent, ent, pos, ang)
 		self:DrawModel(ent, pos, ang)
 	self:PostEntityDraw(ent, ent, pos, ang)
 	pac.ResetBones(ent)
+
+	ent:SetParent(old)
+	ent.pac_render = nil
 end
+
+PART.AlwaysThink = true
 
 function PART:OnThink()
-	self:OnShow()
-end
-
-function PART:OnShow()
 	local ent = self:GetOwner(true)
 	if ent:IsValid() and ent.GetActiveWeapon then
 		local wep = ent:GetActiveWeapon()
-		if wep:IsValid() and wep ~= self.Entity then
-			self.Entity = wep
-			wep:SetNoDraw(true)
+		if wep:IsValid() then
+			if wep ~= self.Entity then
+				if self.Class == "all" or (self.Class:lower() == wep:GetClass():lower()) then
+					self:OnHide()
+					self.Entity = wep
+					self:SetEventHide(false)
+					wep.RenderOverride = function()
+						if wep.pac_render then
+							wep:DrawModel()
+						end
+					end
+				else
+					self:SetEventHide(true)
+					self:OnHide()
+				end
+			end
 		end
 	end
 end
 
 function PART:OnHide()
-	local ent = self.Entity
+	local ent = self:GetOwner(true)
 
-	if ent:IsValid() then
-		ent:SetNoDraw(false)
-	end
-end
-
-function PART:RealSetModel(path)
-	local ent = self:GetEntity()
-	if ent:IsValid() then
-		ent:SetModel(path)
+	if ent:IsValid() and ent.GetActiveWeapon then
+		for k,v in pairs(ent:GetWeapons()) do
+			v.RenderOverride = nil
+		end
+		self.Entity = NULL
 	end
 end
 
