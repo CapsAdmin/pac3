@@ -444,8 +444,8 @@ function PART:CheckBoneMerge()
 
 	if ent:IsValid() and not ent:IsPlayer() then
 		if self.BoneMerge then
-			if false and not self.ragdoll then
-				self.Entity = ClientsideRagdoll(self:GetModel())
+			if not self.ragdoll then
+				self.Entity = ClientsideRagdoll(ent:GetModel())
 				self.requires_bone_model_scale = true
 				ent = self.Entity
 				self.ragdoll = true
@@ -543,7 +543,7 @@ function PART:OnDraw(ent, pos, ang)
 	pac.ResetBones(ent)
 end
 
-local temp_mat = Material( "models/error/new light1" )
+	local temp_mat = Material( "models/error/new light1" )
 
 function PART:OnShow()
 	local ent = self:GetOwner()
