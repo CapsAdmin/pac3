@@ -138,7 +138,7 @@ function pace.StopSelect()
 	end)
 end
 
-local function select_something(tblin, check, getpos, getfriendly, callback, selectCallback)
+local function select_something(tblin, check, getpos, getfriendly, callback, selectCallback, poll)
 	local data
 	local selected = {}
 	holding = nil
@@ -164,6 +164,8 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 	end
 
 	local function HUDPaint()
+		if poll and not poll() then pace.StopSelect() return end
+
 		surface.SetAlphaMultiplier(1)
 
 		x, y = gui.MousePos()
@@ -293,7 +295,9 @@ function pace.SelectBone(ent, callback, only_movable)
 		function (key, val)
 			if val.is_special or val.is_attachment then return end
 			ent.pac_bones_select_target = val.i
-		end
+		end,
+
+		function() return ent:IsValid() end
 	)
 end
 
