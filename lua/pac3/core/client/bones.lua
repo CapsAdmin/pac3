@@ -107,6 +107,7 @@ function pac.GetAllBones(ent)
 		tbl.pos_noang = {friendly = "pos_noang", is_special = true}
 		tbl.camera = {friendly = "camera", is_special = true}
 		tbl.player_eyes = {friendly = "player_eyes", is_special = true}
+		tbl.physgun_beam_endpos = {friendly = "physgun_beam_endpos", is_special = true}
 
 		ent.pac_bone_count = count + 1
 	end
@@ -164,6 +165,30 @@ function pac.GetBonePosAng(ent, id, parent)
 	local override = ent.pac_owner_override
 	if override and override:IsValid() then
 		ent = override
+	end
+
+	if id == "physgun_beam_endpos" then
+		if ent.pac_drawphysgun_event then
+
+			local ply, wep, enabled, target, bone, hitpos = unpack(ent.pac_drawphysgun_event)
+
+			local endpos
+
+			if enabled then
+				if target:IsValid() then
+					if bone ~= 0 then
+						local wpos, wang = target:GetBonePosition(target:TranslatePhysBoneToBone(bone))
+						endpos = LocalToWorld(hitpos, Angle(), wpos, wang)
+					else
+						endpos = target:LocalToWorld(hitpos)
+					end
+				else
+					endpos = ply.pac_traceres and ply.pac_traceres.HitPos or util_QuickTrace(ply:EyePos(), ply:EyeAngles():Forward() * 16000, {ply, ply:GetParent()}).HitPos
+				end
+			end
+
+			return endpos, Angle()
+		end
 	end
 
 	if id == "camera" then

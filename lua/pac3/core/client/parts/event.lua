@@ -209,6 +209,15 @@ PART.OldEvents =
 		end,
 	},
 
+	using_physgun =
+	{
+		callback = function(self, ent)
+			ent = self:GetPlayerOwner()
+			ent.pac_drawphysgun_event_part = self
+			return ent.pac_drawphysgun_event ~= nil
+		end,
+	},
+
 	eyetrace_entity_class =
 	{
 		arguments = {{class = "string"}},

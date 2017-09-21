@@ -569,8 +569,20 @@ function pac.PostDrawViewModel()
 	end
 end
 
-function pac.DrawPhysgunBeam(ent)
-	if ent.pac_hide_physgun_beam then
+function pac.DrawPhysgunBeam(ply, wep, enabled, target, bone, hitpos)
+
+	if enabled then
+		ply.pac_drawphysgun_event = {ply, wep, enabled, target, bone, hitpos}
+	else
+		ply.pac_drawphysgun_event = nil
+	end
+
+	if ent.pac_drawphysgun_event_part and ent.pac_drawphysgun_event_part:IsValid() then
+		ent.pac_drawphysgun_event_part:OnThink()
+	end
+
+
+	if ply.pac_hide_physgun_beam then
 		return false
 	end
 end
