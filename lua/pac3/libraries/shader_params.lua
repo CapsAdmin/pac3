@@ -435,6 +435,7 @@ return {
 					type = "texture",
 					friendly = "BumpMap",
 					description = "bump map",
+					default = "null-bumpmap",
 				},
 				color2 = {
 					type = "color",
