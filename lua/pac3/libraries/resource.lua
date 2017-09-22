@@ -364,22 +364,12 @@ if CLIENT then
 	end)
 
 	function resource.DownloadTexture(url, callback, ply)
-		local skip_cache = url:sub(1,1) == "_"
-		if skip_cache then url = url:sub(2) end
-
 		if not url:find("^.-://") then return end
-
-		local cache = not skip_cache and memory[url:lower()] or nil
-
-		if cache then
-			file.Write(cache.path, cache.buffer)
-		end
 
 		return resource.Download(
 			url,
 			function(path)
 				local frames
-				local tex
 				local mat
 
 				if path:EndsWith(".vtf") then
@@ -394,23 +384,9 @@ if CLIENT then
 					mat = Material("../data/" .. path, "mips smooth noclamp")
 				end
 
-				timer.Create(url .. tostring(callback), 0.1, 50, function()
-					tex = mat:GetTexture("$basetexture")
-					if tex then
-						callback(tex, frames)
+				callback(mat:GetTexture("$basetexture"), frames)
 
-						if not cache then
-							memory[url:lower()] = {buffer = file.Read(path, "DATA"), path = path, frames = frames, ply = ply}
-						end
-
-						-- we can't delete vtf files because source engine will unload
-						if not path:EndsWith(".vtf") then
-							file.Delete(path)
-						end
-
-						timer.Remove(url)
-					end
-				end)
+				memory[url] = {ply = ply, path = path}
 			end,
 			function()
 
