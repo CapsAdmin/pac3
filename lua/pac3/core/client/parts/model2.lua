@@ -43,7 +43,6 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "ModelModifiers", "", {editor_panel = "model_modifiers"})
 		pac.GetSet(PART, "Material", "", {editor_panel = "material"})
 		pac.GetSet(PART, "Materials", "", {editor_panel = "model_materials"})
-		--pac.GetSet(PART, "LightMap", "", {editor_panel = "textures"})
 		pac.GetSet(PART, "LevelOfDetail", 0, {editor_clamp = {-1, 8}, editor_round = true})
 
 		pac.SetupPartName(PART, "EyeTarget")
@@ -63,21 +62,6 @@ function PART:SetLevelOfDetail(val)
 	local ent = self:GetEntity()
 	if ent:IsValid() then
 		ent:SetLOD(val)
-	end
-end
-
-function PART:SetLightMap(val)
-	self.LightMap = val
-
-	if val == "" then
-		self.lightmap_tex = nil
-	else
-		if not pac.resource.DownloadTexture(val, function(tex)
-			self.lightmap_tex = tex
-		end, self:GetPlayerOwner()) then
-			temp:SetTexture("$basetexture", val)
-			self.lightmap_tex = temp:GetTexture("$basetexture")
-		end
 	end
 end
 
@@ -210,6 +194,50 @@ function PART:OnThink()
 	self:CheckBoneMerge()
 end
 
+function PART:BindMaterials()
+	local materials = self.material_override_self or self.material_override
+	local set_material = false
+
+	if self.material_override_self then
+		if materials[0] then
+			render_MaterialOverride(materials[0])
+			set_material = true
+		end
+
+		for i = 1, #ent:GetMaterials() do
+			local mat = materials[i]
+
+			if mat then
+				render.MaterialOverrideByIndex(i-1, mat)
+			else
+				render.MaterialOverrideByIndex(i-1, nil)
+			end
+		end
+	elseif self.material_override then
+		if materials[0] and materials[0][1] then
+			render_MaterialOverride(materials[0][1]:GetRawMaterial())
+			set_material = true
+		end
+
+		for i = 1, #ent:GetMaterials() do
+			local stack = materials[i]
+			if stack then
+				local mat = stack[1]
+
+				if mat then
+					render.MaterialOverrideByIndex(i-1, mat:GetRawMaterial())
+				else
+					render.MaterialOverrideByIndex(i-1, nil)
+				end
+			end
+		end
+	end
+
+	if pac.render_material and not set_material then
+		render_MaterialOverride()
+	end
+end
+
 function PART:PreEntityDraw(owner, ent, pos, ang)
 	if not ent:IsPlayer() and pos and ang then
 		if not self.skip_orient then
@@ -233,15 +261,20 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		if self.NoLighting then
 			render.SuppressEngineLighting(true)
 		end
-
-		if self.NoCulling or self.Invert then
-			render_CullMode(MATERIAL_CULLMODE_CW)
-		end
 	end
 
 	if self.draw_bodygroups then
 		for _, v in ipairs(self.draw_bodygroups) do
 			ent:SetBodygroup(v[1], v[2])
+		end
+	end
+
+	if self.EyeTarget.cached_pos then
+		if self.ClassName == "model2" then
+			local attachment = ent:GetAttachment( ent:LookupAttachment( "eyes" ) )
+			ent:SetEyeTarget(WorldToLocal( self.EyeTarget.cached_pos, self.EyeTarget.cached_ang, attachment.Pos, attachment.Ang ))
+		else
+			ent:SetEyeTarget(self.EyeTarget.cached_pos)
 		end
 	end
 end
@@ -252,13 +285,6 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 
 		if self.NoLighting then
 			render.SuppressEngineLighting(false)
-		end
-
-		if self.NoCulling then
-			render_CullMode(MATERIAL_CULLMODE_CCW)
-			self:DrawModel(ent, pos, ang)
-		elseif self.Invert then
-			render_CullMode(MATERIAL_CULLMODE_CCW)
 		end
 	end
 end
@@ -285,60 +311,22 @@ end
 
 function PART:DrawModel(ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
-		local materials = self.material_override_self or self.material_override
-		local set_material = false
 
-		if self.material_override_self then
-			if materials[0] then
-				render_MaterialOverride(materials[0])
-				set_material = true
-			end
-
-			for i = 1, #ent:GetMaterials() do
-				local mat = materials[i]
-
-				if mat then
-					render.MaterialOverrideByIndex(i-1, mat)
-				else
-					render.MaterialOverrideByIndex(i-1, nil)
-				end
-			end
-		elseif self.material_override then
-			if materials[0] and materials[0][1] then
-				render_MaterialOverride(materials[0][1]:GetRawMaterial())
-				set_material = true
-			end
-
-			for i = 1, #ent:GetMaterials() do
-				local stack = materials[i]
-				if stack then
-					local mat = stack[1]
-
-					if mat then
-						render.MaterialOverrideByIndex(i-1, mat:GetRawMaterial())
-					else
-						render.MaterialOverrideByIndex(i-1, nil)
-					end
-				end
-			end
+		if self.NoCulling or self.Invert then
+			render_CullMode(MATERIAL_CULLMODE_CW)
 		end
 
-		if pac.render_material and not set_material then
-			render_MaterialOverride()
-		end
-
-		if self.EyeTarget.cached_pos then
-			if self.ClassName == "model2" then
-				local attachment = ent:GetAttachment( ent:LookupAttachment( "eyes" ) )
-				ent:SetEyeTarget(WorldToLocal( self.EyeTarget.cached_pos, self.EyeTarget.cached_ang, attachment.Pos, attachment.Ang ))
-			else
-				ent:SetEyeTarget(self.EyeTarget.cached_pos)
-			end
-		end
-
-		--if self.lightmap_tex then render.SetLightmapTexture(self.lightmap_tex) end
-
+		self:BindMaterials()
 		ent:DrawModel()
+
+		if self.NoCulling then
+			render_CullMode(MATERIAL_CULLMODE_CCW)
+			self:BindMaterials()
+			ent:DrawModel()
+		elseif self.Invert then
+			render_CullMode(MATERIAL_CULLMODE_CCW)
+		end
+
 	end
 end
 
