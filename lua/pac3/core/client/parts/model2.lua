@@ -362,10 +362,15 @@ end
 local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs')
 
 function PART:RealSetModel(path)
+	local old = self.Entity:GetModel()
 	self.Entity.pac_bones = nil
 	self.Entity:SetModel(path)
 	self:SetModelModifiers(self:GetModelModifiers())
-	self:SetMaterials("")
+	if old ~= nil and old ~= self.Entity:GetModel() then
+		self:SetMaterials("")
+	else
+		self:SetMaterials(self:GetMaterials())
+	end
 end
 
 function PART:SetModel(path)
