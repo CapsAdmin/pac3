@@ -174,6 +174,7 @@ function PART:Initialize()
 	self.Entity = pac.CreateEntity(self:GetModel())
 	self.Entity:SetNoDraw(true)
 	self.Entity.PACPart = self
+	self.material_count = 0
 end
 
 function PART:GetEntity()
@@ -204,7 +205,7 @@ function PART:BindMaterials(ent)
 			set_material = true
 		end
 
-		for i = 1, #ent:GetMaterials() do
+		for i = 1, self.material_count do
 			local mat = materials[i]
 
 			if mat then
@@ -219,7 +220,7 @@ function PART:BindMaterials(ent)
 			set_material = true
 		end
 
-		for i = 1, #ent:GetMaterials() do
+		for i = 1, self.material_count do
 			local stack = materials[i]
 			if stack then
 				local mat = stack[1]
@@ -321,7 +322,7 @@ function PART:DrawModel(ent, pos, ang)
 
 		if self.NoCulling then
 			render_CullMode(MATERIAL_CULLMODE_CCW)
-			self:BindMaterials(ent)
+			--self:BindMaterials(ent)
 			ent:DrawModel()
 		elseif self.Invert then
 			render_CullMode(MATERIAL_CULLMODE_CCW)
@@ -359,6 +360,7 @@ function PART:RealSetModel(path)
 	else
 		self:SetMaterials(self:GetMaterials())
 	end
+	self.material_count = #self.Entity:GetMaterials()
 end
 
 function PART:SetModel(path)
@@ -478,7 +480,6 @@ function PART:CheckBoneMerge()
 	end
 end
 
-local SCALE_NORMAL = Vector(1, 1, 1)
 function PART:OnBuildBonePositions()
 	if self.AlternativeScaling then return end
 
@@ -528,7 +529,7 @@ do
 	pac.RemoveProperty(PART, "EyeAngles")
 	pac.RemoveProperty(PART, "AimPartName")
 
-	function PART:Initialize() end
+	function PART:Initialize() self.material_count = 0 end
 	function PART:OnDraw(ent, pos, ang)
 		self:PreEntityDraw(ent, ent, pos, ang)
 			self:DrawModel(ent, pos, ang)
@@ -581,6 +582,7 @@ do
 		else
 			ent:SetModel(path)
 		end
+		self.material_count = #ent:GetMaterials()
 	end
 
 	pac.RegisterPart(PART)
@@ -640,6 +642,7 @@ do
 
 	function PART:Initialize()
 		self.Entity = NULL
+		self.material_count = 0
 	end
 	function PART:OnDraw(ent, pos, ang)
 		local ent = self:GetEntity()
