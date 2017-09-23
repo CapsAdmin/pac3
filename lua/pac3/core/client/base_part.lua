@@ -736,27 +736,11 @@ do -- serializing
 				self = hook.Run("pac_PART:SetTable",self,key,value) or self
 
 				if self["Set" .. key] then
-					-- hacky
-					if
-						key:find("Name", nil, true) and
-						key ~= "OwnerName" and
-						key ~= "SequenceName" and
-						key ~= "GestureName" and
-						key ~= "VariableName" and
-						key ~= "BodyGroupName"
-					then
-						self["Set" .. key](self, pac.HandlePartName(self:GetPlayerOwner(), value, key))
-					elseif key == "Material" then
-						if not value:find("/") then
-							value = pac.HandlePartName(self:GetPlayerOwner(), value, key)
-						end
-
+					if key == "Material" then
 						table.insert(self.delayed_variables, {key = key, val = value})
-
-						self:SetMaterial(value)
-					else
-						self["Set" .. key](self, value)
 					end
+
+					self["Set" .. key](self, value)
 				elseif key ~= "ClassName" then
 					pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
 				end

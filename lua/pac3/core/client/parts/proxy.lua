@@ -489,7 +489,7 @@ PART.Inputs =
 
 		if events then
 			for key, data in pairs(events) do
-				if pac.HandlePartName(ply, data.name) == self.Name then
+				if data.name == self.Name then
 
 					data.x = data.x or 0
 					data.y = data.y or 0

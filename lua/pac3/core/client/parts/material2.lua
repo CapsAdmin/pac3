@@ -184,21 +184,12 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 	local function update_submaterial(self, remove, parent)
 		pac.RunNextFrame("refresh materials" .. self.Id, function()
-			--[[
-			for key, val in pairs(self.StorableVars) do
-				if self.ShaderParams[key] and self.ShaderParams[key].type == "texture" then
-					local str = self["Get"..key](self)
-					if str and str ~= "" then
-						self["Set" .. key](self, str)
-					end
-				end
-			end
-	]]
+			local name = self:GetName()
 
 			for _, part in ipairs(self:GetRootPart():GetChildrenList()) do
 				if part.GetMaterials then
 					for _, path in ipairs(part.Materials:Split(";")) do
-						if path == self:GetName() then
+						if path == name then
 							part:SetMaterials(part.Materials)
 							break
 						end
