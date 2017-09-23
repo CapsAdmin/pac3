@@ -194,7 +194,7 @@ function PART:OnThink()
 	self:CheckBoneMerge()
 end
 
-function PART:BindMaterials()
+function PART:BindMaterials(ent)
 	local materials = self.material_override_self or self.material_override
 	local set_material = false
 
@@ -316,12 +316,12 @@ function PART:DrawModel(ent, pos, ang)
 			render_CullMode(MATERIAL_CULLMODE_CW)
 		end
 
-		self:BindMaterials()
+		self:BindMaterials(ent)
 		ent:DrawModel()
 
 		if self.NoCulling then
 			render_CullMode(MATERIAL_CULLMODE_CCW)
-			self:BindMaterials()
+			self:BindMaterials(ent)
 			ent:DrawModel()
 		elseif self.Invert then
 			render_CullMode(MATERIAL_CULLMODE_CCW)
