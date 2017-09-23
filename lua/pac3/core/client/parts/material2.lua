@@ -195,6 +195,17 @@ for shader_name, groups in pairs(shader_params.shaders) do
 			end
 	]]
 
+			for _, part in ipairs(self:GetRootPart():GetChildrenList()) do
+				if part.GetMaterials then
+					for _, path in ipairs(part.Materials:Split(";")) do
+						if path == self:GetName() then
+							part:SetMaterials(part.Materials)
+							break
+						end
+					end
+				end
+			end
+
 			local str = self.MaterialOverride
 			parent = parent or self:GetParent()
 
