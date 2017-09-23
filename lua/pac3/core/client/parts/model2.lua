@@ -322,7 +322,7 @@ function PART:DrawModel(ent, pos, ang)
 
 		if self.NoCulling then
 			render_CullMode(MATERIAL_CULLMODE_CCW)
-			--self:BindMaterials(ent)
+			self:BindMaterials(ent)
 			ent:DrawModel()
 		elseif self.Invert then
 			render_CullMode(MATERIAL_CULLMODE_CCW)
