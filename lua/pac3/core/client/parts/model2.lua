@@ -441,12 +441,12 @@ function PART:CheckBoneMerge()
 
 	if ent:IsValid() and not ent:IsPlayer() and ent:GetModel() then
 		if self.BoneMerge then
-			if not self.ragdoll then
+			--[[if not self.ragdoll then
 				self.Entity = ClientsideRagdoll(ent:GetModel())
 				self.requires_bone_model_scale = true
 				ent = self.Entity
 				self.ragdoll = true
-			end
+			end]]
 
 			local owner = self:GetOwner()
 
@@ -462,12 +462,12 @@ function PART:CheckBoneMerge()
 				end
 			end
 		else
-			if self.ragdoll then
+			--[[if self.ragdoll then
 				self.Entity:Remove()
 				ent = self:GetEntity()
 				self.requires_bone_model_scale = true
 				self.ragdoll = false
-			end
+			end]]
 
 			if ent:GetParent():IsValid() then
 				ent:SetParent(NULL)
