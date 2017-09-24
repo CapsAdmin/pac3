@@ -49,6 +49,8 @@ pac.StartStorableVars()
 
 pac.EndStorableVars()
 
+PART.Entity = NULL
+
 function PART:GetNiceName()
 	local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%."))
 
@@ -582,7 +584,30 @@ do
 		else
 			ent:SetModel(path)
 		end
-		self.material_count = #ent:GetMaterials()
+
+		self:OnThink()
+	end
+
+	function PART:OnThink()
+		self:CheckBoneMerge()
+
+		local ent = self:GetEntity()
+
+		if self.last_model ~= ent:GetModel() then
+			local old = ent:GetModel()
+
+			self:SetModelModifiers(self:GetModelModifiers())
+
+			if old ~= nil and old ~= self.Entity:GetModel() then
+				self:SetMaterials("")
+			else
+				self:SetMaterials(self:GetMaterials())
+			end
+
+			self.material_count = #self.Entity:GetMaterials()
+
+			self.last_model = old
+		end
 	end
 
 	pac.RegisterPart(PART)
@@ -641,7 +666,6 @@ do
 	end
 
 	function PART:Initialize()
-		self.Entity = NULL
 		self.material_count = 0
 	end
 	function PART:OnDraw(ent, pos, ang)
