@@ -658,8 +658,10 @@ end
 function pac.Material(str, part)
 	if str == "" then return end
 
+	local ply_owner = part:GetPlayerOwner()
+
 	for _, part in pairs(pac.GetParts()) do
-		if part.GetRawMaterial and str == part.Name then
+		if part.GetRawMaterial and part:GetPlayerOwner() == ply_owner and str == part.Name then
 			return part:GetRawMaterial()
 		end
 	end
@@ -825,21 +827,4 @@ function pac.StringFind(a, b, simple, case_sensitive)
 		pattern_cache[a][b] = false
 		return false
 	end
-end
-
--- this function adds the unique id of the owner to the part name to resolve name conflicts
--- hack??
-
-function pac.HandlePartName(ply, name)
-	if ply:IsValid() then
-		if ply:IsPlayer() and ply ~= pac.LocalPlayer then
-			return ply:UniqueID() .. " " .. name
-		end
-
-		if not ply:IsPlayer() then
-			return pac.CallHook("HandlePartName", ply, name) or (ply:EntIndex() .. " " .. name)
-		end
-	end
-
-	return name
 end

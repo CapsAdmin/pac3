@@ -49,6 +49,8 @@ pac.StartStorableVars()
 
 pac.EndStorableVars()
 
+PART.Entity = NULL
+
 function PART:GetNiceName()
 	local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%."))
 
@@ -174,6 +176,7 @@ function PART:Initialize()
 	self.Entity = pac.CreateEntity(self:GetModel())
 	self.Entity:SetNoDraw(true)
 	self.Entity.PACPart = self
+	self.material_count = 0
 end
 
 function PART:GetEntity()
@@ -204,7 +207,7 @@ function PART:BindMaterials(ent)
 			set_material = true
 		end
 
-		for i = 1, #ent:GetMaterials() do
+		for i = 1, self.material_count do
 			local mat = materials[i]
 
 			if mat then
@@ -219,7 +222,7 @@ function PART:BindMaterials(ent)
 			set_material = true
 		end
 
-		for i = 1, #ent:GetMaterials() do
+		for i = 1, self.material_count do
 			local stack = materials[i]
 			if stack then
 				local mat = stack[1]
@@ -359,6 +362,7 @@ function PART:RealSetModel(path)
 	else
 		self:SetMaterials(self:GetMaterials())
 	end
+	self.material_count = #self.Entity:GetMaterials()
 end
 
 function PART:SetModel(path)
@@ -437,12 +441,12 @@ function PART:CheckBoneMerge()
 
 	if ent:IsValid() and not ent:IsPlayer() and ent:GetModel() then
 		if self.BoneMerge then
-			if not self.ragdoll then
+			--[[if not self.ragdoll then
 				self.Entity = ClientsideRagdoll(ent:GetModel())
 				self.requires_bone_model_scale = true
 				ent = self.Entity
 				self.ragdoll = true
-			end
+			end]]
 
 			local owner = self:GetOwner()
 
@@ -458,12 +462,12 @@ function PART:CheckBoneMerge()
 				end
 			end
 		else
-			if self.ragdoll then
+			--[[if self.ragdoll then
 				self.Entity:Remove()
 				ent = self:GetEntity()
 				self.requires_bone_model_scale = true
 				self.ragdoll = false
-			end
+			end]]
 
 			if ent:GetParent():IsValid() then
 				ent:SetParent(NULL)
@@ -478,7 +482,6 @@ function PART:CheckBoneMerge()
 	end
 end
 
-local SCALE_NORMAL = Vector(1, 1, 1)
 function PART:OnBuildBonePositions()
 	if self.AlternativeScaling then return end
 
@@ -528,7 +531,7 @@ do
 	pac.RemoveProperty(PART, "EyeAngles")
 	pac.RemoveProperty(PART, "AimPartName")
 
-	function PART:Initialize() end
+	function PART:Initialize() self.material_count = 0 end
 	function PART:OnDraw(ent, pos, ang)
 		self:PreEntityDraw(ent, ent, pos, ang)
 			self:DrawModel(ent, pos, ang)
@@ -580,6 +583,30 @@ do
 			pacx.SetModel(path)
 		else
 			ent:SetModel(path)
+		end
+
+		self:OnThink()
+	end
+
+	function PART:OnThink()
+		self:CheckBoneMerge()
+
+		local ent = self:GetEntity()
+
+		if self.last_model ~= ent:GetModel() then
+			local old = ent:GetModel()
+
+			self:SetModelModifiers(self:GetModelModifiers())
+
+			if old ~= nil and old ~= self.Entity:GetModel() then
+				self:SetMaterials("")
+			else
+				self:SetMaterials(self:GetMaterials())
+			end
+
+			self.material_count = #self.Entity:GetMaterials()
+
+			self.last_model = old
 		end
 	end
 
@@ -639,7 +666,7 @@ do
 	end
 
 	function PART:Initialize()
-		self.Entity = NULL
+		self.material_count = 0
 	end
 	function PART:OnDraw(ent, pos, ang)
 		local ent = self:GetEntity()

@@ -431,9 +431,7 @@ do -- model modifiers
 	function PANEL:ExtraPopulate()
 		local part = pace.current_part
 		local ent = part:GetEntity()
-		if not ent:IsValid() or not ent:GetMaterials() then return end
-
-		if #ent:GetMaterials() == 1 then return end
+		if not ent:IsValid() or not ent:GetMaterials() or #ent:GetMaterials() == 1 then return end
 
 		local tbl = {}
 		local cur = part.Materials:Split(";")
@@ -443,6 +441,7 @@ do -- model modifiers
 			tbl[name] = {
 				val = cur[i] or "",
 				callback = function(val)
+					if not ent:IsValid() or not ent:GetMaterials() or #ent:GetMaterials() == 1 then return end
 					local tbl = part.Materials:Split(";")
 					tbl[i] = val
 					for i, name in ipairs(ent:GetMaterials()) do
