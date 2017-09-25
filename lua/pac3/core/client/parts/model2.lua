@@ -363,6 +363,8 @@ function PART:RealSetModel(path)
 		self:SetMaterials(self:GetMaterials())
 	end
 	self.material_count = #self.Entity:GetMaterials()
+	self:SetSize(self:GetSize())
+	self:SetScale(self:GetScale())
 end
 
 function PART:SetModel(path)
@@ -539,17 +541,24 @@ do
 		pac.ResetBones(ent)
 	end
 
-		local temp_mat = Material( "models/error/new light1" )
-
-	function PART:OnShow()
+	function PART:GetEntity()
 		local ent = self:GetOwner()
 		self.Entity = ent
+		return ent
+	end
 
-		self.Model = ent:GetModel() or ""
+	local temp_mat = Material( "models/error/new light1" )
+
+	function PART:OnShow()
+		local ent = self:GetEntity()
+
+		if self.Model == "" then
+			self.Model = ent:GetModel() or ""
+		end
 
 		if ent:IsValid() then
 			function ent.RenderOverride()
-				if self:IsValid() then
+				if self:IsValid() and self:GetOwner():IsValid() then
 					-- so eyes work
 					if self.NoDraw then
 						render.SetBlend(0)
