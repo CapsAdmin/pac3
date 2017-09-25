@@ -833,7 +833,9 @@ do -- base editable
 		menu:AddSpacer()
 		menu:AddOption(L"reset", function()
 			if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
-				self:SetValue(pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey]))
+				local val = pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey])
+				self:SetValue(val)
+				self.OnValueChanged(val)
 			end
 		end):SetImage(pace.MiscIcons.clear)
 	end
