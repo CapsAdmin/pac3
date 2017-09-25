@@ -541,11 +541,16 @@ do
 		pac.ResetBones(ent)
 	end
 
-		local temp_mat = Material( "models/error/new light1" )
-
-	function PART:OnShow()
+	function PART:GetEntity()
 		local ent = self:GetOwner()
 		self.Entity = ent
+		return ent
+	end
+
+	local temp_mat = Material( "models/error/new light1" )
+
+	function PART:OnShow()
+		local ent = self:GetEntity()
 
 		if self.Model == "" then
 			self.Model = ent:GetModel() or ""
