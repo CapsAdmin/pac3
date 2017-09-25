@@ -288,6 +288,7 @@ function PANEL:PaintOver(w, h)
 	local renderTime = pace.RenderTimes and pace.RenderTimes[LocalPlayer():EntIndex()]
 
 	if not renderTime then return end
+
 	local x = 2
 	local y = 2
 	y = y + self.menu_bar:GetTall()
@@ -304,7 +305,7 @@ function PANEL:PaintOver(w, h)
 	surface.SetFont(pace.CurrentFont)
 
 	textCol = self:GetSkin().Colours.Category.Line.Text
-	drawBox = self:GetSkin().tex.Panels.Bright
+	drawBox = self:GetSkin().tex.Menu_Strip
 	surface.SetTextColor(textCol)
 	cam.IgnoreZ(true)
 	local str = string.format("%s: %.3f ms", L("average render time"), renderTime * 1000)
@@ -313,6 +314,16 @@ function PANEL:PaintOver(w, h)
 	surface.SetTextPos(x + 5, y)
 	surface.DrawText(str)
 	cam.IgnoreZ(false)
+end
+
+function PANEL:Paint(w,h)
+	surface.SetDrawColor(0, 0, 0, 255)
+	surface.DrawRect(0,0,w,h)
+	-- there are some skins that have a transparent dframe
+	-- so the categories that the properties draw will be transparent
+
+
+	DFrame.Paint(self, w,h)
 end
 
 pace.RegisterPanel(PANEL)
