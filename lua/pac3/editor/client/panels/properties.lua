@@ -206,8 +206,11 @@ do -- list
 				search:KillFocus()
 			else
 				search.searched_something = true
+				local group
+
 				for i,v in ipairs(self.List) do
 					local found = false
+
 					if v.panel then
 						if v.panel:GetText():find(pattern) then
 							found = true
@@ -216,6 +219,12 @@ do -- list
 						if v.left:GetValue():find(pattern) then
 							found = true
 						end
+					elseif v.left and v.left.text then
+						group = v.left.text
+					end
+
+					if group and group:find(pattern) then
+						found = true
 					end
 
 					if not found and v.panel then
