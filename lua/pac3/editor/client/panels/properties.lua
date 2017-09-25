@@ -200,6 +200,8 @@ do -- list
 		search.OnEnter = search.Kill
 
 		search.OnTextChanged = function()
+			self.scr:SetScroll(0)
+
 			local pattern = search:GetValue()
 			if pattern == "" and search.searched_something then
 				search:Kill()
