@@ -547,7 +547,9 @@ do
 		local ent = self:GetOwner()
 		self.Entity = ent
 
-		self.Model = ent:GetModel() or ""
+		if self.Model == "" then
+			self.Model = ent:GetModel() or ""
+		end
 
 		if ent:IsValid() then
 			function ent.RenderOverride()
