@@ -380,7 +380,7 @@ function PART:SetModel(path)
 				self.loading = nil
 				self:RealSetModel(path)
 
-				if ent == pac.LocalPlayer and pacx and pacx.SetModel then
+				if self:GetEntity() == pac.LocalPlayer and pacx and pacx.SetModel then
 					pacx.SetModel(self.Model)
 				end
 
@@ -391,7 +391,7 @@ function PART:SetModel(path)
 			end, self:GetPlayerOwner())
 		else
 			self.loading = reason or "mdl is not allowed"
-			self.Entity:SetModel("error.mdl")
+			self:RealSetModel("error.mdl")
 			pac.Message(self, ' mdl files are not allowed')
 		end
 	else
