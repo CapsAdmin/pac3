@@ -376,10 +376,14 @@ function PART:SetModel(path)
 
 		if ALLOW_TO_MDL:GetBool() and status ~= false then
 			self.loading = "downloading mdl zip"
-
 			pac.DownloadMDL(path, function(path)
 				self.loading = nil
 				self:RealSetModel(path)
+
+				if ent == pac.LocalPlayer and pacx and pacx.SetModel then
+					pacx.SetModel(self.Model)
+				end
+
 			end, function(err)
 				pac.Message(err)
 				self.loading = nil
@@ -588,11 +592,8 @@ do
 	function PART:RealSetModel(path)
 		local ent = self:GetEntity()
 		if not ent:IsValid() then return end
-		if ent == pac.LocalPlayer and pacx and pacx.SetModel then
-			pacx.SetModel(path)
-		else
-			ent:SetModel(path)
-		end
+
+		ent:SetModel(path)
 
 		self:OnThink()
 	end
