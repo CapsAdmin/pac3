@@ -141,7 +141,7 @@ end
 function PART:SetMaterials(str)
 	self.Materials = str
 
-	local materials = self:GetEntity():GetMaterials()
+	local materials = self:GetEntity():IsValid() and self:GetEntity():GetMaterials()
 
 	if not materials then return end
 

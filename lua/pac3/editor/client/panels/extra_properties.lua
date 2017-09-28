@@ -212,9 +212,11 @@ do -- materials and textures
 
 	function PANEL_MATERIAL:SpecialCallback()
 		pace.ResourceBrowser(function(path)
-			path = path:match("materials/(.+)%.vmt")
-			self:SetValue(path)
-			self.OnValueChanged(path)
+			if self:IsValid() then
+				path = path:match("materials/(.+)%.vmt")
+				self:SetValue(path)
+				self.OnValueChanged(path)
+			end
 		end, "materials")
 	end
 
