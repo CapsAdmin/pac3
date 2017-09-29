@@ -236,7 +236,7 @@ function PART:BindMaterials(ent)
 		end
 	end
 
-	if pac.render_material and not set_material then
+	if (pac.render_material or self.BoneMerge) and not set_material then
 		render_MaterialOverride()
 	end
 end
@@ -320,7 +320,9 @@ function PART:DrawModel(ent, pos, ang)
 		end
 
 		self:BindMaterials(ent)
+		ent.pac_drawing_model = true
 		ent:DrawModel()
+		ent.pac_drawing_model = false
 
 		if self.NoCulling then
 			render_CullMode(MATERIAL_CULLMODE_CCW)
@@ -465,6 +467,13 @@ function PART:CheckBoneMerge()
 
 				if not ent:IsEffectActive(EF_BONEMERGE) then
 					ent:AddEffects(EF_BONEMERGE)
+					owner.pac_bonemerged = owner.pac_bonemerged or {}
+					table.insert(owner.pac_bonemerged, ent)
+					ent.RenderOverride = function()
+						ent.pac_drawing_model = true
+						ent:DrawModel()
+						ent.pac_drawing_model = false
+					end
 				end
 			end
 		else
@@ -476,10 +485,22 @@ function PART:CheckBoneMerge()
 			end]]
 
 			if ent:GetParent():IsValid() then
+				local owner = ent:GetParent()
 				ent:SetParent(NULL)
 
 				if ent:IsEffectActive(EF_BONEMERGE) then
 					ent:RemoveEffects(EF_BONEMERGE)
+					ent.RenderOverride = nil
+
+					if owner:IsValid() then
+						owner.pac_bonemerged = owner.pac_bonemerged or {}
+						for i, v in ipairs(owner.pac_bonemerged) do
+							if v == ent then
+								table.remove(owner.pac_bonemerged, i)
+								break
+							end
+						end
+					end
 				end
 
 				self.requires_bone_model_scale = false
@@ -563,6 +584,12 @@ do
 		if ent:IsValid() then
 			function ent.RenderOverride()
 				if self:IsValid() and self:GetOwner():IsValid() then
+					if ent.pac_bonemerged then
+						for _, e in ipairs(ent.pac_bonemerged) do
+							if e.pac_drawing_model then return end
+						end
+					end
+
 					-- so eyes work
 					if self.NoDraw then
 						render.SetBlend(0)
