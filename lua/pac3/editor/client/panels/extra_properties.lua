@@ -25,6 +25,8 @@ do -- bone
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:SpecialCallback()
+		if not pace.current_part:GetOwner():IsValid() then return end
+
 		pace.SelectBone(pace.current_part:GetOwner(), function(data)
 			self:SetValue(L(data.friendly))
 			self.OnValueChanged(data.friendly)

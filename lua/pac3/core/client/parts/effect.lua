@@ -36,8 +36,10 @@ function PART:Initialize()
 
 		for file_name in pairs(pac_loaded_particle_effects) do
 			local data = file.Read("particles/"..file_name, "GAME", "b")
-			for str in data:gmatch("\3%c([%a_]+)%c") do
-				found[str] = str
+			if data then
+				for str in data:gmatch("\3%c([%a_]+)%c") do
+					found[str] = str
+				end
 			end
 		end
 
