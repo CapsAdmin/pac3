@@ -200,14 +200,19 @@ do -- list
 		search.OnEnter = search.Kill
 
 		search.OnTextChanged = function()
+			self.scr:SetScroll(0)
+
 			local pattern = search:GetValue()
 			if pattern == "" and search.searched_something then
 				search:Kill()
 				search:KillFocus()
 			else
 				search.searched_something = true
+				local group
+
 				for i,v in ipairs(self.List) do
 					local found = false
+
 					if v.panel then
 						if v.panel:GetText():find(pattern) then
 							found = true
@@ -216,6 +221,12 @@ do -- list
 						if v.left:GetValue():find(pattern) then
 							found = true
 						end
+					elseif v.left and v.left.text then
+						group = v.left.text
+					end
+
+					if group and group:find(pattern) then
+						found = true
 					end
 
 					if not found and v.panel then
@@ -822,7 +833,9 @@ do -- base editable
 		menu:AddSpacer()
 		menu:AddOption(L"reset", function()
 			if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
-				self:SetValue(pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey]))
+				local val = pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey])
+				self:SetValue(val)
+				self.OnValueChanged(val)
 			end
 		end):SetImage(pace.MiscIcons.clear)
 	end
@@ -866,17 +879,23 @@ do -- base editable
 		pnl:RequestFocus()
 		pnl:SelectAllOnFocus(true)
 
-		local hookID = tostring(self) .. math.random(1, 1000)
-		local textEntry = pnl
+		pnl.OnTextChanged = function() oldText = pnl:GetValue() end
 
-		hook.Add('GUIMousePressed', hookID, function(code)
-			if not IsValid(self) or not IsValid(textEntry) then return hook.Remove('GUIMousePressed', hookID) end
+		local hookID = tostring({})
+		local textEntry = pnl
+		local delay = os.clock() + 0.1
+
+		hook.Add('Think', hookID, function(code)
+			if not IsValid(self) or not IsValid(textEntry) then return hook.Remove('Think', hookID) end
 			if textEntry:IsHovered() then return end
-			hook.Remove('GUIMousePressed', hookID)
+			if delay > os.clock() then return end
+			if not input.IsMouseDown(MOUSE_LEFT) and not input.IsKeyDown(KEY_ESCAPE) then return end
+			hook.Remove('Think', hookID)
 			self.editing = false
 			pace.BusyWithProperties = NULL
 			textEntry:Remove()
 			self:SetText(oldText)
+			pnl:OnEnter()
 		end)
 
 		--local x,y = pnl:GetPos()
@@ -908,6 +927,9 @@ do -- base editable
 			surface.DrawRect(0, 0, w, pnl:GetTall())
 			surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
 			surface.DrawOutlinedRect(0, 0, w, pnl:GetTall())
+
+			pnl:SetWide(w)
+
 			old(...)
 		end
 
@@ -1122,7 +1144,9 @@ do -- vector
 			menu:AddSpacer()
 			menu:AddOption(L"reset", function()
 				if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
-					self:SetValue(pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey]))
+					local val = pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey])
+					self:SetValue(val)
+					self.OnValueChanged(val)
 				end
 			end):SetImage(pace.MiscIcons.clear)
 		end

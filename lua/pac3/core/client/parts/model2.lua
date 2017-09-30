@@ -49,6 +49,8 @@ pac.StartStorableVars()
 
 pac.EndStorableVars()
 
+PART.Entity = NULL
+
 function PART:GetNiceName()
 	local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%."))
 
@@ -139,7 +141,7 @@ end
 function PART:SetMaterials(str)
 	self.Materials = str
 
-	local materials = self:GetEntity():GetMaterials()
+	local materials = self:GetEntity():IsValid() and self:GetEntity():GetMaterials()
 
 	if not materials then return end
 
@@ -234,7 +236,7 @@ function PART:BindMaterials(ent)
 		end
 	end
 
-	if pac.render_material and not set_material then
+	if (pac.render_material or self.BoneMerge) and not set_material then
 		render_MaterialOverride()
 	end
 end
@@ -318,7 +320,9 @@ function PART:DrawModel(ent, pos, ang)
 		end
 
 		self:BindMaterials(ent)
+		ent.pac_drawing_model = true
 		ent:DrawModel()
+		ent.pac_drawing_model = false
 
 		if self.NoCulling then
 			render_CullMode(MATERIAL_CULLMODE_CCW)
@@ -361,6 +365,8 @@ function PART:RealSetModel(path)
 		self:SetMaterials(self:GetMaterials())
 	end
 	self.material_count = #self.Entity:GetMaterials()
+	self:SetSize(self:GetSize())
+	self:SetScale(self:GetScale())
 end
 
 function PART:SetModel(path)
@@ -372,10 +378,14 @@ function PART:SetModel(path)
 
 		if ALLOW_TO_MDL:GetBool() and status ~= false then
 			self.loading = "downloading mdl zip"
-
 			pac.DownloadMDL(path, function(path)
 				self.loading = nil
 				self:RealSetModel(path)
+
+				if self:GetEntity() == pac.LocalPlayer and pacx and pacx.SetModel then
+					pacx.SetModel(self.Model)
+				end
+
 			end, function(err)
 				pac.Message(err)
 				self.loading = nil
@@ -383,7 +393,7 @@ function PART:SetModel(path)
 			end, self:GetPlayerOwner())
 		else
 			self.loading = reason or "mdl is not allowed"
-			self.Entity:SetModel("error.mdl")
+			self:RealSetModel("error.mdl")
 			pac.Message(self, ' mdl files are not allowed')
 		end
 	else
@@ -439,12 +449,12 @@ function PART:CheckBoneMerge()
 
 	if ent:IsValid() and not ent:IsPlayer() and ent:GetModel() then
 		if self.BoneMerge then
-			if not self.ragdoll then
+			--[[if not self.ragdoll then
 				self.Entity = ClientsideRagdoll(ent:GetModel())
 				self.requires_bone_model_scale = true
 				ent = self.Entity
 				self.ragdoll = true
-			end
+			end]]
 
 			local owner = self:GetOwner()
 
@@ -457,21 +467,40 @@ function PART:CheckBoneMerge()
 
 				if not ent:IsEffectActive(EF_BONEMERGE) then
 					ent:AddEffects(EF_BONEMERGE)
+					owner.pac_bonemerged = owner.pac_bonemerged or {}
+					table.insert(owner.pac_bonemerged, ent)
+					ent.RenderOverride = function()
+						ent.pac_drawing_model = true
+						ent:DrawModel()
+						ent.pac_drawing_model = false
+					end
 				end
 			end
 		else
-			if self.ragdoll then
+			--[[if self.ragdoll then
 				self.Entity:Remove()
 				ent = self:GetEntity()
 				self.requires_bone_model_scale = true
 				self.ragdoll = false
-			end
+			end]]
 
 			if ent:GetParent():IsValid() then
+				local owner = ent:GetParent()
 				ent:SetParent(NULL)
 
 				if ent:IsEffectActive(EF_BONEMERGE) then
 					ent:RemoveEffects(EF_BONEMERGE)
+					ent.RenderOverride = nil
+
+					if owner:IsValid() then
+						owner.pac_bonemerged = owner.pac_bonemerged or {}
+						for i, v in ipairs(owner.pac_bonemerged) do
+							if v == ent then
+								table.remove(owner.pac_bonemerged, i)
+								break
+							end
+						end
+					end
 				end
 
 				self.requires_bone_model_scale = false
@@ -537,17 +566,30 @@ do
 		pac.ResetBones(ent)
 	end
 
-		local temp_mat = Material( "models/error/new light1" )
-
-	function PART:OnShow()
+	function PART:GetEntity()
 		local ent = self:GetOwner()
 		self.Entity = ent
+		return ent
+	end
 
-		self.Model = ent:GetModel() or ""
+	local temp_mat = Material( "models/error/new light1" )
+
+	function PART:OnShow()
+		local ent = self:GetEntity()
+
+		if self.Model == "" then
+			self.Model = ent:GetModel() or ""
+		end
 
 		if ent:IsValid() then
 			function ent.RenderOverride()
-				if self:IsValid() then
+				if self:IsValid() and self:GetOwner():IsValid() then
+					if ent.pac_bonemerged then
+						for _, e in ipairs(ent.pac_bonemerged) do
+							if e.pac_drawing_model then return end
+						end
+					end
+
 					-- so eyes work
 					if self.NoDraw then
 						render.SetBlend(0)
@@ -577,12 +619,32 @@ do
 	function PART:RealSetModel(path)
 		local ent = self:GetEntity()
 		if not ent:IsValid() then return end
-		if ent == pac.LocalPlayer and pacx and pacx.SetModel then
-			pacx.SetModel(path)
-		else
-			ent:SetModel(path)
+
+		ent:SetModel(path)
+
+		self:OnThink()
+	end
+
+	function PART:OnThink()
+		self:CheckBoneMerge()
+
+		local ent = self:GetEntity()
+
+		if self.last_model ~= ent:GetModel() then
+			local old = ent:GetModel()
+
+			self:SetModelModifiers(self:GetModelModifiers())
+
+			if old ~= nil and old ~= self.Entity:GetModel() then
+				self:SetMaterials("")
+			else
+				self:SetMaterials(self:GetMaterials())
+			end
+
+			self.material_count = #self.Entity:GetMaterials()
+
+			self.last_model = old
 		end
-		self.material_count = #ent:GetMaterials()
 	end
 
 	pac.RegisterPart(PART)
@@ -641,7 +703,6 @@ do
 	end
 
 	function PART:Initialize()
-		self.Entity = NULL
 		self.material_count = 0
 	end
 	function PART:OnDraw(ent, pos, ang)
