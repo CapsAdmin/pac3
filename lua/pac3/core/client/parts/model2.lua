@@ -583,6 +583,7 @@ do
 
 		if ent:IsValid() then
 			function ent.RenderOverride()
+				if not ent.pac_drawing_model then return end -- if the draw call is not from pac don't bother
 				if self:IsValid() and self:GetOwner():IsValid() then
 					if ent.pac_bonemerged then
 						for _, e in ipairs(ent.pac_bonemerged) do
