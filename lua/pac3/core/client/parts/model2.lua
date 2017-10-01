@@ -141,7 +141,7 @@ end
 function PART:SetMaterials(str)
 	self.Materials = str
 
-	local materials = self:GetEntity():GetMaterials()
+	local materials = self:GetEntity():IsValid() and self:GetEntity():GetMaterials()
 
 	if not materials then return end
 
@@ -236,7 +236,7 @@ function PART:BindMaterials(ent)
 		end
 	end
 
-	if pac.render_material and not set_material then
+	if (pac.render_material or self.BoneMerge) and not set_material then
 		render_MaterialOverride()
 	end
 end
@@ -320,7 +320,9 @@ function PART:DrawModel(ent, pos, ang)
 		end
 
 		self:BindMaterials(ent)
+		ent.pac_drawing_model = true
 		ent:DrawModel()
+		ent.pac_drawing_model = false
 
 		if self.NoCulling then
 			render_CullMode(MATERIAL_CULLMODE_CCW)
@@ -376,10 +378,14 @@ function PART:SetModel(path)
 
 		if ALLOW_TO_MDL:GetBool() and status ~= false then
 			self.loading = "downloading mdl zip"
-
 			pac.DownloadMDL(path, function(path)
 				self.loading = nil
 				self:RealSetModel(path)
+
+				if self:GetEntity() == pac.LocalPlayer and pacx and pacx.SetModel then
+					pacx.SetModel(self.Model)
+				end
+
 			end, function(err)
 				pac.Message(err)
 				self.loading = nil
@@ -387,7 +393,7 @@ function PART:SetModel(path)
 			end, self:GetPlayerOwner())
 		else
 			self.loading = reason or "mdl is not allowed"
-			self.Entity:SetModel("error.mdl")
+			self:RealSetModel("error.mdl")
 			pac.Message(self, ' mdl files are not allowed')
 		end
 	else
@@ -461,6 +467,13 @@ function PART:CheckBoneMerge()
 
 				if not ent:IsEffectActive(EF_BONEMERGE) then
 					ent:AddEffects(EF_BONEMERGE)
+					owner.pac_bonemerged = owner.pac_bonemerged or {}
+					table.insert(owner.pac_bonemerged, ent)
+					ent.RenderOverride = function()
+						ent.pac_drawing_model = true
+						ent:DrawModel()
+						ent.pac_drawing_model = false
+					end
 				end
 			end
 		else
@@ -472,10 +485,22 @@ function PART:CheckBoneMerge()
 			end]]
 
 			if ent:GetParent():IsValid() then
+				local owner = ent:GetParent()
 				ent:SetParent(NULL)
 
 				if ent:IsEffectActive(EF_BONEMERGE) then
 					ent:RemoveEffects(EF_BONEMERGE)
+					ent.RenderOverride = nil
+
+					if owner:IsValid() then
+						owner.pac_bonemerged = owner.pac_bonemerged or {}
+						for i, v in ipairs(owner.pac_bonemerged) do
+							if v == ent then
+								table.remove(owner.pac_bonemerged, i)
+								break
+							end
+						end
+					end
 				end
 
 				self.requires_bone_model_scale = false
@@ -558,7 +583,14 @@ do
 
 		if ent:IsValid() then
 			function ent.RenderOverride()
+				if not ent.pac_drawing_model then return end -- if the draw call is not from pac don't bother
 				if self:IsValid() and self:GetOwner():IsValid() then
+					if ent.pac_bonemerged then
+						for _, e in ipairs(ent.pac_bonemerged) do
+							if e.pac_drawing_model then return end
+						end
+					end
+
 					-- so eyes work
 					if self.NoDraw then
 						render.SetBlend(0)
@@ -588,11 +620,8 @@ do
 	function PART:RealSetModel(path)
 		local ent = self:GetEntity()
 		if not ent:IsValid() then return end
-		if ent == pac.LocalPlayer and pacx and pacx.SetModel then
-			pacx.SetModel(path)
-		else
-			ent:SetModel(path)
-		end
+
+		ent:SetModel(path)
 
 		self:OnThink()
 	end

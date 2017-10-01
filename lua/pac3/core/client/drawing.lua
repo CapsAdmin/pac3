@@ -379,8 +379,6 @@ do
 	local should_suppress = setup_suppress()
 
 	function pac.PostDrawOpaqueRenderables(bDrawingDepth, bDrawingSkybox)
-		if bDrawingDepth or bDrawingSkybox then return end
-
 		if should_suppress() then return end
 
 		-- commonly used variables
@@ -499,8 +497,6 @@ do
 	local should_suppress = setup_suppress()
 
 	function pac.PostDrawTranslucentRenderables(bDrawingDepth, bDrawingSkybox)
-		if bDrawingDepth or bDrawingSkybox then return end
-
 		if should_suppress() then return end
 
 		for key, ent in pairs(pac.drawn_entities) do

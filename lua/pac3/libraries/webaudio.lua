@@ -129,6 +129,9 @@ function webaudio.Initialize()
 	file.Write("pac3_webaudio_html.txt", webaudio.html)
 	webaudio.browser_panel:OpenURL("asset://garrysmod/data/pac3_webaudio_html.txt")
 
+	webaudio.eye_pos = Vector()
+	webaudio.eye_ang = Angle()
+
 	hook.Add("RenderScene", "webaudio_pac3", function(pos, ang)
 		webaudio.eye_pos = pos
 		webaudio.eye_ang = ang

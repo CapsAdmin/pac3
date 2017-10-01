@@ -25,12 +25,12 @@ do -- bone
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:SpecialCallback()
-		if IsValid(pace.current_part:GetOwner()) then
-			pace.SelectBone(pace.current_part:GetOwner(), function(data)
-				self:SetValue(L(data.friendly))
-				self.OnValueChanged(data.friendly)
-			end, pace.current_part.ClassName == "bone")
-		end
+		if not pace.current_part:GetOwner():IsValid() then return end
+
+		pace.SelectBone(pace.current_part:GetOwner(), function(data)
+			self:SetValue(L(data.friendly))
+			self.OnValueChanged(data.friendly)
+		end, pace.current_part.ClassName == "bone")
 	end
 
 	function PANEL:SpecialCallback2()
@@ -214,9 +214,11 @@ do -- materials and textures
 
 	function PANEL_MATERIAL:SpecialCallback()
 		pace.ResourceBrowser(function(path)
-			path = path:match("materials/(.+)%.vmt")
-			self:SetValue(path)
-			self.OnValueChanged(path)
+			if self:IsValid() then
+				path = path:match("materials/(.+)%.vmt")
+				self:SetValue(path)
+				self.OnValueChanged(path)
+			end
 		end, "materials")
 	end
 
