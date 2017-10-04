@@ -766,8 +766,12 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 						data.buffer = data.buffer:lower():gsub("\\", "/")
 
+						if DEBUG_MDL or VERBOSE then
+							print(data.file_name .. ":")
+						end
+
 						for shader_param in pairs(texture_keys) do
-							data.buffer = data.buffer:gsub('("%$' .. shader_param .. '"%s-")(.-)(")', function(l, vtf_path, r)
+							data.buffer = data.buffer:gsub('("?%$' .. shader_param .. '"?%s+")(.-)(")', function(l, vtf_path, r)
 								if vtf_path == "env_cubemap" then
 									return
 								end
@@ -800,6 +804,10 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 										end
 									end
 									new_path = vtf_path -- maybe it's a special texture? in that case i need to it
+								end
+
+								if DEBUG_MDL or VERBOSE then
+									print("\t" .. vtf_path .. " >> " .. new_path)
 								end
 
 								return l .. new_path .. r
