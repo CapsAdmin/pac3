@@ -364,7 +364,9 @@ function PART:RealSetModel(path)
 	else
 		self:SetMaterials(self:GetMaterials())
 	end
-	self.material_count = #self.Entity:GetMaterials()
+	if self.Entity:GetMaterials() then
+		self.material_count = #self.Entity:GetMaterials()
+	end
 	self:SetSize(self:GetSize())
 	self:SetScale(self:GetScale())
 end

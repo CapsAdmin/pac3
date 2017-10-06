@@ -401,6 +401,8 @@ function pac.CreateEntity(model, for_obj)
 		ent = pac_debug_clmdl:GetBool() and ClientsideModel(model) or ents.CreateClientProp(model)
 	end
 
+	ent = ent or NULL
+
 	if not ent:IsValid() then
 		pac.Message("Failed to create entity!")
 	end
