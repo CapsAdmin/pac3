@@ -288,6 +288,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 			local property_name = key
 
+			local description = (info.description or "") .. " ($" .. key .. ")"
+
 			if info.type == "matrix" then
 				local position_key = property_name .. "Position"
 				local scale_key = property_name .. "Scale"
@@ -295,10 +297,10 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				local angle_center_key = property_name .. "AngleCenter"
 
 				local friendly_name = info.friendly:gsub("Transform", "")
-				pac.GetSet(PART, position_key, Vector(0, 0, 0), {editor_friendly = friendly_name .. "Position"})
-				pac.GetSet(PART, scale_key, Vector(1, 1, 1), {editor_friendly = friendly_name .. "Scale"})
-				pac.GetSet(PART, angle_key, 0, {editor_panel = "number", editor_friendly = friendly_name .. "Angle"})
-				pac.GetSet(PART, angle_center_key, Vector(0.5, 0.5, 0), {editor_friendly = friendly_name .. "AngleCenter"})
+				pac.GetSet(PART, position_key, Vector(0, 0, 0), {editor_friendly = friendly_name .. "Position", description = description})
+				pac.GetSet(PART, scale_key, Vector(1, 1, 1), {editor_friendly = friendly_name .. "Scale", description = description})
+				pac.GetSet(PART, angle_key, 0, {editor_panel = "number", editor_friendly = friendly_name .. "Angle", description = description})
+				pac.GetSet(PART, angle_center_key, Vector(0.5, 0.5, 0), {editor_friendly = friendly_name .. "AngleCenter", description = description})
 
 				PART.TransformVars[position_key] = true
 				PART.TransformVars[scale_key] = true
@@ -361,8 +363,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				pac.GetSet(PART, property_name, info.default, {
 					editor_panel = "textures",
 					editor_friendly = info.friendly,
-					description = info.description,
-					shader_param_info = info
+					description = description,
+					shader_param_info = info,
 				})
 
 				local key = "$" .. key
@@ -390,7 +392,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				pac.GetSet(PART, property_name, info.default, {
 					editor_friendly = info.friendly,
 					enums = info.enums,
-					description = info.description,
+					description = description,
 					editor_sensitivity = (info.type == "vec3" or info.type == "color") and 0.25 or nil,
 					editor_panel = (info.type == "color" and "color2") or (property_name == "model" and "boolean") or nil,
 				})
