@@ -563,19 +563,23 @@ do -- list
 										local tbl
 
 										if type(udata.enums) == "function" then
-											tbl = udata.enums(pace.current_part)
+											if pace.current_part:IsValid() then
+												tbl = udata.enums(pace.current_part)
+											end
 										else
 											tbl = udata.enums
 										end
 
 										local enums = {}
 
-										for k, v in pairs(tbl) do
-											if type(v) ~= "string" then
-												v = k
-											end
+										if tbl then
+											for k, v in pairs(tbl) do
+												if type(v) ~= "string" then
+													v = k
+												end
 
-											enums[k] = v
+												enums[k] = v
+											end
 										end
 
 										return enums
