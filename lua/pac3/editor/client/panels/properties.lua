@@ -502,10 +502,12 @@ do -- list
 			end
 			table.sort(sorted_groups, function(a, b) return a.key > b.key end)
 		else
-			for i, name in ipairs(pac.GroupOrder[obj.ClassName] or pac.GroupOrder.none) do
+			local done = {}
+			for i, name in ipairs(table.Add(pac.GroupOrder[obj.ClassName] or {}, pac.GroupOrder.none)) do
 				for k, v in pairs(tbl) do
-					if name == k then
+					if name == k and not done[k] then
 						table.insert(sorted_groups, {key = k, val = v})
+						done[k] = true
 						break
 					end
 				end
