@@ -10,7 +10,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "NoModel", false)
 	pac.GetSet(PART, "NoWorld", false)
 
-	pac.SetPropertyGroup("appearance")
+	pac.SetPropertyGroup(PART, "appearance")
 		pac.GetSet(PART, "Brightness", 8)
 		pac.GetSet(PART, "Size", 100, {editor_sensitivity = 0.25})
 		pac.GetSet(PART, "Color", Vector(1, 1, 1), {editor_panel = "color2"})

@@ -25,7 +25,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "MinPitch", 0, {editor_sensitivity = 0.125})
 	pac.GetSet(PART, "MaxPitch", 0, {editor_sensitivity = 0.125})
 
-	pac.SetPropertyGroup("filter")
+	pac.SetPropertyGroup(PART, "filter")
 		pac.GetSet(PART, "FilterType", 0, {enums = {
 			none = "0",
 			lowpass = "1",
@@ -33,12 +33,12 @@ pac.StartStorableVars()
 		}})
 		pac.GetSet(PART, "FilterFraction", 1, {editor_sensitivity = 0.125, editor_clamp = {0, 1}})
 
-	pac.SetPropertyGroup("echo")
+	pac.SetPropertyGroup(PART, "echo")
 		pac.GetSet(PART, "Echo", false)
 		pac.GetSet(PART, "EchoDelay", 0.5, {editor_sensitivity = 0.125})
 		pac.GetSet(PART, "EchoFeedback", 0.75, {editor_sensitivity = 0.125})
 
-	pac.SetPropertyGroup("lfo")
+	pac.SetPropertyGroup(PART, "lfo")
 		pac.GetSet(PART, "PitchLFOAmount", 0, {editor_sensitivity = 0.125, editor_friendly = "pitch amount"})
 		pac.GetSet(PART, "PitchLFOTime", 0, {editor_sensitivity = 0.125, editor_friendly = "pitch time"})
 

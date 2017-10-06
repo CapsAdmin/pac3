@@ -19,7 +19,7 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "Shape", 1)
 		pac.GetSet(PART, "AffectChildren", false)
 
-	pac.SetPropertyGroup("appearance")
+	pac.SetPropertyGroup(PART, "appearance")
 		pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
 		pac.GetSet(PART, "Passes", 1)
 		pac.GetSet(PART, "Additive", true) -- haaaa

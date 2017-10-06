@@ -26,15 +26,15 @@ PART.is_model_part = true
 
 pac.StartStorableVars()
 
-	pac.SetPropertyGroup("generic")
+	pac.SetPropertyGroup(PART, "generic")
 		pac.GetSet(PART, "Model", "", {editor_panel = "model"})
 
-	pac.SetPropertyGroup("orientation")
+	pac.SetPropertyGroup(PART, "orientation")
 		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
 		pac.GetSet(PART, "Scale", Vector(1,1,1))
 		pac.GetSet(PART, "BoneMerge", false)
 
-	pac.SetPropertyGroup("appearance")
+	pac.SetPropertyGroup(PART, "appearance")
 		pac.GetSet(PART, "Color", Vector(1, 1, 1), {editor_panel = "color2"})
 		pac.GetSet(PART, "NoLighting", false)
 		pac.GetSet(PART, "NoCulling", false)
@@ -666,7 +666,7 @@ do
 	PART.is_model_part = false
 
 	pac.StartStorableVars()
-		pac.SetPropertyGroup("generic")
+		pac.SetPropertyGroup(PART, "generic")
 			pac.GetSet(PART, "OverridePosition", false)
 
 			pac.GetSet(PART, "Class", "all", {enums = function()

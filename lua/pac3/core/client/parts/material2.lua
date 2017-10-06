@@ -101,7 +101,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 	pac.StartStorableVars()
 
-	pac.SetPropertyGroup("generic")
+	pac.SetPropertyGroup(PART, "generic")
 
 	-- move this to tools or something
 	pac.GetSet(PART, "LoadVmt", "", {editor_panel = "material"})
@@ -269,9 +269,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 			PART.ShaderParams[key] = info
 
 			if info.is_flag and group == "generic" then
-				pac.SetPropertyGroup("flags")
+				pac.SetPropertyGroup(PART, "flags")
 			else
-				pac.SetPropertyGroup(group)
+				pac.SetPropertyGroup(PART, group)
 			end
 
 			if info.default == nil then
