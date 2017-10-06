@@ -395,6 +395,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 					description = description,
 					editor_sensitivity = (info.type == "vec3" or info.type == "color") and 0.25 or nil,
 					editor_panel = (info.type == "color" and "color2") or (property_name == "model" and "boolean") or nil,
+					editor_round = info.type == "integer",
 				})
 
 				local flag_key = key
