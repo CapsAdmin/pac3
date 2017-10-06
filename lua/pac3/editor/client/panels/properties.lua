@@ -595,7 +595,7 @@ do -- list
 								)
 							end)
 						end
-						if udata.editor_sensitivity or udata.editor_clamp then
+						if udata.editor_sensitivity or udata.editor_clamp or udata.editor_round then
 							pnl.LimitValue = function(self, num)
 								if udata.editor_sensitivity then
 									self.sens = udata.editor_sensitivity
