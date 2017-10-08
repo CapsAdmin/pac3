@@ -502,10 +502,12 @@ do -- list
 			end
 			table.sort(sorted_groups, function(a, b) return a.key > b.key end)
 		else
-			for i, name in ipairs(pac.GroupOrder) do
+			local done = {}
+			for i, name in ipairs(table.Add(pac.GroupOrder[obj.ClassName] or {}, pac.GroupOrder.none)) do
 				for k, v in pairs(tbl) do
-					if name == k then
+					if name == k and not done[k] then
 						table.insert(sorted_groups, {key = k, val = v})
+						done[k] = true
 						break
 					end
 				end
@@ -563,19 +565,23 @@ do -- list
 										local tbl
 
 										if type(udata.enums) == "function" then
-											tbl = udata.enums(pace.current_part)
+											if pace.current_part:IsValid() then
+												tbl = udata.enums(pace.current_part)
+											end
 										else
 											tbl = udata.enums
 										end
 
 										local enums = {}
 
-										for k, v in pairs(tbl) do
-											if type(v) ~= "string" then
-												v = k
-											end
+										if tbl then
+											for k, v in pairs(tbl) do
+												if type(v) ~= "string" then
+													v = k
+												end
 
-											enums[k] = v
+												enums[k] = v
+											end
 										end
 
 										return enums
@@ -595,7 +601,7 @@ do -- list
 								)
 							end)
 						end
-						if udata.editor_sensitivity or udata.editor_clamp then
+						if udata.editor_sensitivity or udata.editor_clamp or udata.editor_round then
 							pnl.LimitValue = function(self, num)
 								if udata.editor_sensitivity then
 									self.sens = udata.editor_sensitivity

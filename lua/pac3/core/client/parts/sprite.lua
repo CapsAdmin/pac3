@@ -17,10 +17,10 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "SizeY", 1, {editor_sensitivity = 0.25})
 		pac.GetSet(PART, "SpritePath", "sprites/grip", {editor_panel = "material"})
 
-	pac.SetPropertyGroup("orientation")
+	pac.SetPropertyGroup(PART, "orientation")
 		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
 
-	pac.SetPropertyGroup("appearance")
+	pac.SetPropertyGroup(PART, "appearance")
 		pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
 		pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
 		pac.GetSet(PART, "Translucent", true)

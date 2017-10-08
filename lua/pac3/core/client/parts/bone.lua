@@ -22,7 +22,7 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "InvertHideMesh", false)
 		pac.SetupPartName(PART, "FollowPart")
 
-	pac.SetPropertyGroup("orientation")
+	pac.SetPropertyGroup(PART, "orientation")
 		pac.GetSet(PART, "Scale", Vector(1,1,1), {editor_sensitivity = 0.25})
 		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
 

@@ -467,6 +467,8 @@ do -- arguments
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:ExtraPopulate()
+		if not pace.current_part:IsValid() then return end
+
 		local data = pace.current_part.Events[pace.current_part.Event]
 		if not data then return end
 		data = data:GetArguments()
@@ -495,6 +497,7 @@ do -- arguments
 				tbl[nam] = {
 					val = arg,
 					callback = function(val)
+						if not pace.current_part:IsValid() then return end
 						local args = {pace.current_part:GetParsedArguments(data)}
 						args[pos] = val
 						pace.current_part:ParseArguments(unpack(args))

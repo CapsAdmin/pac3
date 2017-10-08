@@ -401,7 +401,9 @@ function pac.CreateEntity(model, for_obj)
 		ent = pac_debug_clmdl:GetBool() and ClientsideModel(model) or ents.CreateClientProp(model)
 	end
 
-	if not IsValid(ent) then
+	ent = ent or NULL
+
+	if not ent:IsValid() then
 		pac.Message("Failed to create entity!")
 	end
 
@@ -496,9 +498,16 @@ do -- get set and editor vars
 		__group = nil
 	end
 
-	function pac.SetPropertyGroup(name)
+	function pac.SetPropertyGroup(tbl, name)
 		__group = name
-		insert_key(pac.GroupOrder, name)
+
+		if tbl then
+			pac.GroupOrder[tbl.ClassName] = pac.GroupOrder[tbl.ClassName] or {}
+			insert_key(pac.GroupOrder[tbl.ClassName], name)
+		end
+
+		pac.GroupOrder.none = pac.GroupOrder.none or {}
+		insert_key(pac.GroupOrder.none, name)
 	end
 
 	function pac.GetSet(tbl, key, def, udata)

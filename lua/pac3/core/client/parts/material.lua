@@ -155,7 +155,7 @@ local function setup(PART)
 
 				if pass == 1 then
 					if found then
-						pac.SetPropertyGroup(info.group)
+						pac.SetPropertyGroup(PART, info.group)
 					else
 						goto CONTINUE
 					end

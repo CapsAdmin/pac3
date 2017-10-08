@@ -42,14 +42,14 @@ pac.GetSet(PART, "Owner", NULL)
 
 pac.StartStorableVars()
 
-	pac.SetPropertyGroup("generic")
+	pac.SetPropertyGroup(PART, "generic")
 		pac.GetSet(PART, "Name", "")
 		pac.GetSet(PART, "Hide", false)
 		pac.GetSet(PART, "OwnerName", "self")
 		pac.GetSet(PART, "EditorExpand", false, {hidden = true})
 		pac.GetSet(PART, "UniqueID", "", {hidden = true})
 
-	pac.SetPropertyGroup("orientation")
+	pac.SetPropertyGroup(PART, "orientation")
 		pac.GetSet(PART, "Bone", "head")
 		pac.GetSet(PART, "Position", Vector(0,0,0))
 		pac.GetSet(PART, "Angles", Angle(0,0,0))
@@ -59,7 +59,7 @@ pac.StartStorableVars()
 		pac.SetupPartName(PART, "AimPart", {editor_panel = "aimpartname"})
 		pac.SetupPartName(PART, "Parent")
 
-	pac.SetPropertyGroup("appearance")
+	pac.SetPropertyGroup(PART, "appearance")
 		pac.GetSet(PART, "Translucent", false)
 		pac.GetSet(PART, "IgnoreZ", false)
 		pac.GetSet(PART, "NoTextureFiltering", false)
@@ -71,7 +71,7 @@ pac.StartStorableVars()
 			additive = "src_alpha;one;src_alpha;one",
 		}})
 
-	pac.SetPropertyGroup("other")
+	pac.SetPropertyGroup(PART, "other")
 		pac.GetSet(PART, "DrawOrder", 0)
 
 pac.EndStorableVars()

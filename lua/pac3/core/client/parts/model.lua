@@ -55,18 +55,18 @@ PART.is_model_part = true
 
 pac.StartStorableVars()
 
-	pac.SetPropertyGroup("generic")
+	pac.SetPropertyGroup(PART, "generic")
 		pac.GetSet(PART, "Model", "models/dav0r/hoverball.mdl", {editor_panel = "model"})
 		pac.GetSet(PART, "Material", "", {editor_panel = "material"})
 		pac.GetSet(PART, "UseLegacyScale", false)
 
-	pac.SetPropertyGroup("orientation")
+	pac.SetPropertyGroup(PART, "orientation")
 		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
 		pac.GetSet(PART, "Scale", Vector(1,1,1))
 		pac.GetSet(PART, "BoneMerge", false)
 		pac.GetSet(PART, "AlternativeScaling", false)
 
-	pac.SetPropertyGroup("appearance")
+	pac.SetPropertyGroup(PART, "appearance")
 		pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
 		pac.GetSet(PART, "Brightness", 1)
 		pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
@@ -86,7 +86,7 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "UseWeaponColor", false)
 		pac.GetSet(PART, "LodOverride", -1)
 
-	pac.SetPropertyGroup("other")
+	pac.SetPropertyGroup(PART, "other")
 		pac.GetSet(PART, "OwnerEntity", false)
 
 pac.EndStorableVars()

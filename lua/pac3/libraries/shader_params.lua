@@ -111,7 +111,7 @@ return {
 			},
 			cloak = {
 				cloakpassenabled = {
-					friendly = "PassEnabled",
+					friendly = "Enable",
 					type = "bool",
 					description = "Enables cloak render in a second pass",
 					default = false,
@@ -187,7 +187,7 @@ return {
 					type = "bool",
 					description = "Enables weapon sheen render in a second pass",
 					default = false,
-					friendly = "PassEnabled",
+					friendly = "Enable",
 				},
 				sheenmapmask = {
 					type = "texture",
@@ -232,7 +232,7 @@ return {
 				},
 				rimmask = {
 					type = "bool",
-					friendly = "Mask",
+					friendly = "ExponentAlphaMask",
 					default = false,
 					description = "Indicates whether or not to use alpha channel of exponent texture to mask the rim term",
 				},
@@ -240,10 +240,11 @@ return {
 					type = "bool",
 					default = false,
 					description = "enables rim lighting",
+					friendly = "Enable",
 				},
 				rimlightexponent = {
 					type = "float",
-					friendly = "Power",
+					friendly = "Exponent",
 					default = 0,
 					description = "Exponent for rim lights",
 				},
@@ -268,12 +269,12 @@ return {
 				},
 				phongexponenttexture = {
 					type = "texture",
-					friendly = "ExponentTexture",
+					friendly = "Exponent",
 					description = "Phong Exponent map",
 				},
 				phongwarptexture = {
 					type = "texture",
-					friendly = "WarpTexture",
+					friendly = "Warp",
 					description = "warp the specular term",
 				},
 			},
@@ -431,12 +432,6 @@ return {
 				},
 			},
 			generic = {
-				bumpmap = {
-					type = "texture",
-					friendly = "BumpMap",
-					description = "bump map",
-					default = "null-bumpmap",
-				},
 				color2 = {
 					type = "color",
 					friendly = "Color2",
@@ -607,6 +602,31 @@ return {
 					description = "flag",
 				},
 			},
+			["bump map"] = {
+				bumpmap = {
+					type = "texture",
+					friendly = "BumpMap",
+					description = "bump map",
+					default = "null-bumpmap",
+				},
+				bumpframe = {
+					type = "integer",
+					friendly = "Frame",
+					default = 0,
+					description = "The frame to start an animated bump map on.",
+				},
+				bumptransform = {
+					type = "matrix",
+					friendly = "Transform",
+					description = "Transforms the bump map texture.",
+				},
+				nodiffusebumplighting = {
+					type = "bool",
+					friendly = "NoDiffuseLighting",
+					default = false,
+					description = "Stops the bump map affecting the lighting of the material's albedo, which help combat overdraw. Does not affect the specular map.",
+				},
+			},
 			seamless = {
 				seamless_scale = {
 					type = "float",
@@ -629,7 +649,7 @@ return {
 			},
 			cloak = {
 				cloakpassenabled = {
-					friendly = "PassEnabled",
+					friendly = "Enable",
 					type = "bool",
 					description = "Enables cloak render in a second pass",
 					default = false,
@@ -809,11 +829,6 @@ return {
 				},
 			},
 			generic = {
-				detail = {
-					type = "texture",
-					friendly = "Detail",
-					description = "detail texture",
-				},
 				nofog = {
 					is_flag = true,
 					type = "integer",
@@ -1277,9 +1292,14 @@ return {
 			},
 		},
 		detail = {
+			detail = {
+				type = "texture",
+				friendly = "Texture",
+				description = "detail texture",
+			},
 			detailblendfactor = {
 				type = "float",
-				friendly = "TextureBlendFactor",
+				friendly = "BlendFactor",
 				default = 1,
 				description = "blend amount for detail texture.",
 			},
@@ -1290,20 +1310,36 @@ return {
 				description = "frame number for $detail",
 			},
 			detailblendmode = {
+				recompute = true,
 				type = "integer",
-				friendly = "TextureCombineMode",
+				friendly = "BlendMode",
 				default = 0,
-				description = "mode for combining detail texture with base. 0=normal, 1= additive, 2=alpha blend detail over base, 3=crossfade",
+				description = "mode for combining detail texture with base."..
+[[
+0 = original mode
+1 = ADDITIVE base.rgb+detail.rgb*fblend
+2 = alpha blend detail over base
+3 = straight fade between base and detail.
+4 = use base alpha for blend over detail
+5 = add detail color post lighting
+6 = TCOMBINE_RGB_ADDITIVE_SELFILLUM_THRESHOLD_FADE 6
+7 = use alpha channel of base to select between mod2x channels in r+a of detail
+8 = multiply
+9 = use alpha channel of detail to mask base
+10 = use detail to modulate lighting as an ssbump
+11 = detail is an ssbump but use it as an albedo. shader does the magic here - no user needs to specify mode 11
+12 = there is no detail texture
+]],
 			},
 			detailscale = {
 				type = "float",
-				friendly = "Scale",
-				default = 4,
+				friendly = "SimpleScale",
+				default = 1,
 				description = "scale of the detail texture",
 			},
 			detailtexturetransform = {
 				type = "matrix",
-				friendly = "TextureTransform",
+				friendly = "Transform",
 				description = "$detail texcoord transform",
 			},
 		},
@@ -1389,6 +1425,7 @@ return {
 			phong = {
 				type = "bool",
 				default = false,
+				friendly = "Enable",
 				description = "enables phong lighting",
 			},
 			phongboost = {

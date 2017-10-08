@@ -18,7 +18,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Texture", "effects/flashlight/hard", {editor_panel = "textures"})
 	pac.GetSet(PART, "TextureFrame", 0)
 
-	pac.SetPropertyGroup("appearance")
+	pac.SetPropertyGroup(PART, "appearance")
 		pac.GetSet(PART, "Brightness", 8)
 		pac.GetSet(PART, "Color", Vector(1, 1, 1), {editor_panel = "color2"})
 pac.EndStorableVars()
