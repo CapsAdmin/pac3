@@ -3,8 +3,12 @@ include("pac3/libraries/sh_boneanimlib.lua")
 
 include("footsteps_fix.lua")
 
-function pac.SimpleFetch(url, cb, failcb)
+function pac.SimpleFetch(url, cb, failcb, printError)
 	if not url or url:len() < 4 then return end
+
+	if printError == nil then
+		printError = true
+	end
 
 	url = pac.FixupURL(url)
 
@@ -13,7 +17,9 @@ function pac.SimpleFetch(url, cb, failcb)
 
 		function(data, len, headers, code)
 			if code ~= 200 then
-				pac.Message('URL ', url, ' failed to download: server returned ', code)
+				if printError then
+					pac.Message('URL ', url, ' failed to download: server returned ', code)
+				end
 
 				if failcb then
 					failcb(code, data, len, headers)
@@ -26,7 +32,9 @@ function pac.SimpleFetch(url, cb, failcb)
 		end,
 
 		function(err)
-			pac.Message('URL ', url, ' failed to download: stream error ', err)
+			if printError then
+				pac.Message('URL ', url, ' failed to download: stream error ', err)
+			end
 
 			if failcb then
 				failcb(err)
