@@ -12,7 +12,7 @@ pac.EffectsBlackList =
 pac.loaded_particle_effects = pac.loaded_particle_effects or {}
 
 for key, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
-	if not pac.loaded_particle_effects[file_name] then
+	if not pac.loaded_particle_effects[file_name] and not pac.BlacklistedParticleSystems[file_name:lower()] then
 		game.AddParticles("particles/" .. file_name)
 	end
 	pac.loaded_particle_effects[file_name] = true

@@ -53,7 +53,7 @@ PART.last_spew = 0
 pac.loaded_particle_effects = pac.loaded_particle_effects or {}
 
 for _, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
-	if not pac.loaded_particle_effects[file_name] then
+	if not pac.loaded_particle_effects[file_name] and not pac.BlacklistedParticleSystems[file_name:lower()] then
 		game.AddParticles("particles/" .. file_name)
 	end
 	pac.loaded_particle_effects[file_name] = true
