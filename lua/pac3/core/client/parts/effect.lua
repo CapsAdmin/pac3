@@ -73,9 +73,10 @@ if not pac_loaded_particle_effects then
 	pac_loaded_particle_effects = {}
 
 	for _, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
-		if not pac_loaded_particle_effects[file_name] then
+		if not pac_loaded_particle_effects[file_name] and not pac.BlacklistedParticleSystems[file_name:lower()] then
 			game.AddParticles("particles/" .. file_name)
 		end
+
 		pac_loaded_particle_effects[file_name] = true
 	end
 end
