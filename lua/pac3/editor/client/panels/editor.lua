@@ -11,7 +11,7 @@ PANEL.pac3_PanelsToRemove = {
 }
 
 local BAR_SIZE = 17
-local RENDERSCORE_SIZE = 13
+local RENDERSCORE_SIZE = 20
 
 local use_tabs = CreateClientConVar("pac_property_tabs", 1, true)
 
@@ -22,15 +22,17 @@ function PANEL:Init()
 
 	surface.SetFont(pace.CurrentFont)
 	local _, h = surface.GetTextSize("|")
-	RENDERSCORE_SIZE = h+1
+	RENDERSCORE_SIZE = h + 1
 
 	local div = vgui.Create("DVerticalDivider", self)
-		div:SetDividerHeight(RENDERSCORE_SIZE)
-		div:Dock(FILL)
-		div:SetTopMin(0)
-		div:SetCookieName("pac3_editor")
-		div:SetTopHeight(ScrH()/1.4)
-		div:LoadCookies()
+
+	div:SetDividerHeight(RENDERSCORE_SIZE)
+	div:Dock(FILL)
+	div:SetTopMin(40)
+	div:SetBottomMin(40)
+	div:SetCookieName("pac3_editor")
+	div:SetTopHeight(ScrH() / 1.4)
+	div:LoadCookies()
 
 	self.div = div
 
@@ -64,7 +66,7 @@ function PANEL:OnMousePressed()
 		return
 	end
 
-	if ( self:GetDraggable() and gui.MouseY() < (self.y + 24) ) then
+	if self:GetDraggable() and gui.MouseY() < (self.y + 24) then
 		self.Dragging = { gui.MouseX() - self.x, gui.MouseY() - self.y }
 		self:MouseCapture( true )
 		return
@@ -72,7 +74,7 @@ function PANEL:OnMousePressed()
 end
 
 function PANEL:OnMouseReleased(mc)
-	if mc==MOUSE_RIGHT then
+	if mc == MOUSE_RIGHT then
 		self:Close()
 	end
 
@@ -107,7 +109,7 @@ end
 function PANEL:Think(...)
 	DFrame.Think(self, ...)
 
-	if self.Hovered and self.m_bSizable and gui.MouseX() > ( self.x + self:GetWide() - 20 ) then
+	if self.Hovered and self.m_bSizable and gui.MouseX() > (self.x + self:GetWide() - 20) then
 		self:SetCursor("sizewe")
 		return
 	end
@@ -117,9 +119,7 @@ function PANEL:Think(...)
 	self:SetTall(ScrH())
 	local w = math.max(self:GetWide(), 200)
 	self:SetWide(w)
-	local x = self:GetPos()
-	x = math.Clamp(x, 0, ScrW()-w)
-	self:SetPos(x, 0)
+	self:SetPos(math.Clamp(self:GetPos(), 0, ScrW() - w), 0)
 
 	if x ~= self.last_x then
 		self:SetCookie("x", x)
@@ -145,20 +145,24 @@ function PANEL:PerformLayout()
 		end
 	end
 
-	self.div:InvalidateLayout()
-	self.bottom:PerformLayout()
-	pace.properties:PerformLayout()
-	local sz = auto_size:GetInt()
-	local newh = sz >0 and 	(
-								ScrH() - math.min(pace.properties:GetHeight() + RENDERSCORE_SIZE + BAR_SIZE - 6, ScrH() / 1.5)
-							)
-	if sz >= 2 then
-		local oldh = self.div:GetTopHeight()
-		if newh<oldh then
-			self.div:SetTopHeight(newh)
-		end
-	elseif sz >= 1 then
-		self.div:SetTopHeight(newh)
+	if self.oldproperties ~= pace.properties then
+		self.div:InvalidateLayout()
+		self.bottom:PerformLayout()
+		pace.properties:PerformLayout()
+		self.oldproperties = pace.properties
+
+		-- local sz = auto_size:GetInt()
+		-- local newh = sz > 0 and (ScrH() - math.min(pace.properties:GetHeight() + RENDERSCORE_SIZE + BAR_SIZE - 6, ScrH() / 1.5))
+
+		-- if sz >= 2 then
+		-- 	local oldh = self.div:GetTopHeight()
+
+		-- 	if newh<oldh then
+		-- 		self.div:SetTopHeight(newh)
+		-- 	end
+		-- elseif sz >= 1 then
+		-- 	self.div:SetTopHeight(newh)
+		-- end
 	end
 end
 
