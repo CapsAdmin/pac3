@@ -8,14 +8,24 @@ PART.Icon = 'icon16/application_xp_terminal.png'
 pac.StartStorableVars()
 	pac.GetSet(PART, "String", "", {editor_panel = "string"})
 	pac.GetSet(PART, "UseLua", false)
+	pac.GetSet(PART, "ExectueOnWear", false)
+	pac.GetSet(PART, "ExectueOnShow", true)
 pac.EndStorableVars()
 
 function PART:Initialize()
-	self:Execute()
+	if self:GetExectueOnWear() then
+		self:Execute()
+	end
+
+	self.m_nextworn = RealTime() + 0.4
 end
 
 function PART:OnShow()
-	self:Execute()
+	if self.m_nextworn > RealTime() then return end
+
+	if self:GetExectueOnShow() then
+		self:Execute()
+	end
 end
 
 function PART:SetUseLua(b)
@@ -27,6 +37,7 @@ function PART:SetString(str)
 	if self.UseLua and self:GetPlayerOwner() == pac.LocalPlayer then
 		self.func = CompileString(str, "pac_event")
 	end
+
 	self.String = str
 end
 
@@ -43,6 +54,7 @@ function PART:ShouldHighlight(str)
 end
 
 local sv_allowcslua = GetConVar("sv_allowcslua")
+
 function PART:Execute()
 	local ent = self:GetPlayerOwner()
 
@@ -50,11 +62,12 @@ function PART:Execute()
 		if self.UseLua and self.func then
 			if sv_allowcslua:GetBool() or pac.AllowClientsideLUA then
 				local status, err = pcall(self.func)
+
 				if not status then
 					ErrorNoHalt(err .. "\n")
 				end
 			else
-				ErrorNoHalt("[PAC] sv_allowcslua is 0\n")
+				pac.Message(tostring(self) .. ' - sv_allowcslua is 0')
 			end
 		else
 			ent:ConCommand(self.String)
