@@ -148,6 +148,7 @@ end
 
 function PART:UpdateScale(ent)
 	ent = ent or self:GetOwner()
+
 	if ent:IsValid() then
 		if self.UseLegacyScale then
 			if ent:IsPlayer() or ent:IsNPC() then
@@ -156,6 +157,8 @@ function PART:UpdateScale(ent)
 				pac.SetModelScale(ent, self.Scale * self.Size)
 			end
 		else
+			ent.pac3_Scale = self.Size
+
 			if ent:IsPlayer() or ent:IsNPC() then
 				local size = ent:GetModelScale() -- compensate for serverside scales..
 				pac.SetModelScale(ent, self.Scale * self.Size * (1/size))
