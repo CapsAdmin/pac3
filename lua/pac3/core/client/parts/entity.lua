@@ -352,10 +352,21 @@ function PART:SetModel(path)
 					else
 						ent:SetModel(real_path)
 					end
+
+					for i = 0, #ent:GetMaterials() - 1 do
+						ent:SetSubMaterial(i, '')
+					end
+
+					for i = 0, #ent:GetBodyGroups() - 1 do
+						ent:SetBodygroup(i, 0)
+					end
+
+					self:CallRecursiveExclude('OnShow')
 				end
 			end, function(err)
 				pac.Message(err)
 			end, self:GetPlayerOwner())
+
 			self.mdl_zip = true
 		else
 			self.loading = reason2 or reason or "mdl is not allowed"
@@ -363,13 +374,26 @@ function PART:SetModel(path)
 		end
 	else
 		local ent = self:GetOwner()
+
 		if ent:IsValid() then
 			if ent == pac.LocalPlayer and pacx and pacx.SetModel then
 				pacx.SetModel(self.Model)
 			else
 				ent:SetModel(self.Model)
 			end
+
+			pac.RunNextFrame('entity updatemat ' .. tostring(ent), function()
+				if not ent:IsValid() or not self:IsValid() then return end
+				ent:SetSubMaterial()
+
+				for i = 0, 127 do
+					ent:SetBodygroup(i, 0)
+				end
+
+				self:CallRecursiveExclude('OnShow')
+			end)
 		end
+
 		self.mdl_zip = false
 	end
 end
