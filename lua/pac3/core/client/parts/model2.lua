@@ -313,25 +313,24 @@ function PART:OnDraw(owner, pos, ang)
 end
 
 function PART:DrawModel(ent, pos, ang)
-	if self.Alpha ~= 0 and self.Size ~= 0 then
+	if self.Alpha == 0 or self.Size == 0 then return end
 
-		if self.NoCulling or self.Invert then
-			render_CullMode(MATERIAL_CULLMODE_CW)
-		end
+	if self.NoCulling or self.Invert then
+		render_CullMode(MATERIAL_CULLMODE_CW)
+	end
 
+	self:BindMaterials(ent)
+
+	ent.pac_drawing_model = true
+	ent:DrawModel()
+	ent.pac_drawing_model = false
+
+	if self.NoCulling then
+		render_CullMode(MATERIAL_CULLMODE_CCW)
 		self:BindMaterials(ent)
-		ent.pac_drawing_model = true
 		ent:DrawModel()
-		ent.pac_drawing_model = false
-
-		if self.NoCulling then
-			render_CullMode(MATERIAL_CULLMODE_CCW)
-			self:BindMaterials(ent)
-			ent:DrawModel()
-		elseif self.Invert then
-			render_CullMode(MATERIAL_CULLMODE_CCW)
-		end
-
+	elseif self.Invert then
+		render_CullMode(MATERIAL_CULLMODE_CCW)
 	end
 end
 
@@ -585,7 +584,12 @@ do
 
 		if ent:IsValid() then
 			function ent.RenderOverride()
-				if not ent.pac_drawing_model then return end -- if the draw call is not from pac don't bother
+				-- if the draw call is not from pac don't bother
+				if not ent.pac_drawing_model then
+					ent:DrawModel()
+					return
+				end
+
 				if self:IsValid() and self:GetOwner():IsValid() then
 					if ent.pac_bonemerged then
 						for _, e in ipairs(ent.pac_bonemerged) do
@@ -602,6 +606,7 @@ do
 						render.ModelMaterialOverride()
 						return
 					end
+
 					self:Draw(ent:GetPos(), ent:GetAngles(), self.Translucent and "translucent" or "opaque")
 				else
 					ent.RenderOverride = nil
