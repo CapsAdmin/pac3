@@ -28,7 +28,7 @@ function pace.ResetView()
 			local fwd = ent.EyeAngles and ent:EyeAngles() or ent:GetAngles()
 
 			-- Source Engine local angles fix
-			if type(ent) == 'Player' and ent:GetVehicle():IsValid() then
+			if ent == pac.LocalPlayer and ent:GetVehicle():IsValid() then
 				local ang = ent:GetVehicle():GetAngles()
 				fwd = fwd + ang
 			end
