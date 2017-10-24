@@ -11,13 +11,17 @@ pac.EffectsBlackList =
 
 if not pac_loaded_particle_effects then
 	pac_loaded_particle_effects = {}
+	local files = file.Find("particles/*.pcf", "GAME")
 
-	for key, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
-		if not pac_loaded_particle_effects[file_name] then
+	for key, file_name in pairs(files) do
+		if not pac_loaded_particle_effects[file_name] and not pac.BlacklistedParticleSystems[file_name:lower()] then
 			game.AddParticles("particles/" .. file_name)
 		end
+
 		pac_loaded_particle_effects[file_name] = true
 	end
+
+	pac.Message('Loaded total ', #files, ' particle systems')
 end
 
 util.AddNetworkString("pac_effect_precached")

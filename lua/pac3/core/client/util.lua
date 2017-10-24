@@ -439,7 +439,7 @@ function pac.CreateEntity(model, for_obj)
 		util.Effect("pac_model", EffectData())
 	end]]
 
-	return ent
+	return ent or NULL
 end
 
 

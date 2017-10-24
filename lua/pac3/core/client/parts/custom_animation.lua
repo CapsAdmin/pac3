@@ -91,9 +91,10 @@ function PART:SetURL(url)
 				pace.timeline.Load(tbl)
 			end
 		end,
-		function(code)
-			pac.Message("Animation failed to load from ", url, ': ', code)
-		end)
+
+		function(reason)
+			pac.Message("Animation failed to load from ", url, ': ', reason)
+		end, false)
 	end
 end
 

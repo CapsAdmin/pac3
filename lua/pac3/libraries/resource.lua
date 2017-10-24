@@ -35,19 +35,16 @@ local function utility_CreateCallbackThing(cache)
 			end
 
 			if cache[path].callback then
-				local old = cache[path].callback
-
-				cache[path].callback = function(...)
-					old(...)
-					callback(...)
-				end
+				if type(cache[path].callback) ~= 'table' then cache[path].callback = {cache[path].callback} end
+				table.insert(cache[path].callback, callback)
 				return true
 			end
 		end
 	end
 
 	function self:start(path, callback, extra)
-		cache[path] = {callback = callback, extra_callbacks = extra}
+		if type(callback) ~= 'table' then callback = {callback} end
+		cache[path] = {callback = table.Copy(callback), extra_callbacks = table.Copy(extra or {})}
 	end
 
 	function self:callextra(path, key, out)
@@ -57,7 +54,15 @@ local function utility_CreateCallbackThing(cache)
 
 	function self:stop(path, out, ...)
 		if not cache[path] then return end
-		cache[path].callback(out, ...)
+
+		if type(cache[path].callback) == 'table' then
+			for i, func in ipairs(cache[path].callback) do
+				func(out, ...)
+			end
+		elseif cache[path].callback then
+			cache[path].callback(out, ...)
+		end
+
 		cache[path] = out
 	end
 
@@ -252,7 +257,15 @@ function resource.Download(path, callback, on_fail, crc, check_etag)
 
 	if existing_path and not check_etag then
 		ohno = true
-		callback(existing_path)
+
+		if type(callback) == 'function' then
+			callback(existing_path)
+		elseif type(callback) == 'table' then
+			for i, func in ipairs(callback) do
+				func(existing_path)
+			end
+		end
+
 		ohno = false
 		return true
 	end
