@@ -306,6 +306,10 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			f:Close()
 
 			local count = 0
+			local model_found = false
+			local other_models = {}
+
+			table.sort(files, function(a, b) return #a.buffer > #b.buffer end)
 
 			for i, v in ipairs(files) do
 				if v.file_name:EndsWith(".mdl") then
@@ -321,10 +325,34 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						v.ani.file_name = v.ani.file_name:gsub(".-(%..+)", "i"..count.."%1"):lower()
 						count = count + 1
 					else
-						v.file_name = v.file_name:gsub(".-(%..+)", "model%1"):lower()
+						if not model_found or v.file_name:StartWith(model_found) then
+							model_found = v.file_name:match("(.-)%.")
+							v.file_name = v.file_name:gsub(".-(%..+)", "model%1"):lower()
+						else
+							table.insert(other_models, v.file_name)
+						end
 					end
 				elseif v.file_name:EndsWith(".vtx") or v.file_name:EndsWith(".vvd") or v.file_name:EndsWith(".phy") then
-					v.file_name = v.file_name:gsub(".-(%..+)", "model%1"):lower()
+					if not model_found or v.file_name:StartWith(model_found) then
+						model_found = v.file_name:match("(.-)%.")
+						v.file_name = v.file_name:gsub(".-(%..+)", "model%1"):lower()
+					else
+						table.insert(other_models, v.file_name)
+					end
+				end
+			end
+
+			if other_models[1] and ply == pac.LocalPlayer then
+				pac.Message(Color(255, 200, 50), url, ": the archive contains more than one model.")
+				pac.Message(Color(255, 200, 50), url, ": " .. model_found .. " was selected.")
+				pac.Message(Color(255, 200, 50), url, ": these are ignored:")
+				PrintTable(other_models)
+			end
+
+			if VERBOSE then
+				print("FILES:")
+				for i, v in ipairs(files) do
+					print(v.file_name)
 				end
 			end
 
@@ -567,7 +595,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							f:Seek(old_pos)
 
 							if ply == pac.LocalPlayer and #found_materials == 0 then
-								pac.Message(Color(255, 200,50), url, ": could not find any materials in this model")
+								pac.Message(Color(255, 200, 50), url, ": could not find any materials in this model")
 							end
 						end
 
