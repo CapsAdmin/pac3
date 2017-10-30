@@ -145,24 +145,27 @@ function PANEL:PerformLayout()
 		end
 	end
 
-	if self.oldproperties ~= pace.properties then
+	if self.old_part ~= pace.current_part then
 		self.div:InvalidateLayout()
 		self.bottom:PerformLayout()
 		pace.properties:PerformLayout()
-		self.oldproperties = pace.properties
+		self.old_part = pace.current_part
 
-		-- local sz = auto_size:GetInt()
-		-- local newh = sz > 0 and (ScrH() - math.min(pace.properties:GetHeight() + RENDERSCORE_SIZE + BAR_SIZE - 6, ScrH() / 1.5))
+		local sz = auto_size:GetInt()
 
-		-- if sz >= 2 then
-		-- 	local oldh = self.div:GetTopHeight()
+		if sz > 0 then
+			local newh = sz > 0 and (ScrH() - math.min(pace.properties:GetHeight() + RENDERSCORE_SIZE + BAR_SIZE - 6, ScrH() / 1.5))
 
-		-- 	if newh<oldh then
-		-- 		self.div:SetTopHeight(newh)
-		-- 	end
-		-- elseif sz >= 1 then
-		-- 	self.div:SetTopHeight(newh)
-		-- end
+			if sz >= 2 then
+				local oldh = self.div:GetTopHeight()
+
+				if newh<oldh then
+					self.div:SetTopHeight(newh)
+				end
+			elseif sz >= 1 then
+				self.div:SetTopHeight(newh)
+			end
+		end
 	end
 end
 
