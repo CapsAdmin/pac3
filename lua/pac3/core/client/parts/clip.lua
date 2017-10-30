@@ -33,7 +33,7 @@ do
 	function PART:PreOnDraw()
 		bclip = render_EnableClipping(true)
 
-		local pos, ang = LocalToWorld(self.Position, self:CalcAngles(self.Angles), self:GetBonePosition())
+		local pos, ang = LocalToWorld(self.Position + self.PositionOffset, self:CalcAngles(self.Angles + self.AngleOffset), self:GetBonePosition())
 		local normal = ang:Forward()
 
 		render_PushCustomClipPlane(normal, normal:Dot(pos + normal))
