@@ -398,7 +398,11 @@ function PART:SetModel(path)
 			pac.Message(self, ' mdl files are not allowed')
 		end
 	else
-		self:RealSetModel(path)
+		if self:GetEntity() == pac.LocalPlayer and pacx and pacx.SetModel then
+			pacx.SetModel(self.Model)
+		else
+			self:RealSetModel(path)
+		end
 	end
 end
 
