@@ -48,6 +48,8 @@ do
 	local last_eye_pos
 	local last_eye_pos_time
 
+	webaudio.eye_velocity = Vector()
+
 	function webaudio.Update()
 		if webaudio.browser_state ~= "initialized" then
 			if webaudio.browser_state ~= "initializing" then
