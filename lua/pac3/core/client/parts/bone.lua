@@ -12,7 +12,10 @@ PART.Groups = {'entity', 'model'}
 PART.Icon = 'icon16/connect.png'
 
 pac.StartStorableVars()
-	pac.SetPropertyGroup()
+	pac.SetPropertyGroup(PART, "generic")
+		pac.PropertyOrder(PART, "Name")
+		pac.PropertyOrder(PART, "Hide")
+		pac.PropertyOrder(PART, "ParentName")
 		pac.GetSet(PART, "Jiggle", false)
 		pac.GetSet(PART, "ScaleChildren", false)
 		pac.GetSet(PART, "AlternativeBones", false)
@@ -23,12 +26,28 @@ pac.StartStorableVars()
 		pac.SetupPartName(PART, "FollowPart")
 
 	pac.SetPropertyGroup(PART, "orientation")
-		pac.GetSet(PART, "Scale", Vector(1,1,1), {editor_sensitivity = 0.25})
+		pac.PropertyOrder(PART, "AimPartName")
+		pac.PropertyOrder(PART, "Bone")
+		pac.PropertyOrder(PART, "Position")
+		pac.PropertyOrder(PART, "Angles")
+		pac.PropertyOrder(PART, "EyeAngles")
 		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
+		pac.GetSet(PART, "Scale", Vector(1,1,1), {editor_sensitivity = 0.25})
+		pac.PropertyOrder(PART, "PositionOffset")
+		pac.PropertyOrder(PART, "AngleOffset")
+
+	pac.SetPropertyGroup(PART, "appearance")
+
+
+	pac.SetPropertyGroup(PART, "other")
+		pac.PropertyOrder(PART, "DrawOrder")
 
 pac.EndStorableVars()
 
 pac.RemoveProperty(PART, "Translucent")
+pac.RemoveProperty(PART, "IgnoreZ")
+pac.RemoveProperty(PART, "BlendMode")
+pac.RemoveProperty(PART, "NoTextureFiltering")
 
 function PART:GetNiceName()
 	return self:GetBone()

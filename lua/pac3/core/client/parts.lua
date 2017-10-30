@@ -60,9 +60,7 @@ function pac.CreatePart(name, owner)
 		pac.RemoveProperty(part, "BlendMode")
 		pac.RemoveProperty(part, "NoTextureFiltering")
 
-		if part.ClassName ~= "group" then
-			pac.RemoveProperty(part, "DrawOrder")
-		end
+		pac.RemoveProperty(part, "DrawOrder")
 	end
 
 	part.DefaultVars = {}

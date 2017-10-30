@@ -71,7 +71,6 @@ pac.StartStorableVars()
 			additive = "src_alpha;one;src_alpha;one",
 		}})
 
-	pac.SetPropertyGroup(PART, "other")
 		pac.GetSet(PART, "DrawOrder", 0)
 
 pac.EndStorableVars()

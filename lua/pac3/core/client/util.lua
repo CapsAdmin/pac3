@@ -510,8 +510,20 @@ do -- get set and editor vars
 		insert_key(pac.GroupOrder.none, name)
 	end
 
+	function pac.PropertyOrder(tbl, key)
+		pac.VariableOrder[tbl.ClassName] = pac.VariableOrder[tbl.ClassName] or {}
+		insert_key(pac.VariableOrder[tbl.ClassName], key)
+
+		if __group then
+			pac.PropertyUserdata[tbl.ClassName] = pac.PropertyUserdata[tbl.ClassName] or {}
+			pac.PropertyUserdata[tbl.ClassName][key] = pac.PropertyUserdata[tbl.ClassName][key] or {}
+			pac.PropertyUserdata[tbl.ClassName][key].group = __group
+		end
+	end
+
 	function pac.GetSet(tbl, key, def, udata)
-		insert_key(pac.VariableOrder, key)
+		pac.VariableOrder[tbl.ClassName] = pac.VariableOrder[tbl.ClassName] or {}
+		insert_key(pac.VariableOrder[tbl.ClassName], key)
 
 		pac.class.GetSet(tbl, key, def)
 

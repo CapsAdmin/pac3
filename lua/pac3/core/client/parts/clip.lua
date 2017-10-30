@@ -9,6 +9,16 @@ PART.ClassName = "clip"
 PART.Groups = {'model', 'modifiers'}
 PART.Icon = 'icon16/cut.png'
 
+pac.SetPropertyGroup(PART, "generic")
+	pac.PropertyOrder(PART, "Name")
+	pac.PropertyOrder(PART, "Hide")
+	pac.PropertyOrder(PART, "ParentName")
+
+pac.RemoveProperty(PART, "IgnoreZ")
+pac.RemoveProperty(PART, "BlendMode")
+pac.RemoveProperty(PART, "NoTextureFiltering")
+
+
 function PART:OnParent(part)
 	part:AddModifier(self)
 

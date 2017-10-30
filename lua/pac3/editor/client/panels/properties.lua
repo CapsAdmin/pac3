@@ -468,6 +468,7 @@ do -- list
 			end
 
 			if udata and udata.hidden then goto CONTINUE end
+			if key == "OwnerName" and obj.ClassName ~= "group" then goto CONTINUE end
 
 			if not obj.ClassName or not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key) then
 				local group = group_override or (udata and udata.group) or "generic"
@@ -482,11 +483,30 @@ do -- list
 				table.sort(tbl[group], function(a, b) return a.key > b.key end)
 			else
 				local sorted_variables = {}
-				for i, name in ipairs(pac.VariableOrder) do
-					for _, v in ipairs(vars) do
-						if name == v.key then
-							table.insert(sorted_variables, v)
-							break
+				local done = {}
+				if pac.VariableOrder[obj.ClassName] then
+					for i, name in ipairs(pac.VariableOrder[obj.ClassName]) do
+						for _, v in ipairs(vars) do
+							if name == v.key then
+								if not done[name] then
+									table.insert(sorted_variables, v)
+									done[name] = true
+									break
+								end
+							end
+						end
+					end
+				end
+				for _, variables in pairs(pac.VariableOrder) do
+					for i, name in ipairs(variables) do
+						for _, v in ipairs(vars) do
+							if name == v.key then
+								if not done[name] then
+									table.insert(sorted_variables, v)
+									done[name] = true
+									break
+								end
+							end
 						end
 					end
 				end
