@@ -17,18 +17,26 @@ PART.Group = 'effects'
 PART.Icon = 'icon16/arrow_undo.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Length", 100)
-	pac.GetSet(PART, "Spacing", 1)
-	pac.GetSet(PART, "StartSize", 3)
-	pac.GetSet(PART, "EndSize", 0)
-	pac.GetSet(PART, "StartColor", Vector(255, 255, 255), {editor_panel = "color"})
-	pac.GetSet(PART, "EndColor", Vector(255, 255, 255), {editor_panel = "color"})
-	pac.GetSet(PART, "StartAlpha", 1)
-	pac.GetSet(PART, "EndAlpha", 1)
-	pac.GetSet(PART, "Stretch", false)
-	pac.GetSet(PART, "IgnoreZ", false)
-	pac.GetSet(PART, "TrailPath", "trails/laser", {editor_panel = "material"})
-	pac.GetSet(PART, "Translucent", true)
+	pac.SetPropertyGroup(PART, "generic")
+		pac.PropertyOrder(PART, "Name")
+		pac.PropertyOrder(PART, "Hide")
+		pac.PropertyOrder(PART, "ParentName")
+		pac.GetSet(PART, "TrailPath", "trails/laser", {editor_panel = "material"})
+		pac.GetSet(PART, "StartSize", 3)
+		pac.GetSet(PART, "EndSize", 0)
+		pac.GetSet(PART, "Length", 100)
+		pac.GetSet(PART, "Spacing", 1)
+
+	pac.SetPropertyGroup(PART, "orientation")
+	pac.SetPropertyGroup(PART, "appearance")
+		pac.GetSet(PART, "StartColor", Vector(255, 255, 255), {editor_panel = "color"})
+		pac.GetSet(PART, "EndColor", Vector(255, 255, 255), {editor_panel = "color"})
+		pac.GetSet(PART, "StartAlpha", 1)
+		pac.GetSet(PART, "EndAlpha", 1)
+		pac.PropertyOrder(PART, "Translucent")
+		pac.GetSet(PART, "Stretch", false)
+	pac.SetPropertyGroup(PART, "other")
+		pac.PropertyOrder(PART, "DrawOrder")
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -138,11 +146,6 @@ function PART:OnDraw(owner, pos, ang)
 
 		render_SetMaterial(mat)
 
-		local IgnoreZ = tobool(self.IgnoreZ)
-		if IgnoreZ then
-			cam_IgnoreZ(true)
-		end
-
 		render_StartBeam(count)
 			for k, v in pairs(self.points) do
 				local width = k / (len / self.StartSize)
@@ -157,10 +160,6 @@ function PART:OnDraw(owner, pos, ang)
 				render_AddBeam(k == count and pos or v, width + self.EndSize, self.Stretch and coord or width, temp_color)
 			end
 		render_EndBeam()
-
-		if IgnoreZ then
-			cam_IgnoreZ(false)
-		end
 
 		if count >= len then
 			table_remove(self.points, 1)
