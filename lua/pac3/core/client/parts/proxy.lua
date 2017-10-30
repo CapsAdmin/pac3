@@ -10,7 +10,7 @@ pac.StartStorableVars()
 
 	pac.SetPropertyGroup()
 		pac.GetSet(PART, "VariableName", "", {enums = function(part)
-			local parent = part:GetParent()
+			local parent = part:GetTarget()
 			if not parent:IsValid() then return end
 			local tbl = {}
 			for key, _ in pairs(parent.StorableVars) do
@@ -51,21 +51,32 @@ pac.StartStorableVars()
 
 pac.EndStorableVars()
 
+function PART:GetTarget(physical)
+	local part = self:GetTargetPart()
+
+	if part:IsValid() then
+		return part
+	end
+
+	if physical then
+		local found = NULL
+
+		repeat
+			if not parent.Parent:IsValid() then break end
+			found = parent.Parent
+		until not parent.cached_pos:IsZero()
+
+		return found
+	end
+
+	return self:GetParent()
+end
+
 function PART:SetVariableName(str)
 	self.VariableName = str
 
 	self.set_key = "Set" .. str
 	self.get_key = "Get" .. str
-end
-
-function PART:GetParentEx()
-	local parent = self:GetTargetPart()
-
-	if parent:IsValid() then
-		return parent
-	end
-
-	return self:GetParent()
 end
 
 function PART:GetNiceName()
@@ -403,52 +414,23 @@ PART.Inputs =
 
 	-- parent part
 	parent_velocity_length = function(self, parent)
-		if not self.TargetPart:IsValid() then
-			repeat
-				if not parent.Parent:IsValid() then break end
-				parent = parent.Parent
-			until not parent.cached_pos:IsZero()
-		end
-
+		parent = self:GetTarget(true)
 		return self:GetVelocity(parent):Length()
 	end,
 	parent_velocity_forward = function(self, parent)
-		if not self.TargetPart:IsValid() then
-			repeat
-				if not parent.Parent:IsValid() then break end
-				parent = parent.Parent
-			until not parent.cached_pos:IsZero()
-		end
-
+		parent = self:GetTarget(true)
 		return -parent.cached_ang:Forward():Dot(self:GetVelocity(parent))
 	end,
 	parent_velocity_right = function(self, parent)
-		if not self.TargetPart:IsValid() then
-			repeat
-				if not parent.Parent:IsValid() then break end
-				parent = parent.Parent
-			until not parent.cached_pos:IsZero()
-		end
-
+		parent = self:GetTarget(true)
 		return parent.cached_ang:Right():Dot(self:GetVelocity(parent))
 	end,
 	parent_velocity_up = function(self, parent)
-		if not self.TargetPart:IsValid() then
-			repeat
-				if not parent.Parent:IsValid() then break end
-				parent = parent.Parent
-			until not parent.cached_pos:IsZero()
-		end
-
+		parent = self:GetTarget(true)
 		return parent.cached_ang:Up():Dot(self:GetVelocity(parent))
 	end,
 
 	parent_scale_x = function(self, parent)
-		if not self.TargetPart:IsValid() then
-			if parent:HasParent() then
-				parent = parent:GetParent()
-			end
-		end
 
 		if parent:IsValid() then
 			return parent.Scale and parent.Scale.x*parent.Size or 1
@@ -457,11 +439,6 @@ PART.Inputs =
 		return 1
 	end,
 	parent_scale_y = function(self, parent)
-		if not self.TargetPart:IsValid() then
-			if parent:HasParent() then
-				parent = parent:GetParent()
-			end
-		end
 
 		if parent:IsValid() then
 			return parent.Scale and parent.Scale.y*parent.Size or 1
@@ -470,11 +447,6 @@ PART.Inputs =
 		return 1
 	end,
 	parent_scale_z = function(self, parent)
-		if not self.TargetPart:IsValid() then
-			if parent:HasParent() then
-				parent = parent:GetParent()
-			end
-		end
 
 		if parent:IsValid() then
 			return parent.Scale and parent.Scale.z*parent.Size or 1
@@ -510,7 +482,6 @@ PART.Inputs =
 	end,
 
 	light_amount_r = function(self, parent)
-		parent = self:GetParentEx()
 
 		if parent:IsValid() then
 			return render.GetLightColor(parent.cached_pos):ToColor().r
@@ -519,8 +490,6 @@ PART.Inputs =
 		return 0
 	end,
 	light_amount_g = function(self, parent)
-		parent = self:GetParentEx()
-
 		if parent:IsValid() then
 			return render.GetLightColor(parent.cached_pos):ToColor().g
 		end
@@ -528,8 +497,6 @@ PART.Inputs =
 		return 0
 	end,
 	light_amount_b = function(self, parent)
-		parent = self:GetParentEx()
-
 		if parent:IsValid() then
 			return render.GetLightColor(parent.cached_pos):ToColor().b
 		end
@@ -537,8 +504,6 @@ PART.Inputs =
 		return 0
 	end,
 	light_value = function(self, parent)
-		parent = self:GetParentEx()
-
 		if parent:IsValid() then
 			local h, s, v = ColorToHSV(render.GetLightColor(parent.cached_pos):ToColor())
 			return v
@@ -548,8 +513,6 @@ PART.Inputs =
 	end,
 
 	ambient_light_r = function(self, parent)
-		parent = self:GetParentEx()
-
 		if parent:IsValid() then
 			return render.GetAmbientLightColor():ToColor().r
 		end
@@ -557,8 +520,6 @@ PART.Inputs =
 		return 0
 	end,
 	ambient_light_g = function(self, parent)
-		parent = self:GetParentEx()
-
 		if parent:IsValid() then
 			return render.GetAmbientLightColor():ToColor().g
 		end
@@ -566,8 +527,6 @@ PART.Inputs =
 		return 0
 	end,
 	ambient_light_b = function(self, parent)
-		parent = self:GetParentEx()
-
 		if parent:IsValid() then
 			return render.GetAmbientLightColor():ToColor().b
 		end
@@ -792,20 +751,14 @@ function PART:SetExpression(str)
 	self.ExpressionFunc = nil
 
 	if str and str ~= "" then
-		local parent = self.Parent
+		local parent = self:GetTarget()
 
 		if not parent:IsValid() then return end
-
-		local parentx = self.TargetPart
-
-		if not parentx:IsValid() then
-			parentx = parent
-		end
 
 		local lib = {}
 
 		for name, func in pairs(PART.Inputs) do
-			lib[name] = function(...) return func(self, parentx, ...) end
+			lib[name] = function(...) return func(self, parent, ...) end
 		end
 
 		local ok, res = pac.CompileExpression(str, lib)
@@ -885,11 +838,10 @@ function PART:RunExpression(ExpressionFunc)
 end
 
 function PART:OnThink()
-	local parent = self:GetParent()
+	local parent = self:GetTarget()
 
 	if not parent:IsValid() then return end
 
-	local parentx = self.TargetPart
 	self:CalcVelocity()
 
 	local ExpressionFunc = self.ExpressionFunc
@@ -897,10 +849,6 @@ function PART:OnThink()
 	if not ExpressionFunc then
 		self:SetExpression(self.Expression)
 		ExpressionFunc = self.ExpressionFunc
-	end
-
-	if not parentx:IsValid() then
-		parentx = parent
 	end
 
 	if ExpressionFunc then
@@ -956,7 +904,7 @@ function PART:OnThink()
 		local I = self.Inputs[self.Input]
 
 		if F and I then
-			local num = self.Min + (self.Max - self.Min) * ((F(((I(self, parentx) / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
+			local num = self.Min + (self.Max - self.Min) * ((F(((I(self, parent) / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
 
 			if self.Additive then
 				self.vec_additive[1] = (self.vec_additive[1] or 0) + num
