@@ -111,8 +111,9 @@ local function manscale(ent, id, scale, part)
 	end
 end
 
-local function scale_children(owner, id, scale, origin)
+local function scale_children(owner, id, scale, origin, ownerScale)
 	local count = owner:GetBoneCount()
+	ownerScale = ownerScale or owner.pac3_Scale or 1
 
 	if count == 0 or count < id then return end
 
@@ -125,17 +126,17 @@ local function scale_children(owner, id, scale, origin)
 			if origin then
 				mat:SetTranslation(origin)
 			end
-			mat:Scale(mat:GetScale() * scale)
+
+			mat:Scale(mat:GetScale() * scale / ownerScale)
 			owner:SetBoneMatrix(i, mat)
 		end
 
-		scale_children(owner, i, scale, origin)
+		scale_children(owner, i, scale, origin, ownerScale)
 		::CONTINUE::
 	end
 end
 
 function pac.build_bone_callback(ent)
-
 	if ent.pac_matrixhack then
 		pac.LegacyScale(ent)
 	end
