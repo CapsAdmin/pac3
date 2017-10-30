@@ -913,7 +913,7 @@ do -- base editable
 
 		hook.Add('Think', hookID, function(code)
 			if not IsValid(self) or not IsValid(textEntry) then return hook.Remove('Think', hookID) end
-			if textEntry:IsHovered() then return end
+			if textEntry:IsHovered() or self:IsHovered() then return end
 			if delay > os.clock() then return end
 			if not input.IsMouseDown(MOUSE_LEFT) and not input.IsKeyDown(KEY_ESCAPE) then return end
 			hook.Remove('Think', hookID)
