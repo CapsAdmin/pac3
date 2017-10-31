@@ -6,8 +6,9 @@ local function install_click(icon, path, pattern, on_menu)
 	local old = icon.OnMouseReleased
 	icon.OnMouseReleased = function(_, code)
 		if code == MOUSE_LEFT then
-			pace.model_browser:SetVisible(false)
-			pace.model_browser_callback(path, "GAME")
+			if pace.model_browser_callback(path, "GAME") ~= false then
+				pace.model_browser:SetVisible(false)
+			end
 		elseif code == MOUSE_RIGHT then
 			local menu = DermaMenu()
 			menu:AddOption(L"copy path", function()
@@ -173,6 +174,15 @@ local function create_model_icon(path)
 	return icon
 end
 
+local function update_title(info)
+	if info then
+		info = " - " .. info
+		pace.model_browser:SetTitle(pace.model_browser.title .. info)
+	else
+		pace.model_browser:SetTitle(pace.model_browser.title)
+	end
+end
+
 do
 	local PANEL = {}
 
@@ -239,7 +249,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 	end
 
 	local frame = vgui.Create("DFrame")
-	frame:SetTitle(L"resource browser" .. " - " .. (browse_types_str:gsub(";", " ")))
+	frame.title = L"resource browser" .. " - " .. (browse_types_str:gsub(";", " "))
 	frame:SetSize(ScrW()/1.5, ScrH()/1.5)
 	frame:Center()
 	frame:SetDeleteOnClose(false)
@@ -559,8 +569,9 @@ function pace.ResourceBrowser(callback, browse_types_str)
 									sound_list:ClearSelection()
 									sound_list:SelectItem(line)
 								else
-									pace.model_browser:SetVisible(false)
-									pace.model_browser_callback(path, pathid)
+									if pace.model_browser_callback(path, pathid) ~= false then
+										pace.model_browser:SetVisible(false)
+									end
 								end
 							end
 
@@ -685,6 +696,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 		search:SetValue("Search...")
 		search:SetTooltip("Press enter to search")
 		search.propPanel = view
+		search.delay_functions = {}
 
 		search._OnGetFocus = search.OnGetFocus
 		function search:OnGetFocus ()
@@ -702,57 +714,65 @@ function pace.ResourceBrowser(callback, browse_types_str)
 			search:_OnLoseFocus()
 		end
 
-		function search:updateHeader()
-			self.header:SetText(search.results .. " Results for \"" .. self.search .. "\"")
-		end
+		pac.resource_browser_cache = pac.resource_browser_cache or {}
 
-		local searchTime = nil
+		local function find(path, how)
+			local key = path .. how
 
-		function search:StartSearch(time, folder, extension, path)
-			if searchTime and time ~= searchTime then return end
-			if self.results and self.results >= 256 then return end
-			self.load = self.load + 1
-			local files, folders = file.Find(folder .. "/*", path)
-
-			for k, v in pairs(files) do
-				local file = folder .. v
-				if v:EndsWith(extension) and file:find(self.search:PatternSafe()) and not IsUselessModel(file) then
-					self.propPanel:Add(create_model_icon(file))
-					self.results = self.results + 1
-					self:updateHeader()
-				end
-				if self.results >= 256 then break end
+			if pac.resource_browser_cache[key] then
+				return unpack(pac.resource_browser_cache[key])
 			end
 
-			for k, v in pairs(folders) do
-				timer.Simple(k * 0.02, function()
-					if searchTime and time ~= searchTime then return end
-					if self.results >= 256 then return end
-					self:StartSearch(time, folder .. v .. "/", extension, path)
+			local files, folders = file.Find(path, how)
+
+			pac.resource_browser_cache[key] = {files, folders}
+
+			return files, folders
+		end
+
+		function search:StartSearch(folder, extension, path, cb)
+			local files, folders = find(folder .. "*", path)
+
+			update_title(table.Count(self.delay_functions) .. " directories left - " .. folder .. "*")
+
+			for k, v in ipairs(files) do
+				local file = folder .. v
+				if v:EndsWith(extension) and file:find(self:GetText(), nil, true) then
+					cb(file)
+				end
+			end
+
+			for k, v in ipairs(folders) do
+				self:Delay(function()
+					self:StartSearch(folder .. v .. "/", extension, path, cb)
 				end)
 			end
-			timer.Simple(1, function ()
-				if searchTime and time ~= searchTime then return end
-				self.load = self.load - 1
-			end)
 		end
 
-		function search:OnEnter ()
+		function search:Delay(func)
+			self.delay_functions[func] = func
+		end
+
+		function search:Think()
+			local i = 0
+			for key, func in pairs(self.delay_functions) do
+				i = i + 1
+				func()
+				self.delay_functions[func] = nil
+				if i > 50 then break end
+			end
+		end
+
+		function search:OnEnter()
 			if self:GetValue() == "" then return end
 
 			self.propPanel:Clear()
 
-			self.results = 0
-			self.load = 1
-			self.search = self:GetText()
-
-			self.header = vgui.Create("DLabel", self.propPanel)
-			self:updateHeader()
-			self.propPanel:Add(self.header)
-
-			searchTime = CurTime()
-			self:StartSearch(searchTime, "models/", ".mdl", "GAME")
-			self.load = self.load - 1
+			self:StartSearch("models/", ".mdl", "GAME", function(file)
+				if not IsUselessModel(file) then
+					self.propPanel:Add(create_model_icon(file))
+				end
+			end)
 
 			tree:OnNodeSelected(self)
 		end
@@ -763,8 +783,11 @@ function pace.ResourceBrowser(callback, browse_types_str)
 	pace.model_browser = frame
 end
 
-if pace.model_browser and pace.model_browser:IsValid() then pace.model_browser:Remove() end
+if pace.model_browser and pace.model_browser:IsValid() then
+	pace.model_browser:Remove()
+	pace.ResourceBrowser(function(...) print(...) return false end)
+end
 
 concommand.Add("pac_resource_browser", function()
-	pace.ResourceBrowser(print)
+	pace.ResourceBrowser(function(...) print(...) return false end)
 end)
