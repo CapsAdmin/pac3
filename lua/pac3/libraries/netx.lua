@@ -144,7 +144,7 @@ do
 	}
 
 	for i, val in ipairs(tobank) do
-		crcdatabank[tostring(CRC(val))] = val
+		crcdatabank[CRC(val)] = val
 	end
 end
 
@@ -155,7 +155,7 @@ local readmeta = {
 			return val
 		end
 
-		crcdatabank[key] = crcdatabank[key] or tostring(CRC(key))
+		crcdatabank[key] = crcdatabank[key] or CRC(key)
 		return rawget(self, crcdatabank[key])
 	end
 }
