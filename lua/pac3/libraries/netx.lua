@@ -11,6 +11,7 @@ local TYPE_BOOL = 4
 local TYPE_COLOR = 5
 local TYPE_TABLE = 6
 local TYPE_ENTITY = 7
+local TYPE_NUMBER_UID = 8
 
 local readTable
 
@@ -40,6 +41,8 @@ local function readTyped()
 
 	if tp == TYPE_STRING then
 		return net.ReadString()
+	elseif tp == TYPE_NUMBER_UID then
+		return tostring(net.ReadUInt(32))
 	elseif tp == TYPE_NUMBER then
 		return net.ReadInt(32)
 	elseif tp == TYPE_ANGLE then
@@ -63,8 +66,15 @@ local function writeTyped(val, key)
 	local tp = type(val)
 
 	if tp == 'string' then
-		net.WriteUInt(TYPE_STRING, TYPES_BITS)
-		net.WriteString(val)
+		local tryuid = tonumber(val)
+
+		if tryuid and tryuid > 0 and tryuid < 2 ^ 32 then
+			net.WriteUInt(TYPE_NUMBER_UID, TYPES_BITS)
+			net.WriteUInt(tryuid, 32)
+		else
+			net.WriteUInt(TYPE_STRING, TYPES_BITS)
+			net.WriteString(val)
+		end
 	elseif tp == 'number' then
 		net.WriteUInt(TYPE_NUMBER, TYPES_BITS)
 		net.WriteInt(val, 32)
