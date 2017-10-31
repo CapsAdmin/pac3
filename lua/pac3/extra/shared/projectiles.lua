@@ -41,6 +41,8 @@ do -- projectile entity
 			end
 		end)
 
+		ENT.projectile_owner = NULL
+
 		function ENT:Initialize()
 			self.next_target = 0
 		end
@@ -133,14 +135,22 @@ do -- projectile entity
 			dissolver_entity = ent
 		end
 
+		function ENT:Think()
+			if not self.projectile_owner:IsValid() then
+				self:Remove()
+			end
+		end
+
 		function ENT:PhysicsUpdate(phys)
 			if not self.part_data then return end
 
 			phys:SetVelocity(phys:GetVelocity() / math.max(1 + (self.part_data.Damping / 100), 1))
 
 			if self.part_data.Attract ~= 0 then
+				local ply = self.projectile_owner
+
 				if self.part_data.AttractMode == "hitpos" then
-					local pos = self:GetOwner():GetEyeTrace().HitPos
+					local pos = ply:GetEyeTrace().HitPos
 
 					local dir = pos - phys:GetPos()
 					dir:Normalize()
@@ -148,7 +158,7 @@ do -- projectile entity
 
 					phys:SetVelocity(phys:GetVelocity() + dir)
 				elseif self.part_data.AttractMode == "hitpos_radius" then
-					local pos = self:GetOwner():EyePos() + self:GetOwner():GetAimVector() * self.part_data.AttractRadius
+					local pos = ply:EyePos() + ply:GetAimVector() * self.part_data.AttractRadius
 
 					local dir = pos - phys:GetPos()
 					dir:Normalize()
@@ -163,7 +173,7 @@ do -- projectile entity
 						if self.part_data.AttractMode == "closest_to_projectile" then
 							pos = phys:GetPos()
 						else
-							pos = self:GetOwner():GetEyeTrace().HitPos
+							pos = ply:GetEyeTrace().HitPos
 						end
 
 						local closest_1 = {}
@@ -172,7 +182,7 @@ do -- projectile entity
 						for _, ent in ipairs(ents.FindInSphere(pos, radius)) do
 							if
 								ent ~= self and
-								(ent ~= self:GetOwner() or self.part_data.CollideWithOwner) and
+								ent ~= ply and
 								ent:GetPhysicsObject():IsValid() and
 								ent:GetClass() ~= self:GetClass()
 							then
@@ -209,6 +219,7 @@ do -- projectile entity
 
 		function ENT:PhysicsCollide(data, phys)
 			if not self.part_data then return end
+			if not self.projectile_owner:IsValid() then return end
 
 			if self.part_data.Bounce ~= 0 then
 				phys:SetVelocity(data.OurOldVelocity - 2 * (data.HitNormal:Dot(data.OurOldVelocity) * data.HitNormal) * self.part_data.Bounce)
@@ -250,7 +261,7 @@ do -- projectile entity
 
 			if self.part_data.BulletImpact then
 				self:FireBullets{
-					Attacker = self:GetOwner(),
+					Attacker = ply,
 					Damage = 0,
 					Force = 0,
 					Num = 1,
@@ -260,17 +271,12 @@ do -- projectile entity
 				}
 			end
 
-			local owner = self:GetOwner()
+			local ply = self.projectile_owner
 
-			if
-				self.part_data.DamageType:sub(0, 9) == "dissolve_" and
-				damage_types[self.part_data.DamageType] and
-				owner:IsValid() and
-				owner:IsPlayer()
-			then
+			if self.part_data.DamageType:sub(0, 9) == "dissolve_" and damage_types[self.part_data.DamageType] then
 				if data.HitEntity:IsPlayer() then
 					local info = DamageInfo()
-					info:SetAttacker(owner)
+					info:SetAttacker(ply)
 					info:SetInflictor(self)
 					info:SetDamageForce(data.OurOldVelocity)
 					info:SetDamagePosition(data.HitPos)
@@ -279,9 +285,9 @@ do -- projectile entity
 
 					data.HitEntity:TakeDamageInfo(info)
 				else
-					local can = hook.Run("CanProperty", owner, "remover", data.HitEntity)
+					local can = hook.Run("CanProperty", ply, "remover", data.HitEntity)
 					if can ~= false then
-						dissolve(data.HitEntity, owner, damage_types[self.part_data.DamageType])
+						dissolve(data.HitEntity, ply, damage_types[self.part_data.DamageType])
 					end
 				end
 			end
@@ -384,7 +390,7 @@ if SERVER then
 		local ang = net.ReadAngle()
 		local part = net.ReadTable()
 
-		local radius_limit = 600
+		local radius_limit = 2000
 
 		if pos:Distance(ply:EyePos()) > radius_limit * ply:GetModelScale() then
 			local ok = false
@@ -401,8 +407,7 @@ if SERVER then
 			end
 		end
 
-		timer.Simple(part.Delay, function()
-
+		local function spawn()
 			if not ply:IsValid() then return end
 
 			local ent = ents.Create("pac_projectile")
@@ -431,6 +436,12 @@ if SERVER then
 				net.WriteInt(ent:EntIndex(), 16)
 				net.WriteString(part.UniqueID)
 			net.Broadcast()
-		end)
+		end
+
+		if part.Delay == 0 then
+			spawn()
+		else
+			timer.Simple(part.Delay, spawn)
+		end
 	end)
 end
