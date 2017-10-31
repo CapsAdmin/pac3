@@ -318,20 +318,19 @@ do -- projectile entity
 				else
 					local info = DamageInfo()
 
-					info:SetAttacker(owner:IsValid() and owner or self)
+					info:SetAttacker(ply)
 					info:SetInflictor(self)
 
 					if self.part_data.DamageType == "fire" then
-						local ownerok = owner:IsValid() and owner:IsPlayer()
 						local ent = data.HitEntity
 						if damage_radius > 0 then
 							-- this should also use blast damage to find which entities it can damage
 							for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
-								if ownerok and ent ~= self and ent:IsSolid() and hook.Run("CanProperty", owner, "ignite", ent) ~= false and (ent ~= owner or self.part_data.CollideWithOwner) then
+								if ent ~= self and ent:IsSolid() and hook.Run("CanProperty", ply, "ignite", ent) ~= false and (ent ~= ply or self.part_data.CollideWithOwner) then
 									ent:Ignite(math.min(self.part_data.Damage, 5))
 								end
 							end
-						elseif ownerok and ent:IsSolid() and hook.Run("CanProperty", owner, "ignite", ent) ~= false then
+						elseif ent:IsSolid() and hook.Run("CanProperty", ply, "ignite", ent) ~= false then
 							ent:Ignite(math.min(self.part_data.Damage, 5))
 						end
 					elseif self.part_data.DamageType == "explosion" then
