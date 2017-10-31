@@ -41,6 +41,8 @@ do -- projectile entity
 			end
 		end)
 
+		ENT.projectile_owner = NULL
+
 		function ENT:Initialize()
 			self.next_target = 0
 		end
@@ -133,6 +135,12 @@ do -- projectile entity
 			dissolver_entity = ent
 		end
 
+		function ENT:Think()
+			if not self.projectile_owner:IsValid() then
+				self:Remove()
+			end
+		end
+
 		function ENT:PhysicsUpdate(phys)
 			if not self.part_data then return end
 
@@ -209,6 +217,7 @@ do -- projectile entity
 
 		function ENT:PhysicsCollide(data, phys)
 			if not self.part_data then return end
+			if not self.projectile_owner:IsValid() then return end
 
 			if self.part_data.Bounce ~= 0 then
 				phys:SetVelocity(data.OurOldVelocity - 2 * (data.HitNormal:Dot(data.OurOldVelocity) * data.HitNormal) * self.part_data.Bounce)
