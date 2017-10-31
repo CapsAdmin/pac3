@@ -28,16 +28,14 @@ do
 	local bcnames = "ISLT  ISGE  ISLE  ISGT  ISEQV ISNEV ISEQS ISNES ISEQN ISNEN ISEQP ISNEP ISTC  ISFC  IST   ISF   MOV   NOT   UNM   LEN   ADDVN SUBVN MULVN DIVVN MODVN ADDNV SUBNV MULNV DIVNV MODNV ADDVV SUBVV MULVV DIVVV MODVV POW   CAT   KSTR  KCDATAKSHORTKNUM  KPRI  KNIL  UGET  USETV USETS USETN USETP UCLO  FNEW  TNEW  TDUP  GGET  GSET  TGETV TGETS TGETB TSETV TSETS TSETB TSETM CALLM CALL  CALLMTCALLT ITERC ITERN VARG  ISNEXTRETM  RET   RET0  RET1  FORI  JFORI FORL  IFORL JFORL ITERL IITERLJITERLLOOP  ILOOP JLOOP JMP   FUNCF IFUNCFJFUNCFFUNCV IFUNCVJFUNCVFUNCC FUNCCW"
 	local jit = jit or require("jit")
 	local ver = jit and jit.version_num or 0
+
 	if ver < 20000 or ver > 20009 then
 		ErrorNoHalt"LUADATA SECURITY WARNING: Unable to load verifier, update me!\n"
 		opcode_checker = function() return function() return true end end
 	else
 
-
 		local jutil = jit.util or require'jit.util'
 		local band =  bit.band
-
-
 
 		local opcodes = {}
 

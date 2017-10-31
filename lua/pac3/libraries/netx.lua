@@ -1,198 +1,191 @@
-local netx=setmetatable({},{__index=net})
 
-do local net=netx
+local netx = setmetatable({}, {__index = net})
 
-TYPE_COLOR = 255
+local TYPES_BITS = 4
 
---
--- Read/Write a boolean to the stream
---
-net.WriteBool = net.WriteBit
+local TYPE_STRING = 0
+local TYPE_NUMBER = 1
+local TYPE_ANGLE = 2
+local TYPE_VECTOR = 3
+local TYPE_BOOL = 4
+local TYPE_COLOR = 5
+local TYPE_TABLE = 6
+local TYPE_ENTITY = 7
 
-function net.ReadBool()
+local readTable
 
-	return net.ReadBit() == 1
-
+-- 1.9974 engineers is enough
+local function net_ReadVector()
+	return Vector(net.ReadFloat(), net.ReadFloat(), net.ReadFloat())
 end
 
---
--- Read/Write an entity to the stream
---
-function net.WriteEntity( ent )
+local function net_WriteVector(vec)
+	net.WriteFloat(vec.x)
+	net.WriteFloat(vec.y)
+	net.WriteFloat(vec.z)
+end
 
-	if (  not IsValid( ent ) ) then
-		net.WriteUInt( 0, 16 )
+local function net_ReadAngle()
+	return Angle(net.ReadFloat(), net.ReadFloat(), net.ReadFloat())
+end
+
+local function net_WriteAngle(ang)
+	net.WriteFloat(ang.p)
+	net.WriteFloat(ang.y)
+	net.WriteFloat(ang.r)
+end
+
+local function readTyped()
+	local tp = net.ReadUInt(TYPES_BITS)
+
+	if tp == TYPE_STRING then
+		return net.ReadString()
+	elseif tp == TYPE_NUMBER then
+		return net.ReadInt(32)
+	elseif tp == TYPE_ANGLE then
+		return net_ReadAngle()
+	elseif tp == TYPE_VECTOR then
+		return net_ReadVector()
+	elseif tp == TYPE_BOOL then
+		return net.ReadBool()
+	elseif tp == TYPE_COLOR then
+		return net.ReadColor()
+	elseif tp == TYPE_ENTITY then
+		return net.ReadEntity()
+	elseif tp == TYPE_TABLE then
+		return readTable()
 	else
-		net.WriteUInt( ent:EntIndex(), 16 )
+		error('Cannot read type - type is ' .. tp .. '!')
 	end
-
 end
 
-function net.ReadEntity()
+local function writeTyped(val, key)
+	local tp = type(val)
 
-	local i = net.ReadUInt( 16 )
-	if (  not i ) then return end
-
-	return Entity( i )
-
-end
-
---
--- Read/Write a color to/from the stream
---
-function net.WriteColor( col )
-
-	assert( IsColor( col ), "net.WriteColor: color expected, got ".. type( col ) )
-
-	net.WriteUInt( col.r, 8 )
-	net.WriteUInt( col.g, 8 )
-	net.WriteUInt( col.b, 8 )
-	net.WriteUInt( col.a, 8 )
-
-end
-
-net.ReadVector = function()
-	return Vector( net.ReadFloat(), net.ReadFloat(), net.ReadFloat() )
-end
-
-net.ReadAngle = function()
-	return Angle( net.ReadFloat(), net.ReadFloat(), net.ReadFloat() )
-end
-
-
-net.WriteVector = function( v )
-
-	net.WriteFloat( v.x )
-	net.WriteFloat( v.y )
-	net.WriteFloat( v.z )
-
-end
-
-net.WriteAngle = function( a )
-
-	a:Normalize()
-
-	net.WriteFloat( a.p )
-	net.WriteFloat( a.y )
-	net.WriteFloat( a.r )
-
-end
-
-function net.ReadColor()
-
-	local r, g, b, a =
-		net.ReadUInt( 8 ),
-		net.ReadUInt( 8 ),
-		net.ReadUInt( 8 ),
-		net.ReadUInt( 8 )
-
-	return Color( r, g, b, a )
-
-end
-
---
--- Write a whole table to the stream
--- This is less optimal than writing each
--- item indivdually and in a specific order
--- because it adds type information before each var
---
-function net.WriteTable( tab )
-
-	for k, v in pairs( tab ) do
-
-		net.WriteType( k )
-		net.WriteType( v )
-
+	if tp == 'string' then
+		net.WriteUInt(TYPE_STRING, TYPES_BITS)
+		net.WriteString(val)
+	elseif tp == 'number' then
+		net.WriteUInt(TYPE_NUMBER, TYPES_BITS)
+		net.WriteInt(val, 32)
+	elseif tp == 'Angle' then
+		net.WriteUInt(TYPE_ANGLE, TYPES_BITS)
+		net_WriteAngle(val)
+	elseif tp == 'Vector' then
+		net.WriteUInt(TYPE_VECTOR, TYPES_BITS)
+		net_WriteVector(val)
+	elseif tp == 'boolean' then
+		net.WriteUInt(TYPE_BOOL, TYPES_BITS)
+		net.WriteBool(val)
+	elseif tp == 'table' then
+		net.WriteUInt(TYPE_COLOR, TYPES_BITS)
+		net.WriteColor(val)
+	elseif tp == 'Entity' or tp == 'Player' or tp == 'NPC' or tp == 'NextBot' or tp == 'Vehicle' then
+		net.WriteUInt(TYPE_ENTITY, TYPES_BITS)
+		net.WriteEntity(val)
+	else
+		error('Unknown type - ' .. tp .. ' (index is ' .. (key or 'unknown') .. ')')
 	end
-
-	-- End of table
-	net.WriteType( nil )
-
 end
 
-function net.ReadTable()
+local tostring = tostring
+local CRC = util.CRC
+local crcdatabank = {}
 
-	local tab = {}
+local function writeTable(tab)
+	net.WriteUInt(table.Count(tab), 16)
 
-	while true do
+	for key, value in pairs(tab) do
+		local i = key
 
-		local k = net.ReadType()
-		if ( k == nil ) then return tab end
+		if type(i) == 'string' then
+			i = tonumber(i) or CRC(i)
+		end
 
-		tab[ k ] = net.ReadType()
+		net.WriteUInt(i, 32)
 
+		if type(value) == 'table' then
+			if value.r and value.g and value.b and value.a then
+				writeTyped(value, key)
+			else
+				net.WriteUInt(TYPE_TABLE, TYPES_BITS)
+				writeTable(value)
+			end
+		else
+			writeTyped(value, key)
+		end
 	end
-
 end
 
-net.WriteVars =
-{
-	[TYPE_NIL]			= function ( t, v )	net.WriteUInt( t, 8 )								end,
-	[TYPE_STRING]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteString( v )		end,
-	[TYPE_NUMBER]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteDouble( v )		end,
-	[TYPE_TABLE]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteTable( v )			end,
-	[TYPE_BOOL]			= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteBool( v )			end,
-	[TYPE_ENTITY]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteEntity( v )		end,
-	[TYPE_VECTOR]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteVector( v )		end,
-	[TYPE_ANGLE]		= function ( t, v )	net.WriteUInt( t, 8 )	net.WriteAngle( v )			end,
-	[TYPE_COLOR]		= function ( t, v ) net.WriteUInt( t, 8 )	net.WriteColor( v )			end,
+do
+	local tobank = {
+		'ParentUID',
+		'self',
+		'UniqueID',
+		'part',
+		'ParentName',
+		'AimPartName',
+		'ClassName',
+		'owner',
+		'children',
+		'class',
+		'player_uid',
+		'uid',
+	}
 
+	for i, val in ipairs(tobank) do
+		crcdatabank[tostring(CRC(val))] = val
+	end
+end
+
+local readmeta = {
+	__index = function(self, key)
+		local val = rawget(self, key)
+		if val ~= nil then
+			return val
+		end
+
+		crcdatabank[key] = crcdatabank[key] or tostring(CRC(key))
+		return rawget(self, crcdatabank[key])
+	end
 }
 
-function net.WriteType( v )
-	local typeid = nil
+function readTable(tab)
+	local output = {}
+	setmetatable(output, readmeta)
+	local amount = net.ReadUInt(16)
 
-	if IsColor( v ) then
-		typeid = TYPE_COLOR
-	else
-		typeid = TypeID( v )
+	for i = 1, amount do
+		local i = tostring(net.ReadUInt(32))
+		local val = readTyped()
+
+		if CLIENT then
+			--i = pac.ExtractNetworkID(i) or crcdatabank[i] or (print('Unknown ID ' .. i) or i)
+			i = pac.ExtractNetworkID(i) or crcdatabank[i] or tonumber(i)
+		else
+			i = crcdatabank[i] or i
+		end
+
+		output[i] = val
 	end
 
-	local wv = net.WriteVars[ typeid ]
-	if ( wv ) then return wv( typeid, v ) end
-
-	error( "net.WriteType: Couldn't write " .. type( v ) .. " (type " .. typeid .. ")" )
-
+	return output
 end
-
-net.ReadVars =
-{
-	[TYPE_NIL]		= function ()	return end,
-	[TYPE_STRING]	= function ()	return net.ReadString() end,
-	[TYPE_NUMBER]	= function ()	return net.ReadDouble() end,
-	[TYPE_TABLE]	= function ()	return net.ReadTable() end,
-	[TYPE_BOOL]		= function ()	return net.ReadBool() end,
-	[TYPE_ENTITY]	= function ()	return net.ReadEntity() end,
-	[TYPE_VECTOR]	= function ()	return net.ReadVector() end,
-	[TYPE_ANGLE]	= function ()	return net.ReadAngle() end,
-	[TYPE_COLOR]	= function ()	return net.ReadColor() end,
-}
-
-function net.ReadType( typeid )
-
-	typeid = typeid or net.ReadUInt( 8 )
-
-	local rv = net.ReadVars[ typeid ]
-	if ( rv ) then return rv() end
-
-	error( "net.ReadType: Couldn't read type " .. typeid )
-end
-
-
-end
-
-
 
 function netx.SerializeTable(data)
 	local written1 = net.BytesWritten()
-	netx.WriteTable(data)
+	writeTable(data)
 	local written2 = net.BytesWritten()
-	if written2==65536 then return nil,"table too big" end
-	return written2-written1
+
+	if written2 >= 65536 then
+		return nil, "table too big"
+	end
+
+	return written2 - written1
 end
 
 function netx.DeserializeTable()
-	return netx.ReadTable()
+	return readTable()
 end
 
 return netx

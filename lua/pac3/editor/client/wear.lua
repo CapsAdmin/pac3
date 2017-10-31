@@ -48,7 +48,7 @@ do -- from server
 	function pace.WearPartFromServer(owner, part_data, data)
 		pac.dprint("received outfit %q from %s with %i number of children to set on %s", part_data.self.Name or "", tostring(owner), table.Count(part_data.children), part_data.self.OwnerName or "")
 
-		if pace.CallHook("WearPartFromServer",owner, part_data, data)==false then return end
+		if pace.CallHook("WearPartFromServer", owner, part_data, data) == false then return end
 
 		local part = pac.GetPartFromUniqueID(data.player_uid, part_data.self.UniqueID)
 
@@ -100,6 +100,7 @@ end
 do
 	function pace.HandleReceivedData(data)
 		local T = type(data.part)
+
 		if T == "table" then
 			pace.WearPartFromServer(data.owner, data.part, data)
 		elseif T ==  "string" then
@@ -110,32 +111,21 @@ do
 	end
 end
 
-
 net.Receive("pac_submit", function()
-	local data = pace.net.DeserializeTable()
-
-	pace.HandleReceivedData(data)
+	pace.HandleReceivedData(pace.net.DeserializeTable())
 end)
-
-
-
 
 function pace.Notify(allowed, reason, name)
 	 if allowed then
 		pac.Message("Your part " .. name .. " has been applied.")
 	else
-		chat.AddText(Color(255,255,0), "[PAC3] ", Color(255,0,0), reason)
+		chat.AddText(Color(255, 255, 0), "[PAC3] ", Color(255, 0, 0), reason)
 	end
 end
 
 net.Receive("pac_submit_acknowledged", function(umr)
-	local allowed = net.ReadBool()
-	local reason = net.ReadString()
-	local name = net.ReadString()
-
-	pace.Notify(allowed, reason, name)
+	pace.Notify(net.ReadBool(), net.ReadString(), net.ReadString())
 end)
-
 
 do
 	local t=0

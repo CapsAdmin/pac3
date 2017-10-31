@@ -250,11 +250,13 @@ function pace.SubmitPartNotify(data)
 
 	if data.owner:IsPlayer() then
 		if allowed == "queue" then return end
+
 		net.Start("pac_submit_acknowledged")
 			net.WriteBool(allowed)
 			net.WriteString(reason or "")
 			net.WriteString(data.part.self.Name or "no name")
 		net.Send(data.owner)
+
 		hook.Run("PACSubmitAcknowledged", data.owner, util.tobool(allowed), reason or "", data.part.self.Name or "no name", data)
 	end
 end

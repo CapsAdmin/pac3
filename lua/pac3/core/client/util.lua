@@ -474,6 +474,21 @@ do -- get set and editor vars
 	pac.GroupOrder = pac.GroupOrder or {}
 	pac.PropertyUserdata = pac.PropertyUserdata or {}
 	pac.PropertyUserdata['base'] = pac.PropertyUserdata['base'] or {}
+	pac.NetworkDictionary = pac.NetworkDictionary or {}
+	pac.NetworkDictionaryBackward = pac.NetworkDictionaryBackward or {}
+
+	function pac.PrecacheNetwork(key)
+		if pac.NetworkDictionaryBackward[key] then return pac.NetworkDictionaryBackward[key] end
+
+		local crc = tostring(util.CRC(key))
+		pac.NetworkDictionary[crc] = key
+		pac.NetworkDictionaryBackward[key] = crc
+		return crc
+	end
+
+	function pac.ExtractNetworkID(crc)
+		return pac.NetworkDictionary[crc]
+	end
 
 	local function insert_key(tbl, key)
 		for _, k in ipairs(tbl) do
@@ -522,6 +537,8 @@ do -- get set and editor vars
 	end
 
 	function pac.GetSet(tbl, key, def, udata)
+		pac.PrecacheNetwork(key)
+
 		pac.VariableOrder[tbl.ClassName] = pac.VariableOrder[tbl.ClassName] or {}
 		insert_key(pac.VariableOrder[tbl.ClassName], key)
 
