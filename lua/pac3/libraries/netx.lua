@@ -99,7 +99,7 @@ local function writeTable(tab)
 		local i = key
 
 		if type(i) == 'string' then
-			i = tonumber(i) or CRC(i)
+			i = tonumber(i) or tonumber(CRC(i))
 		end
 
 		net.WriteUInt(i, 32)
@@ -156,14 +156,15 @@ function readTable(tab)
 	local amount = net.ReadUInt(16)
 
 	for i = 1, amount do
-		local i = tostring(net.ReadUInt(32))
+		local i2 = net.ReadUInt(32)
+		local i = tostring(i2)
 		local val = readTyped()
 
 		if CLIENT then
 			--i = pac.ExtractNetworkID(i) or crcdatabank[i] or (print('Unknown ID ' .. i) or i)
-			i = pac.ExtractNetworkID(i) or crcdatabank[i] or tonumber(i)
+			i = pac.ExtractNetworkID(i) or crcdatabank[i] or i2
 		else
-			i = crcdatabank[i] or i
+			i = crcdatabank[i] or i2
 		end
 
 		output[i] = val
