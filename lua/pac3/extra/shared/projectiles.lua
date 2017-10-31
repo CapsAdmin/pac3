@@ -390,7 +390,7 @@ if SERVER then
 		local ang = net.ReadAngle()
 		local part = net.ReadTable()
 
-		local radius_limit = 600
+		local radius_limit = 2000
 
 		if pos:Distance(ply:EyePos()) > radius_limit * ply:GetModelScale() then
 			local ok = false
