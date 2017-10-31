@@ -590,7 +590,6 @@ do
 			function ent.RenderOverride()
 				-- if the draw call is not from pac don't bother
 				if not ent.pac_drawing_model then
-					ent:DrawModel()
 					return
 				end
 
