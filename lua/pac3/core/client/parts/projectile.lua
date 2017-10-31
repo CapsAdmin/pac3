@@ -165,7 +165,7 @@ function PART:Shoot(pos, ang)
 			return
 		end
 
-		timer.Simple(self.Delay, function()
+		local function spawn()
 
 			if not self:IsValid() then return end
 
@@ -263,7 +263,13 @@ function PART:Shoot(pos, ang)
 					end
 				end)
 			end
-		end)
+		end
+
+		if self.Delay == 0 then
+			spawn()
+		else
+			timer.Simple(self.Delay, spawn)
+		end
 	end
 end
 

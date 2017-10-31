@@ -401,8 +401,7 @@ if SERVER then
 			end
 		end
 
-		timer.Simple(part.Delay, function()
-
+		local function spawn()
 			if not ply:IsValid() then return end
 
 			local ent = ents.Create("pac_projectile")
@@ -431,6 +430,12 @@ if SERVER then
 				net.WriteInt(ent:EntIndex(), 16)
 				net.WriteString(part.UniqueID)
 			net.Broadcast()
-		end)
+		end
+
+		if part.Delay == 0 then
+			spawn()
+		else
+			timer.Simple(part.Delay, spawn)
+		end
 	end)
 end
