@@ -1,6 +1,5 @@
 local CurTime = CurTime
 local ParticleEffect = ParticleEffect
-local ParticleEffectAttach = ParticleEffectAttach
 
 local PART = {}
 
