@@ -35,17 +35,19 @@ function PART:Initialize()
 		local found = {}
 
 		for file_name in pairs(pac_loaded_particle_effects) do
-			local data = file.Read("particles/"..file_name, "GAME", "b")
-			if data then
-				if #data < 10000000 then
+			local ok, err = pcall(function()
+				local data = file.Read("particles/"..file_name, "GAME", "b")
+				if data then
 					for str in data:gmatch("\3%c([%a_]+)%c") do
 						if #str > 1 then
 							found[str] = str
 						end
 					end
-				else
-					pac.Message(Color(255, 50, 50), "refusing to load the particle file " .. file_name .. " because it's too big")
 				end
+			end)
+
+			if not ok then
+				pac.Message(Color(255, 50, 50), "unable to parse particle file " .. file_name .. ": " .. err)
 			end
 		end
 
