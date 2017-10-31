@@ -59,12 +59,14 @@ function PART:GetTarget(physical)
 	end
 
 	if physical then
-		local found = NULL
+		local found = self
 
-		repeat
-			if not parent.Parent:IsValid() then break end
-			found = parent.Parent
-		until not parent.cached_pos:IsZero()
+		if found.cached_pos:IsZero() then
+			repeat
+				if not found.Parent:IsValid() then break end
+				found = found.Parent
+			until not found.cached_pos:IsZero()
+		end
 
 		return found
 	end
