@@ -111,6 +111,7 @@ local function create_material_icon(path)
 
 			local old = icon.OnCursorEntered
 			function icon:OnCursorEntered(...)
+				do return end
 				pnl:SetModel("models/pac/default.mdl")
 				pnl:SetCamPos(Vector(1,1,1) * 600)
 				pnl.mouseover = true
@@ -139,6 +140,21 @@ local function create_material_icon(path)
 
 			setup()
 
+			function pnl:Think()
+
+				local x, y = self:ScreenToLocal(gui.MouseX(), gui.MouseY())
+				x = x / self:GetWide()
+				y = y / self:GetTall()
+
+				x = x * 50
+				y = y * 50
+
+				x = x - 25
+				y = y - 55
+
+				self.light_pos = Vector(y, x, 30)
+			end
+
 			function pnl:Paint( w, h )
 				local x, y = self:LocalToScreen( 0, 0 )
 
@@ -154,9 +170,16 @@ local function create_material_icon(path)
 				cam.Start3D( self.vCamPos, ang, self.fFOV, x, y, w, h, 5, self.FarZ )
 
 				render.SuppressEngineLighting( true )
-				render.ResetModelLighting( 1, 1, 1 )
+
+
 				render.SetColorModulation( 1, 1, 1 )
 				render.SetBlend(1)
+
+				render.SetLocalModelLights({{
+					color = Vector(1,1,1),
+					pos = self.Entity:GetPos() + self.light_pos,
+				}})
+
 
 				self:DrawModel()
 
