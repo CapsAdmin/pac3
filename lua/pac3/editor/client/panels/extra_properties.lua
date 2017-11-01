@@ -199,6 +199,7 @@ do -- model
 			self:SetValue(path)
 			self.OnValueChanged(path)
 			pace.PopulateProperties(pace.current_part)
+			pace.model_browser:SetVisible(false)
 
 		end, "models")
 	end
@@ -212,14 +213,14 @@ do -- materials and textures
 	PANEL_MATERIAL.ClassName = "properties_material"
 	PANEL_MATERIAL.Base = "pace_properties_base_type"
 
-	function PANEL_MATERIAL:SpecialCallback()
+	function PANEL_MATERIAL:SpecialCallback(key)
 		pace.ResourceBrowser(function(path)
 			if self:IsValid() then
 				path = path:match("materials/(.+)%.vmt")
 				self:SetValue(path)
 				self.OnValueChanged(path)
 			end
-		end, "materials")
+		end, "materials", key)
 	end
 
 	function PANEL_MATERIAL:SpecialCallback2()

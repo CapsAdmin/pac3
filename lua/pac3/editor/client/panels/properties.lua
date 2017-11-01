@@ -1115,7 +1115,7 @@ do -- vector
 					btn:SetSize(16, 16)
 					btn:Dock(RIGHT)
 					btn:SetText("...")
-					btn.DoClick = function() self:SpecialCallback() end
+					btn.DoClick = function() self:SpecialCallback(self.CurrentKey) end
 					btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
 
 					if type == "color" or type == "color2" then

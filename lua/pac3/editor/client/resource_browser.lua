@@ -6,9 +6,7 @@ local function install_click(icon, path, pattern, on_menu)
 	local old = icon.OnMouseReleased
 	icon.OnMouseReleased = function(_, code)
 		if code == MOUSE_LEFT then
-			if pace.model_browser_callback(path, "GAME") ~= false then
-				pace.model_browser:SetVisible(false)
-			end
+			pace.model_browser_callback(path, "GAME")
 		elseif code == MOUSE_RIGHT then
 			local menu = DermaMenu()
 			menu:AddOption(L"copy path", function()
@@ -76,7 +74,17 @@ surface.CreateFont("pace_resource_browser_fixed_width", {
 	font = "dejavu sans mono",
 })
 
-local function create_material_icon(path)
+local function create_material_icon(path, grid_panel)
+
+	if #pace.model_browser_browse_types_tbl == 1 and file.Read(path, "GAME") then
+		local shader =  file.Read(path, "GAME"):match("^(.-){"):Trim():gsub("%p", ""):lower()
+		if not (shader == "vertexlitgeneric" or shader == "unlitgeneric" or shader == "eyerefract" or shader == "refract") then
+			return
+		end
+	end
+
+	local mat_path = path:match("materials/(.+)%.vmt")
+
 	local icon = vgui.Create("DButton")
 	icon:SetTooltip(path)
 	icon:SetSize(128,128)
@@ -98,7 +106,6 @@ local function create_material_icon(path)
 	end
 
 	function icon:SetupMaterial()
-		local mat_path = path:match("materials/(.+)%.vmt")
 		local mat = Material(mat_path)
 		local shader = mat:GetShader():lower()
 
@@ -108,38 +115,35 @@ local function create_material_icon(path)
 			pnl:Dock(FILL)
 			pnl:SetLookAt( Vector( 0, 0, 0 ) )
 			pnl:SetFOV(1)
+			pnl:SetModel("models/hunter/plates/plate1x1.mdl")
+			pnl:SetCamPos(Vector(1,0,1) * 2100)
+			pnl.mouseover = false
+
+			local m = Matrix()
+			m:Scale(Vector(1.375,1,0.01))
+			pnl.Entity:EnableMatrix("RenderMultiply", m)
+
+			--[[
 
 			local old = icon.OnCursorEntered
 			function icon:OnCursorEntered(...)
-				do return end
-				pnl:SetModel("models/pac/default.mdl")
-				pnl:SetCamPos(Vector(1,1,1) * 600)
-				pnl.mouseover = true
-
-				pnl.Entity:DisableMatrix("RenderMultiply")
+				if pace.current_part:IsValid() and pace.current_part.Materialm then
+					pace.resource_browser_old_mat = pace.resource_browser_old_mat or pace.current_part.Materialm
+					pace.current_part.Materialm = mat
+				end
 
 				old(self, ...)
 			end
 
-			local function setup()
-				pnl:SetModel("models/hunter/plates/plate1x1.mdl")
-				pnl:SetCamPos(Vector(1,0,1) * 2100)
-				pnl.mouseover = false
-
-				local m = Matrix()
-				m:Scale(Vector(1.375,1,0.01))
-				pnl.Entity:EnableMatrix("RenderMultiply", m)
-			end
 
 			local old = icon.OnCursorExited
 			function icon:OnCursorExited(...)
-				setup()
-
+				if pace.current_part:IsValid() and pace.current_part.Materialm then
+					pace.current_part.Materialm = pace.resource_browser_old_mat
+				end
 				old(self, ...)
 			end
-
-			setup()
-
+]]
 			function pnl:Think()
 
 				local x, y = self:ScreenToLocal(gui.MouseX(), gui.MouseY())
@@ -256,6 +260,8 @@ local function create_material_icon(path)
 		end)
 	end)
 
+	grid_panel:Add(icon)
+
 	return icon
 end
 
@@ -295,18 +301,6 @@ do
 		self.IconList:SetBaseSize( 64 )
 		self.IconList:SetSelectionCanvas( true )
 		self.IconList:Dock( TOP )
-do return end
-		local old = self.IconList.PerformLayout
-		self.IconList.PerformLayout = function(self)
-			timer.Create("icon_layout", 0.1, 1, function()
-				if self:IsValid() then
-					old(self)
-					for i, v in ipairs(self:GetChildren()) do
-						v.ready_to_draw = true
-					end
-				end
-			end)
-		end
 	end
 
 	function PANEL:Add(pnl)
@@ -330,7 +324,7 @@ end
 
 local show_sound_duration = CreateClientConVar("pac_resource_browser_sound_duration", "0", true)
 
-function pace.ResourceBrowser(callback, browse_types_str)
+function pace.ResourceBrowser(callback, browse_types_str, part_key)
 	browse_types_str = browse_types_str or "models;materials;textures;sound"
 	local browse_types = browse_types_str:Split(";")
 
@@ -352,6 +346,8 @@ function pace.ResourceBrowser(callback, browse_types_str)
 
 	pace.model_browser_callback = callback or print
 	pace.model_browser_browse_types = browse_types_str
+	pace.model_browser_browse_types_tbl = browse_types
+	pace.model_browser_part_key = part_key
 
 	if pace.model_browser and pace.model_browser:IsValid() then
 		pace.model_browser:SetVisible(true)
@@ -361,8 +357,8 @@ function pace.ResourceBrowser(callback, browse_types_str)
 
 	local frame = vgui.Create("DFrame")
 	frame.title = L"resource browser" .. " - " .. (browse_types_str:gsub(";", " "))
-	frame:SetSize(ScrW()/1.5, ScrH()/1.5)
-	frame:Center()
+	frame:SetSize(ScrW()/3, ScrH())
+	frame:SetPos(ScrW() - frame:GetWide(), 0)
 	frame:SetDeleteOnClose(false)
 	frame:SetSizable(true)
 	pace.model_browser = frame
@@ -516,9 +512,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 				sound_list:ClearSelection()
 				sound_list:SelectItem(line)
 			else
-				if pace.model_browser_callback(path, pathid) ~= false then
-					pace.model_browser:SetVisible(false)
-				end
+				pace.model_browser_callback(path, pathid)
 			end
 		end
 
@@ -562,11 +556,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 				if material_view then
 					for _, material_name in ipairs(materials) do
 						local path = "materials/" .. material_name .. ".vmt"
-						local icon = create_material_icon(path)
-
-						if icon then
-							viewPanel:Add(icon)
-						end
+						create_material_icon(path, viewPanel)
 					end
 				end
 
@@ -720,11 +710,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 
 							if v:find("%.vmt$") then
 								if material_view then
-									local icon = create_material_icon(path)
-
-									if icon then
-										viewPanel:Add(icon)
-									end
+									create_material_icon(path, viewPanel)
 								end
 							elseif texture_view then
 								viewPanel:Add(create_texture_icon(path))
@@ -956,7 +942,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 			local ok, reason = func()
 
 			if ok == false then
-				self:Cancel()
+				self:Cancel(reason)
 				return
 			end
 			self.delay_functions[func] = nil
@@ -1017,18 +1003,15 @@ function pace.ResourceBrowser(callback, browse_types_str)
 			self.propPanel:Clear()
 
 			self:StartSearch(self:GetValue(), "materials/", {".vmt", ".vtf"}, "GAME", function(path, pathid)
-				if count >= 500 then return false, "too many results (" .. count .. ")" end
-				count = count + 1
+				if count >= 750 then return false, "too many results (" .. count .. ")" end
 				if path:EndsWith(".vmt") then
 					if material_view then
-						local icon = create_material_icon(path)
-
-						if icon then
-							self.propPanel:Add(icon)
-						end
+						count = count + 1
+						create_material_icon(path, self.propPanel)
 					end
 				elseif texture_view then
 					self.propPanel:Add(create_texture_icon(path))
+					count = count + 1
 				end
 			end)
 		end
