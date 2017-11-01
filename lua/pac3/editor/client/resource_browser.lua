@@ -219,6 +219,8 @@ do
 	vgui.Register( "pac_ResourceBrowser_ContentContainer", PANEL, "DScrollPanel" )
 end
 
+local show_sound_duration = CreateClientConVar("pac_resource_browser_sound_duration", "0", true)
+
 function pace.ResourceBrowser(callback, browse_types_str)
 	browse_types_str = browse_types_str or "models;materials;textures;sound"
 	local browse_types = browse_types_str:Split(";")
@@ -254,19 +256,47 @@ function pace.ResourceBrowser(callback, browse_types_str)
 	frame:Center()
 	frame:SetDeleteOnClose(false)
 	frame:SetSizable(true)
+	pace.model_browser = frame
+	update_title()
 
 	function frame:OnClose()
 		self:SetVisible(false)
 	end
 
-	--[[
-
 	local menu_bar = vgui.Create("DMenuBar", frame)
 	menu_bar:Dock(TOP)
-	menu_bar:AddMenu("file")
-	local view_menu = menu_bar:AddMenu("view")
-	view_menu:SetDeleteSelf(false)
+	local file_menu = menu_bar:AddMenu(L"file")
+	file_menu:AddOption(L"clear search cache", function()
+		Derma_Query(
+			L"Are you sure you want to clear? A good time to clear is when there is a big TF2 update or you've decided to permanently unmount some games to avoid them showing up in the search results.",
+			L"clear search cache",
 
+			L"clear", function()
+				file.Delete("pac3_cache/pac_resource_browser_index.txt")
+				pac.resource_browser_cache = {}
+			end,
+
+			L"cancel", function()
+
+			end
+		)
+	end):SetImage(pace.MiscIcons.clear)
+
+	file_menu:AddOption(L"build search cache", function()
+		self:StartSearch("models/", {}, "GAME", function(path, pathid) end)
+		self:StartSearch("sound/", {}, "GAME", function(path, pathid) end)
+		self:StartSearch("materials/", {}, "GAME", function(path, pathid) end)
+	end)
+
+
+	file_menu:AddOption(L"exit", function() frame:SetVisible(false) end):SetImage(pace.MiscIcons.exit)
+
+	local view_menu = menu_bar:AddMenu(L"view")
+	view_menu:SetDeleteSelf(false)
+	view_menu:AddCVar(L"show sound duration (slower search)", "pac_resource_browser_sound_duration", "1", "0")
+
+
+--[[
 	local tool_bar = vgui.Create("DPanel", frame)
 	tool_bar:Dock(TOP)
 
@@ -298,12 +328,19 @@ function pace.ResourceBrowser(callback, browse_types_str)
 		end
 
 		frame.PropPanel.selected = node.propPanel
+		frame.dir = node.dir
 
 		frame.PropPanel.selected:Dock(FILL)
 		frame.PropPanel.selected:SetVisible(true)
 		frame.PropPanel:InvalidateParent()
 
 		divider:SetRight(frame.PropPanel.selected)
+
+		if node.dir then
+			update_title("browsing " .. node.dir .. "/*")
+		else
+			update_title()
+		end
 	end
 
 	local root_node = tree:AddNode("content", "icon16/folder_database.png")
@@ -334,9 +371,78 @@ function pace.ResourceBrowser(callback, browse_types_str)
 	sound_list:SetMultiSelect(false)
 	sound_list:SetVisible(false)
 
+	function sound_list:AddSound(path, pathid)
+		local sound_path = path:match("sound/(.+)")
+
+		local duration = show_sound_duration:GetBool() and SoundDuration(sound_path) or -1
+
+		local line = sound_list:AddLine(path, file.Size(path, pathid), duration)
+
+		local play = vgui.Create("DImageButton", line)
+		play:SetImage("icon16/control_play.png")
+		play:SizeToContents()
+		play:Dock(LEFT)
+
+		function play:Start()
+			for _, v in pairs(sound_list:GetLines()) do
+				v.play:Stop()
+			end
+
+			self:SetImage("icon16/control_stop.png")
+
+			local snd = CreateSound(LocalPlayer(), sound_path)
+			snd:Play()
+			pace.resource_browser_snd = snd
+
+			timer.Create("pac_resource_browser_play", duration or SoundDuration(sound_path), 1, function()
+				if self:IsValid() then
+					self:Stop()
+				end
+			end)
+		end
+
+		function play:Stop()
+			self:SetImage("icon16/control_play.png")
+
+			if pace.resource_browser_snd then
+				pace.resource_browser_snd:Stop()
+				timer.Remove("pac_resource_browser_play")
+			end
+		end
+
+		line.OnMousePressed = function(_, code)
+			if code == MOUSE_RIGHT then
+				play:Start()
+				sound_list:ClearSelection()
+				sound_list:SelectItem(line)
+			else
+				if pace.model_browser_callback(path, pathid) ~= false then
+					pace.model_browser:SetVisible(false)
+				end
+			end
+		end
+
+		local label = line.Columns[1]
+		label:SetTextInset(play:GetWide() + 5, 0)
+
+		play.DoClick = function()
+			if timer.Exists("pac_resource_browser_play") and sound_list:GetLines()[sound_list:GetSelectedLine()] == line then
+				play:Stop()
+				return
+			end
+			sound_list:ClearSelection()
+			sound_list:SelectItem(line)
+
+			play:Start()
+		end
+
+		line.play = play
+	end
+
 
 	if texture_view or material_view then
 		local node = root_node:AddNode("materials", "icon16/folder_database.png")
+		node.dir = "materials"
 
 		local viewPanel = vgui.Create("pac_ResourceBrowser_ContentContainer", frame.PropPanel)
 		viewPanel:DockMargin(5, 0, 0, 0)
@@ -344,6 +450,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 
 		for list_name, materials in pairs(pace.Materials) do
 			local list = node:AddNode(list_name)
+			list.dir = "materials"
 			list.propPanel = viewPanel
 
 			list.OnNodeSelected = function()
@@ -402,7 +509,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 		local spawnlists = root_node:AddFolder("Spawnlists")
 		spawnlists.info = {}
 		spawnlists.info.id = 0
-
+		root_node.dir = "models"
 		local function hasGame (name)
 			for k, v in pairs(engine.GetGames()) do
 				if v.folder == name and v.mounted then
@@ -418,6 +525,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 					local node = parentNode:AddNode(v.name, v.icon)
 					node:SetExpanded(true)
 					node.info = v
+					node.dir = "models"
 
 					node.propPanel = vgui.Create("pac_ResourceBrowser_ContentContainer", frame.PropPanel)
 					node.propPanel:DockMargin(5, 0, 0, 0)
@@ -456,6 +564,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 			local function on_select(self, node)
 				if viewPanel and viewPanel.currentNode and viewPanel.currentNode == node then return end
 
+				node.dir = self.dir
 				sound_list:Clear()
 				viewPanel:Clear(true)
 				viewPanel.currentNode = node
@@ -525,71 +634,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 					elseif self.dir == "sound" then
 						for k, v in pairs(files) do
 							local path = node:GetFolder() ..  "/" .. v
-
-							local sound_path = path:match("sound/(.+)")
-							local duration = SoundDuration(sound_path)
-
-							local line = sound_list:AddLine(path, file.Size(path, pathid), duration)
-
-							local play = vgui.Create("DImageButton", line)
-							play:SetImage("icon16/control_play.png")
-							play:SizeToContents()
-							play:Dock(LEFT)
-
-							function play:Start()
-								for _, v in pairs(sound_list:GetLines()) do
-									v.play:Stop()
-								end
-
-								self:SetImage("icon16/control_stop.png")
-
-								local snd = CreateSound(LocalPlayer(), sound_path)
-								snd:Play()
-								pace.resource_browser_snd = snd
-
-								timer.Create("pac_resource_browser_play", duration, 1, function()
-									if self:IsValid() then
-										self:Stop()
-									end
-								end)
-							end
-
-							function play:Stop()
-								self:SetImage("icon16/control_play.png")
-
-								if pace.resource_browser_snd then
-									pace.resource_browser_snd:Stop()
-									timer.Remove("pac_resource_browser_play")
-								end
-							end
-
-							line.OnMousePressed = function(_, code)
-								if code == MOUSE_RIGHT then
-									play:Start()
-									sound_list:ClearSelection()
-									sound_list:SelectItem(line)
-								else
-									if pace.model_browser_callback(path, pathid) ~= false then
-										pace.model_browser:SetVisible(false)
-									end
-								end
-							end
-
-							local label = line.Columns[1]
-							label:SetTextInset(play:GetWide() + 5, 0)
-
-							play.DoClick = function()
-								if timer.Exists("pac_resource_browser_play") and sound_list:GetLines()[sound_list:GetSelectedLine()] == line then
-									play:Stop()
-									return
-								end
-								sound_list:ClearSelection()
-								sound_list:SelectItem(line)
-
-								play:Start()
-							end
-
-							line.play = play
+							sound_list:AddSound(path, pathid)
 						end
 					end
 
@@ -686,101 +731,162 @@ function pace.ResourceBrowser(callback, browse_types_str)
 		end
 	end
 
-	if table.HasValue(browse_types, "models") then
-		local view = vgui.Create("pac_ResourceBrowser_ContentContainer", frame.PropPanel)
-		view:DockMargin(5, 0, 0, 0)
-		view:SetVisible(false)
+	local model_view = vgui.Create("pac_ResourceBrowser_ContentContainer", frame.PropPanel)
+	model_view:DockMargin(5, 0, 0, 0)
+	model_view:SetVisible(false)
 
-		local search = vgui.Create("DTextEntry", left_panel)
-		search:Dock(TOP)
-		search:SetValue("Search...")
-		search:SetTooltip("Press enter to search")
-		search.propPanel = view
-		search.delay_functions = {}
+	local search = vgui.Create("DTextEntry", left_panel)
+	search:Dock(TOP)
+	search:SetTooltip("Press enter to search")
+	search.propPanel = model_view
+	search.model_view = model_view
+	search.delay_functions = {}
 
-		search._OnGetFocus = search.OnGetFocus
+	do
+		local old = search.OnGetFocus
 		function search:OnGetFocus ()
-			if self:GetValue() == "Search..." then
+			if self:GetValue() == self.default_text then
 				self:SetValue("")
 			end
-			search:_OnGetFocus()
+			old(self)
 		end
+	end
 
-		search._OnLoseFocus = search.OnLoseFocus
+	do
+		local old = search.OnLoseFocus
 		function search:OnLoseFocus ()
 			if self:GetValue() == "" then
-				self:SetText("Search...")
+				self:SetValue(self.default_text)
 			end
-			search:_OnLoseFocus()
+			old(self)
+		end
+	end
+
+	if file.Exists("pac3_cache/pac_resource_browser_index.txt", "DATA") then
+		pac.resource_browser_cache = util.JSONToTable(file.Read("pac3_cache/pac_resource_browser_index.txt", "DATA")) or {}
+	else
+		pac.resource_browser_cache = {}
+	end
+
+	local function find(path, pathid)
+		local key = path .. pathid
+
+		if pac.resource_browser_cache[key] then
+			return unpack(pac.resource_browser_cache[key])
 		end
 
-		pac.resource_browser_cache = pac.resource_browser_cache or {}
+		local files, folders = file.Find(path, pathid)
 
-		local function find(path, how)
-			local key = path .. how
+		pac.resource_browser_cache[key] = {files, folders}
 
-			if pac.resource_browser_cache[key] then
-				return unpack(pac.resource_browser_cache[key])
-			end
+		return files, folders
+	end
 
-			local files, folders = file.Find(path, how)
+	function search:StartSearch(search_text, folder, extensions, pathid, cb)
+		local files, folders = find(folder .. "*", pathid)
 
-			pac.resource_browser_cache[key] = {files, folders}
+		self.searched = true
 
-			return files, folders
-		end
-
-		function search:StartSearch(folder, extension, path, cb)
-			local files, folders = find(folder .. "*", path)
-
+		if files then
 			update_title(table.Count(self.delay_functions) .. " directories left - " .. folder .. "*")
 
 			for k, v in ipairs(files) do
 				local file = folder .. v
-				if v:EndsWith(extension) and file:find(self:GetText(), nil, true) then
-					cb(file)
+				for _, ext in ipairs(extensions) do
+					if v:EndsWith(ext) and file:find(search_text, nil, true) then
+						cb(file, pathid)
+						break
+					end
 				end
 			end
 
 			for k, v in ipairs(folders) do
-				self:Delay(function()
-					self:StartSearch(folder .. v .. "/", extension, path, cb)
-				end)
-			end
-		end
-
-		function search:Delay(func)
-			self.delay_functions[func] = func
-		end
-
-		function search:Think()
-			local i = 0
-			for key, func in pairs(self.delay_functions) do
-				i = i + 1
-				func()
-				self.delay_functions[func] = nil
-				if i > 50 then break end
-			end
-		end
-
-		function search:OnEnter()
-			if self:GetValue() == "" then return end
-
-			self.propPanel:Clear()
-
-			self:StartSearch("models/", ".mdl", "GAME", function(file)
-				if not IsUselessModel(file) then
-					self.propPanel:Add(create_model_icon(file))
+				local func = function()
+					self:StartSearch(search_text, folder .. v .. "/", extensions, pathid, cb)
 				end
-			end)
-
-			tree:OnNodeSelected(self)
+				self.delay_functions[func] = func
+			end
 		end
 	end
 
-	frame:MakePopup()
+	function search:Think()
+		local i = 0
+		for key, func in pairs(self.delay_functions) do
+			i = i + 1
+			func()
+			self.delay_functions[func] = nil
+			if i > 30 then break end
+		end
 
-	pace.model_browser = frame
+		if i == 0 and self.searched then
+			update_title()
+			self.searched = false
+			file.Write("pac3_cache/pac_resource_browser_index.txt", util.TableToJSON(pac.resource_browser_cache))
+		end
+
+		if frame.dir then
+			if not self:IsEnabled() then
+				self:SetEnabled(true)
+			end
+			local change = false
+			if self:GetValue() == "" or self:GetValue() == self.default_text then
+				change = true
+			end
+			self.default_text = L("search " .. frame.dir .. "/*")
+			if change then
+				self:SetValue(self.default_text)
+			end
+		else
+			self:SetValue("")
+			if self:IsEnabled() then
+				self:SetEnabled(false)
+			end
+		end
+	end
+
+	function search:OnEnter()
+		if self:GetValue() == "" then return end
+
+		if frame.dir == "models" then
+			self.propPanel = self.model_view
+			self.propPanel:Clear()
+			local count = 0
+			self:StartSearch(self:GetValue(), "models/", {".mdl"}, "GAME", function(path, pathid)
+				if count > 500 then return end
+				count = count + 1
+				if not IsUselessModel(path) then
+					self.propPanel:Add(create_model_icon(path))
+				end
+			end)
+		elseif frame.dir == "sound" then
+			self.propPanel = sound_list
+			self.propPanel:Clear()
+			self:StartSearch(self:GetValue(), "sound/", {".wav", ".mp3", ".ogg"}, "GAME", function(path, pathid)
+				sound_list:AddSound(path, pathid)
+			end)
+		elseif frame.dir == "materials" then
+			self.propPanel = self.model_view
+			self.propPanel:Clear()
+			self:StartSearch(self:GetValue(), "materials/", {".vmt", ".vtf"}, "GAME", function(path, pathid)
+				if path:EndsWith(".vmt") then
+					if material_view then
+						local icon = create_material_icon(path)
+
+						if icon then
+							self.propPanel:Add(icon)
+						end
+					end
+				elseif texture_view then
+					self.propPanel:Add(create_texture_icon(path))
+				end
+			end)
+		end
+
+		self.dir = frame.dir
+		tree:OnNodeSelected(self)
+	end
+
+	frame:MakePopup()
 end
 
 if pace.model_browser and pace.model_browser:IsValid() then
