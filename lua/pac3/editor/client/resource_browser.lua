@@ -146,11 +146,11 @@ local function create_material_icon(path, grid_panel)
 			pnl:SetLookAt( Vector( 0, 0, 0 ) )
 			pnl:SetFOV(1)
 			pnl:SetModel("models/hunter/plates/plate1x1.mdl")
-			pnl:SetCamPos(Vector(1,0,1) * 2100)
+			pnl:SetCamPos(Vector(1,0,1) * 1900)
 			pnl.mouseover = false
 
 			local m = Matrix()
-			m:Scale(Vector(1.375,1,0.01))
+			m:Scale(Vector(1.42,1,0.01))
 			pnl.Entity:EnableMatrix("RenderMultiply", m)
 
 			--[[
@@ -192,16 +192,7 @@ local function create_material_icon(path, grid_panel)
 			function pnl:Paint( w, h )
 				local x, y = self:LocalToScreen( 0, 0 )
 
-				local ang = self.aLookAngle
-				if ( !ang ) then
-					ang = ( self.vLookatPos - self.vCamPos ):Angle()
-				end
-
-				if self.mouseover then
-					self.Entity:SetAngles( Angle( 0, RealTime() * 10 % 360, 0 ) )
-				end
-
-				cam.Start3D( self.vCamPos, ang, self.fFOV, x, y, w, h, 5, self.FarZ )
+				cam.Start3D( self.vCamPos, Angle(45, 180, 0), self.fFOV, x, y, w, h, 5, self.FarZ )
 
 				render.SuppressEngineLighting( true )
 
@@ -327,6 +318,8 @@ do
 	function PANEL:Init()
 		self:SetPaintBackground( false )
 
+		self.zoom = ScrW()/15
+
 		self.IconList = vgui.Create( "DPanel", self:GetCanvas())
 		self.IconList:Dock( TOP )
 
@@ -340,24 +333,22 @@ do
 			for _, child in ipairs(self:GetChildren()) do
 				height = math.max(height, child:GetTall())
 
-				if x + child:GetWide() > max_width - child:GetWide() then
-					total_width = x + child:GetWide()
+				if x + child:GetWide() > max_width then
+					total_width = x - max_width
 					x = 0
 					y = y + height
 					height = 0
-				else
-					x = x + child:GetWide()
 				end
 
 				child:SetPos(x, y)
+
+				x = x + child:GetWide()
 			end
 
 			if total_width then
-				-- center the tiles
-				local offset = (max_width - total_width)/2
 				for _, child in ipairs(self:GetChildren()) do
 					local x, y = child:GetPos()
-					child:SetPos(x + offset, y)
+					child:SetPos(x - total_width/2, y)
 				end
 			end
 
@@ -372,17 +363,18 @@ do
 		self:InvalidateLayout()
 	end
 
-	pace.resource_browser_zoom = 64
+	function PANEL:CalcZoom()
+		for i,v in ipairs(self.IconList:GetChildren()) do
+			v:SetSize(self.zoom, self.zoom)
+		end
+
+		self.IconList:InvalidateLayout()
+		self:InvalidateLayout()
+	end
 
 	function PANEL:OnMouseWheeled(delta)
 		if input.IsControlDown() then
-			pace.resource_browser_zoom = math.Clamp(pace.resource_browser_zoom + delta * 4, 16, 512)
-
-			for i,v in ipairs(self.IconList:GetChildren()) do
-				v:SetSize(pace.resource_browser_zoom, pace.resource_browser_zoom)
-			end
-
-			self.IconList:InvalidateLayout()
+			self.zoom = math.Clamp(self.zoom + delta * 4, 16, 512)
 			self:InvalidateLayout()
 			return
 		end
@@ -390,6 +382,7 @@ do
 	end
 
 	function PANEL:PerformLayout()
+		self:CalcZoom()
 		BaseClass.PerformLayout( self )
 	end
 
@@ -402,14 +395,13 @@ do
 	vgui.Register( "pac_ResourceBrowser_ContentContainer", PANEL, "DScrollPanel" )
 end
 
-local show_sound_duration = CreateClientConVar("pac_resource_browser_sound_duration", "0", true)
-
 function pace.ResourceBrowser(callback, browse_types_str, part_key)
 	browse_types_str = browse_types_str or "models;materials;textures;sound"
 	local browse_types = browse_types_str:Split(";")
 
 	local texture_view = false
 	local material_view = table.HasValue(browse_types, "materials")
+	local sound_view = table.HasValue(browse_types, "sound")
 
 	if table.RemoveByValue(browse_types, "textures") then
 		texture_view = true
@@ -437,7 +429,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 
 	local frame = vgui.Create("DFrame")
 	frame.title = L"resource browser" .. " - " .. (browse_types_str:gsub(";", " "))
-	frame:SetSize(ScrW()/3, ScrH())
+	frame:SetSize(ScrW()/2.75, ScrH())
 	frame:SetPos(ScrW() - frame:GetWide(), 0)
 	frame:SetDeleteOnClose(false)
 	frame:SetSizable(true)
@@ -519,8 +511,10 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		end
 	end
 
-	local root_node = tree:AddNode("content", "icon16/folder_database.png")
-	root_node:SetExpanded(true)
+	--local root_node = tree:AddNode("content", "icon16/folder_database.png")
+	--root_node:SetExpanded(true)
+
+	local root_node = tree
 
 	frame.PropPanel = vgui.Create("DPanel", frame)
 	frame.PropPanel:Dock(FILL)
@@ -531,54 +525,54 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 
 	divider = vgui.Create("DHorizontalDivider", frame)
 	divider:Dock(FILL)
-	divider:SetLeftWidth(175)
-	divider:SetLeftMin(175)
-	divider:SetRightMin(450)
+	divider:SetLeftWidth(140)
+	divider:SetLeftMin(0)
+	divider:SetRightMin(0)
 
 	divider:SetLeft(left_panel)
 	divider:SetRight(frame.PropPanel)
 
 
+	local sound_name_list = vgui.Create("DListView", frame.PropPanel)
+	sound_name_list:AddColumn(L"name")
+	sound_name_list:Dock(FILL)
+	sound_name_list:SetMultiSelect(false)
+	sound_name_list:SetVisible(false)
+
 	local sound_list = vgui.Create("DListView", frame.PropPanel)
 	sound_list:AddColumn(L"path")
 	sound_list:AddColumn(L"byte size")
-	sound_list:AddColumn(L"duration")
 	sound_list:Dock(FILL)
 	sound_list:SetMultiSelect(false)
 	sound_list:SetVisible(false)
 
-	function sound_list:AddSound(path, pathid)
-		local sound_path = path:match("sound/(.+)")
-
-		local duration = show_sound_duration:GetBool() and SoundDuration(sound_path) or -1
-
-		local line = sound_list:AddLine(path, file.Size(path, pathid), duration)
-
+	local function AddGeneric(self, sound, ...)
+		local line = self:AddLine(sound, ...)
 		local play = vgui.Create("DImageButton", line)
 		play:SetImage("icon16/control_play.png")
 		play:SizeToContents()
 		play:Dock(LEFT)
 
-		function play:Start()
-			for _, v in pairs(sound_list:GetLines()) do
+		function play.Start()
+			for _, v in pairs(self:GetLines()) do
 				v.play:Stop()
 			end
 
-			self:SetImage("icon16/control_stop.png")
+			play:SetImage("icon16/control_stop.png")
 
-			local snd = CreateSound(LocalPlayer(), sound_path)
+			local snd = CreateSound(LocalPlayer(), sound)
 			snd:Play()
 			pace.resource_browser_snd = snd
 
-			timer.Create("pac_resource_browser_play", duration or SoundDuration(sound_path), 1, function()
-				if self:IsValid() then
-					self:Stop()
+			timer.Create("pac_resource_browser_play", SoundDuration(sound), 1, function()
+				if play:IsValid() then
+					play:Stop()
 				end
 			end)
 		end
 
-		function play:Stop()
-			self:SetImage("icon16/control_play.png")
+		function play.Stop()
+			play:SetImage("icon16/control_play.png")
 
 			if pace.resource_browser_snd then
 				pace.resource_browser_snd:Stop()
@@ -589,10 +583,10 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		line.OnMousePressed = function(_, code)
 			if code == MOUSE_RIGHT then
 				play:Start()
-				sound_list:ClearSelection()
-				sound_list:SelectItem(line)
+				self:ClearSelection()
+				self:SelectItem(line)
 			else
-				pace.model_browser_callback(path, pathid)
+				pace.model_browser_callback(sound, "GAME")
 			end
 		end
 
@@ -600,12 +594,12 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		label:SetTextInset(play:GetWide() + 5, 0)
 
 		play.DoClick = function()
-			if timer.Exists("pac_resource_browser_play") and sound_list:GetLines()[sound_list:GetSelectedLine()] == line then
+			if timer.Exists("pac_resource_browser_play") and self:GetLines()[self:GetSelectedLine()] == line then
 				play:Stop()
 				return
 			end
-			sound_list:ClearSelection()
-			sound_list:SelectItem(line)
+			self:ClearSelection()
+			self:SelectItem(line)
 
 			play:Start()
 		end
@@ -613,6 +607,15 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		line.play = play
 	end
 
+	function sound_name_list:AddSound(name)
+		AddGeneric(self, name)
+	end
+
+	function sound_list:AddSound(path, pathid)
+		local sound_path = path:match("sound/(.+)")
+
+		AddGeneric(self, sound_path, file.Size(path, pathid))
+	end
 
 	if texture_view or material_view then
 		local node = root_node:AddNode("materials", "icon16/folder_database.png")
@@ -621,6 +624,8 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		local viewPanel = vgui.Create("pac_ResourceBrowser_ContentContainer", frame.PropPanel)
 		viewPanel:DockMargin(5, 0, 0, 0)
 		viewPanel:SetVisible(false)
+
+		node.propPanel = viewPanel
 
 		for list_name, materials in pairs(pace.Materials) do
 			local list = node:AddNode(list_name)
@@ -636,7 +641,9 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 				if material_view then
 					for _, material_name in ipairs(materials) do
 						local path = "materials/" .. material_name .. ".vmt"
-						create_material_icon(path, viewPanel)
+						if file.Exists(path, "GAME") then
+							create_material_icon(path, viewPanel)
+						end
 					end
 				end
 
@@ -676,10 +683,10 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 
 	if table.HasValue(browse_types, "models") then
 
-		local spawnlists = root_node:AddFolder("Spawnlists")
+		local spawnlists = root_node:AddNode("spawnlists")
 		spawnlists.info = {}
 		spawnlists.info.id = 0
-		root_node.dir = "models"
+		spawnlists.dir = "models"
 		local function hasGame (name)
 			for k, v in pairs(engine.GetGames()) do
 				if v.folder == name and v.mounted then
@@ -700,6 +707,8 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 					node.propPanel = vgui.Create("pac_ResourceBrowser_ContentContainer", frame.PropPanel)
 					node.propPanel:DockMargin(5, 0, 0, 0)
 					node.propPanel:SetVisible(false)
+
+					parentNode.propPanel = node.propPanel
 
 					for i, object in SortedPairs(node.info.contents) do
 						if object.type == "model" then
@@ -727,6 +736,34 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		end
 
 		fillNavBar(spawnmenu.GetPropTable(), spawnlists)
+	end
+
+	if sound_view then
+		local node = root_node:AddNode("game sounds", "icon16/sound.png")
+		node.dir = "sound names"
+		node.propPanel = sound_name_list
+		local sorted = {}
+
+		for _, sound_name in ipairs(sound.GetTable()) do
+			local category = sound_name:match("^(.-)%.") or sound_name:match("^(.-)_") or sound_name:match("^(.-)%u") or "misc"
+			sorted[category] = sorted[category] or {}
+			table.insert(sorted[category], sound_name)
+		end
+
+		for category_name, sounds in pairs(sorted) do
+			local node = node:AddNode(category_name, "icon16/sound.png")
+			node.dir = "sound names"
+			node.propPanel = sound_name_list
+
+			node.OnNodeSelected = function()
+				sound_name_list:Clear()
+				for _, sound_name in ipairs(sounds) do
+					sound_name_list:AddSound(sound_name)
+				end
+
+				tree:OnNodeSelected(node)
+			end
+		end
 	end
 
 	do -- mounted
@@ -814,7 +851,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 				end
 			end
 
-			if #browse_types == 1 then
+			if #browse_types == 1 and node.AddFolder then
 				node = node:AddFolder( name, path .. browse_types[1], pathid, false )
 				node:SetIcon( icon )
 				node.dir = browse_types[1]
@@ -1094,6 +1131,18 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 					count = count + 1
 				end
 			end)
+		elseif frame.dir == "sound names" then
+			self.propPanel = sound_name_list
+			self.propPanel:Clear()
+
+			local search_text = self:GetValue()
+			for _, name in ipairs(sound.GetTable()) do
+				if count >= 1500 then update_title("too many results (" .. count .. ")") return end
+				if name:find(search_text, nil, true) then
+					count = count + 1
+					sound_name_list:AddSound(name)
+				end
+			end
 		end
 
 		self.dir = frame.dir
