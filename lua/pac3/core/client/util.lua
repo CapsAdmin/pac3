@@ -134,14 +134,26 @@ do --dev util
 		local editor_was_open
 		local prev_parts = {}
 		local pacLocal = _G.pac
+		local selected_part_uid
+		local model_browser_opened
 
-		if pace and pace.Editor and pace.Editor:IsValid() then
-			editor_was_open = true
-
-			for key, part in pairs(pac.GetParts(true)) do
-				if not part:HasParent() and part.show_in_editor ~= false then
-					table.insert(prev_parts, part:ToTable())
+		if pace then
+			if pace.Editor and pace.Editor:IsValid() then
+				editor_was_open = true
+				if pace.current_part and pace.current_part:IsValid() then
+					selected_part_uid = pace.current_part:GetUniqueID()
 				end
+
+				for key, part in pairs(pac.GetParts(true)) do
+					if not part:HasParent() and part.show_in_editor ~= false then
+						table.insert(prev_parts, part:ToTable())
+					end
+				end
+			end
+
+			if pace.model_browser and pace.model_browser:IsValid() then
+				model_browser_opened = true
+				pace.model_browser:Remove()
 			end
 		end
 
@@ -271,6 +283,18 @@ do --dev util
 		end
 
 		pacLocal.Message("pac_restart: done")
+
+		if selected_part_uid then
+			local part = pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), selected_part_uid)
+
+			if part then
+				pace.Call("PartSelected", part)
+			end
+		end
+
+		if model_browser_opened then
+			pace.ResourceBrowser(function(...) print(...) return false end)
+		end
 	end
 
 	concommand.Add("pac_restart", pac.Restart)

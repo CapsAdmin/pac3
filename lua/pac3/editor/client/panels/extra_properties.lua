@@ -190,17 +190,25 @@ do -- model
 		g_SpawnMenu:Open()
 	end
 
-	function PANEL:SpecialCallback()
+	function PANEL:SpecialCallback(key)
 		pace.close_spawn_menu = true
 		pace.SafeRemoveSpecialPanel()
-		pace.ResourceBrowser(function(path)
-			if not self:IsValid() then return end
 
-			self:SetValue(path)
-			self.OnValueChanged(path)
+		local part = pace.current_part
+
+		pace.ResourceBrowser(function(path)
+			-- because we refresh the properties
+			pace.current_part["Set" .. key](pace.current_part, path)
 			pace.PopulateProperties(pace.current_part)
 
 		end, "models")
+
+		hook.Add("Think", "pace_close_browser", function()
+			if part ~= pace.current_part then
+				hook.Remove("Think", "pace_close_browser")
+				pace.model_browser:SetVisible(false)
+			end
+		end)
 	end
 
 	pace.RegisterPanel(PANEL)
@@ -212,14 +220,14 @@ do -- materials and textures
 	PANEL_MATERIAL.ClassName = "properties_material"
 	PANEL_MATERIAL.Base = "pace_properties_base_type"
 
-	function PANEL_MATERIAL:SpecialCallback()
+	function PANEL_MATERIAL:SpecialCallback(key)
 		pace.ResourceBrowser(function(path)
 			if self:IsValid() then
 				path = path:match("materials/(.+)%.vmt")
 				self:SetValue(path)
 				self.OnValueChanged(path)
 			end
-		end, "materials")
+		end, "materials", key)
 	end
 
 	function PANEL_MATERIAL:SpecialCallback2()

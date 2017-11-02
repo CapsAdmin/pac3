@@ -6,9 +6,7 @@ local function install_click(icon, path, pattern, on_menu)
 	local old = icon.OnMouseReleased
 	icon.OnMouseReleased = function(_, code)
 		if code == MOUSE_LEFT then
-			if pace.model_browser_callback(path, "GAME") ~= false then
-				pace.model_browser:SetVisible(false)
-			end
+			pace.model_browser_callback(path, "GAME")
 		elseif code == MOUSE_RIGHT then
 			local menu = DermaMenu()
 			menu:AddOption(L"copy path", function()
@@ -40,6 +38,45 @@ local function get_unlit_mat(path)
 	return CreateMaterial(path .. "_pac_resource_browser", "UnlitGeneric", {["$basetexture"] = path:match("materials/(.+)%.vtf")})
 end
 
+local next_generate_icon = 0
+local max_generating = 5
+
+local function setup_paint(panel, generate_cb, draw_cb)
+	local old = panel.Think
+	panel.Think = function(self)
+		if self.last_paint and self.last_paint < RealTime() and self.setup_material == false then
+			next_generate_icon = next_generate_icon - 1
+			self.setup_material = nil
+		end
+		return old(self)
+	end
+
+	local old = panel.Paint
+	panel.Paint = function(self,w,h)
+		if not self.ready_to_draw then return end
+
+		self.last_paint = RealTime() + 0.1
+
+		if self.setup_material == false then
+			self.setup_material = true
+			next_generate_icon = next_generate_icon - 1
+		end
+
+		if not self.setup_material then
+			if next_generate_icon > max_generating then return end
+			next_generate_icon = next_generate_icon + 1
+
+			generate_cb(self)
+
+			self.setup_material = false
+		end
+
+		old(self,w,h)
+
+		draw_cb(self, w, h)
+	end
+end
+
 local function create_texture_icon(path)
 	local icon = vgui.Create("DButton")
 	icon:SetTooltip(path)
@@ -49,14 +86,19 @@ local function create_texture_icon(path)
 
 	install_click(icon, path, "^materials/(.+)%.vtf$")
 
-	local mat = get_unlit_mat(path)
-
-	icon.Paint = function(self,w,h)
-		surface.SetDrawColor(255,255,255,255)
-		surface.SetMaterial(mat)
-		surface.DrawTexturedRect(0,0,w,h)
-		return true
-	end
+	setup_paint(
+		icon,
+		function(self)
+			self.mat = get_unlit_mat(path)
+		end,
+		function(self, w, h)
+			if self.mat then
+				surface.SetDrawColor(255,255,255,255)
+				surface.SetMaterial(self.mat)
+				surface.DrawTexturedRect(0,0,w,h)
+			end
+		end
+	)
 
 	return icon
 end
@@ -65,50 +107,142 @@ surface.CreateFont("pace_resource_browser_fixed_width", {
 	font = "dejavu sans mono",
 })
 
-local function create_material_icon(path)
-	local mat_path = path:match("materials/(.+)%.vmt")
-	local mat = Material(mat_path)
-	local shader = mat:GetShader():lower()
+local function create_material_icon(path, grid_panel)
 
-	local SPAWNICON = vgui.GetControlTable("SpawnIcon")
+	if #pace.model_browser_browse_types_tbl == 1 and file.Read(path, "GAME") then
+		local shader =  file.Read(path, "GAME"):match("^(.-){"):Trim():gsub("%p", ""):lower()
+		if not (shader == "vertexlitgeneric" or shader == "unlitgeneric" or shader == "eyerefract" or shader == "refract") then
+			return
+		end
+	end
+
+	local mat_path = path:match("materials/(.+)%.vmt")
+
 	local icon = vgui.Create("DButton")
 	icon:SetTooltip(path)
 	icon:SetSize(128,128)
 	icon:SetWrap(true)
 	icon:SetText("")
-	local old = icon.Paint
-	icon.Paint = function(_,w,h) old(_,w,h) surface.SetDrawColor(0,0,0,240) surface.DrawRect(0,0,w,h) end
 
-	if shader == "vertexlitgeneric" then
-		local pnl =  vgui.Create("DModelPanel", icon)
-		pnl:SetMouseInputEnabled(false)
-		pnl:Dock(FILL)
-		pnl:SetModel("models/pac/default.mdl")
-		pnl:SetLookAt( Vector( 0, 0, 0 ) )
-		pnl:SetFOV(1)
-		pnl:SetCamPos(Vector(1,1,1) * 600)
-		pnl.PreDrawModel = function() render.ModelMaterialOverride(mat) end
-		pnl.PostDrawModel = function() render.ModelMaterialOverride() end
-	elseif shader == "lightmappedgeneric" or shader == "spritecard" then
-		local pnl = vgui.Create("DPanel", icon)
-		pnl:SetMouseInputEnabled(false)
-		pnl:Dock(FILL)
-
-		local mat = get_unlit_mat(path)
-
-		pnl.Paint = function(self,w,h)
-			surface.SetDrawColor(255,255,255,255)
-			surface.SetMaterial(mat)
-			surface.DrawTexturedRect(0,0,w,h)
+	setup_paint(
+		icon,
+		function(self)
+			self:SetupMaterial()
+		end,
+		function(self, w, h)
+			surface.SetDrawColor(0,0,0,240)
+			surface.DrawRect(0,0,w,h)
 		end
+	)
 
-	else
-		local pnl = vgui.Create("DImage", icon)
-		pnl:SetMouseInputEnabled(false)
-		pnl:Dock(FILL)
-		pnl:SetImage(mat_path)
+	function icon:SetupMaterial()
+		local mat = Material(mat_path)
+		local shader = mat:GetShader():lower()
+
+		if shader == "vertexlitgeneric" then
+			local pnl = vgui.Create("DModelPanel", icon)
+			pnl:SetMouseInputEnabled(false)
+			pnl:Dock(FILL)
+			pnl:SetLookAt( Vector( 0, 0, 0 ) )
+			pnl:SetFOV(1)
+			pnl:SetModel("models/hunter/plates/plate1x1.mdl")
+			pnl:SetCamPos(Vector(1,0,1) * 2100)
+			pnl.mouseover = false
+
+			local m = Matrix()
+			m:Scale(Vector(1.375,1,0.01))
+			pnl.Entity:EnableMatrix("RenderMultiply", m)
+
+			--[[
+
+			local old = icon.OnCursorEntered
+			function icon:OnCursorEntered(...)
+				if pace.current_part:IsValid() and pace.current_part.Materialm then
+					pace.resource_browser_old_mat = pace.resource_browser_old_mat or pace.current_part.Materialm
+					pace.current_part.Materialm = mat
+				end
+
+				old(self, ...)
+			end
+
+
+			local old = icon.OnCursorExited
+			function icon:OnCursorExited(...)
+				if pace.current_part:IsValid() and pace.current_part.Materialm then
+					pace.current_part.Materialm = pace.resource_browser_old_mat
+				end
+				old(self, ...)
+			end
+]]
+			function pnl:Think()
+
+				local x, y = self:ScreenToLocal(gui.MouseX(), gui.MouseY())
+				x = x / self:GetWide()
+				y = y / self:GetTall()
+
+				x = x * 50
+				y = y * 50
+
+				x = x - 25
+				y = y - 55
+
+				self.light_pos = Vector(y, x, 30)
+			end
+
+			function pnl:Paint( w, h )
+				local x, y = self:LocalToScreen( 0, 0 )
+
+				local ang = self.aLookAngle
+				if ( !ang ) then
+					ang = ( self.vLookatPos - self.vCamPos ):Angle()
+				end
+
+				if self.mouseover then
+					self.Entity:SetAngles( Angle( 0, RealTime() * 10 % 360, 0 ) )
+				end
+
+				cam.Start3D( self.vCamPos, ang, self.fFOV, x, y, w, h, 5, self.FarZ )
+
+				render.SuppressEngineLighting( true )
+
+
+				render.SetColorModulation( 1, 1, 1 )
+				render.SetBlend(1)
+
+				render.SetLocalModelLights({{
+					color = Vector(1,1,1),
+					pos = self.Entity:GetPos() + self.light_pos,
+				}})
+
+
+				self:DrawModel()
+
+				render.SuppressEngineLighting( false )
+				cam.End3D()
+			end
+
+			pnl.PreDrawModel = function() render.ModelMaterialOverride(mat) end
+			pnl.PostDrawModel = function() render.ModelMaterialOverride() end
+		elseif shader == "lightmappedgeneric" or shader == "spritecard" then
+			local pnl = vgui.Create("DPanel", icon)
+			pnl:SetMouseInputEnabled(false)
+			pnl:Dock(FILL)
+
+			local mat = get_unlit_mat(path)
+
+			pnl.Paint = function(self,w,h)
+				surface.SetDrawColor(255,255,255,255)
+				surface.SetMaterial(mat)
+				surface.DrawTexturedRect(0,0,w,h)
+			end
+
+		else
+			local pnl = vgui.Create("DImage", icon)
+			pnl:SetMouseInputEnabled(false)
+			pnl:Dock(FILL)
+			pnl:SetImage(mat_path)
+		end
 	end
-
 
 	install_click(icon, path, "^materials/(.+)%.vmt$", function(menu)
 		local function create_text_view(str)
@@ -156,6 +290,8 @@ local function create_material_icon(path)
 		end)
 	end)
 
+	grid_panel:Add(icon)
+
 	return icon
 end
 
@@ -191,29 +327,76 @@ do
 	function PANEL:Init()
 		self:SetPaintBackground( false )
 
-		self.IconList = vgui.Create( "DTileLayout", self:GetCanvas())
-		self.IconList:SetBaseSize( 64 )
-		self.IconList:SetSelectionCanvas( true )
+		self.IconList = vgui.Create( "DPanel", self:GetCanvas())
 		self.IconList:Dock( TOP )
+
+		function self.IconList:PerformLayout()
+			local x, y = 0, 0
+			local max_width = self:GetWide()
+			local height = 0
+
+			local total_width
+
+			for _, child in ipairs(self:GetChildren()) do
+				height = math.max(height, child:GetTall())
+
+				if x + child:GetWide() > max_width - child:GetWide() then
+					total_width = x + child:GetWide()
+					x = 0
+					y = y + height
+					height = 0
+				else
+					x = x + child:GetWide()
+				end
+
+				child:SetPos(x, y)
+			end
+
+			if total_width then
+				-- center the tiles
+				local offset = (max_width - total_width)/2
+				for _, child in ipairs(self:GetChildren()) do
+					local x, y = child:GetPos()
+					child:SetPos(x + offset, y)
+				end
+			end
+
+			self:SetTall(y + height)
+		end
 	end
 
 	function PANEL:Add(pnl)
+		pnl.ready_to_draw = true
 		self.IconList:Add(pnl)
-		self:Layout()
+		self.IconList:InvalidateLayout()
+		self:InvalidateLayout()
 	end
 
-	function PANEL:Layout()
-		self.IconList:Layout()
-		self:InvalidateLayout()
+	pace.resource_browser_zoom = 64
+
+	function PANEL:OnMouseWheeled(delta)
+		if input.IsControlDown() then
+			pace.resource_browser_zoom = math.Clamp(pace.resource_browser_zoom + delta * 4, 16, 512)
+
+			for i,v in ipairs(self.IconList:GetChildren()) do
+				v:SetSize(pace.resource_browser_zoom, pace.resource_browser_zoom)
+			end
+
+			self.IconList:InvalidateLayout()
+			self:InvalidateLayout()
+			return
+		end
+		return BaseClass.OnMouseWheeled(self, delta)
 	end
 
 	function PANEL:PerformLayout()
 		BaseClass.PerformLayout( self )
-		self.IconList:SetMinHeight( self:GetTall() - 16 )
 	end
 
 	function PANEL:Clear()
-		self.IconList:Clear( true )
+		for k,v in ipairs(self.IconList:GetChildren()) do
+			v:Remove()
+		end
 	end
 
 	vgui.Register( "pac_ResourceBrowser_ContentContainer", PANEL, "DScrollPanel" )
@@ -221,7 +404,7 @@ end
 
 local show_sound_duration = CreateClientConVar("pac_resource_browser_sound_duration", "0", true)
 
-function pace.ResourceBrowser(callback, browse_types_str)
+function pace.ResourceBrowser(callback, browse_types_str, part_key)
 	browse_types_str = browse_types_str or "models;materials;textures;sound"
 	local browse_types = browse_types_str:Split(";")
 
@@ -243,6 +426,8 @@ function pace.ResourceBrowser(callback, browse_types_str)
 
 	pace.model_browser_callback = callback or print
 	pace.model_browser_browse_types = browse_types_str
+	pace.model_browser_browse_types_tbl = browse_types
+	pace.model_browser_part_key = part_key
 
 	if pace.model_browser and pace.model_browser:IsValid() then
 		pace.model_browser:SetVisible(true)
@@ -252,8 +437,8 @@ function pace.ResourceBrowser(callback, browse_types_str)
 
 	local frame = vgui.Create("DFrame")
 	frame.title = L"resource browser" .. " - " .. (browse_types_str:gsub(";", " "))
-	frame:SetSize(ScrW()/1.5, ScrH()/1.5)
-	frame:Center()
+	frame:SetSize(ScrW()/3, ScrH())
+	frame:SetPos(ScrW() - frame:GetWide(), 0)
 	frame:SetDeleteOnClose(false)
 	frame:SetSizable(true)
 	pace.model_browser = frame
@@ -281,15 +466,6 @@ function pace.ResourceBrowser(callback, browse_types_str)
 			end
 		)
 	end):SetImage(pace.MiscIcons.clear)
-
-	file_menu:AddOption(L"build search cache", function()
-		self:StartSearch("models/", {}, "GAME", function(path, pathid) end)
-		self:StartSearch("sound/", {}, "GAME", function(path, pathid) end)
-		self:StartSearch("materials/", {}, "GAME", function(path, pathid) end)
-	end)
-
-
-	file_menu:AddOption(L"exit", function() frame:SetVisible(false) end):SetImage(pace.MiscIcons.exit)
 
 	local view_menu = menu_bar:AddMenu(L"view")
 	view_menu:SetDeleteSelf(false)
@@ -416,9 +592,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 				sound_list:ClearSelection()
 				sound_list:SelectItem(line)
 			else
-				if pace.model_browser_callback(path, pathid) ~= false then
-					pace.model_browser:SetVisible(false)
-				end
+				pace.model_browser_callback(path, pathid)
 			end
 		end
 
@@ -462,11 +636,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 				if material_view then
 					for _, material_name in ipairs(materials) do
 						local path = "materials/" .. material_name .. ".vmt"
-						local icon = create_material_icon(path)
-
-						if icon then
-							viewPanel:Add(icon)
-						end
+						create_material_icon(path, viewPanel)
 					end
 				end
 
@@ -620,11 +790,7 @@ function pace.ResourceBrowser(callback, browse_types_str)
 
 							if v:find("%.vmt$") then
 								if material_view then
-									local icon = create_material_icon(path)
-
-									if icon then
-										viewPanel:Add(icon)
-									end
+									create_material_icon(path, viewPanel)
 								end
 							elseif texture_view then
 								viewPanel:Add(create_texture_icon(path))
@@ -742,6 +908,19 @@ function pace.ResourceBrowser(callback, browse_types_str)
 	search.model_view = model_view
 	search.delay_functions = {}
 
+	file_menu:AddOption(L"build search cache", function()
+		search:StartSearch("", "models/", {}, "GAME", function(path, pathid) end)
+		search:StartSearch("", "sound/", {}, "GAME", function(path, pathid) end)
+		search:StartSearch("", "materials/", {}, "GAME", function(path, pathid) end)
+	end)
+
+	local cancel = vgui.Create("DImageButton", search)
+	cancel:SetImage(pace.MiscIcons.clear)
+	cancel:SetSize(16, 16)
+	cancel.DoClick = function() search:Cancel() end
+	cancel:SetVisible(false)
+	cancel:PerformLayout()
+
 	do
 		local old = search.OnGetFocus
 		function search:OnGetFocus ()
@@ -782,7 +961,15 @@ function pace.ResourceBrowser(callback, browse_types_str)
 		return files, folders
 	end
 
+	function search:PerformLayout()
+		cancel:SetPos(self:GetWide() - 16 - 2, 2)
+	end
+
 	function search:StartSearch(search_text, folder, extensions, pathid, cb)
+
+		cancel:SetVisible(true)
+		cancel:PerformLayout()
+
 		local files, folders = find(folder .. "*", pathid)
 
 		self.searched = true
@@ -794,7 +981,8 @@ function pace.ResourceBrowser(callback, browse_types_str)
 				local file = folder .. v
 				for _, ext in ipairs(extensions) do
 					if v:EndsWith(ext) and file:find(search_text, nil, true) then
-						cb(file, pathid)
+						local func = function() return cb(file, pathid) end
+						self.delay_functions[func] = func
 						break
 					end
 				end
@@ -809,11 +997,34 @@ function pace.ResourceBrowser(callback, browse_types_str)
 		end
 	end
 
+	function search:Cancel(why)
+		cancel:InvalidateLayout()
+		cancel:SetVisible(false)
+
+		self.delay_functions = {}
+		self.searched = false
+		if why then
+			update_title("search canceled: " .. why)
+		else
+			update_title("search canceled")
+		end
+	end
+
 	function search:Think()
+		if input.IsKeyDown(KEY_ESCAPE) then
+			self:Cancel()
+			return
+		end
+
 		local i = 0
 		for key, func in pairs(self.delay_functions) do
 			i = i + 1
-			func()
+			local ok, reason = func()
+
+			if ok == false then
+				self:Cancel(reason)
+				return
+			end
 			self.delay_functions[func] = nil
 			if i > 30 then break end
 		end
@@ -847,12 +1058,13 @@ function pace.ResourceBrowser(callback, browse_types_str)
 	function search:OnEnter()
 		if self:GetValue() == "" then return end
 
+		local count = 0
+
 		if frame.dir == "models" then
 			self.propPanel = self.model_view
 			self.propPanel:Clear()
-			local count = 0
 			self:StartSearch(self:GetValue(), "models/", {".mdl"}, "GAME", function(path, pathid)
-				if count > 500 then return end
+				if count >= 500 then return false, "too many results (" .. count .. ")" end
 				count = count + 1
 				if not IsUselessModel(path) then
 					self.propPanel:Add(create_model_icon(path))
@@ -862,22 +1074,24 @@ function pace.ResourceBrowser(callback, browse_types_str)
 			self.propPanel = sound_list
 			self.propPanel:Clear()
 			self:StartSearch(self:GetValue(), "sound/", {".wav", ".mp3", ".ogg"}, "GAME", function(path, pathid)
+				if count >= 1500 then return false, "too many results (" .. count .. ")" end
+				count = count + 1
 				sound_list:AddSound(path, pathid)
 			end)
 		elseif frame.dir == "materials" then
 			self.propPanel = self.model_view
 			self.propPanel:Clear()
+
 			self:StartSearch(self:GetValue(), "materials/", {".vmt", ".vtf"}, "GAME", function(path, pathid)
+				if count >= 750 then return false, "too many results (" .. count .. ")" end
 				if path:EndsWith(".vmt") then
 					if material_view then
-						local icon = create_material_icon(path)
-
-						if icon then
-							self.propPanel:Add(icon)
-						end
+						count = count + 1
+						create_material_icon(path, self.propPanel)
 					end
 				elseif texture_view then
 					self.propPanel:Add(create_texture_icon(path))
+					count = count + 1
 				end
 			end)
 		end
@@ -885,6 +1099,9 @@ function pace.ResourceBrowser(callback, browse_types_str)
 		self.dir = frame.dir
 		tree:OnNodeSelected(self)
 	end
+
+	file_menu:AddSpacer()
+	file_menu:AddOption(L"exit", function() frame:SetVisible(false) end):SetImage(pace.MiscIcons.exit)
 
 	frame:MakePopup()
 end
