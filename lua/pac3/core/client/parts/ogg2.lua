@@ -190,6 +190,11 @@ function PART:SetPath(path)
 	end
 
 	for _, path in ipairs(paths) do
+		local info = sound.GetProperties(path)
+		if info then
+			path = info.sound
+		end
+
 		if not pac.resource.Download(path, function(path) load("data/" .. path) end) then
 			load("sound/" .. path)
 		end
