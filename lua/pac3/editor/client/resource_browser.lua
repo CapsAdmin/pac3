@@ -39,6 +39,43 @@ local function get_unlit_mat(path)
 end
 
 local next_generate_icon = 0
+local max_generating = 5
+
+local function setup_paint(panel, generate_cb, draw_cb)
+	local old = panel.Think
+	panel.Think = function(self)
+		if self.last_paint and self.last_paint < RealTime() and self.setup_material == false then
+			next_generate_icon = next_generate_icon - 1
+			self.setup_material = nil
+		end
+		return old(self)
+	end
+
+	local old = panel.Paint
+	panel.Paint = function(self,w,h)
+		if not self.ready_to_draw then return end
+
+		self.last_paint = RealTime() + 0.1
+
+		if self.setup_material == false then
+			self.setup_material = true
+			next_generate_icon = next_generate_icon - 1
+		end
+
+		if not self.setup_material then
+			if next_generate_icon > max_generating then return end
+			next_generate_icon = next_generate_icon + 1
+
+			generate_cb(self)
+
+			self.setup_material = false
+		end
+
+		old(self,w,h)
+
+		draw_cb(self, w, h)
+	end
+end
 
 local function create_texture_icon(path)
 	local icon = vgui.Create("DButton")
@@ -49,23 +86,19 @@ local function create_texture_icon(path)
 
 	install_click(icon, path, "^materials/(.+)%.vtf$")
 
-	icon.Paint = function(self,w,h)
-		if not self.ready_to_draw then return end
-		if not self.setup_material then
-			if next_generate_icon < RealTime() then
-				self.mat = get_unlit_mat(path)
-				self.setup_material = true
-				next_generate_icon = RealTime() + 0.001
+	setup_paint(
+		icon,
+		function(self)
+			self.mat = get_unlit_mat(path)
+		end,
+		function(self, w, h)
+			if self.mat then
+				surface.SetDrawColor(255,255,255,255)
+				surface.SetMaterial(self.mat)
+				surface.DrawTexturedRect(0,0,w,h)
 			end
 		end
-
-		if self.mat then
-			surface.SetDrawColor(255,255,255,255)
-			surface.SetMaterial(self.mat)
-			surface.DrawTexturedRect(0,0,w,h)
-		end
-		return true
-	end
+	)
 
 	return icon
 end
@@ -90,20 +123,17 @@ local function create_material_icon(path, grid_panel)
 	icon:SetSize(128,128)
 	icon:SetWrap(true)
 	icon:SetText("")
-	local old = icon.Paint
-	icon.Paint = function(self,w,h)
-		if not self.ready_to_draw then return end
-		if not self.setup_material then
-			if next_generate_icon < RealTime() then
-				self:SetupMaterial()
-				self.setup_material = true
-				next_generate_icon = RealTime() + 0.001
-			end
+
+	setup_paint(
+		icon,
+		function(self)
+			self:SetupMaterial()
+		end,
+		function(self, w, h)
+			surface.SetDrawColor(0,0,0,240)
+			surface.DrawRect(0,0,w,h)
 		end
-		old(self,w,h)
-		surface.SetDrawColor(0,0,0,240)
-		surface.DrawRect(0,0,w,h)
-	end
+	)
 
 	function icon:SetupMaterial()
 		local mat = Material(mat_path)
@@ -297,26 +327,76 @@ do
 	function PANEL:Init()
 		self:SetPaintBackground( false )
 
-		self.IconList = vgui.Create( "DTileLayout", self:GetCanvas())
-		self.IconList:SetBaseSize( 64 )
-		self.IconList:SetSelectionCanvas( true )
+		self.IconList = vgui.Create( "DPanel", self:GetCanvas())
 		self.IconList:Dock( TOP )
+
+		function self.IconList:PerformLayout()
+			local x, y = 0, 0
+			local max_width = self:GetWide()
+			local height = 0
+
+			local total_width
+
+			for _, child in ipairs(self:GetChildren()) do
+				height = math.max(height, child:GetTall())
+
+				if x + child:GetWide() > max_width - child:GetWide() then
+					total_width = x + child:GetWide()
+					x = 0
+					y = y + height
+					height = 0
+				else
+					x = x + child:GetWide()
+				end
+
+				child:SetPos(x, y)
+			end
+
+			if total_width then
+				-- center the tiles
+				local offset = (max_width - total_width)/2
+				for _, child in ipairs(self:GetChildren()) do
+					local x, y = child:GetPos()
+					child:SetPos(x + offset, y)
+				end
+			end
+
+			self:SetTall(y + height)
+		end
 	end
 
 	function PANEL:Add(pnl)
 		pnl.ready_to_draw = true
 		self.IconList:Add(pnl)
-		self.IconList:Layout()
+		self.IconList:InvalidateLayout()
 		self:InvalidateLayout()
+	end
+
+	pace.resource_browser_zoom = 64
+
+	function PANEL:OnMouseWheeled(delta)
+		if input.IsControlDown() then
+			pace.resource_browser_zoom = math.Clamp(pace.resource_browser_zoom + delta * 4, 16, 512)
+
+			for i,v in ipairs(self.IconList:GetChildren()) do
+				v:SetSize(pace.resource_browser_zoom, pace.resource_browser_zoom)
+			end
+
+			self.IconList:InvalidateLayout()
+			self:InvalidateLayout()
+			return
+		end
+		return BaseClass.OnMouseWheeled(self, delta)
 	end
 
 	function PANEL:PerformLayout()
 		BaseClass.PerformLayout( self )
-		self.IconList:SetMinHeight( self:GetTall() - 16 )
 	end
 
 	function PANEL:Clear()
-		self.IconList:Clear( true )
+		for k,v in ipairs(self.IconList:GetChildren()) do
+			v:Remove()
+		end
 	end
 
 	vgui.Register( "pac_ResourceBrowser_ContentContainer", PANEL, "DScrollPanel" )
