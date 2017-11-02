@@ -759,11 +759,11 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 			local sorted = {}
 
 			for name, sounds in pairs(categories) do
-				table.sort(sounds, function(a, b) return a > b end)
+				table.sort(sounds, function(a, b) return a < b end)
 				table.insert(sorted, {name = name, sounds = sounds})
 			end
 
-			table.sort(sorted, function(a, b) return a.name > b.name end)
+			table.sort(sorted, function(a, b) return a.name < b.name end)
 
 			for _, data in ipairs(sorted) do
 				local category_name, sounds = data.name, data.sounds
