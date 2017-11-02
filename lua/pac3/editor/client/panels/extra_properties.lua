@@ -379,6 +379,10 @@ do -- sound
 		pace.ResourceBrowser(function(path)
 			self:SetValue(path)
 			self.OnValueChanged(path)
+
+			if pace.current_part:IsValid() then
+				pace.current_part:OnShow()
+			end
 		end, "sound")
 	end
 

@@ -487,6 +487,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 	tree:Dock(FILL)
 	tree:DockMargin(0, 0, 0, 0)
 	tree:SetBackgroundColor(Color(240, 240, 240))
+	frame.tree = tree
 	tree.OnNodeSelected = function (self, node)
 		if not IsValid(node.propPanel) then return end
 
@@ -581,10 +582,11 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		end
 
 		line.OnMousePressed = function(_, code)
+			self:ClearSelection()
+			self:SelectItem(line)
+
 			if code == MOUSE_RIGHT then
 				play:Start()
-				self:ClearSelection()
-				self:SelectItem(line)
 			else
 				pace.model_browser_callback(sound, "GAME")
 			end
@@ -742,26 +744,42 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		local node = root_node:AddNode("game sounds", "icon16/sound.png")
 		node.dir = "sound names"
 		node.propPanel = sound_name_list
-		local sorted = {}
 
-		for _, sound_name in ipairs(sound.GetTable()) do
-			local category = sound_name:match("^(.-)%.") or sound_name:match("^(.-)_") or sound_name:match("^(.-)%u") or "misc"
-			sorted[category] = sorted[category] or {}
-			table.insert(sorted[category], sound_name)
-		end
+		node.OnNodeSelected = function()
+			local categories = {}
 
-		for category_name, sounds in pairs(sorted) do
-			local node = node:AddNode(category_name, "icon16/sound.png")
-			node.dir = "sound names"
-			node.propPanel = sound_name_list
+			for _, sound_name in ipairs(sound.GetTable()) do
+				local category = sound_name:match("^(.-)%.") or sound_name:match("^(.-)_") or sound_name:match("^(.-)%u")
+				if not category or category == nil then category = "misc" end
 
-			node.OnNodeSelected = function()
-				sound_name_list:Clear()
-				for _, sound_name in ipairs(sounds) do
-					sound_name_list:AddSound(sound_name)
+				categories[category] = categories[category] or {}
+				table.insert(categories[category], sound_name)
+			end
+
+			local sorted = {}
+
+			for name, sounds in pairs(categories) do
+				table.sort(sounds, function(a, b) return a > b end)
+				table.insert(sorted, {name = name, sounds = sounds})
+			end
+
+			table.sort(sorted, function(a, b) return a.name > b.name end)
+
+			for _, data in ipairs(sorted) do
+				local category_name, sounds = data.name, data.sounds
+
+				local node = node:AddNode(category_name, "icon16/sound.png")
+				node.dir = "sound names"
+				node.propPanel = sound_name_list
+
+				node.OnNodeSelected = function()
+					sound_name_list:Clear()
+					for _, sound_name in ipairs(sounds) do
+						sound_name_list:AddSound(sound_name)
+					end
+
+					tree:OnNodeSelected(node)
 				end
-
-				tree:OnNodeSelected(node)
 			end
 		end
 	end
@@ -864,11 +882,21 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 				node:SetPathID(pathid)
 				node.viewPanel = viewPanel
 
+				local parent = node
+
 				for _, dir in ipairs(dirs) do
 					if table.HasValue(browse_types, dir:lower()) then
 						local node = node:AddFolder(dir, path .. dir, pathid, false)
 						node.dir = dir
 						node.OnNodeSelected = on_select
+
+						if name == "all" and #browse_types == 1 and browse_types[1] == dir then
+							timer.Simple(0, function()
+							parent:SetExpanded(true)
+							tree:SetExpanded(true)
+							tree:SetSelectedItem(node)
+							end)
+						end
 					end
 				end
 			end
@@ -881,27 +909,27 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		do
 			local special = {
 				{
-					title = "All",
+					title = "all",
 					folder = "GAME",
 					icon = "games/16/all.png",
 				},
 				{
-					title = "Downloaded",
+					title = "downloaded",
 					folder = "DOWNLOAD",
 					icon = "materials/icon16/server_go.png",
 				},
 				{
-					title = "Workshop",
+					title = "workshop",
 					folder = "WORKSHOP",
 					icon = "materials/icon16/plugin.png",
 				},
 				{
-					title = "Thirdparty",
+					title = "thirdparty",
 					folder = "THIRDPARTY",
 					icon = "materials/icon16/folder_brick.png",
 				},
 				{
-					title = "Mod",
+					title = "mod",
 					folder = "MOD",
 					icon = "materials/icon16/folder_brick.png",
 				},
@@ -1053,6 +1081,10 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 			return
 		end
 
+		if input.IsControlDown() and input.IsKeyDown(KEY_F) then
+			self:RequestFocus()
+		end
+
 		local i = 0
 		for key, func in pairs(self.delay_functions) do
 			i = i + 1
@@ -1162,4 +1194,6 @@ end
 
 concommand.Add("pac_resource_browser", function()
 	pace.ResourceBrowser(function(...) print(...) return false end)
+	pace.model_browser:SetSize(ScrW()/1.25, ScrH()/1.25)
+	pace.model_browser:Center()
 end)
