@@ -493,6 +493,7 @@ function mctrl.RotationLines(pos, dir, dir2, r)
 end
 
 function mctrl.HUDPaint()
+	mctrl.LastThinkCall = FrameNumber()
 	if pace.IsSelecting then return end
 
 	local target = mctrl.GetTarget()

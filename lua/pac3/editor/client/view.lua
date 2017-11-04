@@ -1,3 +1,6 @@
+
+local L = pace.LanguageString
+
 local acsfnc = function(key, def)
 	pace["View" .. key] = def
 	pace["SetView" .. key] = function(val) pace["View" .. key] = val end
@@ -60,8 +63,7 @@ end
 
 local held_ang = Angle(0,0,0)
 local held_mpos = Vector(0,0,0)
-local mcode
-local hoveredPanelCursor
+local mcode, hoveredPanelCursor, isHoldingMovement
 
 function pace.GUIMousePressed(mc)
 	if pace.mctrl.GUIMousePressed(mc) then return end
@@ -82,9 +84,12 @@ function pace.GUIMousePressed(mc)
 	end
 
 	mcode = mc
+	isHoldingMovement = true
 end
 
 function pace.GUIMouseReleased(mc)
+	isHoldingMovement = false
+
 	if IsValid(hoveredPanelCursor) then
 		hoveredPanelCursor:SetCursor('none')
 		hoveredPanelCursor = nil
@@ -264,6 +269,19 @@ function pace.ShouldDrawLocalPlayer()
 	end
 end
 
+function pace.PostRenderVGUI()
+	if not pace.mctrl or not isHoldingMovement then return end
+
+	if pace.mctrl.LastThinkCall ~= FrameNumber() then
+		surface.SetFont('Trebuchet18')
+		surface.SetTextColor(color_white)
+		local text = L'You are currently holding the camera, movement is disabled'
+		local w = surface.GetTextSize(text)
+		surface.SetTextPos(ScrW() / 2 - w / 2, 10)
+		surface.DrawText(text)
+	end
+end
+
 function pace.EnableView(b)
 	if b then
 		pace.AddHook("GUIMousePressed")
@@ -272,6 +290,7 @@ function pace.EnableView(b)
 		pace.AddHook("CalcView")
 		pace.AddHook("HUDPaint")
 		pace.AddHook("HUDShouldDraw")
+		pace.AddHook("PostRenderVGUI")
 		pace.Focused = true
 		pace.ResetView()
 	else
@@ -282,6 +301,7 @@ function pace.EnableView(b)
 		pace.RemoveHook("CalcView")
 		pace.RemoveHook("HUDPaint")
 		pace.RemoveHook("HUDShouldDraw")
+		pace.RemoveHook("PostRenderVGUI")
 		pace.SetTPose(false)
 		pace.SetBreathing(false)
 	end
