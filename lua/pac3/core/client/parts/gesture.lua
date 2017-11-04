@@ -35,6 +35,7 @@ function PART:GetSequenceList()
 	if ent:IsValid() then
 		return ent:GetSequenceList()
 	end
+
 	return {"none"}
 end
 

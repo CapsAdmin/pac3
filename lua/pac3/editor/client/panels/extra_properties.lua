@@ -146,6 +146,40 @@ do -- owner
 	pace.RegisterPanel(PANEL)
 end
 
+do -- sequence list
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_sequence"
+	PANEL.Base = "pace_properties_base_type"
+
+	function PANEL:SpecialCallback()
+		pace.CreateSearchList(
+			self,
+			self.CurrentKey,
+			L"animations",
+
+			function(list)
+				list:AddColumn(L"id"):SetFixedWidth(25)
+				list:AddColumn(L"name")
+			end,
+
+			function()
+				return pace.current_part:GetSequenceList()
+			end,
+
+			function()
+				return pace.current_part.SequenceName or pace.current_part.GestureName
+			end,
+
+			function(list, key, val)
+				return list:AddLine(key, val)
+			end
+		)
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
 do -- aimpart
 	local PANEL = {}
 
