@@ -273,41 +273,43 @@ do
 end
 
 pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part)
+
 	local holo_str =
 	[[
 
-	     ########################### HOLO_NAME ###########################
-
-			 I++
-			 holoCreate(I) #HOLO_NAME
-			 PARENT
-			 holoColor(I, COLOR)
-			 holoAlpha(I, ALPHA)
-			 holoMaterial(I, MATERIAL)
-			 holoSkin(I, SKIN)
-
-			 holoPos(I, entity():toWorld(POSITION))
-			 holoAng(I, entity():toWorld(ANGLES))
-
-			 holoModel(I, MODEL)
-			 holoScale(I, SCALE)
+		  # HOLO_NAME #
+		  holoCreate(INDEX, Base:toWorld(POSITION * Scale), SCALE * Scale, ANGLES, COLOR, MODEL)
+		  holoSkin(INDEX, SKIN)
+		  holoMaterial(INDEX, MATERIAL)
+		  holoParent(INDEX, Base)
 	]]
+
+	local str_header =
+	[[
+@name
+@inputs [Base]:entity
+
+Scale = 1
+Base = Base:isValid() ? Base : entity()
+	]]
+
 	local function tovec(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
 	local function toang(vec) return ("ang(%s, %s, %s)"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
 	local function toang2(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
+
 	local function part_to_holo(part)
+		local scale = part:GetSize() * part:GetScale()
 
-	local scale = part:GetSize() * part:GetScale()
+		--[[for _, clip in ipairs(part:GetChildren()) do
+			if clip.ClassName == "clip" and not clip:IsHidden() then
+				local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
+				local normal = ang:Forward()
+				holo_str = holo_str .. "\n"
+				holo_str = holo_str .. "holoClipEnabled(I, CI, 1)\n"
+				holo_str = holo_str .. "holoClip(I, " .. tovec(pos + normal) .. ", " .. toang2(normal) ..  ", 1)\n"
+			end
+		end]]--
 
-	--[[for _, clip in ipairs(part:GetChildren()) do
-		if clip.ClassName == "clip" and not clip:IsHidden() then
-			local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
-			local normal = ang:Forward()
-			holo_str = holo_str .. "\n"
-			holo_str = holo_str .. "holoClipEnabled(I, CI, 1)\n"
-			holo_str = holo_str .. "holoClip(I, " .. tovec(pos + normal) .. ", " .. toang2(normal) ..  ", 1)\n"
-		end
-	end]]--
 		local holo = holo_str
 		:gsub("ALPHA", part:GetAlpha()*255)
 		:gsub("COLOR", tovec(part:GetColor()))
@@ -317,34 +319,51 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 		:gsub("MATERIAL", ("%q"):format(part:GetMaterial()))
 		:gsub("MODEL", ("%q"):format(part:GetModel()))
 		:gsub("SKIN", part:GetSkin())
+
 		if part:HasParent() and part:GetParent().is_model_part then
-			holo = holo:gsub("PARENT", ("holoParent(I, %s)"):format(part.Parent.UniqueID))
+			holo = holo:gsub("PARENT", ("%s)"):format(part.Parent.UniqueID))
 		else
-			holo = holo:gsub("PARENT", "holoParent(I, entity())")
+			holo = holo:gsub("PARENT", "entity()")
 		end
+
 		holo = holo:Replace("HOLO_NAME", part:GetName())
+		holo = holo:gsub("INDEX", holoindex)
+
 		LocalPlayer():ChatPrint("PAC > Code printed to console and saved in your Expression 2 folder.")
 		print(holo)
+
 		return holo
 	end
+
+	holoindex = 0
+
 	local function convert(part)
 		local out = ""
-		out = out .. "@name \n"
-		out = out .. "@inputs \n"
-		out = out .. "@outputs \n"
-		out = out .. "\n		  I   = 0 # Hologram index starting at 0\n"
-		out = out .. "		  CI  = 0 # Clip index starting at 0\n"
+		out = out .. str_header
 
 		if part.is_model_part then
 			out = part_to_holo(part)
 		end
+
 		for key, part in ipairs(part:GetChildren()) do
 			if part.is_model_part and not part:IsHidden() and not part.wavefront_mesh then
+				holoindex = holoindex + 1
 				out = out .. convert(part)
 			end
 		end
+
 		return out
 	end
+
+	local function write(part)
+		holoindex = 0
+		out = out .. str_header
+
+		convert(part)
+
+		return out
+	end
+
 	file.CreateDir("expression2/pac")
 	file.Write("expression2/pac/"..part:GetName()..".txt", convert(part))
 end)
