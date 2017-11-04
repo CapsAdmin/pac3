@@ -277,7 +277,6 @@ function pace.HandleReceivedData(ply, data)
 
 	if type(data.part) == "table" and data.part.self then
 		if type(data.part.self) == "table" and not data.part.self.UniqueID then return end -- bogus data
-		-- PrintTable(data.part)
 
 		pace.SubmitPartNotify(data)
 	elseif type(data.part) == "string" then
