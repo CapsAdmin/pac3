@@ -377,9 +377,12 @@ do -- sound
 
 	function PANEL:SpecialCallback()
 		pace.ResourceBrowser(function(path)
-			path = path:match("sound/(.+)")
 			self:SetValue(path)
 			self.OnValueChanged(path)
+
+			if pace.current_part:IsValid() then
+				pace.current_part:OnShow()
+			end
 		end, "sound")
 	end
 

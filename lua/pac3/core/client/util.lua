@@ -151,7 +151,7 @@ do --dev util
 				end
 			end
 
-			if pace.model_browser and pace.model_browser:IsValid() then
+			if pace.model_browser and pace.model_browser:IsValid() and pace.model_browser:IsVisible() then
 				model_browser_opened = true
 				pace.model_browser:Remove()
 			end
@@ -293,7 +293,7 @@ do --dev util
 		end
 
 		if model_browser_opened then
-			pace.ResourceBrowser(function(...) print(...) return false end)
+			RunConsoleCommand("pac_resource_browser")
 		end
 	end
 
