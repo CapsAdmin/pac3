@@ -739,7 +739,7 @@ local function AnimationEditorOff()
 end
 
 local function AnimationEditorOn()
-	if hook.Call("PrePACEditorOpen", GAMEMODE, LocalPlayer()) == false then return end
+	if hook.Run("PrePACEditorOpen", LocalPlayer()) == false then return end
 
 	if animating then AnimationEditorOff() return end
 	for i,v in pairs(animEditorPanels) do

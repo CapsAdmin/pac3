@@ -75,7 +75,7 @@ function pace.SubmitPart(data, filter)
 	end
 
 	-- last arg "true" is pac3 only in case you need to do your checking differnetly from pac2
-	local allowed, reason = hook.Call("PrePACConfigApply", GAMEMODE, data.owner, data, true)
+	local allowed, reason = hook.Run("PrePACConfigApply", data.owner, data, true)
 
 	if type(data.part) == "table" then
 		local ent = Entity(tonumber(data.part.self.OwnerName) or -1)

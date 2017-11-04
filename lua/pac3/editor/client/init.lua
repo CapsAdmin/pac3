@@ -114,7 +114,7 @@ pace.Editor = NULL
 function pace.OpenEditor()
 	pace.CloseEditor()
 
-	if hook.Call("PrePACEditorOpen", GAMEMODE, LocalPlayer()) == false then return end
+	if hook.Run("PrePACEditorOpen", LocalPlayer()) == false then return end
 
 	pac.Enable()
 
