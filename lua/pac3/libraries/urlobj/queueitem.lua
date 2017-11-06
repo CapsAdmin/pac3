@@ -140,6 +140,11 @@ function QUEUEITEM:BeginDownload ()
 	end
 
 	local function failure(code, data, len, headers)
+		-- dont bother with server if he said No
+		if code == 401 or code == 404 or code == 503 or code == 501 then
+			self.DownloadAttemptCount = 100
+		end
+
 		self.DownloadTimeoutTime = 0
 		self:SetStatus ("Failed - " .. code)
 	end
