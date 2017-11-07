@@ -58,7 +58,7 @@ function pace.OnMouseWheeled(delta)
 
 	delta = delta * mult
 
-	pace.ViewFOV = math.Clamp(pace.ViewFOV - delta, 1, 75)
+	pace.ViewFOV = math.Clamp(pace.ViewFOV - delta, 1, 90)
 end
 
 local held_ang = Angle(0,0,0)
