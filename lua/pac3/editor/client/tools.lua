@@ -278,10 +278,11 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 	[[
 
 		  # HOLO_NAME #
-		  holoCreate(INDEX, Base:toWorld(POSITION * Scale), SCALE * Scale, ANGLES, COLOR, MODEL)
-		  holoSkin(INDEX, SKIN)
-		  holoMaterial(INDEX, MATERIAL)
-		  holoParent(INDEX, Base)
+		  holoCreate(I, Base:toWorld(POSITION * Scale), SCALE * Scale, Base:toWorld(ANGLES), COLOR, MODEL)
+		  holoSkin(I, SKIN)
+		  holoMaterial(I, MATERIAL)
+		  holoParent(I, Base)
+		  I++
 	]]
 
 	local str_header =
@@ -290,7 +291,8 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 @inputs [Base]:entity
 
 Scale = 1
-Base = Base:isValid() ? Base : entity()
+Base = entity() # comment to use @input base.
+I = 0
 	]]
 
 	local function tovec(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
@@ -327,7 +329,6 @@ Base = Base:isValid() ? Base : entity()
 		end
 
 		holo = holo:Replace("HOLO_NAME", part:GetName())
-		holo = holo:gsub("INDEX", holoindex)
 
 		LocalPlayer():ChatPrint("PAC > Code printed to console and saved in your Expression 2 folder.")
 		print(holo)
@@ -347,19 +348,9 @@ Base = Base:isValid() ? Base : entity()
 
 		for key, part in ipairs(part:GetChildren()) do
 			if part.is_model_part and not part:IsHidden() and not part.wavefront_mesh then
-				holoindex = holoindex + 1
 				out = out .. convert(part)
 			end
 		end
-
-		return out
-	end
-
-	local function write(part)
-		holoindex = 0
-		out = out .. str_header
-
-		convert(part)
 
 		return out
 	end
