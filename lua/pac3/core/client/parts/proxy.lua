@@ -162,6 +162,7 @@ PART.Inputs =
 
 		return 0,0,0
 	end,
+
 	owner_fov = function(s, p)
 		local owner = s:GetOwner(s.RootOwner)
 
@@ -173,15 +174,25 @@ PART.Inputs =
 
 		return 0
 	end,
+
 	visible = function(s, p, radius)
 		p.proxy_pixvis = p.proxy_pixvis or util.GetPixelVisibleHandle()
 		return util.PixelVisible(p.cached_pos, radius or 16, p.proxy_pixvis) or 0
 	end,
+
 	time = RealTime,
 	synced_time = CurTime,
+	systime = SysTime,
+	stime = SysTime,
+	frametime = FrameTime,
+	ftime = FrameTime,
+	framenumber = FrameNumber,
+	fnumber = FrameNumber,
+
 	random = function(s, p)
 		return math.random()
 	end,
+
 	timeex = function(s, p)
 		s.time = s.time or pac.RealTime
 

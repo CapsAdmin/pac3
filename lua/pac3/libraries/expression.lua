@@ -1,5 +1,5 @@
-local lib =
-{
+
+local lib = {
 	PI = math.pi,
 	rand = math.random,
 	randx = function(a,b)
