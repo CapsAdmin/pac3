@@ -105,6 +105,7 @@ PART.OldEvents =
 			return false
 		end,
 	},
+
 	timerx =
 	{
 		arguments = {{seconds = "number"}, {reset_on_hide = "boolean"}, {synced_time = "boolean"}},
@@ -118,6 +119,20 @@ PART.OldEvents =
 			return self:NumberOperator(time - self.time, seconds)
 		end,
 	},
+
+	timersys = {
+		arguments = {{seconds = "number"}, {reset_on_hide = "boolean"}},
+
+		callback = function(self, ent, seconds, reset_on_hide)
+			local time = SysTime()
+
+			self.time = self.time or time
+			self.timerx_reset = reset_on_hide
+
+			return self:NumberOperator(time - self.time, seconds)
+		end,
+	},
+
 	map_name =
 	{
 		arguments = {{find = "string"}},
