@@ -497,7 +497,9 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		end
 
 		frame.PropPanel.selected = node.propPanel
+
 		frame.dir = node.dir
+		frame.pathid = node.pathid or node.GetPathID and node:GetPathID() or "GAME"
 
 		frame.PropPanel.selected:Dock(FILL)
 		frame.PropPanel.selected:SetVisible(true)
@@ -506,7 +508,10 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		divider:SetRight(frame.PropPanel.selected)
 
 		if node.dir then
-			update_title("browsing " .. node.dir .. "/*")
+			local pathid = frame.pathid or "GAME"
+			if pathid == "GAME" then pathid = "all" end
+
+			update_title("browsing " .. pathid .. "/" .. node.dir .. "/*")
 		else
 			update_title()
 		end
@@ -873,30 +878,27 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 				node = node:AddFolder( name, path .. browse_types[1], pathid, false )
 				node:SetIcon( icon )
 				node.dir = browse_types[1]
-				node.OnNodeSelected = on_select
+
 			else
-				local _, dirs = file.Find("*", pathid)
 				node = node:AddNode(name, icon)
 				node.OnNodeSelected = on_select
 				node:SetFolder("")
 				node:SetPathID(pathid)
 				node.viewPanel = viewPanel
 
-				local parent = node
+				for _, dir in ipairs(browse_types) do
+					local parent = node
 
-				for _, dir in ipairs(dirs) do
-					if table.HasValue(browse_types, dir:lower()) then
-						local node = node:AddFolder(dir, path .. dir, pathid, false)
-						node.dir = dir
-						node.OnNodeSelected = on_select
+					local node = node:AddFolder(dir, path .. dir, pathid, false)
+					node.dir = dir
+					node.OnNodeSelected = on_select
 
-						if name == "all" and #browse_types == 1 and browse_types[1] == dir then
-							timer.Simple(0, function()
-							parent:SetExpanded(true)
-							tree:SetExpanded(true)
-							tree:SetSelectedItem(node)
-							end)
-						end
+					if name == "all" and #browse_types == 1 and browse_types[1] == dir then
+						timer.Simple(0, function()
+						parent:SetExpanded(true)
+						tree:SetExpanded(true)
+						tree:SetSelectedItem(node)
+						end)
 					end
 				end
 			end
@@ -1062,12 +1064,17 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		end
 	end
 
-	function search:Cancel(why)
+	function search:Stop()
 		cancel:InvalidateLayout()
 		cancel:SetVisible(false)
 
 		self.delay_functions = {}
 		self.searched = false
+	end
+
+	function search:Cancel(why)
+		self:Stop()
+
 		if why then
 			update_title("search canceled: " .. why)
 		else
@@ -1099,8 +1106,8 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		end
 
 		if i == 0 and self.searched then
+			self:Stop()
 			update_title()
-			self.searched = false
 			file.Write("pac3_cache/pac_resource_browser_index.txt", util.TableToJSON(pac.resource_browser_cache))
 		end
 
@@ -1112,7 +1119,11 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 			if self:GetValue() == "" or self:GetValue() == self.default_text then
 				change = true
 			end
-			self.default_text = L("search " .. frame.dir .. "/*")
+
+			local pathid = frame.pathid or "GAME"
+			if pathid == "GAME" then pathid = "all" end
+
+			self.default_text = L("search " .. pathid .. "/" .. frame.dir .. "/*")
 			if change then
 				self:SetValue(self.default_text)
 			end
@@ -1128,30 +1139,32 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		if self:GetValue() == "" then return end
 
 		local count = 0
+		local pathid = frame.pathid or "GAME"
+		local dir = frame.dir
 
-		if frame.dir == "models" then
+		if dir == "models" then
 			self.propPanel = self.model_view
 			self.propPanel:Clear()
-			self:StartSearch(self:GetValue(), "models/", {".mdl"}, "GAME", function(path, pathid)
+			self:StartSearch(self:GetValue(), "models/", {".mdl"}, pathid, function(path, pathid)
 				if count >= 500 then return false, "too many results (" .. count .. ")" end
 				count = count + 1
 				if not IsUselessModel(path) then
 					self.propPanel:Add(create_model_icon(path))
 				end
 			end)
-		elseif frame.dir == "sound" then
+		elseif dir == "sound" then
 			self.propPanel = sound_list
 			self.propPanel:Clear()
-			self:StartSearch(self:GetValue(), "sound/", {".wav", ".mp3", ".ogg"}, "GAME", function(path, pathid)
+			self:StartSearch(self:GetValue(), "sound/", {".wav", ".mp3", ".ogg"}, pathid, function(path, pathid)
 				if count >= 1500 then return false, "too many results (" .. count .. ")" end
 				count = count + 1
 				sound_list:AddSound(path, pathid)
 			end)
-		elseif frame.dir == "materials" then
+		elseif dir == "materials" then
 			self.propPanel = self.model_view
 			self.propPanel:Clear()
 
-			self:StartSearch(self:GetValue(), "materials/", {".vmt", ".vtf"}, "GAME", function(path, pathid)
+			self:StartSearch(self:GetValue(), "materials/", {".vmt", ".vtf"}, pathid, function(path, pathid)
 				if count >= 750 then return false, "too many results (" .. count .. ")" end
 				if path:EndsWith(".vmt") then
 					if material_view then
@@ -1163,7 +1176,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 					count = count + 1
 				end
 			end)
-		elseif frame.dir == "sound names" then
+		elseif dir == "sound names" then
 			self.propPanel = sound_name_list
 			self.propPanel:Clear()
 
@@ -1177,7 +1190,8 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 			end
 		end
 
-		self.dir = frame.dir
+		self.dir = dir
+		self.pathid = pathid
 		tree:OnNodeSelected(self)
 	end
 
