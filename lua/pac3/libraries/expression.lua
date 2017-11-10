@@ -2,7 +2,7 @@
 local lib = {
 	PI = math.pi,
 	rand = math.random,
-	randx = function(a,b)
+	randx = function(a, b)
 		a = a or -1
 		b = b or 1
 		return math.Rand(a, b)

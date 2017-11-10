@@ -529,7 +529,7 @@ function PART:SetModel(modelPath)
 				local ent = self:GetEntity()
 				self.loading = nil
 				ent.pac_bones = nil
-				ent:SetModel("error.mdl")
+				ent:SetModel("models/error.mdl")
 			end
 		end, self:GetPlayerOwner())
 
@@ -552,7 +552,7 @@ function PART:SetModel(modelPath)
 				self.Entity = self:GetEntity()
 
 				if not meshes and err then
-					self.Entity:SetModel("error.mdl")
+					self.Entity:SetModel("models/error.mdl")
 					self.Mesh = nil
 					return
 				end

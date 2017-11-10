@@ -941,7 +941,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					end
 				end
 
-				callback(DEBUG_MDL and "error.mdl" or v)
+				callback(DEBUG_MDL and "models/error.mdl" or v)
 				file.Delete("pac3_cache/downloads/" .. id .. ".dat")
 				break
 			end

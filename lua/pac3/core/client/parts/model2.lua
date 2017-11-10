@@ -390,11 +390,11 @@ function PART:SetModel(path)
 			end, function(err)
 				pac.Message(err)
 				self.loading = nil
-				self:RealSetModel("error.mdl")
+				self:RealSetModel("models/error.mdl")
 			end, self:GetPlayerOwner())
 		else
 			self.loading = reason or "mdl is not allowed"
-			self:RealSetModel("error.mdl")
+			self:RealSetModel("models/error.mdl")
 			pac.Message(self, ' mdl files are not allowed')
 		end
 	else
