@@ -125,16 +125,12 @@ function pace.SubmitPart(data, filter)
 			for key, v in pairs(pace.dupe_ents) do
 				if v.owner:IsValid() and v.owner == data.owner then
 					if v.ent:IsValid() and v.ent.pac_parts then
-						v.ent.pac_parts = {}
+						v.ent.pac_parts = nil
 						duplicator.ClearEntityModifier(v.ent, "pac_config")
-						duplicator.StoreEntityModifier(v.ent, "pac_config", {json = util.TableToJSON(v.ent.pac_parts)})
-						return
-					else
-						pace.dupe_ents[key] = nil
 					end
-				else
-					pace.dupe_ents[key] = nil
 				end
+
+				pace.dupe_ents[key] = nil
 			end
 
 		else
