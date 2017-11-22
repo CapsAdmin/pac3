@@ -397,9 +397,14 @@ if CLIENT then
 					mat = Material("../data/" .. path, "mips smooth noclamp")
 				end
 
-				callback(mat:GetTexture("$basetexture"), frames)
+				local tex = mat:GetTexture("$basetexture")
+				if tex then
+					callback(tex, frames)
 
-				memory[url] = {ply = ply, path = path}
+					memory[url] = {ply = ply, path = path}
+				elseif ply == pac.LocalPlayer then
+					pac.Message(Color(255, 50, 50), "$basetexture from ", url, " is nil")
+				end
 			end,
 			function()
 

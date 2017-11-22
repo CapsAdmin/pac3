@@ -7,19 +7,19 @@ concommand.Add("pac_event", function(ply, _, args)
 	if not args[1] then return end
 
 	local event = args[1]
-	local extra = args[2] or 0
+	local extra = tonumber(args[2]) or 0
 
-	if extra == "2" or extra == "toggle" then
+	if extra == 2 or args[2] == "toggle" then
 		ply.pac_event_toggles = ply.pac_event_toggles or {}
 		ply.pac_event_toggles[event] = not ply.pac_event_toggles[event]
 
-		extra = ply.pac_event_toggles[event] and "1" or "0"
+		extra = ply.pac_event_toggles[event] and 1 or 0
 	end
 
 	net.Start("pac_event", true)
 		net.WriteEntity(ply)
 		net.WriteString(event)
-		net.WriteInt(tonumber(extra), 8)
+		net.WriteInt(extra, 8)
 	net.Broadcast()
 end)
 

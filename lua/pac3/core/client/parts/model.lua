@@ -134,7 +134,7 @@ end
 function PART:Initialize(is_obj)
 	self.Entity = pac.CreateEntity(self:GetModel(), is_obj)
 	if not self.Entity:IsValid() then
-		pac.Message("Failed to create entity!")
+		error("pac3 failed to create entity!")
 	end
 	self.Entity:SetNoDraw(true)
 	self.Entity.PACPart = self

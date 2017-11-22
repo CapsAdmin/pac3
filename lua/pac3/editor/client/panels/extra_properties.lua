@@ -25,9 +25,10 @@ do -- bone
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:SpecialCallback()
-		if not pace.current_part:GetOwner():IsValid() then return end
+		if not pace.current_part:IsValid() or not pace.current_part:GetOwner():IsValid() then return end
 
 		pace.SelectBone(pace.current_part:GetOwner(), function(data)
+			if not self:IsValid() then return end
 			self:SetValue(L(data.friendly))
 			self.OnValueChanged(data.friendly)
 		end, pace.current_part.ClassName == "bone")
@@ -75,6 +76,7 @@ do -- part
 
 	function PANEL:SpecialCallback()
 		pace.SelectPart(pac.GetParts(true), function(part)
+			if not self:IsValid() then return end
 			self:SetValue(part:GetName())
 			self.OnValueChanged(part)
 		end)
@@ -105,6 +107,7 @@ do -- owner
 
 	function PANEL:SpecialCallback()
 		pace.SelectEntity(function(ent)
+			if not self:IsValid() then return end
 			pace.current_part:SetOwnerName(ent:EntIndex())
 			local name = pace.current_part:GetOwnerName()
 			self.OnValueChanged(name)
@@ -154,6 +157,7 @@ do -- aimpart
 
 	function PANEL:SpecialCallback()
 		pace.SelectPart(pac.GetParts(true), function(part)
+			if not self:IsValid() then return end
 			self:SetValue(part:GetName())
 			self.OnValueChanged(part)
 		end)
@@ -197,6 +201,7 @@ do -- model
 		local part = pace.current_part
 
 		pace.ResourceBrowser(function(path)
+			if not self:IsValid() then return end
 			-- because we refresh the properties
 			pace.current_part["Set" .. key](pace.current_part, path)
 			pace.PopulateProperties(pace.current_part)
@@ -222,11 +227,10 @@ do -- materials and textures
 
 	function PANEL_MATERIAL:SpecialCallback(key)
 		pace.ResourceBrowser(function(path)
-			if self:IsValid() then
-				path = path:match("materials/(.+)%.vmt")
-				self:SetValue(path)
-				self.OnValueChanged(path)
-			end
+			if not self:IsValid() then return end
+			path = path:match("materials/(.+)%.vmt") or "error"
+			self:SetValue(path)
+			self.OnValueChanged(path)
 		end, "materials", key)
 	end
 
@@ -253,7 +257,8 @@ do -- materials and textures
 
 	function PANEL:SpecialCallback()
 		pace.ResourceBrowser(function(path)
-			path = path:match("materials/(.+)%.vtf")
+			if not self:IsValid() then return end
+			path = path:match("materials/(.+)%.vtf") or "error"
 			self:SetValue(path)
 			self.OnValueChanged(path)
 		end, "textures")
@@ -377,6 +382,8 @@ do -- sound
 
 	function PANEL:SpecialCallback()
 		pace.ResourceBrowser(function(path)
+			if not self:IsValid() then return end
+
 			self:SetValue(path)
 			self.OnValueChanged(path)
 
