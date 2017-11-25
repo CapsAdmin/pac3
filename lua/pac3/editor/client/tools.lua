@@ -278,11 +278,11 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 	[[
 
 		  # HOLO_NAME #
+		  I++
 		  holoCreate(I, Base:toWorld(POSITION * Scale), SCALE * Scale, Base:toWorld(ANGLES), COLOR, MODEL)
 		  holoSkin(I, SKIN)
 		  holoMaterial(I, MATERIAL)
 		  holoParent(I, Base)
-		  I++
 	]]
 
 	local str_header =
