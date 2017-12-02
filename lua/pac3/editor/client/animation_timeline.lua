@@ -520,7 +520,7 @@ do
 			timeInSeconds = timeInSeconds+(1/(v.FrameRate or 1))
 		end
 
-		return timeInSeconds
+		return 0
 	end
 
 	function TIMELINE:AddKeyFrame(raw)

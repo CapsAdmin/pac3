@@ -12,12 +12,14 @@ function pac.UpdateAnimation(ply)
 		for _, part in pairs(pac.GetParts()) do
 			if part:GetPlayerOwner() == ply and part.is_model_part then
 				local ent = part:GetEntity()
-				ent:PhysicsInit(SOLID_NONE)
-				ent:SetMoveType(MOVETYPE_NONE)
-				ent:SetNoDraw(true)
-				ent.RenderOverride = nil
+				if ent:IsValid() then
+					ent:PhysicsInit(SOLID_NONE)
+					ent:SetMoveType(MOVETYPE_NONE)
+					ent:SetNoDraw(true)
+					ent.RenderOverride = nil
 
-				part.skip_orient = false
+					part.skip_orient = false
+				end
 			end
 		end
 		ply.pac_physics_died = false
@@ -230,40 +232,12 @@ function pac.OnClientsideRagdoll(ply, ent)
 end
 
 function pac.InitDeathPhysicsOnProp(part,ply,plyent)
-	plyent:SetNoDraw(true)
+	local ent = part:GetEntity()
+	if not ent:IsValid() then return end
 
+	plyent:SetNoDraw(true)
 	part.skip_orient = true
 
-	local ent = part:GetEntity()
-	ent:SetParent(NULL)
-	ent:SetNoDraw(true)
-	ent:PhysicsInitBox(Vector(1,1,1) * -5, Vector(1,1,1) * 5)
-	ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
-
-	local phys = ent:GetPhysicsObject()
-	phys:AddAngleVelocity(VectorRand() * 1000)
-	phys:AddVelocity(ply:GetVelocity()  + VectorRand() * 30)
-	phys:Wake()
-
-	function ent.RenderOverride(ent)
-		if part:IsValid() then
-			if not part.HideEntity then
-				part:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
-				ent:DrawModel()
-				part:PostEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
-			end
-		else
-			ent.RenderOverride = nil
-		end
-	end
-end
-
-function pac.InitDeathPhysicsOnProp(part,ply,plyent)
-	plyent:SetNoDraw(true)
-
-	part.skip_orient = true
-
-	local ent = part:GetEntity()
 	ent:SetParent(NULL)
 	ent:SetNoDraw(true)
 	ent:PhysicsInitBox(Vector(1,1,1) * -5, Vector(1,1,1) * 5)
