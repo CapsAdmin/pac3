@@ -1,5 +1,8 @@
 -- based on starfall
 
+CreateClientConVar("pac_resource_browser_close_on_select", "0")
+CreateClientConVar("pac_resource_browser_remember_layout", "1")
+
 local L = pace.LanguageString
 
 local function install_click(icon, path, pattern, on_menu)
@@ -318,7 +321,7 @@ do
 	function PANEL:Init()
 		self:SetPaintBackground( false )
 
-		self.zoom = ScrW()/15
+		self.zoom = pace.model_browser:GetCookieNumber("zoom", ScrW()/15)
 
 		self.IconList = vgui.Create( "DPanel", self:GetCanvas())
 		self.IconList:Dock( TOP )
@@ -375,6 +378,7 @@ do
 	function PANEL:OnMouseWheeled(delta)
 		if input.IsControlDown() then
 			self.zoom = math.Clamp(self.zoom + delta * 4, 16, 512)
+			pace.model_browser:SetCookie("zoom", self.zoom)
 			self:InvalidateLayout()
 			return
 		end
@@ -416,7 +420,15 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 
 	local addModel
 
-	pace.model_browser_callback = callback or print
+	pace.model_browser_callback = function(...)
+		callback = callback or print
+
+		callback(...)
+
+		if GetConVar("pac_resource_browser_close_on_select"):GetBool() then
+			pace.model_browser:SetVisible(false)
+		end
+	end
 	pace.model_browser_browse_types = browse_types_str
 	pace.model_browser_browse_types_tbl = browse_types
 	pace.model_browser_part_key = part_key
@@ -427,12 +439,53 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		return
 	end
 
+	local divider
+
 	local frame = vgui.Create("DFrame")
 	frame.title = L"resource browser" .. " - " .. (browse_types_str:gsub(";", " "))
-	frame:SetSize(ScrW()/2.75, ScrH())
-	frame:SetPos(ScrW() - frame:GetWide(), 0)
+
+	if GetConVar("pac_resource_browser_remember_layout"):GetBool() then
+		frame:SetCookieName("pac_resource_browser")
+	end
+
+	local x = frame:GetCookieNumber("x", ScrW() - ScrW()/2.75)
+	local y = frame:GetCookieNumber("y", 0)
+	local w = frame:GetCookieNumber("w", ScrW()/2.75)
+	local h = frame:GetCookieNumber("h", ScrH())
+
+	x = math.Clamp(x, 0, ScrW())
+	y = math.Clamp(y, 0, ScrH())
+
+	w = math.Clamp(w, 50, ScrW())
+	h = math.Clamp(h, 50, ScrH())
+
+	frame:SetPos(x, y)
+	frame:SetSize(w, h)
+
 	frame:SetDeleteOnClose(false)
 	frame:SetSizable(true)
+
+	local last_x
+	local last_y
+	local last_w
+	local last_h
+	local div_x
+
+	local old_think = frame.Think
+	frame.Think = function(...)
+		local x,y = frame:GetPos()
+		local w,h = frame:GetSize()
+
+		local div_x = divider:GetLeftWidth()
+
+		if x ~= last_x then frame:SetCookie("x", x) last_x = x end
+		if y ~= last_y then frame:SetCookie("y", y) last_y = y end
+		if w ~= last_w then frame:SetCookie("w", w) last_w = w end
+		if h ~= last_h then frame:SetCookie("h", h) last_h = h end
+		if div_x ~= last_div_x then frame:SetCookie("div", div_x) last_div_x = div_x end
+
+		return old_think(...)
+	end
 	pace.model_browser = frame
 	update_title()
 
@@ -459,10 +512,12 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		)
 	end):SetImage(pace.MiscIcons.clear)
 
-	local view_menu = menu_bar:AddMenu(L"view")
-	view_menu:SetDeleteSelf(false)
-	view_menu:AddCVar(L"show sound duration (slower search)", "pac_resource_browser_sound_duration", "1", "0")
 
+
+	local options_menu = menu_bar:AddMenu(L"options")
+	options_menu:SetDeleteSelf(false)
+	options_menu:AddCVar(L"close browser on select", "pac_resource_browser_close_on_select", "1", "0")
+	options_menu:AddCVar(L"remember layout", "pac_resource_browser_remember_layout", "1", "0")
 
 --[[
 	local tool_bar = vgui.Create("DPanel", frame)
@@ -480,8 +535,6 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 	left_panel:SetSize(190, 10)
 	left_panel:DockMargin(0, 0, 4, 0)
 	left_panel.Paint = function () end
-
-	local divider
 
 	local tree = vgui.Create("DTree", left_panel)
 	tree:Dock(FILL)
@@ -531,7 +584,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 
 	divider = vgui.Create("DHorizontalDivider", frame)
 	divider:Dock(FILL)
-	divider:SetLeftWidth(140)
+	divider:SetLeftWidth(frame:GetCookieNumber("div", 140))
 	divider:SetLeftMin(0)
 	divider:SetRightMin(0)
 
@@ -711,7 +764,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 					node.info = v
 					node.dir = "models"
 
-					node.propPanel = vgui.Create("pac_ResourceBrowser_ContentContainer", frame.PropPanel)
+					node.propPanel = vgui.Create(vgui.GetControlTable("ContentContainer") and "ContentContainer" or "pac_ResourceBrowser_ContentContainer", frame.PropPanel)
 					node.propPanel:DockMargin(5, 0, 0, 0)
 					node.propPanel:SetVisible(false)
 
@@ -887,18 +940,21 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 				node.viewPanel = viewPanel
 
 				for _, dir in ipairs(browse_types) do
-					local parent = node
+					local files, folders = file.Find(path .. dir .. "/*", pathid)
+					if files[1] or folders[1] then
+						local parent = node
 
-					local node = node:AddFolder(dir, path .. dir, pathid, false)
-					node.dir = dir
-					node.OnNodeSelected = on_select
+						local node = node:AddFolder(dir, path .. dir, pathid, false)
+						node.dir = dir
+						node.OnNodeSelected = on_select
 
-					if name == "all" and #browse_types == 1 and browse_types[1] == dir then
-						timer.Simple(0, function()
-						parent:SetExpanded(true)
-						tree:SetExpanded(true)
-						tree:SetSelectedItem(node)
-						end)
+						if name == "all" and #browse_types == 1 and browse_types[1] == dir and dir ~= "models" then
+							timer.Simple(0, function()
+								parent:SetExpanded(true)
+								tree:SetExpanded(true)
+								tree:SetSelectedItem(node)
+							end)
+						end
 					end
 				end
 			end
@@ -957,9 +1013,31 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 			end
 		end
 
+		local node = root_node:AddNode("addons")
+
 		for _, addon in SortedPairsByMemberValue(engine.GetAddons(), "title") do
-			if addon.downloaded and addon.mounted then
-				addBrowseContent(viewPanel, root_node, addon.title, "icon16/bricks.png", "", addon.title)
+			if addon.file:StartWith("addons/") then
+				local _, dirs = file.Find("*", addon.title)
+
+				if
+					table.HasValue(dirs, "materials") or
+					table.HasValue(dirs, "models") or
+					table.HasValue(dirs, "sound")
+				then
+					addBrowseContent(viewPanel, node, addon.title, "icon16/bricks.png", "", addon.title)
+				end
+			end
+		end
+
+		local _, folders = file.Find("addons/*", "MOD")
+
+		for _, path in ipairs(folders) do
+			if
+				file.IsDir("addons/" .. path .. "/materials", "MOD") or
+				file.IsDir("addons/" .. path .. "/sound", "MOD") or
+				file.IsDir("addons/" .. path .. "/models", "MOD")
+			then
+				addBrowseContent(viewPanel, node, path, "icon16/folder.png", "addons/" .. path .. "/", "MOD")
 			end
 		end
 	end
@@ -1102,7 +1180,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 				return
 			end
 			self.delay_functions[func] = nil
-			if i > 30 then break end
+			if i > 50 then break end
 		end
 
 		if i == 0 and self.searched then
