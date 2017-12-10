@@ -55,7 +55,13 @@ local function IsActuallyPlayer(ent)
 	return IsEntity(ent) and pcall(ent.UniqueID, ent)
 end
 
-local active_parts = {}
+local ent_parts = {}
+local all_parts = {}
+local uid_parts = {}
+
+local function parts_from_uid(owner_id)
+	return uid_parts[owner_id] or {}
+end
 
 local function think(part)
 	if part.ThinkTime == 0 then
@@ -88,8 +94,8 @@ function pac.GetProfilingData(ent)
 end
 
 local function hide_parts(ent)
-	if active_parts[ent] and ent.pac_drawing then
-		for _, part in pairs(active_parts[ent]) do
+	if ent_parts[ent] and ent.pac_drawing then
+		for _, part in pairs(ent_parts[ent]) do
 			part:CallRecursive("OnHide")
 			part:SetKeyValueRecursive("last_hidden", nil)
 			part:SetKeyValueRecursive("shown_from_rendering", false)
@@ -102,8 +108,8 @@ local function hide_parts(ent)
 end
 
 local function show_parts(ent)
-	if active_parts[ent] and (not ent.pac_drawing) and (not ent.pac_shouldnotdraw) and (not ent.pac_ignored) then
-		for _, part in pairs(active_parts[ent]) do
+	if ent_parts[ent] and (not ent.pac_drawing) and (not ent.pac_shouldnotdraw) and (not ent.pac_ignored) then
+		for _, part in pairs(ent_parts[ent]) do
 			part:SetKeyValueRecursive("last_hidden", nil)
 			part:SetKeyValueRecursive("shown_from_rendering", true)
 			part:SetKeyValueRecursive("draw_hidden", false)
@@ -139,7 +145,7 @@ local function render_override(ent, type, draw_only)
 		end
 	end
 
-	if not active_parts[ent] then
+	if not ent_parts[ent] then
 		pac.UnhookEntityRender(ent)
 	else
 		if not draw_only then
@@ -148,30 +154,30 @@ local function render_override(ent, type, draw_only)
 			-- bones MUST be setup before drawing or else unexpected/random results might happen
 
 			if pac.profile then
-				for key, part in pairs(active_parts[ent]) do
+				for key, part in pairs(ent_parts[ent]) do
 					if part:IsValid() then
 						if not part:HasParent() then
 							part:CallRecursiveProfiled("BuildBonePositions")
 						end
 					else
-						active_parts[ent][key] = nil
+						ent_parts[ent][key] = nil
 					end
 				end
 			else
-				for key, part in pairs(active_parts[ent]) do
+				for key, part in pairs(ent_parts[ent]) do
 					if part:IsValid() then
 						if not part:HasParent() then
 							part:CallRecursive("BuildBonePositions")
 						end
 					else
-						active_parts[ent][key] = nil
+						ent_parts[ent][key] = nil
 					end
 				end
 			end
 		end
 
 		if pac.profile then
-			for key, part in pairs(active_parts[ent]) do
+			for key, part in pairs(ent_parts[ent]) do
 				if part:IsValid() then
 					if not part:HasParent() then
 						if not draw_only then
@@ -183,11 +189,11 @@ local function render_override(ent, type, draw_only)
 						end
 					end
 				else
-					active_parts[ent][key] = nil
+					ent_parts[ent][key] = nil
 				end
 			end
 		else
-			for key, part in pairs(active_parts[ent]) do
+			for key, part in pairs(ent_parts[ent]) do
 				if part:IsValid() then
 					if not part:HasParent() then
 						if not draw_only then
@@ -203,7 +209,7 @@ local function render_override(ent, type, draw_only)
 						end
 					end
 				else
-					active_parts[ent][key] = nil
+					ent_parts[ent][key] = nil
 				end
 			end
 		end
@@ -267,11 +273,11 @@ function pac.RenderOverride(ent, type, draw_only)
 end
 
 function pac.HookEntityRender(ent, part)
-	if not active_parts[ent] then
-		active_parts[ent] = {}
+	if not ent_parts[ent] then
+		ent_parts[ent] = {}
 	end
 
-	if active_parts[ent][part] then
+	if ent_parts[ent][part] then
 		return
 	end
 
@@ -280,20 +286,20 @@ function pac.HookEntityRender(ent, part)
 	pac.drawn_entities[ent:EntIndex()] = ent
 	pac.profile_info[ent:EntIndex()] = nil
 
-	active_parts[ent] = active_parts[ent] or {}
-	active_parts[ent][part] = part
+	ent_parts[ent] = ent_parts[ent] or {}
+	ent_parts[ent][part] = part
 
 	ent.pac_has_parts = true
 end
 
 function pac.UnhookEntityRender(ent, part)
 
-	if part and active_parts[ent] then
-		active_parts[ent][part] = nil
+	if part and ent_parts[ent] then
+		ent_parts[ent][part] = nil
 	end
 
-	if active_parts[ent] and not next(active_parts[ent]) then
-		active_parts[ent] = nil
+	if ent_parts[ent] and not next(ent_parts[ent]) then
+		ent_parts[ent] = nil
 		ent.pac_has_parts = nil
 		pac.drawn_entities[ent:EntIndex()] = nil
 	end
@@ -517,7 +523,7 @@ do
 		if should_suppress() then return end
 
 		for key, ent in pairs(pac.drawn_entities) do
-			if ent.pac_draw_cond and active_parts[ent] then -- accessing table of NULL doesn't do anything
+			if ent.pac_draw_cond and ent_parts[ent] then -- accessing table of NULL doesn't do anything
 				pac.RenderOverride(ent, "translucent", true)
 			end
 		end
@@ -526,7 +532,7 @@ end
 
 function pac.Think()
 	for i, ply in ipairs(player.GetAll()) do
-		if active_parts[ply] and not Alive(ply) then
+		if ent_parts[ply] and not Alive(ply) then
 			local ent = ply:GetRagdollEntity()
 
 			if IsValid(ent) then
@@ -573,7 +579,7 @@ end
 function pac.PostDrawViewModel()
 	for key, ent in pairs(pac.drawn_entities) do
 		if IsValid(ent) then
-			if ent.pac_drawing and active_parts[ent] then
+			if ent.pac_drawing and ent_parts[ent] then
 				pac.RenderOverride(ent, "viewmodel", true)
 			end
 		else
@@ -605,8 +611,8 @@ pac.ShowEntityParts = show_parts
 pac.TogglePartDrawing = toggle_drawing_parts
 
 function pac.DisableEntity(ent)
-	if active_parts[ent] then
-		for _, part in pairs(active_parts[ent]) do
+	if ent_parts[ent] then
+		for _, part in pairs(ent_parts[ent]) do
 			part:CallRecursive("OnHide")
 		end
 
@@ -618,9 +624,9 @@ end
 
 -- todo
 function pac.__check_vehicle(ply)
-	if active_parts[ply] then
+	if ent_parts[ply] then
 		local done = {}
-		for _, part in pairs(active_parts[ply]) do
+		for _, part in pairs(ent_parts[ply]) do
 			local part = part:GetRootPart()
 			if not done[part] then
 				if part.OwnerName == "active vehicle" then
@@ -638,7 +644,7 @@ function pac.OnClientsideRagdoll(ply, ent)
 	if ply.pac_death_physics_parts then
 		if ply.pac_physics_died then return end
 
-		for _, part in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
+		for _, part in pairs(parts_from_uid(ply:UniqueID())) do
 			if part.is_model_part then
 				pac.InitDeathPhysicsOnProp(part,ply,ent)
 			end
@@ -651,7 +657,7 @@ function pac.OnClientsideRagdoll(ply, ent)
 			ply.pac_owner_override = ent
 		end
 
-		for _, part in pairs(active_parts[ply]) do
+		for _, part in pairs(ent_parts[ply]) do
 			if part.last_owner ~= ent then
 				part:SetOwner(ent)
 				part.last_owner = ent
@@ -661,8 +667,8 @@ function pac.OnClientsideRagdoll(ply, ent)
 end
 
 function pac.PlayerSpawned(ply)
-	if active_parts[ply] then
-		for _, part in pairs(active_parts[ply]) do
+	if ent_parts[ply] then
+		for _, part in pairs(ent_parts[ply]) do
 			if part.last_owner and part.last_owner:IsValid() then
 				part:SetOwner(ply)
 				part.last_owner = nil
@@ -678,13 +684,13 @@ function pac.EntityRemoved(ent)
 	if IsActuallyValid(ent)  then
 		local owner = ent:GetOwner()
 		if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
-			for _, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
+			for _, part in pairs(parts_from_uid(owner:UniqueID())) do
 				if not part:HasParent() then
 					part:CheckOwner(ent, true)
 				end
 			end
-		elseif active_parts[ent] then
-			for _, part in pairs(active_parts[ent]) do
+		elseif ent_parts[ent] then
+			for _, part in pairs(ent_parts[ent]) do
 				if part.dupe_remove then
 					part:Remove()
 				elseif not part:HasParent() then
@@ -696,8 +702,87 @@ function pac.EntityRemoved(ent)
 end
 pac.AddHook("EntityRemoved")
 
+
+function pac.OnEntityCreated(ent)
+	if not IsActuallyValid(ent) then return end
+
+	local owner = ent:GetOwner()
+
+	if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
+		for _, part in pairs(parts_from_uid(owner:UniqueID())) do
+			if not part:HasParent() then
+				part:CheckOwner(ent, false)
+			end
+		end
+	end
+end
+pac.AddHook("OnEntityCreated")
+
+
+pac.AddHook("EntityEmitSound", function(data)
+	if pac.playing_sound then return end
+	local ent = data.Entity
+
+	if not ent:IsValid() or not ent.pac_has_parts then return end
+
+	ent.pac_emit_sound = {name = data.SoundName, time = pac.RealTime, reset = true, mute_me = ent.pac_emit_sound and ent.pac_emit_sound.mute_me or false}
+
+	for _, v in pairs(parts_from_uid(ent:IsPlayer() and ent:UniqueID() or ent:EntIndex())) do
+		if v.ClassName == "event" and v.Event == "emit_sound" then
+			v:GetParent():CallRecursive("Think")
+
+			if ent.pac_emit_sound.mute_me then
+				return false
+			end
+		end
+	end
+
+	if ent.pac_mute_sounds then
+		return false
+	end
+end)
+
+pac.AddHook("EntityFireBullets", function(ent, data)
+	if not ent:IsValid() or not ent.pac_has_parts then return end
+	ent.pac_fire_bullets = {name = data.AmmoType, time = pac.RealTime, reset = true}
+
+	for _, v in pairs(parts_from_uid(ent:IsPlayer() and ent:UniqueID() or ent:EntIndex())) do
+		if v.ClassName == "event" and v.Event == "fire_bullets" then
+			v:GetParent():CallRecursive("Think")
+		end
+	end
+
+	if ent.pac_hide_bullets then
+		return false
+	end
+end)
+
+
+do
+	local enums = {}
+
+	for key, val in pairs(_G) do
+		if type(key) == "string" and key:find("PLAYERANIMEVENT_", nil, true) then
+			enums[val] = key:gsub("PLAYERANIMEVENT_", ""):gsub("_", " "):lower()
+		end
+	end
+
+	pac.AddHook("DoAnimationEvent", function(ply, event, data)
+		-- update all parts once so OnShow and OnHide are updated properly for animation events
+		if ply.pac_has_parts then
+			ply.pac_anim_event = {name = enums[event], time = pac.RealTime, reset = true}
+
+			for _, v in pairs(parts_from_uid(ply:UniqueID())) do
+				if v.ClassName == "event" and v.Event == "animation_event" then
+					v:GetParent():CallRecursive("Think")
+				end
+			end
+		end
+	end)
+end
+
 timer.Create("pac_gc", 2, 0, function()
-	for ent, parts in pairs(active_parts) do
+	for ent, parts in pairs(ent_parts) do
 		if not ent:IsValid() then
 			for k,v in pairs(parts) do
 				v:Remove()
@@ -706,20 +791,32 @@ timer.Create("pac_gc", 2, 0, function()
 	end
 end)
 
-
-local active_parts2 = {}
-local uid_parts = {}
+function pac.RemovePartsFromUniqueID(uid)
+	for key, part in pairs(parts_from_uid(uid)) do
+		if not part:HasParent() then
+			part:Remove()
+		end
+	end
+end
 
 function pac.UpdatePartsWithMetatable(META, name)
 	-- update part functions only
 	-- updating variables might mess things up
-	for _, part in pairs(pac.GetParts()) do
+	for _, part in pairs(all_parts) do
 		if part.ClassName == name then
 			for k, v in pairs(META) do
 				if type(v) == "function" then
 					part[k] = v
 				end
 			end
+		end
+	end
+end
+
+function pac.GetRawMaterialFromName(str, ply_owner)
+	for _, part in pairs(all_parts) do
+		if part.GetRawMaterial and part:GetPlayerOwner() == ply_owner and str == part.Name then
+			return part:GetRawMaterial()
 		end
 	end
 end
@@ -735,11 +832,11 @@ function pac.SetUniqueIDPart(owner_uid, uid, part)
 end
 
 function pac.AddPart(part)
-	active_parts2[part.Id] = part
+	all_parts[part.Id] = part
 end
 
 function pac.RemovePart(part)
-	active_parts2[part.Id] = nil
+	all_parts[part.Id] = nil
 end
 
 function pac.LoadParts()
@@ -754,16 +851,12 @@ function pac.GetRegisteredParts()
 	return class.GetAll("part")
 end
 
-function pac.GetParts()
-	return active_parts2
+function pac.GetLocalParts()
+	return uid_parts[pac.LocalPlayer:UniqueID()]
 end
 
 function pac.GetPartFromUniqueID(owner_id, id)
 	return uid_parts[owner_id] and uid_parts[owner_id][id] or pac.NULL
-end
-
-function pac.GetPartsFromUniqueID(owner_id)
-	return uid_parts[owner_id] or {}
 end
 
 function pac.RemoveAllParts(owned_only, server)
@@ -779,7 +872,7 @@ function pac.RemoveAllParts(owned_only, server)
 	end
 
 	if not owned_only then
-		active_parts2 = {}
+		all_parts = {}
 		uid_parts = {}
 	end
 end
@@ -788,7 +881,7 @@ function pac.GetPartCount(class, children)
 	class = class:lower()
 	local count = 0
 
-	for _, part in pairs(children or pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
+	for _, part in pairs(children or pac.GetLocalParts()) do
 		if part.ClassName:lower() == class then
 			count = count + 1
 		end
@@ -798,9 +891,125 @@ function pac.GetPartCount(class, children)
 end
 
 function pac.CallPartHook(name, ...)
-	for _, part in pairs(pac.GetParts()) do
+	for _, part in pairs(all_parts) do
 		if part[name] then
 			part[name](part, ...)
+		end
+	end
+end
+
+function pac.UpdateMaterialPart(how, self, val)
+	if how == "update" then
+		pac.RunNextFrame("material translucent " .. self.Id, function()
+			for key, part in pairs(all_parts) do
+				if part.Materialm == val and self ~= part then
+					part.force_translucent = self.Translucent
+				end
+			end
+		end)
+	elseif how == "remove" then
+		pac.RunNextFrame("remove materials" .. self.Id, function()
+			for key, part in pairs(all_parts) do
+				if part.Materialm == val and self ~= part then
+					part.force_translucent = nil
+					part.Materialm = nil
+				end
+			end
+		end)
+	elseif how == "show" then
+		pac.RunNextFrame("refresh materials" .. self.Id, function()
+			for key, part in pairs(all_parts) do
+				if part.Material and part.Material ~= "" and part.Material == val then
+					part:SetMaterial(val)
+				end
+			end
+		end)
+	end
+end
+
+function pac.RefreshSetModel()
+	for _, part in pairs(all_parts) do
+		if part.ClassName == "model" then
+			part:SetModel(part:GetModel())
+		end
+	end
+end
+
+local MOVETYPE_NOCLIP = MOVETYPE_NOCLIP
+local IN_SPEED = IN_SPEED
+local SOLID_NONE = SOLID_NONE
+local MOVETYPE_NONE = MOVETYPE_NONE
+local IN_WALK = IN_WALK
+local IN_DUCK = IN_DUCK
+
+function pac.UpdateAnimation(ply)
+	if not IsEntity(ply) or not ply:IsValid() then return end
+
+	if ply.pac_death_physics_parts and ply:Alive() and ply.pac_physics_died then
+		for _, part in pairs(all_parts) do
+			if part:GetPlayerOwner() == ply and part.is_model_part then
+				local ent = part:GetEntity()
+				if ent:IsValid() then
+					ent:PhysicsInit(SOLID_NONE)
+					ent:SetMoveType(MOVETYPE_NONE)
+					ent:SetNoDraw(true)
+					ent.RenderOverride = nil
+
+					part.skip_orient = false
+				end
+			end
+		end
+		ply.pac_physics_died = false
+	end
+
+	local tbl = ply.pac_pose_params
+
+	if tbl then
+		for _, data in pairs(ply.pac_pose_params) do
+			ply:SetPoseParameter(data.key, data.val)
+		end
+	end
+
+	if ply.pac_global_animation_rate and ply.pac_global_animation_rate ~= 1 then
+
+		if ply.pac_global_animation_rate == 0 then
+			ply:SetCycle((pac.RealTime * ply:GetModelScale() * 2)%1)
+		elseif ply.pac_global_animation_rate ~= 1 then
+			ply:SetCycle((pac.RealTime * ply.pac_global_animation_rate)%1)
+		end
+
+		return true
+	end
+
+	if ply.pac_holdtype_alternative_animation_rate then
+		local length = ply:GetVelocity():Dot(ply:EyeAngles():Forward()) > 0 and 1 or -1
+		local scale = ply:GetModelScale() * 2
+
+		if scale ~= 0 then
+			ply:SetCycle(pac.RealTime / scale * length)
+		else
+			ply:SetCycle(0)
+		end
+
+		return true
+	end
+
+	local vehicle = ply:GetVehicle()
+
+	if ply.pac_last_vehicle ~= vehicle then
+		if ply.pac_last_vehicle ~= nil then
+			pac.__check_vehicle(ply)
+		end
+		ply.pac_last_vehicle = vehicle
+	end
+end
+pac.AddHook("UpdateAnimation")
+
+function pac.EffectReady(name)
+	for _, part in pairs(all_parts) do
+		if part.ClassName == "effect" and part.Effect == name then
+			part.Ready = true
+			part.waitingForServer = false
 		end
 	end
 end

@@ -26,12 +26,7 @@ concommand.Add("pac_urlobj_clear_cache",
 
 function urlobj.Reload()
 	urlobj.ClearCache()
-
-	for _, part in pairs(pac.GetParts()) do
-		if part.ClassName == "model" then
-			part:SetModel(part:GetModel())
-		end
-	end
+	pac.RefreshSetModel()
 end
 
 function urlobj.ClearCache()

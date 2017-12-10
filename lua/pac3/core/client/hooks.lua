@@ -5,69 +5,6 @@ local MOVETYPE_NONE = MOVETYPE_NONE
 local IN_WALK = IN_WALK
 local IN_DUCK = IN_DUCK
 
-function pac.UpdateAnimation(ply)
-	if not IsEntity(ply) or not ply:IsValid() then return end
-
-	if ply.pac_death_physics_parts and ply:Alive() and ply.pac_physics_died then
-		for _, part in pairs(pac.GetParts()) do
-			if part:GetPlayerOwner() == ply and part.is_model_part then
-				local ent = part:GetEntity()
-				if ent:IsValid() then
-					ent:PhysicsInit(SOLID_NONE)
-					ent:SetMoveType(MOVETYPE_NONE)
-					ent:SetNoDraw(true)
-					ent.RenderOverride = nil
-
-					part.skip_orient = false
-				end
-			end
-		end
-		ply.pac_physics_died = false
-	end
-
-	local tbl = ply.pac_pose_params
-
-	if tbl then
-		for _, data in pairs(ply.pac_pose_params) do
-			ply:SetPoseParameter(data.key, data.val)
-		end
-	end
-
-	if ply.pac_global_animation_rate and ply.pac_global_animation_rate ~= 1 then
-
-		if ply.pac_global_animation_rate == 0 then
-			ply:SetCycle((pac.RealTime * ply:GetModelScale() * 2)%1)
-		elseif ply.pac_global_animation_rate ~= 1 then
-			ply:SetCycle((pac.RealTime * ply.pac_global_animation_rate)%1)
-		end
-
-		return true
-	end
-
-	if ply.pac_holdtype_alternative_animation_rate then
-		local length = ply:GetVelocity():Dot(ply:EyeAngles():Forward()) > 0 and 1 or -1
-		local scale = ply:GetModelScale() * 2
-
-		if scale ~= 0 then
-			ply:SetCycle(pac.RealTime / scale * length)
-		else
-			ply:SetCycle(0)
-		end
-
-		return true
-	end
-
-	local vehicle = ply:GetVehicle()
-
-	if ply.pac_last_vehicle ~= vehicle then
-		if ply.pac_last_vehicle ~= nil then
-			pac.__check_vehicle(ply)
-		end
-		ply.pac_last_vehicle = vehicle
-	end
-end
-pac.AddHook("UpdateAnimation")
-
 local function mod_speed(cmd, speed)
 	if speed and speed ~= 0 then
 		local forward = cmd:GetForwardMove()
@@ -222,22 +159,6 @@ function pac.InitDeathPhysicsOnProp(part,ply,plyent)
 	end
 
 end
-
-function pac.OnEntityCreated(ent)
-	if not IsActuallyValid(ent) then return end
-
-	local owner = ent:GetOwner()
-
-	if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
-		for _, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
-			if not part:HasParent() then
-				part:CheckOwner(ent, false)
-			end
-		end
-	end
-end
-pac.AddHook("OnEntityCreated")
-
 
 function pac.NetworkEntityCreated(ply)
 	if not ply:IsPlayer() then return end

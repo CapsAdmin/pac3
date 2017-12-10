@@ -80,11 +80,7 @@ do -- from server
 		pac.dprint("%s removed %q", tostring(owner), part_name)
 
 		if part_name == "__ALL__" then
-			for key, part in pairs(pac.GetPartsFromUniqueID(data.player_uid)) do
-				if not part:HasParent() then
-					part:Remove()
-				end
-			end
+			pac.RemovePartsFromUniqueID(data.player_uid)
 
 			pace.CallHook("RemoveOutfit", owner)
 		else

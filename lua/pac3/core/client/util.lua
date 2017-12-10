@@ -141,7 +141,7 @@ do --dev util
 					selected_part_uid = pace.current_part:GetUniqueID()
 				end
 
-				for key, part in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
+				for key, part in pairs(pac.GetLocalParts()) do
 					if not part:HasParent() and part.show_in_editor ~= false then
 						table.insert(prev_parts, part:ToTable())
 					end
@@ -625,12 +625,11 @@ do -- get set and editor vars
 				if IsValid(part) and part ~= self and self[part_key] ~= part then
 					self[name_set_key](self, part)
 					self[last_uid_key] = self[uid_key]
-				elseif self[try_key] and not self.supress_part_name_find then -- match by name instead
-					for _, part in pairs(pac.GetParts()) do
+				elseif self[try_key] and not self.supress_part_name_find and self:GetPlayerOwner() == pac.LocalPlayer then -- match by name instead, only in editor
+					for _, part in pairs(pac.GetLocalParts()) do
 						if
 							part ~= self and
 							self[part_key] ~= part and
-							part:GetPlayerOwner() == self:GetPlayerOwner() and
 							part:GetName() == self[name_key]
 						then
 							self[name_set_key](self, part)
@@ -702,11 +701,7 @@ function pac.Material(str, part)
 
 	local ply_owner = part:GetPlayerOwner()
 
-	for _, part in pairs(pac.GetParts()) do
-		if part.GetRawMaterial and part:GetPlayerOwner() == ply_owner and str == part.Name then
-			return part:GetRawMaterial()
-		end
-	end
+	pac.GetRawMaterialFromName(str, ply_owner)
 
 	return Material(str)
 end

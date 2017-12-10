@@ -1596,68 +1596,6 @@ net.Receive("pac_event", function(umr)
 	end
 end)
 
-do
-	local enums = {}
-
-	for key, val in pairs(_G) do
-		if type(key) == "string" and key:find("PLAYERANIMEVENT_", nil, true) then
-			enums[val] = key:gsub("PLAYERANIMEVENT_", ""):gsub("_", " "):lower()
-		end
-	end
-
-	pac.AddHook("DoAnimationEvent", function(ply, event, data)
-		-- update all parts once so OnShow and OnHide are updated properly for animation events
-		if ply.pac_has_parts then
-			ply.pac_anim_event = {name = enums[event], time = pac.RealTime, reset = true}
-
-			for _, v in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
-				if v.ClassName == "event" and v.Event == "animation_event" then
-					v:GetParent():CallRecursive("Think")
-				end
-			end
-		end
-	end)
-
-end
-
-pac.AddHook("EntityEmitSound", function(data)
-	if pac.playing_sound then return end
-	local ent = data.Entity
-
-	if not ent:IsValid() or not ent.pac_has_parts then return end
-
-	ent.pac_emit_sound = {name = data.SoundName, time = pac.RealTime, reset = true, mute_me = ent.pac_emit_sound and ent.pac_emit_sound.mute_me or false}
-
-	for _, v in pairs(pac.GetPartsFromUniqueID(ent:IsPlayer() and ent:UniqueID() or ent:EntIndex())) do
-		if v.ClassName == "event" and v.Event == "emit_sound" then
-			v:GetParent():CallRecursive("Think")
-
-			if ent.pac_emit_sound.mute_me then
-				return false
-			end
-		end
-	end
-
-	if ent.pac_mute_sounds then
-		return false
-	end
-end)
-
-pac.AddHook("EntityFireBullets", function(ent, data)
-	if not ent:IsValid() or not ent.pac_has_parts then return end
-	ent.pac_fire_bullets = {name = data.AmmoType, time = pac.RealTime, reset = true}
-
-	for _, v in pairs(pac.GetPartsFromUniqueID(ent:IsPlayer() and ent:UniqueID() or ent:EntIndex())) do
-		if v.ClassName == "event" and v.Event == "fire_bullets" then
-			v:GetParent():CallRecursive("Think")
-		end
-	end
-
-	if ent.pac_hide_bullets then
-		return false
-	end
-end)
-
 pac.AddHook("OnPlayerChat", function(ply, str)
 	ply.pac_say_event = {str = str, time = pac.RealTime}
 end)
