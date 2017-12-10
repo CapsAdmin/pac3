@@ -906,7 +906,7 @@ do -- drawing. this code is running every frame
 	end
 
 	--function PART:Draw(pos, ang, draw_type, isNonRoot)
-	function PART:Draw(pos, ang, draw_type, owner_override)
+	function PART:Draw(pos, ang, draw_type)
 		-- Think takes care of polling this
 		if not self.last_enabled then return end
 
@@ -986,7 +986,7 @@ do -- drawing. this code is running every frame
 
 		local sysTime = SysTime()
 
-		for i, child in ipairs(self:GetChildren()) do
+		for _, child in ipairs(self:GetChildren()) do
 			child:Draw(pos, ang, draw_type)
 		end
 
@@ -1052,10 +1052,8 @@ do -- drawing. this code is running every frame
 					pos, ang = pac.GetBonePosAng(ent, bone_override or self.Bone)
 				else
 					-- else just get the origin of the part
-					if not pos or not ang then
-						-- unless we've passed it from parent
-						pos, ang = parent:GetDrawPosition()
-					end
+					-- unless we've passed it from parent
+					pos, ang = parent:GetDrawPosition()
 				end
 
 			elseif owner:IsValid() then
