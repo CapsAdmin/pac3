@@ -201,7 +201,7 @@ do -- model
 		local part = pace.current_part
 
 		pace.ResourceBrowser(function(path)
-			if not self:IsValid() then return end
+			if not part:IsValid() then return end
 			-- because we refresh the properties
 			pace.current_part["Set" .. key](pace.current_part, path)
 			pace.PopulateProperties(pace.current_part)
