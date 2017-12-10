@@ -38,7 +38,7 @@ function pace.RemoveHook(str)
 end
 
 function pace.PCallCriticalFunction(ply, func, ...)
-	if ply.pac_pcall_last_error and ply.pac_pcall_last_error + 1 < SysTime() then
+	if ply.pac_pcall_last_error and ply.pac_pcall_last_error + 1 > SysTime() then
 		local time = RealTime()
 		if not ply.pac_pcall_next_print or ply.pac_pcall_next_print < time then
 			pac.Message("cannot handle net message from ", ply, " because it errored less than 1 second ago")
