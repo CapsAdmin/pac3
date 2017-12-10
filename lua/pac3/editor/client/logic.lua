@@ -35,7 +35,7 @@ hook.Add("InitPostEntity", "pace_autoload_parts", function()
 		pace.LoadParts("autoload")
 		timer.Simple(3, function()
 		-- give pac some time to solve bones and parents
-			for key, part in pairs(pac.GetParts(true)) do
+			for key, part in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 				if not part:HasParent() then
 					pace.SendPartToServer(part)
 				end
@@ -49,7 +49,7 @@ function pace.OnOpenEditor()
 	pace.SetViewAngles(LocalPlayer():EyeAngles())
 	pace.EnableView(true)
 
-	if table.Count(pac.GetParts(true)) == 0 then
+	if table.Count(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) == 0 then
 		pace.Call("CreatePart", "group", L"my outfit")
 	end
 
@@ -65,7 +65,7 @@ function pace.OnCloseEditor()
 end
 
 function pace.TrySelectPart()
-	local part = select(2, next(pac.GetParts(true)))
+	local part = select(2, next(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())))
 
 	local found = pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), pace.current_part_uid)
 

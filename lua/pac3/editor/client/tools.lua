@@ -43,7 +43,7 @@ pace.AddTool(L"fix origin", function(part, suboption)
 end)
 
 pace.AddTool(L"replace ogg with webaudio", function(part, suboption)
-	for _, part in pairs(pac.GetParts(true)) do
+	for _, part in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 		if part.ClassName == "ogg" then
 			local parent = part:GetParent()
 
@@ -70,7 +70,7 @@ pace.AddTool(L"copy global id", function(obj)
 end)
 
 pace.AddTool(L"use legacy scale", function(part, suboption)
-	for _, part in pairs(pac.GetParts(true)) do
+	for _, part in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 		if part.UseLegacyScale ~= nil then
 			part:SetUseLegacyScale(suboption == 1)
 		end
@@ -118,7 +118,7 @@ end)
 
 pace.AddTool(L"square model scales...", function(part, suboption)
 	Derma_StringRequest(L"model", L"input the model name that should get squared", "default.mdl", function(model)
-		for _, part in pairs(pac.GetParts(true)) do
+		for _, part in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 			if part:IsValid() and part.GetModel then
 				local function square_scale(part)
 					if part.SetSize then
@@ -265,7 +265,7 @@ do
 	end
 
 	pace.AddTool(L"clear names", function(part, suboptions)
-		for k,v in pairs(pac.GetParts(true)) do
+		for k,v in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 			v:SetName("")
 		end
 	end)

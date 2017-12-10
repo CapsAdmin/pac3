@@ -141,7 +141,7 @@ do --dev util
 					selected_part_uid = pace.current_part:GetUniqueID()
 				end
 
-				for key, part in pairs(pac.GetParts(true)) do
+				for key, part in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 					if not part:HasParent() and part.show_in_editor ~= false then
 						table.insert(prev_parts, part:ToTable())
 					end

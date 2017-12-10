@@ -15,7 +15,7 @@ function pace.WearParts(file, clear)
 		pace.LoadParts(file, clear)
 	end
 
-	for key, part in pairs(pac.GetParts(true)) do
+	for key, part in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 		if not part:HasParent() and part.show_in_editor ~= false then
 			pace.SendPartToServer(part)
 		end
@@ -29,7 +29,7 @@ function pace.ClearParts()
 	timer.Simple(0.1, function()
 		if not pace.Editor:IsValid() then return end
 
-		if table.Count(pac.GetParts(true)) == 0 then
+		if table.Count(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) == 0 then
 			pace.Call("CreatePart", "group", L"my outfit")
 		end
 
@@ -39,7 +39,7 @@ end
 
 function pace.OnCreatePart(class_name, name, mdl)
 
-	if class_name ~= "group" and not next(pac.GetParts(true)) then
+	if class_name ~= "group" and not next(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) then
 		pace.Call("CreatePart", "group")
 	end
 
@@ -52,7 +52,7 @@ function pace.OnCreatePart(class_name, name, mdl)
 	if parent:IsValid() then
 		part:SetParent(parent)
 	elseif class_name ~= "group" then
-		for _, parent in pairs(pac.GetParts(true)) do
+		for _, parent in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 			if parent.ClassName == "group" then
 				part:SetParent(parent)
 				break

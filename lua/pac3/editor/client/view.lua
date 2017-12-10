@@ -18,7 +18,7 @@ function pace.ResetView()
 		local ent = pace.GetViewEntity()
 
 		if not ent:IsValid() then
-			local _, part = next(pac.GetParts(true))
+			local _, part = next(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID()))
 			if part then
 				ent = part:GetOwner()
 			end

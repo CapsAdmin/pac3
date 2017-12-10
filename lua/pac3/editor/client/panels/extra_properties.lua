@@ -75,7 +75,7 @@ do -- part
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:SpecialCallback()
-		pace.SelectPart(pac.GetParts(true), function(part)
+		pace.SelectPart(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID()), function(part)
 			if not self:IsValid() then return end
 			self:SetValue(part:GetName())
 			self.OnValueChanged(part)
@@ -87,7 +87,7 @@ do -- part
 
 		menu:MakePopup()
 
-		for _, part in pairs(pac.GetParts(true)) do
+		for _, part in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 			if not part:HasParent() then
 				populate_part_menu(menu, part, "Set" .. key)
 			end
@@ -156,7 +156,7 @@ do -- aimpart
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:SpecialCallback()
-		pace.SelectPart(pac.GetParts(true), function(part)
+		pace.SelectPart(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID()), function(part)
 			if not self:IsValid() then return end
 			self:SetValue(part:GetName())
 			self.OnValueChanged(part)
@@ -171,7 +171,7 @@ do -- aimpart
 			menu:AddOption(L(key), function() pace.current_part:SetAimPartName(name) end):SetImage("icon16/eye.png")
 		end
 
-		for _, part in pairs(pac.GetParts(true)) do
+		for _, part in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 			if not part:HasParent() then
 				populate_part_menu(menu, part, "SetAimPartName")
 			end

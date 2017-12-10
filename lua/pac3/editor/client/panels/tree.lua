@@ -32,7 +32,7 @@ do
 			end
 		end
 
-		for key, part in pairs(pac.GetParts(true)) do
+		for key, part in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 
 			if part.event_triggered ~= nil then
 				local node = part.editor_node
@@ -312,7 +312,7 @@ function PANEL:Populate(reset)
 		node:Remove()
 	end]]
 
-	self:PopulateParts(self, pac.GetParts(true))
+	self:PopulateParts(self, pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID()))
 
 	self:InvalidateLayout()
 end

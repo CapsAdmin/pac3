@@ -36,7 +36,7 @@ function pace.SaveParts(name, prompt_name, override_part)
 		if override_part then
 			data = override_part:ToTable()
 		else
-			for key, part in pairs(pac.GetParts(true)) do
+			for key, part in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 				if not part:HasParent() and part.show_in_editor ~= false then
 					table.insert(data, part:ToTable())
 				end
@@ -64,7 +64,7 @@ function pace.Backup(data, name)
 
 	if not data then
 		data = {}
-		for key, part in pairs(pac.GetParts(true)) do
+		for key, part in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 			if not part:HasParent() then
 				table.insert(data, part:ToTable())
 			end

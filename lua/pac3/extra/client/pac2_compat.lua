@@ -301,9 +301,9 @@ function pacx.ConvertPAC2Config(data, name)
 			part_:SetAngles(data.angles*1)
 	end
 
-	for key, part in pairs(pac.GetParts(true)) do
+	for key, part in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 		if part.pac2_part and part.pac2_part.parent and part.pac2_part.parent ~= "none" then
-			for key, parent in pairs(pac.GetParts(true)) do
+			for key, parent in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 				if parent:GetName() == (part.pac2_part.parent .. " model") then
 					part:SetParent(parent)
 					if parent.pac2_modelbone then
@@ -316,7 +316,7 @@ function pacx.ConvertPAC2Config(data, name)
 
 	-- hacks
 
-	for key, part in pairs(pac.GetParts(true)) do
+	for key, part in pairs(pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 		part:SetParent(part:GetParent())
 	end
 

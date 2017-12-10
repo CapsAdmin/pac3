@@ -754,11 +754,7 @@ function pac.GetRegisteredParts()
 	return class.GetAll("part")
 end
 
-function pac.GetParts(owned_only)
-	if owned_only then
-		return uid_parts[pac.LocalPlayer:UniqueID()] or {}
-	end
-
+function pac.GetParts()
 	return active_parts2
 end
 
@@ -792,7 +788,7 @@ function pac.GetPartCount(class, children)
 	class = class:lower()
 	local count = 0
 
-	for _, part in pairs(children or pac.GetParts(true)) do
+	for _, part in pairs(children or pac.GetPartsFromUniqueID(pac.LocalPlayer:UniqueID())) do
 		if part.ClassName:lower() == class then
 			count = count + 1
 		end
