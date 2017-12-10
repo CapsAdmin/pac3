@@ -280,7 +280,7 @@ end
 
 util.AddNetworkString("pac_submit")
 
-net.Receive("pac_submit", function(_, ply)
+pace.PCallNetReceive(net.Receive, "pac_submit", function(_, ply)
 	local data = pace.net.DeserializeTable()
 	pace.HandleReceivedData(ply, data)
 end)
