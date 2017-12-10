@@ -115,13 +115,6 @@ function pac.GetAllBones(ent)
 	return tbl
 end
 
-timer.Simple(0, function()
-	for k, v in ipairs(ents.GetAll()) do
-		v.pac_bones = nil
-		v.pac_last_model = nil
-	end
-end)
-
 function pac.GetModelBones(ent)
 	if not ent or not ent:IsValid() then return {} end
 
@@ -313,9 +306,9 @@ function pac.GetBonePosAng(ent, id, parent)
 			end
 		end
 	else
-		local id = id and ent:LookupBone(id) or nil
-		if id then
-			pos, ang = GetBonePosition(ent, id)
+		local bone_id = id and ent:LookupBone(id) or nil
+		if bone_id then
+			pos, ang = GetBonePosition(ent, bone_id)
 		end
 	end
 
@@ -380,4 +373,13 @@ do -- bone manipulation for boneanimlib
 			ply:ManipulateBoneAngles(id, var)
 		end
 	end
+end
+
+if LocalPlayer():IsValid() then
+	timer.Simple(0, function()
+		for _, v in ipairs(ents.GetAll()) do
+			v.pac_bones = nil
+			v.pac_last_model = nil
+		end
+	end)
 end
