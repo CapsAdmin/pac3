@@ -45,6 +45,16 @@ pac.FrameNumber = 0
 pac.profile_info = {}
 pac.profile = true
 
+local class = pac.class
+
+local function IsActuallyValid(ent)
+	return IsEntity(ent) and pcall(ent.GetPos, ent)
+end
+
+local function IsActuallyPlayer(ent)
+	return IsEntity(ent) and pcall(ent.UniqueID, ent)
+end
+
 local active_parts = {}
 
 local function think(part)
@@ -696,6 +706,108 @@ timer.Create("pac_gc", 2, 0, function()
 	end
 end)
 
+
+local active_parts2 = {}
+local uid_parts = {}
+
+function pac.UpdatePartsWithMetatable(META, name)
+	-- update part functions only
+	-- updating variables might mess things up
+	for _, part in pairs(pac.GetParts()) do
+		if part.ClassName == name then
+			for k, v in pairs(META) do
+				if type(v) == "function" then
+					part[k] = v
+				end
+			end
+		end
+	end
+end
+
+function pac.RemoveUniqueIDPart(owner_uid, uid)
+	if not uid_parts[owner_uid] then return end
+	uid_parts[owner_uid][uid] = nil
+end
+
+function pac.SetUniqueIDPart(owner_uid, uid, part)
+	uid_parts[owner_uid] = uid_parts[owner_uid] or {}
+	uid_parts[owner_uid][uid] = part
+end
+
+function pac.AddPart(part)
+	active_parts2[part.Id] = part
+end
+
+function pac.RemovePart(part)
+	active_parts2[part.Id] = nil
+end
+
+function pac.LoadParts()
+	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
+
+	for _, name in pairs(files) do
+		include("pac3/core/client/parts/" .. name)
+	end
+end
+
+function pac.GetRegisteredParts()
+	return class.GetAll("part")
+end
+
+function pac.GetParts(owned_only)
+	if owned_only then
+		return uid_parts[pac.LocalPlayer:UniqueID()] or {}
+	end
+
+	return active_parts2
+end
+
+function pac.GetPartFromUniqueID(owner_id, id)
+	return uid_parts[owner_id] and uid_parts[owner_id][id] or pac.NULL
+end
+
+function pac.GetPartsFromUniqueID(owner_id)
+	return uid_parts[owner_id] or {}
+end
+
+function pac.RemoveAllParts(owned_only, server)
+	if server and pace then
+		pace.RemovePartOnServer("__ALL__")
+	end
+
+	for _, part in pairs(pac.GetParts(owned_only)) do
+		if part:IsValid() then
+			local status, err = pcall(part.Remove, part)
+			if not status then pac.Message('Failed to remove part: ' .. err .. '!') end
+		end
+	end
+
+	if not owned_only then
+		active_parts2 = {}
+		uid_parts = {}
+	end
+end
+
+function pac.GetPartCount(class, children)
+	class = class:lower()
+	local count = 0
+
+	for _, part in pairs(children or pac.GetParts(true)) do
+		if part.ClassName:lower() == class then
+			count = count + 1
+		end
+	end
+
+	return count
+end
+
+function pac.CallPartHook(name, ...)
+	for _, part in pairs(pac.GetParts()) do
+		if part[name] then
+			part[name](part, ...)
+		end
+	end
+end
 
 pac.AddHook("DrawPhysgunBeam")
 pac.AddHook("PostDrawViewModel")

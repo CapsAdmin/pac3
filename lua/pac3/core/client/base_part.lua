@@ -116,14 +116,13 @@ end
 
 function PART:SetUniqueID(id)
 	if self.owner_id then
-		pac.UniqueIDParts[self.owner_id] = pac.UniqueIDParts[self.owner_id] or {}
-		pac.UniqueIDParts[self.owner_id][self.UniqueID] = nil
+		pac.RemoveUniqueIDPart(self.owner_id, self.UniqueID)
 	end
 
 	self.UniqueID = id
 
 	if self.owner_id then
-		pac.UniqueIDParts[self.owner_id][id] = self
+		pac.SetUniqueIDPart(self.owner_id, id, self)
 	end
 end
 
@@ -839,10 +838,10 @@ do -- events
 		self:RemoveChildren()
 
 		if self.owner_id and self.UniqueID then
-			pac.UniqueIDParts[self.owner_id][self.UniqueID] = nil
+			pac.RemoveUniqueIDPart(self.owner_id, self.UniqueID)
 		end
 
-		pac.ActiveParts[self.Id] = nil
+		pac.RemovePart(self)
 
 		self.is_valid = false
 	end

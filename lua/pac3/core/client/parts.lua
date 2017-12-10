@@ -1,9 +1,6 @@
 local pac = pac
 local class = pac.class
 
-pac.ActiveParts = pac.ActiveParts or {}
-pac.UniqueIDParts = pac.UniqueIDParts or {}
-
 local part_count = 0 -- unique id thing
 local pairs = pairs
 
@@ -77,7 +74,7 @@ function pac.CreatePart(name, owner)
 		part:PreInitialize()
 	end
 
-	pac.ActiveParts[part.Id] = part
+	pac.AddPart(part)
 
 	if owner then
 		part:SetPlayerOwner(owner)
@@ -100,83 +97,8 @@ function pac.RegisterPart(META, name)
 	META.TypeBase = "base"
 	local _, name = class.Register(META, "part", name)
 
-	-- update part functions only
-	-- updating variables might mess things up
-	for _, part in pairs(pac.GetParts()) do
-		if part.ClassName == name then
-			for k, v in pairs(META) do
-				if type(v) == "function" then
-					part[k] = v
-				end
-			end
-		end
-	end
-end
-
-function pac.LoadParts()
-	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
-
-	for _, name in pairs(files) do
-		include("pac3/core/client/parts/" .. name)
-	end
-end
-
-function pac.GetRegisteredParts()
-	return class.GetAll("part")
-end
-
-function pac.GetParts(owned_only)
-	if owned_only then
-		return pac.UniqueIDParts[pac.LocalPlayer:UniqueID()] or {}
-	end
-
-	return pac.ActiveParts
-end
-
-function pac.GetPartFromUniqueID(owner_id, id)
-	return pac.UniqueIDParts[owner_id] and pac.UniqueIDParts[owner_id][id] or pac.NULL
-end
-
-function pac.GetPartsFromUniqueID(owner_id)
-	return pac.UniqueIDParts[owner_id] or {}
-end
-
-function pac.RemoveAllParts(owned_only, server)
-	if server and pace then
-		pace.RemovePartOnServer("__ALL__")
-	end
-
-	for _, part in pairs(pac.GetParts(owned_only)) do
-		if part:IsValid() then
-			local status, err = pcall(part.Remove, part)
-			if not status then pac.Message('Failed to remove part: ' .. err .. '!') end
-		end
-	end
-
-	if not owned_only then
-		pac.ActiveParts = {}
-		pac.UniqueIDParts = {}
-	end
-end
-
-function pac.GetPartCount(class, children)
-	class = class:lower()
-	local count = 0
-
-	for _, part in pairs(children or pac.GetParts(true)) do
-		if part.ClassName:lower() == class then
-			count = count + 1
-		end
-	end
-
-	return count
-end
-
-function pac.CallPartHook(name, ...)
-	for _, part in pairs(pac.GetParts()) do
-		if part[name] then
-			part[name](part, ...)
-		end
+	if pac.UpdatePartsWithMetatable then
+		pac.UpdatePartsWithMetatable(META, name)
 	end
 end
 
