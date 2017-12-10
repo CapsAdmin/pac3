@@ -61,10 +61,7 @@ end
 do --dev util
 	function pac.RemoveAllPACEntities()
 		for _, ent in pairs(ents.GetAll()) do
-			if ent.pac_parts then
-				pac.UnhookEntityRender(ent)
-				--ent:Remove()
-			end
+			pac.UnhookEntityRender(ent)
 
 			if ent.IsPACEntity then
 				ent:Remove()

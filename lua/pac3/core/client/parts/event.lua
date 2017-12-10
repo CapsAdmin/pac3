@@ -1607,7 +1607,7 @@ do
 
 	pac.AddHook("DoAnimationEvent", function(ply, event, data)
 		-- update all parts once so OnShow and OnHide are updated properly for animation events
-		if ply.pac_parts then
+		if ply.pac_has_parts then
 			ply.pac_anim_event = {name = enums[event], time = pac.RealTime, reset = true}
 
 			for _, v in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
@@ -1624,7 +1624,7 @@ pac.AddHook("EntityEmitSound", function(data)
 	if pac.playing_sound then return end
 	local ent = data.Entity
 
-	if not ent:IsValid() or not ent.pac_parts then return end
+	if not ent:IsValid() or not ent.pac_has_parts then return end
 
 	ent.pac_emit_sound = {name = data.SoundName, time = pac.RealTime, reset = true, mute_me = ent.pac_emit_sound and ent.pac_emit_sound.mute_me or false}
 
@@ -1644,7 +1644,7 @@ pac.AddHook("EntityEmitSound", function(data)
 end)
 
 pac.AddHook("EntityFireBullets", function(ent, data)
-	if not ent:IsValid() or not ent.pac_parts then return end
+	if not ent:IsValid() or not ent.pac_has_parts then return end
 	ent.pac_fire_bullets = {name = data.AmmoType, time = pac.RealTime, reset = true}
 
 	for _, v in pairs(pac.GetPartsFromUniqueID(ent:IsPlayer() and ent:UniqueID() or ent:EntIndex())) do

@@ -56,16 +56,7 @@ function pac.Disable()
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
 
-			if ent.pac_parts then
-				for _, part in pairs(ent.pac_parts) do
-					part:CallRecursive("OnHide")
-				end
-
-				pac.ResetBones(ent)
-			end
-
-			ent.pac_drawing = false
-
+			pac.DisableEntity(ent)
 		else
 			pac.drawn_entities[key] = nil
 		end

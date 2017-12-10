@@ -61,18 +61,7 @@ function pac.UpdateAnimation(ply)
 
 	if ply.pac_last_vehicle ~= vehicle then
 		if ply.pac_last_vehicle ~= nil then
-			if ply.pac_parts then
-				local done = {}
-				for _, part in pairs(ply.pac_parts) do
-					local part = part:GetRootPart()
-					if not done[part] then
-						if part.OwnerName == "active vehicle" then
-							part:CheckOwner()
-						end
-						done[part] = true
-					end
-				end
-			end
+			pac.__check_vehicle(ply)
 		end
 		ply.pac_last_vehicle = vehicle
 	end
@@ -203,34 +192,6 @@ local function IsActuallyPlayer(ent)
 	return IsEntity(ent) and pcall(ent.UniqueID, ent)
 end
 
-function pac.OnClientsideRagdoll(ply, ent)
-	ply.pac_ragdoll = ent
-
-	if ply.pac_death_physics_parts then
-		if ply.pac_physics_died then return end
-
-		for _, part in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
-			if part.is_model_part then
-				pac.InitDeathPhysicsOnProp(part,ply,ent)
-			end
-		end
-		ply.pac_physics_died = true
-	elseif ply.pac_death_ragdollize then
-
-		-- make props draw on the ragdoll
-		if ply.pac_death_ragdollize then
-			ply.pac_owner_override = ent
-		end
-
-		for _, part in pairs(ply.pac_parts) do
-			if part.last_owner ~= ent then
-				part:SetOwner(ent)
-				part.last_owner = ent
-			end
-		end
-	end
-end
-
 function pac.InitDeathPhysicsOnProp(part,ply,plyent)
 	local ent = part:GetEntity()
 	if not ent:IsValid() then return end
@@ -304,50 +265,6 @@ function pac.NotifyShouldTransmit(ent,st)
 	end
 end
 pac.AddHook("NotifyShouldTransmit")
-
-
-function pac.PlayerSpawned(ply)
-	if ply.pac_parts then
-		for _, part in pairs(ply.pac_parts) do
-			if part.last_owner and part.last_owner:IsValid() then
-				part:SetOwner(ply)
-				part.last_owner = nil
-			end
-		end
-	end
-	ply.pac_playerspawn = pac.RealTime -- used for events
-end
-pac.AddHook("PlayerSpawned")
-
-function pac.EntityRemoved(ent)
-	if IsActuallyValid(ent)  then
-		local owner = ent:GetOwner()
-		if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
-			for _, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
-				if not part:HasParent() then
-					part:CheckOwner(ent, true)
-				end
-			end
-		elseif ent.pac_parts then
-			for _, part in pairs(ent.pac_parts) do
-				if part.dupe_remove then
-					part:Remove()
-				elseif not part:HasParent() then
-					part:CheckOwner(ent, true)
-				end
-			end
-		end
-	end
-end
-pac.AddHook("EntityRemoved")
-
-timer.Create("pac_gc", 2, 0, function()
-	for _, part in pairs(pac.GetParts()) do
-		if not part:GetPlayerOwner():IsValid() then
-			part:Remove()
-		end
-	end
-end)
 
 net.Receive("pac_effect_precached", function()
 	local name = net.ReadString()
