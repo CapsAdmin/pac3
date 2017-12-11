@@ -1,9 +1,28 @@
 
-do
-	local MOVETYPE_NOCLIP = MOVETYPE_NOCLIP
-	local SOLID_NONE = SOLID_NONE
-	local MOVETYPE_NONE = MOVETYPE_NONE
+pac.AddHook("RenderScene", function(pos, ang)
+	pac.EyePos = pos
+	pac.EyeAng = ang
+end)
 
+pac.AddHook("DrawPhysgunBeam", function(ply, wep, enabled, target, bone, hitpos)
+
+	if enabled then
+		ply.pac_drawphysgun_event = {ply, wep, enabled, target, bone, hitpos}
+	else
+		ply.pac_drawphysgun_event = nil
+	end
+
+	if ply.pac_drawphysgun_event_part and ply.pac_drawphysgun_event_part:IsValid() then
+		ply.pac_drawphysgun_event_part:OnThink()
+	end
+
+
+	if ply.pac_hide_physgun_beam then
+		return false
+	end
+end)
+
+do
 	pac.AddHook("UpdateAnimation", function(ply)
 		if not IsEntity(ply) or not ply:IsValid() then return end
 

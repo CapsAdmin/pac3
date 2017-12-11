@@ -231,7 +231,7 @@ function pace.SubmitPart(data, filter)
 
 		if type(data.part) == "table" then
 			last_frame = frame_number
-			pace.CallHook("WearOutfit", data.owner, data.part)
+			pace.CallHook("OnWoreOutfit", data.owner, data.part)
 		end
 
 	end

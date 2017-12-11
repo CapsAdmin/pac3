@@ -29,6 +29,7 @@ include("pac3/libraries/boneanimlib.lua")
 
 include("util.lua")
 include("parts.lua")
+include("part_pool.lua")
 
 include("bones.lua")
 include("hooks.lua")

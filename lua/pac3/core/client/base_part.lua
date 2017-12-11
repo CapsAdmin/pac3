@@ -827,7 +827,11 @@ do -- events
 	function PART:OnRemove() end
 
 	function PART:Remove(skip_removechild)
-		pac.CallHook("OnPartRemove", self)
+
+		if self:GetPlayerOwner() == pac.LocalPlayer then
+			pac.CallHook("OnPartRemove", self)
+		end
+
 		self:CallRecursive("OnHide")
 		self:OnRemove()
 

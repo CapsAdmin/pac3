@@ -337,8 +337,8 @@ local function refresh(part, localplayer)
 end
 hook.Add("pac_OnWoreOutfit", "pace_create_tree_nodes", refresh)
 
-local function refresh(part, localplayer)
-	if localplayer and part:GetRootPart().show_in_editor ~= false then
+local function refresh(part)
+	if part:GetRootPart().show_in_editor ~= false then
 		pace.RefreshTree(true)
 	end
 end

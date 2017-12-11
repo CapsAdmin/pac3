@@ -85,8 +85,8 @@ function pac.CreatePart(name, owner)
 	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))
 
 	timer.Simple(0.1, function()
-		if part:IsValid() and part.show_in_editor ~= false then
-			pac.CallHook("OnPartCreated", part, owner == pac.LocalPlayer)
+		if part:IsValid() and part.show_in_editor ~= false and owner == pac.LocalPlayer then
+			pac.CallHook("OnPartCreated", part)
 		end
 	end)
 
@@ -120,5 +120,18 @@ function pac.GenerateNewUniqueID(part_data, base)
 
 	return part_data
 end
+
+function pac.LoadParts()
+	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
+
+	for _, name in pairs(files) do
+		include("pac3/core/client/parts/" .. name)
+	end
+end
+
+function pac.GetRegisteredParts()
+	return class.GetAll("part")
+end
+
 
 include("base_part.lua")
