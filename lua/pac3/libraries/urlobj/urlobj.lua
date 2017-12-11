@@ -26,7 +26,6 @@ concommand.Add("pac_urlobj_clear_cache",
 
 function urlobj.Reload()
 	urlobj.ClearCache()
-	pac.RefreshSetModel()
 end
 
 function urlobj.ClearCache()

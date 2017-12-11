@@ -423,11 +423,11 @@ function PART:UpdateMaterial(now)
 		end
 	end
 
-	pac.UpdateMaterialPart("update", self, self.Materialm)
+	pac.UpdateMaterialParts("update", self:GetPlayerOwner():UniqueID(), self, self.Materialm)
 end
 
 function PART:OnRemove()
-	pac.UpdateMaterialPart("remove", self, self.Materialm)
+	pac.UpdateMaterialParts("remove", self:GetPlayerOwner():UniqueID(), self, self.Materialm)
 end
 
 function PART:OnEvent(event, ...)
@@ -461,7 +461,7 @@ function PART:OnShow()
 
 	local name = self.Name
 
-	pac.UpdateMaterialPart("show", self, self.Name)
+	pac.UpdateMaterialParts("show", self:GetPlayerOwner():UniqueID(), self, self.Name)
 end
 
 pac.RegisterPart(PART)

@@ -1,7 +1,62 @@
+
+do
+	local MOVETYPE_NOCLIP = MOVETYPE_NOCLIP
+	local SOLID_NONE = SOLID_NONE
+	local MOVETYPE_NONE = MOVETYPE_NONE
+
+	pac.AddHook("UpdateAnimation", function(ply)
+		if not IsEntity(ply) or not ply:IsValid() then return end
+
+		if ply.pac_death_physics_parts and ply:Alive() and ply.pac_physics_died then
+			pac.CallPartEvent("become_physics")
+			ply.pac_physics_died = false
+		end
+
+		local tbl = ply.pac_pose_params
+
+		if tbl then
+			for _, data in pairs(ply.pac_pose_params) do
+				ply:SetPoseParameter(data.key, data.val)
+			end
+		end
+
+		if ply.pac_global_animation_rate and ply.pac_global_animation_rate ~= 1 then
+
+			if ply.pac_global_animation_rate == 0 then
+				ply:SetCycle((pac.RealTime * ply:GetModelScale() * 2)%1)
+			elseif ply.pac_global_animation_rate ~= 1 then
+				ply:SetCycle((pac.RealTime * ply.pac_global_animation_rate)%1)
+			end
+
+			return true
+		end
+
+		if ply.pac_holdtype_alternative_animation_rate then
+			local length = ply:GetVelocity():Dot(ply:EyeAngles():Forward()) > 0 and 1 or -1
+			local scale = ply:GetModelScale() * 2
+
+			if scale ~= 0 then
+				ply:SetCycle(pac.RealTime / scale * length)
+			else
+				ply:SetCycle(0)
+			end
+
+			return true
+		end
+
+		local vehicle = ply:GetVehicle()
+
+		if ply.pac_last_vehicle ~= vehicle then
+			if ply.pac_last_vehicle ~= nil then
+				pac.CallPartEvent("vehicle_changed", ply, vehicle)
+			end
+			ply.pac_last_vehicle = vehicle
+		end
+	end)
+end
+
 local MOVETYPE_NOCLIP = MOVETYPE_NOCLIP
 local IN_SPEED = IN_SPEED
-local SOLID_NONE = SOLID_NONE
-local MOVETYPE_NONE = MOVETYPE_NONE
 local IN_WALK = IN_WALK
 local IN_DUCK = IN_DUCK
 
@@ -120,45 +175,6 @@ function pac.pac_PlayerFootstep(ply, pos, snd, vol)
 	end
 end
 pac.AddHook("pac_PlayerFootstep")
-
-local function IsActuallyValid(ent)
-	return IsEntity(ent) and pcall(ent.GetPos, ent)
-end
-
-local function IsActuallyPlayer(ent)
-	return IsEntity(ent) and pcall(ent.UniqueID, ent)
-end
-
-function pac.InitDeathPhysicsOnProp(part,ply,plyent)
-	local ent = part:GetEntity()
-	if not ent:IsValid() then return end
-
-	plyent:SetNoDraw(true)
-	part.skip_orient = true
-
-	ent:SetParent(NULL)
-	ent:SetNoDraw(true)
-	ent:PhysicsInitBox(Vector(1,1,1) * -5, Vector(1,1,1) * 5)
-	ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
-
-	local phys = ent:GetPhysicsObject()
-	phys:AddAngleVelocity(VectorRand() * 1000)
-	phys:AddVelocity(ply:GetVelocity()  + VectorRand() * 30)
-	phys:Wake()
-
-	function ent.RenderOverride(ent)
-		if part:IsValid() then
-			if not part.HideEntity then
-				part:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
-				ent:DrawModel()
-				part:PostEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
-			end
-		else
-			ent.RenderOverride = nil
-		end
-	end
-
-end
 
 function pac.NetworkEntityCreated(ply)
 	if not ply:IsPlayer() then return end

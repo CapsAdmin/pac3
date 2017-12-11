@@ -105,8 +105,17 @@ hook.Add("pac_EffectPrecached", "pac_Effects", function(name)
 	if alreadyServer[name] then return end
 	alreadyServer[name] = true
 	pac.dprint("effect %q precached!", name)
-	pac.EffectReady(name)
+	pac.CallPartEvent("effect_precached", name)
 end)
+
+function PART:OnEvent(typ, name)
+	if typ == "effect_precached" then
+		if self.Effect == name then
+			self.Ready = true
+			self.waitingForServer = false
+		end
+	end
+end
 
 function PART:OnDraw(owner, pos, ang)
 	if not self.Ready then

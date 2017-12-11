@@ -352,10 +352,10 @@ function pac.ToggleIgnoreEntity(ent, status, strID)
 	end
 end
 
-function pac.RenderScene(pos, ang)
+pac.AddHook("RenderScene", function(pos, ang)
 	pac.EyePos = pos
 	pac.EyeAng = ang
-end
+end)
 
 -- disable pop/push flashlight modes (used for stability in 2D context)
 function pac.FlashlightDisable(b)
@@ -401,7 +401,7 @@ do
 
 	local should_suppress = setup_suppress()
 
-	function pac.PostDrawOpaqueRenderables(bDrawingDepth, bDrawingSkybox)
+	pac.AddHook("PostDrawOpaqueRenderables", function(bDrawingDepth, bDrawingSkybox)
 		if should_suppress() then return end
 
 		-- commonly used variables
@@ -515,11 +515,11 @@ do
 				pac.drawn_entities[key] = nil
 			end
 		end
-	end
+	end)
 
 	local should_suppress = setup_suppress()
 
-	function pac.PostDrawTranslucentRenderables(bDrawingDepth, bDrawingSkybox)
+	pac.AddHook("PostDrawTranslucentRenderables", function(bDrawingDepth, bDrawingSkybox)
 		if should_suppress() then return end
 
 		for key, ent in pairs(pac.drawn_entities) do
@@ -527,17 +527,70 @@ do
 				pac.RenderOverride(ent, "translucent", true)
 			end
 		end
-	end
+	end)
 end
 
-function pac.Think()
+pac.AddHook("Think", function()
 	for i, ply in ipairs(player.GetAll()) do
-		if ent_parts[ply] and not Alive(ply) then
-			local ent = ply:GetRagdollEntity()
+		if (ply.pac_death_physics_parts or ply.pac_death_ragdollize) and ent_parts[ply] and not Alive(ply) then
+			local rag = ply:GetRagdollEntity()
 
-			if IsValid(ent) then
-				if ply.pac_ragdoll ~= ent then
-					pac.OnClientsideRagdoll(ply, ent)
+			if IsValid(rag) then
+				if ply.pac_ragdoll ~= rag then
+					ply.pac_ragdoll = rag
+
+					if ply.pac_death_physics_parts then
+						if ply.pac_physics_died then return end
+
+						pac.CallPartEvent("physics_ragdoll_death", rag, ply)
+
+						for _, part in pairs(parts_from_uid(ply:UniqueID())) do
+							if part.is_model_part then
+								local ent = part:GetEntity()
+								if ent:IsValid() then
+									rag:SetNoDraw(true)
+
+									part.skip_orient = true
+
+									ent:SetParent(NULL)
+									ent:SetNoDraw(true)
+									ent:PhysicsInitBox(Vector(1,1,1) * -5, Vector(1,1,1) * 5)
+									ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+
+									local phys = ent:GetPhysicsObject()
+									phys:AddAngleVelocity(VectorRand() * 1000)
+									phys:AddVelocity(ply:GetVelocity()  + VectorRand() * 30)
+									phys:Wake()
+
+									function ent.RenderOverride(ent)
+										if part:IsValid() then
+											if not part.HideEntity then
+												part:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
+												ent:DrawModel()
+												part:PostEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
+											end
+										else
+											ent.RenderOverride = nil
+										end
+									end
+								end
+							end
+						end
+						ply.pac_physics_died = true
+					elseif ply.pac_death_ragdollize then
+
+						-- make props draw on the ragdoll
+						if ply.pac_death_ragdollize then
+							ply.pac_owner_override = rag
+						end
+
+						for _, part in pairs(ent_parts[ply]) do
+							if part.last_owner ~= rag then
+								part:SetOwner(rag)
+								part.last_owner = rag
+							end
+						end
+					end
 				end
 			end
 		end
@@ -574,9 +627,9 @@ function pac.Think()
 			pac.next_frame_funcs[k] = nil
 		end
 	end
-end
+end)
 
-function pac.PostDrawViewModel()
+pac.AddHook("PostDrawViewModel", function()
 	for key, ent in pairs(pac.drawn_entities) do
 		if IsValid(ent) then
 			if ent.pac_drawing and ent_parts[ent] then
@@ -586,9 +639,9 @@ function pac.PostDrawViewModel()
 			pac.drawn_entities[key] = nil
 		end
 	end
-end
+end)
 
-function pac.DrawPhysgunBeam(ply, wep, enabled, target, bone, hitpos)
+pac.AddHook("DrawPhysgunBeam", function(ply, wep, enabled, target, bone, hitpos)
 
 	if enabled then
 		ply.pac_drawphysgun_event = {ply, wep, enabled, target, bone, hitpos}
@@ -604,7 +657,7 @@ function pac.DrawPhysgunBeam(ply, wep, enabled, target, bone, hitpos)
 	if ply.pac_hide_physgun_beam then
 		return false
 	end
-end
+end)
 
 pac.HideEntityParts = hide_parts
 pac.ShowEntityParts = show_parts
@@ -622,51 +675,7 @@ function pac.DisableEntity(ent)
 	ent.pac_drawing = false
 end
 
--- todo
-function pac.__check_vehicle(ply)
-	if ent_parts[ply] then
-		local done = {}
-		for _, part in pairs(ent_parts[ply]) do
-			local part = part:GetRootPart()
-			if not done[part] then
-				if part.OwnerName == "active vehicle" then
-					part:CheckOwner()
-				end
-				done[part] = true
-			end
-		end
-	end
-end
-
-function pac.OnClientsideRagdoll(ply, ent)
-	ply.pac_ragdoll = ent
-
-	if ply.pac_death_physics_parts then
-		if ply.pac_physics_died then return end
-
-		for _, part in pairs(parts_from_uid(ply:UniqueID())) do
-			if part.is_model_part then
-				pac.InitDeathPhysicsOnProp(part,ply,ent)
-			end
-		end
-		ply.pac_physics_died = true
-	elseif ply.pac_death_ragdollize then
-
-		-- make props draw on the ragdoll
-		if ply.pac_death_ragdollize then
-			ply.pac_owner_override = ent
-		end
-
-		for _, part in pairs(ent_parts[ply]) do
-			if part.last_owner ~= ent then
-				part:SetOwner(ent)
-				part.last_owner = ent
-			end
-		end
-	end
-end
-
-function pac.PlayerSpawned(ply)
+pac.AddHook("PlayerSpawned", function(ply)
 	if ent_parts[ply] then
 		for _, part in pairs(ent_parts[ply]) do
 			if part.last_owner and part.last_owner:IsValid() then
@@ -676,11 +685,9 @@ function pac.PlayerSpawned(ply)
 		end
 	end
 	ply.pac_playerspawn = pac.RealTime -- used for events
-end
-pac.AddHook("PlayerSpawned")
+end)
 
-
-function pac.EntityRemoved(ent)
+pac.AddHook("EntityRemoved", function(ent)
 	if IsActuallyValid(ent)  then
 		local owner = ent:GetOwner()
 		if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
@@ -699,11 +706,9 @@ function pac.EntityRemoved(ent)
 			end
 		end
 	end
-end
-pac.AddHook("EntityRemoved")
+end)
 
-
-function pac.OnEntityCreated(ent)
+pac.AddHook("OnEntityCreated", function(ent)
 	if not IsActuallyValid(ent) then return end
 
 	local owner = ent:GetOwner()
@@ -715,71 +720,7 @@ function pac.OnEntityCreated(ent)
 			end
 		end
 	end
-end
-pac.AddHook("OnEntityCreated")
-
-
-pac.AddHook("EntityEmitSound", function(data)
-	if pac.playing_sound then return end
-	local ent = data.Entity
-
-	if not ent:IsValid() or not ent.pac_has_parts then return end
-
-	ent.pac_emit_sound = {name = data.SoundName, time = pac.RealTime, reset = true, mute_me = ent.pac_emit_sound and ent.pac_emit_sound.mute_me or false}
-
-	for _, v in pairs(parts_from_uid(ent:IsPlayer() and ent:UniqueID() or ent:EntIndex())) do
-		if v.ClassName == "event" and v.Event == "emit_sound" then
-			v:GetParent():CallRecursive("Think")
-
-			if ent.pac_emit_sound.mute_me then
-				return false
-			end
-		end
-	end
-
-	if ent.pac_mute_sounds then
-		return false
-	end
 end)
-
-pac.AddHook("EntityFireBullets", function(ent, data)
-	if not ent:IsValid() or not ent.pac_has_parts then return end
-	ent.pac_fire_bullets = {name = data.AmmoType, time = pac.RealTime, reset = true}
-
-	for _, v in pairs(parts_from_uid(ent:IsPlayer() and ent:UniqueID() or ent:EntIndex())) do
-		if v.ClassName == "event" and v.Event == "fire_bullets" then
-			v:GetParent():CallRecursive("Think")
-		end
-	end
-
-	if ent.pac_hide_bullets then
-		return false
-	end
-end)
-
-
-do
-	local enums = {}
-
-	for key, val in pairs(_G) do
-		if type(key) == "string" and key:find("PLAYERANIMEVENT_", nil, true) then
-			enums[val] = key:gsub("PLAYERANIMEVENT_", ""):gsub("_", " "):lower()
-		end
-	end
-
-	pac.AddHook("DoAnimationEvent", function(ply, event, data)
-		-- update all parts once so OnShow and OnHide are updated properly for animation events
-		if ply.pac_has_parts then
-			ply.pac_anim_event = {name = enums[event], time = pac.RealTime, reset = true}
-
-			for _, v in pairs(parts_from_uid(ply:UniqueID())) do
-				if v.ClassName == "event" and v.Event == "animation_event" then
-					v:GetParent():CallRecursive("Think")
-				end
-			end
-		end
-	end)
-end
 
 timer.Create("pac_gc", 2, 0, function()
 	for ent, parts in pairs(ent_parts) do
@@ -813,10 +754,10 @@ function pac.UpdatePartsWithMetatable(META, name)
 	end
 end
 
-function pac.GetRawMaterialFromName(str, ply_owner)
-	for _, part in pairs(all_parts) do
-		if part.GetRawMaterial and part:GetPlayerOwner() == ply_owner and str == part.Name then
-			return part:GetRawMaterial()
+function pac.GetPropertyFromName(func, name, ply_owner)
+	for _, part in pairs(parts_from_uid(ply_owner:UniqueID())) do
+		if part[func] and name == part.Name then
+			return part[func](part)
 		end
 	end
 end
@@ -864,7 +805,7 @@ function pac.RemoveAllParts(owned_only, server)
 		pace.RemovePartOnServer("__ALL__")
 	end
 
-	for _, part in pairs(pac.GetParts(owned_only)) do
+	for _, part in pairs(owned_only and pac.GetLocalParts() or all_parts) do
 		if part:IsValid() then
 			local status, err = pcall(part.Remove, part)
 			if not status then pac.Message('Failed to remove part: ' .. err .. '!') end
@@ -877,146 +818,32 @@ function pac.RemoveAllParts(owned_only, server)
 	end
 end
 
-function pac.GetPartCount(class, children)
-	class = class:lower()
-	local count = 0
-
-	for _, part in pairs(children or pac.GetLocalParts()) do
-		if part.ClassName:lower() == class then
-			count = count + 1
-		end
-	end
-
-	return count
-end
-
-function pac.CallPartHook(name, ...)
-	for _, part in pairs(all_parts) do
-		if part[name] then
-			part[name](part, ...)
-		end
-	end
-end
-
-function pac.UpdateMaterialPart(how, self, val)
-	if how == "update" then
-		pac.RunNextFrame("material translucent " .. self.Id, function()
-			for key, part in pairs(all_parts) do
+function pac.UpdateMaterialParts(how, uid, self, val)
+	pac.RunNextFrame("material " .. how .. " " .. self.Id, function()
+		for _, part in pairs(parts_from_uid(uid)) do
+			if how == "update" or how == "remove" then
 				if part.Materialm == val and self ~= part then
-					part.force_translucent = self.Translucent
+					if how == "update" then
+						part.force_translucent = self.Translucent
+					else
+						part.force_translucent = nil
+						part.Materialm = nil
+					end
 				end
-			end
-		end)
-	elseif how == "remove" then
-		pac.RunNextFrame("remove materials" .. self.Id, function()
-			for key, part in pairs(all_parts) do
-				if part.Materialm == val and self ~= part then
-					part.force_translucent = nil
-					part.Materialm = nil
-				end
-			end
-		end)
-	elseif how == "show" then
-		pac.RunNextFrame("refresh materials" .. self.Id, function()
-			for key, part in pairs(all_parts) do
+			elseif how == "show" then
 				if part.Material and part.Material ~= "" and part.Material == val then
 					part:SetMaterial(val)
 				end
 			end
-		end)
-	end
+		end
+	end)
 end
 
-function pac.RefreshSetModel()
+function pac.CallPartEvent(event, ...)
 	for _, part in pairs(all_parts) do
-		if part.ClassName == "model" then
-			part:SetModel(part:GetModel())
+		local ret = part:OnEvent(event, ...)
+		if ret ~= nil then
+			return ret
 		end
 	end
 end
-
-local MOVETYPE_NOCLIP = MOVETYPE_NOCLIP
-local IN_SPEED = IN_SPEED
-local SOLID_NONE = SOLID_NONE
-local MOVETYPE_NONE = MOVETYPE_NONE
-local IN_WALK = IN_WALK
-local IN_DUCK = IN_DUCK
-
-function pac.UpdateAnimation(ply)
-	if not IsEntity(ply) or not ply:IsValid() then return end
-
-	if ply.pac_death_physics_parts and ply:Alive() and ply.pac_physics_died then
-		for _, part in pairs(all_parts) do
-			if part:GetPlayerOwner() == ply and part.is_model_part then
-				local ent = part:GetEntity()
-				if ent:IsValid() then
-					ent:PhysicsInit(SOLID_NONE)
-					ent:SetMoveType(MOVETYPE_NONE)
-					ent:SetNoDraw(true)
-					ent.RenderOverride = nil
-
-					part.skip_orient = false
-				end
-			end
-		end
-		ply.pac_physics_died = false
-	end
-
-	local tbl = ply.pac_pose_params
-
-	if tbl then
-		for _, data in pairs(ply.pac_pose_params) do
-			ply:SetPoseParameter(data.key, data.val)
-		end
-	end
-
-	if ply.pac_global_animation_rate and ply.pac_global_animation_rate ~= 1 then
-
-		if ply.pac_global_animation_rate == 0 then
-			ply:SetCycle((pac.RealTime * ply:GetModelScale() * 2)%1)
-		elseif ply.pac_global_animation_rate ~= 1 then
-			ply:SetCycle((pac.RealTime * ply.pac_global_animation_rate)%1)
-		end
-
-		return true
-	end
-
-	if ply.pac_holdtype_alternative_animation_rate then
-		local length = ply:GetVelocity():Dot(ply:EyeAngles():Forward()) > 0 and 1 or -1
-		local scale = ply:GetModelScale() * 2
-
-		if scale ~= 0 then
-			ply:SetCycle(pac.RealTime / scale * length)
-		else
-			ply:SetCycle(0)
-		end
-
-		return true
-	end
-
-	local vehicle = ply:GetVehicle()
-
-	if ply.pac_last_vehicle ~= vehicle then
-		if ply.pac_last_vehicle ~= nil then
-			pac.__check_vehicle(ply)
-		end
-		ply.pac_last_vehicle = vehicle
-	end
-end
-pac.AddHook("UpdateAnimation")
-
-function pac.EffectReady(name)
-	for _, part in pairs(all_parts) do
-		if part.ClassName == "effect" and part.Effect == name then
-			part.Ready = true
-			part.waitingForServer = false
-		end
-	end
-end
-
-pac.AddHook("DrawPhysgunBeam")
-pac.AddHook("PostDrawViewModel")
-pac.AddHook("Think")
-pac.AddHook("RenderScene")
-pac.AddHook("PostDrawTranslucentRenderables")
-pac.AddHook("PostDrawOpaqueRenderables")

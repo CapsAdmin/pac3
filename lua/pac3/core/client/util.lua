@@ -467,14 +467,14 @@ end
 do -- hook helpers
 	local added_hooks = pac.added_hooks or {}
 
-	function pac.AddHook(str, func)
+	function pac.AddHook(str, func, id)
 		func = func or pac[str]
 
-		local id = "pac_" .. str
+		local id = "pac_" .. str .. (id or "")
 
 		hook.Add(str, id, func)
 
-		added_hooks[str] = {func = func, event = str, id = id}
+		added_hooks[id] = {func = func, event = str, id = id}
 	end
 
 	function pac.RemoveHook(str)
@@ -701,9 +701,7 @@ function pac.Material(str, part)
 
 	local ply_owner = part:GetPlayerOwner()
 
-	pac.GetRawMaterialFromName(str, ply_owner)
-
-	return Material(str)
+	return pac.GetPropertyFromName("GetRawMaterial", str, ply_owner) or Material(str)
 end
 
 do

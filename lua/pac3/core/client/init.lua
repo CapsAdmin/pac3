@@ -45,7 +45,7 @@ function pac.Enable()
 
 	-- add all the hooks back
 	for event, data in pairs(pac.added_hooks) do
-		pac.AddHook(event, data.func)
+		hook.Add(data.event, data.id, data.func)
 	end
 
 	pac.CallHook("Enable")
@@ -63,8 +63,8 @@ function pac.Disable()
 	end
 
 	-- disable all hooks
-	for event in pairs(pac.added_hooks) do
-		pac.RemoveHook(event)
+	for _, data in pairs(pac.added_hooks) do
+		hook.Remove(data.event, data.id)
 	end
 
 	pac.CallHook("Disable")
