@@ -491,7 +491,7 @@ do -- hook helpers
 end
 
 do -- get set and editor vars
-	pac.VariableOrder = pac.VariableOrder or {}
+	pac.VariableOrder = {}
 	pac.GroupOrder = pac.GroupOrder or {}
 	pac.PropertyUserdata = pac.PropertyUserdata or {}
 	pac.PropertyUserdata['base'] = pac.PropertyUserdata['base'] or {}

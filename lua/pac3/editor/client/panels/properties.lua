@@ -484,6 +484,7 @@ do -- list
 			else
 				local sorted_variables = {}
 				local done = {}
+
 				if pac.VariableOrder[obj.ClassName] then
 					for i, name in ipairs(pac.VariableOrder[obj.ClassName]) do
 						for _, v in ipairs(vars) do
@@ -497,6 +498,7 @@ do -- list
 						end
 					end
 				end
+
 				for _, variables in pairs(pac.VariableOrder) do
 					for i, name in ipairs(variables) do
 						for _, v in ipairs(vars) do
