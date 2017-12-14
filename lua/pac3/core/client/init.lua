@@ -33,7 +33,6 @@ include("part_pool.lua")
 
 include("bones.lua")
 include("hooks.lua")
-include("drawing.lua")
 
 include("owner_name.lua")
 
