@@ -475,7 +475,7 @@ function pac.RemovePart(part)
 end
 
 function pac.GetLocalParts()
-	return uid_parts[pac.LocalPlayer:UniqueID()]
+	return uid_parts[pac.LocalPlayer:UniqueID()] or {}
 end
 
 function pac.GetPartFromUniqueID(owner_id, id)
