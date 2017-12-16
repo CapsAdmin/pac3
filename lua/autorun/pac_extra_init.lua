@@ -1,3 +1,5 @@
+if pac and pace and pacx then return end
+
 if not pace then
 	include("autorun/pac_editor_init.lua")
 end
