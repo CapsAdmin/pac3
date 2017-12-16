@@ -408,16 +408,25 @@ PART.OldEvents =
 			if exclude_noclip and ent:GetMoveType() == MOVETYPE_NOCLIP then return false end
 			--return ent.IsOnGround and ent:IsOnGround()
 
-			local res = util.TraceHull({
-				start = ent:GetPos(),
-				endpos = ent:GetPos() + Vector(0,0,-5),
-				mins = ent:OBBMins(),
-				maxs = ent:OBBMaxs(),
-				filter = ent,
-				--mask = MASK_SOLID_BRUSHONLY,
-			})
+			local rad = ent:BoundingRadius() / 2
+			local times = 2
 
-			return res.Hit
+			for x = -times, times do
+				for y = -times, times do
+					local xy = Vector(x/times,y/times,0) * rad
+					local res = util.TraceLine({
+						start = ent:GetPos() + xy,
+						endpos = ent:GetPos() + xy/1.25 + Vector(0,0,-10),
+						--mins = ent:OBBMins(),
+						--maxs = ent:OBBMaxs(),
+						filter = ent,
+						--mask = MASK_SOLID_BRUSHONLY,
+					})
+					if res.Hit and math.abs(res.HitNormal.z) > 0.70 then return true end
+				end
+			end
+
+			return false
 		end,
 	},
 
