@@ -741,8 +741,6 @@ do -- serializing
 				key == "AimPartName" and table.HasValue(pac.AimPartNames, value))
 
 			if cond then
-				self = hook.Run("pac_PART:SetTable",self,key,value) or self
-
 				if self["Set" .. key] then
 					if key == "Material" then
 						table.insert(self.delayed_variables, {key = key, val = value})
@@ -763,6 +761,8 @@ do -- serializing
 	end
 
 	function PART:ToTable(make_copy_name)
+		if self:GetPlayerOwner() ~= LocalPlayer() then return end
+
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 		for _, key in pairs(self:GetStorableVars()) do

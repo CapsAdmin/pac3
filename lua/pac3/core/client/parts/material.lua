@@ -427,7 +427,9 @@ function PART:UpdateMaterial(now)
 end
 
 function PART:OnRemove()
-	pac.UpdateMaterialParts("remove", self:GetPlayerOwner():UniqueID(), self, self.Materialm)
+	if self:GetPlayerOwner():IsValid() then
+		pac.UpdateMaterialParts("remove", self:GetPlayerOwner():UniqueID(), self, self.Materialm)
+	end
 end
 
 function PART:OnEvent(event, ...)
