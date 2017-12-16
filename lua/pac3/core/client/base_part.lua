@@ -116,14 +116,13 @@ end
 
 function PART:SetUniqueID(id)
 	if self.owner_id then
-		pac.UniqueIDParts[self.owner_id] = pac.UniqueIDParts[self.owner_id] or {}
-		pac.UniqueIDParts[self.owner_id][self.UniqueID] = nil
+		pac.RemoveUniqueIDPart(self.owner_id, self.UniqueID)
 	end
 
 	self.UniqueID = id
 
 	if self.owner_id then
-		pac.UniqueIDParts[self.owner_id][id] = self
+		pac.SetUniqueIDPart(self.owner_id, id, self)
 	end
 end
 
@@ -742,8 +741,6 @@ do -- serializing
 				key == "AimPartName" and table.HasValue(pac.AimPartNames, value))
 
 			if cond then
-				self = hook.Run("pac_PART:SetTable",self,key,value) or self
-
 				if self["Set" .. key] then
 					if key == "Material" then
 						table.insert(self.delayed_variables, {key = key, val = value})
@@ -764,6 +761,8 @@ do -- serializing
 	end
 
 	function PART:ToTable(make_copy_name)
+		if self:GetPlayerOwner() ~= LocalPlayer() then return end
+
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 		for _, key in pairs(self:GetStorableVars()) do
@@ -828,7 +827,11 @@ do -- events
 	function PART:OnRemove() end
 
 	function PART:Remove(skip_removechild)
-		pac.CallHook("OnPartRemove", self)
+
+		if self:GetPlayerOwner() == pac.LocalPlayer then
+			pac.CallHook("OnPartRemove", self)
+		end
+
 		self:CallRecursive("OnHide")
 		self:OnRemove()
 
@@ -839,10 +842,10 @@ do -- events
 		self:RemoveChildren()
 
 		if self.owner_id and self.UniqueID then
-			pac.UniqueIDParts[self.owner_id][self.UniqueID] = nil
+			pac.RemoveUniqueIDPart(self.owner_id, self.UniqueID)
 		end
 
-		pac.ActiveParts[self.Id] = nil
+		pac.RemovePart(self)
 
 		self.is_valid = false
 	end

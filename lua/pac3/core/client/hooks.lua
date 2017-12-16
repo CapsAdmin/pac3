@@ -1,83 +1,83 @@
+
+pac.AddHook("RenderScene", function(pos, ang)
+	pac.EyePos = pos
+	pac.EyeAng = ang
+end)
+
+pac.AddHook("DrawPhysgunBeam", function(ply, wep, enabled, target, bone, hitpos)
+
+	if enabled then
+		ply.pac_drawphysgun_event = {ply, wep, enabled, target, bone, hitpos}
+	else
+		ply.pac_drawphysgun_event = nil
+	end
+
+	if ply.pac_drawphysgun_event_part and ply.pac_drawphysgun_event_part:IsValid() then
+		ply.pac_drawphysgun_event_part:OnThink()
+	end
+
+
+	if ply.pac_hide_physgun_beam then
+		return false
+	end
+end)
+
+do
+	pac.AddHook("UpdateAnimation", function(ply)
+		if not IsEntity(ply) or not ply:IsValid() then return end
+
+		if ply.pac_death_physics_parts and ply:Alive() and ply.pac_physics_died then
+			pac.CallPartEvent("become_physics")
+			ply.pac_physics_died = false
+		end
+
+		local tbl = ply.pac_pose_params
+
+		if tbl then
+			for _, data in pairs(ply.pac_pose_params) do
+				ply:SetPoseParameter(data.key, data.val)
+			end
+		end
+
+		if ply.pac_global_animation_rate and ply.pac_global_animation_rate ~= 1 then
+
+			if ply.pac_global_animation_rate == 0 then
+				ply:SetCycle((pac.RealTime * ply:GetModelScale() * 2)%1)
+			elseif ply.pac_global_animation_rate ~= 1 then
+				ply:SetCycle((pac.RealTime * ply.pac_global_animation_rate)%1)
+			end
+
+			return true
+		end
+
+		if ply.pac_holdtype_alternative_animation_rate then
+			local length = ply:GetVelocity():Dot(ply:EyeAngles():Forward()) > 0 and 1 or -1
+			local scale = ply:GetModelScale() * 2
+
+			if scale ~= 0 then
+				ply:SetCycle(pac.RealTime / scale * length)
+			else
+				ply:SetCycle(0)
+			end
+
+			return true
+		end
+
+		local vehicle = ply:GetVehicle()
+
+		if ply.pac_last_vehicle ~= vehicle then
+			if ply.pac_last_vehicle ~= nil then
+				pac.CallPartEvent("vehicle_changed", ply, vehicle)
+			end
+			ply.pac_last_vehicle = vehicle
+		end
+	end)
+end
+
 local MOVETYPE_NOCLIP = MOVETYPE_NOCLIP
 local IN_SPEED = IN_SPEED
-local SOLID_NONE = SOLID_NONE
-local MOVETYPE_NONE = MOVETYPE_NONE
 local IN_WALK = IN_WALK
 local IN_DUCK = IN_DUCK
-
-function pac.UpdateAnimation(ply)
-	if not IsEntity(ply) or not ply:IsValid() then return end
-
-	if ply.pac_death_physics_parts and ply:Alive() and ply.pac_physics_died then
-		for _, part in pairs(pac.GetParts()) do
-			if part:GetPlayerOwner() == ply and part.is_model_part then
-				local ent = part:GetEntity()
-				if ent:IsValid() then
-					ent:PhysicsInit(SOLID_NONE)
-					ent:SetMoveType(MOVETYPE_NONE)
-					ent:SetNoDraw(true)
-					ent.RenderOverride = nil
-
-					part.skip_orient = false
-				end
-			end
-		end
-		ply.pac_physics_died = false
-	end
-
-	local tbl = ply.pac_pose_params
-
-	if tbl then
-		for _, data in pairs(ply.pac_pose_params) do
-			ply:SetPoseParameter(data.key, data.val)
-		end
-	end
-
-	if ply.pac_global_animation_rate and ply.pac_global_animation_rate ~= 1 then
-
-		if ply.pac_global_animation_rate == 0 then
-			ply:SetCycle((pac.RealTime * ply:GetModelScale() * 2)%1)
-		elseif ply.pac_global_animation_rate ~= 1 then
-			ply:SetCycle((pac.RealTime * ply.pac_global_animation_rate)%1)
-		end
-
-		return true
-	end
-
-	if ply.pac_holdtype_alternative_animation_rate then
-		local length = ply:GetVelocity():Dot(ply:EyeAngles():Forward()) > 0 and 1 or -1
-		local scale = ply:GetModelScale() * 2
-
-		if scale ~= 0 then
-			ply:SetCycle(pac.RealTime / scale * length)
-		else
-			ply:SetCycle(0)
-		end
-
-		return true
-	end
-
-	local vehicle = ply:GetVehicle()
-
-	if ply.pac_last_vehicle ~= vehicle then
-		if ply.pac_last_vehicle ~= nil then
-			if ply.pac_parts then
-				local done = {}
-				for _, part in pairs(ply.pac_parts) do
-					local part = part:GetRootPart()
-					if not done[part] then
-						if part.OwnerName == "active vehicle" then
-							part:CheckOwner()
-						end
-						done[part] = true
-					end
-				end
-			end
-		end
-		ply.pac_last_vehicle = vehicle
-	end
-end
-pac.AddHook("UpdateAnimation")
 
 local function mod_speed(cmd, speed)
 	if speed and speed ~= 0 then
@@ -195,89 +195,6 @@ function pac.pac_PlayerFootstep(ply, pos, snd, vol)
 end
 pac.AddHook("pac_PlayerFootstep")
 
-local function IsActuallyValid(ent)
-	return IsEntity(ent) and pcall(ent.GetPos, ent)
-end
-
-local function IsActuallyPlayer(ent)
-	return IsEntity(ent) and pcall(ent.UniqueID, ent)
-end
-
-function pac.OnClientsideRagdoll(ply, ent)
-	ply.pac_ragdoll = ent
-
-	if ply.pac_death_physics_parts then
-		if ply.pac_physics_died then return end
-
-		for _, part in pairs(pac.GetPartsFromUniqueID(ply:UniqueID())) do
-			if part.is_model_part then
-				pac.InitDeathPhysicsOnProp(part,ply,ent)
-			end
-		end
-		ply.pac_physics_died = true
-	elseif ply.pac_death_ragdollize then
-
-		-- make props draw on the ragdoll
-		if ply.pac_death_ragdollize then
-			ply.pac_owner_override = ent
-		end
-
-		for _, part in pairs(ply.pac_parts) do
-			if part.last_owner ~= ent then
-				part:SetOwner(ent)
-				part.last_owner = ent
-			end
-		end
-	end
-end
-
-function pac.InitDeathPhysicsOnProp(part,ply,plyent)
-	local ent = part:GetEntity()
-	if not ent:IsValid() then return end
-
-	plyent:SetNoDraw(true)
-	part.skip_orient = true
-
-	ent:SetParent(NULL)
-	ent:SetNoDraw(true)
-	ent:PhysicsInitBox(Vector(1,1,1) * -5, Vector(1,1,1) * 5)
-	ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
-
-	local phys = ent:GetPhysicsObject()
-	phys:AddAngleVelocity(VectorRand() * 1000)
-	phys:AddVelocity(ply:GetVelocity()  + VectorRand() * 30)
-	phys:Wake()
-
-	function ent.RenderOverride(ent)
-		if part:IsValid() then
-			if not part.HideEntity then
-				part:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
-				ent:DrawModel()
-				part:PostEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
-			end
-		else
-			ent.RenderOverride = nil
-		end
-	end
-
-end
-
-function pac.OnEntityCreated(ent)
-	if not IsActuallyValid(ent) then return end
-
-	local owner = ent:GetOwner()
-
-	if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
-		for _, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
-			if not part:HasParent() then
-				part:CheckOwner(ent, false)
-			end
-		end
-	end
-end
-pac.AddHook("OnEntityCreated")
-
-
 function pac.NetworkEntityCreated(ply)
 	if not ply:IsPlayer() then return end
 
@@ -304,50 +221,6 @@ function pac.NotifyShouldTransmit(ent,st)
 	end
 end
 pac.AddHook("NotifyShouldTransmit")
-
-
-function pac.PlayerSpawned(ply)
-	if ply.pac_parts then
-		for _, part in pairs(ply.pac_parts) do
-			if part.last_owner and part.last_owner:IsValid() then
-				part:SetOwner(ply)
-				part.last_owner = nil
-			end
-		end
-	end
-	ply.pac_playerspawn = pac.RealTime -- used for events
-end
-pac.AddHook("PlayerSpawned")
-
-function pac.EntityRemoved(ent)
-	if IsActuallyValid(ent)  then
-		local owner = ent:GetOwner()
-		if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
-			for _, part in pairs(pac.GetPartsFromUniqueID(owner:UniqueID())) do
-				if not part:HasParent() then
-					part:CheckOwner(ent, true)
-				end
-			end
-		elseif ent.pac_parts then
-			for _, part in pairs(ent.pac_parts) do
-				if part.dupe_remove then
-					part:Remove()
-				elseif not part:HasParent() then
-					part:CheckOwner(ent, true)
-				end
-			end
-		end
-	end
-end
-pac.AddHook("EntityRemoved")
-
-timer.Create("pac_gc", 2, 0, function()
-	for _, part in pairs(pac.GetParts()) do
-		if not part:GetPlayerOwner():IsValid() then
-			part:Remove()
-		end
-	end
-end)
 
 net.Receive("pac_effect_precached", function()
 	local name = net.ReadString()

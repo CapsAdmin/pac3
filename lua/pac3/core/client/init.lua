@@ -29,10 +29,10 @@ include("pac3/libraries/boneanimlib.lua")
 
 include("util.lua")
 include("parts.lua")
+include("part_pool.lua")
 
 include("bones.lua")
 include("hooks.lua")
-include("drawing.lua")
 
 include("owner_name.lua")
 
@@ -45,7 +45,7 @@ function pac.Enable()
 
 	-- add all the hooks back
 	for event, data in pairs(pac.added_hooks) do
-		pac.AddHook(event, data.func)
+		hook.Add(data.event, data.id, data.func)
 	end
 
 	pac.CallHook("Enable")
@@ -56,24 +56,15 @@ function pac.Disable()
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
 
-			if ent.pac_parts then
-				for _, part in pairs(ent.pac_parts) do
-					part:CallRecursive("OnHide")
-				end
-
-				pac.ResetBones(ent)
-			end
-
-			ent.pac_drawing = false
-
+			pac.DisableEntity(ent)
 		else
 			pac.drawn_entities[key] = nil
 		end
 	end
 
 	-- disable all hooks
-	for event in pairs(pac.added_hooks) do
-		pac.RemoveHook(event)
+	for _, data in pairs(pac.added_hooks) do
+		hook.Remove(data.event, data.id)
 	end
 
 	pac.CallHook("Disable")

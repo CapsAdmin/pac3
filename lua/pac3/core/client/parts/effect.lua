@@ -54,16 +54,6 @@ function PART:Initialize()
 	end
 end
 
-function PART:SetControlPointA(var)
-	self.ControlPointA = var
-	self:ResolveControlPoints()
-end
-
-function PART:SetControlPointB(var)
-	self.ControlPointB = var
-	self:ResolveControlPoints()
-end
-
 function PART:GetOwner()
 	local parent = self:GetParent()
 
@@ -115,13 +105,17 @@ hook.Add("pac_EffectPrecached", "pac_Effects", function(name)
 	if alreadyServer[name] then return end
 	alreadyServer[name] = true
 	pac.dprint("effect %q precached!", name)
-	for _, part in pairs(pac.GetParts()) do
-		if part.ClassName == "effect" and part.Effect == name then
-			part.Ready = true
-			part.waitingForServer = false
+	pac.CallPartEvent("effect_precached", name)
+end)
+
+function PART:OnEvent(typ, name)
+	if typ == "effect_precached" then
+		if self.Effect == name then
+			self.Ready = true
+			self.waitingForServer = false
 		end
 	end
-end)
+end
 
 function PART:OnDraw(owner, pos, ang)
 	if not self.Ready then
@@ -148,22 +142,6 @@ function PART:OnHide()
 	if ent:IsValid() then
 		ent:StopParticles()
 		ent:StopParticleEmission()
-	end
-end
-
-function PART:ResolveControlPoints()
-	for _, part in pairs(pac.GetParts()) do
-		if part.Name == self.ControlPointA then
-			self.ControlPointAPart = part
-			break
-		end
-	end
-
-	for _, part in pairs(pac.GetParts()) do
-		if part.Name == self.ControlPointB then
-			self.ControlPointBPart = part
-			break
-		end
 	end
 end
 

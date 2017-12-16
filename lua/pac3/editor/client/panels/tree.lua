@@ -32,7 +32,7 @@ do
 			end
 		end
 
-		for key, part in pairs(pac.GetParts(true)) do
+		for key, part in pairs(pac.GetLocalParts()) do
 
 			if part.event_triggered ~= nil then
 				local node = part.editor_node
@@ -312,7 +312,7 @@ function PANEL:Populate(reset)
 		node:Remove()
 	end]]
 
-	self:PopulateParts(self, pac.GetParts(true))
+	self:PopulateParts(self, pac.GetLocalParts())
 
 	self:InvalidateLayout()
 end
@@ -337,8 +337,8 @@ local function refresh(part, localplayer)
 end
 hook.Add("pac_OnWoreOutfit", "pace_create_tree_nodes", refresh)
 
-local function refresh(part, localplayer)
-	if localplayer and part:GetRootPart().show_in_editor ~= false then
+local function refresh(part)
+	if part:GetRootPart().show_in_editor ~= false then
 		pace.RefreshTree(true)
 	end
 end

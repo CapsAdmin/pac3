@@ -61,10 +61,7 @@ end
 do --dev util
 	function pac.RemoveAllPACEntities()
 		for _, ent in pairs(ents.GetAll()) do
-			if ent.pac_parts then
-				pac.UnhookEntityRender(ent)
-				--ent:Remove()
-			end
+			pac.UnhookEntityRender(ent)
 
 			if ent.IsPACEntity then
 				ent:Remove()
@@ -144,7 +141,7 @@ do --dev util
 					selected_part_uid = pace.current_part:GetUniqueID()
 				end
 
-				for key, part in pairs(pac.GetParts(true)) do
+				for key, part in pairs(pac.GetLocalParts()) do
 					if not part:HasParent() and part.show_in_editor ~= false then
 						table.insert(prev_parts, part:ToTable())
 					end
@@ -470,14 +467,14 @@ end
 do -- hook helpers
 	local added_hooks = pac.added_hooks or {}
 
-	function pac.AddHook(str, func)
+	function pac.AddHook(str, func, id)
 		func = func or pac[str]
 
-		local id = "pac_" .. str
+		local id = "pac_" .. str .. (id or "")
 
 		hook.Add(str, id, func)
 
-		added_hooks[str] = {func = func, event = str, id = id}
+		added_hooks[id] = {func = func, event = str, id = id}
 	end
 
 	function pac.RemoveHook(str)
@@ -645,12 +642,11 @@ do -- get set and editor vars
 				if IsValid(part) and part ~= self and self[part_key] ~= part then
 					self[name_set_key](self, part)
 					self[last_uid_key] = self[uid_key]
-				elseif self[try_key] and not self.supress_part_name_find then -- match by name instead
-					for _, part in pairs(pac.GetParts()) do
+				elseif self[try_key] and not self.supress_part_name_find and self:GetPlayerOwner() == pac.LocalPlayer then -- match by name instead, only in editor
+					for _, part in pairs(pac.GetLocalParts()) do
 						if
 							part ~= self and
 							self[part_key] ~= part and
-							part:GetPlayerOwner() == self:GetPlayerOwner() and
 							part:GetName() == self[name_key]
 						then
 							self[name_set_key](self, part)
@@ -722,13 +718,7 @@ function pac.Material(str, part)
 
 	local ply_owner = part:GetPlayerOwner()
 
-	for _, part in pairs(pac.GetParts()) do
-		if part.GetRawMaterial and part:GetPlayerOwner() == ply_owner and str == part.Name then
-			return part:GetRawMaterial()
-		end
-	end
-
-	return Material(str)
+	return pac.GetPropertyFromName("GetRawMaterial", str, ply_owner) or Material(str)
 end
 
 do
@@ -890,4 +880,71 @@ function pac.StringFind(a, b, simple, case_sensitive)
 		pattern_cache[a][b] = false
 		return false
 	end
+end
+
+
+do -- ignore
+	function pac.ToggleIgnoreEntity(ent, status, strID)
+		if status then
+			return pac.IgnoreEntity(ent, strID)
+		else
+			return pac.UnIgnoreEntity(ent, strID)
+		end
+	end
+
+	function pac.IgnoreEntity(ent, strID)
+		strID = strID or 'generic'
+		ent.pac_ignored = ent.pac_ignored or false
+		ent.pac_ignored_data = ent.pac_ignored_data or {}
+		ent.pac_ignored_data[strID] = true
+		local newStatus = true
+
+		if newStatus ~= ent.pac_ignored then
+			ent.pac_ignored = newStatus
+			pac.TogglePartDrawing(ent, not newStatus)
+		end
+
+		return true
+	end
+
+	function pac.UnIgnoreEntity(ent, strID)
+		strID = strID or 'generic'
+		ent.pac_ignored = ent.pac_ignored or false
+		ent.pac_ignored_data = ent.pac_ignored_data or {}
+		ent.pac_ignored_data[strID] = false
+		local newStatus = false
+
+		for _, v in pairs(ent.pac_ignored_data) do
+			if v then
+				newStatus = true
+				break
+			end
+		end
+
+		if newStatus ~= ent.pac_ignored then
+			ent.pac_ignored = newStatus
+			pac.TogglePartDrawing(ent, not newStatus)
+		end
+
+		return newStatus
+	end
+
+end
+
+
+function pac.TogglePartDrawing(ent, b)
+	if b then
+		ent.pac_drawing = false
+		pac.ShowEntityParts(ent)
+		ent.pac_shouldnotdraw = false
+	else
+		ent.pac_drawing = true
+		pac.HideEntityParts(ent)
+		ent.pac_shouldnotdraw = true
+	end
+end
+
+-- disable pop/push flashlight modes (used for stability in 2D context)
+function pac.FlashlightDisable(b)
+	pac.flashlight_disabled = b
 end

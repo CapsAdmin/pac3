@@ -18,9 +18,9 @@ function pac.CallHook(str, ...)
 	hook.Call("pac_" .. str, GAMEMODE, ...)
 end
 
-function pac.AddHook(str, func)
+function pac.AddHook(str, func, id)
 	func = func or pac[str]
-	hook.Add(str, "pac_" .. str, function(...)
+	hook.Add(str, "pac_" .. str .. (id or ""), function(...)
 		local args = {pcall(func, ...)}
 		if not args[1] then
 			ErrorNoHalt(args[2] .. "\n")

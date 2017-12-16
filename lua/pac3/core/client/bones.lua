@@ -359,7 +359,7 @@ do -- bone manipulation for boneanimlib
 
 		ply.pac_boneanim.positions[id] = var
 
-		if not ply.pac_parts then
+		if not ply.pac_has_parts then
 			ply:ManipulateBonePosition(id, var)
 		end
 	end
@@ -369,7 +369,7 @@ do -- bone manipulation for boneanimlib
 
 		ply.pac_boneanim.angles[id] = var
 
-		if not ply.pac_parts then
+		if not ply.pac_has_parts then
 			ply:ManipulateBoneAngles(id, var)
 		end
 	end

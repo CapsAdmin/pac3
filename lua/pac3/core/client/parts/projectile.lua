@@ -119,8 +119,7 @@ function PART:AttachToEntity(ent)
 
 	ent:CallOnRemove("pac_projectile_" .. id, function() part:Remove() end)
 
-	ent.pac_parts = {part}
-	pac.drawn_entities[id] = ent
+	pac.HookEntityRender(ent, part)
 
 	ent.RenderOverride = ent.RenderOverride or function()
 		if self.AimDir then

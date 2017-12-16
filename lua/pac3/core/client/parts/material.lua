@@ -423,30 +423,13 @@ function PART:UpdateMaterial(now)
 		end
 	end
 
-	local mat = self.Materialm
-	local self = self
-
-	pac.RunNextFrame("material translucent " .. self.Id, function()
-		for key, part in pairs(pac.GetParts()) do
-			if part.Materialm == mat and self ~= part then
-				part.force_translucent = self.Translucent
-			end
-		end
-	end)
+	pac.UpdateMaterialParts("update", self:GetPlayerOwner():UniqueID(), self, self.Materialm)
 end
 
 function PART:OnRemove()
-	local mat = self.Materialm
-	local self = self
-
-	pac.RunNextFrame("remove materials" .. self.Id, function()
-		for key, part in pairs(pac.GetParts()) do
-			if part.Materialm == mat and self ~= part then
-				part.force_translucent = nil
-				part.Materialm = nil
-			end
-		end
-	end)
+	if self:GetPlayerOwner():IsValid() then
+		pac.UpdateMaterialParts("remove", self:GetPlayerOwner():UniqueID(), self, self.Materialm)
+	end
 end
 
 function PART:OnEvent(event, ...)
@@ -480,13 +463,7 @@ function PART:OnShow()
 
 	local name = self.Name
 
-	pac.RunNextFrame("refresh materials" .. self.Id, function()
-		for key, part in pairs(pac.GetParts()) do
-			if part.Material and part.Material ~= "" and part.Material == name then
-				part:SetMaterial(name)
-			end
-		end
-	end)
+	pac.UpdateMaterialParts("show", self:GetPlayerOwner():UniqueID(), self, self.Name)
 end
 
 pac.RegisterPart(PART)

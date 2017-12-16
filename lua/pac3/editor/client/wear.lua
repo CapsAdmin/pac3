@@ -72,19 +72,16 @@ do -- from server
 			part.dupe_remove = true
 		end
 
-		pace.CallHook("OnWoreOutfit", part, owner == pac.LocalPlayer)
-		pace.CallHook("WearOutfit", owner, part) -- ugh
+		if owner == pac.LocalPlayer then
+			pace.CallHook("OnWoreOutfit", part)
+		end
 	end
 
 	function pace.RemovePartFromServer(owner, part_name, data)
 		pac.dprint("%s removed %q", tostring(owner), part_name)
 
 		if part_name == "__ALL__" then
-			for key, part in pairs(pac.GetPartsFromUniqueID(data.player_uid)) do
-				if not part:HasParent() then
-					part:Remove()
-				end
-			end
+			pac.RemovePartsFromUniqueID(data.player_uid)
 
 			pace.CallHook("RemoveOutfit", owner)
 		else
