@@ -794,6 +794,35 @@ do -- serializing
 		return tbl
 	end
 
+	function PART:ToSaveTable()
+		if self:GetPlayerOwner() ~= LocalPlayer() then return end
+
+		local tbl = {self = {ClassName = self.ClassName}, children = {}}
+
+		for _, key in pairs(self:GetStorableVars()) do
+			local var = self[key] and self["Get" .. key](self) or self[key]
+			var = pac.class.Copy(var) or var
+
+			if key == "Name" and self[key] == "" then
+				var = ""
+			end
+
+			-- these arent needed because parent system uses the tree structure
+			if
+				key ~= "ParentUID" and
+				key ~= "ParentName"
+			then
+				tbl.self[key] = var
+			end
+		end
+
+		for _, part in ipairs(self:GetChildren()) do
+			table.insert(tbl.children, part:ToSaveTable())
+		end
+
+		return tbl
+	end
+
 	function PART:GetVars()
 		local tbl = {}
 
