@@ -119,6 +119,9 @@ local function CalcDrag()
 		pace.properties.search:HasFocus()
 	then return end
 
+	local focus = vgui.GetKeyboardFocus()
+	if focus and focus:IsValid() and focus:GetName():lower():find('textentry') then return end
+
 	if not system.HasFocus() then
 		held_mpos = Vector(gui.MousePos())
 	end
