@@ -199,7 +199,13 @@ end
 
 function netx.SerializeTable(data)
 	local written1 = net.BytesWritten()
+
 	writeTable(data)
+
+	if DLib and DLib.netModule and net.CompressOngoingNow then
+		net.CompressOngoingNow()
+	end
+
 	local written2 = net.BytesWritten()
 
 	if written2 >= 65536 then
@@ -210,6 +216,10 @@ function netx.SerializeTable(data)
 end
 
 function netx.DeserializeTable()
+	if DLib and DLib.netModule and net.DecompressReceivedNow then
+		net.DecompressReceivedNow()
+	end
+
 	return readTable()
 end
 
