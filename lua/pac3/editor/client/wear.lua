@@ -109,7 +109,14 @@ do
 end
 
 net.Receive("pac_submit", function()
-	pace.HandleReceivedData(pace.net.DeserializeTable())
+	local data = pace.net.DeserializeTable()
+
+	if type(data.owner) ~= "Player" or not data.owner:IsValid() then
+		pac.Message("received message from server but owner is not valid!?")
+		return
+	end
+
+	pace.HandleReceivedData(data)
 end)
 
 function pace.Notify(allowed, reason, name)
