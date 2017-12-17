@@ -72,7 +72,6 @@ do --dev util
 	function pac.Panic()
 		pac.RemoveAllParts()
 		pac.RemoveAllPACEntities()
-		pac.Parts = {}
 	end
 
 	pac.convarcache = {}
