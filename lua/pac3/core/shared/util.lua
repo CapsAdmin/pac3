@@ -244,7 +244,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 		if skip_cache or not file.Exists("pac3_cache/downloads/"..id..".dat", "DATA") then
 
-			local dir = "pac3/" .. id .. "/"
+			local dir = "pac3_cache/" .. id .. "/"
 
 			local f = file.Open(path, "rb", "DATA")
 

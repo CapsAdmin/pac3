@@ -893,8 +893,10 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 						for k, v in pairs(files) do
 							local path = node:GetFolder() ..  "/" .. v
 
-							if not IsUselessModel(path) then
-								viewPanel:Add(create_model_icon(path))
+							if not path:StartWith("models/pac3_cache/") then
+								if not IsUselessModel(path) then
+									viewPanel:Add(create_model_icon(path))
+								end
 							end
 						end
 					elseif self.dir == "materials" then
@@ -1134,10 +1136,12 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 			end
 
 			for k, v in ipairs(folders) do
-				local func = function()
-					self:StartSearch(search_text, folder .. v .. "/", extensions, pathid, cb)
+				if v ~= "pac3_cache" then
+					local func = function()
+						self:StartSearch(search_text, folder .. v .. "/", extensions, pathid, cb)
+					end
+					self.delay_functions[func] = func
 				end
-				self.delay_functions[func] = func
 			end
 		end
 	end
