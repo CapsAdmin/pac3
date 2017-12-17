@@ -1,4 +1,4 @@
-if pac and pace then return end
+if CLIENT and pac and pace then return end
 
 if not pac then
 	include("autorun/pac_core_init.lua")

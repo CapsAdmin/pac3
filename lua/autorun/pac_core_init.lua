@@ -1,4 +1,4 @@
-if pac then return end
+if CLIENT and pac then return end
 
 if SERVER then
 	local function add_files(dir)
