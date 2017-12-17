@@ -17,7 +17,6 @@ pac.StartStorableVars()
 		pac.PropertyOrder(PART, "ParentName")
 		pac.GetSet(PART, "Follow", false)
 		pac.GetSet(PART, "Additive", false)
-		pac.GetSet(PART, "IgnoreZ", false)
 		pac.GetSet(PART, "FireDelay", 0.2)
 		pac.GetSet(PART, "NumberParticles", 1)
 		pac.GetSet(PART, "PositionSpread", 0)
@@ -132,24 +131,6 @@ function PART:SetDrawManual(b)
 	self.emitter:SetNoDraw(b)
 end
 
-function PART:SetIgnoreZ(b)
-	self.IgnoreZ = b
-	if b then
-		self.emitter:SetNoDraw(true)
-	else
-		self:SetDrawManual(self:GetDrawManual())
-	end
-end
-
-function PART:SetFollow(b)
-	self.Follow = b
-	if b then
-		self.emitter:SetNoDraw(true)
-	else
-		self:SetDrawManual(self:GetDrawManual())
-	end
-end
-
 PART.Initialize = PART.CreateEmitter
 
 function PART:SetNumberParticles(num)
@@ -164,19 +145,26 @@ end
 function PART:OnDraw(owner, pos, ang)
 	if not self:IsHidden() then
 		self.emitter:SetPos(pos)
-		if self.DrawManual or self.IgnoreZ or self.Follow then
-			if self.IgnoreZ then
-				cam_IgnoreZ(true)
+		if self.DrawManual or self.IgnoreZ or self.Follow or self.BlendMode ~= "" then
+
+			if not self.nodraw then
+				self.emitter:SetNoDraw(true)
+				self.nodraw = true
 			end
 
 			if self.Follow then
 				cam.Start3D(WorldToLocal(EyePos(), EyeAngles(), pos, ang))
+				if self.IgnoreZ then cam.IgnoreZ(true) end
 				self.emitter:Draw()
+				if self.IgnoreZ then cam.IgnoreZ(false) end
 				cam.End3D()
+			else
+				self.emitter:Draw()
 			end
-
-			if self.IgnoreZ then
-				cam_IgnoreZ(false)
+		else
+			if self.nodraw then
+				self:SetDrawManual(self:GetDrawManual())
+				self.nodraw = false
 			end
 		end
 		self:EmitParticles(self.Follow and vector_origin or pos, self.Follow and angle_origin or ang, ang)
