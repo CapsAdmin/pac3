@@ -419,9 +419,13 @@ end)
 timer.Create("pac_gc", 2, 0, function()
 	for ent, parts in pairs(ent_parts) do
 		if not ent:IsValid() then
-			for _, v in pairs(parts) do
-				v:Remove()
-			end
+			ent_parts[ent] = nil
+		end
+	end
+
+	for key, part in pairs(all_parts) do
+		if not part:GetPlayerOwner():IsValid() then
+			part:Remove()
 		end
 	end
 end)
