@@ -761,8 +761,6 @@ do -- serializing
 	end
 
 	function PART:ToTable(make_copy_name)
-		if self:GetPlayerOwner() ~= LocalPlayer() then return end
-
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 		for _, key in pairs(self:GetStorableVars()) do
