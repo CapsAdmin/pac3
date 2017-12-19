@@ -221,6 +221,8 @@ do -- projectile entity
 			if not self.part_data then return end
 			if not self.projectile_owner:IsValid() then return end
 
+			local ply = self.projectile_owner
+
 			if self.part_data.Bounce ~= 0 then
 				phys:SetVelocity(data.OurOldVelocity - 2 * (data.HitNormal:Dot(data.OurOldVelocity) * data.HitNormal) * self.part_data.Bounce)
 			end
@@ -271,8 +273,6 @@ do -- projectile entity
 				}
 			end
 
-			local ply = self.projectile_owner
-
 			if self.part_data.DamageType:sub(0, 9) == "dissolve_" and damage_types[self.part_data.DamageType] then
 				if data.HitEntity:IsPlayer() then
 					local info = DamageInfo()
@@ -298,7 +298,7 @@ do -- projectile entity
 				if self.part_data.DamageType == "heal" then
 					if damage_radius > 0 then
 						for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
-							if ent ~= owner or self.part_data.CollideWithOwner then
+							if ent ~= ply or self.part_data.CollideWithOwner then
 								ent:SetHealth(math.min(ent:Health() + self.part_data.Damage, ent:GetMaxHealth()))
 							end
 						end
@@ -309,7 +309,9 @@ do -- projectile entity
 					if damage_radius > 0 then
 						for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
 							if ent.SetArmor and ent.Armor then
-								ent:SetArmor(math.min(ent:Armor() + self.part_data.Damage, ent.GetMaxArmor and ent:GetMaxArmor() or 100))
+								if ent ~= ply or self.part_data.CollideWithOwner then
+									ent:SetArmor(math.min(ent:Armor() + self.part_data.Damage, ent.GetMaxArmor and ent:GetMaxArmor() or 100))
+								end
 							end
 						end
 					elseif data.HitEntity.SetArmor and data.HitEntity.Armor then
@@ -345,7 +347,7 @@ do -- projectile entity
 
 						if damage_radius > 0 then
 							for _, ent in ipairs(ents.FindInSphere(data.HitPos, damage_radius)) do
-								if ent ~= owner or self.part_data.CollideWithOwner then
+								if ent ~= ply or self.part_data.CollideWithOwner then
 									ent:TakeDamageInfo(info)
 								end
 							end
