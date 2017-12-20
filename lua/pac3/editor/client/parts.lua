@@ -143,7 +143,7 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 				pace.PopulateProperties(obj)
 			elseif key == "Name" then
 				if not obj:HasParent() then
-					pace.RemovePartOnServer(obj:GetUniqueID(), false, true)
+					pace.RemovePartOnServer(obj:GetUniqueID(), true, true)
 				end
 				node:SetText(val)
 			elseif key == "Model" and val and val ~= "" and type(val) == "string" then
