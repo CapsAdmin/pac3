@@ -40,6 +40,11 @@ local function parts_from_uid(owner_id)
 	return uid_parts[owner_id] or {}
 end
 
+local function parts_from_ent(ent)
+	local owner_id = ent:IsPlayer() and ent:UniqueID() or ent:EntIndex()
+	return uid_parts[owner_id] or {}
+end
+
 do
 	local function think(part)
 		if part.ThinkTime == 0 then
@@ -384,19 +389,11 @@ end)
 pac.AddHook("EntityRemoved", function(ent)
 	if IsActuallyValid(ent)  then
 		local owner = ent:GetOwner()
-		if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
-			for _, part in pairs(parts_from_uid(owner:UniqueID())) do
-				if not part:HasParent() then
-					part:CheckOwner(ent, true)
-				end
-			end
-		elseif ent_parts[ent] then
-			for _, part in pairs(ent_parts[ent]) do
-				if part.dupe_remove then
-					part:Remove()
-				elseif not part:HasParent() then
-					part:CheckOwner(ent, true)
-				end
+		for _, part in pairs(parts_from_ent(owner)) do
+			if part.dupe_remove then
+				part:Remove()
+			elseif not part:HasParent() then
+				part:CheckOwner(ent, true)
 			end
 		end
 	end
@@ -407,11 +404,9 @@ pac.AddHook("OnEntityCreated", function(ent)
 
 	local owner = ent:GetOwner()
 
-	if IsActuallyValid(owner) and IsActuallyPlayer(owner) then
-		for _, part in pairs(parts_from_uid(owner:UniqueID())) do
-			if not part:HasParent() then
-				part:CheckOwner(ent, false)
-			end
+	for _, part in pairs(parts_from_ent(owner)) do
+		if not part:HasParent() then
+			part:CheckOwner(ent, false)
 		end
 	end
 end)
@@ -452,8 +447,8 @@ function pac.UpdatePartsWithMetatable(META, name)
 	end
 end
 
-function pac.GetPropertyFromName(func, name, ply_owner)
-	for _, part in pairs(parts_from_uid(ply_owner:UniqueID())) do
+function pac.GetPropertyFromName(func, name, ent_owner)
+	for _, part in pairs(parts_from_ent(ent_owner)) do
 		if part[func] and name == part.Name then
 			return part[func](part)
 		end
