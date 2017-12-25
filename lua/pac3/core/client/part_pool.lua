@@ -41,8 +41,13 @@ local function parts_from_uid(owner_id)
 end
 
 local function parts_from_ent(ent)
-	local owner_id = ent:IsPlayer() and ent:UniqueID() or ent:EntIndex()
-	return uid_parts[owner_id] or {}
+	if ent:IsPlayer() then
+		if not IsActuallyPlayer(ent) then return false end
+		local owner_id = ent:UniqueID()
+		return true, uid_parts[owner_id] or {}
+	else
+		return true, uid_parts[ent:EntIndex()] or {}
+	end
 end
 
 do
@@ -387,9 +392,16 @@ pac.AddHook("PlayerSpawned", function(ply)
 end)
 
 pac.AddHook("EntityRemoved", function(ent)
-	if IsActuallyValid(ent)  then
+	if IsActuallyValid(ent) then
 		local owner = ent:GetOwner()
-		for _, part in pairs(parts_from_ent(owner)) do
+		local shouldContinue, theParts = parts_from_ent(owner)
+
+		if not shouldContinue then
+			pac.Message('EntityRemoved - ', ent, ' has parts, but owner is invalid?! - ', owner, ' (' .. type(owner) .. ')')
+			return
+		end
+
+		for _, part in pairs(theParts) do
 			if part.dupe_remove then
 				part:Remove()
 			elseif not part:HasParent() then
@@ -403,8 +415,14 @@ pac.AddHook("OnEntityCreated", function(ent)
 	if not IsActuallyValid(ent) then return end
 
 	local owner = ent:GetOwner()
+	local shouldContinue, theParts = parts_from_ent(owner)
 
-	for _, part in pairs(parts_from_ent(owner)) do
+	if not shouldContinue then
+		pac.Message('OnEntityCreated - ', ent, ' has owner, but owner parts are invalid?! - ', owner, ' (' .. type(owner) .. ')')
+		return
+	end
+
+	for _, part in pairs(theParts) do
 		if not part:HasParent() then
 			part:CheckOwner(ent, false)
 		end
@@ -448,7 +466,10 @@ function pac.UpdatePartsWithMetatable(META, name)
 end
 
 function pac.GetPropertyFromName(func, name, ent_owner)
-	for _, part in pairs(parts_from_ent(ent_owner)) do
+	local shouldContinue, theParts = parts_from_ent(ent_owner)
+
+	if not shouldContinue then return end
+	for _, part in pairs(theParts) do
 		if part[func] and name == part.Name then
 			return part[func](part)
 		end
