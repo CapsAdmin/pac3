@@ -1,7 +1,7 @@
 include("autorun/pac_core_init.lua")
 
 pace = pace or {}
-
+pace.net = include("pac3/libraries/netx.lua")
 pace.luadata = include("pac3/libraries/luadata.lua")
 
 include("language.lua")
