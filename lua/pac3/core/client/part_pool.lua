@@ -397,7 +397,7 @@ pac.AddHook("EntityRemoved", function(ent)
 		local shouldContinue, theParts = parts_from_ent(owner)
 
 		if not shouldContinue then
-			pac.Message('EntityRemoved - ', ent, ' has parts, but owner is invalid?! - ', owner, ' (' .. type(owner) .. ')')
+			pac.Message('EntityRemoved - ', tostring(ent), ' has parts, but owner is invalid?! - ', tostring(owner), ' (' .. type(owner) .. ')')
 			return
 		end
 
@@ -418,7 +418,7 @@ pac.AddHook("OnEntityCreated", function(ent)
 	local shouldContinue, theParts = parts_from_ent(owner)
 
 	if not shouldContinue then
-		pac.Message('OnEntityCreated - ', ent, ' has owner, but owner parts are invalid?! - ', owner, ' (' .. type(owner) .. ')')
+		pac.Message('OnEntityCreated - ', tostring(ent), ' has owner, but owner parts are invalid?! - ', tostring(owner), ' (' .. type(owner) .. ')')
 		return
 	end
 
