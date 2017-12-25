@@ -202,8 +202,8 @@ function netx.SerializeTable(data)
 
 	writeTable(data)
 
-	if DLib and DLib.netModule and net.CompressOngoingNow then
-		net.CompressOngoingNow()
+	if DLib and DLib.netModule and net.CompressOngoing then
+		net.CompressOngoing()
 	end
 
 	local written2 = net.BytesWritten()
@@ -216,10 +216,6 @@ function netx.SerializeTable(data)
 end
 
 function netx.DeserializeTable()
-	if DLib and DLib.netModule and net.DecompressReceivedNow then
-		net.DecompressReceivedNow()
-	end
-
 	return readTable()
 end
 
