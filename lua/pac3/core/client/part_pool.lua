@@ -389,11 +389,13 @@ end)
 pac.AddHook("EntityRemoved", function(ent)
 	if IsActuallyValid(ent)  then
 		local owner = ent:GetOwner()
-		for _, part in pairs(parts_from_ent(owner)) do
-			if part.dupe_remove then
-				part:Remove()
-			elseif not part:HasParent() then
-				part:CheckOwner(ent, true)
+		if IsActuallyValid(owner)  then
+			for _, part in pairs(parts_from_ent(owner)) do
+				if part.dupe_remove then
+					part:Remove()
+				elseif not part:HasParent() then
+					part:CheckOwner(ent, true)
+				end
 			end
 		end
 	end
