@@ -1,4 +1,3 @@
-pace.net = include("pac3/libraries/netx.lua")
 
 include("hands.lua")
 include("pac_weapon.lua")
