@@ -41,13 +41,8 @@ local function parts_from_uid(owner_id)
 end
 
 local function parts_from_ent(ent)
-	if ent:IsPlayer() then
-		if not IsActuallyPlayer(ent) then return false end
-		local owner_id = ent:UniqueID()
-		return true, uid_parts[owner_id] or {}
-	else
-		return true, uid_parts[ent:EntIndex()] or {}
-	end
+	local owner_id = ent:IsPlayer() and ent:UniqueID() or ent:EntIndex()
+	return uid_parts[owner_id] or {}
 end
 
 do
@@ -392,20 +387,16 @@ pac.AddHook("PlayerSpawned", function(ply)
 end)
 
 pac.AddHook("EntityRemoved", function(ent)
-	if IsActuallyValid(ent) then
+	if IsActuallyValid(ent) and (not ent:IsPlayer() or IsActuallyPlayer(ent)) then
 		local owner = ent:GetOwner()
-		local shouldContinue, theParts = parts_from_ent(owner)
 
-		if not shouldContinue then
-			pac.Message('EntityRemoved - ', tostring(ent), ' has parts, but owner is invalid?! - ', tostring(owner), ' (' .. type(owner) .. ')')
-			return
-		end
-
-		for _, part in pairs(theParts) do
-			if part.dupe_remove then
-				part:Remove()
-			elseif not part:HasParent() then
-				part:CheckOwner(ent, true)
+		if IsActuallyValid(owner) and (not owner:IsPlayer() or IsActuallyPlayer(owner))  then
+			for _, part in pairs(parts_from_ent(owner)) do
+				if part.dupe_remove then
+					part:Remove()
+				elseif not part:HasParent() then
+					part:CheckOwner(ent, true)
+				end
 			end
 		end
 	end
@@ -415,16 +406,12 @@ pac.AddHook("OnEntityCreated", function(ent)
 	if not IsActuallyValid(ent) then return end
 
 	local owner = ent:GetOwner()
-	local shouldContinue, theParts = parts_from_ent(owner)
 
-	if not shouldContinue then
-		pac.Message('OnEntityCreated - ', tostring(ent), ' has owner, but owner parts are invalid?! - ', tostring(owner), ' (' .. type(owner) .. ')')
-		return
-	end
-
-	for _, part in pairs(theParts) do
-		if not part:HasParent() then
-			part:CheckOwner(ent, false)
+	if IsActuallyValid(owner) and (not owner:IsPlayer() or IsActuallyPlayer(owner)) then
+		for _, part in pairs(parts_from_ent(owner)) do
+			if not part:HasParent() then
+				part:CheckOwner(ent, false)
+			end
 		end
 	end
 end)
@@ -466,10 +453,7 @@ function pac.UpdatePartsWithMetatable(META, name)
 end
 
 function pac.GetPropertyFromName(func, name, ent_owner)
-	local shouldContinue, theParts = parts_from_ent(ent_owner)
-
-	if not shouldContinue then return end
-	for _, part in pairs(theParts) do
+	for _, part in pairs(parts_from_ent(ent_owner)) do
 		if part[func] and name == part.Name then
 			return part[func](part)
 		end
