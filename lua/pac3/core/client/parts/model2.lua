@@ -596,6 +596,8 @@ do
 	function PART:OnShow()
 		local ent = self:GetEntity()
 
+		ent.pac_originalmodel = ent.pac_originalmodel or ent:GetModel()
+
 		if self.Model == "" then
 			self.Model = ent:GetModel() or ""
 		end
@@ -646,8 +648,18 @@ do
 		if not ent:IsValid() then return end
 
 		ent:SetModel(path)
+		ent.pac_model = path
 
 		self:OnThink()
+	end
+
+	function PART:OnRemove()
+		local ent = self:GetEntity()
+		if not ent:IsValid() then return end
+
+		ent:SetModel(ent.pac_originalmodel)
+		ent.pac_originalmodel = nil
+		ent.pac_model = nil
 	end
 
 	function PART:OnThink()

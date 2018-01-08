@@ -219,6 +219,16 @@ function pac.NotifyShouldTransmit(ent,st)
 			end)
 		end
 	end
+	if ent.pac_model and ent.pac_originalmodel then
+		--This hack is required due to garrysmod resyncing the entity's model when its PVS changes
+		--Timer is required because it seems to depend on how long the engine takes to do its own update, which will override our update.
+		timer.Simple(0.3,function()
+			if ent:IsValid() and ent.pac_originalmodel and ent.pac_model then
+				ent:SetModel(ent.pac_originalmodel)
+				ent:SetModel(ent.pac_model)
+			end
+		end)
+	end
 end
 pac.AddHook("NotifyShouldTransmit")
 
