@@ -1,4 +1,5 @@
-if CLIENT and pac then return end
+-- VLL_CURR_FILE is local to each file
+if CLIENT and pac and not VLL_CURR_FILE then return end
 
 if SERVER then
 	local function add_files(dir)
