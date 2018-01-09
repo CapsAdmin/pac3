@@ -371,15 +371,11 @@ function PART:RealSetModel(path)
 	local old = self.Entity:GetModel()
 	self.Entity.pac_bones = nil
 	self.Entity:SetModel(path)
+	self.Entity.pac_target_model = path
 	self:SetModelModifiers(self:GetModelModifiers())
-	if old ~= nil and old ~= self.Entity:GetModel() then
-		self:SetMaterials("")
-	else
-		self:SetMaterials(self:GetMaterials())
-	end
-	if self.Entity:GetMaterials() then
-		self.material_count = #self.Entity:GetMaterials()
-	end
+	self:SetMaterials(not old or self.Entity:GetModel() == old and self:GetMaterials() or '')
+	local mats = self.Entity:GetMaterials()
+	self.material_count =  mats and #mats or 0
 	self:SetSize(self:GetSize())
 	self:SetScale(self:GetScale())
 end
@@ -414,9 +410,9 @@ function PART:SetModel(path)
 	else
 		if self:GetEntity() == pac.LocalPlayer and pacx and pacx.SetModel then
 			pacx.SetModel(self.Model)
-		else
-			self:RealSetModel(path)
 		end
+
+		self:RealSetModel(path)
 	end
 end
 
@@ -648,7 +644,7 @@ do
 		if not ent:IsValid() then return end
 
 		ent:SetModel(path)
-		ent.pac_model = path
+		ent.pac_target_model = path
 
 		self:OnThink()
 	end
@@ -657,9 +653,17 @@ do
 		local ent = self:GetEntity()
 		if not ent:IsValid() then return end
 
-		ent:SetModel(ent.pac_originalmodel)
+		if ent.pac_originalmodel then
+			ent:SetModel(ent.pac_originalmodel)
+			ent.pac_bones = nil
+
+			if ent == pac.LocalPlayer and pacx and pacx.SetModel then
+				pacx.SetModel(ent.pac_originalmodel)
+			end
+		end
+
 		ent.pac_originalmodel = nil
-		ent.pac_model = nil
+		ent.pac_target_model = nil
 	end
 
 	function PART:OnThink()

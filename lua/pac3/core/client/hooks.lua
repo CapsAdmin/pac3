@@ -193,6 +193,7 @@ function pac.pac_PlayerFootstep(ply, pos, snd, vol)
 		return true
 	end
 end
+
 pac.AddHook("pac_PlayerFootstep")
 
 function pac.NetworkEntityCreated(ply)
@@ -203,33 +204,25 @@ function pac.NetworkEntityCreated(ply)
 	end
 
 end
+
 pac.AddHook("NetworkEntityCreated")
 
-function pac.NotifyShouldTransmit(ent,st)
+function pac.NotifyShouldTransmit(ply, st)
 	if not st then return end
-	if ent:IsPlayer() then
-		local ply = ent
-		if ply.pac_player_size then
-			pac.SetPlayerSize(ply,ply.pac_player_size,true)
-			timer.Simple(0,function()
-				if not ply:IsValid() then return end
-				if ply.pac_player_size then
-					pac.SetPlayerSize(ply,ply.pac_player_size,true)
-				end
-			end)
-		end
-	end
-	if ent.pac_model and ent.pac_originalmodel then
-		--This hack is required due to garrysmod resyncing the entity's model when its PVS changes
-		--Timer is required because it seems to depend on how long the engine takes to do its own update, which will override our update.
-		timer.Simple(0.3,function()
-			if ent:IsValid() and ent.pac_originalmodel and ent.pac_model then
-				ent:SetModel(ent.pac_originalmodel)
-				ent:SetModel(ent.pac_model)
+
+	if ply:IsPlayer() and ply.pac_player_size then
+		pac.SetPlayerSize(ply, ply.pac_player_size, true)
+
+		pac.RunNextFrame('update_entity_size_' .. ply:EntIndex(), function()
+			if not ply:IsValid() then return end
+
+			if ply.pac_player_size then
+				pac.SetPlayerSize(ply, ply.pac_player_size, true)
 			end
 		end)
 	end
 end
+
 pac.AddHook("NotifyShouldTransmit")
 
 net.Receive("pac_effect_precached", function()
