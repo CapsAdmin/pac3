@@ -62,7 +62,9 @@ function PART:OnDraw(ent, pos, ang)
 	local focus = system.HasFocus()
 	local volume = shouldMute and not focus and 0 or self:GetVolume()
 
-	for url, stream in pairs(self.streams) do
+	for url, streamdata in pairs(self.streams) do
+		local stream = streamdata.stream
+		if streamdata.Loading then goto CONTINUE end
 		if not stream:IsValid() then self.streams[url] = nil goto CONTINUE end
 
 		stream:SetPos(pos, forward)
@@ -73,6 +75,10 @@ function PART:OnDraw(ent, pos, ang)
 		stream:Set3DCone(self.InnerAngle, self.OuterAngle, self.OuterVolume)
 		stream:SetVolume(volume)
 		stream:SetPlaybackRate(self:GetPitch() + self.random_pitch)
+		if streamdata.StartPlaying then
+			stream:Play()
+			streamdata.StartPlaying = nil
+		end
 		::CONTINUE::
 	end
 end
@@ -106,8 +112,9 @@ function PART:SetURL(URL)
 		end
 	end
 
-	for _, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
+	for url, streamdata in pairs(self.streams) do
+		local stream = streamdata.stream
+		if streamdata.Loading or not stream:IsValid() then self.streams[url] = nil goto CONTINUE end
 
 		stream:Stop()
 		::CONTINUE::
@@ -116,27 +123,37 @@ function PART:SetURL(URL)
 	self.streams = {}
 
 	for _, url in pairs(urls) do
-		local flags = "3d noplay noblock"
-
-		local callback callback = function (snd, ...)
-			if not snd or not snd:IsValid() then
-				pac.Message("Failed to load ", url, " (" .. flags .. ")")
-				return
-			end
-
-			if pace and pace.Editor:IsValid() and pace.current_part:IsValid() and pace.current_part.ClassName == "webaudio" and self:GetPlayerOwner() == pac.LocalPlayer then
-				if self.Loop and (snd:GetLength() > 0) then
-					snd:EnableLooping(true)
-				else
-					snd:EnableLooping(false)
-				end
-				snd:Play()
-			end
-
-			self.streams[url] = snd
-		end
 
 		url = pac.FixupURL(url)
+
+		local flags = "3d noplay noblock"
+
+		local callback = function (snd, ...)
+			if not snd or not snd:IsValid() then
+				pac.Message("Failed to load ", url, " (" .. flags .. ")")
+				self.streams[url] = nil
+			else
+
+				if self.streams[url] then
+					if self.streams[url].PlayAfterLoad or (pace and pace.Editor:IsValid() and pace.current_part:IsValid() and pace.current_part.ClassName == "webaudio" and self:GetPlayerOwner() == pac.LocalPlayer) then
+						self.streams[url].PlayAfterLoad = nil
+						if self.Loop and (snd:GetLength() > 0) then
+							snd:EnableLooping(true)
+						else
+							snd:EnableLooping(false)
+						end
+						self.streams[url].Loading = false
+						self.streams[url].StartPlaying = true
+					end
+
+					self.streams[url].stream = snd
+				end
+
+			end
+		end
+
+
+		self.streams[url] = {Loading = true}
 
 		sound.PlayURL(url, flags, callback)
 
@@ -148,8 +165,10 @@ end
 PART.last_stream = NULL
 
 function PART:PlaySound()
-	local stream = table.Random(self.streams) or NULL
+	local streamdata = table.Random(self.streams) or NULL
 
+	local stream = streamdata.stream
+	if streamdata.Loading then streamdata.PlayAfterLoad = true return end
 	if not stream:IsValid() then return end
 
 	self:SetRandomPitch(self.RandomPitch)
@@ -159,16 +178,19 @@ function PART:PlaySound()
 		self.last_stream:Pause()
 	end
 
-	stream:Play()
+	streamdata.StartPlaying = true
 
 	self.last_stream = stream
 end
 
 function PART:StopSound()
-	for key, stream in pairs(self.streams) do
+	for key, streamdata in pairs(self.streams) do
+		local stream = streamdata.stream
+		if streamdata.Loading then goto CONTINUE end
 		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
 
 		if self.StopOnHide then
+			streamdata.StartPlaying = nil
 			if self.PauseOnHide then
 				stream:Pause()
 			else
@@ -191,8 +213,9 @@ function PART:OnHide()
 end
 
 function PART:OnRemove()
-	for key, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
+	for key, streamdata in pairs(self.streams) do
+		local stream = streamdata.stream
+		if streamdata.Loading or not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
 
 		stream:Stop()
 		::CONTINUE::
