@@ -186,7 +186,7 @@ end
 function PART:StopSound()
 	for key, streamdata in pairs(self.streams) do
 		local stream = streamdata.stream
-		if streamdata.Loading then goto CONTINUE end
+		if streamdata.Loading then streamdata.PlayAfterLoad = nil goto CONTINUE end
 		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
 
 		if self.StopOnHide then
