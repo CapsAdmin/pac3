@@ -195,33 +195,6 @@ function pac.pac_PlayerFootstep(ply, pos, snd, vol)
 end
 pac.AddHook("pac_PlayerFootstep")
 
-function pac.NetworkEntityCreated(ply)
-	if not ply:IsPlayer() then return end
-
-	if ply.pac_player_size then
-		pacx.SetPlayerSize(ply,ply.pac_player_size,true)
-	end
-
-end
-pac.AddHook("NetworkEntityCreated")
-
-function pac.NotifyShouldTransmit(ent,st)
-	if not st then return end
-	if ent:IsPlayer() then
-		local ply = ent
-		if ply.pac_player_size then
-			pacx.SetPlayerSize(ply,ply.pac_player_size,true)
-			timer.Simple(0,function()
-				if not ply:IsValid() then return end
-				if ply.pac_player_size then
-					pacx.SetPlayerSize(ply,ply.pac_player_size,true)
-				end
-			end)
-		end
-	end
-end
-pac.AddHook("NotifyShouldTransmit")
-
 net.Receive("pac_effect_precached", function()
 	local name = net.ReadString()
 	pac.CallHook("EffectPrecached", name)
