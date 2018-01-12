@@ -199,7 +199,7 @@ function pac.NetworkEntityCreated(ply)
 	if not ply:IsPlayer() then return end
 
 	if ply.pac_player_size then
-		pac.SetPlayerSize(ply,ply.pac_player_size,true)
+		pacx.SetPlayerSize(ply,ply.pac_player_size,true)
 	end
 
 end
@@ -210,11 +210,11 @@ function pac.NotifyShouldTransmit(ent,st)
 	if ent:IsPlayer() then
 		local ply = ent
 		if ply.pac_player_size then
-			pac.SetPlayerSize(ply,ply.pac_player_size,true)
+			pacx.SetPlayerSize(ply,ply.pac_player_size,true)
 			timer.Simple(0,function()
 				if not ply:IsValid() then return end
 				if ply.pac_player_size then
-					pac.SetPlayerSize(ply,ply.pac_player_size,true)
+					pacx.SetPlayerSize(ply,ply.pac_player_size,true)
 				end
 			end)
 		end
