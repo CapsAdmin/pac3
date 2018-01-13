@@ -114,7 +114,7 @@ function PART:SetModelModifiers(str)
 	self.draw_bodygroups = {}
 
 	for i, info in ipairs(self.Entity:GetBodyGroups()) do
-		local val = tbl[info.name:lower()]
+		local val = tbl[info.name]
 		if val then
 			table.insert(self.draw_bodygroups, {info.id, val})
 		end
