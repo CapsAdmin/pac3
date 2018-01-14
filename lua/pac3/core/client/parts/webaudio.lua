@@ -122,41 +122,47 @@ function PART:SetURL(URL)
 
 	self.streams = {}
 
+	local inPace = pace and pace.IsActive() and pace.current_part == self and self:GetPlayerOwner() == pac.LocalPlayer
+
 	for _, url in pairs(urls) do
-
 		url = pac.FixupURL(url)
-
 		local flags = "3d noplay noblock"
+		local callback
 
-		local callback = function (snd, ...)
-			if not snd or not snd:IsValid() then
-				pac.Message("Failed to load ", url, " (" .. flags .. ")")
-				self.streams[url] = nil
-			else
+		function callback(channel, errorCode, errorString)
+			if not channel or not channel:IsValid() then
+				pac.Message("Failed to load ", url, " (" .. flags .. ") - " .. (errorString or errorCode or 'UNKNOWN'))
 
-				if self.streams[url] then
-					if self.streams[url].PlayAfterLoad or (pace and pace.Editor:IsValid() and pace.current_part:IsValid() and pace.current_part.ClassName == "webaudio" and self:GetPlayerOwner() == pac.LocalPlayer) then
-						self.streams[url].PlayAfterLoad = nil
-						if self.Loop and (snd:GetLength() > 0) then
-							snd:EnableLooping(true)
-						else
-							snd:EnableLooping(false)
-						end
-						self.streams[url].Loading = false
-						self.streams[url].StartPlaying = true
-					end
-
-					self.streams[url].stream = snd
+				if errorCode == -1 then
+					pac.Message('GMOD BUG: WAVe and Vorbis files are known to be not working with 3D flag, recode file into MPEG-3 format!')
 				end
 
+				self.streams[url] = nil
+			else
+				local streamdata = self.streams[url]
+
+				if streamdata then
+					streamdata.Loading = false
+
+					if streamdata.valid then
+						if streamdata.PlayAfterLoad or (inPace and pace.IsActive()) then
+							streamdata.PlayAfterLoad = nil
+							channel:EnableLooping(self.Loop and channel:GetLength() > 0)
+							streamdata.StartPlaying = true
+						end
+
+						streamdata.stream = channel
+					else
+						channel:Stop()
+					end
+				end
 			end
 		end
 
 
-		self.streams[url] = {Loading = true}
+		self.streams[url] = {Loading = true, valid = true}
 
 		sound.PlayURL(url, flags, callback)
-
 	end
 
 	self.URL = URL
@@ -168,8 +174,12 @@ function PART:PlaySound()
 	local streamdata = table.Random(self.streams) or NULL
 
 	local stream = streamdata.stream
-	if streamdata.Loading then streamdata.PlayAfterLoad = true return end
-	if not stream:IsValid() then return end
+	if streamdata.Loading then
+		streamdata.PlayAfterLoad = true
+		return
+	end
+
+	if not IsValid(stream) then return end
 
 	self:SetRandomPitch(self.RandomPitch)
 
@@ -214,10 +224,17 @@ end
 
 function PART:OnRemove()
 	for key, streamdata in pairs(self.streams) do
-		local stream = streamdata.stream
-		if streamdata.Loading or not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
+		if streamdata.Loading then
+			streamdata.valid = false
+			goto CONTINUE
+		end
 
-		stream:Stop()
+		local stream = streamdata.stream
+
+		if stream:IsValid() then
+			stream:Stop()
+		end
+
 		::CONTINUE::
 	end
 end
