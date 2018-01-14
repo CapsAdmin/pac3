@@ -53,6 +53,16 @@ function pac.CalcView(ply, pos, ang, fov, nearz, farz)
 
 	for _, part in pairs(ply.pac_cameras) do
 		if part:IsValid() then
+			if part:IsHidden() and part:IsEventHidden() then
+				for i, event in ipairs(part:GetChildrenList()) do
+					if event.ClassName == 'event' then
+						event.AlwaysThink = true
+						event:Think()
+						part.draw_hidden = part.event_hidden
+					end
+				end
+			end
+
 			if not part:IsHidden() then
 				pos, ang, fov, nearz, farz = part:CalcView(ply, pos, ang, fov, nearz, farz)
 				temp.origin = pos

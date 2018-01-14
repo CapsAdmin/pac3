@@ -616,6 +616,18 @@ do -- parenting
 			self.event_hidden = b
 		end
 
+		function PART:IsDrawHidden()
+			return self.draw_hidden
+		end
+
+		function PART:IsEventHidden()
+			return self.event_hidden
+		end
+
+		function PART:IsHiddenInternal()
+			return self.hidden
+		end
+
 		function PART:IsHidden()
 			if
 				self.draw_hidden or
