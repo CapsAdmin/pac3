@@ -228,6 +228,8 @@ local function ProcessAnimations(pl)
 end
 
 hook.Add("Think", "BoneAnimThink", function()
+	if SERVER then return end
+
 	for _, pl in pairs(player.GetAll()) do
 		if pl.LuaAnimations and pl:IsValid() then
 			ProcessAnimations(pl)
