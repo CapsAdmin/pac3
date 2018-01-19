@@ -370,11 +370,18 @@ end
 do
 	local pac_error_mdl = CreateClientConVar("pac_error_mdl","1",true,false,"0 = default error, 1=custom error model, models/yourmodel.mdl")
 	local tc
+	local invalidCache = {}
 
 	function pac.FilterInvalidModel(mdl, fallback)
 		if util.IsValidModel(mdl) or (not mdl) or (mdl == "") then
 			return mdl
 		end
+
+		if invalidCache[mdl] then
+			return invalidCache[mdl]
+		end
+
+		mdl = mdl:lower():Trim()
 
 		-- IsValidModel doesn't always return true... this is expensive though :(
 		if file.Exists(mdl , "GAME") then
@@ -392,8 +399,10 @@ do
 		if str == "1" or str == "" then
 			--passthrough
 		elseif str == "0" then
+			invalidCache[mdl] = mdl
 			return mdl
 		elseif util.IsValidModel(str) then
+			invalidCache[mdl] = str
 			return str
 		end
 
@@ -405,6 +414,7 @@ do
 			end
 		end
 
+		invalidCache[mdl] = tc
 		return tc
 	end
 end
