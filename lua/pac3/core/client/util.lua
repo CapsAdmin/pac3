@@ -374,14 +374,19 @@ do
 
 	function pac.FilterInvalidModel(mdl, fallback)
 		if util.IsValidModel(mdl) or (not mdl) or (mdl == "") then
+			invalidCache[mdl] = nil
+			return mdl
+		end
+
+		mdl = mdl:lower():Trim()
+
+		if mdl == '' then
 			return mdl
 		end
 
 		if invalidCache[mdl] then
 			return invalidCache[mdl]
 		end
-
-		mdl = mdl:lower():Trim()
 
 		-- IsValidModel doesn't always return true... this is expensive though :(
 		if file.Exists(mdl , "GAME") then
