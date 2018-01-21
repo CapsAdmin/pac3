@@ -14,8 +14,10 @@ util.AddNetworkString("pac.TouchFlexes.ClientNotify")
 net.Receive( "pac.TouchFlexes.ClientNotify", function( length, client )
 	local index = net.ReadInt(13)
 	local ent = Entity(index)
-	local target = ent:GetFlexWeight(1) or 0
-	if ent and ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() > 0 then ent:SetFlexWeight(1,target) end
+	if ent and ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() > 0 then
+		local target = ent:GetFlexWeight(1) or 0
+		ent:SetFlexWeight(1,target)
+	end
 end )
 
 do -- button event
