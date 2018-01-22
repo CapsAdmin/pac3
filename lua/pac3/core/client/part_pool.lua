@@ -25,11 +25,7 @@ local IsValid = entMeta.IsValid
 local Alive = plyMeta.Alive
 
 local function IsActuallyValid(ent)
-	return IsEntity(ent) and pcall(ent.GetPos, ent)
-end
-
-local function IsActuallyPlayer(ent)
-	return IsEntity(ent) and pcall(ent.UniqueID, ent)
+	return IsValid(ent) and IsEntity(ent) and pcall(ent.GetPos, ent)
 end
 
 local ent_parts = {}
@@ -405,7 +401,7 @@ pac.AddHook("OnEntityCreated", function(ent)
 	if not IsActuallyValid(ent) then return end
 
 	local owner = ent:GetOwner()
-	if not IsValid(owner) then return end
+	if not IsActuallyValid(owner) then return end
 
 	for _, part in pairs(parts_from_ent(owner)) do
 		if not part:HasParent() then
