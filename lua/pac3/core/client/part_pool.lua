@@ -406,6 +406,7 @@ pac.AddHook("OnEntityCreated", function(ent)
 	if not IsActuallyValid(ent) then return end
 
 	local owner = ent:GetOwner()
+	if not IsValid(owner) then return end
 
 	if IsActuallyValid(owner) and (not owner:IsPlayer() or IsActuallyPlayer(owner)) then
 		for _, part in pairs(parts_from_ent(owner)) do
