@@ -1,5 +1,20 @@
 local L = pace.LanguageString
 
+pace.select = {}
+local select = pace.select
+
+function select.VecToScreen(vec)
+	return vec:ToScreen()
+end
+
+function select.GetMousePos()
+	return gui.MousePos()
+end
+
+function select.GUIMousePressed(mcode) end
+function select.GUIMouseReleased(mcode) end
+function select.HUDPaint() end
+
 local RENDER_ATTACHMENTS = CreateConVar('pac_render_attachments', '0', {FCVAR_ARCHIVE}, 'Render attachments when selecting bones')
 
 function pace.ToggleRenderAttachments()
@@ -132,6 +147,9 @@ function pace.StopSelect()
 	hook.Remove("GUIMouseReleased", "pac_draw_select")
 	hook.Remove("GUIMousePressed", "pac_draw_select")
 	hook.Remove("HUDPaint", "pac_draw_select")
+	function select.GUIMousePressed(mcode) end
+	function select.GUIMouseReleased(mcode) end
+	function select.HUDPaint() end
 
 	timer.Simple(0.1, function()
 		pace.IsSelecting = false
@@ -149,7 +167,7 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 				pace.StopSelect()
 			end
 
-			holding = Vector(gui.MousePos())
+			holding = Vector(select.GetMousePos())
 		end
 	end
 
@@ -168,7 +186,7 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 
 		surface.SetAlphaMultiplier(1)
 
-		x, y = gui.MousePos()
+		x, y = select.GetMousePos()
 
 		local tbl = {}
 
@@ -177,7 +195,7 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 				goto CONTINUE
 			end
 
-			local pos = getpos(key, value):ToScreen()
+			local pos = select.VecToScreen(getpos(key, value))
 			local friendly = getfriendly(key, value)
 
 			if checkVisible(pos) then
@@ -241,7 +259,7 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 					local sx = math.sin((k / #selected) * math.pi * 2) * rad
 					local sy = math.cos((k / #selected) * math.pi * 2) * rad
 
-					v.pos = getpos(v.key, v.value):ToScreen()
+					v.pos = select.VecToScreen(getpos(v.key, v.value))
 
 					if holding and pace.util.FastDistance2D(v.pos.x + sx, v.pos.y + sy, x, y) < area then
 						pace.DrawSelectionSelected(v.pos)
@@ -260,10 +278,14 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 	end
 
 	pace.IsSelecting = true
+	
+	select.HUDPaint = HUDPaint
+	select.GUIMousePressed = GUIMousePressed
+	select.GUIMouseReleased = GUIMouseReleased
 
-	hook.Add("GUIMousePressed", "pac_draw_select", GUIMousePressed)
-	hook.Add("GUIMouseReleased", "pac_draw_select", GUIMouseReleased)
-	hook.Add("HUDPaint", "pac_draw_select", HUDPaint)
+	hook.Add("GUIMousePressed", "pac_draw_select", select.GUIMousePressed)
+	hook.Add("GUIMouseReleased", "pac_draw_select", select.GUIMouseReleased)
+	hook.Add("HUDPaint", "pac_draw_select", select.HUDPaint)
 end
 
 function pace.SelectBone(ent, callback, only_movable)
