@@ -167,8 +167,7 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 				pace.StopSelect()
 			end
 
-			local x, y = select.GetMousePos()
-			holding = Vector({x = x, y = y})
+			holding = Vector(select.GetMousePos())
 		end
 	end
 
@@ -285,7 +284,7 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 	select.GUIMouseReleased = GUIMouseReleased
 
 	hook.Add("GUIMousePressed", "pac_draw_select", select.GUIMousePressed)
-	hook.Add("GUIMouseReleased", "pac_draw_select", select.GUIMouseReleasedUIMouseReleased)
+	hook.Add("GUIMouseReleased", "pac_draw_select", select.GUIMouseReleased)
 	hook.Add("HUDPaint", "pac_draw_select", select.HUDPaint)
 end
 

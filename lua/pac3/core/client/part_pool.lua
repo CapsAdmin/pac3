@@ -37,7 +37,7 @@ local function parts_from_uid(owner_id)
 end
 
 local function parts_from_ent(ent)
-	local owner_id = ent:IsPlayer() and ent:UniqueID() or ent:EntIndex()
+	local owner_id = IsValid(ent) and ent:IsPlayer() and ent:UniqueID() or ent:EntIndex()
 	return uid_parts[owner_id] or {}
 end
 
