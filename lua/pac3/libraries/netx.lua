@@ -143,6 +143,7 @@ do
 		'part',
 		'ParentName',
 		'AimPartName',
+		'Size',
 		'ClassName',
 		'OwnerName',
 		'owner',
