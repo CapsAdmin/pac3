@@ -27,7 +27,12 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	return pac.PrettifyName(("/" .. self:GetSpritePath()):match(".+/(.+)"):gsub("%..+", "")) or "error"
+	if not self:GetSpritePath() then 
+		return "error"
+	end
+
+	local match = pac.PrettifyName("/" .. self:GetSpritePath()):match(".+/(.+)")
+	return match and match:gsub("%..+", "") or "error"
 end
 
 function PART:SetColor(v)
