@@ -933,10 +933,8 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 				node = node:AddFolder( name, path .. browse_types[1], pathid, false )
 				node:SetIcon( icon )
 				node.dir = browse_types[1]
-
 			else
 				node = node:AddNode(name, icon)
-				node.OnNodeSelected = on_select
 				node:SetFolder("")
 				node:SetPathID(pathid)
 				node.viewPanel = viewPanel
@@ -960,6 +958,8 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 					end
 				end
 			end
+
+			node.OnNodeSelected = on_select
 		end
 
 		local viewPanel = vgui.Create("pac_ResourceBrowser_ContentContainer", frame.PropPanel)
