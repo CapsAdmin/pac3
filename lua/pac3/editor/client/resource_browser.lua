@@ -78,6 +78,15 @@ local function setup_paint(panel, generate_cb, draw_cb)
 
 		draw_cb(self, w, h)
 	end
+
+	local old = panel.OnRemove
+	panel.OnRemove = function(...)
+		next_generate_icon = math.max(next_generate_icon - 1, 0)
+
+		if old then
+			old(...)
+		end
+	end
 end
 
 local function create_texture_icon(path)
@@ -188,7 +197,6 @@ local function create_material_icon(path, grid_panel)
 
 				x = x - 25
 				y = y - 55
-
 				self.light_pos = Vector(y, x, 30)
 			end
 
@@ -855,32 +863,37 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 				local searchString = node:GetFolder()
 
 				if searchString == "" and #browse_types == 1 then
+					local count = 0
 					local function find_recursive(path, pathid)
+						if count >= 500 then return end
 						local files_, folders_ = file.Find(path .. "/*", pathid)
-						for i,v in ipairs(files_) do
+						if files_ then
+							for i,v in ipairs(files_) do
+								count = count + 1
 
-							local path = path .. "/" .. v
+								local path = path .. "/" .. v
 
-							path = path:gsub("^.-(" .. browse_types[1] .. "/.+)$", "%1")
+								path = path:gsub("^.-(" .. browse_types[1] .. "/.+)$", "%1")
 
-							if browse_types[1] == "models" then
-								if not IsUselessModel(path) then
-									viewPanel:Add(create_model_icon(path))
-								end
-							elseif browse_types[1] == "materials" then
-								if path:find("%.vmt$") then
-									if material_view then
-										create_material_icon(path, viewPanel)
+								if browse_types[1] == "models" then
+									if not IsUselessModel(path) then
+										viewPanel:Add(create_model_icon(path))
 									end
-								elseif texture_view then
-									viewPanel:Add(create_texture_icon(path))
+								elseif browse_types[1] == "materials" then
+									if path:find("%.vmt$") then
+										if material_view then
+											create_material_icon(path, viewPanel)
+										end
+									elseif texture_view then
+										viewPanel:Add(create_texture_icon(path))
+									end
+								elseif browse_types[1] == "sound" then
+									sound_list:AddSound(path, pathid)
 								end
-							elseif browse_types[1] == "sound" then
-								sound_list:AddSound(path, pathid)
 							end
-						end
-						for i,v in ipairs(folders_) do
-							find_recursive(path .. "/" .. v, pathid)
+							for i,v in ipairs(folders_) do
+								find_recursive(path .. "/" .. v, pathid)
+							end
 						end
 					end
 					find_recursive(path .. browse_types[1], node:GetPathID())
