@@ -78,6 +78,15 @@ local function setup_paint(panel, generate_cb, draw_cb)
 
 		draw_cb(self, w, h)
 	end
+
+	local old = panel.OnRemove
+	panel.OnRemove = function(...)
+		next_generate_icon = math.max(next_generate_icon - 1, 0)
+
+		if old then
+			old(...)
+		end
+	end
 end
 
 local function create_texture_icon(path)
