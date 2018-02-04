@@ -135,43 +135,16 @@ local function writeTable(tab)
 	end
 end
 
-do
-	local tobank = {
-		'ParentUID',
-		'self',
-		'UniqueID',
-		'part',
-		'ParentName',
-		'AimPartName',
-		'Size',
-		'ClassName',
-		'OwnerName',
-		'owner',
-		'children',
-		'class',
-		'player_uid',
-		'uid',
-		'server_only',
-	}
-
-	for i, val in ipairs(tobank) do
-		crcdatabank[CRC(val)] = val
-	end
-end
 
 local readmeta = {
 	__index = function(self, key)
 		local val = rawget(self, key)
+
 		if val ~= nil then
 			return val
 		end
 
-		-- if SERVER then
-		-- 	print(key, debug.traceback())
-		-- end
-
-		crcdatabank[key] = crcdatabank[key] or CRC(key)
-		return rawget(self, crcdatabank[key])
+		return rawget(self, CRC(key))
 	end
 }
 
@@ -187,9 +160,7 @@ function netx.SimulateTableReceive(tableIn)
 		local i = tostring(i2)
 
 		if CLIENT then
-			i = pac.ExtractNetworkID(i) or crcdatabank[i] or i2
-		else
-			i = crcdatabank[i] or i2
+			i = pac.ExtractNetworkID(i) or i
 		end
 
 		tableIn[i] = tableIn[index]
@@ -209,10 +180,7 @@ function readTable(tab)
 		local val = readTyped()
 
 		if CLIENT then
-			--i = pac.ExtractNetworkID(i) or crcdatabank[i] or (print('Unknown ID ' .. i) or i)
-			i = pac.ExtractNetworkID(i) or crcdatabank[i] or i2
-		else
-			i = crcdatabank[i] or i2
+			i = pac.ExtractNetworkID(i) or i
 		end
 
 		output[i] = val
