@@ -854,107 +854,128 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 
 				local searchString = node:GetFolder()
 
-				if searchString == "" then
-					searchString = "*"
-				else
-					searchString = searchString .. "/*"
-				end
+				if searchString == "" and #browse_types == 1 then
+					local function find_recursive(path, pathid)
+						local files_, folders_ = file.Find(path .. "/*", pathid)
+						for i,v in ipairs(files_) do
 
-				local files, folders = file.Find(searchString, node:GetPathID())
+							local path = path .. "/" .. v
 
-				if files then
-					--[[
-					for _, dir in pairs(folders) do
+							path = path:gsub("^.-(" .. browse_types[1] .. "/.+)$", "%1")
 
-						local SPAWNICON = vgui.GetControlTable("SpawnIcon")
-						local icon = vgui.Create("DButton", viewPanel)
-						icon:SetSize(64,64)
-						icon:SetText(dir)
-						icon:SetWrap(true)
-
-						icon.Paint = SPAWNICON.Paint
-						icon.PaintOver = SPAWNICON.PaintOver
-
-						icon.DoClick = function()
-							for _, child in pairs(node.ChildNodes:GetChildren()) do
-								if child:GetFolder() == ((node:GetFolder() == "" and dir) or (node:GetFolder() .. "/" .. dir)) then
-									prev_node = tree.Tree:GetSelectedItem()
-									tree.Tree:SetSelectedItem(child)
-									node:SetExpanded(true)
-									break
-								end
-							end
-						end
-
-						viewPanel:Add(icon)
-					end
-					]]
-					if self.dir == "models" then
-						for k, v in pairs(files) do
-							local path = node:GetFolder() ..  "/" .. v
-
-							if not path:StartWith("models/pac3_cache/") then
+							if browse_types[1] == "models" then
 								if not IsUselessModel(path) then
 									viewPanel:Add(create_model_icon(path))
 								end
-							end
-						end
-					elseif self.dir == "materials" then
-						for k, v in pairs(files) do
-							local path = node:GetFolder() ..  "/" .. v
-
-							if v:find("%.vmt$") then
-								if material_view then
-									create_material_icon(path, viewPanel)
+							elseif browse_types[1] == "materials" then
+								if path:find("%.vmt$") then
+									if material_view then
+										create_material_icon(path, viewPanel)
+									end
+								elseif texture_view then
+									viewPanel:Add(create_texture_icon(path))
 								end
-							elseif texture_view then
-								viewPanel:Add(create_texture_icon(path))
+							elseif browse_types[1] == "sound" then
+								sound_list:AddSound(path, pathid)
+							end
+						end
+						for i,v in ipairs(folders_) do
+							find_recursive(path .. "/" .. v, pathid)
+						end
+					end
+					find_recursive(path .. browse_types[1], node:GetPathID())
+				else
+					local files, folders = file.Find(searchString .. "/*", node:GetPathID())
+
+					if files then
+						--[[
+						for _, dir in pairs(folders) do
+
+							local SPAWNICON = vgui.GetControlTable("SpawnIcon")
+							local icon = vgui.Create("DButton", viewPanel)
+							icon:SetSize(64,64)
+							icon:SetText(dir)
+							icon:SetWrap(true)
+
+							icon.Paint = SPAWNICON.Paint
+							icon.PaintOver = SPAWNICON.PaintOver
+
+							icon.DoClick = function()
+								for _, child in pairs(node.ChildNodes:GetChildren()) do
+									if child:GetFolder() == ((node:GetFolder() == "" and dir) or (node:GetFolder() .. "/" .. dir)) then
+										prev_node = tree.Tree:GetSelectedItem()
+										tree.Tree:SetSelectedItem(child)
+										node:SetExpanded(true)
+										break
+									end
+								end
 							end
 
+							viewPanel:Add(icon)
 						end
-					elseif self.dir == "sound" then
-						for k, v in pairs(files) do
-							local path = node:GetFolder() ..  "/" .. v
-							sound_list:AddSound(path, pathid)
-						end
-					end
+						]]
+						if self.dir == "models" then
+							for k, v in pairs(files) do
+								local path = node:GetFolder() ..  "/" .. v
 
-					if self.dir == "sound" then
-						node.propPanel = sound_list
-					else
-						node.propPanel = viewPanel
+								if not path:StartWith("models/pac3_cache/") then
+									if not IsUselessModel(path) then
+										viewPanel:Add(create_model_icon(path))
+									end
+								end
+							end
+						elseif self.dir == "materials" then
+							for k, v in pairs(files) do
+								local path = node:GetFolder() ..  "/" .. v
+
+								if v:find("%.vmt$") then
+									if material_view then
+										create_material_icon(path, viewPanel)
+									end
+								elseif texture_view then
+									viewPanel:Add(create_texture_icon(path))
+								end
+
+							end
+						elseif self.dir == "sound" then
+							for k, v in pairs(files) do
+								local path = node:GetFolder() ..  "/" .. v
+								sound_list:AddSound(path, pathid)
+							end
+						end
 					end
-					tree:OnNodeSelected(node)
-					viewPanel.currentNode = node
 				end
+
+				if self.dir == "sound" then
+					node.propPanel = sound_list
+				else
+					node.propPanel = viewPanel
+				end
+
+				tree:OnNodeSelected(node)
+				viewPanel.currentNode = node
 			end
 
-			if #browse_types == 1 and node.AddFolder then
-				node = node:AddFolder( name, path .. browse_types[1], pathid, false )
-				node:SetIcon( icon )
-				node.dir = browse_types[1]
-			else
-				node = node:AddNode(name, icon)
-				node:SetFolder("")
-				node:SetPathID(pathid)
-				node.viewPanel = viewPanel
+			node = node:AddNode(name, icon)
+			node:SetFolder("")
+			node:SetPathID(pathid)
+			node.viewPanel = viewPanel
 
-				for _, dir in ipairs(browse_types) do
-					local files, folders = file.Find(path .. dir .. "/*", pathid)
-					if files[1] or folders[1] then
-						local parent = node
+			for _, dir in ipairs(browse_types) do
+				local files, folders = file.Find(path .. dir .. "/*", pathid)
+				if files[1] or folders[1] then
+					local parent = node
 
-						local node = node:AddFolder(dir, path .. dir, pathid, false)
-						node.dir = dir
-						node.OnNodeSelected = on_select
+					local node = node:AddFolder(dir, path .. dir, pathid, false)
+					node.dir = dir
+					node.OnNodeSelected = on_select
 
-						if name == "all" and #browse_types == 1 and browse_types[1] == dir and dir ~= "models" then
-							timer.Simple(0, function()
-								parent:SetExpanded(true)
-								tree:SetExpanded(true)
-								tree:SetSelectedItem(node)
-							end)
-						end
+					if name == "all" and #browse_types == 1 and browse_types[1] == dir and dir ~= "models" then
+						timer.Simple(0, function()
+							parent:SetExpanded(true)
+							tree:SetExpanded(true)
+							tree:SetSelectedItem(node)
+						end)
 					end
 				end
 			end
