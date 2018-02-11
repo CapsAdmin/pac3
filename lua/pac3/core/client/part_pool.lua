@@ -28,6 +28,14 @@ local function IsActuallyValid(ent)
 	return IsValid(ent) and IsEntity(ent) and pcall(ent.GetPos, ent)
 end
 
+--[[
+	This state can happen when the Player is joined but not yet fully connected.
+	At this point the SteamID is not yet set and the UniqueID call fails with a lua error.
+]]
+local function IsActuallyPlayer(ent)
+	return IsEntity(ent) and pcall(ent.UniqueID, ent)
+end
+
 local ent_parts = {}
 local all_parts = {}
 local uid_parts = {}
@@ -383,9 +391,10 @@ pac.AddHook("PlayerSpawned", function(ply)
 end)
 
 pac.AddHook("EntityRemoved", function(ent)
-	if IsActuallyValid(ent)  then
+	if IsActuallyValid(ent) and (not ent:IsPlayer() or IsActuallyPlayer(ent)) then
 		local owner = ent:GetOwner()
-		if IsActuallyValid(owner)  then
+
+		if IsActuallyValid(owner) and (not owner:IsPlayer() or IsActuallyPlayer(owner))  then
 			for _, part in pairs(parts_from_ent(owner)) do
 				if part.dupe_remove then
 					part:Remove()
@@ -401,11 +410,12 @@ pac.AddHook("OnEntityCreated", function(ent)
 	if not IsActuallyValid(ent) then return end
 
 	local owner = ent:GetOwner()
-	if not IsActuallyValid(owner) then return end
 
-	for _, part in pairs(parts_from_ent(owner)) do
-		if not part:HasParent() then
-			part:CheckOwner(ent, false)
+	if IsActuallyValid(owner) and (not owner:IsPlayer() or IsActuallyPlayer(owner)) then
+		for _, part in pairs(parts_from_ent(owner)) do
+			if not part:HasParent() then
+				part:CheckOwner(ent, false)
+			end
 		end
 	end
 end)
