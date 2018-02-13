@@ -69,26 +69,6 @@ function pac.Disable()
 end
 
 do
-	local pac_enable = CreateClientConVar("pac_enable", "1",true)
-	local pac_enable_bool = pac_enable:GetBool()
-	cvars.AddChangeCallback("pac_enable", function(_, _, new)
-		if (tonumber(new) or 0)>=1 then
-			pac_enable_bool=true
-			pac.Enable()
-		else
-			pac_enable_bool=false
-			pac.Disable()
-		end
-	end)
-
-	function pac.IsEnabled()
-		return pac_enable_bool
-	end
-
-	if pac_enable:GetInt() == 0 then
-		pac.Disable()
-	end
-
 	local pac_friendonly = CreateClientConVar("pac_friendonly", 0, true)
 
 	function pac.FriendOnlyUpdate()

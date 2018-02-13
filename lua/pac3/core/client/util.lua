@@ -2,6 +2,25 @@ local Vector = Vector
 local Matrix = Matrix
 local isstring = isstring
 
+do
+	local pac_enable = CreateClientConVar("pac_enable", "1",true)
+	local pac_enable_bool = pac_enable:GetBool()
+
+	cvars.AddChangeCallback("pac_enable", function(_, _, new)
+		if (tonumber(new) or 0)>=1 then
+			pac_enable_bool=true
+			pac.Enable()
+		else
+			pac_enable_bool=false
+			pac.Disable()
+		end
+	end)
+
+	function pac.IsEnabled()
+		return pac_enable_bool
+	end
+end
+
 function pac.CopyMaterial(mat, shader)
 	local copy = CreateMaterial(pac.uid("pac_copymat_") .. tostring({}), shader or mat:GetShader())
 	for k,v in pairs(mat:GetKeyValues()) do
@@ -484,7 +503,9 @@ do -- hook helpers
 	function pac.AddHook(event_name, id, func)
 		id = "pac_" .. id
 
-		hook.Add(event_name, id, func)
+		if pac.IsEnabled() then
+			hook.Add(event_name, id, func)
+		end
 
 		pac.added_hooks[event_name .. id] = {event_name = event_name, id = id, func = func}
 	end
