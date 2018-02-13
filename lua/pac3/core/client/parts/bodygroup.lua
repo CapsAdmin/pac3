@@ -24,12 +24,27 @@ function PART:GetNiceName()
 end
 
 function PART:SetBodyGroupName(str)
+	local owner = self:GetOwner()
+
+	if owner:IsValid() and not self.markedFailed and self.bodygroup_index and self.oldBodygroup then
+		owner:SetBodygroup(self.bodygroup_index, self.oldBodygroup)
+
+		if owner:IsPlayer() then
+			owner.pac_bodygroups_torender = owner.pac_bodygroups_torender or {}
+			owner.pac_bodygroups_torender[self.bodygroup_index] = self.oldBodygroup
+		end
+
+		self.oldBodygroup = nil
+	end
+
 	self.BodyGroupName = str
+	self.markedFailed = false
 	self:UpdateBodygroupData()
 end
 
 function PART:SetModelIndex(i)
 	self.ModelIndex = math.floor(tonumber(i) or 0)
+	self.markedFailed = false
 	self:UpdateBodygroupData()
 end
 
@@ -40,28 +55,43 @@ function PART:UpdateBodygroupData()
 	local ent = self:GetOwner()
 
 	if not IsValid(ent) or not ent:GetBodyGroups() then return end
-	local fName = self.BodyGroupName:lower()
+	local fName = self.BodyGroupName:lower():Trim()
+
+	if fName == '' then
+		return
+	end
 
 	for i, info in ipairs(ent:GetBodyGroups()) do
-		if info.name == fName then
+		if info.name:lower():Trim() == fName then
 			self.bodygroup_index = info.id
 			self.maxIndex = info.num - 1
-			break
+			self.markedFailed = false
+			self.oldBodygroup = ent:GetBodygroup(info.id)
+			return
 		end
+	end
+
+	if not self.markedFailed then
+		pac.Message(self, ' - Unable to find bodygroup ' .. fName .. ' on ', ent)
+		self.markedFailed = true
 	end
 end
 
-function PART:Draw(pos, ang, draw_type)
-	if not self.last_enabled or self:IsHidden() then return end
-	if not self.bodygroup_index then return self:DrawChildren(event, pos, ang, draw_type) end
-	local ent = self:GetOwner()
-	if not IsValid(ent) then return self:DrawChildren(event, pos, ang, draw_type) end
-	if self.ModelIndex < self.minIndex or self.ModelIndex > self.maxIndex then return self:DrawChildren(event, pos, ang, draw_type) end
-	ent:SetBodygroup(self.bodygroup_index, self.ModelIndex)
-	self:DrawChildren(pos, ang, draw_type)
-	if ent:IsPlayer() then
-		ent.pac_bodygroups_torender = ent.pac_bodygroups_torender or {}
-		ent.pac_bodygroups_torender[self.bodygroup_index] = self.ModelIndex
+function PART:OnBuildBonePositions()
+	if self.markedFailed then return end
+	local owner = self:GetOwner()
+
+	if not owner:IsValid() then return end
+	if not self.bodygroup_index then
+		self:UpdateBodygroupData()
+		return
+	end
+
+	owner:SetBodygroup(self.bodygroup_index, self.ModelIndex)
+
+	if owner:IsPlayer() then
+		owner.pac_bodygroups_torender = owner.pac_bodygroups_torender or {}
+		owner.pac_bodygroups_torender[self.bodygroup_index] = self.ModelIndex
 	end
 end
 
@@ -78,6 +108,7 @@ function PART:GetModelIndexList()
 				for _, model in pairs(info.submodels) do
 					table.insert(out, model)
 				end
+
 				break
 			end
 		end

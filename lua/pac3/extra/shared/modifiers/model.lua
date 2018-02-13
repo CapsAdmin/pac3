@@ -35,8 +35,7 @@ if SERVER then
 		end
 	end
 
-	local ALLOW_TO_CHANGE_MODEL
-	ALLOW_TO_CHANGE_MODEL = pacx.AddServerModifier("model", function(data, owner)
+	local ALLOW_TO_CHANGE_MODEL = pacx.AddServerModifier("model", function(data, owner)
 		if not data then
 			pacx.SetPlayerModel(owner, player_manager.TranslatePlayerModel(owner:GetInfo("cl_playermodel")))
 		else
@@ -56,17 +55,15 @@ if SERVER then
 				pacx.SetPlayerModel(owner, model)
 			end
 		end
+	end)
 
-		if not hook.GetTable().Think or not hook.GetTable().Think.pac_setmodel then
-			timer.Create("pac_setmodel", 0.25, 0, function()
-				if not ALLOW_TO_CHANGE_MODEL:GetBool() then return end
+	timer.Create("pac_setmodel", 0.25, 0, function()
+		if not ALLOW_TO_CHANGE_MODEL:GetBool() then return end
 
-				for _, ply in ipairs(player.GetAll()) do
-					if ply.pac_last_modifier_model and ply:GetModel():lower() ~= ply.pac_last_modifier_model then
-						ply:SetModel(ply.pac_last_modifier_model)
-					end
-				end
-			end)
+		for _, ply in ipairs(player.GetAll()) do
+			if ply.pac_last_modifier_model and ply:GetModel():lower() ~= ply.pac_last_modifier_model then
+				ply:SetModel(ply.pac_last_modifier_model)
+			end
 		end
 	end)
 

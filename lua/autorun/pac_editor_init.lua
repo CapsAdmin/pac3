@@ -1,4 +1,5 @@
-if CLIENT and pac and pace then return end
+-- VLL_CURR_FILE is local to each file
+if CLIENT and pac and pace and not VLL_CURR_FILE then return end
 
 if not pac then
 	include("autorun/pac_core_init.lua")

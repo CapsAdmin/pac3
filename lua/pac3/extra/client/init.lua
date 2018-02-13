@@ -14,18 +14,18 @@ pac.AddHook("NetworkEntityCreated", "player_size", function(ply)
 	end
 end)
 
-pac.AddHook("NotifyShouldTransmit", "player_size", function(ent,st)
+pac.AddHook("NotifyShouldTransmit", "player_size", function(ply,st)
 	if not st then return end
-	if ent:IsPlayer() then
-		local ply = ent
-		if ply.pac_player_size then
-			pacx.SetPlayerSize(ply,ply.pac_player_size,true)
-			timer.Simple(0,function()
-				if not ply:IsValid() then return end
-				if ply.pac_player_size then
-					pacx.SetPlayerSize(ply,ply.pac_player_size,true)
-				end
-			end)
-		end
+
+	if ply:IsPlayer() and ply.pac_player_size then
+		pacx.SetPlayerSize(ply, ply.pac_player_size, true)
+
+		pac.RunNextFrame('update_entity_size_' .. ply:EntIndex(), function()
+			if not ply:IsValid() then return end
+
+			if ply.pac_player_size then
+				pacx.SetPlayerSize(ply, ply.pac_player_size, true)
+			end
+		end)
 	end
 end)

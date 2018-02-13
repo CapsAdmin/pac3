@@ -46,7 +46,7 @@ function PANEL:Init()
 	self.exit_button:SetText("")
 	self.exit_button.DoClick = function() self:Close() end
 	self.exit_button.Paint = function(self, w, h) derma.SkinHook("Paint", "WindowCloseButton", self, w, h) end
-	self.exit_button:SetSize(31, 31)
+	self.exit_button:SetSize(31, 26)
 
 	self.btnClose.Paint = function() end
 

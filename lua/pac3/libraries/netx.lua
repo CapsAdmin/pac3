@@ -135,44 +135,39 @@ local function writeTable(tab)
 	end
 end
 
-do
-	local tobank = {
-		'ParentUID',
-		'self',
-		'UniqueID',
-		'part',
-		'ParentName',
-		'AimPartName',
-		'ClassName',
-		'OwnerName',
-		'owner',
-		'children',
-		'class',
-		'player_uid',
-		'uid',
-		'server_only',
-	}
-
-	for i, val in ipairs(tobank) do
-		crcdatabank[CRC(val)] = val
-	end
-end
 
 local readmeta = {
 	__index = function(self, key)
 		local val = rawget(self, key)
+
 		if val ~= nil then
 			return val
 		end
 
-		-- if SERVER then
-		-- 	print(key, debug.traceback())
-		-- end
-
-		crcdatabank[key] = crcdatabank[key] or CRC(key)
-		return rawget(self, crcdatabank[key])
+		return rawget(self, CRC(key))
 	end
 }
+
+function netx.SimulateTableReceive(tableIn)
+	setmetatable(tableIn, readmeta)
+
+	for index, value in pairs(tableIn) do
+		if type(value) == 'table' then
+			netx.SimulateTableReceive(value)
+		end
+
+		local i2 = index
+		local i = tostring(i2)
+
+		if CLIENT then
+			i = pac.ExtractNetworkID(i) or i
+		end
+
+		tableIn[i] = tableIn[index]
+	end
+
+	return tableIn
+end
 
 function readTable(tab)
 	local output = {}
@@ -185,10 +180,7 @@ function readTable(tab)
 		local val = readTyped()
 
 		if CLIENT then
-			--i = pac.ExtractNetworkID(i) or crcdatabank[i] or (print('Unknown ID ' .. i) or i)
-			i = pac.ExtractNetworkID(i) or crcdatabank[i] or i2
-		else
-			i = crcdatabank[i] or i2
+			i = pac.ExtractNetworkID(i) or i
 		end
 
 		output[i] = val
@@ -202,8 +194,8 @@ function netx.SerializeTable(data)
 
 	writeTable(data)
 
-	if DLib and DLib.netModule and net.CompressOngoingNow then
-		net.CompressOngoingNow()
+	if DLib and DLib.netModule and net.CompressOngoing then
+		net.CompressOngoing()
 	end
 
 	local written2 = net.BytesWritten()
@@ -216,10 +208,6 @@ function netx.SerializeTable(data)
 end
 
 function netx.DeserializeTable()
-	if DLib and DLib.netModule and net.DecompressReceivedNow then
-		net.DecompressReceivedNow()
-	end
-
 	return readTable()
 end
 

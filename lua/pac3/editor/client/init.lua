@@ -138,7 +138,7 @@ function pace.CloseEditor()
 	pace.SetInPAC3Editor(false)
 end
 
-pac.AddHook("pace_Disable", "pac_editor_disable", function()
+pac.AddHook("pac_Disable", "pac_editor_disable", function()
 	pace.CloseEditor()
 end)
 

@@ -25,7 +25,11 @@ local IsValid = entMeta.IsValid
 local Alive = plyMeta.Alive
 
 local function IsActuallyValid(ent)
-	return IsValid(ent) and IsEntity(ent) and pcall(ent.GetPos, ent)
+	return IsEntity(ent) and pcall(ent.GetPos, ent)
+end
+
+local function IsActuallyPlayer(ent)
+	return IsEntity(ent) and pcall(ent.UniqueID, ent)
 end
 
 --[[

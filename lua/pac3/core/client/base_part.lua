@@ -616,6 +616,18 @@ do -- parenting
 			self.event_hidden = b
 		end
 
+		function PART:IsDrawHidden()
+			return self.draw_hidden
+		end
+
+		function PART:IsEventHidden()
+			return self.event_hidden
+		end
+
+		function PART:IsHiddenInternal()
+			return self.hidden
+		end
+
 		function PART:IsHidden()
 			if
 				self.draw_hidden or
@@ -963,7 +975,8 @@ do -- drawing. this code is running every frame
 			if not self.HandleModifiersManually then self:ModifiersPreEvent('OnDraw', draw_type) end
 
 			if self.IgnoreZ then cam.IgnoreZ(true) end
-			if self.blend_override then
+			-- GMOD Bug: Translucent parts don't play nicely with blend overrides. Multicore rendering bug?
+			if self.blend_override and not (self.Translucent == true or self.force_translucent == true) then
 				render.OverrideBlendFunc(true,
 					self.blend_override[1],
 					self.blend_override[2],
