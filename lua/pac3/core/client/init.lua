@@ -1,5 +1,7 @@
 pac = pac or {}
 
+include("util.lua")
+
 pac.NULL = include("pac3/libraries/null.lua")
 pac.class = include("pac3/libraries/class.lua")
 
@@ -27,7 +29,6 @@ include("pac3/libraries/webaudio/streams.lua")
 
 include("pac3/libraries/boneanimlib.lua")
 
-include("util.lua")
 include("parts.lua")
 include("part_pool.lua")
 
@@ -41,11 +42,9 @@ include("integration_tools.lua")
 pac.LoadParts()
 
 function pac.Enable()
-	-- parts were marked as not drawing, so they will show on the next frame
-
 	-- add all the hooks back
-	for event, data in pairs(pac.added_hooks) do
-		hook.Add(data.event, data.id, data.func)
+	for _, data in pairs(pac.added_hooks) do
+		hook.Add(data.event_name, data.id, data.func)
 	end
 
 	pac.CallHook("Enable")
@@ -55,7 +54,6 @@ function pac.Disable()
 	-- turn off all parts
 	for key, ent in pairs(pac.drawn_entities) do
 		if ent:IsValid() then
-
 			pac.DisableEntity(ent)
 		else
 			pac.drawn_entities[key] = nil
@@ -64,7 +62,7 @@ function pac.Disable()
 
 	-- disable all hooks
 	for _, data in pairs(pac.added_hooks) do
-		hook.Remove(data.event, data.id)
+		hook.Remove(data.event_name, data.id)
 	end
 
 	pac.CallHook("Disable")
@@ -104,7 +102,7 @@ do
 
 	cvars.AddChangeCallback("pac_friendonly", pac.FriendOnlyUpdate)
 
-	hook.Add("NetworkEntityCreated", "pac_friendonly", function(ply)
+	pac.AddHook("NetworkEntityCreated", "friendonly", function(ply)
 		if not IsValid(ply) or not ply:IsPlayer() then return end
 		timer.Simple(0, function()
 			if pac_friendonly:GetBool() and ply:GetFriendStatus() ~= "friend" then
@@ -113,7 +111,7 @@ do
 			end
 		end)
 	end)
-	hook.Add("pac_Initialized", "pac_friendonly", pac.FriendOnlyUpdate)
+	pac.AddHook("pac_Initialized", "friendonly", pac.FriendOnlyUpdate)
 
 end
 

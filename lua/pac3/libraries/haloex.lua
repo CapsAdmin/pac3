@@ -199,7 +199,7 @@ function haloex.Render( entry )
 
 end
 
-hook.Add( "PostDrawEffects", "RenderHaloexs", function()
+pac.AddHook( "PostDrawEffects", "RenderHaloexs", function()
 
 	if not List[1] then return end
 

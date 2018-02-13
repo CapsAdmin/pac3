@@ -723,10 +723,10 @@ local function AnimationEditorOff()
 		v:Remove()
 	end
 	pace.SetInAnimEditor(false)
-	hook.Remove("HUDPaint","PaintTopBar")
-	hook.Remove("CalcView","AnimationView")
-	hook.Remove("Think","FixMouse")
-	hook.Remove("ShouldDrawLocalPlayer","DrawMe")
+	pac.RemoveHook("HUDPaint","PaintTopBar")
+	pac.RemoveHook("CalcView","AnimationView")
+	pac.RemoveHook("Think","FixMouse")
+	pac.RemoveHook("ShouldDrawLocalPlayer","DrawMe")
 	pace.SetTPose(false)
 	LocalPlayer():StopAllLuaAnimations()
 	LocalPlayer():ResetBoneMatrix()
@@ -788,10 +788,10 @@ local function AnimationEditorOn()
 
 	table.insert(animEditorPanels,subAnims)
 
-	hook.Add("HUDPaint","PaintTopBar",PaintTopBar)
-	hook.Add("CalcView","AnimationView",AnimationEditorView)
-	hook.Add("Think","FixMouse",FixMouse)
-	hook.Add("ShouldDrawLocalPlayer","DrawMe",function() return true end)
+	pac.AddHook("HUDPaint","PaintTopBar",PaintTopBar)
+	pac.AddHook("CalcView","AnimationView",AnimationEditorView)
+	pac.AddHook("Think","FixMouse",FixMouse)
+	pac.AddHook("ShouldDrawLocalPlayer","DrawMe",function() return true end)
 	gui.EnableScreenClicker(true)
 
 	animating = true
@@ -1553,7 +1553,7 @@ function SUBANIMS:Refresh()
 end
 vgui.Register("AnimEditor_SubAnimations",SUBANIMS,"DFrame")
 
-hook.Add("HUDPaint", "animeditor_InAnimEditor", function()
+pac.AddHook("HUDPaint", "animeditor_InAnimEditor", function()
 	for key, ply in pairs(player.GetAll()) do
 		if ply ~= LocalPlayer() and ply.InAnimEditor then
 			local id = ply:LookupBone("ValveBiped.Bip01_Head1")

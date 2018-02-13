@@ -46,7 +46,7 @@ end
 local function check_tpose()
 	if not timeline.entity:IsPlayer() then return end
 	if timeline.data.Type == boneanimlib.TYPE_SEQUENCE then
-		hook.Add("CalcMainActivity", "pac3_timeline", function(ply)
+		pac.AddHook("CalcMainActivity", "pac3_timeline", function(ply)
 			if ply == timeline.entity then
 				return
 					ply:LookupSequence("reference"),
@@ -54,7 +54,7 @@ local function check_tpose()
 			end
 		end)
 	else
-		hook.Remove("CalcMainActivity", "pac3_timeline")
+		pac.RemoveHook("CalcMainActivity", "pac3_timeline")
 	end
 end
 
@@ -223,8 +223,8 @@ function timeline.Close()
 		timeline.dummy_bone:Remove()
 	end
 
-	hook.Remove("pace_OnVariableChanged", "pac3_timeline")
-	hook.Remove("CalcMainActivity", "pac3_timeline")
+	pac.RemoveHook("pace_OnVariableChanged", "pac3_timeline")
+	pac.RemoveHook("CalcMainActivity", "pac3_timeline")
 end
 
 function timeline.Open(part)
@@ -252,7 +252,7 @@ function timeline.Open(part)
 	if timeline.dummy_bone and timeline.dummy_bone:IsValid() then timeline.dummy_bone:Remove() end
 	timeline.dummy_bone = pac.CreatePart("timeline_dummy_bone", timeline.entity)
 
-	hook.Add("pace_OnVariableChanged", "pac3_timeline", function(part, key, val)
+	pac.AddHook("pace_OnVariableChanged", "pac3_timeline", function(part, key, val)
 		if part == timeline.dummy_bone then
 			if key == "Bone" then
 				local boneData = pac.GetModelBones(timeline.entity)
@@ -299,12 +299,12 @@ function timeline.Open(part)
 
 	timeline.Load(boneanimlib.GetLuaAnimations()[part:GetAnimID()])
 
-	hook.Remove("CalcMainActivity", "pac3_timeline")
+	pac.RemoveHook("CalcMainActivity", "pac3_timeline")
 	timeline.entity:StopAllLuaAnimations()
 	timeline.entity:ResetBoneMatrix()
 end
 
-hook.Add("pace_OnPartSelected", "pac3_timeline", function(part)
+pac.AddHook("pace_OnPartSelected", "pac3_timeline", function(part)
 	if part.ClassName == "timeline_dummy_bone" then return end
 	if part.ClassName == "custom_animation" then
 		if timeline.editing then
@@ -462,7 +462,7 @@ do
 
 			if not timeline.IsEditingBone() then
 				timeline.entity:ResetBoneMatrix()
-				hook.Remove("CalcMainActivity", "pac3_timeline")
+				pac.RemoveHook("CalcMainActivity", "pac3_timeline")
 			end
 
 			timeline.playing_animation = false

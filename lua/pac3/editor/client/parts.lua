@@ -358,6 +358,6 @@ function pace.OnHoverPart(obj)
 	obj:Highlight()
 end
 
-hook.Add("pac_OnPartParent", "pace_parent", function(parent, child)
+pac.AddHook("pac_OnPartParent", "pace_parent", function(parent, child)
 	pace.Call("VariableChanged",parent, "Parent", child)
 end)

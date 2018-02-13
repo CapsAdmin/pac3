@@ -287,7 +287,7 @@ PART.OnHide = OnRemove
 do -- physical
 	local Entity = Entity
 	local projectiles = {}
-	hook.Add("Think", "pac_projectile", function()
+	pac.AddHook("Think", "pac_projectile", function()
 		for key, data in pairs(projectiles) do
 			if not data.ply:IsValid() then
 				projectiles[key] = nil

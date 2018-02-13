@@ -1,10 +1,10 @@
 
-pac.AddHook("RenderScene", function(pos, ang)
+pac.AddHook("RenderScene", "eyeangles_eyepos", function(pos, ang)
 	pac.EyePos = pos
 	pac.EyeAng = ang
 end)
 
-pac.AddHook("DrawPhysgunBeam", function(ply, wep, enabled, target, bone, hitpos)
+pac.AddHook("DrawPhysgunBeam", "physgun_event", function(ply, wep, enabled, target, bone, hitpos)
 
 	if enabled then
 		ply.pac_drawphysgun_event = {ply, wep, enabled, target, bone, hitpos}
@@ -23,7 +23,7 @@ pac.AddHook("DrawPhysgunBeam", function(ply, wep, enabled, target, bone, hitpos)
 end)
 
 do
-	pac.AddHook("UpdateAnimation", function(ply)
+	pac.AddHook("UpdateAnimation", "event_part", function(ply)
 		if not IsEntity(ply) or not ply:IsValid() then return end
 
 		if ply.pac_death_physics_parts and ply:Alive() and ply.pac_physics_died then
@@ -93,7 +93,7 @@ local function mod_speed(cmd, speed)
 	end
 end
 
-function pac.CreateMove(cmd)
+pac.AddHook("CreateMove", "events", function(cmd)
 	if cmd:KeyDown(IN_SPEED) then
 		mod_speed(cmd, pac.LocalPlayer.pac_sprint_speed)
 	elseif cmd:KeyDown(IN_WALK) then
@@ -103,10 +103,9 @@ function pac.CreateMove(cmd)
 	else
 		mod_speed(cmd, pac.LocalPlayer.pac_run_speed)
 	end
-end
-pac.AddHook("CreateMove")
+end)
 
-function pac.TranslateActivity(ply, act)
+pac.AddHook("TranslateActivity", "events", function(ply, act)
 	if IsEntity(ply) and ply:IsValid() then
 
 		-- animation part
@@ -158,11 +157,9 @@ function pac.TranslateActivity(ply, act)
 			end
 		end
 	end
-end
-pac.AddHook("TranslateActivity")
+end)
 
-
-function pac.CalcMainActivity(ply, act)
+pac.AddHook("CalcMainActivity", "events", function(ply, act)
 	if IsEntity(ply) and ply:IsValid() and ply.pac_animation_sequences then
 		local key, val = next(ply.pac_animation_sequences)
 
@@ -175,10 +172,9 @@ function pac.CalcMainActivity(ply, act)
 
 		return val.seq, val.seq
 	end
-end
-pac.AddHook("CalcMainActivity")
+end)
 
-function pac.pac_PlayerFootstep(ply, pos, snd, vol)
+pac.AddHook("pac_PlayerFootstep", "events", function(ply, pos, snd, vol)
 	ply.pac_last_footstep_pos = pos
 
 	if ply.pac_footstep_override then
@@ -192,8 +188,7 @@ function pac.pac_PlayerFootstep(ply, pos, snd, vol)
 	if ply.pac_mute_footsteps then
 		return true
 	end
-end
-pac.AddHook("pac_PlayerFootstep")
+end)
 
 net.Receive("pac_effect_precached", function()
 	local name = net.ReadString()

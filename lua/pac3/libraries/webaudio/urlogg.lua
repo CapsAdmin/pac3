@@ -37,7 +37,7 @@ local volume             = GetConVar("volume")
 local snd_mute_losefocus = GetConVar("snd_mute_losefocus")
 local pac_ogg_volume     = CreateClientConVar("pac_ogg_volume", "1", true)
 
-hook.Add("Think", "webaudio", function()
+pac.AddHook("Think", "webaudio", function()
 	if not webaudio.Browser.IsInitialized () then
 		if not webaudio.Browser.IsInitializing () then
 			webaudio.Browser.Initialize ()

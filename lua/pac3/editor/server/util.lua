@@ -26,17 +26,6 @@ local function wrap_err(ok,...)
 	return ...
 end
 
-function pace.AddHook(str, func)
-	func = func or pac[str]
-	hook.Add(str, "pac", function(...)
-		return wrap_err(pcall(func, ...))
-	end)
-end
-
-function pace.RemoveHook(str)
-	hook.Remove(str, "pac")
-end
-
 function pace.PCallCriticalFunction(ply, func, ...)
 	if ply.pac_pcall_last_error and ply.pac_pcall_last_error + 1 > SysTime() then
 		local time = RealTime()

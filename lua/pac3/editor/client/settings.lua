@@ -8,7 +8,7 @@ end
 
 function pace.SetTPose(b)
 	if b then
-		hook.Add("CalcMainActivity", "pace_tpose", function(ply)
+		pac.AddHook("CalcMainActivity", "pace_tpose", function(ply)
 			if ply == LocalPlayer() then
 				ply:SetRenderAngles(ply:GetAngles())
 				return
@@ -17,7 +17,7 @@ function pace.SetTPose(b)
 			end
 		end)
 	else
-		hook.Remove("CalcMainActivity", "pace_tpose")
+		pac.RemoveHook("CalcMainActivity", "pace_tpose")
 	end
 
 	pace.tposed = b
@@ -25,7 +25,7 @@ end
 
 function pace.SetResetPoseParameters(b)
 	if b then
-		hook.Add("UpdateAnimation", "pace_reset_pose_parameters", function(ply)
+		pac.AddHook("UpdateAnimation", "pace_reset_pose_parameters", function(ply)
 			if ply == LocalPlayer() then
 				ply:ClearPoseParameters()
 				ply:InvalidateBoneCache()
@@ -33,7 +33,7 @@ function pace.SetResetPoseParameters(b)
 			end
 		end)
 	else
-		hook.Remove("UpdateAnimation", "pace_reset_pose_parameters")
+		pac.RemoveHook("UpdateAnimation", "pace_reset_pose_parameters")
 	end
 
 	pace.reset_pose_parameters = b
@@ -42,7 +42,7 @@ end
 
 function pace.SetBreathing(b)
 	if b then
-		hook.Add("UpdateAnimation", "pace_stop_breathing", function(ply)
+		pac.AddHook("UpdateAnimation", "pace_stop_breathing", function(ply)
 			if ply == LocalPlayer() then
 				for i = 0, 6 do
 					--ply:AddVCDSequenceToGestureSlot(0, 4, math.random(), false)
@@ -51,7 +51,7 @@ function pace.SetBreathing(b)
 			end
 		end)
 	else
-		hook.Remove("UpdateAnimation", "pace_stop_breathing")
+		pac.RemoveHook("UpdateAnimation", "pace_stop_breathing")
 	end
 
 	pace.breathing = b

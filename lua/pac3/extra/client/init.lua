@@ -6,17 +6,15 @@ include("contraption.lua")
 include("pac2_compat.lua")
 include("wire_expression_extension.lua")
 
-function pac.NetworkEntityCreated(ply)
+pac.AddHook("NetworkEntityCreated", "player_size", function(ply)
 	if not ply:IsPlayer() then return end
 
 	if ply.pac_player_size then
 		pacx.SetPlayerSize(ply,ply.pac_player_size,true)
 	end
+end)
 
-end
-pac.AddHook("NetworkEntityCreated")
-
-function pac.NotifyShouldTransmit(ent,st)
+pac.AddHook("NotifyShouldTransmit", "player_size", function(ent,st)
 	if not st then return end
 	if ent:IsPlayer() then
 		local ply = ent
@@ -30,5 +28,4 @@ function pac.NotifyShouldTransmit(ent,st)
 			end)
 		end
 	end
-end
-pac.AddHook("NotifyShouldTransmit")
+end)

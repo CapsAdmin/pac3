@@ -121,7 +121,7 @@ function pace.SafeRemoveSpecialPanel()
 	end
 end
 
-hook.Add("GUIMousePressed", "pace_SafeRemoveSpecialPanel", function()
+pac.AddHook("GUIMousePressed", "pace_SafeRemoveSpecialPanel", function()
 	local pnl = pace.ActiveSpecialPanel
 	if pnl:IsValid() then
 		local x,y = gui.MousePos()
@@ -913,12 +913,12 @@ do -- base editable
 		local textEntry = pnl
 		local delay = os.clock() + 0.1
 
-		hook.Add('Think', hookID, function(code)
-			if not IsValid(self) or not IsValid(textEntry) then return hook.Remove('Think', hookID) end
+		pac.AddHook('Think', hookID, function(code)
+			if not IsValid(self) or not IsValid(textEntry) then return pac.RemoveHook('Think', hookID) end
 			if textEntry:IsHovered() or self:IsHovered() then return end
 			if delay > os.clock() then return end
 			if not input.IsMouseDown(MOUSE_LEFT) and not input.IsKeyDown(KEY_ESCAPE) then return end
-			hook.Remove('Think', hookID)
+			pac.RemoveHook('Think', hookID)
 			self.editing = false
 			pace.BusyWithProperties = NULL
 			textEntry:Remove()
@@ -978,8 +978,8 @@ do -- base editable
 		end
 	end
 
-	hook.Add("GUIMousePressed", "pace_property_text_edit", click)
-	hook.Add("VGUIMousePressed", "pace_property_text_edit", click)
+	pac.AddHook("GUIMousePressed", "pace_property_text_edit", click)
+	pac.AddHook("VGUIMousePressed", "pace_property_text_edit", click)
 
 	function PANEL:Reset()
 		if IsValid(self.editing) then

@@ -557,6 +557,6 @@ function mctrl.Think()
 	end
 end
 
-hook.Add("Think", "pace_mctrl_Think", mctrl.Think)
+pac.AddHook("Think", "pace_mctrl_Think", mctrl.Think)
 
 pace.mctrl = mctrl

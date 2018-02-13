@@ -38,11 +38,11 @@ do -- button event
 		end
 	end
 
-	hook.Add("PlayerButtonDown", "pac_event", function(ply, key)
+	pac.AddHook("PlayerButtonDown", "event", function(ply, key)
 		broadcast_key(ply, key, true)
 	end)
 
-	hook.Add("PlayerButtonUp", "pac_event", function(ply, key)
+	pac.AddHook("PlayerButtonUp", "event", function(ply, key)
 		broadcast_key(ply, key, false)
 	end)
 end

@@ -46,11 +46,11 @@ function pacx.LoadModifiers()
 	end
 end
 
-hook.Add("pac_OnWoreOutfit", "pacx_modifiers", function(owner, part_data)
+pac.AddHook("pac_OnWoreOutfit", "pacx_modifiers", function(owner, part_data)
 	pacx.HandleModifiers(part_data, owner)
 end)
 
-hook.Add("pac_RemoveOutfit", "pacx_modifiers", function(owner)
+pac.AddHook("pac_RemoveOutfit", "pacx_modifiers", function(owner)
 	pacx.HandleModifiers(nil, owner)
 end)
 

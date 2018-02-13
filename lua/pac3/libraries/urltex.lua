@@ -152,7 +152,7 @@ function urltex.StartDownload(url, data)
 
 				urltex.Cache[url] = tex
 
-				hook.Remove("Think", id)
+				pac.RemoveHook("Think", id)
 				timer.Remove(id)
 				urltex.Queue[url] = nil
 				timer.Simple(0, function() pnl:Remove() end)
@@ -166,7 +166,7 @@ function urltex.StartDownload(url, data)
 		end
 	end
 
-	hook.Add("Think", id, think)
+	hook.Remove("Think", id, think)
 
 	-- 5 sec max timeout, 5 maximal timeouts
 	timer.Create(id, 5, 5, onTimeout)

@@ -60,4 +60,4 @@ function pace.CheckShortcuts()
 	end
 end
 
-hook.Add("Think", "pace_shortcuts", pace.CheckShortcuts)
+pac.AddHook("Think", "pace_shortcuts", pace.CheckShortcuts)

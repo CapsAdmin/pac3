@@ -7,7 +7,7 @@ include("projectiles.lua")
 local cvar = CreateConVar("pac_restrictions", "0", FCVAR_REPLICATED)
 
 if CLIENT then
-	hook.Add("pac_EditorCalcView", "pac_restrictions", function()
+	pac.AddHook("pac_EditorCalcView", "pac_restrictions", function()
 		if cvar:GetInt() > 0 and not LocalPlayer():IsAdmin() then
 			local ent = pace.GetViewEntity()
 			local dir = pace.ViewPos - ent:EyePos()

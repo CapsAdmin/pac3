@@ -464,29 +464,31 @@ end
 
 
 do -- hook helpers
-	local added_hooks = pac.added_hooks or {}
+	pac.added_hooks = pac.added_hooks or {}
 
-	function pac.AddHook(str, func, id)
-		func = func or pac[str]
+	function pac.AddHook(event_name, id, func)
+		id = "pac_" .. id
 
-		local id = "pac_" .. str .. (id or "")
+		hook.Add(event_name, id, func)
 
-		hook.Add(str, id, func)
-
-		added_hooks[id] = {func = func, event = str, id = id}
+		pac.added_hooks[event_name .. id] = {event_name = event_name, id = id, func = func}
 	end
 
-	function pac.RemoveHook(str)
-		local data = added_hooks[str]
+	function pac.RemoveHook(event_name, id)
+		id = "pac_" .. id
 
-		hook.Remove(data.event, data.id)
+		local data = pac.added_hooks[event_name .. id]
+
+		if data then
+			hook.Remove(data.event_name, data.id)
+
+			pac.added_hooks[event_name .. id] = nil
+		end
 	end
 
 	function pac.CallHook(str, ...)
 		return hook.Run("pac_" .. str, ...)
 	end
-
-	pac.added_hooks = added_hooks
 end
 
 do -- get set and editor vars

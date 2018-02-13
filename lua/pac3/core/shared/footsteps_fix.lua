@@ -2,7 +2,7 @@
 if game.SinglePlayer() then
 	if SERVER then
 		util.AddNetworkString('pac_footstep')
-		hook.Add("PlayerFootstep", "pac_footstep_fix", function(ply, pos, _, snd, vol)
+		pac.AddHook("PlayerFootstep", "footstep_fix", function(ply, pos, _, snd, vol)
 			net.Start("pac_footstep")
 				net.WriteEntity(ply)
 				net.WriteVector(pos)
@@ -25,7 +25,7 @@ if game.SinglePlayer() then
 		end)
 	end
 else
-	hook.Add("PlayerFootstep", "pac_footstep_fix", function(ply, pos, _, snd, vol)
+	pac.AddHook("PlayerFootstep", "footstep_fix", function(ply, pos, _, snd, vol)
 		return hook.Run("pac_PlayerFootstep", ply, pos, snd, vol)
 	end)
 end

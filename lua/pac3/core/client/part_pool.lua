@@ -266,7 +266,7 @@ function pac.UnhookEntityRender(ent, part)
 	pac.profile_info[ent:EntIndex()] = nil
 end
 
-pac.AddHook("Think", function()
+pac.AddHook("Think", "events", function()
 	for _, ply in ipairs(player.GetAll()) do
 		if (ply.pac_death_physics_parts or ply.pac_death_ragdollize) and ent_parts[ply] and not Alive(ply) then
 			local rag = ply:GetRagdollEntity()
@@ -378,7 +378,7 @@ function pac.DisableEntity(ent)
 	ent.pac_drawing = false
 end
 
-pac.AddHook("PlayerSpawned", function(ply)
+pac.AddHook("PlayerSpawned", "change_owner", function(ply)
 	if ent_parts[ply] then
 		for _, part in pairs(ent_parts[ply]) do
 			if part.last_owner and part.last_owner:IsValid() then
@@ -390,7 +390,7 @@ pac.AddHook("PlayerSpawned", function(ply)
 	ply.pac_playerspawn = pac.RealTime -- used for events
 end)
 
-pac.AddHook("EntityRemoved", function(ent)
+pac.AddHook("EntityRemoved", "change_owner", function(ent)
 	if IsActuallyValid(ent) and (not ent:IsPlayer() or IsActuallyPlayer(ent)) then
 		local owner = ent:GetOwner()
 
@@ -406,7 +406,7 @@ pac.AddHook("EntityRemoved", function(ent)
 	end
 end)
 
-pac.AddHook("OnEntityCreated", function(ent)
+pac.AddHook("OnEntityCreated", "change_owner", function(ent)
 	if not IsActuallyValid(ent) then return end
 
 	local owner = ent:GetOwner()
@@ -616,7 +616,7 @@ do -- drawing
 
 		local should_suppress = setup_suppress()
 
-		pac.AddHook("PostDrawOpaqueRenderables", function(bDrawingDepth, bDrawingSkybox)
+		pac.AddHook("PostDrawOpaqueRenderables", "draw_opaque", function(bDrawingDepth, bDrawingSkybox)
 			if should_suppress() then return end
 
 			-- commonly used variables
@@ -734,7 +734,7 @@ do -- drawing
 
 		local should_suppress = setup_suppress()
 
-		pac.AddHook("PostDrawTranslucentRenderables", function(bDrawingDepth, bDrawingSkybox)
+		pac.AddHook("PostDrawTranslucentRenderables", "draw_translucent", function(bDrawingDepth, bDrawingSkybox)
 			if should_suppress() then return end
 
 			for _, ent in pairs(pac.drawn_entities) do
@@ -746,7 +746,7 @@ do -- drawing
 	end
 
 
-	pac.AddHook("PostDrawViewModel", function()
+	pac.AddHook("PostDrawViewModel", "draw_firstperson", function()
 		for key, ent in pairs(pac.drawn_entities) do
 			if IsValid(ent) then
 				if ent.pac_drawing and ent_parts[ent] then

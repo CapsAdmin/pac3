@@ -101,7 +101,7 @@ function PART:SetEffect(name)
 	end
 end
 
-hook.Add("pac_EffectPrecached", "pac_Effects", function(name)
+pac.AddHook("pac_EffectPrecached", "pac_Effects", function(name)
 	if alreadyServer[name] then return end
 	alreadyServer[name] = true
 	pac.dprint("effect %q precached!", name)

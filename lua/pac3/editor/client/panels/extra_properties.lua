@@ -242,9 +242,9 @@ do -- model
 
 		end, "models")
 
-		hook.Add("Think", "pace_close_browser", function()
+		pac.AddHook("Think", "pace_close_browser", function()
 			if part ~= pace.current_part then
-				hook.Remove("Think", "pace_close_browser")
+				pac.RemoveHook("Think", "pace_close_browser")
 				pace.model_browser:SetVisible(false)
 			end
 		end)
@@ -362,7 +362,7 @@ do -- materials and textures
 			end
 		end
 
-		hook.Add('PostRenderVGUI', self, self.HUDPaint)
+		pac.AddHook('PostRenderVGUI', tostring(self), self.HUDPaint)
 		self.isShownTexture = true
 	end
 
@@ -371,7 +371,7 @@ do -- materials and textures
 	function PANEL:MustHideTexture()
 		if not self.isShownTexture then return end
 		self.isShownTexture = false
-		hook.Remove('PostRenderVGUI', self, self.HUDPaint)
+		pac.RemoveHook('PostRenderVGUI', tostring(self), self.HUDPaint)
 	end
 
 	PANEL_MATERIAL.MustHideTexture = PANEL.MustHideTexture

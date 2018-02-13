@@ -1637,7 +1637,7 @@ do
 		end
 	end
 
-	pac.AddHook("DoAnimationEvent", function(ply, event, data)
+	pac.AddHook("DoAnimationEvent", "animation_events", function(ply, event, data)
 		-- update all parts once so OnShow and OnHide are updated properly for animation events
 		if ply.pac_has_parts then
 			ply.pac_anim_event = {name = enums[event], time = pac.RealTime, reset = true}
@@ -1648,7 +1648,7 @@ do
 end
 
 
-pac.AddHook("EntityEmitSound", function(data)
+pac.AddHook("EntityEmitSound", "emit_sound", function(data)
 	if pac.playing_sound then return end
 	local ent = data.Entity
 
@@ -1665,7 +1665,7 @@ pac.AddHook("EntityEmitSound", function(data)
 	end
 end)
 
-pac.AddHook("EntityFireBullets", function(ent, data)
+pac.AddHook("EntityFireBullets", "firebullets", function(ent, data)
 	if not ent:IsValid() or not ent.pac_has_parts then return end
 	ent.pac_fire_bullets = {name = data.AmmoType, time = pac.RealTime, reset = true}
 
@@ -1692,20 +1692,20 @@ net.Receive("pac_event", function(umr)
 	end
 end)
 
-pac.AddHook("OnPlayerChat", function(ply, str)
+pac.AddHook("OnPlayerChat", "say_event", function(ply, str)
 	ply.pac_say_event = {str = str, time = pac.RealTime}
 end)
 
-pac.AddHook("GravGunOnPickedUp", function(ply, ent)
+pac.AddHook("GravGunOnPickedUp", "gravgun_event", function(ply, ent)
 	ply.pac_gravgun_ent = ent
 end)
 
-pac.AddHook("GravGunOnDropped", function(ply, ent)
+pac.AddHook("GravGunOnDropped", "gravgun_event", function(ply, ent)
 	ply.pac_gravgun_ent = ent
 end)
 -- ####
 
-pac.AddHook("GravGunPunt", function(ply, ent)
+pac.AddHook("GravGunPunt", "gravgun_event", function(ply, ent)
 	ply.pac_gravgun_ent = ent
 	ply.pac_gravgun_punt = pac.RealTime
 end)

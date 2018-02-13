@@ -14,8 +14,8 @@ function pace.SpawnPart(ply, model)
 	end
 end
 
-hook.Add( "PlayerSpawnProp", "pac_PlayerSpawnProp", pace.SpawnPart)
-hook.Add( "PlayerSpawnRagdoll", "pac_PlayerSpawnRagdoll", pace.SpawnPart)
-hook.Add( "PlayerSpawnEffect", "pac_PlayerSpawnEffect", pace.SpawnPart)
+pac.AddHook( "PlayerSpawnProp", "pac_PlayerSpawnProp", pace.SpawnPart)
+pac.AddHook( "PlayerSpawnRagdoll", "pac_PlayerSpawnRagdoll", pace.SpawnPart)
+pac.AddHook( "PlayerSpawnEffect", "pac_PlayerSpawnEffect", pace.SpawnPart)
 
 util.AddNetworkString("pac_spawn_part")

@@ -74,4 +74,4 @@ function pace.UndoThink()
 	end
 end
 
-hook.Add("Think", "pace_undo_Think", pace.UndoThink)
+pac.AddHook("Think", "pace_undo_Think", pace.UndoThink)

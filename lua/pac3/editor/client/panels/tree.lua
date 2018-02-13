@@ -328,21 +328,21 @@ local function remove_node(part)
 	end
 end
 
-hook.Add("pac_OnPartRemove", "pace_remove_tree_nodes", remove_node)
+pac.AddHook("pac_OnPartRemove", "pace_remove_tree_nodes", remove_node)
 
 local function refresh(part, localplayer)
 	if localplayer and part:GetRootPart().show_in_editor ~= false then
 		pace.RefreshTree(true)
 	end
 end
-hook.Add("pac_OnWoreOutfit", "pace_create_tree_nodes", refresh)
+pac.AddHook("pac_OnWoreOutfit", "pace_create_tree_nodes", refresh)
 
 local function refresh(part)
 	if part:GetRootPart().show_in_editor ~= false then
 		pace.RefreshTree(true)
 	end
 end
-hook.Add("pac_OnPartCreated", "pace_create_tree_nodes", refresh)
+pac.AddHook("pac_OnPartCreated", "pace_create_tree_nodes", refresh)
 
 function pace.RefreshTree(reset)
 	if pace.tree:IsValid() then

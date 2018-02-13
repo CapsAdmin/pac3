@@ -22,7 +22,7 @@ function pace.OnDraw()
 	end
 end
 
-hook.Add("PostDrawViewModel", "pace_viewmodel_edit", function()
+pac.AddHook("PostDrawViewModel", "pace_viewmodel_edit", function()
 	if pace.editing_viewmodel then
 		cam.Start2D()
 			pace.mctrl.HUDPaint()
@@ -30,7 +30,7 @@ hook.Add("PostDrawViewModel", "pace_viewmodel_edit", function()
 	end
 end)
 
-hook.Add("InitPostEntity", "pace_autoload_parts", function()
+pac.AddHook("InitPostEntity", "pace_autoload_parts", function()
 	timer.Simple(5, function()
 		pace.LoadParts("autoload")
 		timer.Simple(3, function()

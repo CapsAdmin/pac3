@@ -30,7 +30,7 @@ do -- projectile entity
 	end
 
 	if SERVER then
-		hook.Add("EntityTakeDamage", "pac_projectile", function(ent, dmg)
+		pac.AddHook("EntityTakeDamage", "pac_projectile", function(ent, dmg)
 			local a, i = dmg:GetAttacker(), dmg:GetInflictor()
 
 			if a == i and a:IsValid() and a.projectile_owner then

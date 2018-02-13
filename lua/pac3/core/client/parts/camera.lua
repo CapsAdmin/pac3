@@ -48,7 +48,7 @@ pac.RegisterPart(PART)
 
 local temp = {}
 
-function pac.CalcView(ply, pos, ang, fov, nearz, farz)
+pac.AddHook("CalcView", "camera_part", function(ply, pos, ang, fov, nearz, farz)
 	if not ply.pac_cameras then return end
 
 	for _, part in pairs(ply.pac_cameras) do
@@ -67,6 +67,4 @@ function pac.CalcView(ply, pos, ang, fov, nearz, farz)
 			ply.pac_cameras[part] = nil
 		end
 	end
-end
-
-pac.AddHook("CalcView")
+end)

@@ -15,7 +15,7 @@ webaudio.FilterType =
 local listenerPosition, listenerAngle, listenerVelocity = Vector(), Angle(), Vector()
 local lastListenerPosition, lastListenerPositionTime
 
-hook.Add("RenderScene", "webaudio_3d", function(position, angle)
+pac.AddHook("RenderScene", "webaudio_3d", function(position, angle)
 	listenerPosition         = position
 	listenerAngle            = angle
 

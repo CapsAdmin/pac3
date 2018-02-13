@@ -335,4 +335,4 @@ end
 
 pace.RegisterPanel(PANEL)
 
-hook.Add('PostRenderVGUI', 'pac_DrawProfileInfos', PostRenderVGUI)
+pac.AddHook('PostRenderVGUI', 'pac_DrawProfileInfos', PostRenderVGUI)

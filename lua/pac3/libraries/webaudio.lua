@@ -134,12 +134,12 @@ function webaudio.Initialize()
 	webaudio.eye_pos = Vector()
 	webaudio.eye_ang = Angle()
 
-	hook.Add("RenderScene", "webaudio_pac3", function(pos, ang)
+	pac.AddHook("RenderScene", "webaudio", function(pos, ang)
 		webaudio.eye_pos = pos
 		webaudio.eye_ang = ang
 	end)
 
-	hook.Add("Think", "webaudio_pac3", webaudio.Update)
+	pac.AddHook("Think", "webaudio", webaudio.Update)
 end
 
 -- Audio

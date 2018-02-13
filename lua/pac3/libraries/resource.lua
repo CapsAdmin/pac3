@@ -370,7 +370,7 @@ if CLIENT then
 		end
 	end)
 
-	hook.Add("ShutDown", "pac3_resource_gc", function()
+	pac.AddHook("ShutDown", "resource_gc", function()
 		for _, name in ipairs((file.Find(DOWNLOAD_FOLDER .. "*", "DATA"))) do
 			file.Delete(DOWNLOAD_FOLDER .. name)
 		end

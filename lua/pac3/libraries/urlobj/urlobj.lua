@@ -126,7 +126,7 @@ local function Think()
 	end
 end
 
-hook.Add('Think', 'pac_parse_obj', Think)
+pac.AddHook('Think', 'parse_obj', Think)
 
 local nextParsingHookId = 0
 function urlobj.CreateModelFromObjData(objData, generateNormals, statusCallback)

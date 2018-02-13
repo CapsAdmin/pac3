@@ -144,9 +144,9 @@ local function get_friendly_name(ent)
 end
 
 function pace.StopSelect()
-	hook.Remove("GUIMouseReleased", "pac_draw_select")
-	hook.Remove("GUIMousePressed", "pac_draw_select")
-	hook.Remove("HUDPaint", "pac_draw_select")
+	pac.RemoveHook("GUIMouseReleased", "draw_select")
+	pac.RemoveHook("GUIMousePressed", "draw_select")
+	pac.RemoveHook("HUDPaint", "draw_select")
 	function selectControl.GUIMousePressed(mcode) end
 	function selectControl.GUIMouseReleased(mcode) end
 	function selectControl.HUDPaint() end
@@ -283,9 +283,9 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 	selectControl.GUIMousePressed = GUIMousePressed
 	selectControl.GUIMouseReleased = GUIMouseReleased
 
-	hook.Add("GUIMousePressed", "pac_draw_select", selectControl.GUIMousePressed)
-	hook.Add("GUIMouseReleased", "pac_draw_select", selectControl.GUIMouseReleased)
-	hook.Add("HUDPaint", "pac_draw_select", selectControl.HUDPaint)
+	pac.AddHook("GUIMousePressed", "draw_select", selectControl.GUIMousePressed)
+	pac.AddHook("GUIMouseReleased", "draw_select", selectControl.GUIMouseReleased)
+	pac.AddHook("HUDPaint", "draw_select", selectControl.HUDPaint)
 end
 
 function pace.SelectBone(ent, callback, only_movable)

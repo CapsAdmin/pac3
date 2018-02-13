@@ -148,16 +148,16 @@ do
 			return
 		end
 
-		hook.Remove("Think", "pac_request_outfits")
-		hook.Remove("KeyRelease", "pac_request_outfits")
+		pac.RemoveHook("Think", "pac_request_outfits")
+		pac.RemoveHook("KeyRelease", "pac_request_outfits")
 		pac.Message("Requesting outfits...")
 
 		RunConsoleCommand("pac_request_outfits")
 	end
 
-	hook.Add("Think", "pac_request_outfits", function()
+	pac.AddHook("Think", "pac_request_outfits", function()
 		if not t then
-			hook.Remove("Think", "pac_request_outfits")
+			pac.RemoveHook("Think", "pac_request_outfits")
 			return
 		end
 
@@ -174,7 +174,7 @@ do
 		end
 	end)
 
-	hook.Add("KeyRelease", "pac_request_outfits", function()
+	pac.AddHook("KeyRelease", "pac_request_outfits", function()
 		local me = pac.LocalPlayer
 
 		if me:IsValid() and me:GetVelocity():Length() > 5 then

@@ -287,24 +287,24 @@ end
 
 function pace.EnableView(b)
 	if b then
-		pace.AddHook("GUIMousePressed")
-		pace.AddHook("GUIMouseReleased")
-		pace.AddHook("ShouldDrawLocalPlayer")
-		pace.AddHook("CalcView")
-		pace.AddHook("HUDPaint")
-		pace.AddHook("HUDShouldDraw")
-		pace.AddHook("PostRenderVGUI")
+		pac.AddHook("GUIMousePressed", "editor", pace.GUIMousePressed)
+		pac.AddHook("GUIMouseReleased", "editor", pace.GUIMouseReleased)
+		pac.AddHook("ShouldDrawLocalPlayer", "editor", pace.ShouldDrawLocalPlayer)
+		pac.AddHook("CalcView", "editor", pace.CalcView)
+		pac.AddHook("HUDPaint", "editor", pace.HUDPaint)
+		pac.AddHook("HUDShouldDraw", "editor", pace.HUDShouldDraw)
+		pac.AddHook("PostRenderVGUI", "editor", pace.PostRenderVGUI)
 		pace.Focused = true
 		pace.ResetView()
 	else
 		lastEntityPos = nil
-		pace.RemoveHook("GUIMousePressed")
-		pace.RemoveHook("GUIMouseReleased")
-		pace.RemoveHook("ShouldDrawLocalPlayer")
-		pace.RemoveHook("CalcView")
-		pace.RemoveHook("HUDPaint")
-		pace.RemoveHook("HUDShouldDraw")
-		pace.RemoveHook("PostRenderVGUI")
+		pac.RemoveHook("GUIMousePressed", "editor")
+		pac.RemoveHook("GUIMouseReleased", "editor")
+		pac.RemoveHook("ShouldDrawLocalPlayer", "editor")
+		pac.RemoveHook("CalcView", "editor")
+		pac.RemoveHook("HUDPaint", "editor")
+		pac.RemoveHook("HUDShouldDraw", "editor")
+		pac.RemoveHook("PostRenderVGUI", "editor")
 		pace.SetTPose(false)
 		pace.SetBreathing(false)
 	end

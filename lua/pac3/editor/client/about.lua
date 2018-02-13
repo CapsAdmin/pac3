@@ -542,7 +542,7 @@ function pace.ShowAbout()
 	local first = true
 	local start_time = RealTime()
 
-	hook.Add("PreRender", "pace_about", function()
+	pac.AddHook("PreRender", "pace_about", function()
 
 		local w, h = ScrW(), ScrH()
 		local t = RealTime() - start_time
@@ -562,7 +562,7 @@ function pace.ShowAbout()
 		if quit then
 			if not ok then print(err) end
 			pnl:Remove()
-			hook.Remove("PreRender", "pace_about")
+			pac.RemoveHook("PreRender", "pace_about")
 			RunConsoleCommand("volume", old_vol)
 			return
 		end
