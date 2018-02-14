@@ -208,6 +208,8 @@ function urlobj.ParseObj(data, generateNormals)
 	local inContinuation    = false
 	local continuationLines = nil
 
+	local defaultNormal = Vector(0, 0, -1)
+
 	for line in string_gmatch (data, "(.-)\r?\n") do
 		if #line > 3 then
 			local first = string_sub(line, 1, 1)
@@ -472,9 +474,9 @@ function urlobj.ParseObj(data, generateNormals)
 				local v2PositionIndex, v2TexCoordIndex, v2NormalIndex = string_match(parts[i], facesMapper)
 				v2PositionIndex, v2TexCoordIndex, v2NormalIndex = tonumber(v2PositionIndex), tonumber(v2TexCoordIndex), tonumber(v2NormalIndex)
 
-				local v1 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil }
-				local v2 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil }
-				local v3 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil }
+				local v1 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil, userdata = nil }
+				local v2 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil, userdata = nil }
+				local v3 = { pos_index = nil, pos = nil, u = nil, v = nil, normal = nil, userdata = nil }
 
 				v1.pos_index = v1PositionIndex
 				v2.pos_index = v2PositionIndex
@@ -493,12 +495,20 @@ function urlobj.ParseObj(data, generateNormals)
 
 					v3.u = texCoordsU[v3TexCoordIndex]
 					v3.v = texCoordsV[v3TexCoordIndex]
+				else
+					v1.u, v1.v = 0, 0
+					v2.u, v2.v = 0, 0
+					v3.u, v3.v = 0, 0
 				end
 
 				if #normals > 0 then
 					v1.normal = normals[v1NormalIndex]
 					v2.normal = normals[v2NormalIndex]
 					v3.normal = normals[v3NormalIndex]
+				else
+					v1.normal = defaultNormal
+					v2.normal = defaultNormal
+					v3.normal = defaultNormal
 				end
 
 				triangleList [#triangleList + 1] = v1
@@ -540,8 +550,6 @@ function urlobj.ParseObj(data, generateNormals)
 
 		coroutine_yield(false, "Generating normals", triangleCount)
 
-		local defaultNormal = Vector(0, 0, -1)
-
 		local vertexCount = #triangleList
 		local inverseVertexCount = 1 / vertexCount
 		for i = 1, vertexCount do
@@ -550,6 +558,63 @@ function urlobj.ParseObj(data, generateNormals)
 			normals[i] = normal
 			triangleList[i].normal = normal
 			coroutine_yield(false, "Normalizing normals", i * inverseVertexCount)
+		end
+	end
+
+	do
+		-- Lengyel, Eric. “Computing Tangent Space Basis Vectors for an Arbitrary Mesh”. Terathon Software, 2001. http://terathon.com/code/tangent.html
+		local tan1 = {}
+		local tan2 = {}
+		local vertexCount = #triangleList
+
+		for i = 1, vertexCount do
+			tan1[i] = Vector(0, 0, 0)
+			tan2[i] = Vector(0, 0, 0)
+		end
+
+		for i = 1, vertexCount - 2, 3 do
+			local vert1, vert2, vert3 = triangleList[i], triangleList[i+1], triangleList[i+2]
+
+			local p1, p2, p3 = vert1.pos, vert2.pos, vert3.pos
+			local u1, u2, u3 = vert1.u, vert2.u, vert3.u
+			local v1, v2, v3 = vert1.v, vert2.v, vert3.v
+
+			local x1 = p2.x - p1.x;
+			local x2 = p3.x - p1.x;
+			local y1 = p2.y - p1.y;
+			local y2 = p3.y - p1.y;
+			local z1 = p2.z - p1.z;
+			local z2 = p3.z - p1.z;
+
+			local s1 = u2 - u1;
+			local s2 = u3 - u1;
+			local t1 = v2 - v1;
+			local t2 = v3 - v1;
+
+			local r = 1 / (s1 * t2 - s2 * t1)
+			local sdir = Vector((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
+			local tdir = Vector((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
+
+			tan1[i]:Add(sdir)
+			tan1[i+1]:Add(sdir)
+			tan1[i+2]:Add(sdir)
+
+			tan2[i]:Add(tdir)
+			tan2[i+1]:Add(tdir)
+			tan2[i+2]:Add(tdir)
+		end
+
+		local tangent = {}
+		for i = 1, vertexCount do
+			local n = triangleList[i].normal
+			local t = tan1[i]
+
+			local tan = (t - n * n:Dot(t))
+			tan:Normalize()
+
+			local w = (n:Cross(t)):Dot(tan2[i]) < 0 and -1 or 1
+
+			triangleList[i].userdata = {tan[1], tan[2], tan[3], w}
 		end
 	end
 
