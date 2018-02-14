@@ -362,7 +362,14 @@ do -- materials and textures
 			end
 		end
 
-		pac.AddHook('PostRenderVGUI', tostring(self), self.HUDPaint)
+		local id = tostring(self)
+		pac.AddHook("PostRenderVGUI", id, function()
+			if self:IsValid() then
+				self:HUDPaint()
+			else
+				pac.RemoveHook("PostRenderVGUI", id)
+			end
+		end)
 		self.isShownTexture = true
 	end
 
@@ -371,7 +378,7 @@ do -- materials and textures
 	function PANEL:MustHideTexture()
 		if not self.isShownTexture then return end
 		self.isShownTexture = false
-		pac.RemoveHook('PostRenderVGUI', tostring(self), self.HUDPaint)
+		pac.RemoveHook('PostRenderVGUI', tostring(self))
 	end
 
 	PANEL_MATERIAL.MustHideTexture = PANEL.MustHideTexture
