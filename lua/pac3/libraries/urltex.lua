@@ -166,7 +166,7 @@ function urltex.StartDownload(url, data)
 		end
 	end
 
-	hook.Remove("Think", id, think)
+	pac.AddHook("Think", id, think)
 
 	-- 5 sec max timeout, 5 maximal timeouts
 	timer.Create(id, 5, 5, onTimeout)
