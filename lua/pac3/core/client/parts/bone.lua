@@ -168,13 +168,12 @@ function pac.build_bone_callback(ent)
 				local mat = ent:GetBoneMatrix(data.bone)
 				if mat then
 					if part.FollowPart:IsValid() then
+						local _, angles = LocalToWorld(Vector(), part.Angles + part.AngleOffset, Vector(), part.FollowPart.cached_ang)
 						if part.FollowAnglesOnly then
-							local pos = mat:GetTranslation()
-							mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart.cached_ang)
-							mat:SetTranslation(pos)
+							mat:SetAngles(angles)
 						else
-							mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart.cached_ang)
 							mat:SetTranslation(part.Position + part.PositionOffset + part.FollowPart.cached_pos)
+							mat:SetAngles(angles)
 						end
 					else
 						if data.pos then
