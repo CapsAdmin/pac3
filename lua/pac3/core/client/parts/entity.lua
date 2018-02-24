@@ -364,9 +364,7 @@ function PART:SetModel(path)
 						ent:SetModel(real_path)
 					end
 
-					for i = 0, #ent:GetMaterials() - 1 do
-						ent:SetSubMaterial(i, '')
-					end
+					ent:SetSubMaterial()
 
 					for i = 0, #ent:GetBodyGroups() - 1 do
 						ent:SetBodygroup(i, 0)
