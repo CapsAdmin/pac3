@@ -52,17 +52,15 @@ for k,v in pairs(_G) do
 end
 
 PART.Events = {}
-PART.OldEvents =
-{
-	random =
-	{
+PART.OldEvents = {
+	random = {
 		arguments = {{compare = "number"}},
 		callback = function(self, ent, compare)
 			return self:NumberOperator(math.random(), compare)
 		end,
 	},
-	randint =
-	{
+
+	randint = {
 		arguments = {{compare = "number"}, {min = "number"}, {max = "number"}},
 		callback = function(self, ent, compare, min, max)
 			min = min or 0
@@ -71,8 +69,8 @@ PART.OldEvents =
 			return self:NumberOperator(math.random(min,max), compare)
 		end,
 	},
-	random_timer =
-	{
+
+	random_timer = {
 		arguments = {{min = "number"}, {max = "number"}, {holdtime = "number"}},
 		callback = function(self, ent, min, max, holdtime)
 
@@ -106,8 +104,7 @@ PART.OldEvents =
 		end,
 	},
 
-	timerx =
-	{
+	timerx = {
 		arguments = {{seconds = "number"}, {reset_on_hide = "boolean"}, {synced_time = "boolean"}},
 
 		callback = function(self, ent, seconds, reset_on_hide, synced_time)
@@ -133,16 +130,14 @@ PART.OldEvents =
 		end,
 	},
 
-	map_name =
-	{
+	map_name = {
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find)
 			return self:StringOperator(game.GetMap(), find)
 		end,
 	},
 
-	fov =
-	{
+	fov = {
 		arguments = {{fov = "number"}},
 		callback = function(self, ent, fov)
 			ent = try_viewmodel(ent)
@@ -154,8 +149,7 @@ PART.OldEvents =
 			return 0
 		end,
 	},
-	health_lost =
-	{
+	health_lost = {
 		arguments = {{amount = "number"}},
 		callback = function(self, ent, amount)
 
@@ -196,8 +190,7 @@ PART.OldEvents =
 		end,
 	},
 
-	holdtype =
-	{
+	holdtype = {
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find)
 			ent = try_viewmodel(ent)
@@ -208,24 +201,21 @@ PART.OldEvents =
 		end,
 	},
 
-	is_crouching =
-	{
+	is_crouching = {
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
 			return ent.Crouching and ent:Crouching()
 		end,
 	},
 
-	is_typing =
-	{
+	is_typing = {
 		callback = function(self, ent)
 			ent = self:GetPlayerOwner()
 			return ent.IsTyping and ent:IsTyping()
 		end,
 	},
 
-	using_physgun =
-	{
+	using_physgun = {
 		callback = function(self, ent)
 			ent = self:GetPlayerOwner()
 			ent.pac_drawphysgun_event_part = self
@@ -233,8 +223,7 @@ PART.OldEvents =
 		end,
 	},
 
-	eyetrace_entity_class =
-	{
+	eyetrace_entity_class = {
 		arguments = {{class = "string"}},
 		callback = function(self, ent, find)
 			if ent.GetEyeTrace then
@@ -246,8 +235,7 @@ PART.OldEvents =
 		end,
 	},
 
-	owner_health =
-	{
+	owner_health = {
 		arguments = {{health = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
@@ -258,8 +246,7 @@ PART.OldEvents =
 			return 0
 		end,
 	},
-	owner_max_health =
-	{
+	owner_max_health = {
 		arguments = {{health = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
@@ -270,8 +257,7 @@ PART.OldEvents =
 			return 0
 		end,
 	},
-	owner_alive =
-	{
+	owner_alive = {
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
 			if ent:IsValid() and ent.Alive then
@@ -280,8 +266,7 @@ PART.OldEvents =
 			return 0
 		end,
 	},
-	owner_armor =
-	{
+	owner_armor = {
 		arguments = {{armor = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
@@ -293,8 +278,7 @@ PART.OldEvents =
 		end,
 	},
 
-	owner_scale_x =
-	{
+	owner_scale_x = {
 		arguments = {{scale = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
@@ -306,8 +290,7 @@ PART.OldEvents =
 			return 1
 		end,
 	},
-	owner_scale_y =
-	{
+	owner_scale_y = {
 		arguments = {{scale = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
@@ -319,8 +302,7 @@ PART.OldEvents =
 			return 1
 		end,
 	},
-	owner_scale_z =
-	{
+	owner_scale_z = {
 		arguments = {{scale = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
@@ -333,8 +315,7 @@ PART.OldEvents =
 		end,
 	},
 
-	speed =
-	{
+	speed = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
@@ -342,8 +323,7 @@ PART.OldEvents =
 		end,
 	},
 
-	is_under_water =
-	{
+	is_under_water = {
 		arguments = {{level = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
@@ -351,8 +331,7 @@ PART.OldEvents =
 		end,
 	},
 
-	client_spawned =
-	{
+	client_spawned = {
 		arguments = {{time = "number"}},
 		callback = function(self, ent, time)
 			time = time or 0.1
@@ -363,24 +342,21 @@ PART.OldEvents =
 		end,
 	},
 
-	is_client =
-	{
+	is_client = {
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
 			return self:GetPlayerOwner() == ent
 		end,
 	},
 
-	is_flashlight_on =
-	{
+	is_flashlight_on = {
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
 			return ent.FlashlightIsOn and ent:FlashlightIsOn()
 		end,
 	},
 
-	ranger =
-	{
+	ranger = {
 		arguments = {{compare = "number"}, {distance = "number"}},
 		callback = function(self, ent, compare, distance)
 			local parent = self:GetParentEx()
@@ -400,8 +376,7 @@ PART.OldEvents =
 		end,
 	},
 
-	is_on_ground =
-	{
+	is_on_ground = {
 		arguments = {{exclude_noclip = "boolean"}},
 		callback = function(self, ent, exclude_noclip)
 			ent = try_viewmodel(ent)
@@ -430,24 +405,21 @@ PART.OldEvents =
 		end,
 	},
 
-	is_in_noclip =
-	{
+	is_in_noclip = {
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
 			return ent:GetMoveType() == MOVETYPE_NOCLIP and (not ent.GetVehicle or not ent:GetVehicle():IsValid())
 		end,
 	},
 
-	is_voice_chatting =
-	{
+	is_voice_chatting = {
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
 			return ent.IsSpeaking and ent:IsSpeaking()
 		end,
 	},
 
-	ammo =
-	{
+	ammo = {
 		arguments = {{primary = "boolean"}, {amount = "number"}},
 		userdata = {{editor_onchange = function(part, num) return math.Round(num) end}},
 		callback = function(self, ent, primary, amount)
@@ -459,8 +431,7 @@ PART.OldEvents =
 			end
 		end,
 	},
-	total_ammo =
-	{
+	total_ammo = {
 		arguments = {{ammo_id = "string"}, {amount = "number"}},
 		callback = function(self, ent, ammo_id, amount)
 			ent = try_viewmodel(ent)
@@ -480,8 +451,8 @@ PART.OldEvents =
 			end
 		end,
 	},
-	clipsize =
-	{
+
+	clipsize = {
 		arguments = {{primary = "boolean"}, {amount = "number"}},
 		callback = function(self, ent, primary, amount)
 			ent = try_viewmodel(ent)
@@ -493,8 +464,7 @@ PART.OldEvents =
 		end,
 	},
 
-	vehicle_class =
-	{
+	vehicle_class = {
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find)
 			ent = try_viewmodel(ent)
@@ -506,8 +476,7 @@ PART.OldEvents =
 		end,
 	},
 
-	vehicle_model =
-	{
+	vehicle_model = {
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find)
 			ent = try_viewmodel(ent)
@@ -519,8 +488,7 @@ PART.OldEvents =
 		end,
 	},
 
-	driver_name =
-	{
+	driver_name = {
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find)
 			ent = ent.GetDriver and ent:GetDriver() or NULL
@@ -531,16 +499,14 @@ PART.OldEvents =
 		end,
 	},
 
-	entity_class =
-	{
+	entity_class = {
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find)
 			return self:StringOperator(ent:GetClass(), find)
 		end,
 	},
 
-	weapon_class =
-	{
+	weapon_class = {
 		arguments = {{find = "string"}, {hide = "boolean"}},
 		callback = function(self, ent, find, hide)
 			ent = try_viewmodel(ent)
@@ -564,8 +530,7 @@ PART.OldEvents =
 		end,
 	},
 
-	has_weapon =
-	{
+	has_weapon = {
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find)
 			ent = try_viewmodel(ent)
@@ -581,24 +546,21 @@ PART.OldEvents =
 		end,
 	},
 
-	model_name =
-	{
+	model_name = {
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find)
 			return self:StringOperator(ent:GetModel(), find)
 		end,
 	},
 
-	sequence_name =
-	{
+	sequence_name = {
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find)
 			return self:StringOperator(ent:GetSequenceName(ent:GetSequence()), find)
 		end,
 	},
 
-	timer =
-	{
+	timer = {
 		arguments = {{interval = "number"}, {offset = "number"}},
 		callback = function(self, ent, interval, offset)
 			interval = interval or 1
@@ -613,8 +575,7 @@ PART.OldEvents =
 		end,
 	},
 
-	animation_event =
-	{
+	animation_event = {
 		arguments = {{find = "string"}, {time = "number"}},
 		callback = function(self, ent, find, time)
 			time = time or 0.1
@@ -633,8 +594,7 @@ PART.OldEvents =
 		end,
 	},
 
-	fire_bullets =
-	{
+	fire_bullets = {
 		arguments = {{find_ammo = "string"}, {time = "number"}},
 		callback = function(self, ent, find, time)
 			time = time or 0.1
@@ -653,8 +613,7 @@ PART.OldEvents =
 		end,
 	},
 
-	emit_sound =
-	{
+	emit_sound = {
 		arguments = {{find_sound = "string"}, {time = "number"}, {mute = "boolean"}},
 		callback = function(self, ent, find, time, mute)
 			time = time or 0.1
@@ -676,8 +635,7 @@ PART.OldEvents =
 		end,
 	},
 
-	command =
-	{
+	command = {
 		arguments = {{find = "string"}, {time = "number"}},
 		callback = function(self, ent, find, time)
 			time = time or 0.1
@@ -702,8 +660,7 @@ PART.OldEvents =
 		end,
 	},
 
-	say =
-	{
+	say = {
 		arguments = {{find = "string"}, {time = "number"}, {all_players = "boolean"}},
 		callback = function(self, ent, find, time, all_players)
 			time = time or 0.1
@@ -732,8 +689,7 @@ PART.OldEvents =
 	},
 
 	-- outfit owner
-	owner_velocity_length =
-	{
+	owner_velocity_length = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
 			local owner = self:GetOwner(self.RootOwner)
@@ -748,8 +704,7 @@ PART.OldEvents =
 			return 0
 		end,
 	},
-	owner_velocity_forward =
-	{
+	owner_velocity_forward = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
 			local owner = self:GetOwner(self.RootOwner)
@@ -763,8 +718,7 @@ PART.OldEvents =
 			return 0
 		end,
 	},
-	owner_velocity_right =
-	{
+	owner_velocity_right = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
 			local owner = self:GetOwner(self.RootOwner)
@@ -778,8 +732,7 @@ PART.OldEvents =
 			return 0
 		end,
 	},
-	owner_velocity_up =
-	{
+	owner_velocity_up = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
 			local owner = self:GetOwner(self.RootOwner)
@@ -795,8 +748,7 @@ PART.OldEvents =
 	},
 
 	-- parent part
-	parent_velocity_length =
-	{
+	parent_velocity_length = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
 			local parent = self:GetParentEx()
@@ -812,8 +764,7 @@ PART.OldEvents =
 			return 0
 		end,
 	},
-	parent_velocity_forward =
-	{
+	parent_velocity_forward = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
 			local parent = self:GetParentEx()
@@ -829,8 +780,7 @@ PART.OldEvents =
 			return 0
 		end,
 	},
-	parent_velocity_right =
-	{
+	parent_velocity_right = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
 			local parent = self:GetParentEx()
@@ -846,8 +796,7 @@ PART.OldEvents =
 			return 0
 		end,
 	},
-	parent_velocity_up =
-	{
+	parent_velocity_up = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
 			local parent = self:GetParentEx()
@@ -864,8 +813,7 @@ PART.OldEvents =
 		end,
 	},
 
-	parent_scale_x =
-	{
+	parent_scale_x = {
 		arguments = {{scale = "number"}},
 		callback = function(self, ent, num)
 			local parent = self:GetParentEx()
@@ -881,8 +829,7 @@ PART.OldEvents =
 			return 1
 		end,
 	},
-	parent_scale_y =
-	{
+	parent_scale_y = {
 		arguments = {{scale = "number"}},
 		callback = function(self, ent, num)
 			local parent = self:GetParentEx()
@@ -898,8 +845,7 @@ PART.OldEvents =
 			return 1
 		end,
 	},
-	parent_scale_z =
-	{
+	parent_scale_z = {
 		arguments = {{scale = "number"}},
 		callback = function(self, ent, num)
 			local parent = self:GetParentEx()
@@ -916,8 +862,7 @@ PART.OldEvents =
 		end,
 	},
 
-	gravitygun_punt =
-	{
+	gravitygun_punt = {
 		arguments = {{time = "number"}},
 		callback = function(self, ent, time)
 			time = time or 0.1
@@ -932,8 +877,7 @@ PART.OldEvents =
 		end,
 	},
 
-	movetype =
-	{
+	movetype = {
 		arguments = {{find = "string"}},
 		callback = function(self, ent, find)
 			local mt = ent:GetMoveType()
@@ -943,8 +887,7 @@ PART.OldEvents =
 		end,
 	},
 
-	dot_forward =
-	{
+	dot_forward = {
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
 
@@ -960,8 +903,7 @@ PART.OldEvents =
 		end,
 	},
 
-	dot_right =
-	{
+	dot_right = {
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
 
@@ -1010,8 +952,7 @@ do
 		end
 	end)
 
-	PART.OldEvents.button =
-	{
+	PART.OldEvents.button = {
 		arguments = {{button = "string"}},
 		userdata = {{enums = function()
 			local enums = {}
