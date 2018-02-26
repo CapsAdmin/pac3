@@ -1414,6 +1414,7 @@ function PART:GetParsedArguments(data)
 
 	for pos, arg in pairs(data) do
 		local typ = select(2, next(arg))
+
 		if not args[pos] then
 			break
 		elseif typ == "boolean" then
@@ -1444,6 +1445,7 @@ function PART:GetParsedArgumentsForObject(eventObject)
 
 	for i, argData in pairs(eventObject:GetArguments()) do
 		local typ = argData[2]
+
 		if not args[i] then
 			break
 		elseif typ == "boolean" then

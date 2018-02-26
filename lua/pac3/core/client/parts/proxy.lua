@@ -148,8 +148,7 @@ local function try_viewmodel(ent)
 	return ent == pac.LocalPlayer:GetViewModel() and pac.LocalPlayer or ent
 end
 
-PART.Inputs =
-{
+PART.Inputs = {
 	owner_position = function(s, p)
 		local owner = s:GetOwner(s.RootOwner)
 		owner = try_viewmodel(owner)
@@ -749,8 +748,7 @@ function PART:CheckLastVar(parent)
 	end
 end
 
-local allowed =
-{
+local allowed = {
 	number = true,
 	Vector = true,
 	Angle = true,

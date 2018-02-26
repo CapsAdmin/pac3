@@ -71,7 +71,7 @@ local function writeTyped(val, key)
 	if tp == 'string' then
 		local tryuid = tonumber(val)
 
-		if tryuid and tryuid > 0 and tryuid < 2 ^ 32 then
+		if tryuid and tryuid > 0 and tryuid < 2 ^ 32 and math.floor(tryuid) == tryuid then
 			net.WriteUInt(TYPE_NUMBER_UID, TYPES_BITS)
 			net.WriteUInt(tryuid, 32)
 		else
