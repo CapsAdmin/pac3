@@ -65,7 +65,6 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 end)
 
 function pace.SubmitPart(data, filter)
-
 	if type(data.part) == "table" then
 		if last_frame == frame_number then
 			table.insert(pace.StreamQueue, {data, filter})
@@ -176,53 +175,47 @@ function pace.SubmitPart(data, filter)
 		local players = filter or player.GetAll()
 
 		if type(players) == "table" then
-
 			--remove players from list who haven't requested outfits...
-			for key=#players,1,-1 do
-				local ply= players[key]
+			for key = #players, 1, -1 do
+				local ply = players[key]
 				if not ply.pac_requested_outfits and ply ~= data.owner then
 					table.remove(players, key)
 				end
 			end
 
-			if pace.GlobalBans then
-				if data.owner:IsValid() then
-					local owner_steamid = data.owner:SteamID()
-					for key, ply in pairs(players) do
-						local steamid = ply:SteamID()
-						for var, reason in pairs(pace.GlobalBans) do
-							if  var == steamid or type(var) == "table" and (table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):") or ""))) then
-								table.remove(players, key)
+			if pace.GlobalBans and data.owner:IsValid() then
+				local owner_steamid = data.owner:SteamID()
+				for key, ply in pairs(players) do
+					local steamid = ply:SteamID()
+					for var, reason in pairs(pace.GlobalBans) do
+						if  var == steamid or type(var) == "table" and (table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):") or ""))) then
+							table.remove(players, key)
 
-								if owner_steamid == steamid then
-									pac.Message("Dropping data transfer request by '", ply:Nick(), "' due to a global PAC ban.")
-									return false, "You have been globally banned from using PAC. See global_bans.lua for more info."
-								end
+							if owner_steamid == steamid then
+								pac.Message("Dropping data transfer request by '", ply:Nick(), "' due to a global PAC ban.")
+								return false, "You have been globally banned from using PAC. See global_bans.lua for more info."
 							end
 						end
 					end
 				end
 			end
-		elseif type(players)=="Player" then
-			if not players.pac_requested_outfits and players ~= data.owner then
-				return true
-			end
+		elseif type(players) == "Player" and (not players.pac_requested_outfits and players ~= data.owner) then
+			return true
 		end
 
-
-		if not players then return end
-
-		if type(players) == "table" and not next(players) then return end
+		if not players or type(players) == "table" and not next(players) then return end
 
 		-- Alternative transmission system
-		local ret = hook.Run("pac_SendData",players,data)
-		if ret==nil then
-			net.Start "pac_submit"
-			local ok,err = pace.net.SerializeTable(data)
-			if ok == nil then
-				ErrorNoHalt("[PAC3] Outfit broadcast failed for "..tostring(data.owner)..": "..tostring(err)..'\n')
+		local ret = hook.Run("pac_SendData", players, data)
+		if ret == nil then
+			net.Start("pac_submit")
+			local bytes, err = pace.net.SerializeTable(data)
+
+			if not bytes then
+				ErrorNoHalt("[PAC3] Outfit broadcast failed for " .. tostring(data.owner) .. ": " .. tostring(err) .. '\n')
+
 				if data.owner and data.owner:IsValid() then
-					data.owner:ChatPrint('[PAC3] ERROR: Could not broadcast your outfit: '..tostring(err))
+					data.owner:ChatPrint('[PAC3] ERROR: Could not broadcast your outfit: ' .. tostring(err))
 				end
 			else
 				net.Send(players)
@@ -233,7 +226,6 @@ function pace.SubmitPart(data, filter)
 			last_frame = frame_number
 			pace.CallHook("OnWoreOutfit", data.owner, data.part)
 		end
-
 	end
 
 	return true

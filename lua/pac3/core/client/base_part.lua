@@ -737,6 +737,19 @@ do -- serializing
 		self:RemoveChildren()
 	end
 
+	function PART:IsBeingWorn()
+		return self.isBeingWorn
+	end
+
+	function PART:SetIsBeingWorn(status)
+		self.isBeingWorn = status
+		return self
+	end
+
+	function PART:OnWorn()
+		-- override
+	end
+
 	function PART:SetTable(tbl)
 		self.supress_part_name_find = true
 		self.delayed_variables = self.delayed_variables or {}
@@ -768,6 +781,7 @@ do -- serializing
 
 		for _, value in pairs(tbl.children) do
 			local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
+			part:SetIsBeingWorn(self:IsBeingWorn())
 			part:SetTable(value)
 			part:SetParent(self)
 		end
