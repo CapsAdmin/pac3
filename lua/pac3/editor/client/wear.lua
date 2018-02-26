@@ -175,6 +175,8 @@ do
 				for i, func in ipairs(funcs) do
 					func()
 				end
+
+				transmissions[data.transmissionID] = nil
 			end
 		end
 	end
