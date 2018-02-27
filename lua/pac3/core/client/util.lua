@@ -538,7 +538,7 @@ do -- get set and editor vars
 		local crc = tostring(util.CRC(key))
 
 		if pac.NetworkDictionary[crc] and pac.NetworkDictionary[crc] ~= key then
-			error('CRC32 Collision! ' .. crc .. ' is same for ', key, ' and ', pac.NetworkDictionary[crc])
+			error('CRC32 Collision! ' .. crc .. ' is same for ' ..  key .. ' and ' .. pac.NetworkDictionary[crc])
 		end
 
 		pac.NetworkDictionary[crc] = key
