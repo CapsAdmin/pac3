@@ -232,7 +232,7 @@ function pacx.ConvertPAC2Config(data, name)
 					local part2 = part:CreatePart("animation")
 						part2:SetParent(part)
 						part2:SetName(data.name .. " animation")
-						part2:SetSequenceName(data.animation.sequence)
+						part2:SetSequenceName(data.animation.sequence or "")
 						part2:SetRate(data.animation.rate)
 						part2:SetMin(data.animation.min)
 						part2:SetMax(data.animation.max)
@@ -437,6 +437,9 @@ do
 			local r = decode_types[6](reader)
 			return Angle(p, y, r)
 		end,
+		[13	] = function(reader) -- ConVar
+			return GetConVar(decode_types[7](reader))
+		end,
 		[15 ] = function(reader) -- Color
 			local r = decode_types[6](reader)
 			reader:StepBack()
@@ -554,7 +557,8 @@ concommand.Add("pac_convert_pac2_outfits", function()
 
 			if data then
 				pace.ClearParts()
-				local ok, res = pcall(function() pace.ConvertPAC2Config(glon.decode(data), name) end)
+
+				local ok, res = pcall(function() pacx.ConvertPAC2Config(glon.decode(data), name) end)
 				if ok then
 					file.CreateDir("pac3/pac2_outfits/")
 					file.CreateDir("pac3/pac2_outfits/" .. uniqueid .. "/")
