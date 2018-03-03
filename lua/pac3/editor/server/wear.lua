@@ -211,7 +211,7 @@ function pace.SubmitPart(data, filter)
 			return true
 		end
 
-		if not players or type(players) == "table" and not next(players) then return end
+		if not players or type(players) == "table" and not next(players) then return true end
 
 		-- Alternative transmission system
 		local ret = hook.Run("pac_SendData", players, data)
