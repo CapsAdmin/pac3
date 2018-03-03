@@ -44,33 +44,42 @@ local function rebuildPlayerList()
 	local self = PLAYER_LIST_PANEL
 	if not IsValid(self) then return end
 	if count == player.GetCount() then return end
-	if not IsValid(PLAYER_LIST_PANEL) then return end
 	count = player.GetCount()
 
+	if self.plist then
+		for i, panel in ipairs(self.plist) do
+			if IsValid(panel) then
+				panel:Remove()
+			end
+		end
+	end
+
 	if count == 1 then
-		self:AddControl("Label", {Text = L"no players are online"})
+		self.plist = {self:Help(L"no players are online")}
 	else
 		pac_wear_friends_only = pac_wear_friends_only or GetConVar('pac_wear_friends_only')
 		local plys = player.GetAll()
+		self.plist = {}
 
 		for _, ply in ipairs(plys) do
 			if ply ~= LocalPlayer() then
-				local check = self:CheckBox("CheckBox", ply:Nick())
-
-				check.OnChange = function(_, newValue)
-					if pac_wear_friends_only:GetBool() then
-						check:SetChecked(ply:GetFriendStatus() ~= "friend")
-					elseif newValue then
-						cookie.Delete("pac3_wear_block_" .. ply:UniqueiD())
-					else
-						cookie.Set("pac3_wear_block_" .. ply:UniqueiD(), '1')
-					end
-				end
+				local check = self:CheckBox(ply:Nick())
+				table.insert(self.plist, check)
 
 				if pac_wear_friends_only:GetBool() then
 					check:SetChecked(ply:GetFriendStatus() ~= "friend")
 				else
 					check:SetChecked(cookie.GetString("pac3_wear_block_" .. ply:UniqueID()) == "1")
+				end
+
+				check.OnChange = function(_, newValue)
+					if pac_wear_friends_only:GetBool() then
+						check:SetChecked(ply:GetFriendStatus() ~= "friend")
+					elseif newValue then
+						cookie.Delete("pac3_wear_block_" .. ply:UniqueID())
+					else
+						cookie.Set("pac3_wear_block_" .. ply:UniqueID(), '1')
+					end
 				end
 			end
 		end
@@ -81,6 +90,7 @@ timer.Create('pac3.menus.playerlist.rebuild', 5, 0, rebuildPlayerList)
 
 function pace.ClientOptionsMenu(self)
 	if not IsValid(self) then return end
+	PLAYER_LIST_PANEL = self
 
 	self:Button(L"show editor", "pac_editor")
 	self:CheckBox(L"enable", "pac_enable")
@@ -109,12 +119,8 @@ function pace.ClientOptionsMenu(self)
 	self:CheckBox(L"wear for friends only", "pac_wear_friends_only")
 	self:CheckBox(L"wear blacklist acts as whitelist", "pac_wear_reverse")
 
-	self:AddControl("Label", {Text = L"don't wear for these players:"})
+	self:Help(L"don't wear for these players:")
 
-	local pnlParent = vgui.Create('EditablePanel', self)
-	pnlParent:Dock(FILL)
-
-	PLAYER_LIST_PANEL = pnlParent
 	rebuildPlayerList()
 end
 
