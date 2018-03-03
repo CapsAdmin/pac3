@@ -53,19 +53,6 @@ do -- to server
 			pace.CallHook("RemoveOutfit", LocalPlayer())
 		end
 
-		data.wear_filter = {}
-		for i,v in ipairs(player.GetAll()) do
-			if cvars.Bool("pac_wear_friends_only") then
-				if v:GetFriendStatus() == "friend" then
-					table.insert(data.wear_filter, v)
-				end
-			else
-				if cookie.GetString("pac3_wear_allow_" .. v:UniqueID()) == "1" then
-					table.insert(data.wear_filter, v)
-				end
-			end
-		end
-
 		net.Start("pac_submit")
 			local ret,err = pace.net.SerializeTable(data)
 			if ret==nil then
