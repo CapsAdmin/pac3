@@ -60,6 +60,37 @@ function pace.ClientOptionsMenu(pnl)
 
 	pnl:Button(L"request outfits", "pac_request_outfits")
 	pnl:Button(L"panic", "pac_panic")
+
+
+	local Panel = pnl
+
+	pnl:CheckBox(L"wear for friends only", "pac_wear_friends_only")
+
+	Panel:AddControl("Label", {Text = L"don't wear for these players:"})
+
+	local plys = player.GetAll()
+
+	if table.Count(plys) == 1 then
+		Panel:AddControl("Label", {Text = L"no players are online"})
+	else
+		for _, ply in ipairs(plys) do
+			if ply ~= LocalPlayer() then
+				local check = Panel:AddControl("CheckBox", {Label = ply:Nick()})
+				check.OnChange = function(_, b)
+					if cvars.Bool("pac_wear_friends_only") then
+						check:SetChecked(ply:GetFriendStatus() ~= "friend")
+					else
+						cookie.Set("pac3_wear_block" .. ply:UniqueiD(), b and "1" or "0")
+					end
+				end
+				if cvars.Bool("pac_wear_friends_only") then
+					check:SetChecked(ply:GetFriendStatus() ~= "friend")
+				else
+					check:SetChecked(cookie.GetString("pac3_wear_block_" .. ply:UniqueID()) == "1")
+				end
+			end
+		end
+	end
 end
 
 function pace.ClientSettingsMenu(pnl)

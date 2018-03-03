@@ -1,3 +1,5 @@
+CreateClientConVar("pac_wear_friends_only", "0", true)
+
 do -- to server
 	function pace.SendPartToServer(part, extra)
 		-- if it's (ok not very exact) the "my outfit" part without anything added to it, don't bother sending it
@@ -11,6 +13,18 @@ do -- to server
 		end
 
 		data.owner = part:GetOwner()
+		data.wear_filter = {}
+		for i,v in ipairs(player.GetAll()) do
+			if cvars.Bool("pac_wear_friends_only") then
+				if v:GetFriendStatus() == "friend" then
+					table.insert(data.wear_filter, v)
+				end
+			else
+				if cookie.GetString("pac3_wear_allow_" .. v:UniqueID()) == "1" then
+					table.insert(data.wear_filter, v)
+				end
+			end
+		end
 
 		net.Start("pac_submit")
 
@@ -32,6 +46,19 @@ do -- to server
 
 		if name == "__ALL__" then
 			pace.CallHook("RemoveOutfit", LocalPlayer())
+		end
+
+		data.wear_filter = {}
+		for i,v in ipairs(player.GetAll()) do
+			if cvars.Bool("pac_wear_friends_only") then
+				if v:GetFriendStatus() == "friend" then
+					table.insert(data.wear_filter, v)
+				end
+			else
+				if cookie.GetString("pac3_wear_allow_" .. v:UniqueID()) == "1" then
+					table.insert(data.wear_filter, v)
+				end
+			end
 		end
 
 		net.Start("pac_submit")
