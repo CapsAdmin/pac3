@@ -107,6 +107,7 @@ function pace.ClientOptionsMenu(self)
 	self:Button(L"panic", "pac_panic")
 
 	self:CheckBox(L"wear for friends only", "pac_wear_friends_only")
+	self:CheckBox(L"wear blacklist acts as whitelist", "pac_wear_reverse")
 
 	self:AddControl("Label", {Text = L"don't wear for these players:"})
 

@@ -1,5 +1,6 @@
 
-local pac_wear_friends_only = CreateClientConVar("pac_wear_friends_only", "0", true)
+local pac_wear_friends_only = CreateClientConVar("pac_wear_friends_only", "0", true, false, 'Wear outfits only to friends')
+local pac_wear_reverse = CreateClientConVar("pac_wear_reverse", "0", true, false, 'Wear to NOBODY but to people from list (Blacklist -> Whitelist)')
 
 do -- to server
 	function pace.SendPartToServer(part, extra)
@@ -19,6 +20,12 @@ do -- to server
 		if pac_wear_friends_only:GetBool() then
 			for i, v in ipairs(player.GetAll()) do
 				if v:GetFriendStatus() == "friend" then
+					table.insert(data.wear_filter, v)
+				end
+			end
+		elseif pac_wear_reverse:GetBool() then
+			for i, v in ipairs(player.GetAll()) do
+				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') == '1' then
 					table.insert(data.wear_filter, v)
 				end
 			end
