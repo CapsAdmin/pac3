@@ -487,14 +487,14 @@ function urlobj.ParseObj(data, generateNormals)
 				v3.pos = positions[v3PositionIndex]
 
 				if #texCoordsU > 0 then
-					v1.u = texCoordsU[v1TexCoordIndex]
-					v1.v = texCoordsV[v1TexCoordIndex]
+					v1.u = texCoordsU[v1TexCoordIndex] or 0
+					v1.v = texCoordsV[v1TexCoordIndex] or 0
 
-					v2.u = texCoordsU[v2TexCoordIndex]
-					v2.v = texCoordsV[v2TexCoordIndex]
+					v2.u = texCoordsU[v2TexCoordIndex] or 0
+					v2.v = texCoordsV[v2TexCoordIndex] or 0
 
-					v3.u = texCoordsU[v3TexCoordIndex]
-					v3.v = texCoordsV[v3TexCoordIndex]
+					v3.u = texCoordsU[v3TexCoordIndex] or 0
+					v3.v = texCoordsV[v3TexCoordIndex] or 0
 				else
 					v1.u, v1.v = 0, 0
 					v2.u, v2.v = 0, 0
