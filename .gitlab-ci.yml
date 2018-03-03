@@ -6,6 +6,4 @@ before_script:
 pac3_lint:
   script:
     - cd gluac
-    - echo `pwd`
-    - ls
-    - find ../lua/ -iname '*.lua' -not -path '../lua/entities/gmod_wire_expression2/core/custom/*' -print0 | xargs -0 -- ./gluac -p --
+    - find ../lua/ -iname '*.lua' -not -path '../lua/entities/gmod_wire_expression2/core/custom/*' -exec ./gluac -p {} +
