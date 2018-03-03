@@ -57,6 +57,8 @@ function PANEL:Init()
 
 	self:MakeBar()
 	self.lastTopBarHover = 0
+
+	self.okay = true
 end
 
 function PANEL:OnMousePressed()
@@ -107,6 +109,8 @@ function PANEL:OnRemove()
 end
 
 function PANEL:Think(...)
+	if not self.okay then return end
+
 	DFrame.Think(self, ...)
 
 	if self.Hovered and self.m_bSizable and gui.MouseX() > (self.x + self:GetWide() - 20) then
@@ -137,6 +141,8 @@ end
 local auto_size = CreateClientConVar("pac_auto_size_properties", 1, true)
 
 function PANEL:PerformLayout()
+	if not self.okay then return end
+
 	DFrame.PerformLayout(self)
 
 	for i, val in pairs(self.pac3_PanelsToRemove) do
@@ -292,6 +298,8 @@ local function PostRenderVGUI()
 end
 
 function PANEL:PaintOver(w, h)
+	if not self.okay then return end
+
 	local renderTime = pace.RenderTimes and pace.RenderTimes[LocalPlayer():EntIndex()]
 
 	if not renderTime then return end
@@ -324,6 +332,8 @@ function PANEL:PaintOver(w, h)
 end
 
 function PANEL:Paint(w,h)
+	if not self.okay then return end
+
 	surface.SetDrawColor(0, 0, 0, 255)
 	surface.DrawRect(0,0,w,h)
 	-- there are some skins that have a transparent dframe
