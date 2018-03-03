@@ -1,0 +1,11 @@
+
+before_script:
+  - wget https://github.com/Metastruct/gtravis/releases/download/travisbins/gluac.tar.xz
+  - tar -xf gluac.tar.xz
+
+pac3_lint:
+  script:
+    - cd gluac
+    - echo `pwd`
+    - ls
+    - find ../lua/ -iname '*.lua' -not -path '../lua/entities/gmod_wire_expression2/core/custom/*' -print0 | xargs -0 -- ./gluac -p --
