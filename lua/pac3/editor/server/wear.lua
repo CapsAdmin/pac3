@@ -156,19 +156,11 @@ function pace.SubmitPart(data, filter)
 		end
 	end
 
-	local players = data.wear_filter or player.GetAll()
-
-	for i = #players, 1, -1 do
-		if not IsValid(players[i]) then
-			table.remove(players, i)
-		end
-	end
-
 	if filter == false then
 		filter = data.owner
 	elseif filter == true then
 		local tbl = {}
-		for k,v in pairs(players) do
+		for k,v in pairs(player.GetAll()) do
 			if v ~= data.owner then
 				table.insert(tbl, v)
 			end
@@ -181,7 +173,7 @@ function pace.SubmitPart(data, filter)
 			data.player_uid = data.owner:UniqueID()
 		end
 
-		local players = filter or players
+		local players = filter or player.GetAll()
 
 		if type(players) == "table" then
 
