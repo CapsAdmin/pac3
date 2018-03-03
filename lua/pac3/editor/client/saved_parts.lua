@@ -59,6 +59,8 @@ function pace.SaveParts(name, prompt_name, override_part)
 	end
 end
 
+local last_backup
+
 function pace.Backup(data, name)
 	name = name or ""
 
@@ -108,7 +110,11 @@ function pace.Backup(data, name)
 		--end
 
 		local date = os.date("%y-%m-%d-%H_%M_%S")
-		pace.luadata.WriteFile("pac3/__backup/" .. (name=="" and name or (name..'_')) .. date .. ".txt", data)
+		local str = pace.luadata.Encode(data)
+		if str ~= last_backup then
+			file.Write("pac3/__backup/" .. (name=="" and name or (name..'_')) .. date .. ".txt", str)
+			last_backup = str
+		end
 	end
 end
 
