@@ -1,4 +1,5 @@
-CreateClientConVar("pac_wear_friends_only", "0", true)
+
+local pac_wear_friends_only = CreateClientConVar("pac_wear_friends_only", "0", true)
 
 do -- to server
 	function pace.SendPartToServer(part, extra)
@@ -14,13 +15,16 @@ do -- to server
 
 		data.owner = part:GetOwner()
 		data.wear_filter = {}
-		for i,v in ipairs(player.GetAll()) do
-			if cvars.Bool("pac_wear_friends_only") then
+
+		if pac_wear_friends_only:GetBool() then
+			for i, v in ipairs(player.GetAll()) do
 				if v:GetFriendStatus() == "friend" then
 					table.insert(data.wear_filter, v)
 				end
-			else
-				if cookie.GetString("pac3_wear_allow_" .. v:UniqueID()) == "1" then
+			end
+		else
+			for i, v in ipairs(player.GetAll()) do
+				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') ~= '1' then
 					table.insert(data.wear_filter, v)
 				end
 			end
@@ -29,6 +33,7 @@ do -- to server
 		net.Start("pac_submit")
 
 		local bytes, err = pace.net.SerializeTable(data)
+
 		if not bytes then
 			pace.Notify(false, "unable to transfer data to server: " .. tostring(err or "too big"))
 			return false
@@ -221,10 +226,10 @@ net.Receive("pac_submit", function()
 end)
 
 function pace.Notify(allowed, reason, name)
-	 if allowed then
-		pac.Message("Your part " .. name .. " has been applied.")
+	 if allowed == true then
+		pac.Message(string.format('Your part %q has been applied', name))
 	else
-		chat.AddText(Color(255, 255, 0), "[PAC3] ", Color(255, 0, 0), reason)
+		chat.AddText(Color(255, 255, 0), "[PAC3] ", Color(255, 0, 0), string.format('The server rejected applying your part (%q) - %s', name, reason))
 	end
 end
 

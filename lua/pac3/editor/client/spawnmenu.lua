@@ -36,13 +36,58 @@ end)
 
 pace.SpawnlistBrowser = NULL
 
-function pace.ClientOptionsMenu(pnl)
-	pnl:Button(L"show editor", "pac_editor")
-	pnl:CheckBox(L"enable", "pac_enable")
-	pnl:Button(L"clear", "pac_clear_parts")
-	pnl:Button(L"wear on server", "pac_wear_parts"	)
+local count = -1
+local PLAYER_LIST_PANEL
+local pac_wear_friends_only
 
-	local browser = pnl:AddControl("pace_browser", {})
+local function rebuildPlayerList()
+	local self = PLAYER_LIST_PANEL
+	if not IsValid(self) then return end
+	if count == player.GetCount() then return end
+	if not IsValid(PLAYER_LIST_PANEL) then return end
+	count = player.GetCount()
+
+	if count == 1 then
+		self:AddControl("Label", {Text = L"no players are online"})
+	else
+		pac_wear_friends_only = pac_wear_friends_only or GetConVar('pac_wear_friends_only')
+		local plys = player.GetAll()
+
+		for _, ply in ipairs(plys) do
+			if ply ~= LocalPlayer() then
+				local check = self:CheckBox("CheckBox", ply:Nick())
+
+				check.OnChange = function(_, newValue)
+					if pac_wear_friends_only:GetBool() then
+						check:SetChecked(ply:GetFriendStatus() ~= "friend")
+					elseif newValue then
+						cookie.Delete("pac3_wear_block_" .. ply:UniqueiD())
+					else
+						cookie.Set("pac3_wear_block_" .. ply:UniqueiD(), '1')
+					end
+				end
+
+				if pac_wear_friends_only:GetBool() then
+					check:SetChecked(ply:GetFriendStatus() ~= "friend")
+				else
+					check:SetChecked(cookie.GetString("pac3_wear_block_" .. ply:UniqueID()) == "1")
+				end
+			end
+		end
+	end
+end
+
+timer.Create('pac3.menus.playerlist.rebuild', 5, 0, rebuildPlayerList)
+
+function pace.ClientOptionsMenu(self)
+	if not IsValid(self) then return end
+
+	self:Button(L"show editor", "pac_editor")
+	self:CheckBox(L"enable", "pac_enable")
+	self:Button(L"clear", "pac_clear_parts")
+	self:Button(L"wear on server", "pac_wear_parts"	)
+
+	local browser = self:AddControl("pace_browser", {})
 
 	browser.OnLoad = function(node)
 		pace.LoadParts(node.FileName, true)
@@ -58,39 +103,18 @@ function pace.ClientOptionsMenu(pnl)
 
 	pace.SpawnlistBrowser = browser
 
-	pnl:Button(L"request outfits", "pac_request_outfits")
-	pnl:Button(L"panic", "pac_panic")
+	self:Button(L"request outfits", "pac_request_outfits")
+	self:Button(L"panic", "pac_panic")
 
+	self:CheckBox(L"wear for friends only", "pac_wear_friends_only")
 
-	local Panel = pnl
+	self:AddControl("Label", {Text = L"don't wear for these players:"})
 
-	pnl:CheckBox(L"wear for friends only", "pac_wear_friends_only")
+	local pnlParent = vgui.Create('EditablePanel', self)
+	pnlParent:Dock(FILL)
 
-	Panel:AddControl("Label", {Text = L"don't wear for these players:"})
-
-	local plys = player.GetAll()
-
-	if table.Count(plys) == 1 then
-		Panel:AddControl("Label", {Text = L"no players are online"})
-	else
-		for _, ply in ipairs(plys) do
-			if ply ~= LocalPlayer() then
-				local check = Panel:AddControl("CheckBox", {Label = ply:Nick()})
-				check.OnChange = function(_, b)
-					if cvars.Bool("pac_wear_friends_only") then
-						check:SetChecked(ply:GetFriendStatus() ~= "friend")
-					else
-						cookie.Set("pac3_wear_block" .. ply:UniqueiD(), b and "1" or "0")
-					end
-				end
-				if cvars.Bool("pac_wear_friends_only") then
-					check:SetChecked(ply:GetFriendStatus() ~= "friend")
-				else
-					check:SetChecked(cookie.GetString("pac3_wear_block_" .. ply:UniqueID()) == "1")
-				end
-			end
-		end
-	end
+	PLAYER_LIST_PANEL = pnlParent
+	rebuildPlayerList()
 end
 
 function pace.ClientSettingsMenu(pnl)

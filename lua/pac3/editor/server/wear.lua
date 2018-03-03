@@ -247,6 +247,10 @@ function pace.SubmitPartNotify(data)
 	if data.owner:IsPlayer() then
 		if allowed == "queue" then return end
 
+		if not reason and allowed and type(data.part) == 'table' then
+			reason = string.format('Your part %q has been applied', data.part.self.Name or '<unknown>')
+		end
+
 		net.Start("pac_submit_acknowledged")
 			net.WriteBool(allowed)
 			net.WriteString(reason or "")
