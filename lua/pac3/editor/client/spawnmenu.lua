@@ -36,13 +36,68 @@ end)
 
 pace.SpawnlistBrowser = NULL
 
-function pace.ClientOptionsMenu(pnl)
-	pnl:Button(L"show editor", "pac_editor")
-	pnl:CheckBox(L"enable", "pac_enable")
-	pnl:Button(L"clear", "pac_clear_parts")
-	pnl:Button(L"wear on server", "pac_wear_parts"	)
+local count = -1
+local PLAYER_LIST_PANEL
+local pac_wear_friends_only
 
-	local browser = pnl:AddControl("pace_browser", {})
+local function rebuildPlayerList()
+	local self = PLAYER_LIST_PANEL
+	if not IsValid(self) then return end
+	if count == player.GetCount() then return end
+	count = player.GetCount()
+
+	if self.plist then
+		for i, panel in ipairs(self.plist) do
+			if IsValid(panel) then
+				panel:Remove()
+			end
+		end
+	end
+
+	if count == 1 then
+		self.plist = {self:Help(L"no players are online")}
+	else
+		pac_wear_friends_only = pac_wear_friends_only or GetConVar('pac_wear_friends_only')
+		local plys = player.GetAll()
+		self.plist = {}
+
+		for _, ply in ipairs(plys) do
+			if ply ~= LocalPlayer() then
+				local check = self:CheckBox(ply:Nick())
+				table.insert(self.plist, check)
+
+				if pac_wear_friends_only:GetBool() then
+					check:SetChecked(ply:GetFriendStatus() ~= "friend")
+				else
+					check:SetChecked(cookie.GetString("pac3_wear_block_" .. ply:UniqueID()) == "1")
+				end
+
+				check.OnChange = function(_, newValue)
+					if pac_wear_friends_only:GetBool() then
+						check:SetChecked(ply:GetFriendStatus() ~= "friend")
+					elseif newValue then
+						cookie.Delete("pac3_wear_block_" .. ply:UniqueID())
+					else
+						cookie.Set("pac3_wear_block_" .. ply:UniqueID(), '1')
+					end
+				end
+			end
+		end
+	end
+end
+
+timer.Create('pac3.menus.playerlist.rebuild', 5, 0, rebuildPlayerList)
+
+function pace.ClientOptionsMenu(self)
+	if not IsValid(self) then return end
+	PLAYER_LIST_PANEL = self
+
+	self:Button(L"show editor", "pac_editor")
+	self:CheckBox(L"enable", "pac_enable")
+	self:Button(L"clear", "pac_clear_parts")
+	self:Button(L"wear on server", "pac_wear_parts"	)
+
+	local browser = self:AddControl("pace_browser", {})
 
 	browser.OnLoad = function(node)
 		pace.LoadParts(node.FileName, true)
@@ -58,8 +113,15 @@ function pace.ClientOptionsMenu(pnl)
 
 	pace.SpawnlistBrowser = browser
 
-	pnl:Button(L"request outfits", "pac_request_outfits")
-	pnl:Button(L"panic", "pac_panic")
+	self:Button(L"request outfits", "pac_request_outfits")
+	self:Button(L"panic", "pac_panic")
+
+	self:CheckBox(L"wear for friends only", "pac_wear_friends_only")
+	self:CheckBox(L"wear blacklist acts as whitelist", "pac_wear_reverse")
+
+	self:Help(L"don't wear for these players:")
+
+	rebuildPlayerList()
 end
 
 function pace.ClientSettingsMenu(pnl)
