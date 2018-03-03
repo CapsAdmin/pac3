@@ -9,20 +9,24 @@ local last = {}
 function pace.CallChangeForUndo(part, key, val, delay)
 	if pace.SuppressUndo or key == "Parent" then return end
 
-	if last.part == part and last.key == key and (last.val == val or last.delay > RealTime()) then return end
+	if
+		(last.part == part and last.key == key) and
+		(last.val == val or (delay and last.delay > RealTime()))
+	then
+		return
+	end
+
 	last.key = key
 	last.val = val
 	last.part = part
 	last.delay = RealTime() + (delay or 0)
 
 	pac.dprint("added %q = %q for %s to undo history", key, tostring(val), tostring(part))
-	table.insert(pace.UndoHistory, pace.UndoPosition, {part = part, key = key, val = part["Get" .. key](part)})
-	pace.UndoPosition = pace.UndoPosition + 1
+	table.insert(pace.UndoHistory, pace.UndoPosition, {part = part, key = key, val = pac.class.Copy(part["Get" .. key](part))})
+	pace.UndoPosition = 1
 end
 
 function pace.ApplyUndo()
-	pace.UndoPosition = math.Clamp(pace.UndoPosition, 1, #pace.UndoHistory)
-
 	local data = pace.UndoHistory[pace.UndoPosition]
 
 	if data and data.part:IsValid() then
@@ -31,18 +35,21 @@ function pace.ApplyUndo()
 		data.part["Set" .. data.key](data.part, data.val)
 		pace.SuppressUndo = false
 		surface.PlaySound("buttons/button9.wav")
+		pace.RefreshTree(true)
 	else
 		table.remove(pace.UndoHistory, pace.UndoPosition)
 	end
+
+	pace.UndoPosition = math.Clamp(pace.UndoPosition, 1, #pace.UndoHistory)
 end
 
 function pace.Undo()
-	pace.UndoPosition = pace.UndoPosition - 1
+	pace.UndoPosition = pace.UndoPosition + 1
 	pace.ApplyUndo()
 end
 
 function pace.Redo()
-	pace.UndoPosition = pace.UndoPosition + 1
+	pace.UndoPosition = pace.UndoPosition - 1
 	pace.ApplyUndo()
 end
 
@@ -52,7 +59,7 @@ function pace.UndoThink()
 	if not pace.IsActive() then return end
 
 	-- whooaaa
-	if input.IsKeyDown(KEY_LALT) and input.IsKeyDown(KEY_SPACE) and input.IsKeyDown(KEY_Z) then
+	if input.IsControlDown() and input.IsKeyDown(KEY_X) then
 		pace.UndoPosition = math.Round((gui.MouseY() / ScrH()) * #pace.UndoHistory)
 		pace.ApplyUndo()
 		return
@@ -65,10 +72,10 @@ function pace.UndoThink()
 	if wait then return end
 
 
-	if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_LSHIFT) and input.IsKeyDown(KEY_Z) then
+	if input.IsControlDown() and ((input.IsKeyDown(KEY_LSHIFT) and input.IsKeyDown(KEY_Z)) or input.IsKeyDown(KEY_Y)) then
 		pace.Redo()
 		wait = true
-	elseif input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_Z) then
+	elseif input.IsControlDown() and input.IsKeyDown(KEY_Z) then
 		pace.Undo()
 		wait = true
 	end
