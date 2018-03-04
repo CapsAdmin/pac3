@@ -248,6 +248,8 @@ do
 			return
 		end
 
+		pace.WearParts("autoload")
+
 		pac.RemoveHook("Think", "pac_request_outfits")
 		pac.RemoveHook("KeyRelease", "pac_request_outfits")
 		pac.Message("Requesting outfits...")

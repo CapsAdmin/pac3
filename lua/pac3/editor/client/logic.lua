@@ -30,20 +30,6 @@ pac.AddHook("PostDrawViewModel", "pace_viewmodel_edit", function()
 	end
 end)
 
-pac.AddHook("InitPostEntity", "pace_autoload_parts", function()
-	timer.Simple(5, function()
-		pace.LoadParts("autoload")
-		timer.Simple(3, function()
-		-- give pac some time to solve bones and parents
-			for key, part in pairs(pac.GetLocalParts()) do
-				if not part:HasParent() then
-					pace.SendPartToServer(part)
-				end
-			end
-		end)
-	end)
-end)
-
 function pace.OnOpenEditor()
 	pace.SetViewPos(LocalPlayer():EyePos())
 	pace.SetViewAngles(LocalPlayer():EyeAngles())
