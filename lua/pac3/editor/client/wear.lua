@@ -248,7 +248,13 @@ do
 			return
 		end
 
-		pace.WearParts("autoload")
+		if next(pac.GetLocalParts()) then
+			pac.Message("not wearing autoload outfit, already wearing something")
+		elseif pace.IsActive() then
+			pac.Message("not wearing autoload outfit, editor is open")
+		else
+			pace.WearParts("autoload")
+		end
 
 		pac.RemoveHook("Think", "pac_request_outfits")
 		pac.RemoveHook("KeyRelease", "pac_request_outfits")
