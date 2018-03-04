@@ -209,6 +209,12 @@ function PART:OnBuildBonePositions()
 
 	if not owner:IsValid() then return end
 
+	if self.last_model ~= owner:GetModel() then
+		self.BoneIndex = nil
+		self.last_model = owner:GetModel()
+	end
+
+
 	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone)) or 0
 
 	owner.pac_bone_setup_data = owner.pac_bone_setup_data or {}
