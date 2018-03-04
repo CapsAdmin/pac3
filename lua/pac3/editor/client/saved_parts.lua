@@ -59,6 +59,8 @@ function pace.SaveParts(name, prompt_name, override_part)
 	end
 end
 
+local last_backup
+
 function pace.Backup(data, name)
 	name = name or ""
 
@@ -108,7 +110,11 @@ function pace.Backup(data, name)
 		--end
 
 		local date = os.date("%y-%m-%d-%H_%M_%S")
-		pace.luadata.WriteFile("pac3/__backup/" .. (name=="" and name or (name..'_')) .. date .. ".txt", data)
+		local str = pace.luadata.Encode(data)
+		if str ~= last_backup then
+			file.Write("pac3/__backup/" .. (name=="" and name or (name..'_')) .. date .. ".txt", str)
+			last_backup = str
+		end
 	end
 end
 
@@ -423,7 +429,22 @@ end
 local function populate_parts(menu, tbl, dir, override_part)
 	dir = dir or ""
 	menu:AddOption(L"new file", function() pace.SaveParts(nil, dir .. "/", override_part) end)
-	:SetImage(pace.MiscIcons.new)
+	:SetImage("icon16/page_add.png")
+
+	menu:AddOption(L"new directory", function()
+		Derma_StringRequest(
+			L"new directory",
+			L"name:",
+			"",
+
+			function(name)
+				file.CreateDir("pac3/" .. dir .. "/" .. name)
+				pace.RefreshFiles()
+			end
+		)
+	end)
+	:SetImage("icon16/folder_add.png")
+
 	menu:AddSpacer()
 	for key, data in pairs(tbl) do
 		if not data.Path then
@@ -450,6 +471,43 @@ local function populate_parts(menu, tbl, dir, override_part)
 				:SetImage(parts.self.Icon)
 			end
 		end
+	end
+
+	if dir ~= "" then
+		menu:AddSpacer()
+
+		menu:AddOption(L"delete directory", function()
+			Derma_Query(
+				L"Are you sure you want to delete data/pac3" .. dir .. "/* and all its files?\nThis cannot be undone!",
+				L"delete directory",
+
+				L"yes", function()
+					local function delete_directory(dir)
+						local files, folders = file.Find(dir .. "*", "DATA")
+
+						for k,v in ipairs(files) do
+							file.Delete(dir .. v)
+						end
+
+						for k,v in ipairs(folders) do
+							delete_directory(dir .. v .. "/")
+						end
+
+						if file.Find(dir .. "*", "DATA")[1] then
+							Derma_Message("Cannot remove the directory.\nMaybe it contains hidden files?", "unable to remove directory", L"ok")
+						else
+							file.Delete(dir)
+						end
+					end
+					delete_directory("pac3/" .. dir .. "/")
+					pace.RefreshFiles()
+				end,
+
+				L"no", function()
+
+				end
+			)
+		end):SetImage("icon16/folder_delete.png")
 	end
 end
 
