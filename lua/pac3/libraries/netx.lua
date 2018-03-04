@@ -163,7 +163,13 @@ function netx.SimulateTableReceive(tableIn)
 			i = pac.ExtractNetworkID(i) or i
 		end
 
-		tableIn[i] = tableIn[index]
+		local num = tonumber(i)
+
+		if num and num >= 1 and num % 1 == 0 and num <= 255 then
+			tableIn[num] = tableIn[index]
+		else
+			tableIn[i] = tableIn[index]
+		end
 	end
 
 	return tableIn
@@ -183,7 +189,13 @@ function readTable(tab)
 			i = pac.ExtractNetworkID(i) or i
 		end
 
-		output[i] = val
+		local num = tonumber(i)
+
+		if num and num >= 1 and num % 1 == 0 and num <= 255 then
+			output[num] = val
+		else
+			output[i] = val
+		end
 	end
 
 	return output

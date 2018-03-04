@@ -165,7 +165,8 @@ function pace.SubmitPart(data, filter)
 			lookup[ply:UniqueID()] = ply
 		end
 
-		for i, plyID in ipairs(data.wear_filter) do
+		for i, v in ipairs(data.wear_filter) do
+			local plyID = tostring(v)
 			if IsValid(lookup[plyID]) then
 				table.insert(players, lookup[plyID])
 			end
