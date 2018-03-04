@@ -155,23 +155,36 @@ function pace.SubmitPart(data, filter)
 		end
 	end
 
-	local players = data.wear_filter or player.GetAll()
+	local players
 
-	for i = #players, 1, -1 do
-		if not IsValid(players[i]) then
-			table.remove(players, i)
+	if type(data.wear_filter) == 'table' then
+		players = {}
+		local lookup = player.GetAll()
+
+		for i, ply in ipairs(lookup) do
+			lookup[ply:UniqueID()] = ply
 		end
+
+		for i, plyID in ipairs(data.wear_filter) do
+			if IsValid(lookup[plyID]) then
+				table.insert(players, lookup[plyID])
+			end
+		end
+	else
+		players = player.GetAll()
 	end
 
 	if filter == false then
 		filter = data.owner
 	elseif filter == true then
 		local tbl = {}
-		for k,v in pairs(players) do
+
+		for k, v in pairs(players) do
 			if v ~= data.owner then
 				table.insert(tbl, v)
 			end
 		end
+
 		filter = tbl
 	end
 

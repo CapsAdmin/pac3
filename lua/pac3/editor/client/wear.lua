@@ -20,19 +20,19 @@ do -- to server
 		if pac_wear_friends_only:GetBool() then
 			for i, v in ipairs(player.GetAll()) do
 				if v:GetFriendStatus() == "friend" then
-					table.insert(data.wear_filter, v)
+					table.insert(data.wear_filter, v:UniqueID())
 				end
 			end
 		elseif pac_wear_reverse:GetBool() then
 			for i, v in ipairs(player.GetAll()) do
 				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') == '1' then
-					table.insert(data.wear_filter, v)
+					table.insert(data.wear_filter, v:UniqueID())
 				end
 			end
 		else
 			for i, v in ipairs(player.GetAll()) do
 				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') ~= '1' then
-					table.insert(data.wear_filter, v)
+					table.insert(data.wear_filter, v:UniqueID())
 				end
 			end
 		end
