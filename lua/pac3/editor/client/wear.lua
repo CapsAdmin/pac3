@@ -59,7 +59,7 @@ do -- to server
 			table.Merge(data, extra)
 		end
 
-		data.owner = part:GetOwner()
+		data.owner = part:GetPlayerOwner()
 		data.wear_filter = assemblePlayerFilter()
 
 		net.Start("pac_submit")
