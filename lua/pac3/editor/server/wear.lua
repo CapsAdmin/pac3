@@ -317,8 +317,10 @@ function pace.RequestOutfits(ply)
 	if ply.pac_requested_outfits_time and ply.pac_requested_outfits_time > RealTime() then return end
 	ply.pac_requested_outfits_time = RealTime() + 30
 	ply.pac_requested_outfits = true
+
 	for id, outfits in pairs(pace.Parts) do
 		local owner = player.GetByUniqueID(id) or NULL
+
 		if id == false or owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
 			for key, outfit in pairs(outfits) do
 				pace.SubmitPart(outfit, ply)
@@ -327,4 +329,26 @@ function pace.RequestOutfits(ply)
 	end
 end
 
+local function pac_update_playerfilter(len, ply)
+	if not IsValid(ply) then return end
+	local filter = {}
+	local readnext = net.ReadUInt(32)
+
+	while readnext ~= 0 do
+		table.insert(filter, tostring(readnext))
+		readnext = net.ReadUInt(32)
+	end
+
+	for id, outfits in pairs(pace.Parts) do
+		local owner = player.GetByUniqueID(id) or NULL
+
+		if owner == ply then
+			for key, outfit in pairs(outfits) do
+				outfit.wear_filter = filter
+			end
+		end
+	end
+end
+
 concommand.Add("pac_request_outfits", pace.RequestOutfits)
+net.Receive('pac_update_playerfilter', pac_update_playerfilter)

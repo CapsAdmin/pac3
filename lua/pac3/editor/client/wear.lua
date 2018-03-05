@@ -3,6 +3,51 @@ local pac_wear_friends_only = CreateClientConVar("pac_wear_friends_only", "0", t
 local pac_wear_reverse = CreateClientConVar("pac_wear_reverse", "0", true, false, 'Wear to NOBODY but to people from list (Blacklist -> Whitelist)')
 
 do -- to server
+	local count = -1
+
+	local function assemblePlayerFilter()
+		local filter = {}
+
+		if pac_wear_friends_only:GetBool() then
+			for i, v in ipairs(player.GetAll()) do
+				if v:GetFriendStatus() == "friend" then
+					table.insert(filter, v:UniqueID())
+				end
+			end
+		elseif pac_wear_reverse:GetBool() then
+			for i, v in ipairs(player.GetAll()) do
+				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') == '1' then
+					table.insert(filter, v:UniqueID())
+				end
+			end
+		else
+			for i, v in ipairs(player.GetAll()) do
+				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') ~= '1' then
+					table.insert(filter, v:UniqueID())
+				end
+			end
+		end
+
+		return filter
+	end
+
+	local function updatePlayerList()
+		if player.GetCount() == count then return end
+		count = player.GetCount()
+		local filter = assemblePlayerFilter()
+
+		net.Start('pac_update_playerfilter')
+
+		for i, id in ipairs(filter) do
+			net.WriteUInt(tonumber(id), 32)
+		end
+
+		net.WriteUInt(0, 32)
+		net.SendToServer()
+	end
+
+	timer.Create('pac_update_playerfilter', 5, 0, updatePlayerList)
+
 	function pace.SendPartToServer(part, extra)
 		-- if it's (ok not very exact) the "my outfit" part without anything added to it, don't bother sending it
 		if part.ClassName == "group" and not part:HasChildren() then return end
@@ -15,27 +60,7 @@ do -- to server
 		end
 
 		data.owner = part:GetOwner()
-		data.wear_filter = {}
-
-		if pac_wear_friends_only:GetBool() then
-			for i, v in ipairs(player.GetAll()) do
-				if v:GetFriendStatus() == "friend" then
-					table.insert(data.wear_filter, v:UniqueID())
-				end
-			end
-		elseif pac_wear_reverse:GetBool() then
-			for i, v in ipairs(player.GetAll()) do
-				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') == '1' then
-					table.insert(data.wear_filter, v:UniqueID())
-				end
-			end
-		else
-			for i, v in ipairs(player.GetAll()) do
-				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') ~= '1' then
-					table.insert(data.wear_filter, v:UniqueID())
-				end
-			end
-		end
+		data.wear_filter = assemblePlayerFilter()
 
 		net.Start("pac_submit")
 
