@@ -208,7 +208,9 @@ function PART:OnBuildBonePositions()
 
 	if not owner:IsValid() then return end
 
-	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone)) or 0
+	self.BoneIndex = owner:LookupBone(self:GetRealBoneName(self.Bone))
+
+	if not self.BoneIndex then return end
 
 	owner.pac_bone_setup_data = owner.pac_bone_setup_data or {}
 
