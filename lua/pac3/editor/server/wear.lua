@@ -300,7 +300,17 @@ end
 
 util.AddNetworkString("pac_submit")
 
-pace.PCallNetReceive(net.Receive, "pac_submit", function(_, ply)
+pace.PCallNetReceive(net.Receive, "pac_submit", function(len,ply)
+	ply["pac_submit"]=ply["pac_submit"] or 0
+	if len<100 or ply["pac_submit"]>100 then
+		return
+	end
+	ply["pac_submit"]=ply["pac_submit"]+1
+	if ply["pac_submit"]==1 then
+		timer.Simple(0.1,function()
+			ply["pac_submit"]=0
+		end)
+	end
 	local data = pace.net.DeserializeTable()
 	pace.HandleReceivedData(ply, data)
 end)
