@@ -300,7 +300,11 @@ end
 
 util.AddNetworkString("pac_submit")
 
-pace.PCallNetReceive(net.Receive, "pac_submit", function(_, ply)
+pace.PCallNetReceive(net.Receive, "pac_submit", function(len,ply)
+	if len==0 or ply["pac_submit"]==CurTime() then --if they sent an empty net message or sent it more than once per frame
+		return -- block the code below from running
+	end
+	ply["pac_submit"]=CurTime() --note the last time the sent a net message on this string
 	local data = pace.net.DeserializeTable()
 	pace.HandleReceivedData(ply, data)
 end)
