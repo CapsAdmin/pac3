@@ -11,6 +11,7 @@ local FrameTime = FrameTime
 local NULL = NULL
 local pairs = pairs
 local force_rendering = false
+local forced_rendering = false
 
 local cvar_projected_texture = CreateClientConVar("pac_render_projected_texture", "0")
 
@@ -43,6 +44,9 @@ end
 
 function pac.ForceRendering(b)
 	force_rendering = b
+	if b then
+		forced_rendering = b
+	end
 end
 
 local ent_parts = {}
@@ -711,7 +715,8 @@ do -- drawing
 							radius = radius * 4
 						end
 
-						local cond = draw_dist == -1 or
+						local cond =
+							draw_dist == -1 or
 							ent.IsPACWorldEntity or
 							(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or (ent.pac_camera and ent.pac_camera:IsValid())) or
 							ent ~= pac.LocalPlayer and
@@ -733,6 +738,11 @@ do -- drawing
 
 							pac.RenderOverride(ent, "opaque")
 						else
+							if forced_rendering then
+								forced_rendering = false
+								return
+							end
+
 							pac.HideEntityParts(ent)
 						end
 					end
