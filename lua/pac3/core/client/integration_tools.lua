@@ -8,6 +8,9 @@ do
 
 	function pac.DrawEntity2D(ent, x, y, w, h, cam_pos, cam_ang, cam_fov, cam_nearz, cam_farz)
 
+		pac.ShowEntityParts(ent)
+		pac.ForceRendering(true)
+
 		if draw_localplayer == nil then
 			hook.Add("ShouldDrawLocalPlayer", "pac_draw_2d_entity", function()
 				if draw_localplayer == true then
@@ -40,6 +43,8 @@ do
 				cam.IgnoreZ(false)
 			cam.End3D()
 		cam.End2D()
+
+		pac.ForceRendering(false)
 	end
 end
 
