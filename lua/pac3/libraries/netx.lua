@@ -108,7 +108,6 @@ end
 
 local tostring = tostring
 local CRC = util.CRC
-local crcdatabank = {}
 
 local function writeTable(tab)
 	net.WriteUInt(table.Count(tab), 16)
@@ -118,12 +117,7 @@ local function writeTable(tab)
 		local i = key
 
 		if type(i) == 'string' then
-			if not tonumber(i) then
-				crcdatabank[CRC(i)] = key
-				i = tonumber(CRC(i))
-			else
-				i = tonumber(i)
-			end
+			i = tonumber(i) or tonumber(CRC(i))
 		end
 
 		if keys[i] == nil then
@@ -181,7 +175,7 @@ function netx.SimulateTableReceive(tableIn)
 		local i = tostring(i2)
 
 		if CLIENT then
-			i = pac.ExtractNetworkID(i) or crcdatabank[i] or i
+			i = pac.ExtractNetworkID(i) or i
 		end
 
 		local num = tonumber(i)
