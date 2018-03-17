@@ -17,7 +17,6 @@ timer.Create("pac_check_stream_queue", 0.1, 0, function()
 	frame_number = frame_number + 1
 end)
 
-local crcuid = util.CRC('UniqueID')
 local function make_copy(tbl, input)
 	if tbl.self.UniqueID then
 		tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. input)
