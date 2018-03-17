@@ -112,29 +112,37 @@ local crcdatabank = {}
 
 local function writeTable(tab)
 	net.WriteUInt(table.Count(tab), 16)
+	local keys = {}
 
 	for key, value in pairs(tab) do
 		local i = key
 
 		if type(i) == 'string' then
-			i = tonumber(i) or tonumber(CRC(i))
+			if not tonumber(i) then
+				crcdatabank[CRC(i)] = key
+				i = tonumber(CRC(i))
+			else
+				i = tonumber(i)
+			end
 		end
 
-		net.WriteUInt(i, 32)
+		if keys[i] == nil then
+			keys[i] = true
+			net.WriteUInt(i, 32)
 
-		if type(value) == 'table' then
-			if value.r and value.g and value.b and value.a then
-				writeTyped(value, key)
+			if type(value) == 'table' then
+				if value.r and value.g and value.b and value.a then
+					writeTyped(value, key)
+				else
+					net.WriteUInt(TYPE_TABLE, TYPES_BITS)
+					writeTable(value)
+				end
 			else
-				net.WriteUInt(TYPE_TABLE, TYPES_BITS)
-				writeTable(value)
+				writeTyped(value, key)
 			end
-		else
-			writeTyped(value, key)
 		end
 	end
 end
-
 
 local readmeta = {
 	__index = function(self, key)
@@ -145,12 +153,25 @@ local readmeta = {
 		end
 
 		return rawget(self, CRC(key))
+	end,
+
+	__newindex = function(self, key, value)
+		local crc = CRC(key)
+		local crc2 = tonumber(crc)
+
+		if rawget(self, crc) ~= nil then
+			rawset(self, crc, nil)
+		end
+
+		if rawget(self, crc2) ~= nil then
+			rawset(self, crc2, nil)
+		end
+
+		rawset(self, key, value)
 	end
 }
 
 function netx.SimulateTableReceive(tableIn)
-	setmetatable(tableIn, readmeta)
-
 	for index, value in pairs(tableIn) do
 		if type(value) == 'table' then
 			netx.SimulateTableReceive(value)
@@ -160,24 +181,25 @@ function netx.SimulateTableReceive(tableIn)
 		local i = tostring(i2)
 
 		if CLIENT then
-			i = pac.ExtractNetworkID(i) or i
+			i = pac.ExtractNetworkID(i) or crcdatabank[i] or i
 		end
 
 		local num = tonumber(i)
 
 		if num and num >= 1 and num % 1 == 0 and num <= 255 then
-			tableIn[num] = tableIn[index]
-		else
-			tableIn[i] = tableIn[index]
+			tableIn[num] = value
+		--else
+		--	tableIn[i] = value
 		end
 	end
+
+	setmetatable(tableIn, readmeta)
 
 	return tableIn
 end
 
 function readTable(tab)
 	local output = {}
-	setmetatable(output, readmeta)
 	local amount = net.ReadUInt(16)
 
 	for i = 1, amount do
@@ -198,7 +220,7 @@ function readTable(tab)
 		end
 	end
 
-	return output
+	return setmetatable(output, readmeta)
 end
 
 function netx.SerializeTable(data)

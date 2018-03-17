@@ -206,6 +206,7 @@ do
 				transmissions[data.transmissionID] = trData
 			end
 
+			local transmissionID = data.transmissionID
 			data.transmissionID = nil
 			data.totalParts = nil
 			data.partID = nil
@@ -227,7 +228,7 @@ do
 					func()
 				end
 
-				transmissions[data.transmissionID] = nil
+				transmissions[data.transmissionID or transmissionID] = nil
 			end
 		end
 	end
@@ -237,7 +238,7 @@ net.Receive("pac_submit", function()
 	local data = pace.net.DeserializeTable()
 
 	if type(data.owner) ~= "Player" or not data.owner:IsValid() then
-		pac.Message("received message from server but owner is not valid!?")
+		pac.Message("received message from server but owner is not valid!? typeof " .. type(data.owner) .. ' || ', data.owner)
 		return
 	end
 

@@ -17,15 +17,12 @@ timer.Create("pac_check_stream_queue", 0.1, 0, function()
 	frame_number = frame_number + 1
 end)
 
-
+local crcuid = util.CRC('UniqueID')
 local function make_copy(tbl, input)
-	for key, val in pairs(tbl.self) do
---		if key == "ClassName" then continue end
-
-		if key:find("UID", 0, true) or key == "UniqueID" then
-			tbl.self[key] = util.CRC(val .. input)
-		end
+	if tbl.self.UniqueID then
+		tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. input)
 	end
+
 	for key, val in pairs(tbl.children) do
 		make_copy(val, input)
 	end
@@ -33,10 +30,36 @@ end
 
 pace.dupe_ents = pace.dupe_ents or {}
 
+local function fixSanity(tableIn, target)
+	for key, value2 in pairs(tableIn) do
+		local value
+
+		if type(value2) == 'table' then
+			value = fixSanity(value2, {})
+		else
+			value = value2
+		end
+
+		if type(key) == 'number' and key > 10000 then
+			local str = tostring(key)
+			target[str] = value
+		else
+			target[key] = value
+		end
+	end
+
+	return target
+end
+
 duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 	if parts.json then
 		parts = util.JSONToTable(parts.json)
+
+		-- sanity police for json's __index accesses
+		parts = fixSanity(parts, {})
 	end
+
+	pace.net.SimulateTableReceive(parts)
 
 	local id = ent:EntIndex()
 
@@ -47,21 +70,29 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 	ent.pac_parts = parts
 	pace.dupe_ents[ent:EntIndex()] = {owner = ply, ent = ent}
 
-	for uid, data in pairs(parts) do
+	-- give source engine time
+	timer.Simple(0.5, function()
+		for uid, data in pairs(parts) do
+			if type(data.part) == "table" then
+				make_copy(data.part, id)
 
-		if type(data.part) == "table" then
-			make_copy(data.part, id)
+				data.part.self.Name = tostring(ent)
+				data.part.self.OwnerName = id
+			end
 
-			data.part.self.Name = tostring(ent)
-			data.part.self.OwnerName = id
+			data.owner = ply
+			data.uid = ply:UniqueID()
+			data.is_dupe = true
+
+			-- clientside sent variables cleanup for sanity
+			data.wear_filter = nil
+			data.partID = nil
+			data.totalParts = nil
+			data.transmissionID = nil
+
+			pace.SubmitPart(data)
 		end
-
-		data.owner = ply
-		data.uid = ply:UniqueID()
-		data.is_dupe = true
-
-		pace.SubmitPart(data)
-	end
+	end)
 end)
 
 function pace.SubmitPart(data, filter)
@@ -89,7 +120,10 @@ function pace.SubmitPart(data, filter)
 				pace.dupe_ents[ent:EntIndex()] = {owner = data.owner, ent = ent}
 
 				duplicator.ClearEntityModifier(ent, "pac_config")
-				duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(ent.pac_parts)})
+				--duplicator.StoreEntityModifier(ent, "pac_config", ent.pac_parts)
+				--duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(ent.pac_parts)})
+				-- fresh table copy
+				duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(table.Copy(ent.pac_parts))})
 			end
 
 			ent:CallOnRemove("pac_config", function(ent)
@@ -131,8 +165,7 @@ function pace.SubmitPart(data, filter)
 
 				pace.dupe_ents[key] = nil
 			end
-
-		else
+		elseif data.part then
 			pace.Parts[uid][data.part] = nil
 
 			-- this doesn't work because the unique id is different for some reason
