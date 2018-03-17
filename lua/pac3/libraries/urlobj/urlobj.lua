@@ -3,6 +3,11 @@ local urlobj = pac.urlobj
 
 urlobj.DataCache  = pac.CreateCache("objcache")
 
+concommand.Add('pac_clear_objs', function()
+	urlobj.DataCache:Clear()
+	pac.Message('Disk cache cleared')
+end, nil, 'Clears obj file cache on disk')
+
 local SIMULATENOUS_DOWNLOADS = CreateConVar('pac_objdl_streams', '4', {FCVAR_ARCHIVE}, 'OBJ files download streams')
 local CURRENTLY_DOWNLOADING = 0
 

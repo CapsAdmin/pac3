@@ -12,7 +12,7 @@ end
 function CACHE:Initialize (cacheId)
 	self.Version = 3 -- Update this if the crypto library changes
 
-	self.Path    = "pac3/" .. string.lower (cacheId)
+	self.Path    = "pac3_cache/" .. string.lower (cacheId)
 
 	file.CreateDir (self.Path)
 end

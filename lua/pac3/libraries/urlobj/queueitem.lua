@@ -3,6 +3,7 @@ pac.urlobj = pac.urlobj or {}
 local urlobj = pac.urlobj
 
 local TIMEOUT_VALUE = CreateConVar('pac_objdl_timeout', '15', {FCVAR_ARCHIVE}, 'OBJ download timeout in seconds')
+local CACHE_OBJS = CreateConVar('pac_obj_cache', '1', {FCVAR_ARCHIVE}, 'DEBUG: Cache Object files on disk. Disables disk cache access (like cache does not exist in code)')
 local QUEUEITEM = {}
 
 -- Warning: This code is concurrency hell
@@ -54,6 +55,7 @@ end
 
 -- Cache
 function QUEUEITEM:BeginCacheRetrieval ()
+	if not CACHE_OBJS:GetBool() then return end
 	self.Data = urlobj.DataCache:GetItem(self.Url)
 	if not self.Data then return end
 
@@ -121,7 +123,9 @@ function QUEUEITEM:BeginDownload ()
 		else
 			self.Data = data
 
-			urlobj.DataCache:AddItem (self.Url, self.Data)
+			if CACHE_OBJS:GetBool() then
+				urlobj.DataCache:AddItem (self.Url, self.Data)
+			end
 
 			self.Model = urlobj.CreateModelFromObjData(self.Data, self.GenerateNormals,
 				function (finished, statusMessage)
