@@ -106,11 +106,11 @@ function pace.UndoThink()
 	if not pace.IsActive() then return end
 
 	-- whooaaa
-	if input.IsControlDown() and input.IsKeyDown(KEY_X) then
-		pace.UndoPosition = math.Round((gui.MouseY() / ScrH()) * #pace.UndoHistory)
-		pace.ApplyUndo()
-		return
-	end
+	-- if input.IsControlDown() and input.IsKeyDown(KEY_X) then
+	-- 	pace.UndoPosition = math.Round((gui.MouseY() / ScrH()) * #pace.UndoHistory)
+	-- 	pace.ApplyUndo()
+	-- 	return
+	-- end
 
 	if not input.IsKeyDown(KEY_Z) and not input.IsKeyDown(KEY_Y) then
 		hold = false
