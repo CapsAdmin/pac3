@@ -271,7 +271,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 				self.OriginalMaterialAlpha = self.OriginalMaterialAlpha or IMaterial_GetFloat  (self.Materialm, "$alpha")
 			end
 
-			local r, g, b = self.Colorf.r, self.Colorf.g, self.Colorf.b
+			local r, g, b = self.Colorf[1], self.Colorf[2], self.Colorf[3]
 
 			if self.LightBlend ~= 1 then
 				local v = render.GetLightColor(pos)
@@ -692,12 +692,12 @@ function PART:SetColor(var)
 
 	if self.UsePlayerColor and owner:IsValid() then
 		local c = owner:GetPlayerColor() * self.Brightness
-		self.Colorf = Color(c.r, c.g, c.b)
+		self.Colorf = {c.x, c.y, c.z}
 	elseif self.UseWeaponColor and owner:IsValid() then
 		local c = owner:GetWeaponColor() * self.Brightness
-		self.Colorf = Color(c.r, c.g, c.b)
+		self.Colorf = {c.x, c.y, c.z}
 	else
-		self.Colorf = Color((var.r / 255) * self.Brightness, (var.g / 255) * self.Brightness, (var.b / 255) * self.Brightness)
+		self.Colorf = {(var.r / 255) * self.Brightness, (var.g / 255) * self.Brightness, (var.b / 255) * self.Brightness}
 	end
 end
 
