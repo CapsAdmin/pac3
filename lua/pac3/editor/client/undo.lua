@@ -1,6 +1,7 @@
 
 pace.UndoHistory = {}
 pace.UndoPosition = 1
+pace.SuppressUndo = false
 
 local last = {}
 
@@ -19,6 +20,25 @@ function pace.CallChangeForUndo(part, key, val, delay)
 	last.part = part
 	last.delay = RealTime() + (delay or 0)
 
+	pace.AddUndo(part, function()
+		part["Set" .. key](part, val)
+	end)
+end
+
+function pace.AddUndo(callValid, callUndo, callRedo)
+	if type(callValid) == 'table' then
+		local part = callValid
+		callValid = function() return part:IsValid() end
+	elseif type(callValid) == 'nil' then
+		callValid = function() return true end
+	elseif type(callValid) ~= 'function' then
+		error('Invalid validation function')
+	end
+
+	assert(type(callUndo) == 'function', 'Invalid undo function')
+	callRedo = callRedo or callUndo
+	assert(type(callRedo) == 'function', 'Invalid redo function')
+
 	pace.UndoPosition = math.Clamp(pace.UndoPosition, 0, #pace.UndoHistory)
 
 	for i = pace.UndoPosition + 1, #pace.UndoHistory do
@@ -26,18 +46,28 @@ function pace.CallChangeForUndo(part, key, val, delay)
 	end
 
 	pace.UndoPosition = pace.UndoPosition + 1
-	pace.UndoHistory[pace.UndoPosition] = {part = part, key = key, val = pac.class.Copy(part["Get" .. key](part))}
+	pace.UndoHistory[pace.UndoPosition] = {
+		undo = callUndo,
+		redo = callRedo,
+		valid = callValid
+	}
 end
 
-function pace.ApplyUndo()
+function pace.ApplyUndo(redo)
 	local data = pace.UndoHistory[pace.UndoPosition]
 
-	if data and data.part:IsValid() then
+	if data and data.valid() then
 		pace.SuppressUndo = true
-		pac.dprint("undone %q = %q for %s to undo history", data.key, tostring(data.val), tostring(data.part))
-		data.part["Set" .. data.key](data.part, data.val)
+
+		if redo then
+			data.redo()
+		else
+			data.undo()
+		end
+
 		pace.SuppressUndo = false
 		surface.PlaySound("buttons/button9.wav")
+
 		pace.RefreshTree(true)
 	else
 		table.remove(pace.UndoHistory, pace.UndoPosition)
@@ -48,12 +78,12 @@ end
 
 function pace.Undo()
 	pace.UndoPosition = pace.UndoPosition - 1
-	pace.ApplyUndo()
+	pace.ApplyUndo(false)
 end
 
 function pace.Redo()
 	pace.UndoPosition = pace.UndoPosition + 1
-	pace.ApplyUndo()
+	pace.ApplyUndo(true)
 end
 
 pace.OnUndo = pace.Undo

@@ -128,51 +128,47 @@ end
 
 function pace.OnVariableChanged(obj, key, val, undo_delay)
 	local func = obj["Set" .. key]
-	if func then
+	if not func then return end
 
-		timer.Create("pace_backup", 1, 1, function() pace.Backup() end)
+	timer.Create("pace_backup", 1, 1, function() pace.Backup() end)
 
-		if key == "OwnerName" then
-			if val == "viewmodel" then
-				pace.editing_viewmodel = true
-			elseif obj[key] == "viewmodel" then
-				pace.editing_viewmodel = false
+	if key == "OwnerName" then
+		if val == "viewmodel" then
+			pace.editing_viewmodel = true
+		elseif obj[key] == "viewmodel" then
+			pace.editing_viewmodel = false
+		end
+	end
+
+	-- pace.CallChangeForUndo(obj, key, obj["Get" .. key](obj), undo_delay)
+	func(obj, val)
+	pace.CallChangeForUndo(obj, key, obj["Get" .. key](obj), undo_delay)
+
+	local node = obj.editor_node
+	if IsValid(node) then
+		if key == "Event" then
+			pace.PopulateProperties(obj)
+		elseif key == "Name" then
+			if not obj:HasParent() then
+				pace.RemovePartOnServer(obj:GetUniqueID(), true, true)
+			end
+			node:SetText(val)
+		elseif key == "Model" and val and val ~= "" and type(val) == "string" then
+			node:SetModel(val)
+		elseif key == "Parent" then
+			local tree = obj.editor_node
+			if IsValid(tree) then
+				node:Remove()
+				tree = tree:GetRoot()
+				if tree:IsValid() then
+					tree:SetSelectedItem(nil)
+					pace.RefreshTree(true)
+				end
 			end
 		end
 
-		pace.CallChangeForUndo(obj, key, obj["Get" .. key](obj), undo_delay)
-
-		func(obj, val)
-
-		pace.CallChangeForUndo(obj, key, obj["Get" .. key](obj), undo_delay)
-
-
-		local node = obj.editor_node
-		if IsValid(node) then
-			if key == "Event" then
-				pace.PopulateProperties(obj)
-			elseif key == "Name" then
-				if not obj:HasParent() then
-					pace.RemovePartOnServer(obj:GetUniqueID(), true, true)
-				end
-				node:SetText(val)
-			elseif key == "Model" and val and val ~= "" and type(val) == "string" then
-				node:SetModel(val)
-			elseif key == "Parent" then
-				local tree = obj.editor_node
-				if IsValid(tree) then
-					node:Remove()
-					tree = tree:GetRoot()
-					if tree:IsValid() then
-						tree:SetSelectedItem(nil)
-						pace.RefreshTree(true)
-					end
-				end
-			end
-
-			if obj.Name == "" then
-				node:SetText(obj:GetName())
-			end
+		if obj.Name == "" then
+			node:SetText(obj:GetName())
 		end
 	end
 end
