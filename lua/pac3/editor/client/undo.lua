@@ -77,11 +77,21 @@ function pace.ApplyUndo(redo)
 end
 
 function pace.Undo()
+	if pace.UndoPosition <= 1 then
+		pace.FlashNotification('Nothing to undo')
+		return
+	end
+
 	pace.UndoPosition = pace.UndoPosition - 1
 	pace.ApplyUndo(false)
 end
 
 function pace.Redo()
+	if pace.UndoPosition >= #pace.UndoHistory then
+		pace.FlashNotification('Nothing to redo')
+		return
+	end
+
 	pace.UndoPosition = pace.UndoPosition + 1
 	pace.ApplyUndo(true)
 end

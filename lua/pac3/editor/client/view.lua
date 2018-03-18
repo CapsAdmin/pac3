@@ -272,8 +272,35 @@ function pace.ShouldDrawLocalPlayer()
 	end
 end
 
+local notifText
+local notifDisplayTime, notifDisplayTimeFade = 0, 0
+
+function pace.FlashNotification(text, timeToDisplay)
+	timeToDisplay = timeToDisplay or math.Clamp(#text / 6, 1, 8)
+	notifDisplayTime = RealTime() + timeToDisplay
+	notifDisplayTimeFade = RealTime() + timeToDisplay * 1.1
+	notifText = text
+end
+
 function pace.PostRenderVGUI()
-	if not pace.mctrl or not isHoldingMovement then return end
+	if not pace.mctrl then return end
+
+	local time = RealTime()
+
+	if notifDisplayTimeFade > time then
+		if notifDisplayTime > time then
+			surface.SetTextColor(color_white)
+		else
+			surface.SetTextColor(255, 255, 255, 255 * (notifDisplayTimeFade - RealTime()) / (notifDisplayTimeFade - notifDisplayTime))
+		end
+
+		surface.SetFont('Trebuchet18')
+		local w = surface.GetTextSize(notifText)
+		surface.SetTextPos(ScrW() / 2 - w / 2, 30)
+		surface.DrawText(notifText)
+	end
+
+	if not isHoldingMovement then return end
 
 	if pace.mctrl.LastThinkCall ~= FrameNumber() then
 		surface.SetFont('Trebuchet18')
