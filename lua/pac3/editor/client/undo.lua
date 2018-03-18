@@ -102,9 +102,7 @@ pace.OnRedo = pace.Redo
 local hold = false
 local last = 0
 
-function pace.UndoThink()
-	if not pace.IsActive() then return end
-
+local function thinkUndo()
 	-- whooaaa
 	-- if input.IsControlDown() and input.IsKeyDown(KEY_X) then
 	-- 	pace.UndoPosition = math.Round((gui.MouseY() / ScrH()) * #pace.UndoHistory)
@@ -125,6 +123,70 @@ function pace.UndoThink()
 		pace.Undo()
 		hold = true
 	end
+end
+
+local hold = false
+
+local function thinkCopy()
+	if not input.IsKeyDown(KEY_C) then
+		hold = false
+	end
+
+	if hold or not (input.IsControlDown() and input.IsKeyDown(KEY_C)) then return end
+
+	-- copy
+	hold = true
+	local part = pace.current_part
+
+	if not part or not part:IsValid() then
+		pace.FlashNotification('No part selected to copy')
+		return
+	end
+
+	pace.Clipboard = part
+	surface.PlaySound("buttons/button9.wav")
+end
+
+local hold = false
+
+local function thinkPaste()
+	if not input.IsKeyDown(KEY_V) then
+		hold = false
+	end
+
+	if hold or not (input.IsControlDown() and input.IsKeyDown(KEY_V)) then return end
+
+	-- paste
+	hold = true
+	local part = pace.Clipboard
+
+	if not part then
+		pace.FlashNotification('No part is stored in clipboard')
+		return
+	end
+
+	local findParent
+	local newObj = part:Clone()
+
+	if part == pace.current_part then
+		findParent = part:GetParent()
+
+		if not findParent or not findParent:IsValid() then
+			findParent = part
+		end
+	else
+		findParent = part
+	end
+
+	newObj:SetParent(findParent)
+	surface.PlaySound("buttons/button9.wav")
+end
+
+function pace.UndoThink()
+	if not pace.IsActive() then return end
+	thinkUndo()
+	thinkCopy()
+	thinkPaste()
 end
 
 pac.AddHook("Think", "pace_undo_Think", pace.UndoThink)
