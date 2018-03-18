@@ -287,10 +287,14 @@ do -- menu
 		menu:AddOption(L"paste", function()
 			if pace.Clipboard then
 				local newObj = pace.Clipboard:Clone()
-				newObj:SetParent(obj)
+				newObj:Attach(obj)
 			end
-			--pace.Clipboard = nil
 		end):SetImage(pace.MiscIcons.paste)
+
+		menu:AddOption(L"cut", function()
+			pace.Clipboard = obj
+			obj:DeattachFull()
+		end):SetImage('icon16/cut.png')
 
 		menu:AddOption(L"paste properties", function()
 			if pace.Clipboard then

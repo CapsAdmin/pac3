@@ -667,7 +667,7 @@ do -- parenting
 	function PART:RemoveChildren()
 		self:InvalidateChildrenList()
 		for i, part in ipairs(self:GetChildren()) do
-			part:Remove(true)
+			part:Deattach()
 			self.Children[i] = nil
 			self.Children2[part] = nil
 		end
@@ -880,7 +880,13 @@ do -- events
 	function PART:Initialize() end
 	function PART:OnRemove() end
 
-	function PART:Remove(skip_removechild)
+	function PART:IsDeattached()
+		return self.is_deattached
+	end
+
+	function PART:Deattach()
+		if not self.is_valid or self.is_deattached then return end
+		self.is_deattached = true
 
 		if self:GetPlayerOwner() == pac.LocalPlayer then
 			pac.CallHook("OnPartRemove", self)
@@ -889,19 +895,41 @@ do -- events
 		self:CallRecursive("OnHide")
 		self:OnRemove()
 
-		if not skip_removechild and self:HasParent() then
-			self:GetParent():RemoveChild(self)
-		end
-
-		self:RemoveChildren()
-
 		if self.owner_id and self.UniqueID then
 			pac.RemoveUniqueIDPart(self.owner_id, self.UniqueID)
 		end
 
 		pac.RemovePart(self)
-
 		self.is_valid = false
+	end
+
+	function PART:DeattachFull()
+		self:Deattach()
+
+		if self:HasParent() then
+			self:GetParent():RemoveChild(self)
+		end
+	end
+
+	function PART:Attach(parent)
+		if not self.is_deattached then
+			return self:SetParent(parent)
+		end
+
+		self.is_deattached = false
+		self.is_valid = true
+		self:CallRecursive("OnShow")
+		self:SetParent(parent)
+	end
+
+	function PART:Remove(skip_removechild)
+		self:Deattach()
+
+		if self:HasParent() then
+			self:GetParent():RemoveChild(self)
+		end
+
+		self:RemoveChildren()
 	end
 
 	function PART:OnStore()	end

@@ -149,6 +149,29 @@ end
 
 local hold = false
 
+local function thinkCut()
+	if not input.IsKeyDown(KEY_X) then
+		hold = false
+	end
+
+	if hold or not (input.IsControlDown() and input.IsKeyDown(KEY_X)) then return end
+
+	-- copy
+	hold = true
+	local part = pace.current_part
+
+	if not part or not part:IsValid() then
+		pace.FlashNotification('No part selected to cut')
+		return
+	end
+
+	pace.Clipboard = part
+	part:DeattachFull()
+	surface.PlaySound("buttons/button9.wav")
+end
+
+local hold = false
+
 local function thinkPaste()
 	if not input.IsKeyDown(KEY_V) then
 		hold = false
@@ -175,10 +198,10 @@ local function thinkPaste()
 			findParent = part
 		end
 	else
-		findParent = part
+		findParent = pace.current_part
 	end
 
-	newObj:SetParent(findParent)
+	newObj:Attach(findParent)
 	surface.PlaySound("buttons/button9.wav")
 end
 
@@ -187,6 +210,7 @@ function pace.UndoThink()
 	thinkUndo()
 	thinkCopy()
 	thinkPaste()
+	thinkCut()
 end
 
 pac.AddHook("Think", "pace_undo_Think", pace.UndoThink)
