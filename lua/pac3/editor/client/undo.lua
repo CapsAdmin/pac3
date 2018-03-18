@@ -1,8 +1,6 @@
+
 pace.UndoHistory = {}
 pace.UndoPosition = 1
-
-pace.OnUndo = pace.Undo
-pace.OnRedo = pace.Redo
 
 local last = {}
 
@@ -21,9 +19,14 @@ function pace.CallChangeForUndo(part, key, val, delay)
 	last.part = part
 	last.delay = RealTime() + (delay or 0)
 
-	pac.dprint("added %q = %q for %s to undo history", key, tostring(val), tostring(part))
-	table.insert(pace.UndoHistory, pace.UndoPosition, {part = part, key = key, val = pac.class.Copy(part["Get" .. key](part))})
-	pace.UndoPosition = 1
+	pace.UndoPosition = math.Clamp(pace.UndoPosition, 0, #pace.UndoHistory)
+
+	for i = pace.UndoPosition + 1, #pace.UndoHistory do
+		pace.UndoHistory[i] = nil
+	end
+
+	pace.UndoPosition = pace.UndoPosition + 1
+	pace.UndoHistory[pace.UndoPosition] = {part = part, key = key, val = pac.class.Copy(part["Get" .. key](part))}
 end
 
 function pace.ApplyUndo()
@@ -44,15 +47,19 @@ function pace.ApplyUndo()
 end
 
 function pace.Undo()
-	pace.UndoPosition = pace.UndoPosition + 1
-	pace.ApplyUndo()
-end
-
-function pace.Redo()
 	pace.UndoPosition = pace.UndoPosition - 1
 	pace.ApplyUndo()
 end
 
+function pace.Redo()
+	pace.UndoPosition = pace.UndoPosition + 1
+	pace.ApplyUndo()
+end
+
+pace.OnUndo = pace.Undo
+pace.OnRedo = pace.Redo
+
+local hold = false
 local last = 0
 
 function pace.UndoThink()
@@ -65,19 +72,18 @@ function pace.UndoThink()
 		return
 	end
 
-	if not input.IsKeyDown(KEY_Z) then
-		wait = false
+	if not input.IsKeyDown(KEY_Z) and not input.IsKeyDown(KEY_Y) then
+		hold = false
 	end
 
-	if wait then return end
-
+	if hold then return end
 
 	if input.IsControlDown() and ((input.IsKeyDown(KEY_LSHIFT) and input.IsKeyDown(KEY_Z)) or input.IsKeyDown(KEY_Y)) then
 		pace.Redo()
-		wait = true
+		hold = true
 	elseif input.IsControlDown() and input.IsKeyDown(KEY_Z) then
 		pace.Undo()
-		wait = true
+		hold = true
 	end
 end
 
