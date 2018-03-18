@@ -276,6 +276,7 @@ end
 
 function pace.UndoThink()
 	if not pace.IsActive() then return end
+	if IsValid(vgui.GetKeyboardFocus()) and vgui.GetKeyboardFocus():GetClassName():find('Text') then return end
 	thinkUndo()
 	thinkCopy()
 	thinkPaste()
