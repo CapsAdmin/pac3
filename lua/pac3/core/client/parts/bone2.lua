@@ -235,8 +235,24 @@ function PART:OnBuildBonePositions()
 			ang.y = -ang.p
 		end
 
-		manpos(owner, self.BoneIndex, self.Position + self.PositionOffset, self)
-		manang(owner, self.BoneIndex, ang + self.AngleOffset, self)
+		local pos2, ang2 = self.Position + self.PositionOffset, ang + self.AngleOffset
+
+		local parent = self:GetParent()
+
+		if parent and parent:IsValid() and parent.ClassName == 'jiggle' then
+			local pos3, ang3 = parent.Position, parent.Angles
+
+			if parent.pos then
+				pos2 = pos2 + parent.pos - pos3
+			end
+
+			if parent.ang then
+				ang2 = ang2 + parent.ang - ang3
+			end
+		end
+
+		manpos(owner, self.BoneIndex, pos2, self)
+		manang(owner, self.BoneIndex, ang2, self)
 	end
 
 	if owner.pac_bone_setup_data[self.UniqueID] then
