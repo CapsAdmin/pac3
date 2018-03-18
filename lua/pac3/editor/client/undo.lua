@@ -172,6 +172,28 @@ end
 
 local hold = false
 
+local function thinkDelete()
+	if not input.IsKeyDown(KEY_DELETE) then
+		hold = false
+	end
+
+	if hold or not input.IsKeyDown(KEY_DELETE) then return end
+
+	-- delete
+	hold = true
+	local part = pace.current_part
+
+	if not part or not part:IsValid() then
+		pace.FlashNotification('No part to delete')
+		return
+	end
+
+	part:Remove()
+	surface.PlaySound("buttons/button9.wav")
+end
+
+local hold = false
+
 local function thinkPaste()
 	if not input.IsKeyDown(KEY_V) then
 		hold = false
@@ -211,6 +233,7 @@ function pace.UndoThink()
 	thinkCopy()
 	thinkPaste()
 	thinkCut()
+	thinkDelete()
 end
 
 pac.AddHook("Think", "pace_undo_Think", pace.UndoThink)
