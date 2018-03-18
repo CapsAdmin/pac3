@@ -192,6 +192,53 @@ local function thinkDelete()
 	surface.PlaySound("buttons/button9.wav")
 end
 
+local REVERSE_COLLAPSE_CONTROLS = CreateConVar('pac_reverse_collapse', '1', {FCVAR_ARCHIVE}, 'Reverse Collapse/Expand hotkeys')
+local hold = false
+
+local function thinkExpandAll()
+	if not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT) and not input.IsKeyDown(KEY_0) then
+		hold = false
+	end
+
+	if hold or not input.IsShiftDown() or (not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT)) or not input.IsKeyDown(KEY_0) then return end
+
+	-- expand all
+	hold = true
+	local part = pace.current_part
+
+	if not part or not part:IsValid() then
+		pace.FlashNotification('No part to expand')
+		return
+	end
+
+	part:CallRecursive('SetEditorExpand', not REVERSE_COLLAPSE_CONTROLS:GetBool())
+	surface.PlaySound("buttons/button9.wav")
+	pace.RefreshTree(true)
+end
+
+local hold = false
+
+local function thinkCollapseAll()
+	if not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT) and not input.IsKeyDown(KEY_0) then
+		hold = false
+	end
+
+	if hold or input.IsShiftDown() or (not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT)) or not input.IsKeyDown(KEY_0) then return end
+
+	-- collapse all
+	hold = true
+	local part = pace.current_part
+
+	if not part or not part:IsValid() then
+		pace.FlashNotification('No part to collapse')
+		return
+	end
+
+	part:CallRecursive('SetEditorExpand', REVERSE_COLLAPSE_CONTROLS:GetBool())
+	surface.PlaySound("buttons/button9.wav")
+	pace.RefreshTree(true)
+end
+
 local hold = false
 
 local function thinkPaste()
@@ -234,6 +281,8 @@ function pace.UndoThink()
 	thinkPaste()
 	thinkCut()
 	thinkDelete()
+	thinkExpandAll()
+	thinkCollapseAll()
 end
 
 pac.AddHook("Think", "pace_undo_Think", pace.UndoThink)

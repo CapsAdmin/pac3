@@ -316,6 +316,18 @@ do -- menu
 
 		menu:AddSpacer()
 
+		menu:AddOption(L"collapse all", function()
+			obj:CallRecursive('SetEditorExpand', false)
+			pace.RefreshTree(true)
+		end):SetImage('icon16/arrow_in.png')
+
+		menu:AddOption(L"expand all", function()
+			obj:CallRecursive('SetEditorExpand', true)
+			pace.RefreshTree(true)
+		end):SetImage('icon16/arrow_down.png')
+
+		menu:AddSpacer()
+
 		pace.AddRegisteredPartsToMenu(menu)
 
 		menu:AddSpacer()

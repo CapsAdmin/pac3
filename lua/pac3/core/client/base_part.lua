@@ -582,7 +582,7 @@ do -- parenting
 
 			for i = 1, #child do
 				if child[i][func] then
-					child[i][func](child[i], part, ...)
+					child[i][func](child[i], ...)
 				end
 			end
 		end
@@ -592,7 +592,7 @@ do -- parenting
 
 			for i = 1, #child do
 				if child[i][func] then
-					child[i][func](child[i], part, ...)
+					child[i][func](child[i], ...)
 				end
 			end
 		end
