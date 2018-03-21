@@ -53,6 +53,8 @@ function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size
 end
 
 function urltex.Think()
+	if not pac.IsEnabled() then return end
+
 	if table.Count(urltex.Queue) > 0 then
 		for url, data in pairs(urltex.Queue) do
 			-- when the panel is gone start a new one
