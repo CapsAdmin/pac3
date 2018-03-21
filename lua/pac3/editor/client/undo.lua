@@ -266,8 +266,10 @@ local function thinkPaste()
 		if not findParent or not findParent:IsValid() then
 			findParent = part
 		end
-	else
+	elseif pace.current_part and pace.current_part:IsValid() then
 		findParent = pace.current_part
+	else
+		findParent = pace.Call("CreatePart", "group", L"paste data")
 	end
 
 	newObj:Attach(findParent)
