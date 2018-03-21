@@ -338,6 +338,8 @@ end
 
 mctrl.grab = {mode = nil, axis = nil}
 
+local GRAB_AND_CLONE = CreateClientConVar('pac_grab_clone', '1', true, false, 'Holding shift when moving or rotating a part creates its clone')
+
 function mctrl.GUIMousePressed(mc)
 	if mc == MOUSE_LEFT then
 		local target = mctrl.GetTarget()
@@ -345,6 +347,7 @@ function mctrl.GUIMousePressed(mc)
 
 			local x, y = mctrl.GetMousePos()
 			local pos, ang = mctrl.GetTargetPos()
+			local target = mctrl.GetTarget()
 			if pos and ang then
 				local forward, right, up = mctrl.GetAxes(ang)
 				local r = mctrl.GetCalculatedScale()
@@ -371,6 +374,12 @@ function mctrl.GUIMousePressed(mc)
 				if axis then
 					mctrl.grab.mode = MODE_MOVE
 					mctrl.grab.axis = axis
+
+					if GRAB_AND_CLONE:GetBool() and input.IsShiftDown() and target:IsValid() then
+						local copy = target:Clone()
+						copy:SetParent(copy:GetParent())
+					end
+
 					return true
 				end
 
@@ -418,6 +427,12 @@ function mctrl.GUIMousePressed(mc)
 				if axis then
 					mctrl.grab.mode = MODE_ROTATE
 					mctrl.grab.axis = axis
+
+					if GRAB_AND_CLONE:GetBool() and input.IsShiftDown() and target:IsValid() then
+						local copy = target:Clone()
+						copy:SetParent(copy:GetParent())
+					end
+
 					return true
 				end
 			end

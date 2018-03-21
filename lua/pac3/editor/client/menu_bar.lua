@@ -70,6 +70,7 @@ end
 local function populate_options(menu)
 	menu:AddCVar(L"advanced mode", "pac_basic_mode", "0", "1").DoClick = function() pace.ToggleBasicMode() end
 	menu:AddCVar(L"inverse collapse/expand controls", "pac_reverse_collapse", "1", "0")
+	menu:AddCVar(L"enable shift+move/rotate clone", "pac_grab_clone", "1", "0")
 		menu:AddSpacer()
 			menu:AddOption(L"position grid size", function()
 				Derma_StringRequest(L"position grid size", L"size in units:", GetConVarNumber("pac_grid_pos_size"), function(val)
