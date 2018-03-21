@@ -341,102 +341,97 @@ mctrl.grab = {mode = nil, axis = nil}
 local GRAB_AND_CLONE = CreateClientConVar('pac_grab_clone', '1', true, false, 'Holding shift when moving or rotating a part creates its clone')
 
 function mctrl.GUIMousePressed(mc)
-	if mc == MOUSE_LEFT then
-		local target = mctrl.GetTarget()
-		if target:IsValid() then
+	if mc ~= MOUSE_LEFT then return end
+	local target = mctrl.GetTarget()
+	if not target:IsValid() then return end
+	local x, y = mctrl.GetMousePos()
+	local pos, ang = mctrl.GetTargetPos()
+	if not pos or not ang then return end
+	local forward, right, up = mctrl.GetAxes(ang)
+	local r = mctrl.GetCalculatedScale()
 
-			local x, y = mctrl.GetMousePos()
-			local pos, ang = mctrl.GetTargetPos()
-			local target = mctrl.GetTarget()
-			if pos and ang then
-				local forward, right, up = mctrl.GetAxes(ang)
-				local r = mctrl.GetCalculatedScale()
+	-- Movement
+	local axis
+	local dist = mctrl.grab_dist
 
-				-- Movement
-				local axis
-				local dist = mctrl.grab_dist
-
-				for i, v in pairs
-					{
-						[AXIS_X] = mctrl.VecToScreen(pos + forward * r),
-						[AXIS_Y] = mctrl.VecToScreen(pos + right * r),
-						[AXIS_Z] = mctrl.VecToScreen(pos + up * r),
-						[AXIS_VIEW] = mctrl.VecToScreen(pos)
-					}
-				do
-					local d = math.sqrt((v.x - x)^2 + (v.y - y)^2)
-					if d <= dist then
-						axis = i
-						dist = d
-					end
-				end
-
-				if axis then
-					mctrl.grab.mode = MODE_MOVE
-					mctrl.grab.axis = axis
-
-					if GRAB_AND_CLONE:GetBool() and input.IsShiftDown() and target:IsValid() then
-						local copy = target:Clone()
-						copy:SetParent(copy:GetParent())
-					end
-
-					return true
-				end
-
-				--[[ Scale
-				local axis
-				local dist = mctrl.grab_dist
-
-				for i, v in pairs
-					{
-						[AXIS_X] = mctrl.VecToScreen(pos + forward * r * mctrl.scale_pos),
-						[AXIS_Y] = mctrl.VecToScreen(pos + right * r * mctrl.scale_pos),
-						[AXIS_Z] = mctrl.VecToScreen(pos + up * r * mctrl.scale_pos)
-					}
-				do
-					local d = math.sqrt((v.x - x)^2 + (v.y - y)^2)
-					if d <= dist then
-						axis = i
-						dist = d
-					end
-				end
-
-				if axis then
-					mctrl.grab.mode = MODE_SCALE
-					mctrl.grab.axis = axis
-					return true
-				end]]
-
-				-- Rotation
-				local axis
-				local dist = mctrl.grab_dist
-				for i, v in pairs
-					{
-						[AXIS_X] = mctrl.VecToScreen(pos + forward * r * mctrl.angle_pos),
-						[AXIS_Y] = mctrl.VecToScreen(pos + right * r * mctrl.angle_pos),
-						[AXIS_Z] = mctrl.VecToScreen(pos + up * r * mctrl.angle_pos)
-					}
-				do
-					local d = math.sqrt((v.x - x)^2 + (v.y - y)^2)
-					if d <= dist then
-						axis = i
-						dist = d
-					end
-				end
-
-				if axis then
-					mctrl.grab.mode = MODE_ROTATE
-					mctrl.grab.axis = axis
-
-					if GRAB_AND_CLONE:GetBool() and input.IsShiftDown() and target:IsValid() then
-						local copy = target:Clone()
-						copy:SetParent(copy:GetParent())
-					end
-
-					return true
-				end
-			end
+	for i, v in pairs
+		{
+			[AXIS_X] = mctrl.VecToScreen(pos + forward * r),
+			[AXIS_Y] = mctrl.VecToScreen(pos + right * r),
+			[AXIS_Z] = mctrl.VecToScreen(pos + up * r),
+			[AXIS_VIEW] = mctrl.VecToScreen(pos)
+		}
+	do
+		local d = math.sqrt((v.x - x)^2 + (v.y - y)^2)
+		if d <= dist then
+			axis = i
+			dist = d
 		end
+	end
+
+	if axis then
+		mctrl.grab.mode = MODE_MOVE
+		mctrl.grab.axis = axis
+
+		if GRAB_AND_CLONE:GetBool() and input.IsShiftDown() then
+			local copy = target:Clone()
+			copy:SetParent(copy:GetParent())
+		end
+
+		return true
+	end
+
+	--[[ Scale
+	local axis
+	local dist = mctrl.grab_dist
+
+	for i, v in pairs
+		{
+			[AXIS_X] = mctrl.VecToScreen(pos + forward * r * mctrl.scale_pos),
+			[AXIS_Y] = mctrl.VecToScreen(pos + right * r * mctrl.scale_pos),
+			[AXIS_Z] = mctrl.VecToScreen(pos + up * r * mctrl.scale_pos)
+		}
+	do
+		local d = math.sqrt((v.x - x)^2 + (v.y - y)^2)
+		if d <= dist then
+			axis = i
+			dist = d
+		end
+	end
+
+	if axis then
+		mctrl.grab.mode = MODE_SCALE
+		mctrl.grab.axis = axis
+		return true
+	end]]
+
+	-- Rotation
+	local axis
+	local dist = mctrl.grab_dist
+	for i, v in pairs
+		{
+			[AXIS_X] = mctrl.VecToScreen(pos + forward * r * mctrl.angle_pos),
+			[AXIS_Y] = mctrl.VecToScreen(pos + right * r * mctrl.angle_pos),
+			[AXIS_Z] = mctrl.VecToScreen(pos + up * r * mctrl.angle_pos)
+		}
+	do
+		local d = math.sqrt((v.x - x)^2 + (v.y - y)^2)
+		if d <= dist then
+			axis = i
+			dist = d
+		end
+	end
+
+	if axis then
+		mctrl.grab.mode = MODE_ROTATE
+		mctrl.grab.axis = axis
+
+		if GRAB_AND_CLONE:GetBool() and input.IsShiftDown() then
+			local copy = target:Clone()
+			copy:SetParent(copy:GetParent())
+		end
+
+		return true
 	end
 end
 
