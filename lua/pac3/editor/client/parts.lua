@@ -45,7 +45,6 @@ function pace.ClearParts()
 end
 
 function pace.OnCreatePart(class_name, name, mdl)
-
 	if class_name ~= "group" and not next(pac.GetLocalParts()) then
 		pace.Call("CreatePart", "group")
 	end
@@ -94,6 +93,7 @@ function pace.OnCreatePart(class_name, name, mdl)
 	end
 
 	pace.RefreshTree()
+	return part
 end
 
 function pace.OnPartSelected(part, is_selecting)
