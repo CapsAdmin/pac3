@@ -20,6 +20,26 @@ net.Receive( "pac.TouchFlexes.ClientNotify", function( length, client )
 	end
 end )
 
+
+do -- Blood Color
+	util.AddNetworkString("pac.BloodColor")
+	net.Receive( "pac.BloodColor", function( length, ply )
+		local BloodColor = net.ReadInt( 6 )
+		BloodColor = math.Clamp( math.Round( BloodColor ), -2, 4 )
+		if( BloodColor == -2 or BloodColor == 4 )then  BloodColor = 0  end
+		
+		ply.pac_bloodcolor = BloodColor
+	end )
+
+	timer.Create("pac_setbloodcolor", 1, 0, function()
+		for _, Ply in pairs( player.GetAll() )do
+			if( Ply.pac_bloodcolor and Ply.pac_bloodcolor ~= Ply:GetBloodColor() )then
+				Ply:SetBloodColor( Ply.pac_bloodcolor )
+			end
+		end
+	end)
+end
+
 do -- button event
 	util.AddNetworkString("pac.AllowPlayerButtons")
 	net.Receive("pac.AllowPlayerButtons", function(length, client)

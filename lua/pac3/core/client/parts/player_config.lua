@@ -14,6 +14,13 @@ pac.SetPropertyGroup()
 	pac.GetSet(PART, "DrawPlayerOnDeath", false)
 	pac.GetSet(PART, "HidePhysgunBeam", false)
 	pac.GetSet(PART, "UseLegacyScale", false)
+	pac.GetSet(PART, "BloodColor", "BLOOD_COLOR_RED", { enums = {
+		["Don't Bleed"] 	= "DONT_BLEED";
+		["Red"] 			= "BLOOD_COLOR_RED";
+		["Yellow"] 			= "BLOOD_COLOR_YELLOW";
+		["Green"] 			= "BLOOD_COLOR_GREEN";
+		["Sparks"] 			= "BLOOD_COLOR_MECH";
+	}})
 pac.SetPropertyGroup(PART, "movement")
 	pac.GetSet(PART, "SprintSpeed", 0)
 	pac.GetSet(PART, "RunSpeed", 0)
@@ -81,9 +88,9 @@ end
 
 function PART:OnShow()
 	local ent = self:GetOwner()
-
+	self:SetBloodColor( self.BloodColor, true )
+	
 	if ent:IsValid() then
-
 		for _, field in pairs(self.ent_fields) do
 			self["Set" .. field](self, self[field])
 		end
@@ -91,21 +98,39 @@ function PART:OnShow()
 	end
 end
 
-
 function PART:OnThink()
 	local ent = self:GetOwner()
-
+	
 	if ent:IsValid() then
 		ent.pac_mute_footsteps = self.MuteFootsteps
 	end
 end
 
 function PART:OnHide()
-	local ent = self:GetOwner()
-
+	local ent = self:GetOwner()	
+	self:SetBloodColor( "BLOOD_COLOR_RED", true)
+	
 	if ent:IsValid() then
 		for key in pairs(self.ent_fields) do
 			ent[key] = nil
+		end
+	end
+end
+
+function PART:SetBloodColor( BloodColor, NoStore )
+	local Owner = self:GetOwner()
+	
+	if( not NoStore )then  
+		self.BloodColor = BloodColor
+	end
+	
+	if( Owner == pac.LocalPlayer )then
+		local BloodId = _G[ BloodColor ] or 0
+		
+		if( type( BloodId ) == "number" )then
+			net.Start("pac.BloodColor")
+				net.WriteInt( BloodId, 6 )
+			net.SendToServer()
 		end
 	end
 end
