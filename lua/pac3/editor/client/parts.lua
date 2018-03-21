@@ -193,7 +193,7 @@ do -- menu
 
 			for class_name, part in pairs(partsToShow) do
 				local newMenuEntry = menu:AddOption(L(class_name), function()
-					pace.Call("CreatePart", class_name)
+					pace.AddUndoPartCreation(pace.Call("CreatePart", class_name))
 				end)
 
 				if part.Icon then
@@ -236,7 +236,7 @@ do -- menu
 			for group, groupData in pairs(sortedTree) do
 				local sub, pnl = menu:AddSubMenu(groupData.name, function()
 					if groupData.hasPart then
-						pace.Call("CreatePart", group)
+						pace.AddUndoPartCreation(pace.Call("CreatePart", group))
 					end
 				end)
 
@@ -249,7 +249,7 @@ do -- menu
 				table.sort(groupData.parts, function(a, b) return a[1] < b[1] end)
 				for i, partData in ipairs(groupData.parts) do
 					local newMenuEntry = sub:AddOption(L(partData[1]:Replace('_', ' ')), function()
-						pace.Call("CreatePart", partData[1])
+						pace.AddUndoPartCreation(pace.Call("CreatePart", partData[1]))
 					end)
 
 					if partData[2].Icon then
@@ -260,7 +260,7 @@ do -- menu
 
 			for class_name, part in pairs(partsToShow) do
 				local newMenuEntry = menu:AddOption(L(class_name:Replace('_', ' ')), function()
-					pace.Call("CreatePart", class_name)
+					pace.AddUndoPartCreation(pace.Call("CreatePart", class_name))
 				end)
 
 				if part.Icon then
@@ -288,14 +288,17 @@ do -- menu
 			if pace.Clipboard then
 				local newObj = pace.Clipboard:Clone()
 				newObj:Attach(obj)
+				pace.AddUndoPartCreation(newObj)
 			end
 		end):SetImage(pace.MiscIcons.paste)
 
 		menu:AddOption(L"cut", function()
 			pace.Clipboard = obj
 			obj:DeattachFull()
+			pace.AddUndoPartRemoval(obj)
 		end):SetImage('icon16/cut.png')
 
+		-- needs proper undo
 		menu:AddOption(L"paste properties", function()
 			if pace.Clipboard then
 				local tbl = pace.Clipboard:ToTable()
@@ -311,7 +314,8 @@ do -- menu
 		end):SetImage(pace.MiscIcons.replace)
 
 		menu:AddOption(L"clone", function()
-			obj:Clone()
+			local part_ = obj:Clone()
+			pace.AddUndoPartCreation(part_)
 		end):SetImage(pace.MiscIcons.clone)
 
 		menu:AddSpacer()
@@ -319,11 +323,13 @@ do -- menu
 		menu:AddOption(L"collapse all", function()
 			obj:CallRecursive('SetEditorExpand', false)
 			pace.RefreshTree(true)
+			pace.AddUndoRecursive(obj, 'SetEditorExpand', true, false)
 		end):SetImage('icon16/arrow_in.png')
 
 		menu:AddOption(L"expand all", function()
 			obj:CallRecursive('SetEditorExpand', true)
 			pace.RefreshTree(true)
+			pace.AddUndoRecursive(obj, 'SetEditorExpand', false, true)
 		end):SetImage('icon16/arrow_down.png')
 
 		menu:AddSpacer()
@@ -344,8 +350,12 @@ do -- menu
 		menu:AddSpacer()
 
 		menu:AddOption(L"remove", function()
-			obj:Remove()
+			-- obj:Remove()
+			pace.AddUndoPartRemoval(obj)
+			obj:DeattachFull()
+
 			pace.RefreshTree()
+
 			if not obj:HasParent() and obj.ClassName == "group" then
 				pace.RemovePartOnServer(obj:GetUniqueID(), false, true)
 			end

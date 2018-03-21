@@ -900,6 +900,7 @@ do -- events
 	function PART:Deattach()
 		if not self.is_valid or self.is_deattached then return end
 		self.is_deattached = true
+		self.PlayerOwner_ = self.PlayerOwner
 
 		if self:GetPlayerOwner() == pac.LocalPlayer then
 			pac.CallHook("OnPartRemove", self)
@@ -935,6 +936,18 @@ do -- events
 		self.is_valid = true
 		self:CallRecursive("OnShow")
 		self:SetParent(parent)
+
+		if self.SetPlayerOwner then
+			self:SetPlayerOwner(self.PlayerOwner_)
+		end
+
+		timer.Simple(0.1, function()
+			if self:IsValid() and self.show_in_editor ~= false and self.PlayerOwner_ == pac.LocalPlayer then
+				pac.CallHook("OnPartCreated", self)
+			end
+		end)
+
+		pac.AddPart(self)
 	end
 
 	function PART:Remove(skip_removechild)

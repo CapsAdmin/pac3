@@ -503,6 +503,11 @@ function pac.GetPartFromUniqueID(owner_id, id)
 	return uid_parts[owner_id] and uid_parts[owner_id][id] or pac.NULL
 end
 
+function pac.GetLocalPart(id)
+	local owner_id = pac.LocalPlayer:UniqueID()
+	return uid_parts[owner_id] and uid_parts[owner_id][id] or pac.NULL
+end
+
 function pac.RemoveAllParts(owned_only, server)
 	if server and pace then
 		pace.RemovePartOnServer("__ALL__")

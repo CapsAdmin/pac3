@@ -158,7 +158,6 @@ function pace.LoadParts(name, clear, override_part)
 		pac.dprint("loading Parts %s",  name)
 
 		if name:find("https?://") then
-
 			name = pac.FixupURL(name)
 
 			local function callback(str)
@@ -167,6 +166,7 @@ function pace.LoadParts(name, clear, override_part)
 					ErrorNoHalt(("URL fail: %s : %s\n"):format(name,err))
 					return
 				end
+
 				pace.LoadPartsFromTable(data, clear, override_part)
 			end
 
@@ -227,6 +227,7 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 	end
 
 	pace.RefreshTree(true)
+	pace.ClearUndo()
 end
 
 local function add_files(tbl, dir)

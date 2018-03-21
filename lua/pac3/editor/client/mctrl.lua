@@ -376,6 +376,7 @@ function mctrl.GUIMousePressed(mc)
 		if GRAB_AND_CLONE:GetBool() and input.IsShiftDown() then
 			local copy = target:Clone()
 			copy:SetParent(copy:GetParent())
+			pace.AddUndoPartCreation(copy)
 		end
 
 		return true
@@ -429,6 +430,7 @@ function mctrl.GUIMousePressed(mc)
 		if GRAB_AND_CLONE:GetBool() and input.IsShiftDown() then
 			local copy = target:Clone()
 			copy:SetParent(copy:GetParent())
+			pace.AddUndoPartCreation(copy)
 		end
 
 		return true

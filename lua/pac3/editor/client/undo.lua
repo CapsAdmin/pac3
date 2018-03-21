@@ -20,19 +20,75 @@ function pace.CallChangeForUndo(part, key, val, delay)
 	last.part = part
 	last.delay = RealTime() + (delay or 0)
 
-	pace.AddUndo(part, function()
+	pace.AddUndo(part.UniqueID, function()
 		part["Set" .. key](part, val)
 	end)
 end
 
-function pace.AddUndo(callValid, callUndo, callRedo)
+do
+	local function generate(part_)
+		local parent = part_:GetParent().UniqueID
+
+		local function create()
+			part_:Attach(pac.GetLocalPart(parent))
+			pace.RefreshTree(true)
+		end
+
+		local function delete()
+			if part_:IsValid() then
+				part_:DeattachFull()
+				pace.RefreshTree(true)
+			end
+		end
+
+		return create, delete
+	end
+
+	function pace.AddUndoPartCreation(part_)
+		local create, delete = generate(part_)
+		pace.AddUndo(part_.UniqueID, delete, create)
+		return part_
+	end
+
+	function pace.AddUndoPartRemoval(part_)
+		local create, delete = generate(part_)
+		pace.AddUndo(part_.UniqueID, create, delete)
+		return part_
+	end
+
+	function pace.AddUndoRecursive(part_, funcToCall, whenUndo, whenRedo)
+		return pace.AddUndo(part_.UniqueID, function()
+			part_:CallRecursive(funcToCall, whenUndo)
+			pace.RefreshTree(true)
+		end, function()
+			part_:CallRecursive(funcToCall, whenRedo)
+			pace.RefreshTree(true)
+		end)
+	end
+end
+
+function pace.AddUndo(callValid, callUndo, callRedo, ...)
+	local partID
+
 	if type(callValid) == 'table' then
 		local part = callValid
 		callValid = function() return part:IsValid() end
 	elseif type(callValid) == 'nil' then
 		callValid = function() return true end
+	elseif type(callValid) == 'string' then
+		-- symbol link instead of hard link
+		partID = callValid
+		--callValid = function() return pac.GetLocalPart(partID):IsValid() end
+		callValid = function() return true end
 	elseif type(callValid) ~= 'function' then
 		error('Invalid validation function')
+	end
+
+	local argsNum = select('#', ...)
+	local argsArray
+
+	if argsNum ~= 0 then
+		argsArray = {...}
 	end
 
 	assert(type(callUndo) == 'function', 'Invalid undo function')
@@ -45,12 +101,34 @@ function pace.AddUndo(callValid, callUndo, callRedo)
 		pace.UndoHistory[i] = nil
 	end
 
+	if partID then
+		local oldUndo = callUndo
+		local oldRedo = callRedo
+
+		callUndo = function(...)
+			return oldUndo(pac.GetLocalPart(partID), ...)
+		end
+
+		callRedo = function(...)
+			return oldRedo(pac.GetLocalPart(partID), ...)
+		end
+	end
+
 	pace.UndoPosition = pace.UndoPosition + 1
 	pace.UndoHistory[pace.UndoPosition] = {
 		undo = callUndo,
 		redo = callRedo,
-		valid = callValid
+		valid = callValid,
+		argsArray = argsArray
 	}
+end
+
+function pace.ClearUndo()
+	pace.UndoHistory = {}
+	pace.UndoPosition = 1
+	pace.SuppressUndo = false
+
+	last = {}
 end
 
 function pace.ApplyUndo(redo)
@@ -59,10 +137,18 @@ function pace.ApplyUndo(redo)
 	if data and data.valid() then
 		pace.SuppressUndo = true
 
-		if redo then
-			data.redo()
+		if data.argsArray then
+			if redo then
+				data.redo(unpack(data.argsArray, 1, #data.argsArray))
+			else
+				data.undo(unpack(data.argsArray, 1, #data.argsArray))
+			end
 		else
-			data.undo()
+			if redo then
+				data.redo()
+			else
+				data.undo()
+			end
 		end
 
 		pace.SuppressUndo = false
@@ -77,13 +163,14 @@ function pace.ApplyUndo(redo)
 end
 
 function pace.Undo()
-	if pace.UndoPosition <= 1 then
+	if pace.UndoPosition <= 0 then
 		pace.FlashNotification('Nothing to undo')
 		return
 	end
 
-	pace.UndoPosition = pace.UndoPosition - 1
+	-- pace.UndoPosition = pace.UndoPosition - 1
 	pace.ApplyUndo(false)
+	pace.UndoPosition = pace.UndoPosition - 1
 end
 
 function pace.Redo()
@@ -166,6 +253,7 @@ local function thinkCut()
 	end
 
 	pace.Clipboard = part
+	pace.AddUndoPartRemoval(part)
 	part:DeattachFull()
 	surface.PlaySound("buttons/button9.wav")
 end
@@ -188,7 +276,8 @@ local function thinkDelete()
 		return
 	end
 
-	part:Remove()
+	pace.AddUndoPartRemoval(part)
+	part:DeattachFull()
 	surface.PlaySound("buttons/button9.wav")
 end
 
@@ -212,6 +301,7 @@ local function thinkExpandAll()
 	end
 
 	part:CallRecursive('SetEditorExpand', not REVERSE_COLLAPSE_CONTROLS:GetBool())
+	pace.AddUndoRecursive(obj, 'SetEditorExpand', REVERSE_COLLAPSE_CONTROLS:GetBool(), not REVERSE_COLLAPSE_CONTROLS:GetBool())
 	surface.PlaySound("buttons/button9.wav")
 	pace.RefreshTree(true)
 end
@@ -235,6 +325,7 @@ local function thinkCollapseAll()
 	end
 
 	part:CallRecursive('SetEditorExpand', REVERSE_COLLAPSE_CONTROLS:GetBool())
+	pace.AddUndoRecursive(obj, 'SetEditorExpand', not REVERSE_COLLAPSE_CONTROLS:GetBool(), REVERSE_COLLAPSE_CONTROLS:GetBool())
 	surface.PlaySound("buttons/button9.wav")
 	pace.RefreshTree(true)
 end
@@ -273,6 +364,7 @@ local function thinkPaste()
 	end
 
 	newObj:Attach(findParent)
+	pace.AddUndoPartCreation(newObj)
 	surface.PlaySound("buttons/button9.wav")
 end
 
