@@ -10,6 +10,8 @@ local util_TimerCycle = util.TimerCycle
 local FrameTime = FrameTime
 local NULL = NULL
 local pairs = pairs
+local force_rendering = false
+local forced_rendering = false
 
 local cvar_projected_texture = CreateClientConVar("pac_render_projected_texture", "0")
 
@@ -38,6 +40,13 @@ end
 ]]
 local function IsActuallyPlayer(ent)
 	return IsEntity(ent) and pcall(ent.UniqueID, ent)
+end
+
+function pac.ForceRendering(b)
+	force_rendering = b
+	if b then
+		forced_rendering = b
+	end
 end
 
 local ent_parts = {}
@@ -580,7 +589,6 @@ do -- drawing
 	pac.profile_info = {}
 	pac.profile = true
 
-
 	do
 		local draw_dist = 0
 		local sv_draw_dist = 0
@@ -598,6 +606,8 @@ do -- drawing
 			local current_frame_count = 0
 
 			return function()
+				if force_rendering then return end
+
 				if skip_frames:GetBool() then
 					local frame_number = FrameNumber()
 
@@ -705,7 +715,8 @@ do -- drawing
 							radius = radius * 4
 						end
 
-						local cond = draw_dist == -1 or
+						local cond =
+							draw_dist == -1 or
 							ent.IsPACWorldEntity or
 							(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or (ent.pac_camera and ent.pac_camera:IsValid())) or
 							ent ~= pac.LocalPlayer and
@@ -727,6 +738,11 @@ do -- drawing
 
 							pac.RenderOverride(ent, "opaque")
 						else
+							if forced_rendering then
+								forced_rendering = false
+								return
+							end
+
 							pac.HideEntityParts(ent)
 						end
 					end

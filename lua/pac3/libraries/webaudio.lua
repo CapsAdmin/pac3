@@ -939,8 +939,11 @@ end
 
 function webaudio.Panic()
 	for k,v in pairs(webaudio.streams) do
-		v:Remove()
+		if v:IsValid() then
+			v:Remove()
+		end
 	end
+	table.Empty(webaudio.streams)
 end
 
 function webaudio.GetStream(streamId)

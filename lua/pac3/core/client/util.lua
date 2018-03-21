@@ -533,14 +533,15 @@ do -- get set and editor vars
 	pac.PropertyUserdata = pac.PropertyUserdata or {}
 	pac.PropertyUserdata['base'] = pac.PropertyUserdata['base'] or {}
 	pac.NetworkDictionary = pac.NetworkDictionary or {}
-	pac.NetworkDictionaryBackward = pac.NetworkDictionaryBackward or {}
 
 	function pac.PrecacheNetwork(key)
-		if pac.NetworkDictionaryBackward[key] then return pac.NetworkDictionaryBackward[key] end
-
 		local crc = tostring(util.CRC(key))
+
+		if pac.NetworkDictionary[crc] and pac.NetworkDictionary[crc] ~= key then
+			error('CRC32 Collision! ' .. crc .. ' is same for ' ..  key .. ' and ' .. pac.NetworkDictionary[crc])
+		end
+
 		pac.NetworkDictionary[crc] = key
-		pac.NetworkDictionaryBackward[key] = crc
 		return crc
 	end
 

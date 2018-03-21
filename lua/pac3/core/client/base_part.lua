@@ -108,7 +108,8 @@ function PART:SetBlendMode(str)
 	if tbl[4] then dst_alpha = blend_modes[tbl[4]] end
 
 	if src_color and dst_color then
-		self.blend_override = {src_color, dst_color, src_alpha, dst_alpha, tbl[5]}
+		-- GMOD Bug: Blend overrides causing issues. Multicore rendering bug? https://github.com/Facepunch/garrysmod-issues/issues/3396
+		--self.blend_override = {src_color, dst_color, src_alpha, dst_alpha, tbl[5]}
 	else
 		self.blend_override = nil
 	end
@@ -736,6 +737,19 @@ do -- serializing
 		self:RemoveChildren()
 	end
 
+	function PART:IsBeingWorn()
+		return self.isBeingWorn
+	end
+
+	function PART:SetIsBeingWorn(status)
+		self.isBeingWorn = status
+		return self
+	end
+
+	function PART:OnWorn()
+		-- override
+	end
+
 	function PART:SetTable(tbl)
 		self.supress_part_name_find = true
 		self.delayed_variables = self.delayed_variables or {}
@@ -767,6 +781,7 @@ do -- serializing
 
 		for _, value in pairs(tbl.children) do
 			local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
+			part:SetIsBeingWorn(self:IsBeingWorn())
 			part:SetTable(value)
 			part:SetParent(self)
 		end
@@ -975,8 +990,7 @@ do -- drawing. this code is running every frame
 			if not self.HandleModifiersManually then self:ModifiersPreEvent('OnDraw', draw_type) end
 
 			if self.IgnoreZ then cam.IgnoreZ(true) end
-			-- GMOD Bug: Translucent parts don't play nicely with blend overrides. Multicore rendering bug?
-			if self.blend_override and not (self.Translucent == true or self.force_translucent == true) then
+			if self.blend_override then
 				render.OverrideBlendFunc(true,
 					self.blend_override[1],
 					self.blend_override[2],
