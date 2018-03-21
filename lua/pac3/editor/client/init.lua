@@ -222,7 +222,7 @@ concommand.Add("pac_toggle_tpose", function() pace.SetTPose(not pace.GetTPose())
 function pace.Call(str, ...)
 	if pace["On" .. str] then
 		if hook.Run("pace_On" .. str, ...) ~= false then
-			pace["On" .. str](...)
+			return pace["On" .. str](...)
 		end
 	else
 		ErrorNoHalt("missing function pace.On" .. str .. "!\n")
