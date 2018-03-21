@@ -78,7 +78,9 @@ function pace.OnCreatePart(class_name, name, mdl)
 		pace.SetViewPart(part)
 	end
 
-	pace.Call("PartSelected", part)
+	if not input.IsControlDown() then
+		pace.Call("PartSelected", part)
+	end
 
 	part.newly_created = true
 
@@ -185,6 +187,28 @@ end
 do -- menu
 	function pace.AddRegisteredPartsToMenu(menu)
 		local partsToShow = {}
+		local clicked = false
+
+		hook.Add('Think', menu, function()
+			local ctrl = input.IsControlDown()
+
+			if clicked and not ctrl then
+				menu:SetDeleteSelf(true)
+				RegisterDermaMenuForClose(menu)
+				CloseDermaMenus()
+				return
+			end
+
+			menu:SetDeleteSelf(not ctrl)
+		end)
+
+		hook.Add('CloseDermaMenus', menu, function()
+			clicked = true
+			if input.IsControlDown() then
+				menu:SetVisible(true)
+				RegisterDermaMenuForClose(menu)
+			end
+		end)
 
 		for class_name, part in pairs(pac.GetRegisteredParts()) do
 			local cond = (not pace.IsInBasicMode() or not pace.BasicParts[class_name]) and
@@ -255,16 +279,40 @@ do -- menu
 					pnl:SetImage(groupData.icon)
 				end
 
+				local trap = false
 				table.sort(groupData.parts, function(a, b) return a[1] < b[1] end)
 				for i, partData in ipairs(groupData.parts) do
 					local newMenuEntry = sub:AddOption(L(partData[1]:Replace('_', ' ')), function()
 						pace.AddUndoPartCreation(pace.Call("CreatePart", partData[1]))
+						trap = true
 					end)
 
 					if partData[2].Icon then
 						newMenuEntry:SetImage(partData[2].Icon)
 					end
 				end
+
+				hook.Add('Think', sub, function()
+					local ctrl = input.IsControlDown()
+
+					if clicked and not ctrl then
+						sub:SetDeleteSelf(true)
+						RegisterDermaMenuForClose(sub)
+						CloseDermaMenus()
+						return
+					end
+
+					sub:SetDeleteSelf(not ctrl)
+				end)
+
+				hook.Add('CloseDermaMenus', sub, function()
+					if input.IsControlDown() and trap then
+						trap = false
+						sub:SetVisible(true)
+					end
+
+					RegisterDermaMenuForClose(sub)
+				end)
 			end
 
 			for class_name, part in pairs(partsToShow) do
