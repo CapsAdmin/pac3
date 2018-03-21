@@ -661,6 +661,7 @@ do -- list
 							elseif T == "string" then
 								val = tostring(val)
 							end
+
 							pace.Call("VariableChanged", obj, key, val)
 						end
 

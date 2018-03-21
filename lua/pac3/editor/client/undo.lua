@@ -4,23 +4,33 @@ pace.UndoPosition = 1
 pace.SuppressUndo = false
 
 local last = {}
+local lastActive = false
 
-function pace.CallChangeForUndo(part, key, val, delay)
+function pace.CallChangeForUndo(part, key, oldVal, val, delay)
 	if pace.SuppressUndo or key == "Parent" then return end
-
-	if
-		(last.part == part and last.key == key) and
-		(last.val == val or (delay and last.delay > RealTime()))
-	then
-		return
-	end
+	if oldVal == val then return end
 
 	last.key = key
 	last.val = val
 	last.part = part
-	last.delay = RealTime() + (delay or 0)
+
+	if not last.delay or last.delay < RealTime() then
+		last.oldVal = oldVal
+	end
+
+	last.delay = RealTime() + (delay or 0.4)
+	lastActive = true
+end
+
+local function thinkLastChange()
+	if last.delay > RealTime() then return end
+	lastActive = false
+	local part, key, oldVal, val = last.part, last.key, last.oldVal, last.val
+	last = {}
 
 	pace.AddUndo(part.UniqueID, function()
+		part["Set" .. key](part, oldVal)
+	end, function()
 		part["Set" .. key](part, val)
 	end)
 end
@@ -378,6 +388,10 @@ function pace.UndoThink()
 	thinkDelete()
 	thinkExpandAll()
 	thinkCollapseAll()
+
+	if lastActive then
+		thinkLastChange()
+	end
 end
 
 pac.AddHook("Think", "pace_undo_Think", pace.UndoThink)

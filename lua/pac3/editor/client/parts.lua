@@ -127,10 +127,19 @@ function pace.OnPartSelected(part, is_selecting)
 end
 
 function pace.OnVariableChanged(obj, key, val, undo_delay)
+	local funcGet = obj["Get" .. key]
 	local func = obj["Set" .. key]
-	if not func then return end
+	if not func or not funcGet then return end
+	local oldValue = funcGet(obj)
 
-	timer.Create("pace_backup", 1, 1, function() pace.Backup() end)
+	local valType = type(val)
+	if valType == 'Vector' then
+		val = Vector(val)
+	elseif valType == 'Angle' then
+		val = Angle(val)
+	end
+
+	timer.Create("pace_backup", 1, 1, pace.Backup)
 
 	if key == "OwnerName" then
 		if val == "viewmodel" then
@@ -140,9 +149,9 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 		end
 	end
 
-	-- pace.CallChangeForUndo(obj, key, obj["Get" .. key](obj), undo_delay)
+	-- pace.CallChangeForUndo(obj, key, funcGet(obj), undo_delay)
 	func(obj, val)
-	pace.CallChangeForUndo(obj, key, obj["Get" .. key](obj), undo_delay)
+	pace.CallChangeForUndo(obj, key, oldValue, funcGet(obj), undo_delay)
 
 	local node = obj.editor_node
 	if IsValid(node) then
