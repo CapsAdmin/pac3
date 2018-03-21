@@ -666,10 +666,23 @@ do -- parenting
 
 	function PART:RemoveChildren()
 		self:InvalidateChildrenList()
+
 		for i, part in ipairs(self:GetChildren()) do
-			part:Deattach()
+			part:Remove(true)
 			self.Children[i] = nil
 			self.Children2[part] = nil
+		end
+	end
+
+	function PART:DeattachChildren()
+		self:InvalidateChildrenList()
+
+		for i, part in ipairs(self:GetChildren()) do
+			if part.owner_id and part.UniqueID then
+				pac.RemoveUniqueIDPart(part.owner_id, part.UniqueID)
+			end
+
+			pac.RemovePart(part)
 		end
 	end
 
@@ -901,6 +914,8 @@ do -- events
 
 		pac.RemovePart(self)
 		self.is_valid = false
+
+		self:DeattachChildren()
 	end
 
 	function PART:DeattachFull()
@@ -925,7 +940,7 @@ do -- events
 	function PART:Remove(skip_removechild)
 		self:Deattach()
 
-		if self:HasParent() then
+		if not skip_removechild and self:HasParent() then
 			self:GetParent():RemoveChild(self)
 		end
 
