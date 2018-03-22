@@ -184,35 +184,30 @@ do -- pace
 			-- pace.Call("VariableChanged", part, "Position", pos, false)
 
 			for i, child in ipairs(part:GetChildren()) do
-				-- child:SetPosition(child:GetPosition() + diffVector)
-				if child.GetPosition then
-					local diff = Vector(diffVector)
+				if child.GetAngles and child.GetPosition then
+					-- too complex, putting comments
+					-- getting part's bone position to use as one point of local coordinate system
+					local bpos, bang = child:GetBonePosition()
+					-- getting our groun calculated position
+					local gpos, gang = mctrl.GetTargetPos()
+					-- translating GROUP position to be relative to BONE's position
+					local lbpos, lbang = WorldToLocal(gpos, gang, bpos, bang)
+					-- now we have diff vector and angles between group position and part's bone position
+					-- let's get relative position of our part to group
+					local pos, ang = Vector(child:GetPosition()), Angle(child:GetAngles())
+					local lpos, lang = WorldToLocal(pos, ang, lbpos, lbang)
+					-- we finally got our position and angles! now rotate
+					lpos = lpos + diffVector
+					-- rotated, restore local positions to be relative to GROUP's LOCAL position (stack up)
+					local fpos, fang = LocalToWorld(lpos, lang, lbpos, lbang)
 
-					-- doesn't seem to affect anything?
-					-- rotate to local angle
-					if pac_group_move_rotate_mode:GetInt() == 1 then
-						diff:Rotate(child.GetAngles and child:GetAngles() or Angle(0, 0, 0))
-					-- rotate to part's absolute angle (world angle)
-					elseif pac_group_move_rotate_mode:GetInt() == 3 then
-						local pos, ang = child:GetDrawPosition()
-						diff:Rotate(ang or Angle(0, 0, 0))
-					-- rotate to part's bone angle (world bone angle)
-					elseif pac_group_move_rotate_mode:GetInt() == 2 then
-						local pos, ang = child:GetBonePosition()
-						diff:Rotate(ang or Angle(0, 0, 0))
-					end
-
-					pace.Call("VariableChanged", child, "Position", child:GetPosition() + diffVector, false)
+					pace.Call("VariableChanged", child, "Position", fpos, false)
 				end
 			end
 		end
 	end
 
 	local cvar_ang_grid = CreateClientConVar("pac_grid_ang_size", "45")
-
-	-- 0 - don't change
-	-- 1 - translate part to group local coordinates system, rotate, translate back
-	local pac_group_rotate_mode = CreateClientConVar("pac_group_rotate_mode", "1", true, false, 'Group subparts rotate mode')
 
 	function mctrl.OnRotate(part, ang)
 		if input.IsKeyDown(KEY_LCONTROL) then
@@ -234,35 +229,25 @@ do -- pace
 
 			for i, child in ipairs(part:GetChildren()) do
 				if child.GetAngles and child.GetPosition then
-					if pac_group_rotate_mode:GetInt() == 1 then
-						-- local pos, ang = child:GetDrawPosition()
-						-- local gpos, gang = mctrl.GetTargetPos()
-						-- local lpos, lang = WorldToLocal(pos, ang, gpos, gang)
-						-- lang = lang - diffAngle
-						-- lpos:Rotate(diffAngle)
+					-- too complex, putting comments
+					-- getting part's bone position to use as one point of local coordinate system
+					local bpos, bang = child:GetBonePosition()
+					-- getting our groun calculated position
+					local gpos, gang = mctrl.GetTargetPos()
+					-- translating GROUP position to be relative to BONE's position
+					local lbpos, lbang = WorldToLocal(gpos, gang, bpos, bang)
+					-- now we have diff vector and angles between group position and part's bone position
+					-- let's get relative position of our part to group
+					local pos, ang = Vector(child:GetPosition()), Angle(child:GetAngles())
+					local lpos, lang = WorldToLocal(pos, ang, lbpos, lbang)
+					-- we finally got our position and angles! now rotate
+					lpos:Rotate(-diffAngle)
+					lang = lang + diffAngle
+					-- rotated, restore local positions to be relative to GROUP's LOCAL position (stack up)
+					local fpos, fang = LocalToWorld(lpos, lang, lbpos, lbang)
 
-						-- too complex, putting comments
-						-- getting part's bone position to use as one point of local coordinate system
-						local bpos, bang = child:GetBonePosition()
-						-- getting our groun calculated position
-						local gpos, gang = mctrl.GetTargetPos()
-						-- translating GROUP position to be relative to BONE's position
-						local lbpos, lbang = WorldToLocal(gpos, gang, bpos, bang)
-						-- now we have diff vector and angles between group position and part's bone position
-						-- let's get relative position of our part to group
-						local pos, ang = Vector(child:GetPosition()), Angle(child:GetAngles())
-						local lpos, lang = WorldToLocal(pos, ang, lbpos, lbang)
-						-- we finally got our position and angles! now rotate
-						lpos:Rotate(-diffAngle)
-						lang = lang + diffAngle
-						-- rotated, restore local positions to be relative to GROUP's LOCAL position (stack up)
-						local fpos, fang = LocalToWorld(lpos, lang, lbpos, lbang)
-
-						pace.Call("VariableChanged", child, "Angles", fang, false)
-						pace.Call("VariableChanged", child, "Position", fpos, false)
-					else
-						pace.Call("VariableChanged", child, "Angles", child:GetAngles() - diffAngle, 0.25)
-					end
+					pace.Call("VariableChanged", child, "Angles", fang, false)
+					pace.Call("VariableChanged", child, "Position", fpos, false)
 				end
 			end
 		end
