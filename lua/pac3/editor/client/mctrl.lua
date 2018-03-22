@@ -153,12 +153,6 @@ do -- pace
 
 	local cvar_pos_grid = CreateClientConVar("pac_grid_pos_size", "4")
 
-	-- 0 - don't change diff vector
-	-- 1 - rotate diff vector to local part's angle
-	-- 2 - rotate diff vector to world's bone angle
-	-- 3 - rotate diff vector to world's part absolute angle
-	local pac_group_move_rotate_mode = CreateClientConVar("pac_group_move_rotate_mode", "3", true, false, 'Group subparts move mode')
-
 	function mctrl.OnMove(part, pos)
 		if input.IsKeyDown(KEY_LCONTROL) then
 			local num = cvar_pos_grid:GetInt("pac_grid_pos_size")
