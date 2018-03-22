@@ -311,7 +311,7 @@ local function thinkExpandAll()
 	end
 
 	part:CallRecursive('SetEditorExpand', not REVERSE_COLLAPSE_CONTROLS:GetBool())
-	pace.AddUndoRecursive(obj, 'SetEditorExpand', REVERSE_COLLAPSE_CONTROLS:GetBool(), not REVERSE_COLLAPSE_CONTROLS:GetBool())
+	pace.AddUndoRecursive(part, 'SetEditorExpand', REVERSE_COLLAPSE_CONTROLS:GetBool(), not REVERSE_COLLAPSE_CONTROLS:GetBool())
 	surface.PlaySound("buttons/button9.wav")
 	pace.RefreshTree(true)
 end
@@ -335,7 +335,7 @@ local function thinkCollapseAll()
 	end
 
 	part:CallRecursive('SetEditorExpand', REVERSE_COLLAPSE_CONTROLS:GetBool())
-	pace.AddUndoRecursive(obj, 'SetEditorExpand', not REVERSE_COLLAPSE_CONTROLS:GetBool(), REVERSE_COLLAPSE_CONTROLS:GetBool())
+	pace.AddUndoRecursive(part, 'SetEditorExpand', not REVERSE_COLLAPSE_CONTROLS:GetBool(), REVERSE_COLLAPSE_CONTROLS:GetBool())
 	surface.PlaySound("buttons/button9.wav")
 	pace.RefreshTree(true)
 end
