@@ -16,6 +16,17 @@ end
 
 local enable = CreateClientConVar("pac_enable_urltex", "1", true)
 local EMPTY_FUNC = function() end
+local function findFlag(url, flagID)
+	local startPos, endPos = url:find(flagID)
+	if not startPos then return url, false end
+
+	if url:sub(endPos + 1, endPos + 1) == ' ' or url:sub(startPos - 1, startPos - 1) == ' ' then
+		url = url:gsub(' ?' .. flagID .. ' ?', '')
+		return url, true
+	end
+
+	return url, false
+end
 
 function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size_hack, additionalData)
 	if size_hack == nil then
@@ -25,11 +36,32 @@ function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size
 	additionalData = additionalData or {}
 	shader = shader or "VertexLitGeneric"
 	if not enable:GetBool() then return end
+	local noclampS, noclamp, noclampT
 
+	url, noclampS = findFlag(url, 'noclamps')
+	url, noclampT = findFlag(url, 'noclampt')
+	url, noclamp = findFlag(url, 'noclamp')
 	url = pac.FixupURL(url)
+	local urlAddress = url
+	local urlIndex = url
 
-	if type(callback) == "function" and not skip_cache and urltex.Cache[url] then
-		local tex = urltex.Cache[url]
+	if noclamp then
+		urlIndex = urlIndex .. ' noclamp'
+	elseif noclampS then
+		urlIndex = urlIndex .. ' noclampS'
+	elseif noclampT then
+		urlIndex = urlIndex .. ' noclampT'
+	end
+
+	noclamp = noclamp or noclampS and noclampT
+
+	local renderTargetNeeded =
+		noclampS or
+		noclamp or
+		noclampT
+
+	if type(callback) == "function" and not skip_cache and urltex.Cache[urlIndex] then
+		local tex = urltex.Cache[urlIndex]
 		local mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), shader, additionalData)
 		mat:SetTexture("$basetexture", tex)
 		callback(mat, tex)
@@ -38,15 +70,21 @@ function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size
 
 	callback = callback or EMPTY_FUNC
 
-	if urltex.Queue[url] then
-		table.insert(urltex.Queue[url].callbacks, callback)
+	if urltex.Queue[urlIndex] then
+		table.insert(urltex.Queue[urlIndex].callbacks, callback)
 	else
-		urltex.Queue[url] = {
+		urltex.Queue[urlIndex] = {
+			url = urlAddress,
+			urlIndex = urlIndex,
 			callbacks = {callback},
 			tries = 0,
 			size = size,
 			size_hack = size_hack,
 			shader = shader,
+			noclampS = noclampS,
+			noclampT = noclampT,
+			noclamp = noclamp,
+			rt = renderTargetNeeded,
 			additionalData = additionalData
 		}
 	end
@@ -59,7 +97,7 @@ function urltex.Think()
 		for url, data in pairs(urltex.Queue) do
 			-- when the panel is gone start a new one
 			if not urltex.ActivePanel:IsValid() then
-				urltex.StartDownload(url, data)
+				urltex.StartDownload(data.url, data)
 			end
 		end
 		urltex.Busy = true
@@ -71,7 +109,6 @@ end
 timer.Create("urltex_queue", 0.1, 0, urltex.Think)
 
 function urltex.StartDownload(url, data)
-
 	if urltex.ActivePanel:IsValid() then
 		urltex.ActivePanel:Remove()
 	end
@@ -96,7 +133,7 @@ function urltex.StartDownload(url, data)
 				</style>
 
 				<body>
-					<img src="]] .. url .. [[" alt="" width="]] .. size..[[" height="]] .. size .. [[" />
+					<img src="]] .. url .. [[" alt="" width="]] .. size .. [[" height="]] .. size .. [[" />
 				</body>
 			]]
 		)
@@ -123,7 +160,7 @@ function urltex.StartDownload(url, data)
 			pac.dprint("material download %q timed out for good", url, timeoutNum)
 			hook.Remove("Think", id)
 			timer.Remove(id)
-			urltex.Queue[url] = nil
+			urltex.Queue[data.urlIndex] = nil
 		end
 	end
 
@@ -145,23 +182,59 @@ function urltex.StartDownload(url, data)
 			local html_mat = pnl:GetHTMLMaterial()
 
 			if html_mat then
-				local vertex_mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), data.shader, data.additionalData)
-
+				local crc = util.CRC(data.urlIndex .. SysTime())
+				local vertex_mat = CreateMaterial("pac3_urltex_" .. crc, data.shader, data.additionalData)
 				local tex = html_mat:GetTexture("$basetexture")
 				tex:Download()
 				vertex_mat:SetTexture("$basetexture", tex)
 				-- tex:Download()
 
-				urltex.Cache[url] = tex
+				urltex.Cache[data.urlIndex] = tex
 
 				pac.RemoveHook("Think", id)
 				timer.Remove(id)
-				urltex.Queue[url] = nil
+				urltex.Queue[data.urlIndex] = nil
+				local rt
+
+				if data.rt then
+					local textureFlags = 0
+					textureFlags = textureFlags + 4 -- clamp S
+					textureFlags = textureFlags + 8 -- clamp T
+					textureFlags = textureFlags + 16 -- anisotropic
+					textureFlags = textureFlags + 256 -- no mipmaps
+					-- textureFlags = textureFlags + 2048 -- Texture is procedural
+					textureFlags = textureFlags + 32768 -- Texture is a render target
+					-- textureFlags = textureFlags + 67108864 -- Usable as a vertex texture
+
+					if data.noclamp then
+						textureFlags = textureFlags - 4
+						textureFlags = textureFlags - 8
+					elseif data.noclampS then
+						textureFlags = textureFlags - 4
+					elseif data.noclampT then
+						textureFlags = textureFlags - 8
+					end
+
+					local vertex_mat2 = CreateMaterial("pac3_urltex_" .. crc .. '_hack', 'UnlitGeneric', data.additionalData)
+					vertex_mat2:SetTexture("$basetexture", tex)
+					rt = GetRenderTargetEx("pac3_urltex_" .. crc, size, size, RT_SIZE_NO_CHANGE, MATERIAL_RT_DEPTH_NONE, textureFlags, CREATERENDERTARGETFLAGS_UNFILTERABLE_OK, IMAGE_FORMAT_RGB888)
+					render.PushRenderTarget(rt)
+					render.Clear(0, 0, 0, 255, false, false)
+					cam.Start2D()
+					surface.SetMaterial(vertex_mat2)
+					surface.SetDrawColor(255, 255, 255)
+					surface.DrawTexturedRect(0, 0, size, size)
+					cam.End2D()
+					render.PopRenderTarget()
+					vertex_mat:SetTexture('$basetexture', rt)
+					urltex.Cache[data.urlIndex] = rt
+				end
+
 				timer.Simple(0, function() pnl:Remove() end)
 
 				if data.callbacks then
 					for i, callback in pairs(data.callbacks) do
-						callback(vertex_mat, tex)
+						callback(vertex_mat, rt or tex)
 					end
 				end
 			end
