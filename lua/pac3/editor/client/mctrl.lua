@@ -152,6 +152,7 @@ do -- pace
 	end
 
 	local cvar_pos_grid = CreateClientConVar("pac_grid_pos_size", "4")
+	local groupOriginalValues
 
 	function mctrl.OnMove(part, pos)
 		if input.IsKeyDown(KEY_LCONTROL) then
@@ -168,17 +169,24 @@ do -- pace
 				pace.PopulateProperties(part)
 			end)
 		else
+			local undo = {}
 			local diffVector = part.centrePosMV - pos
 			diffVector.y = -diffVector.y
-			--print(pos)
 			part.centrePosMV = pos
 			diffVector:Rotate(Angle(-180, -pac.LocalPlayer:EyeAngles().y, 0))
-			-- part.centrePosCTRL = pos
-			-- print(pos)
-			-- pace.Call("VariableChanged", part, "Position", pos, false)
 
 			for i, child in ipairs(part:GetChildren()) do
 				if child.GetAngles and child.GetPosition then
+					if not groupOriginalValues then
+						groupOriginalValues = {}
+
+						for i, child in ipairs(part:GetChildren()) do
+							if child.GetAngles and child.GetPosition then
+								groupOriginalValues[i] = Vector(child:GetPosition())
+							end
+						end
+					end
+
 					-- too complex, putting comments
 					-- getting part's bone position to use as one point of local coordinate system
 					local bpos, bang = child:GetBonePosition()
@@ -195,8 +203,29 @@ do -- pace
 					-- rotated, restore local positions to be relative to GROUP's LOCAL position (stack up)
 					local fpos, fang = LocalToWorld(lpos, lang, lbpos, lbang)
 
+					table.insert(undo, {
+						child,
+						Vector(groupOriginalValues[i]),
+						Vector(fpos),
+					})
+
 					pace.Call("VariableChanged", child, "Position", fpos, false)
 				end
+			end
+
+			if #undo ~= 0 then
+				timer.Create('pac3_apply_undo_func', 0.25, 1, function()
+					groupOriginalValues = nil
+					pace.AddUndo(nil, function()
+						for i, data in ipairs(undo) do
+							pace.Call("VariableChanged", data[1], "Position", data[2], false)
+						end
+					end, function()
+						for i, data in ipairs(undo) do
+							pace.Call("VariableChanged", data[1], "Position", data[3], false)
+						end
+					end)
+				end)
 			end
 		end
 	end
@@ -218,11 +247,22 @@ do -- pace
 				pace.PopulateProperties(part)
 			end)
 		else
+			local undo = {}
 			local diffAngle = part.centreAngle - ang
 			part.centreAngle = ang
 
 			for i, child in ipairs(part:GetChildren()) do
 				if child.GetAngles and child.GetPosition then
+					if not groupOriginalValues then
+						groupOriginalValues = {}
+
+						for i, child in ipairs(part:GetChildren()) do
+							if child.GetAngles and child.GetPosition then
+								groupOriginalValues[i] = {Vector(child:GetPosition()), Angle(child:GetAngles())}
+							end
+						end
+					end
+
 					-- too complex, putting comments
 					-- getting part's bone position to use as one point of local coordinate system
 					local bpos, bang = child:GetBonePosition()
@@ -240,9 +280,34 @@ do -- pace
 					-- rotated, restore local positions to be relative to GROUP's LOCAL position (stack up)
 					local fpos, fang = LocalToWorld(lpos, lang, lbpos, lbang)
 
+					table.insert(undo, {
+						child,
+						Angle(groupOriginalValues[i][2]),
+						Vector(groupOriginalValues[i][1]),
+						Angle(fang),
+						Vector(fpos),
+					})
+
 					pace.Call("VariableChanged", child, "Angles", fang, false)
 					pace.Call("VariableChanged", child, "Position", fpos, false)
 				end
+			end
+
+			if #undo ~= 0 then
+				timer.Create('pac3_apply_undo_func', 0.25, 1, function()
+					groupOriginalValues = nil
+					pace.AddUndo(nil, function()
+						for i, data in ipairs(undo) do
+							pace.Call("VariableChanged", data[1], "Angles", data[2], false)
+							pace.Call("VariableChanged", data[1], "Position", data[3], false)
+						end
+					end, function()
+						for i, data in ipairs(undo) do
+							pace.Call("VariableChanged", data[1], "Angles", data[4], false)
+							pace.Call("VariableChanged", data[1], "Position", data[5], false)
+						end
+					end)
+				end)
 			end
 		end
 	end
