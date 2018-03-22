@@ -252,7 +252,36 @@ function meta:ResetBoneMatrix()
 	end
 end
 
+function meta:__CheckLuaAnimationPatch()
+	if self:IsPlayer() then return end
+	if self.__luaAnimDrawFunc then return end
+
+	local oldRenderFunc = self.RenderOverride
+
+	function self.RenderOverride()
+		if self.LuaAnimations then
+			if self.__luaAnimLastFrame ~= FrameNumber() then
+				ProcessAnimations(self)
+				pac.ResetBones(self)
+				self.__luaAnimLastFrame = FrameNumber()
+			end
+
+			if oldRenderFunc then
+				oldRenderFunc(self)
+			else
+				self:DrawModel()
+			end
+		else
+			self.RenderOverride = oldRenderFunc
+			self.__luaAnimDrawFunc = nil
+		end
+	end
+
+	self.__luaAnimDrawFunc = self.RenderOverride
+end
+
 function meta:ResetLuaAnimation(sAnimation, fDieTime, fPower, fTimeScale)
+	self:__CheckLuaAnimationPatch()
 	local animtable = Animations[sAnimation]
 	if animtable then
 		self.LuaAnimations = self.LuaAnimations or {}
@@ -340,6 +369,7 @@ end
 
 -- Time is optional, sets the die time to CurTime() + fTime
 function meta:StopLuaAnimation(sAnimation, fTime)
+	self:__CheckLuaAnimationPatch()
 	local anims = self.LuaAnimations
 	if anims and anims[sAnimation] then
 		if fTime then
