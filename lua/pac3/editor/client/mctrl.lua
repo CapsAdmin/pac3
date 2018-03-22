@@ -22,7 +22,12 @@ do -- pace
 
 	function mctrl.SetTarget(part)
 		part = part or pac.NULL
-		if part:IsValid() and part.NonPhysical or part.HideGizmo then
+		if not part:IsValid() then
+			mctrl.target = pac.NULL
+			return
+		end
+
+		if (part.NonPhysical and part.ClassName ~= 'group') or part.HideGizmo then
 			mctrl.target = pac.NULL
 		else
 			mctrl.target = part
@@ -41,15 +46,27 @@ do -- pace
 
 	function mctrl.GetTargetPos()
 		local part = mctrl.GetTarget()
+
 		if part:IsValid() then
-			return part:GetDrawPosition()
+			if part.ClassName ~= 'group' then
+				return part:GetDrawPosition()
+			elseif part.centrePos then
+				return part.centrePos + part.centrePosMV, part.centreAngle
+			else
+				return part.centrePos, part.centreAngle
+			end
 		end
 	end
 
 	function mctrl.GetBonePos()
 		local part = mctrl.GetTarget()
+
 		if part:IsValid() then
-			return part:GetBonePosition()
+			if part.ClassName ~= 'group' then
+				return part:GetBonePosition()
+			else
+				return part.centrePos, Angle(0, 0, 0)
+			end
 		end
 	end
 
@@ -119,6 +136,10 @@ do -- pace
 			return 30
 		end
 
+		if part.ClassName == "group" then
+			return 45
+		end
+
 		if not part:IsValid() then return 3 end
 
 		local dist = (part.cached_pos:Distance(pace.GetViewPos()) / 50)
@@ -132,6 +153,12 @@ do -- pace
 
 	local cvar_pos_grid = CreateClientConVar("pac_grid_pos_size", "4")
 
+	-- 0 - don't change diff vector
+	-- 1 - rotate diff vector to local part's angle
+	-- 2 - rotate diff vector to world's bone angle
+	-- 3 - rotate diff vector to world's part absolute angle
+	local pac_group_move_rotate_mode = CreateClientConVar("pac_group_move_rotate_mode", "3", true, false, 'Group subparts move mode')
+
 	function mctrl.OnMove(part, pos)
 		if input.IsKeyDown(KEY_LCONTROL) then
 			local num = cvar_pos_grid:GetInt("pac_grid_pos_size")
@@ -140,13 +167,52 @@ do -- pace
 			pos.z = math.Round(pos.z/num) * num
 		end
 
-		pace.Call("VariableChanged", part, "Position", pos, 0.25)
-		timer.Create("pace_refresh_properties", 0.1, 1, function()
-			pace.PopulateProperties(part)
-		end)
+		if part.ClassName ~= 'group' then
+			pace.Call("VariableChanged", part, "Position", pos, 0.25)
+
+			timer.Create("pace_refresh_properties", 0.1, 1, function()
+				pace.PopulateProperties(part)
+			end)
+		else
+			local diffVector = part.centrePosMV - pos
+			diffVector.y = -diffVector.y
+			--print(pos)
+			part.centrePosMV = pos
+			diffVector:Rotate(Angle(-180, -pac.LocalPlayer:EyeAngles().y, 0))
+			-- part.centrePosCTRL = pos
+			-- print(pos)
+			-- pace.Call("VariableChanged", part, "Position", pos, false)
+
+			for i, child in ipairs(part:GetChildren()) do
+				-- child:SetPosition(child:GetPosition() + diffVector)
+				if child.GetPosition then
+					local diff = Vector(diffVector)
+
+					-- doesn't seem to affect anything?
+					-- rotate to local angle
+					if pac_group_move_rotate_mode:GetInt() == 1 then
+						diff:Rotate(child.GetAngles and child:GetAngles() or Angle(0, 0, 0))
+					-- rotate to part's absolute angle (world angle)
+					elseif pac_group_move_rotate_mode:GetInt() == 3 then
+						local pos, ang = child:GetDrawPosition()
+						diff:Rotate(ang or Angle(0, 0, 0))
+					-- rotate to part's bone angle (world bone angle)
+					elseif pac_group_move_rotate_mode:GetInt() == 2 then
+						local pos, ang = child:GetBonePosition()
+						diff:Rotate(ang or Angle(0, 0, 0))
+					end
+
+					pace.Call("VariableChanged", child, "Position", child:GetPosition() + diffVector, false)
+				end
+			end
+		end
 	end
 
 	local cvar_ang_grid = CreateClientConVar("pac_grid_ang_size", "45")
+
+	-- 0 - don't change
+	-- 1 - translate part to group local coordinates system, rotate, translate back
+	local pac_group_rotate_mode = CreateClientConVar("pac_group_rotate_mode", "1", true, false, 'Group subparts rotate mode')
 
 	function mctrl.OnRotate(part, ang)
 		if input.IsKeyDown(KEY_LCONTROL) then
@@ -156,10 +222,50 @@ do -- pace
 			ang.r = math.Round(ang.r/num) * num
 		end
 
-		pace.Call("VariableChanged", part, "Angles", ang, 0.25)
-		timer.Create("pace_refresh_properties", 0.1, 1, function()
-			pace.PopulateProperties(part)
-		end)
+		if part.ClassName ~= 'group' then
+			pace.Call("VariableChanged", part, "Angles", ang, 0.25)
+
+			timer.Create("pace_refresh_properties", 0.1, 1, function()
+				pace.PopulateProperties(part)
+			end)
+		else
+			local diffAngle = part.centreAngle - ang
+			part.centreAngle = ang
+
+			for i, child in ipairs(part:GetChildren()) do
+				if child.GetAngles and child.GetPosition then
+					if pac_group_rotate_mode:GetInt() == 1 then
+						-- local pos, ang = child:GetDrawPosition()
+						-- local gpos, gang = mctrl.GetTargetPos()
+						-- local lpos, lang = WorldToLocal(pos, ang, gpos, gang)
+						-- lang = lang - diffAngle
+						-- lpos:Rotate(diffAngle)
+
+						-- too complex, putting comments
+						-- getting part's bone position to use as one point of local coordinate system
+						local bpos, bang = child:GetBonePosition()
+						-- getting our groun calculated position
+						local gpos, gang = mctrl.GetTargetPos()
+						-- translating GROUP position to be relative to BONE's position
+						local lbpos, lbang = WorldToLocal(gpos, gang, bpos, bang)
+						-- now we have diff vector and angles between group position and part's bone position
+						-- let's get relative position of our part to group
+						local pos, ang = Vector(child:GetPosition()), Angle(child:GetAngles())
+						local lpos, lang = WorldToLocal(pos, ang, lbpos, lbang)
+						-- we finally got our position and angles! now rotate
+						lpos:Rotate(-diffAngle)
+						lang = lang + diffAngle
+						-- rotated, restore local positions to be relative to GROUP's LOCAL position (stack up)
+						local fpos, fang = LocalToWorld(lpos, lang, lbpos, lbang)
+
+						pace.Call("VariableChanged", child, "Angles", fang, false)
+						pace.Call("VariableChanged", child, "Position", fpos, false)
+					else
+						pace.Call("VariableChanged", child, "Angles", child:GetAngles() - diffAngle, 0.25)
+					end
+				end
+			end
+		end
 	end
 
 end
@@ -204,8 +310,10 @@ end
 
 function mctrl.CalculateMovement(axis, x, y, offset)
 	local target = mctrl.GetTarget()
+
 	if target:IsValid() then
 		local pos, ang = mctrl.GetTargetPos()
+
 		if pos and ang then
 			local forward, right, up = mctrl.GetAxes(ang)
 
@@ -308,8 +416,10 @@ end
 
 function mctrl.Move(axis, x, y, offset)
 	local target = mctrl.GetTarget()
+
 	if target:IsValid() then
 		local pos = mctrl.CalculateMovement(axis, x, y, offset)
+
 		if pos then
 			mctrl.OnMove(target, pos)
 		end
@@ -512,47 +622,46 @@ function mctrl.HUDPaint()
 	if not target then return end
 
 	local pos, ang = mctrl.GetTargetPos()
-	if pos and ang then
-		local forward, right, up = mctrl.GetAxes(ang)
+	if not pos or not ang then return end
+	local forward, right, up = mctrl.GetAxes(ang)
 
-		local radius = mctrl.GetCalculatedScale()
-		local origin = mctrl.VecToScreen(pos)
-		local forward_point = mctrl.VecToScreen(pos + forward * radius)
-		local right_point = mctrl.VecToScreen(pos + right * radius)
-		local up_point = mctrl.VecToScreen(pos + up * radius)
+	local radius = mctrl.GetCalculatedScale()
+	local origin = mctrl.VecToScreen(pos)
+	local forward_point = mctrl.VecToScreen(pos + forward * radius)
+	local right_point = mctrl.VecToScreen(pos + right * radius)
+	local up_point = mctrl.VecToScreen(pos + up * radius)
 
-		if origin.visible or forward_point.visible or right_point.visible or up_point.visible then
-			if mctrl.grab.axis == AXIS_X or mctrl.grab.axis == AXIS_VIEW then
-				surface.SetDrawColor(255, 200, 0, 255)
-			else
-				surface.SetDrawColor(255, 80, 80, 255)
-			end
-			mctrl.LineToBox(origin, forward_point)
-			--mctrl.LineToBox(o, mctrl.VecToScreen(pos + forward * r * mctrl.scale_pos), 8)
-			mctrl.RotationLines(pos, forward, up, radius)
-
-
-			if mctrl.grab.axis == AXIS_Y or mctrl.grab.axis == AXIS_VIEW then
-				surface.SetDrawColor(255, 200, 0, 255)
-			else
-				surface.SetDrawColor(80, 255, 80, 255)
-			end
-			mctrl.LineToBox(origin, right_point)
-			--mctrl.LineToBox(o, mctrl.VecToScreen(pos + right * r * mctrl.scale_pos), 8)
-			mctrl.RotationLines(pos, right, forward, radius)
-
-			if mctrl.grab.axis == AXIS_Z or mctrl.grab.axis == AXIS_VIEW then
-				surface.SetDrawColor(255, 200, 0, 255)
-			else
-				surface.SetDrawColor(80, 80, 255, 255)
-			end
-			mctrl.LineToBox(origin, up_point)
-			--mctrl.LineToBox(o, mctrl.VecToScreen(pos + up * r * mctrl.scale_pos), 8)
-			mctrl.RotationLines(pos, up, right, radius)
-
+	if origin.visible or forward_point.visible or right_point.visible or up_point.visible then
+		if mctrl.grab.axis == AXIS_X or mctrl.grab.axis == AXIS_VIEW then
 			surface.SetDrawColor(255, 200, 0, 255)
-			DrawCircleEx(origin.x, origin.y, 4, 32, 2)
+		else
+			surface.SetDrawColor(255, 80, 80, 255)
 		end
+		mctrl.LineToBox(origin, forward_point)
+		--mctrl.LineToBox(o, mctrl.VecToScreen(pos + forward * r * mctrl.scale_pos), 8)
+		mctrl.RotationLines(pos, forward, up, radius)
+
+
+		if mctrl.grab.axis == AXIS_Y or mctrl.grab.axis == AXIS_VIEW then
+			surface.SetDrawColor(255, 200, 0, 255)
+		else
+			surface.SetDrawColor(80, 255, 80, 255)
+		end
+		mctrl.LineToBox(origin, right_point)
+		--mctrl.LineToBox(o, mctrl.VecToScreen(pos + right * r * mctrl.scale_pos), 8)
+		mctrl.RotationLines(pos, right, forward, radius)
+
+		if mctrl.grab.axis == AXIS_Z or mctrl.grab.axis == AXIS_VIEW then
+			surface.SetDrawColor(255, 200, 0, 255)
+		else
+			surface.SetDrawColor(80, 80, 255, 255)
+		end
+		mctrl.LineToBox(origin, up_point)
+		--mctrl.LineToBox(o, mctrl.VecToScreen(pos + up * r * mctrl.scale_pos), 8)
+		mctrl.RotationLines(pos, up, right, radius)
+
+		surface.SetDrawColor(255, 200, 0, 255)
+		DrawCircleEx(origin.x, origin.y, 4, 32, 2)
 	end
 end
 

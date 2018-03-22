@@ -126,6 +126,45 @@ function pace.OnPartSelected(part, is_selecting)
 	if not is_selecting then
 		pace.StopSelect()
 	end
+
+	if part.ClassName == 'group' then
+		if #part:GetChildrenList() ~= 0 then
+			local position
+
+			for i, child in ipairs(part:GetChildrenList()) do
+				if not position then
+					local pos = child:GetDrawPosition()
+
+					if not position then
+						position = pos
+					else
+						position = LerpVector(0.5, position, pos)
+					end
+				end
+			end
+
+			if not position then
+				-- wtf
+				part.centreAngle = nil
+				part.centrePosMV = nil
+				part.centrePosCTRL = nil
+				part.centrePosO = nil
+				part.centrePos = nil
+			else
+				part.centrePos = Vector(position)
+				part.centrePosO = Vector(position)
+				part.centrePosMV = Vector()
+				part.centrePosCTRL = Vector()
+				part.centreAngle = Angle(0, pac.LocalPlayer:EyeAngles().y, 0)
+			end
+		else
+			part.centrePos = nil
+			part.centrePosO = nil
+			part.centrePosMV = nil
+			part.centrePosCTRL = nil
+			part.centreAngle = nil
+		end
+	end
 end
 
 function pace.OnVariableChanged(obj, key, val, undo_delay)
@@ -153,7 +192,10 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 
 	-- pace.CallChangeForUndo(obj, key, funcGet(obj), undo_delay)
 	func(obj, val)
-	pace.CallChangeForUndo(obj, key, oldValue, funcGet(obj), undo_delay)
+
+	if undo_delay ~= false then
+		pace.CallChangeForUndo(obj, key, oldValue, funcGet(obj), undo_delay)
+	end
 
 	local node = obj.editor_node
 	if IsValid(node) then
