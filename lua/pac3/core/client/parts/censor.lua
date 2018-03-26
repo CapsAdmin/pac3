@@ -33,7 +33,7 @@ local function create_rt(self)
 		MATERIAL_RT_DEPTH_NONE,
 		self.BlurFiltering and 2 or 1, -- TEXTUREFLAGS_POINTSAMPLE,
 		CREATERENDERTARGETFLAGS_AUTOMIPMAP,
-		IMAGE_FORMAT_RGB888
+		IMAGE_FORMAT_RGB565
 	)
 
 	collectgarbage()
@@ -45,8 +45,12 @@ function PART:SetBlurFiltering(b)
 end
 
 function PART:SetResolution(num)
+	local old = self.Resolution
 	self.Resolution = math.Clamp(num, 4, 1024)
-	create_rt(self)
+
+	if math.Round(old) ~= math.Round(self.Resolution) then
+		create_rt(self)
+	end
 end
 
 function PART:OnDraw(owner, pos, ang)

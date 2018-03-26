@@ -850,6 +850,7 @@ function PART:OnThink()
 	local parent = self:GetTarget()
 
 	if not parent:IsValid() then return end
+	if parent.ClassName == 'woohoo' then return end
 
 	self:CalcVelocity()
 
