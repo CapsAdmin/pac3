@@ -48,7 +48,7 @@ function PART:SetResolution(num)
 	local old = self.Resolution
 	self.Resolution = math.Clamp(num, 4, 1024)
 
-	if math.Round(old) ~= math.Round(self.Resolution) then
+	if not old or math.Round(old) ~= math.Round(self.Resolution) then
 		create_rt(self)
 	end
 end
