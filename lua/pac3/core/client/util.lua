@@ -185,6 +185,7 @@ do --dev util
 
 			_G.pac = nil
 			_G.pace = nil
+			_G.pacx = nil
 
 			collectgarbage()
 		end
