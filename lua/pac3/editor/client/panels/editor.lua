@@ -313,7 +313,7 @@ function PANEL:PaintOver(w, h)
 	local mx, my = gui.MousePos()
 	local cx, cy = self:LocalToScreen(x, y)
 
-	if cx <= mx and cy <= my and mx <= cx + w - 5 and my <= cy + RENDERSCORE_SIZE - 1 then
+	if cx <= mx and cy <= my and mx <= cx + w - 5 and my <= cy + RENDERSCORE_SIZE - 1 and self:IsChildHovered() then
 		drawProfileInfos = FrameNumber()
 	end
 
