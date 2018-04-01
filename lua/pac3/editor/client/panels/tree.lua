@@ -132,6 +132,29 @@ local function install_expand(node)
 			return old(self, b, ...)
 		end
 	end
+
+	local old = node.Expander.OnMousePressed
+	node.Expander.OnMousePressed = function(pnl, code, ...)
+		old(pnl, code, ...)
+
+		if code == MOUSE_RIGHT then
+			local menu = DermaMenu()
+			menu:SetPos(gui.MousePos())
+			menu:MakePopup()
+
+			menu:AddOption(L"collapse all", function()
+				node.part:CallRecursive('SetEditorExpand', false)
+				pace.RefreshTree(true)
+				pace.AddUndoRecursive(node.part, 'SetEditorExpand', true, false)
+			end):SetImage('icon16/arrow_in.png')
+
+			menu:AddOption(L"expand all", function()
+				node.part:CallRecursive('SetEditorExpand', true)
+				pace.RefreshTree(true)
+				pace.AddUndoRecursive(node.part, 'SetEditorExpand', false, true)
+			end):SetImage('icon16/arrow_down.png')
+		end
+	end
 end
 
 local fix_folder_funcs = function(tbl)
