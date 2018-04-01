@@ -718,6 +718,26 @@ PART.Inputs = {
 
 		return (b - a) * m + a
 	end,
+
+	feedback = function(self)
+		if not self.feedback then return 0 end
+		return self.feedback[1] or 0
+	end,
+
+	feedback_x = function(self)
+		if not self.feedback then return 0 end
+		return self.feedback[1] or 0
+	end,
+
+	feedback_y = function(self)
+		if not self.feedback then return 0 end
+		return self.feedback[2] or 0
+	end,
+
+	feedback_z = function(self)
+		if not self.feedback then return 0 end
+		return self.feedback[3] or 0
+	end,
 }
 
 net.Receive("pac_proxy", function()
@@ -885,6 +905,11 @@ function PART:OnThink()
 				z = self.vec_additive[3]
 			end
 		end
+
+		self.feedback = self.feedback or {}
+		self.feedback[1] = x
+		self.feedback[2] = y
+		self.feedback[3] = z
 
 		if self.AffectChildren then
 			for _, part in ipairs(self:GetChildren()) do
