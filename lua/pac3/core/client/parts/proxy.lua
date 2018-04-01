@@ -467,18 +467,14 @@ PART.Inputs = {
 
 	command = function(self, index)
 		local ply = self:GetPlayerOwner()
-		local events = ply.pac_proxy_events
+		if ply.pac_proxy_events then
+			local data = ply.pac_proxy_events[self.Name]
+			if data then
+				data.x = data.x or 0
+				data.y = data.y or 0
+				data.z = data.z or 0
 
-		if events then
-			for key, data in pairs(events) do
-				if data.name == self.Name then
-
-					data.x = data.x or 0
-					data.y = data.y or 0
-					data.z = data.z or 0
-
-					return data.x, data.y, data.z
-				end
+				return data.x, data.y, data.z
 			end
 		end
 
