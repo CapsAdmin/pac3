@@ -1,5 +1,53 @@
 pac = pac or {}
 
+do
+	local pac_enable = CreateClientConVar("pac_enable", "1",true)
+	local pac_enable_bool = pac_enable:GetBool()
+
+	cvars.AddChangeCallback("pac_enable", function(_, _, new)
+		if (tonumber(new) or 0)>=1 then
+			pac.Enable()
+		else
+			pac.Disable()
+		end
+	end)
+
+	function pac.IsEnabled()
+		return pac_enable_bool
+	end
+
+	function pac.Enable()
+		-- add all the hooks back
+		for _, data in pairs(pac.added_hooks) do
+			hook.Add(data.event_name, data.id, data.func)
+		end
+
+		pac.CallHook("Enable")
+
+		pac_enable_bool = true
+	end
+
+	function pac.Disable()
+		-- turn off all parts
+		for key, ent in pairs(pac.drawn_entities) do
+			if ent:IsValid() then
+				pac.DisableEntity(ent)
+			else
+				pac.drawn_entities[key] = nil
+			end
+		end
+
+		-- disable all hooks
+		for _, data in pairs(pac.added_hooks) do
+			hook.Remove(data.event_name, data.id)
+		end
+
+		pac.CallHook("Disable")
+
+		pac_enable_bool = false
+	end
+end
+
 include("util.lua")
 
 pac.NULL = include("pac3/libraries/null.lua")
@@ -40,33 +88,6 @@ include("owner_name.lua")
 include("integration_tools.lua")
 
 pac.LoadParts()
-
-function pac.Enable()
-	-- add all the hooks back
-	for _, data in pairs(pac.added_hooks) do
-		hook.Add(data.event_name, data.id, data.func)
-	end
-
-	pac.CallHook("Enable")
-end
-
-function pac.Disable()
-	-- turn off all parts
-	for key, ent in pairs(pac.drawn_entities) do
-		if ent:IsValid() then
-			pac.DisableEntity(ent)
-		else
-			pac.drawn_entities[key] = nil
-		end
-	end
-
-	-- disable all hooks
-	for _, data in pairs(pac.added_hooks) do
-		hook.Remove(data.event_name, data.id)
-	end
-
-	pac.CallHook("Disable")
-end
 
 do
 	local pac_friendonly = CreateClientConVar("pac_friendonly", 0, true)
