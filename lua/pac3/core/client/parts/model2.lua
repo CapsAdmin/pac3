@@ -16,6 +16,7 @@ local Color = Color
 
 local PART = {}
 
+PART.Name = "model"
 PART.ClassName = "model2"
 PART.Category = "model"
 PART.ManualDraw = true
@@ -551,6 +552,7 @@ pac.RegisterPart(PART)
 do
 	local PART = {}
 
+	PART.Name = "entity"
 	PART.ClassName = "entity2"
 	PART.Base = "model2"
 	PART.Category = "model"

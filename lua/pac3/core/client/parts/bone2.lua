@@ -7,6 +7,7 @@ end
 
 local PART = {}
 
+PART.Name = "bone"
 PART.ClassName = "bone2"
 PART.Group = 'pac4'
 PART.Icon = 'icon16/connect.png'

@@ -267,7 +267,7 @@ do -- menu
 			table.sort(partsToShow)
 
 			for class_name, part in pairs(partsToShow) do
-				local newMenuEntry = menu:AddOption(L(class_name), function()
+				local newMenuEntry = menu:AddOption(L(part.Name or class_name), function()
 					pace.AddUndoPartCreation(pace.Call("CreatePart", class_name))
 				end)
 
@@ -324,13 +324,21 @@ do -- menu
 				local trap = false
 				table.sort(groupData.parts, function(a, b) return a[1] < b[1] end)
 				for i, partData in ipairs(groupData.parts) do
-					local newMenuEntry = sub:AddOption(L(partData[1]:Replace('_', ' ')), function()
+					local newMenuEntry = sub:AddOption(L(partData[2].Name or partData[1]:Replace('_', ' ')), function()
 						pace.AddUndoPartCreation(pace.Call("CreatePart", partData[1]))
 						trap = true
 					end)
 
 					if partData[2].Icon then
 						newMenuEntry:SetImage(partData[2].Icon)
+
+						if group == "pac4" then
+							local mat = Material(pace.GroupsIcons.pac4)
+							newMenuEntry.m_Image.PaintOver = function(_, w,h)
+								surface.SetMaterial(mat)
+								surface.DrawTexturedRect(2,6,13,13)
+							end
+						end
 					end
 				end
 

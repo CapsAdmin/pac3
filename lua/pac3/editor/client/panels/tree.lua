@@ -277,6 +277,17 @@ function PANEL:PopulateParts(node, parts, children)
 				part_node.Icon:SetImage(part.Icon)
 			end
 
+			if part.Group == "pac4" then
+				local mat = Material(pace.GroupsIcons.pac4)
+				local old = part_node.Icon.PaintOver
+				part_node.Icon.PaintOver = function(_, w,h)
+					local b = old and old(_,w,h)
+					surface.SetMaterial(mat)
+					surface.DrawTexturedRect(2,6,13,13)
+					return b
+				end
+			end
+
 			self:PopulateParts(part_node, part:GetChildren(), true)
 
 			if part.newly_created then

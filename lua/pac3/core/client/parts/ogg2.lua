@@ -2,6 +2,7 @@ local webaudio = include("pac3/libraries/webaudio.lua")
 pac.webaudio2 = webaudio
 local PART = {}
 
+PART.Name = "sound"
 PART.ClassName = "sound2"
 PART.NonPhysical = true
 PART.Group = 'pac4'

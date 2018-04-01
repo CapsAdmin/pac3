@@ -5,6 +5,7 @@ local IsEntity = IsEntity
 
 local PART = {}
 
+PART.Name = "clip"
 PART.ClassName = "clip2"
 PART.Group = "pac4"
 PART.Icon = 'icon16/cut.png'
