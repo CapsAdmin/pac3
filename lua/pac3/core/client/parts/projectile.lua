@@ -69,6 +69,7 @@ pac.StartStorableVars()
 	})
 	pac.GetSet(PART, "Spread", 0)
 	pac.GetSet(PART, "Delay", 0)
+	pac.GetSet(PART, "Maximum", 0)
 	pac.GetSet(PART, "Mass", 100)
 	pac.GetSet(PART, "Attract", 0)
 	pac.GetSet(PART, "AttractMode", "projectile_nearest", {enums = {
@@ -154,13 +155,23 @@ function PART:Shoot(pos, ang)
 	else
 		self.projectiles = self.projectiles or {}
 
+		local count = 0
+
 		for key, ent in pairs(self.projectiles) do
 			if not ent:IsValid() then
 				self.projectiles[key] = nil
+			else
+				count = count + 1
 			end
 		end
 
-		if table.Count(self.projectiles) >= 100 then
+		local max = math.min(self.Maximum, 100)
+
+		if max == 0 then
+			max = 100
+		end
+
+		if count > max then
 			return
 		end
 
@@ -273,7 +284,10 @@ function PART:Shoot(pos, ang)
 end
 
 function PART:OnRemove()
-	if self.projectiles then
+	if self.Physical then
+		net.Start("pac_projectile_remove_all")
+		net.SendToServer()
+	elseif self.projectiles then
 		for key, ent in pairs(self.projectiles) do
 			SafeRemoveEntity(ent)
 		end
@@ -281,9 +295,13 @@ function PART:OnRemove()
 		self.projectiles = {}
 	end
 end
-
-PART.OnHide = OnRemove
-
+--[[
+function PART:OnHide()
+	if self.RemoveOnHide then
+		self:OnRemove()
+	end
+end
+]]
 do -- physical
 	local Entity = Entity
 	local projectiles = {}

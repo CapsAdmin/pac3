@@ -364,6 +364,14 @@ do -- projectile entity
 				end)
 			end
 		end
+
+		function ENT:OnRemove()
+			if IsValid(self.pac_projectile_owner) then
+				local ply = self.pac_projectile_owner
+				ply.pac_projectiles = ply.pac_projectiles or {}
+				ply.pac_projectiles[self] = nil
+			end
+		end
 	end
 
 	scripted_ents.Register(ENT, ENT.ClassName)
@@ -376,6 +384,15 @@ if SERVER then
 
 	util.AddNetworkString("pac_projectile")
 	util.AddNetworkString("pac_projectile_attach")
+	util.AddNetworkString("pac_projectile_remove_all")
+
+	net.Receive("pac_projectile_remove_all", function(len, ply)
+		ply.pac_projectiles = ply.pac_projectiles or {}
+		for k,v in pairs(ply.pac_projectiles) do
+			SafeRemoveEntity(v)
+		end
+		ply.pac_projectiles = {}
+	end)
 
 	net.Receive("pac_projectile", function(len, ply)
 		if not enable:GetBool() then return end
@@ -411,6 +428,12 @@ if SERVER then
 		local function spawn()
 			if not ply:IsValid() then return end
 
+			ply.pac_projectiles = ply.pac_projectiles or {}
+
+			if part.Maximum > 0 and table.Count(ply.pac_projectiles) >= part.Maximum then
+				return
+			end
+
 			local ent = ents.Create("pac_projectile")
 			SafeRemoveEntityDelayed(ent,math.Clamp(part.LifeTime, 0, 10))
 
@@ -437,6 +460,10 @@ if SERVER then
 				net.WriteInt(ent:EntIndex(), 16)
 				net.WriteString(part.UniqueID)
 			net.Broadcast()
+
+			ply.pac_projectiles[ent] = ent
+
+			ent.pac_projectile_owner = ply
 		end
 
 		if part.Delay == 0 then
