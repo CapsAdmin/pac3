@@ -1246,14 +1246,15 @@ function PART:CalcShowHide()
 	local b = self:IsHidden()
 
 	if b ~= self.last_hidden then
-
 		if b then
 			self:OnHide()
 		else
-			self:OnShow(self.shown_from_rendering)
+			self:OnShow(self.shown_from_rendering ~= nil)
 		end
 
-		self.shown_from_rendering = nil
+		if FrameNumber() ~= self.shown_from_rendering then
+			self.shown_from_rendering = nil
+		end
 
 		self.last_hidden = b
 	end

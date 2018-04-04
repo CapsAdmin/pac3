@@ -234,7 +234,7 @@ function pac.ShowEntityParts(ent)
 	if ent_parts[ent] and (not ent.pac_drawing) and (not ent.pac_shouldnotdraw) and (not ent.pac_ignored) then
 		for _, part in pairs(ent_parts[ent]) do
 			part:SetKeyValueRecursive("last_hidden", nil)
-			part:SetKeyValueRecursive("shown_from_rendering", true)
+			part:SetKeyValueRecursive("shown_from_rendering", FrameNumber())
 			part:SetKeyValueRecursive("draw_hidden", false)
 		end
 

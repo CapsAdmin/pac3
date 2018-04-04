@@ -1307,6 +1307,8 @@ local function should_hide(self, ent, eventObject)
 	return b
 end
 
+PART.last_event_triggered = false
+
 function PART:OnThink()
 	local ent = self:GetOwner(self.RootOwner)
 
