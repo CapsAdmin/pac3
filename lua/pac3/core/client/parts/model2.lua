@@ -449,6 +449,8 @@ function PART:SetScale(var)
 end
 
 function PART:ApplyMatrix()
+	local ent = self:GetEntity()
+	if not ent:IsValid() then return end
 	local mat = Matrix()
 	if self.ClassName ~= "model2" then
 		mat:Translate(self.Position + self.PositionOffset)
