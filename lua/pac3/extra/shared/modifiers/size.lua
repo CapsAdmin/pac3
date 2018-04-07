@@ -22,7 +22,7 @@ function pacx.GetPlayerSize(ply)
 	return ply.pac_player_size or 1
 end
 
-function pacx.SetPlayerSize(ply, f, force)
+function pacx.SetPlayerSize(ply, f, force, entity2)
 
 	local scale = math.Clamp(f, def.MIN_PL_SIZE, def.MAX_PL_SIZE)
 	local olds = ply.pac_player_size or 1
@@ -34,9 +34,10 @@ function pacx.SetPlayerSize(ply, f, force)
 	if ply.SetViewOffset then ply:SetViewOffset(def.view * scale) end
 	if ply.SetViewOffsetDucked then ply:SetViewOffsetDucked(def.viewducked * scale) end
 
+
 	if SERVER then
 		if ply.SetStepSize then ply:SetStepSize(def.step * scale) end
-	else
+	elseif not entity2 then
 		local mat = Matrix()
 		mat:Scale( Vector( scale,scale,scale ) )
 		ply:EnableMatrix( "RenderMultiply", mat )
@@ -48,8 +49,6 @@ function pacx.SetPlayerSize(ply, f, force)
 		ply:SetHull(def.min * scale, def.max * scale)
 		ply:SetHullDuck(def.min * scale, def.maxduck * scale)
 	end
-
-
 end
 
 pacx.AddServerModifier("size", function(data, owner)
@@ -63,10 +62,12 @@ pacx.AddServerModifier("size", function(data, owner)
 	local size
 
 	if data then
+		local entity2
 		-- find the modifier
 		for key, part in pairs(data.children) do
 			if (part.self.ClassName == "entity" or part.self.ClassName == "entity2") and part.self.Size then
 				size = part.self.Size
+				entity2 = part.self.ClassName
 				break
 			end
 		end
@@ -75,7 +76,7 @@ pacx.AddServerModifier("size", function(data, owner)
 	end
 
 	if size then
-		pacx.SetPlayerSize(owner, size)
+		pacx.SetPlayerSize(owner, size, nil, entity2)
 	end
 
 end)

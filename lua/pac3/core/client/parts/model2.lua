@@ -444,8 +444,18 @@ function PART:SetScale(var)
 	self.Scale = var
 
 	if not self:CheckScale() then
-		pac.SetModelScale(self.Entity, self.Scale * self.Size, nil)
+		self:ApplyMatrix()
 	end
+end
+
+function PART:ApplyMatrix()
+	local mat = Matrix()
+	if self.ClassName ~= "model2" then
+		mat:Translate(self.Position + self.PositionOffset)
+		mat:Rotate(self.Angles + self.AngleOffset)
+	end
+	mat:Scale(self.Scale * self.Size)
+	ent:EnableMatrix("RenderMultiply", mat)
 end
 
 function PART:SetSize(var)
@@ -454,7 +464,7 @@ function PART:SetSize(var)
 	self.Size = var
 
 	if not self:CheckScale() then
-		pac.SetModelScale(self.Entity, self.Scale * self.Size, nil)
+		self:ApplyMatrix()
 	end
 end
 
@@ -568,12 +578,41 @@ do
 
 	pac.RemoveProperty(PART, "BoneMerge")
 	pac.RemoveProperty(PART, "Bone")
-	pac.RemoveProperty(PART, "Position")
-	pac.RemoveProperty(PART, "Angles")
-	pac.RemoveProperty(PART, "PositionOffset")
-	pac.RemoveProperty(PART, "AngleOffset")
+	--pac.RemoveProperty(PART, "Position")
+	--pac.RemoveProperty(PART, "Angles")
+	--pac.RemoveProperty(PART, "PositionOffset")
+	--pac.RemoveProperty(PART, "AngleOffset")
 	pac.RemoveProperty(PART, "EyeAngles")
 	pac.RemoveProperty(PART, "AimPartName")
+
+	function PART:SetPosition(pos)
+		self.Position = pos
+		self:ApplyMatrix()
+	end
+
+	function PART:SetAngles(ang)
+		self.Angles = ang
+		self:ApplyMatrix()
+	end
+
+	function PART:SetPositionOffset(pos)
+		self.PositionOffset = pos
+		self:ApplyMatrix()
+	end
+
+	function PART:SetAngleOffset(ang)
+		self.AngleOffset = ang
+		self:ApplyMatrix()
+	end
+
+	function PART:GetBonePosition()
+		local ent = self:GetOwner()
+		local ang = ent:GetAngles()
+		if ent:IsPlayer() then
+			ang.p = 0
+		end
+		return ent:GetPos(), ang
+	end
 
 	function PART:Initialize() self.material_count = 0 end
 	function PART:OnDraw(ent, pos, ang)
@@ -629,7 +668,7 @@ do
 					ent.RenderOverride = nil
 				end
 			end
-
+			self:ApplyMatrix()
 		end
 	end
 
@@ -638,6 +677,7 @@ do
 
 		if ent:IsValid() then
 			ent.RenderOverride = nil
+			ent:DisableMatrix("RenderMultiply")
 		end
 	end
 
