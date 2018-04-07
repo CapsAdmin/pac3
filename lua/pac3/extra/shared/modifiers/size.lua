@@ -65,7 +65,7 @@ pacx.AddServerModifier("size", function(data, owner)
 	if data then
 		-- find the modifier
 		for key, part in pairs(data.children) do
-			if part.self.ClassName == "entity" and part.self.Size then
+			if (part.self.ClassName == "entity" or part.self.ClassName == "entity2") and part.self.Size then
 				size = part.self.Size
 				break
 			end
