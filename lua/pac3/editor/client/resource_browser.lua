@@ -1,6 +1,6 @@
 -- based on starfall
 
-CreateClientConVar("pac_resource_browser_close_on_select", "0")
+CreateClientConVar("pac_resource_browser_close_on_select", "1")
 CreateClientConVar("pac_resource_browser_remember_layout", "1")
 
 local L = pace.LanguageString
