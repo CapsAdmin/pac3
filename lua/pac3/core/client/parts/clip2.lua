@@ -7,7 +7,7 @@ local PART = {}
 
 PART.Name = "clip"
 PART.ClassName = "clip2"
-PART.Group = "pac4"
+PART.Group = "experimental"
 PART.Icon = 'icon16/cut.png'
 
 function PART:OnParent(part)

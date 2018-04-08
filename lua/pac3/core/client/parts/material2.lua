@@ -96,7 +96,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	PART.ClassName = "material_" .. (shader_name_translate[shader_name] or shader_name)
 	PART.Description = shader_name
 	PART.NonPhysical = true
-	PART.Group = "pac4"
+	PART.Group = "experimental"
 	PART.Icon = "icon16/paintcan.png"
 
 	pac.StartStorableVars()

@@ -277,8 +277,8 @@ function PANEL:PopulateParts(node, parts, children)
 				part_node.Icon:SetImage(part.Icon)
 			end
 
-			if part.Group == "pac4" then
-				local mat = Material(pace.GroupsIcons.pac4)
+			if part.Group == "experimental" then
+				local mat = Material(pace.GroupsIcons.experimental)
 				local old = part_node.Icon.PaintOver
 				part_node.Icon.PaintOver = function(_, w,h)
 					local b = old and old(_,w,h)

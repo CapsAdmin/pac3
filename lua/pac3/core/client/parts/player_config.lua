@@ -1,7 +1,7 @@
 local PART = {}
 
 PART.ClassName = "player_config"
-PART.Group = 'pac4'
+PART.Group = "experimental"
 PART.Icon = 'icon16/brick.png'
 PART.NonPhysical = true
 

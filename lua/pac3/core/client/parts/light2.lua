@@ -2,7 +2,7 @@ local PART = {}
 
 PART.Name = "light"
 PART.ClassName = "light2"
-PART.Group = "pac4"
+PART.Group = "experimental"
 PART.Icon = 'icon16/lightbulb.png'
 
 pac.StartStorableVars()

@@ -22,7 +22,7 @@ PART.Category = "model"
 PART.ManualDraw = true
 PART.HandleModifiersManually = true
 PART.Icon = 'icon16/shape_square.png'
-PART.Group = 'pac4'
+PART.Group = "experimental"
 PART.is_model_part = true
 
 pac.StartStorableVars()
@@ -571,7 +571,7 @@ do
 	PART.ManualDraw = true
 	PART.HandleModifiersManually = true
 	PART.Icon = 'icon16/shape_square.png'
-	PART.Group = 'pac4'
+	PART.Group = "experimental"
 	PART.is_model_part = false
 
 	pac.StartStorableVars()
@@ -744,7 +744,7 @@ do
 	PART.ManualDraw = true
 	PART.HandleModifiersManually = true
 	PART.Icon = 'icon16/shape_square.png'
-	PART.Group = 'pac4'
+	PART.Group = "experimental"
 	PART.is_model_part = false
 
 	pac.StartStorableVars()

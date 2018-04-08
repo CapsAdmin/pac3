@@ -5,7 +5,7 @@ local PART = {}
 PART.Name = "sound"
 PART.ClassName = "sound2"
 PART.NonPhysical = true
-PART.Group = 'pac4'
+PART.Group = "experimental"
 PART.Icon = 'icon16/music.png'
 
 pac.StartStorableVars()

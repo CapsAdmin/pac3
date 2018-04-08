@@ -332,8 +332,8 @@ do -- menu
 					if partData[2].Icon then
 						newMenuEntry:SetImage(partData[2].Icon)
 
-						if group == "pac4" then
-							local mat = Material(pace.GroupsIcons.pac4)
+						if group == "experimental" then
+							local mat = Material(pace.GroupsIcons.experimental)
 							newMenuEntry.m_Image.PaintOver = function(_, w,h)
 								surface.SetMaterial(mat)
 								surface.DrawTexturedRect(2,6,13,13)

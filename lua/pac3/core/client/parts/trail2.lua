@@ -80,7 +80,7 @@ local PART = {}
 
 PART.Name = "trail"
 PART.ClassName = "trail2"
-PART.Group = "pac4"
+PART.Group = "experimental"
 PART.Icon = 'icon16/arrow_undo.png'
 
 pac.StartStorableVars()
