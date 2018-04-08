@@ -51,13 +51,6 @@ function pac.HTTPGet(url, cb, failcb)
 	local limit = GetConVarNumber("pac_webcontent_limit")
 	local sv_limit = GetConVarNumber("sv_pac_webcontent_limit")
 
-	local allow_no_contentlength = GetConVarNumber("pac_webcontent_allow_no_content_length")
-	local sv_allow_no_contentlength = GetConVarNumber("sv_pac_webcontent_allow_no_content_length")
-
-	if sv_allow_no_contentlength ~= -1 then
-		allow_no_contentlength = sv_allow_no_contentlength
-	end
-
 	if sv_limit ~= -1 then
 		limit = sv_limit
 	end
@@ -81,6 +74,13 @@ function pac.HTTPGet(url, cb, failcb)
 						failcb("download is too big ("..string.NiceSize(len)..")", true)
 					end
 				else
+					local allow_no_contentlength = GetConVarNumber("pac_webcontent_allow_no_content_length")
+					local sv_allow_no_contentlength = GetConVarNumber("sv_pac_webcontent_allow_no_content_length")
+
+					if sv_allow_no_contentlength ~= -1 then
+						allow_no_contentlength = sv_allow_no_contentlength
+					end
+
 					if allow_no_contentlength == 1 then
 						get(url, cb, failcb)
 					else
