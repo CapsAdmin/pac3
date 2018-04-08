@@ -763,40 +763,49 @@ do -- serializing
 		-- override
 	end
 
-	function PART:SetTable(tbl)
-		self.supress_part_name_find = true
-		self.delayed_variables = self.delayed_variables or {}
+	do
+		local function SetTable(self, tbl)
+			self.supress_part_name_find = true
+			self.delayed_variables = self.delayed_variables or {}
 
-		-- this needs to be set first
-		self:SetUniqueID(tbl.self.UniqueID)
+			-- this needs to be set first
+			self:SetUniqueID(tbl.self.UniqueID)
 
-		for key, value in pairs(tbl.self) do
+			for key, value in pairs(tbl.self) do
 
-			-- these arent needed because parent system uses the tree structure
-			local cond = key ~= "ParentUID" and
-				key ~= "ParentName" and
-				key ~= "UniqueID" and
-				(key ~= "AimPartName" and not (self.IngoreSetKeys and self.IngoreSetKeys[key]) or
-				key == "AimPartName" and table.HasValue(pac.AimPartNames, value))
+				-- these arent needed because parent system uses the tree structure
+				local cond = key ~= "ParentUID" and
+					key ~= "ParentName" and
+					key ~= "UniqueID" and
+					(key ~= "AimPartName" and not (self.IngoreSetKeys and self.IngoreSetKeys[key]) or
+					key == "AimPartName" and table.HasValue(pac.AimPartNames, value))
 
-			if cond then
-				if self["Set" .. key] then
-					if key == "Material" then
-						table.insert(self.delayed_variables, {key = key, val = value})
+				if cond then
+					if self["Set" .. key] then
+						if key == "Material" then
+							table.insert(self.delayed_variables, {key = key, val = value})
+						end
+
+						self["Set" .. key](self, value)
+					elseif key ~= "ClassName" then
+						pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
 					end
-
-					self["Set" .. key](self, value)
-				elseif key ~= "ClassName" then
-					pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
 				end
+			end
+
+			for _, value in pairs(tbl.children) do
+				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
+				part:SetIsBeingWorn(self:IsBeingWorn())
+				part:SetTable(value)
+				part:SetParent(self)
 			end
 		end
 
-		for _, value in pairs(tbl.children) do
-			local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
-			part:SetIsBeingWorn(self:IsBeingWorn())
-			part:SetTable(value)
-			part:SetParent(self)
+		function PART:SetTable(tbl)
+			local ok, err = xpcall(SetTable, ErrorNoHalt, self, tbl)
+			if not ok then
+				pac.Message(Color(255, 50, 50), "SetTable failed: ", err)
+			end
 		end
 	end
 
