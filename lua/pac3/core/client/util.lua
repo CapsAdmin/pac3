@@ -755,23 +755,6 @@ do
 	end
 end
 
-function pac.FixupURL(url)
-	if url and isstring(url) then
-		url = url:Trim()
-		if url:find("dropbox",1,true) then
-			url = url:gsub([[^http%://dl%.dropboxusercontent%.com/]], [[https://dl.dropboxusercontent.com/]])
-			url = url:gsub([[^https?://dl.dropbox.com/]], [[https://www.dropbox.com/]])
-			url = url:gsub([[^https?://www.dropbox.com/s/(.+)%?dl%=[01]$]], [[https://dl.dropboxusercontent.com/s/%1]])
-			url = url:gsub([[^https?://www.dropbox.com/s/(.+)$]], [[https://dl.dropboxusercontent.com/s/%1]])
-		end
-
-		url = url:gsub([[^http%://onedrive%.live%.com/redir?]],[[https://onedrive.live.com/download?]])
-		url = url:gsub( "pastebin.com/([a-zA-Z0-9]*)$", "pastebin.com/raw.php?i=%1")
-		url = url:gsub( "github.com/([a-zA-Z0-9_]+)/([a-zA-Z0-9_]+)/blob/", "github.com/%1/%2/raw/")
-	end
-	return url
-end
-
 function pac.Handleurltex(part, url, callback, shader, additionalData)
 	if url and pac.urltex and url:find("http") then
 		local skip_cache = url:sub(1,1) == "_"

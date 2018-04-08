@@ -66,7 +66,7 @@ function PART:SetURL(url)
 	self.URL = url
 
 	if url:find("http") then
-		pac.SimpleFetch(url, function(str)
+		pac.HTTPGet(url, function(str)
 			local tbl = util.JSONToTable(str)
 			if not tbl then
 				pac.Message("Animation failed to parse from ", url)
@@ -91,10 +91,9 @@ function PART:SetURL(url)
 				pace.timeline.Load(tbl)
 			end
 		end,
-
-		function(reason)
-			pac.Message("Animation failed to load from ", url, ': ', reason)
-		end, false)
+		function(err)
+			Derma_Message("HTTP Request Failed for "..url,err,"OK")
+		end)
 	end
 end
 

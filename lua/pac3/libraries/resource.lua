@@ -132,9 +132,9 @@ local function download(from, to, callback, on_fail, on_header, check_etag, etag
 		[".dat"] = true,
 	}
 
-	return HTTP({
-		url = from,
-		success = function(code, body, header)
+	return pac.HTTPGet(
+		from,
+		function(body, len, header)
 			do
 				if need_extension then
 					local ext = header["Content-Type"] and (header["Content-Type"]:match(".-/(.-);") or header["Content-Type"]:match(".-/(.+)")) or "dat"
@@ -202,10 +202,10 @@ local function download(from, to, callback, on_fail, on_header, check_etag, etag
 				on_fail()
 			end
 		end,
-		failed = function(...)
+		function(...)
 			on_fail(...)
-		end,
-	})
+		end
+	)
 end
 
 local cb = utility_CreateCallbackThing()

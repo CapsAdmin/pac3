@@ -158,8 +158,6 @@ function pace.LoadParts(name, clear, override_part)
 		pac.dprint("loading Parts %s",  name)
 
 		if name:find("https?://") then
-			name = pac.FixupURL(name)
-
 			local function callback(str)
 				local data,err = pace.luadata.Decode(str)
 				if not data then
@@ -170,7 +168,9 @@ function pace.LoadParts(name, clear, override_part)
 				pace.LoadPartsFromTable(data, clear, override_part)
 			end
 
-			pac.SimpleFetch(name, callback)
+			pac.HTTPGet(name, callback, function(err)
+				Derma_Message("HTTP Request Failed for " .. name, err, "OK")
+			end)
 		else
 			name = name:gsub("%.txt", "")
 

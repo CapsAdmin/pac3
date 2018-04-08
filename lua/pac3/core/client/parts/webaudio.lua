@@ -125,7 +125,6 @@ function PART:SetURL(URL)
 	local inPace = pace and pace.IsActive() and pace.current_part == self and self:GetPlayerOwner() == pac.LocalPlayer
 
 	for _, url in pairs(urls) do
-		url = pac.FixupURL(url)
 		local flags = "3d noplay noblock"
 		local callback
 

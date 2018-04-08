@@ -50,8 +50,6 @@ end
 function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statusCallback)
 	if not pac_enable_urlobj:GetBool() then return end
 
-	url = pac.FixupURL(url)
-
 	-- if it's already downloaded just return it
 	if callback and not forceReload and urlobj.Cache[url] then
 		callback(urlobj.Cache[url])

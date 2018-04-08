@@ -143,17 +143,17 @@ function QUEUEITEM:BeginDownload ()
 		self:ClearCallbacks ()
 	end
 
-	local function failure(code, data, len, headers)
-		-- dont bother with server if he said No
-		if code == 401 or code == 404 or code == 503 or code == 501 then
+	local function failure(err, fatal)
+		-- dont bother with servezilf he said No
+		if fatal then
 			self.DownloadAttemptCount = 100
 		end
 
 		self.DownloadTimeoutTime = 0
-		self:SetStatus ("Failed - " .. code)
+		self:SetStatus ("Failed - " .. err)
 	end
 
-	pac.SimpleFetch(self.Url, success, failure)
+	pac.HTTPGet(self.Url, success, failure)
 end
 
 function QUEUEITEM:GetDownloadAttemptCount ()

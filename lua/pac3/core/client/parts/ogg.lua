@@ -143,9 +143,6 @@ function PART:SetURL(URL)
 	self.streams = {}
 
 	for _, url in pairs(urls) do
-
-		url = pac.FixupURL(url)
-
 		local stream = pac.webaudio.Streams.CreateStream(url)
 		self.streams[url] = stream
 

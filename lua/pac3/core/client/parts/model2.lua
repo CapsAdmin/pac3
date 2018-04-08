@@ -355,7 +355,11 @@ function PART:DrawLoadingText(ent, pos, ang)
 		local pos2d = pos:ToScreen()
 
 		surface.SetFont("DermaDefault")
-		surface.SetTextColor(255, 255, 255, 255)
+		if self.errored then
+			surface.SetTextColor(255, 0, 0, 255)
+		else
+			surface.SetTextColor(255, 255, 255, 255)
+		end
 
 		local str = self.loading .. string.rep(".", pac.RealTime * 3 % 3)
 		local w, h = surface.GetTextSize(self.loading .. "...")
@@ -392,6 +396,7 @@ function PART:SetModel(path)
 			self.loading = "downloading mdl zip"
 			pac.DownloadMDL(path, function(path)
 				self.loading = nil
+				self.errored = nil
 				self:RealSetModel(path)
 
 				if self:GetEntity() == pac.LocalPlayer and pacx and pacx.SetModel then
@@ -400,7 +405,8 @@ function PART:SetModel(path)
 
 			end, function(err)
 				pac.Message(err)
-				self.loading = nil
+				self.loading = err
+				self.errored = true
 				self:RealSetModel("models/error.mdl")
 			end, self:GetPlayerOwner())
 		else

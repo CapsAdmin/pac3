@@ -946,5 +946,5 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				break
 			end
 		end
-	end)
+	end, onfail)
 end

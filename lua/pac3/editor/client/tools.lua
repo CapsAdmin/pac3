@@ -176,17 +176,17 @@ end)
 pace.AddTool(L"import editor tool from url...", function()
 	if GetConVar("sv_allowcslua"):GetBool() then
 		Derma_StringRequest(L"URL", L"URL to PAC Editor tool txt file", "http://www.example.com/tool.txt", function(toolurl)
-		function ToolDLSuccess(body)
-			local toolname = pac.PrettifyName(toolurl:match(".+/(.-)%."))
-			local toolstr = body
-			ctoolstr=[[pace.AddTool(L"]]..toolname..[[",function(part, suboption) ]]..toolstr.." end)"
-			RunStringEx(ctoolstr, "pac_editor_import_tool")
-			LocalPlayer():ConCommand("pac_editor") --close and reopen editor
-		end
-		function ToolDLFail(body)
-			Derma_Message("HTTP Request Failed for "..toolurl,"Error: Request Failed","OK")
-		end
-		http.Fetch(toolurl,ToolDLSuccess,ToolDLFail)
+			function ToolDLSuccess(body)
+				local toolname = pac.PrettifyName(toolurl:match(".+/(.-)%."))
+				local toolstr = body
+				ctoolstr=[[pace.AddTool(L"]]..toolname..[[",function(part, suboption) ]]..toolstr.." end)"
+				RunStringEx(ctoolstr, "pac_editor_import_tool")
+				LocalPlayer():ConCommand("pac_editor") --close and reopen editor
+			end
+
+			pac.HTTPGet(toolurl,ToolDLSuccess,function(err)
+				Derma_Message("HTTP Request Failed for "..toolurl,err,"OK")
+			end)
 		end)
 	else
 		Derma_Message("Importing pac editor tools is disallowed on this server.","Error: Clientside Lua Disabled","OK")

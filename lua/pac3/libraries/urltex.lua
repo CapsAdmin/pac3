@@ -41,7 +41,7 @@ function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size
 	url, noclampS = findFlag(url, 'noclamps')
 	url, noclampT = findFlag(url, 'noclampt')
 	url, noclamp = findFlag(url, 'noclamp')
-	url = pac.FixupURL(url)
+
 	local urlAddress = url
 	local urlIndex = url
 
