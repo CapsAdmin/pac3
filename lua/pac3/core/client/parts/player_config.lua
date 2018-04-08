@@ -63,7 +63,7 @@ do
 
 			if ply == pac.LocalPlayer then
 				local num = GetConVarNumber("pac_free_movement")
-				if num == 1 or (num == -1 and engine.ActiveGamemode() == "sandbox") then
+				if num == 1 or (num == -1 and hook.Run("PlayerNoClip", ply, true)) or disable then
 					local val = disable and -1 or self[func]
 
 					ply[func2](ply, val)
