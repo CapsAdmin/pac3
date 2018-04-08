@@ -368,7 +368,7 @@ do -- menu
 			end
 
 			for class_name, part in pairs(partsToShow) do
-				local newMenuEntry = menu:AddOption(L(class_name:Replace('_', ' ')), function()
+				local newMenuEntry = menu:AddOption(L((part.Name or part.ClassName):Replace('_', ' ')), function()
 					pace.AddUndoPartCreation(pace.Call("CreatePart", class_name))
 				end)
 
@@ -377,6 +377,93 @@ do -- menu
 				end
 			end
 		end
+	end
+
+	function pace.OnAddPartMenu(obj)
+		local base = vgui.Create("EditablePanel")
+		base:SetPos(gui.MousePos())
+		base:SetSize(200, 300)
+		base:MakePopup()
+
+		function base:OnRemove()
+			pac.RemoveHook("VGUIMousePressed", "search_part_menu")
+		end
+
+		local edit = base:Add("DTextEntry")
+		edit:SetTall(20)
+		edit:Dock(TOP)
+		edit:RequestFocus()
+		edit:SetUpdateOnType(true)
+
+		local result = base:Add("DPanel")
+		result:Dock(FILL)
+
+		function edit:OnEnter()
+			if result.found[1] then
+				pace.AddUndoPartCreation(pace.Call("CreatePart", result.found[1].ClassName))
+			end
+			base:Remove()
+		end
+
+		edit.OnValueChange = function(_, str)
+			result:Clear()
+			result.found = {}
+
+			for class_name, part in pairs(pac.GetRegisteredParts()) do
+				if (part.Name or part.ClassName):find(str, nil, true) then
+					table.insert(result.found, part)
+				end
+			end
+
+			table.sort(result.found, function(a, b) return #a.ClassName < #b.ClassName end)
+
+			for _, part in ipairs(result.found) do
+				local line = result:Add("DButton")
+				line:SetText("")
+				line:SetTall(20)
+				line.DoClick = function()
+					pace.AddUndoPartCreation(pace.Call("CreatePart", part.ClassName))
+					base:Remove()
+				end
+
+				local btn = line:Add("DImageButton")
+				btn:SetSize(16, 16)
+				btn:SetPos(4,0)
+				btn:CenterVertical()
+				btn:SetMouseInputEnabled(false)
+				if part.Icon then
+					btn:SetImage(part.Icon)
+
+					if part.Group == "experimental" then
+						local mat = Material(pace.GroupsIcons.experimental)
+						btn.m_Image.PaintOver = function(_, w,h)
+							surface.SetMaterial(mat)
+							surface.DrawTexturedRect(2,6,13,13)
+						end
+					end
+				end
+
+				local label = line:Add("DLabel")
+				label:SetText(L((part.Name or part.ClassName):Replace('_', ' ')))
+				label:SizeToContents()
+				label:MoveRightOf(btn, 4)
+				label:SetMouseInputEnabled(false)
+				label:CenterVertical()
+
+				line:Dock(TOP)
+			end
+
+			base:SetHeight(20 * #result.found + edit:GetTall())
+		end
+
+		edit:OnValueChange("")
+
+		pac.AddHook("VGUIMousePressed", "search_part_menu", function(pnl, code)
+			if code ~= MOUSE_FIRST then return end
+			if not base:IsOurChild(pnl) then
+				base:Remove()
+			end
+		end)
 	end
 
 	function pace.OnPartMenu(obj)
