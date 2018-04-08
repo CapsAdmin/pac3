@@ -88,6 +88,7 @@ end
 function PANEL:SetSelectedItem(node)
 	if IsValid(self.m_pSelectedItem) then
 		self.m_pSelectedItem:SetSelected(false)
+		self:OnNodeDeselected(self.m_pSelectedItem)
 	end
 
 	self.m_pSelectedItem = node
@@ -99,6 +100,10 @@ function PANEL:SetSelectedItem(node)
 end
 
 function PANEL:OnNodeSelected(node)
+
+end
+
+function PANEL:OnNodeDeselected(node)
 
 end
 
@@ -156,6 +161,28 @@ function PANEL:Init()
 	self:SetLastChild(false)
 end
 
+function PANEL:SetRoot(root)
+	self.m_pRoot = root
+
+	root.added_nodes = root.added_nodes or {}
+	for i,v in ipairs(root.added_nodes) do
+		if v == self then return end
+	end
+	table.insert(root.added_nodes, self)
+end
+
+function PANEL:OnRemove()
+	local root = self:GetRoot()
+
+	root.added_nodes = root.added_nodes or {}
+	for i,v in ipairs(root.added_nodes) do
+		if v == self then
+			table.remove(root.added_nodes, i)
+			break
+		end
+	end
+end
+
 function PANEL:IsRootNode()
 	return self.m_pRoot == self.m_pParentNode
 end
@@ -175,7 +202,7 @@ end
 
 function PANEL:OnNodeSelected(node)
 	local parent = self:GetParentNode()
-	if IsValid(parent)  and  parent.OnNodeSelected then
+	if IsValid(parent) and parent.OnNodeSelected then
 		parent:OnNodeSelected(node)
 	end
 end
@@ -408,6 +435,9 @@ end
 function PANEL:SetSelected(b)
 	self.Label:SetSelected(b)
 	self.Label:InvalidateLayout()
+	if self.OnSelected then
+		self:OnSelected(b)
+	end
 end
 
 function PANEL:Think()

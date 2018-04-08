@@ -21,8 +21,69 @@ end
 do
 	local pnl = NULL
 
+	local function get_added_nodes(self)
+		local added_nodes = {}
+		for i,v in ipairs(self.added_nodes) do
+			if v.part and v:IsVisible() then
+				table.insert(added_nodes, v)
+			end
+		end
+		table.sort(added_nodes, function(a, b) return select(2, a:LocalToScreen()) < select(2, b:LocalToScreen()) end)
+		return added_nodes
+	end
+
 	function PANEL:Think(...)
 		pnl = vgui.GetHoveredPanel() or NULL
+
+		if pace.current_part:IsValid() and pace.current_part.editor_node and pace.current_part.editor_node:IsValid() then
+			if input.IsKeyDown(KEY_LEFT) then
+				pace.current_part:SetEditorExpand(false)
+				pace.RefreshTree(true)
+			elseif input.IsKeyDown(KEY_RIGHT) then
+				pace.current_part:SetEditorExpand(true)
+				pace.RefreshTree(true)
+			end
+			if input.IsKeyDown(KEY_UP) or input.IsKeyDown(KEY_PAGEUP) then
+				local added_nodes = get_added_nodes(self)
+				local offset = input.IsKeyDown(KEY_PAGEUP) and 10 or 1
+				if not self.scrolled_up or self.scrolled_up < os.clock() then
+					for i,v in ipairs(added_nodes) do
+						if v == pace.current_part.editor_node then
+							local node = added_nodes[i - offset] or added_nodes[1]
+							print(node)
+							if node then
+								node:DoClick()
+								break
+							end
+						end
+					end
+
+					self.scrolled_up = self.scrolled_up or os.clock() + 0.4
+				end
+			else
+				self.scrolled_up = nil
+			end
+
+			if input.IsKeyDown(KEY_DOWN) or input.IsKeyDown(KEY_PAGEDOWN) then
+				local added_nodes = get_added_nodes(self)
+				local offset = input.IsKeyDown(KEY_PAGEDOWN) and 10 or 1
+				if not self.scrolled_down or self.scrolled_down < os.clock() then
+					for i,v in ipairs(added_nodes) do
+						if v == pace.current_part.editor_node then
+							local node = added_nodes[i + offset] or added_nodes[#added_nodes]
+							if node then
+								node:DoClick()
+								break
+							end
+						end
+					end
+
+					self.scrolled_down = self.scrolled_down or os.clock() + 0.4
+				end
+			else
+				self.scrolled_down = nil
+			end
+		end
 
 		if pnl:IsValid() then
 			local pnl = pnl:GetParent()
@@ -53,7 +114,6 @@ do
 			end
 		end
 
-
 		if pace.pac_dtree.Think then
 			return pace.pac_dtree.Think(self, ...)
 		end
@@ -62,7 +122,7 @@ end
 
 function PANEL:OnMousePressed(mc)
 	if mc == MOUSE_RIGHT then
-		pace.Call("NewPartMenu")
+		pace.Call("PartMenu", self.part)
 	end
 end
 
@@ -173,6 +233,17 @@ local function node_layout(self, ...)
 		self.Label:SetFont(pace.CurrentFont)
 		--self.Label:SetTextColor(derma.Color("text_dark", self, color_black))
 	end
+
+	if self.add_button then
+		local x = self.Label:GetPos() + self.Label:GetTextInset() + 4
+		surface.SetFont(pace.CurrentFont)
+		local w = surface.GetTextSize(self.Label:GetText())
+		self.add_button:SetPos(x + w, (self.Label:GetTall() - self.add_button:GetTall()) / 2)
+	end
+end
+
+local function add_parts_menu(node)
+	pace.Call("AddPartMenu", node.part)
 end
 
 -- a hack, because creating a new node button will mess up the layout
@@ -183,10 +254,25 @@ function PANEL:AddNode(...)
 	install_drag(node)
 	node.SetModel = self.SetModel
 
+	local add_button = node:Add("DImageButton")
+	add_button:SetImage(pace.MiscIcons.new)
+	add_button:SetSize(16, 16)
+	add_button:SetVisible(false)
+	add_button.DoClick = function() add_parts_menu(node) end
+	node.add_button = add_button
+
 	node.AddNode = function(...)
 		local node_ = fix_folder_funcs(pace.pac_dtree_node.AddNode(...))
 		install_expand(node_)
 		install_drag(node_)
+
+		local add_button = node_:Add("DImageButton")
+		add_button:SetImage(pace.MiscIcons.new)
+		add_button:SetSize(16, 16)
+		add_button:SetVisible(false)
+		add_button.DoClick = function() add_parts_menu(node_) end
+		node_.add_button = add_button
+
 		node_.SetModel = self.SetModel
 
 		node_.AddNode = node.AddNode
@@ -256,19 +342,27 @@ function PANEL:PopulateParts(node, parts, children)
 			self.parts[key] = part_node
 
 			part_node.DoClick = function()
-				if part:IsValid() then
-					pace.Call("PartSelected", part)
-					return true
+				if not part:IsValid() then return end
+				pace.Call("PartSelected", part)
+
+				--part_node.add_button:SetVisible(true)
+
+				return true
+			end
+
+			part_node.OnSelected = function(_, b)
+				if part_node.add_button then
+					part_node.add_button:SetVisible(b)
 				end
 			end
 
 			part_node.DoRightClick = function()
-				if part:IsValid() then
-					pace.Call("PartMenu", part)
-					pace.Call("PartSelected", part)
-					part_node:InternalDoClick()
-					return true
-				end
+				if not part:IsValid() then return end
+
+				pace.Call("PartMenu", part)
+				pace.Call("PartSelected", part)
+				part_node:InternalDoClick()
+				return true
 			end
 
 			if enable_model_icons:GetBool() and part.is_model_part and part.GetModel and part:GetEntity():IsValid() then
