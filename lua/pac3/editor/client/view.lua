@@ -45,20 +45,8 @@ function pace.ResetView()
 	end
 end
 
-function pace.OnMouseWheeled(delta)
-	local mult = 5
-
-	if input.IsKeyDown(KEY_LCONTROL) then
-		mult = 1
-	end
-
-	if input.IsKeyDown(KEY_LSHIFT) then
-		mult = 10
-	end
-
-	delta = delta * mult
-
-	pace.ViewFOV = math.Clamp(pace.ViewFOV - delta, 1, 90)
+function pace.SetZoom(frac)
+	pace.ViewFOV = math.Clamp(frac*90, 1, 90)
 end
 
 local held_ang = Angle(0,0,0)
@@ -173,12 +161,6 @@ local function CalcDrag()
 
 	if input.IsKeyDown(KEY_LSHIFT) then
 		mult = mult + 5
-	end
-
-	if input.IsKeyDown(KEY_UP) or input.IsMouseDown(MOUSE_WHEEL_UP) then
-		pace.OnMouseWheeled(0.25)
-	elseif input.IsKeyDown(KEY_DOWN) or input.IsMouseDown(MOUSE_WHEEL_DOWN) then
-		pace.OnMouseWheeled(-0.25)
 	end
 
 	if not pace.IsSelecting then

@@ -48,6 +48,12 @@ function PANEL:Init()
 	self.exit_button.Paint = function(self, w, h) derma.SkinHook("Paint", "WindowCloseButton", self, w, h) end
 	self.exit_button:SetSize(31, 26)
 
+	self.zoom = vgui.Create("DSlider")
+	self.zoom:SetLockY(0)
+	self.zoom:SetSize(100, 20)
+	self.zoom:SetSlideX(1)
+	--self.zoom:SetVisible(false)
+
 	self.btnClose.Paint = function() end
 
 	self:SetBottom(pnl)
@@ -106,6 +112,10 @@ function PANEL:OnRemove()
 	if self.exit_button:IsValid() then
 		self.exit_button:Remove()
 	end
+
+	if self.zoom:IsValid() then
+		self.zoom:Remove()
+	end
 end
 
 function PANEL:Think(...)
@@ -135,6 +145,25 @@ function PANEL:Think(...)
 		local w, h = self:GetSize()
 
 		self.exit_button:SetPos(ScrW() - self.exit_button:GetWide() + 4, -4)
+	end
+
+	if self.zoom:IsValid() then
+
+		local x, y = self:GetPos()
+		local w, h = self:GetSize()
+
+		self.zoom:SetPos(ScrW() - self.zoom:GetWide(), ScrH() - self.zoom:GetTall())
+
+		local mx, my = gui.MousePos()
+		local x, y = self.zoom:GetPos()
+		if mx > x and my > y then
+			self.zoom:SetVisible(true)
+			self.zoom:RequestFocus()
+		elseif not input.IsMouseDown(MOUSE_LEFT) then
+			self.zoom:SetVisible(false)
+		end
+
+		pace.SetZoom(self.zoom:GetSlideX())
 	end
 end
 
