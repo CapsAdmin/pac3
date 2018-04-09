@@ -374,15 +374,18 @@ do
 	local invalidCache = {}
 
 	function pac.FilterInvalidModel(mdl, fallback)
-		if util.IsValidModel(mdl) or (not mdl) or (mdl == "") then
+		mdl = mdl or ""
+		mdl = type(mdl) == "string" and mdl or ""
+
+		if util.IsValidModel(mdl) then
 			invalidCache[mdl] = nil
 			return mdl
 		end
 
 		mdl = mdl:lower():Trim()
 
-		if mdl == '' then
-			return mdl
+		if mdl == "" then
+			return "models/error.mdl"
 		end
 
 		if invalidCache[mdl] then
@@ -425,32 +428,26 @@ do
 	end
 end
 
-local pac_debug_clmdl = CreateClientConVar("pac_debug_clmdl","0",true)
-function pac.CreateEntity(model, for_obj)
-	model = pac.FilterInvalidModel(model)
+local pac_debug_clmdl = CreateClientConVar("pac_debug_clmdl", "0", true)
+RunConsoleCommand("pac_debug_clmdl", "0")
 
-	local ent
+function pac.CreateEntity(model)
+	model = pac.FilterInvalidModel(model, fallback)
 
-	if for_obj then
-		ent = ClientsideModel(model)
-	else
-		ent = pac_debug_clmdl:GetBool() and ClientsideModel(model) or ents.CreateClientProp(model)
-	end
+	local ent = NULL
 
-	ent = ent or NULL
-
-	if not ent:IsValid() then
-		pac.Message("Failed to create entity!")
-	end
-
-	--[[if type == 1 then
-
-		ent = ClientsideModel(model)
-
+	local type = pac_debug_clmdl:GetInt()
+	if type == 0 then
+		ent = ClientsideModel(model) or ent
+	elseif type == 1 then
+		local rag = ClientsideRagdoll(model) or NULL
+		if not rag:IsValid() then
+			ent = ClientsideModel(model) or ent
+		else
+			ent = rag
+		end
 	elseif type == 2 then
-
-		ent = ents.CreateClientProp(model) -- doesn't render properly
-
+		ent = ents.CreateClientProp(model) or ent -- doesn't render properly
 	elseif type == 3 then
 
 		effects.Register(
@@ -473,9 +470,13 @@ function pac.CreateEntity(model, for_obj)
 		)
 
 		util.Effect("pac_model", EffectData())
-	end]]
+	end
 
-	return ent or NULL
+	if not ent:IsValid() then
+		pac.Message("Failed to create entity with model: ", model)
+	end
+
+	return ent
 end
 
 
