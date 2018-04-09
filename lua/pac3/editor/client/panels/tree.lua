@@ -32,6 +32,19 @@ do
 		return added_nodes
 	end
 
+	local function scroll_to_node(self, node)
+		timer.Simple(0.1, function()
+			local _, y = self:LocalToScreen()
+			local h = self:GetTall()
+
+			local _, node_y = node:LocalToScreen()
+
+			if node_y > y + h or node_y < y then
+				self:ScrollToChild(node)
+			end
+		end)
+	end
+
 	function PANEL:Think(...)
 		pnl = vgui.GetHoveredPanel() or NULL
 
@@ -52,6 +65,7 @@ do
 							local node = added_nodes[i - offset] or added_nodes[1]
 							if node then
 								node:DoClick()
+								scroll_to_node(self, node)
 								break
 							end
 						end
@@ -72,6 +86,7 @@ do
 							local node = added_nodes[i + offset] or added_nodes[#added_nodes]
 							if node then
 								node:DoClick()
+								scroll_to_node(self, node)
 								break
 							end
 						end
@@ -345,8 +360,6 @@ function PANEL:PopulateParts(node, parts, children)
 			part_node.DoClick = function()
 				if not part:IsValid() then return end
 				pace.Call("PartSelected", part)
-
-				self:ScrollToChild(part_node)
 
 				--part_node.add_button:SetVisible(true)
 
