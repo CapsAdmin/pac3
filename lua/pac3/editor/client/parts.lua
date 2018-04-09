@@ -410,7 +410,7 @@ do -- menu
 			result.found = {}
 
 			for class_name, part in pairs(pac.GetRegisteredParts()) do
-				if (part.Name or part.ClassName):find(str, nil, true) then
+				if class_name ~= "base" and (part.Name or part.ClassName):find(str, nil, true) then
 					table.insert(result.found, part)
 				end
 			end
@@ -444,6 +444,7 @@ do -- menu
 				end
 
 				local label = line:Add("DLabel")
+				label:SetTextColor(label:GetSkin().Colours.Category.Line.Text)
 				label:SetText(L((part.Name or part.ClassName):Replace('_', ' ')))
 				label:SizeToContents()
 				label:MoveRightOf(btn, 4)

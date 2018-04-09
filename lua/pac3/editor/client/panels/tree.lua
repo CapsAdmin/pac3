@@ -50,7 +50,6 @@ do
 					for i,v in ipairs(added_nodes) do
 						if v == pace.current_part.editor_node then
 							local node = added_nodes[i - offset] or added_nodes[1]
-							print(node)
 							if node then
 								node:DoClick()
 								break
@@ -121,7 +120,7 @@ do
 end
 
 function PANEL:OnMousePressed(mc)
-	if mc == MOUSE_RIGHT then
+	if mc == MOUSE_RIGHT and self.part then
 		pace.Call("PartMenu", self.part)
 	end
 end
@@ -259,6 +258,7 @@ function PANEL:AddNode(...)
 	add_button:SetSize(16, 16)
 	add_button:SetVisible(false)
 	add_button.DoClick = function() add_parts_menu(node) end
+	add_button.DoRightClick = function() node:DoRightClick() end
 	node.add_button = add_button
 
 	node.AddNode = function(...)
@@ -271,6 +271,7 @@ function PANEL:AddNode(...)
 		add_button:SetSize(16, 16)
 		add_button:SetVisible(false)
 		add_button.DoClick = function() add_parts_menu(node_) end
+		add_button.DoRightClick = function() node_:DoRightClick() end
 		node_.add_button = add_button
 
 		node_.SetModel = self.SetModel
@@ -344,6 +345,8 @@ function PANEL:PopulateParts(node, parts, children)
 			part_node.DoClick = function()
 				if not part:IsValid() then return end
 				pace.Call("PartSelected", part)
+
+				self:ScrollToChild(part_node)
 
 				--part_node.add_button:SetVisible(true)
 
