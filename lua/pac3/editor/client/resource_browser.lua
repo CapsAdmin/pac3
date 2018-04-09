@@ -2,25 +2,51 @@
 CreateClientConVar("pac_resource_browser_close_on_select", "1")
 CreateClientConVar("pac_resource_browser_remember_layout", "1")
 
-
-local cache = {}
-local function file_Exists(path, id)
-	local key = path .. id
-
-	if cache[key] == nil then
-		cache[key] = file.Exists(path, id)
+local function table_tolist(tbl, sort)
+	local list = {}
+	for key, val in pairs(tbl) do
+		table.insert(list, {key = key, val = val})
 	end
 
-	return cache[key]
+	return list
 end
 
-local cache = {}
-local function get_material_keyvalues(path)
-	if cache[path] == nil then
-		cache[path] = Material(path):GetKeyValues()
+local function table_sortedpairs(tbl, sort)
+	local list = table_tolist(tbl)
+	table.sort(list, sort)
+	local i = 0
+	return function()
+		i = i + 1
+		if list[i] then
+			return list[i].key, list[i].val
+		end
 	end
+end
 
-	return cache[path]
+local file_Exists
+do
+	local cache = {}
+	file_Exists = function(path, id)
+		local key = path .. id
+
+		if cache[key] == nil then
+			cache[key] = file.Exists(path, id)
+		end
+
+		return cache[key]
+	end
+end
+
+local get_material_keyvalues
+do
+	local cache = {}
+	get_material_keyvalues = function(path)
+		if cache[path] == nil then
+			cache[path] = Material(path):GetKeyValues()
+		end
+
+		return cache[path]
+	end
 end
 
 local L = pace.LanguageString
@@ -117,11 +143,24 @@ surface.CreateFont("pace_resource_browser_fixed_width", {
 	font = "dejavu sans mono",
 })
 
+local bad_materials = {}
+
 local function create_material_icon(path, grid_panel)
 
-	if #pace.model_browser_browse_types_tbl == 1 and file.Read(path, "GAME") then
-		local shader =  file.Read(path, "GAME"):match("^(.-){"):Trim():gsub("%p", ""):lower()
-		if not (shader == "vertexlitgeneric" or shader == "unlitgeneric" or shader == "eyerefract" or shader == "refract") then
+	if #pace.model_browser_browse_types_tbl == 1 then
+		if bad_materials[path] ~= nil then
+			local str = file.Read(path, "GAME")
+			if str then
+				local shader =  str:match("^(.-){"):Trim():gsub("%p", ""):lower()
+				if not (shader == "vertexlitgeneric" or shader == "unlitgeneric" or shader == "eyerefract" or shader == "refract") then
+					bad_materials[path] = true
+				else
+					bad_materials[path] = false
+				end
+			end
+		end
+
+		if bad_materials[path] then
 			return
 		end
 	end
@@ -414,6 +453,14 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 	browse_types_str = browse_types_str or "models;materials;textures;sound"
 	local browse_types = browse_types_str:Split(";")
 
+	if not pac.resource_browser_cache then
+		if file.Exists("pac3_cache/pac_resource_browser_index.txt", "DATA") then
+			pac.resource_browser_cache = util.JSONToTable(file.Read("pac3_cache/pac_resource_browser_index.txt", "DATA")) or {}
+		else
+			pac.resource_browser_cache = {}
+		end
+	end
+
 	local texture_view = false
 	local material_view = table.HasValue(browse_types, "materials")
 	local sound_view = table.HasValue(browse_types, "sound")
@@ -688,6 +735,8 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		AddGeneric(self, sound_path, file.Size(path, pathid))
 	end
 
+	local select_me
+
 	if texture_view or material_view then
 		local node = root_node:AddNode("materials", "icon16/folder_database.png")
 		node.dir = "materials"
@@ -743,10 +792,8 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 				viewPanel.currentNode = list
 			end
 
-			if texture_view or material_view and #browse_types == 1 then
-				node:SetExpanded(true)
-				list:SetExpanded(true)
-				tree:SetSelectedItem(list)
+			if #browse_types == 1 and list_name == "materials" and (texture_view or material_view) then
+				select_me = list
 			end
 		end
 	end
@@ -757,18 +804,20 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		spawnlists.info = {}
 		spawnlists.info.id = 0
 		spawnlists.dir = "models"
-		local function hasGame (name)
-			for k, v in pairs(engine.GetGames()) do
-				if v.folder == name and v.mounted then
-					return true
-				end
+
+		local has_game = {}
+
+		has_game[""] = true
+
+		for k, v in pairs(engine.GetGames()) do
+			if v.mounted then
+				has_game[v.folder] = true
 			end
-			return false
 		end
 
 		local function fillNavBar(propTable, parentNode)
-			for k, v in SortedPairs(propTable) do
-				if v.parentid == parentNode.info.id and (v.needsapp ~= "" and hasGame(v.needsapp) or v.needsapp == "") then
+			for k, v in table_sortedpairs(propTable, function(a, b) return a.key < b.key end) do
+				if v.parentid == parentNode.info.id and has_game[v.needsapp] then
 					local node = parentNode:AddNode(v.name, v.icon)
 					node:SetExpanded(true)
 					node.info = v
@@ -780,24 +829,28 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 
 					parentNode.propPanel = node.propPanel
 
-					for i, object in SortedPairs(node.info.contents) do
-						if object.type == "model" then
-							node.propPanel:Add(create_model_icon(object.model))
+					node.OnNodeSelected = function()
+						if not node.setup then
+							node.setup = true
+							for i, object in table_sortedpairs(v.contents, function(a, b) return a.key < b.key end) do
+								if object.type == "model" then
+									node.propPanel:Add(create_model_icon(object.model))
+								elseif object.type == "header" then
+									if not object.text or type(object.text) ~= "string" then return end
 
-							if not frame.selected_construction_props and #browse_types == 1 and v.name == "Construction Props" then
-								node:SetExpanded(true)
-								parentNode:SetExpanded(true)
-								tree:SetSelectedItem(node)
-								frame.selected_construction_props = true
+									local label = vgui.Create("ContentHeader", node.propPanel)
+									label:SetText(object.text)
+
+									node.propPanel:Add(label)
+								end
 							end
-						elseif object.type == "header" then
-							if not object.text or type(object.text) ~= "string" then return end
-
-							local label = vgui.Create("ContentHeader", node.propPanel)
-							label:SetText(object.text)
-
-							node.propPanel:Add(label)
 						end
+
+						tree:OnNodeSelected(node)
+					end
+
+					if #browse_types == 1 and v.name == "Construction Props" then
+						select_me = node
 					end
 
 					fillNavBar(propTable, node)
@@ -985,12 +1038,8 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 					node.dir = dir
 					node.OnNodeSelected = on_select
 
-					if name == "all" and #browse_types == 1 and browse_types[1] == dir and dir ~= "models" then
-						timer.Simple(0, function()
-							parent:SetExpanded(true)
-							tree:SetExpanded(true)
-							tree:SetSelectedItem(node)
-						end)
+					if not select_me and #browse_types == 1 and name == "all" and browse_types[1] == dir and dir ~= "models" then
+						select_me = node
 					end
 				end
 			end
@@ -1044,7 +1093,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 				mounted = true
 			})
 
-			for _, game in SortedPairsByMemberValue(games, "title") do
+			for _, game in table_sortedpairs(games, function(a, b) return a.val.title < b.val.title end) do
 				if game.mounted then
 					addBrowseContent(viewPanel, root_node, game.title, "games/16/" .. (game.icon or game.folder) .. ".png", "", game.folder)
 				end
@@ -1053,7 +1102,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 
 		local node = root_node:AddNode("addons")
 
-		for _, addon in SortedPairsByMemberValue(engine.GetAddons(), "title") do
+		for _, addon in table_sortedpairs(engine.GetAddons(), function(a, b) return a.val.title < b.val.title end) do
 			if addon.file:StartWith("addons/") then
 				local _, dirs = file.Find("*", addon.title)
 
@@ -1122,12 +1171,6 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 			end
 			old(self)
 		end
-	end
-
-	if file.Exists("pac3_cache/pac_resource_browser_index.txt", "DATA") then
-		pac.resource_browser_cache = util.JSONToTable(file.Read("pac3_cache/pac_resource_browser_index.txt", "DATA")) or {}
-	else
-		pac.resource_browser_cache = {}
 	end
 
 	local function find(path, pathid)
@@ -1314,18 +1357,24 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 	end
 
 	file_menu:AddSpacer()
-	file_menu:AddOption(L"exit", function() frame:SetVisible(false) end):SetImage(pace.MiscIcons.exit)
+	file_menu:AddOption(L"exit", function() frame:Remove() end):SetImage(pace.MiscIcons.exit)
+
+	if select_me then
+		select_me:GetParentNode():SetExpanded(true)
+		select_me:SetExpanded(true)
+		tree:SetSelectedItem(select_me)
+	end
 
 	frame:MakePopup()
 end
 
 if pace.model_browser and pace.model_browser:IsValid() then
 	pace.model_browser:Remove()
-	pace.ResourceBrowser(function(...) print(...) return false end)
+	pace.ResourceBrowser(function(...) print(...) return false end, "models")
 end
 
-concommand.Add("pac_resource_browser", function()
-	pace.ResourceBrowser(function(...) print(...) return false end)
+concommand.Add("pac_resource_browser", function(_, _, args)
+	pace.ResourceBrowser(function(...) print(...) return false end, table.concat(args, ";"))
 	pace.model_browser:SetSize(ScrW()/1.25, ScrH()/1.25)
 	pace.model_browser:Center()
 end)
