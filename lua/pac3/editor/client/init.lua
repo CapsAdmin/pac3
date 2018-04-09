@@ -20,7 +20,7 @@ include("fonts.lua")
 include("basic_mode.lua")
 include("settings.lua")
 include("shortcuts.lua")
-include("resource_browser.lua")
+include("asset_browser.lua")
 include("menu_bar.lua")
 
 include("mctrl.lua")

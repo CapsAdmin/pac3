@@ -290,7 +290,7 @@ do --dev util
 		end
 
 		if model_browser_opened then
-			RunConsoleCommand("pac_resource_browser")
+			RunConsoleCommand("pac_asset_browser")
 		end
 	end
 

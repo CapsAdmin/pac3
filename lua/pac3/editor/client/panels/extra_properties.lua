@@ -234,7 +234,7 @@ do -- model
 
 		local part = pace.current_part
 
-		pace.ResourceBrowser(function(path)
+		pace.AssetBrowser(function(path)
 			if not part:IsValid() then return end
 			-- because we refresh the properties
 			pace.current_part["Set" .. key](pace.current_part, path)
@@ -260,7 +260,7 @@ do -- materials and textures
 	PANEL_MATERIAL.Base = "pace_properties_base_type"
 
 	function PANEL_MATERIAL:SpecialCallback(key)
-		pace.ResourceBrowser(function(path)
+		pace.AssetBrowser(function(path)
 			if not self:IsValid() then return end
 			path = path:match("materials/(.+)%.vmt") or "error"
 			self:SetValue(path)
@@ -290,7 +290,7 @@ do -- materials and textures
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:SpecialCallback()
-		pace.ResourceBrowser(function(path)
+		pace.AssetBrowser(function(path)
 			if not self:IsValid() then return end
 			path = path:match("materials/(.+)%.vtf") or "error"
 			self:SetValue(path)
@@ -422,7 +422,7 @@ do -- sound
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:SpecialCallback()
-		pace.ResourceBrowser(function(path)
+		pace.AssetBrowser(function(path)
 			if not self:IsValid() then return end
 
 			self:SetValue(path)

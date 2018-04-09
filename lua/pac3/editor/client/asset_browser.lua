@@ -1,6 +1,6 @@
 -- based on starfall
-CreateClientConVar("pac_resource_browser_close_on_select", "1")
-CreateClientConVar("pac_resource_browser_remember_layout", "1")
+CreateClientConVar("pac_asset_browser_close_on_select", "1")
+CreateClientConVar("pac_asset_browser_remember_layout", "1")
 
 local function table_tolist(tbl, sort)
 	local list = {}
@@ -84,13 +84,13 @@ local function get_unlit_mat(path)
 	elseif path:find("%.vmt$") then
 		local tex = Material(path:match("materials/(.+)%.vmt")):GetTexture("$basetexture")
 		if tex then
-			local mat = CreateMaterial(path .. "_pac_resource_browser", "UnlitGeneric")
+			local mat = CreateMaterial(path .. "_pac_asset_browser", "UnlitGeneric")
 			mat:SetTexture("$basetexture", tex)
 			return mat
 		end
 	end
 
-	return CreateMaterial(path .. "_pac_resource_browser", "UnlitGeneric", {["$basetexture"] = path:match("materials/(.+)%.vtf")})
+	return CreateMaterial(path .. "_pac_asset_browser", "UnlitGeneric", {["$basetexture"] = path:match("materials/(.+)%.vtf")})
 end
 
 local next_generate_icon = 0
@@ -150,7 +150,7 @@ local function create_texture_icon(path)
 	return icon
 end
 
-surface.CreateFont("pace_resource_browser_fixed_width", {
+surface.CreateFont("pace_asset_browser_fixed_width", {
 	font = "dejavu sans mono",
 })
 
@@ -218,7 +218,7 @@ local function create_material_icon(path, grid_panel)
 			local old = icon.OnCursorEntered
 			function icon:OnCursorEntered(...)
 				if pace.current_part:IsValid() and pace.current_part.Materialm then
-					pace.resource_browser_old_mat = pace.resource_browser_old_mat or pace.current_part.Materialm
+					pace.asset_browser_old_mat = pace.asset_browser_old_mat or pace.current_part.Materialm
 					pace.current_part.Materialm = mat
 				end
 
@@ -229,7 +229,7 @@ local function create_material_icon(path, grid_panel)
 			local old = icon.OnCursorExited
 			function icon:OnCursorExited(...)
 				if pace.current_part:IsValid() and pace.current_part.Materialm then
-					pace.current_part.Materialm = pace.resource_browser_old_mat
+					pace.current_part.Materialm = pace.asset_browser_old_mat
 				end
 				old(self, ...)
 			end
@@ -313,7 +313,7 @@ local function create_material_icon(path, grid_panel)
 
 			local text = vgui.Create("DTextEntry", scroll)
 			text:SetMultiline(true)
-			text:SetFont("pace_resource_browser_fixed_width")
+			text:SetFont("pace_asset_browser_fixed_width")
 
 			text:SetText(str)
 
@@ -457,18 +457,18 @@ do
 		end
 	end
 
-	vgui.Register( "pac_ResourceBrowser_ContentContainer", PANEL, "DScrollPanel" )
+	vgui.Register( "pac_AssetBrowser_ContentContainer", PANEL, "DScrollPanel" )
 end
 
-function pace.ResourceBrowser(callback, browse_types_str, part_key)
+function pace.AssetBrowser(callback, browse_types_str, part_key)
 	browse_types_str = browse_types_str or "models;materials;textures;sound"
 	local browse_types = browse_types_str:Split(";")
 
-	if not pac.resource_browser_cache then
-		if file.Exists("pac3_cache/pac_resource_browser_index.txt", "DATA") then
-			pac.resource_browser_cache = util.JSONToTable(file.Read("pac3_cache/pac_resource_browser_index.txt", "DATA")) or {}
+	if not pac.asset_browser_cache then
+		if file.Exists("pac3_cache/pac_asset_browser_index.txt", "DATA") then
+			pac.asset_browser_cache = util.JSONToTable(file.Read("pac3_cache/pac_asset_browser_index.txt", "DATA")) or {}
 		else
-			pac.resource_browser_cache = {}
+			pac.asset_browser_cache = {}
 		end
 	end
 
@@ -494,7 +494,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 
 		if callback(...) == false then return end
 
-		if GetConVar("pac_resource_browser_close_on_select"):GetBool() then
+		if GetConVar("pac_asset_browser_close_on_select"):GetBool() then
 			pace.model_browser:SetVisible(false)
 		end
 	end
@@ -511,10 +511,10 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 	local divider
 
 	local frame = vgui.Create("DFrame")
-	frame.title = L"resource browser" .. " - " .. (browse_types_str:gsub(";", " "))
+	frame.title = L"asset browser" .. " - " .. (browse_types_str:gsub(";", " "))
 
-	if GetConVar("pac_resource_browser_remember_layout"):GetBool() then
-		frame:SetCookieName("pac_resource_browser")
+	if GetConVar("pac_asset_browser_remember_layout"):GetBool() then
+		frame:SetCookieName("pac_asset_browser")
 	end
 
 	local x = frame:GetCookieNumber("x", ScrW() - ScrW()/2.75)
@@ -571,8 +571,8 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 			L"clear search cache",
 
 			L"clear", function()
-				file.Delete("pac3_cache/pac_resource_browser_index.txt")
-				pac.resource_browser_cache = {}
+				file.Delete("pac3_cache/pac_asset_browser_index.txt")
+				pac.asset_browser_cache = {}
 			end,
 
 			L"cancel", function()
@@ -585,8 +585,8 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 
 	local options_menu = menu_bar:AddMenu(L"options")
 	options_menu:SetDeleteSelf(false)
-	options_menu:AddCVar(L"close browser on select", "pac_resource_browser_close_on_select", "1", "0")
-	options_menu:AddCVar(L"remember layout", "pac_resource_browser_remember_layout", "1", "0")
+	options_menu:AddCVar(L"close browser on select", "pac_asset_browser_close_on_select", "1", "0")
+	options_menu:AddCVar(L"remember layout", "pac_asset_browser_remember_layout", "1", "0")
 
 --[[
 	local tool_bar = vgui.Create("DPanel", frame)
@@ -690,9 +690,9 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 
 			local snd = CreateSound(LocalPlayer(), sound)
 			snd:Play()
-			pace.resource_browser_snd = snd
+			pace.asset_browser_snd = snd
 
-			timer.Create("pac_resource_browser_play", SoundDuration(sound), 1, function()
+			timer.Create("pac_asset_browser_play", SoundDuration(sound), 1, function()
 				if play:IsValid() then
 					play:Stop()
 				end
@@ -702,9 +702,9 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		function play.Stop()
 			play:SetImage("icon16/control_play.png")
 
-			if pace.resource_browser_snd then
-				pace.resource_browser_snd:Stop()
-				timer.Remove("pac_resource_browser_play")
+			if pace.asset_browser_snd then
+				pace.asset_browser_snd:Stop()
+				timer.Remove("pac_asset_browser_play")
 			end
 		end
 
@@ -723,7 +723,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		label:SetTextInset(play:GetWide() + 5, 0)
 
 		play.DoClick = function()
-			if timer.Exists("pac_resource_browser_play") and self:GetLines()[self:GetSelectedLine()] == line then
+			if timer.Exists("pac_asset_browser_play") and self:GetLines()[self:GetSelectedLine()] == line then
 				play:Stop()
 				return
 			end
@@ -752,7 +752,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		local node = root_node:AddNode("materials", "icon16/folder_database.png")
 		node.dir = "materials"
 
-		local viewPanel = vgui.Create("pac_ResourceBrowser_ContentContainer", frame.PropPanel)
+		local viewPanel = vgui.Create("pac_AssetBrowser_ContentContainer", frame.PropPanel)
 		viewPanel:DockMargin(5, 0, 0, 0)
 		viewPanel:SetVisible(false)
 
@@ -834,7 +834,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 					node.info = v
 					node.dir = "models"
 
-					node.propPanel = vgui.Create(vgui.GetControlTable("ContentContainer") and "ContentContainer" or "pac_ResourceBrowser_ContentContainer", frame.PropPanel)
+					node.propPanel = vgui.Create(vgui.GetControlTable("ContentContainer") and "ContentContainer" or "pac_AssetBrowser_ContentContainer", frame.PropPanel)
 					node.propPanel:DockMargin(5, 0, 0, 0)
 					node.propPanel:SetVisible(false)
 
@@ -1062,7 +1062,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 			node.OnNodeSelected = on_select
 		end
 
-		local viewPanel = vgui.Create("pac_ResourceBrowser_ContentContainer", frame.PropPanel)
+		local viewPanel = vgui.Create("pac_AssetBrowser_ContentContainer", frame.PropPanel)
 		viewPanel:DockMargin(5, 0, 0, 0)
 		viewPanel:SetVisible(false)
 
@@ -1144,7 +1144,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		end
 	end
 
-	local model_view = vgui.Create("pac_ResourceBrowser_ContentContainer", frame.PropPanel)
+	local model_view = vgui.Create("pac_AssetBrowser_ContentContainer", frame.PropPanel)
 	model_view:DockMargin(5, 0, 0, 0)
 	model_view:SetVisible(false)
 
@@ -1191,13 +1191,13 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 	local function find(path, pathid)
 		local key = path .. pathid
 
-		if pac.resource_browser_cache[key] then
-			return unpack(pac.resource_browser_cache[key])
+		if pac.asset_browser_cache[key] then
+			return unpack(pac.asset_browser_cache[key])
 		end
 
 		local files, folders = file.Find(path, pathid)
 
-		pac.resource_browser_cache[key] = {files, folders}
+		pac.asset_browser_cache[key] = {files, folders}
 
 		return files, folders
 	end
@@ -1284,7 +1284,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 		if i == 0 and self.searched then
 			self:Stop()
 			update_title()
-			file.Write("pac3_cache/pac_resource_browser_index.txt", util.TableToJSON(pac.resource_browser_cache))
+			file.Write("pac3_cache/pac_asset_browser_index.txt", util.TableToJSON(pac.asset_browser_cache))
 		end
 
 		if frame.dir then
@@ -1385,27 +1385,27 @@ end
 
 if pace.model_browser and pace.model_browser:IsValid() then
 	pace.model_browser:Remove()
-	pace.ResourceBrowser(function(...) print(...) return false end)
+	pace.AssetBrowser(function(...) print(...) return false end)
 end
 
-concommand.Add("pac_resource_browser", function(_, _, args)
-	pace.ResourceBrowser(function(path) SetClipboardText(path) update_title("copied " .. path .. " to clipboard!") return false end, args[1] and table.concat(args, ";"))
+concommand.Add("pac_asset_browser", function(_, _, args)
+	pace.AssetBrowser(function(path) SetClipboardText(path) update_title("copied " .. path .. " to clipboard!") return false end, args[1] and table.concat(args, ";"))
 	pace.model_browser:SetSize(ScrW()/1.25, ScrH()/1.25)
 	pace.model_browser:Center()
 end)
 
 list.Set(
 	"DesktopWindows",
-	"PACResourceBrowser",
+	"PACAssetBrowser",
 	{
-		title = "Resource Browser",
+		title = "Asset Browser",
 		icon = "icon16/images.png",
 		width = 960,
 		height = 700,
 		onewindow = true,
 		init = function(icn, pnl)
 			pnl:Remove()
-			RunConsoleCommand("pac_resource_browser")
+			RunConsoleCommand("pac_asset_browser")
 		end
 	}
 )
