@@ -60,7 +60,13 @@ local function install_click(icon, path, pattern, on_menu)
 			local menu = DermaMenu()
 			menu:AddOption(L"copy path", function()
 				if pattern then
-					path = path:match(pattern)
+					for _, pattern in ipairs(type(pattern) == "string" and {pattern} or pattern) do
+						local test = path:match(pattern)
+						if test then
+							path = test
+							break
+						end
+					end
 				end
 				SetClipboardText(path)
 			end)
@@ -120,18 +126,23 @@ local function create_texture_icon(path)
 	icon:SetWrap(true)
 	icon:SetText("")
 
-	install_click(icon, path, "^materials/(.+)%.vtf$")
+	install_click(icon, path, {"^materials/(.+)%.vtf$", "^materials/(.+%.png)$"})
 
 	setup_paint(
 		icon,
 		function(self)
 			self.mat = get_unlit_mat(path)
+			self.realwidth = self.mat:Width()
+			self.realheight = self.mat:Height()
 		end,
-		function(self, w, h)
+		function(self, W, H)
 			if self.mat then
+				local w = math.min(W, self.realwidth)
+				local h = math.min(H, self.realheight)
+
 				surface.SetDrawColor(255,255,255,255)
 				surface.SetMaterial(self.mat)
-				surface.DrawTexturedRect(0,0,w,h)
+				surface.DrawTexturedRect(W/2 - w/2, H/2 - h/2, w, h)
 			end
 		end
 	)
@@ -481,7 +492,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 	pace.model_browser_callback = function(...)
 		callback = callback or print
 
-		callback(...)
+		if callback(...) == false then return end
 
 		if GetConVar("pac_resource_browser_close_on_select"):GetBool() then
 			pace.model_browser:SetVisible(false)
@@ -1031,7 +1042,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 
 			for _, dir in ipairs(browse_types) do
 				local files, folders = file.Find(path .. dir .. "/*", pathid)
-				if files[1] or folders[1] then
+				if files and (files[1] or folders[1]) then
 					local parent = node
 
 					local node = node:AddFolder(dir, path .. dir, pathid, false)
@@ -1039,6 +1050,10 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 					node.OnNodeSelected = on_select
 
 					if not select_me and #browse_types == 1 and name == "all" and browse_types[1] == dir and dir ~= "models" then
+						select_me = node
+					end
+
+					if not select_me and #browse_types == 3 and name == "all" and dir == "materials" then
 						select_me = node
 					end
 				end
@@ -1325,7 +1340,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 			self.propPanel = self.model_view
 			self.propPanel:Clear()
 
-			self:StartSearch(self:GetValue(), "materials/", {".vmt", ".vtf"}, pathid, function(path, pathid)
+			self:StartSearch(self:GetValue(), "materials/", {".vmt", ".vtf", ".png"}, pathid, function(path, pathid)
 				if count >= 750 then return false, "too many results (" .. count .. ")" end
 				if path:EndsWith(".vmt") then
 					if material_view then
@@ -1370,11 +1385,27 @@ end
 
 if pace.model_browser and pace.model_browser:IsValid() then
 	pace.model_browser:Remove()
-	pace.ResourceBrowser(function(...) print(...) return false end, "models")
+	pace.ResourceBrowser(function(...) print(...) return false end)
 end
 
 concommand.Add("pac_resource_browser", function(_, _, args)
-	pace.ResourceBrowser(function(...) print(...) return false end, table.concat(args, ";"))
+	pace.ResourceBrowser(function(path) SetClipboardText(path) update_title("copied " .. path .. " to clipboard!") return false end, args[1] and table.concat(args, ";"))
 	pace.model_browser:SetSize(ScrW()/1.25, ScrH()/1.25)
 	pace.model_browser:Center()
 end)
+
+list.Set(
+	"DesktopWindows",
+	"PACResourceBrowser",
+	{
+		title = "Resource Browser",
+		icon = "icon16/images.png",
+		width = 960,
+		height = 700,
+		onewindow = true,
+		init = function(icn, pnl)
+			pnl:Remove()
+			RunConsoleCommand("pac_resource_browser")
+		end
+	}
+)
