@@ -304,13 +304,6 @@ do -- list
 		return (self.item_height * (#self.List+(hack or 1))) - (self.div:GetDividerWidth() + 1)
 	end
 
-	function PANEL:FixHeight()
-		for key, data in pairs(self.List) do
-			data.left:SetTall(self:GetItemHeight())
-			data.right:SetTall(self:GetItemHeight())
-		end
-	end
-
 	function PANEL:PerformLayout()
 		self.scr:SetSize(10, self:GetHeight())
 		self.scr:SetUp(self:GetTall(), self:GetHeight() - 10)
@@ -336,6 +329,7 @@ do -- list
 		end
 
 		local left = vgui.Create("DButton", self)
+		left:SetTall(self:GetItemHeight())
 		left:SetText("")
 		left.text = name
 
@@ -352,6 +346,7 @@ do -- list
 		left.GetValue = function() return name end
 
 		local right = vgui.Create("DButton", self)
+		right:SetTall(self:GetItemHeight())
 		right:SetText("")
 		self.right:AddItem(right)
 
@@ -391,6 +386,7 @@ do -- list
 
 	function PANEL:AddKeyValue(key, var, pos, obj, udata, group)
 		local btn = pace.CreatePanel("properties_label")
+			btn:SetTall(self:GetItemHeight())
 			btn:SetValue(L((udata and udata.editor_friendly or key):gsub("%u", " %1"):lower()):Trim())
 
 			if obj then
@@ -401,6 +397,7 @@ do -- list
 
 
 		local pnl = pace.CreatePanel("properties_container")
+		pnl:SetTall(self:GetItemHeight())
 		pnl.right = true
 		pnl.alt_line = #self.List%2 == 1
 		btn.alt_line = pnl.alt_line
@@ -567,6 +564,10 @@ do -- list
 				pnl = pace.CreatePanel("properties_" .. T)
 
 				if pnl then
+					if pnl.PostInit then
+						pnl:PostInit()
+					end
+
 					if udata and udata.description then
 						pnl:SetTooltip(L(udata.description))
 					end
@@ -676,8 +677,6 @@ do -- list
 				::CONTINUE::
 			end
 		end
-
-		self:FixHeight()
 	end
 
 	pace.RegisterPanel(PANEL)
@@ -780,17 +779,19 @@ do -- base editable
 	end
 
 	function PANEL:Init(...)
-		timer.Simple(0, function()
-			if self:IsValid() and self.SpecialCallback then
-				self:DefineSpecialCallback(self.SpecialCallback, self.SpecialCallback2)
-			end
-		end)
-
 		if DLabel and DLabel.Init then
 			local status = DLabel.Init(self, ...)
 			self:SetText('')
 			self:SetMouseInputEnabled(true)
 			return status
+		end
+
+		return status
+	end
+
+	function PANEL:PostInit()
+		if self.SpecialCallback then
+			self:DefineSpecialCallback(self.SpecialCallback, self.SpecialCallback2)
 		end
 	end
 
@@ -1112,30 +1113,28 @@ do -- vector
 			self.middle = middle
 			self.right = right
 
-			timer.Simple(0,function()
-				if self.SpecialCallback then
-					local btn = vgui.Create("DButton", self)
-					btn:SetSize(16, 16)
-					btn:Dock(RIGHT)
-					btn:SetText("...")
-					btn.DoClick = function() self:SpecialCallback(self.CurrentKey) end
-					btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
+			if self.SpecialCallback then
+				local btn = vgui.Create("DButton", self)
+				btn:SetSize(16, 16)
+				btn:Dock(RIGHT)
+				btn:SetText("...")
+				btn.DoClick = function() self:SpecialCallback(self.CurrentKey) end
+				btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
 
-					if type == "color" or type == "color2" then
-						btn:SetText("")
-						btn.Paint = function(_,w,h)
-							if type == "color2" then
-								surface.SetDrawColor(self.vector.x*255, self.vector.y*255, self.vector.z*255, 255)
-							else
-								surface.SetDrawColor(self.vector.x, self.vector.y, self.vector.z, 255)
-							end
-							surface.DrawRect(0,0,w,h)
-							surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
-							surface.DrawOutlinedRect(0,0,w,h)
+				if type == "color" or type == "color2" then
+					btn:SetText("")
+					btn.Paint = function(_,w,h)
+						if type == "color2" then
+							surface.SetDrawColor(self.vector.x*255, self.vector.y*255, self.vector.z*255, 255)
+						else
+							surface.SetDrawColor(self.vector.x, self.vector.y, self.vector.z, 255)
 						end
+						surface.DrawRect(0,0,w,h)
+						surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
+						surface.DrawOutlinedRect(0,0,w,h)
 					end
 				end
-			end)
+			end
 
 			self.Paint = function() end
 		end
