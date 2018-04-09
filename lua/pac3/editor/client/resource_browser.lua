@@ -1,7 +1,27 @@
 -- based on starfall
-
 CreateClientConVar("pac_resource_browser_close_on_select", "1")
 CreateClientConVar("pac_resource_browser_remember_layout", "1")
+
+
+local cache = {}
+local function file_Exists(path, id)
+	local key = path .. id
+
+	if cache[key] == nil then
+		cache[key] = file.Exists(path, id)
+	end
+
+	return cache[key]
+end
+
+local cache = {}
+local function get_material_keyvalues(path)
+	if cache[path] == nil then
+		cache[path] = Material(path):GetKeyValues()
+	end
+
+	return cache[path]
+end
 
 local L = pace.LanguageString
 
@@ -45,36 +65,14 @@ local next_generate_icon = 0
 local max_generating = 5
 
 local function setup_paint(panel, generate_cb, draw_cb)
-	local old = panel.Think
-	panel.Think = function(self)
-		if self.last_paint and self.last_paint < RealTime() and self.setup_material == false then
-			next_generate_icon = next_generate_icon - 1
-			self.setup_material = nil
-		end
-		return old(self)
-	end
-
 	local old = panel.Paint
 	panel.Paint = function(self,w,h)
 		if not self.ready_to_draw then return end
 
-		self.last_paint = RealTime() + 0.1
-
-		if self.setup_material == false then
-			self.setup_material = true
-			next_generate_icon = next_generate_icon - 1
-		end
-
 		if not self.setup_material then
-			if next_generate_icon > max_generating then return end
-			next_generate_icon = next_generate_icon + 1
-
 			generate_cb(self)
-
-			self.setup_material = false
+			self.setup_material = true
 		end
-
-		old(self,w,h)
 
 		draw_cb(self, w, h)
 	end
@@ -158,11 +156,11 @@ local function create_material_icon(path, grid_panel)
 			pnl:SetLookAt( Vector( 0, 0, 0 ) )
 			pnl:SetFOV(1)
 			pnl:SetModel("models/hunter/plates/plate1x1.mdl")
-			pnl:SetCamPos(Vector(1,0,1) * 1900)
+			pnl:SetCamPos(Vector(1,0,1) * 1825)
 			pnl.mouseover = false
 
 			local m = Matrix()
-			m:Scale(Vector(1.42,1,0.01))
+			m:Scale(Vector(1.37,0.99,0.01))
 			pnl.Entity:EnableMatrix("RenderMultiply", m)
 
 			--[[
@@ -186,36 +184,41 @@ local function create_material_icon(path, grid_panel)
 				old(self, ...)
 			end
 ]]
-			function pnl:Think()
 
+			local unlit_mat = get_unlit_mat(path)
+
+			function pnl:Paint( w, h )
 				local x, y = self:ScreenToLocal(gui.MouseX(), gui.MouseY())
-				x = x / self:GetWide()
-				y = y / self:GetTall()
+
+				if (x > w*8 or y > h*8) or (x < -w*4 or y < -h*4) then
+					surface.SetDrawColor(255,255,255,255)
+					surface.SetMaterial(unlit_mat)
+					surface.DrawTexturedRect(0,0,w,h)
+					return
+				end
+
+				x = x / w
+				y = y / h
 
 				x = x * 50
 				y = y * 50
 
 				x = x - 25
 				y = y - 55
-				self.light_pos = Vector(y, x, 30)
-			end
+				local light_pos = Vector(y, x, 30)
 
-			function pnl:Paint( w, h )
-				local x, y = self:LocalToScreen( 0, 0 )
-
-				cam.Start3D( self.vCamPos, Angle(45, 180, 0), self.fFOV, x, y, w, h, 5, self.FarZ )
+				local pos_x, pos_y = self:LocalToScreen( 0, 0 )
+				cam.Start3D( self.vCamPos, Angle(45, 180, 0), self.fFOV, pos_x, pos_y, w, h, 5, self.FarZ )
 
 				render.SuppressEngineLighting( true )
 
 
 				render.SetColorModulation( 1, 1, 1 )
 				render.SetBlend(1)
-
 				render.SetLocalModelLights({{
 					color = Vector(1,1,1),
-					pos = self.Entity:GetPos() + self.light_pos,
+					pos = self.Entity:GetPos() + light_pos,
 				}})
-
 
 				self:DrawModel()
 
@@ -278,7 +281,7 @@ local function create_material_icon(path, grid_panel)
 
 		menu:AddOption("view keyvalues", function()
 			local tbl = {}
-			for k,v in pairs(Material(mat_path):GetKeyValues()) do
+			for k,v in pairs(get_material_keyvalues(mat_path)) do
 				table.insert(tbl, {k = k, v = v})
 			end
 			table.sort(tbl, function(a,b) return a.k < b.k end)
@@ -709,7 +712,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 				if material_view then
 					for _, material_name in ipairs(materials) do
 						local path = "materials/" .. material_name .. ".vmt"
-						if file.Exists(path, "GAME") then
+						if file_Exists(path, "GAME") then
 							create_material_icon(path, viewPanel)
 						end
 					end
@@ -720,8 +723,7 @@ function pace.ResourceBrowser(callback, browse_types_str, part_key)
 					local textures = {}
 
 					for _, material_name in ipairs(materials) do
-						local mat = Material(material_name)
-						for k, v in pairs(mat:GetKeyValues()) do
+						for k, v in pairs(get_material_keyvalues(material_name)) do
 							if type(v) == "ITexture" then
 								local name = v:GetName()
 								if not done[name] then
