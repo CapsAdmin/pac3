@@ -228,6 +228,22 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 	end
 end
 
+function pace.GetRegisteredParts()
+	local out = {}
+	for class_name, part in pairs(pac.GetRegisteredParts()) do
+		local cond = (not pace.IsInBasicMode() or pace.BasicParts[class_name]) and
+			not part.Internal and
+			part.show_in_editor ~= false and
+			part.is_deprecated ~= false
+
+		if cond then
+			table.insert(out, part)
+		end
+	end
+
+	return out
+end
+
 do -- menu
 	function pace.AddRegisteredPartsToMenu(menu)
 		local partsToShow = {}
@@ -254,23 +270,10 @@ do -- menu
 			end
 		end)
 
-		for class_name, part in pairs(pac.GetRegisteredParts()) do
-			local cond = (not pace.IsInBasicMode() or not pace.BasicParts[class_name]) and
-				not part.Internal and
-				part.show_in_editor ~= false and
-				part.is_deprecated ~= false
-
-			if cond then
-				partsToShow[class_name] = part
-			end
-		end
-
 		if pace.IsInBasicMode() then
-			table.sort(partsToShow)
-
-			for class_name, part in pairs(partsToShow) do
-				local newMenuEntry = menu:AddOption(L(part.Name or class_name), function()
-					pace.AddUndoPartCreation(pace.Call("CreatePart", class_name))
+			for _, part in ipairs(pace.GetRegisteredParts()) do
+				local newMenuEntry = menu:AddOption(L(part.Name or part.ClassName), function()
+					pace.AddUndoPartCreation(pace.Call("CreatePart", part.ClassName))
 				end)
 
 				if part.Icon then
@@ -280,7 +283,7 @@ do -- menu
 		else
 			local sortedTree = {}
 
-			for class, part in pairs(partsToShow) do
+			for _, part in pairs(pace.GetRegisteredParts()) do
 				local group = part.Group or part.Groups
 				local groups
 
@@ -299,12 +302,12 @@ do -- menu
 							sortedTree[groupName].name = L(groupName)
 						end
 
-						partsToShow[class] = nil
+						partsToShow[part.ClassName] = nil
 
-						if groupName == class then
+						if groupName == part.ClassName then
 							sortedTree[groupName].hasPart = true
 						else
-							table.insert(sortedTree[groupName].parts, {class, part})
+							table.insert(sortedTree[groupName].parts, {part.ClassName, part})
 						end
 					end
 				end
@@ -391,6 +394,9 @@ do -- menu
 
 		local edit = base:Add("DTextEntry")
 		edit:SetTall(20)
+		if pace.IsInBasicMode() then
+			edit:SetTall(0)
+		end
 		edit:Dock(TOP)
 		edit:RequestFocus()
 		edit:SetUpdateOnType(true)
@@ -409,8 +415,8 @@ do -- menu
 			result:Clear()
 			result.found = {}
 
-			for class_name, part in pairs(pac.GetRegisteredParts()) do
-				if class_name ~= "base" and (part.Name or part.ClassName):find(str, nil, true) then
+			for _, part in ipairs(pace.GetRegisteredParts()) do
+				if (part.Name or part.ClassName):find(str, nil, true) then
 					table.insert(result.found, part)
 				end
 			end
@@ -460,9 +466,10 @@ do -- menu
 		edit:OnValueChange("")
 
 		pac.AddHook("VGUIMousePressed", "search_part_menu", function(pnl, code)
-			if code ~= MOUSE_FIRST then return end
-			if not base:IsOurChild(pnl) then
-				base:Remove()
+			if code == MOUSE_LEFT or code == MOUSE_RIGHT then
+				if not base:IsOurChild(pnl) then
+					base:Remove()
+				end
 			end
 		end)
 	end
