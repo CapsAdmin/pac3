@@ -14,7 +14,7 @@ local function get(url, cb, failcb)
 				return
 			end
 
-			cb(data, len, headers)
+			cb(data, #data, headers)
 		end,
 		failed = function(err)
 			failcb(err)
@@ -92,5 +92,3 @@ function pac.HTTPGet(url, cb, failcb)
 		})
 	end
 end
-
-pac.HTTPGet("https://docs.google.com/uc?export=download&id=0B4QDw71zow0ZZG41emxaTjZfdEk", print, print)
