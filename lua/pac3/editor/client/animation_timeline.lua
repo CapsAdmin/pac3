@@ -395,7 +395,7 @@ do
 		end
 
 		local pnl = vgui.Create("DPanel",self)
-		pnl:SetTall(20)
+		pnl:SetTall(12)
 		pnl:Dock(TOP)
 		pnl.Paint = function(s,w,h)
 			local XPos = self.keyframe_scroll.OffsetX
@@ -554,6 +554,36 @@ end
 do
 	local KEYFRAME = {}
 
+	function KEYFRAME:SetStart(b)
+		if b then
+			self.start_icon = self:Add("DImage")
+			self.start_icon:SetImage("icon16/control_play_blue.png")
+		elseif IsValid(self.start_icon) then
+			self.start_icon:Remove()
+		end
+		self.start = b
+		self:InvalidateLayout(true)
+	end
+
+	function KEYFRAME:GetStart()
+		return self.start
+	end
+
+	function KEYFRAME:SetRestart(b)
+		if b then
+			self.restart_icon = self:Add("DImage")
+			self.restart_icon:SetImage("icon16/control_repeat_blue.png")
+		elseif IsValid(self.restart_icon) then
+			self.restart_icon:Remove()
+		end
+		self.restart = b
+		self:InvalidateLayout(true)
+	end
+
+	function KEYFRAME:GetRestart()
+		return self.restart
+	end
+
 	function KEYFRAME:GetData()
 		return self.DataTable
 	end
@@ -563,10 +593,10 @@ do
 		self:SetWide(1/self:GetData().FrameRate*secondDistance)
 		self:GetParent():GetParent():InvalidateLayout() --rebuild the timeline
 		if timeline.data.RestartFrame == index then
-			self.RestartPos = true
+			self:SetRestart(true)
 		end
 		if timeline.data.StartFrame == index then
-			self.StartPos = true
+			self:SetStart(true)
 		end
 	end
 
@@ -586,13 +616,6 @@ do
 		end
 
 		draw.SimpleText(self:GetAnimationIndex(),pace.CurrentFont,5,5,self:GetSkin().Colours.Tree.Normal,0,3)
-
-		if self.RestartPos then
-			draw.SimpleText("Restart",pace.CurrentFont,self:GetWide()-30,5,Color(0,0,0,255),2,3)
-		end
-		if self.StartPos then
-			draw.SimpleText("Start",pace.CurrentFont,self:GetWide()-25,5,Color(0,0,0,255),0,3)
-		end
 	end
 
 	function KEYFRAME:Think()
@@ -690,23 +713,35 @@ do
 						L"cancel" )
 				end)
 
-			menu:AddOption(L"set restart",function()
-				for _,v in pairs(timeline.frame.keyframe_scroll.Panels) do
-					if v.RestartPos then v.RestartPos = nil end
-				end
-				self.RestartPos = true
-				timeline.data.RestartFrame = self:GetAnimationIndex()
-			end)
-
-			menu:AddOption(L"set start",function()
-				for _,v in pairs(timeline.frame.keyframe_scroll.Panels) do
-					if v.StartPos then
-						v.StartPos = nil
+			if not self:GetRestart() then
+				menu:AddOption(L"set restart",function()
+					for _,v in pairs(timeline.frame.keyframe_scroll.Panels) do
+						v:SetRestart(false)
 					end
-				end
-				self.StartPos = true
-				timeline.data.StartFrame = self:GetAnimationIndex()
-			end)
+					self:SetRestart(true)
+					timeline.data.RestartFrame = self:GetAnimationIndex()
+				end)
+			else
+				menu:AddOption(L"unset restart",function()
+					self:SetStart(false)
+					timeline.data.StartFrame = nil
+				end)
+			end
+
+			if not self:GetStart() then
+				menu:AddOption(L"set start",function()
+					for _,v in pairs(timeline.frame.keyframe_scroll.Panels) do
+						v:SetStart(false)
+					end
+					self:SetStart(true)
+					timeline.data.StartFrame = self:GetAnimationIndex()
+				end)
+			else
+				menu:AddOption(L"unset start",function()
+					self:SetStart(false)
+					timeline.data.StartFrame = nil
+				end)
+			end
 
 			if self:GetAnimationIndex() > 1 then
 				menu:AddOption(L"reverse last frame",function()
@@ -777,6 +812,24 @@ do
 		self:SetWide(secondDistance*int)
 		self:GetParent():GetParent():InvalidateLayout() --rebuild the timeline
 		self:GetData().FrameRate = 1/int --set animation frame rate
+	end
+
+	function KEYFRAME:PerformLayout()
+		if IsValid(self.start_icon) then
+			self.start_icon:SizeToContents()
+			self.start_icon:CenterVertical()
+			self.start_icon:CenterHorizontal()
+		end
+
+		if IsValid(self.restart_icon) then
+			self.restart_icon:SizeToContents()
+			if IsValid(self.start_icon) then
+				self.restart_icon:SetPos(self.start_icon:GetPos() + self.start_icon:GetWide())
+			else
+				self.restart_icon:CenterHorizontal()
+			end
+			self.restart_icon:CenterVertical()
+		end
 	end
 
 	vgui.Register("pac3_timeline_keyframe",KEYFRAME,"DPanel")
