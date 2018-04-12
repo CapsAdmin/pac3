@@ -161,7 +161,7 @@ function timeline.Load(data)
 			keyframe:SetFrameData(i, v)
 		end
 
-		timeline.SelectKeyframe(timeline.frame.keyframe_scroll.Panels[1])
+		timeline.SelectKeyframe(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()[1])
 	else
 		timeline.data = {FrameData = {}, Type = timeline.animation_type, Interpolation = timeline.interpolation}
 		timeline.frame:Clear()
@@ -398,7 +398,7 @@ do
 		pnl:SetTall(12)
 		pnl:Dock(TOP)
 		pnl.Paint = function(s,w,h)
-			local XPos = self.keyframe_scroll.OffsetX
+			local XPos = -self.keyframe_scroll:GetCanvas():GetPos()
 
 			derma.SkinHook( "Paint", "Panel", s, w, h )
 
@@ -429,7 +429,8 @@ do
 				local restartPos = self:ResolveRestart()
 				timeline.play_bar_offset = restartPos*secondDistance
 			end
-			draw.RoundedBox(0,timeline.play_bar_offset-1,0,2,16,Color(255,0,0,240))
+
+			draw.RoundedBox(0,timeline.play_bar_offset-1 - XPos,0,2,16,Color(255,0,0,240))
 
 			local previousSecond = XPos-(XPos%secondDistance)
 			for i=previousSecond,previousSecond+s:GetWide(),secondDistance/4 do
@@ -441,8 +442,23 @@ do
 
 		end
 
-		local pnl = vgui.Create("DHorizontalScroller",self)
-		pnl:Dock(TOP)
+		local pnl = vgui.Create("pac_scrollpanel_horizontal",self)
+		pnl:Dock(FILL)
+
+		local old = pnl.PerformLayout
+
+		function pnl.PerformLayout()
+			old(pnl)
+
+			if self.moving then return end
+
+			local x = 0
+			for k,v in ipairs(pnl:GetCanvas():GetChildren()) do
+				v:SetPos(x, 0)
+				x = x + v:GetWide()
+			end
+		end
+
 		self.keyframe_scroll = pnl
 	end
 
@@ -480,9 +496,8 @@ do
 	end
 
 	function TIMELINE:Clear()
-		for i,v in pairs(self.keyframe_scroll.Panels) do
+		for i,v in pairs(self.keyframe_scroll:GetCanvas():GetChildren()) do
 			v:Remove()
-			self.keyframe_scroll.Panels[i] = nil
 		end
 		self.add_keyframe_button:SetDisabled(false)
 		self.play_button:SetDisabled(false)
@@ -540,13 +555,12 @@ do
 
 		keyframe:SetWide(secondDistance) --default to 1 second animations
 
-		self.keyframe_scroll:AddPanel(keyframe)
+		keyframe:SetParent(self.keyframe_scroll)
 		self.keyframe_scroll:InvalidateLayout()
 
-		keyframe.Alternate = #timeline.frame.keyframe_scroll.Panels%2 == 1
+		keyframe.Alternate = #timeline.frame.keyframe_scroll:GetCanvas():GetChildren()%2 == 1
 
 		return keyframe
-
 	end
 	vgui.Register("pac3_timeline",TIMELINE,"DFrame")
 end
@@ -642,10 +656,9 @@ do
 				local panels = {}
 				local frames = {}
 
-				for k, v in pairs(timeline.frame.keyframe_scroll.Panels) do
+				for k, v in pairs(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()) do
 					table.insert(panels, v)
 					v:SetParent()
-					timeline.frame.keyframe_scroll.Panels[k] = nil
 				end
 
 				table.sort(panels, function(a, b)
@@ -653,8 +666,8 @@ do
 				end)
 
 				for i,v in ipairs(panels) do
-					timeline.frame.keyframe_scroll:AddPanel(v)
-					v.Alternate = #timeline.frame.keyframe_scroll.Panels%2 == 1
+					v:SetParent(timeline.frame.keyframe_scroll)
+					v.Alternate = #timeline.frame.keyframe_scroll:GetCanvas():GetChildren()%2 == 1
 
 					frames[i] = timeline.data.FrameData[v:GetAnimationIndex()]
 				end
@@ -668,6 +681,7 @@ do
 				self:SetCursor("none")
 				self.move = nil
 				self.move_x = nil
+				timeline.frame.moving = false
 			end
 		end
 	end
@@ -687,6 +701,8 @@ do
 				self:MoveToFront()
 				self:MouseCapture(true)
 				self:SetCursor("sizeall")
+
+				timeline.frame.moving = true
 			end
 
 			timeline.frame:Toggle(false)
@@ -715,7 +731,7 @@ do
 
 			if not self:GetRestart() then
 				menu:AddOption(L"set restart",function()
-					for _,v in pairs(timeline.frame.keyframe_scroll.Panels) do
+					for _,v in pairs(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()) do
 						v:SetRestart(false)
 					end
 					self:SetRestart(true)
@@ -730,7 +746,7 @@ do
 
 			if not self:GetStart() then
 				menu:AddOption(L"set start",function()
-					for _,v in pairs(timeline.frame.keyframe_scroll.Panels) do
+					for _,v in pairs(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()) do
 						v:SetStart(false)
 					end
 					self:SetStart(true)
@@ -784,7 +800,7 @@ do
 
 				local remove_i
 
-				for i,v in pairs(timeline.frame.keyframe_scroll.Panels) do
+				for i,v in pairs(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()) do
 					if v == self then
 						remove_i = i
 					elseif v:GetAnimationIndex() > frameNum then
@@ -793,13 +809,13 @@ do
 					end
 				end
 
-				table.remove(timeline.frame.keyframe_scroll.Panels, remove_i)
+				table.remove(timeline.frame.keyframe_scroll:GetCanvas():GetChildren(), remove_i)
 
 				timeline.frame.keyframe_scroll:InvalidateLayout()
 
 				self:Remove()
 
-				timeline.SelectKeyframe(timeline.frame.keyframe_scroll.Panels[#timeline.frame.keyframe_scroll.Panels])
+				timeline.SelectKeyframe(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()[#timeline.frame.keyframe_scroll:GetCanvas():GetChildren()])
 			end)
 
 			menu:Open()
