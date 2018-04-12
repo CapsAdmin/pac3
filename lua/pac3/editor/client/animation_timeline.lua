@@ -397,6 +397,8 @@ do
 		local pnl = vgui.Create("DPanel",self)
 		pnl:SetTall(12)
 		pnl:Dock(TOP)
+		pnl:NoClipping(true)
+		local scrub = Material("icon16/bullet_arrow_down.png")
 		pnl.Paint = function(s,w,h)
 			local XPos = -self.keyframe_scroll:GetCanvas():GetPos()
 
@@ -430,8 +432,6 @@ do
 				timeline.play_bar_offset = restartPos*secondDistance
 			end
 
-			draw.RoundedBox(0,timeline.play_bar_offset-1 - XPos,0,2,16,Color(255,0,0,240))
-
 			local previousSecond = XPos-(XPos%secondDistance)
 			for i=previousSecond,previousSecond+s:GetWide(),secondDistance/4 do
 				if i-XPos > 0 and i-XPos < ScrW() then
@@ -439,6 +439,10 @@ do
 					draw.SimpleText(sec,pace.CurrentFont,i-XPos,6,Color(0,0,0,255),1,1)
 				end
 			end
+
+			surface.SetMaterial(scrub)
+			surface.SetDrawColor(255,0,0,255)
+			surface.DrawTexturedRect(timeline.play_bar_offset - XPos - scrub:Width()/2,-11,scrub:Width(), scrub:Height())
 
 		end
 
@@ -553,7 +557,7 @@ do
 			keyframe.DataTable = timeline.data.FrameData[keyframe.AnimationKeyIndex]
 		end
 
-		keyframe:SetWide(secondDistance) --default to 1 second animations
+		keyframe:SetWide(math.max(secondDistance, 4)) --default to 1 second animations
 
 		keyframe:SetParent(self.keyframe_scroll)
 		self.keyframe_scroll:InvalidateLayout()
@@ -604,7 +608,7 @@ do
 	function KEYFRAME:SetFrameData(index,tbl)
 		self.DataTable = tbl
 		self.AnimationKeyIndex = index
-		self:SetWide(1/self:GetData().FrameRate*secondDistance)
+		self:SetWide(math.max(1/self:GetData().FrameRate*secondDistance, 4))
 		self:GetParent():GetParent():InvalidateLayout() --rebuild the timeline
 		if timeline.data.RestartFrame == index then
 			self:SetRestart(true)
@@ -717,17 +721,17 @@ do
 					function() end,
 					L"set length",
 					L"cancel" )
-			end)
+			end):SetImage("icon16/time.png")
 
 			menu:AddOption(L"multiply length",function()
 				Derma_StringRequest(L"question",
-						L"multiply "..self:GetAnimationIndex().."'s length",
-						"1.0",
-						function(str) self:SetLength(1/tonumber(str)) end,
-						function() end,
-						L"multiply length",
-						L"cancel" )
-				end)
+					L"multiply "..self:GetAnimationIndex().."'s length",
+					"1.0",
+					function(str) self:SetLength(1/tonumber(str)) end,
+					function() end,
+					L"multiply length",
+					L"cancel" )
+			end):SetImage("icon16/time_add.png")
 
 			if not self:GetRestart() then
 				menu:AddOption(L"set restart",function()
@@ -736,12 +740,12 @@ do
 					end
 					self:SetRestart(true)
 					timeline.data.RestartFrame = self:GetAnimationIndex()
-				end)
+				end):SetImage("icon16/control_repeat_blue.png")
 			else
 				menu:AddOption(L"unset restart",function()
-					self:SetStart(false)
+					self:SetRestart(false)
 					timeline.data.StartFrame = nil
-				end)
+				end):SetImage("icon16/control_repeat.png")
 			end
 
 			if not self:GetStart() then
@@ -751,29 +755,31 @@ do
 					end
 					self:SetStart(true)
 					timeline.data.StartFrame = self:GetAnimationIndex()
-				end)
+				end):SetImage("icon16/control_play_blue.png")
 			else
 				menu:AddOption(L"unset start",function()
 					self:SetStart(false)
 					timeline.data.StartFrame = nil
-				end)
+				end):SetImage("icon16/control_play.png")
 			end
 
-			if self:GetAnimationIndex() > 1 then
-				menu:AddOption(L"reverse last frame",function()
-					local tbl = timeline.data.FrameData[self:GetAnimationIndex() - 1].BoneInfo
-					for i, v in pairs(tbl) do
-						self:GetData().BoneInfo[i] = table.Copy(self:GetData().BoneInfo[i] or {})
-						self:GetData().BoneInfo[i].MU = v.MU * -1
-						self:GetData().BoneInfo[i].MR = v.MR * -1
-						self:GetData().BoneInfo[i].MF = v.MF * -1
-						self:GetData().BoneInfo[i].RU = v.RU * -1
-						self:GetData().BoneInfo[i].RR = v.RR * -1
-						self:GetData().BoneInfo[i].RF = v.RF * -1
-					end
-					timeline.UpdateFrameData()
-				end)
-			end
+			menu:AddOption(L"reverse",function()
+				local frame = timeline.data.FrameData[self:GetAnimationIndex() - 1]
+				if not frame then
+					frame = timeline.data.FrameData[#timeline.data.FrameData]
+				end
+				local tbl = frame.BoneInfo
+				for i, v in pairs(tbl) do
+					self:GetData().BoneInfo[i] = table.Copy(self:GetData().BoneInfo[i] or {})
+					self:GetData().BoneInfo[i].MU = v.MU * -1
+					self:GetData().BoneInfo[i].MR = v.MR * -1
+					self:GetData().BoneInfo[i].MF = v.MF * -1
+					self:GetData().BoneInfo[i].RU = v.RU * -1
+					self:GetData().BoneInfo[i].RR = v.RR * -1
+					self:GetData().BoneInfo[i].RF = v.RF * -1
+				end
+				timeline.UpdateFrameData()
+			end):SetImage("icon16/control_rewind_blue.png")
 
 			menu:AddOption(L"duplicate to end", function()
 				local keyframe = timeline.frame:AddKeyFrame()
@@ -791,7 +797,7 @@ do
 				end
 				keyframe:SetLength(1/(self:GetData().FrameRate))
 				timeline.SelectKeyframe(keyframe)
-			end)
+			end):SetImage("icon16/application_double.png")
 
 			menu:AddOption(L"remove",function()
 				local frameNum = self:GetAnimationIndex()
@@ -816,7 +822,7 @@ do
 				self:Remove()
 
 				timeline.SelectKeyframe(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()[#timeline.frame.keyframe_scroll:GetCanvas():GetChildren()])
-			end)
+			end):SetImage("icon16/application_delete.png")
 
 			menu:Open()
 
@@ -825,7 +831,7 @@ do
 
 	function KEYFRAME:SetLength(int)
 		if not int then return end
-		self:SetWide(secondDistance*int)
+		self:SetWide(math.max(secondDistance*int, 4))
 		self:GetParent():GetParent():InvalidateLayout() --rebuild the timeline
 		self:GetData().FrameRate = 1/int --set animation frame rate
 	end

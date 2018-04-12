@@ -151,6 +151,8 @@ local function ProcessAnimations(pl)
 
 	boneanimlib.ResetEntityBoneMatrix(pl)
 
+	if not pl.pac_animations then return end
+
 	local tBuffer = {}
 
 	for _, tbl in pairs(pl.pac_animations) do
