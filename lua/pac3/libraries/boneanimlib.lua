@@ -180,20 +180,42 @@ local function ProcessAnimations(pl)
 				local vForward = aCurBoneAng:Forward()
 				local iInterp = tbl.Interpolation
 
-				if iInterp == "linear" or tbl.Type == "posture" then
-					mBoneMatrix:Translate((tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward) * fAmount)
-					mBoneMatrix:Rotate(Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF) * fAmount)
+				if iInterp == "linear" then
+					if tbl.Type == "posture" then
+						mBoneMatrix:Translate((tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward) * fAmount)
+						mBoneMatrix:Rotate(Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF) * fAmount)
+					else
+						local bi1 = GetFrameBoneInfo(pl, tbl, iCurFrame - 1, iBoneID)
+
+						mBoneMatrix:Translate(
+							LerpVector(
+								fFrameDelta,
+								bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward,
+								tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward
+							) * fPower
+						)
+
+						mBoneMatrix:Rotate(
+							LerpAngle(
+								fFrameDelta,
+								Angle(bi1.RR, bi1.RU, bi1.RF),
+								Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF)
+							) * fPower
+						)
+					end
 				elseif iInterp == "cubic" and tbl.FrameData[iCurFrame - 2] and tbl.FrameData[iCurFrame + 1] then
 						local bi0 = GetFrameBoneInfo(pl, tbl, iCurFrame - 2, iBoneID)
 						local bi1 = GetFrameBoneInfo(pl, tbl, iCurFrame - 1, iBoneID)
 						local bi3 = GetFrameBoneInfo(pl, tbl, iCurFrame + 1, iBoneID)
 
 						mBoneMatrix:Translate(CosineInterpolation(bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward, tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward, fFrameDelta) * fPower)
-						mBoneMatrix:Rotate(CubicInterpolation(Angle(bi0.RR, bi0.RU, bi0.RF),
-																Angle(bi1.RR, bi1.RU, bi1.RF),
-																Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF),
-																Angle(bi3.RR, bi3.RU, bi3.RF),
-																fFrameDelta) * fPower)
+						mBoneMatrix:Rotate(CubicInterpolation(
+							Angle(bi0.RR, bi0.RU, bi0.RF),
+							Angle(bi1.RR, bi1.RU, bi1.RF),
+							Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF),
+							Angle(bi3.RR, bi3.RU, bi3.RF),
+							fFrameDelta
+						) * fPower)
 				elseif iInterp == "none" then
 					mBoneMatrix:Translate((tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward))
 					mBoneMatrix:Rotate(Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF))
