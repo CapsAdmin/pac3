@@ -48,7 +48,12 @@ do
 	function PANEL:Think(...)
 		pnl = vgui.GetHoveredPanel() or NULL
 
-		if pace.current_part:IsValid() and pace.current_part.editor_node and pace.current_part.editor_node:IsValid() then
+		if
+			not gui.IsGameUIVisible()  and
+			pace.current_part:IsValid() and
+			pace.current_part.editor_node and
+			pace.current_part.editor_node:IsValid()
+		then
 			if input.IsKeyDown(KEY_LEFT) then
 				pace.current_part:SetEditorExpand(false)
 				pace.RefreshTree(true)
