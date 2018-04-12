@@ -284,7 +284,7 @@ do --dev util
 		if selected_part_uid then
 			local part = pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), selected_part_uid)
 
-			if part then
+			if part and part:IsValid() then
 				pace.Call("PartSelected", part)
 			end
 		end
