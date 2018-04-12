@@ -1,3 +1,5 @@
+local boneanimlib = pac.boneanimlib
+
 local PART = {}
 
 PART.ClassName = "custom_animation"
@@ -16,6 +18,12 @@ pac.StartStorableVars()
 		sequence = "sequence",
 		stance = "stance",
 	}})
+	pac.GetSet(PART, "Interpolation", "cosine", {enums = {
+		linear = "linear",
+		cosine = "cosine",
+		cubic = "cubic",
+		none = "none",
+	}})
 	pac.GetSet(PART, "Rate", 1)
 	pac.GetSet(PART, "BonePower", 1)
 	pac.GetSet(PART, "Offset", 0)
@@ -32,8 +40,8 @@ end
 function PART:SetRate(num)
 	self.Rate = num
 	local owner = self:GetOwner()
-	if owner:IsValid() and owner.LuaAnimations then
-		local anim = owner.LuaAnimations[self:GetAnimID()]
+	if owner:IsValid() and owner.pac_animations then
+		local anim = owner.pac_animations[self:GetAnimID()]
 		if anim then
 			anim.TimeScale = self.Rate
 		end
@@ -43,10 +51,21 @@ end
 function PART:SetBonePower(num)
 	self.BonePower = num
 	local owner = self:GetOwner()
-	if owner:IsValid() and owner.LuaAnimations then
-		local anim = owner.LuaAnimations[self:GetAnimID()]
+	if owner:IsValid() and owner.pac_animations then
+		local anim = owner.pac_animations[self:GetAnimID()]
 		if anim then
 			anim.Power = self.BonePower
+		end
+	end
+end
+
+function PART:SetInterpolation(mode)
+	self.Interpolation = mode
+	local owner = self:GetOwner()
+	if owner:IsValid() and owner.pac_animations then
+		local anim = owner.pac_animations[self:GetAnimID()]
+		if anim then
+			anim.Interpolation = mode
 		end
 	end
 end
@@ -54,8 +73,8 @@ end
 function PART:SetOffset(num)
 	self.Offset = num
 	local owner = self:GetOwner()
-	if owner:IsValid() and owner.LuaAnimations then
-		local anim = owner.LuaAnimations[self:GetAnimID()]
+	if owner:IsValid() and owner.pac_animations then
+		local anim = owner.pac_animations[self:GetAnimID()]
 		if anim then
 			anim.Offset = num
 		end
@@ -73,19 +92,12 @@ function PART:SetURL(url)
 				return
 			end
 
-			if tbl.Type then
-				if tbl.Type == boneanimlib.TYPE_GESTURE then
-					self:SetAnimationType("gesture")
-				elseif tbl.Type == boneanimlib.TYPE_POSTURE then
-					self:SetAnimationType("posture")
-				elseif tbl.Type == boneanimlib.TYPE_STANCE then
-					self:SetAnimationType("stance")
-				elseif tbl.Type == boneanimlib.TYPE_SEQUENCE then
-					self:SetAnimationType("sequence")
-				end
-			end
+			boneanimlib.ConvertOldData(tbl)
 
-			boneanimlib.RegisterLuaAnimation(self:GetAnimID(), tbl)
+			self:SetAnimationType(tbl.Type)
+			self:SetInterpolation(tbl.Interpolation)
+
+			boneanimlib.RegisterAnimation(self:GetAnimID(), tbl)
 
 			if pace and pace.timeline.IsActive() and pace.timeline.animation_part == self then
 				pace.timeline.Load(tbl)
@@ -102,7 +114,7 @@ function PART:SetData(str)
 	if str then
 		local tbl = util.JSONToTable(str)
 		if tbl then
-			boneanimlib.RegisterLuaAnimation(self:GetAnimID(), tbl)
+			boneanimlib.RegisterAnimation(self:GetAnimID(), tbl)
 		end
 	end
 end
@@ -111,24 +123,25 @@ function PART:OnShow(owner)
 	--play animation
 	local owner = self:GetOwner()
 
-	if not boneanimlib.GetLuaAnimations()[self:GetAnimID()] then
+	if not boneanimlib.GetRegisteredAnimations()[self:GetAnimID()] then
 		self:SetURL(self:GetURL())
 	end
 
 	if owner:IsValid() then
 		if not self:GetStopOnHide() then
-			if boneanimlib.GetLuaAnimations()[self:GetAnimID()] then
-				owner:StopLuaAnimation(self:GetAnimID())
+			if boneanimlib.GetRegisteredAnimations()[self:GetAnimID()] then
+				boneanimlib.StopEntityAnimation(owner, self:GetAnimID())
 			end
 		end
-		owner:SetLuaAnimation(self:GetAnimID())
+		boneanimlib.SetEntityAnimation(owner, self:GetAnimID())
 		self:SetOffset(self:GetOffset())
 		self:SetRate(self:GetRate())
 		self:SetBonePower(self:GetBonePower())
-		if self.StopOtherAnimations and owner.LuaAnimations then
-			for id in pairs(owner.LuaAnimations) do
+		self:SetInterpolation(self:GetInterpolation())
+		if self.StopOtherAnimations and owner.pac_animations then
+			for id in pairs(owner.pac_animations) do
 				if id ~= self:GetAnimID() then
-					owner:StopLuaAnimation(id)
+					boneanimlib.StopEntityAnimation(owner, id)
 				end
 			end
 		end
@@ -140,10 +153,10 @@ function PART:OnHide()
 	local owner = self:GetOwner()
 
 	if owner:IsValid() and self:GetStopOnHide() then
-		if boneanimlib.GetLuaAnimations()[self:GetAnimID()] then
-			owner:StopLuaAnimation(self:GetAnimID())
+		if boneanimlib.GetRegisteredAnimations()[self:GetAnimID()] then
+			boneanimlib.StopEntityAnimation(owner, self:GetAnimID())
 		end
-		owner:ResetBoneMatrix()
+		boneanimlib.ResetEntityBoneMatrix(owner)
 	end
 end
 
@@ -151,11 +164,11 @@ function PART:OnRemove()
 	local owner = self:GetOwner()
 
 	if owner:IsValid() then
-		owner:StopLuaAnimation(self:GetAnimID())
-		owner:ResetBoneMatrix()
+		boneanimlib.StopEntityAnimation(owner, self:GetAnimID())
+		boneanimlib.ResetEntityBoneMatrix(owner)
 	end
 
-	boneanimlib.GetLuaAnimations()[self:GetAnimID()] = nil
+	boneanimlib.GetRegisteredAnimations()[self:GetAnimID()] = nil
 end
 
 pac.RegisterPart(PART)

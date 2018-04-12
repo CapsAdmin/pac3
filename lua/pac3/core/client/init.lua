@@ -75,7 +75,7 @@ include("pac3/libraries/webaudio/browser.lua")
 include("pac3/libraries/webaudio/stream.lua")
 include("pac3/libraries/webaudio/streams.lua")
 
-include("pac3/libraries/boneanimlib.lua")
+pac.boneanimlib = include("pac3/libraries/boneanimlib.lua")
 
 include("parts.lua")
 include("part_pool.lua")

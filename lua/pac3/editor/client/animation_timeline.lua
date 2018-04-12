@@ -1,16 +1,10 @@
+local boneanimlib = pac.boneanimlib
 local L = pace.LanguageString
 
 pace.timeline = pace.timeline or {}
 local timeline = pace.timeline
 
 local secondDistance = 200 --100px per second on timeline
-
-local animation_types = {
-	[0] = "TYPE_GESTURE",
-	[1] = "TYPE_POSTURE",
-	[2] = "TYPE_STANCE",
-	[3] = "TYPE_SEQUENCE",
-}
 
 do
 	local PART = {}
@@ -45,7 +39,7 @@ end
 
 local function check_tpose()
 	if not timeline.entity:IsPlayer() then return end
-	if timeline.data.Type == boneanimlib.TYPE_SEQUENCE then
+	if timeline.data.Type == "sequence" then
 		pac.AddHook("CalcMainActivity", "pac3_timeline", function(ply)
 			if ply == timeline.entity then
 				return
@@ -58,17 +52,25 @@ local function check_tpose()
 	end
 end
 
-function timeline.SetAnimationType(str)
-	if type(str) == "string" then
-		for i,v in pairs(animation_types) do
-			if v == "TYPE_" .. str:upper() then
-				timeline.animation_type = i
-				break
-			end
-		end
-	end
+timeline.interpolation = "cosine"
 
-	timeline.frame.add_keyframe_button:SetDisabled(timeline.animation_type == boneanimlib.TYPE_POSTURE)
+function timeline.SetInterpolation(str)
+	timeline.interpolation = str
+	timeline.data = timeline.data or {}
+	timeline.data.Interpolation = timeline.interpolation
+
+	timeline.frame:Toggle()
+	timeline.frame:Toggle()
+
+	timeline.Save()
+end
+
+timeline.animation_type = "sequence"
+
+function timeline.SetAnimationType(str)
+	timeline.animation_type = str
+
+	timeline.frame.add_keyframe_button:SetDisabled(timeline.animation_type == "posture")
 
 	timeline.data = timeline.data or {}
 	timeline.data.Type = timeline.animation_type
@@ -82,14 +84,14 @@ end
 function timeline.UpdateBones()
 	if not timeline.selected_keyframe or not timeline.selected_keyframe:IsValid() then return end -- WHAT
 	local currentFrame = timeline.selected_keyframe:GetAnimationIndex()
-	local postureAnim = {Type = boneanimlib.TYPE_POSTURE, FrameData = {{BoneInfo = {}}}}
+	local postureAnim = {Type = "posture", FrameData = {{BoneInfo = {}}}}
 
 	postureAnim.FrameData[1] = table.Copy(timeline.data.FrameData[currentFrame])
 
-	boneanimlib.RegisterLuaAnimation("editingAnim",postureAnim)
+	boneanimlib.RegisterAnimation("editingAnim",postureAnim)
 
-	timeline.entity:StopAllLuaAnimations()
-	timeline.entity:SetLuaAnimation("editingAnim")
+	boneanimlib.StopAllEntityAnimations(timeline.entity)
+	boneanimlib.SetEntityAnimation(timeline.entity, "editingAnim")
 end
 
 function timeline.UpdateFrameData()
@@ -161,7 +163,7 @@ function timeline.Load(data)
 
 		timeline.SelectKeyframe(timeline.frame.keyframe_scroll.Panels[1])
 	else
-		timeline.data = {FrameData = {}, Type = timeline.animation_type}
+		timeline.data = {FrameData = {}, Type = timeline.animation_type, Interpolation = timeline.interpolation}
 		timeline.frame:Clear()
 
 		timeline.SelectKeyframe(timeline.frame:AddKeyFrame())
@@ -177,7 +179,7 @@ function timeline.Save()
 	local part = timeline.animation_part
 	timer.Create("pace_timeline_save", 0.1, 1, function()
 		if part and part:IsValid() then
-			boneanimlib.RegisterLuaAnimation(part:GetAnimID(), data)
+			boneanimlib.RegisterAnimation(part:GetAnimID(), data)
 			if part:GetURL() ~= "" then
 				file.Write("pac3/__animations/" .. part:GetName() .. ".txt", util.TableToJSON(data))
 				part:SetData("")
@@ -215,8 +217,8 @@ function timeline.Close()
 	timeline.frame:Remove()
 
 	if timeline.entity:IsValid() then
-		timeline.entity:StopAllLuaAnimations()
-		timeline.entity:ResetBoneMatrix()
+		boneanimlib.StopAllEntityAnimations(timeline.entity)
+		boneanimlib.ResetEntityBoneMatrix(timeline.entity)
 	end
 
 	if timeline.dummy_bone and timeline.dummy_bone:IsValid() then
@@ -290,18 +292,21 @@ function timeline.Open(part)
 			timeline.Save()
 		elseif part == timeline.animation_part then
 			if key == "Data" or key == "URL" then
-				timeline.Load(boneanimlib.GetLuaAnimations()[part:GetAnimID()])
+				timeline.Load(boneanimlib.GetRegisteredAnimations()[part:GetAnimID()])
 			elseif key == "AnimationType" then
 				timeline.SetAnimationType(val)
+			elseif key == "Interpolation" then
+				timeline.SetInterpolation(val)
 			end
 		end
 	end)
 
-	timeline.Load(boneanimlib.GetLuaAnimations()[part:GetAnimID()])
+	timeline.Load(boneanimlib.GetRegisteredAnimations()[part:GetAnimID()])
 
 	pac.RemoveHook("CalcMainActivity", "pac3_timeline")
-	timeline.entity:StopAllLuaAnimations()
-	timeline.entity:ResetBoneMatrix()
+
+	boneanimlib.StopAllEntityAnimations(timeline.entity)
+	boneanimlib.ResetEntityBoneMatrix(timeline.entity)
 end
 
 pac.AddHook("pace_OnPartSelected", "pac3_timeline", function(part)
@@ -355,7 +360,7 @@ do
 				L"save as",
 				timeline.animation_part:GetName(),
 				function(name)
-					boneanimlib.RegisterLuaAnimation(name, table.Copy(timeline.data))
+					boneanimlib.RegisterAnimation(name, table.Copy(timeline.data))
 					file.Write("pac3/__animations/" .. name .. ".txt", util.TableToJSON(timeline.data)) end,
 				function() end,
 				L"save",
@@ -449,19 +454,21 @@ do
 		end
 
 		if self.isPlaying then
-			boneanimlib.RegisterLuaAnimation("editortest", timeline.data)
-			timeline.entity:StopAllLuaAnimations()
-			timeline.entity:SetLuaAnimation("editortest")
+			boneanimlib.StopAllEntityAnimations(timeline.entity)
+			boneanimlib.ResetEntityBoneMatrix(timeline.entity)
+
+			boneanimlib.RegisterAnimation("editortest", timeline.data)
+			boneanimlib.SetEntityAnimation(timeline.entity, "editortest")
 
 			timeline.playing_animation = true
 			timeline.play_bar_offset = self:ResolveStart()*secondDistance
 
 			self.play_button:SetText(L"stop")
 		else
-			timeline.entity:StopAllLuaAnimations()
+			boneanimlib.StopAllEntityAnimations(timeline.entity)
 
 			if not timeline.IsEditingBone() then
-				timeline.entity:ResetBoneMatrix()
+				boneanimlib.ResetEntityBoneMatrix(timeline.entity)
 				pac.RemoveHook("CalcMainActivity", "pac3_timeline")
 			end
 
