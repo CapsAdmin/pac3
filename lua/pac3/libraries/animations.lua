@@ -1,5 +1,6 @@
 local animations = pac.animations or {}
 
+animations.playing = {}
 animations.playing = animations.playing or {}
 animations.registered = animations.registered or {}
 
@@ -35,7 +36,7 @@ function animations.GetRegisteredAnimations()
 	return animations.registered
 end
 
-function animations.RegisterAnimation(sName, tInfo)
+function animations.RegisterAnimation(name, tInfo)
 	if tInfo and tInfo.FrameData then
 		local BonesUsed = {}
 		for _, tFrame in ipairs(tInfo.FrameData) do
@@ -60,10 +61,20 @@ function animations.RegisterAnimation(sName, tInfo)
 			end
 		end
 	end
-	animations.registered[sName] = tInfo
+
+	animations.registered[name] = tInfo
+do return end
+	for _, ent in ipairs(animations.playing) do
+		if ent.pac_animations and ent.pac_animations[name] then
+			local frame, delta = animations.GetEntityAnimationFrame(ent, name)
+			animations.ResetEntityAnimation(ent, name)
+			animations.SetEntityAnimationFrame(ent, name, frame, delta)
+		end
+	end
 end
 
 local function AdvanceFrame(tGestureTable, tFrameData)
+	if tGestureTable.Paused then return end
 
 	if tGestureTable.TimeScale == 0 then
 		local max = #tGestureTable.FrameData
@@ -289,6 +300,85 @@ function animations.SetEntityAnimation(ent, name, fDieTime, fPower, fTimeScale)
 	if ent.pac_animations and ent.pac_animations[name] then return end
 
 	animations.ResetEntityAnimation(ent, name, fDieTime, fPower, fTimeScale)
+end
+
+function animations.GetEntityAnimation(ent, name)
+	if ent.pac_animations and ent.pac_animations[name] then return ent.pac_animations[name] end
+end
+
+
+
+function animations.SetEntityAnimationFrame(ent, name, f, delta)
+	if ent.pac_animations and ent.pac_animations[name] then
+		local data = ent.pac_animations[name]
+
+		f = math.ceil(f)
+		f = math.Clamp(f, 1, #data.FrameData)
+
+		data.Frame = f
+		data.FrameDelta = delta and math.Clamp(delta, 0, 1) or 0
+	end
+end
+
+function animations.GetEntityAnimationFrame(ent, name)
+	if ent.pac_animations and ent.pac_animations[name] then
+		local data = ent.pac_animations[name]
+		return data.Frame, data.FrameDelta
+	end
+end
+
+function animations.SetEntityAnimationCycle(ent, name, f)
+	if ent.pac_animations and ent.pac_animations[name] then
+		local data = ent.pac_animations[name]
+		local duration = animations.GetAnimationDuration(ent, name)
+		f = f%1
+
+
+		ROFL = f
+		f = f * duration
+
+		local sec = 0
+		for i = 1, #data.FrameData do
+			local dt = (1/data.FrameData[i].FrameRate)
+
+			if sec+dt >= f then
+				data.Frame = i
+				data.FrameDelta = math.Clamp((f-sec) / dt, 0, 1)
+				break
+			end
+
+			sec = sec + dt
+		end
+	end
+end
+
+
+function animations.GetEntityAnimationCycle(ent, name)
+	if ent.pac_animations and ent.pac_animations[name] then
+		local data = ent.pac_animations[name]
+
+		local sec = 0
+		for i = 1, data.Frame - 1 do
+			local dt = (1/data.FrameData[i].FrameRate)
+			sec = sec + dt
+		end
+
+		sec = Lerp(data.FrameDelta, sec, sec + (1/data.FrameData[data.Frame].FrameRate))
+
+		return sec/animations.GetAnimationDuration(ent, name)
+	end
+end
+
+function animations.GetAnimationDuration(ent, name)
+	if ent.pac_animations and ent.pac_animations[name] then
+		local total = 0
+		for i=1, #ent.pac_animations[name].FrameData do
+			local v = ent.pac_animations[name].FrameData[i]
+			total = total+(1/(v.FrameRate or 1))
+		end
+		return total
+	end
+	return 0
 end
 
 local function ResetInSequence(ent)

@@ -56,11 +56,8 @@ timeline.interpolation = "cosine"
 
 function timeline.SetInterpolation(str)
 	timeline.interpolation = str
-	timeline.data = timeline.data or {}
+	timeline.data = timeline.data or {FrameData = {}}
 	timeline.data.Interpolation = timeline.interpolation
-
-	timeline.frame:Toggle()
-	timeline.frame:Toggle()
 
 	timeline.Save()
 end
@@ -72,26 +69,22 @@ function timeline.SetAnimationType(str)
 
 	timeline.frame.add_keyframe_button:SetDisabled(timeline.animation_type == "posture")
 
-	timeline.data = timeline.data or {}
+	timeline.data = timeline.data or {FrameData = {}}
 	timeline.data.Type = timeline.animation_type
-
-	timeline.frame:Toggle()
-	timeline.frame:Toggle()
 
 	timeline.Save()
 end
 
-function timeline.UpdateBones()
-	if not timeline.selected_keyframe or not timeline.selected_keyframe:IsValid() then return end -- WHAT
-	local currentFrame = timeline.selected_keyframe:GetAnimationIndex()
-	local postureAnim = {Type = "posture", FrameData = {{BoneInfo = {}}}}
+function timeline.SetCycle(f)
+	animations.SetEntityAnimationCycle(timeline.entity, timeline.animation_part:GetAnimID(), f)
+end
 
-	postureAnim.FrameData[1] = table.Copy(timeline.data.FrameData[currentFrame])
+function timeline.GetCycle()
+	return animations.GetEntityAnimationCycle(timeline.entity, timeline.animation_part:GetAnimID()) or 0
+end
 
-	animations.RegisterAnimation("editingAnim",postureAnim)
-
-	animations.StopAllEntityAnimations(timeline.entity)
-	animations.SetEntityAnimation(timeline.entity, "editingAnim")
+function timeline.Stop()
+	timeline.frame:Stop()
 end
 
 function timeline.UpdateFrameData()
@@ -171,7 +164,6 @@ function timeline.Load(data)
 	end
 
 	timeline.UpdateFrameData()
-	timeline.UpdateBones()
 end
 
 function timeline.Save()
@@ -194,9 +186,11 @@ end
 function timeline.SelectKeyframe(keyframe)
 	timeline.selected_keyframe = keyframe
 	timeline.UpdateFrameData()
-	timeline.UpdateBones()
 	timeline.EditBone()
 	timeline.Save()
+
+	animations.SetEntityAnimationFrame(timeline.entity, timeline.animation_part:GetAnimID(), keyframe.AnimationKeyIndex, 1)
+	timeline.frame:Pause()
 end
 
 function timeline.IsEditingBone()
@@ -213,13 +207,12 @@ function timeline.Close()
 
 	timeline.editing = false
 
+	if timeline.entity:IsValid() then
+		timeline.Stop()
+	end
+
 	timeline.animation_part = nil
 	timeline.frame:Remove()
-
-	if timeline.entity:IsValid() then
-		animations.StopAllEntityAnimations(timeline.entity)
-		animations.ResetEntityBoneMatrix(timeline.entity)
-	end
 
 	if timeline.dummy_bone and timeline.dummy_bone:IsValid() then
 		timeline.dummy_bone:Remove()
@@ -234,8 +227,6 @@ function timeline.Open(part)
 	file.CreateDir("pac3/__animations")
 	file.CreateDir("pac3/__animations/backups")
 
-	timeline.play_bar_offset = 0
-	timeline.playing_animation = false
 	timeline.editing = false
 	timeline.first_pass = true
 
@@ -274,20 +265,19 @@ function timeline.Open(part)
 
 				timer.Simple(0, function() timeline.EditBone() end) -- post variable changed?
 			else
-				timeline.selected_keyframe:GetData().BoneInfo = timeline.selected_keyframe:GetData().BoneInfo or {}
-				timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone] = timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone] or {}
+				local data = timeline.selected_keyframe:GetData()
+				data.BoneInfo = data.BoneInfo or {}
+				data.BoneInfo[timeline.selected_bone] = data.BoneInfo[timeline.selected_bone] or {}
 
 				if key == "Position" then
-					timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone].MF = val.x
-					timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone].MR = -val.y
-					timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone].MU = val.z
+					data.BoneInfo[timeline.selected_bone].MF = val.x
+					data.BoneInfo[timeline.selected_bone].MR = -val.y
+					data.BoneInfo[timeline.selected_bone].MU = val.z
 				elseif key == "Angles" then
-					timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone].RR = val.p
-					timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone].RU = val.y
-					timeline.selected_keyframe:GetData().BoneInfo[timeline.selected_bone].RF = val.r
+					data.BoneInfo[timeline.selected_bone].RR = val.p
+					data.BoneInfo[timeline.selected_bone].RU = val.y
+					data.BoneInfo[timeline.selected_bone].RF = val.r
 				end
-
-				timeline.UpdateBones()
 			end
 			timeline.Save()
 		elseif part == timeline.animation_part then
@@ -297,6 +287,12 @@ function timeline.Open(part)
 				timeline.SetAnimationType(val)
 			elseif key == "Interpolation" then
 				timeline.SetInterpolation(val)
+			elseif key == "Rate" then
+				timeline.data.TimeScale = val
+				timeline.Save()
+			elseif key == "BonePower" then
+				timeline.data.Power = val
+				timeline.Save()
 			end
 		end
 	end)
@@ -305,8 +301,7 @@ function timeline.Open(part)
 
 	pac.RemoveHook("CalcMainActivity", "pac3_timeline")
 
-	animations.StopAllEntityAnimations(timeline.entity)
-	animations.ResetEntityBoneMatrix(timeline.entity)
+	timeline.Stop()
 end
 
 pac.AddHook("pace_OnPartSelected", "pac3_timeline", function(part)
@@ -351,6 +346,11 @@ do
 		pnl.DoClick = function() self:Toggle() end
 		self.play_button = pnl
 
+		local pnl = vgui.Create("DButton",button_area)
+		pnl:SetText(L"stop")
+		pnl:Dock(TOP)
+		pnl.DoClick = function() self:Stop() end
+
 		local pnl = vgui.Create("DButton", button_area)
 		pnl:SetText(L"save")
 		pnl:Dock(TOP)
@@ -394,109 +394,150 @@ do
 			end)
 		end
 
-		local pnl = vgui.Create("DPanel",self)
-		pnl:SetTall(12)
-		pnl:Dock(TOP)
-		pnl:NoClipping(true)
-		local scrub = Material("icon16/bullet_arrow_down.png")
-		pnl.Paint = function(s,w,h)
-			local XPos = -self.keyframe_scroll:GetCanvas():GetPos()
+		do -- keyframes
+			local pnl = vgui.Create("pac_scrollpanel_horizontal",self)
+			pnl:Dock(FILL)
 
-			derma.SkinHook( "Paint", "Panel", s, w, h )
+			pnl.PaintOver = function()
+				local offset = -self.keyframe_scroll:GetCanvas():GetPos()
 
-			if timeline.playing_animation then
-				timeline.play_bar_offset = timeline.play_bar_offset + FrameTime()*secondDistance
+				local x = timeline.GetCycle() * self.keyframe_scroll:GetCanvas():GetWide()
+				x = x - offset
+
+				surface.SetDrawColor(255,0,0,255)
+				surface.DrawLine(x, 0, x, self.keyframe_scroll:GetCanvas():GetTall())
 			end
 
-			local subtraction = 0
-			if timeline.data then
-				if timeline.first_pass and timeline.data.StartFrame then
-					for i=1,timeline.data.StartFrame do
-						local v = timeline.data.FrameData[i]
-						if v then
-							subtraction = subtraction+(1/(v.FrameRate or 1))
-						end
-					end
-				elseif not timeline.first_pass and timeline.data.RestartFrame then
-					for i=1,timeline.data.RestartFrame do
-						local v = timeline.data.FrameData[i]
-						if v then
-							subtraction = subtraction+(1/(v.FrameRate or 1))
-						end
-					end
+			local old = pnl.PerformLayout
+
+			function pnl.PerformLayout()
+				old(pnl)
+
+				local h = self:GetTall() - 50
+				pnl:GetCanvas():SetTall(h)
+
+				if self.moving then return end
+
+				local x = 0
+				for k,v in ipairs(pnl:GetCanvas():GetChildren()) do
+					v:SetWide(math.max(1/v:GetData().FrameRate * secondDistance, 4))
+					v:SetTall(h)
+					v:SetPos(x, 0)
+					x = x + v:GetWide()
 				end
 			end
 
-			if (timeline.play_bar_offset-subtraction)/secondDistance > self:GetAnimationTime() then
-				local restartPos = self:ResolveRestart()
-				timeline.play_bar_offset = restartPos*secondDistance
-			end
+			self.keyframe_scroll = pnl
+		end
 
-			local previousSecond = XPos-(XPos%secondDistance)
-			for i=previousSecond,previousSecond+s:GetWide(),secondDistance/4 do
-				if i-XPos > 0 and i-XPos < ScrW() then
-					local sec = i/secondDistance
-					draw.SimpleText(sec,pace.CurrentFont,i-XPos,6,Color(0,0,0,255),1,1)
+		do -- timeline
+			local pnl = vgui.Create("DPanel",self)
+			pnl:SetTall(12)
+			pnl:Dock(TOP)
+			pnl:NoClipping(true)
+			pnl:SetCursor("sizewe")
+			pnl.Think = function(_)
+				if (self.dragging or pnl:IsHovered()) and input.IsMouseDown(MOUSE_LEFT) then
+					if not self:IsPlaying() then
+						self:Play()
+						self:Pause()
+					end
+
+					if timeline.data and timeline.data.FrameData then
+						local X = -self.keyframe_scroll:GetCanvas():GetPos() + pnl:ScreenToLocal(gui.MouseX(), 0)
+						X = X / self.keyframe_scroll:GetCanvas():GetWide()
+						timeline.SetCycle(X)
+					end
+
+					self.dragging = true
+				end
+				if not input.IsMouseDown(MOUSE_LEFT) then
+					self.dragging = false
 				end
 			end
+			local scrub = Material("icon16/bullet_arrow_down.png")
+			pnl.Paint = function(s,w,h)
+				local offset = -self.keyframe_scroll:GetCanvas():GetPos()
 
-			surface.SetMaterial(scrub)
-			surface.SetDrawColor(255,0,0,255)
-			surface.DrawTexturedRect(timeline.play_bar_offset - XPos - scrub:Width()/2,-11,scrub:Width(), scrub:Height())
+				derma.SkinHook( "Paint", "Panel", s, w, h )
 
-		end
+				local subtraction = 0
+				if timeline.data then
+					if timeline.first_pass and timeline.data.StartFrame then
+						for i=1,timeline.data.StartFrame do
+							local v = timeline.data.FrameData[i]
+							if v then
+								subtraction = subtraction+(1/(v.FrameRate or 1))
+							end
+						end
+					elseif not timeline.first_pass and timeline.data.RestartFrame then
+						for i=1,timeline.data.RestartFrame do
+							local v = timeline.data.FrameData[i]
+							if v then
+								subtraction = subtraction+(1/(v.FrameRate or 1))
+							end
+						end
+					end
+				end
 
-		local pnl = vgui.Create("pac_scrollpanel_horizontal",self)
-		pnl:Dock(FILL)
+				local previousSecond = offset-(offset%secondDistance)
+				for i=previousSecond,previousSecond+s:GetWide(),secondDistance/4 do
+					if i-offset > 0 and i-offset < ScrW() then
+						local sec = i/secondDistance
+						draw.SimpleText(sec,pace.CurrentFont,i-offset,6,Color(0,0,0,255),1,1)
+					end
+				end
 
-		local old = pnl.PerformLayout
+				local x = timeline.GetCycle() * self.keyframe_scroll:GetCanvas():GetWide()
+				x = x - offset
 
-		function pnl.PerformLayout()
-			old(pnl)
-
-			if self.moving then return end
-
-			local x = 0
-			for k,v in ipairs(pnl:GetCanvas():GetChildren()) do
-				v:SetPos(x, 0)
-				x = x + v:GetWide()
+				surface.SetDrawColor(255,0,0,255)
+				surface.DrawLine(x, 0, x, pnl:GetTall())
+				surface.SetMaterial(scrub)
+				surface.DrawTexturedRect(1 + x - scrub:Width()/2,-11,scrub:Width(), scrub:Height())
 			end
 		end
-
-		self.keyframe_scroll = pnl
 	end
 
-	function TIMELINE:Toggle(bForce)
-		if bForce ~= nil then
-			self.isPlaying = bForce
+	function TIMELINE:Play()
+		animations.RegisterAnimation(timeline.animation_part:GetAnimID(), timeline.data)
+		animations.SetEntityAnimation(timeline.entity, timeline.animation_part:GetAnimID())
+
+		animations.GetEntityAnimation(ent, timeline.animation_part:GetAnimID()).Paused = false
+
+		self.playing = true
+
+		self.play_button:SetText(L"pause")
+	end
+
+	function TIMELINE:Pause()
+		local anim = animations.GetEntityAnimation(ent, timeline.animation_part:GetAnimID())
+		if not anim then return end
+
+		animations.GetEntityAnimation(ent, timeline.animation_part:GetAnimID()).Paused = true
+
+		self.playing = false
+
+		self.play_button:SetText(L"play")
+	end
+
+	function TIMELINE:IsPlaying()
+		return self.playing
+	end
+
+	function TIMELINE:Toggle()
+		if self:IsPlaying() then
+			self:Pause()
 		else
-			self.isPlaying = not self.isPlaying
+			self:Play()
 		end
+	end
 
-		if self.isPlaying then
-			animations.StopAllEntityAnimations(timeline.entity)
-			animations.ResetEntityBoneMatrix(timeline.entity)
+	function TIMELINE:Stop()
+		self:Pause()
 
-			animations.RegisterAnimation("editortest", timeline.data)
-			animations.SetEntityAnimation(timeline.entity, "editortest")
-
-			timeline.playing_animation = true
-			timeline.play_bar_offset = self:ResolveStart()*secondDistance
-
-			self.play_button:SetText(L"stop")
-		else
-			animations.StopAllEntityAnimations(timeline.entity)
-
-			if not timeline.IsEditingBone() then
-				animations.ResetEntityBoneMatrix(timeline.entity)
-				pac.RemoveHook("CalcMainActivity", "pac3_timeline")
-			end
-
-			timeline.playing_animation = false
-
-			timeline.play_bar_offset = self:ResolveStart()*secondDistance
-			self.play_button:SetText(L"play")
-		end
+		animations.StopAllEntityAnimations(timeline.entity)
+		animations.ResetEntityBoneMatrix(timeline.entity)
 	end
 
 	function TIMELINE:Clear()
@@ -508,17 +549,16 @@ do
 	end
 
 	function TIMELINE:GetAnimationTime()
-		local tempTime = 0
-		local startIndex = 1
+		local total = 0
 
 		if timeline.data and timeline.data.FrameData then
-			for i=startIndex, #timeline.data.FrameData do
+			for i=1, #timeline.data.FrameData do
 				local v = timeline.data.FrameData[i]
-				tempTime = tempTime+(1/(v.FrameRate or 1))
+				total = total+(1/(v.FrameRate or 1))
 			end
 		end
 
-		return tempTime
+		return total
 	end
 
 	function TIMELINE:ResolveRestart() --get restart pos in seconds
@@ -557,7 +597,7 @@ do
 			keyframe.DataTable = timeline.data.FrameData[keyframe.AnimationKeyIndex]
 		end
 
-		keyframe:SetWide(math.max(secondDistance, 4)) --default to 1 second animations
+		keyframe:SetWide(secondDistance) --default to 1 second animations
 
 		keyframe:SetParent(self.keyframe_scroll)
 		self.keyframe_scroll:InvalidateLayout()
@@ -571,6 +611,18 @@ end
 
 do
 	local KEYFRAME = {}
+
+	function KEYFRAME:Init()
+		self:SetCursor("hand")
+	end
+
+	function KEYFRAME:OnCursorMoved(x, y)
+		if x > self:GetWide() - 4 then
+			self:SetCursor("sizewe")
+		else
+			self:SetCursor("hand")
+		end
+	end
 
 	function KEYFRAME:SetStart(b)
 		if b then
@@ -608,7 +660,6 @@ do
 	function KEYFRAME:SetFrameData(index,tbl)
 		self.DataTable = tbl
 		self.AnimationKeyIndex = index
-		self:SetWide(math.max(1/self:GetData().FrameRate*secondDistance, 4))
 		self:GetParent():GetParent():InvalidateLayout() --rebuild the timeline
 		if timeline.data.RestartFrame == index then
 			self:SetRestart(true)
@@ -831,9 +882,8 @@ do
 
 	function KEYFRAME:SetLength(int)
 		if not int then return end
-		self:SetWide(math.max(secondDistance*int, 4))
 		self:GetParent():GetParent():InvalidateLayout() --rebuild the timeline
-		self:GetData().FrameRate = 1/int --set animation frame rate
+		self:GetData().FrameRate = 1/math.max(int, 0.001) --set animation frame rate
 	end
 
 	function KEYFRAME:PerformLayout()
