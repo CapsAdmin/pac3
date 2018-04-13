@@ -1,4 +1,4 @@
-local boneanimlib = pac.boneanimlib
+local animations = pac.animations
 
 local PART = {}
 
@@ -92,12 +92,12 @@ function PART:SetURL(url)
 				return
 			end
 
-			boneanimlib.ConvertOldData(tbl)
+			animations.ConvertOldData(tbl)
 
 			self:SetAnimationType(tbl.Type)
 			self:SetInterpolation(tbl.Interpolation)
 
-			boneanimlib.RegisterAnimation(self:GetAnimID(), tbl)
+			animations.RegisterAnimation(self:GetAnimID(), tbl)
 
 			if pace and pace.timeline.IsActive() and pace.timeline.animation_part == self then
 				pace.timeline.Load(tbl)
@@ -114,7 +114,7 @@ function PART:SetData(str)
 	if str then
 		local tbl = util.JSONToTable(str)
 		if tbl then
-			boneanimlib.RegisterAnimation(self:GetAnimID(), tbl)
+			animations.RegisterAnimation(self:GetAnimID(), tbl)
 		end
 	end
 end
@@ -123,17 +123,17 @@ function PART:OnShow(owner)
 	--play animation
 	local owner = self:GetOwner()
 
-	if not boneanimlib.GetRegisteredAnimations()[self:GetAnimID()] then
+	if not animations.GetRegisteredAnimations()[self:GetAnimID()] then
 		self:SetURL(self:GetURL())
 	end
 
 	if owner:IsValid() then
 		if not self:GetStopOnHide() then
-			if boneanimlib.GetRegisteredAnimations()[self:GetAnimID()] then
-				boneanimlib.StopEntityAnimation(owner, self:GetAnimID())
+			if animations.GetRegisteredAnimations()[self:GetAnimID()] then
+				animations.StopEntityAnimation(owner, self:GetAnimID())
 			end
 		end
-		boneanimlib.SetEntityAnimation(owner, self:GetAnimID())
+		animations.SetEntityAnimation(owner, self:GetAnimID())
 		self:SetOffset(self:GetOffset())
 		self:SetRate(self:GetRate())
 		self:SetBonePower(self:GetBonePower())
@@ -141,7 +141,7 @@ function PART:OnShow(owner)
 		if self.StopOtherAnimations and owner.pac_animations then
 			for id in pairs(owner.pac_animations) do
 				if id ~= self:GetAnimID() then
-					boneanimlib.StopEntityAnimation(owner, id)
+					animations.StopEntityAnimation(owner, id)
 				end
 			end
 		end
@@ -153,10 +153,10 @@ function PART:OnHide()
 	local owner = self:GetOwner()
 
 	if owner:IsValid() and self:GetStopOnHide() then
-		if boneanimlib.GetRegisteredAnimations()[self:GetAnimID()] then
-			boneanimlib.StopEntityAnimation(owner, self:GetAnimID())
+		if animations.GetRegisteredAnimations()[self:GetAnimID()] then
+			animations.StopEntityAnimation(owner, self:GetAnimID())
 		end
-		boneanimlib.ResetEntityBoneMatrix(owner)
+		animations.ResetEntityBoneMatrix(owner)
 	end
 end
 
@@ -164,11 +164,11 @@ function PART:OnRemove()
 	local owner = self:GetOwner()
 
 	if owner:IsValid() then
-		boneanimlib.StopEntityAnimation(owner, self:GetAnimID())
-		boneanimlib.ResetEntityBoneMatrix(owner)
+		animations.StopEntityAnimation(owner, self:GetAnimID())
+		animations.ResetEntityBoneMatrix(owner)
 	end
 
-	boneanimlib.GetRegisteredAnimations()[self:GetAnimID()] = nil
+	animations.GetRegisteredAnimations()[self:GetAnimID()] = nil
 end
 
 pac.RegisterPart(PART)

@@ -1,4 +1,4 @@
-local boneanimlib = pac.boneanimlib
+local animations = pac.animations
 local L = pace.LanguageString
 
 pace.timeline = pace.timeline or {}
@@ -88,10 +88,10 @@ function timeline.UpdateBones()
 
 	postureAnim.FrameData[1] = table.Copy(timeline.data.FrameData[currentFrame])
 
-	boneanimlib.RegisterAnimation("editingAnim",postureAnim)
+	animations.RegisterAnimation("editingAnim",postureAnim)
 
-	boneanimlib.StopAllEntityAnimations(timeline.entity)
-	boneanimlib.SetEntityAnimation(timeline.entity, "editingAnim")
+	animations.StopAllEntityAnimations(timeline.entity)
+	animations.SetEntityAnimation(timeline.entity, "editingAnim")
 end
 
 function timeline.UpdateFrameData()
@@ -179,7 +179,7 @@ function timeline.Save()
 	local part = timeline.animation_part
 	timer.Create("pace_timeline_save", 0.1, 1, function()
 		if part and part:IsValid() then
-			boneanimlib.RegisterAnimation(part:GetAnimID(), data)
+			animations.RegisterAnimation(part:GetAnimID(), data)
 			if part:GetURL() ~= "" then
 				file.Write("pac3/__animations/" .. part:GetName() .. ".txt", util.TableToJSON(data))
 				part:SetData("")
@@ -217,8 +217,8 @@ function timeline.Close()
 	timeline.frame:Remove()
 
 	if timeline.entity:IsValid() then
-		boneanimlib.StopAllEntityAnimations(timeline.entity)
-		boneanimlib.ResetEntityBoneMatrix(timeline.entity)
+		animations.StopAllEntityAnimations(timeline.entity)
+		animations.ResetEntityBoneMatrix(timeline.entity)
 	end
 
 	if timeline.dummy_bone and timeline.dummy_bone:IsValid() then
@@ -292,7 +292,7 @@ function timeline.Open(part)
 			timeline.Save()
 		elseif part == timeline.animation_part then
 			if key == "Data" or key == "URL" then
-				timeline.Load(boneanimlib.GetRegisteredAnimations()[part:GetAnimID()])
+				timeline.Load(animations.GetRegisteredAnimations()[part:GetAnimID()])
 			elseif key == "AnimationType" then
 				timeline.SetAnimationType(val)
 			elseif key == "Interpolation" then
@@ -301,12 +301,12 @@ function timeline.Open(part)
 		end
 	end)
 
-	timeline.Load(boneanimlib.GetRegisteredAnimations()[part:GetAnimID()])
+	timeline.Load(animations.GetRegisteredAnimations()[part:GetAnimID()])
 
 	pac.RemoveHook("CalcMainActivity", "pac3_timeline")
 
-	boneanimlib.StopAllEntityAnimations(timeline.entity)
-	boneanimlib.ResetEntityBoneMatrix(timeline.entity)
+	animations.StopAllEntityAnimations(timeline.entity)
+	animations.ResetEntityBoneMatrix(timeline.entity)
 end
 
 pac.AddHook("pace_OnPartSelected", "pac3_timeline", function(part)
@@ -360,7 +360,7 @@ do
 				L"save as",
 				timeline.animation_part:GetName(),
 				function(name)
-					boneanimlib.RegisterAnimation(name, table.Copy(timeline.data))
+					animations.RegisterAnimation(name, table.Copy(timeline.data))
 					file.Write("pac3/__animations/" .. name .. ".txt", util.TableToJSON(timeline.data)) end,
 				function() end,
 				L"save",
@@ -474,21 +474,21 @@ do
 		end
 
 		if self.isPlaying then
-			boneanimlib.StopAllEntityAnimations(timeline.entity)
-			boneanimlib.ResetEntityBoneMatrix(timeline.entity)
+			animations.StopAllEntityAnimations(timeline.entity)
+			animations.ResetEntityBoneMatrix(timeline.entity)
 
-			boneanimlib.RegisterAnimation("editortest", timeline.data)
-			boneanimlib.SetEntityAnimation(timeline.entity, "editortest")
+			animations.RegisterAnimation("editortest", timeline.data)
+			animations.SetEntityAnimation(timeline.entity, "editortest")
 
 			timeline.playing_animation = true
 			timeline.play_bar_offset = self:ResolveStart()*secondDistance
 
 			self.play_button:SetText(L"stop")
 		else
-			boneanimlib.StopAllEntityAnimations(timeline.entity)
+			animations.StopAllEntityAnimations(timeline.entity)
 
 			if not timeline.IsEditingBone() then
-				boneanimlib.ResetEntityBoneMatrix(timeline.entity)
+				animations.ResetEntityBoneMatrix(timeline.entity)
 				pac.RemoveHook("CalcMainActivity", "pac3_timeline")
 			end
 

@@ -1,7 +1,7 @@
-local boneanimlib = pac.boneanimlib or {}
+local animations = pac.animations or {}
 
-boneanimlib.playing = boneanimlib.playing or {}
-boneanimlib.registered = boneanimlib.registered or {}
+animations.playing = animations.playing or {}
+animations.registered = animations.registered or {}
 
 do
 	local old_types = {
@@ -17,7 +17,7 @@ do
 		[1] = "cubic", -- Overall best quality blending but may cause animation frames to go 'over the top'.
 	}
 
-	function boneanimlib.ConvertOldData(data)
+	function animations.ConvertOldData(data)
 		if type(data.Type) == "number" then
 			data.Type = old_types[data.Type]
 		end
@@ -31,13 +31,11 @@ do
 	end
 end
 
-
-
-function boneanimlib.GetRegisteredAnimations()
-	return boneanimlib.registered
+function animations.GetRegisteredAnimations()
+	return animations.registered
 end
 
-function boneanimlib.RegisterAnimation(sName, tInfo)
+function animations.RegisterAnimation(sName, tInfo)
 	if tInfo and tInfo.FrameData then
 		local BonesUsed = {}
 		for _, tFrame in ipairs(tInfo.FrameData) do
@@ -62,7 +60,7 @@ function boneanimlib.RegisterAnimation(sName, tInfo)
 			end
 		end
 	end
-	boneanimlib.registered[sName] = tInfo
+	animations.registered[sName] = tInfo
 end
 
 local function AdvanceFrame(tGestureTable, tFrameData)
@@ -128,15 +126,15 @@ local function ProcessAnimations(pl)
 		end
 
 		if die_time and die_time <= CurTime() then
-			boneanimlib.StopEntityAnimation(pl, name)
+			animations.StopEntityAnimation(pl, name)
 		elseif not tbl.PreCallback or not tbl.PreCallback(pl, name, tbl, frame, frame_data, frame_delta) then
 			if tbl.ShouldPlay and not tbl.ShouldPlay(pl, name, tbl, frame, frame_data, frame_delta, power) then
-				boneanimlib.StopEntityAnimation(pl, name, 0.2)
+				animations.StopEntityAnimation(pl, name, 0.2)
 			end
 
 			if tbl.Type == "gesture" then
 				if AdvanceFrame(tbl, frame_data) then
-					boneanimlib.StopEntityAnimation(pl, name)
+					animations.StopEntityAnimation(pl, name)
 				end
 			elseif tbl.Type == "posture" then
 				if frame_delta < 1 and tbl.TimeToArrive then
@@ -149,7 +147,7 @@ local function ProcessAnimations(pl)
 		end
 	end
 
-	boneanimlib.ResetEntityBoneMatrix(pl)
+	animations.ResetEntityBoneMatrix(pl)
 
 	if not pl.pac_animations then return end
 
@@ -238,15 +236,15 @@ local function ProcessAnimations(pl)
 end
 
 
-function boneanimlib.ResetEntityBoneMatrix(ent)
+function animations.ResetEntityBoneMatrix(ent)
 	for i=0, ent:GetBoneCount() - 1 do
 		pac.ManipulateBoneAngles(ent, i, angle_zero)
 		pac.ManipulateBonePosition(ent, i, vector_origin)
 	end
 end
 
-function boneanimlib.ResetEntityAnimation(ent, name, fDieTime, fPower, fTimeScale)
-	local animtable = boneanimlib.registered[name]
+function animations.ResetEntityAnimation(ent, name, fDieTime, fPower, fTimeScale)
+	local animtable = animations.registered[name]
 	if animtable then
 		ent.pac_animations = ent.pac_animations or {}
 
@@ -272,25 +270,25 @@ function boneanimlib.ResetEntityAnimation(ent, name, fDieTime, fPower, fTimeScal
 			Interpolation = animtable.Interpolation,
 		}
 
-		boneanimlib.ResetEntityAnimationProperties(ent)
+		animations.ResetEntityAnimationProperties(ent)
 
 
 		ent:CallOnRemove("pac_animations", function()
-			for i,v in ipairs(boneanimlib.playing) do
+			for i,v in ipairs(animations.playing) do
 				if v == ent then
-					table.remove(boneanimlib.playing, i)
+					table.remove(animations.playing, i)
 					break
 				end
 			end
 		end)
-		table.insert(boneanimlib.playing, ent)
+		table.insert(animations.playing, ent)
 	end
 end
 
-function boneanimlib.SetEntityAnimation(ent, name, fDieTime, fPower, fTimeScale)
+function animations.SetEntityAnimation(ent, name, fDieTime, fPower, fTimeScale)
 	if ent.pac_animations and ent.pac_animations[name] then return end
 
-	boneanimlib.ResetEntityAnimation(ent, name, fDieTime, fPower, fTimeScale)
+	animations.ResetEntityAnimation(ent, name, fDieTime, fPower, fTimeScale)
 end
 
 local function ResetInSequence(ent)
@@ -313,7 +311,7 @@ pac.AddHook("CalcMainActivity", "animations_reset_sequence", function(pl)
 	end
 end)
 
-function boneanimlib.ResetEntityAnimationProperties(ent)
+function animations.ResetEntityAnimationProperties(ent)
 	local anims = ent.pac_animations
 	if anims and table.Count(anims) > 0 then
 		ent:SetIK(false)
@@ -325,16 +323,16 @@ function boneanimlib.ResetEntityAnimationProperties(ent)
 
 		ent:RemoveCallOnRemove("pac_animations")
 
-		for i,v in ipairs(boneanimlib.playing) do
+		for i,v in ipairs(animations.playing) do
 			if v == ent then
-				table.remove(boneanimlib.playing, i)
+				table.remove(animations.playing, i)
 			end
 		end
 	end
 end
 
 -- Time is optional, sets the die time to CurTime() + time
-function boneanimlib.StopEntityAnimation(ent, name, time)
+function animations.StopEntityAnimation(ent, name, time)
 	local anims = ent.pac_animations
 	if anims and anims[name] then
 		if time then
@@ -347,24 +345,24 @@ function boneanimlib.StopEntityAnimation(ent, name, time)
 			anims[name] = nil
 		end
 
-		boneanimlib.ResetEntityAnimationProperties(ent)
+		animations.ResetEntityAnimationProperties(ent)
 	end
 end
 
-function boneanimlib.StopAllEntityAnimations(ent, time)
+function animations.StopAllEntityAnimations(ent, time)
 	if ent.pac_animations then
 		for name in pairs(ent.pac_animations) do
-			boneanimlib.StopEntityAnimation(ent, name, time)
+			animations.StopEntityAnimation(ent, name, time)
 		end
 	end
 end
 
-pac.AddHook("Think", "animations", function()
-	for i,v in ipairs(boneanimlib.playing) do
+hook.Add("Think", "animations", function()
+	for i,v in ipairs(animations.playing) do
 		if v.pac_animations then
 			ProcessAnimations(v)
 		end
 	end
 end)
 
-return boneanimlib
+return animations
