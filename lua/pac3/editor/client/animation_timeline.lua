@@ -235,9 +235,9 @@ function timeline.Open(part)
 	timeline.entity = part:GetOwner()
 
 	timeline.frame = vgui.Create("pac3_timeline")
-	timeline.frame:SetPos(pace.Editor:GetWide(),ScrH()-150)
-	timeline.frame:SetSize(ScrW()-pace.Editor:GetWide(),150)
-	timeline.frame:SetTitle(L"animation editor")
+	timeline.frame:SetPos(pace.Editor:GetWide(),ScrH()-85)
+	timeline.frame:SetSize(ScrW()-pace.Editor:GetWide(),90)
+	timeline.frame:SetTitle("")
 	timeline.frame:ShowCloseButton(false)
 
 	timeline.SetAnimationType(part.AnimationType)
@@ -320,92 +320,169 @@ do
 	local TIMELINE = {}
 
 	function TIMELINE:Init()
-		local button_area = vgui.Create("DPanel", self)
-		button_area:SetPaintBackground(false)
-		button_area:SetWide(128)
-		button_area:Dock(RIGHT)
-
-		local pnl = vgui.Create("DButton", button_area)
-		pnl:SetText(L"edit bone")
-		pnl:Dock(TOP)
-		pnl.DoClick = function()
-			timeline.EditBone()
+		do -- time display info
+			local time = self:Add("DPanel")
+			time:SetWide(72)
+			time:SetTall(self:GetTall())
+			time:SetPos(6,0)
+			time.Paint = function(s, w,h)
+				surface.SetDrawColor(0,0,0,255)
+				surface.DrawRect(0,0,w,h)
+				self:GetSkin().tex.CategoryList.Header( 0, 0, w, h )
+				surface.SetFont(pace.CurrentFont)
+				surface.SetTextColor(self:GetSkin().Colours.Category.Header)
+				surface.SetTextPos(2,0)
+				surface.DrawText("FRM: " .. (animations.GetEntityAnimationFrame(timeline.entity, timeline.animation_part:GetAnimID()) or 0))
+				surface.SetTextPos(2,12)
+				surface.DrawText("SEC: " .. math.Round(timeline.GetCycle() * animations.GetAnimationDuration(timeline.entity, timeline.animation_part:GetAnimID()), 3))
+			end
 		end
 
-		local pnl = vgui.Create("DButton",button_area)
-		pnl:SetText(L"add keyframe")
-		pnl.DoClick = function() timeline.SelectKeyframe(self:AddKeyFrame()) timeline.Save() end
-		pnl:Dock(TOP)
-		pnl:SetDisabled(true)
-		self.add_keyframe_button = pnl
+		do
+			local bottom = vgui.Create("DPanel", self)
+			bottom:Dock(RIGHT)
+			bottom:SetWide(72)
+			do -- time controls
+				local mat = Material("mediaplayer/ui/spritesheet2015-10-7.png")
+				local play_uv = {
+					(24 * 3) / mat:GetInt("$realwidth"),
+					(24 * 4) / mat:GetInt("$realheight"),
+					(24 * 4) / mat:GetInt("$realwidth"),
+					(24 * 5) / mat:GetInt("$realheight"),
+				}
 
-		local pnl = vgui.Create("DButton",button_area)
-		pnl:SetText(L"play")
-		pnl:Dock(TOP)
-		pnl:SetDisabled(true)
-		pnl.DoClick = function() self:Toggle() end
-		self.play_button = pnl
+				local stop_uv = {
+					(24 * 4) / mat:GetInt("$realwidth"),
+					(24 * 4) / mat:GetInt("$realheight"),
+					(24 * 5) / mat:GetInt("$realwidth"),
+					(24 * 5) / mat:GetInt("$realheight"),
+				}
 
-		local pnl = vgui.Create("DButton",button_area)
-		pnl:SetText(L"stop")
-		pnl:Dock(TOP)
-		pnl.DoClick = function() self:Stop() end
+				local controls = bottom:Add("DPanel")
+				controls:SetWide(100)
+				controls:SetTall(bottom:GetTall())
+				controls:Dock(BOTTOM)
+				controls:SetTall(36)
 
-		local pnl = vgui.Create("DButton", button_area)
-		pnl:SetText(L"save")
-		pnl:Dock(TOP)
-		pnl.DoClick = function()
-			Derma_StringRequest(
-				L"question",
-				L"save as",
-				timeline.animation_part:GetName(),
-				function(name)
-					animations.RegisterAnimation(name, table.Copy(timeline.data))
-					file.Write("pac3/__animations/" .. name .. ".txt", util.TableToJSON(timeline.data)) end,
-				function() end,
-				L"save",
-				L"cancel"
-			)
-		end
+				local size = 36
+				local spacing = (size - 24)/2
 
-		local pnl = vgui.Create("DButton", button_area)
-		pnl:SetText(L"load")
-		pnl:Dock(TOP)
-		pnl.DoClick = function()
-			local menu = DermaMenu()
-			menu:SetPos(pnl:LocalToScreen())
+				local play = controls:Add("DButton")
+				play:SetSize(size,size)
+				play:SetText("")
+				play.DoClick = function() self:Toggle() end
+				play:Dock(LEFT)
 
-			for _, name in pairs(file.Find("animations/*.txt", "DATA")) do
-				menu:AddOption(name:match("(.+)%.txt"), function()
-					timeline.Load(util.JSONToTable(file.Read("animations/" .. name)))
-				end)
+				local stop = controls:Add("DButton")
+				stop:SetSize(size,size)
+				stop:SetText("")
+				stop.DoClick = function() self:Stop() end
+				stop:Dock(LEFT)
+
+				function play.PaintOver(_,w,h)
+					surface.SetDrawColor(self:GetSkin().text_dark)
+					surface.SetMaterial(mat)
+					if self:IsPlaying() then
+						surface.DrawTexturedRectUV(spacing,spacing,24,24, unpack(stop_uv))
+					else
+						surface.DrawTexturedRectUV(spacing,spacing,24,24, unpack(play_uv))
+					end
+				end
+
+				function stop:PaintOver(w,h)
+					surface.SetDrawColor(self:GetSkin().text_dark)
+					surface.DrawRect(spacing,spacing,24,24)
+				end
+			end
+			do -- save/load
+				local saveload = bottom:Add("DPanel")
+				saveload:SetWide(100)
+				saveload:SetTall(bottom:GetTall())
+				saveload:Dock(TOP)
+				saveload:SetTall(16)
+
+				local add = saveload:Add("DImageButton")
+				add:SetImage("icon16/add.png")
+				add:SetTooltip(L"add keyframe")
+				add:SizeToContents()
+				add.DoClick = function() timeline.SelectKeyframe(self:AddKeyFrame()) timeline.Save() end
+				add:Dock(LEFT)
+				add:SetDisabled(true)
+				self.add_keyframe_button = add
+
+				local bone = saveload:Add("DImageButton")
+				bone:SetImage("icon16/connect.png")
+				bone:SetTooltip(L"edit bones")
+				bone:SizeToContents()
+				bone:Dock(LEFT)
+				bone.DoClick = function()
+					timeline.EditBone()
+				end
+
+				local save = saveload:Add("DImageButton")
+				save:SetImage("icon16/disk.png")
+				save:SetTooltip(L"save")
+				save:SizeToContents()
+				save:Dock(RIGHT)
+				save.DoClick = function()
+					Derma_StringRequest(
+						L"question",
+						L"save as",
+						timeline.animation_part:GetName(),
+						function(name)
+							animations.RegisterAnimation(name, table.Copy(timeline.data))
+							file.Write("pac3/__animations/" .. name .. ".txt", util.TableToJSON(timeline.data)) end,
+						function() end,
+						L"save",
+						L"cancel"
+					)
+				end
+
+				local load = saveload:Add("DImageButton")
+				load:SetImage("icon16/folder.png")
+				load:SizeToContents()
+				load:Dock(RIGHT)
+				load:SetTooltip(L"load")
+				load.DoClick = function()
+					local menu = DermaMenu()
+					menu:SetPos(load:LocalToScreen())
+
+					for _, name in pairs(file.Find("animations/*.txt", "DATA")) do
+						menu:AddOption(name:match("(.+)%.txt"), function()
+							timeline.Load(util.JSONToTable(file.Read("animations/" .. name)))
+						end)
+					end
+
+					for _, name in pairs(file.Find("pac3/__animations/*.txt", "DATA")) do
+						menu:AddOption(name:match("(.+)%.txt"), function()
+							timeline.Load(util.JSONToTable(file.Read("pac3/__animations/" .. name)))
+						end)
+					end
+
+					-- LOL
+					--timer.Simple(0, function()
+						local x, y = bottom:LocalToScreen(0,0)
+						menu:SetPos(x - menu:GetWide(), y - menu:GetTall())
+					--end)
+				end
 			end
 
-			for _, name in pairs(file.Find("pac3/__animations/*.txt", "DATA")) do
-				menu:AddOption(name:match("(.+)%.txt"), function()
-					timeline.Load(util.JSONToTable(file.Read("pac3/__animations/" .. name)))
-				end)
-			end
-
-			-- LOL
-			timer.Simple(0, function()
-				local x, y = menu:GetPos()
-				menu:SetPos(x, y - menu:GetTall())
-			end)
 		end
 
 		do -- keyframes
 			local pnl = vgui.Create("pac_scrollpanel_horizontal",self)
 			pnl:Dock(FILL)
 
+			pnl:GetCanvas().Paint = function(_,w,h)
+				derma.SkinHook( "Paint", "ListBox", self, w, h )
+			end
+
 			pnl.PaintOver = function()
 				local offset = -self.keyframe_scroll:GetCanvas():GetPos()
 
 				local x = timeline.GetCycle() * self.keyframe_scroll:GetCanvas():GetWide()
-				x = x - offset
 
-				surface.SetDrawColor(255,0,0,255)
-				surface.DrawLine(x, 0, x, self.keyframe_scroll:GetCanvas():GetTall())
+				--self.keyframe_scroll.VBar:SetScroll(x - self.keyframe_scroll:GetWide()/2)
 			end
 
 			local old = pnl.PerformLayout
@@ -432,7 +509,10 @@ do
 
 		do -- timeline
 			local pnl = vgui.Create("DPanel",self)
-			pnl:SetTall(12)
+
+			surface.SetFont(pace.CurrentFont)
+			local _, h = surface.GetTextSize("|")
+			pnl:SetTall(h + 2)
 			pnl:Dock(TOP)
 			pnl:NoClipping(true)
 			pnl:SetCursor("sizewe")
@@ -456,47 +536,74 @@ do
 				end
 			end
 			local scrub = Material("icon16/bullet_arrow_down.png")
+			local start = Material("icon16/control_play_blue.png")
+			local restart = Material("icon16/control_repeat_blue.png")
 			pnl.Paint = function(s,w,h)
 				local offset = -self.keyframe_scroll:GetCanvas():GetPos()
 
-				derma.SkinHook( "Paint", "Panel", s, w, h )
+				surface.SetDrawColor(0,0,0,255)
+				surface.DrawRect(0,0,w,h)
+				self:GetSkin().tex.CategoryList.Header( 0, 0, w, h )
 
-				local subtraction = 0
-				if timeline.data then
-					if timeline.first_pass and timeline.data.StartFrame then
-						for i=1,timeline.data.StartFrame do
-							local v = timeline.data.FrameData[i]
-							if v then
-								subtraction = subtraction+(1/(v.FrameRate or 1))
-							end
-						end
-					elseif not timeline.first_pass and timeline.data.RestartFrame then
-						for i=1,timeline.data.RestartFrame do
-							local v = timeline.data.FrameData[i]
-							if v then
-								subtraction = subtraction+(1/(v.FrameRate or 1))
-							end
-						end
+				local previousSecond = offset-(offset%secondDistance)
+				for i=previousSecond,previousSecond+s:GetWide(),secondDistance/2 do
+					if i-offset > 0 and i-offset < ScrW() then
+						local sec = i/secondDistance
+						local x = i-offset
+
+						surface.SetDrawColor(self:GetSkin().Colours.Category.Header)
+						surface.DrawLine(x, 1, x, pnl:GetTall() - 3)
+
+						surface.SetTextPos(x+2, 1)
+						surface.SetFont(pace.CurrentFont)
+						surface.SetTextColor(self:GetSkin().Colours.Category.Header)
+						surface.DrawText(sec)
 					end
 				end
 
-				local previousSecond = offset-(offset%secondDistance)
-				for i=previousSecond,previousSecond+s:GetWide(),secondDistance/4 do
+				for i=previousSecond,previousSecond+s:GetWide(),secondDistance/8 do
 					if i-offset > 0 and i-offset < ScrW() then
-						local sec = i/secondDistance
-						draw.SimpleText(sec,pace.CurrentFont,i-offset,6,Color(0,0,0,255),1,1)
+						local x = i-offset
+						surface.SetDrawColor(self:GetSkin().Colours.Category.Header)
+						surface.DrawLine(x, 1, x, pnl:GetTall()/2)
+					end
+				end
+
+				local h = self.keyframe_scroll:GetCanvas():GetTall() + pnl:GetTall()
+				if self.keyframe_scroll:GetVBar():IsVisible() then
+					h = h - self.keyframe_scroll:GetVBar():GetTall() + 5
+				end
+
+				for i, v in ipairs(self.keyframe_scroll:GetCanvas():GetChildren()) do
+					local mat = v.restart and restart or v.start and start or false
+
+					if mat then
+						local x = v:GetPos() - offset
+						surface.SetDrawColor(255,255,255,200)
+						surface.DrawLine(x, -mat:Height()/2 - 5, x, h)
+
+						surface.SetDrawColor(255,255,255,255)
+						surface.SetMaterial(mat)
+						surface.DrawTexturedRect(1+x - mat:Width()/2,-mat:Height() - 5,mat:Width(), mat:Height())
+
 					end
 				end
 
 				local x = timeline.GetCycle() * self.keyframe_scroll:GetCanvas():GetWide()
 				x = x - offset
 
+				surface.SetDrawColor(255,0,0,200)
+				surface.DrawLine(x, 0, x, h)
+
 				surface.SetDrawColor(255,0,0,255)
-				surface.DrawLine(x, 0, x, pnl:GetTall())
 				surface.SetMaterial(scrub)
 				surface.DrawTexturedRect(1 + x - scrub:Width()/2,-11,scrub:Width(), scrub:Height())
 			end
 		end
+	end
+
+	function TIMELINE:Paint()
+
 	end
 
 	function TIMELINE:Play()
@@ -506,8 +613,12 @@ do
 		animations.GetEntityAnimation(ent, timeline.animation_part:GetAnimID()).Paused = false
 
 		self.playing = true
+	end
 
-		self.play_button:SetText(L"pause")
+	function TIMELINE:OnMouseWheeled(dt)
+		if input.IsControlDown() then
+			secondDistance = secondDistance + dt * 10
+		end
 	end
 
 	function TIMELINE:Pause()
@@ -517,8 +628,6 @@ do
 		animations.GetEntityAnimation(ent, timeline.animation_part:GetAnimID()).Paused = true
 
 		self.playing = false
-
-		self.play_button:SetText(L"play")
 	end
 
 	function TIMELINE:IsPlaying()
@@ -545,7 +654,6 @@ do
 			v:Remove()
 		end
 		self.add_keyframe_button:SetDisabled(false)
-		self.play_button:SetDisabled(false)
 	end
 
 	function TIMELINE:GetAnimationTime()
@@ -625,14 +733,7 @@ do
 	end
 
 	function KEYFRAME:SetStart(b)
-		if b then
-			self.start_icon = self:Add("DImage")
-			self.start_icon:SetImage("icon16/control_play_blue.png")
-		elseif IsValid(self.start_icon) then
-			self.start_icon:Remove()
-		end
 		self.start = b
-		self:InvalidateLayout(true)
 	end
 
 	function KEYFRAME:GetStart()
@@ -640,14 +741,7 @@ do
 	end
 
 	function KEYFRAME:SetRestart(b)
-		if b then
-			self.restart_icon = self:Add("DImage")
-			self.restart_icon:SetImage("icon16/control_repeat_blue.png")
-		elseif IsValid(self.restart_icon) then
-			self.restart_icon:Remove()
-		end
 		self.restart = b
-		self:InvalidateLayout(true)
 	end
 
 	function KEYFRAME:GetRestart()
@@ -674,17 +768,18 @@ do
 	end
 
 	function KEYFRAME:Paint(w,h)
-		local c = self:GetSkin().Colours.Tree.Normal
-
-		derma.SkinHook( "Paint", "ListBox", self, w, h )
-
-		draw.RoundedBox(0,0,0,w,h, Color(c.r, c.g, c.b, self.Alternate and 75 or 25))
+		self.AltLine = self.Alternate
+		derma.SkinHook( "Paint", "CategoryButton", self, w, h )
+		derma.SkinHook( "Paint", "CategoryButton", self, w, h )
+		derma.SkinHook( "Paint", "CategoryButton", self, w, h )
+		derma.SkinHook( "Paint", "CategoryButton", self, w, h )
 
 		if timeline.selected_keyframe == self then
 			derma.SkinHook( "Paint", "Selection", self, w, h )
+			surface.SetTextColor(self:GetSkin().colTextEntryText)
+		else
+			surface.SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text)
 		end
-
-		draw.SimpleText(self:GetAnimationIndex(),pace.CurrentFont,5,5,self:GetSkin().Colours.Tree.Normal,0,3)
 	end
 
 	function KEYFRAME:Think()
@@ -884,24 +979,6 @@ do
 		if not int then return end
 		self:GetParent():GetParent():InvalidateLayout() --rebuild the timeline
 		self:GetData().FrameRate = 1/math.max(int, 0.001) --set animation frame rate
-	end
-
-	function KEYFRAME:PerformLayout()
-		if IsValid(self.start_icon) then
-			self.start_icon:SizeToContents()
-			self.start_icon:CenterVertical()
-			self.start_icon:CenterHorizontal()
-		end
-
-		if IsValid(self.restart_icon) then
-			self.restart_icon:SizeToContents()
-			if IsValid(self.start_icon) then
-				self.restart_icon:SetPos(self.start_icon:GetPos() + self.start_icon:GetWide())
-			else
-				self.restart_icon:CenterHorizontal()
-			end
-			self.restart_icon:CenterVertical()
-		end
 	end
 
 	vgui.Register("pac3_timeline_keyframe",KEYFRAME,"DPanel")
