@@ -235,7 +235,7 @@ function timeline.Open(part)
 	timeline.entity = part:GetOwner()
 
 	timeline.frame = vgui.Create("pac3_timeline")
-	timeline.frame:SetSize(ScrW()-pace.Editor:GetWide(),90)
+	timeline.frame:SetSize(ScrW()-pace.Editor:GetWide(),93)
 	timeline.frame:SetPos(pace.Editor:GetWide(),ScrH()-timeline.frame:GetTall())
 	timeline.frame:SetTitle("")
 	timeline.frame:ShowCloseButton(false)
@@ -321,13 +321,18 @@ do
 
 	function TIMELINE:Init()
 		self:DockMargin(0,0,0,0)
-		self:DockPadding(0,30,0,0)
+		self:DockPadding(0,35,0,0)
 
 		do -- time display info
 			local time = self:Add("DPanel")
-			time:SetWide(80)
-			time:SetTall(self:GetTall() + 2)
-			time:SetPos(6,0)
+
+			local test = L"frame" .. ": 10.888"
+			surface.SetFont(pace.CurrentFont)
+			local w,h = surface.GetTextSize(test)
+			time:SetWide(w)
+
+			time:SetTall(h*2 + 2)
+			time:SetPos(0,1)
 			time.Paint = function(s, w,h)
 				self:GetSkin().tex.Tab_Control( 0, 0, w, h )
 				self:GetSkin().tex.CategoryList.Header( 0, 0, w, h )
@@ -340,7 +345,7 @@ do
 				}, 1, 100)
 
 				draw.TextShadow({
-					text = L"seconds" .. ": " .. math.Round(timeline.GetCycle() * animations.GetAnimationDuration(timeline.entity, timeline.animation_part:GetAnimID()), 3),
+					text = L"time" .. ": " .. math.Round(timeline.GetCycle() * animations.GetAnimationDuration(timeline.entity, timeline.animation_part:GetAnimID()), 3),
 					font = pace.CurrentFont,
 					pos = {2, h},
 					color = self:GetSkin().Colours.Category.Header
@@ -623,7 +628,20 @@ do
 	end
 
 	function TIMELINE:Paint(w,h)
-		self:GetSkin().tex.Tab_Control( 0, 30, w, h-30 )
+		self:GetSkin().tex.Tab_Control(0, 35, w, h-35)
+	end
+
+	function TIMELINE:Think()
+		DFrame.Think(self)
+
+		if input.IsKeyDown(KEY_SPACE) then
+			if not self.toggled then
+				self:Toggle()
+				self.toggled = true
+			end
+		else
+			self.toggled = false
+		end
 	end
 
 	function TIMELINE:Play()
