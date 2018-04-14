@@ -49,6 +49,13 @@ do -- to server
 	timer.Create('pac_update_playerfilter', 5, 0, updatePlayerList)
 
 	function pace.SendPartToServer(part, extra)
+		local allowed, reason = pac.CallHook("CanWearParts", LocalPlayer())
+
+		if allowed == false then
+			pac.Message(reason or "the server doesn't want you to wear parts for some reason")
+			return
+		end
+
 		-- if it's (ok not very exact) the "my outfit" part without anything added to it, don't bother sending it
 		if part.ClassName == "group" and not part:HasChildren() then return end
 		if not part.show_in_editor == false then return end

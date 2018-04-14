@@ -11,6 +11,13 @@ local function add_expensive_submenu_load(pnl, callback)
 end
 
 function pace.WearParts(file, clear)
+	local allowed, reason = pac.CallHook("CanWearParts", LocalPlayer(), file)
+
+	if allowed == false then
+		pac.Message(reason or "the server doesn't want you to wear parts for some reason")
+		return
+	end
+
 	if file then
 		pace.LoadParts(file, clear)
 	end
