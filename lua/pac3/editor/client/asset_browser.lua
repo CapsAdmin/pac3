@@ -354,13 +354,10 @@ local function create_model_icon(path)
 	local icon = vgui.Create("SpawnIcon")
 
 	icon:SetSize(64, 64)
-	icon:InvalidateLayout(true)
 	icon:SetModel(path)
 	icon:SetTooltip(path)
 
 	install_click(icon, path)
-
-	icon:InvalidateLayout(true)
 
 	return icon
 end
@@ -388,6 +385,8 @@ do
 		self.IconList:Dock( TOP )
 
 		function self.IconList:PerformLayout()
+			if not self.invalidate then return end
+			self.invalidate = nil
 			local x, y = 0, 0
 			local max_width = self:GetWide()
 			local height = 0
@@ -423,32 +422,24 @@ do
 	function PANEL:Add(pnl)
 		pnl.ready_to_draw = true
 		self.IconList:Add(pnl)
-		self.IconList:InvalidateLayout()
-		self:InvalidateLayout()
+		self.IconList.invalidate = true
 	end
 
 	function PANEL:CalcZoom()
 		for i,v in ipairs(self.IconList:GetChildren()) do
 			v:SetSize(self.zoom, self.zoom)
 		end
-
-		self.IconList:InvalidateLayout()
-		self:InvalidateLayout()
+		self.IconList.invalidate = true
 	end
 
 	function PANEL:OnMouseWheeled(delta)
 		if input.IsControlDown() then
 			self.zoom = math.Clamp(self.zoom + delta * 4, 16, 512)
 			pace.model_browser:SetCookie("zoom", self.zoom)
-			self:InvalidateLayout()
+			self:CalcZoom()
 			return
 		end
 		return BaseClass.OnMouseWheeled(self, delta)
-	end
-
-	function PANEL:PerformLayout()
-		self:CalcZoom()
-		BaseClass.PerformLayout( self )
 	end
 
 	function PANEL:Clear()
@@ -625,7 +616,6 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 
 		frame.PropPanel.selected:Dock(FILL)
 		frame.PropPanel.selected:SetVisible(true)
-		frame.PropPanel:InvalidateParent()
 
 		divider:SetRight(frame.PropPanel.selected)
 
@@ -1166,7 +1156,6 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 	cancel:SetSize(16, 16)
 	cancel.DoClick = function() search:Cancel() end
 	cancel:SetVisible(false)
-	cancel:PerformLayout()
 
 	do
 		local old = search.OnGetFocus
@@ -1209,7 +1198,6 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 	function search:StartSearch(search_text, folder, extensions, pathid, cb)
 
 		cancel:SetVisible(true)
-		cancel:PerformLayout()
 
 		local files, folders = find(folder .. "*", pathid)
 
@@ -1241,7 +1229,6 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 	end
 
 	function search:Stop()
-		cancel:InvalidateLayout()
 		cancel:SetVisible(false)
 
 		self.delay_functions = {}
