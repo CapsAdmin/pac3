@@ -283,6 +283,12 @@ function animations.ResetEntityAnimation(ent, name, fDieTime, fPower, fTimeScale
 
 		animations.ResetEntityAnimationProperties(ent)
 
+		for i,v in ipairs(animations.playing) do
+			if v == ent then
+				table.remove(animations.playing, i)
+				break
+			end
+		end
 
 		ent:CallOnRemove("pac_animations", function()
 			for i,v in ipairs(animations.playing) do
@@ -447,7 +453,7 @@ function animations.StopAllEntityAnimations(ent, time)
 	end
 end
 
-hook.Add("Think", "animations", function()
+hook.Add("Think", "pac_custom_animations", function()
 	for i,v in ipairs(animations.playing) do
 		if v.pac_animations then
 			ProcessAnimations(v)
