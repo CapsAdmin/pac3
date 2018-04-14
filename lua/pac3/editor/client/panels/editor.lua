@@ -363,13 +363,15 @@ end
 function PANEL:Paint(w,h)
 	if not self.okay then return end
 
-	surface.SetDrawColor(0, 0, 0, 255)
-	surface.DrawRect(0,0,w,h)
+
+	--surface.SetDrawColor(0, 0, 0, 255)
+	--surface.DrawRect(0,0,w,h)
 	-- there are some skins that have a transparent dframe
 	-- so the categories that the properties draw will be transparent
 
+	self:GetSkin().tex.Tab_Control( 0, 0, w, h )
 
-	DFrame.Paint(self, w,h)
+	--DFrame.Paint(self, w,h)
 end
 
 pace.RegisterPanel(PANEL)

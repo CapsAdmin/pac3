@@ -235,8 +235,8 @@ function timeline.Open(part)
 	timeline.entity = part:GetOwner()
 
 	timeline.frame = vgui.Create("pac3_timeline")
-	timeline.frame:SetPos(pace.Editor:GetWide(),ScrH()-85)
 	timeline.frame:SetSize(ScrW()-pace.Editor:GetWide(),90)
+	timeline.frame:SetPos(pace.Editor:GetWide(),ScrH()-timeline.frame:GetTall())
 	timeline.frame:SetTitle("")
 	timeline.frame:ShowCloseButton(false)
 
@@ -320,21 +320,31 @@ do
 	local TIMELINE = {}
 
 	function TIMELINE:Init()
+		self:DockMargin(0,0,0,0)
+		self:DockPadding(0,30,0,0)
+
 		do -- time display info
 			local time = self:Add("DPanel")
-			time:SetWide(72)
-			time:SetTall(self:GetTall())
+			time:SetWide(80)
+			time:SetTall(self:GetTall() + 2)
 			time:SetPos(6,0)
 			time.Paint = function(s, w,h)
-				surface.SetDrawColor(0,0,0,255)
-				surface.DrawRect(0,0,w,h)
+				self:GetSkin().tex.Tab_Control( 0, 0, w, h )
 				self:GetSkin().tex.CategoryList.Header( 0, 0, w, h )
-				surface.SetFont(pace.CurrentFont)
-				surface.SetTextColor(self:GetSkin().Colours.Category.Header)
-				surface.SetTextPos(2,0)
-				surface.DrawText("FRM: " .. (animations.GetEntityAnimationFrame(timeline.entity, timeline.animation_part:GetAnimID()) or 0))
-				surface.SetTextPos(2,12)
-				surface.DrawText("SEC: " .. math.Round(timeline.GetCycle() * animations.GetAnimationDuration(timeline.entity, timeline.animation_part:GetAnimID()), 3))
+
+				local w,h = draw.TextShadow({
+					text = L"frame" .. ": " .. (animations.GetEntityAnimationFrame(timeline.entity, timeline.animation_part:GetAnimID()) or 0),
+					font = pace.CurrentFont,
+					pos = {2, 0},
+					color = self:GetSkin().Colours.Category.Header
+				}, 1, 100)
+
+				draw.TextShadow({
+					text = L"seconds" .. ": " .. math.Round(timeline.GetCycle() * animations.GetAnimationDuration(timeline.entity, timeline.animation_part:GetAnimID()), 3),
+					font = pace.CurrentFont,
+					pos = {2, h},
+					color = self:GetSkin().Colours.Category.Header
+				}, 1, 100)
 			end
 		end
 
@@ -380,7 +390,7 @@ do
 				stop:Dock(LEFT)
 
 				function play.PaintOver(_,w,h)
-					surface.SetDrawColor(self:GetSkin().text_dark)
+					surface.SetDrawColor(self:GetSkin().Colours.Button.Normal)
 					surface.SetMaterial(mat)
 					if self:IsPlaying() then
 						surface.DrawTexturedRectUV(spacing,spacing,24,24, unpack(stop_uv))
@@ -390,7 +400,7 @@ do
 				end
 
 				function stop:PaintOver(w,h)
-					surface.SetDrawColor(self:GetSkin().text_dark)
+					surface.SetDrawColor(self:GetSkin().Colours.Button.Normal)
 					surface.DrawRect(spacing,spacing,24,24)
 				end
 			end
@@ -490,7 +500,7 @@ do
 			function pnl.PerformLayout()
 				old(pnl)
 
-				local h = self:GetTall() - 50
+				local h = self:GetTall() - 45
 				pnl:GetCanvas():SetTall(h)
 
 				if self.moving then return end
@@ -541,8 +551,7 @@ do
 			pnl.Paint = function(s,w,h)
 				local offset = -self.keyframe_scroll:GetCanvas():GetPos()
 
-				surface.SetDrawColor(0,0,0,255)
-				surface.DrawRect(0,0,w,h)
+				self:GetSkin().tex.Tab_Control( 0, 0, w, h )
 				self:GetSkin().tex.CategoryList.Header( 0, 0, w, h )
 
 				local previousSecond = offset-(offset%secondDistance)
@@ -551,8 +560,16 @@ do
 						local sec = i/secondDistance
 						local x = i-offset
 
+						surface.SetDrawColor(0,0,0,100)
+						surface.DrawLine(x+1, 1+1, x+1, pnl:GetTall() - 3+1)
+
 						surface.SetDrawColor(self:GetSkin().Colours.Category.Header)
 						surface.DrawLine(x, 1, x, pnl:GetTall() - 3)
+
+						surface.SetTextPos(x+2+1, 1+1)
+						surface.SetFont(pace.CurrentFont)
+						surface.SetTextColor(0,0,0,100)
+						surface.DrawText(sec)
 
 						surface.SetTextPos(x+2, 1)
 						surface.SetFont(pace.CurrentFont)
@@ -564,6 +581,9 @@ do
 				for i=previousSecond,previousSecond+s:GetWide(),secondDistance/8 do
 					if i-offset > 0 and i-offset < ScrW() then
 						local x = i-offset
+						surface.SetDrawColor(0,0,0,100)
+						surface.DrawLine(x+1, 1+1, x+1, pnl:GetTall()/2+1)
+
 						surface.SetDrawColor(self:GetSkin().Colours.Category.Header)
 						surface.DrawLine(x, 1, x, pnl:GetTall()/2)
 					end
@@ -602,8 +622,8 @@ do
 		end
 	end
 
-	function TIMELINE:Paint()
-
+	function TIMELINE:Paint(w,h)
+		self:GetSkin().tex.Tab_Control( 0, 30, w, h-30 )
 	end
 
 	function TIMELINE:Play()
@@ -770,16 +790,16 @@ do
 	function KEYFRAME:Paint(w,h)
 		self.AltLine = self.Alternate
 		derma.SkinHook( "Paint", "CategoryButton", self, w, h )
-		derma.SkinHook( "Paint", "CategoryButton", self, w, h )
-		derma.SkinHook( "Paint", "CategoryButton", self, w, h )
-		derma.SkinHook( "Paint", "CategoryButton", self, w, h )
 
 		if timeline.selected_keyframe == self then
-			derma.SkinHook( "Paint", "Selection", self, w, h )
-			surface.SetTextColor(self:GetSkin().colTextEntryText)
-		else
-			surface.SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text)
+			local c = self:GetSkin().Colours.Category.Line.Button_Selected
+			surface.SetDrawColor(c.r,c.g,c.b,250)
 		end
+
+		surface.DrawRect(0,0,w,h)
+
+		surface.SetDrawColor(0,0,0,75)
+		surface.DrawOutlinedRect(0,0,w,h)
 	end
 
 	function KEYFRAME:Think()
