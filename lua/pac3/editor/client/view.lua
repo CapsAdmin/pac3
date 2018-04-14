@@ -198,7 +198,7 @@ local function CalcDrag()
 	end
 
 	if input.IsKeyDown(KEY_SPACE) then
-		if not pace.timeline.frame:IsValid() then
+		if not IsValid(pace.timeline.frame) then
 			pace.ViewPos = pace.ViewPos + pace.ViewAngles:Up() * mult * ftime
 		end
 	end
