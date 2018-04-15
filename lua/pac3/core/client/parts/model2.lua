@@ -378,7 +378,7 @@ function PART:RealSetModel(path)
 	self.Entity:SetModel(path)
 	self.Entity.pac_target_model = path
 	self:SetModelModifiers(self:GetModelModifiers())
-	self:SetMaterials((not old or self.Entity:GetModel() == old) and self:GetMaterials() or '')
+	self:SetMaterials(self:GetMaterials())
 	local mats = self.Entity:GetMaterials()
 	self.material_count =  mats and #mats or 0
 	self:SetSize(self:GetSize())
