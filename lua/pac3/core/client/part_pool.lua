@@ -281,7 +281,15 @@ end
 
 pac.AddHook("Think", "events", function()
 	for _, ply in ipairs(player.GetAll()) do
-		if (ply.pac_death_physics_parts or ply.pac_death_ragdollize) and ent_parts[ply] and not Alive(ply) then
+		if
+			(
+				ply.pac_death_physics_parts or
+				ply.pac_death_ragdollize or
+				ply.pac_death_hide_ragdoll
+			) and
+			ent_parts[ply] and
+			not Alive(ply)
+		then
 			local rag = ply:GetRagdollEntity()
 
 			if IsValid(rag) then
