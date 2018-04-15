@@ -277,48 +277,59 @@ do -- menu
 			end
 		end)
 
+		local function add_part(menu, part)
+			local newMenuEntry = menu:AddOption(L(part.Name or part.ClassName:Replace('_', ' ')), function()
+				pace.AddUndoPartCreation(pace.Call("CreatePart", part.ClassName))
+				trap = true
+			end)
+
+			if part.Icon then
+				newMenuEntry:SetImage(part.Icon)
+
+				if part.Group == "experimental" then
+					local mat = Material(pace.GroupsIcons.experimental)
+					newMenuEntry.m_Image.PaintOver = function(_, w,h)
+						surface.SetMaterial(mat)
+						surface.DrawTexturedRect(2,6,13,13)
+					end
+				end
+			end
+		end
+
 		if pace.IsInBasicMode() then
 			for _, part in ipairs(pace.GetRegisteredParts()) do
-				local newMenuEntry = menu:AddOption(L(part.Name or part.ClassName), function()
-					pace.AddUndoPartCreation(pace.Call("CreatePart", part.ClassName))
-				end)
-
-				if part.Icon then
-					newMenuEntry:SetImage(part.Icon)
-				end
+				add_part(menu, part)
 			end
 		else
 			local sortedTree = {}
 
 			for _, part in pairs(pace.GetRegisteredParts()) do
-				local group = part.Group or part.Groups
-				local groups
+				local group = part.Group or part.Groups or "other"
 
-				if type(group) == 'string' then
-					groups = {group}
-				else
-					groups = group
+				if type(group) == "string" then
+					group = {group}
 				end
 
-				if groups then
-					for i, groupName in ipairs(groups) do
-						if not sortedTree[groupName] then
-							sortedTree[groupName] = {}
-							sortedTree[groupName].parts = {}
-							sortedTree[groupName].icon = pace.GroupsIcons[groupName]
-							sortedTree[groupName].name = L(groupName)
-						end
+				for i, name in ipairs(group) do
+					if not sortedTree[name] then
+						sortedTree[name] = {}
+						sortedTree[name].parts = {}
+						sortedTree[name].icon = pace.GroupsIcons[name]
+						sortedTree[name].name = L(name)
+					end
 
-						partsToShow[part.ClassName] = nil
+					partsToShow[part.ClassName] = nil
 
-						if groupName == part.ClassName then
-							sortedTree[groupName].hasPart = true
-						else
-							table.insert(sortedTree[groupName].parts, {part.ClassName, part})
-						end
+					if name == part.ClassName then
+						sortedTree[name].hasPart = true
+					else
+						table.insert(sortedTree[name].parts, part)
 					end
 				end
 			end
+
+			local other = sortedTree.other
+			sortedTree.other = nil
 
 			for group, groupData in pairs(sortedTree) do
 				local sub, pnl = menu:AddSubMenu(groupData.name, function()
@@ -334,24 +345,9 @@ do -- menu
 				end
 
 				local trap = false
-				table.sort(groupData.parts, function(a, b) return a[1] < b[1] end)
-				for i, partData in ipairs(groupData.parts) do
-					local newMenuEntry = sub:AddOption(L(partData[2].Name or partData[1]:Replace('_', ' ')), function()
-						pace.AddUndoPartCreation(pace.Call("CreatePart", partData[1]))
-						trap = true
-					end)
-
-					if partData[2].Icon then
-						newMenuEntry:SetImage(partData[2].Icon)
-
-						if group == "experimental" then
-							local mat = Material(pace.GroupsIcons.experimental)
-							newMenuEntry.m_Image.PaintOver = function(_, w,h)
-								surface.SetMaterial(mat)
-								surface.DrawTexturedRect(2,6,13,13)
-							end
-						end
-					end
+				table.sort(groupData.parts, function(a, b) return a.ClassName < b.ClassName end)
+				for i, part in ipairs(groupData.parts) do
+					add_part(sub, part)
 				end
 
 				hook.Add('Think', sub, function()
@@ -375,6 +371,10 @@ do -- menu
 
 					RegisterDermaMenuForClose(sub)
 				end)
+			end
+
+			for i,v in ipairs(other.parts) do
+				add_part(menu, v)
 			end
 
 			for class_name, part in pairs(partsToShow) do
