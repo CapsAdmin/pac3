@@ -11,6 +11,13 @@ local function add_expensive_submenu_load(pnl, callback)
 end
 
 function pace.WearParts(file, clear)
+	local allowed, reason = pac.CallHook("CanWearParts", LocalPlayer(), file)
+
+	if allowed == false then
+		pac.Message(reason or "the server doesn't want you to wear parts for some reason")
+		return
+	end
+
 	if file then
 		pace.LoadParts(file, clear)
 	end
@@ -66,10 +73,12 @@ function pace.OnCreatePart(class_name, name, mdl)
 		end
 	end
 
-	if mdl then
-		part:SetModel(mdl)
-	elseif class_name == "model" or class_name == "model2" then
-		part:SetModel("models/pac/default.mdl")
+	if part.SetModel then
+		if mdl then
+			part:SetModel(mdl)
+		elseif class_name == "model" or class_name == "model2" then
+			part:SetModel("models/pac/default.mdl")
+		end
 	end
 
 	local ply = LocalPlayer()
@@ -226,6 +235,22 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 	end
 end
 
+function pace.GetRegisteredParts()
+	local out = {}
+	for class_name, part in pairs(pac.GetRegisteredParts()) do
+		local cond = (not pace.IsInBasicMode() or pace.BasicParts[class_name]) and
+			not part.Internal and
+			part.show_in_editor ~= false and
+			part.is_deprecated ~= false
+
+		if cond then
+			table.insert(out, part)
+		end
+	end
+
+	return out
+end
+
 do -- menu
 	function pace.AddRegisteredPartsToMenu(menu)
 		local partsToShow = {}
@@ -252,61 +277,59 @@ do -- menu
 			end
 		end)
 
-		for class_name, part in pairs(pac.GetRegisteredParts()) do
-			local cond = (not pace.IsInBasicMode() or not pace.BasicParts[class_name]) and
-				not part.Internal and
-				part.show_in_editor ~= false and
-				part.is_deprecated ~= false
+		local function add_part(menu, part)
+			local newMenuEntry = menu:AddOption(L(part.Name or part.ClassName:Replace('_', ' ')), function()
+				pace.AddUndoPartCreation(pace.Call("CreatePart", part.ClassName))
+				trap = true
+			end)
 
-			if cond then
-				partsToShow[class_name] = part
+			if part.Icon then
+				newMenuEntry:SetImage(part.Icon)
+
+				if part.Group == "experimental" then
+					local mat = Material(pace.GroupsIcons.experimental)
+					newMenuEntry.m_Image.PaintOver = function(_, w,h)
+						surface.SetMaterial(mat)
+						surface.DrawTexturedRect(2,6,13,13)
+					end
+				end
 			end
 		end
 
 		if pace.IsInBasicMode() then
-			table.sort(partsToShow)
-
-			for class_name, part in pairs(partsToShow) do
-				local newMenuEntry = menu:AddOption(L(part.Name or class_name), function()
-					pace.AddUndoPartCreation(pace.Call("CreatePart", class_name))
-				end)
-
-				if part.Icon then
-					newMenuEntry:SetImage(part.Icon)
-				end
+			for _, part in ipairs(pace.GetRegisteredParts()) do
+				add_part(menu, part)
 			end
 		else
 			local sortedTree = {}
 
-			for class, part in pairs(partsToShow) do
-				local group = part.Group or part.Groups
-				local groups
+			for _, part in pairs(pace.GetRegisteredParts()) do
+				local group = part.Group or part.Groups or "other"
 
-				if type(group) == 'string' then
-					groups = {group}
-				else
-					groups = group
+				if type(group) == "string" then
+					group = {group}
 				end
 
-				if groups then
-					for i, groupName in ipairs(groups) do
-						if not sortedTree[groupName] then
-							sortedTree[groupName] = {}
-							sortedTree[groupName].parts = {}
-							sortedTree[groupName].icon = pace.GroupsIcons[groupName]
-							sortedTree[groupName].name = L(groupName)
-						end
+				for i, name in ipairs(group) do
+					if not sortedTree[name] then
+						sortedTree[name] = {}
+						sortedTree[name].parts = {}
+						sortedTree[name].icon = pace.GroupsIcons[name]
+						sortedTree[name].name = L(name)
+					end
 
-						partsToShow[class] = nil
+					partsToShow[part.ClassName] = nil
 
-						if groupName == class then
-							sortedTree[groupName].hasPart = true
-						else
-							table.insert(sortedTree[groupName].parts, {class, part})
-						end
+					if name == part.ClassName then
+						sortedTree[name].hasPart = true
+					else
+						table.insert(sortedTree[name].parts, part)
 					end
 				end
 			end
+
+			local other = sortedTree.other
+			sortedTree.other = nil
 
 			for group, groupData in pairs(sortedTree) do
 				local sub, pnl = menu:AddSubMenu(groupData.name, function()
@@ -322,24 +345,9 @@ do -- menu
 				end
 
 				local trap = false
-				table.sort(groupData.parts, function(a, b) return a[1] < b[1] end)
-				for i, partData in ipairs(groupData.parts) do
-					local newMenuEntry = sub:AddOption(L(partData[2].Name or partData[1]:Replace('_', ' ')), function()
-						pace.AddUndoPartCreation(pace.Call("CreatePart", partData[1]))
-						trap = true
-					end)
-
-					if partData[2].Icon then
-						newMenuEntry:SetImage(partData[2].Icon)
-
-						if group == "experimental" then
-							local mat = Material(pace.GroupsIcons.experimental)
-							newMenuEntry.m_Image.PaintOver = function(_, w,h)
-								surface.SetMaterial(mat)
-								surface.DrawTexturedRect(2,6,13,13)
-							end
-						end
-					end
+				table.sort(groupData.parts, function(a, b) return a.ClassName < b.ClassName end)
+				for i, part in ipairs(groupData.parts) do
+					add_part(sub, part)
 				end
 
 				hook.Add('Think', sub, function()
@@ -365,8 +373,12 @@ do -- menu
 				end)
 			end
 
+			for i,v in ipairs(other.parts) do
+				add_part(menu, v)
+			end
+
 			for class_name, part in pairs(partsToShow) do
-				local newMenuEntry = menu:AddOption(L(class_name:Replace('_', ' ')), function()
+				local newMenuEntry = menu:AddOption(L((part.Name or part.ClassName):Replace('_', ' ')), function()
 					pace.AddUndoPartCreation(pace.Call("CreatePart", class_name))
 				end)
 
@@ -375,6 +387,98 @@ do -- menu
 				end
 			end
 		end
+	end
+
+	function pace.OnAddPartMenu(obj)
+		local base = vgui.Create("EditablePanel")
+		base:SetPos(gui.MousePos())
+		base:SetSize(200, 300)
+		base:MakePopup()
+
+		function base:OnRemove()
+			pac.RemoveHook("VGUIMousePressed", "search_part_menu")
+		end
+
+		local edit = base:Add("DTextEntry")
+		edit:SetTall(20)
+		if pace.IsInBasicMode() then
+			edit:SetTall(0)
+		end
+		edit:Dock(TOP)
+		edit:RequestFocus()
+		edit:SetUpdateOnType(true)
+
+		local result = base:Add("DPanel")
+		result:Dock(FILL)
+
+		function edit:OnEnter()
+			if result.found[1] then
+				pace.AddUndoPartCreation(pace.Call("CreatePart", result.found[1].ClassName))
+			end
+			base:Remove()
+		end
+
+		edit.OnValueChange = function(_, str)
+			result:Clear()
+			result.found = {}
+
+			for _, part in ipairs(pace.GetRegisteredParts()) do
+				if (part.Name or part.ClassName):find(str, nil, true) then
+					table.insert(result.found, part)
+				end
+			end
+
+			table.sort(result.found, function(a, b) return #a.ClassName < #b.ClassName end)
+
+			for _, part in ipairs(result.found) do
+				local line = result:Add("DButton")
+				line:SetText("")
+				line:SetTall(20)
+				line.DoClick = function()
+					pace.AddUndoPartCreation(pace.Call("CreatePart", part.ClassName))
+					base:Remove()
+				end
+
+				local btn = line:Add("DImageButton")
+				btn:SetSize(16, 16)
+				btn:SetPos(4,0)
+				btn:CenterVertical()
+				btn:SetMouseInputEnabled(false)
+				if part.Icon then
+					btn:SetImage(part.Icon)
+
+					if part.Group == "experimental" then
+						local mat = Material(pace.GroupsIcons.experimental)
+						btn.m_Image.PaintOver = function(_, w,h)
+							surface.SetMaterial(mat)
+							surface.DrawTexturedRect(2,6,13,13)
+						end
+					end
+				end
+
+				local label = line:Add("DLabel")
+				label:SetTextColor(label:GetSkin().Colours.Category.Line.Text)
+				label:SetText(L((part.Name or part.ClassName):Replace('_', ' ')))
+				label:SizeToContents()
+				label:MoveRightOf(btn, 4)
+				label:SetMouseInputEnabled(false)
+				label:CenterVertical()
+
+				line:Dock(TOP)
+			end
+
+			base:SetHeight(20 * #result.found + edit:GetTall())
+		end
+
+		edit:OnValueChange("")
+
+		pac.AddHook("VGUIMousePressed", "search_part_menu", function(pnl, code)
+			if code == MOUSE_LEFT or code == MOUSE_RIGHT then
+				if not base:IsOurChild(pnl) then
+					base:Remove()
+				end
+			end
+		end)
 	end
 
 	function pace.OnPartMenu(obj)

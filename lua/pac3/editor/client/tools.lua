@@ -436,8 +436,8 @@ pace.AddTool(L"dump player submaterials",function()
 end)
 
 pace.AddTool(L"stop all custom animations",function()
-	LocalPlayer():StopAllLuaAnimations()
-	LocalPlayer():ResetBoneMatrix()
+	boneanimlib.StopAllEntityAnimations(LocalPlayer())
+	boneanimlib.ResetEntityBoneMatrix(LocalPlayer())
 end)
 
 pace.AddTool(L"copy from faceposer tool", function(part, suboption)

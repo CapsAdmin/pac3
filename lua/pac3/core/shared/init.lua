@@ -1,5 +1,4 @@
 include("util.lua")
-include("pac3/libraries/sh_boneanimlib.lua")
 
 include("footsteps_fix.lua")
 include("http.lua")

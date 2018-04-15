@@ -50,6 +50,7 @@ local temp = {}
 
 pac.AddHook("CalcView", "camera_part", function(ply, pos, ang, fov, nearz, farz)
 	if not ply.pac_cameras then return end
+	if ply:GetViewEntity() ~= ply then return end
 
 	for _, part in pairs(ply.pac_cameras) do
 		if part:IsValid() then

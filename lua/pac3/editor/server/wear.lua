@@ -333,6 +333,10 @@ end
 util.AddNetworkString("pac_submit")
 
 pace.PCallNetReceive(net.Receive, "pac_submit", function(_, ply)
+	if pac.CallHook("CanWearParts", ply) == false then
+		return
+	end
+
 	local data = pace.net.DeserializeTable()
 	pace.HandleReceivedData(ply, data)
 end)

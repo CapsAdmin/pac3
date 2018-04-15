@@ -14,6 +14,20 @@ local function merge_storable(tbl, base)
 	end
 end
 
+local function initialize(part, owner)
+	if part.PreInitialize then
+		part:PreInitialize()
+	end
+
+	pac.AddPart(part)
+
+	if owner then
+		part:SetPlayerOwner(owner)
+	end
+
+	part:Initialize()
+end
+
 function pac.CreatePart(name, owner)
 	owner = owner or pac.LocalPlayer
 
@@ -70,17 +84,13 @@ function pac.CreatePart(name, owner)
 
 	part.DefaultVars.UniqueID = "" -- uh
 
-	if part.PreInitialize then
-		part:PreInitialize()
+	local ok, err = xpcall(initialize, ErrorNoHalt, part, owner)
+	if not ok then
+		part:Remove()
+		if part.ClassName ~= "base" then
+			return pac.CreatePart("base", owner)
+		end
 	end
-
-	pac.AddPart(part)
-
-	if owner then
-		part:SetPlayerOwner(owner)
-	end
-
-	part:Initialize()
 
 	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))
 

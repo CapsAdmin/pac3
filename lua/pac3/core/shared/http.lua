@@ -1,10 +1,8 @@
 CreateConVar("pac_webcontent_limit", "-1", {FCVAR_ARCHIVE}, "webcontent limit, -1 = unlimited, 1024 = 1mb")
 CreateConVar("pac_webcontent_allow_no_content_length", "0", {FCVAR_ARCHIVE}, "allow downloads with no content length")
 
-if SERVER then
-	CreateConVar("sv_pac_webcontent_limit", "-1", {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "webcontent limit, -1 = unlimited, 1024 = 1mb")
-	CreateConVar("sv_pac_webcontent_allow_no_content_length", "-1", {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow downloads with no content length")
-end
+CreateConVar("sv_pac_webcontent_limit", "-1", {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "webcontent limit, -1 = unlimited, 1024 = 1mb")
+CreateConVar("sv_pac_webcontent_allow_no_content_length", "-1", {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow downloads with no content length")
 
 local function get(url, cb, failcb)
 	return HTTP({
@@ -16,7 +14,7 @@ local function get(url, cb, failcb)
 				return
 			end
 
-			cb(data, len, headers)
+			cb(data, #data, headers)
 		end,
 		failed = function(err)
 			failcb(err)
@@ -51,13 +49,6 @@ function pac.HTTPGet(url, cb, failcb)
 	local limit = GetConVarNumber("pac_webcontent_limit")
 	local sv_limit = GetConVarNumber("sv_pac_webcontent_limit")
 
-	local allow_no_contentlength = GetConVarNumber("pac_webcontent_allow_no_content_length")
-	local sv_allow_no_contentlength = GetConVarNumber("sv_pac_webcontent_allow_no_content_length")
-
-	if sv_allow_no_contentlength ~= -1 then
-		allow_no_contentlength = sv_allow_no_contentlength
-	end
-
 	if sv_limit ~= -1 then
 		limit = sv_limit
 	end
@@ -81,6 +72,13 @@ function pac.HTTPGet(url, cb, failcb)
 						failcb("download is too big ("..string.NiceSize(len)..")", true)
 					end
 				else
+					local allow_no_contentlength = GetConVarNumber("pac_webcontent_allow_no_content_length")
+					local sv_allow_no_contentlength = GetConVarNumber("sv_pac_webcontent_allow_no_content_length")
+
+					if sv_allow_no_contentlength ~= -1 then
+						allow_no_contentlength = sv_allow_no_contentlength
+					end
+
 					if allow_no_contentlength == 1 then
 						get(url, cb, failcb)
 					else
@@ -94,5 +92,3 @@ function pac.HTTPGet(url, cb, failcb)
 		})
 	end
 end
-
-pac.HTTPGet("https://docs.google.com/uc?export=download&id=0B4QDw71zow0ZZG41emxaTjZfdEk", print, print)
