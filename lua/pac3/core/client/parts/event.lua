@@ -26,8 +26,17 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Invert", false)
 	pac.GetSet(PART, "RootOwner", true)
 	pac.GetSet(PART, "AffectChildrenOnly", false)
+	pac.GetSet(PART, "ZeroEyePitch", false)
 	pac.SetupPartName(PART, "TargetPart")
 pac.EndStorableVars()
+
+local function convert_angles(self, ang)
+	if self.ZeroEyePitch then
+		ang.p = 0
+	end
+
+	return ang
+end
 
 local function calc_velocity(part)
 	local diff = part.cached_pos - (part.last_pos or Vector(0, 0, 0))
@@ -712,7 +721,7 @@ PART.OldEvents = {
 			owner = try_viewmodel(owner)
 
 			if owner:IsValid() then
-				return self:NumberOperator(owner:EyeAngles():Forward():Dot(owner:GetVelocity()), speed)
+				return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Forward():Dot(owner:GetVelocity()), speed)
 			end
 
 			return 0
@@ -726,7 +735,7 @@ PART.OldEvents = {
 			owner = try_viewmodel(owner)
 
 			if owner:IsValid() then
-				return self:NumberOperator(owner:EyeAngles():Right():Dot(owner:GetVelocity()), speed)
+				return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Right():Dot(owner:GetVelocity()), speed)
 			end
 
 			return 0
@@ -740,7 +749,7 @@ PART.OldEvents = {
 			owner = try_viewmodel(owner)
 
 			if owner:IsValid() then
-				return self:NumberOperator(owner:EyeAngles():Up():Dot(owner:GetVelocity()), speed)
+				return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Up():Dot(owner:GetVelocity()), speed)
 			end
 
 			return 0
