@@ -52,7 +52,13 @@ do
 			not gui.IsGameUIVisible()  and
 			pace.current_part:IsValid() and
 			pace.current_part.editor_node and
-			pace.current_part.editor_node:IsValid()
+			pace.current_part.editor_node:IsValid() and not
+			(
+				pace.BusyWithProperties:IsValid() or
+				pace.ActiveSpecialPanel:IsValid() or
+				pace.editing_viewmodel or
+				pace.properties.search:HasFocus()
+			)
 		then
 			if input.IsKeyDown(KEY_LEFT) then
 				pace.current_part:SetEditorExpand(false)
