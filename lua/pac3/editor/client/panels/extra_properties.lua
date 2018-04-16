@@ -239,7 +239,7 @@ do -- model
 			-- because we refresh the properties
 			pace.current_part["Set" .. key](pace.current_part, path)
 
-			if pace.current_part.ClassName == "model2" then
+			if pace.current_part.SetMaterials then
 				local model = pace.current_part:GetModel()
 				local part = pace.current_part
 				if part.pace_last_model and part.pace_last_model ~= model then

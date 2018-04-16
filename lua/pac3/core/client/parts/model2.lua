@@ -146,6 +146,8 @@ function PART:SetMaterials(str)
 
 	if not materials then return end
 
+	self.material_count = #materials
+
 	self.material_override_self = self.material_override_self or {}
 
 	local tbl = str:Split(";")
@@ -372,17 +374,18 @@ end
 
 local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs')
 
-function PART:RealSetModel(path)
-	local old = self.Entity:GetModel()
+function PART:RefreshModel()
 	self.Entity.pac_bones = nil
-	self.Entity:SetModel(path)
 	self.Entity.pac_target_model = path
 	self:SetModelModifiers(self:GetModelModifiers())
 	self:SetMaterials(self:GetMaterials())
-	local mats = self.Entity:GetMaterials()
-	self.material_count =  mats and #mats or 0
 	self:SetSize(self:GetSize())
 	self:SetScale(self:GetScale())
+end
+
+function PART:RealSetModel(path)
+	self.Entity:SetModel(path)
+	self:RefreshModel()
 end
 
 function PART:SetModel(path)
@@ -721,20 +724,12 @@ do
 
 		local ent = self:GetEntity()
 
-		if self.last_model ~= ent:GetModel() then
+		if ent:IsValid() then
 			local old = ent:GetModel()
-
-			self:SetModelModifiers(self:GetModelModifiers())
-
-			if old ~= nil and old ~= self.Entity:GetModel() then
-				self:SetMaterials("")
-			else
-				self:SetMaterials(self:GetMaterials())
+			if self.last_model ~= old then
+				self:RefreshModel()
+				self.last_model = old
 			end
-
-			self.material_count = #self.Entity:GetMaterials()
-
-			self.last_model = old
 		end
 	end
 
