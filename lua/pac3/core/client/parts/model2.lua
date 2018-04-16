@@ -342,6 +342,16 @@ function PART:DrawModel(ent, pos, ang)
 	ent:DrawModel()
 	ent.pac_drawing_model = false
 
+	if pac.projected_texture_enabled and not pac.flashlight_disabled then
+		render.PushFlashlightMode(true)
+
+		ent.pac_drawing_model = true
+		ent:DrawModel()
+		ent.pac_drawing_model = false
+
+		render.PopFlashlightMode()
+	end
+
 	if self.NoCulling then
 		render_CullMode(MATERIAL_CULLMODE_CCW)
 		self:BindMaterials(ent)
