@@ -251,7 +251,10 @@ do
 			if ply ~= LocalPlayer() and ply:GetNW2Bool("pac_in_editor") then
 
 				if ply.pac_editor_cam_pos then
-					ply.pac_editor_camera = ply.pac_editor_camera or ClientsideModel("models/tools/camera/camera.mdl")
+					if not ply.pac_editor_camera then
+						ply.pac_editor_camera = ClientsideModel("models/tools/camera/camera.mdl")
+						ply.pac_editor_camera:SetModelScale(0.25,0)
+					end
 
 					local ent = ply.pac_editor_camera
 
@@ -263,16 +266,26 @@ do
 					local pos_3d = ent:GetPos()
 					local dist = pos_3d:Distance(EyePos())
 
-					dist = math.min(dist/50, 1)
-					ply.pac_editor_camera:SetModelScale(dist * 0.25,0)
-
-					if dist > 50 then
+					if dist > 10 then
 						local pos_2d = pos_3d:ToScreen()
-						draw.DrawText(ply:Nick() .. "'s PAC3 camera", "ChatFont", pos_2d.x, pos_2d.y, Color(255,255,255,255), 1)
+						if pos_2d.visible then
+							local alpha = math.Clamp(pos_3d:Distance(EyePos()) * -1 + 500, 0, 500)/500
+							if alpha > 0 then
+								draw.DrawText(ply:Nick() .. "'s PAC3 camera", "ChatFont", pos_2d.x, pos_2d.y, Color(255,255,255,alpha*255), 1)
+
+								surface.SetDrawColor(255, 255, 255, 100)
+								local endpos = ply.pac_editor_part_pos:ToScreen()
+								if endpos.visible then
+									surface.DrawLine(pos_2d.x, pos_2d.y, endpos.x, endpos.y)
+								end
+							end
+						end
 					end
+
+					dist = math.min(dist/50, 1)
 				end
 
-				local pos_3d = ply:NearestPoint(ply:EyePos() + up) + Vector(0,0,10)
+				local pos_3d = ply:NearestPoint(ply:EyePos() + up) + Vector(0,0,5)
 				local alpha = math.Clamp(pos_3d:Distance(EyePos()) * -1 + 500, 0, 500)/500
 				if alpha > 0 then
 					local pos_2d = pos_3d:ToScreen()
@@ -288,9 +301,14 @@ do
 	end)
 
 	timer.Create("pac_in_editor", 0.25, 0, function()
+		if not pace.current_part:IsValid() then return end
+
 		net.Start("pac_in_editor_posang", true)
 			net.WriteVector(pace.GetViewPos())
 			net.WriteAngle(pace.GetViewAngles())
+
+			local pos = pace.current_part:GetDrawPosition()
+			net.WriteVector(pos or pace.GetViewPos())
 		net.SendToServer()
 	end)
 
@@ -300,9 +318,11 @@ do
 
 		local pos = net.ReadVector()
 		local ang = net.ReadAngle()
+		local part_pos = net.ReadVector()
 
 		ply.pac_editor_cam_pos = pos
 		ply.pac_editor_cam_ang = ang
+		ply.pac_editor_part_pos = part_pos
 	end)
 end
 

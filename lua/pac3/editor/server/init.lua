@@ -27,11 +27,13 @@ do
 	net.Receive("pac_in_editor_posang", function(_, ply)
 		local pos = net.ReadVector()
 		local ang = net.ReadAngle()
+		local part_pos = net.ReadVector()
 
 		net.Start("pac_in_editor_posang", true)
 			net.WriteEntity(ply)
 			net.WriteVector(pos)
 			net.WriteAngle(ang)
+			net.WriteVector(part_pos)
 		net.SendPVS(ply:GetPos())
 	end)
 end
