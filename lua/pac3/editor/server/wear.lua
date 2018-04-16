@@ -332,8 +332,32 @@ end
 
 util.AddNetworkString("pac_submit")
 
-pace.PCallNetReceive(net.Receive, "pac_submit", function(_, ply)
+timer.Create("pac_submit_spam", 3, 0, function()
+	for k, ply in ipairs(player.GetAll()) do
+		ply.pac_submit_spam = math.max((ply.pac_submit_spam or 0) - 5, 0)
+
+		if ply.pac_submit_spam_msg then
+			ply.pac_submit_spam_msg = ply.pac_submit_spam >= 20
+		end
+	end
+end)
+
+pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
 	if pac.CallHook("CanWearParts", ply) == false then
+		return
+	end
+
+	-- data is too short, not even 8 bytes
+	if len < 64 then return end
+
+	ply.pac_submit_spam = ply.pac_submit_spam + 1
+
+	if ply.pac_submit_spam >= 20 then
+		if not ply.pac_submit_spam_msg then
+			pac.Message("Player ", ply, " is spamming pac_submit!")
+			ply.pac_submit_spam_msg = true
+		end
+
 		return
 	end
 
