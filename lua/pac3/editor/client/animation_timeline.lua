@@ -648,7 +648,7 @@ do
 		animations.RegisterAnimation(timeline.animation_part:GetAnimID(), timeline.data)
 		animations.SetEntityAnimation(timeline.entity, timeline.animation_part:GetAnimID())
 
-		animations.GetEntityAnimation(ent, timeline.animation_part:GetAnimID()).Paused = false
+		animations.GetEntityAnimation(timeline.entity, timeline.animation_part:GetAnimID()).Paused = false
 
 		self.playing = true
 	end
@@ -660,10 +660,10 @@ do
 	end
 
 	function TIMELINE:Pause()
-		local anim = animations.GetEntityAnimation(ent, timeline.animation_part:GetAnimID())
+		local anim = animations.GetEntityAnimation(timeline.entity, timeline.animation_part:GetAnimID())
 		if not anim then return end
 
-		animations.GetEntityAnimation(ent, timeline.animation_part:GetAnimID()).Paused = true
+		animations.GetEntityAnimation(timeline.entity, timeline.animation_part:GetAnimID()).Paused = true
 
 		self.playing = false
 	end
