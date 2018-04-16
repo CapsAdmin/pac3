@@ -441,7 +441,7 @@ pac.AddHook("OnEntityCreated", "change_owner", function(ent)
 	end
 end)
 
-timer.Create("pac_gc", 2, 0, function()
+local function pac_gc()
 	for ent, parts in pairs(ent_parts) do
 		if not ent:IsValid() then
 			ent_parts[ent] = nil
@@ -453,6 +453,10 @@ timer.Create("pac_gc", 2, 0, function()
 			part:Remove()
 		end
 	end
+end
+
+timer.Create("pac_gc", 2, 0, function()
+	ProtectedCall(pac_gc)
 end)
 
 function pac.RemovePartsFromUniqueID(uid)
