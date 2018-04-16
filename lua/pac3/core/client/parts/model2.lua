@@ -376,7 +376,6 @@ local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', {FCVAR_ARCHIVE, FCVAR_RE
 
 function PART:RefreshModel()
 	self.Entity.pac_bones = nil
-	self.Entity.pac_target_model = path
 	self:SetModelModifiers(self:GetModelModifiers())
 	self:SetMaterials(self:GetMaterials())
 	self:SetSize(self:GetSize())
@@ -644,8 +643,6 @@ do
 	function PART:OnShow()
 		local ent = self:GetEntity()
 
-		ent.pac_originalmodel = ent.pac_originalmodel or ent:GetModel()
-
 		if self.Model == "" then
 			self.Model = ent:GetModel() or ""
 		end
@@ -697,26 +694,17 @@ do
 		if not ent:IsValid() then return end
 
 		ent:SetModel(path)
-		ent.pac_target_model = path
 
-		self:OnThink()
+		self:RefreshModel()
 	end
 
 	function PART:OnRemove()
 		local ent = self:GetEntity()
 		if not ent:IsValid() then return end
 
-		if ent.pac_originalmodel then
-			ent:SetModel(ent.pac_originalmodel)
-			ent.pac_bones = nil
-
-			if ent == pac.LocalPlayer and pacx and pacx.SetModel then
-				pacx.SetModel(ent.pac_originalmodel)
-			end
+		if ent == pac.LocalPlayer and pacx and pacx.SetModel then
+			pacx.SetModel()
 		end
-
-		ent.pac_originalmodel = nil
-		ent.pac_target_model = nil
 	end
 
 	function PART:OnThink()

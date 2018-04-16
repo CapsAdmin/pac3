@@ -4,7 +4,7 @@ if CLIENT then
 
 	function pacx.SetModel(path)
 		net.Start("pac_setmodel")
-			net.WriteString(path)
+			net.WriteString(path or "")
 		net.SendToServer()
 	end
 end
@@ -23,10 +23,14 @@ if SERVER then
 				pac.Message(err)
 			end, ply)
 		else
-			model = player_manager.AllValidModels()[model] or model
-
-			if not util.IsValidModel(model) then
+			if model == "" then
 				model = player_manager.TranslatePlayerModel(ply:GetInfo("cl_playermodel"))
+			else
+				model = player_manager.AllValidModels()[model] or model
+
+				if not util.IsValidModel(model) then
+					model = player_manager.TranslatePlayerModel(ply:GetInfo("cl_playermodel"))
+				end
 			end
 
 			ply:SetModel(model)
