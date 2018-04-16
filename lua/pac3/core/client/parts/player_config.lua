@@ -5,6 +5,20 @@ PART.Group = "experimental"
 PART.Icon = 'icon16/brick.png'
 PART.NonPhysical = true
 
+local BLOOD_ENUMS = {
+	["Don't Bleed"] 	= "DONT_BLEED",
+	["Red"] 			= "BLOOD_COLOR_RED",
+	["Yellow"] 			= "BLOOD_COLOR_YELLOW",
+	["Green"] 			= "BLOOD_COLOR_GREEN",
+	["Sparks"] 			= "BLOOD_COLOR_MECH"
+}
+
+local BLOOD_ENUMS_NUMBERS = {}
+
+for text, enum in pairs(BLOOD_ENUMS) do
+	BLOOD_ENUMS_NUMBERS[enum] = (getfenv(1) or _G)[enum]
+end
+
 pac.StartStorableVars()
 
 pac.SetPropertyGroup()
@@ -15,13 +29,7 @@ pac.SetPropertyGroup()
 	pac.GetSet(PART, "HidePhysgunBeam", false)
 	pac.GetSet(PART, "UseLegacyScale", false)
 	pac.GetSet(PART, "BloodColor", "BLOOD_COLOR_RED", {
-		enums = {
-			["Don't Bleed"] 	= "DONT_BLEED",
-			["Red"] 			= "BLOOD_COLOR_RED",
-			["Yellow"] 			= "BLOOD_COLOR_YELLOW",
-			["Green"] 			= "BLOOD_COLOR_GREEN",
-			["Sparks"] 			= "BLOOD_COLOR_MECH"
-		}
+		enums = table.Copy(BLOOD_ENUMS)
 	})
 pac.SetPropertyGroup(PART, "behavior")
 	pac.GetSet(PART, "InverseKinematics", false)
@@ -108,7 +116,7 @@ function PART:ReplicateBloodColor(id)
 	local ent = self:GetOwner()
 	if not ent:IsValid() then return end
 	if ent ~= pac.LocalPlayer then return end
-	id = id or (getfenv(1) or _G)[self:GetBloodColor()]
+	id = id or BLOOD_ENUMS_NUMBERS[id]
 	if type(id) ~= 'number' then return end
 
 	net.Start("pac.BloodColor")
@@ -118,6 +126,7 @@ end
 
 function PART:SetBloodColor(newColor)
 	-- if self:GetBloodColor() == newColor then return end
+	if not BLOOD_ENUMS_NUMBERS[newColor] then return end
 	self.BloodColor = newColor
 	self:ReplicateBloodColor()
 end
