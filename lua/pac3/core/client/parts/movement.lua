@@ -24,7 +24,7 @@ do
 		end
 
 		PART["Update" .. func] = function(self, disable)
-			local ply = self:GetOwner()
+			local ply = self:GetOwner(true)
 
 			if ply == pac.LocalPlayer then
 				local num = GetConVarNumber("pac_free_movement")
@@ -50,7 +50,7 @@ do
 end
 
 function PART:GetNiceName()
-	local ent = self:GetOwner()
+	local ent = self:GetOwner(true)
 
 	if ent:IsValid() then
 		if ent:IsPlayer() then
@@ -64,7 +64,7 @@ function PART:GetNiceName()
 end
 
 function PART:OnShow()
-	local ent = self:GetOwner()
+	local ent = self:GetOwner(true)
 
 	if ent:IsValid() then
 		self:UpdateWalkSpeed()
@@ -75,7 +75,7 @@ function PART:OnShow()
 end
 
 function PART:OnHide()
-	local ent = self:GetOwner()
+	local ent = self:GetOwner(true)
 
 	if ent:IsValid() then
 		self:UpdateWalkSpeed(true)
