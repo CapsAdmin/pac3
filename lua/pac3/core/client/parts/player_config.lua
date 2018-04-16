@@ -14,13 +14,15 @@ pac.SetPropertyGroup()
 	pac.GetSet(PART, "DrawPlayerOnDeath", false)
 	pac.GetSet(PART, "HidePhysgunBeam", false)
 	pac.GetSet(PART, "UseLegacyScale", false)
-	pac.GetSet(PART, "BloodColor", "BLOOD_COLOR_RED", { enums = {
-		["Don't Bleed"] 	= "DONT_BLEED";
-		["Red"] 			= "BLOOD_COLOR_RED";
-		["Yellow"] 			= "BLOOD_COLOR_YELLOW";
-		["Green"] 			= "BLOOD_COLOR_GREEN";
-		["Sparks"] 			= "BLOOD_COLOR_MECH";
-	}})
+	pac.GetSet(PART, "BloodColor", "BLOOD_COLOR_RED", {
+		enums = {
+			["Don't Bleed"] 	= "DONT_BLEED",
+			["Red"] 			= "BLOOD_COLOR_RED",
+			["Yellow"] 			= "BLOOD_COLOR_YELLOW",
+			["Green"] 			= "BLOOD_COLOR_GREEN",
+			["Sparks"] 			= "BLOOD_COLOR_MECH"
+		}
+	})
 pac.SetPropertyGroup(PART, "behavior")
 	pac.GetSet(PART, "InverseKinematics", false)
 	pac.GetSet(PART, "MuteFootsteps", false)
@@ -30,7 +32,6 @@ pac.SetPropertyGroup(PART, "behavior")
 pac.EndStorableVars()
 
 local function ENTFIELD(PART, name, field)
-
 	field = "pac_" .. field
 
 	PART.ent_fields = PART.ent_fields or {}
@@ -45,7 +46,6 @@ local function ENTFIELD(PART, name, field)
 			owner[field] = val
 		end
 	end
-
 end
 
 ENTFIELD(PART, "InverseKinematics", "enable_ik")
@@ -76,7 +76,7 @@ end
 
 function PART:OnShow()
 	local ent = self:GetOwner()
-	self:SetBloodColor( self.BloodColor, true )
+	self:ReplicateBloodColor()
 
 	if ent:IsValid() then
 		for _, field in pairs(self.ent_fields) do
@@ -95,7 +95,7 @@ end
 
 function PART:OnHide()
 	local ent = self:GetOwner()
-	self:SetBloodColor( "BLOOD_COLOR_RED", true)
+	self:ReplicateBloodColor(BLOOD_COLOR_RED)
 
 	if ent:IsValid() then
 		for key in pairs(self.ent_fields) do
@@ -104,22 +104,22 @@ function PART:OnHide()
 	end
 end
 
-function PART:SetBloodColor( BloodColor, NoStore )
-	local Owner = self:GetOwner()
+function PART:ReplicateBloodColor(id)
+	local ent = self:GetOwner()
+	if not ent:IsValid() then return end
+	if ent ~= pac.LocalPlayer then return end
+	id = id or (getfenv(1) or _G)[self:GetBloodColor()]
+	if type(id) ~= 'number' then return end
 
-	if( not NoStore )then
-		self.BloodColor = BloodColor
-	end
+	net.Start("pac.BloodColor")
+	net.WriteInt(id, 6)
+	net.SendToServer()
+end
 
-	if( Owner == pac.LocalPlayer )then
-		local BloodId = _G[ BloodColor ] or 0
-
-		if( type( BloodId ) == "number" )then
-			net.Start("pac.BloodColor")
-				net.WriteInt( BloodId, 6 )
-			net.SendToServer()
-		end
-	end
+function PART:SetBloodColor(newColor)
+	-- if self:GetBloodColor() == newColor then return end
+	self.BloodColor = newColor
+	self:ReplicateBloodColor()
 end
 
 pac.RegisterPart(PART)

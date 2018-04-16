@@ -22,19 +22,25 @@ end )
 
 
 do -- Blood Color
+	local pac_allow_blood_color = GetConVar("pac_allow_blood_color")
 	util.AddNetworkString("pac.BloodColor")
-	net.Receive( "pac.BloodColor", function( length, ply )
-		local BloodColor = net.ReadInt( 6 )
-		BloodColor = math.Clamp( math.Round( BloodColor ), -2, 4 )
-		if( BloodColor == -2 or BloodColor == 4 )then  BloodColor = 0  end
-		
-		ply.pac_bloodcolor = BloodColor
-	end )
 
-	timer.Create("pac_setbloodcolor", 1, 0, function()
-		for _, Ply in pairs( player.GetAll() )do
-			if( Ply.pac_bloodcolor and Ply.pac_bloodcolor ~= Ply:GetBloodColor() )then
-				Ply:SetBloodColor( Ply.pac_bloodcolor )
+	net.Receive("pac.BloodColor", function(_, ply)
+		if not pac_allow_blood_color:GetBool() then return end
+		local id = net.ReadInt(6)
+		BloodColor = math.Clamp(math.floor(id), -2, 4)
+		if id == -2 or id == 4 then id = 0  end
+
+		ply.pac_bloodcolor = id
+		ply:SetBloodColor(id)
+	end)
+
+	timer.Create("pac_setbloodcolor", 10, 0, function()
+		if not pac_allow_blood_color:GetBool() then return end
+
+		for _, ply in ipairs(player.GetAll()) do
+			if ply.pac_bloodcolor and ply.pac_bloodcolor ~= ply:GetBloodColor() then
+				ply:SetBloodColor(ply.pac_bloodcolor)
 			end
 		end
 	end)
