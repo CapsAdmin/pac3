@@ -274,7 +274,7 @@ do
 								draw.DrawText(ply:Nick() .. "'s PAC3 camera", "ChatFont", pos_2d.x, pos_2d.y, Color(255,255,255,alpha*255), 1)
 
 								if not ply.pac_editor_part_pos:IsZero() then
-									surface.SetDrawColor(255, 255, 255, 100)
+									surface.SetDrawColor(255, 255, 255, alpha*100)
 									local endpos = ply.pac_editor_part_pos:ToScreen()
 									if endpos.visible then
 										surface.DrawLine(pos_2d.x, pos_2d.y, endpos.x, endpos.y)
