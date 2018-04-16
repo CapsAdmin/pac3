@@ -14,7 +14,15 @@ include("util.lua")
 include("wear.lua")
 include("bans.lua")
 include("spawnmenu.lua")
-include("net_messages.lua")
+
+do
+	util.AddNetworkString("pac_in_editor")
+
+	net.Receive("pac_in_editor", function(_, ply)
+		ply:SetNW2Bool("pac_in_editor", net.ReadBit() == 1)
+	end)
+end
+
 
 CreateConVar("has_pac3_editor", "1", {FCVAR_NOTIFY})
 
