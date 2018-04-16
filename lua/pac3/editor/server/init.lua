@@ -21,6 +21,19 @@ do
 	net.Receive("pac_in_editor", function(_, ply)
 		ply:SetNW2Bool("pac_in_editor", net.ReadBit() == 1)
 	end)
+
+	util.AddNetworkString("pac_in_editor_posang")
+
+	net.Receive("pac_in_editor_posang", function(_, ply)
+		local pos = net.ReadVector()
+		local ang = net.ReadAngle()
+
+		net.Start("pac_in_editor_posang", true)
+			net.WriteEntity(ply)
+			net.WriteVector(pos)
+			net.WriteAngle(ang)
+		net.SendPVS(ply:GetPos())
+	end)
 end
 
 

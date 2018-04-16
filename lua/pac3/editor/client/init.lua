@@ -249,14 +249,60 @@ do
 	hook.Add("HUDPaint", "pac_in_editor", function()
 		for _, ply in ipairs(player.GetAll()) do
 			if ply ~= LocalPlayer() and ply:GetNW2Bool("pac_in_editor") then
+
+				if ply.pac_editor_cam_pos then
+					ply.pac_editor_camera = ply.pac_editor_camera or ClientsideModel("models/tools/camera/camera.mdl")
+
+					local ent = ply.pac_editor_camera
+
+					local dt = math.Clamp(FrameTime() * 5, 0.0001, 0.5)
+
+					ent:SetPos(LerpVector(dt, ent:GetPos(), ply.pac_editor_cam_pos))
+					ent:SetAngles(LerpAngle(dt, ent:GetAngles(), ply.pac_editor_cam_ang))
+
+					local pos_3d = ent:GetPos()
+					local dist = pos_3d:Distance(EyePos())
+
+					dist = math.min(dist/50, 1)
+					ply.pac_editor_camera:SetModelScale(dist * 0.25,0)
+
+					if dist > 50 then
+						local pos_2d = pos_3d:ToScreen()
+						draw.DrawText(ply:Nick() .. "'s PAC3 camera", "ChatFont", pos_2d.x, pos_2d.y, Color(255,255,255,255), 1)
+					end
+				end
+
 				local pos_3d = ply:NearestPoint(ply:EyePos() + up) + Vector(0,0,10)
 				local alpha = math.Clamp(pos_3d:Distance(EyePos()) * -1 + 500, 0, 500)/500
 				if alpha > 0 then
 					local pos_2d = pos_3d:ToScreen()
 					draw.DrawText("In PAC3 Editor", "ChatFont", pos_2d.x, pos_2d.y, Color(255,255,255,alpha*255), 1)
 				end
+			else
+				if ply.pac_editor_camera then
+					SafeRemoveEntity(ply.pac_editor_camera)
+					ply.pac_editor_camera = nil
+				end
 			end
 		end
+	end)
+
+	timer.Create("pac_in_editor", 0.25, 0, function()
+		net.Start("pac_in_editor_posang", true)
+			net.WriteVector(pace.GetViewPos())
+			net.WriteAngle(pace.GetViewAngles())
+		net.SendToServer()
+	end)
+
+	net.Receive("pac_in_editor_posang", function()
+		local ply = net.ReadEntity()
+		if not ply:IsValid() then return end
+
+		local pos = net.ReadVector()
+		local ang = net.ReadAngle()
+
+		ply.pac_editor_cam_pos = pos
+		ply.pac_editor_cam_ang = ang
 	end)
 end
 
