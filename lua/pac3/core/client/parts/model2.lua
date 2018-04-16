@@ -634,12 +634,14 @@ do
 		return ent:GetPos(), ang
 	end
 
-	function PART:Initialize() self.material_count = 0 end
+	function PART:Initialize()
+		self.material_count = 0
+	end
+
 	function PART:OnDraw(ent, pos, ang)
 		self:PreEntityDraw(ent, ent, pos, ang)
 			self:DrawModel(ent, pos, ang)
 		self:PostEntityDraw(ent, ent, pos, ang)
-		pac.ResetBones(ent)
 	end
 
 	function PART:GetEntity()
