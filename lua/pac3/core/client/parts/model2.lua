@@ -345,6 +345,7 @@ function PART:DrawModel(ent, pos, ang)
 	if pac.projected_texture_enabled and not pac.flashlight_disabled then
 		render.PushFlashlightMode(true)
 
+		self:BindMaterials(ent)
 		ent.pac_drawing_model = true
 		ent:DrawModel()
 		ent.pac_drawing_model = false
