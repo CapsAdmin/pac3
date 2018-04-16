@@ -213,10 +213,20 @@ concommand.Add("pac_editor_panic", function()
 	timer.Simple(0.1, function() pace.OpenEditor() end)
 end)
 
-concommand.Add("pac_editor", function() pace.OpenEditor() end)
+concommand.Add("pac_editor", function(_, _, args)
+	if args[1] == "toggle" then
+		if pace.IsActive() then
+			pace.CloseEditor()
+		else
+			pace.OpenEditor()
+		end
+	else
+		pace.OpenEditor()
+	end
+end)
+
 concommand.Add("pac_reset_eye_angles", function() pace.ResetEyeAngles() end)
 concommand.Add("pac_toggle_tpose", function() pace.SetTPose(not pace.GetTPose()) end)
-
 
 function pace.Call(str, ...)
 	if pace["On" .. str] then
