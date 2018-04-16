@@ -15,6 +15,8 @@ pac.SetPropertyGroup(PART, "movement")
 pac.EndStorableVars()
 
 do
+	CreateConVar("pac_free_movement", -1, {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow players to modify movement. -1 apply only allow when noclip is allowed, 1 allow for all gamemodes, 0 to disable")
+
 	local function ADD(func, func2)
 		PART["Set" .. func] = function(self, val)
 			self[func] = val
