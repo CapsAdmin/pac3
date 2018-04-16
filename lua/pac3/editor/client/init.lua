@@ -34,7 +34,6 @@ include("examples.lua")
 include("about.lua")
 include("animation_timeline.lua")
 include("render_scores.lua")
-include("net_messages.lua")
 
 
 do
