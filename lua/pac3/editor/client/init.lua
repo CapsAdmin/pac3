@@ -281,8 +281,6 @@ do
 							end
 						end
 					end
-
-					dist = math.min(dist/50, 1)
 				end
 
 				local pos_3d = ply:NearestPoint(ply:EyePos() + up) + Vector(0,0,5)
