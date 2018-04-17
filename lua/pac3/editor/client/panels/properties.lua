@@ -522,7 +522,11 @@ do -- list
 			table.sort(sorted_groups, function(a, b) return a.key > b.key end)
 		else
 			local done = {}
-			for i, name in ipairs(table.Add(pac.GroupOrder[obj.ClassName] or {}, pac.GroupOrder.none)) do
+			local temp = {}
+			table.Add(temp, pac.GroupOrder[obj.ClassName] or {})
+			table.Add(temp, pac.GroupOrder.none)
+
+			for i, name in ipairs(temp) do
 				for k, v in pairs(tbl) do
 					if name == k and not done[k] then
 						table.insert(sorted_groups, {key = k, val = v})
