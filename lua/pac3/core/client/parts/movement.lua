@@ -5,49 +5,71 @@ PART.Group = "experimental"
 PART.Icon = "icon16/brick_go.png"
 PART.NonPhysical = true
 
-pac.StartStorableVars()
-pac.SetPropertyGroup(PART, "movement")
-	pac.GetSet(PART, "SprintSpeed", -1, {editor_clamp = {-1,  10000}})
-	pac.GetSet(PART, "RunSpeed", -1, {editor_clamp = {-1,  10000}})
-	pac.GetSet(PART, "WalkSpeed", -1, {editor_clamp = {-1,  10000}})
-	pac.GetSet(PART, "CrouchSpeed", -1, {editor_clamp = {-1,  10000}})
-	pac.GetSet(PART, "JumpHeight", -1, {editor_clamp = {-1,  10000}})
-pac.EndStorableVars()
+local function ADD(PART, name, default, ...)
+	pac.GetSet(PART, name, default, ...)
 
-do
-	CreateConVar("pac_free_movement", -1, {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow players to modify movement. -1 apply only allow when noclip is allowed, 1 allow for all gamemodes, 0 to disable")
+	PART["Set" .. name] = function(self, val)
+		self[name] = val
 
-	local function ADD(func, func2)
-		PART["Set" .. func] = function(self, val)
-			self[func] = val
-			self["Update" .. func](self)
-		end
+		local ply = self:GetOwner(true)
 
-		PART["Update" .. func] = function(self, disable)
-			local ply = self:GetOwner(true)
+		if ply == pac.LocalPlayer then
 
-			if ply == pac.LocalPlayer then
-				local num = GetConVarNumber("pac_free_movement")
-				if num == 1 or (num == -1 and hook.Run("PlayerNoClip", ply, true)) or disable then
-					local val = disable and -1 or self[func]
+			ply.pac_movement = ply.pac_movement or {}
+			ply.pac_movement[name] = val
 
-					ply[func2](ply, val)
-					net.Start("pac_modify_movement")
-						net.WriteString(func)
-						net.WriteFloat(val)
-					net.SendToServer()
-				end
+			local num = GetConVarNumber("pac_free_movement")
+			if num == 1 or (num == -1 and hook.Run("PlayerNoClip", ply, true)) then
+				net.Start("pac_modify_movement")
+					net.WriteString(name)
+					net.WriteType(val)
+				net.SendToServer()
 			end
 		end
 	end
 
-	ADD("RunSpeed", "SetRunSpeed")
-	ADD("WalkSpeed", "SetWalkSpeed")
-	ADD("CrouchSpeed", "SetCrouchedWalkSpeed")
-	--ADD("AltWalkSpeed")
-	--ADD("AltCrouchSpeed")
-	ADD("JumpHeight", "SetJumpPower")
+	PART.update_these = PART.update_these or {}
+
+	table.insert(PART.update_these, function(s) PART["Set" .. name](s, PART["Get" .. name](s)) end)
 end
+
+pac.StartStorableVars()
+	pac.SetPropertyGroup(PART, "generic")
+		ADD(PART, "Noclip", false)
+		ADD(PART, "Gravity", Vector(0, 0, -600))
+
+	pac.SetPropertyGroup(PART, "movement")
+		ADD(PART, "SprintSpeed", 400)
+		ADD(PART, "RunSpeed", 200)
+		ADD(PART, "WalkSpeed", 100)
+		ADD(PART, "DuckSpeed", 25)
+
+	pac.SetPropertyGroup(PART, "ground")
+		ADD(PART, "JumpHeight", 200, {editor_clamp = {0,  10000}})
+		ADD(PART, "MaxGroundSpeed", 750)
+		ADD(PART, "StickToGround", true)
+		ADD(PART, "GroundFriction", 0.12, {editor_clamp = {0,  1}, editor_sensitivity = 0.1})
+
+	pac.SetPropertyGroup(PART, "air")
+		ADD(PART, "AllowZVelocity", false)
+		ADD(PART, "AirFriction", 0.01, {editor_clamp = {0,  1}, editor_sensitivity = 0.1})
+		ADD(PART, "MaxAirSpeed", 1)
+
+	pac.SetPropertyGroup(PART, "view angles")
+		ADD(PART, "ReversePitch", false)
+		ADD(PART, "UnlockPitch", false)
+		ADD(PART, "VelocityToViewAngles", 0, {editor_clamp = {0,  1}, editor_sensitivity = 0.1})
+		ADD(PART, "RollAmount", 0, {editor_sensitivity = 0.25})
+
+	pac.SetPropertyGroup(PART, "fin")
+		ADD(PART, "FinEfficiency", 0)
+		ADD(PART, "FinLiftMode", "normal", {enums = {
+			normal = "normal",
+			none = "none",
+		}})
+		ADD(PART, "FinCline", false)
+
+pac.EndStorableVars()
 
 function PART:GetNiceName()
 	local ent = self:GetOwner(true)
@@ -67,21 +89,22 @@ function PART:OnShow()
 	local ent = self:GetOwner(true)
 
 	if ent:IsValid() then
-		self:UpdateWalkSpeed()
-		self:UpdateRunSpeed()
-		self:UpdateCrouchSpeed()
-		self:UpdateJumpHeight()
+		for i,v in ipairs(self.update_these) do
+			v(self)
+		end
 	end
 end
 
 function PART:OnHide()
+	--if not self:IsEventHidden() then return end
 	local ent = self:GetOwner(true)
 
 	if ent:IsValid() then
-		self:UpdateWalkSpeed(true)
-		self:UpdateRunSpeed(true)
-		self:UpdateCrouchSpeed(true)
-		self:UpdateJumpHeight(true)
+		net.Start("pac_modify_movement")
+			net.WriteString("disable")
+		net.SendToServer()
+
+		ent.pac_movement = nil
 	end
 end
 

@@ -10,9 +10,10 @@ CreateConVar("pac_allow_blood_color", "1", {FCVAR_NOTIFY}, "Allow to use custom 
 CreateConVar('pac_allow_mdl', '1', {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs')
 CreateConVar('pac_allow_mdl_entity', '1', {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs as Entity')
 
+include("util.lua")
+
 include("pac3/core/shared/init.lua")
 
-include("util.lua")
 include("effects.lua")
 include("event.lua")
 include("net_messages.lua")

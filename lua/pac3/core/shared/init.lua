@@ -2,6 +2,7 @@ include("util.lua")
 
 include("footsteps_fix.lua")
 include("http.lua")
+include("movement.lua")
 
 CreateConVar("pac_sv_draw_distance", 0, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
 CreateConVar("pac_sv_hide_outfit_on_death", 0, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
