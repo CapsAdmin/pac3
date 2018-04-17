@@ -254,6 +254,10 @@ do
 					if not ply.pac_editor_camera then
 						ply.pac_editor_camera = ClientsideModel("models/tools/camera/camera.mdl")
 						ply.pac_editor_camera:SetModelScale(0.25,0)
+						local ent = ply.pac_editor_camera
+						ply:CallOnRemove("pac_editor_camera", function()
+							SafeRemoveEntity(ent)
+						end)
 					end
 
 					local ent = ply.pac_editor_camera
