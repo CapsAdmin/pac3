@@ -145,9 +145,9 @@ do
 	end
 end
 
-function PANEL:OnMousePressed(mc)
-	if mc == MOUSE_RIGHT and self.part then
-		pace.Call("PartMenu", self.part)
+function PANEL:OnMouseReleased(mc)
+	if mc == MOUSE_RIGHT and pace.current_part then
+		pace.Call("PartMenu", pace.current_part)
 	end
 end
 
