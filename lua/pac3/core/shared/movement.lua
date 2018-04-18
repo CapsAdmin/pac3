@@ -53,7 +53,7 @@ if CLIENT then
 		local self = ply.pac_movement
 		if not self then return end
 
-		if ply:GetMoveType() == MOVETYPE_NOCLIP or ply:KeyDown(IN_BACK) then
+		if ply:GetMoveType() == MOVETYPE_NOCLIP then
 			if ply.pac_movement_viewang then
 				ang.r = 0
 				cmd:SetViewAngles(ang)
@@ -62,37 +62,42 @@ if CLIENT then
 			return
 		end
 
+		if self.UnlockPitch then
+			ply.pac_movement_viewang = ply.pac_movement_viewang or ang
+			ang = ply.pac_movement_viewang
 
-		ply.pac_movement_viewang = ply.pac_movement_viewang or ang
-		local sens = GetConVarNumber("sensitivity")
-		x = x / sens / 5
-		y = y / sens / 5
+			local sens = GetConVarNumber("sensitivity") * 20
+			x = x / sens
+			y = y / sens
 
-		if ply.pac_movement_viewang.p > 89 or ply.pac_movement_viewang.p < -89 then
-			x = -x
+			if ang.p > 89 or ang.p < -89 then
+				x = -x
+			end
+
+			ang.p = math.NormalizeAngle(ang.p + y)
+			ang.y = math.NormalizeAngle(ang.y + -x)
 		end
 
 		if self.ReversePitch then
-			y = -y
-		end
-
-		ply.pac_movement_viewang.p = math.NormalizeAngle(ply.pac_movement_viewang.p + y)
-		ply.pac_movement_viewang.y = math.NormalizeAngle(ply.pac_movement_viewang.y + -x)
-
-		if not self.UnlockPitch then
-			ply.pac_movement_viewang.p = math.Clamp(ply.pac_movement_viewang.p, -89.5, 89.5)
+			ang.p = -ang.p
 		end
 
 		local vel = ply:GetVelocity()
-		local roll = math.Clamp(vel:Dot(-cmd:GetViewAngles():Right()) * self.RollAmount, -89, 89)
+
+		local roll = math.Clamp(vel:Dot(-ang:Right()) * self.RollAmount, -89, 89)
 		if not vel:IsZero() then
-			ply.pac_movement_viewang = LerpAngle(self.VelocityToViewAngles, ply.pac_movement_viewang, vel:Angle())
+			if vel:Dot(ang:Forward()) < 0 then
+				vel = -vel
+			end
+			ang = LerpAngle(self.VelocityToViewAngles, ang, vel:Angle())
 		end
-		ply.pac_movement_viewang.r = roll
+		ang.r = roll
 
-		cmd:SetViewAngles(ply.pac_movement_viewang)
+		cmd:SetViewAngles(ang)
 
-		return true
+		if self.UnlockPitch then
+			return true
+		end
 	end)
 end
 
