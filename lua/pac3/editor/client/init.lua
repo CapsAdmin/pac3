@@ -251,7 +251,7 @@ do
 			if ply ~= LocalPlayer() and ply:GetNW2Bool("pac_in_editor") then
 
 				if ply.pac_editor_cam_pos then
-					if not ply.pac_editor_camera then
+					if not IsValid(ply.pac_editor_camera) then
 						ply.pac_editor_camera = ClientsideModel("models/tools/camera/camera.mdl")
 						ply.pac_editor_camera:SetModelScale(0.25,0)
 						local ent = ply.pac_editor_camera
