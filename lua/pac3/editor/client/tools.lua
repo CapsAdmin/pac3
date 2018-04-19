@@ -268,6 +268,7 @@ do
 		for k,v in pairs(pac.GetLocalParts()) do
 			v:SetName("")
 		end
+		pace.RefreshTree(true)
 	end)
 
 end
