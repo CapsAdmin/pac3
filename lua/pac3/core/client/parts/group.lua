@@ -9,6 +9,10 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "Duplicate", false)
 pac.EndStorableVars()
 
+function PART:GetNiceName()
+	return #self:GetChildrenList() .. " children"
+end
+
 function PART:SetOwnerName(name)
 	if name == "" then
 		name = "self"

@@ -73,7 +73,7 @@ function pace.CreateSearchList(property, key, name, add_columns, get_list, get_c
 		local newList = {}
 
 		for k, v in pairs(get_list()) do
-			table.insert(newList, {k, v, pace.util.FriendlyName(tostring(k)), pace.util.FriendlyName(tostring(v))})
+			table.insert(newList, {k, v, tostring(k), tostring(v)})
 		end
 
 		table.sort(newList, function(a, b) return a[1] < b[1] end)
@@ -619,7 +619,7 @@ do -- list
 									end,
 
 									function(list, key, val)
-										return list:AddLine(pace.util.FriendlyName(key))
+										return list:AddLine(key)
 									end,
 
 									function(val, key)

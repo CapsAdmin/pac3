@@ -16,7 +16,7 @@ local Color = Color
 
 local PART = {}
 
-PART.Name = "model"
+PART.FriendlyName = "model"
 PART.ClassName = "model2"
 PART.Category = "model"
 PART.ManualDraw = true
@@ -583,7 +583,7 @@ pac.RegisterPart(PART)
 do
 	local PART = {}
 
-	PART.Name = "entity"
+	PART.FriendlyName = "entity"
 	PART.ClassName = "entity2"
 	PART.Base = "model2"
 	PART.Category = "model"
@@ -605,6 +605,15 @@ do
 	--pac.RemoveProperty(PART, "AngleOffset")
 	pac.RemoveProperty(PART, "EyeAngles")
 	pac.RemoveProperty(PART, "AimPartName")
+
+	function PART:GetNiceName()
+		local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%."))
+
+		local what = self:GetEntity():GetClass()
+
+		return (str and str:gsub("%d", "") or "error") .. " " .. what .. " model"
+	end
+
 
 	function PART:SetPosition(pos)
 		self.Position = pos
@@ -786,7 +795,10 @@ do
 	pac.RemoveProperty(PART, "Model")
 
 	function PART:GetNiceName()
-		return self.Class
+		if self.Class ~= "all" then
+			return self.Class
+		end
+		return self.ClassName
 	end
 
 	function PART:Initialize()

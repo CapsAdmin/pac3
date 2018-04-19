@@ -1,6 +1,6 @@
 local PART = {}
 
-PART.Name = "light"
+PART.FriendlyName = "light"
 PART.ClassName = "light2"
 PART.Group = "experimental"
 PART.Icon = 'icon16/lightbulb.png'

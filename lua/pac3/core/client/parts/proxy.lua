@@ -84,7 +84,20 @@ function PART:GetNiceName()
 		return self.ClassName
 	end
 
-	return pac.PrettifyName(self:GetVariableName()) .. " = " .. (self.debug_var or "?") .. " proxy"
+	local target
+
+	if self.AffectChildren then
+		target = "children"
+	else
+		local part = self:GetTarget()
+		if part == self.Parent then
+			target = "parent"
+		else
+			target = target:GetName()
+		end
+	end
+
+	return target .. "." .. pac.PrettifyName(self:GetVariableName()) .. " = " .. (self.debug_var or "?")
 end
 
 function PART:Initialize()

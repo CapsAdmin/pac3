@@ -239,6 +239,14 @@ for shader_name, groups in pairs(shader_params.shaders) do
 		self.rotation_angle = Angle(0, 0, 0)
 	end
 
+
+	function PART:GetNiceName()
+		local path = self:Getbasetexture()
+		path = path:gsub("%%(%d+)", function(b) return string.char(tonumber("0x" .. b)) end)
+		local name = ("/".. path):match(".+/(.-)%.") or ("/".. path):match(".+/(.+)")
+		return pac.PrettifyName(name) or "?"
+	end
+
 	function PART:SetMaterialOverride(num)
 		self.MaterialOverride = num
 

@@ -2,7 +2,7 @@ local webaudio = include("pac3/libraries/webaudio.lua")
 pac.webaudio2 = webaudio
 local PART = {}
 
-PART.Name = "sound"
+PART.FriendlyName = "sound"
 PART.ClassName = "sound2"
 PART.NonPhysical = true
 PART.Group = "experimental"
@@ -54,7 +54,9 @@ function PART:Initialize()
 end
 
 function PART:GetNiceName()
-	return pac.PrettifyName(("/".. self:GetPath()):match(".+/(.-)%.")) or "no sound"
+	local path = self:GetPath()
+	path = path:gsub("%%(%d+)", function(b) return string.char(tonumber("0x" .. b)) end)
+	return pac.PrettifyName(("/".. path):match(".+/(.-)%.")) or "no sound"
 end
 
 PART.stream_vars = {}
@@ -206,10 +208,6 @@ PART.last_stream = NULL
 
 function PART:PlaySound(_, additiveVolumeFraction)
 	additiveVolumeFraction = additiveVolumeFraction or 0
-
-	if webaudio.sample_rate and webaudio.sample_rate > 48000 then
-		pac.Message(Color(255, 0, 0), "The ogg2 part (custom sounds) might not work because you have your sample rate set to ", webaudio.sample_rate, " Hz. Set it to 48000 or below if you experience any issues.")
-	end
 
 	local stream = table.Random(self.streams) or NULL
 

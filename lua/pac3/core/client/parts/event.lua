@@ -1272,7 +1272,7 @@ function PART:GetNiceName()
 		if not tonumber(args) then
 			args = [["]] .. args .. [["]]
 		end
-		str = str .. " " .. self:GetOperator() .. args
+		str = str .. " " .. self:GetOperator() .. " " .. args
 	end
 
 	return pac.PrettifyName(str)

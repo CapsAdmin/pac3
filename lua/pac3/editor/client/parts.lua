@@ -278,7 +278,7 @@ do -- menu
 		end)
 
 		local function add_part(menu, part)
-			local newMenuEntry = menu:AddOption(L(part.Name or part.ClassName:Replace('_', ' ')), function()
+			local newMenuEntry = menu:AddOption(L(part.FriendlyName or part.ClassName:Replace('_', ' ')), function()
 				pace.AddUndoPartCreation(pace.Call("CreatePart", part.ClassName))
 				trap = true
 			end)
@@ -378,7 +378,7 @@ do -- menu
 			end
 
 			for class_name, part in pairs(partsToShow) do
-				local newMenuEntry = menu:AddOption(L((part.Name or part.ClassName):Replace('_', ' ')), function()
+				local newMenuEntry = menu:AddOption(L((part.FriendlyName or part.ClassName):Replace('_', ' ')), function()
 					pace.AddUndoPartCreation(pace.Call("CreatePart", class_name))
 				end)
 
@@ -423,7 +423,7 @@ do -- menu
 			result.found = {}
 
 			for _, part in ipairs(pace.GetRegisteredParts()) do
-				if (part.Name or part.ClassName):find(str, nil, true) then
+				if (part.FriendlyName or part.ClassName):find(str, nil, true) then
 					table.insert(result.found, part)
 				end
 			end
@@ -458,7 +458,7 @@ do -- menu
 
 				local label = line:Add("DLabel")
 				label:SetTextColor(label:GetSkin().Colours.Category.Line.Text)
-				label:SetText(L((part.Name or part.ClassName):Replace('_', ' ')))
+				label:SetText(L((part.FriendlyName or part.ClassName):Replace('_', ' ')))
 				label:SizeToContents()
 				label:MoveRightOf(btn, 4)
 				label:SetMouseInputEnabled(false)

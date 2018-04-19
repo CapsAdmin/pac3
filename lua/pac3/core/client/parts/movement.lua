@@ -2,7 +2,7 @@ local PART = {}
 
 PART.ClassName = "player_movement"
 PART.Group = "experimental"
-PART.Icon = "icon16/brick_go.png"
+PART.Icon = "icon16/user_go.png"
 PART.NonPhysical = true
 
 local function ADD(PART, name, default, ...)
@@ -73,16 +73,17 @@ pac.EndStorableVars()
 
 function PART:GetNiceName()
 	local ent = self:GetOwner(true)
+	local str = self.ClassName
 
 	if ent:IsValid() then
 		if ent:IsPlayer() then
-			return ent:Nick()
+			str = ent:Nick()
 		else
-			return language.GetPhrase(ent:GetClass())
+			str = language.GetPhrase(ent:GetClass())
 		end
 	end
 
-	return self.ClassName
+	return str .. "'s movement"
 end
 
 function PART:OnShow()

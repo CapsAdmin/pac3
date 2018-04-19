@@ -165,8 +165,8 @@ function PART:GetName()
 			end
 		end
 
-		if num and count > 1 then
-			nice = nice .. " " .. num
+		if num and count > 1 and num > 1 then
+			nice = nice:Trim() .. " (" .. num - 1 .. ")"
 		end
 
 
