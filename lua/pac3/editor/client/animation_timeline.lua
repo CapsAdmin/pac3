@@ -133,6 +133,7 @@ function timeline.EditBone()
 end
 
 function timeline.Load(data)
+	animations.ConvertOldData(data)
 	timeline.data = data
 
 	if data and data.FrameData then

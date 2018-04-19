@@ -19,6 +19,15 @@ do
 	}
 
 	function animations.ConvertOldData(data)
+		if tonumber(data.Type) then
+			data.Type = tonumber(data.Type)
+		end
+
+		if tonumber(data.Interpolation) then
+			data.Interpolation = tonumber(data.Interpolation)
+		end
+
+
 		if type(data.Type) == "number" then
 			data.Type = old_types[data.Type]
 		end
