@@ -635,16 +635,25 @@ do -- parenting
 				self.temp_hidden or
 				self.hidden or
 				self.event_hidden
-			then return true end
+			then
+				return true
+			end
 
-			if not self:HasParent() then return false end
+			if not self:HasParent() then
+				return false
+			end
 
 			if not self.parent_list then
 				self:BuildParentList()
 			end
 
 			for _, parent in ipairs(self.parent_list) do
-				if parent.event_hidden then
+				if
+					parent.draw_hidden or
+					parent.temp_hidden or
+					parent.hidden or
+					parent.event_hidden
+				then
 					return true
 				end
 			end
