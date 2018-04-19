@@ -761,7 +761,7 @@ do
 	pac.StartStorableVars()
 		pac.SetPropertyGroup(PART, "generic")
 			pac.GetSet(PART, "OverridePosition", false)
-
+			pac.GetSet(PART, "NoDraw", false)
 			pac.GetSet(PART, "Class", "all", {enums = function()
 				local out = {
 					["physgun"] = "weapon_physgun",
@@ -845,7 +845,9 @@ do
 						wep.RenderOverride = function()
 							wep:DrawShadow(false)
 							if wep.pac_render then
-								wep:DrawModel()
+								if not self.NoDraw then
+									wep:DrawModel()
+								end
 							end
 						end
 						wep.pac_weapon_part = self
