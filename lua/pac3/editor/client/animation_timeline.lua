@@ -146,7 +146,8 @@ function timeline.Load(data)
 			data.FrameData = frames
 		end
 
-		timeline.SetAnimationType(data.Type)
+		timeline.animation_part:SetInterpolation(data.Interpolation)
+		timeline.animation_part:SetAnimationType(data.Type)
 		timeline.frame:Clear()
 
 		for i, v in ipairs(data.FrameData) do
