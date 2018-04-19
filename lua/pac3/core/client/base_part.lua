@@ -769,7 +769,7 @@ do -- serializing
 			self.delayed_variables = self.delayed_variables or {}
 
 			-- this needs to be set first
-			self:SetUniqueID(tbl.self.UniqueID)
+			self:SetUniqueID(tbl.self.UniqueID or util.CRC(tostring(tbl.self)))
 
 			for key, value in pairs(tbl.self) do
 
