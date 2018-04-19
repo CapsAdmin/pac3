@@ -25,14 +25,30 @@ do -- Blood Color
 	local pac_allow_blood_color = GetConVar("pac_allow_blood_color")
 	util.AddNetworkString("pac.BloodColor")
 
+	local allowed = {
+		dont_bleed = _G.DONT_BLEED,
+		red = _G.BLOOD_COLOR_RED,
+		yellow = _G.BLOOD_COLOR_YELLOW,
+		green = _G.BLOOD_COLOR_GREEN,
+		mech = _G.BLOOD_COLOR_MECH,
+		antlion = _G.BLOOD_COLOR_ANTLION,
+		zombie = _G.BLOOD_COLOR_ZOMBIE,
+		antlion_worker = _G.BLOOD_COLOR_ANTLION_WORKER,
+	}
+
+	local temp = {}
+	for k,v in pairs(allowed) do
+		temp[v] = k
+	end
+	allowed = temp
+
 	net.Receive("pac.BloodColor", function(_, ply)
 		if not pac_allow_blood_color:GetBool() then return end
-		local id = net.ReadInt(6)
-		BloodColor = math.Clamp(math.floor(id), -2, 4)
-		if id == -2 or id == 4 then id = 0  end
-
-		ply.pac_bloodcolor = id
-		ply:SetBloodColor(id)
+		local num = net.ReadInt(6)
+		if allowed[num] then
+			ply.pac_bloodcolor = num
+			ply:SetBloodColor(num)
+		end
 	end)
 
 	timer.Create("pac_setbloodcolor", 10, 0, function()
