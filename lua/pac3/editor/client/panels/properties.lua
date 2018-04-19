@@ -607,6 +607,10 @@ do -- list
 													v = k
 												end
 
+												if type(k) ~= "string" then
+													k = v
+												end
+
 												enums[k] = v
 											end
 										end
