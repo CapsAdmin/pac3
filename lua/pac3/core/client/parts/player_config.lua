@@ -115,7 +115,7 @@ function PART:UpdateBloodColor(override)
 		local num = blood_colors[override or self.BloodColor]
 		if num then
 			net.Start("pac.BloodColor")
-				net.WriteInt(6, num)
+				net.WriteInt(num, 6)
 			net.SendToServer()
 		end
 	end
