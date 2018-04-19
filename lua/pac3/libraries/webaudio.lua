@@ -1,7 +1,31 @@
-local webaudio = {}
---webaudio.debug = true
+local webaudio = _G.webaudio or {}
+_G.webaudio = webaudio
+
+if me then
+	webaudio.debug = true
+end
+
 webaudio.sample_rate = nil
 webaudio.speed_of_sound = 340.29 -- metres per
+webaudio.buffer_size = CreateClientConVar("webaudio_buffer_size", "2048", true)
+
+local function logn(str)
+	MsgC(Color(0, 255, 0), "[pac webaudio] ")
+	MsgC(Color(255, 255, 255), str)
+	Msg("\n")
+end
+
+local function dprint(str)
+    if webaudio.debug  then
+        logn(str)
+    end
+end
+
+cvars.AddChangeCallback("webaudio_buffer_size", function(_,_,val)
+	dprint("buffer size changed to " .. val)
+	webaudio.Shutdown()
+	webaudio.Initialize()
+end)
 
 if webaudio.browser_panel and webaudio.browser_panel:IsValid() then
 	webaudio.browser_panel:Remove()
@@ -10,14 +34,6 @@ end
 
 webaudio.browser_state = "uninitialized"
 webaudio.volume = 1
-
-local function dprint(str)
-    if webaudio.debug  then
-        MsgC(Color(0, 255, 0), "[webaudio] ")
-        MsgC(Color(255, 255, 255), str)
-        Msg("\n")
-    end
-end
 
 local script_queue
 
@@ -47,8 +63,6 @@ end
 do
 	local last_eye_pos
 	local last_eye_pos_time
-
-	webaudio.eye_velocity = Vector()
 
 	function webaudio.Update()
 		if webaudio.browser_state ~= "initialized" then
@@ -82,6 +96,16 @@ do
 			end
 		end
 	end
+end
+
+function webaudio.Shutdown()
+	webaudio.browser_state = "uninitialized"
+	if webaudio.browser_panel then
+		webaudio.browser_panel:Remove()
+	end
+	webaudio.browser_panel = nil
+	hook.Remove("RenderScene", "pac_webaudio2")
+	hook.Remove("Think", "pac_webaudio2")
 end
 
 function webaudio.Initialize()
@@ -119,7 +143,8 @@ function webaudio.Initialize()
 
 		if typ == "initialized" then
 			webaudio.browser_state = "initialized"
-			webaudio.sample_rate = args[1]
+			webaudio.sample_rate = args[1] or -1
+
 		elseif typ == "stream" then
 			local stream = webaudio.GetStream(tonumber(args[2]) or 0)
 			if stream:IsValid() then
@@ -128,30 +153,7 @@ function webaudio.Initialize()
 		end
 	end)
 
-	file.Write("pac3_webaudio_html.txt", webaudio.html)
-	webaudio.browser_panel:OpenURL("asset://garrysmod/data/pac3_webaudio_html.txt")
-
-	webaudio.eye_pos = Vector()
-	webaudio.eye_ang = Angle()
-
-	pac.AddHook("RenderScene", "webaudio", function(pos, ang)
-		webaudio.eye_pos = pos
-		webaudio.eye_ang = ang
-	end)
-
-	pac.AddHook("Think", "webaudio", webaudio.Update)
-end
-
--- Audio
-function webaudio.SetVolume(vol)
-	if webaudio.volume ~= vol then
-		webaudio.volume = vol
-		run_javascript(string.format("gain.gain.value = %f", vol))
-	end
-end
-
-webaudio.html = [==[
-<script>
+	local js = ([==[
 /*jslint bitwise: true */
 
 window.onerror = function(description, url, line)
@@ -167,7 +169,7 @@ function dprint(str)
 var audio;
 var gain;
 var processor;
-var streams = [];
+var streams = new Object();
 var streams_array = [];
 
 function open()
@@ -180,12 +182,14 @@ function open()
     if (typeof AudioContext != "undefined")
     {
         audio = new AudioContext();
-        processor = audio.createScriptProcessor(2048, 0, 0);
+        processor = audio.createScriptProcessor(]==] .. webaudio.buffer_size:GetInt() .. [==[, 2, 2);
         gain = audio.createGain();
+		compressor = audio.createDynamicsCompressor()
     } else {
         audio = new webkitAudioContext();
-        processor = audio.createJavaScriptNode(2048, 0, 0);
+        processor = audio.createJavaScriptNode(]==] .. webaudio.buffer_size:GetInt() .. [==[, 2, 2);
         gain = audio.createGainNode();
+		compressor = audio.createDynamicsCompressor()
     }
 
     processor.onaudioprocess = function(event)
@@ -272,8 +276,8 @@ function open()
 					if (stream.filter_type == 0)
 					{
 						// None
-                        left = buffer_left[index] * stream.vol_left_smooth;
-                        right = buffer_right[index] * stream.vol_right_smooth;
+                        left = buffer_left[index] * stream.vol_both;
+                        right = buffer_right[index] * stream.vol_both;
 					}
 					else
                     {
@@ -283,16 +287,19 @@ function open()
                         if (stream.filter_type == 1)
                         {
 							// Low pass
-                            left = sml * stream.vol_left_smooth;
-                            right = smr * stream.vol_right_smooth;
+                            left = sml * stream.vol_both;
+                            right = smr * stream.vol_both;
                         }
                         else if (stream.filter_type == 2)
                         {
 							// High pass
-                            left = (buffer_left[index] - sml) * stream.vol_left_smooth;
-                            right = (buffer_right[index] - smr) * stream.vol_right_smooth;
+                            left = (buffer_left[index] - sml) * stream.vol_both;
+                            right = (buffer_right[index] - smr) * stream.vol_both;
                         }
                     }
+
+					left = Math.min(Math.max(left, -1), 1) * stream.vol_left_smooth;
+					right = Math.min(Math.max(right, -1), 1) * stream.vol_right_smooth;
                 }
 
 				if (stream.lfo_volume_time)
@@ -328,8 +335,10 @@ function open()
 
                 stream.position += speed;
 
-				output_left[j] = Math.min(Math.max(output_left[j], -1), 1);
-				output_right[j] = Math.min(Math.max(output_right[j], -1), 1);
+				var max = 1;
+
+				output_left[j] = Math.min(Math.max(output_left[j], -max), max);
+				output_right[j] = Math.min(Math.max(output_right[j], -max), max);
 
 				if (!isFinite(output_left[j])) {
 					output_left[j] = 0
@@ -342,9 +351,9 @@ function open()
         }
     };
 
-    processor.connect(gain);
+    processor.connect(compressor);
+    compressor.connect(gain);
     gain.connect(audio.destination);
-    //processor.connect(audio.destination);
 
     lua.message("initialized", audio.sampleRate);
 }
@@ -359,7 +368,7 @@ function close()
     }
 }
 
-var buffer_cache = [];
+var buffer_cache = new Object();
 
 function download_buffer(url, callback, skip_cache, id)
 {
@@ -407,7 +416,7 @@ function download_buffer(url, callback, skip_cache, id)
     request.onerror = function()
     {
         dprint("downloading " + url + " errored");
-		lua.message("stream", "call", id, "OnError", "download failed");
+		lua.message("stream", "call", id, "OnError", "download failed: ", request.responseText);
     };
 }
 
@@ -425,6 +434,7 @@ function CreateStream(url, id, skip_cache)
         stream.url = url;
         stream.speed = 1; // 1 = normal pitch
         stream.max_loop = 1; // -1 = inf
+        stream.vol_both = 1;
         stream.vol_left = 1;
         stream.vol_right = 1;
         stream.paused = true;
@@ -444,6 +454,7 @@ function CreateStream(url, id, skip_cache)
 
         stream.play = function(stop, position)
         {
+			dprint("play " + stop + position)
             if(position !== undefined)
             {
                 stream.position = position;
@@ -486,7 +497,18 @@ function CreateStream(url, id, skip_cache)
         streams[id] = stream;
         streams_array.push(stream);
 
+		dprint("created stream[" + id + "][" + stream.url + "]");
         lua.message("stream", "loaded", id, buffer.length);
+
+		if (]==] .. (webaudio.debug and "true" or "false") .. [==[)
+		{
+			var size = 0, key;
+			for (key in streams) {
+				if (streams.hasOwnProperty(key)) size++;
+			}
+			dprint("total stream count " + size)
+		}
+
     }, skip_cache, id);
 }
 
@@ -496,19 +518,54 @@ function DestroyStream(id)
 
 	if (stream)
 	{
-		streams[id] = undefined;
-		buffer_cache[stream.url] = undefined;
+		dprint("destroying stream[" + id + "][" + stream.url + "]");
+
+		delete streams[id];
+		delete buffer_cache[stream.url];
 
 		var i = streams_array.indexOf(stream);
 		streams_array.splice(i, 1);
+
+		if (]==] .. (webaudio.debug and "true" or "false") .. [==[)
+		{
+			var size = 0, key;
+			for (key in streams) {
+				if (streams.hasOwnProperty(key)) size++;
+			}
+			dprint("total stream count " + size)
+		}
 	}
 }
 
 open();
 
-</script>
+]==])
 
-]==]
+	webaudio.browser_panel.OnFinishLoadingDocument = function(self)
+		self.OnFinishLoadingDocument = nil
+
+		dprint("OnFinishLoadingDocument")
+		webaudio.browser_panel:RunJavascript(js)
+	end
+
+	file.Write("pac_webaudio2_blankhtml.txt", "<html></html>")
+	webaudio.browser_panel:OpenURL("asset://garrysmod/data/pac_webaudio2_blankhtml.txt")
+
+	hook.Add("RenderScene", "pac_webaudio2", function(pos, ang)
+		webaudio.eye_pos = pos
+		webaudio.eye_ang = ang
+	end)
+
+	hook.Add("Think", "pac_webaudio2", webaudio.Update)
+end
+
+-- Audio
+function webaudio.SetVolume(vol)
+	if webaudio.volume ~= vol then
+		webaudio.volume = vol
+		run_javascript(string.format("gain.gain.value = %f", vol))
+	end
+end
 
 webaudio.streams = setmetatable({}, {__mode = "kv"})
 
@@ -553,7 +610,7 @@ do
 	DECLARE_PROPERTY("LastSourcePosition", nil)
 	DECLARE_PROPERTY("LastSourcePositionTime", nil)
 	DECLARE_PROPERTY("SourceVelocity", nil)
-	DECLARE_PROPERTY("SourceRadius", 5000)
+	DECLARE_PROPERTY("SourceRadius", 4300)
 	DECLARE_PROPERTY("ListenerOutOfRadius", false)
 
 	DECLARE_PROPERTY("Id")
@@ -572,7 +629,7 @@ do
 	DECLARE_PROPERTY("FilterFraction", 0, ".filter_fraction = %f", function(num) return math.Clamp(num, 0, 1) end)
 
 	DECLARE_PROPERTY("Echo", false, ".useEcho(%s)")
-	DECLARE_PROPERTY("EchoDelay", 1, ".setEchoDelay(Math.ceil(audio.sampleRate * %f))", function(num) return math.max(num, 0) end)
+	DECLARE_PROPERTY("EchoDelay", 1, ".setEchoDelay(Math.ceil(audio.sampleRate * %f))", function(num) return math.Clamp(num, 0, 5) end)
 	DECLARE_PROPERTY("EchoFeedback", 0.75, ".echo_feedback = %f")
 
 	-- State
@@ -628,10 +685,6 @@ do
 
 	function META:Pause()
 		self.Paused = true
-
-		self:UpdatePlaybackSpeed()
-		self:UpdateVolume()
-
 		self:Call(".play(false)")
 	end
 
@@ -699,16 +752,8 @@ do
 		local speed = self.PlaybackSpeed + self.AdditivePitchModifier
 
 		if speed < 0 then
-			if not self.reversed then
-				self:Call(".reverse = true")
-				self.reversed = true
-			end
+			self:Call(".reverse = true")
 			speed = math.abs(speed)
-		else
-			if self.reversed then
-				self:Call(".reverse = false")
-				self.reversed = false
-			end
 		end
 
 		if add then
@@ -751,10 +796,15 @@ do
 		return self
 	end
 
-	function META:UpdateSourcePosition()
-		if not self.SourceEntity:IsValid() then return end
+	local FindHeadPos = requirex("find_head_pos")
 
-		self.SourcePosition = self.SourceEntity:GetPos()
+	function META:UpdateSourcePosition()
+		if not self.SourceEntity:IsValid() then
+			self:OutOfRadius()
+			return
+		end
+
+		self.SourcePosition = FindHeadPos(self.SourceEntity)
 	end
 
 	function META:UpdateVolume()
@@ -768,8 +818,15 @@ do
 	end
 
 	function META:UpdateVolumeFlat()
-		self:SetRightVolume((math.Clamp(1 + self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
-		self:SetLeftVolume((math.Clamp(1 - self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
+		self:SetRightVolume((math.Clamp(1 + self.Panning, 0, 1)) + self.AdditiveVolumeFraction)
+		self:SetLeftVolume((math.Clamp(1 - self.Panning, 0, 1)) + self.AdditiveVolumeFraction)
+	end
+
+	function META:UpdateVolumeBoth()
+		if self.last_vol_both ~= self.Volume then
+			self:Call(".vol_both= %f", self.Volume)
+			self.last_vol_both = self.Volume
+		end
 	end
 
 	function META:SetLeftVolume(vol)
@@ -777,6 +834,7 @@ do
 			self:Call(".vol_left= %f", vol)
 			self.last_left_volume = vol
 		end
+		self:UpdateVolumeBoth()
 	end
 
 	function META:SetRightVolume(vol)
@@ -784,9 +842,16 @@ do
 			self:Call(".vol_right = %f", vol)
 			self.last_right_volume = vol
 		end
+		self:UpdateVolumeBoth()
 	end
 
 	function META:UpdateVolume3d()
+		if self.SourceEntity == LocalPlayer() and not self.SourceEntity:ShouldDrawLocalPlayer() then
+			self:UpdateVolumeFlat()
+			return
+		end
+
+
 		self:UpdateSourcePosition()
 
 		local time = RealTime()
@@ -806,8 +871,8 @@ do
 
 		if distanceToSource < self.SourceRadius then
 			local pan = relativeSourcePosition:GetNormalized():Dot(webaudio.eye_ang:Right())
-			local volumeFraction = math.Clamp(1 - distanceToSource / self.SourceRadius, 0, 1) ^ 1.5
-			volumeFraction = volumeFraction * 0.75 * self.Volume
+			local volumeFraction = math.Clamp(1 - distanceToSource / self.SourceRadius, 0, 1) ^ 6
+			volumeFraction = volumeFraction * 0.5
 
 			self:SetRightVolume((math.Clamp(1 + pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
 			self:SetLeftVolume((math.Clamp(1 - pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
@@ -817,17 +882,19 @@ do
 				local relativeSourceSpeed    = relativeSourcePosition:GetNormalized():Dot(-relativeSourceVelocity) * 0.0254
 
 				self:UpdatePlaybackSpeed(relativeSourceSpeed / webaudio.speed_of_sound)
-			else
-				self:UpdatePlaybackSpeed()
 			end
 
 			self.ListenerOutOfRadius = false
 		else
-			if not self.ListenerOutOfRadius then
-				self:SetRightVolume(0)
-				self:SetLeftVolume(0)
-				self.ListenerOutOfRadius = true
-			end
+			self:OutOfRadius()
+		end
+	end
+
+	function META:OutOfRadius()
+		if not self.ListenerOutOfRadius then
+			self:SetRightVolume(0)
+			self:SetLeftVolume(0)
+			self.ListenerOutOfRadius = true
 		end
 	end
 
@@ -897,7 +964,7 @@ do
 
 
 		if self.wants_to_play then
-			timer.Simple(0.1, function() if self:IsValid() then self:Play() end end)
+			timer.Simple(0.1, function() self:Play() end)
 			self.wants_to_play = nil
 		end
 	end
@@ -914,6 +981,8 @@ webaudio.streams = webaudio.streams or {}
 webaudio.last_stream_id = 0
 
 function webaudio.CreateStream(path)
+	webaudio.Initialize()
+
 	path = "../" .. path
 	local self = setmetatable({}, webaudio.stream_meta)
 
@@ -921,29 +990,18 @@ function webaudio.CreateStream(path)
 	self:SetId(webaudio.last_stream_id)
 	self:SetUrl(path)
 
-	self.__gcobj = newproxy()
-	local name = tostring(self)
-	debug.setmetatable(self.__gcobj, {__gc = function()
-		if self:IsValid() then
-			dprint("destroying  " .. name .. " because it has no references")
-			self:Remove()
-		end
-	end})
-
 	webaudio.streams[self:GetId()] = self
 
-	run_javascript(string.format("CreateStream(%q, %d)", self:GetUrl(), self:GetId()))
+	run_javascript(string.format("CreateStream(%q, %i)", self:GetUrl(), self:GetId()))
 
 	return self
 end
 
-function webaudio.Panic()
+function webaudio.Panic(strong)
 	for k,v in pairs(webaudio.streams) do
-		if v:IsValid() then
-			v:Remove()
-		end
+		v:Remove()
 	end
-	table.Empty(webaudio.streams)
+	webaudio.last_stream_id = 0
 end
 
 function webaudio.GetStream(streamId)
@@ -952,6 +1010,11 @@ end
 
 function webaudio.StreamExists(streamId)
 	return webaudio.streams[streamId] ~= nil
+end
+
+if me then
+	--local snd = webaudio.CreateStream("sound/vo/breencast/br_overwatch07.wav")
+	--snd:Play()
 end
 
 return webaudio
