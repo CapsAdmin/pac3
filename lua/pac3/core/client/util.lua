@@ -192,8 +192,14 @@ do --dev util
 
 		local loadingHit = false
 
-		if sv_allowcslua:GetBool() then
-			pacLocal.Message("pac_restart: sv_allowcslua is on, looking for PAC3 addon..")
+		if sv_allowcslua:GetBool() or LocalPlayer():IsSuperAdmin() then
+			if sv_allowcslua:GetBool() then
+				pacLocal.Message("pac_restart: sv_allowcslua is on, looking for PAC3 addon..")
+			end
+
+			if LocalPlayer():IsSuperAdmin() then
+				pacLocal.Message("pac_restart: LocalPlayer() is superadmin, looking for PAC3 addon..")
+			end
 
 			local _, dirs = file.Find("addons/*", "MOD")
 			for _, dir in ipairs(dirs) do
