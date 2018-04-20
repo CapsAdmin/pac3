@@ -284,7 +284,7 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 
 			local MatType = trc.MatType
 
-			if (MatType == 67 || MatType == 77) then
+			if (MatType == 67 or MatType == 77) then
 				local heatvec = Vector(0, 0, 100)
 				local cline = ((2 * (heatvec:Dot(curup)) * curup - heatvec)) * (math.abs(heatvec:Dot(curup)) / 1000)
 				finalvec = finalvec + (cline * (self.FinEfficiency / 50))
