@@ -14,12 +14,11 @@ local function ADD(PART, name, default, ...)
 		local ply = self:GetOwner(true)
 
 		if ply == pac.LocalPlayer then
-
-			ply.pac_movement = ply.pac_movement or {}
-			ply.pac_movement[name] = val
-
 			local num = GetConVarNumber("pac_free_movement")
 			if num == 1 or (num == -1 and hook.Run("PlayerNoClip", ply, true)) then
+				ply.pac_movement = ply.pac_movement or {}
+				ply.pac_movement[name] = val
+
 				net.Start("pac_modify_movement")
 					net.WriteString(name)
 					net.WriteType(val)
