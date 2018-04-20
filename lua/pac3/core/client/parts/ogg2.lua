@@ -55,7 +55,9 @@ end
 
 function PART:GetNiceName()
 	local path = self:GetPath()
-	path = path:gsub("%%(%d+)", function(b) return string.char(tonumber("0x" .. b)) end)
+	path = path:gsub("([^A-Za-z0-9_/])", function(char)
+		return ("%%%02x"):format(string.byte(char))
+	end)
 	return pac.PrettifyName(("/".. path):match(".+/(.-)%.")) or "no sound"
 end
 
