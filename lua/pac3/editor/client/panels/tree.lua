@@ -193,14 +193,23 @@ local function install_drag(node)
 	function node:OnDrop(child, ...)
 		-- we're hovering on the label, not the actual node
 		-- so get the parent node instead
-
 		if not child.part then
 			child = child:GetParent()
 		end
 
 		if child.part and child.part:IsValid() then
-			if self.part and self.part:IsValid() and self.part:GetParent() ~= child.part  then
+			if self.part and self.part:IsValid() and self.part:GetParent() ~= child.part then
 				self.part:SetParent(child.part)
+			end
+		elseif self.part and self.part:IsValid() then
+			if self.part.ClassName ~= "group" then
+				local group = pac.CreatePart("group", self.part:GetPlayerOwner())
+				group:SetEditorExpand(true)
+				self.part:SetParent(group)
+				pace.TrySelectPart()
+			else
+				self.part:SetParent()
+				pace.RefreshTree(true)
 			end
 		end
 
@@ -273,10 +282,13 @@ end
 -- a hack, because creating a new node button will mess up the layout
 function PANEL:AddNode(...)
 
-	local node = fix_folder_funcs(pace.pac_dtree.AddNode(self, ...))
+	if self.RootNode then
+		install_drag(self.RootNode)
+	end
+
+	local node = fix_folder_funcs((self.RootNode and pace.pac_dtree.AddNode or pace.pac_dtree_node.AddNode)(self, ...))
 	install_expand(node)
 	install_drag(node)
-	node.SetModel = self.SetModel
 
 	local add_button = node:Add("DImageButton")
 	add_button:SetImage(pace.MiscIcons.new)
@@ -285,29 +297,8 @@ function PANEL:AddNode(...)
 	add_button.DoClick = function() add_parts_menu(node) end
 	add_button.DoRightClick = function() node:DoRightClick() end
 	node.add_button = add_button
-
-	node.AddNode = function(...)
-		local node_ = fix_folder_funcs(pace.pac_dtree_node.AddNode(...))
-		install_expand(node_)
-		install_drag(node_)
-
-		local add_button = node_:Add("DImageButton")
-		add_button:SetImage(pace.MiscIcons.new)
-		add_button:SetSize(16, 16)
-		add_button:SetVisible(false)
-		add_button.DoClick = function() add_parts_menu(node_) end
-		add_button.DoRightClick = function() node_:DoRightClick() end
-		node_.add_button = add_button
-
-		node_.SetModel = self.SetModel
-
-		node_.AddNode = node.AddNode
-
-		node_.PerformLayout = node_layout
-
-		return node_
-	end
-
+	node.SetModel = self.SetModel
+	node.AddNode = PANEL.AddNode
 	node.PerformLayout = node_layout
 
 	return node

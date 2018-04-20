@@ -706,6 +706,10 @@ do -- parenting
 
 		self:OnUnParent(parent)
 
+		self.Parent = NULL
+		self.ParentName = ""
+		self.ParentUID = ""
+
 		self:CallRecursive("OnHide")
 	end
 end
