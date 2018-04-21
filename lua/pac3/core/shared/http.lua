@@ -40,6 +40,8 @@ function pac.HTTPGet(url, cb, failcb)
 		if id then
 			url = "https://drive.google.com/uc?export=download&id=" .. id
 		end
+	elseif url:find("gitlab.com", 1, true) then
+		url = url:gsub("^(https?://.-/.-/.-/)blob", "%1raw")
 	end
 
 	url = url:gsub([[^http%://onedrive%.live%.com/redir?]],[[https://onedrive.live.com/download?]])
