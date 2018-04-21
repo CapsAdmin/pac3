@@ -34,11 +34,10 @@ if SERVER then
 			if str == "disable" then
 				ply.pac_movement = nil
 			else
-				local def = default[str]
-				if def ~= nil then
+				if default[str] ~= nil then
 					local val = net.ReadType()
-					if type(val) == type(def) then
-						ply.pac_movement = ply.pac_movement or default
+					if type(val) == type(default[str]) then
+						ply.pac_movement = ply.pac_movement or table.Copy(default)
 						ply.pac_movement[str] = val
 					end
 				end
