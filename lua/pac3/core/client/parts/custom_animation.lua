@@ -104,7 +104,9 @@ function PART:SetURL(url)
 			end
 		end,
 		function(err)
-			Derma_Message("HTTP Request Failed for "..url,err,"OK")
+			if self:IsValid() and LocalPlayer() == self:GetPlayerOwner() and pace and pace.IsActive() then
+				Derma_Message("HTTP Request Failed for "..url,err,"OK")
+			end
 		end)
 	end
 end
