@@ -951,8 +951,8 @@ do -- base editable
 
 			pnl:Remove()
 
-			self:SetValue(pnl:GetValue() or "", true)
-			self.OnValueChanged(self:Decode(pnl:GetValue()))
+			self:SetValue(tostring(self:Encode(pnl:GetValue() or "")), true)
+			self.OnValueChanged(self:Decode(self:GetValue()))
 		end
 
 		local old = pnl.Paint
@@ -1396,12 +1396,23 @@ do -- number
 	end
 
 	function PANEL:Encode(num)
-		num = tonumber(num) or 0
+		if not tonumber(num) then
+			local ok, res = pac.CompileExpression(num)
+			if ok then
+				num = res() or 0
+			end
+		end
 
-		num = math.Round(num, 3)
+		num = tonumber(num) or 0
 
 		if input.IsKeyDown(KEY_LCONTROL) then
 			num = math.Round(num)
+		end
+
+		if input.IsKeyDown(KEY_LALT) then
+			num = math.Round(num, 5)
+		else
+			num = math.Round(num, 3)
 		end
 
 		return num
