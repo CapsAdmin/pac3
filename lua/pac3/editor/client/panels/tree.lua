@@ -110,30 +110,35 @@ do
 			end
 		end
 
-		if pnl:IsValid() then
-			local pnl = pnl:GetParent()
-
-			if pnl and pnl.part and pnl.part:IsValid() then
-				pace.Call("HoverPart", pnl.part)
-			end
-		end
-
 		for key, part in pairs(pac.GetLocalParts()) do
 
-			if part.event_triggered ~= nil then
-				local node = part.editor_node
-				if node and node:IsValid() then
+			local node = part.editor_node
+
+			if node and node:IsValid() then
+				if node.add_button then
+					node.add_button:SetVisible(false)
+				end
+
+				if part.event_triggered ~= nil then
 					if part.event_triggered then
 						node.Icon:SetImage("icon16/clock_red.png")
 					else
 						node.Icon:SetImage(part.Icon)
 					end
 				end
-			end
-			if part.ClassName == "proxy" and part.Name == "" then
-				local node = part.editor_node
-				if node and node:IsValid() then
+				if part.ClassName == "proxy" and part.Name == "" then
 					node:SetText(part:GetName())
+				end
+			end
+		end
+
+		if pnl:IsValid() then
+			local pnl = pnl:GetParent()
+
+			if pnl and pnl.part and pnl.part:IsValid() then
+				pace.Call("HoverPart", pnl.part)
+				if pnl.add_button then
+					pnl.add_button:SetVisible(true)
 				end
 			end
 		end
@@ -365,12 +370,6 @@ function PANEL:PopulateParts(node, parts, children)
 				--part_node.add_button:SetVisible(true)
 
 				return true
-			end
-
-			part_node.OnSelected = function(_, b)
-				if part_node.add_button then
-					part_node.add_button:SetVisible(b)
-				end
 			end
 
 			part_node.DoRightClick = function()
