@@ -51,27 +51,51 @@ function pace.ClearParts()
 	end)
 end
 
-function pace.OnCreatePart(class_name, name, mdl)
-	if class_name ~= "group" and not next(pac.GetLocalParts()) then
-		pace.Call("CreatePart", "group")
-	end
+function pace.OnCreatePart(class_name, name, mdl, no_parent)
+	local part
+	local parent = NULL
 
-	local part = pac.CreatePart(class_name)
+	if no_parent then
+		if class_name ~= "group" then
+			local group
+			local parts = pac.GetLocalParts()
+			if table.Count(parts) == 1 then
+				local test = select(2, next(parts))
+				if test.ClassName == "group" then
+					group = test
+				end
+			else
+				group = pac.CreatePart("group")
+			end
+			part = pac.CreatePart(class_name)
+			part:SetParent(group)
+			parent = group
+		else
+			part = pac.CreatePart(class_name)
+		end
+	else
+		if class_name ~= "group" and not next(pac.GetLocalParts()) then
+			pace.Call("CreatePart", "group")
+		end
 
-	if name then part:SetName(name) end
+		part = pac.CreatePart(class_name)
 
-	local parent = pace.current_part
+		parent = pace.current_part
 
-	if parent:IsValid() then
-		part:SetParent(parent)
-	elseif class_name ~= "group" then
-		for _, parent in pairs(pac.GetLocalParts()) do
-			if parent.ClassName == "group" then
-				part:SetParent(parent)
-				break
+		if parent:IsValid() then
+			part:SetParent(parent)
+		elseif class_name ~= "group" then
+			for _, v in pairs(pac.GetLocalParts()) do
+				if v.ClassName == "group" then
+					part:SetParent(v)
+					parent = v
+					break
+				end
 			end
 		end
 	end
+
+	if name then part:SetName(name) end
 
 	if part.SetModel then
 		if mdl then
@@ -252,7 +276,7 @@ function pace.GetRegisteredParts()
 end
 
 do -- menu
-	function pace.AddRegisteredPartsToMenu(menu)
+	function pace.AddRegisteredPartsToMenu(menu, parent)
 		local partsToShow = {}
 		local clicked = false
 
@@ -279,7 +303,7 @@ do -- menu
 
 		local function add_part(menu, part)
 			local newMenuEntry = menu:AddOption(L(part.FriendlyName or part.ClassName:Replace('_', ' ')), function()
-				pace.AddUndoPartCreation(pace.Call("CreatePart", part.ClassName))
+				pace.AddUndoPartCreation(pace.Call("CreatePart", part.ClassName, nil, nil, parent))
 				trap = true
 			end)
 
@@ -334,7 +358,7 @@ do -- menu
 			for group, groupData in pairs(sortedTree) do
 				local sub, pnl = menu:AddSubMenu(groupData.name, function()
 					if groupData.hasPart then
-						pace.AddUndoPartCreation(pace.Call("CreatePart", group))
+						pace.AddUndoPartCreation(pace.Call("CreatePart", group, nil, nil, parent))
 					end
 				end)
 
@@ -379,7 +403,7 @@ do -- menu
 
 			for class_name, part in pairs(partsToShow) do
 				local newMenuEntry = menu:AddOption(L((part.FriendlyName or part.ClassName):Replace('_', ' ')), function()
-					pace.AddUndoPartCreation(pace.Call("CreatePart", class_name))
+					pace.AddUndoPartCreation(pace.Call("CreatePart", class_name, nil, nil, parent))
 				end)
 
 				if part.Icon then
@@ -485,78 +509,85 @@ do -- menu
 		local menu = DermaMenu()
 		menu:SetPos(gui.MousePos())
 
-		if not obj:HasParent() then
-			menu:AddOption(L"wear", function()
-				pace.SendPartToServer(obj)
-			end):SetImage(pace.MiscIcons.wear)
+		if obj then
+			if not obj:HasParent() then
+				menu:AddOption(L"wear", function()
+					pace.SendPartToServer(obj)
+				end):SetImage(pace.MiscIcons.wear)
+			end
+
+			menu:AddOption(L"copy", function()
+				pace.Clipboard = obj
+			end):SetImage(pace.MiscIcons.copy)
+
+			menu:AddOption(L"paste", function()
+				if pace.Clipboard then
+					local newObj = pace.Clipboard:Clone()
+					newObj:Attach(obj)
+					pace.AddUndoPartCreation(newObj)
+				end
+			end):SetImage(pace.MiscIcons.paste)
+
+			menu:AddOption(L"cut", function()
+				pace.Clipboard = obj
+				obj:DeattachFull()
+				pace.AddUndoPartRemoval(obj)
+			end):SetImage('icon16/cut.png')
+
+			-- needs proper undo
+			menu:AddOption(L"paste properties", function()
+				if pace.Clipboard then
+					local tbl = pace.Clipboard:ToTable()
+						tbl.self.Name = nil
+						tbl.self.ParentName = nil
+						tbl.self.Parent = nil
+						tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. tostring(tbl))
+
+						tbl.children = {}
+					obj:SetTable(tbl)
+				end
+				--pace.Clipboard = nil
+			end):SetImage(pace.MiscIcons.replace)
+
+			menu:AddOption(L"clone", function()
+				local part_ = obj:Clone()
+				pace.AddUndoPartCreation(part_)
+			end):SetImage(pace.MiscIcons.clone)
+
+			menu:AddSpacer()
 		end
 
-		menu:AddOption(L"copy", function()
-			pace.Clipboard = obj
-		end):SetImage(pace.MiscIcons.copy)
-
-		menu:AddOption(L"paste", function()
-			if pace.Clipboard then
-				local newObj = pace.Clipboard:Clone()
-				newObj:Attach(obj)
-				pace.AddUndoPartCreation(newObj)
-			end
-		end):SetImage(pace.MiscIcons.paste)
-
-		menu:AddOption(L"cut", function()
-			pace.Clipboard = obj
-			obj:DeattachFull()
-			pace.AddUndoPartRemoval(obj)
-		end):SetImage('icon16/cut.png')
-
-		-- needs proper undo
-		menu:AddOption(L"paste properties", function()
-			if pace.Clipboard then
-				local tbl = pace.Clipboard:ToTable()
-					tbl.self.Name = nil
-					tbl.self.ParentName = nil
-					tbl.self.Parent = nil
-					tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. tostring(tbl))
-
-					tbl.children = {}
-				obj:SetTable(tbl)
-			end
-			--pace.Clipboard = nil
-		end):SetImage(pace.MiscIcons.replace)
-
-		menu:AddOption(L"clone", function()
-			local part_ = obj:Clone()
-			pace.AddUndoPartCreation(part_)
-		end):SetImage(pace.MiscIcons.clone)
+		pace.AddRegisteredPartsToMenu(menu, not obj)
 
 		menu:AddSpacer()
 
-		pace.AddRegisteredPartsToMenu(menu)
-
-		menu:AddSpacer()
-
-		local save, pnl = menu:AddSubMenu(L"save", function() pace.SaveParts() end)
-		pnl:SetImage(pace.MiscIcons.save)
-		add_expensive_submenu_load(pnl, function() pace.AddSaveMenuToMenu(save, obj) end)
+		if obj then
+			local save, pnl = menu:AddSubMenu(L"save", function() pace.SaveParts() end)
+			pnl:SetImage(pace.MiscIcons.save)
+			add_expensive_submenu_load(pnl, function() pace.AddSaveMenuToMenu(save, obj) end)
+		end
 
 		local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
 		add_expensive_submenu_load(pnl, function() pace.AddSavedPartsToMenu(load, false, obj) end)
 
 		pnl:SetImage(pace.MiscIcons.load)
 
-		menu:AddSpacer()
+		if obj then
 
-		menu:AddOption(L"remove", function()
-			-- obj:Remove()
-			pace.AddUndoPartRemoval(obj)
-			obj:DeattachFull()
+			menu:AddSpacer()
 
-			pace.RefreshTree()
+			menu:AddOption(L"remove", function()
+				-- obj:Remove()
+				pace.AddUndoPartRemoval(obj)
+				obj:DeattachFull()
 
-			if not obj:HasParent() and obj.ClassName == "group" then
-				pace.RemovePartOnServer(obj:GetUniqueID(), false, true)
-			end
-		end):SetImage(pace.MiscIcons.clear)
+				pace.RefreshTree()
+
+				if not obj:HasParent() and obj.ClassName == "group" then
+					pace.RemovePartOnServer(obj:GetUniqueID(), false, true)
+				end
+			end):SetImage(pace.MiscIcons.clear)
+		end
 
 		menu:Open()
 		menu:MakePopup()

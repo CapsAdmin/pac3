@@ -150,8 +150,8 @@ do
 end
 
 function PANEL:OnMouseReleased(mc)
-	if mc == MOUSE_RIGHT and pace.current_part then
-		pace.Call("PartMenu", pace.current_part)
+	if mc == MOUSE_RIGHT then
+		pace.Call("PartMenu")
 	end
 end
 
