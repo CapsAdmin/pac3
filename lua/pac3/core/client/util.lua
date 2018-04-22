@@ -654,6 +654,12 @@ do -- get set and editor vars
 			for _, func in pairs(self.PartNameResolvers) do
 				func(self, force)
 			end
+
+			if self.BaseClass and self.BaseClass.PartNameResolvers then
+				for _, func in pairs(self.BaseClass.PartNameResolvers) do
+					func(self, force)
+				end
+			end
 		end
 
 		PART["Resolve" .. name_key] = function(self, force)
