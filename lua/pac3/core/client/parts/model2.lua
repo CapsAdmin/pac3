@@ -292,7 +292,9 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 	if self.EyeTarget.cached_pos then
 		if self.ClassName == "model2" then
 			local attachment = ent:GetAttachment( ent:LookupAttachment( "eyes" ) )
-			ent:SetEyeTarget(WorldToLocal( self.EyeTarget.cached_pos, self.EyeTarget.cached_ang, attachment.Pos, attachment.Ang ))
+			if attachment then
+				ent:SetEyeTarget(WorldToLocal( self.EyeTarget.cached_pos, self.EyeTarget.cached_ang, attachment.Pos, attachment.Ang ))
+			end
 		else
 			ent:SetEyeTarget(self.EyeTarget.cached_pos)
 		end
