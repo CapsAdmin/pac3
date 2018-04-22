@@ -36,7 +36,11 @@ function pac.HTTPGet(url, cb, failcb)
 		url = url:gsub([[^https?://www.dropbox.com/s/(.+)%?dl%=[01]$]], [[https://dl.dropboxusercontent.com/s/%1]])
 		url = url:gsub([[^https?://www.dropbox.com/s/(.+)$]], [[https://dl.dropboxusercontent.com/s/%1]])
 	elseif url:find("drive.google.com", 1, true) and not url:find("export=download", 1, true) then
-		local id = url:match("https://drive.google.com/file/d/(.-)/") or url:match("https://drive.google.com/file/d/(.-)$")
+		local id =
+			url:match("https://drive.google.com/file/d/(.-)/") or
+			url:match("https://drive.google.com/file/d/(.-)$") or
+			url:match("https://drive.google.com/open%?id=(.-)$")
+
 		if id then
 			url = "https://drive.google.com/uc?export=download&id=" .. id
 		end
