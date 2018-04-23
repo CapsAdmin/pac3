@@ -272,6 +272,14 @@ function timeline.Open(part)
 				data.BoneInfo = data.BoneInfo or {}
 				data.BoneInfo[timeline.selected_bone] = data.BoneInfo[timeline.selected_bone] or {}
 
+				data.BoneInfo[timeline.selected_bone].MF = data.BoneInfo[timeline.selected_bone].MF or 0
+				data.BoneInfo[timeline.selected_bone].MR = data.BoneInfo[timeline.selected_bone].MR or 0
+				data.BoneInfo[timeline.selected_bone].MU = data.BoneInfo[timeline.selected_bone].MU or 0
+
+				data.BoneInfo[timeline.selected_bone].RR = data.BoneInfo[timeline.selected_bone].RR or 0
+				data.BoneInfo[timeline.selected_bone].RU = data.BoneInfo[timeline.selected_bone].RU or 0
+				data.BoneInfo[timeline.selected_bone].RF = data.BoneInfo[timeline.selected_bone].RF or 0
+
 				if key == "Position" then
 					data.BoneInfo[timeline.selected_bone].MF = val.x
 					data.BoneInfo[timeline.selected_bone].MR = -val.y
