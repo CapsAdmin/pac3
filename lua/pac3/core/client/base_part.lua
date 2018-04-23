@@ -149,6 +149,10 @@ end
 function PART:GetName()
 	if self.Name == "" then
 
+		if self.last_nice_name_frame and self.last_nice_name_frame == FrameNumber() then
+			return self.last_nice_name
+		end
+
 		local nice = self:GetNiceName()
 		local num
 		local count = 0
@@ -169,8 +173,8 @@ function PART:GetName()
 			nice = nice:Trim() .. " (" .. num - 1 .. ")"
 		end
 
-
 		self.last_nice_name = nice
+		self.last_nice_name_frame = FrameNumber()
 
 		return nice
 	end

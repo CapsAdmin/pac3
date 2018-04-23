@@ -242,8 +242,11 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 	function PART:GetNiceName()
 		local path = self:Getbasetexture()
-		path = path:gsub("([^A-Za-z0-9_/])", function(char)
-			return ("%%%02x"):format(string.byte(char))
+		path = path:gsub("%%(..)", function(char)
+			local num = tonumber("0x" .. char)
+			if num then
+				return string.char(num)
+			end
 		end)
 		local name = ("/".. path):match(".+/(.-)%.") or ("/".. path):match(".+/(.+)")
 		return pac.PrettifyName(name) or "?"

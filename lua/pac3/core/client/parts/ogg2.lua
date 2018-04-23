@@ -54,11 +54,22 @@ function PART:Initialize()
 end
 
 function PART:GetNiceName()
-	local path = self:GetPath()
-	path = path:gsub("([^A-Za-z0-9_/])", function(char)
-		return ("%%%02x"):format(string.byte(char))
-	end)
-	return pac.PrettifyName(("/".. path):match(".+/(.-)%.")) or "no sound"
+	local path = self:GetPath() .. ";"
+	local tbl = {}
+	for i, path in ipairs(path:Split(";")) do
+		if path ~= "" then
+			if path:StartWith("http") then
+				path = path:gsub("%%(..)", function(char)
+					local num = tonumber("0x" .. char)
+					if num then
+						return string.char(num)
+					end
+				end)
+			end
+			tbl[i] = pac.PrettifyName(("/".. path):match(".+/(.-)%.") or path:match("(.-)%.")) or "sound"
+		end
+	end
+	return table.concat(tbl, ";")
 end
 
 PART.stream_vars = {}
