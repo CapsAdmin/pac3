@@ -155,7 +155,7 @@ function PART:GetName()
 
 		if self:HasParent() then
 			for _, val in ipairs(self:GetParent():GetChildren()) do
-				if val:GetNiceName() == self:GetNiceName() then
+				if val:GetNiceName() == nice then
 					count = count + 1
 
 					if val == self then
