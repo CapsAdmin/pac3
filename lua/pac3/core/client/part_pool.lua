@@ -412,15 +412,21 @@ pac.AddHook("PlayerSpawned", "change_owner", function(ply)
 end)
 
 pac.AddHook("EntityRemoved", "change_owner", function(ent)
-	if IsActuallyValid(ent) and (not ent:IsPlayer() or IsActuallyPlayer(ent)) then
+	if IsActuallyValid(ent) then
 		local owner = ent:GetOwner()
 
-		if IsActuallyValid(owner) and (not owner:IsPlayer() or IsActuallyPlayer(owner))  then
+		if IsActuallyPlayer(owner) then
 			for _, part in pairs(parts_from_ent(owner)) do
+				if not part:HasParent() then
+					part:CheckOwner(ent, true)
+				end
+			end
+		end
+
+		if IsActuallyPlayer(ent) then
+			for _, part in pairs(parts_from_ent(ent)) do
 				if part.dupe_remove then
 					part:Remove()
-				elseif not part:HasParent() then
-					part:CheckOwner(ent, true)
 				end
 			end
 		end
