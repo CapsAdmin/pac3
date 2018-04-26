@@ -3,7 +3,7 @@ local urlobj = pac.urlobj
 
 urlobj.DataCache  = pac.CreateCache("objcache")
 
-concommand.Add('pac_clear_objs', function()
+concommand.Add("pac_urlobj_clear_disk", function()
 	urlobj.DataCache:Clear()
 	pac.Message('Disk cache cleared')
 end, nil, 'Clears obj file cache on disk')
