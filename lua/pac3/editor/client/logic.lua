@@ -68,8 +68,8 @@ local pac_onuse_only = CreateClientConVar('pac_onuse_only', '0', true, false, 'E
 local MAX_DIST = 270
 
 local function PlayerBindPress(ply, bind, isPressed)
-	if isPressed then return end
-	if bind ~= "use" then return end
+	if bind ~= "use" and bind ~= "+use" then return end
+	if bind ~= "+use" and isPressed then return end
 	if not pac_onuse_only:GetBool() then return end
 	local eyes, aim = ply:EyePos(), ply:GetAimVector()
 
