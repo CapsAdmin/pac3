@@ -178,6 +178,20 @@ do
 
 	cvars.AddChangeCallback("pac_onuse_only", pace.OnUseOnlyUpdates, "PAC3")
 
+	concommand.Add("pac_onuse_reset", function()
+		for i, ent in ipairs(ents.GetAll()) do
+			if ent.pac_onuse_only then
+				ent.pac_onuse_only_check = true
+
+				if pac_onuse_only:GetBool() then
+					pac.ToggleIgnoreEntity(ent, ent.pac_onuse_only_check, 'pac_onuse_only')
+				else
+					pac.ToggleIgnoreEntity(ent, false, 'pac_onuse_only')
+				end
+			end
+		end
+	end)
+
 	timer.Create('pac3_transmissions_ttl', 10, 0, function()
 		local time = RealTime()
 
