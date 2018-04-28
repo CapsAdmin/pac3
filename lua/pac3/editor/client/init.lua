@@ -155,11 +155,18 @@ end
 
 function pace.Panic()
 	pace.CloseEditor()
+
 	for key, pnl in pairs(pace.ActivePanels) do
 		if pnl:IsValid() then
 			pnl:Remove()
 			table.remove(pace.ActivePanels, key)
 		end
+	end
+
+	for i, ent in ipairs(ents.GetAll()) do
+		ent.pac_onuse_only = nil
+		ent.pac_onuse_only_check = nil
+		hook.Remove('pace_OnUseOnlyUpdates', ent)
 	end
 end
 

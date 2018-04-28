@@ -72,6 +72,13 @@ do --dev util
 	function pac.Panic()
 		pac.RemoveAllParts()
 		pac.RemoveAllPACEntities()
+
+		for i, ent in ipairs(ents.GetAll()) do
+			ent.pac_ignored = nil
+			ent.pac_ignored_data = nil
+			ent.pac_drawing = nil
+			ent.pac_shouldnotdraw = nil
+		end
 	end
 
 	pac.convarcache = {}
