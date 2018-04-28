@@ -928,6 +928,7 @@ do -- ignore
 
 	function pac.IgnoreEntity(ent, strID)
 		strID = strID or 'generic'
+		if ent.pac_ignored_data and ent.pac_ignored_data[strID] then return end
 		ent.pac_ignored = ent.pac_ignored or false
 		ent.pac_ignored_data = ent.pac_ignored_data or {}
 		ent.pac_ignored_data[strID] = true
@@ -943,6 +944,7 @@ do -- ignore
 
 	function pac.UnIgnoreEntity(ent, strID)
 		strID = strID or 'generic'
+		if ent.pac_ignored_data and ent.pac_ignored_data[strID] == nil then return end
 		ent.pac_ignored = ent.pac_ignored or false
 		ent.pac_ignored_data = ent.pac_ignored_data or {}
 		ent.pac_ignored_data[strID] = nil

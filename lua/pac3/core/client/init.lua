@@ -150,9 +150,9 @@ do
 		end
 	end
 
-	cvars.AddChangeCallback("pac_friendonly", pac.FriendOnlyUpdate)
-	cvars.AddChangeCallback("pac_use_whitelist", pac.UseWhitelistUpdates)
-	cvars.AddChangeCallback("pac_use_whitelist_b", pac.UseWhitelistUpdates)
+	cvars.AddChangeCallback("pac_friendonly", pac.FriendOnlyUpdate, "PAC3")
+	cvars.AddChangeCallback("pac_use_whitelist", pac.UseWhitelistUpdates, "PAC3")
+	cvars.AddChangeCallback("pac_use_whitelist_b", pac.UseWhitelistUpdates, "PAC3")
 
 	pac.AddHook("NetworkEntityCreated", "friendonly", function(ply)
 		if not IsValid(ply) or not ply:IsPlayer() then return end

@@ -168,7 +168,14 @@ do -- from server
 end
 
 do
+	local pac_onuse_only = CreateClientConVar('pac_onuse_only', '0', true, false, 'Enable "on +use only" mode. Within this mode, outfits are not being actually "loaded" until you hover over player and press your use button')
 	local transmissions = {}
+
+	function pace.OnUseOnlyUpdates(cvar, ...)
+		hook.Call('pace_OnUseOnlyUpdates', nil, ...)
+	end
+
+	cvars.AddChangeCallback("pac_onuse_only", pace.OnUseOnlyUpdates, "PAC3")
 
 	timer.Create('pac3_transmissions_ttl', 10, 0, function()
 		local time = RealTime()
@@ -194,6 +201,30 @@ do
 	end
 
 	function pace.HandleReceivedData(data)
+		if data.owner ~= LocalPlayer() then
+			if not data.owner.pac_onuse_only then
+				data.owner.pac_onuse_only = true
+				-- if TRUE - hide outfit
+				data.owner.pac_onuse_only_check = true
+
+				if pac_onuse_only:GetBool() then
+					pac.ToggleIgnoreEntity(data.owner, data.owner.pac_onuse_only_check, 'pac_onuse_only')
+				else
+					pac.ToggleIgnoreEntity(data.owner, false, 'pac_onuse_only')
+				end
+			end
+
+			-- behaviour of this (if one of entities on this hook becomes invalid)
+			-- is undefined if DLib is not installed, but anyway
+			hook.Add('pace_OnUseOnlyUpdates', data.owner, function()
+				if pac_onuse_only:GetBool() then
+					pac.ToggleIgnoreEntity(data.owner, data.owner.pac_onuse_only_check, 'pac_onuse_only')
+				else
+					pac.ToggleIgnoreEntity(data.owner, false, 'pac_onuse_only')
+				end
+			end)
+		end
+
 		local validTransmission = type(data.partID) == 'number' and
 			type(data.totalParts) == 'number' and
 			type(data.transmissionID) == 'number'
