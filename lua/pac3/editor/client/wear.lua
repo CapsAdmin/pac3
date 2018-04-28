@@ -249,6 +249,10 @@ net.Receive("pac_submit", function()
 		return
 	end
 
+	if pac.IsEntityIgnored(data.owner) then
+		return
+	end
+
 	pace.HandleReceivedData(data)
 end)
 
