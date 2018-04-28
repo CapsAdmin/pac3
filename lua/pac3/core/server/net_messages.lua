@@ -1,4 +1,9 @@
+
 util.AddNetworkString("pac.TogglePartDrawing")
+util.AddNetworkString("pac.BloodColor")
+util.AddNetworkString("pac.AllowPlayerButtons")
+util.AddNetworkString("pac.BroadcastPlayerButton")
+
 function pac.TogglePartDrawing(ent, b, who) --serverside interface to clientside function of the same name
 	net.Start("pac.TogglePartDrawing")
 	net.WriteEntity(ent)
@@ -10,20 +15,8 @@ function pac.TogglePartDrawing(ent, b, who) --serverside interface to clientside
 	end
 end
 
-util.AddNetworkString("pac.TouchFlexes.ClientNotify")
-net.Receive( "pac.TouchFlexes.ClientNotify", function( length, client )
-	local index = net.ReadInt(13)
-	local ent = Entity(index)
-	if ent and ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() > 0 then
-		local target = ent:GetFlexWeight(1) or 0
-		ent:SetFlexWeight(1,target)
-	end
-end )
-
-
 do -- Blood Color
 	local pac_allow_blood_color = GetConVar("pac_allow_blood_color")
-	util.AddNetworkString("pac.BloodColor")
 
 	local allowed = {
 		dont_bleed = _G.DONT_BLEED,
@@ -63,7 +56,6 @@ do -- Blood Color
 end
 
 do -- button event
-	util.AddNetworkString("pac.AllowPlayerButtons")
 	net.Receive("pac.AllowPlayerButtons", function(length, client)
 		local key = net.ReadUInt(8)
 
@@ -71,7 +63,6 @@ do -- button event
 		client.pac_broadcast_buttons[key] = true
 	end)
 
-	util.AddNetworkString("pac.BroadcastPlayerButton")
 	local function broadcast_key(ply, key, down)
 		if ply.pac_broadcast_buttons and ply.pac_broadcast_buttons[key] then
 			net.Start("pac.BroadcastPlayerButton")

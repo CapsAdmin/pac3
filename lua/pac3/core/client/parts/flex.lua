@@ -76,7 +76,6 @@ function PART:OnShow()
 	local ent = self:GetOwner(self.RootOwner)
 
 	if ent:IsValid() then
-		pac.TouchFlexes(ent)
 		self:UpdateFlex()
 	end
 end

@@ -164,14 +164,6 @@ net.Receive("pac.TogglePartDrawing", function()
 	end
 end )
 
-function pac.TouchFlexes(ent)
-	local index = ent:EntIndex()
-	if index == -1 then return end
-	net.Start("pac.TouchFlexes.ClientNotify")
-	net.WriteInt(index,13)
-	net.SendToServer()
-end
-
 timer.Simple(0.1, function()
 	hook.Run("pac_Initialized")
 end)
