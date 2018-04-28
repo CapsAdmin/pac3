@@ -118,23 +118,28 @@ do -- from server
 			part:Remove()
 		end
 
+		local dupeEnt
+
 		-- safe guard
 		if data.is_dupe then
 			local id = tonumber(part_data.self.OwnerName)
-			if id and not Entity(id):IsValid() then
+			dupeEnt = Entity(id or -1)
+			if dupeEnt:IsValid() then
 				return
 			end
 		end
 
-		local part = pac.CreatePart(part_data.self.ClassName, owner)
-		part:SetIsBeingWorn(true)
-		part:SetTable(part_data)
-
-		if data.is_dupe then
-			part.dupe_remove = true
-		end
-
 		return function()
+			if dupeEnt and not dupeEnt:IsValid() then return end
+
+			local part = pac.CreatePart(part_data.self.ClassName, owner)
+			part:SetIsBeingWorn(true)
+			part:SetTable(part_data)
+
+			if data.is_dupe then
+				part.dupe_remove = true
+			end
+
 			part:CallRecursive('SetIsBeingWorn', false)
 
 			if owner == pac.LocalPlayer then
@@ -197,7 +202,7 @@ do
 			local func = defaultHandler(data)
 
 			if type(func) == 'function' then
-				func()
+				pac.EntityIgnoreBound(data.owner, func)
 			end
 		else
 			local trData = transmissions[data.transmissionID]
@@ -232,7 +237,7 @@ do
 				end
 
 				for i, func in ipairs(funcs) do
-					func()
+					pac.EntityIgnoreBound(data.owner, func)
 				end
 
 				transmissions[data.transmissionID or transmissionID] = nil
@@ -246,10 +251,6 @@ net.Receive("pac_submit", function()
 
 	if type(data.owner) ~= "Player" or not data.owner:IsValid() then
 		pac.Message("received message from server but owner is not valid!? typeof " .. type(data.owner) .. ' || ', data.owner)
-		return
-	end
-
-	if pac.IsEntityIgnored(data.owner) then
 		return
 	end
 

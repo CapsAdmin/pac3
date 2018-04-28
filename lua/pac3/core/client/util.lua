@@ -917,6 +917,15 @@ do -- ignore
 		return ent.pac_ignored_data and ent.pac_ignored_data[strID] and table.Count(ent.pac_ignored_data) == 1 or false
 	end
 
+	function pac.EntityIgnoreBound(ent, callback)
+		if not pac.IsEntityIgnored(ent) then
+			return callback(ent)
+		end
+
+		ent.pac_ignored_callbacks = ent.pac_ignored_callbacks or {}
+		table.insert(ent.pac_ignored_callbacks, callback)
+	end
+
 	function pac.IgnoreEntity(ent, strID)
 		strID = strID or 'generic'
 		ent.pac_ignored = ent.pac_ignored or false
@@ -948,6 +957,17 @@ do -- ignore
 
 		if newStatus ~= ent.pac_ignored then
 			ent.pac_ignored = newStatus
+
+			if not newStatus and ent.pac_ignored_callbacks then
+				for i, callback in ipairs(ent.pac_ignored_callbacks) do
+					ProtectedCall(function()
+						callback(ent)
+					end)
+				end
+
+				ent.pac_ignored_callbacks = nil
+			end
+
 			pac.TogglePartDrawing(ent, not newStatus)
 		end
 
