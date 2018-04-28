@@ -926,6 +926,10 @@ do -- ignore
 		table.insert(ent.pac_ignored_callbacks, callback)
 	end
 
+	function pac.CleanupEntityIgnoreBound(ent)
+		ent.pac_ignored_callbacks = nil
+	end
+
 	function pac.IgnoreEntity(ent, strID)
 		strID = strID or 'generic'
 		if ent.pac_ignored_data and ent.pac_ignored_data[strID] then return end

@@ -157,6 +157,7 @@ do -- from server
 			pac.RemovePartsFromUniqueID(data.player_uid)
 
 			pace.CallHook("RemoveOutfit", owner)
+			pac.CleanupEntityIgnoreBound(owner)
 		else
 			local part = pac.GetPartFromUniqueID(data.player_uid, part_name)
 
