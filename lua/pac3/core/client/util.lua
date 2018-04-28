@@ -909,6 +909,10 @@ do -- ignore
 		return ent.pac_ignored or false
 	end
 
+	function pac.IsEntityIgnoredBy(ent, strID)
+		return ent.pac_ignored_data and ent.pac_ignored_data[strID] or false
+	end
+
 	function pac.IgnoreEntity(ent, strID)
 		strID = strID or 'generic'
 		ent.pac_ignored = ent.pac_ignored or false
