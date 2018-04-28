@@ -342,23 +342,28 @@ timer.Create("pac_submit_spam", 3, 0, function()
 	end
 end)
 
+local pac_submit_spam = CreateConVar('pac_submit_spam', '1', {FCVAR_NOTIFY, FCVAR_ARCHIVE}, 'Prevent users from spamming pac_submit')
+local pac_submit_limit = CreateConVar('pac_submit_limit', '30', {FCVAR_NOTIFY, FCVAR_ARCHIVE}, 'pac_submit spam limit')
+
 pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
 	if pac.CallHook("CanWearParts", ply) == false then
 		return
 	end
 
-	-- data is too short, not even 8 bytes
-	if len < 64 then return end
+	if pac_submit_spam:GetBool() then
+		-- data is too short, not even 8 bytes
+		if len < 64 then return end
 
-	ply.pac_submit_spam = ply.pac_submit_spam + 1
+		ply.pac_submit_spam = ply.pac_submit_spam + 1
 
-	if ply.pac_submit_spam >= 20 then
-		if not ply.pac_submit_spam_msg then
-			pac.Message("Player ", ply, " is spamming pac_submit!")
-			ply.pac_submit_spam_msg = true
+		if ply.pac_submit_spam >= pac_submit_limit:GetInt() then
+			if not ply.pac_submit_spam_msg then
+				pac.Message("Player ", ply, " is spamming pac_submit!")
+				ply.pac_submit_spam_msg = true
+			end
+
+			return
 		end
-
-		return
 	end
 
 	local data = pace.net.DeserializeTable()
