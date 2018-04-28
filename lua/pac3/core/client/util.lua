@@ -913,6 +913,10 @@ do -- ignore
 		return ent.pac_ignored_data and ent.pac_ignored_data[strID] or false
 	end
 
+	function pac.IsEntityIgnoredOnlyBy(ent, strID)
+		return ent.pac_ignored_data and ent.pac_ignored_data[strID] and table.Count(ent.pac_ignored_data) == 1 or false
+	end
+
 	function pac.IgnoreEntity(ent, strID)
 		strID = strID or 'generic'
 		ent.pac_ignored = ent.pac_ignored or false
@@ -932,7 +936,7 @@ do -- ignore
 		strID = strID or 'generic'
 		ent.pac_ignored = ent.pac_ignored or false
 		ent.pac_ignored_data = ent.pac_ignored_data or {}
-		ent.pac_ignored_data[strID] = false
+		ent.pac_ignored_data[strID] = nil
 		local newStatus = false
 
 		for _, v in pairs(ent.pac_ignored_data) do
