@@ -311,15 +311,24 @@ do
 		end
 	end)
 
-	timer.Create("pac_in_editor", 0.25, 0, function()
-		if not pace.current_part:IsValid() then return end
+	do
+		local lastViewPos, lastViewAngle, lastTargetPos
 
-		net.Start("pac_in_editor_posang", true)
-			net.WriteVector(pace.GetViewPos())
-			net.WriteAngle(pace.GetViewAngles())
-			net.WriteVector((pace.mctrl.GetTargetPos()) or pace.current_part:GetDrawPosition() or vector_origin)
-		net.SendToServer()
-	end)
+		timer.Create("pac_in_editor", 0.25, 0, function()
+			if not pace.current_part:IsValid() then return end
+			local pos, ang = pace.GetViewPos(), pace.GetViewAngles()
+			local target_pos = (pace.mctrl.GetTargetPos()) or pace.current_part:GetDrawPosition() or vector_origin
+
+			if lastViewPos == pos and lastViewAngle == ang and lastTargetPos == target_pos then return end
+			lastViewPos, lastViewAngle, lastTargetPos = pos, ang, target_pos
+
+			net.Start("pac_in_editor_posang", true)
+				net.WriteVector(pos)
+				net.WriteAngle(ang)
+				net.WriteVector(target_pos)
+			net.SendToServer()
+		end)
+	end
 
 	net.Receive("pac_in_editor_posang", function()
 		local ply = net.ReadEntity()
