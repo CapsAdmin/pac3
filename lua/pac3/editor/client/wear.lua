@@ -124,7 +124,7 @@ do -- from server
 		if data.is_dupe then
 			local id = tonumber(part_data.self.OwnerName)
 			dupeEnt = Entity(id or -1)
-			if dupeEnt:IsValid() then
+			if not dupeEnt:IsValid() then
 				return
 			end
 		end
