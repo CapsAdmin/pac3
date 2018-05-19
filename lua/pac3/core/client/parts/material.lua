@@ -416,7 +416,9 @@ function PART:OnParent(parent)
 end
 
 function PART:UpdateMaterial(now)
+	if not self:GetPlayerOwner():IsValid() then return end
 	self:GetMaterialFromParent()
+
 	for key, val in pairs(self.StorableVars) do
 		if self.ShaderParams[key] or self.TransformVars[key] then
 			self["Set" .. key](self, self["Get"..key](self))
@@ -434,6 +436,7 @@ end
 
 function PART:OnEvent(event, ...)
 	if self.suppress_event then return end
+
 	if event == "material_changed" then
 		self:UpdateMaterial()
 	end
