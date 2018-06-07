@@ -275,7 +275,7 @@ end
 
 pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part)
 
-	local holo_str =
+	local ref_str =
 	[[
 
 		  # HOLO_NAME #
@@ -293,25 +293,25 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 
 Scale = 1
 Base = entity() # comment to use @input base.
+Clipping = 1 # 0 disables all holoclips
 I = 0
 	]]
 
 	local function tovec(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
 	local function toang(vec) return ("ang(%s, %s, %s)"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
-	local function toang2(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
+	local function toang2(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
 
 	local function part_to_holo(part)
+		local holo_str = ref_str
 		local scale = part:GetSize() * part:GetScale()
-
-		--[[for _, clip in ipairs(part:GetChildren()) do
+		for CI, clip in ipairs(part:GetChildren()) do
 			if clip.ClassName == "clip" and not clip:IsHidden() then
 				local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
 				local normal = ang:Forward()
-				holo_str = holo_str .. "\n"
-				holo_str = holo_str .. "holoClipEnabled(I, CI, 1)\n"
-				holo_str = holo_str .. "holoClip(I, " .. tovec(pos + normal) .. ", " .. toang2(normal) ..  ", 1)\n"
+				holo_str = holo_str .. "holoClipEnabled(I, " .. CI .. ", Clipping)\n"
+				holo_str = holo_str .. "holoClip(I, " .. CI .. ", " .. tovec(pos + normal) .. ", " .. toang2(normal) ..  ", 0)\n"
 			end
-		end]]--
+		end
 
 		local holo = holo_str
 		:gsub("ALPHA", part:GetAlpha()*255)
