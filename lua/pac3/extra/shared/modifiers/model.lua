@@ -56,6 +56,8 @@ if SERVER then
 			end
 
 			if model then
+				model = model:lower()
+				if hook.Run("PACApplyModel", owner, model) == false then return end
 				pacx.SetPlayerModel(owner, model)
 			end
 		end
@@ -75,7 +77,8 @@ if SERVER then
 
 	net.Receive("pac_setmodel", function(_, ply)
 		if ALLOW_TO_CHANGE_MODEL:GetBool() then
-			local path = net.ReadString()
+			local path = net.ReadString():lower()
+			if hook.Run("PACApplyModel", ply, path) == false then return end
 			pacx.SetPlayerModel(ply, path)
 		end
 	end)
