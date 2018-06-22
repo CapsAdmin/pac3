@@ -241,7 +241,7 @@ function open()
 
             for(var j = 0; j < event.outputBuffer.length; ++j)
             {
-				if (stream.paused || stream.max_loop > 0 && stream.position > buffer_length * stream.max_loop)
+				if (stream.paused || stream.max_loop > 0 && stream.position >= (buffer_length * stream.max_loop) - 1)
                 {
                     stream.done_playing = true;
 
