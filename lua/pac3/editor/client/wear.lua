@@ -293,6 +293,8 @@ do
 end
 
 net.Receive("pac_submit", function()
+	if not pac.IsEnabled() then return end
+
 	local data = pace.net.DeserializeTable()
 
 	if type(data.owner) ~= "Player" or not data.owner:IsValid() then
