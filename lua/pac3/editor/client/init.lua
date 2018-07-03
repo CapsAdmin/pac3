@@ -85,6 +85,9 @@ end
 pace.ActivePanels = pace.ActivePanels or {}
 pace.Editor = NULL
 
+local remember = CreateConVar("pac_editor_remember_position", "1", {FCVAR_ARCHIVE}, "Remember PAC3 editor position on screen")
+local positionMode = CreateConVar("pac_editor_position_mode", "0", {FCVAR_ARCHIVE}, "Editor position mode. 0 - Left, 1 - middle, 2 - Right. Has no effect if pac_editor_remember_position is true")
+
 function pace.OpenEditor()
 	pace.CloseEditor()
 
@@ -99,12 +102,35 @@ function pace.OpenEditor()
 	local editor = pace.CreatePanel("editor")
 		editor:SetSize(240, ScrH())
 		editor:MakePopup()
+		--editor:SetPos(0, 0)
 		editor.Close = function()
-			editor:OnRemove()
+			--editor:OnRemove() -- ??? This is called by the engine
+			--editor.__OnClosed = true
 			pace.CloseEditor()
 		end
 	pace.Editor = editor
 	pace.Active = true
+
+	if remember:GetBool() then
+		local x = cookie.GetNumber("pac_editor_x", 0)
+
+		if x < 0 or x + 240 > ScrW() then
+			x = 0
+		end
+
+		editor:SetPos(x, 0)
+		cookie.Set("pac_editor_x", tostring(x))
+	else
+		local mode = positionMode:GetInt()
+
+		if mode == 1 then
+			editor:SetPos(ScrW() / 2 - 120, 0)
+		elseif mode == 2 then
+			editor:SetPos(ScrW() - 240, 0)
+		else
+			editor:SetPos(0, 0)
+		end
+	end
 
 	if ctp and ctp.Disable then
 		ctp:Disable()
@@ -122,7 +148,12 @@ function pace.CloseEditor()
 	pace.RestoreExternalHooks()
 
 	if pace.Editor:IsValid() then
-		pace.Editor:OnRemove()
+		local x = pace.Editor:GetPos()
+		cookie.Set("pac_editor_x", tostring(x))
+		--if not editor.__OnClosed then
+			--pace.Editor:OnRemove() -- ??? This is called by the engine
+		--end
+
 		pace.Editor:Remove()
 		pace.Active = false
 		pace.Call("CloseEditor")
