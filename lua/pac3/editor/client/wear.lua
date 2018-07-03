@@ -320,13 +320,7 @@ net.Receive("pac_submit_acknowledged", function(umr)
 end)
 
 do
-	local function Initialize()
-		pac.RemoveHook("KeyRelease", "pac_request_outfits")
-
-		if not pac.LocalPlayer:IsValid() then
-			return
-		end
-
+	function pace.LoadUpDefault()
 		if next(pac.GetLocalParts()) then
 			pac.Message("not wearing autoload outfit, already wearing something")
 		elseif pace.IsActive() then
@@ -344,6 +338,28 @@ do
 			RunConsoleCommand("pac_request_outfits")
 		end)
 	end
+
+	local function Initialize()
+		pac.RemoveHook("KeyRelease", "pac_request_outfits")
+
+		if not pac.LocalPlayer:IsValid() then
+			return
+		end
+
+		if not pac.IsEnabled() then
+			pac.RemoveHook("Think", "pac_request_outfits")
+			pace.NeverLoaded = true
+			return
+		end
+
+		pace.LoadUpDefault()
+	end
+
+	hook.Add("pac_Enable", "pac_LoadUpDefault", function()
+		if not pace.NeverLoaded then return end
+		pace.NeverLoaded = nil
+		pace.LoadUpDefault()
+	end)
 
 	local frames = 0
 
