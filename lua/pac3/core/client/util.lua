@@ -32,7 +32,7 @@ function pac.MakeMaterialUnlitGeneric(mat, id)
 		params["$vertexcolor"] = 1
 		params["$vertexalpha"] = 1
 
-		return CreateMaterial(pac.uid("pac_fixmat_") .. id, "UnlitGeneric", params)
+		return pac.CreateMaterial(pac.uid("pac_fixmat_") .. id, "UnlitGeneric", params)
 	end
 
 	return mat
@@ -444,6 +444,12 @@ end
 local pac_debug_clmdl = CreateClientConVar("pac_debug_clmdl", "0", true)
 RunConsoleCommand("pac_debug_clmdl", "0")
 
+local matsalt = '_' .. (os.time() - 0x40000000)
+
+function pac.CreateMaterial(name, ...)
+	return CreateMaterial(name .. matsalt, ...)
+end
+
 function pac.CreateEntity(model)
 	model = pac.FilterInvalidModel(model, fallback)
 
@@ -763,7 +769,7 @@ end
 
 do
 	--TODO: Table keeping id -> idx mapping
-	local idx = 0
+	local idx = math.random(0x1000)
 	function pac.uid(id)
 		idx = idx + 1
 		if idx>=2^53 then

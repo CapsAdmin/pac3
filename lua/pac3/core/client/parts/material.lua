@@ -86,7 +86,7 @@ PART.ShaderParams =
 	SelfillumFresnel = "boolean",
 	SelfillumFresnlenMinMaxExp = "Vector",
 
- 	FleshInteriorEnabled = "boolean", --"0", "Enable Flesh interior blend pass" )
+    FleshInteriorEnabled = "boolean", --"0", "Enable Flesh interior blend pass" )
 	FleshInteriorTexture = "ITexture", --"", "Flesh color texture" )
 	FleshInteriorNoiseTexture = "ITexture", --"", "Flesh noise texture" )
 	FleshBorderTexture1D = "ITexture", --"", "Flesh border 1D texture" )
@@ -217,7 +217,7 @@ local function setup(PART)
 									local tex = _mat:GetTexture("$" .. name)
 
 									if not tex or tex:GetName() == "error" then
-										tex = CreateMaterial("pac3_tex_" .. var .. "_" .. self.Id, "VertexLitGeneric", {["$basetexture"] = var}):GetTexture("$basetexture")
+										tex = pac.CreateMaterial("pac3_tex_" .. var .. "_" .. self.Id, "VertexLitGeneric", {["$basetexture"] = var}):GetTexture("$basetexture")
 
 										if not tex or tex:GetName() == "error" then
 											tex = _mat:GetTexture("$basetexture")
@@ -373,7 +373,7 @@ pac.EndStorableVars()
 function PART:GetMaterialFromParent()
 	if self:GetParent():IsValid() then
 		if not self.Materialm then
-			local mat = CreateMaterial(pac.uid"pac_material_", "VertexLitGeneric", {})
+			local mat = pac.CreateMaterial(pac.uid"pac_material_", "VertexLitGeneric", {})
 
 			if self.Parent.Materialm then
 				local tex
@@ -404,7 +404,7 @@ end
 
 function PART:GetRawMaterial()
 	if not self.Materialm then
-		local mat = CreateMaterial(pac.uid"pac_material_", "VertexLitGeneric", {})
+		local mat = pac.CreateMaterial(pac.uid"pac_material_", "VertexLitGeneric", {})
 		self.Materialm = mat
 	end
 
