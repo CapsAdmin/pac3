@@ -551,7 +551,7 @@ PART.Inputs = {
 		end
 
 		return 0
- 	end,
+    end,
 
 	owner_health = function(self)
 		local owner = self:GetPlayerOwner()
@@ -650,6 +650,10 @@ PART.Inputs = {
 	weapon_primary_ammo = function(self)
 		local owner = self:GetOwner(true)
 
+		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
+			owner = self:GetPlayerOwner()
+		end
+
 		if owner:IsValid() then
 			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
 
@@ -660,6 +664,10 @@ PART.Inputs = {
 	end,
 	weapon_primary_total_ammo = function(self)
 		local owner = self:GetOwner(true)
+
+		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
+			owner = self:GetPlayerOwner()
+		end
 
 		if owner:IsValid() then
 			local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
@@ -672,6 +680,10 @@ PART.Inputs = {
 	weapon_primary_clipsize = function(self)
 		local owner = self:GetOwner(true)
 
+		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
+			owner = self:GetPlayerOwner()
+		end
+
 		if owner:IsValid() then
 			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
 
@@ -682,6 +694,10 @@ PART.Inputs = {
 	end,
 	weapon_secondary_ammo = function(self)
 		local owner = self:GetOwner(true)
+
+		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
+			owner = self:GetPlayerOwner()
+		end
 
 		if owner:IsValid() then
 			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
@@ -694,6 +710,10 @@ PART.Inputs = {
 	weapon_secondary_total_ammo = function(self)
 		local owner = self:GetOwner(true)
 
+		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
+			owner = self:GetPlayerOwner()
+		end
+
 		if owner:IsValid() then
 			local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
 
@@ -704,6 +724,10 @@ PART.Inputs = {
 	end,
 	weapon_secondary_clipsize = function(self)
 		local owner = self:GetOwner(true)
+
+		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
+			owner = self:GetPlayerOwner()
+		end
 
 		if owner:IsValid() then
 			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
