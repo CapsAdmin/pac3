@@ -1371,8 +1371,12 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 end
 
 if pace.model_browser and pace.model_browser:IsValid() then
+	local visible = pace.model_browser:IsVisible()
 	pace.model_browser:Remove()
-	pace.AssetBrowser(function(...) print(...) return false end)
+
+	if visible then
+		pace.AssetBrowser(function(...) print(...) return false end)
+	end
 end
 
 concommand.Add("pac_asset_browser", function(_, _, args)
