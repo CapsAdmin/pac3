@@ -94,7 +94,15 @@ function PART:SetLoop(b)
 end
 
 function PART:SetURL(URL)
+	timer.Create("pac3_webaudio_seturl_" .. tostring(self), 0, 1, function()
+		if not self:IsValid() then return end
+		self:SetupURLStreamsNow(URL)
+	end)
 
+	self.URL = URL
+end
+
+function PART:SetupURLStreamsNow(URL)
 	local urls = {}
 
 	for _, url in pairs(URL:Split(";")) do
@@ -163,8 +171,6 @@ function PART:SetURL(URL)
 
 		sound.PlayURL(url, flags, callback)
 	end
-
-	self.URL = URL
 end
 
 PART.last_stream = NULL
