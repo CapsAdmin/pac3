@@ -452,6 +452,8 @@ function PART:DrawModel(ent, pos, ang)
 		if self.BlurLength > 0 then
 			self:DrawBlur(ent, pos, ang)
 		end
+
+		render_MaterialOverride()
 	end
 end
 
