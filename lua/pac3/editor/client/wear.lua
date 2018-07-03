@@ -320,19 +320,10 @@ net.Receive("pac_submit_acknowledged", function(umr)
 end)
 
 do
-	local t = 0
-	local max_time = 123 -- timeout in seconds
-
 	local function Initialize()
+		pac.RemoveHook("KeyRelease", "pac_request_outfits")
+
 		if not pac.LocalPlayer:IsValid() then
-			return
-		end
-
-		t = false
-
-		if not pac.IsEnabled() then
-			-- check every 2 seconds, ugly hack
-			t = max_time - 2
 			return
 		end
 
@@ -341,40 +332,42 @@ do
 		elseif pace.IsActive() then
 			pac.Message("not wearing autoload outfit, editor is open")
 		else
+			pac.Message("Wearing autoload...")
 			pace.WearParts("autoload")
 		end
 
 		pac.RemoveHook("Think", "pac_request_outfits")
-		pac.RemoveHook("KeyRelease", "pac_request_outfits")
-		pac.Message("Requesting outfits...")
+		pac.Message("Requesting outfits in 8 seconds...")
 
-		RunConsoleCommand("pac_request_outfits")
+		timer.Simple(8, function()
+			pac.Message("Requesting outfits...")
+			RunConsoleCommand("pac_request_outfits")
+		end)
 	end
 
+	local frames = 0
+
 	pac.AddHook("Think", "pac_request_outfits", function()
-		if not t then
-			pac.RemoveHook("Think", "pac_request_outfits")
+		if RealFrameTime() > 0.2 then -- lag?
 			return
 		end
 
-		local ft = FrameTime()
+		frames = frames + 1
 
-		-- ignore long frames...
-		ft = ft < 0 and 0 or ft > 0.2 and 0.2 or ft
-
-		t = t + ft
-
-		if t > max_time then
+		if frames > 400 then
 			Initialize()
-			return
 		end
 	end)
 
 	pac.AddHook("KeyRelease", "pac_request_outfits", function()
 		local me = pac.LocalPlayer
 
-		if me:IsValid() and me:GetVelocity():Length() > 5 then
-			Initialize()
+		if me:IsValid() and me:GetVelocity():Length() > 50 then
+			frames = frames + 200
+
+			if frames > 400 then
+				Initialize()
+			end
 		end
 	end)
 end
