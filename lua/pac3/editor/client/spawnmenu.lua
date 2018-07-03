@@ -144,7 +144,7 @@ function pace.ClientOptionsMenu(self)
 	self:Button(L"show editor", "pac_editor")
 	self:CheckBox(L"enable", "pac_enable")
 	self:Button(L"clear", "pac_clear_parts")
-	self:Button(L"wear on server", "pac_wear_parts"	)
+	self:Button(L"wear on server", "pac_wear_parts" )
 
 	local browser = self:AddControl("pace_browser", {})
 
@@ -273,3 +273,7 @@ hook.Add("PopulateToolMenu", "pac_spawnmenu", function()
 		}
 	)
 end)
+
+if IsValid(g_ContextMenu) and CreateContextMenu then
+	CreateContextMenu()
+end
