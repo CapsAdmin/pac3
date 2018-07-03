@@ -144,7 +144,11 @@ function PANEL:Think(...)
 		local x, y = self:GetPos()
 		local w, h = self:GetSize()
 
-		self.exit_button:SetPos(ScrW() - self.exit_button:GetWide() + 4, -4)
+		if self:GetPos() + self:GetWide() / 2 < ScrW() / 2 then
+			self.exit_button:SetPos(ScrW() - self.exit_button:GetWide() + 4, -4)
+		else
+			self.exit_button:SetPos(-4, -4)
+		end
 	end
 
 	if self.zoom:IsValid() then
