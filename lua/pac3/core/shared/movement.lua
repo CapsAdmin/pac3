@@ -102,16 +102,22 @@ end
 
 pac.AddHook("Move", "custom_movement", function(ply, mv)
 	local self = ply.pac_movement
+
 	if not self then
 		if not ply.pac_custom_movement_reset then
-			ply:SetGravity(1)
-			ply:SetMoveType(MOVETYPE_WALK)
-			ply.pac_custom_movement_reset = true
-			if ply.pac_custom_movement_jump_height then
-				ply:SetJumpPower(ply.pac_custom_movement_jump_height)
-				ply.pac_custom_movement_jump_height = nil
+			if ply:GetMoveType() ~= MOVETYPE_NOCLIP then
+				ply:SetGravity(1)
+				ply:SetMoveType(MOVETYPE_WALK)
+
+				if ply.pac_custom_movement_jump_height then
+					ply:SetJumpPower(ply.pac_custom_movement_jump_height)
+					ply.pac_custom_movement_jump_height = nil
+				end
 			end
+
+			ply.pac_custom_movement_reset = true
 		end
+
 		return
 	end
 
