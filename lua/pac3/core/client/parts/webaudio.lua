@@ -56,6 +56,7 @@ function PART:OnThink()
 end
 
 function PART:OnDraw(ent, pos, ang)
+	if not self.streams then return end
 	local forward = ang:Forward()
 
 	local shouldMute = snd_mute_losefocus:GetBool()
@@ -94,9 +95,18 @@ function PART:SetLoop(b)
 end
 
 function PART:SetURL(URL)
+	self.InSetup = true
+
 	timer.Create("pac3_webaudio_seturl_" .. tostring(self), 0, 1, function()
 		if not self:IsValid() then return end
+
+		self.InSetup = false
 		self:SetupURLStreamsNow(URL)
+
+		if self.PlayAfterSetup then
+			self:PlaySound()
+			self.PlayAfterSetup = nil
+		end
 	end)
 
 	self.URL = URL
@@ -176,9 +186,17 @@ end
 PART.last_stream = NULL
 
 function PART:PlaySound()
-	local streamdata = table.Random(self.streams) or NULL
+	if self.InSetup then
+		self.PlayAfterSetup = true
+		return
+	end
+
+	local streamdata = table.Random(self.streams)
+
+	if not streamdata then return end
 
 	local stream = streamdata.stream
+
 	if streamdata.Loading then
 		streamdata.PlayAfterLoad = true
 		return

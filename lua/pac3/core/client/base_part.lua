@@ -497,6 +497,7 @@ do -- parenting
 		pac.CallHook("OnPartParent", self, part)
 
 		part:SetKeyValueRecursive("last_hidden", nil)
+		part:SetKeyValueRecursive("last_hidden_by_event", nil)
 
 		return part.Id
 	end
@@ -618,6 +619,10 @@ do -- parenting
 		end
 
 		function PART:SetEventHide(b)
+			if self.event_hidden ~= b and self.event_hidden ~= nil then
+				self.shown_from_rendering = nil
+			end
+
 			self.event_hidden = b
 		end
 
@@ -640,7 +645,7 @@ do -- parenting
 				self.hidden or
 				self.event_hidden
 			then
-				return true
+				return true, self.event_hidden
 			end
 
 			if not self:HasParent() then
@@ -986,7 +991,7 @@ do -- events
 		self:RemoveChildren()
 	end
 
-	function PART:OnStore()	end
+	function PART:OnStore() end
 	function PART:OnRestore() end
 
 	function PART:OnThink() end
@@ -1049,7 +1054,7 @@ do -- drawing. this code is running every frame
 		-- Think takes care of polling this
 		if not self.last_enabled then return end
 
-		if self:IsHidden() then	return end
+		if self:IsHidden() then return end
 
 		if
 			self.OnDraw and
@@ -1118,9 +1123,9 @@ do -- drawing. this code is running every frame
 		end
 
 		-- if not isNonRoot then
-		-- 	for i, child in ipairs(self:GetChildrenList()) do
-		-- 		child:Draw(pos, ang, draw_type, true)
-		-- 	end
+		--  for i, child in ipairs(self:GetChildrenList()) do
+		--      child:Draw(pos, ang, draw_type, true)
+		--  end
 		-- end
 
 		local sysTime = SysTime()
@@ -1269,7 +1274,10 @@ do -- drawing. this code is running every frame
 end
 
 function PART:CalcShowHide()
-	local b = self:IsHidden()
+	local b, byEvent = self:IsHidden()
+	local triggerUpdate = b ~= self.last_hidden or self.last_hidden_by_event ~= byEvent
+
+	if not triggerUpdate then return end
 
 	if b ~= self.last_hidden then
 		if b then
@@ -1277,13 +1285,14 @@ function PART:CalcShowHide()
 		else
 			self:OnShow(self.shown_from_rendering ~= nil)
 		end
-
-		if FrameNumber() ~= self.shown_from_rendering then
-			self.shown_from_rendering = nil
-		end
-
-		self.last_hidden = b
 	end
+
+	if FrameNumber() ~= self.shown_from_rendering then
+		self.shown_from_rendering = nil
+	end
+
+	self.last_hidden = b
+	self.last_hidden_by_event = byEvent
 end
 
 function PART:HookEntityRender()
@@ -1325,6 +1334,7 @@ function PART:Think()
 	if owner:IsValid() then
 		if owner ~= self.last_owner then
 			self.last_hidden = nil
+			self.last_hidden_by_event = nil
 			self.last_owner = owner
 		end
 
