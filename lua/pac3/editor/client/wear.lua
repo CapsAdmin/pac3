@@ -111,11 +111,11 @@ do -- from server
 
 		if pace.CallHook("WearPartFromServer", owner, part_data, data) == false then return end
 
-		local part = pac.GetPartFromUniqueID(data.player_uid, part_data.self.UniqueID)
+		local dupepart = pac.GetPartFromUniqueID(data.player_uid, part_data.self.UniqueID)
 
-		if part:IsValid() then
-			pac.dprint("removing part %q to be replaced with the part previously received", part.Name)
-			part:Remove()
+		if dupepart:IsValid() then
+			pac.dprint("removing part %q to be replaced with the part previously received", dupepart.Name)
+			dupepart:Remove()
 		end
 
 		local dupeEnt
@@ -131,6 +131,13 @@ do -- from server
 
 		return function()
 			if dupeEnt and not dupeEnt:IsValid() then return end
+
+			dupepart = pac.GetPartFromUniqueID(data.player_uid, part_data.self.UniqueID)
+
+			if dupepart:IsValid() then
+				pac.dprint("removing part %q to be replaced with the part previously received ON callback call", dupepart.Name)
+				dupepart:Remove()
+			end
 
 			local part = pac.CreatePart(part_data.self.ClassName, owner)
 			part:SetIsBeingWorn(true)
