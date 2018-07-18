@@ -652,6 +652,7 @@ do -- drawing
 		end
 
 		local should_suppress = setup_suppress()
+		local pac_sv_draw_distance
 
 		pac.AddHook("PostDrawOpaqueRenderables", "draw_opaque", function(bDrawingDepth, bDrawingSkybox)
 			if should_suppress() then return end
@@ -662,13 +663,20 @@ do -- drawing
 			pac.FrameNumber = FrameNumber()
 
 			draw_dist = cvar_distance:GetInt()
-			fovoverride = cvar_fovoverride:GetInt()
-			sv_draw_dist = GetConVar("pac_sv_draw_distance"):GetFloat()
+			fovoverride = cvar_fovoverride:GetBool()
+			pac_sv_draw_distance = pac_sv_draw_distance or GetConVar("pac_sv_draw_distance")
+			sv_draw_dist = pac_sv_draw_distance:GetFloat()
 			radius = 0
 
-			if draw_dist == 0 then
+			if draw_dist <= 0 then
 				draw_dist = 32768
 			end
+
+			if sv_draw_dist <= 0 then
+				sv_draw_dist = 32768
+			end
+
+			draw_dist = math.min(sv_draw_dist, draw_dist)
 
 			for key, ent in pairs(pac.drawn_entities) do
 				if IsValid(ent) then
@@ -738,19 +746,24 @@ do -- drawing
 							radius = radius * 4
 						end
 
-						local cond =
-							draw_dist == -1 or
-							ent.IsPACWorldEntity or
-							(ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or (ent.pac_camera and ent.pac_camera:IsValid())) or
-							ent ~= pac.LocalPlayer and
-							(
-								((fovoverride ~= 0 or util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0) or (dst < radius * 1.25)) and
-								(
-									(sv_draw_dist ~= 0 and (sv_draw_dist == -1 or dst <= sv_draw_dist)) or
-									(ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance <= dst)) or
-									(dst <= draw_dist)
-								)
+						local cond = ent.IsPACWorldEntity -- or draw_dist == -1 or -- i assume this is a leftover from debugging?
+						-- because we definitely don't want to draw ANY outfit present, right?
+
+						if not cond then
+							cond = ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or
+								ent.pac_camera and ent.pac_camera:IsValid()
+						end
+
+						if not cond and ent ~= pac.LocalPlayer then
+							cond = (
+								ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance <= dst) or
+								dst <= draw_dist
+							) and (
+								dst < radius * 1.25 or
+								fovoverride or
+								util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0
 							)
+						end
 
 						ent.pac_draw_cond = cond
 
