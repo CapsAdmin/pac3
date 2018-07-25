@@ -63,7 +63,7 @@ function pace.SaveParts(name, prompt_name, override_part)
 					local targetFiles = {}
 
 					for i, filename in ipairs(files) do
-						local time = file.Time("pac3/__backup_save/" .. filename)
+						local time = file.Time("pac3/__backup_save/" .. filename, "DATA")
 						table.insert(targetFiles, {"pac3/__backup_save/" .. filename, time})
 					end
 
