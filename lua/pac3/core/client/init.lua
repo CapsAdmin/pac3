@@ -48,6 +48,8 @@ do
 	end
 end
 
+CreateClientConVar("pac_hide_disturbing", "1", true, true, "Hide parts which outfit creators marked as 'may be disturbing for some users' (e.g. gore or nsfw)")
+
 include("util.lua")
 
 pac.NULL = include("pac3/libraries/null.lua")

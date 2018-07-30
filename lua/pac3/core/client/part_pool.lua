@@ -465,6 +465,14 @@ timer.Create("pac_gc", 2, 0, function()
 	ProtectedCall(pac_gc)
 end)
 
+cvars.AddChangeCallback("pac_hide_disturbing", function()
+	for key, part in pairs(all_parts) do
+		if part:GetPlayerOwner():IsValid() then
+			part:SetIsDisturbing(part:GetIsDisturbing())
+		end
+	end
+end, "PAC3")
+
 function pac.RemovePartsFromUniqueID(uid)
 	for _, part in pairs(parts_from_uid(uid)) do
 		if not part:HasParent() then

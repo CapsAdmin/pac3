@@ -36,6 +36,8 @@ function PART:__tostring()
 	return string.format("%s[%s][%s][%i]", self.Type, self.ClassName, self.Name, self.Id)
 end
 
+local pac_hide_disturbing = GetConVar("pac_hide_disturbing")
+
 pac.GetSet(PART, "BoneIndex")
 pac.GetSet(PART, "PlayerOwner", NULL)
 pac.GetSet(PART, "Owner", NULL)
@@ -48,6 +50,7 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "OwnerName", "self")
 		pac.GetSet(PART, "EditorExpand", false, {hidden = true})
 		pac.GetSet(PART, "UniqueID", "", {hidden = true})
+		pac.GetSet(PART, "IsDisturbing", false, {description = "Mark this part as something that should not be visible to everyone in public (e.g. gore or questionable content).\nThis will be only visible to user if he has pac_hide_disturbing set to 0"})
 
 	pac.SetPropertyGroup(PART, "orientation")
 		pac.GetSet(PART, "Bone", "head")
@@ -133,6 +136,7 @@ function PART:PreInitialize()
 	self.modifiers = {}
 	self.RootPart = NULL
 	self.DrawOrder = 0
+	self.hide_disturbing = false
 
 	self.cached_pos = Vector(0,0,0)
 	self.cached_ang = Angle(0,0,0)
@@ -375,6 +379,11 @@ do -- owner
 	end
 
 	--SETUP_CACHE_FUNC(PART, "GetOwner")
+end
+
+function PART:SetIsDisturbing(val)
+	self.IsDisturbing = val
+	self.hide_disturbing = pac_hide_disturbing:GetBool() and val
 end
 
 do -- parenting
@@ -643,6 +652,7 @@ do -- parenting
 				self.draw_hidden or
 				self.temp_hidden or
 				self.hidden or
+				self.hide_disturbing or
 				self.event_hidden
 			then
 				return true, self.event_hidden

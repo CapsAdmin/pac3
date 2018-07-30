@@ -183,6 +183,7 @@ function pace.ClientSettingsMenu(self)
 
 	self:CheckBox(L"Friend only", "pac_friendonly")
 	self:CheckBox(L"Reveal outfits only on +use", "pac_onuse_only")
+	self:CheckBox(L"Hide outfits that some folks can find disturbing", "pac_hide_disturbing")
 
 	self:NumSlider(
 		L"PAC Volume",
