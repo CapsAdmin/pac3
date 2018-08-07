@@ -77,7 +77,13 @@ if SERVER then
 
 	net.Receive("pac_setmodel", function(_, ply)
 		if ALLOW_TO_CHANGE_MODEL:GetBool() then
-			local path = net.ReadString():lower()
+			local pathraw = net.ReadString()
+			local path = pathraw:lower()
+
+			if path:find("^http") then
+				path = pathraw
+			end
+
 			if hook.Run("PACApplyModel", ply, path) == false then return end
 			pacx.SetPlayerModel(ply, path)
 		end
