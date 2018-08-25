@@ -493,7 +493,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	function PART:GetRawMaterial()
 		if not self.Materialm then
 			self.material_name = tostring({})
-			local mat = CreateMaterial(self.material_name, shader_name, {})
+			local mat = pac.CreateMaterial(self.material_name, shader_name, {})
 			self.Materialm = mat
 
 			for k,v in pairs(self:GetVars()) do

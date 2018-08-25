@@ -39,14 +39,34 @@ do
 			end
 		end
 
-		if ply.pac_global_animation_rate and ply.pac_global_animation_rate ~= 1 then
+		local animrate = 1
 
+		if ply.pac_global_animation_rate and ply.pac_global_animation_rate ~= 1 then
 			if ply.pac_global_animation_rate == 0 then
-				ply:SetCycle((pac.RealTime * ply:GetModelScale() * 2)%1)
+				animrate = ply:GetModelScale() * 2
 			elseif ply.pac_global_animation_rate ~= 1 then
 				ply:SetCycle((pac.RealTime * ply.pac_global_animation_rate)%1)
+				animrate = ply.pac_global_animation_rate
 			end
+		end
 
+		if ply.pac_animation_sequences then
+			local part, thing = next(ply.pac_animation_sequences)
+
+			if part and part:IsValid() then
+				if part.Rate == 0 then
+					animrate = 1
+					ply:SetCycle(part.Offset % 1)
+				else
+					animrate = animrate * part.Rate
+				end
+			elseif part and not part:IsValid() then
+				ply.pac_animation_sequences[part] = nil
+			end
+		end
+
+		if animrate ~= 1 then
+			ply:SetCycle((pac.RealTime * animrate) % 1)
 			return true
 		end
 

@@ -452,6 +452,8 @@ function PART:DrawModel(ent, pos, ang)
 		if self.BlurLength > 0 then
 			self:DrawBlur(ent, pos, ang)
 		end
+
+		render_MaterialOverride()
 	end
 end
 
@@ -728,7 +730,7 @@ function PART:FixMaterial()
 			params["$vertexcolor"] = 1
 			params["$additive"] = 1
 
-			self.Materialm = CreateMaterial(pac.uid"pac_fixmat_", "VertexLitGeneric", params)
+			self.Materialm = pac.CreateMaterial(pac.uid"pac_fixmat_", "VertexLitGeneric", params)
 		end
 	end
 end

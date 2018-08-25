@@ -111,30 +111,42 @@ do -- from server
 
 		if pace.CallHook("WearPartFromServer", owner, part_data, data) == false then return end
 
-		local part = pac.GetPartFromUniqueID(data.player_uid, part_data.self.UniqueID)
+		local dupepart = pac.GetPartFromUniqueID(data.player_uid, part_data.self.UniqueID)
 
-		if part:IsValid() then
-			pac.dprint("removing part %q to be replaced with the part previously received", part.Name)
-			part:Remove()
+		if dupepart:IsValid() then
+			pac.dprint("removing part %q to be replaced with the part previously received", dupepart.Name)
+			dupepart:Remove()
 		end
+
+		local dupeEnt
 
 		-- safe guard
 		if data.is_dupe then
 			local id = tonumber(part_data.self.OwnerName)
-			if id and not Entity(id):IsValid() then
+			dupeEnt = Entity(id or -1)
+			if not dupeEnt:IsValid() then
 				return
 			end
 		end
 
-		local part = pac.CreatePart(part_data.self.ClassName, owner)
-		part:SetIsBeingWorn(true)
-		part:SetTable(part_data)
-
-		if data.is_dupe then
-			part.dupe_remove = true
-		end
-
 		return function()
+			if dupeEnt and not dupeEnt:IsValid() then return end
+
+			dupepart = pac.GetPartFromUniqueID(data.player_uid, part_data.self.UniqueID)
+
+			if dupepart:IsValid() then
+				pac.dprint("removing part %q to be replaced with the part previously received ON callback call", dupepart.Name)
+				dupepart:Remove()
+			end
+
+			local part = pac.CreatePart(part_data.self.ClassName, owner)
+			part:SetIsBeingWorn(true)
+			part:SetTable(part_data)
+
+			if data.is_dupe then
+				part.dupe_remove = true
+			end
+
 			part:CallRecursive('SetIsBeingWorn', false)
 
 			if owner == pac.LocalPlayer then
@@ -152,6 +164,7 @@ do -- from server
 			pac.RemovePartsFromUniqueID(data.player_uid)
 
 			pace.CallHook("RemoveOutfit", owner)
+			pac.CleanupEntityIgnoreBound(owner)
 		else
 			local part = pac.GetPartFromUniqueID(data.player_uid, part_name)
 
@@ -163,7 +176,28 @@ do -- from server
 end
 
 do
+	local pac_onuse_only = CreateClientConVar('pac_onuse_only', '0', true, false, 'Enable "on +use only" mode. Within this mode, outfits are not being actually "loaded" until you hover over player and press your use button')
 	local transmissions = {}
+
+	function pace.OnUseOnlyUpdates(cvar, ...)
+		hook.Call('pace_OnUseOnlyUpdates', nil, ...)
+	end
+
+	cvars.AddChangeCallback("pac_onuse_only", pace.OnUseOnlyUpdates, "PAC3")
+
+	concommand.Add("pac_onuse_reset", function()
+		for i, ent in ipairs(ents.GetAll()) do
+			if ent.pac_onuse_only then
+				ent.pac_onuse_only_check = true
+
+				if pac_onuse_only:GetBool() then
+					pac.ToggleIgnoreEntity(ent, ent.pac_onuse_only_check, 'pac_onuse_only')
+				else
+					pac.ToggleIgnoreEntity(ent, false, 'pac_onuse_only')
+				end
+			end
+		end
+	end)
 
 	timer.Create('pac3_transmissions_ttl', 10, 0, function()
 		local time = RealTime()
@@ -189,6 +223,30 @@ do
 	end
 
 	function pace.HandleReceivedData(data)
+		if data.owner ~= LocalPlayer() then
+			if not data.owner.pac_onuse_only then
+				data.owner.pac_onuse_only = true
+				-- if TRUE - hide outfit
+				data.owner.pac_onuse_only_check = true
+
+				if pac_onuse_only:GetBool() then
+					pac.ToggleIgnoreEntity(data.owner, data.owner.pac_onuse_only_check, 'pac_onuse_only')
+				else
+					pac.ToggleIgnoreEntity(data.owner, false, 'pac_onuse_only')
+				end
+			end
+
+			-- behaviour of this (if one of entities on this hook becomes invalid)
+			-- is undefined if DLib is not installed, but anyway
+			hook.Add('pace_OnUseOnlyUpdates', data.owner, function()
+				if pac_onuse_only:GetBool() then
+					pac.ToggleIgnoreEntity(data.owner, data.owner.pac_onuse_only_check, 'pac_onuse_only')
+				else
+					pac.ToggleIgnoreEntity(data.owner, false, 'pac_onuse_only')
+				end
+			end)
+		end
+
 		local validTransmission = type(data.partID) == 'number' and
 			type(data.totalParts) == 'number' and
 			type(data.transmissionID) == 'number'
@@ -197,7 +255,7 @@ do
 			local func = defaultHandler(data)
 
 			if type(func) == 'function' then
-				func()
+				pac.EntityIgnoreBound(data.owner, func)
 			end
 		else
 			local trData = transmissions[data.transmissionID]
@@ -232,7 +290,7 @@ do
 				end
 
 				for i, func in ipairs(funcs) do
-					func()
+					pac.EntityIgnoreBound(data.owner, func)
 				end
 
 				transmissions[data.transmissionID or transmissionID] = nil
@@ -242,6 +300,8 @@ do
 end
 
 net.Receive("pac_submit", function()
+	if not pac.IsEnabled() then return end
+
 	local data = pace.net.DeserializeTable()
 
 	if type(data.owner) ~= "Player" or not data.owner:IsValid() then
@@ -267,61 +327,70 @@ net.Receive("pac_submit_acknowledged", function(umr)
 end)
 
 do
-	local t = 0
-	local max_time = 123 -- timeout in seconds
-
-	local function Initialize()
-		if not pac.LocalPlayer:IsValid() then
-			return
-		end
-
-		t = false
-
-		if not pac.IsEnabled() then
-			-- check every 2 seconds, ugly hack
-			t = max_time - 2
-			return
-		end
-
+	function pace.LoadUpDefault()
 		if next(pac.GetLocalParts()) then
 			pac.Message("not wearing autoload outfit, already wearing something")
 		elseif pace.IsActive() then
 			pac.Message("not wearing autoload outfit, editor is open")
 		else
+			pac.Message("Wearing autoload...")
 			pace.WearParts("autoload")
 		end
 
 		pac.RemoveHook("Think", "pac_request_outfits")
-		pac.RemoveHook("KeyRelease", "pac_request_outfits")
-		pac.Message("Requesting outfits...")
+		pac.Message("Requesting outfits in 8 seconds...")
 
-		RunConsoleCommand("pac_request_outfits")
+		timer.Simple(8, function()
+			pac.Message("Requesting outfits...")
+			RunConsoleCommand("pac_request_outfits")
+		end)
 	end
 
-	pac.AddHook("Think", "pac_request_outfits", function()
-		if not t then
-			pac.RemoveHook("Think", "pac_request_outfits")
+	local function Initialize()
+		pac.RemoveHook("KeyRelease", "pac_request_outfits")
+
+		if not pac.LocalPlayer:IsValid() then
 			return
 		end
 
-		local ft = FrameTime()
-
-		-- ignore long frames...
-		ft = ft < 0 and 0 or ft > 0.2 and 0.2 or ft
-
-		t = t + ft
-
-		if t > max_time then
-			Initialize()
+		if not pac.IsEnabled() then
+			pac.RemoveHook("Think", "pac_request_outfits")
+			pace.NeverLoaded = true
 			return
+		end
+
+		pace.LoadUpDefault()
+	end
+
+	hook.Add("pac_Enable", "pac_LoadUpDefault", function()
+		if not pace.NeverLoaded then return end
+		pace.NeverLoaded = nil
+		pace.LoadUpDefault()
+	end)
+
+	local frames = 0
+
+	pac.AddHook("Think", "pac_request_outfits", function()
+		if RealFrameTime() > 0.2 then -- lag?
+			return
+		end
+
+		frames = frames + 1
+
+		if frames > 400 then
+			Initialize()
 		end
 	end)
 
 	pac.AddHook("KeyRelease", "pac_request_outfits", function()
 		local me = pac.LocalPlayer
 
-		if me:IsValid() and me:GetVelocity():Length() > 5 then
-			Initialize()
+		if me:IsValid() and me:GetVelocity():Length() > 50 then
+			frames = frames + 200
+
+			if frames > 400 then
+				Initialize()
+			end
 		end
 	end)
 end

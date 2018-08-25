@@ -369,21 +369,6 @@ do
 			bottom:Dock(RIGHT)
 			bottom:SetWide(72)
 			do -- time controls
-				local mat = Material("mediaplayer/ui/spritesheet2015-10-7.png")
-				local play_uv = {
-					(24 * 3) / mat:GetInt("$realwidth"),
-					(24 * 4) / mat:GetInt("$realheight"),
-					(24 * 4) / mat:GetInt("$realwidth"),
-					(24 * 5) / mat:GetInt("$realheight"),
-				}
-
-				local stop_uv = {
-					(24 * 4) / mat:GetInt("$realwidth"),
-					(24 * 4) / mat:GetInt("$realheight"),
-					(24 * 5) / mat:GetInt("$realwidth"),
-					(24 * 5) / mat:GetInt("$realheight"),
-				}
-
 				local controls = bottom:Add("DPanel")
 				controls:SetWide(100)
 				controls:SetTall(bottom:GetTall())
@@ -407,11 +392,16 @@ do
 
 				function play.PaintOver(_,w,h)
 					surface.SetDrawColor(self:GetSkin().Colours.Button.Normal)
-					surface.SetMaterial(mat)
+					draw.NoTexture()
 					if self:IsPlaying() then
-						surface.DrawTexturedRectUV(spacing,spacing,24,24, unpack(stop_uv))
+						surface.DrawRect(spacing, spacing, 10, h - spacing * 2)
+						surface.DrawRect(spacing + 13, spacing, 10, h - spacing * 2)
 					else
-						surface.DrawTexturedRectUV(spacing,spacing,24,24, unpack(play_uv))
+						surface.DrawPoly({
+							{ x = spacing, y = spacing },
+							{ x = w - spacing, y = h / 2 },
+							{ x = spacing, y = h - spacing },
+						})
 					end
 				end
 

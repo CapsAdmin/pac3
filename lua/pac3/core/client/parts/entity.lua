@@ -60,6 +60,7 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "Weapon", false)
 		pac.GetSet(PART, "InverseKinematics", false)
 		pac.GetSet(PART, "MuteFootsteps", false)
+		pac.GetSet(PART, "SuppressFrames", false)
 		pac.GetSet(PART, "AnimationRate", 1)
 		pac.GetSet(PART, "FallApartOnDeath", false)
 		pac.GetSet(PART, "DeathRagdollizeParent", false)
@@ -261,6 +262,30 @@ end
 
 local angle_origin = Angle()
 
+local function setup_suppress()
+	local last_framenumber = 0
+	local current_frame = 0
+	local current_frame_count = 0
+
+	return function()
+		local frame_number = FrameNumber()
+
+		if frame_number == last_framenumber then
+			current_frame = current_frame + 1
+		else
+			last_framenumber = frame_number
+
+			if current_frame_count ~= current_frame then
+				current_frame_count = current_frame
+			end
+
+			current_frame = 1
+		end
+
+		return current_frame < current_frame_count
+	end
+end
+
 function PART:OnShow()
 	local ent = self:GetOwner()
 
@@ -281,6 +306,15 @@ function PART:OnShow()
 		function ent.RenderOverride()
 			if self:IsValid() then
 				if not self.HideEntity then
+					if self.SuppressFrames then
+						if not self.should_suppress then
+							self.should_suppress = setup_suppress()
+						end
+
+						if self.should_suppress() then
+							return
+						end
+					end
 
 					self:ModifiersPostEvent("PreDraw")
 					self:PreEntityDraw(ent)

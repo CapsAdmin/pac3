@@ -110,7 +110,7 @@ local tostring = tostring
 local CRC = util.CRC
 
 local function writeTable(tab)
-	net.WriteUInt(table.Count(tab), 16)
+	net.WriteUInt(table.Count(tab), 8)
 	local keys = {}
 
 	for key, value in pairs(tab) do
@@ -194,7 +194,7 @@ end
 
 function readTable(tab)
 	local output = {}
-	local amount = net.ReadUInt(16)
+	local amount = net.ReadUInt(8)
 
 	for i = 1, amount do
 		local i2 = net.ReadUInt(32)

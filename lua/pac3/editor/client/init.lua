@@ -85,6 +85,9 @@ end
 pace.ActivePanels = pace.ActivePanels or {}
 pace.Editor = NULL
 
+local remember = CreateConVar("pac_editor_remember_position", "1", {FCVAR_ARCHIVE}, "Remember PAC3 editor position on screen")
+local positionMode = CreateConVar("pac_editor_position_mode", "0", {FCVAR_ARCHIVE}, "Editor position mode. 0 - Left, 1 - middle, 2 - Right. Has no effect if pac_editor_remember_position is true")
+
 function pace.OpenEditor()
 	pace.CloseEditor()
 
@@ -99,12 +102,35 @@ function pace.OpenEditor()
 	local editor = pace.CreatePanel("editor")
 		editor:SetSize(240, ScrH())
 		editor:MakePopup()
+		--editor:SetPos(0, 0)
 		editor.Close = function()
-			editor:OnRemove()
+			--editor:OnRemove() -- ??? This is called by the engine
+			--editor.__OnClosed = true
 			pace.CloseEditor()
 		end
 	pace.Editor = editor
 	pace.Active = true
+
+	if remember:GetBool() then
+		local x = cookie.GetNumber("pac_editor_x", 0)
+
+		if x < 0 or x + 240 > ScrW() then
+			x = 0
+		end
+
+		editor:SetPos(x, 0)
+		cookie.Set("pac_editor_x", tostring(x))
+	else
+		local mode = positionMode:GetInt()
+
+		if mode == 1 then
+			editor:SetPos(ScrW() / 2 - 120, 0)
+		elseif mode == 2 then
+			editor:SetPos(ScrW() - 240, 0)
+		else
+			editor:SetPos(0, 0)
+		end
+	end
 
 	if ctp and ctp.Disable then
 		ctp:Disable()
@@ -122,7 +148,12 @@ function pace.CloseEditor()
 	pace.RestoreExternalHooks()
 
 	if pace.Editor:IsValid() then
-		pace.Editor:OnRemove()
+		local x = pace.Editor:GetPos()
+		cookie.Set("pac_editor_x", tostring(x))
+		--if not editor.__OnClosed then
+			--pace.Editor:OnRemove() -- ??? This is called by the engine
+		--end
+
 		pace.Editor:Remove()
 		pace.Active = false
 		pace.Call("CloseEditor")
@@ -155,11 +186,18 @@ end
 
 function pace.Panic()
 	pace.CloseEditor()
+
 	for key, pnl in pairs(pace.ActivePanels) do
 		if pnl:IsValid() then
 			pnl:Remove()
 			table.remove(pace.ActivePanels, key)
 		end
+	end
+
+	for i, ent in ipairs(ents.GetAll()) do
+		ent.pac_onuse_only = nil
+		ent.pac_onuse_only_check = nil
+		hook.Remove('pace_OnUseOnlyUpdates', ent)
 	end
 end
 
@@ -304,15 +342,24 @@ do
 		end
 	end)
 
-	timer.Create("pac_in_editor", 0.25, 0, function()
-		if not pace.current_part:IsValid() then return end
+	do
+		local lastViewPos, lastViewAngle, lastTargetPos
 
-		net.Start("pac_in_editor_posang", true)
-			net.WriteVector(pace.GetViewPos())
-			net.WriteAngle(pace.GetViewAngles())
-			net.WriteVector((pace.mctrl.GetTargetPos()) or pace.current_part:GetDrawPosition() or vector_origin)
-		net.SendToServer()
-	end)
+		timer.Create("pac_in_editor", 0.25, 0, function()
+			if not pace.current_part:IsValid() then return end
+			local pos, ang = pace.GetViewPos(), pace.GetViewAngles()
+			local target_pos = (pace.mctrl.GetTargetPos()) or pace.current_part:GetDrawPosition() or vector_origin
+
+			if lastViewPos == pos and lastViewAngle == ang and lastTargetPos == target_pos then return end
+			lastViewPos, lastViewAngle, lastTargetPos = pos, ang, target_pos
+
+			net.Start("pac_in_editor_posang", true)
+				net.WriteVector(pos)
+				net.WriteAngle(ang)
+				net.WriteVector(target_pos)
+			net.SendToServer()
+		end)
+	end
 
 	net.Receive("pac_in_editor_posang", function()
 		local ply = net.ReadEntity()

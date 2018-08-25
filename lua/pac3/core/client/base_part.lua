@@ -36,6 +36,8 @@ function PART:__tostring()
 	return string.format("%s[%s][%s][%i]", self.Type, self.ClassName, self.Name, self.Id)
 end
 
+local pac_hide_disturbing = GetConVar("pac_hide_disturbing")
+
 pac.GetSet(PART, "BoneIndex")
 pac.GetSet(PART, "PlayerOwner", NULL)
 pac.GetSet(PART, "Owner", NULL)
@@ -48,6 +50,7 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "OwnerName", "self")
 		pac.GetSet(PART, "EditorExpand", false, {hidden = true})
 		pac.GetSet(PART, "UniqueID", "", {hidden = true})
+		pac.GetSet(PART, "IsDisturbing", false, {description = "Mark this part as something that should not be visible to everyone in public (e.g. gore or questionable content).\nThis will be only visible to user if he has pac_hide_disturbing set to 0"})
 
 	pac.SetPropertyGroup(PART, "orientation")
 		pac.GetSet(PART, "Bone", "head")
@@ -133,6 +136,7 @@ function PART:PreInitialize()
 	self.modifiers = {}
 	self.RootPart = NULL
 	self.DrawOrder = 0
+	self.hide_disturbing = false
 
 	self.cached_pos = Vector(0,0,0)
 	self.cached_ang = Angle(0,0,0)
@@ -377,6 +381,11 @@ do -- owner
 	--SETUP_CACHE_FUNC(PART, "GetOwner")
 end
 
+function PART:SetIsDisturbing(val)
+	self.IsDisturbing = val
+	self.hide_disturbing = pac_hide_disturbing:GetBool() and val
+end
+
 do -- parenting
 	function PART:GetChildren()
 		return self.Children
@@ -497,6 +506,7 @@ do -- parenting
 		pac.CallHook("OnPartParent", self, part)
 
 		part:SetKeyValueRecursive("last_hidden", nil)
+		part:SetKeyValueRecursive("last_hidden_by_event", nil)
 
 		return part.Id
 	end
@@ -618,6 +628,10 @@ do -- parenting
 		end
 
 		function PART:SetEventHide(b)
+			if self.event_hidden ~= b and self.event_hidden ~= nil then
+				self.shown_from_rendering = nil
+			end
+
 			self.event_hidden = b
 		end
 
@@ -638,9 +652,10 @@ do -- parenting
 				self.draw_hidden or
 				self.temp_hidden or
 				self.hidden or
+				self.hide_disturbing or
 				self.event_hidden
 			then
-				return true
+				return true, self.event_hidden
 			end
 
 			if not self:HasParent() then
@@ -986,7 +1001,7 @@ do -- events
 		self:RemoveChildren()
 	end
 
-	function PART:OnStore()	end
+	function PART:OnStore() end
 	function PART:OnRestore() end
 
 	function PART:OnThink() end
@@ -1049,7 +1064,7 @@ do -- drawing. this code is running every frame
 		-- Think takes care of polling this
 		if not self.last_enabled then return end
 
-		if self:IsHidden() then	return end
+		if self:IsHidden() then return end
 
 		if
 			self.OnDraw and
@@ -1118,9 +1133,9 @@ do -- drawing. this code is running every frame
 		end
 
 		-- if not isNonRoot then
-		-- 	for i, child in ipairs(self:GetChildrenList()) do
-		-- 		child:Draw(pos, ang, draw_type, true)
-		-- 	end
+		--  for i, child in ipairs(self:GetChildrenList()) do
+		--      child:Draw(pos, ang, draw_type, true)
+		--  end
 		-- end
 
 		local sysTime = SysTime()
@@ -1269,7 +1284,10 @@ do -- drawing. this code is running every frame
 end
 
 function PART:CalcShowHide()
-	local b = self:IsHidden()
+	local b, byEvent = self:IsHidden()
+	local triggerUpdate = b ~= self.last_hidden or self.last_hidden_by_event ~= byEvent
+
+	if not triggerUpdate then return end
 
 	if b ~= self.last_hidden then
 		if b then
@@ -1277,13 +1295,14 @@ function PART:CalcShowHide()
 		else
 			self:OnShow(self.shown_from_rendering ~= nil)
 		end
-
-		if FrameNumber() ~= self.shown_from_rendering then
-			self.shown_from_rendering = nil
-		end
-
-		self.last_hidden = b
 	end
+
+	if FrameNumber() ~= self.shown_from_rendering then
+		self.shown_from_rendering = nil
+	end
+
+	self.last_hidden = b
+	self.last_hidden_by_event = byEvent
 end
 
 function PART:HookEntityRender()
@@ -1325,6 +1344,7 @@ function PART:Think()
 	if owner:IsValid() then
 		if owner ~= self.last_owner then
 			self.last_hidden = nil
+			self.last_hidden_by_event = nil
 			self.last_owner = owner
 		end
 

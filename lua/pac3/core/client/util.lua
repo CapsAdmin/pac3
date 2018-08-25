@@ -32,7 +32,7 @@ function pac.MakeMaterialUnlitGeneric(mat, id)
 		params["$vertexcolor"] = 1
 		params["$vertexalpha"] = 1
 
-		return CreateMaterial(pac.uid("pac_fixmat_") .. id, "UnlitGeneric", params)
+		return pac.CreateMaterial(pac.uid("pac_fixmat_") .. id, "UnlitGeneric", params)
 	end
 
 	return mat
@@ -72,6 +72,13 @@ do --dev util
 	function pac.Panic()
 		pac.RemoveAllParts()
 		pac.RemoveAllPACEntities()
+
+		for i, ent in ipairs(ents.GetAll()) do
+			ent.pac_ignored = nil
+			ent.pac_ignored_data = nil
+			ent.pac_drawing = nil
+			ent.pac_shouldnotdraw = nil
+		end
 	end
 
 	pac.convarcache = {}
@@ -437,6 +444,12 @@ end
 local pac_debug_clmdl = CreateClientConVar("pac_debug_clmdl", "0", true)
 RunConsoleCommand("pac_debug_clmdl", "0")
 
+local matsalt = '_' .. (os.time() - 0x40000000)
+
+function pac.CreateMaterial(name, ...)
+	return CreateMaterial(name .. matsalt, ...)
+end
+
 function pac.CreateEntity(model)
 	model = pac.FilterInvalidModel(model, fallback)
 
@@ -756,7 +769,7 @@ end
 
 do
 	--TODO: Table keeping id -> idx mapping
-	local idx = 0
+	local idx = math.random(0x1000)
 	function pac.uid(id)
 		idx = idx + 1
 		if idx>=2^53 then
@@ -905,8 +918,34 @@ do -- ignore
 		end
 	end
 
+	function pac.IsEntityIgnored(ent)
+		return ent.pac_ignored or false
+	end
+
+	function pac.IsEntityIgnoredBy(ent, strID)
+		return ent.pac_ignored_data and ent.pac_ignored_data[strID] or false
+	end
+
+	function pac.IsEntityIgnoredOnlyBy(ent, strID)
+		return ent.pac_ignored_data and ent.pac_ignored_data[strID] and table.Count(ent.pac_ignored_data) == 1 or false
+	end
+
+	function pac.EntityIgnoreBound(ent, callback)
+		if not pac.IsEntityIgnored(ent) then
+			return callback(ent)
+		end
+
+		ent.pac_ignored_callbacks = ent.pac_ignored_callbacks or {}
+		table.insert(ent.pac_ignored_callbacks, callback)
+	end
+
+	function pac.CleanupEntityIgnoreBound(ent)
+		ent.pac_ignored_callbacks = nil
+	end
+
 	function pac.IgnoreEntity(ent, strID)
 		strID = strID or 'generic'
+		if ent.pac_ignored_data and ent.pac_ignored_data[strID] then return end
 		ent.pac_ignored = ent.pac_ignored or false
 		ent.pac_ignored_data = ent.pac_ignored_data or {}
 		ent.pac_ignored_data[strID] = true
@@ -922,9 +961,10 @@ do -- ignore
 
 	function pac.UnIgnoreEntity(ent, strID)
 		strID = strID or 'generic'
+		if ent.pac_ignored_data and ent.pac_ignored_data[strID] == nil then return end
 		ent.pac_ignored = ent.pac_ignored or false
 		ent.pac_ignored_data = ent.pac_ignored_data or {}
-		ent.pac_ignored_data[strID] = false
+		ent.pac_ignored_data[strID] = nil
 		local newStatus = false
 
 		for _, v in pairs(ent.pac_ignored_data) do
@@ -936,6 +976,17 @@ do -- ignore
 
 		if newStatus ~= ent.pac_ignored then
 			ent.pac_ignored = newStatus
+
+			if not newStatus and ent.pac_ignored_callbacks then
+				for i, callback in ipairs(ent.pac_ignored_callbacks) do
+					ProtectedCall(function()
+						callback(ent)
+					end)
+				end
+
+				ent.pac_ignored_callbacks = nil
+			end
+
 			pac.TogglePartDrawing(ent, not newStatus)
 		end
 

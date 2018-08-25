@@ -86,7 +86,7 @@ function PART:FixMaterial()
 	params["$vertexcolor"] = 1
 	params["$additive"] = 1
 
-	self.Materialm = CreateMaterial('pac_submat_fix_' .. util.CRC(mat:GetName()), "VertexLitGeneric", params)
+	self.Materialm = pac.CreateMaterial('pac_submat_fix_' .. util.CRC(mat:GetName()), "VertexLitGeneric", params)
 end
 
 function PART:UrlTextHandler()

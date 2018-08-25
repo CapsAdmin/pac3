@@ -100,25 +100,41 @@ if CLIENT then
 	end)
 end
 
+local function badMovetype(ply)
+	local mvtype = ply:GetMoveType()
+
+	return mvtype == MOVETYPE_OBSERVER
+		or mvtype == MOVETYPE_NOCLIP
+		or mvtype == MOVETYPE_LADDER
+		or mvtype == MOVETYPE_CUSTOM
+		or mvtype == MOVETYPE_ISOMETRIC
+end
+
 pac.AddHook("Move", "custom_movement", function(ply, mv)
 	local self = ply.pac_movement
+
 	if not self then
 		if not ply.pac_custom_movement_reset then
-			ply:SetGravity(1)
-			ply:SetMoveType(MOVETYPE_WALK)
-			ply.pac_custom_movement_reset = true
-			if ply.pac_custom_movement_jump_height then
-				ply:SetJumpPower(ply.pac_custom_movement_jump_height)
-				ply.pac_custom_movement_jump_height = nil
+			if not badMovetype(ply) then
+				ply:SetGravity(1)
+				ply:SetMoveType(MOVETYPE_WALK)
+
+				if ply.pac_custom_movement_jump_height then
+					ply:SetJumpPower(ply.pac_custom_movement_jump_height)
+					ply.pac_custom_movement_jump_height = nil
+				end
 			end
+
+			ply.pac_custom_movement_reset = true
 		end
+
 		return
 	end
 
 	ply.pac_custom_movement_reset = nil
 	ply.pac_custom_movement_jump_height = ply.pac_custom_movement_jump_height or ply:GetJumpPower()
 
-	if ply:GetMoveType() == MOVETYPE_NOCLIP then return end
+	if badMovetype(ply) then return end
 
 	mv:SetForwardSpeed(0)
 	mv:SetSideSpeed(0)

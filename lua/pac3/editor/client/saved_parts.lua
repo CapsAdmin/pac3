@@ -10,6 +10,10 @@ local function add_expensive_submenu_load(pnl, callback)
 	end
 end
 
+file.CreateDir("pac3")
+file.CreateDir("pac3/__backup/")
+file.CreateDir("pac3/__backup_save/")
+
 function pace.SaveParts(name, prompt_name, override_part)
 	if not name or prompt_name then
 		Derma_StringRequest(
@@ -43,15 +47,36 @@ function pace.SaveParts(name, prompt_name, override_part)
 			end
 		end
 
-		data = hook.Run("pac_pace.SaveParts",data) or data
-
-		file.CreateDir("pac3")
-		file.CreateDir("pac3/__backup/")
-
+		data = hook.Run("pac_pace.SaveParts", data) or data
 
 		if not override_part and #file.Find("pac3/sessions/*", "DATA") > 0 and not name:find("/") then
 			pace.luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
 		else
+			if file.Exists("pac3/" .. name .. ".txt", "DATA") then
+				local date = os.date("%y-%m-%d-%H_%M_%S")
+				local read = file.Read("pac3/" .. name .. ".txt", "DATA")
+				file.Write("pac3/__backup_save/" .. name .. "_" .. date .. ".txt", read)
+
+				local files, folders = file.Find("pac3/__backup_save/*", "DATA")
+
+				if #files > 30 then
+					local targetFiles = {}
+
+					for i, filename in ipairs(files) do
+						local time = file.Time("pac3/__backup_save/" .. filename, "DATA")
+						table.insert(targetFiles, {"pac3/__backup_save/" .. filename, time})
+					end
+
+					table.sort(targetFiles, function(a, b)
+						return a[2] > b[2]
+					end)
+
+					for i = 31, #files do
+						file.Delete(targetFiles[i][1])
+					end
+				end
+			end
+
 			pace.luadata.WriteFile("pac3/" .. name .. ".txt", data)
 		end
 
@@ -60,6 +85,7 @@ function pace.SaveParts(name, prompt_name, override_part)
 end
 
 local last_backup
+local maxBackups = CreateConVar("pac_backup_limit", "100", {FCVAR_ARCHIVE}, "Maximal amount of backups")
 
 function pace.Backup(data, name)
 	name = name or ""
@@ -76,14 +102,8 @@ function pace.Backup(data, name)
 	if #data > 0 then
 
 		local files, folders = file.Find("pac3/__backup/*", "DATA")
-		--local newest_time,newest_name
-		if #files > 200 then
-			chat.AddText("PAC3 is trying to delete backup files (new system) but you have way too many for lua to delete because of the old system")
-			chat.AddText(
-				("Go to %s and delete everything in that folder! You should only get this warning once if you've used the SVN version of PAC3.")
-				:format(util.RelativePathToFull("lua/includes/init.lua"):gsub("\\", "/"):gsub("lua/includes/init.lua", "data/pac3/__backup/"))
-			)
-		elseif #files > 100 then
+
+		if #files > maxBackups:GetInt() then
 			local temp = {}
 			for key, name in pairs(files) do
 				local time = file.Time("pac3/__backup/" .. name, "DATA")
@@ -94,23 +114,14 @@ function pace.Backup(data, name)
 				return a.time > b.time
 			end)
 
-			for i = 100, #files do
+			for i = maxBackups:GetInt() + 1, #files do
 				file.Delete(temp[i].path, "DATA")
 			end
 		end
 
-		--if not newest_name then
-		--	for key, name in pairs(files) do
-		--		local time = file.Time("pac3/__backup/" .. name, "DATA")
-		--		if time > newest_time then
-		--			newest_time = time
-		--			newest_name = name
-		--		end
-		--	end
-		--end
-
 		local date = os.date("%y-%m-%d-%H_%M_%S")
 		local str = pace.luadata.Encode(data)
+
 		if str ~= last_backup then
 			file.Write("pac3/__backup/" .. (name=="" and name or (name..'_')) .. date .. ".txt", str)
 			last_backup = str
@@ -235,7 +246,7 @@ local function add_files(tbl, dir)
 
 	if folders then
 		for key, folder in pairs(folders) do
-			if folder == "__backup" or folder == "objcache" or folder == "__animations" then goto CONTINUE end
+			if folder == "__backup" or folder == "objcache" or folder == "__animations" or folder == "__backup_save" then goto CONTINUE end
 			tbl[folder] = {}
 			add_files(tbl[folder], dir .. "/" .. folder)
 			::CONTINUE::
@@ -413,15 +424,55 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 
 	add_expensive_submenu_load(pnl, function()
 		local files = file.Find("pac3/__backup/*", "DATA")
+		local files2 = {}
 
-		table.sort(files, function(a, b)
-			return file.Time("pac3/__backup/" .. a, "DATA") > file.Time("pac3/__backup/" .. b, "DATA")
+		for i, filename in ipairs(files) do
+			table.insert(files2, {filename, file.Time("pac3/__backup/" .. filename, "DATA")})
+		end
+
+		table.sort(files2, function(a, b)
+			return a[2] > b[2]
 		end)
 
-		for _, name in pairs(files) do
+		for _, data in pairs(files2) do
+			local name = data[1]
 			local full_path = "pac3/__backup/" .. name
 			local friendly_name = os.date("%m/%d/%Y %H:%M:%S ", file.Time(full_path, "DATA")) .. string.NiceSize(file.Size(full_path, "DATA"))
 			backups:AddOption(friendly_name, function() pace.LoadParts("__backup/" .. name, true) end)
+			:SetImage(pace.MiscIcons.outfit)
+		end
+	end)
+
+	local backups, pnl = menu:AddSubMenu(L"outfit backups")
+	pnl:SetImage(pace.MiscIcons.clone)
+	backups.GetDeleteSelf = function() return false end
+
+	add_expensive_submenu_load(pnl, function()
+		local files = file.Find("pac3/__backup_save/*", "DATA")
+		local files2 = {}
+
+		for i, filename in ipairs(files) do
+			table.insert(files2, {filename, file.Time("pac3/__backup_save/" .. filename, "DATA")})
+		end
+
+		table.sort(files2, function(a, b)
+			return a[2] > b[2]
+		end)
+
+		for _, data in pairs(files2) do
+			local name = data[1]
+			local stamp = data[2]
+			local nicename = name
+			local date = os.date("_%y-%m-%d-%H_%M_%S", stamp)
+
+			if nicename:find(date, 1, true) then
+				nicename = nicename:Replace(date, os.date(" %m/%d/%Y %H:%M:%S", stamp))
+			end
+
+			backups:AddOption(nicename:Replace(".txt", "") .. " (" .. string.NiceSize(file.Size("pac3/__backup_save/" .. name, "DATA")) .. ")",
+				function()
+					pace.LoadParts("__backup_save/" .. name, true)
+				end)
 			:SetImage(pace.MiscIcons.outfit)
 		end
 	end)

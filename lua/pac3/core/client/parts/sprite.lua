@@ -27,7 +27,7 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	if not self:GetSpritePath() then 
+	if not self:GetSpritePath() then
 		return "error"
 	end
 

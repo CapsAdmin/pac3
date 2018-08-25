@@ -171,9 +171,9 @@ function urltex.StartDownload(url, data)
 			return
 		end
 
-		-- give it some time.. IsLoading is sometimes lying
+		-- give it some time.. IsLoading is sometimes lying, especially on chromium branch
 		if not go and not pnl:IsLoading() then
-			time = pac.RealTime + 0.1
+			time = pac.RealTime + 0.4
 			go = true
 		end
 
