@@ -5,7 +5,9 @@
 	"ignore" :
 	[
 		".gitignore",
+		".editorconfig",
 		".git*",
+		".vscode/*",
 		"*.txt",
 		"*.md",
 		"*.bat",
