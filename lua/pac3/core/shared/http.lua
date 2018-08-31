@@ -22,12 +22,7 @@ local function get(url, cb, failcb)
 	})
 end
 
-function pac.HTTPGet(url, cb, failcb)
-	if not url or url:len() < 4 then
-		failcb("url length is less than 4 (" .. url .. ")", true)
-		return
-	end
-
+function pac.FixUrl(url)
 	url = url:Trim()
 
 	if url:find("dropbox", 1, true) then
@@ -35,22 +30,38 @@ function pac.HTTPGet(url, cb, failcb)
 		url = url:gsub([[^https?://dl.dropbox.com/]], [[https://www.dropbox.com/]])
 		url = url:gsub([[^https?://www.dropbox.com/s/(.+)%?dl%=[01]$]], [[https://dl.dropboxusercontent.com/s/%1]])
 		url = url:gsub([[^https?://www.dropbox.com/s/(.+)$]], [[https://dl.dropboxusercontent.com/s/%1]])
-	elseif url:find("drive.google.com", 1, true) and not url:find("export=download", 1, true) then
+		return url
+	end
+
+	if url:find("drive.google.com", 1, true) and not url:find("export=download", 1, true) then
 		local id =
 			url:match("https://drive.google.com/file/d/(.-)/") or
 			url:match("https://drive.google.com/file/d/(.-)$") or
 			url:match("https://drive.google.com/open%?id=(.-)$")
 
 		if id then
-			url = "https://drive.google.com/uc?export=download&id=" .. id
+			return "https://drive.google.com/uc?export=download&id=" .. id
 		end
-	elseif url:find("gitlab.com", 1, true) then
-		url = url:gsub("^(https?://.-/.-/.-/)blob", "%1raw")
+		return url
+	end
+
+	if url:find("gitlab.com", 1, true) then
+		return url:gsub("^(https?://.-/.-/.-/)blob", "%1raw")
 	end
 
 	url = url:gsub([[^http%://onedrive%.live%.com/redir?]],[[https://onedrive.live.com/download?]])
 	url = url:gsub("pastebin.com/([a-zA-Z0-9]*)$", "pastebin.com/raw.php?i=%1")
 	url = url:gsub("github.com/([a-zA-Z0-9_]+)/([a-zA-Z0-9_]+)/blob/", "github.com/%1/%2/raw/")
+	return url
+end
+
+function pac.HTTPGet(url, cb, failcb)
+	if not url or url:len() < 4 then
+		failcb("url length is less than 4 (" .. url .. ")", true)
+		return
+	end
+
+	url = pac.FixUrl(url)
 
 	local limit = GetConVarNumber("pac_webcontent_limit")
 	local sv_limit = GetConVarNumber("sv_pac_webcontent_limit")
