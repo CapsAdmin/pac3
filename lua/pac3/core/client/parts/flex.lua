@@ -46,6 +46,7 @@ function PART:UpdateFlex(flex, weight)
 	local ent = self:GetOwner(self.RootOwner)
 
 	if ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() > 0 then
+		ent.pac_flex_params = ent.pac_flex_params or {}
 		ent.pac_flex_list = ent.pac_flex_list or self:GetFlexList()
 
 		flex = flex or self.Flex
@@ -55,7 +56,11 @@ function PART:UpdateFlex(flex, weight)
 		flex = ent.pac_flex_list[flex] and ent.pac_flex_list[flex].i or tonumber(flex)
 
 		if type(flex) == "number" then
-			ent:SetFlexWeight(flex, weight)
+			if weight ~= 0 then
+				ent.pac_flex_params[flex] = weight
+			else
+				ent.pac_flex_params[flex] = nil
+			end
 		end
 	end
 end

@@ -34,8 +34,16 @@ do
 		local tbl = ply.pac_pose_params
 
 		if tbl then
-			for _, data in pairs(ply.pac_pose_params) do
+			for _, data in pairs(tbl) do
 				ply:SetPoseParameter(data.key, data.val)
+			end
+		end
+		
+		tbl = ply.pac_flex_params
+
+		if tbl then
+			for flex, weight in pairs(tbl) do
+				ply:SetFlexWeight(flex, weight)
 			end
 		end
 
