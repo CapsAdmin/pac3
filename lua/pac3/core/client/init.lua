@@ -19,7 +19,7 @@ do
 	function pac.Enable()
 		-- add all the hooks back
 		for _, data in pairs(pac.added_hooks) do
-			hook.Add(data.event_name, data.id, data.func)
+			hook.Add(data.event_name, data.id, data.func, data.priority)
 		end
 
 		pac.CallHook("Enable")

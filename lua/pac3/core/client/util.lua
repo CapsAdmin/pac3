@@ -502,14 +502,18 @@ end
 do -- hook helpers
 	pac.added_hooks = pac.added_hooks or {}
 
-	function pac.AddHook(event_name, id, func)
+	function pac.AddHook(event_name, id, func, priority)
 		id = "pac_" .. id
 
-		if pac.IsEnabled() then
-			hook.Add(event_name, id, func)
+		if not DLib and not ULib then
+			priority = nil
 		end
 
-		pac.added_hooks[event_name .. id] = {event_name = event_name, id = id, func = func}
+		if pac.IsEnabled() then
+			hook.Add(event_name, id, func, priority)
+		end
+
+		pac.added_hooks[event_name .. id] = {event_name = event_name, id = id, func = func, priority = priority}
 	end
 
 	function pac.RemoveHook(event_name, id)

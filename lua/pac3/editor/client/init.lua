@@ -209,6 +209,8 @@ do -- forcing hooks
 	}
 
 	function pace.DisableExternalHooks()
+		if DLib or ULib then return end -- hook with priority
+
 		for _, event in pairs(pace.ExternalHooks) do
 			local hooks = hook.GetTable()[event]
 
@@ -227,6 +229,8 @@ do -- forcing hooks
 	end
 
 	function pace.RestoreExternalHooks()
+		if DLib or ULib then return end -- hook with priority
+
 		if pace.OldHooks then
 			for event, hooks in pairs(pace.OldHooks) do
 				for name, func in pairs(hooks) do

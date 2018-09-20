@@ -18,16 +18,23 @@ function pac.CallHook(str, ...)
 	hook.Call("pac_" .. str, GAMEMODE, ...)
 end
 
-function pac.AddHook(str, id, func)
+function pac.AddHook(str, id, func, priority)
 	id = "pac_" .. id
 
+	if not DLib and not ULib then
+		priority = nil
+	end
+
 	hook.Add(str, id, function(...)
-		local args = {pcall(func, ...)}
-		if not args[1] then
-			ErrorNoHalt(args[2] .. "\n")
+		local status, a, b, c, d, e, f, g = pcall(func, ...)
+
+		if not status then
+			pac.Message('Error on hook ' .. str .. ' (' .. id .. ')! ', a)
+			return
 		end
-		return unpack(args, 2)
-	end)
+
+		return a, b, c, d, e, f, g
+	end, priority)
 end
 
 function pac.RemoveHook(str, id)
