@@ -62,6 +62,25 @@ function PART:UpdateFlex(flex, weight)
 				ent.pac_flex_params[flex] = nil
 			end
 		end
+
+		self.flex_ent = ent
+		self.flex_params = ent.pac_flex_params
+	end
+end
+
+function PART:OnDraw(owner, pos, ang)
+	if not IsValid(self.flex_ent) then return end
+
+	for k, v in pairs(self.flex_params) do
+		self.flex_ent:SetFlexWeight(k, v)
+	end
+end
+
+function PART:OnBuildBonePositions()
+	if not IsValid(self.flex_ent) then return end
+
+	for k, v in pairs(self.flex_params) do
+		self.flex_ent:SetFlexWeight(k, v)
 	end
 end
 
