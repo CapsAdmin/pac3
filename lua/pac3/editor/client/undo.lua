@@ -202,9 +202,9 @@ local last = 0
 local function thinkUndo()
 	-- whooaaa
 	-- if input.IsControlDown() and input.IsKeyDown(KEY_X) then
-	-- 	pace.UndoPosition = math.Round((gui.MouseY() / ScrH()) * #pace.UndoHistory)
-	-- 	pace.ApplyUndo()
-	-- 	return
+	--  pace.UndoPosition = math.Round((gui.MouseY() / ScrH()) * #pace.UndoHistory)
+	--  pace.ApplyUndo()
+	--  return
 	-- end
 
 	if not input.IsKeyDown(KEY_Z) and not input.IsKeyDown(KEY_Y) then
@@ -380,6 +380,7 @@ end
 
 function pace.UndoThink()
 	if not pace.IsActive() then return end
+	if not pace.Focused then return end
 	if IsValid(vgui.GetKeyboardFocus()) and vgui.GetKeyboardFocus():GetClassName():find('Text') then return end
 	thinkUndo()
 	thinkCopy()
