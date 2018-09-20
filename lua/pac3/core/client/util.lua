@@ -786,34 +786,36 @@ do
 end
 
 function pac.Handleurltex(part, url, callback, shader, additionalData)
-	if url and pac.urltex and url:find("http") then
-		local skip_cache = url:sub(1,1) == "_"
+	if not url or not pac.urltex or not url:find("http") then return false end
+	local skip_cache = url:sub(1,1) == "_"
 
-		local urlMatch = url:match("http[s]-://.+/.-%.%a+")
+	local urlMatch = url:match("http[s]-://.+/.-%.%a+")
 
-		if urlMatch then
-			pac.urltex.GetMaterialFromURL(
-				url,
-				function(mat, tex)
-					if part:IsValid() then
-						if callback then
-							callback(mat, tex)
-						else
-							part.Materialm = mat
-							part:CallEvent("material_changed")
-						end
-						pac.dprint("set custom material texture %q to %s", url, part:GetName())
-					end
-				end,
-				skip_cache,
-				shader,
-				nil,
-				nil,
-				additionalData
-			)
-			return true
-		end
-	end
+	if not urlMatch then return false end
+
+	pac.urltex.GetMaterialFromURL(
+		pac.FixUrl(url),
+
+		function(mat, tex)
+			if not part:IsValid() then return end
+
+			if callback then
+				callback(mat, tex)
+			else
+				part.Materialm = mat
+				part:CallEvent("material_changed")
+			end
+
+			pac.dprint("set custom material texture %q to %s", url, part:GetName())
+		end,
+
+		skip_cache,
+		shader,
+		nil,
+		nil,
+		additionalData
+	)
+	return true
 end
 
 local mat

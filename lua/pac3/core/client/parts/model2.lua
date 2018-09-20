@@ -131,7 +131,13 @@ function PART:SetMaterial(str)
 		end
 	else
 		self.material_override_self = self.material_override_self or {}
-		self.material_override_self[0] = pac.Material(str, self)
+
+		if not pac.Handleurltex(self, str, function(mat)
+			self.material_override_self = self.material_override_self or {}
+			self.material_override_self[0] = mat
+		end) then
+			self.material_override_self[0] = pac.Material(str, self)
+		end
 	end
 
 	if self.material_override_self and not next(self.material_override_self) then
@@ -154,8 +160,14 @@ function PART:SetMaterials(str)
 
 	for i = 1, #materials do
 		local path = tbl[i]
+
 		if path and path ~= "" then
-			self.material_override_self[i] = pac.Material(path, self)
+			if not pac.Handleurltex(self, path, function(mat)
+				self.material_override_self = self.material_override_self or {}
+				self.material_override_self[i] = mat
+			end) then
+				self.material_override_self[i] = pac.Material(path, self)
+			end
 		else
 			self.material_override_self[i] = nil
 		end
