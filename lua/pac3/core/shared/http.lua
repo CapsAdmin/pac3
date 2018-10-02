@@ -1,8 +1,8 @@
 CreateConVar("pac_webcontent_limit", "-1", {FCVAR_ARCHIVE}, "webcontent limit, -1 = unlimited, 1024 = 1mb")
 CreateConVar("pac_webcontent_allow_no_content_length", "0", {FCVAR_ARCHIVE}, "allow downloads with no content length")
 
-CreateConVar("sv_pac_webcontent_limit", "-1", {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "webcontent limit, -1 = unlimited, 1024 = 1mb")
-CreateConVar("sv_pac_webcontent_allow_no_content_length", "-1", {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow downloads with no content length")
+CreateConVar("sv_pac_webcontent_limit", "-1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "webcontent limit, -1 = unlimited, 1024 = 1mb")
+CreateConVar("sv_pac_webcontent_allow_no_content_length", "-1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow downloads with no content length")
 
 local function get(url, cb, failcb)
 	return HTTP({
