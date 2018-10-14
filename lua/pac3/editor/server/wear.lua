@@ -335,9 +335,14 @@ util.AddNetworkString("pac_submit")
 timer.Create("pac_submit_spam", 3, 0, function()
 	for k, ply in ipairs(player.GetAll()) do
 		ply.pac_submit_spam = math.max((ply.pac_submit_spam or 0) - 5, 0)
+		ply.pac_submit_spam2 = math.max((ply.pac_submit_spam2 or 0) - 5, 0)
 
 		if ply.pac_submit_spam_msg then
 			ply.pac_submit_spam_msg = ply.pac_submit_spam >= 20
+		end
+
+		if ply.pac_submit_spam_msg2 then
+			ply.pac_submit_spam_msg2 = ply.pac_submit_spam2 >= 20
 		end
 	end
 end)
@@ -396,6 +401,22 @@ end
 
 local function pac_update_playerfilter(len, ply)
 	if not IsValid(ply) then return end
+
+	if pac_submit_spam:GetBool() then
+		if player.GetCount() > 4 and len < 16 then return end
+
+		ply.pac_submit_spam2 = ply.pac_submit_spam2 + 1
+
+		if ply.pac_submit_spam2 >= pac_submit_limit:GetInt() / 2 then
+			if not ply.pac_submit_spam_msg2 then
+				pac.Message("Player ", ply, " is spamming pac_update_playerfilter!")
+				ply.pac_submit_spam_msg2 = true
+			end
+
+			return
+		end
+	end
+
 	local filter = {}
 	local readnext = net.ReadUInt(32)
 
