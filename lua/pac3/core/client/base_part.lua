@@ -111,8 +111,7 @@ function PART:SetBlendMode(str)
 	if tbl[4] then dst_alpha = blend_modes[tbl[4]] end
 
 	if src_color and dst_color then
-		-- GMOD Bug: Blend overrides causing issues. Multicore rendering bug? https://github.com/Facepunch/garrysmod-issues/issues/3396
-		--self.blend_override = {src_color, dst_color, src_alpha, dst_alpha, tbl[5]}
+		self.blend_override = {src_color, dst_color, src_alpha, dst_alpha, tbl[5]}
 	else
 		self.blend_override = nil
 	end
