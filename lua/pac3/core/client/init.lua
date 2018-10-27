@@ -82,7 +82,7 @@ pac.animations = include("pac3/libraries/animations.lua")
 include("parts.lua")
 
 do -- include("part_pool.lua")
-	local code = file.Read("pac3/core/client/part_pool.lua", "LUA")
+	local code = include("part_pool.lua")
 
 	local safe = {
 		ent_parts = true,
