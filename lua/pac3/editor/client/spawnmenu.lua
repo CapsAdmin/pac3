@@ -74,9 +74,9 @@ local function rebuildPlayerList()
 					if pac_wear_friends_only:GetBool() then
 						check:SetChecked(ply:GetFriendStatus() ~= "friend")
 					elseif newValue then
-						cookie.Delete("pac3_wear_block_" .. ply:UniqueID())
-					else
 						cookie.Set("pac3_wear_block_" .. ply:UniqueID(), '1')
+					else
+						cookie.Delete("pac3_wear_block_" .. ply:UniqueID())
 					end
 				end
 			end
@@ -112,9 +112,9 @@ local function rebuildPlayerList2()
 					if pac_wear_friends_only:GetBool() then
 						check:SetChecked(ply:GetFriendStatus() ~= "friend")
 					elseif newValue then
-						cookie.Delete("pac3_wear_wl_" .. ply:UniqueID())
-					else
 						cookie.Set("pac3_wear_wl_" .. ply:UniqueID(), '1')
+					else
+						cookie.Delete("pac3_wear_wl_" .. ply:UniqueID())
 					end
 
 					pac.UseWhitelistUpdatesPerPlayer(ply)
