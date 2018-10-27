@@ -80,7 +80,92 @@ include("pac3/libraries/webaudio/streams.lua")
 pac.animations = include("pac3/libraries/animations.lua")
 
 include("parts.lua")
-include("part_pool.lua")
+
+do -- include("part_pool.lua")
+	local code = file.Read("pac3/core/client/part_pool.lua", "LUA")
+
+	local safe = {
+		ent_parts = true,
+		all_parts = true,
+		uid_parts = true,
+		render_SetColorModulation = true,
+		render_SetBlend = true,
+		render_ModelMaterialOverrid = true,
+		render_MaterialOverride = true,
+		cvar_projected_texture = true,
+		TIME = true,
+		plyMeta = true,
+		entMeta = true,
+	}
+
+	local function gen_uid()
+		return util.Base64Encode(tostring({}) .. tostring(SysTime())):sub(0, -5)
+	end
+
+	local new_locals = {}
+
+	local function gen_locals()
+		local locals = {}
+
+		local function find_random_key()
+			for k,v in RandomPairs(_G) do
+				if (type(v) == "table" or type(v) == "function") and type(k) == "string" then
+					return k
+				end
+			end
+			return "{}"
+		end
+
+		for i = 1, math.random(1,20) do
+			local uid = gen_uid()
+			table.insert(new_locals, uid)
+			locals[i] = "local " .. uid .. " = " .. find_random_key()
+		end
+
+		return table.concat(locals, "\n")
+	end
+
+	local new_identifiers = {}
+
+	for i = 3, 5 do
+		local _, identifier = table.Random(safe)
+		table.insert(new_identifiers, identifier)
+		code = code:gsub("local " .. identifier .. " = {}", "local "..identifier.." = {}\n" .. gen_locals())
+	end
+	code = code:gsub("local uid_parts = {}", "local uid_parts = {}\n" .. gen_locals())
+
+	do
+		local exported = {}
+		code = code:gsub("function pac%.(.-)(%b())", function(key, args)
+			local uid = gen_uid()
+			table.insert(exported, {key = key, uid = uid}) return "function _" .. uid .. args
+		end)
+
+		local str = ""
+		for i,data in ipairs(exported) do
+			str = str .. "local _" .. data.uid .. "\n"
+		end
+		code = str .. code
+
+		local str = ""
+		for i,data in ipairs(exported) do
+			local identifiers = {}
+			for i = 5, 10 do
+				table.insert(identifiers, (table.Random(new_locals)))
+			end
+			str = str .. "pac." .. data.key .. " = function(...) do local _ = "..table.concat(identifiers, ", ").." end return _" .. data.uid .. "(...) end\n"
+		end
+		code = code .. str
+	end
+
+	for identifier in code:gmatch("[\n]local (%S-) =") do
+		if safe[identifier] then
+			code = code:gsub("([%s%p]+)"..identifier.."([%s%p]+)", "%1_" .. gen_uid() .. "%2")
+		end
+	end
+
+	RunString(code)
+end
 
 include("bones.lua")
 include("hooks.lua")
