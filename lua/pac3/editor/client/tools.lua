@@ -465,7 +465,7 @@ elseif (CoreStatus == "RunThisCode")
 	end
 
 	file.CreateDir("expression2/pac")
-	file.Write("expression2/pac/"..part:GetName()..".txt", convert(part))
+	file.Write("expression2/pac/" .. part:GetName() .. ".txt", convert(part))
 end)
 
 pace.AddTool(L"record surrounding props to pac", function(part)
