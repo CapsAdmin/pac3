@@ -416,10 +416,8 @@ elseif (CoreStatus == "RunThisCode")
 	]]
 
 	-- pos angle normal formatting functions
-	local function tovec(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
-	local function tovec2(vec) return ("%s, %s, %s"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
-	local function toang(vec) return ("ang(%s, %s, %s)"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
-	local function toang2(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
+	local function tovec(vec) return ("%s, %s, %s"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
+	local function toang(vec) return ("%s, %s, %s"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
 
 	-- converting holograms to strings using templates and sub
 	local function part_to_holo(part)
@@ -429,7 +427,7 @@ elseif (CoreStatus == "RunThisCode")
 			if clip.ClassName == "clip" and not clip:IsHidden() then
 				local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
 				local normal = ang:Forward()
-				holo_str = holo_str .. "   CN++, CT[CN,table] = table(I, " .. CI .. ", " .. tovec(pos + normal) .. ", " .. toang2(normal) .. ")\n"
+				holo_str = holo_str .. "   CN++, CT[CN,table] = table(I, " .. CI .. ", vec(" .. tovec(pos + normal) .. "), vec(" .. tovec(normal) .. "))\n"
 			end
 		end
 
@@ -438,10 +436,10 @@ elseif (CoreStatus == "RunThisCode")
 
 		local holo = holo_str
 		:gsub("ALPHA", part:GetAlpha()*255)
-		:gsub("COLOR", tovec2(part:GetColor()))
-		:gsub("SCALE", tovec(Vector(scale.x, scale.y, scale.z)))
-		:gsub("ANGLES", toang(part:GetAngles()))
-		:gsub("POSITION", tovec(part:GetPosition()))
+		:gsub("COLOR", tovec(part:GetColor()))
+		:gsub("SCALE", "vec(" .. tovec(Vector(scale.x, scale.y, scale.z)) .. ")")
+		:gsub("ANGLES", "ang(" .. toang(part:GetAngles()) .. ")")
+		:gsub("POSITION", "vec(" .. tovec(part:GetPosition()) .. ")")
 		:gsub("MATERIAL", ("%q"):format(part:GetMaterial()))
 		:gsub("MODEL", ("%q"):format(part:GetModel()))
 		:gsub("SKIN", part:GetSkin())
