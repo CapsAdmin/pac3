@@ -279,7 +279,7 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 	local ref_str =
 	[[
 
-	   I++, HN++, HT[HN,table] = table(I, Base, 0, POSITION, ANGLES, SCALE, MODEL, MATERIAL, vec4(COLOR, ALPHA), SKIN)
+	   I++, HN++, HT[HN,table] = table(I, Base, Base, 0, POSITION, ANGLES, SCALE, MODEL, MATERIAL, vec4(COLOR, ALPHA), SKIN)
 	]]
 
 -- Header string for e2 with spawn code
@@ -301,7 +301,7 @@ if (first() | dupefinished())
     ToggleShading = 0
 
 	   #- Data structure
-	   #- HN++, HT[HN, table] = table(Index, Parent, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin, Bodygroup Index, Bodygroup Sub-Index)
+	   #- HN++, HT[HN, table] = table(Index, Local Entity (Relative position), Parent, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin, Bodygroup Index, Bodygroup Sub-Index)
 
 	   # # # # # # # # # HOLOGRAM DATA START # # # # # # # # #
 	]]
@@ -315,18 +315,18 @@ if (first() | dupefinished())
 	   #- Create a hologram from data array
     function table:holo() {
         local Index = This[1, number] * Indices
-        local Entity = This[2, entity]
-        local Parent = This[2, entity]
-        local Rescale = (This[6, vector] / (This[3, number] ? 12 : 1)) * ScaleFactor
+        if (This[2,entity]:isValid()) { Entity = This[2,entity] } else { Entity = holoEntity(This[2,number]) }
+        if (This[3,entity]:isValid()) { Parent = This[3,entity] } else { Parent = holoEntity(This[3,number]) }
+        local Rescale = (This[7, vector] / (This[4, number] ? 12 : 1)) * ScaleFactor
         
-        holoCreate(Index, Entity:toWorld(This[4, vector] * ScaleFactor), Rescale, Entity:toWorld(This[5, angle]), DefaultColor, This[7, string] ?: "cube")
+        holoCreate(Index, Entity:toWorld(This[5, vector] * ScaleFactor), Rescale, Entity:toWorld(This[6, angle]), DefaultColor, This[8, string] ?: "cube")
         holoParent(Index, Parent)
         
         if (ToggleColMat) {
-            holoMaterial(Index, This[8, string])
-            holoColor(Index, This[9, vector4])
-            holoSkin(Index, This[10, number])
-            holoBodygroup(Index, This[11, number], This[12, number])
+            holoMaterial(Index, This[9, string])
+            holoColor(Index, This[10, vector4])
+            holoSkin(Index, This[11, number])
+            holoBodygroup(Index, This[12, number], This[13, number])
         }
         
         if (ToggleShading) { holoDisableShading(Index, 1) }
@@ -409,7 +409,7 @@ elseif (CoreStatus == "InitPostSpawn")
 }
 elseif (CoreStatus == "RunThisCode")
 {
-    # This is your interal ran section of the code.
+    # This is your "interval()" ran section of the code.
 
     runOnTick(0)
 }
