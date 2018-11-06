@@ -275,14 +275,14 @@ end
 
 pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part)
 
--- Hologram template string for subsitution of data
+-- hologram template string for subsitution of data
 	local ref_str =
 	[[
 
 	   I++, HN++, HT[HN,table] = table(I, Base, Base, 0, POSITION, ANGLES, SCALE, MODEL, MATERIAL, vec4(COLOR, ALPHA), SKIN)
 	]]
 
--- Header string for e2 with spawn code
+-- header string for e2 with spawn code
 	local header_str =
 	[[
 @name [NAME]
@@ -302,7 +302,8 @@ if (first() | dupefinished())
 
 	   #- Data structure
 	   #- HN++, HT[HN, table] = table(Index, Local Entity (Relative position), Parent, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin, Bodygroup Index, Bodygroup Sub-Index)
-
+	   #- CN++, CT[CN, table] = table(I, Clip Index, Pos, Ang)
+	   
 	   # # # # # # # # # HOLOGRAM DATA START # # # # # # # # #
 	]]
 
