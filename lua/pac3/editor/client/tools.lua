@@ -302,7 +302,7 @@ if (first() | dupefinished()) {
 	   #- Data structure
 	   #- HN++, HT[HN, table] = table(Index, Local Entity (Relative position), Parent, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin, Bodygroup Index, Bodygroup Sub-Index)
 	   #- CN++, CT[CN, table] = table(I, Clip Index, Pos, Ang)
-	   
+
 	   # # # # # # # # # HOLOGRAM DATA START # # # # # # # # #
 	]]
 
@@ -318,41 +318,41 @@ if (first() | dupefinished()) {
         if (This[2,entity]:isValid()) { Entity = This[2,entity] } else { Entity = holoEntity(This[2,number]) }
         if (This[3,entity]:isValid()) { Parent = This[3,entity] } else { Parent = holoEntity(This[3,number]) }
         local Rescale = (This[7, vector] / (This[4, number] ? 12 : 1)) * ScaleFactor
-        
+
         holoCreate(Index, Entity:toWorld(This[5, vector] * ScaleFactor), Rescale, Entity:toWorld(This[6, angle]), DefaultColor, This[8, string] ?: "cube")
         holoParent(Index, Parent)
-        
+
         if (ToggleColMat) {
             holoMaterial(Index, This[9, string])
             holoColor(Index, This[10, vector4])
             holoSkin(Index, This[11, number])
             holoBodygroup(Index, This[12, number], This[13, number])
         }
-        
+
         if (ToggleShading) { holoDisableShading(Index, 1) }
     }
-    
+
     #- Clip a hologram from data array
     function table:clip() {
         holoClipEnabled(This[1, number] * Indices, This[2, number], 1)
         holoClip(This[1, number] * Indices, This[2, number], This[3, vector] * ScaleFactor, This[4, vector], 0)
     }
-    
-    #- Load the contraption 
+
+    #- Load the contraption
     function loadContraption() {
         switch (SpawnStatus) {
-            case "InitSpawn", 
+            case "InitSpawn",
                 if (clk("Start")) {
-                    SpawnStatus = "LoadHolograms"    
+                    SpawnStatus = "LoadHolograms"
                 }
                 Chip:soundPlay("Blip", 0, "@^garrysmod/content_downloaded.wav", 0.212)
             break
-    
-            case "LoadHolograms", 
-                while (perf() & holoCanCreate() &  SpawnCounter < HN) { 
+
+            case "LoadHolograms",
+                while (perf() & holoCanCreate() &  SpawnCounter < HN) {
                     SpawnCounter++
                     HT[SpawnCounter, table]:holo()
-    
+
                     if (SpawnCounter >= HN) {
                         SpawnStatus = CN > 0 ? "LoadClips" : "PrintStatus"
                         SpawnCounter = 0
@@ -360,12 +360,12 @@ if (first() | dupefinished()) {
                     }
                 }
             break
-    
+
             case "LoadClips",
                 while (perf() & SpawnCounter < CN) {
                     SpawnCounter++
                     CT[SpawnCounter, table]:clip()
-    
+
                     if (SpawnCounter >= CN) {
                         SpawnStatus = "PrintStatus"
                         SpawnCounter = 0
@@ -373,24 +373,24 @@ if (first() | dupefinished()) {
                     }
                 }
             break
-    
-            case "PrintStatus", 
+
+            case "PrintStatus",
                 printColor( vec(222,37,188), "PAC to Holo: ", vec(255,255,255), "Loaded " + HN + " holograms and " + CN + " clips." )
-    
+
                 HT:clear()
                 CT:clear()
-    
+
                 CoreStatus = "InitPostSpawn"
                 SpawnStatus = ""
-            break 
+            break
         }
     }
-    
+
     CoreStatus = "InitSpawn"
     SpawnStatus = "InitSpawn"
-    
+
     DefaultColor = vec(255, 255, 255)
-    
+
     runOnTick(1)
     timer("Start", 500)
 }
