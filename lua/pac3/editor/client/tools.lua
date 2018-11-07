@@ -279,7 +279,7 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 	local ref_str =
 	[[
 
-	   I++, HN++, HT[HN,table] = table(I, Base, Base, 0, POSITION, ANGLES, SCALE, MODEL, MATERIAL, vec4(COLOR, ALPHA), SKIN)
+    I++, HN++, HT[HN,table] = table(I, Base, Base, 0, POSITION, ANGLES, SCALE, MODEL, MATERIAL, vec4(COLOR, ALPHA), SKIN)
 	]]
 
 -- header string for e2 with spawn code
@@ -291,8 +291,7 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 @persist [Base]:entity [ScaleFactor ToggleColMat ToggleShading] Indices
 @persist [DefaultColor DefaultScale]:vector
 
-if (first() | dupefinished())
-{
+if (first() | dupefinished()) {
     Chip = entity()
 
     Indices = 1
@@ -398,18 +397,15 @@ if (first() | dupefinished())
 
 # Credit to Shadowscion for the initial base hologram spawning code.
 
-elseif (CoreStatus == "InitSpawn")
-{
+elseif (CoreStatus == "InitSpawn") {
     loadContraption()
 }
-elseif (CoreStatus == "InitPostSpawn")
-{
-	   # This is your "if (first())" section of the code.
+elseif (CoreStatus == "InitPostSpawn") {
+    # This is your "if (first())" section of the code.
 
     CoreStatus = "RunThisCode"
 }
-elseif (CoreStatus == "RunThisCode")
-{
+elseif (CoreStatus == "RunThisCode") {
     # This is your "interval()" ran section of the code.
 
     runOnTick(0)
@@ -428,7 +424,7 @@ elseif (CoreStatus == "RunThisCode")
 			if clip.ClassName == "clip" and not clip:IsHidden() then
 				local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
 				local normal = ang:Forward()
-				holo_str = holo_str .. "   CN++, CT[CN,table] = table(I, " .. CI .. ", vec(" .. tovec(pos + normal) .. "), vec(" .. tovec(normal) .. "))\n"
+				holo_str = holo_str .. "    CN++, CT[CN,table] = table(I, " .. CI .. ", vec(" .. tovec(pos + normal) .. "), vec(" .. tovec(normal) .. "))\n"
 			end
 		end
 
