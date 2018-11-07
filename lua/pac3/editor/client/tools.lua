@@ -323,8 +323,6 @@ if (first() | dupefinished()) {
 	   #- --> /yourfolder/
 	   #-     --> /hologram_data.txt & hologram_spawner.txt
 
-	   #- You can find an example here.
-
 	   # # # # # # # # # HOLOGRAM DATA START # # # # # # # # #
 	]]
 
