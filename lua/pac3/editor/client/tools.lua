@@ -291,15 +291,15 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 @persist [ScaleFactor ToggleColMat ToggleShading] Indices
 @persist [DefaultColor DefaultScale]:vector
 #- Hologram index directives
-@persist []
+@persist
 
 if (first() | dupefinished()) {
-    Chip = entity()
+    Chip = entity(), Base = entity() #- Remove to use wired entity.
 
-    Indices = 1
-    ScaleFactor = 1
-    ToggleColMat = 1
-    ToggleShading = 0
+    ScaleFactor = 1 #- Scale multiplier.
+    ToggleColMat = 1 #- Toggle for materials and colours.
+    ToggleShading = 0 #- Toggle for shading.
+	Indices = 1
 
 	   #- Data structure
 	   #- HN++, HT[HN, table] = table(Index, Local Entity (Entity:toWorld()), Parent Entity, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin)
@@ -310,6 +310,20 @@ if (first() | dupefinished()) {
 	   #- add a ", I_HologramName"" to the end of that holograms data line with "HologramName" being of your choosing.
 	   #- Finally add this to a @persist directive eg "@persist [I_HologramName]", now you can address this in your holo() code.
 	   #- For example, "holoBodygroup(I_HologramName, 2, 3)" which would be put in the "InitPostSpawn" section.
+
+	   #- Advanced functionality
+	   #- If you wish to take this system to the next level, you can. Instead of using multiple e2s for each "set" of holograms,
+	   #- instead save each set of hologram data to a new file inside a folder of your liking. You can now use the #include "" directive
+	   #- to bring that hologram data into a single e2 with this spawn code and compile multiple files into a single e2.
+	   #- This has many benefits such as 1 interval instead of many, auto updating due to the chip pulling saved data and increased
+	   #- organisation!
+
+	   #- Your file hierarchy should look like this.
+	   #- expression2
+	   #- --> YourFolder
+	   #-     --> hologram data & hologram spawner
+
+	   #- You can find an example here.
 
 	   # # # # # # # # # HOLOGRAM DATA START # # # # # # # # #
 	]]
@@ -415,8 +429,7 @@ elseif (CoreStatus == "RunThisCode") {
     #- This is your "interval()" ran section of the code.
 
     runOnTick(0)
-}
-	]]
+}]]
 
 	local function tovec(vec) return ("%s, %s, %s"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
 	local function toang(vec) return ("%s, %s, %s"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
