@@ -446,7 +446,7 @@ elseif (CoreStatus == "RunThisCode") {
 		local scale = part:GetSize() * part:GetScale()
 
 		local holo = str_holo
-		:gsub("ALPHA", part:GetAlpha() * 255)
+		:gsub("ALPHA", math.Round(part:GetAlpha() * 255, 4))
 		:gsub("COLOR", tovec(part:GetColor()))
 		:gsub("SCALE", "vec(" .. tovec(Vector(scale.x, scale.y, scale.z)) .. ")")
 		:gsub("ANGLES", "ang(" .. toang(part:GetAngles()) .. ")")
