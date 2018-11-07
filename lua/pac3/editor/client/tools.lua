@@ -66,7 +66,7 @@ pace.AddTool(L"replace ogg with webaudio", function(part, suboption)
 end)
 
 pace.AddTool(L"copy global id", function(obj)
-	SetClipboardText("\""..obj.UniqueID.."\"")
+	SetClipboardText("\"" .. obj.UniqueID .. "\"")
 end)
 
 pace.AddTool(L"use legacy scale", function(part, suboption)
@@ -102,7 +102,7 @@ pace.AddTool(L"scale this and children", function(part, suboption)
 	end)
 end)
 
-pace.AddTool(L"free children from part", function(part, suboption)
+pace.AddTool(L"free children from part" ,function(part, suboption)
 	if part:IsValid() then
 		local grandparent = part:GetParent()
 		local parent = part
@@ -159,13 +159,13 @@ pace.AddTool(L"import editor tool from file...", function()
 	local allowcslua = GetConVar("sv_allowcslua")
 	if allowcslua:GetBool() then
 		Derma_StringRequest(L"filename", L"relative to garrysmod/data/pac3_editor/tools/", "mytool.txt", function(toolfile)
-			if file.Exists("pac3_editor/tools/"..toolfile,"DATA") then
-				local toolstr = file.Read("pac3_editor/tools/"..toolfile,"DATA")
-				ctoolstr=[[pace.AddTool(L"]]..toolfile..[[",function(part, suboption) ]]..toolstr.." end)"
+			if file.Exists("pac3_editor/tools/" .. toolfile,"DATA") then
+				local toolstr = file.Read("pac3_editor/tools/" .. toolfile,"DATA")
+				ctoolstr = [[pace.AddTool(L"]] .. toolfile .. [[", function(part, suboption) ]] .. toolstr .. " end)"
 				RunStringEx(ctoolstr, "pac_editor_import_tool")
 				LocalPlayer():ConCommand("pac_editor") --close and reopen editor
 			else
-				Derma_Message("File ".."garrysmod/data/pac3_editor/tools/"..toolfile.." not found.","Error: File Not Found","OK")
+				Derma_Message("File " .. "garrysmod/data/pac3_editor/tools/" .. toolfile .. " not found.","Error: File Not Found","OK")
 			end
 		end)
 	else
@@ -179,13 +179,13 @@ pace.AddTool(L"import editor tool from url...", function()
 			function ToolDLSuccess(body)
 				local toolname = pac.PrettifyName(toolurl:match(".+/(.-)%."))
 				local toolstr = body
-				ctoolstr=[[pace.AddTool(L"]]..toolname..[[",function(part, suboption) ]]..toolstr.." end)"
+				ctoolstr = [[pace.AddTool(L"]] .. toolname .. [[", function(part, suboption)]] .. toolstr .. " end)"
 				RunStringEx(ctoolstr, "pac_editor_import_tool")
 				LocalPlayer():ConCommand("pac_editor") --close and reopen editor
 			end
 
 			pac.HTTPGet(toolurl,ToolDLSuccess,function(err)
-				Derma_Message("HTTP Request Failed for "..toolurl,err,"OK")
+				Derma_Message("HTTP Request Failed for " .. toolurl,err,"OK")
 			end)
 		end)
 	else
@@ -255,9 +255,9 @@ do
 
 	local function HSVToNames(h,s,v)
 		return
-			hue[math.Round((1+(h/360)*#hue))] or hue[1],
-			sat[math.ceil(s*#sat)] or sat[1],
-			val[math.ceil(v*#val)] or val[1]
+			hue[math.Round(1 + (h / 360) * #hue)] or hue[1],
+			sat[math.ceil(s * #sat)] or sat[1],
+			val[math.ceil(v * #val)] or val[1]
 	end
 
 	local function ColorToNames(c)
@@ -426,7 +426,7 @@ elseif (CoreStatus == "RunThisCode") {
 		local scale = part:GetSize() * part:GetScale()
 
 		local holo = holo_str
-		:gsub("ALPHA", part:GetAlpha()*255)
+		:gsub("ALPHA", part:GetAlpha() * 255)
 		:gsub("COLOR", tovec(part:GetColor()))
 		:gsub("SCALE", "vec(" .. tovec(Vector(scale.x, scale.y, scale.z)) .. ")")
 		:gsub("ANGLES", "ang(" .. toang(part:GetAngles()) .. ")")
@@ -484,13 +484,13 @@ pace.AddTool(L"record surrounding props to pac", function(part)
 			mdl:SetAngles(lang)
 			local c = ent:GetColor()
 			mdl:SetColor(Vector(c.r,c.g,c.b))
-			mdl:SetAlpha(c.a/255)
+			mdl:SetAlpha(c.a / 255)
 			mdl:SetName(ent:GetModel():match(".+/(.-)%.mdl"))
 		end
 	end
 end)
 
-pace.AddTool(L"populate with bones",function(part,suboption)
+pace.AddTool(L"populate with bones", function(part,suboption)
 	local target = part.GetEntity or part.GetOwner
 	local ent = target(part)
 	local bones = pac.GetModelBones(ent)
@@ -506,7 +506,7 @@ pace.AddTool(L"populate with bones",function(part,suboption)
 	pace.RefreshTree(true)
 end)
 
-pace.AddTool(L"populate with dummy bones",function(part,suboption)
+pace.AddTool(L"populate with dummy bones", function(part,suboption)
 	local target = part.GetEntity or part.GetOwner
 	local ent = target(part)
 	local bones = pac.GetModelBones(ent)
@@ -515,7 +515,7 @@ pace.AddTool(L"populate with dummy bones",function(part,suboption)
 		if not tbl.is_special then
 			local child = pac.CreatePart("model")
 			child:SetParent(part)
-			child:SetName(bone.."_dummy")
+			child:SetName(bone .. "_dummy")
 			child:SetBone(bone)
 			child:SetScale(Vector(0,0,0))
 		end
@@ -524,18 +524,18 @@ pace.AddTool(L"populate with dummy bones",function(part,suboption)
 	pace.RefreshTree(true)
 end)
 
-pace.AddTool(L"print part info",function(part)
+pace.AddTool(L"print part info", function(part)
 	PrintTable(part:ToTable())
 end)
 
-pace.AddTool(L"dump player submaterials",function()
+pace.AddTool(L"dump player submaterials", function()
 	local ply = LocalPlayer()
 	for id,mat in pairs(ply:GetMaterials()) do
 		chat.AddText(("%d %s"):format(id,tostring(mat)))
 	end
 end)
 
-pace.AddTool(L"stop all custom animations",function()
+pace.AddTool(L"stop all custom animations", function()
 	boneanimlib.StopAllEntityAnimations(LocalPlayer())
 	boneanimlib.ResetEntityBoneMatrix(LocalPlayer())
 end)
@@ -546,7 +546,9 @@ pace.AddTool(L"copy from faceposer tool", function(part, suboption)
 
 	for i = 0, ent:GetFlexNum() - 1 do
 		local name = ent:GetFlexName(i)
-		local weight = GetConVarNumber("faceposer_flex" .. i) * GetConVarNumber("faceposer_scale")
+		local fp_flex = GetConVar("faceposer_flex" .. i):GetFloat()
+		local fp_scale = GetConVar("faceposer_scale"):GetFloat()
+		local weight = fp_flex * fp_scale
 		pac.Message(name, weight)
 		if weight ~= 0 then
 			local flex = group:CreatePart("flex")
