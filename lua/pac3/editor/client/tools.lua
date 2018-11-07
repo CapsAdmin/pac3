@@ -275,14 +275,12 @@ end
 
 pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part)
 
--- hologram template string for subsitution of data
 	local ref_str =
 	[[
 
     I++, HN++, HT[HN,table] = table(I, Base, Base, 0, POSITION, ANGLES, SCALE, MODEL, MATERIAL, vec4(COLOR, ALPHA), SKIN)
 	]]
 
--- header string for e2 with spawn code
 	local header_str =
 	[[
 @name [NAME]
@@ -306,7 +304,6 @@ if (first() | dupefinished()) {
 	   # # # # # # # # # HOLOGRAM DATA START # # # # # # # # #
 	]]
 
--- Ending string for e2, containing spawn code
 	local footer_str =
 	[[
 
@@ -412,11 +409,9 @@ elseif (CoreStatus == "RunThisCode") {
 }
 	]]
 
-	-- pos angle normal formatting functions
 	local function tovec(vec) return ("%s, %s, %s"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
 	local function toang(vec) return ("%s, %s, %s"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
 
-	-- converting holograms to strings using templates and sub
 	local function part_to_holo(part)
 		local holo_str = ref_str
 
@@ -428,7 +423,6 @@ elseif (CoreStatus == "RunThisCode") {
 			end
 		end
 
-		-- subing values in
 		local scale = part:GetSize() * part:GetScale()
 
 		local holo = holo_str
