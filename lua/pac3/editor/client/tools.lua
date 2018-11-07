@@ -284,10 +284,14 @@ pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part
 	local str_header =
 	[[
 @name [NAME]
+#-- Entity input directives
 @inputs [Base]:entity
+#-- Spawning code directives
 @persist [HT CT]:table [SpawnStatus CoreStatus]:string [HN CN I SpawnCounter]
-@persist [Base]:entity [ScaleFactor ToggleColMat ToggleShading] Indices
+@persist [ScaleFactor ToggleColMat ToggleShading] Indices
 @persist [DefaultColor DefaultScale]:vector
+#-- Hologram index directives
+@persist []
 
 if (first() | dupefinished()) {
     Chip = entity()
@@ -297,15 +301,15 @@ if (first() | dupefinished()) {
     ToggleColMat = 1
     ToggleShading = 0
 
-	   #- Data structure
-	   #- HN++, HT[HN, table] = table(Index, Local Entity (Entity:toWorld()), Parent Entity, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin)
-	   #- CN++, CT[CN, table] = table(Index, Clip Index, Pos, Ang)
+	   #-- Data structure
+	   #-- HN++, HT[HN, table] = table(Index, Local Entity (Entity:toWorld()), Parent Entity, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin)
+	   #-- CN++, CT[CN, table] = table(Index, Clip Index, Pos, Ang)
 
-	   #- Editing holograms
-	   #- Scroll down to the bottom of the code to find where to insert your holo() code. In order to reference indexes
-	   #- add a ", I_HologramName"" to the end of that holograms data line with "HologramName" being of your choosing.
-	   #- Finally add this to a @persist directive eg "@persist [I_HologramName]", now you can address this in your holo() code.
-	   #- For example, "holoBodygroup(I_HologramName, 2, 3)" which would be put in the "InitPostSpawn" section.
+	   #-- Editing holograms
+	   #-- Scroll down to the bottom of the code to find where to insert your holo() code. In order to reference indexes
+	   #-- add a ", I_HologramName"" to the end of that holograms data line with "HologramName" being of your choosing.
+	   #-- Finally add this to a @persist directive eg "@persist [I_HologramName]", now you can address this in your holo() code.
+	   #-- For example, "holoBodygroup(I_HologramName, 2, 3)" which would be put in the "InitPostSpawn" section.
 
 	   # # # # # # # # # HOLOGRAM DATA START # # # # # # # # #
 	]]
@@ -315,7 +319,7 @@ if (first() | dupefinished()) {
 
 	   # # # # # # # # # HOLOGRAM DATA END # # # # # # # # #
 
-	   #- Create a hologram from data array
+	   #-- Create a hologram from data array
     function table:holo() {
         local Index = This[1, number] * Indices
         if (This[2,entity]:isValid()) { Entity = This[2,entity] } else { Entity = holoEntity(This[2,number]) }
@@ -334,13 +338,13 @@ if (first() | dupefinished()) {
         if (ToggleShading) { holoDisableShading(Index, 1) }
     }
 
-    #- Clip a hologram from data array
+    #-- Clip a hologram from data array
     function table:clip() {
         holoClipEnabled(This[1, number] * Indices, This[2, number], 1)
         holoClip(This[1, number] * Indices, This[2, number], This[3, vector] * ScaleFactor, This[4, vector], 0)
     }
 
-    #- Load the contraption
+    #-- Load the contraption
     function loadContraption() {
         switch (SpawnStatus) {
             case "InitSpawn",
@@ -397,18 +401,18 @@ if (first() | dupefinished()) {
     timer("Start", 500)
 }
 
-# Credit to Shadowscion for the initial base hologram spawning code.
+#-- Credit to Shadowscion for the initial base hologram spawning code.
 
 elseif (CoreStatus == "InitSpawn") {
     loadContraption()
 }
 elseif (CoreStatus == "InitPostSpawn") {
-    # This is your "if (first())" section of the code.
+    #-- This is your "if (first())" section of the code.
 
     CoreStatus = "RunThisCode"
 }
 elseif (CoreStatus == "RunThisCode") {
-    # This is your "interval()" ran section of the code.
+    #-- This is your "interval()" ran section of the code.
 
     runOnTick(0)
 }
