@@ -298,8 +298,14 @@ if (first() | dupefinished()) {
     ToggleShading = 0
 
 	   #- Data structure
-	   #- HN++, HT[HN, table] = table(Index, Local Entity (Relative position), Parent, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin, Bodygroup Index, Bodygroup Sub-Index)
-	   #- CN++, CT[CN, table] = table(I, Clip Index, Pos, Ang)
+	   #- HN++, HT[HN, table] = table(Index, Local Entity (Entity:toWorld()), Parent Entity, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin)
+	   #- CN++, CT[CN, table] = table(Index, Clip Index, Pos, Ang)
+
+	   #- Editing holograms
+	   #- Scroll down to the bottom of the code to find where to insert your holo() code. In order to reference indexes
+	   #- add a ", I_HologramName"" to the end of that holograms data line with "HologramName" being of your choosing.
+	   #- Finally add this to a @persist directive eg "@persist [I_HologramName]", now you can address this in your holo() code.
+	   #- For example, "holoBodygroup(I_HologramName, 2, 3)" which would be put in the "InitPostSpawn" section.
 
 	   # # # # # # # # # HOLOGRAM DATA START # # # # # # # # #
 	]]
@@ -323,7 +329,6 @@ if (first() | dupefinished()) {
             holoMaterial(Index, This[9, string])
             holoColor(Index, This[10, vector4])
             holoSkin(Index, This[11, number])
-            holoBodygroup(Index, This[12, number], This[13, number])
         }
 
         if (ToggleShading) { holoDisableShading(Index, 1) }
