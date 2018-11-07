@@ -299,7 +299,7 @@ if (first() | dupefinished()) {
     ScaleFactor = 1 #- Scale multiplier.
     ToggleColMat = 1 #- Toggle for materials and colours.
     ToggleShading = 0 #- Toggle for shading.
-	Indices = 1
+    Indices = 1
 
 	   #- Data structure
 	   #- HN++, HT[HN, table] = table(Index, Local Entity (Entity:toWorld()), Parent Entity, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin)
@@ -319,9 +319,9 @@ if (first() | dupefinished()) {
 	   #- organisation!
 
 	   #- Your file hierarchy should look like this.
-	   #- expression2
-	   #- --> YourFolder
-	   #-     --> hologram data & hologram spawner
+	   #- /expression2/
+	   #- --> /yourfolder/
+	   #-     --> /hologram_data.txt & hologram_spawner.txt
 
 	   #- You can find an example here.
 
