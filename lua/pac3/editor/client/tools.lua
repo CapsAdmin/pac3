@@ -275,13 +275,13 @@ end
 
 pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part)
 
-	local ref_str =
+	local str_ref =
 	[[
 
     I++, HN++, HT[HN,table] = table(I, Base, Base, 0, POSITION, ANGLES, SCALE, MODEL, MATERIAL, vec4(COLOR, ALPHA), SKIN)
 	]]
 
-	local header_str =
+	local str_header =
 	[[
 @name [NAME]
 @inputs [Base]:entity
@@ -304,7 +304,7 @@ if (first() | dupefinished()) {
 	   # # # # # # # # # HOLOGRAM DATA START # # # # # # # # #
 	]]
 
-	local footer_str =
+	local str_footer =
 	[[
 
 	   # # # # # # # # # HOLOGRAM DATA END # # # # # # # # #
@@ -413,19 +413,19 @@ elseif (CoreStatus == "RunThisCode") {
 	local function toang(vec) return ("%s, %s, %s"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
 
 	local function part_to_holo(part)
-		local holo_str = ref_str
+		local str_holo = str_ref
 
 		for CI, clip in ipairs(part:GetChildren()) do
 			if clip.ClassName == "clip" and not clip:IsHidden() then
 				local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
 				local normal = ang:Forward()
-				holo_str = holo_str .. "    CN++, CT[CN,table] = table(I, " .. CI .. ", vec(" .. tovec(pos + normal) .. "), vec(" .. tovec(normal) .. "))\n"
+				str_holo = str_holo .. "    CN++, CT[CN,table] = table(I, " .. CI .. ", vec(" .. tovec(pos + normal) .. "), vec(" .. tovec(normal) .. "))\n"
 			end
 		end
 
 		local scale = part:GetSize() * part:GetScale()
 
-		local holo = holo_str
+		local holo = str_holo
 		:gsub("ALPHA", part:GetAlpha() * 255)
 		:gsub("COLOR", tovec(part:GetColor()))
 		:gsub("SCALE", "vec(" .. tovec(Vector(scale.x, scale.y, scale.z)) .. ")")
@@ -440,7 +440,7 @@ elseif (CoreStatus == "RunThisCode") {
 	end
 
 	local function convert(part)
-		local out = string.Replace(header_str, "[NAME]", part:GetName() or "savedpacholos")
+		local out = string.Replace(str_header, "[NAME]", part:GetName() or "savedpacholos")
 
 		for key, part in ipairs(part:GetChildren()) do
 			if part.is_model_part and not part:IsHidden() and not part.wavefront_mesh then
@@ -448,7 +448,7 @@ elseif (CoreStatus == "RunThisCode") {
 			end
 		end
 
-		out = out .. footer_str
+		out = out .. str_footer
 
 		LocalPlayer():ChatPrint("PAC --> Code saved in your Expression 2 folder under [expression2/pac/" .. part:GetName() .. ".txt" .. "].")
 
