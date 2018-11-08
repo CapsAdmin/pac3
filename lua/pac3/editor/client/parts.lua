@@ -32,12 +32,7 @@ function pace.WearParts(file, clear)
 	end
 
 	for i, part in ipairs(toWear) do
-		-- anti network overflow
-		timer.Simple(i * 0.2, function()
-			if part:IsValid() then
-				pace.SendPartToServer(part, {partID = i, totalParts = #toWear, transmissionID = transmissionID})
-			end
-		end)
+		pace.SendPartToServer(part, {partID = i, totalParts = #toWear, transmissionID = transmissionID})
 	end
 end
 
