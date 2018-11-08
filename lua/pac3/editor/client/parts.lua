@@ -26,13 +26,18 @@ function pace.WearParts(file, clear)
 	local transmissionID = math.random(1, math.pow(2, 31) - 1)
 
 	for key, part in pairs(pac.GetLocalParts()) do
-		if not part:HasParent() and part.show_in_editor ~= false then
+		if not part:HasParent() and part.show_in_editor ~= false and pace.IsPartSendable(part) then
 			table.insert(toWear, part)
 		end
 	end
 
 	for i, part in ipairs(toWear) do
-		pace.SendPartToServer(part, {partID = i, totalParts = #toWear, transmissionID = transmissionID})
+		-- anti network overflow
+		timer.Simple(i * 0.2, function()
+			if part:IsValid() then
+				pace.SendPartToServer(part, {partID = i, totalParts = #toWear, transmissionID = transmissionID})
+			end
+		end)
 	end
 end
 

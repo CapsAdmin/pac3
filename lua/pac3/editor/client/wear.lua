@@ -48,17 +48,30 @@ do -- to server
 
 	timer.Create('pac_update_playerfilter', 5, 0, updatePlayerList)
 
+	function pace.IsPartSendable(part, extra)
+		local allowed, reason = pac.CallHook("CanWearParts", LocalPlayer())
+
+		if allowed == false then
+			return false
+		end
+
+		if part.ClassName == "group" and not part:HasChildren() then return false end
+		if not part.show_in_editor == false then return false end
+
+		return true
+	end
+
 	function pace.SendPartToServer(part, extra)
 		local allowed, reason = pac.CallHook("CanWearParts", LocalPlayer())
 
 		if allowed == false then
 			pac.Message(reason or "the server doesn't want you to wear parts for some reason")
-			return
+			return false
 		end
 
 		-- if it's (ok not very exact) the "my outfit" part without anything added to it, don't bother sending it
-		if part.ClassName == "group" and not part:HasChildren() then return end
-		if not part.show_in_editor == false then return end
+		if part.ClassName == "group" and not part:HasChildren() then return false end
+		if not part.show_in_editor == false then return false end
 
 		local data = {part = part:ToTable()}
 
@@ -199,13 +212,13 @@ do
 		end
 	end)
 
-	timer.Create('pac3_transmissions_ttl', 10, 0, function()
+	timer.Create('pac3_transmissions_ttl', 1, 0, function()
 		local time = RealTime()
 
 		for transmissionID, data in pairs(transmissions) do
-			if data.activity + 60 < time then
+			if data.activity + 10 < time then
 				transmissions[transmissionID] = nil
-				pac.Message('Marking transmission session with id ', transmissionID, ' as dead, cleaning up... Dropped ', data.total, ' parts')
+				pac.Message('Marking transmission session with id ', transmissionID, ' as dead. Received ', #data.list, ' out from ', data.total, ' parts.')
 			end
 		end
 	end)
@@ -276,7 +289,7 @@ do
 			data.totalParts = nil
 			data.partID = nil
 			table.insert(trData.list, data)
-			-- trData.activity = RealTime()
+			trData.activity = RealTime()
 
 			if #trData.list == trData.total then
 				local funcs = {}
