@@ -24,26 +24,18 @@ function PANEL:Init()
 	local _, h = surface.GetTextSize("|")
 	RENDERSCORE_SIZE = h + 1
 
-	local div = vgui.Create("DVerticalDivider", self)
+	local treePanel = pace.CreatePanel("tree", self)
+	treePanel:Dock(FILL)
+	self.treePanel = treePanel
 
-	div:SetDividerHeight(RENDERSCORE_SIZE)
-	div:Dock(FILL)
-	div:SetTopMin(40)
-	div:SetBottomMin(40)
-	div:SetCookieName("pac3_editor")
-	div:SetTopHeight(ScrH() / 1.4)
-	div:LoadCookies()
-
-	self.div = div
-
-	self.treePanel = pace.CreatePanel("tree")
-	self:SetTop(self.treePanel)
-
-	local pnl = pace.CreatePanel("properties", div)
-	pace.properties = pnl
+	local properties = pace.CreatePanel("properties_frame")
+	properties:MakePopup()
+	self.properties = properties
 
 	self.exit_button = vgui.Create("DButton")
 	self.exit_button:SetText("")
+	self.exit_button:MakePopup()
+	--self.exit_button:SetZPos(1)
 	self.exit_button.DoClick = function() self:Close() end
 	self.exit_button.Paint = function(self, w, h) derma.SkinHook("Paint", "WindowCloseButton", self, w, h) end
 	self.exit_button:SetSize(31, 26)
@@ -56,12 +48,13 @@ function PANEL:Init()
 
 	self.btnClose.Paint = function() end
 
-	self:SetBottom(pnl)
-
 	self:SetCookieName("pac3_editor")
 	self:SetPos(self:GetCookieNumber("x"), BAR_SIZE)
 
 	self:MakeBar()
+	local search = vgui.Create("DTextEntry", self)
+	search:Dock(TOP)
+	search:SetPlaceholderText("Search...")
 	self.lastTopBarHover = 0
 
 	self.okay = true
@@ -116,6 +109,10 @@ function PANEL:OnRemove()
 	if self.zoom:IsValid() then
 		self.zoom:Remove()
 	end
+
+	if self.properties:IsValid() then
+		self.properties:Remove()
+	end
 end
 
 function PANEL:Think(...)
@@ -128,16 +125,16 @@ function PANEL:Think(...)
 		return
 	end
 
-	local bar = self.menu_bar
+--	local bar = self.menu_bar unused??
 
 	self:SetTall(ScrH())
 	local w = math.max(self:GetWide(), 200)
 	self:SetWide(w)
 	self:SetPos(math.Clamp(self:GetPos(), 0, ScrW() - w), 0)
 
-	if x ~= self.last_x then
-		self:SetCookie("x", x)
-		self.last_x = x
+	if self.x ~= self.last_x then
+		self:SetCookie("x", self.x)
+		self.last_x = self.x
 	end
 
 	if self.exit_button:IsValid() then
@@ -185,37 +182,27 @@ function PANEL:PerformLayout()
 	end
 
 	if self.old_part ~= pace.current_part then
-		self.div:InvalidateLayout()
-		self.bottom:PerformLayout()
+		-- self.div:InvalidateLayout()
+		--self.bottom:PerformLayout()
 		pace.properties:PerformLayout()
 		self.old_part = pace.current_part
 
-		local sz = auto_size:GetInt()
+		-- local sz = auto_size:GetInt()
 
-		if sz > 0 then
-			local newh = sz > 0 and (ScrH() - math.min(pace.properties:GetHeight() + RENDERSCORE_SIZE + BAR_SIZE - 6, ScrH() / 1.5))
+		-- if sz > 0 then
+		-- 	local newh = sz > 0 and (ScrH() - math.min(pace.properties:GetHeight() + RENDERSCORE_SIZE + BAR_SIZE - 6, ScrH() / 1.5))
 
-			if sz >= 2 then
-				local oldh = self.div:GetTopHeight()
+		-- 	if sz >= 2 then
+		-- 		local oldh = self.div:GetTopHeight()
 
-				if newh<oldh then
-					self.div:SetTopHeight(newh)
-				end
-			elseif sz >= 1 then
-				self.div:SetTopHeight(newh)
-			end
-		end
+		-- 		if newh<oldh then
+		-- 			self.div:SetTopHeight(newh)
+		-- 		end
+		-- 	elseif sz >= 1 then
+		-- 		self.div:SetTopHeight(newh)
+		-- 	end
+		-- end
 	end
-end
-
-function PANEL:SetTop(pnl)
-	self.top = pnl
-	self.div:SetTop(pnl)
-end
-
-function PANEL:SetBottom(pnl)
-	self.bottom = pnl
-	self.div:SetBottom(pnl)
 end
 
 pace.Focused = true
@@ -229,9 +216,12 @@ function pace.GainFocus(show_editor)
 	if self:IsValid() then
 		if self.allowclick ~= false then
 			self:MakePopup()
+			self.properties:MakePopup()
+			self.exit_button:MakePopup()
 			pace.Focused = true
 			if not show_editor then
 				self:AlphaTo(255, 0.1, 0)
+				self.properties:AlphaTo(255, 0.1, 0)
 				self.exit_button:AlphaTo(255, 0.1, 0)
 			end
 		end
@@ -242,6 +232,7 @@ function pace.KillFocus(show_editor)
 	local self = pace.Editor
 	if self:IsValid() then
 		self:KillFocus()
+		self.properties:KillFocus()
 		self:SetMouseInputEnabled(false)
 		self:SetKeyBoardInputEnabled(false)
 		gui.EnableScreenClicker(false)
@@ -249,14 +240,17 @@ function pace.KillFocus(show_editor)
 
 		if not show_editor then
 			self:AlphaTo(0, 0.1, 0)
+			self.properties:AlphaTo(0, 0.1, 0)
 			self.exit_button:AlphaTo(0, 0.1, 0)
 		end
 
 		self.allowclick = false
+		self.properties.allowclick = false
 
 		timer.Simple(0.2, function()
 			if self:IsValid() then
 				self.allowclick = true
+				self.properties.allowclick = true
 			end
 		end)
 	end
@@ -272,14 +266,14 @@ local function drawTimeBox(text, time, x, y)
 
 	surface.SetTextPos(x + 5, y)
 	surface.DrawText(str)
-	return y + RENDERSCORE_SIZE
+	return y - RENDERSCORE_SIZE
 end
 
 local function PostRenderVGUI()
 	if drawProfileInfos ~= FrameNumber() then return end
 	local x, y = gui.MousePos()
 	x = x + 3
-	y = y + 3
+	y = y - 3
 
 	surface.SetFont(pace.CurrentFont)
 
@@ -338,9 +332,8 @@ function PANEL:PaintOver(w, h)
 	if not renderTime then return end
 
 	local x = 2
-	local y = 2
-	y = y + self.menu_bar:GetTall()
-	y = y + self.top:GetTall()
+	local y = - RENDERSCORE_SIZE
+	y = y + self:GetTall()
 	boxW, boxH = w, h
 
 	local mx, my = gui.MousePos()

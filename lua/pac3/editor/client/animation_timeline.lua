@@ -238,7 +238,7 @@ function timeline.Open(part)
 	timeline.entity = part:GetOwner()
 
 	timeline.frame = vgui.Create("pac3_timeline")
-	timeline.frame:SetSize(ScrW()-pace.Editor:GetWide(),93)
+	timeline.frame:SetSize(ScrW()-pace.Editor:GetWide()-pace.Editor.properties:GetWide(),93)
 	timeline.frame:SetPos(pace.Editor:GetWide(),ScrH()-timeline.frame:GetTall())
 	timeline.frame:SetTitle("")
 	timeline.frame:ShowCloseButton(false)

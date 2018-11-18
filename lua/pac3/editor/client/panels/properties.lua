@@ -132,6 +132,80 @@ pac.AddHook("GUIMousePressed", "pace_SafeRemoveSpecialPanel", function()
 	end
 end)
 
+do -- frame
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_frame"
+	PANEL.Base = "DFrame"
+
+	function PANEL:Init()
+		self:SetSizable(true)
+		self:ShowCloseButton(false)
+		self:SetTitle("")
+		self:DockMargin(2, 2, 2, 2)
+		self:DockPadding(2, 2, 2, 2)
+		self:SetSize(240, ScrH())
+		self:SetCookieName("pac3_properties")
+		self:SetPos(self:GetCookieNumber("x"), 17)
+
+		local bar = vgui.Create("DMenuBar", self)
+		bar:SetSize(self:GetWide(), 17)
+
+		local div = vgui.Create("DVerticalDivider", self)
+		div:Dock(FILL)
+		div:SetTopMin(40)
+		div:SetBottomMin(40)
+		div:SetCookieName("pac3_properties")
+		div:SetTopHeight(ScrH() / 1.4)
+		div:LoadCookies()
+
+		local pnl = pace.CreatePanel("properties", div)
+		pace.properties = pnl
+		div:SetTop(pnl)
+
+		local hlpnl = vgui.Create("DTextEntry", div)
+		hlpnl:SetDisabled(true)
+		hlpnl:SetText("blah blah help text on hover")
+		div:SetBottom(hlpnl)
+		self.div = div
+	end
+
+	function PANEL:Think(...)
+		DFrame.Think(self, ...)
+		self:SetTall(ScrH())
+		local w = math.max(self:GetWide(), 200)
+		self:SetWide(w)
+		self:SetPos(math.Clamp(self:GetPos(), 0, ScrW() - w), 0)
+
+
+
+		-- if self.Hovered and self.m_bSizable and gui.MouseX() > (self.x + self:GetWide() - 20) then
+		-- 	self:SetCursor("sizewe")
+		-- 	return
+		-- end
+		if self.x ~= self.last_x then
+			self:SetCookie("x", self.x)
+			self.last_x = self.x
+		end
+	end
+
+	function PANEL:OnMousePressed()
+		if self.m_bSizable and gui.MouseX() > ( self.x + self:GetWide() - 20 ) then
+			self.Sizing = { gui.MouseX() - self:GetWide(), gui.MouseY() - self:GetTall() }
+			self:MouseCapture( true )
+			return
+		end
+
+		if self:GetDraggable() and gui.MouseY() < (self.y + 24) then
+			self.Dragging = { gui.MouseX() - self.x, gui.MouseY() - self.y }
+			self:MouseCapture( true )
+			return
+		end
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
 do -- container
 	local PANEL = {}
 
@@ -185,81 +259,68 @@ do -- list
 
 		local search = vgui.Create("DTextEntry", self)
 		search:Dock(TOP)
-		search.Kill = function()
-			search:SetVisible(false)
-			search.searched_something = false
-			search:SetText("")
-			search:SetEnabled(false)
-
-			for i,v in ipairs(self.List) do
-				v.left:SetVisible(true)
-				v.right:SetVisible(true)
-			end
-		end
-
-		search.OnEnter = search.Kill
+		search:SetPlaceholderText("Search...")
 
 		search.OnTextChanged = function()
 			self.scr:SetScroll(0)
 
 			local pattern = search:GetValue()
-			if pattern == "" and search.searched_something then
-				search:Kill()
-				search:KillFocus()
-			else
-				search.searched_something = true
-				local group
 
-				for i,v in ipairs(self.List) do
-					local found = false
+			local group
+			for i,v in ipairs(self.List) do
+				local found = false
 
-					if v.panel then
-						if v.panel:GetText():find(pattern) then
-							found = true
-						end
-
-						if v.left:GetValue():find(pattern) then
-							found = true
-						end
-					elseif v.left and v.left.text then
-						group = v.left.text
-					end
-
-					if group and group:find(pattern) then
+				if v.panel then
+					if v.panel:GetText():find(pattern) then
 						found = true
 					end
 
-					if not found and v.panel then
-						v.left:SetVisible(false)
-						v.right:SetVisible(false)
+					if v.left:GetValue():find(pattern) then
+						found = true
 					end
+				elseif v.left and v.left.text then
+					group = v.left.text
 				end
 
-				for i,v in ipairs(self.List) do
-					if not v.panel then
-						local hide_group = true
+				if group and group:find(pattern) then
+					found = true
+				end
 
-						for i = i+1, #self.List do
-							local val = self.List[i]
-							if not val.panel then
-								break
-							end
+				if not found and v.panel then
+					v.left:SetVisible(false)
+					v.right:SetVisible(false)
+				else
+					v.left:SetVisible(true)
+					v.right:SetVisible(true)
+				end
+			end
 
-							if val.left:IsVisible() then
-								hide_group = false
-								break
-							end
+			for i,v in ipairs(self.List) do
+				if not v.panel then
+					local hide_group = true
+
+					for i = i+1, #self.List do
+						local val = self.List[i]
+						if not val.panel then
+							break
 						end
 
-						if hide_group then
-							v.left:SetVisible(false)
-							v.right:SetVisible(false)
+						if val.left:IsVisible() then
+							hide_group = false
+							break
 						end
+					end
+
+					if hide_group then
+						v.left:SetVisible(false)
+						v.right:SetVisible(false)
+					else
+						v.left:SetVisible(true)
+						v.right:SetVisible(true)
 					end
 				end
 			end
 		end
-		search:SetVisible(false)
 		self.search = search
 
 		self.List = {}
@@ -307,8 +368,7 @@ do -- list
 	function PANEL:PerformLayout()
 		self.scr:SetSize(10, self:GetHeight())
 		self.scr:SetUp(self:GetTall(), self:GetHeight() - 10)
-		self.search:SetZPos(-1)
-		self.div:SetPos(0, (self.search:IsVisible() and self.search:GetTall() or 0) + self.scr:GetOffset())
+		self.div:SetPos(0, self.search:GetTall() + self.scr:GetOffset())
 		local w, h = self:GetSize()
 		local scroll_width = self.scr.Enabled and self.scr:GetWide() or 0
 		self.div:SetLeftWidth((w/2) - scroll_width)

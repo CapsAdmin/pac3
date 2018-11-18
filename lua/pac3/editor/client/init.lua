@@ -113,22 +113,32 @@ function pace.OpenEditor()
 
 	if remember:GetBool() then
 		local x = cookie.GetNumber("pac_editor_x", 0)
+		local px = cookie.GetNumber("pac_properties_x", ScrW() - 240)
 
 		if x < 0 or x + 240 > ScrW() then
 			x = 0
 		end
 
+		if px < 0 or px + 240 > ScrW() then
+			px = ScrW() - 240
+		end
+
 		editor:SetPos(x, 0)
+		editor.properties:SetPos(px, 0)
 		cookie.Set("pac_editor_x", tostring(x))
+		cookie.Set("pac_properties_x", tostring(px))
 	else
 		local mode = positionMode:GetInt()
 
 		if mode == 1 then
 			editor:SetPos(ScrW() / 2 - 120, 0)
+			editor.properties:SetPos(ScrW() - 240, 0)
 		elseif mode == 2 then
 			editor:SetPos(ScrW() - 240, 0)
+			editor.properties:SetPos(0, 0)
 		else
 			editor:SetPos(0, 0)
+			editor.properties:SetPos(ScrW() - 240, 0)
 		end
 	end
 
@@ -149,7 +159,9 @@ function pace.CloseEditor()
 
 	if pace.Editor:IsValid() then
 		local x = pace.Editor:GetPos()
+		local px = pace.Editor.properties:GetPos()
 		cookie.Set("pac_editor_x", tostring(x))
+		cookie.Set("pac_properties_x", tostring(px))
 		--if not editor.__OnClosed then
 			--pace.Editor:OnRemove() -- ??? This is called by the engine
 		--end
