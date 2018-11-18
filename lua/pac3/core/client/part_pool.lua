@@ -1,4 +1,3 @@
-return [====[-- comment this line out for highlighting when changing the file
 local pac = pac
 
 local render_SetColorModulation = render.SetColorModulation
@@ -823,4 +822,3 @@ do -- drawing
 	end)
 
 end
---]====]
