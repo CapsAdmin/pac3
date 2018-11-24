@@ -242,6 +242,32 @@ function pac.ShowEntityParts(ent)
 	end
 end
 
+-- Prevent radius AND pixvis based flickering at the cost of rendering a bit longer than necessary
+local viscache=setmetatable({},{__mode='k'})
+local function nodrawdelay(draw,ent)
+	if draw and viscache[ent]~=false then
+		viscache[ent] = false
+		if pac.debug then print("PAC dodraw catch",ent) end
+	elseif not draw then
+		local c = viscache[ent]
+		local fn = pac.FrameNumber
+		if c~=nil then
+			if c==false then
+				viscache[ent] = fn
+				if pac.debug then print("PAC dodraw override START",ent) end
+				return true
+			elseif c then
+				if fn-c<3 then
+					if pac.debug then print("PAC dodraw override",ent) end
+					return true
+				else
+					viscache[ent] = nil
+				end
+			end
+		end
+	end
+	return draw
+end
 
 function pac.HookEntityRender(ent, part)
 	if not ent_parts[ent] then
@@ -766,9 +792,9 @@ do -- drawing
 								ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance <= dst) or
 								dst <= draw_dist
 							) and (
-								dst < radius * 1.25 or
 								fovoverride or
-								util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0
+								nodrawdelay(dst < radius * 1.25  or
+								util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0,ent)
 							)
 						end
 
