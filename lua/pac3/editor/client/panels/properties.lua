@@ -682,6 +682,7 @@ do -- list
 						self:AddKeyValue(key, pnl, pos, nil, udata, group)
 					end
 				end
+
 				::CONTINUE::
 			end
 		end
@@ -705,10 +706,10 @@ do -- non editable string
 
 				self:PerformLayout()
 
-				local x, y		= input.GetCursorPos()
-				local w, h		= self:GetSize()
+				local x, y      = input.GetCursorPos()
+				local w, h      = self:GetSize()
 
-				local lx, ly	= self.TargetPanel:LocalToScreen( 0, 0 )
+				local lx, ly    = self.TargetPanel:LocalToScreen( 0, 0 )
 
 				y = math.min( y, ly - h )
 
@@ -836,7 +837,7 @@ do -- base editable
 
 		if mcode == MOUSE_LEFT then
 			--if input.IsKeyDown(KEY_R) then
-			--	self:Restart()
+			--  self:Restart()
 			--else
 				self.MousePressing = true
 				if self:MousePress(true) == false then return end

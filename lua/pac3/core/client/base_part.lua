@@ -50,7 +50,10 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "OwnerName", "self")
 		pac.GetSet(PART, "EditorExpand", false, {hidden = true})
 		pac.GetSet(PART, "UniqueID", "", {hidden = true})
-		pac.GetSet(PART, "IsDisturbing", false, {description = "Mark this part as something that should not be visible to everyone in public (e.g. gore or questionable content).\nThis will be only visible to user if he has pac_hide_disturbing set to 0"})
+		pac.GetSet(PART, "IsDisturbing", false, {
+			editor_friendly = "IsExplicit",
+			description = "Marks this content as NSFW, and makes it hidden for most of players who have pac_hide_disturbing set to 1"
+		})
 
 	pac.SetPropertyGroup(PART, "orientation")
 		pac.GetSet(PART, "Bone", "head")

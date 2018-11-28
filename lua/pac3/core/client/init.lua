@@ -48,7 +48,7 @@ do
 	end
 end
 
-CreateClientConVar("pac_hide_disturbing", "1", true, true, "Hide parts which outfit creators marked as 'may be disturbing for some users' (e.g. gore or nsfw)")
+CreateClientConVar("pac_hide_disturbing", "1", true, true, "Hide parts which outfit creators marked as 'nsfw' (e.g. gore or explicit content)")
 
 include("util.lua")
 
