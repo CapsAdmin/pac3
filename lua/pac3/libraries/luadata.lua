@@ -37,12 +37,24 @@ do
 		bcnames = "ISLT  ISGE  ISLE  ISGT  ISEQV ISNEV ISEQS ISNES ISEQN ISNEN ISEQP ISNEP ISTC  ISFC  IST   ISF   ISTYPEISNUM MOV   NOT   UNM   LEN   ADDVN SUBVN MULVN DIVVN MODVN ADDNV SUBNV MULNV DIVNV MODNV ADDVV SUBVV MULVV DIVVV MODVV POW   CAT   KSTR  KCDATAKSHORTKNUM  KPRI  KNIL  UGET  USETV USETS USETN USETP UCLO  FNEW  TNEW  TDUP  GGET  GSET  TGETV TGETS TGETB TGETR TSETV TSETS TSETB TSETM TSETR CALLM CALL  CALLMTCALLT ITERC ITERN VARG  ISNEXTRETM  RET   RET0  RET1  FORI  JFORI FORL  IFORL JFORL ITERL IITERLJITERLLOOP  ILOOP JLOOP JMP   FUNCF IFUNCFJFUNCFFUNCV IFUNCVJFUNCVFUNCC FUNCCW"
 	end
 	
+	local jutil = jit.util
+	if not jutil then
+		local ok, _jutil = pcall(require,'jit.util')
+		if not ok then
+			bcnames = nil
+		else
+			jutil = _jutil
+		end
+	end
+		
 	if not bcnames then
-		ErrorNoHalt"LUADATA SECURITY WARNING: Unable to load verifier, update me!\n"
+		if not jutil then
+			print("[luadata] Verifier could not be loaded. luadata may cause infinite loops.")
+		else
+			ErrorNoHalt"LUADATA SECURITY WARNING: Unable to load verifier, update me!\n"
+		end
 		opcode_checker = function() return function() return true end end
 	else
-
-		local jutil = jit.util or require'jit.util'
 		local band =  bit.band
 
 		local opcodes = {}
