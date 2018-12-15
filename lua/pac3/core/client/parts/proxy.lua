@@ -93,7 +93,7 @@ function PART:GetNiceName()
 		if part == self.Parent then
 			target = "parent"
 		else
-			target = target:GetName()
+			target = part:GetName()
 		end
 	end
 
