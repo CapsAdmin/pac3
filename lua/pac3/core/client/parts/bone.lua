@@ -21,8 +21,8 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "AlternativeBones", false)
 		pac.GetSet(PART, "MoveChildrenToOrigin", false)
 		pac.GetSet(PART, "FollowAnglesOnly", false)
-		pac.GetSet(PART, "HideMesh", false)
-		pac.GetSet(PART, "InvertHideMesh", false)
+		--pac.GetSet(PART, "HideMesh", false)
+		--pac.GetSet(PART, "InvertHideMesh", false)
 		pac.SetupPartName(PART, "FollowPart")
 
 	pac.SetPropertyGroup(PART, "orientation")
@@ -256,7 +256,8 @@ function PART:OnBuildBonePositions()
 
 	local scale
 
-	if self.HideMesh then
+	-- Disable hide mesh functionality completely until the crash this causes, is fixed
+	if self.HideMesh and false then
 		scale = inf_scale
 
 		if self.InvertHideMesh then
