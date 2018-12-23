@@ -192,7 +192,7 @@ function PART:OnShow()
 					params[ACT_MP_RUN] = index + 2
 					params[ACT_MP_CROUCH_IDLE] = index + 3
 					params[ACT_MP_CROUCHWALK] = index + 4
-					params[ACT_MP_ATTACK_STAND_PRIMARYFIRE]	= index + 5
+					params[ACT_MP_ATTACK_STAND_PRIMARYFIRE] = index + 5
 					params[ACT_MP_ATTACK_CROUCH_PRIMARYFIRE] = index + 5
 					params[ACT_MP_RELOAD_STAND] = index + 6
 					params[ACT_MP_RELOAD_CROUCH] = index + 7
@@ -248,7 +248,11 @@ function PART:OnThink()
 
 		if self.OwnerCycle then
 			local owner = self.BaseClass.GetOwner(self, true)
-			ent:SetCycle(owner:GetCycle())
+
+			if IsValid(owner) then
+				ent:SetCycle(owner:GetCycle())
+			end
+
 			return
 		end
 
