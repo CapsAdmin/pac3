@@ -23,14 +23,21 @@ function pace.OnDraw()
 end
 
 pac.AddHook("PostDrawViewModel", "pace_viewmodel_edit", function()
+	if alreadyInCall then return end
+
 	if pace.editing_viewmodel then
 		cam.Start2D()
-			pace.mctrl.HUDPaint()
+
+		alreadyInCall = true
+		pace.mctrl.HUDPaint()
+		alreadyInCall = false
+
 		cam.End2D()
 	end
 end)
 
 function pace.OnOpenEditor()
+	alreadyInCall = false
 	pace.SetViewPos(LocalPlayer():EyePos())
 	pace.SetViewAngles(LocalPlayer():EyeAngles())
 	pace.EnableView(true)

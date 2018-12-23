@@ -834,8 +834,13 @@ do -- drawing
 		end)
 	end
 
+	local alreadyDrawing = false
 
 	pac.AddHook("PostDrawViewModel", "draw_firstperson", function()
+		if alreadyDrawing then return end
+
+		alreadyDrawing = true
+
 		for key, ent in pairs(pac.drawn_entities) do
 			if IsValid(ent) then
 				if ent.pac_drawing and ent_parts[ent] then
@@ -845,6 +850,7 @@ do -- drawing
 				pac.drawn_entities[key] = nil
 			end
 		end
-	end)
 
+		alreadyDrawing = false
+	end)
 end
