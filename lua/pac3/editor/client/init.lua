@@ -140,6 +140,7 @@ function pace.OpenEditor()
 	pace.SetInPAC3Editor(true)
 
 	pace.DisableExternalHooks()
+	vgui.GetWorldPanel():SetWorldClicker(false)
 
 	pace.Call("OpenEditor")
 end
