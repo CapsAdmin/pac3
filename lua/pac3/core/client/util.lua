@@ -950,6 +950,8 @@ do -- ignore
 	end
 
 	function pac.IgnoreEntity(ent, strID)
+		if ent == LocalPlayer() then return false end
+
 		strID = strID or 'generic'
 		if ent.pac_ignored_data and ent.pac_ignored_data[strID] then return end
 		ent.pac_ignored = ent.pac_ignored or false
@@ -966,6 +968,8 @@ do -- ignore
 	end
 
 	function pac.UnIgnoreEntity(ent, strID)
+		if ent == LocalPlayer() then return false end
+
 		strID = strID or 'generic'
 		if ent.pac_ignored_data and ent.pac_ignored_data[strID] == nil then return end
 		ent.pac_ignored = ent.pac_ignored or false

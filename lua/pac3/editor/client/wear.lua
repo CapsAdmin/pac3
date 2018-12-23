@@ -119,7 +119,7 @@ do -- to server
 end
 
 do -- from server
-	function pace.WearPartFromServer(owner, part_data, data)
+	function pace.WearPartFromServer(owner, part_data, data, doItNow)
 		pac.dprint("received outfit %q from %s with %i number of children to set on %s", part_data.self.Name or "", tostring(owner), table.Count(part_data.children), part_data.self.OwnerName or "")
 
 		if pace.CallHook("WearPartFromServer", owner, part_data, data) == false then return end
@@ -142,7 +142,7 @@ do -- from server
 			end
 		end
 
-		return function()
+		local func = function()
 			if dupeEnt and not dupeEnt:IsValid() then return end
 
 			dupepart = pac.GetPartFromUniqueID(data.player_uid, part_data.self.UniqueID)
@@ -168,6 +168,12 @@ do -- from server
 
 			part:CallRecursive('OnWorn')
 		end
+
+		if doItNow then
+			func()
+		end
+
+		return func
 	end
 
 	function pace.RemovePartFromServer(owner, part_name, data)
@@ -235,6 +241,18 @@ do
 		end
 	end
 
+	local function defaultHandlerNow(data)
+		local T = type(data.part)
+
+		if T == "table" then
+			pace.WearPartFromServer(data.owner, data.part, data, true)
+		elseif T ==  "string" then
+			pace.RemovePartFromServer(data.owner, data.part, data)
+		else
+			ErrorNoHalt("PAC: Unhandled "..T..'!?\n')
+		end
+	end
+
 	function pace.HandleReceivedData(data)
 		if data.owner ~= LocalPlayer() then
 			if not data.owner.pac_onuse_only then
@@ -258,6 +276,8 @@ do
 					pac.ToggleIgnoreEntity(data.owner, false, 'pac_onuse_only')
 				end
 			end)
+		else
+			return defaultHandlerNow(data)
 		end
 
 		local validTransmission = type(data.partID) == 'number' and
