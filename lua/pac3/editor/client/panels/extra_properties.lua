@@ -359,8 +359,10 @@ do -- materials and textures
 			pace_material_display = CreateMaterial('pace_material_display', "UnlitGeneric", {})
 		end
 
-		if pace.current_part[self.CurrentKey] and pace.current_part[self.CurrentKey] ~= "" then
-			if not string.find(pace.current_part[self.CurrentKey], '^https?://') then
+		if pace.current_part[self.CurrentKey] then
+			if pace.current_part[self.CurrentKey] == "" then
+				pace_material_display:SetTexture("$basetexture", "models/debug/debugwhite")
+			elseif not string.find(pace.current_part[self.CurrentKey], '^https?://') then
 				pace_material_display:SetTexture("$basetexture", pace.current_part[self.CurrentKey])
 			else
 				local function callback(mat, tex)
