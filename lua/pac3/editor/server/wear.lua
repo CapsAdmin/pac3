@@ -194,11 +194,11 @@ function pace.SubmitPart(data, filter)
 		local lookup = player.GetAll()
 
 		for i, ply in ipairs(lookup) do
-			lookup[ply:UniqueID()] = ply
+			lookup[tonumber(ply:UniqueID())] = ply
 		end
 
 		for i, v in ipairs(data.wear_filter) do
-			local ply = lookup[tostring(v)]
+			local ply = lookup[v]
 
 			if IsValid(ply) then
 				table.insert(players, ply)
@@ -393,7 +393,7 @@ function pace.RequestOutfits(ply)
 
 		if owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
 			for key, outfit in pairs(outfits) do
-				if not outfit.wear_filter or table.HasValue(outfit.wear_filter, ply:UniqueID()) then
+				if not outfit.wear_filter or table.HasValue(outfit.wear_filter, tonumber(ply:UniqueID())) then
 					pace.SubmitPart(outfit, ply)
 				end
 			end
@@ -423,7 +423,7 @@ local function pac_update_playerfilter(len, ply)
 	local readnext = net.ReadUInt(32)
 
 	while readnext ~= 0 do
-		table.insert(filter, tostring(readnext))
+		table.insert(filter, readnext)
 		readnext = net.ReadUInt(32)
 	end
 
