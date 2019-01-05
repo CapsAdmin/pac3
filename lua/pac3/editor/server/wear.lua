@@ -108,7 +108,7 @@ function pace.SubmitPart(data, filter)
 
 	if type(data.part) == "table" then
 		local ent = Entity(tonumber(data.part.self.OwnerName) or -1)
-		if ent:IsValid()then
+		if ent:IsValid() then
 			if ent.CPPICanTool and (ent:CPPIGetOwner() ~= data.owner and data.owner:IsValid() and not ent:CPPICanTool(data.owner, "paint")) then
 				allowed = false
 				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
@@ -198,9 +198,10 @@ function pace.SubmitPart(data, filter)
 		end
 
 		for i, v in ipairs(data.wear_filter) do
-			local plyID = tostring(v)
-			if IsValid(lookup[plyID]) then
-				table.insert(players, lookup[plyID])
+			local ply = lookup[tostring(v)]
+
+			if IsValid(ply) then
+				table.insert(players, ply)
 			end
 		end
 	else
@@ -229,7 +230,6 @@ function pace.SubmitPart(data, filter)
 		local players = filter or players
 
 		if type(players) == "table" then
-			--remove players from list who haven't requested outfits...
 			for key = #players, 1, -1 do
 				local ply = players[key]
 				if not ply.pac_requested_outfits and ply ~= data.owner then
@@ -391,9 +391,11 @@ function pace.RequestOutfits(ply)
 	for id, outfits in pairs(pace.Parts) do
 		local owner = player.GetByUniqueID(id) or NULL
 
-		if id == false or owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
+		if owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
 			for key, outfit in pairs(outfits) do
-				pace.SubmitPart(outfit, ply)
+				if not outfit.wear_filter or table.HasValue(outfit.wear_filter, ply:UniqueID()) then
+					pace.SubmitPart(outfit, ply)
+				end
 			end
 		end
 	end
