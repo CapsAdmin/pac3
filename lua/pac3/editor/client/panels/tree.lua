@@ -57,6 +57,7 @@ do
 				pace.BusyWithProperties:IsValid() or
 				pace.ActiveSpecialPanel:IsValid() or
 				pace.editing_viewmodel or
+				pace.editing_hands or
 				pace.properties.search:HasFocus()
 			)
 		then

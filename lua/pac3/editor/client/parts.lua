@@ -134,10 +134,12 @@ end
 function pace.OnPartSelected(part, is_selecting)
 	local parent = part:GetRootPart()
 
-	if parent:IsValid() and parent.OwnerName == "viewmodel" then
-		pace.editing_viewmodel = true
-	elseif pace.editing_viewmodel then
+	if parent:IsValid() and (parent.OwnerName == "viewmodel" or parent.OwnerName == "hands") then
+		pace.editing_viewmodel = parent.OwnerName == "viewmodel"
+		pace.editing_hands = parent.OwnerName == "hands"
+	elseif pace.editing_viewmodel or pace.editing_hands then
 		pace.editing_viewmodel = false
+		pace.editing_hands = false
 	end
 
 	pace.current_part = part
@@ -218,6 +220,10 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 	if key == "OwnerName" then
 		if val == "viewmodel" then
 			pace.editing_viewmodel = true
+		elseif val == "hands" then
+			pace.editing_hands = true
+		elseif obj[key] == "hands" then
+			pace.editing_hands = false
 		elseif obj[key] == "viewmodel" then
 			pace.editing_viewmodel = false
 		end

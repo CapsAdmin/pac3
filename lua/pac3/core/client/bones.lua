@@ -145,7 +145,8 @@ local function GetBonePosition(ent, id)
 		end
 	end
 
-	if ent:GetClass() == "viewmodel" and ent:GetOwner():IsPlayer() and ent:GetOwner():GetActiveWeapon().ViewModelFlip then
+	if (ent:GetClass() == "viewmodel" or ent == pac.LocalHands) and
+		ent:GetOwner():IsPlayer() and ent:GetOwner():GetActiveWeapon().ViewModelFlip then
 		ang.r = -ang.r
 	end
 

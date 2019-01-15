@@ -126,7 +126,14 @@ do
 								part:CallRecursiveProfiled('CThink')
 							end
 
-							if not (part.OwnerName == "viewmodel" and type ~= "viewmodel" or part.OwnerName ~= "viewmodel" and type == "viewmodel") then
+							--[[print(part, part.OwnerName, type, part.OwnerName == "viewmodel" and type == "viewmodel" or
+							part.OwnerName == "hands" and type == "hands" or
+							part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands")]]
+
+							if part.OwnerName == "viewmodel" and type == "viewmodel" or
+								part.OwnerName == "hands" and type == "hands" or
+								part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands" then
+
 								part:Draw(nil, nil, type)
 							end
 						end
@@ -146,7 +153,10 @@ do
 								end
 							end
 
-							if not (part.OwnerName == "viewmodel" and type ~= "viewmodel" or part.OwnerName ~= "viewmodel" and type == "viewmodel") then
+							if part.OwnerName == "viewmodel" and type == "viewmodel" or
+								part.OwnerName == "hands" and type == "hands" or
+								part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands" then
+
 								part:Draw(nil, nil, type)
 							end
 						end
@@ -834,12 +844,12 @@ do -- drawing
 		end)
 	end
 
-	local alreadyDrawing = false
+	local alreadyDrawing = 0
 
-	pac.AddHook("PostDrawViewModel", "draw_firstperson", function()
-		if alreadyDrawing then return end
+	pac.AddHook("PostDrawViewModel", "draw_firstperson", function(viewmodelIn, playerIn, weaponIn)
+		if alreadyDrawing == FrameNumber() then return end
 
-		alreadyDrawing = true
+		alreadyDrawing = FrameNumber()
 
 		for key, ent in pairs(pac.drawn_entities) do
 			if IsValid(ent) then
@@ -851,6 +861,35 @@ do -- drawing
 			end
 		end
 
-		alreadyDrawing = false
+		alreadyDrawing = 0
+	end)
+
+	local alreadyDrawing = 0
+	local redrawCount = 0
+
+	pac.LocalHands = NULL
+
+	pac.AddHook("PostDrawPlayerHands", "draw_firstperson_hands", function(handsIn, viewmodelIn, playerIn, weaponIn)
+		if alreadyDrawing == FrameNumber() then
+			redrawCount = redrawCount + 1
+			if redrawCount >= 5 then return end
+		end
+
+		pac.LocalHands = handsIn
+
+		alreadyDrawing = FrameNumber()
+
+		for key, ent in pairs(pac.drawn_entities) do
+			if IsValid(ent) then
+				if ent.pac_drawing and ent_parts[ent] then
+					pac.RenderOverride(ent, "hands", true)
+				end
+			else
+				pac.drawn_entities[key] = nil
+			end
+		end
+
+		alreadyDrawing = 0
+		redrawCount = 0
 	end)
 end

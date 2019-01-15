@@ -2,6 +2,7 @@ pac.OwnerNames =
 {
 	"self",
 	"viewmodel",
+	"hands",
 	"active vehicle",
 	"active weapon",
 	"world",
@@ -51,6 +52,11 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 				return ent
 			end
 
+			if owner:IsValid() and owner.GetHands and ent == owner:GetHands() then
+				part:SetOwnerName("hands")
+				return ent
+			end
+
 			if ent == pac.LocalPlayer then
 				part:SetOwnerName("self")
 				return ent
@@ -93,6 +99,14 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 
 		if name == "active vehicle" and owner.GetVehicle and owner:GetVehicle():IsValid() then
 			return owner:GetVehicle()
+		end
+
+		if name == "hands" and owner == pac.LocalPlayer and pac.LocalHands:IsValid() then
+			return pac.LocalHands
+		end
+
+		if name == "hands" and owner.GetHands then
+			return owner:GetHands()
 		end
 
 		if name == "viewmodel" and owner.GetViewModel then

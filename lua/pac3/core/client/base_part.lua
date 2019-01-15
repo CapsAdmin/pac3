@@ -1071,7 +1071,7 @@ do -- drawing. this code is running every frame
 		if
 			self.OnDraw and
 			(
-				draw_type == "viewmodel" or
+				draw_type == "viewmodel" or draw_type == "hands" or
 				((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
 				((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
 			)
