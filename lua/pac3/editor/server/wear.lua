@@ -191,14 +191,15 @@ function pace.SubmitPart(data, filter)
 
 	if type(data.wear_filter) == 'table' then
 		players = {}
-		local lookup = player.GetAll()
 
-		for i, ply in ipairs(lookup) do
-			lookup[tonumber(ply:UniqueID())] = ply
+		local lookup = {}
+
+		for i, ply in ipairs(player.GetAll()) do
+			lookup[ply:UniqueID()] = ply
 		end
 
 		for i, v in ipairs(data.wear_filter) do
-			local ply = lookup[v]
+			local ply = lookup[tostring(v)]
 
 			if IsValid(ply) then
 				table.insert(players, ply)
@@ -401,6 +402,16 @@ function pace.RequestOutfits(ply)
 	end
 end
 
+local function qhasvalue(tab, value)
+	for i, val in ipairs(tab) do
+		if val == value then
+			return true
+		end
+	end
+
+	return false
+end
+
 local function pac_update_playerfilter(len, ply)
 	if not IsValid(ply) then return end
 
@@ -427,11 +438,29 @@ local function pac_update_playerfilter(len, ply)
 		readnext = net.ReadUInt(32)
 	end
 
+	local players = {}
+
+	for i, ply in ipairs(player.GetAll()) do
+		players[ply:UniqueID()] = ply
+	end
+
 	for id, outfits in pairs(pace.Parts) do
 		local owner = player.GetByUniqueID(id) or NULL
 
 		if owner == ply then
 			for key, outfit in pairs(outfits) do
+				if outfit.wear_filter then
+					for i, plyID in ipairs(filter) do
+						if not qhasvalue(outfit.wear_filter, plyID) then
+							local getPly = players[tostring(plyID)]
+
+							if getPly and getPly.pac_requested_outfits then
+								pace.SubmitPart(outfit, getPly)
+							end
+						end
+					end
+				end
+
 				outfit.wear_filter = filter
 			end
 		end
