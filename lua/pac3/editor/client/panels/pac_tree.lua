@@ -21,11 +21,11 @@ end
 local PANEL = vgui.Register("pac_dtree", {}, "DScrollPanel")
 pace.pac_dtree = PANEL
 
-AccessorFunc(PANEL, "m_bShowIcons", 			"ShowIcons")
-AccessorFunc(PANEL, "m_iIndentSize", 			"IndentSize")
-AccessorFunc(PANEL, "m_iLineHeight", 			"LineHeight")
-AccessorFunc(PANEL, "m_pSelectedItem",			"SelectedItem")
-AccessorFunc(PANEL, "m_bClickOnDragHover",		"ClickOnDragHover")
+AccessorFunc(PANEL, "m_bShowIcons",             "ShowIcons")
+AccessorFunc(PANEL, "m_iIndentSize",            "IndentSize")
+AccessorFunc(PANEL, "m_iLineHeight",            "LineHeight")
+AccessorFunc(PANEL, "m_pSelectedItem",          "SelectedItem")
+AccessorFunc(PANEL, "m_bClickOnDragHover",      "ClickOnDragHover")
 
 function PANEL:Init()
 	self:SetShowIcons(true)
@@ -118,24 +118,24 @@ end
 local PANEL = vgui.Register("pac_dtree_node", {}, "DPanel")
 pace.pac_dtree_node = PANEL
 
-AccessorFunc(PANEL, "m_pRoot", 				"Root")
+AccessorFunc(PANEL, "m_pRoot",                  "Root")
 
-AccessorFunc(PANEL, "m_pParentNode", 			"ParentNode")
+AccessorFunc(PANEL, "m_pParentNode",            "ParentNode")
 
-AccessorFunc(PANEL, "m_strPathID", 			"PathID")
-AccessorFunc(PANEL, "m_strWildCard", 			"WildCard")
-AccessorFunc(PANEL, "m_bNeedsPopulating", 		"NeedsPopulating")
+AccessorFunc(PANEL, "m_strPathID",              "PathID")
+AccessorFunc(PANEL, "m_strWildCard",            "WildCard")
+AccessorFunc(PANEL, "m_bNeedsPopulating",       "NeedsPopulating")
 
-AccessorFunc(PANEL, "m_bDirty", 				"Dirty", 				FORCE_BOOL)
-AccessorFunc(PANEL, "m_bNeedsChildSearch",		"NeedsChildSearch", 	FORCE_BOOL)
+AccessorFunc(PANEL, "m_bDirty",                 "Dirty",                FORCE_BOOL)
+AccessorFunc(PANEL, "m_bNeedsChildSearch",      "NeedsChildSearch",     FORCE_BOOL)
 
-AccessorFunc(PANEL, "m_bForceShowExpander",	"ForceShowExpander", 	FORCE_BOOL)
-AccessorFunc(PANEL, "m_bHideExpander",			"HideExpander", 		FORCE_BOOL)
-AccessorFunc(PANEL, "m_bDoubleClickToOpen",	"DoubleClickToOpen", 	FORCE_BOOL)
+AccessorFunc(PANEL, "m_bForceShowExpander",     "ForceShowExpander",    FORCE_BOOL)
+AccessorFunc(PANEL, "m_bHideExpander",          "HideExpander",         FORCE_BOOL)
+AccessorFunc(PANEL, "m_bDoubleClickToOpen",     "DoubleClickToOpen",    FORCE_BOOL)
 
-AccessorFunc(PANEL, "m_bLastChild",			"LastChild", 	FORCE_BOOL)
-AccessorFunc(PANEL, "m_bDrawLines",			"DrawLines", 	FORCE_BOOL)
-AccessorFunc(PANEL, "m_strDraggableName", 		"DraggableName")
+AccessorFunc(PANEL, "m_bLastChild",             "LastChild",            FORCE_BOOL)
+AccessorFunc(PANEL, "m_bDrawLines",             "DrawLines",            FORCE_BOOL)
+AccessorFunc(PANEL, "m_strDraggableName",       "DraggableName")
 
 function PANEL:Init()
 	self:SetDoubleClickToOpen(true)
@@ -173,6 +173,8 @@ end
 
 function PANEL:OnRemove()
 	local root = self:GetRoot()
+
+	if not IsValid(root) then return end
 
 	root.added_nodes = root.added_nodes or {}
 	for i,v in ipairs(root.added_nodes) do
