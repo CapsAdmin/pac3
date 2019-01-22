@@ -255,6 +255,7 @@ function pace.SubmitPart(data, filter)
 				end
 			end
 		elseif type(players) == "Player" and (not players.pac_requested_outfits and players ~= data.owner) then
+			data.transmissionID = nil
 			return true
 		end
 
@@ -282,6 +283,9 @@ function pace.SubmitPart(data, filter)
 			pace.CallHook("OnWoreOutfit", data.owner, data.part)
 		end
 	end
+
+	-- nullify transmission ID
+	data.transmissionID = nil
 
 	return true
 end
