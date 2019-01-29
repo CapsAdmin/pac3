@@ -47,7 +47,7 @@ function PART:SetMass(n)
 	self.Mass = n
 
 	if self.phys:IsValid() then
-		self.phys:SetMass(n)
+		self.phys:SetMass(math.Clamp(n, 0.001, 50000))
 	end
 end
 
