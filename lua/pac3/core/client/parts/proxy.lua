@@ -380,7 +380,6 @@ PART.Inputs = {
 		return 0
 	end,
 
-
 	-- outfit owner vel increase
 	owner_velocity_length_increase = function(self, parent)
 		local owner = self:GetOwner(self.RootOwner)
@@ -454,7 +453,6 @@ PART.Inputs = {
 	end,
 
 	parent_scale_x = function(self, parent)
-
 		if parent:IsValid() then
 			return parent.Scale and parent.Scale.x*parent.Size or 1
 		end
@@ -462,7 +460,6 @@ PART.Inputs = {
 		return 1
 	end,
 	parent_scale_y = function(self, parent)
-
 		if parent:IsValid() then
 			return parent.Scale and parent.Scale.y*parent.Size or 1
 		end
@@ -470,12 +467,25 @@ PART.Inputs = {
 		return 1
 	end,
 	parent_scale_z = function(self, parent)
-
 		if parent:IsValid() then
 			return parent.Scale and parent.Scale.z*parent.Size or 1
 		end
 
 		return 1
+	end,
+
+	pose_parameter = function(self, parent, name)
+		if name then
+			local owner = self:GetOwner(self.RootOwner)
+
+			owner = try_viewmodel(owner)
+
+			if owner:IsValid() and owner.GetPoseParameter then
+				return owner:GetPoseParameter(name)
+			end
+		end
+
+		return 0
 	end,
 
 	command = function(self, index)
@@ -501,7 +511,6 @@ PART.Inputs = {
 	end,
 
 	light_amount_r = function(self, parent)
-
 		if parent:IsValid() then
 			return render.GetLightColor(parent.cached_pos):ToColor().r
 		end

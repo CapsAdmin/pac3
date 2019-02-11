@@ -324,6 +324,14 @@ PART.OldEvents = {
 		end,
 	},
 
+	pose_parameter = {
+		arguments = {{name = "string"}, {num = "number"}},
+		callback = function(self, ent, name, num)
+			ent = try_viewmodel(ent)
+			return self:NumberOperator(ent:GetPoseParameter(name), num)
+		end,
+	},
+
 	speed = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, num)
@@ -337,6 +345,13 @@ PART.OldEvents = {
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
 			return self:NumberOperator(ent:WaterLevel(), num)
+		end,
+	},
+
+	is_on_fire = {
+		callback = function(self, ent)
+			ent = try_viewmodel(ent)
+			return ent:IsOnFire()
 		end,
 	},
 
