@@ -1424,11 +1424,9 @@ function PART:GetParsedArguments(data)
 	local args = line:Split("@@")
 
 	for pos, arg in pairs(data) do
-		local typ = select(2, next(arg))
+		local typ = arg[2]--select(2, next(arg))
 
-		if not args[pos] then
-			break
-		elseif typ == "boolean" then
+		if typ == "boolean" then
 			args[pos] = tonumber(args[pos]) ~= 0
 		elseif typ == "number" then
 			args[pos] = tonumber(args[pos]) or 0
