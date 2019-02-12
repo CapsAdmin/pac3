@@ -1233,21 +1233,39 @@ do -- vector
 			pace.SafeRemoveSpecialPanel()
 
 			local frm = vgui.Create("DFrame")
-			frm:SetTitle("color")
+			frm:SetTitle("Color")
 
 			pace.ShowSpecial(frm, self, 300)
 
 			local clr = vgui.Create("DColorMixer", frm)
 			clr:Dock(FILL)
+			clr:SetAlphaBar(false) -- Alpha isn't needed
 			clr:SetColor(Color(self.vector.x, self.vector.y, self.vector.z))
 
+			local function valHex(val)
+				local str = ("%X"):format(val)
+				if string.len(str) == 1 then
+					str = "0" .. str -- Output the correct format for a hex colour string
+				end
+				return str
+			end
+
 			local function tohex(vec)
-				return ("#%X%X%X"):format(vec.x, vec.y, vec.z)
+				return ("#%s%s%s"):format(valHex(vec.x), valHex(vec.y), valHex(vec.z))
 			end
 
 			local function fromhex(str)
-				local x,y,z = str:match("#?(..)(..)(..)")
-				return Vector(tonumber("0x" .. x), tonumber("0x" .. y), tonumber("0x" .. z))
+				local x,y,z = "FF", "FF", "FF" -- Default to white if no valid values found
+				local strLen = string.len(str)
+				if strLen >= 3 and strLen <= 4 then -- Supports "#xxx" and "xxx"
+					x,y,z = str:match("#?(.)(.)(.)")
+					x = x .. x
+					y = y .. y
+					z = z .. z
+				elseif strLen >= 6 and strLen <= 7 then -- Supports "#xxxxxx" and "xxxxxx"
+					x,y,z = str:match("#?(..)(..)(..)")
+				end
+				return Vector(tonumber("0x" .. x) or 255, tonumber("0x" .. y) or 255, tonumber("0x" .. z) or 255) -- Default to white if tonumber returns nil
 			end
 
 			local html_color = vgui.Create("DTextEntry", frm)
@@ -1256,12 +1274,9 @@ do -- vector
 			html_color.OnEnter = function()
 				local vec = fromhex(html_color:GetValue())
 				clr:SetColor(Color(vec.x, vec.y, vec.z))
-				self.OnValueChanged(vec)
-				self:SetValue(vec)
 			end
 
-			function clr.Think()
-				local clr = clr:GetColor() or Color(255, 255, 255, 255)
+			function clr.ValueChanged(panel, clr) -- Only update values when the Color mixer value changes
 				local vec = Vector(clr.r, clr.g, clr.b)
 				self.OnValueChanged(vec)
 				self:SetValue(vec)

@@ -19,7 +19,7 @@ pac.StartStorableVars()
 	})
 
 	pac.GetSet(PART, "Weight", 0)
-	pac.GetSet(PART, "RootOwner", true)
+	pac.GetSet(PART, "RootOwner", false, { description = "Target the local player instead of the part's parent" })
 	pac.GetSet(PART, "DefaultOnHide", true)
 pac.EndStorableVars()
 
