@@ -1089,7 +1089,7 @@ do
 		end,
 
 		-- __newindex = function(self, key, val)
-		-- 	rawset(self, key, val)
+		--  rawset(self, key, val)
 		-- end
 	}
 
@@ -1411,35 +1411,14 @@ function PART:ParseArguments(...)
 	self.Arguments = str
 end
 
-function PART:GetParsedArguments(data)
-	if not data then return end
+function PART:GetParsedArguments(eventObject)
+	if not eventObject then return end
 
-	local line = self.Arguments
-	local hash = line .. tostring(data)
-
-	if pac.EventArgumentCache[hash] then
-		return unpack(pac.EventArgumentCache[hash])
+	if eventObject.ParseArguments then
+		return eventObject:ParseArguments(self)
 	end
 
-	local args = line:Split("@@")
-
-	for pos, arg in pairs(data) do
-		local typ = select(2, next(arg))
-
-		if not args[pos] then
-			break
-		elseif typ == "boolean" then
-			args[pos] = tonumber(args[pos]) ~= 0
-		elseif typ == "number" then
-			args[pos] = tonumber(args[pos]) or 0
-		elseif typ == "string" then
-			args[pos] = tostring(args[pos]) or ""
-		end
-	end
-
-	pac.EventArgumentCache[hash] = args
-
-	return unpack(args)
+	return self:GetParsedArgumentsForObject(eventObject)
 end
 
 function PART:GetParsedArgumentsForObject(eventObject)
@@ -1457,9 +1436,7 @@ function PART:GetParsedArgumentsForObject(eventObject)
 	for i, argData in pairs(eventObject:GetArguments()) do
 		local typ = argData[2]
 
-		if not args[i] then
-			break
-		elseif typ == "boolean" then
+		if typ == "boolean" then
 			args[i] = tonumber(args[i]) ~= 0
 		elseif typ == "number" then
 			args[i] = tonumber(args[i]) or 0
