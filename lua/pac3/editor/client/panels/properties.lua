@@ -1242,16 +1242,8 @@ do -- vector
 			clr:SetAlphaBar(false) -- Alpha isn't needed
 			clr:SetColor(Color(self.vector.x, self.vector.y, self.vector.z))
 
-			local function valHex(val)
-				local str = ("%X"):format(val)
-				if string.len(str) == 1 then
-					str = "0" .. str -- Output the correct format for a hex colour string
-				end
-				return str
-			end
-
 			local function tohex(vec)
-				return ("#%s%s%s"):format(valHex(vec.x), valHex(vec.y), valHex(vec.z))
+				return ("#%02X%02X%02X"):format(vec.x, vec.y, vec.z)
 			end
 
 			local function fromhex(str)
