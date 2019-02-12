@@ -1299,7 +1299,6 @@ do -- vector
 			clr:Dock(FILL)
 			clr:SetAlphaBar(false) -- Alpha isn't needed
 			clr:SetColor(Color(self.vector.x, self.vector.y, self.vector.z))
-			self.colorMixerPanel = clr
 
 			local html_color = vgui.Create("DTextEntry", frm)
 			html_color:Dock(BOTTOM)
