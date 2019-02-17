@@ -105,7 +105,7 @@ function pac.HTTPGet(url, cb, failcb)
 					if length <= (limit * 1024) then
 						get(url, cb, failcb)
 					else
-						failcb("download is too big (" .. string.NiceSize(len) .. ")", true)
+						failcb("download is too big (" .. string.NiceSize(length) .. ")", true)
 					end
 				else
 					local allow_no_contentlength = SV_NO_CLENGTH:GetInt()
