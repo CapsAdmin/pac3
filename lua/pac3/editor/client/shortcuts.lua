@@ -1,7 +1,7 @@
 function pace.OnShortcutSave()
 	if pace.current_part:IsValid() then
-		local part = pace.current_part:GetRootPart()
-		pace.SavePartToFile(part, part:GetName())
+		-- local part = pace.current_part:GetRootPart() -- Is this even needed?
+		pace.SaveParts()
 		surface.PlaySound("buttons/button9.wav")
 	end
 end
