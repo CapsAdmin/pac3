@@ -1,7 +1,8 @@
 function pace.OnShortcutSave()
 	if pace.current_part:IsValid() then
-		-- local part = pace.current_part:GetRootPart() -- Is this even needed?
-		pace.SaveParts()
+		local part = pace.current_part:GetRootPart()
+		local prompt_name = pace.LastSaveName or part:GetName() or "my outfit"
+		pace.SaveParts(nil, prompt_name)
 		surface.PlaySound("buttons/button9.wav")
 	end
 end
