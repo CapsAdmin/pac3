@@ -14,7 +14,7 @@ file.CreateDir("pac3")
 file.CreateDir("pac3/__backup/")
 file.CreateDir("pac3/__backup_save/")
 
-function pace.SaveParts(name, prompt_name, override_part)
+function pace.SaveParts(name, prompt_name, override_part, overrideAsUsual)
 	if not name or prompt_name then
 		Derma_StringRequest(
 			L"save parts",
@@ -23,7 +23,7 @@ function pace.SaveParts(name, prompt_name, override_part)
 
 			function(name)
 				pace.LastSaveName = name
-				pace.SaveParts(name, nil, override_part)
+				pace.SaveParts(name, nil, override_part, overrideAsUsual)
 
 				pace.RefreshFiles()
 			end
@@ -36,13 +36,20 @@ function pace.SaveParts(name, prompt_name, override_part)
 
 	local data = {}
 
-	if pace.use_current_part_for_saveload and pace.current_part:IsValid() then
-		override_part = pace.current_part
+	if not overrideAsUsual then
+		if pace.use_current_part_for_saveload and pace.current_part:IsValid() then
+			override_part = pace.current_part
+		end
+
+		if override_part then
+			data = override_part:ToSaveTable()
+		end
+	elseif override_part then
+		table.insert(data, override_part:ToSaveTable())
+		override_part = nil
 	end
 
-	if override_part then
-		data = override_part:ToSaveTable()
-	else
+	if #data == 0 then
 		for key, part in pairs(pac.GetLocalParts()) do
 			if not part:HasParent() and part.show_in_editor ~= false then
 				table.insert(data, part:ToSaveTable())

@@ -4,7 +4,7 @@ function pace.OnShortcutSave()
 
 	local part = pace.current_part:GetRootPart()
 	surface.PlaySound("buttons/button9.wav")
-	pace.SaveParts(nil, "part " .. (part:GetName() or "my outfit"), part)
+	pace.SaveParts(nil, "part " .. (part:GetName() or "my outfit"), part, true)
 end
 
 function pace.OnShortcutWear()
