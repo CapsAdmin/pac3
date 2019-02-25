@@ -3,8 +3,6 @@ local pac_wear_friends_only = CreateClientConVar("pac_wear_friends_only", "0", t
 local pac_wear_reverse = CreateClientConVar("pac_wear_reverse", "0", true, false, 'Wear to NOBODY but to people from list (Blacklist -> Whitelist)')
 
 do -- to server
-	local count = -1
-
 	local function assemblePlayerFilter()
 		local filter = {}
 
@@ -31,9 +29,7 @@ do -- to server
 		return filter
 	end
 
-	local function updatePlayerList()
-		if player.GetCount() == count then return end
-		count = player.GetCount()
+	net.Receive('pac_update_playerfilter', function()
 		local filter = assemblePlayerFilter()
 
 		net.Start('pac_update_playerfilter')
@@ -44,9 +40,7 @@ do -- to server
 
 		net.WriteUInt(0, 32)
 		net.SendToServer()
-	end
-
-	timer.Create('pac_update_playerfilter', 5, 0, updatePlayerList)
+	end)
 
 	function pace.IsPartSendable(part, extra)
 		local allowed, reason = pac.CallHook("CanWearParts", LocalPlayer())

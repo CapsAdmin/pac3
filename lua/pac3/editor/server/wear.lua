@@ -389,21 +389,30 @@ end
 
 function pace.RequestOutfits(ply)
 	if not ply:IsValid() then return end
+
 	if ply.pac_requested_outfits_time and ply.pac_requested_outfits_time > RealTime() then return end
 	ply.pac_requested_outfits_time = RealTime() + 30
 	ply.pac_requested_outfits = true
 
-	for id, outfits in pairs(pace.Parts) do
-		local owner = player.GetByUniqueID(id) or NULL
+	ply.pac_gonna_receive_outfits = true
 
-		if owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
-			for key, outfit in pairs(outfits) do
-				if not outfit.wear_filter or table.HasValue(outfit.wear_filter, tonumber(ply:UniqueID())) then
-					pace.SubmitPart(outfit, ply)
+	net.Start('pac_update_playerfilter')
+	net.Broadcast()
+
+	timer.Simple(6, function()
+		ply.pac_gonna_receive_outfits = false
+		for id, outfits in pairs(pace.Parts) do
+			local owner = player.GetByUniqueID(id) or NULL
+
+			if owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
+				for key, outfit in pairs(outfits) do
+					if not outfit.wear_filter or table.HasValue(outfit.wear_filter, tonumber(ply:UniqueID())) then
+						pace.SubmitPart(outfit, ply)
+					end
 				end
 			end
 		end
-	end
+	end)
 end
 
 local function qhasvalue(tab, value)
@@ -458,7 +467,7 @@ local function pac_update_playerfilter(len, ply)
 						if not qhasvalue(outfit.wear_filter, plyID) then
 							local getPly = players[tostring(plyID)]
 
-							if getPly and getPly.pac_requested_outfits then
+							if getPly and getPly.pac_requested_outfits and not getPly.pac_gonna_receive_outfits then
 								pace.SubmitPart(outfit, getPly)
 							end
 						end
