@@ -1451,12 +1451,14 @@ function PART:GetParsedArgumentsForObject(eventObject)
 	for i, argData in pairs(eventObject:GetArguments()) do
 		local typ = argData[2]
 
-		if typ == "boolean" then
-			args[i] = tonumber(args[i]) ~= 0
-		elseif typ == "number" then
-			args[i] = tonumber(args[i]) or 0
-		elseif typ == "string" then
-			args[i] = tostring(args[i]) or ""
+		if args[i] ~= nil then
+			if typ == "boolean" then
+				args[i] = tonumber(args[i]) ~= 0
+			elseif typ == "number" then
+				args[i] = tonumber(args[i]) or 0
+			elseif typ == "string" then
+				args[i] = tostring(args[i]) or ""
+			end
 		end
 	end
 
