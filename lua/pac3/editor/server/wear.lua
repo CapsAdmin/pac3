@@ -400,7 +400,9 @@ function pace.RequestOutfits(ply)
 	net.Broadcast()
 
 	timer.Simple(6, function()
+		if not IsValid(ply) then return end
 		ply.pac_gonna_receive_outfits = false
+
 		for id, outfits in pairs(pace.Parts) do
 			local owner = player.GetByUniqueID(id) or NULL
 
