@@ -57,7 +57,7 @@ function webaudio.Browser.Initialize()
 	webaudio.Browser.Control:AddFunction("lua", "message", function(messageType, ...)
 		local args = {...}
 
-		webaudio.DebugPrint(messageType .. " " .. table.concat(args, ", "))
+		webaudio.DebugPrint(messageType, ...)
 
 		if messageType == "initialized" then
 			webaudio.Browser.State = webaudio.Browser.States.Initialized
