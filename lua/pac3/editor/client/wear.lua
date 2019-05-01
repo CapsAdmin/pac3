@@ -89,7 +89,6 @@ do -- to server
 		pac.Message(('Transmitting outfit %q to server (%s)'):format(part.Name or part.ClassName or '<unknown>', string.NiceSize(bytes)))
 
 		return true
-
 	end
 
 	function pace.RemovePartOnServer(name, server_only, filter)
@@ -108,7 +107,6 @@ do -- to server
 		net.SendToServer()
 
 		return true
-
 	end
 end
 
@@ -161,6 +159,7 @@ do -- from server
 			end
 
 			part:CallRecursive('OnWorn')
+			part:CallRecursive('PostApplyFixes')
 		end
 
 		if doItNow then

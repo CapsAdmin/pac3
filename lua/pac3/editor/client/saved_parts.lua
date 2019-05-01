@@ -233,9 +233,12 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 		pace.ClearParts()
 	end
 
+	local partsLoaded = {}
+
 	if data.self then
 		local part = override_part or pac.CreatePart(data.self.ClassName)
 		part:SetTable(data)
+		table.insert(partsLoaded, part)
 	else
 		data = pace.FixBadGrouping(data)
 		data = pace.FixUniqueIDs(data)
@@ -243,11 +246,17 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 		for key, tbl in pairs(data) do
 			local part = pac.CreatePart(tbl.self.ClassName)
 			part:SetTable(tbl)
+			table.insert(partsLoaded, part)
 		end
 	end
 
 	pace.RefreshTree(true)
 	pace.ClearUndo()
+
+	for i, part in ipairs(partsLoaded) do
+		part:CallRecursive('OnOutfitLoaded')
+		part:CallRecursive('PostApplyFixes')
+	end
 end
 
 local function add_files(tbl, dir)

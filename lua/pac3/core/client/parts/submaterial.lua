@@ -45,6 +45,19 @@ function PART:UpdateSubMaterialId(id, material)
 	id = tonumber(id) or self.SubMaterialId
 	local ent = self:GetOwner(self.RootOwner)
 
+	if ent ~= self.sub_last_owner then
+		if IsValid(self.sub_last_owner) then
+			self.sub_last_owner:SetSubMaterial(self.sub_last_owner_sub_id - 1, "")
+
+			if self.sub_last_owner.pac_submaterials then
+				self.sub_last_owner.pac_submaterials[self.sub_last_owner_sub_id] = nil
+			end
+		end
+
+		self.sub_last_owner = ent
+		self.sub_last_owner_sub_id = id
+	end
+
 	if not ent:IsValid() or not ent.GetMaterials then return end
 	ent.pac_submaterials = ent.pac_submaterials or {}
 
@@ -63,6 +76,10 @@ function PART:UpdateSubMaterialId(id, material)
 		ent.pac_submaterials[id] = material
 		ent:SetSubMaterial(id - 1, material)
 	end
+end
+
+function PART:PostApplyFixes()
+	self:UpdateSubMaterialId()
 end
 
 function PART:SetSubMaterialId(num)

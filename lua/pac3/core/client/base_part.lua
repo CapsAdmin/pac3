@@ -799,6 +799,14 @@ do -- serializing
 		-- override
 	end
 
+	function PART:OnOutfitLoaded()
+		-- override
+	end
+
+	function PART:PostApplyFixes()
+		-- override
+	end
+
 	do
 		local function SetTable(self, tbl)
 			self.supress_part_name_find = true
