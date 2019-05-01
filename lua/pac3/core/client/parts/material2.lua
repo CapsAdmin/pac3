@@ -1,5 +1,7 @@
 local shader_params = include("pac3/libraries/shader_params.lua")
 
+local mat_hdr_level = GetConVar("mat_hdr_level")
+
 local material_flags = {
 	debug = bit.lshift(1, 0),
 	no_debug_override = bit.lshift(1, 1),
@@ -373,6 +375,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				end
 			elseif info.type == "texture" then
 				info.default = info.default or ""
+
 				pac.GetSet(PART, property_name, info.default, {
 					editor_panel = "textures",
 					editor_friendly = info.friendly,
@@ -385,10 +388,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				PART["Set" .. property_name] = function(self, val)
 					self[property_name] = val
 
-					if val == "" then
+					if val == "" or info.no_hdr and mat_hdr_level:GetInt() > 0 then
 						self:GetRawMaterial():SetUndefined(key)
 						self:GetRawMaterial():Recompute()
-
 					else
 						if not pac.resource.DownloadTexture(val, function(tex, frames)
 							if frames then
