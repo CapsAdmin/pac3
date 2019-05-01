@@ -81,6 +81,8 @@ pac.StartStorableVars()
 
 pac.EndStorableVars()
 
+PART.AllowSetupPositionFrameSkip = true
+
 local blend_modes = {
 	zero = 0,
 	one = 1,
@@ -1089,6 +1091,7 @@ do -- drawing. this code is running every frame
 			if not self.HandleModifiersManually then self:ModifiersPreEvent('OnDraw', draw_type) end
 
 			if self.IgnoreZ then cam.IgnoreZ(true) end
+
 			if self.blend_override then
 				render.OverrideBlendFunc(true,
 					self.blend_override[1],
@@ -1105,6 +1108,7 @@ do -- drawing. this code is running every frame
 					render.OverrideColorWriteEnable(true, self.blend_override[6] == "write_color")
 				end
 			end
+
 			if self.NoTextureFiltering then
 				render.PushFilterMin(TEXFILTER.POINT)
 				render.PushFilterMag(TEXFILTER.POINT)
@@ -1128,6 +1132,7 @@ do -- drawing. this code is running every frame
 					render.OverrideColorWriteEnable(false)
 				end
 			end
+
 			if self.IgnoreZ then cam.IgnoreZ(false) end
 
 			if not self.HandleModifiersManually then self:ModifiersPostEvent('OnDraw', draw_type) end
@@ -1154,12 +1159,12 @@ do -- drawing. this code is running every frame
 	end
 
 	function PART:GetDrawPosition(bone_override, skip_cache)
-		if pac.FrameNumber ~= self.last_drawpos_framenum or not self.last_drawpos or skip_cache then
+		if not self.AllowSetupPositionFrameSkip or pac.FrameNumber ~= self.last_drawpos_framenum or not self.last_drawpos or skip_cache then
 			self.last_drawpos_framenum = pac.FrameNumber
 
 			local owner = self:GetOwner()
 			if owner:IsValid() then
-				local pos, ang = self:GetBonePosition(bone_override)
+				local pos, ang = self:GetBonePosition(bone_override, skip_cache)
 
 				pos, ang = LocalToWorld(
 					self.Position or Vector(),
@@ -1175,22 +1180,27 @@ do -- drawing. this code is running every frame
 
 				return pos, ang
 			end
-
-		else
-			return self.last_drawpos, self.last_drawang
 		end
 
-		return Vector(0,0,0), Angle(0,0,0)
+		return self.last_drawpos, self.last_drawang
 	end
 
-	function PART:GetBonePosition(bone_override)
-		if pac.FrameNumber ~= self.last_bonepos_framenum or not self.last_bonepos then
+	function PART:GetBonePosition(bone_override, skip_cache)
+		if not self.AllowSetupPositionFrameSkip or pac.FrameNumber ~= self.last_bonepos_framenum or not self.last_bonepos or skip_cache then
 			self.last_bonepos_framenum = pac.FrameNumber
 
 			local owner = self:GetOwner()
 			local parent = self:GetParent()
 
 			if parent:IsValid() and parent.ClassName == "jiggle" then
+				if skip_cache then
+					if parent.Translucent then
+						parent:Draw(nil, nil, "translucent")
+					else
+						parent:Draw(nil, nil, "opaque")
+					end
+				end
+
 				return parent.pos, parent.ang
 			end
 
@@ -1211,7 +1221,6 @@ do -- drawing. this code is running every frame
 					-- unless we've passed it from parent
 					pos, ang = parent:GetDrawPosition()
 				end
-
 			elseif owner:IsValid() then
 				-- if there is no parent, default to owner bones
 				owner:InvalidateBoneCache()
@@ -1222,9 +1231,9 @@ do -- drawing. this code is running every frame
 			self.last_boneang = ang
 
 			return pos, ang
-		else
-			return self.last_bonepos, self.last_boneang
 		end
+
+		return self.last_bonepos, self.last_boneang
 	end
 
 	-- since this is kind of like a hack I choose to have upper case names to avoid name conflicts with parts

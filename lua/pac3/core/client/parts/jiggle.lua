@@ -51,6 +51,7 @@ end
 
 function PART:Initialize()
 	self:Reset()
+	self.AllowSetupPositionFrameSkip = false
 end
 
 function PART:OnShow()
@@ -153,7 +154,6 @@ function PART:OnDraw(owner, pos, ang)
 	else
 		self.ang = ang
 	end
-
 end
 
 pac.RegisterPart(PART)
