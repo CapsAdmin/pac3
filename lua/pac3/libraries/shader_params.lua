@@ -1504,6 +1504,7 @@ return {
 			envmap = {
 				type = "texture",
 				description = "envmap",
+				default = "shadertest/shadertest_env",
 			},
 			envmapmode = {
 				is_flag = true,
