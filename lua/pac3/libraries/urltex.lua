@@ -117,14 +117,15 @@ function urltex.StartDownload(url, data)
 	local size = data.size or urltex.TextureSize
 	local id = "urltex_download_" .. url
 	local pnl
+	local frames_passed = 0
 
 	local function createDownloadPanel()
 		pnl = vgui.Create("DHTML")
 		-- Tested in PPM/2, this code works perfectly
 		pnl:SetVisible(false)
 		pnl:SetSize(size, size)
-		pnl:SetHTML(
-			[[
+		pnl:SetHTML([[<html>
+				<head>
 				<style type="text/css">
 					html
 					{
@@ -132,13 +133,28 @@ function urltex.StartDownload(url, data)
 						]] .. (data.size_hack and "margin: -8px -8px;" or "margin: 0px 0px;") .. [[
 					}
 				</style>
+				<script>
+					window.onload = function() {
+						setInterval(function() {
+							console.log('REAL_FRAME_PASSED');
+						}, 50);
+					};
+				</script>
+				</head>
 
 				<body>
 					<img src="]] .. url .. [[" alt="" width="]] .. size .. [[" height="]] .. size .. [[" />
 				</body>
-			]]
-		)
+			</html>]])
+
 		pnl:Refresh()
+
+		function pnl:ConsoleMessage(msg)
+			if msg == 'REAL_FRAME_PASSED' then
+				frames_passed = frames_passed + 1
+			end
+		end
+
 		urltex.ActivePanel = pnl
 	end
 
@@ -174,11 +190,11 @@ function urltex.StartDownload(url, data)
 
 		-- give it some time.. IsLoading is sometimes lying, especially on chromium branch
 		if not go and not pnl:IsLoading() then
-			time = pac.RealTime + 0.4
+			time = pac.RealTime + 1
 			go = true
 		end
 
-		if go and time < pac.RealTime then
+		if go and time < pac.RealTime and frames_passed > 20 then
 			pnl:UpdateHTMLTexture()
 			local html_mat = pnl:GetHTMLMaterial()
 
@@ -231,7 +247,9 @@ function urltex.StartDownload(url, data)
 					urltex.Cache[data.urlIndex] = rt
 				end
 
-				timer.Simple(0, function() pnl:Remove() end)
+				timer.Simple(0, function()
+					pnl:Remove()
+				end)
 
 				if data.callbacks then
 					for i, callback in pairs(data.callbacks) do
