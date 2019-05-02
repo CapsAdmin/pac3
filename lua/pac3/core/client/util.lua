@@ -52,9 +52,14 @@ end
 
 do
 	pac.next_frame_funcs = pac.next_frame_funcs or {}
+	pac.next_frame_funcs_simple = pac.next_frame_funcs_simple or {}
 
 	function pac.RunNextFrame(id, func)
 		pac.next_frame_funcs[id] = func
+	end
+
+	function pac.RunNextFrameSimple(func)
+		table.insert(pac.next_frame_funcs_simple, func)
 	end
 end
 

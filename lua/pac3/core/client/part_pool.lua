@@ -414,9 +414,24 @@ pac.AddHook("Think", "events", function()
 	end
 
 	if pac.next_frame_funcs then
-		for k, v in pairs(pac.next_frame_funcs) do
-			v()
-			pac.next_frame_funcs[k] = nil
+		for k, fcall in pairs(pac.next_frame_funcs) do
+			fcall()
+		end
+
+		-- table.Empty is also based on undefined behavior
+		-- god damnit
+		for i, key in ipairs(table.GetKeys(pac.next_frame_funcs)) do
+			pac.next_frame_funcs[key] = nil
+		end
+	end
+
+	if pac.next_frame_funcs_simple and #pac.next_frame_funcs_simple ~= 0 then
+		for i, fcall in ipairs(pac.next_frame_funcs_simple) do
+			fcall()
+		end
+
+		for i = #pac.next_frame_funcs_simple, 1, -1 do
+			pac.next_frame_funcs_simple[i] = nil
 		end
 	end
 end)
