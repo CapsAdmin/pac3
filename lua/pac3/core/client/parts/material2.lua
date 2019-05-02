@@ -186,6 +186,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 	local function update_submaterial(self, remove, parent)
 		pac.RunNextFrame("refresh materials" .. self.Id, function()
+			if not IsValid(self) and not remove then return end
+
+			self.dirty = false
 			local name = self:GetName()
 
 			for _, part in ipairs(self:GetRootPart():GetChildrenList()) do
@@ -507,23 +510,51 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	end
 
 	function PART:OnParent(parent)
+		self.dirty = true
+		self.dirty_parent = parent
+		self.dirty_remove = false
+		if not self.full_load then return end
 		update_submaterial(self)
 	end
 
 	function PART:OnRemove()
+		self.dirty = true
+		self.dirty_parent = nil
+		self.dirty_remove = true
+		if not self.full_load then return end
 		update_submaterial(self, true)
 	end
 
 	function PART:OnUnParent(parent)
+		self.dirty = true
+		self.dirty_parent = parent
+		self.dirty_remove = true
+		if not self.full_load then return end
 		update_submaterial(self, true, parent)
 	end
 
 	function PART:OnHide()
+		self.dirty = true
+		self.dirty_parent = nil
+		self.dirty_remove = true
+		if not self.full_load then return end
 		update_submaterial(self, true)
 	end
 
 	function PART:OnShow()
+		self.dirty = true
+		self.dirty_parent = nil
+		self.dirty_remove = false
+		if not self.full_load then return end
 		update_submaterial(self)
+	end
+
+	function PART:PostApplyFixes()
+		self.full_load = true
+
+		if self.dirty then
+			update_submaterial(self, self.dirty_remove, self.dirty_parent)
+		end
 	end
 
 	pac.RegisterPart(PART)
