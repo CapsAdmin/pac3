@@ -375,6 +375,15 @@ for shader_name, groups in pairs(shader_params.shaders) do
 					self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
 				end
 			elseif info.type == "texture" then
+				local getnohdr = "Get" .. property_name .. "NoHDR"
+
+				if info.partial_hdr then
+					pac.GetSet(PART, property_name .. "NoHDR", false, {
+						editor_friendly = info.friendly .. " No HDR",
+						description = "Disables bound param when HDR is enabled",
+					})
+				end
+
 				info.default = info.default or ""
 
 				pac.GetSet(PART, property_name, info.default, {
@@ -386,10 +395,15 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 				local key = "$" .. key
 
+				PART["Set" .. property_name .. "NoHDR"] = function(self, val)
+					self[property_name .. "NoHDR"] = val
+					PART["Set" .. property_name](self, self[property_name])
+				end
+
 				PART["Set" .. property_name] = function(self, val)
 					self[property_name] = val
 
-					if val == "" or info.no_hdr and mat_hdr_level:GetInt() > 0 then
+					if val == "" or info.partial_hdr and mat_hdr_level:GetInt() > 0 and self[getnohdr](self) then
 						self:GetRawMaterial():SetUndefined(key)
 						self:GetRawMaterial():Recompute()
 					else
