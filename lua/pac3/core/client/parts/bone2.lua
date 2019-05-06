@@ -268,7 +268,8 @@ function PART:OnBuildBonePositions()
 
 	local scale
 
-	if self.HideMesh then
+	-- Disable hide mesh functionality completely until the crash this causes, is fixed
+	if self.HideMesh and false then
 		scale = inf_scale
 
 		if self.InvertHideMesh then
