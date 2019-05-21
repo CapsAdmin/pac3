@@ -444,17 +444,25 @@ elseif (CoreStatus == "RunThisCode") {
 		end
 
 		local scale = part:GetSize() * part:GetScale()
-
-		local holo = str_holo
-		:gsub("ALPHA", math.Round(part:GetAlpha() * 255, 4))
-		:gsub("COLOR", tovec(part:GetColor()))
-		:gsub("SCALE", "vec(" .. tovec(Vector(scale.x, scale.y, scale.z)) .. ")")
-		:gsub("ANGLES", "ang(" .. toang(part:GetAngles()) .. ")")
-		:gsub("POSITION", "vec(" .. tovec(part:GetPosition()) .. ")")
-		:gsub("MATERIAL", ("%q"):format(part:GetMaterial()))
-		:gsub("MODEL", ("%q"):format(part:GetModel()))
-		:gsub("SKIN", part:GetSkin())
-		:gsub("PARENT", "entity()")
+		local pos, ang = part.Position, part.Angles
+		if not part.PositionOffset:IsZero() or not part.AngleOffset:IsZero() then
+			local m1 = Matrix() m1:SetTranslation(pos) m1:SetAngles(ang)
+			local m2 = Matrix() m2:SetTranslation(part.PositionOffset) m2:SetAngles(part.AngleOffset)
+			local m3 = m1 * m2
+			pos, ang = m3:GetTranslation(), m3:GetAngles()
+		end
+			
+		local holo = str_holo:gsub("[A-Z]+",{
+			ALPHA = math.Round(part:GetAlpha() * 255, 4),
+			COLOR = tovec(part:GetColor()),
+			SCALE = "vec(" .. tovec(Vector(scale.x, scale.y, scale.z)) .. ")",
+			ANGLES = "ang(" .. toang(ang) .. ")",
+			POSITION = "vec(" .. tovec(pos) .. ")",
+			MATERIAL = ("%q"):format(part:GetMaterial()),
+			MODEL = ("%q"):format(part:GetModel()),
+			SKIN = part.GetSkin and part:GetSkin() or "0",
+			PARENT = "entity()"
+		})
 
 		return holo
 	end
