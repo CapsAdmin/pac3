@@ -446,11 +446,9 @@ local function pac_update_playerfilter(len, ply)
 	end
 
 	local filter = {}
-	local readnext = net.ReadUInt(32)
-
-	while readnext ~= 0 do
-		table.insert(filter, readnext)
-		readnext = net.ReadUInt(32)
+	local filterCount = net.ReadUInt(8)
+	for i=1, filterCount do
+		table.insert(filter, net.ReadUInt(32))
 	end
 
 	local players = {}

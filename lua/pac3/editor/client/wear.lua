@@ -34,11 +34,12 @@ do -- to server
 
 		net.Start('pac_update_playerfilter')
 
+		if #filter>=256 then error("Filter too large! " .. #filter) end
+		net.WriteUInt(#filter, 8)
 		for i, id in ipairs(filter) do
 			net.WriteUInt(id, 32)
 		end
 
-		net.WriteUInt(0, 32)
 		net.SendToServer()
 	end)
 
