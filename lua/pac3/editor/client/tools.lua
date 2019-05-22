@@ -446,7 +446,7 @@ elseif (CoreStatus == "RunThisCode") {
 		local scale = part:GetSize() * part:GetScale()
 		local pos, ang = part.Position, part.Angles
 		if not part.PositionOffset:IsZero() or not part.AngleOffset:IsZero() then
-			pos, ang = WorldToLocal(pos, ang, part.PositionOffset, part.AngleOffset)
+			pos, ang = LocalToWorld(part.PositionOffset, part.AngleOffset, pos, ang)
 		end
 			
 		local holo = str_holo:gsub("[A-Z]+",{
