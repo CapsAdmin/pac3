@@ -49,10 +49,16 @@ function PANEL:Init()
 	self.exit_button:SetSize(31, 26)
 
 	self.zoom = vgui.Create("DSlider")
-	self.zoom:SetLockY(0)
-	self.zoom:SetSize(100, 20)
+	self.zoom:SetLockY(0.5)
+	self.zoom:SetSize(200, 20)
 	self.zoom:SetSlideX(1)
 	--self.zoom:SetVisible(false)
+	self.zoomframe = vgui.Create( "DFrame" )
+	
+	self.zoomframe:SetSize(220,50)
+	self.zoom:SetParent(self.zoomframe)
+	self.zoom:SetPos(10,20)
+	self.zoomframe:SetPos(0.97*ScrW() - self.zoom:GetWide(), 0.97*ScrH() - self.zoom:GetTall())
 
 	self.btnClose.Paint = function() end
 
@@ -116,6 +122,10 @@ function PANEL:OnRemove()
 	if self.zoom:IsValid() then
 		self.zoom:Remove()
 	end
+
+	if self.zoomframe:IsValid() then
+		self.zoomframe:Remove()
+	end
 end
 
 function PANEL:Think(...)
@@ -152,19 +162,10 @@ function PANEL:Think(...)
 	end
 
 	if self.zoom:IsValid() then
-
-		local x, y = self:GetPos()
-		local w, h = self:GetSize()
-
-		self.zoom:SetPos(ScrW() - self.zoom:GetWide(), ScrH() - self.zoom:GetTall())
-
-		local mx, my = gui.MousePos()
-		local x, y = self.zoom:GetPos()
-		if mx > x and my > y then
-			self.zoom:SetVisible(true)
-			self.zoom:RequestFocus()
-		elseif not input.IsMouseDown(MOUSE_LEFT) then
-			self.zoom:SetVisible(false)
+		--the mouse position checks were removed because the zoom slider being visible in a window
+		--means it is no longer needed to check this
+		if self.zoomframe:IsValid() then
+			self.zoomframe:SetTitle("Zoom FOV: " .. math.Clamp(self.zoom:GetSlideX()*90, 1, 90))
 		end
 
 		pace.SetZoom(self.zoom:GetSlideX())
