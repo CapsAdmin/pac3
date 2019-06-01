@@ -48,11 +48,19 @@ function PANEL:Init()
 	self.exit_button.Paint = function(self, w, h) derma.SkinHook("Paint", "WindowCloseButton", self, w, h) end
 	self.exit_button:SetSize(31, 26)
 
-	self.zoom = vgui.Create("DSlider")
-	self.zoom:SetLockY(0)
-	self.zoom:SetSize(100, 20)
-	self.zoom:SetSlideX(1)
-	--self.zoom:SetVisible(false)
+	self.zoomframe = vgui.Create( "DPanel" )
+	self.zoomframe:SetSize( 180, 20 )
+
+	self.zoom = vgui.Create("DNumSlider", self.zoomframe)
+	self.zoom:SetPos(6,1)
+	self.zoom:SetSize(200, 20)
+	self.zoom:SetMin( 0 )				
+	self.zoom:SetMax( 90 )				
+	self.zoom:SetDecimals( 0 )	
+	self.zoom:SetText("Camera FOV")
+	self.zoom:SetDark(true)
+	self.zoom:SetDefaultValue( 45 )
+	self.zoom:SetValue( 45 )
 
 	self.btnClose.Paint = function() end
 
@@ -113,8 +121,8 @@ function PANEL:OnRemove()
 		self.exit_button:Remove()
 	end
 
-	if self.zoom:IsValid() then
-		self.zoom:Remove()
+	if self.zoomframe:IsValid() then
+		self.zoomframe:Remove()
 	end
 end
 
@@ -141,8 +149,8 @@ function PANEL:Think(...)
 	end
 
 	if self.exit_button:IsValid() then
-		local x, y = self:GetPos()
-		local w, h = self:GetSize()
+		--local x, y = self:GetPos()
+		--local w, h = self:GetSize()
 
 		if self:GetPos() + self:GetWide() / 2 < ScrW() / 2 then
 			self.exit_button:SetPos(ScrW() - self.exit_button:GetWide() + 4, -4)
@@ -151,23 +159,19 @@ function PANEL:Think(...)
 		end
 	end
 
-	if self.zoom:IsValid() then
+	if self.zoomframe:IsValid() then
 
-		local x, y = self:GetPos()
-		local w, h = self:GetSize()
+		--local x, y = self:GetPos()
+		--local w, h = self:GetSize()
 
-		self.zoom:SetPos(ScrW() - self.zoom:GetWide(), ScrH() - self.zoom:GetTall())
+		if self:GetPos() + self:GetWide() / 2 < ScrW() / 2 then
+			self.zoomframe:SetPos(ScrW() - self.zoomframe:GetWide(), ScrH() - self.zoomframe:GetTall())
 
-		local mx, my = gui.MousePos()
-		local x, y = self.zoom:GetPos()
-		if mx > x and my > y then
-			self.zoom:SetVisible(true)
-			self.zoom:RequestFocus()
-		elseif not input.IsMouseDown(MOUSE_LEFT) then
-			self.zoom:SetVisible(false)
+		else
+			self.zoomframe:SetPos(0,ScrH() - self.zoomframe:GetTall())
 		end
 
-		pace.SetZoom(self.zoom:GetSlideX())
+		pace.SetZoom(self.zoom:GetValue())
 	end
 end
 
