@@ -237,6 +237,7 @@ function pace.GainFocus(show_editor)
 			if not show_editor then
 				self:AlphaTo(255, 0.1, 0)
 				self.exit_button:AlphaTo(255, 0.1, 0)
+				self.zoomframe:AlphaTo(255, 0.1, 0)
 			end
 		end
 	end
@@ -254,6 +255,7 @@ function pace.KillFocus(show_editor)
 		if not show_editor then
 			self:AlphaTo(0, 0.1, 0)
 			self.exit_button:AlphaTo(0, 0.1, 0)
+			self.zoomframe:AlphaTo(0, 0.1, 0)
 		end
 
 		self.allowclick = false
