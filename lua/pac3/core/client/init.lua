@@ -19,7 +19,7 @@ do
 	function pac.Enable()
 		-- add all the hooks back
 		for _, data in pairs(pac.added_hooks) do
-			hook.Add(data.event_name, data.id, data.func)
+			hook.Add(data.event_name, data.id, data.func, data.priority)
 		end
 
 		pac.CallHook("Enable")
@@ -48,7 +48,7 @@ do
 	end
 end
 
-CreateClientConVar("pac_hide_disturbing", "1", true, true, "Hide parts which outfit creators marked as 'may be disturbing for some users' (e.g. gore or nsfw)")
+CreateClientConVar("pac_hide_disturbing", "1", true, true, "Hide parts which outfit creators marked as 'nsfw' (e.g. gore or explicit content)")
 
 include("util.lua")
 
@@ -80,6 +80,7 @@ include("pac3/libraries/webaudio/streams.lua")
 pac.animations = include("pac3/libraries/animations.lua")
 
 include("parts.lua")
+
 include("part_pool.lua")
 
 include("bones.lua")

@@ -65,15 +65,13 @@ local function FormatMessage(tabIn)
 			table.insert(output, ENTITY_COLOR)
 			table.insert(output, tostring(val))
 			table.insert(output, prevColor)
+		elseif IsColor(val) then
+			table.insert(output, val)
+			prevColor = val
 		elseif valType == 'table' then
-			if val.r and val.g and val.b then
-				table.insert(output, val)
-				prevColor = val
-			else
-				table.insert(output, TABLE_COLOR)
-				table.insert(output, tostring(val))
-				table.insert(output, prevColor)
-			end
+			table.insert(output, TABLE_COLOR)
+			table.insert(output, tostring(val))
+			table.insert(output, prevColor)
 		elseif valType == 'function' then
 			table.insert(output, FUNCTION_COLOR)
 			table.insert(output, string.format('function - %p', val))

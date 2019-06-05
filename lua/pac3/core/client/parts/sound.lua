@@ -155,7 +155,7 @@ function PART:PlaySound(osnd, ovol)
 	local ent = self:GetOwner(self.RootOwner)
 
 	if ent:IsValid() then
-		if ent:GetClass() == "viewmodel" then
+		if ent:GetClass() == "viewmodel" or ent == pac.LocalHands then
 			ent = pac.LocalPlayer
 		end
 

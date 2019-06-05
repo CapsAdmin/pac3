@@ -82,7 +82,7 @@ do -- pace
 	end
 
 	function mctrl.GetCameraFOV()
-		if pace.editing_viewmodel then
+		if pace.editing_viewmodel or pace.editing_hands then
 			return LocalPlayer():GetActiveWeapon().ViewModelFOV or 55
 		end
 
@@ -124,7 +124,7 @@ do -- pace
 	function mctrl.GetCalculatedScale()
 		local part = pace.current_part
 
-		if pace.editing_viewmodel then
+		if pace.editing_viewmodel or pace.editing_hands then
 			return 5
 		end
 

@@ -1,4 +1,3 @@
-
 local pac = pac
 
 local render_SetColorModulation = render.SetColorModulation
@@ -127,7 +126,14 @@ do
 								part:CallRecursiveProfiled('CThink')
 							end
 
-							if not (part.OwnerName == "viewmodel" and type ~= "viewmodel" or part.OwnerName ~= "viewmodel" and type == "viewmodel") then
+							--[[print(part, part.OwnerName, type, part.OwnerName == "viewmodel" and type == "viewmodel" or
+							part.OwnerName == "hands" and type == "hands" or
+							part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands")]]
+
+							if part.OwnerName == "viewmodel" and type == "viewmodel" or
+								part.OwnerName == "hands" and type == "hands" or
+								part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands" then
+
 								part:Draw(nil, nil, type)
 							end
 						end
@@ -147,7 +153,10 @@ do
 								end
 							end
 
-							if not (part.OwnerName == "viewmodel" and type ~= "viewmodel" or part.OwnerName ~= "viewmodel" and type == "viewmodel") then
+							if part.OwnerName == "viewmodel" and type == "viewmodel" or
+								part.OwnerName == "hands" and type == "hands" or
+								part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands" then
+
 								part:Draw(nil, nil, type)
 							end
 						end
@@ -243,6 +252,32 @@ function pac.ShowEntityParts(ent)
 	end
 end
 
+-- Prevent radius AND pixvis based flickering at the cost of rendering a bit longer than necessary
+local viscache=setmetatable({},{__mode='k'})
+local function nodrawdelay(draw,ent)
+	if draw and viscache[ent]~=false then
+		viscache[ent] = false
+		if pac.debug then print("PAC dodraw catch",ent) end
+	elseif not draw then
+		local c = viscache[ent]
+		local fn = pac.FrameNumber
+		if c~=nil then
+			if c==false then
+				viscache[ent] = fn
+				if pac.debug then print("PAC dodraw override START",ent) end
+				return true
+			elseif c then
+				if fn-c<3 then
+					if pac.debug then print("PAC dodraw override",ent) end
+					return true
+				else
+					viscache[ent] = nil
+				end
+			end
+		end
+	end
+	return draw
+end
 
 function pac.HookEntityRender(ent, part)
 	if not ent_parts[ent] then
@@ -379,9 +414,24 @@ pac.AddHook("Think", "events", function()
 	end
 
 	if pac.next_frame_funcs then
-		for k, v in pairs(pac.next_frame_funcs) do
-			v()
-			pac.next_frame_funcs[k] = nil
+		for k, fcall in pairs(pac.next_frame_funcs) do
+			fcall()
+		end
+
+		-- table.Empty is also based on undefined behavior
+		-- god damnit
+		for i, key in ipairs(table.GetKeys(pac.next_frame_funcs)) do
+			pac.next_frame_funcs[key] = nil
+		end
+	end
+
+	if pac.next_frame_funcs_simple and #pac.next_frame_funcs_simple ~= 0 then
+		for i, fcall in ipairs(pac.next_frame_funcs_simple) do
+			fcall()
+		end
+
+		for i = #pac.next_frame_funcs_simple, 1, -1 do
+			pac.next_frame_funcs_simple[i] = nil
 		end
 	end
 end)
@@ -767,9 +817,9 @@ do -- drawing
 								ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance <= dst) or
 								dst <= draw_dist
 							) and (
-								dst < radius * 1.25 or
 								fovoverride or
-								util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0
+								nodrawdelay(dst < radius * 1.25  or
+								util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0,ent)
 							)
 						end
 
@@ -809,8 +859,13 @@ do -- drawing
 		end)
 	end
 
+	local alreadyDrawing = 0
 
-	pac.AddHook("PostDrawViewModel", "draw_firstperson", function()
+	pac.AddHook("PostDrawViewModel", "draw_firstperson", function(viewmodelIn, playerIn, weaponIn)
+		if alreadyDrawing == FrameNumber() then return end
+
+		alreadyDrawing = FrameNumber()
+
 		for key, ent in pairs(pac.drawn_entities) do
 			if IsValid(ent) then
 				if ent.pac_drawing and ent_parts[ent] then
@@ -820,6 +875,36 @@ do -- drawing
 				pac.drawn_entities[key] = nil
 			end
 		end
+
+		alreadyDrawing = 0
 	end)
 
+	local alreadyDrawing = 0
+	local redrawCount = 0
+
+	pac.LocalHands = NULL
+
+	pac.AddHook("PostDrawPlayerHands", "draw_firstperson_hands", function(handsIn, viewmodelIn, playerIn, weaponIn)
+		if alreadyDrawing == FrameNumber() then
+			redrawCount = redrawCount + 1
+			if redrawCount >= 5 then return end
+		end
+
+		pac.LocalHands = handsIn
+
+		alreadyDrawing = FrameNumber()
+
+		for key, ent in pairs(pac.drawn_entities) do
+			if IsValid(ent) then
+				if ent.pac_drawing and ent_parts[ent] then
+					pac.RenderOverride(ent, "hands", true)
+				end
+			else
+				pac.drawn_entities[key] = nil
+			end
+		end
+
+		alreadyDrawing = 0
+		redrawCount = 0
+	end)
 end

@@ -1,4 +1,4 @@
-CreateConVar("pac_free_movement", -1, {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow players to modify movement. -1 apply only allow when noclip is allowed, 1 allow for all gamemodes, 0 to disable")
+CreateConVar("pac_free_movement", -1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow players to modify movement. -1 apply only allow when noclip is allowed, 1 allow for all gamemodes, 0 to disable")
 
 local default = {}
 default.JumpHeight = 200

@@ -141,8 +141,8 @@ local function ProcessAnimations(ent)
 		local frame_delta = tbl.FrameDelta
 		local die_time = tbl.DieTime
 		local power = tbl.Power
-		if die_time and die_time - ANIMATIONFADEOUTTIME <= CurTime() then
-			power = power * (die_time - CurTime()) / ANIMATIONFADEOUTTIME
+		if die_time and die_time - 0.125 <= CurTime() then
+			power = power * (die_time - CurTime()) / 0.125
 		end
 
 		if die_time and die_time <= CurTime() then
@@ -179,8 +179,8 @@ local function ProcessAnimations(ent)
 		local fFrameDelta = tbl.FrameDelta
 		local fDieTime = tbl.DieTime
 		local fPower = tbl.Power
-		if fDieTime and fDieTime - ANIMATIONFADEOUTTIME <= CurTime() then
-			fPower = fPower * (fDieTime - CurTime()) / ANIMATIONFADEOUTTIME
+		if fDieTime and fDieTime - 0.125 <= CurTime() then
+			fPower = fPower * (fDieTime - CurTime()) / 0.125
 		end
 		local fAmount = fPower * fFrameDelta
 
@@ -399,7 +399,7 @@ end
 local function ResetInSequence(ent)
 	if ent.pac_animations then
 		for _, tbl in pairs(ent.pac_animations) do
-			if tbl.Type == "sequence" and (not tbl.DieTime or CurTime() < tbl.DieTime - ANIMATIONFADEOUTTIME) or tbl.UseReferencePose then
+			if tbl.Type == "sequence" and (not tbl.DieTime or CurTime() < tbl.DieTime - 0.125) or tbl.UseReferencePose then
 				ent.pac_animations_insequence = true
 				return
 			end

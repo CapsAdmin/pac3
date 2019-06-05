@@ -374,12 +374,101 @@ end
 do
 	local PANEL = {}
 
+	local BaseClass = baseclass.Get( "DPanel" )
+
+	function PANEL:Init()
+		self.zoom = pace.model_browser:GetCookieNumber("zoom", 100)
+
+		self.ContentContainers = {}
+
+		self:SetWide(102)
+		self:SetPaintBackground(false)
+
+		self.ZoomOut = vgui.Create("DButton", self)
+		self.ZoomOut:Dock(RIGHT)
+		self.ZoomOut:DockMargin(2, 2, 2, 2)
+		self.ZoomOut:SetText("-")
+		self.ZoomOut:SetWide(20)
+		self.ZoomOut.DoClick = function()
+			self:SetZoom(self.zoom - 10)
+		end
+
+		self.ZoomText = vgui.Create("DTextEntry", self)
+		self.ZoomText:Dock(RIGHT)
+		self.ZoomText:DockMargin(2, 2, 2, 2)
+		self.ZoomText:SetWide(50)
+		self:SetZoomText(self.zoom)
+		self.ZoomText.OnValueChange = function(value)
+			local new_zoom = tonumber(value:GetText())
+			if new_zoom then
+				self:SetZoom(new_zoom)
+			else
+				self:SetZoomText(self.zoom)
+			end
+		end
+
+		self.ZoomIn = vgui.Create("DButton", self)
+		self.ZoomIn:Dock(RIGHT)
+		self.ZoomIn:DockMargin(2, 2, 2, 2)
+		self.ZoomIn:SetText("+")
+		self.ZoomIn:SetWide(20)
+		self.ZoomIn.DoClick = function()
+			self:SetZoom(self.zoom + 10)
+		end
+	end
+
+	function PANEL:AddContentContainer(pnl)
+		if not table.HasValue(self.ContentContainers, pnl) then
+			table.insert(self.ContentContainers, pnl)
+		end
+	end
+
+	function PANEL:VisibilityCheck()
+		local zoomUsable = false
+		for i,v in ipairs(self.ContentContainers) do
+			if v and v:IsVisible() then
+				zoomUsable = true
+				break
+			end
+		end
+		self:SetVisible(zoomUsable)
+	end
+
+	function PANEL:SetZoom(num)
+		self.zoom = math.Clamp(num, 16, 512)
+		pace.model_browser:SetCookie("zoom", self.zoom)
+
+		self:SetZoomText(self.zoom)
+
+		local toDelete = {}
+		for i,v in ipairs(self.ContentContainers) do
+			if not (v and v:IsValid()) then
+				table.insert(toDelete, i)
+			elseif v:IsVisible() then
+				v:CalcZoom()
+			end
+		end
+
+		// Clean up any panels that are invalid for what ever reason
+		for i,v in ipairs(toDelete) do
+			table.remove(self.ContentContainers, v)
+		end
+	end
+
+	function PANEL:SetZoomText(num)
+		self.ZoomText:SetText(math.Round(num, 1) .. "%")
+	end
+
+	vgui.Register( "pac_AssetBrowser_ZoomControls", PANEL, "DPanel" )
+end
+
+do
+	local PANEL = {}
+
 	local BaseClass = baseclass.Get( "DScrollPanel" )
 
 	function PANEL:Init()
 		self:SetPaintBackground( false )
-
-		self.zoom = pace.model_browser:GetCookieNumber("zoom", ScrW()/15)
 
 		self.IconList = vgui.Create( "DPanel", self:GetCanvas())
 		self.IconList:Dock( TOP )
@@ -421,22 +510,31 @@ do
 
 	function PANEL:Add(pnl)
 		pnl.ready_to_draw = true
+		pnl.original_size = {w=pnl:GetWide(),h=pnl:GetTall()}
+		if self.ZoomControls then
+			pnl:SetSize(pnl.original_size.w * self.ZoomControls.zoom * 0.01, pnl.original_size.h * self.ZoomControls.zoom * 0.01)
+		end
 		self.IconList:Add(pnl)
 		self.IconList.invalidate = true
 	end
 
+	function PANEL:SetZoomControls(pnl)
+		self.ZoomControls = pnl
+		pnl:AddContentContainer(self)
+	end
+
 	function PANEL:CalcZoom()
-		for i,v in ipairs(self.IconList:GetChildren()) do
-			v:SetSize(self.zoom, self.zoom)
+		if self.ZoomControls then
+			for i,v in ipairs(self.IconList:GetChildren()) do
+				v:SetSize(v.original_size.w * self.ZoomControls.zoom * 0.01, v.original_size.h * self.ZoomControls.zoom * 0.01)
+			end
+			self.IconList.invalidate = true
 		end
-		self.IconList.invalidate = true
 	end
 
 	function PANEL:OnMouseWheeled(delta)
-		if input.IsControlDown() then
-			self.zoom = math.Clamp(self.zoom + delta * 4, 16, 512)
-			pace.model_browser:SetCookie("zoom", self.zoom)
-			self:CalcZoom()
+		if input.IsControlDown() and self.ZoomControls then
+			self.ZoomControls:SetZoom(self.ZoomControls.zoom + delta * 4)
 			return
 		end
 		return BaseClass.OnMouseWheeled(self, delta)
@@ -579,6 +677,11 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 	options_menu:AddCVar(L"close browser on select", "pac_asset_browser_close_on_select", "1", "0")
 	options_menu:AddCVar(L"remember layout", "pac_asset_browser_remember_layout", "1", "0")
 
+
+	local zoom_controls = vgui.Create("pac_AssetBrowser_ZoomControls", menu_bar)
+	zoom_controls:Dock(RIGHT)
+
+
 --[[
 	local tool_bar = vgui.Create("DPanel", frame)
 	tool_bar:Dock(TOP)
@@ -616,6 +719,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 
 		frame.PropPanel.selected:Dock(FILL)
 		frame.PropPanel.selected:SetVisible(true)
+		zoom_controls:VisibilityCheck()
 
 		divider:SetRight(frame.PropPanel.selected)
 
@@ -745,6 +849,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 		local viewPanel = vgui.Create("pac_AssetBrowser_ContentContainer", frame.PropPanel)
 		viewPanel:DockMargin(5, 0, 0, 0)
 		viewPanel:SetVisible(false)
+		viewPanel:SetZoomControls(zoom_controls)
 
 		node.propPanel = viewPanel
 
@@ -1055,6 +1160,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 		local viewPanel = vgui.Create("pac_AssetBrowser_ContentContainer", frame.PropPanel)
 		viewPanel:DockMargin(5, 0, 0, 0)
 		viewPanel:SetVisible(false)
+		viewPanel:SetZoomControls(zoom_controls)
 
 		do
 			local special = {
@@ -1137,6 +1243,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 	local model_view = vgui.Create("pac_AssetBrowser_ContentContainer", frame.PropPanel)
 	model_view:DockMargin(5, 0, 0, 0)
 	model_view:SetVisible(false)
+	model_view:SetZoomControls(zoom_controls)
 
 	local search = vgui.Create("DTextEntry", left_panel)
 	search:Dock(TOP)

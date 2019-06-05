@@ -1,5 +1,7 @@
 local shader_params = include("pac3/libraries/shader_params.lua")
 
+local mat_hdr_level = GetConVar("mat_hdr_level")
+
 local material_flags = {
 	debug = bit.lshift(1, 0),
 	no_debug_override = bit.lshift(1, 1),
@@ -183,7 +185,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	end})
 
 	local function update_submaterial(self, remove, parent)
-		pac.RunNextFrame("refresh materials" .. self.Id, function()
+		pac.RunNextFrameSimple(function()
+			if not IsValid(self) and not remove then return end
 			local name = self:GetName()
 
 			for _, part in ipairs(self:GetRootPart():GetChildrenList()) do
@@ -372,7 +375,17 @@ for shader_name, groups in pairs(shader_params.shaders) do
 					self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
 				end
 			elseif info.type == "texture" then
+				local getnohdr = "Get" .. property_name .. "NoHDR"
+
+				if info.partial_hdr then
+					pac.GetSet(PART, property_name .. "NoHDR", false, {
+						editor_friendly = info.friendly .. " No HDR",
+						description = "Disables bound param when HDR is enabled",
+					})
+				end
+
 				info.default = info.default or ""
+
 				pac.GetSet(PART, property_name, info.default, {
 					editor_panel = "textures",
 					editor_friendly = info.friendly,
@@ -382,13 +395,17 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 				local key = "$" .. key
 
+				PART["Set" .. property_name .. "NoHDR"] = function(self, val)
+					self[property_name .. "NoHDR"] = val
+					PART["Set" .. property_name](self, self[property_name])
+				end
+
 				PART["Set" .. property_name] = function(self, val)
 					self[property_name] = val
 
-					if val == "" then
+					if val == "" or info.partial_hdr and mat_hdr_level:GetInt() > 0 and self[getnohdr](self) then
 						self:GetRawMaterial():SetUndefined(key)
 						self:GetRawMaterial():Recompute()
-
 					else
 						if not pac.resource.DownloadTexture(val, function(tex, frames)
 							if frames then

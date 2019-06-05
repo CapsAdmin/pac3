@@ -10,6 +10,8 @@ function pace.CallChangeForUndo(part, key, oldVal, val, delay)
 	if pace.SuppressUndo or key == "Parent" then return end
 	if oldVal == val then return end
 
+	last.delay = RealTime() + (delay or 0.4)
+
 	last.key = key
 	last.val = val
 	last.part = part
@@ -18,11 +20,11 @@ function pace.CallChangeForUndo(part, key, oldVal, val, delay)
 		last.oldVal = oldVal
 	end
 
-	last.delay = RealTime() + (delay or 0.4)
 	lastActive = true
 end
 
 local function thinkLastChange()
+	if not last.delay then return end
 	if last.delay > RealTime() then return end
 	lastActive = false
 	local part, key, oldVal, val = last.part, last.key, last.oldVal, last.val
@@ -202,9 +204,9 @@ local last = 0
 local function thinkUndo()
 	-- whooaaa
 	-- if input.IsControlDown() and input.IsKeyDown(KEY_X) then
-	-- 	pace.UndoPosition = math.Round((gui.MouseY() / ScrH()) * #pace.UndoHistory)
-	-- 	pace.ApplyUndo()
-	-- 	return
+	--  pace.UndoPosition = math.Round((gui.MouseY() / ScrH()) * #pace.UndoHistory)
+	--  pace.ApplyUndo()
+	--  return
 	-- end
 
 	if not input.IsKeyDown(KEY_Z) and not input.IsKeyDown(KEY_Y) then
@@ -380,6 +382,7 @@ end
 
 function pace.UndoThink()
 	if not pace.IsActive() then return end
+	if not pace.Focused then return end
 	if IsValid(vgui.GetKeyboardFocus()) and vgui.GetKeyboardFocus():GetClassName():find('Text') then return end
 	thinkUndo()
 	thinkCopy()

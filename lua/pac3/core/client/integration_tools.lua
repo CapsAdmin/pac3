@@ -106,7 +106,7 @@ function pac.SetupENT(ENT, owner)
 			return self:AttachPACSession(outfit, owner)
 		end
 
-		if outfit.self.OwnerName == "viewmodel" and self:IsWeapon() and self.Owner:IsValid() and self.Owner:IsPlayer() and self.Owner ~= LocalPlayer() then
+		if (outfit.self.OwnerName == "viewmodel" or outfit.self.OwnerName == "hands") and self:IsWeapon() and self.Owner:IsValid() and self.Owner:IsPlayer() and self.Owner ~= LocalPlayer() then
 			return
 		end
 

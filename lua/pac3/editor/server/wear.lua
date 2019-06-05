@@ -108,7 +108,7 @@ function pace.SubmitPart(data, filter)
 
 	if type(data.part) == "table" then
 		local ent = Entity(tonumber(data.part.self.OwnerName) or -1)
-		if ent:IsValid()then
+		if ent:IsValid() then
 			if ent.CPPICanTool and (ent:CPPIGetOwner() ~= data.owner and data.owner:IsValid() and not ent:CPPICanTool(data.owner, "paint")) then
 				allowed = false
 				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
@@ -191,16 +191,18 @@ function pace.SubmitPart(data, filter)
 
 	if type(data.wear_filter) == 'table' then
 		players = {}
-		local lookup = player.GetAll()
 
-		for i, ply in ipairs(lookup) do
+		local lookup = {}
+
+		for i, ply in ipairs(player.GetAll()) do
 			lookup[ply:UniqueID()] = ply
 		end
 
 		for i, v in ipairs(data.wear_filter) do
-			local plyID = tostring(v)
-			if IsValid(lookup[plyID]) then
-				table.insert(players, lookup[plyID])
+			local ply = lookup[tostring(v)]
+
+			if IsValid(ply) then
+				table.insert(players, ply)
 			end
 		end
 	else
@@ -229,7 +231,6 @@ function pace.SubmitPart(data, filter)
 		local players = filter or players
 
 		if type(players) == "table" then
-			--remove players from list who haven't requested outfits...
 			for key = #players, 1, -1 do
 				local ply = players[key]
 				if not ply.pac_requested_outfits and ply ~= data.owner then
@@ -254,6 +255,7 @@ function pace.SubmitPart(data, filter)
 				end
 			end
 		elseif type(players) == "Player" and (not players.pac_requested_outfits and players ~= data.owner) then
+			data.transmissionID = nil
 			return true
 		end
 
@@ -281,6 +283,9 @@ function pace.SubmitPart(data, filter)
 			pace.CallHook("OnWoreOutfit", data.owner, data.part)
 		end
 	end
+
+	-- nullify transmission ID
+	data.transmissionID = nil
 
 	return true
 end
@@ -335,9 +340,14 @@ util.AddNetworkString("pac_submit")
 timer.Create("pac_submit_spam", 3, 0, function()
 	for k, ply in ipairs(player.GetAll()) do
 		ply.pac_submit_spam = math.max((ply.pac_submit_spam or 0) - 5, 0)
+		ply.pac_submit_spam2 = math.max((ply.pac_submit_spam2 or 0) - 5, 0)
 
 		if ply.pac_submit_spam_msg then
 			ply.pac_submit_spam_msg = ply.pac_submit_spam >= 20
+		end
+
+		if ply.pac_submit_spam_msg2 then
+			ply.pac_submit_spam_msg2 = ply.pac_submit_spam2 >= 20
 		end
 	end
 end)
@@ -379,29 +389,72 @@ end
 
 function pace.RequestOutfits(ply)
 	if not ply:IsValid() then return end
+
 	if ply.pac_requested_outfits_time and ply.pac_requested_outfits_time > RealTime() then return end
 	ply.pac_requested_outfits_time = RealTime() + 30
 	ply.pac_requested_outfits = true
 
-	for id, outfits in pairs(pace.Parts) do
-		local owner = player.GetByUniqueID(id) or NULL
+	ply.pac_gonna_receive_outfits = true
 
-		if id == false or owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
-			for key, outfit in pairs(outfits) do
-				pace.SubmitPart(outfit, ply)
+	net.Start('pac_update_playerfilter')
+	net.Broadcast()
+
+	timer.Simple(6, function()
+		if not IsValid(ply) then return end
+		ply.pac_gonna_receive_outfits = false
+
+		for id, outfits in pairs(pace.Parts) do
+			local owner = player.GetByUniqueID(id) or NULL
+
+			if owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
+				for key, outfit in pairs(outfits) do
+					if not outfit.wear_filter or table.HasValue(outfit.wear_filter, tonumber(ply:UniqueID())) then
+						pace.SubmitPart(outfit, ply)
+					end
+				end
 			end
 		end
+	end)
+end
+
+local function qhasvalue(tab, value)
+	for i, val in ipairs(tab) do
+		if val == value then
+			return true
+		end
 	end
+
+	return false
 end
 
 local function pac_update_playerfilter(len, ply)
 	if not IsValid(ply) then return end
-	local filter = {}
-	local readnext = net.ReadUInt(32)
 
-	while readnext ~= 0 do
-		table.insert(filter, tostring(readnext))
-		readnext = net.ReadUInt(32)
+	if pac_submit_spam:GetBool() then
+		if player.GetCount() > 4 and len < 16 then return end
+
+		ply.pac_submit_spam2 = ply.pac_submit_spam2 + 1
+
+		if ply.pac_submit_spam2 >= pac_submit_limit:GetInt() / 2 then
+			if not ply.pac_submit_spam_msg2 then
+				pac.Message("Player ", ply, " is spamming pac_update_playerfilter!")
+				ply.pac_submit_spam_msg2 = true
+			end
+
+			return
+		end
+	end
+
+	local filter = {}
+	local filterCount = net.ReadUInt(8)
+	for i=1, filterCount do
+		table.insert(filter, net.ReadUInt(32))
+	end
+
+	local players = {}
+
+	for i, ply in ipairs(player.GetAll()) do
+		players[ply:UniqueID()] = ply
 	end
 
 	for id, outfits in pairs(pace.Parts) do
@@ -409,6 +462,18 @@ local function pac_update_playerfilter(len, ply)
 
 		if owner == ply then
 			for key, outfit in pairs(outfits) do
+				if outfit.wear_filter then
+					for i, plyID in ipairs(filter) do
+						if not qhasvalue(outfit.wear_filter, plyID) then
+							local getPly = players[tostring(plyID)]
+
+							if getPly and getPly.pac_requested_outfits and not getPly.pac_gonna_receive_outfits then
+								pace.SubmitPart(outfit, getPly)
+							end
+						end
+					end
+				end
+
 				outfit.wear_filter = filter
 			end
 		end
