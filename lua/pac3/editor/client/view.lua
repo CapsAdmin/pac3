@@ -46,7 +46,7 @@ function pace.ResetView()
 end
 
 function pace.SetZoom(frac)
-	pace.ViewFOV = math.Clamp(frac*90, 1, 90)
+	pace.ViewFOV = math.Clamp(frac*1, 1, 90)
 end
 
 local held_ang = Angle(0,0,0)
