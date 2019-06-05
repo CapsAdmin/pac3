@@ -59,8 +59,8 @@ function PANEL:Init()
 	self.zoom:SetDecimals( 0 )	
 	self.zoom:SetText("Camera FOV")
 	self.zoom:SetDark(true)
-	self.zoom:SetDefaultValue( 45 )
-	self.zoom:SetValue( 45 )
+	self.zoom:SetDefaultValue( 90 )
+	self.zoom:SetValue( 90 )
 
 	self.btnClose.Paint = function() end
 
