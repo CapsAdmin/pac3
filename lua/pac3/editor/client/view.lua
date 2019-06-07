@@ -46,7 +46,7 @@ function pace.ResetView()
 end
 
 function pace.SetZoom(frac)
-	pace.ViewFOV = math.Clamp(frac*90, 1, 90)
+	pace.ViewFOV = math.Clamp(frac*1, 1, 90)
 end
 
 local held_ang = Angle(0,0,0)
@@ -85,7 +85,7 @@ function pace.GUIMouseReleased(mc)
 
 	if pace.mctrl.GUIMouseReleased(mc) then return end
 
-	if pace.editing_viewmodel then return end
+	if pace.editing_viewmodel or pace.editing_hands then return end
 
 	mcode = nil
 end
@@ -104,6 +104,7 @@ local function CalcDrag()
 		pace.BusyWithProperties:IsValid() or
 		pace.ActiveSpecialPanel:IsValid() or
 		pace.editing_viewmodel or
+		pace.editing_hands or
 		pace.properties.search:HasFocus()
 	then return end
 
@@ -212,7 +213,7 @@ local follow_entity = CreateClientConVar("pac_camera_follow_entity", "0", true)
 local lastEntityPos
 
 function pace.CalcView(ply, pos, ang, fov)
-	if pace.editing_viewmodel then
+	if pace.editing_viewmodel or pace.editing_hands then
 		pace.ViewPos = pos
 		pace.ViewAngles = ang
 		pace.ViewFOV = fov
@@ -251,7 +252,7 @@ function pace.CalcView(ply, pos, ang, fov)
 end
 
 function pace.ShouldDrawLocalPlayer()
-	if not pace.editing_viewmodel then
+	if not pace.editing_viewmodel and not pace.editing_hands then
 		return true
 	end
 end
@@ -300,8 +301,8 @@ function pace.EnableView(b)
 	if b then
 		pac.AddHook("GUIMousePressed", "editor", pace.GUIMousePressed)
 		pac.AddHook("GUIMouseReleased", "editor", pace.GUIMouseReleased)
-		pac.AddHook("ShouldDrawLocalPlayer", "editor", pace.ShouldDrawLocalPlayer)
-		pac.AddHook("CalcView", "editor", pace.CalcView)
+		pac.AddHook("ShouldDrawLocalPlayer", "editor", pace.ShouldDrawLocalPlayer, DLib and -4 or ULib and -1 or nil)
+		pac.AddHook("CalcView", "editor", pace.CalcView, DLib and -4 or ULib and -1 or nil)
 		pac.AddHook("HUDPaint", "editor", pace.HUDPaint)
 		pac.AddHook("HUDShouldDraw", "editor", pace.HUDShouldDraw)
 		pac.AddHook("PostRenderVGUI", "editor", pace.PostRenderVGUI)
@@ -385,7 +386,7 @@ end
 function pace.HUDShouldDraw(typ)
 	if
 		typ == "CHudEPOE" or
-		(typ == "CHudCrosshair" and pace.editing_viewmodel)
+		(typ == "CHudCrosshair" and (pace.editing_viewmodel or pace.editing_hands))
 	then
 		return false
 	end

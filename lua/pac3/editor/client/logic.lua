@@ -17,20 +17,41 @@ function pace.PopulateProperties(part)
 end
 
 function pace.OnDraw()
-	if not pace.editing_viewmodel then
+	if not pace.editing_viewmodel and not pace.editing_hands then
 		pace.mctrl.HUDPaint()
 	end
 end
 
 pac.AddHook("PostDrawViewModel", "pace_viewmodel_edit", function()
-	if pace.editing_viewmodel then
+	if alreadyInCall then return end
+
+	if pace.editing_viewmodel and not pace.editing_hands then
 		cam.Start2D()
-			pace.mctrl.HUDPaint()
+
+		alreadyInCall = true
+		pace.mctrl.HUDPaint()
+		alreadyInCall = false
+
+		cam.End2D()
+	end
+end)
+
+pac.AddHook("PostDrawPlayerHands", "pace_viewmodel_edit", function()
+	if alreadyInCall then return end
+
+	if not pace.editing_viewmodel and pace.editing_hands then
+		cam.Start2D()
+
+		alreadyInCall = true
+		pace.mctrl.HUDPaint()
+		alreadyInCall = false
+
 		cam.End2D()
 	end
 end)
 
 function pace.OnOpenEditor()
+	alreadyInCall = false
 	pace.SetViewPos(LocalPlayer():EyePos())
 	pace.SetViewAngles(LocalPlayer():EyeAngles())
 	pace.EnableView(true)

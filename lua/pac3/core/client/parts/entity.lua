@@ -372,8 +372,8 @@ function PART:OnShow()
 	end
 end
 
-local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs')
-local ALLOW_TO_USE_MDL = CreateConVar('pac_allow_mdl_entity', '1', {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs as Entity')
+local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs')
+local ALLOW_TO_USE_MDL = CreateConVar('pac_allow_mdl_entity', '1', CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs as Entity')
 
 function PART:SetModel(path)
 	self.Model = path

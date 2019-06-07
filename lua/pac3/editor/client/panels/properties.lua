@@ -682,6 +682,7 @@ do -- list
 						self:AddKeyValue(key, pnl, pos, nil, udata, group)
 					end
 				end
+
 				::CONTINUE::
 			end
 		end
@@ -705,10 +706,10 @@ do -- non editable string
 
 				self:PerformLayout()
 
-				local x, y		= input.GetCursorPos()
-				local w, h		= self:GetSize()
+				local x, y      = input.GetCursorPos()
+				local w, h      = self:GetSize()
 
-				local lx, ly	= self.TargetPanel:LocalToScreen( 0, 0 )
+				local lx, ly    = self.TargetPanel:LocalToScreen( 0, 0 )
 
 				y = math.min( y, ly - h )
 
@@ -836,7 +837,7 @@ do -- base editable
 
 		if mcode == MOUSE_LEFT then
 			--if input.IsKeyDown(KEY_R) then
-			--	self:Restart()
+			--  self:Restart()
 			--else
 				self.MousePressing = true
 				if self:MousePress(true) == false then return end
@@ -1218,50 +1219,101 @@ do -- vector
 	VECTOR(Vector, "vector", "x", "y", "z")
 	VECTOR(Angle, "angle", "p", "y", "r")
 
+	local function tohex(vec)
+		return ("#%.2X%.2X%.2X"):format(vec.x, vec.y, vec.z)
+	end
+
+	local function fromhex(str)
+		local r, g, b
+
+		if #str <= 4 then -- Supports "#xxx" and "xxx"
+			r, g, b = str:match("#?(.)(.)(.)")
+
+			if r and g and b then
+				r, g, b = r .. r, g .. g, b .. b
+			end
+		elseif #str <= 7 then -- Supports "#xxxxxx" and "xxxxxx"
+			r, g, b = str:match("#?(..)(..)(..)")
+		end
+
+		if r and g and b then
+			return Color(tonumber(r, 16) or 255, tonumber(g, 16) or 255, tonumber(b, 16) or 255)
+		end
+	end
+
+	local function fromColorStr(str)
+		local r1, g1, b1 = str:match("([0-9]+), *([0-9]+), *([0-9]+)")
+		local r2, g2, b2 = str:match("([0-9]+) +([0-9]+) +([0-9]+)")
+
+		if r1 and g1 and b1 then
+			return Color(tonumber(r1) or 255, tonumber(g1) or 255, tonumber(b1) or 255)
+		elseif r2 and g2 and b2 then
+			return Color(tonumber(r2) or 255, tonumber(g2) or 255, tonumber(b2) or 255)
+		end
+	end
+
+	local function uncodeValue(valIn)
+		local fromHex = fromhex(valIn)
+		local fromShareXColorStr = fromColorStr(valIn)
+
+		return fromHex or fromShareXColorStr
+	end
+
 	VECTOR(Vector, "color", "x", "y", "z",
-		function(_, num)
-			num = tonumber(num) or 0
+		function(self, num) -- this function needs second argument
+			local pnum = tonumber(num)
 
-			num = math.Round(num)
-			num = math.Clamp(num, 0, 255)
+			if not pnum then
+				local uncode = uncodeValue(num)
 
-			return tostring(num)
+				if uncode then
+					timer.Simple(0, function()
+						local parent = self:GetParent()
+						parent.left:SetValue(uncode.r, true)
+						parent.middle:SetValue(uncode.g, true)
+						parent.right:SetValue(uncode.b, true)
+
+						parent.left.OnValueChanged(uncode.r)
+						parent.middle.OnValueChanged(uncode.g)
+						parent.right.OnValueChanged(uncode.b)
+					end)
+
+					return '0'
+				end
+
+				return '0'
+			end
+
+			return tostring(math.Clamp(math.Round(pnum or 0), 0, 255))
 		end,
 
 		function(self)
 			pace.SafeRemoveSpecialPanel()
 
 			local frm = vgui.Create("DFrame")
-			frm:SetTitle("color")
+			frm:SetTitle("Color")
 
 			pace.ShowSpecial(frm, self, 300)
 
 			local clr = vgui.Create("DColorMixer", frm)
 			clr:Dock(FILL)
+			clr:SetAlphaBar(false) -- Alpha isn't needed
 			clr:SetColor(Color(self.vector.x, self.vector.y, self.vector.z))
-
-			local function tohex(vec)
-				return ("#%X%X%X"):format(vec.x, vec.y, vec.z)
-			end
-
-			local function fromhex(str)
-				local x,y,z = str:match("#?(..)(..)(..)")
-				return Vector(tonumber("0x" .. x), tonumber("0x" .. y), tonumber("0x" .. z))
-			end
 
 			local html_color = vgui.Create("DTextEntry", frm)
 			html_color:Dock(BOTTOM)
 			html_color:SetText(tohex(self.vector))
+
 			html_color.OnEnter = function()
-				local vec = fromhex(html_color:GetValue())
-				clr:SetColor(Color(vec.x, vec.y, vec.z))
-				self.OnValueChanged(vec)
-				self:SetValue(vec)
+				local valGet = uncodeValue(html_color:GetValue())
+
+				if valGet then
+					clr:SetColor(valGet)
+				end
 			end
 
-			function clr.Think()
-				local clr = clr:GetColor() or Color(255, 255, 255, 255)
-				local vec = Vector(clr.r, clr.g, clr.b)
+			function clr.ValueChanged(_, newColor) -- Only update values when the Color mixer value changes
+				local vec = Vector(newColor.r, newColor.g, newColor.b)
 				self.OnValueChanged(vec)
 				self:SetValue(vec)
 				html_color:SetText(tohex(vec))

@@ -15,12 +15,19 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "FOV", -1)
 pac.EndStorableVars()
 
+for i, ply in ipairs(player.GetAll()) do
+	ply.pac_cameras = nil
+end
+
 function PART:Initialize()
 	local owner = self:GetOwner(true)
+
 	if owner ~= NULL then
 		owner.pac_cameras = owner.pac_cameras or {}
 		owner.pac_cameras[self] = self
 	end
+
+	self.AllowSetupPositionFrameSkip = false
 end
 
 function PART:CalcView(_, _, eyeang, fov, nearz, farz)
@@ -39,7 +46,6 @@ function PART:CalcView(_, _, eyeang, fov, nearz, farz)
 	if self.FOV > 0 then
 		fov = self.FOV
 	end
-
 
 	return pos, ang, fov, nearz, farz
 end

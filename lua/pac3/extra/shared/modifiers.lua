@@ -11,7 +11,7 @@ function pacx.AddServerModifier(id, func)
 	end
 
 	if SERVER then
-		cvar = CreateConVar("pac_modifier_" .. id, default, bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
+		cvar = CreateConVar("pac_modifier_" .. id, default, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED})
 	else
 		cvar = CreateClientConVar("pac_modifier_" .. id, default, true, true)
 	end

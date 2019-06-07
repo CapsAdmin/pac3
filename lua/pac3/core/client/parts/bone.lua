@@ -21,8 +21,8 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "AlternativeBones", false)
 		pac.GetSet(PART, "MoveChildrenToOrigin", false)
 		pac.GetSet(PART, "FollowAnglesOnly", false)
-		pac.GetSet(PART, "HideMesh", false)
-		pac.GetSet(PART, "InvertHideMesh", false)
+		--pac.GetSet(PART, "HideMesh", false)
+		--pac.GetSet(PART, "InvertHideMesh", false)
 		pac.SetupPartName(PART, "FollowPart")
 
 	pac.SetPropertyGroup(PART, "orientation")
@@ -120,6 +120,7 @@ local function manang(ent, id, ang, part)
 end
 
 local inf_scale = Vector(math.huge, math.huge, math.huge)
+local inf_scale_tempcrashfix = Vector(1,1,1)*0.001
 
 local function manscale(ent, id, scale, part)
 	if part.AlternativeBones then
@@ -256,15 +257,16 @@ function PART:OnBuildBonePositions()
 
 	local scale
 
+	-- Disable hide mesh functionality completely until the crash this causes, is fixed
 	if self.HideMesh then
-		scale = inf_scale
+		scale = inf_scale_tempcrashfix
 
 		if self.InvertHideMesh then
 			local count = owner:GetBoneCount()
 
 			for i = 0, count - 1 do
 				if i ~= self.BoneIndex then
-					manscale(owner, i, inf_scale, self)
+					manscale(owner, i, inf_scale_tempcrashfix, self)
 				end
 			end
 

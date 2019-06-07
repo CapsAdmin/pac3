@@ -47,7 +47,7 @@ function PART:SetMass(n)
 	self.Mass = n
 
 	if self.phys:IsValid() then
-		self.phys:SetMass(n)
+		self.phys:SetMass(math.Clamp(n, 0.001, 50000))
 	end
 end
 
@@ -69,6 +69,10 @@ function PART:SetRadius(n)
 	end
 
 	self.phys = ent:GetPhysicsObject()
+	
+	if self.Gravity ~= nil then
+		self.phys:EnableGravity(self.Gravity)
+	end
 end
 
 function PART:SetGravity(b)

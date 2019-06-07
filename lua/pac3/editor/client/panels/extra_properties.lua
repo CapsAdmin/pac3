@@ -359,8 +359,10 @@ do -- materials and textures
 			pace_material_display = CreateMaterial('pace_material_display', "UnlitGeneric", {})
 		end
 
-		if pace.current_part[self.CurrentKey] and pace.current_part[self.CurrentKey] ~= "" then
-			if not string.find(pace.current_part[self.CurrentKey], '^https?://') then
+		if pace.current_part[self.CurrentKey] then
+			if pace.current_part[self.CurrentKey] == "" then
+				pace_material_display:SetTexture("$basetexture", "models/debug/debugwhite")
+			elseif not string.find(pace.current_part[self.CurrentKey], '^https?://') then
 				pace_material_display:SetTexture("$basetexture", pace.current_part[self.CurrentKey])
 			else
 				local function callback(mat, tex)
@@ -540,12 +542,11 @@ do -- arguments
 
 		local data = pace.current_part.Events[pace.current_part.Event]
 		if not data then return end
-		data = data:GetArguments()
 
 		local tbl = {}
 		local args = {pace.current_part:GetParsedArguments(data)}
 		if args then
-			for pos, arg in ipairs(data) do
+			for pos, arg in ipairs(data:GetArguments()) do
 				local nam, typ, userdata = unpack(arg)
 				if args[pos] then
 					arg = args[pos]

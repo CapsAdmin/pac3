@@ -3,27 +3,25 @@ local pac_wear_friends_only = CreateClientConVar("pac_wear_friends_only", "0", t
 local pac_wear_reverse = CreateClientConVar("pac_wear_reverse", "0", true, false, 'Wear to NOBODY but to people from list (Blacklist -> Whitelist)')
 
 do -- to server
-	local count = -1
-
 	local function assemblePlayerFilter()
 		local filter = {}
 
 		if pac_wear_friends_only:GetBool() then
 			for i, v in ipairs(player.GetAll()) do
 				if v:GetFriendStatus() == "friend" then
-					table.insert(filter, v:UniqueID())
+					table.insert(filter, tonumber(v:UniqueID()))
 				end
 			end
 		elseif pac_wear_reverse:GetBool() then
 			for i, v in ipairs(player.GetAll()) do
 				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') == '1' then
-					table.insert(filter, v:UniqueID())
+					table.insert(filter, tonumber(v:UniqueID()))
 				end
 			end
 		else
 			for i, v in ipairs(player.GetAll()) do
 				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') ~= '1' then
-					table.insert(filter, v:UniqueID())
+					table.insert(filter, tonumber(v:UniqueID()))
 				end
 			end
 		end
@@ -31,34 +29,44 @@ do -- to server
 		return filter
 	end
 
-	local function updatePlayerList()
-		if player.GetCount() == count then return end
-		count = player.GetCount()
+	net.Receive('pac_update_playerfilter', function()
 		local filter = assemblePlayerFilter()
 
 		net.Start('pac_update_playerfilter')
 
+		if #filter>=256 then error("Filter too large! " .. #filter) end
+		net.WriteUInt(#filter, 8)
 		for i, id in ipairs(filter) do
-			net.WriteUInt(tonumber(id), 32)
+			net.WriteUInt(id, 32)
 		end
 
-		net.WriteUInt(0, 32)
 		net.SendToServer()
-	end
+	end)
 
-	timer.Create('pac_update_playerfilter', 5, 0, updatePlayerList)
+	function pace.IsPartSendable(part, extra)
+		local allowed, reason = pac.CallHook("CanWearParts", LocalPlayer())
+
+		if allowed == false then
+			return false
+		end
+
+		if part.ClassName == "group" and not part:HasChildren() then return false end
+		if not part.show_in_editor == false then return false end
+
+		return true
+	end
 
 	function pace.SendPartToServer(part, extra)
 		local allowed, reason = pac.CallHook("CanWearParts", LocalPlayer())
 
 		if allowed == false then
 			pac.Message(reason or "the server doesn't want you to wear parts for some reason")
-			return
+			return false
 		end
 
 		-- if it's (ok not very exact) the "my outfit" part without anything added to it, don't bother sending it
-		if part.ClassName == "group" and not part:HasChildren() then return end
-		if not part.show_in_editor == false then return end
+		if part.ClassName == "group" and not part:HasChildren() then return false end
+		if not part.show_in_editor == false then return false end
 
 		local data = {part = part:ToTable()}
 
@@ -82,7 +90,6 @@ do -- to server
 		pac.Message(('Transmitting outfit %q to server (%s)'):format(part.Name or part.ClassName or '<unknown>', string.NiceSize(bytes)))
 
 		return true
-
 	end
 
 	function pace.RemovePartOnServer(name, server_only, filter)
@@ -101,12 +108,11 @@ do -- to server
 		net.SendToServer()
 
 		return true
-
 	end
 end
 
 do -- from server
-	function pace.WearPartFromServer(owner, part_data, data)
+	function pace.WearPartFromServer(owner, part_data, data, doItNow)
 		pac.dprint("received outfit %q from %s with %i number of children to set on %s", part_data.self.Name or "", tostring(owner), table.Count(part_data.children), part_data.self.OwnerName or "")
 
 		if pace.CallHook("WearPartFromServer", owner, part_data, data) == false then return end
@@ -129,7 +135,7 @@ do -- from server
 			end
 		end
 
-		return function()
+		local func = function()
 			if dupeEnt and not dupeEnt:IsValid() then return end
 
 			dupepart = pac.GetPartFromUniqueID(data.player_uid, part_data.self.UniqueID)
@@ -154,7 +160,14 @@ do -- from server
 			end
 
 			part:CallRecursive('OnWorn')
+			part:CallRecursive('PostApplyFixes')
 		end
+
+		if doItNow then
+			func()
+		end
+
+		return func
 	end
 
 	function pace.RemovePartFromServer(owner, part_name, data)
@@ -199,13 +212,13 @@ do
 		end
 	end)
 
-	timer.Create('pac3_transmissions_ttl', 10, 0, function()
+	timer.Create('pac3_transmissions_ttl', 1, 0, function()
 		local time = RealTime()
 
 		for transmissionID, data in pairs(transmissions) do
-			if data.activity + 60 < time then
+			if data.activity + 10 < time then
 				transmissions[transmissionID] = nil
-				pac.Message('Marking transmission session with id ', transmissionID, ' as dead, cleaning up... Dropped ', data.total, ' parts')
+				pac.Message('Marking transmission session with id ', transmissionID, ' as dead. Received ', #data.list, ' out from ', data.total, ' parts.')
 			end
 		end
 	end)
@@ -217,6 +230,18 @@ do
 			return pace.WearPartFromServer(data.owner, data.part, data)
 		elseif T ==  "string" then
 			return pace.RemovePartFromServer(data.owner, data.part, data)
+		else
+			ErrorNoHalt("PAC: Unhandled "..T..'!?\n')
+		end
+	end
+
+	local function defaultHandlerNow(data)
+		local T = type(data.part)
+
+		if T == "table" then
+			pace.WearPartFromServer(data.owner, data.part, data, true)
+		elseif T ==  "string" then
+			pace.RemovePartFromServer(data.owner, data.part, data)
 		else
 			ErrorNoHalt("PAC: Unhandled "..T..'!?\n')
 		end
@@ -245,6 +270,8 @@ do
 					pac.ToggleIgnoreEntity(data.owner, false, 'pac_onuse_only')
 				end
 			end)
+		else
+			return defaultHandlerNow(data)
 		end
 
 		local validTransmission = type(data.partID) == 'number' and
@@ -276,7 +303,7 @@ do
 			data.totalParts = nil
 			data.partID = nil
 			table.insert(trData.list, data)
-			-- trData.activity = RealTime()
+			trData.activity = RealTime()
 
 			if #trData.list == trData.total then
 				local funcs = {}

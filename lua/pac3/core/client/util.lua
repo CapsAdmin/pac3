@@ -52,9 +52,14 @@ end
 
 do
 	pac.next_frame_funcs = pac.next_frame_funcs or {}
+	pac.next_frame_funcs_simple = pac.next_frame_funcs_simple or {}
 
 	function pac.RunNextFrame(id, func)
 		pac.next_frame_funcs[id] = func
+	end
+
+	function pac.RunNextFrameSimple(func)
+		table.insert(pac.next_frame_funcs_simple, func)
 	end
 end
 
@@ -502,14 +507,18 @@ end
 do -- hook helpers
 	pac.added_hooks = pac.added_hooks or {}
 
-	function pac.AddHook(event_name, id, func)
+	function pac.AddHook(event_name, id, func, priority)
 		id = "pac_" .. id
 
-		if pac.IsEnabled() then
-			hook.Add(event_name, id, func)
+		if not DLib and not ULib then
+			priority = nil
 		end
 
-		pac.added_hooks[event_name .. id] = {event_name = event_name, id = id, func = func}
+		if pac.IsEnabled() then
+			hook.Add(event_name, id, func, priority)
+		end
+
+		pac.added_hooks[event_name .. id] = {event_name = event_name, id = id, func = func, priority = priority}
 	end
 
 	function pac.RemoveHook(event_name, id)
@@ -782,34 +791,36 @@ do
 end
 
 function pac.Handleurltex(part, url, callback, shader, additionalData)
-	if url and pac.urltex and url:find("http") then
-		local skip_cache = url:sub(1,1) == "_"
+	if not url or not pac.urltex or not url:find("http") then return false end
+	local skip_cache = url:sub(1,1) == "_"
 
-		local urlMatch = url:match("http[s]-://.+/.-%.%a+")
+	local urlMatch = url:match("http[s]-://.+/.-%.%a+")
 
-		if urlMatch then
-			pac.urltex.GetMaterialFromURL(
-				url,
-				function(mat, tex)
-					if part:IsValid() then
-						if callback then
-							callback(mat, tex)
-						else
-							part.Materialm = mat
-							part:CallEvent("material_changed")
-						end
-						pac.dprint("set custom material texture %q to %s", url, part:GetName())
-					end
-				end,
-				skip_cache,
-				shader,
-				nil,
-				nil,
-				additionalData
-			)
-			return true
-		end
-	end
+	if not urlMatch then return false end
+
+	pac.urltex.GetMaterialFromURL(
+		pac.FixUrl(url),
+
+		function(mat, tex)
+			if not part:IsValid() then return end
+
+			if callback then
+				callback(mat, tex)
+			else
+				part.Materialm = mat
+				part:CallEvent("material_changed")
+			end
+
+			pac.dprint("set custom material texture %q to %s", url, part:GetName())
+		end,
+
+		skip_cache,
+		shader,
+		nil,
+		nil,
+		additionalData
+	)
+	return true
 end
 
 local mat
@@ -944,6 +955,8 @@ do -- ignore
 	end
 
 	function pac.IgnoreEntity(ent, strID)
+		if ent == LocalPlayer() then return false end
+
 		strID = strID or 'generic'
 		if ent.pac_ignored_data and ent.pac_ignored_data[strID] then return end
 		ent.pac_ignored = ent.pac_ignored or false
@@ -960,6 +973,8 @@ do -- ignore
 	end
 
 	function pac.UnIgnoreEntity(ent, strID)
+		if ent == LocalPlayer() then return false end
+
 		strID = strID or 'generic'
 		if ent.pac_ignored_data and ent.pac_ignored_data[strID] == nil then return end
 		ent.pac_ignored = ent.pac_ignored or false

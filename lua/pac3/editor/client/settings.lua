@@ -11,9 +11,8 @@ function pace.SetTPose(b)
 		pac.AddHook("CalcMainActivity", "pace_tpose", function(ply)
 			if ply == LocalPlayer() then
 				ply:SetRenderAngles(ply:GetAngles())
-				return
-					ply:LookupSequence("reference"),
-					ply:LookupSequence("reference")
+				local act = ply:LookupSequence("ragdoll") or ply:LookupSequence("reference")
+				return act, act
 			end
 		end)
 	else

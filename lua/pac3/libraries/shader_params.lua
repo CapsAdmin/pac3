@@ -32,8 +32,9 @@ return {
 				envmap = {
 					type = "texture",
 					friendly = "Envmap",
-					description = "envmap",
-					default = "shadertest/shadertest_env",
+					description = "envmap. won't work if hdr is enabled",
+					default = "environment maps/klab_01.hdr",
+					partial_hdr = true
 				},
 				ambientocclcolor = {
 					type = "vec3",
@@ -1503,7 +1504,10 @@ return {
 			},
 			envmap = {
 				type = "texture",
-				description = "envmap",
+				friendly = "Envmap",
+				description = "envmap. won't work if hdr is enabled",
+				default = "environment maps/klab_01.hdr",
+				partial_hdr = true
 			},
 			envmapmode = {
 				is_flag = true,

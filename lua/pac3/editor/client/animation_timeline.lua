@@ -42,9 +42,8 @@ local function check_tpose()
 	if timeline.data.Type == "sequence" then
 		pac.AddHook("CalcMainActivity", "pac3_timeline", function(ply)
 			if ply == timeline.entity then
-				return
-					ply:LookupSequence("reference"),
-					ply:LookupSequence("reference")
+				local act = ply:LookupSequence("ragdoll") or ply:LookupSequence("reference")
+				return act, act
 			end
 		end)
 	else

@@ -14,7 +14,7 @@ file.CreateDir("pac3")
 file.CreateDir("pac3/__backup/")
 file.CreateDir("pac3/__backup_save/")
 
-function pace.SaveParts(name, prompt_name, override_part)
+function pace.SaveParts(name, prompt_name, override_part, overrideAsUsual)
 	if not name or prompt_name then
 		Derma_StringRequest(
 			L"save parts",
@@ -23,65 +23,74 @@ function pace.SaveParts(name, prompt_name, override_part)
 
 			function(name)
 				pace.LastSaveName = name
-				pace.SaveParts(name, nil, override_part)
+				pace.SaveParts(name, nil, override_part, overrideAsUsual)
 
 				pace.RefreshFiles()
 			end
 		)
-	else
-		pac.dprint("saving parts %s", name)
 
-		local data = {}
+		return
+	end
 
+	pac.dprint("saving parts %s", name)
+
+	local data = {}
+
+	if not overrideAsUsual then
 		if pace.use_current_part_for_saveload and pace.current_part:IsValid() then
 			override_part = pace.current_part
 		end
 
 		if override_part then
 			data = override_part:ToSaveTable()
-		else
-			for key, part in pairs(pac.GetLocalParts()) do
-				if not part:HasParent() and part.show_in_editor ~= false then
-					table.insert(data, part:ToSaveTable())
-				end
-			end
 		end
-
-		data = hook.Run("pac_pace.SaveParts", data) or data
-
-		if not override_part and #file.Find("pac3/sessions/*", "DATA") > 0 and not name:find("/") then
-			pace.luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
-		else
-			if file.Exists("pac3/" .. name .. ".txt", "DATA") then
-				local date = os.date("%y-%m-%d-%H_%M_%S")
-				local read = file.Read("pac3/" .. name .. ".txt", "DATA")
-				file.Write("pac3/__backup_save/" .. name .. "_" .. date .. ".txt", read)
-
-				local files, folders = file.Find("pac3/__backup_save/*", "DATA")
-
-				if #files > 30 then
-					local targetFiles = {}
-
-					for i, filename in ipairs(files) do
-						local time = file.Time("pac3/__backup_save/" .. filename, "DATA")
-						table.insert(targetFiles, {"pac3/__backup_save/" .. filename, time})
-					end
-
-					table.sort(targetFiles, function(a, b)
-						return a[2] > b[2]
-					end)
-
-					for i = 31, #files do
-						file.Delete(targetFiles[i][1])
-					end
-				end
-			end
-
-			pace.luadata.WriteFile("pac3/" .. name .. ".txt", data)
-		end
-
-		pace.Backup(data, name)
+	elseif override_part then
+		table.insert(data, override_part:ToSaveTable())
+		override_part = nil
 	end
+
+	if #data == 0 then
+		for key, part in pairs(pac.GetLocalParts()) do
+			if not part:HasParent() and part.show_in_editor ~= false then
+				table.insert(data, part:ToSaveTable())
+			end
+		end
+	end
+
+	data = hook.Run("pac_pace.SaveParts", data) or data
+
+	if not override_part and #file.Find("pac3/sessions/*", "DATA") > 0 and not name:find("/") then
+		pace.luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
+	else
+		if file.Exists("pac3/" .. name .. ".txt", "DATA") then
+			local date = os.date("%y-%m-%d-%H_%M_%S")
+			local read = file.Read("pac3/" .. name .. ".txt", "DATA")
+			file.Write("pac3/__backup_save/" .. name .. "_" .. date .. ".txt", read)
+
+			local files, folders = file.Find("pac3/__backup_save/*", "DATA")
+
+			if #files > 30 then
+				local targetFiles = {}
+
+				for i, filename in ipairs(files) do
+					local time = file.Time("pac3/__backup_save/" .. filename, "DATA")
+					table.insert(targetFiles, {"pac3/__backup_save/" .. filename, time})
+				end
+
+				table.sort(targetFiles, function(a, b)
+					return a[2] > b[2]
+				end)
+
+				for i = 31, #files do
+					file.Delete(targetFiles[i][1])
+				end
+			end
+		end
+
+		pace.luadata.WriteFile("pac3/" .. name .. ".txt", data)
+	end
+
+	pace.Backup(data, name)
 end
 
 local last_backup
@@ -224,9 +233,12 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 		pace.ClearParts()
 	end
 
+	local partsLoaded = {}
+
 	if data.self then
 		local part = override_part or pac.CreatePart(data.self.ClassName)
 		part:SetTable(data)
+		table.insert(partsLoaded, part)
 	else
 		data = pace.FixBadGrouping(data)
 		data = pace.FixUniqueIDs(data)
@@ -234,11 +246,17 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 		for key, tbl in pairs(data) do
 			local part = pac.CreatePart(tbl.self.ClassName)
 			part:SetTable(tbl)
+			table.insert(partsLoaded, part)
 		end
 	end
 
 	pace.RefreshTree(true)
 	pace.ClearUndo()
+
+	for i, part in ipairs(partsLoaded) do
+		part:CallRecursive('OnOutfitLoaded')
+		part:CallRecursive('PostApplyFixes')
+	end
 end
 
 local function add_files(tbl, dir)
