@@ -11,7 +11,7 @@ PANEL.pac3_PanelsToRemove = {
 }
 
 local BAR_SIZE = 17
-local RENDERSCORE_SIZE = 13
+local RENDERSCORE_SIZE = 20
 
 local use_tabs = CreateClientConVar("pac_property_tabs", 1, true)
 
@@ -22,15 +22,18 @@ function PANEL:Init()
 
 	surface.SetFont(pace.CurrentFont)
 	local _, h = surface.GetTextSize("|")
-	RENDERSCORE_SIZE = h+1
+	RENDERSCORE_SIZE = h + 1
 
 	local div = vgui.Create("DVerticalDivider", self)
-		div:SetDividerHeight(RENDERSCORE_SIZE)
-		div:Dock(FILL)
-		div:SetTopMin(0)
-		div:SetCookieName("pac3_editor")
-		div:SetTopHeight(ScrH()/1.4)
-		div:LoadCookies()
+
+	div:SetDividerHeight(RENDERSCORE_SIZE)
+	div:Dock(FILL)
+	div:SetTopMin(40)
+	div:SetBottomMin(40)
+	div:SetCookieName("pac3_editor")
+	div:SetTopHeight(ScrH() / 1.4)
+	div:LoadCookies()
+
 	self.div = div
 
 	self.treePanel = pace.CreatePanel("tree")
@@ -43,7 +46,13 @@ function PANEL:Init()
 	self.exit_button:SetText("")
 	self.exit_button.DoClick = function() self:Close() end
 	self.exit_button.Paint = function(self, w, h) derma.SkinHook("Paint", "WindowCloseButton", self, w, h) end
-	self.exit_button:SetSize(31, 31)
+	self.exit_button:SetSize(31, 26)
+
+	self.zoom = vgui.Create("DSlider")
+	self.zoom:SetLockY(0)
+	self.zoom:SetSize(100, 20)
+	self.zoom:SetSlideX(1)
+	--self.zoom:SetVisible(false)
 
 	self.btnClose.Paint = function() end
 
@@ -54,16 +63,18 @@ function PANEL:Init()
 
 	self:MakeBar()
 	self.lastTopBarHover = 0
+
+	self.okay = true
 end
 
 function PANEL:OnMousePressed()
-	if self.m_bSizable && gui.MouseX() > ( self.x + self:GetWide() - 20 ) then
+	if self.m_bSizable and gui.MouseX() > ( self.x + self:GetWide() - 20 ) then
 		self.Sizing = { gui.MouseX() - self:GetWide(), gui.MouseY() - self:GetTall() }
 		self:MouseCapture( true )
 		return
 	end
 
-	if ( self:GetDraggable() && gui.MouseY() < (self.y + 24) ) then
+	if self:GetDraggable() and gui.MouseY() < (self.y + 24) then
 		self.Dragging = { gui.MouseX() - self.x, gui.MouseY() - self.y }
 		self:MouseCapture( true )
 		return
@@ -71,7 +82,7 @@ function PANEL:OnMousePressed()
 end
 
 function PANEL:OnMouseReleased(mc)
-	if mc==MOUSE_RIGHT then
+	if mc == MOUSE_RIGHT then
 		self:Close()
 	end
 
@@ -89,8 +100,8 @@ function PANEL:MakeBar()
 
 	self.menu_bar = bar
 
-	self:DockMargin(2,2,2,2)
-	self:DockPadding(2,2,2,2)
+	self:DockMargin(2, 2, 2, 2)
+	self:DockPadding(2, 2, 2, 2)
 end
 
 function PANEL:OnRemove()
@@ -101,12 +112,18 @@ function PANEL:OnRemove()
 	if self.exit_button:IsValid() then
 		self.exit_button:Remove()
 	end
+
+	if self.zoom:IsValid() then
+		self.zoom:Remove()
+	end
 end
 
 function PANEL:Think(...)
+	if not self.okay then return end
+
 	DFrame.Think(self, ...)
 
-	if self.Hovered && self.m_bSizable && gui.MouseX() > ( self.x + self:GetWide() - 20 ) then
+	if self.Hovered and self.m_bSizable and gui.MouseX() > (self.x + self:GetWide() - 20) then
 		self:SetCursor("sizewe")
 		return
 	end
@@ -116,9 +133,7 @@ function PANEL:Think(...)
 	self:SetTall(ScrH())
 	local w = math.max(self:GetWide(), 200)
 	self:SetWide(w)
-	local x = self:GetPos()
-	x = math.Clamp(x, 0, ScrW()-w)
-	self:SetPos(x, 0)
+	self:SetPos(math.Clamp(self:GetPos(), 0, ScrW() - w), 0)
 
 	if x ~= self.last_x then
 		self:SetCookie("x", x)
@@ -129,13 +144,38 @@ function PANEL:Think(...)
 		local x, y = self:GetPos()
 		local w, h = self:GetSize()
 
-		self.exit_button:SetPos(ScrW() - self.exit_button:GetWide() + 4, -4)
+		if self:GetPos() + self:GetWide() / 2 < ScrW() / 2 then
+			self.exit_button:SetPos(ScrW() - self.exit_button:GetWide() + 4, -4)
+		else
+			self.exit_button:SetPos(-4, -4)
+		end
+	end
+
+	if self.zoom:IsValid() then
+
+		local x, y = self:GetPos()
+		local w, h = self:GetSize()
+
+		self.zoom:SetPos(ScrW() - self.zoom:GetWide(), ScrH() - self.zoom:GetTall())
+
+		local mx, my = gui.MousePos()
+		local x, y = self.zoom:GetPos()
+		if mx > x and my > y then
+			self.zoom:SetVisible(true)
+			self.zoom:RequestFocus()
+		elseif not input.IsMouseDown(MOUSE_LEFT) then
+			self.zoom:SetVisible(false)
+		end
+
+		pace.SetZoom(self.zoom:GetSlideX())
 	end
 end
 
 local auto_size = CreateClientConVar("pac_auto_size_properties", 1, true)
 
 function PANEL:PerformLayout()
+	if not self.okay then return end
+
 	DFrame.PerformLayout(self)
 
 	for i, val in pairs(self.pac3_PanelsToRemove) do
@@ -144,20 +184,27 @@ function PANEL:PerformLayout()
 		end
 	end
 
-	self.div:InvalidateLayout()
-	self.bottom:PerformLayout()
-	pace.properties:PerformLayout()
-	local sz = auto_size:GetInt()
-	local newh = sz >0 and 	(
-								ScrH() - math.min(pace.properties:GetHeight() + RENDERSCORE_SIZE + BAR_SIZE - 6, ScrH() / 1.5)
-							)
-	if sz >= 2 then
-		local oldh = self.div:GetTopHeight()
-		if newh<oldh then
-			self.div:SetTopHeight(newh)
+	if self.old_part ~= pace.current_part then
+		self.div:InvalidateLayout()
+		self.bottom:PerformLayout()
+		pace.properties:PerformLayout()
+		self.old_part = pace.current_part
+
+		local sz = auto_size:GetInt()
+
+		if sz > 0 then
+			local newh = sz > 0 and (ScrH() - math.min(pace.properties:GetHeight() + RENDERSCORE_SIZE + BAR_SIZE - 6, ScrH() / 1.5))
+
+			if sz >= 2 then
+				local oldh = self.div:GetTopHeight()
+
+				if newh<oldh then
+					self.div:SetTopHeight(newh)
+				end
+			elseif sz >= 1 then
+				self.div:SetTopHeight(newh)
+			end
 		end
-	elseif sz >= 1 then
-		self.div:SetTopHeight(newh)
 	end
 end
 
@@ -215,29 +262,122 @@ function pace.KillFocus(show_editor)
 	end
 end
 
+local drawProfileInfos = 0
+local textCol, drawBox
+local boxW, boxH
+
+local function drawTimeBox(text, time, x, y)
+	local str = string.format("%s: %.3f ms", L(text), time)
+	drawBox(x, y, boxW - 5, RENDERSCORE_SIZE - 1)
+
+	surface.SetTextPos(x + 5, y)
+	surface.DrawText(str)
+	return y + RENDERSCORE_SIZE
+end
+
+local function PostRenderVGUI()
+	if drawProfileInfos ~= FrameNumber() then return end
+	local x, y = gui.MousePos()
+	x = x + 3
+	y = y + 3
+
+	surface.SetFont(pace.CurrentFont)
+
+	local part = pace.current_part
+	surface.SetTextColor(textCol)
+
+	if not IsValid(part) then return end
+	local selfTime = part.selfDrawTime
+	local selfTimeB = part.BuildBonePositionsRuntime
+	local selfTimeT = part.CThinkRuntime
+	local childTimeO = part.childrenOpaqueDrawTime or 0
+	local childTimeTD = part.childrenTranslucentDrawTime or 0
+	local childTimeB = part.BuildBonePositionsRuntimeChildren or 0
+	local childTimeT = part.CThinkRuntimeChildren or 0
+	local childTime = childTimeO + childTimeT + childTimeB + childTimeTD
+
+	part.childEditorAverageTime = Lerp(0.03, part.childEditorAverageTime or 0, childTime)
+	y = drawTimeBox("overall children render time", part.childEditorAverageTime * 1000, x, y)
+
+	if selfTime or selfTimeB or selfTimeT then
+		local selfTime2 = (selfTime or 0) + (selfTimeB or 0) + (selfTimeT + 0)
+		part.selfEditorAverageTime = Lerp(0.03, part.selfEditorAverageTime or 0, selfTime2)
+		y = drawTimeBox("overall part render time", part.selfEditorAverageTime * 1000, x, y)
+	end
+
+	if selfTime then
+		part.selfEditorAverageTimeR = Lerp(0.03, part.selfEditorAverageTimeR or 0, selfTime)
+		y = drawTimeBox("part draw time", part.selfEditorAverageTimeR * 1000, x, y)
+	end
+
+	if selfTimeT then
+		part.selfEditorAverageTimeT = Lerp(0.03, part.selfEditorAverageTimeT or 0, selfTimeT)
+		y = drawTimeBox("part think time", part.selfEditorAverageTimeT * 1000, x, y)
+	end
+
+	if selfTimeB then
+		part.selfEditorAverageTimeB = Lerp(0.03, part.selfEditorAverageTimeB or 0, selfTimeB)
+		y = drawTimeBox("part bones time", part.selfEditorAverageTimeB * 1000, x, y)
+	end
+
+	part.childEditorAverageTimeTD = Lerp(0.03, part.childEditorAverageTimeTD or 0, childTimeTD + childTimeO)
+	y = drawTimeBox("overall children draw time", part.childEditorAverageTimeTD * 1000, x, y)
+
+	part.childEditorAverageTimeT = Lerp(0.03, part.childEditorAverageTimeT or 0, childTimeT)
+	y = drawTimeBox("overall children think time", part.childEditorAverageTimeT * 1000, x, y)
+
+	part.childEditorAverageTimeB = Lerp(0.03, part.childEditorAverageTimeB or 0, childTimeB)
+	y = drawTimeBox("overall children bones time", part.childEditorAverageTimeB * 1000, x, y)
+end
+
 function PANEL:PaintOver(w, h)
+	if not self.okay then return end
+
 	local renderTime = pace.RenderTimes and pace.RenderTimes[LocalPlayer():EntIndex()]
 
-	if renderTime then
-		--local x, y = self.top:LocalToScreen()
-		local x = 2
-		local y = 2
-		y = y + self.menu_bar:GetTall()
-		y = y + self.top:GetTall()
+	if not renderTime then return end
 
-		surface.SetFont(pace.CurrentFont)
-		local str = string.format("%s: %.3f ms", L("average render time"), renderTime * 1000)
-		local _w, _h = surface.GetTextSize(str)
+	local x = 2
+	local y = 2
+	y = y + self.menu_bar:GetTall()
+	y = y + self.top:GetTall()
+	boxW, boxH = w, h
 
-		cam.IgnoreZ(true)
-		--surface.SetDrawColor(255, 255, 255, 255)
-		self:GetSkin().tex.Panels.Bright(x,y,w-5, RENDERSCORE_SIZE-1)
+	local mx, my = gui.MousePos()
+	local cx, cy = self:LocalToScreen(x, y)
 
-		surface.SetTextColor(self:GetSkin().Colours.Category.Line.Text)
-		surface.SetTextPos(x+5, y)
-		surface.DrawText(str)
-		cam.IgnoreZ(false)
+	if cx <= mx and cy <= my and mx <= cx + w - 5 and my <= cy + RENDERSCORE_SIZE - 1 and self:IsChildHovered() then
+		drawProfileInfos = FrameNumber()
 	end
+
+	surface.SetFont(pace.CurrentFont)
+
+	textCol = self:GetSkin().Colours.Category.Line.Text
+	drawBox = self:GetSkin().tex.Menu_Strip
+	surface.SetTextColor(textCol)
+	cam.IgnoreZ(true)
+	local str = string.format("%s: %.3f ms", L("average render time"), renderTime * 1000)
+	drawBox(x, y, w - 5, RENDERSCORE_SIZE - 1)
+
+	surface.SetTextPos(x + 5, y)
+	surface.DrawText(str)
+	cam.IgnoreZ(false)
+end
+
+function PANEL:Paint(w,h)
+	if not self.okay then return end
+
+
+	--surface.SetDrawColor(0, 0, 0, 255)
+	--surface.DrawRect(0,0,w,h)
+	-- there are some skins that have a transparent dframe
+	-- so the categories that the properties draw will be transparent
+
+	self:GetSkin().tex.Tab_Control( 0, 0, w, h )
+
+	--DFrame.Paint(self, w,h)
 end
 
 pace.RegisterPanel(PANEL)
+
+pac.AddHook('PostRenderVGUI', 'pac_DrawProfileInfos', PostRenderVGUI)

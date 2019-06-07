@@ -1,10 +1,13 @@
+-- VLL_CURR_FILE is local to each file
+if CLIENT and pac and pace and not VLL_CURR_FILE then return end
+
 if not pac then
-	include'pac_init.lua'
-	PAC_EDITOR_INITED_PAC=true
+	include("autorun/pac_core_init.lua")
 end
 
-if SERVER then AddCSLuaFile("pac3/editor/shared.lua") end
-include("pac3/editor/shared.lua")
+if not pac then
+	error("pac editor requires pac core")
+end
 
 if SERVER then
 	local function add_files(dir)
@@ -20,11 +23,9 @@ if SERVER then
 	end
 
 	add_files("pac3/editor/client/")
+	add_files("pac3/editor/shared/")
 
 	include("pac3/editor/server/init.lua")
-
-	-- for the default models
-	resource.AddWorkshop("104691717")
 end
 
 if CLIENT then

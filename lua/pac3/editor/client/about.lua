@@ -199,7 +199,7 @@ local function blur_screen(w, h, x, y)
 	end
 end
 
-surface.CreateFont("pace_about_1", {font = "Impact", size = 512, weight = 800, additive = false, antialias = true})
+surface.CreateFont("pace_about_1", {font = "Roboto Bold", size = 512, weight = 800, additive = false, antialias = true})
 
 local credits = {}
 local A = function(str, size, ...) table.insert(credits, {str, size or type(str) == "string" and 1 or nil, ...}) end
@@ -542,7 +542,7 @@ function pace.ShowAbout()
 	local first = true
 	local start_time = RealTime()
 
-	hook.Add("PreRender", "pace_about", function()
+	pac.AddHook("PreRender", "pace_about", function()
 
 		local w, h = ScrW(), ScrH()
 		local t = RealTime() - start_time
@@ -562,7 +562,7 @@ function pace.ShowAbout()
 		if quit then
 			if not ok then print(err) end
 			pnl:Remove()
-			hook.Remove("PreRender", "pace_about")
+			pac.RemoveHook("PreRender", "pace_about")
 			RunConsoleCommand("volume", old_vol)
 			return
 		end

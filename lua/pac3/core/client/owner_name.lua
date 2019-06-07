@@ -67,7 +67,7 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 
 	if name == "world" or (pac.WorldEntity:IsValid() and ent == pac.WorldEntity) then
 		if not pac.WorldEntity:IsValid() then
-			ent = pac.CreateEntity("error.mdl")
+			ent = pac.CreateEntity("models/error.mdl")
 
 			ent:SetPos(Vector(0,0,0))
 

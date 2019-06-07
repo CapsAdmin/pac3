@@ -3,6 +3,8 @@ local PART = {}
 PART.ClassName = "holdtype"
 PART.NonPhysical = true
 PART.ThinkTime = 0
+PART.Group = 'entity'
+PART.Icon = 'icon16/user_edit.png'
 
 local act_mods =
 {
@@ -49,16 +51,31 @@ end
 
 PART.ActMods = act_mods
 
+local udata = {
+	enums = function(part)
+		if not part.GetSequenceList then return {} end -- ???
+
+		local tbl = {}
+
+		for k, v in pairs(part:GetSequenceList()) do
+			tbl[v] = v
+		end
+
+		return tbl
+	end
+}
+
 pac.StartStorableVars()
 	for name in pairs(act_mods) do
-		pac.GetSet(PART, name, "")
+		pac.GetSet(PART, name, "", udata)
 	end
 
-	pac.GetSet(PART, "Fallback", "")
-	pac.GetSet(PART, "Noclip", "")
-	pac.GetSet(PART, "Air", "")
-	pac.GetSet(PART, "Sitting", "")
+	pac.GetSet(PART, "Fallback", "", udata)
+	pac.GetSet(PART, "Noclip", "", udata)
+	pac.GetSet(PART, "Air", "", udata)
+	pac.GetSet(PART, "Sitting", "", udata)
 	pac.GetSet(PART, "AlternativeRate", false)
+	pac.GetSet(PART, "Override", false)
 pac.EndStorableVars()
 
 for name in pairs(act_mods) do
@@ -86,6 +103,11 @@ function PART:UpdateActTable()
 		ent.pac_holdtype_alternative_animation_rate = self.AlternativeRate
 
 		ent.pac_holdtypes = ent.pac_holdtypes or {}
+
+		if self.Override then
+			table.Empty(ent.pac_holdtypes)
+		end
+
 		ent.pac_holdtypes[self] = ent.pac_holdtypes[self] or {}
 
 		local acts = ent.pac_holdtypes[self]
@@ -104,12 +126,22 @@ function PART:UpdateActTable()
 	end
 end
 
+function PART:OnThink()
+	local ent = self:GetOwner(true)
+
+	if ent:IsValid() and ent:GetModel() ~= self.last_model then
+		self:UpdateActTable()
+		self.last_model = ent:GetModel()
+	end
+end
+
 function PART:GetSequenceList()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
 		return ent:GetSequenceList()
 	end
+
 	return {"none"}
 end
 

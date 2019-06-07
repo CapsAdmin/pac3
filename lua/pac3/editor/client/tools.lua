@@ -43,7 +43,7 @@ pace.AddTool(L"fix origin", function(part, suboption)
 end)
 
 pace.AddTool(L"replace ogg with webaudio", function(part, suboption)
-	for _, part in pairs(pac.GetParts(true)) do
+	for _, part in pairs(pac.GetLocalParts()) do
 		if part.ClassName == "ogg" then
 			local parent = part:GetParent()
 
@@ -70,7 +70,7 @@ pace.AddTool(L"copy global id", function(obj)
 end)
 
 pace.AddTool(L"use legacy scale", function(part, suboption)
-	for _, part in pairs(pac.GetParts(true)) do
+	for _, part in pairs(pac.GetLocalParts()) do
 		if part.UseLegacyScale ~= nil then
 			part:SetUseLegacyScale(suboption == 1)
 		end
@@ -118,7 +118,7 @@ end)
 
 pace.AddTool(L"square model scales...", function(part, suboption)
 	Derma_StringRequest(L"model", L"input the model name that should get squared", "default.mdl", function(model)
-		for _, part in pairs(pac.GetParts(true)) do
+		for _, part in pairs(pac.GetLocalParts()) do
 			if part:IsValid() and part.GetModel then
 				local function square_scale(part)
 					if part.SetSize then
@@ -174,31 +174,23 @@ pace.AddTool(L"import editor tool from file...", function()
 end)
 
 pace.AddTool(L"import editor tool from url...", function()
-	local allowcslua = GetConVar("sv_allowcslua")
-	if allowcslua:GetBool() then
+	if GetConVar("sv_allowcslua"):GetBool() then
 		Derma_StringRequest(L"URL", L"URL to PAC Editor tool txt file", "http://www.example.com/tool.txt", function(toolurl)
-		function ToolDLSuccess(body)
-			local toolname = pac.PrettifyName(toolurl:match(".+/(.-)%."))
-			local toolstr = body
-			ctoolstr=[[pace.AddTool(L"]]..toolname..[[",function(part, suboption) ]]..toolstr.." end)"
-			RunStringEx(ctoolstr, "pac_editor_import_tool")
-			LocalPlayer():ConCommand("pac_editor") --close and reopen editor
-		end
-		function ToolDLFail(body)
-			Derma_Message("HTTP Request Failed for "..toolurl,"Error: Request Failed","OK")
-		end
-		http.Fetch(toolurl,ToolDLSuccess,ToolDLFail)
+			function ToolDLSuccess(body)
+				local toolname = pac.PrettifyName(toolurl:match(".+/(.-)%."))
+				local toolstr = body
+				ctoolstr=[[pace.AddTool(L"]]..toolname..[[",function(part, suboption) ]]..toolstr.." end)"
+				RunStringEx(ctoolstr, "pac_editor_import_tool")
+				LocalPlayer():ConCommand("pac_editor") --close and reopen editor
+			end
+
+			pac.HTTPGet(toolurl,ToolDLSuccess,function(err)
+				Derma_Message("HTTP Request Failed for "..toolurl,err,"OK")
+			end)
 		end)
 	else
 		Derma_Message("Importing pac editor tools is disallowed on this server.","Error: Clientside Lua Disabled","OK")
 	end
-end)
-
-pace.AddTool(L"spawn as props", function(part)
-	local data = pace.PartToContraptionData(part)
-	net.Start("pac_to_contraption")
-		net.WriteTable(data)
-	net.SendToServer()
 end)
 
 function round_pretty(val)
@@ -273,86 +265,207 @@ do
 	end
 
 	pace.AddTool(L"clear names", function(part, suboptions)
-		for k,v in pairs(pac.GetParts(true)) do
+		for k,v in pairs(pac.GetLocalParts()) do
 			v:SetName("")
 		end
+		pace.RefreshTree(true)
 	end)
 
 end
 
 pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part)
-	local holo_str =
+
+-- Hologram template string for subsitution of data
+	local ref_str =
 	[[
-	  
-	     ########################### HOLO_NAME ###########################
-	
-			 I++
-			 holoCreate(I) #HOLO_NAME
-			 PARENT
-			 holoColor(I, COLOR)
-			 holoAlpha(I, ALPHA)
-			 holoMaterial(I, MATERIAL)
-			 holoSkin(I, SKIN)
-		
-			 holoPos(I, entity():toWorld(POSITION))
-			 holoAng(I, entity():toWorld(ANGLES))
-		
-			 holoModel(I, MODEL)
-			 holoScale(I, SCALE)
+
+	   I++, HN++, HT[HN,table] = table(I, Base, 0, POSITION, ANGLES, SCALE, MODEL, MATERIAL, vec4(COLOR, ALPHA), SKIN)
 	]]
+
+-- Header string for e2 with spawn code
+	local header_str =
+	[[
+@name [NAME]
+@inputs [Base]:entity
+@persist [HT CT]:table [SpawnStatus CoreStatus]:string [HN CN I SpawnCounter]
+@persist [Base]:entity [ScaleFactor ToggleColMat ToggleShading] Indices
+@persist [DefaultColor DefaultScale]:vector
+
+if (first() | dupefinished())
+{
+    Chip = entity()
+
+    Indices = 1
+    ScaleFactor = 1
+    ToggleColMat = 1
+    ToggleShading = 0
+
+	   #- Data structure
+	   #- HN++, HT[HN, table] = table(Index, Parent, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin, Bodygroup Index, Bodygroup Sub-Index)
+
+	   # # # # # # # # # HOLOGRAM DATA START # # # # # # # # #
+	]]
+
+-- Ending string for e2, containing spawn code
+	local footer_str =
+	[[
+
+	   # # # # # # # # # HOLOGRAM DATA END # # # # # # # # #
+
+	   #- Create a hologram from data array
+    function table:holo() {
+        local Index = This[1, number] * Indices
+        local Entity = This[2, entity]
+        local Parent = This[2, entity]
+        local Rescale = (This[6, vector] / (This[3, number] ? 12 : 1)) * ScaleFactor
+        
+        holoCreate(Index, Entity:toWorld(This[4, vector] * ScaleFactor), Rescale, Entity:toWorld(This[5, angle]), DefaultColor, This[7, string] ?: "cube")
+        holoParent(Index, Parent)
+        
+        if (ToggleColMat) {
+            holoMaterial(Index, This[8, string])
+            holoColor(Index, This[9, vector4])
+            holoSkin(Index, This[10, number])
+            holoBodygroup(Index, This[11, number], This[12, number])
+        }
+        
+        if (ToggleShading) { holoDisableShading(Index, 1) }
+    }
+    
+    #- Clip a hologram from data array
+    function table:clip() {
+        holoClipEnabled(This[1, number] * Indices, This[2, number], 1)
+        holoClip(This[1, number] * Indices, This[2, number], This[3, vector] * ScaleFactor, This[4, vector], 0)
+    }
+    
+    #- Load the contraption 
+    function loadContraption() {
+        switch (SpawnStatus) {
+            case "InitSpawn", 
+                if (clk("Start")) {
+                    SpawnStatus = "LoadHolograms"    
+                }
+                Chip:soundPlay("Blip", 0, "@^garrysmod/content_downloaded.wav", 0.212)
+            break
+    
+            case "LoadHolograms", 
+                while (perf() & holoCanCreate() &  SpawnCounter < HN) { 
+                    SpawnCounter++
+                    HT[SpawnCounter, table]:holo()
+    
+                    if (SpawnCounter >= HN) {
+                        SpawnStatus = CN > 0 ? "LoadClips" : "PrintStatus"
+                        SpawnCounter = 0
+                        break
+                    }
+                }
+            break
+    
+            case "LoadClips",
+                while (perf() & SpawnCounter < CN) {
+                    SpawnCounter++
+                    CT[SpawnCounter, table]:clip()
+    
+                    if (SpawnCounter >= CN) {
+                        SpawnStatus = "PrintStatus"
+                        SpawnCounter = 0
+                        break
+                    }
+                }
+            break
+    
+            case "PrintStatus", 
+                printColor( vec(222,37,188), "PAC to Holo: ", vec(255,255,255), "Loaded " + HN + " holograms and " + CN + " clips." )
+    
+                HT:clear()
+                CT:clear()
+    
+                CoreStatus = "InitPostSpawn"
+                SpawnStatus = ""
+            break 
+        }
+    }
+    
+    CoreStatus = "InitSpawn"
+    SpawnStatus = "InitSpawn"
+    
+    DefaultColor = vec(255, 255, 255)
+    
+    runOnTick(1)
+    timer("Start", 500)
+}
+
+# Credit to Shadowscion for the initial base hologram spawning code.
+
+elseif (CoreStatus == "InitSpawn")
+{
+    loadContraption()
+}
+elseif (CoreStatus == "InitPostSpawn")
+{
+	   # This is your "if (first())" section of the code.
+
+    CoreStatus = "RunThisCode"
+}
+elseif (CoreStatus == "RunThisCode")
+{
+    # This is your interal ran section of the code.
+
+    runOnTick(0)
+}
+	]]
+
+	-- pos angle normal formatting functions
 	local function tovec(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
+	local function tovec2(vec) return ("%s, %s, %s"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
 	local function toang(vec) return ("ang(%s, %s, %s)"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
-	local function toang2(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
+	local function toang2(vec) return ("vec(%s, %s, %s)"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
+
+	-- converting holograms to strings using templates and sub
 	local function part_to_holo(part)
-	
-	local scale = part:GetSize() * part:GetScale()
-		
-	--[[for _, clip in ipairs(part:GetChildren()) do
-		if clip.ClassName == "clip" and not clip:IsHidden() then
-			local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
-			local normal = ang:Forward()
-			holo_str = holo_str .. "\n"
-			holo_str = holo_str .. "holoClipEnabled(I, CI, 1)\n"
-			holo_str = holo_str .. "holoClip(I, " .. tovec(pos + normal) .. ", " .. toang2(normal) ..  ", 1)\n"
+		local holo_str = ref_str
+
+		for CI, clip in ipairs(part:GetChildren()) do
+			if clip.ClassName == "clip" and not clip:IsHidden() then
+				local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
+				local normal = ang:Forward()
+				holo_str = holo_str .. "   CN++, CT[CN,table] = table(I, " .. CI .. ", " .. tovec(pos + normal) .. ", " .. toang2(normal) .. ")\n"
+			end
 		end
-	end]]--
+
+		-- subing values in
+		local scale = part:GetSize() * part:GetScale()
+
 		local holo = holo_str
 		:gsub("ALPHA", part:GetAlpha()*255)
-		:gsub("COLOR", tovec(part:GetColor()))
+		:gsub("COLOR", tovec2(part:GetColor()))
 		:gsub("SCALE", tovec(Vector(scale.x, scale.y, scale.z)))
 		:gsub("ANGLES", toang(part:GetAngles()))
 		:gsub("POSITION", tovec(part:GetPosition()))
 		:gsub("MATERIAL", ("%q"):format(part:GetMaterial()))
 		:gsub("MODEL", ("%q"):format(part:GetModel()))
 		:gsub("SKIN", part:GetSkin())
-		if part:HasParent() and part:GetParent().ClassName == "model" then
-			holo = holo:gsub("PARENT", ("holoParent(I, %s)"):format(part.Parent.UniqueID))
-		else
-			holo = holo:gsub("PARENT", "holoParent(I, entity())")
-		end
-		holo = holo:Replace("HOLO_NAME", part:GetName())
-		LocalPlayer():ChatPrint("PAC > Code printed to console and saved in your Expression 2 folder.")
-		print(holo)
+		:gsub("PARENT", "entity()")
+
 		return holo
 	end
+
 	local function convert(part)
-		local out = ""
-		out = out .. "@name \n"
-		out = out .. "@inputs \n"
-		out = out .. "@outputs \n"
-		out = out .. "\n		  I   = 0 # Hologram index starting at 0\n"
-		out = out .. "		  CI  = 0 # Clip index starting at 0\n"
-		
-		if part.ClassName == "model" then
-			out = part_to_holo(part)
-		end
+		local out = string.Replace(header_str, "[NAME]", part:GetName() or "savedpacholos")
+
 		for key, part in ipairs(part:GetChildren()) do
-			if part.ClassName == "model" and not part:IsHidden() and not part.wavefront_mesh then
-				out = out .. convert(part)
+			if part.is_model_part and not part:IsHidden() and not part.wavefront_mesh then
+				out = out .. part_to_holo(part)
 			end
 		end
+
+		out = out .. footer_str
+
+		LocalPlayer():ChatPrint("PAC --> Code saved in your Expression 2 folder under [expression2/pac/" .. part:GetName() .. ".txt" .. "].")
+
 		return out
 	end
+
 	file.CreateDir("expression2/pac")
 	file.Write("expression2/pac/"..part:GetName()..".txt", convert(part))
 end)
@@ -434,8 +547,8 @@ pace.AddTool(L"dump player submaterials",function()
 end)
 
 pace.AddTool(L"stop all custom animations",function()
-	LocalPlayer():StopAllLuaAnimations()
-	LocalPlayer():ResetBoneMatrix()
+	boneanimlib.StopAllEntityAnimations(LocalPlayer())
+	boneanimlib.ResetEntityBoneMatrix(LocalPlayer())
 end)
 
 pace.AddTool(L"copy from faceposer tool", function(part, suboption)
@@ -445,7 +558,7 @@ pace.AddTool(L"copy from faceposer tool", function(part, suboption)
 	for i = 0, ent:GetFlexNum() - 1 do
 		local name = ent:GetFlexName(i)
 		local weight = GetConVarNumber("faceposer_flex" .. i) * GetConVarNumber("faceposer_scale")
-		print(name, weight)
+		pac.Message(name, weight)
 		if weight ~= 0 then
 			local flex = group:CreatePart("flex")
 			flex:SetFlex(name)

@@ -5,6 +5,7 @@ local table_remove = table.remove
 local math_ceil = math.ceil
 local math_abs = math.abs
 local render_StartBeam = render.StartBeam
+local cam_IgnoreZ = cam.IgnoreZ
 local render_EndBeam = render.EndBeam
 local render_AddBeam = render.AddBeam
 local render_SetMaterial = render.SetMaterial
@@ -12,25 +13,35 @@ local render_SetMaterial = render.SetMaterial
 local PART = {}
 
 PART.ClassName = "trail"
+PART.Group = 'effects'
+PART.Icon = 'icon16/arrow_undo.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Length", 100)
-	pac.GetSet(PART, "Spacing", 1)
-	pac.GetSet(PART, "StartSize", 3)
-	pac.GetSet(PART, "EndSize", 0)
-	pac.GetSet(PART, "StartColor", Vector(255, 255, 255))
-	pac.GetSet(PART, "EndColor", Vector(255, 255, 255))
-	pac.GetSet(PART, "StartAlpha", 1)
-	pac.GetSet(PART, "EndAlpha", 1)
-	pac.GetSet(PART, "Stretch", false)
-	pac.GetSet(PART, "TrailPath", "trails/laser")
-	pac.GetSet(PART, "Translucent", true)
+	pac.SetPropertyGroup(PART, "generic")
+		pac.PropertyOrder(PART, "Name")
+		pac.PropertyOrder(PART, "Hide")
+		pac.PropertyOrder(PART, "ParentName")
+		pac.GetSet(PART, "TrailPath", "trails/laser", {editor_panel = "material"})
+		pac.GetSet(PART, "StartSize", 3)
+		pac.GetSet(PART, "EndSize", 0)
+		pac.GetSet(PART, "Length", 100)
+		pac.GetSet(PART, "Spacing", 1)
+
+	pac.SetPropertyGroup(PART, "orientation")
+	pac.SetPropertyGroup(PART, "appearance")
+		pac.GetSet(PART, "StartColor", Vector(255, 255, 255), {editor_panel = "color"})
+		pac.GetSet(PART, "EndColor", Vector(255, 255, 255), {editor_panel = "color"})
+		pac.GetSet(PART, "StartAlpha", 1)
+		pac.GetSet(PART, "EndAlpha", 1)
+		pac.PropertyOrder(PART, "Translucent")
+		pac.GetSet(PART, "Stretch", false)
+	pac.SetPropertyGroup(PART, "other")
+		pac.PropertyOrder(PART, "DrawOrder")
 pac.EndStorableVars()
 
 function PART:GetNiceName()
 	return pac.PrettifyName(("/" .. self:GetTrailPath()):match(".+/(.+)"):gsub("%..+", "")) or "error"
 end
-
 
 PART.LastAdd = 0
 
@@ -114,7 +125,9 @@ end
 local temp_color = Color(255, 255, 255)
 
 function PART:OnDraw(owner, pos, ang)
-	if self.Materialm and self.StartColorC and self.EndColorC then
+	local mat = self.MaterialOverride or self.Materialm
+
+	if mat and self.StartColorC and self.EndColorC then
 		self.points = self.points or {}
 
 		local len = tonumber(self.Length)
@@ -131,7 +144,7 @@ function PART:OnDraw(owner, pos, ang)
 			len = math_ceil(math_abs(len - spc))
 		end
 
-		render_SetMaterial(self.Materialm)
+		render_SetMaterial(mat)
 
 		render_StartBeam(count)
 			for k, v in pairs(self.points) do

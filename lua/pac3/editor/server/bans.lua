@@ -29,10 +29,10 @@ function pace.Ban(ply)
 
 	timer.Simple( 1, function() -- made it a timer because the ConCommand don't run fast enough. - Bizzclaw
 
-		umsg.Start("pac_submit_acknowledged", ply)
-			umsg.Bool(false)
-			umsg.String("You have been banned from using pac!")
-		umsg.End()
+		net.Start("pac_submit_acknowledged")
+			net.WriteBool(false)
+			net.WriteString("You have been banned from using pac!")
+		net.Send(ply)
 
 		local bans = get_bans()
 
@@ -52,10 +52,10 @@ end
 
 function pace.Unban(ply)
 
-	umsg.Start("pac_submit_acknowledged", ply)
-		umsg.Bool(false)
-		umsg.String("You are now permitted to use pac!")
-	umsg.End()
+	net.Start("pac_submit_acknowledged")
+		net.WriteBool(true)
+		net.WriteString("You are now permitted to use pac!")
+	net.Send(ply)
 
 	local bans = get_bans()
 
@@ -82,8 +82,7 @@ concommand.Add("pac_ban", function(ply, cmd, args)
 	local target = GetPlayer(args[1])
 	if (not IsValid(ply) or ply:IsAdmin()) and target then
 		pace.Ban(target)
-		MsgC(Color(255,255,0), "[PAC3] ")
-		print(string.format("%s banned %s from PAC.", IsValid(ply) and ply:Nick() or "Console", target:Nick()))
+		pac.Message(ply, " banned ", target, " from PAC.")
 	end
 end)
 
@@ -91,8 +90,7 @@ concommand.Add("pac_unban", function(ply, cmd, args)
 	local target = GetPlayer(args[1])
 	if (not IsValid(ply) or ply:IsAdmin()) and target then
 		pace.Unban(target)
-		MsgC(Color(255,255,0), "[PAC3] ")
-		print(string.format("%s unbanned %s from PAC.", IsValid(ply) and ply:Nick() or "Console", target:Nick()))
+		pac.Message(ply, " unbanned ", target, " from PAC.")
 	end
 end)
 

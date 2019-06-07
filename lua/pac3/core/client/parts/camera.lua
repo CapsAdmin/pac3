@@ -3,6 +3,8 @@ local LerpAngle = LerpAngle
 local PART = {}
 
 PART.ClassName = "camera"
+PART.Group = 'entity'
+PART.Icon = 'icon16/camera.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "EyeAnglesLerp", 1)
@@ -15,7 +17,7 @@ pac.EndStorableVars()
 
 function PART:Initialize()
 	local owner = self:GetOwner(true)
-	if owner ~= NULL then 
+	if owner ~= NULL then
 		owner.pac_cameras = owner.pac_cameras or {}
 		owner.pac_cameras[self] = self
 	end
@@ -46,11 +48,22 @@ pac.RegisterPart(PART)
 
 local temp = {}
 
-function pac.CalcView(ply, pos, ang, fov, nearz, farz)
+pac.AddHook("CalcView", "camera_part", function(ply, pos, ang, fov, nearz, farz)
 	if not ply.pac_cameras then return end
+	if ply:GetViewEntity() ~= ply then return end
 
 	for _, part in pairs(ply.pac_cameras) do
 		if part:IsValid() then
+			if part:IsHidden() and part:IsEventHidden() then
+				for i, event in ipairs(part:GetChildrenList()) do
+					if event.ClassName == 'event' then
+						event.AlwaysThink = true
+						event:Think()
+						part.draw_hidden = part.event_hidden
+					end
+				end
+			end
+
 			if not part:IsHidden() then
 				pos, ang, fov, nearz, farz = part:CalcView(ply, pos, ang, fov, nearz, farz)
 				temp.origin = pos
@@ -65,6 +78,4 @@ function pac.CalcView(ply, pos, ang, fov, nearz, farz)
 			ply.pac_cameras[part] = nil
 		end
 	end
-end
-
-pac.AddHook("CalcView")
+end)

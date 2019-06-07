@@ -13,48 +13,63 @@ local Color = Color
 local PART = {}
 
 PART.ClassName = "entity"
+PART.Group = 'entity'
+PART.Icon = 'icon16/brick.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Material", "")
-	pac.GetSet(PART, "Model", "")
-	pac.GetSet(PART, "Color", Vector(255, 255, 255))
-	pac.GetSet(PART, "Brightness", 1)
-	pac.GetSet(PART, "Alpha", 1)
-	pac.GetSet(PART, "Scale", Vector(1,1,1))
-	pac.GetSet(PART, "Size", 1)
-	pac.GetSet(PART, "OverallSize", 1)
-	pac.GetSet(PART, "HideEntity", false)
-	pac.GetSet(PART, "Invert", false)
-	pac.GetSet(PART, "DoubleFace", false)
-	pac.GetSet(PART, "DrawWeapon", true)
-	pac.GetSet(PART, "Fullbright", false)
-
-	pac.GetSet(PART, "RelativeBones", true)
-
-	pac.GetSet(PART, "Skin", 0)
-	pac.GetSet(PART, "Bodygroup", 0)
-	pac.GetSet(PART, "BodygroupState", 0)
-	pac.GetSet(PART, "DrawShadow", true)
-	pac.GetSet(PART, "Weapon", false)
-	pac.GetSet(PART, "InverseKinematics", false)
-	pac.GetSet(PART, "MuteFootsteps", false)
-	pac.GetSet(PART, "MuteSounds", false)
-	pac.GetSet(PART, "AllowOggWhenMuted", false)
-	pac.GetSet(PART, "HideBullets", false)
-	pac.GetSet(PART, "AnimationRate", 1)
-	pac.GetSet(PART, "SprintSpeed", 0)
-	pac.GetSet(PART, "RunSpeed", 0)
-	pac.GetSet(PART, "WalkSpeed", 0)
-	pac.GetSet(PART, "CrouchSpeed", 0)
-	pac.GetSet(PART, "FallApartOnDeath", false)
-	pac.GetSet(PART, "DeathRagdollizeParent", false)
-	pac.GetSet(PART, "HideRagdollOnDeath", false)
-	pac.GetSet(PART, "DrawPlayerOnDeath", false)
-	pac.GetSet(PART, "HidePhysgunBeam", false)
-	pac.GetSet(PART, "LodOverride", -1)
-
-	pac.GetSet(PART, "UseLegacyScale", false)
+	pac.SetPropertyGroup(PART, "generic")
+		pac.PropertyOrder(PART, "Name")
+		pac.PropertyOrder(PART, "Hide")
+		pac.GetSet(PART, "Model", "")
+		pac.GetSet(PART, "Material", "")
+		pac.GetSet(PART, "HideEntity", false)
+		pac.GetSet(PART, "DrawWeapon", true)
+		pac.GetSet(PART, "MuteSounds", false)
+		pac.GetSet(PART, "AllowOggWhenMuted", false)
+		pac.GetSet(PART, "HideBullets", false)
+		pac.GetSet(PART, "DrawPlayerOnDeath", false)
+		pac.GetSet(PART, "HidePhysgunBeam", false)
+		pac.GetSet(PART, "UseLegacyScale", false)
+	pac.SetPropertyGroup(PART, "appearance")
+		pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
+		pac.GetSet(PART, "Brightness", 1)
+		pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
+		pac.GetSet(PART, "Fullbright", false)
+		pac.PropertyOrder(PART, "DrawOrder")
+		pac.PropertyOrder(PART, "Translucent")
+		pac.GetSet(PART, "Invert", false)
+		pac.GetSet(PART, "DoubleFace", false)
+		pac.GetSet(PART, "Skin", 0, {editor_onchange = function(self, num) return math.Round(math.max(tonumber(num), 0)) end})
+		pac.GetSet(PART, "DrawShadow", true)
+		pac.GetSet(PART, "LodOverride", -1)
+	pac.SetPropertyGroup(PART, "movement")
+		pac.GetSet(PART, "SprintSpeed", 0)
+		pac.GetSet(PART, "RunSpeed", 0)
+		pac.GetSet(PART, "WalkSpeed", 0)
+		pac.GetSet(PART, "CrouchSpeed", 0)
+	pac.SetPropertyGroup(PART, "orientation")
+		pac.PropertyOrder(PART, "AimPartName")
+		pac.PropertyOrder(PART, "Bone")
+		pac.PropertyOrder(PART, "Position")
+		pac.PropertyOrder(PART, "Angles")
+		pac.PropertyOrder(PART, "EyeAngles")
+		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
+		pac.GetSet(PART, "Scale", Vector(1,1,1))
+	pac.SetPropertyGroup(PART, "behavior")
+		pac.GetSet(PART, "RelativeBones", true)
+		pac.GetSet(PART, "Weapon", false)
+		pac.GetSet(PART, "InverseKinematics", false)
+		pac.GetSet(PART, "MuteFootsteps", false)
+		pac.GetSet(PART, "SuppressFrames", false)
+		pac.GetSet(PART, "AnimationRate", 1)
+		pac.GetSet(PART, "FallApartOnDeath", false)
+		pac.GetSet(PART, "DeathRagdollizeParent", false)
+		pac.GetSet(PART, "HideRagdollOnDeath", false)
+		pac.SetupPartName(PART, "EyeTarget")
 pac.EndStorableVars()
+
+pac.RemoveProperty(PART, "PositionOffset")
+pac.RemoveProperty(PART, "AngleOffset")
 
 local function ENTFIELD(PART, name, field)
 
@@ -129,13 +144,6 @@ end
 
 
 function PART:OnBuildBonePositions()
-	local ent = self:GetOwner()
-
-	if self.OverallSize ~= 1 then
-		for _ = 0, ent:GetBoneCount() do
-			ent:ManipulateBoneScale(0, Vector(1, 1, 1) * self.OverallSize)
-		end
-	end
 end
 
 function PART:SetDrawShadow(b)
@@ -147,34 +155,9 @@ function PART:SetDrawShadow(b)
 	end
 end
 
-function PART:SetBodygroupState(var)
-	var = var or 0
-
-	self.BodygroupState = var
-
-	local ent = self:GetOwner()
-	timer.Simple(0, function()
-		if self:IsValid() and ent:IsValid() then
-			ent:SetBodygroup(self.Bodygroup, var)
-		end
-	end)
-end
-
-function PART:SetBodygroup(var)
-	var = var or 0
-
-	self.Bodygroup = var
-
-	local ent = self:GetOwner()
-	timer.Simple(0, function()
-		if self:IsValid() and ent:IsValid() then
-			ent:SetBodygroup(var, self.BodygroupState)
-		end
-	end)
-end
-
 function PART:UpdateScale(ent)
 	ent = ent or self:GetOwner()
+
 	if ent:IsValid() then
 		if self.UseLegacyScale then
 			if ent:IsPlayer() or ent:IsNPC() then
@@ -183,6 +166,8 @@ function PART:UpdateScale(ent)
 				pac.SetModelScale(ent, self.Scale * self.Size)
 			end
 		else
+			ent.pac3_Scale = self.Size
+
 			if ent:IsPlayer() or ent:IsNPC() then
 				local size = ent:GetModelScale() -- compensate for serverside scales..
 				pac.SetModelScale(ent, self.Scale * self.Size * (1/size))
@@ -247,19 +232,12 @@ function PART:SetRelativeBones(b)
 	end
 end
 
-function PART:SetDrawWeapon(b)
-	self.DrawWeapon = b
-	self:UpdateWeaponDraw(self:GetOwner())
-end
-
 function PART:UpdateWeaponDraw(ent)
 	local wep = ent and ent:IsValid() and ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 
-	if wep and wep:IsWeapon() then
-		local hide = not self.DrawWeapon
-		if hide == true then
-			wep.pac_hide_weapon = hide
-			pac.HideWeapon(wep, hide)
+	if wep:IsWeapon() then
+		if not wep.pac_weapon_class then
+			wep:SetNoDraw(not self.DrawWeapon)
 		end
 	end
 end
@@ -270,8 +248,9 @@ function PART:UpdateColor()
 end
 
 function PART:UpdateMaterial()
-	if self.Materialm then
-		render_MaterialOverride(self.Materialm)
+	local mat = self.MaterialOverride or self.Materialm
+	if mat then
+		render_MaterialOverride(mat)
 	end
 end
 
@@ -283,27 +262,42 @@ end
 
 local angle_origin = Angle()
 
+local function setup_suppress()
+	local last_framenumber = 0
+	local current_frame = 0
+	local current_frame_count = 0
+
+	return function()
+		local frame_number = FrameNumber()
+
+		if frame_number == last_framenumber then
+			current_frame = current_frame + 1
+		else
+			last_framenumber = frame_number
+
+			if current_frame_count ~= current_frame then
+				current_frame_count = current_frame
+			end
+
+			current_frame = 1
+		end
+
+		return current_frame < current_frame_count
+	end
+end
+
 function PART:OnShow()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
 
-		if ent == pac.LocalPlayer and self.Model ~= "" then
-			RunConsoleCommand("pac_setmodel", self.Model)
-		end
-
 		if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
 			ent = ent:GetActiveWeapon()
-		else
-			if self.Model ~= "" and self:GetOwner() == pac.LocalPlayer and self.Model:lower() ~= self:GetOwner():GetModel():lower() then
-				RunConsoleCommand("pac_setmodel", self.Model)
-			end
 		end
 
 		for _, field in pairs(self.ent_fields) do
 			self["Set" .. field](self, self[field])
 		end
-
 
 		self:SetColor(self:GetColor())
 		ent:SetColor(self.Colorc)
@@ -312,6 +306,15 @@ function PART:OnShow()
 		function ent.RenderOverride()
 			if self:IsValid() then
 				if not self.HideEntity then
+					if self.SuppressFrames then
+						if not self.should_suppress then
+							self.should_suppress = setup_suppress()
+						end
+
+						if self.should_suppress() then
+							return
+						end
+					end
 
 					self:ModifiersPostEvent("PreDraw")
 					self:PreEntityDraw(ent)
@@ -333,6 +336,18 @@ function PART:OnShow()
 					end
 
 					ent:SetSkin(self.Skin)
+
+					if ent.pac_bodygroups_torender then
+						for bgID, bgVal in pairs(ent.pac_bodygroups_torender) do
+							ent:SetBodygroup(bgID, bgVal)
+						end
+					end
+
+					ent.pac_bodygroups_torender = nil
+
+					if self.EyeTarget.cached_pos then
+						ent:SetEyeTarget(self.EyeTarget.cached_pos)
+					end
 
 					ent:DrawModel()
 
@@ -357,12 +372,72 @@ function PART:OnShow()
 	end
 end
 
-function PART:SetModel(str)
-	self.Model = str
+local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs')
+local ALLOW_TO_USE_MDL = CreateConVar('pac_allow_mdl_entity', '1', {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs as Entity')
 
-	local ent = self:GetOwner()
-	if str ~= "" and ent:IsValid() and ent == pac.LocalPlayer then
-		RunConsoleCommand("pac_setmodel", self.Model)
+function PART:SetModel(path)
+	self.Model = path
+
+	if path:find("^http") then
+		local status, reason = hook.Run('PAC3AllowMDLDownload', self:GetPlayerOwner(), self, path)
+		local status2, reason2 = hook.Run('PAC3AllowEntityMDLDownload', self:GetPlayerOwner(), self, path)
+
+		if ALLOW_TO_USE_MDL:GetBool() and ALLOW_TO_MDL:GetBool() and status ~= false and status2 ~= false then
+			local ent = self:GetOwner()
+
+			if ent == pac.LocalPlayer then
+				pac.Message("downloading ", path, " to use as player model")
+			end
+
+			pac.DownloadMDL(path, function(real_path)
+				if ent:IsValid() then
+					if ent == pac.LocalPlayer and pacx and pacx.SetModel then
+						pac.Message("finished downloading ", path)
+						pacx.SetModel(path)
+					else
+						ent:SetModel(real_path)
+					end
+
+					ent:SetSubMaterial()
+
+					for i = 0, #ent:GetBodyGroups() - 1 do
+						ent:SetBodygroup(i, 0)
+					end
+
+					self:CallRecursiveExclude('OnShow')
+				end
+			end, function(err)
+				pac.Message(err)
+			end, self:GetPlayerOwner())
+
+			self.mdl_zip = true
+		else
+			self.loading = reason2 or reason or "mdl is not allowed"
+			pac.Message(self:GetPlayerOwner(), ' - mdl files are not allowed')
+		end
+	else
+		local ent = self:GetOwner()
+
+		if ent:IsValid() then
+			if ent == pac.LocalPlayer and pacx and pacx.SetModel then
+				pacx.SetModel(self.Model)
+			else
+				ent:SetModel(self.Model)
+			end
+
+			pac.RunNextFrame('entity updatemat ' .. tostring(ent), function()
+				if not ent:IsValid() or not self:IsValid() then return end
+				ent:SetSubMaterial()
+
+				for i = 0, 127 do
+					ent:SetBodygroup(i, 0)
+				end
+
+				self:CallRecursiveExclude('OnShow')
+			end)
+		end
+
+		self.mdl_zip = false
 	end
 end
 
@@ -445,8 +520,9 @@ function PART:OnHide()
 
 		if weps then
 			for _, wep in pairs(weps) do
-				wep.pac_hide_weapon = nil
-				pac.HideWeapon(wep, false)
+				if not wep.pac_weapon_class then
+					wep:SetNoDraw(false)
+				end
 			end
 		end
 

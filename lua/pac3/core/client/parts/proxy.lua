@@ -3,50 +3,80 @@ local PART = {}
 PART.ClassName = "proxy"
 PART.NonPhysical = true
 PART.ThinkTime = 0
+PART.Group = 'modifiers'
+PART.Icon = 'icon16/calculator.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "VariableName", "")
-	pac.GetSet(PART, "Expression", "")
-	pac.GetSet(PART, "RootOwner", false)
-	pac.GetSet(PART, "Additive", false)
-	pac.GetSet(PART, "AffectChildren", false)
 
-	pac.GetSet(PART, "Input", "time")
-	pac.GetSet(PART, "Function", "sin")
-	pac.GetSet(PART, "Offset", 0)
-	pac.GetSet(PART, "InputMultiplier", 1)
-	pac.GetSet(PART, "InputDivider", 1)
-	pac.GetSet(PART, "Min", 0)
-	pac.GetSet(PART, "Max", 1)
-	pac.GetSet(PART, "Pow", 1)
-	pac.GetSet(PART, "Axis", "")
+	pac.SetPropertyGroup()
+		pac.GetSet(PART, "VariableName", "", {enums = function(part)
+			local parent = part:GetTarget()
+			if not parent:IsValid() then return end
+			local tbl = {}
+			for key, _ in pairs(parent.StorableVars) do
+				if key == "UniqueID" then goto CONTINUE end
 
-	pac.GetSet(PART, "PlayerAngles", false)
-	pac.GetSet(PART, "ZeroEyePitch", false)
-	pac.GetSet(PART, "ResetVelocitiesOnHide", true)
-	pac.GetSet(PART, "VelocityRoughness", 10)
-	pac.SetupPartName(PART, "TargetPart")
+				local T = type(parent[key])
+				if T == "number" or T == "Vector" or T == "Angle" or T == "boolean" then
+					tbl[key] = key
+				end
+				::CONTINUE::
+			end
+
+			return tbl
+		end})
+
+		pac.GetSet(PART, "RootOwner", false)
+		pac.SetupPartName(PART, "TargetPart")
+		pac.GetSet(PART, "AffectChildren", false)
+		pac.GetSet(PART, "Expression", "")
+
+	pac.SetPropertyGroup(PART, "easy setup")
+		pac.GetSet(PART, "Input", "time", {enums = function(part) return part.Inputs end})
+		pac.GetSet(PART, "Function", "sin", {enums = function(part) return part.Functions end})
+		pac.GetSet(PART, "Axis", "")
+		pac.GetSet(PART, "Min", 0)
+		pac.GetSet(PART, "Max", 1)
+		pac.GetSet(PART, "Offset", 0)
+		pac.GetSet(PART, "InputMultiplier", 1)
+		pac.GetSet(PART, "InputDivider", 1)
+		pac.GetSet(PART, "Pow", 1)
+
+	pac.SetPropertyGroup(PART, "behavior")
+		pac.GetSet(PART, "Additive", false)
+		pac.GetSet(PART, "PlayerAngles", false)
+		pac.GetSet(PART, "ZeroEyePitch", false)
+		pac.GetSet(PART, "ResetVelocitiesOnHide", true)
+		pac.GetSet(PART, "VelocityRoughness", 10)
+
 pac.EndStorableVars()
 
-function PART:SetVariableName(str)
-	if str:lower() == str then
-		str = (str .. " "):gsub("(.-) ", function(str) return str:sub(1,1):upper() .. str:sub(2) end)
+function PART:GetTarget(physical)
+	local part = self:GetTargetPart()
+
+	if part:IsValid() then
+		return part
 	end
 
-	self.VariableName = str
+	if physical then
+		local parent = self:GetParent()
 
-	self.set_key = "Set" .. str
-	self.get_key = "Get" .. str
-end
+		repeat
+			if not parent.Parent:IsValid() then break end
+			parent = parent.Parent
+		until not parent.cached_pos:IsZero()
 
-function PART:GetParentEx()
-	local parent = self:GetTargetPart()
-
-	if parent:IsValid() then
 		return parent
 	end
 
 	return self:GetParent()
+end
+
+function PART:SetVariableName(str)
+	self.VariableName = str
+
+	self.set_key = "Set" .. str
+	self.get_key = "Get" .. str
 end
 
 function PART:GetNiceName()
@@ -54,7 +84,20 @@ function PART:GetNiceName()
 		return self.ClassName
 	end
 
-	return pac.PrettifyName(self:GetVariableName()) .. " = " .. (self.debug_var or "?") .. " proxy"
+	local target
+
+	if self.AffectChildren then
+		target = "children"
+	else
+		local part = self:GetTarget()
+		if part == self.Parent then
+			target = "parent"
+		else
+			target = target:GetName()
+		end
+	end
+
+	return target .. "." .. pac.PrettifyName(self:GetVariableName()) .. " = " .. (self.debug_var or "?")
 end
 
 function PART:Initialize()
@@ -118,8 +161,7 @@ local function try_viewmodel(ent)
 	return ent == pac.LocalPlayer:GetViewModel() and pac.LocalPlayer or ent
 end
 
-PART.Inputs =
-{
+PART.Inputs = {
 	owner_position = function(s, p)
 		local owner = s:GetOwner(s.RootOwner)
 		owner = try_viewmodel(owner)
@@ -132,6 +174,7 @@ PART.Inputs =
 
 		return 0,0,0
 	end,
+
 	owner_fov = function(s, p)
 		local owner = s:GetOwner(s.RootOwner)
 
@@ -143,15 +186,25 @@ PART.Inputs =
 
 		return 0
 	end,
+
 	visible = function(s, p, radius)
 		p.proxy_pixvis = p.proxy_pixvis or util.GetPixelVisibleHandle()
 		return util.PixelVisible(p.cached_pos, radius or 16, p.proxy_pixvis) or 0
 	end,
+
 	time = RealTime,
 	synced_time = CurTime,
+	systime = SysTime,
+	stime = SysTime,
+	frametime = FrameTime,
+	ftime = FrameTime,
+	framenumber = FrameNumber,
+	fnumber = FrameNumber,
+
 	random = function(s, p)
 		return math.random()
 	end,
+
 	timeex = function(s, p)
 		s.time = s.time or pac.RealTime
 
@@ -384,52 +437,23 @@ PART.Inputs =
 
 	-- parent part
 	parent_velocity_length = function(self, parent)
-		if not self.TargetPart:IsValid() then
-			repeat
-				if not parent.Parent:IsValid() then break end
-				parent = parent.Parent
-			until not parent.cached_pos:IsZero()
-		end
-
+		parent = self:GetTarget(true)
 		return self:GetVelocity(parent):Length()
 	end,
 	parent_velocity_forward = function(self, parent)
-		if not self.TargetPart:IsValid() then
-			repeat
-				if not parent.Parent:IsValid() then break end
-				parent = parent.Parent
-			until not parent.cached_pos:IsZero()
-		end
-
+		parent = self:GetTarget(true)
 		return -parent.cached_ang:Forward():Dot(self:GetVelocity(parent))
 	end,
 	parent_velocity_right = function(self, parent)
-		if not self.TargetPart:IsValid() then
-			repeat
-				if not parent.Parent:IsValid() then break end
-				parent = parent.Parent
-			until not parent.cached_pos:IsZero()
-		end
-
+		parent = self:GetTarget(true)
 		return parent.cached_ang:Right():Dot(self:GetVelocity(parent))
 	end,
 	parent_velocity_up = function(self, parent)
-		if not self.TargetPart:IsValid() then
-			repeat
-				if not parent.Parent:IsValid() then break end
-				parent = parent.Parent
-			until not parent.cached_pos:IsZero()
-		end
-
+		parent = self:GetTarget(true)
 		return parent.cached_ang:Up():Dot(self:GetVelocity(parent))
 	end,
 
 	parent_scale_x = function(self, parent)
-		if not self.TargetPart:IsValid() then
-			if parent:HasParent() then
-				parent = parent:GetParent()
-			end
-		end
 
 		if parent:IsValid() then
 			return parent.Scale and parent.Scale.x*parent.Size or 1
@@ -438,11 +462,6 @@ PART.Inputs =
 		return 1
 	end,
 	parent_scale_y = function(self, parent)
-		if not self.TargetPart:IsValid() then
-			if parent:HasParent() then
-				parent = parent:GetParent()
-			end
-		end
 
 		if parent:IsValid() then
 			return parent.Scale and parent.Scale.y*parent.Size or 1
@@ -451,11 +470,6 @@ PART.Inputs =
 		return 1
 	end,
 	parent_scale_z = function(self, parent)
-		if not self.TargetPart:IsValid() then
-			if parent:HasParent() then
-				parent = parent:GetParent()
-			end
-		end
 
 		if parent:IsValid() then
 			return parent.Scale and parent.Scale.z*parent.Size or 1
@@ -466,18 +480,14 @@ PART.Inputs =
 
 	command = function(self, index)
 		local ply = self:GetPlayerOwner()
-		local events = ply.pac_proxy_events
+		if ply.pac_proxy_events then
+			local data = ply.pac_proxy_events[self.Name]
+			if data then
+				data.x = data.x or 0
+				data.y = data.y or 0
+				data.z = data.z or 0
 
-		if events then
-			for key, data in pairs(events) do
-				if pac.HandlePartName(ply, data.name) == self.Name then
-
-					data.x = data.x or 0
-					data.y = data.y or 0
-					data.z = data.z or 0
-
-					return data.x, data.y, data.z
-				end
+				return data.x, data.y, data.z
 			end
 		end
 
@@ -491,7 +501,6 @@ PART.Inputs =
 	end,
 
 	light_amount_r = function(self, parent)
-		parent = self:GetParentEx()
 
 		if parent:IsValid() then
 			return render.GetLightColor(parent.cached_pos):ToColor().r
@@ -499,30 +508,21 @@ PART.Inputs =
 
 		return 0
 	end,
-
 	light_amount_g = function(self, parent)
-		parent = self:GetParentEx()
-
 		if parent:IsValid() then
 			return render.GetLightColor(parent.cached_pos):ToColor().g
 		end
 
 		return 0
 	end,
-
 	light_amount_b = function(self, parent)
-		parent = self:GetParentEx()
-
 		if parent:IsValid() then
 			return render.GetLightColor(parent.cached_pos):ToColor().b
 		end
 
 		return 0
 	end,
-
 	light_value = function(self, parent)
-		parent = self:GetParentEx()
-
 		if parent:IsValid() then
 			local h, s, v = ColorToHSV(render.GetLightColor(parent.cached_pos):ToColor())
 			return v
@@ -532,34 +532,26 @@ PART.Inputs =
 	end,
 
 	ambient_light_r = function(self, parent)
-		parent = self:GetParentEx()
-
 		if parent:IsValid() then
 			return render.GetAmbientLightColor():ToColor().r
 		end
 
 		return 0
 	end,
-
 	ambient_light_g = function(self, parent)
-		parent = self:GetParentEx()
-
 		if parent:IsValid() then
 			return render.GetAmbientLightColor():ToColor().g
 		end
 
 		return 0
 	end,
-
 	ambient_light_b = function(self, parent)
-		parent = self:GetParentEx()
-
 		if parent:IsValid() then
 			return render.GetAmbientLightColor():ToColor().b
 		end
 
 		return 0
- 	end,
+    end,
 
 	owner_health = function(self)
 		local owner = self:GetPlayerOwner()
@@ -570,7 +562,6 @@ PART.Inputs =
 
 		return 0
 	end,
-
 	owner_max_health = function(self)
 		local owner = self:GetPlayerOwner()
 
@@ -580,12 +571,21 @@ PART.Inputs =
 
 		return 0
 	end,
-
 	owner_armor = function(self)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
 			return owner:Armor()
+		end
+
+		return 0
+	end,
+	owner_total_ammo = function(self, parent, id)
+		local owner = self:GetPlayerOwner()
+		id = id and id:lower()
+
+		if owner:IsValid() then
+			return (owner.GetAmmoCount and id) and owner:GetAmmoCount(id) or 0
 		end
 
 		return 0
@@ -650,6 +650,10 @@ PART.Inputs =
 	weapon_primary_ammo = function(self)
 		local owner = self:GetOwner(true)
 
+		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
+			owner = self:GetPlayerOwner()
+		end
+
 		if owner:IsValid() then
 			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
 
@@ -658,8 +662,27 @@ PART.Inputs =
 
 		return 0
 	end,
+	weapon_primary_total_ammo = function(self)
+		local owner = self:GetOwner(true)
+
+		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
+			owner = self:GetPlayerOwner()
+		end
+
+		if owner:IsValid() then
+			local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
+
+			return (wep.GetPrimaryAmmoType and owner.GetAmmoCount) and owner:GetAmmoCount(wep:GetPrimaryAmmoType()) or 0
+		end
+
+		return 0
+	end,
 	weapon_primary_clipsize = function(self)
 		local owner = self:GetOwner(true)
+
+		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
+			owner = self:GetPlayerOwner()
+		end
 
 		if owner:IsValid() then
 			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
@@ -672,6 +695,10 @@ PART.Inputs =
 	weapon_secondary_ammo = function(self)
 		local owner = self:GetOwner(true)
 
+		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
+			owner = self:GetPlayerOwner()
+		end
+
 		if owner:IsValid() then
 			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
 
@@ -680,8 +707,27 @@ PART.Inputs =
 
 		return 0
 	end,
+	weapon_secondary_total_ammo = function(self)
+		local owner = self:GetOwner(true)
+
+		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
+			owner = self:GetPlayerOwner()
+		end
+
+		if owner:IsValid() then
+			local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
+
+			return (wep.GetSecondaryAmmoType and owner.GetAmmoCount) and owner:GetAmmoCount(wep:GetSecondaryAmmoType()) or 0
+		end
+
+		return 0
+	end,
 	weapon_secondary_clipsize = function(self)
 		local owner = self:GetOwner(true)
+
+		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
+			owner = self:GetPlayerOwner()
+		end
 
 		if owner:IsValid() then
 			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
@@ -709,15 +755,35 @@ PART.Inputs =
 
 		return (b - a) * m + a
 	end,
+
+	feedback = function(self)
+		if not self.feedback then return 0 end
+		return self.feedback[1] or 0
+	end,
+
+	feedback_x = function(self)
+		if not self.feedback then return 0 end
+		return self.feedback[1] or 0
+	end,
+
+	feedback_y = function(self)
+		if not self.feedback then return 0 end
+		return self.feedback[2] or 0
+	end,
+
+	feedback_z = function(self)
+		if not self.feedback then return 0 end
+		return self.feedback[3] or 0
+	end,
 }
 
-usermessage.Hook("pac_proxy", function(umr)
-	local ply = umr:ReadEntity()
-	local str = umr:ReadString()
+net.Receive("pac_proxy", function()
+	local ply = net.ReadEntity()
+	local str = net.ReadString()
 
-	local x = umr:ReadFloat()
-	local y = umr:ReadFloat()
-	local z = umr:ReadFloat()
+	local x = net.ReadFloat()
+	local y = net.ReadFloat()
+	local z = net.ReadFloat()
 
 	if ply:IsValid() then
 		ply.pac_proxy_events = ply.pac_proxy_events or {}
@@ -735,8 +801,7 @@ function PART:CheckLastVar(parent)
 	end
 end
 
-local allowed =
-{
+local allowed = {
 	number = true,
 	Vector = true,
 	Angle = true,
@@ -748,20 +813,14 @@ function PART:SetExpression(str)
 	self.ExpressionFunc = nil
 
 	if str and str ~= "" then
-		local parent = self.Parent
+		local parent = self:GetTarget()
 
 		if not parent:IsValid() then return end
-
-		local parentx = self.TargetPart
-
-		if not parentx:IsValid() then
-			parentx = parent
-		end
 
 		local lib = {}
 
 		for name, func in pairs(PART.Inputs) do
-			lib[name] = function(...) return func(self, parentx, ...) end
+			lib[name] = function(...) return func(self, parent, ...) end
 		end
 
 		local ok, res = pac.CompileExpression(str, lib)
@@ -771,7 +830,6 @@ function PART:SetExpression(str)
 		else
 			self.ExpressionFunc = true
 			self.ExpressionError = res
-			print(res)
 		end
 	end
 end
@@ -842,11 +900,11 @@ function PART:RunExpression(ExpressionFunc)
 end
 
 function PART:OnThink()
-	local parent = self:GetParent()
+	local parent = self:GetTarget()
 
 	if not parent:IsValid() then return end
+	if parent.ClassName == 'woohoo' then return end
 
-	local parentx = self.TargetPart
 	self:CalcVelocity()
 
 	local ExpressionFunc = self.ExpressionFunc
@@ -854,10 +912,6 @@ function PART:OnThink()
 	if not ExpressionFunc then
 		self:SetExpression(self.Expression)
 		ExpressionFunc = self.ExpressionFunc
-	end
-
-	if not parentx:IsValid() then
-		parentx = parent
 	end
 
 	if ExpressionFunc then
@@ -889,6 +943,11 @@ function PART:OnThink()
 			end
 		end
 
+		self.feedback = self.feedback or {}
+		self.feedback[1] = x
+		self.feedback[2] = y
+		self.feedback[3] = z
+
 		if self.AffectChildren then
 			for _, part in ipairs(self:GetChildren()) do
 				set(self, part, x, y, z, true)
@@ -913,7 +972,7 @@ function PART:OnThink()
 		local I = self.Inputs[self.Input]
 
 		if F and I then
-			local num = self.Min + (self.Max - self.Min) * ((F(((I(self, parentx) / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
+			local num = self.Min + (self.Max - self.Min) * ((F(((I(self, parent) / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
 
 			if self.Additive then
 				self.vec_additive[1] = (self.vec_additive[1] or 0) + num

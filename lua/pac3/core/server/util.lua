@@ -18,19 +18,20 @@ function pac.CallHook(str, ...)
 	hook.Call("pac_" .. str, GAMEMODE, ...)
 end
 
-function pac.AddHook(str, func)
-	func = func or pac[str]
-	hook.Add(str, "pac_" .. str, function(...)
+function pac.AddHook(str, id, func)
+	id = "pac_" .. id
+
+	hook.Add(str, id, function(...)
 		local args = {pcall(func, ...)}
 		if not args[1] then
 			ErrorNoHalt(args[2] .. "\n")
-			--table.insert(pac.Errors, args[2])
 		end
-		table.remove(args, 1)
-		return unpack(args)
+		return unpack(args, 2)
 	end)
 end
 
-function pac.RemoveHook(str)
-	hook.Remove(str, "pac_" .. str)
+function pac.RemoveHook(str, id)
+	id = "pac_" .. id
+
+	hook.Remove(str, id)
 end

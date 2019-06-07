@@ -132,8 +132,12 @@ function pace.SetLanguage(lang)
 	if lang ~= "english" then
 		if file.Exists("pac3_editor/" .. lang .. ".txt", "DATA") then
 			table.Merge(pace.CurrentTranslation, CompileString(file.Read("pac3_editor/" .. lang .. ".txt", "DATA"), "pac3_lang")())
-		else
+		elseif file.Exists("pac3/editor/client/translations/"..lang..".lua", "LUA") then
 			table.Merge(pace.CurrentTranslation, CompileFile("pac3/editor/client/translations/"..lang..".lua")())
+		else
+			pac.Message(Color(255,0,0), "language " .. lang .. " does not exist, falling back to english")
+			RunConsoleCommand("pac_language", "english")
+			lang = "english"
 		end
 	end
 

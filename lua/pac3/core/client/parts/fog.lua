@@ -11,12 +11,14 @@ local PART = {}
 
 PART.ClassName = "fog"
 PART.NonPhysical = true
+PART.Group = 'modifiers'
+PART.Icon = 'icon16/weather_clouds.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Color", Vector(255, 255, 255))
+	pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
 	pac.GetSet(PART, "Start", 0)
 	pac.GetSet(PART, "End", 10)
-	pac.GetSet(PART, "Alpha", 1)
+	pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
 	--pac.GetSet(PART, "AffectChildren", false)
 	pac.GetSet(PART, "Height", 0)
 pac.EndStorableVars()

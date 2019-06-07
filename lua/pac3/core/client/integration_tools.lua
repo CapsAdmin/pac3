@@ -8,6 +8,9 @@ do
 
 	function pac.DrawEntity2D(ent, x, y, w, h, cam_pos, cam_ang, cam_fov, cam_nearz, cam_farz)
 
+		pac.ShowEntityParts(ent)
+		pac.ForceRendering(true)
+
 		if draw_localplayer == nil then
 			hook.Add("ShouldDrawLocalPlayer", "pac_draw_2d_entity", function()
 				if draw_localplayer == true then
@@ -29,7 +32,6 @@ do
 			cam.Start3D(cam_pos, cam_ang, cam_fov, x, y, w, h, cam_nearz or 5, cam_farz or 4096)
 				cam.IgnoreZ(true)
 					pac.FlashlightDisable(true)
-					pac.ForceRendering(true)
 						draw_localplayer = true
 
 							pac.RenderOverride(ent, "opaque")
@@ -37,11 +39,12 @@ do
 							ent:DrawModel()
 
 						draw_localplayer = false
-					pac.ForceRendering(false)
 					pac.FlashlightDisable(false)
 				cam.IgnoreZ(false)
 			cam.End3D()
 		cam.End2D()
+
+		pac.ForceRendering(false)
 	end
 end
 

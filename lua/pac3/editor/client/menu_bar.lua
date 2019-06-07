@@ -49,30 +49,29 @@ local function populate_pac(menu)
 		cookie.Set("pac3_discord_ad", cookie.GetNumber("pac3_discord_ad", 0) + 1)
 	end
 
-	menu:AddOption(
-		L"about",
-		function() pace.ShowAbout() end
-	):SetImage(pace.MiscIcons.about)
-
 	menu:AddOption(L"exit", function() pace.CloseEditor() end):SetImage(pace.MiscIcons.exit)
 end
 
 local function populate_view(menu)
 	menu:AddOption(L"hide editor",
-		function() pace.Call("ToggleFocus") chat.AddText("[pac3] \"ctrl + e\" to get the editor back")
+		function() pace.Call("ToggleFocus") chat.AddText("[PAC3] \"ctrl + e\" to get the editor back")
 	end):SetImage("icon16/application_delete.png")
 
 	menu:AddCVar(L"camera follow", "pac_camera_follow_entity", "1", "0"):SetImage("icon16/camera_go.png")
 	menu:AddOption(L"reset view position", function() pace.ResetView() end):SetImage("icon16/camera_link.png")
+
+	menu:AddOption(
+		L"about",
+		function() pace.ShowAbout() end
+	):SetImage(pace.MiscIcons.about)
+
 end
 
 local function populate_options(menu)
-	local pnl = menu:AddCVar(L"show deprecated features", "pac_show_deprecated", "1", "0")
-	pnl:SetImage("icon16/bin.png")
-	pnl.DoClick = function() pace.ToggleDeprecatedFeatures() end
-
-
 	menu:AddCVar(L"advanced mode", "pac_basic_mode", "0", "1").DoClick = function() pace.ToggleBasicMode() end
+	menu:AddCVar(L"inverse collapse/expand controls", "pac_reverse_collapse", "1", "0")
+	menu:AddCVar(L"enable shift+move/rotate clone", "pac_grab_clone", "1", "0")
+	menu:AddCVar(L"remember editor position", "pac_editor_remember_position", "1", "0")
 		menu:AddSpacer()
 			menu:AddOption(L"position grid size", function()
 				Derma_StringRequest(L"position grid size", L"size in units:", GetConVarNumber("pac_grid_pos_size"), function(val)
@@ -84,6 +83,7 @@ local function populate_options(menu)
 					RunConsoleCommand("pac_grid_ang_size", val)
 				end)
 			end)
+	menu:AddCVar(L"render attachments as bones", "pac_render_attachments", "1", "0").DoClick = function() pace.ToggleRenderAttachments() end
 	menu:AddSpacer()
 
 	menu:AddCVar(L"automatic property size", "pac_auto_size_properties", "1", "0")
@@ -104,12 +104,16 @@ local function populate_player(menu)
 	local pnl = menu:AddOption(L"t pose", function() pace.SetTPose(not pace.GetTPose()) end):SetImage("icon16/user_go.png")
 	menu:AddOption(L"reset eye angles", function() pace.ResetEyeAngles() end):SetImage("icon16/user_delete.png")
 
-	local mods, pnl = menu:AddSubMenu(L"modifiers", function() end)
+	-- this should be in pacx but it's kinda stupid to add a hook just to populate the player menu
+	-- make it more generic
+	if pacx and pacx.GetServerModifiers then
+		local mods, pnl = menu:AddSubMenu(L"modifiers", function() end)
 		pnl:SetImage("icon16/user_edit.png")
 		mods.GetDeleteSelf = function() return false end
-		for name in pairs(pac.GetServerModifiers()) do
+		for name in pairs(pacx.GetServerModifiers()) do
 			mods:AddCVar(L(name), "pac_modifier_" .. name, "1", "0")
 		end
+	end
 end
 
 function pace.OnMenuBarPopulate(bar)

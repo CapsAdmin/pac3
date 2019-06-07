@@ -1,3 +1,6 @@
+
+local L = pace.LanguageString
+
 local acsfnc = function(key, def)
 	pace["View" .. key] = def
 	pace["SetView" .. key] = function(val) pace["View" .. key] = val end
@@ -18,44 +21,43 @@ function pace.ResetView()
 		local ent = pace.GetViewEntity()
 
 		if not ent:IsValid() then
-			local _, part = next(pac.GetParts(true))
+			local _, part = next(pac.GetLocalParts())
 			if part then
 				ent = part:GetOwner()
 			end
 		end
 
 		if ent:IsValid() then
-			pace.ViewPos = ent:EyePos() + Vector(50, 0, 0)
+			local fwd = ent.EyeAngles and ent:EyeAngles() or ent:GetAngles()
+
+			-- Source Engine local angles fix
+			if ent == pac.LocalPlayer and ent:GetVehicle():IsValid() then
+				local ang = ent:GetVehicle():GetAngles()
+				fwd = fwd + ang
+			end
+
+			fwd = fwd:Forward()
+			fwd.z = 0
+			pace.ViewPos = ent:EyePos() + fwd * 128
 			pace.ViewAngles = (ent:EyePos() - pace.ViewPos):Angle()
+			pace.ViewAngles:Normalize()
 		end
 	end
 end
 
-function pace.OnMouseWheeled(delta)
-	local mult = 5
-
-	if input.IsKeyDown(KEY_LCONTROL) then
-		mult = 1
-	end
-
-	if input.IsKeyDown(KEY_LSHIFT) then
-		mult = 10
-	end
-
-	delta = delta * mult
-
-	pace.ViewFOV = math.Clamp(pace.ViewFOV - delta, 1, 75)
+function pace.SetZoom(frac)
+	pace.ViewFOV = math.Clamp(frac*90, 1, 90)
 end
 
 local held_ang = Angle(0,0,0)
 local held_mpos = Vector(0,0,0)
-local mcode
+local mcode, hoveredPanelCursor, isHoldingMovement
 
 function pace.GUIMousePressed(mc)
 	if pace.mctrl.GUIMousePressed(mc) then return end
 
 	if mc == MOUSE_LEFT and not pace.editing_viewmodel then
-		held_ang = pace.ViewAngles*1
+		held_ang = pace.ViewAngles * 1
 		held_mpos = Vector(gui.MousePos())
 	end
 
@@ -63,10 +65,24 @@ function pace.GUIMousePressed(mc)
 		pace.Call("OpenMenu")
 	end
 
+	hoveredPanelCursor = vgui.GetHoveredPanel()
+
+	if IsValid(hoveredPanelCursor) then
+		hoveredPanelCursor:SetCursor('sizeall')
+	end
+
 	mcode = mc
+	isHoldingMovement = true
 end
 
 function pace.GUIMouseReleased(mc)
+	isHoldingMovement = false
+
+	if IsValid(hoveredPanelCursor) then
+		hoveredPanelCursor:SetCursor('none')
+		hoveredPanelCursor = nil
+	end
+
 	if pace.mctrl.GUIMouseReleased(mc) then return end
 
 	if pace.editing_viewmodel then return end
@@ -81,12 +97,18 @@ local function set_mouse_pos(x, y)
 	return held_mpos * 1
 end
 
+local WORLD_ORIGIN = Vector(0, 0, 0)
+
 local function CalcDrag()
 	if
 		pace.BusyWithProperties:IsValid() or
 		pace.ActiveSpecialPanel:IsValid() or
-		pace.editing_viewmodel
+		pace.editing_viewmodel or
+		pace.properties.search:HasFocus()
 	then return end
+
+	local focus = vgui.GetKeyboardFocus()
+	if focus and focus:IsValid() and focus:GetName():lower():find('textentry') then return end
 
 	if not system.HasFocus() then
 		held_mpos = Vector(gui.MousePos())
@@ -95,11 +117,11 @@ local function CalcDrag()
 	local ftime = FrameTime() * 50
 	local mult = 5
 
-	if input.IsKeyDown(KEY_LCONTROL) then
+	if input.IsKeyDown(KEY_LCONTROL) or input.IsKeyDown(KEY_RCONTROL) then
 		mult = 0.1
 	end
 
-	if pace.current_part:IsValid() then
+	if IsValid(pace.current_part) then
 		local origin
 
 		local owner = pace.current_part:GetOwner(true)
@@ -109,6 +131,7 @@ local function CalcDrag()
 				for key, child in ipairs(pace.current_part:GetChildren()) do
 					if not child.NonPhysical then
 						origin = child:GetDrawPosition()
+						if origin == WORLD_ORIGIN then origin = LocalPlayer():GetPos() end
 						break
 					end
 				end
@@ -117,7 +140,7 @@ local function CalcDrag()
 			end
 
 			if not origin then
-				origin = owner:GetPos()
+				origin = LocalPlayer():GetPos()
 			end
 		else
 			if not owner:IsValid() then
@@ -131,17 +154,13 @@ local function CalcDrag()
 			end
 		end
 
-		mult = mult * (origin:Distance(pace.ViewPos) / 200)
+		mult = mult * math.min(origin:Distance(pace.ViewPos) / 200, 3)
+	else
+		mult = mult * math.min(LocalPlayer():GetPos():Distance(pace.ViewPos) / 200, 3)
 	end
 
 	if input.IsKeyDown(KEY_LSHIFT) then
 		mult = mult + 5
-	end
-
-	if input.IsKeyDown(KEY_UP) or input.IsMouseDown(MOUSE_WHEEL_UP) then
-		pace.OnMouseWheeled(0.25)
-	elseif input.IsKeyDown(KEY_DOWN) or input.IsMouseDown(MOUSE_WHEEL_DOWN) then
-		pace.OnMouseWheeled(-0.25)
 	end
 
 	if not pace.IsSelecting then
@@ -179,7 +198,9 @@ local function CalcDrag()
 	end
 
 	if input.IsKeyDown(KEY_SPACE) then
-		pace.ViewPos = pace.ViewPos + pace.ViewAngles:Up() * mult * ftime
+		if not IsValid(pace.timeline.frame) then
+			pace.ViewPos = pace.ViewPos + pace.ViewAngles:Up() * mult * ftime
+		end
 	end
 
 	--[[if input.IsKeyDown(KEY_LALT) then
@@ -207,21 +228,18 @@ function pace.CalcView(ply, pos, ang, fov)
 		lastEntityPos = nil
 	end
 
-	if pac.GetRestrictionLevel() > 0 and not ply:IsAdmin() then
-		local ent = pace.GetViewEntity()
-		local dir = pace.ViewPos - ent:EyePos()
-		local dist = ent:BoundingRadius() * ent:GetModelScale() * 4
-		local filter = player.GetAll()
-		table.insert(filter, ent)
+	local pos, ang, fov = pac.CallHook("EditorCalcView", pace.ViewPos, pace.ViewAngles, pace.ViewFOV)
 
-		if dir:Length() > dist then
-			pace.ViewPos = ent:EyePos() + (dir:GetNormalized() * dist)
-		end
+	if pos then
+		pace.ViewPos = pos
+	end
 
-		local res = util.TraceHull({start = ent:EyePos(), endpos = pace.ViewPos, filter = filter, mins = Vector(1,1,1)*-8, maxs = Vector(1,1,1)*8})
-		if res.Hit then
-			pace.ViewPos = res.HitPos
-		end
+	if ang then
+		pace.ViewAngles = ang
+	end
+
+	if fov then
+		pace.ViewFOV = fov
 	end
 
 	return
@@ -238,24 +256,66 @@ function pace.ShouldDrawLocalPlayer()
 	end
 end
 
+local notifText
+local notifDisplayTime, notifDisplayTimeFade = 0, 0
+
+function pace.FlashNotification(text, timeToDisplay)
+	timeToDisplay = timeToDisplay or math.Clamp(#text / 6, 1, 8)
+	notifDisplayTime = RealTime() + timeToDisplay
+	notifDisplayTimeFade = RealTime() + timeToDisplay * 1.1
+	notifText = text
+end
+
+function pace.PostRenderVGUI()
+	if not pace.mctrl then return end
+
+	local time = RealTime()
+
+	if notifDisplayTimeFade > time then
+		if notifDisplayTime > time then
+			surface.SetTextColor(color_white)
+		else
+			surface.SetTextColor(255, 255, 255, 255 * (notifDisplayTimeFade - RealTime()) / (notifDisplayTimeFade - notifDisplayTime))
+		end
+
+		surface.SetFont('Trebuchet18')
+		local w = surface.GetTextSize(notifText)
+		surface.SetTextPos(ScrW() / 2 - w / 2, 30)
+		surface.DrawText(notifText)
+	end
+
+	if not isHoldingMovement then return end
+
+	if pace.mctrl.LastThinkCall ~= FrameNumber() then
+		surface.SetFont('Trebuchet18')
+		surface.SetTextColor(color_white)
+		local text = L'You are currently holding the camera, movement is disabled'
+		local w = surface.GetTextSize(text)
+		surface.SetTextPos(ScrW() / 2 - w / 2, 10)
+		surface.DrawText(text)
+	end
+end
+
 function pace.EnableView(b)
 	if b then
-		pace.AddHook("GUIMousePressed")
-		pace.AddHook("GUIMouseReleased")
-		pace.AddHook("ShouldDrawLocalPlayer")
-		pace.AddHook("CalcView")
-		pace.AddHook("HUDPaint")
-		pace.AddHook("HUDShouldDraw")
+		pac.AddHook("GUIMousePressed", "editor", pace.GUIMousePressed)
+		pac.AddHook("GUIMouseReleased", "editor", pace.GUIMouseReleased)
+		pac.AddHook("ShouldDrawLocalPlayer", "editor", pace.ShouldDrawLocalPlayer)
+		pac.AddHook("CalcView", "editor", pace.CalcView)
+		pac.AddHook("HUDPaint", "editor", pace.HUDPaint)
+		pac.AddHook("HUDShouldDraw", "editor", pace.HUDShouldDraw)
+		pac.AddHook("PostRenderVGUI", "editor", pace.PostRenderVGUI)
 		pace.Focused = true
 		pace.ResetView()
 	else
 		lastEntityPos = nil
-		pace.RemoveHook("GUIMousePressed")
-		pace.RemoveHook("GUIMouseReleased")
-		pace.RemoveHook("ShouldDrawLocalPlayer")
-		pace.RemoveHook("CalcView")
-		pace.RemoveHook("HUDPaint")
-		pace.RemoveHook("HUDShouldDraw")
+		pac.RemoveHook("GUIMousePressed", "editor")
+		pac.RemoveHook("GUIMouseReleased", "editor")
+		pac.RemoveHook("ShouldDrawLocalPlayer", "editor")
+		pac.RemoveHook("CalcView", "editor")
+		pac.RemoveHook("HUDPaint", "editor")
+		pac.RemoveHook("HUDShouldDraw", "editor")
+		pac.RemoveHook("PostRenderVGUI", "editor")
 		pace.SetTPose(false)
 		pace.SetBreathing(false)
 	end

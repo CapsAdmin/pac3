@@ -7,52 +7,66 @@ local WorldToLocal = WorldToLocal
 local PART = {}
 
 PART.ClassName = "particles"
+PART.Group = 'effects'
+PART.Icon = 'icon16/water.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Color1", Vector(255, 255, 255))
-	pac.GetSet(PART, "Color2", Vector(255, 255, 255))
-	pac.GetSet(PART, "Material", "effects/slime1")
-	pac.GetSet(PART, "RandomColour", true) -- haaaa
-	pac.GetSet(PART, "FireDelay", 0.2)
-	pac.GetSet(PART, "NumberParticles", 1)
-	pac.GetSet(PART, "Velocity", 250)
-	pac.GetSet(PART, "Spread", 0.1)
-	pac.GetSet(PART, "PositionSpread", 0)
-	pac.GetSet(PART, "DieTime", 3)
-	pac.GetSet(PART, "StartAlpha", 255)
-	pac.GetSet(PART, "EndAlpha", 0)
-	pac.GetSet(PART, "StartSize", 2)
-	pac.GetSet(PART, "EndSize", 20)
-	pac.GetSet(PART, "StartLength", 0)
-	pac.GetSet(PART, "EndLength", 0)
-	pac.GetSet(PART, "RandomRollSpeed", 0)
-	pac.GetSet(PART, "RollDelta", 0)
-	pac.GetSet(PART, "AirResistance", 5)
-	pac.GetSet(PART, "Bounce", 5)
-	pac.GetSet(PART, "ParticleAngle", Angle(0,0,0))
-	pac.GetSet(PART, "Gravity", Vector(0,0, -50))
-	pac.GetSet(PART, "Collide", true)
-	pac.GetSet(PART, "Lighting", true)
-	pac.GetSet(PART, "Additive", false)
-	pac.GetSet(PART, "Sliding", true)
-	pac.GetSet(PART, "3D", false)
-	pac.GetSet(PART, "AlignToSurface", true)
-	pac.GetSet(PART, "StickToSurface", true)
-	pac.GetSet(PART, "DoubleSided", true)
-	pac.GetSet(PART, "ParticleAngleVelocity", Vector(50, 50, 50))
-	pac.GetSet(PART, "StickLifetime", 2)
-	pac.GetSet(PART, "StickStartSize", 20)
-	pac.GetSet(PART, "StickEndSize", 0)
-	pac.GetSet(PART, "StickStartAlpha", 255)
-	pac.GetSet(PART, "StickEndAlpha", 0)
+	pac.SetPropertyGroup(PART, "generic")
+		pac.PropertyOrder(PART, "Name")
+		pac.PropertyOrder(PART, "Hide")
+		pac.PropertyOrder(PART, "ParentName")
+		pac.GetSet(PART, "Follow", false)
+		pac.GetSet(PART, "Additive", false)
+		pac.GetSet(PART, "FireDelay", 0.2)
+		pac.GetSet(PART, "NumberParticles", 1)
+		pac.GetSet(PART, "PositionSpread", 0)
+		pac.GetSet(PART, "PositionSpread2", Vector(0,0,0))
+		pac.GetSet(PART, "DieTime", 3)
+		pac.GetSet(PART, "StartSize", 2)
+		pac.GetSet(PART, "EndSize", 20)
+		pac.GetSet(PART, "StartLength", 0)
+		pac.GetSet(PART, "EndLength", 0)
+		pac.GetSet(PART, "ParticleAngle", Angle(0,0,0))
+		pac.GetSet(PART, "AddFrametimeLife", false)
+	pac.SetPropertyGroup(PART, "stick")
+		pac.GetSet(PART, "AlignToSurface", true)
+		pac.GetSet(PART, "StickToSurface", true)
+		pac.GetSet(PART, "StickLifetime", 2)
+		pac.GetSet(PART, "StickStartSize", 20)
+		pac.GetSet(PART, "StickEndSize", 0)
+		pac.GetSet(PART, "StickStartAlpha", 255)
+		pac.GetSet(PART, "StickEndAlpha", 0)
+	pac.SetPropertyGroup(PART, "appearance")
+		pac.GetSet(PART, "Material", "effects/slime1")
+		pac.GetSet(PART, "StartAlpha", 255)
+		pac.GetSet(PART, "EndAlpha", 0)
+		pac.GetSet(PART, "Translucent", true)
+		pac.GetSet(PART, "Color2", Vector(255, 255, 255), {editor_panel = "color"})
+		pac.GetSet(PART, "Color1", Vector(255, 255, 255), {editor_panel = "color"})
+		pac.GetSet(PART, "RandomColor", false)
+		pac.GetSet(PART, "Lighting", true)
+		pac.GetSet(PART, "3D", false)
+		pac.GetSet(PART, "DoubleSided", true)
+		pac.GetSet(PART, "DrawManual", false)
+	pac.SetPropertyGroup(PART, "rotation")
+		pac.GetSet(PART, "RandomRollSpeed", 0)
+		pac.GetSet(PART, "RollDelta", 0)
+		pac.GetSet(PART, "ParticleAngleVelocity", Vector(50, 50, 50))
+	pac.SetPropertyGroup(PART, "orientation")
+	pac.SetPropertyGroup(PART, "movement")
+		pac.GetSet(PART, "Velocity", 250)
+		pac.GetSet(PART, "Spread", 0.1)
+		pac.GetSet(PART, "AirResistance", 5)
+		pac.GetSet(PART, "Bounce", 5)
+		pac.GetSet(PART, "Gravity", Vector(0,0, -50))
+		pac.GetSet(PART, "Collide", true)
+		pac.GetSet(PART, "Sliding", true)
+		--pac.GetSet(PART, "AddVelocityFromOwner", false)
+		pac.GetSet(PART, "OwnerVelocityMultiplier", 0)
 
-	--pac.GetSet(PART, "AddVelocityFromOwner", false)
-	pac.GetSet(PART, "OwnerVelocityMultiplier", 0)
-	pac.GetSet(PART, "Translucent", true)
-	pac.GetSet(PART, "DrawManual", false)
-	pac.GetSet(PART, "AddFrametimeLife", false)
-	pac.GetSet(PART, "IgnoreZ", false)
-	pac.GetSet(PART, "Follow", false)
+
+
+
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -117,24 +131,6 @@ function PART:SetDrawManual(b)
 	self.emitter:SetNoDraw(b)
 end
 
-function PART:SetIgnoreZ(b)
-	self.IgnoreZ = b
-	if b then
-		self.emitter:SetNoDraw(true)
-	else
-		self:SetDrawManual(self:GetDrawManual())
-	end
-end
-
-function PART:SetFollow(b)
-	self.Follow = b
-	if b then
-		self.emitter:SetNoDraw(true)
-	else
-		self:SetDrawManual(self:GetDrawManual())
-	end
-end
-
 PART.Initialize = PART.CreateEmitter
 
 function PART:SetNumberParticles(num)
@@ -148,22 +144,27 @@ end
 
 function PART:OnDraw(owner, pos, ang)
 	if not self:IsHidden() then
-		--self.emitter:SetPos(pos)
-		if self.DrawManual or self.IgnoreZ or self.Follow then
-			if self.IgnoreZ then
-				cam_IgnoreZ(true)
+		self.emitter:SetPos(pos)
+		if self.DrawManual or self.IgnoreZ or self.Follow or self.BlendMode ~= "" then
+
+			if not self.nodraw then
+				self.emitter:SetNoDraw(true)
+				self.nodraw = true
 			end
 
 			if self.Follow then
 				cam.Start3D(WorldToLocal(EyePos(), EyeAngles(), pos, ang))
+				if self.IgnoreZ then cam.IgnoreZ(true) end
 				self.emitter:Draw()
+				if self.IgnoreZ then cam.IgnoreZ(false) end
 				cam.End3D()
+			else
+				self.emitter:Draw()
 			end
-
-			self.emitter:Draw()
-
-			if self.IgnoreZ then
-				cam_IgnoreZ(false)
+		else
+			if self.nodraw then
+				self:SetDrawManual(self:GetDrawManual())
+				self.nodraw = false
 			end
 		end
 		self:EmitParticles(self.Follow and vector_origin or pos, self.Follow and angle_origin or ang, ang)
@@ -204,6 +205,7 @@ function PART:EmitParticles(pos, ang, real_ang)
 		if self.Material == "" then return end
 		if self.Velocity == 500.01 then return end
 
+		local originalAng = ang
 		ang = ang:Forward()
 
 		local double = 1
@@ -240,6 +242,16 @@ function PART:EmitParticles(pos, ang, real_ang)
 
 			if self.PositionSpread ~= 0 then
 				pos = pos + Angle(math.Rand(-180, 180), math.Rand(-180, 180), math.Rand(-180, 180)):Forward() * self.PositionSpread
+			end
+
+			do
+				local vecAdd = Vector(
+					math.Rand(-self.PositionSpread2.x, self.PositionSpread2.x),
+					math.Rand(-self.PositionSpread2.x, self.PositionSpread2.y),
+					math.Rand(-self.PositionSpread2.z, self.PositionSpread2.z)
+				)
+				vecAdd:Rotate(originalAng)
+				pos = pos + vecAdd
 			end
 
 			for i = 1, double do

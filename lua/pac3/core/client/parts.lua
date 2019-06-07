@@ -1,18 +1,8 @@
 local pac = pac
 local class = pac.class
 
-pac.ActiveParts = pac.ActiveParts or {}
-pac.UniqueIDParts = pac.UniqueIDParts or {}
-
 local part_count = 0 -- unique id thing
 local pairs = pairs
-
-local function remove(part, field)
-	if part.StorableVars then
-		part.StorableVars[field] = nil
-	end
-	class.RemoveField(part, field)
-end
 
 local function merge_storable(tbl, base)
 	if not base then return end
@@ -22,6 +12,20 @@ local function merge_storable(tbl, base)
 		end
 		merge_storable(tbl, base.BaseClass)
 	end
+end
+
+local function initialize(part, owner)
+	if part.PreInitialize then
+		part:PreInitialize()
+	end
+
+	pac.AddPart(part)
+
+	if owner then
+		part:SetPlayerOwner(owner)
+	end
+
+	part:Initialize()
 end
 
 function pac.CreatePart(name, owner)
@@ -34,7 +38,7 @@ function pac.CreatePart(name, owner)
 	local part = class.Create("part", name)
 
 	if not part then
-		print("pac3 tried to create unknown part " .. name)
+		pac.Message("Tried to create unknown part: " .. name .. '!')
 		part = class.Create("part", "base")
 	end
 
@@ -46,22 +50,29 @@ function pac.CreatePart(name, owner)
 
 	merge_storable(part, part.BaseClass)
 
+	if part.RemovedStorableVars then
+		for k in pairs(part.RemovedStorableVars) do
+			part.StorableVars[k] = nil
+		end
+	end
+
 	if part.NonPhysical then
-		remove(part, "Bone")
-		remove(part, "Position")
-		remove(part, "Angles")
-		remove(part, "AngleVelocity")
-		remove(part, "EyeAngles")
-		remove(part, "AimName")
-		remove(part, "AimPartName")
-		remove(part, "AnglePartName")
-		remove(part, "AnglePartMultiplier")
-		remove(part, "PositionOffset")
-		remove(part, "AngleOffset")
-		remove(part, "Translucent")
+		pac.RemoveProperty(part, "Bone")
+		pac.RemoveProperty(part, "Position")
+		pac.RemoveProperty(part, "Angles")
+		pac.RemoveProperty(part, "AngleVelocity")
+		pac.RemoveProperty(part, "EyeAngles")
+		pac.RemoveProperty(part, "AimName")
+		pac.RemoveProperty(part, "AimPartName")
+		pac.RemoveProperty(part, "PositionOffset")
+		pac.RemoveProperty(part, "AngleOffset")
+		pac.RemoveProperty(part, "Translucent")
+		pac.RemoveProperty(part, "IgnoreZ")
+		pac.RemoveProperty(part, "BlendMode")
+		pac.RemoveProperty(part, "NoTextureFiltering")
 
 		if part.ClassName ~= "group" then
-			remove(part, "DrawOrder")
+			pac.RemoveProperty(part, "DrawOrder")
 		end
 	end
 
@@ -73,23 +84,19 @@ function pac.CreatePart(name, owner)
 
 	part.DefaultVars.UniqueID = "" -- uh
 
-	if part.PreInitialize then
-		part:PreInitialize()
+	local ok, err = xpcall(initialize, ErrorNoHalt, part, owner)
+	if not ok then
+		part:Remove()
+		if part.ClassName ~= "base" then
+			return pac.CreatePart("base", owner)
+		end
 	end
-
-	pac.ActiveParts[part.Id] = part
-
-	if owner then
-		part:SetPlayerOwner(owner)
-	end
-
-	part:Initialize()
 
 	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))
 
 	timer.Simple(0.1, function()
-		if part:IsValid() and part.show_in_editor ~= false then
-			pac.CallHook("OnPartCreated", part, owner == pac.LocalPlayer)
+		if part:IsValid() and part.show_in_editor ~= false and owner == pac.LocalPlayer then
+			pac.CallHook("OnPartCreated", part)
 		end
 	end)
 
@@ -100,82 +107,8 @@ function pac.RegisterPart(META, name)
 	META.TypeBase = "base"
 	local _, name = class.Register(META, "part", name)
 
-	-- update part functions only
-	-- updating variables might mess things up
-	for _, part in pairs(pac.GetParts()) do
-		if part.ClassName == name then
-			for k, v in pairs(META) do
-				if type(v) == "function" then
-					part[k] = v
-				end
-			end
-		end
-	end
-end
-
-function pac.LoadParts()
-	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
-
-	for _, name in pairs(files) do
-		include("pac3/core/client/parts/" .. name)
-	end
-end
-
-function pac.GetRegisteredParts()
-	return class.GetAll("part")
-end
-
-function pac.GetParts(owned_only)
-	if owned_only then
-		return pac.UniqueIDParts[pac.LocalPlayer:UniqueID()] or {}
-	end
-
-	return pac.ActiveParts
-end
-
-function pac.GetPartFromUniqueID(owner_id, id)
-	return pac.UniqueIDParts[owner_id] and pac.UniqueIDParts[owner_id][id] or pac.NULL
-end
-
-function pac.GetPartsFromUniqueID(owner_id)
-	return pac.UniqueIDParts[owner_id] or {}
-end
-
-function pac.RemoveAllParts(owned_only, server)
-	if server and pace then
-		pace.RemovePartOnServer("__ALL__")
-	end
-
-	for _, part in pairs(pac.GetParts(owned_only)) do
-		if part:IsValid() then
-			part:Remove()
-		end
-	end
-
-	if not owned_only then
-		pac.ActiveParts = {}
-		pac.UniqueIDParts = {}
-	end
-end
-
-function pac.GetPartCount(class, children)
-	class = class:lower()
-	local count = 0
-
-	for _, part in pairs(children or pac.GetParts(true)) do
-		if part.ClassName:lower() == class then
-			count = count + 1
-		end
-	end
-
-	return count
-end
-
-function pac.CallPartHook(name, ...)
-	for _, part in pairs(pac.GetParts()) do
-		if part[name] then
-			part[name](part, ...)
-		end
+	if pac.UpdatePartsWithMetatable then
+		pac.UpdatePartsWithMetatable(META, name)
 	end
 end
 
@@ -197,5 +130,18 @@ function pac.GenerateNewUniqueID(part_data, base)
 
 	return part_data
 end
+
+function pac.LoadParts()
+	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
+
+	for _, name in pairs(files) do
+		include("pac3/core/client/parts/" .. name)
+	end
+end
+
+function pac.GetRegisteredParts()
+	return class.GetAll("part")
+end
+
 
 include("base_part.lua")

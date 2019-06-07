@@ -46,45 +46,61 @@ pac.DisableDoubleFace = false
 local PART = {}
 
 PART.ClassName = "model"
+PART.Category = "model"
 PART.ManualDraw = true
 PART.HandleModifiersManually = true
+PART.Icon = 'icon16/shape_square.png'
+PART.Group = 'model'
+PART.is_model_part = true
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "BoneMerge", false)
-	pac.GetSet(PART, "BoneMergeAlternative", false)
-	pac.GetSet(PART, "Skin", 0)
-	pac.GetSet(PART, "Fullbright", false)
-	pac.GetSet(PART, "Invert", false)
-	pac.GetSet(PART, "DoubleFace", false)
-	pac.GetSet(PART, "Bodygroup", 0)
-	pac.GetSet(PART, "BodygroupState", 0)
-	pac.GetSet(PART, "Material", "")
-	pac.GetSet(PART, "Color", Vector(255, 255, 255))
-	pac.GetSet(PART, "TintColor", Vector(0, 0, 0))
-	pac.GetSet(PART, "Brightness", 1)
-	pac.GetSet(PART, "CellShade", 0)
-	pac.GetSet(PART, "LightBlend", 1)
-	pac.GetSet(PART, "Alpha", 1)
-	pac.GetSet(PART, "Passes", 1)
-	pac.GetSet(PART, "Scale", Vector(1,1,1))
-	pac.GetSet(PART, "Size", 1)
-	pac.GetSet(PART, "AlternativeScaling", false)
-	pac.GetSet(PART, "OverallSize", 1)
-	pac.GetSet(PART, "OriginFix", false)
-	pac.GetSet(PART, "Model", "models/dav0r/hoverball.mdl")
-	pac.GetSet(PART, "ModelFallback", "")
-	pac.GetSet(PART, "OwnerEntity", false)
-	pac.GetSet(PART, "TextureFilter", 3)
 
-	pac.GetSet(PART, "BlurLength", 0)
-	pac.GetSet(PART, "BlurSpacing", 0)
+	pac.SetPropertyGroup(PART, "generic")
+		pac.PropertyOrder(PART, "Name")
+		pac.PropertyOrder(PART, "Hide")
+		pac.PropertyOrder(PART, "ParentName")
+		pac.GetSet(PART, "Model", "models/dav0r/hoverball.mdl", {editor_panel = "model"})
+		pac.GetSet(PART, "Material", "", {editor_panel = "material"})
+		pac.GetSet(PART, "UseLegacyScale", false)
 
-	pac.GetSet(PART, "UseLegacyScale", false)
+	pac.SetPropertyGroup(PART, "orientation")
+		pac.PropertyOrder(PART, "AimPartName")
+		pac.PropertyOrder(PART, "Bone")
+		pac.GetSet(PART, "BoneMerge", false)
+		pac.PropertyOrder(PART, "Position")
+		pac.PropertyOrder(PART, "Angles")
+		pac.PropertyOrder(PART, "EyeAngles")
+		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
+		pac.GetSet(PART, "Scale", Vector(1,1,1))
+		pac.PropertyOrder(PART, "PositionOffset")
+		pac.PropertyOrder(PART, "AngleOffset")
+		pac.GetSet(PART, "AlternativeScaling", false)
 
-	pac.GetSet(PART, "UsePlayerColor", false)
-	pac.GetSet(PART, "UseWeaponColor", false)
+	pac.SetPropertyGroup(PART, "appearance")
+		pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
+		pac.GetSet(PART, "Brightness", 1)
+		pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
+		pac.GetSet(PART, "Fullbright", false)
+		pac.GetSet(PART, "CellShade", 0, {editor_sensitivity = 0.1})
+		pac.PropertyOrder(PART, "Translucent")
+		pac.GetSet(PART, "Invert", false)
+		pac.GetSet(PART, "DoubleFace", false)
+		pac.GetSet(PART, "Skin", 0, {editor_onchange = function(self, num) return math.Round(math.max(tonumber(num), 0)) end})
+		pac.GetSet(PART, "LodOverride", -1)
+		pac.GetSet(PART, "Passes", 1)
+		pac.GetSet(PART, "TintColor", Vector(0, 0, 0), {editor_panel = "color"})
+		pac.GetSet(PART, "LightBlend", 1)
+		pac.GetSet(PART, "ModelFallback", "", {editor_panel = "model"})
+		pac.GetSet(PART, "TextureFilter", 3)
+		pac.GetSet(PART, "BlurLength", 0)
+		pac.GetSet(PART, "BlurSpacing", 0)
+		pac.GetSet(PART, "UsePlayerColor", false)
+		pac.GetSet(PART, "UseWeaponColor", false)
 
-	pac.GetSet(PART, "LodOverride", -1)
+	pac.SetPropertyGroup(PART, "other")
+		pac.PropertyOrder(PART, "DrawOrder")
+		pac.GetSet(PART, "OwnerEntity", false)
+
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -118,11 +134,26 @@ end
 function PART:Initialize(is_obj)
 	self.Entity = pac.CreateEntity(self:GetModel(), is_obj)
 	if not self.Entity:IsValid() then
-		print("pac3 failed to create entity!")
+		pac.Message("pac3 failed to create entity!")
+		return
 	end
 	self.Entity:SetNoDraw(true)
 	self.Entity.PACPart = self
 	self.is_obj = is_obj
+end
+
+function PART:OnEvent(typ)
+	if typ == "become_physics" then
+		local ent = self:GetEntity()
+		if ent:IsValid() then
+			ent:PhysicsInit(SOLID_NONE)
+			ent:SetMoveType(MOVETYPE_NONE)
+			ent:SetNoDraw(true)
+			ent.RenderOverride = nil
+
+			self.skip_orient = false
+		end
+	end
 end
 
 function PART:GetEntity()
@@ -240,7 +271,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 				self.OriginalMaterialAlpha = self.OriginalMaterialAlpha or IMaterial_GetFloat  (self.Materialm, "$alpha")
 			end
 
-			local r, g, b = self.Colorf.r, self.Colorf.g, self.Colorf.b
+			local r, g, b = self.Colorf[1], self.Colorf[2], self.Colorf[3]
 
 			if self.LightBlend ~= 1 then
 				local v = render.GetLightColor(pos)
@@ -318,7 +349,7 @@ function PART:OnDraw(owner, pos, ang)
 		self:Reset()
 		ent = self:GetEntity()
 		if not ent:IsValid() then
-			print("WTF", ent, self.Entity)
+			pac.Message("WTF", ent, self.Entity)
 			return
 		end
 	end
@@ -328,11 +359,6 @@ function PART:OnDraw(owner, pos, ang)
 	self:PostEntityDraw(owner, ent, pos, ang)
 
 	pac.ResetBones(ent)
-
-	if self.OriginFix then
-		self:SetPositionOffset(self:GetPositionOffset() + -ent:OBBCenter() * self.Scale * self.Size)
-		self:SetOriginFix(false)
-	end
 
 	if ent.pac_can_legacy_scale ~= false then
 		ent.pac_can_legacy_scale = not not ent.pac_can_legacy_scale
@@ -388,11 +414,14 @@ function PART:DrawModel(ent, pos, ang)
 			render_PushFilterMag(textureFilter)
 		end
 
-		render_MaterialOverride(self.Materialm)
-		render_ModelMaterialOverride(self.Materialm)
-		if self.Materialm then
-			render_SetMaterial(self.Materialm)
+		local mat = self.MaterialOverride or self.Materialm
+
+		render_MaterialOverride(mat)
+		if mat then
+			render_SetMaterial(mat)
 		end
+
+		pac.render_material = mat
 
 		-- Render model
 		local passCount = math_max (1, self.Passes)
@@ -423,6 +452,8 @@ function PART:DrawModel(ent, pos, ang)
 		if self.BlurLength > 0 then
 			self:DrawBlur(ent, pos, ang)
 		end
+
+		render_MaterialOverride()
 	end
 end
 
@@ -497,6 +528,31 @@ end
 function PART:SetModel(modelPath)
 	self.Entity = self:GetEntity()
 
+	if modelPath:find("^mdlhttp") then
+		self.Model = modelPath
+
+		modelPath = modelPath:gsub("^mdl", "")
+
+		pac.DownloadMDL(modelPath, function(path)
+			if self:IsValid() and self:GetEntity():IsValid() then
+				local ent = self:GetEntity()
+				self.loading = nil
+				ent.pac_bones = nil
+				ent:SetModel(path)
+			end
+		end, function(err)
+			pac.Message(err)
+			if self:IsValid() and self:GetEntity():IsValid() then
+				local ent = self:GetEntity()
+				self.loading = nil
+				ent.pac_bones = nil
+				ent:SetModel("models/error.mdl")
+			end
+		end, self:GetPlayerOwner())
+
+		return
+	end
+
 	if modelPath and modelPath:find("http") and pac.urlobj then
 		self.loading_obj = "downloading"
 
@@ -513,7 +569,7 @@ function PART:SetModel(modelPath)
 				self.Entity = self:GetEntity()
 
 				if not meshes and err then
-					self.Entity:SetModel("error.mdl")
+					self.Entity:SetModel("models/error.mdl")
 					self.Mesh = nil
 					return
 				end
@@ -638,12 +694,12 @@ function PART:SetColor(var)
 
 	if self.UsePlayerColor and owner:IsValid() then
 		local c = owner:GetPlayerColor() * self.Brightness
-		self.Colorf = Color(c.r, c.g, c.b)
+		self.Colorf = {c.x, c.y, c.z}
 	elseif self.UseWeaponColor and owner:IsValid() then
 		local c = owner:GetWeaponColor() * self.Brightness
-		self.Colorf = Color(c.r, c.g, c.b)
+		self.Colorf = {c.x, c.y, c.z}
 	else
-		self.Colorf = Color((var.r / 255) * self.Brightness, (var.g / 255) * self.Brightness, (var.b / 255) * self.Brightness)
+		self.Colorf = {(var.r / 255) * self.Brightness, (var.g / 255) * self.Brightness, (var.b / 255) * self.Brightness}
 	end
 end
 
@@ -674,7 +730,7 @@ function PART:FixMaterial()
 			params["$vertexcolor"] = 1
 			params["$additive"] = 1
 
-			self.Materialm = CreateMaterial(pac.uid"pac_fixmat_", "VertexLitGeneric", params)
+			self.Materialm = pac.CreateMaterial(pac.uid"pac_fixmat_", "VertexLitGeneric", params)
 		end
 	end
 end
@@ -695,28 +751,6 @@ function PART:SetMaterial(var)
 	self.Material = var
 end
 
-function PART:SetBodygroupState(var)
-	var = var or 0
-
-	self.BodygroupState = var
-	timer.Simple(0, function()
-		if self:IsValid() and self.Entity:IsValid() then
-			self.Entity:SetBodygroup(self.Bodygroup, var)
-		end
-	end)
-end
-
-function PART:SetBodygroup(var)
-	var = var or 0
-
-	self.Bodygroup = var
-	timer.Simple(0, function()
-		if self:IsValid() and self.Entity:IsValid() then
-			self.Entity:SetBodygroup(var, self.BodygroupState)
-		end
-	end)
-end
-
 function PART:SetSkin(var)
 	var = var or 0
 
@@ -729,26 +763,6 @@ function PART:OnRemove()
 		timer.Simple(0, function()
 			SafeRemoveEntity(self.Entity)
 		end)
-	end
-end
-
-function PART:SetBoneMergeAlternative(b)
-
-	self.BoneMergeAlternative = b
-
-	local ent = self.Entity
-	if ent:IsValid() then
-		ent.pac_bones = nil
-		local owner = self:GetOwner()
-		if owner:IsValid() then
-			owner.pac_bones = nil
-		end
-
-		if b then
-			ent:SetParent(owner)
-		else
-			ent:SetParent(NULL)
-		end
 	end
 end
 
@@ -766,7 +780,7 @@ function PART:CheckBoneMerge()
 	if self.skip_orient then return end
 
 	if ent:IsValid() and not ent:IsPlayer() then
-		if self.BoneMerge and not self.BoneMergeAlternative then
+		if self.BoneMerge then
 			local owner = self:GetOwner()
 
 			if owner.pac_owner_override and owner.pac_owner_override:IsValid() then
@@ -802,12 +816,6 @@ function PART:OnBuildBonePositions()
 	local owner = self:GetOwner()
 
 	if not ent:IsValid() or not owner:IsValid() or not ent:GetBoneCount() or ent:GetBoneCount() < 1 then return end
-
-	if self.OverallSize ~= 1 then
-		for i = 0, ent:GetBoneCount() - 1 do
-			ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * SCALE_NORMAL * self.OverallSize)
-		end
-	end
 
 	if self.requires_bone_model_scale then
 		local scale = self.Scale * self.Size

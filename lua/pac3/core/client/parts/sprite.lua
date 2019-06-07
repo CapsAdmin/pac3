@@ -7,20 +7,32 @@ local cam_IgnoreZ = cam.IgnoreZ
 local PART = {}
 
 PART.ClassName = "sprite"
+PART.Group = 'effects'
+PART.Icon = 'icon16/layers.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "SizeX", 1)
-	pac.GetSet(PART, "SizeY", 1)
-	pac.GetSet(PART, "Size", 1)
-	pac.GetSet(PART, "Color", Vector(255, 255, 255))
-	pac.GetSet(PART, "Alpha", 1)
-	pac.GetSet(PART, "SpritePath", "sprites/grip")
-	pac.GetSet(PART, "Translucent", true)
-	pac.GetSet(PART, "IgnoreZ", false)
+	pac.SetPropertyGroup()
+		pac.GetSet(PART, "IgnoreZ", false)
+		pac.GetSet(PART, "SizeX", 1, {editor_sensitivity = 0.25})
+		pac.GetSet(PART, "SizeY", 1, {editor_sensitivity = 0.25})
+		pac.GetSet(PART, "SpritePath", "sprites/grip", {editor_panel = "material"})
+
+	pac.SetPropertyGroup(PART, "orientation")
+		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
+
+	pac.SetPropertyGroup(PART, "appearance")
+		pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
+		pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
+		pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	return pac.PrettifyName(("/" .. self:GetSpritePath()):match(".+/(.+)"):gsub("%..+", "")) or "error"
+	if not self:GetSpritePath() then
+		return "error"
+	end
+
+	local match = pac.PrettifyName("/" .. self:GetSpritePath()):match(".+/(.+)")
+	return match and match:gsub("%..+", "") or "error"
 end
 
 function PART:SetColor(v)
@@ -91,12 +103,13 @@ function PART:SetMaterial(var)
 end
 
 function PART:OnDraw(owner, pos, ang)
-	if self.Materialm then
+	local mat = self.MaterialOverride or self.Materialm
+	if mat then
 		if self.IgnoreZ then
 			cam_IgnoreZ(true)
 		end
 
-		render_SetMaterial(self.Materialm)
+		render_SetMaterial(mat)
 		render_DrawSprite(pos, self.SizeX * self.Size, self.SizeY * self.Size, self.ColorC)
 
 		if self.IgnoreZ then

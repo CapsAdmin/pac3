@@ -3,11 +3,13 @@ local PART = {}
 PART.ClassName = "gesture"
 PART.NonPhysical = true
 PART.ThinkTime = 0
+PART.Group = 'entity'
+PART.Icon = 'icon16/thumb_up.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Loop", false)
-	pac.GetSet(PART, "GestureName", "")
-	pac.GetSet(PART, "SlotName", "attackreload")
+	pac.GetSet(PART, "GestureName", "", {editor_panel = "sequence"})
+	pac.GetSet(PART, "SlotName", "attackreload", {enums = function(part) return part.ValidGestureSlots end})
 	pac.GetSet(PART, "SlotWeight", 1)
 pac.EndStorableVars()
 
@@ -33,6 +35,7 @@ function PART:GetSequenceList()
 	if ent:IsValid() then
 		return ent:GetSequenceList()
 	end
+
 	return {"none"}
 end
 

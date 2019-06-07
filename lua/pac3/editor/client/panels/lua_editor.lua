@@ -11,8 +11,8 @@ local PANEL = {};
 PANEL.ClassName = "luapad"
 PANEL.Base = "Panel"
 
-surface.CreateFont("LuapadEditor", {font = "Courier New", size = 16, weight = 400 } );
-surface.CreateFont("LuapadEditor_Bold", {font = "Courier New", size = 16, weight = 800});
+surface.CreateFont("LuapadEditor", {font = "roboto mono", size = 16, weight = 400 } );
+surface.CreateFont("LuapadEditor_Bold", {font = "roboto mono", size = 16, weight = 800});
 
 function PANEL:Init()
 	self:SetCursor("beam");
@@ -97,7 +97,7 @@ function PANEL:OnMousePressed(code)
 		self.MouseDown = true
 
 		self.Caret = self:CursorToCaret()
-		if(!input.IsKeyDown(KEY_LSHIFT) and !input.IsKeyDown(KEY_RSHIFT)) then
+		if( not input.IsKeyDown(KEY_LSHIFT) and  not input.IsKeyDown(KEY_RSHIFT)) then
 			self.Start = self:CursorToCaret()
 		end
 	elseif(code == MOUSE_RIGHT) then
@@ -161,18 +161,18 @@ function PANEL:OnMousePressed(code)
 end
 
 function PANEL:OnMouseReleased(code)
-	if(!self.MouseDown) then return end
+	if( not self.MouseDown) then return end
 
 	if(code == MOUSE_LEFT) then
 		self.MouseDown = nil
-		if(!self.tmp) then return end
+		if( not self.tmp) then return end
 		self.Caret = self:CursorToCaret()
 	end
 end
 
 function PANEL:SetText(text)
 	self.Rows = string.Explode("\n", text);
-	if(self.Rows[#self.Rows] != "") then
+	if(self.Rows[#self.Rows] ~= "") then
 		self.Rows[#self.Rows + 1] = "";
 	end
 
@@ -191,7 +191,7 @@ function PANEL:GetValue()
 end
 
 function PANEL:NextChar()
-	if(!self.char) then return end
+	if( not self.char) then return end
 
 	self.str = self.str .. self.char
 	self.pos = self.pos + 1
@@ -233,7 +233,7 @@ function PANEL:SyntaxColorLine(row)
 		self.str = "";
 
 		while self.char and self.char == " " do self:NextChar() end
-		if(!self.char) then break end
+		if( not self.char) then break end
 
 		if(self.char >= "0" and self.char <= "9") then
 			while self.char and (self.char >= "0" and self.char <= "9" or self.char == "." or self.char == "_") do self:NextChar() end
@@ -253,9 +253,9 @@ function PANEL:SyntaxColorLine(row)
 
 				token = "expression"
 
-			elseif(self:CheckGlobal(sstr) && (type(self:CheckGlobal(sstr)) == "function" or self:CheckGlobal(sstr) == "f"
+			elseif(self:CheckGlobal(sstr)  and  (type(self:CheckGlobal(sstr)) == "function" or self:CheckGlobal(sstr) == "f"
 			or self:CheckGlobal(sstr) == "e" or self:CheckGlobal(sstr) == "m" or type(self:CheckGlobal(sstr)) == "table")
-			or (lasttable && lasttable[sstr])) then -- Could be better code, but what the hell; it works
+			or (lasttable  and  lasttable[sstr])) then -- Could be better code, but what the hell; it works
 
 				if(type(self:CheckGlobal(sstr)) == "table") then
 					lasttable = self:CheckGlobal(sstr);
@@ -275,10 +275,10 @@ function PANEL:SyntaxColorLine(row)
 				token = "none"
 
 			end
-		elseif(self.char == "\"") then -- TODO: Fix multiline strings, and add support for [[stuff]]!
+		elseif(self.char == "\"") then -- TODO: Fix multiline strings, and add support for [[stuff]] not 
 
 			self:NextChar()
-			while self.char and self.char != "\"" do
+			while self.char and self.char ~= "\"" do
 				if(self.char == "\\") then self:NextChar() end
 				self:NextChar()
 			end
@@ -288,7 +288,7 @@ function PANEL:SyntaxColorLine(row)
 		elseif(self.char == "'") then
 
 			self:NextChar()
-			while self.char and self.char != "'" do
+			while self.char and self.char ~= "'" do
 				if(self.char == "\\") then self:NextChar() end
 				self:NextChar()
 			end
@@ -332,7 +332,7 @@ end
 function PANEL:PaintLine(row)
 	if(row > #self.Rows) then return end
 
-	if(!self.PaintRows[row]) then
+	if( not self.PaintRows[row]) then
 		self.PaintRows[row] = self:SyntaxColorLine(row)
 	end
 
@@ -420,11 +420,11 @@ function PANEL:PerformLayout()
 end
 
 function PANEL:Paint()
-	if(!input.IsMouseDown(MOUSE_LEFT)) then
+	if( not input.IsMouseDown(MOUSE_LEFT)) then
 		self:OnMouseReleased(MOUSE_LEFT)
 	end
 
-	if(!self.PaintRows) then
+	if( not self.PaintRows) then
 		self.PaintRows = {}
 	end
 
@@ -501,7 +501,7 @@ function PANEL:MovePosition(caret, offset)
 end
 
 function PANEL:HasSelection()
-	return self.Caret[1] != self.Start[1] || self.Caret[2] != self.Start[2]
+	return self.Caret[1] ~= self.Start[1]  or  self.Caret[2] ~= self.Start[2]
 end
 
 function PANEL:Selection()
@@ -539,7 +539,7 @@ function PANEL:SetArea(selection, text, isundo, isredo, before, after)
 
 	local buffer = self:GetArea(selection)
 
-	if(start[1] != stop[1] or start[2] != stop[2]) then
+	if(start[1] ~= stop[1] or start[2] ~= stop[2]) then
 		-- clear selection
 		self.Rows[start[1]] = string.sub(self.Rows[start[1]], 1, start[2] - 1) .. string.sub(self.Rows[stop[1]], stop[2])
 		self.PaintRows[start[1]] = false
@@ -551,13 +551,13 @@ function PANEL:SetArea(selection, text, isundo, isredo, before, after)
 		end
 
 		-- add empty row at end of file (TODO!)
-		if(self.Rows[#self.Rows] != "") then
+		if(self.Rows[#self.Rows] ~= "") then
 			self.Rows[#self.Rows + 1] = ""
 			self.PaintRows[#self.Rows + 1] = false
 		end
 	end
 
-	if(!text or text == "") then
+	if( not text or text == "") then
 		self.ScrollBar:SetUp(self.Size[1], #self.Rows - 1)
 
 		self.PaintRows = {}
@@ -587,7 +587,7 @@ function PANEL:SetArea(selection, text, isundo, isredo, before, after)
 	for i=2,#rows do
 		table.insert(self.Rows, start[1] + i - 1, rows[i])
 		table.insert(self.PaintRows, start[1] + i - 1, false)
-		self.PaintRows = {} // TODO: fix for cache errors
+		self.PaintRows = {} -- TODO: fix for cache errors
 	end
 
 	local stop = { start[1] + #rows - 1, string.len(self.Rows[start[1] + #rows - 1]) + 1 }
@@ -596,10 +596,10 @@ function PANEL:SetArea(selection, text, isundo, isredo, before, after)
 	self.PaintRows[stop[1]] = false
 
 	-- add empty row at end of file (TODO!)
-	if(self.Rows[#self.Rows] != "") then
+	if(self.Rows[#self.Rows] ~= "") then
 		self.Rows[#self.Rows + 1] = ""
 		self.PaintRows[#self.Rows + 1] = false
-		self.PaintRows = {} // TODO: fix for cache errors
+		self.PaintRows = {} -- TODO: fix for cache errors
 	end
 
 	self.ScrollBar:SetUp(self.Size[1], #self.Rows - 1)
@@ -776,7 +776,7 @@ function PANEL:_OnKeyCodeTyped(code)
 		elseif(code == KEY_DOWN) then
 			self.Scroll[1] = self.Scroll[1] + 1
 		elseif(code == KEY_LEFT) then
-			if(self:HasSelection() and !shift) then
+			if(self:HasSelection() and  not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			else
 				self.Caret = self:getWordStart(self:MovePosition(self.Caret, -2))
@@ -784,11 +784,11 @@ function PANEL:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if(!shift) then
+			if( not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif(code == KEY_RIGHT) then
-			if(self:HasSelection() and !shift) then
+			if(self:HasSelection() and  not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			else
 				self.Caret = self:getWordEnd(self:MovePosition(self.Caret, 1))
@@ -796,7 +796,7 @@ function PANEL:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if(!shift) then
+			if( not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif(code == KEY_HOME) then
@@ -805,7 +805,7 @@ function PANEL:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if(!shift) then
+			if( not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif(code == KEY_END) then
@@ -814,7 +814,7 @@ function PANEL:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if(!shift) then
+			if( not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		end
@@ -837,7 +837,7 @@ function PANEL:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if(!shift) then
+			if( not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif(code == KEY_DOWN) then
@@ -852,11 +852,11 @@ function PANEL:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if(!shift) then
+			if( not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif(code == KEY_LEFT) then
-			if(self:HasSelection() and !shift) then
+			if(self:HasSelection() and  not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			else
 				self.Caret = self:MovePosition(self.Caret, -1)
@@ -864,11 +864,11 @@ function PANEL:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if(!shift) then
+			if( not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif(code == KEY_RIGHT) then
-			if(self:HasSelection() and !shift) then
+			if(self:HasSelection() and  not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			else
 				self.Caret = self:MovePosition(self.Caret, 1)
@@ -876,7 +876,7 @@ function PANEL:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if(!shift) then
+			if( not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif(code == KEY_PAGEUP) then
@@ -890,7 +890,7 @@ function PANEL:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if(!shift) then
+			if( not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif(code == KEY_PAGEDOWN) then
@@ -904,7 +904,7 @@ function PANEL:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if(!shift) then
+			if( not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif(code == KEY_HOME) then
@@ -918,7 +918,7 @@ function PANEL:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if(!shift) then
+			if( not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif(code == KEY_END) then
@@ -927,7 +927,7 @@ function PANEL:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if(!shift) then
+			if( not shift) then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif(code == KEY_BACKSPACE) then
@@ -987,7 +987,7 @@ function PANEL:getWordStart(caret)
 	local line = string.ToTable(self.Rows[caret[1]])
 	if(#line < caret[2]) then return caret end
 	for i=0,caret[2] do
-		if(!line[caret[2]-i]) then return {caret[1],caret[2]-i+1} end
+		if( not line[caret[2]-i]) then return {caret[1],caret[2]-i+1} end
 		if(line[caret[2]-i] >= "a" and line[caret[2]-i] <= "z" or line[caret[2]-i] >= "A" and line[caret[2]-i] <= "Z" or line[caret[2]-i] >= "0" and line[caret[2]-i] <= "9") then else return {caret[1],caret[2]-i+1} end
 	end
 	return {caret[1],1}
@@ -997,7 +997,7 @@ function PANEL:getWordEnd(caret)
 	local line = string.ToTable(self.Rows[caret[1]])
 	if(#line < caret[2]) then return caret end
 	for i=caret[2],#line do
-		if(!line[i]) then return {caret[1],i} end
+		if( not line[i]) then return {caret[1],i} end
 		if(line[i] >= "a" and line[i] <= "z" or line[i] >= "A" and line[i] <= "Z" or line[i] >= "0" and line[i] <= "9") then else return {caret[1],i} end
 	end
 	return {caret[1],#line+1}

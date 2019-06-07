@@ -1,6 +1,6 @@
 local L = pace.LanguageString
 
-local function SHOW_SPECIAL(pnl, parent, size)
+function pace.ShowSpecial(pnl, parent, size)
 	size = size or 150
 
 	pnl:SetPos(pace.Editor:GetWide(), select(2, parent:LocalToScreen()) - size + 25)
@@ -8,15 +8,35 @@ local function SHOW_SPECIAL(pnl, parent, size)
 	pnl:MakePopup()
 end
 
-local function FIX_MENU(menu)
+function pace.FixMenu(menu)
 	menu:SetMaxHeight(500)
 	menu:InvalidateLayout(true, true)
 	menu:SetPos(pace.Editor:GetPos() + pace.Editor:GetWide(), gui.MouseY() - (menu:GetTall() * 0.5))
 end
 
+local function DefineSpecialCallback(self, callFuncLeft, callFuncRight)
+	local btn = vgui.Create("DButton", self)
+	btn:SetSize(16, 16)
+	btn:Dock(RIGHT)
+	btn:SetText("...")
+	btn.DoClick = function() callFuncLeft(self, self.CurrentKey) end
 
-local function create_search_list(property, key, name, add_columns, get_list, get_current, add_line, select_value)
+	if callFuncRight then
+		btn.DoRightClick = function() callFuncRight(self, self.CurrentKey) end
+	else
+		btn.DoRightClick = btn.DoClick
+	end
+
+	if self.OnSpecialCallbackButton then
+		self:OnSpecialCallbackButton(btn)
+	end
+
+	return btn
+end
+
+function pace.CreateSearchList(property, key, name, add_columns, get_list, get_current, add_line, select_value, select_value_search)
 	select_value = select_value or function(val, key) return val end
+	select_value_search = select_value_search or select_value
 	pace.SafeRemoveSpecialPanel()
 
 	local frame = vgui.Create("DFrame")
@@ -50,9 +70,18 @@ local function create_search_list(property, key, name, add_columns, get_list, ge
 		list:Clear()
 
 		local cur = get_current()
+		local newList = {}
 
-		for key, val in pairs(get_list()) do
-			if (not find or find == "") or tostring(select_value(val, key)):lower():find(find) then
+		for k, v in pairs(get_list()) do
+			table.insert(newList, {k, v, tostring(k), tostring(v)})
+		end
+
+		table.sort(newList, function(a, b) return a[1] < b[1] end)
+		if find then find = find:lower() end
+
+		for i, data in ipairs(newList) do
+			local key, val, keyFriendly, valFriendly = data[1], data[2], data[3], data[4]
+			if (not find or find == "") or tostring(select_value_search(valFriendly, keyFriendly)):lower():find(find) then
 
 				local pnl = add_line(list, key, val)
 				pnl.list_key = key
@@ -83,25 +112,6 @@ local function create_search_list(property, key, name, add_columns, get_list, ge
 	return frame
 end
 
-
-local function populate_part_menu(menu, part, func)
-	if part:HasChildren() then
-		local menu, pnl = menu:AddSubMenu(part:GetName(), function()
-			pace.current_part[func](pace.current_part, part)
-		end)
-
-		pnl:SetImage(pace.GetIconFromClassName(part.ClassName))
-
-		for key, part in ipairs(part:GetChildren()) do
-			populate_part_menu(menu, part, func)
-		end
-	else
-		menu:AddOption(part:GetName(), function()
-			pace.current_part[func](pace.current_part, part)
-		end):SetImage(pace.GetIconFromClassName(part.ClassName))
-	end
-end
-
 pace.ActiveSpecialPanel = NULL
 pace.extra_populates = {}
 
@@ -111,7 +121,7 @@ function pace.SafeRemoveSpecialPanel()
 	end
 end
 
-hook.Add("GUIMousePressed", "pace_SafeRemoveSpecialPanel", function()
+pac.AddHook("GUIMousePressed", "pace_SafeRemoveSpecialPanel", function()
 	local pnl = pace.ActiveSpecialPanel
 	if pnl:IsValid() then
 		local x,y = gui.MousePos()
@@ -172,9 +182,90 @@ do -- list
 	AccessorFunc(PANEL, "item_height", "ItemHeight")
 
 	function PANEL:Init()
+
+		local search = vgui.Create("DTextEntry", self)
+		search:Dock(TOP)
+		search.Kill = function()
+			search:SetVisible(false)
+			search.searched_something = false
+			search:SetText("")
+			search:SetEnabled(false)
+
+			for i,v in ipairs(self.List) do
+				v.left:SetVisible(true)
+				v.right:SetVisible(true)
+			end
+		end
+
+		search.OnEnter = search.Kill
+
+		search.OnTextChanged = function()
+			self.scr:SetScroll(0)
+
+			local pattern = search:GetValue()
+			if pattern == "" and search.searched_something then
+				search:Kill()
+				search:KillFocus()
+			else
+				search.searched_something = true
+				local group
+
+				for i,v in ipairs(self.List) do
+					local found = false
+
+					if v.panel then
+						if v.panel:GetText():find(pattern) then
+							found = true
+						end
+
+						if v.left:GetValue():find(pattern) then
+							found = true
+						end
+					elseif v.left and v.left.text then
+						group = v.left.text
+					end
+
+					if group and group:find(pattern) then
+						found = true
+					end
+
+					if not found and v.panel then
+						v.left:SetVisible(false)
+						v.right:SetVisible(false)
+					end
+				end
+
+				for i,v in ipairs(self.List) do
+					if not v.panel then
+						local hide_group = true
+
+						for i = i+1, #self.List do
+							local val = self.List[i]
+							if not val.panel then
+								break
+							end
+
+							if val.left:IsVisible() then
+								hide_group = false
+								break
+							end
+						end
+
+						if hide_group then
+							v.left:SetVisible(false)
+							v.right:SetVisible(false)
+						end
+					end
+				end
+			end
+		end
+		search:SetVisible(false)
+		self.search = search
+
 		self.List = {}
 
 		local divider = vgui.Create("DHorizontalDivider", self)
+
 		local left = vgui.Create("DPanelList", divider)
 			divider:SetLeft(left)
 		self.left = left
@@ -184,7 +275,6 @@ do -- list
 		self.right = right
 
 		divider:SetDividerWidth(3)
-		divider:SetLeftWidth(110)
 
 		surface.SetFont(pace.CurrentFont)
 		local w,h = surface.GetTextSize("W")
@@ -214,30 +304,35 @@ do -- list
 		return (self.item_height * (#self.List+(hack or 1))) - (self.div:GetDividerWidth() + 1)
 	end
 
-	function PANEL:FixHeight()
-		for key, data in pairs(self.List) do
-			data.left:SetTall(self:GetItemHeight())
-			data.right:SetTall(self:GetItemHeight())
-		end
-	end
-
 	function PANEL:PerformLayout()
 		self.scr:SetSize(10, self:GetHeight())
 		self.scr:SetUp(self:GetTall(), self:GetHeight() - 10)
-		self.div:SetPos(0,self.scr:GetOffset())
+		self.search:SetZPos(-1)
+		self.div:SetPos(0, (self.search:IsVisible() and self.search:GetTall() or 0) + self.scr:GetOffset())
 		local w, h = self:GetSize()
-		self.div:SetSize(w - (self.scr.Enabled and self.scr:GetWide() or 0), self:GetHeight())
+		local scroll_width = self.scr.Enabled and self.scr:GetWide() or 0
+		self.div:SetLeftWidth((w/2) - scroll_width)
+		self.div:SetSize(w - scroll_width, self:GetHeight())
 	end
 
 	function PANEL:Paint(w, h)
 		self:GetSkin().tex.CategoryList.Outer(0, 0, w, h)
 	end
 
-	pace.CollapsedProperties = pac.luadata.ReadFile("pac3_editor/collapsed.txt") or {}
+	pace.CollapsedProperties = pace.luadata.ReadFile("pac3_editor/collapsed.txt") or {}
 
 	function PANEL:AddCollapser(name)
+		for i,v in ipairs(self.List) do
+			if v.group == name then
+				return
+			end
+		end
+
 		local left = vgui.Create("DButton", self)
+		left:SetTall(self:GetItemHeight())
 		left:SetText("")
+		left.text = name
+
 		self.left:AddItem(left)
 
 		left.DoClick = function()
@@ -245,10 +340,13 @@ do -- list
 			pace.PopulateProperties(pace.current_part)
 
 			pace.Editor:InvalidateLayout()
-			pac.luadata.WriteFile("pac3_editor/collapsed.txt", pace.CollapsedProperties)
+			pace.luadata.WriteFile("pac3_editor/collapsed.txt", pace.CollapsedProperties)
 		end
 
+		left.GetValue = function() return name end
+
 		local right = vgui.Create("DButton", self)
+		right:SetTall(self:GetItemHeight())
 		right:SetText("")
 		self.right:AddItem(right)
 
@@ -281,22 +379,25 @@ do -- list
 			left:GetSkin().tex.CategoryList.Header(-w,0,w*2,h)
 		end
 
-		table.insert(self.List, {left = left, right = right, panel = var, key = key})
+		table.insert(self.List, {left = left, right = right, panel = var, key = key, group = name})
+
+		return #self.List
 	end
 
-	function PANEL:AddKeyValue(key, var, pos, obj)
+	function PANEL:AddKeyValue(key, var, pos, obj, udata, group)
 		local btn = pace.CreatePanel("properties_label")
-			btn:SetValue(" " .. L(key:gsub("%u", " %1"):lower()))
-			btn.pac3_sort_pos = pos
+			btn:SetTall(self:GetItemHeight())
+			btn:SetValue(L((udata and udata.editor_friendly or key):gsub("%u", " %1"):lower()):Trim())
 
 			if obj then
 				btn.key_name = key
 				btn.part_namepart_name = obj.ClassName
 			end
 
-		self.left:AddItem(btn)
+
 
 		local pnl = pace.CreatePanel("properties_container")
+		pnl:SetTall(self:GetItemHeight())
 		pnl.right = true
 		pnl.alt_line = #self.List%2 == 1
 		btn.alt_line = pnl.alt_line
@@ -305,10 +406,33 @@ do -- list
 			pnl:SetContent(var)
 		end
 
-		pnl.pac3_sort_pos = pos
+		self.left:AddItem(btn)
 		self.right:AddItem(pnl)
 
-		table.insert(self.List, {left = btn, right = pnl, panel = var, key = key})
+		local pos
+
+		if group then
+			for i, v in ipairs(self.List) do
+				if v.group == group then
+					for i = i + 1, #self.List do
+						local v = self.List[i]
+						if v.group or not v then
+							pos = i
+							break
+						end
+					end
+				end
+			end
+		end
+
+		if pos then
+			table.insert(self.left.Items, pos, table.remove(self.left.Items))
+			table.insert(self.right.Items, pos, table.remove(self.right.Items))
+
+			table.insert(self.List, pos, {left = btn, right = pnl, panel = var, key = key})
+		else
+			table.insert(self.List, {left = btn, right = pnl, panel = var, key = key})
+		end
 	end
 
 	function PANEL:Clear()
@@ -327,218 +451,240 @@ do -- list
 		if dont_clear == nil then self:Clear() end
 
 		local tbl = {}
-		local data = {}
 
 		for key, val in pairs(obj.ClassName and obj:GetVars() or obj) do
 			local callback
+			local udata
+
 			if not obj.ClassName then
 				callback = val.callback
+				udata = val.userdata
 				val = val.val
+			else
+				udata = pac.GetPropertyUserdata(obj, key)
 			end
 
-			if
-				not obj.ClassName or
-				(not pace.HiddenPropertyKeys[key] or pace.HiddenPropertyKeys[key] == obj.ClassName) and
-				not pace.ShouldHideProperty(key) and
-				(not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key))
-			then
-				local group = pace.ReversedPropertySheets[key:lower()]
-				if group == nil then group = L"generic" end
+			if udata and udata.hidden then goto CONTINUE end
+			if key == "OwnerName" and obj.ClassName ~= "group" then goto CONTINUE end
 
-				if pace.PropertySheets[obj.ClassName] then
-					local reversed = {}
-					for group, properties in pairs(pace.PropertySheets[obj.ClassName]) do
-						for k,v in pairs(properties) do
-							reversed[k] = group
-						end
-					end
+			if not obj.ClassName or not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key) then
+				local group = group_override or (udata and udata.group) or "generic"
+				tbl[group] = tbl[group] or {}
+				table.insert(tbl[group], {key = key, val = val, callback = callback, udata = udata})
+			end
+			::CONTINUE::
+		end
 
-					group = reversed[key:lower()]
-					if group == nil then group = L"generic" end
-				end
+		for group, vars in pairs(tbl) do
+			if not obj.ClassName then
+				table.sort(tbl[group], function(a, b) return a.key > b.key end)
+			else
+				local sorted_variables = {}
+				local done = {}
 
-				if pace.PropertySheetPatterns[obj.ClassName] then
-					for _group, pattern in pairs(pace.PropertySheetPatterns[obj.ClassName]) do
-						local found
-
-						if type(pattern) == "table" then
-							for k,v in pairs(pattern) do
-								if key:lower():find(v) then
-									found = true
+				if pac.VariableOrder[obj.ClassName] then
+					for i, name in ipairs(pac.VariableOrder[obj.ClassName]) do
+						for _, v in ipairs(vars) do
+							if name == v.key then
+								if not done[name] then
+									table.insert(sorted_variables, v)
+									done[name] = true
 									break
 								end
 							end
-						else
-							found = key:lower():find(pattern)
-						end
-
-						if found then
-							group = _group
 						end
 					end
 				end
 
-				table.insert(data, {key = key, val = val, group = group_override or group, callback = callback})
+				for _, variables in pairs(pac.VariableOrder) do
+					for i, name in ipairs(variables) do
+						for _, v in ipairs(vars) do
+							if name == v.key then
+								if not done[name] then
+									table.insert(sorted_variables, v)
+									done[name] = true
+									break
+								end
+							end
+						end
+					end
+				end
+				tbl[group] = sorted_variables
 			end
 		end
 
-		table.sort(data, function(a,b) return a.key > b.key end)
+		local sorted_groups = {}
 
-		local ordered_list = {}
-
-		for k,v in pairs(pace.PropertyOrder) do table.insert(ordered_list, v) end
-		for k,v in pairs(pac.VariableOrder) do table.insert(ordered_list, v) end
-
-		local sorted_sheets = {}
-		table.insert(sorted_sheets, "generic")
-
-		if pace.PropertySheetPatterns[obj.ClassName] then
-			for k,v in pairs(pace.PropertySheetPatterns[obj.ClassName]) do
-				table.insert(sorted_sheets, k)
+		if not obj.ClassName then
+			for k, v in pairs(tbl) do
+				table.insert(sorted_groups, {key = k, val = v})
 			end
-		end
+			table.sort(sorted_groups, function(a, b) return a.key > b.key end)
+		else
+			local done = {}
+			local temp = {}
+			table.Add(temp, pac.GroupOrder[obj.ClassName] or {})
+			table.Add(temp, pac.GroupOrder.none)
 
-		if pace.PropertySheets[obj.ClassName] then
-			for k,v in pairs(pace.PropertySheets[obj.ClassName]) do
-				table.insert(sorted_sheets, k)
-			end
-		end
-
-		for k,v in pairs(pace.PropertySheets) do
-			table.insert(sorted_sheets, k)
-		end
-
-		for _, group in pairs(sorted_sheets) do
-			for pos, str in pairs(ordered_list) do
-				for i, val in pairs(data) do
-					if val.key == str and val.group == group then
-						table.insert(tbl, {pos = pos, key = val.key, val = val.val, group = val.group, callback = val.callback})
-						table.remove(data, i)
+			for i, name in ipairs(temp) do
+				for k, v in pairs(tbl) do
+					if name == k and not done[k] then
+						table.insert(sorted_groups, {key = k, val = v})
+						done[k] = true
+						break
 					end
 				end
 			end
-		end
-
-		for pos, val in pairs(data) do
-			table.insert(tbl, {pos = pos, key = val.key, val = val.val, group = val.group, callback = val.callback})
 		end
 
 		local current_group = nil
 
-		for pos, data in pairs(tbl) do
-			local key, val = data.key, data.val
+		for i, tbl in ipairs(sorted_groups) do
+			local group, tbl = tbl.key, tbl.val
+			for pos, data in ipairs(tbl) do
+				local key, val, udata = data.key, data.val, data.udata
+				local group_pos = 0
 
-			if obj.ClassName then
-				if pace.IsInBasicMode() and not pace.BasicProperties[key] then continue end
+				if obj.ClassName and pace.IsInBasicMode() and not pace.BasicProperties[key] then goto CONTINUE end
 
-				if not pace.IsShowingDeprecatedFeatures() then
-					local part = pace.DeprecatedProperties[key]
-					if part == true or part == obj.ClassName then
-						continue
-					end
-				end
-			end
+				local pnl
+				local T = type(val):lower()
 
-			local pnl
-			local T = (pace.TranslatePropertiesKey(key, obj) or type(val)):lower()
-
-			if pace.PanelExists("properties_" .. T) then
-
-				if data.group and data.group ~= current_group then
-					self:AddCollapser(data.group)
-					current_group = data.group
+				if current_group ~= group then
+					group_pos = self:AddCollapser(group)
+					current_group = group
 				end
 
-				if pace.CollapsedProperties[data.group] ~= nil and pace.CollapsedProperties[data.group] then continue end
+				if udata and udata.editor_panel then
+					T = udata.editor_panel or T
+				elseif pace.PanelExists("properties_" .. key:lower()) then
+					T = key:lower()
+				elseif not pace.PanelExists("properties_" .. T) then
+					T = "string"
+				end
+
+				if pace.CollapsedProperties[group] ~= nil and pace.CollapsedProperties[group] then goto CONTINUE end
 
 				pnl = pace.CreatePanel("properties_" .. T)
-			end
 
-			if pnl then
-				if obj.ClassName then
-
-					if pnl.ExtraPopulate then
-						table.insert(pace.extra_populates, pnl.ExtraPopulate)
-						pnl:Remove()
-						continue
+				if pnl then
+					if pnl.PostInit then
+						pnl:PostInit()
 					end
 
-					pnl.CurrentKey = key
-					obj.editor_pnl = pnl
+					if udata and udata.description then
+						pnl:SetTooltip(L(udata.description))
+					end
 
-					local val = obj["Get" .. key](obj)
-					pnl:SetValue(val)
-					pnl.LimitValue = pace.PropertyLimits[key]
+					if udata then
+						if udata.enums then
+							DefineSpecialCallback(pnl, function(self)
+								pace.CreateSearchList(
+									self,
+									self.CurrentKey,
+									L(key),
 
-					pnl.OnValueChanged = function(val)
-						if T == "number" then
-							val = tonumber(val) or 0
-						elseif T == "string" then
-							val = tostring(val)
+									function(list)
+										list:AddColumn("enum")
+									end,
+
+									function()
+										local tbl
+
+										if type(udata.enums) == "function" then
+											if pace.current_part:IsValid() then
+												tbl = udata.enums(pace.current_part)
+											end
+										else
+											tbl = udata.enums
+										end
+
+										local enums = {}
+
+										if tbl then
+											for k, v in pairs(tbl) do
+												if type(v) ~= "string" then
+													v = k
+												end
+
+												if type(k) ~= "string" then
+													k = v
+												end
+
+												enums[k] = v
+											end
+										end
+
+										return enums
+									end,
+
+									function()
+										return pace.current_part[key]
+									end,
+
+									function(list, key, val)
+										return list:AddLine(key)
+									end,
+
+									function(val, key)
+										return val
+									end
+								)
+							end)
 						end
-						pace.Call("VariableChanged", obj, key, val)
+						if udata.editor_sensitivity or udata.editor_clamp or udata.editor_round then
+							pnl.LimitValue = function(self, num)
+								if udata.editor_sensitivity then
+									self.sens = udata.editor_sensitivity
+								end
+								if udata.editor_clamp then
+									num = math.Clamp(num, unpack(udata.editor_clamp))
+								end
+								if udata.editor_round then
+									num = math.Round(num)
+								end
+								return num
+							end
+						elseif udata.editor_onchange then
+							pnl.LimitValue = udata.editor_onchange
+						end
 					end
 
-					self:AddKeyValue(key, pnl, pos, obj)
-				else
-					pnl.CurrentKey = key
-					pnl:SetValue(val)
-					pnl.LimitValue = pace.PropertyLimits[key]
-					pnl.OnValueChanged = data.callback
-					self:AddKeyValue(key, pnl, pos)
+					if obj.ClassName then
+						pnl.CurrentKey = key
+
+						if pnl.ExtraPopulate then
+							table.insert(pace.extra_populates, {pnl = pnl, func = pnl.ExtraPopulate})
+							pnl:Remove()
+							goto CONTINUE
+						end
+
+						obj.editor_pnl = pnl
+
+						local val = obj["Get" .. key](obj)
+						pnl:SetValue(val)
+
+						pnl.OnValueChanged = function(val)
+							if T == "number" then
+								val = tonumber(val) or 0
+							elseif T == "string" then
+								val = tostring(val)
+							end
+
+							pace.Call("VariableChanged", obj, key, val)
+						end
+
+						self:AddKeyValue(key, pnl, pos, obj, udata)
+					else
+						pnl.CurrentKey = key
+						pnl:SetValue(val)
+						pnl.OnValueChanged = data.callback
+						self:AddKeyValue(key, pnl, pos, nil, udata, group)
+					end
 				end
+				::CONTINUE::
 			end
 		end
-
-		self:FixHeight()
-	end
-
-
-	function PANEL:PopulateCustom(obj)
-		self:Clear()
-
-		local tbl = {}
-		local data = {}
-
-		for key, val in pairs(obj) do
-			table.insert(data, {key = key, val = val.val, callback = val.callback})
-		end
-
-		table.sort(data, function(a,b) return a.key > b.key end)
-
-		for pos, str in pairs(pace.PropertyOrder) do
-			for i, val in pairs(data) do
-				if val.key == str then
-					table.insert(tbl, {pos = pos, key = val.key, val = val.val, callback = val.callback})
-					table.remove(data, i)
-				end
-			end
-		end
-
-		for pos, val in pairs(data) do
-			table.insert(tbl, {pos = pos, key = val.key, val = val.val, callback = val.callback})
-		end
-
-		for pos, data in pairs(tbl) do
-			local key, val = data.key, data.val
-
-			local pnl
-			local T = (pace.TranslatePropertiesKey(key, obj) or type(val)):lower()
-
-			if pace.PanelExists("properties_" .. T) then
-				pnl = pace.CreatePanel("properties_" .. T)
-			end
-
-			if pnl then
-				pnl.CurrentKey = key
-				pnl:SetValue(val)
-				pnl.LimitValue = pace.PropertyLimits[key]
-				pnl.OnValueChanged = data.callback
-				self:AddItem(key, pnl, pos)
-			end
-		end
-
-		self:FixHeight()
 	end
 
 	pace.RegisterPanel(PANEL)
@@ -552,7 +698,7 @@ do -- non editable string
 			if self.TargetPanel.pac_tooltip_hack then
 				local args = {pace_Old_PositionTooltip(self, ...)}
 
-				if ( !IsValid( self.TargetPanel ) ) then
+				if (  not IsValid( self.TargetPanel ) ) then
 					self:Remove()
 					return;
 				end
@@ -587,9 +733,10 @@ do -- non editable string
 			lbl:SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text)
 			lbl:SetFont(pace.CurrentFont)
 			lbl:SetText(str)
-			lbl:SetTextInset(4,0)
+			lbl:SetTextInset(10, 0)
 			lbl:SizeToContents()
 			lbl.pac_tooltip_hack = true
+			self.lbl = lbl
 		self:SetContent(lbl)
 
 		if self.part_name and self.key_name then
@@ -616,6 +763,10 @@ do -- non editable string
 		end
 	end
 
+	function PANEL:GetValue()
+		return self.lbl:GetValue()
+	end
+
 	pace.RegisterPanel(PANEL)
 end
 
@@ -631,21 +782,29 @@ do -- base editable
 		self:SetCursor("hand")
 	end
 
-	function PANEL:Init(...)
-		timer.Simple(0,function()
-			if self.SpecialCallback then
-				local btn = vgui.Create("DButton", self)
-				btn:SetSize(16, 16)
-				btn:Dock(RIGHT)
-				btn:SetText("...")
-				btn.DoClick = function() self:SpecialCallback(self.CurrentKey) end
-				btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
-			end
-		end)
+	function PANEL:OnValueChanged()
 
+	end
+
+	function PANEL:Init(...)
 		if DLabel and DLabel.Init then
-			return DLabel.Init(self, ...)
+			local status = DLabel.Init(self, ...)
+			self:SetText('')
+			self:SetMouseInputEnabled(true)
+			return status
 		end
+
+		return status
+	end
+
+	function PANEL:PostInit()
+		if self.SpecialCallback then
+			self:DefineSpecialCallback(self.SpecialCallback, self.SpecialCallback2)
+		end
+	end
+
+	function PANEL:DefineSpecialCallback(callFuncLeft, callFuncRight)
+		return DefineSpecialCallback(self, callFuncLeft, callFuncRight)
 	end
 
 	function PANEL:SetValue(var, skip_encode)
@@ -712,7 +871,9 @@ do -- base editable
 		menu:AddSpacer()
 		menu:AddOption(L"reset", function()
 			if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
-				self:SetValue(pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey]))
+				local val = pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey])
+				self:SetValue(val)
+				self.OnValueChanged(val)
 			end
 		end):SetImage(pace.MiscIcons.clear)
 	end
@@ -743,9 +904,10 @@ do -- base editable
 	end
 
 	function PANEL:EditText()
+		local oldText = self:GetText()
 		self:SetText("")
 
-		local pnl = vgui.Create("DTextEntry", self)
+		local pnl = vgui.Create("DTextEntry")
 		self.editing = pnl
 		pnl:SetFont(pace.CurrentFont)
 		pnl:SetDrawBackground(false)
@@ -755,9 +917,33 @@ do -- base editable
 		pnl:RequestFocus()
 		pnl:SelectAllOnFocus(true)
 
-		local x,y = pnl:GetPos()
-		pnl:SetPos(x+3,y-4)
-		pnl:Dock(FILL)
+		pnl.OnTextChanged = function() oldText = pnl:GetValue() end
+
+		local hookID = tostring({})
+		local textEntry = pnl
+		local delay = os.clock() + 0.1
+
+		pac.AddHook('Think', hookID, function(code)
+			if not IsValid(self) or not IsValid(textEntry) then return pac.RemoveHook('Think', hookID) end
+			if textEntry:IsHovered() or self:IsHovered() then return end
+			if delay > os.clock() then return end
+			if not input.IsMouseDown(MOUSE_LEFT) and not input.IsKeyDown(KEY_ESCAPE) then return end
+			pac.RemoveHook('Think', hookID)
+			self.editing = false
+			pace.BusyWithProperties = NULL
+			textEntry:Remove()
+			self:SetText(oldText)
+			pnl:OnEnter()
+		end)
+
+		--local x,y = pnl:GetPos()
+		--pnl:SetPos(x+3,y-4)
+		--pnl:Dock(FILL)
+		local x, y = self:LocalToScreen()
+		pnl:SetPos(x+5, y)
+		pnl:SetSize(self:GetSize())
+		pnl:SetWide(ScrW())
+		pnl:MakePopup()
 
 		pnl.OnEnter = function()
 			pace.BusyWithProperties = NULL
@@ -765,8 +951,24 @@ do -- base editable
 
 			pnl:Remove()
 
-			self:SetValue(pnl:GetValue() or "", true)
-			self.OnValueChanged(self:Decode(pnl:GetValue()))
+			self:SetValue(tostring(self:Encode(pnl:GetValue() or "")), true)
+			self.OnValueChanged(self:Decode(self:GetValue()))
+		end
+
+		local old = pnl.Paint
+		pnl.Paint = function(...)
+			if not self:IsValid() then pnl:Remove() return end
+
+			surface.SetFont(pnl:GetFont())
+			local w = surface.GetTextSize(pnl:GetValue()) + 6
+
+			surface.DrawRect(0, 0, w, pnl:GetTall())
+			surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
+			surface.DrawOutlinedRect(0, 0, w, pnl:GetTall())
+
+			pnl:SetWide(w)
+
+			old(...)
 		end
 
 		pace.BusyWithProperties = pnl
@@ -786,8 +988,8 @@ do -- base editable
 		end
 	end
 
-	hook.Add("GUIMousePressed", "pace_property_text_edit", click)
-	hook.Add("VGUIMousePressed", "pace_property_text_edit", click)
+	pac.AddHook("GUIMousePressed", "pace_property_text_edit", click)
+	pac.AddHook("VGUIMousePressed", "pace_property_text_edit", click)
 
 	function PANEL:Reset()
 		if IsValid(self.editing) then
@@ -919,26 +1121,28 @@ do -- vector
 			self.middle = middle
 			self.right = right
 
-			timer.Simple(0,function()
-				if self.SpecialCallback then
-					local btn = vgui.Create("DButton", self)
-					btn:SetSize(16, 16)
-					btn:Dock(RIGHT)
-					btn:SetText("...")
-					btn.DoClick = function() self:SpecialCallback() end
-					btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
+			if self.SpecialCallback then
+				local btn = vgui.Create("DButton", self)
+				btn:SetSize(16, 16)
+				btn:Dock(RIGHT)
+				btn:SetText("...")
+				btn.DoClick = function() self:SpecialCallback(self.CurrentKey) end
+				btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
 
-					if type == "color" then
-						btn:SetText("")
-						btn.Paint = function(_,w,h)
+				if type == "color" or type == "color2" then
+					btn:SetText("")
+					btn.Paint = function(_,w,h)
+						if type == "color2" then
+							surface.SetDrawColor(self.vector.x*255, self.vector.y*255, self.vector.z*255, 255)
+						else
 							surface.SetDrawColor(self.vector.x, self.vector.y, self.vector.z, 255)
-							surface.DrawRect(0,0,w,h)
-							surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
-							surface.DrawOutlinedRect(0,0,w,h)
 						end
+						surface.DrawRect(0,0,w,h)
+						surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
+						surface.DrawOutlinedRect(0,0,w,h)
 					end
 				end
-			end)
+			end
 
 			self.Paint = function() end
 		end
@@ -976,7 +1180,9 @@ do -- vector
 			menu:AddSpacer()
 			menu:AddOption(L"reset", function()
 				if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
-					self:SetValue(pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey]))
+					local val = pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey])
+					self:SetValue(val)
+					self.OnValueChanged(val)
 				end
 			end):SetImage(pace.MiscIcons.clear)
 		end
@@ -1011,6 +1217,7 @@ do -- vector
 
 	VECTOR(Vector, "vector", "x", "y", "z")
 	VECTOR(Angle, "angle", "p", "y", "r")
+
 	VECTOR(Vector, "color", "x", "y", "z",
 		function(_, num)
 			num = tonumber(num) or 0
@@ -1027,7 +1234,7 @@ do -- vector
 			local frm = vgui.Create("DFrame")
 			frm:SetTitle("color")
 
-			SHOW_SPECIAL(frm, self, 300)
+			pace.ShowSpecial(frm, self, 300)
 
 			local clr = vgui.Create("DColorMixer", frm)
 			clr:Dock(FILL)
@@ -1063,6 +1270,61 @@ do -- vector
 			pace.ActiveSpecialPanel = frm
 		end,
 		10
+	)
+
+	VECTOR(Vector, "color2", "x", "y", "z",
+		function(_, num)
+			num = tonumber(num) or 0
+
+			if input.IsKeyDown(KEY_LCONTROL) then
+				num = math.Round(num)
+			end
+
+			return tostring(num)
+		end,
+
+		function(self)
+			pace.SafeRemoveSpecialPanel()
+
+			local frm = vgui.Create("DFrame")
+			frm:SetTitle("color")
+
+			pace.ShowSpecial(frm, self, 300)
+
+			local clr = vgui.Create("DColorMixer", frm)
+			clr:Dock(FILL)
+			clr:SetColor(Color(self.vector.x * 255, self.vector.y * 255, self.vector.z * 255))
+
+			local function tohex(vec)
+				return ("#%X%X%X"):format(vec.x * 255, vec.y * 255, vec.z * 255)
+			end
+
+			local function fromhex(str)
+				local x,y,z = str:match("#?(..)(..)(..)")
+				return Vector(tonumber("0x" .. x), tonumber("0x" .. y), tonumber("0x" .. z)) / 255
+			end
+
+			local html_color = vgui.Create("DTextEntry", frm)
+			html_color:Dock(BOTTOM)
+			html_color:SetText(tohex(self.vector))
+			html_color.OnEnter = function()
+				local vec = fromhex(html_color:GetValue())
+				clr:SetColor(Color(vec.x * 255, vec.y * 255, vec.z * 255))
+				self.OnValueChanged(vec)
+				self:SetValue(vec)
+			end
+
+			function clr.Think()
+				local clr = clr:GetColor() or Color(255, 255, 255, 255)
+				local vec = Vector(clr.r, clr.g, clr.b) / 255
+				self.OnValueChanged(vec)
+				self:SetValue(vec)
+				html_color:SetText(tohex(vec))
+			end
+
+			pace.ActiveSpecialPanel = frm
+		end,
+		0.25
 	)
 end
 
@@ -1134,12 +1396,23 @@ do -- number
 	end
 
 	function PANEL:Encode(num)
-		num = tonumber(num) or 0
+		if not tonumber(num) then
+			local ok, res = pac.CompileExpression(num)
+			if ok then
+				num = res() or 0
+			end
+		end
 
-		num = math.Round(num, 3)
+		num = tonumber(num) or 0
 
 		if input.IsKeyDown(KEY_LCONTROL) then
 			num = math.Round(num)
+		end
+
+		if input.IsKeyDown(KEY_LALT) then
+			num = math.Round(num, 5)
+		else
+			num = math.Round(num, 3)
 		end
 
 		return num
@@ -1198,1060 +1471,6 @@ do -- boolean
 		self.lbl:CenterVertical()
 		local w,h = self:GetParent():GetSize()
 		self:SetSize(w-2,h)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- bone
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_bone"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SelectBone(pace.current_part:GetOwner(), function(data)
-			self:SetValue(L(data.friendly))
-			self.OnValueChanged(data.friendly)
-		end, true)
-	end
-
-	function PANEL:SpecialCallback2()
-		local bones = pac.GetModelBones(pace.current_part:GetOwner())
-
-		local menu = DermaMenu()
-
-		menu:MakePopup()
-
-		local list = {}
-		for k,v in pairs(bones) do
-			table.insert(list, v.friendly)
-		end
-
-		create_search_list(
-			self,
-			self.CurrentKey,
-			L"bones",
-			function(list)
-				list:AddColumn(L"name")
-			end,
-			function()
-				return list
-			end,
-			function()
-				return pace.current_part:GetBone()
-			end,
-			function(list, key, val)
-				return list:AddLine(val)
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- part
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_part"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SelectPart(pac.GetParts(true), function(part)
-			self:SetValue(part:GetName())
-			self.OnValueChanged(part)
-		end)
-	end
-
-	function PANEL:SpecialCallback2(key)
-		local menu = DermaMenu()
-
-		menu:MakePopup()
-
-		for _, part in pairs(pac.GetParts(true)) do
-			if not part:HasParent() then
-				populate_part_menu(menu, part, "Set" .. key)
-			end
-		end
-
-		FIX_MENU(menu)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- owner
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_ownername"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SelectEntity(function(ent)
-			pace.current_part:SetOwnerName(ent:EntIndex())
-			local name = pace.current_part:GetOwnerName()
-			self.OnValueChanged(name)
-			self:SetValue(L(name))
-		end)
-	end
-
-	function PANEL:SpecialCallback2()
-		local menu = DermaMenu()
-		menu:MakePopup()
-
-		local function get_friendly_name(ent)
-			local name = ent.GetName and ent:GetName()
-			if not name or name == "" then
-				name = ent:GetClass()
-			end
-
-			return ent:EntIndex() .. " - " .. name
-		end
-
-		for key, name in pairs(pac.OwnerNames) do
-			menu:AddOption(name, function() pace.current_part:SetOwnerName(name) end)
-		end
-
-		local entities = menu:AddSubMenu(L"entities", function() end)
-		entities.GetDeleteSelf = function() return false end
-		for _, ent in pairs(ents.GetAll()) do
-			if ent:EntIndex() > 0 then
-				entities:AddOption(get_friendly_name(ent), function()
-					pace.current_part:SetOwnerName(ent:EntIndex())
-					self.OnValueChanged(ent:EntIndex())
-				end)
-			end
-		end
-
-		FIX_MENU(menu)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- aimpart
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_aimpartname"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SelectPart(pac.GetParts(true), function(part)
-			self:SetValue(part:GetName())
-			self.OnValueChanged(part)
-		end)
-	end
-
-	function PANEL:SpecialCallback2(key)
-		local menu = DermaMenu()
-		menu:MakePopup()
-
-		for key, name in pairs(pac.AimPartNames) do
-			menu:AddOption(L(key), function() pace.current_part:SetAimPartName(name) end):SetImage("icon16/eye.png")
-		end
-
-		for _, part in pairs(pac.GetParts(true)) do
-			if not part:HasParent() then
-				populate_part_menu(menu, part, "SetAimPartName")
-			end
-		end
-
-		FIX_MENU(menu)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- model
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_model"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback2()
-		pace.SafeRemoveSpecialPanel()
-		g_SpawnMenu:Open()
-	end
-
-	function PANEL:SpecialCallback()
-		pace.close_spawn_menu = true
-		pace.SafeRemoveSpecialPanel()
-		pace.ResourceBrowser(function(path)
-			self:SetValue(path)
-			self.OnValueChanged(path)
-		end, "models")
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-
-do -- submaterial
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_submaterialid"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-
-		local submaterials = pace.current_part:GetSubMaterialIdList()
-
-		local menu = DermaMenu()
-
-		menu:MakePopup()
-
-		for num, path in next,submaterials do
-			menu:AddOption(L(path), function()
-				self:SetValue(num)
-				self.OnValueChanged(num)
-			end)
-		end
-
-		FIX_MENU(menu)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-
-do -- material
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_material"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.ResourceBrowser(function(path)
-			path = path:match("materials/(.+)%.vmt")
-			self:SetValue(path)
-			self.OnValueChanged(path)
-		end, "materials")
-	end
-
-	function PANEL:SpecialCallback2()
-		pace.SafeRemoveSpecialPanel()
-
-		local pnl = pace.CreatePanel("mat_browser")
-
-		SHOW_SPECIAL(pnl, self, 300)
-
-		function pnl.MaterialSelected(_, path)
-			self:SetValue(path)
-			self.OnValueChanged(path)
-		end
-
-		pace.ActiveSpecialPanel = pnl
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- textures
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_textures"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.ResourceBrowser(function(path)
-			path = path:match("materials/(.+)%.vtf")
-			self:SetValue(path)
-			self.OnValueChanged(path)
-		end, "textures")
-	end
-
-	function PANEL:SpecialCallback2()
-		pace.SafeRemoveSpecialPanel()
-
-		local pnl = pace.CreatePanel("mat_browser")
-
-		SHOW_SPECIAL(pnl, self, 300)
-
-		function pnl.MaterialSelected(_, path)
-			self:SetValue(path)
-			self.OnValueChanged(path)
-		end
-
-		pace.ActiveSpecialPanel = pnl
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-
-do -- sound
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_sound"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.ResourceBrowser(function(path)
-			path = path:match("sound/(.+)")
-			self:SetValue(path)
-			self.OnValueChanged(path)
-		end, "sound")
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- sequence list
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_sequence"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		create_search_list(
-			self,
-			self.CurrentKey,
-			"animations",
-			function(list)
-				list:AddColumn("id"):SetFixedWidth(25)
-				list:AddColumn("name")
-			end,
-			function()
-				return pace.current_part:GetSequenceList()
-			end,
-			function()
-				return pace.current_part.ClassName == "animation" and pace.current_part:GetSequenceName()
-			end,
-			function(list, key, val)
-				return list:AddLine(key, val)
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- pose parameter list
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_poseparameter"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		create_search_list(
-			self,
-			self.CurrentKey,
-			"pose parameters",
-			function(list)
-				list:AddColumn("id"):SetFixedWidth(25)
-				list:AddColumn("name")
-			end,
-			function()
-				return pace.current_part:GetPoseParameterList()
-			end,
-			function()
-				return pace.current_part:GetPoseParameter()
-			end,
-			function(list, key, val)
-				return list:AddLine(key, val.name)
-			end,
-			function(val)
-				return val.name
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- event list
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_event"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			"events",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return pace.current_part.Events
-			end,
-			function()
-				return pace.current_part.Event
-			end,
-			function(list, key, val)
-				return list:AddLine(L(key:gsub("_", " ")))
-			end,
-			function(val, key)
-				return key
-			end
-		)
-
-		SHOW_SPECIAL(frame, self, 250)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- operator list
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_operator"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			"operators",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return pace.current_part.Operators
-			end,
-			function()
-				return pace.current_part.Operator
-			end,
-			function(list, key, val)
-				return list:AddLine(L(val:gsub("_", " ")))
-			end,
-			function(val, key)
-				return val
-			end
-		)
-
-		SHOW_SPECIAL(frame, self, 250)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- arguments
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_arguments"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:ExtraPopulate()
-		local data = pace.current_part.Events[pace.current_part.Event]
-		data = data and data.arguments
-
-		if not data then return end
-
-		local tbl = {}
-		local args = {pace.current_part:GetParsedArguments(data)}
-		if args then
-			for pos, arg in pairs(data) do
-				local nam, typ = next(arg)
-				if args[pos] then
-					arg = args[pos]
-				else
-					if typ == "string" then
-						arg = ""
-					elseif typ == "number" then
-						arg = 0
-					elseif typ == "boolean" then
-						arg = false
-					end
-				end
-				tbl[nam] = {val = arg, callback = function(val)
-					local args = {pace.current_part:GetParsedArguments(data)}
-					args[pos] = val
-					pace.current_part:ParseArguments(unpack(args))
-					--self:SetValue(pace.current_part.Arguments)
-				end}
-			end
-			pace.properties:Populate(tbl, true, L"arguments")
-		end
-
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- Proxy Functions
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_proxyfunctions"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SafeRemoveSpecialPanel()
-
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"functions")
-		SHOW_SPECIAL(frame, self, 250)
-		frame:SetSizable(true)
-
-		local list = vgui.Create("DListView", frame)
-		list:Dock(FILL)
-		list:SetMultiSelect(false)
-		list:AddColumn(L"function")
-
-		list.OnRowSelected = function(_, id, line)
-			self:SetValue(line.event_name)
-			self.OnValueChanged(line.event_name)
-		end
-
-		for name, _ in pairs(pace.current_part.Functions) do
-			local pnl = list:AddLine(L(name))
-			pnl.event_name = name
-
-			if cur == name then
-				list:SelectItem(pnl)
-			end
-		end
-
-		pace.ActiveSpecialPanel = frame
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- Proxy Functions
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_proxyinputs"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			"operators",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return pace.current_part.Inputs
-			end,
-			function()
-				return pace.current_part.Input
-			end,
-			function(list, key, val)
-				return list:AddLine(L(key))
-			end,
-			function(val, key)
-				return key
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- Proxy Variables
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_proxyvars"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local parent = pace.current_part.Parent
-
-		if not parent:IsValid() then return end
-
-		pace.SafeRemoveSpecialPanel()
-
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"functions")
-		SHOW_SPECIAL(frame, self, 250)
-		frame:SetSizable(true)
-
-		local list = vgui.Create("DListView", frame)
-		list:Dock(FILL)
-		list:SetMultiSelect(false)
-		list:AddColumn(L"parent variables")
-
-		list.OnRowSelected = function(_, id, line)
-			self:SetValue(line.event_name)
-			self.OnValueChanged(line.event_name)
-		end
-
-		for key, _ in pairs(parent.StorableVars) do
-			if key == "UniqueID" then continue end
-
-			local T = type(parent[key])
-			if T == "number" or T == "Vector" or T == "Angle" or T == "boolean" then
-				local pnl = list:AddLine(L(key:gsub("%u", " %1"):lower()))
-				pnl.event_name = key
-
-				if cur == key then
-					list:SelectItem(pnl)
-				end
-			end
-		end
-
-		pace.ActiveSpecialPanel = frame
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-
-do -- bodygroup names
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_bodygroupname"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SafeRemoveSpecialPanel()
-
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"bodygroup names")
-		SHOW_SPECIAL(frame, self, 250)
-		frame:SetSizable(true)
-
-		local list = vgui.Create("DListView", frame)
-		list:Dock(FILL)
-		list:SetMultiSelect(false)
-		list:AddColumn(L"name")
-
-		list.OnRowSelected = function(_, id, line)
-			self:SetValue(line.name)
-			self.OnValueChanged(line.name)
-		end
-
-		local cur = pace.current_part:GetBodyGroupName()
-
-		for _, name in pairs(pace.current_part:GetBodyGroupNameList()) do
-			local pnl = list:AddLine(L(name))
-			pnl.name = name
-
-			if cur == name then
-				list:SelectItem(pnl)
-			end
-		end
-
-		pace.ActiveSpecialPanel = frame
-	end
-
-	pace.RegisterPanel(PANEL)
-
-end
-
-do -- flex
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_flex"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SafeRemoveSpecialPanel()
-
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"flex names")
-		SHOW_SPECIAL(frame, self, 250)
-		frame:SetSizable(true)
-
-		local list = vgui.Create("DListView", frame)
-		list:Dock(FILL)
-		list:SetMultiSelect(false)
-		list:AddColumn(L"id")
-		list:AddColumn(L"name")
-
-		list.OnRowSelected = function(_, id, line)
-			self:SetValue(line.name)
-			self.OnValueChanged(line.name)
-		end
-
-		local cur = pace.current_part:GetFlex()
-
-		for _, v in pairs(pace.current_part:GetFlexList()) do
-			local pnl = list:AddLine(v.i, L(v.name))
-			pnl.name = v.name
-
-			if cur == v.name then
-				list:SelectItem(pnl)
-			end
-		end
-
-		pace.ActiveSpecialPanel = frame
-	end
-
-	pace.RegisterPanel(PANEL)
-
-end
-
-do -- holdtype
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_weaponholdtype"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			L"holdtypes",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return pace.current_part.ValidHoldTypes
-			end,
-			function()
-				return pace.current_part.HoldType
-			end,
-			function(list, key, val)
-				return list:AddLine(key)
-			end,
-			function(val, key)
-				return key
-			end
-		)
-
-		pace.ActiveSpecialPanel = frame
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- effect
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_effect"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		if not pace.particle_list then
-			local found = {}
-
-			for file_name in pairs(pac.loaded_particle_effects) do
-				local data = file.Read("particles/"..file_name, "GAME", "b")
-				for str in data:gmatch("\3%c([%a_]+)%c") do
-					found[str] = true
-				end
-			end
-
-			pace.particle_list = found
-		end
-
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			L"particle list",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return pace.particle_list
-			end,
-			function()
-				return pace.current_part.Effect
-			end,
-			function(list, key, val)
-				return list:AddLine(key)
-			end,
-			function(val, key)
-				return key
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- damage type
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_damagetype"
-	PANEL.Base = "pace_properties_base_type"
-
-	local damage_types = {
-		generic = 0, --generic damage
-		crush = 1, --caused by physics interaction
-		bullet = 2, --bullet damage
-		slash = 4, --sharp objects, such as manhacks or other npcs attacks
-		burn = 8, --damage from fire
-		vehicle = 16, --hit by a vehicle
-		fall = 32, --fall damage
-		blast = 64, --explosion damage
-		club = 128, --crowbar damage
-		shock = 256, --electrical damage, shows smoke at the damage position
-		sonic = 512, --sonic damage,used by the gargantua and houndeye npcs
-		energybeam = 1024, --laser
-		nevergib = 4096, --don't create gibs
-		alwaysgib = 8192, --always create gibs
-		drown = 16384, --drown damage
-		paralyze = 32768, --same as dmg_poison
-		nervegas = 65536, --neurotoxin damage
-		poison = 131072, --poison damage
-		acid = 1048576, --
-		airboat = 33554432, --airboat gun damage
-		blast_surface = 134217728, --this won't hurt the player underwater
-		buckshot = 536870912, --the pellets fired from a shotgun
-		direct = 268435456, --
-		dissolve = 67108864, --forces the entity to dissolve on death
-		drownrecover = 524288, --damage applied to the player to restore health after drowning
-		physgun = 8388608, --damage done by the gravity gun
-		plasma = 16777216, --
-		prevent_physics_force = 2048, --
-		radiation = 262144, --radiation
-		removenoragdoll = 4194304, --don't create a ragdoll on death
-		slowburn = 2097152, --
-
-		explosion = -1, -- util.BlastDamage
-		fire = -1, -- ent:Ignite(5)
-
-		-- env_entity_dissolver
-		dissolve_energy = 0,
-		dissolve_heavy_electrical = 1,
-		dissolve_light_electrical = 2,
-		dissolve_core_effect = 3,
-
-		heal = -1,
-		armor = -1,
-	}
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			L"damage type list",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return damage_types
-			end,
-			function()
-				return pace.current_part.DamageType
-			end,
-			function(list, key, val)
-				return list:AddLine(key)
-			end,
-			function(val, key)
-				return key
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- gesture slots
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_gestureslot"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			L"gesture slots list",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return {
-					attackreload = GESTURE_SLOT_ATTACK_AND_RELOAD,
-					grenade = GESTURE_SLOT_GRENADE,
-					jump = GESTURE_SLOT_JUMP,
-					swim = GESTURE_SLOT_SWIM,
-					flinch = GESTURE_SLOT_FLINCH,
-					vcd = GESTURE_SLOT_VCD,
-					custom = GESTURE_SLOT_CUSTOM
-				}
-			end,
-			function()
-				return pace.current_part.SlotName
-			end,
-			function(list, key, val)
-				return list:AddLine(key)
-			end,
-			function(val, key)
-				return key
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- gesture properties
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_custom_animation_type"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			L"animation type",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return {
-					gesture = "gesture",
-					posture = "posture",
-					sequence = "sequence",
-					stance = "stance",
-				}
-			end,
-			function()
-				return pace.current_part.AnimationType
-			end,
-			function(list, key, val)
-				return list:AddLine(key)
-			end,
-			function(val, key)
-				return key
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- gesture properties
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_attract_mode"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			L"attract mode",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return {
-					hitpos = "hitpos",
-					hitpos_radius = "hitpos_radius",
-					closest_to_projectile = "closest_to_projectile",
-					closest_to_hitpos = "closest_to_hitpos",
-				}
-			end,
-			function()
-				return pace.current_part.AttractMode
-			end,
-			function(list, key, val)
-				return list:AddLine(key)
-			end,
-			function(val, key)
-				return key
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_buttons"
-	PANEL.Base = "pace_properties_base_type"
-
-	local enums = {}
-
-	for key, val in pairs(_G) do
-		if type(key) == "string" and type(val) == "number" and key:sub(0,4) == "KEY_" then
-			enums[key:sub(5):lower()] = val
-		end
-	end
-
-
-	function PANEL:SpecialCallback()
-		local frame = create_search_list(
-			self,
-			self.CurrentKey,
-			L"keyboard buttons",
-			function(list)
-				list:AddColumn("name")
-			end,
-			function()
-				return enums
-			end,
-			function()
-				return pace.current_part.Arguments
-			end,
-			function(list, key, val)
-				return list:AddLine(key)
-			end,
-			function(val, key)
-				return key
-			end
-		)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-do -- script
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_code"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:SpecialCallback()
-		pace.SafeRemoveSpecialPanel()
-
-		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"script")
-		SHOW_SPECIAL(frame, self, 512)
-		frame:SetSizable(true)
-
-		local editor = vgui.Create("pace_luapad", frame)
-		editor:Dock(FILL)
-
-		editor:SetText(pace.current_part:GetCode())
-		editor.OnTextChanged = function(self)
-			pace.current_part:SetCode(self:GetValue())
-		end
-
-		editor.last_error = ""
-
-		function editor:CheckGlobal(str)
-			local part = pace.current_part
-
-			if not part:IsValid() then frame:Remove() return end
-
-			return part:ShouldHighlight(str)
-		end
-
-		function editor:Think()
-			local part = pace.current_part
-
-			if not part:IsValid() then frame:Remove() return end
-
-			local title = L"script editor"
-
-			if part.Error then
-				title = part.Error
-
-				local line = tonumber(title:match("SCRIPT_ENV:(%d-):"))
-
-				if line then
-					title = title:match("SCRIPT_ENV:(.+)")
-					if self.last_error ~= title then
-						editor:SetScrollPosition(line)
-						editor:SetErrorLine(line)
-						self.last_error = title
-					end
-				end
-			else
-				editor:SetErrorLine(nil)
-
-				if part.script_printing then
-					title = part.script_printing
-					part.script_printing = nil
-				end
-			end
-
-			frame:SetTitle(title)
-		end
-
-		pace.ActiveSpecialPanel = frame
 	end
 
 	pace.RegisterPanel(PANEL)

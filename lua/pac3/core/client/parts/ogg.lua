@@ -2,28 +2,38 @@ local PART = {}
 
 PART.ClassName = "ogg"
 PART.NonPhysical = true
+PART.Group = 'effects'
+PART.Icon = 'icon16/music.png'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "URL", "")
-	pac.GetSet(PART, "Volume", 1)
-	pac.GetSet(PART, "Pitch", 1)
+	pac.GetSet(PART, "Volume", 1, {editor_sensitivity = 0.25})
+	pac.GetSet(PART, "Pitch", 1, {editor_sensitivity = 0.125})
 	pac.GetSet(PART, "Radius", 1500)
-	pac.GetSet(PART, "PlayCount", 1)
+	pac.GetSet(PART, "PlayCount", 1, {editor_onchange = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Round(math.max(num, 0))
+	end})
 	pac.GetSet(PART, "Doppler", false)
 	pac.GetSet(PART, "StopOnHide", false)
 	pac.GetSet(PART, "PauseOnHide", false)
 	pac.GetSet(PART, "Overlapping", false)
 
-	pac.GetSet(PART, "FilterType", 0)
-	pac.GetSet(PART, "FilterFraction", 1)
+	pac.GetSet(PART, "FilterType", 0, {editor_onchange = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Round(math.Clamp(num, 0, 2))
+	end})
+	pac.GetSet(PART, "FilterFraction", 1, {editor_sensitivity = 0.125, editor_clamp = {0, 1}})
 
 	--pac.GetSet(PART, "Echo", false)
 	--pac.GetSet(PART, "EchoDelay", 0.5)
 	--pac.GetSet(PART, "EchoFeedback", 0.75)
 
 	pac.GetSet(PART, "PlayOnFootstep", false)
-	pac.GetSet(PART, "MinPitch", 0)
-	pac.GetSet(PART, "MaxPitch", 0)
+	pac.GetSet(PART, "MinPitch", 0, {editor_sensitivity = 0.125})
+	pac.GetSet(PART, "MaxPitch", 0, {editor_sensitivity = 0.125})
 pac.EndStorableVars()
 
 function PART:Initialize()
@@ -34,7 +44,10 @@ function PART:GetNiceName()
 	return pac.PrettifyName(("/".. self:GetURL()):match(".+/(.-)%.")) or "no sound"
 end
 
+PART.stream_vars = {"Doppler", "Radius"}
+
 local BIND = function(propertyName, setterMethodName, check)
+	table.insert(PART.stream_vars, propertyName)
 	setterMethodName = setterMethodName or "Set" .. propertyName
 	PART["Set" .. propertyName] = function(self, value)
 		if check then
@@ -60,17 +73,16 @@ BIND("Radius",    "SetSourceRadius" )
 
 BIND("FilterType")
 BIND("FilterFraction")
-BIND("Echo")
 
-BIND("Echo")
-BIND("EchoDelay")
-BIND("EchoFeedback", nil, function(n) return math.Clamp(n, 0, 0.99) end)
+--BIND("Echo")
+--BIND("EchoDelay")
+--BIND("EchoFeedback", nil, function(n) return math.Clamp(n, 0, 0.99) end)
 
 function PART:OnThink()
 	local owner = self:GetOwner(true)
 
 	for url, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[url] = nil continue end
+		if not stream:IsValid() then self.streams[url] = nil goto CONTINUE end
 
 		if self.PlayCount == 0 then
 			stream:Resume()
@@ -80,6 +92,7 @@ function PART:OnThink()
 			stream:SetSourceEntity(owner, true)
 			stream.owner_set = owner
 		end
+		::CONTINUE::
 	end
 
 	if self.last_playonfootstep ~= self.PlayOnFootstep then
@@ -130,23 +143,17 @@ function PART:SetURL(URL)
 	self.streams = {}
 
 	for _, url in pairs(urls) do
-
-		url = pac.FixupURL(url)
-
 		local stream = pac.webaudio.Streams.CreateStream(url)
 		self.streams[url] = stream
 
 		stream:Enable3D(true)
 		stream.OnLoad = function()
-			for key in pairs(self.StorableVars) do
-				if key ~= "URL" then
-					self["Set" .. key](self, self["Get" .. key](self))
-				end
+			for _, key in ipairs(PART.stream_vars) do
+				self["Set" .. key](self, self["Get" .. key](self))
 			end
 		end
 		stream.OnError =  function(err, info)
-			local str = ("OGG error: %s reason: %s\n"):format(err, info or "none")
-			MsgC(Color(255, 0, 0), "[PAC3] " .. str)
+			pac.Message("OGG error: ", err, " reason: ", info or "none")
 			self.Errored = str
 		end
 
@@ -162,19 +169,11 @@ PART.last_stream = NULL
 
 function PART:PlaySound(_, additiveVolumeFraction)
 	additiveVolumeFraction = additiveVolumeFraction or 0
-
-	if pac.webaudio.GetSampleRate() > 48000 then
-		local warningColor   = Color(255, 0, 0)
-		local warningMessage = "[PAC3] The ogg part (custom sounds) might not work because you have your sample rate set to " .. pac.webaudio.GetSampleRate() .. " Hz. Set it to 48000 or below if you experience any issues.\n"
-		--[[
-		if self:GetPlayerOwner() == pac.LocalPlayer then
-			chat.AddText(warningColor, warningMessage)
-		else
-			MsgC(warningColor, warningMessage)
-		end]]
-	end
-
 	local stream = table.Random(self.streams) or NULL
+
+	if pac.webaudio.sample_rate and pac.webaudio.sample_rate > 48000 then
+		pac.Message(Color(255, 0, 0), "The ogg part (custom sounds) might not work because you have your sample rate set to ", pac.webaudio.sample_rate, " Hz. Set it to 48000 or below if you experience any issues.")
+	end
 
 	if not stream:IsValid() then return end
 
@@ -201,7 +200,7 @@ end
 
 function PART:StopSound()
 	for key, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[key] = nil continue end
+		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
 
 		if not self.StopOnHide then
 			if self.PauseOnHide then
@@ -210,6 +209,7 @@ function PART:StopSound()
 				stream:Stop()
 			end
 		end
+		::CONTINUE::
 	end
 end
 
@@ -225,17 +225,19 @@ end
 
 function PART:OnRemove()
 	for key, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[key] = nil continue end
+		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
 
 		stream:Remove()
+		::CONTINUE::
 	end
 end
 
 function PART:SetDoppler(num)
 	for key, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[key] = nil continue end
+		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
 
 		stream:EnableDoppler(num)
+		::CONTINUE::
 	end
 
 	self.Doppler = num

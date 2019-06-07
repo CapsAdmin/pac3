@@ -6,18 +6,23 @@ local PART = {}
 PART.ClassName = "halo"
 PART.NonPhysical = true
 PART.ThinkTime = 0
+PART.Group = {'effects', 'model'}
+PART.Icon = 'icon16/shading.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Color", Vector(255, 255, 255))
-	pac.GetSet(PART, "BlurX", 2)
-	pac.GetSet(PART, "BlurY", 2)
-	pac.GetSet(PART, "Passes", 1)
-	pac.GetSet(PART, "Amount", 1)
-	pac.GetSet(PART, "Additive", true) -- haaaa
-	pac.GetSet(PART, "IgnoreZ", false)
-	pac.GetSet(PART, "SphericalSize", 1)
-	pac.GetSet(PART, "Shape", 1)
-	pac.GetSet(PART, "AffectChildren", false)
+	pac.SetPropertyGroup()
+		pac.GetSet(PART, "BlurX", 2)
+		pac.GetSet(PART, "BlurY", 2)
+		pac.GetSet(PART, "Amount", 1)
+		pac.GetSet(PART, "IgnoreZ", false)
+		pac.GetSet(PART, "SphericalSize", 1)
+		pac.GetSet(PART, "Shape", 1)
+		pac.GetSet(PART, "AffectChildren", false)
+
+	pac.SetPropertyGroup(PART, "appearance")
+		pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
+		pac.GetSet(PART, "Passes", 1)
+		pac.GetSet(PART, "Additive", true) -- haaaa
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -37,12 +42,12 @@ end
 function PART:OnThink()
 	local parent = self:GetParent()
 
-	if parent.ClassName == "model" and parent.Entity:IsValid() then
+	if parent.is_model_part and parent.Entity:IsValid() then
 		local tbl = {parent.Entity}
 
 		if self.AffectChildren then
 			for _, part in ipairs(parent:GetChildren()) do
-				if part.ClassName == "model" and part.Entity:IsValid() and not part:IsHidden() then
+				if part.is_model_part and part.Entity:IsValid() and not part:IsHidden() then
 					table.insert(tbl, part.Entity)
 				end
 			end

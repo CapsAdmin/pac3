@@ -6,22 +6,24 @@ local PART = {}
 PART.ClassName = "animation"
 PART.NonPhysical = true
 PART.ThinkTime = 0
+PART.Groups = {'entity', 'model', 'modifiers'}
+PART.Icon = 'icon16/eye.png'
 
 PART.frame = 0
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Loop", true)
 	pac.GetSet(PART, "PingPongLoop", false)
-	pac.GetSet(PART, "SequenceName", "")
-	pac.GetSet(PART, "Rate", 1)
+	pac.GetSet(PART, "SequenceName", "", {enums = function(part) local tbl = {} for k,v in pairs(part:GetSequenceList()) do tbl[v] = v end return tbl end})
+	pac.GetSet(PART, "Rate", 1, {editor_sensitivity = 0.1})
 	pac.GetSet(PART, "Offset", 0)
 	pac.GetSet(PART, "Min", 0)
 	pac.GetSet(PART, "Max", 1)
-	pac.GetSet(PART, "WeaponHoldType", "none")
+	pac.GetSet(PART, "WeaponHoldType", "none", {enums = function(part) return part.ValidHoldTypes end})
 	pac.GetSet(PART, "OwnerCycle", false)
+	pac.GetSet(PART, "InvertFrames", false)
 	pac.GetSet(PART, "ResetOnHide", true)
 pac.EndStorableVars()
-
 
 local tonumber = tonumber
 
@@ -67,18 +69,20 @@ end
 function PART:GetOwner()
 	local parent = self:GetParent()
 
-	if parent:IsValid() and parent.ClassName == "model" and parent.Entity:IsValid() then
+	if parent:IsValid() and parent.is_model_part and parent.Entity:IsValid() then
 		return parent.Entity
 	end
 
 	return self.BaseClass.GetOwner(self)
 end
+
 function PART:GetSequenceList()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
 		return ent:GetSequenceList()
 	end
+
 	return {"none"}
 end
 
@@ -88,6 +92,14 @@ function PART:OnHide()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
+		if not self:GetResetOnHide() then
+			self.SequenceCycle = ent:GetCycle()
+			self.storeFrame = self.frame
+		else
+			self.SequenceCycle = nil
+			self.frame = 0
+		end
+
 		if ent.pac_animation_sequences then
 			ent.pac_animation_sequences[self] = nil
 		end
@@ -96,8 +108,9 @@ function PART:OnHide()
 			ent.pac_animation_holdtypes[self] = nil
 		end
 
-		if not ent:IsPlayer() and self:GetResetOnHide() then
-			ent:SetSequence(0)
+		if not ent:IsPlayer() and self.prevSequence then
+			ent:ResetSequence(self.prevSequence)
+			self.prevSequence = nil
 		end
 	end
 end
@@ -114,15 +127,16 @@ function PART:SetSequenceName(name)
 end
 
 function PART:OnShow()
+	self.PlayingSequenceFrom = RealTime()
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
+		self.prevSequence = ent:GetSequence()
 		self.random_seqname = table.Random(self.SequenceName:Split(";"))
 
 		if self.random_seqname ~= "" then
-			local seq = ent:LookupSequence(self.random_seqname)
-
-			local count = ent:GetSequenceCount()
+			local seq = ent:LookupSequence(self.random_seqname) or 0
+			local count = ent:GetSequenceCount() or 0
 
 			if seq < 0 or seq > count or count < 0 then
 				return
@@ -148,7 +162,17 @@ function PART:OnShow()
 			end
 
 			if seq ~= -1  then
+				ent:ResetSequence(seq)
 				ent:SetSequence(seq)
+				if not self:GetResetOnHide() then
+					ent:ResetSequenceInfo()
+
+					for i = 1, 10 do
+						ent:FrameAdvance(1)
+					end
+
+					ent:ResetSequenceInfo()
+				end
 			end
 
 		elseif ent:IsPlayer() then
@@ -192,6 +216,16 @@ function PART:OnShow()
 				ent.pac_animation_holdtypes[self] = params
 			end
 		end
+
+		if not self:GetResetOnHide() and self.SequenceCycle then
+			ent:SetCycle(self.SequenceCycle)
+			self.SequenceCycle = nil
+
+			if self.storeFrame then
+				self.frame = self.storeFrame
+				self.storeFrame = nil
+			end
+		end
 	end
 end
 
@@ -201,10 +235,10 @@ function PART:OnThink()
 	if ent:IsValid() then
 		if not self.random_seqname then return end
 
-		local seq = ent:LookupSequence(self.random_seqname)
+		local seq = ent:LookupSequence(self.random_seqname) or 0
 
 		local duration = 0
-		local count = ent:GetSequenceCount()
+		local count = ent:GetSequenceCount() or 0
 		if seq >= 0 and seq < count and count > 0 then
 			duration = ent:SequenceDuration(seq)
 		else
@@ -248,14 +282,16 @@ function PART:OnThink()
 		if self.PingPongLoop then
 			self.frame = self.frame + rate / 2
 			local cycle = min + math.abs(math.Round((self.frame + self.Offset) * 0.5) - (self.frame + self.Offset) * 0.5) * 2 * (max - min)
+
 			if pac.IsNumberValid(cycle) then
-				ent:SetCycle(cycle)
+				ent:SetCycle(not self.InvertFrames and cycle or (1 - cycle))
 			end
 		else
 			self.frame = self.frame + rate
 			local cycle = min + ((self.frame + self.Offset) * 0.5) % 1 * (max - min)
+
 			if pac.IsNumberValid(cycle) then
-				ent:SetCycle(cycle)
+				ent:SetCycle(not self.InvertFrames and cycle or (1 - cycle))
 			end
 		end
 	end

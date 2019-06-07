@@ -88,6 +88,7 @@ end
 function PANEL:SetSelectedItem(node)
 	if IsValid(self.m_pSelectedItem) then
 		self.m_pSelectedItem:SetSelected(false)
+		self:OnNodeDeselected(self.m_pSelectedItem)
 	end
 
 	self.m_pSelectedItem = node
@@ -99,6 +100,10 @@ function PANEL:SetSelectedItem(node)
 end
 
 function PANEL:OnNodeSelected(node)
+
+end
+
+function PANEL:OnNodeDeselected(node)
 
 end
 
@@ -143,7 +148,7 @@ function PANEL:Init()
 	self.Label.DragHover = function(s, t) self:DragHover(t) end
 
 	self.Expander = vgui.Create("DExpandButton", self)
-	self.Expander.DoClick = function() self:SetExpanded(!self.m_bExpanded) end
+	self.Expander.DoClick = function() self:SetExpanded( not self.m_bExpanded) end
 	self.Expander:SetVisible(false)
 
 	self.Icon = vgui.Create("DImage", self)
@@ -154,6 +159,28 @@ function PANEL:Init()
 
 	self:SetDrawLines(false)
 	self:SetLastChild(false)
+end
+
+function PANEL:SetRoot(root)
+	self.m_pRoot = root
+
+	root.added_nodes = root.added_nodes or {}
+	for i,v in ipairs(root.added_nodes) do
+		if v == self then return end
+	end
+	table.insert(root.added_nodes, self)
+end
+
+function PANEL:OnRemove()
+	local root = self:GetRoot()
+
+	root.added_nodes = root.added_nodes or {}
+	for i,v in ipairs(root.added_nodes) do
+		if v == self then
+			table.remove(root.added_nodes, i)
+			break
+		end
+	end
 end
 
 function PANEL:IsRootNode()
@@ -167,7 +194,7 @@ function PANEL:InternalDoClick()
 	if self:GetRoot():DoClick(self) then return end
 
 	if not self.m_bDoubleClickToOpen or (SysTime() - self.fLastClick < 0.3) then
-		self:SetExpanded(!self.m_bExpanded)
+		self:SetExpanded( not self.m_bExpanded)
 	end
 
 	self.fLastClick = SysTime()
@@ -175,7 +202,7 @@ end
 
 function PANEL:OnNodeSelected(node)
 	local parent = self:GetParentNode()
-	if IsValid(parent) && parent.OnNodeSelected then
+	if IsValid(parent) and parent.OnNodeSelected then
 		parent:OnNodeSelected(node)
 	end
 end
@@ -365,7 +392,7 @@ function PANEL:AddNode(strName, strIcon)
 		pNode:SetParentNode(self)
 		pNode:SetRoot(self:GetRoot())
 		pNode:SetIcon(strIcon)
-		pNode:SetDrawLines(!self:IsRootNode())
+		pNode:SetDrawLines( not self:IsRootNode())
 
 		self:InstallDraggable(pNode)
 
@@ -408,6 +435,9 @@ end
 function PANEL:SetSelected(b)
 	self.Label:SetSelected(b)
 	self.Label:InvalidateLayout()
+	if self.OnSelected then
+		self:OnSelected(b)
+	end
 end
 
 function PANEL:Think()

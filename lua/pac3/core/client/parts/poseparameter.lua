@@ -3,9 +3,11 @@ local PART = {}
 PART.ClassName = "poseparameter"
 PART.NonPhysical = true
 PART.ThinkTime = 0
+PART.Group = {'modifiers', 'entity'}
+PART.Icon = 'icon16/disconnect.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "PoseParameter", "")
+	pac.GetSet(PART, "PoseParameter", "", {enums = function(part) return part:GetPoseParameterList() end})
 	pac.GetSet(PART, "Range", 0)
 pac.EndStorableVars()
 

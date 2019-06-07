@@ -1,16 +1,17 @@
 local CurTime = CurTime
 local ParticleEffect = ParticleEffect
-local ParticleEffectAttach = ParticleEffectAttach
 
 local PART = {}
 
 PART.ClassName = "effect"
+PART.Groups = {'effects', 'model', 'entity'}
+PART.Icon = 'icon16/wand.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Effect", "default")
+	pac.GetSet(PART, "Effect", "default", {enums = function() return pac.particle_list end})
 	pac.GetSet(PART, "Loop", true)
 	pac.GetSet(PART, "Follow", true)
-	pac.GetSet(PART, "Rate", 1)
+	pac.GetSet(PART, "Rate", 1, {editor_sensitivity = 0.1})
 	pac.GetSet(PART, "UseParticleTracer", false)
 
 	pac.SetupPartName(PART, "PointA")
@@ -20,28 +21,43 @@ pac.StartStorableVars()
 
 pac.EndStorableVars()
 
+pac.RemoveProperty(PART, "Translucent")
+
 function PART:GetNiceName()
 	return pac.PrettifyName(self:GetEffect())
 end
 
 function PART:Initialize()
 	self:SetEffect(self.Effect)
-end
 
-function PART:SetControlPointA(var)
-	self.ControlPointA = var
-	self:ResolveControlPoints()
-end
+	if not pac.particle_list then
+		local found = {}
 
-function PART:SetControlPointB(var)
-	self.ControlPointB = var
-	self:ResolveControlPoints()
+		for file_name in pairs(pac_loaded_particle_effects) do
+			local ok, err = pcall(function()
+				local data = file.Read("particles/"..file_name, "GAME", "b")
+				if data then
+					for str in data:gmatch("\3%c([%a_]+)%c") do
+						if #str > 1 then
+							found[str] = str
+						end
+					end
+				end
+			end)
+
+			if not ok then
+				pac.Message(Color(255, 50, 50), "unable to parse particle file " .. file_name .. ": " .. err)
+			end
+		end
+
+		pac.particle_list = found
+	end
 end
 
 function PART:GetOwner()
 	local parent = self:GetParent()
 
-	if parent:IsValid() and parent.ClassName == "model" and parent.Entity:IsValid() then
+	if parent:IsValid() and parent.is_model_part and parent.Entity:IsValid() then
 		return parent.Entity
 	end
 
@@ -50,44 +66,62 @@ end
 
 PART.last_spew = 0
 
-pac.loaded_particle_effects = pac.loaded_particle_effects or {}
+if not pac_loaded_particle_effects then
+	pac_loaded_particle_effects = {}
 
-for _, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
-	if not pac.loaded_particle_effects[file_name] and not pac.BlacklistedParticleSystems[file_name:lower()] then
-		game.AddParticles("particles/" .. file_name)
+	for _, file_name in pairs(file.Find("particles/*.pcf", "GAME")) do
+		if not pac_loaded_particle_effects[file_name] and not pac.BlacklistedParticleSystems[file_name:lower()] then
+			game.AddParticles("particles/" .. file_name)
+		end
+
+		pac_loaded_particle_effects[file_name] = true
 	end
-	pac.loaded_particle_effects[file_name] = true
 end
 
 local already = {}
+local alreadyServer = {}
 local function pac_request_precache(name)
 	if already[name] then return end
 	already[name] = true
-	net.Start "pac_request_precache"
-		net.WriteString(name)
+	PrecacheParticleSystem(name)
+	net.Start("pac_request_precache")
+	net.WriteString(name)
 	net.SendToServer()
 end
 
 function PART:SetEffect(name)
+	self.waitingForServer = true
 	self.Effect = name
-	self.Ready = false
+	self.Ready = alreadyServer[name] or false
 
-	pac_request_precache(name)
-
+	if not alreadyServer[name] then
+		pac_request_precache(name)
+	else
+		self.waitingForServer = false
+	end
 end
 
-net.Receive("pac_effect_precached", function()
-	local name = net.ReadString()
+pac.AddHook("pac_EffectPrecached", "pac_Effects", function(name)
+	if alreadyServer[name] then return end
+	alreadyServer[name] = true
 	pac.dprint("effect %q precached!", name)
-	for _, part in pairs(pac.GetParts()) do
-		if part.ClassName == "effect" and part.Effect == name then
-			part.Ready = true
-		end
-	end
+	pac.CallPartEvent("effect_precached", name)
 end)
 
+function PART:OnEvent(typ, name)
+	if typ == "effect_precached" then
+		if self.Effect == name then
+			self.Ready = true
+			self.waitingForServer = false
+		end
+	end
+end
+
 function PART:OnDraw(owner, pos, ang)
-	if not self.Ready then return end
+	if not self.Ready then
+		if not self.waitingForServer then self:SetEffect(self.Effect) end
+		return
+	end
 
 	local ent = self:GetOwner()
 
@@ -108,22 +142,6 @@ function PART:OnHide()
 	if ent:IsValid() then
 		ent:StopParticles()
 		ent:StopParticleEmission()
-	end
-end
-
-function PART:ResolveControlPoints()
-	for _, part in pairs(pac.GetParts()) do
-		if part.Name == self.ControlPointA then
-			self.ControlPointAPart = part
-			break
-		end
-	end
-
-	for _, part in pairs(pac.GetParts()) do
-		if part.Name == self.ControlPointB then
-			self.ControlPointBPart = part
-			break
-		end
 	end
 end
 
@@ -186,12 +204,11 @@ function PART:Emit(pos, ang)
 				})
 			end
 
-
 			ent:CreateParticleEffect(self.Effect, points)
 		elseif self.Follow then
 			ent:StopParticles()
 			ent:StopParticleEmission()
-			ParticleEffectAttach(self.Effect, PATTACH_ABSORIGIN_FOLLOW, ent, 0)
+			CreateParticleSystem(ent, self.Effect, PATTACH_ABSORIGIN_FOLLOW, 0)
 		else
 			ent:StopParticles()
 			ent:StopParticleEmission()

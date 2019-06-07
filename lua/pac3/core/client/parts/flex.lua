@@ -2,9 +2,22 @@ local PART = {}
 
 PART.ClassName = "flex"
 PART.NonPhysical = true
+PART.Icon = 'icon16/emoticon_smile.png'
+PART.Group = 'entity'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Flex", "")
+	pac.GetSet(PART, "Flex", "", {
+		enums = function(part)
+			local tbl = {}
+
+			for _, v in pairs(part:GetFlexList()) do
+				tbl[v.name] = v.name
+			end
+
+			return tbl
+		end
+	})
+
 	pac.GetSet(PART, "Weight", 0)
 	pac.GetSet(PART, "RootOwner", true)
 	pac.GetSet(PART, "DefaultOnHide", true)
@@ -63,7 +76,6 @@ function PART:OnShow()
 	local ent = self:GetOwner(self.RootOwner)
 
 	if ent:IsValid() then
-		pac.TouchFlexes(ent)
 		self:UpdateFlex()
 	end
 end
@@ -84,8 +96,3 @@ function PART:Clear()
 end
 
 pac.RegisterPart(PART)
-
-hook.Add("pac_EditorPostConfig","flex",function()
-	pace.PartTree.entity.flex = true
-	pace.PartIcons.flex = "icon16/emoticon_smile.png"
-end)
