@@ -47,9 +47,9 @@ end
 
 function pace.SetZoom(fov, smooth)
 	if smooth then 
-		pace.ViewFOV = Lerp(FrameTime()*10, pace.ViewFOV, math.Clamp(fov,1,90))
+		pace.ViewFOV = Lerp(FrameTime()*10, pace.ViewFOV, math.Clamp(fov,1,100))
 	else
-		pace.ViewFOV = math.Clamp(fov,1,90)
+		pace.ViewFOV = math.Clamp(fov,1,100)
 	end
 end
 

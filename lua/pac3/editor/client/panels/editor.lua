@@ -110,7 +110,7 @@ function PANEL:Init()
 			self.zoomslider:DockPadding(4,0,0,0)
 			self.zoomslider:SetSize(200, 20)
 			self.zoomslider:SetMin( 0 )				
-			self.zoomslider:SetMax( 90 )				
+			self.zoomslider:SetMax( 100 )				
 			self.zoomslider:SetDecimals( 0 )	
 			self.zoomslider:SetText("Camera FOV")
 			self.zoomslider:SetDark(true)
@@ -236,7 +236,7 @@ function PANEL:Think(...)
 		if pace.timeline.IsActive() then
 			self.zoomframe:SetPos(x,y-pace.timeline.frame:GetTall())
 		end
-		
+
 		if zoom_smooth:GetInt() == 1 then
 			pace.SetZoom(self.zoomslider:GetValue(),true)
 		else
