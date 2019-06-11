@@ -51,6 +51,8 @@ function PANEL:Init()
 	self.zoomframe = vgui.Create( "DPanel" )
 	self.zoomframe:SetSize( 180, 20 )
 
+	local zoomval = pace.ViewFOV or 75
+
 	self.zoom = vgui.Create("DNumSlider", self.zoomframe)
 	self.zoom:SetPos(6,1)
 	self.zoom:SetSize(200, 20)
@@ -59,8 +61,8 @@ function PANEL:Init()
 	self.zoom:SetDecimals( 0 )	
 	self.zoom:SetText("Camera FOV")
 	self.zoom:SetDark(true)
-	self.zoom:SetDefaultValue( 90 )
-	self.zoom:SetValue( 90 )
+	self.zoom:SetDefaultValue( zoomval )
+	self.zoom:SetValue( zoomval )
 
 	self.btnClose.Paint = function() end
 
