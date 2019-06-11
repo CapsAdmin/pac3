@@ -243,6 +243,16 @@ function PANEL:Think(...)
 			pace.SetZoom(self.zoomslider:GetValue(),false)
 		end
 
+		local mx, my = gui.MousePos()
+		local x, y = self.zoomframe:GetPos()
+		local xs, xy = self.zoomframe:GetSize()
+
+		if mx > x and my > y and mx < x + xs and my < y + xy then
+			self.zoomsettings:SetVisible(true)
+			self.zoomsettings:RequestFocus()
+		else
+			self.zoomsettings:SetVisible(false)
+		end
 	end
 end
 
