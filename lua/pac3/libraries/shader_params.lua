@@ -1192,15 +1192,16 @@ return {
 				refractamount = {
 					type = "float",
 					friendly = "RefractAmount",
-					default = 0.5,
+					default = 0,
 					description = "How strong the refraction effect should be when the material is partially cloaked (default = 2).",
 				},
 			},
 			generic = {
 				vertexcolormodulate = {
 					type = "color",
-					default = Vector(1, 1, 1),
+					default = Vector(0, 0, 0),
 					friendly = "VertexColorModulate",
+					recompute = true,
 				},
 				bluramount = {
 					type = "integer",
@@ -1252,7 +1253,7 @@ return {
 					is_flag = true,
 					type = "integer",
 					friendly = "Model",
-					default = false,
+					default = true,
 					description = "flag",
 				},
 			},
