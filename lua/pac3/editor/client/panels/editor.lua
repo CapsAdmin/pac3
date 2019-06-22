@@ -15,6 +15,10 @@ local RENDERSCORE_SIZE = 20
 
 local use_tabs = CreateClientConVar("pac_property_tabs", 1, true)
 
+local zoom_persistent = CreateClientConVar("pac_zoom_persistent", 0, true, false, 'Keep zoom between sessions.')
+local zoom_mousewheel = CreateClientConVar("pac_zoom_mousewheel", 0, true, false, 'Enable zooming with mouse wheel.')
+local zoom_smooth = CreateClientConVar("pac_zoom_smooth", 0, true, false, 'Enable smooth zooming.')
+
 function PANEL:Init()
 	self:SetTitle("")
 	self:SetSizable(true)
@@ -49,20 +53,74 @@ function PANEL:Init()
 	self.exit_button:SetSize(31, 26)
 
 	self.zoomframe = vgui.Create( "DPanel" )
-	self.zoomframe:SetSize( 180, 20 )
+	self.zoomframe:SetSize( 180, 150 )
 
-	local zoomval = pace.ViewFOV or 75
+		self.zoomsettings = vgui.Create("DPanel", self.zoomframe)
+		self.zoomsettings:Dock(TOP)
+		self.zoomsettings:DockPadding(4,0,4,4)
 
-	self.zoom = vgui.Create("DNumSlider", self.zoomframe)
-	self.zoom:SetPos(6,1)
-	self.zoom:SetSize(200, 20)
-	self.zoom:SetMin( 0 )				
-	self.zoom:SetMax( 90 )				
-	self.zoom:SetDecimals( 0 )	
-	self.zoom:SetText("Camera FOV")
-	self.zoom:SetDark(true)
-	self.zoom:SetDefaultValue( zoomval )
-	self.zoom:SetValue( zoomval )
+		local SETTING_MARGIN_TOP = 6
+			self.persistcheckbox = vgui.Create("DCheckBoxLabel", self.zoomsettings)
+			self.persistcheckbox:SetText("Persistent camera FOV")
+			self.persistcheckbox:Dock(TOP)
+			self.persistcheckbox:SetDark(true)
+			self.persistcheckbox:DockMargin(0,SETTING_MARGIN_TOP,0,0)
+			self.persistcheckbox:SetConVar("pac_zoom_persistent")
+
+			self.persistlabel = vgui.Create("DLabel", self.zoomsettings)
+			self.persistlabel:Dock(TOP)
+			self.persistlabel:SetDark(true)
+			self.persistlabel:SetText("Keep the zoom when reopening the editor.")
+			self.persistlabel:SetWrap(true)
+			self.persistlabel:SetAutoStretchVertical(true)
+
+			self.mwheelcheckbox = vgui.Create("DCheckBoxLabel", self.zoomsettings)
+			self.mwheelcheckbox:SetText("Enable mouse wheel")
+			self.mwheelcheckbox:Dock(TOP)
+			self.mwheelcheckbox:SetDark(true)
+			self.mwheelcheckbox:DockMargin(0,SETTING_MARGIN_TOP,0,0)
+			self.mwheelcheckbox:SetConVar("pac_zoom_mousewheel")
+
+			self.mwheellabel = vgui.Create("DLabel", self.zoomsettings)
+			self.mwheellabel:Dock(TOP)
+			self.mwheellabel:SetDark(true)
+			self.mwheellabel:SetText("Enable zooming with mouse wheel.\n+CTRL: Precise\n+SHIFT: Fast")
+			self.mwheellabel:SetWrap(true)
+			self.mwheellabel:SetAutoStretchVertical(true)
+
+			self.smoothcheckbox = vgui.Create("DCheckBoxLabel", self.zoomsettings)
+			self.smoothcheckbox:SetText("Smooth zooming")
+			self.smoothcheckbox:Dock(TOP)
+			self.smoothcheckbox:SetDark(true)
+			self.smoothcheckbox:DockMargin(0,SETTING_MARGIN_TOP,0,0)
+			self.smoothcheckbox:SetConVar("pac_zoom_smooth")
+
+			self.smoothlabel = vgui.Create("DLabel", self.zoomsettings)
+			self.smoothlabel:Dock(TOP)
+			self.smoothlabel:SetDark(true)
+			self.smoothlabel:SetText("Enable smooth zooming.")
+			self.smoothlabel:SetWrap(true)
+			self.smoothlabel:SetAutoStretchVertical(true)
+			
+		self.sliderpanel = vgui.Create("DPanel", self.zoomframe)
+		self.sliderpanel:SetSize(180, 20)
+		self.sliderpanel:Dock(TOP)
+
+			self.zoomslider = vgui.Create("DNumSlider", self.sliderpanel)
+			self.zoomslider:DockPadding(4,0,0,0)
+			self.zoomslider:SetSize(200, 20)
+			self.zoomslider:SetMin( 0 )				
+			self.zoomslider:SetMax( 100 )				
+			self.zoomslider:SetDecimals( 0 )	
+			self.zoomslider:SetText("Camera FOV")
+			self.zoomslider:SetDark(true)
+			self.zoomslider:SetDefaultValue( 75 )
+
+			if zoom_persistent:GetInt() == 1 then
+				self.zoomslider:SetValue( pace.ViewFOV )
+			else
+				self.zoomslider:SetValue( 75 )
+			end
 
 	self.btnClose.Paint = function() end
 
@@ -130,7 +188,6 @@ end
 
 function PANEL:Think(...)
 	if not self.okay then return end
-
 	DFrame.Think(self, ...)
 
 	if self.Hovered and self.m_bSizable and gui.MouseX() > (self.x + self:GetWide() - 20) then
@@ -151,8 +208,6 @@ function PANEL:Think(...)
 	end
 
 	if self.exit_button:IsValid() then
-		--local x, y = self:GetPos()
-		--local w, h = self:GetSize()
 
 		if self:GetPos() + self:GetWide() / 2 < ScrW() / 2 then
 			self.exit_button:SetPos(ScrW() - self.exit_button:GetWide() + 4, -4)
@@ -163,8 +218,11 @@ function PANEL:Think(...)
 
 	if self.zoomframe:IsValid() then
 
-		--local x, y = self:GetPos()
-		--local w, h = self:GetSize()
+		self.zoomsettings:InvalidateLayout( true )
+		self.zoomsettings:SizeToChildren( false, true )
+		
+		self.zoomframe:InvalidateLayout( true )
+		self.zoomframe:SizeToChildren( false, true )
 
 		if self:GetPos() + self:GetWide() / 2 < ScrW() / 2 then
 			self.zoomframe:SetPos(ScrW() - self.zoomframe:GetWide(), ScrH() - self.zoomframe:GetTall())
@@ -173,7 +231,28 @@ function PANEL:Think(...)
 			self.zoomframe:SetPos(0,ScrH() - self.zoomframe:GetTall())
 		end
 
-		pace.SetZoom(self.zoom:GetValue())
+		local x, y = self.zoomframe:GetPos()
+
+		if pace.timeline.IsActive() then
+			self.zoomframe:SetPos(x,y-pace.timeline.frame:GetTall())
+		end
+
+		if zoom_smooth:GetInt() == 1 then
+			pace.SetZoom(self.zoomslider:GetValue(),true)
+		else
+			pace.SetZoom(self.zoomslider:GetValue(),false)
+		end
+
+		local mx, my = gui.MousePos()
+		local x, y = self.zoomframe:GetPos()
+		local xs, xy = self.zoomframe:GetSize()
+
+		if mx > x and my > y and mx < x + xs and my < y + xy then
+			self.zoomsettings:SetVisible(true)
+			self.zoomsettings:RequestFocus()
+		else
+			self.zoomsettings:SetVisible(false)
+		end
 	end
 end
 

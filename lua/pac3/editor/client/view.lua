@@ -45,8 +45,33 @@ function pace.ResetView()
 	end
 end
 
-function pace.SetZoom(frac)
-	pace.ViewFOV = math.Clamp(frac*1, 1, 90)
+function pace.SetZoom(fov, smooth)
+	if smooth then 
+		pace.ViewFOV = Lerp(FrameTime()*10, pace.ViewFOV, math.Clamp(fov,1,100))
+	else
+		pace.ViewFOV = math.Clamp(fov,1,100)
+	end
+end
+
+local worldPanel = vgui.GetWorldPanel();
+function worldPanel.OnMouseWheeled( self, scrollDelta )
+	local zoom_usewheel = GetConVar( "pac_zoom_mousewheel" )
+
+	if zoom_usewheel:GetInt() == 1 then
+		local speed = 10
+
+		if input.IsKeyDown(KEY_LSHIFT) then
+			speed = 50
+		end
+	
+		if input.IsKeyDown(KEY_LCONTROL) then
+			speed = 1
+		end
+
+		if vgui.GetHoveredPanel() == worldPanel then
+			pace.Editor.zoomslider:SetValue(pace.ViewFOV - (scrollDelta * speed))
+		end
+	end
 end
 
 local held_ang = Angle(0,0,0)
@@ -207,6 +232,8 @@ local function CalcDrag()
 	--[[if input.IsKeyDown(KEY_LALT) then
 		pace.ViewPos = pace.ViewPos + pace.ViewAngles:Up() * -mult * ftime
 	end]]
+
+	
 end
 
 local follow_entity = CreateClientConVar("pac_camera_follow_entity", "0", true)

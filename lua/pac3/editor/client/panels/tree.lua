@@ -300,7 +300,7 @@ function PANEL:AddNode(...)
 	add_button:SetImage(pace.MiscIcons.new)
 	add_button:SetSize(16, 16)
 	add_button:SetVisible(false)
-	add_button.DoClick = function() add_parts_menu(node) end
+	add_button.DoClick = function() add_parts_menu(node) pace.Call("PartSelected", node.part) end
 	add_button.DoRightClick = function() node:DoRightClick() end
 	node.add_button = add_button
 	node.SetModel = self.SetModel
