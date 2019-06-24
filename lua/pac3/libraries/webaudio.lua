@@ -648,6 +648,7 @@ do
 	end
 
 	function META:Remove()
+		webaudio.streams[self:GetId())] = nil
 		self:Stop()
 		run_javascript(string.format("DestroyStream(%i)", self:GetId()))
 		setmetatable(self, getmetatable(NULL))
