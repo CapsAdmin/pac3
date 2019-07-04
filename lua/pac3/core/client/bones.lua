@@ -5,6 +5,7 @@ local Angle = Angle
 local Vector = Vector
 local util_QuickTrace = util.QuickTrace
 local pac = pac
+local pac_isCameraAllowed = pac.CreateClientConVarFast("pac_allow_camera_bone", "1", true, "boolean")
 
 pac.BoneNameReplacements =
 {
@@ -188,17 +189,27 @@ function pac.GetBonePosAng(ent, id, parent)
 	end
 
 	if id == "camera" then
-		return pac.EyePos, pac.EyeAng
+		if pac_isCameraAllowed() then
+			return pac.EyePos, pac.EyeAng
+		else
+			return ent:EyePos(), ent:EyeAngles()
+		end
 	end
 
 	if id == "player_eyes" then
+		local oldEnt = ent -- Track reference to the original entity in case we aren't allowed to draw here
 		local ent = ent.pac_traceres and ent.pac_traceres.Entity or util_QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()}).Entity
+		local allowed = pac_isCameraAllowed()
 
-		if ent:IsValid() then
+		if ent:IsValid() and (allowed or ent ~= pac.LocalPlayer) then -- Make sure we don't draw on viewer's screen if we aren't allowed to
 			return ent:EyePos(), ent:EyeAngles()
 		end
 
-		return pac.EyePos, pac.EyeAng
+		if allowed then
+			return pac.EyePos, pac.EyeAng
+		else
+			return oldEnt:EyePos(), oldEnt:EyeAngles()
+		end
 	end
 
 	if id == "pos_ang" then
