@@ -5,7 +5,7 @@ local Angle = Angle
 local Vector = Vector
 local util_QuickTrace = util.QuickTrace
 local pac = pac
-local pac_isCameraAllowed = pac.CreateClientConVarFast("pac_allow_camera_bone", "1", true, "boolean")
+local pac_isCameraAllowed = pac.CreateClientConVarFast("pac_enable_camera_as_bone", "1", true, "boolean")
 
 pac.BoneNameReplacements =
 {
