@@ -512,21 +512,33 @@ PART.Inputs = {
 
 	light_amount_r = function(self, parent)
 		if parent:IsValid() then
-			return render.GetLightColor(parent.cached_pos):ToColor().r
+			if parent.Group == "experimental" then
+				return render.GetLightColor(parent.cached_pos):ToColor().r / 255
+			else 
+				return render.GetLightColor(parent.cached_pos):ToColor().r
+			end
 		end
 
 		return 0
 	end,
 	light_amount_g = function(self, parent)
 		if parent:IsValid() then
-			return render.GetLightColor(parent.cached_pos):ToColor().g
+			if parent.Group == "experimental" then
+				return render.GetLightColor(parent.cached_pos):ToColor().g / 255
+			else 
+				return render.GetLightColor(parent.cached_pos):ToColor().g
+			end
 		end
 
 		return 0
 	end,
 	light_amount_b = function(self, parent)
 		if parent:IsValid() then
-			return render.GetLightColor(parent.cached_pos):ToColor().b
+			if parent.Group == "experimental" then
+				return render.GetLightColor(parent.cached_pos):ToColor().b / 255
+			else 
+				return render.GetLightColor(parent.cached_pos):ToColor().b
+			end
 		end
 
 		return 0
@@ -542,21 +554,33 @@ PART.Inputs = {
 
 	ambient_light_r = function(self, parent)
 		if parent:IsValid() then
-			return render.GetAmbientLightColor():ToColor().r
+			if parent.Group == "experimental" then
+				return render.GetAmbientLightColor():ToColor().r / 255
+			else 
+				return render.GetAmbientLightColor():ToColor().r 
+			end
 		end
 
 		return 0
 	end,
 	ambient_light_g = function(self, parent)
 		if parent:IsValid() then
-			return render.GetAmbientLightColor():ToColor().g
+			if parent.Group == "experimental" then
+				return render.GetAmbientLightColor():ToColor().g / 255
+			else 
+				return render.GetAmbientLightColor():ToColor().g 
+			end
 		end
 
 		return 0
 	end,
 	ambient_light_b = function(self, parent)
 		if parent:IsValid() then
-			return render.GetAmbientLightColor():ToColor().b
+			if parent.Group == "experimental" then
+				return render.GetAmbientLightColor():ToColor().b / 255
+			else 
+				return render.GetAmbientLightColor():ToColor().b 
+			end
 		end
 
 		return 0
@@ -600,57 +624,81 @@ PART.Inputs = {
 		return 0
 	end,
 
-	player_color_r = function(self)
+	player_color_r = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetPlayerColor().r
+			if parent.Group == "experimental" then
+				return owner:GetPlayerColor().r
+			else
+				return owner:GetPlayerColor().r * 255
+			end
 		end
 
 		return 1
 	end,
-	player_color_g = function(self)
+	player_color_g = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetPlayerColor().g
+			if parent.Group == "experimental" then
+				return owner:GetPlayerColor().g
+			else
+				return owner:GetPlayerColor().g * 255
+			end
 		end
 
 		return 1
 	end,
-	player_color_b = function(self)
+	player_color_b = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetPlayerColor().b
+			if parent.Group == "experimental" then
+				return owner:GetPlayerColor().b
+			else
+				return owner:GetPlayerColor().b * 255
+			end
 		end
 
 		return 1
 	end,
 
-	weapon_color_r = function(self)
+	weapon_color_r = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetWeaponColor().r
+			if parent.Group == "experimental" then
+				return owner:GetWeaponColor().r
+			else
+				return owner:GetWeaponColor().r * 255
+			end
 		end
 
 		return 1
 	end,
-	weapon_color_g = function(self)
+	weapon_color_g = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetWeaponColor().g
+			if parent.Group == "experimental" then
+				return owner:GetWeaponColor().g
+			else
+				return owner:GetWeaponColor().g * 255
+			end
 		end
 
 		return 1
 	end,
-	weapon_color_b = function(self)
+	weapon_color_b = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetWeaponColor().b
+			if parent.Group == "experimental" then
+				return owner:GetWeaponColor().b
+			else
+				return owner:GetWeaponColor().b * 255
+			end
 		end
 
 		return 1
@@ -754,7 +802,11 @@ PART.Inputs = {
 
 		local c = HSVToColor(h%360, s, v)
 
-		return c.r, c.g, c.b
+		if parent.Group == "experimental" then
+			return c.r/255, c.g/255, c.b/255
+		else
+			return c.r, c.g, c.b
+		end
 	end,
 
 	lerp = function(self, parent, m, a, b)
