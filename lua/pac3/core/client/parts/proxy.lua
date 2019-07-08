@@ -960,6 +960,8 @@ function PART:RunExpression(ExpressionFunc)
 	return pcall(ExpressionFunc)
 end
 
+local oldclass = ""
+
 function PART:OnThink()
 	local parent = self:GetTarget()
 
@@ -970,9 +972,10 @@ function PART:OnThink()
 
 	local ExpressionFunc = self.ExpressionFunc
 
-	if not ExpressionFunc then
+	if not ExpressionFunc or oldclass ~= parent.ClassName then
 		self:SetExpression(self.Expression)
 		ExpressionFunc = self.ExpressionFunc
+		oldclass = parent.ClassName
 	end
 
 	if ExpressionFunc then
