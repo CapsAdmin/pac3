@@ -875,6 +875,7 @@ function PART:SetExpression(str)
 
 	if str and str ~= "" then
 		local parent = self:GetTarget()
+		self.old_class = parent.ClassName
 
 		if not parent:IsValid() then return end
 
@@ -960,8 +961,6 @@ function PART:RunExpression(ExpressionFunc)
 	return pcall(ExpressionFunc)
 end
 
-local oldclass = ""
-
 function PART:OnThink()
 	local parent = self:GetTarget()
 
@@ -972,10 +971,10 @@ function PART:OnThink()
 
 	local ExpressionFunc = self.ExpressionFunc
 
-	if not ExpressionFunc or oldclass ~= parent.ClassName then
+	if not ExpressionFunc or self.old_class ~= parent.ClassName then
 		self:SetExpression(self.Expression)
 		ExpressionFunc = self.ExpressionFunc
-		oldclass = parent.ClassName
+		self.old_class = parent.ClassName
 	end
 
 	if ExpressionFunc then
