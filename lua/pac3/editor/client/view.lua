@@ -68,7 +68,7 @@ function worldPanel.OnMouseWheeled( self, scrollDelta )
 			speed = 1
 		end
 
-		if vgui.GetHoveredPanel() == worldPanel then
+		if vgui.GetHoveredPanel() == worldPanel and IsValid(pace.Editor) then
 			pace.Editor.zoomslider:SetValue(pace.ViewFOV - (scrollDelta * speed))
 		end
 	end
