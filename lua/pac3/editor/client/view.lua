@@ -55,21 +55,23 @@ end
 
 local worldPanel = vgui.GetWorldPanel();
 function worldPanel.OnMouseWheeled( self, scrollDelta )
-	local zoom_usewheel = GetConVar( "pac_zoom_mousewheel" )
+	if IsValid(pace.Editor) then
+		local zoom_usewheel = GetConVar( "pac_zoom_mousewheel" )
 
-	if zoom_usewheel:GetInt() == 1 then
-		local speed = 10
+		if zoom_usewheel:GetInt() == 1 then
+			local speed = 10
 
-		if input.IsKeyDown(KEY_LSHIFT) then
-			speed = 50
-		end
-	
-		if input.IsKeyDown(KEY_LCONTROL) then
-			speed = 1
-		end
+			if input.IsKeyDown(KEY_LSHIFT) then
+				speed = 50
+			end
 
-		if vgui.GetHoveredPanel() == worldPanel then
-			pace.Editor.zoomslider:SetValue(pace.ViewFOV - (scrollDelta * speed))
+			if input.IsKeyDown(KEY_LCONTROL) then
+				speed = 1
+			end
+
+			if vgui.GetHoveredPanel() == worldPanel then
+				pace.Editor.zoomslider:SetValue(pace.ViewFOV - (scrollDelta * speed))
+			end
 		end
 	end
 end
