@@ -475,6 +475,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 						self[property_name] = val
 						local mat = self:GetRawMaterial()
 						mat:SetVector(key, val)
+						if info.recompute then mat:Recompute() end
 					end
 				elseif info.type == "vec4" then
 					-- need vec4 type

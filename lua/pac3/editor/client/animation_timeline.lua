@@ -634,6 +634,14 @@ do
 	function TIMELINE:Think()
 		DFrame.Think(self)
 
+		if pace.Editor:GetPos() + pace.Editor:GetWide() / 2 < ScrW() / 2 then
+			self:SetSize(ScrW()-(pace.Editor.x+pace.Editor:GetWide()),93)
+			self:SetPos(pace.Editor.x+pace.Editor:GetWide(),ScrH()-self:GetTall())
+		else
+			self:SetSize(ScrW()-(ScrW()-pace.Editor.x),93)
+			self:SetPos(0,ScrH()-self:GetTall())
+		end
+		
 		if input.IsKeyDown(KEY_SPACE) then
 			if not self.toggled then
 				self:Toggle()

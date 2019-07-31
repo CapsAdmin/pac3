@@ -490,7 +490,11 @@ function PART:ApplyMatrix()
 		mat:Rotate(self.Angles + self.AngleOffset)
 	end
 	mat:Scale(self.Scale * self.Size)
-	ent:EnableMatrix("RenderMultiply", mat)
+	if mat:IsIdentity() then
+		ent:DisableMatrix("RenderMultiply")
+	else
+		ent:EnableMatrix("RenderMultiply", mat)
+	end
 end
 
 function PART:SetSize(var)

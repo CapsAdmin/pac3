@@ -873,7 +873,11 @@ function pac.SetModelScale(ent, scale, size, legacy_scale)
 			--local x,y,z = ent.pac_model_scale.x, ent.pac_model_scale.y, ent.pac_model_scale.z
 
 			mat:Scale(Vector(x,y,z))
-			ent:EnableMatrix("RenderMultiply", mat)
+			if mat:IsIdentity() then
+				ent:DisableMatrix("RenderMultiply")
+			else
+				ent:EnableMatrix("RenderMultiply", mat)
+			end
 		end
 
 		if size then
