@@ -750,6 +750,7 @@ do -- drawing
 						if isply then
 							if not Alive(ent) and pac_sv_hide_outfit_on_death:GetBool() then
 								pac.HideEntityParts(ent)
+								continue
 							else
 								local rag = ent.pac_ragdoll or NULL
 
