@@ -737,107 +737,111 @@ do -- drawing
 			draw_dist = math.min(sv_draw_dist, draw_dist)
 
 			for key, ent in pairs(pac.drawn_entities) do
-				if IsValid(ent) then
-					local isply = ent:IsPlayer()
-					ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
-					dst = ent:EyePos():Distance(pac.EyePos)
-					radius = ent:BoundingRadius() * 3 * (ent:GetModelScale() or 1)
+				if not IsValid(ent) then
+					pac.drawn_entities[key] = nil
+					goto CONTINUE
+				end
 
-					if ent:GetNoDraw() or (isply and not Alive(ent) and pac_sv_hide_outfit_on_death:GetBool()) then
-						pac.HideEntityParts(ent)
-					else
-						if isply then
-							local rag = ent.pac_ragdoll or NULL
+				local isply = ent:IsPlayer()
+				ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
+				dst = ent:EyePos():Distance(pac.EyePos)
+				radius = ent:BoundingRadius() * 3 * (ent:GetModelScale() or 1)
 
-							if IsValid(rag) then
-								if ent.pac_death_hide_ragdoll then
-									rag:SetRenderMode(RENDERMODE_TRANSALPHA)
+				if ent:GetNoDraw() or (isply and not Alive(ent) and pac_sv_hide_outfit_on_death:GetBool()) then
+					pac.HideEntityParts(ent)
+					goto CONTINUE
+				end
 
-									local c = rag:GetColor()
-									c.a = 0
-									rag:SetColor(c)
-									rag:SetNoDraw(true)
-									if rag:GetParent() ~= ent then
-										rag:SetParent(ent)
-										rag:AddEffects(EF_BONEMERGE)
-									end
+				if isply then
+					local rag = ent.pac_ragdoll or NULL
 
-									if ent.pac_draw_player_on_death then
-										ent:DrawModel()
-									end
-								elseif ent.pac_death_ragdollize then
-									rag:SetNoDraw(true)
+					if IsValid(rag) then
+						if ent.pac_death_hide_ragdoll then
+							rag:SetRenderMode(RENDERMODE_TRANSALPHA)
 
-									if not ent.pac_hide_entity then
-										local col = ent.pac_color or dummyv
-										local bri = ent.pac_brightness or 1
-
-										render_ModelMaterialOverride(ent.pac_materialm)
-										render_SetColorModulation(col.x * bri, col.y * bri, col.z * bri)
-										render_SetBlend(ent.pac_alpha or 1)
-
-										if ent.pac_invert then render_CullMode(1) end
-										if ent.pac_fullbright then render_SuppressEngineLighting(true) end
-
-										rag:DrawModel()
-										rag:CreateShadow()
-
-										render_ModelMaterialOverride()
-										render_SetColorModulation(1,1,1)
-										render_SetBlend(1)
-
-										render_CullMode(0)
-										render_SuppressEngineLighting(false)
-									end
-								end
+							local c = rag:GetColor()
+							c.a = 0
+							rag:SetColor(c)
+							rag:SetNoDraw(true)
+							if rag:GetParent() ~= ent then
+								rag:SetParent(ent)
+								rag:AddEffects(EF_BONEMERGE)
 							end
 
-							if radius < 32 then
-								radius = 128
+							if ent.pac_draw_player_on_death then
+								ent:DrawModel()
 							end
-						elseif not ent:IsNPC() then
-							radius = radius * 4
-						end
+						elseif ent.pac_death_ragdollize then
+							rag:SetNoDraw(true)
 
-						local cond = ent.IsPACWorldEntity -- or draw_dist == -1 or -- i assume this is a leftover from debugging?
-						-- because we definitely don't want to draw ANY outfit present, right?
+							if not ent.pac_hide_entity then
+								local col = ent.pac_color or dummyv
+								local bri = ent.pac_brightness or 1
 
-						if not cond then
-							cond = ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or
-								ent.pac_camera and ent.pac_camera:IsValid()
-						end
+								render_ModelMaterialOverride(ent.pac_materialm)
+								render_SetColorModulation(col.x * bri, col.y * bri, col.z * bri)
+								render_SetBlend(ent.pac_alpha or 1)
 
-						if not cond and ent ~= pac.LocalPlayer then
-							cond = (
-								ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance <= dst) or
-								dst <= draw_dist
-							) and (
-								fovoverride or
-								nodrawdelay(dst < radius * 1.25  or
-								util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0,ent)
-							)
-						end
+								if ent.pac_invert then render_CullMode(1) end
+								if ent.pac_fullbright then render_SuppressEngineLighting(true) end
 
-						ent.pac_draw_cond = cond
+								rag:DrawModel()
+								rag:CreateShadow()
 
-						if cond then
-							ent.pac_model = ent:GetModel() -- used for cached functions
+								render_ModelMaterialOverride()
+								render_SetColorModulation(1,1,1)
+								render_SetBlend(1)
 
-							pac.ShowEntityParts(ent)
-
-							pac.RenderOverride(ent, "opaque")
-						else
-							if forced_rendering then
-								forced_rendering = false
-								return
+								render_CullMode(0)
+								render_SuppressEngineLighting(false)
 							end
-
-							pac.HideEntityParts(ent)
 						end
 					end
-				else
-					pac.drawn_entities[key] = nil
+
+					if radius < 32 then
+						radius = 128
+					end
+				elseif not ent:IsNPC() then
+					radius = radius * 4
 				end
+
+				local cond = ent.IsPACWorldEntity -- or draw_dist == -1 or -- i assume this is a leftover from debugging?
+				-- because we definitely don't want to draw ANY outfit present, right?
+
+				if not cond then
+					cond = ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or
+						ent.pac_camera and ent.pac_camera:IsValid()
+				end
+
+				if not cond and ent ~= pac.LocalPlayer then
+					cond = (
+						ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance <= dst) or
+						dst <= draw_dist
+					) and (
+						fovoverride or
+						nodrawdelay(dst < radius * 1.25  or
+						util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0,ent)
+					)
+				end
+
+				ent.pac_draw_cond = cond
+
+				if cond then
+					ent.pac_model = ent:GetModel() -- used for cached functions
+
+					pac.ShowEntityParts(ent)
+
+					pac.RenderOverride(ent, "opaque")
+				else
+					if forced_rendering then
+						forced_rendering = false
+						return
+					end
+
+					pac.HideEntityParts(ent)
+				end
+
+				::CONTINUE::
 			end
 		end)
 
