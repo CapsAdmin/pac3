@@ -331,6 +331,7 @@ pac.AddHook("Think", "events", function()
 			if IsValid(rag) then
 				if ply.pac_ragdoll ~= rag then
 					ply.pac_ragdoll = rag
+					rag.pac_ragdoll_player_owner = ply
 
 					if ply.pac_death_physics_parts then
 						if ply.pac_physics_died then return end
@@ -748,7 +749,10 @@ do -- drawing
 				dst = ent:EyePos():Distance(pac.EyePos)
 				radius = ent:BoundingRadius() * 3 * (ent:GetModelScale() or 1)
 
-				if ent:GetNoDraw() or (isply and not Alive(ent) and pac_sv_hide_outfit_on_death:GetBool()) then
+				if ent:GetNoDraw() or
+					isply and not Alive(ent) and pac_sv_hide_outfit_on_death:GetBool() or
+					IsValid(ent.pac_ragdoll_player_owner) and not Alive(ent.pac_ragdoll_player_owner) and pac_sv_hide_outfit_on_death:GetBool()
+				then
 					pac.HideEntityParts(ent)
 					goto CONTINUE
 				end
