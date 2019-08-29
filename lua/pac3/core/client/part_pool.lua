@@ -326,10 +326,11 @@ pac.AddHook("Think", "events", function()
 			not Alive(ply)
 		then
 			local rag = ply:GetRagdollEntity()
+			rag = hook.Run("PACChooseDeathRagdoll", ply, rag) or rag
 
 			if IsValid(rag) then
 				if ply.pac_ragdoll ~= rag then
-					ply.pac_ragdoll = hook.Run("PACChooseDeathRagdoll", ply, rag) or rag
+					ply.pac_ragdoll = rag
 
 					if ply.pac_death_physics_parts then
 						if ply.pac_physics_died then return end
