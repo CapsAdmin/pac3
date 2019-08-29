@@ -738,68 +738,62 @@ do -- drawing
 
 			for key, ent in pairs(pac.drawn_entities) do
 				if IsValid(ent) then
+					local isply = ent:IsPlayer()
 					ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
 					dst = ent:EyePos():Distance(pac.EyePos)
 					radius = ent:BoundingRadius() * 3 * (ent:GetModelScale() or 1)
 
-					if ent:GetNoDraw() then
+					if ent:GetNoDraw() or (isply and not Alive(ent) and pac_sv_hide_outfit_on_death:GetBool()) then
 						pac.HideEntityParts(ent)
 					else
-						local isply = type(ent) == 'Player'
-
 						if isply then
-							if not Alive(ent) and pac_sv_hide_outfit_on_death:GetBool() then
-								pac.HideEntityParts(ent)
-								continue
-							else
-								local rag = ent.pac_ragdoll or NULL
+							local rag = ent.pac_ragdoll or NULL
 
-								if IsValid(rag) then
-									if ent.pac_death_hide_ragdoll then
-										rag:SetRenderMode(RENDERMODE_TRANSALPHA)
+							if IsValid(rag) then
+								if ent.pac_death_hide_ragdoll then
+									rag:SetRenderMode(RENDERMODE_TRANSALPHA)
 
-										local c = rag:GetColor()
-										c.a = 0
-										rag:SetColor(c)
-										rag:SetNoDraw(true)
-										if rag:GetParent() ~= ent then
-											rag:SetParent(ent)
-											rag:AddEffects(EF_BONEMERGE)
-										end
+									local c = rag:GetColor()
+									c.a = 0
+									rag:SetColor(c)
+									rag:SetNoDraw(true)
+									if rag:GetParent() ~= ent then
+										rag:SetParent(ent)
+										rag:AddEffects(EF_BONEMERGE)
+									end
 
-										if ent.pac_draw_player_on_death then
-											ent:DrawModel()
-										end
-									elseif ent.pac_death_ragdollize then
-										rag:SetNoDraw(true)
+									if ent.pac_draw_player_on_death then
+										ent:DrawModel()
+									end
+								elseif ent.pac_death_ragdollize then
+									rag:SetNoDraw(true)
 
-										if not ent.pac_hide_entity then
-											local col = ent.pac_color or dummyv
-											local bri = ent.pac_brightness or 1
+									if not ent.pac_hide_entity then
+										local col = ent.pac_color or dummyv
+										local bri = ent.pac_brightness or 1
 
-											render_ModelMaterialOverride(ent.pac_materialm)
-											render_SetColorModulation(col.x * bri, col.y * bri, col.z * bri)
-											render_SetBlend(ent.pac_alpha or 1)
+										render_ModelMaterialOverride(ent.pac_materialm)
+										render_SetColorModulation(col.x * bri, col.y * bri, col.z * bri)
+										render_SetBlend(ent.pac_alpha or 1)
 
-											if ent.pac_invert then render_CullMode(1) end
-											if ent.pac_fullbright then render_SuppressEngineLighting(true) end
+										if ent.pac_invert then render_CullMode(1) end
+										if ent.pac_fullbright then render_SuppressEngineLighting(true) end
 
-											rag:DrawModel()
-											rag:CreateShadow()
+										rag:DrawModel()
+										rag:CreateShadow()
 
-											render_ModelMaterialOverride()
-											render_SetColorModulation(1,1,1)
-											render_SetBlend(1)
+										render_ModelMaterialOverride()
+										render_SetColorModulation(1,1,1)
+										render_SetBlend(1)
 
-											render_CullMode(0)
-											render_SuppressEngineLighting(false)
-										end
+										render_CullMode(0)
+										render_SuppressEngineLighting(false)
 									end
 								end
+							end
 
-								if radius < 32 then
-									radius = 128
-								end
+							if radius < 32 then
+								radius = 128
 							end
 						elseif not ent:IsNPC() then
 							radius = radius * 4
