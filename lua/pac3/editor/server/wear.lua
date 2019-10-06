@@ -408,7 +408,7 @@ function pace.RequestOutfits(ply)
 
 			if owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
 				for key, outfit in pairs(outfits) do
-					if not outfit.wear_filter or table.HasValue(outfit.wear_filter, tostring(ply:UniqueID())) then
+					if not outfit.wear_filter or table.HasValue(outfit.wear_filter, ply:UniqueID()) then
 						pace.SubmitPart(outfit, ply)
 					end
 				end
