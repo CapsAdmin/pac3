@@ -9,19 +9,19 @@ do -- to server
 		if pac_wear_friends_only:GetBool() then
 			for i, v in ipairs(player.GetAll()) do
 				if v:GetFriendStatus() == "friend" then
-					table.insert(filter, tonumber(v:UniqueID()))
+					table.insert(filter, v:UniqueID())
 				end
 			end
 		elseif pac_wear_reverse:GetBool() then
 			for i, v in ipairs(player.GetAll()) do
 				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') == '1' then
-					table.insert(filter, tonumber(v:UniqueID()))
+					table.insert(filter, v:UniqueID())
 				end
 			end
 		else
 			for i, v in ipairs(player.GetAll()) do
 				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') ~= '1' then
-					table.insert(filter, tonumber(v:UniqueID()))
+					table.insert(filter, v:UniqueID())
 				end
 			end
 		end
@@ -37,7 +37,7 @@ do -- to server
 		if #filter>=256 then error("Filter too large! " .. #filter) end
 		net.WriteUInt(#filter, 8)
 		for i, id in ipairs(filter) do
-			net.WriteUInt(id, 32)
+			net.WriteString(id)
 		end
 
 		net.SendToServer()
@@ -421,6 +421,3 @@ do
 		end
 	end)
 end
-
-
-

@@ -408,7 +408,7 @@ function pace.RequestOutfits(ply)
 
 			if owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
 				for key, outfit in pairs(outfits) do
-					if not outfit.wear_filter or table.HasValue(outfit.wear_filter, tonumber(ply:UniqueID())) then
+					if not outfit.wear_filter or table.HasValue(outfit.wear_filter, ply:UniqueID()) then
 						pace.SubmitPart(outfit, ply)
 					end
 				end
@@ -448,7 +448,7 @@ local function pac_update_playerfilter(len, ply)
 	local filter = {}
 	local filterCount = net.ReadUInt(8)
 	for i=1, filterCount do
-		table.insert(filter, net.ReadUInt(32))
+		table.insert(filter, net.ReadString())
 	end
 
 	local players = {}
