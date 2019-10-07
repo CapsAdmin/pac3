@@ -9,19 +9,19 @@ do -- to server
 		if pac_wear_friends_only:GetBool() then
 			for i, v in ipairs(player.GetAll()) do
 				if v:GetFriendStatus() == "friend" then
-					table.insert(filter, v:UniqueID())
+					table.insert(filter, v:SteamID():sub(7))
 				end
 			end
 		elseif pac_wear_reverse:GetBool() then
 			for i, v in ipairs(player.GetAll()) do
 				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') == '1' then
-					table.insert(filter, v:UniqueID())
+					table.insert(filter, v:SteamID():sub(7))
 				end
 			end
 		else
 			for i, v in ipairs(player.GetAll()) do
 				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') ~= '1' then
-					table.insert(filter, v:UniqueID())
+					table.insert(filter, v:SteamID():sub(7))
 				end
 			end
 		end
@@ -34,8 +34,11 @@ do -- to server
 
 		net.Start('pac_update_playerfilter')
 
-		if #filter>=256 then error("Filter too large! " .. #filter) end
+		-- gmod limit is 127 players, which is also almost impossible to achieve in regular conditions
+		-- since this push source engine limits way too much
+		if #filter > 128 then error("Filter too large! " .. #filter) end
 		net.WriteUInt(#filter, 8)
+
 		for i, id in ipairs(filter) do
 			net.WriteString(id)
 		end
