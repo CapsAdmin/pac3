@@ -34,9 +34,6 @@ do -- to server
 
 		net.Start('pac_update_playerfilter')
 
-		-- gmod limit is 127 players, which is also almost impossible to achieve in regular conditions
-		-- since this push source engine limits way too much
-		if #filter > 128 then error("Filter too large! " .. #filter) end
 		net.WriteUInt(#filter, 8)
 
 		for i, id in ipairs(filter) do

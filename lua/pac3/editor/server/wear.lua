@@ -327,13 +327,18 @@ function pace.HandleReceivedData(ply, data)
 	data.uid = ply:UniqueID()
 
 	if data.wear_filter then
-		local assemble = {}
+		if #data.wear_filter <= game.MaxPlayers() then
+			local assemble = {}
 
-		for i, steamid in ipairs(data.wear_filter) do
-			table.insert(assemble, "STEAM_" .. tostring(steamid))
+			for i, steamid in ipairs(data.wear_filter) do
+				table.insert(assemble, "STEAM_" .. tostring(steamid))
+			end
+
+			data.wear_filter = assemble
+		else
+			pac.Message("Player ", ply, " tried to submit extraordinary wear filter size of ", #data.wear_filter, ", dropping.")
+			data.wear_filter = nil
 		end
-
-		data.wear_filter = assemble
 	end
 
 	if type(data.part) == "table" and data.part.self then
@@ -456,6 +461,12 @@ local function pac_update_playerfilter(len, ply)
 	end
 
 	local filter = {}
+	local sizeof = net.ReadUInt(8)
+
+	if sizeof > game.MaxPlayers() then
+		pac.Message("Player ", ply, " tried to submit extraordinary wear filter size of ", sizeof, ", dropping.")
+		return
+	end
 
 	for i = 1, net.ReadUInt(8) do
 		table.insert(filter, "STEAM_" .. net.ReadString())
