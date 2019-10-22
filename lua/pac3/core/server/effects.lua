@@ -51,8 +51,8 @@ net.Receive("pac_request_precache", function(len, pl)
 				queue[pl] = nil
 			else
 				timer.Simple(0.5, processQueue)
+				pac.PrecacheEffect(table.remove(plqueue,1))
 			end
-			pac.PrecacheEffect(table.remove(plqueue,1))
 		end
 		processQueue()
 	end
