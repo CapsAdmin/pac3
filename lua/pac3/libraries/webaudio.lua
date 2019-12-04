@@ -644,14 +644,14 @@ do
 	end
 
 	function META:IsValid()
-		return true
+		return self.invalid == nil
 	end
 
 	function META:Remove()
 		webaudio.streams[self:GetId()] = nil
 		self:Stop()
 		run_javascript(string.format("DestroyStream(%i)", self:GetId()))
-		setmetatable(self, getmetatable(NULL))
+		self.invalid = true
 	end
 
 	-- Browser
