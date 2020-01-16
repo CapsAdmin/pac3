@@ -220,15 +220,13 @@ function PART:StopSound()
 	for key, streamdata in pairs(self.streams) do
 		local stream = streamdata.stream
 		if stream:IsValid() then
-			if self.StopOnHide then
-				streamdata.PlayAfterLoad = nil
-				streamdata.StartPlaying = nil
-				if self.PauseOnHide then
-					stream:Pause()
-				else
-					pcall(function() stream:SetTime(0) end)
-					stream:Pause()
-				end
+			streamdata.PlayAfterLoad = nil
+			streamdata.StartPlaying = nil
+			if self.PauseOnHide then
+				stream:Pause()
+			else
+				pcall(function() stream:SetTime(0) end)
+				stream:Pause()
 			end
 		else
 			self.streams[key] = nil
@@ -243,7 +241,9 @@ function PART:OnShow(from_rendering)
 end
 
 function PART:OnHide()
-	self:StopSound()
+	if self.StopOnHide then
+		self:StopSound()
+	end
 end
 
 function PART:OnRemove()
