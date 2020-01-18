@@ -176,7 +176,6 @@ function PART:SetupURLStreamsNow(URL)
 			end
 		end
 
-
 		self.streams[url] = {Loading = true, valid = true}
 
 		sound.PlayURL(url, flags, callback)
@@ -219,7 +218,8 @@ end
 function PART:StopSound()
 	for key, streamdata in pairs(self.streams) do
 		local stream = streamdata.stream
-		if stream:IsValid() then
+
+		if IsValid(stream) then
 			streamdata.PlayAfterLoad = nil
 			streamdata.StartPlaying = nil
 			if self.PauseOnHide then
