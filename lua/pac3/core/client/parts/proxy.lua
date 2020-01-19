@@ -379,39 +379,6 @@ PART.Inputs = {
 
 		return 0
 	end,
-	owner_velocity_world_forward = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			return self:GetVelocity(owner)[1]
-		end
-
-		return 0
-	end,
-	owner_velocity_world_right = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			return self:GetVelocity(owner)[2]
-		end
-
-		return 0
-	end,
-	owner_velocity_world_up = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			return self:GetVelocity(owner)[3]
-		end
-
-		return 0
-	end,
 
 	-- outfit owner vel increase
 	owner_velocity_length_increase = function(self, parent)
@@ -462,45 +429,6 @@ PART.Inputs = {
 			local vel = self:CalcEyeAngles(owner):Up():Dot(self:GetVelocity(owner))
 			self.ov_up_i = (self.ov_up_i or 0) + vel * FrameTime()
 			return self.ov_up_i
-		end
-
-		return 0
-	end,
-	owner_velocity_world_forward_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			local vel = self:GetVelocity(owner)[1]
-			self.ov_wforward_i = (self.ov_wforward_i or 0) + vel * FrameTime()
-			return self.ov_wforward_i
-		end
-
-		return 0
-	end,
-	owner_velocity_world_right_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			local vel = self:GetVelocity(owner)[2]
-			self.ov_wright_i = (self.ov_wright_i or 0) + vel * FrameTime()
-			return self.ov_wright_i
-		end
-
-		return 0
-	end,
-	owner_velocity_world_up_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			local vel = self:GetVelocity(owner)[3]
-			self.ov_wup_i = (self.ov_wup_i or 0) + vel * FrameTime()
-			return self.ov_wup_i
 		end
 
 		return 0
