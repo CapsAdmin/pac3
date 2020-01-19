@@ -217,19 +217,20 @@ end
 
 function PART:StopSound()
 	for key, streamdata in pairs(self.streams) do
+		streamdata.PlayAfterLoad = nil
+		streamdata.StartPlaying = nil
 		local stream = streamdata.stream
-
-		if IsValid(stream) then
-			streamdata.PlayAfterLoad = nil
-			streamdata.StartPlaying = nil
-			if self.PauseOnHide then
-				stream:Pause()
+		if stream then
+			if stream:IsValid() then
+				if self.PauseOnHide then
+					stream:Pause()
+				else
+					pcall(function() stream:SetTime(0) end)
+					stream:Pause()
+				end
 			else
-				pcall(function() stream:SetTime(0) end)
-				stream:Pause()
+				self.streams[key] = nil
 			end
-		elseif not streamdata.Loading then
-			self.streams[key] = nil
 		end
 	end
 end
