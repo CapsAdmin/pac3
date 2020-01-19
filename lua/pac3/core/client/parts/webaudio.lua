@@ -228,7 +228,7 @@ function PART:StopSound()
 				pcall(function() stream:SetTime(0) end)
 				stream:Pause()
 			end
-		else
+		elseif not streamdata.Loading then
 			self.streams[key] = nil
 		end
 	end
