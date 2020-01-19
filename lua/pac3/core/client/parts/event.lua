@@ -770,6 +770,48 @@ PART.OldEvents = {
 			return 0
 		end,
 	},
+	owner_velocity_world_forward = {
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, speed)
+			local owner = self:GetOwner(self.RootOwner)
+
+			owner = try_viewmodel(owner)
+
+			if owner:IsValid() then
+				return self:NumberOperator(owner:GetVelocity()[1], speed)
+			end
+
+			return 0
+		end,
+	},
+	owner_velocity_world_right = {
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, speed)
+			local owner = self:GetOwner(self.RootOwner)
+
+			owner = try_viewmodel(owner)
+
+			if owner:IsValid() then
+				return self:NumberOperator(owner:GetVelocity()[2], speed)
+			end
+
+			return 0
+		end,
+	},
+	owner_velocity_world_up = {
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, speed)
+			local owner = self:GetOwner(self.RootOwner)
+
+			owner = try_viewmodel(owner)
+
+			if owner:IsValid() then
+				return self:NumberOperator(owner:GetVelocity()[3], speed)
+			end
+
+			return 0
+		end,
+	},
 
 	-- parent part
 	parent_velocity_length = {
