@@ -28,6 +28,7 @@ pac.EndStorableVars()
 
 function PART:Initialize()
 	self.streams = {}
+	self.stream_count = 0
 end
 
 function PART:GetNiceName()
@@ -66,7 +67,13 @@ function PART:OnDraw(ent, pos, ang)
 	for url, streamdata in pairs(self.streams) do
 		local stream = streamdata.stream
 		if streamdata.Loading then goto CONTINUE end
-		if not stream:IsValid() then self.streams[url] = nil goto CONTINUE end
+
+		if not stream:IsValid() then
+			self.streams[url] = nil
+			self.stream_count = self.stream_count - 1
+			-- TODO: Notify the user somehow or reload streams
+			goto CONTINUE
+		end
 
 		stream:SetPos(pos, forward)
 
@@ -76,10 +83,12 @@ function PART:OnDraw(ent, pos, ang)
 		stream:Set3DCone(self.InnerAngle, self.OuterAngle, self.OuterVolume)
 		stream:SetVolume(volume)
 		stream:SetPlaybackRate(self:GetPitch() + self.random_pitch)
+
 		if streamdata.StartPlaying then
 			stream:Play()
-			streamdata.StartPlaying = nil
+			streamdata.StartPlaying = false
 		end
+
 		::CONTINUE::
 	end
 end
@@ -97,7 +106,7 @@ end
 function PART:SetURL(URL)
 	self.InSetup = true
 
-	timer.Create("pac3_webaudio_seturl_" .. tostring(self), 0, 1, function()
+	timer.Create("pac3_webaudio_seturl_" .. tostring(self), 0.5, 1, function()
 		if not self:IsValid() then return end
 
 		self.InSetup = false
@@ -105,7 +114,7 @@ function PART:SetURL(URL)
 
 		if self.PlayAfterSetup then
 			self:PlaySound()
-			self.PlayAfterSetup = nil
+			self.PlayAfterSetup = false
 		end
 	end)
 
@@ -115,7 +124,7 @@ end
 function PART:SetupURLStreamsNow(URL)
 	local urls = {}
 
-	for _, url in pairs(URL:Split(";")) do
+	for _, url in ipairs(URL:Split(";")) do
 		local min, max = url:match(".+%[(.-),(.-)%]")
 
 		min = tonumber(min)
@@ -130,59 +139,76 @@ function PART:SetupURLStreamsNow(URL)
 		end
 	end
 
-	for url, streamdata in pairs(self.streams) do
-		local stream = streamdata.stream
-		if streamdata.Loading or not stream:IsValid() then self.streams[url] = nil goto CONTINUE end
+	if #urls >= 150 then
+		local cp = {}
 
-		stream:Stop()
-		::CONTINUE::
+		for i = 1, 150 do
+			table.insert(cp, urls[i])
+		end
+
+		urls = cp
+	end
+
+	for url, streamdata in pairs(self.streams) do
+		if IsValid(streamdata.stream) then
+			stream:Stop()
+		end
 	end
 
 	self.streams = {}
+	self.stream_count = 0
 
 	local inPace = pace and pace.IsActive() and pace.current_part == self and self:GetPlayerOwner() == pac.LocalPlayer
 
-	for _, url in pairs(urls) do
+	for _, url in ipairs(urls) do
 		local flags = "3d noplay noblock"
-		local callback
+		local function callback(channel, errorCode, errorString)
+			local streamdata = self.streams[url]
+			if not streamdata then
+				if IsValid(channel) then channel:Stop() end
+				return
+			end
 
-		function callback(channel, errorCode, errorString)
 			if not channel or not channel:IsValid() then
-				pac.Message("Failed to load ", url, " (" .. flags .. ") - " .. (errorString or errorCode or 'UNKNOWN'))
+				pac.Message("Failed to load ", url, " (" .. flags .. ") - " .. (errorString or errorCode or "UNKNOWN"))
 
 				if errorCode == -1 then
 					pac.Message('GMOD BUG: WAVe and Vorbis files are known to be not working with 3D flag, recode file into MPEG-3 format!')
 				end
 
 				self.streams[url] = nil
-			else
-				local streamdata = self.streams[url]
-
-				if streamdata then
-					streamdata.Loading = false
-
-					if streamdata.valid then
-						if streamdata.PlayAfterLoad or (inPace and pace.IsActive()) then
-							streamdata.PlayAfterLoad = nil
-							channel:EnableLooping(self.Loop and channel:GetLength() > 0)
-							streamdata.StartPlaying = true
-						end
-
-						streamdata.stream = channel
-					else
-						channel:Stop()
-					end
-				end
+				self.stream_count = self.stream_count - 1
+				return
 			end
+
+			streamdata.Loading = false
+
+			if streamdata.valid then
+				if streamdata.PlayAfterLoad or inPace then
+					channel:EnableLooping(self.Loop and channel:GetLength() > 0)
+					streamdata.PlayAfterLoad = false
+					streamdata.StartPlaying = true
+				end
+
+				streamdata.stream = channel
+
+				if self.NeedsToPlayAfterLoad then
+					self.NeedsToPlayAfterLoad = false
+					self:PlaySound()
+				end
+
+				return
+			end
+
+			channel:Stop()
 		end
 
 		self.streams[url] = {Loading = true, valid = true}
+		self.stream_count = self.stream_count + 1
 
 		sound.PlayURL(url, flags, callback)
 	end
 end
-
-PART.last_stream = NULL
 
 function PART:PlaySound()
 	if self.InSetup then
@@ -190,48 +216,73 @@ function PART:PlaySound()
 		return
 	end
 
-	local streamdata = table.Random(self.streams)
+	if self.stream_count == 0 then return end
 
-	if not streamdata then return end
+	local i, streamdata, atLeastSome = 0
+
+	while i < 20 and i < self.stream_count do
+		streamdata = table.Random(self.streams)
+
+		if IsValid(streamdata.stream) then
+			if not atLeastSome and streamdata.Loading then
+				atLeastSome = true
+			end
+
+			break
+		end
+
+		i = i + 1
+	end
 
 	local stream = streamdata.stream
 
-	if streamdata.Loading then
-		streamdata.PlayAfterLoad = true
+	if not IsValid(stream) then
+		if atLeastSome then
+			self.NeedsToPlayAfterLoad = true
+		end
+
 		return
 	end
 
-	if not IsValid(stream) then return end
-
 	self:SetRandomPitch(self.RandomPitch)
 
-	if self.last_stream:IsValid() and not self.Overlapping and self.last_stream ~= stream then
+	if IsValid(self.last_stream) and not self.Overlapping and self.last_stream ~= stream then
 		self.last_stream:SetTime(0)
 		self.last_stream:Pause()
 	end
 
 	streamdata.StartPlaying = true
-
 	self.last_stream = stream
 end
 
 function PART:StopSound()
+	local toremove
+
 	for key, streamdata in pairs(self.streams) do
-		streamdata.PlayAfterLoad = nil
-		streamdata.StartPlaying = nil
+		streamdata.PlayAfterLoad = false
+		streamdata.StartPlaying = false
+
 		local stream = streamdata.stream
-		if stream then
-			if stream:IsValid() then
-				if self.PauseOnHide then
-					stream:Pause()
-				else
-					pcall(function() stream:SetTime(0) end)
-					stream:Pause()
-				end
+
+		if IsValid(stream) then
+			if self.PauseOnHide then
+				stream:Pause()
 			else
-				self.streams[key] = nil
+				pcall(function() stream:SetTime(0) end)
+				stream:Pause()
 			end
+		elseif stream then
+			toremove = toremove or {}
+			table.insert(toremove, key)
 		end
+	end
+
+	if toremove then
+		for i, index in ipairs(toremove) do
+			self.streams[index] = nil
+		end
+
+		self.stream_count = self.stream_count - #toremove
 	end
 end
 
@@ -249,18 +300,11 @@ end
 
 function PART:OnRemove()
 	for key, streamdata in pairs(self.streams) do
-		if streamdata.Loading then
-			streamdata.valid = false
-			goto CONTINUE
+		streamdata.valid = false
+
+		if IsValid(streamdata.stream) then
+			streamdata.stream:Stop()
 		end
-
-		local stream = streamdata.stream
-
-		if stream:IsValid() then
-			stream:Stop()
-		end
-
-		::CONTINUE::
 	end
 end
 
