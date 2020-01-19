@@ -1340,7 +1340,6 @@ function PART:OnThink()
 		local data = self.Events[self.Event]
 
 		if data then
-
 			if self.AffectChildrenOnly then
 				local b = should_hide(self, ent, data)
 
@@ -1366,6 +1365,7 @@ function PART:OnThink()
 					local b = should_hide(self, ent, data)
 
 					parent:SetEventHide(b)
+					parent:CallRecursive("FlushFromRenderingState")
 
 					-- this is just used for the editor..
 					self.event_triggered = b
