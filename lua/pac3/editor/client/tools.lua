@@ -560,12 +560,10 @@ pace.AddTool(L"dump player submaterials", function()
 	end
 end)
 
-if boneanimlib then
-	pace.AddTool(L"stop all custom animations", function()
-		boneanimlib.StopAllEntityAnimations(LocalPlayer())
-		boneanimlib.ResetEntityBoneMatrix(LocalPlayer())
-	end)
-end
+pace.AddTool(L"stop all custom animations", function()
+	pac.animations.StopAllEntityAnimations(LocalPlayer())
+	pac.animations.ResetEntityBoneMatrix(LocalPlayer())
+end)
 
 pace.AddTool(L"copy from faceposer tool", function(part, suboption)
 	local group = pac.CreatePart("group")
