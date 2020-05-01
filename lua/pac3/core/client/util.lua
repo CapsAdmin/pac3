@@ -473,6 +473,9 @@ function pac.CreateEntity(model)
 		end
 	elseif type == 2 then
 		ent = ents.CreateClientProp(model) or ent -- doesn't render properly
+		if ent:IsValid() then
+			ent:PhysicsDestroy()
+		end
 	elseif type == 3 then
 
 		effects.Register(
