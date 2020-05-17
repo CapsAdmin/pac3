@@ -29,11 +29,11 @@ do
 
 	function pac.Disable()
 		-- turn off all parts
-		for key, ent in pairs(pac.drawn_entities) do
+		for ent in next, pac.drawn_entities do
 			if ent:IsValid() then
 				pac.DisableEntity(ent)
 			else
-				pac.drawn_entities[key] = nil
+				pac.drawn_entities[ent] = nil
 			end
 		end
 

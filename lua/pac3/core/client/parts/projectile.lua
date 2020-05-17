@@ -128,7 +128,6 @@ function PART:AttachToEntity(ent)
 		end
 	end
 
-	ent.pac_projectile_id = id
 	ent.pac_projectile_part = part
 
 	return true
@@ -259,16 +258,13 @@ function PART:Shoot(pos, ang)
 
 			if self:AttachToEntity(ent) then
 				timer.Simple(math.Clamp(self.LifeTime, 0, 10), function()
-					if ent:IsValid() and ent.pac_projectile_id then
-						local id = ent.pac_projectile_id
-
+					if ent:IsValid() then
 						if ent.pac_projectile_part and ent.pac_projectile_part:IsValid() then
 							ent.pac_projectile_part:Remove()
 						end
 
 						timer.Simple(0.5, function()
 							SafeRemoveEntity(ent)
-							pac.drawn_entities[id] = nil
 						end)
 					end
 				end)

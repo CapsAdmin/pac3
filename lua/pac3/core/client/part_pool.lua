@@ -170,13 +170,12 @@ do
 		if pac.profile then
 			TIME = util_TimerCycle()
 
-			local id = ent:EntIndex()
-			pac.profile_info[id] = pac.profile_info[id] or {types = {}, times_ran = 0}
-			pac.profile_info[id].times_ran = pac.profile_info[id].times_ran + 1
+			pac.profile_info[ent] = pac.profile_info[ent] or {types = {}, times_ran = 0}
+			pac.profile_info[ent].times_ran = pac.profile_info[ent].times_ran + 1
 
-			pac.profile_info[id].types[type] = pac.profile_info[id].types[type] or {}
+			pac.profile_info[ent].types[type] = pac.profile_info[ent].types[type] or {}
 
-			local data = pac.profile_info[id].types[type]
+			local data = pac.profile_info[ent].types[type]
 
 			data.total_render_time = (data.total_render_time or 0) + TIME
 		end
@@ -290,8 +289,8 @@ function pac.HookEntityRender(ent, part)
 
 	pac.dprint("hooking render on %s to draw part %s", tostring(ent), tostring(part))
 
-	pac.drawn_entities[ent:EntIndex()] = ent
-	pac.profile_info[ent:EntIndex()] = nil
+	pac.drawn_entities[ent] = true
+	pac.profile_info[ent] = nil
 
 	ent_parts[ent] = ent_parts[ent] or {}
 	ent_parts[ent][part] = part
@@ -308,10 +307,10 @@ function pac.UnhookEntityRender(ent, part)
 	if ent_parts[ent] and not next(ent_parts[ent]) then
 		ent_parts[ent] = nil
 		ent.pac_has_parts = nil
-		pac.drawn_entities[ent:EntIndex()] = nil
+		pac.drawn_entities[ent] = nil
 	end
 
-	pac.profile_info[ent:EntIndex()] = nil
+	pac.profile_info[ent] = nil
 end
 
 pac.AddHook("Think", "events", function()
@@ -402,7 +401,7 @@ pac.AddHook("Think", "events", function()
 		end
 	end
 
-	for key, ent in pairs(pac.drawn_entities) do
+	for ent in next, pac.drawn_entities do
 		if IsValid(ent) then
 			if ent.pac_drawing and ent:IsPlayer() then
 
@@ -411,7 +410,7 @@ pac.AddHook("Think", "events", function()
 
 			end
 		else
-			pac.drawn_entities[key] = nil
+			pac.drawn_entities[ent] = nil
 		end
 	end
 
@@ -738,9 +737,9 @@ do -- drawing
 
 			draw_dist = math.min(sv_draw_dist, draw_dist)
 
-			for key, ent in pairs(pac.drawn_entities) do
+			for ent in next, pac.drawn_entities do
 				if not IsValid(ent) then
-					pac.drawn_entities[key] = nil
+					pac.drawn_entities[ent] = nil
 					goto CONTINUE
 				end
 
@@ -855,7 +854,7 @@ do -- drawing
 		pac.AddHook("PostDrawTranslucentRenderables", "draw_translucent", function(bDrawingDepth, bDrawingSkybox)
 			if should_suppress() then return end
 
-			for _, ent in pairs(pac.drawn_entities) do
+			for ent in next, pac.drawn_entities do
 				if ent.pac_draw_cond and ent_parts[ent] then -- accessing table of NULL doesn't do anything
 					pac.RenderOverride(ent, "translucent", true)
 				end
@@ -870,13 +869,13 @@ do -- drawing
 
 		alreadyDrawing = FrameNumber()
 
-		for key, ent in pairs(pac.drawn_entities) do
+		for ent in next, pac.drawn_entities do
 			if IsValid(ent) then
 				if ent.pac_drawing and ent_parts[ent] then
 					pac.RenderOverride(ent, "viewmodel", true)
 				end
 			else
-				pac.drawn_entities[key] = nil
+				pac.drawn_entities[ent] = nil
 			end
 		end
 
@@ -898,13 +897,13 @@ do -- drawing
 
 		alreadyDrawing = FrameNumber()
 
-		for key, ent in pairs(pac.drawn_entities) do
+		for ent in next, pac.drawn_entities do
 			if IsValid(ent) then
 				if ent.pac_drawing and ent_parts[ent] then
 					pac.RenderOverride(ent, "hands", true)
 				end
 			else
-				pac.drawn_entities[key] = nil
+				pac.drawn_entities[ent] = nil
 			end
 		end
 
