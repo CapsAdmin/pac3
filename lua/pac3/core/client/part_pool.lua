@@ -483,16 +483,13 @@ pac.AddHook("EntityRemoved", "change_owner", function(ent)
 		else
 			local owner = ent:GetOwner()
 			if IsActuallyPlayer(owner) then
-				local parts = parts_from_ent(owner)
-				if next(parts) then
-					IsActuallyRemoved(ent, function()
-						for _, part in pairs(parts) do
-							if not part:HasParent() then
-								part:CheckOwner(ent, true)
-							end
+				IsActuallyRemoved(ent, function()
+					for _, part in pairs(parts_from_ent(owner)) do
+						if not part:HasParent() then
+							part:CheckOwner(ent, true)
 						end
-					end)
-				end
+					end
+				end)
 			end
 		end
 	end
