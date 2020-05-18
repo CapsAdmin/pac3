@@ -1683,21 +1683,29 @@ net.Receive("pac_event", function(umr)
 end)
 
 pac.AddHook("OnPlayerChat", "say_event", function(ply, str)
-	ply.pac_say_event = {str = str, time = pac.RealTime}
+	if ply:IsValid() then
+		ply.pac_say_event = {str = str, time = pac.RealTime}
+	end
 end)
 
 pac.AddHook("GravGunOnPickedUp", "gravgun_event", function(ply, ent)
-	ply.pac_gravgun_ent = ent
+	if ply:IsValid() then
+		ply.pac_gravgun_ent = ent
+	end
 end)
 
 pac.AddHook("GravGunOnDropped", "gravgun_event", function(ply, ent)
-	ply.pac_gravgun_ent = ent
+	if ply:IsValid() then
+		ply.pac_gravgun_ent = ent
+	end
 end)
 -- ####
 
 pac.AddHook("GravGunPunt", "gravgun_event", function(ply, ent)
-	ply.pac_gravgun_ent = ent
-	ply.pac_gravgun_punt = pac.RealTime
+	if ply:IsValid() then
+		ply.pac_gravgun_ent = ent
+		ply.pac_gravgun_punt = pac.RealTime
+	end
 end)
 
 --[[
