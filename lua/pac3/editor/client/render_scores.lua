@@ -7,7 +7,7 @@ pace.RenderTimes = {} -- render times in seconds
 
 
 function pace.GetProfilingData(ent)
-	local profile_data = pac.profile_info[ent:EntIndex()]
+	local profile_data = pac.profile_info[ent]
 
 	if profile_data then
 		local out = {events = {}}

@@ -195,11 +195,11 @@ function pace.SubmitPart(data, filter)
 		local lookup = {}
 
 		for i, ply in ipairs(player.GetAll()) do
-			lookup[ply:UniqueID()] = ply
+			lookup[ply:SteamID()] = ply
 		end
 
 		for i, v in ipairs(data.wear_filter) do
-			local ply = lookup[tostring(v)]
+			local ply = lookup[v]
 
 			if IsValid(ply) then
 				table.insert(players, ply)
@@ -326,6 +326,21 @@ function pace.HandleReceivedData(ply, data)
 	data.owner = ply
 	data.uid = ply:UniqueID()
 
+	if data.wear_filter then
+		if #data.wear_filter <= game.MaxPlayers() then
+			local assemble = {}
+
+			for i, steamid in ipairs(data.wear_filter) do
+				table.insert(assemble, "STEAM_" .. tostring(steamid))
+			end
+
+			data.wear_filter = assemble
+		else
+			pac.Message("Player ", ply, " tried to submit extraordinary wear filter size of ", #data.wear_filter, ", dropping.")
+			data.wear_filter = nil
+		end
+	end
+
 	if type(data.part) == "table" and data.part.self then
 		if type(data.part.self) == "table" and not data.part.self.UniqueID then return end -- bogus data
 
@@ -408,7 +423,7 @@ function pace.RequestOutfits(ply)
 
 			if owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
 				for key, outfit in pairs(outfits) do
-					if not outfit.wear_filter or table.HasValue(outfit.wear_filter, tonumber(ply:UniqueID())) then
+					if not outfit.wear_filter or table.HasValue(outfit.wear_filter, ply:SteamID()) then
 						pace.SubmitPart(outfit, ply)
 					end
 				end
@@ -446,15 +461,21 @@ local function pac_update_playerfilter(len, ply)
 	end
 
 	local filter = {}
-	local filterCount = net.ReadUInt(8)
-	for i=1, filterCount do
-		table.insert(filter, net.ReadUInt(32))
+	local sizeof = net.ReadUInt(8)
+
+	if sizeof > game.MaxPlayers() then
+		pac.Message("Player ", ply, " tried to submit extraordinary wear filter size of ", sizeof, ", dropping.")
+		return
+	end
+
+	for i = 1, net.ReadUInt(8) do
+		table.insert(filter, "STEAM_" .. net.ReadString())
 	end
 
 	local players = {}
 
 	for i, ply in ipairs(player.GetAll()) do
-		players[ply:UniqueID()] = ply
+		players[ply:SteamID()] = ply
 	end
 
 	for id, outfits in pairs(pace.Parts) do
@@ -465,7 +486,7 @@ local function pac_update_playerfilter(len, ply)
 				if outfit.wear_filter then
 					for i, plyID in ipairs(filter) do
 						if not qhasvalue(outfit.wear_filter, plyID) then
-							local getPly = players[tostring(plyID)]
+							local getPly = players[plyID]
 
 							if getPly and getPly.pac_requested_outfits and not getPly.pac_gonna_receive_outfits then
 								pace.SubmitPart(outfit, getPly)

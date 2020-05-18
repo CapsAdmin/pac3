@@ -770,6 +770,48 @@ PART.OldEvents = {
 			return 0
 		end,
 	},
+	owner_velocity_world_forward = {
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, speed)
+			local owner = self:GetOwner(self.RootOwner)
+
+			owner = try_viewmodel(owner)
+
+			if owner:IsValid() then
+				return self:NumberOperator(owner:GetVelocity()[1], speed)
+			end
+
+			return 0
+		end,
+	},
+	owner_velocity_world_right = {
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, speed)
+			local owner = self:GetOwner(self.RootOwner)
+
+			owner = try_viewmodel(owner)
+
+			if owner:IsValid() then
+				return self:NumberOperator(owner:GetVelocity()[2], speed)
+			end
+
+			return 0
+		end,
+	},
+	owner_velocity_world_up = {
+		arguments = {{speed = "number"}},
+		callback = function(self, ent, speed)
+			local owner = self:GetOwner(self.RootOwner)
+
+			owner = try_viewmodel(owner)
+
+			if owner:IsValid() then
+				return self:NumberOperator(owner:GetVelocity()[3], speed)
+			end
+
+			return 0
+		end,
+	},
 
 	-- parent part
 	parent_velocity_length = {
@@ -1340,7 +1382,6 @@ function PART:OnThink()
 		local data = self.Events[self.Event]
 
 		if data then
-
 			if self.AffectChildrenOnly then
 				local b = should_hide(self, ent, data)
 
@@ -1366,6 +1407,7 @@ function PART:OnThink()
 					local b = should_hide(self, ent, data)
 
 					parent:SetEventHide(b)
+					parent:CallRecursive("FlushFromRenderingState")
 
 					-- this is just used for the editor..
 					self.event_triggered = b
@@ -1641,21 +1683,29 @@ net.Receive("pac_event", function(umr)
 end)
 
 pac.AddHook("OnPlayerChat", "say_event", function(ply, str)
-	ply.pac_say_event = {str = str, time = pac.RealTime}
+	if ply:IsValid() then
+		ply.pac_say_event = {str = str, time = pac.RealTime}
+	end
 end)
 
 pac.AddHook("GravGunOnPickedUp", "gravgun_event", function(ply, ent)
-	ply.pac_gravgun_ent = ent
+	if ply:IsValid() then
+		ply.pac_gravgun_ent = ent
+	end
 end)
 
 pac.AddHook("GravGunOnDropped", "gravgun_event", function(ply, ent)
-	ply.pac_gravgun_ent = ent
+	if ply:IsValid() then
+		ply.pac_gravgun_ent = ent
+	end
 end)
 -- ####
 
 pac.AddHook("GravGunPunt", "gravgun_event", function(ply, ent)
-	ply.pac_gravgun_ent = ent
-	ply.pac_gravgun_punt = pac.RealTime
+	if ply:IsValid() then
+		ply.pac_gravgun_ent = ent
+		ply.pac_gravgun_punt = pac.RealTime
+	end
 end)
 
 --[[

@@ -527,9 +527,6 @@ function DEMO:OnUpate(w, h, d, t, pos, first)
 end
 
 function pace.ShowAbout()
-	local old_vol = GetConVarNumber("volume")
-
-	RunConsoleCommand("volume", 0)
 
 	local pnl = vgui.Create("Panel")
 	pnl:SetPos(0, 0)
@@ -563,7 +560,6 @@ function pace.ShowAbout()
 			if not ok then print(err) end
 			pnl:Remove()
 			pac.RemoveHook("PreRender", "pace_about")
-			RunConsoleCommand("volume", old_vol)
 			return
 		end
 
