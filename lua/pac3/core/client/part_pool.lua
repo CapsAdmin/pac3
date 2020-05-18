@@ -473,23 +473,29 @@ end)
 pac.AddHook("EntityRemoved", "change_owner", function(ent)
 	if IsActuallyValid(ent) then
 		if IsActuallyPlayer(ent) then
-			IsActuallyRemoved(ent, function()
-				for _, part in pairs(parts_from_ent(ent)) do
-					if part.dupe_remove then
-						part:Remove()
-					end
-				end
-			end)
-		else
-			local owner = ent:GetOwner()
-			if IsActuallyPlayer(owner) then
+			local parts = parts_from_ent(ent)
+			if next(parts) ~= nil then
 				IsActuallyRemoved(ent, function()
-					for _, part in pairs(parts_from_ent(owner)) do
-						if not part:HasParent() then
-							part:CheckOwner(ent, true)
+					for _, part in pairs(parts) do
+						if part.dupe_remove then
+							part:Remove()
 						end
 					end
 				end)
+			end
+		else
+			local owner = ent:GetOwner()
+			if IsActuallyPlayer(owner) then
+				local parts = parts_from_ent(owner)
+				if next(parts) ~= nil then
+					IsActuallyRemoved(ent, function()
+						for _, part in pairs(parts) do
+							if not part:HasParent() then
+								part:CheckOwner(ent, true)
+							end
+						end
+					end)
+				end
 			end
 		end
 	end
