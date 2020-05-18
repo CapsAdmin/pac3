@@ -269,8 +269,13 @@ function pac.AddEntityClassListener(class, session, check_func, draw_dist)
 
 	local function removed(ent)
 		if ent:IsValid() and check_func(ent) and ent.pac_outfits then
-			ent:RemovePACSession(session)
-			weapons[ent:EntIndex()] = nil
+			local index = ent:EntIndex()
+			timer.Simple(0, function()
+				if not ent:IsValid() then
+					ent:RemovePACSession(session)
+					weapons[index] = nil
+				end
+			end)
 		end
 	end
 
