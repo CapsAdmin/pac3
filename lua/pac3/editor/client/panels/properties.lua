@@ -1290,25 +1290,33 @@ do -- vector
 		function(self)
 			pace.SafeRemoveSpecialPanel()
 
+			local dlibbased = vgui.GetControlTable("DLibColorMixer")
+
 			local frm = vgui.Create("DFrame")
 			frm:SetTitle("Color")
 
 			pace.ShowSpecial(frm, self, 300)
 
-			local clr = vgui.Create("DColorMixer", frm)
+			if dlibbased then
+				frm:SetWide(500)
+			end
+
+			local clr = vgui.Create(dlibbased and "DLibColorMixer" or "DColorMixer", frm)
 			clr:Dock(FILL)
 			clr:SetAlphaBar(false) -- Alpha isn't needed
 			clr:SetColor(Color(self.vector.x, self.vector.y, self.vector.z))
 
-			local html_color = vgui.Create("DTextEntry", frm)
-			html_color:Dock(BOTTOM)
-			html_color:SetText(tohex(self.vector))
+			if not dlibbased then
+				local html_color = vgui.Create("DTextEntry", frm)
+				html_color:Dock(BOTTOM)
+				html_color:SetText(tohex(self.vector))
 
-			html_color.OnEnter = function()
-				local valGet = uncodeValue(html_color:GetValue())
+				html_color.OnEnter = function()
+					local valGet = uncodeValue(html_color:GetValue())
 
-				if valGet then
-					clr:SetColor(valGet)
+					if valGet then
+						clr:SetColor(valGet)
+					end
 				end
 			end
 
@@ -1316,7 +1324,10 @@ do -- vector
 				local vec = Vector(newColor.r, newColor.g, newColor.b)
 				self.OnValueChanged(vec)
 				self:SetValue(vec)
-				html_color:SetText(tohex(vec))
+
+				if not dlibbased then
+					html_color:SetText(tohex(vec))
+				end
 			end
 
 			pace.ActiveSpecialPanel = frm
@@ -1338,40 +1349,51 @@ do -- vector
 		function(self)
 			pace.SafeRemoveSpecialPanel()
 
+			local dlibbased = vgui.GetControlTable("DLibColorMixer")
+
 			local frm = vgui.Create("DFrame")
 			frm:SetTitle("color")
 
 			pace.ShowSpecial(frm, self, 300)
 
-			local clr = vgui.Create("DColorMixer", frm)
+			if dlibbased then
+				frm:SetWide(500)
+			end
+
+			local clr = vgui.Create(dlibbased and "DLibColorMixer" or "DColorMixer", frm)
 			clr:Dock(FILL)
+			clr:SetAlphaBar(false)
 			clr:SetColor(Color(self.vector.x * 255, self.vector.y * 255, self.vector.z * 255))
 
-			local function tohex(vec)
-				return ("#%X%X%X"):format(vec.x * 255, vec.y * 255, vec.z * 255)
+			if not dlibbased then
+				local function tohex(vec)
+					return ("#%X%X%X"):format(vec.x * 255, vec.y * 255, vec.z * 255)
+				end
+
+				local function fromhex(str)
+					local x,y,z = str:match("#?(..)(..)(..)")
+					return Vector(tonumber("0x" .. x), tonumber("0x" .. y), tonumber("0x" .. z)) / 255
+				end
+
+				local html_color = vgui.Create("DTextEntry", frm)
+				html_color:Dock(BOTTOM)
+				html_color:SetText(tohex(self.vector))
+				html_color.OnEnter = function()
+					local vec = fromhex(html_color:GetValue())
+					clr:SetColor(Color(vec.x * 255, vec.y * 255, vec.z * 255))
+					self.OnValueChanged(vec)
+					self:SetValue(vec)
+				end
 			end
 
-			local function fromhex(str)
-				local x,y,z = str:match("#?(..)(..)(..)")
-				return Vector(tonumber("0x" .. x), tonumber("0x" .. y), tonumber("0x" .. z)) / 255
-			end
-
-			local html_color = vgui.Create("DTextEntry", frm)
-			html_color:Dock(BOTTOM)
-			html_color:SetText(tohex(self.vector))
-			html_color.OnEnter = function()
-				local vec = fromhex(html_color:GetValue())
-				clr:SetColor(Color(vec.x * 255, vec.y * 255, vec.z * 255))
+			function clr.ValueChanged(_, newcolor)
+				local vec = Vector(newcolor.r / 255, newcolor.g / 255, newcolor.b / 255)
 				self.OnValueChanged(vec)
 				self:SetValue(vec)
-			end
 
-			function clr.Think()
-				local clr = clr:GetColor() or Color(255, 255, 255, 255)
-				local vec = Vector(clr.r, clr.g, clr.b) / 255
-				self.OnValueChanged(vec)
-				self:SetValue(vec)
-				html_color:SetText(tohex(vec))
+				if not dlibbased then
+					html_color:SetText(tohex(vec))
+				end
 			end
 
 			pace.ActiveSpecialPanel = frm
