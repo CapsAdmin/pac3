@@ -1306,8 +1306,10 @@ do -- vector
 			clr:SetAlphaBar(false) -- Alpha isn't needed
 			clr:SetColor(Color(self.vector.x, self.vector.y, self.vector.z))
 
+			local html_color
+
 			if not dlibbased then
-				local html_color = vgui.Create("DTextEntry", frm)
+				html_color = vgui.Create("DTextEntry", frm)
 				html_color:Dock(BOTTOM)
 				html_color:SetText(tohex(self.vector))
 
@@ -1365,6 +1367,8 @@ do -- vector
 			clr:SetAlphaBar(false)
 			clr:SetColor(Color(self.vector.x * 255, self.vector.y * 255, self.vector.z * 255))
 
+			local html_color
+
 			if not dlibbased then
 				local function tohex(vec)
 					return ("#%X%X%X"):format(vec.x * 255, vec.y * 255, vec.z * 255)
@@ -1375,7 +1379,7 @@ do -- vector
 					return Vector(tonumber("0x" .. x), tonumber("0x" .. y), tonumber("0x" .. z)) / 255
 				end
 
-				local html_color = vgui.Create("DTextEntry", frm)
+				html_color = vgui.Create("DTextEntry", frm)
 				html_color:Dock(BOTTOM)
 				html_color:SetText(tohex(self.vector))
 				html_color.OnEnter = function()
