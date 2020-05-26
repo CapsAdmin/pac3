@@ -34,9 +34,26 @@ function pac.PrecacheEffect(name)
 	net.Broadcast()
 end
 
-net.Receive("pac_request_precache", function()
+local queue = {}
+net.Receive("pac_request_precache", function(len, pl)
 	local name = net.ReadString()
-	if not table.HasValue(pac.EffectsBlackList, name) then
-		pac.PrecacheEffect(name)
+	if table.HasValue(pac.EffectsBlackList, name) then return end
+
+	-- Each player gets a 50 length queue
+	local plqueue = queue[pl]
+	if plqueue then
+		if #plqueue<50 then plqueue[#plqueue+1] = name end
+	else
+		plqueue = {name}
+		queue[pl] = plqueue
+		local function processQueue()
+			if #plqueue == 0 then
+				queue[pl] = nil
+			else
+				timer.Simple(0.5, processQueue)
+				pac.PrecacheEffect(table.remove(plqueue,1))
+			end
+		end
+		processQueue()
 	end
 end)

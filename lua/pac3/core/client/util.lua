@@ -392,8 +392,9 @@ do
 	local invalidCache = {}
 
 	function pac.FilterInvalidModel(mdl, fallback)
-		mdl = mdl or ""
-		mdl = type(mdl) == "string" and mdl or ""
+		if not isstring(mdl) then
+			mdl = ""
+		end
 
 		if util.IsValidModel(mdl) then
 			invalidCache[mdl] = nil
@@ -411,7 +412,7 @@ do
 		end
 
 		-- IsValidModel doesn't always return true... this is expensive though :(
-		if file.Exists(mdl , "GAME") then
+		if string.GetExtensionFromFilename(mdl) == "mdl" and file.Exists(mdl, "GAME") then
 			return mdl
 		end
 
@@ -472,6 +473,9 @@ function pac.CreateEntity(model)
 		end
 	elseif type == 2 then
 		ent = ents.CreateClientProp(model) or ent -- doesn't render properly
+		if ent:IsValid() then
+			ent:PhysicsDestroy()
+		end
 	elseif type == 3 then
 
 		effects.Register(

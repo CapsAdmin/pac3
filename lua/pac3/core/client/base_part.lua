@@ -14,16 +14,16 @@ local function SETUP_CACHE_FUNC(tbl, func_name)
 	local old_func = tbl[func_name]
 
 	local cached_key = "cached_" .. func_name
+	local cached_key2 = "cached_" .. func_name .. "_2"
 	local last_key = "last_" .. func_name .. "_framenumber"
 
 	tbl[func_name] = function(self, a,b,c,d,e)
-
 		if self[last_key] ~= pac.FrameNumber or self[cached_key] == nil then
-			self[cached_key] = old_func(self, a,b,c,d,e)
+			self[cached_key], self[cached_key2] = old_func(self, a,b,c,d,e)
 			self[last_key] = pac.FrameNumber
 		end
 
-		return self[cached_key]
+		return self[cached_key], self[cached_key2]
 	end
 end
 
@@ -639,6 +639,10 @@ do -- parenting
 			self.event_hidden = b
 		end
 
+		function PART:FlushFromRenderingState(newState)
+			self.shown_from_rendering = nil
+		end
+
 		function PART:IsDrawHidden()
 			return self.draw_hidden
 		end
@@ -677,7 +681,7 @@ do -- parenting
 					parent.hidden or
 					parent.event_hidden
 				then
-					return true
+					return true, parent.event_hidden
 				end
 			end
 
