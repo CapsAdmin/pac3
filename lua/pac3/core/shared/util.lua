@@ -725,7 +725,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								end
 							end
 
-							if not found and string.GetExtensionFromFilename(v.path)=="mdl" and file.Exists(v.path, "GAME") then
+							if not found and string.match(v.path,"^models/[^%z]%.mdl$") and file.Exists(v.path, "GAME") then
 								path = v.path
 								found = true
 							else
