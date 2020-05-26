@@ -725,7 +725,12 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								end
 							end
 
-							local path = "models/" .. newdir .. file_name
+							if not found and string.GetExtensionFromFilename(v.path)=="mdl" and file.Exists(v.path, "GAME") then
+								path = v.path
+								found = true
+							else
+								path = "models/" .. newdir .. file_name
+							end
 
 							if found then
 								buffer = buffer:sub(0, v.offset) .. path .. buffer:sub(v.offset + #v.path + 1)
