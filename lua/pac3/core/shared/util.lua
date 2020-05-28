@@ -111,7 +111,7 @@ function pac.dprint(fmt, ...)
 	MsgN("\n")
 end
 
-local DEBUG_MDL = true
+local DEBUG_MDL = false
 local VERBOSE = false
 
 local function int_to_bytes(num,endian,signed)
@@ -435,15 +435,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						end
 
 						local f = pac.StringStream(data.buffer, 0, "little")
-						-- Strip off alignment nulls
-						for i=f:Size(), 1, -1 do
-							if f.buffer[i-1] == 0 then
-								f.buffer[i] = nil
-							else
-								break
-							end
-						end
-						
 						local id = f:Read(4)
 						local version = f:ReadUInt32()
 						local checksum = f:ReadUInt32()
@@ -751,8 +742,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						end
 
 						-- Add nulls to align to 4 bytes
-						while f:Size()%4 ~= 0 do
-							f:WriteInt8(0)
+						while (#f.buffer)%4 ~= 0 do
+							f.buffer[#f.buffer+1] = 0
 						end
 
 						f:Seek(size_offset)
