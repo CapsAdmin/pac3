@@ -434,9 +434,9 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							file.Write(data.file_name..".debug.old.dat", data.buffer)
 						end
 
-						file.Write("pac3_cache/temp.dat", data.buffer)
-
-						local f = file.Open("pac3_cache/temp.dat", "rb", "DATA")
+						local f = file.Open("pac3_cache/temp.dat", "rwb", "DATA")
+						f:Write(data.buffer)
+						f:Seek(0)
 						local id = f:Read(4)
 						local version = f:ReadLong()
 						local checksum = f:ReadLong()
@@ -660,7 +660,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								local file_name_offset = f:ReadLong()
 								local old_pos = f:Tell()
 								f:Seek(base_pos + file_name_offset)
-								table.insert(found_mdl_includes, {offset = base_pos + file_name_offset, path = read_string(f)})
+								table.insert(found_mdl_includes, {base_pos = base_pos, path = read_string(f)})
 								f:Seek(old_pos)
 							end
 
@@ -672,8 +672,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						anim_name_offset = f:ReadLong()
 						f:Seek(anim_name_offset)
 						anim_name_str = read_string(f)
-
-						f:Close()
 
 						if VERBOSE or DEBUG_MDL then
 							print(data.file_name, "MATERIAL DIRECTORIES:")
@@ -690,27 +688,19 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							print("============")
 						end
 
-						local buffer = file.Read("pac3_cache/temp.dat")
-						local original_size = #buffer
-						file.Delete("pac3_cache/temp.dat")
-
-						local newdir = dir
-						local newname = (dir .. data.file_name:lower()):gsub("/", "\\")
-						newdir = newdir:gsub("\\", "/")
+						local newdir = dir:gsub("\\", "/")
 
 						do -- replace the mdl name (max size is 64 bytes)
-							local newname = newname
-							if #newname < #name then
-								newname = newname .. ("\0"):rep(#name - #newname)
-							end
-
-							buffer = buffer:sub(0, name_offset) .. newname .. buffer:sub(name_offset + #name + 1)
+							local newname = string.sub(newdir .. data.file_name:lower(), 1, 63)
+							f:Seek(name_offset)
+							f:Write(newname .. string.rep("\0", 64-#newname))
 						end
 
 						-- replace bad activity names with ones that gmod is okay with (should never extend size)
 						for i,v in ipairs(found_activities) do
-							local newname = v.to .. ("\0"):rep(#v.from - #v.to)
-							buffer = buffer:sub(0, v.offset) .. newname .. buffer:sub(v.offset + #v.from + 1)
+							local newname = v.to .. string.rep("\0", #v.from - #v.to)
+							f:Seek(v.offset)
+							f:Write(newname)
 						end
 
 						for i,v in ipairs(found_mdl_includes) do
@@ -725,42 +715,15 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								end
 							end
 
-							if not found and string.match(v.path,"^models/[^%z]%.mdl$") and file.Exists(v.path, "GAME") then
-								path = v.path
-								found = true
-							else
-								path = "models/" .. newdir .. file_name
-							end
-
 							if found then
-								buffer = buffer:sub(0, v.offset) .. path .. buffer:sub(v.offset + #v.path + 1)
-
-								local new_offset = #path - #v.path
-
-								for i,v in ipairs(found_vmt_directories) do
-									v.offset = v.offset + new_offset
-								end
-
-								local int_bytes = buffer:sub(vmt_dir_offset + 1, vmt_dir_offset + 4)
-								local offset = bytes_to_int(int_bytes) + new_offset
-								int_bytes = int_to_bytes(offset)
-								buffer = buffer:sub(0, vmt_dir_offset) .. int_bytes .. buffer:sub(vmt_dir_offset + 4 + 1)
-
-								if VERBOSE then
-									print(data.file_name, "vmt_dir_offset: ", vmt_dir_offset)
-									print(data.file_name, "NEW MATERIAL OFFSET:", vmt_dir_offset + offset)
-								end
-
-								local pos = vtf_dir_offset
-								for i = 1, vtf_dir_count do
-									local int_bytes = int_to_bytes(bytes_to_int(buffer:sub(pos + 1, pos + 4)) + new_offset)
-									buffer = buffer:sub(0, pos) .. int_bytes .. buffer:sub(pos + 4 + 1)
-									pos = pos + 4
-								end
-							else
-								if ply == pac.LocalPlayer then
-									pac.Message(Color(255, 50, 50), "the model want to include ", path, " but it doesn't exist")
-								end
+								local path = "models/" .. newdir .. file_name .. "\0"
+								local newoffset = f:Size()
+								f:Seek(newoffset)
+								f:Write(path)
+								f:Seek(v.base_pos + 4)
+								f:WriteLong(newoffset - v.base_pos)
+							elseif ply == pac.LocalPlayer and not file.Exists(v.path, "GAME") then
+								pac.Message(Color(255, 50, 50), "the model want to include ", v.path, " but it doesn't exist")
 							end
 						end
 
@@ -768,25 +731,26 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						if data.file_name == "model.mdl" then
 							for i,v in ipairs(found_vmt_directories) do
 								local newdir = newdir .. ("\0"):rep(#v.dir - #newdir + 1)
-								buffer = buffer:sub(0, v.offset) .. newdir .. buffer:sub(v.offset + #v.dir + 1)
+								f:Seek(v.offset)
+								f:Write(newdir)
 							end
 						else
 							local new_name = newdir .. data.file_name:gsub("mdl$", "ani")
-
-							buffer = buffer:sub(0, anim_name_offset) .. new_name .. buffer:sub(anim_name_offset + #anim_name_str + 1)
+							f:Seek(anim_name_offset)
+							f:Write(new_name)
 						end
 
-						if #buffer ~= original_size then
-							local size_bytes = int_to_bytes(#buffer)
+						f:Seek(size_offset)
+						f:WriteLong(f:Size())
 
-							buffer = buffer:sub(0, size_offset) .. size_bytes .. buffer:sub(size_offset + 4 + 1)
+						f:Seek(0)
+						data.buffer = f:Read(f:Size())
+						f:Close()
+
+						if not DEBUG_MDL then
+							file.Delete("pac3_cache/temp.dat")
 						end
 
-						if DEBUG_MDL then
-							file.Write(data.file_name..".debug.new.dat", buffer)
-						end
-
-						data.buffer = buffer
 						data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
 					end
 				end
