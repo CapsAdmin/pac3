@@ -163,17 +163,6 @@ local function bytes_to_int(str,endian,signed) -- use length of string to determ
     return n
 end
 
-local function read_string(f)
-	local chars = {}
-	for i = 1, 64 do
-		local b = f:ReadUInt8()
-		if not b or b == 0 then break end
-		table.insert(chars, string.char(b))
-	end
-
-	return table.concat(chars)
-end
-
 local shader_params = include("pac3/libraries/shader_params.lua")
 local texture_keys = {}
 
@@ -470,7 +459,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 										local oldpos = f:Tell()
 										f:Seek(seek_offset + activity_name_offset)
-										local str = read_string(f)
+										local str = f:ReadString()
 										if _G[str] == nil then
 											for i, v in ipairs(enums) do
 												if #v.k <= #str then
@@ -659,7 +648,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								local file_name_offset = f:ReadUInt32()
 								local old_pos = f:Tell()
 								f:Seek(base_pos + file_name_offset)
-								table.insert(found_mdl_includes, {base_pos = base_pos, path = read_string(f)})
+								table.insert(found_mdl_includes, {base_pos = base_pos, path = f:ReadString()})
 								f:Seek(old_pos)
 							end
 
@@ -670,7 +659,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 						anim_name_offset = f:ReadUInt32()
 						f:Seek(anim_name_offset)
-						anim_name_str = read_string(f)
+						anim_name_str = f:ReadString()
 
 						if VERBOSE or DEBUG_MDL then
 							print(data.file_name, "MATERIAL DIRECTORIES:")
