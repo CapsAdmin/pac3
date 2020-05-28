@@ -111,7 +111,7 @@ function pac.dprint(fmt, ...)
 	MsgN("\n")
 end
 
-local DEBUG_MDL = false
+local DEBUG_MDL = true
 local VERBOSE = false
 
 local function int_to_bytes(num,endian,signed)
@@ -166,7 +166,7 @@ end
 local function read_string(f)
 	local chars = {}
 	for i = 1, 64 do
-		local b = f:ReadByte()
+		local b = f:ReadUInt8()
 		if not b or b == 0 then break end
 		table.insert(chars, string.char(b))
 	end
@@ -434,17 +434,15 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							file.Write(data.file_name..".debug.old.dat", data.buffer)
 						end
 
-						local f = file.Open("pac3_cache/temp.dat", "rwb", "DATA")
-						f:Write(data.buffer)
-						f:Seek(0)
+						local f = pac.StringStream(data.buffer, 0, "little")
 						local id = f:Read(4)
-						local version = f:ReadLong()
-						local checksum = f:ReadLong()
+						local version = f:ReadUInt32()
+						local checksum = f:ReadUInt32()
 
 						local name_offset = f:Tell()
 						local name = f:Read(64)
 						local size_offset = f:Tell()
-						local size = f:ReadLong()
+						local size = f:ReadUInt32()
 
 						f:Skip(12 * 6) -- skips over all the vec3 stuff
 
@@ -455,8 +453,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						f:Skip(8) -- local anim
 
 						do
-							local sequence_count = f:ReadLong()
-							local sequence_offset = f:ReadLong()
+							local sequence_count = f:ReadUInt32()
+							local sequence_offset = f:ReadUInt32()
 
 							if sequence_count > 0 then
 								local enums = table.Copy(act_enums)
@@ -466,9 +464,9 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 									for i = 1, sequence_count do
 										local tbl = {}
 										local seek_offset = f:Tell()
-										local base_header_offset = f:ReadLong()
-										tbl.name_offset = f:ReadLong()
-										local activity_name_offset = f:ReadLong()
+										local base_header_offset = f:ReadUInt32()
+										tbl.name_offset = f:ReadUInt32()
+										local activity_name_offset = f:ReadUInt32()
 
 										local oldpos = f:Tell()
 										f:Seek(seek_offset + activity_name_offset)
@@ -484,64 +482,64 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 										end
 										f:Seek(oldpos)
 
-										tbl.flags = f:ReadLong()
-										tbl.activity = f:ReadLong()
-										tbl.activity_weight = f:ReadLong()
-										tbl.event_count = f:ReadLong()
-										tbl.event_offset = f:ReadLong()
+										-- tbl.flags = f:ReadUInt32()
+										-- tbl.activity = f:ReadUInt32()
+										-- tbl.activity_weight = f:ReadUInt32()
+										-- tbl.event_count = f:ReadUInt32()
+										-- tbl.event_offset = f:ReadUInt32()
 
-										tbl.bbminx = f:ReadFloat()
-										tbl.bbminy = f:ReadFloat()
-										tbl.bbminz = f:ReadFloat()
+										-- tbl.bbminx = f:ReadFloat()
+										-- tbl.bbminy = f:ReadFloat()
+										-- tbl.bbminz = f:ReadFloat()
 
-										tbl.bbmaxx = f:ReadFloat()
-										tbl.bbmaxy = f:ReadFloat()
-										tbl.bbmaxz = f:ReadFloat()
+										-- tbl.bbmaxx = f:ReadFloat()
+										-- tbl.bbmaxy = f:ReadFloat()
+										-- tbl.bbmaxz = f:ReadFloat()
 
-										tbl.blend_count = f:ReadLong()
-										tbl.anim_index_offset = f:ReadLong()
-										tbl.movement_index = f:ReadLong()
-										tbl.group_size_0 = f:ReadLong()
-										tbl.group_size_1 = f:ReadLong()
+										-- tbl.blend_count = f:ReadUInt32()
+										-- tbl.anim_index_offset = f:ReadUInt32()
+										-- tbl.movement_index = f:ReadUInt32()
+										-- tbl.group_size_0 = f:ReadUInt32()
+										-- tbl.group_size_1 = f:ReadUInt32()
 
-										tbl.param_index_0 = f:ReadLong()
-										tbl.param_index_1 = f:ReadLong()
+										-- tbl.param_index_0 = f:ReadUInt32()
+										-- tbl.param_index_1 = f:ReadUInt32()
 
-										tbl.param_start_0 = f:ReadFloat()
-										tbl.param_start_1 = f:ReadFloat()
+										-- tbl.param_start_0 = f:ReadFloat()
+										-- tbl.param_start_1 = f:ReadFloat()
 
-										tbl.param_end_0 = f:ReadFloat()
-										tbl.param_end_1 = f:ReadFloat()
+										-- tbl.param_end_0 = f:ReadFloat()
+										-- tbl.param_end_1 = f:ReadFloat()
 
-										tbl.param_parent = f:ReadLong()
+										-- tbl.param_parent = f:ReadUInt32()
 
-										tbl.fade_in_time = f:ReadFloat()
-										tbl.fade_out_time = f:ReadFloat()
+										-- tbl.fade_in_time = f:ReadFloat()
+										-- tbl.fade_out_time = f:ReadFloat()
 
-										tbl.local_entry_node_index = f:ReadLong()
-										tbl.local_exit_node_index = f:ReadLong()
-										tbl.node_flags = f:ReadLong()
+										-- tbl.local_entry_node_index = f:ReadUInt32()
+										-- tbl.local_exit_node_index = f:ReadUInt32()
+										-- tbl.node_flags = f:ReadUInt32()
 
-										tbl.entry_phase = f:ReadFloat()
-										tbl.exit_phase = f:ReadFloat()
-										tbl.last_frame = f:ReadFloat()
+										-- tbl.entry_phase = f:ReadFloat()
+										-- tbl.exit_phase = f:ReadFloat()
+										-- tbl.last_frame = f:ReadFloat()
 
-										tbl.next_seq = f:ReadLong()
-										tbl.pose = f:ReadLong()
+										-- tbl.next_seq = f:ReadUInt32()
+										-- tbl.pose = f:ReadUInt32()
 
-										tbl.ikRuleCount = f:ReadLong()
-										tbl.autoLayerCount = f:ReadLong()
-										tbl.autoLayerOffset = f:ReadLong()
-										tbl.weightOffset = f:ReadLong()
-										tbl.poseKeyOffset = f:ReadLong()
+										-- tbl.ikRuleCount = f:ReadUInt32()
+										-- tbl.autoLayerCount = f:ReadUInt32()
+										-- tbl.autoLayerOffset = f:ReadUInt32()
+										-- tbl.weightOffset = f:ReadUInt32()
+										-- tbl.poseKeyOffset = f:ReadUInt32()
 
-										tbl.ikLockCount = f:ReadLong()
-										tbl.ikLockOffset = f:ReadLong()
-										tbl.keyValueOffset = f:ReadLong()
-										tbl.keyValueSize = f:ReadLong()
-										tbl.cyclePoseIndex = f:ReadLong()
+										-- tbl.ikLockCount = f:ReadUInt32()
+										-- tbl.ikLockOffset = f:ReadUInt32()
+										-- tbl.keyValueOffset = f:ReadUInt32()
+										-- tbl.keyValueSize = f:ReadUInt32()
+										-- tbl.cyclePoseIndex = f:ReadUInt32()
 
-										f:Skip(4*7)
+										f:Skip(4*50)
 
 									end
 								f:Seek(old_pos)
@@ -552,19 +550,19 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						f:Skip(8) -- activitylistversion + eventsindexed
 
 						do
-							vmt_dir_count = f:ReadLong()
-							vmt_dir_offset = f:ReadLong()
+							vmt_dir_count = f:ReadUInt32()
+							vmt_dir_offset = f:ReadUInt32()
 
 							local old_pos = f:Tell()
 							f:Seek(vmt_dir_offset)
-								local offset = f:ReadLong()
+								local offset = f:ReadUInt32()
 								if offset > -1 then
 									if VERBOSE then print(data.file_name, "MATERIAL OFFSET:", vmt_dir_offset + offset) end
 									f:Seek(vmt_dir_offset + offset)
 									for i = 1, vmt_dir_count do
 										local chars = {}
 										for i = 1, 64 do
-											local b = f:ReadByte()
+											local b = f:ReadUInt8()
 											if not b or b == 0 then break end
 											table.insert(chars, string.char(b))
 										end
@@ -599,15 +597,15 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 
 						do
-							vtf_dir_count = f:ReadLong()
-							vtf_dir_offset = f:ReadLong()
+							vtf_dir_count = f:ReadUInt32()
+							vtf_dir_offset = f:ReadUInt32()
 							local old_pos = f:Tell()
 							f:Seek(vtf_dir_offset)
 
 							local done = {}
 
 							for i = 1, vtf_dir_count do
-								local offset = f:ReadLong()
+								local offset = f:ReadUInt32()
 								local old_pos = f:Tell()
 								if not offset then break end
 
@@ -615,7 +613,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 								local chars = {}
 								for i = 1, 64 do
-									local b = f:ReadByte()
+									local b = f:ReadUInt8()
 									if not b or b == 0 then break end
 									table.insert(chars, string.char(b))
 								end
@@ -646,8 +644,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							f:Skip(4) -- contents
 
 						do
-							include_mdl_dir_count = f:ReadLong()
-							include_mdl_dir_offset = f:ReadLong()
+							include_mdl_dir_count = f:ReadUInt32()
+							include_mdl_dir_offset = f:ReadUInt32()
 
 							local old_pos = f:Tell()
 
@@ -657,7 +655,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 								f:Skip(4)
 
-								local file_name_offset = f:ReadLong()
+								local file_name_offset = f:ReadUInt32()
 								local old_pos = f:Tell()
 								f:Seek(base_pos + file_name_offset)
 								table.insert(found_mdl_includes, {base_pos = base_pos, path = read_string(f)})
@@ -669,7 +667,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 						f:Skip(4) -- virtual pointer
 
-						anim_name_offset = f:ReadLong()
+						anim_name_offset = f:ReadUInt32()
 						f:Seek(anim_name_offset)
 						anim_name_str = read_string(f)
 
@@ -721,7 +719,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								f:Seek(newoffset)
 								f:Write(path)
 								f:Seek(v.base_pos + 4)
-								f:WriteLong(newoffset - v.base_pos)
+								f:WriteInt32(newoffset - v.base_pos)
 							elseif ply == pac.LocalPlayer and not file.Exists(v.path, "GAME") then
 								pac.Message(Color(255, 50, 50), "the model want to include ", v.path, " but it doesn't exist")
 							end
@@ -741,14 +739,12 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						end
 
 						f:Seek(size_offset)
-						f:WriteLong(f:Size())
+						f:WriteInt32(f:Size())
 
-						f:Seek(0)
-						data.buffer = f:Read(f:Size())
-						f:Close()
+						data.buffer = f:GetString()
 
-						if not DEBUG_MDL then
-							file.Delete("pac3_cache/temp.dat")
+						if DEBUG_MDL then
+							file.Write(data.file_name..".debug.new.dat", data.buffer)
 						end
 
 						data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
@@ -914,4 +910,213 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			end
 		end
 	end, onfail)
+end
+
+do
+	local ss_methods = {}
+	local ss_meta = {
+		__index = ss_methods,
+		__tostring = function(self)
+			return string.format("Stringstream [%u,%u]",self.pos-1, #self.buffer)
+		end
+	}
+	function pac.StringStream(stream, i, endian)
+		local ret = setmetatable({
+			buffer = {},
+			pos = 1
+		}, ss_meta)
+		
+		ret:Write(stream or "")
+		ret:Seek(i or 0)
+		ret:SetEndian(endian or "little")
+		
+		return ret
+	end
+
+	local function checkErr(n)
+		if n==math.huge or n==-math.huge or n~=n then
+			error("Can't convert error float to integer!", 4)
+		end
+	end
+
+	local function ByterizeInt(n)
+		checkErr(n)
+		n = (n < 0) and (4294967296 + n) or n
+		return math.floor(n/16777216)%256, math.floor(n/65536)%256, math.floor(n/256)%256, n%256
+	end
+
+	local function ByterizeShort(n)
+		checkErr(n)
+		n = (n < 0) and (65536 + n) or n
+		return math.floor(n/256)%256, n%256
+	end
+
+	local function ByterizeByte(n)
+		checkErr(n)
+		n = (n < 0) and (256 + n) or n
+		return n%256
+	end
+
+	local function twos_compliment(x,bits)
+		local limit = math.ldexp(1, bits - 1)
+		if x>limit then return x - limit*2 else return x end
+	end
+
+	local function toString(buffer, start, stop)
+		-- Max unpack is 7997
+		local chartbl = {}
+		for i=start, stop, 7997 do
+			chartbl[#chartbl + 1] = string.char(unpack(buffer, i, math.min(i+7997-1, stop)))
+		end
+		return table.concat(chartbl)
+	end
+
+	local function fromString(str, buffer, p)
+		-- Max string.byte is 8000
+		for i=1, #str, 8000 do
+			local b = {string.byte(str, i, math.min(i+8000-1, #str))}
+			for o=1, #b do
+				buffer[p] = b[o]
+				p = p + 1
+			end
+		end
+	end
+
+	function ss_methods:SetEndian(endian)
+		if endian == "little" then
+			function self:ReadBytesEndian(start, stop)
+				local t = {}
+				for i=stop, start, -1 do
+					t[#t+1] = self.buffer[i]
+				end
+				return t
+			end
+			function self:WriteBytesEndian(start, stop, t)
+				local o = #t
+				for i=start, stop do
+					self.buffer[i] = t[o]
+					o = o - 1
+				end
+			end
+		elseif endian == "big" then
+			function self:ReadBytesEndian(start, stop)
+				local t = {}
+				for i=start, stop do
+					t[#t+1] = self.buffer[i]
+				end
+				return t
+			end
+			function self:WriteBytesEndian(start, stop, t)
+				local o = 1
+				for i=start, stop do
+					self.buffer[i] = t[o]
+					o = o + 1
+				end
+			end
+		else
+			error("Invalid endian specified", 2)
+		end
+	end
+
+	function ss_methods:Seek(i)
+		self.pos = math.Clamp(i+1, 1, #self.buffer + 1)
+	end
+
+	function ss_methods:Skip(i)
+		self.pos = self.pos + i
+	end
+
+	function ss_methods:Tell()
+		return self.pos-1
+	end
+
+	function ss_methods:Size()
+		return #self.buffer
+	end
+
+	function ss_methods:Read(n)
+		n = math.max(n, 0)
+		local str = toString(self.buffer, self.pos, self.pos+n-1)
+		self.pos = self.pos + n
+		return str
+	end
+
+	function ss_methods:ReadUInt8()
+		local ret = self.buffer[self.pos]
+		self.pos = self.pos + 1
+		return ret
+	end
+
+	function ss_methods:ReadUInt16()
+		local t = self:ReadBytesEndian(self.pos, self.pos+1)
+		self.pos = self.pos + 2
+		return t[1] * 0x100 + t[2]
+	end
+
+	function ss_methods:ReadUInt32()
+		local t = self:ReadBytesEndian(self.pos, self.pos+3)
+		self.pos = self.pos + 4
+		return t[1] * 0x1000000 + t[2] * 0x10000 + t[3] * 0x100 + t[4]
+	end
+
+	function ss_methods:ReadInt8()
+		return twos_compliment(self:ReadUInt8(),8)
+	end
+
+	function ss_methods:ReadInt16()
+		return twos_compliment(self:ReadUInt16(),16)
+	end
+
+	function ss_methods:ReadInt32()
+		return twos_compliment(self:ReadUInt32(),32)
+	end
+
+	function ss_methods:ReadUntil(byte)
+		local endpos = nil
+		for i=self.pos, #self.buffer do
+			if self.buffer[i] == byte then endpos = i break end
+		end
+		endpos = endpos or #self.buffer
+		local str = toString(self.buffer, self.pos, endpos)
+		self.pos = endpos + 1
+		return str
+	end
+
+	function ss_methods:ReadString()
+		local s = self:ReadUntil(0)
+		return string.sub(s, 1, #s-1)
+	end
+
+	function ss_methods:Write(bytes)
+		fromString(bytes, self.buffer, self.pos)
+		self.pos = self.pos + #bytes
+	end
+
+	function ss_methods:WriteInt8(x)
+		self.buffer[self.pos] = ByterizeByte(x)
+		self.pos = self.pos + 1
+	end
+
+	function ss_methods:WriteInt16(x)
+		self:WriteBytesEndian(self.pos, self.pos + 1, { ByterizeShort(x) })
+		self.pos = self.pos + 2
+	end
+
+	function ss_methods:WriteInt32(x)
+		self:WriteBytesEndian(self.pos, self.pos + 3, { ByterizeInt(x) })
+		self.pos = self.pos + 4
+	end
+
+	function ss_methods:WriteString(string)
+		self:Write(string)
+		self:WriteInt8(0)
+	end
+
+	function ss_methods:GetString()
+		return toString(self.buffer, 1, #self.buffer)
+	end
+
+	function ss_methods:GetBuffer()
+		return self.buffer
+	end
 end
