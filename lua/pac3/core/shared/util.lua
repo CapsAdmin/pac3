@@ -111,7 +111,7 @@ function pac.dprint(fmt, ...)
 	MsgN("\n")
 end
 
-local DEBUG_MDL = true
+local DEBUG_MDL = false
 local VERBOSE = false
 
 local function int_to_bytes(num,endian,signed)
@@ -435,6 +435,10 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						end
 
 						local f = pac.StringStream(data.buffer, 0, "little")
+						-- Strip 2 nulls off the end
+						f.buffer[#f.buffer] = nil
+						f.buffer[#f.buffer] = nil
+						
 						local id = f:Read(4)
 						local version = f:ReadUInt32()
 						local checksum = f:ReadUInt32()
@@ -605,6 +609,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							local done = {}
 
 							for i = 1, vtf_dir_count do
+								local offset_pos = f:Tell()
 								local offset = f:ReadUInt32()
 								local old_pos = f:Tell()
 								if not offset then break end
@@ -621,7 +626,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								if chars[1] then
 									local dir = table.concat(chars)
 
-									table.insert(found_vmt_directories, {offset = offset, dir = dir})
+									table.insert(found_vmt_directories, {offset_pos = offset_pos, offset = offset, dir = dir})
 								end
 
 								f:Seek(old_pos)
@@ -714,10 +719,10 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							end
 
 							if found then
-								local path = "models/" .. newdir .. file_name .. "\0"
+								local path = "models/" .. newdir .. file_name
 								local newoffset = f:Size()
 								f:Seek(newoffset)
-								f:Write(path)
+								f:WriteString(path)
 								f:Seek(v.base_pos + 4)
 								f:WriteInt32(newoffset - v.base_pos)
 							elseif ply == pac.LocalPlayer and not file.Exists(v.path, "GAME") then
@@ -728,15 +733,21 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						-- if we extend the mdl file with vmt directories we don't have to change any offsets cause nothing else comes after it
 						if data.file_name == "model.mdl" then
 							for i,v in ipairs(found_vmt_directories) do
-								local newdir = newdir .. ("\0"):rep(#v.dir - #newdir + 1)
-								f:Seek(v.offset)
-								f:Write(newdir)
+								local newoffset = f:Size()
+								f:Seek(newoffset)
+								f:WriteString(newdir)
+								f:Seek(v.offset_pos)
+								f:WriteInt32(newoffset)
 							end
 						else
 							local new_name = newdir .. data.file_name:gsub("mdl$", "ani")
 							f:Seek(anim_name_offset)
 							f:Write(new_name)
 						end
+
+						-- Add back two nulls onto the end
+						f.buffer[#f.buffer+1] = 0
+						f.buffer[#f.buffer+1] = 0
 
 						f:Seek(size_offset)
 						f:WriteInt32(f:Size())
