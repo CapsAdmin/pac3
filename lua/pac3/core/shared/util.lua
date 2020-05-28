@@ -549,14 +549,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 									if VERBOSE then print(data.file_name, "MATERIAL OFFSET:", vmt_dir_offset + offset) end
 									f:Seek(vmt_dir_offset + offset)
 									for i = 1, vmt_dir_count do
-										local chars = {}
-										for i = 1, 64 do
-											local b = f:ReadUInt8()
-											if not b or b == 0 then break end
-											table.insert(chars, string.char(b))
-										end
-
-										local mat = (table.concat(chars) .. ".vmt"):lower()
+										local mat = (f:ReadString() .. ".vmt"):lower()
 										local found = false
 
 										for i, v in pairs(files) do
@@ -596,24 +589,10 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							for i = 1, vtf_dir_count do
 								local offset_pos = f:Tell()
 								local offset = f:ReadUInt32()
+
 								local old_pos = f:Tell()
-								if not offset then break end
-
 								f:Seek(offset)
-
-								local chars = {}
-								for i = 1, 64 do
-									local b = f:ReadUInt8()
-									if not b or b == 0 then break end
-									table.insert(chars, string.char(b))
-								end
-
-								if chars[1] then
-									local dir = table.concat(chars)
-
-									table.insert(found_vmt_directories, {offset_pos = offset_pos, offset = offset, dir = dir})
-								end
-
+								table.insert(found_vmt_directories, {offset_pos = offset_pos, offset = offset, dir = f:ReadString()})
 								f:Seek(old_pos)
 							end
 							f:Seek(old_pos)
