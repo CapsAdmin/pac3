@@ -348,8 +348,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 			do -- hex models
 				local found_vmt_directories = {}
-				local anim_name_offset
-				local anim_name_str
 
 				for i, data in ipairs(files) do
 					if data.file_name:EndsWith(".mdl") then
@@ -584,9 +582,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 						f:Skip(4) -- virtual pointer
 
-						anim_name_offset = f:ReadUInt32()
-						f:Seek(anim_name_offset)
-						anim_name_str = f:ReadString()
+						local anim_name_offset_pos = f:Tell()
 
 						if VERBOSE or DEBUG_MDL then
 							print(data.file_name, "MATERIAL DIRECTORIES:")
@@ -651,8 +647,11 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							end
 						else
 							local new_name = dir .. data.file_name:gsub("mdl$", "ani")
-							f:Seek(anim_name_offset)
-							f:Write(new_name)
+							local newoffset = f:Size()
+							f:Seek(newoffset)
+							f:WriteString(new_name)
+							f:Seek(anim_name_offset_pos)
+							f:WriteInt32(newoffset)
 						end
 
 						-- Add nulls to align to 4 bytes
