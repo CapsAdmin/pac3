@@ -213,10 +213,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			return
 		end
 
-		for _, name in ipairs((file.Find("pac3_cache/downloads/*_temp.dat", "DATA"))) do
-			file.Delete("pac3_cache/downloads/" .. name)
-		end
-
 		local skip_cache = false
 		if url:StartWith("_") then
 			skip_cache = true
@@ -655,10 +651,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							print("============")
 						end
 
-						local newdir = dir:gsub("\\", "/")
-
 						do -- replace the mdl name (max size is 64 bytes)
-							local newname = string.sub(newdir .. data.file_name:lower(), 1, 63)
+							local newname = string.sub(dir .. data.file_name:lower(), 1, 63)
 							f:Seek(name_offset)
 							f:Write(newname .. string.rep("\0", 64-#newname))
 						end
@@ -683,7 +677,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							end
 
 							if found then
-								local path = "models/" .. newdir .. file_name
+								local path = "models/" .. dir .. file_name
 								local newoffset = f:Size()
 								f:Seek(newoffset)
 								f:WriteString(path)
@@ -699,12 +693,12 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							for i,v in ipairs(found_vmt_directories) do
 								local newoffset = f:Size()
 								f:Seek(newoffset)
-								f:WriteString(newdir)
+								f:WriteString(dir)
 								f:Seek(v.offset_pos)
 								f:WriteInt32(newoffset)
 							end
 						else
-							local new_name = newdir .. data.file_name:gsub("mdl$", "ani")
+							local new_name = dir .. data.file_name:gsub("mdl$", "ani")
 							f:Seek(anim_name_offset)
 							f:Write(new_name)
 						end
@@ -729,8 +723,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 				for i, data in ipairs(files) do
 					if data.file_name:EndsWith(".vmt") then
-						local newdir = dir
-
 						data.buffer = data.buffer:lower():gsub("\\", "/")
 
 						if DEBUG_MDL or VERBOSE then
@@ -745,7 +737,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 								local new_path
 								for _, info in ipairs(found_vmt_directories) do
-									new_path, count = vtf_path:gsub("^" .. info.dir:gsub("\\", "/"):lower(), newdir)
+									new_path, count = vtf_path:gsub("^" .. info.dir:gsub("\\", "/"):lower(), dir)
 									if count == 0 then
 										new_path = nil
 									else
@@ -757,7 +749,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 									if info.file_name:EndsWith(".vtf") then
 										local vtf_name = (vtf_path:match(".+/(.+)") or vtf_path)
 										if info.file_name == vtf_name .. ".vtf" then
-											new_path = newdir .. vtf_name
+											new_path = dir .. vtf_name
 											break
 										end
 									end
@@ -880,7 +872,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					end
 				end
 
-				callback(DEBUG_MDL and "models/error.mdl" or v)
+				callback(v)
 				file.Delete("pac3_cache/downloads/" .. id .. ".dat")
 				break
 			end
