@@ -197,8 +197,8 @@ do
 			ent.pac_render_times[type] = last
 
 			if last > max_render_time then
+				pac.Message(Color(255, 50, 50), tostring(ent) .. ": Render time limit exceeded!")
 				ent.pac_render_time_exceeded = true
-
 				pac.HideEntityParts(ent)
 			end
 		end
