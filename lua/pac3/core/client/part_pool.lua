@@ -381,10 +381,7 @@ pac.AddHook("Think", "events", function()
 					elseif ply.pac_death_ragdollize then
 
 						-- make props draw on the ragdoll
-						if ply.pac_death_ragdollize then
-							ply.pac_owner_override = rag
-						end
-
+						ply.pac_owner_override = rag
 						for _, part in pairs(ent_parts[ply]) do
 							if part.last_owner ~= rag then
 								part:SetOwner(rag)
@@ -765,8 +762,7 @@ do -- drawing
 				dst = ent:EyePos():Distance(pac.EyePos)
 				radius = ent:BoundingRadius() * 3 * (ent:GetModelScale() or 1)
 
-				if ent:GetNoDraw() or
-					isply and not Alive(ent) and pac_sv_hide_outfit_on_death:GetBool() or
+				if isply and not Alive(ent) and pac_sv_hide_outfit_on_death:GetBool() or
 					IsValid(ent.pac_ragdoll_player_owner) and not Alive(ent.pac_ragdoll_player_owner) and pac_sv_hide_outfit_on_death:GetBool()
 				then
 					pac.HideEntityParts(ent)
