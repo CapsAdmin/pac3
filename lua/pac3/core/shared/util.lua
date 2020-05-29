@@ -114,55 +114,6 @@ end
 local DEBUG_MDL = false
 local VERBOSE = false
 
-local function int_to_bytes(num,endian,signed)
-    if num<0 and not signed then num=-num print"warning, dropping sign from number converting to unsigned" end
-    local res={}
-    local n = math.ceil(select(2,math.frexp(num))/8) -- number of bytes to be used.
-    if signed and num < 0 then
-        num = num + 2^n
-    end
-    for k=n,1,-1 do -- 256 = 2^8 bits per char.
-        local mul=2^(8*(k-1))
-        res[k]=math.floor(num/mul)
-        num=num-res[k]*mul
-    end
-    assert(num==0)
-    if endian == "big" then
-        local t={}
-        for k=1,n do
-            t[k]=res[n-k+1]
-        end
-        res=t
-    end
-
-	local bytes =  string.char(unpack(res))
-
-	if #bytes ~= 4 then
-		bytes = bytes .. ("\0"):rep(4 - #bytes)
-	end
-
-	return bytes
-end
-
-local function bytes_to_int(str,endian,signed) -- use length of string to determine 8,16,32,64 bits
-    local t={str:byte(1,-1)}
-    if endian=="big" then --reverse bytes
-        local tt={}
-        for k=1,#t do
-            tt[#t-k+1]=t[k]
-        end
-        t=tt
-    end
-    local n=0
-    for k=1,#t do
-        n=n+t[k]*2^((k-1)*8)
-    end
-    if signed then
-        n = (n > 2^(#t*8-1) -1) and (n - 2^(#t*8)) or n -- if last bit set, negative.
-    end
-    return n
-end
-
 local shader_params = include("pac3/libraries/shader_params.lua")
 local texture_keys = {}
 
@@ -403,6 +354,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				for i, data in ipairs(files) do
 					if data.file_name:EndsWith(".mdl") then
 						local found_materials = {}
+						local found_materialdirs = {}
 						local found_activities = {}
 						local found_mdl_includes = {}
 
@@ -577,18 +529,17 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						do
 							vtf_dir_count = f:ReadUInt32()
 							vtf_dir_offset = f:ReadUInt32()
+
 							local old_pos = f:Tell()
 							f:Seek(vtf_dir_offset)
-
-							local done = {}
-
 							for i = 1, vtf_dir_count do
 								local offset_pos = f:Tell()
 								local offset = f:ReadUInt32()
 
 								local old_pos = f:Tell()
 								f:Seek(offset)
-								table.insert(found_vmt_directories, {offset_pos = offset_pos, offset = offset, dir = f:ReadString()})
+								table.insert(found_materialdirs, {offset_pos = offset_pos, offset = offset, dir = f:ReadString()})
+								table.insert(found_vmt_directories, {dir = f:ReadString()})
 								f:Seek(old_pos)
 							end
 							f:Seek(old_pos)
@@ -638,7 +589,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 						if VERBOSE or DEBUG_MDL then
 							print(data.file_name, "MATERIAL DIRECTORIES:")
-							PrintTable(found_vmt_directories)
+							PrintTable(found_materialdirs)
 							print("============")
 							print(data.file_name, "MATERIALS:")
 							PrintTable(found_materials)
@@ -690,7 +641,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 						-- if we extend the mdl file with vmt directories we don't have to change any offsets cause nothing else comes after it
 						if data.file_name == "model.mdl" then
-							for i,v in ipairs(found_vmt_directories) do
+							for i,v in ipairs(found_materialdirs) do
 								local newoffset = f:Size()
 								f:Seek(newoffset)
 								f:WriteString(dir)
@@ -717,7 +668,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							file.Write(data.file_name..".debug.new.dat", data.buffer)
 						end
 
-						data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
+						local crc = pac.StringStream() crc:WriteInt32(tonumber(util.CRC(data.buffer)))
+						data.crc = crc:GetString()
 					end
 				end
 
@@ -773,7 +725,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							end)
 						end
 
-						data.crc = int_to_bytes(tonumber(util.CRC(data.buffer)))
+						local crc = pac.StringStream() crc:WriteInt32(tonumber(util.CRC(data.buffer)))
+						data.crc = crc:GetString()
 					end
 				end
 			end
