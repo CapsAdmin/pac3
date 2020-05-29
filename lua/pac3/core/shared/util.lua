@@ -538,8 +538,9 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 								local old_pos = f:Tell()
 								f:Seek(offset)
-								table.insert(found_materialdirs, {offset_pos = offset_pos, offset = offset, dir = f:ReadString()})
-								table.insert(found_vmt_directories, {dir = f:ReadString()})
+								local dir = f:ReadString()
+								table.insert(found_materialdirs, {offset_pos = offset_pos, offset = offset, dir = dir})
+								table.insert(found_vmt_directories, {dir = dir})
 								f:Seek(old_pos)
 							end
 							f:Seek(old_pos)
