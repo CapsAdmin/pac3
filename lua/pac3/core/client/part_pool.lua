@@ -88,11 +88,10 @@ do
 		end
 
 		if max_render_time > 0 and ent ~= pac.LocalPlayer then
-			render_time = SysTime()
-
-			if ent.pac_render_time_stop and ent.pac_render_time_stop > render_time then
+			if ent.pac_render_time_exceeded then
 				return
 			end
+			render_time = SysTime()
 		end
 
 		if not ent_parts[ent] then
@@ -198,7 +197,7 @@ do
 			ent.pac_render_times[type] = last
 
 			if last > max_render_time then
-				ent.pac_render_time_stop = SysTime() + 2 + (math.random() * 2)
+				ent.pac_render_time_exceeded = true
 
 				pac.HideEntityParts(ent)
 			end
