@@ -233,29 +233,37 @@ do
 end
 
 function pac.HideEntityParts(ent)
-	if ent_parts[ent] and ent.pac_drawing then
-		for _, part in pairs(ent_parts[ent]) do
-			part:CallRecursive("OnHide")
-			part:SetKeyValueRecursive("last_hidden", nil)
-			part:SetKeyValueRecursive("shown_from_rendering", false)
-			part:SetKeyValueRecursive("draw_hidden", true)
-		end
+	local parts = ent_parts[ent]
+	if parts then
+		local enttbl = ent:GetTable()
+		if enttbl.pac_drawing then
+			for _, part in pairs(parts) do
+				part:CallRecursive("OnHide")
+				part:SetKeyValueRecursive("last_hidden", nil)
+				part:SetKeyValueRecursive("shown_from_rendering", false)
+				part:SetKeyValueRecursive("draw_hidden", true)
+			end
 
-		pac.ResetBones(ent)
-		ent.pac_drawing = false
+			pac.ResetBones(ent)
+			enttbl.pac_drawing = false
+		end
 	end
 end
 
 function pac.ShowEntityParts(ent)
-	if ent_parts[ent] and (not ent.pac_drawing) and (not ent.pac_shouldnotdraw) and (not ent.pac_ignored) then
-		for _, part in pairs(ent_parts[ent]) do
-			part:SetKeyValueRecursive("last_hidden", nil)
-			part:SetKeyValueRecursive("shown_from_rendering", FrameNumber())
-			part:SetKeyValueRecursive("draw_hidden", false)
-		end
+	local parts = ent_parts[ent]
+	if parts then
+		local enttbl = ent:GetTable()
+		if (not enttbl.pac_drawing) and (not enttbl.pac_shouldnotdraw) and (not enttbl.pac_ignored) then
+			for _, part in pairs(parts) do
+				part:SetKeyValueRecursive("last_hidden", nil)
+				part:SetKeyValueRecursive("shown_from_rendering", FrameNumber())
+				part:SetKeyValueRecursive("draw_hidden", false)
+			end
 
-		pac.ResetBones(ent)
-		ent.pac_drawing = true
+			pac.ResetBones(ent)
+			enttbl.pac_drawing = true
+		end
 	end
 end
 
@@ -678,7 +686,6 @@ do -- drawing
 		local draw_dist = 0
 		local sv_draw_dist = 0
 		local radius = 0
-		local dst = 0
 		local dummyv = Vector(0.577350,0.577350,0.577350)
 		local fovoverride
 
@@ -727,15 +734,15 @@ do -- drawing
 			draw_dist = cvar_distance:GetInt()
 			fovoverride = cvar_fovoverride:GetBool()
 			pac_sv_draw_distance = pac_sv_draw_distance or GetConVar("pac_sv_draw_distance")
-			sv_draw_dist = pac_sv_draw_distance:GetFloat()
+			sv_draw_dist = pac_sv_draw_distance:GetInt()
 			radius = 0
 
 			if draw_dist <= 0 then
-				draw_dist = 32768
+				draw_dist = math.huge
 			end
 
 			if sv_draw_dist <= 0 then
-				sv_draw_dist = 32768
+				sv_draw_dist = math.huge
 			end
 
 			draw_dist = math.min(sv_draw_dist, draw_dist)
@@ -746,23 +753,22 @@ do -- drawing
 					goto CONTINUE
 				end
 
+				local enttbl = ent:GetTable()
 				local isply = ent:IsPlayer()
-				ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
-				dst = ent:EyePos():Distance(pac.EyePos)
+				enttbl.pac_pixvis = enttbl.pac_pixvis or util.GetPixelVisibleHandle()
 				radius = ent:BoundingRadius() * 3 * (ent:GetModelScale() or 1)
 
 				if isply and not Alive(ent) and pac_sv_hide_outfit_on_death:GetBool() or
-					IsValid(ent.pac_ragdoll_player_owner) and not Alive(ent.pac_ragdoll_player_owner) and pac_sv_hide_outfit_on_death:GetBool()
+					IsValid(enttbl.pac_ragdoll_player_owner) and not Alive(enttbl.pac_ragdoll_player_owner) and pac_sv_hide_outfit_on_death:GetBool()
 				then
 					pac.HideEntityParts(ent)
 					goto CONTINUE
 				end
 
 				if isply then
-					local rag = ent.pac_ragdoll or NULL
-
-					if IsValid(rag) then
-						if ent.pac_death_hide_ragdoll then
+					local rag = enttbl.pac_ragdoll
+					if rag and rag:IsValid() then
+						if enttbl.pac_death_hide_ragdoll then
 							rag:SetRenderMode(RENDERMODE_TRANSALPHA)
 
 							local c = rag:GetColor()
@@ -774,22 +780,22 @@ do -- drawing
 								rag:AddEffects(EF_BONEMERGE)
 							end
 
-							if ent.pac_draw_player_on_death then
+							if enttbl.pac_draw_player_on_death then
 								ent:DrawModel()
 							end
-						elseif ent.pac_death_ragdollize then
+						elseif enttbl.pac_death_ragdollize then
 							rag:SetNoDraw(true)
 
-							if not ent.pac_hide_entity then
-								local col = ent.pac_color or dummyv
-								local bri = ent.pac_brightness or 1
+							if not enttbl.pac_hide_entity then
+								local col = enttbl.pac_color or dummyv
+								local bri = enttbl.pac_brightness or 1
 
-								render_ModelMaterialOverride(ent.pac_materialm)
+								render_ModelMaterialOverride(enttbl.pac_materialm)
 								render_SetColorModulation(col.x * bri, col.y * bri, col.z * bri)
-								render_SetBlend(ent.pac_alpha or 1)
+								render_SetBlend(enttbl.pac_alpha or 1)
 
-								if ent.pac_invert then render_CullMode(1) end
-								if ent.pac_fullbright then render_SuppressEngineLighting(true) end
+								if enttbl.pac_invert then render_CullMode(1) end
+								if enttbl.pac_fullbright then render_SuppressEngineLighting(true) end
 
 								rag:DrawModel()
 								rag:CreateShadow()
@@ -811,29 +817,37 @@ do -- drawing
 					radius = radius * 4
 				end
 
-				local cond = ent.IsPACWorldEntity -- or draw_dist == -1 or -- i assume this is a leftover from debugging?
-				-- because we definitely don't want to draw ANY outfit present, right?
+				local cond
 
-				if not cond then
-					cond = ent == pac.LocalPlayer and ent:ShouldDrawLocalPlayer() or
-						ent.pac_camera and ent.pac_camera:IsValid()
+				if ent.IsPACWorldEntity then -- or draw_dist == -1 or -- i assume this is a leftover from debugging?
+					cond = true
+				elseif ent == pac.LocalPlayer then
+					cond = ent:ShouldDrawLocalPlayer()
+				elseif ent.pac_camera then
+					cond = ent.pac_camera:IsValid()
+				else
+					cond = true
+					local dst = ent:EyePos():Distance(pac.EyePos)
+					if draw_dist < math.huge then
+						if enttbl.pac_draw_distance then
+							if enttbl.pac_draw_distance > 0 and dst > enttbl.pac_draw_distance then
+								cond = false
+							end
+						else
+							if dst > draw_dist then
+								cond = false
+							end
+						end
+					end
+					if not fovoverride and not nodrawdelay(dst < radius * 1.25 or util_PixelVisible(ent:EyePos(), radius, enttbl.pac_pixvis) ~= 0, ent) then
+						cond = false
+					end
 				end
 
-				if not cond and ent ~= pac.LocalPlayer then
-					cond = (
-						ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance <= dst) or
-						dst <= draw_dist
-					) and (
-						fovoverride or
-						nodrawdelay(dst < radius * 1.25  or
-						util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0,ent)
-					)
-				end
-
-				ent.pac_draw_cond = cond
+				enttbl.pac_draw_cond = cond
 
 				if cond then
-					ent.pac_model = ent:GetModel() -- used for cached functions
+					enttbl.pac_model = ent:GetModel() -- used for cached functions
 
 					pac.ShowEntityParts(ent)
 
