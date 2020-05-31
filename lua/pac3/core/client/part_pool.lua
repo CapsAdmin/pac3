@@ -94,7 +94,8 @@ do
 			render_time = SysTime()
 		end
 
-		if not ent_parts[ent] then
+		local parts = ent_parts[ent]
+		if parts == nil or next(parts) == nil then
 			pac.UnhookEntityRender(ent)
 		else
 			if not draw_only then
@@ -103,30 +104,30 @@ do
 				-- bones MUST be setup before drawing or else unexpected/random results might happen
 
 				if pac.profile then
-					for key, part in pairs(ent_parts[ent]) do
+					for key, part in pairs(parts) do
 						if part:IsValid() then
 							if not part:HasParent() then
 								part:CallRecursiveProfiled("BuildBonePositions")
 							end
 						else
-							ent_parts[ent][key] = nil
+							parts[key] = nil
 						end
 					end
 				else
-					for key, part in pairs(ent_parts[ent]) do
+					for key, part in pairs(parts) do
 						if part:IsValid() then
 							if not part:HasParent() then
 								part:CallRecursive("BuildBonePositions")
 							end
 						else
-							ent_parts[ent][key] = nil
+							parts[key] = nil
 						end
 					end
 				end
 			end
 
 			if pac.profile then
-				for key, part in pairs(ent_parts[ent]) do
+				for key, part in pairs(parts) do
 					if part:IsValid() then
 						if not part:HasParent() then
 							if not draw_only then
@@ -145,11 +146,11 @@ do
 							end
 						end
 					else
-						ent_parts[ent][key] = nil
+						parts[key] = nil
 					end
 				end
 			else
-				for key, part in pairs(ent_parts[ent]) do
+				for key, part in pairs(parts) do
 					if part:IsValid() then
 						if not part:HasParent() then
 							if not draw_only then
@@ -168,7 +169,7 @@ do
 							end
 						end
 					else
-						ent_parts[ent][key] = nil
+						parts[key] = nil
 					end
 				end
 			end
@@ -286,11 +287,13 @@ local function nodrawdelay(draw,ent)
 end
 
 function pac.HookEntityRender(ent, part)
-	if not ent_parts[ent] then
-		ent_parts[ent] = {}
+	local parts = ent_parts[ent]
+	if not parts then
+		parts = {}
+		ent_parts[ent] = parts
 	end
 
-	if ent_parts[ent][part] then
+	if parts[part] then
 		return
 	end
 
@@ -299,8 +302,7 @@ function pac.HookEntityRender(ent, part)
 	pac.drawn_entities[ent] = true
 	pac.profile_info[ent] = nil
 
-	ent_parts[ent] = ent_parts[ent] or {}
-	ent_parts[ent][part] = part
+	parts[part] = part
 
 	ent.pac_has_parts = true
 end
