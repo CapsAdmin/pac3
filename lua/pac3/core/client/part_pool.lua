@@ -819,12 +819,12 @@ do -- drawing
 
 				local cond
 
-				if ent.IsPACWorldEntity then -- or draw_dist == -1 or -- i assume this is a leftover from debugging?
+				if enttbl.IsPACWorldEntity then -- or draw_dist == -1 or -- i assume this is a leftover from debugging?
 					cond = true
 				elseif ent == pac.LocalPlayer then
 					cond = ent:ShouldDrawLocalPlayer()
-				elseif ent.pac_camera then
-					cond = ent.pac_camera:IsValid()
+				elseif enttbl.pac_camera then
+					cond = enttbl.pac_camera:IsValid()
 				else
 					cond = true
 					local dst = ent:EyePos():Distance(pac.EyePos)
