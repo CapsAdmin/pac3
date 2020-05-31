@@ -311,7 +311,7 @@ function pac.UnhookEntityRender(ent, part)
 		ent_parts[ent][part] = nil
 	end
 
-	if ent_parts[ent] and not next(ent_parts[ent]) then
+	if (ent_parts[ent] and not next(ent_parts[ent])) or not part then
 		ent_parts[ent] = nil
 		ent.pac_has_parts = nil
 		pac.drawn_entities[ent] = nil
