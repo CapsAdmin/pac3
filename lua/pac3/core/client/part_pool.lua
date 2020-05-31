@@ -454,18 +454,6 @@ function pac.DisableEntity(ent)
 	ent.pac_drawing = false
 end
 
-pac.AddHook("PlayerSpawned", "change_owner", function(ply)
-	if ent_parts[ply] then
-		for _, part in pairs(ent_parts[ply]) do
-			if part.last_owner and part.last_owner:IsValid() then
-				part:SetOwner(ply)
-				part.last_owner = nil
-			end
-		end
-	end
-	ply.pac_playerspawn = pac.RealTime -- used for events
-end)
-
 pac.AddHook("EntityRemoved", "change_owner", function(ent)
 	if IsActuallyValid(ent) then
 		if IsActuallyPlayer(ent) then
