@@ -41,14 +41,6 @@ local function IsActuallyRemoved(ent, cb)
 	end)
 end
 
---[[
-	This state can happen when the Player is joined but not yet fully connected.
-	At this point the SteamID is not yet set and the UniqueID call fails with a lua error.
-]]
-local function IsActuallyPlayer(ent)
-	return IsEntity(ent) and pcall(ent.UniqueID, ent)
-end
-
 function pac.ForceRendering(b)
 	force_rendering = b
 	if b then
@@ -477,7 +469,7 @@ pac.AddHook("EntityRemoved", "change_owner", function(ent)
 					end
 				end)
 			end
-		else
+		elseif ent.PACPart then
 			local owner = ent:GetOwner()
 			if IsActuallyPlayer(owner) then
 				local parts = parts_from_ent(owner)
@@ -491,12 +483,22 @@ pac.AddHook("EntityRemoved", "change_owner", function(ent)
 					end)
 				end
 			end
+		else
+			local owner = ent.pac_ragdoll_player_owner
+			if IsActuallyPlayer(owner) then
+				for _, part in pairs(parts_from_ent(owner)) do
+					if part.last_owner ~= owner then
+						part:SetOwner(owner)
+						part.last_owner = owner
+					end
+				end
+			end
 		end
 	end
 end)
 
 pac.AddHook("OnEntityCreated", "change_owner", function(ent)
-	if not IsActuallyValid(ent) then return end
+	if not IsActuallyValid(ent) or not ent.PACPart then return end
 
 	local owner = ent:GetOwner()
 
@@ -839,7 +841,7 @@ do -- drawing
 							end
 						end
 					end
-					if not fovoverride and not nodrawdelay(dst < radius * 1.25 or util_PixelVisible(ent:EyePos(), radius, enttbl.pac_pixvis) ~= 0, ent) then
+					if cond and not fovoverride and not nodrawdelay(dst < radius * 1.25 or util_PixelVisible(ent:EyePos(), radius, enttbl.pac_pixvis) ~= 0, ent) then
 						cond = false
 					end
 				end
