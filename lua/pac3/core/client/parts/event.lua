@@ -1021,14 +1021,6 @@ do
 	PART.OldEvents.button = {
 		arguments = {{button = "string"}},
 		userdata = {{enums = function()
-			local enums = {}
-
-			for key, val in pairs(_G) do
-				if type(key) == "string" and type(val) == "number" and key:sub(0,4) == "KEY_" then
-					enums[key:sub(5):lower()] = val
-				end
-			end
-
 			return enums
 		end}},
 		callback = function(self, ent, button)
