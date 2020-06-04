@@ -3,6 +3,7 @@ local cam_Start3D2D = cam.Start3D2D
 local EyePos = EyePos
 local EyeAngles = EyeAngles
 local draw_SimpleTextOutlined = draw.SimpleTextOutlined
+local surface_DisableClipping = surface.DisableClipping
 local render_CullMode = render.CullMode
 local cam_End3D2D = cam.End3D2D
 local cam_End3D = cam.End3D
@@ -82,6 +83,7 @@ function PART:OnDraw(owner, pos, ang)
 	if self.Text ~= "" then
 		cam_Start3D(EyePos(), EyeAngles())
 			cam_Start3D2D(pos, ang, self.Size)
+			surface_DisableClipping(true)
 
 			draw_SimpleTextOutlined(self.Text, self.Font, 0,0, self.ColorC, TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER, self.Outline, self.OutlineColorC)
 			render_CullMode(1) -- MATERIAL_CULLMODE_CW
@@ -89,6 +91,7 @@ function PART:OnDraw(owner, pos, ang)
 			draw_SimpleTextOutlined(self.Text, self.Font, 0,0, self.ColorC, TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER, self.Outline, self.OutlineColorC)
 			render_CullMode(0) -- MATERIAL_CULLMODE_CCW
 
+			surface_DisableClipping(false)
 			cam_End3D2D()
 		cam_End3D()
 	end
