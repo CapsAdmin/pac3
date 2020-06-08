@@ -151,7 +151,7 @@ function PART:SetupURLStreamsNow(URL)
 
 	for url, streamdata in pairs(self.streams) do
 		if IsValid(streamdata.stream) then
-			stream:Stop()
+			streamdata.stream:Stop()
 		end
 	end
 
