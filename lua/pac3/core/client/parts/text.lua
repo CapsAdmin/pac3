@@ -91,7 +91,8 @@ function PART:OnDraw(owner, pos, ang)
 			draw_SimpleTextOutlined(self.Text, self.Font, 0,0, self.ColorC, TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER, self.Outline, self.OutlineColorC)
 			render_CullMode(0) -- MATERIAL_CULLMODE_CCW
 
-			surface_DisableClipping(false)
+			-- Clipping was not enabled anywhere in the hook which OnDraw is called in so don not enable it
+			--surface_DisableClipping(false)
 			cam_End3D2D()
 		cam_End3D()
 	end
