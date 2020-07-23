@@ -141,6 +141,7 @@ function PART:PreInitialize()
 	self.RootPart = NULL
 	self.DrawOrder = 0
 	self.hide_disturbing = false
+	self.event_hide_registry = {}
 
 	self.cached_pos = Vector(0,0,0)
 	self.cached_ang = Angle(0,0,0)
@@ -631,12 +632,27 @@ do -- parenting
 			self:SetKeyValueRecursive("hidden", b)
 		end
 
-		function PART:SetEventHide(b)
-			if self.event_hidden ~= b and self.event_hidden ~= nil then
-				self.shown_from_rendering = nil
+		function PART:RemoveEventHide(object)
+			self.event_hide_registry[object] = nil
+		end
+
+		function PART:SetEventHide(b, object)
+			object = object or self
+
+			-- this can and will produce undefined behavior (like skipping keys)
+			-- but still, it will do the job at cleaning up at least a part of table
+			for k, v in pairs(self.event_hide_registry) do
+				if not IsValid(k) then
+					self.event_hide_registry[k] = nil
+				end
 			end
 
-			self.event_hidden = b
+			self.event_hide_registry[object] = b
+			self.event_hidden = self:CalculateEventHidden()
+
+			if self.event_hidden ~= b then
+				self.shown_from_rendering = nil
+			end
 		end
 
 		function PART:FlushFromRenderingState(newState)
@@ -647,7 +663,35 @@ do -- parenting
 			return self.draw_hidden
 		end
 
-		function PART:IsEventHidden()
+		function PART:CalculateEventHidden()
+			for k, v in pairs(self.event_hide_registry) do
+				if v then
+					return true
+				end
+			end
+
+			return false
+		end
+
+		function PART:IsEventHidden(object, invert)
+			if object then
+				if invert then
+					for k, v in pairs(self.event_hide_registry) do
+						if k ~= object and v then
+							return true
+						end
+					end
+
+					return false
+				end
+
+				return self.event_hide_registry[object] == true
+			end
+
+			if self.event_hidden == nil then
+				self.event_hidden = self:CalculateEventHidden()
+			end
+
 			return self.event_hidden
 		end
 
@@ -661,9 +705,9 @@ do -- parenting
 				self.temp_hidden or
 				self.hidden or
 				self.hide_disturbing or
-				self.event_hidden
+				self:IsEventHidden()
 			then
-				return true, self.event_hidden
+				return true, self:IsEventHidden()
 			end
 
 			if not self:HasParent() then
@@ -681,7 +725,7 @@ do -- parenting
 					parent.hidden or
 					parent.event_hidden
 				then
-					return true, parent.event_hidden
+					return true, parent:IsEventHidden()
 				end
 			end
 

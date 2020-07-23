@@ -859,7 +859,7 @@ do
 					if self.Class == "all" or (self.Class:lower() == wep:GetClass():lower()) then
 						self:OnHide()
 						self.Entity = wep
-						self:SetEventHide(false)
+						self:SetEventHide(false, self)
 						wep.RenderOverride = function()
 							wep:DrawShadow(false)
 							if wep.pac_render then
@@ -870,7 +870,7 @@ do
 						end
 						wep.pac_weapon_part = self
 					else
-						self:SetEventHide(true)
+						self:SetEventHide(true, self)
 						self:OnHide()
 					end
 				end

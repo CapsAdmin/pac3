@@ -122,6 +122,16 @@ PART.OldEvents = {
 			self.time = self.time or time
 			self.timerx_reset = reset_on_hide
 
+			-- limitation - we can not "not to think" the timer
+			-- when our thinking depends on whenever we control our parent!
+			if self.AffectChildrenOnly then
+				local hidden, event_hidden = self:IsHidden()
+
+				if hidden and (not event_hidden or not self:IsEventHidden(self, true)) then
+					return false
+				end
+			end
+
 			return self:NumberOperator(time - self.time, seconds)
 		end,
 	},
@@ -134,6 +144,16 @@ PART.OldEvents = {
 
 			self.time = self.time or time
 			self.timerx_reset = reset_on_hide
+
+			-- limitation - we can not "not to think" the timer
+			-- when our thinking depends on whenever we control our parent!
+			if self.AffectChildrenOnly then
+				local hidden, event_hidden = self:IsHidden()
+
+				if hidden and (not event_hidden or not self:IsEventHidden(self, true)) then
+					return false
+				end
+			end
 
 			return self:NumberOperator(time - self.time, seconds)
 		end,
@@ -1330,13 +1350,13 @@ end
 function PART:OnRemove()
 	if self.AffectChildrenOnly then
 		for _, child in ipairs(self:GetChildren()) do
-			child:SetEventHide(false)
+			child:RemoveEventHide(self)
 		end
 	else
 		local parent = self:GetParent()
 
 		if parent:IsValid() then
-			parent:SetEventHide(false)
+			parent:RemoveEventHide(self)
 		end
 	end
 end
@@ -1378,7 +1398,7 @@ function PART:OnThink()
 				local b = should_hide(self, ent, data)
 
 				for _, child in ipairs(self:GetChildren()) do
-					child:SetEventHide(b)
+					child:SetEventHide(b, self)
 				end
 
 				-- this is just used for the editor..
@@ -1398,7 +1418,7 @@ function PART:OnThink()
 				if parent:IsValid() then
 					local b = should_hide(self, ent, data)
 
-					parent:SetEventHide(b)
+					parent:SetEventHide(b, self)
 					parent:CallRecursive("FlushFromRenderingState")
 
 					-- this is just used for the editor..
@@ -1578,10 +1598,16 @@ function PART:OnHide()
 			end
 		end
 	end
-
 end
 
 function PART:OnShow()
+	self:OnThink() -- Update hide status for chilren!
+	-- This fixes the very rare issue where stuff getting un-hidden in complex event tree for 1 game frame
+	-- before getting hidden again by events inside tree
+
+	if self.timerx_reset then
+		self.time = nil
+	end
 end
 
 function PART:OnEvent(typ, ent)
