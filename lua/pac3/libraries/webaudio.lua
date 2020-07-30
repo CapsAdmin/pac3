@@ -846,6 +846,7 @@ do
 	end
 
 	function META:UpdateVolume()
+		if not self.Loaded then return end
 		queue_javascript()
 		if self:Get3D() then
 			self:UpdateVolume3d()
