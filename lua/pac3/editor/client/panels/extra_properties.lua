@@ -331,7 +331,7 @@ do -- materials and textures
 
 		-- Near cursor
 		local W, H = ScrW(), ScrH()
-		local x, y = gui.MousePos()
+		local x, y = input.GetCursorPos()
 		local w, h = 256, 256
 		x = x + 12
 		y = y + 4

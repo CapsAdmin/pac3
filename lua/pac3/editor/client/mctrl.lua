@@ -94,7 +94,7 @@ do -- pace
 	end
 
 	function mctrl.GetMousePos()
-		return gui.MousePos()
+		return input.GetCursorPos()
 	end
 
 	function mctrl.VecToScreen(vec)
@@ -712,7 +712,7 @@ end
 function mctrl.Think()
 	if pace.IsSelecting then return end
 	if not mctrl.target:IsValid() then return end
-	
+
 	local x, y = mctrl.GetMousePos()
 	if mctrl.grab.axis and mctrl.grab.mode == MODE_MOVE then
 		mctrl.Move(mctrl.grab.axis, x, y, mctrl.GetCalculatedScale())

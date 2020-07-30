@@ -421,7 +421,7 @@ do -- menu
 
 	function pace.OnAddPartMenu(obj)
 		local base = vgui.Create("EditablePanel")
-		base:SetPos(gui.MousePos())
+		base:SetPos(input.GetCursorPos())
 		base:SetSize(200, 300)
 		base:MakePopup()
 
@@ -513,7 +513,7 @@ do -- menu
 
 	function pace.OnPartMenu(obj)
 		local menu = DermaMenu()
-		menu:SetPos(gui.MousePos())
+		menu:SetPos(input.GetCursorPos())
 
 		if obj then
 			if not obj:HasParent() then
@@ -603,7 +603,7 @@ do -- menu
 		pace.current_part = pac.NULL
 		local menu = DermaMenu()
 		menu:MakePopup()
-		menu:SetPos(gui.MousePos())
+		menu:SetPos(input.GetCursorPos())
 
 		pace.AddRegisteredPartsToMenu(menu)
 

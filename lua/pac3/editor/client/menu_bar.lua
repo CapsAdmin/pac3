@@ -132,7 +132,7 @@ end
 
 function pace.OnOpenMenu()
 	local menu = DermaMenu()
-	menu:SetPos(gui.MousePos())
+	menu:SetPos(input.GetCursorPos())
 
 	populate_player(menu) menu:AddSpacer()
 	populate_view(menu) menu:AddSpacer()

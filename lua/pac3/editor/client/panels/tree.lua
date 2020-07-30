@@ -238,7 +238,7 @@ local function install_expand(node)
 
 		if code == MOUSE_RIGHT then
 			local menu = DermaMenu()
-			menu:SetPos(gui.MousePos())
+			menu:SetPos(input.GetCursorPos())
 			menu:MakePopup()
 
 			menu:AddOption(L"collapse all", function()

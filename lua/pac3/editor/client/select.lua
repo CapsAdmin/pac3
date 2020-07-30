@@ -8,7 +8,7 @@ function selectControl.VecToScreen(vec)
 end
 
 function selectControl.GetMousePos()
-	return gui.MousePos()
+	return input.GetCursorPos()
 end
 
 function selectControl.GUIMousePressed(mcode) end

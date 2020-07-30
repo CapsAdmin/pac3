@@ -46,7 +46,7 @@ function pace.ResetView()
 end
 
 function pace.SetZoom(fov, smooth)
-	if smooth then 
+	if smooth then
 		pace.ViewFOV = Lerp(FrameTime()*10, pace.ViewFOV, math.Clamp(fov,1,100))
 	else
 		pace.ViewFOV = math.Clamp(fov,1,100)
@@ -85,7 +85,7 @@ function pace.GUIMousePressed(mc)
 
 	if mc == MOUSE_LEFT and not pace.editing_viewmodel then
 		held_ang = pace.ViewAngles * 1
-		held_mpos = Vector(gui.MousePos())
+		held_mpos = Vector(input.GetCursorPos())
 	end
 
 	if mc == MOUSE_RIGHT then
@@ -118,7 +118,7 @@ function pace.GUIMouseReleased(mc)
 end
 
 local function set_mouse_pos(x, y)
-	gui.SetMousePos(x, y)
+	input.SetCursorPos(x, y)
 	held_ang = pace.ViewAngles * 1
 	held_mpos = Vector(x, y)
 	return held_mpos * 1
@@ -139,7 +139,7 @@ local function CalcDrag()
 	if focus and focus:IsValid() and focus:GetName():lower():find('textentry') then return end
 
 	if not system.HasFocus() then
-		held_mpos = Vector(gui.MousePos())
+		held_mpos = Vector(input.GetCursorPos())
 	end
 
 	local ftime = FrameTime() * 50
@@ -193,7 +193,7 @@ local function CalcDrag()
 
 	if not pace.IsSelecting then
 		if mcode == MOUSE_LEFT then
-			local mpos = Vector(gui.MousePos())
+			local mpos = Vector(input.GetCursorPos())
 
 			if mpos.x >= ScrW() - 1 then
 				mpos = set_mouse_pos(1, gui.MouseY())
@@ -235,7 +235,7 @@ local function CalcDrag()
 		pace.ViewPos = pace.ViewPos + pace.ViewAngles:Up() * -mult * ftime
 	end]]
 
-	
+
 end
 
 local follow_entity = CreateClientConVar("pac_camera_follow_entity", "0", true)

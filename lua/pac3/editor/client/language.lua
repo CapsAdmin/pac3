@@ -60,7 +60,7 @@ function pace.ShowLanguageEditor()
 		local line = list:AddLine(english, other)
 		line.OnRightClick = function()
 			local menu = DermaMenu()
-			menu:SetPos(gui.MousePos())
+			menu:SetPos(input.GetCursorPos())
 			menu:AddOption(L"edit", function()
 				local window = Derma_StringRequest(
 					L"translate",

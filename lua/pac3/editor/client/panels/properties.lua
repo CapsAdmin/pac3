@@ -124,7 +124,7 @@ end
 pac.AddHook("GUIMousePressed", "pace_SafeRemoveSpecialPanel", function()
 	local pnl = pace.ActiveSpecialPanel
 	if pnl:IsValid() then
-		local x,y = gui.MousePos()
+		local x,y = input.GetCursorPos()
 		local _x, _y = pnl:GetPos()
 		if x < _x or y < _y or x > _x + pnl:GetWide() or y > _y + pnl:GetTall() then
 			pnl:Remove()
@@ -855,7 +855,7 @@ do -- base editable
 
 		if mcode == MOUSE_RIGHT then
 			local menu = DermaMenu()
-			menu:SetPos(gui.MousePos())
+			menu:SetPos(input.GetCursorPos())
 			menu:MakePopup()
 			self:PopulateContextMenu(menu)
 		end
@@ -981,7 +981,7 @@ do -- base editable
 		if not input.IsMouseDown(MOUSE_LEFT) then return end
 		local pnl = pace.BusyWithProperties
 		if pnl and pnl ~= true and pnl:IsValid() then
-			local x, y = gui.MousePos()
+			local x, y = input.GetCursorPos()
 			local _x, _y = pnl:GetParent():LocalToScreen()
 			if x < _x or y < _y or x > _x + pnl:GetParent():GetWide() or y > _y + pnl:GetParent():GetTall() then
 				pnl:OnEnter()
@@ -1464,11 +1464,11 @@ do -- number
 			if gui.MouseY()+1 >= ScrH() then
 				self.mousey = 0
 				self.oldval = val
-				gui.SetMousePos(gui.MouseX(), 0)
+				input.SetCursorPos(gui.MouseX(), 0)
 			elseif gui.MouseY() <= 0 then
 				self.mousey = ScrH()
 				self.oldval = val
-				gui.SetMousePos(gui.MouseX(), ScrH())
+				input.SetCursorPos(gui.MouseX(), ScrH())
 			end
 		end
 	end
