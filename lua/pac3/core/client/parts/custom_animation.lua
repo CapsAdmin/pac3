@@ -112,7 +112,7 @@ function PART:SetURL(url)
 		end,
 		function(err)
 			if self:IsValid() and LocalPlayer() == self:GetPlayerOwner() and pace and pace.IsActive() then
-				Derma_Message("HTTP Request Failed for "..url,err,"OK")
+				pac.Message(Color(0, 255, 0), "[animation] ", Color(255, 255, 255), "HTTP Request Failed for " .. url .. " - " .. err)
 			end
 		end)
 	end
