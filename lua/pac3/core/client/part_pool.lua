@@ -99,7 +99,8 @@ do
 			pac.UnhookEntityRender(ent)
 		else
 			if not draw_only then
-				if type == 'opaque' or type == 'viewmodel' then pac.ResetBones(ent) end
+				-- Is this really needed? HUGE CPU CONSUMPTION!!
+				-- if type == 'opaque' or type == 'viewmodel' then pac.ResetBones(ent) end
 
 				-- bones MUST be setup before drawing or else unexpected/random results might happen
 
