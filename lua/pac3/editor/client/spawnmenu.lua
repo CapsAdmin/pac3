@@ -99,6 +99,7 @@ local function rebuildPlayerList2()
 	if count == 1 then
 		self.plist = {self:Help(L"no players are online")}
 	else
+		pac_wear_friends_only = pac_wear_friends_only or GetConVar('pac_wear_friends_only')
 		local plys = player.GetAll()
 		self.plist = {}
 
