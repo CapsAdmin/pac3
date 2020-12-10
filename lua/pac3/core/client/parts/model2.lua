@@ -44,6 +44,7 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "ModelModifiers", "", {editor_panel = "model_modifiers"})
 		pac.GetSet(PART, "Material", "", {editor_panel = "material"})
 		pac.GetSet(PART, "Materials", "", {editor_panel = "model_materials"})
+		pac.GetSet(PART, "Skin", 0, {editor_onchange = function(self, num) return math.Round(math.max(tonumber(num), 0)) end})
 		pac.GetSet(PART, "LevelOfDetail", 0, {editor_clamp = {-1, 8}, editor_round = true})
 
 		pac.SetupPartName(PART, "EyeTarget")
