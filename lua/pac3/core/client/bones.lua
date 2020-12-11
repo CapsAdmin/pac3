@@ -345,23 +345,38 @@ do -- bone manipulation for boneanimlib
 	local ORIGIN_RESET = Vector(0, 0, 0)
 	local ANGLE_RESET = Angle(0, 0, 0)
 
-	function pac.ResetBones(ent)
-		ent.pac_boneanim = ent.pac_boneanim or {positions = {}, angles = {}}
+	local entmeta = FindMetaTable("Entity")
 
+	local ManipulateBoneScale = entmeta.ManipulateBoneScale
+	local ManipulateBonePosition = entmeta.ManipulateBonePosition
+	local ManipulateBoneAngles = entmeta.ManipulateBoneAngles
+	local ManipulateBoneJiggle = entmeta.ManipulateBoneJiggle
+
+	function pac.ResetBones(ent)
+		local pac_boneanim = ent.pac_boneanim
 		local count = (ent:GetBoneCount() or 0) - 1
 
-		for i = 0, count do
-			ent:ManipulateBoneScale(i, SCALE_RESET)
-			ent:ManipulateBonePosition(i, ent.pac_boneanim.positions[i] or ORIGIN_RESET)
-			ent:ManipulateBoneAngles(i, ent.pac_boneanim.angles[i] or ANGLE_RESET)
-			ent:ManipulateBoneJiggle(i, 0)
+		if pac_boneanim then
+			for i = 0, count do
+				ManipulateBoneScale(ent, i, SCALE_RESET)
+				ManipulateBonePosition(ent, i, pac_boneanim.angles[i] or ORIGIN_RESET)
+				ManipulateBoneAngles(ent, i, pac_boneanim.positions[i] or ANGLE_RESET)
+				ManipulateBoneJiggle(ent, i, 0)
+			end
+		else
+			for i = 0, count do
+				ManipulateBoneScale(ent, i, SCALE_RESET)
+				ManipulateBonePosition(ent, i, ORIGIN_RESET)
+				ManipulateBoneAngles(ent, i, ANGLE_RESET)
+				ManipulateBoneJiggle(ent, i, 0)
+			end
 		end
 
 		hook.Call("PAC3ResetBones", nil, ent)
 
 		local i = ent.pac_bones_select_target
 		if i and count >= i then
-			ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * (1 + math.sin(RealTime() * 4) * 0.1))
+			ManipulateBoneScale(ent, i, ent:GetManipulateBoneScale(i) * (1 + math.sin(RealTime() * 4) * 0.1))
 			ent.pac_bones_select_target = nil
 		end
 	end
