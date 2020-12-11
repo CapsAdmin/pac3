@@ -359,8 +359,8 @@ do -- bone manipulation for boneanimlib
 		if pac_boneanim then
 			for i = 0, count do
 				ManipulateBoneScale(ent, i, SCALE_RESET)
-				ManipulateBonePosition(ent, i, pac_boneanim.angles[i] or ORIGIN_RESET)
-				ManipulateBoneAngles(ent, i, pac_boneanim.positions[i] or ANGLE_RESET)
+				ManipulateBonePosition(ent, i, pac_boneanim.positions[i] or ORIGIN_RESET)
+				ManipulateBoneAngles(ent, i, pac_boneanim.angles[i] or ANGLE_RESET)
 				ManipulateBoneJiggle(ent, i, 0)
 			end
 		else
