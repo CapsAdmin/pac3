@@ -71,7 +71,10 @@ end
 
 function PART:SetSkin(var)
 	self.Skin = var
-	self.Entity:SetSkin(var)
+	
+	if self.Entity:IsValid() then
+		self.Entity:SetSkin(var)
+	end
 end
 
 function PART:ModelModifiersToTable(str)
