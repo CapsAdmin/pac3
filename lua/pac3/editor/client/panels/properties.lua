@@ -660,6 +660,7 @@ do -- list
 						end
 
 						obj.editor_pnl = pnl
+						pnl.part = obj
 
 						local val = obj["Get" .. key](obj)
 						pnl:SetValue(val)
@@ -824,6 +825,10 @@ do -- base editable
 
 		self.original_str = str
 		self.original_var = var
+
+		if self.OnValueSet then
+			self:OnValueSet(var)
+		end
 	end
 
 	-- kind of a hack
@@ -941,7 +946,8 @@ do -- base editable
 		--pnl:SetPos(x+3,y-4)
 		--pnl:Dock(FILL)
 		local x, y = self:LocalToScreen()
-		pnl:SetPos(x+5, y)
+		local inset_x = self:GetTextInset()
+		pnl:SetPos(x+5 + inset_x, y)
 		pnl:SetSize(self:GetSize())
 		pnl:SetWide(ScrW())
 		pnl:MakePopup()

@@ -74,6 +74,46 @@ do -- part
 	PANEL.ClassName = "properties_part"
 	PANEL.Base = "pace_properties_base_type"
 
+	function PANEL:OnValueSet(val)
+		if not IsValid(self.part) then return end
+		local func_name = "Get" .. self.CurrentKey:sub(1, -5)
+		local part = self.part[func_name](self.part)
+
+		if IsValid(self.Icon) then self.Icon:Remove() end
+
+		if not part:IsValid() then
+			return
+		end
+
+		if
+			GetConVar("pac_editor_model_icons"):GetBool() and
+			part.is_model_part and
+			part.GetModel and
+			part:GetEntity():IsValid() and
+			part.ClassName ~= "entity2" and
+			part.ClassName ~= "weapon" -- todo: is_model_part is true, class inheritance issues?
+		then
+			local pnl = vgui.Create("SpawnIcon", self)
+			pnl:SetModel(part:GetEntity():GetModel() or "")
+			self.Icon = pnl
+		elseif type(part.Icon) == "string" then
+			local pnl = vgui.Create("DImage", self)
+			pnl:SetImage(part.Icon)
+			self.Icon = pnl
+		end
+	end
+
+	function PANEL:PerformLayout()
+		if not IsValid(self.Icon) then return end
+		self:SetTextInset(11, 0)
+		self.Icon:SetPos(4,0)
+		surface.SetFont(pace.CurrentFont)
+		local w,h = surface.GetTextSize(".")
+		h = h / 1.5
+		self.Icon:SetSize(h, h)
+		self.Icon:CenterVertical()
+	end
+
 	function PANEL:MoreOptionsLeftClick()
 		pace.SelectPart(pac.GetLocalParts(), function(part)
 			if not self:IsValid() then return end
