@@ -15,8 +15,19 @@ local function get(url, cb, failcb)
 		method = "GET",
 		url = url,
 		success = function(code, data, headers)
-			if code ~= 200 then
-				failcb("server returned code " .. code, code == 401 or code == 404 or code == 503 or code == 501)
+			if code >= 400 then
+				local header = {}
+				for k,v in pairs(headers) do
+					table.insert(header, tostring(k) .. ": " .. tostring(v))
+				end
+				print("================")
+				print("HEADER:")
+				print(table.concat(header, "\n"))
+				print("\n")
+				print("BODY:")
+				print(data)
+				print("================")
+				failcb("server returned code " .. code .. " see console for more details", code >= 400)
 				return
 			end
 
