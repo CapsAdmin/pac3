@@ -347,7 +347,6 @@ function pace.EnableView(b)
 		pac.RemoveHook("HUDShouldDraw", "editor")
 		pac.RemoveHook("PostRenderVGUI", "editor")
 		pace.SetTPose(false)
-		pace.SetBreathing(false)
 	end
 end
 
