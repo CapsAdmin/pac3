@@ -14,7 +14,7 @@ function pace.FixMenu(menu)
 	menu:SetPos(pace.Editor:GetPos() + pace.Editor:GetWide(), gui.MouseY() - (menu:GetTall() * 0.5))
 end
 
-local function DefineSpecialCallback(self, callFuncLeft, callFuncRight)
+local function DefineMoreOptionsLeftClick(self, callFuncLeft, callFuncRight)
 	local btn = vgui.Create("DButton", self)
 	btn:SetSize(16, 16)
 	btn:Dock(RIGHT)
@@ -27,8 +27,8 @@ local function DefineSpecialCallback(self, callFuncLeft, callFuncRight)
 		btn.DoRightClick = btn.DoClick
 	end
 
-	if self.OnSpecialCallbackButton then
-		self:OnSpecialCallbackButton(btn)
+	if self.OnMoreOptionsLeftClickButton then
+		self:OnMoreOptionsLeftClickButton(btn)
 	end
 
 	return btn
@@ -578,7 +578,7 @@ do -- list
 
 					if udata then
 						if udata.enums then
-							DefineSpecialCallback(pnl, function(self)
+							DefineMoreOptionsLeftClick(pnl, function(self)
 								pace.CreateSearchList(
 									self,
 									self.CurrentKey,
@@ -799,13 +799,13 @@ do -- base editable
 	end
 
 	function PANEL:PostInit()
-		if self.SpecialCallback then
-			self:DefineSpecialCallback(self.SpecialCallback, self.SpecialCallback2)
+		if self.MoreOptionsLeftClick then
+			self:DefineMoreOptionsLeftClick(self.MoreOptionsLeftClick, self.MoreOptionsRightClick)
 		end
 	end
 
-	function PANEL:DefineSpecialCallback(callFuncLeft, callFuncRight)
-		return DefineSpecialCallback(self, callFuncLeft, callFuncRight)
+	function PANEL:DefineMoreOptionsLeftClick(callFuncLeft, callFuncRight)
+		return DefineMoreOptionsLeftClick(self, callFuncLeft, callFuncRight)
 	end
 
 	function PANEL:SetValue(var, skip_encode)
@@ -1122,13 +1122,13 @@ do -- vector
 			self.middle = middle
 			self.right = right
 
-			if self.SpecialCallback then
+			if self.MoreOptionsLeftClick then
 				local btn = vgui.Create("DButton", self)
 				btn:SetSize(16, 16)
 				btn:Dock(RIGHT)
 				btn:SetText("...")
-				btn.DoClick = function() self:SpecialCallback(self.CurrentKey) end
-				btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
+				btn.DoClick = function() self:MoreOptionsLeftClick(self.CurrentKey) end
+				btn.DoRightClick = self.MoreOptionsRightClick and function() self:MoreOptionsRightClick(self.CurrentKey) end or btn.DoClick
 
 				if type == "color" or type == "color2" then
 					btn:SetText("")
@@ -1148,7 +1148,7 @@ do -- vector
 			self.Paint = function() end
 		end
 
-		PANEL.SpecialCallback = special_callback
+		PANEL.MoreOptionsLeftClick = special_callback
 
 		function PANEL:Restart()
 			self.left:SetValue(0)

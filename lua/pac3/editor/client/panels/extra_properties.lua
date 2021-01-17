@@ -24,7 +24,7 @@ do -- bone
 	PANEL.ClassName = "properties_bone"
 	PANEL.Base = "pace_properties_base_type"
 
-	function PANEL:SpecialCallback()
+	function PANEL:MoreOptionsLeftClick()
 		if not pace.current_part:IsValid() or not pace.current_part:GetOwner():IsValid() then return end
 
 		pace.SelectBone(pace.current_part:GetOwner(), function(data)
@@ -34,7 +34,7 @@ do -- bone
 		end, pace.current_part.ClassName == "bone")
 	end
 
-	function PANEL:SpecialCallback2()
+	function PANEL:MoreOptionsRightClick()
 		local bones = pac.GetModelBones(pace.current_part:GetOwner())
 
 		local menu = DermaMenu()
@@ -74,7 +74,7 @@ do -- part
 	PANEL.ClassName = "properties_part"
 	PANEL.Base = "pace_properties_base_type"
 
-	function PANEL:SpecialCallback()
+	function PANEL:MoreOptionsLeftClick()
 		pace.SelectPart(pac.GetLocalParts(), function(part)
 			if not self:IsValid() then return end
 			self:SetValue(part:GetName())
@@ -82,7 +82,7 @@ do -- part
 		end)
 	end
 
-	function PANEL:SpecialCallback2(key)
+	function PANEL:MoreOptionsRightClick(key)
 		local menu = DermaMenu()
 
 		menu:MakePopup()
@@ -105,7 +105,7 @@ do -- owner
 	PANEL.ClassName = "properties_ownername"
 	PANEL.Base = "pace_properties_base_type"
 
-	function PANEL:SpecialCallback()
+	function PANEL:MoreOptionsLeftClick()
 		pace.SelectEntity(function(ent)
 			if not self:IsValid() then return end
 			pace.current_part:SetOwnerName(ent:EntIndex())
@@ -115,7 +115,7 @@ do -- owner
 		end)
 	end
 
-	function PANEL:SpecialCallback2()
+	function PANEL:MoreOptionsRightClick()
 		local menu = DermaMenu()
 		menu:MakePopup()
 
@@ -155,7 +155,7 @@ do -- sequence list
 	PANEL.ClassName = "properties_sequence"
 	PANEL.Base = "pace_properties_base_type"
 
-	function PANEL:SpecialCallback()
+	function PANEL:MoreOptionsLeftClick()
 		pace.CreateSearchList(
 			self,
 			self.CurrentKey,
@@ -189,7 +189,7 @@ do -- aimpart
 	PANEL.ClassName = "properties_aimpartname"
 	PANEL.Base = "pace_properties_base_type"
 
-	function PANEL:SpecialCallback()
+	function PANEL:MoreOptionsLeftClick()
 		pace.SelectPart(pac.GetLocalParts(), function(part)
 			if not self:IsValid() then return end
 			self:SetValue(part:GetName())
@@ -197,7 +197,7 @@ do -- aimpart
 		end)
 	end
 
-	function PANEL:SpecialCallback2(key)
+	function PANEL:MoreOptionsRightClick(key)
 		local menu = DermaMenu()
 		menu:MakePopup()
 
@@ -223,12 +223,12 @@ do -- model
 	PANEL.ClassName = "properties_model"
 	PANEL.Base = "pace_properties_base_type"
 
-	function PANEL:SpecialCallback2()
+	function PANEL:MoreOptionsRightClick()
 		pace.SafeRemoveSpecialPanel()
 		g_SpawnMenu:Open()
 	end
 
-	function PANEL:SpecialCallback(key)
+	function PANEL:MoreOptionsLeftClick(key)
 		pace.close_spawn_menu = true
 		pace.SafeRemoveSpecialPanel()
 
@@ -269,7 +269,7 @@ do -- materials and textures
 	PANEL_MATERIAL.ClassName = "properties_material"
 	PANEL_MATERIAL.Base = "pace_properties_base_type"
 
-	function PANEL_MATERIAL:SpecialCallback(key)
+	function PANEL_MATERIAL:MoreOptionsLeftClick(key)
 		pace.AssetBrowser(function(path)
 			if not self:IsValid() then return end
 			path = path:match("materials/(.+)%.vmt") or "error"
@@ -278,7 +278,7 @@ do -- materials and textures
 		end, "materials", key)
 	end
 
-	function PANEL_MATERIAL:SpecialCallback2()
+	function PANEL_MATERIAL:MoreOptionsRightClick()
 		pace.SafeRemoveSpecialPanel()
 
 		local pnl = pace.CreatePanel("mat_browser")
@@ -299,7 +299,7 @@ do -- materials and textures
 	PANEL.ClassName = "properties_textures"
 	PANEL.Base = "pace_properties_base_type"
 
-	function PANEL:SpecialCallback()
+	function PANEL:MoreOptionsLeftClick()
 		pace.AssetBrowser(function(path)
 			if not self:IsValid() then return end
 			path = path:match("materials/(.+)%.vtf") or "error"
@@ -308,7 +308,7 @@ do -- materials and textures
 		end, "textures")
 	end
 
-	function PANEL:SpecialCallback2()
+	function PANEL:MoreOptionsRightClick()
 		pace.SafeRemoveSpecialPanel()
 
 		local pnl = pace.CreatePanel("mat_browser")
@@ -414,13 +414,13 @@ do -- materials and textures
 
 	PANEL_MATERIAL.ThinkTextureDisplay = PANEL.ThinkTextureDisplay
 
-	function PANEL:OnSpecialCallbackButton(btn)
+	function PANEL:OnMoreOptionsLeftClickButton(btn)
 		self.preTextureThink = self.Think
 		self.Think = self.ThinkTextureDisplay
 		self.textureButton = btn
 	end
 
-	PANEL_MATERIAL.OnSpecialCallbackButton = PANEL.OnSpecialCallbackButton
+	PANEL_MATERIAL.OnMoreOptionsLeftClickButton = PANEL.OnMoreOptionsLeftClickButton
 
 	pace.RegisterPanel(PANEL)
 	pace.RegisterPanel(PANEL_MATERIAL)
@@ -433,7 +433,7 @@ do -- sound
 	PANEL.ClassName = "properties_sound"
 	PANEL.Base = "pace_properties_base_type"
 
-	function PANEL:SpecialCallback()
+	function PANEL:MoreOptionsLeftClick()
 		pace.AssetBrowser(function(path)
 			if not self:IsValid() then return end
 
@@ -590,7 +590,7 @@ do -- script
 	PANEL.ClassName = "properties_code"
 	PANEL.Base = "pace_properties_base_type"
 
-	function PANEL:SpecialCallback()
+	function PANEL:MoreOptionsLeftClick()
 		pace.SafeRemoveSpecialPanel()
 
 		local frame = vgui.Create("DFrame")
