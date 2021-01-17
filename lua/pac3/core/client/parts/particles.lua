@@ -143,32 +143,32 @@ function PART:Set3D(b)
 end
 
 function PART:OnDraw(owner, pos, ang)
-	if not self:IsHidden() then
-		self.emitter:SetPos(pos)
-		if self.DrawManual or self.IgnoreZ or self.Follow or self.BlendMode ~= "" then
+	if self:IsHidden() or self:IsEventHidden() then return end
+	
+	self.emitter:SetPos(pos)
+	if self.DrawManual or self.IgnoreZ or self.Follow or self.BlendMode ~= "" then
 
-			if not self.nodraw then
-				self.emitter:SetNoDraw(true)
-				self.nodraw = true
-			end
-
-			if self.Follow then
-				cam.Start3D(WorldToLocal(EyePos(), EyeAngles(), pos, ang))
-				if self.IgnoreZ then cam.IgnoreZ(true) end
-				self.emitter:Draw()
-				if self.IgnoreZ then cam.IgnoreZ(false) end
-				cam.End3D()
-			else
-				self.emitter:Draw()
-			end
-		else
-			if self.nodraw then
-				self:SetDrawManual(self:GetDrawManual())
-				self.nodraw = false
-			end
+		if not self.nodraw then
+			self.emitter:SetNoDraw(true)
+			self.nodraw = true
 		end
-		self:EmitParticles(self.Follow and vector_origin or pos, self.Follow and angle_origin or ang, ang)
+
+		if self.Follow then
+			cam.Start3D(WorldToLocal(EyePos(), EyeAngles(), pos, ang))
+			if self.IgnoreZ then cam.IgnoreZ(true) end
+			self.emitter:Draw()
+			if self.IgnoreZ then cam.IgnoreZ(false) end
+			cam.End3D()
+		else
+			self.emitter:Draw()
+		end
+	else
+		if self.nodraw then
+			self:SetDrawManual(self:GetDrawManual())
+			self.nodraw = false
+		end
 	end
+	self:EmitParticles(self.Follow and vector_origin or pos, self.Follow and angle_origin or ang, ang)
 end
 
 function PART:SetAdditive(b)
