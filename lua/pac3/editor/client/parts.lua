@@ -316,7 +316,7 @@ do -- menu
 			if part.Icon then
 				newMenuEntry:SetImage(part.Icon)
 
-				if part.Group == "experimental" then
+				if part.Group == "legacy" then
 					local mat = Material(pace.GroupsIcons.experimental)
 					newMenuEntry.m_Image.PaintOver = function(_, w,h)
 						surface.SetMaterial(mat)
@@ -350,8 +350,8 @@ do -- menu
 
 					partsToShow[part.ClassName] = nil
 
-					if name == part.ClassName then
-						sortedTree[name].hasPart = true
+					if name == part.ClassName or name == part.FriendlyName then
+						sortedTree[name].group_class_name = part.ClassName
 					else
 						table.insert(sortedTree[name].parts, part)
 					end
@@ -363,8 +363,8 @@ do -- menu
 
 			for group, groupData in pairs(sortedTree) do
 				local sub, pnl = menu:AddSubMenu(groupData.name, function()
-					if groupData.hasPart then
-						pace.AddUndoPartCreation(pace.Call("CreatePart", group, nil, nil, parent))
+					if groupData.group_class_name then
+						pace.AddUndoPartCreation(pace.Call("CreatePart", groupData.group_class_name, nil, nil, parent))
 					end
 				end)
 
@@ -477,7 +477,7 @@ do -- menu
 				if part.Icon then
 					btn:SetImage(part.Icon)
 
-					if part.Group == "experimental" then
+					if part.Group == "legacy" then
 						local mat = Material(pace.GroupsIcons.experimental)
 						btn.m_Image.PaintOver = function(_, w,h)
 							surface.SetMaterial(mat)

@@ -7,7 +7,7 @@ local PART = {}
 
 PART.FriendlyName = "clip"
 PART.ClassName = "clip2"
-PART.Group = "experimental"
+PART.Groups = {'model', 'modifiers'}
 PART.Icon = 'icon16/cut.png'
 
 function PART:OnParent(part)

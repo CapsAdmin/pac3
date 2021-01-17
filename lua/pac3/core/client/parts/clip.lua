@@ -6,7 +6,7 @@ local IsEntity = IsEntity
 local PART = {}
 
 PART.ClassName = "clip"
-PART.Groups = {'model', 'modifiers'}
+PART.Group = "legacy"
 PART.Icon = 'icon16/cut.png'
 
 pac.SetPropertyGroup(PART, "generic")

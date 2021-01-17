@@ -80,8 +80,8 @@ local PART = {}
 
 PART.FriendlyName = "trail"
 PART.ClassName = "trail2"
-PART.Group = "experimental"
 PART.Icon = 'icon16/arrow_undo.png'
+PART.Group = 'effects'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Duration", 1)

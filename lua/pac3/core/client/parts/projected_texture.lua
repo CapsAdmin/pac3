@@ -1,7 +1,7 @@
 local PART = {}
 
 PART.ClassName = "projected_texture"
-PART.Group = "experimental"
+PART.Group = "effects"
 PART.Icon = 'icon16/lightbulb.png'
 
 pac.StartStorableVars()

@@ -2,8 +2,7 @@ local PART = {}
 local snd_mute_losefocus = GetConVar('snd_mute_losefocus')
 
 PART.ClassName = "webaudio"
-
-PART.Group = 'effects'
+PART.Group = 'legacy'
 PART.Icon = 'icon16/sound_add.png'
 
 pac.StartStorableVars()

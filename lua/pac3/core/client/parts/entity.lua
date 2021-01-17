@@ -13,7 +13,7 @@ local Color = Color
 local PART = {}
 
 PART.ClassName = "entity"
-PART.Group = 'entity'
+PART.Group = 'legacy'
 PART.Icon = 'icon16/brick.png'
 
 pac.StartStorableVars()

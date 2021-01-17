@@ -9,7 +9,7 @@ local PART = {}
 
 PART.FriendlyName = "bone"
 PART.ClassName = "bone2"
-PART.Group = "experimental"
+PART.Groups = {'entity', 'model'}
 PART.Icon = 'icon16/connect.png'
 
 pac.StartStorableVars()

@@ -50,7 +50,8 @@ PART.Category = "model"
 PART.ManualDraw = true
 PART.HandleModifiersManually = true
 PART.Icon = 'icon16/shape_square.png'
-PART.Group = 'model'
+PART.Group = "legacy"
+
 PART.is_model_part = true
 
 pac.StartStorableVars()

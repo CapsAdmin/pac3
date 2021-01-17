@@ -2,7 +2,7 @@ local PART = {}
 
 PART.FriendlyName = "light"
 PART.ClassName = "light2"
-PART.Group = "experimental"
+PART.Group = 'effects'
 PART.Icon = 'icon16/lightbulb.png'
 
 pac.StartStorableVars()

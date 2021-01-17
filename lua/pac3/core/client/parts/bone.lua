@@ -8,7 +8,8 @@ end
 local PART = {}
 
 PART.ClassName = "bone"
-PART.Groups = {'entity', 'model'}
+PART.Group = "legacy"
+
 PART.Icon = 'icon16/connect.png'
 
 pac.StartStorableVars()

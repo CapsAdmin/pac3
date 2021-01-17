@@ -2,11 +2,11 @@ local webaudio = include("pac3/libraries/webaudio.lua")
 pac.webaudio2 = webaudio
 local PART = {}
 
-PART.FriendlyName = "sound"
+PART.FriendlyName = "web sound"
 PART.ClassName = "sound2"
 PART.NonPhysical = true
-PART.Group = "experimental"
 PART.Icon = 'icon16/music.png'
+PART.Group = 'effects'
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Path", "", {editor_panel = "sound"})

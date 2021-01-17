@@ -1,7 +1,7 @@
 local PART = {}
 
 PART.ClassName = "player_movement"
-PART.Group = "experimental"
+PART.Group = "entity"
 PART.Icon = "icon16/user_go.png"
 PART.NonPhysical = true
 

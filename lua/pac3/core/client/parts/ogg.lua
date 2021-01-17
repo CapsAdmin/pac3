@@ -2,7 +2,7 @@ local PART = {}
 
 PART.ClassName = "ogg"
 PART.NonPhysical = true
-PART.Group = 'effects'
+PART.Group = "legacy"
 PART.Icon = 'icon16/music.png'
 
 pac.StartStorableVars()

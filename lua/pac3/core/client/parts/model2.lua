@@ -22,8 +22,8 @@ PART.Category = "model"
 PART.ManualDraw = true
 PART.HandleModifiersManually = true
 PART.Icon = 'icon16/shape_square.png'
-PART.Group = "experimental"
 PART.is_model_part = true
+PART.Group = 'model'
 
 pac.StartStorableVars()
 
@@ -71,7 +71,7 @@ end
 
 function PART:SetSkin(var)
 	self.Skin = var
-	
+
 	if self.Entity:IsValid() then
 		self.Entity:SetSkin(var)
 	end
@@ -608,11 +608,11 @@ do
 	PART.FriendlyName = "entity"
 	PART.ClassName = "entity2"
 	PART.Base = "model2"
-	PART.Category = "model"
+	PART.Category = "entity"
 	PART.ManualDraw = true
 	PART.HandleModifiersManually = true
-	PART.Icon = 'icon16/shape_square.png'
-	PART.Group = "experimental"
+	PART.Icon = 'icon16/brick.png'
+	PART.Group = "entity"
 	PART.is_model_part = false
 
 	pac.StartStorableVars()
@@ -773,11 +773,11 @@ do
 
 	PART.ClassName = "weapon"
 	PART.Base = "model2"
-	PART.Category = "model"
+	PART.Category = "entity"
 	PART.ManualDraw = true
 	PART.HandleModifiersManually = true
-	PART.Icon = 'icon16/shape_square.png'
-	PART.Group = "experimental"
+	PART.Icon = 'icon16/brick.png'
+	PART.Group = "entity"
 	PART.is_model_part = false
 
 	pac.StartStorableVars()

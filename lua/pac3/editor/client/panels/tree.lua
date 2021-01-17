@@ -382,15 +382,20 @@ function PANEL:PopulateParts(node, parts, children)
 				return true
 			end
 
-			if enable_model_icons:GetBool() and part.is_model_part and part.GetModel and part:GetEntity():IsValid()
-				and part.ClassName ~= "entity2" and part.ClassName ~= "weapon" -- todo: is_model_part is true, class inheritance issues?
+			if
+				enable_model_icons:GetBool() and
+				part.is_model_part and
+				part.GetModel and
+				part:GetEntity():IsValid() and
+				part.ClassName ~= "entity2" and
+				part.ClassName ~= "weapon" -- todo: is_model_part is true, class inheritance issues?
 			then
 				part_node:SetModel(part:GetEntity():GetModel())
 			elseif type(part.Icon) == "string" then
 				part_node.Icon:SetImage(part.Icon)
 			end
 
-			if part.Group == "experimental" then
+			if part.Group == "legacy" then
 				local mat = Material(pace.GroupsIcons.experimental)
 				local old = part_node.Icon.PaintOver
 				part_node.Icon.PaintOver = function(_, w,h)
