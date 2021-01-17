@@ -474,11 +474,11 @@ do
 						end)
 					end
 
-					-- LOL
-					--timer.Simple(0, function()
-						local x, y = bottom:LocalToScreen(0,0)
-						menu:SetPos(x - menu:GetWide(), y - menu:GetTall())
-					--end)
+					menu:PerformLayout()
+
+					local x, y = bottom:LocalToScreen(0,0)
+					x = x + bottom:GetWide()
+					menu:SetPos(x - menu:GetWide(), y - menu:GetTall())
 				end
 			end
 
