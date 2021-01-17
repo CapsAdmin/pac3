@@ -237,7 +237,7 @@ do -- model
 		pace.AssetBrowser(function(path)
 			if not part:IsValid() then return end
 			-- because we refresh the properties
-			pace.current_part["Set" .. key](pace.current_part, path)
+			self.OnValueChanged(path)
 
 			if pace.current_part.SetMaterials then
 				local model = pace.current_part:GetModel()
