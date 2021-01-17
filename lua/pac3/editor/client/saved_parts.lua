@@ -405,11 +405,18 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 	menu:AddOption(L"load from url", function()
 		Derma_StringRequest(
 			L"load parts",
-			L"pastebin urls also work!",
+			L"Some indirect urls from on pastebin, dropbox, github, etc are handled automatically. Pasting the outfit's file contents into the input field will also work.",
 			"",
 
 			function(name)
-				pace.LoadParts(name, clear, override_part)
+				if name:find("{", nil, true) and name:find("}", nil, true) then
+					local data,err = pace.luadata.Decode(name)
+					if data then
+						pace.LoadPartsFromTable(data, clear, override_part)
+					end
+				else
+					pace.LoadParts(name, clear, override_part)
+				end
 			end
 		)
 	end):SetImage(pace.MiscIcons.url)
