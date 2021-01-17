@@ -37,7 +37,13 @@ webaudio.volume = 1
 
 local script_queue
 
-local function run_javascript(code)
+local function run_javascript(code, stream)
+	if stream and not stream:IsReady() then
+		stream.js_queue = stream.js_queue or {}
+		table.insert(stream.js_queue, code)
+		return
+	end
+
 	if script_queue then
 		table.insert(script_queue, code)
 	else
@@ -563,7 +569,7 @@ end
 function webaudio.SetVolume(vol)
 	if webaudio.volume ~= vol then
 		webaudio.volume = vol
-		run_javascript(string.format("gain.gain.value = %f", vol))
+		run_javascript(string.format("gain.gain.value = %f", vol), self)
 	end
 end
 
@@ -639,7 +645,6 @@ do
 
 	function META:GetLength()
 		if not self.Loaded then return 0 end
-
 		return self.SampleCount / tonumber(webaudio.sample_rate)
 	end
 
@@ -656,11 +661,9 @@ do
 
 	-- Browser
 	function META:Call(fmt, ...)
-		if not self.Loaded then return end
-
 		local code = string.format("var id = %d; try { if (streams[id]) { streams[id]%s } } catch(e) { dprint('streams[' + id + '] ' + e.toString()) }", self:GetId(), string.format(fmt, ...))
 
-		run_javascript(code)
+		run_javascript(code, self)
 	end
 
 	function META:HandleBrowserMessage(t, ...)
@@ -699,11 +702,6 @@ do
 	end
 
 	function META:Play()
-		if not self:IsReady() then
-			self.wants_to_play = true
-			return
-		end
-
 		self.Paused = false
 
 		queue_javascript()
@@ -846,7 +844,6 @@ do
 	end
 
 	function META:UpdateVolume()
-		if not self.Loaded then return end
 		queue_javascript()
 		if self:Get3D() then
 			self:UpdateVolume3d()
@@ -1001,10 +998,11 @@ do
 			self:OnLoad()
 		end
 
-
-		if self.wants_to_play then
-			timer.Simple(0.1, function() self:Play() end)
-			self.wants_to_play = nil
+		if self.js_queue then
+			for _, code in ipairs(self.js_queue) do
+				run_javascript(code)
+			end
+			self.js_queue = nil
 		end
 	end
 

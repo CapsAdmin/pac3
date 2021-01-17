@@ -249,16 +249,13 @@ end
 
 function PART:StopSound()
 	for key, stream in pairs(self.streams) do
-		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
-
-		if not self.StopOnHide then
+		if stream:IsValid() then
 			if self.PauseOnHide then
 				stream:Pause()
-			else
+			elseif self.StopOnHide then
 				stream:Stop()
 			end
 		end
-		::CONTINUE::
 	end
 end
 
