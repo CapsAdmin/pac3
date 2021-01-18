@@ -510,8 +510,9 @@ do -- parenting
 
 		pac.CallHook("OnPartParent", self, part)
 
-		part:SetKeyValueRecursive("last_hidden", false)
-		part:SetKeyValueRecursive("last_hidden_by_event", false)
+		part.shown_from_rendering = true
+		part:SetKeyValueRecursive("last_hidden", nil)
+		part:SetKeyValueRecursive("last_hidden_by_event", nil)
 
 		return part.Id
 	end
@@ -1378,7 +1379,7 @@ function PART:CalcShowHide()
 		if b then
 			self:OnHide()
 		else
-			self:OnShow(self.shown_from_rendering == FrameNumber())
+			self:OnShow(self.shown_from_rendering == true or self.shown_from_rendering == FrameNumber())
 		end
 	end
 
