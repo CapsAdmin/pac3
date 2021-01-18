@@ -510,8 +510,8 @@ do -- parenting
 
 		pac.CallHook("OnPartParent", self, part)
 
-		part:SetKeyValueRecursive("last_hidden", nil)
-		part:SetKeyValueRecursive("last_hidden_by_event", nil)
+		part:SetKeyValueRecursive("last_hidden", false)
+		part:SetKeyValueRecursive("last_hidden_by_event", false)
 
 		return part.Id
 	end
@@ -1360,7 +1360,7 @@ function PART:CalcShowHide()
 		if b then
 			self:OnHide()
 		else
-			self:OnShow(self.shown_from_rendering ~= nil)
+			self:OnShow(self.shown_from_rendering == FrameNumber())
 		end
 	end
 
@@ -1410,8 +1410,8 @@ function PART:Think()
 
 	if owner:IsValid() then
 		if owner ~= self.last_owner then
-			self.last_hidden = nil
-			self.last_hidden_by_event = nil
+			self.last_hidden = false
+			self.last_hidden_by_event = false
 			self.last_owner = owner
 		end
 

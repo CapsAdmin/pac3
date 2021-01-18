@@ -237,7 +237,7 @@ function pac.HideEntityParts(ent)
 		for _, part in pairs(ent_parts[ent]) do
 			part:CallRecursive("OnHide")
 			part:SetKeyValueRecursive("last_hidden", nil)
-			part:SetKeyValueRecursive("shown_from_rendering", false)
+			part:SetKeyValueRecursive("shown_from_rendering", nil)
 			part:SetKeyValueRecursive("draw_hidden", true)
 		end
 

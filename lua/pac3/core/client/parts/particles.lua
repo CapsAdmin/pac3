@@ -143,8 +143,8 @@ function PART:Set3D(b)
 end
 
 function PART:OnDraw(owner, pos, ang)
-	if self:IsHidden() or self:IsEventHidden() then return end
-	
+	if self:IsHidden() then return end
+
 	self.emitter:SetPos(pos)
 	if self.DrawManual or self.IgnoreZ or self.Follow or self.BlendMode ~= "" then
 

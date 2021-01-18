@@ -122,6 +122,8 @@ function PART:AttachToEntity(ent)
 
 	pac.HookEntityRender(ent, part)
 
+	part:CallRecursive("CThink") -- this somehow fixes events triggering on start
+
 	ent.RenderOverride = ent.RenderOverride or function()
 		if self.AimDir then
 			ent:SetRenderAngles(ent:GetVelocity():Angle())
