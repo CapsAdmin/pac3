@@ -400,6 +400,22 @@ PART.OldEvents = {
 		end,
 	},
 
+	collide = {
+		callback = function(self, ent)
+			ent.pac_event_collide_callback = ent.pac_event_collide_callback or ent:AddCallback("PhysicsCollide", function(ent, data)
+				ent.pac_event_collision_data = data
+			end)
+
+			if ent.pac_event_collision_data then
+				local data = ent.pac_event_collision_data
+				ent.pac_event_collision_data = nil
+				return true
+			end
+
+			return false
+		end,
+	},
+
 	ranger = {
 		arguments = {{compare = "number"}, {distance = "number"}},
 		callback = function(self, ent, compare, distance)
