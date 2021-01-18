@@ -11,6 +11,12 @@ local SV_LIMIT = CreateConVar("sv_pac_webcontent_limit", "-1", CLIENT and {FCVAR
 local SV_NO_CLENGTH = CreateConVar("sv_pac_webcontent_allow_no_content_length", "-1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow downloads with no content length")
 
 local function get(url, cb, failcb)
+
+	-- url like https://yag.ovh/pac/DANTE10.zip fails with "invalid url" because of the last 0
+	-- a workaround is to encode the 0
+
+	url = url:Replace("0", "%30")
+
 	return HTTP({
 		method = "GET",
 		url = url,
@@ -34,7 +40,7 @@ local function get(url, cb, failcb)
 			cb(data, #data, headers)
 		end,
 		failed = function(err)
-			failcb(err)
+			failcb("_G.HTTP error: " .. err)
 		end
 	})
 end
