@@ -893,7 +893,25 @@ do -- serializing
 			end
 		end
 
-		function PART:SetTable(tbl)
+		local function make_copy(tbl, pepper)
+			for key, val in pairs(tbl.self) do
+				if key == "UniqueID" or key:sub(-3) == "UID" then
+					tbl.self[key] = util.CRC(val .. pepper)
+				end
+			end
+
+			for _, child in ipairs(tbl.children) do
+				make_copy(child, pepper)
+			end
+			return tbl
+		end
+
+		function PART:SetTable(tbl, copy)
+
+			if copy then
+				tbl = make_copy(table.Copy(tbl), os.clock())
+			end
+
 			local ok, err = xpcall(SetTable, ErrorNoHalt, self, tbl)
 			if not ok then
 				pac.Message(Color(255, 50, 50), "SetTable failed: ", err)

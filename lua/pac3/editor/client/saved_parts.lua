@@ -237,7 +237,7 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 
 	if data.self then
 		local part = override_part or pac.CreatePart(data.self.ClassName)
-		part:SetTable(data)
+		part:SetTable(data, pac.GetPartFromUniqueID(LocalPlayer():UniqueID(), data.self.UniqueID) ~= nil)
 		table.insert(partsLoaded, part)
 	else
 		data = pace.FixBadGrouping(data)
@@ -245,7 +245,7 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 
 		for key, tbl in pairs(data) do
 			local part = pac.CreatePart(tbl.self.ClassName)
-			part:SetTable(tbl)
+			part:SetTable(tbl, pac.GetPartFromUniqueID(LocalPlayer():UniqueID(), tbl.self.UniqueID) ~= nil)
 			table.insert(partsLoaded, part)
 		end
 	end
@@ -333,7 +333,9 @@ local function populate_part(menu, part, override_part, clear)
 	end
 
 	if #part.children > 0 then
-		local menu, pnl = menu:AddSubMenu(name, function() pace.LoadPartsFromTable(part, nil, override_part) end)
+		local menu, pnl = menu:AddSubMenu(name, function()
+			pace.LoadPartsFromTable(part, nil, override_part)
+		end)
 		pnl:SetImage(part.self.Icon)
 		menu.GetDeleteSelf = function() return false end
 		local old = menu.Open
