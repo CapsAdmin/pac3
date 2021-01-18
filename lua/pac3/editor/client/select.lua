@@ -293,6 +293,30 @@ function pace.SelectBone(ent, callback, only_movable)
 	local tbl = table.Copy(pac.GetModelBones(ent))
 
 	if only_movable then
+		local models = ent:GetModel() and util.GetModelMeshes(ent:GetModel())
+
+		if models then
+			local found = {}
+			for i,v in ipairs(models) do
+				for i,v in ipairs(v.triangles) do
+					if v.weights then
+						for i,v in ipairs(v.weights) do
+							if v.bone then
+								found[v.bone] = (found[v.bone] or 0) + v.weight
+							end
+						end
+					end
+				end
+			end
+
+			for k, v in pairs(tbl) do
+				if not found[v.bone] then
+					PrintTable(v)
+					tbl[k] = nil
+				end
+			end
+		end
+
 		for k, v in pairs(tbl) do
 			if v.is_special or not RENDER_ATTACHMENTS:GetBool() and v.is_attachment then
 				tbl[k] = nil

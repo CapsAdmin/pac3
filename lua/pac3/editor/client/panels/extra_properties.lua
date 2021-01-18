@@ -31,7 +31,7 @@ do -- bone
 			if not self:IsValid() then return end
 			self:SetValue(L(data.friendly))
 			self.OnValueChanged(data.friendly)
-		end, pace.current_part.ClassName == "bone")
+		end, pace.current_part.ClassName == "bone" or pace.current_part.ClassName == "timeline_dummy_bone")
 	end
 
 	function PANEL:MoreOptionsRightClick()
