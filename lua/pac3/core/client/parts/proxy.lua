@@ -931,23 +931,27 @@ function PART:OnShow()
 	self.vec_additive = Vector()
 end
 
+local legacy_parts = {
+	model = true,
+	entity = true,
+}
+
 local function set(self, part, x, y, z, children)
-	local T = type(part[self.VariableName])
+	local val = part[self.VariableName]
+	local T = type(val)
+
+	if self.VariableName == "Color" and _0_to_1_color_parts[part.ClassName] then
+
+	end
 
 	if allowed[T] then
 		if T == "boolean" then
-
-			x = x or part[self.VariableName] == true and 1 or 0
+			x = x or val == true and 1 or 0
 			part[self.set_key](part, tonumber(x) > 0)
-
 		elseif T == "number" then
-
-			x = x or part[self.VariableName]
+			x = x or val
 			part[self.set_key](part, tonumber(x) or 0)
-
 		else
-			local val = part[self.VariableName]
-
 			if self.Axis ~= "" and val[self.Axis] then
 				val[self.Axis] = x
 			else

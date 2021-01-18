@@ -133,9 +133,13 @@ end
 
 function pac.LoadParts()
 	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
-
 	for _, name in pairs(files) do
 		include("pac3/core/client/parts/" .. name)
+	end
+
+	local files = file.Find("pac3/core/client/parts/legacy/*.lua", "LUA")
+	for _, name in pairs(files) do
+		include("pac3/core/client/parts/legacy/" .. name)
 	end
 end
 

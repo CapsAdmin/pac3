@@ -7,9 +7,9 @@ end
 
 local PART = {}
 
-PART.ClassName = "bone"
-PART.Group = "legacy"
-
+PART.FriendlyName = "bone"
+PART.ClassName = "bone2"
+PART.Groups = {'entity', 'model'}
 PART.Icon = 'icon16/connect.png'
 
 pac.StartStorableVars()
@@ -22,8 +22,8 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "AlternativeBones", false)
 		pac.GetSet(PART, "MoveChildrenToOrigin", false)
 		pac.GetSet(PART, "FollowAnglesOnly", false)
-		--pac.GetSet(PART, "HideMesh", false)
-		--pac.GetSet(PART, "InvertHideMesh", false)
+		pac.GetSet(PART, "HideMesh", false)
+		pac.GetSet(PART, "InvertHideMesh", false)
 		pac.SetupPartName(PART, "FollowPart")
 
 	pac.SetPropertyGroup(PART, "orientation")
@@ -170,13 +170,12 @@ function pac.build_bone_callback(ent)
 				local mat = ent:GetBoneMatrix(data.bone)
 				if mat then
 					if part.FollowPart:IsValid() then
+						local _, angles = LocalToWorld(Vector(), part.Angles + part.AngleOffset, Vector(), part.FollowPart.cached_ang)
 						if part.FollowAnglesOnly then
-							local pos = mat:GetTranslation()
-							mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart.cached_ang)
-							mat:SetTranslation(pos)
+							mat:SetAngles(angles)
 						else
-							mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart.cached_ang)
 							mat:SetTranslation(part.Position + part.PositionOffset + part.FollowPart.cached_pos)
+							mat:SetAngles(angles)
 						end
 					else
 						if data.pos then
@@ -211,13 +210,9 @@ function PART:OnBuildBonePositions()
 
 	if not owner:IsValid() then return end
 
-	if self.last_model ~= owner:GetModel() then
-		self.BoneIndex = nil
-		self.last_model = owner:GetModel()
-	end
+	self.BoneIndex = owner:LookupBone(self:GetRealBoneName(self.Bone))
 
-
-	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone)) or 0
+	if not self.BoneIndex then return end
 
 	owner.pac_bone_setup_data = owner.pac_bone_setup_data or {}
 
@@ -242,8 +237,24 @@ function PART:OnBuildBonePositions()
 			ang.y = -ang.p
 		end
 
-		manpos(owner, self.BoneIndex, self.Position + self.PositionOffset, self)
-		manang(owner, self.BoneIndex, ang + self.AngleOffset, self)
+		local pos2, ang2 = self.Position + self.PositionOffset, ang + self.AngleOffset
+
+		local parent = self:GetParent()
+
+		if parent and parent:IsValid() and parent.ClassName == 'jiggle' then
+			local pos3, ang3 = parent.Position, parent.Angles
+
+			if parent.pos then
+				pos2 = pos2 + parent.pos - pos3
+			end
+
+			if parent.ang then
+				ang2 = ang2 + parent.ang - ang3
+			end
+		end
+
+		manpos(owner, self.BoneIndex, pos2, self)
+		manang(owner, self.BoneIndex, ang2, self)
 	end
 
 	if owner.pac_bone_setup_data[self.UniqueID] then

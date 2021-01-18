@@ -5,10 +5,19 @@ local IsEntity = IsEntity
 
 local PART = {}
 
-PART.FriendlyName = "clip"
-PART.ClassName = "clip2"
-PART.Groups = {'model', 'modifiers'}
+PART.ClassName = "clip"
+PART.Group = "legacy"
 PART.Icon = 'icon16/cut.png'
+
+pac.SetPropertyGroup(PART, "generic")
+	pac.PropertyOrder(PART, "Name")
+	pac.PropertyOrder(PART, "Hide")
+	pac.PropertyOrder(PART, "ParentName")
+
+pac.RemoveProperty(PART, "IgnoreZ")
+pac.RemoveProperty(PART, "BlendMode")
+pac.RemoveProperty(PART, "NoTextureFiltering")
+
 
 function PART:OnParent(part)
 	part:AddModifier(self)
@@ -37,7 +46,7 @@ do
 		local pos, ang = LocalToWorld(self.Position + self.PositionOffset, self:CalcAngles(self.Angles + self.AngleOffset), self:GetBonePosition())
 		local normal = ang:Forward()
 
-		render_PushCustomClipPlane(normal, normal:Dot(pos))
+		render_PushCustomClipPlane(normal, normal:Dot(pos + normal))
 	end
 
 	local render_PopCustomClipPlane = render.PopCustomClipPlane

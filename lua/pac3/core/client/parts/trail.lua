@@ -4,40 +4,100 @@ local table_insert = table.insert
 local table_remove = table.remove
 local math_ceil = math.ceil
 local math_abs = math.abs
+local math_min = math.min
 local render_StartBeam = render.StartBeam
 local cam_IgnoreZ = cam.IgnoreZ
 local render_EndBeam = render.EndBeam
 local render_AddBeam = render.AddBeam
 local render_SetMaterial = render.SetMaterial
+local Vector = Vector
+local RealTime = RealTime
+
+local temp_color = Color(255, 255, 255)
+
+function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,ecb,eca, start_size, end_size, stretch)
+	self.trail_points = self.trail_points or {}
+
+	local time = RealTime()
+
+	if not self.trail_points[1] or self.trail_points[#self.trail_points].pos:Distance(pos) > spc then
+		table_insert(self.trail_points, {pos = pos * 1, life_time = time + len})
+	end
+
+	local count = #self.trail_points
+
+	render_SetMaterial(mat)
+
+	render_StartBeam(count)
+		for i = #self.trail_points, 1, -1 do
+			local data = self.trail_points[i]
+
+			local f = (data.life_time - time)/len
+			local f2 = f
+			f = -f+1
+
+			local coord = (1 / count) * (i - 1)
+
+			temp_color.r = math_min(Lerp(coord, ecr, scr), 255)
+			temp_color.g = math_min(Lerp(coord, ecg, scg), 255)
+			temp_color.b = math_min(Lerp(coord, ecb, scb), 255)
+			temp_color.a = math_min(Lerp(coord, eca, sca), 255)
+
+			render_AddBeam(data.pos, (f * start_size) + (f2 * end_size), coord * stretch, temp_color)
+
+			if f >= 1 then
+				table_remove(self.trail_points, i)
+			end
+		end
+	render_EndBeam()
+
+	if self.CenterAttraction ~= 0 then
+		local attraction = FrameTime() * self.CenterAttraction
+		local center = Vector(0,0,0)
+		for _, data in ipairs(self.trail_points) do
+			center:Zero()
+			for _, data in ipairs(self.trail_points) do
+				center:Add(data.pos)
+			end
+			center:Mul(1 / #self.trail_points)
+			center:Sub(data.pos)
+			center:Mul(attraction)
+
+			data.pos:Add(center)
+		end
+	end
+
+	if not self.Gravity:IsZero() then
+		local gravity = self.Gravity * FrameTime()
+		gravity:Rotate(ang)
+		for _, data in ipairs(self.trail_points) do
+			data.pos:Add(gravity)
+		end
+	end
+end
 
 local PART = {}
 
-PART.ClassName = "trail"
-PART.Group = "legacy"
-
+PART.FriendlyName = "trail"
+PART.ClassName = "trail2"
 PART.Icon = 'icon16/arrow_undo.png'
+PART.Group = 'effects'
 
 pac.StartStorableVars()
-	pac.SetPropertyGroup(PART, "generic")
-		pac.PropertyOrder(PART, "Name")
-		pac.PropertyOrder(PART, "Hide")
-		pac.PropertyOrder(PART, "ParentName")
-		pac.GetSet(PART, "TrailPath", "trails/laser", {editor_panel = "material"})
-		pac.GetSet(PART, "StartSize", 3)
-		pac.GetSet(PART, "EndSize", 0)
-		pac.GetSet(PART, "Length", 100)
-		pac.GetSet(PART, "Spacing", 1)
-
-	pac.SetPropertyGroup(PART, "orientation")
-	pac.SetPropertyGroup(PART, "appearance")
-		pac.GetSet(PART, "StartColor", Vector(255, 255, 255), {editor_panel = "color"})
-		pac.GetSet(PART, "EndColor", Vector(255, 255, 255), {editor_panel = "color"})
-		pac.GetSet(PART, "StartAlpha", 1)
-		pac.GetSet(PART, "EndAlpha", 1)
-		pac.PropertyOrder(PART, "Translucent")
-		pac.GetSet(PART, "Stretch", false)
-	pac.SetPropertyGroup(PART, "other")
-		pac.PropertyOrder(PART, "DrawOrder")
+	pac.GetSet(PART, "Duration", 1)
+	pac.GetSet(PART, "Spacing", 0.25)
+	pac.GetSet(PART, "StartSize", 3)
+	pac.GetSet(PART, "EndSize", 0)
+	pac.GetSet(PART, "StartColor", Vector(1, 1, 1), {editor_panel = "color2"})
+	pac.GetSet(PART, "EndColor", Vector(1, 1, 1), {editor_panel = "color2"})
+	pac.GetSet(PART, "StartAlpha", 1)
+	pac.GetSet(PART, "EndAlpha", 0)
+	pac.GetSet(PART, "Stretch", 1)
+	pac.GetSet(PART, "CenterAttraction", 0)
+	pac.GetSet(PART, "Gravity", Vector(0,0,0))
+	pac.GetSet(PART, "IgnoreZ", false)
+	pac.GetSet(PART, "TrailPath", "trails/laser", {editor_panel = "material"})
+	pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
 
 function PART:GetNiceName()
@@ -48,45 +108,6 @@ PART.LastAdd = 0
 
 function PART:Initialize()
 	self:SetTrailPath(self.TrailPath)
-
-	self.StartColorC = Color(255, 255, 255, 255)
-	self.EndColorC = Color(255, 255, 255, 255)
-end
-
-function PART:SetStartColor(v)
-	self.StartColorC = self.StartColorC or Color(255, 255, 255, 255)
-
-	self.StartColorC.r = v.r
-	self.StartColorC.g = v.g
-	self.StartColorC.b = v.b
-
-	self.StartColor = v
-end
-
-function PART:SetEndColor(v)
-	self.EndColorC = self.EndColorC or Color(255, 255, 255, 255)
-
-	self.EndColorC.r = v.r
-	self.EndColorC.g = v.g
-	self.EndColorC.b = v.b
-
-	self.EndColor = v
-end
-
-function PART:SetStartAlpha(n)
-	self.StartColorC = self.StartColorC or Color(255, 255, 255, 255)
-
-	self.StartColorC.a = n * 255
-
-	self.StartAlpha = n
-end
-
-function PART:SetEndAlpha(n)
-	self.EndColorC = self.EndColorC or Color(255, 255, 255, 255)
-
-	self.EndColorC.a = n * 255
-
-	self.EndAlpha = n
 end
 
 function PART:SetTrailPath(var)
@@ -123,49 +144,22 @@ function PART:OnHide()
 	self.points = {}
 end
 
-local temp_color = Color(255, 255, 255)
-
 function PART:OnDraw(owner, pos, ang)
-	local mat = self.MaterialOverride or self.Materialm
+	pac.DrawTrail(
+		self,
+		math.min(self.Duration, 10),
+		self.Spacing + (self.StartSize/10),
+		pos,
+		ang,
+		self.material_override and self.material_override[0][1] and self.material_override[0][1]:GetRawMaterial() or self.Materialm,
 
-	if mat and self.StartColorC and self.EndColorC then
-		self.points = self.points or {}
+		self.StartColor.x*255, self.StartColor.y*255, self.StartColor.z*255,self.StartAlpha*255,
+		self.EndColor.x*255, self.EndColor.y*255, self.EndColor.z*255,self.EndAlpha*255,
 
-		local len = tonumber(self.Length)
-		local spc = tonumber(self.Spacing)
-
-		if spc == 0 or self.LastAdd < pac.RealTime then
-			table_insert(self.points, pos)
-			self.LastAdd = pac.RealTime + spc / 1000
-		end
-
-		local count = #self.points
-
-		if spc > 0 then
-			len = math_ceil(math_abs(len - spc))
-		end
-
-		render_SetMaterial(mat)
-
-		render_StartBeam(count)
-			for k, v in pairs(self.points) do
-				local width = k / (len / self.StartSize)
-
-				local coord = (1 / count) * (k - 1)
-
-				temp_color.r = Lerp(coord, self.EndColorC.r, self.StartColorC.r)
-				temp_color.g = Lerp(coord, self.EndColorC.g, self.StartColorC.g)
-				temp_color.b = Lerp(coord, self.EndColorC.b, self.StartColorC.b)
-				temp_color.a = Lerp(coord, self.EndColorC.a, self.StartColorC.a)
-
-				render_AddBeam(k == count and pos or v, width + self.EndSize, self.Stretch and coord or width, temp_color)
-			end
-		render_EndBeam()
-
-		if count >= len then
-			table_remove(self.points, 1)
-		end
-	end
+		self.StartSize,
+		self.EndSize,
+		1/self.Stretch
+	)
 end
 
 pac.RegisterPart(PART)
