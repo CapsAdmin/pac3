@@ -232,12 +232,12 @@ end
 
 function PART:BindMaterials(ent)
 	local materials = self.material_override_self or self.material_override
-	local set_material = false
+	local material_bound = false
 
 	if self.material_override_self then
 		if materials[0] then
 			render_MaterialOverride(materials[0])
-			set_material = true
+			material_bound = true
 		end
 
 		for i = 1, self.material_count do
@@ -252,7 +252,7 @@ function PART:BindMaterials(ent)
 	elseif self.material_override then
 		if materials[0] and materials[0][1] then
 			render_MaterialOverride(materials[0][1]:GetRawMaterial())
-			set_material = true
+			material_bound = true
 		end
 
 		for i = 1, self.material_count do
@@ -269,9 +269,11 @@ function PART:BindMaterials(ent)
 		end
 	end
 
-	if (pac.render_material or self.BoneMerge) and not set_material then
+	if self.BoneMerge and not material_bound then
 		render_MaterialOverride()
 	end
+
+	return material_bound
 end
 
 function PART:PreEntityDraw(owner, ent, pos, ang)
@@ -354,7 +356,9 @@ function PART:DrawModel(ent, pos, ang)
 		render_CullMode(MATERIAL_CULLMODE_CW)
 	end
 
-	self:BindMaterials(ent)
+	local material_bound = false
+
+	material_bound = self:BindMaterials(ent) or material_bound
 
 	ent.pac_drawing_model = true
 	ent:DrawModel()
@@ -363,7 +367,7 @@ function PART:DrawModel(ent, pos, ang)
 	if pac.projected_texture_enabled and not pac.flashlight_disabled then
 		render.PushFlashlightMode(true)
 
-		self:BindMaterials(ent)
+		material_bound = self:BindMaterials(ent) or material_bound
 		ent.pac_drawing_model = true
 		ent:DrawModel()
 		ent.pac_drawing_model = false
@@ -373,10 +377,15 @@ function PART:DrawModel(ent, pos, ang)
 
 	if self.NoCulling then
 		render_CullMode(MATERIAL_CULLMODE_CCW)
-		self:BindMaterials(ent)
+		material_bound = self:BindMaterials(ent) or material_bound
 		ent:DrawModel()
 	elseif self.Invert then
 		render_CullMode(MATERIAL_CULLMODE_CCW)
+	end
+
+	-- need to unbind mateiral
+	if material_bound then
+	    render_MaterialOverride()
 	end
 end
 
