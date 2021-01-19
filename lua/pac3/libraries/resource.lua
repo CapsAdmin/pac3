@@ -99,7 +99,7 @@ local function download(from, to, callback, on_fail, on_header, check_etag, etag
 
 		HTTP({
 			method = "HEAD",
-			url = from:Replace(".", "%2E"), -- to avoid "invalid url" errors
+			url = from:gsub("(%d)", function(d) return "%" .. ("%x"):format(string.byte(d)) end), -- to avoid "invalid url" errors
 			success = function(code, body, header)
 				local res = header.ETag or header["Last-Modified"]
 
