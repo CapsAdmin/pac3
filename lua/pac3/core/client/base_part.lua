@@ -507,6 +507,7 @@ do -- parenting
 		self:SortChildren()
 
 		self:BuildParentList()
+		part:BuildParentList()
 
 		pac.CallHook("OnPartParent", self, part)
 
