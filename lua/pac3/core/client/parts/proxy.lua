@@ -931,11 +931,6 @@ function PART:OnShow()
 	self.vec_additive = Vector()
 end
 
-local legacy_parts = {
-	model = true,
-	entity = true,
-}
-
 local function set(self, part, x, y, z, children)
 	local val = part[self.VariableName]
 	local T = type(val)
