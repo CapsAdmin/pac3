@@ -143,7 +143,11 @@ function webaudio.Initialize()
 
 	webaudio.browser_panel:AddFunction("lua", "print", dprint)
 	webaudio.browser_panel:AddFunction("lua", "message", function(typ, ...)
-		local args = {...}
+		local args = {}
+
+		for i = 1, select("#", ...) do
+			args[i] = tostring(select(i, ...))
+		end
 
 		dprint(typ .. " " .. table.concat(args, ", "))
 
@@ -408,8 +412,8 @@ function download_buffer(url, callback, skip_cache, id)
 
             function(err)
             {
-                dprint("decoding error " + url + " " + err);
-				lua.message("stream", "call", id, "OnError", "decoding failed", err);
+                dprint("decoding error " + url + " " + err.message);
+				lua.message("stream", "call", id, "OnError", "decoding failed", err.message);
             }
         );
     };

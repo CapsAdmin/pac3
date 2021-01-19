@@ -18,23 +18,28 @@ local function http(method, url, headers, cb, failcb)
 		url = url,
 		headers = headers,
 		success = function(code, data, headers)
-			if code >= 400 then
+			if code < 400 then
+				cb(data, #data, headers)
+			else
 				local header = {}
 				for k,v in pairs(headers) do
 					table.insert(header, tostring(k) .. ": " .. tostring(v))
 				end
-				print("================")
-				print("HEADER:")
-				print(table.concat(header, "\n"))
-				print("\n")
-				print("BODY:")
-				print(data)
-				print("================")
-				failcb("server returned code " .. code .. " see console for more details", code >= 400)
-				return
-			end
 
-			cb(data, #data, headers)
+				local err = "server returned code " .. code .. ":\n\n"
+				err = err .. "================\n"
+
+				err = err .. "HEADER:\n"
+				err = err .. table.concat(header, "\n") .. "\n"
+
+				err = err .. "================\n"
+
+				err = err .. "BODY:\n"
+				err = err .. data .. "\n"
+
+				err = err .. "================\n"
+				failcb(err, code >= 400)
+			end
 		end,
 		failed = function(err)
 			failcb("_G.HTTP error: " .. err)
@@ -78,7 +83,7 @@ end
 
 function pac.HTTPGet(url, cb, failcb)
 	if not url or url:len() < 4 then
-		failcb("url length is less than 4 (" .. url .. ")", true)
+		failcb("url length is less than 4 (" .. tostring(url) .. ")", true)
 		return
 	end
 

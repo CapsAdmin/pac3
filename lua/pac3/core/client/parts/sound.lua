@@ -189,9 +189,15 @@ function PART:SetPath(path)
 				self["Set" .. key](self, self["Get" .. key](self))
 			end
 		end
-		stream.OnError =  function(err, info)
-			pac.Message("OGG error: ", err, " reason: ", info or "none")
-			self.Errored = str
+		stream.OnError =  function(_, err, info)
+			info = info or "unknown error"
+			if self:IsValid() and LocalPlayer() == self:GetPlayerOwner() and pace and pace.IsActive() then
+				if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
+					pace.MessagePrompt(err .. "\n" .. info, "OGG error for" .. path, "OK")
+				else
+					pac.Message("OGG error: ", err, " reason: ", info)
+				end
+			end
 		end
 
 		if

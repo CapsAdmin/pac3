@@ -112,7 +112,11 @@ function PART:SetURL(url)
 		end,
 		function(err)
 			if self:IsValid() and LocalPlayer() == self:GetPlayerOwner() and pace and pace.IsActive() then
-				pac.Message(Color(0, 255, 0), "[animation] ", Color(255, 255, 255), "HTTP Request Failed for " .. url .. " - " .. err)
+				if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
+					pace.MessagePrompt(err, "HTTP Request Failed for " .. url, "OK")
+				else
+					pac.Message(Color(0, 255, 0), "[animation] ", Color(255, 255, 255), "HTTP Request Failed for " .. url .. " - " .. err)
+				end
 			end
 		end)
 	end

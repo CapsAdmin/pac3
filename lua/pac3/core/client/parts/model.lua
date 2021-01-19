@@ -395,17 +395,21 @@ function PART:DrawLoadingText(ent, pos, ang)
 		local pos2d = pos:ToScreen()
 
 		surface.SetFont("DermaDefault")
+
 		if self.errored then
 			surface.SetTextColor(255, 0, 0, 255)
+			local str = self.loading:match("^(.-):\n") or self.loading:match("^(.-)\n") or self.loading:sub(1, 100)
+			local w, h = surface.GetTextSize(str)
+			surface.SetTextPos(pos2d.x - w / 2, pos2d.y - h / 2)
+			surface.DrawText(str)
 		else
 			surface.SetTextColor(255, 255, 255, 255)
+			local str = self.loading .. string.rep(".", pac.RealTime * 3 % 3)
+			local w, h = surface.GetTextSize(self.loading .. "...")
+
+			surface.SetTextPos(pos2d.x - w / 2, pos2d.y - h / 2)
+			surface.DrawText(str)
 		end
-
-		local str = self.loading .. string.rep(".", pac.RealTime * 3 % 3)
-		local w, h = surface.GetTextSize(self.loading .. "...")
-
-		surface.SetTextPos(pos2d.x - w / 2, pos2d.y - h / 2)
-		surface.DrawText(str)
 	cam.IgnoreZ(false)
 	cam.End2D()
 end
@@ -444,7 +448,13 @@ function PART:SetModel(path)
 				end
 
 			end, function(err)
-				pac.Message(err)
+
+				if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
+					pace.MessagePrompt(err, "HTTP Request Failed for " .. path, "OK")
+				else
+					pac.Message(Color(0, 255, 0), "[model] ", Color(255, 255, 255), "HTTP Request Failed for " .. path .. " - " .. err)
+				end
+
 				self.loading = err
 				self.errored = true
 				self:RealSetModel("models/error.mdl")

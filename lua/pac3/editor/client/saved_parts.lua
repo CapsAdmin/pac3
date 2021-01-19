@@ -189,7 +189,7 @@ function pace.LoadParts(name, clear, override_part)
 			end
 
 			pac.HTTPGet(name, callback, function(err)
-				Derma_Message("HTTP Request Failed for " .. name, err, "OK")
+				pace.MessagePrompt(err, "HTTP Request Failed for " .. name, "OK")
 			end)
 		else
 			name = name:gsub("%.txt", "")
