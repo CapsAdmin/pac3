@@ -576,6 +576,10 @@ do -- list
 						pnl:SetTooltip(L(udata.description))
 					end
 
+					obj.editor_property = obj.editor_property or {}
+					obj.editor_property[key] = pnl
+					pnl.part = obj
+
 					if udata then
 						if udata.enums then
 							DefineMoreOptionsLeftClick(pnl, function(self)
@@ -658,9 +662,6 @@ do -- list
 							pnl:Remove()
 							goto CONTINUE
 						end
-
-						obj.editor_pnl = pnl
-						pnl.part = obj
 
 						local val = obj["Get" .. key](obj)
 						pnl:SetValue(val)

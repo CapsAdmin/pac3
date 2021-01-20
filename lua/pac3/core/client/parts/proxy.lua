@@ -1041,6 +1041,10 @@ function PART:OnThink()
 			if z then str = str .. ", " .. math.Round(z, 3) end
 
 			self.debug_var = str
+
+			if self.Name == "" and pace.current_part == self and self.editor_property and IsValid(self.editor_property["Name"]) then
+				self.editor_property["Name"]:SetText(self:GetNiceName())
+			end
 		end
 	else
 
@@ -1065,6 +1069,10 @@ function PART:OnThink()
 
 			if pace and pace.IsActive() then
 				self.debug_var = math.Round(num, 3)
+			end
+
+			if self.Name == "" and pace.current_part == self and self.editor_property and IsValid(self.editor_property["Name"]) then
+				self.editor_property["Name"]:SetText(self:GetNiceName())
 			end
 		end
 	end
