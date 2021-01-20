@@ -650,9 +650,14 @@ do
 	function PART:GetNiceName()
 		local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%."))
 
-		local what = self:GetEntity():GetClass()
+		local class_name = "NULL"
+		local ent = self:GetEntity()
 
-		return (str and str:gsub("%d", "") or "error") .. " " .. what .. " model"
+		if ent:IsValid() then
+			class_name = ent:GetClass()
+		end
+
+		return (str and str:gsub("%d", "") or "error") .. " " .. class_name .. " model"
 	end
 
 
