@@ -158,9 +158,12 @@ end
 function PART:GetName()
 	if self.Name == "" then
 
+		-- recursive call guard
 		if self.last_nice_name_frame and self.last_nice_name_frame == FrameNumber() then
 			return self.last_nice_name
 		end
+
+		self.last_nice_name_frame = FrameNumber()
 
 		local nice = self:GetNiceName()
 		local num
@@ -183,7 +186,6 @@ function PART:GetName()
 		end
 
 		self.last_nice_name = nice
-		self.last_nice_name_frame = FrameNumber()
 
 		return nice
 	end
