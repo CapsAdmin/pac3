@@ -10,8 +10,13 @@ end
 local SV_LIMIT = CreateConVar("sv_pac_webcontent_limit", "-1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "webcontent limit, -1 = unlimited, 1024 = 1mb")
 local SV_NO_CLENGTH = CreateConVar("sv_pac_webcontent_allow_no_content_length", "-1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow downloads with no content length")
 
+function pac.FixGMODUrl(url)
+	return url:gsub("(%d%.)", function(d) return "%" .. ("%x"):format(string.byte(d)) end) -- to avoid "invalid url" errors
+end
+
 local function http(method, url, headers, cb, failcb)
-	url = url:gsub("(%d)", function(d) return "%" .. ("%x"):format(string.byte(d)) end) -- to avoid "invalid url" errors
+
+	url = pac.FixGMODUrl(url)
 
 	return HTTP({
 		method = method,
@@ -27,6 +32,7 @@ local function http(method, url, headers, cb, failcb)
 				end
 
 				local err = "server returned code " .. code .. ":\n\n"
+				err = err .. "url: "..url.."\n"
 				err = err .. "================\n"
 
 				err = err .. "HEADER:\n"
