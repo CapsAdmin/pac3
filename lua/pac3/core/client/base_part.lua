@@ -910,10 +910,10 @@ do -- serializing
 			return tbl
 		end
 
-		function PART:SetTable(tbl, copy)
+		function PART:SetTable(tbl, copy_id)
 
-			if copy then
-				tbl = make_copy(table.Copy(tbl), os.clock())
+			if copy_id then
+				tbl = make_copy(table.Copy(tbl), copy_id)
 			end
 
 			local ok, err = xpcall(SetTable, ErrorNoHalt, self, tbl)
