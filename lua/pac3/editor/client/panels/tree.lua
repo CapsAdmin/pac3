@@ -139,7 +139,7 @@ do
 		if pnl:IsValid() then
 			local pnl = pnl:GetParent()
 
-			if pnl and pnl.part and pnl.part:IsValid() then
+			if IsVald(pnl) and IsValid(pnl.part) then
 				pace.Call("HoverPart", pnl.part)
 				if pnl.add_button then
 					pnl.add_button:SetVisible(true)
