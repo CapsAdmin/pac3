@@ -108,7 +108,8 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	return pac.PrettifyName(("/" .. self:GetMaterial()):match(".*/(.+)"):gsub("%..+", "")) or "error"
+	local found = ("/" .. self:GetMaterial()):match(".*/(.+)")
+	return found and pac.PrettifyName(found:gsub("%..+", "")) or "error"
 end
 
 function PART:Initialize()

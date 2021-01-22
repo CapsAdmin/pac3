@@ -31,7 +31,8 @@ function PART:Initialize()
 end
 
 function PART:GetNiceName()
-	return pac.PrettifyName(("/" .. self:GetURL()):match(".+/(.-)%.")) or "no sound"
+	local str = pac.PrettifyName("/" .. self:GetURL())
+	return str and str:match(".+/(.-)%.") or "no sound"
 end
 
 function PART:OnThink()

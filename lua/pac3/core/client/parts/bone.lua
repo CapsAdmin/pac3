@@ -196,6 +196,11 @@ function pac.build_bone_callback(ent)
 						scale_children(ent, data.bone, scale, data.origin)
 					end
 
+					if part.HideMesh then
+						mat = Matrix({{0/0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}} )
+						print(mat)
+					end
+
 					ent:SetBoneMatrix(data.bone, mat)
 				end
 			else
@@ -270,7 +275,7 @@ function PART:OnBuildBonePositions()
 	local scale
 
 	-- Disable hide mesh functionality completely until the crash this causes, is fixed
-	if self.HideMesh then
+	if self.HideMesh and false then
 		scale = inf_scale_tempcrashfix
 
 		if self.InvertHideMesh then

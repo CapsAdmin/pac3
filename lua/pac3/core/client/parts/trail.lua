@@ -101,7 +101,8 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	return pac.PrettifyName(("/" .. self:GetTrailPath()):match(".+/(.+)"):gsub("%..+", "")) or "error"
+	local str = pac.PrettifyName("/" .. self:GetTrailPath())
+	return str and str:match(".+/(.+)"):gsub("%..+", "") or "error"
 end
 
 PART.LastAdd = 0

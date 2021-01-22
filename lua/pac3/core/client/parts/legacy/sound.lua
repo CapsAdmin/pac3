@@ -22,7 +22,8 @@ pac.StartStorableVars()
 pac.EndStorableVars()
 
 function PART:GetNiceName()
-	return pac.PrettifyName(("/" .. self:GetSound()):match(".+/(.-)%.")) or "no sound"
+	local str = pac.PrettifyName("/" .. self:GetSound())
+	return str and str:match(".+/(.-)%.") or "no sound"
 end
 
 function PART:Initialize()
