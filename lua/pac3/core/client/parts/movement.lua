@@ -5,8 +5,12 @@ PART.Group = "entity"
 PART.Icon = "icon16/user_go.png"
 PART.NonPhysical = true
 
+local pac_movement_default = {}
+
 local function ADD(PART, name, default, ...)
 	pac.GetSet(PART, name, default, ...)
+
+	pac_movement_default[name] = default
 
 	PART["Set" .. name] = function(self, val)
 		self[name] = val
@@ -16,7 +20,7 @@ local function ADD(PART, name, default, ...)
 		if ply == pac.LocalPlayer then
 			local num = GetConVarNumber("pac_free_movement")
 			if num == 1 or (num == -1 and hook.Run("PlayerNoClip", ply, true)) then
-				ply.pac_movement = ply.pac_movement or {}
+				ply.pac_movement = ply.pac_movement or table.Copy(pac_movement_default)
 				ply.pac_movement[name] = val
 
 				net.Start("pac_modify_movement")
