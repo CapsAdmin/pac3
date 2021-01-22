@@ -347,6 +347,8 @@ do
 				self:GetSkin().tex.Tab_Control( 0, 0, w, h )
 				self:GetSkin().tex.CategoryList.Header( 0, 0, w, h )
 
+				if not timeline.animation_part then return end
+
 				local w,h = draw.TextShadow({
 					text = L"frame" .. ": " .. (animations.GetEntityAnimationFrame(timeline.entity, timeline.animation_part:GetAnimID()) or 0),
 					font = pace.CurrentFont,
@@ -493,6 +495,8 @@ do
 			end
 
 			pnl.PaintOver = function()
+				if not timeline.animation_part then return end
+
 				local offset = -self.keyframe_scroll:GetCanvas():GetPos()
 
 				local x = timeline.GetCycle() * self.keyframe_scroll:GetCanvas():GetWide()
@@ -641,7 +645,7 @@ do
 			self:SetSize(ScrW()-(ScrW()-pace.Editor.x),93)
 			self:SetPos(0,ScrH()-self:GetTall())
 		end
-		
+
 		if input.IsKeyDown(KEY_SPACE) then
 			if not self.toggled then
 				self:Toggle()
