@@ -34,6 +34,9 @@ do
 
 	local function scroll_to_node(self, node)
 		timer.Simple(0.1, function()
+			if not self:IsValid() then return end
+			if not node:IsValid() then return end
+
 			local _, y = self:LocalToScreen()
 			local h = self:GetTall()
 
