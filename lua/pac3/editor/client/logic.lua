@@ -22,7 +22,7 @@ function pace.OnDraw()
 	end
 end
 
-pac.AddHook("PostDrawViewModel", "pace_viewmodel_edit", function()
+local function post_draw_view_model()
 	if alreadyInCall then return end
 
 	if pace.editing_viewmodel and not pace.editing_hands then
@@ -34,9 +34,9 @@ pac.AddHook("PostDrawViewModel", "pace_viewmodel_edit", function()
 
 		cam.End2D()
 	end
-end)
+end
 
-pac.AddHook("PostDrawPlayerHands", "pace_viewmodel_edit", function()
+local function post_draw_player_hands()
 	if alreadyInCall then return end
 
 	if not pace.editing_viewmodel and pace.editing_hands then
@@ -48,7 +48,7 @@ pac.AddHook("PostDrawPlayerHands", "pace_viewmodel_edit", function()
 
 		cam.End2D()
 	end
-end)
+end
 
 function pace.OnOpenEditor()
 	alreadyInCall = false
@@ -63,12 +63,18 @@ function pace.OnOpenEditor()
 	pace.TrySelectPart()
 
 	pace.ResetView()
+
+	pac.AddHook("PostDrawPlayerHands", "pace_viewmodel_edit", post_draw_player_hands)
+	pac.AddHook("PostDrawViewModel", "pace_viewmodel_edit", post_draw_view_model)
 end
 
 function pace.OnCloseEditor()
 	pace.EnableView(false)
 	pace.StopSelect()
 	pace.SafeRemoveSpecialPanel()
+
+	pac.RemoveHook("PostDrawViewModel", "pace_viewmodel_edit")
+	pac.RemoveHook("PostDrawPlayerHands", "pace_viewmodel_edit")
 end
 
 function pace.TrySelectPart()
