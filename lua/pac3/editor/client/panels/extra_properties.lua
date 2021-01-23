@@ -504,7 +504,7 @@ do -- model modifiers
 
 		local tbl = {}
 
-		if ent:SkinCount() > 1 then
+		if ent:SkinCount() and ent:SkinCount() > 1 then
 			tbl.skin = {
 				val = ent:GetSkin(),
 				callback = function(val)
