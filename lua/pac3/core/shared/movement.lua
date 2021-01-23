@@ -239,11 +239,10 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 
 		vel = vel * friction
 
+		speed = speed:GetNormalized() * math.min(speed:Length(), self.MaxGroundSpeed)
 		vel = vel + (speed * FrameTime()*(75.77*(-friction+1)))
 		vel = vel + self.Gravity * 0.015
 	end
-
-
 
 	if self.FinEfficiency > 0 then -- fin
 		local curvel = vel
@@ -302,10 +301,6 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 		end
 
 		vel = finalvec
-	end
-
-	if on_ground and self.MaxGroundSpeed > 0 then
-		vel = vel:GetNormalized() * math.min(vel:Length(), self.MaxGroundSpeed)
 	end
 
 	mv:SetVelocity(vel)
