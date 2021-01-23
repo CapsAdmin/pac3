@@ -3,6 +3,12 @@ if CLIENT then
 	pacx.AddServerModifier("model", function(data, owner) end)
 
 	function pacx.SetModel(path)
+
+		if not path then
+			local ply = LocalPlayer()
+			ply:SetModel(player_manager.TranslatePlayerModel(ply:GetInfo("cl_playermodel")))
+		end
+
 		net.Start("pac_setmodel")
 			net.WriteString(path or "")
 		net.SendToServer()
@@ -11,7 +17,7 @@ end
 
 if SERVER then
 	local url_to_path = {}
-	
+
 	local function set_url_playermodel(ply, path)
 		ply:SetModel(path)
 		ply.pac_last_modifier_model = path:lower()
@@ -22,7 +28,7 @@ if SERVER then
 			local cached_path = url_to_path[model]
 			if cached_path then return set_url_playermodel(ply, cached_path) end
 			pac.Message(ply, " wants to use ", model, " as player model")
-	
+
 			pac.DownloadMDL(model, function(path)
 				pac.Message(model, " downloaded for ", ply, ': ', path)
 				set_url_playermodel(ply, model)
@@ -35,12 +41,12 @@ if SERVER then
 				model = player_manager.TranslatePlayerModel(ply:GetInfo("cl_playermodel"))
 			else
 				model = player_manager.AllValidModels()[model] or model
-	
+
 				if not util.IsValidModel(model) then
 					model = player_manager.TranslatePlayerModel(ply:GetInfo("cl_playermodel"))
 				end
 			end
-	
+
 			ply:SetModel(model)
 			ply.pac_last_modifier_model = model:lower()
 			ply.pac_url_playermodel = false
