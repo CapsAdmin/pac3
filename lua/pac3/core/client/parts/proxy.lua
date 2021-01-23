@@ -584,21 +584,39 @@ PART.Inputs = {
 
 	light_amount_r = function(self, parent)
 		if parent:IsValid() then
-			return render.GetLightColor(parent.cached_pos):ToColor().r
+			local v = render.GetLightColor(parent.cached_pos):ToColor().r
+
+			if parent.ClassName == "model2" then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 0
 	end,
 	light_amount_g = function(self, parent)
 		if parent:IsValid() then
-			return render.GetLightColor(parent.cached_pos):ToColor().g
+			local v = render.GetLightColor(parent.cached_pos):ToColor().g
+
+			if parent.ClassName == "model2" then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 0
 	end,
 	light_amount_b = function(self, parent)
 		if parent:IsValid() then
-			return render.GetLightColor(parent.cached_pos):ToColor().b
+			local v = render.GetLightColor(parent.cached_pos):ToColor().b
+
+			if parent.ClassName == "model2" then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 0
@@ -614,21 +632,39 @@ PART.Inputs = {
 
 	ambient_light_r = function(self, parent)
 		if parent:IsValid() then
-			return render.GetAmbientLightColor():ToColor().r
+			local v = render.GetAmbientLightColor():ToColor().r
+
+			if parent.ClassName == "model2" then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 0
 	end,
 	ambient_light_g = function(self, parent)
 		if parent:IsValid() then
-			return render.GetAmbientLightColor():ToColor().g
+			local v = render.GetAmbientLightColor():ToColor().g
+
+			if parent.ClassName == "model2" then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 0
 	end,
 	ambient_light_b = function(self, parent)
 		if parent:IsValid() then
-			return render.GetAmbientLightColor():ToColor().b
+			local v = render.GetAmbientLightColor():ToColor().b
+
+			if parent.ClassName == "model2" then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 0
@@ -672,57 +708,93 @@ PART.Inputs = {
 		return 0
 	end,
 
-	player_color_r = function(self)
+	player_color_r = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetPlayerColor().r
+			local v =  owner:GetPlayerColor().r
+
+			if parent.ClassName == "model2" then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 1
 	end,
-	player_color_g = function(self)
+	player_color_g = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetPlayerColor().g
+			local v = owner:GetPlayerColor().g
+
+			if parent.ClassName == "model2" then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 1
 	end,
-	player_color_b = function(self)
+	player_color_b = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetPlayerColor().b
+			local v = owner:GetPlayerColor().b
+
+			if parent.ClassName == "model2" then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 1
 	end,
 
-	weapon_color_r = function(self)
+	weapon_color_r = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetWeaponColor().r
+			local v = owner:GetWeaponColor().r
+
+			if parent.ClassName == "model2" then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 1
 	end,
-	weapon_color_g = function(self)
+	weapon_color_g = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetWeaponColor().g
+			local v = owner:GetWeaponColor().g
+
+			if parent.ClassName == "model2" then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 1
 	end,
-	weapon_color_b = function(self)
+	weapon_color_b = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetWeaponColor().b
+			local v = owner:GetWeaponColor().b
+
+			if parent.ClassName == "model2" then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 1
@@ -825,6 +897,10 @@ PART.Inputs = {
 		v = tonumber(v) or 1
 
 		local c = HSVToColor(h%360, s, v)
+
+		if parent.ClassName == "model2" then
+			return c.r/255, c.g/255, c.b/255
+		end
 
 		return c.r, c.g, c.b
 	end,
