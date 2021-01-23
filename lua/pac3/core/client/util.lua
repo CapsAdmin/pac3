@@ -135,6 +135,7 @@ do --dev util
 	end
 
 	local sv_allowcslua = GetConVar('sv_allowcslua')
+	local prefer_local_version = CreateClientConVar("pac_restart_prefer_local", "1")
 
 	function pac.Restart()
 		PAC_MDL_SALT = PAC_MDL_SALT + 1
@@ -202,9 +203,19 @@ do --dev util
 			collectgarbage()
 		end
 
-		local loadingHit = false
 
-		if sv_allowcslua:GetBool() or LocalPlayer():IsSuperAdmin() then
+		if not prefer_local_version:GetBool() then
+			pacLocal.Message("pac_restart: not reloading from local version")
+
+			for _, path in ipairs((file.Find("autorun/pac*", "LUA"))) do
+				if path:EndsWith("_init.lua") and path ~= "pac_init.lua" then
+					include("autorun/" .. path)
+				end
+			end
+
+		elseif sv_allowcslua:GetBool() or LocalPlayer():IsSuperAdmin() then
+			local loadingHit = false
+
 			if sv_allowcslua:GetBool() then
 				pacLocal.Message("pac_restart: sv_allowcslua is on, looking for PAC3 addon..")
 			end
@@ -275,14 +286,15 @@ do --dev util
 					break
 				end
 			end
-		end
 
-		if not loadingHit then
-			pacLocal.Message("sv_allowcslua is not enabled or unable to find PAC3 in addons/, loading PAC3 again from server lua")
 
-			for _, path in ipairs((file.Find("autorun/pac*", "LUA"))) do
-				if path:EndsWith("_init.lua") and path ~= "pac_init.lua" then
-					include("autorun/" .. path)
+			if not loadingHit then
+				pacLocal.Message("sv_allowcslua is not enabled or unable to find PAC3 in addons/, loading PAC3 again from server lua")
+
+				for _, path in ipairs((file.Find("autorun/pac*", "LUA"))) do
+					if path:EndsWith("_init.lua") and path ~= "pac_init.lua" then
+						include("autorun/" .. path)
+					end
 				end
 			end
 		end
