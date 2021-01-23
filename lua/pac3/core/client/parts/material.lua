@@ -269,6 +269,17 @@ for shader_name, groups in pairs(shader_params.shaders) do
 		update_submaterial(self)
 	end
 
+	function PART:OnThink()
+		local parent = self:GetParent()
+		if parent.GetEntity and parent:GetEntity():IsValid() then
+			local materials = parent:GetEntity():GetMaterials()
+			if materials and #materials ~= self.last_material_count then
+				update_submaterial(self)
+				self.last_material_count = #materials
+			end
+		end
+	end
+
 	PART.ShaderParams = {}
 	PART.TransformVars = {}
 
