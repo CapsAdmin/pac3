@@ -97,41 +97,41 @@ end
 
 function PART:UpdateActTable()
 	local ent = self:GetOwner(true)
+	if not ent:IsValid() then return end
 
-	if ent:IsValid() then
+	ent.pac_holdtype_alternative_animation_rate = self.AlternativeRate
 
-		ent.pac_holdtype_alternative_animation_rate = self.AlternativeRate
+	ent.pac_holdtypes = ent.pac_holdtypes or {}
 
-		ent.pac_holdtypes = ent.pac_holdtypes or {}
-
-		if self.Override then
-			table.Empty(ent.pac_holdtypes)
-		end
-
-		ent.pac_holdtypes[self] = ent.pac_holdtypes[self] or {}
-
-		local acts = ent.pac_holdtypes[self]
-
-		for name, act in pairs(act_mods) do
-			acts[act] = ent:GetSequenceActivity(ent:LookupSequence(self[name]))
-		end
-
-		-- custom acts
-		acts.fallback = ent:GetSequenceActivity(ent:LookupSequence(self.Fallback))
-		acts.noclip = ent:GetSequenceActivity(ent:LookupSequence(self.Noclip))
-		acts.air = ent:GetSequenceActivity(ent:LookupSequence(self.Air))
-		acts.sitting = ent:GetSequenceActivity(ent:LookupSequence(self.Sitting))
-
-		acts.part = self
+	if self.Override then
+		table.Empty(ent.pac_holdtypes)
 	end
+
+	ent.pac_holdtypes[self] = ent.pac_holdtypes[self] or {}
+
+	local acts = ent.pac_holdtypes[self]
+
+	for name, act in pairs(act_mods) do
+		acts[act] = ent:GetSequenceActivity(ent:LookupSequence(self[name]))
+	end
+
+	-- custom acts
+	acts.fallback = ent:GetSequenceActivity(ent:LookupSequence(self.Fallback))
+	acts.noclip = ent:GetSequenceActivity(ent:LookupSequence(self.Noclip))
+	acts.air = ent:GetSequenceActivity(ent:LookupSequence(self.Air))
+	acts.sitting = ent:GetSequenceActivity(ent:LookupSequence(self.Sitting))
+
+	acts.part = self
 end
 
 function PART:OnThink()
 	local ent = self:GetOwner(true)
+	if not ent:IsValid() then return end
 
-	if ent:IsValid() and ent:GetModel() ~= self.last_model then
+	if (ent:GetModel() ~= self.last_model or ent.pac_holdtypes ~= self.last_pac_holdtypes)  then
 		self:UpdateActTable()
 		self.last_model = ent:GetModel()
+		self.last_pac_holdtypes = ent.pac_holdtypes
 	end
 end
 

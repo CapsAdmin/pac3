@@ -417,7 +417,12 @@ end
 local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs')
 
 function PART:RefreshModel()
+
 	self.Entity.pac_bones = nil
+	if self.Entity.pac_holdtypes then
+		self.Entity.pac_holdtypes = {}
+	end
+
 	self:SetModelModifiers(self:GetModelModifiers())
 	self:SetMaterials(self:GetMaterials())
 	self:SetSize(self:GetSize())
