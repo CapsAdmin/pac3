@@ -274,10 +274,14 @@ do -- model
 
 		local part = pace.current_part
 
+
 		pace.AssetBrowser(function(path)
 			if not part:IsValid() then return end
 			-- because we refresh the properties
-			self.OnValueChanged(path)
+
+			if IsValid(self) and self.OnValueChanged then
+				self.OnValueChanged(path)
+			end
 
 			if pace.current_part.SetMaterials then
 				local model = pace.current_part:GetModel()
@@ -289,6 +293,13 @@ do -- model
 			end
 
 			pace.PopulateProperties(pace.current_part)
+
+			for k,v in ipairs(pace.properties.List) do
+				if v.panel and v.panel.part == part and v.key == key then
+					self = v.panel
+					break
+				end
+			end
 
 		end, "models")
 
