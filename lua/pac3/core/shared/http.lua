@@ -11,7 +11,7 @@ local SV_LIMIT = CreateConVar("sv_pac_webcontent_limit", "-1", CLIENT and {FCVAR
 local SV_NO_CLENGTH = CreateConVar("sv_pac_webcontent_allow_no_content_length", "-1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow downloads with no content length")
 
 function pac.FixGMODUrl(url)
-	return url:gsub("(%d%.)", function(d) return "%" .. ("%x"):format(string.byte(d)) end) -- to avoid "invalid url" errors
+	return url:gsub("(%d%.)", function(d) return "%" .. ("%x"):format(string.byte(d)) .. "." end) -- to avoid "invalid url" errors
 end
 
 local function http(method, url, headers, cb, failcb)
