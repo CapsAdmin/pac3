@@ -200,6 +200,12 @@ function PART:SetPath(path)
 			end
 		end
 
+		stream.UpdateSourcePosition = function()
+			if self:IsValid() then
+				stream.SourcePosition = self:GetDrawPosition()
+			end
+		end
+
 		if
 			pace and
 			pace.Editor:IsValid() and
