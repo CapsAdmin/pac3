@@ -14,7 +14,7 @@ function pace.SetTPose(b)
 		ply.pace_tpose_last_layer_sequence = {}
 		for i = 0, 16 do
 			ply.pace_tpose_last_layer_sequence[i] = ply:GetLayerSequence(i)
-		end	
+		end
 
 		pac.AddHook("PrePlayerDraw", "pace_tpose", function(ply)
 			if ply ~= LocalPlayer() then return end
@@ -28,7 +28,7 @@ function pace.SetTPose(b)
 			local ang = ply:EyeAngles()
 			ang.p = 0
 			ply:SetEyeAngles(ang)
-			ply:SetRenderAngles(ang)			
+			ply:SetRenderAngles(ang)
 		end)
 
 		pac.AddHook("UpdateAnimation", "pace_tpose", function()
@@ -42,9 +42,22 @@ function pace.SetTPose(b)
 				end
 			end
 		end)
+
+		pac.AddHook("CalcMainActivity", "pace_tpose", function(ply)
+			if ply == LocalPlayer() then
+				for i = 0, 16 do
+					ply:SetLayerSequence(i, 0)
+				end
+
+				local act = ply:LookupSequence("ragdoll") or ply:LookupSequence("reference")
+
+				return act, act
+			end
+		end)
 	else
 		pac.RemoveHook("PrePlayerDraw", "pace_tpose")
 		pac.RemoveHook("UpdateAnimation", "pace_tpose")
+		pac.RemoveHook("CalcMainActivity", "pace_tpose")
 
 		if ply.pace_tpose_last_sequence then
 			ply:SetSequence(ply.pace_tpose_last_sequence)
