@@ -40,6 +40,23 @@ SafeRemoveEntity(pac.WorldEntity)
 
 pac.WorldEntity = NULL
 
+function pac.GetWorldEntity()
+	if not pac.WorldEntity:IsValid() then
+		ent = pac.CreateEntity("models/error.mdl")
+
+		ent:SetPos(Vector(0,0,0))
+
+		-- go away ugh
+		ent:SetModelScale(0,0)
+
+		ent.IsPACWorldEntity = true
+
+		pac.WorldEntity = ent
+	end
+
+	return pac.WorldEntity
+end
+
 function pac.HandleOwnerName(owner, name, ent, part, check_func)
 	local idx = tonumber(name)
 
@@ -68,24 +85,12 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 
 			return ent
 		end
-		return NULL
+
+		return pac.GetWorldEntity()
 	end
 
-	if name == "world" or (pac.WorldEntity:IsValid() and ent == pac.WorldEntity) then
-		if not pac.WorldEntity:IsValid() then
-			ent = pac.CreateEntity("models/error.mdl")
-
-			ent:SetPos(Vector(0,0,0))
-
-			-- go away ugh
-			ent:SetModelScale(0,0)
-
-			ent.IsPACWorldEntity = true
-
-			pac.WorldEntity = ent
-		end
-
-		return pac.WorldEntity
+	if name == "world" or name == "worldspawn" then
+		return pac.GetWorldEntity()
 	end
 
 	if name == "self" then
@@ -133,5 +138,5 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 		end
 	end
 
-	return NULL
+	return pac.GetWorldEntity()
 end
