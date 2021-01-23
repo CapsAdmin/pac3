@@ -156,7 +156,6 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 		ply:SetGroundEntity(NULL)
 	end
 
-
 	local speed = self.RunSpeed
 
 	if mv:KeyDown(IN_SPEED) then
@@ -171,16 +170,7 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 		speed = self.DuckSpeed
 	end
 
-	-- 0.175 = 71
-	-- 0.272 = 80.5
-	-- 0.447 = 106
-	-- 0.672 = 179
-	-- 0.822 = 330
-	-- 0.922 = 751
-	-- 0.95 = 1170
-	-- 0.99 = 5870
-
-	speed = speed * FrameTime()
+--	speed = speed * FrameTime()
 
 	local ang = mv:GetAngles()
 	local vel = Vector()
@@ -190,16 +180,18 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 	end
 
 	if mv:KeyDown(IN_FORWARD) then
-		vel = vel + ang:Forward() * speed
+		vel = vel + ang:Forward()
 	elseif mv:KeyDown(IN_BACK) then
-		vel = vel - ang:Forward() * speed
+		vel = vel - ang:Forward()
 	end
 
 	if mv:KeyDown(IN_MOVERIGHT) then
-		vel = vel + ang:Right() * speed
+		vel = vel + ang:Right()
 	elseif mv:KeyDown(IN_MOVELEFT) then
-		vel = vel - ang:Right() * speed
+		vel = vel - ang:Right()
 	end
+
+	vel = vel:GetNormalized() * speed
 
 	if self.AllowZVelocity then
 		if mv:KeyDown(IN_JUMP) then
@@ -212,43 +204,46 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 	if not self.AllowZVelocity then
 		vel.z = 0
 	end
-	local speed = vel * 66.66666
 
-	local friction = (on_ground and self.GroundFriction or self.AirFriction)
-	friction = -(friction) + 1
-
-	if friction < 1 then
-		if not on_ground then
-			speed = speed * friction
-		else
-			speed = speed * (-friction+1)
-		end
-	end
+	local speed = vel
 
 	local vel = mv:GetVelocity()
 
-	if not self.Noclip and self.StickToGround then -- work against ground friction
-		local sv_friction = GetConVarNumber("sv_friction")
+	if on_ground then
+		if not self.Noclip and self.StickToGround then -- work against ground friction
+			local sv_friction = GetConVarNumber("sv_friction")
 
-		if sv_friction > 0 and on_ground then
-			sv_friction = 1 - (sv_friction * 15) / 1000
-			vel = vel / sv_friction
+			if sv_friction > 0 then
+				sv_friction = 1 - (sv_friction * 15) / 1000
+				vel = vel / sv_friction
+			end
 		end
 	end
 
-	vel = vel * friction
-
+	vel = vel + self.Gravity * 0
 
 	-- todo: don't allow adding more velocity to existing velocity if it exceeds
 	-- but allow decreasing
 	if not on_ground then
+		local friction = self.AirFriction
+		friction = -(friction) + 1
+
+		vel = vel * friction
+
+		vel = vel + self.Gravity * 0.015
 		speed = speed:GetNormalized() * math.Clamp(speed:Length(), 0, self.MaxAirSpeed)
-		vel = vel + speed
+		vel = vel + (speed * FrameTime()*(66.666*(-friction+1)))
 	else
-		vel = vel + speed
+		local friction = self.GroundFriction
+		friction = -(friction) + 1
+
+		vel = vel * friction
+
+		vel = vel + (speed * FrameTime()*(75.77*(-friction+1)))
+		vel = vel + self.Gravity * 0.015
 	end
 
-	vel = vel + self.Gravity * 0.015
+
 
 	if self.FinEfficiency > 0 then -- fin
 		local curvel = vel
