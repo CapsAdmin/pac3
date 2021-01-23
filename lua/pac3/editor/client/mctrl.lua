@@ -128,7 +128,7 @@ do -- pace
 			return 5
 		end
 
-		if part.ClassName == "clip" then
+		if part.ClassName == "clip" or part.ClassName == "clip2" then
 			part = part.Parent
 		end
 
