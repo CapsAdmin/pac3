@@ -168,6 +168,10 @@ function PART:UpdateScale(ent)
 		else
 			ent.pac3_Scale = self.Size
 
+			if pacx.SetPlayerSize and ent:IsPlayer() then
+				pacx.SetPlayerSize(ent, self.Size)
+			end
+
 			if ent:IsPlayer() or ent:IsNPC() then
 				local size = ent:GetModelScale() -- compensate for serverside scales..
 				pac.SetModelScale(ent, self.Scale * self.Size * (1/size))

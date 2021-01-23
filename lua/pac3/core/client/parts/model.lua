@@ -513,6 +513,11 @@ function PART:ApplyMatrix()
 		mat:Rotate(self.Angles + self.AngleOffset)
 	end
 	mat:Scale(self.Scale * self.Size)
+
+	if pacx and pacx.SetPlayerSize and ent == pac.LocalPlayer then
+		pacx.SetPlayerSize(ent, self.Size)
+	end
+
 	if mat:IsIdentity() then
 		ent:DisableMatrix("RenderMultiply")
 	else
@@ -770,8 +775,14 @@ do
 		local ent = self:GetEntity()
 		if not ent:IsValid() then return end
 
-		if ent == pac.LocalPlayer and pacx and pacx.SetModel then
-			pacx.SetModel()
+		if pacx and ent == pac.LocalPlayer then
+			if pacx.SetModel then
+				pacx.SetModel()
+			end
+
+			if pacx.SetPlayerSize then
+				pacx.SetPlayerSize(ent)
+			end
 		end
 	end
 

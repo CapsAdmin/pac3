@@ -23,6 +23,7 @@ function pacx.GetPlayerSize(ply)
 end
 
 function pacx.SetPlayerSize(ply, f, force, entity2)
+	f = f or 1
 
 	local scale = math.Clamp(f, def.MIN_PL_SIZE, def.MAX_PL_SIZE)
 	local olds = ply.pac_player_size or 1
@@ -49,34 +50,52 @@ function pacx.SetPlayerSize(ply, f, force, entity2)
 		ply:SetHull(def.min * scale, def.max * scale)
 		ply:SetHullDuck(def.min * scale, def.maxduck * scale)
 	end
+
+	if CLIENT then
+		if ply == LocalPlayer() then
+			net.Start("pacx_setsize")
+				net.WriteDouble(f or 1)
+			net.SendToServer()
+		end
+	end
 end
 
-pacx.AddServerModifier("size", function(data, owner)
-	if data and tonumber(data.self.OwnerName) then
-		 local ent = Entity(tonumber(data.self.OwnerName))
-		 if ent and ent:IsValid() and ent:IsPlayer() then
-			owner = ent
-		 end
-	end
+	local ALLOW_TO_CHANGE = pacx.AddServerModifier("size", function(data, owner)
 
-	local size
-
-	if data then
-		local entity2
-		-- find the modifier
-		for key, part in pairs(data.children) do
-			if (part.self.ClassName == "entity" or part.self.ClassName == "entity2") and part.self.Size then
-				size = part.self.Size
-				entity2 = part.self.ClassName
-				break
+		if data and tonumber(data.self.OwnerName) then
+			local ent = Entity(tonumber(data.self.OwnerName))
+			if ent and ent:IsValid() and ent:IsPlayer() then
+				owner = ent
 			end
 		end
-	else
-		size = 1
-	end
 
-	if size then
-		pacx.SetPlayerSize(owner, size, nil, entity2)
-	end
+		local size
 
-end)
+		if data then
+			local entity2
+			-- find the modifier
+			for key, part in pairs(data.children) do
+				if (part.self.ClassName == "entity" or part.self.ClassName == "entity2") and part.self.Size then
+					size = part.self.Size
+					entity2 = part.self.ClassName
+					break
+				end
+			end
+		else
+			size = 1
+		end
+
+		if size then
+			pacx.SetPlayerSize(owner, size, nil, entity2)
+		end
+	end)
+
+if SERVER then
+	util.AddNetworkString("pacx_setsize")
+
+	net.Receive("pacx_setsize", function(_, ply)
+		if not ALLOW_TO_CHANGE:GetBool() then return end
+		local size = net.ReadDouble()
+		pacx.SetPlayerSize(ply, size)
+	end)
+end
