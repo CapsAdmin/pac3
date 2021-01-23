@@ -194,6 +194,30 @@ function pace.SubmitPart(data, filter)
 
 		local lookup = {}
 
+		if game.SinglePlayer() then
+			--[[
+				CapsAdminToday at 12:03 AM
+					] lua_run print(player.GetAll()[1]:SteamID())
+					STEAM_0:0:0
+					] lua_run_cl print(player.GetAll()[1]:SteamID())
+					STEAM_0:1:9355639
+
+					what
+					singleplayer
+
+				noruzenchi86Today at 12:04 AM
+					definitely a single player moment
+
+				nforceToday at 12:04 AM
+					just use Entity(1) for sp
+
+				CapsAdminToday at 12:05 AM
+					thx for the tip
+			]]
+
+			table.insert(data.wear_filter, Entity(1):SteamID())
+		end
+
 		for i, ply in ipairs(player.GetAll()) do
 			lookup[ply:SteamID()] = ply
 		end
