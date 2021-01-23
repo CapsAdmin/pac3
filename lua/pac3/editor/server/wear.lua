@@ -375,7 +375,7 @@ pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
 		return
 	end
 
-	if pac_submit_spam:GetBool() then
+	if pac_submit_spam:GetBool() and not game.SinglePlayer() then
 		-- data is too short, not even 8 bytes
 		if len < 64 then return end
 
