@@ -736,6 +736,11 @@ do -- get set and editor vars
 			self[name_find_count_key] = 0
 
 			if type(var) == "string" then
+				if self[name_key] == var and self[uid_key] ~= "" then
+					-- don't do anything to avoid editor from choosing random parts with the same name
+					return
+				end
+
 				self[name_key] = var
 
 				if var == "" then
