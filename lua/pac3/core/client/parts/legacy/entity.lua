@@ -158,22 +158,29 @@ end
 function PART:UpdateScale(ent)
 	ent = ent or self:GetOwner()
 
-	if ent:IsValid() then
-		if self.UseLegacyScale then
-			if ent:IsPlayer() or ent:IsNPC() then
-				pac.SetModelScale(ent, nil, self.Size)
+	if not ent:IsValid() then return end
+
+	if self.UseLegacyScale then
+		if ent:IsPlayer() or ent:IsNPC() then
+			if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
+				pacx.SetEntitySizeMultiplier(ent, self.Size)
 			else
-				pac.SetModelScale(ent, self.Scale * self.Size)
+				pac.SetModelScale(ent, nil, self.Size)
 			end
 		else
-			ent.pac3_Scale = self.Size
+			pac.SetModelScale(ent, self.Scale * self.Size)
+		end
+	else
+		ent.pac3_Scale = self.Size
 
-			if ent:IsPlayer() or ent:IsNPC() then
-				local size = ent:GetModelScale() -- compensate for serverside scales..
-				pac.SetModelScale(ent, self.Scale * self.Size * (1/size))
+		if ent:IsPlayer() or ent:IsNPC() then
+			if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
+				pacx.SetEntitySizeMultiplier(ent, self.Size)
 			else
-				pac.SetModelScale(ent, self.Scale * self.Size)
+				pac.SetModelScale(ent, nil, self.Size)
 			end
+		else
+			pac.SetModelScale(ent, self.Scale * self.Size)
 		end
 	end
 end
@@ -481,54 +488,60 @@ function PART:OnThink()
 	end
 end
 
+function PART:OnRemove()
+	local ent = self:GetOwner()
+
+	if not ent:IsValid() then return end
+
+	if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
+		pacx.SetEntitySizeMultiplier(ent)
+	end
+end
+
 function PART:OnHide()
 	local ent = self:GetOwner()
 
-	if ent:IsValid() then
-		if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
-			ent = ent:GetActiveWeapon()
-		end
+	if not ent:IsValid() then return end
 
-		ent.RenderOverride = nil
-		ent:SetColor(Color(255, 255, 255, 255))
+	if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
+		ent = ent:GetActiveWeapon()
+	end
 
-		ent.pac_material = nil
-		ent.pac_materialm = nil
-		ent.pac_color = nil
-		ent.pac_alpha = nil
-		ent.pac_brightness = nil
+	ent.RenderOverride = nil
+	ent:SetColor(Color(255, 255, 255, 255))
 
-		ent.pac_hide_entity = nil
-		ent.pac_fullbright = nil
-		ent.pac_invert = nil
+	ent.pac_material = nil
+	ent.pac_materialm = nil
+	ent.pac_color = nil
+	ent.pac_alpha = nil
+	ent.pac_brightness = nil
 
-		for key in pairs(self.ent_fields) do
-			ent[key] = nil
-		end
+	ent.pac_hide_entity = nil
+	ent.pac_fullbright = nil
+	ent.pac_invert = nil
 
-		if self.UseLegacyScale then
-			if ent:IsPlayer() then
-				pac.SetModelScale(ent, nil, 1)
-			else
-				pac.SetModelScale(ent, Vector(1,1,1))
-			end
-		else
-			pac.SetModelScale(ent, Vector(1,1,1))
-		end
+	for key in pairs(self.ent_fields) do
+		ent[key] = nil
+	end
 
-		local weps = ent.GetWeapons and ent:GetWeapons()
+	if ent:IsPlayer() or ent:IsNPC() then
+		-- do nothing, we want the player to feel small even on hide
+	else
+		pac.SetModelScale(ent, Vector(1,1,1))
+	end
 
-		if weps then
-			for _, wep in pairs(weps) do
-				if not wep.pac_weapon_class then
-					wep:SetNoDraw(false)
-				end
+	local weps = ent.GetWeapons and ent:GetWeapons()
+
+	if weps then
+		for _, wep in pairs(weps) do
+			if not wep.pac_weapon_class then
+				wep:SetNoDraw(false)
 			end
 		end
+	end
 
-		if self.LodOverride ~= -1 then
-			ent:SetLOD(-1)
-		end
+	if self.LodOverride ~= -1 then
+		ent:SetLOD(-1)
 	end
 end
 

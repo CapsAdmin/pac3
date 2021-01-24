@@ -525,7 +525,7 @@ function PART:ApplyMatrix()
 	mat:Scale(self.Scale * self.Size)
 
 	if ent:IsPlayer() or ent:IsNPC() then
-		if pacx and pacx.SetEntitySizeMultiplier then
+		if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
 			pacx.SetEntitySizeMultiplier(ent, self.Size)
 		end
 	else
@@ -792,7 +792,7 @@ do
 		end
 
 		if ent:IsPlayer() or ent:IsNPC() then
-			if pacx and pacx.SetEntitySizeMultiplier then
+			if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
 				pacx.SetEntitySizeMultiplier(ent)
 			end
 		else
