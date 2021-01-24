@@ -10,7 +10,7 @@ pace.Errors = {}
 util.AddNetworkString('pac_submit_acknowledged')
 util.AddNetworkString('pac_update_playerfilter')
 
-function pace.CanModify(ply, ent)
+function pace.CanPlayerModify(ply, ent)
 	if not IsValid(ply) or not IsValid(ent) then
 		return false
 	end
