@@ -31,7 +31,7 @@ function pace.CanPlayerModify(ply, ent)
 		return true
 	end
 
-	return ply:CPPICanTool(ent, "paint")
+	return ent:CPPICanTool(ply, "paint")
 end
 
 include("util.lua")
