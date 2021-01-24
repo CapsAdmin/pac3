@@ -75,7 +75,7 @@ if SERVER then
 
 		local ent = net.ReadEntity()
 
-		if not pace.CanModify(ply, ent) then return end
+		if not pace.CanPlayerModify(ply, ent) then return end
 
 		local multiplier = net.ReadDouble()
 
