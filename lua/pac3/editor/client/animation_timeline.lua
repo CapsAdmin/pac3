@@ -618,6 +618,8 @@ do
 					end
 				end
 
+				if not timeline.animation_part then return end
+
 				local x = timeline.GetCycle() * self.keyframe_scroll:GetCanvas():GetWide()
 				x = x - offset
 
