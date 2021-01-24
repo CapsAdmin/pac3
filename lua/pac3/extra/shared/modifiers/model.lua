@@ -87,7 +87,9 @@ do -- is there a nicer way to do this?
 	end)
 
 	gameevent.Listen("player_spawn")
-	hook.Add("player_spawn", "pacx_setmodel", function(ply)
+	hook.Add("player_spawn", "pacx_setmodel", function(data)
+		local ply = player.GetByID(data.userid)
+		if not ply:IsValid() then return end
 		check(ply)
 		timer.Simple(0, function()
 			if ply:IsValid() then
