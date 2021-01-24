@@ -136,7 +136,9 @@ function pace.OpenEditor()
 		ctp:Disable()
 	end
 
+	RunConsoleCommand("pac_enable", "1")
 	RunConsoleCommand("pac_in_editor", "1")
+
 	pace.SetInPAC3Editor(true)
 
 	pace.DisableExternalHooks()
