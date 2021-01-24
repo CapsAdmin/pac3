@@ -784,10 +784,6 @@ function PART:CheckBoneMerge()
 		if self.BoneMerge then
 			local owner = self:GetOwner()
 
-			if owner.pac_owner_override and owner.pac_owner_override:IsValid() then
-				owner = owner.pac_owner_override
-			end
-
 			if ent:GetParent() ~= owner then
 				ent:SetParent(owner)
 

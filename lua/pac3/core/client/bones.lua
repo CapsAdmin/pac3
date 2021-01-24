@@ -159,11 +159,6 @@ local angle_origin = Angle(0,0,0)
 function pac.GetBonePosAng(ent, id, parent)
 	if not ent:IsValid() then return Vector(), Angle() end
 
-	local override = ent.pac_owner_override
-	if override and override:IsValid() then
-		ent = override
-	end
-
 	if id == "physgun_beam_endpos" then
 		if ent.pac_drawphysgun_event then
 

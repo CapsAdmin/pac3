@@ -324,89 +324,87 @@ end
 
 pac.AddHook("Think", "events", function()
 	for _, ply in ipairs(player.GetAll()) do
-		if
-			(
-				ply.pac_death_physics_parts or
-				ply.pac_death_ragdollize or
-				ply.pac_death_hide_ragdoll
-			) and
-			ent_parts[ply] and
-			not Alive(ply)
-		then
-			local rag = ply:GetRagdollEntity()
-			rag = hook.Run("PACChooseDeathRagdoll", ply, rag) or rag
+		if not ent_parts[ply] then continue end
 
-			if IsValid(rag) then
-				if ply.pac_ragdoll ~= rag then
-					ply.pac_ragdoll = rag
-					rag.pac_ragdoll_player_owner = ply
+		if Alive(ply) then
+			if ply.pac_revert_ragdoll then
+				ply.pac_revert_ragdoll()
+				ply.pac_revert_ragdoll = nil
+			end
+			continue
+		end
 
-					if ply.pac_death_physics_parts then
-						if ply.pac_physics_died then return end
+		local rag = ply:GetRagdollEntity()
+		if not IsValid(rag) then continue end
 
-						pac.CallPartEvent("physics_ragdoll_death", rag, ply)
+		-- so it only runs once
+		if ply.pac_ragdoll == rag then continue end
+		ply.pac_ragdoll = rag
+		rag.pac_player = ply
 
-						for _, part in pairs(parts_from_uid(ply:UniqueID())) do
-							if part.is_model_part then
-								local ent = part:GetEntity()
-								if ent:IsValid() then
-									rag:SetNoDraw(true)
+		rag = hook.Run("PACChooseDeathRagdoll", ply, rag) or rag
 
-									part.skip_orient = true
+		if ply.pac_death_physics_parts then
+			if ply.pac_physics_died then return end
 
-									ent:SetParent(NULL)
-									ent:SetNoDraw(true)
-									ent:PhysicsInitBox(Vector(1,1,1) * -5, Vector(1,1,1) * 5)
-									ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+			pac.CallPartEvent("physics_ragdoll_death", rag, ply)
 
-									local phys = ent:GetPhysicsObject()
-									phys:AddAngleVelocity(VectorRand() * 1000)
-									phys:AddVelocity(ply:GetVelocity()  + VectorRand() * 30)
-									phys:Wake()
+			for _, part in pairs(parts_from_uid(ply:UniqueID())) do
+				if part.is_model_part then
+					local ent = part:GetEntity()
+					if ent:IsValid() then
+						rag:SetNoDraw(true)
 
-									function ent.RenderOverride()
-										if part:IsValid() then
-											if not part.HideEntity then
-												part:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
-												ent:DrawModel()
-												part:PostEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
-											end
-										else
-											ent.RenderOverride = nil
-										end
-									end
+						part.skip_orient = true
+
+						ent:SetParent(NULL)
+						ent:SetNoDraw(true)
+						ent:PhysicsInitBox(Vector(1,1,1) * -5, Vector(1,1,1) * 5)
+						ent:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+
+						local phys = ent:GetPhysicsObject()
+						phys:AddAngleVelocity(VectorRand() * 1000)
+						phys:AddVelocity(ply:GetVelocity()  + VectorRand() * 30)
+						phys:Wake()
+
+						function ent.RenderOverride()
+							if part:IsValid() then
+								if not part.HideEntity then
+									part:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
+									ent:DrawModel()
+									part:PostEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
 								end
-							end
-						end
-						ply.pac_physics_died = true
-					elseif ply.pac_death_ragdollize then
-
-						-- make props draw on the ragdoll
-						ply.pac_owner_override = rag
-						for _, part in pairs(ent_parts[ply]) do
-							if part.last_owner ~= rag then
-								part:SetOwner(rag)
-								part.last_owner = rag
-							end
-						end
-
-						ply.pac_revert_ragdoll = function()
-							if not ent_parts[ply] then return end
-
-							ply.pac_death_ragdollize = nil
-
-							for _, part in pairs(ent_parts[ply]) do
-								part:SetOwner(ply)
+							else
+								ent.RenderOverride = nil
 							end
 						end
 					end
 				end
 			end
-		end
+			ply.pac_physics_died = true
+		elseif ply.pac_death_ragdollize then
 
-		if Alive(ply) and ply.pac_revert_ragdoll then
-			ply.pac_revert_ragdoll()
-			ply.pac_revert_ragdoll = nil
+			pac.HideEntityParts(ply)
+
+			for _, part in pairs(ent_parts[ply]) do
+				part:SetOwner(rag)
+			end
+
+			pac.ShowEntityParts(rag)
+
+			ply.pac_revert_ragdoll = function()
+				ply.pac_ragdoll = nil
+
+				if not ent_parts[ply] then return end
+
+				pac.HideEntityParts(rag)
+
+				for _, part in pairs(ent_parts[ply]) do
+					part:SetOwner(ply)
+				end
+
+				pac.ShowEntityParts(ply)
+			end
 		end
 	end
 
@@ -697,7 +695,6 @@ do -- drawing
 		local dummyv = Vector(0.577350,0.577350,0.577350)
 		local fovoverride
 
-		local pac_sv_hide_outfit_on_death = GetConVar("pac_sv_hide_outfit_on_death")
 		local skip_frames = CreateConVar('pac_suppress_frames', '1', {FCVA_ARCHIVE}, 'Skip frames (reflections)')
 
 		local function setup_suppress()
@@ -761,60 +758,29 @@ do -- drawing
 					goto CONTINUE
 				end
 
-				local isply = ent:IsPlayer()
 				ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
 				dst = ent:EyePos():Distance(pac.EyePos)
 				radius = ent:BoundingRadius() * 3 * (ent:GetModelScale() or 1)
 
-				if isply and not Alive(ent) and pac_sv_hide_outfit_on_death:GetBool() or
-					IsValid(ent.pac_ragdoll_player_owner) and not Alive(ent.pac_ragdoll_player_owner) and pac_sv_hide_outfit_on_death:GetBool()
-				then
-					pac.HideEntityParts(ent)
-					goto CONTINUE
-				end
-
-				if isply then
-					local rag = ent.pac_ragdoll or NULL
+				if ent:IsPlayer() or IsValid(ent.pac_player) then
+					local ply = ent.pac_player or ent
+					local rag = ply.pac_ragdoll
 
 					if IsValid(rag) then
-						if ent.pac_death_hide_ragdoll then
+						if ply.pac_death_hide_ragdoll or ply.pac_draw_player_on_death then
 							rag:SetRenderMode(RENDERMODE_TRANSALPHA)
 
 							local c = rag:GetColor()
 							c.a = 0
 							rag:SetColor(c)
 							rag:SetNoDraw(true)
-							if rag:GetParent() ~= ent then
+							if rag:GetParent() ~= ply then
 								rag:SetParent(ent)
 								rag:AddEffects(EF_BONEMERGE)
 							end
 
-							if ent.pac_draw_player_on_death then
-								ent:DrawModel()
-							end
-						elseif ent.pac_death_ragdollize then
-							rag:SetNoDraw(true)
-
-							if not ent.pac_hide_entity then
-								local col = ent.pac_color or dummyv
-								local bri = ent.pac_brightness or 1
-
-								render_ModelMaterialOverride(ent.pac_materialm)
-								render_SetColorModulation(col.x * bri, col.y * bri, col.z * bri)
-								render_SetBlend(ent.pac_alpha or 1)
-
-								if ent.pac_invert then render_CullMode(1) end
-								if ent.pac_fullbright then render_SuppressEngineLighting(true) end
-
-								rag:DrawModel()
-								rag:CreateShadow()
-
-								render_ModelMaterialOverride()
-								render_SetColorModulation(1,1,1)
-								render_SetBlend(1)
-
-								render_CullMode(0)
-								render_SuppressEngineLighting(false)
+							if ply.pac_draw_player_on_death then
+								ply:DrawModel()
 							end
 						end
 					end

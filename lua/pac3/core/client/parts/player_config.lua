@@ -22,16 +22,20 @@ pac.SetPropertyGroup()
 	pac.GetSet(PART, "MuteSounds", false)
 	pac.GetSet(PART, "AllowOggWhenMuted", false)
 	pac.GetSet(PART, "HideBullets", false)
-	pac.GetSet(PART, "DrawPlayerOnDeath", false)
 	pac.GetSet(PART, "HidePhysgunBeam", false)
 	pac.GetSet(PART, "UseLegacyScale", false)
 	pac.GetSet(PART, "BloodColor", "red", {enums = blood_colors})
+
 pac.SetPropertyGroup(PART, "behavior")
 	pac.GetSet(PART, "InverseKinematics", false)
 	pac.GetSet(PART, "MuteFootsteps", false)
+
+pac.SetPropertyGroup(PART, "death")
 	pac.GetSet(PART, "FallApartOnDeath", false)
-	pac.GetSet(PART, "DeathRagdollizeParent", false)
+	pac.GetSet(PART, "DeathRagdollizeParent", true)
+	pac.GetSet(PART, "DrawPlayerOnDeath", false)
 	pac.GetSet(PART, "HideRagdollOnDeath", false)
+
 pac.EndStorableVars()
 
 local function ENTFIELD(PART, name, field)
@@ -43,7 +47,7 @@ local function ENTFIELD(PART, name, field)
 	PART["Set" .. name] = function(self, val)
 		self[name] = val
 
-		local owner = self:GetOwner()
+		local owner = self:GetActualOwner()
 
 		if owner:IsValid() then
 			owner[field] = val
@@ -63,8 +67,16 @@ ENTFIELD(PART, "MuteSounds", "mute_sounds")
 ENTFIELD(PART, "AllowOggWhenMuted", "allow_ogg_sounds")
 ENTFIELD(PART, "HideBullets", "hide_bullets")
 
+function PART:GetActualOwner()
+	local owner = self:GetOwner()
+	if owner:GetRagdollOwner():IsPlayer() then
+		return owner:GetRagdollOwner()
+	end
+	return owner
+end
+
 function PART:GetNiceName()
-	local ent = self:GetOwner()
+	local ent = self:GetActualOwner()
 
 	if ent:IsValid() then
 		if ent:IsPlayer() then
@@ -78,8 +90,7 @@ function PART:GetNiceName()
 end
 
 function PART:OnShow()
-	local ent = self:GetOwner()
-
+	local ent = self:GetActualOwner()
 	self:UpdateBloodColor()
 
 	if ent:IsValid() then
@@ -90,7 +101,7 @@ function PART:OnShow()
 end
 
 function PART:OnThink()
-	local ent = self:GetOwner()
+	local ent = self:GetActualOwner()
 
 	if ent:IsValid() then
 		ent.pac_mute_footsteps = self.MuteFootsteps
@@ -98,7 +109,7 @@ function PART:OnThink()
 end
 
 function PART:OnHide()
-	local ent = self:GetOwner()
+	local ent = self:GetActualOwner()
 
 	self:UpdateBloodColor("red")
 
@@ -110,7 +121,7 @@ function PART:OnHide()
 end
 
 function PART:UpdateBloodColor(override)
-	local ent = self:GetOwner()
+	local ent = self:GetActualOwner()
 	if ent == pac.LocalPlayer then
 		local num = blood_colors[override or self.BloodColor]
 		if num then

@@ -564,10 +564,6 @@ function PART:CheckBoneMerge()
 
 			local owner = self:GetOwner()
 
-			if owner.pac_owner_override and owner.pac_owner_override:IsValid() then
-				owner = owner.pac_owner_override
-			end
-
 			if ent:GetParent() ~= owner then
 				ent:SetParent(owner)
 
@@ -728,6 +724,7 @@ do
 
 	function PART:OnShow()
 		local ent = self:GetEntity()
+		print("SHOW", self, ent, self:GetOwner())
 
 		if self.Model == "" then
 			self.Model = pacx and pacx.GetModel(ent) or ent:GetModel() or ""
@@ -768,6 +765,7 @@ do
 
 	function PART:OnHide()
 		local ent = self:GetOwner()
+		print("HIDE", self, ent, self:GetOwner())
 
 		if ent:IsValid() then
 			ent.RenderOverride = nil
