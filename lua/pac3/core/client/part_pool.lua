@@ -389,9 +389,24 @@ pac.AddHook("Think", "events", function()
 								part.last_owner = rag
 							end
 						end
+
+						ply.pac_revert_ragdoll = function()
+							if not ent_parts[ply] then return end
+
+							ply.pac_death_ragdollize = nil
+
+							for _, part in pairs(ent_parts[ply]) do
+								part:SetOwner(ply)
+							end
+						end
 					end
 				end
 			end
+		end
+
+		if Alive(ply) and ply.pac_revert_ragdoll then
+			ply.pac_revert_ragdoll()
+			ply.pac_revert_ragdoll = nil
 		end
 	end
 
