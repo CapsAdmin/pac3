@@ -921,6 +921,7 @@ do -- base editable
 		pnl:SetDrawBorder(false)
 		pnl:SetValue(self.original_str or "")
 		pnl:SetKeyboardInputEnabled(true)
+		pnl:SetDrawLanguageID(false)
 		pnl:RequestFocus()
 		pnl:SelectAllOnFocus(true)
 
