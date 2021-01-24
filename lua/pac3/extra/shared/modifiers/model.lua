@@ -48,7 +48,12 @@ function pacx.SetModel(ent, path, ply)
 			pac.Message(err)
 		end, ply)
 	else
-		if not util.IsValidModel(path) then return end
+		if not util.IsValidModel(path) then
+			path = player_manager.TranslatePlayerModel(path)
+			if not util.IsValidModel(path) then
+				return
+			end
+		end
 
 		ent:SetModel(path)
 		ent.pacx_model = path
