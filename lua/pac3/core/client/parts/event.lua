@@ -1043,15 +1043,17 @@ do
 	net.Receive("pac.BroadcastPlayerButton", function()
 		local ply = net.ReadEntity()
 
-		if ply:IsValid() then
-			local key = net.ReadUInt(8)
-			local down = net.ReadBool()
+		if not ply:IsValid() then return end
 
-			key = pac.key_enums[key] or key
+		if ply == pac.LocalPlayer and (pace and pace.Editor:HasFocus() or gui.IsConsoleVisible()) then return end
 
-			ply.pac_buttons = ply.pac_buttons or {}
-			ply.pac_buttons[key] = down
-		end
+		local key = net.ReadUInt(8)
+		local down = net.ReadBool()
+
+		key = pac.key_enums[key] or key
+
+		ply.pac_buttons = ply.pac_buttons or {}
+		ply.pac_buttons[key] = down
 	end)
 
 	PART.OldEvents.button = {
