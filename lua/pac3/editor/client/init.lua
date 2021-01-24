@@ -170,6 +170,10 @@ function pace.CloseEditor()
 	pace.SetInPAC3Editor(false)
 end
 
+function pace.HasFocus()
+	return pace.Editor:IsValid() and pace.Editor:HasFocus()
+end
+
 pac.AddHook("pac_Disable", "pac_editor_disable", function()
 	pace.CloseEditor()
 end)
