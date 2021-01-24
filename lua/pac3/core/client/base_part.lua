@@ -341,6 +341,11 @@ do -- owner
 	end
 
 	function PART:SetOwner(ent)
+
+		if IsValid(self.last_owner) and self.last_owner ~= ent then
+			self:CallRecursive("OnHide", true)
+		end
+
 		self.last_owner = self.Owner
 		self.Owner = ent or NULL
 		pac.RunNextFrame(self:GetRootPart().Id .. "_hook_render", function()
