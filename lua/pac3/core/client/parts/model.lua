@@ -666,7 +666,7 @@ do
 	pac.RemoveProperty(PART, "AimPartName")
 
 	function PART:GetNiceName()
-		local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%."))
+		local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%.")) or self:GetModel()
 
 		local class_name = "NULL"
 		local ent = self:GetEntity()
@@ -730,7 +730,7 @@ do
 		local ent = self:GetEntity()
 
 		if self.Model == "" then
-			self.Model = ent:GetModel() or ""
+			self.Model = pacx and pacx.GetModel(ent) or ent:GetModel() or ""
 		end
 
 		if ent:IsValid() then
@@ -807,7 +807,7 @@ do
 		local ent = self:GetEntity()
 
 		if ent:IsValid() then
-			local old = ent:GetModel()
+			local old = pacx and pacx.GetModel(ent) or ent:GetModel()
 			if self.last_model ~= old then
 				self:RefreshModel()
 				self.last_model = old

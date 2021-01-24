@@ -6,7 +6,7 @@ local ALLOW_TO_CHANGE = pacx.AddServerModifier("model", function(enable)
 			if ent.pacx_model_original then
 				pacx.SetModel(ent)
 			end
-			ent.pacx_model = nil
+			ent:SetNW2String("pacx_model", nil)
 		end
 	end
 
@@ -14,10 +14,15 @@ local ALLOW_TO_CHANGE = pacx.AddServerModifier("model", function(enable)
 end)
 
 function pacx.SetModelOnServer(ent, path)
+	path = path or ""
 	net.Start("pacx_setmodel")
 		net.WriteEntity(ent)
-		net.WriteString(path or "")
+		net.WriteString(path)
 	net.SendToServer()
+end
+
+function pacx.GetModel(ent)
+	return ent:GetNW2String("pacx_model", ent:GetModel())
 end
 
 function pacx.SetModel(ent, path, ply)
@@ -25,7 +30,7 @@ function pacx.SetModel(ent, path, ply)
 		if ent.pacx_model_original then
 			ent:SetModel(ent.pacx_model_original)
 			ent.pacx_model_original = nil
-			ent.pacx_model = nil
+			ent:SetNW2String("pacx_model", nil)
 		end
 		return
 	end
@@ -43,7 +48,7 @@ function pacx.SetModel(ent, path, ply)
 			pac.Message(mdl_path, " downloaded for ", ent, ': ', path)
 
 			ent:SetModel(mdl_path)
-			ent.pacx_model = mdl_path
+			ent:SetNW2String("pacx_model", mdl_path)
 		end, function(err)
 			pac.Message(err)
 		end, ply)
@@ -56,7 +61,7 @@ function pacx.SetModel(ent, path, ply)
 		end
 
 		ent:SetModel(path)
-		ent.pacx_model = path
+		ent:SetNW2String("pacx_model", path)
 	end
 end
 
@@ -81,8 +86,9 @@ end
 
 do -- is there a nicer way to do this?
 	local function check(ply)
-		if ply.pacx_model and ply:GetModel():lower() ~= ply.pacx_model:lower() then
-			ply:SetModel(ply.pacx_model)
+		local mdl = pacx.GetModel(ply)
+		if mdl and ply:GetModel():lower() ~= mdl:lower() then
+			ply:SetModel(mdl)
 		end
 	end
 

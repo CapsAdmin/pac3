@@ -159,20 +159,19 @@ function PANEL:OnMouseReleased(mc)
 	end
 end
 
-function PANEL:SetModel(path)
-	local pnl = vgui.Create("SpawnIcon", self)
-		pnl:SetModel(path or "")
-		pnl:SetSize(16, 16)
-
-		--[[if pnl.Entity and pnl.Entity:IsValid() then
-			local mins, maxs = pnl.Entity:GetRenderBounds()
-			pnl:SetCamPos(mins:Distance(maxs) * Vector(0.75, 0.75, 0.5) * 15)
-			pnl:SetLookAt((maxs + mins) / 2)
-			pnl:SetFOV(3)
+function PANEL:SetModel(path, icon)
+	if not file.Exists(path, "GAME") then
+		path = player_manager.TranslatePlayerModel(path)
+		if not file.Exists(path, "GAME") then
+			print(path, "is invalid")
+			return
 		end
+	end
 
-		pnl.SetImage = function() end
-		pnl.GetImage = function() end]]
+	local pnl = vgui.Create("SpawnIcon", self)
+	pnl:SetModel(path or "")
+	pnl:SetSize(16, 16)
+
 
 	self.Icon:Remove()
 	self.Icon = pnl
@@ -389,23 +388,18 @@ function PANEL:PopulateParts(node, parts, children)
 				enable_model_icons:GetBool() and
 				part.is_model_part and
 				part.GetModel and
-				part:GetEntity():IsValid() and
-				part.ClassName ~= "entity2" and
-				part.ClassName ~= "weapon" -- todo: is_model_part is true, class inheritance issues?
+				part:GetEntity():IsValid()
 			then
-				part_node:SetModel(part:GetEntity():GetModel())
+				part_node:SetModel(part:GetEntity():GetModel(), part.Icon)
 			elseif type(part.Icon) == "string" then
 				part_node.Icon:SetImage(part.Icon)
 			end
 
 			if part.Group == "legacy" then
 				local mat = Material(pace.GroupsIcons.experimental)
-				local old = part_node.Icon.PaintOver
 				part_node.Icon.PaintOver = function(_, w,h)
-					local b = old and old(_,w,h)
 					surface.SetMaterial(mat)
 					surface.DrawTexturedRect(2,6,13,13)
-					return b
 				end
 			end
 
