@@ -10,6 +10,30 @@ pace.Errors = {}
 util.AddNetworkString('pac_submit_acknowledged')
 util.AddNetworkString('pac_update_playerfilter')
 
+function pace.CanModify(ply, ent)
+	if not IsValid(ply) or not IsValid(ent) then
+		return false
+	end
+
+	if ply == ent then
+		return true
+	end
+
+	if game.SinglePlayer() then
+		return true
+	end
+
+	if not ent.CPPICanTool then
+		return false
+	end
+
+	if ent:CPPIGetOwner() == ent then
+		return true
+	end
+
+	return ply:CPPICanTool(ent, "paint")
+end
+
 include("util.lua")
 include("wear.lua")
 include("bans.lua")

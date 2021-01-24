@@ -148,7 +148,21 @@ end
 
 table.sort(act_enums, function(a, b) return #a.k > #b.k end)
 
+local cached_paths = {}
+
 function pac.DownloadMDL(url, callback, onfail, ply)
+	local skip_cache = false
+
+	if url:StartWith("_") then
+		skip_cache = true
+		url = url:sub(2)
+	end
+
+	if not skip_cache and cached_paths[url] then
+		callback(cached_paths[url])
+		return
+	end
+
 	return pac.resource.Download(url, function(path)
 		if not ply:IsValid() then
 			pac.Message(Color(255, 50, 50), "player is no longer valid")
@@ -162,12 +176,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			pac.Message(Color(255, 50, 50), "content is empty")
 			file.Delete(path)
 			return
-		end
-
-		local skip_cache = false
-		if url:StartWith("_") then
-			skip_cache = true
-			url = url:sub(2)
 		end
 
 		local id = util.CRC(url .. file_content .. PAC_MDL_SALT)
@@ -825,7 +833,9 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					end
 				end
 
+				cached_paths[url] = v
 				callback(v)
+
 				file.Delete("pac3_cache/downloads/" .. id .. ".dat")
 				break
 			end
@@ -846,11 +856,11 @@ do
 			buffer = {},
 			pos = 1
 		}, ss_meta)
-		
+
 		ret:Write(stream or "")
 		ret:Seek(i or 0)
 		ret:SetEndian(endian or "little")
-		
+
 		return ret
 	end
 

@@ -168,10 +168,6 @@ function PART:UpdateScale(ent)
 		else
 			ent.pac3_Scale = self.Size
 
-			if pacx.SetPlayerSize and ent:IsPlayer() then
-				pacx.SetPlayerSize(ent, self.Size)
-			end
-
 			if ent:IsPlayer() or ent:IsNPC() then
 				local size = ent:GetModelScale() -- compensate for serverside scales..
 				pac.SetModelScale(ent, self.Scale * self.Size * (1/size))
@@ -395,12 +391,12 @@ function PART:SetModel(path)
 
 			pac.DownloadMDL(path, function(real_path)
 				if ent:IsValid() then
-					if ent == pac.LocalPlayer and pacx and pacx.SetModel then
+					if pacx and pacx.SetModelOnServer and self:GetPlayerOwner() == pac.LocalPlayer then
 						pac.Message("finished downloading ", path)
-						pacx.SetModel(path)
-					else
-						ent:SetModel(real_path)
+						pacx.SetModelOnServer(ent, self.Model)
 					end
+
+					ent:SetModel(real_path)
 
 					ent:SetSubMaterial()
 
@@ -423,11 +419,11 @@ function PART:SetModel(path)
 		local ent = self:GetOwner()
 
 		if ent:IsValid() then
-			if ent == pac.LocalPlayer and pacx and pacx.SetModel then
-				pacx.SetModel(self.Model)
-			else
-				ent:SetModel(self.Model)
+			if pacx and pacx.SetModelOnServer and self:GetPlayerOwner() == pac.LocalPlayer then
+				pacx.SetModelOnServer(ent, self.Model)
 			end
+
+			ent:SetModel(self.Model)
 
 			pac.RunNextFrame('entity updatemat ' .. tostring(ent), function()
 				if not ent:IsValid() or not self:IsValid() then return end

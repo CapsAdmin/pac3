@@ -443,14 +443,17 @@ function PART:SetModel(path)
 
 		if ALLOW_TO_MDL:GetBool() and status ~= false then
 			self.loading = "downloading mdl zip"
-			pac.DownloadMDL(path, function(path)
+			pac.DownloadMDL(path, function(mdl_path)
 				self.loading = nil
 				self.errored = nil
-				self:RealSetModel(path)
 
-				if self:GetEntity() == pac.LocalPlayer and pacx and pacx.SetModel then
-					pacx.SetModel(self.Model)
+				local ent = self:GetEntity()
+
+				if pacx and pacx.SetModelOnServer and self:GetPlayerOwner() == pac.LocalPlayer then
+					pacx.SetModelOnServer(ent, path)
 				end
+
+				self:RealSetModel(mdl_path)
 
 			end, function(err)
 
@@ -470,8 +473,10 @@ function PART:SetModel(path)
 			pac.Message(self, ' mdl files are not allowed')
 		end
 	else
-		if self:GetEntity() == pac.LocalPlayer and pacx and pacx.SetModel then
-			pacx.SetModel(self.Model)
+		local ent = self:GetEntity()
+
+		if pacx and pacx.SetModelOnServer and self:GetPlayerOwner() == pac.LocalPlayer then
+			pacx.SetModelOnServer(ent, path)
 		end
 
 		self:RealSetModel(path)
@@ -519,14 +524,16 @@ function PART:ApplyMatrix()
 	end
 	mat:Scale(self.Scale * self.Size)
 
-	if pacx and pacx.SetPlayerSize and ent == pac.LocalPlayer then
-		pacx.SetPlayerSize(ent, self.Size)
-	end
-
-	if mat:IsIdentity() then
-		ent:DisableMatrix("RenderMultiply")
+	if ent:IsPlayer() or ent:IsNPC() then
+		if pacx and pacx.SetEntitySizeMultiplier then
+			pacx.SetEntitySizeMultiplier(ent, self.Size)
+		end
 	else
-		ent:EnableMatrix("RenderMultiply", mat)
+		if mat:IsIdentity() then
+			ent:DisableMatrix("RenderMultiply")
+		else
+			ent:EnableMatrix("RenderMultiply", mat)
+		end
 	end
 end
 
@@ -780,14 +787,16 @@ do
 		local ent = self:GetEntity()
 		if not ent:IsValid() then return end
 
-		if pacx and ent == pac.LocalPlayer then
-			if pacx.SetModel then
-				pacx.SetModel()
-			end
+		if pacx and pacx.SetModelOnServer and self:GetPlayerOwner() == pac.LocalPlayer then
+			pacx.SetModelOnServer(ent)
+		end
 
-			if pacx.SetPlayerSize then
-				pacx.SetPlayerSize(ent)
+		if ent:IsPlayer() or ent:IsNPC() then
+			if pacx and pacx.SetEntitySizeMultiplier then
+				pacx.SetEntitySizeMultiplier(ent)
 			end
+		else
+			ent:DisableMatrix("RenderMultiply")
 		end
 	end
 
