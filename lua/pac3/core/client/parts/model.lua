@@ -724,7 +724,6 @@ do
 
 	function PART:OnShow()
 		local ent = self:GetEntity()
-		print("SHOW", self, ent, self:GetOwner())
 
 		if self.Model == "" then
 			self.Model = pacx and pacx.GetModel(ent) or ent:GetModel() or ""
@@ -765,7 +764,6 @@ do
 
 	function PART:OnHide()
 		local ent = self:GetOwner()
-		print("HIDE", self, ent, self:GetOwner())
 
 		if ent:IsValid() then
 			ent.RenderOverride = nil
