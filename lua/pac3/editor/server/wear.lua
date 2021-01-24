@@ -109,7 +109,7 @@ function pace.SubmitPart(data, filter)
 	if type(data.part) == "table" then
 		local ent = Entity(tonumber(data.part.self.OwnerName) or -1)
 		if ent:IsValid() then
-			if pace.CanPlayerModify(data.owner, ent) then
+			if not pace.CanPlayerModify(data.owner, ent) then
 				allowed = false
 				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
 			elseif not data.is_dupe then
