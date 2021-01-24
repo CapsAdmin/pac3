@@ -6,6 +6,7 @@ local ALLOW_TO_CHANGE = pacx.AddServerModifier("model", function(enable)
 			if ent.pacx_model_original then
 				pacx.SetModel(ent)
 			end
+			ent.pacx_model = nil
 		end
 	end
 
@@ -41,6 +42,7 @@ function pacx.SetModel(ent, path, ply)
 			pac.Message(mdl_path, " downloaded for ", ent, ': ', path)
 
 			ent:SetModel(mdl_path)
+			ent.pacx_model = mdl_path
 		end, function(err)
 			pac.Message(err)
 		end, ply)
@@ -48,6 +50,7 @@ function pacx.SetModel(ent, path, ply)
 		if not util.IsValidModel(path) then return end
 
 		ent:SetModel(path)
+		ent.pacx_model = path
 	end
 end
 
@@ -66,5 +69,30 @@ if SERVER then
 		if hook.Run("PACApplyModel", ply, path) == false then return end
 
 		pacx.SetModel(ent, path, ply)
+	end)
+end
+
+
+do -- is there a nicer way to do this?
+	local function check(ply)
+		if ply.pacx_model and ply:GetModel():lower() ~= ply.pacx_model:lower() then
+			ply:SetModel(ply.pacx_model)
+		end
+	end
+
+	timer.Create("pac_setmodel", 0.25, 0, function()
+		for _, ply in ipairs(player.GetAll()) do
+			check(ply)
+		end
+	end)
+
+	gameevent.Listen("player_spawn")
+	hook.Add("player_spawn", "pacx_setmodel", function(ply)
+		check(ply)
+		timer.Simple(0, function()
+			if ply:IsValid() then
+				check(ply)
+			end
+		end)
 	end)
 end
