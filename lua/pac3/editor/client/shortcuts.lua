@@ -18,6 +18,7 @@ end
 local last = 0
 
 function pace.CheckShortcuts()
+	if gui.IsConsoleVisible() then return end
 	if not pace.Editor or not pace.Editor:IsValid() then return end
 	if last > RealTime() or input.IsMouseDown(MOUSE_LEFT) then return end
 
