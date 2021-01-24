@@ -586,7 +586,7 @@ PART.Inputs = {
 		if parent:IsValid() then
 			local v = render.GetLightColor(parent.cached_pos):ToColor().r
 
-			if parent.ClassName == "model2" then
+			if parent.ProperColorRange then
 				return v / 255
 			end
 
@@ -599,7 +599,7 @@ PART.Inputs = {
 		if parent:IsValid() then
 			local v = render.GetLightColor(parent.cached_pos):ToColor().g
 
-			if parent.ClassName == "model2" then
+			if parent.ProperColorRange then
 				return v / 255
 			end
 
@@ -612,7 +612,7 @@ PART.Inputs = {
 		if parent:IsValid() then
 			local v = render.GetLightColor(parent.cached_pos):ToColor().b
 
-			if parent.ClassName == "model2" then
+			if parent.ProperColorRange then
 				return v / 255
 			end
 
@@ -634,7 +634,7 @@ PART.Inputs = {
 		if parent:IsValid() then
 			local v = render.GetAmbientLightColor():ToColor().r
 
-			if parent.ClassName == "model2" then
+			if parent.ProperColorRange then
 				return v / 255
 			end
 
@@ -647,7 +647,7 @@ PART.Inputs = {
 		if parent:IsValid() then
 			local v = render.GetAmbientLightColor():ToColor().g
 
-			if parent.ClassName == "model2" then
+			if parent.ProperColorRange then
 				return v / 255
 			end
 
@@ -660,7 +660,7 @@ PART.Inputs = {
 		if parent:IsValid() then
 			local v = render.GetAmbientLightColor():ToColor().b
 
-			if parent.ClassName == "model2" then
+			if parent.ProperColorRange then
 				return v / 255
 			end
 
@@ -714,7 +714,7 @@ PART.Inputs = {
 		if owner:IsValid() then
 			local v =  owner:GetPlayerColor().r
 
-			if parent.ClassName == "model2" then
+			if parent.ProperColorRange then
 				return v / 255
 			end
 
@@ -729,7 +729,7 @@ PART.Inputs = {
 		if owner:IsValid() then
 			local v = owner:GetPlayerColor().g
 
-			if parent.ClassName == "model2" then
+			if parent.ProperColorRange then
 				return v / 255
 			end
 
@@ -744,7 +744,7 @@ PART.Inputs = {
 		if owner:IsValid() then
 			local v = owner:GetPlayerColor().b
 
-			if parent.ClassName == "model2" then
+			if parent.ProperColorRange then
 				return v / 255
 			end
 
@@ -760,7 +760,7 @@ PART.Inputs = {
 		if owner:IsValid() then
 			local v = owner:GetWeaponColor().r
 
-			if parent.ClassName == "model2" then
+			if parent.ProperColorRange then
 				return v / 255
 			end
 
@@ -775,7 +775,7 @@ PART.Inputs = {
 		if owner:IsValid() then
 			local v = owner:GetWeaponColor().g
 
-			if parent.ClassName == "model2" then
+			if parent.ProperColorRange then
 				return v / 255
 			end
 
@@ -790,7 +790,7 @@ PART.Inputs = {
 		if owner:IsValid() then
 			local v = owner:GetWeaponColor().b
 
-			if parent.ClassName == "model2" then
+			if parent.ProperColorRange then
 				return v / 255
 			end
 
@@ -898,7 +898,7 @@ PART.Inputs = {
 
 		local c = HSVToColor(h%360, s, v)
 
-		if parent.ClassName == "model2" then
+		if parent.ProperColorRange then
 			return c.r/255, c.g/255, c.b/255
 		end
 

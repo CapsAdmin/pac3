@@ -23,6 +23,7 @@ PART.ManualDraw = true
 PART.HandleModifiersManually = true
 PART.Icon = 'icon16/shape_square.png'
 PART.is_model_part = true
+PART.ProperColorRange = true
 PART.Group = 'model'
 
 pac.StartStorableVars()

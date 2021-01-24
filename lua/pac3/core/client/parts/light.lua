@@ -4,6 +4,7 @@ PART.FriendlyName = "light"
 PART.ClassName = "light2"
 PART.Group = 'effects'
 PART.Icon = 'icon16/lightbulb.png'
+PART.ProperColorRange = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "InnerAngle", 0)

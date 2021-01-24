@@ -82,6 +82,7 @@ PART.FriendlyName = "trail"
 PART.ClassName = "trail2"
 PART.Icon = 'icon16/arrow_undo.png'
 PART.Group = 'effects'
+PART.ProperColorRange = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Duration", 1)

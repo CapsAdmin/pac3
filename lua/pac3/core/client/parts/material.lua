@@ -98,6 +98,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	PART.ClassName = "material_" .. (shader_name_translate[shader_name] or shader_name)
 	PART.Description = shader_name
 	PART.NonPhysical = true
+	PART.ProperColorRange = true
 
 	if shader_name == "vertexlitgeneric" then
 		PART.FriendlyName = "material"
