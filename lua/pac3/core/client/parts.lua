@@ -104,6 +104,14 @@ function pac.CreatePart(name, owner)
 end
 
 function pac.RegisterPart(META, name)
+
+	if META.Group == "experimental" then
+		-- something is up with the lua cache
+		-- file.Find("pac3/core/client/parts/*.lua", "LUA") will find the experimental parts as well
+		-- maybe because pac3 mounts the workshop version on server?
+		return
+	end
+
 	META.TypeBase = "base"
 	local _, name = class.Register(META, "part", name)
 
