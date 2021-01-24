@@ -534,7 +534,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 			self.Materialm = mat
 
 			for k,v in pairs(self:GetVars()) do
-				self["Set" .. k](self, v)
+				if PART.ShaderParams[k] and PART.ShaderParams[k].default ~= nil then
+					self["Set" .. k](self, v)
+				end
 			end
 		end
 
