@@ -25,6 +25,7 @@ function pacx.SetModel(ent, path, ply)
 		if ent.pacx_model_original then
 			ent:SetModel(ent.pacx_model_original)
 			ent.pacx_model_original = nil
+			ent.pacx_model = nil
 		end
 		return
 	end
