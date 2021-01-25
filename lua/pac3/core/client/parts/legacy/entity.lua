@@ -493,8 +493,14 @@ function PART:OnRemove()
 
 	if not ent:IsValid() then return end
 
-	if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
-		pacx.SetEntitySizeMultiplier(ent)
+	if pacx and self:GetPlayerOwner() == pac.LocalPlayer then
+		if pacx.SetEntitySizeMultiplier then
+			pacx.SetEntitySizeMultiplier(ent)
+		end
+
+		if pacx.SetModelOnServer then
+			pacx.SetModelOnServer(ent)
+		end
 	end
 end
 
