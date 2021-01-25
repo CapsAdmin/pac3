@@ -69,7 +69,7 @@ ENTFIELD(PART, "HideBullets", "hide_bullets")
 
 function PART:GetActualOwner()
 	local owner = self:GetOwner()
-	if owner:GetRagdollOwner():IsPlayer() then
+	if owner:IsValid() and owner:GetRagdollOwner():IsPlayer() then
 		return owner:GetRagdollOwner()
 	end
 	return owner
