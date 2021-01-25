@@ -1,5 +1,7 @@
 local L = pace.LanguageString
 
+local languageID = CreateClientConVar("pac_editor_languageid", 1, true, false, "Whether we should show the language indicator inside of editable text entries.")
+
 function pace.ShowSpecial(pnl, parent, size)
 	size = size or 150
 
@@ -921,7 +923,7 @@ do -- base editable
 		pnl:SetDrawBorder(false)
 		pnl:SetValue(self.original_str or "")
 		pnl:SetKeyboardInputEnabled(true)
-		pnl:SetDrawLanguageID(false)
+		pnl:SetDrawLanguageID(languageID:GetBool())
 		pnl:RequestFocus()
 		pnl:SelectAllOnFocus(true)
 

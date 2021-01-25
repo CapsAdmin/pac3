@@ -87,6 +87,7 @@ local function populate_options(menu)
 	menu:AddSpacer()
 
 	menu:AddCVar(L"automatic property size", "pac_auto_size_properties", "1", "0")
+	menu:AddCVar(L"enable language identifier in text fields", "pac_editor_languageid", "1", "0")
 	pace.AddLanguagesToMenu(menu)
 	pace.AddFontsToMenu(menu)
 
