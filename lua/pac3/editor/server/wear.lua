@@ -70,7 +70,7 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 	pace.dupe_ents[ent:EntIndex()] = {owner = ply, ent = ent}
 
 	-- give source engine time
-	timer.Simple(0.5, function()
+	timer.Simple(0, function()
 		for uid, data in pairs(parts) do
 			if type(data.part) == "table" then
 				make_copy(data.part, id)
@@ -114,7 +114,7 @@ function pace.SubmitPart(data, filter)
 				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
 			elseif not data.is_dupe then
 				ent.pac_parts = ent.pac_parts or {}
-				ent.pac_parts[data.part.self.UniqueID] = data
+				ent.pac_parts[data.owner:UniqueID()] = data
 
 				pace.dupe_ents[ent:EntIndex()] = {owner = data.owner, ent = ent}
 
@@ -123,19 +123,18 @@ function pace.SubmitPart(data, filter)
 				--duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(ent.pac_parts)})
 				-- fresh table copy
 				duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(table.Copy(ent.pac_parts))})
-			end
 
-			ent:CallOnRemove("pac_config", function(ent)
-				if ent.pac_parts then
-					for _, data in pairs(ent.pac_parts) do
-						if type(data.part) == "table" then
-							data.part = data.part.self.UniqueID
+				ent:CallOnRemove("pac_config", function(ent)
+					if ent.pac_parts then
+						for _, data in pairs(ent.pac_parts) do
+							if type(data.part) == "table" then
+								data.part = data.part.self.UniqueID
+							end
+							pace.RemovePart(data)
 						end
-						data.is_dupe = true
-						pace.RemovePart(data)
 					end
-				end
-			end)
+				end)
+			end
 		end
 	end
 
