@@ -518,18 +518,35 @@ end
 function PART:ApplyMatrix()
 	local ent = self:GetEntity()
 	if not ent:IsValid() then return end
-	local mat = Matrix()
-	if self.ClassName ~= "model2" then
-		mat:Translate(self.Position + self.PositionOffset)
-		mat:Rotate(self.Angles + self.AngleOffset)
-	end
-	mat:Scale(self.Scale * self.Size)
 
 	if ent:IsPlayer() or ent:IsNPC() then
+
+		local mat = Matrix()
+		if self.ClassName ~= "model2" then
+			mat:Translate(self.Position + self.PositionOffset)
+			mat:Rotate(self.Angles + self.AngleOffset)
+		end
+		mat:Scale(self.Scale)
+
+
 		if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
 			pacx.SetEntitySizeMultiplier(ent, self.Size)
 		end
+
+		if mat:IsIdentity() then
+			ent:DisableMatrix("RenderMultiply")
+		else
+			ent:EnableMatrix("RenderMultiply", mat)
+		end
 	else
+		local mat = Matrix()
+		if self.ClassName ~= "model2" then
+			mat:Translate(self.Position + self.PositionOffset)
+			mat:Rotate(self.Angles + self.AngleOffset)
+		end
+		mat:Scale(self.Scale * self.Size)
+
+
 		if mat:IsIdentity() then
 			ent:DisableMatrix("RenderMultiply")
 		else
@@ -792,9 +809,9 @@ do
 			if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
 				pacx.SetEntitySizeMultiplier(ent)
 			end
-		else
-			ent:DisableMatrix("RenderMultiply")
 		end
+
+		ent:DisableMatrix("RenderMultiply")
 	end
 
 	function PART:OnThink()
