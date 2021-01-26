@@ -91,7 +91,6 @@ pace.ClearUndo()
 local last_json
 
 function pace.RecordUndoHistory()
-	debug.Trace()
 	local data = get_current_outfit()
 
 	local json = util.TableToJSON(data)
