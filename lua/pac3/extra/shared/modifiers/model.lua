@@ -6,7 +6,6 @@ local ALLOW_TO_CHANGE = pacx.AddServerModifier("model", function(enable)
 			if ent.pacx_model_original then
 				pacx.SetModel(ent)
 			end
-			ent:SetNW2String("pacx_model", nil)
 		end
 	end
 
@@ -22,15 +21,17 @@ function pacx.SetModelOnServer(ent, path)
 end
 
 function pacx.GetModel(ent)
-	return ent:GetNW2String("pacx_model", ent:GetModel())
+	return ent:GetNWString("pacx_model", ent:GetModel())
 end
 
 function pacx.SetModel(ent, path, ply)
 	if not path or path == "" then
 		if ent.pacx_model_original then
 			ent:SetModel(ent.pacx_model_original)
+			if SERVER then
+				ent:SetNWString("pacx_model", ent.pacx_model_original)
+			end
 			ent.pacx_model_original = nil
-			ent:SetNW2String("pacx_model", nil)
 		end
 		return
 	end
@@ -48,20 +49,21 @@ function pacx.SetModel(ent, path, ply)
 			pac.Message(mdl_path, " downloaded for ", ent, ': ', path)
 
 			ent:SetModel(mdl_path)
-			ent:SetNW2String("pacx_model", mdl_path)
+			if SERVER then
+				ent:SetNWString("pacx_model", mdl_path)
+			end
 		end, function(err)
 			pac.Message(err)
 		end, ply)
 	else
 		if not util.IsValidModel(path) then
 			path = player_manager.TranslatePlayerModel(path)
-			if not util.IsValidModel(path) then
-				return
-			end
 		end
 
 		ent:SetModel(path)
-		ent:SetNW2String("pacx_model", path)
+		if SERVER then
+			ent:SetNWString("pacx_model", path)
+		end
 	end
 end
 
