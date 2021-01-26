@@ -261,7 +261,10 @@ function pace.LoadPartsFromTable(data, clear, override_part, dont_clear_undo)
 	for i, part in ipairs(partsLoaded) do
 		part:CallRecursive('OnOutfitLoaded')
 		part:CallRecursive('PostApplyFixes')
+		part:ResolvePartNames()
 	end
+
+	pace.RecordUndoHistory()
 end
 
 local function add_files(tbl, dir)

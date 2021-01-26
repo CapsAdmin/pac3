@@ -7,7 +7,7 @@ local function get_current_outfit()
 	local data = {}
 
 	for key, part in pairs(pac.GetLocalParts()) do
-		if not part:HasParent() then
+		if not part:HasParent() and part.show_in_editor ~= false then
 			table.insert(data, part:ToUndoTable())
 		end
 	end
@@ -91,6 +91,7 @@ pace.ClearUndo()
 local last_json
 
 function pace.RecordUndoHistory()
+	debug.Trace()
 	local data = get_current_outfit()
 
 	local json = util.TableToJSON(data)
