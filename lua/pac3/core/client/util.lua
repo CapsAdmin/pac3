@@ -674,8 +674,8 @@ do -- get set and editor vars
 		local name_find_count_key = name_key:lower() .. "_try_count"
 
 		-- these keys are ignored when table is set. it's kind of a hack..
-		PART.IngoreSetKeys = PART.IgnoreSetKeys or {}
-		PART.IngoreSetKeys[name_key] = true
+		pac.PartNameKeysToIgnore = pac.PartNameKeysToIgnore or {}
+		pac.PartNameKeysToIgnore[name_key] = true
 
 		local group = __group
 

@@ -878,7 +878,7 @@ do -- serializing
 				local cond = key ~= "ParentUID" and
 					key ~= "ParentName" and
 					key ~= "UniqueID" and
-					(key ~= "AimPartName" and not (self.IngoreSetKeys and self.IngoreSetKeys[key]) or
+					(key ~= "AimPartName" and not (pac.PartNameKeysToIgnore and pac.PartNameKeysToIgnore[key]) or
 					key == "AimPartName" and table.HasValue(pac.AimPartNames, value))
 
 				if cond then
@@ -1039,17 +1039,8 @@ do -- serializing
 			local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 			for _, key in pairs(self:GetStorableVars()) do
-				local var = self[key] and self["Get" .. key](self) or self[key]
-				var = pac.class.Copy(var) or var
-
-				if key == "Name" and self[key] == "" then
-					var = ""
-				end
-
-				if
-					key ~= "ParentName"
-				then
-					tbl.self[key] = var
+				if not pac.PartNameKeysToIgnore[key] then
+					tbl.self[key] = pac.class.Copy(self["Get" .. key](self))
 				end
 			end
 
