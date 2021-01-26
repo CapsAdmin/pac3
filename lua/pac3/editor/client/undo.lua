@@ -24,6 +24,7 @@ local function find_uid_part(part, findpart)
 end
 
 local function diff_remove(a, b, aparent, bparent)
+
 	for _, apart in ipairs(a.children) do
 		local bpart = find_uid_part(b, apart)
 
@@ -332,7 +333,3 @@ function pace.UndoThink()
 end
 
 pac.AddHook("Think", "pace_undo_Think", pace.UndoThink)
-
-pace.RecordUndoHistory()
-
-pace.LoadParts("autoload", true)
