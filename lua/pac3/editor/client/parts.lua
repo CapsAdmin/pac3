@@ -276,11 +276,14 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 	timer.Simple(0, function()
 		if not IsValid(obj) then return end
 
-	local prop_panel = obj.editor_property and obj.editor_property[key]
+		local prop_panel = obj.editor_property and obj.editor_property[key]
 
-	if IsValid(prop_panel) then
-		prop_panel:SetValue(val)
-	end
+		if IsValid(prop_panel) then
+			local old = prop_panel.OnValueChanged
+			prop_panel.OnValueChanged = function() end
+			prop_panel:SetValue(val)
+			prop_panel.OnValueChanged = old
+		end
 	end)
 end
 
