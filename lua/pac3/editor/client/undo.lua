@@ -15,75 +15,65 @@ local function get_current_outfit()
 	return data
 end
 
-local function find_uid_part(parts, uid)
-	for i,v in ipairs(parts) do
-		if v.self.UniqueID == uid then
-			return v
+local function find_uid_part(part, findpart)
+	for _, child in ipairs(part.children) do
+		if child.self.UniqueID == findpart.self.UniqueID then
+			return child
 		end
 	end
 end
 
-local function diff(a, b, aparent, bparent)
-
+local function diff_remove(a, b, aparent, bparent)
 	for _, apart in ipairs(a.children) do
-		local bpart
-
-		for i,v in ipairs(b.children) do
-			if v.self.UniqueID == apart.self.UniqueID then
-				bpart = v
-				break
-			end
-		end
+		local bpart = find_uid_part(b, apart)
 
 		if not bpart then
 			local part = pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), apart.self.UniqueID)
+			local parent = pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), apart.self.ParentUID)
+
 			if part:IsValid() then
-				local parent = part:GetParent()
-
-				if parent:IsValid() then
-					pace.Call("PartSelected", parent)
+				if part:GetParent() == parent then
+					do
+						local parent = part:GetParent()
+						if parent:IsValid() then pace.Call("PartSelected", parent) end
+					end
+					part:Remove()
 				end
-
-				part:Remove()
 			end
-			continue
+		else
+			diff_remove(apart, bpart, a, b)
 		end
 	end
+end
+
+
+local function diff_create(a, b, aparent, bparent)
 
 	for _, bpart in ipairs(b.children) do
+		local apart = find_uid_part(a, bpart)
 
-		local apart
+		if apart then
+			for key, aval in pairs(apart.self) do
+				local bval = bpart.self[key]
 
-		for i,v in ipairs(a.children) do
-			if v.self.UniqueID == bpart.self.UniqueID then
-				apart = v
-				break
-			end
-		end
+				if aval ~= bval then
+					local part = pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), bpart.self.UniqueID)
+					local parent = pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), apart.self.ParentUID)
 
-		if not apart then
-			local part = pac.CreatePart(bpart.self.ClassName, pac.LocalPlayer)
-			part:SetTable(bpart)
-			if bpart.self.ParentUID then
-				part:SetParent(pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), bpart.self.ParentUID))
-			end
-			apart = part:ToTable()
-		end
-
-		for akey, aval in pairs(apart.self) do
-			local bkey, bval = akey, bpart.self[akey]
-
-			if aval ~= bval then
-				local part = pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), bpart.self.UniqueID)
-				if part:IsValid() then
-					if part["Set" .. akey] then
-						pace.Call("VariableChanged", part, akey, bval, true)
+					if part:IsValid() and part:GetParent() == parent then
+						if part["Set" .. key] then
+							pace.Call("VariableChanged", part, key, bval, true)
+						end
 					end
 				end
 			end
-		end
 
-		diff(apart, bpart, a, b)
+			diff(apart, bpart, a, b)
+		else
+			local part = pac.CreatePart(bpart.self.ClassName, pac.LocalPlayer)
+			part:SetUndoTable(bpart)
+			part:ResolvePartNames()
+		end
 	end
 end
 
@@ -91,7 +81,8 @@ function pace.ApplyDifference(data)
 	local A = get_current_outfit()
 	local B = data
 
-	diff({children = A}, {children = B})
+	diff_remove({children = A}, {children = B})
+	diff_create({children = A}, {children = B})
 end
 
 pace.ClearUndo()
@@ -116,7 +107,7 @@ function pace.RecordUndoHistory()
 end
 
 function pace.Undo()
-	pace.UndoPosition = math.Clamp(pace.UndoPosition - 1, 1, #pace.UndoHistory)
+	pace.UndoPosition = math.Clamp(pace.UndoPosition - 1, 0, #pace.UndoHistory)
 	local data = pace.UndoHistory[pace.UndoPosition]
 
 	if data then
@@ -128,7 +119,7 @@ function pace.Undo()
 end
 
 function pace.Redo()
-	pace.UndoPosition = math.Clamp(pace.UndoPosition + 1, 1, #pace.UndoHistory)
+	pace.UndoPosition = math.Clamp(pace.UndoPosition + 1, 1, #pace.UndoHistory + 1)
 	local data = pace.UndoHistory[pace.UndoPosition]
 
 	if data then
@@ -342,5 +333,6 @@ end
 
 pac.AddHook("Think", "pace_undo_Think", pace.UndoThink)
 
-
 pace.RecordUndoHistory()
+
+pace.LoadParts("autoload", true)

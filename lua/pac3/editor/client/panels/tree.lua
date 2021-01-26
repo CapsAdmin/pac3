@@ -181,7 +181,6 @@ local function install_drag(node)
 	node:SetDraggableName("pac3")
 
 	local old = node.OnDrop
-
 	function node:OnDrop(child, ...)
 		-- we're hovering on the label, not the actual node
 		-- so get the parent node instead
@@ -189,26 +188,32 @@ local function install_drag(node)
 			child = child:GetParent()
 		end
 
-		pace.RecordUndoHistory()
-
-
 		if child.part and child.part:IsValid() then
 			if self.part and self.part:IsValid() and self.part:GetParent() ~= child.part then
-				self.part:SetParent(child.part)
 				pace.RecordUndoHistory()
+				self.part:SetParent(child.part)
+				self.part:ResolvePartNames()
+				pace.RecordUndoHistory()
+				called = true
 			end
 		elseif self.part and self.part:IsValid() then
 			if self.part.ClassName ~= "group" then
+				pace.RecordUndoHistory()
 				local group = pac.CreatePart("group", self.part:GetPlayerOwner())
 				group:SetEditorExpand(true)
 				self.part:SetParent(group)
-				pace.TrySelectPart()
+				self.part:ResolvePartNames()
 				pace.RecordUndoHistory()
+				pace.TrySelectPart()
+				called = true
 
 			else
-				self.part:SetParent()
-				pace.RefreshTree(true)
 				pace.RecordUndoHistory()
+				self.part:SetParent()
+				self.part:ResolvePartNames()
+				pace.RecordUndoHistory()
+				pace.RefreshTree(true)
+				called = true
 			end
 		end
 
@@ -226,7 +231,9 @@ local function install_drag(node)
 
 		if child.part and child.part:IsValid() then
 			if self.part and self.part:IsValid() and child.part:GetParent() ~= self.part then
+				pace.RecordUndoHistory()
 				child.part:SetParent(self.part)
+				child.part:ResolvePartNames()
 				pace.RecordUndoHistory()
 			end
 		end
