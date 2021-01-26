@@ -1493,14 +1493,16 @@ do -- number
 
 		num = tonumber(num) or 0
 
-		if input.IsKeyDown(KEY_LCONTROL) then
-			num = math.Round(num)
-		end
+		if self:IsMouseDown() then
+			if input.IsKeyDown(KEY_LCONTROL) then
+				num = math.Round(num)
+			end
 
-		if input.IsKeyDown(KEY_LALT) then
-			num = math.Round(num, 5)
-		else
-			num = math.Round(num, 3)
+			if input.IsKeyDown(KEY_LALT) then
+				num = math.Round(num, 5)
+			else
+				num = math.Round(num, 3)
+			end
 		end
 
 		return num

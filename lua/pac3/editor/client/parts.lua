@@ -37,6 +37,7 @@ function pace.WearParts(file, clear)
 end
 
 function pace.ClearParts()
+	pace.ClearUndo()
 	pac.RemoveAllParts(true, true)
 	pace.RefreshTree()
 
@@ -128,6 +129,7 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 	end
 
 	pace.RefreshTree()
+
 	return part
 end
 
@@ -202,11 +204,10 @@ function pace.OnPartSelected(part, is_selecting)
 	end
 end
 
-function pace.OnVariableChanged(obj, key, val, undo_delay)
+function pace.OnVariableChanged(obj, key, val, not_from_editor)
 	local funcGet = obj["Get" .. key]
 	local func = obj["Set" .. key]
 	if not func or not funcGet then return end
-	local oldValue = funcGet(obj)
 
 	local valType = type(val)
 	if valType == 'Vector' then
@@ -215,7 +216,19 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 		val = Angle(val)
 	end
 
+	if not not_from_editor then
 	timer.Create("pace_backup", 1, 1, pace.Backup)
+
+		if not pace.undo_release_varchange then
+			pace.RecordUndoHistory()
+			pace.undo_release_varchange = true
+		end
+
+		timer.Create("pace_undo", 0.25, 1, function()
+			pace.undo_release_varchange = false
+			pace.RecordUndoHistory()
+		end)
+	end
 
 	if key == "OwnerName" then
 		if val == "viewmodel" then
@@ -229,12 +242,8 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 		end
 	end
 
-	-- pace.CallChangeForUndo(obj, key, funcGet(obj), undo_delay)
-	func(obj, val)
 
-	if undo_delay ~= false then
-		pace.CallChangeForUndo(obj, key, oldValue, funcGet(obj), undo_delay)
-	end
+	func(obj, val)
 
 	local node = obj.editor_node
 	if IsValid(node) then
@@ -263,6 +272,16 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 			node:SetText(obj:GetName())
 		end
 	end
+
+	timer.Simple(0, function()
+		if not IsValid(obj) then return end
+
+	local prop_panel = obj.editor_property and obj.editor_property[key]
+
+	if IsValid(prop_panel) then
+		prop_panel:SetValue(val)
+	end
+	end)
 end
 
 function pace.GetRegisteredParts()
@@ -309,7 +328,9 @@ do -- menu
 
 		local function add_part(menu, part)
 			local newMenuEntry = menu:AddOption(L(part.FriendlyName or part.ClassName:Replace('_', ' ')), function()
-				pace.AddUndoPartCreation(pace.Call("CreatePart", part.ClassName, nil, nil, parent))
+				pace.RecordUndoHistory()
+				pace.Call("CreatePart", part.ClassName, nil, nil, parent)
+				pace.RecordUndoHistory()
 				trap = true
 			end)
 
@@ -364,7 +385,9 @@ do -- menu
 			for group, groupData in pairs(sortedTree) do
 				local sub, pnl = menu:AddSubMenu(groupData.name, function()
 					if groupData.group_class_name then
-						pace.AddUndoPartCreation(pace.Call("CreatePart", groupData.group_class_name, nil, nil, parent))
+						pace.RecordUndoHistory()
+						pace.Call("CreatePart", groupData.group_class_name, nil, nil, parent)
+						pace.RecordUndoHistory()
 					end
 				end)
 
@@ -409,7 +432,9 @@ do -- menu
 
 			for class_name, part in pairs(partsToShow) do
 				local newMenuEntry = menu:AddOption(L((part.FriendlyName or part.ClassName):Replace('_', ' ')), function()
-					pace.AddUndoPartCreation(pace.Call("CreatePart", class_name, nil, nil, parent))
+					pace.RecordUndoHistory()
+					pace.Call("CreatePart", class_name, nil, nil, parent)
+					pace.RecordUndoHistory()
 				end)
 
 				if part.Icon then
@@ -443,7 +468,9 @@ do -- menu
 
 		function edit:OnEnter()
 			if result.found[1] then
-				pace.AddUndoPartCreation(pace.Call("CreatePart", result.found[1].ClassName))
+				pace.RecordUndoHistory()
+				pace.Call("CreatePart", result.found[1].ClassName)
+				pace.RecordUndoHistory()
 			end
 			base:Remove()
 		end
@@ -465,8 +492,10 @@ do -- menu
 				line:SetText("")
 				line:SetTall(20)
 				line.DoClick = function()
-					pace.AddUndoPartCreation(pace.Call("CreatePart", part.ClassName))
+					pace.RecordUndoHistory()
+					pace.Call("CreatePart", part.ClassName)
 					base:Remove()
+					pace.RecordUndoHistory()
 				end
 
 				local btn = line:Add("DImageButton")
@@ -528,16 +557,18 @@ do -- menu
 
 			menu:AddOption(L"paste", function()
 				if pace.Clipboard then
+					pace.RecordUndoHistory()
 					local newObj = pace.Clipboard:Clone()
 					newObj:Attach(obj)
-					pace.AddUndoPartCreation(newObj)
+					pace.RecordUndoHistory()
 				end
 			end):SetImage(pace.MiscIcons.paste)
 
 			menu:AddOption(L"cut", function()
+				pace.RecordUndoHistory()
 				pace.Clipboard = obj
 				obj:DeattachFull()
-				pace.AddUndoPartRemoval(obj)
+				pace.RecordUndoHistory()
 			end):SetImage('icon16/cut.png')
 
 			-- needs proper undo
@@ -556,8 +587,9 @@ do -- menu
 			end):SetImage(pace.MiscIcons.replace)
 
 			menu:AddOption(L"clone", function()
+				pace.RecordUndoHistory()
 				local part_ = obj:Clone()
-				pace.AddUndoPartCreation(part_)
+				pace.RecordUndoHistory()
 			end):SetImage(pace.MiscIcons.clone)
 
 			menu:AddSpacer()
@@ -583,9 +615,9 @@ do -- menu
 			menu:AddSpacer()
 
 			menu:AddOption(L"remove", function()
-				-- obj:Remove()
-				pace.AddUndoPartRemoval(obj)
+				pace.RecordUndoHistory()
 				obj:DeattachFull()
+				pace.RecordUndoHistory()
 
 				pace.RefreshTree()
 
@@ -625,5 +657,5 @@ function pace.OnHoverPart(obj)
 end
 
 pac.AddHook("pac_OnPartParent", "pace_parent", function(parent, child)
-	pace.Call("VariableChanged",parent, "Parent", child)
+	pace.Call("VariableChanged", parent, "Parent", child, true)
 end)

@@ -18,6 +18,7 @@ net.Receive("pac_spawn_part", function()
 	local mdl = net.ReadString()
 
 	if pace.close_spawn_menu then
+		pace.RecordUndoHistory()
 		pace.Call("VariableChanged", pace.current_part, "Model", mdl)
 
 		if g_SpawnMenu:IsVisible() then
@@ -28,8 +29,10 @@ net.Receive("pac_spawn_part", function()
 	elseif pace.current_part.ClassName ~= "model" then
 		local name = mdl:match(".+/(.+)%.mdl")
 
+		pace.RecordUndoHistory()
 		pace.Call("CreatePart", "model", name, mdl)
 	else
+		pace.RecordUndoHistory()
 		pace.Call("VariableChanged", pace.current_part, "Model", mdl)
 	end
 end)

@@ -180,6 +180,41 @@ end
 local function install_drag(node)
 	node:SetDraggableName("pac3")
 
+	local old = node.OnDrop
+
+	function node:OnDrop(child, ...)
+		-- we're hovering on the label, not the actual node
+		-- so get the parent node instead
+		if not child.part then
+			child = child:GetParent()
+		end
+
+		pace.RecordUndoHistory()
+
+
+		if child.part and child.part:IsValid() then
+			if self.part and self.part:IsValid() and self.part:GetParent() ~= child.part then
+				self.part:SetParent(child.part)
+				pace.RecordUndoHistory()
+			end
+		elseif self.part and self.part:IsValid() then
+			if self.part.ClassName ~= "group" then
+				local group = pac.CreatePart("group", self.part:GetPlayerOwner())
+				group:SetEditorExpand(true)
+				self.part:SetParent(group)
+				pace.TrySelectPart()
+				pace.RecordUndoHistory()
+
+			else
+				self.part:SetParent()
+				pace.RefreshTree(true)
+				pace.RecordUndoHistory()
+			end
+		end
+
+		return old(self, child, ...)
+	end
+
 	function node:DroppedOn(child)
 
 		if not child.part then
@@ -192,36 +227,10 @@ local function install_drag(node)
 		if child.part and child.part:IsValid() then
 			if self.part and self.part:IsValid() and child.part:GetParent() ~= self.part then
 				child.part:SetParent(self.part)
-			end
-		end
-	end
-
-	local old = node.OnDrop
-
-	function node:OnDrop(child, ...)
-		-- we're hovering on the label, not the actual node
-		-- so get the parent node instead
-		if not child.part then
-			child = child:GetParent()
-		end
-
-		if child.part and child.part:IsValid() then
-			if self.part and self.part:IsValid() and self.part:GetParent() ~= child.part then
-				self.part:SetParent(child.part)
-			end
-		elseif self.part and self.part:IsValid() then
-			if self.part.ClassName ~= "group" then
-				local group = pac.CreatePart("group", self.part:GetPlayerOwner())
-				group:SetEditorExpand(true)
-				self.part:SetParent(group)
-				pace.TrySelectPart()
-			else
-				self.part:SetParent()
-				pace.RefreshTree(true)
+				pace.RecordUndoHistory()
 			end
 		end
 
-		return old(self, child, ...)
 	end
 end
 
@@ -246,13 +255,11 @@ local function install_expand(node)
 			menu:AddOption(L"collapse all", function()
 				node.part:CallRecursive('SetEditorExpand', false)
 				pace.RefreshTree(true)
-				pace.AddUndoRecursive(node.part, 'SetEditorExpand', true, false)
 			end):SetImage('icon16/arrow_in.png')
 
 			menu:AddOption(L"expand all", function()
 				node.part:CallRecursive('SetEditorExpand', true)
 				pace.RefreshTree(true)
-				pace.AddUndoRecursive(node.part, 'SetEditorExpand', false, true)
 			end):SetImage('icon16/arrow_down.png')
 		end
 	end

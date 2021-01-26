@@ -224,7 +224,7 @@ concommand.Add('pac_load_url', function(ply, cmd, args)
 	pace.LoadParts(url, tobool(args[2]))
 end)
 
-function pace.LoadPartsFromTable(data, clear, override_part)
+function pace.LoadPartsFromTable(data, clear, override_part, dont_clear_undo)
 	if pace.use_current_part_for_saveload and pace.current_part:IsValid() then
 		override_part = pace.current_part
 	end
@@ -253,7 +253,10 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 	end
 
 	pace.RefreshTree(true)
-	pace.ClearUndo()
+
+	if not dont_clear_undo then
+		pace.ClearUndo()
+	end
 
 	for i, part in ipairs(partsLoaded) do
 		part:CallRecursive('OnOutfitLoaded')

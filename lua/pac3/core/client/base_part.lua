@@ -954,7 +954,11 @@ do -- serializing
 		end
 
 		for _, part in ipairs(self:GetChildren()) do
-			table.insert(tbl.children, part:ToTable(make_copy_name))
+			if not self.is_valid or self.is_deattached then
+
+			else
+				table.insert(tbl.children, part:ToTable(make_copy_name))
+			end
 		end
 
 		return tbl
@@ -983,10 +987,83 @@ do -- serializing
 		end
 
 		for _, part in ipairs(self:GetChildren()) do
-			table.insert(tbl.children, part:ToSaveTable())
+			if not self.is_valid or self.is_deattached then
+
+			else
+				table.insert(tbl.children, part:ToSaveTable())
+			end
 		end
 
 		return tbl
+	end
+
+	do -- undo
+		do
+			local function SetTable(self, tbl)
+				self.supress_part_name_find = true
+				self.delayed_variables = self.delayed_variables or {}
+
+				-- this needs to be set first
+				self:SetUniqueID(tbl.self.UniqueID or util.CRC(tostring(tbl.self)))
+
+				for key, value in pairs(tbl.self) do
+					if self["Set" .. key] then
+						if key == "Material" then
+							table.insert(self.delayed_variables, {key = key, val = value})
+						end
+
+						self["Set" .. key](self, value)
+					elseif key ~= "ClassName" then
+						pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
+					end
+				end
+
+				for _, value in pairs(tbl.children) do
+					local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
+					part:SetUndoTable(value)
+					part:SetParent(self)
+				end
+			end
+
+			function PART:SetUndoTable(tbl)
+				local ok, err = xpcall(SetTable, ErrorNoHalt, self, tbl)
+				if not ok then
+					pac.Message(Color(255, 50, 50), "SetUndoTable failed: ", err)
+				end
+			end
+		end
+
+		function PART:ToUndoTable()
+			if self:GetPlayerOwner() ~= LocalPlayer() then return end
+
+			local tbl = {self = {ClassName = self.ClassName}, children = {}}
+
+			for _, key in pairs(self:GetStorableVars()) do
+				local var = self[key] and self["Get" .. key](self) or self[key]
+				var = pac.class.Copy(var) or var
+
+				if key == "Name" and self[key] == "" then
+					var = ""
+				end
+
+				if
+					key ~= "ParentName"
+				then
+					tbl.self[key] = var
+				end
+			end
+
+			for _, part in ipairs(self:GetChildren()) do
+				if not self.is_valid or self.is_deattached then
+
+				else
+					table.insert(tbl.children, part:ToUndoTable())
+				end
+			end
+
+			return tbl
+		end
+
 	end
 
 	function PART:GetVars()
