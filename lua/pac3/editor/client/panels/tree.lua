@@ -450,11 +450,14 @@ function PANEL:SelectPart(part)
 		else
 			if node.part == part then
 				node:SetSelected(true)
+				node:ExpandTo(true)
 			else
 				node:SetSelected(false)
 			end
 		end
 	end
+
+	self:InvalidateLayout()
 end
 
 function PANEL:Populate(reset)

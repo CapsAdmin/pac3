@@ -71,9 +71,10 @@ local function diff_create(a, b, aparent, bparent)
 
 			diff_create(apart, bpart, a, b)
 		else
-			local part = pac.CreatePart(bpart.self.ClassName, pac.LocalPlayer)
+			local part = pac.CreatePart(bpart.self.ClassName)
 			part:SetUndoTable(bpart)
 			part:ResolvePartNames()
+			pace.Call("PartSelected", part)
 		end
 	end
 end
