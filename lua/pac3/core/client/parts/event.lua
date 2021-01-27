@@ -1492,7 +1492,7 @@ function PART:OnThink()
 		end
 	end
 
-	if pace and pace.IsActive() then
+	if pace and pace.IsActive() and self.Name == "" then
 		if self.editor_property and self.editor_property["Name"] and self.editor_property["Name"]:IsValid() then
 			self.editor_property["Name"]:SetText(self:GetNiceName())
 		end
