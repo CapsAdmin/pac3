@@ -555,29 +555,30 @@ do -- menu
 			end
 
 			menu:AddOption(L"copy", function()
-				pace.Clipboard = obj
+				pace.Clipboard = obj:ToSaveTable()
 			end):SetImage(pace.MiscIcons.copy)
 
 			menu:AddOption(L"paste", function()
 				if pace.Clipboard then
 					pace.RecordUndoHistory()
-					local newObj = pace.Clipboard:Clone()
-					newObj:Attach(obj)
+					local newObj = pac.CreatePart(pace.Clipboard.self.ClassName)
+					newObj:SetTable(pace.Clipboard)
+					newObj:SetParent(obj)
 					pace.RecordUndoHistory()
 				end
 			end):SetImage(pace.MiscIcons.paste)
 
 			menu:AddOption(L"cut", function()
 				pace.RecordUndoHistory()
-				pace.Clipboard = obj
-				obj:DeattachFull()
+				pace.Clipboard = obj:ToSaveTable()
+				obj:Remove()
 				pace.RecordUndoHistory()
 			end):SetImage('icon16/cut.png')
 
 			-- needs proper undo
 			menu:AddOption(L"paste properties", function()
 				if pace.Clipboard then
-					local tbl = pace.Clipboard:ToTable()
+					local tbl = pace.Clipboard
 						tbl.self.Name = nil
 						tbl.self.ParentName = nil
 						tbl.self.Parent = nil
@@ -591,7 +592,7 @@ do -- menu
 
 			menu:AddOption(L"clone", function()
 				pace.RecordUndoHistory()
-				local part_ = obj:Clone()
+				obj:Clone()
 				pace.RecordUndoHistory()
 			end):SetImage(pace.MiscIcons.clone)
 
