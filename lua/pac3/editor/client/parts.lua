@@ -543,58 +543,70 @@ do -- menu
 		end)
 	end
 
+	function pace.Copy(obj)
+		pace.Clipboard = obj:ToTable(true)
+	end
+
+	function pace.Cut(obj)
+		pace.RecordUndoHistory()
+		pace.Copy(obj)
+		obj:Remove()
+		pace.RecordUndoHistory()
+	end
+
+	function pace.Paste(obj)
+		if not pace.Clipboard then return end
+		pace.RecordUndoHistory()
+		local newObj = pac.CreatePart(pace.Clipboard.self.ClassName)
+		newObj:SetTable(pace.Clipboard)
+		newObj:SetParent(obj)
+		pace.RecordUndoHistory()
+	end
+
+	function pace.PasteProperties(obj)
+		if not pace.Clipboard then return end
+		pace.RecordUndoHistory()
+		local tbl = pace.Clipboard
+			tbl.self.Name = nil
+			tbl.self.ParentName = nil
+			tbl.self.Parent = nil
+			tbl.children = {}
+		obj:SetTable(tbl)
+		pace.RecordUndoHistory()
+	end
+
+	function pace.Clone(obj)
+		pace.RecordUndoHistory()
+		obj:Clone()
+		pace.RecordUndoHistory()
+	end
+
+	function pace.RemovePart(obj)
+		pace.RecordUndoHistory()
+		obj:Remove()
+		pace.RecordUndoHistory()
+
+		pace.RefreshTree()
+
+		if not obj:HasParent() and obj.ClassName == "group" then
+			pace.RemovePartOnServer(obj:GetUniqueID(), false, true)
+		end
+	end
+
 	function pace.OnPartMenu(obj)
 		local menu = DermaMenu()
 		menu:SetPos(input.GetCursorPos())
 
 		if obj then
 			if not obj:HasParent() then
-				menu:AddOption(L"wear", function()
-					pace.SendPartToServer(obj)
-				end):SetImage(pace.MiscIcons.wear)
+				menu:AddOption(L"wear", function() pace.SendPartToServer(obj) end):SetImage(pace.MiscIcons.wear)
 			end
 
-			menu:AddOption(L"copy", function()
-				pace.Clipboard = obj:ToSaveTable()
-			end):SetImage(pace.MiscIcons.copy)
-
-			menu:AddOption(L"paste", function()
-				if pace.Clipboard then
-					pace.RecordUndoHistory()
-					local newObj = pac.CreatePart(pace.Clipboard.self.ClassName)
-					newObj:SetTable(pace.Clipboard)
-					newObj:SetParent(obj)
-					pace.RecordUndoHistory()
-				end
-			end):SetImage(pace.MiscIcons.paste)
-
-			menu:AddOption(L"cut", function()
-				pace.RecordUndoHistory()
-				pace.Clipboard = obj:ToSaveTable()
-				obj:Remove()
-				pace.RecordUndoHistory()
-			end):SetImage('icon16/cut.png')
-
-			-- needs proper undo
-			menu:AddOption(L"paste properties", function()
-				if pace.Clipboard then
-					local tbl = pace.Clipboard
-						tbl.self.Name = nil
-						tbl.self.ParentName = nil
-						tbl.self.Parent = nil
-						tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. tostring(tbl))
-
-						tbl.children = {}
-					obj:SetTable(tbl)
-				end
-				--pace.Clipboard = nil
-			end):SetImage(pace.MiscIcons.replace)
-
-			menu:AddOption(L"clone", function()
-				pace.RecordUndoHistory()
-				obj:Clone()
-				pace.RecordUndoHistory()
-			end):SetImage(pace.MiscIcons.clone)
+			menu:AddOption(L"copy", function() pace.Copy(obj) end):SetImage(pace.MiscIcons.copy)
+			menu:AddOption(L"paste", function() pace.Paste(obj) end):SetImage(pace.MiscIcons.paste)
+			menu:AddOption(L"cut", function() pace.Cut(obj) end):SetImage('icon16/cut.png')
+			menu:AddOption(L"paste properties", function() pace.PasteProperties(obj) end):SetImage(pace.MiscIcons.replace)
+			menu:AddOption(L"clone", function() pace.Clone(obj) end):SetImage(pace.MiscIcons.clone)
 
 			menu:AddSpacer()
 		end
@@ -615,20 +627,8 @@ do -- menu
 		pnl:SetImage(pace.MiscIcons.load)
 
 		if obj then
-
 			menu:AddSpacer()
-
-			menu:AddOption(L"remove", function()
-				pace.RecordUndoHistory()
-				obj:DeattachFull()
-				pace.RecordUndoHistory()
-
-				pace.RefreshTree()
-
-				if not obj:HasParent() and obj.ClassName == "group" then
-					pace.RemovePartOnServer(obj:GetUniqueID(), false, true)
-				end
-			end):SetImage(pace.MiscIcons.clear)
+			menu:AddOption(L"remove", function() pace.RemovePart(obj) end):SetImage(pace.MiscIcons.clear)
 		end
 
 		menu:Open()
@@ -663,3 +663,202 @@ end
 pac.AddHook("pac_OnPartParent", "pace_parent", function(parent, child)
 	pace.Call("VariableChanged", parent, "Parent", child, true)
 end)
+
+do
+	local hold = false
+	local last = 0
+
+	local function thinkUndo()
+		-- whooaaa
+		-- if input.IsControlDown() and input.IsKeyDown(KEY_X) then
+		--  pace.UndoPosition = math.Round((gui.MouseY() / ScrH()) * #pace.UndoHistory)
+		--  pace.ApplyUndo()
+		--  return
+		-- end
+
+		if not input.IsKeyDown(KEY_Z) and not input.IsKeyDown(KEY_Y) then
+			hold = false
+		end
+
+		if hold then return end
+
+		if input.IsControlDown() and ((input.IsKeyDown(KEY_LSHIFT) and input.IsKeyDown(KEY_Z)) or input.IsKeyDown(KEY_Y)) then
+			pace.Redo()
+			hold = true
+		elseif input.IsControlDown() and input.IsKeyDown(KEY_Z) then
+			pace.Undo()
+			hold = true
+		end
+	end
+
+	local hold = false
+
+	local function thinkCopy()
+		if not input.IsKeyDown(KEY_C) then
+			hold = false
+		end
+
+		if hold or not (input.IsControlDown() and input.IsKeyDown(KEY_C)) then return end
+
+		-- copy
+		hold = true
+		local part = pace.current_part
+
+		if not part or not part:IsValid() then
+			pace.FlashNotification('No part selected to copy')
+			return
+		end
+
+		pace.Copy(part)
+
+		surface.PlaySound("buttons/button9.wav")
+	end
+
+	local hold = false
+
+	local function thinkCut()
+		if not input.IsKeyDown(KEY_X) then
+			hold = false
+		end
+
+		if hold or not (input.IsControlDown() and input.IsKeyDown(KEY_X)) then return end
+
+		-- copy
+		hold = true
+		local part = pace.current_part
+
+		if not part or not part:IsValid() then
+			pace.FlashNotification('No part selected to cut')
+			return
+		end
+
+		pace.Cut(part)
+
+		surface.PlaySound("buttons/button9.wav")
+	end
+
+	local hold = false
+
+	local function thinkDelete()
+		if not input.IsKeyDown(KEY_DELETE) then
+			hold = false
+		end
+
+		if hold or not input.IsKeyDown(KEY_DELETE) then return end
+
+		-- delete
+		hold = true
+		local part = pace.current_part
+
+		if not part or not part:IsValid() then
+			pace.FlashNotification('No part to delete')
+			return
+		end
+
+		pace.RemovePart(part)
+
+		surface.PlaySound("buttons/button9.wav")
+	end
+
+	local REVERSE_COLLAPSE_CONTROLS = CreateConVar('pac_reverse_collapse', '1', {FCVAR_ARCHIVE}, 'Reverse Collapse/Expand hotkeys')
+	local hold = false
+
+	local function thinkExpandAll()
+		if not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT) and not input.IsKeyDown(KEY_0) then
+			hold = false
+		end
+
+		if hold or not input.IsShiftDown() or (not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT)) or not input.IsKeyDown(KEY_0) then return end
+
+		-- expand all
+		hold = true
+		local part = pace.current_part
+
+		if not part or not part:IsValid() then
+			pace.FlashNotification('No part to expand')
+			return
+		end
+
+		part:CallRecursive('SetEditorExpand', not REVERSE_COLLAPSE_CONTROLS:GetBool())
+
+		surface.PlaySound("buttons/button9.wav")
+		pace.RefreshTree(true)
+	end
+
+	local hold = false
+
+	local function thinkCollapseAll()
+		if not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT) and not input.IsKeyDown(KEY_0) then
+			hold = false
+		end
+
+		if hold or input.IsShiftDown() or (not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT)) or not input.IsKeyDown(KEY_0) then return end
+
+		-- collapse all
+		hold = true
+		local part = pace.current_part
+
+		if not part or not part:IsValid() then
+			pace.FlashNotification('No part to collapse')
+			return
+		end
+
+		part:CallRecursive('SetEditorExpand', REVERSE_COLLAPSE_CONTROLS:GetBool())
+
+		surface.PlaySound("buttons/button9.wav")
+		pace.RefreshTree(true)
+	end
+
+	local hold = false
+
+	local function thinkPaste()
+		if not input.IsKeyDown(KEY_V) then
+			hold = false
+		end
+
+		if hold or not (input.IsControlDown() and input.IsKeyDown(KEY_V)) then return end
+
+		-- paste
+		hold = true
+		local part = pace.Clipboard
+
+		if not part then
+			pace.FlashNotification('No part is stored in clipboard')
+			return
+		end
+
+		local findParent
+
+		if part == pace.current_part then
+			findParent = part:GetParent()
+
+			if not findParent or not findParent:IsValid() then
+				findParent = part
+			end
+		elseif pace.current_part and pace.current_part:IsValid() then
+			findParent = pace.current_part
+		else
+			pace.RecordUndoHistory()
+			findParent = pace.Call("CreatePart", "group", L"paste data")
+			pace.RecordUndoHistory()
+		end
+
+		pace.Paste(findParent)
+
+		surface.PlaySound("buttons/button9.wav")
+	end
+
+	pac.AddHook("Think", "pace_keyboard_shortcuts", function()
+		if not pace.IsActive() then return end
+		if not pace.Focused then return end
+		if IsValid(vgui.GetKeyboardFocus()) and vgui.GetKeyboardFocus():GetClassName():find('Text') then return end
+		if gui.IsConsoleVisible() then return end
+		thinkUndo()
+		thinkCopy()
+		thinkPaste()
+		thinkCut()
+		thinkDelete()
+		thinkExpandAll()
+		thinkCollapseAll()
+	end)
+end
