@@ -4,20 +4,18 @@ local RealTime = RealTime
 local NULL = NULL
 
 do
-	local draw_localplayer = nil
+	local force_draw_localplayer = false
+
+	hook.Add("ShouldDrawLocalPlayer", "pac_draw_2d_entity", function()
+		if force_draw_localplayer == true then
+			return true
+		end
+	end)
 
 	function pac.DrawEntity2D(ent, x, y, w, h, cam_pos, cam_ang, cam_fov, cam_nearz, cam_farz)
 
 		pac.ShowEntityParts(ent)
 		pac.ForceRendering(true)
-
-		if draw_localplayer == nil then
-			hook.Add("ShouldDrawLocalPlayer", "pac_draw_2d_entity", function()
-				if draw_localplayer == true then
-					return true
-				end
-			end)
-		end
 
 		ent = ent or LocalPlayer()
 		x = x or 0
@@ -28,19 +26,19 @@ do
 		cam_pos = cam_pos or ent:LocalToWorld(ent:OBBCenter()) - cam_ang:Forward() * ent:BoundingRadius() * 2
 		cam_fov = cam_fov or 90
 
+		ent:SetupBones()
+
 		cam.Start2D()
 			cam.Start3D(cam_pos, cam_ang, cam_fov, x, y, w, h, cam_nearz or 5, cam_farz or 4096)
-				cam.IgnoreZ(true)
-					pac.FlashlightDisable(true)
-						draw_localplayer = true
+				pac.FlashlightDisable(true)
 
-							pac.RenderOverride(ent, "opaque")
-							pac.RenderOverride(ent, "translucent", true)
-							ent:DrawModel()
+				force_draw_localplayer = true
+				ent:DrawModel()
+				pac.RenderOverride(ent, "opaque")
+				pac.RenderOverride(ent, "translucent", true)
+				force_draw_localplayer = false
 
-						draw_localplayer = false
-					pac.FlashlightDisable(false)
-				cam.IgnoreZ(false)
+				pac.FlashlightDisable(false)
 			cam.End3D()
 		cam.End2D()
 
