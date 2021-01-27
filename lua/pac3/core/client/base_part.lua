@@ -48,7 +48,7 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "Name", "")
 		pac.GetSet(PART, "Hide", false)
 		pac.GetSet(PART, "OwnerName", "self")
-		pac.GetSet(PART, "EditorExpand", false, {hidden = true})
+		pac.GetSet(PART, "EditorExpand", true, {hidden = true})
 		pac.GetSet(PART, "UniqueID", "", {hidden = true})
 		pac.GetSet(PART, "IsDisturbing", false, {
 			editor_friendly = "IsExplicit",
