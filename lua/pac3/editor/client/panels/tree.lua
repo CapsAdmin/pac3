@@ -130,7 +130,7 @@ do
 						node.Icon:SetImage(part.Icon)
 					end
 				end
-				if part.ClassName == "proxy" and part.Name == "" then
+				if (part.ClassName == "proxy" or part.ClassName == "event") and part.Name == "" then
 					node:SetText(part:GetName())
 				end
 			end

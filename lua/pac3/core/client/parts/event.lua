@@ -115,7 +115,9 @@ PART.OldEvents = {
 
 	timerx = {
 		arguments = {{seconds = "number"}, {reset_on_hide = "boolean"}, {synced_time = "boolean"}},
-
+		nice = function(self, ent, seconds)
+			return "timerx: " .. ("%.2f"):format(self.number or 0, 2) .. " " .. self:GetOperator() .. " " .. seconds .. " seconds?"
+		end,
 		callback = function(self, ent, seconds, reset_on_hide, synced_time)
 			local time = synced_time and CurTime() or RealTime()
 
@@ -132,7 +134,9 @@ PART.OldEvents = {
 				end
 			end
 
-			return self:NumberOperator(time - self.time, seconds)
+			self.number = time - self.time
+
+			return self:NumberOperator(self.number, seconds)
 		end,
 	},
 
@@ -1061,6 +1065,25 @@ do
 		userdata = {{enums = function()
 			return enums
 		end}},
+		nice = function(self, ent, button)
+			local ply = self:GetPlayerOwner()
+
+			local active = {}
+			if ply.pac_buttons then
+				for k,v in pairs(ply.pac_buttons) do
+					if v then
+						table.insert(active, "\"" .. tostring(k) .. "\"")
+					end
+				end
+			end
+			active = table.concat(active, " or ")
+
+			if active == "" then
+				active = "-"
+			end
+
+			return self:GetOperator() .. " \"" .. button .. "\"" .. " in (" .. active .. ")"
+		end,
 		callback = function(self, ent, button)
 			local ply = self:GetPlayerOwner()
 
@@ -1148,6 +1171,25 @@ do
 		return false
 	end
 
+	function eventMeta:GetNiceName(part, ent)
+		if self.extra_nice_name then
+			return self.extra_nice_name(part, ent, part:GetParsedArgumentsForObject(self))
+		end
+
+		local str = part:GetEvent()
+
+		if part:GetArguments() ~= "" then
+			local args = part:GetArguments():gsub(";", " or ")
+
+			if not tonumber(args) then
+				args = [["]] .. args .. [["]]
+			end
+			str = str .. " " .. part:GetOperator() .. " " .. args
+		end
+
+		return pac.PrettifyName(str)
+	end
+
 	local eventMetaTable = {
 		__index = function(self, key)
 			if key == '__class' or key == '__classname' then
@@ -1226,6 +1268,8 @@ do
 				eventObject:AppendArgument(key, Type, data.userdata and data.userdata[i] or nil)
 			end
 		end
+
+		eventObject.extra_nice_name = data.nice
 
 		function eventObject:Think(event, ent, ...)
 			return think(event, ent, ...)
@@ -1351,18 +1395,11 @@ function PART:GetParentEx()
 end
 
 function PART:GetNiceName()
-	local str = self:GetEvent()
+	local event_name = self:GetEvent()
 
-	if self:GetArguments() ~= "" then
-		local args = self:GetArguments():gsub(";", " or ")
+	if not PART.Events[event_name] then return "unknown event" end
 
-		if not tonumber(args) then
-			args = [["]] .. args .. [["]]
-		end
-		str = str .. " " .. self:GetOperator() .. " " .. args
-	end
-
-	return pac.PrettifyName(str)
+	return PART.Events[event_name]:GetNiceName(self, self:GetOwner(self.RootOwner))
 end
 
 function PART:OnRemove()
@@ -1454,6 +1491,13 @@ function PART:OnThink()
 			end
 		end
 	end
+
+	if pace and pace.IsActive() then
+		if self.editor_property and self.editor_property["Name"] and self.editor_property["Name"]:IsValid() then
+			self.editor_property["Name"]:SetText(self:GetNiceName())
+		end
+	end
+
 end
 
 PART.Operators =
