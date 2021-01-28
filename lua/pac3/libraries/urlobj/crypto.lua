@@ -1,5 +1,4 @@
-pac.crypto = pac.crypto or {}
-local crypto = pac.crypto
+local crypto = {}
 
 crypto.UInt8BlockSize  = 64
 crypto.UInt32BlockSize = 16
@@ -492,3 +491,5 @@ end
 function crypto.UInt32ArrayToString (array, startIndex)
 	return crypto.Int32ArrayToString (array, startIndex)
 end
+
+return crypto

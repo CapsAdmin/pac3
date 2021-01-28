@@ -1,6 +1,4 @@
-
-pac.urlobj = pac.urlobj or {}
-local urlobj = pac.urlobj
+local urlobj = _G.pac_urlobj
 
 local TIMEOUT_VALUE = CreateConVar('pac_objdl_timeout', '15', {FCVAR_ARCHIVE}, 'OBJ download timeout in seconds')
 local CACHE_OBJS = CreateConVar('pac_obj_cache', '1', {FCVAR_ARCHIVE}, 'DEBUG: Cache Object files on disk. Disables disk cache access (like cache does not exist in code)')
@@ -10,7 +8,7 @@ local QUEUEITEM = {}
 --     Either the decode from the cache or the decode from the web could finish first / last
 --     And the web request handler will often decide to not override the cache
 
-function urlobj.CreateQueueItem (url)
+local function CreateQueueItem(url)
 	local queueItem = {}
 	setmetatable (queueItem, { __index = QUEUEITEM })
 
@@ -250,3 +248,5 @@ function QUEUEITEM:DispatchStatusCallbacks (...)
 		statusCallback (...)
 	end
 end
+
+return CreateQueueItem

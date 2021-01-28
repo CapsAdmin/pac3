@@ -259,6 +259,20 @@ function pac.ShowEntityParts(ent)
 	end
 end
 
+function pac.EnableDrawnEntities(bool)
+	for ent in next, pac.drawn_entities do
+		if ent:IsValid() then
+			if bool then
+				pac.ShowEntityParts(ent)
+			else
+				pac.HideEntityParts(ent)
+			end
+		else
+			pac.drawn_entities[ent] = nil
+		end
+	end
+end
+
 -- Prevent radius AND pixvis based flickering at the cost of rendering a bit longer than necessary
 local viscache=setmetatable({},{__mode='k'})
 local function nodrawdelay(draw,ent)
@@ -455,19 +469,6 @@ pac.AddHook("Think", "events", function()
 		end
 	end
 end)
-
-
-function pac.DisableEntity(ent)
-	if ent_parts[ent] then
-		for _, part in pairs(ent_parts[ent]) do
-			part:CallRecursive("OnHide")
-		end
-
-		pac.ResetBones(ent)
-	end
-
-	ent.pac_drawing = false
-end
 
 pac.AddHook("EntityRemoved", "change_owner", function(ent)
 	if IsActuallyValid(ent) then

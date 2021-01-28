@@ -1,3 +1,8 @@
+include("pac3/libraries/webaudio/urlogg.lua")
+include("pac3/libraries/webaudio/browser.lua")
+include("pac3/libraries/webaudio/stream.lua")
+include("pac3/libraries/webaudio/streams.lua")
+
 local PART = {}
 
 PART.ClassName = "ogg"

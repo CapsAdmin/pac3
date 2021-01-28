@@ -182,16 +182,51 @@ function PART:OnShow()
 	end
 end
 
-function PART:OnThink()
-	pac.SetModelScale(self:GetEntity(), self.Scale * self.Size, nil, self.UseLegacyScale)
+do
 
-	self:CheckScale()
-	self:CheckBoneMerge()
+	function PART:OnThink()
+		pac.SetModelScale(self:GetEntity(), self.Scale * self.Size, nil, self.UseLegacyScale)
 
-	local ent = self:GetEntity()
-	if ent:IsValid() then
-		ent.pac_matproxies = ent.pac_matproxies or {}
-		ent.pac_matproxies.ItemTintColor = self.TintColor / 255
+		self:CheckScale()
+		self:CheckBoneMerge()
+
+		local ent = self:GetEntity()
+		if ent:IsValid() then
+			ent.pac_matproxies = ent.pac_matproxies or {}
+			ent.pac_matproxies.ItemTintColor = self.TintColor / 255
+		end
+	end
+
+	do
+		local NULL = NULL
+
+		local function BIND_MATPROXY(NAME, TYPE)
+
+			local set = "Set" .. TYPE
+
+			matproxy.Add(
+				{
+					name = NAME,
+
+					init = function(self, mat, values)
+						self.result = values.resultvar
+					end,
+
+					bind = function(self, mat, ent)
+						ent = ent or NULL
+						if ent:IsValid() then
+							if ent.pac_matproxies and ent.pac_matproxies[NAME] then
+								mat[set](mat, self.result, ent.pac_matproxies[NAME])
+							end
+						end
+					end
+				}
+			)
+
+		end
+
+		-- tf2
+		BIND_MATPROXY("ItemTintColor", "Vector")
 	end
 end
 
@@ -526,101 +561,105 @@ local function set_mesh(part, mesh)
 	part.Entity:SetRenderBounds(Vector(1, 1, 1) * -300, Vector(1, 1, 1) * 300)
 end
 
-function PART:SetModel(modelPath)
-	self.Entity = self:GetEntity()
+do
+	pac.urlobj = include("pac3/libraries/urlobj/urlobj.lua")
 
-	if modelPath:find("^mdlhttp") then
-		self.Model = modelPath
+	function PART:SetModel(modelPath)
+		self.Entity = self:GetEntity()
 
-		modelPath = modelPath:gsub("^mdl", "")
+		if modelPath:find("^mdlhttp") then
+			self.Model = modelPath
 
-		pac.DownloadMDL(modelPath, function(path)
-			if self:IsValid() and self:GetEntity():IsValid() then
-				local ent = self:GetEntity()
-				self.loading = nil
-				ent.pac_bones = nil
-				ent:SetModel(path)
-			end
-		end, function(err)
-			pac.Message(err)
-			if self:IsValid() and self:GetEntity():IsValid() then
-				local ent = self:GetEntity()
-				self.loading = nil
-				ent.pac_bones = nil
-				ent:SetModel("models/error.mdl")
-			end
-		end, self:GetPlayerOwner())
+			modelPath = modelPath:gsub("^mdl", "")
 
-		return
-	end
+			pac.DownloadMDL(modelPath, function(path)
+				if self:IsValid() and self:GetEntity():IsValid() then
+					local ent = self:GetEntity()
+					self.loading = nil
+					ent.pac_bones = nil
+					ent:SetModel(path)
+				end
+			end, function(err)
+				pac.Message(err)
+				if self:IsValid() and self:GetEntity():IsValid() then
+					local ent = self:GetEntity()
+					self.loading = nil
+					ent.pac_bones = nil
+					ent:SetModel("models/error.mdl")
+				end
+			end, self:GetPlayerOwner())
 
-	if modelPath and modelPath:find("http") and pac.urlobj then
-		self.loading_obj = "downloading"
-
-		if not self.is_obj then
-			self:Initialize(true)
+			return
 		end
 
-		pac.urlobj.GetObjFromURL(modelPath, false, false,
-			function(meshes, err)
-				if not self:IsValid() then return end
+		if modelPath and modelPath:find("http") and pac.urlobj then
+			self.loading_obj = "downloading"
 
-				self.loading_obj = false
+			if not self.is_obj then
+				self:Initialize(true)
+			end
 
-				self.Entity = self:GetEntity()
+			pac.urlobj.GetObjFromURL(modelPath, false, false,
+				function(meshes, err)
+					if not self:IsValid() then return end
 
-				if not meshes and err then
-					self.Entity:SetModel("models/error.mdl")
-					self.Mesh = nil
-					return
-				end
+					self.loading_obj = false
 
-				if table.Count(meshes) == 1 then
-					set_mesh(self, select(2, next(meshes)))
-				else
-					for key, mesh in pairs(meshes) do
-						local part = pac.CreatePart("model", self:GetOwnerName())
-						part:SetName(key)
-						part:SetParent(self)
-						part:SetMaterial(self:GetMaterial())
-						set_mesh(part, mesh)
+					self.Entity = self:GetEntity()
+
+					if not meshes and err then
+						self.Entity:SetModel("models/error.mdl")
+						self.Mesh = nil
+						return
 					end
 
-					self:SetAlpha(0)
+					if table.Count(meshes) == 1 then
+						set_mesh(self, select(2, next(meshes)))
+					else
+						for key, mesh in pairs(meshes) do
+							local part = pac.CreatePart("model", self:GetOwnerName())
+							part:SetName(key)
+							part:SetParent(self)
+							part:SetMaterial(self:GetMaterial())
+							set_mesh(part, mesh)
+						end
+
+						self:SetAlpha(0)
+					end
+				end,
+				function(finished, statusMessage)
+					if finished then
+						self.loading_obj = nil
+					else
+						self.loading_obj = statusMessage
+					end
 				end
-			end,
-			function(finished, statusMessage)
-				if finished then
-					self.loading_obj = nil
-				else
-					self.loading_obj = statusMessage
-				end
-			end
-		)
+			)
+
+			self.Model = modelPath
+			return
+		end
+
+		if self.is_obj or not self.Entity:IsValid() then
+			self:Initialize(false)
+		end
+
+		self.Mesh = nil
+
+		local real_model = modelPath
+		local ret = hook.Run("pac_model:SetModel", self, modelPath, self.ModelFallback)
+		if ret == nil then
+			real_model = pac.FilterInvalidModel(real_model,self.ModelFallback)
+		else
+			modelPath = ret or modelPath
+			real_model = modelPath
+			real_model = pac.FilterInvalidModel(real_model,self.ModelFallback)
+		end
 
 		self.Model = modelPath
-		return
+		self.Entity.pac_bones = nil
+		self.Entity:SetModel(real_model)
 	end
-
-	if self.is_obj or not self.Entity:IsValid() then
-		self:Initialize(false)
-	end
-
-	self.Mesh = nil
-
-	local real_model = modelPath
-	local ret = hook.Run("pac_model:SetModel", self, modelPath, self.ModelFallback)
-	if ret == nil then
-		real_model = pac.FilterInvalidModel(real_model,self.ModelFallback)
-	else
-		modelPath = ret or modelPath
-		real_model = modelPath
-		real_model = pac.FilterInvalidModel(real_model,self.ModelFallback)
-	end
-
-	self.Model = modelPath
-	self.Entity.pac_bones = nil
-	self.Entity:SetModel(real_model)
 end
 
 local NORMAL = Vector(1,1,1)

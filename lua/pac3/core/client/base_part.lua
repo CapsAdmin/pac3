@@ -36,8 +36,6 @@ function PART:__tostring()
 	return string.format("%s[%s][%s][%i]", self.Type, self.ClassName, self.Name, self.Id)
 end
 
-local pac_hide_disturbing = GetConVar("pac_hide_disturbing")
-
 pac.GetSet(PART, "BoneIndex")
 pac.GetSet(PART, "PlayerOwner", NULL)
 pac.GetSet(PART, "Owner", NULL)
@@ -393,9 +391,13 @@ do -- owner
 	--SETUP_CACHE_FUNC(PART, "GetOwner")
 end
 
-function PART:SetIsDisturbing(val)
-	self.IsDisturbing = val
-	self.hide_disturbing = pac_hide_disturbing:GetBool() and val
+do
+	local pac_hide_disturbing = CreateClientConVar("pac_hide_disturbing", "1", true, true, "Hide parts which outfit creators marked as 'nsfw' (e.g. gore or explicit content)")
+
+	function PART:SetIsDisturbing(val)
+		self.IsDisturbing = val
+		self.hide_disturbing = pac_hide_disturbing:GetBool() and val
+	end
 end
 
 do -- parenting
@@ -1175,26 +1177,30 @@ do -- events
 	function PART:OnEvent(event, ...) end
 end
 
-function PART:Highlight(skip_children, data)
-	local tbl = {self.Entity and self.Entity:IsValid() and self.Entity or nil}
+do
+	pac.haloex = include("pac3/libraries/haloex.lua")
 
-	if not skip_children then
-		for _, part in ipairs(self:GetChildren()) do
-			local ent = part.Entity
+	function PART:Highlight(skip_children, data)
+		local tbl = {self.Entity and self.Entity:IsValid() and self.Entity or nil}
 
-			if ent and ent:IsValid() then
-				table.insert(tbl, ent)
+		if not skip_children then
+			for _, part in ipairs(self:GetChildren()) do
+				local ent = part.Entity
+
+				if ent and ent:IsValid() then
+					table.insert(tbl, ent)
+				end
 			end
 		end
-	end
 
-	if #tbl > 0 then
-		if data then
-			pac.haloex.Add(tbl, unpack(data))
-		else
-			local pulse = math.abs(1 + math.sin(pac.RealTime * 20) * 255)
-			pulse = pulse + 2
-			pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
+		if #tbl > 0 then
+			if data then
+				pac.haloex.Add(tbl, unpack(data))
+			else
+				local pulse = math.abs(1 + math.sin(pac.RealTime * 20) * 255)
+				pulse = pulse + 2
+				pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
+			end
 		end
 	end
 end

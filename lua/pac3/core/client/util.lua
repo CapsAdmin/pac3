@@ -552,6 +552,18 @@ do -- hook helpers
 	function pac.CallHook(str, ...)
 		return hook.Run("pac_" .. str, ...)
 	end
+
+	function pac.EnableAddedHooks()
+		for _, data in pairs(pac.added_hooks) do
+			hook.Add(data.event_name, data.id, data.func, data.priority)
+		end
+	end
+
+	function pac.DisableAddedHooks()
+		for _, data in pairs(pac.added_hooks) do
+			hook.Remove(data.event_name, data.id)
+		end
+	end
 end
 
 do -- get set and editor vars

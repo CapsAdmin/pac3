@@ -1,7 +1,13 @@
-pac.urlobj = pac.urlobj or {}
-local urlobj = pac.urlobj
+local urlobj = {}
 
-urlobj.DataCache  = pac.CreateCache("objcache")
+_G.pac_urlobj = urlobj
+
+local CreateCache = include("pac3/libraries/urlobj/cache.lua")
+local CreateQueueItem = include("pac3/libraries/urlobj/queueitem.lua")
+
+_G.pac_urlobj = nil
+
+urlobj.DataCache  = CreateCache("objcache")
 
 concommand.Add("pac_urlobj_clear_disk", function()
 	urlobj.DataCache:Clear()
@@ -58,7 +64,7 @@ function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statu
 
 	-- Add item to queue
 	if not urlobj.Queue[url] then
-		local queueItem = urlobj.CreateQueueItem(url)
+		local queueItem = CreateQueueItem(url)
 
 		urlobj.Queue[url] = queueItem
 		urlobj.QueueCount = urlobj.QueueCount + 1
@@ -684,3 +690,5 @@ function urlobj.DownloadQueueThink()
 end
 
 timer.Create("urlobj_download_queue", 0.1, 0, urlobj.DownloadQueueThink)
+
+return urlobj
