@@ -3,9 +3,10 @@ pac = pac or {}
 do
 	local pac_enable = CreateClientConVar("pac_enable", "1", true)
 
-	cvars.AddChangeCallback("pac_enable", function(_, _, value)
-		value = tobool(value) or 0
-		if value then
+	cvars.AddChangeCallback("pac_enable", function(_, old, new)
+		if old == new then return end
+
+		if tobool(new) then
 			pac.Enable()
 		else
 			pac.Disable()
