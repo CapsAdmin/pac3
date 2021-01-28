@@ -29,11 +29,8 @@ local function initialize(part, owner)
 end
 
 function pac.CreatePart(name, owner)
+	name = name or "base"
 	owner = owner or pac.LocalPlayer
-
-	if not name then
-		name = "base"
-	end
 
 	local part = class.Create("part", name)
 
@@ -45,8 +42,7 @@ function pac.CreatePart(name, owner)
 	part.Id = part_count
 	part_count = part_count + 1
 
-	part.IsEnabled = pac.CreateClientConVarFast("pac_enable_" .. name, "1", true,"boolean")
-	part:SetUniqueID(tostring(util.CRC(os.time() + pac.RealTime + part_count)))
+	part:SetUniqueID(util.CRC(os.time() + pac.RealTime + part_count))
 
 	merge_storable(part, part.BaseClass)
 
@@ -103,7 +99,7 @@ function pac.CreatePart(name, owner)
 	return part
 end
 
-function pac.RegisterPart(META, name)
+function pac.RegisterPart(META)
 
 	if META.Group == "experimental" then
 		-- something is up with the lua cache
@@ -112,8 +108,15 @@ function pac.RegisterPart(META, name)
 		return
 	end
 
+	do
+		local enabled = pac.CreateClientConVarFast("pac_enable_" .. META.ClassName, "1", true, "boolean")
+		function META:IsEnabled()
+			return enabled()
+		end
+	end
+
 	META.TypeBase = "base"
-	local _, name = class.Register(META, "part", name)
+	local _, name = class.Register(META, "part")
 
 	if pac.UpdatePartsWithMetatable then
 		pac.UpdatePartsWithMetatable(META, name)
