@@ -596,3 +596,35 @@ function PART:PostEntityDraw()
 end
 
 pac.RegisterPart(PART)
+
+do
+	local IN_SPEED = IN_SPEED
+	local IN_WALK = IN_WALK
+	local IN_DUCK = IN_DUCK
+
+	local function mod_speed(cmd, speed)
+		if speed and speed ~= 0 then
+			local forward = cmd:GetForwardMove()
+			forward = forward > 0 and speed or forward < 0 and -speed or 0
+
+			local side = cmd:GetSideMove()
+			side = side > 0 and speed or side < 0 and -speed or 0
+
+
+			cmd:SetForwardMove(forward)
+			cmd:SetSideMove(side)
+		end
+	end
+
+	pac.AddHook("CreateMove", "legacy_entity_part_speed_modifier", function(cmd)
+		if cmd:KeyDown(IN_SPEED) then
+			mod_speed(cmd, pac.LocalPlayer.pac_sprint_speed)
+		elseif cmd:KeyDown(IN_WALK) then
+			mod_speed(cmd, pac.LocalPlayer.pac_walk_speed)
+		elseif cmd:KeyDown(IN_DUCK) then
+			mod_speed(cmd, pac.LocalPlayer.pac_crouch_speed)
+		else
+			mod_speed(cmd, pac.LocalPlayer.pac_run_speed)
+		end
+	end)
+end
