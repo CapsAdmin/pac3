@@ -1,29 +1,30 @@
 local FrameTime = FrameTime
 
+local BUILDER, PART = pac.PartTemplate("base")
 
-local PART = {}
+BUILDER:NonPhysical()
 
 PART.ClassName = "animation"
-PART.NonPhysical = true
 PART.ThinkTime = 0
 PART.Groups = {'entity', 'model', 'modifiers'}
 PART.Icon = 'icon16/eye.png'
 
 PART.frame = 0
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Loop", true)
-	pac.GetSet(PART, "PingPongLoop", false)
-	pac.GetSet(PART, "SequenceName", "", {enums = function(part) local tbl = {} for k,v in pairs(part:GetSequenceList()) do tbl[v] = v end return tbl end})
-	pac.GetSet(PART, "Rate", 1, {editor_sensitivity = 0.1})
-	pac.GetSet(PART, "Offset", 0)
-	pac.GetSet(PART, "Min", 0)
-	pac.GetSet(PART, "Max", 1)
-	pac.GetSet(PART, "WeaponHoldType", "none", {enums = function(part) return part.ValidHoldTypes end})
-	pac.GetSet(PART, "OwnerCycle", false)
-	pac.GetSet(PART, "InvertFrames", false)
-	pac.GetSet(PART, "ResetOnHide", true)
-pac.EndStorableVars()
+BUILDER
+:StartStorableVars()
+	:GetSet("Loop", true)
+	:GetSet("PingPongLoop", false)
+	:GetSet("SequenceName", "", {enums = function(part) local tbl = {} for k,v in pairs(part:GetSequenceList()) do tbl[v] = v end return tbl end})
+	:GetSet("Rate", 1, {editor_sensitivity = 0.1})
+	:GetSet("Offset", 0)
+	:GetSet("Min", 0)
+	:GetSet("Max", 1)
+	:GetSet("WeaponHoldType", "none", {enums = function(part) return part.ValidHoldTypes end})
+	:GetSet("OwnerCycle", false)
+	:GetSet("InvertFrames", false)
+	:GetSet("ResetOnHide", true)
+:EndStorableVars()
 
 local tonumber = tonumber
 
@@ -301,4 +302,4 @@ function PART:OnThink()
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

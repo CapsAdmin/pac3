@@ -44,43 +44,48 @@ function pac.CreatePart(name, owner)
 
 	part:SetUniqueID(util.CRC(os.time() + pac.RealTime + part_count))
 
-	merge_storable(part, part.BaseClass)
+	if not pac.part_templates[part.ClassName] then
+		merge_storable(part, part.BaseClass)
 
-	if part.RemovedStorableVars then
-		for k in pairs(part.RemovedStorableVars) do
-			part.StorableVars[k] = nil
+		if part.RemovedStorableVars then
+			for k in pairs(part.RemovedStorableVars) do
+				part.StorableVars[k] = nil
+			end
 		end
-	end
 
-	if part.NonPhysical then
-		pac.RemoveProperty(part, "Bone")
-		pac.RemoveProperty(part, "Position")
-		pac.RemoveProperty(part, "Angles")
-		pac.RemoveProperty(part, "AngleVelocity")
-		pac.RemoveProperty(part, "EyeAngles")
-		pac.RemoveProperty(part, "AimName")
-		pac.RemoveProperty(part, "AimPartName")
-		pac.RemoveProperty(part, "PositionOffset")
-		pac.RemoveProperty(part, "AngleOffset")
-		pac.RemoveProperty(part, "Translucent")
-		pac.RemoveProperty(part, "IgnoreZ")
-		pac.RemoveProperty(part, "BlendMode")
-		pac.RemoveProperty(part, "NoTextureFiltering")
+		if part.NonPhysical then
+			pac.RemoveProperty(part, "Bone")
+			pac.RemoveProperty(part, "Position")
+			pac.RemoveProperty(part, "Angles")
+			pac.RemoveProperty(part, "AngleVelocity")
+			pac.RemoveProperty(part, "EyeAngles")
+			pac.RemoveProperty(part, "AimName")
+			pac.RemoveProperty(part, "AimPartName")
+			pac.RemoveProperty(part, "PositionOffset")
+			pac.RemoveProperty(part, "AngleOffset")
+			pac.RemoveProperty(part, "Translucent")
+			pac.RemoveProperty(part, "IgnoreZ")
+			pac.RemoveProperty(part, "BlendMode")
+			pac.RemoveProperty(part, "NoTextureFiltering")
 
-		if part.ClassName ~= "group" then
-			pac.RemoveProperty(part, "DrawOrder")
+			if part.ClassName ~= "group" then
+				pac.RemoveProperty(part, "DrawOrder")
+			end
 		end
 	end
 
 	part.DefaultVars = {}
 
 	for key in pairs(part.StorableVars) do
-		part.DefaultVars[key] = pac.class.Copy(part[key])
+		if key == "UniqueID" then
+			part.DefaultVars[key] = ""
+		else
+			part.DefaultVars[key] = pac.class.Copy(part[key])
+		end
 	end
 
-	part.DefaultVars.UniqueID = "" -- uh
-
 	local ok, err = xpcall(initialize, ErrorNoHalt, part, owner)
+
 	if not ok then
 		part:Remove()
 		if part.ClassName ~= "base" then

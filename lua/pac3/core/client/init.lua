@@ -33,6 +33,7 @@ do
 end
 
 include("util.lua")
+include("class.lua")
 
 pac.class = include("pac3/libraries/class.lua")
 pac.CompileExpression = include("pac3/libraries/expression.lua")

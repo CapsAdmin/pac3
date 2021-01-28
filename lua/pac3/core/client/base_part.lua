@@ -27,57 +27,76 @@ local function SETUP_CACHE_FUNC(tbl, func_name)
 	end
 end
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate()
 
 PART.ClassName = "base"
-PART.Internal = true
 
 function PART:__tostring()
 	return string.format("%s[%s][%s][%i]", self.Type, self.ClassName, self.Name, self.Id)
 end
 
-pac.GetSet(PART, "BoneIndex")
-pac.GetSet(PART, "PlayerOwner", NULL)
-pac.GetSet(PART, "Owner", NULL)
+BUILDER
+	:GetSet("BoneIndex")
+	:GetSet("PlayerOwner", NULL)
+	:GetSet("Owner", NULL)
 
-pac.StartStorableVars()
+BUILDER
+	:StartStorableVars()
+		:SetPropertyGroup("generic")
+			:GetSet("Name", "")
+			:GetSet("Hide", false)
+			:GetSet("OwnerName", "self")
+			:GetSet("EditorExpand", true, {hidden = true})
+			:GetSet("UniqueID", "", {hidden = true})
+			:GetSet("IsDisturbing", false, {
+				editor_friendly = "IsExplicit",
+				description = "Marks this content as NSFW, and makes it hidden for most of players who have pac_hide_disturbing set to 1"
+			})
+		:SetPropertyGroup("orientation")
+			:GetSet("Bone", "head")
+			:GetSet("Position", Vector(0,0,0))
+			:GetSet("Angles", Angle(0,0,0))
+			:GetSet("EyeAngles", false)
+			:GetSet("PositionOffset", Vector(0,0,0))
+			:GetSet("AngleOffset", Angle(0,0,0))
+			:SetupPartName("AimPart", {editor_panel = "aimpartname"})
+			:SetupPartName("Parent")
 
-	pac.SetPropertyGroup(PART, "generic")
-		pac.GetSet(PART, "Name", "")
-		pac.GetSet(PART, "Hide", false)
-		pac.GetSet(PART, "OwnerName", "self")
-		pac.GetSet(PART, "EditorExpand", true, {hidden = true})
-		pac.GetSet(PART, "UniqueID", "", {hidden = true})
-		pac.GetSet(PART, "IsDisturbing", false, {
-			editor_friendly = "IsExplicit",
-			description = "Marks this content as NSFW, and makes it hidden for most of players who have pac_hide_disturbing set to 1"
-		})
+		:SetPropertyGroup("appearance")
+			:GetSet("Translucent", false)
+			:GetSet("IgnoreZ", false)
+			:GetSet("NoTextureFiltering", false)
+			:GetSet("BlendMode", "", {enums = {
+				none = "one;zero;one;zero",
+				alpha = "src_alpha;one_minus_src_alpha;one;one_minus_src_alpha",
+				multiplicative = "dst_color;zero;dst_color;zero",
+				premultiplied = "one;one_src_minus_alpha;one;one_src_minus_alpha",
+				additive = "src_alpha;one;src_alpha;one",
+			}})
+			:GetSet("DrawOrder", 0)
+	:EndStorableVars()
 
-	pac.SetPropertyGroup(PART, "orientation")
-		pac.GetSet(PART, "Bone", "head")
-		pac.GetSet(PART, "Position", Vector(0,0,0))
-		pac.GetSet(PART, "Angles", Angle(0,0,0))
-		pac.GetSet(PART, "EyeAngles", false)
-		pac.GetSet(PART, "PositionOffset", Vector(0,0,0))
-		pac.GetSet(PART, "AngleOffset", Angle(0,0,0))
-		pac.SetupPartName(PART, "AimPart", {editor_panel = "aimpartname"})
-		pac.SetupPartName(PART, "Parent")
+function BUILDER:NonPhysical()
+	self:RemoveProperty("Bone")
+	self:RemoveProperty("Position")
+	self:RemoveProperty("Angles")
+	self:RemoveProperty("AngleVelocity")
+	self:RemoveProperty("EyeAngles")
+	self:RemoveProperty("AimName")
+	self:RemoveProperty("AimPartName")
+	self:RemoveProperty("PositionOffset")
+	self:RemoveProperty("AngleOffset")
+	self:RemoveProperty("Translucent")
+	self:RemoveProperty("IgnoreZ")
+	self:RemoveProperty("BlendMode")
+	self:RemoveProperty("NoTextureFiltering")
 
-	pac.SetPropertyGroup(PART, "appearance")
-		pac.GetSet(PART, "Translucent", false)
-		pac.GetSet(PART, "IgnoreZ", false)
-		pac.GetSet(PART, "NoTextureFiltering", false)
-		pac.GetSet(PART, "BlendMode", "", {enums = {
-			none = "one;zero;one;zero",
-			alpha = "src_alpha;one_minus_src_alpha;one;one_minus_src_alpha",
-			multiplicative = "dst_color;zero;dst_color;zero",
-			premultiplied = "one;one_src_minus_alpha;one;one_src_minus_alpha",
-			additive = "src_alpha;one;src_alpha;one",
-		}})
+	if self.PART.ClassName ~= "group" then
+		self:RemoveProperty("DrawOrder")
+	end
 
-		pac.GetSet(PART, "DrawOrder", 0)
-
-pac.EndStorableVars()
+	self.PART.NonPhysical = true
+end
 
 PART.AllowSetupPositionFrameSkip = true
 
@@ -1567,4 +1586,4 @@ function PART:SetDrawOrder(num)
 	if self:HasParent() then self:GetParent():SortChildren() end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

@@ -291,7 +291,7 @@ function pace.GetRegisteredParts()
 	local out = {}
 	for class_name, part in pairs(pac.GetRegisteredParts()) do
 		local cond = (not pace.IsInBasicMode() or pace.BasicParts[class_name]) and
-			not part.Internal and
+			part.ClassName ~= "base" and
 			part.show_in_editor ~= false and
 			part.is_deprecated ~= false
 

@@ -14,7 +14,7 @@ local EF_BONEMERGE = EF_BONEMERGE
 local NULL = NULL
 local Color = Color
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.FriendlyName = "model"
 PART.ClassName = "model2"
@@ -26,31 +26,29 @@ PART.is_model_part = true
 PART.ProperColorRange = true
 PART.Group = 'model'
 
-pac.StartStorableVars()
+BUILDER:StartStorableVars()
+	:SetPropertyGroup("generic")
+		:GetSet("Model", "", {editor_panel = "model"})
 
-	pac.SetPropertyGroup(PART, "generic")
-		pac.GetSet(PART, "Model", "", {editor_panel = "model"})
+	:SetPropertyGroup("orientation")
+		:GetSet("Size", 1, {editor_sensitivity = 0.25})
+		:GetSet("Scale", Vector(1,1,1))
+		:GetSet("BoneMerge", false)
 
-	pac.SetPropertyGroup(PART, "orientation")
-		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
-		pac.GetSet(PART, "Scale", Vector(1,1,1))
-		pac.GetSet(PART, "BoneMerge", false)
+	:SetPropertyGroup("appearance")
+		:GetSet("Color", Vector(1, 1, 1), {editor_panel = "color2"})
+		:GetSet("NoLighting", false)
+		:GetSet("NoCulling", false)
+		:GetSet("Invert", false)
+		:GetSet("Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
+		:GetSet("ModelModifiers", "", {editor_panel = "model_modifiers"})
+		:GetSet("Material", "", {editor_panel = "material"})
+		:GetSet("Materials", "", {editor_panel = "model_materials"})
+		:GetSet("Skin", 0, {editor_onchange = function(self, num) return math.Round(math.max(tonumber(num), 0)) end})
+		:GetSet("LevelOfDetail", 0, {editor_clamp = {-1, 8}, editor_round = true})
+		:SetupPartName("EyeTarget")
 
-	pac.SetPropertyGroup(PART, "appearance")
-		pac.GetSet(PART, "Color", Vector(1, 1, 1), {editor_panel = "color2"})
-		pac.GetSet(PART, "NoLighting", false)
-		pac.GetSet(PART, "NoCulling", false)
-		pac.GetSet(PART, "Invert", false)
-		pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
-		pac.GetSet(PART, "ModelModifiers", "", {editor_panel = "model_modifiers"})
-		pac.GetSet(PART, "Material", "", {editor_panel = "material"})
-		pac.GetSet(PART, "Materials", "", {editor_panel = "model_materials"})
-		pac.GetSet(PART, "Skin", 0, {editor_onchange = function(self, num) return math.Round(math.max(tonumber(num), 0)) end})
-		pac.GetSet(PART, "LevelOfDetail", 0, {editor_clamp = {-1, 8}, editor_round = true})
-
-		pac.SetupPartName(PART, "EyeTarget")
-
-pac.EndStorableVars()
+:EndStorableVars()
 
 PART.Entity = NULL
 
@@ -650,14 +648,13 @@ function PART:OnBuildBonePositions()
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()
 
 do
-	local PART = {}
+	local BUILDER, PART = pac.PartTemplate("model2")
 
 	PART.FriendlyName = "entity"
 	PART.ClassName = "entity2"
-	PART.Base = "model2"
 	PART.Category = "entity"
 	PART.ManualDraw = true
 	PART.HandleModifiersManually = true
@@ -665,18 +662,20 @@ do
 	PART.Group = "entity"
 	PART.is_model_part = false
 
-	pac.StartStorableVars()
-		pac.GetSet(PART, "NoDraw", false)
-	pac.EndStorableVars()
+	BUILDER:StartStorableVars()
+		:GetSet("NoDraw", false)
+	:EndStorableVars()
 
-	pac.RemoveProperty(PART, "BoneMerge")
-	pac.RemoveProperty(PART, "Bone")
-	--pac.RemoveProperty(PART, "Position")
-	--pac.RemoveProperty(PART, "Angles")
-	--pac.RemoveProperty(PART, "PositionOffset")
-	--pac.RemoveProperty(PART, "AngleOffset")
-	pac.RemoveProperty(PART, "EyeAngles")
-	pac.RemoveProperty(PART, "AimPartName")
+	BUILDER:RemoveProperty("BoneMerge")
+	BUILDER:RemoveProperty("Bone")
+	--BUILDER:RemoveProperty("Position")
+	--BUILDER:RemoveProperty("Angles")
+	--BUILDER:RemoveProperty("PositionOffset")
+	--BUILDER:RemoveProperty("AngleOffset")
+	BUILDER:RemoveProperty("EyeAngles")
+	BUILDER:RemoveProperty("AimPartName")
+
+	PrintTable(BUILDER)
 
 	function PART:GetNiceName()
 		local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%.")) or self:GetModel()
@@ -690,7 +689,6 @@ do
 
 		return (str and str:gsub("%d", "") or "error") .. " " .. class_name .. " model"
 	end
-
 
 	function PART:SetPosition(pos)
 		self.Position = pos
@@ -828,14 +826,14 @@ do
 		end
 	end
 
-	pac.RegisterPart(PART)
+	BUILDER:Register()
 end
 
 do
-	local PART = {}
+	local BUILDER, PART = pac.PartTemplate("model2")
 
 	PART.ClassName = "weapon"
-	PART.Base = "model2"
+	PART.FriendlyName = "weapon"
 	PART.Category = "entity"
 	PART.ManualDraw = true
 	PART.HandleModifiersManually = true
@@ -843,11 +841,11 @@ do
 	PART.Group = "entity"
 	PART.is_model_part = false
 
-	pac.StartStorableVars()
-		pac.SetPropertyGroup(PART, "generic")
-			pac.GetSet(PART, "OverridePosition", false)
-			pac.GetSet(PART, "NoDraw", false)
-			pac.GetSet(PART, "Class", "all", {enums = function()
+	BUILDER:StartStorableVars()
+		:SetPropertyGroup("generic")
+			:GetSet("OverridePosition", false)
+			:GetSet("NoDraw", false)
+			:GetSet("Class", "all", {enums = function()
 				local out = {
 					["physgun"] = "weapon_physgun",
 					["357"] = "weapon_357",
@@ -875,9 +873,9 @@ do
 				end
 				return out
 			end})
-	pac.EndStorableVars()
+		:EndStorableVars()
 
-	pac.RemoveProperty(PART, "Model")
+	BUILDER:RemoveProperty("Model")
 
 	function PART:GetNiceName()
 		if self.Class ~= "all" then
@@ -960,5 +958,5 @@ do
 		end
 	end
 
-	pac.RegisterPart(PART)
+	BUILDER:Register()
 end

@@ -25,7 +25,10 @@ function _G.pac_Restart()
 
 			for key, part in pairs(pac.GetLocalParts()) do
 				if not part:HasParent() and part.show_in_editor ~= false then
-					table.insert(prev_parts, part:ToTable())
+					local ok, err = pcall(function()
+						table.insert(prev_parts, part:ToTable())
+					end)
+					if not ok then print(err) end
 				end
 			end
 		end
