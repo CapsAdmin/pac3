@@ -18,24 +18,24 @@ mctrl.angle_pos = 0.5
 mctrl.scale_pos = 0.25
 
 do -- pace
-	mctrl.target = pac.NULL
+	mctrl.target = NULL
 
 	function mctrl.SetTarget(part)
-		part = part or pac.NULL
+		part = part or NULL
 		if not part:IsValid() then
-			mctrl.target = pac.NULL
+			mctrl.target = NULL
 			return
 		end
 
 		if (part.NonPhysical and part.ClassName ~= 'group') or part.HideGizmo then
-			mctrl.target = pac.NULL
+			mctrl.target = NULL
 		else
 			mctrl.target = part
 		end
 	end
 
 	function mctrl.GetTarget()
-		return mctrl.target:IsValid() and not mctrl.target:IsHidden() and mctrl.target or pac.NULL
+		return mctrl.target:IsValid() and not mctrl.target:IsHidden() and mctrl.target or NULL
 	end
 
 	function mctrl.GetAxes(ang)

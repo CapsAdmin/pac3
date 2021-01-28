@@ -636,7 +636,7 @@ do -- menu
 	end
 
 	function pace.OnNewPartMenu()
-		pace.current_part = pac.NULL
+		pace.current_part = NULL
 		local menu = DermaMenu()
 		menu:MakePopup()
 		menu:SetPos(input.GetCursorPos())

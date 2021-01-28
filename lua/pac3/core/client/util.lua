@@ -470,7 +470,7 @@ do -- get set and editor vars
 		local group = __group
 
 		pac.EndStorableVars()
-			pac.GetSet(PART, part_key, pac.NULL)
+			pac.GetSet(PART, part_key, NULL)
 		pac.StartStorableVars()
 
 		__group = group
@@ -535,7 +535,7 @@ do -- get set and editor vars
 
 				if var == "" then
 					self[uid_key] = ""
-					self[part_key] = pac.NULL
+					self[part_key] = NULL
 					return
 				else
 					self[try_key] = true

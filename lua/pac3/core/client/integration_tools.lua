@@ -73,15 +73,15 @@ function pac.SetupENT(ENT, owner)
 				end
 			end
 
-			return pac.NULL
+			return NULL
 		end
 
 		self.pac_part_find_cache = self.pac_part_find_cache or {}
 
-		local part = self.pac_outfits[outfit.self.UniqueID] or pac.NULL
+		local part = self.pac_outfits[outfit.self.UniqueID] or NULL
 
 		if part:IsValid() then
-			local cached = self.pac_part_find_cache[name] or pac.NULL
+			local cached = self.pac_part_find_cache[name] or NULL
 
 			if cached:IsValid() then return cached end
 
@@ -95,7 +95,7 @@ function pac.SetupENT(ENT, owner)
 			end
 		end
 
-		return pac.NULL
+		return NULL
 	end
 
 	function ENT:AttachPACPart(outfit, owner, keep_uniqueid)
@@ -122,7 +122,7 @@ function pac.SetupENT(ENT, owner)
 
 		self.pac_outfits = self.pac_outfits or {}
 
-		local part = self.pac_outfits[outfit.self.UniqueID] or pac.NULL
+		local part = self.pac_outfits[outfit.self.UniqueID] or NULL
 
 		if part:IsValid() then
 			part:Remove()
@@ -152,7 +152,7 @@ function pac.SetupENT(ENT, owner)
 
 		self.pac_outfits = self.pac_outfits or {}
 
-		local part = self.pac_outfits[outfit.self.UniqueID] or pac.NULL
+		local part = self.pac_outfits[outfit.self.UniqueID] or NULL
 
 		if part:IsValid() then
 			part:Remove()

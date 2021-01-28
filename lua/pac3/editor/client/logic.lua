@@ -1,4 +1,4 @@
-pace.current_part = pac.NULL
+pace.current_part = NULL
 pace.properties = NULL
 pace.tree = NULL
 
