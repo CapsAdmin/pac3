@@ -1040,6 +1040,12 @@ do -- serializing
 
 			for _, key in pairs(self:GetStorableVars()) do
 				if not pac.PartNameKeysToIgnore[key] then
+
+					if key == "Name" and self.Name == "" then
+						-- TODO: seperate debug name and name !!!
+						continue
+					end
+
 					tbl.self[key] = pac.class.Copy(self["Get" .. key](self))
 				end
 			end

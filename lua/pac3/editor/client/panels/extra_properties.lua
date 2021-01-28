@@ -589,7 +589,7 @@ do -- arguments
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:ExtraPopulate()
-		if not pace.current_part:IsValid() then return end
+		if not pace.current_part:IsValid() or pace.current_part.ClassName ~= "event" then return end
 
 		local data = pace.current_part.Events[pace.current_part.Event]
 		if not data then return end
