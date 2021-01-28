@@ -2,26 +2,6 @@ local Vector = Vector
 local Matrix = Matrix
 local isstring = isstring
 
-function pac.CopyMaterial(mat, shader)
-	local copy = CreateMaterial(pac.uid("pac_copymat_") .. tostring({}), shader or mat:GetShader())
-	for k,v in pairs(mat:GetKeyValues()) do
-		local t = type(v)
-
-		if t == "Vector" then
-			copy:SetVector(k, v)
-		elseif t == "number" then
-			copy:SetFloat(k, v)
-		elseif t == "Matrix" then
-			copy:SetMatrix(k, v)
-		elseif t == "ITexture" then
-			copy:SetTexture(k, v)
-		elseif t == "string" then
-			copy:SetString(k, v)
-		end
-	end
-	return copy
-end
-
 function pac.MakeMaterialUnlitGeneric(mat, id)
 	local tex_path = mat:GetString("$basetexture")
 
@@ -94,7 +74,6 @@ do --dev util
 
 		local val
 		local c = CreateClientConVar(cvar,initial,save,server)
-		--Msg("[FCVar] ",cvar,": ")
 
 		local ConVarChanged
 
@@ -387,15 +366,6 @@ function pac.CalcEntityCRC(ent)
 	local crc = x .. y .. z .. p .. _y .. r .. mdl
 
 	return util.CRC(crc)
-end
-
-function pac.MakeNull(tbl)
-	if tbl then
-		for k in pairs(tbl) do
-			tbl[k] = nil
-		end
-		setmetatable(tbl, getmetatable(pac.NULL))
-	end
 end
 
 do
