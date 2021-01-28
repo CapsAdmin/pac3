@@ -1,3 +1,9 @@
+AddCSLuaFile()
+
+if SERVER then
+	return
+end
+
 local sv_allowcslua = GetConVar('sv_allowcslua')
 local prefer_local_version = CreateClientConVar("pac_restart_prefer_local", "1")
 
