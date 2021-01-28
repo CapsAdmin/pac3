@@ -164,6 +164,7 @@ function PART:UpdateScale(ent)
 		if ent:IsPlayer() or ent:IsNPC() then
 			if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
 				pacx.SetEntitySizeMultiplier(ent, self.Size)
+				pac.SetModelScale(ent, self.Scale)
 			else
 				pac.SetModelScale(ent, nil, self.Size)
 			end
@@ -176,9 +177,9 @@ function PART:UpdateScale(ent)
 		if ent:IsPlayer() or ent:IsNPC() then
 			if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
 				pacx.SetEntitySizeMultiplier(ent, self.Size)
-				pac.SetModelScale(ent, self.Scale * self.Size)
+				pac.SetModelScale(ent, self.Scale)
 			else
-				pac.SetModelScale(ent, nil, self.Size)
+				pac.SetModelScale(ent, self.Scale)
 			end
 		else
 			pac.SetModelScale(ent, self.Scale * self.Size)
@@ -502,9 +503,10 @@ function PART:OnRemove()
 		if pacx.SetModelOnServer then
 			pacx.SetModelOnServer(ent)
 		end
-
-		pac.SetModelScale(ent)
 	end
+
+	print("LOL")
+	pac.SetModelScale(ent)
 end
 
 function PART:OnHide()
