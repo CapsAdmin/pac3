@@ -29,7 +29,7 @@ function pac.CreatePart(name, owner)
 		META = pac.registered_parts.base
 		if not META then
 			return NULL
-	end
+		end
 	end
 
 	local part = setmetatable({}, META)
@@ -84,6 +84,8 @@ function pac.RegisterPart(META)
 			return enabled()
 		end
 	end
+
+	META.__index = META
 
 	pac.registered_parts[META.ClassName] = META
 
