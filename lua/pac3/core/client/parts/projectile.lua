@@ -85,6 +85,8 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSet("RemoveOnCollide", false)
 BUILDER:EndStorableVars()
 
+PART.Translucent = false
+
 function PART:OnShow(from_rendering)
 	if not from_rendering then
 		self.trigger = true
