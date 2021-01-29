@@ -1,16 +1,16 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "woohoo"
 PART.Group = "effects"
 PART.Icon = "icon16/webcam_delete.png"
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Resolution", 8)
-	pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, "FixedSize", true)
-	pac.GetSet(PART, "BlurFiltering", false)
-	pac.GetSet(PART, "Translucent", true)
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Resolution", 8)
+	BUILDER:GetSet("Size", 1, {editor_sensitivity = 0.25})
+	BUILDER:GetSet("FixedSize", true)
+	BUILDER:GetSet("BlurFiltering", false)
+	BUILDER:GetSet("Translucent", true)
+BUILDER:EndStorableVars()
 
 local render_ReadPixel = render.ReadPixel
 local surface_SetDrawColor = surface.SetDrawColor
@@ -78,4 +78,4 @@ function PART:OnDraw(owner, pos, ang)
 	cam.End2D()
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

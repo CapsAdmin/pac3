@@ -1,25 +1,25 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "sound"
 PART.FriendlyName = "sound"
-PART.NonPhysical = true
+BUILDER:NonPhysical()
 PART.ThinkTime = 0
 PART.Group = 'effects'
 PART.Icon = 'icon16/sound.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Sound", "")
-	pac.GetSet(PART, "Volume", 1, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, "Pitch", 0.4, {editor_sensitivity = 0.125})
-	pac.GetSet(PART, "MinPitch", 100, {editor_sensitivity = 0.125})
-	pac.GetSet(PART, "MaxPitch", 100, {editor_sensitivity = 0.125})
-	pac.GetSet(PART, "RootOwner", true)
-	pac.GetSet(PART, "PlayOnFootstep", false)
-	pac.GetSet(PART, "Overlapping", false)
-	pac.GetSet(PART, "SoundLevel", 100)
-	pac.GetSet(PART, "Loop", false)
-	pac.GetSet(PART, "LocalPlayerOnly", false)
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Sound", "")
+	BUILDER:GetSet("Volume", 1, {editor_sensitivity = 0.25})
+	BUILDER:GetSet("Pitch", 0.4, {editor_sensitivity = 0.125})
+	BUILDER:GetSet("MinPitch", 100, {editor_sensitivity = 0.125})
+	BUILDER:GetSet("MaxPitch", 100, {editor_sensitivity = 0.125})
+	BUILDER:GetSet("RootOwner", true)
+	BUILDER:GetSet("PlayOnFootstep", false)
+	BUILDER:GetSet("Overlapping", false)
+	BUILDER:GetSet("SoundLevel", 100)
+	BUILDER:GetSet("Loop", false)
+	BUILDER:GetSet("LocalPlayerOnly", false)
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	local str = pac.PrettifyName("/" .. self:GetSound())
@@ -257,4 +257,4 @@ for key, CHAN in pairs(channels) do
 	} )
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

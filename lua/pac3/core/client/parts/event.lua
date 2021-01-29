@@ -1,16 +1,16 @@
 local LocalPlayer = LocalPlayer
 local FrameTime = FrameTime
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "event"
-PART.NonPhysical = true
+BUILDER:NonPhysical()
 PART.ThinkTime = 0
 PART.AlwaysThink = true
 PART.Icon = 'icon16/clock.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Event", "", {enums = function(part)
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Event", "", {enums = function(part)
 		local output = {}
 
 		for i, event in pairs(part.Events) do
@@ -21,14 +21,14 @@ pac.StartStorableVars()
 
 		return output
 	end})
-	pac.GetSet(PART, "Operator", "find simple", {enums = function(part) local tbl = {} for i,v in ipairs(part.Operators) do tbl[v] = v end return tbl end})
-	pac.GetSet(PART, "Arguments", "", {editor_panel = "event_arguments"})
-	pac.GetSet(PART, "Invert", false)
-	pac.GetSet(PART, "RootOwner", true)
-	pac.GetSet(PART, "AffectChildrenOnly", false)
-	pac.GetSet(PART, "ZeroEyePitch", false)
-	pac.SetupPartName(PART, "TargetPart")
-pac.EndStorableVars()
+	BUILDER:GetSet("Operator", "find simple", {enums = function(part) local tbl = {} for i,v in ipairs(part.Operators) do tbl[v] = v end return tbl end})
+	BUILDER:GetSet("Arguments", "", {editor_panel = "event_arguments"})
+	BUILDER:GetSet("Invert", false)
+	BUILDER:GetSet("RootOwner", true)
+	BUILDER:GetSet("AffectChildrenOnly", false)
+	BUILDER:GetSet("ZeroEyePitch", false)
+	BUILDER:SetupPartName("TargetPart")
+BUILDER:EndStorableVars()
 
 local function convert_angles(self, ang)
 	if self.ZeroEyePitch then
@@ -1696,7 +1696,7 @@ function PART:OnEvent(typ, ent)
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()
 
 do
 	local enums = {}

@@ -1,27 +1,27 @@
 language.Add("pac_projectile", "Projectile")
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "projectile"
 PART.Group = 'advanced'
 PART.Icon = 'icon16/bomb.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Speed", 1)
-	pac.GetSet(PART, "AddOwnerSpeed", false)
-	pac.GetSet(PART, "Damping", 0)
-	pac.GetSet(PART, "Gravity", true)
-	pac.GetSet(PART, "Collisions", true)
-	pac.GetSet(PART, "Sphere", false)
-	pac.GetSet(PART, "Radius", 1)
-	pac.GetSet(PART, "DamageRadius", 50)
-	pac.GetSet(PART, "LifeTime", 5)
-	pac.GetSet(PART, "AimDir", false)
-	pac.GetSet(PART, "Sticky", false)
-	pac.GetSet(PART, "Bounce", 0)
-	pac.GetSet(PART, "BulletImpact", false)
-	pac.GetSet(PART, "Damage", 0)
-	pac.GetSet(PART, "DamageType", "generic", {enums = {
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Speed", 1)
+	BUILDER:GetSet("AddOwnerSpeed", false)
+	BUILDER:GetSet("Damping", 0)
+	BUILDER:GetSet("Gravity", true)
+	BUILDER:GetSet("Collisions", true)
+	BUILDER:GetSet("Sphere", false)
+	BUILDER:GetSet("Radius", 1)
+	BUILDER:GetSet("DamageRadius", 50)
+	BUILDER:GetSet("LifeTime", 5)
+	BUILDER:GetSet("AimDir", false)
+	BUILDER:GetSet("Sticky", false)
+	BUILDER:GetSet("Bounce", 0)
+	BUILDER:GetSet("BulletImpact", false)
+	BUILDER:GetSet("Damage", 0)
+	BUILDER:GetSet("DamageType", "generic", {enums = {
 			generic = 0, --generic damage
 			crush = 1, --caused by physics interaction
 			bullet = 2, --bullet damage
@@ -67,23 +67,23 @@ pac.StartStorableVars()
 			armor = -1,
 		}
 	})
-	pac.GetSet(PART, "Spread", 0)
-	pac.GetSet(PART, "Delay", 0)
-	pac.GetSet(PART, "Maximum", 0)
-	pac.GetSet(PART, "Mass", 100)
-	pac.GetSet(PART, "Attract", 0)
-	pac.GetSet(PART, "AttractMode", "projectile_nearest", {enums = {
+	BUILDER:GetSet("Spread", 0)
+	BUILDER:GetSet("Delay", 0)
+	BUILDER:GetSet("Maximum", 0)
+	BUILDER:GetSet("Mass", 100)
+	BUILDER:GetSet("Attract", 0)
+	BUILDER:GetSet("AttractMode", "projectile_nearest", {enums = {
 		hitpos = "hitpos",
 		hitpos_radius = "hitpos_radius",
 		closest_to_projectile = "closest_to_projectile",
 		closest_to_hitpos = "closest_to_hitpos",
 	}})
-	pac.GetSet(PART, "AttractRadius", 200)
-	pac.SetupPartName(PART, "OutfitPart")
-	pac.GetSet(PART, "Physical", false)
-	pac.GetSet(PART, "CollideWithOwner", false)
-	pac.GetSet(PART, "RemoveOnCollide", false)
-pac.EndStorableVars()
+	BUILDER:GetSet("AttractRadius", 200)
+	BUILDER:SetupPartName("OutfitPart")
+	BUILDER:GetSet("Physical", false)
+	BUILDER:GetSet("CollideWithOwner", false)
+	BUILDER:GetSet("RemoveOnCollide", false)
+BUILDER:EndStorableVars()
 
 function PART:OnShow(from_rendering)
 	if not from_rendering then
@@ -334,4 +334,4 @@ do -- physical
 	end)
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

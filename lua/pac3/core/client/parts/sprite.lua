@@ -4,27 +4,27 @@ local Color = Color
 local Vector = Vector
 local cam_IgnoreZ = cam.IgnoreZ
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "sprite"
 PART.Group = 'effects'
 PART.Icon = 'icon16/layers.png'
 
-pac.StartStorableVars()
-	pac.SetPropertyGroup()
-		pac.GetSet(PART, "IgnoreZ", false)
-		pac.GetSet(PART, "SizeX", 1, {editor_sensitivity = 0.25})
-		pac.GetSet(PART, "SizeY", 1, {editor_sensitivity = 0.25})
-		pac.GetSet(PART, "SpritePath", "sprites/grip", {editor_panel = "material"})
+BUILDER:StartStorableVars()
+	BUILDER:SetPropertyGroup()
+		BUILDER:GetSet("IgnoreZ", false)
+		BUILDER:GetSet("SizeX", 1, {editor_sensitivity = 0.25})
+		BUILDER:GetSet("SizeY", 1, {editor_sensitivity = 0.25})
+		BUILDER:GetSet("SpritePath", "sprites/grip", {editor_panel = "material"})
 
-	pac.SetPropertyGroup(PART, "orientation")
-		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
+	BUILDER:SetPropertyGroup("orientation")
+		BUILDER:GetSet("Size", 1, {editor_sensitivity = 0.25})
 
-	pac.SetPropertyGroup(PART, "appearance")
-		pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
-		pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
-		pac.GetSet(PART, "Translucent", true)
-pac.EndStorableVars()
+	BUILDER:SetPropertyGroup("appearance")
+		BUILDER:GetSet("Color", Vector(255, 255, 255), {editor_panel = "color"})
+		BUILDER:GetSet("Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
+		BUILDER:GetSet("Translucent", true)
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	if not self:GetSpritePath() then
@@ -122,4 +122,4 @@ function PART:OnRestore(data)
 	self:SetMaterial(data.SpritePath)
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

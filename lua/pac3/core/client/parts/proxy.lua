@@ -1,15 +1,15 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "proxy"
-PART.NonPhysical = true
+BUILDER:NonPhysical()
 PART.ThinkTime = 0
 PART.Group = 'modifiers'
 PART.Icon = 'icon16/calculator.png'
 
-pac.StartStorableVars()
+BUILDER:StartStorableVars()
 
-	pac.SetPropertyGroup()
-		pac.GetSet(PART, "VariableName", "", {enums = function(part)
+	BUILDER:SetPropertyGroup()
+		BUILDER:GetSet("VariableName", "", {enums = function(part)
 			local parent = part:GetTarget()
 			if not parent:IsValid() then return end
 			local tbl = {}
@@ -26,30 +26,30 @@ pac.StartStorableVars()
 			return tbl
 		end})
 
-		pac.GetSet(PART, "RootOwner", false)
-		pac.SetupPartName(PART, "TargetPart")
-		pac.GetSet(PART, "AffectChildren", false)
-		pac.GetSet(PART, "Expression", "")
+		BUILDER:GetSet("RootOwner", false)
+		BUILDER:SetupPartName("TargetPart")
+		BUILDER:GetSet("AffectChildren", false)
+		BUILDER:GetSet("Expression", "")
 
-	pac.SetPropertyGroup(PART, "easy setup")
-		pac.GetSet(PART, "Input", "time", {enums = function(part) return part.Inputs end})
-		pac.GetSet(PART, "Function", "sin", {enums = function(part) return part.Functions end})
-		pac.GetSet(PART, "Axis", "")
-		pac.GetSet(PART, "Min", 0)
-		pac.GetSet(PART, "Max", 1)
-		pac.GetSet(PART, "Offset", 0)
-		pac.GetSet(PART, "InputMultiplier", 1)
-		pac.GetSet(PART, "InputDivider", 1)
-		pac.GetSet(PART, "Pow", 1)
+	BUILDER:SetPropertyGroup("easy setup")
+		BUILDER:GetSet("Input", "time", {enums = function(part) return part.Inputs end})
+		BUILDER:GetSet("Function", "sin", {enums = function(part) return part.Functions end})
+		BUILDER:GetSet("Axis", "")
+		BUILDER:GetSet("Min", 0)
+		BUILDER:GetSet("Max", 1)
+		BUILDER:GetSet("Offset", 0)
+		BUILDER:GetSet("InputMultiplier", 1)
+		BUILDER:GetSet("InputDivider", 1)
+		BUILDER:GetSet("Pow", 1)
 
-	pac.SetPropertyGroup(PART, "behavior")
-		pac.GetSet(PART, "Additive", false)
-		pac.GetSet(PART, "PlayerAngles", false)
-		pac.GetSet(PART, "ZeroEyePitch", false)
-		pac.GetSet(PART, "ResetVelocitiesOnHide", true)
-		pac.GetSet(PART, "VelocityRoughness", 10)
+	BUILDER:SetPropertyGroup("behavior")
+		BUILDER:GetSet("Additive", false)
+		BUILDER:GetSet("PlayerAngles", false)
+		BUILDER:GetSet("ZeroEyePitch", false)
+		BUILDER:GetSet("ResetVelocitiesOnHide", true)
+		BUILDER:GetSet("VelocityRoughness", 10)
 
-pac.EndStorableVars()
+BUILDER:EndStorableVars()
 
 function PART:GetTarget(physical)
 	local part = self:GetTargetPart()
@@ -1155,4 +1155,4 @@ function PART:OnThink()
 
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

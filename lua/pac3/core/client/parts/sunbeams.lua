@@ -2,18 +2,18 @@ local ScrW = ScrW
 local ScrH = ScrH
 local DrawSunbeams
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "sunbeams"
 PART.Group = 'effects'
 PART.Icon = 'icon16/weather_sun.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Darken", 0)
-	pac.GetSet(PART, "Multiplier", 0.25, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, "Size", 0.1, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, "Translucent", true)
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Darken", 0)
+	BUILDER:GetSet("Multiplier", 0.25, {editor_sensitivity = 0.25})
+	BUILDER:GetSet("Size", 0.1, {editor_sensitivity = 0.25})
+	BUILDER:GetSet("Translucent", true)
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	local mult = self:GetMultiplier()
@@ -38,4 +38,4 @@ function PART:OnDraw(owner, pos, ang)
 	cam.End2D()
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

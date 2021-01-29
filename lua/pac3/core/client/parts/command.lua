@@ -1,16 +1,16 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "command"
-PART.NonPhysical = true
+BUILDER:NonPhysical()
 PART.Group = 'advanced'
 PART.Icon = 'icon16/application_xp_terminal.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "String", "", {editor_panel = "string"})
-	pac.GetSet(PART, "UseLua", false)
-	pac.GetSet(PART, "ExectueOnWear", false)
-	pac.GetSet(PART, "ExectueOnShow", true)
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("String", "", {editor_panel = "string"})
+	BUILDER:GetSet("UseLua", false)
+	BUILDER:GetSet("ExectueOnWear", false)
+	BUILDER:GetSet("ExectueOnShow", true)
+BUILDER:EndStorableVars()
 
 function PART:Initialize()
 	if self:GetExectueOnWear() then
@@ -75,4 +75,4 @@ function PART:Execute()
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

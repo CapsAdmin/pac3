@@ -1,12 +1,12 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "flex"
-PART.NonPhysical = true
+BUILDER:NonPhysical()
 PART.Icon = 'icon16/emoticon_smile.png'
 PART.Group = 'entity'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Flex", "", {
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Flex", "", {
 		enums = function(part)
 			local tbl = {}
 
@@ -18,10 +18,10 @@ pac.StartStorableVars()
 		end
 	})
 
-	pac.GetSet(PART, "Weight", 0)
-	pac.GetSet(PART, "RootOwner", false, { description = "Target the local player instead of the part's parent" })
-	pac.GetSet(PART, "DefaultOnHide", true)
-pac.EndStorableVars()
+	BUILDER:GetSet("Weight", 0)
+	BUILDER:GetSet("RootOwner", false, { description = "Target the local player instead of the part's parent" })
+	BUILDER:GetSet("DefaultOnHide", true)
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	return self:GetFlex() ~= "" and self:GetFlex() or "no flex"
@@ -125,4 +125,4 @@ function PART:Clear()
 	self:UpdateFlex(self.Flex, 0)
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

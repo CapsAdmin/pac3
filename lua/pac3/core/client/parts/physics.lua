@@ -1,32 +1,32 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ThinkTime = 0
 PART.ClassName = "physics"
-PART.NonPhysical = true
+BUILDER:NonPhysical()
 PART.Group = 'model'
 PART.Icon = 'icon16/shape_handles.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Box", true)
-	pac.GetSet(PART, "Radius", 1)
-	pac.GetSet(PART, "SelfCollision", false)
-	pac.GetSet(PART, "Gravity", true)
-	pac.GetSet(PART, "Collisions", true)
-	pac.GetSet(PART, "Mass", 100)
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Box", true)
+	BUILDER:GetSet("Radius", 1)
+	BUILDER:GetSet("SelfCollision", false)
+	BUILDER:GetSet("Gravity", true)
+	BUILDER:GetSet("Collisions", true)
+	BUILDER:GetSet("Mass", 100)
 
-	pac.GetSet(PART, "Follow", false)
+	BUILDER:GetSet("Follow", false)
 
-	pac.GetSet(PART, "SecondsToArrive", 0.1)
+	BUILDER:GetSet("SecondsToArrive", 0.1)
 
-	pac.GetSet(PART, "MaxSpeed", 10000)
-	pac.GetSet(PART, "MaxAngular", 3600)
+	BUILDER:GetSet("MaxSpeed", 10000)
+	BUILDER:GetSet("MaxAngular", 3600)
 
-	pac.GetSet(PART, "MaxSpeedDamp", 1000)
-	pac.GetSet(PART, "MaxAngularDamp", 1000)
-	pac.GetSet(PART, "DampFactor", 1)
+	BUILDER:GetSet("MaxSpeedDamp", 1000)
+	BUILDER:GetSet("MaxAngularDamp", 1000)
+	BUILDER:GetSet("DampFactor", 1)
 
-	pac.GetSet(PART, "ConstrainSphere", 0)
-pac.EndStorableVars()
+	BUILDER:GetSet("ConstrainSphere", 0)
+BUILDER:EndStorableVars()
 
 local function IsInvalidParent(self)
 	return self.Parent.ClassName ~= "model" and self.Parent.ClassName ~= "model2"
@@ -173,7 +173,7 @@ function PART:Enable()
 	self:SetRadius(self.Radius)
 
 	for key, val in pairs(self.StorableVars) do
-		if self.BaseClass.StorableVars[key] then goto CONTINUE end
+		if pac.registered_parts.base.StorableVars[key] then goto CONTINUE end
 		self["Set" .. key](self, self[key])
 		::CONTINUE::
 	end
@@ -209,4 +209,4 @@ function PART:SetAngleDamping(num)
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

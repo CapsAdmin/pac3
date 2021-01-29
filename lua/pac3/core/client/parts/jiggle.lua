@@ -5,37 +5,37 @@ local Vector = Vector
 local Angle = Angle
 local physenv_GetGravity = physenv.GetGravity
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "jiggle"
 PART.Group = 'model'
 PART.Icon = 'icon16/chart_line.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Strain", 0.5, {editor_onchange = function(self, num)
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Strain", 0.5, {editor_onchange = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
 		return math.Clamp(num, 0, 1) * 0.999
 	end})
-	pac.GetSet(PART, "Speed", 1)
-	pac.GetSet(PART, "ConstantVelocity", Vector(0, 0, 0))
-	pac.GetSet(PART, "LocalVelocity", true)
-	pac.GetSet(PART, "JiggleAngle", true)
-	pac.GetSet(PART, "JigglePosition", true)
+	BUILDER:GetSet("Speed", 1)
+	BUILDER:GetSet("ConstantVelocity", Vector(0, 0, 0))
+	BUILDER:GetSet("LocalVelocity", true)
+	BUILDER:GetSet("JiggleAngle", true)
+	BUILDER:GetSet("JigglePosition", true)
 
-	pac.GetSet(PART, "ConstrainPitch", false)
-	pac.GetSet(PART, "ConstrainYaw", false)
-	pac.GetSet(PART, "ConstrainRoll", false)
+	BUILDER:GetSet("ConstrainPitch", false)
+	BUILDER:GetSet("ConstrainYaw", false)
+	BUILDER:GetSet("ConstrainRoll", false)
 
-	pac.GetSet(PART, "ConstrainX", false)
-	pac.GetSet(PART, "ConstrainY", false)
-	pac.GetSet(PART, "ConstrainZ", false)
+	BUILDER:GetSet("ConstrainX", false)
+	BUILDER:GetSet("ConstrainY", false)
+	BUILDER:GetSet("ConstrainZ", false)
 
-	pac.GetSet(PART, "ConstrainSphere", 0)
-	pac.GetSet(PART, "StopRadius", 0)
-	pac.GetSet(PART, "Ground", false)
-	pac.GetSet(PART, "ResetOnHide", false)
-pac.EndStorableVars()
+	BUILDER:GetSet("ConstrainSphere", 0)
+	BUILDER:GetSet("StopRadius", 0)
+	BUILDER:GetSet("Ground", false)
+	BUILDER:GetSet("ResetOnHide", false)
+BUILDER:EndStorableVars()
 
 local math_AngleDifference = math.AngleDifference
 
@@ -156,4 +156,4 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

@@ -1,9 +1,9 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "player_config"
 PART.Group = "entity"
 PART.Icon = 'icon16/brick.png'
-PART.NonPhysical = true
+BUILDER:NonPhysical()
 
 local blood_colors = {
 	dont_bleed = _G.DONT_BLEED,
@@ -16,27 +16,27 @@ local blood_colors = {
 	antlion_worker = _G.BLOOD_COLOR_ANTLION_WORKER,
 }
 
-pac.StartStorableVars()
+BUILDER:StartStorableVars()
 
-pac.SetPropertyGroup()
-	pac.GetSet(PART, "MuteSounds", false)
-	pac.GetSet(PART, "AllowOggWhenMuted", false)
-	pac.GetSet(PART, "HideBullets", false)
-	pac.GetSet(PART, "HidePhysgunBeam", false)
-	pac.GetSet(PART, "UseLegacyScale", false)
-	pac.GetSet(PART, "BloodColor", "red", {enums = blood_colors})
+BUILDER:SetPropertyGroup()
+	BUILDER:GetSet("MuteSounds", false)
+	BUILDER:GetSet("AllowOggWhenMuted", false)
+	BUILDER:GetSet("HideBullets", false)
+	BUILDER:GetSet("HidePhysgunBeam", false)
+	BUILDER:GetSet("UseLegacyScale", false)
+	BUILDER:GetSet("BloodColor", "red", {enums = blood_colors})
 
-pac.SetPropertyGroup(PART, "behavior")
-	pac.GetSet(PART, "InverseKinematics", false)
-	pac.GetSet(PART, "MuteFootsteps", false)
+BUILDER:SetPropertyGroup("behavior")
+	BUILDER:GetSet("InverseKinematics", false)
+	BUILDER:GetSet("MuteFootsteps", false)
 
-pac.SetPropertyGroup(PART, "death")
-	pac.GetSet(PART, "FallApartOnDeath", false)
-	pac.GetSet(PART, "DeathRagdollizeParent", true)
-	pac.GetSet(PART, "DrawPlayerOnDeath", false)
-	pac.GetSet(PART, "HideRagdollOnDeath", false)
+BUILDER:SetPropertyGroup("death")
+	BUILDER:GetSet("FallApartOnDeath", false)
+	BUILDER:GetSet("DeathRagdollizeParent", true)
+	BUILDER:GetSet("DrawPlayerOnDeath", false)
+	BUILDER:GetSet("HideRagdollOnDeath", false)
 
-pac.EndStorableVars()
+BUILDER:EndStorableVars()
 
 local function ENTFIELD(PART, name, field)
 	field = "pac_" .. field
@@ -138,4 +138,4 @@ function PART:SetBloodColor(str)
 	self:UpdateBloodColor()
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

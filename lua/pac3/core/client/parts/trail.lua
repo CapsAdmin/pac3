@@ -76,7 +76,7 @@ function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,e
 	end
 end
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.FriendlyName = "trail"
 PART.ClassName = "trail2"
@@ -84,22 +84,22 @@ PART.Icon = 'icon16/arrow_undo.png'
 PART.Group = 'effects'
 PART.ProperColorRange = true
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Duration", 1)
-	pac.GetSet(PART, "Spacing", 0.25)
-	pac.GetSet(PART, "StartSize", 3)
-	pac.GetSet(PART, "EndSize", 0)
-	pac.GetSet(PART, "StartColor", Vector(1, 1, 1), {editor_panel = "color2"})
-	pac.GetSet(PART, "EndColor", Vector(1, 1, 1), {editor_panel = "color2"})
-	pac.GetSet(PART, "StartAlpha", 1)
-	pac.GetSet(PART, "EndAlpha", 0)
-	pac.GetSet(PART, "Stretch", 1)
-	pac.GetSet(PART, "CenterAttraction", 0)
-	pac.GetSet(PART, "Gravity", Vector(0,0,0))
-	pac.GetSet(PART, "IgnoreZ", false)
-	pac.GetSet(PART, "TrailPath", "trails/laser", {editor_panel = "material"})
-	pac.GetSet(PART, "Translucent", true)
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	:GetSet("Duration", 1)
+	:GetSet("Spacing", 0.25)
+	:GetSet("StartSize", 3)
+	:GetSet("EndSize", 0)
+	:GetSet("StartColor", Vector(1, 1, 1), {editor_panel = "color2"})
+	:GetSet("EndColor", Vector(1, 1, 1), {editor_panel = "color2"})
+	:GetSet("StartAlpha", 1)
+	:GetSet("EndAlpha", 0)
+	:GetSet("Stretch", 1)
+	:GetSet("CenterAttraction", 0)
+	:GetSet("Gravity", Vector(0,0,0))
+	:GetSet("IgnoreZ", false)
+	:GetSet("TrailPath", "trails/laser", {editor_panel = "material"})
+	:GetSet("Translucent", true)
+:EndStorableVars()
 
 function PART:GetNiceName()
 	local str = pac.PrettifyName("/" .. self:GetTrailPath())
@@ -164,4 +164,4 @@ function PART:OnDraw(owner, pos, ang)
 	)
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

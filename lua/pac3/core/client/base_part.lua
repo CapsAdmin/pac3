@@ -954,7 +954,7 @@ do -- serializing
 
 		for _, key in pairs(self:GetStorableVars()) do
 			local var = self[key] and self["Get" .. key](self) or self[key]
-			var = pac.class.Copy(var) or var
+			var = pac.CopyValue(var) or var
 
 			if make_copy_name and var ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
 				var = util.CRC(var .. var)
@@ -992,7 +992,7 @@ do -- serializing
 
 		for _, key in pairs(self:GetStorableVars()) do
 			local var = self[key] and self["Get" .. key](self) or self[key]
-			var = pac.class.Copy(var) or var
+			var = pac.CopyValue(var) or var
 
 			if key == "Name" and self[key] == "" then
 				var = ""
@@ -1067,7 +1067,7 @@ do -- serializing
 						continue
 					end
 
-					tbl.self[key] = pac.class.Copy(self["Get" .. key](self))
+					tbl.self[key] = pac.CopyValue(self["Get" .. key](self))
 				end
 			end
 
@@ -1088,7 +1088,7 @@ do -- serializing
 		local tbl = {}
 
 		for _, key in pairs(self:GetStorableVars()) do
-			tbl[key] = pac.class.Copy(self[key])
+			tbl[key] = pac.CopyValue(self[key])
 		end
 
 		return tbl
@@ -1248,6 +1248,7 @@ do -- drawing. this code is running every frame
 
 	--function PART:Draw(pos, ang, draw_type, isNonRoot)
 	function PART:Draw(pos, ang, draw_type)
+
 		-- Think takes care of polling this
 		if not self.last_enabled then return end
 

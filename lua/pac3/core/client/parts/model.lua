@@ -668,14 +668,8 @@ do
 
 	BUILDER:RemoveProperty("BoneMerge")
 	BUILDER:RemoveProperty("Bone")
-	--BUILDER:RemoveProperty("Position")
-	--BUILDER:RemoveProperty("Angles")
-	--BUILDER:RemoveProperty("PositionOffset")
-	--BUILDER:RemoveProperty("AngleOffset")
 	BUILDER:RemoveProperty("EyeAngles")
 	BUILDER:RemoveProperty("AimPartName")
-
-	PrintTable(BUILDER)
 
 	function PART:GetNiceName()
 		local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%.")) or self:GetModel()

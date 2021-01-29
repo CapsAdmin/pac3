@@ -1,13 +1,13 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "submaterial"
-PART.NonPhysical = true
+BUILDER:NonPhysical()
 PART.Icon = 'icon16/picture_edit.png'
 PART.Group = {'model', 'entity'}
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Material", "")
-	pac.GetSet(PART, "SubMaterialId", 1, {
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Material", "")
+	BUILDER:GetSet("SubMaterialId", 1, {
 		editor_onchange = function(self, num)
 			num = tonumber(num) or 0
 
@@ -26,8 +26,8 @@ pac.StartStorableVars()
 			return tbl
 		end,
 	})
-	pac.GetSet(PART, "RootOwner", false)
-pac.EndStorableVars()
+	BUILDER:GetSet("RootOwner", false)
+BUILDER:EndStorableVars()
 
 function PART:GetSubMaterialIdList()
 	local out = {}
@@ -167,4 +167,4 @@ function PART:Clear()
 	self:UpdateSubMaterialId(nil, "")
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

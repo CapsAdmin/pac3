@@ -1,29 +1,29 @@
 local Color = Color
 local Vector = Vector
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "halo"
-PART.NonPhysical = true
+BUILDER:NonPhysical()
 PART.ThinkTime = 0
 PART.Group = {'effects', 'model'}
 PART.Icon = 'icon16/shading.png'
 
-pac.StartStorableVars()
-	pac.SetPropertyGroup()
-		pac.GetSet(PART, "BlurX", 2)
-		pac.GetSet(PART, "BlurY", 2)
-		pac.GetSet(PART, "Amount", 1)
-		pac.GetSet(PART, "IgnoreZ", false)
-		pac.GetSet(PART, "SphericalSize", 1)
-		pac.GetSet(PART, "Shape", 1)
-		pac.GetSet(PART, "AffectChildren", false)
+BUILDER:StartStorableVars()
+	BUILDER:SetPropertyGroup()
+		BUILDER:GetSet("BlurX", 2)
+		BUILDER:GetSet("BlurY", 2)
+		BUILDER:GetSet("Amount", 1)
+		BUILDER:GetSet("IgnoreZ", false)
+		BUILDER:GetSet("SphericalSize", 1)
+		BUILDER:GetSet("Shape", 1)
+		BUILDER:GetSet("AffectChildren", false)
 
-	pac.SetPropertyGroup(PART, "appearance")
-		pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
-		pac.GetSet(PART, "Passes", 1)
-		pac.GetSet(PART, "Additive", true) -- haaaa
-pac.EndStorableVars()
+	BUILDER:SetPropertyGroup("appearance")
+		BUILDER:GetSet("Color", Vector(255, 255, 255), {editor_panel = "color"})
+		BUILDER:GetSet("Passes", 1)
+		BUILDER:GetSet("Additive", true) -- haaaa
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	local h = pac.ColorToNames(self:GetColor())
@@ -57,4 +57,4 @@ function PART:OnThink()
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

@@ -871,16 +871,16 @@ do -- base editable
 
 	function PANEL:PopulateContextMenu(menu)
 		menu:AddOption(L"copy", function()
-			pace.clipboard = pac.class.Copy(self:GetValue())
+			pace.clipboard = pac.CopyValue(self:GetValue())
 		end):SetImage(pace.MiscIcons.copy)
 		menu:AddOption(L"paste", function()
-			self:SetValue(pac.class.Copy(pace.clipboard))
+			self:SetValue(pac.CopyValue(pace.clipboard))
 			self.OnValueChanged(self:GetValue())
 		end):SetImage(pace.MiscIcons.paste)
 		menu:AddSpacer()
 		menu:AddOption(L"reset", function()
 			if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
-				local val = pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey])
+				local val = pac.CopyValue(pace.current_part.DefaultVars[self.CurrentKey])
 				self:SetValue(val)
 				self.OnValueChanged(val)
 			end
@@ -1170,10 +1170,10 @@ do -- vector
 
 		function PANEL:PopulateContextMenu(menu)
 			menu:AddOption(L"copy", function()
-				pace.clipboard = pac.class.Copy(self.vector)
+				pace.clipboard = pac.CopyValue(self.vector)
 			end):SetImage(pace.MiscIcons.copy)
 			menu:AddOption(L"paste", function()
-				local val = pac.class.Copy(pace.clipboard)
+				local val = pac.CopyValue(pace.clipboard)
 				if _G.type(val) == "number" then
 					val = ctor(val, val, val)
 				elseif _G.type(val) == "Vector" and type == "angle" then
@@ -1191,7 +1191,7 @@ do -- vector
 			menu:AddSpacer()
 			menu:AddOption(L"reset", function()
 				if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
-					local val = pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey])
+					local val = pac.CopyValue(pace.current_part.DefaultVars[self.CurrentKey])
 					self:SetValue(val)
 					self.OnValueChanged(val)
 				end

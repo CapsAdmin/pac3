@@ -3,7 +3,7 @@ local render_PushCustomClipPlane = render.PushCustomClipPlane
 local LocalToWorld = LocalToWorld
 local IsEntity = IsEntity
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.FriendlyName = "clip"
 PART.ClassName = "clip2"
@@ -49,4 +49,4 @@ do
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

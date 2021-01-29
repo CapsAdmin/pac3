@@ -35,7 +35,6 @@ end
 include("util.lua")
 include("class.lua")
 
-pac.class = include("pac3/libraries/class.lua")
 pac.CompileExpression = include("pac3/libraries/expression.lua")
 pac.resource = include("pac3/libraries/resource.lua")
 pac.animations = include("pac3/libraries/animations.lua")

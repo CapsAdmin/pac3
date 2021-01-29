@@ -1,13 +1,13 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "group"
-PART.NonPhysical = true
+BUILDER:NonPhysical()
 PART.Icon = 'icon16/world.png'
 PART.Description = "right click to add parts"
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Duplicate", false)
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Duplicate", false)
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	return #self:GetChildrenList() .. " children"
@@ -31,4 +31,4 @@ function PART:OnEvent(typ, ply, vehicle)
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

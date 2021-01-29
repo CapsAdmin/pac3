@@ -1,18 +1,8 @@
 local pac = pac
-local class = pac.class
-
 local part_count = 0 -- unique id thing
 local pairs = pairs
 
-local function merge_storable(tbl, base)
-	if not base then return end
-	if base.StorableVars then
-		for k,v in pairs(base.StorableVars) do
-			tbl.StorableVars[k] = v
-		end
-		merge_storable(tbl, base.BaseClass)
-	end
-end
+pac.registered_parts = {}
 
 local function initialize(part, owner)
 	if part.PreInitialize then
@@ -32,47 +22,18 @@ function pac.CreatePart(name, owner)
 	name = name or "base"
 	owner = owner or pac.LocalPlayer
 
-	local part = class.Create("part", name)
-
-	if not part then
+	local META = pac.registered_parts[name]
+	if not META then
 		pac.Message("Tried to create unknown part: " .. name .. '!')
-		part = class.Create("part", "base")
+		META = pac.registered_parts.base
 	end
+	local part = pac.CopyValue(META)
+	setmetatable(part, part)
 
 	part.Id = part_count
 	part_count = part_count + 1
 
 	part:SetUniqueID(util.CRC(os.time() + pac.RealTime + part_count))
-
-	if not pac.part_templates[part.ClassName] then
-		merge_storable(part, part.BaseClass)
-
-		if part.RemovedStorableVars then
-			for k in pairs(part.RemovedStorableVars) do
-				part.StorableVars[k] = nil
-			end
-		end
-
-		if part.NonPhysical then
-			pac.RemoveProperty(part, "Bone")
-			pac.RemoveProperty(part, "Position")
-			pac.RemoveProperty(part, "Angles")
-			pac.RemoveProperty(part, "AngleVelocity")
-			pac.RemoveProperty(part, "EyeAngles")
-			pac.RemoveProperty(part, "AimName")
-			pac.RemoveProperty(part, "AimPartName")
-			pac.RemoveProperty(part, "PositionOffset")
-			pac.RemoveProperty(part, "AngleOffset")
-			pac.RemoveProperty(part, "Translucent")
-			pac.RemoveProperty(part, "IgnoreZ")
-			pac.RemoveProperty(part, "BlendMode")
-			pac.RemoveProperty(part, "NoTextureFiltering")
-
-			if part.ClassName ~= "group" then
-				pac.RemoveProperty(part, "DrawOrder")
-			end
-		end
-	end
 
 	part.DefaultVars = {}
 
@@ -80,7 +41,7 @@ function pac.CreatePart(name, owner)
 		if key == "UniqueID" then
 			part.DefaultVars[key] = ""
 		else
-			part.DefaultVars[key] = pac.class.Copy(part[key])
+			part.DefaultVars[key] = pac.CopyValue(part[key])
 		end
 	end
 
@@ -120,8 +81,7 @@ function pac.RegisterPart(META)
 		end
 	end
 
-	META.TypeBase = "base"
-	local _, name = class.Register(META, "part")
+	pac.registered_parts[META.ClassName] = META
 
 	if pac.UpdatePartsWithMetatable then
 		pac.UpdatePartsWithMetatable(META, name)
@@ -150,6 +110,7 @@ end
 function pac.LoadParts()
 	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
 	for _, name in pairs(files) do
+		if name:EndsWith("2.lua") then continue end
 		include("pac3/core/client/parts/" .. name)
 	end
 
@@ -160,7 +121,7 @@ function pac.LoadParts()
 end
 
 function pac.GetRegisteredParts()
-	return class.GetAll("part")
+	return pac.registered_parts
 end
 
 

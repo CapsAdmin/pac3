@@ -1,14 +1,14 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "player_movement"
 PART.Group = "entity"
 PART.Icon = "icon16/user_go.png"
-PART.NonPhysical = true
+BUILDER:NonPhysical()
 
 local pac_movement_default = {}
 
 local function ADD(PART, name, default, ...)
-	pac.GetSet(PART, name, default, ...)
+	BUILDER:GetSet(name, default, ...)
 
 	pac_movement_default[name] = default
 
@@ -36,35 +36,35 @@ local function ADD(PART, name, default, ...)
 	table.insert(PART.update_these, function(s) PART["Set" .. name](s, PART["Get" .. name](s)) end)
 end
 
-pac.StartStorableVars()
-	pac.SetPropertyGroup(PART, "generic")
+BUILDER:StartStorableVars()
+	BUILDER:SetPropertyGroup("generic")
 		ADD(PART, "Noclip", false)
 		ADD(PART, "Gravity", Vector(0, 0, -600))
 
-	pac.SetPropertyGroup(PART, "movement")
+	BUILDER:SetPropertyGroup("movement")
 		ADD(PART, "SprintSpeed", 400)
 		ADD(PART, "RunSpeed", 200)
 		ADD(PART, "WalkSpeed", 100)
 		ADD(PART, "DuckSpeed", 25)
 
-	pac.SetPropertyGroup(PART, "ground")
+	BUILDER:SetPropertyGroup("ground")
 		ADD(PART, "JumpHeight", 200, {editor_clamp = {0,  10000}})
 		ADD(PART, "MaxGroundSpeed", 750)
 		ADD(PART, "StickToGround", true)
 		ADD(PART, "GroundFriction", 0.12, {editor_clamp = {0,  1}, editor_sensitivity = 0.1})
 
-	pac.SetPropertyGroup(PART, "air")
+	BUILDER:SetPropertyGroup("air")
 		ADD(PART, "AllowZVelocity", false)
 		ADD(PART, "AirFriction", 0.01, {editor_clamp = {0,  1}, editor_sensitivity = 0.1})
 		ADD(PART, "MaxAirSpeed", 1)
 
-	pac.SetPropertyGroup(PART, "view angles")
+	BUILDER:SetPropertyGroup("view angles")
 		ADD(PART, "ReversePitch", false)
 		ADD(PART, "UnlockPitch", false)
 		ADD(PART, "VelocityToViewAngles", 0, {editor_clamp = {0,  1}, editor_sensitivity = 0.1})
 		ADD(PART, "RollAmount", 0, {editor_sensitivity = 0.25})
 
-	pac.SetPropertyGroup(PART, "fin")
+	BUILDER:SetPropertyGroup("fin")
 		ADD(PART, "FinEfficiency", 0)
 		ADD(PART, "FinLiftMode", "normal", {enums = {
 			normal = "normal",
@@ -72,7 +72,7 @@ pac.StartStorableVars()
 		}})
 		ADD(PART, "FinCline", false)
 
-pac.EndStorableVars()
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	local ent = self:GetOwner(true)
@@ -112,4 +112,4 @@ function PART:OnHide()
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

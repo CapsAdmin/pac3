@@ -5,50 +5,52 @@ for _, v in pairs(ents.GetAll()) do
 	v.pac_bone_setup_data = nil
 end
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "bone"
 PART.Group = "legacy"
 
 PART.Icon = 'icon16/connect.png'
 
-pac.StartStorableVars()
-	pac.SetPropertyGroup(PART, "generic")
-		pac.PropertyOrder(PART, "Name")
-		pac.PropertyOrder(PART, "Hide")
-		pac.PropertyOrder(PART, "ParentName")
-		pac.GetSet(PART, "Jiggle", false)
-		pac.GetSet(PART, "ScaleChildren", false)
-		pac.GetSet(PART, "AlternativeBones", false)
-		pac.GetSet(PART, "MoveChildrenToOrigin", false)
-		pac.GetSet(PART, "FollowAnglesOnly", false)
-		--pac.GetSet(PART, "HideMesh", false)
-		--pac.GetSet(PART, "InvertHideMesh", false)
-		pac.SetupPartName(PART, "FollowPart")
+BUILDER:StartStorableVars()
+	BUILDER:SetPropertyGroup("generic")
+		BUILDER:PropertyOrder("Name")
+		BUILDER:PropertyOrder("Hide")
+		BUILDER:PropertyOrder("ParentName")
+		BUILDER:GetSet("Jiggle", false)
+		BUILDER:GetSet("ScaleChildren", false)
+		BUILDER:GetSet("AlternativeBones", false)
+		BUILDER:GetSet("MoveChildrenToOrigin", false)
+		BUILDER:GetSet("FollowAnglesOnly", false)
+		--BUILDER:GetSet("HideMesh", false)
+		--BUILDER:GetSet("InvertHideMesh", false)
+		BUILDER:SetupPartName("FollowPart")
 
-	pac.SetPropertyGroup(PART, "orientation")
-		pac.PropertyOrder(PART, "AimPartName")
-		pac.PropertyOrder(PART, "Bone")
-		pac.PropertyOrder(PART, "Position")
-		pac.PropertyOrder(PART, "Angles")
-		pac.PropertyOrder(PART, "EyeAngles")
-		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
-		pac.GetSet(PART, "Scale", Vector(1,1,1), {editor_sensitivity = 0.25})
-		pac.PropertyOrder(PART, "PositionOffset")
-		pac.PropertyOrder(PART, "AngleOffset")
+	BUILDER:SetPropertyGroup("orientation")
+		BUILDER:PropertyOrder("AimPartName")
+		BUILDER:PropertyOrder("Bone")
+		BUILDER:PropertyOrder("Position")
+		BUILDER:PropertyOrder("Angles")
+		BUILDER:PropertyOrder("EyeAngles")
+		BUILDER:GetSet("Size", 1, {editor_sensitivity = 0.25})
+		BUILDER:GetSet("Scale", Vector(1,1,1), {editor_sensitivity = 0.25})
+		BUILDER:PropertyOrder("PositionOffset")
+		BUILDER:PropertyOrder("AngleOffset")
 
-	pac.SetPropertyGroup(PART, "appearance")
+	BUILDER:SetPropertyGroup("appearance")
 
 
-	pac.SetPropertyGroup(PART, "other")
-		pac.PropertyOrder(PART, "DrawOrder")
+	BUILDER:SetPropertyGroup("other")
+		BUILDER:PropertyOrder("DrawOrder")
 
-pac.EndStorableVars()
+BUILDER:EndStorableVars()
 
-pac.RemoveProperty(PART, "Translucent")
-pac.RemoveProperty(PART, "IgnoreZ")
-pac.RemoveProperty(PART, "BlendMode")
-pac.RemoveProperty(PART, "NoTextureFiltering")
+BUILDER:RemoveProperty("Translucent")
+BUILDER:RemoveProperty("IgnoreZ")
+BUILDER:RemoveProperty("BlendMode")
+BUILDER:RemoveProperty("NoTextureFiltering")
+
+local BaseClass_GetOwner = PART.GetOwner
 
 function PART:GetNiceName()
 	return self:GetBone()
@@ -69,7 +71,7 @@ function PART:GetOwner(root)
 		return parent.Entity
 	end
 
-	return self.BaseClass.GetOwner(self, root)
+	return BaseClass_GetOwner(self, root)
 end
 
 function PART:OnThink()
@@ -280,4 +282,4 @@ function PART:OnBuildBonePositions()
 	manscale(owner, self.BoneIndex, scale, self)
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

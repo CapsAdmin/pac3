@@ -3,20 +3,20 @@ local render_PushCustomClipPlane = render.PushCustomClipPlane
 local LocalToWorld = LocalToWorld
 local IsEntity = IsEntity
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "clip"
 PART.Group = "legacy"
 PART.Icon = 'icon16/cut.png'
 
-pac.SetPropertyGroup(PART, "generic")
-	pac.PropertyOrder(PART, "Name")
-	pac.PropertyOrder(PART, "Hide")
-	pac.PropertyOrder(PART, "ParentName")
+BUILDER:SetPropertyGroup("generic")
+	BUILDER:PropertyOrder("Name")
+	BUILDER:PropertyOrder("Hide")
+	BUILDER:PropertyOrder("ParentName")
 
-pac.RemoveProperty(PART, "IgnoreZ")
-pac.RemoveProperty(PART, "BlendMode")
-pac.RemoveProperty(PART, "NoTextureFiltering")
+BUILDER:RemoveProperty("IgnoreZ")
+BUILDER:RemoveProperty("BlendMode")
+BUILDER:RemoveProperty("NoTextureFiltering")
 
 
 function PART:OnParent(part)
@@ -58,4 +58,4 @@ do
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

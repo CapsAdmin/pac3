@@ -75,37 +75,37 @@ do
 	end
 end
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "beam"
 PART.Group = 'effects'
 PART.Icon = 'icon16/vector.png'
 
-pac.StartStorableVars()
-	pac.SetPropertyGroup(PART, "generic")
-		pac.PropertyOrder(PART, "Name")
-		pac.PropertyOrder(PART, "Hide")
-		pac.PropertyOrder(PART, "ParentName")
-		pac.GetSet(PART, "Material", "cable/rope")
-		pac.SetupPartName(PART, "EndPoint")
-		pac.GetSet(PART, "Bend", 10)
-		pac.GetSet(PART, "Frequency", 1)
-		pac.GetSet(PART, "Resolution", 16)
-		pac.GetSet(PART, "Width", 1)
-		pac.GetSet(PART, "WidthBend", 0)
-		pac.GetSet(PART, "WidthBendSize", 1)
-		pac.GetSet(PART, "TextureStretch", 1)
-		pac.GetSet(PART, "TextureScroll", 0)
-		pac.GetSet(PART, "UseEndpointOffsets", false)
-	pac.SetPropertyGroup(PART, "orientation")
-	pac.SetPropertyGroup(PART, "appearance")
-		pac.GetSet(PART, "StartColor", Vector(255, 255, 255), {editor_panel = "color"})
-		pac.GetSet(PART, "EndColor", Vector(255, 255, 255), {editor_panel = "color"})
-		pac.GetSet(PART, "StartAlpha", 1)
-		pac.GetSet(PART, "EndAlpha", 1)
-	pac.SetPropertyGroup(PART, "other")
-		pac.PropertyOrder(PART, "DrawOrder")
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:SetPropertyGroup("generic")
+		BUILDER:PropertyOrder("Name")
+		BUILDER:PropertyOrder("Hide")
+		BUILDER:PropertyOrder("ParentName")
+		BUILDER:GetSet("Material", "cable/rope")
+		BUILDER:SetupPartName("EndPoint")
+		BUILDER:GetSet("Bend", 10)
+		BUILDER:GetSet("Frequency", 1)
+		BUILDER:GetSet("Resolution", 16)
+		BUILDER:GetSet("Width", 1)
+		BUILDER:GetSet("WidthBend", 0)
+		BUILDER:GetSet("WidthBendSize", 1)
+		BUILDER:GetSet("TextureStretch", 1)
+		BUILDER:GetSet("TextureScroll", 0)
+		BUILDER:GetSet("UseEndpointOffsets", false)
+	BUILDER:SetPropertyGroup("orientation")
+	BUILDER:SetPropertyGroup("appearance")
+		BUILDER:GetSet("StartColor", Vector(255, 255, 255), {editor_panel = "color"})
+		BUILDER:GetSet("EndColor", Vector(255, 255, 255), {editor_panel = "color"})
+		BUILDER:GetSet("StartAlpha", 1)
+		BUILDER:GetSet("EndAlpha", 1)
+	BUILDER:SetPropertyGroup("other")
+		BUILDER:PropertyOrder("DrawOrder")
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	local found = ("/" .. self:GetMaterial()):match(".*/(.+)")
@@ -227,4 +227,4 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

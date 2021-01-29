@@ -26,6 +26,8 @@ BUILDER
 	:GetSet("ResetOnHide", true)
 :EndStorableVars()
 
+local BaseClass_GetOwner = PART.GetOwner
+
 local tonumber = tonumber
 
 PART.ValidHoldTypes =
@@ -74,7 +76,7 @@ function PART:GetOwner()
 		return parent.Entity
 	end
 
-	return self.BaseClass.GetOwner(self)
+	return BaseClass_GetOwner(self)
 end
 
 function PART:GetSequenceList()
@@ -248,7 +250,7 @@ function PART:OnThink()
 		end
 
 		if self.OwnerCycle then
-			local owner = self.BaseClass.GetOwner(self, true)
+			local owner = BaseClass_GetOwner(self, true)
 
 			if IsValid(owner) then
 				ent:SetCycle(owner:GetCycle())

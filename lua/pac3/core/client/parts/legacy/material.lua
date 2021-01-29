@@ -1,7 +1,7 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "material"
-PART.NonPhysical = true
+BUILDER:NonPhysical()
 PART.Icon = 'icon16/paintcan.png'
 PART.Group = "legacy"
 
@@ -155,13 +155,13 @@ local function setup(PART)
 
 				if pass == 1 then
 					if found then
-						pac.SetPropertyGroup(PART, info.group)
+						BUILDER:SetPropertyGroup(info.group)
 					else
 						goto CONTINUE
 					end
 				elseif pass == 2 then
 					if not found then
-						pac.SetPropertyGroup()
+						BUILDER:SetPropertyGroup()
 					else
 						goto CONTINUE
 					end
@@ -174,7 +174,7 @@ local function setup(PART)
 						T = T.type
 					end
 					if T == "ITexture" then
-						pac.GetSet(PART, name, "", {editor_panel = "textures"})
+						BUILDER:GetSet(name, "", {editor_panel = "textures"})
 
 						PART["Set" .. name] = function(self, var)
 							self[name] = var
@@ -233,7 +233,7 @@ local function setup(PART)
 							end
 						end
 					elseif T == "boolean" then
-						pac.GetSet(PART, name, false)
+						BUILDER:GetSet(name, false)
 
 						PART["Set" .. name] = function(self, var)
 							self[name] = var
@@ -249,7 +249,7 @@ local function setup(PART)
 							end
 						end
 					elseif T == "number" then
-						pac.GetSet(PART, name, 0)
+						BUILDER:GetSet(name, 0)
 
 						PART["Set" .. name] = function(self, var)
 							self[name] = var
@@ -269,7 +269,7 @@ local function setup(PART)
 							def = Vector(1,1,1)
 						end
 
-						pac.GetSet(PART, name, def)
+						BUILDER:GetSet(name, def)
 
 						PART["Set" .. name] = function(self, var)
 							self[name] = var
@@ -298,10 +298,10 @@ local function add_transform(texture_name)
 	local angle_key = texture_name.."Angle"
 	local angle_center_key = texture_name.."AngleCenter"
 
-	pac.GetSet(PART, position_key, Vector(0, 0, 0))
-	pac.GetSet(PART, scale_key, Vector(1, 1, 1))
-	pac.GetSet(PART, angle_key, 0, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, angle_center_key, Vector(0.5, 0.5, 0))
+	BUILDER:GetSet(position_key, Vector(0, 0, 0))
+	BUILDER:GetSet(scale_key, Vector(1, 1, 1))
+	BUILDER:GetSet(angle_key, 0, {editor_sensitivity = 0.25})
+	BUILDER:GetSet(angle_center_key, Vector(0.5, 0.5, 0))
 
 	PART.TransformVars = PART.TransformVars or {}
 	PART.TransformVars[position_key] = true
@@ -362,13 +362,13 @@ local function add_transform(texture_name)
 end
 
 
-pac.StartStorableVars()
+BUILDER:StartStorableVars()
 
 	setup(PART)
 	add_transform("BaseTexture")
 	--add_transform("Bump") -- doesn't work
 	--add_transform("EnvMapMask")
-pac.EndStorableVars()
+BUILDER:EndStorableVars()
 
 function PART:GetMaterialFromParent()
 	if self:GetParent():IsValid() then
@@ -392,7 +392,7 @@ function PART:GetMaterialFromParent()
 		end
 
 		self.Parent.Materialm = self.Materialm
-		
+
 		if self.Parent.UpdateSubMaterialId then
 			self.Parent:UpdateSubMaterialId()
 		end
@@ -473,4 +473,4 @@ function PART:OnShow()
 	pac.UpdateMaterialParts("show", self:GetPlayerOwner():UniqueID(), self, self.Name)
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

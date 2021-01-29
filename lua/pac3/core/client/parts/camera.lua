@@ -1,19 +1,19 @@
 local LerpAngle = LerpAngle
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "camera"
 PART.Group = 'entity'
 PART.Icon = 'icon16/camera.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "EyeAnglesLerp", 1)
-	pac.GetSet(PART, "DrawViewModel", false)
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("EyeAnglesLerp", 1)
+	BUILDER:GetSet("DrawViewModel", false)
 
-	pac.GetSet(PART, "NearZ", -1)
-	pac.GetSet(PART, "FarZ", -1)
-	pac.GetSet(PART, "FOV", -1)
-pac.EndStorableVars()
+	BUILDER:GetSet("NearZ", -1)
+	BUILDER:GetSet("FarZ", -1)
+	BUILDER:GetSet("FOV", -1)
+BUILDER:EndStorableVars()
 
 for i, ply in ipairs(player.GetAll()) do
 	ply.pac_cameras = nil
@@ -50,7 +50,7 @@ function PART:CalcView(_, _, eyeang, fov, nearz, farz)
 	return pos, ang, fov, nearz, farz
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()
 
 local temp = {}
 

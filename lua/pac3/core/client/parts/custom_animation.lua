@@ -1,33 +1,33 @@
 local animations = pac.animations
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "custom_animation"
-PART.NonPhysical = true
+BUILDER:NonPhysical()
 PART.Group = 'advanced'
 PART.Icon = 'icon16/film.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "URL", "")
-	pac.GetSet(PART, "Data", "")
-	pac.GetSet(PART, "StopOnHide", true)
-	pac.GetSet(PART, "StopOtherAnimations", false)
-	pac.GetSet(PART, "AnimationType", "sequence", {enums = {
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("URL", "")
+	BUILDER:GetSet("Data", "")
+	BUILDER:GetSet("StopOnHide", true)
+	BUILDER:GetSet("StopOtherAnimations", false)
+	BUILDER:GetSet("AnimationType", "sequence", {enums = {
 		gesture = "gesture",
 		posture = "posture",
 		sequence = "sequence",
 		stance = "stance",
 	}})
-	pac.GetSet(PART, "Interpolation", "cosine", {enums = {
+	BUILDER:GetSet("Interpolation", "cosine", {enums = {
 		linear = "linear",
 		cosine = "cosine",
 		cubic = "cubic",
 		none = "none",
 	}})
-	pac.GetSet(PART, "Rate", 1)
-	pac.GetSet(PART, "BonePower", 1)
-	pac.GetSet(PART, "Offset", 0)
-pac.EndStorableVars()
+	BUILDER:GetSet("Rate", 1)
+	BUILDER:GetSet("BonePower", 1)
+	BUILDER:GetSet("Offset", 0)
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	return pac.PrettifyName(("/".. self:GetURL()):match(".+/(.-)%.")) or "no anim"
@@ -184,4 +184,4 @@ function PART:OnRemove()
 	animations.GetRegisteredAnimations()[self:GetAnimID()] = nil
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

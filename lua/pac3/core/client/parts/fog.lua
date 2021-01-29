@@ -7,21 +7,21 @@ local render_FogMaxDensity = render.FogMaxDensity
 local render_SetFogZ = render.SetFogZ
 local render_FogMode = render.FogMode
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "fog"
-PART.NonPhysical = true
+BUILDER:NonPhysical()
 PART.Group = 'modifiers'
 PART.Icon = 'icon16/weather_clouds.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
-	pac.GetSet(PART, "Start", 0)
-	pac.GetSet(PART, "End", 10)
-	pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
-	--pac.GetSet(PART, "AffectChildren", false)
-	pac.GetSet(PART, "Height", 0)
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Color", Vector(255, 255, 255), {editor_panel = "color"})
+	BUILDER:GetSet("Start", 0)
+	BUILDER:GetSet("End", 10)
+	BUILDER:GetSet("Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
+	--BUILDER:GetSet("AffectChildren", false)
+	BUILDER:GetSet("Height", 0)
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	local h = pac.ColorToNames(self:GetColor())
@@ -63,4 +63,4 @@ function PART:PostOnDraw()
 	render.FogMode(MATERIAL_FOG_NONE)
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

@@ -1,14 +1,14 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "script"
-PART.NonPhysical = true
+BUILDER:NonPhysical()
 PART.ThinkTime = 0
 PART.Group = 'advanced'
 PART.Icon = 'icon16/page_white_gear.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Code", "")
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Code", "")
+BUILDER:EndStorableVars()
 
 local blacklist = {
 	"do",
@@ -406,5 +406,5 @@ function PART:OnThink()
 end
 
 concommand.Add("pac_register_script_part", function()
-	pac.RegisterPart(PART)
+	BUILDER:Register()
 end)

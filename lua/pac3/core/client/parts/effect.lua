@@ -1,27 +1,30 @@
 local CurTime = CurTime
 local ParticleEffect = ParticleEffect
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "effect"
 PART.Groups = {'effects', 'model', 'entity'}
 PART.Icon = 'icon16/wand.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Effect", "default", {enums = function() return pac.particle_list end})
-	pac.GetSet(PART, "Loop", true)
-	pac.GetSet(PART, "Follow", true)
-	pac.GetSet(PART, "Rate", 1, {editor_sensitivity = 0.1})
-	pac.GetSet(PART, "UseParticleTracer", false)
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Effect", "default", {enums = function() return pac.particle_list end})
+	BUILDER:GetSet("Loop", true)
+	BUILDER:GetSet("Follow", true)
+	BUILDER:GetSet("Rate", 1, {editor_sensitivity = 0.1})
+	BUILDER:GetSet("UseParticleTracer", false)
 
-	pac.SetupPartName(PART, "PointA")
-	pac.SetupPartName(PART, "PointB")
-	pac.SetupPartName(PART, "PointC")
-	pac.SetupPartName(PART, "PointD")
+	BUILDER:SetupPartName("PointA")
+	BUILDER:SetupPartName("PointB")
+	BUILDER:SetupPartName("PointC")
+	BUILDER:SetupPartName("PointD")
 
-pac.EndStorableVars()
+BUILDER:EndStorableVars()
 
-pac.RemoveProperty(PART, "Translucent")
+BUILDER:RemoveProperty("Translucent")
+PART.Translucent = false -- otherwise OnDraw won't be called
+
+local BaseClass_GetOwner = PART.GetOwner
 
 function PART:GetNiceName()
 	return pac.PrettifyName(self:GetEffect())
@@ -61,7 +64,7 @@ function PART:GetOwner()
 		return parent.Entity
 	end
 
-	return self.BaseClass.GetOwner(self)
+	return BaseClass_GetOwner(self)
 end
 
 PART.last_spew = 0
@@ -119,7 +122,9 @@ end
 
 function PART:OnDraw(owner, pos, ang)
 	if not self.Ready then
-		if not self.waitingForServer then self:SetEffect(self.Effect) end
+		if not self.waitingForServer then
+			self:SetEffect(self.Effect)
+		end
 		return
 	end
 
@@ -217,4 +222,4 @@ function PART:Emit(pos, ang)
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()
