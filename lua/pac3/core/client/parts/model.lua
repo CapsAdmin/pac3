@@ -46,7 +46,7 @@ BUILDER:StartStorableVars()
 		:GetSet("Materials", "", {editor_panel = "model_materials"})
 		:GetSet("Skin", 0, {editor_onchange = function(self, num) return math.Round(math.max(tonumber(num), 0)) end})
 		:GetSet("LevelOfDetail", 0, {editor_clamp = {-1, 8}, editor_round = true})
-		:SetupPartName("EyeTarget")
+		:GetSetPart("EyeTarget")
 
 :EndStorableVars()
 

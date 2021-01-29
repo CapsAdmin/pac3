@@ -79,7 +79,7 @@ BUILDER:StartStorableVars()
 		closest_to_hitpos = "closest_to_hitpos",
 	}})
 	BUILDER:GetSet("AttractRadius", 200)
-	BUILDER:SetupPartName("OutfitPart")
+	BUILDER:GetSetPart("OutfitPart")
 	BUILDER:GetSet("Physical", false)
 	BUILDER:GetSet("CollideWithOwner", false)
 	BUILDER:GetSet("RemoveOnCollide", false)

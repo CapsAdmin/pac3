@@ -14,10 +14,10 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSet("Rate", 1, {editor_sensitivity = 0.1})
 	BUILDER:GetSet("UseParticleTracer", false)
 
-	BUILDER:SetupPartName("PointA")
-	BUILDER:SetupPartName("PointB")
-	BUILDER:SetupPartName("PointC")
-	BUILDER:SetupPartName("PointD")
+	BUILDER:GetSetPart("PointA")
+	BUILDER:GetSetPart("PointB")
+	BUILDER:GetSetPart("PointC")
+	BUILDER:GetSetPart("PointD")
 
 BUILDER:EndStorableVars()
 

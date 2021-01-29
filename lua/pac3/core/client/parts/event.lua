@@ -27,7 +27,7 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSet("RootOwner", true)
 	BUILDER:GetSet("AffectChildrenOnly", false)
 	BUILDER:GetSet("ZeroEyePitch", false)
-	BUILDER:SetupPartName("TargetPart")
+	BUILDER:GetSetPart("TargetPart")
 BUILDER:EndStorableVars()
 
 local function convert_angles(self, ang)

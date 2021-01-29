@@ -65,7 +65,7 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("FallApartOnDeath", false)
 		BUILDER:GetSet("DeathRagdollizeParent", false)
 		BUILDER:GetSet("HideRagdollOnDeath", false)
-		BUILDER:SetupPartName("EyeTarget")
+		BUILDER:GetSetPart("EyeTarget")
 BUILDER:EndStorableVars()
 
 BUILDER:RemoveProperty("PositionOffset")

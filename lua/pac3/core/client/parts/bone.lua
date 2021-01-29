@@ -24,7 +24,7 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("FollowAnglesOnly", false)
 		BUILDER:GetSet("HideMesh", false)
 		BUILDER:GetSet("InvertHideMesh", false)
-		BUILDER:SetupPartName("FollowPart")
+		BUILDER:GetSetPart("FollowPart")
 
 	BUILDER:SetPropertyGroup("orientation")
 		BUILDER:PropertyOrder("AimPartName")

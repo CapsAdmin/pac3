@@ -59,8 +59,8 @@ BUILDER
 			:GetSet("EyeAngles", false)
 			:GetSet("PositionOffset", Vector(0,0,0))
 			:GetSet("AngleOffset", Angle(0,0,0))
-			:SetupPartName("AimPart", {editor_panel = "aimpartname"})
-			:SetupPartName("Parent")
+			:GetSetPart("AimPart", {editor_panel = "aimpartname"})
+			:GetSetPart("Parent")
 
 		:SetPropertyGroup("appearance")
 			:GetSet("Translucent", false)

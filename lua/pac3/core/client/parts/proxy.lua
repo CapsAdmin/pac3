@@ -27,7 +27,7 @@ BUILDER:StartStorableVars()
 		end})
 
 		BUILDER:GetSet("RootOwner", false)
-		BUILDER:SetupPartName("TargetPart")
+		BUILDER:GetSetPart("TargetPart")
 		BUILDER:GetSet("AffectChildren", false)
 		BUILDER:GetSet("Expression", "")
 

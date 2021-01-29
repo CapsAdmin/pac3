@@ -122,7 +122,7 @@ do
 		return self
 	end
 
-	function META:SetupPartName(key, udata)
+	function META:GetSetPart(key, udata)
 		local PART = self.PART
 
 
