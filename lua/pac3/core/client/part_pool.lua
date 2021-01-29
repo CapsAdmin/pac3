@@ -549,11 +549,11 @@ function pac.RemovePartsFromUniqueID(uid)
 	end
 end
 
-function pac.UpdatePartsWithMetatable(META, name)
+function pac.UpdatePartsWithMetatable(META)
 	-- update part functions only
 	-- updating variables might mess things up
 	for _, part in pairs(all_parts) do
-		if part.ClassName == name then
+		if part.ClassName == META.ClassName or META.ClassName == "base" then
 			for k, v in pairs(META) do
 				if type(v) == "function" then
 					part[k] = v

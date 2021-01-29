@@ -23,10 +23,12 @@ function pac.CreatePart(name, owner)
 	owner = owner or pac.LocalPlayer
 
 	local META = pac.registered_parts[name]
+
 	if not META then
 		pac.Message("Tried to create unknown part: " .. name .. '!')
 		META = pac.registered_parts.base
 	end
+
 	local part = pac.CopyValue(META)
 	setmetatable(part, part)
 
@@ -84,7 +86,7 @@ function pac.RegisterPart(META)
 	pac.registered_parts[META.ClassName] = META
 
 	if pac.UpdatePartsWithMetatable then
-		pac.UpdatePartsWithMetatable(META, name)
+		pac.UpdatePartsWithMetatable(META)
 	end
 end
 
