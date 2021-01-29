@@ -505,7 +505,6 @@ function PART:OnRemove()
 		end
 	end
 
-	print("LOL")
 	pac.SetModelScale(ent)
 end
 
