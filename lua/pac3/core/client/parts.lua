@@ -88,25 +88,6 @@ function pac.RegisterPart(META)
 	end
 end
 
-function pac.GenerateNewUniqueID(part_data, base)
-	local part_data = table.Copy(part_data)
-	base = base or tostring(part_data)
-
-	local function fixpart(part)
-		for key, val in pairs(part.self) do
-			if val ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
-				part.self[key] = util.CRC(base .. val)
-			end
-		end
-
-		for _, part in pairs(part.children) do
-			fixpart(part)
-		end
-	end
-
-	return part_data
-end
-
 function pac.LoadParts()
 	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
 	for _, name in pairs(files) do
