@@ -125,7 +125,6 @@ do
 	function META:SetupPartName(key, udata)
 		local PART = self.PART
 
-		PART.PartNameResolvers = PART.PartNameResolvers or {}
 
 		local part_key = key
 		local part_set_key = "Set" .. part_key
@@ -155,6 +154,7 @@ do
 		self:GetSet(uid_key, "", {hidden = true})
 
 		local BUILDER = self
+		BUILDER.PartNameResolvers = {}
 
 		PART.ResolvePartNames = PART.ResolvePartNames or function(self, force)
 			for _, func in ipairs(BUILDER.PartNameResolvers) do
@@ -162,15 +162,10 @@ do
 			end
 		end
 
-		PART["Resolve" .. name_key] = function(self, force)
-			PART.PartNameResolvers[part_key](self, force)
-		end
-
 		self.added_partname_solvers = self.added_partname_solvers or {}
 
 		if not self.added_partname_solvers[name_key] then
 			self.added_partname_solvers[name_key] = true
-			self.PartNameResolvers = self.PartNameResolvers or {}
 
 			table.insert(self.PartNameResolvers, function(self, force)
 				if self[uid_key] == "" and self[name_key] == "" then return end
@@ -250,7 +245,7 @@ do
 	end
 
 	function pac.PartTemplate(name)
-		local builder = {PART = {Builder = true}}
+		local builder = {PART = {}}
 
 		if name and pac.PartTemplates[name] then
 			builder = pac.CopyValue(pac.PartTemplates[name])

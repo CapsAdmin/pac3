@@ -71,12 +71,13 @@ BUILDER:EndStorableVars()
 BUILDER:RemoveProperty("PositionOffset")
 BUILDER:RemoveProperty("AngleOffset")
 
+local ent_fields = {}
+
 local function ENTFIELD(PART, name, field)
 
 	field = "pac_" .. field
 
-	PART.ent_fields = PART.ent_fields or {}
-	PART.ent_fields[field] = name
+	ent_fields[field] = name
 
 	PART["Set" .. name] = function(self, val)
 		self[name] = val
@@ -108,6 +109,10 @@ ENTFIELD(PART, "HidePhysgunBeam", "hide_physgun_beam")
 ENTFIELD(PART, "MuteSounds", "mute_sounds")
 ENTFIELD(PART, "AllowOggWhenMuted", "allow_ogg_sounds")
 ENTFIELD(PART, "HideBullets", "hide_bullets")
+
+function PART:Initialize()
+	self:SetColor(self:GetColor())
+end
 
 function PART:GetNiceName()
 	local ent = self:GetOwner()
@@ -196,8 +201,6 @@ function PART:SetScale(val)
 	self.Scale = val
 	self:UpdateScale()
 end
-
-PART.Colorf = Vector(1,1,1)
 
 function PART:SetColor(var)
 	var = var or Vector(255, 255, 255)
@@ -304,7 +307,7 @@ function PART:OnShow()
 			ent = ent:GetActiveWeapon()
 		end
 
-		for _, field in pairs(self.ent_fields) do
+		for _, field in pairs(ent_fields) do
 			self["Set" .. field](self, self[field])
 		end
 
@@ -530,7 +533,7 @@ function PART:OnHide()
 	ent.pac_fullbright = nil
 	ent.pac_invert = nil
 
-	for key in pairs(self.ent_fields) do
+	for key in pairs(ent_fields) do
 		ent[key] = nil
 	end
 

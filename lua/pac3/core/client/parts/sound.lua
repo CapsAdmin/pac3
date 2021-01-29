@@ -72,10 +72,10 @@ function PART:GetNiceName()
 	return table.concat(tbl, ";")
 end
 
-PART.stream_vars = {}
+local stream_vars = {}
 
 local BIND = function(propertyName, setterMethodName, check)
-	table.insert(PART.stream_vars, propertyName)
+	table.insert(stream_vars, propertyName)
 	setterMethodName = setterMethodName or "Set" .. propertyName
 	PART["Set" .. propertyName] = function(self, value)
 		if check then
@@ -185,7 +185,7 @@ function PART:SetPath(path)
 
 		stream:Set3D(true)
 		stream.OnLoad = function()
-			for _, key in ipairs(PART.stream_vars) do
+			for _, key in ipairs(stream_vars) do
 				self["Set" .. key](self, self["Get" .. key](self))
 			end
 		end

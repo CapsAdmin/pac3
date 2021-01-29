@@ -6,6 +6,7 @@ PART.Icon = "icon16/user_go.png"
 BUILDER:NonPhysical()
 
 local pac_movement_default = {}
+local update_these = {}
 
 local function ADD(PART, name, default, ...)
 	BUILDER:GetSet(name, default, ...)
@@ -31,9 +32,7 @@ local function ADD(PART, name, default, ...)
 		end
 	end
 
-	PART.update_these = PART.update_these or {}
-
-	table.insert(PART.update_these, function(s) PART["Set" .. name](s, PART["Get" .. name](s)) end)
+	table.insert(update_these, function(s) PART["Set" .. name](s, PART["Get" .. name](s)) end)
 end
 
 BUILDER:StartStorableVars()
@@ -93,7 +92,7 @@ function PART:OnShow()
 	local ent = self:GetOwner(true)
 
 	if ent:IsValid() then
-		for i,v in ipairs(self.update_these) do
+		for i,v in ipairs(update_these) do
 			v(self)
 		end
 	end

@@ -50,10 +50,10 @@ function PART:GetNiceName()
 	return str and str:match(".+/(.-)%.") or "no sound"
 end
 
-PART.stream_vars = {"Doppler", "Radius"}
+local stream_vars = {"Doppler", "Radius"}
 
 local BIND = function(propertyName, setterMethodName, check)
-	table.insert(PART.stream_vars, propertyName)
+	table.insert(stream_vars, propertyName)
 	setterMethodName = setterMethodName or "Set" .. propertyName
 	PART["Set" .. propertyName] = function(self, value)
 		if check then
@@ -154,7 +154,7 @@ function PART:SetURL(URL)
 
 		stream:Enable3D(true)
 		stream.OnLoad = function()
-			for _, key in ipairs(PART.stream_vars) do
+			for _, key in ipairs(stream_vars) do
 				self["Set" .. key](self, self["Get" .. key](self))
 			end
 		end

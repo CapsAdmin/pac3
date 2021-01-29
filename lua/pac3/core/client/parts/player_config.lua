@@ -38,11 +38,12 @@ BUILDER:SetPropertyGroup("death")
 
 BUILDER:EndStorableVars()
 
+local ent_fields = {}
+
 local function ENTFIELD(PART, name, field)
 	field = "pac_" .. field
 
-	PART.ent_fields = PART.ent_fields or {}
-	PART.ent_fields[field] = name
+	ent_fields[field] = name
 
 	PART["Set" .. name] = function(self, val)
 		self[name] = val
@@ -94,7 +95,7 @@ function PART:OnShow()
 	self:UpdateBloodColor()
 
 	if ent:IsValid() then
-		for _, field in pairs(self.ent_fields) do
+		for _, field in pairs(ent_fields) do
 			self["Set" .. field](self, self[field])
 		end
 	end
@@ -114,7 +115,7 @@ function PART:OnHide()
 	self:UpdateBloodColor("red")
 
 	if ent:IsValid() then
-		for key in pairs(self.ent_fields) do
+		for key in pairs(ent_fields) do
 			ent[key] = nil
 		end
 	end

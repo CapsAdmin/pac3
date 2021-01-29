@@ -1231,9 +1231,6 @@ do
 end
 
 do -- drawing. this code is running every frame
-	PART.cached_pos = Vector(0, 0, 0)
-	PART.cached_ang = Angle(0, 0, 0)
-
 	function PART:DrawChildren(event, pos, ang, draw_type, drawAll)
 		if drawAll then
 			for i, child in ipairs(self:GetChildrenList()) do

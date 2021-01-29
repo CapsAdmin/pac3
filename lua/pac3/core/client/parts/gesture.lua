@@ -13,8 +13,6 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSet("SlotWeight", 1)
 BUILDER:EndStorableVars()
 
-PART.random_gestlist = {}
-
 PART.ValidGestureSlots = {
 	attackreload = GESTURE_SLOT_ATTACK_AND_RELOAD,
 	grenade = GESTURE_SLOT_GRENADE,
