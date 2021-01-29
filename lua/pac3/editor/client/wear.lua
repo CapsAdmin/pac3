@@ -407,7 +407,10 @@ do
 		frames = frames + 1
 
 		if frames > 400 then
-			Initialize()
+			if not xpcall(Initialize, ErrorNoHalt) then
+				pac.RemoveHook("Think", "pac_request_outfits")
+				pace.NeverLoaded = true
+			end
 		end
 	end)
 

@@ -27,10 +27,12 @@ function pac.CreatePart(name, owner)
 	if not META then
 		pac.Message("Tried to create unknown part: " .. name .. '!')
 		META = pac.registered_parts.base
+		if not META then
+			return NULL
+	end
 	end
 
-	local part = pac.CopyValue(META)
-	setmetatable(part, part)
+	local part = setmetatable({}, META)
 
 	part.Id = part_count
 	part_count = part_count + 1
