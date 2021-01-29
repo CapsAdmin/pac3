@@ -153,11 +153,10 @@ do
 		self:GetSet(name_key, "", udata or {editor_panel = "part"})
 		self:GetSet(uid_key, "", {hidden = true})
 
-		local BUILDER = self
-		BUILDER.PartNameResolvers = {}
+		self.PartNameResolvers = self.PartNameResolvers or {}
 
 		PART.ResolvePartNames = PART.ResolvePartNames or function(self, force)
-			for _, func in ipairs(BUILDER.PartNameResolvers) do
+			for _, func in ipairs(self.Builder.PartNameResolvers) do
 				func(self, force)
 			end
 		end
@@ -246,6 +245,7 @@ do
 
 	function pac.PartTemplate(name)
 		local builder = {PART = {}}
+		builder.PART.Builder = builder
 
 		if name and pac.PartTemplates[name] then
 			builder = pac.CopyValue(pac.PartTemplates[name])
