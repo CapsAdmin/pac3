@@ -1814,3 +1814,148 @@ reload end
 reload
 custom gesture
 --]]
+
+
+-- Custom event selector wheel
+do
+	-- TODO: Also make sure name's length is limited to 12 or something.
+	pac.CustomEvents = {
+		{name = "Test1", event = {}},
+		{name = "Test2", event = {}},
+		{name = "Test3", event = {}},
+		{name = "Test4", event = {}},
+		{name = "Test5", event = {}},
+		{name = "Test6", event = {}},
+		{name = "Test7", event = {}},
+		{name = "Test8", event = {}},
+		{name = "Test9", event = {}},
+		{name = "Test10", event = {}},
+		{name = "Test11", event = {}},
+		{name = "Test12", event = {}},
+		{name = "Test13", event = {}},
+		{name = "Test14", event = {}},
+		{name = "Test15", event = {}},
+		{name = "Test16", event = {}},
+		{name = "Test17", event = {}},
+		{name = "Test18", event = {}},
+		{name = "Test19", event = {}},
+		{name = "Test20", event = {}},
+		{name = "Test21", event = {}},
+		{name = "Test22", event = {}},
+	}
+
+	local selectorBg = Material("pac/selector64.png","smooth")
+	local selected
+
+	function pac.openEventSelectionWheel()
+		gui.EnableScreenClicker(true)
+
+		local scrw, scrh = ScrW(), ScrH()
+		local scrw2, scrh2 = scrw*0.5, scrh*0.5
+		local color_red = Color(255,0,0)
+		local R = 48
+
+		-- Theta size of each wedge
+		local thetadiff = math.pi*2 / #pac.CustomEvents
+		-- Used to compare the dot product
+		local coslimit = math.cos(thetadiff * 0.5)
+		-- Keeps the circles 100 units from each others' center
+		local radius
+		if #pac.CustomEvents < 3 then
+			radius = R
+		else
+			radius = R/math.cos((#pac.CustomEvents - 2)*math.pi*0.5/#pac.CustomEvents)
+		end
+
+		-- Scale down to keep from going out of the screen
+		local gScale
+		if radius+R > scrh2 then
+			gScale = scrh2 / (radius+R)
+		else
+			gScale = 1
+		end
+
+		local selections = {}
+		for k, v in ipairs(pac.CustomEvents) do
+			local theta = (k-1)*thetadiff
+			selections[k] = {
+				grow = 0,
+				name = v.name,
+				event = v.event,
+				x = math.sin(theta),
+				y = -math.cos(theta),
+			}
+		end
+
+		local function think(self, x, y)
+			local dot = self.x*x + self.y*y
+			local grow
+			if dot > coslimit then
+				selected = self
+				grow = 0.1
+			else
+				grow = 0
+			end
+			self.grow = self.grow*0.9 + grow -- Framerate will affect this effect's speed but oh well
+
+			local scale = gScale*(1 + self.grow*0.2)
+			local m = Matrix()
+			m:SetTranslation(Vector(scrw2, scrh2, 0))
+			m:Scale(Vector(scale, scale, scale))
+			cam.PushModelMatrix(m)
+
+			local x, y = self.x*radius, self.y*radius
+			surface.DrawTexturedRect(x-48, y-48, 96, 96)
+			draw.SimpleText(self.name, "DermaDefault", x, y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+			cam.PopModelMatrix()
+		end
+
+		pac.AddHook("HUDPaint","custom_event_selector",function()
+			-- Right clicking cancels
+			if input.IsButtonDown(MOUSE_RIGHT) then pac.closeEventSelectionWheel(true) return end
+
+			-- Normalize mouse vector from center of screen
+			local x, y = input.GetCursorPos()
+			x = x - scrw2
+			y = y - scrh2
+			if x==0 and y==0 then x = 1 y = 0 else
+				local l = math.sqrt(x^2+y^2)
+				x = x/l
+				y = y/l
+			end
+
+			DisableClipping(true)
+			render.PushFilterMag(TEXFILTER.ANISOTROPIC)
+			render.PushFilterMin(TEXFILTER.ANISOTROPIC)
+
+			surface.SetMaterial(selectorBg)
+			surface.SetDrawColor(255,255,255)
+
+			draw.SimpleText("Right click to cancel", "DermaDefault", scrw2, scrh2+radius+R, color_red, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+			for _, v in ipairs(selections) do think(v, x, y) end
+
+			render.PopFilterMag()
+			render.PopFilterMin()
+			DisableClipping(false)
+		end)
+	end
+
+	function pac.closeEventSelectionWheel(cancel)
+		gui.EnableScreenClicker(false)
+		pac.RemoveHook("HUDPaint","custom_event_selector")
+
+		if selected and cancel~=true then
+			-- TODO
+			-- selected.event:trigger()
+			selected = nil
+		end
+	end
+
+	concommand.Add("+pac_events", pac.openEventSelectionWheel)
+
+	concommand.Add("-pac_events", pac.closeEventSelectionWheel)
+end
+
+
+
