@@ -1859,7 +1859,7 @@ do
 		local thetadiff = math.pi*2 / #pac.CustomEvents
 		-- Used to compare the dot product
 		local coslimit = math.cos(thetadiff * 0.5)
-		-- Keeps the circles 100 units from each others' center
+		-- Keeps the circles R units from each others' center
 		local radius
 		if #pac.CustomEvents < 3 then
 			radius = R
