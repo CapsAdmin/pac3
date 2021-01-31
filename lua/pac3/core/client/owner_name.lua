@@ -138,5 +138,5 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 		end
 	end
 
-	return pac.GetWorldEntity()
+	return NULL
 end
