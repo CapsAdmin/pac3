@@ -889,7 +889,7 @@ do -- serializing
 
 	do
 		local function SetTable(self, tbl)
-			self:SetUniqueID(tbl.self.UniqueID)
+			self:SetUniqueID(tbl.self.UniqueID or util.CRC(tostring(tbl.self)))
 			self.delayed_variables = self.delayed_variables or {}
 
 			for key, value in pairs(tbl.self) do
