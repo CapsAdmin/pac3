@@ -135,6 +135,7 @@ do --dev util
 	end
 
 	local sv_allowcslua = GetConVar('sv_allowcslua')
+	local prefer_local_version = CreateClientConVar("pac_restart_prefer_local", "1")
 
 	function pac.Restart()
 		PAC_MDL_SALT = PAC_MDL_SALT + 1
@@ -202,9 +203,19 @@ do --dev util
 			collectgarbage()
 		end
 
-		local loadingHit = false
 
-		if sv_allowcslua:GetBool() or LocalPlayer():IsSuperAdmin() then
+		if not prefer_local_version:GetBool() then
+			pacLocal.Message("pac_restart: not reloading from local version")
+
+			for _, path in ipairs((file.Find("autorun/pac*", "LUA"))) do
+				if path:EndsWith("_init.lua") and path ~= "pac_init.lua" then
+					include("autorun/" .. path)
+				end
+			end
+
+		elseif sv_allowcslua:GetBool() or LocalPlayer():IsSuperAdmin() then
+			local loadingHit = false
+
 			if sv_allowcslua:GetBool() then
 				pacLocal.Message("pac_restart: sv_allowcslua is on, looking for PAC3 addon..")
 			end
@@ -275,14 +286,15 @@ do --dev util
 					break
 				end
 			end
-		end
 
-		if not loadingHit then
-			pacLocal.Message("sv_allowcslua is not enabled or unable to find PAC3 in addons/, loading PAC3 again from server lua")
 
-			for _, path in ipairs((file.Find("autorun/pac*", "LUA"))) do
-				if path:EndsWith("_init.lua") and path ~= "pac_init.lua" then
-					include("autorun/" .. path)
+			if not loadingHit then
+				pacLocal.Message("sv_allowcslua is not enabled or unable to find PAC3 in addons/, loading PAC3 again from server lua")
+
+				for _, path in ipairs((file.Find("autorun/pac*", "LUA"))) do
+					if path:EndsWith("_init.lua") and path ~= "pac_init.lua" then
+						include("autorun/" .. path)
+					end
 				end
 			end
 		end
@@ -662,8 +674,8 @@ do -- get set and editor vars
 		local name_find_count_key = name_key:lower() .. "_try_count"
 
 		-- these keys are ignored when table is set. it's kind of a hack..
-		PART.IngoreSetKeys = PART.IgnoreSetKeys or {}
-		PART.IngoreSetKeys[name_key] = true
+		pac.PartNameKeysToIgnore = pac.PartNameKeysToIgnore or {}
+		pac.PartNameKeysToIgnore[name_key] = true
 
 		local group = __group
 
@@ -724,6 +736,11 @@ do -- get set and editor vars
 			self[name_find_count_key] = 0
 
 			if type(var) == "string" then
+				if self[name_key] == var and self[uid_key] ~= "" then
+					-- don't do anything to avoid editor from choosing random parts with the same name
+					return
+				end
+
 				self[name_key] = var
 
 				if var == "" then

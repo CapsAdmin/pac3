@@ -1,5 +1,7 @@
 local L = pace.LanguageString
 
+local languageID = CreateClientConVar("pac_editor_languageid", 1, true, false, "Whether we should show the language indicator inside of editable text entries.")
+
 function pace.ShowSpecial(pnl, parent, size)
 	size = size or 150
 
@@ -14,7 +16,7 @@ function pace.FixMenu(menu)
 	menu:SetPos(pace.Editor:GetPos() + pace.Editor:GetWide(), gui.MouseY() - (menu:GetTall() * 0.5))
 end
 
-local function DefineSpecialCallback(self, callFuncLeft, callFuncRight)
+local function DefineMoreOptionsLeftClick(self, callFuncLeft, callFuncRight)
 	local btn = vgui.Create("DButton", self)
 	btn:SetSize(16, 16)
 	btn:Dock(RIGHT)
@@ -27,8 +29,8 @@ local function DefineSpecialCallback(self, callFuncLeft, callFuncRight)
 		btn.DoRightClick = btn.DoClick
 	end
 
-	if self.OnSpecialCallbackButton then
-		self:OnSpecialCallbackButton(btn)
+	if self.OnMoreOptionsLeftClickButton then
+		self:OnMoreOptionsLeftClickButton(btn)
 	end
 
 	return btn
@@ -124,7 +126,7 @@ end
 pac.AddHook("GUIMousePressed", "pace_SafeRemoveSpecialPanel", function()
 	local pnl = pace.ActiveSpecialPanel
 	if pnl:IsValid() then
-		local x,y = gui.MousePos()
+		local x,y = input.GetCursorPos()
 		local _x, _y = pnl:GetPos()
 		if x < _x or y < _y or x > _x + pnl:GetWide() or y > _y + pnl:GetTall() then
 			pnl:Remove()
@@ -307,7 +309,7 @@ do -- list
 	function PANEL:PerformLayout()
 		self.scr:SetSize(10, self:GetHeight())
 		self.scr:SetUp(self:GetTall(), self:GetHeight() - 10)
-		self.search:SetZPos(-1)
+		self.search:SetZPos(1)
 		self.div:SetPos(0, (self.search:IsVisible() and self.search:GetTall() or 0) + self.scr:GetOffset())
 		local w, h = self:GetSize()
 		local scroll_width = self.scr.Enabled and self.scr:GetWide() or 0
@@ -576,9 +578,13 @@ do -- list
 						pnl:SetTooltip(L(udata.description))
 					end
 
+					obj.editor_property = obj.editor_property or {}
+					obj.editor_property[key] = pnl
+					pnl.part = obj
+
 					if udata then
 						if udata.enums then
-							DefineSpecialCallback(pnl, function(self)
+							DefineMoreOptionsLeftClick(pnl, function(self)
 								pace.CreateSearchList(
 									self,
 									self.CurrentKey,
@@ -658,8 +664,6 @@ do -- list
 							pnl:Remove()
 							goto CONTINUE
 						end
-
-						obj.editor_pnl = pnl
 
 						local val = obj["Get" .. key](obj)
 						pnl:SetValue(val)
@@ -799,13 +803,13 @@ do -- base editable
 	end
 
 	function PANEL:PostInit()
-		if self.SpecialCallback then
-			self:DefineSpecialCallback(self.SpecialCallback, self.SpecialCallback2)
+		if self.MoreOptionsLeftClick then
+			self:DefineMoreOptionsLeftClick(self.MoreOptionsLeftClick, self.MoreOptionsRightClick)
 		end
 	end
 
-	function PANEL:DefineSpecialCallback(callFuncLeft, callFuncRight)
-		return DefineSpecialCallback(self, callFuncLeft, callFuncRight)
+	function PANEL:DefineMoreOptionsLeftClick(callFuncLeft, callFuncRight)
+		return DefineMoreOptionsLeftClick(self, callFuncLeft, callFuncRight)
 	end
 
 	function PANEL:SetValue(var, skip_encode)
@@ -824,6 +828,10 @@ do -- base editable
 
 		self.original_str = str
 		self.original_var = var
+
+		if self.OnValueSet then
+			self:OnValueSet(var)
+		end
 	end
 
 	-- kind of a hack
@@ -855,7 +863,7 @@ do -- base editable
 
 		if mcode == MOUSE_RIGHT then
 			local menu = DermaMenu()
-			menu:SetPos(gui.MousePos())
+			menu:SetPos(input.GetCursorPos())
 			menu:MakePopup()
 			self:PopulateContextMenu(menu)
 		end
@@ -915,6 +923,7 @@ do -- base editable
 		pnl:SetDrawBorder(false)
 		pnl:SetValue(self.original_str or "")
 		pnl:SetKeyboardInputEnabled(true)
+		pnl:SetDrawLanguageID(languageID:GetBool())
 		pnl:RequestFocus()
 		pnl:SelectAllOnFocus(true)
 
@@ -941,7 +950,8 @@ do -- base editable
 		--pnl:SetPos(x+3,y-4)
 		--pnl:Dock(FILL)
 		local x, y = self:LocalToScreen()
-		pnl:SetPos(x+5, y)
+		local inset_x = self:GetTextInset()
+		pnl:SetPos(x+5 + inset_x, y)
 		pnl:SetSize(self:GetSize())
 		pnl:SetWide(ScrW())
 		pnl:MakePopup()
@@ -981,7 +991,7 @@ do -- base editable
 		if not input.IsMouseDown(MOUSE_LEFT) then return end
 		local pnl = pace.BusyWithProperties
 		if pnl and pnl ~= true and pnl:IsValid() then
-			local x, y = gui.MousePos()
+			local x, y = input.GetCursorPos()
 			local _x, _y = pnl:GetParent():LocalToScreen()
 			if x < _x or y < _y or x > _x + pnl:GetParent():GetWide() or y > _y + pnl:GetParent():GetTall() then
 				pnl:OnEnter()
@@ -1122,13 +1132,13 @@ do -- vector
 			self.middle = middle
 			self.right = right
 
-			if self.SpecialCallback then
+			if self.MoreOptionsLeftClick then
 				local btn = vgui.Create("DButton", self)
 				btn:SetSize(16, 16)
 				btn:Dock(RIGHT)
 				btn:SetText("...")
-				btn.DoClick = function() self:SpecialCallback(self.CurrentKey) end
-				btn.DoRightClick = self.SpecialCallback2 and function() self:SpecialCallback2(self.CurrentKey) end or btn.DoClick
+				btn.DoClick = function() self:MoreOptionsLeftClick(self.CurrentKey) end
+				btn.DoRightClick = self.MoreOptionsRightClick and function() self:MoreOptionsRightClick(self.CurrentKey) end or btn.DoClick
 
 				if type == "color" or type == "color2" then
 					btn:SetText("")
@@ -1148,7 +1158,7 @@ do -- vector
 			self.Paint = function() end
 		end
 
-		PANEL.SpecialCallback = special_callback
+		PANEL.MoreOptionsLeftClick = special_callback
 
 		function PANEL:Restart()
 			self.left:SetValue(0)
@@ -1290,25 +1300,35 @@ do -- vector
 		function(self)
 			pace.SafeRemoveSpecialPanel()
 
+			local dlibbased = vgui.GetControlTable("DLibColorMixer")
+
 			local frm = vgui.Create("DFrame")
 			frm:SetTitle("Color")
 
 			pace.ShowSpecial(frm, self, 300)
 
-			local clr = vgui.Create("DColorMixer", frm)
+			if dlibbased then
+				frm:SetWide(500)
+			end
+
+			local clr = vgui.Create(dlibbased and "DLibColorMixer" or "DColorMixer", frm)
 			clr:Dock(FILL)
 			clr:SetAlphaBar(false) -- Alpha isn't needed
 			clr:SetColor(Color(self.vector.x, self.vector.y, self.vector.z))
 
-			local html_color = vgui.Create("DTextEntry", frm)
-			html_color:Dock(BOTTOM)
-			html_color:SetText(tohex(self.vector))
+			local html_color
 
-			html_color.OnEnter = function()
-				local valGet = uncodeValue(html_color:GetValue())
+			if not dlibbased then
+				html_color = vgui.Create("DTextEntry", frm)
+				html_color:Dock(BOTTOM)
+				html_color:SetText(tohex(self.vector))
 
-				if valGet then
-					clr:SetColor(valGet)
+				html_color.OnEnter = function()
+					local valGet = uncodeValue(html_color:GetValue())
+
+					if valGet then
+						clr:SetColor(valGet)
+					end
 				end
 			end
 
@@ -1316,7 +1336,10 @@ do -- vector
 				local vec = Vector(newColor.r, newColor.g, newColor.b)
 				self.OnValueChanged(vec)
 				self:SetValue(vec)
-				html_color:SetText(tohex(vec))
+
+				if not dlibbased then
+					html_color:SetText(tohex(vec))
+				end
 			end
 
 			pace.ActiveSpecialPanel = frm
@@ -1338,40 +1361,53 @@ do -- vector
 		function(self)
 			pace.SafeRemoveSpecialPanel()
 
+			local dlibbased = vgui.GetControlTable("DLibColorMixer")
+
 			local frm = vgui.Create("DFrame")
 			frm:SetTitle("color")
 
 			pace.ShowSpecial(frm, self, 300)
 
-			local clr = vgui.Create("DColorMixer", frm)
+			if dlibbased then
+				frm:SetWide(500)
+			end
+
+			local clr = vgui.Create(dlibbased and "DLibColorMixer" or "DColorMixer", frm)
 			clr:Dock(FILL)
+			clr:SetAlphaBar(false)
 			clr:SetColor(Color(self.vector.x * 255, self.vector.y * 255, self.vector.z * 255))
 
-			local function tohex(vec)
-				return ("#%X%X%X"):format(vec.x * 255, vec.y * 255, vec.z * 255)
+			local html_color
+
+			if not dlibbased then
+				local function tohex(vec)
+					return ("#%X%X%X"):format(vec.x * 255, vec.y * 255, vec.z * 255)
+				end
+
+				local function fromhex(str)
+					local x,y,z = str:match("#?(..)(..)(..)")
+					return Vector(tonumber("0x" .. x), tonumber("0x" .. y), tonumber("0x" .. z)) / 255
+				end
+
+				html_color = vgui.Create("DTextEntry", frm)
+				html_color:Dock(BOTTOM)
+				html_color:SetText(tohex(self.vector))
+				html_color.OnEnter = function()
+					local vec = fromhex(html_color:GetValue())
+					clr:SetColor(Color(vec.x * 255, vec.y * 255, vec.z * 255))
+					self.OnValueChanged(vec)
+					self:SetValue(vec)
+				end
 			end
 
-			local function fromhex(str)
-				local x,y,z = str:match("#?(..)(..)(..)")
-				return Vector(tonumber("0x" .. x), tonumber("0x" .. y), tonumber("0x" .. z)) / 255
-			end
-
-			local html_color = vgui.Create("DTextEntry", frm)
-			html_color:Dock(BOTTOM)
-			html_color:SetText(tohex(self.vector))
-			html_color.OnEnter = function()
-				local vec = fromhex(html_color:GetValue())
-				clr:SetColor(Color(vec.x * 255, vec.y * 255, vec.z * 255))
+			function clr.ValueChanged(_, newcolor)
+				local vec = Vector(newcolor.r / 255, newcolor.g / 255, newcolor.b / 255)
 				self.OnValueChanged(vec)
 				self:SetValue(vec)
-			end
 
-			function clr.Think()
-				local clr = clr:GetColor() or Color(255, 255, 255, 255)
-				local vec = Vector(clr.r, clr.g, clr.b) / 255
-				self.OnValueChanged(vec)
-				self:SetValue(vec)
-				html_color:SetText(tohex(vec))
+				if not dlibbased then
+					html_color:SetText(tohex(vec))
+				end
 			end
 
 			pace.ActiveSpecialPanel = frm
@@ -1438,11 +1474,11 @@ do -- number
 			if gui.MouseY()+1 >= ScrH() then
 				self.mousey = 0
 				self.oldval = val
-				gui.SetMousePos(gui.MouseX(), 0)
+				input.SetCursorPos(gui.MouseX(), 0)
 			elseif gui.MouseY() <= 0 then
 				self.mousey = ScrH()
 				self.oldval = val
-				gui.SetMousePos(gui.MouseX(), ScrH())
+				input.SetCursorPos(gui.MouseX(), ScrH())
 			end
 		end
 	end
@@ -1457,14 +1493,16 @@ do -- number
 
 		num = tonumber(num) or 0
 
-		if input.IsKeyDown(KEY_LCONTROL) then
-			num = math.Round(num)
-		end
+		if self:IsMouseDown() then
+			if input.IsKeyDown(KEY_LCONTROL) then
+				num = math.Round(num)
+			end
 
-		if input.IsKeyDown(KEY_LALT) then
-			num = math.Round(num, 5)
-		else
-			num = math.Round(num, 3)
+			if input.IsKeyDown(KEY_LALT) then
+				num = math.Round(num, 5)
+			else
+				num = math.Round(num, 3)
+			end
 		end
 
 		return num

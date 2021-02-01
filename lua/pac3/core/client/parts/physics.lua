@@ -28,6 +28,10 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "ConstrainSphere", 0)
 pac.EndStorableVars()
 
+local function IsInvalidParent(self)
+	return self.Parent.ClassName ~= "model" and self.Parent.ClassName ~= "model2"
+end
+
 PART.phys = NULL
 
 function PART:SetBox(b)
@@ -54,7 +58,7 @@ end
 function PART:SetRadius(n)
 	self.Radius = n
 
-	if self.Parent.ClassName ~= "model" then return end
+	if IsInvalidParent(self) then return end
 
 	local ent = self.Parent:GetEntity()
 
@@ -69,7 +73,7 @@ function PART:SetRadius(n)
 	end
 
 	self.phys = ent:GetPhysicsObject()
-	
+
 	if self.Gravity ~= nil then
 		self.phys:EnableGravity(self.Gravity)
 	end
@@ -86,8 +90,10 @@ end
 function PART:SetSelfCollision(b)
 	self.SelfCollision = b
 
-	if self.Parent.ClassName ~= "model" then return end
+	if IsInvalidParent(self) then return end
+
 	local ent = self.Parent:GetEntity()
+
 	if b then
 		ent:SetCollisionGroup(COLLISION_GROUP_NONE)
 	else
@@ -155,8 +161,9 @@ function PART:OnHide()
 end
 
 function PART:Enable()
+	if IsInvalidParent(self) then return end
+
 	local part = self:GetParent()
-	if part.ClassName ~= "model" then return end
 
 	part.skip_orient = true
 
@@ -173,8 +180,9 @@ function PART:Enable()
 end
 
 function PART:Disable()
+	if IsInvalidParent(self) then return end
+
 	local part = self:GetParent()
-	if part.ClassName ~= "model" then return end
 
 	local ent = part:GetEntity()
 	if ent:IsValid() then

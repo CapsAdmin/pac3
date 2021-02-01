@@ -108,7 +108,7 @@ local function CreateDummies(parts)
 		EventHide = function(_, b)
 			for _, v in pairs(parts) do
 				if v:IsValid() then
-					v:SetEventHide(not not b)
+					v:SetEventHide(not not b, self)
 				end
 			end
 		end,
@@ -116,7 +116,7 @@ local function CreateDummies(parts)
 		EventShow = function(_, b)
 			for _, v in pairs(parts) do
 				if v:IsValid() then
-					v:SetEventHide(not b)
+					v:SetEventHide(not b, self)
 				end
 			end
 		end
@@ -125,7 +125,7 @@ local function CreateDummies(parts)
 	return obj
 end
 
-local function CreateDummy(part, store)
+local function CreateDummy(part, store, self)
 	if not part or not part:IsValid() then return end
 	if part.dummy_part then return part.dummy_part end
 
@@ -157,15 +157,15 @@ local function CreateDummy(part, store)
 		end,
 
 		EventHide = function(_, b)
-			part:SetEventHide(not not b)
+			part:SetEventHide(not not b, self)
 		end,
 
 		EventShow = function(_, b)
-			part:SetEventHide(not b)
+			part:SetEventHide(not b, self)
 		end,
 
 		GetChildren = function()
-			return CreateDummies(part:GetChildren())
+			return CreateDummies(part:GetChildren(), self)
 		end,
 
 	}
@@ -265,7 +265,7 @@ function PART:CompileCode()
 					parent = parent:GetParent()
 				end
 
-				return CreateDummy(parent, store)
+				return CreateDummy(parent, store, self)
 			end,
 
 			FindMultiple = function(str)
@@ -280,7 +280,7 @@ function PART:CompileCode()
 					end
 				end
 
-				return CreateDummies(parts)
+				return CreateDummies(parts, self)
 			end,
 
 			FindMultipleWithProperty = function()
@@ -296,7 +296,7 @@ function PART:CompileCode()
 					end
 				end
 
-				return CreateDummies(parts)
+				return CreateDummies(parts, self)
 			end,
 
 			Find = function(str)
@@ -305,7 +305,7 @@ function PART:CompileCode()
 						part:GetPlayerOwner() == self:GetPlayerOwner() and
 						(part.UniqueID == str or part:GetName() == str)
 					then
-						return CreateDummy(part, store)
+						return CreateDummy(part, store, self)
 					end
 				end
 			end,
@@ -316,7 +316,7 @@ function PART:CompileCode()
 
 	env.__index = function(_, key)
 		if key == "this" or key == "self" then
-			return CreateDummy(self, store)
+			return CreateDummy(self, store, self)
 		end
 
 		if key == "T" or key == "TIME" then

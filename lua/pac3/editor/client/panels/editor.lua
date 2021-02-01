@@ -101,7 +101,7 @@ function PANEL:Init()
 			self.smoothlabel:SetText("Enable smooth zooming.")
 			self.smoothlabel:SetWrap(true)
 			self.smoothlabel:SetAutoStretchVertical(true)
-			
+
 		self.sliderpanel = vgui.Create("DPanel", self.zoomframe)
 		self.sliderpanel:SetSize(180, 20)
 		self.sliderpanel:Dock(TOP)
@@ -109,9 +109,9 @@ function PANEL:Init()
 			self.zoomslider = vgui.Create("DNumSlider", self.sliderpanel)
 			self.zoomslider:DockPadding(4,0,0,0)
 			self.zoomslider:SetSize(200, 20)
-			self.zoomslider:SetMin( 0 )				
-			self.zoomslider:SetMax( 100 )				
-			self.zoomslider:SetDecimals( 0 )	
+			self.zoomslider:SetMin( 0 )
+			self.zoomslider:SetMax( 100 )
+			self.zoomslider:SetDecimals( 0 )
 			self.zoomslider:SetText("Camera FOV")
 			self.zoomslider:SetDark(true)
 			self.zoomslider:SetDefaultValue( 75 )
@@ -220,7 +220,7 @@ function PANEL:Think(...)
 
 		self.zoomsettings:InvalidateLayout( true )
 		self.zoomsettings:SizeToChildren( false, true )
-		
+
 		self.zoomframe:InvalidateLayout( true )
 		self.zoomframe:SizeToChildren( false, true )
 
@@ -243,7 +243,7 @@ function PANEL:Think(...)
 			pace.SetZoom(self.zoomslider:GetValue(),false)
 		end
 
-		local mx, my = gui.MousePos()
+		local mx, my = input.GetCursorPos()
 		local x, y = self.zoomframe:GetPos()
 		local xs, xy = self.zoomframe:GetSize()
 
@@ -364,7 +364,7 @@ end
 
 local function PostRenderVGUI()
 	if drawProfileInfos ~= FrameNumber() then return end
-	local x, y = gui.MousePos()
+	local x, y = input.GetCursorPos()
 	x = x + 3
 	y = y + 3
 
@@ -430,7 +430,7 @@ function PANEL:PaintOver(w, h)
 	y = y + self.top:GetTall()
 	boxW, boxH = w, h
 
-	local mx, my = gui.MousePos()
+	local mx, my = input.GetCursorPos()
 	local cx, cy = self:LocalToScreen(x, y)
 
 	if cx <= mx and cy <= my and mx <= cx + w - 5 and my <= cy + RENDERSCORE_SIZE - 1 and self:IsChildHovered() then

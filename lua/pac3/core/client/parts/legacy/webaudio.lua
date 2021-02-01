@@ -2,8 +2,7 @@ local PART = {}
 local snd_mute_losefocus = GetConVar('snd_mute_losefocus')
 
 PART.ClassName = "webaudio"
-
-PART.Group = 'effects'
+PART.Group = 'legacy'
 PART.Icon = 'icon16/sound_add.png'
 
 pac.StartStorableVars()
@@ -32,7 +31,8 @@ function PART:Initialize()
 end
 
 function PART:GetNiceName()
-	return pac.PrettifyName(("/" .. self:GetURL()):match(".+/(.-)%.")) or "no sound"
+	local str = pac.PrettifyName("/" .. self:GetURL())
+	return str and str:match(".+/(.-)%.") or "no sound"
 end
 
 function PART:OnThink()
@@ -151,7 +151,7 @@ function PART:SetupURLStreamsNow(URL)
 
 	for url, streamdata in pairs(self.streams) do
 		if IsValid(streamdata.stream) then
-			stream:Stop()
+			streamdata.stream:Stop()
 		end
 	end
 

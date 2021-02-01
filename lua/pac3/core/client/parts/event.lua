@@ -115,14 +115,28 @@ PART.OldEvents = {
 
 	timerx = {
 		arguments = {{seconds = "number"}, {reset_on_hide = "boolean"}, {synced_time = "boolean"}},
-
+		nice = function(self, ent, seconds)
+			return "timerx: " .. ("%.2f"):format(self.number or 0, 2) .. " " .. self:GetOperator() .. " " .. seconds .. " seconds?"
+		end,
 		callback = function(self, ent, seconds, reset_on_hide, synced_time)
 			local time = synced_time and CurTime() or RealTime()
 
 			self.time = self.time or time
 			self.timerx_reset = reset_on_hide
 
-			return self:NumberOperator(time - self.time, seconds)
+			-- limitation - we can not "not to think" the timer
+			-- when our thinking depends on whenever we control our parent!
+			if self.AffectChildrenOnly then
+				local hidden, event_hidden = self:IsHidden()
+
+				if hidden and (not event_hidden or not self:IsEventHidden(self, true)) then
+					return false
+				end
+			end
+
+			self.number = time - self.time
+
+			return self:NumberOperator(self.number, seconds)
 		end,
 	},
 
@@ -134,6 +148,16 @@ PART.OldEvents = {
 
 			self.time = self.time or time
 			self.timerx_reset = reset_on_hide
+
+			-- limitation - we can not "not to think" the timer
+			-- when our thinking depends on whenever we control our parent!
+			if self.AffectChildrenOnly then
+				local hidden, event_hidden = self:IsHidden()
+
+				if hidden and (not event_hidden or not self:IsEventHidden(self, true)) then
+					return false
+				end
+			end
 
 			return self:NumberOperator(time - self.time, seconds)
 		end,
@@ -377,6 +401,22 @@ PART.OldEvents = {
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
 			return ent.FlashlightIsOn and ent:FlashlightIsOn()
+		end,
+	},
+
+	collide = {
+		callback = function(self, ent)
+			ent.pac_event_collide_callback = ent.pac_event_collide_callback or ent:AddCallback("PhysicsCollide", function(ent, data)
+				ent.pac_event_collision_data = data
+			end)
+
+			if ent.pac_event_collision_data then
+				local data = ent.pac_event_collision_data
+				ent.pac_event_collision_data = nil
+				return true
+			end
+
+			return false
 		end,
 	},
 
@@ -1007,30 +1047,43 @@ do
 	net.Receive("pac.BroadcastPlayerButton", function()
 		local ply = net.ReadEntity()
 
-		if ply:IsValid() then
-			local key = net.ReadUInt(8)
-			local down = net.ReadBool()
+		if not ply:IsValid() then return end
 
-			key = pac.key_enums[key] or key
+		if ply == pac.LocalPlayer and (pace and pace.HasFocus() or gui.IsConsoleVisible()) then return end
 
-			ply.pac_buttons = ply.pac_buttons or {}
-			ply.pac_buttons[key] = down
-		end
+		local key = net.ReadUInt(8)
+		local down = net.ReadBool()
+
+		key = pac.key_enums[key] or key
+
+		ply.pac_buttons = ply.pac_buttons or {}
+		ply.pac_buttons[key] = down
 	end)
 
 	PART.OldEvents.button = {
 		arguments = {{button = "string"}},
 		userdata = {{enums = function()
-			local enums = {}
-
-			for key, val in pairs(_G) do
-				if type(key) == "string" and type(val) == "number" and key:sub(0,4) == "KEY_" then
-					enums[key:sub(5):lower()] = val
-				end
-			end
-
 			return enums
 		end}},
+		nice = function(self, ent, button)
+			local ply = self:GetPlayerOwner()
+
+			local active = {}
+			if ply.pac_buttons then
+				for k,v in pairs(ply.pac_buttons) do
+					if v then
+						table.insert(active, "\"" .. tostring(k) .. "\"")
+					end
+				end
+			end
+			active = table.concat(active, " or ")
+
+			if active == "" then
+				active = "-"
+			end
+
+			return self:GetOperator() .. " \"" .. button .. "\"" .. " in (" .. active .. ")"
+		end,
 		callback = function(self, ent, button)
 			local ply = self:GetPlayerOwner()
 
@@ -1118,6 +1171,25 @@ do
 		return false
 	end
 
+	function eventMeta:GetNiceName(part, ent)
+		if self.extra_nice_name then
+			return self.extra_nice_name(part, ent, part:GetParsedArgumentsForObject(self))
+		end
+
+		local str = part:GetEvent()
+
+		if part:GetArguments() ~= "" then
+			local args = part:GetArguments():gsub(";", " or ")
+
+			if not tonumber(args) then
+				args = [["]] .. args .. [["]]
+			end
+			str = str .. " " .. part:GetOperator() .. " " .. args
+		end
+
+		return pac.PrettifyName(str)
+	end
+
 	local eventMetaTable = {
 		__index = function(self, key)
 			if key == '__class' or key == '__classname' then
@@ -1196,6 +1268,8 @@ do
 				eventObject:AppendArgument(key, Type, data.userdata and data.userdata[i] or nil)
 			end
 		end
+
+		eventObject.extra_nice_name = data.nice
 
 		function eventObject:Think(event, ent, ...)
 			return think(event, ent, ...)
@@ -1321,30 +1395,23 @@ function PART:GetParentEx()
 end
 
 function PART:GetNiceName()
-	local str = self:GetEvent()
+	local event_name = self:GetEvent()
 
-	if self:GetArguments() ~= "" then
-		local args = self:GetArguments():gsub(";", " or ")
+	if not PART.Events[event_name] then return "unknown event" end
 
-		if not tonumber(args) then
-			args = [["]] .. args .. [["]]
-		end
-		str = str .. " " .. self:GetOperator() .. " " .. args
-	end
-
-	return pac.PrettifyName(str)
+	return PART.Events[event_name]:GetNiceName(self, self:GetOwner(self.RootOwner))
 end
 
 function PART:OnRemove()
 	if self.AffectChildrenOnly then
 		for _, child in ipairs(self:GetChildren()) do
-			child:SetEventHide(false)
+			child:RemoveEventHide(self)
 		end
 	else
 		local parent = self:GetParent()
 
 		if parent:IsValid() then
-			parent:SetEventHide(false)
+			parent:RemoveEventHide(self)
 		end
 	end
 end
@@ -1386,7 +1453,7 @@ function PART:OnThink()
 				local b = should_hide(self, ent, data)
 
 				for _, child in ipairs(self:GetChildren()) do
-					child:SetEventHide(b)
+					child:SetEventHide(b, self)
 				end
 
 				-- this is just used for the editor..
@@ -1406,7 +1473,7 @@ function PART:OnThink()
 				if parent:IsValid() then
 					local b = should_hide(self, ent, data)
 
-					parent:SetEventHide(b)
+					parent:SetEventHide(b, self)
 					parent:CallRecursive("FlushFromRenderingState")
 
 					-- this is just used for the editor..
@@ -1424,6 +1491,13 @@ function PART:OnThink()
 			end
 		end
 	end
+
+	if pace and pace.IsActive() and self.Name == "" then
+		if self.editor_property and self.editor_property["Name"] and self.editor_property["Name"]:IsValid() then
+			self.editor_property["Name"]:SetText(self:GetNiceName())
+		end
+	end
+
 end
 
 PART.Operators =
@@ -1586,10 +1660,16 @@ function PART:OnHide()
 			end
 		end
 	end
-
 end
 
 function PART:OnShow()
+	self:OnThink() -- Update hide status for chilren!
+	-- This fixes the very rare issue where stuff getting un-hidden in complex event tree for 1 game frame
+	-- before getting hidden again by events inside tree
+
+	if self.timerx_reset then
+		self.time = nil
+	end
 end
 
 function PART:OnEvent(typ, ent)

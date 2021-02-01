@@ -34,6 +34,9 @@ do
 
 	local function scroll_to_node(self, node)
 		timer.Simple(0.1, function()
+			if not self:IsValid() then return end
+			if not node:IsValid() then return end
+
 			local _, y = self:LocalToScreen()
 			local h = self:GetTall()
 
@@ -127,7 +130,7 @@ do
 						node.Icon:SetImage(part.Icon)
 					end
 				end
-				if part.ClassName == "proxy" and part.Name == "" then
+				if (part.ClassName == "proxy" or part.ClassName == "event") and part.Name == "" then
 					node:SetText(part:GetName())
 				end
 			end
@@ -136,7 +139,7 @@ do
 		if pnl:IsValid() then
 			local pnl = pnl:GetParent()
 
-			if pnl and pnl.part and pnl.part:IsValid() then
+			if IsValid(pnl) and IsValid(pnl.part) then
 				pace.Call("HoverPart", pnl.part)
 				if pnl.add_button then
 					pnl.add_button:SetVisible(true)
@@ -156,20 +159,19 @@ function PANEL:OnMouseReleased(mc)
 	end
 end
 
-function PANEL:SetModel(path)
-	local pnl = vgui.Create("SpawnIcon", self)
-		pnl:SetModel(path or "")
-		pnl:SetSize(16, 16)
-
-		--[[if pnl.Entity and pnl.Entity:IsValid() then
-			local mins, maxs = pnl.Entity:GetRenderBounds()
-			pnl:SetCamPos(mins:Distance(maxs) * Vector(0.75, 0.75, 0.5) * 15)
-			pnl:SetLookAt((maxs + mins) / 2)
-			pnl:SetFOV(3)
+function PANEL:SetModel(path, icon)
+	if not file.Exists(path, "GAME") then
+		path = player_manager.TranslatePlayerModel(path)
+		if not file.Exists(path, "GAME") then
+			print(path, "is invalid")
+			return
 		end
+	end
 
-		pnl.SetImage = function() end
-		pnl.GetImage = function() end]]
+	local pnl = vgui.Create("SpawnIcon", self)
+	pnl:SetModel(path or "")
+	pnl:SetSize(16, 16)
+
 
 	self.Icon:Remove()
 	self.Icon = pnl
@@ -177,6 +179,46 @@ end
 
 local function install_drag(node)
 	node:SetDraggableName("pac3")
+
+	local old = node.OnDrop
+	function node:OnDrop(child, ...)
+		-- we're hovering on the label, not the actual node
+		-- so get the parent node instead
+		if not child.part then
+			child = child:GetParent()
+		end
+
+		if child.part and child.part:IsValid() then
+			if self.part and self.part:IsValid() and self.part:GetParent() ~= child.part then
+				pace.RecordUndoHistory()
+				self.part:SetParent(child.part)
+				self.part:ResolvePartNames()
+				pace.RecordUndoHistory()
+				called = true
+			end
+		elseif self.part and self.part:IsValid() then
+			if self.part.ClassName ~= "group" then
+				pace.RecordUndoHistory()
+				local group = pac.CreatePart("group", self.part:GetPlayerOwner())
+				group:SetEditorExpand(true)
+				self.part:SetParent(group)
+				self.part:ResolvePartNames()
+				pace.RecordUndoHistory()
+				pace.TrySelectPart()
+				called = true
+
+			else
+				pace.RecordUndoHistory()
+				self.part:SetParent()
+				self.part:ResolvePartNames()
+				pace.RecordUndoHistory()
+				pace.RefreshTree(true)
+				called = true
+			end
+		end
+
+		return old(self, child, ...)
+	end
 
 	function node:DroppedOn(child)
 
@@ -189,37 +231,13 @@ local function install_drag(node)
 
 		if child.part and child.part:IsValid() then
 			if self.part and self.part:IsValid() and child.part:GetParent() ~= self.part then
+				pace.RecordUndoHistory()
 				child.part:SetParent(self.part)
-			end
-		end
-	end
-
-	local old = node.OnDrop
-
-	function node:OnDrop(child, ...)
-		-- we're hovering on the label, not the actual node
-		-- so get the parent node instead
-		if not child.part then
-			child = child:GetParent()
-		end
-
-		if child.part and child.part:IsValid() then
-			if self.part and self.part:IsValid() and self.part:GetParent() ~= child.part then
-				self.part:SetParent(child.part)
-			end
-		elseif self.part and self.part:IsValid() then
-			if self.part.ClassName ~= "group" then
-				local group = pac.CreatePart("group", self.part:GetPlayerOwner())
-				group:SetEditorExpand(true)
-				self.part:SetParent(group)
-				pace.TrySelectPart()
-			else
-				self.part:SetParent()
-				pace.RefreshTree(true)
+				child.part:ResolvePartNames()
+				pace.RecordUndoHistory()
 			end
 		end
 
-		return old(self, child, ...)
 	end
 end
 
@@ -238,19 +256,17 @@ local function install_expand(node)
 
 		if code == MOUSE_RIGHT then
 			local menu = DermaMenu()
-			menu:SetPos(gui.MousePos())
+			menu:SetPos(input.GetCursorPos())
 			menu:MakePopup()
 
 			menu:AddOption(L"collapse all", function()
 				node.part:CallRecursive('SetEditorExpand', false)
 				pace.RefreshTree(true)
-				pace.AddUndoRecursive(node.part, 'SetEditorExpand', true, false)
 			end):SetImage('icon16/arrow_in.png')
 
 			menu:AddOption(L"expand all", function()
 				node.part:CallRecursive('SetEditorExpand', true)
 				pace.RefreshTree(true)
-				pace.AddUndoRecursive(node.part, 'SetEditorExpand', false, true)
 			end):SetImage('icon16/arrow_down.png')
 		end
 	end
@@ -382,22 +398,22 @@ function PANEL:PopulateParts(node, parts, children)
 				return true
 			end
 
-			if enable_model_icons:GetBool() and part.is_model_part and part.GetModel and part:GetEntity():IsValid()
-				and part.ClassName ~= "entity2" and part.ClassName ~= "weapon" -- todo: is_model_part is true, class inheritance issues?
+			if
+				enable_model_icons:GetBool() and
+				part.is_model_part and
+				part.GetModel and
+				part:GetEntity():IsValid()
 			then
-				part_node:SetModel(part:GetEntity():GetModel())
+				part_node:SetModel(part:GetEntity():GetModel(), part.Icon)
 			elseif type(part.Icon) == "string" then
 				part_node.Icon:SetImage(part.Icon)
 			end
 
-			if part.Group == "experimental" then
+			if part.Group == "legacy" then
 				local mat = Material(pace.GroupsIcons.experimental)
-				local old = part_node.Icon.PaintOver
 				part_node.Icon.PaintOver = function(_, w,h)
-					local b = old and old(_,w,h)
 					surface.SetMaterial(mat)
 					surface.DrawTexturedRect(2,6,13,13)
-					return b
 				end
 			end
 
@@ -434,11 +450,14 @@ function PANEL:SelectPart(part)
 		else
 			if node.part == part then
 				node:SetSelected(true)
+				node:ExpandTo(true)
 			else
 				node:SetSelected(false)
 			end
 		end
 	end
+
+	self:InvalidateLayout()
 end
 
 function PANEL:Populate(reset)

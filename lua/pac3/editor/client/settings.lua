@@ -7,60 +7,76 @@ function pace.OnToggleFocus(show_editor)
 end
 
 function pace.SetTPose(b)
+	local ply = LocalPlayer()
+
 	if b then
+		ply.pace_tpose_last_sequence = ply:GetSequence()
+		ply.pace_tpose_last_layer_sequence = {}
+		for i = 0, 16 do
+			ply.pace_tpose_last_layer_sequence[i] = ply:GetLayerSequence(i)
+		end
+
+		pac.AddHook("PrePlayerDraw", "pace_tpose", function(ply)
+			if ply ~= LocalPlayer() then return end
+
+			for i = 0, 16 do
+				ply:SetLayerSequence(i, 0)
+			end
+
+			ply:SetSequence(ply:LookupSequence("ragdoll") or ply:LookupSequence("reference"))
+
+			local ang = ply:EyeAngles()
+			ang.p = 0
+			ply:SetEyeAngles(ang)
+			ply:SetRenderAngles(ang)
+		end)
+
+		pac.AddHook("UpdateAnimation", "pace_tpose", function()
+			local ply = LocalPlayer()
+			ply:ClearPoseParameters()
+
+			for i = 0, ply:GetNumPoseParameters() - 1 do
+				local name = ply:GetPoseParameterName(i)
+				if name then
+					ply:SetPoseParameter(name, 0)
+				end
+			end
+		end)
+
 		pac.AddHook("CalcMainActivity", "pace_tpose", function(ply)
 			if ply == LocalPlayer() then
-				ply:SetRenderAngles(ply:GetAngles())
+				for i = 0, 16 do
+					ply:SetLayerSequence(i, 0)
+				end
+
 				local act = ply:LookupSequence("ragdoll") or ply:LookupSequence("reference")
+
 				return act, act
 			end
 		end)
 	else
+		pac.RemoveHook("PrePlayerDraw", "pace_tpose")
+		pac.RemoveHook("UpdateAnimation", "pace_tpose")
 		pac.RemoveHook("CalcMainActivity", "pace_tpose")
+
+		if ply.pace_tpose_last_sequence then
+			ply:SetSequence(ply.pace_tpose_last_sequence)
+			ply.pace_tpose_last_sequence = nil
+		end
+
+		if ply.pace_tpose_last_layer_sequence then
+			for i, seq in ipairs(ply.pace_tpose_last_layer_sequence) do
+				ply:SetLayerSequence(i, seq)
+			end
+
+			ply.pace_tpose_last_layer_sequence = nil
+		end
 	end
 
 	pace.tposed = b
 end
 
-function pace.SetResetPoseParameters(b)
-	if b then
-		pac.AddHook("UpdateAnimation", "pace_reset_pose_parameters", function(ply)
-			if ply == LocalPlayer() then
-				ply:ClearPoseParameters()
-				ply:InvalidateBoneCache()
-
-			end
-		end)
-	else
-		pac.RemoveHook("UpdateAnimation", "pace_reset_pose_parameters")
-	end
-
-	pace.reset_pose_parameters = b
-end
-
-
-function pace.SetBreathing(b)
-	if b then
-		pac.AddHook("UpdateAnimation", "pace_stop_breathing", function(ply)
-			if ply == LocalPlayer() then
-				for i = 0, 6 do
-					--ply:AddVCDSequenceToGestureSlot(0, 4, math.random(), false)
-				end
-				--return true
-			end
-		end)
-	else
-		pac.RemoveHook("UpdateAnimation", "pace_stop_breathing")
-	end
-
-	pace.breathing = b
-end
-
-pace.SetTPose(false)
-pace.SetResetPoseParameters(false)
-pace.SetBreathing(false)
-
-pace.SetBreathing(true)
+pace.SetTPose(pace.tposed)
 
 function pace.ToggleCameraFollow()
 	local c = GetConVar("pac_camera_follow_entity")

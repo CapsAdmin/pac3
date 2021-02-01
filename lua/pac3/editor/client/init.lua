@@ -136,7 +136,9 @@ function pace.OpenEditor()
 		ctp:Disable()
 	end
 
+	RunConsoleCommand("pac_enable", "1")
 	RunConsoleCommand("pac_in_editor", "1")
+
 	pace.SetInPAC3Editor(true)
 
 	pace.DisableExternalHooks()
@@ -166,6 +168,10 @@ function pace.CloseEditor()
 
 	RunConsoleCommand("pac_in_editor", "0")
 	pace.SetInPAC3Editor(false)
+end
+
+function pace.HasFocus()
+	return pace.Editor:IsValid() and pace.Editor:HasFocus()
 end
 
 pac.AddHook("pac_Disable", "pac_editor_disable", function()
