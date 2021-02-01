@@ -1,82 +1,84 @@
-local def =
-{
-	run = 500,
-	walk = 250,
-	step = 18,
-	jump = 200,
+local MIN, MAX = 0.1, 10
 
-	view = Vector(0,0,64),
-	viewducked = Vector(0,0,28),
-	mass = 85,
-
-	min = Vector(-16, -16, 0),
-	max = Vector(16, 16, 72),
-	maxduck = Vector(16, 16, 36),
-	MIN_PL_SIZE = 0.1,
-	MAX_PL_SIZE = 10.0,
-}
-
-pacx.size_constants = def
-
-function pacx.GetPlayerSize(ply)
-	return ply.pac_player_size or 1
-end
-
-function pacx.SetPlayerSize(ply, f, force, entity2)
-
-	local scale = math.Clamp(f, def.MIN_PL_SIZE, def.MAX_PL_SIZE)
-	local olds = ply.pac_player_size or 1
-
-	if olds==scale and not force then return end
-
-	ply.pac_player_size = scale
-
-	if ply.SetViewOffset then ply:SetViewOffset(def.view * scale) end
-	if ply.SetViewOffsetDucked then ply:SetViewOffsetDucked(def.viewducked * scale) end
-
-
-	if SERVER then
-		if ply.SetStepSize then ply:SetStepSize(def.step * scale) end
-	elseif not entity2 then
-		local mat = Matrix()
-		mat:Scale( Vector( scale,scale,scale ) )
-		ply:EnableMatrix( "RenderMultiply", mat )
-	end
-
-	if scale == 1 then
-		ply:ResetHull()
-	else
-		ply:SetHull(def.min * scale, def.max * scale)
-		ply:SetHullDuck(def.min * scale, def.maxduck * scale)
-	end
-end
-
-pacx.AddServerModifier("size", function(data, owner)
-	if data and tonumber(data.self.OwnerName) then
-		 local ent = Entity(tonumber(data.self.OwnerName))
-		 if ent and ent:IsValid() and ent:IsPlayer() then
-			owner = ent
-		 end
-	end
-
-	local size
-
-	if data then
-		local entity2
-		-- find the modifier
-		for key, part in pairs(data.children) do
-			if (part.self.ClassName == "entity" or part.self.ClassName == "entity2") and part.self.Size then
-				size = part.self.Size
-				entity2 = part.self.ClassName
-				break
+local ALLOW_TO_CHANGE = pacx.AddServerModifier("size", function(enable)
+	if not enable then
+		for _, ent in ipairs(ents.GetAll()) do
+			if ent.pacx_size then
+				pacx.SetEntitySizeMultiplier(ent)
 			end
 		end
-	else
-		size = 1
 	end
 
-	if size then
-		pacx.SetPlayerSize(owner, size, nil, entity2)
-	end
-
+	-- we can also add a way to restore, but i don't think it's worth it
 end)
+
+local function change(ent, property, multiplier)
+	if ent["Set" .. property] then
+
+		local default = ent.pacx_size_default_props
+
+		if not default[property] then
+			default[property] = ent["Get" .. property](ent)
+		end
+
+		ent["Set" .. property](ent, default[property] * multiplier)
+	end
+end
+
+function pacx.SetEntitySizeMultiplier(ent, multiplier)
+	if not multiplier then
+		pacx.SetEntitySizeMultiplier(ent, 1)
+		ent.pacx_size_default_props = nil
+		return
+	end
+
+	multiplier = math.Clamp(multiplier, MIN, MAX)
+
+	if multiplier == ent.pacx_size then return end
+
+	ent.pacx_size = multiplier
+
+	if CLIENT then
+		if ent:EntIndex() > 0 then
+			net.Start("pacx_size")
+				net.WriteEntity(ent)
+				net.WriteDouble(multiplier)
+			net.SendToServer()
+		end
+	end
+
+	ent.pacx_size_default_props = ent.pacx_size_default_props or {}
+	local default = ent.pacx_size_default_props
+
+	change(ent, "ViewOffset", multiplier)
+	change(ent, "ViewOffsetDucked", multiplier)
+	change(ent, "StepSize", multiplier)
+	change(ent, "ModelScale", multiplier)
+
+	if ent.GetPhysicsObject then
+		local phys = ent:GetPhysicsObject()
+		if phys:IsValid() then
+			if not default.Mass then
+				default.Mass = phys:GetMass()
+			end
+
+			phys:SetMass(default.Mass * multiplier)
+		end
+	end
+end
+
+if SERVER then
+	util.AddNetworkString("pacx_size")
+
+	net.Receive("pacx_size", function(_, ply)
+		if not ALLOW_TO_CHANGE:GetBool() then return end
+
+		local ent = net.ReadEntity()
+
+		if not pace.CanPlayerModify(ply, ent) then return end
+
+		local multiplier = net.ReadDouble()
+
+		pacx.SetEntitySizeMultiplier(ply, multiplier)
+	end)
+end

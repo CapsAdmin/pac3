@@ -94,7 +94,7 @@ do -- pace
 	end
 
 	function mctrl.GetMousePos()
-		return gui.MousePos()
+		return input.GetCursorPos()
 	end
 
 	function mctrl.VecToScreen(vec)
@@ -128,7 +128,7 @@ do -- pace
 			return 5
 		end
 
-		if part.ClassName == "clip" then
+		if part.ClassName == "clip" or part.ClassName == "clip2" then
 			part = part.Parent
 		end
 
@@ -162,72 +162,11 @@ do -- pace
 			pos.z = math.Round(pos.z/num) * num
 		end
 
-		if part.ClassName ~= 'group' then
-			pace.Call("VariableChanged", part, "Position", pos, 0.25)
+		pace.Call("VariableChanged", part, "Position", pos, 0.25)
 
-			timer.Create("pace_refresh_properties", 0.1, 1, function()
-				pace.PopulateProperties(part)
-			end)
-		else
-			local undo = {}
-			local diffVector = part.centrePosMV - pos
-			diffVector.y = -diffVector.y
-			part.centrePosMV = pos
-			diffVector:Rotate(Angle(-180, -pac.LocalPlayer:EyeAngles().y, 0))
-
-			for i, child in ipairs(part:GetChildren()) do
-				if child.GetAngles and child.GetPosition then
-					if not groupOriginalValues then
-						groupOriginalValues = {}
-
-						for i, child in ipairs(part:GetChildren()) do
-							if child.GetAngles and child.GetPosition then
-								groupOriginalValues[i] = Vector(child:GetPosition())
-							end
-						end
-					end
-
-					-- too complex, putting comments
-					-- getting part's bone position to use as one point of local coordinate system
-					local bpos, bang = child:GetBonePosition()
-					-- getting our groun calculated position
-					local gpos, gang = mctrl.GetTargetPos()
-					-- translating GROUP position to be relative to BONE's position
-					local lbpos, lbang = WorldToLocal(gpos, gang, bpos, bang)
-					-- now we have diff vector and angles between group position and part's bone position
-					-- let's get relative position of our part to group
-					local pos, ang = Vector(child:GetPosition()), Angle(child:GetAngles())
-					local lpos, lang = WorldToLocal(pos, ang, lbpos, lbang)
-					-- we finally got our position and angles! now rotate
-					lpos = lpos + diffVector
-					-- rotated, restore local positions to be relative to GROUP's LOCAL position (stack up)
-					local fpos, fang = LocalToWorld(lpos, lang, lbpos, lbang)
-
-					table.insert(undo, {
-						child,
-						Vector(groupOriginalValues[i]),
-						Vector(fpos),
-					})
-
-					pace.Call("VariableChanged", child, "Position", fpos, false)
-				end
-			end
-
-			if #undo ~= 0 then
-				timer.Create('pac3_apply_undo_func', 0.25, 1, function()
-					groupOriginalValues = nil
-					pace.AddUndo(nil, function()
-						for i, data in ipairs(undo) do
-							pace.Call("VariableChanged", data[1], "Position", data[2], false)
-						end
-					end, function()
-						for i, data in ipairs(undo) do
-							pace.Call("VariableChanged", data[1], "Position", data[3], false)
-						end
-					end)
-				end)
-			end
-		end
+		timer.Create("pace_refresh_properties", 0.1, 1, function()
+			pace.PopulateProperties(part)
+		end)
 	end
 
 	local cvar_ang_grid = CreateClientConVar("pac_grid_ang_size", "45")
@@ -240,76 +179,11 @@ do -- pace
 			ang.r = math.Round(ang.r/num) * num
 		end
 
-		if part.ClassName ~= 'group' then
-			pace.Call("VariableChanged", part, "Angles", ang, 0.25)
+		pace.Call("VariableChanged", part, "Angles", ang, 0.25)
 
-			timer.Create("pace_refresh_properties", 0.1, 1, function()
-				pace.PopulateProperties(part)
-			end)
-		else
-			local undo = {}
-			local diffAngle = part.centreAngle - ang
-			part.centreAngle = ang
-
-			for i, child in ipairs(part:GetChildren()) do
-				if child.GetAngles and child.GetPosition then
-					if not groupOriginalValues then
-						groupOriginalValues = {}
-
-						for i, child in ipairs(part:GetChildren()) do
-							if child.GetAngles and child.GetPosition then
-								groupOriginalValues[i] = {Vector(child:GetPosition()), Angle(child:GetAngles())}
-							end
-						end
-					end
-
-					-- too complex, putting comments
-					-- getting part's bone position to use as one point of local coordinate system
-					local bpos, bang = child:GetBonePosition()
-					-- getting our groun calculated position
-					local gpos, gang = mctrl.GetTargetPos()
-					-- translating GROUP position to be relative to BONE's position
-					local lbpos, lbang = WorldToLocal(gpos, gang, bpos, bang)
-					-- now we have diff vector and angles between group position and part's bone position
-					-- let's get relative position of our part to group
-					local pos, ang = Vector(child:GetPosition()), Angle(child:GetAngles())
-					local lpos, lang = WorldToLocal(pos, ang, lbpos, lbang)
-					-- we finally got our position and angles! now rotate
-					lpos:Rotate(-diffAngle)
-					lang = lang + diffAngle
-					-- rotated, restore local positions to be relative to GROUP's LOCAL position (stack up)
-					local fpos, fang = LocalToWorld(lpos, lang, lbpos, lbang)
-
-					table.insert(undo, {
-						child,
-						Angle(groupOriginalValues[i][2]),
-						Vector(groupOriginalValues[i][1]),
-						Angle(fang),
-						Vector(fpos),
-					})
-
-					pace.Call("VariableChanged", child, "Angles", fang, false)
-					pace.Call("VariableChanged", child, "Position", fpos, false)
-				end
-			end
-
-			if #undo ~= 0 then
-				timer.Create('pac3_apply_undo_func', 0.25, 1, function()
-					groupOriginalValues = nil
-					pace.AddUndo(nil, function()
-						for i, data in ipairs(undo) do
-							pace.Call("VariableChanged", data[1], "Angles", data[2], false)
-							pace.Call("VariableChanged", data[1], "Position", data[3], false)
-						end
-					end, function()
-						for i, data in ipairs(undo) do
-							pace.Call("VariableChanged", data[1], "Angles", data[4], false)
-							pace.Call("VariableChanged", data[1], "Position", data[5], false)
-						end
-					end)
-				end)
-			end
-		end
+		timer.Create("pace_refresh_properties", 0.1, 1, function()
+			pace.PopulateProperties(part)
+		end)
 	end
 
 end
@@ -530,8 +404,9 @@ function mctrl.GUIMousePressed(mc)
 		if GRAB_AND_CLONE:GetBool() and input.IsShiftDown() then
 			local copy = target:Clone()
 			copy:SetParent(copy:GetParent())
-			pace.AddUndoPartCreation(copy)
 		end
+
+		pace.RecordUndoHistory()
 
 		return true
 	end
@@ -584,8 +459,9 @@ function mctrl.GUIMousePressed(mc)
 		if GRAB_AND_CLONE:GetBool() and input.IsShiftDown() then
 			local copy = target:Clone()
 			copy:SetParent(copy:GetParent())
-			pace.AddUndoPartCreation(copy)
 		end
+
+		pace.RecordUndoHistory()
 
 		return true
 	end
@@ -596,6 +472,8 @@ function mctrl.GUIMouseReleased(mc)
 		mctrl.grab.mode = nil
 		mctrl.grab.axis = nil
 	end
+
+	pace.RecordUndoHistory()
 end
 
 local white = surface.GetTextureID("gui/center_gradient.vtf")
@@ -712,7 +590,7 @@ end
 function mctrl.Think()
 	if pace.IsSelecting then return end
 	if not mctrl.target:IsValid() then return end
-	
+
 	local x, y = mctrl.GetMousePos()
 	if mctrl.grab.axis and mctrl.grab.mode == MODE_MOVE then
 		mctrl.Move(mctrl.grab.axis, x, y, mctrl.GetCalculatedScale())

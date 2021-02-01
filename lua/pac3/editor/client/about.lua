@@ -117,7 +117,7 @@ end
 
 function DEMO:OnStart(w, h)
 
-	gui.SetMousePos(w/2, h/2)
+	input.SetCursorPos(w/2, h/2)
 
 	surface.SetDrawColor(0,0,0,255)
 	surface.DrawRect(0,0,w,h)
@@ -491,7 +491,7 @@ function DEMO:OnDraw(w, h, d, t, pos)
 	surface.DrawRect(w*-1, h*-1, w*4, h*4)
 
 	if input.IsMouseDown(MOUSE_LEFT) then
-		self:SpawnFireworks(gui.MousePos())
+		self:SpawnFireworks(input.GetCursorPos())
 	end
 
 	if math.random() > 0.99 then
@@ -545,7 +545,7 @@ function pace.ShowAbout()
 		local t = RealTime() - start_time
 		local d = FrameTime()
 
-		local ok, err = DEMO:OnUpate(w, h, d, t, Vector(gui.MousePos()), first)
+		local ok, err = DEMO:OnUpate(w, h, d, t, Vector(input.GetCursorPos()), first)
 
 		if pnl.last_cursor ~= DEMO.cursor then
 			pnl:SetCursor(DEMO.cursor or "arrow")

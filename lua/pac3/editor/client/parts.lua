@@ -37,6 +37,7 @@ function pace.WearParts(file, clear)
 end
 
 function pace.ClearParts()
+	pace.ClearUndo()
 	pac.RemoveAllParts(true, true)
 	pace.RefreshTree()
 
@@ -128,6 +129,7 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 	end
 
 	pace.RefreshTree()
+
 	return part
 end
 
@@ -202,11 +204,10 @@ function pace.OnPartSelected(part, is_selecting)
 	end
 end
 
-function pace.OnVariableChanged(obj, key, val, undo_delay)
+function pace.OnVariableChanged(obj, key, val, not_from_editor)
 	local funcGet = obj["Get" .. key]
 	local func = obj["Set" .. key]
 	if not func or not funcGet then return end
-	local oldValue = funcGet(obj)
 
 	local valType = type(val)
 	if valType == 'Vector' then
@@ -215,7 +216,19 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 		val = Angle(val)
 	end
 
+	if not not_from_editor then
 	timer.Create("pace_backup", 1, 1, pace.Backup)
+
+		if not pace.undo_release_varchange then
+			pace.RecordUndoHistory()
+			pace.undo_release_varchange = true
+		end
+
+		timer.Create("pace_undo", 0.25, 1, function()
+			pace.undo_release_varchange = false
+			pace.RecordUndoHistory()
+		end)
+	end
 
 	if key == "OwnerName" then
 		if val == "viewmodel" then
@@ -229,12 +242,8 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 		end
 	end
 
-	-- pace.CallChangeForUndo(obj, key, funcGet(obj), undo_delay)
-	func(obj, val)
 
-	if undo_delay ~= false then
-		pace.CallChangeForUndo(obj, key, oldValue, funcGet(obj), undo_delay)
-	end
+	func(obj, val)
 
 	local node = obj.editor_node
 	if IsValid(node) then
@@ -263,6 +272,19 @@ function pace.OnVariableChanged(obj, key, val, undo_delay)
 			node:SetText(obj:GetName())
 		end
 	end
+
+	timer.Simple(0, function()
+		if not IsValid(obj) then return end
+
+		local prop_panel = obj.editor_property and obj.editor_property[key]
+
+		if IsValid(prop_panel) then
+			local old = prop_panel.OnValueChanged
+			prop_panel.OnValueChanged = function() end
+			prop_panel:SetValue(val)
+			prop_panel.OnValueChanged = old
+		end
+	end)
 end
 
 function pace.GetRegisteredParts()
@@ -309,14 +331,16 @@ do -- menu
 
 		local function add_part(menu, part)
 			local newMenuEntry = menu:AddOption(L(part.FriendlyName or part.ClassName:Replace('_', ' ')), function()
-				pace.AddUndoPartCreation(pace.Call("CreatePart", part.ClassName, nil, nil, parent))
+				pace.RecordUndoHistory()
+				pace.Call("CreatePart", part.ClassName, nil, nil, parent)
+				pace.RecordUndoHistory()
 				trap = true
 			end)
 
 			if part.Icon then
 				newMenuEntry:SetImage(part.Icon)
 
-				if part.Group == "experimental" then
+				if part.Group == "legacy" then
 					local mat = Material(pace.GroupsIcons.experimental)
 					newMenuEntry.m_Image.PaintOver = function(_, w,h)
 						surface.SetMaterial(mat)
@@ -350,8 +374,8 @@ do -- menu
 
 					partsToShow[part.ClassName] = nil
 
-					if name == part.ClassName then
-						sortedTree[name].hasPart = true
+					if name == part.ClassName or name == part.FriendlyName then
+						sortedTree[name].group_class_name = part.ClassName
 					else
 						table.insert(sortedTree[name].parts, part)
 					end
@@ -363,8 +387,10 @@ do -- menu
 
 			for group, groupData in pairs(sortedTree) do
 				local sub, pnl = menu:AddSubMenu(groupData.name, function()
-					if groupData.hasPart then
-						pace.AddUndoPartCreation(pace.Call("CreatePart", group, nil, nil, parent))
+					if groupData.group_class_name then
+						pace.RecordUndoHistory()
+						pace.Call("CreatePart", groupData.group_class_name, nil, nil, parent)
+						pace.RecordUndoHistory()
 					end
 				end)
 
@@ -409,7 +435,9 @@ do -- menu
 
 			for class_name, part in pairs(partsToShow) do
 				local newMenuEntry = menu:AddOption(L((part.FriendlyName or part.ClassName):Replace('_', ' ')), function()
-					pace.AddUndoPartCreation(pace.Call("CreatePart", class_name, nil, nil, parent))
+					pace.RecordUndoHistory()
+					pace.Call("CreatePart", class_name, nil, nil, parent)
+					pace.RecordUndoHistory()
 				end)
 
 				if part.Icon then
@@ -421,7 +449,7 @@ do -- menu
 
 	function pace.OnAddPartMenu(obj)
 		local base = vgui.Create("EditablePanel")
-		base:SetPos(gui.MousePos())
+		base:SetPos(input.GetCursorPos())
 		base:SetSize(200, 300)
 		base:MakePopup()
 
@@ -443,7 +471,9 @@ do -- menu
 
 		function edit:OnEnter()
 			if result.found[1] then
-				pace.AddUndoPartCreation(pace.Call("CreatePart", result.found[1].ClassName))
+				pace.RecordUndoHistory()
+				pace.Call("CreatePart", result.found[1].ClassName)
+				pace.RecordUndoHistory()
 			end
 			base:Remove()
 		end
@@ -465,8 +495,10 @@ do -- menu
 				line:SetText("")
 				line:SetTall(20)
 				line.DoClick = function()
-					pace.AddUndoPartCreation(pace.Call("CreatePart", part.ClassName))
+					pace.RecordUndoHistory()
+					pace.Call("CreatePart", part.ClassName)
 					base:Remove()
+					pace.RecordUndoHistory()
 				end
 
 				local btn = line:Add("DImageButton")
@@ -477,7 +509,7 @@ do -- menu
 				if part.Icon then
 					btn:SetImage(part.Icon)
 
-					if part.Group == "experimental" then
+					if part.Group == "legacy" then
 						local mat = Material(pace.GroupsIcons.experimental)
 						btn.m_Image.PaintOver = function(_, w,h)
 							surface.SetMaterial(mat)
@@ -511,54 +543,70 @@ do -- menu
 		end)
 	end
 
+	function pace.Copy(obj)
+		pace.Clipboard = obj:ToTable(true)
+	end
+
+	function pace.Cut(obj)
+		pace.RecordUndoHistory()
+		pace.Copy(obj)
+		obj:Remove()
+		pace.RecordUndoHistory()
+	end
+
+	function pace.Paste(obj)
+		if not pace.Clipboard then return end
+		pace.RecordUndoHistory()
+		local newObj = pac.CreatePart(pace.Clipboard.self.ClassName)
+		newObj:SetTable(pace.Clipboard)
+		newObj:SetParent(obj)
+		pace.RecordUndoHistory()
+	end
+
+	function pace.PasteProperties(obj)
+		if not pace.Clipboard then return end
+		pace.RecordUndoHistory()
+		local tbl = pace.Clipboard
+			tbl.self.Name = nil
+			tbl.self.ParentName = nil
+			tbl.self.Parent = nil
+			tbl.children = {}
+		obj:SetTable(tbl)
+		pace.RecordUndoHistory()
+	end
+
+	function pace.Clone(obj)
+		pace.RecordUndoHistory()
+		obj:Clone()
+		pace.RecordUndoHistory()
+	end
+
+	function pace.RemovePart(obj)
+		pace.RecordUndoHistory()
+		obj:Remove()
+		pace.RecordUndoHistory()
+
+		pace.RefreshTree()
+
+		if not obj:HasParent() and obj.ClassName == "group" then
+			pace.RemovePartOnServer(obj:GetUniqueID(), false, true)
+		end
+	end
+
 	function pace.OnPartMenu(obj)
 		local menu = DermaMenu()
-		menu:SetPos(gui.MousePos())
+		menu:SetPos(input.GetCursorPos())
 
 		if obj then
 			if not obj:HasParent() then
-				menu:AddOption(L"wear", function()
-					pace.SendPartToServer(obj)
-				end):SetImage(pace.MiscIcons.wear)
+				menu:AddOption(L"wear", function() pace.SendPartToServer(obj) end):SetImage(pace.MiscIcons.wear)
 			end
 
-			menu:AddOption(L"copy", function()
-				pace.Clipboard = obj
-			end):SetImage(pace.MiscIcons.copy)
-
-			menu:AddOption(L"paste", function()
-				if pace.Clipboard then
-					local newObj = pace.Clipboard:Clone()
-					newObj:Attach(obj)
-					pace.AddUndoPartCreation(newObj)
-				end
-			end):SetImage(pace.MiscIcons.paste)
-
-			menu:AddOption(L"cut", function()
-				pace.Clipboard = obj
-				obj:DeattachFull()
-				pace.AddUndoPartRemoval(obj)
-			end):SetImage('icon16/cut.png')
-
-			-- needs proper undo
-			menu:AddOption(L"paste properties", function()
-				if pace.Clipboard then
-					local tbl = pace.Clipboard:ToTable()
-						tbl.self.Name = nil
-						tbl.self.ParentName = nil
-						tbl.self.Parent = nil
-						tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. tostring(tbl))
-
-						tbl.children = {}
-					obj:SetTable(tbl)
-				end
-				--pace.Clipboard = nil
-			end):SetImage(pace.MiscIcons.replace)
-
-			menu:AddOption(L"clone", function()
-				local part_ = obj:Clone()
-				pace.AddUndoPartCreation(part_)
-			end):SetImage(pace.MiscIcons.clone)
+			menu:AddOption(L"copy", function() pace.Copy(obj) end):SetImage(pace.MiscIcons.copy)
+			menu:AddOption(L"paste", function() pace.Paste(obj) end):SetImage(pace.MiscIcons.paste)
+			menu:AddOption(L"cut", function() pace.Cut(obj) end):SetImage('icon16/cut.png')
+			menu:AddOption(L"paste properties", function() pace.PasteProperties(obj) end):SetImage(pace.MiscIcons.replace)
+			menu:AddOption(L"clone", function() pace.Clone(obj) end):SetImage(pace.MiscIcons.clone)
 
 			menu:AddSpacer()
 		end
@@ -579,20 +627,8 @@ do -- menu
 		pnl:SetImage(pace.MiscIcons.load)
 
 		if obj then
-
 			menu:AddSpacer()
-
-			menu:AddOption(L"remove", function()
-				-- obj:Remove()
-				pace.AddUndoPartRemoval(obj)
-				obj:DeattachFull()
-
-				pace.RefreshTree()
-
-				if not obj:HasParent() and obj.ClassName == "group" then
-					pace.RemovePartOnServer(obj:GetUniqueID(), false, true)
-				end
-			end):SetImage(pace.MiscIcons.clear)
+			menu:AddOption(L"remove", function() pace.RemovePart(obj) end):SetImage(pace.MiscIcons.clear)
 		end
 
 		menu:Open()
@@ -603,7 +639,7 @@ do -- menu
 		pace.current_part = pac.NULL
 		local menu = DermaMenu()
 		menu:MakePopup()
-		menu:SetPos(gui.MousePos())
+		menu:SetPos(input.GetCursorPos())
 
 		pace.AddRegisteredPartsToMenu(menu)
 
@@ -625,5 +661,204 @@ function pace.OnHoverPart(obj)
 end
 
 pac.AddHook("pac_OnPartParent", "pace_parent", function(parent, child)
-	pace.Call("VariableChanged",parent, "Parent", child)
+	pace.Call("VariableChanged", parent, "Parent", child, true)
 end)
+
+do
+	local hold = false
+	local last = 0
+
+	local function thinkUndo()
+		-- whooaaa
+		-- if input.IsControlDown() and input.IsKeyDown(KEY_X) then
+		--  pace.UndoPosition = math.Round((gui.MouseY() / ScrH()) * #pace.UndoHistory)
+		--  pace.ApplyUndo()
+		--  return
+		-- end
+
+		if not input.IsKeyDown(KEY_Z) and not input.IsKeyDown(KEY_Y) then
+			hold = false
+		end
+
+		if hold then return end
+
+		if input.IsControlDown() and ((input.IsKeyDown(KEY_LSHIFT) and input.IsKeyDown(KEY_Z)) or input.IsKeyDown(KEY_Y)) then
+			pace.Redo()
+			hold = true
+		elseif input.IsControlDown() and input.IsKeyDown(KEY_Z) then
+			pace.Undo()
+			hold = true
+		end
+	end
+
+	local hold = false
+
+	local function thinkCopy()
+		if not input.IsKeyDown(KEY_C) then
+			hold = false
+		end
+
+		if hold or not (input.IsControlDown() and input.IsKeyDown(KEY_C)) then return end
+
+		-- copy
+		hold = true
+		local part = pace.current_part
+
+		if not part or not part:IsValid() then
+			pace.FlashNotification('No part selected to copy')
+			return
+		end
+
+		pace.Copy(part)
+
+		surface.PlaySound("buttons/button9.wav")
+	end
+
+	local hold = false
+
+	local function thinkCut()
+		if not input.IsKeyDown(KEY_X) then
+			hold = false
+		end
+
+		if hold or not (input.IsControlDown() and input.IsKeyDown(KEY_X)) then return end
+
+		-- copy
+		hold = true
+		local part = pace.current_part
+
+		if not part or not part:IsValid() then
+			pace.FlashNotification('No part selected to cut')
+			return
+		end
+
+		pace.Cut(part)
+
+		surface.PlaySound("buttons/button9.wav")
+	end
+
+	local hold = false
+
+	local function thinkDelete()
+		if not input.IsKeyDown(KEY_DELETE) then
+			hold = false
+		end
+
+		if hold or not input.IsKeyDown(KEY_DELETE) then return end
+
+		-- delete
+		hold = true
+		local part = pace.current_part
+
+		if not part or not part:IsValid() then
+			pace.FlashNotification('No part to delete')
+			return
+		end
+
+		pace.RemovePart(part)
+
+		surface.PlaySound("buttons/button9.wav")
+	end
+
+	local REVERSE_COLLAPSE_CONTROLS = CreateConVar('pac_reverse_collapse', '1', {FCVAR_ARCHIVE}, 'Reverse Collapse/Expand hotkeys')
+	local hold = false
+
+	local function thinkExpandAll()
+		if not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT) and not input.IsKeyDown(KEY_0) then
+			hold = false
+		end
+
+		if hold or not input.IsShiftDown() or (not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT)) or not input.IsKeyDown(KEY_0) then return end
+
+		-- expand all
+		hold = true
+		local part = pace.current_part
+
+		if not part or not part:IsValid() then
+			pace.FlashNotification('No part to expand')
+			return
+		end
+
+		part:CallRecursive('SetEditorExpand', not REVERSE_COLLAPSE_CONTROLS:GetBool())
+
+		surface.PlaySound("buttons/button9.wav")
+		pace.RefreshTree(true)
+	end
+
+	local hold = false
+
+	local function thinkCollapseAll()
+		if not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT) and not input.IsKeyDown(KEY_0) then
+			hold = false
+		end
+
+		if hold or input.IsShiftDown() or (not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT)) or not input.IsKeyDown(KEY_0) then return end
+
+		-- collapse all
+		hold = true
+		local part = pace.current_part
+
+		if not part or not part:IsValid() then
+			pace.FlashNotification('No part to collapse')
+			return
+		end
+
+		part:CallRecursive('SetEditorExpand', REVERSE_COLLAPSE_CONTROLS:GetBool())
+
+		surface.PlaySound("buttons/button9.wav")
+		pace.RefreshTree(true)
+	end
+
+	local hold = false
+
+	local function thinkPaste()
+		if not input.IsKeyDown(KEY_V) then
+			hold = false
+		end
+
+		if hold or not (input.IsControlDown() and input.IsKeyDown(KEY_V)) then return end
+
+		-- paste
+		hold = true
+		local part = pace.Clipboard
+
+		if not part then
+			pace.FlashNotification('No part is stored in clipboard')
+			return
+		end
+
+		local findParent
+
+		if part == pace.current_part then
+			findParent = part:GetParent()
+
+			if not findParent or not findParent:IsValid() then
+				findParent = part
+			end
+		elseif pace.current_part and pace.current_part:IsValid() then
+			findParent = pace.current_part
+		else
+			pace.RecordUndoHistory()
+			findParent = pace.Call("CreatePart", "group", L"paste data")
+			pace.RecordUndoHistory()
+		end
+
+		pace.Paste(findParent)
+
+		surface.PlaySound("buttons/button9.wav")
+	end
+
+	pac.AddHook("Think", "pace_keyboard_shortcuts", function()
+		if not pace.IsActive() then return end
+		if not pace.Focused then return end
+		if IsValid(vgui.GetKeyboardFocus()) and vgui.GetKeyboardFocus():GetClassName():find('Text') then return end
+		if gui.IsConsoleVisible() then return end
+		thinkUndo()
+		thinkCopy()
+		thinkPaste()
+		thinkCut()
+		thinkDelete()
+		thinkExpandAll()
+		thinkCollapseAll()
+	end)
+end

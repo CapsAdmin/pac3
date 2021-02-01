@@ -33,4 +33,5 @@ pace.GroupsIcons = {
 	modifiers = 'icon16/disconnect.png',
 	advanced = 'icon16/page_white_gear.png',
 	experimental = 'icon16/bug.png',
+	legacy = 'icon16/hourglass.png',
 }

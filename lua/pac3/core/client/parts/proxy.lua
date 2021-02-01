@@ -584,21 +584,39 @@ PART.Inputs = {
 
 	light_amount_r = function(self, parent)
 		if parent:IsValid() then
-			return render.GetLightColor(parent.cached_pos):ToColor().r
+			local v = render.GetLightColor(parent.cached_pos):ToColor().r
+
+			if parent.ProperColorRange then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 0
 	end,
 	light_amount_g = function(self, parent)
 		if parent:IsValid() then
-			return render.GetLightColor(parent.cached_pos):ToColor().g
+			local v = render.GetLightColor(parent.cached_pos):ToColor().g
+
+			if parent.ProperColorRange then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 0
 	end,
 	light_amount_b = function(self, parent)
 		if parent:IsValid() then
-			return render.GetLightColor(parent.cached_pos):ToColor().b
+			local v = render.GetLightColor(parent.cached_pos):ToColor().b
+
+			if parent.ProperColorRange then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 0
@@ -614,21 +632,39 @@ PART.Inputs = {
 
 	ambient_light_r = function(self, parent)
 		if parent:IsValid() then
-			return render.GetAmbientLightColor():ToColor().r
+			local v = render.GetAmbientLightColor():ToColor().r
+
+			if parent.ProperColorRange then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 0
 	end,
 	ambient_light_g = function(self, parent)
 		if parent:IsValid() then
-			return render.GetAmbientLightColor():ToColor().g
+			local v = render.GetAmbientLightColor():ToColor().g
+
+			if parent.ProperColorRange then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 0
 	end,
 	ambient_light_b = function(self, parent)
 		if parent:IsValid() then
-			return render.GetAmbientLightColor():ToColor().b
+			local v = render.GetAmbientLightColor():ToColor().b
+
+			if parent.ProperColorRange then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 0
@@ -672,57 +708,93 @@ PART.Inputs = {
 		return 0
 	end,
 
-	player_color_r = function(self)
+	player_color_r = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetPlayerColor().r
+			local v =  owner:GetPlayerColor().r
+
+			if parent.ProperColorRange then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 1
 	end,
-	player_color_g = function(self)
+	player_color_g = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetPlayerColor().g
+			local v = owner:GetPlayerColor().g
+
+			if parent.ProperColorRange then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 1
 	end,
-	player_color_b = function(self)
+	player_color_b = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetPlayerColor().b
+			local v = owner:GetPlayerColor().b
+
+			if parent.ProperColorRange then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 1
 	end,
 
-	weapon_color_r = function(self)
+	weapon_color_r = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetWeaponColor().r
+			local v = owner:GetWeaponColor().r
+
+			if parent.ProperColorRange then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 1
 	end,
-	weapon_color_g = function(self)
+	weapon_color_g = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetWeaponColor().g
+			local v = owner:GetWeaponColor().g
+
+			if parent.ProperColorRange then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 1
 	end,
-	weapon_color_b = function(self)
+	weapon_color_b = function(self, parent)
 		local owner = self:GetPlayerOwner()
 
 		if owner:IsValid() then
-			return owner:GetWeaponColor().b
+			local v = owner:GetWeaponColor().b
+
+			if parent.ProperColorRange then
+				return v / 255
+			end
+
+			return v
 		end
 
 		return 1
@@ -825,6 +897,10 @@ PART.Inputs = {
 		v = tonumber(v) or 1
 
 		local c = HSVToColor(h%360, s, v)
+
+		if parent.ProperColorRange then
+			return c.r/255, c.g/255, c.b/255
+		end
 
 		return c.r, c.g, c.b
 	end,
@@ -932,22 +1008,17 @@ function PART:OnShow()
 end
 
 local function set(self, part, x, y, z, children)
-	local T = type(part[self.VariableName])
+	local val = part[self.VariableName]
+	local T = type(val)
 
 	if allowed[T] then
 		if T == "boolean" then
-
-			x = x or part[self.VariableName] == true and 1 or 0
+			x = x or val == true and 1 or 0
 			part[self.set_key](part, tonumber(x) > 0)
-
 		elseif T == "number" then
-
-			x = x or part[self.VariableName]
+			x = x or val
 			part[self.set_key](part, tonumber(x) or 0)
-
 		else
-			local val = part[self.VariableName]
-
 			if self.Axis ~= "" and val[self.Axis] then
 				val[self.Axis] = x
 			else
@@ -1046,6 +1117,10 @@ function PART:OnThink()
 			if z then str = str .. ", " .. math.Round(z, 3) end
 
 			self.debug_var = str
+
+			if self.Name == "" and pace.current_part == self and self.editor_property and IsValid(self.editor_property["Name"]) then
+				self.editor_property["Name"]:SetText(self:GetNiceName())
+			end
 		end
 	else
 
@@ -1070,6 +1145,10 @@ function PART:OnThink()
 
 			if pace and pace.IsActive() then
 				self.debug_var = math.Round(num, 3)
+			end
+
+			if self.Name == "" and pace.current_part == self and self.editor_property and IsValid(self.editor_property["Name"]) then
+				self.editor_property["Name"]:SetText(self:GetNiceName())
 			end
 		end
 	end

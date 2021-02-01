@@ -189,7 +189,7 @@ function pace.LoadParts(name, clear, override_part)
 			end
 
 			pac.HTTPGet(name, callback, function(err)
-				Derma_Message("HTTP Request Failed for " .. name, err, "OK")
+				pace.MessagePrompt(err, "HTTP Request Failed for " .. name, "OK")
 			end)
 		else
 			name = name:gsub("%.txt", "")
@@ -231,13 +231,18 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 
 	if clear then
 		pace.ClearParts()
+		pace.ClearUndo()
+	else
+		--pace.RecordUndoHistory()
 	end
 
 	local partsLoaded = {}
 
+	local copy_id = tostring(data)
+
 	if data.self then
 		local part = override_part or pac.CreatePart(data.self.ClassName)
-		part:SetTable(data)
+		part:SetTable(data, pac.GetPartFromUniqueID(LocalPlayer():UniqueID(), data.self.UniqueID):IsValid() and copy_id)
 		table.insert(partsLoaded, part)
 	else
 		data = pace.FixBadGrouping(data)
@@ -245,18 +250,20 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 
 		for key, tbl in pairs(data) do
 			local part = pac.CreatePart(tbl.self.ClassName)
-			part:SetTable(tbl)
+			part:SetTable(tbl, pac.GetPartFromUniqueID(LocalPlayer():UniqueID(), tbl.self.UniqueID):IsValid() and copy_id)
 			table.insert(partsLoaded, part)
 		end
 	end
 
 	pace.RefreshTree(true)
-	pace.ClearUndo()
 
 	for i, part in ipairs(partsLoaded) do
 		part:CallRecursive('OnOutfitLoaded')
 		part:CallRecursive('PostApplyFixes')
+		part:ResolvePartNames()
 	end
+
+	pace.RecordUndoHistory()
 end
 
 local function add_files(tbl, dir)
@@ -333,7 +340,9 @@ local function populate_part(menu, part, override_part, clear)
 	end
 
 	if #part.children > 0 then
-		local menu, pnl = menu:AddSubMenu(name, function() pace.LoadPartsFromTable(part, nil, override_part) end)
+		local menu, pnl = menu:AddSubMenu(name, function()
+			pace.LoadPartsFromTable(part, nil, override_part)
+		end)
 		pnl:SetImage(part.self.Icon)
 		menu.GetDeleteSelf = function() return false end
 		local old = menu.Open
@@ -405,11 +414,18 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 	menu:AddOption(L"load from url", function()
 		Derma_StringRequest(
 			L"load parts",
-			L"pastebin urls also work!",
+			L"Some indirect urls from on pastebin, dropbox, github, etc are handled automatically. Pasting the outfit's file contents into the input field will also work.",
 			"",
 
 			function(name)
-				pace.LoadParts(name, clear, override_part)
+				if name:find("{", nil, true) and name:find("}", nil, true) then
+					local data,err = pace.luadata.Decode(name)
+					if data then
+						pace.LoadPartsFromTable(data, clear, override_part)
+					end
+				else
+					pace.LoadParts(name, clear, override_part)
+				end
 			end
 		)
 	end):SetImage(pace.MiscIcons.url)

@@ -185,7 +185,7 @@ pace.AddTool(L"import editor tool from url...", function()
 			end
 
 			pac.HTTPGet(toolurl,ToolDLSuccess,function(err)
-				Derma_Message("HTTP Request Failed for " .. toolurl,err,"OK")
+				pace.MessagePrompt(err, "HTTP Request Failed for " .. toolurl, "OK")
 			end)
 		end)
 	else
@@ -448,7 +448,7 @@ elseif (CoreStatus == "RunThisCode") {
 		if not part.PositionOffset:IsZero() or not part.AngleOffset:IsZero() then
 			pos, ang = LocalToWorld(part.PositionOffset, part.AngleOffset, pos, ang)
 		end
-			
+
 		local holo = str_holo:gsub("[A-Z]+",{
 			ALPHA = math.Round(part:GetAlpha() * 255, 4),
 			COLOR = tovec(part:GetColor()),

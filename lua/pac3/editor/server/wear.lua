@@ -70,7 +70,7 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 	pace.dupe_ents[ent:EntIndex()] = {owner = ply, ent = ent}
 
 	-- give source engine time
-	timer.Simple(0.5, function()
+	timer.Simple(0, function()
 		for uid, data in pairs(parts) do
 			if type(data.part) == "table" then
 				make_copy(data.part, id)
@@ -109,12 +109,12 @@ function pace.SubmitPart(data, filter)
 	if type(data.part) == "table" then
 		local ent = Entity(tonumber(data.part.self.OwnerName) or -1)
 		if ent:IsValid() then
-			if ent.CPPICanTool and (ent:CPPIGetOwner() ~= data.owner and data.owner:IsValid() and not ent:CPPICanTool(data.owner, "paint")) then
+			if not pace.CanPlayerModify(data.owner, ent) then
 				allowed = false
 				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
 			elseif not data.is_dupe then
 				ent.pac_parts = ent.pac_parts or {}
-				ent.pac_parts[data.part.self.UniqueID] = data
+				ent.pac_parts[data.owner:UniqueID()] = data
 
 				pace.dupe_ents[ent:EntIndex()] = {owner = data.owner, ent = ent}
 
@@ -123,19 +123,18 @@ function pace.SubmitPart(data, filter)
 				--duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(ent.pac_parts)})
 				-- fresh table copy
 				duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(table.Copy(ent.pac_parts))})
-			end
 
-			ent:CallOnRemove("pac_config", function(ent)
-				if ent.pac_parts then
-					for _, data in pairs(ent.pac_parts) do
-						if type(data.part) == "table" then
-							data.part = data.part.self.UniqueID
+				ent:CallOnRemove("pac_config", function(ent)
+					if ent.pac_parts then
+						for _, data in pairs(ent.pac_parts) do
+							if type(data.part) == "table" then
+								data.part = data.part.self.UniqueID
+							end
+							pace.RemovePart(data)
 						end
-						data.is_dupe = true
-						pace.RemovePart(data)
 					end
-				end
-			end)
+				end)
+			end
 		end
 	end
 
@@ -193,6 +192,30 @@ function pace.SubmitPart(data, filter)
 		players = {}
 
 		local lookup = {}
+
+		if game.SinglePlayer() then
+			--[[
+				CapsAdminToday at 12:03 AM
+					] lua_run print(player.GetAll()[1]:SteamID())
+					STEAM_0:0:0
+					] lua_run_cl print(player.GetAll()[1]:SteamID())
+					STEAM_0:1:9355639
+
+					what
+					singleplayer
+
+				noruzenchi86Today at 12:04 AM
+					definitely a single player moment
+
+				nforceToday at 12:04 AM
+					just use Entity(1) for sp
+
+				CapsAdminToday at 12:05 AM
+					thx for the tip
+			]]
+
+			table.insert(data.wear_filter, Entity(1):SteamID())
+		end
 
 		for i, ply in ipairs(player.GetAll()) do
 			lookup[ply:SteamID()] = ply
@@ -375,7 +398,7 @@ pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
 		return
 	end
 
-	if pac_submit_spam:GetBool() then
+	if pac_submit_spam:GetBool() and not game.SinglePlayer() then
 		-- data is too short, not even 8 bytes
 		if len < 64 then return end
 

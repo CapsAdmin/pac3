@@ -1,15 +1,12 @@
-local webaudio = include("pac3/libraries/webaudio.lua")
-pac.webaudio2 = webaudio
 local PART = {}
 
-PART.FriendlyName = "sound"
-PART.ClassName = "sound2"
+PART.ClassName = "ogg"
 PART.NonPhysical = true
-PART.Group = "experimental"
+PART.Group = "legacy"
 PART.Icon = 'icon16/music.png'
 
 pac.StartStorableVars()
-	pac.GetSet(PART, "Path", "", {editor_panel = "sound"})
+	pac.GetSet(PART, "URL", "")
 	pac.GetSet(PART, "Volume", 1, {editor_sensitivity = 0.25})
 	pac.GetSet(PART, "Pitch", 1, {editor_sensitivity = 0.125})
 	pac.GetSet(PART, "Radius", 1500)
@@ -22,57 +19,33 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "StopOnHide", false)
 	pac.GetSet(PART, "PauseOnHide", false)
 	pac.GetSet(PART, "Overlapping", false)
+
+	pac.GetSet(PART, "FilterType", 0, {editor_onchange = function(self, num)
+		self.sens = 0.25
+		num = tonumber(num)
+		return math.Round(math.Clamp(num, 0, 2))
+	end})
+	pac.GetSet(PART, "FilterFraction", 1, {editor_sensitivity = 0.125, editor_clamp = {0, 1}})
+
+	--pac.GetSet(PART, "Echo", false)
+	--pac.GetSet(PART, "EchoDelay", 0.5)
+	--pac.GetSet(PART, "EchoFeedback", 0.75)
+
 	pac.GetSet(PART, "PlayOnFootstep", false)
 	pac.GetSet(PART, "MinPitch", 0, {editor_sensitivity = 0.125})
 	pac.GetSet(PART, "MaxPitch", 0, {editor_sensitivity = 0.125})
-
-	pac.SetPropertyGroup(PART, "filter")
-		pac.GetSet(PART, "FilterType", 0, {enums = {
-			none = "0",
-			lowpass = "1",
-			highpass = "2",
-		}})
-		pac.GetSet(PART, "FilterFraction", 1, {editor_sensitivity = 0.125, editor_clamp = {0, 1}})
-
-	pac.SetPropertyGroup(PART, "echo")
-		pac.GetSet(PART, "Echo", false)
-		pac.GetSet(PART, "EchoDelay", 0.5, {editor_sensitivity = 0.125})
-		pac.GetSet(PART, "EchoFeedback", 0.75, {editor_sensitivity = 0.125})
-
-	pac.SetPropertyGroup(PART, "lfo")
-		pac.GetSet(PART, "PitchLFOAmount", 0, {editor_sensitivity = 0.125, editor_friendly = "pitch amount"})
-		pac.GetSet(PART, "PitchLFOTime", 0, {editor_sensitivity = 0.125, editor_friendly = "pitch time"})
-
-		pac.GetSet(PART, "VolumeLFOAmount", 0, {editor_sensitivity = 0.125, editor_friendly = "volume amount"})
-		pac.GetSet(PART, "VolumeLFOTime", 0, {editor_sensitivity = 0.125, editor_friendly = "volume time"})
-
 pac.EndStorableVars()
 
 function PART:Initialize()
-	webaudio.Initialize()
 	self.streams = {}
 end
 
 function PART:GetNiceName()
-	local path = self:GetPath() .. ";"
-	local tbl = {}
-	for i, path in ipairs(path:Split(";")) do
-		if path ~= "" then
-			if path:StartWith("http") then
-				path = path:gsub("%%(..)", function(char)
-					local num = tonumber("0x" .. char)
-					if num then
-						return string.char(num)
-					end
-				end)
-			end
-			tbl[i] = pac.PrettifyName(("/".. path):match(".+/(.-)%.") or path:match("(.-)%.")) or "sound"
-		end
-	end
-	return table.concat(tbl, ";")
+	local str = pac.PrettifyName("/".. self:GetURL())
+	return str and str:match(".+/(.-)%.") or "no sound"
 end
 
-PART.stream_vars = {}
+PART.stream_vars = {"Doppler", "Radius"}
 
 local BIND = function(propertyName, setterMethodName, check)
 	table.insert(PART.stream_vars, propertyName)
@@ -102,17 +75,9 @@ BIND("Radius",    "SetSourceRadius" )
 BIND("FilterType")
 BIND("FilterFraction")
 
-BIND("Echo")
-BIND("EchoDelay")
-BIND("EchoFeedback", nil, function(n) return math.Clamp(n, 0, 0.99) end)
-
-BIND("PitchLFOAmount")
-BIND("PitchLFOTime")
-
-BIND("VolumeLFOAmount")
-BIND("VolumeLFOTime")
-
-BIND("Doppler")
+--BIND("Echo")
+--BIND("EchoDelay")
+--BIND("EchoFeedback", nil, function(n) return math.Clamp(n, 0, 0.99) end)
 
 function PART:OnThink()
 	local owner = self:GetOwner(true)
@@ -151,23 +116,22 @@ function PART:OnThink()
 	end
 end
 
-function PART:SetPath(path)
-	self.Path = path
+function PART:SetURL(URL)
 
-	local paths = {}
+	local urls = {}
 
-	for _, path in ipairs(path:Split(";")) do
-		local min, max = path:match(".+%[(.-),(.-)%]")
+	for _, url in pairs(URL:Split(";")) do
+		local min, max = url:match(".+%[(.-),(.-)%]")
 
 		min = tonumber(min)
 		max = tonumber(max)
 
 		if min and max then
 			for i = min, max do
-				table.insert(paths, (path:gsub("%[.-%]", i)))
+				table.insert(urls, (url:gsub("%[.-%]", i)))
 			end
 		else
-			table.insert(paths, path)
+			table.insert(urls, url)
 		end
 	end
 
@@ -179,11 +143,11 @@ function PART:SetPath(path)
 
 	self.streams = {}
 
-	local function load(path)
-		local stream = webaudio.CreateStream(path)
-		self.streams[path] = stream
+	for _, url in pairs(urls) do
+		local stream = pac.webaudio.Streams.CreateStream(url)
+		self.streams[url] = stream
 
-		stream:Set3D(true)
+		stream:Enable3D(true)
 		stream.OnLoad = function()
 			for _, key in ipairs(PART.stream_vars) do
 				self["Set" .. key](self, self["Get" .. key](self))
@@ -194,41 +158,29 @@ function PART:SetPath(path)
 			self.Errored = str
 		end
 
-		if
-			pace and
-			pace.Editor:IsValid() and
-			pace.current_part:IsValid() and
-			pace.current_part.ClassName == "ogg2" and
-			self:GetPlayerOwner() == pac.LocalPlayer
-		then
+		if pace and pace.Editor:IsValid() and pace.current_part:IsValid() and pace.current_part.ClassName == "ogg" and self:GetPlayerOwner() == pac.LocalPlayer then
 			stream:Play()
 		end
 	end
 
-	for _, path in ipairs(paths) do
-		local info = sound.GetProperties(path)
-		if info then
-			path = info.sound
-		end
-
-		if not pac.resource.Download(path, function(path) load("data/" .. path) end) then
-			load("sound/" .. path)
-		end
-	end
+	self.URL = URL
 end
 
 PART.last_stream = NULL
 
 function PART:PlaySound(_, additiveVolumeFraction)
 	additiveVolumeFraction = additiveVolumeFraction or 0
-
 	local stream = table.Random(self.streams) or NULL
+
+	if pac.webaudio.sample_rate and pac.webaudio.sample_rate > 48000 then
+		pac.Message(Color(255, 0, 0), "The ogg part (custom sounds) might not work because you have your sample rate set to ", pac.webaudio.sample_rate, " Hz. Set it to 48000 or below if you experience any issues.")
+	end
 
 	if not stream:IsValid() then return end
 
-	stream:SetAdditiveVolumeModifier(additiveVolumeFraction)
+	stream:SetAdditiveVolumeModifier (additiveVolumeFraction)
 
-	if self.last_stream:IsValid() and not self.Overlapping and not self.PauseOnHide  then
+	if self.last_stream:IsValid() and not self.Overlapping then
 		self.last_stream:Stop()
 	end
 
@@ -241,7 +193,7 @@ function PART:PlaySound(_, additiveVolumeFraction)
 	if self.PauseOnHide then
 		stream:Resume()
 	else
-		stream:Play()
+		stream:Start()
 	end
 
 	self.last_stream = stream
@@ -279,6 +231,17 @@ function PART:OnRemove()
 		stream:Remove()
 		::CONTINUE::
 	end
+end
+
+function PART:SetDoppler(num)
+	for key, stream in pairs(self.streams) do
+		if not stream:IsValid() then self.streams[key] = nil goto CONTINUE end
+
+		stream:EnableDoppler(num)
+		::CONTINUE::
+	end
+
+	self.Doppler = num
 end
 
 pac.RegisterPart(PART)

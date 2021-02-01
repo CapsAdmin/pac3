@@ -115,3 +115,54 @@ function pace.util.FriendlyName(strIn)
 
 	return table.concat(outputTab, '')
 end
+
+
+function pace.MessagePrompt( strText, strTitle, strButtonText )
+
+	local Window = vgui.Create( "DFrame" )
+	Window:SetTitle( strTitle or "Message" )
+	Window:SetDraggable( false )
+	Window:ShowCloseButton( false )
+	Window:SetBackgroundBlur( true )
+	Window:SetDrawOnTop( true )
+	Window:SetSizable(true)
+	Window:SetTall(300)
+	Window:SetWide(500)
+	Window:Center()
+
+	Window.OnRemove = function()
+		hook.Remove("Think", "pace_modal_escape")
+	end
+
+	hook.Add("Think", "pace_modal_escape", function()
+		if input.IsKeyDown(KEY_ESCAPE) then
+			if Window:IsValid() then
+				Window:Remove()
+			end
+		end
+	end)
+
+	local DScrollPanel = vgui.Create( "DScrollPanel", Window )
+	DScrollPanel:Dock( FILL )
+
+	local Text = DScrollPanel:Add("DLabel")
+	Text:SetText( strText or "Message Text" )
+	Text:SetTextColor( color_white )
+	Text:Dock(FILL)
+	Text:SetAutoStretchVertical(true)
+	Text:SetWrap(true)
+
+	local Button = vgui.Create( "DButton", Window )
+	Button:SetText( strButtonText or "OK" )
+	Button:Dock(BOTTOM)
+	Button:SetTall( 20 )
+	Button:SetPos( 5, 5 )
+	Button.DoClick = function() Window:Close() end
+
+	Window:MakePopup()
+	Window:DoModal()
+
+	Window:PerformLayout()
+
+	return Window
+end

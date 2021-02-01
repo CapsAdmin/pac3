@@ -48,7 +48,7 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "Name", "")
 		pac.GetSet(PART, "Hide", false)
 		pac.GetSet(PART, "OwnerName", "self")
-		pac.GetSet(PART, "EditorExpand", false, {hidden = true})
+		pac.GetSet(PART, "EditorExpand", true, {hidden = true})
 		pac.GetSet(PART, "UniqueID", "", {hidden = true})
 		pac.GetSet(PART, "IsDisturbing", false, {
 			editor_friendly = "IsExplicit",
@@ -141,6 +141,7 @@ function PART:PreInitialize()
 	self.RootPart = NULL
 	self.DrawOrder = 0
 	self.hide_disturbing = false
+	self.event_hide_registry = {}
 
 	self.cached_pos = Vector(0,0,0)
 	self.cached_ang = Angle(0,0,0)
@@ -157,9 +158,12 @@ end
 function PART:GetName()
 	if self.Name == "" then
 
+		-- recursive call guard
 		if self.last_nice_name_frame and self.last_nice_name_frame == FrameNumber() then
 			return self.last_nice_name
 		end
+
+		self.last_nice_name_frame = FrameNumber()
 
 		local nice = self:GetNiceName()
 		local num
@@ -182,7 +186,6 @@ function PART:GetName()
 		end
 
 		self.last_nice_name = nice
-		self.last_nice_name_frame = FrameNumber()
 
 		return nice
 	end
@@ -338,6 +341,11 @@ do -- owner
 	end
 
 	function PART:SetOwner(ent)
+
+		if IsValid(self.last_owner) and self.last_owner ~= ent then
+			self:CallRecursive("OnHide", true)
+		end
+
 		self.last_owner = self.Owner
 		self.Owner = ent or NULL
 		pac.RunNextFrame(self:GetRootPart().Id .. "_hook_render", function()
@@ -506,9 +514,11 @@ do -- parenting
 		self:SortChildren()
 
 		self:BuildParentList()
+		part:BuildParentList()
 
 		pac.CallHook("OnPartParent", self, part)
 
+		part.shown_from_rendering = true
 		part:SetKeyValueRecursive("last_hidden", nil)
 		part:SetKeyValueRecursive("last_hidden_by_event", nil)
 
@@ -631,12 +641,27 @@ do -- parenting
 			self:SetKeyValueRecursive("hidden", b)
 		end
 
-		function PART:SetEventHide(b)
-			if self.event_hidden ~= b and self.event_hidden ~= nil then
-				self.shown_from_rendering = nil
+		function PART:RemoveEventHide(object)
+			self.event_hide_registry[object] = nil
+		end
+
+		function PART:SetEventHide(b, object)
+			object = object or self
+
+			-- this can and will produce undefined behavior (like skipping keys)
+			-- but still, it will do the job at cleaning up at least a part of table
+			for k, v in pairs(self.event_hide_registry) do
+				if not IsValid(k) then
+					self.event_hide_registry[k] = nil
+				end
 			end
 
-			self.event_hidden = b
+			self.event_hide_registry[object] = b
+			self.event_hidden = self:CalculateEventHidden()
+
+			if self.event_hidden ~= b then
+				self.shown_from_rendering = nil
+			end
 		end
 
 		function PART:FlushFromRenderingState(newState)
@@ -647,7 +672,35 @@ do -- parenting
 			return self.draw_hidden
 		end
 
-		function PART:IsEventHidden()
+		function PART:CalculateEventHidden()
+			for k, v in pairs(self.event_hide_registry) do
+				if v then
+					return true
+				end
+			end
+
+			return false
+		end
+
+		function PART:IsEventHidden(object, invert)
+			if object then
+				if invert then
+					for k, v in pairs(self.event_hide_registry) do
+						if k ~= object and v then
+							return true
+						end
+					end
+
+					return false
+				end
+
+				return self.event_hide_registry[object] == true
+			end
+
+			if self.event_hidden == nil then
+				self.event_hidden = self:CalculateEventHidden()
+			end
+
 			return self.event_hidden
 		end
 
@@ -661,9 +714,9 @@ do -- parenting
 				self.temp_hidden or
 				self.hidden or
 				self.hide_disturbing or
-				self.event_hidden
+				self:IsEventHidden()
 			then
-				return true, self.event_hidden
+				return true, self:IsEventHidden()
 			end
 
 			if not self:HasParent() then
@@ -681,7 +734,7 @@ do -- parenting
 					parent.hidden or
 					parent.event_hidden
 				then
-					return true, parent.event_hidden
+					return true, parent:IsEventHidden()
 				end
 			end
 
@@ -825,7 +878,7 @@ do -- serializing
 				local cond = key ~= "ParentUID" and
 					key ~= "ParentName" and
 					key ~= "UniqueID" and
-					(key ~= "AimPartName" and not (self.IngoreSetKeys and self.IngoreSetKeys[key]) or
+					(key ~= "AimPartName" and not (pac.PartNameKeysToIgnore and pac.PartNameKeysToIgnore[key]) or
 					key == "AimPartName" and table.HasValue(pac.AimPartNames, value))
 
 				if cond then
@@ -849,7 +902,25 @@ do -- serializing
 			end
 		end
 
-		function PART:SetTable(tbl)
+		local function make_copy(tbl, pepper)
+			for key, val in pairs(tbl.self) do
+				if key == "UniqueID" or key:sub(-3) == "UID" then
+					tbl.self[key] = util.CRC(val .. pepper)
+				end
+			end
+
+			for _, child in ipairs(tbl.children) do
+				make_copy(child, pepper)
+			end
+			return tbl
+		end
+
+		function PART:SetTable(tbl, copy_id)
+
+			if copy_id then
+				tbl = make_copy(table.Copy(tbl), copy_id)
+			end
+
 			local ok, err = xpcall(SetTable, ErrorNoHalt, self, tbl)
 			if not ok then
 				pac.Message(Color(255, 50, 50), "SetTable failed: ", err)
@@ -883,7 +954,11 @@ do -- serializing
 		end
 
 		for _, part in ipairs(self:GetChildren()) do
-			table.insert(tbl.children, part:ToTable(make_copy_name))
+			if not self.is_valid or self.is_deattached then
+
+			else
+				table.insert(tbl.children, part:ToTable(make_copy_name))
+			end
 		end
 
 		return tbl
@@ -912,10 +987,80 @@ do -- serializing
 		end
 
 		for _, part in ipairs(self:GetChildren()) do
-			table.insert(tbl.children, part:ToSaveTable())
+			if not self.is_valid or self.is_deattached then
+
+			else
+				table.insert(tbl.children, part:ToSaveTable())
+			end
 		end
 
 		return tbl
+	end
+
+	do -- undo
+		do
+			local function SetTable(self, tbl)
+				self.supress_part_name_find = true
+				self.delayed_variables = self.delayed_variables or {}
+
+				-- this needs to be set first
+				self:SetUniqueID(tbl.self.UniqueID or util.CRC(tostring(tbl.self)))
+
+				for key, value in pairs(tbl.self) do
+					if self["Set" .. key] then
+						if key == "Material" then
+							table.insert(self.delayed_variables, {key = key, val = value})
+						end
+
+						self["Set" .. key](self, value)
+					elseif key ~= "ClassName" then
+						pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
+					end
+				end
+
+				for _, value in pairs(tbl.children) do
+					local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
+					part:SetUndoTable(value)
+					part:SetParent(self)
+				end
+			end
+
+			function PART:SetUndoTable(tbl)
+				local ok, err = xpcall(SetTable, ErrorNoHalt, self, tbl)
+				if not ok then
+					pac.Message(Color(255, 50, 50), "SetUndoTable failed: ", err)
+				end
+			end
+		end
+
+		function PART:ToUndoTable()
+			if self:GetPlayerOwner() ~= LocalPlayer() then return end
+
+			local tbl = {self = {ClassName = self.ClassName}, children = {}}
+
+			for _, key in pairs(self:GetStorableVars()) do
+				if not pac.PartNameKeysToIgnore[key] then
+
+					if key == "Name" and self.Name == "" then
+						-- TODO: seperate debug name and name !!!
+						continue
+					end
+
+					tbl.self[key] = pac.class.Copy(self["Get" .. key](self))
+				end
+			end
+
+			for _, part in ipairs(self:GetChildren()) do
+				if not self.is_valid or self.is_deattached then
+
+				else
+					table.insert(tbl.children, part:ToUndoTable())
+				end
+			end
+
+			return tbl
+		end
+
 	end
 
 	function PART:GetVars()
@@ -964,6 +1109,7 @@ do -- events
 		end
 
 		self:CallRecursive("OnHide")
+		self:CallRecursive("OnRemove")
 		self:OnRemove()
 
 		if self.owner_id and self.UniqueID then
@@ -1316,7 +1462,7 @@ function PART:CalcShowHide()
 		if b then
 			self:OnHide()
 		else
-			self:OnShow(self.shown_from_rendering ~= nil)
+			self:OnShow(self.shown_from_rendering == true or self.shown_from_rendering == FrameNumber())
 		end
 	end
 
@@ -1366,8 +1512,8 @@ function PART:Think()
 
 	if owner:IsValid() then
 		if owner ~= self.last_owner then
-			self.last_hidden = nil
-			self.last_hidden_by_event = nil
+			self.last_hidden = false
+			self.last_hidden_by_event = false
 			self.last_owner = owner
 		end
 

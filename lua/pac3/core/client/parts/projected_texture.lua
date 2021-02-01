@@ -1,8 +1,9 @@
 local PART = {}
 
 PART.ClassName = "projected_texture"
-PART.Group = "experimental"
+PART.Group = "effects"
 PART.Icon = 'icon16/lightbulb.png'
+PART.ProperColorRange = true
 
 pac.StartStorableVars()
 	pac.GetSet(PART, "Shadows", true)

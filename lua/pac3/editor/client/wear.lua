@@ -145,6 +145,8 @@ do -- from server
 				dupepart:Remove()
 			end
 
+			owner.pac_render_time_exceeded = false
+
 			local part = pac.CreatePart(part_data.self.ClassName, owner)
 			part:SetIsBeingWorn(true)
 			part:SetTable(part_data)
