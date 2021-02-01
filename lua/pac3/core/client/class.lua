@@ -125,103 +125,32 @@ do
 	function META:GetSetPart(key, udata)
 		local PART = self.PART
 
+		self:GetSet(key .. "UID", "", {editor_panel = "part"})
 
-		local part_key = key
-		local part_set_key = "Set" .. part_key
+		PART["Set" .. key .. "UID"] = function(self, uid)
+			if type(uid) == "table" then
+				uid = uid.UniqueID
+			end
 
-		local uid_key = part_key .. "UID"
-		local name_key = key .. "Name"
-		local name_set_key = "Set" .. name_key
+			self[key.."UID"] = uid
 
-		local last_uid_key = "last_" .. uid_key:lower()
-		local try_key = "try_" .. name_key:lower()
+			local owner_id = self:GetPlayerOwner():UniqueID()
+			local part = pac.GetPartFromUniqueID(owner_id, uid)
 
-		local name_find_count_key = name_key:lower() .. "_try_count"
-
-		-- these keys are ignored when table is set. it's kind of a hack..
-		pac.PartNameKeysToIgnore = pac.PartNameKeysToIgnore or {}
-		pac.PartNameKeysToIgnore[name_key] = true
-
-		local group = self.group
-
-		self:EndStorableVars()
-			self:GetSet(part_key, NULL)
-		self:StartStorableVars()
-
-		self.group = group
-
-		self:GetSet(name_key, "", udata or {editor_panel = "part"})
-		self:GetSet(uid_key, "", {hidden = true})
-
-		self.PartNameResolvers = self.PartNameResolvers or {}
-
-		PART.ResolvePartNames = PART.ResolvePartNames or function(self, force)
-			for _, func in ipairs(self.Builder.PartNameResolvers) do
-				func(self, force)
+			if part:IsValid() then
+				self["Set" .. key](self, part)
+			elseif uid ~= "" then
+				self.unresolved_uid_parts = self.unresolved_uid_parts or {}
+				self.unresolved_uid_parts[owner_id] = self.unresolved_uid_parts[owner_id] or {}
+				self.unresolved_uid_parts[owner_id][uid] = self.unresolved_uid_parts[owner_id][uid] or {}
+				self.unresolved_uid_parts[owner_id][uid][key] = key
 			end
 		end
 
-		self.added_partname_solvers = self.added_partname_solvers or {}
+		PART["Set" .. key] = PART["Set" .. key] or function(self, var) self[key] = var end
+		PART["Get" .. key] = PART["Get" .. key] or function(self) return self[key] end
+		PART[key] = NULL
 
-		if not self.added_partname_solvers[name_key] then
-			self.added_partname_solvers[name_key] = true
-
-			table.insert(self.PartNameResolvers, function(self, force)
-				if self[uid_key] == "" and self[name_key] == "" then return end
-
-				if force or self[try_key] or self[uid_key] ~= "" and not IsValid(self[part_key]) then
-					local part = pac.GetPartFromUniqueID(self.owner_id, self[uid_key])
-
-					if IsValid(part) and part ~= self and self[part_key] ~= part then
-						self[name_set_key](self, part)
-						self[last_uid_key] = self[uid_key]
-					elseif self[try_key] and not self.supress_part_name_find and self:GetPlayerOwner() == pac.LocalPlayer then -- match by name instead, only in editor
-						for _, part in pairs(pac.GetLocalParts()) do
-							if
-								part ~= self and
-								self[part_key] ~= part and
-								part:GetName() == self[name_key]
-							then
-								self[name_set_key](self, part)
-								break
-							end
-
-							self[last_uid_key] = self[uid_key]
-						end
-
-						self[try_key] = false
-					end
-				end
-			end)
-		end
-
-
-		PART[name_set_key] = function(self, var)
-			self[name_find_count_key] = 0
-
-			if type(var) == "string" then
-				if self[name_key] == var and self[uid_key] ~= "" then
-					-- don't do anything to avoid editor from choosing random parts with the same name
-					return
-				end
-
-				self[name_key] = var
-
-				if var == "" then
-					self[uid_key] = ""
-					self[part_key] = NULL
-					return
-				else
-					self[try_key] = true
-				end
-
-				timer.Simple(0, function() PART.PartNameResolvers[part_key](self) end)
-			else
-				self[name_key] = var.Name and var.Name ~= '' and var.Name or var:GetName()
-				self[uid_key] = var.UniqueID
-				self[part_set_key](self, var)
-			end
-		end
 
 		return self
 	end

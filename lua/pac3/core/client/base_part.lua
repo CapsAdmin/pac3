@@ -537,7 +537,9 @@ do -- parenting
 		self:BuildParentList()
 		part:BuildParentList()
 
-		pac.CallHook("OnPartParent", self, part)
+		if self:GetPlayerOwner() == pac.LocalPlayer then
+			pac.CallHook("OnPartParent", self, part)
+		end
 
 		part.shown_from_rendering = true
 		part:SetKeyValueRecursive("last_hidden", nil)
@@ -887,38 +889,25 @@ do -- serializing
 
 	do
 		local function SetTable(self, tbl)
-			self.supress_part_name_find = true
+			self:SetUniqueID(tbl.self.UniqueID)
 			self.delayed_variables = self.delayed_variables or {}
 
-			-- this needs to be set first
-			self:SetUniqueID(tbl.self.UniqueID or util.CRC(tostring(tbl.self)))
-
 			for key, value in pairs(tbl.self) do
+				if key == "UniqueID" then continue end
 
-				-- these arent needed because parent system uses the tree structure
-				local cond = key ~= "ParentUID" and
-					key ~= "ParentName" and
-					key ~= "UniqueID" and
-					(key ~= "AimPartName" and not (pac.PartNameKeysToIgnore and pac.PartNameKeysToIgnore[key]) or
-					key == "AimPartName" and table.HasValue(pac.AimPartNames, value))
-
-				if cond then
-					if self["Set" .. key] then
-						if key == "Material" then
-							table.insert(self.delayed_variables, {key = key, val = value})
-						end
-
-						self["Set" .. key](self, value)
-					elseif key ~= "ClassName" then
-						pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
+				if self["Set" .. key] then
+					if key == "Material" then
+						table.insert(self.delayed_variables, {key = key, val = value})
 					end
+					self["Set" .. key](self, value)
+				elseif key ~= "ClassName" then
+					pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
 				end
 			end
 
 			for _, value in pairs(tbl.children) do
-				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
+				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner(), value)
 				part:SetIsBeingWorn(self:IsBeingWorn())
-				part:SetTable(value)
 				part:SetParent(self)
 			end
 		end
@@ -1021,18 +1010,16 @@ do -- serializing
 	do -- undo
 		do
 			local function SetTable(self, tbl)
-				self.supress_part_name_find = true
+				self:SetUniqueID(tbl.self.UniqueID)
 				self.delayed_variables = self.delayed_variables or {}
 
-				-- this needs to be set first
-				self:SetUniqueID(tbl.self.UniqueID or util.CRC(tostring(tbl.self)))
-
 				for key, value in pairs(tbl.self) do
+					if key == "UniqueID" then continue end
+
 					if self["Set" .. key] then
 						if key == "Material" then
 							table.insert(self.delayed_variables, {key = key, val = value})
 						end
-
 						self["Set" .. key](self, value)
 					elseif key ~= "ClassName" then
 						pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
@@ -1060,15 +1047,12 @@ do -- serializing
 			local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 			for _, key in pairs(self:GetStorableVars()) do
-				if not pac.PartNameKeysToIgnore[key] then
-
-					if key == "Name" and self.Name == "" then
-						-- TODO: seperate debug name and name !!!
-						continue
-					end
-
-					tbl.self[key] = pac.CopyValue(self["Get" .. key](self))
+				if key == "Name" and self.Name == "" then
+					-- TODO: seperate debug name and name !!!
+					continue
 				end
+
+				tbl.self[key] = pac.CopyValue(self["Get" .. key](self))
 			end
 
 			for _, part in ipairs(self:GetChildren()) do
@@ -1151,27 +1135,21 @@ do -- events
 		end
 	end
 
-	function PART:Attach(parent)
-		if not self.is_deattached then
-			return self:SetParent(parent)
+	function PART:OnOtherPartCreated(part)
+		if not part.owner_id then return end
+		if not self.unresolved_uid_parts then return end
+		if not self.unresolved_uid_parts[part.owner_id] then return end
+		local keys = self.unresolved_uid_parts[part.owner_id][part.UniqueID]
+
+		if not keys then return end
+
+		for _, key in pairs(keys) do
+			self["Set" .. key](self, part)
 		end
 
-		self.is_deattached = false
-		self.is_valid = true
-		self:CallRecursive("OnShow")
-		self:SetParent(parent)
-
-		if self.SetPlayerOwner then
-			self:SetPlayerOwner(self.PlayerOwner_)
+		if self:GetPlayerOwner() == pac.LocalPlayer then
+			pac.CallHook("OnPartCreated", self)
 		end
-
-		timer.Simple(0.1, function()
-			if self:IsValid() and self.show_in_editor ~= false and self.PlayerOwner_ == pac.LocalPlayer then
-				pac.CallHook("OnPartCreated", self)
-			end
-		end)
-
-		pac.AddPart(self)
 	end
 
 	function PART:Remove(skip_removechild)
@@ -1457,7 +1435,7 @@ do -- drawing. this code is running every frame
 			return self.Angles + (pac.EyePos - self.cached_pos):Angle()
 		end
 
-		if self.AimPart:IsValid() then
+		if self.AimPart:IsValid() and self.AimPart.cached_pos then
 			return self.Angles + (self.AimPart.cached_pos - self.cached_pos):Angle()
 		end
 
@@ -1545,9 +1523,6 @@ function PART:Think()
 		end
 	end
 
-	if self.ResolvePartNames then
-		self:ResolvePartNames()
-	end
 
 	if self.delayed_variables then
 
@@ -1557,10 +1532,7 @@ function PART:Think()
 
 		self.delayed_variables = nil
 	end
-
 	self:OnThink()
-
-	self.supress_part_name_find = false
 end
 
 function PART:BuildBonePositions()

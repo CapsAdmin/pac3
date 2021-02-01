@@ -192,7 +192,6 @@ local function install_drag(node)
 			if self.part and self.part:IsValid() and self.part:GetParent() ~= child.part then
 				pace.RecordUndoHistory()
 				self.part:SetParent(child.part)
-				self.part:ResolvePartNames()
 				pace.RecordUndoHistory()
 				called = true
 			end
@@ -202,7 +201,6 @@ local function install_drag(node)
 				local group = pac.CreatePart("group", self.part:GetPlayerOwner())
 				group:SetEditorExpand(true)
 				self.part:SetParent(group)
-				self.part:ResolvePartNames()
 				pace.RecordUndoHistory()
 				pace.TrySelectPart()
 				called = true
@@ -210,7 +208,6 @@ local function install_drag(node)
 			else
 				pace.RecordUndoHistory()
 				self.part:SetParent()
-				self.part:ResolvePartNames()
 				pace.RecordUndoHistory()
 				pace.RefreshTree(true)
 				called = true
@@ -233,7 +230,6 @@ local function install_drag(node)
 			if self.part and self.part:IsValid() and child.part:GetParent() ~= self.part then
 				pace.RecordUndoHistory()
 				child.part:SetParent(self.part)
-				child.part:ResolvePartNames()
 				pace.RecordUndoHistory()
 			end
 		end
@@ -501,14 +497,15 @@ local function refresh(part, localplayer)
 		pace.RefreshTree(true)
 	end
 end
-pac.AddHook("pac_OnWoreOutfit", "pace_create_tree_nodes", refresh)
+pac.AddHook("pac_OnWoreOutfit", "pace_refresh_tree_nodes", refresh)
 
 local function refresh(part)
 	if part:GetRootPart().show_in_editor ~= false then
 		pace.RefreshTree(true)
 	end
 end
-pac.AddHook("pac_OnPartCreated", "pace_create_tree_nodes", refresh)
+pac.AddHook("pac_OnPartParent", "pace_refresh_tree_nodes", refresh)
+pac.AddHook("pac_OnPartCreated", "pace_refresh_tree_nodes", refresh)
 
 function pace.RefreshTree(reset)
 	if pace.tree:IsValid() then

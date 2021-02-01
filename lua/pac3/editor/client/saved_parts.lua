@@ -260,7 +260,6 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 	for i, part in ipairs(partsLoaded) do
 		part:CallRecursive('OnOutfitLoaded')
 		part:CallRecursive('PostApplyFixes')
-		part:ResolvePartNames()
 	end
 
 	pace.RecordUndoHistory()

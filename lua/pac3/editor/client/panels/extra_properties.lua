@@ -74,16 +74,37 @@ do -- part
 	PANEL.ClassName = "properties_part"
 	PANEL.Base = "pace_properties_base_type"
 
+	function PANEL:EncodeEdit(uid)
+		local part = pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), uid)
+
+		if part:IsValid() then
+			return part:GetName()
+		end
+
+		return ""
+	end
+
+	function PANEL:DecodeEdit(name)
+		local part = pac.FindPartByName(pac.LocalPlayer:UniqueID(), name)
+		if part:IsValid() then
+			return part:GetUniqueID()
+		end
+
+		return ""
+	end
+
 	function PANEL:OnValueSet(val)
 		if not IsValid(self.part) then return end
-		local func_name = "Get" .. self.CurrentKey:sub(1, -5)
-		local part = self.part[func_name](self.part)
+		local part = pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), val)
 
 		if IsValid(self.Icon) then self.Icon:Remove() end
+
 
 		if not part:IsValid() then
 			return
 		end
+
+		self:SetText(" " .. part:GetName())
 
 		if
 			GetConVar("pac_editor_model_icons"):GetBool() and

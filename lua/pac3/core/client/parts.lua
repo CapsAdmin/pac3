@@ -18,7 +18,7 @@ local function initialize(part, owner)
 	part:Initialize()
 end
 
-function pac.CreatePart(name, owner)
+function pac.CreatePart(name, owner, tbl)
 	name = name or "base"
 	owner = owner or pac.LocalPlayer
 
@@ -37,7 +37,9 @@ function pac.CreatePart(name, owner)
 	part.Id = part_count
 	part_count = part_count + 1
 
-	part:SetUniqueID(util.CRC(os.time() + pac.RealTime + part_count))
+	if not tbl or not tbl.self.UniqueID then
+		part:SetUniqueID(util.CRC(os.time() + pac.RealTime + part_count))
+	end
 
 	part.DefaultVars = {}
 
@@ -54,17 +56,15 @@ function pac.CreatePart(name, owner)
 	if not ok then
 		part:Remove()
 		if part.ClassName ~= "base" then
-			return pac.CreatePart("base", owner)
+			return pac.CreatePart("base", owner, tbl)
 		end
 	end
 
-	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))
+	if tbl then
+		part:SetTable(tbl)
+	end
 
-	timer.Simple(0.1, function()
-		if part:IsValid() and part.show_in_editor ~= false and owner == pac.LocalPlayer then
-			pac.CallHook("OnPartCreated", part)
-		end
-	end)
+	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))
 
 	return part
 end

@@ -579,6 +579,8 @@ end
 function pac.SetUniqueIDPart(owner_uid, uid, part)
 	uid_parts[owner_uid] = uid_parts[owner_uid] or {}
 	uid_parts[owner_uid][uid] = part
+
+	pac.NotifyPartCreated(part)
 end
 
 function pac.AddPart(part)
@@ -595,6 +597,34 @@ end
 
 function pac.GetPartFromUniqueID(owner_id, id)
 	return uid_parts[owner_id] and uid_parts[owner_id][id] or NULL
+end
+
+function pac.FindPartByName(owner_id, str)
+	if uid_parts[owner_id] then
+		if uid_parts[owner_id][str] then
+			return uid_parts[owner_id][str]
+		end
+
+		for _, part in pairs(uid_parts[owner_id]) do
+			if part:GetName() == str then
+				return part
+			end
+		end
+
+		for _, part in pairs(uid_parts[owner_id]) do
+			if pac.StringFind(part:GetName(), str) then
+				return part
+			end
+		end
+
+		for _, part in pairs(uid_parts[owner_id]) do
+			if pac.StringFind(part:GetName(), str, true) then
+				return part
+			end
+		end
+	end
+
+	return NULL
 end
 
 function pac.GetLocalPart(id)
@@ -639,6 +669,14 @@ function pac.UpdateMaterialParts(how, uid, self, val)
 			end
 		end
 	end)
+end
+
+function pac.NotifyPartCreated(part)
+	if not uid_parts[part.owner_id] then return end
+
+	for _, p in pairs(uid_parts[part.owner_id]) do
+		p:OnOtherPartCreated(part)
+	end
 end
 
 function pac.CallPartEvent(event, ...)
