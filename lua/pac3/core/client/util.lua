@@ -203,6 +203,7 @@ do --dev util
 			collectgarbage()
 		end
 
+		local loadingHit = false
 
 		if not prefer_local_version:GetBool() then
 			pacLocal.Message("pac_restart: not reloading from local version")
@@ -213,8 +214,9 @@ do --dev util
 				end
 			end
 
+			loadingHit = true
+
 		elseif sv_allowcslua:GetBool() or LocalPlayer():IsSuperAdmin() then
-			local loadingHit = false
 
 			if sv_allowcslua:GetBool() then
 				pacLocal.Message("pac_restart: sv_allowcslua is on, looking for PAC3 addon..")
@@ -286,15 +288,14 @@ do --dev util
 					break
 				end
 			end
+		end
 
+		if not loadingHit then
+			pacLocal.Message("sv_allowcslua is not enabled or unable to find PAC3 in addons/, loading PAC3 again from server lua")
 
-			if not loadingHit then
-				pacLocal.Message("sv_allowcslua is not enabled or unable to find PAC3 in addons/, loading PAC3 again from server lua")
-
-				for _, path in ipairs((file.Find("autorun/pac*", "LUA"))) do
-					if path:EndsWith("_init.lua") and path ~= "pac_init.lua" then
-						include("autorun/" .. path)
-					end
+			for _, path in ipairs((file.Find("autorun/pac*", "LUA"))) do
+				if path:EndsWith("_init.lua") and path ~= "pac_init.lua" then
+					include("autorun/" .. path)
 				end
 			end
 		end
