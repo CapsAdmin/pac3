@@ -1818,7 +1818,6 @@ custom gesture
 
 -- Custom event selector wheel
 do
-	-- TODO: Also make sure name's length is limited to 12 or something.
 	local function get_events()
 		local available = {}
 
