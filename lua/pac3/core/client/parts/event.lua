@@ -1855,18 +1855,18 @@ do
 		local R = 48
 
 		local events = get_events()
-		local length = #events
+		local nevents = #events
 
 		-- Theta size of each wedge
-		local thetadiff = math.pi*2 / length
+		local thetadiff = math.pi*2 / nevents
 		-- Used to compare the dot product
 		local coslimit = math.cos(thetadiff * 0.5)
 		-- Keeps the circles R units from each others' center
 		local radius
-		if length < 3 then
+		if nevents < 3 then
 			radius = R
 		else
-			radius = R/math.cos((length - 2)*math.pi*0.5/length)
+			radius = R/math.cos((nevents - 2)*math.pi*0.5/nevents)
 		end
 
 		-- Scale down to keep from going out of the screen
