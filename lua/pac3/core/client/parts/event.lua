@@ -1819,32 +1819,32 @@ custom gesture
 -- Custom event selector wheel
 do
 	-- TODO: Also make sure name's length is limited to 12 or something.
-	pac.CustomEvents = {
-		{name = "Test1", event = {}},
-		{name = "Test2", event = {}},
-		{name = "Test3", event = {}},
-		{name = "Test4", event = {}},
-		{name = "Test5", event = {}},
-		{name = "Test6", event = {}},
-		{name = "Test7", event = {}},
-		{name = "Test8", event = {}},
-		{name = "Test9", event = {}},
-		{name = "Test10", event = {}},
-		{name = "Test11", event = {}},
-		{name = "Test12", event = {}},
-		{name = "Test13", event = {}},
-		{name = "Test14", event = {}},
-		{name = "Test15", event = {}},
-		{name = "Test16", event = {}},
-		{name = "Test17", event = {}},
-		{name = "Test18", event = {}},
-		{name = "Test19", event = {}},
-		{name = "Test20", event = {}},
-		{name = "Test21", event = {}},
-		{name = "Test22", event = {}},
-	}
+	local function get_events()
+		local available = {}
 
-	local selectorBg = Material("pac/selector64.png","smooth")
+		for k,v in pairs(pac.GetLocalParts()) do
+			if v.ClassName == "event" then
+				local e = v:GetEvent()
+				if e == "command" then
+					local cmd, time = v:GetParsedArgumentsForObject(v.Events.command)
+
+					available[cmd] = {type = e, time = time}
+				end
+			end
+		end
+
+		local list = {}
+		for k,v in pairs(available) do
+			v.trigger = k
+			table.insert(list, v)
+		end
+
+		table.sort(list, function(a, b) return a.trigger > b.trigger end)
+
+		return list
+	end
+
+	local selectorBg = Material("sgm/playercircle")
 	local selected
 
 	function pac.openEventSelectionWheel()
@@ -1855,16 +1855,19 @@ do
 		local color_red = Color(255,0,0)
 		local R = 48
 
+		local events = get_events()
+		local length = #events
+
 		-- Theta size of each wedge
-		local thetadiff = math.pi*2 / #pac.CustomEvents
+		local thetadiff = math.pi*2 / length
 		-- Used to compare the dot product
 		local coslimit = math.cos(thetadiff * 0.5)
 		-- Keeps the circles R units from each others' center
 		local radius
-		if #pac.CustomEvents < 3 then
+		if length < 3 then
 			radius = R
 		else
-			radius = R/math.cos((#pac.CustomEvents - 2)*math.pi*0.5/#pac.CustomEvents)
+			radius = R/math.cos((length - 2)*math.pi*0.5/length)
 		end
 
 		-- Scale down to keep from going out of the screen
@@ -1876,18 +1879,18 @@ do
 		end
 
 		local selections = {}
-		for k, v in ipairs(pac.CustomEvents) do
+		for k, v in ipairs(events) do
 			local theta = (k-1)*thetadiff
 			selections[k] = {
 				grow = 0,
-				name = v.name,
-				event = v.event,
+				name = v.trigger,
+				event = v,
 				x = math.sin(theta),
 				y = -math.cos(theta),
 			}
 		end
 
-		local function think(self, x, y)
+		local function draw_circle(self, x, y)
 			local dot = self.x*x + self.y*y
 			local grow
 			if dot > coslimit then
@@ -1905,6 +1908,28 @@ do
 			cam.PushModelMatrix(m)
 
 			local x, y = self.x*radius, self.y*radius
+
+
+			local ply = pac.LocalPlayer
+			local data = ply.pac_command_events and ply.pac_command_events[self.event.trigger] and ply.pac_command_events[self.event.trigger]
+			if data then
+				local is_oneshot = self.event.time and self.event.time > 0
+
+				if is_oneshot then
+					local f = (pac.RealTime - data.time) / self.event.time
+					local c = Lerp(math.Clamp(f,0,1), 100, 55)
+					surface.SetDrawColor(c,c,c)
+				else
+					if data.on == 1 then
+						surface.SetDrawColor(150,150,150)
+					else
+						surface.SetDrawColor(50,50,50)
+					end
+				end
+			else
+				surface.SetDrawColor(50,50,50)
+			end
+
 			surface.DrawTexturedRect(x-48, y-48, 96, 96)
 			draw.SimpleText(self.name, "DermaDefault", x, y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 
@@ -1930,10 +1955,9 @@ do
 			render.PushFilterMin(TEXFILTER.ANISOTROPIC)
 
 			surface.SetMaterial(selectorBg)
-			surface.SetDrawColor(255,255,255)
 
 			draw.SimpleText("Right click to cancel", "DermaDefault", scrw2, scrh2+radius+R, color_red, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
-			for _, v in ipairs(selections) do think(v, x, y) end
+			for _, v in ipairs(selections) do draw_circle(v, x, y) end
 
 			render.PopFilterMag()
 			render.PopFilterMin()
@@ -1945,15 +1969,23 @@ do
 		gui.EnableScreenClicker(false)
 		pac.RemoveHook("HUDPaint","custom_event_selector")
 
-		if selected and cancel~=true then
-			-- TODO
-			-- selected.event:trigger()
+		if selected and cancel ~= true then
+			if selected.event.time and selected.event.time > 0 then
+				RunConsoleCommand("pac_event", selected.event.trigger, "toggle")
+			else
+				local ply = pac.LocalPlayer
+
+				if ply.pac_command_events and ply.pac_command_events[selected.event.trigger] and ply.pac_command_events[selected.event.trigger].on == 1 then
+					RunConsoleCommand("pac_event", selected.event.trigger, "0")
+				else
+					RunConsoleCommand("pac_event", selected.event.trigger, "1")
+				end
+			end
 			selected = nil
 		end
 	end
 
 	concommand.Add("+pac_events", pac.openEventSelectionWheel)
-
 	concommand.Add("-pac_events", pac.closeEventSelectionWheel)
 end
 
