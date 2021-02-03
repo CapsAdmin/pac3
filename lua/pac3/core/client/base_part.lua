@@ -291,11 +291,7 @@ do -- owner
 	end
 
 	function PART:CheckOwner(ent, removed)
-		local part = self:GetRootPart()
-
-		if part ~= self then
-			return part:CheckOwner(ent, removed)
-		end
+		self = self:GetRootPart()
 
 		local prev_owner = self:GetOwner()
 
@@ -897,8 +893,8 @@ do -- serializing
 			for _, value in pairs(tbl.children) do
 				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
 				part:SetIsBeingWorn(self:IsBeingWorn())
-				part:SetTable(value)
 				part:SetParent(self)
+				part:SetTable(value)
 			end
 		end
 
