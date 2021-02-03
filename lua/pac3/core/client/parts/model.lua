@@ -451,8 +451,8 @@ function PART:SetModel(path)
 
 				local ent = self:GetEntity()
 
-				if pacx and pacx.SetModelOnServer and self:GetPlayerOwner() == pac.LocalPlayer then
-					pacx.SetModelOnServer(ent, path)
+				if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
+					pacx.SetModel(ent, path, self:GetPlayerOwner())
 				end
 
 				self:RealSetModel(mdl_path)
@@ -477,8 +477,8 @@ function PART:SetModel(path)
 	else
 		local ent = self:GetEntity()
 
-		if pacx and pacx.SetModelOnServer and self:GetPlayerOwner() == pac.LocalPlayer then
-			pacx.SetModelOnServer(ent, path)
+		if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
+			pacx.SetModel(ent, path, self:GetPlayerOwner())
 		end
 
 		self:RealSetModel(path)
@@ -809,8 +809,8 @@ do
 		local ent = self:GetEntity()
 		if not ent:IsValid() then return end
 
-		if pacx and pacx.SetModelOnServer and self:GetPlayerOwner() == pac.LocalPlayer then
-			pacx.SetModelOnServer(ent)
+		if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
+			pacx.SetModel(ent, nil, self:GetPlayerOwner())
 		end
 
 		if ent:IsPlayer() or ent:IsNPC() then
