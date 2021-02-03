@@ -409,14 +409,6 @@ function PANEL:PopulateParts(node, parts, children)
 				part_node.Icon:SetImage(part.Icon)
 			end
 
-			if part.Group == "legacy" then
-				local mat = Material(pace.GroupsIcons.experimental)
-				part_node.Icon.PaintOver = function(_, w,h)
-					surface.SetMaterial(mat)
-					surface.DrawTexturedRect(2,6,13,13)
-				end
-			end
-
 			self:PopulateParts(part_node, part:GetChildren(), true)
 
 			if part.newly_created then
