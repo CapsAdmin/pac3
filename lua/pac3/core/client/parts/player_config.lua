@@ -27,7 +27,6 @@ pac.SetPropertyGroup()
 	pac.GetSet(PART, "BloodColor", "red", {enums = blood_colors})
 
 pac.SetPropertyGroup(PART, "behavior")
-	pac.GetSet(PART, "InverseKinematics", false)
 	pac.GetSet(PART, "MuteFootsteps", false)
 
 pac.SetPropertyGroup(PART, "death")

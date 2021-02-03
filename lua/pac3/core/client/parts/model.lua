@@ -41,6 +41,7 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "NoLighting", false)
 		pac.GetSet(PART, "NoCulling", false)
 		pac.GetSet(PART, "Invert", false)
+		pac.GetSet(PART, "InverseKinematics", false)
 		pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
 		pac.GetSet(PART, "ModelModifiers", "", {editor_panel = "model_modifiers"})
 		pac.GetSet(PART, "Material", "", {editor_panel = "material"})
@@ -538,6 +539,14 @@ function PART:ApplyMatrix()
 		else
 			ent:EnableMatrix("RenderMultiply", mat)
 		end
+
+		if ent.pac_enable_ik then
+			ent:SetModelScale(1, 0)
+			ent:SetIK(true)
+		else
+			ent:SetModelScale(1.000001, 0)
+			ent:SetIK(false)
+		end
 	else
 		local mat = Matrix()
 		if self.ClassName ~= "model2" then
@@ -691,7 +700,6 @@ do
 		return (str and str:gsub("%d", "") or "error") .. " " .. class_name .. " model"
 	end
 
-
 	function PART:SetPosition(pos)
 		self.Position = pos
 		self:ApplyMatrix()
@@ -812,6 +820,19 @@ do
 		end
 
 		ent:DisableMatrix("RenderMultiply")
+	end
+
+	function PART:SetInverseKinematics(b)
+		self.InverseKinematics = b
+
+		local ent = self:GetOwner()
+
+		print(ent, b, "!?!")
+
+		if ent:IsValid() then
+			ent.pac_enable_ik = b
+			self:ApplyMatrix()
+		end
 	end
 
 	function PART:OnThink()
