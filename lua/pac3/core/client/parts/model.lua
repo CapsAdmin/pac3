@@ -827,8 +827,6 @@ do
 
 		local ent = self:GetOwner()
 
-		print(ent, b, "!?!")
-
 		if ent:IsValid() then
 			ent.pac_enable_ik = b
 			self:ApplyMatrix()
