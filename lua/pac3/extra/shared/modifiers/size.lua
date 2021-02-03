@@ -79,6 +79,6 @@ if SERVER then
 
 		local multiplier = net.ReadDouble()
 
-		pacx.SetEntitySizeMultiplier(ply, multiplier)
+		pacx.SetEntitySizeMultiplier(ent, multiplier)
 	end)
 end
