@@ -124,7 +124,7 @@ local inf_scale = Vector(math.huge, math.huge, math.huge)
 local inf_scale_tempcrashfix = Vector(1,1,1)*0.001
 
 local function manscale(ent, id, scale, part)
-	if part.AlternativeBones then
+	if part and part.AlternativeBones then
 		ent.pac_bone_setup_data[part.UniqueID].scale = scale
 	else
 		ent:ManipulateBoneScale(id, ent:GetManipulateBoneScale(id) * scale)
@@ -194,11 +194,6 @@ function pac.build_bone_callback(ent)
 					if part.ScaleChildren then
 						local scale = part.Scale * part.Size
 						scale_children(ent, data.bone, scale, data.origin)
-					end
-
-					if part.HideMesh then
-						mat = Matrix({{0/0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}} )
-						print(mat)
 					end
 
 					ent:SetBoneMatrix(data.bone, mat)
@@ -276,6 +271,7 @@ function PART:OnBuildBonePositions()
 
 	if self.HideMesh then
 		scale = inf_scale
+		owner.pac_inf_scale = true
 
 		if self.InvertHideMesh then
 			local count = owner:GetBoneCount()
@@ -289,6 +285,8 @@ function PART:OnBuildBonePositions()
 			return
 		end
 	else
+		owner.pac_inf_scale = false
+
 		scale = self.Scale * self.Size
 	end
 
@@ -296,3 +294,16 @@ function PART:OnBuildBonePositions()
 end
 
 pac.RegisterPart(PART)
+
+pac.AddHook("OnEntityCreated", "hide_mesh_no_crash", function(ent)
+	local ply = ent:GetRagdollOwner()
+	if ply:IsPlayer() and ply.pac_inf_scale then
+		for i = 0, ply:GetBoneCount() - 1 do
+			local scale = ply:GetManipulateBoneScale(i)
+			if scale == inf_scale then
+				scale = Vector(0,0,0)
+			end
+			ply:ManipulateBoneScale(i, scale)
+		end
+	end
+end)

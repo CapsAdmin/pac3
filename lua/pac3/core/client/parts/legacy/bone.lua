@@ -261,6 +261,8 @@ function PART:OnBuildBonePositions()
 	if self.HideMesh then
 		scale = inf_scale
 
+		owner.pac_inf_scale = true
+
 		if self.InvertHideMesh then
 			local count = owner:GetBoneCount()
 
@@ -273,6 +275,9 @@ function PART:OnBuildBonePositions()
 			return
 		end
 	else
+
+		owner.pac_inf_scale = false
+
 		scale = self.Scale * self.Size
 	end
 
