@@ -382,7 +382,7 @@ pac.AddHook("Think", "events", function()
 				end
 			end
 			ply.pac_physics_died = true
-		elseif ply.pac_death_ragdollize then
+		elseif ply.pac_death_ragdollize or ply.pac_death_ragdollize == nil then
 
 			pac.HideEntityParts(ply)
 
