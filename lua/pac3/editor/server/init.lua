@@ -23,15 +23,19 @@ function pace.CanPlayerModify(ply, ent)
 		return true
 	end
 
-	if not ent.CPPICanTool then
-		return false
-	end
-
-	if ent:CPPIGetOwner() == ent then
+	if ent.CPPICanTool and ent:CPPICanTool(ply, "paint") then
 		return true
 	end
 
-	return ent:CPPICanTool(ply, "paint")
+	if ent.CPPIGetOwner and ent:CPPIGetOwner() == ply then
+		return true
+	end
+
+	if hook.Run("CanTool", ply, util.TraceLine({ start = ply:EyePos(), endpos = ent:WorldSpaceCenter(), filter = ply }), "paint") == true then
+		return true
+	end
+
+	return false
 end
 
 include("util.lua")

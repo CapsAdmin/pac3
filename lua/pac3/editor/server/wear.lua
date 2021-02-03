@@ -111,7 +111,7 @@ function pace.SubmitPart(data, filter)
 		if ent:IsValid() then
 			if not pace.CanPlayerModify(data.owner, ent) then
 				allowed = false
-				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
+				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent.CPPIGetOwner and ent:CPPIGetOwner() or "world")
 			elseif not data.is_dupe then
 				ent.pac_parts = ent.pac_parts or {}
 				ent.pac_parts[data.owner:UniqueID()] = data
