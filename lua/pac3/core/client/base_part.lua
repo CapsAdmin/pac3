@@ -905,7 +905,6 @@ do -- serializing
 				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner(), value)
 				part:SetIsBeingWorn(self:IsBeingWorn())
 				part:SetParent(self)
-				part:SetTable(value)
 			end
 		end
 
