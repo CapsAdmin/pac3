@@ -12,13 +12,13 @@ local ALLOW_TO_CHANGE = pacx.AddServerModifier("size", function(enable)
 	-- we can also add a way to restore, but i don't think it's worth it
 end)
 
-local function change(ent, property, multiplier)
-	if ent["Set" .. property] then
+local function change(ent, property, multiplier, default_override)
+	if ent["Set" .. property] and ent["Get" .. property] then
 
 		local default = ent.pacx_size_default_props
 
 		if not default[property] then
-			default[property] = ent["Get" .. property](ent)
+			default[property] = default_override or ent["Get" .. property](ent)
 		end
 
 		ent["Set" .. property](ent, default[property] * multiplier)
@@ -53,7 +53,7 @@ function pacx.SetEntitySizeMultiplier(ent, multiplier)
 	change(ent, "ViewOffset", multiplier)
 	change(ent, "ViewOffsetDucked", multiplier)
 	change(ent, "StepSize", multiplier)
-	change(ent, "ModelScale", multiplier)
+	change(ent, "ModelScale", multiplier, 1)
 
 	if ent.GetPhysicsObject then
 		local phys = ent:GetPhysicsObject()

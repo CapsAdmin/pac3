@@ -540,12 +540,14 @@ function PART:ApplyMatrix()
 			ent:EnableMatrix("RenderMultiply", mat)
 		end
 
-		if ent.pac_enable_ik then
-			ent:SetModelScale(1, 0)
-			ent:SetIK(true)
-		else
-			ent:SetModelScale(1.000001, 0)
-			ent:SetIK(false)
+		if self.Size == 1 then
+			if ent.pac_enable_ik then
+				ent:SetModelScale(1, 0)
+				ent:SetIK(true)
+			else
+				ent:SetModelScale(1.000001, 0)
+				ent:SetIK(false)
+			end
 		end
 	else
 		local mat = Matrix()
