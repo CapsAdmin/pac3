@@ -21,7 +21,13 @@ function pacx.SetModelOnServer(ent, path)
 end
 
 function pacx.GetModel(ent)
-	return ent:GetNWString("pacx_model", ent:GetModel())
+	local mdl = ent:GetNWString("pacx_model")
+
+	if not mdl or mdl == "" then
+		return ent:GetModel()
+	end
+
+	return mdl
 end
 
 function pacx.SetModel(ent, path, ply)
@@ -29,10 +35,15 @@ function pacx.SetModel(ent, path, ply)
 		if ent.pacx_model_original then
 			ent:SetModel(ent.pacx_model_original)
 			if SERVER then
-				ent:SetNWString("pacx_model", ent.pacx_model_original)
+				ent:SetNWString("pacx_model", "")
 			end
 			ent.pacx_model_original = nil
 		end
+
+		if CLIENT then
+			pacx.SetModelOnServer(ent, path)
+		end
+
 		return
 	end
 
@@ -88,8 +99,10 @@ end
 
 do -- is there a nicer way to do this?
 	local function check(ply)
-		local mdl = pacx.GetModel(ply)
-		if mdl and ply:GetModel():lower() ~= mdl:lower() then
+		if not ply.pacx_model_original then return end
+
+		local mdl = ply:GetNWString("pacx_model")
+		if mdl and mdl ~= "" and ply:GetModel():lower() ~= mdl:lower() then
 			ply:SetModel(mdl)
 		end
 	end

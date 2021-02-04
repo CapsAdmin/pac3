@@ -12,13 +12,13 @@ local ALLOW_TO_CHANGE = pacx.AddServerModifier("size", function(enable)
 	-- we can also add a way to restore, but i don't think it's worth it
 end)
 
-local function change(ent, property, multiplier)
-	if ent["Set" .. property] then
+local function change(ent, property, multiplier, default_override)
+	if ent["Set" .. property] and ent["Get" .. property] then
 
 		local default = ent.pacx_size_default_props
 
 		if not default[property] then
-			default[property] = ent["Get" .. property](ent)
+			default[property] = default_override or ent["Get" .. property](ent)
 		end
 
 		ent["Set" .. property](ent, default[property] * multiplier)
@@ -53,7 +53,7 @@ function pacx.SetEntitySizeMultiplier(ent, multiplier)
 	change(ent, "ViewOffset", multiplier)
 	change(ent, "ViewOffsetDucked", multiplier)
 	change(ent, "StepSize", multiplier)
-	change(ent, "ModelScale", multiplier)
+	change(ent, "ModelScale", multiplier, 1)
 
 	if ent.GetPhysicsObject then
 		local phys = ent:GetPhysicsObject()
@@ -64,6 +64,24 @@ function pacx.SetEntitySizeMultiplier(ent, multiplier)
 
 			phys:SetMass(default.Mass * multiplier)
 		end
+	end
+
+	if ent.SetHull and ent.GetHull then
+		if not default.Hull then
+			default.Hull = {ent:GetHull()}
+		end
+
+		local def = default.Hull
+		ent:SetHull(def[1] * multiplier, def[2] * multiplier)
+	end
+
+	if ent.SetHullDuck and ent.GetHullDuck then
+		if not default.HullDuck then
+			default.HullDuck = {ent:GetHullDuck()}
+		end
+
+		local def = default.HullDuck
+		ent:SetHullDuck(def[1] * multiplier, def[2] * multiplier)
 	end
 end
 
@@ -79,6 +97,6 @@ if SERVER then
 
 		local multiplier = net.ReadDouble()
 
-		pacx.SetEntitySizeMultiplier(ply, multiplier)
+		pacx.SetEntitySizeMultiplier(ent, multiplier)
 	end)
 end

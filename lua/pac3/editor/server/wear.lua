@@ -111,19 +111,20 @@ function pace.SubmitPart(data, filter)
 		if ent:IsValid() then
 			if not pace.CanPlayerModify(data.owner, ent) then
 				allowed = false
-				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent:CPPIGetOwner())
-			elseif not data.is_dupe then
-				ent.pac_parts = ent.pac_parts or {}
-				ent.pac_parts[data.owner:UniqueID()] = data
+				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent.CPPIGetOwner and ent:CPPIGetOwner() or "world")
+			else
+				if not data.is_dupe then
+					ent.pac_parts = ent.pac_parts or {}
+					ent.pac_parts[data.owner:UniqueID()] = data
 
-				pace.dupe_ents[ent:EntIndex()] = {owner = data.owner, ent = ent}
+					pace.dupe_ents[ent:EntIndex()] = {owner = data.owner, ent = ent}
 
-				duplicator.ClearEntityModifier(ent, "pac_config")
-				--duplicator.StoreEntityModifier(ent, "pac_config", ent.pac_parts)
-				--duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(ent.pac_parts)})
-				-- fresh table copy
-				duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(table.Copy(ent.pac_parts))})
-
+					duplicator.ClearEntityModifier(ent, "pac_config")
+					--duplicator.StoreEntityModifier(ent, "pac_config", ent.pac_parts)
+					--duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(ent.pac_parts)})
+					-- fresh table copy
+					duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(table.Copy(ent.pac_parts))})
+				end
 				ent:CallOnRemove("pac_config", function(ent)
 					if ent.pac_parts then
 						for _, data in pairs(ent.pac_parts) do

@@ -40,6 +40,7 @@ BUILDER:StartStorableVars()
 		:GetSet("NoLighting", false)
 		:GetSet("NoCulling", false)
 		:GetSet("Invert", false)
+		:GetSet("InverseKinematics", false)
 		:GetSet("Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
 		:GetSet("ModelModifiers", "", {editor_panel = "model_modifiers"})
 		:GetSet("Material", "", {editor_panel = "material"})
@@ -448,8 +449,8 @@ function PART:SetModel(path)
 
 				local ent = self:GetEntity()
 
-				if pacx and pacx.SetModelOnServer and self:GetPlayerOwner() == pac.LocalPlayer then
-					pacx.SetModelOnServer(ent, path)
+				if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
+					pacx.SetModel(ent, path, self:GetPlayerOwner())
 				end
 
 				self:RealSetModel(mdl_path)
@@ -474,8 +475,8 @@ function PART:SetModel(path)
 	else
 		local ent = self:GetEntity()
 
-		if pacx and pacx.SetModelOnServer and self:GetPlayerOwner() == pac.LocalPlayer then
-			pacx.SetModelOnServer(ent, path)
+		if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
+			pacx.SetModel(ent, path, self:GetPlayerOwner())
 		end
 
 		self:RealSetModel(path)
@@ -535,6 +536,16 @@ function PART:ApplyMatrix()
 			ent:DisableMatrix("RenderMultiply")
 		else
 			ent:EnableMatrix("RenderMultiply", mat)
+		end
+
+		if self.Size == 1 then
+			if ent.pac_enable_ik then
+				ent:SetModelScale(1, 0)
+				ent:SetIK(true)
+			else
+				ent:SetModelScale(1.000001, 0)
+				ent:SetIK(false)
+			end
 		end
 	else
 		local mat = Matrix()
@@ -793,8 +804,8 @@ do
 		local ent = self:GetEntity()
 		if not ent:IsValid() then return end
 
-		if pacx and pacx.SetModelOnServer and self:GetPlayerOwner() == pac.LocalPlayer then
-			pacx.SetModelOnServer(ent)
+		if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
+			pacx.SetModel(ent, nil, self:GetPlayerOwner())
 		end
 
 		if ent:IsPlayer() or ent:IsNPC() then
@@ -804,6 +815,17 @@ do
 		end
 
 		ent:DisableMatrix("RenderMultiply")
+	end
+
+	function PART:SetInverseKinematics(b)
+		self.InverseKinematics = b
+
+		local ent = self:GetOwner()
+
+		if ent:IsValid() then
+			ent.pac_enable_ik = b
+			self:ApplyMatrix()
+		end
 	end
 
 	function PART:OnThink()

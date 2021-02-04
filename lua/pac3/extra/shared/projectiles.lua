@@ -27,6 +27,13 @@ do -- projectile entity
 				self.done = true
 			end
 		end
+
+		net.Receive("pac_projectile_collide_event", function()
+			local self = net.ReadEntity()
+			local data = net.ReadTable()
+
+			self.pac_event_collision_data = data
+		end)
 	end
 
 	if SERVER then
@@ -217,9 +224,16 @@ do -- projectile entity
 			end
 		end
 
+		util.AddNetworkString("pac_projectile_collide_event")
+
 		function ENT:PhysicsCollide(data, phys)
 			if not self.part_data then return end
 			if not self.projectile_owner:IsValid() then return end
+
+			net.Start("pac_projectile_collide_event", true)
+				net.WriteEntity(self)
+				net.WriteTable({}) -- nothing for now
+			net.SendPVS(data.HitPos)
 
 			local ply = self.projectile_owner
 

@@ -11,7 +11,11 @@ local SV_LIMIT = CreateConVar("sv_pac_webcontent_limit", "-1", CLIENT and {FCVAR
 local SV_NO_CLENGTH = CreateConVar("sv_pac_webcontent_allow_no_content_length", "-1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow downloads with no content length")
 
 function pac.FixGMODUrl(url)
-	return url:gsub("(%d%.)", function(d) return "%" .. ("%x"):format(string.byte(d)) .. "." end) -- to avoid "invalid url" errors
+	-- to avoid "invalid url" errors
+	-- gmod does not allow urls containing "10.", "172.16.", "192.168.", "127." or "://localhost"
+	-- we escape 10. and 127. can occur (mydomain.com/model10.zip) and assume the server supports
+	-- the escaped request
+	return url:Replace("10.", "%31%30%2e"):Replace("127.", "%31%32%37%2e")
 end
 
 local function http(method, url, headers, cb, failcb)

@@ -27,7 +27,6 @@ BUILDER:SetPropertyGroup()
 	BUILDER:GetSet("BloodColor", "red", {enums = blood_colors})
 
 BUILDER:SetPropertyGroup("behavior")
-	BUILDER:GetSet("InverseKinematics", false)
 	BUILDER:GetSet("MuteFootsteps", false)
 
 BUILDER:SetPropertyGroup("death")

@@ -260,22 +260,26 @@ function PART:OnBuildBonePositions()
 
 	local scale
 
-	-- Disable hide mesh functionality completely until the crash this causes, is fixed
 	if self.HideMesh then
-		scale = inf_scale_tempcrashfix
+		scale = inf_scale
+
+		owner.pac_inf_scale = true
 
 		if self.InvertHideMesh then
 			local count = owner:GetBoneCount()
 
 			for i = 0, count - 1 do
 				if i ~= self.BoneIndex then
-					manscale(owner, i, inf_scale_tempcrashfix, self)
+					manscale(owner, i, inf_scale, self)
 				end
 			end
 
 			return
 		end
 	else
+
+		owner.pac_inf_scale = false
+
 		scale = self.Scale * self.Size
 	end
 
