@@ -131,7 +131,6 @@ function pace.SubmitPart(data, filter)
 							if type(data.part) == "table" then
 								data.part = data.part.self.UniqueID
 							end
-							PrintTable(data)
 							pace.RemovePart(data)
 						end
 					end
