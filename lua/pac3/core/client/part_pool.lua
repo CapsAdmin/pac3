@@ -672,9 +672,10 @@ function pac.UpdateMaterialParts(how, uid, self, val)
 end
 
 function pac.NotifyPartCreated(part)
-	if not uid_parts[part.owner_id] then return end
+	local owner_id = part:GetPlayerOwnerId()
+	if not uid_parts[owner_id] then return end
 
-	for _, p in pairs(uid_parts[part.owner_id]) do
+	for _, p in pairs(uid_parts[owner_id]) do
 		p:OnOtherPartCreated(part)
 	end
 end

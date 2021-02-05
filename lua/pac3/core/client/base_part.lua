@@ -140,14 +140,16 @@ function PART:SetBlendMode(str)
 end
 
 function PART:SetUniqueID(id)
-	if self.owner_id then
-		pac.RemoveUniqueIDPart(self.owner_id, self.UniqueID)
+	local owner_id = self:GetPlayerOwnerId()
+
+	if owner_id then
+		pac.RemoveUniqueIDPart(owner_id, self.UniqueID)
 	end
 
 	self.UniqueID = id
 
-	if self.owner_id then
-		pac.SetUniqueIDPart(self.owner_id, id, self)
+	if owner_id then
+		pac.SetUniqueIDPart(owner_id, id, self)
 	end
 end
 
@@ -292,16 +294,25 @@ do -- owner
 	function PART:SetPlayerOwner(ply)
 		self.PlayerOwner = ply
 
-		if ply:IsValid() then
-			self.owner_id = ply:IsPlayer() and ply:UniqueID() or ply:EntIndex()
-		end
-
 		if not self:HasParent() then
 			self:CheckOwner()
 		end
 
 		self:SetUniqueID(self:GetUniqueID())
 	end
+
+	function PART:GetPlayerOwnerId()
+		local owner = self:GetPlayerOwner()
+
+		if not owner:IsValid() then return end
+
+		if owner:IsPlayer() then
+			return owner:UniqueID()
+		end
+
+		return owner:EntIndex()
+	end
+
 	function PART:SetOwnerName(name)
 		self.OwnerName = name
 		self:CheckOwner()
@@ -786,8 +797,10 @@ do -- parenting
 		self:InvalidateChildrenList()
 
 		for i, part in ipairs(self:GetChildren()) do
-			if part.owner_id and part.UniqueID then
-				pac.RemoveUniqueIDPart(part.owner_id, part.UniqueID)
+			local owner_id = part:GetPlayerOwnerId()
+
+			if owner_id then
+				pac.RemoveUniqueIDPart(owner_id, part.UniqueID)
 			end
 
 			pac.RemovePart(part)
@@ -1113,8 +1126,10 @@ do -- events
 		self:CallRecursive("OnRemove")
 		self:OnRemove()
 
-		if self.owner_id and self.UniqueID then
-			pac.RemoveUniqueIDPart(self.owner_id, self.UniqueID)
+
+		local owner_id = self:GetPlayerOwnerId()
+		if owner_id then
+			pac.RemoveUniqueIDPart(owner_id, self.UniqueID)
 		end
 
 		pac.RemovePart(self)
@@ -1132,10 +1147,11 @@ do -- events
 	end
 
 	function PART:OnOtherPartCreated(part)
-		if not part.owner_id then return end
+		local owner_id = part:GetPlayerOwnerId()
+		if not owner_id then return end
 		if not self.unresolved_uid_parts then return end
-		if not self.unresolved_uid_parts[part.owner_id] then return end
-		local keys = self.unresolved_uid_parts[part.owner_id][part.UniqueID]
+		if not self.unresolved_uid_parts[owner_id] then return end
+		local keys = self.unresolved_uid_parts[owner_id][part.UniqueID]
 
 		if not keys then return end
 
