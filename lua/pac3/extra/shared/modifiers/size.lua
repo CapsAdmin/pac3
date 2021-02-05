@@ -26,6 +26,7 @@ local function change(ent, property, multiplier, default_override)
 end
 
 local function write_other(other)
+	if not other then return end
 	net.WriteDouble(other.StandingHullHeight or 0)
 	net.WriteDouble(other.CrouchingHullHeight or 0)
 	net.WriteDouble(other.HullWidth or 0)
@@ -34,6 +35,7 @@ end
 local function read_other()
 	local other = {}
 	other.StandingHullHeight = net.ReadDouble()
+	if not other.StandingHullHeight then return end
 	other.CrouchingHullHeight = net.ReadDouble()
 	other.HullWidth = net.ReadDouble()
 	return other
@@ -43,7 +45,7 @@ function pacx.SetEntitySizeOnServer(ent, multiplier, other)
 	net.Start("pacx_size")
 		net.WriteEntity(ent)
 		net.WriteDouble(multiplier or 1)
-		write_other(other or {})
+		write_other(other)
 	net.SendToServer()
 end
 
@@ -78,30 +80,35 @@ function pacx.SetEntitySizeMultiplier(ent, multiplier, other)
 		end
 	end
 
-	if other and ent.SetHull and ent.SetHullDuck then
-		local smin, smax = Vector(), Vector()
-		local cmin, cmax = Vector(), Vector()
+	if ent.SetHull and ent.SetHullDuck and ent.ResetHull then
+		if other then
+			local smin, smax = Vector(), Vector()
+			local cmin, cmax = Vector(), Vector()
 
-		local w = math.Clamp(other.HullWidth or 0, 1, 128)
+			local w = math.Clamp(other.HullWidth or 0, 1, 128)
 
-		smin.x = -w / 2
-		smax.x = w / 2
-		smin.y = -w / 2
-		smax.y = w / 2
+			smin.x = -w / 2
+			smax.x = w / 2
+			smin.y = -w / 2
+			smax.y = w / 2
 
-		cmin.x = -w / 2
-		cmax.x = w / 2
-		cmin.y = -w / 2
-		cmax.y = w / 2
+			cmin.x = -w / 2
+			cmax.x = w / 2
+			cmin.y = -w / 2
+			cmax.y = w / 2
 
-		smin.z = 0
-		smax.z = math.Clamp(other.StandingHullHeight or 0, 1, 128)
+			smin.z = 0
+			smax.z = math.Clamp(other.StandingHullHeight or 0, 1, 128)
 
-		cmin.z = 0
-		cmax.z = math.Clamp(other.CrouchingHullHeight or 0, 1, 128)
+			cmin.z = 0
+			cmax.z = math.Clamp(other.CrouchingHullHeight or 0, 1, 128)
 
-		ent:SetHull(smin, smax)
-		ent:SetHullDuck(cmin, cmax)
+			ent:SetHull(smin, smax)
+			ent:SetHullDuck(cmin, cmax)
+		else
+			print("RESET!!")
+			ent:ResetHull()
+		end
 	end
 
 	if multiplier == 1 then
