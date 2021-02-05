@@ -713,6 +713,7 @@ do -- hull
 
 	function PANEL:OnValueSet()
 		local function stop()
+			RunConsoleCommand("-duck")
 			hook.Remove("PostDrawOpaqueRenderables", "pace_draw_hull")
 		end
 
@@ -731,6 +732,7 @@ do -- hull
 
 			if self.udata and self.udata.crouch then
 				min, max = ent:GetHullDuck()
+				RunConsoleCommand("+duck")
 			end
 
 			render.DrawWireframeBox( ent:GetPos(), Angle(0), min, max, Color(255, 204, 51, 255), true )
