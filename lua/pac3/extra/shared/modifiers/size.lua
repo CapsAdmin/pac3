@@ -25,13 +25,15 @@ local function change(ent, property, multiplier, default_override)
 	end
 end
 
-function pacx.SetEntitySizeMultiplier(ent, multiplier)
-	if not multiplier then
-		pacx.SetEntitySizeMultiplier(ent, 1)
-		ent.pacx_size_default_props = nil
-		return
-	end
+function pacx.SetEntitySizeOnServer(ent, multiplier)
+	net.Start("pacx_size")
+		net.WriteEntity(ent)
+		net.WriteDouble(multiplier or 1)
+	net.SendToServer()
+end
 
+function pacx.SetEntitySizeMultiplier(ent, multiplier)
+	multiplier = multiplier or 1
 	multiplier = math.Clamp(multiplier, MIN, MAX)
 
 	if multiplier == ent.pacx_size then return end
@@ -39,12 +41,7 @@ function pacx.SetEntitySizeMultiplier(ent, multiplier)
 	ent.pacx_size = multiplier
 
 	if CLIENT then
-		if ent:EntIndex() > 0 then
-			net.Start("pacx_size")
-				net.WriteEntity(ent)
-				net.WriteDouble(multiplier)
-			net.SendToServer()
-		end
+		pacx.SetEntitySizeOnServer(ent, multiplier)
 	end
 
 	ent.pacx_size_default_props = ent.pacx_size_default_props or {}
@@ -82,6 +79,10 @@ function pacx.SetEntitySizeMultiplier(ent, multiplier)
 
 		local def = default.HullDuck
 		ent:SetHullDuck(def[1] * multiplier, def[2] * multiplier)
+	end
+
+	if multiplier == 1 then
+		ent.pacx_size_default_props = nil
 	end
 end
 

@@ -516,31 +516,28 @@ function PART:SetScale(var)
 	end
 end
 
+local vec_one = Vector(1,1,1)
+
 function PART:ApplyMatrix()
 	local ent = self:GetEntity()
 	if not ent:IsValid() then return end
 
+	local mat = Matrix()
+
+	if self.ClassName ~= "model2" then
+		mat:Translate(self.Position + self.PositionOffset)
+		mat:Rotate(self.Angles + self.AngleOffset)
+	end
+
 	if ent:IsPlayer() or ent:IsNPC() then
-
-		local mat = Matrix()
-		if self.ClassName ~= "model2" then
-			mat:Translate(self.Position + self.PositionOffset)
-			mat:Rotate(self.Angles + self.AngleOffset)
-		end
-		mat:Scale(self.Scale)
-
-
-		if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
+		if pacx and pacx.SetEntitySizeMultiplier then
+			if self:GetPlayerOwner() == pac.LocalPlayer then
+				pacx.SetEntitySizeOnServer(ent, self.Size)
+			end
 			pacx.SetEntitySizeMultiplier(ent, self.Size)
 		end
 
-		if mat:IsIdentity() then
-			ent:DisableMatrix("RenderMultiply")
-		else
-			ent:EnableMatrix("RenderMultiply", mat)
-		end
-
-		if self.Size == 1 then
+		if self.Size == 1 and self.Scale == vec_one then
 			if ent.pac_enable_ik then
 				ent:SetModelScale(1, 0)
 				ent:SetIK(true)
@@ -549,20 +546,16 @@ function PART:ApplyMatrix()
 				ent:SetIK(false)
 			end
 		end
+
+		mat:Scale(self.Scale)
 	else
-		local mat = Matrix()
-		if self.ClassName ~= "model2" then
-			mat:Translate(self.Position + self.PositionOffset)
-			mat:Rotate(self.Angles + self.AngleOffset)
-		end
 		mat:Scale(self.Scale * self.Size)
+	end
 
-
-		if mat:IsIdentity() then
-			ent:DisableMatrix("RenderMultiply")
-		else
-			ent:EnableMatrix("RenderMultiply", mat)
-		end
+	if mat:IsIdentity() then
+		ent:DisableMatrix("RenderMultiply")
+	else
+		ent:EnableMatrix("RenderMultiply", mat)
 	end
 end
 
@@ -816,9 +809,13 @@ do
 		end
 
 		if ent:IsPlayer() or ent:IsNPC() then
-			if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
+			if pacx and pacx.SetEntitySizeMultiplier then
+				if self:GetPlayerOwner() == pac.LocalPlayer then
+					pacx.SetEntitySizeOnServer(ent)
+				end
 				pacx.SetEntitySizeMultiplier(ent)
 			end
+
 		end
 
 		ent:DisableMatrix("RenderMultiply")
