@@ -57,6 +57,16 @@ function pacx.SetEntitySizeMultiplier(ent, multiplier, other)
 		ent.pacx_size = multiplier
 
 		if CLIENT then
+			if not ALLOW_TO_CHANGE:GetBool() then
+				pacx.SetEntitySizeMultiplier(ent)
+
+				ent.pacx_size_default_props = ent.pacx_size_default_props or {}
+				change(ent, "ModelScale", multiplier, 1)
+				return
+			end
+		end
+
+		if CLIENT then
 			pacx.SetEntitySizeOnServer(ent, multiplier, other)
 		end
 
@@ -85,7 +95,7 @@ function pacx.SetEntitySizeMultiplier(ent, multiplier, other)
 			local smin, smax = Vector(), Vector()
 			local cmin, cmax = Vector(), Vector()
 
-			local w = math.Clamp(other.HullWidth or 0, 1, 128)
+			local w = math.Clamp(other.HullWidth or 32, 1, 4096)
 
 			smin.x = -w / 2
 			smax.x = w / 2
@@ -98,15 +108,14 @@ function pacx.SetEntitySizeMultiplier(ent, multiplier, other)
 			cmax.y = w / 2
 
 			smin.z = 0
-			smax.z = math.Clamp(other.StandingHullHeight or 0, 1, 128)
+			smax.z = math.Clamp(other.StandingHullHeight or 72, 1, 4096)
 
 			cmin.z = 0
-			cmax.z = math.Clamp(other.CrouchingHullHeight or 0, 1, 128)
+			cmax.z = math.Clamp(other.CrouchingHullHeight or 36, 1, 4096)
 
 			ent:SetHull(smin, smax)
 			ent:SetHullDuck(cmin, cmax)
 		else
-			print("RESET!!")
 			ent:ResetHull()
 		end
 	end
