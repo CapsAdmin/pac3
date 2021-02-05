@@ -35,7 +35,7 @@ function pace.AddTool(name, callback, ...)
 end
 
 pace.AddTool(L"fix origin", function(part, suboption)
-	if part.ClassName ~= "model" then return end
+	if part.ClassName ~= "model" and part.ClassName ~= "model" then return end
 
 	local ent = part:GetEntity()
 
@@ -436,7 +436,7 @@ elseif (CoreStatus == "RunThisCode") {
 		local str_holo = str_ref
 
 		for CI, clip in ipairs(part:GetChildren()) do
-			if clip.ClassName == "clip" and not clip:IsHidden() then
+			if clip.ClassName == "clip" or clip.ClassName == "clip2" and not clip:IsHidden() then
 				local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
 				local normal = ang:Forward()
 				str_holo = str_holo .. "    CN++, CT[CN,table] = table(I, " .. CI .. ", vec(" .. tovec(pos + normal) .. "), vec(" .. tovec(normal) .. "))\n"
@@ -451,7 +451,7 @@ elseif (CoreStatus == "RunThisCode") {
 
 		local holo = str_holo:gsub("[A-Z]+",{
 			ALPHA = math.Round(part:GetAlpha() * 255, 4),
-			COLOR = tovec(part:GetColor()),
+			COLOR = tovec((part.ProperColorRange and part:GetColor()*255) or part:GetColor()),
 			SCALE = "vec(" .. tovec(Vector(scale.x, scale.y, scale.z)) .. ")",
 			ANGLES = "ang(" .. toang(ang) .. ")",
 			POSITION = "vec(" .. tovec(pos) .. ")",
