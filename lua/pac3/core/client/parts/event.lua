@@ -1814,3 +1814,179 @@ reload end
 reload
 custom gesture
 --]]
+
+
+-- Custom event selector wheel
+do
+	local function get_events()
+		local available = {}
+
+		for k,v in pairs(pac.GetLocalParts()) do
+			if v.ClassName == "event" then
+				local e = v:GetEvent()
+				if e == "command" then
+					local cmd, time = v:GetParsedArgumentsForObject(v.Events.command)
+
+					available[cmd] = {type = e, time = time}
+				end
+			end
+		end
+
+		local list = {}
+		for k,v in pairs(available) do
+			v.trigger = k
+			table.insert(list, v)
+		end
+
+		table.sort(list, function(a, b) return a.trigger > b.trigger end)
+
+		return list
+	end
+
+	local selectorBg = Material("sgm/playercircle")
+	local selected
+
+	function pac.openEventSelectionWheel()
+		gui.EnableScreenClicker(true)
+
+		local scrw, scrh = ScrW(), ScrH()
+		local scrw2, scrh2 = scrw*0.5, scrh*0.5
+		local color_red = Color(255,0,0)
+		local R = 48
+
+		local events = get_events()
+		local nevents = #events
+
+		-- Theta size of each wedge
+		local thetadiff = math.pi*2 / nevents
+		-- Used to compare the dot product
+		local coslimit = math.cos(thetadiff * 0.5)
+		-- Keeps the circles R units from each others' center
+		local radius
+		if nevents < 3 then
+			radius = R
+		else
+			radius = R/math.cos((nevents - 2)*math.pi*0.5/nevents)
+		end
+
+		-- Scale down to keep from going out of the screen
+		local gScale
+		if radius+R > scrh2 then
+			gScale = scrh2 / (radius+R)
+		else
+			gScale = 1
+		end
+
+		local selections = {}
+		for k, v in ipairs(events) do
+			local theta = (k-1)*thetadiff
+			selections[k] = {
+				grow = 0,
+				name = v.trigger,
+				event = v,
+				x = math.sin(theta),
+				y = -math.cos(theta),
+			}
+		end
+
+		local function draw_circle(self, x, y)
+			local dot = self.x*x + self.y*y
+			local grow
+			if dot > coslimit then
+				selected = self
+				grow = 0.1
+			else
+				grow = 0
+			end
+			self.grow = self.grow*0.9 + grow -- Framerate will affect this effect's speed but oh well
+
+			local scale = gScale*(1 + self.grow*0.2)
+			local m = Matrix()
+			m:SetTranslation(Vector(scrw2, scrh2, 0))
+			m:Scale(Vector(scale, scale, scale))
+			cam.PushModelMatrix(m)
+
+			local x, y = self.x*radius, self.y*radius
+
+
+			local ply = pac.LocalPlayer
+			local data = ply.pac_command_events and ply.pac_command_events[self.event.trigger] and ply.pac_command_events[self.event.trigger]
+			if data then
+				local is_oneshot = self.event.time and self.event.time > 0
+
+				if is_oneshot then
+					local f = (pac.RealTime - data.time) / self.event.time
+					local c = Lerp(math.Clamp(f,0,1), 100, 55)
+					surface.SetDrawColor(c,c,c)
+				else
+					if data.on == 1 then
+						surface.SetDrawColor(150,150,150)
+					else
+						surface.SetDrawColor(50,50,50)
+					end
+				end
+			else
+				surface.SetDrawColor(50,50,50)
+			end
+
+			surface.DrawTexturedRect(x-48, y-48, 96, 96)
+			draw.SimpleText(self.name, "DermaDefault", x, y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+			cam.PopModelMatrix()
+		end
+
+		pac.AddHook("HUDPaint","custom_event_selector",function()
+			-- Right clicking cancels
+			if input.IsButtonDown(MOUSE_RIGHT) then pac.closeEventSelectionWheel(true) return end
+
+			-- Normalize mouse vector from center of screen
+			local x, y = input.GetCursorPos()
+			x = x - scrw2
+			y = y - scrh2
+			if x==0 and y==0 then x = 1 y = 0 else
+				local l = math.sqrt(x^2+y^2)
+				x = x/l
+				y = y/l
+			end
+
+			DisableClipping(true)
+			render.PushFilterMag(TEXFILTER.ANISOTROPIC)
+			render.PushFilterMin(TEXFILTER.ANISOTROPIC)
+
+			surface.SetMaterial(selectorBg)
+
+			draw.SimpleText("Right click to cancel", "DermaDefault", scrw2, scrh2+radius+R, color_red, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+			for _, v in ipairs(selections) do draw_circle(v, x, y) end
+
+			render.PopFilterMag()
+			render.PopFilterMin()
+			DisableClipping(false)
+		end)
+	end
+
+	function pac.closeEventSelectionWheel(cancel)
+		gui.EnableScreenClicker(false)
+		pac.RemoveHook("HUDPaint","custom_event_selector")
+
+		if selected and cancel ~= true then
+			if selected.event.time and selected.event.time > 0 then
+				RunConsoleCommand("pac_event", selected.event.trigger, "toggle")
+			else
+				local ply = pac.LocalPlayer
+
+				if ply.pac_command_events and ply.pac_command_events[selected.event.trigger] and ply.pac_command_events[selected.event.trigger].on == 1 then
+					RunConsoleCommand("pac_event", selected.event.trigger, "0")
+				else
+					RunConsoleCommand("pac_event", selected.event.trigger, "1")
+				end
+			end
+			selected = nil
+		end
+	end
+
+	concommand.Add("+pac_events", pac.openEventSelectionWheel)
+	concommand.Add("-pac_events", pac.closeEventSelectionWheel)
+end
+
+
+
