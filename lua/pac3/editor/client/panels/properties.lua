@@ -581,6 +581,7 @@ do -- list
 					obj.editor_property = obj.editor_property or {}
 					obj.editor_property[key] = pnl
 					pnl.part = obj
+					pnl.udata = udata
 
 					if udata then
 						if udata.enums then
@@ -1090,6 +1091,10 @@ do -- vector
 
 				self.OnValueChanged(self.vector)
 				self:InvalidateLayout()
+
+				if self.OnValueSet then
+					self:OnValueSet(self.vector)
+				end
 			end
 
 			middle:SetMouseInputEnabled(true)
@@ -1108,6 +1113,10 @@ do -- vector
 
 				self.OnValueChanged(self.vector)
 				self:InvalidateLayout()
+
+				if self.OnValueSet then
+					self:OnValueSet(self.vector)
+				end
 			end
 
 			right:SetMouseInputEnabled(true)
@@ -1126,6 +1135,10 @@ do -- vector
 
 				self.OnValueChanged(self.vector)
 				self:InvalidateLayout()
+
+				if self.OnValueSet then
+					self:OnValueSet(self.vector)
+				end
 			end
 
 			self.left = left

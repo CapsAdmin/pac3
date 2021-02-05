@@ -531,10 +531,17 @@ function PART:ApplyMatrix()
 
 	if ent:IsPlayer() or ent:IsNPC() then
 		if pacx and pacx.SetEntitySizeMultiplier then
+			local other = {
+				HullStandingMin = self.HullStandingMin,
+				HullStandingMax = self.HullStandingMax,
+
+				HullCrouchingMin = self.HullCrouchingMin,
+				HullCrouchingMax = self.HullCrouchingMax,
+			}
 			if self:GetPlayerOwner() == pac.LocalPlayer then
-				pacx.SetEntitySizeOnServer(ent, self.Size)
+				pacx.SetEntitySizeOnServer(ent, self.Size, other)
 			end
-			pacx.SetEntitySizeMultiplier(ent, self.Size)
+			pacx.SetEntitySizeMultiplier(ent, self.Size, other)
 		end
 
 		if self.Size == 1 and self.Scale == vec_one then
@@ -670,7 +677,15 @@ do
 	PART.is_model_part = false
 
 	pac.StartStorableVars()
+	pac.SetPropertyGroup(PART, "appearance")
 		pac.GetSet(PART, "NoDraw", false)
+
+	pac.SetPropertyGroup(PART, "hull")
+		pac.GetSet(PART, "HullStandingMin", Vector(-16,-16,0), {editor_panel = "hull"})
+		pac.GetSet(PART, "HullStandingMax", Vector(16,16,72), {editor_panel = "hull"})
+
+		pac.GetSet(PART, "HullCrouchingMin", Vector(-16,-16,0), {editor_panel = "hull", crouch = true})
+		pac.GetSet(PART, "HullCrouchingMax", Vector(16,16,36), {editor_panel = "hull", crouch = true})
 	pac.EndStorableVars()
 
 	pac.RemoveProperty(PART, "BoneMerge")
@@ -681,6 +696,27 @@ do
 	--pac.RemoveProperty(PART, "AngleOffset")
 	pac.RemoveProperty(PART, "EyeAngles")
 	pac.RemoveProperty(PART, "AimPartName")
+
+
+	function PART:SetHullStandingMin(vec)
+		self.HullStandingMin = vec
+		self:ApplyMatrix()
+	end
+
+	function PART:SetHullStandingMax(vec)
+		self.HullStandingMax = vec
+		self:ApplyMatrix()
+	end
+
+	function PART:SetHullCrouchingMin(vec)
+		self.HullCrouchingMin = vec
+		self:ApplyMatrix()
+	end
+
+	function PART:SetHullCrouchingMax(vec)
+		self.HullCrouchingMax = vec
+		self:ApplyMatrix()
+	end
 
 	function PART:GetNiceName()
 		local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%.")) or self:GetModel()

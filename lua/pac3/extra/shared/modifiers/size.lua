@@ -25,41 +25,90 @@ local function change(ent, property, multiplier, default_override)
 	end
 end
 
-function pacx.SetEntitySizeOnServer(ent, multiplier)
+local function write_other(other)
+	net.WriteVector(other.HullStandingMin or Vector())
+	net.WriteVector(other.HullStandingMax or Vector())
+
+	net.WriteVector(other.HullCrouchingMin or Vector())
+	net.WriteVector(other.HullCrouchingMax or Vector())
+end
+
+local function read_other()
+	local other = {}
+	other.HullStandingMin = net.ReadVector()
+	other.HullStandingMax = net.ReadVector()
+
+	other.HullCrouchingMin = net.ReadVector()
+	other.HullCrouchingMax = net.ReadVector()
+	return other
+end
+
+function pacx.SetEntitySizeOnServer(ent, multiplier, other)
 	net.Start("pacx_size")
 		net.WriteEntity(ent)
 		net.WriteDouble(multiplier or 1)
+		write_other(other or {})
 	net.SendToServer()
 end
 
-function pacx.SetEntitySizeMultiplier(ent, multiplier)
+function pacx.SetEntitySizeMultiplier(ent, multiplier, other)
 	multiplier = multiplier or 1
 	multiplier = math.Clamp(multiplier, MIN, MAX)
 
-	if multiplier == ent.pacx_size then return end
+	if multiplier ~= ent.pacx_size then
+		ent.pacx_size = multiplier
 
-	ent.pacx_size = multiplier
+		if CLIENT then
+			pacx.SetEntitySizeOnServer(ent, multiplier, other)
+		end
 
-	if CLIENT then
-		pacx.SetEntitySizeOnServer(ent, multiplier)
+		ent.pacx_size_default_props = ent.pacx_size_default_props or {}
+		local default = ent.pacx_size_default_props
+
+		change(ent, "ViewOffset", multiplier)
+		change(ent, "ViewOffsetDucked", multiplier)
+		change(ent, "StepSize", multiplier)
+		change(ent, "ModelScale", multiplier, 1)
+
+		if ent.GetPhysicsObject then
+			local phys = ent:GetPhysicsObject()
+			if phys:IsValid() then
+				if not default.Mass then
+					default.Mass = phys:GetMass()
+				end
+
+				phys:SetMass(default.Mass * multiplier)
+			end
+		end
 	end
 
-	ent.pacx_size_default_props = ent.pacx_size_default_props or {}
-	local default = ent.pacx_size_default_props
+	if other then
+		if ent.SetHull and (other.HullStandingMin:Length() ~= 0 or other.HullStandingMax:Length() ~= 0) then
+			local min = other.HullStandingMin*1
+			min.x = math.min(min.x, 0)
+			min.y = math.min(min.y, 0)
+			min.z = math.min(min.z, 0)
 
-	change(ent, "ViewOffset", multiplier)
-	change(ent, "ViewOffsetDucked", multiplier)
-	change(ent, "StepSize", multiplier)
-	change(ent, "ModelScale", multiplier, 1)
+			local max = other.HullStandingMax*1
+			max.x = math.max(max.x, 0.01)
+			max.y = math.max(max.y, 0.01)
+			max.z = math.max(max.z, 0.01)
 
-	if ent.GetPhysicsObject then
-		local phys = ent:GetPhysicsObject()
-		if phys:IsValid() then
-			if not default.Mass then
-				default.Mass = phys:GetMass()
-			end
+			ent:SetHull(min, max)
+		end
 
-			phys:SetMass(default.Mass * multiplier)
+		if ent.SetHullDuck and (other.HullCrouchingMin:Length() ~= 0 or other.HullCrouchingMax:Length() ~= 0) then
+			local min = other.HullCrouchingMin*1
+			min.x = math.min(min.x, 0)
+			min.y = math.min(min.y, 0)
+			min.z = math.min(min.z, 0)
+
+			local max = other.HullCrouchingMax*1
+			max.x = math.max(max.x, 0.01)
+			max.y = math.max(max.y, 0.01)
+			max.z = math.max(max.z, 0.01)
+
+			ent:SetHullDuck(min, max)
 		end
 	end
 
@@ -79,7 +128,8 @@ if SERVER then
 		if not pace.CanPlayerModify(ply, ent) then return end
 
 		local multiplier = net.ReadDouble()
+		local other = read_other()
 
-		pacx.SetEntitySizeMultiplier(ent, multiplier)
+		pacx.SetEntitySizeMultiplier(ent, multiplier, other)
 	end)
 end
