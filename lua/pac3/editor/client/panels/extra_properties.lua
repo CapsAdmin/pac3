@@ -709,7 +709,7 @@ do -- hull
 	local PANEL = {}
 
 	PANEL.ClassName = "properties_hull"
-	PANEL.Base = "pace_properties_vector"
+	PANEL.Base = "pace_properties_number"
 
 	function PANEL:OnValueSet()
 		local function stop()

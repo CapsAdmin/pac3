@@ -532,11 +532,9 @@ function PART:ApplyMatrix()
 	if ent:IsPlayer() or ent:IsNPC() then
 		if pacx and pacx.SetEntitySizeMultiplier then
 			local other = {
-				HullStandingMin = self.HullStandingMin,
-				HullStandingMax = self.HullStandingMax,
-
-				HullCrouchingMin = self.HullCrouchingMin,
-				HullCrouchingMax = self.HullCrouchingMax,
+				StandingHullHeight = self.StandingHullHeight,
+				CrouchingHullHeight = self.CrouchingHullHeight,
+				HullWidth = self.HullWidth,
 			}
 			if self:GetPlayerOwner() == pac.LocalPlayer then
 				pacx.SetEntitySizeOnServer(ent, self.Size, other)
@@ -681,11 +679,9 @@ do
 		pac.GetSet(PART, "NoDraw", false)
 
 	pac.SetPropertyGroup(PART, "hull")
-		pac.GetSet(PART, "HullStandingMin", Vector(-16,-16,0), {editor_panel = "hull"})
-		pac.GetSet(PART, "HullStandingMax", Vector(16,16,72), {editor_panel = "hull"})
-
-		pac.GetSet(PART, "HullCrouchingMin", Vector(-16,-16,0), {editor_panel = "hull", crouch = true})
-		pac.GetSet(PART, "HullCrouchingMax", Vector(16,16,36), {editor_panel = "hull", crouch = true})
+		pac.GetSet(PART, "StandingHullHeight", 72, {editor_panel = "hull"})
+		pac.GetSet(PART, "CrouchingHullHeight", 36, {editor_panel = "hull", crouch = true})
+		pac.GetSet(PART, "HullWidth", 32, {editor_panel = "hull"})
 	pac.EndStorableVars()
 
 	pac.RemoveProperty(PART, "BoneMerge")
@@ -698,23 +694,16 @@ do
 	pac.RemoveProperty(PART, "AimPartName")
 
 
-	function PART:SetHullStandingMin(vec)
-		self.HullStandingMin = vec
+	function PART:SetStandingHullHeight(val)
+		self.StandingHullHeight = val
 		self:ApplyMatrix()
 	end
-
-	function PART:SetHullStandingMax(vec)
-		self.HullStandingMax = vec
+	function PART:SetCrouchingHullHeight(val)
+		self.CrouchingHullHeight = val
 		self:ApplyMatrix()
 	end
-
-	function PART:SetHullCrouchingMin(vec)
-		self.HullCrouchingMin = vec
-		self:ApplyMatrix()
-	end
-
-	function PART:SetHullCrouchingMax(vec)
-		self.HullCrouchingMax = vec
+	function PART:SetHullWidth(val)
+		self.HullWidth = val
 		self:ApplyMatrix()
 	end
 

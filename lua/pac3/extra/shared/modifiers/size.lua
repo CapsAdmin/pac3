@@ -26,20 +26,16 @@ local function change(ent, property, multiplier, default_override)
 end
 
 local function write_other(other)
-	net.WriteVector(other.HullStandingMin or Vector())
-	net.WriteVector(other.HullStandingMax or Vector())
-
-	net.WriteVector(other.HullCrouchingMin or Vector())
-	net.WriteVector(other.HullCrouchingMax or Vector())
+	net.WriteDouble(other.StandingHullHeight or 0)
+	net.WriteDouble(other.CrouchingHullHeight or 0)
+	net.WriteDouble(other.HullWidth or 0)
 end
 
 local function read_other()
 	local other = {}
-	other.HullStandingMin = net.ReadVector()
-	other.HullStandingMax = net.ReadVector()
-
-	other.HullCrouchingMin = net.ReadVector()
-	other.HullCrouchingMax = net.ReadVector()
+	other.StandingHullHeight = net.ReadDouble()
+	other.CrouchingHullHeight = net.ReadDouble()
+	other.HullWidth = net.ReadDouble()
 	return other
 end
 
@@ -82,34 +78,30 @@ function pacx.SetEntitySizeMultiplier(ent, multiplier, other)
 		end
 	end
 
-	if other then
-		if ent.SetHull and (other.HullStandingMin:Length() ~= 0 or other.HullStandingMax:Length() ~= 0) then
-			local min = other.HullStandingMin*1
-			min.x = math.min(min.x, 0)
-			min.y = math.min(min.y, 0)
-			min.z = math.min(min.z, 0)
+	if other and ent.SetHull and ent.SetHullDuck then
+		local smin, smax = Vector(), Vector()
+		local cmin, cmax = Vector(), Vector()
 
-			local max = other.HullStandingMax*1
-			max.x = math.max(max.x, 0.01)
-			max.y = math.max(max.y, 0.01)
-			max.z = math.max(max.z, 0.01)
+		local w = math.Clamp(other.HullWidth or 0, 1, 128)
 
-			ent:SetHull(min, max)
-		end
+		smin.x = -w / 2
+		smax.x = w / 2
+		smin.y = -w / 2
+		smax.y = w / 2
 
-		if ent.SetHullDuck and (other.HullCrouchingMin:Length() ~= 0 or other.HullCrouchingMax:Length() ~= 0) then
-			local min = other.HullCrouchingMin*1
-			min.x = math.min(min.x, 0)
-			min.y = math.min(min.y, 0)
-			min.z = math.min(min.z, 0)
+		cmin.x = -w / 2
+		cmax.x = w / 2
+		cmin.y = -w / 2
+		cmax.y = w / 2
 
-			local max = other.HullCrouchingMax*1
-			max.x = math.max(max.x, 0.01)
-			max.y = math.max(max.y, 0.01)
-			max.z = math.max(max.z, 0.01)
+		smin.z = 0
+		smax.z = math.Clamp(other.StandingHullHeight or 0, 1, 128)
 
-			ent:SetHullDuck(min, max)
-		end
+		cmin.z = 0
+		cmax.z = math.Clamp(other.CrouchingHullHeight or 0, 1, 128)
+
+		ent:SetHull(smin, smax)
+		ent:SetHullDuck(cmin, cmax)
 	end
 
 	if multiplier == 1 then
