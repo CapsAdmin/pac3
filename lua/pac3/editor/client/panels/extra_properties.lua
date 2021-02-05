@@ -735,6 +735,9 @@ do -- hull
 				RunConsoleCommand("+duck")
 			end
 
+			min = min * ent:GetModelScale()
+			max = max * ent:GetModelScale()
+
 			render.DrawWireframeBox( ent:GetPos(), Angle(0), min, max, Color(255, 204, 51, 255), true )
 
 			if time < os.clock() then
