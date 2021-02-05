@@ -58,10 +58,7 @@ function pacx.SetEntitySizeMultiplier(ent, multiplier, other)
 
 		if CLIENT then
 			if not ALLOW_TO_CHANGE:GetBool() then
-				pacx.SetEntitySizeMultiplier(ent)
-
-				ent.pacx_size_default_props = ent.pacx_size_default_props or {}
-				change(ent, "ModelScale", multiplier, 1)
+				ent:SetModelScale(multiplier)
 				return
 			end
 		end
