@@ -677,6 +677,7 @@ do
 	pac.StartStorableVars()
 	pac.SetPropertyGroup(PART, "appearance")
 		pac.GetSet(PART, "NoDraw", false)
+		pac.GetSet(PART, "DrawShadow", true)
 
 	pac.SetPropertyGroup(PART, "hull")
 		pac.GetSet(PART, "StandingHullHeight", 72, {editor_panel = "hull"})
@@ -693,6 +694,15 @@ do
 	pac.RemoveProperty(PART, "EyeAngles")
 	pac.RemoveProperty(PART, "AimPartName")
 
+	function PART:SetDrawShadow(b)
+		self.DrawShadow = b
+
+		local ent = self:GetEntity()
+		if ent:IsValid() then
+			ent:DrawShadow(b)
+			ent:MarkShadowAsDirty()
+		end
+	end
 
 	function PART:SetStandingHullHeight(val)
 		self.StandingHullHeight = val
@@ -803,6 +813,7 @@ do
 					ent.RenderOverride = nil
 				end
 			end
+			self:SetDrawShadow(self:GetDrawShadow())
 			self:ApplyMatrix()
 		end
 	end
@@ -889,7 +900,6 @@ do
 	pac.StartStorableVars()
 		pac.SetPropertyGroup(PART, "generic")
 			pac.GetSet(PART, "OverridePosition", false)
-			pac.GetSet(PART, "NoDraw", false)
 			pac.GetSet(PART, "Class", "all", {enums = function()
 				local out = {
 					["physgun"] = "weapon_physgun",
@@ -918,9 +928,22 @@ do
 				end
 				return out
 			end})
+		pac.SetPropertyGroup(PART, "appearance")
+			pac.GetSet(PART, "NoDraw", false)
+			pac.GetSet(PART, "DrawShadow", true)
 	pac.EndStorableVars()
 
 	pac.RemoveProperty(PART, "Model")
+
+	function PART:SetDrawShadow(b)
+		self.DrawShadow = b
+
+		local ent = self:GetEntity()
+		if not ent:IsValid() then return end
+
+		ent:DrawShadow(b)
+		ent:MarkShadowAsDirty()
+	end
 
 	function PART:GetNiceName()
 		if self.Class ~= "all" then
@@ -971,14 +994,17 @@ do
 						self.Entity = wep
 						self:SetEventHide(false, self)
 						wep.RenderOverride = function()
-							wep:DrawShadow(false)
 							if wep.pac_render then
 								if not self.NoDraw then
+									if self.DrawShadow then
+										wep:CreateShadow()
+									end
 									wep:DrawModel()
 								end
 							end
 						end
 						wep.pac_weapon_part = self
+						self:SetDrawShadow(self:GetDrawShadow())
 					else
 						self:SetEventHide(true, self)
 						self:OnHide()
@@ -995,7 +1021,6 @@ do
 			for k,v in pairs(ent:GetWeapons()) do
 				if v.pac_weapon_part == self then
 					v.RenderOverride = nil
-					v:DrawShadow(true)
 					v:SetParent(ent)
 				end
 			end
