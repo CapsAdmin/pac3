@@ -404,9 +404,10 @@ function PART:SetModel(path)
 
 			pac.DownloadMDL(path, function(real_path)
 				if ent:IsValid() then
-					if pacx and pacx.SetModelOnServer and self:GetPlayerOwner() == pac.LocalPlayer then
+
+					if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
 						pac.Message("finished downloading ", path)
-						pacx.SetModelOnServer(ent, self.Model)
+						pacx.SetModel(ent, self.Model, self:GetPlayerOwner())
 					end
 
 					ent:SetModel(real_path)
@@ -432,8 +433,8 @@ function PART:SetModel(path)
 		local ent = self:GetOwner()
 
 		if ent:IsValid() then
-			if pacx and pacx.SetModelOnServer and self:GetPlayerOwner() == pac.LocalPlayer then
-				pacx.SetModelOnServer(ent, self.Model)
+			if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
+				pacx.SetModel(ent, self.Model, self:GetPlayerOwner())
 			end
 
 			ent:SetModel(self.Model)
