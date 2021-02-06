@@ -510,7 +510,7 @@ function PART:OnRemove()
 	end
 
 	if pacx and pacx.SetEntitySizeMultiplier then
-		pacx.SetEntitySizeMultiplier(ent, self.Size)
+		pacx.SetEntitySizeMultiplier(ent)
 	end
 
 	pac.SetModelScale(ent)
