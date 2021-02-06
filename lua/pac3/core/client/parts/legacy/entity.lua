@@ -167,7 +167,10 @@ function PART:UpdateScale(ent)
 
 	if self.UseLegacyScale then
 		if ent:IsPlayer() or ent:IsNPC() then
-			if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
+			if pacx and pacx.SetEntitySizeMultiplier then
+				if self:GetPlayerOwner() == pac.LocalPlayer then
+					pacx.SetEntitySizeOnServer(ent, self.Size)
+				end
 				pacx.SetEntitySizeMultiplier(ent, self.Size)
 				pac.SetModelScale(ent, self.Scale)
 			else
@@ -180,12 +183,13 @@ function PART:UpdateScale(ent)
 		ent.pac3_Scale = self.Size
 
 		if ent:IsPlayer() or ent:IsNPC() then
-			if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
+			if pacx and pacx.SetEntitySizeMultiplier then
+				if self:GetPlayerOwner() == pac.LocalPlayer then
+					pacx.SetEntitySizeOnServer(ent, self.Size)
+				end
 				pacx.SetEntitySizeMultiplier(ent, self.Size)
-				pac.SetModelScale(ent, self.Scale)
-			else
-				pac.SetModelScale(ent, self.Scale)
 			end
+			pac.SetModelScale(ent, self.Scale)
 		else
 			pac.SetModelScale(ent, self.Scale * self.Size)
 		end
@@ -499,13 +503,17 @@ function PART:OnRemove()
 	if not ent:IsValid() then return end
 
 	if pacx and self:GetPlayerOwner() == pac.LocalPlayer then
-		if pacx.SetEntitySizeMultiplier then
-			pacx.SetEntitySizeMultiplier(ent)
+		if pacx.SetEntitySizeMultiplierOnServer then
+			pacx.SetEntitySizeMultiplierOnServer(ent)
 		end
 
 		if pacx.SetModelOnServer then
 			pacx.SetModelOnServer(ent)
 		end
+	end
+
+	if pacx and pacx.SetEntitySizeMultiplier then
+		pacx.SetEntitySizeMultiplier(ent, self.Size)
 	end
 
 	pac.SetModelScale(ent)

@@ -725,3 +725,47 @@ do -- script
 
 	pace.RegisterPanel(PANEL)
 end
+
+do -- hull
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_hull"
+	PANEL.Base = "pace_properties_number"
+
+	function PANEL:OnValueSet()
+		local function stop()
+			RunConsoleCommand("-duck")
+			hook.Remove("PostDrawOpaqueRenderables", "pace_draw_hull")
+		end
+
+		local time = os.clock() + 3
+
+		hook.Add("PostDrawOpaqueRenderables", "pace_draw_hull", function()
+
+			if not pace.current_part:IsValid() then stop() return end
+			if pace.current_part.ClassName ~= "entity2" then stop() return end
+
+			local ent = pace.current_part:GetEntity()
+			if not ent.GetHull then stop() return end
+			if not ent.GetHullDuck then stop() return end
+
+			local min, max = ent:GetHull()
+
+			if self.udata and self.udata.crouch then
+				min, max = ent:GetHullDuck()
+				RunConsoleCommand("+duck")
+			end
+
+			min = min * ent:GetModelScale()
+			max = max * ent:GetModelScale()
+
+			render.DrawWireframeBox( ent:GetPos(), Angle(0), min, max, Color(255, 204, 51, 255), true )
+
+			if time < os.clock() then
+				stop()
+			end
+		end)
+	end
+
+	pace.RegisterPanel(PANEL)
+end

@@ -514,31 +514,33 @@ function PART:SetScale(var)
 	end
 end
 
+local vec_one = Vector(1,1,1)
+
 function PART:ApplyMatrix()
 	local ent = self:GetEntity()
 	if not ent:IsValid() then return end
 
+	local mat = Matrix()
+
+	if self.ClassName ~= "model2" then
+		mat:Translate(self.Position + self.PositionOffset)
+		mat:Rotate(self.Angles + self.AngleOffset)
+	end
+
 	if ent:IsPlayer() or ent:IsNPC() then
-
-		local mat = Matrix()
-		if self.ClassName ~= "model2" then
-			mat:Translate(self.Position + self.PositionOffset)
-			mat:Rotate(self.Angles + self.AngleOffset)
-		end
-		mat:Scale(self.Scale)
-
-
-		if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
-			pacx.SetEntitySizeMultiplier(ent, self.Size)
-		end
-
-		if mat:IsIdentity() then
-			ent:DisableMatrix("RenderMultiply")
-		else
-			ent:EnableMatrix("RenderMultiply", mat)
+		if pacx and pacx.SetEntitySizeMultiplier then
+			local other = {
+				StandingHullHeight = self.StandingHullHeight,
+				CrouchingHullHeight = self.CrouchingHullHeight,
+				HullWidth = self.HullWidth,
+			}
+			if self:GetPlayerOwner() == pac.LocalPlayer then
+				pacx.SetEntitySizeOnServer(ent, self.Size, other)
+			end
+			pacx.SetEntitySizeMultiplier(ent, self.Size, other)
 		end
 
-		if self.Size == 1 then
+		if self.Size == 1 and self.Scale == vec_one then
 			if ent.pac_enable_ik then
 				ent:SetModelScale(1, 0)
 				ent:SetIK(true)
@@ -547,20 +549,16 @@ function PART:ApplyMatrix()
 				ent:SetIK(false)
 			end
 		end
+
+		mat:Scale(self.Scale)
 	else
-		local mat = Matrix()
-		if self.ClassName ~= "model2" then
-			mat:Translate(self.Position + self.PositionOffset)
-			mat:Rotate(self.Angles + self.AngleOffset)
-		end
 		mat:Scale(self.Scale * self.Size)
+	end
 
-
-		if mat:IsIdentity() then
-			ent:DisableMatrix("RenderMultiply")
-		else
-			ent:EnableMatrix("RenderMultiply", mat)
-		end
+	if mat:IsIdentity() then
+		ent:DisableMatrix("RenderMultiply")
+	else
+		ent:EnableMatrix("RenderMultiply", mat)
 	end
 end
 
@@ -674,13 +672,31 @@ do
 	PART.is_model_part = false
 
 	BUILDER:StartStorableVars()
-		:GetSet("NoDraw", false)
+		:SetPropertyGroup("appearance")
+			:GetSet("NoDraw", false)
+		:SetPropertyGroup("hull")
+			:GetSet("StandingHullHeight", 72, {editor_panel = "hull"})
+			:GetSet("CrouchingHullHeight", 36, {editor_panel = "hull", crouch = true})
+			:GetSet("HullWidth", 32, {editor_panel = "hull"})
 	:EndStorableVars()
 
 	BUILDER:RemoveProperty("BoneMerge")
 	BUILDER:RemoveProperty("Bone")
 	BUILDER:RemoveProperty("EyeAngles")
 	BUILDER:RemoveProperty("AimPartName")
+
+	function PART:SetStandingHullHeight(val)
+		self.StandingHullHeight = val
+		self:ApplyMatrix()
+	end
+	function PART:SetCrouchingHullHeight(val)
+		self.CrouchingHullHeight = val
+		self:ApplyMatrix()
+	end
+	function PART:SetHullWidth(val)
+		self.HullWidth = val
+		self:ApplyMatrix()
+	end
 
 	function PART:GetNiceName()
 		local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%.")) or self:GetModel()
@@ -809,9 +825,13 @@ do
 		end
 
 		if ent:IsPlayer() or ent:IsNPC() then
-			if pacx and pacx.SetEntitySizeMultiplier and self:GetPlayerOwner() == pac.LocalPlayer then
+			if pacx and pacx.SetEntitySizeMultiplier then
+				if self:GetPlayerOwner() == pac.LocalPlayer then
+					pacx.SetEntitySizeOnServer(ent)
+				end
 				pacx.SetEntitySizeMultiplier(ent)
 			end
+
 		end
 
 		ent:DisableMatrix("RenderMultiply")
