@@ -1,7 +1,7 @@
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "script"
-BUILDER:NonPhysical()
+
 PART.ThinkTime = 0
 PART.Group = 'advanced'
 PART.Icon = 'icon16/page_white_gear.png'

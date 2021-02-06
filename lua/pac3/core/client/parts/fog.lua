@@ -7,10 +7,10 @@ local render_FogMaxDensity = render.FogMaxDensity
 local render_SetFogZ = render.SetFogZ
 local render_FogMode = render.FogMode
 
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "fog"
-BUILDER:NonPhysical()
+
 PART.Group = 'modifiers'
 PART.Icon = 'icon16/weather_clouds.png'
 

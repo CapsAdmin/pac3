@@ -4,7 +4,7 @@ local Color = Color
 local Vector = Vector
 local cam_IgnoreZ = cam.IgnoreZ
 
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "sprite"
 PART.Group = 'effects'

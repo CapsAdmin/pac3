@@ -10,7 +10,7 @@ local render_EndBeam = render.EndBeam
 local render_AddBeam = render.AddBeam
 local render_SetMaterial = render.SetMaterial
 
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "trail"
 PART.Group = "legacy"

@@ -3,7 +3,7 @@ local animations = pac.animations
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "custom_animation"
-BUILDER:NonPhysical()
+
 PART.Group = 'advanced'
 PART.Icon = 'icon16/film.png'
 

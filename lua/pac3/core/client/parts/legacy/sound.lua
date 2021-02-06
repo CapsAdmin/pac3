@@ -1,8 +1,8 @@
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "sound"
 PART.FriendlyName = "sound"
-BUILDER:NonPhysical()
+
 PART.ThinkTime = 0
 PART.Group = 'effects'
 PART.Icon = 'icon16/sound.png'

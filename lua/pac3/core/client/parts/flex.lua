@@ -1,7 +1,7 @@
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "flex"
-BUILDER:NonPhysical()
+
 PART.Icon = 'icon16/emoticon_smile.png'
 PART.Group = 'entity'
 

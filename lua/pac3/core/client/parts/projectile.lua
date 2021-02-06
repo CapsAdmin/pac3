@@ -1,6 +1,6 @@
 language.Add("pac_projectile", "Projectile")
 
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "projectile"
 PART.Group = 'advanced'

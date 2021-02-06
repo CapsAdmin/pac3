@@ -76,7 +76,7 @@ function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,e
 	end
 end
 
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.FriendlyName = "trail"
 PART.ClassName = "trail2"

@@ -149,43 +149,37 @@ local function CalcDrag()
 		mult = 0.1
 	end
 
+	local origin = pac.LocalPlayer:GetPos()
+
 	if IsValid(pace.current_part) then
-		local origin
 
 		local owner = pace.current_part:GetOwner(true)
 
-		if owner == pac.WorldEntity and owner:IsValid() then
-			if pace.current_part:HasChildren() then
-				for key, child in ipairs(pace.current_part:GetChildren()) do
-					if not child.NonPhysical then
-						origin = child:GetDrawPosition()
-						if origin == WORLD_ORIGIN then origin = LocalPlayer():GetPos() end
-						break
-					end
+		if owner == pac.WorldEntity and owner:IsValid() and pace.current_part:HasChildren() then
+			for key, child in ipairs(pace.current_part:GetChildren()) do
+				if child.GetDrawPosition then
+					origin = child:GetDrawPosition()
+					break
 				end
-			else
-				origin = LocalPlayer():GetPos()
-			end
-
-			if not origin then
-				origin = LocalPlayer():GetPos()
 			end
 		else
 			if not owner:IsValid() then
 				owner = pac.LocalPlayer
 			end
 
-			if pace.current_part.NonPhysical then
-				origin = owner:GetPos()
-			else
+			if pace.current_part.GetDrawPosition then
 				origin = pace.current_part:GetDrawPosition()
+			else
+				origin = owner:GetPos()
 			end
 		end
 
-		mult = mult * math.min(origin:Distance(pace.ViewPos) / 200, 3)
-	else
-		mult = mult * math.min(LocalPlayer():GetPos():Distance(pace.ViewPos) / 200, 3)
+		if not origin or origin == WORLD_ORIGIN then
+			origin = pac.LocalPlayer:GetPos()
+		end
 	end
+
+	mult = mult * math.min(origin:Distance(pace.ViewPos) / 200, 3)
 
 	if input.IsKeyDown(KEY_LSHIFT) then
 		mult = mult + 5

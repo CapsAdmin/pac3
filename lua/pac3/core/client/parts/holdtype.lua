@@ -1,7 +1,7 @@
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "holdtype"
-BUILDER:NonPhysical()
+
 PART.ThinkTime = 0
 PART.Group = 'entity'
 PART.Icon = 'icon16/user_edit.png'

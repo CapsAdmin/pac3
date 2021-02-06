@@ -118,7 +118,7 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 
 	part.newly_created = true
 
-	if not part.NonPhysical and parent:IsValid() and not parent:HasParent() and parent.OwnerName == "world" and part:GetPlayerOwner() == ply then
+	if parent.GetDrawPosition and parent:IsValid() and not parent:HasParent() and parent.OwnerName == "world" and part:GetPlayerOwner() == ply then
 		local data = ply:GetEyeTrace()
 
 		if data.HitPos:Distance(ply:GetPos()) < 1000 then
@@ -169,7 +169,7 @@ function pace.OnPartSelected(part, is_selecting)
 			local position
 
 			for i, child in ipairs(part:GetChildrenList()) do
-				if not position then
+				if not position and child.GetDrawPosition then
 					local pos = child:GetDrawPosition()
 
 					if not position then

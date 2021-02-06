@@ -1,7 +1,7 @@
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "submaterial"
-BUILDER:NonPhysical()
+
 PART.Icon = 'icon16/picture_edit.png'
 PART.Group = {'model', 'entity'}
 

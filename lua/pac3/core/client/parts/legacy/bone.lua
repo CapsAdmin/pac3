@@ -5,7 +5,7 @@ for _, v in pairs(ents.GetAll()) do
 	v.pac_bone_setup_data = nil
 end
 
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "bone"
 PART.Group = "legacy"

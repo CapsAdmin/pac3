@@ -67,7 +67,7 @@ if CLIENT then
 	local BUILDER, PART = pac.PartTemplate("base")
 
 	PART.ClassName = "weapon"
-	BUILDER:NonPhysical()
+
 
 	BUILDER:StartStorableVars()
 		for key, val in pairs(SWEP) do

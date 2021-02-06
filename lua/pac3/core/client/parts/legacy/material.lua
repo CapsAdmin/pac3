@@ -1,7 +1,7 @@
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "material"
-BUILDER:NonPhysical()
+
 PART.Icon = 'icon16/paintcan.png'
 PART.Group = "legacy"
 

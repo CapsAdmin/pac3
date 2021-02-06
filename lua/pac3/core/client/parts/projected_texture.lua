@@ -1,4 +1,4 @@
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "projected_texture"
 PART.Group = "effects"

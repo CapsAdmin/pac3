@@ -1,4 +1,4 @@
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 local snd_mute_losefocus = GetConVar('snd_mute_losefocus')
 
 PART.ClassName = "webaudio"

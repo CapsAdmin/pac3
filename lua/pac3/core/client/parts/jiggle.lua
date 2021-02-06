@@ -5,7 +5,7 @@ local Vector = Vector
 local Angle = Angle
 local physenv_GetGravity = physenv.GetGravity
 
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "jiggle"
 PART.Group = 'model'
@@ -40,7 +40,7 @@ BUILDER:EndStorableVars()
 local math_AngleDifference = math.AngleDifference
 
 function PART:Reset()
-	local pos, ang = self:HasParent() and not self.Parent.NonPhysical and self.Parent:GetDrawPosition() or self:GetBonePosition()
+	local pos, ang = self:HasParent() and self.Parent.GetDrawPosition and self.Parent:GetDrawPosition() or self:GetBonePosition()
 
 	self.pos = pos
 	self.vel = Vector()

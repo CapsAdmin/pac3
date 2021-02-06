@@ -4,7 +4,7 @@ local FrameTime = FrameTime
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "event"
-BUILDER:NonPhysical()
+
 PART.ThinkTime = 0
 PART.AlwaysThink = true
 PART.Icon = 'icon16/clock.png'

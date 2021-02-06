@@ -2,7 +2,7 @@ local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ThinkTime = 0
 PART.ClassName = "physics"
-BUILDER:NonPhysical()
+
 PART.Group = 'model'
 PART.Icon = 'icon16/shape_handles.png'
 

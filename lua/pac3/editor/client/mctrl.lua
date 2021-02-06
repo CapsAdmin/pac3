@@ -27,7 +27,7 @@ do -- pace
 			return
 		end
 
-		if (part.NonPhysical and part.ClassName ~= 'group') or part.HideGizmo then
+		if (not part.GetDrawPosition and part.ClassName ~= 'group') or part.HideGizmo then
 			mctrl.target = NULL
 		else
 			mctrl.target = part
@@ -48,7 +48,7 @@ do -- pace
 		local part = mctrl.GetTarget()
 
 		if part:IsValid() then
-			if part.ClassName ~= 'group' then
+			if part.GetDrawPosition then
 				return part:GetDrawPosition()
 			elseif part.centrePos then
 				return part.centrePos + part.centrePosMV, part.centreAngle

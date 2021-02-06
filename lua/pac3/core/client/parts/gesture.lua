@@ -1,7 +1,7 @@
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "gesture"
-BUILDER:NonPhysical()
+
 PART.ThinkTime = 0
 PART.Group = 'entity'
 PART.Icon = 'icon16/thumb_up.png'

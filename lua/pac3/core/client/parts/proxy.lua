@@ -1,7 +1,7 @@
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "proxy"
-BUILDER:NonPhysical()
+
 PART.ThinkTime = 0
 PART.Group = 'modifiers'
 PART.Icon = 'icon16/calculator.png'
@@ -214,7 +214,7 @@ PART.Inputs = {
 	eye_position_distance = function(self, parent)
 		local pos = parent.cached_pos
 
-		if parent.NonPhysical then
+		if not parent.GetDrawPosition then
 			local owner = parent:GetOwner(self.RootOwner)
 			if owner:IsValid() then
 				pos = owner:GetPos()
@@ -226,7 +226,7 @@ PART.Inputs = {
 	eye_angle_distance = function(self, parent)
 		local pos = parent.cached_pos
 
-		if parent.NonPhysical then
+		if not parent.GetDrawPosition then
 			local owner = parent:GetOwner(self.RootOwner)
 			if owner:IsValid() then
 				pos = owner:GetPos()

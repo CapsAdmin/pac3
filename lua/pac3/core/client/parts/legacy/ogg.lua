@@ -3,10 +3,10 @@ include("pac3/libraries/webaudio/browser.lua")
 include("pac3/libraries/webaudio/stream.lua")
 include("pac3/libraries/webaudio/streams.lua")
 
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "ogg"
-BUILDER:NonPhysical()
+
 PART.Group = "legacy"
 PART.Icon = 'icon16/music.png'
 

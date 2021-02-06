@@ -142,7 +142,11 @@ do
 								part.OwnerName == "hands" and type == "hands" or
 								part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands" then
 
-								part:Draw(nil, nil, type)
+								for _, child in ipairs(part:GetChildrenList()) do
+									if child.Draw then
+										child:Draw(nil, nil, type)
+									end
+								end
 							end
 						end
 					else
@@ -165,7 +169,11 @@ do
 								part.OwnerName == "hands" and type == "hands" or
 								part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands" then
 
-								part:Draw(nil, nil, type)
+								for _, child in ipairs(part:GetChildrenList()) do
+									if child.Draw then
+										child:Draw(nil, nil, type)
+									end
+								end
 							end
 						end
 					else

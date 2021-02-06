@@ -1,7 +1,7 @@
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "poseparameter"
-BUILDER:NonPhysical()
+
 PART.ThinkTime = 0
 PART.Group = {'modifiers', 'entity'}
 PART.Icon = 'icon16/disconnect.png'

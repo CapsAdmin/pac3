@@ -14,7 +14,7 @@ local EF_BONEMERGE = EF_BONEMERGE
 local NULL = NULL
 local Color = Color
 
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.FriendlyName = "model"
 PART.ClassName = "model2"

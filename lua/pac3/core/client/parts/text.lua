@@ -11,7 +11,7 @@ local TEXT_ALIGN_CENTER = TEXT_ALIGN_CENTER
 local surface_SetFont = surface.SetFont
 local Color = Color
 
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "text"
 PART.Group = 'effects'

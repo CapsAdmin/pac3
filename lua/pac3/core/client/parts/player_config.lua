@@ -3,7 +3,7 @@ local BUILDER, PART = pac.PartTemplate("base")
 PART.ClassName = "player_config"
 PART.Group = "entity"
 PART.Icon = 'icon16/brick.png'
-BUILDER:NonPhysical()
+
 
 local blood_colors = {
 	dont_bleed = _G.DONT_BLEED,

@@ -1,6 +1,6 @@
 --!lc util.DecalEx(Material("sprites/key_0"), this:IsValid() and this or Entity(0), there + trace.Normal, -trace.HitNormal, Color(255,255,255,255), 0.5,0.5)
 
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "decal"
 PART.Group = 'effects'

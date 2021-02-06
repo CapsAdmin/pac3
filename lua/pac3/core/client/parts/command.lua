@@ -1,7 +1,7 @@
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "command"
-BUILDER:NonPhysical()
+
 PART.Group = 'advanced'
 PART.Icon = 'icon16/application_xp_terminal.png'
 

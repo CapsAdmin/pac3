@@ -1,7 +1,7 @@
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "shake"
-BUILDER:NonPhysical()
+
 PART.Group = 'effects'
 PART.Icon = 'icon16/transmit.png'
 

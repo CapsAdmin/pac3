@@ -1,6 +1,6 @@
 local LerpAngle = LerpAngle
 
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "camera"
 PART.Group = 'entity'

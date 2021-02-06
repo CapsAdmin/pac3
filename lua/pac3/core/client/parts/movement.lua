@@ -3,7 +3,7 @@ local BUILDER, PART = pac.PartTemplate("base")
 PART.ClassName = "player_movement"
 PART.Group = "entity"
 PART.Icon = "icon16/user_go.png"
-BUILDER:NonPhysical()
+
 
 local pac_movement_default = {}
 local update_these = {}

@@ -1,10 +1,10 @@
 local Color = Color
 local Vector = Vector
 
-local BUILDER, PART = pac.PartTemplate("base")
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "halo"
-BUILDER:NonPhysical()
+
 PART.ThinkTime = 0
 PART.Group = {'effects', 'model'}
 PART.Icon = 'icon16/shading.png'

@@ -2,8 +2,6 @@ local FrameTime = FrameTime
 
 local BUILDER, PART = pac.PartTemplate("base")
 
-BUILDER:NonPhysical()
-
 PART.ClassName = "animation"
 PART.ThinkTime = 0
 PART.Groups = {'entity', 'model', 'modifiers'}

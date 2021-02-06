@@ -1,7 +1,7 @@
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "group"
-BUILDER:NonPhysical()
+
 PART.Icon = 'icon16/world.png'
 PART.Description = "right click to add parts"
 

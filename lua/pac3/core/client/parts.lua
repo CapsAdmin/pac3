@@ -113,3 +113,5 @@ end
 
 
 include("base_part.lua")
+include("base_movable.lua")
+include("base_drawable.lua")
