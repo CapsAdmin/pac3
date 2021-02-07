@@ -469,6 +469,32 @@ PART.OldEvents = {
 		end,
 	},
 
+	is_touching = {
+		arguments = {{extra_radius = "number"}},
+		callback = function(self, ent, extra_radius)
+			extra_radius = extra_radius or 0
+
+			local radius = ent:BoundingRadius() + extra_radius + 1
+			local mins = Vector(-1,-1,-1)
+			local maxs = Vector(1,1,1)
+			local startpos = ent:WorldSpaceCenter()
+			mins = mins * radius
+			maxs = maxs * radius
+
+			local tr = util.TraceHull( {
+				start = startpos,
+				endpos = startpos,
+				maxs = maxs,
+				mins = mins,
+				filter = ent
+			} )
+
+			--render.DrawWireframeBox( startpos, Angle( 0, 0, 0 ), mins, maxs, tr.Hit and Color(255,0,0) or Color(255,255,255), true )
+
+			return tr.Hit
+		end,
+	},
+
 	is_in_noclip = {
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
