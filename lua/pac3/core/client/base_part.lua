@@ -461,37 +461,6 @@ do -- parenting
 	SETUP_CACHE_FUNC(PART, "GetRootPart")
 
 	do
-		local function doRecursiveCall(childrens, func, profileName, profileNameChildren, ...)
-			for i, child in ipairs(childrens) do
-				local sysTime = SysTime()
-
-				if child[func] then
-					child[func](child, func, ...)
-				end
-
-				child[profileName] = SysTime() - sysTime
-
-				sysTime = SysTime()
-				doRecursiveCall(child:GetChildren(), func, profileName, profileNameChildren, ...)
-				child[profileNameChildren] = SysTime() - sysTime
-			end
-		end
-
-		function PART:CallRecursiveProfiled(func, ...)
-			local profileName = func .. 'Runtime'
-			local profileNameChildren = func .. 'RuntimeChildren'
-
-			if self[func] then
-				local sysTime = SysTime()
-				self[func](self, ...)
-				self[profileName] = SysTime() - sysTime
-			end
-
-			local sysTime = SysTime()
-			doRecursiveCall(self:GetChildren(), func, profileName, profileNameChildren, ...)
-			self[profileNameChildren] = SysTime() - sysTime
-		end
-
 		function PART:CallRecursive(func, ...)
 			if self[func] then
 				self[func](self, ...)

@@ -70,23 +70,7 @@ local function parts_from_ent(ent)
 end
 
 do
-	local function think(part)
-		if part.ThinkTime == 0 then
-			if part.last_think ~= pac.FrameNumber then
-				part:Think()
-				part.last_think = pac.FrameNumber
-			end
-		elseif not part.last_think or part.last_think < pac.RealTime then
-			part:Think()
-			part.last_think = pac.RealTime + (part.ThinkTime or 0.1)
-		end
-	end
-
 	local function render_override(ent, type, draw_only)
-		if pac.profile then
-			TIME = util_TimerCycle()
-		end
-
 		if max_render_time > 0 and ent ~= pac.LocalPlayer then
 			if ent.pac_render_time_exceeded then
 				return
@@ -103,97 +87,39 @@ do
 
 				-- bones MUST be setup before drawing or else unexpected/random results might happen
 
-				if pac.profile then
-					for key, part in pairs(parts) do
-						if part:IsValid() then
-							if not part:HasParent() then
-								part:CallRecursiveProfiled("BuildBonePositions")
+				for key, part in pairs(parts) do
+					if part:IsValid() then
+						if not part:HasParent() then
+							part:CallRecursive("BuildBonePositions")
+						end
+					else
+						parts[key] = nil
+					end
+				end
+			end
+
+			for key, part in pairs(parts) do
+				if part:IsValid() then
+					if not part:HasParent() then
+						if not draw_only then
+							part:CallRecursive('CThink')
+						end
+
+						if part.OwnerName == "viewmodel" and type == "viewmodel" or
+							part.OwnerName == "hands" and type == "hands" or
+							part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands" then
+
+							for _, child in ipairs(part:GetChildrenList()) do
+								if child.Draw then
+									child:Draw(nil, nil, type)
+								end
 							end
-						else
-							parts[key] = nil
 						end
 					end
 				else
-					for key, part in pairs(parts) do
-						if part:IsValid() then
-							if not part:HasParent() then
-								part:CallRecursive("BuildBonePositions")
-							end
-						else
-							parts[key] = nil
-						end
-					end
+					parts[key] = nil
 				end
 			end
-
-			if pac.profile then
-				for key, part in pairs(parts) do
-					if part:IsValid() then
-						if not part:HasParent() then
-							if not draw_only then
-								part:CallRecursiveProfiled('CThink')
-							end
-
-							--[[print(part, part.OwnerName, type, part.OwnerName == "viewmodel" and type == "viewmodel" or
-							part.OwnerName == "hands" and type == "hands" or
-							part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands")]]
-
-							if part.OwnerName == "viewmodel" and type == "viewmodel" or
-								part.OwnerName == "hands" and type == "hands" or
-								part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands" then
-
-								for _, child in ipairs(part:GetChildrenList()) do
-									if child.Draw then
-										child:Draw(nil, nil, type)
-									end
-								end
-							end
-						end
-					else
-						parts[key] = nil
-					end
-				end
-			else
-				for key, part in pairs(parts) do
-					if part:IsValid() then
-						if not part:HasParent() then
-							if not draw_only then
-								think(part)
-
-								for _, child in ipairs(part:GetChildrenList()) do
-									think(child)
-								end
-							end
-
-							if part.OwnerName == "viewmodel" and type == "viewmodel" or
-								part.OwnerName == "hands" and type == "hands" or
-								part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands" then
-
-								for _, child in ipairs(part:GetChildrenList()) do
-									if child.Draw then
-										child:Draw(nil, nil, type)
-									end
-								end
-							end
-						end
-					else
-						parts[key] = nil
-					end
-				end
-			end
-		end
-
-		if pac.profile then
-			TIME = util_TimerCycle()
-
-			pac.profile_info[ent] = pac.profile_info[ent] or {types = {}, times_ran = 0}
-			pac.profile_info[ent].times_ran = pac.profile_info[ent].times_ran + 1
-
-			pac.profile_info[ent].types[type] = pac.profile_info[ent].types[type] or {}
-
-			local data = pac.profile_info[ent].types[type]
-
-			data.total_render_time = (data.total_render_time or 0) + TIME
 		end
 
 		if max_render_time > 0 and ent ~= pac.LocalPlayer then
@@ -322,7 +248,6 @@ function pac.HookEntityRender(ent, part)
 	pac.dprint("hooking render on %s to draw part %s", tostring(ent), tostring(part))
 
 	pac.drawn_entities[ent] = true
-	pac.profile_info[ent] = nil
 
 	parts[part] = part
 
@@ -340,8 +265,6 @@ function pac.UnhookEntityRender(ent, part)
 		ent.pac_has_parts = nil
 		pac.drawn_entities[ent] = nil
 	end
-
-	pac.profile_info[ent] = nil
 end
 
 pac.AddHook("Think", "events", function()
@@ -732,8 +655,6 @@ do -- drawing
 	pac.LocalPlayer = LocalPlayer()
 	pac.RealTime = 0
 	pac.FrameNumber = 0
-	pac.profile_info = {}
-	pac.profile = true
 
 	do
 		local draw_dist = 0
