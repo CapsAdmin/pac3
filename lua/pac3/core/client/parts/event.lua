@@ -474,7 +474,14 @@ PART.OldEvents = {
 		callback = function(self, ent, extra_radius)
 			extra_radius = extra_radius or 0
 
-			local radius = ent:BoundingRadius() + extra_radius + 1
+			local radius =  ent:BoundingRadius()
+
+			if radius == 0 and IsValid(ent.pac_projectile) then
+				radius = ent.pac_projectile:GetRadius()
+			end
+
+			radius = radius + extra_radius + 1
+
 			local mins = Vector(-1,-1,-1)
 			local maxs = Vector(1,1,1)
 			local startpos = ent:WorldSpaceCenter()
@@ -489,7 +496,18 @@ PART.OldEvents = {
 				filter = ent
 			} )
 
-			--render.DrawWireframeBox( startpos, Angle( 0, 0, 0 ), mins, maxs, tr.Hit and Color(255,0,0) or Color(255,255,255), true )
+			--[[
+
+
+			if tr.Hit then
+				debugoverlay.Text(tr.HitPos, "hit!", 1, false)
+			end
+
+			cam.IgnoreZ(true)
+			render.DrawWireframeBox( startpos, Angle( 0, 0, 0 ), mins, maxs, tr.Hit and Color(255,0,0) or Color(255,255,255), true )
+			cam.IgnoreZ(false)
+
+			]]
 
 			return tr.Hit
 		end,

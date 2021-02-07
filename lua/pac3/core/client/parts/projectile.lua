@@ -131,6 +131,7 @@ function PART:AttachToEntity(ent)
 	end
 
 	ent.pac_projectile_part = part
+	ent.pac_projectile = self
 
 	return true
 end
