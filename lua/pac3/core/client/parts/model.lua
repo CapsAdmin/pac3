@@ -40,7 +40,6 @@ BUILDER:StartStorableVars()
 		:GetSet("NoLighting", false)
 		:GetSet("NoCulling", false)
 		:GetSet("Invert", false)
-		:GetSet("InverseKinematics", false)
 		:GetSet("Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
 		:GetSet("ModelModifiers", "", {editor_panel = "model_modifiers"})
 		:GetSet("Material", "", {editor_panel = "material"})
@@ -674,6 +673,9 @@ do
 	BUILDER:StartStorableVars()
 		:SetPropertyGroup("appearance")
 			:GetSet("NoDraw", false)
+			:GetSet("DrawShadow", true)
+			:GetSet("InverseKinematics", false)
+
 		:SetPropertyGroup("hull")
 			:GetSet("StandingHullHeight", 72, {editor_panel = "hull"})
 			:GetSet("CrouchingHullHeight", 36, {editor_panel = "hull", crouch = true})
@@ -794,6 +796,7 @@ do
 					ent.RenderOverride = nil
 				end
 			end
+			self:SetDrawShadow(self:GetDrawShadow())
 			self:ApplyMatrix()
 		end
 	end
@@ -880,7 +883,6 @@ do
 	BUILDER:StartStorableVars()
 		:SetPropertyGroup("generic")
 			:GetSet("OverridePosition", false)
-			:GetSet("NoDraw", false)
 			:GetSet("Class", "all", {enums = function()
 				local out = {
 					["physgun"] = "weapon_physgun",
@@ -909,9 +911,22 @@ do
 				end
 				return out
 			end})
+		:SetPropertyGroup("appearance")
+			:GetSet("NoDraw", false)
+			:GetSet("DrawShadow", true)
 		:EndStorableVars()
 
 	BUILDER:RemoveProperty("Model")
+
+	function PART:SetDrawShadow(b)
+		self.DrawShadow = b
+
+		local ent = self:GetEntity()
+		if not ent:IsValid() then return end
+
+		ent:DrawShadow(b)
+		ent:MarkShadowAsDirty()
+	end
 
 	function PART:GetNiceName()
 		if self.Class ~= "all" then
@@ -962,14 +977,17 @@ do
 						self.Entity = wep
 						self:SetEventHide(false, self)
 						wep.RenderOverride = function()
-							wep:DrawShadow(false)
 							if wep.pac_render then
 								if not self.NoDraw then
+									if self.DrawShadow then
+										wep:CreateShadow()
+									end
 									wep:DrawModel()
 								end
 							end
 						end
 						wep.pac_weapon_part = self
+						self:SetDrawShadow(self:GetDrawShadow())
 					else
 						self:SetEventHide(true, self)
 						self:OnHide()
@@ -986,7 +1004,6 @@ do
 			for k,v in pairs(ent:GetWeapons()) do
 				if v.pac_weapon_part == self then
 					v.RenderOverride = nil
-					v:DrawShadow(true)
 					v:SetParent(ent)
 				end
 			end

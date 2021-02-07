@@ -26,19 +26,21 @@ local function change(ent, property, multiplier, default_override)
 end
 
 local function write_other(other)
-	if not other then return end
+	if not other then net.WriteBool(false) return end
+	net.WriteBool(true)
 	net.WriteDouble(other.StandingHullHeight or 0)
 	net.WriteDouble(other.CrouchingHullHeight or 0)
 	net.WriteDouble(other.HullWidth or 0)
 end
 
 local function read_other()
-	local other = {}
-	other.StandingHullHeight = net.ReadDouble()
-	if not other.StandingHullHeight then return end
-	other.CrouchingHullHeight = net.ReadDouble()
-	other.HullWidth = net.ReadDouble()
-	return other
+	if net.ReadBool() then
+		local other = {}
+		other.StandingHullHeight = net.ReadDouble()
+		other.CrouchingHullHeight = net.ReadDouble()
+		other.HullWidth = net.ReadDouble()
+		return other
+	end
 end
 
 function pacx.SetEntitySizeOnServer(ent, multiplier, other)

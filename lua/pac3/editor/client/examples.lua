@@ -1334,6 +1334,7 @@ pace.example_outfits["chell engineer"] = {[1] = {
 					["self"] = {
 						["UniqueID"] = "3522381108",
 						["ClassName"] = "model",
+						["LegacyScale"] = true,
 						["Size"] = 0.88,
 						["Model"] = "models/player/engineer.mdl",
 						["EditorExpand"] = true,
@@ -2466,7 +2467,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 			["Rimlight"] = true,
 			["Name"] = "mat face",
 			["RimlightExponent"] = 34.700000762939,
-			["BaseTexture"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/hair/face1.jpg",
+			["BaseTexture"] = "https://raw.githubusercontent.com/CapsAdmin/pac3_assets/master/organic/human/female/head/face1.jpg",
 			["ClassName"] = "material",
 			["OwnerName"] = "",
 			["PhongBoost"] = 0.05,
@@ -2481,7 +2482,7 @@ pace.example_outfits["custom face"] = {["children"] = {
 		},
 		["self"] = {
 			["Detail"] = "models/props_halloween/halloween_blk",
-			["DetailBlendFactor"] = 88.6,
+			["DetailBlendFactor"] = 0.5,
 			["UniqueID"] = "2481252630",
 			["DetailTint"] = Vector(29, 29, 29),
 			["PhongTint"] = Vector(1, 1, 1),
@@ -3613,27 +3614,27 @@ pace.example_outfits["staff"] = {[1] = {
 }
 pace.example_outfits["robotic arm with aimpart"] = {[1] = {
 	["children"] = {
-		[1] = {
+		{
 			["children"] = {
-				[1] = {
-					["children"] = {
-					},
-					["self"] = {
-						["StartColor"] = Vector(29, 0, 255),
-						["UniqueID"] = "428214384",
-						["Length"] = 1000,
-						["Name"] = "IDK",
-						["EndSize"] = 1,
-						["ClassName"] = "trail",
-						["EndColor"] = Vector(255, 0, 0),
-						["ParentName"] = "point 1",
-						["ParentUID"] = "2384404661",
-						["Bone"] = "hitpos",
-						["StartSize"] = 1,
-						["TrailPath"] = "sprites/strider_blackball",
-					},
-				},
-				[2] = {
+			},
+			["self"] = {
+				["StartColor"] = Vector(29, 0, 255),
+				["UniqueID"] = "428214384",
+				["Length"] = 1000,
+				["Name"] = "IDK",
+				["EndSize"] = 1,
+				["ClassName"] = "trail",
+				["EndColor"] = Vector(255, 0, 0),
+				["ParentName"] = "point 1",
+				["ParentUID"] = "2384404661",
+				["Bone"] = "hitpos",
+				["StartSize"] = 1,
+				["TrailPath"] = "sprites/strider_blackball",
+			},
+		},
+		{
+			["children"] = {
+				{
 					["children"] = {
 						[1] = {
 							["children"] = {
@@ -3689,7 +3690,7 @@ pace.example_outfits["robotic arm with aimpart"] = {[1] = {
 				["EditorExpand"] = true,
 			},
 		},
-		[2] = {
+		{
 			["children"] = {
 				[1] = {
 					["children"] = {
@@ -5091,7 +5092,7 @@ pace.example_outfits["custom texture"] = {[1] = {
 						["ClassName"] = "model",
 						["Size"] = 0.308,
 						["UniqueID"] = "463513559",
-						["Material"] = "http://www.marikollen.no/axis2b.jpg",
+						["Material"] = "https://marikollen.no/Marikollen-klubbhus/Marikollen%20klubbhus_559030792_20210207160001262_TIMING.jpg",
 						["Fullbright"] = true,
 						["Model"] = "models/hunter/plates/plate1x1.mdl",
 						["Angles"] = Angle(90, 0, 0),
