@@ -1106,7 +1106,6 @@ do -- events
 
 		self:CallRecursive("OnHide")
 		self:CallRecursive("OnRemove")
-		self:OnRemove()
 
 		if self.owner_id and self.UniqueID then
 			pac.RemoveUniqueIDPart(self.owner_id, self.UniqueID)

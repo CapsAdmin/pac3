@@ -227,3 +227,19 @@ end )
 timer.Simple(0.1, function()
 	hook.Run("pac_Initialized")
 end)
+
+concommand.Add("pac_test", function(ply, _, args)
+	local what = args[1]
+
+	if not what then
+		print("this command is intended for developers to test that pac works after changing the code")
+		print("it will remove all parts before starting the test")
+		print("if you really want to run this command, run 'pac_test client'")
+		return
+	end
+
+	if what == "client" then
+		include("pac3/core/client/test/create_part.lua")
+		include("pac3/core/client/test/part_events.lua")
+	end
+end)
