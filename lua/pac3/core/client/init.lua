@@ -239,7 +239,9 @@ concommand.Add("pac_test", function(ply, _, args)
 	end
 
 	if what == "client" then
+		pac.RemoveAllParts()
 		include("pac3/core/client/test/create_part.lua")
-		include("pac3/core/client/test/part_events.lua")
+		include("pac3/core/client/test/base_part.lua")
+		include("pac3/core/client/test/events.lua")
 	end
 end)

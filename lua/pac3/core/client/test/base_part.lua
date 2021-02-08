@@ -64,6 +64,6 @@ part.finished = function(recorded)
 		print(expected)
 		print("~=")
 		print(events)
-		error("events don't match")
+		ErrorNoHalt("events don't match\n")
 	end
 end
