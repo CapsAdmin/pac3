@@ -1,8 +1,6 @@
-hook.Add("ShouldDrawLocalPlayer", "pac_test", function() return true end)
 local stage
 local recorded = {}
 local function record(what)
-	print(what)
 	table.insert(recorded, what)
 end
 do
@@ -84,28 +82,37 @@ do
 	pac.RegisterEvent(event)
 end
 
-local root = pac.CreatePart("group", LocalPlayer())
+hook.Add("ShouldDrawLocalPlayer", "pac_test", function() return true end)
 
-do
-	local event = root:CreatePart("event")
-	event:SetEvent("test")
-	event:SetAffectChildrenOnly(true)
-	event_part = event
+-- TODO: no timer.Simple
+timer.Simple(0, function()
+	local root = pac.CreatePart("group", LocalPlayer())
 
 	do
-		local child = event:CreatePart("test")
-		child.finished = function()
-			local got = table.concat(recorded, ", ")
-			local expected = "shown from rendering, event think, event triggers hide, hidden, event triggers show, shown from event"
-			if got ~= expected then
-				print(got)
-				print("~=")
-				print(expected)
-				ErrorNoHalt("events don't match\n")
-			end
-			hook.Remove("ShouldDrawLocalPlayer", "pac_test")
+		local event = root:CreatePart("event")
+		event:SetEvent("test")
+		event:SetAffectChildrenOnly(true)
+		event_part = event
 
-			root:Remove()
+		do
+			local child = event:CreatePart("test")
+			child.finished = function()
+				local got = table.concat(recorded, ", ")
+				local expected = "shown from rendering, event think, event triggers hide, hidden, event triggers show, shown from event"
+				if got ~= expected then
+					print("== events don't match ==")
+					print(got)
+					print("~=")
+					print(expected)
+					print("== ==")
+				end
+				hook.Remove("ShouldDrawLocalPlayer", "pac_test")
+
+				-- TODO: OnRemove is called multiple times
+				child.finished = function() end
+
+				root:Remove()
+			end
 		end
 	end
-end
+end)

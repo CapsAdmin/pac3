@@ -1,6 +1,6 @@
 
-local recorded
-local function record_event(what)
+local recorded = {}
+local function record(what)
 	table.insert(recorded, what)
 end
 
@@ -12,58 +12,68 @@ do
 	PART.Icon = 'icon16/cut.png'
 
 	function PART:Initialize()
-		record_event("init")
+		record("init")
 	end
 
 	function PART:OnShow(from_rendering)
-		record_event("show " .. tostring(from_rendering))
-		print(self:GetOwner())
+		if from_rendering then
+			record("shown from rendering")
+		end
 	end
 
 	function PART:OnDraw(owner, pos, ang)
-		record_event("draw")
+		record("draw")
 		self:Remove()
 	end
 
 	function PART:OnThink()
-		record_event("think")
+		record("think")
 	end
 
 	function PART:OnHide()
-		record_event("hide")
+		record("hide")
 	end
 
 	function PART:OnRemove()
-		record_event("remove")
+		record("remove")
 
-		self.finished(recorded)
+		self.finished()
 	end
 
 	function PART:OnParent(parent)
-		record_event("parent " .. tostring(parent.ClassName))
+		record("parent " .. tostring(parent.ClassName))
 	end
 
 	function PART:OnUnparent()
-		record_event("unparent")
+		record("unparent")
 	end
 
 	pac.RegisterPart(PART)
 end
 
-recorded = {}
+hook.Add("ShouldDrawLocalPlayer", "pac_test", function() return true end)
 
-local root = pac.CreatePart("group", LocalPlayer())
+-- TODO: no timer.Simple
+timer.Simple(0, function()
+	local root = pac.CreatePart("group", LocalPlayer())
 
-local part = root:CreatePart("test")
+	local part = root:CreatePart("test")
 
-part.finished = function(recorded)
-	-- could be subject to change
-	local events = table.concat(recorded, ", ")
-	local expected = "init, hide, parent group, show true, think, draw, hide, remove"
-	if events ~= expected then
-		print(expected)
-		print("~=")
-		print(events)
-		ErrorNoHalt("events don't match\n")
+	part.finished = function()
+		-- could be subject to change
+		local got = table.concat(recorded, ", ")
+		local expected = "init, hide, parent group, show true, think, draw, hide, remove"
+		if got ~= expected then
+			print("== base part events don't match ==")
+			print(got)
+			print("~=")
+			print(expected)
+			print("== ==")
+		end
+
+		hook.Remove("ShouldDrawLocalPlayer", "pac_test")
+
+		-- TODO: OnRemove is called multiple times
+		part.finished = function() end
 	end
-end
+end)
