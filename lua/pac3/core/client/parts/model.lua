@@ -783,10 +783,6 @@ do
 	function PART:OnShow()
 		local ent = self:GetEntity()
 
-		if self.Model == "" then
-			self.Model = pacx and pacx.GetModel(ent) or ent:GetModel() or ""
-		end
-
 		if ent:IsValid() then
 			function ent.RenderOverride()
 				-- if the draw call is not from pac don't bother
