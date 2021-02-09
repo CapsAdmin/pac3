@@ -1488,53 +1488,12 @@ PART.last_event_triggered = false
 
 function PART:OnThink()
 	local ent = self:GetOwner(self.RootOwner)
+	if not ent:IsValid() then return end
 
-	if ent:IsValid() then
-		local data = self.Events[self.Event]
+	local data = self.Events[self.Event]
+	if not data then return end
 
-		if data then
-			if self.AffectChildrenOnly then
-				local b = should_hide(self, ent, data)
-
-				for _, child in ipairs(self:GetChildren()) do
-					child:SetEventHide(b, self)
-				end
-
-				-- this is just used for the editor..
-				self.event_triggered = b
-
-				if self.last_event_triggered ~= self.event_triggered then
-					if not self.suppress_event_think then
-						self.suppress_event_think = true
-						self:CallRecursive("CalcShowHide")
-						self.suppress_event_think = nil
-					end
-					self.last_event_triggered = self.event_triggered
-				end
-			else
-				local parent = self:GetParent()
-
-				if parent:IsValid() then
-					local b = should_hide(self, ent, data)
-
-					parent:SetEventHide(b, self)
-					parent:CallRecursive("FlushFromRenderingState")
-
-					-- this is just used for the editor..
-					self.event_triggered = b
-
-					if self.last_event_triggered ~= self.event_triggered then
-						if not self.suppress_event_think then
-							self.suppress_event_think = true
-							parent:CallRecursive("CalcShowHide")
-							self.suppress_event_think = nil
-						end
-						self.last_event_triggered = self.event_triggered
-					end
-				end
-			end
-		end
-	end
+	self:TriggerEvent(should_hide(self, ent, data))
 
 	if pace and pace.IsActive() and self.Name == "" then
 		if self.editor_property and self.editor_property["Name"] and self.editor_property["Name"]:IsValid() then
@@ -1542,6 +1501,42 @@ function PART:OnThink()
 		end
 	end
 
+end
+
+function PART:TriggerEvent(b)
+	-- this is just used for the editor..
+	self.event_triggered = b
+
+	if self.AffectChildrenOnly then
+
+		for _, child in ipairs(self:GetChildren()) do
+			child:SetEventHide(b, self)
+		end
+
+
+		if self.last_event_triggered ~= self.event_triggered then
+			if not self.suppress_event_think then
+				self.suppress_event_think = true
+				self:CallRecursive("CalcShowHide")
+				self.suppress_event_think = nil
+			end
+			self.last_event_triggered = self.event_triggered
+		end
+	elseif self:HasParent() then
+		local parent = self:GetParent()
+
+		parent:SetEventHide(b, self)
+		parent:CallRecursive("FlushFromRenderingState")
+
+		if self.last_event_triggered ~= self.event_triggered then
+			if not self.suppress_event_think then
+				self.suppress_event_think = true
+				parent:CallRecursive("CalcShowHide")
+				self.suppress_event_think = nil
+			end
+			self.last_event_triggered = self.event_triggered
+		end
+	end
 end
 
 PART.Operators =
