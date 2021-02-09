@@ -12,7 +12,7 @@ function test.Run(done)
 	local stage = nil
 
 	do
-		local PART = {}
+		local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 		PART.FriendlyName = "test"
 		PART.ClassName = "test"
