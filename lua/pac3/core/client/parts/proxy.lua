@@ -64,7 +64,7 @@ function PART:GetTarget(physical)
 		repeat
 			if not parent.Parent:IsValid() then break end
 			parent = parent.Parent
-		until not parent.cached_pos:IsZero()
+		until parent.cached_pos and not parent.cached_pos:IsZero()
 
 		return parent
 	end
@@ -513,15 +513,21 @@ PART.Inputs = {
 	end,
 	parent_velocity_forward = function(self, parent)
 		parent = self:GetTarget(true)
-		return -parent.cached_ang:Forward():Dot(self:GetVelocity(parent))
+		if parent.cached_ang then
+			return -parent.cached_ang:Forward():Dot(self:GetVelocity(parent))
+		end
 	end,
 	parent_velocity_right = function(self, parent)
 		parent = self:GetTarget(true)
-		return parent.cached_ang:Right():Dot(self:GetVelocity(parent))
+		if parent.cached_ang then
+			return parent.cached_ang:Right():Dot(self:GetVelocity(parent))
+		end
 	end,
 	parent_velocity_up = function(self, parent)
 		parent = self:GetTarget(true)
-		return parent.cached_ang:Up():Dot(self:GetVelocity(parent))
+		if parent.cached_ang then
+			return parent.cached_ang:Up():Dot(self:GetVelocity(parent))
+		end
 	end,
 
 	parent_scale_x = function(self, parent)
