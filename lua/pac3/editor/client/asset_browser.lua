@@ -357,6 +357,10 @@ local function create_model_icon(path, pathid)
 	icon:SetModel(path)
 	icon:SetTooltip(path)
 
+	if path:StartWith("addons/") then
+		path = path:match("^addons/.-/(.+)") or path
+	end
+
 	install_click(icon, path, nil, nil, pathid)
 
 	return icon
