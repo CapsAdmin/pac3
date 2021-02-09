@@ -922,8 +922,6 @@ do -- events
 
 		self:CallRecursive("OnHide")
 		self:CallRecursive("OnRemove")
-		self:OnRemove()
-
 
 		local owner_id = self:GetPlayerOwnerId()
 		if owner_id then

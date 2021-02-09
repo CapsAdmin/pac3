@@ -50,6 +50,7 @@ include("hooks.lua")
 include("owner_name.lua")
 include("friends_only.lua")
 include("integration_tools.lua")
+include("test.lua")
 
 pac.LoadParts()
 
