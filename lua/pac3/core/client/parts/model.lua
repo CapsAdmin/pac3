@@ -416,10 +416,13 @@ end
 local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs')
 
 function PART:RefreshModel()
+	local ent = self:GetEntity()
 
-	self.Entity.pac_bones = nil
-	if self.Entity.pac_holdtypes then
-		self.Entity.pac_holdtypes = {}
+	if ent:IsValid() then
+		ent.pac_bones = nil
+		if ent.pac_holdtypes then
+			ent.pac_holdtypes = {}
+		end
 	end
 
 	self:SetModelModifiers(self:GetModelModifiers())
@@ -763,10 +766,6 @@ do
 	function PART:OnShow()
 		local ent = self:GetEntity()
 
-		if self.Model == "" then
-			self.Model = pacx and pacx.GetModel(ent) or ent:GetModel() or ""
-		end
-
 		if ent:IsValid() then
 			function ent.RenderOverride()
 				-- if the draw call is not from pac don't bother
@@ -857,10 +856,15 @@ do
 		local ent = self:GetEntity()
 
 		if ent:IsValid() then
-			local old = pacx and pacx.GetModel(ent) or ent:GetModel()
-			if self.last_model ~= old then
+			local model = pacx and pacx.GetModel(ent) or ent:GetModel()
+			local bone_count = ent:GetBoneCount()
+			if
+				self.last_model ~= model or
+				self.last_bone_count ~= bone_count
+			then
 				self:RefreshModel()
-				self.last_model = old
+				self.last_model = model
+				self.last_bone_count = bone_count
 			end
 		end
 	end
