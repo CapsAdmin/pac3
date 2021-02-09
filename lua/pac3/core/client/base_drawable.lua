@@ -283,28 +283,7 @@ do -- drawing. this code is running every frame
 			if not self.HandleModifiersManually then self:ModifiersPostEvent('OnDraw', draw_type) end
 			self.selfDrawTime = SysTime() - sysTime
 		end
-
-		-- if not isNonRoot then
-		--  for i, child in ipairs(self:GetChildrenList()) do
-		--      child:Draw(pos, ang, draw_type, true)
-		--  end
-		-- end
-
-		local sysTime = SysTime()
-
-		for _, child in ipairs(self:GetChildren()) do
-			if child.Draw then
-				child:Draw(pos, ang, draw_type)
-			end
-		end
-
-		if draw_type == "translucent" then
-			self.childrenTranslucentDrawTime = SysTime() - sysTime
-		elseif draw_type == "opaque" then
-			self.childrenOpaqueDrawTime = SysTime() - sysTime
-		end
 	end
-	--SETUP_CACHE_FUNC(PART, "CalcAngles")
 end
 
 function PART:HookEntityRender()
