@@ -104,8 +104,6 @@ function pace.RecordUndoHistory()
 
 	table.insert(pace.UndoHistory, data)
 	pace.UndoPosition = #pace.UndoHistory
-
-	pace.FlashNotification("Undo position: " .. pace.UndoPosition .. "/" .. #pace.UndoHistory)
 end
 
 function pace.Undo()
