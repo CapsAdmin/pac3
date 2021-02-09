@@ -816,7 +816,12 @@ do -- base editable
 	function PANEL:SetValue(var, skip_encode)
 		if self.editing then return end
 
-		local str = tostring(skip_encode and var or self:Encode(var))
+		local value = skip_encode and var or self:Encode(var)
+		if type(value) == "number" then
+			-- visually round numbers so 0.6 doesn't show up as 0.600000000001231231 on wear
+			value = math.Round(value, 7)
+		end
+		local str = tostring(value)
 
 		self:SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text)
 		self:SetFont(pace.CurrentFont)
