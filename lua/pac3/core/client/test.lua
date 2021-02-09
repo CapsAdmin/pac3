@@ -5,55 +5,75 @@ local tests = {
 	"events",
 }
 
+local COLOR_ERROR = Color(255,100,100)
+local COLOR_WARNING = Color(255,150,50)
+local COLOR_NORMAL = Color(255,255,255)
+local COLOR_OK = Color(150,255,50)
+
 local function msg_color(color, ...)
-	local str = {}
+	local tbl = {}
+
 	for i = 1, select("#", ...) do
-		str[i] = select(i, ...)
+		local val = select(i, ...)
+		if IsColor(val) then
+			tbl[i] = val
+		else
+			tbl[i] = tostring(val)
+		end
 	end
 
-	MsgC(color, table.concat(str), "\n")
+	table.insert(tbl, "\n")
+
+	MsgC(color, unpack(tbl))
 end
 
 local function msg_error(...)
-	msg_color(Color(255,50,50), ...)
+	msg_color(COLOR_ERROR, ...)
 end
 
 local function msg_warning(...)
-	msg_color(Color(255,150,50), ...)
+	msg_color(COLOR_WARNING, ...)
 end
 
 local function msg_ok(...)
-	msg_color(Color(150,255,50), ...)
+	msg_color(COLOR_OK, ...)
 end
 
 local function msg(...)
-	msg_color(Color(255,255,255), ...)
-end
-
-
-local function CheckOrdered(events)
-	return function(got)
-		local expected = table.remove(events, 1)
-		if expected ~= got then
-			msg_error("=============\n")
-			msg_error(" expected " .. expected .. " got " .. got .. "\n")
-			msg(debug.traceback())
-			msg_error("=============\n")
-		end
-	end, events
+	msg_color(COLOR_NORMAL, ...)
 end
 
 local function start_test(name, done)
 	local test = {}
 
+	local function msg_error(...)
+		test.error_called = true
+		msg_color(COLOR_ERROR, ...)
+	end
+
+	local function msg_warning(...)
+		test.warning_called = true
+		msg_color(COLOR_WARNING, ...)
+	end
+
 	test.name = name
 	test.time = os.clock() + 5
 
-	function test.Setup() end
-	function test.Teardown() end
+	function test.Setup()
+		hook.Add("ShouldDrawLocalPlayer", "pac_test", function() return true end)
+	end
+
+	function test.Teardown()
+		hook.Remove("ShouldDrawLocalPlayer", "pac_test")
+	end
+
 	function test.Run(done) error("test.Run is not defined") end
 	function test.Remove()
 		if not test then return end
+
+		if test.events_consume and test.events_consume_index then
+			msg_error(test.name .. " finished before consuming event ", test.events_consume[test.events_consume_index], " at index ", test.events_consume_index)
+		end
 
 		test.Teardown()
 		done(test)
@@ -62,16 +82,31 @@ local function start_test(name, done)
 		test = nil
 	end
 
-	test.CheckOrdered = CheckOrdered
-
-	local function msg_error(...)
-		test.error_called = true
-		msg_color(Color(255,50,50), ...)
+	function test.equal(a, b)
+		if a ~= b then
+			msg_error("=============")
+			msg_error("expected ", COLOR_NORMAL, tostring(a), COLOR_ERROR, " got ", COLOR_NORMAL, tostring(b), COLOR_ERROR, "!")
+			msg(debug.traceback())
+			msg_error("=============")
+		end
 	end
 
-	local function msg_warning(...)
-		test.warning_called = true
-		msg_color(Color(255,150,50), ...)
+	function test.EventConsumer(events)
+		test.events_consume = events
+		test.events_consume_index = 1
+		return function(got)
+			if not test.events_consume_index then
+				msg_error("calling check more than once")
+				return
+			end
+
+			local expected = events[test.events_consume_index]
+			test.equal(expected, got)
+			test.events_consume_index = test.events_consume_index + 1
+			if not events[test.events_consume_index] then
+				test.events_consume_index = nil
+			end
+		end
 	end
 
 	local env = {}

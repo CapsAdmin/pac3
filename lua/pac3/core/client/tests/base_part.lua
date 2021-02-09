@@ -1,12 +1,5 @@
-function test.Setup()
-	hook.Add("ShouldDrawLocalPlayer", "pac_test", function() return true end)
-end
 
-function test.Teardown()
-	hook.Remove("ShouldDrawLocalPlayer", "pac_test")
-end
-
-local check, events = test.CheckOrdered({
+local check = test.EventConsumer({
 	"init",
 	"hide",
 	"parent group",
@@ -16,15 +9,6 @@ local check, events = test.CheckOrdered({
 	"hide",
 	"remove",
 })
-
-function test.Timeout()
-	if #events > 0 then
-		msg_error("timed out while waiting for:")
-		for i,v in ipairs(events) do
-			msg_error("\t", i, " : ", v)
-		end
-	end
-end
 
 function test.Run(done)
 	do
