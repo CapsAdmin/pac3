@@ -96,7 +96,8 @@ local function start_test(name, done)
 		test.events_consume_index = 1
 		return function(got)
 			if not test.events_consume_index then
-				msg_error("calling check more than once")
+				msg_error("tried to consume event when finished")
+				msg(debug.traceback())
 				return
 			end
 

@@ -1,5 +1,5 @@
 
-local check = test.EventConsumer({
+local consume = test.EventConsumer({
 	"init",
 	"hide",
 	"parent group",
@@ -19,39 +19,39 @@ function test.Run(done)
 		PART.Icon = 'icon16/cut.png'
 
 		function PART:Initialize()
-			check("init")
+			consume("init")
 		end
 
 		function PART:OnShow(from_rendering)
 			if from_rendering then
-				check("shown from rendering")
+				consume("shown from rendering")
 			end
 		end
 
 		function PART:OnDraw(owner, pos, ang)
-			check("draw")
+			consume("draw")
 			self:Remove()
 		end
 
 		function PART:OnThink()
-			check("think")
+			consume("think")
 		end
 
 		function PART:OnHide()
-			check("hide")
+			consume("hide")
 		end
 
 		function PART:OnRemove()
-			check("remove")
+			consume("remove")
 			done()
 		end
 
 		function PART:OnParent(parent)
-			check("parent " .. tostring(parent.ClassName))
+			consume("parent " .. tostring(parent.ClassName))
 		end
 
 		function PART:OnUnparent()
-			check("unparent")
+			consume("unparent")
 		end
 
 		pac.RegisterPart(PART)

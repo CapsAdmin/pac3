@@ -1,5 +1,5 @@
 
-local check = test.EventConsumer({
+local consume = test.EventConsumer({
 	"shown from rendering",
 	"event think",
 	"event triggers hide",
@@ -24,7 +24,7 @@ function test.Run(done)
 				if stage == nil then
 					-- 1
 
-					check("shown from rendering")
+					consume("shown from rendering")
 					stage = "first event frame"
 				end
 			else
@@ -32,7 +32,7 @@ function test.Run(done)
 
 					-- 5
 
-					check("shown from event")
+					consume("shown from event")
 					self:GetRootPart():Remove()
 				end
 			end
@@ -43,7 +43,7 @@ function test.Run(done)
 
 				-- 3
 
-				check("hidden")
+				consume("hidden")
 				stage = "show trigger"
 			end
 		end
@@ -64,7 +64,7 @@ function test.Run(done)
 
 				-- 2
 
-				check("event think")
+				consume("event think")
 				stage = "hide trigger"
 
 
@@ -73,7 +73,7 @@ function test.Run(done)
 
 				-- 3
 
-				check("event triggers hide")
+				consume("event triggers hide")
 				stage = "hide from event"
 
 				return true -- hide
@@ -81,7 +81,7 @@ function test.Run(done)
 
 				-- 4
 
-				check("event triggers show")
+				consume("event triggers show")
 				stage = "wait for trigger"
 
 
