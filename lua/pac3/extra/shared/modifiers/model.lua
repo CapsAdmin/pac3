@@ -72,13 +72,14 @@ function pacx.SetModel(ent, path, ply)
 			path = player_manager.TranslatePlayerModel(path)
 		end
 
-		if path ~= original_path and original_path:EndsWith(".mdl") then
-			ply:ChatPrint('[PAC3] ERROR: ' .. original_path .. " is not a valid player model on the server. Defaulting to kleiner.")
-		end
-
 		ent:SetModel(path)
 
 		if SERVER then
+
+			if path ~= original_path and original_path:EndsWith(".mdl") then
+				ply:ChatPrint('[PAC3] ERROR: ' .. original_path .. " is not a valid player model on the server. Defaulting to kleiner.")
+			end
+
 			ent:SetNWString("pacx_model", path)
 		end
 	end

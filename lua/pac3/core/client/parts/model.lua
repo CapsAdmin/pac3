@@ -453,8 +453,10 @@ function PART:SetModel(path)
 
 				local ent = self:GetEntity()
 
-				if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
-					pacx.SetModel(ent, path, self:GetPlayerOwner())
+				if self.ClassName == "entity2" then
+					if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
+						pacx.SetModel(ent, path, self:GetPlayerOwner())
+					end
 				end
 
 				self:RealSetModel(mdl_path)
@@ -479,8 +481,10 @@ function PART:SetModel(path)
 	else
 		local ent = self:GetEntity()
 
-		if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
-			pacx.SetModel(ent, path, self:GetPlayerOwner())
+		if self.ClassName == "entity2" then
+			if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
+				pacx.SetModel(ent, path, self:GetPlayerOwner())
+			end
 		end
 
 		self:RealSetModel(path)
