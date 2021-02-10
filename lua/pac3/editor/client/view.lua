@@ -53,6 +53,10 @@ function pace.SetZoom(fov, smooth)
 	end
 end
 
+function pace.ResetZoom()
+	pace.zoom_reset = 75
+end
+
 local worldPanel = vgui.GetWorldPanel();
 function worldPanel.OnMouseWheeled( self, scrollDelta )
 	if IsValid(pace.Editor) then
