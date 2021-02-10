@@ -27,7 +27,7 @@ do -- pace
 			return
 		end
 
-		if (part.NonPhysical and part.ClassName ~= 'group') or part.HideGizmo then
+		if part.NonPhysical then
 			mctrl.target = pac.NULL
 		else
 			mctrl.target = part
