@@ -654,7 +654,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								f:WriteInt32(newoffset)
 							end
 						else
-							local new_name = dir .. data.file_name:gsub("mdl$", "ani")
+							local new_name = "models/" .. dir .. data.file_name:gsub("mdl$", "ani")
 							local newoffset = f:Size()
 							f:Seek(newoffset)
 							f:WriteString(new_name)
