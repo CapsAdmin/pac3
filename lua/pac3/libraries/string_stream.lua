@@ -498,4 +498,154 @@ end
 function ss_methods:getString()
 	return table.concat(self)
 end
+
+do
+	do
+		function ss_methods:writeBool(b)
+			self:writeInt8(1)
+		end
+
+		function ss_methods:readBool(b)
+			return self:readInt8() == 1
+		end
+	end
+
+	do
+		function ss_methods:writeVector(val)
+			self:writeDouble(val.x)
+			self:writeDouble(val.y)
+			self:writeDouble(val.z)
+		end
+
+		function ss_methods:readVector()
+			local x = self:readDouble()
+			local y = self:readDouble()
+			local z = self:readDouble()
+
+			return Vector(x,y,z)
+		end
+	end
+
+	do
+		function ss_methods:writeAngle(val)
+			self:writeDouble(val.p)
+			self:writeDouble(val.y)
+			self:writeDouble(val.r)
+		end
+
+		function ss_methods:readAngle()
+			local x = self:readDouble()
+			local y = self:readDouble()
+			local z = self:readDouble()
+
+			return Angle(x,y,z)
+		end
+	end
+
+	do
+		function ss_methods:writeColor(val)
+			self:writeDouble(val.r)
+			self:writeDouble(val.g)
+			self:writeDouble(val.b)
+			self:writeDouble(val.a)
+		end
+
+		function ss_methods:readColor()
+			local r = self:readDouble()
+			local g = self:readDouble()
+			local b = self:readDouble()
+			local a = self:readDouble()
+
+			return Color(r,g,b,a)
+		end
+	end
+
+	do
+		function ss_methods:writeEntity(val)
+			self:writeInt32(val:EntIndex())
+		end
+
+		function ss_methods:readEntity()
+			return Entity(self:readInt32())
+		end
+	end
+
+	function ss_methods:writeTable(tab)
+		for k, v in pairs( tab ) do
+			self:writeType( k )
+			self:writeType( v )
+		end
+
+		self:writeType( nil )
+	end
+
+	function ss_methods:readTable()
+		local tab = {}
+
+		while true do
+			local k = self:readType()
+			if k == nil then
+				return tab
+			end
+
+			tab[k] = self:readType()
+		end
+	end
+
+	local write_functions = {
+		[TYPE_NIL] = function(s, t, v) s:writeInt8( t ) end,
+		[TYPE_STRING] = function(s, t, v) s:writeInt8( t ) s:writeString( v ) end,
+		[TYPE_NUMBER] = function(s, t, v) s:writeInt8( t ) s:writeDouble( v ) end,
+		[TYPE_TABLE] = function(s, t, v) s:writeInt8( t ) s:writeTable( v ) end,
+		[TYPE_BOOL] = function(s, t, v) s:writeInt8( t ) s:writeBool( v ) end,
+		[TYPE_VECTOR] = function(s, t, v) s:writeInt8( t ) s:writeVector( v ) end,
+		[TYPE_ANGLE] = function(s, t, v) s:writeInt8( t ) s:writeAngle( v ) end,
+		[TYPE_COLOR] = function(s, t, v) s:writeInt8( t ) s:writeColor( v ) end,
+		[TYPE_ENTITY] = function(s, t, v) s:writeInt8( t ) s:writeEntity( v ) end,
+
+	}
+
+	function ss_methods:writeType( v )
+		local typeid = nil
+
+		if IsColor(v) then
+			typeid = TYPE_COLOR
+		else
+			typeid = TypeID(v)
+		end
+
+		local func = write_functions[typeid]
+
+		if func then
+			return func(self, typeid, v)
+		end
+
+		error("StringStream:writeType: Couldn't write " .. type(v) .. " (type " .. typeid .. ")")
+	end
+
+	local read_functions = {
+		[TYPE_NIL] = function(s) return nil end,
+		[TYPE_STRING] = function(s) return s:readString() end,
+		[TYPE_NUMBER] = function(s) return s:readDouble() end,
+		[TYPE_TABLE] = function(s) return s:readTable() end,
+		[TYPE_BOOL] = function(s) return s:readBool() end,
+		[TYPE_VECTOR] = function(s) return s:readVector() end,
+		[TYPE_ANGLE] = function(s) return s:readAngle() end,
+		[TYPE_COLOR] = function(s) return s:readColor() end,
+		[TYPE_ENTITY] = function(s) return s:readEntity() end,
+	}
+
+	function ss_methods:readType( typeid )
+		typeid = typeid or self:readUInt8(8)
+
+		local func = read_functions[typeid]
+
+		if func then
+			return func(self)
+		end
+
+		error("StringStream:readType: Couldn't read type " .. typeid)
+	end
+end
+
 return StringStream
