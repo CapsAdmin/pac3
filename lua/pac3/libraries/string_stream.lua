@@ -301,13 +301,10 @@ end
 --@return The buffer position
 function ss_methods:tell()
 	local length = 0
-	for i, v in ipairs(self) do
-		if i==self.index then
-			return length + self.subindex
-		end
-		length = length + #v
+	for i=1, self.index-1 do
+		length = length + #self[i]
 	end
-	return length+1
+	return length + self.subindex
 end
 
 --- Tells the size of the byte stream.
