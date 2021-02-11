@@ -377,7 +377,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							file.Write(data.file_name..".debug.old.dat", data.buffer)
 						end
 
-						local f = pac.StringStream(data.buffer, 1, "little")
+						local f = pac.StringStream(data.buffer)
 						local id = f:read(4)
 						local version = f:readUInt32()
 						local checksum = f:readUInt32()
