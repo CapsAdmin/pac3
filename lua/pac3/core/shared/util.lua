@@ -653,7 +653,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								f:seek(newoffset)
 								f:writeString(dir)
 								f:seek(v.offset_pos)
-								f:writeInt32(newoffset)
+								f:writeInt32(newoffset - 1) -- -1 to convert 1 indexed to 0 indexed
 							end
 						else
 							local new_name = "models/" .. dir .. data.file_name:gsub("mdl$", "ani")
@@ -661,7 +661,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							f:seek(newoffset)
 							f:writeString(new_name)
 							f:seek(anim_name_offset_pos)
-							f:writeInt32(newoffset)
+							f:writeInt32(newoffset - 1) -- -1 to convert 1 indexed to 0 indexed
 						end
 
 						local cursize = f:size()
