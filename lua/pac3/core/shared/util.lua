@@ -667,8 +667,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						local cursize = f:size()
 
 						-- Add nulls to align to 4 bytes
-						local padding = cursize%4
-						if padding>0 then
+						local padding = 4-cursize%4
+						if padding<4 then
 							f:seek(cursize+1)
 							f:write(string.rep("\0",padding))
 							cursize = cursize + padding
