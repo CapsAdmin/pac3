@@ -499,7 +499,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 							local old_pos = f:tell()
 							f:seek(vmt_dir_offset)
-								local offset = f:readUInt32()
+								local offset = f:readInt32()
 								if offset > -1 then
 									offset = offset + vmt_dir_offset
 									if VERBOSE then print(data.file_name, "MATERIAL OFFSET:", offset) end
