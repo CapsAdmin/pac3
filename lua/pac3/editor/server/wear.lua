@@ -27,35 +27,27 @@ local function make_copy(tbl, input)
 	end
 end
 
-pace.dupe_ents = pace.dupe_ents or {}
+local function net_write_table(tbl)
 
-local function fixSanity(tableIn, target)
-	for key, value2 in pairs(tableIn) do
-		local value
+	local buffer = pac.StringStream()
+	buffer:writeTable(tbl)
 
-		if type(value2) == 'table' then
-			value = fixSanity(value2, {})
-		else
-			value = value2
-		end
+	local data = buffer:getString()
+	local ok, err = pcall(pac.net_stream.Write, data)
 
-		if type(key) == 'number' and key > 10000 then
-			local str = tostring(key)
-			target[str] = value
-		else
-			target[key] = value
-		end
+	if not ok then
+		return ok, err
 	end
 
-	return target
+	return #data
 end
+
+
+pace.dupe_ents = pace.dupe_ents or {}
 
 duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 	if parts.json then
 		parts = util.JSONToTable(parts.json)
-
-		-- sanity police for json's __index accesses
-		parts = fixSanity(parts, {})
 	end
 
 	pace.net.SimulateTableReceive(parts)
@@ -289,7 +281,7 @@ function pace.SubmitPart(data, filter)
 		local ret = hook.Run("pac_SendData", players, data)
 		if ret == nil then
 			net.Start("pac_submit")
-			local bytes, err = pace.net.SerializeTable(data)
+			local bytes, err = net_write_table(data)
 
 			if not bytes then
 				ErrorNoHalt("[PAC3] Outfit broadcast failed for " .. tostring(data.owner) .. ": " .. tostring(err) .. '\n')
@@ -415,8 +407,10 @@ pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
 		end
 	end
 
-	local data = pace.net.DeserializeTable()
-	pace.HandleReceivedData(ply, data)
+	pac.net_stream.Read(ply, function(data)
+		local buffer = pac.StringStream(data)
+		pace.HandleReceivedData(ply, buffer:readTable())
+	end)
 end)
 
 function pace.ClearOutfit(ply)

@@ -127,6 +127,13 @@ function PART:SetData(str)
 	if str then
 		local tbl = util.JSONToTable(str)
 		if tbl then
+
+			if type(tbl.Type) == "number" then
+				animations.ConvertOldData(tbl)
+				self:SetAnimationType(tbl.Type)
+				self:SetInterpolation(tbl.Interpolation)
+			end
+
 			animations.RegisterAnimation(self:GetAnimID(), tbl)
 		end
 	end

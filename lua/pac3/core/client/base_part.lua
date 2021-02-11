@@ -45,7 +45,7 @@ BUILDER
 			:GetSet("Name", "")
 			:GetSet("Hide", false)
 			:GetSet("OwnerName", "self")
-			:GetSet("EditorExpand", true, {hidden = true})
+			:GetSet("EditorExpand", false, {hidden = true})
 			:GetSet("UniqueID", "", {hidden = true})
 			:GetSetPart("Parent")
 			:GetSet("IsDisturbing", false, {

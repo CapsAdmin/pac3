@@ -237,6 +237,11 @@ function PANEL:Think(...)
 			self.zoomframe:SetPos(x,y-pace.timeline.frame:GetTall())
 		end
 
+		if pace.zoom_reset then
+			self.zoomslider:SetValue(75)
+			pace.zoom_reset = nil
+		end
+
 		if zoom_smooth:GetInt() == 1 then
 			pace.SetZoom(self.zoomslider:GetValue(),true)
 		else

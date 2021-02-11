@@ -34,6 +34,80 @@ function pace.AddTool(name, callback, ...)
 	table.insert(pace.Tools, {name = name, callback = callback, suboptions = {...}})
 end
 
+
+pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
+
+	local class_translate = {
+		model = "model2",
+		material = "material_vertexlitgeneric",
+		entity = "entity2",
+		bone = "bone2",
+		light = "light2",
+		trail = "trail2",
+		clip = "clip2",
+	}
+
+	local model_prop_translate = {
+		Color = function(old, new, oldval) new:SetColor(Vector(oldval.r/255, oldval.g/255, oldval.b/255)) end,
+		DoubleFace = function(old, new, oldval) new:SetNoCulling(oldval) end,
+		Fullbright = function(old, new, oldval) new:SetNoLighting(oldval) end,
+		Brightness = function(old, new, oldval) new:SetColor(new:GetColor() * oldval) end,
+		TextureFilter = function(old, new, oldval) new:SetNoTextureFiltering(not oldval) end,
+		LodOverride = function(old, new, oldval) new:SetLevelOfDetail(oldval) end,
+	}
+
+	local prop_translate = {
+		model = model_prop_translate,
+		entity = table.Merge(model_prop_translate, {
+			HideEntity = function(old, new, oldval) new:SetNoDraw(oldval) end
+		}),
+	}
+
+	local done = {}
+
+	for _, old_part in pairs(pac.GetLocalParts()) do
+		if old_part.Group == "legacy" then
+
+			local new_classname = class_translate[old_part.ClassName]
+			if not new_classname then
+
+				print("cannot translate classname " .. old_part.ClassName)
+
+				continue
+			end
+
+			local new_part = pac.CreatePart(old_part.ClassName .. "2")
+			new_part:SetParent(old_part:GetParent())
+
+			for _, key in pairs(old_part:GetStorableVars()) do
+				if prop_translate[old_part.ClassName] and prop_translate[old_part.ClassName][key] then
+					prop_translate[old_part.ClassName][key](old_part, new_part, old_part["Get" .. key](old_part))
+				else
+					local func = new_part["Set" .. key]
+					if func then
+						local oldval = old_part["Get" .. key](old_part)
+						func(new_part, oldval)
+					else
+
+						local msg = old_part.ClassName .. "." .. key
+						if not done[msg] then
+							print("cannot translate property " .. msg)
+							done[msg] = true
+						end
+					end
+				end
+			end
+
+			for k,v in ipairs(old_part:GetChildren()) do
+				v:SetParent(new_part)
+			end
+
+			old_part:Remove()
+		end
+	end
+end)
+
+
 pace.AddTool(L"fix origin", function(part, suboption)
 	if part.ClassName ~= "model" and part.ClassName ~= "model" then return end
 

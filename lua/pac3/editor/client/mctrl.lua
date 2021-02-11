@@ -27,7 +27,7 @@ do -- pace
 			return
 		end
 
-		if (not part.GetDrawPosition and part.ClassName ~= 'group') or part.HideGizmo then
+		if part.GetDrawPosition then
 			mctrl.target = NULL
 		else
 			mctrl.target = part
