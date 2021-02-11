@@ -150,11 +150,14 @@ do
 		render_ModelMaterialOverride()
 	end
 
+	local function on_error(msg)
+		ErrorNoHalt(msg)
+	end
+
 	function pac.RenderOverride(ent, type, draw_only)
-		local ok, err = pcall(render_override, ent, type, draw_only)
+		local ok, err = xpcall(render_override, on_error, ent, type, draw_only)
 		if not ok then
 			pac.Message("failed to render ", tostring(ent), ":")
-			print(err)
 
 			if ent == pac.LocalPlayer then
 				chat.AddText("your pac3 outfit failed to render!")
@@ -182,6 +185,7 @@ function pac.HideEntityParts(ent)
 
 		pac.ResetBones(ent)
 		ent.pac_drawing = false
+		pac.drawn_entities[ent] = nil
 	end
 end
 
