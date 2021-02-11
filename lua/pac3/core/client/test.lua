@@ -4,6 +4,8 @@ local tests = {
 	"all_parts",
 	"base_part",
 	"events",
+	"model_modifier",
+	"size_modifier",
 }
 
 local COLOR_ERROR = Color(255,100,100)
