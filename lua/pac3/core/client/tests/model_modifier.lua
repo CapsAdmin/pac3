@@ -16,18 +16,18 @@ function test.Run(done)
 	RunConsoleCommand("pac_modifier_model", "1")
 
 	pacx.SetModelOnServer(owner, mdl)
-	test.RunLuaOnServer("return Entity(" .. owner:EntIndex() .. "):GetModel()", function(server_mdl)
-		assert(server_mdl == mdl)
 
-		RunConsoleCommand("pac_modifier_model", "0")
+	assert(test.RunLuaOnServer("return Entity(" .. owner:EntIndex() .. "):GetModel()") == mdl)
 
-		test.RunLuaOnServer("return Entity(" .. owner:EntIndex() .. "):GetModel()", function(server_mdl)
-			assert(server_mdl == prev)
-			pacx.SetModelOnServer(owner)
-			RunConsoleCommand("pac_modifier_model", "1")
-			done()
-		end)
-	end)
+	RunConsoleCommand("pac_modifier_model", "0")
+
+	assert(test.RunLuaOnServer("return Entity(" .. owner:EntIndex() .. "):GetModel()") == prev)
+
+	pacx.SetModelOnServer(owner)
+
+	RunConsoleCommand("pac_modifier_model", "1")
+
+	done()
 end
 
 
