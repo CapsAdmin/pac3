@@ -343,7 +343,19 @@ function pace.SelectPart(parts, callback)
 		end,
 
 		function(_, part)
-			return part:GetDrawPosition()
+			if part.GetDrawPosition then
+				return part:GetDrawPosition()
+			end
+
+			local owner = part:GetOwner()
+			if owner:IsValid() then
+				return owner:GetPos()
+			end
+
+			owner = part:GetPlayerOwner()
+			if owner:IsValid() then
+				return owner:GetPos()
+			end
 		end,
 
 		function(_, part)
