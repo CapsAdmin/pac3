@@ -1,6 +1,7 @@
 -- the order of tests is important, smoke test should always be first
 local tests = {
 	"smoke",
+	"all_parts",
 	"base_part",
 	"events",
 }
@@ -69,7 +70,7 @@ local function start_test(name, done)
 
 	function test.Run(done) error("test.Run is not defined") end
 	function test.Remove()
-		if not test then return end
+		if test.done then return end
 
 		if test.events_consume and test.events_consume_index then
 			msg_error(test.name .. " finished before consuming event ", test.events_consume[test.events_consume_index], " at index ", test.events_consume_index)
@@ -78,8 +79,7 @@ local function start_test(name, done)
 		test.Teardown()
 		done(test)
 
-		-- so that if done was called the same frame, start_test returns nil
-		test = nil
+		test.done = true
 	end
 
 	function test.equal(a, b)
@@ -137,6 +137,10 @@ local function start_test(name, done)
 
 	test.Setup()
 	test.Run(test.Remove)
+
+	if test.done then
+		return
+	end
 
 	return test
 end

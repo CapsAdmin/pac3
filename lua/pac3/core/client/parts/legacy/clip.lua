@@ -20,6 +20,8 @@ pac.RemoveProperty(PART, "NoTextureFiltering")
 
 
 function PART:OnParent(part)
+	if not part.AddModifier then return end
+
 	part:AddModifier(self)
 
 	-- this is only really for halos..
@@ -34,6 +36,7 @@ end
 
 function PART:OnUnParent(part)
 	if not part:IsValid() then return end
+	if not part.RemoveModifier then return end
 	part:RemoveModifier(self)
 end
 
