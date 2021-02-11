@@ -27,7 +27,7 @@ do -- pace
 			return
 		end
 
-		if part.GetDrawPosition then
+		if not part.GetDrawPosition then
 			mctrl.target = NULL
 		else
 			mctrl.target = part
