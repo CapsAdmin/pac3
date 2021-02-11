@@ -36,6 +36,10 @@ local function StringStream(stream, i, endian)
 			ret:seek(1)
 		end
 	end
+	if endian~=nil then
+		assert(type(endian) == "string", "endian must be a string")
+		ret:setEndian(endian)
+	end
 
 	return ret
 end
