@@ -397,7 +397,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 						do
 							local sequence_count = f:readUInt32()
-							local sequence_offset = f:readUInt32()
+							local sequence_offset = f:readUInt32() + 1 -- +1 to convert 0 indexed to 1 indexed
 
 							if sequence_count > 0 then
 								local enums = table.Copy(act_enums)
@@ -407,17 +407,18 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 									for i = 1, sequence_count do
 										local tbl = {}
 										local seek_offset = f:tell()
-										local base_header_offset = f:readUInt32()
-										tbl.name_offset = f:readUInt32()
-										local activity_name_offset = f:readUInt32()
+										--local base_header_offset = f:readUInt32() -- Unused
+										--tbl.name_offset = f:readUInt32() -- Unused
+										f:skip(8)
+										local activity_name_offset = seek_offset + f:readUInt32() -- Address relative to seek_offset
 
 										local oldpos = f:tell()
-										f:seek(seek_offset + activity_name_offset)
+										f:seek(activity_name_offset)
 										local str = f:readString()
 										if _G[str] == nil then
 											for i, v in ipairs(enums) do
 												if #v.k <= #str then
-													table.insert(found_activities, {from = str, to = v.k, offset = seek_offset + activity_name_offset})
+													table.insert(found_activities, {from = str, to = v.k, offset = activity_name_offset})
 													table.remove(enums, i)
 													break
 												end
@@ -494,14 +495,15 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 						do
 							vmt_dir_count = f:readUInt32()
-							vmt_dir_offset = f:readUInt32()
+							vmt_dir_offset = f:readUInt32() + 1 -- +1 to convert 0 indexed to 1 indexed
 
 							local old_pos = f:tell()
 							f:seek(vmt_dir_offset)
 								local offset = f:readUInt32()
 								if offset > -1 then
-									if VERBOSE then print(data.file_name, "MATERIAL OFFSET:", vmt_dir_offset + offset) end
-									f:seek(vmt_dir_offset + offset)
+									offset = offset + vmt_dir_offset
+									if VERBOSE then print(data.file_name, "MATERIAL OFFSET:", offset) end
+									f:seek(offset)
 									for i = 1, vmt_dir_count do
 										local mat = (f:readString() .. ".vmt"):lower()
 										local found = false
@@ -534,13 +536,13 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 						do
 							vtf_dir_count = f:readUInt32()
-							vtf_dir_offset = f:readUInt32()
+							vtf_dir_offset = f:readUInt32() + 1 -- +1 to convert 0 indexed to 1 indexed
 
 							local old_pos = f:tell()
 							f:seek(vtf_dir_offset)
 							for i = 1, vtf_dir_count do
 								local offset_pos = f:tell()
-								local offset = f:readUInt32()
+								local offset = f:readUInt32() + 1 -- +1 to convert 0 indexed to 1 indexed
 
 								local old_pos = f:tell()
 								f:seek(offset)
@@ -551,24 +553,24 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							end
 							f:seek(old_pos)
 						end
-							f:skip(4 + 8) -- skin
-							f:skip(8) -- bodypart
-							f:skip(8) -- attachment
-							f:skip(4 + 8) -- localnode
-							f:skip(8) -- flex
-							f:skip(8) -- flex rules
-							f:skip(8) -- ik
-							f:skip(8) -- mouth
-							f:skip(8) -- localpose
-							f:skip(4) -- render2dprop
-							f:skip(8) -- keyvalues
-							f:skip(8) -- iklock
-							f:skip(12) -- mass
-							f:skip(4) -- contents
+						f:skip(4 + 8) -- skin
+						f:skip(8) -- bodypart
+						f:skip(8) -- attachment
+						f:skip(4 + 8) -- localnode
+						f:skip(8) -- flex
+						f:skip(8) -- flex rules
+						f:skip(8) -- ik
+						f:skip(8) -- mouth
+						f:skip(8) -- localpose
+						f:skip(4) -- render2dprop
+						f:skip(8) -- keyvalues
+						f:skip(8) -- iklock
+						f:skip(12) -- mass
+						f:skip(4) -- contents
 
 						do
 							include_mdl_dir_count = f:readUInt32()
-							include_mdl_dir_offset = f:readUInt32()
+							include_mdl_dir_offset = f:readUInt32() + 1 -- +1 to convert 0 indexed to 1 indexed
 
 							local old_pos = f:tell()
 
@@ -580,8 +582,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 								local file_name_offset = f:readUInt32()
 								local old_pos = f:tell()
-								f:seek(base_pos + file_name_offset)
-								table.insert(found_mdl_includes, {base_pos = base_pos, path = f:readString()})
+									f:seek(base_pos + file_name_offset)
+									table.insert(found_mdl_includes, {base_pos = base_pos, path = f:readString()})
 								f:seek(old_pos)
 							end
 
@@ -634,7 +636,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 							if found then
 								local path = "models/" .. dir .. file_name
-								local newoffset = f:size()
+								local newoffset = f:size() + 1
 								f:seek(newoffset)
 								f:writeString(path)
 								f:seek(v.base_pos + 4)
@@ -647,7 +649,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						-- if we extend the mdl file with vmt directories we don't have to change any offsets cause nothing else comes after it
 						if data.file_name == "model.mdl" then
 							for i,v in ipairs(found_materialdirs) do
-								local newoffset = f:size()
+								local newoffset = f:size() + 1
 								f:seek(newoffset)
 								f:writeString(dir)
 								f:seek(v.offset_pos)
@@ -655,7 +657,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							end
 						else
 							local new_name = "models/" .. dir .. data.file_name:gsub("mdl$", "ani")
-							local newoffset = f:size()
+							local newoffset = f:size() + 1
 							f:seek(newoffset)
 							f:writeString(new_name)
 							f:seek(anim_name_offset_pos)
