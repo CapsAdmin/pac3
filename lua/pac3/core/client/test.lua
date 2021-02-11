@@ -65,7 +65,14 @@ local function start_test(name, done)
 	test.name = name
 	test.time = os.clock() + 5
 
-	test.RunLuaOnServer = run_lua_on_server
+	test.RunLuaOnServer = function(code)
+		local ret
+		run_lua_on_server(code, function(...) ret = {...} end)
+		while not ret do
+			coroutine.yield()
+		end
+		return unpack(ret)
+	end
 
 	function test.Setup()
 		hook.Add("ShouldDrawLocalPlayer", "pac_test", function() return true end)
@@ -77,13 +84,17 @@ local function start_test(name, done)
 
 	function test.Run(done) error("test.Run is not defined") end
 	function test.Remove()
+		hook.Remove("ShouldDrawLocalPlayer", "pac_test")
+		hook.Remove("Think", "pac_test_coroutine")
+
 		if test.done then return end
 
 		if test.events_consume and test.events_consume_index then
 			msg_error(test.name .. " finished before consuming event ", test.events_consume[test.events_consume_index], " at index ", test.events_consume_index)
 		end
 
-		hook.Remove("ShouldDrawLocalPlayer", "pac_test")
+		test.co = nil
+
 		test.Teardown()
 		done(test)
 
@@ -125,6 +136,7 @@ local function start_test(name, done)
 	env.msg_error = msg_error
 	env.msg_warning = msg_warning
 	env.msg_color = msg_color
+	env.yield = coroutine.yield
 
 	local func = CompileFile("pac3/core/client/tests/"..name..".lua")
 
@@ -144,7 +156,28 @@ local function start_test(name, done)
 	func()
 
 	test.Setup()
-	test.Run(test.Remove)
+
+	test.co = coroutine.create(function()
+		test.Run(test.Remove)
+	end)
+
+	local ok, err = coroutine.resume(test.co)
+
+	if not ok then
+		ErrorNoHalt(err)
+		test.Remove()
+	end
+
+	hook.Add("Think", "pac_test_coroutine", function()
+		if not test.co then return end
+
+		local ok, err = coroutine.resume(test.co)
+
+		if not ok and err ~= "cannot resume dead coroutine" then
+			ErrorNoHalt(err)
+			test.Remove()
+		end
+	end)
 
 	if test.done then
 		return
@@ -222,5 +255,3 @@ net.Receive("pac3_test_sutie_backdoor_receive_results", function()
 	lua_server_run_callbacks[id](unpack(results))
 	lua_server_run_callbacks[id] = nil
 end)
-
-run_lua_on_server("return 1", print)
