@@ -13,6 +13,9 @@ local COLOR_WARNING = Color(255,150,50)
 local COLOR_NORMAL = Color(255,255,255)
 local COLOR_OK = Color(150,255,50)
 
+-- see bottom of this file and test_suite_backdoor.lua on server for more info
+local run_lua_on_server
+
 local function msg_color(color, ...)
 	local tbl = {}
 
@@ -62,6 +65,8 @@ local function start_test(name, done)
 	test.name = name
 	test.time = os.clock() + 5
 
+	test.RunLuaOnServer = run_lua_on_server
+
 	function test.Setup()
 		hook.Add("ShouldDrawLocalPlayer", "pac_test", function() return true end)
 	end
@@ -78,6 +83,7 @@ local function start_test(name, done)
 			msg_error(test.name .. " finished before consuming event ", test.events_consume[test.events_consume_index], " at index ", test.events_consume_index)
 		end
 
+		hook.Remove("ShouldDrawLocalPlayer", "pac_test")
 		test.Teardown()
 		done(test)
 
@@ -198,3 +204,23 @@ concommand.Add("pac_test", function(ply, _, args)
 		end)
 	end
 end)
+
+local lua_server_run_callbacks = {}
+
+function run_lua_on_server(code, cb)
+	local id = util.CRC(code .. tostring(cb))
+	lua_server_run_callbacks[id] = cb
+	net.Start("pac3_test_sutie_backdoor")
+		net.WriteString(id)
+		net.WriteString(code)
+	net.SendToServer()
+end
+
+net.Receive("pac3_test_sutie_backdoor_receive_results", function()
+	local id = net.ReadString()
+	local results = net.ReadTable()
+	lua_server_run_callbacks[id](unpack(results))
+	lua_server_run_callbacks[id] = nil
+end)
+
+run_lua_on_server("return 1", print)
