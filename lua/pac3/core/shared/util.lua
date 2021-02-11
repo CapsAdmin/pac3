@@ -662,18 +662,18 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							f:writeInt32(newoffset)
 						end
 
+						local cursize = f:size()
 
-						do
-							error("NYI, code below infinite loops")
-
-							-- Add nulls to align to 4 bytes
-							while (#f)%4 ~= 0 do
-								f:write("\0")
-							end
+						-- Add nulls to align to 4 bytes
+						local padding = cursize%4
+						if padding>0 then
+							f:seek(cursize+1)
+							f:write(string.rep("\0",padding))
+							cursize = cursize + padding
 						end
 
 						f:seek(size_offset)
-						f:writeInt32(f:size())
+						f:writeInt32(cursize)
 
 						data.buffer = f:getString()
 
