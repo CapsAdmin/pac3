@@ -5,5 +5,8 @@ function test.Run(done)
 		root:CreatePart(class_name)
 	end
 
-	done()
+	timer.Simple(0.5, function()
+		root:Remove()
+		done()
+	end)
 end
