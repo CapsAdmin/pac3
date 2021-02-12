@@ -3,6 +3,7 @@ include("util.lua")
 include("footsteps_fix.lua")
 include("http.lua")
 include("movement.lua")
+include("entity_mutator.lua")
 
 pac.StringStream = include("pac3/libraries/string_stream.lua")
 
