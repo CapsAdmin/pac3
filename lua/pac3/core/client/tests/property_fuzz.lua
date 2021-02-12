@@ -9,13 +9,7 @@ local function RandomModel()
 end
 
 local function RandomMaterial()
-	for _, tbl in RandomPairs(spawnmenu.GetPropTable()) do
-		for _, val in RandomPairs(tbl.contents) do
-			if val.material then
-				return val.material
-			end
-		end
-	end
+	return table.Random(list.Get("OverrideMaterials"))
 end
 
 function test.Run(done)
@@ -50,6 +44,7 @@ function test.Run(done)
 				if key == "UniqueID" then continue end
 				if key == "Name" then continue end
 				if key == "OwnerName" then continue end
+				if key == "Command" then continue end
 
 				log(part.ClassName .. ".Get" .. key)
 				local val = part["Get"..key](part)
@@ -70,13 +65,15 @@ function test.Run(done)
 				elseif type(val) == "boolean" then
 					val = math.random() > 0.5
 				elseif type(val) == "string" then
+
+
+
 					local udata = pac.GetPropertyUserdata(part, key)
 
 					if udata then
 						local t = udata.editor_panel
 						if t == "model" then
 							val = RandomModel()
-							print(val, "!!")
 						elseif t == "material" then
 							val = RandomMaterial()
 						elseif key == "Bone" then
@@ -95,10 +92,10 @@ function test.Run(done)
 
 				log(part.ClassName .. ".Set" .. key .. " = " .. tostring(val))
 				part["Set" .. key](part, val)
-				yield()
-				test.SetTestTimeout(1)
-				break
 			end
+			yield()
+			test.SetTestTimeout(1)
+			break
 		end
 	end
 
