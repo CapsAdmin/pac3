@@ -74,6 +74,10 @@ local function start_test(name, done)
 		return unpack(ret)
 	end
 
+	function test.SetTestTimeout(sec)
+		test.time = os.clock() + sec
+	end
+
 	function test.Setup()
 		hook.Add("ShouldDrawLocalPlayer", "pac_test", function() return true end)
 	end
@@ -197,9 +201,15 @@ concommand.Add("pac_test", function(ply, _, args)
 	end
 
 	if what == "client" then
+		local which = args[2]
+
 		pac.RemoveAllParts()
 
 		local tests = table.Copy(tests)
+
+		if which then
+			tests = {which}
+		end
 
 		local current_test = nil
 

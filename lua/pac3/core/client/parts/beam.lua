@@ -198,6 +198,9 @@ end
 function PART:OnDraw(owner, pos, ang)
 	local part = self.EndPoint
 	if self.Materialm and self.StartColorC and self.EndColorC and part:IsValid() then
+
+		if not part.cached_pos or not part.cached_ang then return end
+
 		render.SetMaterial(self.Materialm)
 		--(veca, vecb, dira, dirb, bend, res, width, start_color, end_color, frequency, tex_stretch, width_bend, width_bend_size)
 		local opos = Vector(0,0,0)
