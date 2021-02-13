@@ -53,14 +53,6 @@ include("test.lua")
 
 pac.LoadParts()
 
-net.Receive("pac.TogglePartDrawing", function()
-	local ent = net.ReadEntity()
-	if ent:IsValid() then
-		local b = (net.ReadBit() == 1)
-		pac.TogglePartDrawing(ent, b)
-	end
-end)
-
 hook.Add("Think", "pac_init", function()
 	local ply = LocalPlayer()
 	if not ply:IsValid() then return end

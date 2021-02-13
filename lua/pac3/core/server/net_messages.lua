@@ -1,19 +1,8 @@
 
-util.AddNetworkString("pac.TogglePartDrawing")
 util.AddNetworkString("pac.BloodColor")
 util.AddNetworkString("pac.AllowPlayerButtons")
 util.AddNetworkString("pac.BroadcastPlayerButton")
 
-function pac.TogglePartDrawing(ent, b, who) --serverside interface to clientside function of the same name
-	net.Start("pac.TogglePartDrawing")
-	net.WriteEntity(ent)
-	net.WriteBit(b)
-	if not who then
-		net.Broadcast()
-	else
-		net.Send(who)
-	end
-end
 
 do -- Blood Color
 	local pac_allow_blood_color = GetConVar("pac_allow_blood_color")
