@@ -48,7 +48,7 @@ function MUTATOR:StoreState()
 	local ent = self.Entity
 
 	return
-		ent:GetModelScale(),
+		1,--ent:GetModelScale(),
 		false, -- we will just ent:ResetHull()
 		{
 			ViewOffset = ent.GetViewOffset and ent:GetViewOffset() or nil,
@@ -65,8 +65,6 @@ local functions = {
 
 function MUTATOR:Mutate(multiplier, other, hidden_state)
 	local ent = self.Entity
-
-	print(ent, multiplier, other)
 
 	ent:SetModelScale(multiplier)
 

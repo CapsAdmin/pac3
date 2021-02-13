@@ -432,6 +432,7 @@ function PART:RefreshModel()
 end
 
 function PART:RealSetModel(path)
+	print("WTF",path)
 	self.Entity:SetModel(path)
 	self:RefreshModel()
 end
@@ -452,9 +453,7 @@ function PART:SetModel(path)
 				local ent = self:GetEntity()
 
 				if self.ClassName == "entity2" then
-					if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
-						pacx.SetModel(ent, path, self:GetPlayerOwner())
-					end
+					pac.emut.MutateEntity(self:GetPlayerOwner(), "model", ent, path)
 				end
 
 				self:RealSetModel(mdl_path)
@@ -480,9 +479,7 @@ function PART:SetModel(path)
 		local ent = self:GetEntity()
 
 		if self.ClassName == "entity2" then
-			if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
-				pacx.SetModel(ent, path, self:GetPlayerOwner())
-			end
+			pac.emut.MutateEntity(self:GetPlayerOwner(), "model", ent, path)
 		end
 
 		self:RealSetModel(path)
@@ -534,17 +531,11 @@ function PART:ApplyMatrix()
 	end
 
 	if ent:IsPlayer() or ent:IsNPC() then
-		if pacx and pacx.SetEntitySizeMultiplier then
-			local other = {
-				StandingHullHeight = self.StandingHullHeight,
-				CrouchingHullHeight = self.CrouchingHullHeight,
-				HullWidth = self.HullWidth,
-			}
-			if self:GetPlayerOwner() == pac.LocalPlayer then
-				pacx.SetEntitySizeOnServer(ent, self.Size, other)
-			end
-			pacx.SetEntitySizeMultiplier(ent, self.Size, other)
-		end
+		pac.emut.MutateEntity(self:GetPlayerOwner(), "size", ent, self.Size, {
+			StandingHullHeight = self.StandingHullHeight,
+			CrouchingHullHeight = self.CrouchingHullHeight,
+			HullWidth = self.HullWidth,
+		})
 
 		if self.Size == 1 and self.Scale == vec_one then
 			if ent.pac_enable_ik then
@@ -826,18 +817,10 @@ do
 		local ent = self:GetEntity()
 		if not ent:IsValid() then return end
 
-		if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
-			pacx.SetModel(ent, nil, self:GetPlayerOwner())
-		end
+		pac.emut.RestoreMutations(self:GetPlayerOwner(), "model", ent)
 
 		if ent:IsPlayer() or ent:IsNPC() then
-			if pacx and pacx.SetEntitySizeMultiplier then
-				if self:GetPlayerOwner() == pac.LocalPlayer then
-					pacx.SetEntitySizeOnServer(ent)
-				end
-				pacx.SetEntitySizeMultiplier(ent)
-			end
-
+			pac.emut.RestoreMutations(self:GetPlayerOwner(), "size", ent)
 		end
 
 		ent:DisableMatrix("RenderMultiply")
@@ -860,7 +843,7 @@ do
 		local ent = self:GetEntity()
 
 		if ent:IsValid() then
-			local model = pacx and pacx.GetModel(ent) or ent:GetModel()
+			local model = ent:GetModel()
 			local bone_count = ent:GetBoneCount()
 			if
 				self.last_model ~= model or

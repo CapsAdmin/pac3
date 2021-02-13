@@ -165,34 +165,17 @@ function PART:UpdateScale(ent)
 
 	if not ent:IsValid() then return end
 
-	if self.UseLegacyScale then
-		if ent:IsPlayer() or ent:IsNPC() then
-			if pacx and pacx.SetEntitySizeMultiplier then
-				if self:GetPlayerOwner() == pac.LocalPlayer then
-					pacx.SetEntitySizeOnServer(ent, self.Size)
-				end
-				pacx.SetEntitySizeMultiplier(ent, self.Size)
-				pac.SetModelScale(ent, self.Scale)
-			else
-				pac.SetModelScale(ent, nil, self.Size)
-			end
-		else
-			pac.SetModelScale(ent, self.Scale * self.Size)
-		end
-	else
+	if not self.UseLegacyScale then
 		ent.pac3_Scale = self.Size
+	end
 
-		if ent:IsPlayer() or ent:IsNPC() then
-			if pacx and pacx.SetEntitySizeMultiplier then
-				if self:GetPlayerOwner() == pac.LocalPlayer then
-					pacx.SetEntitySizeOnServer(ent, self.Size)
-				end
-				pacx.SetEntitySizeMultiplier(ent, self.Size)
-			end
-			pac.SetModelScale(ent, self.Scale)
-		else
-			pac.SetModelScale(ent, self.Scale * self.Size)
+	if ent:IsPlayer() or ent:IsNPC() then
+		if self:GetPlayerOwner() == pac.LocalPlayer then
+			pac.emut.MutateEntity(self:GetPlayerOwner(), "size", ent, self.Size)
 		end
+		pac.SetModelScale(ent, self.Scale)
+	else
+		pac.SetModelScale(ent, self.Scale * self.Size)
 	end
 end
 
@@ -408,9 +391,9 @@ function PART:SetModel(path)
 			pac.DownloadMDL(path, function(real_path)
 				if ent:IsValid() then
 
-					if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
+					if self:GetPlayerOwner() == pac.LocalPlayer then
 						pac.Message("finished downloading ", path)
-						pacx.SetModel(ent, self.Model, self:GetPlayerOwner())
+						pac.emut.MutateEntity(self:GetPlayerOwner(), "model", ent, self.Model)
 					end
 
 					ent:SetModel(real_path)
@@ -436,8 +419,8 @@ function PART:SetModel(path)
 		local ent = self:GetOwner()
 
 		if ent:IsValid() then
-			if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
-				pacx.SetModel(ent, self.Model, self:GetPlayerOwner())
+			if self:GetPlayerOwner() == pac.LocalPlayer then
+				pac.emut.MutateEntity(self:GetPlayerOwner(), "model", ent, self.Model)
 			end
 
 			ent:SetModel(self.Model)
@@ -503,18 +486,9 @@ function PART:OnRemove()
 
 	if not ent:IsValid() then return end
 
-	if pacx and self:GetPlayerOwner() == pac.LocalPlayer then
-		if pacx.SetEntitySizeMultiplierOnServer then
-			pacx.SetEntitySizeMultiplierOnServer(ent)
-		end
-
-		if pacx.SetModelOnServer then
-			pacx.SetModelOnServer(ent)
-		end
-	end
-
-	if pacx and pacx.SetEntitySizeMultiplier then
-		pacx.SetEntitySizeMultiplier(ent)
+	if self:GetPlayerOwner() == pac.LocalPlayer then
+		pac.emut.RestoreMutations(self:GetPlayerOwner(), "model", ent)
+		pac.emut.RestoreMutations(self:GetPlayerOwner(), "size", ent)
 	end
 
 	pac.SetModelScale(ent)
