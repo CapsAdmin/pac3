@@ -144,7 +144,6 @@ function emut.RestoreMutations(ply, class_name, ent)
 	assert(emut.registered_mutators[class_name], "invalid mutator " .. class_name)
 	assert(IsValid(ent), "entity is invalid")
 
-
 	if SERVER then
 		if not override_enabled then
 			if not emut.registered_mutators[class_name].cvar:GetBool() then
@@ -201,6 +200,9 @@ function emut.Register(meta)
 			end
 		end
 	end
+
+	meta.Mutate = meta.Mutate or function() end
+	meta.StoreState = meta.StoreState or function() end
 
 	function meta:Disable()
 		if self.disabled_state then return end

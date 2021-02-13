@@ -90,7 +90,7 @@ end
 
 function PART:OnShow()
 	local ent = self:GetActualOwner()
-	self:UpdateBloodColor()
+	pac.emut.MutateEntity(self:GetPlayerOwner(), "blood_color", ent, blood_colors[self.BloodColor == "" and "red" or self.BloodColor])
 
 	if ent:IsValid() then
 		for _, field in pairs(self.ent_fields) do
@@ -109,8 +109,7 @@ end
 
 function PART:OnHide()
 	local ent = self:GetActualOwner()
-
-	self:UpdateBloodColor("red")
+	pac.emut.RestoreMutations(self:GetPlayerOwner(), "blood_color", ent)
 
 	if ent:IsValid() then
 		for key in pairs(self.ent_fields) do
@@ -119,22 +118,11 @@ function PART:OnHide()
 	end
 end
 
-function PART:UpdateBloodColor(override)
-	local ent = self:GetActualOwner()
-	if ent == pac.LocalPlayer then
-		local num = blood_colors[override or self.BloodColor]
-		if num then
-			net.Start("pac.BloodColor")
-				net.WriteInt(num, 6)
-			net.SendToServer()
-		end
-	end
-end
-
 function PART:SetBloodColor(str)
 	self.BloodColor = str
 
-	self:UpdateBloodColor()
+	local ent = self:GetActualOwner()
+	pac.emut.MutateEntity(self:GetPlayerOwner(), "blood_color", ent, blood_colors[self.BloodColor == "" and "red" or self.BloodColor])
 end
 
 pac.RegisterPart(PART)
