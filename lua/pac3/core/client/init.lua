@@ -48,7 +48,6 @@ include("part_pool.lua")
 include("bones.lua")
 include("hooks.lua")
 include("owner_name.lua")
-include("friends_only.lua")
 include("integration_tools.lua")
 include("test.lua")
 
