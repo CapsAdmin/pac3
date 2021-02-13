@@ -3,7 +3,7 @@ local MUTATOR = {}
 MUTATOR.ClassName = "blood_color"
 
 function MUTATOR:WriteArguments(enum)
-	assert(enum >= -1 and enum <= 6, "path must be a string")
+	assert(enum >= -1 and enum <= 6, "invalid blood color")
 	net.WriteInt(enum, 8)
 end
 
