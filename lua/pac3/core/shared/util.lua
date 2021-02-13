@@ -361,7 +361,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					if data.file_name:EndsWith(".mdl") then
 						local found_materials = {}
 						local found_materialdirs = {}
-						local found_activities = {}
 						local found_mdl_includes = {}
 
 						local vtf_dir_offset
@@ -409,22 +408,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 										local seek_offset = f:tell()
 										--local base_header_offset = f:readUInt32() -- Unused
 										--tbl.name_offset = f:readUInt32() -- Unused
-										f:skip(8)
-										local activity_name_offset = seek_offset + f:readUInt32() -- Address relative to seek_offset
-
-										local oldpos = f:tell()
-										f:seek(activity_name_offset)
-										local str = f:readString()
-										if _G[str] == nil then
-											for i, v in ipairs(enums) do
-												if #v.k <= #str then
-													table.insert(found_activities, {from = str, to = v.k, offset = activity_name_offset})
-													table.remove(enums, i)
-													break
-												end
-											end
-										end
-										f:seek(oldpos)
+										-- local activity_name_offset = seek_offset + f:readUInt32() -- Unused
 
 										-- tbl.flags = f:readUInt32()
 										-- tbl.activity = f:readUInt32()
@@ -483,7 +467,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 										-- tbl.keyValueSize = f:readUInt32()
 										-- tbl.cyclePoseIndex = f:readUInt32()
 
-										f:skip(4*50)
+										f:skip(4*53)
 
 									end
 								f:seek(old_pos)
@@ -601,9 +585,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							print(data.file_name, "MATERIALS:")
 							PrintTable(found_materials)
 							print("============")
-							print(data.file_name, "ACTIVITIES:")
-							PrintTable(found_activities)
-							print("============")
 							print(data.file_name, "MDL_INCLUDES:")
 							PrintTable(found_mdl_includes)
 							print("============")
@@ -613,13 +594,6 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							local newname = string.sub(dir .. data.file_name:lower(), 1, 63)
 							f:seek(name_offset)
 							f:write(newname .. string.rep("\0", 64-#newname))
-						end
-
-						-- replace bad activity names with ones that gmod is okay with (should never extend size)
-						for i,v in ipairs(found_activities) do
-							local newname = v.to .. string.rep("\0", #v.from - #v.to)
-							f:seek(v.offset)
-							f:write(newname)
 						end
 
 						for i,v in ipairs(found_mdl_includes) do
