@@ -138,16 +138,6 @@ end
 -- for pac_restart
 PAC_MDL_SALT = PAC_MDL_SALT or 0
 
-local act_enums = {}
-
-for k,v in pairs(_G) do
-	if type(k) == "string" and k:StartWith("ACT_") and type(v) == "number" then
-		table.insert(act_enums, {k = k, v = v})
-	end
-end
-
-table.sort(act_enums, function(a, b) return #a.k > #b.k end)
-
 local cached_paths = {}
 
 function pac.DownloadMDL(url, callback, onfail, ply)
@@ -393,88 +383,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						f:skip(8) -- bone controller
 						f:skip(8) -- hitbox
 						f:skip(8) -- local anim
-
-						do
-							local sequence_count = f:readUInt32()
-							local sequence_offset = f:readUInt32() + 1 -- +1 to convert 0 indexed to 1 indexed
-
-							if sequence_count > 0 then
-								local enums = table.Copy(act_enums)
-
-								local old_pos = f:tell()
-								f:seek(sequence_offset)
-									for i = 1, sequence_count do
-										local tbl = {}
-										local seek_offset = f:tell()
-										--local base_header_offset = f:readUInt32() -- Unused
-										--tbl.name_offset = f:readUInt32() -- Unused
-										-- local activity_name_offset = seek_offset + f:readUInt32() -- Unused
-
-										-- tbl.flags = f:readUInt32()
-										-- tbl.activity = f:readUInt32()
-										-- tbl.activity_weight = f:readUInt32()
-										-- tbl.event_count = f:readUInt32()
-										-- tbl.event_offset = f:readUInt32()
-
-										-- tbl.bbminx = f:readFloat()
-										-- tbl.bbminy = f:readFloat()
-										-- tbl.bbminz = f:readFloat()
-
-										-- tbl.bbmaxx = f:readFloat()
-										-- tbl.bbmaxy = f:readFloat()
-										-- tbl.bbmaxz = f:readFloat()
-
-										-- tbl.blend_count = f:readUInt32()
-										-- tbl.anim_index_offset = f:readUInt32()
-										-- tbl.movement_index = f:readUInt32()
-										-- tbl.group_size_0 = f:readUInt32()
-										-- tbl.group_size_1 = f:readUInt32()
-
-										-- tbl.param_index_0 = f:readUInt32()
-										-- tbl.param_index_1 = f:readUInt32()
-
-										-- tbl.param_start_0 = f:readFloat()
-										-- tbl.param_start_1 = f:readFloat()
-
-										-- tbl.param_end_0 = f:readFloat()
-										-- tbl.param_end_1 = f:readFloat()
-
-										-- tbl.param_parent = f:readUInt32()
-
-										-- tbl.fade_in_time = f:readFloat()
-										-- tbl.fade_out_time = f:readFloat()
-
-										-- tbl.local_entry_node_index = f:readUInt32()
-										-- tbl.local_exit_node_index = f:readUInt32()
-										-- tbl.node_flags = f:readUInt32()
-
-										-- tbl.entry_phase = f:readFloat()
-										-- tbl.exit_phase = f:readFloat()
-										-- tbl.last_frame = f:readFloat()
-
-										-- tbl.next_seq = f:readUInt32()
-										-- tbl.pose = f:readUInt32()
-
-										-- tbl.ikRuleCount = f:readUInt32()
-										-- tbl.autoLayerCount = f:readUInt32()
-										-- tbl.autoLayerOffset = f:readUInt32()
-										-- tbl.weightOffset = f:readUInt32()
-										-- tbl.poseKeyOffset = f:readUInt32()
-
-										-- tbl.ikLockCount = f:readUInt32()
-										-- tbl.ikLockOffset = f:readUInt32()
-										-- tbl.keyValueOffset = f:readUInt32()
-										-- tbl.keyValueSize = f:readUInt32()
-										-- tbl.cyclePoseIndex = f:readUInt32()
-
-										f:skip(4*53)
-
-									end
-								f:seek(old_pos)
-
-							end
-						end
-
+						f:skip(8) -- sequences
 						f:skip(8) -- activitylistversion + eventsindexed
 
 						do
