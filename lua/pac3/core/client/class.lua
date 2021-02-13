@@ -1,7 +1,6 @@
 pac.PartTemplates = pac.PartTemplates or {}
 pac.VariableOrder = {}
 pac.GroupOrder = pac.GroupOrder or {}
-pac.NetworkDictionary = pac.NetworkDictionary or {}
 
 do
 	local META = {}
@@ -88,8 +87,6 @@ do
 
 	function META:GetSet(key, def, udata)
 		local tbl = self.PART
-
-		pac.PrecacheNetwork(key)
 
 		pac.VariableOrder[tbl.ClassName] = pac.VariableOrder[tbl.ClassName] or {}
 		insert_key(pac.VariableOrder[tbl.ClassName], key)
@@ -182,21 +179,6 @@ do
 
 		return setmetatable(builder, META), builder.PART
 	end
-end
-
-function pac.PrecacheNetwork(key)
-	local crc = tostring(util.CRC(key))
-
-	if pac.NetworkDictionary[crc] and pac.NetworkDictionary[crc] ~= key then
-		error('CRC32 Collision! ' .. crc .. ' is same for ' ..  key .. ' and ' .. pac.NetworkDictionary[crc])
-	end
-
-	pac.NetworkDictionary[crc] = key
-	return crc
-end
-
-function pac.ExtractNetworkID(crc)
-	return pac.NetworkDictionary[crc]
 end
 
 function pac.GetPropertyUserdata(obj, key)
