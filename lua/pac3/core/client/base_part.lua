@@ -694,6 +694,20 @@ do -- serializing
 		-- override
 	end
 
+	function PART:GetProperties()
+		local tbl = {}
+		for _, key in pairs(self:GetStorableVars()) do
+			local val = {}
+			val.set = function(v) self["Set" .. key](self, v) end
+			val.get = function() return self["Get" .. key](self) end
+			val.key = key
+			val.udata = pac.GetPropertyUserdata(self, key) or {}
+
+			table.insert(tbl, val)
+		end
+		return tbl
+	end
+
 	do
 		local function SetTable(self, tbl)
 			self:SetUniqueID(tbl.self.UniqueID or util.CRC(tostring(tbl.self)))
