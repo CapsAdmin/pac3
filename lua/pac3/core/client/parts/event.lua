@@ -1496,8 +1496,8 @@ function PART:OnThink()
 	self:TriggerEvent(should_hide(self, ent, data))
 
 	if pace and pace.IsActive() and self.Name == "" then
-		if self.editor_property and self.editor_property["Name"] and self.editor_property["Name"]:IsValid() then
-			self.editor_property["Name"]:SetText(self:GetNiceName())
+		if self.pace_properties and self.pace_properties["Name"] and self.pace_properties["Name"]:IsValid() then
+			self.pace_properties["Name"]:SetText(self:GetNiceName())
 		end
 	end
 
