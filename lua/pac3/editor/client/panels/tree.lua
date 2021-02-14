@@ -24,7 +24,7 @@ do
 	local function get_added_nodes(self)
 		local added_nodes = {}
 		for i,v in ipairs(self.added_nodes) do
-			if v.part and v:IsVisible() then
+			if v.part and v:IsVisible() and v:IsExpanded() then
 				table.insert(added_nodes, v)
 			end
 		end
@@ -65,12 +65,11 @@ do
 			)
 		then
 			if input.IsKeyDown(KEY_LEFT) then
-				pace.current_part:SetEditorExpand(false)
-				pace.RefreshTree(true)
+				pace.Call("VariableChanged", pace.current_part, "EditorExpand", false)
 			elseif input.IsKeyDown(KEY_RIGHT) then
-				pace.current_part:SetEditorExpand(true)
-				pace.RefreshTree(true)
+				pace.Call("VariableChanged", pace.current_part, "EditorExpand", true)
 			end
+			
 			if input.IsKeyDown(KEY_UP) or input.IsKeyDown(KEY_PAGEUP) then
 				local added_nodes = get_added_nodes(self)
 				local offset = input.IsKeyDown(KEY_PAGEUP) and 10 or 1
@@ -101,7 +100,7 @@ do
 							local node = added_nodes[i + offset] or added_nodes[#added_nodes]
 							if node then
 								node:DoClick()
-								scroll_to_node(self, node)
+								--scroll_to_node(self, node)
 								break
 							end
 						end
@@ -442,7 +441,6 @@ function PANEL:SelectPart(part)
 		else
 			if node.part == part then
 				node:SetSelected(true)
-				node:ExpandTo(true)
 			else
 				node:SetSelected(false)
 			end
@@ -502,6 +500,15 @@ local function refresh(part)
 end
 pac.AddHook("pac_OnPartCreated", "pace_create_tree_nodes", refresh)
 
+pac.AddHook("pace_OnVariableChanged", "pace_create_tree_nodes", function(part, key, val) 
+	if key == "EditorExpand" then
+		local node = part.editor_node
+		if IsValid(node) then
+			node:SetExpanded(val)
+		end
+	end
+end)
+
 function pace.RefreshTree(reset)
 	if pace.tree:IsValid() then
 		timer.Create("pace_refresh_tree",  0.01, 1, function()
@@ -513,4 +520,9 @@ function pace.RefreshTree(reset)
 			end
 		end)
 	end
+end
+
+if Entity(1):IsPlayer() then
+	pace.OpenEditor()
+	pace.RefreshTree(true)
 end
