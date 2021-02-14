@@ -245,7 +245,7 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 
 	func(obj, val)
 
-	local node = obj.editor_node
+	local node = obj.pace_tree_node
 	if IsValid(node) then
 		if key == "Event" then
 			pace.PopulateProperties(obj)
@@ -257,7 +257,7 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 		elseif key == "Model" and val and val ~= "" and type(val) == "string" then
 			node:SetModel(val)
 		elseif key == "Parent" then
-			local tree = obj.editor_node
+			local tree = obj.pace_tree_node
 			if IsValid(tree) then
 				node:Remove()
 				tree = tree:GetRoot()
@@ -276,7 +276,7 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 	timer.Simple(0, function()
 		if not IsValid(obj) then return end
 
-		local prop_panel = obj.editor_property and obj.editor_property[key]
+		local prop_panel = obj.pace_properties and obj.pace_properties[key]
 
 		if IsValid(prop_panel) then
 			local old = prop_panel.OnValueChanged

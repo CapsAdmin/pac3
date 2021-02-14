@@ -1118,8 +1118,8 @@ function PART:OnThink()
 
 			self.debug_var = str
 
-			if self.Name == "" and pace.current_part == self and self.editor_property and IsValid(self.editor_property["Name"]) then
-				self.editor_property["Name"]:SetText(self:GetNiceName())
+			if self.Name == "" and pace.current_part == self and self.pace_properties and IsValid(self.pace_properties["Name"]) then
+				self.pace_properties["Name"]:SetText(self:GetNiceName())
 			end
 		end
 	else
@@ -1147,8 +1147,8 @@ function PART:OnThink()
 				self.debug_var = math.Round(num, 3)
 			end
 
-			if self.Name == "" and pace.current_part == self and self.editor_property and IsValid(self.editor_property["Name"]) then
-				self.editor_property["Name"]:SetText(self:GetNiceName())
+			if self.Name == "" and pace.current_part == self and self.pace_properties and IsValid(self.pace_properties["Name"]) then
+				self.pace_properties["Name"]:SetText(self:GetNiceName())
 			end
 		end
 	end
