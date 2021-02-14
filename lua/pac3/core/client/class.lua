@@ -120,9 +120,13 @@ do
 	end
 
 	function META:GetSetPart(key, udata)
+		udata = udata or {}
+		udata.editor_panel = udata.editor_panel or "part"
+		udata.part_key = key
+
 		local PART = self.PART
 
-		self:GetSet(key .. "UID", "", {editor_panel = "part"})
+		self:GetSet(key .. "UID", "", udata)
 
 		PART["Set" .. key .. "UID"] = function(self, uid)
 			if type(uid) == "table" then
@@ -135,7 +139,7 @@ do
 			local part = pac.GetPartFromUniqueID(owner_id, uid)
 
 			if part:IsValid() then
-				self["Set" .. key](self, part)
+				self["Set" .. key](self, part)				
 			elseif uid ~= "" then
 				self.unresolved_uid_parts = self.unresolved_uid_parts or {}
 				self.unresolved_uid_parts[owner_id] = self.unresolved_uid_parts[owner_id] or {}
@@ -147,7 +151,6 @@ do
 		PART["Set" .. key] = PART["Set" .. key] or function(self, var) self[key] = var end
 		PART["Get" .. key] = PART["Get" .. key] or function(self) return self[key] end
 		PART[key] = NULL
-
 
 		return self
 	end
