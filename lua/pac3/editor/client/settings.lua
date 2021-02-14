@@ -16,6 +16,14 @@ function pace.SetTPose(b)
 			ply.pace_tpose_last_layer_sequence[i] = ply:GetLayerSequence(i)
 		end
 
+		local function reset_angles(ply)
+			local ang = ply:EyeAngles()
+			ang.p = 0
+			ply:SetEyeAngles(ang)
+			ply:SetRenderAngles(ang)
+			ply:SetAngles(ang)
+		end
+
 		pac.AddHook("PrePlayerDraw", "pace_tpose", function(ply)
 			if ply ~= LocalPlayer() then return end
 
@@ -24,16 +32,13 @@ function pace.SetTPose(b)
 			end
 
 			ply:SetSequence(ply:LookupSequence("ragdoll") or ply:LookupSequence("reference"))
-
-			local ang = ply:EyeAngles()
-			ang.p = 0
-			ply:SetEyeAngles(ang)
-			ply:SetRenderAngles(ang)
+			reset_angles(ply)
 		end)
 
 		pac.AddHook("UpdateAnimation", "pace_tpose", function()
 			local ply = LocalPlayer()
 			ply:ClearPoseParameters()
+			reset_angles(ply)
 
 			for i = 0, ply:GetNumPoseParameters() - 1 do
 				local name = ply:GetPoseParameterName(i)

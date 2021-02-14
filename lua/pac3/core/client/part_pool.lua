@@ -279,6 +279,7 @@ end
 pac.AddHook("Think", "events", function()
 	for _, ply in ipairs(player.GetAll()) do
 		if not ent_parts[ply] then continue end
+		if pac.IsEntityIgnored(ply) then continue end
 
 		if Alive(ply) then
 			if ply.pac_revert_ragdoll then

@@ -62,7 +62,7 @@ do -- to server
 		buffer:writeTable(tbl)
 
 		local data = buffer:getString()
-		local ok, err = pcall(pac.net_stream.Write, data)
+		local ok, err = pcall(net.WriteStream, data)
 
 		if not ok then
 			return ok, err
@@ -347,7 +347,7 @@ net.Receive("pac_submit", function()
 	if not pac.IsEnabled() then return end
 
 
-	pac.net_stream.Read(ply, function(data)
+	net.ReadStream(ply, function(data)
 		local buffer = pac.StringStream(data)
 		local data = buffer:readTable()
 

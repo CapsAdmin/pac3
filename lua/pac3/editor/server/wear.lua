@@ -33,7 +33,7 @@ local function net_write_table(tbl)
 	buffer:writeTable(tbl)
 
 	local data = buffer:getString()
-	local ok, err = pcall(pac.net_stream.Write, data)
+	local ok, err = pcall(net.WriteStream, data)
 
 	if not ok then
 		return ok, err
@@ -407,7 +407,7 @@ pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
 		end
 	end
 
-	pac.net_stream.Read(ply, function(data)
+	net.ReadStream(ply, function(data)
 		local buffer = pac.StringStream(data)
 		pace.HandleReceivedData(ply, buffer:readTable())
 	end)
