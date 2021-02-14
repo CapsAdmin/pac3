@@ -185,5 +185,5 @@ do
 end
 
 function pac.GetPropertyUserdata(obj, key)
-	return pac.PartTemplates[obj.ClassName]:GetPropData(key) or {}
+	return pac.PartTemplates[obj.ClassName] and pac.PartTemplates[obj.ClassName]:GetPropData(key) or {}
 end
