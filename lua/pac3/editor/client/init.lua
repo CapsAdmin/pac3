@@ -35,6 +35,7 @@ include("examples.lua")
 include("about.lua")
 include("animation_timeline.lua")
 include("render_scores.lua")
+include("wires.lua")
 
 
 do
