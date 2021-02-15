@@ -415,7 +415,7 @@ function PART:SetModel(path)
 			self.loading = reason2 or reason or "mdl is not allowed"
 			pac.Message(self:GetPlayerOwner(), ' - mdl files are not allowed')
 		end
-	else
+	elseif self.Model ~= "" then
 		local ent = self:GetOwner()
 
 		if ent:IsValid() then

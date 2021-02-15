@@ -475,7 +475,7 @@ function PART:SetModel(path)
 			self:RealSetModel("models/error.mdl")
 			pac.Message(self, ' mdl files are not allowed')
 		end
-	else
+	elseif path ~= "" then
 		local ent = self:GetEntity()
 
 		if self.ClassName == "entity2" then
