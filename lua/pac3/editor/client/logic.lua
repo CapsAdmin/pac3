@@ -52,8 +52,8 @@ end
 
 function pace.OnOpenEditor()
 	alreadyInCall = false
-	pace.SetViewPos(LocalPlayer():EyePos())
-	pace.SetViewAngles(LocalPlayer():EyeAngles())
+	pace.SetViewPos(pac.LocalPlayer:EyePos())
+	pace.SetViewAngles(pac.LocalPlayer:EyeAngles())
 	pace.EnableView(true)
 
 	if table.Count(pac.GetLocalParts()) == 0 then
@@ -125,7 +125,7 @@ surface.CreateFont("pac_onuse_only_hint", {
 
 local function HUDPaint(ply, bind, isPressed)
 	if not pac_onuse_only:GetBool() then return end
-	local ply = LocalPlayer()
+	local ply = pac.LocalPlayer
 	local eyes, aim = ply:EyePos(), ply:GetAimVector()
 
 	local tr = util.TraceLine({

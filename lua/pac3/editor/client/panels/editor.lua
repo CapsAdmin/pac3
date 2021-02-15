@@ -425,7 +425,7 @@ end
 function PANEL:PaintOver(w, h)
 	if not self.okay then return end
 
-	local renderTime = pace.RenderTimes and pace.RenderTimes[LocalPlayer():EntIndex()]
+	local renderTime = pace.RenderTimes and pace.RenderTimes[pac.LocalPlayer:EntIndex()]
 
 	if not renderTime then return end
 

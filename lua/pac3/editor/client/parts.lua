@@ -11,7 +11,7 @@ local function add_expensive_submenu_load(pnl, callback)
 end
 
 function pace.WearParts(file, clear)
-	local allowed, reason = pac.CallHook("CanWearParts", LocalPlayer(), file)
+	local allowed, reason = pac.CallHook("CanWearParts", pac.LocalPlayer, file)
 
 	if allowed == false then
 		pac.Message(reason or "the server doesn't want you to wear parts for some reason")
@@ -106,7 +106,7 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 		end
 	end
 
-	local ply = LocalPlayer()
+	local ply = pac.LocalPlayer
 
 	if part:GetPlayerOwner() == ply then
 		pace.SetViewPart(part)

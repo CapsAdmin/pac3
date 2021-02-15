@@ -1,5 +1,7 @@
 pac = pac or {}
 
+pac.LocalPlayer = LocalPlayer()
+
 do
 	local pac_enable = CreateClientConVar("pac_enable", "1", true)
 
@@ -53,12 +55,12 @@ include("test.lua")
 
 pac.LoadParts()
 
-hook.Add("Think", "pac_init", function()
+hook.Add("OnEntityCreated", "pac_init", function(ent)
 	local ply = LocalPlayer()
 	if not ply:IsValid() then return end
 
 	pac.LocalPlayer = ply
 	hook.Run("pac_Initialized")
 
-	hook.Remove("Think", "pac_init")
+	hook.Remove("OnEntityCreated", "pac_init")
 end)

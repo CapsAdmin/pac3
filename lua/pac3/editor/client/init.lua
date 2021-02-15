@@ -93,7 +93,7 @@ local positionMode = CreateConVar("pac_editor_position_mode", "0", {FCVAR_ARCHIV
 function pace.OpenEditor()
 	pace.CloseEditor()
 
-	if hook.Run("PrePACEditorOpen", LocalPlayer()) == false then return end
+	if hook.Run("PrePACEditorOpen", pac.LocalPlayer) == false then return end
 
 	pac.Enable()
 
@@ -299,7 +299,7 @@ do
 
 	hook.Add("HUDPaint", "pac_in_editor", function()
 		for _, ply in ipairs(player.GetAll()) do
-			if ply ~= LocalPlayer() and ply:GetNW2Bool("pac_in_editor") then
+			if ply ~= pac.LocalPlayer and ply:GetNW2Bool("pac_in_editor") then
 
 				if ply.pac_editor_cam_pos then
 					if not IsValid(ply.pac_editor_camera) then

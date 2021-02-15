@@ -41,7 +41,7 @@ do -- ignore
 	end
 
 	function pac.IgnoreEntity(ent, strID)
-		if ent == LocalPlayer() then return false end
+		if ent == pac.LocalPlayer then return false end
 
 		strID = strID or 'generic'
 		if ent.pac_ignored_data and ent.pac_ignored_data[strID] then return end
@@ -59,7 +59,7 @@ do -- ignore
 	end
 
 	function pac.UnIgnoreEntity(ent, strID)
-		if ent == LocalPlayer() then return false end
+		if ent == pac.LocalPlayer then return false end
 
 		strID = strID or 'generic'
 		if ent.pac_ignored_data and ent.pac_ignored_data[strID] == nil then return end
@@ -101,7 +101,7 @@ local pac_use_whitelist = CreateClientConVar("pac_use_whitelist", 0, true, false
 local pac_use_whitelist_b = CreateClientConVar("pac_use_whitelist_b", 0, true, false, 'Whitelist acts as blacklist')
 
 function pac.FriendOnlyUpdate()
-	local lply = LocalPlayer()
+	local lply = pac.LocalPlayer
 
 	if pac_friendonly:GetBool() then
 		for k, v in ipairs(player.GetAll()) do
@@ -119,7 +119,7 @@ function pac.FriendOnlyUpdate()
 end
 
 function pac.UseWhitelistUpdates()
-	local lply = LocalPlayer()
+	local lply = pac.LocalPlayer
 
 	if pac_use_whitelist:GetBool() then
 		if pac_use_whitelist_b:GetBool() then

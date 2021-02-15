@@ -92,7 +92,7 @@ function test.Run(done)
 		pac.RegisterEvent(event)
 	end
 
-	local root = pac.CreatePart("group", LocalPlayer())
+	local root = pac.CreatePart("group")
 
 	do
 		local event = root:CreatePart("event")

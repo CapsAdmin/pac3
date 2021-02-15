@@ -404,7 +404,7 @@ do -- bone manipulation for boneanimlib
 	end
 end
 
-if LocalPlayer():IsValid() then
+if Entity(1):IsPlayer() then
 	timer.Simple(0, function()
 		for _, v in ipairs(ents.GetAll()) do
 			v.pac_bones = nil

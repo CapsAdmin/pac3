@@ -111,7 +111,7 @@ function PART:SetURL(url)
 			end
 		end,
 		function(err)
-			if self:IsValid() and LocalPlayer() == self:GetPlayerOwner() and pace and pace.IsActive() then
+			if self:IsValid() and pac.LocalPlayer == self:GetPlayerOwner() and pace and pace.IsActive() then
 				if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
 					pace.MessagePrompt(err, "HTTP Request Failed for " .. url, "OK")
 				else

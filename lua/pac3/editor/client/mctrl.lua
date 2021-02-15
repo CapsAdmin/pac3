@@ -83,7 +83,7 @@ do -- pace
 
 	function mctrl.GetCameraFOV()
 		if pace.editing_viewmodel or pace.editing_hands then
-			return LocalPlayer():GetActiveWeapon().ViewModelFOV or 55
+			return pac.LocalPlayer:GetActiveWeapon().ViewModelFOV or 55
 		end
 
 		return pace.GetViewFOV()

@@ -536,7 +536,7 @@ concommand.Add("pac_convert_pac2_outfits", function()
 		local owner_nick = file.Read("pac2_outfits/" .. uniqueid .. "/__owner.txt", "DATA")
 
 		if not owner_nick then
-			owner_nick = LocalPlayer():Nick()
+			owner_nick = pac.LocalPlayer:Nick()
 			pac.Message("garrysmod/data/pac2_outfits/" .. uniqueid .. "/__owner.txt does not exist (it contains the player nickname) defaulting to " .. owner_nick)
 		end
 

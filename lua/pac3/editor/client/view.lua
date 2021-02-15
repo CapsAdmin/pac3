@@ -13,7 +13,7 @@ acsfnc("Angles", Angle(0,0,0))
 acsfnc("FOV", 75)
 
 function pace.GetViewEntity()
-	return pace.ViewEntity:IsValid() and pace.ViewEntity or LocalPlayer()
+	return pace.ViewEntity:IsValid() and pace.ViewEntity or pac.LocalPlayer
 end
 
 function pace.ResetView()

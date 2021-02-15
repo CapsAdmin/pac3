@@ -14,7 +14,7 @@ function test.Run(done)
 
 	assert(table.Count(pac.GetLocalParts()) == 0)
 
-	local part = pac.CreatePart("group", LocalPlayer())
+	local part = pac.CreatePart("group")
 	local model = part:CreatePart("model")
 	assert(table.Count(pac.GetLocalParts()) == 2)
 

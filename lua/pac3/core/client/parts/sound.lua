@@ -191,7 +191,7 @@ function PART:SetPath(path)
 		end
 		stream.OnError =  function(_, err, info)
 			info = info or "unknown error"
-			if self:IsValid() and LocalPlayer() == self:GetPlayerOwner() and pace and pace.IsActive() then
+			if self:IsValid() and pac.LocalPlayer == self:GetPlayerOwner() and pace and pace.IsActive() then
 				if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
 					pace.MessagePrompt(err .. "\n" .. info, "OGG error for" .. path, "OK")
 				else

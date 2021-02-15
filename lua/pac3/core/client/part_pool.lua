@@ -662,7 +662,6 @@ do -- drawing
 	pac.firstperson_parts = pac.firstperson_parts or {}
 	pac.EyePos = vector_origin
 	pac.drawn_entities = pac.drawn_entities or {}
-	pac.LocalPlayer = LocalPlayer()
 	pac.RealTime = 0
 	pac.FrameNumber = 0
 

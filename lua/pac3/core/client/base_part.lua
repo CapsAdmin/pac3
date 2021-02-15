@@ -796,7 +796,7 @@ do -- serializing
 	end
 
 	function PART:ToSaveTable()
-		if self:GetPlayerOwner() ~= LocalPlayer() then return end
+		if self:GetPlayerOwner() ~= pac.LocalPlayer then return end
 
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
@@ -863,7 +863,7 @@ do -- serializing
 		end
 
 		function PART:ToUndoTable()
-			if self:GetPlayerOwner() ~= LocalPlayer() then return end
+			if self:GetPlayerOwner() ~= pac.LocalPlayer then return end
 
 			local tbl = {self = {ClassName = self.ClassName}, children = {}}
 

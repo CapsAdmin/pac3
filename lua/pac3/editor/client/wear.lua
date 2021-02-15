@@ -44,7 +44,7 @@ do -- to server
 	end)
 
 	function pace.IsPartSendable(part, extra)
-		local allowed, reason = pac.CallHook("CanWearParts", LocalPlayer())
+		local allowed, reason = pac.CallHook("CanWearParts", pac.LocalPlayer)
 
 		if allowed == false then
 			return false
@@ -72,7 +72,7 @@ do -- to server
 	end
 
 	function pace.SendPartToServer(part, extra)
-		local allowed, reason = pac.CallHook("CanWearParts", LocalPlayer())
+		local allowed, reason = pac.CallHook("CanWearParts", pac.LocalPlayer)
 
 		if allowed == false then
 			pac.Message(reason or "the server doesn't want you to wear parts for some reason")
@@ -111,7 +111,7 @@ do -- to server
 		local data = {part = name, server_only = server_only, filter = filter}
 
 		if name == "__ALL__" then
-			pace.CallHook("RemoveOutfit", LocalPlayer())
+			pace.CallHook("RemoveOutfit", pac.LocalPlayer)
 		end
 
 		net.Start("pac_submit")
@@ -265,7 +265,7 @@ do
 	end
 
 	function pace.HandleReceivedData(data)
-		if data.owner ~= LocalPlayer() then
+		if data.owner ~= pac.LocalPlayer then
 			if not data.owner.pac_onuse_only then
 				data.owner.pac_onuse_only = true
 				-- if TRUE - hide outfit

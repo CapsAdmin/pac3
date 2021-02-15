@@ -57,6 +57,6 @@ function test.Run(done)
 		pac.RegisterPart(PART)
 	end
 
-	local root = pac.CreatePart("group", LocalPlayer())
+	local root = pac.CreatePart("group")
 	local part = root:CreatePart("test")
 end

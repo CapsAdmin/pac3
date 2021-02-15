@@ -237,7 +237,7 @@ pace.AddTool(L"import editor tool from file...", function()
 				local toolstr = file.Read("pac3_editor/tools/" .. toolfile,"DATA")
 				ctoolstr = [[pace.AddTool(L"]] .. toolfile .. [[", function(part, suboption) ]] .. toolstr .. " end)"
 				RunStringEx(ctoolstr, "pac_editor_import_tool")
-				LocalPlayer():ConCommand("pac_editor") --close and reopen editor
+				pac.LocalPlayer:ConCommand("pac_editor") --close and reopen editor
 			else
 				Derma_Message("File " .. "garrysmod/data/pac3_editor/tools/" .. toolfile .. " not found.","Error: File Not Found","OK")
 			end
@@ -255,7 +255,7 @@ pace.AddTool(L"import editor tool from url...", function()
 				local toolstr = body
 				ctoolstr = [[pace.AddTool(L"]] .. toolname .. [[", function(part, suboption)]] .. toolstr .. " end)"
 				RunStringEx(ctoolstr, "pac_editor_import_tool")
-				LocalPlayer():ConCommand("pac_editor") --close and reopen editor
+				pac.LocalPlayer:ConCommand("pac_editor") --close and reopen editor
 			end
 
 			pac.HTTPGet(toolurl,ToolDLSuccess,function(err)
@@ -549,7 +549,7 @@ elseif (CoreStatus == "RunThisCode") {
 
 		out = out .. str_footer
 
-		LocalPlayer():ChatPrint("PAC --> Code saved in your Expression 2 folder under [expression2/pac/" .. part:GetName() .. ".txt" .. "].")
+		pac.LocalPlayer:ChatPrint("PAC --> Code saved in your Expression 2 folder under [expression2/pac/" .. part:GetName() .. ".txt" .. "].")
 
 		return out
 	end
@@ -628,20 +628,20 @@ pace.AddTool(L"print part info", function(part)
 end)
 
 pace.AddTool(L"dump player submaterials", function()
-	local ply = LocalPlayer()
+	local ply = pac.LocalPlayer
 	for id,mat in pairs(ply:GetMaterials()) do
 		chat.AddText(("%d %s"):format(id,tostring(mat)))
 	end
 end)
 
 pace.AddTool(L"stop all custom animations", function()
-	pac.animations.StopAllEntityAnimations(LocalPlayer())
-	pac.animations.ResetEntityBoneMatrix(LocalPlayer())
+	pac.animations.StopAllEntityAnimations(pac.LocalPlayer)
+	pac.animations.ResetEntityBoneMatrix(pac.LocalPlayer)
 end)
 
 pace.AddTool(L"copy from faceposer tool", function(part, suboption)
 	local group = pac.CreatePart("group")
-	local ent = LocalPlayer()
+	local ent = pac.LocalPlayer
 
 	for i = 0, ent:GetFlexNum() - 1 do
 		local name = ent:GetFlexName(i)

@@ -37,7 +37,7 @@ do
 		pac.ShowEntityParts(ent)
 		pac.ForceRendering(true)
 
-		ent = ent or LocalPlayer()
+		ent = ent or pac.LocalPlayer
 		x = x or 0
 		y = y or 0
 		w = w or 64
@@ -124,7 +124,13 @@ function pac.SetupENT(ENT, owner)
 			return self:AttachPACSession(outfit, owner)
 		end
 
-		if (outfit.self.OwnerName == "viewmodel" or outfit.self.OwnerName == "hands") and self:IsWeapon() and self.Owner:IsValid() and self.Owner:IsPlayer() and self.Owner ~= LocalPlayer() then
+		if
+			(outfit.self.OwnerName == "viewmodel" or outfit.self.OwnerName == "hands") and
+			self:IsWeapon() and
+			self.Owner:IsValid() and
+			self.Owner:IsPlayer() and
+			self.Owner ~= pac.LocalPlayer
+		then
 			return
 		end
 

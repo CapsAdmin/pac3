@@ -886,7 +886,7 @@ do
 	end
 
 	function META:UpdateVolume3d()
-		if self.SourceEntity == LocalPlayer() and not self.SourceEntity:ShouldDrawLocalPlayer() then
+		if self.SourceEntity == pac.LocalPlayer and not pac.LocalPlayer:ShouldDrawLocalPlayer() then
 			self:UpdateVolumeFlat()
 			return
 		end

@@ -48,7 +48,7 @@ end
 
 if CLIENT then
 	pac.AddHook("InputMouseApply", "custom_movement", function(cmd, x,y, ang)
-		local ply = LocalPlayer()
+		local ply = pac.LocalPlayer
 		local self = ply.pac_movement
 		if not self then return end
 

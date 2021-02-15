@@ -5,13 +5,13 @@ local function equal(a,b, msg)
 end
 
 function test.Run(done)
-	local prev = LocalPlayer():GetModel()
-	local mdl = "models/combine_helicopter/helicopter_bomb01.mdl"
 	local owner = pac.LocalPlayer
+	local prev = owner:GetModel()
+	local mdl = "models/combine_helicopter/helicopter_bomb01.mdl"
 
 	if prev == mdl then
-		owner:SetModel(test.RunLuaOnServer("return Entity(" .. LocalPlayer():EntIndex() .. "):GetModel()"))
-		prev = LocalPlayer():GetModel()
+		owner:SetModel(test.RunLuaOnServer("return Entity(" .. owner:EntIndex() .. "):GetModel()"))
+		prev = owner:GetModel()
 		assert(prev ~= mdl, "something is wrong!!")
 	end
 

@@ -221,7 +221,7 @@ function PART:CompileCode()
 	local extra_lib =
 	{
 		print = function(...)
-			if self:GetPlayerOwner() == LocalPlayer() then
+			if self:GetPlayerOwner() == pac.LocalPlayer then
 				print(...)
 
 				local str = ""

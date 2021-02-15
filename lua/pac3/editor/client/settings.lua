@@ -7,7 +7,7 @@ function pace.OnToggleFocus(show_editor)
 end
 
 function pace.SetTPose(b)
-	local ply = LocalPlayer()
+	local ply = pac.LocalPlayer
 
 	if b then
 		ply.pace_tpose_last_sequence = ply:GetSequence()
@@ -25,7 +25,7 @@ function pace.SetTPose(b)
 		end
 
 		pac.AddHook("PrePlayerDraw", "pace_tpose", function(ply)
-			if ply ~= LocalPlayer() then return end
+			if ply ~= pac.LocalPlayer then return end
 
 			for i = 0, 16 do
 				ply:SetLayerSequence(i, 0)
@@ -36,7 +36,7 @@ function pace.SetTPose(b)
 		end)
 
 		pac.AddHook("UpdateAnimation", "pace_tpose", function()
-			local ply = LocalPlayer()
+			local ply = pac.LocalPlayer
 			ply:ClearPoseParameters()
 			reset_angles(ply)
 
@@ -49,7 +49,7 @@ function pace.SetTPose(b)
 		end)
 
 		pac.AddHook("CalcMainActivity", "pace_tpose", function(ply)
-			if ply == LocalPlayer() then
+			if ply == pac.LocalPlayer then
 				for i = 0, 16 do
 					ply:SetLayerSequence(i, 0)
 				end
