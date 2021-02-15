@@ -645,7 +645,7 @@ do
 			return func(self)
 		end
 
-		error("StringStream:readType: Couldn't read type " .. typeid)
+		error("StringStream:readType: Couldn't read type " .. tostring(typeid))
 	end
 end
 
