@@ -153,34 +153,32 @@ local function CalcDrag()
 		mult = 0.1
 	end
 
-	local origin = pac.LocalPlayer:GetPos()
+	local origin
+	local part = pace.current_part or NULL
 
-	if IsValid(pace.current_part) then
-
-		local owner = pace.current_part:GetOwner(true)
-
-		if owner == pac.WorldEntity and owner:IsValid() and pace.current_part:HasChildren() then
-			for key, child in ipairs(pace.current_part:GetChildren()) do
-				if child.GetDrawPosition then
-					origin = child:GetDrawPosition()
-					break
+	if IsValid(part) then
+		local owner = part:GetOwner(true)
+		if owner:IsValid() then
+			origin = owner:GetPos()
+			if owner == pac.WorldEntity then
+				if part:HasChildren() then
+					for key, child in ipairs(part:GetChildren()) do
+						if not child.NonPhysical then
+							part = child
+							break
+						end
+					end
 				end
 			end
-		else
-			if not owner:IsValid() then
-				owner = pac.LocalPlayer
-			end
-
-			if pace.current_part.GetDrawPosition then
-				origin = pace.current_part:GetDrawPosition()
-			else
-				origin = owner:GetPos()
-			end
 		end
+	end
 
-		if not origin or origin == WORLD_ORIGIN then
-			origin = pac.LocalPlayer:GetPos()
-		end
+	if not part.NonPhysical then
+		origin = part:GetDrawPosition()
+	end
+
+	if not origin or origin == WORLD_ORIGIN then
+		origin = pac.LocalPlayer:GetPos()
 	end
 
 	mult = mult * math.min(origin:Distance(pace.ViewPos) / 200, 3)
