@@ -163,7 +163,7 @@ local function CalcDrag()
 			if owner == pac.WorldEntity then
 				if part:HasChildren() then
 					for key, child in ipairs(part:GetChildren()) do
-						if not child.NonPhysical then
+						if child.GetDrawPosition then
 							part = child
 							break
 						end
@@ -173,7 +173,7 @@ local function CalcDrag()
 		end
 	end
 
-	if not part.NonPhysical then
+	if part.GetDrawPosition then
 		origin = part:GetDrawPosition()
 	end
 
