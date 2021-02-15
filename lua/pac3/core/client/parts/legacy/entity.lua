@@ -505,9 +505,7 @@ function PART:OnRemove()
 			pacx.SetEntitySizeMultiplierOnServer(ent)
 		end
 
-		if pacx.SetModelOnServer then
-			pacx.SetModelOnServer(ent)
-		end
+		pacx.SetModel(ent, nil, self:GetPlayerOwner())
 	end
 
 	if pacx and pacx.SetEntitySizeMultiplier then

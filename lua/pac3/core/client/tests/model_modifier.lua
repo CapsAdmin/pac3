@@ -1,31 +1,47 @@
+local function equal(a,b, msg)
+	if a ~= b then
+		error(tostring(a) .. " != " .. tostring(b) .. ": " .. msg, 2)
+	end
+end
+
 function test.Run(done)
 	local prev = LocalPlayer():GetModel()
-
-	local root = pac.CreatePart("group")
-	local entity = root:CreatePart("entity2")
-
 	local mdl = "models/combine_helicopter/helicopter_bomb01.mdl"
-	entity:SetModel(mdl)
+	local owner = pac.LocalPlayer
 
-	local owner = root:GetOwner()
+	if prev == mdl then
+		owner:SetModel(test.RunLuaOnServer("return Entity(" .. LocalPlayer():EntIndex() .. "):GetModel()"))
+		prev = LocalPlayer():GetModel()
+		assert(prev ~= mdl, "something is wrong!!")
+	end
 
-	assert(owner:GetModel() == mdl)
-	root:Remove()
-	assert(owner:GetModel() == prev)
+	for _, class in ipairs({"entity", "entity2"}) do
+		local root = pac.CreatePart("group")
+		local entity = root:CreatePart(class)
+
+		entity:SetModel(mdl)
+
+		equal(owner:GetModel(), mdl, " after "..class..":SetModel")
+		root:Remove()
+		equal(owner:GetModel(), prev, class.." after root is removed, the model should be reverted")
+	end
 
 	RunConsoleCommand("pac_modifier_model", "1")
+	repeat yield() until GetConVar("pac_modifier_model"):GetBool()
 
-	pacx.SetModelOnServer(owner, mdl)
+	pacx.SetModel(owner, mdl, owner)
 
-	assert(test.RunLuaOnServer("return Entity(" .. owner:EntIndex() .. "):GetModel()") == mdl)
+	equal(test.RunLuaOnServer("return Entity(" .. owner:EntIndex() .. "):GetModel()"), mdl, " server model differs")
 
 	RunConsoleCommand("pac_modifier_model", "0")
+	repeat yield() until not GetConVar("pac_modifier_model"):GetBool()
 
-	assert(test.RunLuaOnServer("return Entity(" .. owner:EntIndex() .. "):GetModel()") == prev)
+	equal(test.RunLuaOnServer("return Entity(" .. owner:EntIndex() .. "):GetModel()"), prev, " should be reverted")
 
-	pacx.SetModelOnServer(owner)
+	pacx.SetModel(owner, nil, owner)
 
 	RunConsoleCommand("pac_modifier_model", "1")
+	repeat yield() until GetConVar("pac_modifier_model"):GetBool()
 
 	done()
 end

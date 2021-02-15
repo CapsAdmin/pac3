@@ -79,9 +79,12 @@ function emut.MutateEntity(ply, class_name, ent, ...)
 	assert(emut.registered_mutators[class_name], "invalid mutator " .. class_name)
 	assert(IsValid(ent), "entity is invalid")
 
-	if not override_enabled then
-		if not emut.registered_mutators[class_name].cvar:GetBool() then
-			return
+	if SERVER then
+		if not override_enabled then
+			if not emut.registered_mutators[class_name].cvar:GetBool() then
+				pac.Message(ply, "tried to set size when it's disabled")
+				return false
+			end
 		end
 	end
 
@@ -107,7 +110,13 @@ function emut.MutateEntity(ply, class_name, ent, ...)
 	end
 
 	if CLIENT then
-		if not suppress_send_to_server then
+		if not emut.registered_mutators[class_name].cvar:GetBool() then
+			return false
+		end
+	end
+
+	if CLIENT then
+		if ply == LocalPlayer() and not suppress_send_to_server then
 			net.Start("pac_entity_mutator")
 				net.WriteString(class_name)
 				net.WriteEntity(ent)
@@ -126,6 +135,8 @@ function emut.MutateEntity(ply, class_name, ent, ...)
 			mutator:WriteArguments(...)
 		net.Broadcast(ply)
 	end
+
+	return true
 end
 
 function emut.RestoreMutations(ply, class_name, ent)
@@ -133,8 +144,13 @@ function emut.RestoreMutations(ply, class_name, ent)
 	assert(emut.registered_mutators[class_name], "invalid mutator " .. class_name)
 	assert(IsValid(ent), "entity is invalid")
 
-	if not emut.registered_mutators[class_name].cvar:GetBool() then
-		return
+
+	if SERVER then
+		if not override_enabled then
+			if not emut.registered_mutators[class_name].cvar:GetBool() then
+				return false
+			end
+		end
 	end
 
 	local mutator = ent.pac_mutations and ent.pac_mutations[class_name]
@@ -146,7 +162,13 @@ function emut.RestoreMutations(ply, class_name, ent)
 	end
 
 	if CLIENT then
-		if not suppress_send_to_server then
+		if not emut.registered_mutators[class_name].cvar:GetBool() then
+			return false
+		end
+	end
+
+	if CLIENT then
+		if ply == LocalPlayer() and not suppress_send_to_server then
 			net.Start("pac_entity_mutator")
 				net.WriteString(class_name)
 				net.WriteEntity(ent)
@@ -224,8 +246,10 @@ function emut.Register(meta)
 				local enable = meta.cvar:GetBool()
 
 				if enable then
+					pac.Message("entity modifier ", name, " is now enabled")
 					emut.EnableMutator()
 				else
+					pac.Message("entity modifier ", name, " is now disabled")
 					emut.DisableMutator()
 				end
 
@@ -314,6 +338,7 @@ if SERVER then
 end
 
 hook.Add("EntityRemoved", "pac_entity_mutators_left", function(ent)
+	if not ent:IsValid() then return end
 	if ent:IsPlayer() then
 		emut.RemoveMutationsForPlayer(ent)
 	else
