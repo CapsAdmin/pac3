@@ -7,6 +7,57 @@ end
 local sv_allowcslua = GetConVar('sv_allowcslua')
 local prefer_local_version = CreateClientConVar("pac_restart_prefer_local", "1")
 
+function _G.pac.ReloadParts()
+	local pacLocal = _G.pac
+
+	local _, dirs = file.Find("addons/*", "MOD")
+	for _, dir in ipairs(dirs) do
+		if file.Exists("addons/" .. dir .. "/lua/autorun/pac_editor_init.lua", "MOD") then
+			pacLocal.Message("found PAC3 in garrysmod/addons/" .. dir)
+			local old_include = _G.include
+
+			local function include(path, ...)
+				local new_path = path
+				if not file.Exists("addons/" .. dir .. "/lua/" .. path, "MOD") then
+					local src = debug.getinfo(2).source
+					local lua_dir = src:sub(2):match("(.+/)")
+					if lua_dir:StartWith("addons/" .. dir) then
+						lua_dir = lua_dir:match("addons/.-/lua/(.+)")
+					end
+					new_path = lua_dir .. path
+				end
+
+				if file.Exists("addons/" .. dir .. "/lua/" .. new_path, "MOD") then
+					local str = file.Read("addons/" .. dir .. "/lua/" .. new_path, "MOD")
+					if str then
+						local func = CompileString(str, "addons/" .. dir .. "/lua/" .. new_path)
+						if type(func) == "function" then
+							local res = {pcall(func, ...)}
+
+							if res[1] then
+								return unpack(res, 2)
+							end
+
+							pacLocal.Message("pac_restart: pcall error: " .. res[2])
+						else
+							pacLocal.Message("pac_restart: compile string error: " .. func)
+						end
+					end
+				end
+
+				return old_include(path, ...)
+			end
+
+			_G.include = include
+			local ok, err = pcall(function()
+				pac.LoadParts()
+			end)
+			_G.include = old_include
+			break
+		end
+	end
+end
+
 function _G.pac_Restart()
 	PAC_MDL_SALT = PAC_MDL_SALT + 1
 

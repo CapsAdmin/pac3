@@ -491,19 +491,16 @@ function pac.RemovePartsFromUniqueID(uid)
 end
 
 function pac.UpdatePartsWithMetatable(META)
-	-- update part functions only
-	-- updating variables might mess things up
+	print("reloading parts with template " .. META.ClassName)
 	for _, part in pairs(all_parts) do
-		for _, b_class_name in pairs(part.ClassNames) do
-
-			if META.ClassName == b_class_name then
-				for k, v in pairs(META) do
-					if type(v) == "function" then
-						part[k] = v
-					end
+		if META.ClassName == part.ClassName then
+			for k, v in pairs(META) do
+				-- update part functions only
+				-- updating variables might mess things up
+				if type(v) == "function" then
+					part[k] = v
 				end
 			end
-
 		end
 	end
 end

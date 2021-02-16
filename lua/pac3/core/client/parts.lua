@@ -69,15 +69,9 @@ function pac.CreatePart(name, owner, tbl)
 	return part
 end
 
+local reloading = false
+
 function pac.RegisterPart(META)
-
-	if META.Group == "experimental" then
-		-- something is up with the lua cache
-		-- file.Find("pac3/core/client/parts/*.lua", "LUA") will find the experimental parts as well
-		-- maybe because pac3 mounts the workshop version on server?
-		return
-	end
-
 	do
 		local enabled = pac.CreateClientConVarFast("pac_enable_" .. META.ClassName, "1", true, "boolean")
 		function META:IsEnabled()
@@ -86,18 +80,35 @@ function pac.RegisterPart(META)
 	end
 
 	META.__index = META
-
 	pac.registered_parts[META.ClassName] = META
 
 	if pac.UpdatePartsWithMetatable then
-		pac.UpdatePartsWithMetatable(META)
+
+		if PAC_RESTART or not Entity(1):IsPlayer() then return end
+
+		if not reloading then
+			reloading = true
+			pac.ReloadParts()
+			reloading = false
+		end
+
+		timer.Create("pac_reload", 0, 1, function()
+			for _, other_meta in pairs(pac.registered_parts) do
+				pac.UpdatePartsWithMetatable(other_meta)
+			end
+		end)
 	end
 end
 
 function pac.LoadParts()
+	print("loading all parts")
+
+	include("base_part.lua")
+	include("base_movable.lua")
+	include("base_drawable.lua")
+
 	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
 	for _, name in pairs(files) do
-		if name:EndsWith("2.lua") then continue end
 		include("pac3/core/client/parts/" .. name)
 	end
 
@@ -112,6 +123,3 @@ function pac.GetRegisteredParts()
 end
 
 
-include("base_part.lua")
-include("base_movable.lua")
-include("base_drawable.lua")

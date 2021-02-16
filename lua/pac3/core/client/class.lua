@@ -171,8 +171,10 @@ do
 		self.PART.ClassNames = self.PART.ClassNames or {}
 		table.insert(self.PART.ClassNames, self.PART.ClassName)
 
-		pac.RegisterPart(self.PART)
 		pac.PartTemplates[self.PART.ClassName] = self
+
+		pac.RegisterPart(self.PART)
+
 		return self
 	end
 
