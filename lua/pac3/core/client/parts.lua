@@ -82,13 +82,13 @@ function pac.RegisterPart(META)
 	META.__index = META
 	pac.registered_parts[META.ClassName] = META
 
-	if pac.UpdatePartsWithMetatable then
+	if pac.UpdatePartsWithMetatable and _G.pac_ReloadParts then
 
 		if PAC_RESTART or not Entity(1):IsPlayer() then return end
 
 		if not reloading then
 			reloading = true
-			pac.ReloadParts()
+			_G.pac_ReloadParts()
 			reloading = false
 		end
 

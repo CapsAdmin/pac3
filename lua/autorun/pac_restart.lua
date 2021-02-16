@@ -7,7 +7,7 @@ end
 local sv_allowcslua = GetConVar('sv_allowcslua')
 local prefer_local_version = CreateClientConVar("pac_restart_prefer_local", "1")
 
-function _G.pac.ReloadParts()
+function _G.pac_ReloadParts()
 	local pacLocal = _G.pac
 
 	local _, dirs = file.Find("addons/*", "MOD")
