@@ -494,12 +494,16 @@ function pac.UpdatePartsWithMetatable(META)
 	-- update part functions only
 	-- updating variables might mess things up
 	for _, part in pairs(all_parts) do
-		if part.ClassName == META.ClassName or META.ClassName == "base" then
-			for k, v in pairs(META) do
-				if type(v) == "function" then
-					part[k] = v
+		for _, b_class_name in pairs(part.ClassNames) do
+
+			if META.ClassName == b_class_name then
+				for k, v in pairs(META) do
+					if type(v) == "function" then
+						part[k] = v
+					end
 				end
 			end
+
 		end
 	end
 end

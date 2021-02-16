@@ -266,7 +266,7 @@ end
 function PANEL:IsExpanded()
 	local parent = self:GetParent():GetParent()
 
-	while IsValid(parent) and parent.m_bExpanded ~= nil do		
+	while IsValid(parent) and parent.m_bExpanded ~= nil do
 		if parent.m_bExpanded == false then
 			return false
 		end
@@ -555,7 +555,7 @@ function PANEL:SetupCopy(copy)
 
 end
 
-if Entity(1):IsPlayer() then
+if Entity(1):IsPlayer() and not PAC_RESTART then
 	pace.OpenEditor()
 	pace.RefreshTree(true)
 end

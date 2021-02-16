@@ -69,7 +69,7 @@ do
 			elseif input.IsKeyDown(KEY_RIGHT) then
 				pace.Call("VariableChanged", pace.current_part, "EditorExpand", true)
 			end
-			
+
 			if input.IsKeyDown(KEY_UP) or input.IsKeyDown(KEY_PAGEUP) then
 				local added_nodes = get_added_nodes(self)
 				local offset = input.IsKeyDown(KEY_PAGEUP) and 10 or 1
@@ -503,7 +503,7 @@ end
 pac.AddHook("pac_OnPartParent", "pace_refresh_tree_nodes", refresh)
 pac.AddHook("pac_OnPartCreated", "pace_refresh_tree_nodes", refresh)
 
-pac.AddHook("pace_OnVariableChanged", "pace_create_tree_nodes", function(part, key, val) 
+pac.AddHook("pace_OnVariableChanged", "pace_create_tree_nodes", function(part, key, val)
 	if key == "EditorExpand" then
 		local node = part.editor_node
 		if IsValid(node) then
@@ -525,7 +525,7 @@ function pace.RefreshTree(reset)
 	end
 end
 
-if Entity(1):IsPlayer() then
+if Entity(1):IsPlayer() and not PAC_RESTART then
 	pace.OpenEditor()
 	pace.RefreshTree(true)
 end

@@ -76,6 +76,7 @@ function _G.pac_Restart()
 		collectgarbage()
 	end
 
+	_G.PAC_RESTART = true
 
 	if not prefer_local_version:GetBool() then
 		pacLocal.Message("pac_restart: not reloading from local version")
@@ -171,6 +172,8 @@ function _G.pac_Restart()
 			end
 		end
 	end
+
+	_G.PAC_RESTART = nil
 
 	if editor_was_open then
 		pace.OpenEditor()

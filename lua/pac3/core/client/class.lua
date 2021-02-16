@@ -139,7 +139,7 @@ do
 			local part = pac.GetPartFromUniqueID(owner_id, uid)
 
 			if part:IsValid() then
-				self["Set" .. key](self, part)				
+				self["Set" .. key](self, part)
 			elseif uid ~= "" then
 				self.unresolved_uid_parts = self.unresolved_uid_parts or {}
 				self.unresolved_uid_parts[owner_id] = self.unresolved_uid_parts[owner_id] or {}
@@ -167,17 +167,23 @@ do
 	end
 
 	function META:Register()
+
+		self.PART.ClassNames = self.PART.ClassNames or {}
+		table.insert(self.PART.ClassNames, self.PART.ClassName)
+
 		pac.RegisterPart(self.PART)
 		pac.PartTemplates[self.PART.ClassName] = self
 		return self
 	end
 
 	function pac.PartTemplate(name)
-		local builder = {PART = {}}
-		builder.PART.Builder = builder
+		local builder
 
 		if name and pac.PartTemplates[name] then
 			builder = pac.CopyValue(pac.PartTemplates[name])
+		else
+			builder = {PART = {}}
+			builder.PART.Builder = builder
 		end
 
 		return setmetatable(builder, META), builder.PART
