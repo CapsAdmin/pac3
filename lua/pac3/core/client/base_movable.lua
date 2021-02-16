@@ -124,6 +124,10 @@ function PART:GetDrawPosition(bone_override, skip_cache)
 
 			ang = self:CalcAngles(ang) or ang
 
+			if not self.PositionOffset:IsZero() or not self.AngleOffset:IsZero() then
+				pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
+			end
+
 			self.last_drawpos = pos
 			self.last_drawang = ang
 

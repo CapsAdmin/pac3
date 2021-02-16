@@ -354,7 +354,6 @@ function pace.KillFocus(show_editor)
 	end
 end
 
-local drawProfileInfos = 0
 local textCol, drawBox
 local boxW, boxH
 
@@ -365,61 +364,6 @@ local function drawTimeBox(text, time, x, y)
 	surface.SetTextPos(x + 5, y)
 	surface.DrawText(str)
 	return y + RENDERSCORE_SIZE
-end
-
-local function PostRenderVGUI()
-	if drawProfileInfos ~= FrameNumber() then return end
-	local x, y = input.GetCursorPos()
-	x = x + 3
-	y = y + 3
-
-	surface.SetFont(pace.CurrentFont)
-
-	local part = pace.current_part
-	surface.SetTextColor(textCol)
-
-	if not IsValid(part) then return end
-	local selfTime = part.selfDrawTime
-	local selfTimeB = part.BuildBonePositionsRuntime
-	local selfTimeT = part.CThinkRuntime
-	local childTimeO = part.childrenOpaqueDrawTime or 0
-	local childTimeTD = part.childrenTranslucentDrawTime or 0
-	local childTimeB = part.BuildBonePositionsRuntimeChildren or 0
-	local childTimeT = part.CThinkRuntimeChildren or 0
-	local childTime = childTimeO + childTimeT + childTimeB + childTimeTD
-
-	part.childEditorAverageTime = Lerp(0.03, part.childEditorAverageTime or 0, childTime)
-	y = drawTimeBox("overall children render time", part.childEditorAverageTime * 1000, x, y)
-
-	if selfTime or selfTimeB or selfTimeT then
-		local selfTime2 = (selfTime or 0) + (selfTimeB or 0) + (selfTimeT + 0)
-		part.selfEditorAverageTime = Lerp(0.03, part.selfEditorAverageTime or 0, selfTime2)
-		y = drawTimeBox("overall part render time", part.selfEditorAverageTime * 1000, x, y)
-	end
-
-	if selfTime then
-		part.selfEditorAverageTimeR = Lerp(0.03, part.selfEditorAverageTimeR or 0, selfTime)
-		y = drawTimeBox("part draw time", part.selfEditorAverageTimeR * 1000, x, y)
-	end
-
-	if selfTimeT then
-		part.selfEditorAverageTimeT = Lerp(0.03, part.selfEditorAverageTimeT or 0, selfTimeT)
-		y = drawTimeBox("part think time", part.selfEditorAverageTimeT * 1000, x, y)
-	end
-
-	if selfTimeB then
-		part.selfEditorAverageTimeB = Lerp(0.03, part.selfEditorAverageTimeB or 0, selfTimeB)
-		y = drawTimeBox("part bones time", part.selfEditorAverageTimeB * 1000, x, y)
-	end
-
-	part.childEditorAverageTimeTD = Lerp(0.03, part.childEditorAverageTimeTD or 0, childTimeTD + childTimeO)
-	y = drawTimeBox("overall children draw time", part.childEditorAverageTimeTD * 1000, x, y)
-
-	part.childEditorAverageTimeT = Lerp(0.03, part.childEditorAverageTimeT or 0, childTimeT)
-	y = drawTimeBox("overall children think time", part.childEditorAverageTimeT * 1000, x, y)
-
-	part.childEditorAverageTimeB = Lerp(0.03, part.childEditorAverageTimeB or 0, childTimeB)
-	y = drawTimeBox("overall children bones time", part.childEditorAverageTimeB * 1000, x, y)
 end
 
 function PANEL:PaintOver(w, h)
@@ -437,10 +381,6 @@ function PANEL:PaintOver(w, h)
 
 	local mx, my = input.GetCursorPos()
 	local cx, cy = self:LocalToScreen(x, y)
-
-	if cx <= mx and cy <= my and mx <= cx + w - 5 and my <= cy + RENDERSCORE_SIZE - 1 and self:IsChildHovered() then
-		drawProfileInfos = FrameNumber()
-	end
 
 	surface.SetFont(pace.CurrentFont)
 
@@ -471,5 +411,3 @@ function PANEL:Paint(w,h)
 end
 
 pace.RegisterPanel(PANEL)
-
-pac.AddHook('PostRenderVGUI', 'pac_DrawProfileInfos', PostRenderVGUI)

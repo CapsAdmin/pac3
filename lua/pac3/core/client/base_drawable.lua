@@ -10,23 +10,6 @@ local SysTime = SysTime
 
 local LocalToWorld = LocalToWorld
 
-local function SETUP_CACHE_FUNC(tbl, func_name)
-	local old_func = tbl[func_name]
-
-	local cached_key = "cached_" .. func_name
-	local cached_key2 = "cached_" .. func_name .. "_2"
-	local last_key = "last_" .. func_name .. "_framenumber"
-
-	tbl[func_name] = function(self, a,b,c,d,e)
-		if self[last_key] ~= pac.FrameNumber or self[cached_key] == nil then
-			self[cached_key], self[cached_key2] = old_func(self, a,b,c,d,e)
-			self[last_key] = pac.FrameNumber
-		end
-
-		return self[cached_key], self[cached_key2]
-	end
-end
-
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "base_drawable"
@@ -211,28 +194,17 @@ do -- drawing. this code is running every frame
 	--function PART:Draw(pos, ang, draw_type, isNonRoot)
 	function PART:Draw(pos, ang, draw_type)
 		-- Think takes care of polling this
+		if not self.OnDraw then return end
 		if not self.last_enabled then return end
 
 		if self:IsHidden() then return end
 
 		if
-			self.OnDraw and
-			(
-				draw_type == "viewmodel" or draw_type == "hands" or
-				((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
-				((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
-			)
+			draw_type == "viewmodel" or draw_type == "hands" or
+			((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
+			((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
+
 		then
-			local sysTime = SysTime()
-			pos, ang = self:GetDrawPosition()
-
-			self.cached_pos = pos
-			self.cached_ang = ang
-
-			if not self.PositionOffset:IsZero() or not self.AngleOffset:IsZero() then
-				pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
-			end
-
 			if not self.HandleModifiersManually then self:ModifiersPreEvent('OnDraw', draw_type) end
 
 			if self.IgnoreZ then cam.IgnoreZ(true) end
@@ -259,6 +231,11 @@ do -- drawing. this code is running every frame
 				render.PushFilterMag(TEXFILTER.POINT)
 			end
 
+			pos, ang = self:GetDrawPosition()
+
+			self.cached_pos = pos
+			self.cached_ang = ang
+
 			self:OnDraw(self:GetOwner(), pos, ang)
 
 			if self.NoTextureFiltering then
@@ -281,7 +258,6 @@ do -- drawing. this code is running every frame
 			if self.IgnoreZ then cam.IgnoreZ(false) end
 
 			if not self.HandleModifiersManually then self:ModifiersPostEvent('OnDraw', draw_type) end
-			self.selfDrawTime = SysTime() - sysTime
 		end
 	end
 end
