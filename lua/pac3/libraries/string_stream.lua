@@ -1,4 +1,3 @@
-local checkluatype = SF.CheckLuaType
 local math_huge = math.huge
 local math_frexp = math.frexp
 local math_ldexp = math.ldexp
