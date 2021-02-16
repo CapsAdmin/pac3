@@ -31,10 +31,6 @@ local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "base_movable"
 
-function PART:__tostring()
-	return string.format("%s[%s][%s][%i]", self.Type, self.ClassName, self.Name, self.Id)
-end
-
 BUILDER
 	:GetSet("BoneIndex")
 	:GetSet("PlayerOwner", NULL)

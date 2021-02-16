@@ -32,7 +32,7 @@ local BUILDER, PART = pac.PartTemplate()
 PART.ClassName = "base"
 
 function PART:__tostring()
-	return string.format("%s[%s][%s][%i]", self.Type, self.ClassName, self.Name, self.Id)
+	return string.format("part[%s][%s][%i]", self.ClassName, self:GetName(), self.Id)
 end
 
 BUILDER

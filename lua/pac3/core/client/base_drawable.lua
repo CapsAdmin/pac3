@@ -14,10 +14,6 @@ local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "base_drawable"
 
-function PART:__tostring()
-	return string.format("%s[%s][%s][%i]", self.Type, self.ClassName, self.Name, self.Id)
-end
-
 BUILDER
 	:GetSet("PlayerOwner", NULL)
 	:GetSet("Owner", NULL)
