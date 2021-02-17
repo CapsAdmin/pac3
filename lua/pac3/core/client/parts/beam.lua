@@ -96,7 +96,6 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("WidthBendSize", 1)
 		BUILDER:GetSet("TextureStretch", 1)
 		BUILDER:GetSet("TextureScroll", 0)
-		BUILDER:GetSet("UseEndpointOffsets", false)
 	BUILDER:SetPropertyGroup("orientation")
 	BUILDER:SetPropertyGroup("appearance")
 		BUILDER:GetSet("StartColor", Vector(255, 255, 255), {editor_panel = "color"})
@@ -197,24 +196,15 @@ end
 
 function PART:OnDraw(owner, pos, ang)
 	local part = self.EndPoint
-	if self.Materialm and self.StartColorC and self.EndColorC and part:IsValid() then
-
-		if not part.cached_pos or not part.cached_ang then return end
+	if self.Materialm and self.StartColorC and self.EndColorC and part:IsValid() and part.GetWorldPosition then
 
 		render.SetMaterial(self.Materialm)
-		--(veca, vecb, dira, dirb, bend, res, width, start_color, end_color, frequency, tex_stretch, width_bend, width_bend_size)
-		local opos = Vector(0,0,0)
-		local oang = Angle(0,0,0)
-		if self.UseEndpointOffsets then
-			opos, oang = LocalToWorld(part.PositionOffset,part.AngleOffset,part.cached_pos,part.cached_ang) - part.cached_pos, part.cached_ang
-		end
 		pac.DrawBeam(
-
 			pos,
-			part.cached_pos + opos,
+			part:GetWorldPosition(),
 
 			ang:Forward(),
-			(part.cached_ang + oang):Forward(),
+			part:GetWorldAngles():Forward(),
 
 			self.Bend,
 			math.Clamp(self.Resolution, 1, 256),

@@ -7,25 +7,7 @@ local Angle = Angle
 local Color = Color
 local NULL = NULL
 local SysTime = SysTime
-
-local LocalToWorld = LocalToWorld
-
-local function SETUP_CACHE_FUNC(tbl, func_name)
-	local old_func = tbl[func_name]
-
-	local cached_key = "cached_" .. func_name
-	local cached_key2 = "cached_" .. func_name .. "_2"
-	local last_key = "last_" .. func_name .. "_framenumber"
-
-	tbl[func_name] = function(self, a,b,c,d,e)
-		if self[last_key] ~= pac.FrameNumber or self[cached_key] == nil then
-			self[cached_key], self[cached_key2] = old_func(self, a,b,c,d,e)
-			self[last_key] = pac.FrameNumber
-		end
-
-		return self[cached_key], self[cached_key2]
-	end
-end
+local Matrix = Matrix
 
 local BUILDER, PART = pac.PartTemplate("base")
 
@@ -51,17 +33,33 @@ BUILDER
 
 PART.AllowSetupPositionFrameSkip = true
 
-local BaseClass_PreInitialize = PART.PreInitialize
-
-function PART:PreInitialize()
-	BaseClass_PreInitialize(self)
-
-	self.cached_pos = Vector(0,0,0)
-	self.cached_ang = Angle(0,0,0)
-end
-
-
 do -- bones
+	function PART:GetBonePosition()
+		local owner = self:GetOwner()
+		local parent = self:GetParent()
+
+		local bone = self.BoneOverride or self.Bone
+
+		if parent:IsValid() and parent.ClassName == "jiggle" then
+			return parent.pos, parent.ang
+		end
+
+		if parent:IsValid() and parent.GetDrawPosition then
+			local ent = parent.GetEntity and parent:GetEntity()
+			if ent:IsValid() then
+				-- if the parent part is a model, get the bone position of the parent model
+				return pac.GetBonePosAng(ent, bone)
+			else
+				-- else just get the origin of the part
+				-- unless we've passed it from parent
+				return parent:GetDrawPosition()
+			end
+		elseif owner:IsValid() then
+			-- if there is no parent, default to owner bones
+			return pac.GetBonePosAng(owner, bone)
+		end
+	end
+
 	function PART:SetBone(var)
 		self.Bone = var
 		self:ClearBone()
@@ -69,7 +67,6 @@ do -- bones
 
 	function PART:ClearBone()
 		self.BoneIndex = nil
-		self.TriedToFindBone = nil
 		local owner = self:GetOwner()
 		if owner:IsValid() then
 			owner.pac_bones = nil
@@ -103,86 +100,56 @@ do -- bones
 	end
 end
 
-function PART:GetDrawPosition(bone_override, skip_cache)
-	if not self.AllowSetupPositionFrameSkip or pac.FrameNumber ~= self.last_drawpos_framenum or not self.last_drawpos or skip_cache then
-		self.last_drawpos_framenum = pac.FrameNumber
+function PART:BuildWorldMatrix(with_offsets)
+	local local_matrix = Matrix()
+	local_matrix:SetTranslation(self.Position)
+	local_matrix:SetAngles(self.Angles)
 
-		local owner = self:GetOwner()
-		if owner:IsValid() then
-			local pos, ang = self:GetBonePosition(bone_override, skip_cache)
-
-			pos, ang = LocalToWorld(
-				self.Position or Vector(),
-				self.Angles or Angle(),
-				pos or owner:GetPos(),
-				ang or owner:GetAngles()
-			)
-
-			ang = self:CalcAngles(ang) or ang
-
-			if not self.PositionOffset:IsZero() or not self.AngleOffset:IsZero() then
-				pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
-			end
-
-			self.last_drawpos = pos
-			self.last_drawang = ang
-
-			return pos, ang
-		end
+	if with_offsets then
+		local_matrix:Translate(self.PositionOffset)
+		local_matrix:Rotate(self.AngleOffset)
 	end
 
-	return self.last_drawpos, self.last_drawang
+	local world_matrix = Matrix()
+	local pos, ang = self:GetBonePosition()
+	if pos then
+		world_matrix:SetTranslation(pos)
+	end
+	if ang then
+		world_matrix:SetAngles(ang)
+	end
+
+	local m = world_matrix * local_matrix
+
+	m:SetAngles(self:CalcAngles(m:GetAngles()))
+
+	return m
 end
 
-function PART:GetBonePosition(bone_override, skip_cache)
-	if not self.AllowSetupPositionFrameSkip or pac.FrameNumber ~= self.last_bonepos_framenum or not self.last_bonepos or skip_cache then
-		self.last_bonepos_framenum = pac.FrameNumber
+function PART:GetWorldMatrixWithoutOffsets()
+	-- this is only used by the editor, no need to cache
+	return self:BuildWorldMatrix(false)
+end
 
-		local owner = self:GetOwner()
-		local parent = self:GetParent()
-
-		if parent:IsValid() and parent.ClassName == "jiggle" then
-			if skip_cache then
-				if parent.Translucent then
-					parent:Draw(nil, nil, "translucent")
-				else
-					parent:Draw(nil, nil, "opaque")
-				end
-			end
-
-			return parent.pos, parent.ang
-		end
-
-		local pos, ang
-
-		if parent:IsValid() and parent.GetDrawPosition then
-			local ent = parent.Entity or NULL
-
-			if ent:IsValid() then
-				-- if the parent part is a model, get the bone position of the parent model
-				if ent.pac_bone_affected ~= FrameNumber() then
-					ent:InvalidateBoneCache()
-				end
-
-				pos, ang = pac.GetBonePosAng(ent, bone_override or self.Bone)
-			else
-				-- else just get the origin of the part
-				-- unless we've passed it from parent
-				pos, ang = parent:GetDrawPosition()
-			end
-		elseif owner:IsValid() then
-			-- if there is no parent, default to owner bones
-			owner:InvalidateBoneCache()
-			pos, ang = pac.GetBonePosAng(owner, self.Bone)
-		end
-
-		self.last_bonepos = pos
-		self.last_boneang = ang
-
-		return pos, ang
+function PART:GetWorldMatrix()
+	if not self.WorldMatrix or pac.FrameNumber ~= self.last_framenumber then
+		self.last_framenumber = pac.FrameNumber
+		self.WorldMatrix = self:BuildWorldMatrix(true)
 	end
 
-	return self.last_bonepos, self.last_boneang
+	return self.WorldMatrix
+end
+
+function PART:GetWorldAngles()
+	return self:GetWorldMatrix():GetAngles()
+end
+
+function PART:GetWorldPosition()
+	return self:GetWorldMatrix():GetTranslation()
+end
+
+function PART:GetDrawPosition()
+	return self:GetWorldPosition(), self:GetWorldAngles()
 end
 
 -- since this is kind of like a hack I choose to have upper case names to avoid name conflicts with parts
@@ -196,22 +163,25 @@ pac.AimPartNames =
 }
 
 function PART:CalcAngles(ang)
+	if not self.WorldMatrix then return ang end
+
 	local owner = self:GetOwner(true)
+	local wpos = self.WorldMatrix:GetTranslation()
 
 	if pac.StringFind(self.AimPartName, "LOCALEYES_YAW", true, true) then
-		ang = (pac.EyePos - self.cached_pos):Angle()
+		ang = (pac.EyePos - wpos):Angle()
 		ang.p = 0
 		return self.Angles + ang
 	end
 
 	if pac.StringFind(self.AimPartName, "LOCALEYES_PITCH", true, true) then
-		ang = (pac.EyePos - self.cached_pos):Angle()
+		ang = (pac.EyePos - wpos):Angle()
 		ang.y = 0
 		return self.Angles + ang
 	end
 
 	if pac.StringFind(self.AimPartName, "LOCALEYES", true, true) then
-		return self.Angles + (pac.EyePos - self.cached_pos):Angle()
+		return self.Angles + (pac.EyePos - wpos):Angle()
 	end
 
 
@@ -219,21 +189,21 @@ function PART:CalcAngles(ang)
 		local ent = owner.pac_traceres and owner.pac_traceres.Entity or NULL
 
 		if ent:IsValid() then
-			return self.Angles + (ent:EyePos() - self.cached_pos):Angle()
+			return self.Angles + (ent:EyePos() - wpos):Angle()
 		end
 
-		return self.Angles + (pac.EyePos - self.cached_pos):Angle()
+		return self.Angles + (pac.EyePos - wpos):Angle()
 	end
 
-	if self.AimPart:IsValid() and self.AimPart.cached_pos then
-		return self.Angles + (self.AimPart.cached_pos - self.cached_pos):Angle()
+	if self.AimPart:IsValid() and self.AimPart.GetWorldPosition then
+		return self.Angles + (self.AimPart:GetWorldPosition() - wpos):Angle()
 	end
 
 	if self.EyeAngles then
 		if owner:IsPlayer() then
-			return self.Angles + ((owner.pac_hitpos or owner:GetEyeTraceNoCursor().HitPos) - self.cached_pos):Angle()
+			return self.Angles + ((owner.pac_hitpos or owner:GetEyeTraceNoCursor().HitPos) - wpos):Angle()
 		elseif owner:IsNPC() then
-			return self.Angles + ((owner:EyePos() + owner:GetForward() * 100) - self.cached_pos):Angle()
+			return self.Angles + ((owner:EyePos() + owner:GetForward() * 100) - wpos):Angle()
 		end
 	end
 

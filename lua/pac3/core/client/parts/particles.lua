@@ -121,7 +121,7 @@ function PART:CreateEmitter()
 	self.Created = pac.RealTime + 0.1
 
 	if self.last_3d ~= self["3D"] then
-		self.emitter = ParticleEmitter(self.cached_pos, self["3D"])
+		self.emitter = ParticleEmitter(self:GetWorldPosition(), self["3D"])
 		self.last_3d = self["3D"]
 	end
 end

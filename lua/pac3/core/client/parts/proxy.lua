@@ -64,7 +64,7 @@ function PART:GetTarget(physical)
 		repeat
 			if not parent.Parent:IsValid() then break end
 			parent = parent.Parent
-		until parent.cached_pos and not parent.cached_pos:IsZero()
+		until parent.GetWorldPosition and not parent:GetWorldPosition():IsZero()
 
 		return parent
 	end
@@ -126,9 +126,11 @@ function PART:CalcVelocity()
 end
 
 function PART:GetVelocity(part)
-	local pos = part.cached_pos
+	local pos
 
-	if not pos or pos == Vector() then
+	if part.GetWorldPosition then
+		pos = part:GetWorldPosition()
+	else
 		if IsEntity(part) then
 			pos = part:GetPos()
 		elseif part:GetOwner():IsValid() then
@@ -188,8 +190,9 @@ PART.Inputs = {
 	end,
 
 	visible = function(s, p, radius)
+		if not p.GetWorldPosition then return 0 end
 		p.proxy_pixvis = p.proxy_pixvis or util.GetPixelVisibleHandle()
-		return util.PixelVisible(p.cached_pos, radius or 16, p.proxy_pixvis) or 0
+		return util.PixelVisible(p:GetWorldPosition(), radius or 16, p.proxy_pixvis) or 0
 	end,
 
 	time = RealTime,
@@ -212,7 +215,9 @@ PART.Inputs = {
 	end,
 
 	eye_position_distance = function(self, parent)
-		local pos = parent.cached_pos
+		if not parent.GetWorldPosition then return 0 end
+
+		local pos = parent:GetWorldPosition()
 
 		if not parent.GetDrawPosition then
 			local owner = parent:GetOwner(self.RootOwner)
@@ -224,7 +229,9 @@ PART.Inputs = {
 		return pos:Distance(pac.EyePos)
 	end,
 	eye_angle_distance = function(self, parent)
-		local pos = parent.cached_pos
+		if not parent.GetWorldPosition then return 0 end
+
+		local pos = parent:GetWorldPosition()
 
 		if not parent.GetDrawPosition then
 			local owner = parent:GetOwner(self.RootOwner)
@@ -421,6 +428,7 @@ PART.Inputs = {
 
 		if owner:IsValid() then
 			local vel = self:GetVelocity(owner):Length()
+			print(vel, owner)
 			self.ov_length_i = (self.ov_length_i or 0) + vel * FrameTime()
 			return self.ov_length_i
 		end
@@ -513,20 +521,20 @@ PART.Inputs = {
 	end,
 	parent_velocity_forward = function(self, parent)
 		parent = self:GetTarget(true)
-		if parent.cached_ang then
-			return -parent.cached_ang:Forward():Dot(self:GetVelocity(parent))
+		if parent.GetWorldAngles then
+			return -parent:GetWorldAngles():Forward():Dot(self:GetVelocity(parent))
 		end
 	end,
 	parent_velocity_right = function(self, parent)
 		parent = self:GetTarget(true)
-		if parent.cached_ang then
-			return parent.cached_ang:Right():Dot(self:GetVelocity(parent))
+		if parent.GetWorldAngles then
+			return parent:GetWorldAngles():Right():Dot(self:GetVelocity(parent))
 		end
 	end,
 	parent_velocity_up = function(self, parent)
 		parent = self:GetTarget(true)
-		if parent.cached_ang then
-			return parent.cached_ang:Up():Dot(self:GetVelocity(parent))
+		if parent.GetWorldAngles then
+			return parent:GetWorldAngles():Up():Dot(self:GetVelocity(parent))
 		end
 	end,
 
@@ -589,51 +597,41 @@ PART.Inputs = {
 	end,
 
 	light_amount_r = function(self, parent)
-		if parent:IsValid() then
-			local v = render.GetLightColor(parent.cached_pos):ToColor().r
+		if not parent.GetWorldPosition then return 0 end
 
-			if parent.ProperColorRange then
-				return v / 255
-			end
+		local v = render.GetLightColor(parent:GetWorldPosition()):ToColor().r
 
-			return v
+		if parent.ProperColorRange then
+			return v / 255
 		end
 
-		return 0
+		return v
 	end,
 	light_amount_g = function(self, parent)
-		if parent:IsValid() then
-			local v = render.GetLightColor(parent.cached_pos):ToColor().g
+		local v = render.GetLightColor(parent:GetWorldPosition()):ToColor().g
 
-			if parent.ProperColorRange then
-				return v / 255
-			end
-
-			return v
+		if parent.ProperColorRange then
+			return v / 255
 		end
 
-		return 0
+		return v
 	end,
 	light_amount_b = function(self, parent)
-		if parent:IsValid() then
-			local v = render.GetLightColor(parent.cached_pos):ToColor().b
+		if not parent.GetWorldPosition then return 0 end
 
-			if parent.ProperColorRange then
-				return v / 255
-			end
+		local v = render.GetLightColor(parent:GetWorldPosition()):ToColor().b
 
-			return v
+		if parent.ProperColorRange then
+			return v / 255
 		end
 
-		return 0
+		return v
 	end,
 	light_value = function(self, parent)
-		if parent:IsValid() then
-			local h, s, v = ColorToHSV(render.GetLightColor(parent.cached_pos):ToColor())
-			return v
-		end
+		if not parent.GetWorldPosition then return 0 end
 
-		return 0
+		local h, s, v = ColorToHSV(render.GetLightColor(parent:GetWorldPosition()):ToColor())
+		return v
 	end,
 
 	ambient_light_r = function(self, parent)

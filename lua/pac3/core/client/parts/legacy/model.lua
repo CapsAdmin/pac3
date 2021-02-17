@@ -263,9 +263,6 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		if not self.skip_orient then
 			ent:SetPos(pos)
 			ent:SetAngles(ang)
-		else
-			self.cached_pos = pos
-			self.cached_ang = ang
 		end
 	end
 

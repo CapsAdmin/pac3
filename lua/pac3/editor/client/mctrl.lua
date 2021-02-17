@@ -48,8 +48,9 @@ do -- pace
 		local part = mctrl.GetTarget()
 
 		if part:IsValid() then
-			if part.GetDrawPosition then
-				return part:GetDrawPosition()
+			if part.GetWorldMatrixWithoutOffsets then
+				local m = part:GetWorldMatrixWithoutOffsets()
+				return m:GetTranslation(), m:GetAngles()
 			elseif part.centrePos then
 				return part.centrePos + part.centrePosMV, part.centreAngle
 			else
@@ -142,7 +143,7 @@ do -- pace
 
 		if not part:IsValid() then return 3 end
 
-		local dist = (part.cached_pos:Distance(pace.GetViewPos()) / 50)
+		local dist = (part:GetWorldPosition():Distance(pace.GetViewPos()) / 50)
 
 		if dist > 1 then
 			dist = 1 / dist

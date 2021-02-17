@@ -68,9 +68,6 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSetPart("EyeTarget")
 BUILDER:EndStorableVars()
 
-BUILDER:RemoveProperty("PositionOffset")
-BUILDER:RemoveProperty("AngleOffset")
-
 local ent_fields = {}
 
 local function ENTFIELD(PART, name, field)
@@ -321,17 +318,17 @@ function PART:OnShow()
 					local modpos = not self.Position:IsZero() or not self.Angles:IsZero()
 					local pos
 
+					self.BoneOverride = nil
+
 					if modpos then
 						pos = ent:GetPos()
 
-						self.cached_pos, self.cached_ang = self:GetDrawPosition(not self.Weapon and "none" or nil)
+						self.BoneOverride = "none"
 
-						ent:SetPos(self.cached_pos)
-						ent:SetRenderAngles(self.cached_ang)
+						local pos, ang = self:GetDrawPosition()
+						ent:SetPos(pos)
+						ent:SetRenderAngles(ang)
 						ent:SetupBones()
-					else
-						self.cached_pos = ent:GetPos()
-						self.cached_ang = ent:GetAngles()
 					end
 
 					ent:SetSkin(self.Skin)
@@ -344,8 +341,8 @@ function PART:OnShow()
 
 					ent.pac_bodygroups_torender = nil
 
-					if self.EyeTarget.cached_pos then
-						ent:SetEyeTarget(self.EyeTarget.cached_pos)
+					if self.EyeTarget.GetWorldPosition then
+						ent:SetEyeTarget(self.EyeTarget:GetWorldPosition())
 					end
 
 					ent:DrawModel()

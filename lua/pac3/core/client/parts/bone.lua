@@ -93,15 +93,7 @@ end
 
 function PART:GetBonePosition()
 	local owner = self:GetOwner()
-	local pos, ang
-
-	pos, ang = pac.GetBonePosAng(owner, self.Bone, true)
-	if owner:IsValid() then owner:InvalidateBoneCache() end
-
-	self.cached_pos = pos
-	self.cached_ang = ang
-
-	return pos, ang
+	return pac.GetBonePosAng(owner, self.Bone, true)
 end
 
 local function manpos(ent, id, pos, part)
@@ -171,14 +163,14 @@ function pac.build_bone_callback(ent)
 			if part:IsValid() then
 				local mat = ent:GetBoneMatrix(data.bone)
 				if mat then
-					if part.FollowPart:IsValid() then
-						local _, angles = LocalToWorld(Vector(), part.Angles + part.AngleOffset, Vector(), part.FollowPart.cached_ang)
-						if part.FollowAnglesOnly then
-							mat:SetAngles(angles)
-						else
-							mat:SetTranslation(part.Position + part.PositionOffset + part.FollowPart.cached_pos)
-							mat:SetAngles(angles)
+					if part.FollowPart:IsValid() and part.FollowPart.GetWorldPosition then
+
+						mat:SetAngles(part.FollowPart:GetWorldAngles())
+
+						if not part.FollowAnglesOnly then
+							mat:SetTranslation(part.FollowPart:GetWorldPosition())
 						end
+
 					else
 						if data.pos then
 							mat:Translate(data.pos)

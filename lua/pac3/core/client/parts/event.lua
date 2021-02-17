@@ -39,11 +39,15 @@ local function convert_angles(self, ang)
 end
 
 local function calc_velocity(part)
-	local diff = part.cached_pos - (part.last_pos or Vector(0, 0, 0))
-	part.last_pos = part.cached_pos
+	if not part.GetWorldPosition then
+		return vector_origin
+	end
+
+	local diff = part:GetWorldPosition() - (part.last_pos or Vector(0, 0, 0))
+	part.last_pos = part:GetWorldPosition()
 
 	part.last_vel_smooth = part.last_vel_smooth or Vector(0, 0, 0)
-	part.last_vel_smooth = part.last_vel_smooth + (diff - part.last_vel_smooth) * FrameTime() * 4
+	part.last_vel_smooth = part.last_vel_smooth + (part:GetWorldPosition() - part.last_vel_smooth) * FrameTime() * 4
 
 	return part.last_vel_smooth
 end
@@ -425,13 +429,13 @@ PART.OldEvents = {
 		callback = function(self, ent, compare, distance)
 			local parent = self:GetParentEx()
 
-			if parent:IsValid() then
+			if parent:IsValid() and parent.GetWorldPosition then
 				distance = distance or 1
 				compare = compare or 0
 
 				local res = util.TraceLine({
-					start = parent.cached_pos,
-					endpos = parent.cached_pos + parent.cached_ang:Forward() * distance,
+					start = parent:GetWorldPosition(),
+					endpos = parent:GetWorldPosition() + parent:GetWorldAngles():Forward() * distance,
 					filter = ent,
 				})
 
@@ -923,8 +927,8 @@ PART.OldEvents = {
 				parent = parent:GetParent()
 			end
 
-			if parent:IsValid() then
-				return self:NumberOperator(parent.cached_ang:Forward():Dot(calc_velocity(parent)), speed)
+			if parent:IsValid() and parent.GetWorldAngles then
+				return self:NumberOperator(parent:GetWorldAngles():Forward():Dot(calc_velocity(parent)), speed)
 			end
 
 			return 0
@@ -939,8 +943,8 @@ PART.OldEvents = {
 				parent = parent:GetParent()
 			end
 
-			if parent:IsValid() then
-				return self:NumberOperator(parent.cached_ang:Right():Dot(calc_velocity(parent)), speed)
+			if parent:IsValid() and parent.GetWorldAngles then
+				return self:NumberOperator(parent:GetWorldAngles():Right():Dot(calc_velocity(parent)), speed)
 			end
 
 			return 0
@@ -955,8 +959,8 @@ PART.OldEvents = {
 				parent = parent:GetParent()
 			end
 
-			if parent:IsValid() then
-				return self:NumberOperator(parent.cached_ang:Up():Dot(calc_velocity(parent)), speed)
+			if parent:IsValid() and parent.GetWorldAngles then
+				return self:NumberOperator(parent:GetWorldAngles():Up():Dot(calc_velocity(parent)), speed)
 			end
 
 			return 0

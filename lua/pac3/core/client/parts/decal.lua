@@ -25,8 +25,6 @@ end
 
 function PART:OnShow()
 	local pos, ang = self:GetDrawPosition()
-	self.cached_pos = pos
-	self.cached_ang = ang
 	if self.Materialm then
 		local filter
 		if self.IgnoreOwner then

@@ -105,14 +105,25 @@ local params = {}
 
 function PART:OnThink()
 
+	if self.Parent.GetWorldPosition then
+		if self.disabled then
+			self:Enable()
+		end
+	else
+		if not self.disabled then
+			self:Disable()
+		end
+	end
+
+
 	local phys = self.phys
 
 	if phys:IsValid() then
 		phys:Wake()
 
 		if self.Follow then
-			params.pos = self.Parent.cached_pos
-			params.angle  = self.Parent.cached_ang
+			params.pos = self.Parent:GetWorldPosition()
+			params.angle  = self.Parent:GetWorldAngles()
 
 			params.secondstoarrive = math.max(self.SecondsToArrive, 0.0001)
 			params.maxangular = self.MaxAngular
@@ -127,15 +138,15 @@ function PART:OnThink()
 
 
 			-- this is nicer i think
-			if self.ConstrainSphere ~= 0 and phys:GetPos():Distance(self.Parent.cached_pos) > self.ConstrainSphere then
-				phys:SetPos(self.Parent.cached_pos + (self.Parent.cached_pos - phys:GetPos()):GetNormalized() * -self.ConstrainSphere)
+			if self.ConstrainSphere ~= 0 and phys:GetPos():Distance(self.Parent:GetWorldPosition()) > self.ConstrainSphere then
+				phys:SetPos(self.Parent:GetWorldPosition() + (self.Parent:GetWorldPosition() - phys:GetPos()):GetNormalized() * -self.ConstrainSphere)
 			end
 		else
 			if self.ConstrainSphere ~= 0 then
-				local offset = self.Parent.cached_pos - phys:GetPos()
+				local offset = self.Parent:GetWorldPosition() - phys:GetPos()
 
 				if offset:Length() > self.ConstrainSphere then
-					phys:SetPos(self.Parent.cached_pos - offset:GetNormalized() * self.ConstrainSphere)
+					phys:SetPos(self.Parent:GetWorldPosition() - offset:GetNormalized() * self.ConstrainSphere)
 					phys:SetVelocity(Vector())
 				end
 			end
@@ -177,6 +188,8 @@ function PART:Enable()
 		self["Set" .. key](self, self[key])
 		::CONTINUE::
 	end
+
+	self.disabled = false
 end
 
 function PART:Disable()
@@ -191,6 +204,8 @@ function PART:Disable()
 		ent:PhysicsInit(SOLID_NONE)
 	end
 	part.skip_orient = false
+
+	self.disabled = true
 end
 
 function PART:SetPositionDamping(num)

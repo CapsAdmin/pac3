@@ -280,9 +280,6 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		if not self.skip_orient then
 			ent:SetPos(pos)
 			ent:SetAngles(ang)
-		else
-			self.cached_pos = pos
-			self.cached_ang = ang
 		end
 	end
 
@@ -306,14 +303,14 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		end
 	end
 
-	if self.EyeTarget.cached_pos then
+	if self.EyeTarget.GetWorldPosition then
 		if self.ClassName == "model2" then
 			local attachment = ent:GetAttachment( ent:LookupAttachment( "eyes" ) )
 			if attachment then
-				ent:SetEyeTarget(WorldToLocal( self.EyeTarget.cached_pos, self.EyeTarget.cached_ang, attachment.Pos, attachment.Ang ))
+				ent:SetEyeTarget(WorldToLocal( self.EyeTarget:GetWorldPosition(), self.EyeTarget.cached_ang, attachment.Pos, attachment.Ang ))
 			end
 		else
-			ent:SetEyeTarget(self.EyeTarget.cached_pos)
+			ent:SetEyeTarget(self.EyeTarget:GetWorldPosition())
 		end
 	end
 end

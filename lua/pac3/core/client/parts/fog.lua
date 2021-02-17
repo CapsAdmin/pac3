@@ -56,7 +56,7 @@ function PART:PreOnDraw()
 
 	if self.Height > 0 then
 		render_FogMode(MATERIAL_FOG_LINEAR_BELOW_FOG_Z)
-		render_SetFogZ(self.cached_pos.z + self.Height * 10)
+		render_SetFogZ(self:GetWorldPosition().z + self.Height * 10)
 	else
 		render_FogMode(MATERIAL_FOG_LINEAR)
 	end

@@ -229,9 +229,6 @@ do -- drawing. this code is running every frame
 
 			pos, ang = self:GetDrawPosition()
 
-			self.cached_pos = pos
-			self.cached_ang = ang
-
 			self:OnDraw(self:GetOwner(), pos, ang)
 
 			if self.NoTextureFiltering then
