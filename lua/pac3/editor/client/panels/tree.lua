@@ -478,7 +478,9 @@ end
 pace.RegisterPanel(PANEL)
 
 local function remove_node(part)
-	if (part.pace_tree_node or NULL):IsValid() and part:GetRootPart().show_in_editor ~= false then
+	if part:GetRootPart().show_in_editor == false then return end
+
+	if (part.pace_tree_node or NULL):IsValid() then
 		part.pace_tree_node:SetForceShowExpander()
 		part.pace_tree_node:GetRoot().m_pSelectedItem = nil
 		part.pace_tree_node:Remove()
@@ -488,18 +490,16 @@ end
 
 pac.AddHook("pac_OnPartRemove", "pace_remove_tree_nodes", remove_node)
 
-local function refresh(part, localplayer)
-	if localplayer and part:GetRootPart().show_in_editor ~= false then
-		pace.RefreshTree(true)
-	end
-end
-pac.AddHook("pac_OnWoreOutfit", "pace_refresh_tree_nodes", refresh)
-
 local function refresh(part)
-	if part:GetRootPart().show_in_editor ~= false then
+	timer.Simple(0, function()
+		if not part:IsValid() then return end
+		if part:GetRootPart().show_in_editor == false then return end
+
 		pace.RefreshTree(true)
-	end
+	end)
 end
+
+pac.AddHook("pac_OnWoreOutfit", "pace_refresh_tree_nodes", refresh)
 pac.AddHook("pac_OnPartParent", "pace_refresh_tree_nodes", refresh)
 pac.AddHook("pac_OnPartCreated", "pace_refresh_tree_nodes", refresh)
 
