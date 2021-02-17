@@ -59,9 +59,8 @@ end
 PART.ThinkTime = 0
 
 function PART:OnShow()
-	self.BoneIndex = nil
+	self:SetBone(self:GetBone())
 end
-
 PART.OnParent = PART.OnShow
 
 function PART:GetOwner(root)
@@ -96,7 +95,6 @@ function PART:GetBonePosition()
 	local pos, ang
 
 	pos, ang = pac.GetBonePosAng(owner, self.Bone, true)
-	if owner:IsValid() then owner:InvalidateBoneCache() end
 
 	return pos, ang
 end
@@ -155,8 +153,11 @@ local function scale_children(owner, id, scale, origin, ownerScale)
 		::CONTINUE::
 	end
 end
-
+local in_build = false
 function pac.build_bone_callback(ent)
+	if in_build then return end
+
+	in_build = true
 	if ent.pac_matrixhack then
 		pac.LegacyScale(ent)
 	end
@@ -168,7 +169,7 @@ function pac.build_bone_callback(ent)
 			if part:IsValid() then
 				local mat = ent:GetBoneMatrix(data.bone)
 				if mat then
-					if part.FollowPart:IsValid() and part.FollowPart:GetWorldAngles() and part.FollowPart:GetWorldPosition() then
+					if part.FollowPart:IsValid() and part.FollowPart.GetWorldAngles and part.FollowPart.GetWorldPosition then
 						if part.FollowAnglesOnly then
 							local pos = mat:GetTranslation()
 							mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart:GetWorldAngles())
@@ -203,6 +204,7 @@ function pac.build_bone_callback(ent)
 			end
 		end
 	end
+	in_build = false
 end
 
 function PART:OnBuildBonePositions()
@@ -210,19 +212,15 @@ function PART:OnBuildBonePositions()
 
 	if not owner:IsValid() then return end
 
-	if self.last_model ~= owner:GetModel() then
-		self.BoneIndex = nil
-		self.last_model = owner:GetModel()
-	end
+	local index = self:GetModelBoneIndex()
+	if not index then return end
 
-
-	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone)) or 0
 
 	owner.pac_bone_setup_data = owner.pac_bone_setup_data or {}
 
 	if self.AlternativeBones or self.ScaleChildren or self.FollowPart:IsValid() then
 		owner.pac_bone_setup_data[self.UniqueID] = owner.pac_bone_setup_data[self.UniqueID] or {}
-		owner.pac_bone_setup_data[self.UniqueID].bone = self.BoneIndex
+		owner.pac_bone_setup_data[self.UniqueID].bone = index
 		owner.pac_bone_setup_data[self.UniqueID].part = self
 	else
 		owner.pac_bone_setup_data[self.UniqueID] = nil
@@ -241,8 +239,8 @@ function PART:OnBuildBonePositions()
 			ang.y = -ang.p
 		end
 
-		manpos(owner, self.BoneIndex, self.Position + self.PositionOffset, self)
-		manang(owner, self.BoneIndex, ang + self.AngleOffset, self)
+		manpos(owner, index, self.Position + self.PositionOffset, self)
+		manang(owner, index, ang + self.AngleOffset, self)
 	end
 
 	if owner.pac_bone_setup_data[self.UniqueID] then
@@ -253,7 +251,7 @@ function PART:OnBuildBonePositions()
 		end
 	end
 
-	owner:ManipulateBoneJiggle(self.BoneIndex, type(self.Jiggle) == "number" and self.Jiggle or (self.Jiggle and 1 or 0)) -- afaik anything but 1 is not doing anything at all
+	owner:ManipulateBoneJiggle(index, type(self.Jiggle) == "number" and self.Jiggle or (self.Jiggle and 1 or 0)) -- afaik anything but 1 is not doing anything at all
 
 	local scale
 
@@ -266,7 +264,7 @@ function PART:OnBuildBonePositions()
 			local count = owner:GetBoneCount()
 
 			for i = 0, count - 1 do
-				if i ~= self.BoneIndex then
+				if i ~= index then
 					manscale(owner, i, inf_scale, self)
 				end
 			end
@@ -280,7 +278,7 @@ function PART:OnBuildBonePositions()
 		scale = self.Scale * self.Size
 	end
 
-	manscale(owner, self.BoneIndex, scale, self)
+	manscale(owner, index, scale, self)
 end
 
 BUILDER:Register()

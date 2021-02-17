@@ -167,9 +167,6 @@ function PART:OnShow()
 
 	if ent:IsValid() and owner:IsValid() and owner ~= ent then
 		ent:SetPos(owner:EyePos())
-		--ent:SetParent(owner)
-		--ent:SetOwner(owner)
-		self.BoneIndex = nil
 
 		if self.OwnerEntity then
 			self:SetOwnerEntity(self.OwnerEntity)
@@ -538,7 +535,7 @@ end
 
 local function set_mesh(part, mesh)
 	part.Mesh = mesh
-	part.Entity.pac_bones = nil
+	pac.ResetBoneCache(part.Entity)
 
 	if not part.Materialm then
 		part.Materialm = Material("error")
@@ -573,7 +570,7 @@ do
 				if self:IsValid() and self:GetEntity():IsValid() then
 					local ent = self:GetEntity()
 					self.loading = nil
-					ent.pac_bones = nil
+					pac.ResetBoneCache(ent)
 					ent:SetModel(path)
 				end
 			end, function(err)
@@ -581,7 +578,7 @@ do
 				if self:IsValid() and self:GetEntity():IsValid() then
 					local ent = self:GetEntity()
 					self.loading = nil
-					ent.pac_bones = nil
+					pac.ResetBoneCache(ent)
 					ent:SetModel("models/error.mdl")
 				end
 			end, self:GetPlayerOwner())
@@ -654,7 +651,7 @@ do
 		end
 
 		self.Model = modelPath
-		self.Entity.pac_bones = nil
+		pac.ResetBoneCache(self.Entity)
 		self.Entity:SetModel(real_model)
 	end
 end

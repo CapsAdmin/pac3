@@ -14,11 +14,6 @@ local BUILDER, PART = pac.PartTemplate("base")
 PART.ClassName = "base_movable"
 
 BUILDER
-	:GetSet("BoneIndex")
-	:GetSet("PlayerOwner", NULL)
-	:GetSet("Owner", NULL)
-
-BUILDER
 	:StartStorableVars()
 		:SetPropertyGroup("orientation")
 			:GetSet("Bone", "head")
@@ -27,13 +22,24 @@ BUILDER
 			:GetSet("EyeAngles", false)
 			:GetSet("PositionOffset", Vector(0,0,0))
 			:GetSet("AngleOffset", Angle(0,0,0))
-			:GetSetPart("AimPart", {editor_panel = "aimpartname"})
+			:GetSetPart("AimPart")
+			:GetSet("AimPartName", "", {enums = {
+				["local eyes"] = "LOCALEYES",
+				["player eyes"] = "PLAYEREYES",
+				["local eyes yaw"] = "LOCALEYES_YAW",
+				["local eyes pitch"] = "LOCALEYES_PITCH",
+			}})
 			:GetSetPart("Parent")
 	:EndStorableVars()
 
 PART.AllowSetupPositionFrameSkip = true
 
 do -- bones
+	function PART:SetBone(val)
+		self.Bone = val
+		pac.ResetBoneCache(self:GetOwner())
+	end
+
 	function PART:GetBonePosition()
 		local owner = self:GetOwner()
 		local parent = self:GetParent()
@@ -60,33 +66,22 @@ do -- bones
 		end
 	end
 
-	function PART:SetBone(var)
-		self.Bone = var
-		self:ClearBone()
+	function PART:GetModelBones()
+		return pac.GetModelBones(self:GetOwner())
 	end
 
-	function PART:ClearBone()
-		self.BoneIndex = nil
+	function PART:GetModelBoneIndex()
+		local bones = self:GetModelBones()
 		local owner = self:GetOwner()
-		if owner:IsValid() then
-			owner.pac_bones = nil
-		end
-	end
+		if not owner:IsValid() then return end
 
-	function PART:GetModelBones(owner)
-		return pac.GetModelBones(owner or self:GetOwner())
-	end
+		local name = self.Bone
 
-	function PART:GetRealBoneName(name, owner)
-		owner = owner or self:GetOwner()
-
-		local bones = self:GetModelBones(owner)
-
-		if owner:IsValid() and bones and bones[name] and not bones[name].is_special then
-			return bones[name].real
+		if bones[name] and not bones[name].is_special then
+			return owner:LookupBone(bones[name].real)
 		end
 
-		return name
+		return nil
 	end
 
 	function PART:BuildBonePositions()
@@ -121,7 +116,7 @@ function PART:BuildWorldMatrix(with_offsets)
 
 	local m = world_matrix * local_matrix
 
-	m:SetAngles(self:CalcAngles(m:GetAngles()))
+	m:SetAngles(self:CalcAngles(m:GetAngles(), m:GetTranslation()))
 
 	return m
 end
@@ -152,21 +147,11 @@ function PART:GetDrawPosition()
 	return self:GetWorldPosition(), self:GetWorldAngles()
 end
 
--- since this is kind of like a hack I choose to have upper case names to avoid name conflicts with parts
--- the editor can use the keys as friendly names
-pac.AimPartNames =
-{
-	["local eyes"] = "LOCALEYES",
-	["player eyes"] = "PLAYEREYES",
-	["local eyes yaw"] = "LOCALEYES_YAW",
-	["local eyes pitch"] = "LOCALEYES_PITCH",
-}
-
-function PART:CalcAngles(ang)
-	if not self.WorldMatrix then return ang end
+function PART:CalcAngles(ang, wpos)
+	wpos = wpos or self.WorldMatrix and self.WorldMatrix:GetTranslation()
+	if not wpos then return ang end
 
 	local owner = self:GetOwner(true)
-	local wpos = self.WorldMatrix:GetTranslation()
 
 	if pac.StringFind(self.AimPartName, "LOCALEYES_YAW", true, true) then
 		ang = (pac.EyePos - wpos):Angle()

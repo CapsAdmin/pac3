@@ -59,7 +59,7 @@ end
 PART.ThinkTime = 0
 
 function PART:OnShow()
-	self.BoneIndex = nil
+	self:SetBone(self:GetBone())
 end
 
 PART.OnParent = PART.OnShow
@@ -204,15 +204,15 @@ function PART:OnBuildBonePositions()
 
 	if not owner:IsValid() then return end
 
-	self.BoneIndex = owner:LookupBone(self:GetRealBoneName(self.Bone))
+	local index = self:GetModelBoneIndex()
 
-	if not self.BoneIndex then return end
+	if not index then return end
 
 	owner.pac_bone_setup_data = owner.pac_bone_setup_data or {}
 
 	if self.AlternativeBones or self.ScaleChildren or self.FollowPart:IsValid() then
 		owner.pac_bone_setup_data[self.UniqueID] = owner.pac_bone_setup_data[self.UniqueID] or {}
-		owner.pac_bone_setup_data[self.UniqueID].bone = self.BoneIndex
+		owner.pac_bone_setup_data[self.UniqueID].bone = index
 		owner.pac_bone_setup_data[self.UniqueID].part = self
 	else
 		owner.pac_bone_setup_data[self.UniqueID] = nil
@@ -254,8 +254,8 @@ function PART:OnBuildBonePositions()
 			end
 		end
 
-		manpos(owner, self.BoneIndex, pos2, self)
-		manang(owner, self.BoneIndex, ang2, self)
+		manpos(owner, index, pos2, self)
+		manang(owner, index, ang2, self)
 	end
 
 	if owner.pac_bone_setup_data[self.UniqueID] then
@@ -266,7 +266,7 @@ function PART:OnBuildBonePositions()
 		end
 	end
 
-	owner:ManipulateBoneJiggle(self.BoneIndex, type(self.Jiggle) == "number" and self.Jiggle or (self.Jiggle and 1 or 0)) -- afaik anything but 1 is not doing anything at all
+	owner:ManipulateBoneJiggle(index, type(self.Jiggle) == "number" and self.Jiggle or (self.Jiggle and 1 or 0)) -- afaik anything but 1 is not doing anything at all
 
 	local scale
 
@@ -278,7 +278,7 @@ function PART:OnBuildBonePositions()
 			local count = owner:GetBoneCount()
 
 			for i = 0, count - 1 do
-				if i ~= self.BoneIndex then
+				if i ~= index then
 					manscale(owner, i, inf_scale, self)
 				end
 			end
@@ -291,7 +291,7 @@ function PART:OnBuildBonePositions()
 		scale = self.Scale * self.Size
 	end
 
-	manscale(owner, self.BoneIndex, scale, self)
+	manscale(owner, index, scale, self)
 end
 
 BUILDER:Register()

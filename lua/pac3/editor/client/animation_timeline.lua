@@ -22,7 +22,6 @@ do
 		local pos, ang
 
 		pos, ang = pac.GetBonePosAng(owner, self.Bone, true)
-		if owner:IsValid() then owner:InvalidateBoneCache() end
 
 		return pos, ang
 	end

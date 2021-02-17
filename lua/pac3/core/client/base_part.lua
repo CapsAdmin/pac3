@@ -385,9 +385,6 @@ do -- parenting
 		part.ParentName = self:GetName()
 		part.ParentUID = self:GetUniqueID()
 
-		-- self:ClearBone() <<< DRAW RELATED
-		-- part:ClearBone() <<< DRAW RELATED
-
 		part:OnParent(self)
 		self:OnChildAdd(part)
 
@@ -643,8 +640,6 @@ do -- parenting
 		if parent:IsValid() then
 			parent:RemoveChild(self)
 		end
-
-		-- self:ClearBone() <<< DRAW RELATED
 
 		self:OnUnParent(parent)
 
@@ -1050,12 +1045,7 @@ function PART:Think()
 			self.last_hidden_by_event = false
 			self.last_owner = owner
 		end
-
-		--if not owner.pac_bones then
-			--self:GetModelBones() <<< DRAW RELATED
-		--end
 	end
-
 
 	if self.delayed_variables then
 

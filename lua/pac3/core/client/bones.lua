@@ -134,6 +134,17 @@ function pac.GetModelBones(ent)
 	return ent.pac_bones
 end
 
+function pac.ResetBoneCache(ent)
+	if not IsValid(ent) then return end
+
+	ent.pac_last_model = nil
+	ent.pac_bones = nil
+
+	if ent.pac_holdtypes then
+		ent.pac_holdtypes = {}
+	end
+end
+
 local UP = Vector(0,0,1):Angle()
 
 local function GetBonePosition(ent, id)
@@ -407,8 +418,7 @@ end
 if Entity(1):IsPlayer() and not PAC_RESTART then
 	timer.Simple(0, function()
 		for _, v in ipairs(ents.GetAll()) do
-			v.pac_bones = nil
-			v.pac_last_model = nil
+			pac.ResetBoneCache(v)
 		end
 	end)
 end

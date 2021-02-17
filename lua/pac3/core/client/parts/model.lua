@@ -221,7 +221,7 @@ function PART:OnShow()
 
 	if ent:IsValid() and owner:IsValid() and owner ~= ent then
 		ent:SetPos(owner:EyePos())
-		self.BoneIndex = nil
+		self:SetBone(self:GetBone())
 	end
 end
 
@@ -416,10 +416,7 @@ function PART:RefreshModel()
 	local ent = self:GetEntity()
 
 	if ent:IsValid() then
-		ent.pac_bones = nil
-		if ent.pac_holdtypes then
-			ent.pac_holdtypes = {}
-		end
+		pac.ResetBoneCache(ent)
 	end
 
 	self:SetModelModifiers(self:GetModelModifiers())

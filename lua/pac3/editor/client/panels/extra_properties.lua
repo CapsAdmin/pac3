@@ -244,39 +244,6 @@ do -- sequence list
 	pace.RegisterPanel(PANEL)
 end
 
-do -- aimpart
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_aimpartname"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:MoreOptionsLeftClick()
-		pace.SelectPart(pac.GetLocalParts(), function(part)
-			if not self:IsValid() then return end
-			self:SetValue(part:GetName())
-			self.OnValueChanged(part)
-		end)
-	end
-
-	function PANEL:MoreOptionsRightClick(key)
-		local menu = DermaMenu()
-		menu:MakePopup()
-
-		for key, name in pairs(pac.AimPartNames) do
-			menu:AddOption(L(key), function() pace.current_part:SetAimPartName(name) end):SetImage("icon16/eye.png")
-		end
-
-		for _, part in pairs(pac.GetLocalParts()) do
-			if not part:HasParent() then
-				populate_part_menu(menu, part, "SetAimPartName")
-			end
-		end
-
-		pace.FixMenu(menu)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
 
 do -- model
 	local PANEL = {}
