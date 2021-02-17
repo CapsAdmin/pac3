@@ -70,15 +70,6 @@ local function parts_from_ent(ent)
 end
 
 do
-	local function draw(part, pos, ang, draw_type)
-		if part.Draw then
-			part:Draw(pos, ang, draw_type)
-		end
-		for _, child in ipairs(part:GetChildren()) do
-			draw(child, pos, ang, draw_type)
-		end
-	end
-
 	local function render_override(ent, type, draw_only)
 		if max_render_time > 0 and ent ~= pac.LocalPlayer then
 			if ent.pac_render_time_exceeded then
@@ -100,9 +91,9 @@ do
 
 						if part.OwnerName == "viewmodel" and type == "viewmodel" or
 							part.OwnerName == "hands" and type == "hands" or
-							part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands" then
-
-							draw(part, nil, nil, type)
+							part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands"
+						then
+							part:CallRecursive("Draw", nil, nil, type)
 						end
 					end
 				else

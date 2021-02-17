@@ -442,12 +442,8 @@ do -- parenting
 				self[func](self, ...)
 			end
 
-			local child = self:GetChildrenList()
-
-			for i = 1, #child do
-				if child[i][func] then
-					child[i][func](child[i], ...)
-				end
+			for _, child in ipairs(self:GetChildren()) do
+				child:CallRecursive(func, ...)
 			end
 		end
 
