@@ -10,23 +10,6 @@ local SysTime = SysTime
 
 local LocalToWorld = LocalToWorld
 
-local function SETUP_CACHE_FUNC(tbl, func_name)
-	local old_func = tbl[func_name]
-
-	local cached_key = "cached_" .. func_name
-	local cached_key2 = "cached_" .. func_name .. "_2"
-	local last_key = "last_" .. func_name .. "_framenumber"
-
-	tbl[func_name] = function(self, a,b,c,d,e)
-		if self[last_key] ~= pac.FrameNumber or self[cached_key] == nil then
-			self[cached_key], self[cached_key2] = old_func(self, a,b,c,d,e)
-			self[last_key] = pac.FrameNumber
-		end
-
-		return self[cached_key], self[cached_key2]
-	end
-end
-
 local BUILDER, PART = pac.PartTemplate()
 
 PART.ClassName = "base"
@@ -270,8 +253,6 @@ do -- owner
 
 		return self.Owner or NULL
 	end
-
-	--SETUP_CACHE_FUNC(PART, "GetOwner")
 end
 
 do
@@ -455,8 +436,6 @@ do -- parenting
 		return self.RootPart
 	end
 
-	SETUP_CACHE_FUNC(PART, "GetRootPart")
-
 	do
 		function PART:CallRecursive(func, ...)
 			if self[func] then
@@ -597,8 +576,6 @@ do -- parenting
 
 			return false
 		end
-
-		SETUP_CACHE_FUNC(PART, "IsHidden")
 	end
 
 	function PART:InvalidateChildrenList()
