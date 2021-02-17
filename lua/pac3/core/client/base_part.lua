@@ -35,6 +35,8 @@ BUILDER
 				editor_friendly = "IsExplicit",
 				description = "Marks this content as NSFW, and makes it hidden for most of players who have pac_hide_disturbing set to 1"
 			})
+			-- this is an unfortunate name, it controls the order in which the scene related functions iterate over children
+			-- in practice it's often used to make something draw above something else in translucent rendering
 			:GetSet("DrawOrder", 0)
 	:EndStorableVars()
 
@@ -54,7 +56,7 @@ end
 
 function PART:PreInitialize()
 	self.Children = {}
-	self.Children2 = {}
+	self.ChildrenMap = {}
 	self.modifiers = {}
 	self.RootPart = NULL
 	self.DrawOrder = 0
@@ -265,40 +267,6 @@ do
 end
 
 do -- parenting
-	function PART:GetChildren()
-		return self.Children
-	end
-
-	function PART:GetChildrenList()
-		if not self.children_list then
-			self:BuildChildrenList()
-		end
-
-		return self.children_list
-	end
-
-	local function add_children_to_list(parent, list, drawOrder)
-		for _, child in ipairs(parent:GetChildren()) do
-			table.insert(list, {child, child.DrawOrder + drawOrder})
-			add_children_to_list(child, list, drawOrder + child.DrawOrder)
-		end
-	end
-
-	function PART:BuildChildrenList()
-		local child = {}
-		self.children_list = child
-
-		local tableToSort = {}
-		add_children_to_list(self, tableToSort, self.DrawOrder)
-
-		table.sort(tableToSort, function(a, b)
-			return a[2] < b[2]
-		end)
-
-		for i, data in ipairs(tableToSort) do
-			child[#child + 1] = data[1]
-		end
-	end
 
 	function PART:CreatePart(name)
 		local part = pac.CreatePart(name, self:GetPlayerOwner())
@@ -307,38 +275,92 @@ do -- parenting
 		return part
 	end
 
-	function PART:SetParent(part)
-		if not part or not part:IsValid() then
-			self:UnParent()
-			return false
-		else
-			return part:AddChild(self)
+	function PART:SetDrawOrder(num)
+		self.DrawOrder = num
+		if self:HasParent() then
+			self:GetParent():SortChildren()
 		end
 	end
 
-	function PART:BuildParentList()
-
-		if not self:HasParent() then return end
-
-		self.parent_list = {}
-
-		local temp = self:GetParent()
-
-		table.insert(self.parent_list, temp)
-
-		for _ = 1, 100 do
-			local parent = temp:GetParent()
-			if not parent:IsValid() then break end
-
-			table.insert(self.parent_list, parent)
-
-			temp = parent
+	do -- children
+		function PART:GetChildren()
+			return self.Children
 		end
 
-		self.RootPart = temp
+		local function add_children_to_list(parent, list, drawOrder)
+			for _, child in ipairs(parent:GetChildren()) do
+				table.insert(list, {child, child.DrawOrder + drawOrder})
+				add_children_to_list(child, list, drawOrder + child.DrawOrder)
+			end
+		end
 
-		for _, part in ipairs(self:GetChildren()) do
-			part:BuildParentList()
+		function PART:GetChildrenList()
+			if not self.children_list then
+				local child = {}
+				self.children_list = child
+
+				local tableToSort = {}
+				add_children_to_list(self, tableToSort, self.DrawOrder)
+
+				table.sort(tableToSort, function(a, b)
+					return a[2] < b[2]
+				end)
+
+				for i, data in ipairs(tableToSort) do
+					child[#child + 1] = data[1]
+				end
+			end
+
+			return self.children_list
+		end
+
+		function PART:InvalidateChildrenList()
+			self.children_list = nil
+
+			for _, parent in ipairs(self:GetParentList()) do
+				parent.children_list = nil
+			end
+		end
+	end
+
+	do -- parent
+		function PART:SetParent(part)
+			if not part or not part:IsValid() then
+				self:UnParent()
+				return false
+			else
+				return part:AddChild(self)
+			end
+		end
+
+		do
+			function PART:GetParentList()
+				if not self.parent_list then
+					self.parent_list = {}
+
+					local temp = self:GetParent()
+
+					if temp:IsValid() then
+						table.insert(self.parent_list, temp)
+
+						for _ = 1, 100 do
+							local parent = temp:GetParent()
+							if not parent:IsValid() then break end
+
+							table.insert(self.parent_list, parent)
+
+							temp = parent
+						end
+					end
+				end
+
+				return self.parent_list
+			end
+		end
+
+		function PART:InvalidateParentList()
+			self.parent_list = nil
+			self:CallRecursiveExcludeSelf("InvalidateParentList")
 		end
 	end
 
@@ -357,7 +379,7 @@ do -- parenting
 		part.Parent = self
 
 		if not part:HasChild(self) then
-			self.Children2[part] = part
+			self.ChildrenMap[part] = part
 			table.insert(self.Children, part)
 		end
 
@@ -376,8 +398,8 @@ do -- parenting
 		part:SortChildren()
 		self:SortChildren()
 
-		self:BuildParentList()
-		part:BuildParentList()
+		self:InvalidateParentList()
+		part:InvalidateParentList()
 
 		if self:GetPlayerOwner() == pac.LocalPlayer then
 			pac.CallHook("OnPartParent", self, part)
@@ -409,11 +431,11 @@ do -- parenting
 	end
 
 	function PART:HasChild(part)
-		return self.Children2[part] ~= nil
+		return self.ChildrenMap[part] ~= nil
 	end
 
 	function PART:RemoveChild(part)
-		self.Children2[part] = nil
+		self.ChildrenMap[part] = nil
 
 		for i, val in ipairs(self:GetChildren()) do
 			if val == part then
@@ -426,14 +448,11 @@ do -- parenting
 	end
 
 	function PART:GetRootPart()
-
-		if not self:HasParent() then return self end
-
-		if not self.RootPart:IsValid() then
-			self:BuildParentList()
+		local list = self:GetParentList()
+		if list[1] then
+			return list[#list]
 		end
-
-		return self.RootPart
+		return self
 	end
 
 	function PART:CallRecursive(func, ...)
@@ -446,34 +465,20 @@ do -- parenting
 		end
 	end
 
-	function PART:CallRecursiveExclude(func, ...)
-		local child = self:GetChildrenList()
-
-		for i = 1, #child do
-			if child[i][func] then
-				child[i][func](child[i], ...)
-			end
+	function PART:CallRecursiveExcludeSelf(func, ...)
+		for _, child in ipairs(self:GetChildren()) do
+			child:CallRecursive(func, ...)
 		end
 	end
 
 	function PART:SetKeyValueRecursive(key, val)
 		self[key] = val
 
-		local child = self:GetChildrenList()
-
-		for i = 1, #child do
-			child[i][key] = val
+		for _, child in ipairs(self:GetChildren()) do
+			child:SetKeyValueRecursive(key, val)
 		end
 	end
 
-	function PART:InvalidateChildrenList()
-		self.children_list = nil
-		if self.parent_list then
-			for _, part in ipairs(self.parent_list) do
-				part.children_list = nil
-			end
-		end
-	end
 
 	function PART:RemoveChildren()
 		self:InvalidateChildrenList()
@@ -481,7 +486,7 @@ do -- parenting
 		for i, part in ipairs(self:GetChildren()) do
 			part:Remove(true)
 			self.Children[i] = nil
-			self.Children2[part] = nil
+			self.ChildrenMap[part] = nil
 		end
 	end
 
@@ -605,11 +610,7 @@ do -- hidden / events
 			return false
 		end
 
-		if not self.parent_list then
-			self:BuildParentList()
-		end
-
-		for _, parent in ipairs(self.parent_list) do
+		for _, parent in ipairs(self:GetParentList()) do
 			if
 				parent.draw_hidden or
 				parent.temp_hidden or

@@ -52,7 +52,7 @@ do -- bones
 
 		if parent:IsValid() and parent.GetDrawPosition then
 			local ent = parent.GetEntity and parent:GetEntity()
-			if ent:IsValid() then
+			if ent and ent:IsValid() then
 				-- if the parent part is a model, get the bone position of the parent model
 				return pac.GetBonePosAng(ent, bone)
 			else

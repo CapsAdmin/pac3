@@ -27,7 +27,6 @@ BUILDER
 				premultiplied = "one;one_src_minus_alpha;one;one_src_minus_alpha",
 				additive = "src_alpha;one;src_alpha;one",
 			}})
-			:GetSet("DrawOrder", 0)
 	:EndStorableVars()
 
 PART.AllowSetupPositionFrameSkip = true
@@ -229,11 +228,6 @@ function PART:HookEntityRender()
 	if owner:IsValid() then
 		pac.HookEntityRender(owner, root)
 	end
-end
-
-function PART:SetDrawOrder(num)
-	self.DrawOrder = num
-	if self:HasParent() then self:GetParent():SortChildren() end
 end
 
 BUILDER:Register()
