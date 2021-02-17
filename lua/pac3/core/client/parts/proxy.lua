@@ -1024,13 +1024,16 @@ local function set(self, part, x, y, z, children)
 			part[self.set_key](part, tonumber(x) or 0)
 		else
 			if self.Axis ~= "" and val[self.Axis] then
+				val = val * 1
 				val[self.Axis] = x
 			else
 				if T == "Angle" then
+					val = val * 1
 					val.p = x or val.p
 					val.y = y or val.y
 					val.r = z or val.r
 				elseif T == "Vector" then
+					val = val * 1
 					val.x = x or val.x
 					val.y = y or val.y
 					val.z = z or val.z
