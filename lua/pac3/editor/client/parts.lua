@@ -656,8 +656,32 @@ do -- menu
 	end
 end
 
-function pace.OnHoverPart(obj)
-	obj:Highlight()
+do
+	pac.haloex = include("pac3/libraries/haloex.lua")
+
+	function pace.OnHoverPart(self)
+		local tbl = {self.Entity and self.Entity:IsValid() and self.Entity or nil}
+
+		if not skip_children then
+			for _, part in ipairs(self:GetChildren()) do
+				local ent = part.Entity
+
+				if ent and ent:IsValid() then
+					table.insert(tbl, ent)
+				end
+			end
+		end
+
+		if #tbl > 0 then
+			if data then
+				pac.haloex.Add(tbl, unpack(data))
+			else
+				local pulse = math.abs(1 + math.sin(pac.RealTime * 20) * 255)
+				pulse = pulse + 2
+				pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
+			end
+		end
+	end
 end
 
 pac.AddHook("pac_OnPartParent", "pace_parent", function(parent, child)

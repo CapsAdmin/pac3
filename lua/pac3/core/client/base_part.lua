@@ -987,7 +987,6 @@ do -- events
 	function PART:OnParent() end
 	function PART:OnChildAdd() end
 	function PART:OnUnParent() end
-	function PART:Highlight() end
 
 	function PART:OnHide() end
 	function PART:OnShow() end

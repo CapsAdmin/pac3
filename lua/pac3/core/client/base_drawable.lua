@@ -15,10 +15,6 @@ local BUILDER, PART = pac.PartTemplate("base_movable")
 PART.ClassName = "base_drawable"
 
 BUILDER
-	:GetSet("PlayerOwner", NULL)
-	:GetSet("Owner", NULL)
-
-BUILDER
 	:StartStorableVars()
 		:SetPropertyGroup("appearance")
 			:GetSet("Translucent", false)
@@ -36,42 +32,77 @@ BUILDER
 
 PART.AllowSetupPositionFrameSkip = true
 
-local blend_modes = {
-	zero = 0,
-	one = 1,
-	dst_color = 2,
-	one_minus_dst_color = 3,
-	src_alpha = 4,
-	one_minus_src_alpha = 5,
-	dst_alpha = 6,
-	one_minus_dst_alpha = 7,
-	src_alpha_saturate = 8,
-	src_color = 9,
-	one_minus_src_color = 10,
-}
+do
+	local blend_modes = {
+		zero = 0,
+		one = 1,
+		dst_color = 2,
+		one_minus_dst_color = 3,
+		src_alpha = 4,
+		one_minus_src_alpha = 5,
+		dst_alpha = 6,
+		one_minus_dst_alpha = 7,
+		src_alpha_saturate = 8,
+		src_color = 9,
+		one_minus_src_color = 10,
+	}
 
-function PART:SetBlendMode(str)
-	str = str:lower():gsub("%s+", ""):gsub(",", ";"):gsub("blend_", "")
+	function PART:SetBlendMode(str)
+		str = str:lower():gsub("%s+", ""):gsub(",", ";"):gsub("blend_", "")
 
-	self.BlendMode = str
+		self.BlendMode = str
 
-	local tbl = str:Split(";")
-	local src_color
-	local dst_color
+		local tbl = str:Split(";")
+		local src_color
+		local dst_color
 
-	local src_alpha
-	local dst_alpha
+		local src_alpha
+		local dst_alpha
 
-	if tbl[1] then src_color = blend_modes[tbl[1]] end
-	if tbl[2] then dst_color = blend_modes[tbl[2]] end
+		if tbl[1] then src_color = blend_modes[tbl[1]] end
+		if tbl[2] then dst_color = blend_modes[tbl[2]] end
 
-	if tbl[3] then src_alpha = blend_modes[tbl[3]] end
-	if tbl[4] then dst_alpha = blend_modes[tbl[4]] end
+		if tbl[3] then src_alpha = blend_modes[tbl[3]] end
+		if tbl[4] then dst_alpha = blend_modes[tbl[4]] end
 
-	if src_color and dst_color then
-		self.blend_override = {src_color, dst_color, src_alpha, dst_alpha, tbl[5]}
-	else
-		self.blend_override = nil
+		if src_color and dst_color then
+			self.blend_override = {src_color, dst_color, src_alpha, dst_alpha, tbl[5]}
+		else
+			self.blend_override = nil
+		end
+	end
+
+	function PART:StartBlend()
+		if self.blend_override then
+			render.OverrideBlendFunc(true,
+				self.blend_override[1],
+				self.blend_override[2],
+				self.blend_override[3],
+				self.blend_override[4]
+			)
+
+			if self.blend_override[5] then
+				render.OverrideAlphaWriteEnable(true, self.blend_override[5] == "write_alpha")
+			end
+
+			if self.blend_override[6] then
+				render.OverrideColorWriteEnable(true, self.blend_override[6] == "write_color")
+			end
+		end
+	end
+
+	function PART:StopBlend()
+		if self.blend_override then
+			render.OverrideBlendFunc(false)
+
+			if self.blend_override[5] then
+				render.OverrideAlphaWriteEnable(false)
+			end
+
+			if self.blend_override[6] then
+				render.OverrideColorWriteEnable(false)
+			end
+		end
 	end
 end
 
@@ -146,112 +177,42 @@ function PART:SetOwner(owner)
 	end)
 end
 
-do
-	pac.haloex = include("pac3/libraries/haloex.lua")
+function PART:Draw(pos, ang, draw_type)
+	-- Think takes care of polling this
+	if not self.OnDraw then return end
+	if not self.last_enabled then return end
 
-	function PART:Highlight(skip_children, data)
-		local tbl = {self.Entity and self.Entity:IsValid() and self.Entity or nil}
+	if self:IsHidden() then return end
 
-		if not skip_children then
-			for _, part in ipairs(self:GetChildren()) do
-				local ent = part.Entity
+	if
+		draw_type == "viewmodel" or draw_type == "hands" or
+		((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
+		((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
 
-				if ent and ent:IsValid() then
-					table.insert(tbl, ent)
-				end
-			end
+	then
+		if not self.HandleModifiersManually then self:ModifiersPreEvent('OnDraw', draw_type) end
+
+		if self.IgnoreZ then cam.IgnoreZ(true) end
+
+		self:StartBlend()
+
+		if self.NoTextureFiltering then
+			render.PushFilterMin(TEXFILTER.POINT)
+			render.PushFilterMag(TEXFILTER.POINT)
 		end
 
-		if #tbl > 0 then
-			if data then
-				pac.haloex.Add(tbl, unpack(data))
-			else
-				local pulse = math.abs(1 + math.sin(pac.RealTime * 20) * 255)
-				pulse = pulse + 2
-				pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
-			end
+		self:OnDraw(self:GetOwner(), self:GetDrawPosition())
+
+		if self.NoTextureFiltering then
+			render.PopFilterMin()
+			render.PopFilterMag()
 		end
-	end
-end
 
-do -- drawing. this code is running every frame
-	function PART:DrawChildren(event, pos, ang, draw_type, drawAll)
-		if drawAll then
-			for i, child in ipairs(self:GetChildrenList()) do
-				child:Draw(pos, ang, draw_type, true)
-			end
-		else
-			for i, child in ipairs(self:GetChildren()) do
-				child:Draw(pos, ang, draw_type)
-			end
-		end
-	end
+		self:StopBlend()
 
-	--function PART:Draw(pos, ang, draw_type, isNonRoot)
-	function PART:Draw(pos, ang, draw_type)
-		-- Think takes care of polling this
-		if not self.OnDraw then return end
-		if not self.last_enabled then return end
+		if self.IgnoreZ then cam.IgnoreZ(false) end
 
-		if self:IsHidden() then return end
-
-		if
-			draw_type == "viewmodel" or draw_type == "hands" or
-			((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
-			((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
-
-		then
-			if not self.HandleModifiersManually then self:ModifiersPreEvent('OnDraw', draw_type) end
-
-			if self.IgnoreZ then cam.IgnoreZ(true) end
-
-			if self.blend_override then
-				render.OverrideBlendFunc(true,
-					self.blend_override[1],
-					self.blend_override[2],
-					self.blend_override[3],
-					self.blend_override[4]
-				)
-
-				if self.blend_override[5] then
-					render.OverrideAlphaWriteEnable(true, self.blend_override[5] == "write_alpha")
-				end
-
-				if self.blend_override[6] then
-					render.OverrideColorWriteEnable(true, self.blend_override[6] == "write_color")
-				end
-			end
-
-			if self.NoTextureFiltering then
-				render.PushFilterMin(TEXFILTER.POINT)
-				render.PushFilterMag(TEXFILTER.POINT)
-			end
-
-			pos, ang = self:GetDrawPosition()
-
-			self:OnDraw(self:GetOwner(), pos, ang)
-
-			if self.NoTextureFiltering then
-				render.PopFilterMin()
-				render.PopFilterMag()
-			end
-
-			if self.blend_override then
-				render.OverrideBlendFunc(false)
-
-				if self.blend_override[5] then
-					render.OverrideAlphaWriteEnable(false)
-				end
-
-				if self.blend_override[6] then
-					render.OverrideColorWriteEnable(false)
-				end
-			end
-
-			if self.IgnoreZ then cam.IgnoreZ(false) end
-
-			if not self.HandleModifiersManually then self:ModifiersPostEvent('OnDraw', draw_type) end
-		end
+		if not self.HandleModifiersManually then self:ModifiersPostEvent('OnDraw', draw_type) end
 	end
 end
 
