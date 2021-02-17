@@ -164,18 +164,6 @@ function PART:IsDrawHidden()
 	return self.draw_hidden
 end
 
-local BaseClass_SetOwner = PART.SetOwner
-
-function PART:SetOwner(owner)
-	BaseClass_SetOwner(self, owner)
-
-	pac.RunNextFrame(self:GetRootPart().Id .. "_hook_render", function()
-		if self:IsValid() then
-			self:HookEntityRender()
-		end
-	end)
-end
-
 function PART:Draw(pos, ang, draw_type)
 	-- Think takes care of polling this
 	if not self.OnDraw then return end
@@ -212,21 +200,6 @@ function PART:Draw(pos, ang, draw_type)
 		if self.IgnoreZ then cam.IgnoreZ(false) end
 
 		if not self.HandleModifiersManually then self:ModifiersPostEvent('OnDraw', draw_type) end
-	end
-end
-
-function PART:HookEntityRender()
-	local root = self:GetRootPart()
-	local owner = root:GetOwner()
-
-	if root.ClassName ~= "group" then return end -- FIX ME
-
-	if root.last_owner:IsValid() then
-		pac.UnhookEntityRender(root.last_owner, root)
-	end
-
-	if owner:IsValid() then
-		pac.HookEntityRender(owner, root)
 	end
 end
 

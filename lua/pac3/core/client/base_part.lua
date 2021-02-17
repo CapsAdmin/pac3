@@ -211,15 +211,37 @@ do -- owner
 		end
 	end
 
-	function PART:SetOwner(ent)
 
+	function PART:SetOwner(ent)
 		if IsValid(self.last_owner) and self.last_owner ~= ent then
 			self:CallRecursive("OnHide", true)
 		end
 
 		self.last_owner = self.Owner
 		self.Owner = ent or NULL
+
+		pac.RunNextFrame(self:GetRootPart().Id .. "_hook_render", function()
+			if self:IsValid() then
+				self:HookEntityRender()
+			end
+		end)
 	end
+
+		-- unfortunate name, it will actually add the part for updating, not just rendering
+	function PART:HookEntityRender()
+		local root = self:GetRootPart()
+		local owner = root:GetOwner()
+		if root.ClassName ~= "group" then return end -- FIX ME
+
+		if root.last_owner:IsValid() then
+			pac.UnhookEntityRender(root.last_owner, root)
+		end
+
+		if owner:IsValid() then
+			pac.HookEntityRender(owner, root)
+		end
+	end
+
 
 	-- always return the root owner
 	function PART:GetPlayerOwner()
