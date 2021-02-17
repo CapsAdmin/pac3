@@ -92,7 +92,7 @@ local function PackIEEE754Float(number)
 	end
 end
 local function UnpackIEEE754Float(b4, b3, b2, b1)
-	local exponent = (b1 % 0x80) * 0x02 + math_rshift(b2, 7)
+	local exponent = (b1 % 0x80) * 0x02 + bit_rshift(b2, 7)
 	local mantissa = math_ldexp(((b2 % 0x80) * 0x100 + b3) * 0x100 + b4, -23)
 	if exponent == 0xFF then
 		if mantissa > 0 then
