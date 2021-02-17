@@ -436,141 +436,33 @@ do -- parenting
 		return self.RootPart
 	end
 
-	do
-		function PART:CallRecursive(func, ...)
-			if self[func] then
-				self[func](self, ...)
-			end
-
-			for _, child in ipairs(self:GetChildren()) do
-				child:CallRecursive(func, ...)
-			end
+	function PART:CallRecursive(func, ...)
+		if self[func] then
+			self[func](self, ...)
 		end
 
-		function PART:CallRecursiveExclude(func, ...)
-			local child = self:GetChildrenList()
+		for _, child in ipairs(self:GetChildren()) do
+			child:CallRecursive(func, ...)
+		end
+	end
 
-			for i = 1, #child do
-				if child[i][func] then
-					child[i][func](child[i], ...)
-				end
+	function PART:CallRecursiveExclude(func, ...)
+		local child = self:GetChildrenList()
+
+		for i = 1, #child do
+			if child[i][func] then
+				child[i][func](child[i], ...)
 			end
 		end
+	end
 
-		function PART:SetKeyValueRecursive(key, val)
-			self[key] = val
+	function PART:SetKeyValueRecursive(key, val)
+		self[key] = val
 
-			local child = self:GetChildrenList()
+		local child = self:GetChildrenList()
 
-			for i = 1, #child do
-				child[i][key] = val
-			end
-		end
-
-		function PART:SetHide(b)
-			self.Hide = b
-
-			self:SetKeyValueRecursive("hidden", b)
-		end
-
-		function PART:RemoveEventHide(object)
-			self.event_hide_registry[object] = nil
-		end
-
-		function PART:SetEventHide(b, object)
-			object = object or self
-
-			-- this can and will produce undefined behavior (like skipping keys)
-			-- but still, it will do the job at cleaning up at least a part of table
-			for k, v in pairs(self.event_hide_registry) do
-				if not IsValid(k) then
-					self.event_hide_registry[k] = nil
-				end
-			end
-
-			self.event_hide_registry[object] = b
-			self.event_hidden = self:CalculateEventHidden()
-
-			if self.event_hidden ~= b then
-				self.shown_from_rendering = nil
-			end
-		end
-
-		function PART:FlushFromRenderingState(newState)
-			self.shown_from_rendering = nil
-		end
-
-		function PART:IsDrawHidden()
-			return self.draw_hidden
-		end
-
-		function PART:CalculateEventHidden()
-			for k, v in pairs(self.event_hide_registry) do
-				if v then
-					return true
-				end
-			end
-
-			return false
-		end
-
-		function PART:IsEventHidden(object, invert)
-			if object then
-				if invert then
-					for k, v in pairs(self.event_hide_registry) do
-						if k ~= object and v then
-							return true
-						end
-					end
-
-					return false
-				end
-
-				return self.event_hide_registry[object] == true
-			end
-
-			if self.event_hidden == nil then
-				self.event_hidden = self:CalculateEventHidden()
-			end
-
-			return self.event_hidden
-		end
-
-		function PART:IsHiddenInternal()
-			return self.hidden
-		end
-
-		function PART:IsHidden()
-			if
-				self.draw_hidden or
-				self.temp_hidden or
-				self.hidden or
-				self.hide_disturbing or
-				self:IsEventHidden()
-			then
-				return true, self:IsEventHidden()
-			end
-
-			if not self:HasParent() then
-				return false
-			end
-
-			if not self.parent_list then
-				self:BuildParentList()
-			end
-
-			for _, parent in ipairs(self.parent_list) do
-				if
-					parent.draw_hidden or
-					parent.temp_hidden or
-					parent.hidden or
-					parent.event_hidden
-				then
-					return true, parent:IsEventHidden()
-				end
-			end
-
-			return false
+		for i = 1, #child do
+			child[i][key] = val
 		end
 	end
 
@@ -621,6 +513,114 @@ do -- parenting
 		self.ParentUID = ""
 
 		self:CallRecursive("OnHide")
+	end
+end
+
+do -- hidden / events
+	function PART:SetHide(b)
+		self.Hide = b
+
+		self:SetKeyValueRecursive("hidden", b)
+	end
+
+	function PART:RemoveEventHide(object)
+		self.event_hide_registry[object] = nil
+	end
+
+	function PART:SetEventHide(b, object)
+		object = object or self
+
+		-- this can and will produce undefined behavior (like skipping keys)
+		-- but still, it will do the job at cleaning up at least a part of table
+		for k, v in pairs(self.event_hide_registry) do
+			if not IsValid(k) then
+				self.event_hide_registry[k] = nil
+			end
+		end
+
+		self.event_hide_registry[object] = b
+		self.event_hidden = self:CalculateEventHidden()
+
+		if self.event_hidden ~= b then
+			self.shown_from_rendering = nil
+		end
+	end
+
+	function PART:FlushFromRenderingState(newState)
+		self.shown_from_rendering = nil
+	end
+
+	function PART:IsDrawHidden()
+		return self.draw_hidden
+	end
+
+	function PART:CalculateEventHidden()
+		for k, v in pairs(self.event_hide_registry) do
+			if v then
+				return true
+			end
+		end
+
+		return false
+	end
+
+	function PART:IsEventHidden(object, invert)
+		if object then
+			if invert then
+				for k, v in pairs(self.event_hide_registry) do
+					if k ~= object and v then
+						return true
+					end
+				end
+
+				return false
+			end
+
+			return self.event_hide_registry[object] == true
+		end
+
+		if self.event_hidden == nil then
+			self.event_hidden = self:CalculateEventHidden()
+		end
+
+		return self.event_hidden
+	end
+
+	function PART:IsHiddenInternal()
+		return self.hidden
+	end
+
+	function PART:IsHidden()
+		if
+			self.draw_hidden or
+			self.temp_hidden or
+			self.hidden or
+			self.hide_disturbing or
+			self:IsEventHidden()
+		then
+			return true, self:IsEventHidden()
+		end
+
+		if not self:HasParent() then
+			return false
+		end
+
+		if not self.parent_list then
+			self:BuildParentList()
+		end
+
+		for _, parent in ipairs(self.parent_list) do
+			if
+				parent.draw_hidden or
+				parent.temp_hidden or
+				parent.hidden or
+				parent.event_hidden
+			then
+				return true, parent:IsEventHidden()
+			end
+		end
+
+		return false
 	end
 end
 
