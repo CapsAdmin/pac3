@@ -91,22 +91,6 @@ do
 		if parts == nil or next(parts) == nil then
 			pac.UnhookEntityRender(ent)
 		else
-			if not draw_only then
-				if type == 'opaque' or type == 'viewmodel' then pac.ResetBones(ent) end
-
-				-- bones MUST be setup before drawing or else unexpected/random results might happen
-
-				for key, part in pairs(parts) do
-					if part:IsValid() then
-						if not part:HasParent() then
-							part:CallRecursive("BuildBonePositions")
-						end
-					else
-						parts[key] = nil
-					end
-				end
-			end
-
 			for key, part in pairs(parts) do
 				if part:IsValid() then
 					if not part:HasParent() then
@@ -123,6 +107,27 @@ do
 					end
 				else
 					parts[key] = nil
+				end
+			end
+
+			if not draw_only then
+				if type == 'opaque' or type == 'viewmodel' then pac.ResetBones(ent) end
+
+				-- bones MUST be setup before drawing or else unexpected/random results might happen
+
+				for key, part in pairs(parts) do
+					if part:IsValid() then
+						if not part:HasParent() then
+							part:CallRecursive("BuildBonePositions")
+						end
+					else
+						parts[key] = nil
+					end
+				end
+
+				if ent.pac_bones_modified then
+					ent:SetupBones()
+					ent.pac_bones_modified = nil
 				end
 			end
 		end

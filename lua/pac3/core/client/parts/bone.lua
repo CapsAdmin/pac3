@@ -101,7 +101,7 @@ local function manpos(ent, id, pos, part)
 		ent.pac_bone_setup_data[part.UniqueID].pos = part.Position + part.PositionOffset
 	else
 		ent:ManipulateBonePosition(id, ent:GetManipulateBonePosition(id) + pos)
-		if ent:EntIndex() == -1 then ent.pac_bone_affected = FrameNumber() end
+		part.modified_bones = true
 	end
 end
 
@@ -110,7 +110,7 @@ local function manang(ent, id, ang, part)
 		ent.pac_bone_setup_data[part.UniqueID].ang = part.Angles + part.AngleOffset
 	else
 		ent:ManipulateBoneAngles(id, ent:GetManipulateBoneAngles(id) + ang)
-		if ent:EntIndex() == -1 then ent.pac_bone_affected = FrameNumber() end
+		part.modified_bones = true
 	end
 end
 
@@ -122,7 +122,7 @@ local function manscale(ent, id, scale, part)
 		ent.pac_bone_setup_data[part.UniqueID].scale = scale
 	else
 		ent:ManipulateBoneScale(id, ent:GetManipulateBoneScale(id) * scale)
-		if ent:EntIndex() == -1 then ent.pac_bone_affected = FrameNumber() end
+		part.modified_bones = true
 	end
 end
 
@@ -292,6 +292,8 @@ function PART:OnBuildBonePositions()
 	end
 
 	manscale(owner, index, scale, self)
+
+	owner.pac_bones_modified = true
 end
 
 BUILDER:Register()
