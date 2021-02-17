@@ -100,10 +100,6 @@ function PART:BuildWorldMatrix(with_offsets)
 	local_matrix:SetTranslation(self.Position)
 	local_matrix:SetAngles(self.Angles)
 
-	if with_offsets then
-		local_matrix:Translate(self.PositionOffset)
-		local_matrix:Rotate(self.AngleOffset)
-	end
 
 	local world_matrix = Matrix()
 	local pos, ang = self:GetBonePosition()
@@ -117,6 +113,11 @@ function PART:BuildWorldMatrix(with_offsets)
 	local m = world_matrix * local_matrix
 
 	m:SetAngles(self:CalcAngles(m:GetAngles(), m:GetTranslation()))
+
+	if with_offsets then
+		m:Translate(self.PositionOffset)
+		m:Rotate(self.AngleOffset)
+	end
 
 	return m
 end
