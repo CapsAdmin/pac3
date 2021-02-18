@@ -181,7 +181,6 @@ function pac.HideEntityParts(ent)
 
 		pac.ResetBones(ent)
 		ent.pac_drawing = false
-		pac.drawn_entities[ent] = nil
 	end
 end
 
