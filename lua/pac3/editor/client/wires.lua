@@ -194,6 +194,8 @@ hook.Add("PostRenderVGUI", "beams", function()
 				from_pnl.wire_smooth_hover = from_pnl.wire_smooth_hover + (0 - from_pnl.wire_smooth_hover) * FrameTime() * 20
 			end
 
+			from_pnl.wire_smooth_hover = math.Clamp(from_pnl.wire_smooth_hover, 0, 5)
+
 			if from_pnl.wire_smooth_hover > 0.01 then
 				draw_hermite(0,0,ScrW(),ScrH(), from_pnl.wire_smooth_hover, fx,fy, tx,ty, Color(255,255,255), Color(255,255,255, 255), 1)
 			end
