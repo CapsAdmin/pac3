@@ -1,3 +1,11 @@
+local math_huge = math.huge
+local math_frexp = math.frexp
+local math_ldexp = math.ldexp
+local math_floor = math.floor
+local math_min = math.min
+local math_max = math.max
+local bit_rshift = bit.rshift
+
 --- StringStream type
 -- @name StringStream
 -- @class type
@@ -8,7 +16,7 @@ local ss_meta = {
 	__index = ss_methods,
 	__metatable = "StringStream",
 	__tostring = function(self)
-		return string.format("Stringstream [%u,%u]",self.pos, #self.buffer)
+		return string.format("Stringstream [%u,%u]", self:tell(), self:size())
 	end
 }
 local ss_methods_big = setmetatable({},{__index=ss_methods})
@@ -16,7 +24,7 @@ local ss_meta_big = {
 	__index = ss_methods_big,
 	__metatable = "StringStream",
 	__tostring = function(self)
-		return string.format("Stringstream [%u,%u]",self.pos, #self.buffer)
+		return string.format("Stringstream [%u,%u]", self:tell(), self:size())
 	end
 }
 
@@ -49,9 +57,9 @@ end
 local function PackIEEE754Float(number)
 	if number == 0 then
 		return 0x00, 0x00, 0x00, 0x00
-	elseif number == math.huge then
+	elseif number == math_huge then
 		return 0x00, 0x00, 0x80, 0x7F
-	elseif number == -math.huge then
+	elseif number == -math_huge then
 		return 0x00, 0x00, 0x80, 0xFF
 	elseif number ~= number then
 		return 0x00, 0x00, 0xC0, 0xFF
@@ -61,10 +69,10 @@ local function PackIEEE754Float(number)
 			sign = 0x80
 			number = -number
 		end
-		local mantissa, exponent = math.frexp(number)
+		local mantissa, exponent = math_frexp(number)
 		exponent = exponent + 0x7F
 		if exponent <= 0 then
-			mantissa = math.ldexp(mantissa, exponent - 1)
+			mantissa = math_ldexp(mantissa, exponent - 1)
 			exponent = 0
 		elseif exponent > 0 then
 			if exponent >= 0xFF then
@@ -76,24 +84,24 @@ local function PackIEEE754Float(number)
 				exponent = exponent - 1
 			end
 		end
-		mantissa = math.floor(math.ldexp(mantissa, 23) + 0.5)
+		mantissa = math_floor(math_ldexp(mantissa, 23) + 0.5)
 		return mantissa % 0x100,
-				math.floor(mantissa / 0x100) % 0x100,
-				(exponent % 2) * 0x80 + math.floor(mantissa / 0x10000),
-				sign + math.floor(exponent / 2)
+				bit_rshift(mantissa, 8) % 0x100,
+				(exponent % 2) * 0x80 + bit_rshift(mantissa, 16),
+				sign + bit_rshift(exponent, 1)
 	end
 end
 local function UnpackIEEE754Float(b4, b3, b2, b1)
-	local exponent = (b1 % 0x80) * 0x02 + math.floor(b2 / 0x80)
-	local mantissa = math.ldexp(((b2 % 0x80) * 0x100 + b3) * 0x100 + b4, -23)
+	local exponent = (b1 % 0x80) * 0x02 + bit_rshift(b2, 7)
+	local mantissa = math_ldexp(((b2 % 0x80) * 0x100 + b3) * 0x100 + b4, -23)
 	if exponent == 0xFF then
 		if mantissa > 0 then
 			return 0 / 0
 		else
 			if b1 >= 0x80 then
-				return -math.huge
+				return -math_huge
 			else
-				return math.huge
+				return math_huge
 			end
 		end
 	elseif exponent > 0 then
@@ -104,14 +112,14 @@ local function UnpackIEEE754Float(b4, b3, b2, b1)
 	if b1 >= 0x80 then
 		mantissa = -mantissa
 	end
-	return math.ldexp(mantissa, exponent - 0x7F)
+	return math_ldexp(mantissa, exponent - 0x7F)
 end
 local function PackIEEE754Double(number)
 	if number == 0 then
 		return 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-	elseif number == math.huge then
+	elseif number == math_huge then
 		return 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0, 0x7F
-	elseif number == -math.huge then
+	elseif number == -math_huge then
 		return 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0, 0xFF
 	elseif number ~= number then
 		return 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0xFF
@@ -121,10 +129,10 @@ local function PackIEEE754Double(number)
 			sign = 0x80
 			number = -number
 		end
-		local mantissa, exponent = math.frexp(number)
+		local mantissa, exponent = math_frexp(number)
 		exponent = exponent + 0x3FF
 		if exponent <= 0 then
-			mantissa = math.ldexp(mantissa, exponent - 1)
+			mantissa = math_ldexp(mantissa, exponent - 1)
 			exponent = 0
 		elseif exponent > 0 then
 			if exponent >= 0x7FF then
@@ -136,28 +144,28 @@ local function PackIEEE754Double(number)
 				exponent = exponent - 1
 			end
 		end
-		mantissa = math.floor(math.ldexp(mantissa, 52) + 0.5)
+		mantissa = math_floor(math_ldexp(mantissa, 52) + 0.5)
 		return mantissa % 0x100,
-				math.floor(mantissa / 0x100) % 0x100,
-				math.floor(mantissa / 0x10000) % 0x100,
-				math.floor(mantissa / 0x1000000) % 0x100,
-				math.floor(mantissa / 0x100000000) % 0x100,
-				math.floor(mantissa / 0x10000000000) % 0x100,
-				(exponent % 0x10) * 0x10 + math.floor(mantissa / 0x1000000000000),
-				sign + math.floor(exponent / 0x10)
+				math_floor(mantissa / 0x100) % 0x100,  --can only rshift up to 32 bit numbers. mantissa is too big
+				math_floor(mantissa / 0x10000) % 0x100,
+				math_floor(mantissa / 0x1000000) % 0x100,
+				math_floor(mantissa / 0x100000000) % 0x100,
+				math_floor(mantissa / 0x10000000000) % 0x100,
+				(exponent % 0x10) * 0x10 + math_floor(mantissa / 0x1000000000000),
+				sign + bit_rshift(exponent, 4)
 	end
 end
 local function UnpackIEEE754Double(b8, b7, b6, b5, b4, b3, b2, b1)
-	local exponent = (b1 % 0x80) * 0x10 + math.floor(b2 / 0x10)
-	local mantissa = math.ldexp(((((((b2 % 0x10) * 0x100 + b3) * 0x100 + b4) * 0x100 + b5) * 0x100 + b6) * 0x100 + b7) * 0x100 + b8, -52)
+	local exponent = (b1 % 0x80) * 0x10 + bit_rshift(b2, 4)
+	local mantissa = math_ldexp(((((((b2 % 0x10) * 0x100 + b3) * 0x100 + b4) * 0x100 + b5) * 0x100 + b6) * 0x100 + b7) * 0x100 + b8, -52)
 	if exponent == 0x7FF then
 		if mantissa > 0 then
 			return 0 / 0
 		else
 			if b1 >= 0x80 then
-				return -math.huge
+				return -math_huge
 			else
-				return math.huge
+				return math_huge
 			end
 		end
 	elseif exponent > 0 then
@@ -168,7 +176,7 @@ local function UnpackIEEE754Double(b8, b7, b6, b5, b4, b3, b2, b1)
 	if b1 >= 0x80 then
 		mantissa = -mantissa
 	end
-	return math.ldexp(mantissa, exponent - 0x3FF)
+	return math_ldexp(mantissa, exponent - 0x3FF)
 end
 
 --- Sets the endianness of the string stream
@@ -201,7 +209,7 @@ function ss_methods:write(data)
 				break
 			else
 				local cur = self[self.index]
-				local sublength = math.min(#cur - self.subindex + 1, length)
+				local sublength = math_min(#cur - self.subindex + 1, length)
 				self[self.index] = string.sub(cur,1,self.subindex-1) .. string.sub(data,i,i+sublength-1) .. string.sub(cur,self.subindex+sublength)
 				length = length - sublength
 				i = i + sublength
@@ -229,7 +237,7 @@ function ss_methods:read(length)
 				self.index = self.index + 1
 				length = length - #cur
 			else
-				local sublength = math.min(#cur - self.subindex + 1, length)
+				local sublength = math_min(#cur - self.subindex + 1, length)
 				ret[#ret+1] = string.sub(cur, self.subindex, self.subindex + sublength - 1)
 				length = length - sublength
 				if length > 0 then
@@ -270,7 +278,7 @@ function ss_methods:skip(length)
 	while length>0 do
 		local cur = self[self.index]
 		if cur then
-			local sublength = math.min(#cur - self.subindex + 1, length)
+			local sublength = math_min(#cur - self.subindex + 1, length)
 			length = length - sublength
 			self.subindex = self.subindex + sublength
 			if self.subindex>#cur then
@@ -286,7 +294,7 @@ function ss_methods:skip(length)
 	while length<0 do
 		local cur = self[self.index]
 		if cur then
-			local sublength = math.max(-self.subindex, length)
+			local sublength = math_max(-self.subindex, length)
 			length = length - sublength
 			self.subindex = self.subindex + sublength
 			if self.subindex<1 then
@@ -436,7 +444,7 @@ end
 --- Writes a byte to the buffer and advances the buffer pointer.
 --@param x An int8 to write
 function ss_methods:writeInt8(x)
-	if x==math.huge or x==-math.huge or x~=x then error("Can't convert error float to integer!", 2) end
+	if x==math_huge or x==-math_huge or x~=x then error("Can't convert error float to integer!", 2) end
 	if x < 0 then x = x + 0x100 end
 	self:write(string.char(x%0x100))
 end
@@ -444,27 +452,27 @@ end
 --- Writes a short to the buffer and advances the buffer pointer.
 --@param x An int16 to write
 function ss_methods:writeInt16(x)
-	if x==math.huge or x==-math.huge or x~=x then error("Can't convert error float to integer!", 2) end
+	if x==math_huge or x==-math_huge or x~=x then error("Can't convert error float to integer!", 2) end
 	if x < 0 then x = x + 0x10000 end
-	self:write(string.char(x%0x100, math.floor(x/0x100)%0x100))
+	self:write(string.char(x%0x100, bit_rshift(x, 8)%0x100))
 end
 function ss_methods_big:writeInt16(x)
-	if x==math.huge or x==-math.huge or x~=x then error("Can't convert error float to integer!", 2) end
+	if x==math_huge or x==-math_huge or x~=x then error("Can't convert error float to integer!", 2) end
 	if x < 0 then x = x + 0x10000 end
-	self:write(math.floor(x/0x100)%0x100, string.char(x%0x100))
+	self:write(bit_rshift(x, 8)%0x100, string.char(x%0x100))
 end
 
 --- Writes an int to the buffer and advances the buffer pointer.
 --@param x An int32 to write
 function ss_methods:writeInt32(x)
-	if x==math.huge or x==-math.huge or x~=x then error("Can't convert error float to integer!", 2) end
+	if x==math_huge or x==-math_huge or x~=x then error("Can't convert error float to integer!", 2) end
 	if x < 0 then x = x + 0x100000000 end
-	self:write(string.char(x%0x100, math.floor(x/0x100)%0x100, math.floor(x/0x10000)%0x100, math.floor(x/0x1000000)%0x100))
+	self:write(string.char(x%0x100, bit_rshift(x, 8)%0x100, bit_rshift(x, 16)%0x100, bit_rshift(x, 24)%0x100))
 end
 function ss_methods_big:writeInt32(x)
-	if x==math.huge or x==-math.huge or x~=x then error("Can't convert error float to integer!", 2) end
+	if x==math_huge or x==-math_huge or x~=x then error("Can't convert error float to integer!", 2) end
 	if x < 0 then x = x + 0x100000000 end
-	self:write(string.char(math.floor(x/0x1000000)%0x100, math.floor(x/0x10000)%0x100, math.floor(x/0x100)%0x100), x%0x100)
+	self:write(string.char(bit_rshift(x, 24)%0x100, bit_rshift(x, 16)%0x100, bit_rshift(x, 8)%0x100), x%0x100)
 end
 
 --- Writes a 4 byte IEEE754 float to the byte stream and advances the buffer pointer.
