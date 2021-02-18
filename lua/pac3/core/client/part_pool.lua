@@ -70,7 +70,7 @@ local function parts_from_ent(ent)
 end
 
 do
-	local function render_override(ent, type, draw_only)
+	local function render_override(ent, type)
 		if max_render_time > 0 and ent ~= pac.LocalPlayer then
 			if ent.pac_render_time_exceeded then
 				return
@@ -82,13 +82,24 @@ do
 		if parts == nil or next(parts) == nil then
 			pac.UnhookEntityRender(ent)
 		else
+			if type == "update" then
+				pac.ResetBones(ent)
+
+				for key, part in pairs(parts) do
+					if part:IsValid() then
+						if not part:HasParent() then
+							part:CallRecursive("BuildBonePositions")
+							part:CallRecursive('CThink')
+						end
+					else
+						parts[key] = nil
+					end
+				end
+			end
+
 			for key, part in pairs(parts) do
 				if part:IsValid() then
 					if not part:HasParent() then
-						if not draw_only then
-							part:CallRecursive('CThink')
-						end
-
 						if part.OwnerName == "viewmodel" and type == "viewmodel" or
 							part.OwnerName == "hands" and type == "hands" or
 							part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands"
@@ -98,27 +109,6 @@ do
 					end
 				else
 					parts[key] = nil
-				end
-			end
-
-			if not draw_only then
-				if type == 'opaque' or type == 'viewmodel' then pac.ResetBones(ent) end
-
-				-- bones MUST be setup before drawing or else unexpected/random results might happen
-
-				for key, part in pairs(parts) do
-					if part:IsValid() then
-						if not part:HasParent() then
-							part:CallRecursive("BuildBonePositions")
-						end
-					else
-						parts[key] = nil
-					end
-				end
-
-				if ent.pac_bones_modified then
-					ent:SetupBones()
-					ent.pac_bones_modified = nil
 				end
 			end
 		end
@@ -150,8 +140,8 @@ do
 		ErrorNoHalt(msg)
 	end
 
-	function pac.RenderOverride(ent, type, draw_only)
-		local ok, err = xpcall(render_override, on_error, ent, type, draw_only)
+	function pac.RenderOverride(ent, type)
+		local ok, err = xpcall(render_override, on_error, ent, type)
 		if not ok then
 			pac.Message("failed to render ", tostring(ent), ":")
 
@@ -700,11 +690,32 @@ do -- drawing
 		end
 
 		local should_suppress = setup_suppress()
-		local pac_sv_draw_distance
 
 		pac.AddHook("PostDrawOpaqueRenderables", "draw_opaque", function(bDrawingDepth, bDrawingSkybox)
 			if should_suppress() then return end
 
+			for ent in next, pac.drawn_entities do
+				if ent.pac_draw_cond and ent_parts[ent] then
+					pac.RenderOverride(ent, "opaque")
+				end
+			end
+		end)
+
+		local should_suppress = setup_suppress()
+
+		pac.AddHook("PostDrawTranslucentRenderables", "draw_translucent", function(bDrawingDepth, bDrawingSkybox)
+			if should_suppress() then return end
+
+			for ent in next, pac.drawn_entities do
+				if ent.pac_draw_cond and ent_parts[ent] then -- accessing table of NULL doesn't do anything
+					pac.RenderOverride(ent, "translucent")
+				end
+			end
+		end)
+
+		local pac_sv_draw_distance
+
+		pac.AddHook("Think", "update_parts", function()
 			-- commonly used variables
 			max_render_time = max_render_time_cvar:GetFloat()
 			pac.RealTime = RealTime()
@@ -792,7 +803,7 @@ do -- drawing
 
 					pac.ShowEntityParts(ent)
 
-					pac.RenderOverride(ent, "opaque")
+					pac.RenderOverride(ent, "update")
 				else
 					if forced_rendering then
 						forced_rendering = false
@@ -803,18 +814,6 @@ do -- drawing
 				end
 
 				::CONTINUE::
-			end
-		end)
-
-		local should_suppress = setup_suppress()
-
-		pac.AddHook("PostDrawTranslucentRenderables", "draw_translucent", function(bDrawingDepth, bDrawingSkybox)
-			if should_suppress() then return end
-
-			for ent in next, pac.drawn_entities do
-				if ent.pac_draw_cond and ent_parts[ent] then -- accessing table of NULL doesn't do anything
-					pac.RenderOverride(ent, "translucent", true)
-				end
 			end
 		end)
 	end
@@ -829,7 +828,7 @@ do -- drawing
 		for ent in next, pac.drawn_entities do
 			if IsValid(ent) then
 				if ent.pac_drawing and ent_parts[ent] then
-					pac.RenderOverride(ent, "viewmodel", true)
+					pac.RenderOverride(ent, "viewmodel")
 				end
 			else
 				pac.drawn_entities[ent] = nil
@@ -857,7 +856,7 @@ do -- drawing
 		for ent in next, pac.drawn_entities do
 			if IsValid(ent) then
 				if ent.pac_drawing and ent_parts[ent] then
-					pac.RenderOverride(ent, "hands", true)
+					pac.RenderOverride(ent, "hands")
 				end
 			else
 				pac.drawn_entities[ent] = nil

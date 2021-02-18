@@ -388,6 +388,7 @@ function PART:OnDraw(owner, pos, ang)
 		self:DrawModel(ent, pos, ang)
 	self:PostEntityDraw(owner, ent, pos, ang)
 
+	ent:SetupBones()
 	pac.ResetBones(ent)
 
 	if ent.pac_can_legacy_scale ~= false then

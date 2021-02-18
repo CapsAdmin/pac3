@@ -55,7 +55,7 @@ do
 				force_draw_localplayer = true
 				ent:DrawModel()
 				pac.RenderOverride(ent, "opaque")
-				pac.RenderOverride(ent, "translucent", true)
+				pac.RenderOverride(ent, "translucent")
 				force_draw_localplayer = false
 
 				pac.FlashlightDisable(false)

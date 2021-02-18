@@ -1015,10 +1015,7 @@ end
 
 function PART:CThink()
 	if self.ThinkTime == 0 then
-		if self.last_think ~= pac.FrameNumber then
-			self:Think()
-			self.last_think = pac.FrameNumber
-		end
+		self:Think()
 	elseif not self.last_think or self.last_think < pac.RealTime then
 		self:Think()
 		self.last_think = pac.RealTime + (self.ThinkTime or 0.1)

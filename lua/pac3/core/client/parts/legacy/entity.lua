@@ -144,10 +144,6 @@ function PART:SetWeapon(b)
 	end
 end
 
-
-function PART:OnBuildBonePositions()
-end
-
 function PART:SetDrawShadow(b)
 	self.DrawShadow = b
 
