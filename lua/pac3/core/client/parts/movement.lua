@@ -99,7 +99,6 @@ function PART:OnShow()
 end
 
 function PART:OnHide()
-	--if not self:IsEventHidden() then return end
 	local ent = self:GetOwner(true)
 
 	if ent == pac.LocalPlayer then
