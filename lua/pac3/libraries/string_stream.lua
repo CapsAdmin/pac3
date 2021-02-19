@@ -511,10 +511,10 @@ end
 do
 	do
 		function ss_methods:writeBool(b)
-			self:writeInt8(1)
+			self:writeInt8(b and 1 or 0)
 		end
 
-		function ss_methods:readBool(b)
+		function ss_methods:readBool()
 			return self:readInt8() == 1
 		end
 	end

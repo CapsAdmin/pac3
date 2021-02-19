@@ -425,8 +425,8 @@ PART.OldEvents = {
 	},
 
 	ranger = {
-		arguments = {{compare = "number"}, {distance = "number"}},
-		callback = function(self, ent, compare, distance)
+		arguments = {{compare = "number"}, {distance = "number"}, {npcs_and_players_only = "boolean"}},
+		callback = function(self, ent, compare, distance, npcs_and_players_only)
 			local parent = self:GetParentEx()
 
 			if parent:IsValid() and parent.GetWorldPosition then
@@ -438,6 +438,10 @@ PART.OldEvents = {
 					endpos = parent:GetWorldPosition() + parent:GetWorldAngles():Forward() * distance,
 					filter = ent,
 				})
+
+				if npcs_and_players_only and (not res.Entity:IsPlayer() and not res.Entity:IsNPC()) then
+					return false
+				end
 
 				return self:NumberOperator(res.Fraction * distance, compare)
 			end
