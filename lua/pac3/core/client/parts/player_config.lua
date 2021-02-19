@@ -113,7 +113,7 @@ function PART:OnHide()
 	if ent:IsValid() then
 		local player_owner = self:GetPlayerOwner()
 
-		if player_manager:IsValid() then
+		if IsValid(player_manager) then
 			pac.emut.RestoreMutations(player_owner, "blood_color", ent)
 		end
 
