@@ -139,8 +139,7 @@ function PART:SetData(str)
 	end
 end
 
-function PART:OnShow(owner)
-	--play animation
+function PART:OnShow(from_rendering)
 	local owner = self:GetOwner()
 
 	if not animations.GetRegisteredAnimations()[self:GetAnimID()] then

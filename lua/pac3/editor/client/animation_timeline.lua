@@ -7,7 +7,7 @@ local timeline = pace.timeline
 local secondDistance = 200 --100px per second on timeline
 
 do
-	local BUILDER, PART = pac.PartTemplate("base")
+	local BUILDER, PART = pac.PartTemplate("base_movable")
 
 	PART.ClassName = "timeline_dummy_bone"
 	PART.show_in_editor = false
