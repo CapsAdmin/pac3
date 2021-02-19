@@ -660,15 +660,15 @@ do
 	pac.haloex = include("pac3/libraries/haloex.lua")
 
 	function pace.OnHoverPart(self)
-		local tbl = {self.Entity and self.Entity:IsValid() and self.Entity or nil}
+		local tbl = {}
 
-		if not skip_children then
-			for _, part in ipairs(self:GetChildren()) do
-				local ent = part.Entity
+		if self.Entity and self.Entity:IsValid() then
+			table.insert(tbl, self.Entity)
+		end
 
-				if ent and ent:IsValid() then
-					table.insert(tbl, ent)
-				end
+		for _, child in ipairs(self:GetChildrenList()) do
+			if child.Entity and child.Entity:IsValid() then
+				table.insert(tbl, child.Entity)
 			end
 		end
 
@@ -676,8 +676,8 @@ do
 			if data then
 				pac.haloex.Add(tbl, unpack(data))
 			else
-				local pulse = math.abs(1 + math.sin(pac.RealTime * 20) * 255)
-				pulse = pulse + 2
+				local pulse = math.sin(pac.RealTime * 20) * 0.5 + 0.5
+				pulse = pulse * 255
 				pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
 			end
 		end
