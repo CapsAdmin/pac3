@@ -111,6 +111,34 @@ do
 					parts[key] = nil
 				end
 			end
+
+			if not draw_only then
+				if type == 'opaque' or type == 'viewmodel' then pac.ResetBones(ent) end
+
+				-- bones MUST be setup before drawing or else unexpected/random results might happen
+
+				if pac.profile then
+					for key, part in pairs(parts) do
+						if part:IsValid() then
+							if not part:HasParent() then
+								part:CallRecursiveProfiled("BuildBonePositions")
+							end
+						else
+							parts[key] = nil
+						end
+					end
+				else
+					for key, part in pairs(parts) do
+						if part:IsValid() then
+							if not part:HasParent() then
+								part:CallRecursive("BuildBonePositions")
+							end
+						else
+							parts[key] = nil
+						end
+					end
+				end
+			end
 		end
 
 		if max_render_time > 0 and ent ~= pac.LocalPlayer then

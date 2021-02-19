@@ -318,14 +318,6 @@ if SERVER then
 		end
 	end
 
-	function emut.RemoveMutationsForPlayer(ply)
-		for _, mutator in ipairs(emut.GetAllMutators()) do
-			if mutator.Owner == ply then
-				emut.RestoreMutations(mutator.Owner, mutator.ClassName, mutator.Entity)
-			end
-		end
-	end
-
 	hook.Add("PlayerInitialSpawn", "pac_entity_mutators_spawn", function( ply)
 		local id = "pac_entity_mutators_spawn" .. ply:UniqueID()
 		hook.Add( "SetupMove", id, function(self, ply, _, cmd)
@@ -337,6 +329,14 @@ if SERVER then
 			end
 		end)
 	end)
+end
+
+function emut.RemoveMutationsForPlayer(ply)
+	for _, mutator in ipairs(emut.GetAllMutators()) do
+		if mutator.Owner == ply then
+			emut.RestoreMutations(mutator.Owner, mutator.ClassName, mutator.Entity)
+		end
+	end
 end
 
 hook.Add("EntityRemoved", "pac_entity_mutators_left", function(ent)

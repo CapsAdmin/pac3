@@ -66,12 +66,8 @@ function SWEP:Deploy()
 end
 
 function SWEP:Think()
-
 	if self.Thinking and self.Owner and self.Owner:IsValid() and self.Owner:GetViewModel():IsValid() then
 		self.Thinking = false
-
-		assert(self:GetClass()=="none","WTF WRONG SHIT: "..tostring(self:GetClass()))
-
 	end
 end
 
