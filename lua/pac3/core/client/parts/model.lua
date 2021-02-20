@@ -34,6 +34,7 @@ BUILDER:StartStorableVars()
 		:GetSet("Size", 1, {editor_sensitivity = 0.25})
 		:GetSet("Scale", Vector(1,1,1))
 		:GetSet("BoneMerge", false)
+		:GetSet("LegacyTransform", false)
 
 	:SetPropertyGroup("appearance")
 		:GetSet("Color", Vector(1, 1, 1), {editor_panel = "color2"})
@@ -221,6 +222,7 @@ function PART:OnShow()
 
 	if ent:IsValid() and owner:IsValid() and owner ~= ent then
 		ent:SetPos(owner:EyePos())
+		ent:SetLegacyTransform(self.LegacyTransform)
 		self:SetBone(self:GetBone())
 	end
 end
