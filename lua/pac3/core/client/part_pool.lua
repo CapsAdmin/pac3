@@ -348,16 +348,21 @@ pac.AddHook("Think", "events", function()
 		end
 	end
 
-	do
-		local mode = cvar_projected_texture:GetInt()
 
-		if mode <= 0 then
-			pac.projected_texture_enabled = false
-		elseif mode == 1 then
-			pac.projected_texture_enabled = true
-		elseif mode >= 2 then
-			pac.projected_texture_enabled = pac.LocalPlayer:FlashlightIsOn()
-		end
+	if pac.last_flashlight_on ~= pac.LocalPlayer:FlashlightIsOn() then
+
+		local lamp = ProjectedTexture()
+
+		lamp:SetTexture( "effects/flashlight001" )
+		lamp:SetFarZ( 500 )
+
+		lamp:SetPos( pac.LocalPlayer:EyePos() - pac.LocalPlayer:GetAimVector()*100 )
+		lamp:SetAngles( pac.LocalPlayer:EyeAngles() )
+		lamp:Update()
+
+		lamp:Remove()
+
+		pac.last_flashlight_on = pac.LocalPlayer:FlashlightIsOn()
 	end
 
 	for ent in next, pac.drawn_entities do

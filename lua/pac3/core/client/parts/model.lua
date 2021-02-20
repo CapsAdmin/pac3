@@ -361,7 +361,6 @@ function PART:DrawModel(ent, pos, ang)
 	ent:DrawModel()
 	ent.pac_drawing_model = false
 
-	if pac.projected_texture_enabled and not pac.flashlight_disabled then
 		render.PushFlashlightMode(true)
 
 		material_bound = self:BindMaterials(ent) or material_bound
@@ -370,7 +369,6 @@ function PART:DrawModel(ent, pos, ang)
 		ent.pac_drawing_model = false
 
 		render.PopFlashlightMode()
-	end
 
 	if self.NoCulling then
 		render_CullMode(MATERIAL_CULLMODE_CCW)
