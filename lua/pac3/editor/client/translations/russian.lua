@@ -66,7 +66,6 @@ return {
 ["ammo"] = "патроны",
 ["alpha"] = "альфа",
 ["exit"] = "выход",
-["marks this content as nsfw, and makes it hidden for most of players who have pac_hide_disturbing set to 1"] = "помечает этот контент как nsfw, и делает его скрытым для игроков, которые имеют pac_hide_disturbing на 1",
 ["revert"] = "вернуть обратно",
 ["modified"] = "изменено",
 ["angle offset"] = "смещение угла",

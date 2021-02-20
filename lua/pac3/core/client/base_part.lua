@@ -31,10 +31,6 @@ BUILDER
 			:GetSet("EditorExpand", false, {hidden = true})
 			:GetSet("UniqueID", "", {hidden = true})
 			:GetSetPart("Parent")
-			:GetSet("IsDisturbing", false, {
-				editor_friendly = "IsExplicit",
-				description = "Marks this content as NSFW, and makes it hidden for most of players who have pac_hide_disturbing set to 1"
-			})
 			-- this is an unfortunate name, it controls the order in which the scene related functions iterate over children
 			-- in practice it's often used to make something draw above something else in translucent rendering
 			:GetSet("DrawOrder", 0)
@@ -60,8 +56,8 @@ function PART:PreInitialize()
 	self.modifiers = {}
 	self.RootPart = NULL
 	self.DrawOrder = 0
-	self.hide_disturbing = false
 	self.active_events = {}
+	self.active_events_ref_count = 0
 end
 
 function PART:GetNiceName()
@@ -274,15 +270,6 @@ do -- owner
 		end
 
 		return self.Owner or NULL
-	end
-end
-
-do
-	local pac_hide_disturbing = CreateClientConVar("pac_hide_disturbing", "1", true, true, "Hide parts which outfit creators marked as 'nsfw' (e.g. gore or explicit content)")
-
-	function PART:SetIsDisturbing(val)
-		self.IsDisturbing = val
-		self.hide_disturbing = pac_hide_disturbing:GetBool() and val
 	end
 end
 
@@ -566,14 +553,13 @@ do -- hidden / events
 	end
 
 	local function is_hidden(part, ignored_event_part)
-
-		if next(part.active_events) then
+		if part.active_events_ref_count > 0 then
 			if not ignored_event_part or not part.active_events[ignored_event_part] then
 				return true
 			end
 		end
 
-		return part.Hide or part.hide_disturbing
+		return part.Hide
 	end
 
 	function PART:IsHidden(ignored_event_part, only_self)
@@ -594,12 +580,18 @@ do -- hidden / events
 
 	function PART:SetEventTrigger(event_part, enable)
 		if enable then
-			self.active_events[event_part] = event_part
+			if not self.active_events[event_part] then
+				self.active_events[event_part] = event_part
+				self.active_events_ref_count = self.active_events_ref_count + 1
+				self:CalcShowHide()
+			end
 		else
-			self.active_events[event_part] = nil
+			if self.active_events[event_part] then
+				self.active_events[event_part] = nil
+				self.active_events_ref_count = self.active_events_ref_count - 1
+				self:CalcShowHide()
+			end
 		end
-
-		self:CalcShowHide()
 	end
 
 	function PART:CalcShowHide()
