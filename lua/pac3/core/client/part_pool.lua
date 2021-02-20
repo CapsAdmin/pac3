@@ -141,6 +141,8 @@ do
 	end
 
 	function pac.RenderOverride(ent, type)
+		if ent.pac_error then return end
+
 		local ok, err = xpcall(render_override, on_error, ent, type)
 		if not ok then
 			pac.Message("failed to render ", tostring(ent), ":")
@@ -179,6 +181,7 @@ function pac.ShowEntityParts(ent)
 
 		pac.ResetBones(ent)
 		ent.pac_drawing = true
+		ent.pac_error = nil
 	end
 end
 
