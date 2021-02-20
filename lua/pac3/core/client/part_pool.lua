@@ -111,7 +111,7 @@ do
 					parts[key] = nil
 				end
 			end
-							end
+		end
 
 		if max_render_time > 0 and ent ~= pac.LocalPlayer then
 			ent.pac_render_times = ent.pac_render_times or {}
@@ -163,10 +163,7 @@ end
 function pac.HideEntityParts(ent)
 	if ent_parts[ent] and ent.pac_drawing then
 		for _, part in pairs(ent_parts[ent]) do
-			part:CallRecursive("OnHide")
-			part:SetKeyValueRecursive("last_hidden", nil)
-			part:SetKeyValueRecursive("shown_from_rendering", nil)
-			part:SetKeyValueRecursive("draw_hidden", true)
+			part:HideFromRendering()
 		end
 
 		pac.ResetBones(ent)
@@ -177,9 +174,7 @@ end
 function pac.ShowEntityParts(ent)
 	if ent_parts[ent] and (not ent.pac_drawing) and (not ent.pac_shouldnotdraw) and (not ent.pac_ignored) then
 		for _, part in pairs(ent_parts[ent]) do
-			part:SetKeyValueRecursive("last_hidden", nil)
-			part:SetKeyValueRecursive("shown_from_rendering", FrameNumber())
-			part:SetKeyValueRecursive("draw_hidden", false)
+			part:ShowFromRendering()
 		end
 
 		pac.ResetBones(ent)
@@ -246,6 +241,8 @@ function pac.HookEntityRender(ent, part)
 	parts[part] = part
 
 	ent.pac_has_parts = true
+
+	part:ShowFromRendering()
 end
 
 function pac.UnhookEntityRender(ent, part)
@@ -258,6 +255,10 @@ function pac.UnhookEntityRender(ent, part)
 		ent_parts[ent] = nil
 		ent.pac_has_parts = nil
 		pac.drawn_entities[ent] = nil
+	end
+
+	if part then
+		part:HideFromRendering()
 	end
 end
 

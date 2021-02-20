@@ -61,7 +61,7 @@ function PART:PreInitialize()
 	self.RootPart = NULL
 	self.DrawOrder = 0
 	self.hide_disturbing = false
-	self.event_hide_registry = {}
+	self.active_events = {}
 end
 
 function PART:GetNiceName()
@@ -126,9 +126,9 @@ function PART:GetEnabled()
 		self.last_enabled = enabled
 
 		if enabled then
-			self:CallRecursive("OnShow")
+			self:ShowFromRendering()
 		else
-			self:CallRecursive("OnHide")
+			self:HideFromRendering()
 		end
 
 	end
@@ -195,7 +195,6 @@ do -- owner
 		else
 			if removed and prev_owner == ent then
 				self:SetOwner(NULL)
-				self.temp_hidden = true
 				return
 			end
 
@@ -203,7 +202,6 @@ do -- owner
 				ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self) or NULL
 				if ent ~= prev_owner then
 					self:SetOwner(ent)
-					self.temp_hidden = false
 					return true
 				end
 			end
@@ -427,10 +425,6 @@ do -- parenting
 			pac.CallHook("OnPartParent", self, part)
 		end
 
-		part.shown_from_rendering = true
-		part:SetKeyValueRecursive("last_hidden", nil)
-		part:SetKeyValueRecursive("last_hidden_by_event", nil)
-
 		return part.Id
 	end
 
@@ -544,46 +538,53 @@ do -- parenting
 end
 
 do -- hidden / events
-	function PART:SetHide(b)
-		self.Hide = b
-
-		self:SetKeyValueRecursive("hidden", b)
-	end
-
-	function PART:RemoveEventHide(object)
-		self.event_hide_registry[object] = nil
-	end
-
-	function PART:SetEventHide(b, object)
-		object = object or self
-
-		-- this can and will produce undefined behavior (like skipping keys)
-		-- but still, it will do the job at cleaning up at least a part of table
-		for k, v in pairs(self.event_hide_registry) do
-			if not IsValid(k) then
-				self.event_hide_registry[k] = nil
-			end
-		end
-
-		self.event_hide_registry[object] = b
-		self.event_hidden = self:CalculateEventHidden()
-
-		if self.event_hidden ~= b then
-			self.shown_from_rendering = nil
-		end
-	end
-
-	function PART:FlushFromRenderingState(newState)
-		self.shown_from_rendering = nil
-	end
-
 	function PART:IsDrawHidden()
 		return self.draw_hidden
 	end
 
-	function PART:CalculateEventHidden()
-		for k, v in pairs(self.event_hide_registry) do
-			if v then
+	function PART:SetDrawHidden(b)
+		self.draw_hidden = b
+	end
+
+	function PART:ShowFromRendering()
+		self:SetDrawHidden(true)
+
+		if not self:IsHidden() then
+			self:OnShow(true)
+		end
+
+		for _, child in ipairs(self:GetChildrenList()) do
+			if not child:IsHidden() then
+				child:OnShow(true)
+			end
+		end
+	end
+
+	function PART:HideFromRendering()
+		self:SetDrawHidden(false)
+		self:CallRecursive("OnHide", true)
+	end
+
+	local function is_hidden(part, ignored_event_part)
+
+		if next(part.active_events) then
+			if not ignored_event_part or not part.active_events[ignored_event_part] then
+				return true
+			end
+		end
+
+		return part.Hide or part.hide_disturbing
+	end
+
+	function PART:IsHidden(ignored_event_part, only_self)
+		if is_hidden(self, ignored_event_part) then
+			return true
+		end
+
+		if only_self then return false end
+
+		for _, parent in ipairs(self:GetParentList()) do
+			if is_hidden(parent, ignored_event_part) then
 				return true
 			end
 		end
@@ -591,59 +592,28 @@ do -- hidden / events
 		return false
 	end
 
-	function PART:IsEventHidden(object, invert)
-		if object then
-			if invert then
-				for k, v in pairs(self.event_hide_registry) do
-					if k ~= object and v then
-						return true
-					end
-				end
-
-				return false
-			end
-
-			return self.event_hide_registry[object] == true
+	function PART:SetEventTrigger(event_part, enable)
+		if enable then
+			self.active_events[event_part] = event_part
+		else
+			self.active_events[event_part] = nil
 		end
 
-		if self.event_hidden == nil then
-			self.event_hidden = self:CalculateEventHidden()
-		end
-
-		return self.event_hidden
+		self:CalcShowHide()
 	end
 
-	function PART:IsHiddenInternal()
-		return self.hidden
-	end
+	function PART:CalcShowHide()
+		local b = self:IsHidden()
 
-	function PART:IsHidden()
-		if
-			self.draw_hidden or
-			self.temp_hidden or
-			self.hidden or
-			self.hide_disturbing or
-			self:IsEventHidden()
-		then
-			return true, self:IsEventHidden()
-		end
-
-		if not self:HasParent() then
-			return false
-		end
-
-		for _, parent in ipairs(self:GetParentList()) do
-			if
-				parent.draw_hidden or
-				parent.temp_hidden or
-				parent.hidden or
-				parent.event_hidden
-			then
-				return true, parent:IsEventHidden()
+		if b ~= self.last_hidden then
+			if b then
+				self:OnHide()
+			else
+				self:OnShow()
 			end
 		end
 
-		return false
+		self.last_hidden = b
 	end
 end
 
@@ -992,27 +962,6 @@ do -- events
 	function PART:OnEvent(event, ...) end
 end
 
-function PART:CalcShowHide()
-	local b, byEvent = self:IsHidden()
-	local triggerUpdate = b ~= self.last_hidden or self.last_hidden_by_event ~= byEvent
-	if not triggerUpdate then return end
-
-	if b ~= self.last_hidden then
-		if b then
-			self:OnHide()
-		else
-			self:OnShow(self.shown_from_rendering == true or self.shown_from_rendering == FrameNumber())
-		end
-	end
-
-	if FrameNumber() ~= self.shown_from_rendering then
-		self.shown_from_rendering = nil
-	end
-
-	self.last_hidden = b
-	self.last_hidden_by_event = byEvent
-end
-
 function PART:CThink()
 	if self.ThinkTime == 0 then
 		self:Think()
@@ -1033,8 +982,6 @@ function PART:Think()
 
 	if owner:IsValid() then
 		if owner ~= self.last_owner then
-			self.last_hidden = false
-			self.last_hidden_by_event = false
 			self.last_owner = owner
 		end
 	end

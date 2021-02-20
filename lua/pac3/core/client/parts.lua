@@ -62,6 +62,8 @@ function pac.CreatePart(name, owner, tbl)
 
 	if tbl then
 		part:SetTable(tbl)
+		-- if already hidden, this prevents OnHide or OnShow from being called by CalcShowHide
+		part.last_hidden = part:IsHidden()
 	end
 
 	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))

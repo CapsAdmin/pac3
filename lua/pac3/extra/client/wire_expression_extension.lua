@@ -11,7 +11,7 @@ local function SetKeyValue(ply, ent, unique_id, key, val)
 
 	if part:GetOwner(true) == ent then
 		if key == "EventHide" then
-			part:SetEventHide(val > 0, ent)
+			part:SetEventTrigger(ent, val > 0)
 		else
 			local t1 = type(part[key])
 			local t2 = type(val)

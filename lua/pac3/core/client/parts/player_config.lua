@@ -118,7 +118,7 @@ function PART:OnHide()
 			pac.emut.RestoreMutations(player_owner, "blood_color", ent)
 		end
 
-		for key in pairs(self.ent_fields) do
+		for key in pairs(ent_fields) do
 			ent[key] = nil
 		end
 	end

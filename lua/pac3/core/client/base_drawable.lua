@@ -156,10 +156,6 @@ do -- modifiers
 
 end
 
-function PART:FlushFromRenderingState(newState)
-	self.shown_from_rendering = nil
-end
-
 function PART:IsDrawHidden()
 	return self.draw_hidden
 end

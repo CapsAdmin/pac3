@@ -361,14 +361,14 @@ function PART:DrawModel(ent, pos, ang)
 	ent:DrawModel()
 	ent.pac_drawing_model = false
 
-		render.PushFlashlightMode(true)
+	render.PushFlashlightMode(true)
 
-		material_bound = self:BindMaterials(ent) or material_bound
-		ent.pac_drawing_model = true
-		ent:DrawModel()
-		ent.pac_drawing_model = false
+	material_bound = self:BindMaterials(ent) or material_bound
+	ent.pac_drawing_model = true
+	ent:DrawModel()
+	ent.pac_drawing_model = false
 
-		render.PopFlashlightMode()
+	render.PopFlashlightMode()
 
 	if self.NoCulling then
 		render_CullMode(MATERIAL_CULLMODE_CCW)
@@ -959,7 +959,7 @@ do
 					if self.Class == "all" or (self.Class:lower() == wep:GetClass():lower()) then
 						self:OnHide()
 						self.Entity = wep
-						self:SetEventHide(false, self)
+						self:SetEventTrigger(self, false)
 						wep.RenderOverride = function()
 							if wep.pac_render then
 								if not self.NoDraw then
@@ -973,7 +973,7 @@ do
 						wep.pac_weapon_part = self
 						self:SetDrawShadow(self:GetDrawShadow())
 					else
-						self:SetEventHide(true, self)
+						self:SetEventTrigger(self, true)
 						self:OnHide()
 					end
 				end

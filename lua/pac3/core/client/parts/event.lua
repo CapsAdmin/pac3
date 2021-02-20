@@ -128,16 +128,9 @@ PART.OldEvents = {
 			self.time = self.time or time
 			self.timerx_reset = reset_on_hide
 
-			-- limitation - we can not "not to think" the timer
-			-- when our thinking depends on whenever we control our parent!
-			if self.AffectChildrenOnly then
-				local hidden, event_hidden = self:IsHidden()
-
-				if hidden and (not event_hidden or not self:IsEventHidden(self, true)) then
-					return false
-				end
+			if self.AffectChildrenOnly and self:IsHidden(self) then
+				return false
 			end
-
 			self.number = time - self.time
 
 			return self:NumberOperator(self.number, seconds)
@@ -153,16 +146,9 @@ PART.OldEvents = {
 			self.time = self.time or time
 			self.timerx_reset = reset_on_hide
 
-			-- limitation - we can not "not to think" the timer
-			-- when our thinking depends on whenever we control our parent!
-			if self.AffectChildrenOnly then
-				local hidden, event_hidden = self:IsHidden()
-
-				if hidden and (not event_hidden or not self:IsEventHidden(self, true)) then
-					return false
-				end
+			if self.AffectChildrenOnly and self:IsHidden(self) then
+				return false
 			end
-
 			return self:NumberOperator(time - self.time, seconds)
 		end,
 	},
@@ -1454,40 +1440,27 @@ function PART:GetNiceName()
 	return PART.Events[event_name]:GetNiceName(self, self:GetOwner(self.RootOwner))
 end
 
-function PART:OnRemove()
-	if self.AffectChildrenOnly then
-		for _, child in ipairs(self:GetChildren()) do
-			child:RemoveEventHide(self)
-		end
-	else
-		local parent = self:GetParent()
-
-		if parent:IsValid() then
-			parent:RemoveEventHide(self)
-		end
-	end
-end
-
-local function should_hide(self, ent, eventObject)
+local function should_trigger(self, ent, eventObject)
 	if not eventObject:IsAvaliable(self) then
 		return true
 	end
 
 	local b = false
-
-	if self.hidden or self.event_hidden then
-		b = self.Invert
+	if eventObject.ParseArguments then
+		b = eventObject:Think(self, ent, eventObject:ParseArguments(self)) or false
 	else
-		if eventObject.ParseArguments then
-			b = eventObject:Think(self, ent, eventObject:ParseArguments(self)) or false
-		else
-			b = eventObject:Think(self, ent, self:GetParsedArgumentsForObject(eventObject)) or false
-		end
-
-		if self.Invert then
-			b = not b
-		end
+		b = eventObject:Think(self, ent, self:GetParsedArgumentsForObject(eventObject)) or false
 	end
+
+	if self.Invert then
+		b = not b
+	end
+
+	if self:IsHidden(self, true) then
+		b = self.Invert
+	end
+
+	self.is_active = b
 
 	return b
 end
@@ -1501,7 +1474,7 @@ function PART:OnThink()
 	local data = self.Events[self.Event]
 	if not data then return end
 
-	self:TriggerEvent(should_hide(self, ent, data))
+	self:TriggerEvent(should_trigger(self, ent, data))
 
 	if pace and pace.IsActive() and self.Name == "" then
 		if self.pace_properties and self.pace_properties["Name"] and self.pace_properties["Name"]:IsValid() then
@@ -1512,43 +1485,21 @@ function PART:OnThink()
 end
 
 function PART:TriggerEvent(b)
-	-- this is just used for the editor..
-	self.event_triggered = b
+	self.event_triggered = b -- event_triggered is just used for the editor
 
 	if self.AffectChildrenOnly then
-
 		for _, child in ipairs(self:GetChildren()) do
-			child:SetEventHide(b, self)
+			child:SetEventTrigger(self, b)
 		end
-
-
-		if self.last_event_triggered ~= self.event_triggered then
-			if not self.suppress_event_think then
-				self.suppress_event_think = true
-				self:CallRecursive("CalcShowHide")
-				self.suppress_event_think = nil
-			end
-			self.last_event_triggered = self.event_triggered
-		end
-	elseif self:HasParent() then
+	else
 		local parent = self:GetParent()
-
-		parent:SetEventHide(b, self)
-		parent:CallRecursive("FlushFromRenderingState")
-
-		if self.last_event_triggered ~= self.event_triggered then
-			if not self.suppress_event_think then
-				self.suppress_event_think = true
-				parent:CallRecursive("CalcShowHide")
-				self.suppress_event_think = nil
-			end
-			self.last_event_triggered = self.event_triggered
+		if parent:IsValid() then
+			parent:SetEventTrigger(self, b)
 		end
 	end
 end
 
-PART.Operators =
-{
+PART.Operators = {
 	"equal",
 	"not equal",
 	"above",

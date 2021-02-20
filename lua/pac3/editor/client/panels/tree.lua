@@ -122,13 +122,31 @@ do
 					node.add_button:SetVisible(false)
 				end
 
-				if part.event_triggered ~= nil then
-					if part.event_triggered then
+				if part.ClassName == "event" then
+					if part.is_active then
 						node.Icon:SetImage("icon16/clock_red.png")
 					else
 						node.Icon:SetImage(part.Icon)
 					end
 				end
+
+				if part:IsHidden() then
+					if not node.Icon.event_icon then
+						local pnl = vgui.Create("DImage", node.Icon)
+						pnl:SetImage("icon16/clock_red.png")
+						pnl:SetSize(8, 8)
+						pnl:SetPos(8, 8)
+						pnl:SetVisible(false)
+						node.Icon.event_icon = pnl
+					end
+
+					node.Icon.event_icon:SetVisible(true)
+				else
+					if node.Icon.event_icon then
+						node.Icon.event_icon:SetVisible(false)
+					end
+				end
+
 				if (part.ClassName == "proxy" or part.ClassName == "event") and part.Name == "" then
 					node:SetText(part:GetName())
 				end

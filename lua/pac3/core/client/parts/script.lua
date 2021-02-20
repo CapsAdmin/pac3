@@ -108,7 +108,7 @@ local function CreateDummies(parts)
 		EventHide = function(_, b)
 			for _, v in pairs(parts) do
 				if v:IsValid() then
-					v:SetEventHide(not not b, self)
+					v:SetEventTrigger(self, not not b)
 				end
 			end
 		end,
@@ -116,7 +116,7 @@ local function CreateDummies(parts)
 		EventShow = function(_, b)
 			for _, v in pairs(parts) do
 				if v:IsValid() then
-					v:SetEventHide(not b, self)
+					v:SetEventTrigger(self, not b)
 				end
 			end
 		end
@@ -157,11 +157,11 @@ local function CreateDummy(part, store, self)
 		end,
 
 		EventHide = function(_, b)
-			part:SetEventHide(not not b, self)
+			part:SetEventTrigger(self, not not b)
 		end,
 
 		EventShow = function(_, b)
-			part:SetEventHide(not b, self)
+			part:SetEventTrigger(self, not b)
 		end,
 
 		GetChildren = function()
