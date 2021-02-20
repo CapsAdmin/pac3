@@ -39,7 +39,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 
 	local class_translate = {
 		model = "model2",
-		material = "material_vertexlitgeneric",
+		material = "material_3d",
 		entity = "entity2",
 		bone = "bone2",
 		light = "light2",
@@ -48,62 +48,121 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 	}
 
 	local model_prop_translate = {
-		Color = function(old, new, oldval) new:SetColor(Vector(oldval.r/255, oldval.g/255, oldval.b/255)) end,
-		DoubleFace = function(old, new, oldval) new:SetNoCulling(oldval) end,
-		Fullbright = function(old, new, oldval) new:SetNoLighting(oldval) end,
-		Brightness = function(old, new, oldval) new:SetColor(new:GetColor() * oldval) end,
-		TextureFilter = function(old, new, oldval) new:SetNoTextureFiltering(not oldval) end,
-		LodOverride = function(old, new, oldval) new:SetLevelOfDetail(oldval) end,
+		DoubleFace = function(tbl, val) tbl.NoCulling = val end,
+		Fullbright = function(tbl, val) tbl.NoLighting = val end,
+
+		TextureFilter = function(tbl, val) tbl.NoTextureFiltering = not val end,
+		LodOverride = function(tbl, val) tbl.LevelOfDetail = val end,
+		Model = function(tbl, val)
+			if val:find("://", nil, true) then
+				tbl.Model = "obj" .. val
+			else
+				tbl.Model = val
+			end
+		end,
 	}
+
+	local registered_parts = pac.GetRegisteredParts()
+
+	local material_translate = {}
+	for old_key in pairs(registered_parts.material.ShaderParams) do
+
+		local new_key = old_key:lower()
+		local new_val = registered_parts.material_3d[new_key]
+		local old_val = registered_parts.material[old_key]
+
+		if new_val ~= nil and type(new_val) == type(old_val) then
+			material_translate[old_key] = function(tbl, val)
+				tbl[new_key] = val
+			end
+		end
+	end
 
 	local prop_translate = {
 		model = model_prop_translate,
 		entity = table.Merge(model_prop_translate, {
-			HideEntity = function(old, new, oldval) new:SetNoDraw(oldval) end
+			HideEntity = function(tbl, val) tbl.NoDraw = val end
 		}),
+		material = material_translate,
 	}
+
+	local temp = {}
+
+	local function get_storable(classname)
+		if registered_parts[classname].StorableVars then
+			return registered_parts[classname].StorableVars
+		end
+
+		if temp[classname] then
+			return temp[classname]
+		end
+
+		local part = pac.CreatePart(classname, pac.LocalPlayer)
+		temp[classname] = part.StorableVars
+		part:Remove()
+
+		return temp[classname]
+	end
+
+	local saved = {}
+	for _, part in pairs(pac.GetLocalParts()) do
+		if not part:HasParent() then
+			table.insert(saved, part:ToTable())
+		end
+	end
+
+	pace.ClearParts()
 
 	local done = {}
 
-	for _, old_part in pairs(pac.GetLocalParts()) do
-		if old_part.Group == "legacy" then
+	local function walk(tbl)
+		local new_classname = class_translate[tbl.self.ClassName]
+		if new_classname then
+			local old_classname = tbl.self.ClassName
+			tbl.self.ClassName = new_classname
 
-			local new_classname = class_translate[old_part.ClassName]
-			if not new_classname then
-
-				print("cannot translate classname " .. old_part.ClassName)
-
-				continue
+			if tbl.self.Color then
+				local val = tbl.self.Color
+				tbl.self.Color = Vector(val.r/255, val.g/255, val.b/255)
+				if tbl.self.Brightness then
+					tbl.self.Color = tbl.self.Color * tbl.self.Brightness
+				end
 			end
 
-			local new_part = pac.CreatePart(old_part.ClassName .. "2")
-			new_part:SetParent(old_part:GetParent())
+			for key in pairs(get_storable(old_classname)) do
+				local value = tbl.self[key] or registered_parts[old_classname][key]
 
-			for _, key in pairs(old_part:GetStorableVars()) do
-				if prop_translate[old_part.ClassName] and prop_translate[old_part.ClassName][key] then
-					prop_translate[old_part.ClassName][key](old_part, new_part, old_part["Get" .. key](old_part))
-				else
-					local func = new_part["Set" .. key]
-					if func then
-						local oldval = old_part["Get" .. key](old_part)
-						func(new_part, oldval)
-					else
+				if key == "Brightness" or key == "Color" then continue end
 
-						local msg = old_part.ClassName .. "." .. key
-						if not done[msg] then
-							print("cannot translate property " .. msg)
-							done[msg] = true
-						end
+				if prop_translate[old_classname] and prop_translate[old_classname][key] then
+					pac.Message("translating property: ", key, " = ", value)
+					tbl.self[key] = nil
+					prop_translate[old_classname][key](tbl.self, value)
+				elseif not get_storable(new_classname)[key] then
+					local msg = tbl.self.ClassName .. "." .. key
+					if not done[msg] then
+						pac.Message(Color(255,100,100), "cannot translate property ", msg)
+						done[msg] = true
 					end
 				end
 			end
 
-			for k,v in ipairs(old_part:GetChildren()) do
-				v:SetParent(new_part)
-			end
-
-			old_part:Remove()
 		end
+
+		if tbl.children then
+			for _, tbl in ipairs(tbl.children) do
+				walk(tbl)
+			end
+		end
+	end
+
+	for _, tbl in ipairs(saved) do
+		walk(tbl)
+	end
+
+	for _, tbl in ipairs(saved) do
+		local part = pac.CreatePart(tbl.self.ClassName, pac.LocalPlayer)
+		part:SetTable(tbl)
 	end
 end)
 
