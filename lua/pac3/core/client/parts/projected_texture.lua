@@ -124,8 +124,6 @@ function PART:SetTextureFrame(val)
 	end
 end
 
-
-
 function PART:SetTexture(val)
 	if not val then
 		return
@@ -144,8 +142,20 @@ function PART:SetTexture(val)
 end
 
 function PART:OnHide()
-	self:GetProjectedTexture():Remove()
+	local tex = self:GetProjectedTexture()
+	tex:SetBrightness(0)
+	tex:Update()
+	-- give it one frame to update
+	timer.Simple(0, function()
+		if tex:IsValid() then
+			tex:Remove()
+		end
+	end)
 	self.ptex = nil
+end
+
+function PART:OnRemove()
+	self:OnHide()
 end
 
 BUILDER:Register()
