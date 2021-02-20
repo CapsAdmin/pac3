@@ -89,7 +89,7 @@ do
 					if part:IsValid() then
 						if not part:HasParent() then
 							part:CallRecursive("BuildBonePositions")
-							part:CallRecursive('CThink')
+							part:CallRecursive('Think')
 						end
 					else
 						parts[key] = nil
@@ -613,6 +613,14 @@ function pac.CallPartEvent(event, ...)
 		local ret = part:OnEvent(event, ...)
 		if ret ~= nil then
 			return ret
+		end
+	end
+end
+
+function pac.EnablePartsByClass(classname, enable)
+	for _, part in pairs(all_parts) do
+		if part.ClassName == classname then
+			part:SetEnabled(enable)
 		end
 	end
 end

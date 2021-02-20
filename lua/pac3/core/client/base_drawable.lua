@@ -161,11 +161,9 @@ function PART:IsDrawHidden()
 end
 
 function PART:Draw(pos, ang, draw_type)
-	-- Think takes care of polling this
 	if not self.OnDraw then return end
-	if not self.last_enabled then return end
-
-	if self:IsHidden() then return end
+	if not self.Enabled then return end
+	if self:IsHiddenCached() then return end
 
 	if
 		draw_type == "viewmodel" or draw_type == "hands" or

@@ -85,7 +85,9 @@ do -- bones
 	end
 
 	function PART:BuildBonePositions()
-		if not self:IsHidden() then
+		if not self.Enabled then return end
+
+		if not self:IsHiddenCached() then
 			self:OnBuildBonePositions()
 		end
 	end

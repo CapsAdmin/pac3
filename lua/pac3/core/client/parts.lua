@@ -66,6 +66,10 @@ function pac.CreatePart(name, owner, tbl)
 		part.last_hidden = part:IsHidden()
 	end
 
+	if not META.GloballyEnabled then
+		part:SetEnabled(false)
+	end
+
 	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))
 
 	return part
@@ -75,10 +79,18 @@ local reloading = false
 
 function pac.RegisterPart(META)
 	do
-		local enabled = pac.CreateClientConVarFast("pac_enable_" .. META.ClassName, "1", true, "boolean")
-		function META:IsEnabled()
-			return enabled()
-		end
+		local cvar = CreateClientConVar("pac_enable_" .. META.ClassName, "1", true)
+		cvars.AddChangeCallback("pac_enable_" .. META.ClassName, function(name, old, new)
+			local enable = tobool(new)
+			META.GloballyEnabled = enable
+			if enable then
+				pac.Message("enabling parts by class " .. META.ClassName)
+			else
+				pac.Message("disabling parts by class " .. META.ClassName)
+			end
+			pac.EnablePartsByClass(META.ClassName, enable)
+		end)
+		META.GloballyEnabled = cvar:GetBool()
 	end
 
 	META.__index = META

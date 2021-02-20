@@ -21,6 +21,7 @@ end
 BUILDER
 	:GetSet("PlayerOwner", NULL)
 	:GetSet("Owner", NULL)
+	:GetSet("Enabled", true)
 
 BUILDER
 	:StartStorableVars()
@@ -104,33 +105,6 @@ function PART:GetName()
 	end
 
 	return self.Name
-end
-
-function PART:GetEnabled()
-
-	local enabled = self:IsEnabled()
-
-	if self.last_enabled == enabled then
-		return enabled
-	end
-
-	-- changed
-
-	if self.last_enabled == nil then
-		self.last_enabled = enabled
-	else
-		self.last_enabled = enabled
-
-		if enabled then
-			self:ShowFromRendering()
-		else
-			self:HideFromRendering()
-		end
-
-	end
-
-	return enabled
-
 end
 
 do -- owner
@@ -525,6 +499,16 @@ do -- parenting
 end
 
 do -- hidden / events
+	function PART:SetEnabled(val)
+		self.Enabled = val
+		print(self, val)
+		if val then
+			self:ShowFromRendering()
+		else
+			self:HideFromRendering()
+		end
+	end
+
 	function PART:IsDrawHidden()
 		return self.draw_hidden
 	end
@@ -607,6 +591,10 @@ do -- hidden / events
 
 		self.last_hidden = b
 	end
+
+	function PART:IsHiddenCached()
+		return self.last_hidden
+end
 end
 
 do -- serializing
@@ -954,41 +942,43 @@ do -- events
 	function PART:OnEvent(event, ...) end
 end
 
-function PART:CThink()
-	if self.ThinkTime == 0 then
-		self:Think()
-	elseif not self.last_think or self.last_think < pac.RealTime then
-		self:Think()
-		self.last_think = pac.RealTime + (self.ThinkTime or 0.1)
-	end
-end
+do
+	local function think(self)
+		self:CalcShowHide()
 
-function PART:Think()
-	if not self:GetEnabled() then return end
+		if not self.AlwaysThink and self:IsHiddenCached() then return end
 
-	self:CalcShowHide()
+		local owner = self:GetOwner()
 
-	if not self.AlwaysThink and self:IsHidden() then return end
-
-	local owner = self:GetOwner()
-
-	if owner:IsValid() then
-		if owner ~= self.last_owner then
-			self.last_owner = owner
-		end
-	end
-
-	if self.delayed_variables then
-
-		for _, data in ipairs(self.delayed_variables) do
-			self["Set" .. data.key](self, data.val)
+		if owner:IsValid() then
+			if owner ~= self.last_owner then
+				self.last_owner = owner
+			end
 		end
 
-		self.delayed_variables = nil
-	end
-	self:OnThink()
-end
+		if self.delayed_variables then
 
+			for _, data in ipairs(self.delayed_variables) do
+				self["Set" .. data.key](self, data.val)
+			end
+
+			self.delayed_variables = nil
+		end
+
+		self:OnThink()
+	end
+
+	function PART:Think()
+		if not self.Enabled then return end
+
+		if self.ThinkTime == 0 then
+			think(self)
+		elseif not self.last_think or self.last_think < pac.RealTime then
+			think(self)
+			self.last_think = pac.RealTime + (self.ThinkTime or 0.1)
+		end
+	end
+end
 
 function PART:SubmitToServer()
 	pac.SubmitPart(self:ToTable())
