@@ -23,11 +23,9 @@ function PART:SetOwnerName(name)
 	self:CheckOwner()
 end
 
-function PART:OnEvent(typ, ply, vehicle)
-	if typ == "vehicle_changed" then
-		if not self:HasParent() and self.OwnerName == "active vehicle" then
-			self:CheckOwner()
-		end
+function PART:OnVehicleChanged(ply, vehicle)
+	if not self:HasParent() and self.OwnerName == "active vehicle" then
+		self:CheckOwner()
 	end
 end
 

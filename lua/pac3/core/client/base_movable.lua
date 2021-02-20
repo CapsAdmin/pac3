@@ -66,6 +66,17 @@ do -- bones
 		end
 	end
 
+	do
+		local bone_matrix = Matrix()
+
+		function PART:GetBoneMatrix()
+			local pos, ang = self:GetBonePosition()
+			bone_matrix:SetTranslation(pos)
+			bone_matrix:SetAngles(ang)
+			return bone_matrix
+		end
+	end
+
 	function PART:GetModelBones()
 		return pac.GetModelBones(self:GetOwner())
 	end
@@ -97,31 +108,24 @@ do -- bones
 	end
 end
 
-function PART:BuildWorldMatrix(with_offsets)
+do
 	local local_matrix = Matrix()
-	local_matrix:SetTranslation(self.Position)
-	local_matrix:SetAngles(self.Angles)
 
+	function PART:BuildWorldMatrix(with_offsets)
+		local_matrix:SetTranslation(self.Position)
+		local_matrix:SetAngles(self.Angles)
 
-	local world_matrix = Matrix()
-	local pos, ang = self:GetBonePosition()
-	if pos then
-		world_matrix:SetTranslation(pos)
+		local m = self:GetBoneMatrix() * local_matrix
+
+		m:SetAngles(self:CalcAngles(m:GetAngles(), m:GetTranslation()))
+
+		if with_offsets then
+			m:Translate(self.PositionOffset)
+			m:Rotate(self.AngleOffset)
+		end
+
+		return m
 	end
-	if ang then
-		world_matrix:SetAngles(ang)
-	end
-
-	local m = world_matrix * local_matrix
-
-	m:SetAngles(self:CalcAngles(m:GetAngles(), m:GetTranslation()))
-
-	if with_offsets then
-		m:Translate(self.PositionOffset)
-		m:Rotate(self.AngleOffset)
-	end
-
-	return m
 end
 
 function PART:GetWorldMatrixWithoutOffsets()

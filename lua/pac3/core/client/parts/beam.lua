@@ -185,11 +185,11 @@ function PART:SetMaterial(var)
 		if type(var) == "string" then
 			self.Materialm = pac.Material(var, self)
 			self:FixMaterial()
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		elseif type(var) == "IMaterial" then
 			self.Materialm = var
 			self:FixMaterial()
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		end
 	end
 end

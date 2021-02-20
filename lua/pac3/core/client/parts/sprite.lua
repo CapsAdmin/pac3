@@ -90,10 +90,10 @@ function PART:SetMaterial(var)
 	if not pac.Handleurltex(self, var, nil, "UnlitGeneric", {["$translucent"] = "1"}) then
 		if type(var) == "string" then
 			self.Materialm = pac.Material(var, self)
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		elseif type(var) == "IMaterial" then
 			self.Materialm = var
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		end
 	end
 
@@ -116,10 +116,6 @@ function PART:OnDraw(owner, pos, ang)
 			cam_IgnoreZ(false)
 		end
 	end
-end
-
-function PART:OnRestore(data)
-	self:SetMaterial(data.SpritePath)
 end
 
 BUILDER:Register()

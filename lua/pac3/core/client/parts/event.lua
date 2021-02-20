@@ -1670,26 +1670,24 @@ function PART:OnShow()
 	end
 end
 
-function PART:OnEvent(typ, ent)
-	if typ == "animation_event" then
-		if self.Event == "animation_event" then
-			self:GetParent():CallRecursive("Think")
-		end
+function PART:OnAnimationEvent(ent)
+	if self.Event == "animation_event" then
+		self:GetParent():CallRecursive("Think")
 	end
+end
 
-	if typ == "fire_bullets" then
-		if self.Event == "fire_bullets" then
-			self:GetParent():CallRecursive("Think")
-		end
+function PART:OnFireBullets()
+	if self.Event == "fire_bullets" then
+		self:GetParent():CallRecursive("Think")
 	end
+end
 
-	if typ == "emit_sound" then
-		if self.Event == "emit_sound" then
-			self:GetParent():CallRecursive("Think")
+function PART:OnEmitSound()
+	if self.Event == "emit_sound" then
+		self:GetParent():CallRecursive("Think")
 
-			if ent.pac_emit_sound.mute_me then
-				return false
-			end
+		if ent.pac_emit_sound.mute_me then
+			return false
 		end
 	end
 end
@@ -1710,7 +1708,7 @@ do
 		if ply.pac_has_parts then
 			ply.pac_anim_event = {name = enums[event], time = pac.RealTime, reset = true}
 
-			pac.CallPartEvent("animation_event")
+			pac.CallRecursiveOnAllParts("OnAnimationEvent")
 		end
 	end)
 end
@@ -1724,7 +1722,7 @@ pac.AddHook("EntityEmitSound", "emit_sound", function(data)
 
 	ent.pac_emit_sound = {name = data.SoundName, time = pac.RealTime, reset = true, mute_me = ent.pac_emit_sound and ent.pac_emit_sound.mute_me or false}
 
-	if pac.CallPartEvent("emit_sound", ent) == false then
+	if pac.CallRecursiveOnAllParts("OnEmitSound", ent) == false then
 		return false
 	end
 
@@ -1737,7 +1735,7 @@ pac.AddHook("EntityFireBullets", "firebullets", function(ent, data)
 	if not ent:IsValid() or not ent.pac_has_parts then return end
 	ent.pac_fire_bullets = {name = data.AmmoType, time = pac.RealTime, reset = true}
 
-	pac.CallPartEvent("fire_bullets")
+	pac.CallRecursiveOnAllParts("OnFireBullets")
 
 	if ent.pac_hide_bullets then
 		return false

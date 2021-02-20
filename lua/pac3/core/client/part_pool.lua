@@ -291,8 +291,6 @@ pac.AddHook("Think", "events", function()
 		if ply.pac_death_physics_parts then
 			if ply.pac_physics_died then return end
 
-			pac.CallPartEvent("physics_ragdoll_death", rag, ply)
-
 			for _, part in pairs(parts_from_uid(ply:UniqueID())) do
 				if part.is_model_part then
 					local ent = part:GetEntity()
@@ -608,11 +606,13 @@ function pac.NotifyPartCreated(part)
 	end
 end
 
-function pac.CallPartEvent(event, ...)
+function pac.CallRecursiveOnAllParts(func_name, ...)
 	for _, part in pairs(all_parts) do
-		local ret = part:OnEvent(event, ...)
-		if ret ~= nil then
-			return ret
+		if part[func_name] then
+			local ret = part[func_name](part, ...)
+			if ret ~= nil then
+				return ret
+			end
 		end
 	end
 end

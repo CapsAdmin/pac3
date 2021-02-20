@@ -438,12 +438,9 @@ function PART:OnRemove()
 	end
 end
 
-function PART:OnEvent(event, ...)
+function PART:OnMaterialChanged()
 	if self.suppress_event then return end
-
-	if event == "material_changed" then
-		self:UpdateMaterial()
-	end
+	self:UpdateMaterial()
 end
 
 function PART:OnParent(parent)

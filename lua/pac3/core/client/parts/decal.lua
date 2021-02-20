@@ -19,7 +19,7 @@ function PART:SetMaterial(var)
 	self.Material = var
 	if not pac.Handleurltex(self, var) then
 		self.Materialm = pac.Material(var, self)
-		self:CallEvent("material_changed")
+		self:CallRecursive("OnMaterialChanged")
 	end
 end
 

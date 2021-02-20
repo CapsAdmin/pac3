@@ -191,18 +191,15 @@ function PART:Reset()
 	end
 end
 
-function PART:OnEvent(typ)
-	if typ == "become_physics" then
-		local ent = self:GetEntity()
-		if ent:IsValid() then
-			ent:PhysicsInit(SOLID_NONE)
-			ent:SetMoveType(MOVETYPE_NONE)
-			ent:SetNoDraw(true)
-			ent.RenderOverride = nil
+function PART:OnBecomePhysics()
+	local ent = self:GetEntity()
+	if not ent:IsValid() then return end
+	ent:PhysicsInit(SOLID_NONE)
+	ent:SetMoveType(MOVETYPE_NONE)
+	ent:SetNoDraw(true)
+	ent.RenderOverride = nil
 
-			self.skip_orient = false
-		end
-	end
+	self.skip_orient = false
 end
 
 function PART:Initialize()

@@ -182,13 +182,13 @@ function PART:SetMaterial(var)
 		mat:SetFloat("$alpha", 0.999)
 		mat:SetInt("$spriterendermode", self.Additive and 5 or 1)
 		self.Materialm = mat
-		self:CallEvent("material_changed")
+		self:CallRecursive("OnMaterialChanged")
 	end, "Sprite") then
 		if var == "" then
 			self.Materialm = nil
 		else
 			self.Materialm = pac.Material(var, self)
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		end
 	end
 

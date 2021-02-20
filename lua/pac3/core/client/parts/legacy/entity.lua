@@ -209,7 +209,7 @@ function PART:SetMaterial(var)
 			self.Materialm = nil
 		else
 			self.Materialm = pac.Material(var, self)
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		end
 	end
 

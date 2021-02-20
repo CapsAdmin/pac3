@@ -102,10 +102,10 @@ function PART:SetMaterial(var)
 	if not pac.Handleurltex(self, var) then
 		if type(var) == "string" then
 			self.Materialm = pac.Material(var, self)
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		elseif type(var) == "IMaterial" then
 			self.Materialm = var
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		end
 	end
 

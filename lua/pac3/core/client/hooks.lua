@@ -27,7 +27,7 @@ do
 		if not IsEntity(ply) or not ply:IsValid() then return end
 
 		if ply.pac_death_physics_parts and ply:Alive() and ply.pac_physics_died then
-			pac.CallPartEvent("become_physics")
+			pac.CallRecursiveOnAllParts("OnBecomePhysics")
 			ply.pac_physics_died = false
 		end
 
@@ -95,7 +95,7 @@ do
 
 		if ply.pac_last_vehicle ~= vehicle then
 			if ply.pac_last_vehicle ~= nil then
-				pac.CallPartEvent("vehicle_changed", ply, vehicle)
+				pac.CallRecursiveOnAllParts("OnVehicleChanged", ply, vehicle)
 			end
 			ply.pac_last_vehicle = vehicle
 		end

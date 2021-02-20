@@ -117,7 +117,7 @@ function PART:Handleurltex(mat, tex)
 	if not mat or mat:IsError() or tex:IsError() then self.Materialm = nil return end
 
 	self.Materialm = mat
-	self:CallEvent("material_changed")
+	self:CallRecursive("OnMaterialChanged")
 
 	self:UpdateSubMaterialId()
 end
@@ -131,7 +131,7 @@ function PART:SetMaterial(var)
 		else
 			self.Materialm = pac.Material(var, self)
 			self:FixMaterial()
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		end
 	end
 

@@ -37,6 +37,25 @@ BUILDER
 			:GetSet("DrawOrder", 0)
 	:EndStorableVars()
 
+
+PART.is_valid = true
+
+function PART:IsValid()
+	return self.is_valid
+end
+
+function PART:PreInitialize()
+	self.Children = {}
+	self.ChildrenMap = {}
+	self.modifiers = {}
+	self.RootPart = NULL
+	self.DrawOrder = 0
+	self.active_events = {}
+	self.active_events_ref_count = 0
+end
+
+function PART:Initialize() end
+
 function PART:SetUniqueID(id)
 	local owner_id = self:GetPlayerOwnerId()
 
@@ -51,22 +70,10 @@ function PART:SetUniqueID(id)
 	end
 end
 
-function PART:PreInitialize()
-	self.Children = {}
-	self.ChildrenMap = {}
-	self.modifiers = {}
-	self.RootPart = NULL
-	self.DrawOrder = 0
-	self.active_events = {}
-	self.active_events_ref_count = 0
-end
+function PART:OnRemove() end
 
 function PART:GetNiceName()
 	return self.ClassName
-end
-
-function PART:RemoveOnNULLOwner(b)
-	self.remove_on_null_owner = b
 end
 
 function PART:GetName()
@@ -179,7 +186,6 @@ do -- owner
 		end
 	end
 
-
 	function PART:SetOwner(ent)
 		if IsValid(self.last_owner) and self.last_owner ~= ent then
 			self:CallRecursive("OnHide", true)
@@ -209,7 +215,6 @@ do -- owner
 			pac.HookEntityRender(owner, root)
 		end
 	end
-
 
 	-- always return the root owner
 	function PART:GetPlayerOwner()
@@ -247,7 +252,29 @@ do -- owner
 	end
 end
 
-do -- parenting
+do -- scene graph
+
+	function PART:OnParent() end
+	function PART:OnChildAdd() end
+	function PART:OnUnParent() end
+
+	function PART:OnOtherPartCreated(part)
+		local owner_id = part:GetPlayerOwnerId()
+		if not owner_id then return end
+		if not self.unresolved_uid_parts then return end
+		if not self.unresolved_uid_parts[owner_id] then return end
+		local keys = self.unresolved_uid_parts[owner_id][part.UniqueID]
+
+		if not keys then return end
+
+		for _, key in pairs(keys) do
+			self["Set" .. key](self, part)
+		end
+
+		if self:GetPlayerOwner() == pac.LocalPlayer then
+			pac.CallHook("OnPartCreated", self)
+		end
+	end
 
 	function PART:CreatePart(name)
 		local part = pac.CreatePart(name, self:GetPlayerOwner())
@@ -366,7 +393,6 @@ do -- parenting
 
 		self:InvalidateChildrenList()
 
-		part.ParentName = self:GetName()
 		part.ParentUID = self:GetUniqueID()
 
 		part:OnParent(self)
@@ -467,7 +493,51 @@ do -- parenting
 		end
 	end
 
-	function PART:DeattachChildren()
+	function PART:UnParent()
+		local parent = self:GetParent()
+
+		if parent:IsValid() then
+			parent:RemoveChild(self)
+		end
+
+		self:OnUnParent(parent)
+
+		self.Parent = NULL
+		self.ParentUID = ""
+
+		self:CallRecursive("OnHide")
+	end
+
+	function PART:Remove(skip_removechild)
+		self:Deattach()
+
+		if not skip_removechild and self:HasParent() then
+			self:GetParent():RemoveChild(self)
+		end
+
+		self:RemoveChildren()
+	end
+
+	function PART:Deattach()
+		if not self.is_valid or self.is_deattached then return end
+		self.is_deattached = true
+		self.PlayerOwner_ = self.PlayerOwner
+
+		if self:GetPlayerOwner() == pac.LocalPlayer then
+			pac.CallHook("OnPartRemove", self)
+		end
+
+		self:CallRecursive("OnHide")
+		self:CallRecursive("OnRemove")
+
+		local owner_id = self:GetPlayerOwnerId()
+		if owner_id then
+			pac.RemoveUniqueIDPart(owner_id, self.UniqueID)
+		end
+
+		pac.RemovePart(self)
+		self.is_valid = false
+
 		self:InvalidateChildrenList()
 
 		for i, part in ipairs(self:GetChildren()) do
@@ -481,24 +551,12 @@ do -- parenting
 		end
 	end
 
-	function PART:UnParent()
-		local parent = self:GetParent()
-
-		if parent:IsValid() then
-			parent:RemoveChild(self)
-		end
-
-		self:OnUnParent(parent)
-
-		self.Parent = NULL
-		self.ParentName = ""
-		self.ParentUID = ""
-
-		self:CallRecursive("OnHide")
-	end
 end
 
 do -- hidden / events
+	function PART:OnHide() end
+	function PART:OnShow() end
+
 	function PART:SetEnabled(val)
 		self.Enabled = val
 		print(self, val)
@@ -594,7 +652,7 @@ do -- hidden / events
 
 	function PART:IsHiddenCached()
 		return self.last_hidden
-end
+	end
 end
 
 do -- serializing
@@ -716,11 +774,7 @@ do -- serializing
 			end
 
 			-- these arent needed because parent system uses the tree structure
-			if
-				key ~= "ParentUID" and
-				key ~= "ParentName" and
-				var ~= self.DefaultVars[key]
-			then
+			if key ~= "ParentUID" and var ~= self.DefaultVars[key] then
 				tbl.self[key] = var
 			end
 		end
@@ -750,10 +804,7 @@ do -- serializing
 			end
 
 			-- these arent needed because parent system uses the tree structure
-			if
-				key ~= "ParentUID" and
-				key ~= "ParentName"
-			then
+			if key ~= "ParentUID" then
 				tbl.self[key] = var
 			end
 		end
@@ -851,97 +902,6 @@ do -- serializing
 	end
 end
 
-function PART:CallEvent(event, ...)
-	self:OnEvent(event, ...)
-	for _, part in ipairs(self:GetChildren()) do
-		part:CallEvent(event, ...)
-	end
-end
-
-do -- events
-	function PART:Initialize() end
-	function PART:OnRemove() end
-
-	function PART:IsDeattached()
-		return self.is_deattached
-	end
-
-	function PART:Deattach()
-		if not self.is_valid or self.is_deattached then return end
-		self.is_deattached = true
-		self.PlayerOwner_ = self.PlayerOwner
-
-		if self:GetPlayerOwner() == pac.LocalPlayer then
-			pac.CallHook("OnPartRemove", self)
-		end
-
-		self:CallRecursive("OnHide")
-		self:CallRecursive("OnRemove")
-
-		local owner_id = self:GetPlayerOwnerId()
-		if owner_id then
-			pac.RemoveUniqueIDPart(owner_id, self.UniqueID)
-		end
-
-		pac.RemovePart(self)
-		self.is_valid = false
-
-		self:DeattachChildren()
-	end
-
-	function PART:DeattachFull()
-		self:Deattach()
-
-		if self:HasParent() then
-			self:GetParent():RemoveChild(self)
-		end
-	end
-
-	function PART:OnOtherPartCreated(part)
-		local owner_id = part:GetPlayerOwnerId()
-		if not owner_id then return end
-		if not self.unresolved_uid_parts then return end
-		if not self.unresolved_uid_parts[owner_id] then return end
-		local keys = self.unresolved_uid_parts[owner_id][part.UniqueID]
-
-		if not keys then return end
-
-		for _, key in pairs(keys) do
-			self["Set" .. key](self, part)
-		end
-
-		if self:GetPlayerOwner() == pac.LocalPlayer then
-			pac.CallHook("OnPartCreated", self)
-		end
-	end
-
-	function PART:Remove(skip_removechild)
-		self:Deattach()
-
-		if not skip_removechild and self:HasParent() then
-			self:GetParent():RemoveChild(self)
-		end
-
-		self:RemoveChildren()
-	end
-
-	function PART:OnStore() end
-	function PART:OnRestore() end
-
-	function PART:OnThink() end
-
-	function PART:OnParent() end
-	function PART:OnChildAdd() end
-	function PART:OnUnParent() end
-
-	function PART:OnHide() end
-	function PART:OnShow() end
-
-	function PART:OnSetOwner(ent) end
-
-	function PART:OnEvent(event, ...) end
-end
-
 do
 	local function think(self)
 		self:CalcShowHide()
@@ -978,17 +938,8 @@ do
 			self.last_think = pac.RealTime + (self.ThinkTime or 0.1)
 		end
 	end
+
+	function PART:OnThink() end
 end
-
-function PART:SubmitToServer()
-	pac.SubmitPart(self:ToTable())
-end
-
-PART.is_valid = true
-
-function PART:IsValid()
-	return self.is_valid
-end
-
 
 BUILDER:Register()

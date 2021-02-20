@@ -108,15 +108,13 @@ pac.AddHook("pac_EffectPrecached", "pac_Effects", function(name)
 	if alreadyServer[name] then return end
 	alreadyServer[name] = true
 	pac.dprint("effect %q precached!", name)
-	pac.CallPartEvent("effect_precached", name)
+	pac.CallRecursiveOnAllParts("OnEffectPrecached", name)
 end)
 
-function PART:OnEvent(typ, name)
-	if typ == "effect_precached" then
-		if self.Effect == name then
-			self.Ready = true
-			self.waitingForServer = false
-		end
+function PART:OnEffectPrecached(name)
+	if self.Effect == name then
+		self.Ready = true
+		self.waitingForServer = false
 	end
 end
 

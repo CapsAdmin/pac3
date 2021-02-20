@@ -143,19 +143,18 @@ function PART:Initialize(is_obj)
 	self.is_obj = is_obj
 end
 
-function PART:OnEvent(typ)
-	if typ == "become_physics" then
-		local ent = self:GetEntity()
-		if ent:IsValid() then
-			ent:PhysicsInit(SOLID_NONE)
-			ent:SetMoveType(MOVETYPE_NONE)
-			ent:SetNoDraw(true)
-			ent.RenderOverride = nil
 
-			self.skip_orient = false
-		end
-	end
+function PART:OnBecomePhysics()
+	local ent = self:GetEntity()
+	if not ent:IsValid() then return end
+	ent:PhysicsInit(SOLID_NONE)
+	ent:SetMoveType(MOVETYPE_NONE)
+	ent:SetNoDraw(true)
+	ent.RenderOverride = nil
+
+	self.skip_orient = false
 end
+
 
 function PART:GetEntity()
 	return self.Entity or NULL
@@ -775,7 +774,7 @@ function PART:SetMaterial(var)
 		else
 			self.Materialm = pac.Material(var, self)
 			self:FixMaterial()
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		end
 	end
 

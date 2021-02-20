@@ -408,7 +408,7 @@ function pac.Handleurltex(part, url, callback, shader, additionalData)
 				callback(mat, tex)
 			else
 				part.Materialm = mat
-				part:CallEvent("material_changed")
+				part:CallRecursive("OnMaterialChanged")
 			end
 
 			pac.dprint("set custom material texture %q to %s", url, part:GetName())

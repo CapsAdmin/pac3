@@ -97,10 +97,6 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
-function PART:OnRestore(data)
-	self:SetMaterial(data.SpritePath)
-end
-
 function PART:SetText(str)
 	self.Text = str
 end
