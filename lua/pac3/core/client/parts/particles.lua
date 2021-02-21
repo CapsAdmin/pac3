@@ -116,22 +116,20 @@ local function StickCallback(particle, hitpos, normal)
 	particle:SetEndAlpha(particle.StickEndAlpha or 0)
 end
 
-function PART:CreateEmitter()
-	self.NextShot = pac.RealTime
+function PART:GetEmitter()
+	if not self.emitter then
+		self.NextShot = 0
 	self.Created = pac.RealTime + 0.1
-
-	if self.last_3d ~= self["3D"] then
-		self.emitter = ParticleEmitter(self:GetWorldPosition(), self["3D"])
-		self.last_3d = self["3D"]
+		self.emitter = ParticleEmitter(vector_origin, self:Get3D())
 	end
-end
+
+	return self.emitter
+	end
 
 function PART:SetDrawManual(b)
 	self.DrawManual = b
-	self.emitter:SetNoDraw(b)
+	self:GetEmitter():SetNoDraw(b)
 end
-
-PART.Initialize = PART.CreateEmitter
 
 function PART:SetNumberParticles(num)
 	self.NumberParticles = math.Clamp(num, 0, 100)
@@ -139,26 +137,36 @@ end
 
 function PART:Set3D(b)
 	self["3D"] = b
-	self:CreateEmitter()
+	self.emitter = nil
 end
 
-function PART:OnDraw(owner, pos, ang)
-	self.emitter:SetPos(pos)
+function PART:OnShow(from_rendering)
+	if not from_rendering then
+		self.NextShot = 0
+		local pos, ang = self:GetDrawPosition()
+		self:EmitParticles(self.Follow and vector_origin or pos, self.Follow and angle_origin or ang, ang)
+	end
+end
+
+function PART:OnDraw(owner, pos, ang) do return end
+	local emitter = self:GetEmitter()
+
+	emitter:SetPos(pos)
 	if self.DrawManual or self.IgnoreZ or self.Follow or self.BlendMode ~= "" then
 
 		if not self.nodraw then
-			self.emitter:SetNoDraw(true)
+			emitter:SetNoDraw(true)
 			self.nodraw = true
 		end
 
 		if self.Follow then
 			cam.Start3D(WorldToLocal(EyePos(), EyeAngles(), pos, ang))
 			if self.IgnoreZ then cam.IgnoreZ(true) end
-			self.emitter:Draw()
+			emitter:Draw()
 			if self.IgnoreZ then cam.IgnoreZ(false) end
 			cam.End3D()
 		else
-			self.emitter:Draw()
+			emitter:Draw()
 		end
 	else
 		if self.nodraw then
@@ -196,7 +204,7 @@ function PART:SetMaterial(var)
 end
 
 function PART:EmitParticles(pos, ang, real_ang)
-	local emt = self.emitter
+	local emt = self:GetEmitter()
 	if not emt then return end
 
 	if self.NextShot < pac.RealTime then
