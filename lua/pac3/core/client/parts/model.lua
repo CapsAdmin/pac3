@@ -853,7 +853,7 @@ do
 	end
 
 	function PART:GetEntity()
-		local ent = self:GetOwner()
+		local ent = self:GetOutfitOwner()
 		self.Entity = ent
 		return ent
 	end
