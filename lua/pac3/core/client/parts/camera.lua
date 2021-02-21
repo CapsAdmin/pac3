@@ -19,13 +19,13 @@ for i, ply in ipairs(player.GetAll()) do
 	ply.pac_cameras = nil
 end
 
-function PART:Initialize()
+function PART:OnShow()
 	local owner = self:GetRootOwner()
+	if not owner:IsValid() then return end
 
-	if owner ~= NULL then
-		owner.pac_cameras = owner.pac_cameras or {}
-		owner.pac_cameras[self] = self
-	end
+	owner.pac_cameras = owner.pac_cameras or {}
+	owner.pac_cameras[self] = self
+end
 
 function PART:CalcView(_, _, eyeang, fov, nearz, farz)
 	local pos, ang = self:GetDrawPosition(nil, true)
