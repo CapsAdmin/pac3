@@ -162,9 +162,7 @@ do -- from server
 
 			owner.pac_render_time_exceeded = false
 
-			local part = pac.CreatePart(part_data.self.ClassName, owner)
-			part:SetIsBeingWorn(true)
-			part:SetTable(part_data)
+			local part = pac.CreatePart(part_data.self.ClassName, owner, part_data)
 
 			if data.is_dupe then
 				part.dupe_remove = true

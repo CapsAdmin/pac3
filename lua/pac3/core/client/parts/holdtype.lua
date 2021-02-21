@@ -96,7 +96,7 @@ function PART:SetFallback(str)
 end
 
 function PART:UpdateActTable()
-	local ent = self:GetOutfitOwner()
+	local ent = self:GetRootOwner()
 	if not ent:IsValid() then return end
 
 	ent.pac_holdtype_alternative_animation_rate = self.AlternativeRate
@@ -125,7 +125,7 @@ function PART:UpdateActTable()
 end
 
 function PART:OnThink()
-	local ent = self:GetOutfitOwner()
+	local ent = self:GetRootOwner()
 	if not ent:IsValid() then return end
 
 	if (ent:GetModel() ~= self.last_model or ent.pac_holdtypes ~= self.last_pac_holdtypes)  then
@@ -146,7 +146,7 @@ function PART:GetSequenceList()
 end
 
 function PART:OnHide()
-	local ent = self:GetOutfitOwner()
+	local ent = self:GetRootOwner()
 
 	if ent:IsValid() then
 		if ent.pac_holdtypes then

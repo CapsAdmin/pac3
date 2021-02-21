@@ -115,7 +115,7 @@ BIND("VolumeLFOTime")
 BIND("Doppler")
 
 function PART:OnThink()
-	local owner = self:GetOutfitOwner()
+	local owner = self:GetRootOwner()
 
 	for url, stream in pairs(self.streams) do
 		if not stream:IsValid() then self.streams[url] = nil goto CONTINUE end

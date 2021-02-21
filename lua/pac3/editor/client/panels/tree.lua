@@ -421,9 +421,9 @@ function PANEL:PopulateParts(node, parts, children)
 				enable_model_icons:GetBool() and
 				part.is_model_part and
 				part.GetModel and
-				part:GetEntity():IsValid()
+				part:GetOwner():IsValid()
 			then
-				part_node:SetModel(part:GetEntity():GetModel(), part.Icon)
+				part_node:SetModel(part:GetOwner():GetModel(), part.Icon)
 			elseif type(part.Icon) == "string" then
 				part_node.Icon:SetImage(part.Icon)
 			end

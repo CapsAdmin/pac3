@@ -293,7 +293,7 @@ pac.AddHook("Think", "events", function()
 
 			for _, part in pairs(parts_from_uid(ply:UniqueID())) do
 				if part.is_model_part then
-					local ent = part:GetEntity()
+					local ent = part:GetOwner()
 					if ent:IsValid() then
 						rag:SetNoDraw(true)
 
@@ -423,8 +423,8 @@ pac.AddHook("EntityRemoved", "change_owner", function(ent)
 				if next(parts) ~= nil then
 					IsActuallyRemoved(ent, function()
 						for _, part in pairs(parts) do
-							if not part:HasParent() then
-								part:CheckOwner(ent, true)
+							if part.ClassName == "group" then
+								part:UpdateOwnerName(ent, true)
 							end
 						end
 					end)
@@ -441,8 +441,8 @@ pac.AddHook("OnEntityCreated", "change_owner", function(ent)
 
 	if IsActuallyValid(owner) and (not owner:IsPlayer() or IsActuallyPlayer(owner)) then
 		for _, part in pairs(parts_from_ent(owner)) do
-			if not part:HasParent() then
-				part:CheckOwner(ent, false)
+			if part.ClassName == "group" then
+				part:UpdateOwnerName(ent, false)
 			end
 		end
 	end
@@ -475,7 +475,6 @@ function pac.RemovePartsFromUniqueID(uid)
 end
 
 function pac.UpdatePartsWithMetatable(META)
-	print("reloading parts with template " .. META.ClassName)
 	for _, part in pairs(all_parts) do
 		if META.ClassName == part.ClassName then
 			for k, v in pairs(META) do
@@ -660,35 +659,35 @@ do -- drawing
 	pac.RealTime = 0
 	pac.FrameNumber = 0
 
-		local skip_frames = CreateConVar('pac_suppress_frames', '1', {FCVA_ARCHIVE}, 'Skip frames (reflections)')
+	local skip_frames = CreateConVar('pac_suppress_frames', '1', {FCVA_ARCHIVE}, 'Skip frames (reflections)')
 
-		local function setup_suppress()
-			local last_framenumber = 0
-			local current_frame = 0
-			local current_frame_count = 0
+	local function setup_suppress()
+		local last_framenumber = 0
+		local current_frame = 0
+		local current_frame_count = 0
 
-			return function()
-				if force_rendering then return end
+		return function()
+			if force_rendering then return end
 
-				if skip_frames:GetBool() then
-					local frame_number = FrameNumber()
+			if skip_frames:GetBool() then
+				local frame_number = FrameNumber()
 
-					if frame_number == last_framenumber then
-						current_frame = current_frame + 1
-					else
-						last_framenumber = frame_number
+				if frame_number == last_framenumber then
+					current_frame = current_frame + 1
+				else
+					last_framenumber = frame_number
 
-						if current_frame_count ~= current_frame then
-							current_frame_count = current_frame
-						end
-
-						current_frame = 1
+					if current_frame_count ~= current_frame then
+						current_frame_count = current_frame
 					end
 
-					return current_frame < current_frame_count
+					current_frame = 1
 				end
+
+				return current_frame < current_frame_count
 			end
 		end
+	end
 
 	do
 		local draw_dist = 0
@@ -837,55 +836,55 @@ do -- drawing
 	end)
 
 	do
-	local alreadyDrawing = 0
+		local alreadyDrawing = 0
 
-	pac.AddHook("PostDrawViewModel", "draw_firstperson", function(viewmodelIn, playerIn, weaponIn)
-		if alreadyDrawing == FrameNumber() then return end
+		pac.AddHook("PostDrawViewModel", "draw_firstperson", function(viewmodelIn, playerIn, weaponIn)
+			if alreadyDrawing == FrameNumber() then return end
 
-		alreadyDrawing = FrameNumber()
+			alreadyDrawing = FrameNumber()
 
-		for ent in next, pac.drawn_entities do
-			if IsValid(ent) then
-				if ent.pac_drawing and ent_parts[ent] then
-					pac.RenderOverride(ent, "viewmodel")
+			for ent in next, pac.drawn_entities do
+				if IsValid(ent) then
+					if ent.pac_drawing and ent_parts[ent] then
+						pac.RenderOverride(ent, "viewmodel")
+					end
+				else
+					pac.drawn_entities[ent] = nil
 				end
-			else
-				pac.drawn_entities[ent] = nil
 			end
-		end
 
-		alreadyDrawing = 0
-	end)
+			alreadyDrawing = 0
+		end)
 	end
 
 	do
-	local alreadyDrawing = 0
-	local redrawCount = 0
+		local alreadyDrawing = 0
+		local redrawCount = 0
 
-	pac.LocalHands = NULL
+		pac.LocalHands = NULL
 
-	pac.AddHook("PostDrawPlayerHands", "draw_firstperson_hands", function(handsIn, viewmodelIn, playerIn, weaponIn)
-		if alreadyDrawing == FrameNumber() then
-			redrawCount = redrawCount + 1
-			if redrawCount >= 5 then return end
-		end
-
-		pac.LocalHands = handsIn
-
-		alreadyDrawing = FrameNumber()
-
-		for ent in next, pac.drawn_entities do
-			if IsValid(ent) then
-				if ent.pac_drawing and ent_parts[ent] then
-					pac.RenderOverride(ent, "hands")
-				end
-			else
-				pac.drawn_entities[ent] = nil
+		pac.AddHook("PostDrawPlayerHands", "draw_firstperson_hands", function(handsIn, viewmodelIn, playerIn, weaponIn)
+			if alreadyDrawing == FrameNumber() then
+				redrawCount = redrawCount + 1
+				if redrawCount >= 5 then return end
 			end
-		end
 
-		alreadyDrawing = 0
-		redrawCount = 0
-	end)
-end
+			pac.LocalHands = handsIn
+
+			alreadyDrawing = FrameNumber()
+
+			for ent in next, pac.drawn_entities do
+				if IsValid(ent) then
+					if ent.pac_drawing and ent_parts[ent] then
+						pac.RenderOverride(ent, "hands")
+					end
+				else
+					pac.drawn_entities[ent] = nil
+				end
+			end
+
+			alreadyDrawing = 0
+			redrawCount = 0
+		end)
+	end
 end

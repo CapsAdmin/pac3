@@ -60,7 +60,7 @@ function PART:SetRadius(n)
 
 	if IsInvalidParent(self) then return end
 
-	local ent = self.Parent:GetEntity()
+	local ent = self.Parent:GetOwner()
 
 	if n <= 0 then n = ent:BoundingRadius()/2 end
 
@@ -92,7 +92,7 @@ function PART:SetSelfCollision(b)
 
 	if IsInvalidParent(self) then return end
 
-	local ent = self.Parent:GetEntity()
+	local ent = self.Parent:GetOwner()
 
 	if b then
 		ent:SetCollisionGroup(COLLISION_GROUP_NONE)
@@ -178,7 +178,7 @@ function PART:Enable()
 
 	part.skip_orient = true
 
-	local ent = part:GetEntity()
+	local ent = part:GetOwner()
 	ent:SetNoDraw(false)
 
 	self:SetRadius(self.Radius)
@@ -197,7 +197,7 @@ function PART:Disable()
 
 	local part = self:GetParent()
 
-	local ent = part:GetEntity()
+	local ent = part:GetOwner()
 	if ent:IsValid() then
 		-- SetNoDraw does not care of validity but PhysicsInit does?
 		ent:SetNoDraw(true)

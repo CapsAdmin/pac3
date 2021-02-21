@@ -133,19 +133,19 @@ function PART:SetTextureFilter(num)
 end
 
 function PART:Initialize(is_obj)
-	self.Entity = pac.CreateEntity(self:GetModel(), is_obj)
-	if not self.Entity:IsValid() then
+	self.Owner = pac.CreateEntity(self:GetModel(), is_obj)
+	if not self.Owner:IsValid() then
 		pac.Message("pac3 failed to create entity!")
 		return
 	end
-	self.Entity:SetNoDraw(true)
-	self.Entity.PACPart = self
+	self.Owner:SetNoDraw(true)
+	self.Owner.PACPart = self
 	self.is_obj = is_obj
 end
 
 
 function PART:OnBecomePhysics()
-	local ent = self:GetEntity()
+	local ent = self:GetOwner()
 	if not ent:IsValid() then return end
 	ent:PhysicsInit(SOLID_NONE)
 	ent:SetMoveType(MOVETYPE_NONE)
@@ -155,14 +155,9 @@ function PART:OnBecomePhysics()
 	self.skip_orient = false
 end
 
-
-function PART:GetEntity()
-	return self.Entity or NULL
-end
-
 function PART:OnShow()
-	local owner = self:GetOwner()
-	local ent = self:GetEntity()
+	local owner = self:GetParentOwner()
+	local ent = self:GetOwner()
 
 	if ent:IsValid() and owner:IsValid() and owner ~= ent then
 		ent:SetPos(owner:EyePos())
@@ -181,12 +176,12 @@ end
 do
 
 	function PART:OnThink()
-		pac.SetModelScale(self:GetEntity(), self.Scale * self.Size, nil, self.UseLegacyScale)
+		pac.SetModelScale(self:GetOwner(), self.Scale * self.Size, nil, self.UseLegacyScale)
 
 		self:CheckScale()
 		self:CheckBoneMerge()
 
-		local ent = self:GetEntity()
+		local ent = self:GetOwner()
 		if ent:IsValid() then
 			ent.pac_matproxies = ent.pac_matproxies or {}
 			ent.pac_matproxies.ItemTintColor = self.TintColor / 255
@@ -227,10 +222,10 @@ do
 end
 
 function PART:SetOwnerEntity(b)
-	local ent = self:GetOwner()
+	local ent = self:GetParentOwner()
 	if ent:IsValid() then
 		if b then
-			self.Entity = ent
+			self.Owner = ent
 
 			function ent.RenderOverride()
 				if self:IsValid() then
@@ -244,10 +239,12 @@ function PART:SetOwnerEntity(b)
 				end
 			end
 		elseif self.OwnerEntity then
-			self.Entity = NULL
+			self.Owner = NULL
 
 			ent.RenderOverride = nil
 			pac.SetModelScale(ent, Vector(1,1,1), nil, self.UseLegacyScale)
+
+			self:Initialize()
 		end
 	end
 
@@ -372,13 +369,13 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 end
 
 function PART:OnDraw(owner, pos, ang)
-	local ent = self:GetEntity()
+	local ent = self:GetOwner()
 
 	if not ent:IsValid() then
 		self:Reset()
-		ent = self:GetEntity()
+		ent = self:GetOwner()
 		if not ent:IsValid() then
-			pac.Message("WTF", ent, self.Entity)
+			pac.Message("WTF", ent, self:GetOwner())
 			return
 		end
 	end
@@ -530,14 +527,15 @@ function PART:DrawBlur(ent, pos, ang)
 end
 
 local function set_mesh(part, mesh)
+	local owner = part:GetOwner()
 	part.Mesh = mesh
-	pac.ResetBoneCache(part.Entity)
+	pac.ResetBoneCache(owner)
 
 	if not part.Materialm then
 		part.Materialm = Material("error")
 	end
 
-	function part.Entity.pacDrawModel(ent, simple)
+	function owner.pacDrawModel(ent, simple)
 		if simple then
 			RealDrawModel(part, ent, ent:GetPos(), ent:GetAngles())
 		else
@@ -548,31 +546,29 @@ local function set_mesh(part, mesh)
 	end
 
 	-- temp
-	part.Entity:SetRenderBounds(Vector(1, 1, 1) * -300, Vector(1, 1, 1) * 300)
+	owner:SetRenderBounds(Vector(1, 1, 1) * -300, Vector(1, 1, 1) * 300)
 end
 
 do
 	pac.urlobj = include("pac3/libraries/urlobj/urlobj.lua")
 
 	function PART:SetModel(modelPath)
-		self.Entity = self:GetEntity()
-
 		if modelPath:find("^mdlhttp") then
 			self.Model = modelPath
 
 			modelPath = modelPath:gsub("^mdl", "")
 
 			pac.DownloadMDL(modelPath, function(path)
-				if self:IsValid() and self:GetEntity():IsValid() then
-					local ent = self:GetEntity()
+				if self:IsValid() and self:GetOwner():IsValid() then
+					local ent = self:GetOwner()
 					self.loading = nil
 					pac.ResetBoneCache(ent)
 					ent:SetModel(path)
 				end
 			end, function(err)
 				pac.Message(err)
-				if self:IsValid() and self:GetEntity():IsValid() then
-					local ent = self:GetEntity()
+				if self:IsValid() and self:GetOwner():IsValid() then
+					local ent = self:GetOwner()
 					self.loading = nil
 					pac.ResetBoneCache(ent)
 					ent:SetModel("models/error.mdl")
@@ -595,10 +591,8 @@ do
 
 					self.loading_obj = false
 
-					self.Entity = self:GetEntity()
-
 					if not meshes and err then
-						self.Entity:SetModel("models/error.mdl")
+						self:GetOwner():SetModel("models/error.mdl")
 						self.Mesh = nil
 						return
 					end
@@ -607,7 +601,7 @@ do
 						set_mesh(self, select(2, next(meshes)))
 					else
 						for key, mesh in pairs(meshes) do
-							local part = pac.CreatePart("model", self:GetOwnerName())
+							local part = pac.CreatePart("model", self:GetParentOwnerName())
 							part:SetName(key)
 							part:SetParent(self)
 							part:SetMaterial(self:GetMaterial())
@@ -630,7 +624,7 @@ do
 			return
 		end
 
-		if self.is_obj or not self.Entity:IsValid() then
+		if self.is_obj or not self.Owner:IsValid() then
 			self:Initialize(false)
 		end
 
@@ -647,8 +641,8 @@ do
 		end
 
 		self.Model = modelPath
-		pac.ResetBoneCache(self.Entity)
-		self.Entity:SetModel(real_model)
+		pac.ResetBoneCache(self.Owner)
+		self.Owner:SetModel(real_model)
 	end
 end
 
@@ -656,7 +650,7 @@ local NORMAL = Vector(1,1,1)
 
 function PART:CheckScale()
 	-- RenderMultiply doesn't work with this..
-	if (self.UseLegacyScale or self.BoneMerge) and self.Entity:IsValid() and self.Entity:GetBoneCount() and self.Entity:GetBoneCount() > 1 then
+	if (self.UseLegacyScale or self.BoneMerge) and self.Owner:IsValid() and self.Owner:GetBoneCount() and self.Owner:GetBoneCount() > 1 then
 		if self.Scale * self.Size ~= NORMAL then
 			if not self.requires_bone_model_scale then
 				self.requires_bone_model_scale = true
@@ -680,16 +674,16 @@ function PART:SetScale(var)
 
 	if self.AlternativeScaling then
 		if not self:CheckScale() then
-			pac.SetModelScale(self.Entity, self.Scale, nil, self.UseLegacyScale)
+			pac.SetModelScale(self.Owner, self.Scale, nil, self.UseLegacyScale)
 			self.used_alt_scale = true
 		end
 	else
 		if self.used_alt_scale then
-			pac.SetModelScale(self.Entity, nil, 1, self.UseLegacyScale)
+			pac.SetModelScale(self.Owner, nil, 1, self.UseLegacyScale)
 			self.used_alt_scale = false
 		end
 		if not self:CheckScale() then
-			pac.SetModelScale(self.Entity, self.Scale * self.Size, nil, self.UseLegacyScale)
+			pac.SetModelScale(self.Owner, self.Scale * self.Size, nil, self.UseLegacyScale)
 		end
 	end
 end
@@ -700,15 +694,15 @@ function PART:SetSize(var)
 	self.Size = var
 
 	if self.AlternativeScaling then
-		pac.SetModelScale(self.Entity, nil, self.Size, self.UseLegacyScale)
+		pac.SetModelScale(self.Owner, nil, self.Size, self.UseLegacyScale)
 		self.used_alt_scale = true
 	else
 		if self.used_alt_scale then
-			pac.SetModelScale(self.Entity, nil, 1, self.UseLegacyScale)
+			pac.SetModelScale(self.Owner, nil, 1, self.UseLegacyScale)
 			self.used_alt_scale = false
 		end
 		if not self:CheckScale() then
-			pac.SetModelScale(self.Entity, self.Scale * self.Size, nil, self.UseLegacyScale)
+			pac.SetModelScale(self.Owner, self.Scale * self.Size, nil, self.UseLegacyScale)
 		end
 	end
 end
@@ -785,19 +779,19 @@ function PART:SetSkin(var)
 	var = var or 0
 
 	self.Skin = var
-	self.Entity:SetSkin(var)
+	self.Owner:SetSkin(var)
 end
 
 function PART:OnRemove()
 	if not self.OwnerEntity then
 		timer.Simple(0, function()
-			SafeRemoveEntity(self.Entity)
+			SafeRemoveEntity(self.Owner)
 		end)
 	end
 end
 
 function PART:SetLodOverride(num)
-	local ent = self.Entity
+	local ent = self.Owner
 	if ent:IsValid() then
 		ent:SetLOD(num)
 		self.LodOverride = num
@@ -805,13 +799,13 @@ function PART:SetLodOverride(num)
 end
 
 function PART:CheckBoneMerge()
-	local ent = self.Entity
+	local ent = self.Owner
 
 	if self.skip_orient then return end
 
 	if ent:IsValid() and not ent:IsPlayer() then
 		if self.BoneMerge then
-			local owner = self:GetOwner()
+			local owner = self:GetParentOwner()
 
 			if ent:GetParent() ~= owner then
 				ent:SetParent(owner)
@@ -838,8 +832,8 @@ local SCALE_NORMAL = Vector(1, 1, 1)
 function PART:OnBuildBonePositions()
 	if self.AlternativeScaling then return end
 
-	local ent = self:GetEntity()
-	local owner = self:GetOwner()
+	local ent = self:GetOwner()
+	local owner = self:GetParentOwner()
 
 	if not ent:IsValid() or not owner:IsValid() or not ent:GetBoneCount() or ent:GetBoneCount() < 1 then return end
 

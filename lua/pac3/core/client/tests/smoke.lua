@@ -22,7 +22,7 @@ function test.Run(done)
 
 	assert(find_part_in_entities(model) == model)
 
-	assert(model:GetEntity():GetModel() == model:GetEntity():GetModel())
+	assert(model:GetOwner():GetModel() == model:GetOwner():GetModel())
 
 	model:Remove()
 

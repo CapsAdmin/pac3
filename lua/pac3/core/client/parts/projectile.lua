@@ -106,23 +106,21 @@ function PART:AttachToEntity(ent)
 	ent.pac_draw_distance = 0
 
 	local tbl = self.OutfitPart:ToTable()
-	tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. tbl.self.UniqueID)
+	--tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. tbl.self.UniqueID)
 
-	local part = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner())
+	local part = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner(), tbl, tostring(tbl))
+	part:SetOwner(ent)
+	part.SetOwner = function(s) s.Owner = ent end
+
 
 	local id = part.Id + self:GetPlayerOwner():UniqueID()
 
 	part.show_in_editor = false
-	part.CheckOwner = function(s) s.Owner = ent end
-	part:SetPlayerOwner(self:GetPlayerOwner())
-	part:SetTable(tbl)
 	part:SetHide(false)
 
 	part:SetOwner(ent)
 
 	ent:CallOnRemove("pac_projectile_" .. id, function() part:Remove() end)
-
-	pac.HookEntityRender(ent, part)
 
 	part:CallRecursive("Think")
 
@@ -235,7 +233,7 @@ function PART:Shoot(pos, ang)
 					return
 				end
 
-				if not self:GetOutfitOwner():IsValid() then
+				if not self:GetRootOwner():IsValid() then
 					timer.Simple(0, function() SafeRemoveEntity(ent) end)
 				end
 

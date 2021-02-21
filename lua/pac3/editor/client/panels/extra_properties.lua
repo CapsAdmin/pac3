@@ -110,12 +110,12 @@ do -- part
 			GetConVar("pac_editor_model_icons"):GetBool() and
 			part.is_model_part and
 			part.GetModel and
-			part:GetEntity():IsValid() and
+			part:GetOwner():IsValid() and
 			part.ClassName ~= "entity2" and
 			part.ClassName ~= "weapon" -- todo: is_model_part is true, class inheritance issues?
 		then
 			local pnl = vgui.Create("SpawnIcon", self)
-			pnl:SetModel(part:GetEntity():GetModel() or "")
+			pnl:SetModel(part:GetOwner():GetModel() or "")
 			self.Icon = pnl
 		elseif type(part.Icon) == "string" then
 			local pnl = vgui.Create("DImage", self)
@@ -496,7 +496,7 @@ do -- model modifiers
 
 	function PANEL:ExtraPopulate()
 		local part = pace.current_part
-		local ent = part:GetEntity()
+		local ent = part:GetOwner()
 		if not ent:IsValid() or not ent:GetBodyGroups() then return end
 
 		local group = pac.GetPropertyUserdata(part, self.CurrentKey) and pac.GetPropertyUserdata(part, self.CurrentKey).group
@@ -542,7 +542,7 @@ do -- model modifiers
 
 	function PANEL:ExtraPopulate()
 		local part = pace.current_part
-		local ent = part:GetEntity()
+		local ent = part:GetOwner()
 		if not ent:IsValid() or not ent:GetMaterials() or #ent:GetMaterials() == 1 then return end
 
 		local tbl = {}
@@ -712,7 +712,7 @@ do -- hull
 			if not pace.current_part:IsValid() then stop() return end
 			if pace.current_part.ClassName ~= "entity2" then stop() return end
 
-			local ent = pace.current_part:GetEntity()
+			local ent = pace.current_part:GetOwner()
 			if not ent.GetHull then stop() return end
 			if not ent.GetHullDuck then stop() return end
 

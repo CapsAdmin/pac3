@@ -119,12 +119,12 @@ end
 function PART:GetEmitter()
 	if not self.emitter then
 		self.NextShot = 0
-	self.Created = pac.RealTime + 0.1
+		self.Created = pac.RealTime + 0.1
 		self.emitter = ParticleEmitter(vector_origin, self:Get3D())
 	end
 
 	return self.emitter
-	end
+end
 
 function PART:SetDrawManual(b)
 	self.DrawManual = b
@@ -277,7 +277,7 @@ function PART:EmitParticles(pos, ang, real_ang)
 				end
 
 				if self.OwnerVelocityMultiplier ~= 0 then
-					local owner = self:GetOutfitOwner()
+					local owner = self:GetRootOwner()
 					if owner:IsValid() then
 						vec = vec + (owner:GetVelocity() * self.OwnerVelocityMultiplier)
 					end

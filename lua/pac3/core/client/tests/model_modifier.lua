@@ -1,6 +1,6 @@
 local function equal(a,b, msg)
 	if a ~= b then
-		error(tostring(a) .. " != " .. tostring(b) .. ": " .. msg, 2)
+		error(tostring(a) .. " != " .. tostring(b) .. ": " .. msg .. "\n", 2)
 	end
 end
 
@@ -19,9 +19,12 @@ function test.Run(done)
 		local root = pac.CreatePart("group")
 		local entity = root:CreatePart(class)
 
+		-- the owner is not valid right away, when the owner is valid, the changes are applied
+		repeat yield() until entity:GetOwner():IsValid()
+
 		entity:SetModel(mdl)
 
-		equal(owner:GetModel(), mdl, " after :SetModel")
+		equal(owner:GetModel(), mdl, " after "..class..":SetModel")
 		root:Remove()
 		equal(owner:GetModel(), prev, " after root is removed, the model should be reverted")
 	end

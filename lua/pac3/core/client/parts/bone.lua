@@ -43,8 +43,6 @@ BUILDER:StartStorableVars()
 
 BUILDER:EndStorableVars()
 
-local BaseClass_GetOwner = PART.GetOwner
-
 function PART:GetNiceName()
 	return self:GetBone()
 end
@@ -212,16 +210,6 @@ function PART:BuildBonePositions2(ent, bone_count)
 	m:Scale(scale)
 
 	ent:SetBoneMatrix(index, m)
-end
-
-function PART:GetOwner(root)
-	local parent = self:GetParent()
-
-	if parent:IsValid() and parent.is_model_part then
-		return parent.Entity
-	end
-
-	return BaseClass_GetOwner(self, root)
 end
 
 function PART:GetBonePosition()

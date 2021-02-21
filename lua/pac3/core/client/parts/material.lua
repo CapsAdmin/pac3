@@ -172,13 +172,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 		local materials = {}
 
-		if
-			pace.current_part:HasParent() and
-			pace.current_part:GetParent().GetEntity and
-			pace.current_part:GetParent():GetEntity():IsValid() and
-			pace.current_part:GetParent():GetEntity():GetMaterials()
-		then
-			materials = pace.current_part:GetParent():GetEntity():GetMaterials()
+		if pace.current_part:GetOwner():IsValid() then
+			materials = pace.current_part:GetOwner():GetMaterials()
 		end
 
 		table.insert(materials, "all")
@@ -217,8 +212,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 			if parent:IsValid() then
 				if tonumber(str) then
 					num = tonumber(str)
-				elseif str ~= "all" and parent.GetEntity and parent:GetEntity():IsValid() and parent:GetEntity():GetMaterials() then
-					for i, v in ipairs(parent:GetEntity():GetMaterials()) do
+				elseif str ~= "all" and self:GetOwner():IsValid() then
+					for i, v in ipairs(parent:GetOwner():GetMaterials()) do
 						if (v:match(".+/(.+)") or v):lower() == str:lower() then
 							num = i
 							break
@@ -271,9 +266,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	end
 
 	function PART:OnThink()
-		local parent = self:GetParent()
-		if parent.GetEntity and parent:GetEntity():IsValid() then
-			local materials = parent:GetEntity():GetMaterials()
+		if self:GetOwner():IsValid() then
+			local materials = self:GetOwner():GetMaterials()
 			if materials and #materials ~= self.last_material_count then
 				update_submaterial(self)
 				self.last_material_count = #materials

@@ -5,13 +5,21 @@ PART.ClassName = "submaterial"
 PART.Icon = 'icon16/picture_edit.png'
 PART.Group = {'model', 'entity'}
 
+
+local function get_owner(self)
+	if self.RootOwner then
+		return self:GetRootOwner()
+	end
+	return self:GetOwner()
+end
+
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("Material", "")
 	BUILDER:GetSet("SubMaterialId", 1, {
 		editor_onchange = function(self, num)
 			num = tonumber(num) or 0
 
-			local ent = pace.current_part:GetOwner(pace.current_part.RootOwner)
+			local ent = get_owner(pace.current_part)
 
 			local maxnum = 16
 
@@ -32,7 +40,7 @@ BUILDER:EndStorableVars()
 function PART:GetSubMaterialIdList()
 	local out = {}
 
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = get_owner(self)
 
 	if ent:IsValid() and ent.GetMaterials and #ent:GetMaterials() > 0 then
 		out = ent:GetMaterials()
@@ -43,7 +51,7 @@ end
 
 function PART:UpdateSubMaterialId(id, material)
 	id = tonumber(id) or self.SubMaterialId
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = get_owner(self)
 
 	if ent ~= self.sub_last_owner then
 		if IsValid(self.sub_last_owner) then
@@ -140,7 +148,7 @@ function PART:SetMaterial(var)
 end
 
 function PART:OnShow()
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = get_owner(self)
 
 	if ent:IsValid() then
 		self:UpdateSubMaterialId()

@@ -156,18 +156,18 @@ local function CalcDrag()
 	local origin
 	local part = pace.current_part or NULL
 
-	if IsValid(part) then
-		local owner = part:GetOutfitOwner()
-		if owner:IsValid() then
-			origin = owner:GetPos()
-			if owner == pac.WorldEntity then
-				if part:HasChildren() then
-					for key, child in ipairs(part:GetChildren()) do
-						if child.GetDrawPosition then
-							part = child
-							break
-						end
-					end
+	if not part:IsValid() then return end
+
+	local owner = part:GetRootOwner()
+	if not owner:IsValid() then return end
+
+	origin = owner:GetPos()
+	if owner == pac.WorldEntity then
+		if part:HasChildren() then
+			for key, child in ipairs(part:GetChildren()) do
+				if child.GetDrawPosition then
+					part = child
+					break
 				end
 			end
 		end
@@ -384,7 +384,7 @@ function pace.GetTPose()
 end
 
 function pace.SetViewPart(part, reset_campos)
-	pace.SetViewEntity(part:GetOutfitOwner())
+	pace.SetViewEntity(part:GetRootOwner())
 
 	if reset_campos then
 		pace.ResetView()

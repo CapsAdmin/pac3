@@ -56,6 +56,14 @@ local function try_viewmodel(ent)
 	return ent == pac.LocalPlayer:GetViewModel() and pac.LocalPlayer or ent
 end
 
+local function get_owner(self)
+	if self.RootOwner then
+		return try_viewmodel(self:GetRootOwner())
+	else
+		return try_viewmodel(self:GetOwner())
+	end
+end
+
 local movetypes = {}
 
 for k,v in pairs(_G) do
@@ -732,17 +740,17 @@ PART.OldEvents = {
 			local events = ply.pac_command_events
 
 			if events then
+				local found = nil
 				for _, data in pairs(events) do
 					if self:StringOperator(data.name, find) then
 						if data.on > 0 then
-							return data.on == 1
-						end
-
-						if data.time + time > pac.RealTime then
-							return true
+							found = data.on == 1
+						elseif data.time + time > pac.RealTime then
+							found = true
 						end
 					end
 				end
+				return found
 			end
 		end,
 	},
@@ -763,7 +771,7 @@ PART.OldEvents = {
 					end
 				end
 			else
-				local owner = self:GetOutfitOwner()
+				local owner = self:GetRootOwner()
 				if owner:IsValid() then
 					local data = owner.pac_say_event
 
@@ -783,7 +791,7 @@ PART.OldEvents = {
 			owner = try_viewmodel(owner)
 
 			if parent:IsValid() and ent:IsValid() then
-				return self:NumberOperator(parent:GetOwner(self.RootOwner):GetVelocity():Length(), speed)
+				return self:NumberOperator(get_owner(parent):GetVelocity():Length(), speed)
 			end
 
 			return 0
@@ -1006,7 +1014,7 @@ PART.OldEvents = {
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
 
-			local owner = self:GetOutfitOwner()
+			local owner = self:GetRootOwner()
 
 			if owner:IsValid() then
 				local ang = owner:EyeAngles()
@@ -1022,7 +1030,7 @@ PART.OldEvents = {
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
 
-			local owner = self:GetOutfitOwner()
+			local owner = self:GetRootOwner()
 
 			if owner:IsValid() then
 				local ang = owner:EyeAngles()
@@ -1408,7 +1416,7 @@ function PART:GetNiceName()
 
 	if not PART.Events[event_name] then return "unknown event" end
 
-	return PART.Events[event_name]:GetNiceName(self, self:GetOwner(self.RootOwner))
+	return PART.Events[event_name]:GetNiceName(self, get_owner(self))
 end
 
 local function should_trigger(self, ent, eventObject)
@@ -1439,10 +1447,10 @@ end
 PART.last_event_triggered = false
 
 function PART:OnThink()
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = get_owner(self)
 	if not ent:IsValid() then return end
 
-	local data = self.Events[self.Event]
+	local data = PART.Events[self.Event]
 	if not data then return end
 
 	self:TriggerEvent(should_trigger(self, ent, data))

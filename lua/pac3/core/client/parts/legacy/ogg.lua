@@ -85,7 +85,7 @@ BIND("FilterFraction")
 --BIND("EchoFeedback", nil, function(n) return math.Clamp(n, 0, 0.99) end)
 
 function PART:OnThink()
-	local owner = self:GetOutfitOwner()
+	local owner = self:GetRootOwner()
 
 	for url, stream in pairs(self.streams) do
 		if not stream:IsValid() then self.streams[url] = nil goto CONTINUE end

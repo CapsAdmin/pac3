@@ -54,20 +54,6 @@ end
 
 function PART:Initialize() end
 
-function PART:SetUniqueID(id)
-	local owner_id = self:GetPlayerOwnerId()
-
-	if owner_id then
-		pac.RemoveUniqueIDPart(owner_id, self.UniqueID)
-	end
-
-	self.UniqueID = id
-
-	if owner_id then
-		pac.SetUniqueIDPart(owner_id, id, self)
-	end
-end
-
 function PART:OnRemove() end
 
 function PART:GetNiceName()
@@ -112,14 +98,24 @@ function PART:GetName()
 	return self.Name
 end
 
+function PART:SetUniqueID(id)
+	local owner_id = self:GetPlayerOwnerId()
+
+	if owner_id then
+		pac.RemoveUniqueIDPart(owner_id, self.UniqueID)
+	end
+
+	self.UniqueID = id
+
+	if owner_id then
+		pac.SetUniqueIDPart(owner_id, id, self)
+	end
+end
+
+
 do -- owner
 	function PART:SetPlayerOwner(ply)
 		self.PlayerOwner = ply
-
-		if not self:HasParent() then
-			self:CheckOwner()
-		end
-
 		self:SetUniqueID(self:GetUniqueID())
 	end
 
@@ -135,105 +131,37 @@ do -- owner
 		return owner:EntIndex()
 	end
 
-	function PART:SetOwnerName(name)
-		self.OwnerName = name
-		self:CheckOwner()
-	end
-
-	function PART:CheckOwner(ent, removed)
-		self = self:GetRootPart()
-
-		local prev_owner = self:GetOwner()
-
-		if self.Duplicate then
-
-			ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self, function(e) return e.pac_duplicate_attach_uid ~= self.UniqueID end) or NULL
-
-			if ent ~= prev_owner and ent:IsValid() then
-
-				local tbl = self:ToTable(true)
-				tbl.self.OwnerName = "self"
-				pac.SetupENT(ent)
-				ent:SetShowPACPartsInEditor(false)
-				ent:AttachPACPart(tbl)
-				ent:CallOnRemove("pac_remove_outfit_" .. tbl.self.UniqueID, function()
-					ent:RemovePACPart(tbl)
-				end)
-
-				if self:GetPlayerOwner() == pac.LocalPlayer then
-					ent:SetPACDrawDistance(0)
-				end
-
-				ent.pac_duplicate_attach_uid = self.UniqueID
-			end
-
-		else
-			if removed and prev_owner == ent then
-				self:SetOwner(NULL)
-				return
-			end
-
-			if not removed and self.OwnerName ~= "" then
-				ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self) or NULL
-				if ent ~= prev_owner then
-					self:SetOwner(ent)
-					return true
-				end
-			end
-
-		end
-	end
-
-	function PART:SetOwner(ent)
-		if IsValid(self.last_owner) and self.last_owner ~= ent then
-			self:CallRecursive("OnHide", true)
-		end
-
-		self.last_owner = self.Owner
-		self.Owner = ent or NULL
-
-		pac.RunNextFrame(self:GetRootPart().Id .. "_hook_render", function()
-			if self:IsValid() then
-				self:HookEntityRender()
-			end
-		end)
-	end
-
-		-- unfortunate name, it will actually add the part for updating, not just rendering
-	function PART:HookEntityRender()
-		local root = self:GetRootPart()
-		local owner = root:GetOwner()
-		if root.ClassName ~= "group" then return end -- FIX ME
-
-		if root.last_owner:IsValid() then
-			pac.UnhookEntityRender(root.last_owner, root)
-		end
-
-		if owner:IsValid() then
-			pac.HookEntityRender(owner, root)
-		end
-	end
 
 	-- always return the root owner
 	function PART:GetPlayerOwner()
 		return self:GetRootPart().PlayerOwner
 	end
 
-	function PART:GetOutfitOwner()
+	function PART:GetRootOwner()
 		return self:GetRootPart().Owner
 	end
 
-	function PART:GetEntity()
-		return self:GetOutfitOwner()
+	function PART:GetParentOwner()
+		local parent = self:GetParent()
+
+		if parent:IsValid() then
+			return parent:GetOwner()
+		end
+
+		return NULL
 	end
 
 	function PART:GetOwner()
-		local parent = self:GetParent()
-		if parent:IsValid() then
-			return parent:GetEntity()
+		if self.Owner:IsValid() then
+			return self.Owner
 		end
 
-		return self:GetEntity()
+		local parent = self:GetParent()
+		if parent:IsValid() then
+			return parent:GetOwner()
+		end
+
+		return NULL
 	end
 end
 
@@ -657,10 +585,6 @@ do -- serializing
 		self:RemoveChildren()
 	end
 
-	function PART:IsBeingWorn()
-		return self.isBeingWorn
-	end
-
 	function PART:SetIsBeingWorn(status)
 		self.isBeingWorn = status
 		return self
@@ -718,7 +642,6 @@ do -- serializing
 
 			for _, value in pairs(tbl.children) do
 				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner(), value)
-				part:SetIsBeingWorn(self:IsBeingWorn())
 				part:SetParent(self)
 			end
 		end
@@ -886,9 +809,8 @@ do -- serializing
 	end
 
 	function PART:Clone()
-		local part = pac.CreatePart(self.ClassName, self:GetPlayerOwner())
+		local part = pac.CreatePart(self.ClassName, self:GetPlayerOwner(), self:ToTable(true))
 		if not part then return end
-		part:SetTable(self:ToTable(true))
 
 		part:SetParent(self:GetParent())
 

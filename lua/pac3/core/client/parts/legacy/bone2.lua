@@ -50,8 +50,6 @@ BUILDER:RemoveProperty("IgnoreZ")
 BUILDER:RemoveProperty("BlendMode")
 BUILDER:RemoveProperty("NoTextureFiltering")
 
-local BaseClass_GetOwner = PART.GetOwner
-
 function PART:GetNiceName()
 	return self:GetBone()
 end

@@ -35,7 +35,7 @@ function pac.GetAllBones(ent)
 		ent:InvalidateBoneCache()
 		ent:SetupBones()
 
-		local count = (ent:GetBoneCount() or 0) - 1
+		local count = ent:GetBoneCount() or 0
 
 		for bone = 0, count do
 			local name = ent:GetBoneName(bone)

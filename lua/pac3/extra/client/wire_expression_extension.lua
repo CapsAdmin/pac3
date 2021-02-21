@@ -9,7 +9,7 @@ local function SetKeyValue(ply, ent, unique_id, key, val)
 
 	local part = pac.GetPartFromUniqueID(ply:UniqueID(), unique_id)
 
-	if part:GetOutfitOwner() == ent then
+	if part:GetRootOwner() == ent then
 		if key == "EventHide" then
 			part:SetEventTrigger(ent, val > 0)
 		else

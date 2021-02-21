@@ -24,8 +24,6 @@ BUILDER
 	:GetSet("ResetOnHide", true)
 :EndStorableVars()
 
-local BaseClass_GetOwner = PART.GetOwner
-
 local tonumber = tonumber
 
 PART.ValidHoldTypes =
@@ -247,7 +245,7 @@ function PART:OnUpdateAnimation()
 		end
 
 		if self.OwnerCycle then
-			local owner = BaseClass_GetOwner(self, true)
+			local owner = self:GetRootPart():GetOwner()
 
 			if IsValid(owner) then
 				ent:SetCycle(owner:GetCycle())

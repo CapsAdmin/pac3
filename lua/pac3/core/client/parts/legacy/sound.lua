@@ -154,7 +154,7 @@ function PART:SetPitch(num)
 end
 
 function PART:PlaySound(osnd, ovol)
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = self.RootOwner and self:GetRootOwner() or self:GetOwner()
 
 	if ent:IsValid() then
 		if ent:GetClass() == "viewmodel" or ent == pac.LocalHands then

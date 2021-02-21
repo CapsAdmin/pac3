@@ -361,7 +361,9 @@ do
 		timer.Create("pac_in_editor", 0.25, 0, function()
 			if not pace.current_part:IsValid() then return end
 			local pos, ang = pace.GetViewPos(), pace.GetViewAngles()
-			local target_pos = (pace.mctrl.GetTargetPos()) or (pace.current_part.GetDrawPosition and pace.current_part:GetDrawPosition()) or vector_origin
+			local target_pos = pace.mctrl.GetTargetPos()
+
+			if not target_pos then return end
 
 			if lastViewPos == pos and lastViewAngle == ang and lastTargetPos == target_pos then return end
 			lastViewPos, lastViewAngle, lastTargetPos = pos, ang, target_pos

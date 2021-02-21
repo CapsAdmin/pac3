@@ -197,7 +197,7 @@ local function CreateDummy(part, store, self)
 end
 
 local function get_entity(part)
-	local ent = part:GetOutfitOwner()
+	local ent = part:GetRootOwner()
 	return ent == pac.LocalPlayer:GetViewModel() and pac.LocalPlayer or ent
 end
 

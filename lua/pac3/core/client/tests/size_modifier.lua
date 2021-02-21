@@ -18,6 +18,9 @@ function test.Run(done)
 
 		entity:SetSize(0.5)
 
+		-- the owner is not valid right away, when the owner is valid, the changes are applied
+		repeat yield() until entity:GetOwner():IsValid()
+
 		equal(owner:GetModelScale(), 0.5, "after :SetSize")
 		root:Remove()
 		equal(owner:GetModelScale(), 1, "should revert after root is removed")

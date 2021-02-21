@@ -164,7 +164,11 @@ local function try_viewmodel(ent)
 end
 
 local function get_owner(self)
-	return try_viewmodel(self:GetOwner(self.RootOwner))
+	if self.RootOwner then
+		return try_viewmodel(self:GetRootOwner())
+	else
+		return try_viewmodel(self:GetOwner())
+	end
 end
 
 PART.Inputs = {
@@ -221,7 +225,7 @@ PART.Inputs = {
 		local pos = parent:GetWorldPosition()
 
 		if not parent.GetDrawPosition then
-			local owner = parent:GetOwner(self.RootOwner)
+			local owner = get_owner(parent)
 			if owner:IsValid() then
 				pos = owner:GetPos()
 			end
@@ -235,7 +239,7 @@ PART.Inputs = {
 		local pos = parent:GetWorldPosition()
 
 		if not parent.GetDrawPosition then
-			local owner = parent:GetOwner(self.RootOwner)
+			local owner = get_owner(parent)
 			if owner:IsValid() then
 				pos = owner:GetPos()
 			end
@@ -760,7 +764,7 @@ PART.Inputs = {
 	end,
 
 	weapon_primary_ammo = function(self)
-		local owner = self:GetOutfitOwner()
+		local owner = self:GetRootOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()
@@ -775,7 +779,7 @@ PART.Inputs = {
 		return 0
 	end,
 	weapon_primary_total_ammo = function(self)
-		local owner = self:GetOutfitOwner()
+		local owner = self:GetRootOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()
@@ -790,7 +794,7 @@ PART.Inputs = {
 		return 0
 	end,
 	weapon_primary_clipsize = function(self)
-		local owner = self:GetOutfitOwner()
+		local owner = self:GetRootOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()
@@ -805,7 +809,7 @@ PART.Inputs = {
 		return 0
 	end,
 	weapon_secondary_ammo = function(self)
-		local owner = self:GetOutfitOwner()
+		local owner = self:GetRootOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()
@@ -820,7 +824,7 @@ PART.Inputs = {
 		return 0
 	end,
 	weapon_secondary_total_ammo = function(self)
-		local owner = self:GetOutfitOwner()
+		local owner = self:GetRootOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()
@@ -835,7 +839,7 @@ PART.Inputs = {
 		return 0
 	end,
 	weapon_secondary_clipsize = function(self)
-		local owner = self:GetOutfitOwner()
+		local owner = self:GetRootOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()

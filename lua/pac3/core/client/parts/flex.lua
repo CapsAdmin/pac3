@@ -23,6 +23,14 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSet("DefaultOnHide", true)
 BUILDER:EndStorableVars()
 
+local function get_owner(self)
+	if self.RootOwner then
+		return self:GetRootOwner()
+	end
+
+	return self:GetOwner()
+end
+
 function PART:GetNiceName()
 	return self:GetFlex() ~= "" and self:GetFlex() or "no flex"
 end
@@ -30,7 +38,7 @@ end
 function PART:GetFlexList()
 	local out = {}
 
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = get_owner(self)
 
 	if ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() > 0 then
 		for i = 0, ent:GetFlexNum() - 1 do
@@ -43,7 +51,7 @@ function PART:GetFlexList()
 end
 
 function PART:UpdateFlex(flex, weight)
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = get_owner(self)
 	if not ent:IsValid() or not ent.GetFlexNum or ent:GetFlexNum() == 0 then return end
 
 	if self.flex_ent ~= ent then
@@ -103,7 +111,7 @@ function PART:SetWeight(num)
 end
 
 function PART:OnShow()
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = get_owner(self)
 
 	if ent:IsValid() then
 		self:UpdateFlex()

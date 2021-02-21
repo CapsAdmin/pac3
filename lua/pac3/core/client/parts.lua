@@ -4,6 +4,10 @@ local pairs = pairs
 
 pac.registered_parts = {}
 
+local function on_error(msg)
+	ErrorNoHalt(debug.traceback(msg))
+end
+
 local function initialize(part, owner)
 	if part.PreInitialize then
 		part:PreInitialize()
@@ -18,7 +22,7 @@ local function initialize(part, owner)
 	part:Initialize()
 end
 
-function pac.CreatePart(name, owner, tbl)
+function pac.CreatePart(name, owner, tbl, make_copy)
 	name = name or "base"
 	owner = owner or pac.LocalPlayer
 
@@ -51,7 +55,7 @@ function pac.CreatePart(name, owner, tbl)
 		end
 	end
 
-	local ok, err = xpcall(initialize, ErrorNoHalt, part, owner)
+	local ok, err = xpcall(initialize, on_error, part, owner)
 
 	if not ok then
 		part:Remove()
@@ -61,7 +65,8 @@ function pac.CreatePart(name, owner, tbl)
 	end
 
 	if tbl then
-		part:SetTable(tbl)
+		part:SetTable(tbl, make_copy)
+
 		-- if already hidden, this prevents OnHide or OnShow from being called by CalcShowHide
 		part.last_hidden = part:IsHidden()
 	end

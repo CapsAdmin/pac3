@@ -4,7 +4,6 @@ local consume = test.EventConsumer({
 	"hide",
 	"parent group",
 	"shown from rendering",
-	"think",
 	"draw",
 	"hide",
 	"remove",
@@ -34,7 +33,7 @@ function test.Run(done)
 		end
 
 		function PART:OnThink()
-			consume("think")
+			--consume("think")
 		end
 
 		function PART:OnHide()

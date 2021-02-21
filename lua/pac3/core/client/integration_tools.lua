@@ -154,8 +154,7 @@ function pac.SetupENT(ENT, owner)
 			part:Remove()
 		end
 
-		part = pac.CreatePart(outfit.self.ClassName, owner)
-		part:SetTable(outfit)
+		part = pac.CreatePart(outfit.self.ClassName, owner, outfit)
 
 		self.pac_outfits[outfit.self.UniqueID] = part
 

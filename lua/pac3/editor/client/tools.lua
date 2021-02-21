@@ -147,7 +147,7 @@ end)
 pace.AddTool(L"fix origin", function(part, suboption)
 	if part.ClassName ~= "model" and part.ClassName ~= "model" then return end
 
-	local ent = part:GetEntity()
+	local ent = part:GetOwner()
 
 	part:SetPositionOffset(part:GetPositionOffset() + -ent:OBBCenter() * part.Scale * part.Size)
 end)
@@ -249,7 +249,7 @@ end)
 
 pace.AddTool(L"show only with active weapon", function(part, suboption)
 	local event = part:CreatePart("event")
-	local owner = part:GetOutfitOwner()
+	local owner = part:GetRootOwner()
 	if not owner.GetActiveWeapon or not owner:GetActiveWeapon():IsValid() then
 		owner = pac.LocalPlayer
 	end
@@ -626,8 +626,7 @@ pace.AddTool(L"record surrounding props to pac", function(part)
 end)
 
 pace.AddTool(L"populate with bones", function(part,suboption)
-	local target = part.GetEntity or part.GetOwner
-	local ent = target(part)
+	local ent = part:GetOwner()
 	local bones = pac.GetModelBones(ent)
 
 	for bone,tbl in pairs(bones) do
@@ -642,8 +641,7 @@ pace.AddTool(L"populate with bones", function(part,suboption)
 end)
 
 pace.AddTool(L"populate with dummy bones", function(part,suboption)
-	local target = part.GetEntity or part.GetOwner
-	local ent = target(part)
+	local ent = part:GetOwner()
 	local bones = pac.GetModelBones(ent)
 
 	for bone,tbl in pairs(bones) do

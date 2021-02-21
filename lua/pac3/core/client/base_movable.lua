@@ -36,29 +36,21 @@ do -- bones
 	end
 
 	function PART:GetBonePosition()
-		local owner = self:GetOwner()
-		local parent = self:GetParent()
-
 		local bone = self.BoneOverride or self.Bone
 
+		local parent = self:GetParent()
 		if parent:IsValid() and parent.ClassName == "jiggle" then
 			return parent.pos, parent.ang
 		end
 
-		if parent:IsValid() and parent.GetDrawPosition then
-			local ent = parent.GetEntity and parent:GetEntity()
-			if ent and ent:IsValid() then
-				-- if the parent part is a model, get the bone position of the parent model
-				return pac.GetBonePosAng(ent, bone)
-			else
-				-- else just get the origin of the part
-				-- unless we've passed it from parent
-				return parent:GetDrawPosition()
-			end
-		elseif owner:IsValid() then
+		local owner = self:GetParentOwner()
+
+		if owner:IsValid() then
 			-- if there is no parent, default to owner bones
 			return pac.GetBonePosAng(owner, bone)
 		end
+
+		return Vector(), Angle()
 	end
 
 	do
@@ -114,6 +106,7 @@ do
 
 		m:SetAngles(self:CalcAngles(m:GetAngles(), m:GetTranslation()))
 
+
 		if with_offsets then
 			m:Translate(self.PositionOffset)
 			m:Rotate(self.AngleOffset)
@@ -153,7 +146,7 @@ function PART:CalcAngles(ang, wpos)
 	wpos = wpos or self.WorldMatrix and self.WorldMatrix:GetTranslation()
 	if not wpos then return ang end
 
-	local owner = self:GetOutfitOwner()
+	local owner = self:GetRootOwner()
 
 	if pac.StringFind(self.AimPartName, "LOCALEYES_YAW", true, true) then
 		ang = (pac.EyePos - wpos):Angle()

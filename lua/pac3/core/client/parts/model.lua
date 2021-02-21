@@ -54,7 +54,7 @@ BUILDER:StartStorableVars()
 
 :EndStorableVars()
 
-PART.Entity = NULL
+PART.Owner = NULL
 
 function PART:GetNiceName()
 	local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%."))
@@ -66,7 +66,7 @@ local temp = CreateMaterial(tostring({}), "VertexLitGeneric", {})
 
 function PART:SetLevelOfDetail(val)
 	self.LevelOfDetail = val
-	local ent = self:GetEntity()
+	local ent = self:GetOwner()
 	if ent:IsValid() then
 		ent:SetLOD(val)
 	end
@@ -75,8 +75,8 @@ end
 function PART:SetSkin(var)
 	self.Skin = var
 
-	if self.Entity:IsValid() then
-		self.Entity:SetSkin(var)
+	if self.Owner:IsValid() then
+		self.Owner:SetSkin(var)
 	end
 end
 
@@ -108,20 +108,20 @@ end
 function PART:SetModelModifiers(str)
 	self.ModelModifiers = str
 
-	if not self.Entity:IsValid() then return end
+	if not self.Owner:IsValid() then return end
 
 	local tbl = self:ModelModifiersToTable(str)
 
 	if tbl.skin then
-		self.Entity:SetSkin(tbl.skin)
+		self.Owner:SetSkin(tbl.skin)
 		tbl.skin = nil
 	end
 
-	if not self.Entity:GetBodyGroups() then return end
+	if not self.Owner:GetBodyGroups() then return end
 
 	self.draw_bodygroups = {}
 
-	for i, info in ipairs(self.Entity:GetBodyGroups()) do
+	for i, info in ipairs(self.Owner:GetBodyGroups()) do
 		local val = tbl[info.name]
 		if val then
 			table.insert(self.draw_bodygroups, {info.id, val})
@@ -155,7 +155,7 @@ end
 function PART:SetMaterials(str)
 	self.Materials = str
 
-	local materials = self:GetEntity():IsValid() and self:GetEntity():GetMaterials()
+	local materials = self:GetOwner():IsValid() and self:GetOwner():GetMaterials()
 
 	if not materials then return end
 
@@ -195,7 +195,7 @@ function PART:Reset()
 end
 
 function PART:OnBecomePhysics()
-	local ent = self:GetEntity()
+	local ent = self:GetOwner()
 	if not ent:IsValid() then return end
 	ent:PhysicsInit(SOLID_NONE)
 	ent:SetMoveType(MOVETYPE_NONE)
@@ -206,19 +206,15 @@ function PART:OnBecomePhysics()
 end
 
 function PART:Initialize()
-	self.Entity = pac.CreateEntity(self:GetModel())
-	self.Entity:SetNoDraw(true)
-	self.Entity.PACPart = self
+	self.Owner = pac.CreateEntity(self:GetModel())
+	self.Owner:SetNoDraw(true)
+	self.Owner.PACPart = self
 	self.material_count = 0
 end
 
-function PART:GetEntity()
-	return self.Entity or NULL
-end
-
 function PART:OnShow()
-	local owner = self:GetOwner()
-	local ent = self:GetEntity()
+	local owner = self:GetParentOwner()
+	local ent = self:GetOwner()
 
 	if ent:IsValid() and owner:IsValid() and owner ~= ent then
 		ent:SetPos(owner:EyePos())
@@ -328,11 +324,11 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 end
 
 function PART:OnDraw(owner, pos, ang)
-	local ent = self:GetEntity()
+	local ent = self:GetOwner()
 
 	if not ent:IsValid() then
 		self:Reset()
-		ent = self:GetEntity()
+		ent = self:GetOwner()
 	end
 
 	if self.loading then
@@ -462,7 +458,7 @@ end
 local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs')
 
 function PART:RefreshModel()
-	local ent = self:GetEntity()
+	local ent = self:GetOwner()
 
 	if ent:IsValid() then
 		pac.ResetBoneCache(ent)
@@ -475,13 +471,14 @@ function PART:RefreshModel()
 end
 
 function PART:RealSetModel(path)
-	self.Entity:SetModel(path)
+	self.Owner:SetModel(path)
 	self:RefreshModel()
 end
 
 function PART:SetModel(path)
 	self.Model = path
-	self.Entity = self:GetEntity()
+	local owner = self:GetOwner()
+	if not owner:IsValid() then return end
 
 	if path:StartWith("objhttp") then
 		self.loading = "downloading obj"
@@ -490,14 +487,15 @@ function PART:SetModel(path)
 			function(meshes, err)
 
 				local function set_mesh(part, mesh)
+					local owner = part:GetOwner()
 					part.obj_mesh = mesh
-					pac.ResetBoneCache(part.Entity)
+					pac.ResetBoneCache(owner)
 
 					if not part.Materialm then
 						part.Materialm = Material("error")
 					end
 
-					function part.Entity.pacDrawModel(ent, simple)
+					function owner.pacDrawModel(ent, simple)
 						if simple then
 							RealDrawModel(part, ent, ent:GetPos(), ent:GetAngles())
 						else
@@ -507,17 +505,15 @@ function PART:SetModel(path)
 						end
 					end
 
-					part.Entity:SetRenderBounds(Vector(1, 1, 1) * -300, Vector(1, 1, 1) * 300)
+					owner:SetRenderBounds(Vector(1, 1, 1) * -300, Vector(1, 1, 1) * 300)
 				end
 
 				if not self:IsValid() then return end
 
 				self.loading = false
 
-				self.Entity = self:GetEntity()
-
 				if not meshes and err then
-					self.Entity:SetModel("models/error.mdl")
+					owner:SetModel("models/error.mdl")
 					self.obj_mesh = nil
 					return
 				end
@@ -556,10 +552,8 @@ function PART:SetModel(path)
 				self.loading = nil
 				self.errored = nil
 
-				local ent = self:GetEntity()
-
 				if self.ClassName == "entity2" then
-					pac.emut.MutateEntity(self:GetPlayerOwner(), "model", ent, path)
+					pac.emut.MutateEntity(self:GetPlayerOwner(), "model", owner, path)
 				end
 
 				self:RealSetModel(mdl_path)
@@ -582,10 +576,8 @@ function PART:SetModel(path)
 			pac.Message(self, ' mdl files are not allowed')
 		end
 	elseif path ~= "" then
-		local ent = self:GetEntity()
-
 		if self.ClassName == "entity2" then
-			pac.emut.MutateEntity(self:GetPlayerOwner(), "model", ent, path)
+			pac.emut.MutateEntity(self:GetPlayerOwner(), "model", owner, path)
 		end
 
 		self:RealSetModel(path)
@@ -595,8 +587,11 @@ end
 local NORMAL = Vector(1,1,1)
 
 function PART:CheckScale()
+	local owner = self:GetOwner()
+	if not owner:IsValid() then return end
+
 	-- RenderMultiply doesn't work with this..
-	if self.BoneMerge and self.Entity:IsValid() and self.Entity:GetBoneCount() and self.Entity:GetBoneCount() > 1 then
+	if self.BoneMerge and owner:GetBoneCount() and owner:GetBoneCount() > 1 then
 		if self.Scale * self.Size ~= NORMAL then
 			if not self.requires_bone_model_scale then
 				self.requires_bone_model_scale = true
@@ -626,7 +621,7 @@ end
 local vec_one = Vector(1,1,1)
 
 function PART:ApplyMatrix()
-	local ent = self:GetEntity()
+	local ent = self:GetOwner()
 	if not ent:IsValid() then return end
 
 	local mat = Matrix()
@@ -676,20 +671,13 @@ function PART:SetSize(var)
 end
 
 function PART:CheckBoneMerge()
-	local ent = self.Entity
+	local ent = self.Owner
 
 	if self.skip_orient then return end
 
 	if ent:IsValid() and not ent:IsPlayer() and ent:GetModel() then
 		if self.BoneMerge then
-			--[[if not self.ragdoll then
-				self.Entity = ClientsideRagdoll(ent:GetModel())
-				self.requires_bone_model_scale = true
-				ent = self.Entity
-				self.ragdoll = true
-			end]]
-
-			local owner = self:GetOwner()
+			local owner = self:GetParentOwner()
 
 			if ent:GetParent() ~= owner then
 				ent:SetParent(owner)
@@ -706,13 +694,6 @@ function PART:CheckBoneMerge()
 				end
 			end
 		else
-			--[[if self.ragdoll then
-				self.Entity:Remove()
-				ent = self:GetEntity()
-				self.requires_bone_model_scale = true
-				self.ragdoll = false
-			end]]
-
 			if ent:GetParent():IsValid() then
 				local owner = ent:GetParent()
 				ent:SetParent(NULL)
@@ -741,8 +722,8 @@ end
 function PART:OnBuildBonePositions()
 	if self.AlternativeScaling then return end
 
-	local ent = self:GetEntity()
-	local owner = self:GetOwner()
+	local ent = self:GetOwner()
+	local owner = self:GetParentOwner()
 
 	if not ent:IsValid() or not owner:IsValid() or not ent:GetBoneCount() or ent:GetBoneCount() < 1 then return end
 
@@ -808,7 +789,7 @@ do
 		local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%.")) or self:GetModel()
 
 		local class_name = "NULL"
-		local ent = self:GetEntity()
+		local ent = self:GetOwner()
 
 		if ent:IsValid() then
 			class_name = ent:GetClass()
@@ -838,7 +819,7 @@ do
 	end
 
 	function PART:GetBonePosition()
-		local ent = self:GetOwner()
+		local ent = self:GetParentOwner()
 		local ang = ent:GetAngles()
 		if ent:IsPlayer() then
 			ang.p = 0
@@ -846,6 +827,7 @@ do
 		return ent:GetPos(), ang
 	end
 
+	-- this also implicitly overrides parent init to not create a custom owner
 	function PART:Initialize()
 		self.material_count = 0
 	end
@@ -856,53 +838,50 @@ do
 		self:PostEntityDraw(ent, ent, pos, ang)
 	end
 
-	function PART:GetEntity()
-		local ent = self:GetOutfitOwner()
-		self.Entity = ent
-		return ent
-	end
-
 	local temp_mat = Material( "models/error/new light1" )
 
 	function PART:OnShow()
-		local ent = self:GetEntity()
+		local ent = self:GetOwner()
 
-		if ent:IsValid() then
-			function ent.RenderOverride()
-				-- if the draw call is not from pac don't bother
-				if not ent.pac_drawing_model then
+		if not ent:IsValid() then return end
+
+		function ent.RenderOverride()
+			-- if the draw call is not from pac don't bother
+			if not ent.pac_drawing_model then
+				return
+			end
+
+			if self:IsValid() and self:GetParentOwner():IsValid() then
+				if ent.pac_bonemerged then
+					for _, e in ipairs(ent.pac_bonemerged) do
+						if e.pac_drawing_model then return end
+					end
+				end
+
+				-- so eyes work
+				if self.NoDraw then
+					render.SetBlend(0)
+					render.ModelMaterialOverride(temp_mat)
+					ent:DrawModel()
+					render.SetBlend(1)
+					render.ModelMaterialOverride()
 					return
 				end
 
-				if self:IsValid() and self:GetOwner():IsValid() then
-					if ent.pac_bonemerged then
-						for _, e in ipairs(ent.pac_bonemerged) do
-							if e.pac_drawing_model then return end
-						end
-					end
-
-					-- so eyes work
-					if self.NoDraw then
-						render.SetBlend(0)
-						render.ModelMaterialOverride(temp_mat)
-						ent:DrawModel()
-						render.SetBlend(1)
-						render.ModelMaterialOverride()
-						return
-					end
-
-					self:Draw(self.Translucent and "translucent" or "opaque")
-				else
-					ent.RenderOverride = nil
-				end
+				self:Draw(self.Translucent and "translucent" or "opaque")
+			else
+				ent.RenderOverride = nil
 			end
-			self:SetDrawShadow(self:GetDrawShadow())
-			self:ApplyMatrix()
 		end
+
+		self:SetModel(self:GetModel())
+		self:RefreshModel()
+		self:SetDrawShadow(self:GetDrawShadow())
+		self:ApplyMatrix()
 	end
 
 	function PART:OnHide()
-		local ent = self:GetOwner()
+		local ent = self:GetParentOwner()
 
 		if ent:IsValid() then
 			ent.RenderOverride = nil
@@ -911,7 +890,7 @@ do
 	end
 
 	function PART:RealSetModel(path)
-		local ent = self:GetEntity()
+		local ent = self:GetOwner()
 		if not ent:IsValid() then return end
 
 		ent:SetModel(path)
@@ -920,7 +899,7 @@ do
 	end
 
 	function PART:OnRemove()
-		local ent = self:GetEntity()
+		local ent = self:GetOwner()
 		if not ent:IsValid() then return end
 
 		pac.emut.RestoreMutations(self:GetPlayerOwner(), "model", ent)
@@ -935,7 +914,7 @@ do
 	function PART:SetInverseKinematics(b)
 		self.InverseKinematics = b
 
-		local ent = self:GetOwner()
+		local ent = self:GetParentOwner()
 
 		if ent:IsValid() then
 			ent.pac_enable_ik = b
@@ -946,7 +925,7 @@ do
 	function PART:OnThink()
 		self:CheckBoneMerge()
 
-		local ent = self:GetEntity()
+		local ent = self:GetOwner()
 
 		if ent:IsValid() then
 			local model = ent:GetModel()
@@ -1018,7 +997,7 @@ do
 	function PART:SetDrawShadow(b)
 		self.DrawShadow = b
 
-		local ent = self:GetEntity()
+		local ent = self:GetOwner()
 		if not ent:IsValid() then return end
 
 		ent:DrawShadow(b)
@@ -1036,7 +1015,7 @@ do
 		self.material_count = 0
 	end
 	function PART:OnDraw(ent, pos, ang)
-		local ent = self:GetEntity()
+		local ent = self:GetOwner()
 		if not ent:IsValid() then return end
 
 		local old
@@ -1064,14 +1043,14 @@ do
 	PART.AlwaysThink = true
 
 	function PART:OnThink()
-		local ent = self:GetOutfitOwner()
+		local ent = self:GetRootOwner()
 		if ent:IsValid() and ent.GetActiveWeapon then
 			local wep = ent:GetActiveWeapon()
 			if wep:IsValid() then
-				if wep ~= self.Entity then
+				if wep ~= self.Owner then
 					if self.Class == "all" or (self.Class:lower() == wep:GetClass():lower()) then
 						self:OnHide()
-						self.Entity = wep
+						self.Owner = wep
 						self:SetEventTrigger(self, false)
 						wep.RenderOverride = function()
 							if wep.pac_render then
@@ -1095,7 +1074,7 @@ do
 	end
 
 	function PART:OnHide()
-		local ent = self:GetOutfitOwner()
+		local ent = self:GetRootOwner()
 
 		if ent:IsValid() and ent.GetActiveWeapon then
 			for _, wep in pairs(ent:GetWeapons()) do
@@ -1104,7 +1083,7 @@ do
 					wep:SetParent(ent)
 				end
 			end
-			self.Entity = NULL
+			self.Owner = NULL
 		end
 	end
 

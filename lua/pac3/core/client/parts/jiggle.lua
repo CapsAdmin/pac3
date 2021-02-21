@@ -40,10 +40,7 @@ BUILDER:EndStorableVars()
 local math_AngleDifference = math.AngleDifference
 
 function PART:Reset()
-	local parent = self:GetParent()
-	if not parent:IsValid() then return end
-
-	local pos, ang = parent.GetDrawPosition and parent:GetDrawPosition()
+	local pos, ang = self:GetDrawPosition()
 
 	self.pos = pos or Vector()
 	self.vel = Vector()

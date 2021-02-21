@@ -557,8 +557,7 @@ do -- menu
 	function pace.Paste(obj)
 		if not pace.Clipboard then return end
 		pace.RecordUndoHistory()
-		local newObj = pac.CreatePart(pace.Clipboard.self.ClassName)
-		newObj:SetTable(pace.Clipboard)
+		local newObj = pac.CreatePart(pace.Clipboard.self.ClassName, nil, pace.Clipboard)
 		newObj:SetParent(obj)
 		pace.RecordUndoHistory()
 	end

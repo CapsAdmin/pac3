@@ -141,7 +141,7 @@ do -- pace
 			return 45
 		end
 
-		if not part:IsValid() then return 3 end
+		if not part:IsValid() or not part.GetWorldPosition then return 3 end
 
 		local dist = (part:GetWorldPosition():Distance(pace.GetViewPos()) / 50)
 

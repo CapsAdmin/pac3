@@ -257,7 +257,7 @@ function pacx.ConvertPAC2Config(data, name)
 						local part2 = pac.CreatePart("bone")
 							part2:SetName("model bone " .. part:GetName() .. " " .. key)
 							part2:SetParent(part)
-							part2:SetBone(part:GetEntity():GetBoneName(key))
+							part2:SetBone(part:GetOwner():GetBoneName(key))
 
 							part2:SetScale(bone.scale*1)
 							part2:SetAngles(bone.angles*1)
