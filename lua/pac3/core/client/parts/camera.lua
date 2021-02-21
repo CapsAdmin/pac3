@@ -27,9 +27,6 @@ function PART:Initialize()
 		owner.pac_cameras[self] = self
 	end
 
-	self.AllowSetupPositionFrameSkip = false
-end
-
 function PART:CalcView(_, _, eyeang, fov, nearz, farz)
 	local pos, ang = self:GetDrawPosition(nil, true)
 

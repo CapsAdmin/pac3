@@ -27,8 +27,6 @@ BUILDER
 			:GetSetPart("Parent")
 	:EndStorableVars()
 
-PART.AllowSetupPositionFrameSkip = true
-
 do -- bones
 	function PART:SetBone(val)
 		self.Bone = val

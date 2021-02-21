@@ -56,8 +56,6 @@ function PART:Initialize()
 	self.ang = Angle()
 	self.angvel = Angle()
 
-	self.AllowSetupPositionFrameSkip = false
-
 	self.first_time_reset = true
 end
 

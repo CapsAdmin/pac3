@@ -31,8 +31,6 @@ BUILDER
 			}})
 	:EndStorableVars()
 
-PART.AllowSetupPositionFrameSkip = true
-
 do
 	local blend_modes = {
 		zero = 0,
