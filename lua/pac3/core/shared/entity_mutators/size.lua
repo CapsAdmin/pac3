@@ -10,6 +10,8 @@ function MUTATOR:WriteArguments(multiplier, other)
 		net.WriteDouble(other.StandingHullHeight)
 		net.WriteDouble(other.CrouchingHullHeight)
 		net.WriteDouble(other.HullWidth)
+	else
+		net.WriteBool(false)
 	end
 
 	if SERVER then
@@ -35,6 +37,7 @@ function MUTATOR:ReadArguments()
 		other.StandingHullHeight = net.ReadDouble()
 		other.CrouchingHullHeight = net.ReadDouble()
 		other.HullWidth = net.ReadDouble()
+		PrintTable(other)
 	end
 
 	if net.ReadBool() then
