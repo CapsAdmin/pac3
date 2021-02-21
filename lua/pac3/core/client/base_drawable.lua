@@ -7,8 +7,10 @@ local Angle = Angle
 local Color = Color
 local NULL = NULL
 local SysTime = SysTime
-
+local TEXFILTER_POINT = TEXFILTER.POINT
 local LocalToWorld = LocalToWorld
+local cam_IgnoreZ = cam.IgnoreZ
+local render_OverrideBlendFunc = render.OverrideBlendFunc
 
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
@@ -73,7 +75,7 @@ do
 
 	function PART:StartBlend()
 		if self.blend_override then
-			render.OverrideBlendFunc(true,
+			render_OverrideBlendFunc(true,
 				self.blend_override[1],
 				self.blend_override[2],
 				self.blend_override[3],
@@ -160,7 +162,7 @@ function PART:IsDrawHidden()
 	return self.draw_hidden
 end
 
-function PART:Draw(pos, ang, draw_type)
+function PART:Draw(draw_type)
 	if not self.OnDraw then return end
 	if not self.Enabled then return end
 	if self:IsHiddenCached() then return end
@@ -173,13 +175,13 @@ function PART:Draw(pos, ang, draw_type)
 	then
 		if not self.HandleModifiersManually then self:ModifiersPreEvent('OnDraw', draw_type) end
 
-		if self.IgnoreZ then cam.IgnoreZ(true) end
+		if self.IgnoreZ then cam_IgnoreZ(true) end
 
 		self:StartBlend()
 
 		if self.NoTextureFiltering then
-			render.PushFilterMin(TEXFILTER.POINT)
-			render.PushFilterMag(TEXFILTER.POINT)
+			render.PushFilterMin(TEXFILTER_POINT)
+			render.PushFilterMag(TEXFILTER_POINT)
 		end
 
 		self:OnDraw(self:GetOwner(), self:GetDrawPosition())

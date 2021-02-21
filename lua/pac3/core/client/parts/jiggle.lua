@@ -42,10 +42,10 @@ local math_AngleDifference = math.AngleDifference
 function PART:Reset()
 	local pos, ang = self:HasParent() and self.Parent.GetDrawPosition and self.Parent:GetDrawPosition() or self:GetBonePosition()
 
-	self.pos = pos
+	self.pos = pos or Vector()
 	self.vel = Vector()
 
-	self.ang = ang
+	self.ang = ang or Angle()
 	self.angvel = Angle()
 end
 

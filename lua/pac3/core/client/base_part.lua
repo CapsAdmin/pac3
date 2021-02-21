@@ -2,13 +2,11 @@ local pac = pac
 local pairs = pairs
 local ipairs = ipairs
 local table = table
-local Vector = Vector
-local Angle = Angle
 local Color = Color
 local NULL = NULL
-local SysTime = SysTime
-
-local LocalToWorld = LocalToWorld
+local IsValid = IsValid
+local util_CRC = util.CRC
+local ErrorNoHalt = ErrorNoHalt
 
 local BUILDER, PART = pac.PartTemplate()
 
@@ -80,11 +78,11 @@ function PART:GetName()
 	if self.Name == "" then
 
 		-- recursive call guard
-		if self.last_nice_name_frame and self.last_nice_name_frame == FrameNumber() then
+		if self.last_nice_name_frame and self.last_nice_name_frame == pac.FrameNumber then
 			return self.last_nice_name
 		end
 
-		self.last_nice_name_frame = FrameNumber()
+		self.last_nice_name_frame = pac.FrameNumber
 
 		local nice = self:GetNiceName()
 		local num
@@ -219,7 +217,7 @@ do -- owner
 	-- always return the root owner
 	function PART:GetPlayerOwner()
 		return self:GetRootPart().PlayerOwner
-		end
+	end
 
 	function PART:GetOutfitOwner()
 		return self:GetRootPart().Owner
@@ -227,13 +225,13 @@ do -- owner
 
 	function PART:GetEntity()
 		return self:GetOutfitOwner()
-		end
+	end
 
 	function PART:GetOwner()
 		local parent = self:GetParent()
 		if parent:IsValid() then
 			return parent:GetEntity()
-			end
+		end
 
 		return self:GetEntity()
 	end
@@ -301,7 +299,7 @@ do -- scene graph
 					return a[2] < b[2]
 				end)
 
-				for i, data in ipairs(tableToSort) do
+				for _, data in ipairs(tableToSort) do
 					child[#child + 1] = data[1]
 				end
 			end
@@ -527,7 +525,7 @@ do -- scene graph
 
 		self:InvalidateChildrenList()
 
-		for i, part in ipairs(self:GetChildren()) do
+		for _, part in ipairs(self:GetChildren()) do
 			local owner_id = part:GetPlayerOwnerId()
 
 			if owner_id then
@@ -694,13 +692,17 @@ do -- serializing
 		return tbl
 	end
 
+	local function on_error(msg)
+		ErrorNoHalt(debug.traceback(msg))
+	end
+
 	do
 		local function SetTable(self, tbl)
-			self:SetUniqueID(tbl.self.UniqueID or util.CRC(tostring(tbl.self)))
+			self:SetUniqueID(tbl.self.UniqueID or util_CRC(tostring(tbl.self)))
 			self.delayed_variables = self.delayed_variables or {}
 
 			for key, value in pairs(tbl.self) do
-				if key == "UniqueID" then continue end
+				if key == "UniqueID" then goto CONTINUE end
 
 				if self["Set" .. key] then
 					if key == "Material" then
@@ -710,6 +712,8 @@ do -- serializing
 				elseif key ~= "ClassName" then
 					pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
 				end
+
+		        ::CONTINUE::
 			end
 
 			for _, value in pairs(tbl.children) do
@@ -738,7 +742,7 @@ do -- serializing
 				tbl = make_copy(table.Copy(tbl), copy_id)
 			end
 
-			local ok, err = xpcall(SetTable, ErrorNoHalt, self, tbl)
+			local ok, err = xpcall(SetTable, on_error, self, tbl)
 			if not ok then
 				pac.Message(Color(255, 50, 50), "SetTable failed: ", err)
 			end
@@ -814,7 +818,7 @@ do -- serializing
 				self.delayed_variables = self.delayed_variables or {}
 
 				for key, value in pairs(tbl.self) do
-					if key == "UniqueID" then continue end
+					if key == "UniqueID" then goto CONTINUE end
 
 					if self["Set" .. key] then
 						if key == "Material" then
@@ -824,6 +828,8 @@ do -- serializing
 					elseif key ~= "ClassName" then
 						pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
 					end
+
+          			::CONTINUE::
 				end
 
 				for _, value in pairs(tbl.children) do
@@ -834,7 +840,7 @@ do -- serializing
 			end
 
 			function PART:SetUndoTable(tbl)
-				local ok, err = xpcall(SetTable, ErrorNoHalt, self, tbl)
+				local ok, err = xpcall(SetTable, on_error, self, tbl)
 				if not ok then
 					pac.Message(Color(255, 50, 50), "SetUndoTable failed: ", err)
 				end
@@ -849,10 +855,11 @@ do -- serializing
 			for _, key in pairs(self:GetStorableVars()) do
 				if key == "Name" and self.Name == "" then
 					-- TODO: seperate debug name and name !!!
-					continue
+					goto CONTINUE
 				end
 
 				tbl.self[key] = pac.CopyValue(self["Get" .. key](self))
+        		::CONTINUE::
 			end
 
 			for _, part in ipairs(self:GetChildren()) do

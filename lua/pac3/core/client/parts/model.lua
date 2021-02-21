@@ -8,11 +8,14 @@ local MATERIAL_CULLMODE_CCW = MATERIAL_CULLMODE_CCW
 local render_SetMaterial = render.SetMaterial
 local render_ModelMaterialOverride = render.MaterialOverride
 local render_MaterialOverride = render.ModelMaterialOverride
-
+local cam_PushModelMatrix = cam.PushModelMatrix
+local cam_PopModelMatrix = cam.PopModelMatrix
 local Vector = Vector
 local EF_BONEMERGE = EF_BONEMERGE
 local NULL = NULL
 local Color = Color
+local Matrix = Matrix
+local WorldToLocal = WorldToLocal
 
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
@@ -333,7 +336,7 @@ function PART:OnDraw(owner, pos, ang)
 	end
 
 	if self.loading then
-		self:DrawLoadingText(ent, pos, ang)
+		self:DrawLoadingText(ent, pos)
 		return
 	end
 
@@ -345,25 +348,26 @@ function PART:OnDraw(owner, pos, ang)
 	pac.ResetBones(ent)
 end
 
+
+local matrix = Matrix()
+
 local function ent_draw_model(self, ent, pos, ang)
 	if self.obj_mesh then
 		ent:SetModelScale(0,0)
 		ent:DrawModel()
 
-		local matrix = Matrix()
-
 		matrix:SetAngles(ang)
 		matrix:SetTranslation(pos)
 
 		if ent.pac_model_scale then
-			matrix:Scale(ent.pac_model_scale)
+			matrix:SetScale(ent.pac_model_scale)
 		else
-			matrix:Scale(self.Scale * self.Size)
+			matrix:SetScale(self.Scale * self.Size)
 		end
 
-		cam.PushModelMatrix(matrix)
+		cam_PushModelMatrix(matrix)
 			self.obj_mesh:Draw()
-		cam.PopModelMatrix()
+		cam_PopModelMatrix()
 	else
 		ent:DrawModel()
 	end
@@ -388,7 +392,7 @@ end
 
 function PART:DrawModel(ent, pos, ang)
 	if self.loading then
-		self:DrawLoadingText(ent, pos, ang)
+		self:DrawLoadingText(ent, pos)
 	end
 
 	if self.Alpha == 0 or self.Size == 0 then return end
@@ -430,7 +434,7 @@ function PART:DrawModel(ent, pos, ang)
 	end
 end
 
-function PART:DrawLoadingText(ent, pos, ang)
+function PART:DrawLoadingText(ent, pos)
 	cam.Start2D()
 	cam.IgnoreZ(true)
 		local pos2d = pos:ToScreen()
@@ -887,7 +891,7 @@ do
 						return
 					end
 
-					self:Draw(ent:GetPos(), ent:GetAngles(), self.Translucent and "translucent" or "opaque")
+					self:Draw(self.Translucent and "translucent" or "opaque")
 				else
 					ent.RenderOverride = nil
 				end
@@ -1060,7 +1064,7 @@ do
 	PART.AlwaysThink = true
 
 	function PART:OnThink()
-		local ent = self:GetOwner(true)
+		local ent = self:GetOutfitOwner()
 		if ent:IsValid() and ent.GetActiveWeapon then
 			local wep = ent:GetActiveWeapon()
 			if wep:IsValid() then
@@ -1091,13 +1095,13 @@ do
 	end
 
 	function PART:OnHide()
-		local ent = self:GetOwner(true)
+		local ent = self:GetOutfitOwner()
 
 		if ent:IsValid() and ent.GetActiveWeapon then
-			for k,v in pairs(ent:GetWeapons()) do
-				if v.pac_weapon_part == self then
-					v.RenderOverride = nil
-					v:SetParent(ent)
+			for _, wep in pairs(ent:GetWeapons()) do
+				if wep.pac_weapon_part == self then
+					wep.RenderOverride = nil
+					wep:SetParent(ent)
 				end
 			end
 			self.Entity = NULL

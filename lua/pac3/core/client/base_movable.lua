@@ -1,12 +1,7 @@
 local pac = pac
-local pairs = pairs
-local ipairs = ipairs
-local table = table
 local Vector = Vector
 local Angle = Angle
-local Color = Color
 local NULL = NULL
-local SysTime = SysTime
 local Matrix = Matrix
 
 local BUILDER, PART = pac.PartTemplate("base")

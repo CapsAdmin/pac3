@@ -104,7 +104,7 @@ do
 							part.OwnerName == "hands" and type == "hands" or
 							part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands"
 						then
-							part:CallRecursive("Draw", nil, nil, type)
+							part:CallRecursive("Draw", type)
 						end
 					end
 				else
