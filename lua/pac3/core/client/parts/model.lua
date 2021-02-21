@@ -30,6 +30,7 @@ pac.StartStorableVars()
 
 	pac.SetPropertyGroup(PART, "generic")
 		pac.GetSet(PART, "Model", "", {editor_panel = "model"})
+		pac.GetSet(PART, "SetModelToPlayer", false)
 
 	pac.SetPropertyGroup(PART, "orientation")
 		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
@@ -352,6 +353,16 @@ end
 
 function PART:DrawModel(ent, pos, ang)
 	if self.Alpha == 0 or self.Size == 0 then return end
+
+	if self.SetModelToPlayer then
+		pacx.SetModel(ent, LocalPlayer():GetModel(), LocalPlayer())
+
+		for i=0, 100, 1 do
+			ent:SetBodygroup(i, LocalPlayer():GetBodygroup(i))
+
+		end
+
+	end
 
 	if self.NoCulling or self.Invert then
 		render_CullMode(MATERIAL_CULLMODE_CW)
