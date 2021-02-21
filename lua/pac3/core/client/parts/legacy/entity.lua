@@ -280,88 +280,88 @@ end
 
 function PART:OnShow()
 	local ent = self:GetOwner()
+	if not ent:IsValid() then return end
 
-	if ent:IsValid() then
+	self:SetModel(self:GetModel())
 
-		if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
-			ent = ent:GetActiveWeapon()
-		end
-
-		for _, field in pairs(ent_fields) do
-			self["Set" .. field](self, self[field])
-		end
-
-		self:SetColor(self:GetColor())
-		ent:SetColor(self.Colorc)
-		self:UpdateWeaponDraw(self:GetOwner())
-
-		function ent.RenderOverride()
-			if self:IsValid() then
-				if not self.HideEntity then
-					if self.SuppressFrames then
-						if not self.should_suppress then
-							self.should_suppress = setup_suppress()
-						end
-
-						if self.should_suppress() then
-							return
-						end
-					end
-
-					self:ModifiersPostEvent("PreDraw")
-					self:PreEntityDraw(ent)
-
-					local modpos = not self.Position:IsZero() or not self.Angles:IsZero()
-					local pos
-
-					self.BoneOverride = nil
-
-					if modpos then
-						pos = ent:GetPos()
-
-						self.BoneOverride = "none"
-
-						local pos, ang = self:GetDrawPosition()
-						ent:SetPos(pos)
-						ent:SetRenderAngles(ang)
-						ent:SetupBones()
-					end
-
-					ent:SetSkin(self.Skin)
-
-					if ent.pac_bodygroups_torender then
-						for bgID, bgVal in pairs(ent.pac_bodygroups_torender) do
-							ent:SetBodygroup(bgID, bgVal)
-						end
-					end
-
-					ent.pac_bodygroups_torender = nil
-
-					if self.EyeTarget.GetWorldPosition then
-						ent:SetEyeTarget(self.EyeTarget:GetWorldPosition())
-					end
-
-					ent:DrawModel()
-
-					if modpos then
-						ent:SetPos(pos)
-						ent:SetRenderAngles(angle_origin)
-					end
-
-					self:PostEntityDraw(ent)
-					self:ModifiersPostEvent("OnDraw")
-				end
-			else
-				ent.RenderOverride = nil
-			end
-		end
-
-		self.current_ro = ent.RenderOverride
-
-		self:UpdateScale()
-
-		if self.LodOverride ~= -1 then self:SetLodOverride(self.LodOverride) end
+	if self.Weapon and ent.GetActiveWeapon and ent:GetActiveWeapon():IsValid() then
+		ent = ent:GetActiveWeapon()
 	end
+
+	for _, field in pairs(ent_fields) do
+		self["Set" .. field](self, self[field])
+	end
+
+	self:SetColor(self:GetColor())
+	ent:SetColor(self.Colorc)
+	self:UpdateWeaponDraw(self:GetOwner())
+
+	function ent.RenderOverride()
+		if self:IsValid() then
+			if not self.HideEntity then
+				if self.SuppressFrames then
+					if not self.should_suppress then
+						self.should_suppress = setup_suppress()
+					end
+
+					if self.should_suppress() then
+						return
+					end
+				end
+
+				self:ModifiersPostEvent("PreDraw")
+				self:PreEntityDraw(ent)
+
+				local modpos = not self.Position:IsZero() or not self.Angles:IsZero()
+				local pos
+
+				self.BoneOverride = nil
+
+				if modpos then
+					pos = ent:GetPos()
+
+					self.BoneOverride = "none"
+
+					local pos, ang = self:GetDrawPosition()
+					ent:SetPos(pos)
+					ent:SetRenderAngles(ang)
+					ent:SetupBones()
+				end
+
+				ent:SetSkin(self.Skin)
+
+				if ent.pac_bodygroups_torender then
+					for bgID, bgVal in pairs(ent.pac_bodygroups_torender) do
+						ent:SetBodygroup(bgID, bgVal)
+					end
+				end
+
+				ent.pac_bodygroups_torender = nil
+
+				if self.EyeTarget.GetWorldPosition then
+					ent:SetEyeTarget(self.EyeTarget:GetWorldPosition())
+				end
+
+				ent:DrawModel()
+
+				if modpos then
+					ent:SetPos(pos)
+					ent:SetRenderAngles(angle_origin)
+				end
+
+				self:PostEntityDraw(ent)
+				self:ModifiersPostEvent("OnDraw")
+			end
+		else
+			ent.RenderOverride = nil
+		end
+	end
+
+	self.current_ro = ent.RenderOverride
+
+	self:UpdateScale()
+
+	if self.LodOverride ~= -1 then self:SetLodOverride(self.LodOverride) end
 end
 
 local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs')
@@ -370,35 +370,40 @@ local ALLOW_TO_USE_MDL = CreateConVar('pac_allow_mdl_entity', '1', CLIENT and {F
 function PART:SetModel(path)
 	self.Model = path
 
+	local ent = self:GetOwner()
+
+	if not ent:IsValid() then return end
+
+	pac.ResetBoneCache(ent)
+
 	if path:find("^http") then
 		local status, reason = hook.Run('PAC3AllowMDLDownload', self:GetPlayerOwner(), self, path)
 		local status2, reason2 = hook.Run('PAC3AllowEntityMDLDownload', self:GetPlayerOwner(), self, path)
 
 		if ALLOW_TO_USE_MDL:GetBool() and ALLOW_TO_MDL:GetBool() and status ~= false and status2 ~= false then
-			local ent = self:GetOwner()
-
 			if ent == pac.LocalPlayer then
 				pac.Message("downloading ", path, " to use as player model")
 			end
 
 			pac.DownloadMDL(path, function(real_path)
-				if ent:IsValid() then
+				if not ent:IsValid() then return end
 
-					if self:GetPlayerOwner() == pac.LocalPlayer then
-						pac.Message("finished downloading ", path)
-						pac.emut.MutateEntity(self:GetPlayerOwner(), "model", ent, self.Model)
-					end
-
-					ent:SetModel(real_path)
-
-					ent:SetSubMaterial()
-
-					for i = 0, #ent:GetBodyGroups() - 1 do
-						ent:SetBodygroup(i, 0)
-					end
-
-					self:CallRecursiveExcludeSelf('OnShow')
+				if self:GetPlayerOwner() == pac.LocalPlayer then
+					pac.Message("finished downloading ", path)
+					pac.emut.MutateEntity(self:GetPlayerOwner(), "model", ent, self.Model)
 				end
+
+				ent:SetModel(real_path)
+
+				ent:SetSubMaterial()
+
+				for i = 0, #ent:GetBodyGroups() - 1 do
+					ent:SetBodygroup(i, 0)
+				end
+
+				pac.ResetBoneCache(ent)
+
+				self:CallRecursiveExcludeSelf('OnShow', true)
 			end, function(err)
 				pac.Message(err)
 			end, self:GetPlayerOwner())
@@ -409,26 +414,25 @@ function PART:SetModel(path)
 			pac.Message(self:GetPlayerOwner(), ' - mdl files are not allowed')
 		end
 	elseif self.Model ~= "" then
-		local ent = self:GetOwner()
 
-		if ent:IsValid() then
-			if self:GetPlayerOwner() == pac.LocalPlayer then
-				pac.emut.MutateEntity(self:GetPlayerOwner(), "model", ent, self.Model)
+		if self:GetPlayerOwner() == pac.LocalPlayer then
+			pac.emut.MutateEntity(self:GetPlayerOwner(), "model", ent, self.Model)
+		end
+
+		ent:SetModel(self.Model)
+
+
+		pac.RunNextFrame('entity updatemat ' .. tostring(ent), function()
+			if not ent:IsValid() or not self:IsValid() then return end
+			pac.ResetBoneCache(ent)
+			ent:SetSubMaterial()
+
+			for i = 0, #ent:GetBodyGroups() - 1 do
+				ent:SetBodygroup(i, 0)
 			end
 
-			ent:SetModel(self.Model)
-
-			pac.RunNextFrame('entity updatemat ' .. tostring(ent), function()
-				if not ent:IsValid() or not self:IsValid() then return end
-				ent:SetSubMaterial()
-
-				for i = 0, 127 do
-					ent:SetBodygroup(i, 0)
-				end
-
-				self:CallRecursiveExcludeSelf('OnShow')
-			end)
-		end
+			self:CallRecursiveExcludeSelf('OnShow', true)
+		end)
 
 		self.mdl_zip = false
 	end
@@ -458,7 +462,7 @@ function PART:OnThink()
 			self:UpdateScale(ent)
 		end
 
-		if self.HideEntity or self.Weapon and self.current_ro ~= ent.RenderOverride then
+		if (self.HideEntity or self.Weapon) and self.current_ro ~= ent.RenderOverride then
 			self:OnShow()
 		end
 
