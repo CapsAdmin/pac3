@@ -1,4 +1,5 @@
 local function equal(a,b, msg, level)
+	level = level or 0
 	if a ~= b then
 		error(tostring(a) .. " != " .. tostring(b) .. ": " .. msg, 2 + level)
 	end
