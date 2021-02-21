@@ -40,7 +40,10 @@ BUILDER:EndStorableVars()
 local math_AngleDifference = math.AngleDifference
 
 function PART:Reset()
-	local pos, ang = self:HasParent() and self.Parent.GetDrawPosition and self.Parent:GetDrawPosition() or self:GetBonePosition()
+	local parent = self:GetParent()
+	if not parent:IsValid() then return end
+
+	local pos, ang = parent.GetDrawPosition and parent:GetDrawPosition()
 
 	self.pos = pos or Vector()
 	self.vel = Vector()
@@ -50,8 +53,15 @@ function PART:Reset()
 end
 
 function PART:Initialize()
-	self:Reset()
+	self.pos = Vector()
+	self.vel = Vector()
+
+	self.ang = Angle()
+	self.angvel = Angle()
+
 	self.AllowSetupPositionFrameSkip = false
+
+	self.first_time_reset = true
 end
 
 function PART:OnShow()
@@ -60,7 +70,22 @@ function PART:OnShow()
 	end
 end
 
+local inf, ninf = math.huge, -math.huge
+
+local function check_num(num)
+	if num ~= inf and num ~= ninf and (num >= 0 or num <= 0) then
+		return num
+	end
+
+	return 0
+end
+
 function PART:OnDraw(owner, pos, ang)
+	if self.first_time_reset then
+		self:Reset()
+		self.first_time_reset = false
+	end
+
 	local delta = FrameTime()
 	local speed = self.Speed * delta
 
@@ -69,7 +94,8 @@ function PART:OnDraw(owner, pos, ang)
 
 	if self.StopRadius ~= 0 and self.pos and self.pos:Distance(pos) < self.StopRadius then
 		self.vel = Vector()
-	return end
+		return
+	end
 
 	if self.JigglePosition then
 		if not self.ConstrainX then
@@ -154,6 +180,14 @@ function PART:OnDraw(owner, pos, ang)
 	else
 		self.ang = ang
 	end
+
+	self.pos.x = check_num(self.pos.x)
+	self.pos.y = check_num(self.pos.y)
+	self.pos.z = check_num(self.pos.z)
+
+	self.ang.p = check_num(self.ang.p)
+	self.ang.y = check_num(self.ang.y)
+	self.ang.r = check_num(self.ang.r)
 end
 
 BUILDER:Register()
