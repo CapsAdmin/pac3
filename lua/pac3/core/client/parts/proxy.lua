@@ -163,10 +163,13 @@ local function try_viewmodel(ent)
 	return ent == pac.LocalPlayer:GetViewModel() and pac.LocalPlayer or ent
 end
 
+local function get_owner(self)
+	return try_viewmodel(self:GetOwner(self.RootOwner))
+end
+
 PART.Inputs = {
-	owner_position = function(s, p)
-		local owner = s:GetOwner(s.RootOwner)
-		owner = try_viewmodel(owner)
+	owner_position = function(self, parent)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			local pos = owner:GetPos()
@@ -177,10 +180,8 @@ PART.Inputs = {
 		return 0,0,0
 	end,
 
-	owner_fov = function(s, p)
-		local owner = s:GetOwner(s.RootOwner)
-
-		owner = try_viewmodel(owner)
+	owner_fov = function(self, parent)
+		local owner = get_owner(self)
 
 		if owner:IsValid() and owner.GetFOV then
 			return owner:GetFOV()
@@ -244,9 +245,7 @@ PART.Inputs = {
 	end,
 
 	aim_length = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			local res = util.QuickTrace(owner:EyePos(), self:CalcEyeAngles(owner):Forward() * 16000, {owner, owner:GetParent()})
@@ -257,9 +256,7 @@ PART.Inputs = {
 		return 0
 	end,
 	aim_length_fraction = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			local res = util.QuickTrace(owner:EyePos(), self:CalcEyeAngles(owner):Forward() * 16000, {owner, owner:GetParent()})
@@ -271,9 +268,7 @@ PART.Inputs = {
 	end,
 
 	owner_eye_angle_pitch = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			local n = self:CalcEyeAngles(owner).p
@@ -283,9 +278,7 @@ PART.Inputs = {
 		return 0
 	end,
 	owner_eye_angle_yaw = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			local n = self:CalcEyeAngles(owner).y
@@ -295,9 +288,7 @@ PART.Inputs = {
 		return 0
 	end,
 	owner_eye_angle_roll = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			local n = self:CalcEyeAngles(owner).r
@@ -308,9 +299,7 @@ PART.Inputs = {
 	end,
 
 	owner_scale_x = function(self)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			return owner.pac_model_scale and owner.pac_model_scale.x or (owner.GetModelScale and owner:GetModelScale()) or 1
@@ -319,9 +308,7 @@ PART.Inputs = {
 		return 1
 	end,
 	owner_scale_y = function(self)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			return owner.pac_model_scale and owner.pac_model_scale.y or (owner.GetModelScale and owner:GetModelScale()) or 1
@@ -330,9 +317,7 @@ PART.Inputs = {
 		return 1
 	end,
 	owner_scale_z = function(self)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			return owner.pac_model_scale and owner.pac_model_scale.z or (owner.GetModelScale and owner:GetModelScale()) or 1
@@ -343,9 +328,7 @@ PART.Inputs = {
 
 	-- outfit owner
 	owner_velocity_length = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			return self:GetVelocity(owner):Length()
@@ -354,9 +337,7 @@ PART.Inputs = {
 		return 0
 	end,
 	owner_velocity_forward = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			return self:CalcEyeAngles(owner):Forward():Dot(self:GetVelocity(owner))
@@ -365,9 +346,7 @@ PART.Inputs = {
 		return 0
 	end,
 	owner_velocity_right = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			return self:CalcEyeAngles(owner):Right():Dot(self:GetVelocity(owner))
@@ -376,9 +355,7 @@ PART.Inputs = {
 		return 0
 	end,
 	owner_velocity_up = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			return self:CalcEyeAngles(owner):Up():Dot(self:GetVelocity(owner))
@@ -387,9 +364,7 @@ PART.Inputs = {
 		return 0
 	end,
 	owner_velocity_world_forward = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			return self:GetVelocity(owner)[1]
@@ -398,9 +373,7 @@ PART.Inputs = {
 		return 0
 	end,
 	owner_velocity_world_right = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			return self:GetVelocity(owner)[2]
@@ -409,9 +382,7 @@ PART.Inputs = {
 		return 0
 	end,
 	owner_velocity_world_up = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			return self:GetVelocity(owner)[3]
@@ -422,9 +393,7 @@ PART.Inputs = {
 
 	-- outfit owner vel increase
 	owner_velocity_length_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			local vel = self:GetVelocity(owner):Length()
@@ -436,9 +405,7 @@ PART.Inputs = {
 		return 0
 	end,
 	owner_velocity_forward_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			local vel = self:CalcEyeAngles(owner):Forward():Dot(self:GetVelocity(owner))
@@ -449,9 +416,7 @@ PART.Inputs = {
 		return 0
 	end,
 	owner_velocity_right_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			local vel = self:CalcEyeAngles(owner):Right():Dot(self:GetVelocity(owner))
@@ -462,9 +427,7 @@ PART.Inputs = {
 		return 0
 	end,
 	owner_velocity_up_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			local vel = self:CalcEyeAngles(owner):Up():Dot(self:GetVelocity(owner))
@@ -475,9 +438,7 @@ PART.Inputs = {
 		return 0
 	end,
 	owner_velocity_world_forward_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			local vel = self:GetVelocity(owner)[1]
@@ -488,9 +449,7 @@ PART.Inputs = {
 		return 0
 	end,
 	owner_velocity_world_right_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			local vel = self:GetVelocity(owner)[2]
@@ -501,9 +460,7 @@ PART.Inputs = {
 		return 0
 	end,
 	owner_velocity_world_up_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
+		local owner = get_owner(self)
 
 		if owner:IsValid() then
 			local vel = self:GetVelocity(owner)[3]
@@ -562,9 +519,7 @@ PART.Inputs = {
 
 	pose_parameter = function(self, parent, name)
 		if name then
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
+			local owner = get_owner(self)
 
 			if owner:IsValid() and owner.GetPoseParameter then
 				return owner:GetPoseParameter(name)
@@ -805,7 +760,7 @@ PART.Inputs = {
 	end,
 
 	weapon_primary_ammo = function(self)
-		local owner = self:GetOwner(true)
+		local owner = self:GetOutfitOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()
@@ -820,7 +775,7 @@ PART.Inputs = {
 		return 0
 	end,
 	weapon_primary_total_ammo = function(self)
-		local owner = self:GetOwner(true)
+		local owner = self:GetOutfitOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()
@@ -835,7 +790,7 @@ PART.Inputs = {
 		return 0
 	end,
 	weapon_primary_clipsize = function(self)
-		local owner = self:GetOwner(true)
+		local owner = self:GetOutfitOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()
@@ -850,7 +805,7 @@ PART.Inputs = {
 		return 0
 	end,
 	weapon_secondary_ammo = function(self)
-		local owner = self:GetOwner(true)
+		local owner = self:GetOutfitOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()
@@ -865,7 +820,7 @@ PART.Inputs = {
 		return 0
 	end,
 	weapon_secondary_total_ammo = function(self)
-		local owner = self:GetOwner(true)
+		local owner = self:GetOutfitOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()
@@ -880,7 +835,7 @@ PART.Inputs = {
 		return 0
 	end,
 	weapon_secondary_clipsize = function(self)
-		local owner = self:GetOwner(true)
+		local owner = self:GetOutfitOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()

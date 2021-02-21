@@ -165,7 +165,7 @@ PART.OldEvents = {
 		callback = function(self, ent, fov)
 			ent = try_viewmodel(ent)
 
-			if ent:IsValid() and ent.GetFOV then
+			if ent.GetFOV then
 				return self:NumberOperator(ent:GetFOV(), fov)
 			end
 
@@ -178,7 +178,7 @@ PART.OldEvents = {
 
 			ent = try_viewmodel(ent)
 
-			if ent:IsValid() and ent.Health then
+			if ent.Health then
 
 				local dmg = self.pac_lastdamage or 0
 
@@ -251,7 +251,7 @@ PART.OldEvents = {
 		callback = function(self, ent, find)
 			if ent.GetEyeTrace then
 				ent = ent:GetEyeTrace().Entity
-				if ent:IsValid() and self:StringOperator(ent:GetClass(), find) then
+				if self:StringOperator(ent:GetClass(), find) then
 					return true
 				end
 			end
@@ -262,7 +262,7 @@ PART.OldEvents = {
 		arguments = {{health = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
-			if ent:IsValid() and ent.Health then
+			if ent.Health then
 				return self:NumberOperator(ent:Health(), num)
 			end
 
@@ -273,7 +273,7 @@ PART.OldEvents = {
 		arguments = {{health = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
-			if ent:IsValid() and ent.GetMaxHealth then
+			if ent.GetMaxHealth then
 				return self:NumberOperator(ent:GetMaxHealth(), num)
 			end
 
@@ -283,7 +283,7 @@ PART.OldEvents = {
 	owner_alive = {
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
-			if ent:IsValid() and ent.Alive then
+			if ent.Alive then
 				return ent:Alive()
 			end
 			return 0
@@ -293,7 +293,7 @@ PART.OldEvents = {
 		arguments = {{armor = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
-			if ent:IsValid() and ent.Armor then
+			if ent.Armor then
 				return self:NumberOperator(ent:Armor(), num)
 			end
 
@@ -306,11 +306,7 @@ PART.OldEvents = {
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
 
-			if ent:IsValid() then
 				return self:NumberOperator(ent.pac_model_scale and ent.pac_model_scale.x or (ent.GetModelScale and ent:GetModelScale()) or 1, num)
-			end
-
-			return 1
 		end,
 	},
 	owner_scale_y = {
@@ -318,11 +314,7 @@ PART.OldEvents = {
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
 
-			if ent:IsValid() then
 				return self:NumberOperator(ent.pac_model_scale and ent.pac_model_scale.y or (ent.GetModelScale and ent:GetModelScale()) or 1, num)
-			end
-
-			return 1
 		end,
 	},
 	owner_scale_z = {
@@ -330,11 +322,7 @@ PART.OldEvents = {
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
 
-			if ent:IsValid() then
 				return self:NumberOperator(ent.pac_model_scale and ent.pac_model_scale.z or (ent.GetModelScale and ent:GetModelScale()) or 1, num)
-			end
-
-			return 1
 		end,
 	},
 
@@ -536,11 +524,8 @@ PART.OldEvents = {
 	total_ammo = {
 		arguments = {{ammo_id = "string"}, {amount = "number"}},
 		callback = function(self, ent, ammo_id, amount)
-			ent = try_viewmodel(ent)
-
-			ammo_id = tonumber(ammo_id) or ammo_id:lower()
-
-			if ent:IsValid() and ent.GetAmmoCount then
+			if ent.GetAmmoCount then
+				ammo_id = tonumber(ammo_id) or ammo_id:lower()
 				if ammo_id == "primary" then
 					local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 					return self:NumberOperator(wep:IsValid() and ent:GetAmmoCount(wep:GetPrimaryAmmoType()) or 0, amount)
@@ -778,7 +763,7 @@ PART.OldEvents = {
 					end
 				end
 			else
-				local owner = self:GetOwner(true)
+				local owner = self:GetOutfitOwner()
 				if owner:IsValid() then
 					local data = owner.pac_say_event
 
@@ -794,12 +779,10 @@ PART.OldEvents = {
 	owner_velocity_length = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
 			local parent = self:GetParentEx()
-
 			owner = try_viewmodel(owner)
 
-			if parent:IsValid() and owner:IsValid() then
+			if parent:IsValid() and ent:IsValid() then
 				return self:NumberOperator(parent:GetOwner(self.RootOwner):GetVelocity():Length(), speed)
 			end
 
@@ -809,9 +792,7 @@ PART.OldEvents = {
 	owner_velocity_forward = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
+			ent = try_viewmodel(ent)
 
 			if owner:IsValid() then
 				return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Forward():Dot(owner:GetVelocity()), speed)
@@ -823,9 +804,7 @@ PART.OldEvents = {
 	owner_velocity_right = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
+			ent = try_viewmodel(ent)
 
 			if owner:IsValid() then
 				return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Right():Dot(owner:GetVelocity()), speed)
@@ -837,9 +816,7 @@ PART.OldEvents = {
 	owner_velocity_up = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
+			ent = try_viewmodel(ent)
 
 			if owner:IsValid() then
 				return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Up():Dot(owner:GetVelocity()), speed)
@@ -851,9 +828,7 @@ PART.OldEvents = {
 	owner_velocity_world_forward = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
+			ent = try_viewmodel(ent)
 
 			if owner:IsValid() then
 				return self:NumberOperator(owner:GetVelocity()[1], speed)
@@ -865,9 +840,7 @@ PART.OldEvents = {
 	owner_velocity_world_right = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
+			ent = try_viewmodel(ent)
 
 			if owner:IsValid() then
 				return self:NumberOperator(owner:GetVelocity()[2], speed)
@@ -879,9 +852,7 @@ PART.OldEvents = {
 	owner_velocity_world_up = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
+			ent = try_viewmodel(ent)
 
 			if owner:IsValid() then
 				return self:NumberOperator(owner:GetVelocity()[3], speed)
@@ -1035,7 +1006,7 @@ PART.OldEvents = {
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
 
-			local owner = self:GetOwner(true)
+			local owner = self:GetOutfitOwner()
 
 			if owner:IsValid() then
 				local ang = owner:EyeAngles()
@@ -1051,7 +1022,7 @@ PART.OldEvents = {
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
 
-			local owner = self:GetOwner(true)
+			local owner = self:GetOutfitOwner()
 
 			if owner:IsValid() then
 				local ang = owner:EyeAngles()

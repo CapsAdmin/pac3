@@ -67,16 +67,6 @@ function PART:GetNiceName()
 	return pac.PrettifyName(str)
 end
 
-function PART:GetOwner()
-	local parent = self:GetParent()
-
-	if parent:IsValid() and parent.is_model_part and parent.Entity:IsValid() then
-		return parent.Entity
-	end
-
-	return BaseClass_GetOwner(self)
-end
-
 function PART:GetSequenceList()
 	local ent = self:GetOwner()
 

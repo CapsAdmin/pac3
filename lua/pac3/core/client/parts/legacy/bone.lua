@@ -63,16 +63,6 @@ function PART:OnShow()
 end
 PART.OnParent = PART.OnShow
 
-function PART:GetOwner(root)
-	local parent = self:GetParent()
-
-	if parent:IsValid() and parent.is_model_part then
-		return parent.Entity
-	end
-
-	return BaseClass_GetOwner(self, root)
-end
-
 function PART:OnThink()
 	-- this is to setup the cached values
 	if not self.first_getbpos and self:GetOwner():IsValid() then

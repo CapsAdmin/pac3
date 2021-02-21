@@ -235,7 +235,7 @@ function PART:Shoot(pos, ang)
 					return
 				end
 
-				if not self:GetOwner(true):IsValid() then
+				if not self:GetOutfitOwner():IsValid() then
 					timer.Simple(0, function() SafeRemoveEntity(ent) end)
 				end
 

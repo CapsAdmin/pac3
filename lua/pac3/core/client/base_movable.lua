@@ -158,7 +158,7 @@ function PART:CalcAngles(ang, wpos)
 	wpos = wpos or self.WorldMatrix and self.WorldMatrix:GetTranslation()
 	if not wpos then return ang end
 
-	local owner = self:GetOwner(true)
+	local owner = self:GetOutfitOwner()
 
 	if pac.StringFind(self.AimPartName, "LOCALEYES_YAW", true, true) then
 		ang = (pac.EyePos - wpos):Angle()

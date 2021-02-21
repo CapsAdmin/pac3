@@ -57,16 +57,6 @@ function PART:Initialize()
 	end
 end
 
-function PART:GetOwner()
-	local parent = self:GetParent()
-
-	if parent:IsValid() and parent.is_model_part and parent.Entity:IsValid() then
-		return parent.Entity
-	end
-
-	return BaseClass_GetOwner(self)
-end
-
 PART.last_spew = 0
 
 if not pac_loaded_particle_effects then

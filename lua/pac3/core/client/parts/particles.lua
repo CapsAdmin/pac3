@@ -269,7 +269,7 @@ function PART:EmitParticles(pos, ang, real_ang)
 				end
 
 				if self.OwnerVelocityMultiplier ~= 0 then
-					local owner = self:GetOwner(true)
+					local owner = self:GetOutfitOwner()
 					if owner:IsValid() then
 						vec = vec + (owner:GetVelocity() * self.OwnerVelocityMultiplier)
 					end

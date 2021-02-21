@@ -218,37 +218,24 @@ do -- owner
 
 	-- always return the root owner
 	function PART:GetPlayerOwner()
-		if not self.PlayerOwner then
-			return self:GetOwner(true) or NULL
+		return self:GetRootPart().PlayerOwner
 		end
 
-		return self.PlayerOwner
+	function PART:GetOutfitOwner()
+		return self:GetRootPart().Owner
 	end
 
-	function PART:GetOwner(root)
-		if self.owner_override then
-			return self.owner_override
+	function PART:GetEntity()
+		return self:GetOutfitOwner()
 		end
 
-		if root then
-			return self:GetRootPart():GetOwner()
-		end
-
+	function PART:GetOwner()
 		local parent = self:GetParent()
-
 		if parent:IsValid() then
-			if
-				self.ClassName ~= "event" and
-				parent.is_model_part and
-				parent.Entity:IsValid()
-			then
-				return parent.Entity
+			return parent:GetEntity()
 			end
 
-			return parent:GetOwner()
-		end
-
-		return self.Owner or NULL
+		return self:GetEntity()
 	end
 end
 

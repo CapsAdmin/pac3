@@ -16,7 +16,7 @@ local function ADD(PART, name, default, ...)
 	PART["Set" .. name] = function(self, val)
 		self[name] = val
 
-		local ply = self:GetOwner(true)
+		local ply = self:GetOutfitOwner()
 
 		if ply == pac.LocalPlayer then
 			local num = GetConVarNumber("pac_free_movement")
@@ -74,7 +74,7 @@ BUILDER:StartStorableVars()
 BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
-	local ent = self:GetOwner(true)
+	local ent = self:GetOutfitOwner()
 	local str = self.ClassName
 
 	if ent:IsValid() then
@@ -89,7 +89,7 @@ function PART:GetNiceName()
 end
 
 function PART:OnShow()
-	local ent = self:GetOwner(true)
+	local ent = self:GetOutfitOwner()
 
 	if ent:IsValid() then
 		for i,v in ipairs(update_these) do
@@ -99,7 +99,7 @@ function PART:OnShow()
 end
 
 function PART:OnHide()
-	local ent = self:GetOwner(true)
+	local ent = self:GetOutfitOwner()
 
 	if ent == pac.LocalPlayer then
 		net.Start("pac_modify_movement")

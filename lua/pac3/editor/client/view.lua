@@ -157,7 +157,7 @@ local function CalcDrag()
 	local part = pace.current_part or NULL
 
 	if IsValid(part) then
-		local owner = part:GetOwner(true)
+		local owner = part:GetOutfitOwner()
 		if owner:IsValid() then
 			origin = owner:GetPos()
 			if owner == pac.WorldEntity then
@@ -384,7 +384,7 @@ function pace.GetTPose()
 end
 
 function pace.SetViewPart(part, reset_campos)
-	pace.SetViewEntity(part:GetOwner(true))
+	pace.SetViewEntity(part:GetOutfitOwner())
 
 	if reset_campos then
 		pace.ResetView()

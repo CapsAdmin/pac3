@@ -249,7 +249,7 @@ end)
 
 pace.AddTool(L"show only with active weapon", function(part, suboption)
 	local event = part:CreatePart("event")
-	local owner = part:GetOwner(true)
+	local owner = part:GetOutfitOwner()
 	if not owner.GetActiveWeapon or not owner:GetActiveWeapon():IsValid() then
 		owner = pac.LocalPlayer
 	end

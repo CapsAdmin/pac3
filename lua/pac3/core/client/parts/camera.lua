@@ -20,7 +20,7 @@ for i, ply in ipairs(player.GetAll()) do
 end
 
 function PART:Initialize()
-	local owner = self:GetOwner(true)
+	local owner = self:GetOutfitOwner()
 
 	if owner ~= NULL then
 		owner.pac_cameras = owner.pac_cameras or {}
