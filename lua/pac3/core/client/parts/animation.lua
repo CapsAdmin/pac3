@@ -222,6 +222,15 @@ end
 
 function PART:OnThink()
 	local ent = self:GetOwner()
+	if not ent:IsPlayer() then
+		self:OnThink()
+	end
+end
+
+function PART:OnUpdateAnimation()
+	local ent = self:GetOwner()
+
+	if self:IsHiddenCached() then return end
 
 	if ent:IsValid() then
 		if not self.random_seqname then return end

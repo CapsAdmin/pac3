@@ -660,14 +660,6 @@ do -- drawing
 	pac.RealTime = 0
 	pac.FrameNumber = 0
 
-	do
-		local draw_dist = 0
-		local sv_draw_dist = 0
-		local radius = 0
-		local dst = 0
-		local dummyv = Vector(0.577350,0.577350,0.577350)
-		local fovoverride
-
 		local skip_frames = CreateConVar('pac_suppress_frames', '1', {FCVA_ARCHIVE}, 'Skip frames (reflections)')
 
 		local function setup_suppress()
@@ -698,30 +690,13 @@ do -- drawing
 			end
 		end
 
-		local should_suppress = setup_suppress()
-
-		pac.AddHook("PostDrawOpaqueRenderables", "draw_opaque", function(bDrawingDepth, bDrawingSkybox)
-			if should_suppress() then return end
-
-			for ent in next, pac.drawn_entities do
-				if ent.pac_draw_cond and ent_parts[ent] then
-					pac.RenderOverride(ent, "opaque")
-				end
-			end
-		end)
-
-		local should_suppress = setup_suppress()
-
-		pac.AddHook("PostDrawTranslucentRenderables", "draw_translucent", function(bDrawingDepth, bDrawingSkybox)
-			if should_suppress() then return end
-
-			for ent in next, pac.drawn_entities do
-				if ent.pac_draw_cond and ent_parts[ent] then -- accessing table of NULL doesn't do anything
-					pac.RenderOverride(ent, "translucent")
-				end
-			end
-		end)
-
+	do
+		local draw_dist = 0
+		local sv_draw_dist = 0
+		local radius = 0
+		local dst = 0
+		local dummyv = Vector(0.577350,0.577350,0.577350)
+		local fovoverride
 		local pac_sv_draw_distance
 
 		pac.AddHook("Think", "update_parts", function()
@@ -827,6 +802,41 @@ do -- drawing
 		end)
 	end
 
+	do
+		local should_suppress = setup_suppress()
+
+		pac.AddHook("PostDrawOpaqueRenderables", "draw_opaque", function(bDrawingDepth, bDrawingSkybox)
+			if should_suppress() then return end
+
+			for ent in next, pac.drawn_entities do
+				if ent.pac_draw_cond and ent_parts[ent] then
+					pac.RenderOverride(ent, "opaque")
+				end
+			end
+		end)
+	end
+
+	do
+		local should_suppress = setup_suppress()
+
+		pac.AddHook("PostDrawTranslucentRenderables", "draw_translucent", function(bDrawingDepth, bDrawingSkybox)
+			if should_suppress() then return end
+
+			for ent in next, pac.drawn_entities do
+				if ent.pac_draw_cond and ent_parts[ent] then -- accessing table of NULL doesn't do anything
+					pac.RenderOverride(ent, "translucent")
+				end
+			end
+		end)
+	end
+
+	pac.AddHook("UpdateAnimation", "update_animation_parts", function(ply)
+		if ply.pac_draw_cond and ent_parts[ply] then -- accessing table of NULL doesn't do anything
+			pac.CallRecursiveOnAllParts("OnUpdateAnimation")
+		end
+	end)
+
+	do
 	local alreadyDrawing = 0
 
 	pac.AddHook("PostDrawViewModel", "draw_firstperson", function(viewmodelIn, playerIn, weaponIn)
@@ -846,7 +856,9 @@ do -- drawing
 
 		alreadyDrawing = 0
 	end)
+	end
 
+	do
 	local alreadyDrawing = 0
 	local redrawCount = 0
 
@@ -875,4 +887,5 @@ do -- drawing
 		alreadyDrawing = 0
 		redrawCount = 0
 	end)
+end
 end
