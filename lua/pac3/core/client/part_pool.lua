@@ -448,24 +448,6 @@ pac.AddHook("OnEntityCreated", "change_owner", function(ent)
 	end
 end)
 
-local function pac_gc()
-	for ent, parts in pairs(ent_parts) do
-		if not ent:IsValid() then
-			ent_parts[ent] = nil
-		end
-	end
-
-	for key, part in pairs(all_parts) do
-		if not part:GetPlayerOwner():IsValid() then
-			part:Remove()
-		end
-	end
-end
-
-timer.Create("pac_gc", 2, 0, function()
-	ProtectedCall(pac_gc)
-end)
-
 function pac.RemovePartsFromUniqueID(uid)
 	for _, part in pairs(parts_from_uid(uid)) do
 		if not part:HasParent() then
