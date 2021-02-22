@@ -1691,6 +1691,7 @@ end
 function PART:OnHide()
 	if self.timerx_reset then
 		self.time = nil
+		self.number = 0
 	end
 
 	if self.Event == "weapon_class" then
@@ -1712,6 +1713,7 @@ function PART:OnShow()
 
 	if self.timerx_reset then
 		self.time = nil
+		self.number = 0
 	end
 end
 
