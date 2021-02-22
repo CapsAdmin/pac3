@@ -1664,10 +1664,6 @@ function PART:OnHide()
 end
 
 function PART:OnShow()
-	self:OnThink() -- Update hide status for chilren!
-	-- This fixes the very rare issue where stuff getting un-hidden in complex event tree for 1 game frame
-	-- before getting hidden again by events inside tree
-
 	if self.timerx_reset then
 		self.time = nil
 	end
