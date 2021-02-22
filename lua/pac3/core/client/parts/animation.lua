@@ -221,7 +221,7 @@ end
 function PART:OnThink()
 	local ent = self:GetOwner()
 	if not ent:IsPlayer() then
-		self:OnThink()
+		self:OnUpdateAnimation()
 	end
 end
 
