@@ -199,33 +199,6 @@ function pac.EnableDrawnEntities(bool)
 	end
 end
 
--- Prevent radius AND pixvis based flickering at the cost of rendering a bit longer than necessary
-local viscache=setmetatable({},{__mode='k'})
-local function nodrawdelay(draw,ent)
-	if draw and viscache[ent]~=false then
-		viscache[ent] = false
-		if pac.debug then print("PAC dodraw catch",ent) end
-	elseif not draw then
-		local c = viscache[ent]
-		local fn = pac.FrameNumber
-		if c~=nil then
-			if c==false then
-				viscache[ent] = fn
-				if pac.debug then print("PAC dodraw override START",ent) end
-				return true
-			elseif c then
-				if fn-c<3 then
-					if pac.debug then print("PAC dodraw override",ent) end
-					return true
-				else
-					viscache[ent] = nil
-				end
-			end
-		end
-	end
-	return draw
-end
-
 function pac.HookEntityRender(ent, part)
 	local parts = ent_parts[ent]
 	if not parts then
