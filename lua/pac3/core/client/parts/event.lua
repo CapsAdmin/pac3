@@ -136,7 +136,7 @@ PART.OldEvents = {
 			self.time = self.time or time
 			self.timerx_reset = reset_on_hide
 
-			if self.AffectChildrenOnly and self:IsHidden(self) then
+			if self.AffectChildrenOnly and self:IsHiddenBySomethingElse() then
 				return false
 			end
 			self.number = time - self.time
@@ -154,7 +154,7 @@ PART.OldEvents = {
 			self.time = self.time or time
 			self.timerx_reset = reset_on_hide
 
-			if self.AffectChildrenOnly and self:IsHidden(self) then
+			if self.AffectChildrenOnly and self:IsHiddenBySomethingElse() then
 				return false
 			end
 			return self:NumberOperator(time - self.time, seconds)
@@ -1419,6 +1419,30 @@ function PART:GetNiceName()
 	return PART.Events[event_name]:GetNiceName(self, get_owner(self))
 end
 
+local function is_hidden_by_something_else(part, ignored_part)
+	if part.active_events_ref_count > 0 and not part.active_events[ignored_part] then
+		return true
+	end
+
+	return part.Hide
+end
+
+function PART:IsHiddenBySomethingElse(only_self)
+	if is_hidden_by_something_else(self, self) then
+		return true
+	end
+
+	if only_self then return false end
+
+	for _, parent in ipairs(self:GetParentList()) do
+		if is_hidden_by_something_else(parent, self) then
+			return true
+		end
+	end
+
+	return false
+end
+
 local function should_trigger(self, ent, eventObject)
 	if not eventObject:IsAvaliable(self) then
 		return true
@@ -1435,7 +1459,7 @@ local function should_trigger(self, ent, eventObject)
 		b = not b
 	end
 
-	if self:IsHidden(self, true) then
+	if is_hidden_by_something_else(self, self) then
 		b = self.Invert
 	end
 

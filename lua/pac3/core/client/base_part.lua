@@ -507,25 +507,21 @@ do -- hidden / events
 		self:CallRecursive("OnHide", true)
 	end
 
-	local function is_hidden(part, ignored_event_part)
+	local function is_hidden(part)
 		if part.active_events_ref_count > 0 then
-			if not ignored_event_part or not part.active_events[ignored_event_part] then
-				return true
-			end
+			return true
 		end
 
 		return part.Hide
 	end
 
-	function PART:IsHidden(ignored_event_part, only_self)
-		if is_hidden(self, ignored_event_part) then
+	function PART:IsHidden()
+		if is_hidden(self) then
 			return true
 		end
 
-		if only_self then return false end
-
 		for _, parent in ipairs(self:GetParentList()) do
-			if is_hidden(parent, ignored_event_part) then
+			if is_hidden(parent) then
 				return true
 			end
 		end
