@@ -175,7 +175,9 @@ function PART:OnDraw(owner, pos, ang)
 	else
 		self.ang = ang
 	end
+end
 
+function PART:OnThink()
 	self.pos.x = check_num(self.pos.x)
 	self.pos.y = check_num(self.pos.y)
 	self.pos.z = check_num(self.pos.z)
