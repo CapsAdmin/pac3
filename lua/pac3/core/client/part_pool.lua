@@ -137,7 +137,7 @@ do
 	end
 
 	local function on_error(msg)
-		ErrorNoHalt(msg)
+		ErrorNoHalt(debug.traceback(msg))
 	end
 
 	function pac.RenderOverride(ent, type)
