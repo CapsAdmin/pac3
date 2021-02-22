@@ -208,28 +208,20 @@ do -- scene graph
 			return self.Children
 		end
 
-		local function add_children_to_list(parent, list, drawOrder)
-			for _, child in ipairs(parent:GetChildren()) do
-				table.insert(list, {child, child.DrawOrder + drawOrder})
-				add_children_to_list(child, list, drawOrder + child.DrawOrder)
+		local function add_recursive(part, tbl)
+			for _, child in ipairs(part.Children) do
+				table.insert(tbl, child)
+				add_recursive(child, tbl)
 			end
 		end
 
 		function PART:GetChildrenList()
 			if not self.children_list then
-				local child = {}
-				self.children_list = child
+				local tbl = {}
 
-				local tableToSort = {}
-				add_children_to_list(self, tableToSort, self.DrawOrder)
+				add_recursive(self, tbl)
 
-				table.sort(tableToSort, function(a, b)
-					return a[2] < b[2]
-				end)
-
-				for _, data in ipairs(tableToSort) do
-					child[#child + 1] = data[1]
-				end
+				self.children_list = tbl
 			end
 
 			return self.children_list
@@ -254,29 +246,23 @@ do -- scene graph
 			end
 		end
 
-		do
-			function PART:GetParentList()
-				if not self.parent_list then
-					self.parent_list = {}
+		function PART:GetParentList()
+			if not self.parent_list then
+				local tbl = {}
 
-					local temp = self:GetParent()
+				local part = self.Parent
+				local i = 1
 
-					if temp:IsValid() then
-						table.insert(self.parent_list, temp)
-
-						for _ = 1, 100 do
-							local parent = temp:GetParent()
-							if not parent:IsValid() then break end
-
-							table.insert(self.parent_list, parent)
-
-							temp = parent
-						end
-					end
+				while part:IsValid() do
+					tbl[i] = part
+					part = part.Parent
+					i = i + 1
 				end
 
-				return self.parent_list
+				self.parent_list = tbl
 			end
+
+			return self.parent_list
 		end
 
 		function PART:InvalidateParentList()
@@ -376,22 +362,26 @@ do -- scene graph
 			self[func](self, ...)
 		end
 
-		for _, child in ipairs(self:GetChildren()) do
-			child:CallRecursive(func, ...)
+		for _, child in ipairs(self:GetChildrenList()) do
+			if child[func] then
+				child[func](child, ...)
+			end
 		end
 	end
 
 	function PART:CallRecursiveExcludeSelf(func, ...)
-		for _, child in ipairs(self:GetChildren()) do
-			child:CallRecursive(func, ...)
+		for _, child in ipairs(self:GetChildrenList()) do
+			if child[func] then
+				child[func](child, ...)
+			end
 		end
 	end
 
 	function PART:SetKeyValueRecursive(key, val)
 		self[key] = val
 
-		for _, child in ipairs(self:GetChildren()) do
-			child:SetKeyValueRecursive(key, val)
+		for _, child in ipairs(self:GetChildrenList()) do
+			child[key] = val
 		end
 	end
 
