@@ -355,7 +355,7 @@ function PART:DrawModel(ent, pos, ang)
 	if self.Alpha == 0 or self.Size == 0 then return end
 
 	if self.SetModelToPlayer then
-		pacx.SetModel(ent, LocalPlayer():GetModel(), LocalPlayer())
+		pacx.SetModel(ent, self:GetPlayerOwner():GetModel(), self:GetPlayerOwner())
 
 		for i=0, 100, 1 do
 			ent:SetBodygroup(i, LocalPlayer():GetBodygroup(i))
