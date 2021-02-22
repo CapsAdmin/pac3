@@ -19,8 +19,6 @@ function PANEL:Init()
 end
 
 do
-	local pnl = NULL
-
 	local function get_added_nodes(self)
 		local added_nodes = {}
 		for i,v in ipairs(self.added_nodes) do
@@ -49,11 +47,9 @@ do
 	end
 
 	function PANEL:Think(...)
-		pnl = vgui.GetHoveredPanel() or NULL
+		if not pace.current_part:IsValid() then return end
 
 		if
-			not gui.IsGameUIVisible()  and
-			pace.current_part:IsValid() and
 			pace.current_part.pace_tree_node and
 			pace.current_part.pace_tree_node:IsValid() and not
 			(
@@ -113,45 +109,45 @@ do
 			end
 		end
 
-		for key, part in pairs(pac.GetLocalParts()) do
-
+		for _, part in pairs(pac.GetLocalParts()) do
 			local node = part.pace_tree_node
+			if not node or not node:IsValid() then continue end
 
-			if node and node:IsValid() then
-				if node.add_button then
-					node.add_button:SetVisible(false)
-				end
+			if node.add_button then
+				node.add_button:SetVisible(false)
+			end
 
-				if part.ClassName == "event" then
-					if part.is_active then
-						node.Icon:SetImage("icon16/clock_red.png")
-					else
-						node.Icon:SetImage(part.Icon)
-					end
-				end
-
-				if part:IsHidden() then
-					if not node.Icon.event_icon then
-						local pnl = vgui.Create("DImage", node.Icon)
-						pnl:SetImage("icon16/clock_red.png")
-						pnl:SetSize(8, 8)
-						pnl:SetPos(8, 8)
-						pnl:SetVisible(false)
-						node.Icon.event_icon = pnl
-					end
-
-					node.Icon.event_icon:SetVisible(true)
+			if part.ClassName == "event" then
+				if part.is_active then
+					node.Icon:SetImage("icon16/clock_red.png")
 				else
-					if node.Icon.event_icon then
-						node.Icon.event_icon:SetVisible(false)
-					end
+					node.Icon:SetImage(part.Icon)
+				end
+			end
+
+			if (part.ClassName == "proxy" or part.ClassName == "event") and part.Name == "" then
+				node:SetText(part:GetName())
+			end
+
+			if part:IsHiddenCached() then
+				if not node.Icon.event_icon then
+					local pnl = vgui.Create("DImage", node.Icon)
+					pnl:SetImage("icon16/clock_red.png")
+					pnl:SetSize(8, 8)
+					pnl:SetPos(8, 8)
+					pnl:SetVisible(false)
+					node.Icon.event_icon = pnl
 				end
 
-				if (part.ClassName == "proxy" or part.ClassName == "event") and part.Name == "" then
-					node:SetText(part:GetName())
+				node.Icon.event_icon:SetVisible(true)
+			else
+				if node.Icon.event_icon then
+					node.Icon.event_icon:SetVisible(false)
 				end
 			end
 		end
+
+		local pnl = vgui.GetHoveredPanel() or NULL
 
 		if pnl:IsValid() then
 			local pnl = pnl:GetParent()
@@ -162,10 +158,6 @@ do
 					pnl.add_button:SetVisible(true)
 				end
 			end
-		end
-
-		if pace.pac_dtree.Think then
-			return pace.pac_dtree.Think(self, ...)
 		end
 	end
 end

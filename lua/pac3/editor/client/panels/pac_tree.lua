@@ -456,10 +456,6 @@ function PANEL:SetSelected(b)
 	end
 end
 
-function PANEL:Think()
-
-end
-
 function PANEL:DragHoverClick(HoverTime)
 	if not self.m_bExpanded then
 		self:SetExpanded(true)
