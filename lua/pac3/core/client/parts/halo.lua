@@ -40,21 +40,25 @@ function PART:SetPasses(n)
 end
 
 function PART:OnThink()
-	local parent = self:GetParent()
 
-	if parent.is_model_part and parent.Entity:IsValid() then
-		local tbl = {parent.Entity}
+	local tbl = {}
 
-		if self.AffectChildren then
-			for _, part in ipairs(parent:GetChildren()) do
-				if part.is_model_part and part.Entity:IsValid() and not part:IsHidden() then
-					table.insert(tbl, part.Entity)
-				end
+	if self.AffectChildren then
+		for _, part in ipairs(self:GetChildrenList()) do
+			local ent = part:GetOwner()
+			if ent:IsValid() and not part:IsHiddenCached() then
+				table.insert(tbl, ent)
 			end
 		end
-
-		pac.haloex.Add(tbl, Color(self.Color.r, self.Color.g, self.Color.b), self.BlurX, self.BlurY, self.Passes, self.Additive, self.IgnoreZ, self.Amount, self.SphericalSize, self.Shape)
+	else
+		local parent = self:GetParent()
+		local ent = self:GetOwner()
+		if ent:IsValid() then
+			tbl[1] = ent
+		end
 	end
+
+	pac.haloex.Add(tbl, Color(self.Color.r, self.Color.g, self.Color.b), self.BlurX, self.BlurY, self.Passes, self.Additive, self.IgnoreZ, self.Amount, self.SphericalSize, self.Shape)
 end
 
 BUILDER:Register()
