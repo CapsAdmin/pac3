@@ -66,9 +66,6 @@ function pac.CreatePart(name, owner, tbl, make_copy)
 
 	if tbl then
 		part:SetTable(tbl, make_copy)
-
-		-- if already hidden, this prevents OnHide or OnShow from being called by CalcShowHide
-		part.last_hidden = part:IsHidden()
 	end
 
 	if not META.GloballyEnabled then

@@ -661,6 +661,8 @@ do -- serializing
 			if not ok then
 				pac.Message(Color(255, 50, 50), "SetTable failed: ", err)
 			end
+
+			self:CallRecursive("CalcShowHide")
 		end
 	end
 
