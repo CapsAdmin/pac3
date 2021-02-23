@@ -557,13 +557,11 @@ function PART:SetModel(path)
 				end
 			)
 		else
-			print("DOWNLOADING MDL ZIP FOR SOME REASON", path, self.ForceObjUrl)
-
 			local status, reason = hook.Run('PAC3AllowMDLDownload', self:GetPlayerOwner(), self, path)
 
 			if ALLOW_TO_MDL:GetBool() and status ~= false then
 				self.loading = "downloading mdl zip"
-				print(path, "?!!?!?")
+
 				pac.DownloadMDL(path, function(mdl_path)
 					self.loading = nil
 					self.errored = nil
