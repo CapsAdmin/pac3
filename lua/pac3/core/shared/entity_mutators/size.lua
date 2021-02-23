@@ -37,7 +37,6 @@ function MUTATOR:ReadArguments()
 		other.StandingHullHeight = net.ReadDouble()
 		other.CrouchingHullHeight = net.ReadDouble()
 		other.HullWidth = net.ReadDouble()
-		PrintTable(other)
 	end
 
 	if net.ReadBool() then
