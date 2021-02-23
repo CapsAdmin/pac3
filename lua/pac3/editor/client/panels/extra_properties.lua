@@ -25,9 +25,9 @@ do -- bone
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:MoreOptionsLeftClick()
-		if not pace.current_part:IsValid() or not pace.current_part:GetOwner():IsValid() then return end
+		if not pace.current_part:IsValid() or not pace.current_part:GetParentOwner():IsValid() then return end
 
-		pace.SelectBone(pace.current_part:GetOwner(), function(data)
+		pace.SelectBone(pace.current_part:GetParentOwner(), function(data)
 			if not self:IsValid() then return end
 			self:SetValue(L(data.friendly))
 			self.OnValueChanged(data.friendly)
@@ -35,7 +35,7 @@ do -- bone
 	end
 
 	function PANEL:MoreOptionsRightClick()
-		local bones = pac.GetModelBones(pace.current_part:GetOwner())
+		local bones = pac.GetModelBones(pace.current_part:GetParentOwner())
 
 		local menu = DermaMenu()
 
