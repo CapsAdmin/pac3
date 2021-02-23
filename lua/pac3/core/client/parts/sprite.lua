@@ -109,11 +109,23 @@ function PART:OnDraw(owner, pos, ang)
 			cam_IgnoreZ(true)
 		end
 
+		local old_alpha
+		if pac.drawing_motionblur_alpha then
+			if not self.ColorC then self:SetColor(self:GetColor()) end
+			old_alpha = self.ColorC.a
+			self.ColorC.a = pac.drawing_motionblur_alpha*255
+			--print(self.ColorC, pac.drawing_motionblur_alpha*255)
+		end
+
 		render_SetMaterial(mat)
 		render_DrawSprite(pos, self.SizeX * self.Size, self.SizeY * self.Size, self.ColorC)
 
 		if self.IgnoreZ then
 			cam_IgnoreZ(false)
+		end
+
+		if pac.drawing_motionblur_alpha then
+			self.ColorC.a = old_alpha
 		end
 	end
 end

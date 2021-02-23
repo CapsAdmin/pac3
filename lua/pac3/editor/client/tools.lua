@@ -36,7 +36,6 @@ end
 
 
 pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
-
 	local class_translate = {
 		model = "model2",
 		material = "material_3d",
@@ -52,30 +51,20 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 		Color = function(tbl, val) tbl.Color = Vector(val.r/255, val.g/255, val.b/255) end,
 		DoubleFace = function(tbl, val) tbl.NoCulling = val end,
 		Fullbright = function(tbl, val) tbl.NoLighting = val end,
-		Brightness = function(tbl, val)
-			if tbl.Color then
-				tbl.Color = tbl.Color * val
-			else
-				tbl.Color = Vector(val, val, val)
-			end
-		end,
+
 		TextureFilter = function(tbl, val) tbl.NoTextureFiltering = not val end,
 		LodOverride = function(tbl, val) tbl.LevelOfDetail = val end,
-		Model = function(tbl, val)
-			if val:find("://", nil, true) then
-				tbl.Model = "obj" .. val
-			else
-				tbl.Model = val
-			end
-		end,
+
 	}
 
+	local registered_parts = pac.GetRegisteredParts()
+
 	local material_translate = {}
-	for old_key in pairs(pac.registered_parts.material.ShaderParams) do
+	for old_key in pairs(registered_parts.material.ShaderParams) do
 
 		local new_key = old_key:lower()
-		local new_val = pac.registered_parts.material_3d[new_key]
-		local old_val = pac.registered_parts.material[old_key]
+		local new_val = registered_parts.material_3d[new_key]
+		local old_val = registered_parts.material[old_key]
 
 		if new_val ~= nil and type(new_val) == type(old_val) then
 			material_translate[old_key] = function(tbl, val)
@@ -103,20 +92,51 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 
 	local done = {}
 
-	local function walk(tbl)
+	local function walk(tbl, parent)
 		local new_classname = class_translate[tbl.self.ClassName]
+
 		if new_classname then
 			local old_classname = tbl.self.ClassName
 			tbl.self.ClassName = new_classname
 
-			for key in pairs(pac.registered_parts[old_classname].StorableVars) do
-				local value = tbl.self[key] or pac.registered_parts[old_classname][key]
+			if old_classname == "model" then
+				if tbl.self.BlurLength and tbl.self.BlurLength > 0 then
+					table.insert(tbl.children, {
+						self = {
+							ClassName = "motion_blur",
+							UniqueID = util.CRC(tostring({})),
+							BlurLength = tbl.self.BlurLength,
+							BlurSpacing = tbl.self.BlurSpacing,
+						},
+						children = {},
+					})
+				end
+			end
+
+			if old_classname == "entity" then
+				if tbl.self.Weapon == true and tbl.self.HideEntity then
+					table.insert(parent.children, {
+						self = {
+							ClassName = "weapon",
+							UniqueID = util.CRC(tostring({})),
+							NoDraw = true
+						},
+						children = {},
+					})
+				end
+			end
+
+			for key in pairs(registered_parts[old_classname].StorableVars) do
+				local value = tbl.self[key]
+				if value == nil then
+					value = registered_parts[old_classname][key]
+				end
 
 				if prop_translate[old_classname] and prop_translate[old_classname][key] then
-					pac.Message("translating property: ", key, " = ", value)
 					tbl.self[key] = nil
 					prop_translate[old_classname][key](tbl.self, value)
-				elseif not pac.registered_parts[new_classname].StorableVars[key] then
+					pac.Message("translated property: ", key, " = ", value, " to ", tbl.self[key])
+				elseif not registered_parts[new_classname].StorableVars[key] then
 					local msg = tbl.self.ClassName .. "." .. key
 					if not done[msg] then
 						pac.Message(Color(255,100,100), "cannot translate property ", msg)
@@ -127,9 +147,26 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 
 		end
 
+		if tbl.self.ClassName == "proxy" and tbl.self.VariableName == "Color" then
+			if tbl.self.Expression ~= "" then
+				local r,g,b = unpack(tbl.self.Expression:Split(","))
+				r = tonumber(r)
+				g = tonumber(g)
+				b = tonumber(b)
+
+				if r and g and b then
+					tbl.self.Expression = (r/255)..","..(g/255)..","..(b/255)
+				end
+			end
+		end
+
+		if tbl.self.Model and tbl.self.Model:find("://", nil, true) then
+			tbl.self.ForceObjUrl = true
+		end
+
 		if tbl.children then
-			for _, tbl in ipairs(tbl.children) do
-				walk(tbl)
+			for _, child in ipairs(tbl.children) do
+				walk(child, tbl)
 			end
 		end
 	end
@@ -139,7 +176,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 	end
 
 	for _, tbl in ipairs(saved) do
-		pac.CreatePart(tbl.self.ClassName, pac.LocalPlayer, tbl)
+		local part = pac.CreatePart(tbl.self.ClassName, pac.LocalPlayer, tbl)
 	end
 end)
 

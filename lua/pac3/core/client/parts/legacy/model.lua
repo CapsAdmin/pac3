@@ -498,6 +498,7 @@ function PART:DrawLoadingText(ent, pos, ang)
 end
 
 function PART:DrawBlur(ent, pos, ang)
+	if pac.drawing_motionblur_alpha then return end
 	self.blur_history = self.blur_history or {}
 
 	local blurSpacing = self.BlurSpacing

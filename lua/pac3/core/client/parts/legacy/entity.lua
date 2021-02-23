@@ -236,6 +236,7 @@ end
 
 function PART:UpdateColor()
 	render_SetColorModulation(self.Colorf.r * self.Brightness, self.Colorf.g * self.Brightness, self.Colorf.b * self.Brightness)
+	if pac.drawing_motionblur_alpha then return end
 	render_SetBlend(self.Alpha)
 end
 
