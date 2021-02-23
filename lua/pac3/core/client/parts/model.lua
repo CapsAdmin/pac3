@@ -556,10 +556,8 @@ function PART:SetModel(path)
 					self.loading = nil
 					self.errored = nil
 
-					local ent = self:GetEntity()
-
 					if self.ClassName == "entity2" then
-						pac.emut.MutateEntity(self:GetPlayerOwner(), "model", owner, path)
+						pac.emut.MutateEntity(self:GetPlayerOwner(), "model", self:GetOwner(), path)
 					end
 
 					self:RealSetModel(mdl_path)
