@@ -148,7 +148,7 @@ function PART:OnShow(from_rendering)
 	end
 end
 
-function PART:OnDraw(owner, pos, ang) do return end
+function PART:OnDraw(owner, pos, ang)
 	local emitter = self:GetEmitter()
 
 	emitter:SetPos(pos)
