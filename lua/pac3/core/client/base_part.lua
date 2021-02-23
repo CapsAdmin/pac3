@@ -806,7 +806,10 @@ do -- serializing
 end
 
 do
-	local function think(self)
+	function PART:Think()
+		if not self.Enabled then return end
+		if self.ThinkTime ~= 0 and self.last_think and self.last_think > pac.RealTime then return end
+
 		self:CalcShowHide()
 
 		if not self.AlwaysThink and self:IsHiddenCached() then return end
@@ -821,17 +824,6 @@ do
 		end
 
 		self:OnThink()
-	end
-
-	function PART:Think()
-		if not self.Enabled then return end
-
-		if self.ThinkTime == 0 then
-			think(self)
-		elseif not self.last_think or self.last_think < pac.RealTime then
-			think(self)
-			self.last_think = pac.RealTime + (self.ThinkTime or 0.1)
-		end
 	end
 
 	function PART:OnThink() end
