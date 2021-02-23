@@ -494,13 +494,15 @@ function PART:SetModel(path)
 				function(meshes, err)
 
 					local function set_mesh(part, mesh)
+						local owner = part:GetOwner()
 						part.obj_mesh = mesh
+						pac.ResetBoneCache(owner)
 
 						if not part.Materialm then
 							part.Materialm = Material("error")
 						end
 
-						function part.Entity.pacDrawModel(ent, simple)
+						function owner.pacDrawModel(ent, simple)
 							if simple then
 								RealDrawModel(part, ent, ent:GetPos(), ent:GetAngles())
 							else
@@ -510,17 +512,15 @@ function PART:SetModel(path)
 							end
 						end
 
-						part.Entity:SetRenderBounds(Vector(1, 1, 1) * -300, Vector(1, 1, 1) * 300)
+						owner:SetRenderBounds(Vector(1, 1, 1) * -300, Vector(1, 1, 1) * 300)
 					end
 
 					if not self:IsValid() then return end
 
 					self.loading = false
 
-					self.Entity = self:GetEntity()
-
 					if not meshes and err then
-						self.Entity:SetModel("models/error.mdl")
+						owner:SetModel("models/error.mdl")
 						self.obj_mesh = nil
 						return
 					end
@@ -552,7 +552,6 @@ function PART:SetModel(path)
 
 			if ALLOW_TO_MDL:GetBool() and status ~= false then
 				self.loading = "downloading mdl zip"
-				print(path, "?!!?!?")
 				pac.DownloadMDL(path, function(mdl_path)
 					self.loading = nil
 					self.errored = nil
@@ -560,9 +559,7 @@ function PART:SetModel(path)
 					local ent = self:GetEntity()
 
 					if self.ClassName == "entity2" then
-						if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
-							pacx.SetModel(ent, path, self:GetPlayerOwner())
-						end
+						pac.emut.MutateEntity(self:GetPlayerOwner(), "model", owner, path)
 					end
 
 					self:RealSetModel(mdl_path)
