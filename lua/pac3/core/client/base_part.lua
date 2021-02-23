@@ -159,7 +159,7 @@ do -- owner
 		for _, parent in ipairs(self:GetParentList()) do
 			if parent.Owner:IsValid() then
 				return parent.Owner
-		end
+			end
 		end
 
 		return NULL
@@ -471,6 +471,11 @@ do -- hidden / events
 		end
 	end
 
+	function PART:SetHide(val)
+		self.Hide = val
+		self:CallRecursive("CalcShowHide")
+	end
+
 	function PART:IsDrawHidden()
 		return self.draw_hidden
 	end
@@ -525,13 +530,13 @@ do -- hidden / events
 			if not self.active_events[event_part] then
 				self.active_events[event_part] = event_part
 				self.active_events_ref_count = self.active_events_ref_count + 1
-				self:CalcShowHide()
+				self:CallRecursive("CalcShowHide")
 			end
 		else
 			if self.active_events[event_part] then
 				self.active_events[event_part] = nil
 				self.active_events_ref_count = self.active_events_ref_count - 1
-				self:CalcShowHide()
+				self:CallRecursive("CalcShowHide")
 			end
 		end
 	end
@@ -810,7 +815,6 @@ do
 		if not self.Enabled then return end
 		if self.ThinkTime ~= 0 and self.last_think and self.last_think > pac.RealTime then return end
 
-		self:CalcShowHide()
 
 		if not self.AlwaysThink and self:IsHiddenCached() then return end
 
