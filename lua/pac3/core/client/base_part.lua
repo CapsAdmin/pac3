@@ -473,7 +473,7 @@ do -- hidden / events
 
 	function PART:SetHide(val)
 		self.Hide = val
-		self:CallRecursive("CalcShowHide")
+		self:CallRecursive("CalcShowHide", true)
 	end
 
 	function PART:IsDrawHidden()
@@ -530,25 +530,25 @@ do -- hidden / events
 			if not self.active_events[event_part] then
 				self.active_events[event_part] = event_part
 				self.active_events_ref_count = self.active_events_ref_count + 1
-				self:CallRecursive("CalcShowHide")
+				self:CallRecursive("CalcShowHide", false)
 			end
 		else
 			if self.active_events[event_part] then
 				self.active_events[event_part] = nil
 				self.active_events_ref_count = self.active_events_ref_count - 1
-				self:CallRecursive("CalcShowHide")
+				self:CallRecursive("CalcShowHide", false)
 			end
 		end
 	end
 
-	function PART:CalcShowHide()
+	function PART:CalcShowHide(from_rendering)
 		local b = self:IsHidden()
 
 		if b ~= self.last_hidden then
 			if b then
-				self:OnHide()
+				self:OnHide(from_rendering)
 			else
-				self:OnShow()
+				self:OnShow(from_rendering)
 			end
 		end
 
@@ -663,7 +663,7 @@ do -- serializing
 			end
 
 			-- figure out if children needs to be hidden
-			self:CallRecursive("CalcShowHide")
+			self:CallRecursive("CalcShowHide", true)
 		end
 	end
 
