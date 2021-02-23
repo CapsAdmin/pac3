@@ -160,7 +160,7 @@ function PART:CalcEyeAngles(ent)
 end
 
 local function try_viewmodel(ent)
-	return ent == pac.LocalPlayer:GetViewModel() and pac.LocalPlayer or ent
+	return ent == pac.LocalViewModel and pac.LocalPlayer or ent
 end
 
 local function get_owner(self)

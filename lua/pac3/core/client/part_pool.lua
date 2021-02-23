@@ -796,6 +796,8 @@ do -- drawing
 		pac.AddHook("PostDrawViewModel", "draw_firstperson", function(viewmodelIn, playerIn, weaponIn)
 			if alreadyDrawing == FrameNumber() then return end
 
+			pac.LocalViewModel = viewmodelIn
+
 			alreadyDrawing = FrameNumber()
 
 			for ent in next, pac.drawn_entities do
