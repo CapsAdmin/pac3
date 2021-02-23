@@ -662,6 +662,7 @@ do -- serializing
 				pac.Message(Color(255, 50, 50), "SetTable failed: ", err)
 			end
 
+			-- figure out if children needs to be hidden
 			self:CallRecursive("CalcShowHide")
 		end
 	end
