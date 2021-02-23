@@ -463,7 +463,7 @@ do -- hidden / events
 
 	function PART:SetEnabled(val)
 		self.Enabled = val
-		print(self, val)
+
 		if val then
 			self:ShowFromRendering()
 		else
