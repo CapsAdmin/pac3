@@ -1,7 +1,7 @@
 local Color = Color
 local Vector = Vector
 
-local BUILDER, PART = pac.PartTemplate("base_drawable")
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "halo"
 
