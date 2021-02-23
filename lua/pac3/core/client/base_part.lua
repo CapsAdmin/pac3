@@ -811,14 +811,6 @@ do
 
 		if not self.AlwaysThink and self:IsHiddenCached() then return end
 
-		local owner = self:GetOwner()
-
-		if owner:IsValid() then
-			if owner ~= self.last_owner then
-				self.last_owner = owner
-			end
-		end
-
 		if self.delayed_variables then
 
 			for _, data in ipairs(self.delayed_variables) do
