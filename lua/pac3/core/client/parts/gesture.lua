@@ -23,12 +23,6 @@ PART.ValidGestureSlots = {
 	custom = GESTURE_SLOT_CUSTOM
 }
 
-local BaseClass_GetOwner = PART.GetOwner
-
-function PART:GetOwner()
-	return BaseClass_GetOwner(self)	-- until gesture functions for non-players
-end
-
 function PART:GetSequenceList()
 	local ent = self:GetOwner()
 
