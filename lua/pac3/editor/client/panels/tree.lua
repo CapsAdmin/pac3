@@ -58,7 +58,8 @@ do
 				pace.editing_viewmodel or
 				pace.editing_hands or
 				pace.properties.search:HasFocus()
-			)
+			) and
+			not gui.IsConsoleVisible()
 		then
 			if input.IsKeyDown(KEY_LEFT) then
 				pace.Call("VariableChanged", pace.current_part, "EditorExpand", false)
