@@ -89,6 +89,19 @@ PART.Translucent = false
 
 function PART:OnShow(from_rendering)
 	if not from_rendering then
+		-- TODO:
+		-- this makes sure all the parents of this movable have an up-to-date draw position
+		-- GetBonePosition implicitly uses ent:GetPos() as the parent origin which is really bad,
+		-- it should instead be using what pac considers to be the position
+		--self:GetRootPart():CallRecursive("Draw", "opaque")
+		local parents = self:GetParentList()
+		-- call draw from root to the current part only on direct parents to update the position hiearchy
+		for i = #parents, 1, -1 do
+			local part = parents[i]
+			if part.Draw then
+				part:Draw("opaque")
+			end
+		end
 		self:Shoot(self:GetDrawPosition())
 	end
 end
