@@ -8,6 +8,10 @@ local Color = Color
 local NULL = NULL
 local SysTime = SysTime
 local TEXFILTER_POINT = TEXFILTER.POINT
+local render_PopFilterMag = render.PopFilterMag
+local render_PopFilterMin = render.PopFilterMin
+local render_PushFilterMin = render.PushFilterMin
+local render_PushFilterMag = render.PushFilterMag
 local LocalToWorld = LocalToWorld
 local cam_IgnoreZ = cam.IgnoreZ
 local render_OverrideBlendFunc = render.OverrideBlendFunc
@@ -123,32 +127,32 @@ do -- modifiers
 	end
 
 	function PART:ModifiersPreEvent(event)
-		if #self.modifiers > 0 then
-			for _, part in ipairs(self.modifiers) do
-				if not part:IsHidden() then
+		if not self.modifiers[1] then return end
 
-					if not part.pre_draw_events then part.pre_draw_events = {} end
-					if not part.pre_draw_events[event] then part.pre_draw_events[event] = "Pre" .. event end
+		for _, part in ipairs(self.modifiers) do
+			if not part:IsHidden() then
 
-					if part[part.pre_draw_events[event]] then
-						part[part.pre_draw_events[event]](part)
-					end
+				if not part.pre_draw_events then part.pre_draw_events = {} end
+				if not part.pre_draw_events[event] then part.pre_draw_events[event] = "Pre" .. event end
+
+				if part[part.pre_draw_events[event]] then
+					part[part.pre_draw_events[event]](part)
 				end
 			end
 		end
 	end
 
 	function PART:ModifiersPostEvent(event)
-		if #self.modifiers > 0 then
-			for _, part in ipairs(self.modifiers) do
-				if not part:IsHidden() then
+		if not self.modifiers[1] then return end
 
-					if not part.post_draw_events then part.post_draw_events = {} end
-					if not part.post_draw_events[event] then part.post_draw_events[event] = "Post" .. event end
+		for _, part in ipairs(self.modifiers) do
+			if not part:IsHidden() then
 
-					if part[part.post_draw_events[event]] then
-						part[part.post_draw_events[event]](part)
-					end
+				if not part.post_draw_events then part.post_draw_events = {} end
+				if not part.post_draw_events[event] then part.post_draw_events[event] = "Post" .. event end
+
+				if part[part.post_draw_events[event]] then
+					part[part.post_draw_events[event]](part)
 				end
 			end
 		end
@@ -178,15 +182,15 @@ function PART:Draw(draw_type)
 		self:StartBlend()
 
 		if self.NoTextureFiltering then
-			render.PushFilterMin(TEXFILTER_POINT)
-			render.PushFilterMag(TEXFILTER_POINT)
+			render_PushFilterMin(TEXFILTER_POINT)
+			render_PushFilterMag(TEXFILTER_POINT)
 		end
 
 		self:OnDraw(self:GetOwner(), self:GetDrawPosition())
 
 		if self.NoTextureFiltering then
-			render.PopFilterMin()
-			render.PopFilterMag()
+			render_PopFilterMin()
+			render_PopFilterMag()
 		end
 
 		self:StopBlend()
