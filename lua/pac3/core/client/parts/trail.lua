@@ -155,7 +155,8 @@ function PART:OnHide()
 	self.points = {}
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
+	local pos, ang = self:GetDrawPosition()
 	pac.DrawTrail(
 		self,
 		math.min(self.Duration, 10),

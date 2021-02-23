@@ -53,12 +53,15 @@ function PART:SetResolution(num)
 	end
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
 	if not self.rt then create_rt(self) end
 
 	render.CopyTexture(render.GetScreenEffectTexture(), self.rt)
 
 	cam.Start2D()
+
+
+	local pos, ang = self:GetDrawPosition()
 
 	local spos = pos:ToScreen()
 	local size = self.Size

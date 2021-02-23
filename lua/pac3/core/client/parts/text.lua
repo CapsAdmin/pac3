@@ -79,7 +79,9 @@ function PART:SetFont(str)
 	self.Font = str
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
+	local pos, ang = self:GetDrawPosition()
+
 	if self.Text ~= "" then
 		cam_Start3D(EyePos(), EyeAngles())
 			cam_Start3D2D(pos, ang, self.Size)

@@ -20,10 +20,11 @@ function PART:GetNiceName()
 	return mult > 0 and "bright sunbeams" or mult < 0 and "dark sunbeams" or self.ClassName
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
 	if not DrawSunbeams then DrawSunbeams = _G.DrawSunbeams end
 
 	cam.Start2D()
+	local pos = self:GetDrawPosition()
 	local spos = pos:ToScreen()
 
 	local dist_mult = - math.Clamp(pac.EyePos:Distance(pos) / 1000, 0, 1) + 1

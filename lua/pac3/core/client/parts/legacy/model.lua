@@ -231,9 +231,9 @@ function PART:SetOwnerEntity(b)
 			function ent.RenderOverride()
 				if self:IsValid() then
 					if not self.HideEntity then
-						self:PreEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
+						self:PreEntityDraw(ent, ent:GetPos(), ent:GetAngles())
 						ent:DrawModel()
-						self:PostEntityDraw(ent, ent, ent:GetPos(), ent:GetAngles())
+						self:PostEntityDraw(ent, ent:GetPos(), ent:GetAngles())
 					end
 				else
 					ent.RenderOverride = nil
@@ -252,7 +252,7 @@ function PART:SetOwnerEntity(b)
 	self.OwnerEntity = b
 end
 
-function PART:PreEntityDraw(owner, ent, pos, ang)
+function PART:PreEntityDraw(ent, pos, ang)
 	if not ent:IsPlayer() and pos and ang then
 		if not self.skip_orient then
 			ent:SetPos(pos)
@@ -326,7 +326,7 @@ end
 local DEFAULT_COLOR = Vector(1, 1, 1)
 local WHITE = Material("models/debug/debugwhite")
 
-function PART:PostEntityDraw(owner, ent, pos, ang)
+function PART:PostEntityDraw(ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 		if not pac.DisableDoubleFace then
 			if self.DoubleFace then
@@ -369,7 +369,7 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 	end
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
 	local ent = self:GetOwner()
 
 	if not ent:IsValid() then
@@ -381,9 +381,11 @@ function PART:OnDraw(owner, pos, ang)
 		end
 	end
 
-	self:PreEntityDraw(owner, ent, pos, ang)
+	local pos, ang = self:GetDrawPosition()
+
+	self:PreEntityDraw(ent, pos, ang)
 		self:DrawModel(ent, pos, ang)
-	self:PostEntityDraw(owner, ent, pos, ang)
+	self:PostEntityDraw(ent, pos, ang)
 
 	ent:SetupBones()
 	pac.ResetBones(ent)

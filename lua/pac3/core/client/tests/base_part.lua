@@ -27,7 +27,7 @@ function test.Run(done)
 			end
 		end
 
-		function PART:OnDraw(owner, pos, ang)
+		function PART:OnDraw()
 			consume("draw")
 			self:Remove()
 		end

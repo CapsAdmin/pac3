@@ -61,7 +61,8 @@ function PART:OnShow()
 	end
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
+	local pos, ang = self:GetDrawPosition()
 	local ptex = self:GetProjectedTexture()
 	ptex:SetPos(pos)
 	ptex:SetAngles(ang)

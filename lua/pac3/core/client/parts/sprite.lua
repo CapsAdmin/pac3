@@ -102,7 +102,7 @@ function PART:SetMaterial(var)
 	self.SpritePath = var
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
 	local mat = self.MaterialOverride or self.Materialm
 	if mat then
 		if self.IgnoreZ then
@@ -116,6 +116,8 @@ function PART:OnDraw(owner, pos, ang)
 			self.ColorC.a = pac.drawing_motionblur_alpha*255
 			--print(self.ColorC, pac.drawing_motionblur_alpha*255)
 		end
+
+		local pos = self:GetDrawPosition()
 
 		render_SetMaterial(mat)
 		render_DrawSprite(pos, self.SizeX * self.Size, self.SizeY * self.Size, self.ColorC)

@@ -75,7 +75,9 @@ local function check_num(num)
 	return 0
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
+	local pos, ang = self:GetDrawPosition()
+
 	if self.first_time_reset then
 		self:Reset()
 		self.first_time_reset = false

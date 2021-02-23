@@ -81,7 +81,7 @@ function PART:UpdateFlex(flex, weight)
 	self.flex_params = ent.pac_flex_params
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
 	if not IsValid(self.flex_ent) then return end
 
 	for k, v in pairs(self.flex_params) do

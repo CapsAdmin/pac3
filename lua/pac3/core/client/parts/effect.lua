@@ -108,7 +108,7 @@ function PART:OnEffectPrecached(name)
 	end
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
 	if not self.Ready then
 		if not self.waitingForServer then
 			self:SetEffect(self.Effect)
@@ -121,6 +121,8 @@ function PART:OnDraw(owner, pos, ang)
 	if ent:IsValid() and self.Loop then
 		local time = CurTime()
 		if self.last_spew < time then
+			local pos, ang = self:GetDrawPosition()
+
 			ent:StopParticles()
 			ent:StopParticleEmission()
 			self:Emit(pos, ang)

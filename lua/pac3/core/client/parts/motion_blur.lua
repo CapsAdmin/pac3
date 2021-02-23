@@ -61,10 +61,12 @@ function PART:DrawBlur(pos, ang)
 	end
 end
 
-function PART:OnDraw(ent, pos, ang)
+function PART:OnDraw()
 	if pac.drawing_motionblur_alpha then return end
 
 	if self.BlurLength > 0 then
+		local pos, ang = self:GetDrawPosition()
+
 		self:DrawBlur(pos, ang)
 	end
 end

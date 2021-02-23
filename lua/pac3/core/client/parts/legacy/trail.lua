@@ -127,7 +127,7 @@ end
 
 local temp_color = Color(255, 255, 255)
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
 	local mat = self.MaterialOverride or self.Materialm
 
 	if mat and self.StartColorC and self.EndColorC then
@@ -135,6 +135,8 @@ function PART:OnDraw(owner, pos, ang)
 
 		local len = tonumber(self.Length)
 		local spc = tonumber(self.Spacing)
+
+		local pos, ang = self:GetDrawPosition()
 
 		if spc == 0 or self.LastAdd < pac.RealTime then
 			table_insert(self.points, pos)

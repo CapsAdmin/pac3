@@ -186,7 +186,7 @@ function PART:Draw(draw_type)
 			render_PushFilterMag(TEXFILTER_POINT)
 		end
 
-		self:OnDraw(self:GetOwner(), self:GetDrawPosition())
+		self:OnDraw()
 
 		if self.NoTextureFiltering then
 			render_PopFilterMin()

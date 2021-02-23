@@ -56,8 +56,9 @@ function PART:OnThink()
 	end
 end
 
-function PART:OnDraw(ent, pos, ang)
+function PART:OnDraw()
 	if not self.streams then return end
+	local pos, ang = self:GetDrawPosition()
 	local forward = ang:Forward()
 
 	local shouldMute = snd_mute_losefocus:GetBool()

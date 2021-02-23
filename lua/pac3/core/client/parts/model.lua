@@ -275,7 +275,7 @@ function PART:BindMaterials(ent)
 	return material_bound
 end
 
-function PART:PreEntityDraw(owner, ent, pos, ang)
+function PART:PreEntityDraw(ent, pos, ang)
 	if not ent:IsPlayer() and pos and ang then
 		if not self.skip_orient then
 			ent:SetPos(pos)
@@ -318,7 +318,7 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 	end
 end
 
-function PART:PostEntityDraw(owner, ent, pos, ang)
+function PART:PostEntityDraw(ent, pos, ang)
 	if self.Alpha ~= 0 and self.Size ~= 0 then
 		self:ModifiersPostEvent("OnDraw")
 
@@ -328,7 +328,7 @@ function PART:PostEntityDraw(owner, ent, pos, ang)
 	end
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
 	local ent = self:GetOwner()
 
 	if not ent:IsValid() then
@@ -336,14 +336,17 @@ function PART:OnDraw(owner, pos, ang)
 		ent = self:GetOwner()
 	end
 
+	local pos, ang = self:GetDrawPosition()
+
 	if self.loading then
 		self:DrawLoadingText(ent, pos)
 		return
 	end
 
-	self:PreEntityDraw(owner, ent, pos, ang)
+
+	self:PreEntityDraw(ent, pos, ang)
 		self:DrawModel(ent, pos, ang)
-	self:PostEntityDraw(owner, ent, pos, ang)
+	self:PostEntityDraw(ent, pos, ang)
 
 	ent:SetupBones()
 	pac.ResetBones(ent)
@@ -837,10 +840,12 @@ do
 		self.material_count = 0
 	end
 
-	function PART:OnDraw(ent, pos, ang)
-		self:PreEntityDraw(ent, ent, pos, ang)
+	function PART:OnDraw()
+		local ent = self:GetOwner()
+		local pos, ang = self:GetDrawPosition()
+		self:PreEntityDraw(ent, pos, ang)
 			self:DrawModel(ent, pos, ang)
-		self:PostEntityDraw(ent, ent, pos, ang)
+		self:PostEntityDraw(ent, pos, ang)
 	end
 
 	local temp_mat = Material( "models/error/new light1" )
@@ -1019,9 +1024,10 @@ do
 	function PART:Initialize()
 		self.material_count = 0
 	end
-	function PART:OnDraw(ent, pos, ang)
+	function PART:OnDraw()
 		local ent = self:GetOwner()
 		if not ent:IsValid() then return end
+		local pos, ang = self:GetDrawPosition()
 
 		local old
 		if self.OverridePosition then
@@ -1033,9 +1039,9 @@ do
 		end
 		ent.pac_render = true
 
-		self:PreEntityDraw(ent, ent, pos, ang)
+		self:PreEntityDraw(ent, pos, ang)
 			self:DrawModel(ent, pos, ang)
-		self:PostEntityDraw(ent, ent, pos, ang)
+		self:PostEntityDraw(ent, pos, ang)
 		pac.ResetBones(ent)
 
 		if self.OverridePosition then

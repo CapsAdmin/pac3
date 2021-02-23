@@ -62,7 +62,8 @@ end
 
 local DynamicLight = DynamicLight
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
+	local pos, ang = self:GetDrawPosition()
 	self:GetLight().pos = pos
 	self:GetLight().dir = ang:Forward()
 end
