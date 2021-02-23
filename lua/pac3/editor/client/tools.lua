@@ -48,18 +48,13 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 	}
 
 	local model_prop_translate = {
+		Color = function(tbl, val) tbl.Color = Vector(val.r/255, val.g/255, val.b/255) end,
 		DoubleFace = function(tbl, val) tbl.NoCulling = val end,
 		Fullbright = function(tbl, val) tbl.NoLighting = val end,
 
 		TextureFilter = function(tbl, val) tbl.NoTextureFiltering = not val end,
 		LodOverride = function(tbl, val) tbl.LevelOfDetail = val end,
-		Model = function(tbl, val)
-			if val:find("://", nil, true) then
-				tbl.Model = "obj" .. val
-			else
-				tbl.Model = val
-			end
-		end,
+
 	}
 
 	local registered_parts = pac.GetRegisteredParts()
@@ -115,29 +110,50 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 
 	local done = {}
 
-	local function walk(tbl)
+	local function walk(tbl, parent)
 		local new_classname = class_translate[tbl.self.ClassName]
+
 		if new_classname then
 			local old_classname = tbl.self.ClassName
 			tbl.self.ClassName = new_classname
 
-			if tbl.self.Color then
-				local val = tbl.self.Color
-				tbl.self.Color = Vector(val.r/255, val.g/255, val.b/255)
-				if tbl.self.Brightness then
-					tbl.self.Color = tbl.self.Color * tbl.self.Brightness
+			if old_classname == "model" then
+				if tbl.self.BlurLength and tbl.self.BlurLength > 0 then
+					table.insert(tbl.children, {
+						self = {
+							ClassName = "motion_blur",
+							UniqueID = util.CRC(tostring({})),
+							BlurLength = tbl.self.BlurLength,
+							BlurSpacing = tbl.self.BlurSpacing,
+						},
+						children = {},
+					})
+				end
+			end
+
+			if old_classname == "entity" then
+				if tbl.self.Weapon == true and tbl.self.HideEntity then
+					table.insert(parent.children, {
+						self = {
+							ClassName = "weapon",
+							UniqueID = util.CRC(tostring({})),
+							NoDraw = true
+						},
+						children = {},
+					})
 				end
 			end
 
 			for key in pairs(get_storable(old_classname)) do
-				local value = tbl.self[key] or registered_parts[old_classname][key]
-
-				if key == "Brightness" or key == "Color" then continue end
+				local value = tbl.self[key]
+				if value == nil then
+					value = registered_parts[old_classname][key]
+				end
 
 				if prop_translate[old_classname] and prop_translate[old_classname][key] then
-					pac.Message("translating property: ", key, " = ", value)
 					tbl.self[key] = nil
 					prop_translate[old_classname][key](tbl.self, value)
+					pac.Message("translated property: ", key, " = ", value, " to ", tbl.self[key])
 				elseif not get_storable(new_classname)[key] then
 					local msg = tbl.self.ClassName .. "." .. key
 					if not done[msg] then
@@ -149,9 +165,26 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 
 		end
 
+		if tbl.self.ClassName == "proxy" and tbl.self.VariableName == "Color" then
+			if tbl.self.Expression ~= "" then
+				local r,g,b = unpack(tbl.self.Expression:Split(","))
+				r = tonumber(r)
+				g = tonumber(g)
+				b = tonumber(b)
+
+				if r and g and b then
+					tbl.self.Expression = (r/255)..","..(g/255)..","..(b/255)
+				end
+			end
+		end
+
+		if tbl.self.Model and tbl.self.Model:find("://", nil, true) then
+			tbl.self.ForceObjUrl = true
+		end
+
 		if tbl.children then
-			for _, tbl in ipairs(tbl.children) do
-				walk(tbl)
+			for _, child in ipairs(tbl.children) do
+				walk(child, tbl)
 			end
 		end
 	end
