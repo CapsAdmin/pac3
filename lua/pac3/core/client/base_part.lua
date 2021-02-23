@@ -156,9 +156,10 @@ do -- owner
 			return self.Owner
 		end
 
-		local parent = self:GetParent()
-		if parent:IsValid() then
-			return parent:GetOwner()
+		for _, parent in ipairs(self:GetParentList()) do
+			if parent.Owner:IsValid() then
+				return parent.Owner
+		end
 		end
 
 		return NULL
