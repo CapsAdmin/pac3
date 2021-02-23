@@ -660,14 +660,16 @@ do
 
 	function pace.OnHoverPart(self)
 		local tbl = {}
+		local ent = self:GetOwner()
 
-		if self.Entity and self.Entity:IsValid() then
-			table.insert(tbl, self.Entity)
+		if ent:IsValid() then
+			table.insert(tbl, ent)
 		end
 
 		for _, child in ipairs(self:GetChildrenList()) do
-			if child.Entity and child.Entity:IsValid() then
-				table.insert(tbl, child.Entity)
+			local ent = self:GetOwner()
+			if ent:IsValid() then
+				table.insert(tbl, ent)
 			end
 		end
 

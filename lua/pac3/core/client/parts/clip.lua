@@ -14,9 +14,12 @@ function PART:OnParent(part)
 	if not part.AddModifier then return end
 	part:AddModifier(self)
 
+
 	-- this is only really for halos..
-	if IsEntity(part.Entity) and part.Entity:IsValid() then
-		function part.Entity.pacDrawModel(ent)
+	local ent = self:GetOwner()
+
+	if ent:IsValid() then
+		function ent.pacDrawModel(ent)
 			self:PreOnDraw()
 			ent:DrawModel()
 			self:PostOnDraw()
