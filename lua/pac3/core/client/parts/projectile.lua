@@ -1,6 +1,6 @@
 language.Add("pac_projectile", "Projectile")
 
-local BUILDER, PART = pac.PartTemplate("base_drawable")
+local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "projectile"
 PART.Group = 'advanced'
@@ -89,14 +89,7 @@ PART.Translucent = false
 
 function PART:OnShow(from_rendering)
 	if not from_rendering then
-		self.trigger = true
-	end
-end
-
-function PART:OnDraw(owner, pos, ang)
-	if self.trigger then
-		self:Shoot(pos, ang)
-		self.trigger = false
+		self:Shoot(self:GetDrawPosition())
 	end
 end
 
