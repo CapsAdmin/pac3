@@ -50,8 +50,6 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 		parts = util.JSONToTable(parts.json)
 	end
 
-	pace.net.SimulateTableReceive(parts)
-
 	local id = ent:EntIndex()
 
 	if parts.part then
