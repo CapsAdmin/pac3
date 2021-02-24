@@ -91,7 +91,10 @@ end
 
 function PART:OnShow()
 	local ent = self:GetActualOwner()
-	pac.emut.MutateEntity(self:GetPlayerOwner(), "blood_color", ent, blood_colors[self.BloodColor == "" and "red" or self.BloodColor])
+
+	if ent:IsValid() then
+		pac.emut.MutateEntity(self:GetPlayerOwner(), "blood_color", ent, blood_colors[self.BloodColor == "" and "red" or self.BloodColor])
+	end
 
 	if ent:IsValid() then
 		for _, field in pairs(ent_fields) do

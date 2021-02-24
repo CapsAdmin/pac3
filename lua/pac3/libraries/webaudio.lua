@@ -917,7 +917,7 @@ do
 			self:SetRightVolume((math.Clamp(1 + pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
 			self:SetLeftVolume((math.Clamp(1 - pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
 
-			if self:GetDoppler() then
+			if self:GetDoppler() and webaudio.eye_velocity then
 				local relativeSourceVelocity = self.SourceVelocity - webaudio.eye_velocity
 				local relativeSourceSpeed    = relativeSourcePosition:GetNormalized():Dot(-relativeSourceVelocity) * 0.0254
 
