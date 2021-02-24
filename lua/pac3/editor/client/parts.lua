@@ -670,13 +670,9 @@ function pace.OnHoverPart(self)
 	end
 
 	if #tbl > 0 then
-		if data then
-			pac.haloex.Add(tbl, unpack(data))
-		else
-			local pulse = math.sin(pac.RealTime * 20) * 0.5 + 0.5
-			pulse = pulse * 255
-			pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
-		end
+		local pulse = math.sin(pac.RealTime * 20) * 0.5 + 0.5
+		pulse = pulse * 255
+		pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
 	end
 end
 
