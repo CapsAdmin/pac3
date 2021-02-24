@@ -5,6 +5,7 @@ include("pac3/libraries/webaudio/streams.lua")
 
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
+PART.FriendlyName = "legacy ogg"
 PART.ClassName = "ogg"
 
 PART.Group = "legacy"

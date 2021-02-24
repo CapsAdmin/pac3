@@ -1,6 +1,7 @@
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 local snd_mute_losefocus = GetConVar('snd_mute_losefocus')
 
+PART.FriendlyName = "legacy webaudio"
 PART.ClassName = "webaudio"
 PART.Group = 'legacy'
 PART.Icon = 'icon16/sound_add.png'

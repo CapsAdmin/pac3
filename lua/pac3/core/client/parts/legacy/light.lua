@@ -1,5 +1,6 @@
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
+PART.FriendlyName = "legacy light"
 PART.ClassName = "light"
 PART.Group = "legacy"
 

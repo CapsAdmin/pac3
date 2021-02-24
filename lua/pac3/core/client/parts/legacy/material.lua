@@ -1,6 +1,7 @@
 local BUILDER, PART = pac.PartTemplate("base")
 
-PART.ClassName = "material"
+PART.FriendlyName = "legacy material"
+PART.ClassName = "legacy material"
 
 PART.Icon = 'icon16/paintcan.png'
 PART.Group = "legacy"

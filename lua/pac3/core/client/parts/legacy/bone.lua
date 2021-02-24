@@ -7,6 +7,7 @@ end
 
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
+PART.FriendlyName = "legacy bone"
 PART.ClassName = "bone"
 PART.Group = "legacy"
 

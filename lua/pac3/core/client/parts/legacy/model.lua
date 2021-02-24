@@ -45,6 +45,7 @@ pac.DisableDoubleFace = false
 
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
+PART.FriendlyName = "legacy model"
 PART.ClassName = "model"
 PART.Category = "model"
 PART.ManualDraw = true

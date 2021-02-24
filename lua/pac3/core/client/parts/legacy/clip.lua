@@ -5,6 +5,7 @@ local IsEntity = IsEntity
 
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
+PART.FriendlyName = "legacy clip"
 PART.ClassName = "clip"
 PART.Group = "legacy"
 PART.Icon = 'icon16/cut.png'

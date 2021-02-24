@@ -12,6 +12,7 @@ local render_SetMaterial = render.SetMaterial
 
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
+PART.FriendlyName = "legacy trail"
 PART.ClassName = "trail"
 PART.Group = "legacy"
 

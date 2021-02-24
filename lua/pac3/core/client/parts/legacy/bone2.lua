@@ -7,9 +7,9 @@ end
 
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
-PART.FriendlyName = "bone"
+PART.FriendlyName = "legacy experimental bone"
 PART.ClassName = "bone2"
-PART.Groups = {'entity', 'model'}
+PART.Group = "legacy"
 PART.Icon = 'icon16/connect.png'
 
 BUILDER:StartStorableVars()

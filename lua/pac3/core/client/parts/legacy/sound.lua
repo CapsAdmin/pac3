@@ -1,7 +1,7 @@
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
+PART.FriendlyName = "legacy sound"
 PART.ClassName = "sound"
-PART.FriendlyName = "sound"
 
 PART.ThinkTime = 0
 PART.Group = 'effects'
