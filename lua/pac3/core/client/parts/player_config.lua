@@ -128,7 +128,9 @@ function PART:SetBloodColor(str)
 	self.BloodColor = str
 
 	local ent = self:GetActualOwner()
-	pac.emut.MutateEntity(self:GetPlayerOwner(), "blood_color", ent, blood_colors[self.BloodColor == "" and "red" or self.BloodColor])
+	if ent:IsValid() then
+		pac.emut.MutateEntity(self:GetPlayerOwner(), "blood_color", ent, blood_colors[self.BloodColor == "" and "red" or self.BloodColor])
+	end
 end
 
 BUILDER:Register()
