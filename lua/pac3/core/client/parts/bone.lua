@@ -17,7 +17,6 @@ BUILDER:StartStorableVars()
 		BUILDER:PropertyOrder("Name")
 		BUILDER:PropertyOrder("Hide")
 		BUILDER:PropertyOrder("ParentName")
-		BUILDER:GetSet("Jiggle", false)
 		BUILDER:GetSet("ScaleChildren", false)
 		BUILDER:GetSet("MoveChildrenToOrigin", false)
 		BUILDER:GetSet("FollowAnglesOnly", false)
@@ -45,19 +44,6 @@ BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	return self:GetBone()
-end
-
-function PART:SetJiggle(val)
-	self.Jiggle = val
-
-	local owner = self:GetOwner()
-	if not owner:IsValid() then return end
-
-	self:SetBone(self:GetBone())
-
-	if self.bone_index then
-		owner:ManipulateBoneJiggle(self.bone_index, self.Jiggle and 1 or 0)
-	end
 end
 
 function PART:SetBone(val)
