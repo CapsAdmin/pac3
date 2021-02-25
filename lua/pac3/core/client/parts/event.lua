@@ -650,8 +650,15 @@ PART.OldEvents = {
 
 	sequence_name = {
 		arguments = {{find = "string"}},
+		nice = function(self)
+			return self.sequence_name
+		end,
 		callback = function(self, ent, find)
-			return self:StringOperator(ent:GetSequenceName(ent:GetSequence()), find)
+			ent = get_owner(self)
+
+			self.sequence_name = ent:GetSequenceName(ent:GetSequence())
+
+			return self:StringOperator(self.sequence_name, find)
 		end,
 	},
 
@@ -672,10 +679,13 @@ PART.OldEvents = {
 
 	animation_event = {
 		arguments = {{find = "string"}, {time = "number"}},
+		nice = function(self)
+			return self.anim_name or ""
+		end,
 		callback = function(self, ent, find, time)
 			time = time or 0.1
 
-			ent = try_viewmodel(ent)
+			ent = get_owner(self)
 
 			local data = ent.pac_anim_event
 			local b = false
@@ -683,6 +693,12 @@ PART.OldEvents = {
 			if data and (self:StringOperator(data.name, find) and (time == 0 or data.time + time > pac.RealTime)) then
 				data.reset = false
 				b = true
+			end
+
+			if b then
+				self.anim_name = name
+			else
+				self.anim_name = nil
 			end
 
 			return b
