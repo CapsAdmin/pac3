@@ -45,9 +45,33 @@ end
 
 pace.dupe_ents = pace.dupe_ents or {}
 
+local uid2key = include("legacy_network_dictionary_translate.lua")
+
+local function translate_old_dupe(tableIn, target)
+	for key, value2 in pairs(tableIn) do
+		local value
+
+		if type(value2) == 'table' then
+			value = translate_old_dupe(value2, {})
+		else
+			value = value2
+		end
+
+		if type(key) == 'number' and key > 10000 then
+			local str = uid2key[key] or key
+			target[str] = value
+		else
+			target[key] = value
+		end
+	end
+
+	return target
+end
+
 duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 	if parts.json then
 		parts = util.JSONToTable(parts.json)
+		parts = translate_old_dupe(parts, {})
 	end
 
 	local id = ent:EntIndex()
