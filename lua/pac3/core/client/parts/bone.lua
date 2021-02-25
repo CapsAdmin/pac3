@@ -86,6 +86,27 @@ end
 
 local inf_scale = Vector(math.huge, math.huge, math.huge)
 
+local function get_children_bones(ent, root_index, bone_count, out)
+	ent:SetLOD(0)
+	for child_index = 0, bone_count - 1 do
+		if ent:GetBoneParent(child_index) == root_index then
+			table.insert(out, child_index)
+			get_children_bones(ent, child_index, bone_count, out)
+		end
+	end
+end
+
+local function get_children_bones_cached(ent, root_index)
+	ent.pac_cached_child_bones = ent.pac_cached_child_bones or {}
+
+	if not ent.pac_cached_child_bones[root_index] then
+		ent.pac_cached_child_bones[root_index] = {}
+		get_children_bones(ent, root_index, ent:GetBoneCount(), ent.pac_cached_child_bones[root_index])
+	end
+
+	return ent.pac_cached_child_bones[root_index]
+end
+
 local function scale_children(ent, root_index, bone_count, scale, move_to_origin)
 	for child_index = 0, bone_count - 1 do
 		if ent:GetBoneParent(child_index) == root_index then
@@ -105,23 +126,6 @@ local function scale_children(ent, root_index, bone_count, scale, move_to_origin
 	end
 end
 
-local function move_children(ent, root_index, bone_count, parent_matrix, prev_matrix, scale)
-	for child_index = 0, bone_count - 1 do
-		if ent:GetBoneParent(child_index) == root_index then
-			local child_matrix = ent:GetBoneMatrix(child_index)
-			if child_matrix then
-				local inverse_prev_matrix = prev_matrix:GetInverse()
-				if inverse_prev_matrix then
-					local m = parent_matrix * inverse_prev_matrix
-					m = m * child_matrix
-					ent:SetBoneMatrix(child_index, m)
-					move_children(ent, child_index, bone_count, m, child_matrix, scale)
-				end
-			end
-		end
-	end
-end
-
 function PART:BuildBonePositions2(ent, bone_count)
 	local index = self.bone_index
 
@@ -134,12 +138,22 @@ function PART:BuildBonePositions2(ent, bone_count)
 	original_matrix:Set(m)
 
 	if self.FollowPart:IsValid() and self.FollowPart.GetWorldPosition then
-		if not self.FollowAnglesOnly then
-			m:SetTranslation(self.FollowPart:GetWorldPosition())
+		local pos, ang
+		if self.FollowPart.ClassName == "jiggle" then
+			pos = self.FollowPart.pos
+			ang = self.FollowPart.ang
+		else
+			pos = self.FollowPart:GetWorldPosition()
+			ang = self.FollowPart:GetWorldAngles()
 		end
 
-		m:SetAngles(self.FollowPart:GetWorldAngles())
+		if not self.FollowAnglesOnly then
+			m:SetTranslation(pos)
+		end
+
+		m:SetAngles(ang)
 		m:Rotate(self.Angles)
+		original_matrix:Set(m)
 	else
 
 		local prev_ang = m:GetAngles()
@@ -185,13 +199,45 @@ function PART:BuildBonePositions2(ent, bone_count)
 		scale = self.Scale * self.Size
 	end
 
+	do
+		local should_scale = self.ScaleChildren
+		local scale_origin = self.MoveChildrenToOrigin and m:GetTranslation()
 
-	if self.ScaleChildren then
-		scale_children(ent, index, bone_count, scale, self.MoveChildrenToOrigin and m:GetTranslation())
+		for _, child_index in ipairs(get_children_bones_cached(ent, index)) do
+			local m = ent:GetBoneMatrix(child_index)
+			if not m then continue end
+
+			if should_scale then
+				if scale_origin then
+					m:SetTranslation(scale_origin)
+				end
+
+
+				m:Scale(scale)
+			end
+
+			ent:SetBoneMatrix(child_index, m)
+		end
 	end
 
-	move_children(ent, index, bone_count, m, original_matrix, scale)
 
+	local parent_matrix = m
+	local prev_matrix = original_matrix
+
+	for _, child_index in ipairs(get_children_bones_cached(ent, index)) do
+		local child_matrix = ent:GetBoneMatrix(child_index)
+		if not child_matrix then continue end
+		local inverse_prev_matrix = prev_matrix:GetInverse()
+		if inverse_prev_matrix then
+			local m = parent_matrix * inverse_prev_matrix
+			m = m * child_matrix
+
+			ent:SetBoneMatrix(child_index, m)
+
+			parent_matrix = m
+			prev_matrix = child_matrix
+		end
+	end
 
 	m:Scale(scale)
 

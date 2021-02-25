@@ -139,6 +139,7 @@ function pac.ResetBoneCache(ent)
 
 	ent.pac_last_model = nil
 	ent.pac_bones = nil
+	ent.pac_cached_child_bones = nil
 
 	if ent.pac_holdtypes then
 		ent.pac_holdtypes = {}
