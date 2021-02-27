@@ -25,7 +25,7 @@ BUILDER
 				["local eyes pitch"] = "LOCALEYES_PITCH",
 			}})
 			:GetSetPart("Parent")
-	:EndStorableVars()
+:EndStorableVars()
 
 do -- bones
 	function PART:SetBone(val)

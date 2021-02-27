@@ -9,6 +9,7 @@ BUILDER:StartStorableVars()
 	:GetSet("Alpha", 1)
 	:GetSet("IgnoreZ", false)
 	:GetSet("Model", "models/maxofs2d/cube_tool.mdl")
+	:GetSet("PACPart", NULL)
 :EndStorableVars()
 
 function META:Start()
@@ -56,6 +57,9 @@ local function blend(color, alpha, brightness)
 end
 
 function META:Render3D()
+
+	local part = self.PACPart
+	
 	if not self.model_set then return end
 	local ent = self.source_ent
 	local world = self.entity.transform:GetMatrix()
@@ -87,7 +91,17 @@ function META:Render3D()
 	render.SetBlend(a)
 	render.SetColorModulation(r,g,b)
 
+	if part:IsValid() then
+		cam.IgnoreZ(true)
+		render.SetColorModulation(50,50,50)
+		render.SetBlend(0.25)
+	end
+
 	ent:DrawModel()
+
+	if part:IsValid() then
+		cam.IgnoreZ(false)
+	end
 
 	if self.Material then
 		--render.MaterialOverride()
@@ -116,7 +130,7 @@ end
 
 BUILDER:Register()
 
-hook.Add("PostDrawOpaqueRenderables", "pac_999", function()
+pac999.AddHook("PostDrawOpaqueRenderables", function()
 	for _, obj in ipairs(pac999.entity.GetAllComponents("model")) do
 		obj:Render3D()
 	end

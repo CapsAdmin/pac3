@@ -3,7 +3,7 @@ local entity = pac999.entity
 local events = {}
 
 do
-	local META = entity.ComponentTemplate("test")
+	local BUILDER, META = entity.ComponentTemplate("test")
 
 	function META:Start()
 		table.insert(events, "start")
@@ -17,22 +17,24 @@ do
 		table.insert(events, "finish")
 	end
 
-	META:Register()
+	BUILDER:Register()
 
-	local META = entity.ComponentTemplate("test2")
-	META:Register()
+	local BUILDER, META = entity.ComponentTemplate("test2")
+	BUILDER:Register()
 end
 
+local count = #entity.GetAll()
+
 do
-	assert(#entity.GetAll() == 0)
+	assert(#entity.GetAll() == count)
 	local a = entity.Create({"test"})
-	assert(#entity.GetAll() == 1)
+	assert(#entity.GetAll() == count + 1)
 	a:AddComponent("test2")
 	assert(#entity.GetAllComponents("test2") == 1)
 	a:RemoveComponent("test2")
 	assert(#entity.GetAllComponents("test2") == 0)
 	a:Remove()
-	assert(#entity.GetAll() == 0)
+	assert(#entity.GetAll() == count + 0)
 end
 
 do
@@ -40,7 +42,7 @@ do
 	a:AddComponent("test2")
 	a:Remove()
 	assert(#entity.GetAllComponents("test2") == 0)
-	assert(#entity.GetAll() == 0)
+	assert(#entity.GetAll() == count + 0)
 end
 
 do
@@ -58,7 +60,7 @@ do
 end
 
 do
-	local META = entity.ComponentTemplate("test")
+	local BUILDER, META = entity.ComponentTemplate("test")
 
 	function META:Start()
 		self.FooBar = true
@@ -68,15 +70,15 @@ do
 		self.FooBar = b
 	end
 
-	META:Register()
+	BUILDER:Register()
 
-	local META = entity.ComponentTemplate("test2")
+	local BUILDER, META = entity.ComponentTemplate("test2")
 
 	function META:SetFoo(b)
 		self.FooBar = b
 	end
 
-	META:Register()
+	BUILDER:Register()
 
 	local ent = entity.Create()
 	local cmp = ent:AddComponent("test")
@@ -96,4 +98,17 @@ do
 	ent:Remove()
 end
 
-assert(#entity.GetAll() == 0)
+assert(count)
+
+do
+	local root = pac999.scene.AddNode()
+	root:EnableGizmo(true)
+	assert(#root:GetChildren() == 16)
+	root:EnableGizmo(false)
+	assert(#root:GetChildren() == 0)
+	root:EnableGizmo(true)
+	local children = root:GetChildren()
+	assert(#children == 16)
+	root:Remove()
+	assert(#children == 0)
+end

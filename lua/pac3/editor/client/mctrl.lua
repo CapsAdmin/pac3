@@ -21,6 +21,31 @@ do -- pace
 	mctrl.target = NULL
 
 	function mctrl.SetTarget(part)
+		if not part.GetWorldMatrix then return end
+
+		if IsValid(mctrl.pac999) then
+			mctrl.pac999:Remove()
+		end
+
+		local node = pac999.scene.AddNode()
+		if part.GetModel then
+			node:SetModel(part:GetModel())
+		end
+
+		--node.transform:SetWorldMatrix(part:GetWorldMatrix())
+		
+		node.transform:SetPACPart(part)
+		node.model:SetPACPart(part)
+		--node.gizmo:SetPACPart(part)
+		
+		node:EnableGizmo(true)
+		
+		
+		part:SetPosition(Vector(0,0,0))
+		part:SetAngles(Angle(0,0,0))
+		part:SetScale(Vector(1,1,1))
+		mctrl.pac999 = node
+
 		part = part or NULL
 		if not part:IsValid() then
 			mctrl.target = NULL
@@ -164,6 +189,22 @@ do -- pace
 		end
 
 		pace.Call("VariableChanged", part, "Position", pos, 0.25)
+
+		timer.Create("pace_refresh_properties", 0.1, 1, function()
+			pace.PopulateProperties(part)
+		end)
+	end
+
+
+	function mctrl.OnScale(part, pos)
+		if input.IsKeyDown(KEY_LCONTROL) then
+			local num = cvar_pos_grid:GetInt("pac_grid_pos_size")
+			pos.x = math.Round(pos.x/num) * num
+			pos.y = math.Round(pos.y/num) * num
+			pos.z = math.Round(pos.z/num) * num
+		end
+
+		pace.Call("VariableChanged", part, "Scale", pos, 0.25)
 
 		timer.Create("pace_refresh_properties", 0.1, 1, function()
 			pace.PopulateProperties(part)
@@ -338,7 +379,6 @@ function mctrl.Move(axis, x, y, offset)
 
 	if target:IsValid() then
 		local pos = mctrl.CalculateMovement(axis, x, y, offset)
-
 		if pos then
 			mctrl.OnMove(target, pos)
 		end
@@ -370,6 +410,9 @@ mctrl.grab = {mode = nil, axis = nil}
 local GRAB_AND_CLONE = CreateClientConVar('pac_grab_clone', '1', true, false, 'Holding shift when moving or rotating a part creates its clone')
 
 function mctrl.GUIMousePressed(mc)
+	pac999.input.Update()
+	if pac999.input.grabbed then return true end
+
 	if mc ~= MOUSE_LEFT then return end
 	local target = mctrl.GetTarget()
 	if not target:IsValid() then return end
@@ -537,7 +580,7 @@ function mctrl.RotationLines(pos, dir, dir2, r)
 	DrawLine(pr.x, pr.y, prb.x, prb.y)
 end
 
-function mctrl.HUDPaint()
+function mctrl.HUDPaint() do return end
 	mctrl.LastThinkCall = FrameNumber()
 	if pace.IsSelecting then return end
 
@@ -588,7 +631,7 @@ function mctrl.HUDPaint()
 	end
 end
 
-function mctrl.Think()
+function mctrl.Think() do return end
 	if pace.IsSelecting then return end
 	if not mctrl.target:IsValid() then return end
 

@@ -10,6 +10,9 @@
 		fix plane origin being off center when rotating
 ]]
 
+if pace then
+	pace.mctrl.pac999 = nil
+end
 
 if pac999_models then
 	hook.Remove("RenderScene", "pac_999")
@@ -27,6 +30,18 @@ local pac999 = _G.pac999
 
 pac999.TEST = true
 pac999.DEBUG = false
+
+local function on_error(msg)
+	ErrorNoHalt(debug.traceback(msg))
+end
+
+function pac999.AddHook(name, callback)
+	hook.Add(name, "pac999_" .. name, function(...)
+		if not xpcall(callback, on_error, ...) then
+			hook.Remove(name, "pac999_" .. name)
+		end
+	end)
+end
 
 pac999.Matrix44 = include("matrix44.lua")
 pac999.utility = include("utility.lua")

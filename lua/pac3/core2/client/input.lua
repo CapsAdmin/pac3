@@ -63,8 +63,12 @@ function input.Update()
 	end
 end
 
+pac999.camera.eye_pos = EyePos()
+pac999.camera.eye_ang = EyeAngles()
+pac999.camera.eye_fov = 90
+
 function input.Init()
-	hook.Add("RenderScene", "pac_999_input", function(pos, ang, fov)
+	pac999.AddHook("RenderScene", function(pos, ang, fov)
 		pac999.camera.eye_pos = pos
 		pac999.camera.eye_ang = ang
 		pac999.camera.eye_fov = fov

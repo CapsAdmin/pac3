@@ -169,7 +169,7 @@ do -- table copy
 	local function copy(obj, skip_meta)
 		local t = type(obj)
 
-		if t == "number" or t == "string" or t == "function" or t == "boolean" or t == "nil" or t == "IMaterial" then
+		if t == "number" or t == "string" or t == "function" or t == "boolean" or t == "nil" or t == "IMaterial" or obj == NULL then
 			return obj
 		end
 

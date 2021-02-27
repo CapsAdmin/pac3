@@ -18,13 +18,16 @@ local function table_remove_value(tbl, val)
 	for i, v in ipairs(tbl) do
 		if v == val then
 			table.remove(tbl, i)
-			break
+			return true
 		end
 	end
+	return false
 end
 
 do
 	local META = {}
+
+	META.removed = false
 
 	function META:__index(key)
 
@@ -36,11 +39,13 @@ do
 			return self.ComponentFunctions[key]
 		end
 
-		error("no such key: " .. tostring(key))
+		error("no such key: " .. tostring(key), 2)
 	end
 
 	function META:__newindex(key, val)
-		error("cannot newindex: entity." .. tostring(key) .. " = " .. tostring(val))
+		if META[key] == nil then
+			error("cannot newindex: entity." .. tostring(key) .. " = " .. tostring(val), 2)
+		end
 	end
 
 	function META:__tostring()
@@ -59,7 +64,15 @@ do
 		rawset(self, "Name", str)
 	end
 
+	function META:IsValid()
+		return self.removed ~= true
+	end
+
 	function META:Remove()
+		if self.removed then return end
+
+		self.removed = true
+
 		self:FireEvent("Finish")
 
 		for i = #self.Components, 1, -1 do
@@ -69,6 +82,10 @@ do
 		assert(#self.Components == 0)
 
 		entity.entity_pool:remove(self)
+
+		for event in pairs(self.events) do
+			self:RemoveEvents(event)
+		end
 	end
 
 
@@ -78,7 +95,6 @@ do
 		local blacklist = {
 			Start = true,
 			Finish = true,
-			Register = true,
 		}
 
 		for _, component in ipairs(self.Components) do
@@ -100,9 +116,16 @@ do
 		end
 	end
 
+	local i = 0
+	local function gen_component_id()
+		i = i + 1
+		return tostring(i)
+	end
+
 	function META:AddComponent(name)
 		local meta = assert(entity.component_templates[name])
 		local component = setmetatable({entity = self}, meta)
+		component.id = gen_component_id()
 
 		if meta.StorableVars then
 			for key in pairs(meta.StorableVars) do
@@ -135,7 +158,7 @@ do
 		end
 
 		rawset(self, name, nil)
-		table_remove_value(self.Components, component)
+		assert(table_remove_value(self.Components, component))
 		entity.component_pools[component.ClassName]:remove(component)
 
 		for event_name in pairs(entity.component_templates[name].EVENTS) do
@@ -151,9 +174,20 @@ do
 
 	do
 		function META:FireEvent(name, ...)
+			if not self:IsValid() then
+				error("firing event " .. name ..  " on invalid entity", 2)
+			end
+
 			if not self.events[name] then return false end
 
 			for _, event in ipairs(self.events[name]) do
+
+				if event.component then
+					if not event.component:IsValid() then
+						error("firing event " .. name ..  " on invalid component", 2)
+					end
+				end
+
 				event.callback(event.component or self, ...)
 			end
 		end
@@ -166,6 +200,7 @@ do
 				id = sub_id or #self.events[name],
 				component = component,
 			}
+
 			table.insert(self.events[name], event)
 			return event.id
 		end
@@ -173,7 +208,11 @@ do
 		function META:RemoveEvents(name)
 			if not self.events[name] then return false end
 
-			table.Clear(self.events[name])
+			for i in ipairs(self.events[name]) do
+				self.events[name][i] = nil
+			end
+
+			self.events[name] = nil
 
 			return true
 		end
@@ -184,6 +223,11 @@ do
 			for i, event in ipairs(self.events[name]) do
 				if event.id == sub_id then
 					table.remove(self.events[name], i)
+
+					if not self.events[name][1] then
+						self.events[name] = nil
+					end
+
 					return true
 				end
 			end
@@ -199,6 +243,8 @@ do
 		META.RequiredComponents = required
 		META.__index = META
 
+		META.id = -1
+
 		function META:__tostring()
 			local name = self.entity.Name
 			if name == "entity" then
@@ -207,7 +253,18 @@ do
 				name = name .. ": "
 			end
 
-			return name .. "component[" .. self.ClassName .. "]"
+			return name .. "component[" .. self.ClassName .. "]["..self.id.."]"
+		end
+
+		META.removed = false
+
+		function META:IsValid()
+			return self.removed == false
+		end
+
+		function META:Remove()
+			self.removed = true
+			self.entity:RemoveComponent(name)
 		end
 
 		local BUILDER = {}
@@ -440,5 +497,11 @@ do
 		return self
 	end
 end
+
+pac999.AddHook("PreDrawOpaqueRenderables", function()
+	for _, obj in ipairs(pac999.entity.GetAll()) do
+		obj:FireEvent("Update")
+	end
+end)
 
 return entity

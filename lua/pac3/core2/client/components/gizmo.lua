@@ -93,12 +93,9 @@ end
 function META:StartGrab(axis, center)
 
 	self.grab_matrix = self.entity.transform:GetMatrix() * Matrix()
-	center = center or self.grab_matrix:GetTranslation()
-	self.old_scale = self.grab_matrix:GetScale()
 	self.grab_matrix:SetScale(Vector(1,1,1))
-	self.grab_transform = self.entity.transform:GetTRMatrix() * Matrix()
-	self.grab_translation = self.grab_transform:GetTranslation()
-
+	
+	center = center or self.grab_matrix:GetTranslation()
 
 	self.center_pos = util.IntersectRayWithPlane(
 		pac999.camera.GetViewMatrix():GetTranslation(),
@@ -125,19 +122,6 @@ function META:GetGrabPlanePosition(axis, center)
 	return plane_pos
 end
 
-function META:SetWorldMatrix(m, b)
-	if self.old_scale then
-		--m:SetScale(self.old_scale)
-		--self.grab_matrix:SetScale(self.old_scale)
-	end
-
-	self.entity.transform:SetTRMatrix(m * self.grab_matrix:GetInverse() * self.grab_transform)
-
-	if self.old_scale then
-		--self.grab_matrix:SetScale(Vector(1,1,1))
-	end
-end
-
 function META:SetupTranslation()
 	local dist = 8
 	local thickness = 1.5
@@ -159,7 +143,7 @@ function META:SetupTranslation()
 				local dir = m[axis2](m)
 				m:SetTranslation(m:GetTranslation() + dir * (plane_pos - center_pos):Dot(dir))
 
-				self:SetWorldMatrix(m)
+				self.entity.transform:SetTRMatrix(m)
 			end
 		end,
 		function(ent, grabbed)
@@ -287,7 +271,6 @@ function META:SetupRotation()
 			if not m then return end
 
 			local centerw = self.entity:GetWorldCenter()
-			local old_tr = m:GetTranslation()
 			local center = utility.TransformVector(m:GetInverse(), centerw)
 
 			local local_start_rotation = local_matrix(m, (center_pos - m:GetTranslation())*invert)
@@ -297,10 +280,7 @@ function META:SetupRotation()
 
 				if not plane_pos then return end
 
-				debugoverlay.Sphere(plane_pos, 4, 0, RED, Color(255,0,0,255), true)
-
 				local local_drag_rotation = local_matrix(m, (plane_pos - m:GetTranslation())*invert)
-
 
 				local m = m * Matrix()
 
@@ -320,13 +300,14 @@ function META:SetupRotation()
 					end
 				end
 
+				-- TODO: off-center rotation doesn't work
+
 				local rot = Matrix()
 				rot:Rotate(ang)
 				local ang = (m * rot):GetAngles()
+
 				m:Translate(center)
 				m:SetAngles(ang)
-
-				m = m * self.grab_matrix:GetInverse() * self.grab_transform
 				m:Translate(-center)
 				self.entity.transform:SetTRMatrix(m)
 			end

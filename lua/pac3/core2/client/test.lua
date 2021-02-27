@@ -107,10 +107,6 @@ if me:IsValid() then
 	end
 
 	hook.Add("PreDrawOpaqueRenderables", "pac_999", function()
-		for _, obj in ipairs(pac999.entity.GetAll()) do
-			obj:FireEvent("Update")
-		end
-
 		do return end
 
 		local tr = LocalPlayer():GetEyeTrace()

@@ -14,8 +14,63 @@ BUILDER:StartStorableVars()
 	:GetSet("CageScaleMin", Vector(1,1,1))
 	:GetSet("CageScaleMax", Vector(1,1,1))
 	:GetSet("IgnoreParentScale", false)
+	:GetSet("PACPart", NULL)
 :EndStorableVars()
 
+
+
+--[[
+
+local function update_scale(self)
+
+	local part = self.PACPart
+	if part:IsValid() then
+		local m = self.entity.transform:GetScaleMatrix()
+
+
+		do
+			local world = self.pac_part_matrix
+			local m = world * m:GetInverse()
+			
+			--self:SetWorldMatrix(m)
+		end
+
+		pace.mctrl.OnScale(part, m:GetScale())
+	end
+end
+
+if part:IsValid() then
+	local sm = self.entity.transform:GetScaleMatrix()
+
+	local world = self.pac_part_matrix * sm
+			
+	local lol = self.grab_matrix:GetInverse() * self.grab_transform
+	lol = world:GetInverse() * m * lol
+--	
+	pace.mctrl.OnMove(part, lol:GetTranslation())
+	pace.mctrl.OnRotate(part, lol:GetAngles())
+
+	--part:SetPosition(lol:GetTranslation())
+	--part:SetAngles(lol:GetAngles())
+	
+	self.entity.transform:SetTRMatrix(part:GetWorldMatrix())
+	return
+end
+
+function META:StorePACPartMatrix()
+
+	local part = self.PACPart
+	if part:IsValid() then
+		self.pac_part_matrix = part:BuildWorldMatrix(true)
+		local lmat = Matrix()
+		lmat:SetTranslation(part.Position)
+		lmat:SetAngles(part.Angles)
+		self.pac_part_matrix = self.pac_part_matrix * lmat:GetInverse()
+		self.grab_matrix2 = self.entity.transform:GetMatrix() * Matrix()
+
+	end
+
+end]]
 function META:Start()
 	self.TRMatrix = Matrix()
 end
@@ -88,7 +143,7 @@ function META:WorldToLocalAngles(ang)
 end
 
 function META:GetWorldMatrix()
-	local m = self.entity.transform:GetMatrix() * self.entity.transform:GetScaleMatrix()
+	local m = self:GetMatrix() * self:GetScaleMatrix()
 	--m:Translate(-self.entity.transform:GetCageCenter())
 
 	return m
@@ -230,13 +285,53 @@ function META:InvalidateMatrix()
 	self.InvalidMatrix = true
 	self._Scale = nil
 
-	for _, child in ipairs(self.entity.node:GetAllChildren()) do
+	for _, child in ipairs(self.entity.node:GetChildrenList()) do
 		child.entity.transform._Scale = nil
 		child.entity.transform.InvalidMatrix = true
 	end
 end
 
+function META:SetTRMatrix(m)
+
+
+	local part = self.PACPart
+	if part:IsValid() then
+		local lmat = m
+		--pace.mctrl.OnMove(part, lmat:GetTranslation())
+		--pace.mctrl.OnRotate(part, lmat:GetAngles())
+
+		--return
+	end
+
+
+	self.TRMatrix = m * Matrix()
+	self:InvalidateMatrix()
+end
+
+function META:GetTRMatrix()
+	local part = self.PACPart
+	if part:IsValid() then
+
+		local lmat = Matrix()
+		lmat:SetTranslation(part.Position)
+		lmat:SetAngles(part.Angles)
+
+		
+		--return lmat
+	end
+
+
+	return self.TRMatrix
+end
+
 function META:GetMatrix()
+	local part = self.PACPart
+	
+	if part:IsValid() then
+	--	return part:GetWorldMatrix()
+	end
+
+
 	if self.InvalidMatrix or not self.cached_matrix then
 		self.cached_matrix = self:BuildTRMatrix()
 		self.InvalidMatrix = false
@@ -263,16 +358,19 @@ function META:GetMatrix()
 end
 
 function META:BuildTRMatrix()
-	local tr = self.TRMatrix * Matrix()
+
+	local tr = self:GetTRMatrix() * Matrix()
 
 	if self.TRScale then
 		tr:SetTranslation(tr:GetTranslation() * self.TRScale)
 	end
 
-	local parent = self.entity.node.Parent
+	local parent = self.entity.node:GetParent()
 
-	if parent then
+	if parent:IsValid() and parent.entity:HasComponent("transform") then
+
 		parent = parent.entity.transform
+
 		if self.IgnoreParentScale then
 			local pm = parent:GetMatrix()*Matrix()
 			pm:SetScale(Vector(1,1,1))
@@ -290,14 +388,21 @@ function META:BuildTRMatrix()
 	return tr
 end
 
-function META:SetTRMatrix(m)
-	self.TRMatrix = m * Matrix()
-	self:InvalidateMatrix()
-end
 
 function META:SetWorldMatrix(m)
+
+
+	local part = self.PACPart
+	if part:IsValid() then
+		local lmat = part:GetWorldMatrix():GetInverse() * m
+		--print(lmat)
+
+		--return
+	end
+
+
 	local lm = m:GetInverse() * self:GetMatrix()
-	self.TRMatrix = self.TRMatrix * lm:GetInverse()
+	self:SetTRMatrix(self:GetTRMatrix() * lm:GetInverse())
 	self:InvalidateMatrix()
 end
 
@@ -338,7 +443,7 @@ function META:GetWorldPosition()
 end
 
 function META:GetAngles()
-	return self.TRMatrix:GetAngles()
+	return self:GetTRMatrix():GetAngles()
 end
 
 function META:GetWorldAngles()
@@ -348,21 +453,21 @@ function META:GetWorldAngles()
 end
 
 function META:SetPosition(v)
-	self.TRMatrix:SetTranslation(v)
+	self:GetTRMatrix():SetTranslation(v)
 	self:InvalidateMatrix()
 end
 
 function META:GetPosition()
-	return self.TRMatrix:GetTranslation()
+	return self:GetTRMatrix():GetTranslation()
 end
 
 function META:SetAngles(a)
-	self.TRMatrix:SetAngles(a)
+	self:GetTRMatrix():SetAngles(a)
 	self:InvalidateMatrix()
 end
 
 function META:Rotate(a)
-	self.TRMatrix:Rotate(a)
+	self:GetTRMatrix():Rotate(a)
 	self:InvalidateMatrix()
 end
 
