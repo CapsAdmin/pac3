@@ -143,7 +143,7 @@ function META:SetupTranslation()
 				local dir = m[axis2](m)
 				m:SetTranslation(m:GetTranslation() + dir * (plane_pos - center_pos):Dot(dir))
 
-				self.entity.transform:SetTRMatrix(m)
+				self.entity.transform:SetWorldMatrix(m)
 			end
 		end,
 		function(ent, grabbed)
@@ -309,7 +309,7 @@ function META:SetupRotation()
 				m:Translate(center)
 				m:SetAngles(ang)
 				m:Translate(-center)
-				self.entity.transform:SetTRMatrix(m)
+				self.entity.transform:SetWorldMatrix(m)
 			end
 		end
 	end

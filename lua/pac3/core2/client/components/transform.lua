@@ -254,6 +254,18 @@ do
 			tr:Translate(-self:GetCageMin())
 		end
 
+		local part = self.PACPart 
+		if part:IsValid() then
+			local tr2 = tr * Matrix()
+			tr2:SetScale(Vector(1,1,1))
+			local lmat =  tr2
+
+			print(lmat:GetTranslation())
+			pace.mctrl.OnMove(part, lmat:GetTranslation())
+
+			pace.mctrl.OnScale(part, tr:GetScale())			
+		end
+
 		self.ScaleMatrix = tr
 	end
 
@@ -291,44 +303,11 @@ function META:InvalidateMatrix()
 	end
 end
 
-function META:SetTRMatrix(m)
-
-
-	local part = self.PACPart
-	if part:IsValid() then
-		local lmat = m
-		--pace.mctrl.OnMove(part, lmat:GetTranslation())
-		--pace.mctrl.OnRotate(part, lmat:GetAngles())
-
-		--return
-	end
-
-
-	self.TRMatrix = m * Matrix()
-	self:InvalidateMatrix()
-end
-
-function META:GetTRMatrix()
-	local part = self.PACPart
-	if part:IsValid() then
-
-		local lmat = Matrix()
-		lmat:SetTranslation(part.Position)
-		lmat:SetAngles(part.Angles)
-
-		
-		--return lmat
-	end
-
-
-	return self.TRMatrix
-end
-
 function META:GetMatrix()
 	local part = self.PACPart
 	
 	if part:IsValid() then
-	--	return part:GetWorldMatrix()
+		return part:GetWorldMatrix()
 	end
 
 
@@ -394,10 +373,12 @@ function META:SetWorldMatrix(m)
 
 	local part = self.PACPart
 	if part:IsValid() then
-		local lmat = part:GetWorldMatrix():GetInverse() * m
-		--print(lmat)
+		local lmat = part:GetBoneMatrix():GetInverse() * m
+			
+		pace.mctrl.OnMove(part, lmat:GetTranslation())
+		pace.mctrl.OnRotate(part, lmat:GetAngles())
 
-		--return
+		return
 	end
 
 
