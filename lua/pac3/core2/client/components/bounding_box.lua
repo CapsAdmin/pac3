@@ -157,7 +157,7 @@ function META:GetWorldMin()
 	local scale = self.entity.transform:GetScaleMatrix()
 
 	local tr = Matrix()
-	tr:SetTranslation(((min + self:GetCenter()) * scale:GetScale() + scale:GetTranslation()) * m:GetScale())
+	tr:SetTranslation((min - self:GetCenter()) * scale:GetScale())
 	tr = tr * m
 
 	return tr:GetTranslation()
@@ -170,7 +170,7 @@ function META:GetWorldMax()
 	local scale = self.entity.transform:GetScaleMatrix()
 
 	local tr = Matrix()
-	tr:SetTranslation(((max + self:GetCenter()) * scale:GetScale() + scale:GetTranslation()) * m:GetScale())
+	tr:SetTranslation((max - self:GetCenter()) * scale:GetScale())
 	tr = tr * m
 
 	--print(utility.TransformVector(m, max + scale:GetTranslation() * m:GetScale()), tr:GetTranslation())

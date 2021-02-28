@@ -59,6 +59,10 @@ end
 function META:Render3D()
 
 	local part = self.PACPart
+
+	if part:IsValid() then
+		return
+	end
 	
 	if not self.model_set then return end
 	local ent = self.source_ent

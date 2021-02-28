@@ -74,7 +74,7 @@ function META:SetupViewTranslation()
 		"models/XQM/Rails/gumball_1.mdl",
 		Vector(0,0,0),
 		function()
-			local m = pac999.camera.GetViewMatrix():GetInverse() * self.entity.transform:GetMatrix()
+			local m = pac999.camera.GetViewMatrix():GetInverse() * self.entity.transform:GetWorldMatrix()
 
 			return function()
 				self.entity.transform:SetWorldMatrix(pac999.camera.GetViewMatrix() * m)
@@ -92,7 +92,7 @@ end
 
 function META:StartGrab(axis, center)
 
-	self.grab_matrix = self.entity.transform:GetMatrix() * Matrix()
+	self.grab_matrix = self.entity.transform:GetWorldMatrix() * Matrix()
 	self.grab_matrix:SetScale(Vector(1,1,1))
 	
 	center = center or self.grab_matrix:GetTranslation()
@@ -198,7 +198,7 @@ function META:SetupTranslation()
 
 			ent:SetWorldPosition(box_pos + (box_pos - self.entity:GetWorldCenter()):GetNormalized() * 15)
 
-			ent.transform:GetMatrix()
+			ent.transform:GetWorldMatrix()
 		end
 
 		do
@@ -210,7 +210,7 @@ function META:SetupTranslation()
 			ent:SetWorldPosition(ent:GetWorldPosition() + ent:GetUp() * ent:GetBoundingRadius()*2)
 
 			ent:AddEvent("Update", function(ent)
-				local m = self.entity.transform:GetMatrix()
+				local m = self.entity.transform:GetWorldMatrix()
 
 				update(ent, m[axis2](m))
 			end)
@@ -225,7 +225,7 @@ function META:SetupTranslation()
 			ent:SetColor(gizmo_color)
 			ent:SetWorldPosition(ent:GetWorldPosition() + ent:GetUp() * ent:GetBoundingRadius()*2.15)
 			ent:AddEvent("Update", function(ent)
-				local m = self.entity.transform:GetMatrix()
+				local m = self.entity.transform:GetWorldMatrix()
 
 				update(ent, m[axis2](m)*-1)
 			end)
@@ -378,7 +378,7 @@ function META:SetupScale()
 
 	local function build_callback(axis, axis2, reverse)
 		return function(component)
-			local m = self.entity.transform:GetMatrix() * Matrix()
+			local m = self.entity.transform:GetWorldMatrix() * Matrix()
 			m:SetScale(Vector(1,1,1))
 			local pos = m:GetTranslation()
 			local center_pos = util.IntersectRayWithPlane(
@@ -446,14 +446,14 @@ function META:SetupScale()
 
 			ent:SetWorldPosition(box_pos)
 
-			ent.transform:GetMatrix()
+			ent.transform:GetWorldMatrix()
 		end
 
 		local ent = create_grab(self, model, vector_origin, build_callback(axis, axis2, true))
 		ent:SetLocalScale(Vector(1,1,1)*scale)
 		ent:SetColor(gizmo_color)
 		ent:AddEvent("Update", function(ent)
-			local m = self.entity.transform:GetMatrix()
+			local m = self.entity.transform:GetWorldMatrix()
 			if axis2 == "GetRight" then
 				update(ent, m[axis2](m))
 			else
@@ -466,7 +466,7 @@ function META:SetupScale()
 		ent:SetColor(gizmo_color)
 
 		ent:AddEvent("Update", function(ent)
-			local m = self.entity.transform:GetMatrix()
+			local m = self.entity.transform:GetWorldMatrix()
 
 			if axis2 == "GetRight" then
 				update(ent, m[axis2](m) * -1)
