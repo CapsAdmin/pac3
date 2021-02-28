@@ -83,11 +83,18 @@ function META:SetupViewTranslation()
 	)
 
 	ent:SetColor(YELLOW)
-	ent:SetLocalScale(Vector(1,1,1)*0.5)
 
 	ent:AddEvent("Update", function()
+		ent:SetLocalScale(Vector(1,1,1) * 0.03 * self:GetDistanceScaler())
 		ent:SetWorldPosition(self.entity:GetWorldCenter())
 	end)
+end
+
+function META:GetDistanceScaler()
+	local center = self.entity:GetWorldCenter()
+	local distance = EyePos():Distance(center)
+	local size = self.entity:GetBoundingRadius()
+	return distance / size
 end
 
 function META:StartGrab(axis, center)
@@ -192,11 +199,15 @@ function META:SetupTranslation()
 		local wpos = self.entity:GetWorldPosition()
 
 		local function update(ent, dir)
-			local box_pos = self.entity:NearestPoint(self.entity:GetWorldCenter() + dir * 1000)
+			local m = self:GetDistanceScaler()
+
+			local box_pos = self.entity:NearestPoint(self.entity:GetWorldCenter() + dir * 1000 * m)
 
 			if not box_pos then return end
+			
+			ent:SetLocalScale(Vector(1,1,1.25) * m * 0.02)
 
-			ent:SetWorldPosition(box_pos + (box_pos - self.entity:GetWorldCenter()):GetNormalized() * 15)
+			ent:SetWorldPosition(box_pos + (box_pos - self.entity:GetWorldCenter()):GetNormalized() * m * 2)
 
 			ent.transform:GetWorldMatrix()
 		end
@@ -333,16 +344,16 @@ function META:SetupRotation()
 				ent:SetAngles(Angle(90 +45,90,90))
 			end
 
-			ent:SetLocalScale(Vector(1,1,0.0125) * 0.02 * self.entity:GetBoundingRadius())
-
 			ent:SetColor(gizmo_color)
 
 			ent:AddEvent("Update", function()
-				ent:SetWorldPosition(self.entity:GetWorldCenter())
 				local s = self.entity:GetScaleMatrix():GetScale()
 				local l = math.max(s.x, s.y, s.z)/3
-				ent:SetLocalScale(Vector(1,1,0.0125) * 0.02 * self.entity:GetBoundingRadius() * l)
-				--ent:SetPosition(vect)
+				
+				local m = self:GetDistanceScaler()
+				
+				ent:SetLocalScale(Vector(1,1,0.0125) * 0.2 * (m ^ 0.5))
+				ent:SetWorldPosition(self.entity:GetWorldCenter())
 			end)
 		end
 	end
