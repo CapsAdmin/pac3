@@ -98,43 +98,28 @@ do
 		if parts == nil or next(parts) == nil then
 			pac.UnhookEntityRender(ent)
 		else
+			if type == "update" then
+				pac.ResetBones(ent)
 
-
-			if pac.profile then
 				for key, part in pairs(parts) do
 					if part:IsValid() then
 						if not part:HasParent() then
-							if not draw_only then
+							if pac.profile then
 								part:CallRecursiveProfiled('CThink')
-							end
-
-							--[[print(part, part.OwnerName, type, part.OwnerName == "viewmodel" and type == "viewmodel" or
-							part.OwnerName == "hands" and type == "hands" or
-							part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands")]]
-
-							if part.OwnerName == "viewmodel" and type == "viewmodel" or
-								part.OwnerName == "hands" and type == "hands" or
-								part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands" then
-
-								part:Draw(nil, nil, type)
-							end
+								part:CallRecursiveProfiled("BuildBonePositions")
+							else
+								part:CallRecursive('CThink')
+								part:CallRecursive("BuildBonePositions")
+							end	
+						else
+							parts[key] = nil
 						end
-					else
-						parts[key] = nil
 					end
 				end
 			else
 				for key, part in pairs(parts) do
 					if part:IsValid() then
 						if not part:HasParent() then
-							if not draw_only then
-								think(part)
-
-								for _, child in ipairs(part:GetChildrenList()) do
-									think(child)
-								end
-							end
-
 							if part.OwnerName == "viewmodel" and type == "viewmodel" or
 								part.OwnerName == "hands" and type == "hands" or
 								part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands" then
@@ -146,35 +131,7 @@ do
 						parts[key] = nil
 					end
 				end
-			end
-
-			if not draw_only then
-				if type == 'opaque' or type == 'viewmodel' then pac.ResetBones(ent) end
-
-				-- bones MUST be setup before drawing or else unexpected/random results might happen
-
-				if pac.profile then
-					for key, part in pairs(parts) do
-						if part:IsValid() then
-							if not part:HasParent() then
-								part:CallRecursiveProfiled("BuildBonePositions")
-							end
-						else
-							parts[key] = nil
-						end
-					end
-				else
-					for key, part in pairs(parts) do
-						if part:IsValid() then
-							if not part:HasParent() then
-								part:CallRecursive("BuildBonePositions")
-							end
-						else
-							parts[key] = nil
-						end
-					end
-				end
-			end
+			end			
 		end
 
 		if pac.profile then
@@ -850,6 +807,19 @@ do -- drawing
 			end
 		end)
 	end
+
+	pac.AddHook("Think", "update_parts", function(viewmodelIn, playerIn, weaponIn)
+		for ent in next, pac.drawn_entities do
+			if IsValid(ent) then
+				if ent.pac_drawing and ent_parts[ent] then
+					pac.RenderOverride(ent, "update", true)
+				end
+			else
+				pac.drawn_entities[ent] = nil
+			end
+		end
+	end)
+
 
 	local alreadyDrawing = 0
 
