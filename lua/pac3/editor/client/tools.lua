@@ -602,10 +602,16 @@ elseif (CoreStatus == "RunThisCode") {
 		local str_holo = str_ref
 
 		for CI, clip in ipairs(part:GetChildren()) do
-			if clip.ClassName == "clip" or clip.ClassName == "clip2" and not clip:IsHidden() then
-				local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
-				local normal = ang:Forward()
-				str_holo = str_holo .. "    CN++, CT[CN,table] = table(I, " .. CI .. ", vec(" .. tovec(pos + normal) .. "), vec(" .. tovec(normal) .. "))\n"
+			if not clip:IsHidden() then
+				if clip.ClassName == "clip" then
+					local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
+					local normal = ang:Forward()
+					str_holo = str_holo .. "    CN++, CT[CN,table] = table(I, " .. CI .. ", vec(" .. tovec(pos + normal) .. "), vec(" .. tovec(normal) .. "))\n"
+				elseif clip.ClassName == "clip2" then
+					local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
+					local normal = ang:Forward()
+					str_holo = str_holo .. "    CN++, CT[CN,table] = table(I, " .. CI .. ", vec(" .. tovec(pos) .. "), vec(" .. tovec(normal) .. "))\n"
+				end
 			end
 		end
 
@@ -634,7 +640,7 @@ elseif (CoreStatus == "RunThisCode") {
 		local out = string.Replace(str_header, "[NAME]", part:GetName() or "savedpacholos")
 
 		for key, part in ipairs(part:GetChildren()) do
-			if part.is_model_part and not part:IsHidden() and not part.wavefront_mesh then
+			if part.is_model_part and not part:IsHidden() then
 				out = out .. part_to_holo(part)
 			end
 		end
