@@ -1106,10 +1106,11 @@ do
 	end
 
 	PART.AlwaysThink = true
+	PART.ThinkTime = 0
 
 	function PART:OnThink()
 		local ent = self:GetOwner(true)
-		if ent:IsValid() and ent.GetActiveWeapon and not self:IsHidden() then
+		if ent:IsValid() and ent.GetActiveWeapon then
 			local wep = ent:GetActiveWeapon()
 			if wep:IsValid() then
 				if wep ~= self.Entity then
