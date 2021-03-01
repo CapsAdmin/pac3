@@ -205,11 +205,16 @@ do
 			tr:Translate(-self:GetCageMin())
 		end
 
+
+		local part = self.PACPart
+		if part:IsValid() then
+			tr:Scale(part.Scale * part.Size)
+		end
+
 		self.ScaleMatrix = tr
 	end
 
 	function META:GetScaleMatrix()
-
 		if not self.ScaleMatrix then
 			self:InvalidateScaleMatrix()
 		end
@@ -244,9 +249,9 @@ end
 
 function META:GetMatrix()
 	local part = self.PACPart
-	
+
 	if part:IsValid() then
-		return part:GetWorldMatrix() 
+		return part:GetWorldMatrix()
 	end
 
 
@@ -273,6 +278,17 @@ function META:GetMatrix()
 	end
 
 	return self.cached_matrix
+end
+
+function META:GetTRMatrix()
+	local part = self.PACPart
+	if part:IsValid() then
+		local m = Matrix()
+		m:SetTranslation(part.Position)
+		m:SetAngles(part.Angles)
+		return m
+	end
+	return self.TRMatrix
 end
 
 function META:BuildTRMatrix()
@@ -312,7 +328,7 @@ function META:UpdatePACMatrix(m)
 
 	if not m then
 		local lmat =  self:GetScaleMatrix()
-		
+
 		pace.mctrl.OnScale(part, self:GetScaleMatrix():GetScale())
 		lmat = lmat*Matrix()
 		lmat:SetScale(Vector(1,1,1))
@@ -323,21 +339,21 @@ function META:UpdatePACMatrix(m)
 		return
 	end
 
-	local lmat = part:GetBoneMatrix():GetInverse() * m 
+	local lmat = part:GetBoneMatrix():GetInverse() * m
 
 	pace.mctrl.OnMove(part, lmat:GetTranslation())
 	pace.mctrl.OnRotate(part, lmat:GetAngles())
-	
+
 	part.WorldMatrix = nil
 	part:GetWorldMatrix()
-	
+
 	return true
 end
 
 function META:SetWorldMatrix(m)
 
 	if self:UpdatePACMatrix(m) then return end
-	
+
 
 	local lm = m:GetInverse() * self:GetMatrix()
 	self:SetTRMatrix(self:GetTRMatrix() * lm:GetInverse())
