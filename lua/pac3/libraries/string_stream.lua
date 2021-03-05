@@ -183,9 +183,9 @@ end
 --@param endian The endianness of number types. "big" or "little" (default "little")
 function ss_methods:setEndian(endian)
 	if endian == "little" then
-		setmetatable(self, ss_meta)
+		debug.setmetatable(self, ss_meta)
 	elseif endian == "big" then
-		setmetatable(self, ss_meta_big)
+		debug.setmetatable(self, ss_meta_big)
 	else
 		error("Invalid endian specified", 2)
 	end
