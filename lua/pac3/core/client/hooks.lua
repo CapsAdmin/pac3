@@ -38,7 +38,7 @@ do
 				ply:SetPoseParameter(data.key, data.val)
 			end
 		end
-		
+
 		tbl = ply.pac_flex_params
 
 		if tbl then
@@ -62,12 +62,7 @@ do
 			local part, thing = next(ply.pac_animation_sequences)
 
 			if part and part:IsValid() then
-				if part.Rate == 0 then
-					animrate = 1
-					ply:SetCycle(part.Offset % 1)
-				else
-					animrate = animrate * part.Rate
-				end
+				part:UpdateAnimation(ply)
 			elseif part and not part:IsValid() then
 				ply.pac_animation_sequences[part] = nil
 			end
