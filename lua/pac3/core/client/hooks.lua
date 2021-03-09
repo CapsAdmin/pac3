@@ -62,7 +62,17 @@ do
 			local part, thing = next(ply.pac_animation_sequences)
 
 			if part and part:IsValid() then
-				part:UpdateAnimation(ply)
+
+				if part.OwnerCycle then
+					if part.Rate == 0 then
+						animrate = 1
+						ply:SetCycle(part.Offset % 1)
+					else
+						animrate = animrate * part.Rate
+					end
+				else
+					part:UpdateAnimation(ply)
+				end
 			elseif part and not part:IsValid() then
 				ply.pac_animation_sequences[part] = nil
 			end

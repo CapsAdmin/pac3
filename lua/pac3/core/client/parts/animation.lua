@@ -255,16 +255,6 @@ function PART:UpdateAnimation(ent)
 		return
 	end
 
-	if self.OwnerCycle then
-		local owner = self.BaseClass.GetOwner(self, true)
-
-		if IsValid(owner) then
-			ent:SetCycle(owner:GetCycle())
-		end
-
-		return
-	end
-
 	local rate = math.min(self.Rate * duration, 1)
 
 	if seq ~= -1 then
