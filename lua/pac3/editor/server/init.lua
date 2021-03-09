@@ -1,5 +1,4 @@
 pace = pace or {}
-pace.net = include("pac3/libraries/netx.lua")
 
 -- for the default models
 resource.AddWorkshop("104691717")

@@ -262,6 +262,20 @@ function PANEL:ExpandTo(bExpand)
 	self:GetParentNode():ExpandTo(bExpand)
 end
 
+
+function PANEL:IsExpanded()
+	local parent = self:GetParent():GetParent()
+
+	while IsValid(parent) and parent.m_bExpanded ~= nil do
+		if parent.m_bExpanded == false then
+			return false
+		end
+		parent = parent:GetParent():GetParent()
+	end
+
+	return true
+end
+
 function PANEL:SetExpanded(bExpand)
 
 	if self.m_pParentNode:IsValid() then

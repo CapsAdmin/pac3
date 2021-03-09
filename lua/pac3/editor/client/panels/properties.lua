@@ -578,8 +578,8 @@ do -- list
 						pnl:SetTooltip(L(udata.description))
 					end
 
-					obj.editor_property = obj.editor_property or {}
-					obj.editor_property[key] = pnl
+					obj.pace_properties = obj.pace_properties or {}
+					obj.pace_properties[key] = pnl
 					pnl.part = obj
 					pnl.udata = udata
 

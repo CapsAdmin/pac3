@@ -31,6 +31,7 @@ pac.StartStorableVars()
 	pac.SetPropertyGroup(PART, "generic")
 		pac.GetSet(PART, "Model", "", {editor_panel = "model"})
 		pac.GetSet(PART, "SetModelToPlayer", false)
+		pac.GetSet(PART, "ForceObjUrl", false)
 
 	pac.SetPropertyGroup(PART, "orientation")
 		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
@@ -39,6 +40,7 @@ pac.StartStorableVars()
 
 	pac.SetPropertyGroup(PART, "appearance")
 		pac.GetSet(PART, "Color", Vector(1, 1, 1), {editor_panel = "color2"})
+		pac.GetSet(PART, "Brightness", 1)
 		pac.GetSet(PART, "NoLighting", false)
 		pac.GetSet(PART, "NoCulling", false)
 		pac.GetSet(PART, "Invert", false)
@@ -293,10 +295,13 @@ function PART:PreEntityDraw(owner, ent, pos, ang)
 		self:ModifiersPreEvent("OnDraw")
 
 		local r, g, b = self.Color.r, self.Color.g, self.Color.b
+		local brightness = self.Brightness
 
 		-- render.SetColorModulation and render.SetAlpha set the material $color and $alpha.
-		render_SetColorModulation(r,g,b)
-		render_SetBlend(self.Alpha)
+		render_SetColorModulation(r*brightness, g*brightness, b*brightness)
+		if not pac.drawing_motionblur_alpha then
+			render_SetBlend(self.Alpha)
+		end
 
 		if self.NoLighting then
 			render.SuppressEngineLighting(true)
@@ -351,8 +356,55 @@ function PART:OnDraw(owner, pos, ang)
 	pac.ResetBones(ent)
 end
 
+local function ent_draw_model(self, ent, pos, ang)
+	if self.obj_mesh then
+		ent:SetModelScale(0,0)
+		ent:DrawModel()
+
+		local matrix = Matrix()
+
+		matrix:SetAngles(ang)
+		matrix:SetTranslation(pos)
+
+		if ent.pac_model_scale then
+			matrix:Scale(ent.pac_model_scale)
+		else
+			matrix:Scale(self.Scale * self.Size)
+		end
+
+		cam.PushModelMatrix(matrix)
+			self.obj_mesh:Draw()
+		cam.PopModelMatrix()
+	else
+		ent:DrawModel()
+	end
+end
+
+function PART:DrawLoadingText(ent, pos, ang)
+	cam.Start2D()
+	cam.IgnoreZ(true)
+		local pos2d = pos:ToScreen()
+
+		surface.SetFont("pac_urlobj_loading")
+		surface.SetTextColor(255, 255, 255, 255)
+
+		local str = self.loading .. string.rep(".", pac.RealTime * 3 % 3)
+		local w, h = surface.GetTextSize(self.loading .. "...")
+
+		surface.SetTextPos(pos2d.x - w / 2, pos2d.y - h / 2)
+		surface.DrawText(str)
+	cam.IgnoreZ(false)
+	cam.End2D()
+end
+
 function PART:DrawModel(ent, pos, ang)
+	if self.loading then
+		self:DrawLoadingText(ent, pos, ang)
+	end
+
 	if self.Alpha == 0 or self.Size == 0 then return end
+	if self.loading and not self.obj_mesh then return end
+
 
 	if self.SetModelToPlayer then
 		pacx.SetModel(ent, self:GetPlayerOwner():GetModel(), self:GetPlayerOwner())
@@ -373,16 +425,16 @@ function PART:DrawModel(ent, pos, ang)
 	material_bound = self:BindMaterials(ent) or material_bound
 
 	ent.pac_drawing_model = true
-	ent:DrawModel()
+	ent_draw_model(self, ent, pos, ang)
 	ent.pac_drawing_model = false
 
 	if pac.projected_texture_enabled and not pac.flashlight_disabled then
 		render.PushFlashlightMode(true)
 
-		material_bound = self:BindMaterials(ent) or material_bound
-		ent.pac_drawing_model = true
-		ent:DrawModel()
-		ent.pac_drawing_model = false
+	material_bound = self:BindMaterials(ent) or material_bound
+	ent.pac_drawing_model = true
+	ent_draw_model(self, ent, pos, ang)
+	ent.pac_drawing_model = false
 
 		render.PopFlashlightMode()
 	end
@@ -390,7 +442,7 @@ function PART:DrawModel(ent, pos, ang)
 	if self.NoCulling then
 		render_CullMode(MATERIAL_CULLMODE_CCW)
 		material_bound = self:BindMaterials(ent) or material_bound
-		ent:DrawModel()
+		ent_draw_model(self, ent, pos, ang)
 	elseif self.Invert then
 		render_CullMode(MATERIAL_CULLMODE_CCW)
 	end
@@ -453,41 +505,105 @@ function PART:SetModel(path)
 	self.Model = path
 	self.Entity = self:GetEntity()
 
-	if path:find("^.-://") then
-		local status, reason = hook.Run('PAC3AllowMDLDownload', self:GetPlayerOwner(), self, path)
+	if path:find("://", nil, true) then
 
-		if ALLOW_TO_MDL:GetBool() and status ~= false then
-			self.loading = "downloading mdl zip"
-			pac.DownloadMDL(path, function(mdl_path)
-				self.loading = nil
-				self.errored = nil
+		if path:StartWith("objhttp") or path:EndsWith(".obj") or self.ForceObjUrl then
+			self.loading = "downloading obj"
 
-				local ent = self:GetEntity()
+			pac.urlobj.GetObjFromURL(path, false, false,
+				function(meshes, err)
 
-				if self.ClassName == "entity2" then
-					if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
-						pacx.SetModel(ent, path, self:GetPlayerOwner())
+					local function set_mesh(part, mesh)
+						part.obj_mesh = mesh
+
+						if not part.Materialm then
+							part.Materialm = Material("error")
+						end
+
+						function part.Entity.pacDrawModel(ent, simple)
+							if simple then
+								RealDrawModel(part, ent, ent:GetPos(), ent:GetAngles())
+							else
+								part:ModifiersPreEvent("OnDraw")
+								part:DrawModel(ent, ent:GetPos(), ent:GetAngles())
+								part:ModifiersPostEvent("OnDraw")
+							end
+						end
+
+						part.Entity:SetRenderBounds(Vector(1, 1, 1) * -300, Vector(1, 1, 1) * 300)
+					end
+
+					if not self:IsValid() then return end
+
+					self.loading = false
+
+					self.Entity = self:GetEntity()
+
+					if not meshes and err then
+						self.Entity:SetModel("models/error.mdl")
+						self.obj_mesh = nil
+						return
+					end
+
+					if table.Count(meshes) == 1 then
+						set_mesh(self, select(2, next(meshes)))
+					else
+						for key, mesh in pairs(meshes) do
+							local part = pac.CreatePart("model", self:GetOwnerName())
+							part:SetName(key)
+							part:SetParent(self)
+							part:SetMaterial(self:GetMaterial())
+							set_mesh(part, mesh)
+						end
+
+						self:SetAlpha(0)
+					end
+				end,
+				function(finished, statusMessage)
+					if finished then
+						self.loading = nil
+					else
+						self.loading = statusMessage
 					end
 				end
-
-				self:RealSetModel(mdl_path)
-
-			end, function(err)
-
-				if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
-					pace.MessagePrompt(err, "HTTP Request Failed for " .. path, "OK")
-				else
-					pac.Message(Color(0, 255, 0), "[model] ", Color(255, 255, 255), "HTTP Request Failed for " .. path .. " - " .. err)
-				end
-
-				self.loading = err
-				self.errored = true
-				self:RealSetModel("models/error.mdl")
-			end, self:GetPlayerOwner())
+			)
 		else
-			self.loading = reason or "mdl is not allowed"
-			self:RealSetModel("models/error.mdl")
-			pac.Message(self, ' mdl files are not allowed')
+			local status, reason = hook.Run('PAC3AllowMDLDownload', self:GetPlayerOwner(), self, path)
+
+			if ALLOW_TO_MDL:GetBool() and status ~= false then
+				self.loading = "downloading mdl zip"
+
+				pac.DownloadMDL(path, function(mdl_path)
+					self.loading = nil
+					self.errored = nil
+
+					local ent = self:GetEntity()
+
+					if self.ClassName == "entity2" then
+						if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
+							pacx.SetModel(ent, path, self:GetPlayerOwner())
+						end
+					end
+
+					self:RealSetModel(mdl_path)
+
+				end, function(err)
+
+					if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
+						pace.MessagePrompt(err, "HTTP Request Failed for " .. path, "OK")
+					else
+						pac.Message(Color(0, 255, 0), "[model] ", Color(255, 255, 255), "HTTP Request Failed for " .. path .. " - " .. err)
+					end
+
+					self.loading = err
+					self.errored = true
+					self:RealSetModel("models/error.mdl")
+				end, self:GetPlayerOwner())
+			else
+				self.loading = reason or "mdl is not allowed"
+				self:RealSetModel("models/error.mdl")
+				pac.Message(self, ' mdl files are not allowed')
+			end
 		end
 	else
 		local ent = self:GetEntity()
@@ -1001,6 +1117,7 @@ do
 	end
 
 	PART.AlwaysThink = true
+	PART.ThinkTime = 0
 
 	function PART:OnThink()
 		local ent = self:GetOwner(true)

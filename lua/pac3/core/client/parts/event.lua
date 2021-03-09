@@ -421,8 +421,8 @@ PART.OldEvents = {
 	},
 
 	ranger = {
-		arguments = {{compare = "number"}, {distance = "number"}},
-		callback = function(self, ent, compare, distance)
+		arguments = {{compare = "number"}, {distance = "number"}, {npcs_and_players_only = "boolean"}},
+		callback = function(self, ent, compare, distance, npcs_and_players_only)
 			local parent = self:GetParentEx()
 
 			if parent:IsValid() then
@@ -434,6 +434,10 @@ PART.OldEvents = {
 					endpos = parent.cached_pos + parent.cached_ang:Forward() * distance,
 					filter = ent,
 				})
+
+				if npcs_and_players_only and (not res.Entity:IsPlayer() and not res.Entity:IsNPC()) then
+					return false
+				end
 
 				return self:NumberOperator(res.Fraction * distance, compare)
 			end
@@ -1496,8 +1500,8 @@ function PART:OnThink()
 	self:TriggerEvent(should_hide(self, ent, data))
 
 	if pace and pace.IsActive() and self.Name == "" then
-		if self.editor_property and self.editor_property["Name"] and self.editor_property["Name"]:IsValid() then
-			self.editor_property["Name"]:SetText(self:GetNiceName())
+		if self.pace_properties and self.pace_properties["Name"] and self.pace_properties["Name"]:IsValid() then
+			self.pace_properties["Name"]:SetText(self:GetNiceName())
 		end
 	end
 
@@ -1687,6 +1691,7 @@ end
 function PART:OnHide()
 	if self.timerx_reset then
 		self.time = nil
+		self.number = 0
 	end
 
 	if self.Event == "weapon_class" then
@@ -1708,6 +1713,7 @@ function PART:OnShow()
 
 	if self.timerx_reset then
 		self.time = nil
+		self.number = 0
 	end
 end
 

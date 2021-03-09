@@ -17,20 +17,28 @@ local temp_color = Color(255, 255, 255)
 
 function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,ecb,eca, start_size, end_size, stretch)
 	self.trail_points = self.trail_points or {}
+	local points = self.trail_points
+
+	if pac.drawing_motionblur_alpha then
+		local a = pac.drawing_motionblur_alpha
+		self.trail_points_motionblur = self.trail_points_motionblur or {}
+		self.trail_points_motionblur[a] = self.trail_points_motionblur[a] or {}
+		points = self.trail_points_motionblur[a]
+	end
 
 	local time = RealTime()
 
-	if not self.trail_points[1] or self.trail_points[#self.trail_points].pos:Distance(pos) > spc then
-		table_insert(self.trail_points, {pos = pos * 1, life_time = time + len})
+	if not points[1] or points[#points].pos:Distance(pos) > spc then
+		table_insert(points, {pos = pos * 1, life_time = time + len})
 	end
 
-	local count = #self.trail_points
+	local count = #points
 
 	render_SetMaterial(mat)
 
 	render_StartBeam(count)
-		for i = #self.trail_points, 1, -1 do
-			local data = self.trail_points[i]
+		for i = #points, 1, -1 do
+			local data = points[i]
 
 			local f = (data.life_time - time)/len
 			local f2 = f
@@ -46,7 +54,7 @@ function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,e
 			render_AddBeam(data.pos, (f * start_size) + (f2 * end_size), coord * stretch, temp_color)
 
 			if f >= 1 then
-				table_remove(self.trail_points, i)
+				table_remove(points, i)
 			end
 		end
 	render_EndBeam()
@@ -54,12 +62,12 @@ function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,e
 	if self.CenterAttraction ~= 0 then
 		local attraction = FrameTime() * self.CenterAttraction
 		local center = Vector(0,0,0)
-		for _, data in ipairs(self.trail_points) do
+		for _, data in ipairs(points) do
 			center:Zero()
-			for _, data in ipairs(self.trail_points) do
+			for _, data in ipairs(points) do
 				center:Add(data.pos)
 			end
-			center:Mul(1 / #self.trail_points)
+			center:Mul(1 / #points)
 			center:Sub(data.pos)
 			center:Mul(attraction)
 
@@ -70,7 +78,7 @@ function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,e
 	if not self.Gravity:IsZero() then
 		local gravity = self.Gravity * FrameTime()
 		gravity:Rotate(ang)
-		for _, data in ipairs(self.trail_points) do
+		for _, data in ipairs(points) do
 			data.pos:Add(gravity)
 		end
 	end
@@ -103,7 +111,8 @@ pac.EndStorableVars()
 
 function PART:GetNiceName()
 	local str = pac.PrettifyName("/" .. self:GetTrailPath())
-	return str and str:match(".+/(.+)"):gsub("%..+", "") or "error"
+	local matched = str and str:match(".+/(.+)")
+	return matched and matched:gsub("%..+", "") or "error"
 end
 
 PART.LastAdd = 0

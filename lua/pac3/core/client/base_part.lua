@@ -48,7 +48,7 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "Name", "")
 		pac.GetSet(PART, "Hide", false)
 		pac.GetSet(PART, "OwnerName", "self")
-		pac.GetSet(PART, "EditorExpand", true, {hidden = true})
+		pac.GetSet(PART, "EditorExpand", false, {hidden = true})
 		pac.GetSet(PART, "UniqueID", "", {hidden = true})
 		pac.GetSet(PART, "IsDisturbing", false, {
 			editor_friendly = "IsExplicit",
@@ -1166,7 +1166,6 @@ do -- events
 	function PART:OnParent() end
 	function PART:OnChildAdd() end
 	function PART:OnUnParent() end
-	function PART:Highlight() end
 
 	function PART:OnHide() end
 	function PART:OnShow() end
@@ -1174,30 +1173,6 @@ do -- events
 	function PART:OnSetOwner(ent) end
 
 	function PART:OnEvent(event, ...) end
-end
-
-function PART:Highlight(skip_children, data)
-	local tbl = {self.Entity and self.Entity:IsValid() and self.Entity or nil}
-
-	if not skip_children then
-		for _, part in ipairs(self:GetChildren()) do
-			local ent = part.Entity
-
-			if ent and ent:IsValid() then
-				table.insert(tbl, ent)
-			end
-		end
-	end
-
-	if #tbl > 0 then
-		if data then
-			pac.haloex.Add(tbl, unpack(data))
-		else
-			local pulse = math.abs(1 + math.sin(pac.RealTime * 20) * 255)
-			pulse = pulse + 2
-			pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
-		end
-	end
 end
 
 do -- drawing. this code is running every frame

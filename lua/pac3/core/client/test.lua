@@ -1,14 +1,20 @@
 -- the order of tests is important, smoke test should always be first
 local tests = {
 	"smoke",
+	"all_parts",
 	"base_part",
 	"events",
+	"model_modifier",
+	"size_modifier",
 }
 
 local COLOR_ERROR = Color(255,100,100)
 local COLOR_WARNING = Color(255,150,50)
 local COLOR_NORMAL = Color(255,255,255)
 local COLOR_OK = Color(150,255,50)
+
+-- see bottom of this file and test_suite_backdoor.lua on server for more info
+local run_lua_on_server
 
 local function msg_color(color, ...)
 	local tbl = {}
@@ -59,6 +65,19 @@ local function start_test(name, done)
 	test.name = name
 	test.time = os.clock() + 5
 
+	test.RunLuaOnServer = function(code)
+		local ret
+		run_lua_on_server(code, function(...) ret = {...} end)
+		while not ret do
+			coroutine.yield()
+		end
+		return unpack(ret)
+	end
+
+	function test.SetTestTimeout(sec)
+		test.time = os.clock() + sec
+	end
+
 	function test.Setup()
 		hook.Add("ShouldDrawLocalPlayer", "pac_test", function() return true end)
 	end
@@ -69,17 +88,21 @@ local function start_test(name, done)
 
 	function test.Run(done) error("test.Run is not defined") end
 	function test.Remove()
-		if not test then return end
+		hook.Remove("ShouldDrawLocalPlayer", "pac_test")
+		hook.Remove("Think", "pac_test_coroutine")
+
+		if test.done then return end
 
 		if test.events_consume and test.events_consume_index then
 			msg_error(test.name .. " finished before consuming event ", test.events_consume[test.events_consume_index], " at index ", test.events_consume_index)
 		end
 
+		test.co = nil
+
 		test.Teardown()
 		done(test)
 
-		-- so that if done was called the same frame, start_test returns nil
-		test = nil
+		test.done = true
 	end
 
 	function test.equal(a, b)
@@ -117,6 +140,7 @@ local function start_test(name, done)
 	env.msg_error = msg_error
 	env.msg_warning = msg_warning
 	env.msg_color = msg_color
+	env.yield = coroutine.yield
 
 	local func = CompileFile("pac3/core/client/tests/"..name..".lua")
 
@@ -136,7 +160,32 @@ local function start_test(name, done)
 	func()
 
 	test.Setup()
-	test.Run(test.Remove)
+
+	test.co = coroutine.create(function()
+		test.Run(test.Remove)
+	end)
+
+	local ok, err = coroutine.resume(test.co)
+
+	if not ok then
+		ErrorNoHalt(err)
+		test.Remove()
+	end
+
+	hook.Add("Think", "pac_test_coroutine", function()
+		if not test.co then return end
+
+		local ok, err = coroutine.resume(test.co)
+
+		if not ok and err ~= "cannot resume dead coroutine" then
+			ErrorNoHalt(err)
+			test.Remove()
+		end
+	end)
+
+	if test.done then
+		return
+	end
 
 	return test
 end
@@ -152,9 +201,15 @@ concommand.Add("pac_test", function(ply, _, args)
 	end
 
 	if what == "client" then
+		local which = args[2]
+
 		pac.RemoveAllParts()
 
 		local tests = table.Copy(tests)
+
+		if which then
+			tests = {which}
+		end
 
 		local current_test = nil
 
@@ -191,4 +246,22 @@ concommand.Add("pac_test", function(ply, _, args)
 			end)
 		end)
 	end
+end)
+
+local lua_server_run_callbacks = {}
+
+function run_lua_on_server(code, cb)
+	local id = util.CRC(code .. tostring(cb))
+	lua_server_run_callbacks[id] = cb
+	net.Start("pac3_test_sutie_backdoor")
+		net.WriteString(id)
+		net.WriteString(code)
+	net.SendToServer()
+end
+
+net.Receive("pac3_test_sutie_backdoor_receive_results", function()
+	local id = net.ReadString()
+	local results = net.ReadTable()
+	lua_server_run_callbacks[id](unpack(results))
+	lua_server_run_callbacks[id] = nil
 end)

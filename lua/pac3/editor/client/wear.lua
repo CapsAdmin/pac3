@@ -56,6 +56,21 @@ do -- to server
 		return true
 	end
 
+	local function net_write_table(tbl)
+
+		local buffer = pac.StringStream()
+		buffer:writeTable(tbl)
+
+		local data = buffer:getString()
+		local ok, err = pcall(net.WriteStream, data)
+
+		if not ok then
+			return ok, err
+		end
+
+		return #data
+	end
+
 	function pace.SendPartToServer(part, extra)
 		local allowed, reason = pac.CallHook("CanWearParts", LocalPlayer())
 
@@ -79,7 +94,7 @@ do -- to server
 
 		net.Start("pac_submit")
 
-		local bytes, err = pace.net.SerializeTable(data)
+		local bytes, err = net_write_table(data)
 
 		if not bytes then
 			pace.Notify(false, "unable to transfer data to server: " .. tostring(err or "too big"), part:GetName())
@@ -100,7 +115,7 @@ do -- to server
 		end
 
 		net.Start("pac_submit")
-			local ret,err = pace.net.SerializeTable(data)
+			local ret,err = net_write_table(data)
 			if ret == nil then
 				pace.Notify(false, "unable to transfer data to server: "..tostring(err or "too big"), name)
 				return false
@@ -331,14 +346,18 @@ end
 net.Receive("pac_submit", function()
 	if not pac.IsEnabled() then return end
 
-	local data = pace.net.DeserializeTable()
 
-	if type(data.owner) ~= "Player" or not data.owner:IsValid() then
-		pac.Message("received message from server but owner is not valid!? typeof " .. type(data.owner) .. ' || ', data.owner)
-		return
-	end
+	net.ReadStream(ply, function(data)
+		local buffer = pac.StringStream(data)
+		local data = buffer:readTable()
 
-	pace.HandleReceivedData(data)
+		if type(data.owner) ~= "Player" or not data.owner:IsValid() then
+			pac.Message("received message from server but owner is not valid!? typeof " .. type(data.owner) .. ' || ', data.owner)
+			return
+		end
+
+		pace.HandleReceivedData(data)
+	end)
 end)
 
 function pace.Notify(allowed, reason, name)

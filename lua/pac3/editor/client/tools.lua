@@ -34,12 +34,178 @@ function pace.AddTool(name, callback, ...)
 	table.insert(pace.Tools, {name = name, callback = callback, suboptions = {...}})
 end
 
+
+pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
+
+	local class_translate = {
+		model = "model2",
+		material = "material_3d",
+		entity = "entity2",
+		bone = "bone2",
+		light = "light2",
+		trail = "trail2",
+		clip = "clip2",
+	}
+
+	local model_prop_translate = {
+		Color = function(tbl, val) tbl.Color = Vector(val.r/255, val.g/255, val.b/255) end,
+		DoubleFace = function(tbl, val) tbl.NoCulling = val end,
+		Fullbright = function(tbl, val) tbl.NoLighting = val end,
+
+		TextureFilter = function(tbl, val) tbl.NoTextureFiltering = not val end,
+		LodOverride = function(tbl, val) tbl.LevelOfDetail = val end,
+
+	}
+
+	local registered_parts = pac.GetRegisteredParts()
+
+	local material_translate = {}
+	for old_key in pairs(registered_parts.material.ShaderParams) do
+
+		local new_key = old_key:lower()
+		local new_val = registered_parts.material_3d[new_key]
+		local old_val = registered_parts.material[old_key]
+
+		if new_val ~= nil and type(new_val) == type(old_val) then
+			material_translate[old_key] = function(tbl, val)
+				tbl[new_key] = val
+			end
+		end
+	end
+
+	local prop_translate = {
+		model = model_prop_translate,
+		entity = table.Merge(model_prop_translate, {
+			HideEntity = function(tbl, val) tbl.NoDraw = val end
+		}),
+		material = material_translate,
+	}
+
+	local temp = {}
+
+	local function get_storable(classname)
+		if registered_parts[classname].StorableVars then
+			return registered_parts[classname].StorableVars
+		end
+
+		if temp[classname] then
+			return temp[classname]
+		end
+
+		local part = pac.CreatePart(classname, pac.LocalPlayer)
+		temp[classname] = part.StorableVars
+		part:Remove()
+
+		return temp[classname]
+	end
+
+	local saved = {}
+	for _, part in pairs(pac.GetLocalParts()) do
+		if not part:HasParent() then
+			table.insert(saved, part:ToTable())
+		end
+	end
+
+	pace.ClearParts()
+
+	local done = {}
+
+	local function walk(tbl, parent)
+		local new_classname = class_translate[tbl.self.ClassName]
+
+		if new_classname then
+			local old_classname = tbl.self.ClassName
+			tbl.self.ClassName = new_classname
+
+			if old_classname == "model" then
+				if tbl.self.BlurLength and tbl.self.BlurLength > 0 then
+					table.insert(tbl.children, {
+						self = {
+							ClassName = "motion_blur",
+							UniqueID = util.CRC(tostring({})),
+							BlurLength = tbl.self.BlurLength,
+							BlurSpacing = tbl.self.BlurSpacing,
+						},
+						children = {},
+					})
+				end
+			end
+
+			if old_classname == "entity" then
+				if tbl.self.Weapon == true and tbl.self.HideEntity then
+					table.insert(parent.children, {
+						self = {
+							ClassName = "weapon",
+							UniqueID = util.CRC(tostring({})),
+							NoDraw = true
+						},
+						children = {},
+					})
+				end
+			end
+
+			for key in pairs(get_storable(old_classname)) do
+				local value = tbl.self[key]
+				if value == nil then
+					value = registered_parts[old_classname][key]
+				end
+
+				if prop_translate[old_classname] and prop_translate[old_classname][key] then
+					tbl.self[key] = nil
+					prop_translate[old_classname][key](tbl.self, value)
+					pac.Message("translated property: ", key, " = ", value, " to ", tbl.self[key])
+				elseif not get_storable(new_classname)[key] then
+					local msg = tbl.self.ClassName .. "." .. key
+					if not done[msg] then
+						pac.Message(Color(255,100,100), "cannot translate property ", msg)
+						done[msg] = true
+					end
+				end
+			end
+
+		end
+
+		if tbl.self.ClassName == "proxy" and tbl.self.VariableName == "Color" then
+			if tbl.self.Expression ~= "" then
+				local r,g,b = unpack(tbl.self.Expression:Split(","))
+				r = tonumber(r)
+				g = tonumber(g)
+				b = tonumber(b)
+
+				if r and g and b then
+					tbl.self.Expression = (r/255)..","..(g/255)..","..(b/255)
+				end
+			end
+		end
+
+		if tbl.self.Model and tbl.self.Model:find("://", nil, true) then
+			tbl.self.ForceObjUrl = true
+		end
+
+		if tbl.children then
+			for _, child in ipairs(tbl.children) do
+				walk(child, tbl)
+			end
+		end
+	end
+
+	for _, tbl in ipairs(saved) do
+		walk(tbl)
+	end
+
+	for _, tbl in ipairs(saved) do
+		local part = pac.CreatePart(tbl.self.ClassName, pac.LocalPlayer)
+		part:SetTable(tbl)
+	end
+end)
+
+
 pace.AddTool(L"fix origin", function(part, suboption)
-	if part.ClassName ~= "model" and part.ClassName ~= "model" then return end
+	if not part.GetEntity then return end
 
 	local ent = part:GetEntity()
 
-	part:SetPositionOffset(part:GetPositionOffset() + -ent:OBBCenter() * part.Scale * part.Size)
+	part:SetPositionOffset(-ent:OBBCenter() * part.Scale * part.Size)
 end)
 
 pace.AddTool(L"replace ogg with webaudio", function(part, suboption)
@@ -436,10 +602,16 @@ elseif (CoreStatus == "RunThisCode") {
 		local str_holo = str_ref
 
 		for CI, clip in ipairs(part:GetChildren()) do
-			if clip.ClassName == "clip" or clip.ClassName == "clip2" and not clip:IsHidden() then
-				local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
-				local normal = ang:Forward()
-				str_holo = str_holo .. "    CN++, CT[CN,table] = table(I, " .. CI .. ", vec(" .. tovec(pos + normal) .. "), vec(" .. tovec(normal) .. "))\n"
+			if not clip:IsHidden() then
+				if clip.ClassName == "clip" then
+					local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
+					local normal = ang:Forward()
+					str_holo = str_holo .. "    CN++, CT[CN,table] = table(I, " .. CI .. ", vec(" .. tovec(pos + normal) .. "), vec(" .. tovec(normal) .. "))\n"
+				elseif clip.ClassName == "clip2" then
+					local pos, ang = clip.Position, clip:CalcAngles(clip.Angles)
+					local normal = ang:Forward()
+					str_holo = str_holo .. "    CN++, CT[CN,table] = table(I, " .. CI .. ", vec(" .. tovec(pos) .. "), vec(" .. tovec(normal) .. "))\n"
+				end
 			end
 		end
 
@@ -468,7 +640,7 @@ elseif (CoreStatus == "RunThisCode") {
 		local out = string.Replace(str_header, "[NAME]", part:GetName() or "savedpacholos")
 
 		for key, part in ipairs(part:GetChildren()) do
-			if part.is_model_part and not part:IsHidden() and not part.wavefront_mesh then
+			if part.is_model_part and not part:IsHidden() then
 				out = out .. part_to_holo(part)
 			end
 		end

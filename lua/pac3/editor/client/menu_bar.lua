@@ -59,6 +59,7 @@ local function populate_view(menu)
 
 	menu:AddCVar(L"camera follow", "pac_camera_follow_entity", "1", "0"):SetImage("icon16/camera_go.png")
 	menu:AddOption(L"reset view position", function() pace.ResetView() end):SetImage("icon16/camera_link.png")
+	menu:AddOption(L"reset zoom", function() pace.ResetZoom() end):SetImage("icon16/magnifier.png")
 
 	menu:AddOption(
 		L"about",
@@ -104,6 +105,7 @@ end
 local function populate_player(menu)
 	local pnl = menu:AddOption(L"t pose", function() pace.SetTPose(not pace.GetTPose()) end):SetImage("icon16/user_go.png")
 	menu:AddOption(L"reset eye angles", function() pace.ResetEyeAngles() end):SetImage("icon16/user_delete.png")
+	menu:AddOption(L"reset zoom", function() pace.ResetZoom() end):SetImage("icon16/magnifier.png")
 
 	-- this should be in pacx but it's kinda stupid to add a hook just to populate the player menu
 	-- make it more generic

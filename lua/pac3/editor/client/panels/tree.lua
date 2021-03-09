@@ -24,7 +24,7 @@ do
 	local function get_added_nodes(self)
 		local added_nodes = {}
 		for i,v in ipairs(self.added_nodes) do
-			if v.part and v:IsVisible() then
+			if v.part and v:IsVisible() and v:IsExpanded() then
 				table.insert(added_nodes, v)
 			end
 		end
@@ -54,8 +54,8 @@ do
 		if
 			not gui.IsGameUIVisible()  and
 			pace.current_part:IsValid() and
-			pace.current_part.editor_node and
-			pace.current_part.editor_node:IsValid() and not
+			pace.current_part.pace_tree_node and
+			pace.current_part.pace_tree_node:IsValid() and not
 			(
 				pace.BusyWithProperties:IsValid() or
 				pace.ActiveSpecialPanel:IsValid() or
@@ -65,18 +65,17 @@ do
 			)
 		then
 			if input.IsKeyDown(KEY_LEFT) then
-				pace.current_part:SetEditorExpand(false)
-				pace.RefreshTree(true)
+				pace.Call("VariableChanged", pace.current_part, "EditorExpand", false)
 			elseif input.IsKeyDown(KEY_RIGHT) then
-				pace.current_part:SetEditorExpand(true)
-				pace.RefreshTree(true)
+				pace.Call("VariableChanged", pace.current_part, "EditorExpand", true)
 			end
+
 			if input.IsKeyDown(KEY_UP) or input.IsKeyDown(KEY_PAGEUP) then
 				local added_nodes = get_added_nodes(self)
 				local offset = input.IsKeyDown(KEY_PAGEUP) and 10 or 1
 				if not self.scrolled_up or self.scrolled_up < os.clock() then
 					for i,v in ipairs(added_nodes) do
-						if v == pace.current_part.editor_node then
+						if v == pace.current_part.pace_tree_node then
 							local node = added_nodes[i - offset] or added_nodes[1]
 							if node then
 								node:DoClick()
@@ -97,11 +96,11 @@ do
 				local offset = input.IsKeyDown(KEY_PAGEDOWN) and 10 or 1
 				if not self.scrolled_down or self.scrolled_down < os.clock() then
 					for i,v in ipairs(added_nodes) do
-						if v == pace.current_part.editor_node then
+						if v == pace.current_part.pace_tree_node then
 							local node = added_nodes[i + offset] or added_nodes[#added_nodes]
 							if node then
 								node:DoClick()
-								scroll_to_node(self, node)
+								--scroll_to_node(self, node)
 								break
 							end
 						end
@@ -116,7 +115,7 @@ do
 
 		for key, part in pairs(pac.GetLocalParts()) do
 
-			local node = part.editor_node
+			local node = part.pace_tree_node
 
 			if node and node:IsValid() then
 				if node.add_button then
@@ -159,7 +158,7 @@ function PANEL:OnMouseReleased(mc)
 	end
 end
 
-function PANEL:SetModel(path, icon)
+function PANEL:SetModel(path)
 	if not file.Exists(path, "GAME") then
 		path = player_manager.TranslatePlayerModel(path)
 		if not file.Exists(path, "GAME") then
@@ -172,9 +171,14 @@ function PANEL:SetModel(path, icon)
 	pnl:SetModel(path or "")
 	pnl:SetSize(16, 16)
 
-
 	self.Icon:Remove()
 	self.Icon = pnl
+
+	self.ModelPath = path
+end
+
+function PANEL:GetModel()
+	return self.ModelPath
 end
 
 local function install_drag(node)
@@ -320,6 +324,7 @@ function PANEL:AddNode(...)
 	add_button.DoRightClick = function() node:DoRightClick() end
 	node.add_button = add_button
 	node.SetModel = self.SetModel
+	node.GetModel = self.GetModel
 	node.AddNode = PANEL.AddNode
 	node.PerformLayout = node_layout
 
@@ -363,8 +368,8 @@ function PANEL:PopulateParts(node, parts, children)
 		if not part:HasParent() or children then
 			local part_node
 
-			if IsValid(part.editor_node) then
-				part_node = part.editor_node
+			if IsValid(part.pace_tree_node) then
+				part_node = part.pace_tree_node
 			elseif IsValid(self.parts[key]) then
 				part_node = self.parts[key]
 			else
@@ -375,7 +380,7 @@ function PANEL:PopulateParts(node, parts, children)
 
 			if part.Description then part_node:SetTooltip(L(part.Description)) end
 
-			part.editor_node = part_node
+			part.pace_tree_node = part_node
 			part_node.part = part
 
 			self.parts[key] = part_node
@@ -415,8 +420,8 @@ function PANEL:PopulateParts(node, parts, children)
 				part_node:SetSelected(true)
 
 				local function expand(part)
-					if part:HasParent() and part.Parent.editor_node then
-						part.Parent.editor_node:SetExpanded(true)
+					if part:HasParent() and part.Parent.pace_tree_node then
+						part.Parent.pace_tree_node:SetExpanded(true)
 						expand(part.Parent)
 					end
 				end
@@ -442,7 +447,6 @@ function PANEL:SelectPart(part)
 		else
 			if node.part == part then
 				node:SetSelected(true)
-				node:ExpandTo(true)
 			else
 				node:SetSelected(false)
 			end
@@ -478,10 +482,10 @@ end
 pace.RegisterPanel(PANEL)
 
 local function remove_node(part)
-	if (part.editor_node or NULL):IsValid() and part:GetRootPart().show_in_editor ~= false then
-		part.editor_node:SetForceShowExpander()
-		part.editor_node:GetRoot().m_pSelectedItem = nil
-		part.editor_node:Remove()
+	if (part.pace_tree_node or NULL):IsValid() and part:GetRootPart().show_in_editor ~= false then
+		part.pace_tree_node:SetForceShowExpander()
+		part.pace_tree_node:GetRoot().m_pSelectedItem = nil
+		part.pace_tree_node:Remove()
 		pace.RefreshTree()
 	end
 end
@@ -501,6 +505,15 @@ local function refresh(part)
 	end
 end
 pac.AddHook("pac_OnPartCreated", "pace_create_tree_nodes", refresh)
+
+pac.AddHook("pace_OnVariableChanged", "pace_create_tree_nodes", function(part, key, val)
+	if key == "EditorExpand" then
+		local node = part.editor_node
+		if IsValid(node) then
+			node:SetExpanded(val)
+		end
+	end
+end)
 
 function pace.RefreshTree(reset)
 	if pace.tree:IsValid() then

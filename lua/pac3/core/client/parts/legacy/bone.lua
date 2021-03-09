@@ -169,7 +169,7 @@ function pac.build_bone_callback(ent)
 			if part:IsValid() then
 				local mat = ent:GetBoneMatrix(data.bone)
 				if mat then
-					if part.FollowPart:IsValid() then
+					if part.FollowPart:IsValid() and part.FollowPart.cached_ang and part.FollowPart.cached_pos then
 						if part.FollowAnglesOnly then
 							local pos = mat:GetTranslation()
 							mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart.cached_ang)
@@ -282,6 +282,9 @@ function PART:OnBuildBonePositions()
 	end
 
 	manscale(owner, self.BoneIndex, scale, self)
+
+	-- TODO: only when actually modified?
+	owner:SetupBones()
 end
 
 pac.RegisterPart(PART)

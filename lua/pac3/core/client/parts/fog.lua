@@ -36,12 +36,16 @@ function PART:SetColor(v)
 end
 
 function PART:OnParent(part)
-	part:AddModifier(self)
+	if part.AddModifier then
+		part:AddModifier(self)
+	end
 end
 
 function PART:OnUnParent(part)
 	if not part:IsValid() then return end
-	part:RemoveModifier(self)
+	if part.RemoveModifier then
+		part:RemoveModifier(self)
+	end
 end
 
 function PART:PreOnDraw()

@@ -27,20 +27,38 @@ local function make_copy(tbl, input)
 	end
 end
 
+local function net_write_table(tbl)
+
+	local buffer = pac.StringStream()
+	buffer:writeTable(tbl)
+
+	local data = buffer:getString()
+	local ok, err = pcall(net.WriteStream, data)
+
+	if not ok then
+		return ok, err
+	end
+
+	return #data
+end
+
+
 pace.dupe_ents = pace.dupe_ents or {}
 
-local function fixSanity(tableIn, target)
+local uid2key = include("legacy_network_dictionary_translate.lua")
+
+local function translate_old_dupe(tableIn, target)
 	for key, value2 in pairs(tableIn) do
 		local value
 
 		if type(value2) == 'table' then
-			value = fixSanity(value2, {})
+			value = translate_old_dupe(value2, {})
 		else
 			value = value2
 		end
 
 		if type(key) == 'number' and key > 10000 then
-			local str = tostring(key)
+			local str = uid2key[key] or key
 			target[str] = value
 		else
 			target[key] = value
@@ -53,12 +71,8 @@ end
 duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 	if parts.json then
 		parts = util.JSONToTable(parts.json)
-
-		-- sanity police for json's __index accesses
-		parts = fixSanity(parts, {})
+		parts = translate_old_dupe(parts, {})
 	end
-
-	pace.net.SimulateTableReceive(parts)
 
 	local id = ent:EntIndex()
 
@@ -289,7 +303,7 @@ function pace.SubmitPart(data, filter)
 		local ret = hook.Run("pac_SendData", players, data)
 		if ret == nil then
 			net.Start("pac_submit")
-			local bytes, err = pace.net.SerializeTable(data)
+			local bytes, err = net_write_table(data)
 
 			if not bytes then
 				ErrorNoHalt("[PAC3] Outfit broadcast failed for " .. tostring(data.owner) .. ": " .. tostring(err) .. '\n')
@@ -415,8 +429,10 @@ pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
 		end
 	end
 
-	local data = pace.net.DeserializeTable()
-	pace.HandleReceivedData(ply, data)
+	net.ReadStream(ply, function(data)
+		local buffer = pac.StringStream(data)
+		pace.HandleReceivedData(ply, buffer:readTable())
+	end)
 end)
 
 function pace.ClearOutfit(ply)
