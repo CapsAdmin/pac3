@@ -2025,8 +2025,8 @@ do
 					RunConsoleCommand("pac_event", selected.event.trigger, "1")
 				end
 			end
-			selected = nil
 		end
+		selected = nil
 	end
 
 	concommand.Add("+pac_events", pac.openEventSelectionWheel)
