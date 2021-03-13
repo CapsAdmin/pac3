@@ -31,19 +31,13 @@ do
 			ply.pac_physics_died = false
 		end
 
-		local tbl = ply.pac_pose_params
+		do
+			local tbl = ply.pac_pose_params
 
-		if tbl then
-			for _, data in pairs(tbl) do
-				ply:SetPoseParameter(data.key, data.val)
-			end
-		end
-
-		tbl = ply.pac_flex_params
-
-		if tbl then
-			for flex, weight in pairs(tbl) do
-				ply:SetFlexWeight(flex, weight)
+			if tbl then
+				for _, data in pairs(tbl) do
+					ply:SetPoseParameter(data.key, data.val)
+				end
 			end
 		end
 

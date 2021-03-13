@@ -381,6 +381,12 @@ do -- bone manipulation for boneanimlib
 			ManipulateBoneScale(ent, i, ent:GetManipulateBoneScale(i) * (1 + math.sin(RealTime() * 4) * 0.1))
 			ent.pac_bones_select_target = nil
 		end
+
+		ent:SetFlexScale(1)
+
+		for i = 0, ent:GetFlexNum() - 1 do
+			ent:SetFlexWeight(i, 0)
+		end
 	end
 
 	function pac.ManipulateBonePosition(ply, id, var)

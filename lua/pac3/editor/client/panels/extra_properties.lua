@@ -546,6 +546,88 @@ do -- model modifiers
 	pace.RegisterPanel(PANEL)
 end
 
+
+do -- flex 2
+
+	-- Make the internal flex names be more presentable, TODO: handle numbers
+	local function PrettifyName( name )
+		name = name:Replace( "_", " " )
+
+		-- Try to split text into words, where words would start with single uppercase character
+		local newParts = {}
+		for id, str in pairs( string.Explode( " ", name ) ) do
+			local wordStart = 1
+			for i = 2, str:len() do
+				local c = str[ i ]
+				if ( c:upper() == c ) then
+					local toAdd = str:sub(wordStart, i - 1)
+					if ( toAdd:upper() == toAdd ) then continue end
+					table.insert( newParts, toAdd )
+					wordStart = i
+				end
+
+			end
+
+			table.insert( newParts, str:sub(wordStart, str:len()))
+		end
+
+		-- Uppercase all first characters
+		for id, str in pairs( newParts ) do
+			if ( str:len() < 2 ) then continue end
+			newParts[ id ] = str:Left( 1 ):upper() .. str:sub( 2 )
+		end
+
+		return table.concat( newParts, " " )
+	end
+
+
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_flex_weights"
+	PANEL.Base = "pace_properties_base_type"
+
+	function PANEL:ExtraPopulate()
+		local part = pace.current_part
+		local ent = part:GetOwner()
+		if ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() and ent:GetFlexNum() == 0 then return end
+
+		local tbl = {}
+		local weight_map = util.JSONToTable(part:GetFlexWeights()) or {}
+
+		for i = 0, ent:GetFlexNum() - 1 do
+			local name = ent:GetFlexName(i)
+
+			weight_map[name] = weight_map[name] or 0
+
+			tbl[name] = {
+				val = weight_map[name],
+				callback = function(val)
+					if ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() == 0 then return end
+
+					weight_map[name] = tonumber(val) or 0
+
+					part:SetFlexWeights(util.TableToJSON(weight_map))
+				end,
+				userdata = {
+					editor_friendly = PrettifyName(name),
+					group = "flexes",
+					editor_sensitivity = 0.1,
+					editor_onchange = function(self, num)
+						local min, max = ent:GetFlexBounds(i)
+
+						return math.Clamp(num, min, max)
+					end,
+				},
+			}
+		end
+
+		pace.properties:Populate(tbl, true)
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
+
 do -- model modifiers
 	local PANEL = {}
 
