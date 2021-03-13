@@ -27,6 +27,9 @@ PART.ProperColorRange = true
 PART.Group = 'model'
 
 pac.StartStorableVars()
+	pac.PropertyOrder(PART, "Name")
+	pac.PropertyOrder(PART, "Hide")
+	pac.PropertyOrder(PART, "ParentName")
 
 	pac.SetPropertyGroup(PART, "generic")
 		pac.GetSet(PART, "Model", "", {editor_panel = "model"})
@@ -797,6 +800,13 @@ do
 	PART.is_model_part = false
 
 	pac.StartStorableVars()
+
+	pac.SetPropertyGroup(PART, "generic")
+	pac.PropertyOrder(PART, "Name")
+	pac.PropertyOrder(PART, "Hide")
+	pac.PropertyOrder(PART, "ParentName")
+
+
 	pac.SetPropertyGroup(PART, "appearance")
 		pac.GetSet(PART, "NoDraw", false)
 		pac.GetSet(PART, "DrawShadow", true)
@@ -1023,6 +1033,10 @@ do
 
 	pac.StartStorableVars()
 		pac.SetPropertyGroup(PART, "generic")
+			pac.PropertyOrder(PART, "Name")
+			pac.PropertyOrder(PART, "Hide")
+			pac.PropertyOrder(PART, "ParentName")
+
 			pac.GetSet(PART, "OverridePosition", false)
 			pac.GetSet(PART, "Class", "all", {enums = function()
 				local out = {
