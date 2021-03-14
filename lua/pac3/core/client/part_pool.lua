@@ -110,7 +110,7 @@ do
 							else
 								part:CallRecursive('CThink')
 								part:CallRecursive("BuildBonePositions")
-							end	
+							end
 						else
 							parts[key] = nil
 						end
@@ -131,7 +131,7 @@ do
 						parts[key] = nil
 					end
 				end
-			end			
+			end
 		end
 
 		if pac.profile then
@@ -809,6 +809,9 @@ do -- drawing
 	end
 
 	pac.AddHook("Think", "update_parts", function(viewmodelIn, playerIn, weaponIn)
+		pac.RealTime = RealTime()
+		pac.FrameNumber = FrameNumber()
+
 		for ent in next, pac.drawn_entities do
 			if IsValid(ent) then
 				if ent.pac_drawing and ent_parts[ent] then
