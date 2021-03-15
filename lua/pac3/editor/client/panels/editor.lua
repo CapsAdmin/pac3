@@ -38,7 +38,7 @@ function PANEL:Init()
 	self.exit_button = vgui.Create("DButton")
 	self.exit_button:SetText("")
 	self.exit_button:MakePopup()
-	--self.exit_button:SetZPos(1)
+	self.exit_button:SetZPos(100)
 	self.exit_button.DoClick = function() self:Close() end
 	self.exit_button.Paint = function(self, w, h) derma.SkinHook("Paint", "WindowCloseButton", self, w, h) end
 	self.exit_button:SetSize(31, 26)
@@ -208,27 +208,60 @@ function PANEL:Think(...)
 	end
 
 	if self.exit_button:IsValid() then
+		local stickX, stickY = -4, -4
+		local stickW = self.exit_button:GetWide()
 
 		if self:GetPos() + self:GetWide() / 2 < ScrW() / 2 then
-			self.exit_button:SetPos(ScrW() - self.exit_button:GetWide() + 4, -4)
-		else
-			self.exit_button:SetPos(-4, -4)
+			stickX = ScrW() - stickW + 4
+		end
+
+		if self.properties:IsValid() then
+			-- intereference
+			if stickX >= self.properties:GetPos() and stickX <= self.properties:GetPos() + self.properties:GetWide() or stickX + stickW >= self.properties:GetPos() and stickX + stickW <= self.properties:GetPos() + self.properties:GetWide() then
+				-- stick to right side of properties
+				if self.properties:GetPos() + self.properties:GetWide() / 2 < ScrW() / 2 then
+					stickX = self.properties:GetPos() + self.properties:GetWide()
+				-- stick to left side of properties
+				else
+					stickX = self.properties:GetPos() - stickW
+				end
+			end
+		end
+
+		if self.exit_button:GetPos() ~= stickX or select(2, self.exit_button:GetPos()) ~= stickY then
+			self.exit_button:SetPos(stickX, stickY)
 		end
 	end
 
 	if self.zoomframe:IsValid() then
-
-		self.zoomsettings:InvalidateLayout( true )
-		self.zoomsettings:SizeToChildren( false, true )
+		self.zoomsettings:InvalidateLayout(true )
+		self.zoomsettings:SizeToChildren(false, true)
 
 		self.zoomframe:InvalidateLayout( true )
 		self.zoomframe:SizeToChildren( false, true )
 
-		if self:GetPos() + self:GetWide() / 2 < ScrW() / 2 then
-			self.zoomframe:SetPos(ScrW() - self.zoomframe:GetWide(), ScrH() - self.zoomframe:GetTall())
+		local stickX, stickY = 0, ScrH() - self.zoomframe:GetTall()
+		local stickW = self.zoomframe:GetWide()
 
-		else
-			self.zoomframe:SetPos(0,ScrH() - self.zoomframe:GetTall())
+		if self:GetPos() + self:GetWide() / 2 < ScrW() / 2 then
+			stickX, stickY = ScrW() - self.zoomframe:GetWide(), ScrH() - self.zoomframe:GetTall()
+		end
+
+		if self.properties:IsValid() then
+			-- intereference
+			if stickX >= self.properties:GetPos() and stickX <= self.properties:GetPos() + self.properties:GetWide() or stickX + stickW >= self.properties:GetPos() and stickX + stickW <= self.properties:GetPos() + self.properties:GetWide() then
+				-- stick to right side of properties
+				if self.properties:GetPos() + self.properties:GetWide() / 2 < ScrW() / 2 then
+					stickX = self.properties:GetPos() + self.properties:GetWide()
+				-- stick to left side of properties
+				else
+					stickX = self.properties:GetPos() - stickW
+				end
+			end
+		end
+
+		if self.zoomframe:GetPos() ~= stickX or select(2, self.zoomframe:GetPos()) ~= stickY then
+			self.zoomframe:SetPos(stickX, stickY)
 		end
 
 		local x, y = self.zoomframe:GetPos()

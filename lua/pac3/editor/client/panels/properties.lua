@@ -153,6 +153,8 @@ do -- frame
 		local bar = vgui.Create("DMenuBar", self)
 		bar:SetSize(self:GetWide(), 17)
 
+		self._bar = bar
+
 		--[[
 		local div = vgui.Create("DVerticalDivider", self)
 		div:Dock(FILL)
