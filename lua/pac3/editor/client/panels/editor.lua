@@ -306,12 +306,15 @@ end
 
 function pace.GainFocus(show_editor)
 	local self = pace.Editor
+
 	if self:IsValid() then
 		if self.allowclick ~= false then
 			self:MakePopup()
 			self.properties:MakePopup()
 			self.exit_button:MakePopup()
+
 			pace.Focused = true
+
 			if not show_editor then
 				self:AlphaTo(255, 0.1, 0)
 				self.properties:AlphaTo(255, 0.1, 0)
@@ -324,11 +327,20 @@ end
 
 function pace.KillFocus(show_editor)
 	local self = pace.Editor
+
 	if self:IsValid() then
 		self:KillFocus()
 		self.properties:KillFocus()
+		self.exit_button:KillFocus()
+
 		self:SetMouseInputEnabled(false)
 		self:SetKeyBoardInputEnabled(false)
+
+		self.properties:SetMouseInputEnabled(false)
+		self.exit_button:SetMouseInputEnabled(false)
+		self.properties:SetKeyBoardInputEnabled(false)
+		self.exit_button:SetKeyBoardInputEnabled(false)
+
 		gui.EnableScreenClicker(false)
 		pace.Focused = false
 
