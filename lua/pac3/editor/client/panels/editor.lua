@@ -194,13 +194,16 @@ function PANEL:Think(...)
 	for k,v in pairs(pac.GetRenderTimeInfo(pac.LocalPlayer)) do
 		self.rendertime_data[k] = Lerp(0.03, self.rendertime_data[k] or 0, v)
 	end
+	local sW, sH = ScrW(), ScrH()
+
+--  local bar = self.menu_bar unused??
 
 	local bar = self.menu_bar
 
 	self:SetTall(ScrH())
 	local w = math.max(self:GetWide(), 200)
 	self:SetWide(w)
-	self:SetPos(math.Clamp(self:GetPos(), 0, ScrW() - w), 0)
+	self:SetPos(math.Clamp(self:GetPos(), 0, sW - w), 0)
 
 	if self.x ~= self.last_x then
 		self:SetCookie("x", self.x)
@@ -211,15 +214,15 @@ function PANEL:Think(...)
 		local stickX, stickY = -4, -4
 		local stickW = self.exit_button:GetWide()
 
-		if self:GetPos() + self:GetWide() / 2 < ScrW() / 2 then
-			stickX = ScrW() - stickW + 4
+		if self:GetPos() + self:GetWide() / 2 < sW / 2 then
+			stickX = sW - stickW + 4
 		end
 
 		if self.properties:IsValid() then
 			-- intereference
 			if stickX >= self.properties:GetPos() and stickX <= self.properties:GetPos() + self.properties:GetWide() or stickX + stickW >= self.properties:GetPos() and stickX + stickW <= self.properties:GetPos() + self.properties:GetWide() then
 				-- stick to right side of properties
-				if self.properties:GetPos() + self.properties:GetWide() / 2 < ScrW() / 2 then
+				if self.properties:GetPos() + self.properties:GetWide() / 2 < sW / 2 then
 					stickX = self.properties:GetPos() + self.properties:GetWide()
 				-- stick to left side of properties
 				else
@@ -240,18 +243,18 @@ function PANEL:Think(...)
 		self.zoomframe:InvalidateLayout( true )
 		self.zoomframe:SizeToChildren( false, true )
 
-		local stickX, stickY = 0, ScrH() - self.zoomframe:GetTall()
+		local stickX, stickY = 0, sH - self.zoomframe:GetTall()
 		local stickW = self.zoomframe:GetWide()
 
-		if self:GetPos() + self:GetWide() / 2 < ScrW() / 2 then
-			stickX, stickY = ScrW() - self.zoomframe:GetWide(), ScrH() - self.zoomframe:GetTall()
+		if self:GetPos() + self:GetWide() / 2 < sW / 2 then
+			stickX, stickY = sW - self.zoomframe:GetWide(), sH - self.zoomframe:GetTall()
 		end
 
 		if self.properties:IsValid() then
 			-- intereference
 			if stickX >= self.properties:GetPos() and stickX <= self.properties:GetPos() + self.properties:GetWide() or stickX + stickW >= self.properties:GetPos() and stickX + stickW <= self.properties:GetPos() + self.properties:GetWide() then
 				-- stick to right side of properties
-				if self.properties:GetPos() + self.properties:GetWide() / 2 < ScrW() / 2 then
+				if self.properties:GetPos() + self.properties:GetWide() / 2 < sW / 2 then
 					stickX = self.properties:GetPos() + self.properties:GetWide()
 				-- stick to left side of properties
 				else
@@ -260,15 +263,22 @@ function PANEL:Think(...)
 			end
 		end
 
+		if pace.timeline.IsActive() then
+			local _tall = pace.timeline.frame:GetTall() + 8
+			stickY = stickY - _tall
+
+			self:SetTall(sH - _tall)
+			self.properties:SetTall(sH - _tall)
+		else
+			self:SetTall(sH)
+			self.properties:SetTall(sH)
+		end
+
 		if self.zoomframe:GetPos() ~= stickX or select(2, self.zoomframe:GetPos()) ~= stickY then
 			self.zoomframe:SetPos(stickX, stickY)
 		end
 
 		local x, y = self.zoomframe:GetPos()
-
-		if pace.timeline.IsActive() then
-			self.zoomframe:SetPos(x,y-pace.timeline.frame:GetTall())
-		end
 
 		if pace.zoom_reset then
 			self.zoomslider:SetValue(75)
