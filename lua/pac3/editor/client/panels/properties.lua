@@ -153,6 +153,7 @@ do -- frame
 		local bar = vgui.Create("DMenuBar", self)
 		bar:SetSize(self:GetWide(), 17)
 
+		--[[
 		local div = vgui.Create("DVerticalDivider", self)
 		div:Dock(FILL)
 		div:SetTopMin(40)
@@ -160,15 +161,20 @@ do -- frame
 		div:SetCookieName("pac3_properties")
 		div:SetTopHeight(ScrH() / 1.4)
 		div:LoadCookies()
+		]]
 
-		local pnl = pace.CreatePanel("properties", div)
-		pace.properties = pnl
-		div:SetTop(pnl)
+		--local pnl = pace.CreatePanel("properties", div)
+		local properties = pace.CreatePanel("properties", self)
+		pace.properties = properties
+		properties:Dock(FILL)
+		--div:SetTop(properties)
 
+		--[[
 		local hlpnl = vgui.Create("DTextEntry", div)
 		hlpnl:SetDisabled(true)
 		hlpnl:SetText("blah blah help text on hover")
 		div:SetBottom(hlpnl)
+		]]
 		self.div = div
 	end
 
