@@ -410,7 +410,7 @@ function PANEL:PopulateParts(node, parts, children)
 				part:GetEntity():IsValid()
 			then
 				part_node:SetModel(part:GetEntity():GetModel(), part.Icon)
-			elseif type(part.Icon) == "string" then
+			elseif isstring(part.Icon) then
 				part_node.Icon:SetImage(part.Icon)
 			end
 

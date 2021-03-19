@@ -37,7 +37,7 @@ local material_flags = {
 }
 
 local function TableToFlags(flags, valid_flags)
-	if type(flags) == "string" then
+	if isstring(flags) then
 		flags = {flags}
 	end
 
@@ -145,17 +145,17 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				local t = type(v)
 				local info = PART.ShaderParams[k]
 
-				if type(v) == "string" then
+				if isstring(v) then
 					if v:find("[", nil, true) then
 						v = Vector(v:gsub("[%[%]]", ""):gsub("%s+", " "):Trim())
 
-						if type(info.default) == "number" then
+						if isnumber(info.default) then
 							v = v.x
 						end
 					end
 				end
 
-				if type(v) == "number" then
+				if isnumber(v) then
 					if info.type == "bool" or info.is_flag then
 						v = v == 1
 					end
@@ -451,7 +451,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				local flag_key = key
 				local key = "$" .. key
 
-				if type(info.default) == "number" then
+				if isnumber(info.default) then
 					PART["Set" .. property_name] = function(self, val)
 						self[property_name] = val
 						local mat = self:GetRawMaterial()
@@ -468,7 +468,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 							end
 						end
 					end
-				elseif type(info.default) == "boolean" then
+				elseif isbool(info.default) then
 					if info.is_flag then
 						PART["Set" .. property_name] = function(self, val)
 							self[property_name] = val
@@ -489,9 +489,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 							if info.recompute then mat:Recompute() end
 						end
 					end
-				elseif type(info.default) == "Vector" or info.type == "vec3" or info.type == "vec2" then
+				elseif isvector(info.default) or info.type == "vec3" or info.type == "vec2" then
 					PART["Set" .. property_name] = function(self, val)
-						if type(val) == "string" then val = Vector() end
+						if isstring(val) then val = Vector() end
 						self[property_name] = val
 						local mat = self:GetRawMaterial()
 						mat:SetVector(key, val)
@@ -502,13 +502,13 @@ for shader_name, groups in pairs(shader_params.shaders) do
 					PART["Set" .. property_name] = function(self, val)
 
 						local x,y,z,w
-						if type(val) == "string" then
+						if isstring(val) then
 							x,y,z,w = unpack(val:Split(" "))
 							x = tonumber(x) or 0
 							y = tonumber(y) or 0
 							z = tonumber(z) or 0
 							w = tonumber(w) or 0
-						elseif type(val) == "Vector" then
+						elseif isvector(val) then
 							x,y,z = val.x, val.y, val.z
 							w = 0
 						else

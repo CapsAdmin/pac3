@@ -291,14 +291,14 @@ do
 			return defaultHandlerNow(data)
 		end
 
-		local validTransmission = type(data.partID) == 'number' and
-			type(data.totalParts) == 'number' and
-			type(data.transmissionID) == 'number'
+		local validTransmission = isnumber(data.partID) and
+			isnumber(data.totalParts) and
+			isnumber(data.transmissionID)
 
 		if not validTransmission then
 			local func = defaultHandler(data)
 
-			if type(func) == 'function' then
+			if isfunction(func) then
 				pac.EntityIgnoreBound(data.owner, func)
 			end
 		else
@@ -328,7 +328,7 @@ do
 				for i, part in ipairs(trData.list) do
 					local func = defaultHandler(part)
 
-					if type(func) == 'function' then
+					if isfunction(func) then
 						table.insert(funcs, func)
 					end
 				end

@@ -60,7 +60,7 @@ function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size
 		noclamp or
 		noclampT
 
-	if type(callback) == "function" and not skip_cache and urltex.Cache[urlIndex] then
+	if isfunction(callback) and not skip_cache and urltex.Cache[urlIndex] then
 		local tex = urltex.Cache[urlIndex]
 		local mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), shader, additionalData)
 		mat:SetTexture("$basetexture", tex)

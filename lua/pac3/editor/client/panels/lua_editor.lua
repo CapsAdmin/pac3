@@ -253,11 +253,11 @@ function PANEL:SyntaxColorLine(row)
 
 				token = "expression"
 
-			elseif(self:CheckGlobal(sstr)  and  (type(self:CheckGlobal(sstr)) == "function" or self:CheckGlobal(sstr) == "f"
-			or self:CheckGlobal(sstr) == "e" or self:CheckGlobal(sstr) == "m" or type(self:CheckGlobal(sstr)) == "table")
+			elseif(self:CheckGlobal(sstr)  and  (isfunction(self:CheckGlobal(sstr)) or self:CheckGlobal(sstr) == "f"
+			or self:CheckGlobal(sstr) == "e" or self:CheckGlobal(sstr) == "m" or istable(self:CheckGlobal(sstr)))
 			or (lasttable  and  lasttable[sstr])) then -- Could be better code, but what the hell; it works
 
-				if(type(self:CheckGlobal(sstr)) == "table") then
+				if(istable(self:CheckGlobal(sstr))) then
 					lasttable = self:CheckGlobal(sstr);
 				end
 

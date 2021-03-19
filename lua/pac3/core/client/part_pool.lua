@@ -517,7 +517,7 @@ function pac.UpdatePartsWithMetatable(META, name)
 	for _, part in pairs(all_parts) do
 		if part.ClassName == name then
 			for k, v in pairs(META) do
-				if type(v) == "function" then
+				if isfunction(v) then
 					part[k] = v
 				end
 			end

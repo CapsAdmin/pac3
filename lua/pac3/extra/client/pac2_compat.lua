@@ -501,7 +501,7 @@ do
 	function glon.decode(data)
 		if type(data) == "nil" then
 			return nil
-		elseif type(data) ~= "string" then
+		elseif not isstring(data) then
 			error(string.format("Expected string to decode! (Got type %s)",
 				type(data)
 			))

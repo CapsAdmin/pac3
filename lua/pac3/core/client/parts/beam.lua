@@ -183,7 +183,7 @@ function PART:SetMaterial(var)
 	self.Material = var
 
 	if not pac.Handleurltex(self, var) then
-		if type(var) == "string" then
+		if isstring(var) then
 			self.Materialm = pac.Material(var, self)
 			self:FixMaterial()
 			self:CallEvent("material_changed")

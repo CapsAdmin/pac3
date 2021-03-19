@@ -50,7 +50,7 @@ if CLIENT then
 		local id = net.ReadString()
 		local enable = net.ReadBool()
 		local func = pacx.Modifiers[id]
-		if type(func) == "function" then
+		if isfunction(func) then
 			func(enable)
 		end
 	end)

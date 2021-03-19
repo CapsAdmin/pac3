@@ -247,7 +247,7 @@ do --dev util
 							local str = file.Read("addons/" .. dir .. "/lua/" .. new_path, "MOD")
 							if str then
 								local func = CompileString(str, "addons/" .. dir .. "/lua/" .. new_path)
-								if type(func) == "function" then
+								if isfunction(func) then
 									local res = {pcall(func, ...)}
 
 									if res[1] then
@@ -736,7 +736,7 @@ do -- get set and editor vars
 		PART[name_set_key] = function(self, var)
 			self[name_find_count_key] = 0
 
-			if type(var) == "string" then
+			if isstring(var) then
 				if self[name_key] == var and self[uid_key] ~= "" then
 					-- don't do anything to avoid editor from choosing random parts with the same name
 					return

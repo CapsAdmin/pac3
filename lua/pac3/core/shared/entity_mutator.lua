@@ -52,13 +52,13 @@ end
 local function encode_arguments(...)
 	for i = 1, select("#", ...) do
 		local val = select(i, ...)
-		if type(val) == "number" then
+		if isnumber(val) then
 			net.WriteDouble(val)
-		elseif type(val) == "string" then
+		elseif isstring(val) then
 			net.WriteString(val)
-		elseif type(val) == "boolean" then
+		elseif isbool(val) then
 			net.WriteBool(val)
-		elseif type(val) == "table" then
+		elseif istable(val) then
 			net.WriteTable(val)
 		else
 			error("NYI")

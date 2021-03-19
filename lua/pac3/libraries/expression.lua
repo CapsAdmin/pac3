@@ -58,7 +58,7 @@ local function compile_expression(str, extra_lib)
 
 	local func = CompileString(str, "pac_expression", false)
 
-	if type(func) == "string" then
+	if isstring(func) then
 		return false, func
 	else
 		setfenv(func, functions)

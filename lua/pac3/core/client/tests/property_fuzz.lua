@@ -56,15 +56,15 @@ function test.Run(done)
 						val = part:CreatePart(table.Random(classes))
 					end
 					val = val:GetUniqueID()
-				elseif type(val) == "number" then
+				elseif isnumber(val) then
 					val = math.Rand(-1000, 100)
-				elseif type(val) == "Vector" then
+				elseif isvector(val) then
 					val = VectorRand()*1000
-				elseif type(val) == "Angle" then
+				elseif isangle(val) then
 					val = Angle(math.Rand(0, 360), math.Rand(0, 360), math.Rand(0, 360))
-				elseif type(val) == "boolean" then
+				elseif isbool(val) then
 					val = math.random() > 0.5
-				elseif type(val) == "string" then
+				elseif isstring(val) then
 
 
 

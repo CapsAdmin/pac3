@@ -368,11 +368,11 @@ pace.AddTool(L"round numbers", function(part)
 		for _, key in pairs(part:GetStorableVars()) do
 			local val = part["Get" .. key](part)
 
-			if type(val) == "number" then
+			if isnumber(val) then
 				part["Set" .. key](part, round_pretty(val))
-			elseif type(val) == "Vector" then
+			elseif isvector(val) then
 				part["Set" .. key](part, Vector(round_pretty(val.x), round_pretty(val.y), round_pretty(val.z)))
-			elseif type(val) == "Angle" then
+			elseif isangle(val) then
 				part["Set" .. key](part, Angle(round_pretty(val.p), round_pretty(val.y), round_pretty(val.r)))
 			end
 		end

@@ -4,7 +4,7 @@ MUTATOR.ClassName = "model"
 MUTATOR.UpdateRate = 0.25
 
 function MUTATOR:WriteArguments(path)
-	assert(type(path) == "string", "path must be a string")
+	assert(isstring(path), "path must be a string")
 
 	net.WriteString(path:lower())
 end

@@ -35,17 +35,17 @@ local function StringStream(stream, i, endian)
 	}, ss_meta)
 
 	if stream~=nil then
-		assert(type(stream) == "string", "stream must be a string")
+		assert(isstring(stream), "stream must be a string")
 		ret:write(stream)
 		if i~=nil then
-			assert(type(i) == "number", "i must be a number")
+			assert(isnumber(i), "i must be a number")
 			ret:seek(i)
 		else
 			ret:seek(1)
 		end
 	end
 	if endian~=nil then
-		assert(type(endian) == "string", "endian must be a string")
+		assert(isstring(endian), "endian must be a string")
 		ret:setEndian(endian)
 	end
 

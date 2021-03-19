@@ -254,7 +254,7 @@ function PART:OnBuildBonePositions()
 		end
 	end
 
-	owner:ManipulateBoneJiggle(self.BoneIndex, type(self.Jiggle) == "number" and self.Jiggle or (self.Jiggle and 1 or 0)) -- afaik anything but 1 is not doing anything at all
+	owner:ManipulateBoneJiggle(self.BoneIndex, isnumber(self.Jiggle) and self.Jiggle or (self.Jiggle and 1 or 0)) -- afaik anything but 1 is not doing anything at all
 
 	local scale
 

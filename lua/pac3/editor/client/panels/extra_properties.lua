@@ -96,7 +96,7 @@ do -- part
 			local pnl = vgui.Create("SpawnIcon", self)
 			pnl:SetModel(part:GetEntity():GetModel() or "")
 			self.Icon = pnl
-		elseif type(part.Icon) == "string" then
+		elseif isstring(part.Icon) then
 			local pnl = vgui.Create("DImage", self)
 			pnl:SetImage(part.Icon)
 			self.Icon = pnl

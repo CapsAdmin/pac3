@@ -55,7 +55,7 @@ end
 local movetypes = {}
 
 for k,v in pairs(_G) do
-	if type(k) == "string" and type(v) == "number" and k:sub(0,9) == "MOVETYPE_" then
+	if isstring(k) and isnumber(v) and k:sub(0,9) == "MOVETYPE_" then
 		movetypes[v] = k:sub(10):lower()
 	end
 end
@@ -1078,7 +1078,7 @@ do
 	local enums = {}
 	local enums2 = {}
 	for key, val in pairs(_G) do
-		if type(key) == "string" and type(val) == "number" then
+		if isstring(key) and isnumber(val) then
 			if key:sub(0,4) == "KEY_" and not key:find("_LAST$") and not key:find("_FIRST$")  and not key:find("_COUNT$")  then
 				enums[val] = key:sub(5):lower()
 				enums2[enums[val]] = val
@@ -1255,7 +1255,7 @@ do
 			local newObj = pac.CreateEvent(self:GetClass())
 
 			for k, v in pairs(self) do
-				if type(v) ~= 'table' then
+				if not istable(v) then
 					newObj[k] = v
 				else
 					newObj[k] = table.Copy(v)
@@ -1747,7 +1747,7 @@ do
 	local enums = {}
 
 	for key, val in pairs(_G) do
-		if type(key) == "string" and key:find("PLAYERANIMEVENT_", nil, true) then
+		if isstring(key) and key:find("PLAYERANIMEVENT_", nil, true) then
 			enums[val] = key:gsub("PLAYERANIMEVENT_", ""):gsub("_", " "):lower()
 		end
 	end

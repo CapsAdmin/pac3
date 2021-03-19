@@ -51,10 +51,10 @@ end
 
 function class.GetSet(tbl, name, def)
 
-    if type(def) == "number" then
+    if isnumber(def) then
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = tonumber(var) end
 		tbl["Get" .. name] = tbl["Get" .. name] or function(self) return tonumber(self[name]) end
-	elseif type(def) == "string" then
+	elseif isstring(def) then
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = tostring(var) end
 		tbl["Get" .. name] = tbl["Get" .. name] or function(self) return tostring(self[name]) end
 	else
@@ -66,7 +66,7 @@ function class.GetSet(tbl, name, def)
 end
 
 function class.IsSet(tbl, name, def)
-	if type(def) == "number" then
+	if isnumber(def) then
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = tonumber(var) end
 	else
 		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end

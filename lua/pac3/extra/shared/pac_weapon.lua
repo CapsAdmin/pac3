@@ -71,7 +71,7 @@ if CLIENT then
 
 	pac.StartStorableVars()
 		for key, val in pairs(SWEP) do
-			if type(val) ~= "table" and type(val) ~= "function" then
+			if not istable(val) and not isfunction(val) then
 				pac.GetSet(PART, key, val)
 			end
 		end
