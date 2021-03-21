@@ -87,10 +87,20 @@ function hash_version.LuaPaths(lua_paths)
 		path = path:sub(5)
 		local lua = file.Read(path, "LUA")
 
-		lua:gsub("(%u%l+)", add_word)
+		if lua then
+			lua:gsub("(%u%l+)", add_word)
 
-		path_hash[path] = HASH(lua)
-		hash = hash .. path_hash[path]
+			path_hash[path] = HASH(lua)
+			hash = hash .. path_hash[path]
+		end
+	end
+
+	if not words[1] then
+		return {
+			version_name = "unknown version",
+			hash = "",
+			paths = {},
+		}
 	end
 
 	table.sort(words)
