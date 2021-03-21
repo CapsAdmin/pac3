@@ -1,5 +1,4 @@
 local L = pace.LanguageString
-local PAC_VERSION = _G.PAC_VERSION
 local PANEL = {}
 
 PANEL.ClassName = "editor"
@@ -426,7 +425,7 @@ function PANEL:PaintOver(w, h)
 	if not self.okay then return end
 
 
-	if PAC_VERSION then
+	if _G.PAC_VERSION then
 		local info = PAC_VERSION()
 
 		local text = info.pac3.version_name
