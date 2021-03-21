@@ -66,7 +66,7 @@ end
 if SERVER then
 	util.AddNetworkString("pac_version_dump")
 	concommand.Add("pac_version_server", function(ply, _, args)
-		if not ply:IsAdmin() then return end
+		if ply:IsValid() and not ply:IsAdmin() then return end
 		net.Start("pac_version_dump")
 			net.WriteBool(args[1] == "1")
 			net.WriteTable(PAC_VERSION())
