@@ -129,7 +129,10 @@ end
 function PART:SetMaterial(var)
 	var = var or ""
 
-	if not pac.Handleurltex(self, var) then
+	if not pac.Handleurltex(self, var, function(mat)
+		self.Materialm = mat
+		self:MakeMaterialUnlit()
+	end) then
 		if type(var) == "string" then
 			self.Materialm = pac.Material(var, self)
 			self:CallRecursive("OnMaterialChanged")
@@ -137,13 +140,16 @@ function PART:SetMaterial(var)
 			self.Materialm = var
 			self:CallRecursive("OnMaterialChanged")
 		end
+		self:MakeMaterialUnlit()
 	end
+end
 
-	if self.Materialm then
-		local shader = self.Materialm:GetShader()
-		if shader == "VertexLitGeneric" or shader == "Cable" or shader == "LightmappedGeneric" then
-			self.Materialm = pac.MakeMaterialUnlitGeneric(self.Materialm, self.Id)
-		end
+function PART:MakeMaterialUnlit()
+	if not self.Materialm then return end
+
+	local shader = self.Materialm:GetShader()
+	if shader == "VertexLitGeneric" or shader == "Cable" or shader == "LightmappedGeneric" then
+		self.Materialm = pac.MakeMaterialUnlitGeneric(self.Materialm, self.Id)
 	end
 end
 
@@ -157,13 +163,15 @@ end
 
 function PART:OnDraw()
 	local pos, ang = self:GetDrawPosition()
+	local mat = self.material_override and self.material_override[0][1] and self.material_override[0][1]:GetRawMaterial() or self.Materialm
+	if not mat then return end
 	pac.DrawTrail(
 		self,
 		math.min(self.Duration, 10),
 		self.Spacing + (self.StartSize/10),
 		pos,
 		ang,
-		self.material_override and self.material_override[0][1] and self.material_override[0][1]:GetRawMaterial() or self.Materialm,
+		mat,
 
 		self.StartColor.x*255, self.StartColor.y*255, self.StartColor.z*255,self.StartAlpha*255,
 		self.EndColor.x*255, self.EndColor.y*255, self.EndColor.z*255,self.EndAlpha*255,

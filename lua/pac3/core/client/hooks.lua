@@ -31,19 +31,13 @@ do
 			ply.pac_physics_died = false
 		end
 
-		local tbl = ply.pac_pose_params
+		do
+			local tbl = ply.pac_pose_params
 
-		if tbl then
-			for _, data in pairs(tbl) do
-				ply:SetPoseParameter(data.key, data.val)
-			end
-		end
-
-		tbl = ply.pac_flex_params
-
-		if tbl then
-			for flex, weight in pairs(tbl) do
-				ply:SetFlexWeight(flex, weight)
+			if tbl then
+				for _, data in pairs(tbl) do
+					ply:SetPoseParameter(data.key, data.val)
+				end
 			end
 		end
 
@@ -55,6 +49,24 @@ do
 			elseif ply.pac_global_animation_rate ~= 1 then
 				ply:SetCycle((pac.RealTime * ply.pac_global_animation_rate)%1)
 				animrate = ply.pac_global_animation_rate
+			end
+		end
+
+		if ply.pac_animation_sequences then
+			local part, thing = next(ply.pac_animation_sequences)
+
+			if part and part:IsValid() then
+
+				if part.OwnerCycle then
+					if part.Rate == 0 then
+						animrate = 1
+						ply:SetCycle(part.Offset % 1)
+					else
+						animrate = animrate * part.Rate
+					end
+				end
+			elseif part and not part:IsValid() then
+				ply.pac_animation_sequences[part] = nil
 			end
 		end
 

@@ -182,11 +182,11 @@ end)
 
 
 pace.AddTool(L"fix origin", function(part, suboption)
-	if part.ClassName ~= "model" and part.ClassName ~= "model" then return end
+	if not part.GetEntity then return end
 
 	local ent = part:GetOwner()
 
-	part:SetPositionOffset(part:GetPositionOffset() + -ent:OBBCenter() * part.Scale * part.Size)
+	part:SetPositionOffset(-ent:OBBCenter() * part.Scale * part.Size)
 end)
 
 pace.AddTool(L"replace ogg with webaudio", function(part, suboption)

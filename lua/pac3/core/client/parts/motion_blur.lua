@@ -9,6 +9,7 @@ PART.Group = 'modifiers'
 PART.Icon = 'icon16/shape_ungroup.png'
 
 BUILDER:StartStorableVars()
+	:GetSet("Bone", "none")
 	:GetSet("Alpha", 0.5)
 	:GetSet("BlurLength", 10)
 	:GetSet("BlurSpacing", 0.1)
@@ -35,16 +36,35 @@ function PART:DrawBlur(pos, ang)
 	local blurSpacing = self.BlurSpacing
 
 	if not self.blur_last_add or blurSpacing == 0 or self.blur_last_add < pac.RealTime then
-		table_insert(self.blur_history, {pos, ang})
+
+		local bones = {}
+		local i = 1
+		for id = 0, ent:GetBoneCount() - 1 do
+			local mat = ent:GetBoneMatrix(id)
+			if mat then
+				bones[i] = {id = id, matrix = mat}
+				i = i + 1
+			end
+		end
+
+		table_insert(self.blur_history, {pos, ang, ent:GetCycle(), bones})
 		self.blur_last_add = pac.RealTime + blurSpacing / 1000
 	end
 
 	local blurHistoryLength = #self.blur_history
 	for i = 1, blurHistoryLength do
-		pos, ang = self.blur_history[i][1], self.blur_history[i][2]
+		local pos, ang, cycle, bones = self.blur_history[i][1], self.blur_history[i][2], self.blur_history[i][3], self.blur_history[i][4]
 
 		local alpha = self.Alpha * (i / blurHistoryLength)
 		render_SetBlend(alpha)
+
+		if ent then
+			ent:SetCycle(cycle)
+
+			for _, data in ipairs(bones) do
+				ent:SetBoneMatrix(data.id, data.matrix)
+			end
+		end
 
 		pac.drawing_motionblur_alpha = alpha
 		parent:OnDraw(ent, pos, ang)

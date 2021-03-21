@@ -31,6 +31,9 @@ PART.Group = 'model'
 
 BUILDER:StartStorableVars()
 	:SetPropertyGroup("generic")
+		:PropertyOrder("Name")
+		:PropertyOrder("Hide")
+		:PropertyOrder("ParentName")
 		:GetSet("Model", "", {editor_panel = "model"})
 		:GetSet("ForceObjUrl", false)
 
@@ -764,6 +767,10 @@ do
 	PART.is_model_part = false
 
 	BUILDER:StartStorableVars()
+		:SetPropertyGroup("generic")
+			:PropertyOrder("Name")
+			:PropertyOrder("Hide")
+			:PropertyOrder("ParentName")
 		:SetPropertyGroup("appearance")
 			:GetSet("NoDraw", false)
 			:GetSet("DrawShadow", true)
@@ -968,6 +975,9 @@ do
 
 	BUILDER:StartStorableVars()
 		:SetPropertyGroup("generic")
+			:PropertyOrder("Name")
+			:PropertyOrder("Hide")
+			:PropertyOrder("ParentName")
 			:GetSet("OverridePosition", false)
 			:GetSet("Class", "all", {enums = function()
 				local out = {
