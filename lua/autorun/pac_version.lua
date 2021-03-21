@@ -18,6 +18,7 @@ function _G.PAC_VERSION()
 	pac3 = pac3 or hash.LuaPaths({
 		"lua/pac3/",
 		"lua/autorun/netstream.lua",
+		"lua/autorun/pac_version.lua",
 		"lua/autorun/pac_core_init.lua",
 		"lua/autorun/pac_editor_init.lua",
 		"lua/autorun/pac_extra_init.lua",
