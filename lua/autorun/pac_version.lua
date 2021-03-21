@@ -1,39 +1,5 @@
 AddCSLuaFile()
 
-local hash = include("pac3/libraries/hash_version.lua")
-
-local pac3
-local core
-local editor
-
-function _G.PAC_VERSION()
-	core = core or hash.LuaPaths({
-		"lua/pac3/core/",
-	})
-
-	editor = editor or hash.LuaPaths({
-		"lua/pac3/editor/",
-	})
-
-	pac3 = pac3 or hash.LuaPaths({
-		"lua/pac3/",
-		"lua/autorun/netstream.lua",
-		"lua/autorun/pac_version.lua",
-		"lua/autorun/pac_core_init.lua",
-		"lua/autorun/pac_editor_init.lua",
-		"lua/autorun/pac_extra_init.lua",
-		"lua/autorun/pac_init.lua",
-		"lua/autorun/pac_init.lua",
-		"lua/entities/gmod_wire_expression2/core/custom/pac.lua",
-	})
-
-	return {
-		pac3 = pac3,
-		editor = editor,
-		core = core,
-	}
-end
-
 local function dump_version(name, info, verbose)
 	pac.Message(name .. " = " .. info.version_name .. " / " .. info.hash)
 	if verbose then
@@ -42,43 +8,85 @@ local function dump_version(name, info, verbose)
 		end
 	end
 end
+
 local function dump(info, verbose)
-	dump_version("Addon", info.pac3, verbose)
+	dump_version("Addon", info.addon, verbose)
 	dump_version("Core", info.core, verbose)
 	dump_version("Editor", info.editor, verbose)
 end
 
-
 if CLIENT then
-	concommand.Add("pac_version", function(_, _, args)
-		local info = PAC_VERSION()
+	local info
 
-		dump(info, args[1] == "1")
+	function _G.PAC_VERSION()
+		return info
+	end
+
+	net.Receive("pac_version", function()
+		info = net.ReadTable()
 	end)
 
-	net.Receive("pac_version_dump", function()
-		local verbose = net.ReadBool()
-		local info = net.ReadTable()
-
-		dump(info, verbose)
+	concommand.Add("pac_version", function(_, _, args)
+		if not info then
+			print("pac version has not been received from server yet")
+			return
+		end
+		dump(info, args[1] == "1")
 	end)
 end
 
 if SERVER then
-	util.AddNetworkString("pac_version_dump")
-	concommand.Add("pac_version_server", function(ply, _, args)
+	local hash = include("pac3/libraries/hash_version.lua")
+
+	function _G.PAC_VERSION()
+		return {
+			addon = hash.LuaPaths({
+				"lua/pac3/",
+				"lua/autorun/netstream.lua",
+				"lua/autorun/pac_version.lua",
+				"lua/autorun/pac_core_init.lua",
+				"lua/autorun/pac_editor_init.lua",
+				"lua/autorun/pac_extra_init.lua",
+				"lua/autorun/pac_init.lua",
+				"lua/autorun/pac_init.lua",
+				"lua/entities/gmod_wire_expression2/core/custom/pac.lua",
+			}),
+			editor = hash.LuaPaths({
+				"lua/pac3/editor/",
+			}),
+			core = hash.LuaPaths({
+				"lua/pac3/core/",
+			}),
+		}
+	end
+
+	util.AddNetworkString("pac_version")
+
+	local info = PAC_VERSION()
+
+	concommand.Add("pac_calc_version", function(ply, _, args)
+		if not ply:IsAdmin() or not ply:IsValid() then return end
+
 		local verbose = args[1] == "1"
-		local info = PAC_VERSION()
+		info = PAC_VERSION()
 
-		if not ply:IsValid() then
-			dump(info, verbose)
-			return
-		end
-
-		if not ply:IsAdmin() then return end
-		net.Start("pac_version_dump")
-			net.WriteBool(verbose)
+		net.Start("pac_version")
 			net.WriteTable(info)
-		net.Send(ply)
+		net.Broadcast()
+
+		dump(info, verbose)
+	end)
+
+	hook.Add("PlayerInitialSpawn", "pac_version", function( ply)
+		local id = "pac_version_" .. ply:UniqueID()
+		hook.Add("SetupMove", id, function(self, mov, cmd)
+			if self == ply and not cmd:IsForced() then
+				hook.Remove("SetupMove", id)
+
+				net.Start("pac_version")
+					net.WriteTable(info)
+				net.Send(ply)
+			end
+		end)
 	end)
 end

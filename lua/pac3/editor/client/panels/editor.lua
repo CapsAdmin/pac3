@@ -425,10 +425,9 @@ function PANEL:PaintOver(w, h)
 	if not self.okay then return end
 
 
-	if _G.PAC_VERSION then
-		local info = PAC_VERSION()
-
-		local text = info.pac3.version_name
+	local info = _G.PAC_VERSION and PAC_VERSION()
+	if info then
+		local text = info.addon.version_name
 
 		surface.SetFont("DermaDefault")
 		local x, y = self:LocalToScreen()
@@ -442,7 +441,7 @@ function PANEL:PaintOver(w, h)
 
 		if mx > x and mx < x + w and my > y and my < y + h then
 			hovering = true
-			text = "pac3 version: " .. info.pac3.version_name
+			text = "pac version: " .. info.addon.version_name
 			w, h = surface.GetTextSize(text)
 
 			surface.SetDrawColor(0,0,0,255)

@@ -43,14 +43,13 @@ local function populate_pac(menu)
 		function() gui.OpenURL("https://discord.gg/utpR3gJ") cookie.Set("pac3_discord_ad", 3)  end
 	) chat_pnl:SetImage(pace.MiscIcons.chat)
 
-	if _G.PAC_VERSION then
+	local info = _G.PAC_VERSION and PAC_VERSION()
+	if info then
 		local version, version_pnl = help:AddSubMenu(L"Version", function() pace.ShowWiki() end)
 		version.GetDeleteSelf = function() return false end
 		version_pnl:SetImage(pace.MiscIcons.info)
 
-		local info = PAC_VERSION()
-
-		version:AddOption("Addon: " .. info.pac3.version_name)
+		version:AddOption("Addon: " .. info.addon.version_name)
 		version:AddOption("Editor: " .. info.editor.version_name)
 		version:AddOption("Core: " .. info.core.version_name)
 	end
