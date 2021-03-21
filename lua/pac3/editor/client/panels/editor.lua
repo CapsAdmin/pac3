@@ -1,5 +1,5 @@
 local L = pace.LanguageString
-
+local PAC_VERSION = _G.PAC_VERSION
 local PANEL = {}
 
 PANEL.ClassName = "editor"
@@ -424,6 +424,38 @@ end
 
 function PANEL:PaintOver(w, h)
 	if not self.okay then return end
+
+
+	if PAC_VERSION then
+		local info = PAC_VERSION()
+
+		local text = info.pac3.version_name
+
+		surface.SetFont("DermaDefault")
+		local x, y = self:LocalToScreen()
+		local w, h = surface.GetTextSize(text)
+		x = x + self:GetWide() + 4
+		y = y + self:GetTall() - 4 - h
+
+		local mx, my = gui.MousePos()
+		local hovering = false
+		DisableClipping(true)
+
+		if mx > x and mx < x + w and my > y and my < y + h then
+			hovering = true
+			text = "pac3 version: " .. info.pac3.version_name
+			w, h = surface.GetTextSize(text)
+
+			surface.SetDrawColor(0,0,0,255)
+			surface.DrawRect(x,y,w,h)
+		end
+
+
+		surface.SetTextPos(x,y)
+		surface.SetTextColor(255,255,255,hovering and 255 or 100)
+		surface.DrawText(text)
+		DisableClipping(false )
+	end
 
 	local renderTime = pace.RenderTimes and pace.RenderTimes[LocalPlayer():EntIndex()]
 

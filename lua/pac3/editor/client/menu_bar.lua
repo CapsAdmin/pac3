@@ -43,6 +43,17 @@ local function populate_pac(menu)
 		function() gui.OpenURL("https://discord.gg/utpR3gJ") cookie.Set("pac3_discord_ad", 3)  end
 	) chat_pnl:SetImage(pace.MiscIcons.chat)
 
+	if _G.PAC_VERSION then
+		local version, version_pnl = help:AddSubMenu(L"Version", function() pace.ShowWiki() end)
+		version.GetDeleteSelf = function() return false end
+		version_pnl:SetImage(pace.MiscIcons.info)
+
+		local info = PAC_VERSION()
+
+		version:AddOption("Addon: " .. info.pac3.version_name)
+		version:AddOption("Editor: " .. info.editor.version_name)
+		version:AddOption("Core: " .. info.core.version_name)
+	end
 	if cookie.GetNumber("pac3_discord_ad", 0) < 3 then
 		help_pnl.PaintOver = function(_,w,h) surface.SetDrawColor(255,255,0,50 + math.sin(SysTime()*20)*20) surface.DrawRect(0,0,w,h) end
 		chat_pnl.PaintOver = help_pnl.PaintOver
