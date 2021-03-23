@@ -306,6 +306,8 @@ do -- scene graph
 			pac.CallHook("OnPartParent", self, part)
 		end
 
+		part:CallRecursive("CalcShowHide", true)
+
 		return part.Id
 	end
 
