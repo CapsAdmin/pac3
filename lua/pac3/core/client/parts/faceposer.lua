@@ -1,15 +1,15 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "faceposer"
+
 PART.FriendlyName = "face poser"
-PART.NonPhysical = true
 PART.Icon = 'icon16/monkey.png'
 PART.Group = 'entity'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "FlexWeights", "", {editor_panel = "flex_weights"})
-	pac.GetSet(PART, "Scale", 1)
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	:GetSet("FlexWeights", "", {editor_panel = "flex_weights"})
+	:GetSet("Scale", 1)
+:EndStorableVars()
 
 function PART:GetNiceName()
 	return "face pose"
@@ -54,4 +54,4 @@ function PART:OnRemove()
 	self:UpdateFlex()
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()
