@@ -79,7 +79,7 @@ function PART:UpdateFlex()
 	ent:SetFlexWeight(id, ent:GetFlexWeight(id) + weight)
 end
 
-function PART:OnBuildBonePositions()
+function PART:BuildBonePositions()
 	self:UpdateFlex()
 end
 
