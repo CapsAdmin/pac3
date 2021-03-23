@@ -479,13 +479,15 @@ do -- hidden / events
 	end
 
 	function PART:ShowFromRendering()
-		self:SetDrawHidden(true)
+		self:SetDrawHidden(false)
 
 		if not self:IsHidden() then
 			self:OnShow(true)
 		end
 
 		for _, child in ipairs(self:GetChildrenList()) do
+			child:SetDrawHidden(false)
+
 			if not child:IsHidden() then
 				child:OnShow(true)
 			end
@@ -493,7 +495,7 @@ do -- hidden / events
 	end
 
 	function PART:HideFromRendering()
-		self:SetDrawHidden(false)
+		self:SetDrawHidden(true)
 		self:CallRecursive("OnHide", true)
 	end
 
