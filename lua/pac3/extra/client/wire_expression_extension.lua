@@ -7,7 +7,7 @@ end)
 local function SetKeyValue(ply, ent, unique_id, key, val)
 	local set = "Set" .. key
 
-	local part = pac.GetPartFromUniqueID(ply:UniqueID(), unique_id)
+	local part = pac.GetPartFromUniqueID(pac.Hash(ply), unique_id)
 
 	if part:GetRootOwner() == ent then
 		if key == "EventHide" then

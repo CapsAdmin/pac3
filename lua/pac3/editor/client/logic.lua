@@ -80,7 +80,7 @@ end
 function pace.TrySelectPart()
 	local part = select(2, next(pac.GetLocalParts()))
 
-	local found = pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), pace.current_part_uid)
+	local found = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), pace.current_part_uid)
 
 	if found:IsValid() and found:GetPlayerOwner() == part:GetPlayerOwner() then
 		part = found

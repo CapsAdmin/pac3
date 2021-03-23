@@ -65,7 +65,7 @@ local function parts_from_uid(owner_id)
 end
 
 local function parts_from_ent(ent)
-	local owner_id = IsValid(ent) and ent:IsPlayer() and ent:UniqueID() or ent:EntIndex()
+	local owner_id = IsValid(ent) and pac.Hash(ent)
 	return uid_parts[owner_id] or {}
 end
 
@@ -264,7 +264,7 @@ pac.AddHook("Think", "events", function()
 		if ply.pac_death_physics_parts then
 			if ply.pac_physics_died then return end
 
-			for _, part in pairs(parts_from_uid(ply:UniqueID())) do
+			for _, part in pairs(parts_from_uid(pac.Hash(ply))) do
 				if part.is_model_part then
 					local ent = part:GetOwner()
 					if ent:IsValid() then
@@ -472,7 +472,7 @@ function pac.RemovePart(part)
 end
 
 function pac.GetLocalParts()
-	return uid_parts[pac.LocalPlayer:UniqueID()] or {}
+	return uid_parts[pac.Hash(pac.LocalPlayer)] or {}
 end
 
 function pac.GetPartFromUniqueID(owner_id, id)
@@ -508,7 +508,7 @@ function pac.FindPartByName(owner_id, str)
 end
 
 function pac.GetLocalPart(id)
-	local owner_id = pac.LocalPlayer:UniqueID()
+	local owner_id = pac.Hash(pac.LocalPlayer)
 	return uid_parts[owner_id] and uid_parts[owner_id][id] or NULL
 end
 

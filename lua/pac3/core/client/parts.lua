@@ -42,7 +42,7 @@ function pac.CreatePart(name, owner, tbl, make_copy)
 	part_count = part_count + 1
 
 	if not tbl or not tbl.self.UniqueID then
-		part:SetUniqueID(util.CRC(os.time() + pac.RealTime + part_count))
+		part:SetUniqueID(pac.Hash())
 	end
 
 	part.DefaultVars = {}

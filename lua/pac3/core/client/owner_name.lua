@@ -33,7 +33,7 @@ local function calc_entity_crc(ent)
 
 	local crc = x .. y .. z .. p .. _y .. r .. mdl
 
-	return util.CRC(crc)
+	return pac.Hash(crc)
 end
 
 SafeRemoveEntity(pac.WorldEntity)

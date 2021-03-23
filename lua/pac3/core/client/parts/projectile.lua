@@ -112,14 +112,13 @@ function PART:AttachToEntity(ent)
 	ent.pac_draw_distance = 0
 
 	local tbl = self.OutfitPart:ToTable()
-	--tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. tbl.self.UniqueID)
 
 	local part = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner(), tbl, tostring(tbl))
 	part:SetOwner(ent)
 	part.SetOwner = function(s) s.Owner = ent end
 
 
-	local id = part.Id + self:GetPlayerOwner():UniqueID()
+	local id = part.Id + self:GetPlayerOwnerId()
 
 	part.show_in_editor = false
 	part:SetHide(false)
@@ -320,7 +319,7 @@ do -- physical
 			local ent = Entity(data.ent_id)
 
 			if ent:IsValid() and ent:GetClass() == "pac_projectile" then
-				local part = pac.GetPartFromUniqueID(data.ply:IsPlayer() and data.ply:UniqueID() or data.ply:EntIndex(), data.partuid)
+				local part = pac.GetPartFromUniqueID(pac.Hash(data.ply), data.partuid)
 				if part:IsValid() and part:GetPlayerOwner() == data.ply then
 					part:AttachToEntity(ent)
 				end

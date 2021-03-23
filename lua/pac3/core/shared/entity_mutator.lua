@@ -319,7 +319,7 @@ if SERVER then
 	end
 
 	hook.Add("PlayerInitialSpawn", "pac_entity_mutators_spawn", function( ply)
-		local id = "pac_entity_mutators_spawn" .. ply:UniqueID()
+		local id = "pac_entity_mutators_spawn" .. pac.Hash(ply)
 		hook.Add( "SetupMove", id, function(self, ply, _, cmd)
 			if self == ply and not cmd:IsForced() then
 

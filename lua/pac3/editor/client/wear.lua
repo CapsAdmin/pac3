@@ -14,13 +14,13 @@ do -- to server
 			end
 		elseif pac_wear_reverse:GetBool() then
 			for i, v in ipairs(player.GetAll()) do
-				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') == '1' then
+				if cookie.GetString('pac3_wear_block_' .. pac.Hash(v), '0') == '1' then
 					table.insert(filter, v:SteamID():sub(7))
 				end
 			end
 		else
 			for i, v in ipairs(player.GetAll()) do
-				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') ~= '1' then
+				if cookie.GetString('pac3_wear_block_' .. pac.Hash(v), '0') ~= '1' then
 					table.insert(filter, v:SteamID():sub(7))
 				end
 			end

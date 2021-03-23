@@ -241,14 +241,14 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 	local copy_id = tostring(data)
 
 	if data.self then
-		local part = override_part or pac.CreatePart(data.self.ClassName, nil, data, pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), data.self.UniqueID):IsValid() and copy_id)
+		local part = override_part or pac.CreatePart(data.self.ClassName, nil, data, pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), data.self.UniqueID):IsValid() and copy_id)
 		table.insert(partsLoaded, part)
 	else
 		data = pace.FixBadGrouping(data)
 		data = pace.FixUniqueIDs(data)
 
 		for key, tbl in pairs(data) do
-			local part = pac.CreatePart(tbl.self.ClassName, nil, tbl, pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), tbl.self.UniqueID):IsValid() and copy_id)
+			local part = pac.CreatePart(tbl.self.ClassName, nil, tbl, pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), tbl.self.UniqueID):IsValid() and copy_id)
 			table.insert(partsLoaded, part)
 		end
 	end
@@ -632,7 +632,7 @@ function pace.FixUniqueIDs(data)
 		if #val > 1 then
 			for key, part in pairs(val) do
 				pac.dprint("Part (%s using model %s) named %q has %i other parts with the same unique id. Fixing!", part.self.ClassName, part.self.Name, part.self.Model or "", #val)
-				part.self.UniqueID = util.CRC(key .. tostring(part) .. SysTime())
+				part.self.UniqueID = pac.Hash()
 			end
 		end
 	end
@@ -660,7 +660,7 @@ function pace.FixBadGrouping(data)
 				["self"] = {
 					["EditorExpand"] = true,
 					["ClassName"] = "group",
-					["UniqueID"] = util.CRC(tostring(data)),
+					["UniqueID"] = pac.Hash(),
 					["Name"] = "automatic group",
 				},
 

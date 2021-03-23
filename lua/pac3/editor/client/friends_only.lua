@@ -125,13 +125,13 @@ function pac.UseWhitelistUpdates()
 		if pac_use_whitelist_b:GetBool() then
 			for k, v in ipairs(player.GetAll()) do
 				if v ~= lply then
-					pac.ToggleIgnoreEntity(v, cookie.GetString('pac3_wear_wl_' .. v:UniqueID(), '0') == '1', 'pac_whitelist')
+					pac.ToggleIgnoreEntity(v, cookie.GetString('pac3_wear_wl_' .. pac.Hash(v), '0') == '1', 'pac_whitelist')
 				end
 			end
 		else
 			for k, v in ipairs(player.GetAll()) do
 				if v ~= lply then
-					pac.ToggleIgnoreEntity(v, cookie.GetString('pac3_wear_wl_' .. v:UniqueID(), '0') ~= '1', 'pac_whitelist')
+					pac.ToggleIgnoreEntity(v, cookie.GetString('pac3_wear_wl_' .. pac.Hash(v), '0') ~= '1', 'pac_whitelist')
 				end
 			end
 		end
@@ -147,9 +147,9 @@ end
 function pac.UseWhitelistUpdatesPerPlayer(ply)
 	if pac_use_whitelist:GetBool() then
 		if pac_use_whitelist_b:GetBool() then
-			pac.ToggleIgnoreEntity(ply, cookie.GetString('pac3_wear_wl_' .. ply:UniqueID(), '0') == '1', 'pac_whitelist')
+			pac.ToggleIgnoreEntity(ply, cookie.GetString('pac3_wear_wl_' .. pac.Hash(ply), '0') == '1', 'pac_whitelist')
 		else
-			pac.ToggleIgnoreEntity(ply, cookie.GetString('pac3_wear_wl_' .. ply:UniqueID(), '0') ~= '1', 'pac_whitelist')
+			pac.ToggleIgnoreEntity(ply, cookie.GetString('pac3_wear_wl_' .. pac.Hash(ply), '0') ~= '1', 'pac_whitelist')
 		end
 	else
 		pac.ToggleIgnoreEntity(ply, false, 'pac_whitelist')

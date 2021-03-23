@@ -239,7 +239,7 @@ function _G.pac_Restart()
 	pacLocal.Message("pac_restart: done")
 
 	if selected_part_uid then
-		local part = pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), selected_part_uid)
+		local part = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), selected_part_uid)
 
 		if part and part:IsValid() then
 			pace.Call("PartSelected", part)

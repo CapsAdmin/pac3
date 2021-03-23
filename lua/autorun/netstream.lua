@@ -179,7 +179,7 @@ function net.WriteStream(data, callback, dontcompress)
 		local datachunk = string.sub(data, (i - 1) * net.Stream.SendSize + 1, i * net.Stream.SendSize)
 		chunks[i] = {
 			data = datachunk,
-			crc = util.CRC(datachunk),
+			crc = pac.Hash(datachunk),
 		}
 	end
 	

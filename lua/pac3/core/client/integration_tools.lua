@@ -10,7 +10,7 @@ function pac.GenerateNewUniqueID(part_data, base)
 	local function fixpart(part)
 		for key, val in pairs(part.self) do
 			if val ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
-				part.self[key] = util.CRC(base .. val)
+				part.self[key] = pac.Hash(base .. val)
 			end
 		end
 

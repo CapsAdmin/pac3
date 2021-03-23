@@ -83,7 +83,7 @@ function test.Run(done)
 							end
 						else
 							print(part.ClassName, key, t)
-							val = util.CRC(math.random())
+							val = pac.Hash()
 						end
 					else
 						print(part, key)

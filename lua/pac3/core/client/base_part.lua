@@ -5,7 +5,6 @@ local table = table
 local Color = Color
 local NULL = NULL
 local IsValid = IsValid
-local util_CRC = util.CRC
 local ErrorNoHalt = ErrorNoHalt
 
 local BUILDER, PART = pac.PartTemplate()
@@ -121,14 +120,9 @@ do -- owner
 
 	function PART:GetPlayerOwnerId()
 		local owner = self:GetPlayerOwner()
-
 		if not owner:IsValid() then return end
 
-		if owner:IsPlayer() then
-			return owner:UniqueID()
-		end
-
-		return owner:EntIndex()
+		return pac.Hash(owner)
 	end
 
 
@@ -614,7 +608,7 @@ do -- serializing
 
 	do
 		local function SetTable(self, tbl)
-			self:SetUniqueID(tbl.self.UniqueID or util_CRC(tostring(tbl.self)))
+			self:SetUniqueID(tbl.self.UniqueID or pac.Hash())
 			self.delayed_variables = self.delayed_variables or {}
 
 			for key, value in pairs(tbl.self) do
@@ -641,7 +635,7 @@ do -- serializing
 		local function make_copy(tbl, pepper)
 			for key, val in pairs(tbl.self) do
 				if key == "UniqueID" or key:sub(-3) == "UID" then
-					tbl.self[key] = util.CRC(val .. pepper)
+					tbl.self[key] = pac.Hash(val .. pepper)
 				end
 			end
 
@@ -675,7 +669,7 @@ do -- serializing
 			var = pac.CopyValue(var) or var
 
 			if make_copy_name and var ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
-				var = util.CRC(var .. var)
+				var = pac.Hash(var .. var)
 			end
 
 			if key == "Name" and self[key] == "" then

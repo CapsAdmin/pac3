@@ -70,16 +70,16 @@ local function rebuildPlayerList()
 				if pac_wear_friends_only:GetBool() then
 					check:SetChecked(ply:GetFriendStatus() ~= "friend")
 				else
-					check:SetChecked(cookie.GetString("pac3_wear_block_" .. ply:UniqueID()) == "1")
+					check:SetChecked(cookie.GetString("pac3_wear_block_" .. pac.Hash(ply)) == "1")
 				end
 
 				check.OnChange = function(_, newValue)
 					if pac_wear_friends_only:GetBool() then
 						check:SetChecked(ply:GetFriendStatus() ~= "friend")
 					elseif newValue then
-						cookie.Set("pac3_wear_block_" .. ply:UniqueID(), '1')
+						cookie.Set("pac3_wear_block_" .. pac.Hash(ply), '1')
 					else
-						cookie.Delete("pac3_wear_block_" .. ply:UniqueID())
+						cookie.Delete("pac3_wear_block_" .. pac.Hash(ply))
 					end
 				end
 			end
@@ -110,15 +110,15 @@ local function rebuildPlayerList2()
 			if ply ~= pac.LocalPlayer then
 				local check = self:CheckBox(ply:Nick())
 				table.insert(self.plist, check)
-				check:SetChecked(cookie.GetString("pac3_wear_wl_" .. ply:UniqueID(), '0') == "1")
+				check:SetChecked(cookie.GetString("pac3_wear_wl_" .. pac.Hash(ply), '0') == "1")
 
 				check.OnChange = function(_, newValue)
 					if pac_wear_friends_only:GetBool() then
 						check:SetChecked(ply:GetFriendStatus() ~= "friend")
 					elseif newValue then
-						cookie.Set("pac3_wear_wl_" .. ply:UniqueID(), '1')
+						cookie.Set("pac3_wear_wl_" .. pac.Hash(ply), '1')
 					else
-						cookie.Delete("pac3_wear_wl_" .. ply:UniqueID())
+						cookie.Delete("pac3_wear_wl_" .. pac.Hash(ply))
 					end
 
 					pac.UseWhitelistUpdatesPerPlayer(ply)
