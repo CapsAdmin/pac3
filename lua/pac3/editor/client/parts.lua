@@ -544,7 +544,7 @@ do -- menu
 	end
 
 	function pace.Copy(obj)
-		pace.Clipboard = obj:ToTable(true)
+		pace.Clipboard = obj:ToTable()
 	end
 
 	function pace.Cut(obj)
@@ -558,7 +558,7 @@ do -- menu
 		if not pace.Clipboard then return end
 		pace.RecordUndoHistory()
 		local newObj = pac.CreatePart(pace.Clipboard.self.ClassName)
-		newObj:SetTable(pace.Clipboard)
+		newObj:SetTable(pace.Clipboard, true)
 		newObj:SetParent(obj)
 		pace.RecordUndoHistory()
 	end

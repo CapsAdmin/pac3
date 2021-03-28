@@ -899,9 +899,14 @@ do -- serializing
 		end
 
 		local function make_copy(tbl, pepper)
+			if pepper == true then
+				pepper = tostring(math.random())
+			end
+
 			for key, val in pairs(tbl.self) do
 				if key == "UniqueID" or key:sub(-3) == "UID" then
 					tbl.self[key] = util.CRC(val .. pepper)
+					print(tbl.self[key], val, pepper, "!!")
 				end
 			end
 
@@ -924,16 +929,12 @@ do -- serializing
 		end
 	end
 
-	function PART:ToTable(make_copy_name)
+	function PART:ToTable()
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 		for _, key in pairs(self:GetStorableVars()) do
 			local var = self[key] and self["Get" .. key](self) or self[key]
 			var = pac.class.Copy(var) or var
-
-			if make_copy_name and var ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
-				var = util.CRC(var .. var)
-			end
 
 			if key == "Name" and self[key] == "" then
 				var = ""
@@ -953,7 +954,7 @@ do -- serializing
 			if not self.is_valid or self.is_deattached then
 
 			else
-				table.insert(tbl.children, part:ToTable(make_copy_name))
+				table.insert(tbl.children, part:ToTable())
 			end
 		end
 
@@ -1072,7 +1073,7 @@ do -- serializing
 	function PART:Clone()
 		local part = pac.CreatePart(self.ClassName, self:GetPlayerOwner())
 		if not part then return end
-		part:SetTable(self:ToTable(true))
+		part:SetTable(self:ToTable(), true)
 
 		part:SetParent(self:GetParent())
 
