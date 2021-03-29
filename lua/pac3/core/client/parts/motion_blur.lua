@@ -51,6 +51,8 @@ function PART:DrawBlur(pos, ang)
 		self.blur_last_add = pac.RealTime + blurSpacing / 1000
 	end
 
+	local prev_cycle = ent:GetCycle()
+
 	local blurHistoryLength = #self.blur_history
 	for i = 1, blurHistoryLength do
 		local pos, ang, cycle, bones = self.blur_history[i][1], self.blur_history[i][2], self.blur_history[i][3], self.blur_history[i][4]
@@ -62,7 +64,7 @@ function PART:DrawBlur(pos, ang)
 			ent:SetCycle(cycle)
 
 			for _, data in ipairs(bones) do
-				ent:SetBoneMatrix(data.id, data.matrix)
+				pcall(ent.SetBoneMatrix, ent, data.id, data.matrix)
 			end
 		end
 
@@ -74,6 +76,8 @@ function PART:DrawBlur(pos, ang)
 			ent:SetupBones()
 		end
 	end
+
+	ent:SetCycle(prev_cycle)
 
 	local maximumBlurHistoryLength = math.min(self.BlurLength, 20)
 	while #self.blur_history >= maximumBlurHistoryLength do
