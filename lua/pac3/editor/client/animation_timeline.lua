@@ -17,13 +17,28 @@ do
 		"Bone",
 	}
 
+	function PART:GetParentOwner()
+		return self:GetOwner()
+	end
+
 	function PART:GetBonePosition()
-		local owner = self:GetOwner()
-		local pos, ang
+		local ent = self:GetOwner()
 
-		pos, ang = pac.GetBonePosAng(owner, self.Bone, true)
+		local index = self:GetModelBoneIndex(self.Bone)
+		if not index then return end
 
-		return pos, ang
+		--ent:SetupBones()
+		local m = ent:GetBoneMatrix(index)
+
+		local lm = Matrix()
+		lm:SetTranslation(self.Position)
+		lm:SetAngles(self.Angles)
+
+		m = m * lm:GetInverse()
+
+		if not m then return end
+
+		return m:GetTranslation(), m:GetAngles()
 	end
 
 	BUILDER:Register()
@@ -242,6 +257,7 @@ function timeline.Open(part)
 
 	if timeline.dummy_bone and timeline.dummy_bone:IsValid() then timeline.dummy_bone:Remove() end
 	timeline.dummy_bone = pac.CreatePart("timeline_dummy_bone", timeline.entity)
+	timeline.dummy_bone:SetOwner(timeline.entity)
 
 	pac.AddHook("pace_OnVariableChanged", "pac3_timeline", function(part, key, val)
 		if part == timeline.dummy_bone then

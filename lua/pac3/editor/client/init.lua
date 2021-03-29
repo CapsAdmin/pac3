@@ -25,7 +25,6 @@ include("asset_browser.lua")
 include("menu_bar.lua")
 
 include("mctrl.lua")
-include("screenvec.lua")
 
 include("panels.lua")
 include("tools.lua")
@@ -361,7 +360,7 @@ do
 		timer.Create("pac_in_editor", 0.25, 0, function()
 			if not pace.current_part:IsValid() then return end
 			local pos, ang = pace.GetViewPos(), pace.GetViewAngles()
-			local target_pos = pace.mctrl.GetTargetPos()
+			local target_pos = pace.mctrl.GetWorldPosition()
 
 			if not target_pos then return end
 

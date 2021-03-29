@@ -132,10 +132,13 @@ function PART:BuildBonePositions2(ent, bone_count)
 	if not index then return end
 
 	local m = ent:GetBoneMatrix(index)
+
 	if not m then return end
 
 	local original_matrix = Matrix()
 	original_matrix:Set(m)
+
+	self.bone_matrix = m * Matrix()
 
 	if self.FollowPart:IsValid() and self.FollowPart.GetWorldPosition then
 		local pos, ang
@@ -155,20 +158,7 @@ function PART:BuildBonePositions2(ent, bone_count)
 		m:Rotate(self.Angles)
 		original_matrix:Set(m)
 	else
-
-		local prev_ang = m:GetAngles()
-		if true then
-			m:Rotate(Angle(0,0,-90))
-		end
-
 		m:Translate(self.Position)
-
-
-		if true then
-			m:SetAngles(prev_ang)
-		end
-
-
 		m:Rotate(self.Angles)
 	end
 
@@ -245,8 +235,19 @@ function PART:BuildBonePositions2(ent, bone_count)
 end
 
 function PART:GetBonePosition()
-	local owner = self:GetOwner()
-	return pac.GetBonePosAng(owner, self.Bone, true)
+	local ent = self:GetOwner()
+
+	local index = self.bone_index
+
+	if not index then return end
+
+	local m = self.bone_matrix or ent:GetBoneMatrix(index)
+	if not m then return end
+
+	local pos = m:GetTranslation()
+	local ang = m:GetAngles()
+
+	return pos, ang
 end
 
 BUILDER:Register()

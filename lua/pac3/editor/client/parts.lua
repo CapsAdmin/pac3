@@ -163,45 +163,6 @@ function pace.OnPartSelected(part, is_selecting)
 	if not is_selecting then
 		pace.StopSelect()
 	end
-
-	if part.ClassName == 'group' then
-		if #part:GetChildrenList() ~= 0 then
-			local position
-
-			for i, child in ipairs(part:GetChildrenList()) do
-				if not position and child.GetDrawPosition then
-					local pos = child:GetDrawPosition()
-
-					if not position then
-						position = pos
-					else
-						position = LerpVector(0.5, position, pos)
-					end
-				end
-			end
-
-			if not position then
-				-- wtf
-				part.centreAngle = nil
-				part.centrePosMV = nil
-				part.centrePosCTRL = nil
-				part.centrePosO = nil
-				part.centrePos = nil
-			else
-				part.centrePos = Vector(position)
-				part.centrePosO = Vector(position)
-				part.centrePosMV = Vector()
-				part.centrePosCTRL = Vector()
-				part.centreAngle = Angle(0, pac.LocalPlayer:EyeAngles().y, 0)
-			end
-		else
-			part.centrePos = nil
-			part.centrePosO = nil
-			part.centrePosMV = nil
-			part.centrePosCTRL = nil
-			part.centreAngle = nil
-		end
-	end
 end
 
 function pace.OnVariableChanged(obj, key, val, not_from_editor)

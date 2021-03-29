@@ -398,7 +398,19 @@ do -- bone manipulation for boneanimlib
 			ent:SetFlexWeight(i, 0)
 		end
 
+
 		hook.Call("PAC3ResetBones", nil, ent)
+	end
+
+	function pac.SetEntityBoneMatrix(ent, i, matrix)
+		pac.ManipulateBonePosition(ent, i, matrix:GetTranslation())
+		pac.ManipulateBoneAngles(ent, i, matrix:GetAngles())
+	end
+
+
+	function pac.ResetEntityBoneMatrix(ent, i)
+		pac.ManipulateBoneAngles(ent, i, angle_zero)
+		pac.ManipulateBonePosition(ent, i, vector_origin)
 	end
 
 	function pac.ManipulateBonePosition(ply, id, var)

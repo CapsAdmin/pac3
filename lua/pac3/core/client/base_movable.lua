@@ -56,6 +56,7 @@ do -- bones
 
 		function PART:GetBoneMatrix()
 			local pos, ang = self:GetBonePosition()
+
 			bone_matrix:SetTranslation(pos)
 			bone_matrix:SetAngles(ang)
 			return bone_matrix
@@ -103,7 +104,6 @@ do
 		local m = self:GetBoneMatrix() * local_matrix
 
 		m:SetAngles(self:CalcAngles(m:GetAngles(), m:GetTranslation()))
-
 
 		if with_offsets then
 			m:Translate(self.PositionOffset)
