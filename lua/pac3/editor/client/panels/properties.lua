@@ -465,10 +465,12 @@ do -- list
 		for key, val in pairs(obj.ClassName and obj:GetVars() or obj) do
 			local callback
 			local udata
+			local sort_key
 
 			if not obj.ClassName then
 				callback = val.callback
 				udata = val.userdata
+				sort_key = val.sort_key
 				val = val.val
 			else
 				udata = pac.GetPropertyUserdata(obj, key)
@@ -480,14 +482,19 @@ do -- list
 			if not obj.ClassName or not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key) then
 				local group = group_override or (udata and udata.group) or "generic"
 				tbl[group] = tbl[group] or {}
-				table.insert(tbl[group], {key = key, val = val, callback = callback, udata = udata})
+				table.insert(tbl[group], {key = key, val = val, callback = callback, udata = udata, sort_key = sort_key})
 			end
 			::CONTINUE::
 		end
 
 		for group, vars in pairs(tbl) do
 			if not obj.ClassName then
-				table.sort(tbl[group], function(a, b) return a.key > b.key end)
+				table.sort(tbl[group], function(a, b)
+					if a.sort_key and b.sort_key then
+						return a.sort_key > b.sort_key
+					end
+					return a.key > b.key
+				end)
 			else
 				local sorted_variables = {}
 				local done = {}
