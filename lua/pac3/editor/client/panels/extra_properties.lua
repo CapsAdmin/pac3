@@ -589,7 +589,7 @@ do -- flex 2
 
 			tbl[name] = {
 				sort_key = -i,
-				val = weight_map[name],
+				val = tonumber(weight_map[name]),
 				callback = function(val)
 					if ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() == 0 then return end
 
