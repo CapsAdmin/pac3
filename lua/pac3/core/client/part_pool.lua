@@ -728,9 +728,7 @@ do -- drawing
 						ent.pac_draw_distance and (ent.pac_draw_distance <= 0 or ent.pac_draw_distance <= dst) or
 						dst <= draw_dist
 					) and (
-						fovoverride or
-						nodrawdelay(dst < radius * 1.25  or
-						util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0,ent)
+						fovoverride
 					)
 				end
 
