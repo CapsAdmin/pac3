@@ -58,7 +58,8 @@ do -- bone
 			end,
 			function(list, key, val)
 				return list:AddLine(val)
-			end)
+			end
+		)
 	end
 
 	pace.RegisterPanel(PANEL)
@@ -211,7 +212,8 @@ do -- sequence list
 			end,
 			function(list, key, val)
 				return list:AddLine(key, val)
-			end)
+			end
+		)
 	end
 
 	pace.RegisterPanel(PANEL)
@@ -846,7 +848,8 @@ do -- hull
 				min,
 				max,
 				Color(255, 204, 51, 255),
-				true)
+				true
+			)
 
 			if time < os.clock() then
 				stop()

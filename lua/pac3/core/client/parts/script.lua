@@ -150,7 +150,8 @@ local function CreateDummy(part, store, self)
 				if not part:IsValid() then return end
 				store.parts[part.UniqueID][key] = val
 			end,
-		})
+		}
+	)
 	part.dummy_part = obj
 	return obj
 end

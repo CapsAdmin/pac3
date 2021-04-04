@@ -25,7 +25,8 @@ pac.StartStorableVars()
 
 				return tbl
 			end,
-		})
+		}
+	)
 	pac.GetSet(PART, "RootOwner", false)
 pac.EndStorableVars()
 

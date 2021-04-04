@@ -32,7 +32,8 @@ pac.StartStorableVars()
 				num = tonumber(num)
 				return math.Clamp(num, 0, 1)
 			end,
-		})
+		}
+	)
 	pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
 
@@ -90,7 +91,8 @@ function PART:OnDraw(owner, pos, ang)
 			TEXT_ALIGN_CENTER,
 			TEXT_ALIGN_CENTER,
 			self.Outline,
-			self.OutlineColorC)
+			self.OutlineColorC
+		)
 		render_CullMode(1) -- MATERIAL_CULLMODE_CW
 
 			draw_SimpleTextOutlined(
@@ -102,7 +104,8 @@ function PART:OnDraw(owner, pos, ang)
 			TEXT_ALIGN_CENTER,
 			TEXT_ALIGN_CENTER,
 			self.Outline,
-			self.OutlineColorC)
+			self.OutlineColorC
+		)
 		render_CullMode(0) -- MATERIAL_CULLMODE_CCW
 
 			DisableClipping(oldState)

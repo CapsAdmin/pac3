@@ -24,7 +24,8 @@ if CLIENT then
 					filter = filter,
 					mins = Vector(1, 1, 1) * -8,
 					maxs = Vector(1, 1, 1) * 8,
-				})
+				}
+			)
 			if res.Hit then return res.HitPos end
 		end
 	end)

@@ -13,7 +13,8 @@ pac.StartStorableVars()
 			enums = function()
 				return pac.particle_list
 			end,
-		})
+		}
+	)
 	pac.GetSet(PART, "Loop", true)
 	pac.GetSet(PART, "Follow", true)
 	pac.GetSet(PART, "Rate", 1, {editor_sensitivity = 0.1})
@@ -173,7 +174,8 @@ function PART:Emit(pos, ang)
 				ent2:GetPos(),
 				true,
 				ent:EntIndex(),
-				0)
+				0
+			)
 			return
 		end
 
@@ -186,7 +188,8 @@ function PART:Emit(pos, ang)
 					self.PointA.Entity or
 					self.PointA:GetOwner(),
 					attachtype = PATTACH_ABSORIGIN_FOLLOW,
-				})
+				}
+			)
 
 			if self.PointB:IsValid() then
 				table.insert(
@@ -196,7 +199,8 @@ function PART:Emit(pos, ang)
 						self.PointB.Entity or
 						self.PointB:GetOwner(),
 						attachtype = PATTACH_ABSORIGIN_FOLLOW,
-					})
+					}
+				)
 			end
 
 			if self.PointC:IsValid() then
@@ -207,7 +211,8 @@ function PART:Emit(pos, ang)
 						self.PointC.Entity or
 						self.PointC:GetOwner(),
 						attachtype = PATTACH_ABSORIGIN_FOLLOW,
-					})
+					}
+				)
 			end
 
 			if self.PointD:IsValid() then
@@ -218,7 +223,8 @@ function PART:Emit(pos, ang)
 						self.PointD.Entity or
 						self.PointD:GetOwner(),
 						attachtype = PATTACH_ABSORIGIN_FOLLOW,
-					})
+					}
+				)
 			end
 
 			ent:CreateParticleEffect(self.Effect, points)

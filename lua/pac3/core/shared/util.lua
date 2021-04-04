@@ -200,7 +200,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 					if compression_method ~= 0 then
 						error(
-							"the file " .. name .. " is compressed! (use compression method 0 / store, or maybe you drag dropped files into the archive)")
+							"the file " .. name .. " is compressed! (use compression method 0 / store, or maybe you drag dropped files into the archive)"
+						)
 					end
 
 					f:Skip(extra_field_length)
@@ -234,7 +235,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 									buffer = buffer,
 									crc = crc,
 									file_path = file_path,
-								})
+								}
+							)
 						end
 					end
 				end
@@ -322,12 +324,14 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				if not is_binary then
 					pac.Message(
 						Color(255, 50, 50),
-						"the url isn't a binary zip archive. Is it a html website? here's the content:")
+						"the url isn't a binary zip archive. Is it a html website? here's the content:"
+					)
 					print(str)
 				elseif ply == pac.LocalPlayer then
 					file.Write("pac3_cache/failed_zip_download.dat", str)
 					pac.Message(
-						"the zip archive was stored to garrysmod/data/pac3_cache/failed_zip_download.dat (rename extension to .zip) if you want to inspect it")
+						"the zip archive was stored to garrysmod/data/pac3_cache/failed_zip_download.dat (rename extension to .zip) if you want to inspect it"
+					)
 				end
 
 				return
@@ -438,7 +442,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 												buffer = dummy,
 												crc = util.CRC(dummy),
 												file_path = mat,
-											})
+											}
+										)
 									end
 
 									table.insert(found_materials, mat)
@@ -472,7 +477,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 										offset_pos = offset_pos,
 										offset = offset,
 										dir = dir,
-									})
+									}
+								)
 								table.insert(found_vmt_directories, {dir = dir})
 								f:seek(old_pos)
 							end
@@ -651,7 +657,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 												vtf_path,
 												".vtf for $",
 												shader_param,
-												" but it doesn't exist")
+												" but it doesn't exist"
+											)
 											print(data.buffer)
 										end
 									end

@@ -190,13 +190,15 @@ function net.WriteStream(data, callback, dontcompress)
 	if not isstring(data) then
 		error(
 			"bad argument #1 to 'WriteStream' (string expected, got " .. type(data) .. ")",
-			2)
+			2
+		)
 	end
 
 	if callback ~= nil and not isfunction(callback) then
 		error(
 			"bad argument #2 to 'WriteStream' (function expected, got " .. type(callback) .. ")",
-			2)
+			2
+		)
 	end
 
 	local compressed = not dontcompress
@@ -256,7 +258,8 @@ function net.WriteStream(data, callback, dontcompress)
 						t[k] = r
 						return r
 					end,
-				}),
+				}
+			),
 		}
 	setmetatable(stream, net.Stream.WriteStream)
 	net.Stream.WriteStreams[identifier] = stream
@@ -287,7 +290,8 @@ function net.ReadStream(ply, callback)
 	if not isfunction(callback) then
 		error(
 			"bad argument #2 to 'ReadStream' (function expected, got " .. type(callback) .. ")",
-			2)
+			2
+		)
 	end
 
 	local queue = net.Stream.ReadStreamQueues[ply]
@@ -322,7 +326,8 @@ function net.ReadStream(ply, callback)
 			ply,
 			" is too large! ",
 			numchunks * net.Stream.SendSize / 1048576,
-			"MiB")
+			"MiB"
+		)
 		return
 	end
 

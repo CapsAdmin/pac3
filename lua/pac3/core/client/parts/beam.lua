@@ -63,7 +63,8 @@ do
 				vector,
 				width + ((math_sin(wave) ^ width_bend_size) * width_bend),
 				(i / tex_stretch) + tex_scroll,
-				color)
+				color
+			)
 		end
 
 		render_EndBeam()
@@ -203,7 +204,8 @@ function PART:OnDraw(owner, pos, ang)
 			self.TextureStretch,
 			self.TextureScroll,
 			self.WidthBend,
-			self.WidthBendSize)
+			self.WidthBendSize
+		)
 	end
 end
 

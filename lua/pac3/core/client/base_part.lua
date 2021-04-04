@@ -22,7 +22,8 @@ local function SETUP_CACHE_FUNC(tbl, func_name)
 				b,
 				c,
 				d,
-				e)
+				e
+			)
 			self[last_key] = pac.FrameNumber
 		end
 
@@ -56,7 +57,8 @@ pac.StartStorableVars()
 			{
 				editor_friendly = "IsExplicit",
 				description = "Marks this content as NSFW, and makes it hidden for most of players who have pac_hide_disturbing set to 1",
-			})
+			}
+		)
 	pac.SetPropertyGroup(PART, "orientation")
 		pac.GetSet(PART, "Bone", "head")
 		pac.GetSet(PART, "Position", Vector(0, 0, 0))
@@ -82,7 +84,8 @@ pac.StartStorableVars()
 					premultiplied = "one;one_src_minus_alpha;one;one_src_minus_alpha",
 					additive = "src_alpha;one;src_alpha;one",
 				},
-			})
+			}
+		)
 		pac.GetSet(PART, "DrawOrder", 0)
 pac.EndStorableVars()
 PART.AllowSetupPositionFrameSkip = true
@@ -1301,7 +1304,8 @@ do -- drawing. this code is running every frame
 					self.Position or Vector(),
 					self.Angles or Angle(),
 					pos or owner:GetPos(),
-					ang or owner:GetAngles())
+					ang or owner:GetAngles()
+				)
 				ang = self:CalcAngles(ang) or ang
 				self.last_drawpos = pos
 				self.last_drawang = ang
@@ -1427,7 +1431,8 @@ function PART:CalcShowHide()
 		else
 			self:OnShow(
 				self.shown_from_rendering == true or
-				self.shown_from_rendering == FrameNumber())
+				self.shown_from_rendering == FrameNumber()
+			)
 		end
 	end
 

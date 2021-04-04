@@ -10,14 +10,16 @@ CreateConVar(
 	CLIENT and
 	{FCVAR_REPLICATED} or
 	{FCVAR_ARCHIVE, FCVAR_REPLICATED},
-	"Allow to use custom MDLs")
+	"Allow to use custom MDLs"
+)
 CreateConVar(
 	"pac_allow_mdl_entity",
 	"1",
 	CLIENT and
 	{FCVAR_REPLICATED} or
 	{FCVAR_ARCHIVE, FCVAR_REPLICATED},
-	"Allow to use custom MDLs as Entity")
+	"Allow to use custom MDLs as Entity"
+)
 include("util.lua")
 include("pac3/core/shared/init.lua")
 include("effects.lua")

@@ -32,7 +32,8 @@ pac.StartStorableVars()
 
 					return tbl
 				end,
-			})
+			}
+		)
 		pac.GetSet(PART, "RootOwner", false)
 		pac.SetupPartName(PART, "TargetPart")
 		pac.GetSet(PART, "AffectChildren", false)
@@ -46,7 +47,8 @@ pac.StartStorableVars()
 				enums = function(part)
 					return part.Inputs
 				end,
-			})
+			}
+		)
 		pac.GetSet(
 			PART,
 			"Function",
@@ -55,7 +57,8 @@ pac.StartStorableVars()
 				enums = function(part)
 					return part.Functions
 				end,
-			})
+			}
+		)
 		pac.GetSet(PART, "Axis", "")
 		pac.GetSet(PART, "Min", 0)
 		pac.GetSet(PART, "Max", 1)
@@ -242,7 +245,8 @@ PART.Inputs = {
 			return math.Clamp(
 				math.abs(pac.EyeAng:Forward():DotProduct((pos - pac.EyePos):GetNormalized())) - 0.5,
 				0,
-				1)
+				1
+			)
 		end,
 		aim_length = function(self, parent)
 			local owner = self:GetOwner(self.RootOwner)
@@ -252,7 +256,8 @@ PART.Inputs = {
 				local res = util.QuickTrace(
 					owner:EyePos(),
 					self:CalcEyeAngles(owner):Forward() * 16000,
-					{owner, owner:GetParent()})
+					{owner, owner:GetParent()}
+				)
 				return res.StartPos:Distance(res.HitPos)
 			end
 
@@ -266,7 +271,8 @@ PART.Inputs = {
 				local res = util.QuickTrace(
 					owner:EyePos(),
 					self:CalcEyeAngles(owner):Forward() * 16000,
-					{owner, owner:GetParent()})
+					{owner, owner:GetParent()}
+				)
 				return res.Fraction
 			end
 
@@ -907,7 +913,8 @@ local function set(self, part, x, y, z, children)
 				x,
 				y,
 				z,
-				true)
+				true
+			)
 		end
 	end
 end
@@ -939,7 +946,8 @@ function PART:OnThink()
 			then
 				chat.AddText(
 					Color(255, 180, 180),
-					"============\n[ERR] PAC Proxy error on " .. tostring(self) .. ":\n" .. x .. "\n============\n")
+					"============\n[ERR] PAC Proxy error on " .. tostring(self) .. ":\n" .. x .. "\n============\n"
+				)
 				self.LastBadExpression = self.Expression
 			end
 
@@ -976,7 +984,8 @@ function PART:OnThink()
 					x,
 					y,
 					z,
-					true)
+					true
+				)
 			end
 		else
 			set(self, parent, x, y, z)
@@ -1017,7 +1026,8 @@ function PART:OnThink()
 					(
 						F(
 							((I(self, parent) / self.InputDivider) + self.Offset) * self.InputMultiplier,
-							self) + 1
+							self
+						) + 1
 					) / 2
 				) ^ self.Pow
 
@@ -1034,7 +1044,8 @@ function PART:OnThink()
 						num,
 						nil,
 						nil,
-						true)
+						true
+					)
 				end
 			else
 				set(self, parent, num)

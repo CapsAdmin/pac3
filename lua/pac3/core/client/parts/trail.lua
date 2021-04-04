@@ -185,7 +185,8 @@ function PART:OnDraw(owner, pos, ang)
 		self.EndAlpha * 255,
 		self.StartSize,
 		self.EndSize,
-		1 / self.Stretch)
+		1 / self.Stretch
+	)
 end
 
 pac.RegisterPart(PART)

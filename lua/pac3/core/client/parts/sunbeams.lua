@@ -35,7 +35,8 @@ function PART:OnDraw(owner, pos, ang)
 			dist_mult * self.Multiplier * (math.Clamp(pac.EyeAng:Forward():Dot((pos - pac.EyePos):GetNormalized()) - 0.5, 0, 1) * 2) ^ 5,
 			self.Size,
 			spos.x / ScrW(),
-			spos.y / ScrH())
+			spos.y / ScrH()
+		)
 	cam.End2D()
 end
 

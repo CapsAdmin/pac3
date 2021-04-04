@@ -94,7 +94,8 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 					HideEntity = function(tbl, val)
 						tbl.NoDraw = val
 					end,
-				}),
+				}
+			),
 			material = material_translate,
 		}
 	local temp = {}
@@ -138,7 +139,8 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 								BlurSpacing = tbl.self.BlurSpacing,
 							},
 							children = {},
-						})
+						}
+					)
 				end
 			end
 
@@ -153,7 +155,8 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 								NoDraw = true,
 							},
 							children = {},
-						})
+						}
+					)
 				end
 			end
 
@@ -173,7 +176,8 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 						" = ",
 						value,
 						" to ",
-						tbl.self[key])
+						tbl.self[key]
+					)
 				elseif not get_storable(new_classname)[key] then
 					local msg = tbl.self.ClassName .. "." .. key
 
@@ -350,14 +354,16 @@ pace.AddTool(L"import editor tool from file...", function()
 				Derma_Message(
 					"File " .. "garrysmod/data/pac3_editor/tools/" .. toolfile .. " not found.",
 					"Error: File Not Found",
-					"OK")
+					"OK"
+				)
 			end
 		end)
 	else
 		Derma_Message(
 			"Importing pac editor tools is disallowed on this server.",
 			"Error: Clientside Lua Disabled",
-			"OK")
+			"OK"
+		)
 	end
 end)
 
@@ -380,7 +386,8 @@ pace.AddTool(L"import editor tool from url...", function()
 		Derma_Message(
 			"Importing pac editor tools is disallowed on this server.",
 			"Error: Clientside Lua Disabled",
-			"OK")
+			"OK"
+		)
 	end
 end)
 
@@ -646,7 +653,8 @@ elseif (CoreStatus == "RunThisCode") {
 				part:GetSkin() or
 				"0",
 				PARENT = "entity()",
-			})
+			}
+		)
 		return holo
 	end
 
@@ -661,7 +669,8 @@ elseif (CoreStatus == "RunThisCode") {
 
 		out = out .. str_footer
 		LocalPlayer():ChatPrint(
-			"PAC --> Code saved in your Expression 2 folder under [expression2/pac/" .. part:GetName() .. ".txt" .. "].")
+			"PAC --> Code saved in your Expression 2 folder under [expression2/pac/" .. part:GetName() .. ".txt" .. "]."
+		)
 		return out
 	end
 

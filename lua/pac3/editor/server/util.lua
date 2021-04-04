@@ -35,7 +35,8 @@ function pace.PCallCriticalFunction(ply, func, ...)
 			pac.Message(
 				"cannot handle net message from ",
 				ply,
-				" because it errored less than 1 second ago")
+				" because it errored less than 1 second ago"
+			)
 			ply.pac_pcall_next_print = time + 1
 		end
 

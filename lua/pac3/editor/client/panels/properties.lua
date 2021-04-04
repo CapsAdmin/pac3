@@ -4,7 +4,8 @@ local languageID = CreateClientConVar(
 	1,
 	true,
 	false,
-	"Whether we should show the language indicator inside of editable text entries.")
+	"Whether we should show the language indicator inside of editable text entries."
+)
 
 function pace.ShowSpecial(pnl, parent, size)
 	size = size or 150
@@ -18,7 +19,8 @@ function pace.FixMenu(menu)
 	menu:InvalidateLayout(true, true)
 	menu:SetPos(
 		pace.Editor:GetPos() + pace.Editor:GetWide(),
-		gui.MouseY() - (menu:GetTall() * 0.5))
+		gui.MouseY() - (menu:GetTall() * 0.5)
+	)
 end
 
 local function DefineMoreOptionsLeftClick(self, callFuncLeft, callFuncRight)
@@ -376,7 +378,8 @@ do -- list
 					color = left:GetSkin().Colours.Category.Header,
 				},
 				1,
-				100)
+				100
+			)
 			local txt = (pace.CollapsedProperties[name] and "+" or "-")
 			local w = surface.GetTextSize(txt)
 			draw.TextShadow(
@@ -387,7 +390,8 @@ do -- list
 					color = left:GetSkin().Colours.Category.Header,
 				},
 				1,
-				100)
+				100
+			)
 		end
 		right.Paint = function(_, w, h)
 			left:GetSkin().tex.CategoryList.Header(-w, 0, w * 2, h)
@@ -400,7 +404,8 @@ do -- list
 				panel = var,
 				key = key,
 				group = name,
-			})
+			}
+		)
 		return #self.List
 	end
 
@@ -501,7 +506,8 @@ do -- list
 						val = val,
 						callback = callback,
 						udata = udata,
-					})
+					}
+				)
 			end
 
 			::CONTINUE::
@@ -674,7 +680,8 @@ do -- list
 									end,
 									function(val, key)
 										return val
-									end)
+									end
+								)
 							end)
 						end
 
@@ -731,7 +738,8 @@ do -- list
 							pos,
 							nil,
 							udata,
-							group)
+							group
+						)
 					end
 				end
 
@@ -780,7 +788,8 @@ do -- non editable string
 		lbl:SetTextColor(
 			self.alt_line and
 			self:GetSkin().Colours.Category.AltLine.Text or
-			self:GetSkin().Colours.Category.Line.Text)
+			self:GetSkin().Colours.Category.Line.Text
+		)
 		lbl:SetFont(pace.CurrentFont)
 		lbl:SetText(str)
 		lbl:SetTextInset(10, 0)
@@ -868,7 +877,8 @@ do -- base editable
 		self:SetTextColor(
 			self.alt_line and
 			self:GetSkin().Colours.Category.AltLine.Text or
-			self:GetSkin().Colours.Category.Line.Text)
+			self:GetSkin().Colours.Category.Line.Text
+		)
 		self:SetFont(pace.CurrentFont)
 		self:SetText("  " .. str) -- ugh
 		self:SizeToContents()
@@ -1404,7 +1414,8 @@ do -- vector
 
 			pace.ActiveSpecialPanel = frm
 		end,
-		10)
+		10
+	)
 
 	VECTOR(
 		Vector,
@@ -1471,7 +1482,8 @@ do -- vector
 
 			pace.ActiveSpecialPanel = frm
 		end,
-		0.25)
+		0.25
+	)
 end
 
 do -- number
@@ -1593,7 +1605,8 @@ do -- boolean
 		lbl:SetTextColor(
 			self.alt_line and
 			self:GetSkin().Colours.Category.AltLine.Text or
-			self:GetSkin().Colours.Category.Line.Text)
+			self:GetSkin().Colours.Category.Line.Text
+		)
 		self.lbl = lbl
 	end
 

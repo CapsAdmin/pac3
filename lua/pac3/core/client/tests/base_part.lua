@@ -8,7 +8,8 @@ local consume = test.EventConsumer(
 		"draw",
 		"hide",
 		"remove",
-	})
+	}
+)
 
 function test.Run(done)
 	do

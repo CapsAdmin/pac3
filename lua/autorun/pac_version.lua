@@ -54,7 +54,8 @@ if SERVER then
 						"lua/autorun/pac_init.lua",
 						"lua/autorun/pac_init.lua",
 						"lua/entities/gmod_wire_expression2/core/custom/pac.lua",
-					}),
+					}
+				),
 				editor = hash.LuaPaths({"lua/pac3/editor/",}),
 				core = hash.LuaPaths({"lua/pac3/core/",}),
 			}

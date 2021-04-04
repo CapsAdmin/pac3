@@ -21,7 +21,8 @@ pac.StartStorableVars()
 				num = tonumber(num)
 				return math.Round(math.max(num, 0))
 			end,
-		})
+		}
+	)
 	pac.GetSet(PART, "Doppler", false)
 	pac.GetSet(PART, "StopOnHide", false)
 	pac.GetSet(PART, "PauseOnHide", false)
@@ -40,7 +41,8 @@ pac.StartStorableVars()
 					lowpass = "1",
 					highpass = "2",
 				},
-			})
+			}
+		)
 		pac.GetSet(PART, "FilterFraction", 1, {editor_sensitivity = 0.125, editor_clamp = {0, 1}})
 	pac.SetPropertyGroup(PART, "echo")
 		pac.GetSet(PART, "Echo", false)
@@ -54,7 +56,8 @@ pac.StartStorableVars()
 			{
 				editor_sensitivity = 0.125,
 				editor_friendly = "pitch amount",
-			})
+			}
+		)
 		pac.GetSet(
 			PART,
 			"PitchLFOTime",
@@ -62,7 +65,8 @@ pac.StartStorableVars()
 			{
 				editor_sensitivity = 0.125,
 				editor_friendly = "pitch time",
-			})
+			}
+		)
 		pac.GetSet(
 			PART,
 			"VolumeLFOAmount",
@@ -70,7 +74,8 @@ pac.StartStorableVars()
 			{
 				editor_sensitivity = 0.125,
 				editor_friendly = "volume amount",
-			})
+			}
+		)
 		pac.GetSet(
 			PART,
 			"VolumeLFOTime",
@@ -78,7 +83,8 @@ pac.StartStorableVars()
 			{
 				editor_sensitivity = 0.125,
 				editor_friendly = "volume time",
-			})
+			}
+		)
 pac.EndStorableVars()
 
 function PART:Initialize()

@@ -203,7 +203,8 @@ function timeline.Close()
 	if timeline.animation_part:GetURL() ~= "" then
 		file.Write(
 			"pac3/__animations/backups/previous_session_" .. os.date("%m%d%y%H%M%S") .. ".txt",
-			util.TableToJSON(timeline.data))
+			util.TableToJSON(timeline.data)
+		)
 	end
 
 	timeline.editing = false
@@ -354,7 +355,8 @@ do
 						color = self:GetSkin().Colours.Category.Header,
 					},
 					1,
-					100)
+					100
+				)
 				draw.TextShadow(
 					{
 						text = L"time" .. ": " .. math.Round(timeline.GetCycle() * animations.GetAnimationDuration(timeline.entity, timeline.animation_part:GetAnimID()), 3),
@@ -363,7 +365,8 @@ do
 						color = self:GetSkin().Colours.Category.Header,
 					},
 					1,
-					100)
+					100
+				)
 			end
 		end
 
@@ -408,7 +411,8 @@ do
 								{x = spacing, y = spacing},
 								{x = w - spacing, y = h / 2},
 								{x = spacing, y = h - spacing},
-							})
+							}
+						)
 					end
 				end
 
@@ -460,7 +464,8 @@ do
 						function() 
 						end,
 						L"save",
-						L"cancel")
+						L"cancel"
+					)
 				end
 				local load = saveload:Add("DImageButton")
 				load:SetImage("icon16/folder.png")
@@ -903,7 +908,8 @@ do
 					function() 
 					end,
 					L"set length",
-					L"cancel")
+					L"cancel"
+				)
 			end)
 			:SetImage("icon16/time.png")
 			menu:AddOption(L"multiply length", function()
@@ -917,7 +923,8 @@ do
 					function() 
 					end,
 					L"multiply length",
-					L"cancel")
+					L"cancel"
+				)
 			end)
 			:SetImage("icon16/time_add.png")
 

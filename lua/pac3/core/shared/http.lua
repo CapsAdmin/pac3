@@ -5,12 +5,14 @@ if CLIENT then
 		"pac_webcontent_limit",
 		"-1",
 		{FCVAR_ARCHIVE},
-		"webcontent limit, -1 = unlimited, 1024 = 1mb")
+		"webcontent limit, -1 = unlimited, 1024 = 1mb"
+	)
 	CL_NO_CLENGTH = CreateConVar(
 		"pac_webcontent_allow_no_content_length",
 		"0",
 		{FCVAR_ARCHIVE},
-		"allow downloads with no content length")
+		"allow downloads with no content length"
+	)
 	CL_LIMIT_OVERRIDE = CreateConVar("pac_webcontent_limit_force", "0", {FCVAR_ARCHIVE}, "Override serverside setting")
 end
 
@@ -20,14 +22,16 @@ local SV_LIMIT = CreateConVar(
 	CLIENT and
 	{FCVAR_REPLICATED} or
 	{FCVAR_ARCHIVE, FCVAR_REPLICATED},
-	"webcontent limit, -1 = unlimited, 1024 = 1mb")
+	"webcontent limit, -1 = unlimited, 1024 = 1mb"
+)
 local SV_NO_CLENGTH = CreateConVar(
 	"sv_pac_webcontent_allow_no_content_length",
 	"-1",
 	CLIENT and
 	{FCVAR_REPLICATED} or
 	{FCVAR_ARCHIVE, FCVAR_REPLICATED},
-	"allow downloads with no content length")
+	"allow downloads with no content length"
+)
 
 function pac.FixGMODUrl(url)
 	-- to avoid "invalid url" errors
@@ -69,7 +73,8 @@ local function http(method, url, headers, cb, failcb)
 			failed = function(err)
 				failcb("_G.HTTP error: " .. err)
 			end,
-		})
+		}
+	)
 end
 
 function pac.FixUrl(url)
@@ -78,14 +83,17 @@ function pac.FixUrl(url)
 	if url:find("dropbox", 1, true) then
 		url = url:gsub(
 			[[^http%://dl%.dropboxusercontent%.com/]],
-			[[https://dl.dropboxusercontent.com/]])
+			[[https://dl.dropboxusercontent.com/]]
+		)
 		url = url:gsub([[^https?://dl.dropbox.com/]], [[https://www.dropbox.com/]])
 		url = url:gsub(
 			[[^https?://www.dropbox.com/s/(.+)%?dl%=[01]$]],
-			[[https://dl.dropboxusercontent.com/s/%1]])
+			[[https://dl.dropboxusercontent.com/s/%1]]
+		)
 		url = url:gsub(
 			[[^https?://www.dropbox.com/s/(.+)$]],
-			[[https://dl.dropboxusercontent.com/s/%1]])
+			[[https://dl.dropboxusercontent.com/s/%1]]
+		)
 		return url
 	end
 
@@ -100,7 +108,8 @@ function pac.FixUrl(url)
 	if url:find("gitlab.com", 1, true) then return url:gsub("^(https?://.-/.-/.-/)blob", "%1raw") end
 	url = url:gsub(
 		[[^http%://onedrive%.live%.com/redir?]],
-		[[https://onedrive.live.com/download?]])
+		[[https://onedrive.live.com/download?]]
+	)
 	url = url:gsub("pastebin.com/([a-zA-Z0-9]*)$", "pastebin.com/raw.php?i=%1")
 	url = url:gsub("github.com/([a-zA-Z0-9_]+)/([a-zA-Z0-9_]+)/blob/", "github.com/%1/%2/raw/")
 	return url
@@ -129,7 +138,8 @@ function pac.HTTPGet(url, cb, failcb)
 				if not length or math.floor(length) ~= length then
 					failcb(string.format(
 						"malformed server reply with header content-length (got %q, expected valid integer number)",
-						value), true)
+						value
+					), true)
 					return
 				end
 
@@ -155,7 +165,8 @@ function pac.HTTPGet(url, cb, failcb)
 			else
 				failcb(
 					"unknown file size when allow_no_contentlength is " .. allow_no_contentlength,
-					true)
+					true
+				)
 			end
 		end
 	end, failcb)

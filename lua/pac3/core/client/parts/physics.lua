@@ -119,7 +119,8 @@ function PART:OnThink()
 				phys:GetPos():Distance(self.Parent.cached_pos) > self.ConstrainSphere
 			then
 				phys:SetPos(
-					self.Parent.cached_pos + (self.Parent.cached_pos - phys:GetPos()):GetNormalized() * -self.ConstrainSphere)
+					self.Parent.cached_pos + (self.Parent.cached_pos - phys:GetPos()):GetNormalized() * -self.ConstrainSphere
+				)
 			end
 		else
 			if self.ConstrainSphere ~= 0 then

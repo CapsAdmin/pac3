@@ -39,7 +39,8 @@ do
 				weight = weight,
 				antialias = true,
 				additive = true,
-			})
+			}
+		)
 		surface.CreateFont(
 			blur,
 			{
@@ -48,7 +49,8 @@ do
 				weight = weight,
 				antialias = true,
 				blursize = blursize,
-			})
+			}
+		)
 		return {main = main, blur = blur,}
 	end
 
@@ -121,7 +123,8 @@ function DEMO:CreateParticle(x, y, vx, vy, life, on_death)
 			on_death = on_death,
 			life = self.time + life,
 			random = math.Rand(-1, 1),
-		})
+		}
+	)
 end
 
 function DEMO:PreUpdate(w, h, t, d)
@@ -171,7 +174,8 @@ surface.CreateFont(
 		weight = 800,
 		additive = false,
 		antialias = true,
-	})
+	}
+)
 local credits = {}
 local A = function(str, size, ...)
 	table.insert(credits, {
@@ -315,7 +319,8 @@ function DEMO:DrawCredits(w, h, d, t, pos)
 				Color(255, 255, 255, 200),
 				Color(255, 100, 255, 50),
 				data[3] or 0.5,
-				1)
+				1
+			)
 			last_height = last_height + h * data[2] + text_spacing
 		end
 	end
@@ -377,7 +382,8 @@ function DEMO:DrawParticles(w, h, d, t, pos)
 			part.pos.x - part.vel.x * l,
 			part.pos.y - part.vel.y * l,
 			part.siz * life_scale,
-			true)
+			true
+		)
 		s = s * life_scale
 		surface.SetDrawColor(part.clr.r * 0.1 * l, part.clr.g * 0.1 * l, part.clr.b * 0.1 * l, 255)
 		surface.DrawTexturedRect((part.pos.x - s * 0.5), (part.pos.y - s * 0.5), s, s)
@@ -434,7 +440,8 @@ function DEMO:SpawnFireworks(x, y)
 			end
 
 			self.base_color = self.base_color + math.Rand(30, 60)
-		end)
+		end
+	)
 end
 
 function DEMO:OnDraw(w, h, d, t, pos)
@@ -471,7 +478,8 @@ function DEMO:OnUpate(w, h, d, t, pos, first)
 		w,
 		h,
 		t,
-		d)
+		d
+	)
 	if not ok then return ok, mat end
 	cam.Start2D()
 
@@ -486,7 +494,8 @@ function DEMO:OnUpate(w, h, d, t, pos, first)
 			h,
 			d,
 			t,
-			pos)
+			pos
+		)
 
 		if mat then
 			cam.PopModelMatrix()
@@ -516,7 +525,8 @@ function pace.ShowAbout()
 			d,
 			t,
 			Vector(input.GetCursorPos()),
-			first)
+			first
+		)
 
 		if pnl.last_cursor ~= DEMO.cursor then
 			pnl:SetCursor(DEMO.cursor or "arrow")

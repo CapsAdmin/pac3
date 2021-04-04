@@ -66,7 +66,8 @@ function crypto.EncryptString(inputString, keyArray)
 		1,
 		crypto.UInt32BlockSize,
 		outputArray,
-		1)
+		1
+	)
 	local inputArrayLength = #inputArray
 	local inputEndIndex = #inputArray
 	inputEndIndex = inputEndIndex - ((inputArrayLength / crypto.UInt32BlockSize) % 64) * crypto.UInt32BlockSize
@@ -82,7 +83,8 @@ function crypto.EncryptString(inputString, keyArray)
 			1,
 			crypto.UInt32BlockSize * 64,
 			outputArray,
-			crypto.UInt32BlockSize + inputIndex)
+			crypto.UInt32BlockSize + inputIndex
+		)
 		inputIndex = inputIndex + crypto.UInt32BlockSize * 64
 	end
 
@@ -99,7 +101,8 @@ function crypto.EncryptString(inputString, keyArray)
 			1,
 			crypto.UInt32BlockSize,
 			outputArray,
-			crypto.UInt32BlockSize + inputIndex)
+			crypto.UInt32BlockSize + inputIndex
+		)
 		inputIndex = inputIndex + crypto.UInt32BlockSize
 	end
 
@@ -122,7 +125,8 @@ function crypto.DecryptString(inputString, keyArray)
 			1,
 			crypto.UInt32BlockSize,
 			inputArray,
-			inputIndex)
+			inputIndex
+		)
 		inputIndex = inputIndex - crypto.UInt32BlockSize
 	end
 
@@ -133,7 +137,8 @@ function crypto.DecryptString(inputString, keyArray)
 		1,
 		crypto.UInt32BlockSize,
 		inputArray,
-		1)
+		1
+	)
 	inputArray = crypto.UnpadInt32Array(inputArray)
 	local outputArray = inputArray
 	local outputString = crypto.Int32ArrayToString(outputArray, crypto.UInt32BlockSize + 1)
@@ -293,7 +298,8 @@ function crypto.XorArrays(array1, array1StartIndex, array2, array2StartIndex, le
 		array2StartIndex,
 		length,
 		out,
-		outStartIndex)
+		outStartIndex
+	)
 end
 
 function crypto.XorArrays2(array1, array1StartIndex, array2, array2StartIndex, length, out, outStartIndex)
@@ -344,7 +350,8 @@ function crypto.XorUInt8Arrays(array1, array1StartIndex, array2, array2StartInde
 		array2StartIndex,
 		length,
 		out,
-		outStartIndex)
+		outStartIndex
+	)
 end
 
 function crypto.XorUInt8Arrays2(array1, array1StartIndex, array2, array2StartIndex, length, out, outStartIndex)
@@ -355,7 +362,8 @@ function crypto.XorUInt8Arrays2(array1, array1StartIndex, array2, array2StartInd
 		array2StartIndex,
 		length,
 		out,
-		outStartIndex)
+		outStartIndex
+	)
 end
 
 function crypto.XorUInt8Arrays3(array1, array1StartIndex, array2, array2StartIndex, array3, array3StartIndex, length, out, outStartIndex)
@@ -368,7 +376,8 @@ function crypto.XorUInt8Arrays3(array1, array1StartIndex, array2, array2StartInd
 		array3StartIndex,
 		length,
 		out,
-		outStartIndex)
+		outStartIndex
+	)
 end
 
 -- Xors an array with another
@@ -380,7 +389,8 @@ function crypto.XorInt32Arrays(array1, array1StartIndex, array2, array2StartInde
 		array2StartIndex,
 		length,
 		out,
-		outStartIndex)
+		outStartIndex
+	)
 end
 
 function crypto.XorInt32Arrays2(array1, array1StartIndex, array2, array2StartIndex, length, out, outStartIndex)
@@ -391,7 +401,8 @@ function crypto.XorInt32Arrays2(array1, array1StartIndex, array2, array2StartInd
 		array2StartIndex,
 		length,
 		out,
-		outStartIndex)
+		outStartIndex
+	)
 end
 
 function crypto.XorInt32Arrays3(array1, array1StartIndex, array2, array2StartIndex, array3, array3StartIndex, length, out, outStartIndex)
@@ -404,7 +415,8 @@ function crypto.XorInt32Arrays3(array1, array1StartIndex, array2, array2StartInd
 		array3StartIndex,
 		length,
 		out,
-		outStartIndex)
+		outStartIndex
+	)
 end
 
 -- Converts a string to an array of uint8s

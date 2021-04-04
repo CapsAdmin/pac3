@@ -13,7 +13,8 @@ pac.StartStorableVars()
 			enums = function(part)
 				return part:GetPoseParameterList()
 			end,
-		})
+		}
+	)
 	pac.GetSet(PART, "Range", 0)
 pac.EndStorableVars()
 

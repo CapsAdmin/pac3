@@ -126,7 +126,8 @@ function pace.Backup(data, name)
 		if str ~= last_backup then
 			file.Write(
 				"pac3/__backup/" .. (name == "" and name or (name .. "_")) .. date .. ".txt",
-				str)
+				str
+			)
 			last_backup = str
 		end
 	end
@@ -235,7 +236,8 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 		part:SetTable(
 			data,
 			pac.GetPartFromUniqueID(LocalPlayer():UniqueID(), data.self.UniqueID):IsValid() and
-			copy_id)
+			copy_id
+		)
 		table.insert(partsLoaded, part)
 	else
 		data = pace.FixBadGrouping(data)
@@ -246,7 +248,8 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 			part:SetTable(
 				tbl,
 				pac.GetPartFromUniqueID(LocalPlayer():UniqueID(), tbl.self.UniqueID):IsValid() and
-				copy_id)
+				copy_id
+			)
 			table.insert(partsLoaded, part)
 		end
 	end
@@ -431,7 +434,8 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 				else
 					pace.LoadParts(name, clear, override_part)
 				end
-			end)
+			end
+		)
 	end)
 	:SetImage(pace.MiscIcons.url)
 
@@ -478,7 +482,8 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 				{
 					filename,
 					file.Time("pac3/__backup/" .. filename, "DATA"),
-				})
+				}
+			)
 		end
 
 		table.sort(files2, function(a, b)
@@ -512,7 +517,8 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 				{
 					filename,
 					file.Time("pac3/__backup_save/" .. filename, "DATA"),
-				})
+				}
+			)
 		end
 
 		table.sort(files2, function(a, b)
@@ -533,7 +539,8 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 				nicename:Replace(".txt", "") .. " (" .. string.NiceSize(file.Size("pac3/__backup_save/" .. name, "DATA")) .. ")",
 				function()
 					pace.LoadParts("__backup_save/" .. name, true)
-				end)
+				end
+			)
 			:SetImage(pace.MiscIcons.outfit)
 		end
 	end)
@@ -612,7 +619,8 @@ local function populate_parts(menu, tbl, dir, override_part)
 							Derma_Message(
 								"Cannot remove the directory.\nMaybe it contains hidden files?",
 								"unable to remove directory",
-								L"ok")
+								L"ok"
+							)
 						else
 							file.Delete(dir)
 						end
@@ -623,7 +631,8 @@ local function populate_parts(menu, tbl, dir, override_part)
 				end,
 				L"no",
 				function() 
-				end)
+				end
+			)
 		end)
 		:SetImage("icon16/folder_delete.png")
 	end
@@ -672,7 +681,8 @@ function pace.FixUniqueIDs(data)
 					part.self.ClassName,
 					part.self.Name,
 					part.self.Model or "",
-					#val)
+					#val
+				)
 				part.self.UniqueID = util.CRC(key .. tostring(part) .. SysTime())
 			end
 		end

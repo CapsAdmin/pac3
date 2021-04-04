@@ -151,7 +151,8 @@ local function ProcessAnimations(ent)
 			tbl,
 			frame,
 			frame_data,
-			frame_delta) then
+			frame_delta
+		) then
 			if tbl.ShouldPlay and not tbl.ShouldPlay(
 				ent,
 				name,
@@ -159,7 +160,8 @@ local function ProcessAnimations(ent)
 				frame,
 				frame_data,
 				frame_delta,
-				power) then
+				power
+			) then
 				animations.StopEntityAnimation(ent, name, 0.2)
 			end
 
@@ -218,7 +220,8 @@ local function ProcessAnimations(ent)
 				vCurBonePos,
 				aCurBoneAng,
 				fFrameDelta,
-				fPower) then
+				fPower
+			) then
 				local vUp = aCurBoneAng:Up()
 				local vRight = aCurBoneAng:Right()
 				local vForward = aCurBoneAng:Forward()
@@ -227,7 +230,8 @@ local function ProcessAnimations(ent)
 				if iInterp == "linear" then
 					if tbl.Type == "posture" then
 						mBoneMatrix:Translate(
-							(tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward) * fAmount)
+							(tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward) * fAmount
+						)
 						mBoneMatrix:Rotate(Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF) * fAmount)
 					else
 						local bi1 = GetFrameBoneInfo(ent, tbl, iCurFrame - 1, iBoneID)
@@ -235,9 +239,12 @@ local function ProcessAnimations(ent)
 							LerpVector(
 								fFrameDelta,
 								bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward,
-								tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward) * fPower)
+								tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward
+							) * fPower
+						)
 						mBoneMatrix:Rotate(
-							LerpAngle(fFrameDelta, Angle(bi1.RR, bi1.RU, bi1.RF), Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF)) * fPower)
+							LerpAngle(fFrameDelta, Angle(bi1.RR, bi1.RU, bi1.RF), Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF)) * fPower
+						)
 					end
 				elseif
 					iInterp == "cubic" and
@@ -251,9 +258,12 @@ local function ProcessAnimations(ent)
 						CosineInterpolation(
 							bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward,
 							tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward,
-							fFrameDelta) * fPower)
+							fFrameDelta
+						) * fPower
+					)
 					mBoneMatrix:Rotate(
-						CubicInterpolation(Angle(bi0.RR, bi0.RU, bi0.RF), Angle(bi1.RR, bi1.RU, bi1.RF), Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF), Angle(bi3.RR, bi3.RU, bi3.RF), fFrameDelta) * fPower)
+						CubicInterpolation(Angle(bi0.RR, bi0.RU, bi0.RF), Angle(bi1.RR, bi1.RU, bi1.RF), Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF), Angle(bi3.RR, bi3.RU, bi3.RF), fFrameDelta) * fPower
+					)
 				elseif iInterp == "none" then
 					mBoneMatrix:Translate((tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward))
 					mBoneMatrix:Rotate(Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF))
@@ -263,9 +273,12 @@ local function ProcessAnimations(ent)
 						CosineInterpolation(
 							bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward,
 							tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward,
-							fFrameDelta) * fPower)
+							fFrameDelta
+						) * fPower
+					)
 					mBoneMatrix:Rotate(
-						CosineInterpolation(Angle(bi1.RR, bi1.RU, bi1.RF), Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF), fFrameDelta) * fPower)
+						CosineInterpolation(Angle(bi1.RR, bi1.RU, bi1.RF), Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF), fFrameDelta) * fPower
+					)
 				end
 			end
 

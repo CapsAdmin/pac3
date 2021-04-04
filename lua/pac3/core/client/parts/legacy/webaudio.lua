@@ -178,11 +178,13 @@ function PART:SetupURLStreamsNow(URL)
 				pac.Message(
 					"Failed to load ",
 					url,
-					" (" .. flags .. ") - " .. (errorString or errorCode or "UNKNOWN"))
+					" (" .. flags .. ") - " .. (errorString or errorCode or "UNKNOWN")
+				)
 
 				if errorCode == -1 then
 					pac.Message(
-						"GMOD BUG: WAVe and Vorbis files are known to be not working with 3D flag, recode file into MPEG-3 format!")
+						"GMOD BUG: WAVe and Vorbis files are known to be not working with 3D flag, recode file into MPEG-3 format!"
+					)
 				end
 
 				self.streams[url] = nil

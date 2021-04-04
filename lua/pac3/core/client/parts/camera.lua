@@ -71,7 +71,8 @@ pac.AddHook("CalcView", "camera_part", function(ply, pos, ang, fov, nearz, farz)
 					ang,
 					fov,
 					nearz,
-					farz)
+					farz
+				)
 				temp.origin = pos
 				temp.angles = ang
 				temp.fov = fov

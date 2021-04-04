@@ -19,7 +19,8 @@ pac.StartStorableVars()
 				num = tonumber(num)
 				return math.Clamp(num, 0, 1) * 0.999
 			end,
-		})
+		}
+	)
 	pac.GetSet(PART, "Speed", 1)
 	pac.GetSet(PART, "ConstantVelocity", Vector(0, 0, 0))
 	pac.GetSet(PART, "LocalVelocity", true)

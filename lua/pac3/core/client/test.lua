@@ -105,7 +105,8 @@ local function start_test(name, done)
 				test.name .. " finished before consuming event ",
 				test.events_consume[test.events_consume_index],
 				" at index ",
-				test.events_consume_index)
+				test.events_consume_index
+			)
 		end
 
 		test.co = nil
@@ -126,7 +127,8 @@ local function start_test(name, done)
 				COLOR_NORMAL,
 				tostring(b),
 				COLOR_ERROR,
-				"!")
+				"!"
+			)
 			msg(debug.traceback())
 			msg_error("=============")
 		end
@@ -169,7 +171,8 @@ local function start_test(name, done)
 				if env[key] then return env[key] end
 				return rawget(_G, key)
 			end,
-		}))
+		}
+	))
 	func()
 	test.Setup()
 	test.co = coroutine.create(function()
@@ -201,7 +204,8 @@ concommand.Add("pac_test", function(ply, _, args)
 
 	if not what then
 		msg_warning(
-			"this command is intended for developers to test that pac works after changing the code")
+			"this command is intended for developers to test that pac works after changing the code"
+		)
 		msg_warning("it will remove all parts before starting the test")
 		msg_warning("if you really want to run this command, run 'pac_test client'")
 		return

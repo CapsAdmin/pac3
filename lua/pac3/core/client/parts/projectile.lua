@@ -67,7 +67,8 @@ pac.StartStorableVars()
 				heal = -1,
 				armor = -1,
 			},
-		})
+		}
+	)
 	pac.GetSet(PART, "Spread", 0)
 	pac.GetSet(PART, "Delay", 0)
 	pac.GetSet(PART, "Maximum", 0)
@@ -84,7 +85,8 @@ pac.StartStorableVars()
 				closest_to_projectile = "closest_to_projectile",
 				closest_to_hitpos = "closest_to_hitpos",
 			},
-		})
+		}
+	)
 	pac.GetSet(PART, "AttractRadius", 200)
 	pac.SetupPartName(PART, "OutfitPart")
 	pac.GetSet(PART, "Physical", false)
@@ -189,7 +191,8 @@ function PART:Shoot(pos, ang)
 					timer.Simple(0, function()
 						if phys:IsValid() then
 							phys:SetVelocity(
-								data.OurOldVelocity - 2 * (data.HitNormal:Dot(data.OurOldVelocity) * data.HitNormal) * self.Bounce)
+								data.OurOldVelocity - 2 * (data.HitNormal:Dot(data.OurOldVelocity) * data.HitNormal) * self.Bounce
+							)
 						end
 					end)
 				elseif self.Sticky then
@@ -251,7 +254,8 @@ function PART:Shoot(pos, ang)
 			local phys = ent:GetPhysicsObject()
 			phys:EnableGravity(self.Gravity)
 			phys:AddVelocity(
-				(ang:Forward() + (VectorRand():Angle():Forward() * self.Spread)) * self.Speed * 1000)
+				(ang:Forward() + (VectorRand():Angle():Forward() * self.Spread)) * self.Speed * 1000
+			)
 
 			if self.AddOwnerSpeed and ent:GetOwner():IsValid() then
 				phys:AddVelocity(ent:GetOwner():GetVelocity())

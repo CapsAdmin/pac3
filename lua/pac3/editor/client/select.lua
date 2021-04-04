@@ -23,7 +23,8 @@ local RENDER_ATTACHMENTS = CreateConVar(
 	"pac_render_attachments",
 	"0",
 	{FCVAR_ARCHIVE},
-	"Render attachments when selecting bones")
+	"Render attachments when selecting bones"
+)
 
 function pace.ToggleRenderAttachments()
 	RunConsoleCommand("pac_render_attachments", RENDER_ATTACHMENTS:GetBool() and "0" or "1")
@@ -39,7 +40,8 @@ surface.CreateFont(
 		weight = 800,
 		antialias = true,
 		additive = true,
-	})
+	}
+)
 local font_name_blur = font_name .. "_blur"
 surface.CreateFont(
 	font_name_blur,
@@ -50,7 +52,8 @@ surface.CreateFont(
 		antialias = true,
 		additive = false,
 		blursize = 3,
-	})
+	}
+)
 
 local function draw_text(text, color, x, y)
 	surface.SetFont(font_name_blur)
@@ -110,7 +113,8 @@ local function DrawSelection(pos, r, g, b, sizeToUse)
 		pos.x - (sizeToUse * 0.5) - 1,
 		pos.y - (sizeToUse * 0.5) - 1,
 		sizeToUse + 2,
-		sizeToUse + 2)
+		sizeToUse + 2
+	)
 	return checkVisible(pos)
 end
 
@@ -207,7 +211,8 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 						dist = pace.util.FastDistance2D(pos.x, pos.y, x, y),
 						key = key,
 						value = value,
-					})
+					}
+				)
 			else
 				local hit = false
 
@@ -265,7 +270,8 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 					0,
 					-30,
 					v.pos.x,
-					v.pos.y)
+					v.pos.y
+				)
 				data = v
 
 				if selectCallback then
@@ -297,7 +303,8 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 							sy,
 							v.pos.x,
 							v.pos.y,
-							true)
+							true
+						)
 						found = v
 
 						if selectCallback then
@@ -314,7 +321,8 @@ local function select_something(tblin, check, getpos, getfriendly, callback, sel
 							v.pos.x,
 							v.pos.y,
 							false,
-							Color(255, 255, 255, 128))
+							Color(255, 255, 255, 128)
+						)
 					end
 				end
 
@@ -371,7 +379,8 @@ function pace.SelectBone(ent, callback, only_movable)
 		end,
 		function()
 			return ent:IsValid()
-		end)
+		end
+	)
 end
 
 function pace.SelectPart(parts, callback)

@@ -28,7 +28,8 @@ local function set_pos(ent, data, parent)
 		(data.Position or VEC0) + (data.PositionOffset or VEC0),
 		(data.Angles or ANG0) + (data.AngleOffset or ANG0),
 		ppos,
-		pang)
+		pang
+	)
 	ent:SetPos(pos)
 	ent:SetAngles(ang)
 end

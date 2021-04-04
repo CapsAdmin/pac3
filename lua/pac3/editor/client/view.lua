@@ -309,7 +309,8 @@ function pace.PostRenderVGUI()
 				255,
 				255,
 				255,
-				255 * (notifDisplayTimeFade - RealTime()) / (notifDisplayTimeFade - notifDisplayTime))
+				255 * (notifDisplayTimeFade - RealTime()) / (notifDisplayTimeFade - notifDisplayTime)
+			)
 		end
 
 		surface.SetFont("Trebuchet18")
@@ -338,7 +339,8 @@ function pace.EnableView(b)
 			"ShouldDrawLocalPlayer",
 			"editor",
 			pace.ShouldDrawLocalPlayer,
-			DLib and -4 or ULib and -1 or nil)
+			DLib and -4 or ULib and -1 or nil
+		)
 		pac.AddHook("CalcView", "editor", pace.CalcView, DLib and -4 or ULib and -1 or nil)
 		pac.AddHook("HUDPaint", "editor", pace.HUDPaint)
 		pac.AddHook("HUDShouldDraw", "editor", pace.HUDShouldDraw)

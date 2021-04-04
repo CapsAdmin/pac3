@@ -39,7 +39,8 @@ function PART:OnShow()
 				start = pos,
 				endpos = pos + (ang:Forward() * 1000),
 				filter = filter,
-			})
+			}
+		)
 
 		if data.Hit then
 			util.DecalEx(

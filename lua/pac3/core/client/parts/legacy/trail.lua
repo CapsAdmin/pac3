@@ -151,7 +151,8 @@ function PART:OnDraw(owner, pos, ang)
 				k == count and pos or v,
 				width + self.EndSize,
 				self.Stretch and coord or width,
-				temp_color)
+				temp_color
+			)
 		end
 
 		render_EndBeam()

@@ -18,7 +18,8 @@ pac.StartStorableVars()
 				num = tonumber(num)
 				return math.Round(math.max(num, 0))
 			end,
-		})
+		}
+	)
 	pac.GetSet(PART, "Doppler", false)
 	pac.GetSet(PART, "StopOnHide", false)
 	pac.GetSet(PART, "PauseOnHide", false)
@@ -33,7 +34,8 @@ pac.StartStorableVars()
 				num = tonumber(num)
 				return math.Round(math.Clamp(num, 0, 2))
 			end,
-		})
+		}
+	)
 	pac.GetSet(PART, "FilterFraction", 1, {editor_sensitivity = 0.125, editor_clamp = {0, 1}})
 
 	--pac.GetSet(PART, "Echo", false)
@@ -196,7 +198,8 @@ function PART:PlaySound(_, additiveVolumeFraction)
 			Color(255, 0, 0),
 			"The ogg part (custom sounds) might not work because you have your sample rate set to ",
 			pac.webaudio.sample_rate,
-			" Hz. Set it to 48000 or below if you experience any issues.")
+			" Hz. Set it to 48000 or below if you experience any issues."
+		)
 	end
 
 	if not stream:IsValid() then return end

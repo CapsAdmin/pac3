@@ -37,7 +37,8 @@ function SWEP:DrawWeaponSelection(x, y, w, t, a)
 		x + w / 2,
 		y,
 		Color(255, 220, 0, a),
-		TEXT_ALIGN_CENTER)
+		TEXT_ALIGN_CENTER
+	)
 end
 
 function SWEP:DrawWorldModel() 

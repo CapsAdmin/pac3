@@ -255,7 +255,8 @@ for key, CHAN in pairs(channels) do
 			pitchstart = 0,
 			pitchend = 0,
 			sound = "ambient/_period.wav",
-		})
+		}
+	)
 end
 
 pac.RegisterPart(PART)

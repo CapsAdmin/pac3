@@ -9,7 +9,8 @@ for i = 1, 5 do
 			size = 11 + i,
 			weight = 50,
 			antialias = true,
-		})
+		}
+	)
 	table.insert(pace.Fonts, "pac_font_" .. i)
 end
 
@@ -21,7 +22,8 @@ for i = 1, 5 do
 			size = 11 + i,
 			weight = 800,
 			antialias = true,
-		})
+		}
+	)
 	table.insert(pace.Fonts, "pac_font_bold" .. i)
 end
 

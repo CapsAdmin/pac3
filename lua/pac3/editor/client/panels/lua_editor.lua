@@ -402,7 +402,8 @@ function PANEL:Init()
 								width * 3 + 5,
 								(row - self.Scroll[1]) * height,
 								self:GetWide() - (width * 3 + 5),
-								height)
+								height
+							)
 						end
 
 						if (self:HasSelection()) then
@@ -427,13 +428,15 @@ function PANEL:Init()
 									char * width + width * 3 + 6,
 									(row - self.Scroll[1]) * height,
 									width * (endchar - char),
-									height)
+									height
+								)
 							elseif (row == line) then
 								surface.DrawRect(
 									char * width + width * 3 + 6,
 									(row - self.Scroll[1]) * height,
 									width * (length - char + 1),
-									height)
+									height
+								)
 							elseif (row == endline) then
 								surface.DrawRect(width * 3 + 6, (row - self.Scroll[1]) * height, width * endchar, height)
 							elseif (row > line and row < endline) then
@@ -447,7 +450,8 @@ function PANEL:Init()
 							width * 3,
 							(row - self.Scroll[1]) * height,
 							Color(128, 128, 128, 255),
-							TEXT_ALIGN_RIGHT)
+							TEXT_ALIGN_RIGHT
+						)
 						local offset = -self.Scroll[2] + 1
 
 						for i, cell in ipairs(self.PaintRows[row]) do
@@ -471,14 +475,16 @@ function PANEL:Init()
 										"LuapadEditorBold",
 										offset * width + width * 3 + 6,
 										(row - self.Scroll[1]) * height,
-										cell[2][1])
+										cell[2][1]
+									)
 								else
 									draw.SimpleText(
 										cell[1],
 										"LuapadEditor",
 										offset * width + width * 3 + 6,
 										(row - self.Scroll[1]) * height,
-										cell[2][1])
+										cell[2][1]
+									)
 								end
 
 								offset = offset + string.len(cell[1])
@@ -493,7 +499,8 @@ function PANEL:Init()
 										(self.Caret[2] - self.Scroll[2]) * width + width * 3 + 6,
 										(self.Caret[1] - self.Scroll[1]) * height,
 										1,
-										height)
+										height
+									)
 								end
 							end
 						end
@@ -885,7 +892,8 @@ function PANEL:Init()
 													true,
 													false,
 													undo[3],
-													undo[4]))
+													undo[4]
+												))
 											end
 										end
 
@@ -903,7 +911,8 @@ function PANEL:Init()
 													false,
 													true,
 													redo[3],
-													redo[4]))
+													redo[4]
+												))
 											end
 										end
 
@@ -1140,7 +1149,8 @@ function PANEL:Init()
 																																{
 																																	{self.Caret[1], self.Caret[2] + 4},
 																																	{self.Caret[1], 1},
-																																})
+																																}
+																															)
 
 																															if
 																																(

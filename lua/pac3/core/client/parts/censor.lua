@@ -29,7 +29,8 @@ local function create_rt(self)
 		MATERIAL_RT_DEPTH_NONE,
 		self.BlurFiltering and 2 or 1, -- TEXTUREFLAGS_POINTSAMPLE,
 		CREATERENDERTARGETFLAGS_AUTOMIPMAP,
-		IMAGE_FORMAT_RGB565)
+		IMAGE_FORMAT_RGB565
+	)
 	collectgarbage()
 end
 

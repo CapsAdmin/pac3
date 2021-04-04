@@ -215,7 +215,8 @@ if self.NextShot < pac.RealTime then
 			vec = Vector(
 				math.sin(math.Rand(0, 360)) * math.Rand(-self.Spread, self.Spread),
 				math.cos(math.Rand(0, 360)) * math.Rand(-self.Spread, self.Spread),
-				math.sin(math.random()) * math.Rand(-self.Spread, self.Spread))
+				math.sin(math.random()) * math.Rand(-self.Spread, self.Spread)
+			)
 		end
 
 		local color
@@ -311,7 +312,8 @@ if self.NextShot < pac.RealTime then
 				particle:SetAngleVelocity(Angle(
 					self.ParticleAngleVelocity.x,
 					self.ParticleAngleVelocity.y,
-					self.ParticleAngleVelocity.z))
+					self.ParticleAngleVelocity.z
+				))
 				particle.Align = self.Align
 				particle.Stick = self.Stick
 				particle.StickLifeTime = self.StickLifeTime

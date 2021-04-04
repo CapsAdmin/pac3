@@ -23,7 +23,8 @@ pac.StartStorableVars()
 
 				return output
 			end,
-		})
+		}
+	)
 	pac.GetSet(
 		PART,
 		"Operator",
@@ -38,7 +39,8 @@ pac.StartStorableVars()
 
 				return tbl
 			end,
-		})
+		}
+	)
 	pac.GetSet(PART, "Arguments", "", {editor_panel = "event_arguments"})
 	pac.GetSet(PART, "Invert", false)
 	pac.GetSet(PART, "RootOwner", true)
@@ -292,7 +294,8 @@ PART.OldEvents = {
 					ent.pac_model_scale.x or
 					(ent.GetModelScale and ent:GetModelScale()) or
 					1,
-					num) end
+					num
+				) end
 				return 1
 			end,
 		},
@@ -305,7 +308,8 @@ PART.OldEvents = {
 					ent.pac_model_scale.y or
 					(ent.GetModelScale and ent:GetModelScale()) or
 					1,
-					num) end
+					num
+				) end
 				return 1
 			end,
 		},
@@ -318,7 +322,8 @@ PART.OldEvents = {
 					ent.pac_model_scale.z or
 					(ent.GetModelScale and ent:GetModelScale()) or
 					1,
-					num) end
+					num
+				) end
 				return 1
 			end,
 		},
@@ -401,7 +406,8 @@ PART.OldEvents = {
 							start = parent.cached_pos,
 							endpos = parent.cached_pos + parent.cached_ang:Forward() * distance,
 							filter = ent,
-						})
+						}
+					)
 					if npcs_and_players_only and (not res.Entity:IsPlayer() and not res.Entity:IsNPC()) then return false end
 					return self:NumberOperator(res.Fraction * distance, compare)
 				end
@@ -428,7 +434,8 @@ PART.OldEvents = {
 						--maxs = ent:OBBMaxs(),
 						filter = ent,
 						--mask = MASK_SOLID_BRUSHONLY,
-					})
+					}
+						)
 						if res.Hit and math.abs(res.HitNormal.z) > 0.70 then return true end
 					end
 				end
@@ -459,7 +466,8 @@ PART.OldEvents = {
 						maxs = maxs,
 						mins = mins,
 						filter = ent,
-					})
+					}
+				)
 
 			--[[
 
@@ -532,7 +540,8 @@ PART.OldEvents = {
 					ent.GetMaxClip1 and
 					(primary and ent:GetMaxClip1() or ent:GetMaxClip2()) or
 					0,
-					amount) end
+					amount
+				) end
 			end,
 		},
 		vehicle_class = {
@@ -881,7 +890,8 @@ PART.OldEvents = {
 					(parent.pac_model_scale and parent.pac_model_scale.x) or
 					(parent.GetModelScale and parent:GetModelScale()) or
 					1,
-					num) end
+					num
+				) end
 				return 1
 			end,
 		},
@@ -899,7 +909,8 @@ PART.OldEvents = {
 					(parent.pac_model_scale and parent.pac_model_scale.y) or
 					(parent.GetModelScale and parent:GetModelScale()) or
 					1,
-					num) end
+					num
+				) end
 				return 1
 			end,
 		},
@@ -917,7 +928,8 @@ PART.OldEvents = {
 					(parent.pac_model_scale and parent.pac_model_scale.z) or
 					(parent.GetModelScale and parent:GetModelScale()) or
 					1,
-					num) end
+					num
+				) end
 				return 1
 			end,
 		},
@@ -1178,7 +1190,8 @@ do
 				__index = eventMetaTable.__index,
 				__call = eventMetaTable.__call,
 				__classname = nClassName,
-			})
+			}
+		)
 		newObj.__registeredArguments = {}
 		newObj:SetName(nClassName)
 
@@ -1282,7 +1295,8 @@ do
 						ent:isWanted() and
 						ent:getWantedReason() or
 						"",
-						find)
+						find
+					)
 				end,
 			},
 			{
@@ -1878,7 +1892,8 @@ do
 				y,
 				color_white,
 				TEXT_ALIGN_CENTER,
-				TEXT_ALIGN_CENTER)
+				TEXT_ALIGN_CENTER
+			)
 			cam.PopModelMatrix()
 		end
 
@@ -1914,7 +1929,8 @@ do
 				scrh2 + radius + R,
 				color_red,
 				TEXT_ALIGN_CENTER,
-				TEXT_ALIGN_TOP)
+				TEXT_ALIGN_TOP
+			)
 
 			for _, v in ipairs(selections) do
 				draw_circle(v, x, y)

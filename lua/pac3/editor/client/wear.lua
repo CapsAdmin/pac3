@@ -4,7 +4,8 @@ local pac_wear_reverse = CreateClientConVar(
 	"0",
 	true,
 	false,
-	"Wear to NOBODY but to people from list (Blacklist -> Whitelist)")
+	"Wear to NOBODY but to people from list (Blacklist -> Whitelist)"
+)
 
 do -- to server
 	local function assemblePlayerFilter()
@@ -125,14 +126,16 @@ do -- from server
 			part_data.self.Name or "",
 			tostring(owner),
 			table.Count(part_data.children),
-			part_data.self.OwnerName or "")
+			part_data.self.OwnerName or ""
+		)
 		if pace.CallHook("WearPartFromServer", owner, part_data, data) == false then return end
 		local dupepart = pac.GetPartFromUniqueID(data.player_uid, part_data.self.UniqueID)
 
 		if dupepart:IsValid() then
 			pac.dprint(
 				"removing part %q to be replaced with the part previously received",
-				dupepart.Name)
+				dupepart.Name
+			)
 			dupepart:Remove()
 		end
 
@@ -152,7 +155,8 @@ do -- from server
 			if dupepart:IsValid() then
 				pac.dprint(
 					"removing part %q to be replaced with the part previously received ON callback call",
-					dupepart.Name)
+					dupepart.Name
+				)
 				dupepart:Remove()
 			end
 
@@ -205,7 +209,8 @@ do
 		"0",
 		true,
 		false,
-		"Enable \"on +use only\" mode. Within this mode, outfits are not being actually \"loaded\" until you hover over player and press your use button")
+		"Enable \"on +use only\" mode. Within this mode, outfits are not being actually \"loaded\" until you hover over player and press your use button"
+	)
 	local transmissions = {}
 
 	function pace.OnUseOnlyUpdates(cvar, ...)
@@ -241,7 +246,8 @@ do
 					#data.list,
 					" out from ",
 					data.total,
-					" parts.")
+					" parts."
+				)
 			end
 		end
 	end)
@@ -358,7 +364,8 @@ net.Receive("pac_submit", function()
 		if type(data.owner) ~= "Player" or not data.owner:IsValid() then
 			pac.Message(
 				"received message from server but owner is not valid!? typeof " .. type(data.owner) .. " || ",
-				data.owner)
+				data.owner
+			)
 			return
 		end
 

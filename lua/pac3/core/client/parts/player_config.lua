@@ -84,7 +84,8 @@ function PART:OnShow()
 		ent,
 		blood_colors[self.BloodColor == "" and
 		"red" or
-		self.BloodColor])
+		self.BloodColor]
+	)
 
 	if ent:IsValid() then
 		for _, field in pairs(self.ent_fields) do
@@ -126,7 +127,8 @@ function PART:SetBloodColor(str)
 		ent,
 		blood_colors[self.BloodColor == "" and
 		"red" or
-		self.BloodColor])
+		self.BloodColor]
+	)
 end
 
 pac.RegisterPart(PART)

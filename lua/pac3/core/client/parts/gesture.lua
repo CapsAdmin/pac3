@@ -15,7 +15,8 @@ pac.StartStorableVars()
 			enums = function(part)
 				return part.ValidGestureSlots
 			end,
-		})
+		}
+	)
 	pac.GetSet(PART, "SlotWeight", 1)
 pac.EndStorableVars()
 PART.random_gestlist = {}

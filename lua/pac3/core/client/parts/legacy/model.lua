@@ -78,7 +78,8 @@ pac.StartStorableVars()
 				editor_onchange = function(self, num)
 					return math.Round(math.max(tonumber(num), 0))
 				end,
-			})
+			}
+		)
 		pac.GetSet(PART, "LodOverride", -1)
 		pac.GetSet(PART, "Passes", 1)
 		pac.GetSet(PART, "TintColor", Vector(0, 0, 0), {editor_panel = "color"})
@@ -365,7 +366,8 @@ surface.CreateFont(
 		weight = 10,
 		antialias = true,
 		outline = true,
-	})
+	}
+)
 
 -- ugh lol
 local function RealDrawModel(self, ent, pos, ang)

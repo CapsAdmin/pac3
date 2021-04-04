@@ -23,7 +23,8 @@ pac.StartStorableVars()
 
 				return tbl
 			end,
-		})
+		}
+	)
 	pac.GetSet(PART, "Rate", 1, {editor_sensitivity = 0.1})
 	pac.GetSet(PART, "Offset", 0)
 	pac.GetSet(PART, "Min", 0)
@@ -36,7 +37,8 @@ pac.StartStorableVars()
 			enums = function(part)
 				return part.ValidHoldTypes
 			end,
-		})
+		}
+	)
 	pac.GetSet(PART, "OwnerCycle", false)
 	pac.GetSet(PART, "InvertFrames", false)
 	pac.GetSet(PART, "ResetOnHide", true)
@@ -277,7 +279,8 @@ function PART:UpdateAnimation(ent)
 	if self.PingPongLoop then
 		self.frame = self.frame + rate / 2
 		local cycle = min + math.abs(
-				math.Round((self.frame + self.Offset) * 0.5) - (self.frame + self.Offset) * 0.5) * 2 * (max - min)
+				math.Round((self.frame + self.Offset) * 0.5) - (self.frame + self.Offset) * 0.5
+			) * 2 * (max - min)
 
 		if pac.IsNumberValid(cycle) then
 			ent:SetCycle(not self.InvertFrames and cycle or (1 - cycle))

@@ -135,7 +135,8 @@ function urlobj.CreateModelFromObjData(objData, generateNormals, statusCallback)
 			statusCallback = statusCallback,
 			co = co,
 			mesh = mesh,
-		})
+		}
+	)
 	statusCallback(false, "Queued")
 	return {mesh}
 end
@@ -612,7 +613,8 @@ function urlobj.DownloadQueueThink()
 			pac.dprint(
 				"model download timed out for the %s time %q",
 				queueItem:GetDownloadAttemptCount(),
-				queueItem:GetUrl())
+				queueItem:GetUrl()
+			)
 			queueItem:AbortDownload()
 
 			if queueItem:GetDownloadAttemptCount() > 3 then

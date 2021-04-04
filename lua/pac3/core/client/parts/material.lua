@@ -189,7 +189,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 						return tbl
 					end,
-				})
+				}
+			)
 
 			local function update_submaterial(self, remove, parent)
 				pac.RunNextFrameSimple(function()
@@ -345,7 +346,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 							{
 								editor_friendly = friendly_name .. "Position",
 								description = description,
-							})
+							}
+						)
 						pac.GetSet(
 							PART,
 							scale_key,
@@ -353,7 +355,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 							{
 								editor_friendly = friendly_name .. "Scale",
 								description = description,
-							})
+							}
+						)
 						pac.GetSet(
 							PART,
 							angle_key,
@@ -362,7 +365,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 								editor_panel = "number",
 								editor_friendly = friendly_name .. "Angle",
 								description = description,
-							})
+							}
+						)
 						pac.GetSet(
 							PART,
 							angle_center_key,
@@ -370,7 +374,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 							{
 								editor_friendly = friendly_name .. "AngleCenter",
 								description = description,
-							})
+							}
+						)
 						PART.TransformVars[position_key] = true
 						PART.TransformVars[scale_key] = true
 						PART.TransformVars[angle_key] = true
@@ -421,7 +426,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 								{
 									editor_friendly = info.friendly .. " No HDR",
 									description = "Disables bound param when HDR is enabled",
-								})
+								}
+							)
 						end
 
 						info.default = info.default or ""
@@ -434,7 +440,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 								editor_friendly = info.friendly,
 								description = description,
 								shader_param_info = info,
-							})
+							}
+						)
 						local key = "$" .. key
 						PART["Set" .. property_name .. "NoHDR"] = function(self, val)
 							self[property_name .. "NoHDR"] = val
@@ -480,7 +487,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 								(property_name == "model" and "boolean") or
 								nil,
 								editor_round = info.type == "integer",
-							})
+							}
+						)
 						local flag_key = key
 						local key = "$" .. key
 

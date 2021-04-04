@@ -662,7 +662,8 @@ do
 		local code = string.format(
 			"var id = %d; try { if (streams[id]) { streams[id]%s } } catch(e) { dprint('streams[' + id + '] ' + e.toString()) }",
 			self:GetId(),
-			string.format(fmt, ...))
+			string.format(fmt, ...)
+		)
 		run_javascript(code, self)
 	end
 
@@ -691,7 +692,8 @@ do
 			maxLoopCount == false and
 			1 or
 			tonumber(maxLoopCount) or
-			1)
+			1
+		)
 	end
 
 	function META:Pause()

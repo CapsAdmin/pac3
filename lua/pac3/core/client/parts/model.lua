@@ -50,7 +50,8 @@ pac.StartStorableVars()
 				editor_onchange = function(self, num)
 					return math.Round(math.max(tonumber(num), 0))
 				end,
-			})
+			}
+		)
 		pac.GetSet(PART, "LevelOfDetail", 0, {editor_clamp = {-1, 8}, editor_round = true})
 		pac.SetupPartName(PART, "EyeTarget")
 pac.EndStorableVars()
@@ -461,7 +462,8 @@ local ALLOW_TO_MDL = CreateConVar(
 CLIENT and
 {FCVAR_REPLICATED} or
 {FCVAR_ARCHIVE, FCVAR_REPLICATED},
-"Allow to use custom MDLs")
+"Allow to use custom MDLs"
+)
 
 function PART:RefreshModel()
 local ent = self:GetEntity()
@@ -1054,7 +1056,8 @@ pac.SetPropertyGroup(PART, "generic")
 
 				return out
 			end,
-		})
+		}
+	)
 pac.SetPropertyGroup(PART, "appearance")
 	pac.GetSet(PART, "NoDraw", false)
 	pac.GetSet(PART, "DrawShadow", true)

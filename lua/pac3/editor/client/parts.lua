@@ -42,7 +42,8 @@ function pace.WearParts(file, clear)
 				partID = i,
 				totalParts = #toWear,
 				transmissionID = transmissionID,
-			})
+			}
+		)
 	end
 end
 
@@ -735,7 +736,8 @@ function pace.OnHoverPart(self)
 			true,
 			5,
 			1,
-			1)
+			1
+		)
 	end
 end
 

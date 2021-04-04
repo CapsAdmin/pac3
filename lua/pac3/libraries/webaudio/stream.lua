@@ -111,7 +111,8 @@ function STREAM:Call(fmt, ...)
 	local code = string.format(
 		"try { streams[%d]%s } catch(e) { lua.print(e.toString()) }",
 		self:GetId(),
-		string.format(fmt, ...))
+		string.format(fmt, ...)
+	)
 	webaudio.Browser.QueueJavascript(code)
 end
 
@@ -120,7 +121,8 @@ function STREAM:CallNow(fmt, ...)
 	local code = string.format(
 		"try { streams[%d]%s } catch(e) { lua.print(e.toString()) }",
 		self:GetId(),
-		string.format(fmt, ...))
+		string.format(fmt, ...)
+	)
 	webaudio.Browser.RunJavascript(code)
 end
 
@@ -153,7 +155,8 @@ function STREAM:SetMaxLoopCount(maxLoopCount)
 		maxLoopCount == false and
 		1 or
 		tonumber(maxLoopCount) or
-		1)
+		1
+	)
 	self.MaxLoopCount = maxLoopCount
 end
 
@@ -276,10 +279,12 @@ function STREAM:GetPanning()
 		function STREAM:UpdateVolumeFlat()
 			self:Call(
 				".vol_right = %f",
-				(math.Clamp(1 + self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
+				(math.Clamp(1 + self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction
+			)
 			self:Call(
 				".vol_left  = %f",
-				(math.Clamp(1 - self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction)
+				(math.Clamp(1 - self.Panning, 0, 1) * self.Volume) + self.AdditiveVolumeFraction
+			)
 		end
 
 		function STREAM:UpdateVolume3d()
@@ -299,10 +304,12 @@ function STREAM:GetPanning()
 				volumeFraction = volumeFraction * 0.75 * self.Volume
 				self:Call(
 					".vol_right = %f",
-					(math.Clamp(1 + pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
+					(math.Clamp(1 + pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction
+				)
 				self:Call(
 					".vol_left  = %f",
-					(math.Clamp(1 - pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
+					(math.Clamp(1 - pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction
+				)
 
 				if self.UseDoppler then
 					local relativeSourcePosition = self.SourcePosition - listenerPosition
@@ -310,7 +317,8 @@ function STREAM:GetPanning()
 					local relativeSourceSpeed = relativeSourcePosition:GetNormalized():Dot(-relativeSourceVelocity) * 0.0254
 					self:Call(
 						".speed = %f",
-						(self.PlaybackSpeed + (relativeSourceSpeed / webaudio.SpeedOfSound)) + self.AdditivePitchModifier)
+						(self.PlaybackSpeed + (relativeSourceSpeed / webaudio.SpeedOfSound)) + self.AdditivePitchModifier
+					)
 				end
 
 				self.ListenerOutOfRadius = false

@@ -6,7 +6,8 @@ local consume = test.EventConsumer(
 		"hidden",
 		"event triggers show",
 		"shown from event",
-	})
+	}
+)
 
 function test.Run(done)
 	local stage = nil

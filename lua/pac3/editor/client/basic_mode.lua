@@ -25,7 +25,8 @@ local basic_mode = CreateClientConVar(
 	#table.Merge(table.Merge(file.Find("pac3/*", "DATA")), table.Merge(file.Find("pac3/sessions/*", "DATA"))) == 0 and
 	"1" or
 	"0",
-	true)
+	true
+)
 
 function pace.ToggleBasicMode()
 	RunConsoleCommand("pac_basic_mode", basic_mode:GetBool() and "0" or "1")

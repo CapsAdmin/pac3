@@ -68,7 +68,8 @@ function haloex.Render(entry)
 			0,
 			255,
 			false,
-			true)
+			true
+		)
 	else
 		render.Clear(
 			255,
@@ -76,7 +77,8 @@ function haloex.Render(entry)
 			255,
 			255,
 			false,
-			true)
+			true
+		)
 	end
 
 

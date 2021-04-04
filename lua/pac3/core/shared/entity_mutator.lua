@@ -213,7 +213,8 @@ function emut.Register(meta)
 				self.Owner,
 				self.ClassName,
 				self.Entity,
-				unpack(self.original_state))
+				unpack(self.original_state)
+			)
 			override_enabled = false
 		end
 	end
@@ -226,7 +227,8 @@ function emut.Register(meta)
 			self.Owner,
 			self.ClassName,
 			self.Entity,
-			unpack(self.disabled_state))
+			unpack(self.disabled_state)
+		)
 		self.disabled_state = nil
 	end
 

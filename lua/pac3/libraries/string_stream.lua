@@ -214,7 +214,8 @@ local function UnpackIEEE754Double(b8, b7, b6, b5, b4, b3, b2, b1)
 	local exponent = (b1 % 0x80) * 0x10 + bit_rshift(b2, 4)
 	local mantissa = math_ldexp(
 		((((((b2 % 0x10) * 0x100 + b3) * 0x100 + b4) * 0x100 + b5) * 0x100 + b6) * 0x100 + b7) * 0x100 + b8,
-		-52)
+		-52
+	)
 
 	if exponent == 0x7FF then
 		if mantissa > 0 then
@@ -509,7 +510,8 @@ function ss_methods_big:readDouble()
 		d,
 		c,
 		b,
-		a)
+		a
+	)
 end
 
 --- Reads until the given byte and advances the buffer pointer.
@@ -610,7 +612,8 @@ function ss_methods:writeInt32(x)
 		x % 0x100,
 		bit_rshift(x, 8) % 0x100,
 		bit_rshift(x, 16) % 0x100,
-		bit_rshift(x, 24) % 0x100))
+		bit_rshift(x, 24) % 0x100
+	))
 end
 
 function ss_methods_big:writeInt32(x)
@@ -652,7 +655,8 @@ function ss_methods_big:writeDouble(x)
 		d,
 		c,
 		b,
-		a))
+		a
+	))
 end
 
 --- Writes a string to the buffer putting a null at the end and advances the buffer pointer.
@@ -805,7 +809,8 @@ do
 		local func = write_functions[typeid]
 		if func then return func(self, typeid, v) end
 		error(
-			"StringStream:writeType: Couldn't write " .. type(v) .. " (type " .. typeid .. ")")
+			"StringStream:writeType: Couldn't write " .. type(v) .. " (type " .. typeid .. ")"
+		)
 	end
 
 	local read_functions = {

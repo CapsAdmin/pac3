@@ -63,7 +63,8 @@ pac.StartStorableVars()
 			"normal",
 			{
 				enums = {normal = "normal", none = "none",},
-			})
+			}
+		)
 		ADD(PART, "FinCline", false)
 pac.EndStorableVars()
 

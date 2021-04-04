@@ -87,7 +87,8 @@ pace.PCallNetReceive(net.Receive, "pac_to_contraption", function(len, ply)
 			ply,
 			" might have tried to crash the server by attempting to spawn ",
 			count,
-			" entities with the contraption system!")
+			" entities with the contraption system!"
+		)
 		return
 	end
 

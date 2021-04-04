@@ -145,7 +145,8 @@ function urltex.StartDownload(url, data)
 				<body>
 					<img src="]] .. url .. [[" alt="" width="]] .. size .. [[" height="]] .. size .. [[" />
 				</body>
-			</html>]])
+			</html>]]
+		)
 		pnl:Refresh()
 
 		function pnl:ConsoleMessage(msg)
@@ -243,7 +244,8 @@ function urltex.StartDownload(url, data)
 						MATERIAL_RT_DEPTH_NONE,
 						textureFlags,
 						CREATERENDERTARGETFLAGS_UNFILTERABLE_OK,
-						IMAGE_FORMAT_RGB888)
+						IMAGE_FORMAT_RGB888
+					)
 					render.PushRenderTarget(rt)
 					render.Clear(
 						0,
@@ -251,7 +253,8 @@ function urltex.StartDownload(url, data)
 						0,
 						255,
 						false,
-						false)
+						false
+					)
 					cam.Start2D()
 						surface.SetMaterial(vertex_mat2)
 						surface.SetDrawColor(255, 255, 255)

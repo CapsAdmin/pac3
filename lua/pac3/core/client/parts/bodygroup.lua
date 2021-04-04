@@ -12,7 +12,8 @@ pac.StartStorableVars()
 			enums = function()
 				return pace.current_part:GetBodyGroupNameList()
 			end,
-		})
+		}
+	)
 	pac.GetSet(PART, "ModelIndex", 0)
 pac.EndStorableVars()
 

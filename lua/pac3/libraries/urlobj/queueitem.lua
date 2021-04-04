@@ -5,7 +5,8 @@ local CACHE_OBJS = CreateConVar(
 	"pac_obj_cache",
 	"1",
 	{FCVAR_ARCHIVE},
-	"DEBUG: Cache Object files on disk. Disables disk cache access (like cache does not exist in code)")
+	"DEBUG: Cache Object files on disk. Disables disk cache access (like cache does not exist in code)"
+)
 local QUEUEITEM = {}
 
 -- Warning: This code is concurrency hell

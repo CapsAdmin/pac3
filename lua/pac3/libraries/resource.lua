@@ -125,13 +125,15 @@ local function download(from, to, callback, on_fail, on_header, check_etag, etag
 							on_header,
 							nil,
 							etag_path_override,
-							need_extension)
+							need_extension
+						)
 					else
 					--llog(from, ": etag is the same")
 					check_etag()
 					end
 				end,
-			})
+			}
+		)
 		return
 	end
 
@@ -319,7 +321,8 @@ function resource.Download(path, callback, on_fail, crc, check_etag)
 			end,
 			check_etag,
 			nil,
-			need_extension)
+			need_extension
+		)
 
 		return true
 	end

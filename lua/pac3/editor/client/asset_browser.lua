@@ -105,7 +105,8 @@ local function get_unlit_mat(path)
 		"UnlitGeneric",
 		{
 			["$basetexture"] = path:match("materials/(.+)%.vtf"),
-		})
+		}
+	)
 end
 
 local next_generate_icon = 0
@@ -265,7 +266,8 @@ local function create_material_icon(path, grid_panel)
 						w,
 						h,
 						5,
-						self.FarZ)
+						self.FarZ
+					)
 					render.SuppressEngineLighting(true)
 					render.SetColorModulation(1, 1, 1)
 					render.SetBlend(1)
@@ -275,7 +277,8 @@ local function create_material_icon(path, grid_panel)
 								color = Vector(1, 1, 1),
 								pos = self.Entity:GetPos() + light_pos,
 							},
-						})
+						}
+					)
 					self:DrawModel()
 					render.SuppressEngineLighting(false)
 				cam.End3D()
@@ -515,7 +518,8 @@ do
 		if self.ZoomControls then
 			pnl:SetSize(
 				pnl.original_size.w * self.ZoomControls.zoom * 0.01,
-				pnl.original_size.h * self.ZoomControls.zoom * 0.01)
+				pnl.original_size.h * self.ZoomControls.zoom * 0.01
+			)
 		end
 
 		self.IconList:Add(pnl)
@@ -532,7 +536,8 @@ do
 			for i, v in ipairs(self.IconList:GetChildren()) do
 				v:SetSize(
 					v.original_size.w * self.ZoomControls.zoom * 0.01,
-					v.original_size.h * self.ZoomControls.zoom * 0.01)
+					v.original_size.h * self.ZoomControls.zoom * 0.01
+				)
 			end
 
 			self.IconList.invalidate = true
@@ -689,7 +694,8 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 			end,
 			L"cancel",
 			function() 
-			end)
+			end
+		)
 	end)
 	:SetImage(pace.MiscIcons.clear)
 	local options_menu = menu_bar:AddMenu(L"options")
@@ -765,7 +771,8 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 			0,
 			w,
 			h,
-			Color(240, 240, 240))
+			Color(240, 240, 240)
+		)
 	end
 
 	divider = vgui.Create("DHorizontalDivider", frame)
@@ -950,7 +957,8 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 									vgui.GetControlTable("ContentContainer") and
 									"ContentContainer" or
 									"pac_AssetBrowser_ContentContainer",
-									frame.PropPanel)
+									frame.PropPanel
+								)
 								node.propPanel:DockMargin(5, 0, 0, 0)
 								node.propPanel:SetVisible(false)
 								parentNode.propPanel = node.propPanel
@@ -1236,7 +1244,8 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 								info.title,
 								info.icon,
 								"",
-								info.folder)
+								info.folder
+							)
 						end
 					end
 
@@ -1248,7 +1257,8 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 								title = "Garry's Mod",
 								folder = "garrysmod",
 								mounted = true,
-							})
+							}
+						)
 
 						for _, game in table_sortedpairs(games, function(a, b)
 							return a.val.title < b.val.title
@@ -1260,7 +1270,8 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 									game.title,
 									"games/16/" .. (game.icon or game.folder) .. ".png",
 									"",
-									game.folder)
+									game.folder
+								)
 							end
 						end
 					end
@@ -1284,7 +1295,8 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 									addon.title,
 									"icon16/bricks.png",
 									"",
-									addon.title)
+									addon.title
+								)
 							end
 						end
 					end
@@ -1303,7 +1315,8 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 								path,
 								"icon16/folder.png",
 								"addons/" .. path .. "/",
-								"MOD")
+								"MOD"
+							)
 						end
 					end
 				end
@@ -1603,4 +1616,5 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 						pnl:Remove()
 						RunConsoleCommand("pac_asset_browser")
 					end,
-				})
+				}
+			)

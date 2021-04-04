@@ -24,7 +24,8 @@ function test.Run(done)
 		equal(
 			owner:GetModel(),
 			prev,
-			class .. " after root is removed, the model should be reverted")
+			class .. " after root is removed, the model should be reverted"
+		)
 	end
 
 	RunConsoleCommand("pac_modifier_model", "1")

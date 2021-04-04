@@ -88,7 +88,8 @@ local pac_onuse_only = CreateClientConVar(
 	"0",
 	true,
 	false,
-	"Enable \"on +use only\" mode. Within this mode, outfits are not being actually \"loaded\" until you hover over player and press your use button")
+	"Enable \"on +use only\" mode. Within this mode, outfits are not being actually \"loaded\" until you hover over player and press your use button"
+)
 local MAX_DIST = 270
 
 local function PlayerBindPress(ply, bind, isPressed)
@@ -117,7 +118,8 @@ surface.CreateFont(
 		font = "Roboto",
 		size = ScreenScale(16),
 		weight = 600,
-	})
+	}
+)
 
 local function HUDPaint(ply, bind, isPressed)
 	if not pac_onuse_only:GetBool() then return end
@@ -146,7 +148,8 @@ local function HUDPaint(ply, bind, isPressed)
 		ScrW() / 2,
 		ScrH() * 0.3,
 		Color(255, 255, 255, alpha * 255),
-		TEXT_ALIGN_CENTER)
+		TEXT_ALIGN_CENTER
+	)
 end
 
 hook.Add("PlayerBindPress", "pac_onuse_only", PlayerBindPress)

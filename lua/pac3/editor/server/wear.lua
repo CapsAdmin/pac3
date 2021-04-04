@@ -130,7 +130,8 @@ function pace.SubmitPart(data, filter)
 						"pac_config",
 						{
 							json = util.TableToJSON(table.Copy(ent.pac_parts)),
-						})
+						}
+					)
 				end
 
 				ent:CallOnRemove("pac_config", function(ent)
@@ -314,7 +315,8 @@ function pace.SubmitPart(data, filter)
 
 				if not bytes then
 					ErrorNoHalt(
-						"[PAC3] Outfit broadcast failed for " .. tostring(data.owner) .. ": " .. tostring(err) .. "\n")
+						"[PAC3] Outfit broadcast failed for " .. tostring(data.owner) .. ": " .. tostring(err) .. "\n"
+					)
 
 					if data.owner and data.owner:IsValid() then
 						data.owner:ChatPrint("[PAC3] ERROR: Could not broadcast your outfit: " .. tostring(err))
@@ -341,7 +343,8 @@ function pace.SubmitPartNotify(data)
 		data.part.self.Name or "",
 		data.owner:GetName(),
 		table.Count(data.part.children),
-		data.part.self.OwnerName or "")
+		data.part.self.OwnerName or ""
+	)
 	local allowed, reason = pace.SubmitPart(data)
 
 	if data.owner:IsPlayer() then
@@ -362,7 +365,8 @@ function pace.SubmitPartNotify(data)
 			util.tobool(allowed),
 			reason or "",
 			data.part.self.Name or "no name",
-			data)
+			data
+		)
 	end
 end
 
@@ -372,7 +376,8 @@ function pace.RemovePart(data)
 		data.owner and
 		data.owner:IsValid() and
 		data.owner:GetName(),
-		data.part)
+		data.part
+	)
 
 	if data.part == "__ALL__" then
 		pace.CallHook("RemoveOutfit", data.owner)
@@ -400,7 +405,8 @@ function pace.HandleReceivedData(ply, data)
 				ply,
 				" tried to submit extraordinary wear filter size of ",
 				#data.wear_filter,
-				", dropping.")
+				", dropping."
+			)
 			data.wear_filter = nil
 		end
 	end
@@ -435,7 +441,8 @@ local pac_submit_spam = CreateConVar(
 	"pac_submit_spam",
 	"1",
 	{FCVAR_NOTIFY, FCVAR_ARCHIVE},
-	"Prevent users from spamming pac_submit")
+	"Prevent users from spamming pac_submit"
+)
 local pac_submit_limit = CreateConVar("pac_submit_limit", "30", {FCVAR_NOTIFY, FCVAR_ARCHIVE}, "pac_submit spam limit")
 
 pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
@@ -533,7 +540,8 @@ local function pac_update_playerfilter(len, ply)
 			ply,
 			" tried to submit extraordinary wear filter size of ",
 			sizeof,
-			", dropping.")
+			", dropping."
+		)
 		return
 	end
 

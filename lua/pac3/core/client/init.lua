@@ -51,7 +51,8 @@ CreateClientConVar(
 	"1",
 	true,
 	true,
-	"Hide parts which outfit creators marked as 'nsfw' (e.g. gore or explicit content)")
+	"Hide parts which outfit creators marked as 'nsfw' (e.g. gore or explicit content)"
+)
 include("util.lua")
 pac.NULL = include("pac3/libraries/null.lua")
 pac.class = include("pac3/libraries/class.lua")
@@ -139,12 +140,14 @@ do
 				pac.ToggleIgnoreEntity(
 					ply,
 					cookie.GetString("pac3_wear_wl_" .. ply:UniqueID(), "0") == "1",
-					"pac_whitelist")
+					"pac_whitelist"
+				)
 			else
 				pac.ToggleIgnoreEntity(
 					ply,
 					cookie.GetString("pac3_wear_wl_" .. ply:UniqueID(), "0") ~= "1",
-					"pac_whitelist")
+					"pac_whitelist"
+				)
 			end
 		else
 			pac.ToggleIgnoreEntity(ply, false, "pac_whitelist")
@@ -203,7 +206,8 @@ do
 						end
 					end
 				end,
-			})
+			}
+		)
 	end
 
 	-- tf2

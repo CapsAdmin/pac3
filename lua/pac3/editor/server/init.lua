@@ -20,7 +20,8 @@ function pace.CanPlayerModify(ply, ent)
 				start = ply:EyePos(),
 				endpos = ent:WorldSpaceCenter(),
 				filter = ply,
-			}), "paint") == true
+			}
+		), "paint") == true
 	then
 		return true
 	end

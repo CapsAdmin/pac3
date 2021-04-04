@@ -58,7 +58,8 @@ function PART:OnThink()
 			self.IgnoreZ,
 			self.Amount,
 			self.SphericalSize,
-			self.Shape)
+			self.Shape
+		)
 	end
 end
 

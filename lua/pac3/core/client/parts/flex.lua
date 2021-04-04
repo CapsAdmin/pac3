@@ -18,7 +18,8 @@ pac.StartStorableVars()
 
 				return tbl
 			end,
-		})
+		}
+	)
 	pac.GetSet(PART, "Weight", 0)
 	pac.GetSet(
 		PART,
@@ -26,7 +27,8 @@ pac.StartStorableVars()
 		false,
 		{
 			description = "Target the local player instead of the part's parent",
-		})
+		}
+	)
 	pac.GetSet(PART, "DefaultOnHide", true)
 pac.EndStorableVars()
 

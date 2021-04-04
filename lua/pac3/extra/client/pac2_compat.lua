@@ -544,7 +544,8 @@ do
 				c = string.sub(data, 0, 0),
 				p = string.sub(data, 1, 1),
 			},
-			reader_meta), {})
+			reader_meta
+		), {})
 	end
 end
 
@@ -567,7 +568,8 @@ concommand.Add("pac_convert_pac2_outfits", function()
 		if not owner_nick then
 			owner_nick = LocalPlayer():Nick()
 			pac.Message(
-				"garrysmod/data/pac2_outfits/" .. uniqueid .. "/__owner.txt does not exist (it contains the player nickname) defaulting to " .. owner_nick)
+				"garrysmod/data/pac2_outfits/" .. uniqueid .. "/__owner.txt does not exist (it contains the player nickname) defaulting to " .. owner_nick
+			)
 		end
 
 		local folders = select(2, file.Find("pac2_outfits/" .. uniqueid .. "/*", "DATA"))
@@ -583,7 +585,8 @@ concommand.Add("pac_convert_pac2_outfits", function()
 
 			if not name then
 				pac.Message(
-					"garrysmod/data/pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "/name.txt does not exist. defaulting to: " .. folder_name)
+					"garrysmod/data/pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "/name.txt does not exist. defaulting to: " .. folder_name
+				)
 			end
 
 			if data then
@@ -598,11 +601,13 @@ concommand.Add("pac_convert_pac2_outfits", function()
 					pace.SaveParts("pac2_outfits/" .. uniqueid .. "/" .. folder_name)
 				else
 					pac.Message(
-						"garrysmod/data/pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "(" .. name .. ") failed to convert : " .. res)
+						"garrysmod/data/pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "(" .. name .. ") failed to convert : " .. res
+					)
 				end
 			else
 				pac.Message(
-					"garrysmod/data/pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "/data.txt does not exist. this file contains the outfit data")
+					"garrysmod/data/pac2_outfits/" .. uniqueid .. "/" .. folder_name .. "/data.txt does not exist. this file contains the outfit data"
+				)
 			end
 		end
 	end

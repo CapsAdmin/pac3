@@ -66,12 +66,14 @@ local remember = CreateConVar(
 	"pac_editor_remember_position",
 	"1",
 	{FCVAR_ARCHIVE},
-	"Remember PAC3 editor position on screen")
+	"Remember PAC3 editor position on screen"
+)
 local positionMode = CreateConVar(
 	"pac_editor_position_mode",
 	"0",
 	{FCVAR_ARCHIVE},
-	"Editor position mode. 0 - Left, 1 - middle, 2 - Right. Has no effect if pac_editor_remember_position is true")
+	"Editor position mode. 0 - Left, 1 - middle, 2 - Right. Has no effect if pac_editor_remember_position is true"
+)
 
 function pace.OpenEditor()
 	pace.CloseEditor()
@@ -307,7 +309,8 @@ do
 									pos_2d.x,
 									pos_2d.y,
 									Color(255, 255, 255, alpha * 255),
-									1)
+									1
+								)
 
 								if not ply.pac_editor_part_pos:IsZero() then
 									surface.SetDrawColor(255, 255, 255, alpha * 100)
@@ -333,7 +336,8 @@ do
 						pos_2d.x,
 						pos_2d.y,
 						Color(255, 255, 255, alpha * 255),
-						1)
+						1
+					)
 				end
 			else
 				if ply.pac_editor_camera then

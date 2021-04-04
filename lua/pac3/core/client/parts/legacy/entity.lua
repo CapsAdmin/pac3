@@ -44,7 +44,8 @@ pac.StartStorableVars()
 				editor_onchange = function(self, num)
 					return math.Round(math.max(tonumber(num), 0))
 				end,
-			})
+			}
+		)
 		pac.GetSet(PART, "DrawShadow", true)
 		pac.GetSet(PART, "LodOverride", -1)
 	pac.SetPropertyGroup(PART, "movement")
@@ -255,7 +256,8 @@ function PART:UpdateColor()
 	render_SetColorModulation(
 		self.Colorf.r * self.Brightness,
 		self.Colorf.g * self.Brightness,
-		self.Colorf.b * self.Brightness)
+		self.Colorf.b * self.Brightness
+	)
 	if pac.drawing_motionblur_alpha then return end
 	render_SetBlend(self.Alpha)
 end
@@ -386,14 +388,16 @@ local ALLOW_TO_MDL = CreateConVar(
 	CLIENT and
 	{FCVAR_REPLICATED} or
 	{FCVAR_ARCHIVE, FCVAR_REPLICATED},
-	"Allow to use custom MDLs")
+	"Allow to use custom MDLs"
+)
 local ALLOW_TO_USE_MDL = CreateConVar(
 	"pac_allow_mdl_entity",
 	"1",
 	CLIENT and
 	{FCVAR_REPLICATED} or
 	{FCVAR_ARCHIVE, FCVAR_REPLICATED},
-	"Allow to use custom MDLs as Entity")
+	"Allow to use custom MDLs as Entity"
+)
 
 function PART:SetModel(path)
 	self.Model = path

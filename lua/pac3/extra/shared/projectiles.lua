@@ -3,7 +3,8 @@ local enable = CreateConVar(
 	0,
 	CLIENT and
 	{FCVAR_REPLICATED} or
-	{FCVAR_ARCHIVE, FCVAR_REPLICATED})
+	{FCVAR_ARCHIVE, FCVAR_REPLICATED}
+)
 
 do -- projectile entity
 	local ENT = {}
@@ -71,7 +72,8 @@ do -- projectile entity
 			local phys = self:GetPhysicsObject()
 			phys:EnableGravity(part.Gravity)
 			phys:AddVelocity(
-				(ang:Forward() + (VectorRand():Angle():Forward() * part.Spread)) * part.Speed * 1000)
+				(ang:Forward() + (VectorRand():Angle():Forward() * part.Spread)) * part.Speed * 1000
+			)
 
 			if part.AddOwnerSpeed then
 				phys:AddVelocity(ply:GetVelocity())
@@ -251,7 +253,8 @@ do -- projectile entity
 
 				if self.part_data.Bounce ~= 0 then
 					phys:SetVelocity(
-						data.OurOldVelocity - 2 * (data.HitNormal:Dot(data.OurOldVelocity) * data.HitNormal) * self.part_data.Bounce)
+						data.OurOldVelocity - 2 * (data.HitNormal:Dot(data.OurOldVelocity) * data.HitNormal) * self.part_data.Bounce
+					)
 				end
 
 				if self.part_data.Sticky and (self.part_data.Bounce == 0 or not data.HitEntity:IsWorld()) then
@@ -280,7 +283,8 @@ do -- projectile entity
 											dist = pos:Distance(data.HitPos),
 											id = id,
 											pos = pos,
-										})
+										}
+									)
 								end
 							end
 
@@ -291,7 +295,8 @@ do -- projectile entity
 
 								self:FollowBone(data.HitEntity, closest[1].id)
 								self:SetLocalPos(
-									util.TraceLine({start = data.HitPos, endpos = closest[1].pos}).HitPos - closest[1].pos)
+									util.TraceLine({start = data.HitPos, endpos = closest[1].pos}).HitPos - closest[1].pos
+								)
 							else
 								self:SetPos(data.HitPos)
 								self:SetParent(data.HitEntity)
@@ -360,7 +365,8 @@ do -- projectile entity
 									if ent ~= ply or self.part_data.CollideWithOwner then
 										ent:SetArmor(math.min(
 											ent:Armor() + self.part_data.Damage,
-											ent.GetMaxArmor and ent:GetMaxArmor() or 100))
+											ent.GetMaxArmor and ent:GetMaxArmor() or 100
+										))
 									end
 								end
 							end
@@ -369,7 +375,8 @@ do -- projectile entity
 								data.HitEntity:Armor() + self.part_data.Damage,
 								data.HitEntity.GetMaxArmor and
 								data.HitEntity:GetMaxArmor() or
-								100))
+								100
+							))
 						end
 					else
 						local info = DamageInfo()

@@ -765,7 +765,8 @@ do -- drawing
 						(fovoverride or nodrawdelay(
 							dst < radius * 1.25 or
 							util_PixelVisible(ent:EyePos(), radius, ent.pac_pixvis) ~= 0,
-							ent))
+							ent
+						))
 				end
 
 				ent.pac_draw_cond = cond

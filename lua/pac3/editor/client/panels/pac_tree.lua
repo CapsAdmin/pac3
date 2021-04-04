@@ -340,7 +340,8 @@ function PANEL:PerformLayout()
 		self.Icon:SetVisible(true)
 		self.Icon:SetPos(
 			self.Expander.x + self.Expander:GetWide() + 4,
-			(LineHeight - self.Icon:GetTall()) * 0.5)
+			(LineHeight - self.Icon:GetTall()) * 0.5
+		)
 		self.Label:SetTextInset(self.Icon.x + self.Icon:GetWide() + 4, 0)
 	else
 		self.Icon:SetVisible(false)

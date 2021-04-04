@@ -222,7 +222,8 @@ list.Set(
 			pnl:Remove()
 			RunConsoleCommand("pac_editor")
 		end,
-	})
+	}
+)
 
 hook.Add("PopulateToolMenu", "pac_spawnmenu", function()
 	spawnmenu.AddToolMenuOption(
@@ -233,7 +234,8 @@ hook.Add("PopulateToolMenu", "pac_spawnmenu", function()
 		"",
 		"",
 		pace.ClientOptionsMenu,
-		{SwitchConVar = "pac_enable",})
+		{SwitchConVar = "pac_enable",}
+	)
 	spawnmenu.AddToolMenuOption(
 		"Utilities",
 		"PAC",
@@ -242,7 +244,8 @@ hook.Add("PopulateToolMenu", "pac_spawnmenu", function()
 		"",
 		"",
 		pace.ClientSettingsMenu,
-		{})
+		{}
+	)
 end)
 
 if IsValid(g_ContextMenu) and CreateContextMenu then

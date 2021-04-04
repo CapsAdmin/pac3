@@ -104,7 +104,8 @@ do -- pace
 			ScrW(),
 			ScrH(),
 			EyeAngles(),
-			math.rad(mctrl.GetCameraFOV()))
+			math.rad(mctrl.GetCameraFOV())
+		)
 		return vec
 	end
 
@@ -337,7 +338,8 @@ local GRAB_AND_CLONE = CreateClientConVar(
 	"1",
 	true,
 	false,
-	"Holding shift when moving or rotating a part creates its clone")
+	"Holding shift when moving or rotating a part creates its clone"
+)
 
 function mctrl.GUIMousePressed(mc)
 	if mc ~= MOUSE_LEFT then return end
@@ -484,7 +486,8 @@ local function DrawCircleEx(x, y, rad, res, ...)
 			y + math.cos(i1) * rad,
 			x + math.sin(i2) * rad,
 			y + math.cos(i2) * rad,
-			...)
+			...
+		)
 	end
 end
 

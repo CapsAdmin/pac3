@@ -20,7 +20,8 @@ pac.StartStorableVars()
 				sequence = "sequence",
 				stance = "stance",
 			},
-		})
+		}
+	)
 	pac.GetSet(
 		PART,
 		"Interpolation",
@@ -32,7 +33,8 @@ pac.StartStorableVars()
 				cubic = "cubic",
 				none = "none",
 			},
-		})
+		}
+	)
 	pac.GetSet(PART, "Rate", 1)
 	pac.GetSet(PART, "BonePower", 1)
 	pac.GetSet(PART, "Offset", 0)

@@ -265,7 +265,8 @@ do --dev util
 						end
 
 						pacLocal.Message(
-							"pac_restart: couldn't include " .. new_path .. " reverting to normal include")
+							"pac_restart: couldn't include " .. new_path .. " reverting to normal include"
+						)
 						return old_include(path, ...)
 					end
 
@@ -294,7 +295,8 @@ do --dev util
 
 		if not loadingHit then
 			pacLocal.Message(
-				"sv_allowcslua is not enabled or unable to find PAC3 in addons/, loading PAC3 again from server lua")
+				"sv_allowcslua is not enabled or unable to find PAC3 in addons/, loading PAC3 again from server lua"
+			)
 
 			for _, path in ipairs((file.Find("autorun/pac*", "LUA"))) do
 				if path:EndsWith("_init.lua") and path ~= "pac_init.lua" then
@@ -396,7 +398,8 @@ do
 		"1",
 		true,
 		false,
-		"0 = default error, 1=custom error model, models/yourmodel.mdl")
+		"0 = default error, 1=custom error model, models/yourmodel.mdl"
+	)
 	local tc
 	local invalidCache = {}
 
@@ -497,7 +500,8 @@ function pac.CreateEntity(model)
 					end
 				end,
 			},
-			"pac_model")
+			"pac_model"
+		)
 		util.Effect("pac_model", EffectData())
 	end
 
@@ -557,7 +561,8 @@ do -- get set and editor vars
 
 		if pac.NetworkDictionary[crc] and pac.NetworkDictionary[crc] ~= key then
 			error(
-				"CRC32 Collision! " .. crc .. " is same for " .. key .. " and " .. pac.NetworkDictionary[crc])
+				"CRC32 Collision! " .. crc .. " is same for " .. key .. " and " .. pac.NetworkDictionary[crc]
+			)
 		end
 
 		pac.NetworkDictionary[crc] = key
@@ -807,7 +812,8 @@ do -- get set and editor vars
 				shader,
 				nil,
 				nil,
-				additionalData)
+				additionalData
+			)
 
 			return true
 		end

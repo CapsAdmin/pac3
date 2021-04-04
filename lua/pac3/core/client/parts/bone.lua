@@ -269,7 +269,8 @@ function PART:OnBuildBonePositions()
 		self.BoneIndex,
 		type(self.Jiggle) == "number" and
 		self.Jiggle or
-		(self.Jiggle and 1 or 0)) -- afaik anything but 1 is not doing anything at all
+		(self.Jiggle and 1 or 0)
+	) -- afaik anything but 1 is not doing anything at all
 
 	local scale
 

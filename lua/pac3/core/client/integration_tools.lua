@@ -33,7 +33,8 @@ do
 					w,
 					h,
 					cam_nearz or 5,
-					cam_farz or 4096)
+					cam_farz or 4096
+				)
 				pac.FlashlightDisable(true)
 				force_draw_localplayer = true
 				ent:DrawModel()
@@ -296,7 +297,8 @@ timer.Simple(0, function()
 				"AddEntityClassListener" or
 				"RemoveEntityClassListener",
 				class_name,
-				file.Read("pac3/" .. name .. ".txt", "DATA")))
+				file.Read("pac3/" .. name .. ".txt", "DATA")
+			))
 		end
 	end
 end)
