@@ -67,7 +67,7 @@ local config = {
 for _, path in ipairs(lua_files) do
 	if not blacklist[path] then
 		local lua_code = read_file(path)
-		local new_lua_code = assert(nl.Code(lua_code, "@" .. path, config)):Emit()
+		local new_lua_code = assert(nl.Code(lua_code, "@" .. path, config)):Emit() .. "\n"
 		--assert(loadstring(new_lua_code, "@" .. path))
 		write_file(path, new_lua_code)
 	end
