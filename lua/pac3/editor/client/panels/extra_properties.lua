@@ -46,9 +46,9 @@ do -- bone
 		pace.CreateSearchList(
 			self,
 			self.CurrentKey,
-			L"bones",
+			L("bones"),
 			function(list)
-				list:AddColumn(L"name")
+				list:AddColumn(L("name"))
 			end,
 			function()
 				return list
@@ -169,7 +169,7 @@ do -- owner
 			end)
 		end
 
-		local entities = menu:AddSubMenu(L"entities", function() 
+		local entities = menu:AddSubMenu(L("entities"), function() 
 		end)
 		entities.GetDeleteSelf = function()
 			return false
@@ -199,10 +199,10 @@ do -- sequence list
 		pace.CreateSearchList(
 			self,
 			self.CurrentKey,
-			L"animations",
+			L("animations"),
 			function(list)
-				list:AddColumn(L"id"):SetFixedWidth(25)
-				list:AddColumn(L"name")
+				list:AddColumn(L("id")):SetFixedWidth(25)
+				list:AddColumn(L("name"))
 			end,
 			function()
 				return pace.current_part:GetSequenceList()
@@ -719,7 +719,7 @@ do -- arguments
 					}
 			end
 
-			pace.properties:Populate(tbl, true, L"arguments")
+			pace.properties:Populate(tbl, true, L("arguments"))
 		end
 	end
 
@@ -734,7 +734,7 @@ do -- script
 	function PANEL:MoreOptionsLeftClick()
 		pace.SafeRemoveSpecialPanel()
 		local frame = vgui.Create("DFrame")
-		frame:SetTitle(L"script")
+		frame:SetTitle(L("script"))
 		pace.ShowSpecial(frame, self, 512)
 		frame:SetSizable(true)
 		local editor = vgui.Create("pace_luapad", frame)
@@ -764,7 +764,7 @@ do -- script
 				return
 			end
 
-			local title = L"script editor"
+			local title = L("script editor")
 
 			if part.Error then
 				title = part.Error

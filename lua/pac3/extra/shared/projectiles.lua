@@ -311,7 +311,7 @@ do -- projectile entity
 				end
 
 				if self.part_data.BulletImpact then
-					self:FireBullets
+					self:FireBullets(
 						{
 							Attacker = ply,
 							Damage = 0,
@@ -321,6 +321,7 @@ do -- projectile entity
 							Dir = data.HitNormal,
 							Distance = 10,
 						}
+					)
 				end
 
 				if

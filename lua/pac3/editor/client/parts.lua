@@ -56,7 +56,7 @@ function pace.ClearParts()
 		if not pace.Editor:IsValid() then return end
 
 		if table.Count(pac.GetLocalParts()) == 0 then
-			pace.Call("CreatePart", "group", L"my outfit")
+			pace.Call("CreatePart", "group", L("my outfit"))
 		end
 
 		pace.TrySelectPart()
@@ -630,24 +630,24 @@ do -- menu
 
 		if obj then
 			if not obj:HasParent() then
-				menu:AddOption(L"wear", function()
+				menu:AddOption(L("wear"), function()
 					pace.SendPartToServer(obj)
 				end):SetImage(pace.MiscIcons.wear)
 			end
 
-			menu:AddOption(L"copy", function()
+			menu:AddOption(L("copy"), function()
 				pace.Copy(obj)
 			end):SetImage(pace.MiscIcons.copy)
-			menu:AddOption(L"paste", function()
+			menu:AddOption(L("paste"), function()
 				pace.Paste(obj)
 			end):SetImage(pace.MiscIcons.paste)
-			menu:AddOption(L"cut", function()
+			menu:AddOption(L("cut"), function()
 				pace.Cut(obj)
 			end):SetImage("icon16/cut.png")
-			menu:AddOption(L"paste properties", function()
+			menu:AddOption(L("paste properties"), function()
 				pace.PasteProperties(obj)
 			end):SetImage(pace.MiscIcons.replace)
-			menu:AddOption(L"clone", function()
+			menu:AddOption(L("clone"), function()
 				pace.Clone(obj)
 			end):SetImage(pace.MiscIcons.clone)
 			menu:AddSpacer()
@@ -657,7 +657,7 @@ do -- menu
 		menu:AddSpacer()
 
 		if obj then
-			local save, pnl = menu:AddSubMenu(L"save", function()
+			local save, pnl = menu:AddSubMenu(L("save"), function()
 				pace.SaveParts()
 			end)
 			pnl:SetImage(pace.MiscIcons.save)
@@ -667,7 +667,7 @@ do -- menu
 			end)
 		end
 
-		local load, pnl = menu:AddSubMenu(L"load", function()
+		local load, pnl = menu:AddSubMenu(L("load"), function()
 			pace.LoadParts()
 		end)
 
@@ -679,7 +679,7 @@ do -- menu
 
 		if obj then
 			menu:AddSpacer()
-			menu:AddOption(L"remove", function()
+			menu:AddOption(L("remove"), function()
 				pace.RemovePart(obj)
 			end):SetImage(pace.MiscIcons.clear)
 		end
@@ -695,7 +695,7 @@ do -- menu
 		menu:SetPos(input.GetCursorPos())
 		pace.AddRegisteredPartsToMenu(menu)
 		menu:AddSpacer()
-		local load, pnl = menu:AddSubMenu(L"load", function()
+		local load, pnl = menu:AddSubMenu(L("load"), function()
 			pace.LoadParts()
 		end)
 		pnl:SetImage(pace.MiscIcons.load)
@@ -704,7 +704,7 @@ do -- menu
 			pace.AddSavedPartsToMenu(load, false, obj)
 		end)
 
-		menu:AddOption(L"clear", function()
+		menu:AddOption(L("clear"), function()
 			pace.ClearParts()
 		end):SetImage(pace.MiscIcons.clear)
 	end
@@ -932,7 +932,7 @@ do
 			findParent = pace.current_part
 		else
 			pace.RecordUndoHistory()
-			findParent = pace.Call("CreatePart", "group", L"paste data")
+			findParent = pace.Call("CreatePart", "group", L("paste data"))
 			pace.RecordUndoHistory()
 		end
 

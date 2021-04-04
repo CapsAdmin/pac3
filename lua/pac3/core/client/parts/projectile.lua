@@ -202,7 +202,7 @@ function PART:Shoot(pos, ang)
 				end
 
 				if self.BulletImpact then
-					ent:FireBullets
+					ent:FireBullets(
 						{
 							Attacker = ent:GetOwner(),
 							Damage = 0,
@@ -212,6 +212,7 @@ function PART:Shoot(pos, ang)
 							Dir = data.HitNormal,
 							Distance = 10,
 						}
+					)
 				end
 
 				if self.RemoveOnCollide then

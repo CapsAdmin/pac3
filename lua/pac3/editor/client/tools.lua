@@ -44,7 +44,7 @@ function pace.AddTool(name, callback, ...)
 	})
 end
 
-pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
+pace.AddTool(L("convert legacy parts to new parts"), function(part, suboption)
 	local class_translate = {
 			model = "model2",
 			material = "material_3d",
@@ -223,13 +223,13 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 	end
 end)
 
-pace.AddTool(L"fix origin", function(part, suboption)
+pace.AddTool(L("fix origin"), function(part, suboption)
 	if not part.GetEntity then return end
 	local ent = part:GetEntity()
 	part:SetPositionOffset(-ent:OBBCenter() * part.Scale * part.Size)
 end)
 
-pace.AddTool(L"replace ogg with webaudio", function(part, suboption)
+pace.AddTool(L("replace ogg with webaudio"), function(part, suboption)
 	for _, part in pairs(pac.GetLocalParts()) do
 		if part.ClassName == "ogg" then
 			local parent = part:GetParent()
@@ -250,20 +250,20 @@ pace.AddTool(L"replace ogg with webaudio", function(part, suboption)
 	end
 end)
 
-pace.AddTool(L"copy global id", function(obj)
+pace.AddTool(L("copy global id"), function(obj)
 	SetClipboardText("\"" .. obj.UniqueID .. "\"")
 end)
 
-pace.AddTool(L"use legacy scale", function(part, suboption)
+pace.AddTool(L("use legacy scale"), function(part, suboption)
 	for _, part in pairs(pac.GetLocalParts()) do
 		if part.UseLegacyScale ~= nil then
 			part:SetUseLegacyScale(suboption == 1)
 		end
 	end
-end, L"true", L"false")
+end, L("true"), L("false"))
 
-pace.AddTool(L"scale this and children", function(part, suboption)
-	Derma_StringRequest(L"scale", L"input the scale multiplier (does not work well with bones)", "1", function(scale)
+pace.AddTool(L("scale this and children"), function(part, suboption)
+	Derma_StringRequest(L("scale"), L("input the scale multiplier (does not work well with bones)"), "1", function(scale)
 		scale = tonumber(scale)
 
 		if scale and part:IsValid() then
@@ -287,7 +287,7 @@ pace.AddTool(L"scale this and children", function(part, suboption)
 	end)
 end)
 
-pace.AddTool(L"free children from part", function(part, suboption)
+pace.AddTool(L("free children from part"), function(part, suboption)
 	if part:IsValid() then
 		local grandparent = part:GetParent()
 		local parent = part
@@ -302,8 +302,8 @@ pace.AddTool(L"free children from part", function(part, suboption)
 	end
 end)
 
-pace.AddTool(L"square model scales...", function(part, suboption)
-	Derma_StringRequest(L"model", L"input the model name that should get squared", "default.mdl", function(model)
+pace.AddTool(L("square model scales..."), function(part, suboption)
+	Derma_StringRequest(L("model"), L("input the model name that should get squared"), "default.mdl", function(model)
 		for _, part in pairs(pac.GetLocalParts()) do
 			if part:IsValid() and part.GetModel then
 				local function square_scale(part)
@@ -324,7 +324,7 @@ pace.AddTool(L"square model scales...", function(part, suboption)
 	end)
 end)
 
-pace.AddTool(L"show only with active weapon", function(part, suboption)
+pace.AddTool(L("show only with active weapon"), function(part, suboption)
 	local event = part:CreatePart("event")
 	local owner = part:GetOwner(true)
 
@@ -338,13 +338,13 @@ pace.AddTool(L"show only with active weapon", function(part, suboption)
 	event:SetInvert(true)
 	event:SetRootOwner(true)
 	event:ParseArguments(class_name, suboption == 1)
-end, L"hide weapon", L"show weapon")
+end, L("hide weapon"), L("show weapon"))
 
-pace.AddTool(L"import editor tool from file...", function()
+pace.AddTool(L("import editor tool from file..."), function()
 	local allowcslua = GetConVar("sv_allowcslua")
 
 	if allowcslua:GetBool() then
-		Derma_StringRequest(L"filename", L"relative to garrysmod/data/pac3_editor/tools/", "mytool.txt", function(toolfile)
+		Derma_StringRequest(L("filename"), L("relative to garrysmod/data/pac3_editor/tools/"), "mytool.txt", function(toolfile)
 			if file.Exists("pac3_editor/tools/" .. toolfile, "DATA") then
 				local toolstr = file.Read("pac3_editor/tools/" .. toolfile, "DATA")
 				ctoolstr = [[pace.AddTool(L"]] .. toolfile .. [[", function(part, suboption) ]] .. toolstr .. " end)"
@@ -367,9 +367,9 @@ pace.AddTool(L"import editor tool from file...", function()
 	end
 end)
 
-pace.AddTool(L"import editor tool from url...", function()
+pace.AddTool(L("import editor tool from url..."), function()
 	if GetConVar("sv_allowcslua"):GetBool() then
-		Derma_StringRequest(L"URL", L"URL to PAC Editor tool txt file", "http://www.example.com/tool.txt", function(toolurl)
+		Derma_StringRequest(L("URL"), L("URL to PAC Editor tool txt file"), "http://www.example.com/tool.txt", function(toolurl)
 			function ToolDLSuccess(body)
 				local toolname = pac.PrettifyName(toolurl:match(".+/(.-)%."))
 				local toolstr = body
@@ -395,7 +395,7 @@ function round_pretty(val)
 	return math.Round(val, 2)
 end
 
-pace.AddTool(L"round numbers", function(part)
+pace.AddTool(L("round numbers"), function(part)
 	local function ify_parts(part)
 		for _, key in pairs(part:GetStorableVars()) do
 			local val = part["Get" .. key](part)
@@ -448,7 +448,7 @@ do
 		return HSVToNames(ColorToHSV(Color(c.r, c.g, c.b)))
 	end
 
-	pace.AddTool(L"clear names", function(part, suboptions)
+	pace.AddTool(L("clear names"), function(part, suboptions)
 		for k, v in pairs(pac.GetLocalParts()) do
 			v:SetName("")
 		end
@@ -457,7 +457,7 @@ do
 	end)
 end
 
-pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part)
+pace.AddTool(L("Convert group of models to Expression 2 holograms"), function(part)
 	local str_ref = [[
 
     I++, HN++, HT[HN,table] = table(I, Base, Base, 0, POSITION, ANGLES, SCALE, MODEL, MATERIAL, vec4(COLOR, ALPHA), SKIN)
@@ -678,7 +678,7 @@ elseif (CoreStatus == "RunThisCode") {
 	file.Write("expression2/pac/" .. part:GetName() .. ".txt", convert(part))
 end)
 
-pace.AddTool(L"record surrounding props to pac", function(part)
+pace.AddTool(L("record surrounding props to pac"), function(part)
 	local base = pac.CreatePart("group")
 	base:SetName("recorded props")
 	local origin = base:CreatePart("model")
@@ -702,7 +702,7 @@ pace.AddTool(L"record surrounding props to pac", function(part)
 	end
 end)
 
-pace.AddTool(L"populate with bones", function(part, suboption)
+pace.AddTool(L("populate with bones"), function(part, suboption)
 	local target = part.GetEntity or part.GetOwner
 	local ent = target(part)
 	local bones = pac.GetModelBones(ent)
@@ -718,7 +718,7 @@ pace.AddTool(L"populate with bones", function(part, suboption)
 	pace.RefreshTree(true)
 end)
 
-pace.AddTool(L"populate with dummy bones", function(part, suboption)
+pace.AddTool(L("populate with dummy bones"), function(part, suboption)
 	local target = part.GetEntity or part.GetOwner
 	local ent = target(part)
 	local bones = pac.GetModelBones(ent)
@@ -736,11 +736,11 @@ pace.AddTool(L"populate with dummy bones", function(part, suboption)
 	pace.RefreshTree(true)
 end)
 
-pace.AddTool(L"print part info", function(part)
+pace.AddTool(L("print part info"), function(part)
 	PrintTable(part:ToTable())
 end)
 
-pace.AddTool(L"dump player submaterials", function()
+pace.AddTool(L("dump player submaterials"), function()
 	local ply = LocalPlayer()
 
 	for id, mat in pairs(ply:GetMaterials()) do
@@ -748,12 +748,12 @@ pace.AddTool(L"dump player submaterials", function()
 	end
 end)
 
-pace.AddTool(L"stop all custom animations", function()
+pace.AddTool(L("stop all custom animations"), function()
 	pac.animations.StopAllEntityAnimations(LocalPlayer())
 	pac.animations.ResetEntityBoneMatrix(LocalPlayer())
 end)
 
-pace.AddTool(L"copy from faceposer tool", function(part, suboption)
+pace.AddTool(L("copy from faceposer tool"), function(part, suboption)
 	local group = pac.CreatePart("group")
 	local ent = LocalPlayer()
 

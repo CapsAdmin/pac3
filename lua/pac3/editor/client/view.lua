@@ -324,7 +324,7 @@ function pace.PostRenderVGUI()
 	if pace.mctrl.LastThinkCall ~= FrameNumber() then
 		surface.SetFont("Trebuchet18")
 		surface.SetTextColor(color_white)
-		local text = L"You are currently holding the camera, movement is disabled"
+		local text = L("You are currently holding the camera, movement is disabled")
 		local w = surface.GetTextSize(text)
 		surface.SetTextPos(ScrW() / 2 - w / 2, 10)
 		surface.DrawText(text)

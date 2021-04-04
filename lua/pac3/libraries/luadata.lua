@@ -53,7 +53,7 @@ do
 		if not jutil then
 			print("[luadata] Verifier could not be loaded. luadata may cause infinite loops.")
 		else
-			ErrorNoHalt"LUADATA SECURITY WARNING: Unable to load verifier, update me!\n"
+			ErrorNoHalt("LUADATA SECURITY WARNING: Unable to load verifier, update me!\n")
 		end
 
 		opcode_checker = function()
@@ -66,7 +66,7 @@ do
 		local opcodes = {}
 
 		--extract opcode names
-		for str in bcnames:gmatch"......" do
+		for str in bcnames:gmatch("......") do
 			str = str:gsub("%s", "")
 			table.insert(opcodes, str)
 		end
@@ -103,14 +103,14 @@ do
 
 			local function add_whitelist(num)
 				if opwhite[num] == nil then
-					error"invalid opcode num"
+					error("invalid opcode num")
 				end
 
 				opwhite[num] = true
 			end
 
-			for line in white:gmatch"[^\r\n]+" do
-				local opstr_towhite = line:match"[%w]+"
+			for line in white:gmatch("[^\r\n]+") do
+				local opstr_towhite = line:match("[%w]+")
 
 				if opstr_towhite and opstr_towhite:len() > 0 then
 					local whiteopnum = getopnum(opstr_towhite)

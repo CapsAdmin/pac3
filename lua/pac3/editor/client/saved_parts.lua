@@ -16,7 +16,7 @@ file.CreateDir("pac3/__backup_save/")
 
 function pace.SaveParts(name, prompt_name, override_part, overrideAsUsual)
 	if not name or prompt_name then
-		Derma_StringRequest(L"save parts", L"filename:", prompt_name or pace.LastSaveName or "autoload", function(name)
+		Derma_StringRequest(L("save parts"), L("filename:"), prompt_name or pace.LastSaveName or "autoload", function(name)
 			pace.LastSaveName = name
 			pace.SaveParts(name, nil, override_part, overrideAsUsual)
 			pace.RefreshFiles()
@@ -136,7 +136,7 @@ end
 function pace.LoadParts(name, clear, override_part)
 	if not name then
 		local frm = vgui.Create("DFrame")
-		frm:SetTitle(L"parts")
+		frm:SetTitle(L("parts"))
 		local pnl = pace.CreatePanel("browser", frm)
 		pnl.OnLoad = function(node)
 			pace.LoadParts(node.FileName, clear, override_part)
@@ -154,9 +154,9 @@ function pace.LoadParts(name, clear, override_part)
 		frm:Center()
 		local btn = vgui.Create("DButton", frm)
 		btn:Dock(BOTTOM)
-		btn:SetText(L"load from url")
+		btn:SetText(L("load from url"))
 		btn.DoClick = function()
-			Derma_StringRequest(L"load part", L"pastebin urls also work!", "", function(name)
+			Derma_StringRequest(L("load part"), L("pastebin urls also work!"), "", function(name)
 				pace.LoadParts(name, clear, override_part)
 			end)
 		end
@@ -418,29 +418,25 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 	menu.GetDeleteSelf = function()
 		return false
 	end
-	menu:AddOption(L"load from url", function()
-		Derma_StringRequest(
-			L"load parts",
-			L
-				"Some indirect urls from on pastebin, dropbox, github, etc are handled automatically. Pasting the outfit's file contents into the input field will also work.",
-			"",
-			function(name)
-				if name:find("{", nil, true) and name:find("}", nil, true) then
-					local data, err = pace.luadata.Decode(name)
+	menu:AddOption(L("load from url"), function()
+		Derma_StringRequest(L("load parts"), L(
+			"Some indirect urls from on pastebin, dropbox, github, etc are handled automatically. Pasting the outfit's file contents into the input field will also work."
+		), "", function(name)
+			if name:find("{", nil, true) and name:find("}", nil, true) then
+				local data, err = pace.luadata.Decode(name)
 
-					if data then
-						pace.LoadPartsFromTable(data, clear, override_part)
-					end
-				else
-					pace.LoadParts(name, clear, override_part)
+				if data then
+					pace.LoadPartsFromTable(data, clear, override_part)
 				end
+			else
+				pace.LoadParts(name, clear, override_part)
 			end
-		)
+		end)
 	end)
 	:SetImage(pace.MiscIcons.url)
 
 	if not override_part and pace.example_outfits then
-		local examples, pnl = menu:AddSubMenu(L"examples")
+		local examples, pnl = menu:AddSubMenu(L("examples"))
 		pnl:SetImage(pace.MiscIcons.help)
 		examples.GetDeleteSelf = function()
 			return false
@@ -466,7 +462,7 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 	local tbl = pace.GetSavedParts()
 	populate_parts(menu, tbl, override_part, clear)
 	menu:AddSpacer()
-	local backups, pnl = menu:AddSubMenu(L"backups")
+	local backups, pnl = menu:AddSubMenu(L("backups"))
 	pnl:SetImage(pace.MiscIcons.clone)
 	backups.GetDeleteSelf = function()
 		return false
@@ -501,7 +497,7 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 		end
 	end)
 
-	local backups, pnl = menu:AddSubMenu(L"outfit backups")
+	local backups, pnl = menu:AddSubMenu(L("outfit backups"))
 	pnl:SetImage(pace.MiscIcons.clone)
 	backups.GetDeleteSelf = function()
 		return false
@@ -548,12 +544,12 @@ end
 
 local function populate_parts(menu, tbl, dir, override_part)
 	dir = dir or ""
-	menu:AddOption(L"new file", function()
+	menu:AddOption(L("new file"), function()
 		pace.SaveParts(nil, dir .. "/", override_part)
 	end)
 	:SetImage("icon16/page_add.png")
-	menu:AddOption(L"new directory", function()
-		Derma_StringRequest(L"new directory", L"name:", "", function(name)
+	menu:AddOption(L("new directory"), function()
+		Derma_StringRequest(L("new directory"), L("name:"), "", function(name)
 			file.CreateDir("pac3/" .. dir .. "/" .. name)
 			pace.RefreshFiles()
 		end)
@@ -581,7 +577,7 @@ local function populate_parts(menu, tbl, dir, override_part)
 					return false
 				end
 				pnl:SetImage(pace.MiscIcons.outfit)
-				menu:AddOption(L"delete", function()
+				menu:AddOption(L("delete"), function()
 					file.Delete("pac3/" .. data.RelativePath .. ".txt", "DATA")
 					pace.RefreshFiles()
 				end)
@@ -598,11 +594,11 @@ local function populate_parts(menu, tbl, dir, override_part)
 
 	if dir ~= "" then
 		menu:AddSpacer()
-		menu:AddOption(L"delete directory", function()
+		menu:AddOption(L("delete directory"), function()
 			Derma_Query(
-				L"Are you sure you want to delete data/pac3" .. dir .. "/* and all its files?\nThis cannot be undone!",
-				L"delete directory",
-				L"yes",
+				L("Are you sure you want to delete data/pac3") .. dir .. "/* and all its files?\nThis cannot be undone!",
+				L("delete directory"),
+				L("yes"),
 				function()
 					local function delete_directory(dir)
 						local files, folders = file.Find(dir .. "*", "DATA")
@@ -619,7 +615,7 @@ local function populate_parts(menu, tbl, dir, override_part)
 							Derma_Message(
 								"Cannot remove the directory.\nMaybe it contains hidden files?",
 								"unable to remove directory",
-								L"ok"
+								L("ok")
 							)
 						else
 							file.Delete(dir)
@@ -629,7 +625,7 @@ local function populate_parts(menu, tbl, dir, override_part)
 					delete_directory("pac3/" .. dir .. "/")
 					pace.RefreshFiles()
 				end,
-				L"no",
+				L("no"),
 				function() 
 				end
 			)
@@ -644,7 +640,7 @@ function pace.AddSaveMenuToMenu(menu, override_part)
 	end
 
 	if not override_part then
-		menu:AddOption(L"auto load (your spawn outfit)", function()
+		menu:AddOption(L("auto load (your spawn outfit)"), function()
 			pace.SaveParts("autoload", nil, override_part)
 			pace.RefreshFiles()
 		end)

@@ -931,17 +931,17 @@ do -- base editable
 	end
 
 	function PANEL:PopulateContextMenu(menu)
-		menu:AddOption(L"copy", function()
+		menu:AddOption(L("copy"), function()
 			pace.clipboard = pac.class.Copy(self:GetValue())
 		end)
 		:SetImage(pace.MiscIcons.copy)
-		menu:AddOption(L"paste", function()
+		menu:AddOption(L("paste"), function()
 			self:SetValue(pac.class.Copy(pace.clipboard))
 			self.OnValueChanged(self:GetValue())
 		end)
 		:SetImage(pace.MiscIcons.paste)
 		menu:AddSpacer()
-		menu:AddOption(L"reset", function()
+		menu:AddOption(L("reset"), function()
 			if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
 				local val = pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey])
 				self:SetValue(val)
@@ -1245,11 +1245,11 @@ do -- vector
 		end
 
 		function PANEL:PopulateContextMenu(menu)
-			menu:AddOption(L"copy", function()
+			menu:AddOption(L("copy"), function()
 				pace.clipboard = pac.class.Copy(self.vector)
 			end)
 			:SetImage(pace.MiscIcons.copy)
-			menu:AddOption(L"paste", function()
+			menu:AddOption(L("paste"), function()
 				local val = pac.class.Copy(pace.clipboard)
 
 				if _G.type(val) == "number" then
@@ -1267,7 +1267,7 @@ do -- vector
 			end)
 			:SetImage(pace.MiscIcons.paste)
 			menu:AddSpacer()
-			menu:AddOption(L"reset", function()
+			menu:AddOption(L("reset"), function()
 				if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
 					local val = pac.class.Copy(pace.current_part.DefaultVars[self.CurrentKey])
 					self:SetValue(val)

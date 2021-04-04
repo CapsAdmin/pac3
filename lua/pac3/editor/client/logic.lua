@@ -53,7 +53,7 @@ function pace.OnOpenEditor()
 	pace.EnableView(true)
 
 	if table.Count(pac.GetLocalParts()) == 0 then
-		pace.Call("CreatePart", "group", L"my outfit")
+		pace.Call("CreatePart", "group", L("my outfit"))
 	end
 
 	pace.TrySelectPart()
@@ -143,7 +143,7 @@ local function HUDPaint(ply, bind, isPressed)
 	if lastDisplayLabel < RealTime() then return end
 	local alpha = (lastDisplayLabel - RealTime()) / 3
 	draw.DrawText(
-		L"Press +use to reveal PAC3 outfit",
+		L("Press +use to reveal PAC3 outfit"),
 		"pac_onuse_only_hint",
 		ScrW() / 2,
 		ScrH() * 0.3,

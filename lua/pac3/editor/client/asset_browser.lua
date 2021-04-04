@@ -60,7 +60,7 @@ local function install_click(icon, path, pattern, on_menu, pathid)
 		elseif code == MOUSE_RIGHT then
 			local menu = DermaMenu()
 
-			menu:AddOption(L"copy path", function()
+			menu:AddOption(L("copy path"), function()
 				if pattern then
 					for _, pattern in ipairs(type(pattern) == "string" and {pattern} or pattern) do
 						local test = path:match(pattern)
@@ -616,7 +616,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 
 	local divider
 	local frame = vgui.Create("DFrame")
-	frame.title = L"asset browser" .. " - " .. (browse_types_str:gsub(";", " "))
+	frame.title = L("asset browser") .. " - " .. (browse_types_str:gsub(";", " "))
 
 	if GetConVar("pac_asset_browser_remember_layout"):GetBool() then
 		frame:SetCookieName("pac_asset_browser")
@@ -681,27 +681,28 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 
 	local menu_bar = vgui.Create("DMenuBar", frame)
 	menu_bar:Dock(TOP)
-	local file_menu = menu_bar:AddMenu(L"file")
-	file_menu:AddOption(L"clear search cache", function()
+	local file_menu = menu_bar:AddMenu(L("file"))
+	file_menu:AddOption(L("clear search cache"), function()
 		Derma_Query(
-			L
-				"Are you sure you want to clear? A good time to clear is when there is a big TF2 update or you've decided to permanently unmount some games to avoid them showing up in the search results.",
-			L"clear search cache",
-			L"clear",
+			L(
+				"Are you sure you want to clear? A good time to clear is when there is a big TF2 update or you've decided to permanently unmount some games to avoid them showing up in the search results."
+			),
+			L("clear search cache"),
+			L("clear"),
 			function()
 				file.Delete("pac3_cache/pac_asset_browser_index.txt")
 				pac.asset_browser_cache = {}
 			end,
-			L"cancel",
+			L("cancel"),
 			function() 
 			end
 		)
 	end)
 	:SetImage(pace.MiscIcons.clear)
-	local options_menu = menu_bar:AddMenu(L"options")
+	local options_menu = menu_bar:AddMenu(L("options"))
 	options_menu:SetDeleteSelf(false)
-	options_menu:AddCVar(L"close browser on select", "pac_asset_browser_close_on_select", "1", "0")
-	options_menu:AddCVar(L"remember layout", "pac_asset_browser_remember_layout", "1", "0")
+	options_menu:AddCVar(L("close browser on select"), "pac_asset_browser_close_on_select", "1", "0")
+	options_menu:AddCVar(L("remember layout"), "pac_asset_browser_remember_layout", "1", "0")
 	local zoom_controls = vgui.Create("pac_AssetBrowser_ZoomControls", menu_bar)
 	zoom_controls:Dock(RIGHT)
 
@@ -783,13 +784,13 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 	divider:SetLeft(left_panel)
 	divider:SetRight(frame.PropPanel)
 	local sound_name_list = vgui.Create("DListView", frame.PropPanel)
-	sound_name_list:AddColumn(L"name")
+	sound_name_list:AddColumn(L("name"))
 	sound_name_list:Dock(FILL)
 	sound_name_list:SetMultiSelect(false)
 	sound_name_list:SetVisible(false)
 	local sound_list = vgui.Create("DListView", frame.PropPanel)
-	sound_list:AddColumn(L"path")
-	sound_list:AddColumn(L"byte size")
+	sound_list:AddColumn(L("path"))
+	sound_list:AddColumn(L("byte size"))
 	sound_list:Dock(FILL)
 	sound_list:SetMultiSelect(false)
 	sound_list:SetVisible(false)
@@ -1332,7 +1333,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 				search.model_view = model_view
 				search.delay_functions = {}
 
-				file_menu:AddOption(L"build search cache", function()
+				file_menu:AddOption(L("build search cache"), function()
 					search:StartSearch("", "models/", {}, "GAME", function(path, pathid) 
 					end)
 
@@ -1567,7 +1568,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 				end
 
 				file_menu:AddSpacer()
-				file_menu:AddOption(L"exit", function()
+				file_menu:AddOption(L("exit"), function()
 					frame:Remove()
 				end):SetImage(pace.MiscIcons.exit)
 

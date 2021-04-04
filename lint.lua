@@ -39,6 +39,7 @@ local config = {
 	preserve_whitespace = false,
 	string_quote = "\"",
 	no_semicolon = true,
+	force_parenthesis = true,
 	extra_indent = {
 		StartStorableVars = {
 			to = "EndStorableVars",

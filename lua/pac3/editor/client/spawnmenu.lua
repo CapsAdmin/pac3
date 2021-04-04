@@ -53,7 +53,7 @@ local function rebuildPlayerList()
 	end
 
 	if count == 1 then
-		self.plist = {self:Help(L"no players are online")}
+		self.plist = {self:Help(L("no players are online"))}
 	else
 		pac_wear_friends_only = pac_wear_friends_only or GetConVar("pac_wear_friends_only")
 		local plys = player.GetAll()
@@ -97,7 +97,7 @@ local function rebuildPlayerList2()
 	end
 
 	if count == 1 then
-		self.plist = {self:Help(L"no players are online")}
+		self.plist = {self:Help(L("no players are online"))}
 	else
 		pac_wear_friends_only = pac_wear_friends_only or GetConVar("pac_wear_friends_only")
 		local plys = player.GetAll()
@@ -140,10 +140,10 @@ end
 function pace.ClientOptionsMenu(self)
 	if not IsValid(self) then return end
 	PLAYER_LIST_PANEL = self
-	self:Button(L"show editor", "pac_editor")
-	self:CheckBox(L"enable", "pac_enable")
-	self:Button(L"clear", "pac_clear_parts")
-	self:Button(L"wear on server", "pac_wear_parts")
+	self:Button(L("show editor"), "pac_editor")
+	self:CheckBox(L("enable"), "pac_enable")
+	self:Button(L("clear"), "pac_clear_parts")
+	self:Button(L("wear on server"), "pac_wear_parts")
 	local browser = self:AddControl("pace_browser", {})
 	browser.OnLoad = function(node)
 		pace.LoadParts(node.FileName, true)
@@ -157,32 +157,32 @@ function pace.ClientOptionsMenu(self)
 
 	browser:SetSize(400, 480)
 	pace.SpawnlistBrowser = browser
-	self:Button(L"request outfits", "pac_request_outfits")
-	self:Button(L"panic", "pac_panic")
-	self:CheckBox(L"wear for friends only", "pac_wear_friends_only")
-	self:CheckBox(L"wear blacklist acts as whitelist", "pac_wear_reverse")
-	self:Help(L"don't wear for these players:")
+	self:Button(L("request outfits"), "pac_request_outfits")
+	self:Button(L("panic"), "pac_panic")
+	self:CheckBox(L("wear for friends only"), "pac_wear_friends_only")
+	self:CheckBox(L("wear blacklist acts as whitelist"), "pac_wear_reverse")
+	self:Help(L("don't wear for these players:"))
 	rebuildPlayerList()
 end
 
 function pace.ClientSettingsMenu(self)
 	if not IsValid(self) then return end
 	PLAYER_LIST_PANEL2 = self
-	self:Help(L"Performance"):SetFont("DermaDefaultBold")
-	self:CheckBox(L"Enable PAC", "pac_enable")
-	self:NumSlider(L"Draw distance:", "pac_draw_distance", 0, 20000, 0)
-	self:NumSlider(L"Max render time: ", "pac_max_render_time", 0, 50, 0)
-	self:CheckBox(L"Friend only", "pac_friendonly")
-	self:CheckBox(L"Reveal outfits only on +use", "pac_onuse_only")
-	self:CheckBox(L"Hide outfits that some folks can find disturbing", "pac_hide_disturbing")
-	self:NumSlider(L"PAC Volume", "pac_ogg_volume", 0, 1, 2)
-	self:CheckBox(L"Process OBJ in background", "pac_obj_async")
-	self:CheckBox(L"render objects outside visible fov", "pac_override_fov")
-	self:CheckBox(L"render projected textures (flashlight)", "pac_render_projected_texture")
-	self:Help(L"Misc"):SetFont("DermaDefaultBold")
-	self:NumSlider(L"PAC Volume", "pac_ogg_volume", 0, 1, 2)
-	self:CheckBox(L"Custom error model", "pac_error_mdl")
-	self:Help(L"Enable"):SetFont("DermaDefaultBold")
+	self:Help(L("Performance")):SetFont("DermaDefaultBold")
+	self:CheckBox(L("Enable PAC"), "pac_enable")
+	self:NumSlider(L("Draw distance:"), "pac_draw_distance", 0, 20000, 0)
+	self:NumSlider(L("Max render time: "), "pac_max_render_time", 0, 50, 0)
+	self:CheckBox(L("Friend only"), "pac_friendonly")
+	self:CheckBox(L("Reveal outfits only on +use"), "pac_onuse_only")
+	self:CheckBox(L("Hide outfits that some folks can find disturbing"), "pac_hide_disturbing")
+	self:NumSlider(L("PAC Volume"), "pac_ogg_volume", 0, 1, 2)
+	self:CheckBox(L("Process OBJ in background"), "pac_obj_async")
+	self:CheckBox(L("render objects outside visible fov"), "pac_override_fov")
+	self:CheckBox(L("render projected textures (flashlight)"), "pac_render_projected_texture")
+	self:Help(L("Misc")):SetFont("DermaDefaultBold")
+	self:NumSlider(L("PAC Volume"), "pac_ogg_volume", 0, 1, 2)
+	self:CheckBox(L("Custom error model"), "pac_error_mdl")
+	self:Help(L("Enable")):SetFont("DermaDefaultBold")
 	local t = {"urlobj", "urltex"}
 
 	for k in pairs(pac.convarcache or {}) do
@@ -200,8 +200,8 @@ function pace.ClientSettingsMenu(self)
 	end
 
 	self:Help("")
-	self:CheckBox(L"Load PACs only from next players", "pac_use_whitelist")
-	self:CheckBox(L"next list acts as blacklist", "pac_use_whitelist_b")
+	self:CheckBox(L("Load PACs only from next players"), "pac_use_whitelist")
+	self:CheckBox(L("next list acts as blacklist"), "pac_use_whitelist_b")
 	rebuildPlayerList2()
 end
 
@@ -230,7 +230,7 @@ hook.Add("PopulateToolMenu", "pac_spawnmenu", function()
 		"Utilities",
 		"PAC",
 		"PAC3",
-		L"PAC3",
+		L("PAC3"),
 		"",
 		"",
 		pace.ClientOptionsMenu,
@@ -240,7 +240,7 @@ hook.Add("PopulateToolMenu", "pac_spawnmenu", function()
 		"Utilities",
 		"PAC",
 		"PAC3S",
-		L"Settings",
+		L("Settings"),
 		"",
 		"",
 		pace.ClientSettingsMenu,

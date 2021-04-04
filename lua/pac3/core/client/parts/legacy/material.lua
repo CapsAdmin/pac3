@@ -354,7 +354,7 @@ pac.EndStorableVars()
 function PART:GetMaterialFromParent()
 	if self:GetParent():IsValid() then
 		if not self.Materialm then
-			local mat = pac.CreateMaterial(pac.uid"pac_material_", "VertexLitGeneric", {})
+			local mat = pac.CreateMaterial(pac.uid("pac_material_"), "VertexLitGeneric", {})
 
 			if self.Parent.Materialm then
 				local tex
@@ -391,7 +391,7 @@ end
 
 function PART:GetRawMaterial()
 	if not self.Materialm then
-		local mat = pac.CreateMaterial(pac.uid"pac_material_", "VertexLitGeneric", {})
+		local mat = pac.CreateMaterial(pac.uid("pac_material_"), "VertexLitGeneric", {})
 		self.Materialm = mat
 	end
 

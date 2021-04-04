@@ -1,6 +1,6 @@
 local L = pace.LanguageString
 
-pace.AddTool(L"spawn as props", function(part)
+pace.AddTool(L("spawn as props"), function(part)
 	local data = pacx.PartToContraptionData(part)
 	net.Start("pac_to_contraption")
 		net.WriteTable(data)

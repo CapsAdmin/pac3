@@ -11,7 +11,7 @@ end
 local L = pace.LanguageString
 
 function pace.AddLanguagesToMenu(menu)
-	local menu, pnl = menu:AddSubMenu(L"language")
+	local menu, pnl = menu:AddSubMenu(L("language"))
 	pnl:SetImage("icon16/world_edit.png")
 	menu.GetDeleteSelf = function()
 		return false
@@ -42,7 +42,7 @@ function pace.ShowLanguageEditor()
 	frame:SetSize(512, 512)
 	frame:Center()
 	frame:MakePopup()
-	frame:SetTitle(L"translation editor")
+	frame:SetTitle(L("translation editor"))
 	local list = vgui.Create("DListView", frame)
 	list:Dock(FILL)
 	list:AddColumn("english")
@@ -60,8 +60,8 @@ function pace.ShowLanguageEditor()
 		line.OnRightClick = function()
 			local menu = DermaMenu()
 			menu:SetPos(input.GetCursorPos())
-			menu:AddOption(L"edit", function()
-				local window = Derma_StringRequest(L"translate", english, other, function(new)
+			menu:AddOption(L("edit"), function()
+				local window = Derma_StringRequest(L("translate"), english, other, function(new)
 					pace.CurrentTranslation[english] = new
 					line:SetValue(2, new)
 					pace.SaveCurrentTranslation()
@@ -78,7 +78,7 @@ function pace.ShowLanguageEditor()
 				end
 			end)
 			:SetImage(pace.MiscIcons.edit)
-			menu:AddOption(L"revert", function()
+			menu:AddOption(L("revert"), function()
 				local new = CompileFile("pac3/editor/client/translations/" .. lang .. ".lua")()[english]
 				pace.CurrentTranslation[english] = new
 				line:SetValue(2, new or english)

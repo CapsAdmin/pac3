@@ -355,13 +355,14 @@ function mctrl.GUIMousePressed(mc)
 	local axis
 	local dist = mctrl.grab_dist
 
-	for i, v in pairs
+	for i, v in pairs(
 		{
 			[AXIS_X] = mctrl.VecToScreen(pos + forward * r),
 			[AXIS_Y] = mctrl.VecToScreen(pos + right * r),
 			[AXIS_Z] = mctrl.VecToScreen(pos + up * r),
 			[AXIS_VIEW] = mctrl.VecToScreen(pos),
-		} do
+		}
+	) do
 		local d = math.sqrt((v.x - x) ^ 2 + (v.y - y) ^ 2)
 
 		if d <= dist then
@@ -411,12 +412,13 @@ function mctrl.GUIMousePressed(mc)
 	local axis
 	local dist = mctrl.grab_dist
 
-	for i, v in pairs
+	for i, v in pairs(
 		{
 			[AXIS_X] = mctrl.VecToScreen(pos + forward * r * mctrl.angle_pos),
 			[AXIS_Y] = mctrl.VecToScreen(pos + right * r * mctrl.angle_pos),
 			[AXIS_Z] = mctrl.VecToScreen(pos + up * r * mctrl.angle_pos),
-		} do
+		}
+	) do
 		local d = math.sqrt((v.x - x) ^ 2 + (v.y - y) ^ 2)
 
 		if d <= dist then

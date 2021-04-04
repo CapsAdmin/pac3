@@ -69,7 +69,7 @@ end
 
 function SWEP:Initialize()
 	if self.SetHoldType then
-		self:SetHoldType"normal"
+		self:SetHoldType("normal")
 	else
 		self:SetWeaponHoldType("normal")
 	end

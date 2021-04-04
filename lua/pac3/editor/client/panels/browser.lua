@@ -11,9 +11,9 @@ function PANEL:SetDir(str)
 end
 
 function PANEL:Init()
-	self:AddColumn(L"name")
-	self:AddColumn(L"size")
-	self:AddColumn(L"modified")
+	self:AddColumn(L("name"))
+	self:AddColumn(L("size"))
+	self:AddColumn(L("modified"))
 	self:PopulateFromClient()
 	self:FixColumnsLayout()
 end
@@ -54,17 +54,17 @@ end
 function PANEL.OnRowRightClick(_self, id, self)
 	local m = DermaMenu()
 
-	m:AddOption(L"View", function()
+	m:AddOption(L("View"), function()
 		self:GetListView():OnClickLine(self, true)
 		self:OnSelect()
 	end)
 
-	m:AddOption(L"wear on server", function()
+	m:AddOption(L("wear on server"), function()
 		self:GetListView():OnClickLine(self, true)
 		self:OnSelect()
 
 		timer.Simple(0, function()
-			RunConsoleCommand"pac_wear_parts"
+			RunConsoleCommand("pac_wear_parts")
 		end)
 	end)
 

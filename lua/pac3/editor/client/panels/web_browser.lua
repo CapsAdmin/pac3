@@ -93,13 +93,13 @@ function PANEL:Init()
 	end
 	browser.OnKeyCodePressed = function(browser, code)
 		if code == 96 then
-			self.browser:RunJavascript[[location.reload(true);]]
+			self.browser:RunJavascript([[location.reload(true);]])
 			return
 		end
 	end
 	local status = vgui.Create("DLabel", self)
 	self.status = status
-	status:SetText""
+	status:SetText("")
 	status:Dock(BOTTOM)
 end
 
@@ -135,11 +135,12 @@ function PANEL:Think(w, h)
 
 	if self.wasloading and not self.browser:IsLoading() then
 		self.wasloading = false
-		self.browser:QueueJavascript[[gmod.LoadedURL(document.location.href,document.title); gmod.status(""); ]]
-		self.browser:QueueJavascript[[function alert(str) { console.log("Alert: "+str); }]]
-		self.browser:QueueJavascript
+		self.browser:QueueJavascript([[gmod.LoadedURL(document.location.href,document.title); gmod.status(""); ]])
+		self.browser:QueueJavascript([[function alert(str) { console.log("Alert: "+str); }]])
+		self.browser:QueueJavascript(
 			[[if (!document.body.style.background) { document.body.style.background = 'white'; }; void 0;]]
-		self.browser:QueueJavascript
+		)
+		self.browser:QueueJavascript(
 			[[
 			function getLink() {
 				gmod.status(this.href || "-");
@@ -157,6 +158,7 @@ function PANEL:Think(w, h)
 			}
 
 		]]
+		)
 	end
 end
 
