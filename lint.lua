@@ -45,19 +45,22 @@ local config = {
 			to = "EndStorableVars",
 		},
 
-		Start2D = {
-			to = "End2D"
-		},
+		Start2D = {to = "End2D"},
+		Start3D = {to = "End3D"},
+		Start3D2D = {to = "End3D2D"},
 
-		Start3D = {
-			to = "End3D"
-		},
+		-- in case it's localized
+		cam_Start2D = {to = "cam_End2D"},
+		cam_Start3D = {to = "cam_End3D"},
+		cam_Start3D2D = {to = "cam_End3D2D"},
+		cam_Start = {to = "cam_End"},
 
 		Start = {
 			to = {
 				SendToServer = true,
 				Send = true,
 				Broadcast = true,
+				End = true,
 			}
 		},
 

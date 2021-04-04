@@ -46,23 +46,23 @@ end
 
 function PART:PreOnDraw()
 	render_FogStart(self.Start * 100)
-		render_FogEnd(self.End * 100)
-		render_FogMaxDensity(self.Alpha)
+	render_FogEnd(self.End * 100)
+	render_FogMaxDensity(self.Alpha)
 
-		if self.clr then
-			render.FogColor(unpack(self.clr))
-		end
-
-		if self.Height > 0 then
-			render_FogMode(MATERIAL_FOG_LINEAR_BELOW_FOG_Z)
-			render_SetFogZ(self.cached_pos.z + self.Height * 10)
-		else
-			render_FogMode(MATERIAL_FOG_LINEAR)
-		end
+	if self.clr then
+		render.FogColor(unpack(self.clr))
 	end
 
-	function PART:PostOnDraw()
-		render.FogMode(MATERIAL_FOG_NONE)
+	if self.Height > 0 then
+		render_FogMode(MATERIAL_FOG_LINEAR_BELOW_FOG_Z)
+		render_SetFogZ(self.cached_pos.z + self.Height * 10)
+	else
+		render_FogMode(MATERIAL_FOG_LINEAR)
 	end
+end
 
-	pac.RegisterPart(PART)
+function PART:PostOnDraw()
+	render.FogMode(MATERIAL_FOG_NONE)
+end
+
+pac.RegisterPart(PART)
