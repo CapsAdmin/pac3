@@ -352,7 +352,7 @@ pac.AddHook("Think", "events", function()
 			for _, part in pairs(ent_parts[ply]) do
 				part:SetOwner(rag)
 			end
-
+			rag:SetOwner(ply)
 			pac.ShowEntityParts(rag)
 
 			ply.pac_revert_ragdoll = function()
@@ -447,13 +447,18 @@ pac.AddHook("EntityRemoved", "change_owner", function(ent)
 			end
 		else
 			local owner = ent:GetOwner()
+			local rag = ent.pac_player
 			if IsActuallyPlayer(owner) then
 				local parts = parts_from_ent(owner)
 				if next(parts) ~= nil then
 					IsActuallyRemoved(ent, function()
 						for _, part in pairs(parts) do
 							if not part:HasParent() then
-								part:CheckOwner(ent, true)
+								if rag then
+									part:CheckOwner(ent, false)
+								else
+									part:CheckOwner(ent, true)			
+								end
 							end
 						end
 					end)
@@ -657,7 +662,8 @@ do -- drawing
 		local dst = 0
 		local dummyv = Vector(0.577350,0.577350,0.577350)
 		local fovoverride
-
+		
+		local pac_sv_hide_outfit_on_death = GetConVar("pac_sv_hide_outfit_on_death")
 		local skip_frames = CreateConVar('pac_suppress_frames', '1', {FCVA_ARCHIVE}, 'Skip frames (reflections)')
 
 		local function setup_suppress()
@@ -730,7 +736,10 @@ do -- drawing
 					local rag = ply.pac_ragdoll
 
 					if IsValid(rag) then
-						if ply.pac_death_hide_ragdoll or ply.pac_draw_player_on_death then
+						if pac_sv_hide_outfit_on_death:GetBool() then
+							pac.HideEntityParts(ply)
+							goto CONTINUE
+						elseif ply.pac_death_hide_ragdoll or ply.pac_draw_player_on_death then
 							rag:SetRenderMode(RENDERMODE_TRANSALPHA)
 
 							local c = rag:GetColor()
