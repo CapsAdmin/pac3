@@ -191,13 +191,9 @@ local numberMatch = '(-?[0-9.+-e0-9]+)'
 local vMatch = '^ *v *' .. numberMatch .. ' +' .. numberMatch .. ' +' .. numberMatch
 local vtMatch = '^ *vt *' .. numberMatch .. ' +' .. numberMatch
 local vnMatch = '^ *vn *' .. numberMatch .. ' +' .. numberMatch .. ' +' .. numberMatch
-local ASYNC_PROCESSING = CreateConVar('pac_obj_async', '1', {FCVAR_ARCHIVE}, 'Process OBJ files in background')
 
 function urlobj.ParseObj(data, generateNormals)
 	local coroutine_yield = coroutine.running () and coroutine.yield or function () end
-	if not ASYNC_PROCESSING:GetBool() then
-		coroutine_yield = function () end
-	end
 
 	local positions  = {}
 	local texCoordsU = {}

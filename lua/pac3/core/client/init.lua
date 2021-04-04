@@ -46,6 +46,7 @@ include("pac3/core/shared/init.lua")
 pac.urltex = include("pac3/libraries/urltex.lua")
 
 include("parts.lua")
+include("max_render_time.lua")
 include("part_pool.lua")
 include("bones.lua")
 include("hooks.lua")

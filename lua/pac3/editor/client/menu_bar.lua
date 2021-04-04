@@ -108,8 +108,6 @@ local function populate_options(menu)
 		rendering.GetDeleteSelf = function() return false end
 		pnl:SetImage("icon16/camera_edit.png")
 		rendering:AddCVar(L"no outfit reflections", "pac_suppress_frames", "1", "0")
-		rendering:AddCVar(L"render objects outside visible fov", "pac_override_fov", "1", "0")
-		rendering:AddCVar(L"render projected textures (flashlight)", "pac_render_projected_texture", "1", "0")
 end
 
 local function populate_player(menu)
