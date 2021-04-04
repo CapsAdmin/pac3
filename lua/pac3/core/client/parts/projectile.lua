@@ -1,27 +1,27 @@
 language.Add("pac_projectile", "Projectile")
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "projectile"
 PART.Group = 'advanced'
 PART.Icon = 'icon16/bomb.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Speed", 1)
-	pac.GetSet(PART, "AddOwnerSpeed", false)
-	pac.GetSet(PART, "Damping", 0)
-	pac.GetSet(PART, "Gravity", true)
-	pac.GetSet(PART, "Collisions", true)
-	pac.GetSet(PART, "Sphere", false)
-	pac.GetSet(PART, "Radius", 1)
-	pac.GetSet(PART, "DamageRadius", 50)
-	pac.GetSet(PART, "LifeTime", 5)
-	pac.GetSet(PART, "AimDir", false)
-	pac.GetSet(PART, "Sticky", false)
-	pac.GetSet(PART, "Bounce", 0)
-	pac.GetSet(PART, "BulletImpact", false)
-	pac.GetSet(PART, "Damage", 0)
-	pac.GetSet(PART, "DamageType", "generic", {enums = {
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Speed", 1)
+	BUILDER:GetSet("AddOwnerSpeed", false)
+	BUILDER:GetSet("Damping", 0)
+	BUILDER:GetSet("Gravity", true)
+	BUILDER:GetSet("Collisions", true)
+	BUILDER:GetSet("Sphere", false)
+	BUILDER:GetSet("Radius", 1)
+	BUILDER:GetSet("DamageRadius", 50)
+	BUILDER:GetSet("LifeTime", 5)
+	BUILDER:GetSet("AimDir", false)
+	BUILDER:GetSet("Sticky", false)
+	BUILDER:GetSet("Bounce", 0)
+	BUILDER:GetSet("BulletImpact", false)
+	BUILDER:GetSet("Damage", 0)
+	BUILDER:GetSet("DamageType", "generic", {enums = {
 			generic = 0, --generic damage
 			crush = 1, --caused by physics interaction
 			bullet = 2, --bullet damage
@@ -67,34 +67,42 @@ pac.StartStorableVars()
 			armor = -1,
 		}
 	})
-	pac.GetSet(PART, "Spread", 0)
-	pac.GetSet(PART, "Delay", 0)
-	pac.GetSet(PART, "Maximum", 0)
-	pac.GetSet(PART, "Mass", 100)
-	pac.GetSet(PART, "Attract", 0)
-	pac.GetSet(PART, "AttractMode", "projectile_nearest", {enums = {
+	BUILDER:GetSet("Spread", 0)
+	BUILDER:GetSet("Delay", 0)
+	BUILDER:GetSet("Maximum", 0)
+	BUILDER:GetSet("Mass", 100)
+	BUILDER:GetSet("Attract", 0)
+	BUILDER:GetSet("AttractMode", "projectile_nearest", {enums = {
 		hitpos = "hitpos",
 		hitpos_radius = "hitpos_radius",
 		closest_to_projectile = "closest_to_projectile",
 		closest_to_hitpos = "closest_to_hitpos",
 	}})
-	pac.GetSet(PART, "AttractRadius", 200)
-	pac.SetupPartName(PART, "OutfitPart")
-	pac.GetSet(PART, "Physical", false)
-	pac.GetSet(PART, "CollideWithOwner", false)
-	pac.GetSet(PART, "RemoveOnCollide", false)
-pac.EndStorableVars()
+	BUILDER:GetSet("AttractRadius", 200)
+	BUILDER:GetSetPart("OutfitPart")
+	BUILDER:GetSet("Physical", false)
+	BUILDER:GetSet("CollideWithOwner", false)
+	BUILDER:GetSet("RemoveOnCollide", false)
+BUILDER:EndStorableVars()
+
+PART.Translucent = false
 
 function PART:OnShow(from_rendering)
 	if not from_rendering then
-		self.trigger = true
-	end
-end
-
-function PART:OnDraw(owner, pos, ang)
-	if self.trigger then
-		self:Shoot(pos, ang)
-		self.trigger = false
+		-- TODO:
+		-- this makes sure all the parents of this movable have an up-to-date draw position
+		-- GetBonePosition implicitly uses ent:GetPos() as the parent origin which is really bad,
+		-- it should instead be using what pac considers to be the position
+		--self:GetRootPart():CallRecursive("Draw", "opaque")
+		local parents = self:GetParentList()
+		-- call draw from root to the current part only on direct parents to update the position hiearchy
+		for i = #parents, 1, -1 do
+			local part = parents[i]
+			if part.Draw then
+				part:Draw("opaque")
+			end
+		end
+		self:Shoot(self:GetDrawPosition())
 	end
 end
 
@@ -104,25 +112,22 @@ function PART:AttachToEntity(ent)
 	ent.pac_draw_distance = 0
 
 	local tbl = self.OutfitPart:ToTable()
-	tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. tbl.self.UniqueID)
 
-	local part = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner())
+	local part = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner(), tbl, tostring(tbl))
+	part:SetOwner(ent)
+	part.SetOwner = function(s) s.Owner = ent end
 
-	local id = part.Id + self:GetPlayerOwner():UniqueID()
+
+	local id = part.Id + self:GetPlayerOwnerId()
 
 	part.show_in_editor = false
-	part.CheckOwner = function(s) s.Owner = ent end
-	part:SetPlayerOwner(self:GetPlayerOwner())
-	part:SetTable(tbl)
 	part:SetHide(false)
 
 	part:SetOwner(ent)
 
 	ent:CallOnRemove("pac_projectile_" .. id, function() part:Remove() end)
 
-	pac.HookEntityRender(ent, part)
-
-	part:CallRecursive("CThink") -- this somehow fixes events triggering on start
+	part:CallRecursive("Think")
 
 	ent.RenderOverride = ent.RenderOverride or function()
 		if self.AimDir then
@@ -233,7 +238,7 @@ function PART:Shoot(pos, ang)
 					return
 				end
 
-				if not self:GetOwner(true):IsValid() then
+				if not self:GetRootOwner():IsValid() then
 					timer.Simple(0, function() SafeRemoveEntity(ent) end)
 				end
 
@@ -314,7 +319,7 @@ do -- physical
 			local ent = Entity(data.ent_id)
 
 			if ent:IsValid() and ent:GetClass() == "pac_projectile" then
-				local part = pac.GetPartFromUniqueID(data.ply:IsPlayer() and data.ply:UniqueID() or data.ply:EntIndex(), data.partuid)
+				local part = pac.GetPartFromUniqueID(pac.Hash(data.ply), data.partuid)
 				if part:IsValid() and part:GetPlayerOwner() == data.ply then
 					part:AttachToEntity(ent)
 				end
@@ -335,4 +340,4 @@ do -- physical
 	end)
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

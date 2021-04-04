@@ -16,8 +16,8 @@ function pacx.PartToContraptionData(part, tbl)
 		local c = part:GetColor()
 
 		data.clr = {c.r, c.g, c.b, part:GetAlpha() * 255}
-		data.ang = part.Entity:GetAngles()
-		data.pos = part.Entity:GetPos()
+		data.ang = part:GetOwner():GetAngles()
+		data.pos = part:GetOwner():GetPos()
 		data.mat = part:GetMaterial()
 		data.mdl = part:GetModel()
 		data.skn = part:GetSkin()

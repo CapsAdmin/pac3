@@ -1,52 +1,52 @@
 local webaudio = include("pac3/libraries/webaudio.lua")
 pac.webaudio2 = webaudio
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.FriendlyName = "web sound"
 PART.ClassName = "sound2"
-PART.NonPhysical = true
+
 PART.Icon = 'icon16/music.png'
 PART.Group = 'effects'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Path", "", {editor_panel = "sound"})
-	pac.GetSet(PART, "Volume", 1, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, "Pitch", 1, {editor_sensitivity = 0.125})
-	pac.GetSet(PART, "Radius", 1500)
-	pac.GetSet(PART, "PlayCount", 1, {editor_onchange = function(self, num)
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Path", "", {editor_panel = "sound"})
+	BUILDER:GetSet("Volume", 1, {editor_sensitivity = 0.25})
+	BUILDER:GetSet("Pitch", 1, {editor_sensitivity = 0.125})
+	BUILDER:GetSet("Radius", 1500)
+	BUILDER:GetSet("PlayCount", 1, {editor_onchange = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
 		return math.Round(math.max(num, 0))
 	end})
-	pac.GetSet(PART, "Doppler", false)
-	pac.GetSet(PART, "StopOnHide", false)
-	pac.GetSet(PART, "PauseOnHide", false)
-	pac.GetSet(PART, "Overlapping", false)
-	pac.GetSet(PART, "PlayOnFootstep", false)
-	pac.GetSet(PART, "MinPitch", 0, {editor_sensitivity = 0.125})
-	pac.GetSet(PART, "MaxPitch", 0, {editor_sensitivity = 0.125})
+	BUILDER:GetSet("Doppler", false)
+	BUILDER:GetSet("StopOnHide", false)
+	BUILDER:GetSet("PauseOnHide", false)
+	BUILDER:GetSet("Overlapping", false)
+	BUILDER:GetSet("PlayOnFootstep", false)
+	BUILDER:GetSet("MinPitch", 0, {editor_sensitivity = 0.125})
+	BUILDER:GetSet("MaxPitch", 0, {editor_sensitivity = 0.125})
 
-	pac.SetPropertyGroup(PART, "filter")
-		pac.GetSet(PART, "FilterType", 0, {enums = {
+	BUILDER:SetPropertyGroup("filter")
+		BUILDER:GetSet("FilterType", 0, {enums = {
 			none = "0",
 			lowpass = "1",
 			highpass = "2",
 		}})
-		pac.GetSet(PART, "FilterFraction", 1, {editor_sensitivity = 0.125, editor_clamp = {0, 1}})
+		BUILDER:GetSet("FilterFraction", 1, {editor_sensitivity = 0.125, editor_clamp = {0, 1}})
 
-	pac.SetPropertyGroup(PART, "echo")
-		pac.GetSet(PART, "Echo", false)
-		pac.GetSet(PART, "EchoDelay", 0.5, {editor_sensitivity = 0.125})
-		pac.GetSet(PART, "EchoFeedback", 0.75, {editor_sensitivity = 0.125})
+	BUILDER:SetPropertyGroup("echo")
+		BUILDER:GetSet("Echo", false)
+		BUILDER:GetSet("EchoDelay", 0.5, {editor_sensitivity = 0.125})
+		BUILDER:GetSet("EchoFeedback", 0.75, {editor_sensitivity = 0.125})
 
-	pac.SetPropertyGroup(PART, "lfo")
-		pac.GetSet(PART, "PitchLFOAmount", 0, {editor_sensitivity = 0.125, editor_friendly = "pitch amount"})
-		pac.GetSet(PART, "PitchLFOTime", 0, {editor_sensitivity = 0.125, editor_friendly = "pitch time"})
+	BUILDER:SetPropertyGroup("lfo")
+		BUILDER:GetSet("PitchLFOAmount", 0, {editor_sensitivity = 0.125, editor_friendly = "pitch amount"})
+		BUILDER:GetSet("PitchLFOTime", 0, {editor_sensitivity = 0.125, editor_friendly = "pitch time"})
 
-		pac.GetSet(PART, "VolumeLFOAmount", 0, {editor_sensitivity = 0.125, editor_friendly = "volume amount"})
-		pac.GetSet(PART, "VolumeLFOTime", 0, {editor_sensitivity = 0.125, editor_friendly = "volume time"})
+		BUILDER:GetSet("VolumeLFOAmount", 0, {editor_sensitivity = 0.125, editor_friendly = "volume amount"})
+		BUILDER:GetSet("VolumeLFOTime", 0, {editor_sensitivity = 0.125, editor_friendly = "volume time"})
 
-pac.EndStorableVars()
+BUILDER:EndStorableVars()
 
 function PART:Initialize()
 	webaudio.Initialize()
@@ -72,10 +72,10 @@ function PART:GetNiceName()
 	return table.concat(tbl, ";")
 end
 
-PART.stream_vars = {}
+local stream_vars = {}
 
 local BIND = function(propertyName, setterMethodName, check)
-	table.insert(PART.stream_vars, propertyName)
+	table.insert(stream_vars, propertyName)
 	setterMethodName = setterMethodName or "Set" .. propertyName
 	PART["Set" .. propertyName] = function(self, value)
 		if check then
@@ -115,7 +115,7 @@ BIND("VolumeLFOTime")
 BIND("Doppler")
 
 function PART:OnThink()
-	local owner = self:GetOwner(true)
+	local owner = self:GetRootOwner()
 
 	for url, stream in pairs(self.streams) do
 		if not stream:IsValid() then self.streams[url] = nil goto CONTINUE end
@@ -185,13 +185,13 @@ function PART:SetPath(path)
 
 		stream:Set3D(true)
 		stream.OnLoad = function()
-			for _, key in ipairs(PART.stream_vars) do
+			for _, key in ipairs(stream_vars) do
 				self["Set" .. key](self, self["Get" .. key](self))
 			end
 		end
 		stream.OnError =  function(_, err, info)
 			info = info or "unknown error"
-			if self:IsValid() and LocalPlayer() == self:GetPlayerOwner() and pace and pace.IsActive() then
+			if self:IsValid() and pac.LocalPlayer == self:GetPlayerOwner() and pace and pace.IsActive() then
 				if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
 					pace.MessagePrompt(err .. "\n" .. info, "OGG error for" .. path, "OK")
 				else
@@ -290,4 +290,4 @@ function PART:OnRemove()
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

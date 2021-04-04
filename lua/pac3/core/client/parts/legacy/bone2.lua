@@ -7,10 +7,9 @@ end
 
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
-PART.FriendlyName = "legacy bone"
-PART.ClassName = "bone"
+PART.FriendlyName = "legacy experimental bone"
+PART.ClassName = "bone2"
 PART.Group = "legacy"
-
 PART.Icon = 'icon16/connect.png'
 
 BUILDER:StartStorableVars()
@@ -23,8 +22,8 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("AlternativeBones", false)
 		BUILDER:GetSet("MoveChildrenToOrigin", false)
 		BUILDER:GetSet("FollowAnglesOnly", false)
-		--BUILDER:GetSet("HideMesh", false)
-		--BUILDER:GetSet("InvertHideMesh", false)
+		BUILDER:GetSet("HideMesh", false)
+		BUILDER:GetSet("InvertHideMesh", false)
 		BUILDER:GetSetPart("FollowPart")
 
 	BUILDER:SetPropertyGroup("orientation")
@@ -51,8 +50,6 @@ BUILDER:RemoveProperty("IgnoreZ")
 BUILDER:RemoveProperty("BlendMode")
 BUILDER:RemoveProperty("NoTextureFiltering")
 
-local BaseClass_GetOwner = PART.GetOwner
-
 function PART:GetNiceName()
 	return self:GetBone()
 end
@@ -62,6 +59,7 @@ PART.ThinkTime = 0
 function PART:OnShow()
 	self:SetBone(self:GetBone())
 end
+
 PART.OnParent = PART.OnShow
 
 function PART:OnThink()
@@ -83,11 +81,7 @@ end
 
 function PART:GetBonePosition()
 	local owner = self:GetOwner()
-	local pos, ang
-
-	pos, ang = pac.GetBonePosAng(owner, self.Bone, true)
-
-	return pos, ang
+	return pac.GetBonePosAng(owner, self.Bone, true)
 end
 
 local function manpos(ent, id, pos, part)
@@ -112,7 +106,7 @@ local inf_scale = Vector(math.huge, math.huge, math.huge)
 local inf_scale_tempcrashfix = Vector(1,1,1)*0.001
 
 local function manscale(ent, id, scale, part)
-	if part.AlternativeBones then
+	if part and part.AlternativeBones then
 		ent.pac_bone_setup_data[part.UniqueID].scale = scale
 	else
 		ent:ManipulateBoneScale(id, ent:GetManipulateBoneScale(id) * scale)
@@ -144,11 +138,8 @@ local function scale_children(owner, id, scale, origin, ownerScale)
 		::CONTINUE::
 	end
 end
-local in_build = false
-function pac.build_bone_callback(ent)
-	if in_build then return end
 
-	in_build = true
+function pac.build_bone_callback(ent)
 	if ent.pac_matrixhack then
 		pac.LegacyScale(ent)
 	end
@@ -160,15 +151,14 @@ function pac.build_bone_callback(ent)
 			if part:IsValid() then
 				local mat = ent:GetBoneMatrix(data.bone)
 				if mat then
-					if part.FollowPart:IsValid() and part.FollowPart.GetWorldAngles and part.FollowPart.GetWorldPosition then
-						if part.FollowAnglesOnly then
-							local pos = mat:GetTranslation()
-							mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart:GetWorldAngles())
-							mat:SetTranslation(pos)
-						else
-							mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart:GetWorldAngles())
-							mat:SetTranslation(part.Position + part.PositionOffset + part.FollowPart:GetWorldPosition())
+					if part.FollowPart:IsValid() and part.FollowPart.GetWorldPosition then
+
+						mat:SetAngles(part.FollowPart:GetWorldAngles())
+
+						if not part.FollowAnglesOnly then
+							mat:SetTranslation(part.FollowPart:GetWorldPosition())
 						end
+
 					else
 						if data.pos then
 							mat:Translate(data.pos)
@@ -195,7 +185,6 @@ function pac.build_bone_callback(ent)
 			end
 		end
 	end
-	in_build = false
 end
 
 function PART:OnBuildBonePositions()
@@ -204,6 +193,7 @@ function PART:OnBuildBonePositions()
 	if not owner:IsValid() then return end
 
 	local index = self:GetModelBoneIndex()
+
 	if not index then return end
 
 	owner.pac_bone_setup_data = owner.pac_bone_setup_data or {}
@@ -220,7 +210,14 @@ function PART:OnBuildBonePositions()
 
 	if not owner.pac_follow_bones_function then
 		owner.pac_follow_bones_function = pac.build_bone_callback
-		owner:AddCallback("BuildBonePositions", function(ent) pac.build_bone_callback(ent) end)
+		local id
+		id = owner:AddCallback("BuildBonePositions", function(ent)
+			if pac and pac.build_bone_callback then
+				pac.build_bone_callback(ent)
+			else
+				owner:RemoveCallback("BuildBonePositions", id)
+			end
+		end)
 	end
 
 	if not self.FollowPart:IsValid() then
@@ -229,8 +226,24 @@ function PART:OnBuildBonePositions()
 			ang.y = -ang.p
 		end
 
-		manpos(owner, index, self.Position + self.PositionOffset, self)
-		manang(owner, index, ang + self.AngleOffset, self)
+		local pos2, ang2 = self.Position + self.PositionOffset, ang + self.AngleOffset
+
+		local parent = self:GetParent()
+
+		if parent and parent:IsValid() and parent.ClassName == 'jiggle' then
+			local pos3, ang3 = parent.Position, parent.Angles
+
+			if parent.pos then
+				pos2 = pos2 + parent.pos - pos3
+			end
+
+			if parent.ang then
+				ang2 = ang2 + parent.ang - ang3
+			end
+		end
+
+		manpos(owner, index, pos2, self)
+		manang(owner, index, ang2, self)
 	end
 
 	if owner.pac_bone_setup_data[self.UniqueID] then
@@ -247,7 +260,6 @@ function PART:OnBuildBonePositions()
 
 	if self.HideMesh then
 		scale = inf_scale
-
 		owner.pac_inf_scale = true
 
 		if self.InvertHideMesh then
@@ -262,7 +274,6 @@ function PART:OnBuildBonePositions()
 			return
 		end
 	else
-
 		owner.pac_inf_scale = false
 
 		scale = self.Scale * self.Size
@@ -275,3 +286,16 @@ function PART:OnBuildBonePositions()
 end
 
 BUILDER:Register()
+
+pac.AddHook("OnEntityCreated", "hide_mesh_no_crash", function(ent)
+	local ply = ent:GetRagdollOwner()
+	if ply:IsPlayer() and ply.pac_inf_scale then
+		for i = 0, ply:GetBoneCount() - 1 do
+			local scale = ply:GetManipulateBoneScale(i)
+			if scale == inf_scale then
+				scale = Vector(0,0,0)
+			end
+			ply:ManipulateBoneScale(i, scale)
+		end
+	end
+end)

@@ -25,9 +25,9 @@ do -- bone
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:MoreOptionsLeftClick()
-		if not pace.current_part:IsValid() or not pace.current_part:GetOwner():IsValid() then return end
+		if not pace.current_part:IsValid() or not pace.current_part:GetParentOwner():IsValid() then return end
 
-		pace.SelectBone(pace.current_part:GetOwner(), function(data)
+		pace.SelectBone(pace.current_part:GetParentOwner(), function(data)
 			if not self:IsValid() then return end
 			self:SetValue(L(data.friendly))
 			self.OnValueChanged(data.friendly)
@@ -35,7 +35,7 @@ do -- bone
 	end
 
 	function PANEL:MoreOptionsRightClick()
-		local bones = pac.GetModelBones(pace.current_part:GetOwner())
+		local bones = pac.GetModelBones(pace.current_part:GetParentOwner())
 
 		local menu = DermaMenu()
 
@@ -74,27 +74,48 @@ do -- part
 	PANEL.ClassName = "properties_part"
 	PANEL.Base = "pace_properties_base_type"
 
+	function PANEL:EncodeEdit(uid)
+		local part = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid)
+
+		if part:IsValid() then
+			return part:GetName()
+		end
+
+		return ""
+	end
+
+	function PANEL:DecodeEdit(name)
+		local part = pac.FindPartByName(pac.Hash(pac.LocalPlayer), name)
+		if part:IsValid() then
+			return part:GetUniqueID()
+		end
+
+		return ""
+	end
+
 	function PANEL:OnValueSet(val)
 		if not IsValid(self.part) then return end
-		local func_name = "Get" .. self.CurrentKey:sub(1, -5)
-		local part = self.part[func_name](self.part)
+		local part = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), val)
 
 		if IsValid(self.Icon) then self.Icon:Remove() end
+
 
 		if not part:IsValid() then
 			return
 		end
 
+		self:SetText(" " .. part:GetName())
+
 		if
 			GetConVar("pac_editor_model_icons"):GetBool() and
 			part.is_model_part and
 			part.GetModel and
-			part:GetEntity():IsValid() and
+			part:GetOwner():IsValid() and
 			part.ClassName ~= "entity2" and
 			part.ClassName ~= "weapon" -- todo: is_model_part is true, class inheritance issues?
 		then
 			local pnl = vgui.Create("SpawnIcon", self)
-			pnl:SetModel(part:GetEntity():GetModel() or "")
+			pnl:SetModel(part:GetOwner():GetModel() or "")
 			self.Icon = pnl
 		elseif type(part.Icon) == "string" then
 			local pnl = vgui.Create("DImage", self)
@@ -223,39 +244,6 @@ do -- sequence list
 	pace.RegisterPanel(PANEL)
 end
 
-do -- aimpart
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_aimpartname"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:MoreOptionsLeftClick()
-		pace.SelectPart(pac.GetLocalParts(), function(part)
-			if not self:IsValid() then return end
-			self:SetValue(part:GetName())
-			self.OnValueChanged(part)
-		end)
-	end
-
-	function PANEL:MoreOptionsRightClick(key)
-		local menu = DermaMenu()
-		menu:MakePopup()
-
-		for key, name in pairs(pac.AimPartNames) do
-			menu:AddOption(L(key), function() pace.current_part:SetAimPartName(name) end):SetImage("icon16/eye.png")
-		end
-
-		for _, part in pairs(pac.GetLocalParts()) do
-			if not part:HasParent() then
-				populate_part_menu(menu, part, "SetAimPartName")
-			end
-		end
-
-		pace.FixMenu(menu)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
 
 do -- model
 	local PANEL = {}
@@ -508,7 +496,7 @@ do -- model modifiers
 
 	function PANEL:ExtraPopulate()
 		local part = pace.current_part
-		local ent = part:GetEntity()
+		local ent = part:GetOwner()
 		if not ent:IsValid() or not ent:GetBodyGroups() then return end
 
 		local group = pac.GetPropertyUserdata(part, self.CurrentKey) and pac.GetPropertyUserdata(part, self.CurrentKey).group
@@ -600,7 +588,8 @@ do -- flex 2
 			weight_map[name] = weight_map[name] or 0
 
 			tbl[name] = {
-				val = weight_map[name],
+				sort_key = -i,
+				val = tonumber(weight_map[name]),
 				callback = function(val)
 					if ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() == 0 then return end
 
@@ -636,7 +625,7 @@ do -- model modifiers
 
 	function PANEL:ExtraPopulate()
 		local part = pace.current_part
-		local ent = part:GetEntity()
+		local ent = part:GetOwner()
 		if not ent:IsValid() or not ent:GetMaterials() or #ent:GetMaterials() == 1 then return end
 
 		local tbl = {}
@@ -806,7 +795,7 @@ do -- hull
 			if not pace.current_part:IsValid() then stop() return end
 			if pace.current_part.ClassName ~= "entity2" then stop() return end
 
-			local ent = pace.current_part:GetEntity()
+			local ent = pace.current_part:GetOwner()
 			if not ent.GetHull then stop() return end
 			if not ent.GetHullDuck then stop() return end
 

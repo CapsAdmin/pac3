@@ -78,7 +78,7 @@ if SERVER then
 	end)
 
 	hook.Add("PlayerInitialSpawn", "pac_version", function( ply)
-		local id = "pac_version_" .. ply:UniqueID()
+		local id = "pac_version_" .. pac.Hash(ply)
 		hook.Add("SetupMove", id, function(self, mov, cmd)
 			if self == ply and not cmd:IsForced() then
 				hook.Remove("SetupMove", id)

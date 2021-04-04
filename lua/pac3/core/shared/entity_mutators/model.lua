@@ -40,23 +40,14 @@ function MUTATOR:Mutate(path)
 		end, self.Owner)
 	else
 		if path:EndsWith(".mdl") then
-			if not util.IsValidModel(path) then
-				util.PrecacheModel(path)
-			end
+			self.Entity:SetModel(path)
 
-			if not util.IsValidModel(path) then
+			if path:lower() ~= self.Entity:GetModel():lower() then
 				self.Owner:ChatPrint('[PAC3] ERROR: ' .. path .. " is not a valid model on the server.")
-			else
-				self.Entity:SetModel(path)
 			end
 		else
 			local translated = player_manager.TranslatePlayerModel(path)
-
-			if translated ~= path then
-				self.Owner:ChatPrint('[PAC3] ERROR: ' .. path .. " is not a valid player model on the server.")
-			else
-				self.Entity:SetModel(path)
-			end
+			self.Entity:SetModel(translated)
 		end
 	end
 end

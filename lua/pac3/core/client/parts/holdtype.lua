@@ -1,7 +1,7 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "holdtype"
-PART.NonPhysical = true
+
 PART.ThinkTime = 0
 PART.Group = 'entity'
 PART.Icon = 'icon16/user_edit.png'
@@ -65,18 +65,18 @@ local udata = {
 	end
 }
 
-pac.StartStorableVars()
+BUILDER:StartStorableVars()
 	for name in pairs(act_mods) do
-		pac.GetSet(PART, name, "", udata)
+		BUILDER:GetSet(name, "", udata)
 	end
 
-	pac.GetSet(PART, "Fallback", "", udata)
-	pac.GetSet(PART, "Noclip", "", udata)
-	pac.GetSet(PART, "Air", "", udata)
-	pac.GetSet(PART, "Sitting", "", udata)
-	pac.GetSet(PART, "AlternativeRate", false)
-	pac.GetSet(PART, "Override", false)
-pac.EndStorableVars()
+	BUILDER:GetSet("Fallback", "", udata)
+	BUILDER:GetSet("Noclip", "", udata)
+	BUILDER:GetSet("Air", "", udata)
+	BUILDER:GetSet("Sitting", "", udata)
+	BUILDER:GetSet("AlternativeRate", false)
+	BUILDER:GetSet("Override", false)
+BUILDER:EndStorableVars()
 
 for name in pairs(act_mods) do
 	PART["Set" .. name] = function(self, str)
@@ -96,7 +96,7 @@ function PART:SetFallback(str)
 end
 
 function PART:UpdateActTable()
-	local ent = self:GetOwner(true)
+	local ent = self:GetRootOwner()
 	if not ent:IsValid() then return end
 
 	ent.pac_holdtype_alternative_animation_rate = self.AlternativeRate
@@ -125,7 +125,7 @@ function PART:UpdateActTable()
 end
 
 function PART:OnThink()
-	local ent = self:GetOwner(true)
+	local ent = self:GetRootOwner()
 	if not ent:IsValid() then return end
 
 	if (ent:GetModel() ~= self.last_model or ent.pac_holdtypes ~= self.last_pac_holdtypes)  then
@@ -146,7 +146,7 @@ function PART:GetSequenceList()
 end
 
 function PART:OnHide()
-	local ent = self:GetOwner(true)
+	local ent = self:GetRootOwner()
 
 	if ent:IsValid() then
 		if ent.pac_holdtypes then
@@ -162,4 +162,4 @@ function PART:OnShow()
 end
 
 
-pac.RegisterPart(PART)
+BUILDER:Register()

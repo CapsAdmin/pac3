@@ -1,40 +1,46 @@
-local PART = {}
+include("pac3/libraries/webaudio/urlogg.lua")
+include("pac3/libraries/webaudio/browser.lua")
+include("pac3/libraries/webaudio/stream.lua")
+include("pac3/libraries/webaudio/streams.lua")
 
+local BUILDER, PART = pac.PartTemplate("base_movable")
+
+PART.FriendlyName = "legacy ogg"
 PART.ClassName = "ogg"
-PART.NonPhysical = true
+
 PART.Group = "legacy"
 PART.Icon = 'icon16/music.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "URL", "")
-	pac.GetSet(PART, "Volume", 1, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, "Pitch", 1, {editor_sensitivity = 0.125})
-	pac.GetSet(PART, "Radius", 1500)
-	pac.GetSet(PART, "PlayCount", 1, {editor_onchange = function(self, num)
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("URL", "")
+	BUILDER:GetSet("Volume", 1, {editor_sensitivity = 0.25})
+	BUILDER:GetSet("Pitch", 1, {editor_sensitivity = 0.125})
+	BUILDER:GetSet("Radius", 1500)
+	BUILDER:GetSet("PlayCount", 1, {editor_onchange = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
 		return math.Round(math.max(num, 0))
 	end})
-	pac.GetSet(PART, "Doppler", false)
-	pac.GetSet(PART, "StopOnHide", false)
-	pac.GetSet(PART, "PauseOnHide", false)
-	pac.GetSet(PART, "Overlapping", false)
+	BUILDER:GetSet("Doppler", false)
+	BUILDER:GetSet("StopOnHide", false)
+	BUILDER:GetSet("PauseOnHide", false)
+	BUILDER:GetSet("Overlapping", false)
 
-	pac.GetSet(PART, "FilterType", 0, {editor_onchange = function(self, num)
+	BUILDER:GetSet("FilterType", 0, {editor_onchange = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
 		return math.Round(math.Clamp(num, 0, 2))
 	end})
-	pac.GetSet(PART, "FilterFraction", 1, {editor_sensitivity = 0.125, editor_clamp = {0, 1}})
+	BUILDER:GetSet("FilterFraction", 1, {editor_sensitivity = 0.125, editor_clamp = {0, 1}})
 
-	--pac.GetSet(PART, "Echo", false)
-	--pac.GetSet(PART, "EchoDelay", 0.5)
-	--pac.GetSet(PART, "EchoFeedback", 0.75)
+	--BUILDER:GetSet("Echo", false)
+	--BUILDER:GetSet("EchoDelay", 0.5)
+	--BUILDER:GetSet("EchoFeedback", 0.75)
 
-	pac.GetSet(PART, "PlayOnFootstep", false)
-	pac.GetSet(PART, "MinPitch", 0, {editor_sensitivity = 0.125})
-	pac.GetSet(PART, "MaxPitch", 0, {editor_sensitivity = 0.125})
-pac.EndStorableVars()
+	BUILDER:GetSet("PlayOnFootstep", false)
+	BUILDER:GetSet("MinPitch", 0, {editor_sensitivity = 0.125})
+	BUILDER:GetSet("MaxPitch", 0, {editor_sensitivity = 0.125})
+BUILDER:EndStorableVars()
 
 function PART:Initialize()
 	self.streams = {}
@@ -45,10 +51,10 @@ function PART:GetNiceName()
 	return str and str:match(".+/(.-)%.") or "no sound"
 end
 
-PART.stream_vars = {"Doppler", "Radius"}
+local stream_vars = {"Doppler", "Radius"}
 
 local BIND = function(propertyName, setterMethodName, check)
-	table.insert(PART.stream_vars, propertyName)
+	table.insert(stream_vars, propertyName)
 	setterMethodName = setterMethodName or "Set" .. propertyName
 	PART["Set" .. propertyName] = function(self, value)
 		if check then
@@ -80,7 +86,7 @@ BIND("FilterFraction")
 --BIND("EchoFeedback", nil, function(n) return math.Clamp(n, 0, 0.99) end)
 
 function PART:OnThink()
-	local owner = self:GetOwner(true)
+	local owner = self:GetRootOwner()
 
 	for url, stream in pairs(self.streams) do
 		if not stream:IsValid() then self.streams[url] = nil goto CONTINUE end
@@ -149,7 +155,7 @@ function PART:SetURL(URL)
 
 		stream:Enable3D(true)
 		stream.OnLoad = function()
-			for _, key in ipairs(PART.stream_vars) do
+			for _, key in ipairs(stream_vars) do
 				self["Set" .. key](self, self["Get" .. key](self))
 			end
 		end
@@ -244,4 +250,4 @@ function PART:SetDoppler(num)
 	self.Doppler = num
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

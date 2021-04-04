@@ -1,19 +1,18 @@
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "bodygroup"
-PART.NonPhysical = true
 PART.Groups = {'entity', 'model', 'modifiers'}
 PART.Icon = 'icon16/user.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "BodyGroupName", "", {
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("BodyGroupName", "", {
 		enums = function()
 			return pace.current_part:GetBodyGroupNameList()
 		end
 	})
-	pac.GetSet(PART, "ModelIndex", 0)
-pac.EndStorableVars()
+	BUILDER:GetSet("ModelIndex", 0)
+BUILDER:EndStorableVars()
 
 function PART:OnShow()
 	self:SetBodyGroupName(self:GetBodyGroupName())
@@ -131,4 +130,4 @@ function PART:GetBodyGroupNameList()
 	return out
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

@@ -1,29 +1,29 @@
 local Color = Color
 local Vector = Vector
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "halo"
-PART.NonPhysical = true
+
 PART.ThinkTime = 0
 PART.Group = {'effects', 'model'}
 PART.Icon = 'icon16/shading.png'
 
-pac.StartStorableVars()
-	pac.SetPropertyGroup()
-		pac.GetSet(PART, "BlurX", 2)
-		pac.GetSet(PART, "BlurY", 2)
-		pac.GetSet(PART, "Amount", 1)
-		pac.GetSet(PART, "IgnoreZ", false)
-		pac.GetSet(PART, "SphericalSize", 1)
-		pac.GetSet(PART, "Shape", 1)
-		pac.GetSet(PART, "AffectChildren", false)
+BUILDER:StartStorableVars()
+	BUILDER:SetPropertyGroup()
+		BUILDER:GetSet("BlurX", 2)
+		BUILDER:GetSet("BlurY", 2)
+		BUILDER:GetSet("Amount", 1)
+		BUILDER:GetSet("IgnoreZ", false)
+		BUILDER:GetSet("SphericalSize", 1)
+		BUILDER:GetSet("Shape", 1)
+		BUILDER:GetSet("AffectChildren", false)
 
-	pac.SetPropertyGroup(PART, "appearance")
-		pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
-		pac.GetSet(PART, "Passes", 1)
-		pac.GetSet(PART, "Additive", true) -- haaaa
-pac.EndStorableVars()
+	BUILDER:SetPropertyGroup("appearance")
+		BUILDER:GetSet("Color", Vector(255, 255, 255), {editor_panel = "color"})
+		BUILDER:GetSet("Passes", 1)
+		BUILDER:GetSet("Additive", true) -- haaaa
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	local h = pac.ColorToNames(self:GetColor())
@@ -40,21 +40,25 @@ function PART:SetPasses(n)
 end
 
 function PART:OnThink()
-	local parent = self:GetParent()
 
-	if parent.is_model_part and parent.Entity:IsValid() then
-		local tbl = {parent.Entity}
+	local tbl = {}
 
-		if self.AffectChildren then
-			for _, part in ipairs(parent:GetChildren()) do
-				if part.is_model_part and part.Entity:IsValid() and not part:IsHidden() then
-					table.insert(tbl, part.Entity)
-				end
+	if self.AffectChildren then
+		for _, part in ipairs(self:GetChildrenList()) do
+			local ent = part:GetOwner()
+			if ent:IsValid() and not part:IsHiddenCached() then
+				table.insert(tbl, ent)
 			end
 		end
-
-		pac.haloex.Add(tbl, Color(self.Color.r, self.Color.g, self.Color.b), self.BlurX, self.BlurY, self.Passes, self.Additive, self.IgnoreZ, self.Amount, self.SphericalSize, self.Shape)
+	else
+		local parent = self:GetParent()
+		local ent = self:GetOwner()
+		if ent:IsValid() then
+			tbl[1] = ent
+		end
 	end
+
+	pac.haloex.Add(tbl, Color(self.Color.r, self.Color.g, self.Color.b), self.BlurX, self.BlurY, self.Passes, self.Additive, self.IgnoreZ, self.Amount, self.SphericalSize, self.Shape)
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

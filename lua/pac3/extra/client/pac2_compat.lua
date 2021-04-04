@@ -257,7 +257,7 @@ function pacx.ConvertPAC2Config(data, name)
 						local part2 = pac.CreatePart("bone")
 							part2:SetName("model bone " .. part:GetName() .. " " .. key)
 							part2:SetParent(part)
-							part2:SetBone(part:GetEntity():GetBoneName(key))
+							part2:SetBone(part:GetOwner():GetBoneName(key))
 
 							part2:SetScale(bone.scale*1)
 							part2:SetAngles(bone.angles*1)
@@ -536,7 +536,7 @@ concommand.Add("pac_convert_pac2_outfits", function()
 		local owner_nick = file.Read("pac2_outfits/" .. uniqueid .. "/__owner.txt", "DATA")
 
 		if not owner_nick then
-			owner_nick = LocalPlayer():Nick()
+			owner_nick = pac.LocalPlayer:Nick()
 			pac.Message("garrysmod/data/pac2_outfits/" .. uniqueid .. "/__owner.txt does not exist (it contains the player nickname) defaulting to " .. owner_nick)
 		end
 

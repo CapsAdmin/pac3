@@ -7,7 +7,7 @@ local timeline = pace.timeline
 local secondDistance = 200 --100px per second on timeline
 
 do
-	local PART = {}
+	local BUILDER, PART = pac.PartTemplate("base_movable")
 
 	PART.ClassName = "timeline_dummy_bone"
 	PART.show_in_editor = false
@@ -17,20 +17,31 @@ do
 		"Bone",
 	}
 
-	function PART:GetBonePosition()
-		local owner = self:GetOwner()
-		local pos, ang
-
-		pos, ang = pac.GetBonePosAng(owner, self.Bone, true)
-		if owner:IsValid() then owner:InvalidateBoneCache() end
-
-		self.cached_pos = pos
-		self.cached_ang = ang
-
-		return pos, ang
+	function PART:GetParentOwner()
+		return self:GetOwner()
 	end
 
-	pac.RegisterPart(PART)
+	function PART:GetBonePosition()
+		local ent = self:GetOwner()
+
+		local index = self:GetModelBoneIndex(self.Bone)
+		if not index then return end
+
+		--ent:SetupBones()
+		local m = ent:GetBoneMatrix(index)
+
+		local lm = Matrix()
+		lm:SetTranslation(self.Position)
+		lm:SetAngles(self.Angles)
+
+		m = m * lm:GetInverse()
+
+		if not m then return end
+
+		return m:GetTranslation(), m:GetAngles()
+	end
+
+	BUILDER:Register()
 end
 
 function timeline.IsActive()
@@ -246,6 +257,7 @@ function timeline.Open(part)
 
 	if timeline.dummy_bone and timeline.dummy_bone:IsValid() then timeline.dummy_bone:Remove() end
 	timeline.dummy_bone = pac.CreatePart("timeline_dummy_bone", timeline.entity)
+	timeline.dummy_bone:SetOwner(timeline.entity)
 
 	pac.AddHook("pace_OnVariableChanged", "pac3_timeline", function(part, key, val)
 		if part == timeline.dummy_bone then

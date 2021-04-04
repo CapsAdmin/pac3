@@ -456,10 +456,6 @@ function PANEL:SetSelected(b)
 	end
 end
 
-function PANEL:Think()
-
-end
-
 function PANEL:DragHoverClick(HoverTime)
 	if not self.m_bExpanded then
 		self:SetExpanded(true)
@@ -553,4 +549,9 @@ end
 
 function PANEL:SetupCopy(copy)
 
+end
+
+if Entity(1):IsPlayer() and not PAC_RESTART then
+	pace.OpenEditor()
+	pace.RefreshTree(true)
 end

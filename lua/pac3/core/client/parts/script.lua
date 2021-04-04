@@ -1,14 +1,14 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "script"
-PART.NonPhysical = true
+
 PART.ThinkTime = 0
 PART.Group = 'advanced'
 PART.Icon = 'icon16/page_white_gear.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Code", "")
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Code", "")
+BUILDER:EndStorableVars()
 
 local blacklist = {
 	"do",
@@ -108,7 +108,7 @@ local function CreateDummies(parts)
 		EventHide = function(_, b)
 			for _, v in pairs(parts) do
 				if v:IsValid() then
-					v:SetEventHide(not not b, self)
+					v:SetEventTrigger(self, not not b)
 				end
 			end
 		end,
@@ -116,7 +116,7 @@ local function CreateDummies(parts)
 		EventShow = function(_, b)
 			for _, v in pairs(parts) do
 				if v:IsValid() then
-					v:SetEventHide(not b, self)
+					v:SetEventTrigger(self, not b)
 				end
 			end
 		end
@@ -157,11 +157,11 @@ local function CreateDummy(part, store, self)
 		end,
 
 		EventHide = function(_, b)
-			part:SetEventHide(not not b, self)
+			part:SetEventTrigger(self, not not b)
 		end,
 
 		EventShow = function(_, b)
-			part:SetEventHide(not b, self)
+			part:SetEventTrigger(self, not b)
 		end,
 
 		GetChildren = function()
@@ -197,7 +197,7 @@ local function CreateDummy(part, store, self)
 end
 
 local function get_entity(part)
-	local ent = part:GetOwner(true)
+	local ent = part:GetRootOwner()
 	return ent == pac.LocalPlayer:GetViewModel() and pac.LocalPlayer or ent
 end
 
@@ -221,7 +221,7 @@ function PART:CompileCode()
 	local extra_lib =
 	{
 		print = function(...)
-			if self:GetPlayerOwner() == LocalPlayer() then
+			if self:GetPlayerOwner() == pac.LocalPlayer then
 				print(...)
 
 				local str = ""
@@ -406,5 +406,5 @@ function PART:OnThink()
 end
 
 concommand.Add("pac_register_script_part", function()
-	pac.RegisterPart(PART)
+	BUILDER:Register()
 end)

@@ -1,16 +1,16 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "shake"
-PART.NonPhysical = true
+
 PART.Group = 'effects'
 PART.Icon = 'icon16/transmit.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Amplitude", 1)
-	pac.GetSet(PART, "Frequency", 1)
-	pac.GetSet(PART, "Duration", 0.5)
-	pac.GetSet(PART, "Radius", 100)
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Amplitude", 1)
+	BUILDER:GetSet("Frequency", 1)
+	BUILDER:GetSet("Duration", 0.5)
+	BUILDER:GetSet("Radius", 100)
+BUILDER:EndStorableVars()
 
 function PART:OnShow(from_rendering)
 	if not from_rendering then
@@ -18,4 +18,4 @@ function PART:OnShow(from_rendering)
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

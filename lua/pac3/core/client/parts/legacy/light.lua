@@ -1,16 +1,17 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
+PART.FriendlyName = "legacy light"
 PART.ClassName = "light"
 PART.Group = "legacy"
 
 PART.Icon = 'icon16/lightbulb.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Brightness", 1)
-	pac.GetSet(PART, "Size", 5, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, "Style", 0, {editor_clamp = {0, 16}})
-	pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Brightness", 1)
+	BUILDER:GetSet("Size", 5, {editor_sensitivity = 0.25})
+	BUILDER:GetSet("Style", 0, {editor_clamp = {0, 16}})
+	BUILDER:GetSet("Color", Vector(255, 255, 255), {editor_panel = "color"})
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	local hue = pac.ColorToNames(self:GetColor())
@@ -19,7 +20,8 @@ end
 
 local DynamicLight = DynamicLight
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
+	local pos = self:GetDrawPosition()
 	local light = self.light or DynamicLight(tonumber(self.UniqueID))
 
 	light.Pos = pos
@@ -48,4 +50,4 @@ function PART:OnHide()
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

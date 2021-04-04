@@ -1,17 +1,11 @@
 local pac = pac
-local class = pac.class
-
 local part_count = 0 -- unique id thing
 local pairs = pairs
 
-local function merge_storable(tbl, base)
-	if not base then return end
-	if base.StorableVars then
-		for k,v in pairs(base.StorableVars) do
-			tbl.StorableVars[k] = v
-		end
-		merge_storable(tbl, base.BaseClass)
-	end
+pac.registered_parts = {}
+
+local function on_error(msg)
+	ErrorNoHalt(debug.traceback(msg))
 end
 
 local function initialize(part, owner)
@@ -28,118 +22,107 @@ local function initialize(part, owner)
 	part:Initialize()
 end
 
-function pac.CreatePart(name, owner)
+function pac.CreatePart(name, owner, tbl, make_copy)
+	name = name or "base"
 	owner = owner or pac.LocalPlayer
 
-	if not name then
-		name = "base"
-	end
+	local META = pac.registered_parts[name]
 
-	local part = class.Create("part", name)
-
-	if not part then
+	if not META then
 		pac.Message("Tried to create unknown part: " .. name .. '!')
-		part = class.Create("part", "base")
+		META = pac.registered_parts.base
+		if not META then
+			return NULL
+		end
 	end
+
+	local part = setmetatable({}, META)
 
 	part.Id = part_count
 	part_count = part_count + 1
 
-	part.IsEnabled = pac.CreateClientConVarFast("pac_enable_" .. name, "1", true,"boolean")
-	part:SetUniqueID(tostring(util.CRC(os.time() + pac.RealTime + part_count)))
-
-	merge_storable(part, part.BaseClass)
-
-	if part.RemovedStorableVars then
-		for k in pairs(part.RemovedStorableVars) do
-			part.StorableVars[k] = nil
-		end
-	end
-
-	if part.NonPhysical then
-		pac.RemoveProperty(part, "Bone")
-		pac.RemoveProperty(part, "Position")
-		pac.RemoveProperty(part, "Angles")
-		pac.RemoveProperty(part, "AngleVelocity")
-		pac.RemoveProperty(part, "EyeAngles")
-		pac.RemoveProperty(part, "AimName")
-		pac.RemoveProperty(part, "AimPartName")
-		pac.RemoveProperty(part, "PositionOffset")
-		pac.RemoveProperty(part, "AngleOffset")
-		pac.RemoveProperty(part, "Translucent")
-		pac.RemoveProperty(part, "IgnoreZ")
-		pac.RemoveProperty(part, "BlendMode")
-		pac.RemoveProperty(part, "NoTextureFiltering")
-
-		if part.ClassName ~= "group" then
-			pac.RemoveProperty(part, "DrawOrder")
-		end
+	if not tbl or not tbl.self.UniqueID then
+		part:SetUniqueID(pac.Hash())
 	end
 
 	part.DefaultVars = {}
 
 	for key in pairs(part.StorableVars) do
-		part.DefaultVars[key] = pac.class.Copy(part[key])
+		if key == "UniqueID" then
+			part.DefaultVars[key] = ""
+		else
+			part.DefaultVars[key] = pac.CopyValue(part[key])
+		end
 	end
 
-	part.DefaultVars.UniqueID = "" -- uh
+	local ok, err = xpcall(initialize, on_error, part, owner)
 
-	local ok, err = xpcall(initialize, ErrorNoHalt, part, owner)
 	if not ok then
 		part:Remove()
 		if part.ClassName ~= "base" then
-			return pac.CreatePart("base", owner)
+			return pac.CreatePart("base", owner, tbl)
 		end
+	end
+
+	if tbl then
+		part:SetTable(tbl, make_copy)
+	end
+
+	if not META.GloballyEnabled then
+		part:SetEnabled(false)
 	end
 
 	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))
 
-	timer.Simple(0.1, function()
-		if part:IsValid() and part.show_in_editor ~= false and owner == pac.LocalPlayer then
-			pac.CallHook("OnPartCreated", part)
-		end
-	end)
-
 	return part
 end
 
-function pac.RegisterPart(META, name)
+local reloading = false
 
-	if META.Group == "experimental" then
-		-- something is up with the lua cache
-		-- file.Find("pac3/core/client/parts/*.lua", "LUA") will find the experimental parts as well
-		-- maybe because pac3 mounts the workshop version on server?
-		return
-	end
-
-	META.TypeBase = "base"
-	local _, name = class.Register(META, "part", name)
-
-	if pac.UpdatePartsWithMetatable then
-		pac.UpdatePartsWithMetatable(META, name)
-	end
-end
-
-function pac.GenerateNewUniqueID(part_data, base)
-	local part_data = table.Copy(part_data)
-	base = base or tostring(part_data)
-
-	local function fixpart(part)
-		for key, val in pairs(part.self) do
-			if val ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
-				part.self[key] = util.CRC(base .. val)
+function pac.RegisterPart(META)
+	do
+		local cvar = CreateClientConVar("pac_enable_" .. META.ClassName, "1", true)
+		cvars.AddChangeCallback("pac_enable_" .. META.ClassName, function(name, old, new)
+			local enable = tobool(new)
+			META.GloballyEnabled = enable
+			if enable then
+				pac.Message("enabling parts by class " .. META.ClassName)
+			else
+				pac.Message("disabling parts by class " .. META.ClassName)
 			end
-		end
-
-		for _, part in pairs(part.children) do
-			fixpart(part)
-		end
+			pac.EnablePartsByClass(META.ClassName, enable)
+		end)
+		META.GloballyEnabled = cvar:GetBool()
 	end
 
-	return part_data
+	META.__index = META
+	pac.registered_parts[META.ClassName] = META
+
+	if pac.UpdatePartsWithMetatable and _G.pac_ReloadParts then
+
+		if PAC_RESTART or not Entity(1):IsPlayer() then return end
+
+		if not reloading then
+			reloading = true
+			_G.pac_ReloadParts()
+			reloading = false
+		end
+
+		timer.Create("pac_reload", 0, 1, function()
+			for _, other_meta in pairs(pac.registered_parts) do
+				pac.UpdatePartsWithMetatable(other_meta)
+			end
+		end)
+	end
 end
 
 function pac.LoadParts()
+	print("loading all parts")
+
+	include("base_part.lua")
+	include("base_movable.lua")
+	include("base_drawable.lua")
+
 	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
 	for _, name in pairs(files) do
 		include("pac3/core/client/parts/" .. name)
@@ -152,8 +135,7 @@ function pac.LoadParts()
 end
 
 function pac.GetRegisteredParts()
-	return class.GetAll("part")
+	return pac.registered_parts
 end
 
 
-include("base_part.lua")

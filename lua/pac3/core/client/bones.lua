@@ -35,7 +35,7 @@ function pac.GetAllBones(ent)
 		ent:InvalidateBoneCache()
 		ent:SetupBones()
 
-		local count = (ent:GetBoneCount() or 0) - 1
+		local count = ent:GetBoneCount() or 0
 
 		for bone = 0, count do
 			local name = ent:GetBoneName(bone)
@@ -132,6 +132,18 @@ function pac.GetModelBones(ent)
 	end
 
 	return ent.pac_bones
+end
+
+function pac.ResetBoneCache(ent)
+	if not IsValid(ent) then return end
+
+	ent.pac_last_model = nil
+	ent.pac_bones = nil
+	ent.pac_cached_child_bones = nil
+
+	if ent.pac_holdtypes then
+		ent.pac_holdtypes = {}
+	end
 end
 
 local UP = Vector(0,0,1):Angle()
@@ -389,6 +401,17 @@ do -- bone manipulation for boneanimlib
 		hook.Call("PAC3ResetBones", nil, ent)
 	end
 
+	function pac.SetEntityBoneMatrix(ent, i, matrix)
+		pac.ManipulateBonePosition(ent, i, matrix:GetTranslation())
+		pac.ManipulateBoneAngles(ent, i, matrix:GetAngles())
+	end
+
+
+	function pac.ResetEntityBoneMatrix(ent, i)
+		pac.ManipulateBoneAngles(ent, i, angle_zero)
+		pac.ManipulateBonePosition(ent, i, vector_origin)
+	end
+
 	function pac.ManipulateBonePosition(ply, id, var)
 		ply.pac_boneanim = ply.pac_boneanim or {positions = {}, angles = {}}
 
@@ -410,11 +433,10 @@ do -- bone manipulation for boneanimlib
 	end
 end
 
-if LocalPlayer():IsValid() then
+if Entity(1):IsPlayer() and not PAC_RESTART then
 	timer.Simple(0, function()
 		for _, v in ipairs(ents.GetAll()) do
-			v.pac_bones = nil
-			v.pac_last_model = nil
+			pac.ResetBoneCache(v)
 		end
 	end)
 end

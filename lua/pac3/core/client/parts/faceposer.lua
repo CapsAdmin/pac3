@@ -1,15 +1,62 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "faceposer"
+
 PART.FriendlyName = "face poser"
-PART.NonPhysical = true
 PART.Icon = 'icon16/monkey.png'
 PART.Group = 'entity'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "FlexWeights", "", {editor_panel = "flex_weights"})
-	pac.GetSet(PART, "Scale", 1)
-pac.EndStorableVars()
+
+BUILDER:StartStorableVars()
+	:GetSet("Preset", "", {enums = function(part)
+		local ent = part:GetOwner()
+		if not ent:IsValid() then return end
+
+		local maps = {}
+
+		local toolgun = {}
+		for i = 0, 255 do
+			local name = ent:GetFlexName(i)
+			if name then
+				toolgun[name] = GetConVar("faceposer_flex" .. i):GetFloat()
+			end
+		end
+
+		maps.toolgun = util.TableToJSON({
+			scale = GetConVar("faceposer_scale"):GetFloat(),
+			weight_map = util.TableToJSON(toolgun),
+		})
+
+		for preset_name, map in pairs(presets.GetTable( "face" )) do
+			local preset = {}
+			for key, weight in pairs(map) do
+				local i = tonumber(key:match("faceposer_flex(%d+)"))
+				if i then
+					local name = ent:GetFlexName(i)
+					if name then
+						preset[name] = tonumber(weight)
+					end
+				end
+			end
+
+			maps[preset_name] = util.TableToJSON({
+				scale = tonumber(map.faceposer_scale),
+				weight_map = util.TableToJSON(preset),
+			})
+		end
+
+		return maps
+	end})
+	:GetSet("FlexWeights", "", {editor_panel = "flex_weights"})
+	:GetSet("Scale", 1)
+:EndStorableVars()
+
+function PART:SetPreset(json)
+	local preset = util.JSONToTable(json)
+	self:SetFlexWeights(preset.weight_map)
+	self:SetScale(preset.scale)
+	self.Preset = ""
+end
 
 function PART:GetNiceName()
 	return "face pose"
@@ -34,11 +81,13 @@ function PART:UpdateFlex()
 
 	for name, weight in pairs(self:GetWeightMap()) do
 		local id = ent:GetFlexIDByName(name)
-		ent:SetFlexWeight(id, ent:GetFlexWeight(id) + weight)
+		if id then
+			ent:SetFlexWeight(id, ent:GetFlexWeight(id) + weight)
+		end
 	end
 end
 
-function PART:OnBuildBonePositions()
+function PART:BuildBonePositions()
 	self:UpdateFlex()
 end
 
@@ -54,4 +103,4 @@ function PART:OnRemove()
 	self:UpdateFlex()
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

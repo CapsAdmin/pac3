@@ -1,4 +1,4 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.FriendlyName = "light"
 PART.ClassName = "light2"
@@ -6,17 +6,17 @@ PART.Group = 'effects'
 PART.Icon = 'icon16/lightbulb.png'
 PART.ProperColorRange = true
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "InnerAngle", 0)
-	pac.GetSet(PART, "OuterAngle", 0)
-	pac.GetSet(PART, "NoModel", false)
-	pac.GetSet(PART, "NoWorld", false)
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("InnerAngle", 0)
+	BUILDER:GetSet("OuterAngle", 0)
+	BUILDER:GetSet("NoModel", false)
+	BUILDER:GetSet("NoWorld", false)
 
-	pac.SetPropertyGroup(PART, "appearance")
-		pac.GetSet(PART, "Brightness", 8)
-		pac.GetSet(PART, "Size", 100, {editor_sensitivity = 0.25})
-		pac.GetSet(PART, "Color", Vector(1, 1, 1), {editor_panel = "color2"})
-pac.EndStorableVars()
+	BUILDER:SetPropertyGroup("appearance")
+		BUILDER:GetSet("Brightness", 8)
+		BUILDER:GetSet("Size", 100, {editor_sensitivity = 0.25})
+		BUILDER:GetSet("Color", Vector(1, 1, 1), {editor_panel = "color2"})
+BUILDER:EndStorableVars()
 
 function PART:GetLight()
 	if not self.light then
@@ -62,7 +62,8 @@ end
 
 local DynamicLight = DynamicLight
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
+	local pos, ang = self:GetDrawPosition()
 	self:GetLight().pos = pos
 	self:GetLight().dir = ang:Forward()
 end
@@ -108,4 +109,4 @@ function PART:OnHide()
 	self:RemoveLight()
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

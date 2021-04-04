@@ -5,53 +5,58 @@ local Vector = Vector
 local Angle = Angle
 local physenv_GetGravity = physenv.GetGravity
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "jiggle"
 PART.Group = 'model'
 PART.Icon = 'icon16/chart_line.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Strain", 0.5, {editor_onchange = function(self, num)
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Strain", 0.5, {editor_onchange = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
 		return math.Clamp(num, 0, 1) * 0.999
 	end})
-	pac.GetSet(PART, "Speed", 1)
-	pac.GetSet(PART, "ConstantVelocity", Vector(0, 0, 0))
-	pac.GetSet(PART, "LocalVelocity", true)
-	pac.GetSet(PART, "JiggleAngle", true)
-	pac.GetSet(PART, "JigglePosition", true)
+	BUILDER:GetSet("Speed", 1)
+	BUILDER:GetSet("ConstantVelocity", Vector(0, 0, 0))
+	BUILDER:GetSet("LocalVelocity", true)
+	BUILDER:GetSet("JiggleAngle", true)
+	BUILDER:GetSet("JigglePosition", true)
 
-	pac.GetSet(PART, "ConstrainPitch", false)
-	pac.GetSet(PART, "ConstrainYaw", false)
-	pac.GetSet(PART, "ConstrainRoll", false)
+	BUILDER:GetSet("ConstrainPitch", false)
+	BUILDER:GetSet("ConstrainYaw", false)
+	BUILDER:GetSet("ConstrainRoll", false)
 
-	pac.GetSet(PART, "ConstrainX", false)
-	pac.GetSet(PART, "ConstrainY", false)
-	pac.GetSet(PART, "ConstrainZ", false)
+	BUILDER:GetSet("ConstrainX", false)
+	BUILDER:GetSet("ConstrainY", false)
+	BUILDER:GetSet("ConstrainZ", false)
 
-	pac.GetSet(PART, "ConstrainSphere", 0)
-	pac.GetSet(PART, "StopRadius", 0)
-	pac.GetSet(PART, "Ground", false)
-	pac.GetSet(PART, "ResetOnHide", false)
-pac.EndStorableVars()
+	BUILDER:GetSet("ConstrainSphere", 0)
+	BUILDER:GetSet("StopRadius", 0)
+	BUILDER:GetSet("Ground", false)
+	BUILDER:GetSet("ResetOnHide", false)
+BUILDER:EndStorableVars()
 
 local math_AngleDifference = math.AngleDifference
 
 function PART:Reset()
-	local pos, ang = self:HasParent() and not self.Parent.NonPhysical and self.Parent:GetDrawPosition() or self:GetBonePosition()
+	local pos, ang = self:GetDrawPosition()
 
-	self.pos = pos
+	self.pos = pos or Vector()
 	self.vel = Vector()
 
-	self.ang = ang
+	self.ang = ang or Angle()
 	self.angvel = Angle()
 end
 
 function PART:Initialize()
-	self:Reset()
-	self.AllowSetupPositionFrameSkip = false
+	self.pos = Vector()
+	self.vel = Vector()
+
+	self.ang = Angle()
+	self.angvel = Angle()
+
+	self.first_time_reset = true
 end
 
 function PART:OnShow()
@@ -60,7 +65,24 @@ function PART:OnShow()
 	end
 end
 
-function PART:OnDraw(owner, pos, ang)
+local inf, ninf = math.huge, -math.huge
+
+local function check_num(num)
+	if num ~= inf and num ~= ninf and (num >= 0 or num <= 0) then
+		return num
+	end
+
+	return 0
+end
+
+function PART:OnDraw()
+	local pos, ang = self:GetDrawPosition()
+
+	if self.first_time_reset then
+		self:Reset()
+		self.first_time_reset = false
+	end
+
 	local delta = FrameTime()
 	local speed = self.Speed * delta
 
@@ -69,7 +91,8 @@ function PART:OnDraw(owner, pos, ang)
 
 	if self.StopRadius ~= 0 and self.pos and self.pos:Distance(pos) < self.StopRadius then
 		self.vel = Vector()
-	return end
+		return
+	end
 
 	if self.JigglePosition then
 		if not self.ConstrainX then
@@ -156,4 +179,14 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
-pac.RegisterPart(PART)
+function PART:OnThink()
+	self.pos.x = check_num(self.pos.x)
+	self.pos.y = check_num(self.pos.y)
+	self.pos.z = check_num(self.pos.z)
+
+	self.ang.p = check_num(self.ang.p)
+	self.ang.y = check_num(self.ang.y)
+	self.ang.r = check_num(self.ang.r)
+end
+
+BUILDER:Register()

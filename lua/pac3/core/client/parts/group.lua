@@ -1,16 +1,91 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "group"
-PART.NonPhysical = true
+
 PART.Icon = 'icon16/world.png'
 PART.Description = "right click to add parts"
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Duplicate", false)
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Duplicate", false)
+	BUILDER:GetSet("OwnerName", "self")
+BUILDER:EndStorableVars()
 
-function PART:GetNiceName()
-	return #self:GetChildrenList() .. " children"
+function PART:Initialize()
+	timer.Simple(0, function()
+		if self:IsValid() and not self:HasParent() and not self.Owner:IsValid() then
+			self:UpdateOwnerName()
+		end
+	end)
+end
+
+function PART:SetOwner(ent)
+	if not self:HasParent() then
+		if IsValid(self.last_owner) and self.last_owner ~= ent then
+			self:CallRecursive("OnHide", true)
+		end
+
+		self.last_owner = self.Owner
+	end
+
+	self.Owner = ent or NULL
+
+	if not self:HasParent() then
+		local owner = self:GetOwner()
+
+		if self.last_owner:IsValid() then
+			pac.UnhookEntityRender(self.last_owner, self)
+		end
+
+		if owner:IsValid() then
+			pac.HookEntityRender(owner, self)
+		end
+	end
+end
+
+function PART:UpdateOwnerName(ent, removed)
+	-- this is only supported by groups in root
+	if self:HasParent() then return end
+
+	local prev_owner = self:GetOwner()
+
+	if self.Duplicate then
+		ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self, function(e) return e.pac_duplicate_attach_uid ~= self.UniqueID end) or NULL
+
+		if ent ~= prev_owner and ent:IsValid() then
+
+			local tbl = self:ToTable(true)
+			tbl.self.OwnerName = "self"
+			pac.SetupENT(ent)
+			ent:SetShowPACPartsInEditor(false)
+			ent:AttachPACPart(tbl)
+			ent:CallOnRemove("pac_remove_outfit_" .. tbl.self.UniqueID, function()
+				ent:RemovePACPart(tbl)
+			end)
+
+			if self:GetPlayerOwner() == pac.LocalPlayer then
+				ent:SetPACDrawDistance(0)
+			end
+
+			ent.pac_duplicate_attach_uid = self.UniqueID
+		end
+	else
+		ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self) or NULL
+
+		if ent ~= prev_owner then
+			self:SetOwner(ent)
+		end
+	end
+end
+
+function PART:SetPlayerOwner(ply)
+	local prev = self.PlayerOwner
+
+	self.PlayerOwner = ply
+	self:SetUniqueID(self:GetUniqueID())
+
+	if prev:IsValid() then
+		self:UpdateOwnerName()
+	end
 end
 
 function PART:SetOwnerName(name)
@@ -20,15 +95,21 @@ function PART:SetOwnerName(name)
 
 	self.OwnerName = name
 
-	self:CheckOwner()
-end
-
-function PART:OnEvent(typ, ply, vehicle)
-	if typ == "vehicle_changed" then
-		if not self:HasParent() and self.OwnerName == "active vehicle" then
-			self:CheckOwner()
-		end
+	if self.Owner:IsValid() then
+		self:UpdateOwnerName()
 	end
 end
 
-pac.RegisterPart(PART)
+function PART:GetNiceName()
+	return #self:GetChildrenList() .. " children"
+end
+
+function PART:OnVehicleChanged(ply, vehicle)
+	if self:HasParent() then return end
+
+	if self.OwnerName == "active vehicle" then
+		self:UpdateOwnerName()
+	end
+end
+
+BUILDER:Register()

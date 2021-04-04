@@ -3,20 +3,21 @@ local render_PushCustomClipPlane = render.PushCustomClipPlane
 local LocalToWorld = LocalToWorld
 local IsEntity = IsEntity
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
+PART.FriendlyName = "legacy clip"
 PART.ClassName = "clip"
 PART.Group = "legacy"
 PART.Icon = 'icon16/cut.png'
 
-pac.SetPropertyGroup(PART, "generic")
-	pac.PropertyOrder(PART, "Name")
-	pac.PropertyOrder(PART, "Hide")
-	pac.PropertyOrder(PART, "ParentName")
+BUILDER:SetPropertyGroup("generic")
+	BUILDER:PropertyOrder("Name")
+	BUILDER:PropertyOrder("Hide")
+	BUILDER:PropertyOrder("ParentName")
 
-pac.RemoveProperty(PART, "IgnoreZ")
-pac.RemoveProperty(PART, "BlendMode")
-pac.RemoveProperty(PART, "NoTextureFiltering")
+BUILDER:RemoveProperty("IgnoreZ")
+BUILDER:RemoveProperty("BlendMode")
+BUILDER:RemoveProperty("NoTextureFiltering")
 
 
 function PART:OnParent(part)
@@ -25,8 +26,10 @@ function PART:OnParent(part)
 	part:AddModifier(self)
 
 	-- this is only really for halos..
-	if IsEntity(part.Entity) and part.Entity:IsValid() then
-		function part.Entity.pacDrawModel(ent)
+	local ent = self:GetOwner()
+
+	if ent:IsValid() then
+		function ent.pacDrawModel(ent)
 			self:PreOnDraw()
 			ent:DrawModel()
 			self:PostOnDraw()
@@ -61,4 +64,4 @@ do
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

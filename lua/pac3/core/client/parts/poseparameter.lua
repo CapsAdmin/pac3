@@ -1,15 +1,15 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "poseparameter"
-PART.NonPhysical = true
+
 PART.ThinkTime = 0
 PART.Group = {'modifiers', 'entity'}
 PART.Icon = 'icon16/disconnect.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "PoseParameter", "", {enums = function(part) return part:GetPoseParameterList() end})
-	pac.GetSet(PART, "Range", 0)
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("PoseParameter", "", {enums = function(part) return part:GetPoseParameterList() end})
+	BUILDER:GetSet("Range", 0)
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	return pac.PrettifyName(self:GetPoseParameter())
@@ -75,4 +75,4 @@ function PART:OnShow(ent)
 	self:UpdateParams()
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

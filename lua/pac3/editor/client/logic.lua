@@ -1,4 +1,4 @@
-pace.current_part = pac.NULL
+pace.current_part = NULL
 pace.properties = NULL
 pace.tree = NULL
 
@@ -52,8 +52,8 @@ end
 
 function pace.OnOpenEditor()
 	alreadyInCall = false
-	pace.SetViewPos(LocalPlayer():EyePos())
-	pace.SetViewAngles(LocalPlayer():EyeAngles())
+	pace.SetViewPos(pac.LocalPlayer:EyePos())
+	pace.SetViewAngles(pac.LocalPlayer:EyeAngles())
 	pace.EnableView(true)
 
 	if table.Count(pac.GetLocalParts()) == 0 then
@@ -80,7 +80,7 @@ end
 function pace.TrySelectPart()
 	local part = select(2, next(pac.GetLocalParts()))
 
-	local found = pac.GetPartFromUniqueID(pac.LocalPlayer:UniqueID(), pace.current_part_uid)
+	local found = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), pace.current_part_uid)
 
 	if found:IsValid() and found:GetPlayerOwner() == part:GetPlayerOwner() then
 		part = found
@@ -125,7 +125,7 @@ surface.CreateFont("pac_onuse_only_hint", {
 
 local function HUDPaint(ply, bind, isPressed)
 	if not pac_onuse_only:GetBool() then return end
-	local ply = LocalPlayer()
+	local ply = pac.LocalPlayer
 	local eyes, aim = ply:EyePos(), ply:GetAimVector()
 
 	local tr = util.TraceLine({

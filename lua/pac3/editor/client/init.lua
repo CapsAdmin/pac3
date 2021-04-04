@@ -3,6 +3,8 @@ include("autorun/pac_core_init.lua")
 pace = pace or {}
 pace.luadata = include("pac3/libraries/luadata.lua")
 
+include("friends_only.lua")
+
 include("language.lua")
 include("icons.lua")
 
@@ -23,7 +25,6 @@ include("asset_browser.lua")
 include("menu_bar.lua")
 
 include("mctrl.lua")
-include("screenvec.lua")
 
 include("panels.lua")
 include("tools.lua")
@@ -33,6 +34,7 @@ include("examples.lua")
 include("about.lua")
 include("animation_timeline.lua")
 include("render_scores.lua")
+include("wires.lua")
 
 
 do
@@ -90,7 +92,7 @@ local positionMode = CreateConVar("pac_editor_position_mode", "0", {FCVAR_ARCHIV
 function pace.OpenEditor()
 	pace.CloseEditor()
 
-	if hook.Run("PrePACEditorOpen", LocalPlayer()) == false then return end
+	if hook.Run("PrePACEditorOpen", pac.LocalPlayer) == false then return end
 
 	pac.Enable()
 
@@ -296,7 +298,7 @@ do
 
 	hook.Add("HUDPaint", "pac_in_editor", function()
 		for _, ply in ipairs(player.GetAll()) do
-			if ply ~= LocalPlayer() and ply:GetNW2Bool("pac_in_editor") then
+			if ply ~= pac.LocalPlayer and ply:GetNW2Bool("pac_in_editor") then
 
 				if ply.pac_editor_cam_pos then
 					if not IsValid(ply.pac_editor_camera) then
@@ -358,7 +360,9 @@ do
 		timer.Create("pac_in_editor", 0.25, 0, function()
 			if not pace.current_part:IsValid() then return end
 			local pos, ang = pace.GetViewPos(), pace.GetViewAngles()
-			local target_pos = (pace.mctrl.GetTargetPos()) or pace.current_part:GetDrawPosition() or vector_origin
+			local target_pos = pace.mctrl.GetWorldPosition()
+
+			if not target_pos then return end
 
 			if lastViewPos == pos and lastViewAngle == ang and lastTargetPos == target_pos then return end
 			lastViewPos, lastViewAngle, lastTargetPos = pos, ang, target_pos

@@ -19,7 +19,7 @@ end)
 
 local function make_copy(tbl, input)
 	if tbl.self.UniqueID then
-		tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. input)
+		tbl.self.UniqueID = pac.Hash(tbl.self.UniqueID .. input)
 	end
 
 	for key, val in pairs(tbl.children) do
@@ -94,7 +94,7 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 			end
 
 			data.owner = ply
-			data.uid = ply:UniqueID()
+			data.uid = pac.Hash(ply)
 			data.is_dupe = true
 
 			-- clientside sent variables cleanup for sanity
@@ -129,7 +129,7 @@ function pace.SubmitPart(data, filter)
 			else
 				if not data.is_dupe then
 					ent.pac_parts = ent.pac_parts or {}
-					ent.pac_parts[data.owner:UniqueID()] = data
+					ent.pac_parts[pac.Hash(data.owner)] = data
 
 					pace.dupe_ents[ent:EntIndex()] = {owner = data.owner, ent = ent}
 
@@ -186,7 +186,7 @@ function pace.SubmitPart(data, filter)
 			--[[for key, v in pairs(pace.dupe_ents) do
 				if v.owner:IsValid() and v.owner == data.owner then
 					if v.ent:IsValid() and v.ent.pac_parts then
-						local id = util.CRC(data.part .. v.ent:EntIndex())
+						local id = pac.Hash(data.part .. v.ent:EntIndex())
 						v.ent.pac_parts[id] = nil
 						duplicator.ClearEntityModifier(v.ent, "pac_config")
 						duplicator.StoreEntityModifier(v.ent, "pac_config", v.ent.pac_parts)
@@ -263,7 +263,7 @@ function pace.SubmitPart(data, filter)
 
 	if not data.server_only then
 		if data.owner:IsValid() then
-			data.player_uid = data.owner:UniqueID()
+			data.player_uid = pac.Hash(data.owner)
 		end
 
 		local players = filter or players
@@ -362,7 +362,7 @@ end
 
 function pace.HandleReceivedData(ply, data)
 	data.owner = ply
-	data.uid = ply:UniqueID()
+	data.uid = pac.Hash(ply)
 
 	if data.wear_filter then
 		if #data.wear_filter <= game.MaxPlayers() then
@@ -436,9 +436,9 @@ pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
 end)
 
 function pace.ClearOutfit(ply)
-	local uid = ply:UniqueID()
+	local uid = pac.Hash(ply)
 
-	pace.SubmitPart({part = "__ALL__", uid = ply:UniqueID(), owner = ply})
+	pace.SubmitPart({part = "__ALL__", uid = pac.Hash(ply), owner = ply})
 	pace.CallHook("RemoveOutfit", ply)
 end
 
@@ -461,7 +461,7 @@ function pace.RequestOutfits(ply)
 		for id, outfits in pairs(pace.Parts) do
 			local owner = player.GetByUniqueID(id) or NULL
 
-			if owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
+			if owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= pac.Hash(ply) then
 				for key, outfit in pairs(outfits) do
 					if not outfit.wear_filter or table.HasValue(outfit.wear_filter, ply:SteamID()) then
 						pace.SubmitPart(outfit, ply)

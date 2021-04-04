@@ -36,12 +36,12 @@ end
 
 
 pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
-
 	local class_translate = {
 		model = "model2",
 		material = "material_3d",
 		entity = "entity2",
-		bone = "bone2",
+		bone = "bone3",
+		bone2 = "bone3",
 		light = "light2",
 		trail = "trail2",
 		clip = "clip2",
@@ -81,24 +81,6 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 		material = material_translate,
 	}
 
-	local temp = {}
-
-	local function get_storable(classname)
-		if registered_parts[classname].StorableVars then
-			return registered_parts[classname].StorableVars
-		end
-
-		if temp[classname] then
-			return temp[classname]
-		end
-
-		local part = pac.CreatePart(classname, pac.LocalPlayer)
-		temp[classname] = part.StorableVars
-		part:Remove()
-
-		return temp[classname]
-	end
-
 	local saved = {}
 	for _, part in pairs(pac.GetLocalParts()) do
 		if not part:HasParent() then
@@ -122,7 +104,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 					table.insert(tbl.children, {
 						self = {
 							ClassName = "motion_blur",
-							UniqueID = util.CRC(tostring({})),
+							UniqueID = pac.Hash(),
 							BlurLength = tbl.self.BlurLength,
 							BlurSpacing = tbl.self.BlurSpacing,
 						},
@@ -136,7 +118,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 					table.insert(parent.children, {
 						self = {
 							ClassName = "weapon",
-							UniqueID = util.CRC(tostring({})),
+							UniqueID = pac.Hash(),
 							NoDraw = true
 						},
 						children = {},
@@ -144,7 +126,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 				end
 			end
 
-			for key in pairs(get_storable(old_classname)) do
+			for key in pairs(registered_parts[old_classname].StorableVars) do
 				local value = tbl.self[key]
 				if value == nil then
 					value = registered_parts[old_classname][key]
@@ -154,7 +136,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 					tbl.self[key] = nil
 					prop_translate[old_classname][key](tbl.self, value)
 					pac.Message("translated property: ", key, " = ", value, " to ", tbl.self[key])
-				elseif not get_storable(new_classname)[key] then
+				elseif not registered_parts[new_classname].StorableVars[key] then
 					local msg = tbl.self.ClassName .. "." .. key
 					if not done[msg] then
 						pac.Message(Color(255,100,100), "cannot translate property ", msg)
@@ -194,8 +176,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 	end
 
 	for _, tbl in ipairs(saved) do
-		local part = pac.CreatePart(tbl.self.ClassName, pac.LocalPlayer)
-		part:SetTable(tbl)
+		local part = pac.CreatePart(tbl.self.ClassName, pac.LocalPlayer, tbl)
 	end
 end)
 
@@ -203,7 +184,7 @@ end)
 pace.AddTool(L"fix origin", function(part, suboption)
 	if not part.GetEntity then return end
 
-	local ent = part:GetEntity()
+	local ent = part:GetOwner()
 
 	part:SetPositionOffset(-ent:OBBCenter() * part.Scale * part.Size)
 end)
@@ -305,7 +286,7 @@ end)
 
 pace.AddTool(L"show only with active weapon", function(part, suboption)
 	local event = part:CreatePart("event")
-	local owner = part:GetOwner(true)
+	local owner = part:GetRootOwner()
 	if not owner.GetActiveWeapon or not owner:GetActiveWeapon():IsValid() then
 		owner = pac.LocalPlayer
 	end
@@ -329,7 +310,7 @@ pace.AddTool(L"import editor tool from file...", function()
 				local toolstr = file.Read("pac3_editor/tools/" .. toolfile,"DATA")
 				ctoolstr = [[pace.AddTool(L"]] .. toolfile .. [[", function(part, suboption) ]] .. toolstr .. " end)"
 				RunStringEx(ctoolstr, "pac_editor_import_tool")
-				LocalPlayer():ConCommand("pac_editor") --close and reopen editor
+				pac.LocalPlayer:ConCommand("pac_editor") --close and reopen editor
 			else
 				Derma_Message("File " .. "garrysmod/data/pac3_editor/tools/" .. toolfile .. " not found.","Error: File Not Found","OK")
 			end
@@ -347,7 +328,7 @@ pace.AddTool(L"import editor tool from url...", function()
 				local toolstr = body
 				ctoolstr = [[pace.AddTool(L"]] .. toolname .. [[", function(part, suboption)]] .. toolstr .. " end)"
 				RunStringEx(ctoolstr, "pac_editor_import_tool")
-				LocalPlayer():ConCommand("pac_editor") --close and reopen editor
+				pac.LocalPlayer:ConCommand("pac_editor") --close and reopen editor
 			end
 
 			pac.HTTPGet(toolurl,ToolDLSuccess,function(err)
@@ -647,7 +628,7 @@ elseif (CoreStatus == "RunThisCode") {
 
 		out = out .. str_footer
 
-		LocalPlayer():ChatPrint("PAC --> Code saved in your Expression 2 folder under [expression2/pac/" .. part:GetName() .. ".txt" .. "].")
+		pac.LocalPlayer:ChatPrint("PAC --> Code saved in your Expression 2 folder under [expression2/pac/" .. part:GetName() .. ".txt" .. "].")
 
 		return out
 	end
@@ -688,8 +669,7 @@ pace.AddTool(L"record surrounding props to pac", function(part)
 end)
 
 pace.AddTool(L"populate with bones", function(part,suboption)
-	local target = part.GetEntity or part.GetOwner
-	local ent = target(part)
+	local ent = part:GetOwner()
 	local bones = pac.GetModelBones(ent)
 
 	for bone,tbl in pairs(bones) do
@@ -704,8 +684,7 @@ pace.AddTool(L"populate with bones", function(part,suboption)
 end)
 
 pace.AddTool(L"populate with dummy bones", function(part,suboption)
-	local target = part.GetEntity or part.GetOwner
-	local ent = target(part)
+	local ent = part:GetOwner()
 	local bones = pac.GetModelBones(ent)
 
 	for bone,tbl in pairs(bones) do
@@ -726,20 +705,20 @@ pace.AddTool(L"print part info", function(part)
 end)
 
 pace.AddTool(L"dump player submaterials", function()
-	local ply = LocalPlayer()
+	local ply = pac.LocalPlayer
 	for id,mat in pairs(ply:GetMaterials()) do
 		chat.AddText(("%d %s"):format(id,tostring(mat)))
 	end
 end)
 
 pace.AddTool(L"stop all custom animations", function()
-	pac.animations.StopAllEntityAnimations(LocalPlayer())
-	pac.animations.ResetEntityBoneMatrix(LocalPlayer())
+	pac.animations.StopAllEntityAnimations(pac.LocalPlayer)
+	pac.animations.ResetEntityBoneMatrix(pac.LocalPlayer)
 end)
 
 pace.AddTool(L"copy from faceposer tool", function(part, suboption)
 	local group = pac.CreatePart("group")
-	local ent = LocalPlayer()
+	local ent = pac.LocalPlayer
 
 	for i = 0, ent:GetFlexNum() - 1 do
 		local name = ent:GetFlexName(i)

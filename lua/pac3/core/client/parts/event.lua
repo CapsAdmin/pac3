@@ -1,16 +1,16 @@
 local LocalPlayer = LocalPlayer
 local FrameTime = FrameTime
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "event"
-PART.NonPhysical = true
+
 PART.ThinkTime = 0
 PART.AlwaysThink = true
 PART.Icon = 'icon16/clock.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Event", "", {enums = function(part)
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Event", "", {enums = function(part)
 		local output = {}
 
 		for i, event in pairs(part.Events) do
@@ -21,14 +21,14 @@ pac.StartStorableVars()
 
 		return output
 	end})
-	pac.GetSet(PART, "Operator", "find simple", {enums = function(part) local tbl = {} for i,v in ipairs(part.Operators) do tbl[v] = v end return tbl end})
-	pac.GetSet(PART, "Arguments", "", {editor_panel = "event_arguments"})
-	pac.GetSet(PART, "Invert", false)
-	pac.GetSet(PART, "RootOwner", true)
-	pac.GetSet(PART, "AffectChildrenOnly", false)
-	pac.GetSet(PART, "ZeroEyePitch", false)
-	pac.SetupPartName(PART, "TargetPart")
-pac.EndStorableVars()
+	BUILDER:GetSet("Operator", "find simple", {enums = function(part) local tbl = {} for i,v in ipairs(part.Operators) do tbl[v] = v end return tbl end})
+	BUILDER:GetSet("Arguments", "", {editor_panel = "event_arguments"})
+	BUILDER:GetSet("Invert", false)
+	BUILDER:GetSet("RootOwner", true)
+	BUILDER:GetSet("AffectChildrenOnly", false)
+	BUILDER:GetSet("ZeroEyePitch", false)
+	BUILDER:GetSetPart("TargetPart")
+BUILDER:EndStorableVars()
 
 local function convert_angles(self, ang)
 	if self.ZeroEyePitch then
@@ -39,17 +39,29 @@ local function convert_angles(self, ang)
 end
 
 local function calc_velocity(part)
-	local diff = part.cached_pos - (part.last_pos or Vector(0, 0, 0))
-	part.last_pos = part.cached_pos
+	if not part.GetWorldPosition then
+		return vector_origin
+	end
+
+	local diff = part:GetWorldPosition() - (part.last_pos or Vector(0, 0, 0))
+	part.last_pos = part:GetWorldPosition()
 
 	part.last_vel_smooth = part.last_vel_smooth or Vector(0, 0, 0)
-	part.last_vel_smooth = part.last_vel_smooth + (diff - part.last_vel_smooth) * FrameTime() * 4
+	part.last_vel_smooth = part.last_vel_smooth + (part:GetWorldPosition() - part.last_vel_smooth) * FrameTime() * 4
 
 	return part.last_vel_smooth
 end
 
 local function try_viewmodel(ent)
-	return ent == pac.LocalPlayer:GetViewModel() and pac.LocalPlayer or ent
+	return ent == pac.LocalViewModel and pac.LocalPlayer or ent
+end
+
+local function get_owner(self)
+	if self.RootOwner then
+		return try_viewmodel(self:GetRootOwner())
+	else
+		return try_viewmodel(self:GetOwner())
+	end
 end
 
 local movetypes = {}
@@ -124,16 +136,9 @@ PART.OldEvents = {
 			self.time = self.time or time
 			self.timerx_reset = reset_on_hide
 
-			-- limitation - we can not "not to think" the timer
-			-- when our thinking depends on whenever we control our parent!
-			if self.AffectChildrenOnly then
-				local hidden, event_hidden = self:IsHidden()
-
-				if hidden and (not event_hidden or not self:IsEventHidden(self, true)) then
-					return false
-				end
+			if self.AffectChildrenOnly and self:IsHiddenBySomethingElse() then
+				return false
 			end
-
 			self.number = time - self.time
 
 			return self:NumberOperator(self.number, seconds)
@@ -149,16 +154,9 @@ PART.OldEvents = {
 			self.time = self.time or time
 			self.timerx_reset = reset_on_hide
 
-			-- limitation - we can not "not to think" the timer
-			-- when our thinking depends on whenever we control our parent!
-			if self.AffectChildrenOnly then
-				local hidden, event_hidden = self:IsHidden()
-
-				if hidden and (not event_hidden or not self:IsEventHidden(self, true)) then
-					return false
-				end
+			if self.AffectChildrenOnly and self:IsHiddenBySomethingElse() then
+				return false
 			end
-
 			return self:NumberOperator(time - self.time, seconds)
 		end,
 	},
@@ -175,7 +173,7 @@ PART.OldEvents = {
 		callback = function(self, ent, fov)
 			ent = try_viewmodel(ent)
 
-			if ent:IsValid() and ent.GetFOV then
+			if ent.GetFOV then
 				return self:NumberOperator(ent:GetFOV(), fov)
 			end
 
@@ -188,7 +186,7 @@ PART.OldEvents = {
 
 			ent = try_viewmodel(ent)
 
-			if ent:IsValid() and ent.Health then
+			if ent.Health then
 
 				local dmg = self.pac_lastdamage or 0
 
@@ -261,7 +259,7 @@ PART.OldEvents = {
 		callback = function(self, ent, find)
 			if ent.GetEyeTrace then
 				ent = ent:GetEyeTrace().Entity
-				if ent:IsValid() and self:StringOperator(ent:GetClass(), find) then
+				if self:StringOperator(ent:GetClass(), find) then
 					return true
 				end
 			end
@@ -272,7 +270,7 @@ PART.OldEvents = {
 		arguments = {{health = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
-			if ent:IsValid() and ent.Health then
+			if ent.Health then
 				return self:NumberOperator(ent:Health(), num)
 			end
 
@@ -283,7 +281,7 @@ PART.OldEvents = {
 		arguments = {{health = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
-			if ent:IsValid() and ent.GetMaxHealth then
+			if ent.GetMaxHealth then
 				return self:NumberOperator(ent:GetMaxHealth(), num)
 			end
 
@@ -293,7 +291,7 @@ PART.OldEvents = {
 	owner_alive = {
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
-			if ent:IsValid() and ent.Alive then
+			if ent.Alive then
 				return ent:Alive()
 			end
 			return 0
@@ -303,7 +301,7 @@ PART.OldEvents = {
 		arguments = {{armor = "number"}},
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
-			if ent:IsValid() and ent.Armor then
+			if ent.Armor then
 				return self:NumberOperator(ent:Armor(), num)
 			end
 
@@ -316,11 +314,7 @@ PART.OldEvents = {
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
 
-			if ent:IsValid() then
 				return self:NumberOperator(ent.pac_model_scale and ent.pac_model_scale.x or (ent.GetModelScale and ent:GetModelScale()) or 1, num)
-			end
-
-			return 1
 		end,
 	},
 	owner_scale_y = {
@@ -328,11 +322,7 @@ PART.OldEvents = {
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
 
-			if ent:IsValid() then
 				return self:NumberOperator(ent.pac_model_scale and ent.pac_model_scale.y or (ent.GetModelScale and ent:GetModelScale()) or 1, num)
-			end
-
-			return 1
 		end,
 	},
 	owner_scale_z = {
@@ -340,11 +330,7 @@ PART.OldEvents = {
 		callback = function(self, ent, num)
 			ent = try_viewmodel(ent)
 
-			if ent:IsValid() then
 				return self:NumberOperator(ent.pac_model_scale and ent.pac_model_scale.z or (ent.GetModelScale and ent:GetModelScale()) or 1, num)
-			end
-
-			return 1
 		end,
 	},
 
@@ -425,13 +411,13 @@ PART.OldEvents = {
 		callback = function(self, ent, compare, distance, npcs_and_players_only)
 			local parent = self:GetParentEx()
 
-			if parent:IsValid() then
+			if parent:IsValid() and parent.GetWorldPosition then
 				distance = distance or 1
 				compare = compare or 0
 
 				local res = util.TraceLine({
-					start = parent.cached_pos,
-					endpos = parent.cached_pos + parent.cached_ang:Forward() * distance,
+					start = parent:GetWorldPosition(),
+					endpos = parent:GetWorldPosition() + parent:GetWorldAngles():Forward() * distance,
 					filter = ent,
 				})
 
@@ -546,11 +532,8 @@ PART.OldEvents = {
 	total_ammo = {
 		arguments = {{ammo_id = "string"}, {amount = "number"}},
 		callback = function(self, ent, ammo_id, amount)
-			ent = try_viewmodel(ent)
-
-			ammo_id = tonumber(ammo_id) or ammo_id:lower()
-
-			if ent:IsValid() and ent.GetAmmoCount then
+			if ent.GetAmmoCount then
+				ammo_id = tonumber(ammo_id) or ammo_id:lower()
 				if ammo_id == "primary" then
 					local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 					return self:NumberOperator(wep:IsValid() and ent:GetAmmoCount(wep:GetPrimaryAmmoType()) or 0, amount)
@@ -667,8 +650,15 @@ PART.OldEvents = {
 
 	sequence_name = {
 		arguments = {{find = "string"}},
+		nice = function(self)
+			return self.sequence_name
+		end,
 		callback = function(self, ent, find)
-			return self:StringOperator(ent:GetSequenceName(ent:GetSequence()), find)
+			ent = get_owner(self)
+
+			self.sequence_name = ent:GetSequenceName(ent:GetSequence())
+
+			return self:StringOperator(self.sequence_name, find)
 		end,
 	},
 
@@ -689,10 +679,13 @@ PART.OldEvents = {
 
 	animation_event = {
 		arguments = {{find = "string"}, {time = "number"}},
+		nice = function(self)
+			return self.anim_name or ""
+		end,
 		callback = function(self, ent, find, time)
 			time = time or 0.1
 
-			ent = try_viewmodel(ent)
+			ent = get_owner(self)
 
 			local data = ent.pac_anim_event
 			local b = false
@@ -700,6 +693,12 @@ PART.OldEvents = {
 			if data and (self:StringOperator(data.name, find) and (time == 0 or data.time + time > pac.RealTime)) then
 				data.reset = false
 				b = true
+			end
+
+			if b then
+				self.anim_name = name
+			else
+				self.anim_name = nil
 			end
 
 			return b
@@ -757,17 +756,17 @@ PART.OldEvents = {
 			local events = ply.pac_command_events
 
 			if events then
+				local found = nil
 				for _, data in pairs(events) do
 					if self:StringOperator(data.name, find) then
 						if data.on > 0 then
-							return data.on == 1
-						end
-
-						if data.time + time > pac.RealTime then
-							return true
+							found = data.on == 1
+						elseif data.time + time > pac.RealTime then
+							found = true
 						end
 					end
 				end
+				return found
 			end
 		end,
 	},
@@ -788,7 +787,7 @@ PART.OldEvents = {
 					end
 				end
 			else
-				local owner = self:GetOwner(true)
+				local owner = self:GetRootOwner()
 				if owner:IsValid() then
 					local data = owner.pac_say_event
 
@@ -804,13 +803,11 @@ PART.OldEvents = {
 	owner_velocity_length = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
 			local parent = self:GetParentEx()
-
 			owner = try_viewmodel(owner)
 
-			if parent:IsValid() and owner:IsValid() then
-				return self:NumberOperator(parent:GetOwner(self.RootOwner):GetVelocity():Length(), speed)
+			if parent:IsValid() and ent:IsValid() then
+				return self:NumberOperator(get_owner(parent):GetVelocity():Length(), speed)
 			end
 
 			return 0
@@ -819,9 +816,7 @@ PART.OldEvents = {
 	owner_velocity_forward = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
+			ent = try_viewmodel(ent)
 
 			if owner:IsValid() then
 				return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Forward():Dot(owner:GetVelocity()), speed)
@@ -833,9 +828,7 @@ PART.OldEvents = {
 	owner_velocity_right = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
+			ent = try_viewmodel(ent)
 
 			if owner:IsValid() then
 				return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Right():Dot(owner:GetVelocity()), speed)
@@ -847,9 +840,7 @@ PART.OldEvents = {
 	owner_velocity_up = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
+			ent = try_viewmodel(ent)
 
 			if owner:IsValid() then
 				return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Up():Dot(owner:GetVelocity()), speed)
@@ -861,9 +852,7 @@ PART.OldEvents = {
 	owner_velocity_world_forward = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
+			ent = try_viewmodel(ent)
 
 			if owner:IsValid() then
 				return self:NumberOperator(owner:GetVelocity()[1], speed)
@@ -875,9 +864,7 @@ PART.OldEvents = {
 	owner_velocity_world_right = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
+			ent = try_viewmodel(ent)
 
 			if owner:IsValid() then
 				return self:NumberOperator(owner:GetVelocity()[2], speed)
@@ -889,9 +876,7 @@ PART.OldEvents = {
 	owner_velocity_world_up = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
+			ent = try_viewmodel(ent)
 
 			if owner:IsValid() then
 				return self:NumberOperator(owner:GetVelocity()[3], speed)
@@ -927,8 +912,8 @@ PART.OldEvents = {
 				parent = parent:GetParent()
 			end
 
-			if parent:IsValid() then
-				return self:NumberOperator(parent.cached_ang:Forward():Dot(calc_velocity(parent)), speed)
+			if parent:IsValid() and parent.GetWorldAngles then
+				return self:NumberOperator(parent:GetWorldAngles():Forward():Dot(calc_velocity(parent)), speed)
 			end
 
 			return 0
@@ -943,8 +928,8 @@ PART.OldEvents = {
 				parent = parent:GetParent()
 			end
 
-			if parent:IsValid() then
-				return self:NumberOperator(parent.cached_ang:Right():Dot(calc_velocity(parent)), speed)
+			if parent:IsValid() and parent.GetWorldAngles then
+				return self:NumberOperator(parent:GetWorldAngles():Right():Dot(calc_velocity(parent)), speed)
 			end
 
 			return 0
@@ -959,8 +944,8 @@ PART.OldEvents = {
 				parent = parent:GetParent()
 			end
 
-			if parent:IsValid() then
-				return self:NumberOperator(parent.cached_ang:Up():Dot(calc_velocity(parent)), speed)
+			if parent:IsValid() and parent.GetWorldAngles then
+				return self:NumberOperator(parent:GetWorldAngles():Up():Dot(calc_velocity(parent)), speed)
 			end
 
 			return 0
@@ -1045,7 +1030,7 @@ PART.OldEvents = {
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
 
-			local owner = self:GetOwner(true)
+			local owner = self:GetRootOwner()
 
 			if owner:IsValid() then
 				local ang = owner:EyeAngles()
@@ -1061,7 +1046,7 @@ PART.OldEvents = {
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
 
-			local owner = self:GetOwner(true)
+			local owner = self:GetRootOwner()
 
 			if owner:IsValid() then
 				local ang = owner:EyeAngles()
@@ -1447,43 +1432,54 @@ function PART:GetNiceName()
 
 	if not PART.Events[event_name] then return "unknown event" end
 
-	return PART.Events[event_name]:GetNiceName(self, self:GetOwner(self.RootOwner))
+	return PART.Events[event_name]:GetNiceName(self, get_owner(self))
 end
 
-function PART:OnRemove()
-	if self.AffectChildrenOnly then
-		for _, child in ipairs(self:GetChildren()) do
-			child:RemoveEventHide(self)
-		end
-	else
-		local parent = self:GetParent()
+local function is_hidden_by_something_else(part, ignored_part)
+	if part.active_events_ref_count > 0 and not part.active_events[ignored_part] then
+		return true
+	end
 
-		if parent:IsValid() then
-			parent:RemoveEventHide(self)
+	return part.Hide
+end
+
+function PART:IsHiddenBySomethingElse(only_self)
+	if is_hidden_by_something_else(self, self) then
+		return true
+	end
+
+	if only_self then return false end
+
+	for _, parent in ipairs(self:GetParentList()) do
+		if is_hidden_by_something_else(parent, self) then
+			return true
 		end
 	end
+
+	return false
 end
 
-local function should_hide(self, ent, eventObject)
+local function should_trigger(self, ent, eventObject)
 	if not eventObject:IsAvaliable(self) then
 		return true
 	end
 
 	local b = false
-
-	if self.hidden or self.event_hidden then
-		b = self.Invert
+	if eventObject.ParseArguments then
+		b = eventObject:Think(self, ent, eventObject:ParseArguments(self)) or false
 	else
-		if eventObject.ParseArguments then
-			b = eventObject:Think(self, ent, eventObject:ParseArguments(self)) or false
-		else
-			b = eventObject:Think(self, ent, self:GetParsedArgumentsForObject(eventObject)) or false
-		end
-
-		if self.Invert then
-			b = not b
-		end
+		b = eventObject:Think(self, ent, self:GetParsedArgumentsForObject(eventObject)) or false
 	end
+
+	if self.Invert then
+		b = not b
+	end
+
+	if is_hidden_by_something_else(self, self) then
+		b = self.Invert
+	end
+
+	self.is_active = b
 
 	return b
 end
@@ -1491,13 +1487,13 @@ end
 PART.last_event_triggered = false
 
 function PART:OnThink()
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = get_owner(self)
 	if not ent:IsValid() then return end
 
-	local data = self.Events[self.Event]
+	local data = PART.Events[self.Event]
 	if not data then return end
 
-	self:TriggerEvent(should_hide(self, ent, data))
+	self:TriggerEvent(should_trigger(self, ent, data))
 
 	if pace and pace.IsActive() and self.Name == "" then
 		if self.pace_properties and self.pace_properties["Name"] and self.pace_properties["Name"]:IsValid() then
@@ -1508,43 +1504,21 @@ function PART:OnThink()
 end
 
 function PART:TriggerEvent(b)
-	-- this is just used for the editor..
-	self.event_triggered = b
+	self.event_triggered = b -- event_triggered is just used for the editor
 
 	if self.AffectChildrenOnly then
-
 		for _, child in ipairs(self:GetChildren()) do
-			child:SetEventHide(b, self)
+			child:SetEventTrigger(self, b)
 		end
-
-
-		if self.last_event_triggered ~= self.event_triggered then
-			if not self.suppress_event_think then
-				self.suppress_event_think = true
-				self:CallRecursive("CalcShowHide")
-				self.suppress_event_think = nil
-			end
-			self.last_event_triggered = self.event_triggered
-		end
-	elseif self:HasParent() then
+	else
 		local parent = self:GetParent()
-
-		parent:SetEventHide(b, self)
-		parent:CallRecursive("FlushFromRenderingState")
-
-		if self.last_event_triggered ~= self.event_triggered then
-			if not self.suppress_event_think then
-				self.suppress_event_think = true
-				parent:CallRecursive("CalcShowHide")
-				self.suppress_event_think = nil
-			end
-			self.last_event_triggered = self.event_triggered
+		if parent:IsValid() then
+			parent:SetEventTrigger(self, b)
 		end
 	end
 end
 
-PART.Operators =
-{
+PART.Operators = {
 	"equal",
 	"not equal",
 	"above",
@@ -1707,41 +1681,35 @@ function PART:OnHide()
 end
 
 function PART:OnShow()
-	self:OnThink() -- Update hide status for chilren!
-	-- This fixes the very rare issue where stuff getting un-hidden in complex event tree for 1 game frame
-	-- before getting hidden again by events inside tree
-
 	if self.timerx_reset then
 		self.time = nil
 		self.number = 0
 	end
 end
 
-function PART:OnEvent(typ, ent)
-	if typ == "animation_event" then
-		if self.Event == "animation_event" then
-			self:GetParent():CallRecursive("Think")
-		end
+function PART:OnAnimationEvent(ent)
+	if self.Event == "animation_event" then
+		self:GetParent():CallRecursive("Think")
 	end
+end
 
-	if typ == "fire_bullets" then
-		if self.Event == "fire_bullets" then
-			self:GetParent():CallRecursive("Think")
-		end
+function PART:OnFireBullets()
+	if self.Event == "fire_bullets" then
+		self:GetParent():CallRecursive("Think")
 	end
+end
 
-	if typ == "emit_sound" then
-		if self.Event == "emit_sound" then
-			self:GetParent():CallRecursive("Think")
+function PART:OnEmitSound()
+	if self.Event == "emit_sound" then
+		self:GetParent():CallRecursive("Think")
 
-			if ent.pac_emit_sound.mute_me then
-				return false
-			end
+		if ent.pac_emit_sound.mute_me then
+			return false
 		end
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()
 
 do
 	local enums = {}
@@ -1757,7 +1725,7 @@ do
 		if ply.pac_has_parts then
 			ply.pac_anim_event = {name = enums[event], time = pac.RealTime, reset = true}
 
-			pac.CallPartEvent("animation_event")
+			pac.CallRecursiveOnAllParts("OnAnimationEvent")
 		end
 	end)
 end
@@ -1771,7 +1739,7 @@ pac.AddHook("EntityEmitSound", "emit_sound", function(data)
 
 	ent.pac_emit_sound = {name = data.SoundName, time = pac.RealTime, reset = true, mute_me = ent.pac_emit_sound and ent.pac_emit_sound.mute_me or false}
 
-	if pac.CallPartEvent("emit_sound", ent) == false then
+	if pac.CallRecursiveOnAllParts("OnEmitSound", ent) == false then
 		return false
 	end
 
@@ -1784,7 +1752,7 @@ pac.AddHook("EntityFireBullets", "firebullets", function(ent, data)
 	if not ent:IsValid() or not ent.pac_has_parts then return end
 	ent.pac_fire_bullets = {name = data.AmmoType, time = pac.RealTime, reset = true}
 
-	pac.CallPartEvent("fire_bullets")
+	pac.CallRecursiveOnAllParts("OnFireBullets")
 
 	if ent.pac_hide_bullets then
 		return false

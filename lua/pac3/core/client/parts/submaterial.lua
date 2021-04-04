@@ -1,17 +1,25 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "submaterial"
-PART.NonPhysical = true
+
 PART.Icon = 'icon16/picture_edit.png'
 PART.Group = {'model', 'entity'}
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Material", "")
-	pac.GetSet(PART, "SubMaterialId", 1, {
+
+local function get_owner(self)
+	if self.RootOwner then
+		return self:GetRootOwner()
+	end
+	return self:GetOwner()
+end
+
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Material", "")
+	BUILDER:GetSet("SubMaterialId", 1, {
 		editor_onchange = function(self, num)
 			num = tonumber(num) or 0
 
-			local ent = pace.current_part:GetOwner(pace.current_part.RootOwner)
+			local ent = get_owner(pace.current_part)
 
 			local maxnum = 16
 
@@ -26,13 +34,13 @@ pac.StartStorableVars()
 			return tbl
 		end,
 	})
-	pac.GetSet(PART, "RootOwner", false)
-pac.EndStorableVars()
+	BUILDER:GetSet("RootOwner", false)
+BUILDER:EndStorableVars()
 
 function PART:GetSubMaterialIdList()
 	local out = {}
 
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = get_owner(self)
 
 	if ent:IsValid() and ent.GetMaterials and #ent:GetMaterials() > 0 then
 		out = ent:GetMaterials()
@@ -43,7 +51,7 @@ end
 
 function PART:UpdateSubMaterialId(id, material)
 	id = tonumber(id) or self.SubMaterialId
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = get_owner(self)
 
 	if ent ~= self.sub_last_owner then
 		if IsValid(self.sub_last_owner) then
@@ -103,7 +111,7 @@ function PART:FixMaterial()
 	params["$vertexcolor"] = 1
 	params["$additive"] = 1
 
-	self.Materialm = pac.CreateMaterial('pac_submat_fix_' .. util.CRC(mat:GetName()), "VertexLitGeneric", params)
+	self.Materialm = pac.CreateMaterial('pac_submat_fix_' .. pac.Hash(mat:GetName()), "VertexLitGeneric", params)
 end
 
 function PART:UrlTextHandler()
@@ -117,7 +125,7 @@ function PART:Handleurltex(mat, tex)
 	if not mat or mat:IsError() or tex:IsError() then self.Materialm = nil return end
 
 	self.Materialm = mat
-	self:CallEvent("material_changed")
+	self:CallRecursive("OnMaterialChanged")
 
 	self:UpdateSubMaterialId()
 end
@@ -131,7 +139,7 @@ function PART:SetMaterial(var)
 		else
 			self.Materialm = pac.Material(var, self)
 			self:FixMaterial()
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		end
 	end
 
@@ -140,7 +148,7 @@ function PART:SetMaterial(var)
 end
 
 function PART:OnShow()
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = get_owner(self)
 
 	if ent:IsValid() then
 		self:UpdateSubMaterialId()
@@ -167,4 +175,4 @@ function PART:Clear()
 	self:UpdateSubMaterialId(nil, "")
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

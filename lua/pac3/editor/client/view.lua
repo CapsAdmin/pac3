@@ -13,7 +13,7 @@ acsfnc("Angles", Angle(0,0,0))
 acsfnc("FOV", 75)
 
 function pace.GetViewEntity()
-	return pace.ViewEntity:IsValid() and pace.ViewEntity or LocalPlayer()
+	return pace.ViewEntity:IsValid() and pace.ViewEntity or pac.LocalPlayer
 end
 
 function pace.ResetView()
@@ -156,24 +156,24 @@ local function CalcDrag()
 	local origin
 	local part = pace.current_part or NULL
 
-	if IsValid(part) then
-		local owner = part:GetOwner(true)
-		if owner:IsValid() then
-			origin = owner:GetPos()
-			if owner == pac.WorldEntity then
-				if part:HasChildren() then
-					for key, child in ipairs(part:GetChildren()) do
-						if not child.NonPhysical then
-							part = child
-							break
-						end
-					end
+	if not part:IsValid() then return end
+
+	local owner = part:GetRootOwner()
+	if not owner:IsValid() then return end
+
+	origin = owner:GetPos()
+	if owner == pac.WorldEntity then
+		if part:HasChildren() then
+			for key, child in ipairs(part:GetChildren()) do
+				if child.GetDrawPosition then
+					part = child
+					break
 				end
 			end
 		end
 	end
 
-	if not part.NonPhysical then
+	if part.GetDrawPosition then
 		origin = part:GetDrawPosition()
 	end
 
@@ -384,7 +384,7 @@ function pace.GetTPose()
 end
 
 function pace.SetViewPart(part, reset_campos)
-	pace.SetViewEntity(part:GetOwner(true))
+	pace.SetViewEntity(part:GetRootOwner())
 
 	if reset_campos then
 		pace.ResetView()

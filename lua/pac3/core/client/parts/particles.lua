@@ -4,70 +4,70 @@ local FrameTime = FrameTime
 local angle_origin = Angle(0,0,0)
 local WorldToLocal = WorldToLocal
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "particles"
 PART.Group = 'effects'
 PART.Icon = 'icon16/water.png'
 
-pac.StartStorableVars()
-	pac.SetPropertyGroup(PART, "generic")
-		pac.PropertyOrder(PART, "Name")
-		pac.PropertyOrder(PART, "Hide")
-		pac.PropertyOrder(PART, "ParentName")
-		pac.GetSet(PART, "Follow", false)
-		pac.GetSet(PART, "Additive", false)
-		pac.GetSet(PART, "FireDelay", 0.2)
-		pac.GetSet(PART, "NumberParticles", 1)
-		pac.GetSet(PART, "PositionSpread", 0)
-		pac.GetSet(PART, "PositionSpread2", Vector(0,0,0))
-		pac.GetSet(PART, "DieTime", 3)
-		pac.GetSet(PART, "StartSize", 2)
-		pac.GetSet(PART, "EndSize", 20)
-		pac.GetSet(PART, "StartLength", 0)
-		pac.GetSet(PART, "EndLength", 0)
-		pac.GetSet(PART, "ParticleAngle", Angle(0,0,0))
-		pac.GetSet(PART, "AddFrametimeLife", false)
-	pac.SetPropertyGroup(PART, "stick")
-		pac.GetSet(PART, "AlignToSurface", true)
-		pac.GetSet(PART, "StickToSurface", true)
-		pac.GetSet(PART, "StickLifetime", 2)
-		pac.GetSet(PART, "StickStartSize", 20)
-		pac.GetSet(PART, "StickEndSize", 0)
-		pac.GetSet(PART, "StickStartAlpha", 255)
-		pac.GetSet(PART, "StickEndAlpha", 0)
-	pac.SetPropertyGroup(PART, "appearance")
-		pac.GetSet(PART, "Material", "effects/slime1")
-		pac.GetSet(PART, "StartAlpha", 255)
-		pac.GetSet(PART, "EndAlpha", 0)
-		pac.GetSet(PART, "Translucent", true)
-		pac.GetSet(PART, "Color2", Vector(255, 255, 255), {editor_panel = "color"})
-		pac.GetSet(PART, "Color1", Vector(255, 255, 255), {editor_panel = "color"})
-		pac.GetSet(PART, "RandomColor", false)
-		pac.GetSet(PART, "Lighting", true)
-		pac.GetSet(PART, "3D", false)
-		pac.GetSet(PART, "DoubleSided", true)
-		pac.GetSet(PART, "DrawManual", false)
-	pac.SetPropertyGroup(PART, "rotation")
-		pac.GetSet(PART, "RandomRollSpeed", 0)
-		pac.GetSet(PART, "RollDelta", 0)
-		pac.GetSet(PART, "ParticleAngleVelocity", Vector(50, 50, 50))
-	pac.SetPropertyGroup(PART, "orientation")
-	pac.SetPropertyGroup(PART, "movement")
-		pac.GetSet(PART, "Velocity", 250)
-		pac.GetSet(PART, "Spread", 0.1)
-		pac.GetSet(PART, "AirResistance", 5)
-		pac.GetSet(PART, "Bounce", 5)
-		pac.GetSet(PART, "Gravity", Vector(0,0, -50))
-		pac.GetSet(PART, "Collide", true)
-		pac.GetSet(PART, "Sliding", true)
-		--pac.GetSet(PART, "AddVelocityFromOwner", false)
-		pac.GetSet(PART, "OwnerVelocityMultiplier", 0)
+BUILDER:StartStorableVars()
+	BUILDER:SetPropertyGroup("generic")
+		BUILDER:PropertyOrder("Name")
+		BUILDER:PropertyOrder("Hide")
+		BUILDER:PropertyOrder("ParentName")
+		BUILDER:GetSet("Follow", false)
+		BUILDER:GetSet("Additive", false)
+		BUILDER:GetSet("FireDelay", 0.2)
+		BUILDER:GetSet("NumberParticles", 1)
+		BUILDER:GetSet("PositionSpread", 0)
+		BUILDER:GetSet("PositionSpread2", Vector(0,0,0))
+		BUILDER:GetSet("DieTime", 3)
+		BUILDER:GetSet("StartSize", 2)
+		BUILDER:GetSet("EndSize", 20)
+		BUILDER:GetSet("StartLength", 0)
+		BUILDER:GetSet("EndLength", 0)
+		BUILDER:GetSet("ParticleAngle", Angle(0,0,0))
+		BUILDER:GetSet("AddFrametimeLife", false)
+	BUILDER:SetPropertyGroup("stick")
+		BUILDER:GetSet("AlignToSurface", true)
+		BUILDER:GetSet("StickToSurface", true)
+		BUILDER:GetSet("StickLifetime", 2)
+		BUILDER:GetSet("StickStartSize", 20)
+		BUILDER:GetSet("StickEndSize", 0)
+		BUILDER:GetSet("StickStartAlpha", 255)
+		BUILDER:GetSet("StickEndAlpha", 0)
+	BUILDER:SetPropertyGroup("appearance")
+		BUILDER:GetSet("Material", "effects/slime1")
+		BUILDER:GetSet("StartAlpha", 255)
+		BUILDER:GetSet("EndAlpha", 0)
+		BUILDER:GetSet("Translucent", true)
+		BUILDER:GetSet("Color2", Vector(255, 255, 255), {editor_panel = "color"})
+		BUILDER:GetSet("Color1", Vector(255, 255, 255), {editor_panel = "color"})
+		BUILDER:GetSet("RandomColor", false)
+		BUILDER:GetSet("Lighting", true)
+		BUILDER:GetSet("3D", false)
+		BUILDER:GetSet("DoubleSided", true)
+		BUILDER:GetSet("DrawManual", false)
+	BUILDER:SetPropertyGroup("rotation")
+		BUILDER:GetSet("RandomRollSpeed", 0)
+		BUILDER:GetSet("RollDelta", 0)
+		BUILDER:GetSet("ParticleAngleVelocity", Vector(50, 50, 50))
+	BUILDER:SetPropertyGroup("orientation")
+	BUILDER:SetPropertyGroup("movement")
+		BUILDER:GetSet("Velocity", 250)
+		BUILDER:GetSet("Spread", 0.1)
+		BUILDER:GetSet("AirResistance", 5)
+		BUILDER:GetSet("Bounce", 5)
+		BUILDER:GetSet("Gravity", Vector(0,0, -50))
+		BUILDER:GetSet("Collide", true)
+		BUILDER:GetSet("Sliding", true)
+		--BUILDER:GetSet("AddVelocityFromOwner", false)
+		BUILDER:GetSet("OwnerVelocityMultiplier", 0)
 
 
 
 
-pac.EndStorableVars()
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	return pac.PrettifyName(("/".. self:GetMaterial()):match(".+/(.+)")) or "error"
@@ -116,22 +116,20 @@ local function StickCallback(particle, hitpos, normal)
 	particle:SetEndAlpha(particle.StickEndAlpha or 0)
 end
 
-function PART:CreateEmitter()
-	self.NextShot = pac.RealTime
-	self.Created = pac.RealTime + 0.1
-
-	if self.last_3d ~= self["3D"] then
-		self.emitter = ParticleEmitter(self.cached_pos, self["3D"])
-		self.last_3d = self["3D"]
+function PART:GetEmitter()
+	if not self.emitter then
+		self.NextShot = 0
+		self.Created = pac.RealTime + 0.1
+		self.emitter = ParticleEmitter(vector_origin, self:Get3D())
 	end
+
+	return self.emitter
 end
 
 function PART:SetDrawManual(b)
 	self.DrawManual = b
-	self.emitter:SetNoDraw(b)
+	self:GetEmitter():SetNoDraw(b)
 end
-
-PART.Initialize = PART.CreateEmitter
 
 function PART:SetNumberParticles(num)
 	self.NumberParticles = math.Clamp(num, 0, 100)
@@ -139,28 +137,38 @@ end
 
 function PART:Set3D(b)
 	self["3D"] = b
-	self:CreateEmitter()
+	self.emitter = nil
 end
 
-function PART:OnDraw(owner, pos, ang)
-	if self:IsHidden() then return end
+function PART:OnShow(from_rendering)
+	if not from_rendering then
+		self.NextShot = 0
+		local pos, ang = self:GetDrawPosition()
+		self:EmitParticles(self.Follow and vector_origin or pos, self.Follow and angle_origin or ang, ang)
+	end
+end
 
-	self.emitter:SetPos(pos)
+function PART:OnDraw()
+
+	local pos, ang = self:GetDrawPosition()
+	local emitter = self:GetEmitter()
+
+	emitter:SetPos(pos)
 	if self.DrawManual or self.IgnoreZ or self.Follow or self.BlendMode ~= "" then
 
 		if not self.nodraw then
-			self.emitter:SetNoDraw(true)
+			emitter:SetNoDraw(true)
 			self.nodraw = true
 		end
 
 		if self.Follow then
 			cam.Start3D(WorldToLocal(EyePos(), EyeAngles(), pos, ang))
 			if self.IgnoreZ then cam.IgnoreZ(true) end
-			self.emitter:Draw()
+			emitter:Draw()
 			if self.IgnoreZ then cam.IgnoreZ(false) end
 			cam.End3D()
 		else
-			self.emitter:Draw()
+			emitter:Draw()
 		end
 	else
 		if self.nodraw then
@@ -184,13 +192,13 @@ function PART:SetMaterial(var)
 		mat:SetFloat("$alpha", 0.999)
 		mat:SetInt("$spriterendermode", self.Additive and 5 or 1)
 		self.Materialm = mat
-		self:CallEvent("material_changed")
+		self:CallRecursive("OnMaterialChanged")
 	end, "Sprite") then
 		if var == "" then
 			self.Materialm = nil
 		else
 			self.Materialm = pac.Material(var, self)
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		end
 	end
 
@@ -198,7 +206,7 @@ function PART:SetMaterial(var)
 end
 
 function PART:EmitParticles(pos, ang, real_ang)
-	local emt = self.emitter
+	local emt = self:GetEmitter()
 	if not emt then return end
 
 	if self.NextShot < pac.RealTime then
@@ -271,7 +279,7 @@ function PART:EmitParticles(pos, ang, real_ang)
 				end
 
 				if self.OwnerVelocityMultiplier ~= 0 then
-					local owner = self:GetOwner(true)
+					local owner = self:GetRootOwner()
 					if owner:IsValid() then
 						vec = vec + (owner:GetVelocity() * self.OwnerVelocityMultiplier)
 					end
@@ -335,4 +343,4 @@ function PART:EmitParticles(pos, ang, real_ang)
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

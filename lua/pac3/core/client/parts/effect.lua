@@ -1,27 +1,30 @@
 local CurTime = CurTime
 local ParticleEffect = ParticleEffect
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "effect"
 PART.Groups = {'effects', 'model', 'entity'}
 PART.Icon = 'icon16/wand.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Effect", "default", {enums = function() return pac.particle_list end})
-	pac.GetSet(PART, "Loop", true)
-	pac.GetSet(PART, "Follow", true)
-	pac.GetSet(PART, "Rate", 1, {editor_sensitivity = 0.1})
-	pac.GetSet(PART, "UseParticleTracer", false)
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Effect", "default", {enums = function() return pac.particle_list end})
+	BUILDER:GetSet("Loop", true)
+	BUILDER:GetSet("Follow", true)
+	BUILDER:GetSet("Rate", 1, {editor_sensitivity = 0.1})
+	BUILDER:GetSet("UseParticleTracer", false)
 
-	pac.SetupPartName(PART, "PointA")
-	pac.SetupPartName(PART, "PointB")
-	pac.SetupPartName(PART, "PointC")
-	pac.SetupPartName(PART, "PointD")
+	BUILDER:GetSetPart("PointA")
+	BUILDER:GetSetPart("PointB")
+	BUILDER:GetSetPart("PointC")
+	BUILDER:GetSetPart("PointD")
 
-pac.EndStorableVars()
+BUILDER:EndStorableVars()
 
-pac.RemoveProperty(PART, "Translucent")
+BUILDER:RemoveProperty("Translucent")
+PART.Translucent = false -- otherwise OnDraw won't be called
+
+local BaseClass_GetOwner = PART.GetOwner
 
 function PART:GetNiceName()
 	return pac.PrettifyName(self:GetEffect())
@@ -52,16 +55,6 @@ function PART:Initialize()
 
 		pac.particle_list = found
 	end
-end
-
-function PART:GetOwner()
-	local parent = self:GetParent()
-
-	if parent:IsValid() and parent.is_model_part and parent.Entity:IsValid() then
-		return parent.Entity
-	end
-
-	return self.BaseClass.GetOwner(self)
 end
 
 PART.last_spew = 0
@@ -105,21 +98,21 @@ pac.AddHook("pac_EffectPrecached", "pac_Effects", function(name)
 	if alreadyServer[name] then return end
 	alreadyServer[name] = true
 	pac.dprint("effect %q precached!", name)
-	pac.CallPartEvent("effect_precached", name)
+	pac.CallRecursiveOnAllParts("OnEffectPrecached", name)
 end)
 
-function PART:OnEvent(typ, name)
-	if typ == "effect_precached" then
-		if self.Effect == name then
-			self.Ready = true
-			self.waitingForServer = false
-		end
+function PART:OnEffectPrecached(name)
+	if self.Effect == name then
+		self.Ready = true
+		self.waitingForServer = false
 	end
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
 	if not self.Ready then
-		if not self.waitingForServer then self:SetEffect(self.Effect) end
+		if not self.waitingForServer then
+			self:SetEffect(self.Effect)
+		end
 		return
 	end
 
@@ -128,6 +121,8 @@ function PART:OnDraw(owner, pos, ang)
 	if ent:IsValid() and self.Loop then
 		local time = CurTime()
 		if self.last_spew < time then
+			local pos, ang = self:GetDrawPosition()
+
 			ent:StopParticles()
 			ent:StopParticleEmission()
 			self:Emit(pos, ang)
@@ -217,4 +212,4 @@ function PART:Emit(pos, ang)
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

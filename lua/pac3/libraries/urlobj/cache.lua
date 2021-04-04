@@ -1,6 +1,8 @@
+local crypto = include("pac3/libraries/urlobj/crypto.lua")
+
 local CACHE = {}
 
-function pac.CreateCache (cacheId)
+local function CreateCache(cacheId)
 	local cache = {}
 	setmetatable (cache, { __index = CACHE })
 
@@ -29,13 +31,13 @@ function CACHE:AddItem (itemId, data)
 
 	-- Header
 	local compressedItemId = util.Compress (itemId)
-	local entryItemId = pac.crypto.EncryptString (compressedItemId, key)
+	local entryItemId = crypto.EncryptString (compressedItemId, key)
 	f:WriteLong (#entryItemId)
 	f:Write (entryItemId, #entryItemId)
 
 	-- Data
 	local compressedData = util.Compress (data)
-	data = pac.crypto.EncryptString (compressedData, key)
+	data = crypto.EncryptString (compressedData, key)
 	f:WriteLong (#data)
 	f:Write (data, #data)
 
@@ -72,7 +74,7 @@ function CACHE:GetItem (itemId)
 
 	-- Header
 	local entryItemIdLength = f:ReadLong ()
-	local entryItemId = pac.crypto.DecryptString (f:Read (entryItemIdLength), key)
+	local entryItemId = crypto.DecryptString (f:Read (entryItemIdLength), key)
 	entryItemId = util.Decompress (entryItemId)
 
 	if itemId ~= entryItemId then
@@ -86,16 +88,18 @@ function CACHE:GetItem (itemId)
 
 	f:Close ()
 
-	data = pac.crypto.DecryptString (data, key)
+	data = crypto.DecryptString (data, key)
 	data = util.Decompress (data)
 
 	return data
 end
 
 function CACHE:GetItemIdEncryptionKey (itemId)
-	return pac.crypto.GenerateKey (string.reverse (itemId))
+	return crypto.GenerateKey (string.reverse (itemId))
 end
 
 function CACHE:GetItemIdHash(itemId)
 	return string.format ("%08x", tonumber (util.CRC (itemId)))
 end
+
+return CreateCache

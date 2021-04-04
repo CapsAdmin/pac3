@@ -1,12 +1,12 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "flex"
-PART.NonPhysical = true
+
 PART.Icon = 'icon16/emoticon_smile.png'
 PART.Group = 'entity'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Flex", "", {
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Flex", "", {
 		enums = function(part)
 			local tbl = {}
 
@@ -18,17 +18,36 @@ pac.StartStorableVars()
 		end
 	})
 
-	pac.GetSet(PART, "Weight", 0)
-	pac.GetSet(PART, "RootOwner", false, { description = "Target the local player instead of the part's parent" })
-	pac.GetSet(PART, "DefaultOnHide", true)
-pac.EndStorableVars()
+	BUILDER:GetSet("Weight", 0)
+	BUILDER:GetSet("RootOwner", false, { description = "Target the local player instead of the part's parent" })
+	BUILDER:GetSet("DefaultOnHide", true)
+BUILDER:EndStorableVars()
+
+local function get_owner(self)
+	if self.RootOwner then
+		return self:GetRootOwner()
+	end
+
+	return self:GetOwner()
+end
 
 function PART:GetNiceName()
 	return self:GetFlex() ~= "" and self:GetFlex() or "no flex"
 end
 
 function PART:GetFlexMap()
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = get_owner(self)
+
+	if self.last_owner ~= ent then
+		self.last_owner = ent
+		self.cached_flex_map = nil
+	end
+
+	if self.cached_flex_map then
+		return self.cached_flex_map
+	end
+
+	local out = {}
 
 	if self.last_owner ~= ent then
 		self.last_owner = ent
@@ -54,7 +73,7 @@ function PART:GetFlexMap()
 end
 
 function PART:UpdateFlex()
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = get_owner(self)
 	if not ent:IsValid() or not ent.GetFlexNum or ent:GetFlexNum() == 0 then return end
 
 	local name = self.Flex:lower()
@@ -71,7 +90,7 @@ function PART:UpdateFlex()
 	ent:SetFlexWeight(id, ent:GetFlexWeight(id) + weight)
 end
 
-function PART:OnBuildBonePositions()
+function PART:BuildBonePositions()
 	self:UpdateFlex()
 end
 
@@ -101,4 +120,4 @@ function PART:OnRemove()
 	self:UpdateFlex()
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

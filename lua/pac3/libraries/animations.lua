@@ -250,16 +250,14 @@ local function ProcessAnimations(ent)
 	end
 
 	for iBoneID, mMatrix in pairs(tBuffer) do
-		pac.ManipulateBonePosition(ent, iBoneID, mMatrix:GetTranslation())
-		pac.ManipulateBoneAngles(ent, iBoneID, mMatrix:GetAngles())
+		pac.SetEntityBoneMatrix(ent, iBoneID, mMatrix)
 	end
 end
 
 
 function animations.ResetEntityBoneMatrix(ent)
 	for i=0, ent:GetBoneCount() - 1 do
-		pac.ManipulateBoneAngles(ent, i, angle_zero)
-		pac.ManipulateBonePosition(ent, i, vector_origin)
+		pac.ResetEntityBoneMatrix(ent, i)
 	end
 end
 

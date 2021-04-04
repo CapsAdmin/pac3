@@ -10,35 +10,36 @@ local render_EndBeam = render.EndBeam
 local render_AddBeam = render.AddBeam
 local render_SetMaterial = render.SetMaterial
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
+PART.FriendlyName = "legacy trail"
 PART.ClassName = "trail"
 PART.Group = "legacy"
 
 PART.Icon = 'icon16/arrow_undo.png'
 
-pac.StartStorableVars()
-	pac.SetPropertyGroup(PART, "generic")
-		pac.PropertyOrder(PART, "Name")
-		pac.PropertyOrder(PART, "Hide")
-		pac.PropertyOrder(PART, "ParentName")
-		pac.GetSet(PART, "TrailPath", "trails/laser", {editor_panel = "material"})
-		pac.GetSet(PART, "StartSize", 3)
-		pac.GetSet(PART, "EndSize", 0)
-		pac.GetSet(PART, "Length", 100)
-		pac.GetSet(PART, "Spacing", 1)
+BUILDER:StartStorableVars()
+	BUILDER:SetPropertyGroup("generic")
+		BUILDER:PropertyOrder("Name")
+		BUILDER:PropertyOrder("Hide")
+		BUILDER:PropertyOrder("ParentName")
+		BUILDER:GetSet("TrailPath", "trails/laser", {editor_panel = "material"})
+		BUILDER:GetSet("StartSize", 3)
+		BUILDER:GetSet("EndSize", 0)
+		BUILDER:GetSet("Length", 100)
+		BUILDER:GetSet("Spacing", 1)
 
-	pac.SetPropertyGroup(PART, "orientation")
-	pac.SetPropertyGroup(PART, "appearance")
-		pac.GetSet(PART, "StartColor", Vector(255, 255, 255), {editor_panel = "color"})
-		pac.GetSet(PART, "EndColor", Vector(255, 255, 255), {editor_panel = "color"})
-		pac.GetSet(PART, "StartAlpha", 1)
-		pac.GetSet(PART, "EndAlpha", 1)
-		pac.PropertyOrder(PART, "Translucent")
-		pac.GetSet(PART, "Stretch", false)
-	pac.SetPropertyGroup(PART, "other")
-		pac.PropertyOrder(PART, "DrawOrder")
-pac.EndStorableVars()
+	BUILDER:SetPropertyGroup("orientation")
+	BUILDER:SetPropertyGroup("appearance")
+		BUILDER:GetSet("StartColor", Vector(255, 255, 255), {editor_panel = "color"})
+		BUILDER:GetSet("EndColor", Vector(255, 255, 255), {editor_panel = "color"})
+		BUILDER:GetSet("StartAlpha", 1)
+		BUILDER:GetSet("EndAlpha", 1)
+		BUILDER:PropertyOrder("Translucent")
+		BUILDER:GetSet("Stretch", false)
+	BUILDER:SetPropertyGroup("other")
+		BUILDER:PropertyOrder("DrawOrder")
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	local str = pac.PrettifyName("/" .. self:GetTrailPath())
@@ -102,10 +103,10 @@ function PART:SetMaterial(var)
 	if not pac.Handleurltex(self, var) then
 		if type(var) == "string" then
 			self.Materialm = pac.Material(var, self)
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		elseif type(var) == "IMaterial" then
 			self.Materialm = var
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		end
 	end
 
@@ -127,7 +128,7 @@ end
 
 local temp_color = Color(255, 255, 255)
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
 	local mat = self.MaterialOverride or self.Materialm
 
 	if mat and self.StartColorC and self.EndColorC then
@@ -135,6 +136,8 @@ function PART:OnDraw(owner, pos, ang)
 
 		local len = tonumber(self.Length)
 		local spc = tonumber(self.Spacing)
+
+		local pos, ang = self:GetDrawPosition()
 
 		if spc == 0 or self.LastAdd < pac.RealTime then
 			table_insert(self.points, pos)
@@ -170,4 +173,4 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()
