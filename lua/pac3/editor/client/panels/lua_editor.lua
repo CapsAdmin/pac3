@@ -603,11 +603,10 @@ function PANEL:HasSelection()
 end
 
 function PANEL:Selection()
-	return
-		{
-			{self.Caret[1], self.Caret[2]},
-			{self.Start[1], self.Start[2]},
-		}
+	return {
+		{self.Caret[1], self.Caret[2]},
+		{self.Start[1], self.Start[2]},
+	}
 end
 
 function PANEL:MakeSelection(selection)
@@ -1145,12 +1144,10 @@ function PANEL:_OnKeyCodeTyped(code)
 			if (self:HasSelection()) then
 				self:SetSelection()
 			else
-				local buffer = self:GetArea(
-					{
-						{self.Caret[1], self.Caret[2] + 4},
-						{self.Caret[1], 1},
-					}
-				)
+				local buffer = self:GetArea({
+					{self.Caret[1], self.Caret[2] + 4},
+					{self.Caret[1], 1},
+				})
 
 				if
 					(

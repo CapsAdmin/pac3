@@ -1024,5 +1024,5 @@ do -- get set and editor vars
 
 -- disable pop/push flashlight modes (used for stability in 2D context)
 function pac.FlashlightDisable(b)
-	pac.flashlight_disabled = b
-end
+		pac.flashlight_disabled = b
+	end
