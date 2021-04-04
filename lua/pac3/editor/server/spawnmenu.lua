@@ -8,7 +8,7 @@ function pace.SpawnPart(ply, model)
 	if model then
 		if IsValid(ply) and ply:GetNWBool("in pac3 editor") then
 			net.Start("pac_spawn_part")
-				net.WriteString(model)
+			net.WriteString(model)
 			net.Send(ply)
 			return false
 		end

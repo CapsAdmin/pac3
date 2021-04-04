@@ -19,8 +19,8 @@ local function ADD(PART, name, default, ...)
 				ply.pac_movement = ply.pac_movement or table.Copy(pac_movement_default)
 				ply.pac_movement[name] = val
 				net.Start("pac_modify_movement")
-					net.WriteString(name)
-					net.WriteType(val)
+				net.WriteString(name)
+				net.WriteType(val)
 				net.SendToServer()
 			end
 		end
@@ -99,10 +99,10 @@ function PART:OnHide()
 
 	if ent == pac.LocalPlayer then
 		net.Start("pac_modify_movement")
-			net.WriteString("disable")
-	net.SendToServer()
-	ent.pac_movement = nil
-end
+		net.WriteString("disable")
+		net.SendToServer()
+		ent.pac_movement = nil
+	end
 end
 
 pac.RegisterPart(PART)

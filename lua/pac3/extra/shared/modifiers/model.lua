@@ -14,8 +14,8 @@ end)
 function pacx.SetModelOnServer(ent, path)
 	path = path or ""
 	net.Start("pacx_setmodel")
-		net.WriteEntity(ent)
-		net.WriteString(path)
+	net.WriteEntity(ent)
+	net.WriteString(path)
 	net.SendToServer()
 end
 

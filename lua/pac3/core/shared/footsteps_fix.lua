@@ -4,10 +4,10 @@ if game.SinglePlayer() then
 
 		hook.Add("PlayerFootstep", "footstep_fix", function(ply, pos, _, snd, vol)
 			net.Start("pac_footstep")
-				net.WriteEntity(ply)
-				net.WriteVector(pos)
-				net.WriteString(snd)
-				net.WriteFloat(vol)
+			net.WriteEntity(ply)
+			net.WriteVector(pos)
+			net.WriteString(snd)
+			net.WriteFloat(vol)
 			net.Broadcast()
 		end)
 	end

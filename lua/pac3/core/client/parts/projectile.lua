@@ -154,9 +154,9 @@ function PART:Shoot(pos, ang)
 		end
 
 		net.Start("pac_projectile")
-			net.WriteVector(pos)
-			net.WriteAngle(ang)
-			net.WriteTable(tbl)
+		net.WriteVector(pos)
+		net.WriteAngle(ang)
+		net.WriteTable(tbl)
 		net.SendToServer()
 	else
 		self.projectiles = self.projectiles or {}

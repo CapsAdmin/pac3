@@ -834,271 +834,271 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 
 			if code == MOUSE_RIGHT then
 				play:Start()
-				else
-					pace.model_browser_callback(sound, "GAME")
-				end
+			else
+				pace.model_browser_callback(sound, "GAME")
 			end
-			local label = line.Columns[1]
-			label:SetTextInset(play:GetWide() + 5, 0)
-			play.DoClick = function()
-				if
-					timer.Exists("pac_asset_browser_play") and
-					self:GetLines()[self:GetSelectedLine()] == line
-				then
-					play:Stop()
-					return
-				end
-
-				self:ClearSelection()
-				self:SelectItem(line)
-				play:Start()
-				end
-				line.play = play
+		end
+		local label = line.Columns[1]
+		label:SetTextInset(play:GetWide() + 5, 0)
+		play.DoClick = function()
+			if
+				timer.Exists("pac_asset_browser_play") and
+				self:GetLines()[self:GetSelectedLine()] == line
+			then
+				play:Stop()
+				return
 			end
 
-			function sound_name_list:AddSound(name)
-				AddGeneric(self, name)
-			end
+			self:ClearSelection()
+			self:SelectItem(line)
+			play:Start()
+		end
+		line.play = play
+	end
 
-			function sound_list:AddSound(path, pathid)
-				local sound_path = path:match("sound/(.+)")
-				AddGeneric(self, sound_path, file.Size(path, pathid))
-			end
+	function sound_name_list:AddSound(name)
+		AddGeneric(self, name)
+	end
 
-			local select_me
+	function sound_list:AddSound(path, pathid)
+		local sound_path = path:match("sound/(.+)")
+		AddGeneric(self, sound_path, file.Size(path, pathid))
+	end
 
-			if texture_view or material_view then
-				local node = root_node:AddNode("materials", "icon16/folder_database.png")
-				node.dir = "materials"
-				local viewPanel = vgui.Create("pac_AssetBrowser_ContentContainer", frame.PropPanel)
-				viewPanel:DockMargin(5, 0, 0, 0)
-				viewPanel:SetVisible(false)
-				viewPanel:SetZoomControls(zoom_controls)
-				node.propPanel = viewPanel
+	local select_me
 
-				for list_name, materials in pairs(pace.Materials) do
-					local list = node:AddNode(list_name)
-					list.dir = "materials"
-					list.propPanel = viewPanel
-					list.OnNodeSelected = function()
-						if viewPanel and viewPanel.currentNode and viewPanel.currentNode == list then return end
-						viewPanel:Clear(true)
-						viewPanel.currentNode = list
+	if texture_view or material_view then
+		local node = root_node:AddNode("materials", "icon16/folder_database.png")
+		node.dir = "materials"
+		local viewPanel = vgui.Create("pac_AssetBrowser_ContentContainer", frame.PropPanel)
+		viewPanel:DockMargin(5, 0, 0, 0)
+		viewPanel:SetVisible(false)
+		viewPanel:SetZoomControls(zoom_controls)
+		node.propPanel = viewPanel
 
-						if material_view then
-							for _, material_name in ipairs(materials) do
-								local path = "materials/" .. material_name .. ".vmt"
+		for list_name, materials in pairs(pace.Materials) do
+			local list = node:AddNode(list_name)
+			list.dir = "materials"
+			list.propPanel = viewPanel
+			list.OnNodeSelected = function()
+				if viewPanel and viewPanel.currentNode and viewPanel.currentNode == list then return end
+				viewPanel:Clear(true)
+				viewPanel.currentNode = list
 
-								if file_Exists(path, "GAME") then
-									create_material_icon(path, viewPanel)
-								end
-							end
-						end
+				if material_view then
+					for _, material_name in ipairs(materials) do
+						local path = "materials/" .. material_name .. ".vmt"
 
-						if texture_view then
-							local done = {}
-							local textures = {}
-
-							for _, material_name in ipairs(materials) do
-								for k, v in pairs(get_material_keyvalues(material_name)) do
-									if type(v) == "ITexture" then
-										local name = v:GetName()
-
-										if not done[name] then
-											done[name] = true
-											table.insert(textures, "materials/" .. name .. ".vtf")
-										end
-									end
-								end
-							end
-
-							for _, path in ipairs(textures) do
-								viewPanel:Add(create_texture_icon(path))
-							end
-						end
-
-						tree:OnNodeSelected(list)
-						viewPanel.currentNode = list
-					end
-
-					if
-						#browse_types == 1 and
-						list_name == "materials" and
-						(texture_view or material_view)
-					then
-						select_me = list
-					end
-				end
-			end
-
-			if table.HasValue(browse_types, "models") then
-				local spawnlists = root_node:AddNode("spawnlists")
-				spawnlists.info = {}
-				spawnlists.info.id = 0
-				spawnlists.dir = "models"
-				local has_game = {}
-				has_game[""] = true
-
-				for k, v in pairs(engine.GetGames()) do
-					if v.mounted then
-						has_game[v.folder] = true
-					end
-				end
-
-				local function fillNavBar(propTable, parentNode)
-					for k, v in table_sortedpairs(propTable, function(a, b)
-						return a.key < b.key
-					end) do
-						if v.parentid == parentNode.info.id and has_game[v.needsapp] then
-							local node = parentNode:AddNode(v.name, v.icon)
-							node:SetExpanded(true)
-							node.info = v
-							node.dir = "models"
-							node.propPanel = vgui.Create(
-								vgui.GetControlTable("ContentContainer") and
-								"ContentContainer" or
-								"pac_AssetBrowser_ContentContainer",
-								frame.PropPanel
-							)
-							node.propPanel:DockMargin(5, 0, 0, 0)
-							node.propPanel:SetVisible(false)
-							parentNode.propPanel = node.propPanel
-							node.OnNodeSelected = function()
-								if not node.setup then
-									node.setup = true
-
-									for i, object in table_sortedpairs(v.contents, function(a, b)
-										return a.key < b.key
-									end) do
-										if object.type == "model" then
-											node.propPanel:Add(create_model_icon(object.model))
-										elseif object.type == "header" then
-											if not object.text or type(object.text) ~= "string" then return end
-											local label = vgui.Create("ContentHeader", node.propPanel)
-											label:SetText(object.text)
-											node.propPanel:Add(label)
-										end
-									end
-								end
-
-								tree:OnNodeSelected(node)
-							end
-
-							if #browse_types == 1 and v.name == "Construction Props" then
-								select_me = node
-							end
-
-							fillNavBar(propTable, node)
+						if file_Exists(path, "GAME") then
+							create_material_icon(path, viewPanel)
 						end
 					end
 				end
 
-				fillNavBar(spawnmenu.GetPropTable(), spawnlists)
+				if texture_view then
+					local done = {}
+					local textures = {}
+
+					for _, material_name in ipairs(materials) do
+						for k, v in pairs(get_material_keyvalues(material_name)) do
+							if type(v) == "ITexture" then
+								local name = v:GetName()
+
+								if not done[name] then
+									done[name] = true
+									table.insert(textures, "materials/" .. name .. ".vtf")
+								end
+							end
+						end
+					end
+
+					for _, path in ipairs(textures) do
+						viewPanel:Add(create_texture_icon(path))
+					end
+				end
+
+				tree:OnNodeSelected(list)
+				viewPanel.currentNode = list
 			end
 
-			if sound_view then
-				local node = root_node:AddNode("game sounds", "icon16/sound.png")
+			if
+				#browse_types == 1 and
+				list_name == "materials" and
+				(texture_view or material_view)
+			then
+				select_me = list
+			end
+		end
+	end
+
+	if table.HasValue(browse_types, "models") then
+		local spawnlists = root_node:AddNode("spawnlists")
+		spawnlists.info = {}
+		spawnlists.info.id = 0
+		spawnlists.dir = "models"
+		local has_game = {}
+		has_game[""] = true
+
+		for k, v in pairs(engine.GetGames()) do
+			if v.mounted then
+				has_game[v.folder] = true
+			end
+		end
+
+		local function fillNavBar(propTable, parentNode)
+			for k, v in table_sortedpairs(propTable, function(a, b)
+				return a.key < b.key
+			end) do
+				if v.parentid == parentNode.info.id and has_game[v.needsapp] then
+					local node = parentNode:AddNode(v.name, v.icon)
+					node:SetExpanded(true)
+					node.info = v
+					node.dir = "models"
+					node.propPanel = vgui.Create(
+						vgui.GetControlTable("ContentContainer") and
+						"ContentContainer" or
+						"pac_AssetBrowser_ContentContainer",
+						frame.PropPanel
+					)
+					node.propPanel:DockMargin(5, 0, 0, 0)
+					node.propPanel:SetVisible(false)
+					parentNode.propPanel = node.propPanel
+					node.OnNodeSelected = function()
+						if not node.setup then
+							node.setup = true
+
+							for i, object in table_sortedpairs(v.contents, function(a, b)
+								return a.key < b.key
+							end) do
+								if object.type == "model" then
+									node.propPanel:Add(create_model_icon(object.model))
+								elseif object.type == "header" then
+									if not object.text or type(object.text) ~= "string" then return end
+									local label = vgui.Create("ContentHeader", node.propPanel)
+									label:SetText(object.text)
+									node.propPanel:Add(label)
+								end
+							end
+						end
+
+						tree:OnNodeSelected(node)
+					end
+
+					if #browse_types == 1 and v.name == "Construction Props" then
+						select_me = node
+					end
+
+					fillNavBar(propTable, node)
+				end
+			end
+		end
+
+		fillNavBar(spawnmenu.GetPropTable(), spawnlists)
+	end
+
+	if sound_view then
+		local node = root_node:AddNode("game sounds", "icon16/sound.png")
+		node.dir = "sound names"
+		node.propPanel = sound_name_list
+		node.OnNodeSelected = function()
+			local categories = {}
+
+			for _, sound_name in ipairs(sound.GetTable()) do
+				local category = sound_name:match("^(.-)%.") or
+					sound_name:match("^(.-)_") or
+					sound_name:match("^(.-)%u")
+
+				if not category or category == nil then
+					category = "misc"
+				end
+
+				categories[category] = categories[category] or {}
+				table.insert(categories[category], sound_name)
+			end
+
+			local sorted = {}
+
+			for name, sounds in pairs(categories) do
+				table.sort(sounds, function(a, b)
+					return a < b
+				end)
+
+				table.insert(sorted, {name = name, sounds = sounds})
+			end
+
+			table.sort(sorted, function(a, b)
+				return a.name < b.name
+			end)
+
+			for _, data in ipairs(sorted) do
+				local category_name, sounds = data.name, data.sounds
+				local node = node:AddNode(category_name, "icon16/sound.png")
 				node.dir = "sound names"
 				node.propPanel = sound_name_list
 				node.OnNodeSelected = function()
-					local categories = {}
+					sound_name_list:Clear()
 
-					for _, sound_name in ipairs(sound.GetTable()) do
-						local category = sound_name:match("^(.-)%.") or
-							sound_name:match("^(.-)_") or
-							sound_name:match("^(.-)%u")
-
-						if not category or category == nil then
-							category = "misc"
-						end
-
-						categories[category] = categories[category] or {}
-						table.insert(categories[category], sound_name)
+					for _, sound_name in ipairs(sounds) do
+						sound_name_list:AddSound(sound_name)
 					end
 
-					local sorted = {}
-
-					for name, sounds in pairs(categories) do
-						table.sort(sounds, function(a, b)
-							return a < b
-						end)
-
-						table.insert(sorted, {name = name, sounds = sounds})
-					end
-
-					table.sort(sorted, function(a, b)
-						return a.name < b.name
-					end)
-
-					for _, data in ipairs(sorted) do
-						local category_name, sounds = data.name, data.sounds
-						local node = node:AddNode(category_name, "icon16/sound.png")
-						node.dir = "sound names"
-						node.propPanel = sound_name_list
-						node.OnNodeSelected = function()
-							sound_name_list:Clear()
-
-							for _, sound_name in ipairs(sounds) do
-								sound_name_list:AddSound(sound_name)
-							end
-
-							tree:OnNodeSelected(node)
-						end
-					end
+					tree:OnNodeSelected(node)
 				end
 			end
+		end
+	end
 
-			do -- mounted
+	do -- mounted
 		local function addBrowseContent(viewPanel, node, name, icon, path, pathid)
-					local function on_select(self, node)
-						if viewPanel and viewPanel.currentNode and viewPanel.currentNode == node then return end
-						node.dir = self.dir
-						sound_list:Clear()
-						viewPanel:Clear(true)
-						viewPanel.currentNode = node
-						local searchString = node:GetFolder()
+			local function on_select(self, node)
+				if viewPanel and viewPanel.currentNode and viewPanel.currentNode == node then return end
+				node.dir = self.dir
+				sound_list:Clear()
+				viewPanel:Clear(true)
+				viewPanel.currentNode = node
+				local searchString = node:GetFolder()
 
-						if searchString == "" and #browse_types == 1 then
-							local count = 0
+				if searchString == "" and #browse_types == 1 then
+					local count = 0
 
-							local function find_recursive(path, pathid)
-								if count >= 500 then return end
-								local files_, folders_ = file.Find(path .. "/*", pathid)
+					local function find_recursive(path, pathid)
+						if count >= 500 then return end
+						local files_, folders_ = file.Find(path .. "/*", pathid)
 
-								if files_ then
-									for i, v in ipairs(files_) do
-										count = count + 1
-										local path = path .. "/" .. v
-										path = path:gsub("^.-(" .. browse_types[1] .. "/.+)$", "%1")
+						if files_ then
+							for i, v in ipairs(files_) do
+								count = count + 1
+								local path = path .. "/" .. v
+								path = path:gsub("^.-(" .. browse_types[1] .. "/.+)$", "%1")
 
-										if browse_types[1] == "models" then
-											if not IsUselessModel(path) then
-												viewPanel:Add(create_model_icon(path, pathid))
-											end
-										elseif browse_types[1] == "materials" then
-											if path:find("%.vmt$") then
-												if material_view then
-													create_material_icon(path, viewPanel)
-												end
-											elseif texture_view then
-												viewPanel:Add(create_texture_icon(path, pathid))
-											end
-										elseif browse_types[1] == "sound" then
-											sound_list:AddSound(path, pathid)
+								if browse_types[1] == "models" then
+									if not IsUselessModel(path) then
+										viewPanel:Add(create_model_icon(path, pathid))
+									end
+								elseif browse_types[1] == "materials" then
+									if path:find("%.vmt$") then
+										if material_view then
+											create_material_icon(path, viewPanel)
 										end
+									elseif texture_view then
+										viewPanel:Add(create_texture_icon(path, pathid))
 									end
-
-									for i, v in ipairs(folders_) do
-										find_recursive(path .. "/" .. v, pathid)
-									end
+								elseif browse_types[1] == "sound" then
+									sound_list:AddSound(path, pathid)
 								end
 							end
 
-							find_recursive(path .. browse_types[1], node:GetPathID())
-						else
-							local files, folders = file.Find(searchString .. "/*", node:GetPathID())
+							for i, v in ipairs(folders_) do
+								find_recursive(path .. "/" .. v, pathid)
+							end
+						end
+					end
 
-							if files then
+					find_recursive(path .. browse_types[1], node:GetPathID())
+				else
+					local files, folders = file.Find(searchString .. "/*", node:GetPathID())
+
+					if files then
 						--[[
 						for _, dir in pairs(folders) do
 
@@ -1126,496 +1126,496 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 						end
 						]]
 						if self.dir == "models" then
-									for k, v in pairs(files) do
-										local path = node:GetFolder() .. "/" .. v
+							for k, v in pairs(files) do
+								local path = node:GetFolder() .. "/" .. v
 
-										if not path:StartWith("models/pac3_cache/") then
-											if not IsUselessModel(path) then
-												viewPanel:Add(create_model_icon(path, pathid))
-											end
-										end
-									end
-								elseif self.dir == "materials" then
-									for k, v in pairs(files) do
-										local path = node:GetFolder() .. "/" .. v
-
-										if v:find("%.vmt$") then
-											if material_view then
-												create_material_icon(path, viewPanel)
-											end
-										elseif texture_view then
-											viewPanel:Add(create_texture_icon(path, pathid))
-										end
-									end
-								elseif self.dir == "sound" then
-									for k, v in pairs(files) do
-										local path = node:GetFolder() .. "/" .. v
-										sound_list:AddSound(path, pathid)
+								if not path:StartWith("models/pac3_cache/") then
+									if not IsUselessModel(path) then
+										viewPanel:Add(create_model_icon(path, pathid))
 									end
 								end
 							end
-						end
+						elseif self.dir == "materials" then
+							for k, v in pairs(files) do
+								local path = node:GetFolder() .. "/" .. v
 
-						if self.dir == "sound" then
-							node.propPanel = sound_list
-						else
-							node.propPanel = viewPanel
-						end
-
-						tree:OnNodeSelected(node)
-						viewPanel.currentNode = node
-					end
-
-					node = node:AddNode(name, icon)
-					node:SetFolder("")
-					node:SetPathID(pathid)
-					node.viewPanel = viewPanel
-
-					for _, dir in ipairs(browse_types) do
-						local files, folders = file.Find(path .. dir .. "/*", pathid)
-
-						if files and (files[1] or folders[1]) then
-							local parent = node
-							local node = node:AddFolder(dir, path .. dir, pathid, false)
-							node.dir = dir
-							node.OnNodeSelected = on_select
-
-							if
-								not select_me and
-								#browse_types == 1 and
-								name == "all" and
-								browse_types[1] == dir and
-								dir ~= "models"
-							then
-								select_me = node
-							end
-
-							if
-								not select_me and
-								#browse_types == 3 and
-								name == "all" and
-								dir == "materials"
-							then
-								select_me = node
-							end
-						end
-					end
-
-					node.OnNodeSelected = on_select
-				end
-
-				local viewPanel = vgui.Create("pac_AssetBrowser_ContentContainer", frame.PropPanel)
-				viewPanel:DockMargin(5, 0, 0, 0)
-				viewPanel:SetVisible(false)
-				viewPanel:SetZoomControls(zoom_controls)
-
-				do
-					local special = {
-							{
-								title = "all",
-								folder = "GAME",
-								icon = "games/16/all.png",
-							},
-							{
-								title = "downloaded",
-								folder = "DOWNLOAD",
-								icon = "materials/icon16/server_go.png",
-							},
-							{
-								title = "workshop",
-								folder = "WORKSHOP",
-								icon = "materials/icon16/plugin.png",
-							},
-							{
-								title = "thirdparty",
-								folder = "THIRDPARTY",
-								icon = "materials/icon16/folder_brick.png",
-							},
-							{
-								title = "mod",
-								folder = "MOD",
-								icon = "materials/icon16/folder_brick.png",
-							},
-						}
-
-					for _, info in ipairs(special) do
-						addBrowseContent(
-							viewPanel,
-							root_node,
-							info.title,
-							info.icon,
-							"",
-							info.folder
-						)
-					end
-				end
-
-				do
-					local games = engine.GetGames()
-					table.insert(
-						games,
-						{
-							title = "Garry's Mod",
-							folder = "garrysmod",
-							mounted = true,
-						}
-					)
-
-					for _, game in table_sortedpairs(games, function(a, b)
-						return a.val.title < b.val.title
-					end) do
-						if game.mounted then
-							addBrowseContent(
-								viewPanel,
-								root_node,
-								game.title,
-								"games/16/" .. (game.icon or game.folder) .. ".png",
-								"",
-								game.folder
-							)
-						end
-					end
-				end
-
-				local node = root_node:AddNode("addons")
-
-				for _, addon in table_sortedpairs(engine.GetAddons(), function(a, b)
-					return a.val.title < b.val.title
-				end) do
-					if addon.file:StartWith("addons/") then
-						local _, dirs = file.Find("*", addon.title)
-
-						if
-							table.HasValue(dirs, "materials") or
-							table.HasValue(dirs, "models") or
-							table.HasValue(dirs, "sound")
-						then
-							addBrowseContent(
-								viewPanel,
-								node,
-								addon.title,
-								"icon16/bricks.png",
-								"",
-								addon.title
-							)
-						end
-					end
-				end
-
-				local _, folders = file.Find("addons/*", "MOD")
-
-				for _, path in ipairs(folders) do
-					if
-						file.IsDir("addons/" .. path .. "/materials", "MOD") or
-						file.IsDir("addons/" .. path .. "/sound", "MOD") or
-						file.IsDir("addons/" .. path .. "/models", "MOD")
-					then
-						addBrowseContent(
-							viewPanel,
-							node,
-							path,
-							"icon16/folder.png",
-							"addons/" .. path .. "/",
-							"MOD"
-						)
-					end
-				end
-			end
-
-			local model_view = vgui.Create("pac_AssetBrowser_ContentContainer", frame.PropPanel)
-			model_view:DockMargin(5, 0, 0, 0)
-			model_view:SetVisible(false)
-			model_view:SetZoomControls(zoom_controls)
-			local search = vgui.Create("DTextEntry", left_panel)
-			search:Dock(TOP)
-			search:SetTooltip("Press enter to search")
-			search.propPanel = model_view
-			search.model_view = model_view
-			search.delay_functions = {}
-
-			file_menu:AddOption(L("build search cache"), function()
-				search:StartSearch("", "models/", {}, "GAME", function(path, pathid) 
-				end)
-
-				search:StartSearch("", "sound/", {}, "GAME", function(path, pathid) 
-				end)
-
-				search:StartSearch("", "materials/", {}, "GAME", function(path, pathid) 
-				end)
-			end)
-
-			local cancel = vgui.Create("DImageButton", search)
-			cancel:SetImage(pace.MiscIcons.clear)
-			cancel:SetSize(16, 16)
-			cancel.DoClick = function()
-				search:Cancel()
-			end
-			cancel:SetVisible(false)
-
-			do
-				local old = search.OnGetFocus
-
-				function search:OnGetFocus()
-					if self:GetValue() == self.default_text then
-						self:SetValue("")
-					end
-
-					old(self)
-				end
-			end
-
-			do
-				local old = search.OnLoseFocus
-
-				function search:OnLoseFocus()
-					if self:GetValue() == "" then
-						self:SetValue(self.default_text)
-					end
-
-					old(self)
-				end
-			end
-
-			local function find(path, pathid)
-				local key = path .. pathid
-				if pac.asset_browser_cache[key] then return unpack(pac.asset_browser_cache[key]) end
-				local files, folders = file.Find(path, pathid)
-				pac.asset_browser_cache[key] = {files, folders}
-				return files, folders
-			end
-
-			function search:PerformLayout()
-				cancel:SetPos(self:GetWide() - 16 - 2, 2)
-			end
-
-			function search:StartSearch(search_text, folder, extensions, pathid, cb)
-				cancel:SetVisible(true)
-				local files, folders = find(folder .. "*", pathid)
-				self.searched = true
-
-				if files then
-					update_title(table.Count(self.delay_functions) .. " directories left - " .. folder .. "*")
-
-					for k, v in ipairs(files) do
-						local file = folder .. v
-
-						for _, ext in ipairs(extensions) do
-							if v:EndsWith(ext) and file:find(search_text, nil, true) then
-								local func = function()
-									return cb(file, pathid)
+								if v:find("%.vmt$") then
+									if material_view then
+										create_material_icon(path, viewPanel)
+									end
+								elseif texture_view then
+									viewPanel:Add(create_texture_icon(path, pathid))
 								end
-								self.delay_functions[func] = func
-
-								break
 							end
-						end
-					end
-
-					for k, v in ipairs(folders) do
-						if v ~= "pac3_cache" then
-							local func = function()
-								self:StartSearch(search_text, folder .. v .. "/", extensions, pathid, cb)
+						elseif self.dir == "sound" then
+							for k, v in pairs(files) do
+								local path = node:GetFolder() .. "/" .. v
+								sound_list:AddSound(path, pathid)
 							end
-							self.delay_functions[func] = func
 						end
 					end
 				end
-			end
 
-			function search:Stop()
-				cancel:SetVisible(false)
-				self.delay_functions = {}
-				self.searched = false
-			end
-
-			function search:Cancel(why)
-				self:Stop()
-
-				if why then
-					update_title("search canceled: " .. why)
+				if self.dir == "sound" then
+					node.propPanel = sound_list
 				else
-					update_title("search canceled")
+					node.propPanel = viewPanel
+				end
+
+				tree:OnNodeSelected(node)
+				viewPanel.currentNode = node
+			end
+
+			node = node:AddNode(name, icon)
+			node:SetFolder("")
+			node:SetPathID(pathid)
+			node.viewPanel = viewPanel
+
+			for _, dir in ipairs(browse_types) do
+				local files, folders = file.Find(path .. dir .. "/*", pathid)
+
+				if files and (files[1] or folders[1]) then
+					local parent = node
+					local node = node:AddFolder(dir, path .. dir, pathid, false)
+					node.dir = dir
+					node.OnNodeSelected = on_select
+
+					if
+						not select_me and
+						#browse_types == 1 and
+						name == "all" and
+						browse_types[1] == dir and
+						dir ~= "models"
+					then
+						select_me = node
+					end
+
+					if
+						not select_me and
+						#browse_types == 3 and
+						name == "all" and
+						dir == "materials"
+					then
+						select_me = node
+					end
 				end
 			end
 
-			function search:Think()
-				if input.IsKeyDown(KEY_ESCAPE) then
-					self:Cancel()
+			node.OnNodeSelected = on_select
+		end
+
+		local viewPanel = vgui.Create("pac_AssetBrowser_ContentContainer", frame.PropPanel)
+		viewPanel:DockMargin(5, 0, 0, 0)
+		viewPanel:SetVisible(false)
+		viewPanel:SetZoomControls(zoom_controls)
+
+		do
+			local special = {
+					{
+						title = "all",
+						folder = "GAME",
+						icon = "games/16/all.png",
+					},
+					{
+						title = "downloaded",
+						folder = "DOWNLOAD",
+						icon = "materials/icon16/server_go.png",
+					},
+					{
+						title = "workshop",
+						folder = "WORKSHOP",
+						icon = "materials/icon16/plugin.png",
+					},
+					{
+						title = "thirdparty",
+						folder = "THIRDPARTY",
+						icon = "materials/icon16/folder_brick.png",
+					},
+					{
+						title = "mod",
+						folder = "MOD",
+						icon = "materials/icon16/folder_brick.png",
+					},
+				}
+
+			for _, info in ipairs(special) do
+				addBrowseContent(
+					viewPanel,
+					root_node,
+					info.title,
+					info.icon,
+					"",
+					info.folder
+				)
+			end
+		end
+
+		do
+			local games = engine.GetGames()
+			table.insert(
+				games,
+				{
+					title = "Garry's Mod",
+					folder = "garrysmod",
+					mounted = true,
+				}
+			)
+
+			for _, game in table_sortedpairs(games, function(a, b)
+				return a.val.title < b.val.title
+			end) do
+				if game.mounted then
+					addBrowseContent(
+						viewPanel,
+						root_node,
+						game.title,
+						"games/16/" .. (game.icon or game.folder) .. ".png",
+						"",
+						game.folder
+					)
+				end
+			end
+		end
+
+		local node = root_node:AddNode("addons")
+
+		for _, addon in table_sortedpairs(engine.GetAddons(), function(a, b)
+			return a.val.title < b.val.title
+		end) do
+			if addon.file:StartWith("addons/") then
+				local _, dirs = file.Find("*", addon.title)
+
+				if
+					table.HasValue(dirs, "materials") or
+					table.HasValue(dirs, "models") or
+					table.HasValue(dirs, "sound")
+				then
+					addBrowseContent(
+						viewPanel,
+						node,
+						addon.title,
+						"icon16/bricks.png",
+						"",
+						addon.title
+					)
+				end
+			end
+		end
+
+		local _, folders = file.Find("addons/*", "MOD")
+
+		for _, path in ipairs(folders) do
+			if
+				file.IsDir("addons/" .. path .. "/materials", "MOD") or
+				file.IsDir("addons/" .. path .. "/sound", "MOD") or
+				file.IsDir("addons/" .. path .. "/models", "MOD")
+			then
+				addBrowseContent(
+					viewPanel,
+					node,
+					path,
+					"icon16/folder.png",
+					"addons/" .. path .. "/",
+					"MOD"
+				)
+			end
+		end
+	end
+
+	local model_view = vgui.Create("pac_AssetBrowser_ContentContainer", frame.PropPanel)
+	model_view:DockMargin(5, 0, 0, 0)
+	model_view:SetVisible(false)
+	model_view:SetZoomControls(zoom_controls)
+	local search = vgui.Create("DTextEntry", left_panel)
+	search:Dock(TOP)
+	search:SetTooltip("Press enter to search")
+	search.propPanel = model_view
+	search.model_view = model_view
+	search.delay_functions = {}
+
+	file_menu:AddOption(L("build search cache"), function()
+		search:StartSearch("", "models/", {}, "GAME", function(path, pathid) 
+		end)
+
+		search:StartSearch("", "sound/", {}, "GAME", function(path, pathid) 
+		end)
+
+		search:StartSearch("", "materials/", {}, "GAME", function(path, pathid) 
+		end)
+	end)
+
+	local cancel = vgui.Create("DImageButton", search)
+	cancel:SetImage(pace.MiscIcons.clear)
+	cancel:SetSize(16, 16)
+	cancel.DoClick = function()
+		search:Cancel()
+	end
+	cancel:SetVisible(false)
+
+	do
+		local old = search.OnGetFocus
+
+		function search:OnGetFocus()
+			if self:GetValue() == self.default_text then
+				self:SetValue("")
+			end
+
+			old(self)
+		end
+	end
+
+	do
+		local old = search.OnLoseFocus
+
+		function search:OnLoseFocus()
+			if self:GetValue() == "" then
+				self:SetValue(self.default_text)
+			end
+
+			old(self)
+		end
+	end
+
+	local function find(path, pathid)
+		local key = path .. pathid
+		if pac.asset_browser_cache[key] then return unpack(pac.asset_browser_cache[key]) end
+		local files, folders = file.Find(path, pathid)
+		pac.asset_browser_cache[key] = {files, folders}
+		return files, folders
+	end
+
+	function search:PerformLayout()
+		cancel:SetPos(self:GetWide() - 16 - 2, 2)
+	end
+
+	function search:StartSearch(search_text, folder, extensions, pathid, cb)
+		cancel:SetVisible(true)
+		local files, folders = find(folder .. "*", pathid)
+		self.searched = true
+
+		if files then
+			update_title(table.Count(self.delay_functions) .. " directories left - " .. folder .. "*")
+
+			for k, v in ipairs(files) do
+				local file = folder .. v
+
+				for _, ext in ipairs(extensions) do
+					if v:EndsWith(ext) and file:find(search_text, nil, true) then
+						local func = function()
+							return cb(file, pathid)
+						end
+						self.delay_functions[func] = func
+
+						break
+					end
+				end
+			end
+
+			for k, v in ipairs(folders) do
+				if v ~= "pac3_cache" then
+					local func = function()
+						self:StartSearch(search_text, folder .. v .. "/", extensions, pathid, cb)
+					end
+					self.delay_functions[func] = func
+				end
+			end
+		end
+	end
+
+	function search:Stop()
+		cancel:SetVisible(false)
+		self.delay_functions = {}
+		self.searched = false
+	end
+
+	function search:Cancel(why)
+		self:Stop()
+
+		if why then
+			update_title("search canceled: " .. why)
+		else
+			update_title("search canceled")
+		end
+	end
+
+	function search:Think()
+		if input.IsKeyDown(KEY_ESCAPE) then
+			self:Cancel()
+			return
+		end
+
+		if input.IsControlDown() and input.IsKeyDown(KEY_F) then
+			self:RequestFocus()
+		end
+
+		local i = 0
+
+		for key, func in pairs(self.delay_functions) do
+			i = i + 1
+			local ok, reason = func()
+
+			if ok == false then
+				self:Cancel(reason)
+				return
+			end
+
+			self.delay_functions[func] = nil
+			if i > 50 then break end
+		end
+
+		if i == 0 and self.searched then
+			self:Stop()
+			update_title()
+			file.Write("pac3_cache/pac_asset_browser_index.txt", util.TableToJSON(pac.asset_browser_cache))
+		end
+
+		if frame.dir then
+			if not self:IsEnabled() then
+				self:SetEnabled(true)
+			end
+
+			local change = false
+
+			if self:GetValue() == "" or self:GetValue() == self.default_text then
+				change = true
+			end
+
+			local pathid = frame.pathid or "GAME"
+
+			if pathid == "GAME" then
+				pathid = "all"
+			end
+
+			self.default_text = L("search " .. pathid .. "/" .. frame.dir .. "/*")
+
+			if change then
+				self:SetValue(self.default_text)
+			end
+		else
+			self:SetValue("")
+
+			if self:IsEnabled() then
+				self:SetEnabled(false)
+			end
+		end
+	end
+
+	function search:OnEnter()
+		if self:GetValue() == "" then return end
+		local count = 0
+		local pathid = frame.pathid or "GAME"
+		local dir = frame.dir
+
+		if dir == "models" then
+			self.propPanel = self.model_view
+			self.propPanel:Clear()
+
+			self:StartSearch(self:GetValue(), "models/", {".mdl"}, pathid, function(path, pathid)
+				if count >= 500 then return false, "too many results (" .. count .. ")" end
+				count = count + 1
+
+				if not IsUselessModel(path) then
+					self.propPanel:Add(create_model_icon(path, pathid))
+				end
+			end)
+		elseif dir == "sound" then
+			self.propPanel = sound_list
+			self.propPanel:Clear()
+
+			self:StartSearch(self:GetValue(), "sound/", {".wav", ".mp3", ".ogg"}, pathid, function(path, pathid)
+				if count >= 1500 then return false, "too many results (" .. count .. ")" end
+				count = count + 1
+				sound_list:AddSound(path, pathid)
+			end)
+		elseif dir == "materials" then
+			self.propPanel = self.model_view
+			self.propPanel:Clear()
+
+			self:StartSearch(self:GetValue(), "materials/", {".vmt", ".vtf", ".png"}, pathid, function(path, pathid)
+				if count >= 750 then return false, "too many results (" .. count .. ")" end
+
+				if path:EndsWith(".vmt") then
+					if material_view then
+						count = count + 1
+						create_material_icon(path, self.propPanel)
+					end
+				elseif texture_view then
+					self.propPanel:Add(create_texture_icon(path, pathid))
+					count = count + 1
+				end
+			end)
+		elseif dir == "sound names" then
+			self.propPanel = sound_name_list
+			self.propPanel:Clear()
+			local search_text = self:GetValue()
+
+			for _, name in ipairs(sound.GetTable()) do
+				if count >= 1500 then
+					update_title("too many results (" .. count .. ")")
 					return
 				end
 
-				if input.IsControlDown() and input.IsKeyDown(KEY_F) then
-					self:RequestFocus()
+				if name:find(search_text, nil, true) then
+					count = count + 1
+					sound_name_list:AddSound(name)
 				end
-
-				local i = 0
-
-				for key, func in pairs(self.delay_functions) do
-					i = i + 1
-					local ok, reason = func()
-
-					if ok == false then
-						self:Cancel(reason)
-						return
-					end
-
-					self.delay_functions[func] = nil
-					if i > 50 then break end
-				end
-
-				if i == 0 and self.searched then
-					self:Stop()
-					update_title()
-					file.Write("pac3_cache/pac_asset_browser_index.txt", util.TableToJSON(pac.asset_browser_cache))
-				end
-
-				if frame.dir then
-					if not self:IsEnabled() then
-						self:SetEnabled(true)
-					end
-
-					local change = false
-
-					if self:GetValue() == "" or self:GetValue() == self.default_text then
-						change = true
-					end
-
-					local pathid = frame.pathid or "GAME"
-
-					if pathid == "GAME" then
-						pathid = "all"
-					end
-
-					self.default_text = L("search " .. pathid .. "/" .. frame.dir .. "/*")
-
-					if change then
-						self:SetValue(self.default_text)
-					end
-				else
-					self:SetValue("")
-
-					if self:IsEnabled() then
-						self:SetEnabled(false)
-					end
-				end
-			end
-
-			function search:OnEnter()
-				if self:GetValue() == "" then return end
-				local count = 0
-				local pathid = frame.pathid or "GAME"
-				local dir = frame.dir
-
-				if dir == "models" then
-					self.propPanel = self.model_view
-					self.propPanel:Clear()
-
-					self:StartSearch(self:GetValue(), "models/", {".mdl"}, pathid, function(path, pathid)
-						if count >= 500 then return false, "too many results (" .. count .. ")" end
-						count = count + 1
-
-						if not IsUselessModel(path) then
-							self.propPanel:Add(create_model_icon(path, pathid))
-						end
-					end)
-				elseif dir == "sound" then
-					self.propPanel = sound_list
-					self.propPanel:Clear()
-
-					self:StartSearch(self:GetValue(), "sound/", {".wav", ".mp3", ".ogg"}, pathid, function(path, pathid)
-						if count >= 1500 then return false, "too many results (" .. count .. ")" end
-						count = count + 1
-						sound_list:AddSound(path, pathid)
-					end)
-				elseif dir == "materials" then
-					self.propPanel = self.model_view
-					self.propPanel:Clear()
-
-					self:StartSearch(self:GetValue(), "materials/", {".vmt", ".vtf", ".png"}, pathid, function(path, pathid)
-						if count >= 750 then return false, "too many results (" .. count .. ")" end
-
-						if path:EndsWith(".vmt") then
-							if material_view then
-								count = count + 1
-								create_material_icon(path, self.propPanel)
-							end
-						elseif texture_view then
-							self.propPanel:Add(create_texture_icon(path, pathid))
-							count = count + 1
-						end
-					end)
-				elseif dir == "sound names" then
-					self.propPanel = sound_name_list
-					self.propPanel:Clear()
-					local search_text = self:GetValue()
-
-					for _, name in ipairs(sound.GetTable()) do
-						if count >= 1500 then
-							update_title("too many results (" .. count .. ")")
-							return
-						end
-
-						if name:find(search_text, nil, true) then
-							count = count + 1
-							sound_name_list:AddSound(name)
-						end
-					end
-				end
-
-				self.dir = dir
-				self.pathid = pathid
-				tree:OnNodeSelected(self)
-			end
-
-			file_menu:AddSpacer()
-			file_menu:AddOption(L("exit"), function()
-				frame:Remove()
-			end):SetImage(pace.MiscIcons.exit)
-
-			if select_me then
-				select_me:GetParentNode():SetExpanded(true)
-				select_me:SetExpanded(true)
-				tree:SetSelectedItem(select_me)
-			end
-
-			frame:MakePopup()
-		end
-
-		if pace.model_browser and pace.model_browser:IsValid() then
-			local visible = pace.model_browser:IsVisible()
-			pace.model_browser:Remove()
-
-			if visible then
-				pace.AssetBrowser(function(...)
-					print(...)
-					return false
-				end)
 			end
 		end
 
-		concommand.Add("pac_asset_browser", function(_, _, args)
-			pace.AssetBrowser(function(path)
-				SetClipboardText(path)
-				update_title("copied " .. path .. " to clipboard!")
-				return false
-			end, args[1] and table.concat(args, ";"))
+		self.dir = dir
+		self.pathid = pathid
+		tree:OnNodeSelected(self)
+	end
 
-			pace.model_browser:SetSize(ScrW() / 1.25, ScrH() / 1.25)
-			pace.model_browser:Center()
+	file_menu:AddSpacer()
+	file_menu:AddOption(L("exit"), function()
+		frame:Remove()
+	end):SetImage(pace.MiscIcons.exit)
+
+	if select_me then
+		select_me:GetParentNode():SetExpanded(true)
+		select_me:SetExpanded(true)
+		tree:SetSelectedItem(select_me)
+	end
+
+	frame:MakePopup()
+end
+
+if pace.model_browser and pace.model_browser:IsValid() then
+	local visible = pace.model_browser:IsVisible()
+	pace.model_browser:Remove()
+
+	if visible then
+		pace.AssetBrowser(function(...)
+			print(...)
+			return false
 		end)
+	end
+end
 
-		list.Set(
-			"DesktopWindows",
-			"PACAssetBrowser",
-			{
-				title = "Asset Browser",
-				icon = "icon16/images.png",
-				width = 960,
-				height = 700,
-				onewindow = true,
-				init = function(icn, pnl)
-					pnl:Remove()
-					RunConsoleCommand("pac_asset_browser")
-				end,
-			}
-		)
+concommand.Add("pac_asset_browser", function(_, _, args)
+	pace.AssetBrowser(function(path)
+		SetClipboardText(path)
+		update_title("copied " .. path .. " to clipboard!")
+		return false
+	end, args[1] and table.concat(args, ";"))
+
+	pace.model_browser:SetSize(ScrW() / 1.25, ScrH() / 1.25)
+	pace.model_browser:Center()
+end)
+
+list.Set(
+	"DesktopWindows",
+	"PACAssetBrowser",
+	{
+		title = "Asset Browser",
+		icon = "icon16/images.png",
+		width = 960,
+		height = 700,
+		onewindow = true,
+		init = function(icn, pnl)
+			pnl:Remove()
+			RunConsoleCommand("pac_asset_browser")
+		end,
+	}
+)

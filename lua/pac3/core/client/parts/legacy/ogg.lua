@@ -219,69 +219,69 @@ function PART:PlaySound(_, additiveVolumeFraction)
 		stream:Resume()
 	else
 		stream:Start()
-		end
-
-		self.last_stream = stream
 	end
 
-	function PART:StopSound()
-		for key, stream in pairs(self.streams) do
-			if not stream:IsValid() then
-				self.streams[key] = nil
+	self.last_stream = stream
+end
 
-				goto CONTINUE
+function PART:StopSound()
+	for key, stream in pairs(self.streams) do
+		if not stream:IsValid() then
+			self.streams[key] = nil
+
+			goto CONTINUE
+		end
+
+		if not self.StopOnHide then
+			if self.PauseOnHide then
+				stream:Pause()
+			else
+				stream:Stop()
 			end
-
-			if not self.StopOnHide then
-				if self.PauseOnHide then
-					stream:Pause()
-				else
-					stream:Stop()
-				end
-			end
-
-			::CONTINUE::
-		end
-	end
-
-	function PART:OnShow(from_rendering)
-		if not from_rendering then
-			self:PlaySound()
-		end
-	end
-
-	function PART:OnHide()
-		self:StopSound()
-	end
-
-	function PART:OnRemove()
-		for key, stream in pairs(self.streams) do
-			if not stream:IsValid() then
-				self.streams[key] = nil
-
-				goto CONTINUE
-			end
-
-			stream:Remove()
-
-			::CONTINUE::
-		end
-	end
-
-	function PART:SetDoppler(num)
-		for key, stream in pairs(self.streams) do
-			if not stream:IsValid() then
-				self.streams[key] = nil
-
-				goto CONTINUE
-			end
-
-			stream:EnableDoppler(num)
-
-			::CONTINUE::
 		end
 
-		self.Doppler = num
+		::CONTINUE::
+	end
+end
+
+function PART:OnShow(from_rendering)
+	if not from_rendering then
+		self:PlaySound()
+	end
+end
+
+function PART:OnHide()
+	self:StopSound()
+end
+
+function PART:OnRemove()
+	for key, stream in pairs(self.streams) do
+		if not stream:IsValid() then
+			self.streams[key] = nil
+
+			goto CONTINUE
+		end
+
+		stream:Remove()
+
+		::CONTINUE::
+	end
+end
+
+function PART:SetDoppler(num)
+	for key, stream in pairs(self.streams) do
+		if not stream:IsValid() then
+			self.streams[key] = nil
+
+			goto CONTINUE
+		end
+
+		stream:EnableDoppler(num)
+
+		::CONTINUE::
 	end
 
-	pac.RegisterPart(PART)
+	self.Doppler = num
+end
+
+pac.RegisterPart(PART)

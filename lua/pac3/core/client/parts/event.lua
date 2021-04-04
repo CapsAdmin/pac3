@@ -1059,7 +1059,7 @@ do
 
 						if val then
 							net.Start("pac.AllowPlayerButtons")
-								net.WriteUInt(val, 8)
+							net.WriteUInt(val, 8)
 							net.SendToServer()
 						end
 

@@ -115,21 +115,21 @@ function emut.MutateEntity(ply, class_name, ent, ...)
 	if CLIENT then
 		if ply == LocalPlayer() and not suppress_send_to_server then
 			net.Start("pac_entity_mutator")
-				net.WriteString(class_name)
-				net.WriteEntity(ent)
-				net.WriteBool(false)
-				mutator:WriteArguments(...)
+			net.WriteString(class_name)
+			net.WriteEntity(ent)
+			net.WriteBool(false)
+			mutator:WriteArguments(...)
 			net.SendToServer(ply)
 		end
 	end
 
 	if SERVER then
 		net.Start("pac_entity_mutator")
-			net.WriteEntity(ply)
-			net.WriteString(class_name)
-			net.WriteEntity(ent)
-			net.WriteBool(false)
-			mutator:WriteArguments(...)
+		net.WriteEntity(ply)
+		net.WriteString(class_name)
+		net.WriteEntity(ent)
+		net.WriteBool(false)
+		mutator:WriteArguments(...)
 		net.Broadcast(ply)
 	end
 
@@ -162,19 +162,19 @@ function emut.RestoreMutations(ply, class_name, ent)
 	if CLIENT then
 		if ply == LocalPlayer() and not suppress_send_to_server then
 			net.Start("pac_entity_mutator")
-				net.WriteString(class_name)
-				net.WriteEntity(ent)
-				net.WriteBool(true)
+			net.WriteString(class_name)
+			net.WriteEntity(ent)
+			net.WriteBool(true)
 			net.SendToServer(ply)
 		end
 	end
 
 	if SERVER then
 		net.Start("pac_entity_mutator")
-			net.WriteEntity(ply)
-			net.WriteString(class_name)
-			net.WriteEntity(ent)
-			net.WriteBool(true)
+		net.WriteEntity(ply)
+		net.WriteString(class_name)
+		net.WriteEntity(ent)
+		net.WriteBool(true)
 		net.Broadcast()
 		-- we also include the player who made the mutations, in case the server wants the arguments to be something else
 	end
@@ -313,11 +313,11 @@ if SERVER then
 	function emut.ReplicateMutatorsForPlayer(ply)
 		for _, mutator in ipairs(emut.GetAllMutators()) do
 			net.Start("pac_entity_mutator")
-				net.WriteEntity(mutator.Owner)
-				net.WriteString(mutator.ClassName)
-				net.WriteEntity(mutator.Entity)
-				net.WriteBool(false)
-				mutator:WriteArguments(unpack(mutator.current_state))
+			net.WriteEntity(mutator.Owner)
+			net.WriteString(mutator.ClassName)
+			net.WriteEntity(mutator.Entity)
+			net.WriteBool(false)
+			mutator:WriteArguments(unpack(mutator.current_state))
 			net.Send(ply)
 		end
 	end

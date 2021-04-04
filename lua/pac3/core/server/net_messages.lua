@@ -2,10 +2,10 @@ util.AddNetworkString("pac.TogglePartDrawing")
 
 function pac.TogglePartDrawing(ent, b, who) --serverside interface to clientside function of the same name
 	net.Start("pac.TogglePartDrawing")
-		net.WriteEntity(ent)
-		net.WriteBit(b)
+	net.WriteEntity(ent)
+	net.WriteBit(b)
 
-		if not who then
+	if not who then
 		net.Broadcast()
 	else
 		net.Send(who)
@@ -25,9 +25,9 @@ do -- button event
 	local function broadcast_key(ply, key, down)
 		if ply.pac_broadcast_buttons and ply.pac_broadcast_buttons[key] then
 			net.Start("pac.BroadcastPlayerButton")
-				net.WriteEntity(ply)
-				net.WriteUInt(key, 8)
-				net.WriteBool(down)
+			net.WriteEntity(ply)
+			net.WriteUInt(key, 8)
+			net.WriteBool(down)
 			net.Broadcast()
 		end
 	end

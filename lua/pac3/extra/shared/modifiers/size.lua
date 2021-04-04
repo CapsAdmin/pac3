@@ -47,9 +47,9 @@ end
 
 function pacx.SetEntitySizeOnServer(ent, multiplier, other)
 	net.Start("pacx_size")
-		net.WriteEntity(ent)
-		net.WriteDouble(multiplier or 1)
-		write_other(other)
+	net.WriteEntity(ent)
+	net.WriteDouble(multiplier or 1)
+	write_other(other)
 	net.SendToServer()
 end
 

@@ -311,17 +311,17 @@ function pace.SubmitPart(data, filter)
 
 		if ret == nil then
 			net.Start("pac_submit")
-				local bytes, err = net_write_table(data)
+			local bytes, err = net_write_table(data)
 
-				if not bytes then
-					ErrorNoHalt(
-						"[PAC3] Outfit broadcast failed for " .. tostring(data.owner) .. ": " .. tostring(err) .. "\n"
-					)
+			if not bytes then
+				ErrorNoHalt(
+					"[PAC3] Outfit broadcast failed for " .. tostring(data.owner) .. ": " .. tostring(err) .. "\n"
+				)
 
-					if data.owner and data.owner:IsValid() then
-						data.owner:ChatPrint("[PAC3] ERROR: Could not broadcast your outfit: " .. tostring(err))
-					end
-				else
+				if data.owner and data.owner:IsValid() then
+					data.owner:ChatPrint("[PAC3] ERROR: Could not broadcast your outfit: " .. tostring(err))
+				end
+			else
 				net.Send(players)
 			end
 		end
@@ -355,9 +355,9 @@ function pace.SubmitPartNotify(data)
 		end
 
 		net.Start("pac_submit_acknowledged")
-			net.WriteBool(allowed)
-			net.WriteString(reason or "")
-			net.WriteString(data.part.self.Name or "no name")
+		net.WriteBool(allowed)
+		net.WriteString(reason or "")
+		net.WriteString(data.part.self.Name or "no name")
 		net.Send(data.owner)
 		hook.Run(
 			"PACSubmitAcknowledged",

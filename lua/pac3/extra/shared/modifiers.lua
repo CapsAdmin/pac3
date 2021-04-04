@@ -19,8 +19,8 @@ function pacx.AddServerModifier(id, change_callback)
 			if SERVER then
 				-- https://github.com/Facepunch/garrysmod-issues/issues/3740
 				net.Start("pacx_modifiers_change")
-					net.WriteString(id)
-					net.WriteBool(enable)
+				net.WriteString(id)
+				net.WriteBool(enable)
 				net.Broadcast()
 			end
 		end, id .. "_change")

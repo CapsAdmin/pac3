@@ -37,11 +37,11 @@ do -- to server
 	net.Receive("pac_update_playerfilter", function()
 		local filter = assemblePlayerFilter()
 		net.Start("pac_update_playerfilter")
-			net.WriteUInt(#filter, 8)
+		net.WriteUInt(#filter, 8)
 
-			for i, id in ipairs(filter) do
-				net.WriteString(id)
-			end
+		for i, id in ipairs(filter) do
+			net.WriteString(id)
+		end
 
 		net.SendToServer()
 	end)
@@ -83,12 +83,12 @@ do -- to server
 		data.owner = part:GetPlayerOwner()
 		data.wear_filter = assemblePlayerFilter()
 		net.Start("pac_submit")
-			local bytes, err = net_write_table(data)
+		local bytes, err = net_write_table(data)
 
-			if not bytes then
-				pace.Notify(false, "unable to transfer data to server: " .. tostring(err or "too big"), part:GetName())
-				return false
-			end
+		if not bytes then
+			pace.Notify(false, "unable to transfer data to server: " .. tostring(err or "too big"), part:GetName())
+			return false
+		end
 
 		net.SendToServer()
 		pac.Message(("Transmitting outfit %q to server (%s)"):format(part.Name or part.ClassName or "<unknown>", string.NiceSize(bytes)))
@@ -107,12 +107,12 @@ do -- to server
 		end
 
 		net.Start("pac_submit")
-			local ret, err = net_write_table(data)
+		local ret, err = net_write_table(data)
 
-			if ret == nil then
-				pace.Notify(false, "unable to transfer data to server: " .. tostring(err or "too big"), name)
-				return false
-			end
+		if ret == nil then
+			pace.Notify(false, "unable to transfer data to server: " .. tostring(err or "too big"), name)
+			return false
+		end
 
 		net.SendToServer()
 		return true

@@ -48,13 +48,13 @@ do
 		local ang = net.ReadAngle()
 		local part_pos = net.ReadVector()
 		net.Start("pac_in_editor_posang", true)
-			net.WriteEntity(ply)
-			net.WriteVector(pos)
-			net.WriteAngle(ang)
-			net.WriteVector(part_pos)
-			net.SendPVS(ply:GetPos())
-		end)
-	end
+		net.WriteEntity(ply)
+		net.WriteVector(pos)
+		net.WriteAngle(ang)
+		net.WriteVector(part_pos)
+		net.SendPVS(ply:GetPos())
+	end)
+end
 
-	CreateConVar("has_pac3_editor", "1", {FCVAR_NOTIFY})
-	resource.AddSingleFile("materials/icon64/pac3.png")
+CreateConVar("has_pac3_editor", "1", {FCVAR_NOTIFY})
+resource.AddSingleFile("materials/icon64/pac3.png")

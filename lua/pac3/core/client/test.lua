@@ -268,8 +268,8 @@ function run_lua_on_server(code, cb)
 	local id = util.CRC(code .. tostring(cb))
 	lua_server_run_callbacks[id] = cb
 	net.Start("pac3_test_sutie_backdoor")
-		net.WriteString(id)
-		net.WriteString(code)
+	net.WriteString(id)
+	net.WriteString(code)
 	net.SendToServer()
 end
 

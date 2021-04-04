@@ -130,12 +130,12 @@ function PART:SetBlendMode(str)
 
 	if src_color and dst_color then
 		self.blend_override = {
-			src_color,
-			dst_color,
-			src_alpha,
-			dst_alpha,
-			tbl[5],
-		}
+				src_color,
+				dst_color,
+				src_alpha,
+				dst_alpha,
+				tbl[5],
+			}
 	else
 		self.blend_override = nil
 	end

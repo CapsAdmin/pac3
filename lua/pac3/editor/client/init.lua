@@ -269,7 +269,7 @@ end
 do
 	function pace.SetInPAC3Editor(b)
 		net.Start("pac_in_editor")
-			net.WriteBit(b)
+		net.WriteBit(b)
 		net.SendToServer()
 	end
 
@@ -360,9 +360,9 @@ do
 			if lastViewPos == pos and lastViewAngle == ang and lastTargetPos == target_pos then return end
 			lastViewPos, lastViewAngle, lastTargetPos = pos, ang, target_pos
 			net.Start("pac_in_editor_posang", true)
-				net.WriteVector(pos)
-				net.WriteAngle(ang)
-				net.WriteVector(target_pos)
+			net.WriteVector(pos)
+			net.WriteAngle(ang)
+			net.WriteVector(target_pos)
 			net.SendToServer()
 		end)
 	end

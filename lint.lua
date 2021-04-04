@@ -55,15 +55,6 @@ local config = {
 		cam_Start3D2D = {to = "cam_End3D2D"},
 		cam_Start = {to = "cam_End"},
 
-		Start = {
-			to = {
-				SendToServer = true,
-				Send = true,
-				Broadcast = true,
-				End = true,
-			}
-		},
-
 		SetPropertyGroup = "toggle",
 	}
 }

@@ -86,7 +86,7 @@ local function pac_request_precache(name)
 	already[name] = true
 	PrecacheParticleSystem(name)
 	net.Start("pac_request_precache")
-		net.WriteString(name)
+	net.WriteString(name)
 	net.SendToServer()
 end
 

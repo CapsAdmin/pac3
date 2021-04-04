@@ -56,8 +56,8 @@ end)
 pace.PCallNetReceive(net.Receive, "pac_to_contraption", function(len, ply)
 	if not pac_to_contraption_allow:GetBool() then
 		net.Start("pac_submit_acknowledged")
-			net.WriteBool(false)
-			net.WriteString("This server does not allow spawning PAC contraptions.")
+		net.WriteBool(false)
+		net.WriteString("This server does not allow spawning PAC contraptions.")
 		net.Send(ply)
 		return
 	end
@@ -80,8 +80,8 @@ pace.PCallNetReceive(net.Receive, "pac_to_contraption", function(len, ply)
 
 	if count > max then
 		net.Start("pac_submit_acknowledged")
-			net.WriteBool(false)
-			net.WriteString("You can only spawn ", max, " props at a time!")
+		net.WriteBool(false)
+		net.WriteString("You can only spawn ", max, " props at a time!")
 		net.Send(ply)
 		pac.Message(
 			ply,

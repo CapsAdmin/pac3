@@ -23,12 +23,12 @@ function net.Stream.ReadStream:Request()
 	-- print("Requesting",self.identifier,false,false,#self.chunks)
 
 	net.Start("NetStreamRequest")
-		net.WriteUInt(self.identifier, 32)
-		net.WriteBit(false)
-		net.WriteBit(false)
-		net.WriteUInt(#self.chunks, 32)
+	net.WriteUInt(self.identifier, 32)
+	net.WriteBit(false)
+	net.WriteBit(false)
+	net.WriteUInt(#self.chunks, 32)
 
-		if CLIENT then
+	if CLIENT then
 		net.SendToServer()
 	else
 		net.Send(self.player)
@@ -78,11 +78,11 @@ function net.Stream.ReadStream:Remove()
 	end
 
 	net.Start("NetStreamRequest")
-		net.WriteUInt(self.identifier, 32)
-		net.WriteBit(false)
-		net.WriteBit(true)
+	net.WriteUInt(self.identifier, 32)
+	net.WriteBit(false)
+	net.WriteBit(true)
 
-		if CLIENT then
+	if CLIENT then
 		net.SendToServer()
 	else
 		net.Send(self.player)
@@ -123,12 +123,12 @@ function net.Stream.WriteStream:Write(ply)
 	if chunk then
 		self.clients[ply].progress = progress
 		net.Start("NetStreamDownload")
-			net.WriteUInt(#chunk.data, 32)
-			net.WriteUInt(progress, 32)
-			net.WriteString(chunk.crc)
-			net.WriteData(chunk.data, #chunk.data)
+		net.WriteUInt(#chunk.data, 32)
+		net.WriteUInt(progress, 32)
+		net.WriteString(chunk.crc)
+		net.WriteData(chunk.data, #chunk.data)
 
-			if CLIENT then
+		if CLIENT then
 			net.SendToServer()
 		else
 			net.Send(ply)
@@ -169,10 +169,10 @@ function net.Stream.WriteStream:Remove()
 	end
 
 	net.Start("NetStreamDownload")
-		net.WriteUInt(0, 32)
-		net.WriteUInt(self.identifier, 32)
+	net.WriteUInt(0, 32)
+	net.WriteUInt(self.identifier, 32)
 
-		if SERVER then
+	if SERVER then
 		net.Send(sendTo)
 	else
 		net.SendToServer()
@@ -358,10 +358,10 @@ function net.ReadStream(ply, callback)
 	if #queue > 1 then
 		timer.Create("NetStreamKeepAlive" .. identifier, net.Stream.Timeout / 2, 0, function()
 			net.Start("NetStreamRequest")
-				net.WriteUInt(identifier, 32)
-				net.WriteBit(true)
+			net.WriteUInt(identifier, 32)
+			net.WriteBit(true)
 
-				if CLIENT then
+			if CLIENT then
 				net.SendToServer()
 			else
 				net.Send(ply)

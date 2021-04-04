@@ -69,7 +69,7 @@ if SERVER then
 		local verbose = args[1] == "1"
 		info = PAC_VERSION()
 		net.Start("pac_version")
-			net.WriteTable(info)
+		net.WriteTable(info)
 		net.Broadcast()
 		dump(info, verbose)
 	end)
@@ -81,7 +81,7 @@ if SERVER then
 			if self == ply and not cmd:IsForced() then
 				hook.Remove("SetupMove", id)
 				net.Start("pac_version")
-					net.WriteTable(info)
+				net.WriteTable(info)
 				net.Send(ply)
 			end
 		end)
