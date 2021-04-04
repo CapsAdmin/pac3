@@ -143,7 +143,12 @@ do
 	function pac.RenderOverride(ent, type)
 		if ent.pac_error then return end
 
+		local start = SysTime()
 		local ok, err = xpcall(render_override, on_error, ent, type)
+		ent.pac_rendertime = ent.pac_rendertime or {}
+		ent.pac_rendertime[type] = SysTime() - start
+
+
 		if not ok then
 			pac.Message("failed to render ", tostring(ent), ":")
 
@@ -159,6 +164,10 @@ do
 		else
 			ent.pac_error = nil
 		end
+	end
+
+	function pac.GetRenderTimeInfo(ent)
+		return ent.pac_rendertime or {}
 	end
 end
 

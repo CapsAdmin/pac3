@@ -10,6 +10,7 @@ PANEL.pac3_PanelsToRemove = {
 }
 
 local BAR_SIZE = 17
+local RENDERSCORE_SIZE = 20
 
 local use_tabs = CreateClientConVar("pac_property_tabs", 1, true)
 
@@ -24,9 +25,11 @@ function PANEL:Init()
 
 	surface.SetFont(pace.CurrentFont)
 	local _, h = surface.GetTextSize("|")
+	RENDERSCORE_SIZE = h + 1
 
 	local div = vgui.Create("DVerticalDivider", self)
 
+	div:SetDividerHeight(RENDERSCORE_SIZE)
 	div:Dock(FILL)
 	div:SetTopMin(40)
 	div:SetBottomMin(40)
@@ -127,7 +130,7 @@ function PANEL:Init()
 
 	self:MakeBar()
 	self.lastTopBarHover = 0
-
+	self.rendertime_data = {}
 	self.okay = true
 end
 
@@ -189,6 +192,10 @@ function PANEL:Think(...)
 	if self.Hovered and self.m_bSizable and gui.MouseX() > (self.x + self:GetWide() - 20) then
 		self:SetCursor("sizewe")
 		return
+	end
+
+	for k,v in pairs(pac.GetRenderTimeInfo(pac.LocalPlayer)) do
+		self.rendertime_data[k] = Lerp(0.03, self.rendertime_data[k] or 0, v)
 	end
 
 	local bar = self.menu_bar
@@ -279,7 +286,7 @@ function PANEL:PerformLayout()
 		local sz = auto_size:GetInt()
 
 		if sz > 0 then
-			local newh = sz > 0 and (ScrH() - math.min(pace.properties:GetHeight() + BAR_SIZE - 6, ScrH() / 1.5))
+			local newh = sz > 0 and (ScrH() - math.min(pace.properties:GetHeight() + RENDERSCORE_SIZE + BAR_SIZE - 6, ScrH() / 1.5))
 
 			if sz >= 2 then
 				local oldh = self.div:GetTopHeight()
@@ -350,9 +357,28 @@ function pace.KillFocus(show_editor)
 	end
 end
 
+local drawProfileInfos = 0
+local textCol, drawBox
+local boxW, boxH
+
+local function drawTimeBox(text, time, x, y)
+	local str = string.format("%s: %.3f ms", L(text), time)
+	drawBox(x, y, boxW - 5, RENDERSCORE_SIZE - 1)
+
+	surface.SetTextPos(x + 5, y)
+	surface.DrawText(str)
+	return y + RENDERSCORE_SIZE
+end
+
+local function PostRenderVGUI()
+
+end
+
+pac.AddHook('PostRenderVGUI', 'pac_DrawProfileInfos', PostRenderVGUI)
+
 function PANEL:PaintOver(w, h)
 	if not self.okay then return end
-
+	textCol = self:GetSkin().Colours.Category.Line.Text
 	local info = _G.PAC_VERSION and PAC_VERSION()
 	if info then
 		local text = info.addon.version_name
@@ -364,6 +390,8 @@ function PANEL:PaintOver(w, h)
 		y = y + self:GetTall() - 4 - h
 
 		local mx, my = gui.MousePos()
+		local cx, cy = self:LocalToScreen(x, y)
+
 		local hovering = false
 		DisableClipping(true)
 
@@ -376,16 +404,13 @@ function PANEL:PaintOver(w, h)
 			surface.DrawRect(x,y,w,h)
 		end
 
-
 		surface.SetTextPos(x,y)
 		surface.SetTextColor(255,255,255,hovering and 255 or 100)
 		surface.DrawText(text)
 		DisableClipping(false )
 	end
 
-	local renderTime = pace.RenderTimes and pace.RenderTimes[pac.LocalPlayer:EntIndex()]
-
-	if not renderTime then return end
+	local data = self.rendertime_data
 
 	local x = 2
 	local y = 2
@@ -393,17 +418,38 @@ function PANEL:PaintOver(w, h)
 	y = y + self.top:GetTall()
 	boxW, boxH = w, h
 
-	local mx, my = input.GetCursorPos()
-	local cx, cy = self:LocalToScreen(x, y)
-
 	surface.SetFont(pace.CurrentFont)
 
 	textCol = self:GetSkin().Colours.Category.Line.Text
 	drawBox = self:GetSkin().tex.Menu_Strip
 	surface.SetTextColor(textCol)
 	cam.IgnoreZ(true)
-	local str = string.format("%s: %.3f ms", L("average render time"), renderTime * 1000)
+
+	local total = 0
+	for k,v in pairs(data) do
+		total = total + v
+	end
+
+	local str = string.format("%s: %.3f ms", L("average render time"), total * 1000)
 	drawBox(x, y, w - 5, RENDERSCORE_SIZE - 1)
+
+	local mx, my = input.GetCursorPos()
+	local cx, cy = self:LocalToScreen(x, y)
+
+	if cx <= mx and cy <= my and mx <= cx + w - 5 and my <= cy + RENDERSCORE_SIZE - 1 and self:IsChildHovered() then
+		surface.SetFont(pace.CurrentFont)
+		surface.SetTextColor(textCol)
+
+		local x, y = input.GetCursorPos()
+		x = x + 3
+		y = y + 3
+
+		DisableClipping(true)
+		for type, time in pairs(self.rendertime_data) do
+			y = drawTimeBox(type, time * 1000, x, y)
+		end
+		DisableClipping(false)
+	end
 
 	surface.SetTextPos(x + 5, y)
 	surface.DrawText(str)
