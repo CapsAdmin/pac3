@@ -257,27 +257,27 @@ local function create_material_icon(path, grid_panel)
 				local light_pos = Vector(y, x, 30)
 				local pos_x, pos_y = self:LocalToScreen(0, 0)
 				cam.Start3D(
-					self.vCamPos,
-					Angle(45, 180, 0),
-					self.fFOV,
-					pos_x,
-					pos_y,
-					w,
-					h,
-					5,
-					self.FarZ)
-				render.SuppressEngineLighting(true)
-				render.SetColorModulation(1, 1, 1)
-				render.SetBlend(1)
-				render.SetLocalModelLights(
-					{
+						self.vCamPos,
+						Angle(45, 180, 0),
+						self.fFOV,
+						pos_x,
+						pos_y,
+						w,
+						h,
+						5,
+						self.FarZ)
+					render.SuppressEngineLighting(true)
+					render.SetColorModulation(1, 1, 1)
+					render.SetBlend(1)
+					render.SetLocalModelLights(
 						{
-							color = Vector(1, 1, 1),
-							pos = self.Entity:GetPos() + light_pos,
-						},
-					})
-				self:DrawModel()
-				render.SuppressEngineLighting(false)
+							{
+								color = Vector(1, 1, 1),
+								pos = self.Entity:GetPos() + light_pos,
+							},
+						})
+					self:DrawModel()
+					render.SuppressEngineLighting(false)
 				cam.End3D()
 			end
 

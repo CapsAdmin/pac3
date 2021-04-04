@@ -144,187 +144,187 @@ function PART:OnDraw(owner, pos, ang)
 		if self.Follow then
 			cam.Start3D(WorldToLocal(EyePos(), EyeAngles(), pos, ang))
 
-			if self.IgnoreZ then
-				cam.IgnoreZ(true)
-			end
+				if self.IgnoreZ then
+					cam.IgnoreZ(true)
+				end
 
-			self.emitter:Draw()
+				self.emitter:Draw()
 
-			if self.IgnoreZ then
-				cam.IgnoreZ(false)
-			end
+				if self.IgnoreZ then
+					cam.IgnoreZ(false)
+				end
 
-			cam.End3D()
-		else
-			self.emitter:Draw()
-		end
+		cam.End3D()
 	else
-		if self.nodraw then
-			self:SetDrawManual(self:GetDrawManual())
-			self.nodraw = false
-		end
+		self.emitter:Draw()
 	end
+else
+	if self.nodraw then
+		self:SetDrawManual(self:GetDrawManual())
+		self.nodraw = false
+	end
+end
 
-	self:EmitParticles(self.Follow and vector_origin or pos, self.Follow and angle_origin or ang, ang)
+self:EmitParticles(self.Follow and vector_origin or pos, self.Follow and angle_origin or ang, ang)
 end
 
 function PART:SetAdditive(b)
-	self.Additive = b
-	self:SetMaterial(self:GetMaterial())
+self.Additive = b
+self:SetMaterial(self:GetMaterial())
 end
 
 function PART:SetMaterial(var)
-	var = var or ""
+var = var or ""
 
-	if not pac.Handleurltex(self, var, function(mat)
-		mat:SetFloat("$alpha", 0.999)
-		mat:SetInt("$spriterendermode", self.Additive and 5 or 1)
-		self.Materialm = mat
+if not pac.Handleurltex(self, var, function(mat)
+	mat:SetFloat("$alpha", 0.999)
+	mat:SetInt("$spriterendermode", self.Additive and 5 or 1)
+	self.Materialm = mat
+	self:CallEvent("material_changed")
+end, "Sprite") then
+	if var == "" then
+		self.Materialm = nil
+	else
+		self.Materialm = pac.Material(var, self)
 		self:CallEvent("material_changed")
-	end, "Sprite") then
-		if var == "" then
-			self.Materialm = nil
-		else
-			self.Materialm = pac.Material(var, self)
-			self:CallEvent("material_changed")
-		end
 	end
+end
 
-	self.Material = var
+self.Material = var
 end
 
 function PART:EmitParticles(pos, ang, real_ang)
-	local emt = self.emitter
-	if not emt then return end
+local emt = self.emitter
+if not emt then return end
 
-	if self.NextShot < pac.RealTime then
-		if self.Material == "" then return end
-		if self.Velocity == 500.01 then return end
-		local originalAng = ang
-		ang = ang:Forward()
-		local double = 1
+if self.NextShot < pac.RealTime then
+	if self.Material == "" then return end
+	if self.Velocity == 500.01 then return end
+	local originalAng = ang
+	ang = ang:Forward()
+	local double = 1
 
-		if self.DoubleSided then
-			double = 2
-		end
-
-		for _ = 1, self.NumberParticles do
-			local vec = Vector()
-
-			if self.Spread ~= 0 then
-				vec = Vector(
-					math.sin(math.Rand(0, 360)) * math.Rand(-self.Spread, self.Spread),
-					math.cos(math.Rand(0, 360)) * math.Rand(-self.Spread, self.Spread),
-					math.sin(math.random()) * math.Rand(-self.Spread, self.Spread))
-			end
-
-			local color
-
-			if self.RandomColor then
-				color = {
-						math.random(math.min(self.Color1.r, self.Color2.r), math.max(self.Color1.r, self.Color2.r)),
-						math.random(math.min(self.Color1.g, self.Color2.g), math.max(self.Color1.g, self.Color2.g)),
-						math.random(math.min(self.Color1.b, self.Color2.b), math.max(self.Color1.b, self.Color2.b)),
-					}
-			else
-				color = {self.Color1.r, self.Color1.g, self.Color1.b}
-			end
-
-			local roll = math.Rand(-self.RollDelta, self.RollDelta)
-
-			if self.PositionSpread ~= 0 then
-				pos = pos + Angle(math.Rand(-180, 180), math.Rand(-180, 180), math.Rand(-180, 180)):Forward() * self.PositionSpread
-			end
-
-			do
-				local vecAdd = Vector(math.Rand(-self.PositionSpread2.x, self.PositionSpread2.x), math.Rand(-self.PositionSpread2.x, self.PositionSpread2.y), math.Rand(-self.PositionSpread2.z, self.PositionSpread2.z))
-				vecAdd:Rotate(originalAng)
-				pos = pos + vecAdd
-			end
-
-			for i = 1, double do
-				local particle = emt:Add(self.Materialm or self.Material, pos)
-
-				if double == 2 then
-					local ang_
-
-					if i == 1 then
-						ang_ = (ang * -1):Angle()
-					elseif i == 2 then
-						ang_ = ang:Angle()
-					end
-
-					particle:SetAngles(ang_)
-				else
-					particle:SetAngles(ang:Angle())
-				end
-
-				if self.OwnerVelocityMultiplier ~= 0 then
-					local owner = self:GetOwner(true)
-
-					if owner:IsValid() then
-						vec = vec + (owner:GetVelocity() * self.OwnerVelocityMultiplier)
-					end
-				end
-
-				particle:SetVelocity((vec + ang) * self.Velocity)
-				particle:SetColor(unpack(color))
-				particle:SetColor(unpack(color))
-				local life = math.Clamp(self.DieTime, 0.0001, 50)
-
-				if self.AddFrametimeLife then
-					life = life + FrameTime()
-				end
-
-				particle:SetDieTime(life)
-				particle:SetStartAlpha(self.StartAlpha)
-				particle:SetEndAlpha(self.EndAlpha)
-				particle:SetStartSize(self.StartSize)
-				particle:SetEndSize(self.EndSize)
-				particle:SetStartLength(self.StartLength)
-				particle:SetEndLength(self.EndLength)
-				particle:SetRoll(self.RandomRollSpeed * 36)
-				particle:SetRollDelta(self.RollDelta + roll)
-				particle:SetAirResistance(self.AirResistance)
-				particle:SetBounce(self.Bounce)
-				particle:SetGravity(self.Gravity)
-				particle:SetAngles(particle:GetAngles() + self.ParticleAngle)
-				particle:SetLighting(self.Lighting)
-
-				if not self.Follow then
-					particle:SetCollide(self.Collide)
-				end
-
-				if self.Sliding then
-					particle:SetCollideCallback(SlideCallback)
-				end
-
-				if self["3D"] then
-					if not self.Sliding then
-						if i == 1 then
-							particle:SetCollideCallback(RemoveCallback)
-						else
-							particle:SetCollideCallback(StickCallback)
-						end
-					end
-
-					particle:SetAngleVelocity(Angle(
-						self.ParticleAngleVelocity.x,
-						self.ParticleAngleVelocity.y,
-						self.ParticleAngleVelocity.z))
-					particle.Align = self.Align
-					particle.Stick = self.Stick
-					particle.StickLifeTime = self.StickLifeTime
-					particle.StickStartSize = self.StickStartSize
-					particle.StickEndSize = self.StickEndSize
-					particle.StickStartAlpha = self.StickStartAlpha
-					particle.StickEndAlpha = self.StickEndAlpha
-				end
-			end
-		end
-
-		self.NextShot = pac.RealTime + self.FireDelay
+	if self.DoubleSided then
+		double = 2
 	end
+
+	for _ = 1, self.NumberParticles do
+		local vec = Vector()
+
+		if self.Spread ~= 0 then
+			vec = Vector(
+				math.sin(math.Rand(0, 360)) * math.Rand(-self.Spread, self.Spread),
+				math.cos(math.Rand(0, 360)) * math.Rand(-self.Spread, self.Spread),
+				math.sin(math.random()) * math.Rand(-self.Spread, self.Spread))
+		end
+
+		local color
+
+		if self.RandomColor then
+			color = {
+					math.random(math.min(self.Color1.r, self.Color2.r), math.max(self.Color1.r, self.Color2.r)),
+					math.random(math.min(self.Color1.g, self.Color2.g), math.max(self.Color1.g, self.Color2.g)),
+					math.random(math.min(self.Color1.b, self.Color2.b), math.max(self.Color1.b, self.Color2.b)),
+				}
+		else
+			color = {self.Color1.r, self.Color1.g, self.Color1.b}
+		end
+
+		local roll = math.Rand(-self.RollDelta, self.RollDelta)
+
+		if self.PositionSpread ~= 0 then
+			pos = pos + Angle(math.Rand(-180, 180), math.Rand(-180, 180), math.Rand(-180, 180)):Forward() * self.PositionSpread
+		end
+
+		do
+			local vecAdd = Vector(math.Rand(-self.PositionSpread2.x, self.PositionSpread2.x), math.Rand(-self.PositionSpread2.x, self.PositionSpread2.y), math.Rand(-self.PositionSpread2.z, self.PositionSpread2.z))
+			vecAdd:Rotate(originalAng)
+			pos = pos + vecAdd
+		end
+
+		for i = 1, double do
+			local particle = emt:Add(self.Materialm or self.Material, pos)
+
+			if double == 2 then
+				local ang_
+
+				if i == 1 then
+					ang_ = (ang * -1):Angle()
+				elseif i == 2 then
+					ang_ = ang:Angle()
+				end
+
+				particle:SetAngles(ang_)
+			else
+				particle:SetAngles(ang:Angle())
+			end
+
+			if self.OwnerVelocityMultiplier ~= 0 then
+				local owner = self:GetOwner(true)
+
+				if owner:IsValid() then
+					vec = vec + (owner:GetVelocity() * self.OwnerVelocityMultiplier)
+				end
+			end
+
+			particle:SetVelocity((vec + ang) * self.Velocity)
+			particle:SetColor(unpack(color))
+			particle:SetColor(unpack(color))
+			local life = math.Clamp(self.DieTime, 0.0001, 50)
+
+			if self.AddFrametimeLife then
+				life = life + FrameTime()
+			end
+
+			particle:SetDieTime(life)
+			particle:SetStartAlpha(self.StartAlpha)
+			particle:SetEndAlpha(self.EndAlpha)
+			particle:SetStartSize(self.StartSize)
+			particle:SetEndSize(self.EndSize)
+			particle:SetStartLength(self.StartLength)
+			particle:SetEndLength(self.EndLength)
+			particle:SetRoll(self.RandomRollSpeed * 36)
+			particle:SetRollDelta(self.RollDelta + roll)
+			particle:SetAirResistance(self.AirResistance)
+			particle:SetBounce(self.Bounce)
+			particle:SetGravity(self.Gravity)
+			particle:SetAngles(particle:GetAngles() + self.ParticleAngle)
+			particle:SetLighting(self.Lighting)
+
+			if not self.Follow then
+				particle:SetCollide(self.Collide)
+			end
+
+			if self.Sliding then
+				particle:SetCollideCallback(SlideCallback)
+			end
+
+			if self["3D"] then
+				if not self.Sliding then
+					if i == 1 then
+						particle:SetCollideCallback(RemoveCallback)
+					else
+						particle:SetCollideCallback(StickCallback)
+					end
+				end
+
+				particle:SetAngleVelocity(Angle(
+					self.ParticleAngleVelocity.x,
+					self.ParticleAngleVelocity.y,
+					self.ParticleAngleVelocity.z))
+				particle.Align = self.Align
+				particle.Stick = self.Stick
+				particle.StickLifeTime = self.StickLifeTime
+				particle.StickStartSize = self.StickStartSize
+				particle.StickEndSize = self.StickEndSize
+				particle.StickStartAlpha = self.StickStartAlpha
+				particle.StickEndAlpha = self.StickEndAlpha
+			end
+		end
+	end
+
+	self.NextShot = pac.RealTime + self.FireDelay
+end
 end
 
 pac.RegisterPart(PART)

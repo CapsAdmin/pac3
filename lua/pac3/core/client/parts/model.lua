@@ -385,313 +385,313 @@ function PART:DrawLoadingText(ent, pos, ang)
 		surface.SetTextPos(pos2d.x - w / 2, pos2d.y - h / 2)
 		surface.DrawText(str)
 		cam.IgnoreZ(false)
-		cam.End2D()
-	end
+cam.End2D()
+end
 
-	function PART:DrawModel(ent, pos, ang)
-		if self.loading then
-			self:DrawLoadingText(ent, pos, ang)
-		end
+function PART:DrawModel(ent, pos, ang)
+if self.loading then
+	self:DrawLoadingText(ent, pos, ang)
+end
 
-		if self.Alpha == 0 or self.Size == 0 then return end
-		if self.loading and not self.obj_mesh then return end
+if self.Alpha == 0 or self.Size == 0 then return end
+if self.loading and not self.obj_mesh then return end
 
-		if self.NoCulling or self.Invert then
-			render_CullMode(MATERIAL_CULLMODE_CW)
-		end
+if self.NoCulling or self.Invert then
+	render_CullMode(MATERIAL_CULLMODE_CW)
+end
 
-		local material_bound = false
-		material_bound = self:BindMaterials(ent) or material_bound
-		ent.pac_drawing_model = true
-		ent_draw_model(self, ent, pos, ang)
-		ent.pac_drawing_model = false
+local material_bound = false
+material_bound = self:BindMaterials(ent) or material_bound
+ent.pac_drawing_model = true
+ent_draw_model(self, ent, pos, ang)
+ent.pac_drawing_model = false
 
-		if pac.projected_texture_enabled and not pac.flashlight_disabled then
-			render.PushFlashlightMode(true)
-			material_bound = self:BindMaterials(ent) or material_bound
-			ent.pac_drawing_model = true
-			ent_draw_model(self, ent, pos, ang)
-			ent.pac_drawing_model = false
-			render.PopFlashlightMode()
-		end
+if pac.projected_texture_enabled and not pac.flashlight_disabled then
+	render.PushFlashlightMode(true)
+	material_bound = self:BindMaterials(ent) or material_bound
+	ent.pac_drawing_model = true
+	ent_draw_model(self, ent, pos, ang)
+	ent.pac_drawing_model = false
+	render.PopFlashlightMode()
+end
 
-		if self.NoCulling then
-			render_CullMode(MATERIAL_CULLMODE_CCW)
-			material_bound = self:BindMaterials(ent) or material_bound
-			ent_draw_model(self, ent, pos, ang)
-		elseif self.Invert then
-			render_CullMode(MATERIAL_CULLMODE_CCW)
-		end
+if self.NoCulling then
+	render_CullMode(MATERIAL_CULLMODE_CCW)
+	material_bound = self:BindMaterials(ent) or material_bound
+	ent_draw_model(self, ent, pos, ang)
+elseif self.Invert then
+	render_CullMode(MATERIAL_CULLMODE_CCW)
+end
 
 	-- need to unbind mateiral
 	if material_bound then
-			render_MaterialOverride()
-		end
+	render_MaterialOverride()
+end
+end
+
+function PART:DrawLoadingText(ent, pos, ang)
+cam.Start2D()
+	cam.IgnoreZ(true)
+	local pos2d = pos:ToScreen()
+	surface.SetFont("DermaDefault")
+
+	if self.errored then
+		surface.SetTextColor(255, 0, 0, 255)
+		local str = self.loading:match("^(.-):\n") or
+			self.loading:match("^(.-)\n") or
+			self.loading:sub(1, 100)
+		local w, h = surface.GetTextSize(str)
+		surface.SetTextPos(pos2d.x - w / 2, pos2d.y - h / 2)
+		surface.DrawText(str)
+	else
+		surface.SetTextColor(255, 255, 255, 255)
+		local str = self.loading .. string.rep(".", pac.RealTime * 3 % 3)
+		local w, h = surface.GetTextSize(self.loading .. "...")
+		surface.SetTextPos(pos2d.x - w / 2, pos2d.y - h / 2)
+		surface.DrawText(str)
 	end
 
-	function PART:DrawLoadingText(ent, pos, ang)
-		cam.Start2D()
-			cam.IgnoreZ(true)
-			local pos2d = pos:ToScreen()
-			surface.SetFont("DermaDefault")
+	cam.IgnoreZ(false)
+cam.End2D()
+end
 
-			if self.errored then
-				surface.SetTextColor(255, 0, 0, 255)
-				local str = self.loading:match("^(.-):\n") or
-					self.loading:match("^(.-)\n") or
-					self.loading:sub(1, 100)
-				local w, h = surface.GetTextSize(str)
-				surface.SetTextPos(pos2d.x - w / 2, pos2d.y - h / 2)
-				surface.DrawText(str)
-			else
-				surface.SetTextColor(255, 255, 255, 255)
-				local str = self.loading .. string.rep(".", pac.RealTime * 3 % 3)
-				local w, h = surface.GetTextSize(self.loading .. "...")
-				surface.SetTextPos(pos2d.x - w / 2, pos2d.y - h / 2)
-				surface.DrawText(str)
+local ALLOW_TO_MDL = CreateConVar(
+"pac_allow_mdl",
+"1",
+CLIENT and
+{FCVAR_REPLICATED} or
+{FCVAR_ARCHIVE, FCVAR_REPLICATED},
+"Allow to use custom MDLs")
+
+function PART:RefreshModel()
+local ent = self:GetEntity()
+
+if ent:IsValid() then
+ent.pac_bones = nil
+
+if ent.pac_holdtypes then
+	ent.pac_holdtypes = {}
+end
+end
+
+self:SetModelModifiers(self:GetModelModifiers())
+self:SetMaterials(self:GetMaterials())
+self:SetSize(self:GetSize())
+self:SetScale(self:GetScale())
+end
+
+function PART:RealSetModel(path)
+self.Entity:SetModel(path)
+self:RefreshModel()
+end
+
+function PART:SetModel(path)
+self.Model = path
+self.Entity = self:GetEntity()
+
+if path:find("://", nil, true) then
+if path:StartWith("objhttp") or path:EndsWith(".obj") or self.ForceObjUrl then
+	self.loading = "downloading obj"
+
+	pac.urlobj.GetObjFromURL(path, false, false, function(meshes, err)
+		local function set_mesh(part, mesh)
+			part.obj_mesh = mesh
+
+			if not part.Materialm then
+				part.Materialm = Material("error")
 			end
 
-			cam.IgnoreZ(false)
-			cam.End2D()
+			function part.Entity.pacDrawModel(ent, simple)
+				if simple then
+					RealDrawModel(part, ent, ent:GetPos(), ent:GetAngles())
+				else
+					part:ModifiersPreEvent("OnDraw")
+					part:DrawModel(ent, ent:GetPos(), ent:GetAngles())
+					part:ModifiersPostEvent("OnDraw")
+				end
+			end
+
+			part.Entity:SetRenderBounds(Vector(1, 1, 1) * -300, Vector(1, 1, 1) * 300)
 		end
 
-		local ALLOW_TO_MDL = CreateConVar(
-			"pac_allow_mdl",
-			"1",
-			CLIENT and
-			{FCVAR_REPLICATED} or
-			{FCVAR_ARCHIVE, FCVAR_REPLICATED},
-			"Allow to use custom MDLs")
+		if not self:IsValid() then return end
+		self.loading = false
+		self.Entity = self:GetEntity()
 
-		function PART:RefreshModel()
+		if not meshes and err then
+			self.Entity:SetModel("models/error.mdl")
+			self.obj_mesh = nil
+			return
+		end
+
+		if table.Count(meshes) == 1 then
+			set_mesh(self, select(2, next(meshes)))
+		else
+			for key, mesh in pairs(meshes) do
+				local part = pac.CreatePart("model", self:GetOwnerName())
+				part:SetName(key)
+				part:SetParent(self)
+				part:SetMaterial(self:GetMaterial())
+				set_mesh(part, mesh)
+			end
+
+			self:SetAlpha(0)
+		end
+	end, function(finished, statusMessage)
+		if finished then
+			self.loading = nil
+		else
+			self.loading = statusMessage
+		end
+	end)
+else
+	local status, reason = hook.Run("PAC3AllowMDLDownload", self:GetPlayerOwner(), self, path)
+
+	if ALLOW_TO_MDL:GetBool() and status ~= false then
+		self.loading = "downloading mdl zip"
+
+		pac.DownloadMDL(path, function(mdl_path)
+			self.loading = nil
+			self.errored = nil
 			local ent = self:GetEntity()
 
-			if ent:IsValid() then
-				ent.pac_bones = nil
-
-				if ent.pac_holdtypes then
-					ent.pac_holdtypes = {}
+			if self.ClassName == "entity2" then
+				if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
+					pacx.SetModel(ent, path, self:GetPlayerOwner())
 				end
 			end
 
-			self:SetModelModifiers(self:GetModelModifiers())
-			self:SetMaterials(self:GetMaterials())
-			self:SetSize(self:GetSize())
-			self:SetScale(self:GetScale())
-		end
-
-		function PART:RealSetModel(path)
-			self.Entity:SetModel(path)
-			self:RefreshModel()
-		end
-
-		function PART:SetModel(path)
-			self.Model = path
-			self.Entity = self:GetEntity()
-
-			if path:find("://", nil, true) then
-				if path:StartWith("objhttp") or path:EndsWith(".obj") or self.ForceObjUrl then
-					self.loading = "downloading obj"
-
-					pac.urlobj.GetObjFromURL(path, false, false, function(meshes, err)
-						local function set_mesh(part, mesh)
-							part.obj_mesh = mesh
-
-							if not part.Materialm then
-								part.Materialm = Material("error")
-							end
-
-							function part.Entity.pacDrawModel(ent, simple)
-								if simple then
-									RealDrawModel(part, ent, ent:GetPos(), ent:GetAngles())
-								else
-									part:ModifiersPreEvent("OnDraw")
-									part:DrawModel(ent, ent:GetPos(), ent:GetAngles())
-									part:ModifiersPostEvent("OnDraw")
-								end
-							end
-
-							part.Entity:SetRenderBounds(Vector(1, 1, 1) * -300, Vector(1, 1, 1) * 300)
-						end
-
-						if not self:IsValid() then return end
-						self.loading = false
-						self.Entity = self:GetEntity()
-
-						if not meshes and err then
-							self.Entity:SetModel("models/error.mdl")
-							self.obj_mesh = nil
-							return
-						end
-
-						if table.Count(meshes) == 1 then
-							set_mesh(self, select(2, next(meshes)))
-						else
-							for key, mesh in pairs(meshes) do
-								local part = pac.CreatePart("model", self:GetOwnerName())
-								part:SetName(key)
-								part:SetParent(self)
-								part:SetMaterial(self:GetMaterial())
-								set_mesh(part, mesh)
-							end
-
-							self:SetAlpha(0)
-						end
-					end, function(finished, statusMessage)
-						if finished then
-							self.loading = nil
-						else
-							self.loading = statusMessage
-						end
-					end)
-				else
-					local status, reason = hook.Run("PAC3AllowMDLDownload", self:GetPlayerOwner(), self, path)
-
-					if ALLOW_TO_MDL:GetBool() and status ~= false then
-						self.loading = "downloading mdl zip"
-
-						pac.DownloadMDL(path, function(mdl_path)
-							self.loading = nil
-							self.errored = nil
-							local ent = self:GetEntity()
-
-							if self.ClassName == "entity2" then
-								if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
-									pacx.SetModel(ent, path, self:GetPlayerOwner())
-								end
-							end
-
-							self:RealSetModel(mdl_path)
-						end, function(err)
-							if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
-								pace.MessagePrompt(err, "HTTP Request Failed for " .. path, "OK")
-							else
-								pac.Message(Color(0, 255, 0), "[model] ", Color(255, 255, 255), "HTTP Request Failed for " .. path .. " - " .. err)
-							end
-
-							self.loading = err
-							self.errored = true
-							self:RealSetModel("models/error.mdl")
-						end, self:GetPlayerOwner())
-					else
-						self.loading = reason or "mdl is not allowed"
-						self:RealSetModel("models/error.mdl")
-						pac.Message(self, " mdl files are not allowed")
-					end
-				end
+			self:RealSetModel(mdl_path)
+		end, function(err)
+			if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
+				pace.MessagePrompt(err, "HTTP Request Failed for " .. path, "OK")
 			else
-				local ent = self:GetEntity()
-
-				if self.ClassName == "entity2" then
-					if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
-						pacx.SetModel(ent, path, self:GetPlayerOwner())
-					end
-				end
-
-				self:RealSetModel(path)
+				pac.Message(Color(0, 255, 0), "[model] ", Color(255, 255, 255), "HTTP Request Failed for " .. path .. " - " .. err)
 			end
-		end
 
-		local NORMAL = Vector(1, 1, 1)
+			self.loading = err
+			self.errored = true
+			self:RealSetModel("models/error.mdl")
+		end, self:GetPlayerOwner())
+	else
+		self.loading = reason or "mdl is not allowed"
+		self:RealSetModel("models/error.mdl")
+		pac.Message(self, " mdl files are not allowed")
+	end
+end
+else
+local ent = self:GetEntity()
 
-		function PART:CheckScale()
+if self.ClassName == "entity2" then
+	if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
+		pacx.SetModel(ent, path, self:GetPlayerOwner())
+	end
+end
+
+self:RealSetModel(path)
+end
+end
+
+local NORMAL = Vector(1, 1, 1)
+
+function PART:CheckScale()
 	-- RenderMultiply doesn't work with this..
 	if
-				self.BoneMerge and
-				self.Entity:IsValid() and
-				self.Entity:GetBoneCount() and
-				self.Entity:GetBoneCount() > 1
-			then
-				if self.Scale * self.Size ~= NORMAL then
-					if not self.requires_bone_model_scale then
-						self.requires_bone_model_scale = true
-					end
+self.BoneMerge and
+self.Entity:IsValid() and
+self.Entity:GetBoneCount() and
+self.Entity:GetBoneCount() > 1
+then
+if self.Scale * self.Size ~= NORMAL then
+	if not self.requires_bone_model_scale then
+		self.requires_bone_model_scale = true
+	end
 
-					return true
-				end
+	return true
+end
 
-				self.requires_bone_model_scale = false
-			end
-		end
+self.requires_bone_model_scale = false
+end
+end
 
-		function PART:SetAlternativeScaling(b)
-			self.AlternativeScaling = b
-			self:SetScale(self.Scale)
-		end
+function PART:SetAlternativeScaling(b)
+self.AlternativeScaling = b
+self:SetScale(self.Scale)
+end
 
-		function PART:SetScale(var)
-			var = var or Vector(1, 1, 1)
-			self.Scale = var
+function PART:SetScale(var)
+var = var or Vector(1, 1, 1)
+self.Scale = var
 
-			if not self:CheckScale() then
-				self:ApplyMatrix()
-			end
-		end
+if not self:CheckScale() then
+self:ApplyMatrix()
+end
+end
 
-		local vec_one = Vector(1, 1, 1)
+local vec_one = Vector(1, 1, 1)
 
-		function PART:ApplyMatrix()
-			local ent = self:GetEntity()
-			if not ent:IsValid() then return end
-			local mat = Matrix()
+function PART:ApplyMatrix()
+local ent = self:GetEntity()
+if not ent:IsValid() then return end
+local mat = Matrix()
 
-			if self.ClassName ~= "model2" then
-				mat:Translate(self.Position + self.PositionOffset)
-				mat:Rotate(self.Angles + self.AngleOffset)
-			end
+if self.ClassName ~= "model2" then
+mat:Translate(self.Position + self.PositionOffset)
+mat:Rotate(self.Angles + self.AngleOffset)
+end
 
-			if ent:IsPlayer() or ent:IsNPC() then
-				if pacx and pacx.SetEntitySizeMultiplier then
-					local other = {
-							StandingHullHeight = self.StandingHullHeight,
-							CrouchingHullHeight = self.CrouchingHullHeight,
-							HullWidth = self.HullWidth,
-						}
+if ent:IsPlayer() or ent:IsNPC() then
+if pacx and pacx.SetEntitySizeMultiplier then
+	local other = {
+			StandingHullHeight = self.StandingHullHeight,
+			CrouchingHullHeight = self.CrouchingHullHeight,
+			HullWidth = self.HullWidth,
+		}
 
-					if self:GetPlayerOwner() == pac.LocalPlayer then
-						pacx.SetEntitySizeOnServer(ent, self.Size, other)
-					end
+	if self:GetPlayerOwner() == pac.LocalPlayer then
+		pacx.SetEntitySizeOnServer(ent, self.Size, other)
+	end
 
-					pacx.SetEntitySizeMultiplier(ent, self.Size, other)
-				end
+	pacx.SetEntitySizeMultiplier(ent, self.Size, other)
+end
 
-				if self.Size == 1 and self.Scale == vec_one then
-					if ent.pac_enable_ik then
-						ent:SetModelScale(1, 0)
-						ent:SetIK(true)
-					else
-						ent:SetModelScale(1.000001, 0)
-						ent:SetIK(false)
-					end
-				end
+if self.Size == 1 and self.Scale == vec_one then
+	if ent.pac_enable_ik then
+		ent:SetModelScale(1, 0)
+		ent:SetIK(true)
+	else
+		ent:SetModelScale(1.000001, 0)
+		ent:SetIK(false)
+	end
+end
 
-				mat:Scale(self.Scale)
-			else
-				mat:Scale(self.Scale * self.Size)
-			end
+mat:Scale(self.Scale)
+else
+mat:Scale(self.Scale * self.Size)
+end
 
-			if mat:IsIdentity() then
-				ent:DisableMatrix("RenderMultiply")
-			else
-				ent:EnableMatrix("RenderMultiply", mat)
-			end
-		end
+if mat:IsIdentity() then
+ent:DisableMatrix("RenderMultiply")
+else
+ent:EnableMatrix("RenderMultiply", mat)
+end
+end
 
-		function PART:SetSize(var)
-			var = var or 1
-			self.Size = var
+function PART:SetSize(var)
+var = var or 1
+self.Size = var
 
-			if not self:CheckScale() then
-				self:ApplyMatrix()
-			end
-		end
+if not self:CheckScale() then
+self:ApplyMatrix()
+end
+end
 
-		function PART:CheckBoneMerge()
-			local ent = self.Entity
-			if self.skip_orient then return end
+function PART:CheckBoneMerge()
+local ent = self.Entity
+if self.skip_orient then return end
 
-			if ent:IsValid() and not ent:IsPlayer() and ent:GetModel() then
-				if self.BoneMerge then
+if ent:IsValid() and not ent:IsPlayer() and ent:GetModel() then
+if self.BoneMerge then
 			--[[if not self.ragdoll then
 				self.Entity = ClientsideRagdoll(ent:GetModel())
 				self.requires_bone_model_scale = true
@@ -701,21 +701,21 @@ function PART:DrawLoadingText(ent, pos, ang)
 
 			local owner = self:GetOwner()
 
-					if ent:GetParent() ~= owner then
-						ent:SetParent(owner)
+	if ent:GetParent() ~= owner then
+		ent:SetParent(owner)
 
-						if not ent:IsEffectActive(EF_BONEMERGE) then
-							ent:AddEffects(EF_BONEMERGE)
-							owner.pac_bonemerged = owner.pac_bonemerged or {}
-							table.insert(owner.pac_bonemerged, ent)
-							ent.RenderOverride = function()
-								ent.pac_drawing_model = true
-								ent:DrawModel()
-								ent.pac_drawing_model = false
-							end
-						end
-					end
-				else
+		if not ent:IsEffectActive(EF_BONEMERGE) then
+			ent:AddEffects(EF_BONEMERGE)
+			owner.pac_bonemerged = owner.pac_bonemerged or {}
+			table.insert(owner.pac_bonemerged, ent)
+			ent.RenderOverride = function()
+				ent.pac_drawing_model = true
+				ent:DrawModel()
+				ent.pac_drawing_model = false
+			end
+		end
+	end
+else
 			--[[if self.ragdoll then
 				self.Entity:Remove()
 				ent = self:GetEntity()
@@ -724,438 +724,438 @@ function PART:DrawLoadingText(ent, pos, ang)
 			end]]
 
 			if ent:GetParent():IsValid() then
-						local owner = ent:GetParent()
-						ent:SetParent(NULL)
+		local owner = ent:GetParent()
+		ent:SetParent(NULL)
 
-						if ent:IsEffectActive(EF_BONEMERGE) then
-							ent:RemoveEffects(EF_BONEMERGE)
-							ent.RenderOverride = nil
+		if ent:IsEffectActive(EF_BONEMERGE) then
+			ent:RemoveEffects(EF_BONEMERGE)
+			ent.RenderOverride = nil
 
-							if owner:IsValid() then
-								owner.pac_bonemerged = owner.pac_bonemerged or {}
+			if owner:IsValid() then
+				owner.pac_bonemerged = owner.pac_bonemerged or {}
 
-								for i, v in ipairs(owner.pac_bonemerged) do
-									if v == ent then
-										table.remove(owner.pac_bonemerged, i)
+				for i, v in ipairs(owner.pac_bonemerged) do
+					if v == ent then
+						table.remove(owner.pac_bonemerged, i)
 
-										break
-									end
-								end
-							end
-						end
-
-						self.requires_bone_model_scale = false
+						break
 					end
 				end
 			end
 		end
 
-		function PART:OnBuildBonePositions()
-			if self.AlternativeScaling then return end
-			local ent = self:GetEntity()
-			local owner = self:GetOwner()
+		self.requires_bone_model_scale = false
+	end
+end
+end
+end
 
-			if
-				not ent:IsValid() or
-				not owner:IsValid() or
-				not ent:GetBoneCount() or
-				ent:GetBoneCount() < 1
-			then
-				return
-			end
+function PART:OnBuildBonePositions()
+if self.AlternativeScaling then return end
+local ent = self:GetEntity()
+local owner = self:GetOwner()
 
-			if self.requires_bone_model_scale then
-				local scale = self.Scale * self.Size
+if
+not ent:IsValid() or
+not owner:IsValid() or
+not ent:GetBoneCount() or
+ent:GetBoneCount() < 1
+then
+return
+end
 
-				for i = 0, ent:GetBoneCount() - 1 do
-					if i == 0 then
-						ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * Vector(scale.x ^ 0.25, scale.y ^ 0.25, scale.z ^ 0.25))
-					else
-						ent:ManipulateBonePosition(i, ent:GetManipulateBonePosition(i) + Vector((scale.x - 1) ^ 4, 0, 0))
-						ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * scale)
-					end
-				end
-			end
-		end
+if self.requires_bone_model_scale then
+local scale = self.Scale * self.Size
 
-		pac.RegisterPart(PART)
+for i = 0, ent:GetBoneCount() - 1 do
+	if i == 0 then
+		ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * Vector(scale.x ^ 0.25, scale.y ^ 0.25, scale.z ^ 0.25))
+	else
+		ent:ManipulateBonePosition(i, ent:GetManipulateBonePosition(i) + Vector((scale.x - 1) ^ 4, 0, 0))
+		ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * scale)
+	end
+end
+end
+end
 
-		do
-			local PART = {}
-			PART.FriendlyName = "entity"
-			PART.ClassName = "entity2"
-			PART.Base = "model2"
-			PART.Category = "entity"
-			PART.ManualDraw = true
-			PART.HandleModifiersManually = true
-			PART.Icon = "icon16/brick.png"
-			PART.Group = "entity"
-			PART.is_model_part = false
-			pac.StartStorableVars()
-				pac.SetPropertyGroup(PART, "generic")
-					pac.PropertyOrder(PART, "Name")
-					pac.PropertyOrder(PART, "Hide")
-					pac.PropertyOrder(PART, "ParentName")
-				pac.SetPropertyGroup(PART, "appearance")
-					pac.GetSet(PART, "NoDraw", false)
-					pac.GetSet(PART, "DrawShadow", true)
-					pac.GetSet(PART, "InverseKinematics", false)
-				pac.SetPropertyGroup(PART, "hull")
-					pac.GetSet(PART, "StandingHullHeight", 72, {editor_panel = "hull"})
-					pac.GetSet(PART, "CrouchingHullHeight", 36, {editor_panel = "hull", crouch = true})
-					pac.GetSet(PART, "HullWidth", 32, {editor_panel = "hull"})
-			pac.EndStorableVars()
-			pac.RemoveProperty(PART, "BoneMerge")
-			pac.RemoveProperty(PART, "Bone")
+pac.RegisterPart(PART)
+
+do
+local PART = {}
+PART.FriendlyName = "entity"
+PART.ClassName = "entity2"
+PART.Base = "model2"
+PART.Category = "entity"
+PART.ManualDraw = true
+PART.HandleModifiersManually = true
+PART.Icon = "icon16/brick.png"
+PART.Group = "entity"
+PART.is_model_part = false
+pac.StartStorableVars()
+pac.SetPropertyGroup(PART, "generic")
+	pac.PropertyOrder(PART, "Name")
+	pac.PropertyOrder(PART, "Hide")
+	pac.PropertyOrder(PART, "ParentName")
+pac.SetPropertyGroup(PART, "appearance")
+	pac.GetSet(PART, "NoDraw", false)
+	pac.GetSet(PART, "DrawShadow", true)
+	pac.GetSet(PART, "InverseKinematics", false)
+pac.SetPropertyGroup(PART, "hull")
+	pac.GetSet(PART, "StandingHullHeight", 72, {editor_panel = "hull"})
+	pac.GetSet(PART, "CrouchingHullHeight", 36, {editor_panel = "hull", crouch = true})
+	pac.GetSet(PART, "HullWidth", 32, {editor_panel = "hull"})
+pac.EndStorableVars()
+pac.RemoveProperty(PART, "BoneMerge")
+pac.RemoveProperty(PART, "Bone")
 	--pac.RemoveProperty(PART, "Position")
 	--pac.RemoveProperty(PART, "Angles")
 	--pac.RemoveProperty(PART, "PositionOffset")
 	--pac.RemoveProperty(PART, "AngleOffset")
 	pac.RemoveProperty(PART, "EyeAngles")
-			pac.RemoveProperty(PART, "AimPartName")
+pac.RemoveProperty(PART, "AimPartName")
 
-			function PART:SetDrawShadow(b)
-				self.DrawShadow = b
-				local ent = self:GetEntity()
+function PART:SetDrawShadow(b)
+self.DrawShadow = b
+local ent = self:GetEntity()
 
-				if ent:IsValid() then
-					ent:DrawShadow(b)
-					ent:MarkShadowAsDirty()
-				end
-			end
+if ent:IsValid() then
+	ent:DrawShadow(b)
+	ent:MarkShadowAsDirty()
+end
+end
 
-			function PART:SetStandingHullHeight(val)
-				self.StandingHullHeight = val
-				self:ApplyMatrix()
-			end
+function PART:SetStandingHullHeight(val)
+self.StandingHullHeight = val
+self:ApplyMatrix()
+end
 
-			function PART:SetCrouchingHullHeight(val)
-				self.CrouchingHullHeight = val
-				self:ApplyMatrix()
-			end
+function PART:SetCrouchingHullHeight(val)
+self.CrouchingHullHeight = val
+self:ApplyMatrix()
+end
 
-			function PART:SetHullWidth(val)
-				self.HullWidth = val
-				self:ApplyMatrix()
-			end
+function PART:SetHullWidth(val)
+self.HullWidth = val
+self:ApplyMatrix()
+end
 
-			function PART:GetNiceName()
-				local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%.")) or
-					self:GetModel()
-				local class_name = "NULL"
-				local ent = self:GetEntity()
+function PART:GetNiceName()
+local str = pac.PrettifyName(("/" .. self:GetModel()):match(".+/(.-)%.")) or
+	self:GetModel()
+local class_name = "NULL"
+local ent = self:GetEntity()
 
-				if ent:IsValid() then
-					class_name = ent:GetClass()
-				end
+if ent:IsValid() then
+	class_name = ent:GetClass()
+end
 
-				return (str and str:gsub("%d", "") or "error") .. " " .. class_name .. " model"
-			end
+return (str and str:gsub("%d", "") or "error") .. " " .. class_name .. " model"
+end
 
-			function PART:SetPosition(pos)
-				self.Position = pos
-				self:ApplyMatrix()
-			end
+function PART:SetPosition(pos)
+self.Position = pos
+self:ApplyMatrix()
+end
 
-			function PART:SetAngles(ang)
-				self.Angles = ang
-				self:ApplyMatrix()
-			end
+function PART:SetAngles(ang)
+self.Angles = ang
+self:ApplyMatrix()
+end
 
-			function PART:SetPositionOffset(pos)
-				self.PositionOffset = pos
-				self:ApplyMatrix()
-			end
+function PART:SetPositionOffset(pos)
+self.PositionOffset = pos
+self:ApplyMatrix()
+end
 
-			function PART:SetAngleOffset(ang)
-				self.AngleOffset = ang
-				self:ApplyMatrix()
-			end
+function PART:SetAngleOffset(ang)
+self.AngleOffset = ang
+self:ApplyMatrix()
+end
 
-			function PART:GetBonePosition()
-				local ent = self:GetOwner()
-				local ang = ent:GetAngles()
+function PART:GetBonePosition()
+local ent = self:GetOwner()
+local ang = ent:GetAngles()
 
-				if ent:IsPlayer() then
-					ang.p = 0
-				end
+if ent:IsPlayer() then
+	ang.p = 0
+end
 
-				return ent:GetPos(), ang
-			end
+return ent:GetPos(), ang
+end
 
-			function PART:Initialize()
-				self.material_count = 0
-			end
+function PART:Initialize()
+self.material_count = 0
+end
 
-			function PART:OnDraw(ent, pos, ang)
-				self:PreEntityDraw(ent, ent, pos, ang)
-				self:DrawModel(ent, pos, ang)
-				self:PostEntityDraw(ent, ent, pos, ang)
-			end
+function PART:OnDraw(ent, pos, ang)
+self:PreEntityDraw(ent, ent, pos, ang)
+self:DrawModel(ent, pos, ang)
+self:PostEntityDraw(ent, ent, pos, ang)
+end
 
-			function PART:GetEntity()
-				local ent = self:GetOwner()
-				self.Entity = ent
-				return ent
-			end
+function PART:GetEntity()
+local ent = self:GetOwner()
+self.Entity = ent
+return ent
+end
 
-			local temp_mat = Material("models/error/new light1")
+local temp_mat = Material("models/error/new light1")
 
-			function PART:OnShow()
-				local ent = self:GetEntity()
+function PART:OnShow()
+local ent = self:GetEntity()
 
-				if ent:IsValid() then
-					function ent.RenderOverride()
+if ent:IsValid() then
+	function ent.RenderOverride()
 				-- if the draw call is not from pac don't bother
 				if not ent.pac_drawing_model then return end
 
-						if self:IsValid() and self:GetOwner():IsValid() then
-							if ent.pac_bonemerged then
-								for _, e in ipairs(ent.pac_bonemerged) do
-									if e.pac_drawing_model then return end
-								end
-							end
+		if self:IsValid() and self:GetOwner():IsValid() then
+			if ent.pac_bonemerged then
+				for _, e in ipairs(ent.pac_bonemerged) do
+					if e.pac_drawing_model then return end
+				end
+			end
 
 					-- so eyes work
 					if self.NoDraw then
-								render.SetBlend(0)
-								render.ModelMaterialOverride(temp_mat)
-								ent:DrawModel()
-								render.SetBlend(1)
-								render.ModelMaterialOverride()
-								return
-							end
-
-							self:Draw(ent:GetPos(), ent:GetAngles(), self.Translucent and "translucent" or "opaque")
-						else
-							ent.RenderOverride = nil
-						end
-					end
-
-					self:SetDrawShadow(self:GetDrawShadow())
-					self:ApplyMatrix()
-				end
+				render.SetBlend(0)
+				render.ModelMaterialOverride(temp_mat)
+				ent:DrawModel()
+				render.SetBlend(1)
+				render.ModelMaterialOverride()
+				return
 			end
 
-			function PART:OnHide()
-				local ent = self:GetOwner()
+			self:Draw(ent:GetPos(), ent:GetAngles(), self.Translucent and "translucent" or "opaque")
+		else
+			ent.RenderOverride = nil
+		end
+	end
 
-				if ent:IsValid() then
-					ent.RenderOverride = nil
-					ent:DisableMatrix("RenderMultiply")
-				end
-			end
+	self:SetDrawShadow(self:GetDrawShadow())
+	self:ApplyMatrix()
+end
+end
 
-			function PART:RealSetModel(path)
-				local ent = self:GetEntity()
-				if not ent:IsValid() then return end
-				ent:SetModel(path)
-				self:RefreshModel()
-			end
+function PART:OnHide()
+local ent = self:GetOwner()
 
-			function PART:OnRemove()
-				local ent = self:GetEntity()
-				if not ent:IsValid() then return end
+if ent:IsValid() then
+	ent.RenderOverride = nil
+	ent:DisableMatrix("RenderMultiply")
+end
+end
 
-				if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
-					pacx.SetModel(ent, nil, self:GetPlayerOwner())
-				end
+function PART:RealSetModel(path)
+local ent = self:GetEntity()
+if not ent:IsValid() then return end
+ent:SetModel(path)
+self:RefreshModel()
+end
 
-				if ent:IsPlayer() or ent:IsNPC() then
-					if pacx and pacx.SetEntitySizeMultiplier then
-						if self:GetPlayerOwner() == pac.LocalPlayer then
-							pacx.SetEntitySizeOnServer(ent)
-						end
+function PART:OnRemove()
+local ent = self:GetEntity()
+if not ent:IsValid() then return end
 
-						pacx.SetEntitySizeMultiplier(ent)
-					end
-				end
+if pacx and pacx.SetModel and self:GetPlayerOwner() == pac.LocalPlayer then
+	pacx.SetModel(ent, nil, self:GetPlayerOwner())
+end
 
-				ent:DisableMatrix("RenderMultiply")
-			end
-
-			function PART:SetInverseKinematics(b)
-				self.InverseKinematics = b
-				local ent = self:GetOwner()
-
-				if ent:IsValid() then
-					ent.pac_enable_ik = b
-					self:ApplyMatrix()
-				end
-			end
-
-			function PART:OnThink()
-				self:CheckBoneMerge()
-				local ent = self:GetEntity()
-
-				if ent:IsValid() then
-					local model = pacx and pacx.GetModel(ent) or ent:GetModel()
-					local bone_count = ent:GetBoneCount()
-
-					if self.last_model ~= model or self.last_bone_count ~= bone_count then
-						self:RefreshModel()
-						self.last_model = model
-						self.last_bone_count = bone_count
-					end
-				end
-			end
-
-			pac.RegisterPart(PART)
+if ent:IsPlayer() or ent:IsNPC() then
+	if pacx and pacx.SetEntitySizeMultiplier then
+		if self:GetPlayerOwner() == pac.LocalPlayer then
+			pacx.SetEntitySizeOnServer(ent)
 		end
 
-		do
-			local PART = {}
-			PART.ClassName = "weapon"
-			PART.Base = "model2"
-			PART.Category = "entity"
-			PART.ManualDraw = true
-			PART.HandleModifiersManually = true
-			PART.Icon = "icon16/brick.png"
-			PART.Group = "entity"
-			PART.is_model_part = false
-			pac.StartStorableVars()
-				pac.SetPropertyGroup(PART, "generic")
-					pac.PropertyOrder(PART, "Name")
-					pac.PropertyOrder(PART, "Hide")
-					pac.PropertyOrder(PART, "ParentName")
-					pac.GetSet(PART, "OverridePosition", false)
-					pac.GetSet(
-						PART,
-						"Class",
-						"all",
-						{
-							enums = function()
-								local out = {
-										["physgun"] = "weapon_physgun",
-										["357"] = "weapon_357",
-										["alyxgun"] = "weapon_alyxgun",
-										["annabelle"] = "weapon_annabelle",
-										["ar2"] = "weapon_ar2",
-										["brickbat"] = "weapon_brickbat",
-										["bugbait"] = "weapon_bugbait",
-										["crossbow"] = "weapon_crossbow",
-										["crowbar"] = "weapon_crowbar",
-										["frag"] = "weapon_frag",
-										["physcannon"] = "weapon_physcannon",
-										["pistol"] = "weapon_pistol",
-										["rpg"] = "weapon_rpg",
-										["shotgun"] = "weapon_shotgun",
-										["smg1"] = "weapon_smg1",
-										["striderbuster"] = "weapon_striderbuster",
-										["stunstick"] = "weapon_stunstick",
-									}
+		pacx.SetEntitySizeMultiplier(ent)
+	end
+end
 
-								for _, tbl in pairs(weapons.GetList()) do
-									if not tbl.ClassName:StartWith("ai_") then
-										local friendly = tbl.ClassName:match("weapon_(.+)") or tbl.ClassName
-										out[friendly] = tbl.ClassName
-									end
-								end
+ent:DisableMatrix("RenderMultiply")
+end
 
-								return out
-							end,
-						})
-				pac.SetPropertyGroup(PART, "appearance")
-					pac.GetSet(PART, "NoDraw", false)
-					pac.GetSet(PART, "DrawShadow", true)
-			pac.EndStorableVars()
-			pac.RemoveProperty(PART, "Model")
+function PART:SetInverseKinematics(b)
+self.InverseKinematics = b
+local ent = self:GetOwner()
 
-			function PART:SetDrawShadow(b)
-				self.DrawShadow = b
-				local ent = self:GetEntity()
-				if not ent:IsValid() then return end
-				ent:DrawShadow(b)
-				ent:MarkShadowAsDirty()
-			end
+if ent:IsValid() then
+	ent.pac_enable_ik = b
+	self:ApplyMatrix()
+end
+end
 
-			function PART:GetNiceName()
-				if self.Class ~= "all" then return self.Class end
-				return self.ClassName
-			end
+function PART:OnThink()
+self:CheckBoneMerge()
+local ent = self:GetEntity()
 
-			function PART:Initialize()
-				self.material_count = 0
-			end
+if ent:IsValid() then
+	local model = pacx and pacx.GetModel(ent) or ent:GetModel()
+	local bone_count = ent:GetBoneCount()
 
-			function PART:OnDraw(ent, pos, ang)
-				local ent = self:GetEntity()
-				if not ent:IsValid() then return end
-				local old
+	if self.last_model ~= model or self.last_bone_count ~= bone_count then
+		self:RefreshModel()
+		self.last_model = model
+		self.last_bone_count = bone_count
+	end
+end
+end
 
-				if self.OverridePosition then
-					old = ent:GetParent()
-					ent:SetParent(NULL)
-					ent:SetRenderOrigin(pos)
-					ent:SetRenderAngles(ang)
-					ent:SetupBones()
+pac.RegisterPart(PART)
+end
+
+do
+local PART = {}
+PART.ClassName = "weapon"
+PART.Base = "model2"
+PART.Category = "entity"
+PART.ManualDraw = true
+PART.HandleModifiersManually = true
+PART.Icon = "icon16/brick.png"
+PART.Group = "entity"
+PART.is_model_part = false
+pac.StartStorableVars()
+pac.SetPropertyGroup(PART, "generic")
+	pac.PropertyOrder(PART, "Name")
+	pac.PropertyOrder(PART, "Hide")
+	pac.PropertyOrder(PART, "ParentName")
+	pac.GetSet(PART, "OverridePosition", false)
+	pac.GetSet(
+		PART,
+		"Class",
+		"all",
+		{
+			enums = function()
+				local out = {
+						["physgun"] = "weapon_physgun",
+						["357"] = "weapon_357",
+						["alyxgun"] = "weapon_alyxgun",
+						["annabelle"] = "weapon_annabelle",
+						["ar2"] = "weapon_ar2",
+						["brickbat"] = "weapon_brickbat",
+						["bugbait"] = "weapon_bugbait",
+						["crossbow"] = "weapon_crossbow",
+						["crowbar"] = "weapon_crowbar",
+						["frag"] = "weapon_frag",
+						["physcannon"] = "weapon_physcannon",
+						["pistol"] = "weapon_pistol",
+						["rpg"] = "weapon_rpg",
+						["shotgun"] = "weapon_shotgun",
+						["smg1"] = "weapon_smg1",
+						["striderbuster"] = "weapon_striderbuster",
+						["stunstick"] = "weapon_stunstick",
+					}
+
+				for _, tbl in pairs(weapons.GetList()) do
+					if not tbl.ClassName:StartWith("ai_") then
+						local friendly = tbl.ClassName:match("weapon_(.+)") or tbl.ClassName
+						out[friendly] = tbl.ClassName
+					end
 				end
 
-				ent.pac_render = true
-				self:PreEntityDraw(ent, ent, pos, ang)
-				self:DrawModel(ent, pos, ang)
-				self:PostEntityDraw(ent, ent, pos, ang)
-				pac.ResetBones(ent)
+				return out
+			end,
+		})
+pac.SetPropertyGroup(PART, "appearance")
+	pac.GetSet(PART, "NoDraw", false)
+	pac.GetSet(PART, "DrawShadow", true)
+pac.EndStorableVars()
+pac.RemoveProperty(PART, "Model")
 
-				if self.OverridePosition then
-					ent:MarkShadowAsDirty()
+function PART:SetDrawShadow(b)
+self.DrawShadow = b
+local ent = self:GetEntity()
+if not ent:IsValid() then return end
+ent:DrawShadow(b)
+ent:MarkShadowAsDirty()
+end
+
+function PART:GetNiceName()
+if self.Class ~= "all" then return self.Class end
+return self.ClassName
+end
+
+function PART:Initialize()
+self.material_count = 0
+end
+
+function PART:OnDraw(ent, pos, ang)
+local ent = self:GetEntity()
+if not ent:IsValid() then return end
+local old
+
+if self.OverridePosition then
+	old = ent:GetParent()
+	ent:SetParent(NULL)
+	ent:SetRenderOrigin(pos)
+	ent:SetRenderAngles(ang)
+	ent:SetupBones()
+end
+
+ent.pac_render = true
+self:PreEntityDraw(ent, ent, pos, ang)
+self:DrawModel(ent, pos, ang)
+self:PostEntityDraw(ent, ent, pos, ang)
+pac.ResetBones(ent)
+
+if self.OverridePosition then
+	ent:MarkShadowAsDirty()
 			--ent:SetParent(old)
 		end
 
-				ent.pac_render = nil
-			end
+ent.pac_render = nil
+end
 
-			PART.AlwaysThink = true
-			PART.ThinkTime = 0
+PART.AlwaysThink = true
+PART.ThinkTime = 0
 
-			function PART:OnThink()
-				local ent = self:GetOwner(true)
+function PART:OnThink()
+local ent = self:GetOwner(true)
 
-				if ent:IsValid() and ent.GetActiveWeapon then
-					local wep = ent:GetActiveWeapon()
+if ent:IsValid() and ent.GetActiveWeapon then
+	local wep = ent:GetActiveWeapon()
 
-					if wep:IsValid() then
-						if wep ~= self.Entity then
-							if self.Class == "all" or (self.Class:lower() == wep:GetClass():lower()) then
-								self:OnHide()
-								self.Entity = wep
-								self:SetEventHide(false, self)
-								wep.RenderOverride = function()
-									if wep.pac_render then
-										if not self.NoDraw then
-											if self.DrawShadow then
-												wep:CreateShadow()
-											end
-
-											wep:DrawModel()
-										end
-									end
-								end
-								wep.pac_weapon_part = self
-								self:SetDrawShadow(self:GetDrawShadow())
-							else
-								self:SetEventHide(true, self)
-								self:OnHide()
+	if wep:IsValid() then
+		if wep ~= self.Entity then
+			if self.Class == "all" or (self.Class:lower() == wep:GetClass():lower()) then
+				self:OnHide()
+				self.Entity = wep
+				self:SetEventHide(false, self)
+				wep.RenderOverride = function()
+					if wep.pac_render then
+						if not self.NoDraw then
+							if self.DrawShadow then
+								wep:CreateShadow()
 							end
+
+							wep:DrawModel()
 						end
 					end
 				end
+				wep.pac_weapon_part = self
+				self:SetDrawShadow(self:GetDrawShadow())
+			else
+				self:SetEventHide(true, self)
+				self:OnHide()
 			end
-
-			function PART:OnHide()
-				local ent = self:GetOwner(true)
-
-				if ent:IsValid() and ent.GetActiveWeapon then
-					for k, v in pairs(ent:GetWeapons()) do
-						if v.pac_weapon_part == self then
-							v.RenderOverride = nil
-							v:SetParent(ent)
-						end
-					end
-
-					self.Entity = NULL
-				end
-			end
-
-			pac.RegisterPart(PART)
 		end
+	end
+end
+end
+
+function PART:OnHide()
+local ent = self:GetOwner(true)
+
+if ent:IsValid() and ent.GetActiveWeapon then
+	for k, v in pairs(ent:GetWeapons()) do
+		if v.pac_weapon_part == self then
+			v.RenderOverride = nil
+			v:SetParent(ent)
+		end
+	end
+
+	self.Entity = NULL
+end
+end
+
+pac.RegisterPart(PART)
+end

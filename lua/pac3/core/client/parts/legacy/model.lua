@@ -459,370 +459,370 @@ function PART:DrawLoadingText(ent, pos, ang)
 		surface.SetTextPos(pos2d.x - w / 2, pos2d.y - h / 2)
 		surface.DrawText(str)
 		cam.IgnoreZ(false)
-		cam.End2D()
+cam.End2D()
+end
+
+function PART:DrawBlur(ent, pos, ang)
+if pac.drawing_motionblur_alpha then return end
+self.blur_history = self.blur_history or {}
+local blurSpacing = self.BlurSpacing
+
+if
+	not self.blur_last_add or
+	blurSpacing == 0 or
+	self.blur_last_add < pac.RealTime
+then
+	table_insert(self.blur_history, {pos, ang})
+	self.blur_last_add = pac.RealTime + blurSpacing / 1000
+end
+
+local blurHistoryLength = #self.blur_history
+
+for i = 1, blurHistoryLength do
+	pos, ang = self.blur_history[i][1], self.blur_history[i][2]
+	render_SetBlend(self.Alpha * (i / blurHistoryLength))
+	ent:SetPos(pos)
+	ent:SetAngles(ang)
+	ent:SetupBones()
+	RealDrawModel(self, ent, pos, ang)
+end
+
+local maximumBlurHistoryLength = math.min(self.BlurLength, 20)
+
+while #self.blur_history >= maximumBlurHistoryLength do
+	table_remove(self.blur_history, 1)
+end
+end
+
+local function set_mesh(part, mesh)
+part.Mesh = mesh
+part.Entity.pac_bones = nil
+
+if not part.Materialm then
+	part.Materialm = Material("error")
+end
+
+function part.Entity.pacDrawModel(ent, simple)
+	if simple then
+		RealDrawModel(part, ent, ent:GetPos(), ent:GetAngles())
+	else
+		part:ModifiersPreEvent("OnDraw")
+		part:DrawModel(ent, ent:GetPos(), ent:GetAngles())
+		part:ModifiersPostEvent("OnDraw")
 	end
-
-	function PART:DrawBlur(ent, pos, ang)
-		if pac.drawing_motionblur_alpha then return end
-		self.blur_history = self.blur_history or {}
-		local blurSpacing = self.BlurSpacing
-
-		if
-			not self.blur_last_add or
-			blurSpacing == 0 or
-			self.blur_last_add < pac.RealTime
-		then
-			table_insert(self.blur_history, {pos, ang})
-			self.blur_last_add = pac.RealTime + blurSpacing / 1000
-		end
-
-		local blurHistoryLength = #self.blur_history
-
-		for i = 1, blurHistoryLength do
-			pos, ang = self.blur_history[i][1], self.blur_history[i][2]
-			render_SetBlend(self.Alpha * (i / blurHistoryLength))
-			ent:SetPos(pos)
-			ent:SetAngles(ang)
-			ent:SetupBones()
-			RealDrawModel(self, ent, pos, ang)
-		end
-
-		local maximumBlurHistoryLength = math.min(self.BlurLength, 20)
-
-		while #self.blur_history >= maximumBlurHistoryLength do
-			table_remove(self.blur_history, 1)
-		end
-	end
-
-	local function set_mesh(part, mesh)
-		part.Mesh = mesh
-		part.Entity.pac_bones = nil
-
-		if not part.Materialm then
-			part.Materialm = Material("error")
-		end
-
-		function part.Entity.pacDrawModel(ent, simple)
-			if simple then
-				RealDrawModel(part, ent, ent:GetPos(), ent:GetAngles())
-			else
-				part:ModifiersPreEvent("OnDraw")
-				part:DrawModel(ent, ent:GetPos(), ent:GetAngles())
-				part:ModifiersPostEvent("OnDraw")
-			end
-		end
+end
 
 	-- temp
 	part.Entity:SetRenderBounds(Vector(1, 1, 1) * -300, Vector(1, 1, 1) * 300)
+end
+
+function PART:SetModel(modelPath)
+self.Entity = self:GetEntity()
+
+if modelPath:find("^mdlhttp") then
+	self.Model = modelPath
+	modelPath = modelPath:gsub("^mdl", "")
+
+	pac.DownloadMDL(modelPath, function(path)
+		if self:IsValid() and self:GetEntity():IsValid() then
+			local ent = self:GetEntity()
+			self.loading = nil
+			ent.pac_bones = nil
+			ent:SetModel(path)
+		end
+	end, function(err)
+		pac.Message(err)
+
+		if self:IsValid() and self:GetEntity():IsValid() then
+			local ent = self:GetEntity()
+			self.loading = nil
+			ent.pac_bones = nil
+			ent:SetModel("models/error.mdl")
+		end
+	end, self:GetPlayerOwner())
+
+	return
+end
+
+if modelPath and modelPath:find("http") and pac.urlobj then
+	self.loading_obj = "downloading"
+
+	if not self.is_obj then
+		self:Initialize(true)
 	end
 
-	function PART:SetModel(modelPath)
+	pac.urlobj.GetObjFromURL(modelPath, false, false, function(meshes, err)
+		if not self:IsValid() then return end
+		self.loading_obj = false
 		self.Entity = self:GetEntity()
 
-		if modelPath:find("^mdlhttp") then
-			self.Model = modelPath
-			modelPath = modelPath:gsub("^mdl", "")
-
-			pac.DownloadMDL(modelPath, function(path)
-				if self:IsValid() and self:GetEntity():IsValid() then
-					local ent = self:GetEntity()
-					self.loading = nil
-					ent.pac_bones = nil
-					ent:SetModel(path)
-				end
-			end, function(err)
-				pac.Message(err)
-
-				if self:IsValid() and self:GetEntity():IsValid() then
-					local ent = self:GetEntity()
-					self.loading = nil
-					ent.pac_bones = nil
-					ent:SetModel("models/error.mdl")
-				end
-			end, self:GetPlayerOwner())
-
+		if not meshes and err then
+			self.Entity:SetModel("models/error.mdl")
+			self.Mesh = nil
 			return
 		end
 
-		if modelPath and modelPath:find("http") and pac.urlobj then
-			self.loading_obj = "downloading"
-
-			if not self.is_obj then
-				self:Initialize(true)
+		if table.Count(meshes) == 1 then
+			set_mesh(self, select(2, next(meshes)))
+		else
+			for key, mesh in pairs(meshes) do
+				local part = pac.CreatePart("model", self:GetOwnerName())
+				part:SetName(key)
+				part:SetParent(self)
+				part:SetMaterial(self:GetMaterial())
+				set_mesh(part, mesh)
 			end
 
-			pac.urlobj.GetObjFromURL(modelPath, false, false, function(meshes, err)
-				if not self:IsValid() then return end
-				self.loading_obj = false
-				self.Entity = self:GetEntity()
-
-				if not meshes and err then
-					self.Entity:SetModel("models/error.mdl")
-					self.Mesh = nil
-					return
-				end
-
-				if table.Count(meshes) == 1 then
-					set_mesh(self, select(2, next(meshes)))
-				else
-					for key, mesh in pairs(meshes) do
-						local part = pac.CreatePart("model", self:GetOwnerName())
-						part:SetName(key)
-						part:SetParent(self)
-						part:SetMaterial(self:GetMaterial())
-						set_mesh(part, mesh)
-					end
-
-					self:SetAlpha(0)
-				end
-			end, function(finished, statusMessage)
-				if finished then
-					self.loading_obj = nil
-				else
-					self.loading_obj = statusMessage
-				end
-			end)
-
-			self.Model = modelPath
-			return
+			self:SetAlpha(0)
 		end
-
-		if self.is_obj or not self.Entity:IsValid() then
-			self:Initialize(false)
-		end
-
-		self.Mesh = nil
-		local real_model = modelPath
-		local ret = hook.Run("pac_model:SetModel", self, modelPath, self.ModelFallback)
-
-		if ret == nil then
-			real_model = pac.FilterInvalidModel(real_model, self.ModelFallback)
+	end, function(finished, statusMessage)
+		if finished then
+			self.loading_obj = nil
 		else
-			modelPath = ret or modelPath
-			real_model = modelPath
-			real_model = pac.FilterInvalidModel(real_model, self.ModelFallback)
+			self.loading_obj = statusMessage
 		end
+	end)
 
-		self.Model = modelPath
-		self.Entity.pac_bones = nil
-		self.Entity:SetModel(real_model)
-	end
+	self.Model = modelPath
+	return
+end
 
-	local NORMAL = Vector(1, 1, 1)
+if self.is_obj or not self.Entity:IsValid() then
+	self:Initialize(false)
+end
 
-	function PART:CheckScale()
+self.Mesh = nil
+local real_model = modelPath
+local ret = hook.Run("pac_model:SetModel", self, modelPath, self.ModelFallback)
+
+if ret == nil then
+	real_model = pac.FilterInvalidModel(real_model, self.ModelFallback)
+else
+	modelPath = ret or modelPath
+	real_model = modelPath
+	real_model = pac.FilterInvalidModel(real_model, self.ModelFallback)
+end
+
+self.Model = modelPath
+self.Entity.pac_bones = nil
+self.Entity:SetModel(real_model)
+end
+
+local NORMAL = Vector(1, 1, 1)
+
+function PART:CheckScale()
 	-- RenderMultiply doesn't work with this..
 	if
-			(self.UseLegacyScale or self.BoneMerge) and
-			self.Entity:IsValid() and
-			self.Entity:GetBoneCount() and
-			self.Entity:GetBoneCount() > 1
-		then
-			if self.Scale * self.Size ~= NORMAL then
-				if not self.requires_bone_model_scale then
-					self.requires_bone_model_scale = true
-				end
+	(self.UseLegacyScale or self.BoneMerge) and
+	self.Entity:IsValid() and
+	self.Entity:GetBoneCount() and
+	self.Entity:GetBoneCount() > 1
+then
+	if self.Scale * self.Size ~= NORMAL then
+		if not self.requires_bone_model_scale then
+			self.requires_bone_model_scale = true
+		end
 
-				return true
+		return true
+	end
+
+	self.requires_bone_model_scale = false
+end
+end
+
+function PART:SetAlternativeScaling(b)
+self.AlternativeScaling = b
+self:SetScale(self.Scale)
+end
+
+function PART:SetScale(var)
+var = var or Vector(1, 1, 1)
+self.Scale = var
+
+if self.AlternativeScaling then
+	if not self:CheckScale() then
+		pac.SetModelScale(self.Entity, self.Scale, nil, self.UseLegacyScale)
+		self.used_alt_scale = true
+	end
+else
+	if self.used_alt_scale then
+		pac.SetModelScale(self.Entity, nil, 1, self.UseLegacyScale)
+		self.used_alt_scale = false
+	end
+
+	if not self:CheckScale() then
+		pac.SetModelScale(self.Entity, self.Scale * self.Size, nil, self.UseLegacyScale)
+	end
+end
+end
+
+function PART:SetSize(var)
+var = var or 1
+self.Size = var
+
+if self.AlternativeScaling then
+	pac.SetModelScale(self.Entity, nil, self.Size, self.UseLegacyScale)
+	self.used_alt_scale = true
+else
+	if self.used_alt_scale then
+		pac.SetModelScale(self.Entity, nil, 1, self.UseLegacyScale)
+		self.used_alt_scale = false
+	end
+
+	if not self:CheckScale() then
+		pac.SetModelScale(self.Entity, self.Scale * self.Size, nil, self.UseLegacyScale)
+	end
+end
+end
+
+function PART:SetBrightness(num)
+self.Brightness = num
+self:SetColor(self:GetColor())
+end
+
+function PART:SetColor(var)
+self.Color = var
+local owner = self:GetPlayerOwner()
+
+if self.UsePlayerColor and owner:IsValid() then
+	local c = owner:GetPlayerColor() * self.Brightness
+	self.Colorf = {c.x, c.y, c.z}
+elseif self.UseWeaponColor and owner:IsValid() then
+	local c = owner:GetWeaponColor() * self.Brightness
+	self.Colorf = {c.x, c.y, c.z}
+else
+	self.Colorf = {
+			(var.r / 255) * self.Brightness,
+			(var.g / 255) * self.Brightness,
+			(var.b / 255) * self.Brightness,
+		}
+end
+end
+
+function PART:SetUseWeaponColor(b)
+self.UseWeaponColor = b
+self:SetColor(self:GetColor())
+end
+
+function PART:SetUsePlayerColor(b)
+self.UsePlayerColor = b
+self:SetColor(self:GetColor())
+end
+
+function PART:FixMaterial()
+local mat = self.Materialm
+if not mat then return end
+local shader = mat:GetShader()
+
+if shader == "UnlitGeneric" then
+	local tex_path = mat:GetString("$basetexture")
+
+	if tex_path then
+		local params = {}
+		params["$basetexture"] = tex_path
+		params["$vertexcolor"] = 1
+		params["$additive"] = 1
+		self.Materialm = pac.CreateMaterial(pac.uid"pac_fixmat_", "VertexLitGeneric", params)
+	end
+end
+end
+
+function PART:SetMaterial(var)
+var = var or ""
+
+if not pac.Handleurltex(self, var) then
+	if var == "" then
+		self.Materialm = nil
+	else
+		self.Materialm = pac.Material(var, self)
+		self:FixMaterial()
+		self:CallEvent("material_changed")
+	end
+end
+
+self.Material = var
+end
+
+function PART:SetSkin(var)
+var = var or 0
+self.Skin = var
+self.Entity:SetSkin(var)
+end
+
+function PART:OnRemove()
+if not self.OwnerEntity then
+	timer.Simple(0, function()
+		SafeRemoveEntity(self.Entity)
+	end)
+end
+end
+
+function PART:SetLodOverride(num)
+local ent = self.Entity
+
+if ent:IsValid() then
+	ent:SetLOD(num)
+	self.LodOverride = num
+end
+end
+
+function PART:CheckBoneMerge()
+local ent = self.Entity
+if self.skip_orient then return end
+
+if ent:IsValid() and not ent:IsPlayer() then
+	if self.BoneMerge then
+		local owner = self:GetOwner()
+
+		if ent:GetParent() ~= owner then
+			ent:SetParent(owner)
+
+			if not ent:IsEffectActive(EF_BONEMERGE) then
+				ent:AddEffects(EF_BONEMERGE)
+			end
+		end
+	else
+		if ent:GetParent():IsValid() then
+			ent:SetParent(NULL)
+
+			if ent:IsEffectActive(EF_BONEMERGE) then
+				ent:RemoveEffects(EF_BONEMERGE)
 			end
 
 			self.requires_bone_model_scale = false
 		end
 	end
+end
+end
 
-	function PART:SetAlternativeScaling(b)
-		self.AlternativeScaling = b
-		self:SetScale(self.Scale)
-	end
+local SCALE_NORMAL = Vector(1, 1, 1)
 
-	function PART:SetScale(var)
-		var = var or Vector(1, 1, 1)
-		self.Scale = var
+function PART:OnBuildBonePositions()
+if self.AlternativeScaling then return end
+local ent = self:GetEntity()
+local owner = self:GetOwner()
 
-		if self.AlternativeScaling then
-			if not self:CheckScale() then
-				pac.SetModelScale(self.Entity, self.Scale, nil, self.UseLegacyScale)
-				self.used_alt_scale = true
-			end
+if
+	not ent:IsValid() or
+	not owner:IsValid() or
+	not ent:GetBoneCount() or
+	ent:GetBoneCount() < 1
+then
+	return
+end
+
+if self.requires_bone_model_scale then
+	local scale = self.Scale * self.Size
+
+	for i = 0, ent:GetBoneCount() - 1 do
+		if i == 0 then
+			ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * Vector(scale.x ^ 0.25, scale.y ^ 0.25, scale.z ^ 0.25))
 		else
-			if self.used_alt_scale then
-				pac.SetModelScale(self.Entity, nil, 1, self.UseLegacyScale)
-				self.used_alt_scale = false
-			end
-
-			if not self:CheckScale() then
-				pac.SetModelScale(self.Entity, self.Scale * self.Size, nil, self.UseLegacyScale)
-			end
+			ent:ManipulateBonePosition(i, ent:GetManipulateBonePosition(i) + Vector((scale.x - 1) ^ 4, 0, 0))
+			ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * scale)
 		end
 	end
+end
+end
 
-	function PART:SetSize(var)
-		var = var or 1
-		self.Size = var
-
-		if self.AlternativeScaling then
-			pac.SetModelScale(self.Entity, nil, self.Size, self.UseLegacyScale)
-			self.used_alt_scale = true
-		else
-			if self.used_alt_scale then
-				pac.SetModelScale(self.Entity, nil, 1, self.UseLegacyScale)
-				self.used_alt_scale = false
-			end
-
-			if not self:CheckScale() then
-				pac.SetModelScale(self.Entity, self.Scale * self.Size, nil, self.UseLegacyScale)
-			end
-		end
-	end
-
-	function PART:SetBrightness(num)
-		self.Brightness = num
-		self:SetColor(self:GetColor())
-	end
-
-	function PART:SetColor(var)
-		self.Color = var
-		local owner = self:GetPlayerOwner()
-
-		if self.UsePlayerColor and owner:IsValid() then
-			local c = owner:GetPlayerColor() * self.Brightness
-			self.Colorf = {c.x, c.y, c.z}
-		elseif self.UseWeaponColor and owner:IsValid() then
-			local c = owner:GetWeaponColor() * self.Brightness
-			self.Colorf = {c.x, c.y, c.z}
-		else
-			self.Colorf = {
-					(var.r / 255) * self.Brightness,
-					(var.g / 255) * self.Brightness,
-					(var.b / 255) * self.Brightness,
-				}
-		end
-	end
-
-	function PART:SetUseWeaponColor(b)
-		self.UseWeaponColor = b
-		self:SetColor(self:GetColor())
-	end
-
-	function PART:SetUsePlayerColor(b)
-		self.UsePlayerColor = b
-		self:SetColor(self:GetColor())
-	end
-
-	function PART:FixMaterial()
-		local mat = self.Materialm
-		if not mat then return end
-		local shader = mat:GetShader()
-
-		if shader == "UnlitGeneric" then
-			local tex_path = mat:GetString("$basetexture")
-
-			if tex_path then
-				local params = {}
-				params["$basetexture"] = tex_path
-				params["$vertexcolor"] = 1
-				params["$additive"] = 1
-				self.Materialm = pac.CreateMaterial(pac.uid"pac_fixmat_", "VertexLitGeneric", params)
-			end
-		end
-	end
-
-	function PART:SetMaterial(var)
-		var = var or ""
-
-		if not pac.Handleurltex(self, var) then
-			if var == "" then
-				self.Materialm = nil
-			else
-				self.Materialm = pac.Material(var, self)
-				self:FixMaterial()
-				self:CallEvent("material_changed")
-			end
-		end
-
-		self.Material = var
-	end
-
-	function PART:SetSkin(var)
-		var = var or 0
-		self.Skin = var
-		self.Entity:SetSkin(var)
-	end
-
-	function PART:OnRemove()
-		if not self.OwnerEntity then
-			timer.Simple(0, function()
-				SafeRemoveEntity(self.Entity)
-			end)
-		end
-	end
-
-	function PART:SetLodOverride(num)
-		local ent = self.Entity
-
-		if ent:IsValid() then
-			ent:SetLOD(num)
-			self.LodOverride = num
-		end
-	end
-
-	function PART:CheckBoneMerge()
-		local ent = self.Entity
-		if self.skip_orient then return end
-
-		if ent:IsValid() and not ent:IsPlayer() then
-			if self.BoneMerge then
-				local owner = self:GetOwner()
-
-				if ent:GetParent() ~= owner then
-					ent:SetParent(owner)
-
-					if not ent:IsEffectActive(EF_BONEMERGE) then
-						ent:AddEffects(EF_BONEMERGE)
-					end
-				end
-			else
-				if ent:GetParent():IsValid() then
-					ent:SetParent(NULL)
-
-					if ent:IsEffectActive(EF_BONEMERGE) then
-						ent:RemoveEffects(EF_BONEMERGE)
-					end
-
-					self.requires_bone_model_scale = false
-				end
-			end
-		end
-	end
-
-	local SCALE_NORMAL = Vector(1, 1, 1)
-
-	function PART:OnBuildBonePositions()
-		if self.AlternativeScaling then return end
-		local ent = self:GetEntity()
-		local owner = self:GetOwner()
-
-		if
-			not ent:IsValid() or
-			not owner:IsValid() or
-			not ent:GetBoneCount() or
-			ent:GetBoneCount() < 1
-		then
-			return
-		end
-
-		if self.requires_bone_model_scale then
-			local scale = self.Scale * self.Size
-
-			for i = 0, ent:GetBoneCount() - 1 do
-				if i == 0 then
-					ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * Vector(scale.x ^ 0.25, scale.y ^ 0.25, scale.z ^ 0.25))
-				else
-					ent:ManipulateBonePosition(i, ent:GetManipulateBonePosition(i) + Vector((scale.x - 1) ^ 4, 0, 0))
-					ent:ManipulateBoneScale(i, ent:GetManipulateBoneScale(i) * scale)
-				end
-			end
-		end
-	end
-
-	pac.RegisterPart(PART)
+pac.RegisterPart(PART)

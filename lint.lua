@@ -48,7 +48,7 @@ local config = {
 			to = "End2D"
 		},
 
-		Start2D = {
+		Start3D = {
 			to = "End3D"
 		},
 

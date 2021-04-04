@@ -36,7 +36,7 @@ function PART:OnDraw(owner, pos, ang)
 			self.Size,
 			spos.x / ScrW(),
 			spos.y / ScrH())
-		cam.End2D()
-	end
+	cam.End2D()
+end
 
-	pac.RegisterPart(PART)
+pac.RegisterPart(PART)

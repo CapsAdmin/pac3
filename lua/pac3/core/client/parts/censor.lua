@@ -66,7 +66,7 @@ function PART:OnDraw(owner, pos, ang)
 		render.SetScissorRect(x, y, w, h, true)
 		render.DrawTextureToScreenRect(self.rt, 0, 0, ScrW(), ScrH())
 		render.SetScissorRect(0, 0, 0, 0, false)
-		cam.End2D()
-	end
+	cam.End2D()
+end
 
-	pac.RegisterPart(PART)
+pac.RegisterPart(PART)

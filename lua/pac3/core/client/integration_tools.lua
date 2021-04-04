@@ -25,23 +25,23 @@ do
 		ent:SetupBones()
 		cam.Start2D()
 			cam.Start3D(
-				cam_pos,
-				cam_ang,
-				cam_fov,
-				x,
-				y,
-				w,
-				h,
-				cam_nearz or 5,
-				cam_farz or 4096)
-			pac.FlashlightDisable(true)
-			force_draw_localplayer = true
-			ent:DrawModel()
-			pac.RenderOverride(ent, "opaque")
-			pac.RenderOverride(ent, "translucent", true)
-			force_draw_localplayer = false
-			pac.FlashlightDisable(false)
-		cam.End3D()
+					cam_pos,
+					cam_ang,
+					cam_fov,
+					x,
+					y,
+					w,
+					h,
+					cam_nearz or 5,
+					cam_farz or 4096)
+				pac.FlashlightDisable(true)
+				force_draw_localplayer = true
+				ent:DrawModel()
+				pac.RenderOverride(ent, "opaque")
+				pac.RenderOverride(ent, "translucent", true)
+				force_draw_localplayer = false
+				pac.FlashlightDisable(false)
+			cam.End3D()
 		cam.End2D()
 		pac.ForceRendering(false)
 	end

@@ -492,50 +492,50 @@ function DEMO:OnUpate(w, h, d, t, pos, first)
 			cam.PopModelMatrix()
 		end
 
-		cam.End2D()
-		return ok, err
-	end
+	cam.End2D()
+	return ok, err
+end
 
-	function pace.ShowAbout()
-		local pnl = vgui.Create("Panel")
-		pnl:SetPos(0, 0)
-		pnl:SetSize(ScrW(), ScrH())
-		pnl:MakePopup()
-		local html = vgui.Create("DHTML", pnl)
-		html:OpenURL("https://www.youtube.com/watch?v=Kvg7oTfGhYg")
-		local first = true
-		local start_time = RealTime()
+function pace.ShowAbout()
+	local pnl = vgui.Create("Panel")
+	pnl:SetPos(0, 0)
+	pnl:SetSize(ScrW(), ScrH())
+	pnl:MakePopup()
+	local html = vgui.Create("DHTML", pnl)
+	html:OpenURL("https://www.youtube.com/watch?v=Kvg7oTfGhYg")
+	local first = true
+	local start_time = RealTime()
 
-		pac.AddHook("PreRender", "pace_about", function()
-			local w, h = ScrW(), ScrH()
-			local t = RealTime() - start_time
-			local d = FrameTime()
-			local ok, err = DEMO:OnUpate(
-				w,
-				h,
-				d,
-				t,
-				Vector(input.GetCursorPos()),
-				first)
+	pac.AddHook("PreRender", "pace_about", function()
+		local w, h = ScrW(), ScrH()
+		local t = RealTime() - start_time
+		local d = FrameTime()
+		local ok, err = DEMO:OnUpate(
+			w,
+			h,
+			d,
+			t,
+			Vector(input.GetCursorPos()),
+			first)
 
-			if pnl.last_cursor ~= DEMO.cursor then
-				pnl:SetCursor(DEMO.cursor or "arrow")
-				pnl.last_cursor = DEMO.cursor
+		if pnl.last_cursor ~= DEMO.cursor then
+			pnl:SetCursor(DEMO.cursor or "arrow")
+			pnl.last_cursor = DEMO.cursor
+		end
+
+		first = false
+		quit = input.IsKeyDown(KEY_SPACE) or input.IsKeyDown(KEY_ESCAPE) or not ok
+
+		if quit then
+			if not ok then
+				print(err)
 			end
 
-			first = false
-			quit = input.IsKeyDown(KEY_SPACE) or input.IsKeyDown(KEY_ESCAPE) or not ok
+			pnl:Remove()
+			pac.RemoveHook("PreRender", "pace_about")
+			return
+		end
 
-			if quit then
-				if not ok then
-					print(err)
-				end
-
-				pnl:Remove()
-				pac.RemoveHook("PreRender", "pace_about")
-				return
-			end
-
-			return true
-		end)
-	end
+		return true
+	end)
+end

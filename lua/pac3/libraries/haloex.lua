@@ -83,72 +83,72 @@ function haloex.Render(entry)
 	-- FILL STENCIL
 	-- Write to the stencil..
 	cam.Start3D(EyePos(), EyeAngles())
-	cam.IgnoreZ(entry.IgnoreZ)
-	render.OverrideDepthEnable(true, false)									-- Don't write depth
+		cam.IgnoreZ(entry.IgnoreZ)
+		render.OverrideDepthEnable(true, false)									-- Don't write depth
 
 		render.SetStencilEnable(true)
-	render.SetStencilFailOperation(STENCILOPERATION_KEEP)
-	render.SetStencilZFailOperation(STENCILOPERATION_KEEP)
-	render.SetStencilPassOperation(STENCILOPERATION_REPLACE)
-	render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_ALWAYS)
-	render.SetStencilWriteMask(1)
-	render.SetStencilReferenceValue(1)
-	render.SetBlend(0)
+		render.SetStencilFailOperation(STENCILOPERATION_KEEP)
+		render.SetStencilZFailOperation(STENCILOPERATION_KEEP)
+		render.SetStencilPassOperation(STENCILOPERATION_REPLACE)
+		render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_ALWAYS)
+		render.SetStencilWriteMask(1)
+		render.SetStencilReferenceValue(1)
+		render.SetBlend(0)
  -- don't render any colour
 
 		for k, v in pairs(entry.Ents) do
-		if (not IsValid(v)) then
-			goto CONTINUE
+			if (not IsValid(v)) then
+				goto CONTINUE
+			end
+
+			render.PushFlashlightMode(true)
+
+			if v.pacDrawModel then
+				v:pacDrawModel()
+			else
+				v:DrawModel()
+			end
+
+			render.PopFlashlightMode()
+
+			::CONTINUE::
 		end
-
-		render.PushFlashlightMode(true)
-
-		if v.pacDrawModel then
-			v:pacDrawModel()
-		else
-			v:DrawModel()
-		end
-
-		render.PopFlashlightMode()
-
-		::CONTINUE::
-	end
 
 	cam.End3D()
 
 	-- FILL COLOUR
 	-- Write to the colour buffer
 	cam.Start3D(EyePos(), EyeAngles())
-	render.MaterialOverride(matColor)
-	cam.IgnoreZ(entry.IgnoreZ)
-	render.SetStencilEnable(true)
-	render.SetStencilWriteMask(0)
-	render.SetStencilReferenceValue(0)
-	render.SetStencilTestMask(1)
-	render.SetStencilFailOperation(STENCILOPERATION_KEEP)
-	render.SetStencilPassOperation(STENCILOPERATION_KEEP)
-	render.SetStencilZFailOperation(STENCILOPERATION_KEEP)
-	render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_NOTEQUAL)
+		render.MaterialOverride(matColor)
+		cam.IgnoreZ(entry.IgnoreZ)
+		render.SetStencilEnable(true)
+		render.SetStencilWriteMask(0)
+		render.SetStencilReferenceValue(0)
+		render.SetStencilTestMask(1)
+		render.SetStencilFailOperation(STENCILOPERATION_KEEP)
+		render.SetStencilPassOperation(STENCILOPERATION_KEEP)
+		render.SetStencilZFailOperation(STENCILOPERATION_KEEP)
+		render.SetStencilCompareFunction(STENCILCOMPARISONFUNCTION_NOTEQUAL)
 
-	for k, v in pairs(entry.Ents) do
-		if (not IsValid(v)) then
-			goto CONTINUE
+		for k, v in pairs(entry.Ents) do
+			if (not IsValid(v)) then
+				goto CONTINUE
+			end
+
+			render.SetColorModulation(entry.Color.r / 255, entry.Color.g / 255, entry.Color.b / 255)
+			render.SetBlend(entry.Color.a / 255)
+
+			if v.pacDrawModel then
+				v:pacDrawModel()
+			else
+				v:DrawModel()
+			end
+
+			::CONTINUE::
 		end
 
-		render.SetColorModulation(entry.Color.r / 255, entry.Color.g / 255, entry.Color.b / 255)
-		render.SetBlend(entry.Color.a / 255)
-
-		if v.pacDrawModel then
-			v:pacDrawModel()
-		else
-			v:DrawModel()
-		end
-
-		::CONTINUE::
-	end
-
-	render.MaterialOverride(nil)
-	render.SetStencilEnable(false)
+		render.MaterialOverride(nil)
+		render.SetStencilEnable(false)
 	cam.End3D()
 
 	-- BLUR IT

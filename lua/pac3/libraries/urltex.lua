@@ -256,30 +256,30 @@ function urltex.StartDownload(url, data)
 						surface.SetMaterial(vertex_mat2)
 						surface.SetDrawColor(255, 255, 255)
 						surface.DrawTexturedRect(0, 0, size, size)
-						cam.End2D()
-						render.PopRenderTarget()
-						vertex_mat:SetTexture("$basetexture", rt)
-						urltex.Cache[data.urlIndex] = rt
-					end
+					cam.End2D()
+					render.PopRenderTarget()
+					vertex_mat:SetTexture("$basetexture", rt)
+					urltex.Cache[data.urlIndex] = rt
+				end
 
-					timer.Simple(0, function()
-						pnl:Remove()
-					end)
+				timer.Simple(0, function()
+					pnl:Remove()
+				end)
 
-					if data.callbacks then
-						for i, callback in pairs(data.callbacks) do
-							callback(vertex_mat, rt or tex)
-						end
+				if data.callbacks then
+					for i, callback in pairs(data.callbacks) do
+						callback(vertex_mat, rt or tex)
 					end
 				end
 			end
 		end
+	end
 
-		pac.AddHook("Think", id, think)
+	pac.AddHook("Think", id, think)
 
 	-- 5 sec max timeout, 5 maximal timeouts
 	timer.Create(id, 5, 5, onTimeout)
-		createDownloadPanel()
-	end
+	createDownloadPanel()
+end
 
-	return urltex
+return urltex
