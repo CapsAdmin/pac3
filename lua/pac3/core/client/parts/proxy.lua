@@ -110,7 +110,7 @@ function PART:GetNiceName()
 		end
 	end
 
-	return 
+	return
 		target .. "." .. pac.PrettifyName(self:GetVariableName()) .. " = " .. (self.debug_var or "?")
 end
 
@@ -308,7 +308,7 @@ PART.Inputs = {
 		owner_scale_x = function(self)
 			local owner = self:GetOwner(self.RootOwner)
 			owner = try_viewmodel(owner)
-			if owner:IsValid() then return 
+			if owner:IsValid() then return
 				owner.pac_model_scale and
 				owner.pac_model_scale.x or
 				(owner.GetModelScale and owner:GetModelScale()) or
@@ -318,7 +318,7 @@ PART.Inputs = {
 		owner_scale_y = function(self)
 			local owner = self:GetOwner(self.RootOwner)
 			owner = try_viewmodel(owner)
-			if owner:IsValid() then return 
+			if owner:IsValid() then return
 				owner.pac_model_scale and
 				owner.pac_model_scale.y or
 				(owner.GetModelScale and owner:GetModelScale()) or
@@ -328,7 +328,7 @@ PART.Inputs = {
 		owner_scale_z = function(self)
 			local owner = self:GetOwner(self.RootOwner)
 			owner = try_viewmodel(owner)
-			if owner:IsValid() then return 
+			if owner:IsValid() then return
 				owner.pac_model_scale and
 				owner.pac_model_scale.z or
 				(owner.GetModelScale and owner:GetModelScale()) or
@@ -696,7 +696,7 @@ PART.Inputs = {
 
 			if owner:IsValid() then
 				local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
-				return 
+				return
 					(wep.GetPrimaryAmmoType and owner.GetAmmoCount) and
 					owner:GetAmmoCount(wep:GetPrimaryAmmoType()) or
 					0
@@ -741,7 +741,7 @@ PART.Inputs = {
 
 			if owner:IsValid() then
 				local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
-				return 
+				return
 					(wep.GetSecondaryAmmoType and owner.GetAmmoCount) and
 					owner:GetAmmoCount(wep:GetSecondaryAmmoType()) or
 					0

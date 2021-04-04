@@ -231,7 +231,7 @@ function emut.Register(meta)
 	end
 
 	function meta:__tostring()
-		return 
+		return
 			"mutator[" .. self.ClassName .. "]" .. "[" .. tostring(self.Owner) .. "]" .. "[" .. tostring(self.Entity) .. "]"
 	end
 

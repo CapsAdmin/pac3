@@ -33,7 +33,7 @@ do -- pace
 	end
 
 	function mctrl.GetTarget()
-		return 
+		return
 			mctrl.target:IsValid() and
 			not mctrl.target:IsHidden() and
 			mctrl.target or

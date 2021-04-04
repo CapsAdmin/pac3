@@ -25,7 +25,7 @@ function pace.LPCameraScreenToVector(iScreenX, iScreenY, iScreenW, iScreenH, ang
 
 
     --Then convert vec to proper world coordinates and return it
-    return 
+    return
 		(d * vForward + (iScreenX - 0.5 * iScreenW) * vRight + (0.5 * iScreenH - iScreenY) * vUp)
 		:GetNormalized()
 end

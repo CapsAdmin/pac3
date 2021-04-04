@@ -1,4 +1,4 @@
-return 
+return
 	{
 		shaders = {
 			eyerefract = {

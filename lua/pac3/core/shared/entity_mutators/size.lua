@@ -46,7 +46,7 @@ end
 
 function MUTATOR:StoreState()
 	local ent = self.Entity
-	return 
+	return
 		1,--ent:GetModelScale(),
 		false, -- we will just ent:ResetHull()
 		{

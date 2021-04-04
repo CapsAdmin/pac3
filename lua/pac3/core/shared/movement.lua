@@ -106,7 +106,7 @@ end
 
 local function badMovetype(ply)
 	local mvtype = ply:GetMoveType()
-	return 
+	return
 		mvtype == MOVETYPE_OBSERVER or
 		mvtype == MOVETYPE_NOCLIP or
 		mvtype == MOVETYPE_LADDER or

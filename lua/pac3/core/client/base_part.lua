@@ -1402,10 +1402,10 @@ do -- drawing. this code is running every frame
 
 		if self.EyeAngles then
 			if owner:IsPlayer() then
-				return 
+				return
 					self.Angles + ((owner.pac_hitpos or owner:GetEyeTraceNoCursor().HitPos) - self.cached_pos):Angle()
 			elseif owner:IsNPC() then
-				return 
+				return
 					self.Angles + ((owner:EyePos() + owner:GetForward() * 100) - self.cached_pos):Angle()
 			end
 		end

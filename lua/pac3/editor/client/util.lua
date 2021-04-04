@@ -27,7 +27,7 @@ function pace.util.FastDistance2D(x1, y1, x2, y2)
 end
 
 local function isUpperCase(charIn)
-	return 
+	return
 		charIn == "A" or
 		charIn == "B" or
 		charIn == "C" or

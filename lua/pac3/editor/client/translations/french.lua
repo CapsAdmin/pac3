@@ -1,4 +1,4 @@
-return 
+return
 	{
 		["trail"] = "trainee",
 		["texture filter"] = "filtre de texture",

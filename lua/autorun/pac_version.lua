@@ -41,7 +41,7 @@ if SERVER then
 	local hash = include("pac3/libraries/hash_version.lua")
 
 	function _G.PAC_VERSION()
-		return 
+		return
 			{
 				addon = hash.LuaPaths(
 					{

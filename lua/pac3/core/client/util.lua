@@ -346,7 +346,7 @@ do
 	local val = {"dark", "", "bright"}
 
 	function pac.HSVToNames(h, s, v)
-		return 
+		return
 			hue[math.Round((1 + (h / 360) * #hue))] or hue[1],
 			sat[math.ceil(s * #sat)] or sat[1],
 			val[math.ceil(v * #val)] or val[1]
@@ -933,7 +933,7 @@ local pattern_cache = {{}}
 			end
 
 			function pac.IsEntityIgnoredOnlyBy(ent, strID)
-				return 
+				return
 					ent.pac_ignored_data and
 					ent.pac_ignored_data[strID] and
 					table.Count(ent.pac_ignored_data) == 1 or

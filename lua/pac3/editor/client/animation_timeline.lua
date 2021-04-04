@@ -70,7 +70,7 @@ function timeline.SetCycle(f)
 end
 
 function timeline.GetCycle()
-	return 
+	return
 		animations.GetEntityAnimationCycle(timeline.entity, timeline.animation_part:GetAnimID()) or
 		0
 end

@@ -8,7 +8,7 @@ pac.OwnerNames = {
 	}
 
 local function find_ent(ent, str)
-	return 
+	return
 		pac.StringFind(ent:GetClass(), str) or
 		pac.StringFind(ent:GetClass(), str, true) or
 		(ent.GetName and pac.StringFind(ent:GetName(), str)) or
@@ -18,7 +18,7 @@ local function find_ent(ent, str)
 end
 
 local function check_owner(a, b)
-	return 
+	return
 		a:GetOwner() == b or
 		(not b.CPPIGetOwner or b:CPPIGetOwner() == a or b:CPPIGetOwner() == true)
 end

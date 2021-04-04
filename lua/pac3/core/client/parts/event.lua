@@ -133,7 +133,7 @@ PART.OldEvents = {
 				{synced_time = "boolean"},
 			},
 			nice = function(self, ent, seconds)
-				return 
+				return
 					"timerx: " .. ("%.2f"):format(self.number or 0, 2) .. " " .. self:GetOperator() .. " " .. seconds .. " seconds?"
 			end,
 			callback = function(self, ent, seconds, reset_on_hide, synced_time)

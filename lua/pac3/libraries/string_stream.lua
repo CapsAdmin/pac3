@@ -88,7 +88,7 @@ local function PackIEEE754Float(number)
 		end
 
 		mantissa = math_floor(math_ldexp(mantissa, 23) + 0.5)
-		return 
+		return
 			mantissa % 0x100,
 			bit_rshift(mantissa, 8) % 0x100,
 			(exponent % 2) * 0x80 + bit_rshift(mantissa, 16),
@@ -125,7 +125,7 @@ end
 
 local function PackIEEE754Double(number)
 	if number == 0 then
-		return 
+		return
 			0x00,
 			0x00,
 			0x00,
@@ -135,7 +135,7 @@ local function PackIEEE754Double(number)
 			0x00,
 			0x00
 	elseif number == math_huge then
-		return 
+		return
 			0x00,
 			0x00,
 			0x00,
@@ -145,7 +145,7 @@ local function PackIEEE754Double(number)
 			0xF0,
 			0x7F
 	elseif number == -math_huge then
-		return 
+		return
 			0x00,
 			0x00,
 			0x00,
@@ -155,7 +155,7 @@ local function PackIEEE754Double(number)
 			0xF0,
 			0xFF
 	elseif number ~= number then
-		return 
+		return
 			0x00,
 			0x00,
 			0x00,
@@ -180,7 +180,7 @@ local function PackIEEE754Double(number)
 			exponent = 0
 		elseif exponent > 0 then
 			if exponent >= 0x7FF then
-				return 
+				return
 					0x00,
 					0x00,
 					0x00,
@@ -198,7 +198,7 @@ local function PackIEEE754Double(number)
 		end
 
 		mantissa = math_floor(math_ldexp(mantissa, 52) + 0.5)
-		return 
+		return
 			mantissa % 0x100,
 			math_floor(mantissa / 0x100) % 0x100,  --can only rshift up to 32 bit numbers. mantissa is too big
 				math_floor(mantissa / 0x10000) % 0x100,

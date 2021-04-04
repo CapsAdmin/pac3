@@ -1,4 +1,4 @@
-return 
+return
 	{
 		["trail"] = "iz",
 		["texture filter"] = "doku filtresi",

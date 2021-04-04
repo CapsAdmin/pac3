@@ -47,9 +47,9 @@ function PART:GetAnimID()
 		-- Jazztronauts "issue"
 		-- actually im pretty sure they did this due to limitations of source engine
 		-- and gmod api
-		return 
+		return
 		"pac_anim_" .. (self:GetPlayerOwner():IsValid() and string.format("%p", self:GetPlayerOwner()) or "!") .. "_" .. self:GetUniqueID() end
-	return 
+	return
 		"pac_anim_" .. (self:GetPlayerOwner():IsValid() and self:GetPlayerOwner():UniqueID() or "") .. self:GetUniqueID()
 end
 

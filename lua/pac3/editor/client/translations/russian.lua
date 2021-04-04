@@ -1,4 +1,4 @@
-return 
+return
 	{
 		["trail"] = "трейл",
 		["show in firstperson"] = "показывать от 1-го лица",

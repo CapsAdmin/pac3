@@ -1,4 +1,4 @@
-return 
+return
 	{
 		[1076811763] = "is_dupe",
 		[1191326365] = "ClassName",

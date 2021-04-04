@@ -1,4 +1,4 @@
-return 
+return
 	{
 		["sprite path"] = "스프라이트 이미지",
 		["right upperarm"] = "오른쪽 팔 위쪽",

@@ -310,7 +310,7 @@ do -- list
 	end
 
 	function PANEL:GetHeight(hack)
-		return 
+		return
 			(self.item_height * (#self.List + (hack or 1))) - (self.div:GetDividerWidth() + 1)
 	end
 

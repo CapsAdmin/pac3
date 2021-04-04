@@ -34,7 +34,7 @@ function pac.AddHook(str, id, func, priority)
 			return
 		end
 
-		return 
+		return
 			a,
 			b,
 			c,

@@ -96,12 +96,11 @@ local function PlayerBindPress(ply, bind, isPressed)
 	if bind ~= "+use" and isPressed then return end
 	if not pac_onuse_only:GetBool() then return end
 	local eyes, aim = ply:EyePos(), ply:GetAimVector()
-	local tr = util.TraceLine(
-		{
-			start = eyes,
-			endpos = eyes + aim * MAX_DIST,
-			filter = ply,
-		})
+	local tr = util.TraceLine({
+		start = eyes,
+		endpos = eyes + aim * MAX_DIST,
+		filter = ply,
+	})
 
 	-- if not tr.Hit or not tr.Entity:IsValid() or not tr.Entity:IsPlayer() then return end
 	if not tr.Hit or not tr.Entity:IsValid() then return end
@@ -124,12 +123,11 @@ local function HUDPaint(ply, bind, isPressed)
 	if not pac_onuse_only:GetBool() then return end
 	local ply = LocalPlayer()
 	local eyes, aim = ply:EyePos(), ply:GetAimVector()
-	local tr = util.TraceLine(
-		{
-			start = eyes,
-			endpos = eyes + aim * MAX_DIST,
-			filter = ply,
-		})
+	local tr = util.TraceLine({
+		start = eyes,
+		endpos = eyes + aim * MAX_DIST,
+		filter = ply,
+	})
 
 	if
 		tr.Hit and

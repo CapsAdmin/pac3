@@ -94,7 +94,7 @@ function pace.DrawHUDText(x, y, text, lx, ly, mx, my, selected, line_color)
 end
 
 local function checkVisible(pos)
-	return 
+	return
 		x > pos.x - area and
 		x < pos.x + area and
 		y > pos.y - area and

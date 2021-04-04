@@ -14,7 +14,7 @@ pac.EndStorableVars()
 
 function PART:GetNiceName()
 	local mult = self:GetMultiplier()
-	return 
+	return
 		mult > 0 and
 		"bright sunbeams" or
 		mult < 0 and

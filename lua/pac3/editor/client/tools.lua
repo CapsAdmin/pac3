@@ -431,7 +431,7 @@ do
 	local val = {"dark", "", "bright"}
 
 	local function HSVToNames(h, s, v)
-		return 
+		return
 			hue[math.Round(1 + (h / 360) * #hue)] or hue[1],
 			sat[math.ceil(s * #sat)] or sat[1],
 			val[math.ceil(v * #val)] or val[1]

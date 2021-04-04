@@ -275,7 +275,7 @@ function pace.CalcView(ply, pos, ang, fov)
 		pace.ViewFOV = fov
 	end
 
-	return 
+	return
 		{
 			origin = pace.ViewPos,
 			angles = pace.ViewAngles,

@@ -596,7 +596,7 @@ function PANEL:Init()
 								end
 
 								function PANEL:Selection()
-									return 
+									return
 										{
 											{self.Caret[1], self.Caret[2]},
 											{self.Start[1], self.Start[2]},

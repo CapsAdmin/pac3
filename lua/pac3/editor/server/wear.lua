@@ -287,7 +287,7 @@ function pace.SubmitPart(data, filter)
 
 							if owner_steamid == steamid then
 								pac.Message("Dropping data transfer request by '", ply:Nick(), "' due to a global PAC ban.")
-								return 
+								return
 									false,
 									"You have been globally banned from using PAC. See global_bans.lua for more info."
 							end

@@ -1,4 +1,4 @@
-return 
+return
 	{
 		["sprite path"] = "精灵路径",
 		["right upperarm"] = "右上臂",
