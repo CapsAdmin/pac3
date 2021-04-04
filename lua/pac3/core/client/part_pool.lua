@@ -557,26 +557,14 @@ end
 do -- drawing
 	local pac = pac
 
-	local render_SetColorModulation = render.SetColorModulation
-	local render_SetBlend = render.SetBlend
-	local render_ModelMaterialOverride = render.ModelMaterialOverride
-	local render_CullMode = render.CullMode
-	local render_SuppressEngineLighting = render.SuppressEngineLighting
 	local FrameNumber = FrameNumber
 	local RealTime = RealTime
 	local GetConVar = GetConVar
 	local NULL = NULL
 	local EF_BONEMERGE = EF_BONEMERGE
 	local RENDERMODE_TRANSALPHA = RENDERMODE_TRANSALPHA
-	local pairs = pairs
-	local util_PixelVisible = util.PixelVisible
 
 	local cvar_distance = CreateClientConVar("pac_draw_distance", "500")
-
-	local entMeta = FindMetaTable('Entity')
-	local plyMeta = FindMetaTable('Player')
-	local IsValid = entMeta.IsValid
-	local Alive = plyMeta.Alive
 
 	pac.Errors = {}
 	pac.firstperson_parts = pac.firstperson_parts or {}
