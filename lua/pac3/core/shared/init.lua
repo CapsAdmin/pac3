@@ -8,7 +8,6 @@ include("entity_mutator.lua")
 pac.StringStream = include("pac3/libraries/string_stream.lua")
 
 CreateConVar("pac_sv_draw_distance", 0, CLIENT and FCVAR_REPLICATED or bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
-CreateConVar("pac_sv_hide_outfit_on_death", 0, CLIENT and FCVAR_REPLICATED or bit.bor(FCVAR_REPLICATED, FCVAR_ARCHIVE))
 
 do
 	local tohash = {
