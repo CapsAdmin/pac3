@@ -1,5 +1,4 @@
 local MUTATOR = {}
-
 MUTATOR.ClassName = "blood_color"
 
 function MUTATOR:WriteArguments(enum)

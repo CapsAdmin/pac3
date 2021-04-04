@@ -24,7 +24,6 @@ if SERVER then
 
 	add_files("pac3/editor/client/")
 	add_files("pac3/editor/shared/")
-
 	include("pac3/editor/server/init.lua")
 end
 

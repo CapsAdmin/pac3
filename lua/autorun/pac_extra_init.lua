@@ -24,11 +24,9 @@ if SERVER then
 
 	add_files("pac3/extra/client/")
 	add_files("pac3/extra/shared/")
-
 	include("pac3/extra/server/init.lua")
 end
 
 if CLIENT then
 	include("pac3/extra/client/init.lua")
 end
-

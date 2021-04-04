@@ -1,11 +1,9 @@
-
 pac.AddHook("RenderScene", "eyeangles_eyepos", function(pos, ang)
 	pac.EyePos = pos
 	pac.EyeAng = ang
 end)
 
 pac.AddHook("DrawPhysgunBeam", "physgun_event", function(ply, wep, enabled, target, bone, hitpos)
-
 	if enabled then
 		ply.pac_drawphysgun_event = {ply, wep, enabled, target, bone, hitpos}
 	else
@@ -16,10 +14,7 @@ pac.AddHook("DrawPhysgunBeam", "physgun_event", function(ply, wep, enabled, targ
 		ply.pac_drawphysgun_event_part:OnThink()
 	end
 
-
-	if ply.pac_hide_physgun_beam then
-		return false
-	end
+	if ply.pac_hide_physgun_beam then return false end
 end)
 
 do
@@ -47,7 +42,7 @@ do
 			if ply.pac_global_animation_rate == 0 then
 				animrate = ply:GetModelScale() * 2
 			elseif ply.pac_global_animation_rate ~= 1 then
-				ply:SetCycle((pac.RealTime * ply.pac_global_animation_rate)%1)
+				ply:SetCycle((pac.RealTime * ply.pac_global_animation_rate) % 1)
 				animrate = ply.pac_global_animation_rate
 			end
 		end
@@ -56,7 +51,6 @@ do
 			local part, thing = next(ply.pac_animation_sequences)
 
 			if part and part:IsValid() then
-
 				if part.OwnerCycle then
 					if part.Rate == 0 then
 						animrate = 1
@@ -96,6 +90,7 @@ do
 			if ply.pac_last_vehicle ~= nil then
 				pac.CallPartEvent("vehicle_changed", ply, vehicle)
 			end
+
 			ply.pac_last_vehicle = vehicle
 		end
 	end)
@@ -110,11 +105,8 @@ local function mod_speed(cmd, speed)
 	if speed and speed ~= 0 then
 		local forward = cmd:GetForwardMove()
 		forward = forward > 0 and speed or forward < 0 and -speed or 0
-
 		local side = cmd:GetSideMove()
 		side = side > 0 and speed or side < 0 and -speed or 0
-
-
 		cmd:SetForwardMove(forward)
 		cmd:SetSideMove(side)
 	end
@@ -138,11 +130,11 @@ pac.AddHook("TranslateActivity", "events", function(ply, act)
 		-- animation part
 		if ply.pac_animation_sequences and next(ply.pac_animation_sequences) then
 			-- dont do any holdtype stuff if theres a sequence
-			return
-		end
+			return end
 
 		if ply.pac_animation_holdtypes then
 			local key, val = next(ply.pac_animation_holdtypes)
+
 			if key then
 				if not val.part:IsValid() then
 					ply.pac_animation_holdtypes[key] = nil
@@ -160,26 +152,18 @@ pac.AddHook("TranslateActivity", "events", function(ply, act)
 				if not act_table.part:IsValid() then
 					ply.pac_holdtypes[key] = nil
 				else
+					if act_table[act] and act_table[act] ~= -1 then return act_table[act] end
 
-					if act_table[act] and act_table[act] ~= -1 then
-						return act_table[act]
-					end
-
-					if ply:GetVehicle():IsValid() and ply:GetVehicle():GetClass() == "prop_vehicle_prisoner_pod" then
+					if
+						ply:GetVehicle():IsValid() and
+						ply:GetVehicle():GetClass() == "prop_vehicle_prisoner_pod"
+					then
 						return act_table.sitting
 					end
 
-					if act_table.noclip ~= -1 and ply:GetMoveType() == MOVETYPE_NOCLIP then
-						return act_table.noclip
-					end
-
-					if act_table.air ~= -1 and ply:GetMoveType() ~= MOVETYPE_NOCLIP and not ply:IsOnGround() then
-						return act_table.air
-					end
-
-					if act_table.fallback ~= -1 then
-						return act_table.fallback
-					end
+					if act_table.noclip ~= -1 and ply:GetMoveType() == MOVETYPE_NOCLIP then return act_table.noclip end
+					if act_table.air ~= -1 and ply:GetMoveType() ~= MOVETYPE_NOCLIP and not ply:IsOnGround() then return act_table.air end
+					if act_table.fallback ~= -1 then return act_table.fallback end
 				end
 			end
 		end
@@ -189,7 +173,6 @@ end)
 pac.AddHook("CalcMainActivity", "events", function(ply, act)
 	if IsEntity(ply) and ply:IsValid() and ply.pac_animation_sequences then
 		local key, val = next(ply.pac_animation_sequences)
-
 		if not key then return end
 
 		if not val.part:IsValid() then
@@ -212,9 +195,7 @@ pac.AddHook("pac_PlayerFootstep", "events", function(ply, pos, snd, vol)
 		end
 	end
 
-	if ply.pac_mute_footsteps then
-		return true
-	end
+	if ply.pac_mute_footsteps then return true end
 end)
 
 net.Receive("pac_effect_precached", function()

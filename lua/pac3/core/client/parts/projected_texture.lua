@@ -1,24 +1,18 @@
 local PART = {}
-
 PART.ClassName = "projected_texture"
 PART.Group = "effects"
-PART.Icon = 'icon16/lightbulb.png'
+PART.Icon = "icon16/lightbulb.png"
 PART.ProperColorRange = true
-
 pac.StartStorableVars()
 	pac.GetSet(PART, "Shadows", true)
 	pac.GetSet(PART, "Orthographic", false)
-
 	pac.GetSet(PART, "NearZ", 1)
 	pac.GetSet(PART, "FarZ", 2048)
-
 	pac.GetSet(PART, "FOV", 90)
 	pac.GetSet(PART, "HorizontalFOV", 90)
 	pac.GetSet(PART, "VerticalFOV", 90)
-
 	pac.GetSet(PART, "Texture", "effects/flashlight/hard", {editor_panel = "textures"})
 	pac.GetSet(PART, "TextureFrame", 0)
-
 	pac.SetPropertyGroup(PART, "appearance")
 		pac.GetSet(PART, "Brightness", 8)
 		pac.GetSet(PART, "Color", Vector(1, 1, 1), {editor_panel = "color2"})
@@ -28,6 +22,7 @@ function PART:GetProjectedTexture()
 	if not self.ptex then
 		self.ptex = ProjectedTexture()
 	end
+
 	return self.ptex
 end
 
@@ -37,23 +32,18 @@ function PART:GetNiceName()
 end
 
 local vars = {
-	"Shadows",
-
-	"NearZ",
-	"FarZ",
-
-	"FOV",
-	"HorizontalFOV",
-	"VerticalFOV",
-
-	"Orthographic",
-
-	"Texture",
-	"TextureFrame",
-
-	"Brightness",
-	"Color",
-}
+		"Shadows",
+		"NearZ",
+		"FarZ",
+		"FOV",
+		"HorizontalFOV",
+		"VerticalFOV",
+		"Orthographic",
+		"Texture",
+		"TextureFrame",
+		"Brightness",
+		"Color",
+	}
 
 function PART:OnShow()
 	for _, v in ipairs(vars) do
@@ -68,10 +58,9 @@ function PART:OnDraw(owner, pos, ang)
 	ptex:Update()
 end
 
-
 function PART:SetColor(val)
 	self.Color = val
-	self:GetProjectedTexture():SetColor(Color(val.x*255, val.y*255, val.z*255, 1))
+	self:GetProjectedTexture():SetColor(Color(val.x * 255, val.y * 255, val.z * 255, 1))
 end
 
 function PART:SetBrightness(val)
@@ -93,7 +82,6 @@ function PART:SetHorizontalFOV(val)
 	self.HorizontalFOV = val
 	self:GetProjectedTexture():SetHorizontalFOV(val)
 end
-
 
 function PART:SetFOV(val)
 	self.FOV = val
@@ -117,26 +105,23 @@ end
 
 function PART:SetTextureFrame(val)
 	self.TextureFrame = val
+
 	if self.vtf_frame_limit then
-		self:GetProjectedTexture():SetTextureFrame(math.abs(val)%self.vtf_frame_limit)
+		self:GetProjectedTexture():SetTextureFrame(math.abs(val) % self.vtf_frame_limit)
 	else
 		self:GetProjectedTexture():SetTextureFrame(math.abs(val))
 	end
 end
 
-
-
 function PART:SetTexture(val)
-	if not val then
-		return
-	end
-
+	if not val then return end
 	self.Texture = val
 
 	if not pac.resource.DownloadTexture(val, function(tex, frames)
 		if frames then
 			self.vtf_frame_limit = frames
 		end
+
 		self:GetProjectedTexture():SetTexture(tex)
 	end, self:GetPlayerOwner()) then
 		self:GetProjectedTexture():SetTexture(val)

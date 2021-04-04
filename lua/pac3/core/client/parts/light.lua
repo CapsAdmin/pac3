@@ -1,17 +1,14 @@
 local PART = {}
-
 PART.FriendlyName = "light"
 PART.ClassName = "light2"
-PART.Group = 'effects'
-PART.Icon = 'icon16/lightbulb.png'
+PART.Group = "effects"
+PART.Icon = "icon16/lightbulb.png"
 PART.ProperColorRange = true
-
 pac.StartStorableVars()
 	pac.GetSet(PART, "InnerAngle", 0)
 	pac.GetSet(PART, "OuterAngle", 0)
 	pac.GetSet(PART, "NoModel", false)
 	pac.GetSet(PART, "NoWorld", false)
-
 	pac.SetPropertyGroup(PART, "appearance")
 		pac.GetSet(PART, "Brightness", 8)
 		pac.GetSet(PART, "Size", 100, {editor_sensitivity = 0.25})
@@ -22,9 +19,9 @@ function PART:GetLight()
 	if not self.light then
 		self.light = DynamicLight(tonumber(self.UniqueID))
 	end
+
 	self.light.decay = 0
 	self.light.dietime = math.huge
-
 	return self.light
 end
 
@@ -33,7 +30,8 @@ function PART:RemoveLight()
 	local light = self.light
 	self.light = nil
 	-- this prevents fade out when removing the light
-	light.pos = Vector(9999,9999,9999)
+	light.pos = Vector(9999, 9999, 9999)
+
 	timer.Simple(0, function()
 		light.dietime = 0
 	end)
@@ -45,14 +43,14 @@ function PART:GetNiceName()
 end
 
 local vars = {
-	"InnerAngle",
-	"OuterAngle",
-	"NoWorld",
-	"NoModel",
-	"Brightness",
-	"Color",
-	"Size",
-}
+		"InnerAngle",
+		"OuterAngle",
+		"NoWorld",
+		"NoModel",
+		"Brightness",
+		"Color",
+		"Size",
+	}
 
 function PART:OnShow()
 	for _, v in ipairs(vars) do
@@ -74,9 +72,9 @@ end
 
 function PART:SetColor(val)
 	self.Color = val
-	self:GetLight().r = math.Clamp(val.r*255, 0, 255)
-	self:GetLight().g = math.Clamp(val.g*255, 0, 255)
-	self:GetLight().b = math.Clamp(val.b*255, 0, 255)
+	self:GetLight().r = math.Clamp(val.r * 255, 0, 255)
+	self:GetLight().g = math.Clamp(val.g * 255, 0, 255)
+	self:GetLight().b = math.Clamp(val.b * 255, 0, 255)
 end
 
 function PART:SetBrightness(val)

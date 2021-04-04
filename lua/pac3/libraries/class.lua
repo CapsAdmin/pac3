@@ -5,10 +5,7 @@ do -- table copy
 
 	local function copy(obj, skip_meta)
 		local t = type(obj)
-
-		if t == "number" or t == "string" or t == "function" or t == "boolean" then
-			return obj
-		end
+		if t == "number" or t == "string" or t == "function" or t == "boolean" then return obj end
 
 		if t == "Vector" or t == "Angle" then
 			return obj * 1
@@ -16,7 +13,6 @@ do -- table copy
 			return lookup_table[obj]
 		elseif t == "table" then
 			local new_table = {}
-
 			lookup_table[obj] = new_table
 
 			for key, val in pairs(obj) do
@@ -36,56 +32,71 @@ do -- table copy
 end
 
 local class = {}
-
 class.Registered = {}
 
 local function checkfield(tbl, key, def)
-    tbl[key] = tbl[key] or def
+	tbl[key] = tbl[key] or def
 
-    if not tbl[key] then
-        error(string.format("The type field %q was not found!", key), 3)
-    end
+	if not tbl[key] then
+		error(string.format("The type field %q was not found!", key), 3)
+	end
 
-    return tbl[key]
+	return tbl[key]
 end
 
 function class.GetSet(tbl, name, def)
-
-    if type(def) == "number" then
-		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = tonumber(var) end
-		tbl["Get" .. name] = tbl["Get" .. name] or function(self) return tonumber(self[name]) end
+	if type(def) == "number" then
+		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var)
+			self[name] = tonumber(var)
+		end
+		tbl["Get" .. name] = tbl["Get" .. name] or function(self)
+			return tonumber(self[name])
+		end
 	elseif type(def) == "string" then
-		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = tostring(var) end
-		tbl["Get" .. name] = tbl["Get" .. name] or function(self) return tostring(self[name]) end
+		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var)
+			self[name] = tostring(var)
+		end
+		tbl["Get" .. name] = tbl["Get" .. name] or function(self)
+			return tostring(self[name])
+		end
 	else
-		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
-		tbl["Get" .. name] = tbl["Get" .. name] or function(self) return self[name] end
+		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var)
+			self[name] = var
+		end
+		tbl["Get" .. name] = tbl["Get" .. name] or function(self)
+			return self[name]
+		end
 	end
 
-    tbl[name] = def
+	tbl[name] = def
 end
 
 function class.IsSet(tbl, name, def)
 	if type(def) == "number" then
-		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = tonumber(var) end
+		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var)
+			self[name] = tonumber(var)
+		end
 	else
-		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var) self[name] = var end
+		tbl["Set" .. name] = tbl["Set" .. name] or function(self, var)
+			self[name] = var
+		end
 	end
-    tbl["Is" .. name] = tbl["Is" .. name] or function(self) return self[name] end
 
-    tbl[name] = def
+	tbl["Is" .. name] = tbl["Is" .. name] or function(self)
+		return self[name]
+	end
+	tbl[name] = def
 end
 
 function class.RemoveField(tbl, name)
 	tbl["Set" .. name] = nil
-    tbl["Get" .. name] = nil
-    tbl["Is" .. name] = nil
-
-    tbl[name] = nil
+	tbl["Get" .. name] = nil
+	tbl["Is" .. name] = nil
+	tbl[name] = nil
 end
 
 function class.Get(type_name, class_name)
-    return class.Registered[type_name] and class.Registered[type_name][class_name] or nil
+	return class.Registered[type_name] and class.Registered[type_name][class_name] or nil
 end
 
 function class.GetAll(type_name)
@@ -93,18 +104,15 @@ function class.GetAll(type_name)
 end
 
 function class.Register(META, type_name, name)
-    local type_name = checkfield(META, "Type", type_name)
-    local name = checkfield(META, "ClassName", name)
-
-    class.Registered[type_name] = class.Registered[type_name] or {}
-    class.Registered[type_name][name] = META
-
+	local type_name = checkfield(META, "Type", type_name)
+	local name = checkfield(META, "ClassName", name)
+	class.Registered[type_name] = class.Registered[type_name] or {}
+	class.Registered[type_name][name] = META
 	return type_name, name
 end
 
 function class.HandleBaseField(META, var)
 	if not var then return end
-
 	local t = type(var)
 
 	if t == "string" then
@@ -118,21 +126,19 @@ function class.HandleBaseField(META, var)
 		else
 			-- make a copy of it so we don't alter the meta template
 			var = table.copy(var)
-
 			META.BaseList = META.BaseList or {}
-
 			table.insert(META.BaseList, var)
 		end
 	end
 end
 
 function class.Create(type_name, class_name)
-    local META = class.Get(type_name, class_name)
+	local META = class.Get(type_name, class_name)
 
-    if not META then
-        MsgN(string.format("tried to create unknown %s %q!", type or "no type", class_name or "no class"))
-        return
-    end
+	if not META then
+		MsgN(string.format("tried to create unknown %s %q!", type or "no type", class_name or "no class"))
+		return
+	end
 
 	local obj = table.copy(META)
 	class.HandleBaseField(obj, obj.Base)
@@ -143,13 +149,16 @@ function class.Create(type_name, class_name)
 			for key, val in pairs(obj.BaseList[1]) do
 				obj[key] = obj[key] or val
 			end
+
 			obj.BaseClass = obj.BaseList[1]
 		else
 			local current = obj
+
 			for _, base in pairs(obj.BaseList) do
 				for key, val in pairs(base) do
 					obj[key] = obj[key] or val
 				end
+
 				current.BaseClass = base
 				current = base
 			end
@@ -157,12 +166,9 @@ function class.Create(type_name, class_name)
 	end
 
 	obj.MetaTable = META
-
 	setmetatable(obj, obj)
-
 	return obj
 end
 
 class.Copy = table.copy
-
 return class

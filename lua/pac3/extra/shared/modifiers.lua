@@ -1,10 +1,8 @@
 pacx.ModifiersPath = "pac3/extra/shared/modifiers/"
-
 pacx.Modifiers = {}
 
 function pacx.AddServerModifier(id, change_callback)
 	local name = "pac_modifier_" .. id
-
 	local default = 1
 
 	if GAMEMODE and GAMEMODE.FolderName and not GAMEMODE.FolderName:lower():find("sandbox") then
@@ -29,7 +27,6 @@ function pacx.AddServerModifier(id, change_callback)
 	end
 
 	pacx.Modifiers[id] = change_callback or true
-
 	return cvar
 end
 
@@ -50,6 +47,7 @@ if CLIENT then
 		local id = net.ReadString()
 		local enable = net.ReadBool()
 		local func = pacx.Modifiers[id]
+
 		if type(func) == "function" then
 			func(enable)
 		end

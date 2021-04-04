@@ -1,8 +1,11 @@
 local enable = CreateClientConVar("pac_show_profiling_info", 1, true, true)
 local font = "pac_render_score"
-
-surface.CreateFont(font, {font = "Arial", shadow = true, size = 14, antialias = false})
-
+surface.CreateFont(font, {
+	font = "Arial",
+	shadow = true,
+	size = 14,
+	antialias = false,
+})
 pace.RenderTimes = {} -- render times in seconds
 
 
@@ -12,7 +15,6 @@ function pace.GetProfilingData(ent)
 	if profile_data then
 		local out = {events = {}}
 		out.times_rendered = profile_data.times_ran
-
 
 		for type, data in pairs(profile_data.types) do
 			out.events[type] = {
@@ -35,7 +37,7 @@ timer.Create("pac_render_times", 0.1, 0, function()
 
 			-- events are "opaque" and "translucent"
 			-- WE DO NOT CALCULATE AN AVERAGE
-			for k,v in pairs(data.events) do
+			for k, v in pairs(data.events) do
 				renderTime = renderTime + v.average_ms * 0.001
 			end
 
@@ -45,10 +47,19 @@ timer.Create("pac_render_times", 0.1, 0, function()
 end)
 
 pac.AddHook("HUDPaint", "pac_show_render_times", function()
-	if not pace.IsActive() or not pace.IsFocused() or not enable:GetBool() or pace.IsInBasicMode() then return end
+	if
+		not pace.IsActive() or
+		not pace.IsFocused() or
+		not enable:GetBool() or
+		pace.IsInBasicMode()
+	then
+		return
+	end
 
 	for key, ply in pairs(player.GetHumans()) do
-		if ply == LocalPlayer() then goto CONTINUE end
+		if ply == LocalPlayer() then
+			goto CONTINUE
+		end
 
 		local pos = ply:EyePos()
 
@@ -56,10 +67,8 @@ pac.AddHook("HUDPaint", "pac_show_render_times", function()
 			local pos = pos:ToScreen()
 
 			if pos.visible then
-
 				surface.SetFont(font)
 				surface.SetTextColor(255, 255, 255, 255)
-
 				local renderTime = pace.RenderTimes[ply:EntIndex()]
 
 				if renderTime then
@@ -68,6 +77,7 @@ pac.AddHook("HUDPaint", "pac_show_render_times", function()
 				end
 			end
 		end
+
 		::CONTINUE::
 	end
 end)

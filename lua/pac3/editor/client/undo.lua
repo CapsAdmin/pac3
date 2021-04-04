@@ -17,14 +17,11 @@ end
 
 local function find_uid_part(part, findpart)
 	for _, child in ipairs(part.children) do
-		if child.self.UniqueID == findpart.self.UniqueID then
-			return child
-		end
+		if child.self.UniqueID == findpart.self.UniqueID then return child end
 	end
 end
 
 local function diff_remove(a, b, aparent, bparent)
-
 	for _, apart in ipairs(a.children) do
 		local bpart = find_uid_part(b, apart)
 
@@ -36,8 +33,12 @@ local function diff_remove(a, b, aparent, bparent)
 				if part:GetParent() == parent then
 					do
 						local parent = part:GetParent()
-						if parent:IsValid() then pace.Call("PartSelected", parent) end
+
+						if parent:IsValid() then
+							pace.Call("PartSelected", parent)
+						end
 					end
+
 					part:Remove()
 				end
 			end
@@ -47,9 +48,7 @@ local function diff_remove(a, b, aparent, bparent)
 	end
 end
 
-
 local function diff_create(a, b, aparent, bparent)
-
 	for _, bpart in ipairs(b.children) do
 		local apart = find_uid_part(a, bpart)
 
@@ -82,18 +81,15 @@ end
 function pace.ApplyDifference(data)
 	local A = get_current_outfit()
 	local B = data
-
 	diff_remove({children = A}, {children = B})
 	diff_create({children = A}, {children = B})
 end
 
 pace.ClearUndo()
-
 local last_json
 
 function pace.RecordUndoHistory()
 	local data = get_current_outfit()
-
 	local json = util.TableToJSON(data)
 	if json == last_json then return end
 	last_json = json
@@ -114,7 +110,7 @@ function pace.Undo()
 		pace.ApplyDifference(data)
 		pace.FlashNotification("Undo position: " .. pace.UndoPosition .. "/" .. #pace.UndoHistory)
 	else
-		pace.FlashNotification('Nothing to undo')
+		pace.FlashNotification("Nothing to undo")
 	end
 end
 
@@ -126,6 +122,6 @@ function pace.Redo()
 		pace.ApplyDifference(data)
 		pace.FlashNotification("Undo position: " .. pace.UndoPosition .. "/" .. #pace.UndoHistory)
 	else
-		pace.FlashNotification('Nothing to redo')
+		pace.FlashNotification("Nothing to redo")
 	end
 end

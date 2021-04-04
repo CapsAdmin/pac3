@@ -1,5 +1,6 @@
 pac.AddHook("Think", "pac_e2_extension", function()
 	local ply = LocalPlayer()
+
 	if ply:IsValid() then
 
 		-- uuumm
@@ -13,7 +14,6 @@ end)
 
 local function SetKeyValue(ply, ent, unique_id, key, val)
 	local set = "Set" .. key
-
 	local part = pac.GetPartFromUniqueID(ply:UniqueID(), unique_id)
 
 	if part:GetOwner(true) == ent then
@@ -43,7 +43,6 @@ net.Receive("pac_e2_setkeyvalue_str", function()
 		local id = net.ReadString()
 		local key = net.ReadString()
 		local val = net.ReadString()
-
 		SetKeyValue(ply, ent, id, key, val)
 	end
 end)
@@ -56,7 +55,6 @@ net.Receive("pac_e2_setkeyvalue_vec", function()
 		local id = net.ReadString()
 		local key = net.ReadString()
 		local val = net.ReadVector()
-
 		SetKeyValue(ply, ent, id, key, val)
 	end
 end)
@@ -69,7 +67,6 @@ net.Receive("pac_e2_setkeyvalue_ang", function()
 		local id = net.ReadString()
 		local key = net.ReadString()
 		local val = net.ReadAngle()
-
 		SetKeyValue(ply, ent, id, key, val)
 	end
 end)
@@ -82,7 +79,6 @@ net.Receive("pac_e2_setkeyvalue_num", function()
 		local id = net.ReadString()
 		local key = net.ReadString()
 		local val = net.ReadFloat()
-
 		SetKeyValue(ply, ent, id, key, val)
 	end
 end)

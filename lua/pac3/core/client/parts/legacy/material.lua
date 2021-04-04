@@ -1,92 +1,98 @@
 local PART = {}
-
 PART.ClassName = "material"
 PART.NonPhysical = true
-PART.Icon = 'icon16/paintcan.png'
+PART.Icon = "icon16/paintcan.png"
 PART.Group = "legacy"
-
 local group_ordering = {
-	{pattern = "phong", group = "phong"},
-	{pattern = "envmap", group = "env map"},
-	{pattern = {"ambientocclusion", "halflambert"}, group = "ambient occlusion"},
-	{pattern = "detail", group = "detail"},
-	{pattern = "rimlight", group = "rimlight"},
-	{pattern = {"cloak", "refract"}, group = "cloak"},
-	{pattern = "color", group = "colors"},
-	{pattern = {"bumpmap", "basetexture", "^envmapmask$", "lightwarptexture"}, group = "textures"},
-	{pattern = "flesh", group = "flesh"},
-	{pattern = "selfillum", group = "selfillum"},
-	{pattern = "emissive", group ="emissive"},
-}
-
-PART.ShaderParams =
-{
-	BaseTexture = "ITexture",
-
-	CloakPassEnabled  = "boolean",
-	CloakFactor = {type = "number", extra = {editor_sensitivity = 0.25, editor_clamp = {0, 1}}},
-	CloakColorTint = "Vector",
-	RefractAmount = "number",
-
-	BumpMap = "ITexture",
-	LightWarpTexture = "ITexture",
-
-	Detail = "ITexture",
-	DetailTint = "Vector",
-	DetailScale = "number",
-	DetailBlendMode = {type = "number", extra = {editor_onchange = function(pnl, num) return math.Round(math.max(num, 0)) end}},
-	DetailBlendFactor = "number",
-
-	Phong = "boolean",
-	PhongBoost = "number",
-	PhongExponent = "number",
-	PhongTint = "Vector",
-	PhongFresnelRanges = {type = "Vector", extra = {editor_panel = "color"}},
-	PhongWarpTexture = "ITexture",
-	PhongAlbedoTint = "boolean",
-	PhongExponentTexture = "ITexture",
-
-	Rimlight = "boolean",
-	RimlightBoost = "number",
-	RimlightExponent = "number",
+		{pattern = "phong", group = "phong"},
+		{pattern = "envmap", group = "env map"},
+		{
+			pattern = {"ambientocclusion", "halflambert"},
+			group = "ambient occlusion",
+		},
+		{pattern = "detail", group = "detail"},
+		{pattern = "rimlight", group = "rimlight"},
+		{pattern = {"cloak", "refract"}, group = "cloak"},
+		{pattern = "color", group = "colors"},
+		{
+			pattern = {
+				"bumpmap",
+				"basetexture",
+				"^envmapmask$",
+				"lightwarptexture",
+			},
+			group = "textures",
+		},
+		{pattern = "flesh", group = "flesh"},
+		{pattern = "selfillum", group = "selfillum"},
+		{pattern = "emissive", group = "emissive"},
+	}
+PART.ShaderParams = {
+		BaseTexture = "ITexture",
+		CloakPassEnabled = "boolean",
+		CloakFactor = {
+			type = "number",
+			extra = {editor_sensitivity = 0.25, editor_clamp = {0, 1}},
+		},
+		CloakColorTint = "Vector",
+		RefractAmount = "number",
+		BumpMap = "ITexture",
+		LightWarpTexture = "ITexture",
+		Detail = "ITexture",
+		DetailTint = "Vector",
+		DetailScale = "number",
+		DetailBlendMode = {
+			type = "number",
+			extra = {
+				editor_onchange = function(pnl, num)
+					return math.Round(math.max(num, 0))
+				end,
+			},
+		},
+		DetailBlendFactor = "number",
+		Phong = "boolean",
+		PhongBoost = "number",
+		PhongExponent = "number",
+		PhongTint = "Vector",
+		PhongFresnelRanges = {type = "Vector", extra = {editor_panel = "color"}},
+		PhongWarpTexture = "ITexture",
+		PhongAlbedoTint = "boolean",
+		PhongExponentTexture = "ITexture",
+		Rimlight = "boolean",
+		RimlightBoost = "number",
+		RimlightExponent = "number",
 
 	-- doesn't do anything i think
 	EnvMap = "ITexture",
-	EnvMapMask = "ITexture",
-	EnvMapTint = "Vector",
-	EnvMapMode = "number",
-	EnvMapContrast = "number",
-	EnvMapMaskScale = "number",
-	EnvMapSaturation = "Vector",
-	NormalMapAlphaEnvMapMask = "boolean",
-	BaseAlphaEnvMapMask = "boolean",
-	Selfillum_EnvMapMask_Alpha = "number",
-
-	AmbientOcclusion = "boolean",
-	AmbientOcclusionColor = "Vector",
-	AmbientOcclusionTexture = "ITexture",
-
-	BlendTintByBaseAlpha = "boolean",
-	BlendTintColorOverBase = "Vector",
-	ColorTint_Base = "Vector",
-	ColorTint_Tmp = "Vector",
-	Color = "Vector",
-	Color2 = "Vector",
-	Additive = "boolean",
-	AlphaTest = "boolean",
-	TranslucentX = "boolean",
-
-
-	HalfLambert = "boolean",
-
-	Selfillum = "boolean",
-	SelfillumTint = "Vector",
-	SelfillumMask = "ITexture",
-	Selfillum_Envmapmask_Alpha = "ITexture",
-	SelfillumFresnel = "boolean",
-	SelfillumFresnlenMinMaxExp = "Vector",
-
-    FleshInteriorEnabled = "boolean", --"0", "Enable Flesh interior blend pass" )
+		EnvMapMask = "ITexture",
+		EnvMapTint = "Vector",
+		EnvMapMode = "number",
+		EnvMapContrast = "number",
+		EnvMapMaskScale = "number",
+		EnvMapSaturation = "Vector",
+		NormalMapAlphaEnvMapMask = "boolean",
+		BaseAlphaEnvMapMask = "boolean",
+		Selfillum_EnvMapMask_Alpha = "number",
+		AmbientOcclusion = "boolean",
+		AmbientOcclusionColor = "Vector",
+		AmbientOcclusionTexture = "ITexture",
+		BlendTintByBaseAlpha = "boolean",
+		BlendTintColorOverBase = "Vector",
+		ColorTint_Base = "Vector",
+		ColorTint_Tmp = "Vector",
+		Color = "Vector",
+		Color2 = "Vector",
+		Additive = "boolean",
+		AlphaTest = "boolean",
+		TranslucentX = "boolean",
+		HalfLambert = "boolean",
+		Selfillum = "boolean",
+		SelfillumTint = "Vector",
+		SelfillumMask = "ITexture",
+		Selfillum_Envmapmask_Alpha = "ITexture",
+		SelfillumFresnel = "boolean",
+		SelfillumFresnlenMinMaxExp = "Vector",
+		FleshInteriorEnabled = "boolean", --"0", "Enable Flesh interior blend pass" )
 	FleshInteriorTexture = "ITexture", --"", "Flesh color texture" )
 	FleshInteriorNoiseTexture = "ITexture", --"", "Flesh noise texture" )
 	FleshBorderTexture1D = "ITexture", --"", "Flesh border 1D texture" )
@@ -110,16 +116,15 @@ PART.ShaderParams =
 	FleshScrollSpeed = "number", --"1.0", "Flesh scroll speed" )
 
 	EmissiveBlendEnabled = "boolean",
-	EmissiveBlendTexture = "ITexture",
-	EmissiveBlendBaseTexture = "ITexture",
-	EmissiveBlendFlowTexture = "ITexture",
-	EmissiveBlendTint = "Vector",
-	EmissiveBlendScrollVector = "Vector",
-
-	DistanceAlpha = "number",
-	VertexAlpha = "boolean",
-	Alpha = "number",
-}
+		EmissiveBlendTexture = "ITexture",
+		EmissiveBlendBaseTexture = "ITexture",
+		EmissiveBlendFlowTexture = "ITexture",
+		EmissiveBlendTint = "Vector",
+		EmissiveBlendScrollVector = "Vector",
+		DistanceAlpha = "number",
+		VertexAlpha = "boolean",
+		Alpha = "number",
+	}
 
 function PART:OnThink()
 	if self.delay_set and self.Parent then
@@ -130,22 +135,26 @@ end
 
 local function setup(PART)
 	local sorted = {}
-	for k,v in pairs(PART.ShaderParams) do
+
+	for k, v in pairs(PART.ShaderParams) do
 		table.insert(sorted, {k = k, v = v})
 	end
-	table.sort(sorted, function(a, b) return a.k > b.k end)
+
+	table.sort(sorted, function(a, b)
+		return a.k > b.k
+	end)
 
 	for pass = 1, 2 do
 		for _, info in ipairs(group_ordering) do
 			for _, v in ipairs(sorted) do
 				local name, T = v.k, v.v
-
 				local found
 
 				if type(info.pattern) == "table" then
-					for k,v in pairs(info.pattern) do
+					for k, v in pairs(info.pattern) do
 						if name:lower():find(v) then
 							found = true
+
 							break
 						end
 					end
@@ -156,216 +165,188 @@ local function setup(PART)
 				if pass == 1 then
 					if found then
 						pac.SetPropertyGroup(PART, info.group)
-					else
-						goto CONTINUE
-					end
-				elseif pass == 2 then
-					if not found then
+						else
+							goto CONTINUE
+						end
+					elseif pass == 2 then
+						if not found then
 						pac.SetPropertyGroup()
-					else
-						goto CONTINUE
+						else
+							goto CONTINUE
+						end
 					end
-				end
 
-				do
-					local extra
-					if type(T) == "table" then
-						extra = T.extra
-						T = T.type
-					end
-					if T == "ITexture" then
-						pac.GetSet(PART, name, "", {editor_panel = "textures"})
+					do
+						local extra
 
-						PART["Set" .. name] = function(self, var)
-							self[name] = var
+						if type(T) == "table" then
+							extra = T.extra
+							T = T.type
+						end
 
-							if
-								self.SKIP or
-								pac.Handleurltex(
-									self,
-									var,
-									function(_, tex)
-										local mat = self:GetMaterialFromParent()
-										if mat then
-											mat:SetTexture("$" .. name, tex)
+						if T == "ITexture" then
+							pac.GetSet(PART, name, "", {editor_panel = "textures"})
+							PART["Set" .. name] = function(self, var)
+								self[name] = var
+								if self.SKIP or pac.Handleurltex(self, var, function(_, tex)
+									local mat = self:GetMaterialFromParent()
 
-											self.SKIP = true
-											self:UpdateMaterial()
-											self.SKIP = false
-										else
-											self.delay_set = function()
-												local mat = self:GetMaterialFromParent()
-												if mat then
-													mat:SetTexture("$" .. name, tex)
-													self.SKIP = true
-													self:UpdateMaterial()
-													self.SKIP = false
-												end
+									if mat then
+										mat:SetTexture("$" .. name, tex)
+										self.SKIP = true
+										self:UpdateMaterial()
+										self.SKIP = false
+									else
+										self.delay_set = function()
+											local mat = self:GetMaterialFromParent()
+
+											if mat then
+												mat:SetTexture("$" .. name, tex)
+												self.SKIP = true
+												self:UpdateMaterial()
+												self.SKIP = false
 											end
 										end
 									end
-								)
-							then
-								return
-							end
+								end) then return end
+								local mat = self:GetMaterialFromParent()
 
-							local mat = self:GetMaterialFromParent()
-
-							if mat then
-								if var ~= "" then
-									local _mat = Material(var)
-									local tex = _mat:GetTexture("$" .. name)
-
-									if not tex or tex:GetName() == "error" then
-										tex = pac.CreateMaterial("pac3_tex_" .. var .. "_" .. self.Id, "VertexLitGeneric", {["$basetexture"] = var}):GetTexture("$basetexture")
+								if mat then
+									if var ~= "" then
+										local _mat = Material(var)
+										local tex = _mat:GetTexture("$" .. name)
 
 										if not tex or tex:GetName() == "error" then
-											tex = _mat:GetTexture("$basetexture")
+											tex = pac.CreateMaterial("pac3_tex_" .. var .. "_" .. self.Id, "VertexLitGeneric", {["$basetexture"] = var})
+												:GetTexture("$basetexture")
+
+											if not tex or tex:GetName() == "error" then
+												tex = _mat:GetTexture("$basetexture")
+											end
 										end
-									end
 
-									if tex then
-										mat:SetTexture("$" .. name, tex)
+										if tex then
+											mat:SetTexture("$" .. name, tex)
+										end
+									else
+										mat:SetUndefined("$" .. name)
 									end
-								else
-									mat:SetUndefined("$" .. name)
 								end
 							end
-						end
-					elseif T == "boolean" then
-						pac.GetSet(PART, name, false)
+						elseif T == "boolean" then
+							pac.GetSet(PART, name, false)
+							PART["Set" .. name] = function(self, var)
+								self[name] = var
+								local mat = self:GetMaterialFromParent()
 
-						PART["Set" .. name] = function(self, var)
-							self[name] = var
+								if mat then
+									if name == "TranslucentX" then
+										name = "Translucent"
+									end
 
-							local mat = self:GetMaterialFromParent()
+									mat:SetInt("$" .. name, var and 1 or 0) -- setint crashes?
+							end
+							end
+						elseif T == "number" then
+							pac.GetSet(PART, name, 0)
+							PART["Set" .. name] = function(self, var)
+								self[name] = var
+								local mat = self:GetMaterialFromParent()
 
-							if mat then
-								if name == "TranslucentX" then
-									name = "Translucent"
+								if mat then
+									mat:SetFloat("$" .. name, var)
 								end
-
-								mat:SetInt("$" .. name, var and 1 or 0) -- setint crashes?
 							end
-						end
-					elseif T == "number" then
-						pac.GetSet(PART, name, 0)
-
-						PART["Set" .. name] = function(self, var)
-							self[name] = var
-
-							local mat = self:GetMaterialFromParent()
-
-							if mat then
-								mat:SetFloat("$" .. name, var)
-							end
-						end
-					elseif T == "Vector" then
-						local def = Vector(0,0,0)
+						elseif T == "Vector" then
+							local def = Vector(0, 0, 0)
 
 						-- hack
 						local key = name:lower()
-						if key == "color" or key == "color2" then
-							def = Vector(1,1,1)
-						end
 
-						pac.GetSet(PART, name, def)
+							if key == "color" or key == "color2" then
+								def = Vector(1, 1, 1)
+							end
 
-						PART["Set" .. name] = function(self, var)
-							self[name] = var
+							pac.GetSet(PART, name, def)
+							PART["Set" .. name] = function(self, var)
+								self[name] = var
+								local mat = self:GetMaterialFromParent()
 
-							local mat = self:GetMaterialFromParent()
+								if mat then
+									if key == "color" or key == "color2" then
+										timer.Simple(0.1, function()
+											mat:SetVector("$" .. name, var)
+										end)
+									end
 
-							if mat then
-								if key == "color" or key == "color2" then
-									timer.Simple(0.1, function() mat:SetVector("$" .. name, var) end)
+									mat:SetVector("$" .. name, var)
 								end
-
-								mat:SetVector("$" .. name, var)
 							end
 						end
 					end
+
+					::CONTINUE::
 				end
-				::CONTINUE::
 			end
 		end
 	end
-end
 
-local function add_transform(texture_name)
-	local position_key = texture_name.."Position"
-	local scale_key = texture_name.."Scale"
-	local angle_key = texture_name.."Angle"
-	local angle_center_key = texture_name.."AngleCenter"
+	local function add_transform(texture_name)
+		local position_key = texture_name .. "Position"
+		local scale_key = texture_name .. "Scale"
+		local angle_key = texture_name .. "Angle"
+		local angle_center_key = texture_name .. "AngleCenter"
+		pac.GetSet(PART, position_key, Vector(0, 0, 0))
+		pac.GetSet(PART, scale_key, Vector(1, 1, 1))
+		pac.GetSet(PART, angle_key, 0, {editor_sensitivity = 0.25})
+		pac.GetSet(PART, angle_center_key, Vector(0.5, 0.5, 0))
+		PART.TransformVars = PART.TransformVars or {}
+		PART.TransformVars[position_key] = true
+		PART.TransformVars[scale_key] = true
+		PART.TransformVars[angle_key] = true
+		PART.TransformVars[angle_center_key] = true
+		local shader_key = "$" .. texture_name .. "transform"
 
-	pac.GetSet(PART, position_key, Vector(0, 0, 0))
-	pac.GetSet(PART, scale_key, Vector(1, 1, 1))
-	pac.GetSet(PART, angle_key, 0, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, angle_center_key, Vector(0.5, 0.5, 0))
+		local function setup_matrix(self)
+			self.matrix = self.matrix or Matrix()
+			self.translation_vector = self.translation_vector or Vector(0, 0, 0)
+			self.rotation_angle = self.rotation_angle or Angle(0, 0, 0)
+			self.matrix:Identity()
+			self.matrix:Translate(self.translation_vector)
+			self.matrix:Translate(self[angle_center_key])
+			self.matrix:Rotate(self.rotation_angle)
+			self.matrix:Translate(-self[angle_center_key])
+			self.matrix:SetScale(self[scale_key])
+		end
 
-	PART.TransformVars = PART.TransformVars or {}
-	PART.TransformVars[position_key] = true
-	PART.TransformVars[scale_key] = true
-	PART.TransformVars[angle_key] = true
-	PART.TransformVars[angle_center_key] = true
-
-	local shader_key = "$"..texture_name.."transform"
-
-	local function setup_matrix(self)
-		self.matrix = self.matrix or Matrix()
-		self.translation_vector = self.translation_vector or Vector(0, 0, 0)
-		self.rotation_angle = self.rotation_angle or Angle(0, 0, 0)
-
-		self.matrix:Identity()
-		self.matrix:Translate(self.translation_vector)
-
-		self.matrix:Translate(self[angle_center_key])
-		self.matrix:Rotate(self.rotation_angle)
-		self.matrix:Translate(-self[angle_center_key])
-
-		self.matrix:SetScale(self[scale_key])
+		PART["Set" .. position_key] = function(self, vec)
+			self[position_key] = vec
+			setup_matrix(self)
+			self.translation_vector.x = self[position_key].x % 1
+			self.translation_vector.y = self[position_key].y % 1
+			self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
+		end
+		PART["Set" .. scale_key] = function(self, vec)
+			self[scale_key] = vec
+			setup_matrix(self)
+			self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
+		end
+		PART["Set" .. angle_key] = function(self, num)
+			self[angle_key] = num
+			setup_matrix(self)
+			self.rotation_angle.y = self[angle_key] * 360
+			self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
+		end
+		PART["Set" .. angle_center_key] = function(self, vec)
+			self[angle_center_key] = vec
+			setup_matrix(self)
+			self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
+		end
 	end
 
-	PART["Set" .. position_key] = function(self, vec)
-		self[position_key] = vec
-		setup_matrix(self)
-
-		self.translation_vector.x = self[position_key].x%1
-		self.translation_vector.y = self[position_key].y%1
-
-		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
-	end
-
-	PART["Set" .. scale_key] = function(self, vec)
-		self[scale_key] = vec
-		setup_matrix(self)
-
-		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
-	end
-
-	PART["Set" .. angle_key] = function(self, num)
-		self[angle_key] = num
-		setup_matrix(self)
-
-		self.rotation_angle.y = self[angle_key]*360
-
-		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
-	end
-
-	PART["Set" .. angle_center_key] = function(self, vec)
-		self[angle_center_key] = vec
-		setup_matrix(self)
-
-		self:GetRawMaterial():SetMatrix(shader_key, self.matrix)
-	end
-
-end
-
-
-pac.StartStorableVars()
-
-	setup(PART)
-	add_transform("BaseTexture")
+	pac.StartStorableVars()
+		setup(PART)
+		add_transform("BaseTexture")
 	--add_transform("Bump") -- doesn't work
 	--add_transform("EnvMapMask")
 pac.EndStorableVars()
@@ -378,11 +359,13 @@ function PART:GetMaterialFromParent()
 			if self.Parent.Materialm then
 				local tex
 				tex = self.Parent.Materialm:GetTexture("$bumpmap")
+
 				if tex and not tex:IsError() then
 					mat:SetTexture("$bumpmap", tex)
 				end
 
 				local tex = self.Parent.Materialm:GetTexture("$basetexture")
+
 				if tex and not tex:IsError() then
 					mat:SetTexture("$basetexture", tex)
 				end
@@ -392,7 +375,7 @@ function PART:GetMaterialFromParent()
 		end
 
 		self.Parent.Materialm = self.Materialm
-		
+
 		if self.Parent.UpdateSubMaterialId then
 			self.Parent:UpdateSubMaterialId()
 		end
@@ -425,7 +408,7 @@ function PART:UpdateMaterial(now)
 
 	for key, val in pairs(self.StorableVars) do
 		if self.ShaderParams[key] or self.TransformVars[key] then
-			self["Set" .. key](self, self["Get"..key](self))
+			self["Set" .. key](self, self["Get" .. key](self))
 		end
 	end
 
@@ -467,9 +450,7 @@ end
 
 function PART:OnShow()
 	self:UpdateMaterial()
-
 	local name = self.Name
-
 	pac.UpdateMaterialParts("show", self:GetPlayerOwner():UniqueID(), self, self.Name)
 end
 

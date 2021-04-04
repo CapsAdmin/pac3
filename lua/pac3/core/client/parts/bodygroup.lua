@@ -1,17 +1,18 @@
-
 local PART = {}
-
 PART.ClassName = "bodygroup"
 PART.NonPhysical = true
-PART.Groups = {'entity', 'model', 'modifiers'}
-PART.Icon = 'icon16/user.png'
-
+PART.Groups = {"entity", "model", "modifiers"}
+PART.Icon = "icon16/user.png"
 pac.StartStorableVars()
-	pac.GetSet(PART, "BodyGroupName", "", {
-		enums = function()
-			return pace.current_part:GetBodyGroupNameList()
-		end
-	})
+	pac.GetSet(
+		PART,
+		"BodyGroupName",
+		"",
+		{
+			enums = function()
+				return pace.current_part:GetBodyGroupNameList()
+			end,
+		})
 	pac.GetSet(PART, "ModelIndex", 0)
 pac.EndStorableVars()
 
@@ -26,7 +27,12 @@ end
 function PART:SetBodyGroupName(str)
 	local owner = self:GetOwner()
 
-	if owner:IsValid() and not self.markedFailed and self.bodygroup_index and self.oldBodygroup then
+	if
+		owner:IsValid() and
+		not self.markedFailed and
+		self.bodygroup_index and
+		self.oldBodygroup
+	then
 		owner:SetBodygroup(self.bodygroup_index, self.oldBodygroup)
 
 		if owner:IsPlayer() then
@@ -53,13 +59,9 @@ function PART:UpdateBodygroupData()
 	self.minIndex = 0
 	self.maxIndex = 0
 	local ent = self:GetOwner()
-
 	if not IsValid(ent) or not ent:GetBodyGroups() then return end
 	local fName = self.BodyGroupName:lower():Trim()
-
-	if fName == '' then
-		return
-	end
+	if fName == "" then return end
 
 	for i, info in ipairs(ent:GetBodyGroups()) do
 		if info.name:lower():Trim() == fName then
@@ -72,7 +74,7 @@ function PART:UpdateBodygroupData()
 	end
 
 	if not self.markedFailed then
-		pac.Message(self, ' - Unable to find bodygroup ' .. fName .. ' on ', ent)
+		pac.Message(self, " - Unable to find bodygroup " .. fName .. " on ", ent)
 		self.markedFailed = true
 	end
 end
@@ -80,8 +82,8 @@ end
 function PART:OnBuildBonePositions()
 	if self.markedFailed then return end
 	local owner = self:GetOwner()
-
 	if not owner:IsValid() then return end
+
 	if not self.bodygroup_index then
 		self:UpdateBodygroupData()
 		return
@@ -99,7 +101,6 @@ end
 
 function PART:GetModelIndexList()
 	local out = {}
-
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
@@ -119,7 +120,6 @@ end
 
 function PART:GetBodyGroupNameList()
 	local out = {}
-
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then

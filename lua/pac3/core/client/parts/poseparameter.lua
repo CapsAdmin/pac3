@@ -1,13 +1,19 @@
 local PART = {}
-
 PART.ClassName = "poseparameter"
 PART.NonPhysical = true
 PART.ThinkTime = 0
-PART.Group = {'modifiers', 'entity'}
-PART.Icon = 'icon16/disconnect.png'
-
+PART.Group = {"modifiers", "entity"}
+PART.Icon = "icon16/disconnect.png"
 pac.StartStorableVars()
-	pac.GetSet(PART, "PoseParameter", "", {enums = function(part) return part:GetPoseParameterList() end})
+	pac.GetSet(
+		PART,
+		"PoseParameter",
+		"",
+		{
+			enums = function(part)
+				return part:GetPoseParameterList()
+			end,
+		})
 	pac.GetSet(PART, "Range", 0)
 pac.EndStorableVars()
 
@@ -17,14 +23,18 @@ end
 
 function PART:GetPoseParameterList()
 	local ent = self:GetOwner()
-
 	local out = {}
 
 	if ent:IsValid() then
-		for i = 0, ent:GetNumPoseParameters()-1 do
+		for i = 0, ent:GetNumPoseParameters() - 1 do
 			local name = ent:GetPoseParameterName(i)
+
 			if name ~= "" then
-				out[name] = {name = name, i = i, range = {ent:GetPoseParameterRange(i)}}
+				out[name] = {
+						name = name,
+						i = i,
+						range = {ent:GetPoseParameterRange(i)},
+					}
 			end
 		end
 	end
@@ -50,13 +60,10 @@ function PART:UpdateParams()
 
 		if data then
 			local num = Lerp((self.Range + 1) / 2, data.range[1] or 0, data.range[2] or 1)
-
 			ent.pac_pose_params = ent.pac_pose_params or {}
 			ent.pac_pose_params[self.UniqueID] = ent.pac_pose_params[self.UniqueID] or {}
-
-			ent.pac_pose_params[self.UniqueID].key  = data.name
+			ent.pac_pose_params[self.UniqueID].key = data.name
 			ent.pac_pose_params[self.UniqueID].val = num
-
 			ent:SetPoseParameter(data.name, num)
 		end
 	end

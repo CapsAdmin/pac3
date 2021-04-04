@@ -1,11 +1,10 @@
 pace.StreamQueue = pace.StreamQueue or {}
-
 local frame_number = 0
 local last_frame
 local ERROR_COLOR = Color(228, 37, 37)
 
 local function catchError(err)
-	pac.Message(ERROR_COLOR, 'Error: ', err)
+	pac.Message(ERROR_COLOR, "Error: ", err)
 	pac.Message(debug.traceback())
 end
 
@@ -28,36 +27,28 @@ local function make_copy(tbl, input)
 end
 
 local function net_write_table(tbl)
-
 	local buffer = pac.StringStream()
 	buffer:writeTable(tbl)
-
 	local data = buffer:getString()
 	local ok, err = pcall(net.WriteStream, data)
-
-	if not ok then
-		return ok, err
-	end
-
+	if not ok then return ok, err end
 	return #data
 end
 
-
 pace.dupe_ents = pace.dupe_ents or {}
-
 local uid2key = include("legacy_network_dictionary_translate.lua")
 
 local function translate_old_dupe(tableIn, target)
 	for key, value2 in pairs(tableIn) do
 		local value
 
-		if type(value2) == 'table' then
+		if type(value2) == "table" then
 			value = translate_old_dupe(value2, {})
 		else
 			value = value2
 		end
 
-		if type(key) == 'number' and key > 10000 then
+		if type(key) == "number" and key > 10000 then
 			local str = uid2key[key] or key
 			target[str] = value
 		else
@@ -88,7 +79,6 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 		for uid, data in pairs(parts) do
 			if type(data.part) == "table" then
 				make_copy(data.part, id)
-
 				data.part.self.Name = tostring(ent)
 				data.part.self.OwnerName = id
 			end
@@ -102,7 +92,6 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 			data.partID = nil
 			data.totalParts = nil
 			data.transmissionID = nil
-
 			pace.SubmitPart(data)
 		end
 	end)
@@ -122,6 +111,7 @@ function pace.SubmitPart(data, filter)
 
 	if type(data.part) == "table" then
 		local ent = Entity(tonumber(data.part.self.OwnerName) or -1)
+
 		if ent:IsValid() then
 			if not pace.CanPlayerModify(data.owner, ent) then
 				allowed = false
@@ -130,21 +120,26 @@ function pace.SubmitPart(data, filter)
 				if not data.is_dupe then
 					ent.pac_parts = ent.pac_parts or {}
 					ent.pac_parts[data.owner:UniqueID()] = data
-
 					pace.dupe_ents[ent:EntIndex()] = {owner = data.owner, ent = ent}
-
 					duplicator.ClearEntityModifier(ent, "pac_config")
 					--duplicator.StoreEntityModifier(ent, "pac_config", ent.pac_parts)
 					--duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(ent.pac_parts)})
 					-- fresh table copy
-					duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(table.Copy(ent.pac_parts))})
+					duplicator.StoreEntityModifier(
+						ent,
+						"pac_config",
+						{
+							json = util.TableToJSON(table.Copy(ent.pac_parts)),
+						})
 				end
+
 				ent:CallOnRemove("pac_config", function(ent)
 					if ent.pac_parts then
 						for _, data in pairs(ent.pac_parts) do
 							if type(data.part) == "table" then
 								data.part = data.part.self.UniqueID
 							end
+
 							pace.RemovePart(data)
 						end
 					end
@@ -203,9 +198,8 @@ function pace.SubmitPart(data, filter)
 
 	local players
 
-	if type(data.wear_filter) == 'table' then
+	if type(data.wear_filter) == "table" then
 		players = {}
-
 		local lookup = {}
 
 		if game.SinglePlayer() then
@@ -271,6 +265,7 @@ function pace.SubmitPart(data, filter)
 		if type(players) == "table" then
 			for key = #players, 1, -1 do
 				local ply = players[key]
+
 				if not ply.pac_requested_outfits and ply ~= data.owner then
 					table.remove(players, key)
 				end
@@ -278,21 +273,32 @@ function pace.SubmitPart(data, filter)
 
 			if pace.GlobalBans and data.owner:IsValid() then
 				local owner_steamid = data.owner:SteamID()
+
 				for key, ply in pairs(players) do
 					local steamid = ply:SteamID()
+
 					for var, reason in pairs(pace.GlobalBans) do
-						if  var == steamid or type(var) == "table" and (table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):") or ""))) then
+						if
+							var == steamid or
+							type(var) == "table" and
+							(table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):") or "")))
+						then
 							table.remove(players, key)
 
 							if owner_steamid == steamid then
 								pac.Message("Dropping data transfer request by '", ply:Nick(), "' due to a global PAC ban.")
-								return false, "You have been globally banned from using PAC. See global_bans.lua for more info."
+								return 
+									false,
+									"You have been globally banned from using PAC. See global_bans.lua for more info."
 							end
 						end
 					end
 				end
 			end
-		elseif type(players) == "Player" and (not players.pac_requested_outfits and players ~= data.owner) then
+		elseif
+			type(players) == "Player" and
+			(not players.pac_requested_outfits and players ~= data.owner)
+		then
 			data.transmissionID = nil
 			return true
 		end
@@ -301,17 +307,19 @@ function pace.SubmitPart(data, filter)
 
 		-- Alternative transmission system
 		local ret = hook.Run("pac_SendData", players, data)
+
 		if ret == nil then
 			net.Start("pac_submit")
-			local bytes, err = net_write_table(data)
+				local bytes, err = net_write_table(data)
 
-			if not bytes then
-				ErrorNoHalt("[PAC3] Outfit broadcast failed for " .. tostring(data.owner) .. ": " .. tostring(err) .. '\n')
+				if not bytes then
+					ErrorNoHalt(
+						"[PAC3] Outfit broadcast failed for " .. tostring(data.owner) .. ": " .. tostring(err) .. "\n")
 
-				if data.owner and data.owner:IsValid() then
-					data.owner:ChatPrint('[PAC3] ERROR: Could not broadcast your outfit: ' .. tostring(err))
-				end
-			else
+					if data.owner and data.owner:IsValid() then
+						data.owner:ChatPrint("[PAC3] ERROR: Could not broadcast your outfit: " .. tostring(err))
+					end
+				else
 				net.Send(players)
 			end
 		end
@@ -324,20 +332,23 @@ function pace.SubmitPart(data, filter)
 
 	-- nullify transmission ID
 	data.transmissionID = nil
-
 	return true
 end
 
 function pace.SubmitPartNotify(data)
-	pace.dprint("submitted outfit %q from %s with %i number of children to set on %s", data.part.self.Name or "", data.owner:GetName(), table.Count(data.part.children), data.part.self.OwnerName or "")
-
+	pace.dprint(
+		"submitted outfit %q from %s with %i number of children to set on %s",
+		data.part.self.Name or "",
+		data.owner:GetName(),
+		table.Count(data.part.children),
+		data.part.self.OwnerName or "")
 	local allowed, reason = pace.SubmitPart(data)
 
 	if data.owner:IsPlayer() then
 		if allowed == "queue" then return end
 
-		if not reason and allowed and type(data.part) == 'table' then
-			reason = string.format('Your part %q has been applied', data.part.self.Name or '<unknown>')
+		if not reason and allowed and type(data.part) == "table" then
+			reason = string.format("Your part %q has been applied", data.part.self.Name or "<unknown>")
 		end
 
 		net.Start("pac_submit_acknowledged")
@@ -345,13 +356,23 @@ function pace.SubmitPartNotify(data)
 			net.WriteString(reason or "")
 			net.WriteString(data.part.self.Name or "no name")
 		net.Send(data.owner)
-
-		hook.Run("PACSubmitAcknowledged", data.owner, util.tobool(allowed), reason or "", data.part.self.Name or "no name", data)
+		hook.Run(
+			"PACSubmitAcknowledged",
+			data.owner,
+			util.tobool(allowed),
+			reason or "",
+			data.part.self.Name or "no name",
+			data)
 	end
 end
 
 function pace.RemovePart(data)
-	pace.dprint("%s is removed %q", data.owner and data.owner:IsValid() and data.owner:GetName(), data.part)
+	pace.dprint(
+		"%s is removed %q",
+		data.owner and
+		data.owner:IsValid() and
+		data.owner:GetName(),
+		data.part)
 
 	if data.part == "__ALL__" then
 		pace.CallHook("RemoveOutfit", data.owner)
@@ -374,7 +395,12 @@ function pace.HandleReceivedData(ply, data)
 
 			data.wear_filter = assemble
 		else
-			pac.Message("Player ", ply, " tried to submit extraordinary wear filter size of ", #data.wear_filter, ", dropping.")
+			pac.Message(
+				"Player ",
+				ply,
+				" tried to submit extraordinary wear filter size of ",
+				#data.wear_filter,
+				", dropping.")
 			data.wear_filter = nil
 		end
 	end
@@ -405,18 +431,19 @@ timer.Create("pac_submit_spam", 3, 0, function()
 	end
 end)
 
-local pac_submit_spam = CreateConVar('pac_submit_spam', '1', {FCVAR_NOTIFY, FCVAR_ARCHIVE}, 'Prevent users from spamming pac_submit')
-local pac_submit_limit = CreateConVar('pac_submit_limit', '30', {FCVAR_NOTIFY, FCVAR_ARCHIVE}, 'pac_submit spam limit')
+local pac_submit_spam = CreateConVar(
+	"pac_submit_spam",
+	"1",
+	{FCVAR_NOTIFY, FCVAR_ARCHIVE},
+	"Prevent users from spamming pac_submit")
+local pac_submit_limit = CreateConVar("pac_submit_limit", "30", {FCVAR_NOTIFY, FCVAR_ARCHIVE}, "pac_submit spam limit")
 
 pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
-	if pac.CallHook("CanWearParts", ply) == false then
-		return
-	end
+	if pac.CallHook("CanWearParts", ply) == false then return end
 
 	if pac_submit_spam:GetBool() and not game.SinglePlayer() then
 		-- data is too short, not even 8 bytes
 		if len < 64 then return end
-
 		ply.pac_submit_spam = ply.pac_submit_spam + 1
 
 		if ply.pac_submit_spam >= pac_submit_limit:GetInt() then
@@ -437,21 +464,21 @@ end)
 
 function pace.ClearOutfit(ply)
 	local uid = ply:UniqueID()
-
-	pace.SubmitPart({part = "__ALL__", uid = ply:UniqueID(), owner = ply})
+	pace.SubmitPart({
+		part = "__ALL__",
+		uid = ply:UniqueID(),
+		owner = ply,
+	})
 	pace.CallHook("RemoveOutfit", ply)
 end
 
 function pace.RequestOutfits(ply)
 	if not ply:IsValid() then return end
-
 	if ply.pac_requested_outfits_time and ply.pac_requested_outfits_time > RealTime() then return end
 	ply.pac_requested_outfits_time = RealTime() + 30
 	ply.pac_requested_outfits = true
-
 	ply.pac_gonna_receive_outfits = true
-
-	net.Start('pac_update_playerfilter')
+	net.Start("pac_update_playerfilter")
 	net.Broadcast()
 
 	timer.Simple(6, function()
@@ -474,9 +501,7 @@ end
 
 local function qhasvalue(tab, value)
 	for i, val in ipairs(tab) do
-		if val == value then
-			return true
-		end
+		if val == value then return true end
 	end
 
 	return false
@@ -487,7 +512,6 @@ local function pac_update_playerfilter(len, ply)
 
 	if pac_submit_spam:GetBool() then
 		if player.GetCount() > 4 and len < 16 then return end
-
 		ply.pac_submit_spam2 = ply.pac_submit_spam2 + 1
 
 		if ply.pac_submit_spam2 >= pac_submit_limit:GetInt() / 2 then
@@ -504,7 +528,12 @@ local function pac_update_playerfilter(len, ply)
 	local sizeof = net.ReadUInt(8)
 
 	if sizeof > game.MaxPlayers() then
-		pac.Message("Player ", ply, " tried to submit extraordinary wear filter size of ", sizeof, ", dropping.")
+		pac.Message(
+			"Player ",
+			ply,
+			" tried to submit extraordinary wear filter size of ",
+			sizeof,
+			", dropping.")
 		return
 	end
 
@@ -542,4 +571,4 @@ local function pac_update_playerfilter(len, ply)
 end
 
 concommand.Add("pac_request_outfits", pace.RequestOutfits)
-net.Receive('pac_update_playerfilter', pac_update_playerfilter)
+net.Receive("pac_update_playerfilter", pac_update_playerfilter)

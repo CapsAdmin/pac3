@@ -1,10 +1,8 @@
 local PART = {}
-
 PART.ClassName = "shake"
 PART.NonPhysical = true
-PART.Group = 'effects'
-PART.Icon = 'icon16/transmit.png'
-
+PART.Group = "effects"
+PART.Icon = "icon16/transmit.png"
 pac.StartStorableVars()
 	pac.GetSet(PART, "Amplitude", 1)
 	pac.GetSet(PART, "Frequency", 1)

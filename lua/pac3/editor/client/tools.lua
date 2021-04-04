@@ -2,11 +2,17 @@ local L = pace.LanguageString
 pace.Tools = {}
 
 function pace.AddToolsToMenu(menu)
-	menu.GetDeleteSelf = function() return false end
+	menu.GetDeleteSelf = function()
+		return false
+	end
+
 	for key, data in pairs(pace.Tools) do
 		if #data.suboptions > 0 then
 			local menu = menu:AddSubMenu(L(data.name))
-			menu.GetDeleteSelf = function() return false end
+			menu.GetDeleteSelf = function()
+				return false
+			end
+
 			for key, option in pairs(data.suboptions) do
 				menu:AddOption(option, function()
 					if pace.current_part:IsValid() then
@@ -25,43 +31,50 @@ function pace.AddToolsToMenu(menu)
 end
 
 function pace.AddTool(name, callback, ...)
-	for i,v in pairs(pace.Tools) do
+	for i, v in pairs(pace.Tools) do
 		if v.name == name then
 			table.remove(pace.Tools, i)
 		end
 	end
 
-	table.insert(pace.Tools, {name = name, callback = callback, suboptions = {...}})
+	table.insert(pace.Tools, {
+		name = name,
+		callback = callback,
+		suboptions = {...},
+	})
 end
 
-
 pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
-
 	local class_translate = {
-		model = "model2",
-		material = "material_3d",
-		entity = "entity2",
-		bone = "bone2",
-		light = "light2",
-		trail = "trail2",
-		clip = "clip2",
-	}
-
+			model = "model2",
+			material = "material_3d",
+			entity = "entity2",
+			bone = "bone2",
+			light = "light2",
+			trail = "trail2",
+			clip = "clip2",
+		}
 	local model_prop_translate = {
-		Color = function(tbl, val) tbl.Color = Vector(val.r/255, val.g/255, val.b/255) end,
-		DoubleFace = function(tbl, val) tbl.NoCulling = val end,
-		Fullbright = function(tbl, val) tbl.NoLighting = val end,
-
-		TextureFilter = function(tbl, val) tbl.NoTextureFiltering = not val end,
-		LodOverride = function(tbl, val) tbl.LevelOfDetail = val end,
-
-	}
-
+			Color = function(tbl, val)
+				tbl.Color = Vector(val.r / 255, val.g / 255, val.b / 255)
+			end,
+			DoubleFace = function(tbl, val)
+				tbl.NoCulling = val
+			end,
+			Fullbright = function(tbl, val)
+				tbl.NoLighting = val
+			end,
+			TextureFilter = function(tbl, val)
+				tbl.NoTextureFiltering = not val
+			end,
+			LodOverride = function(tbl, val)
+				tbl.LevelOfDetail = val
+			end,
+		}
 	local registered_parts = pac.GetRegisteredParts()
-
 	local material_translate = {}
-	for old_key in pairs(registered_parts.material.ShaderParams) do
 
+	for old_key in pairs(registered_parts.material.ShaderParams) do
 		local new_key = old_key:lower()
 		local new_val = registered_parts.material_3d[new_key]
 		local old_val = registered_parts.material[old_key]
@@ -74,32 +87,29 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 	end
 
 	local prop_translate = {
-		model = model_prop_translate,
-		entity = table.Merge(model_prop_translate, {
-			HideEntity = function(tbl, val) tbl.NoDraw = val end
-		}),
-		material = material_translate,
-	}
-
+			model = model_prop_translate,
+			entity = table.Merge(
+				model_prop_translate,
+				{
+					HideEntity = function(tbl, val)
+						tbl.NoDraw = val
+					end,
+				}),
+			material = material_translate,
+		}
 	local temp = {}
 
 	local function get_storable(classname)
-		if registered_parts[classname].StorableVars then
-			return registered_parts[classname].StorableVars
-		end
-
-		if temp[classname] then
-			return temp[classname]
-		end
-
+		if registered_parts[classname].StorableVars then return registered_parts[classname].StorableVars end
+		if temp[classname] then return temp[classname] end
 		local part = pac.CreatePart(classname, pac.LocalPlayer)
 		temp[classname] = part.StorableVars
 		part:Remove()
-
 		return temp[classname]
 	end
 
 	local saved = {}
+
 	for _, part in pairs(pac.GetLocalParts()) do
 		if not part:HasParent() then
 			table.insert(saved, part:ToTable())
@@ -107,7 +117,6 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 	end
 
 	pace.ClearParts()
-
 	local done = {}
 
 	local function walk(tbl, parent)
@@ -119,33 +128,38 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 
 			if old_classname == "model" then
 				if tbl.self.BlurLength and tbl.self.BlurLength > 0 then
-					table.insert(tbl.children, {
-						self = {
-							ClassName = "motion_blur",
-							UniqueID = util.CRC(tostring({})),
-							BlurLength = tbl.self.BlurLength,
-							BlurSpacing = tbl.self.BlurSpacing,
-						},
-						children = {},
-					})
+					table.insert(
+						tbl.children,
+						{
+							self = {
+								ClassName = "motion_blur",
+								UniqueID = util.CRC(tostring({})),
+								BlurLength = tbl.self.BlurLength,
+								BlurSpacing = tbl.self.BlurSpacing,
+							},
+							children = {},
+						})
 				end
 			end
 
 			if old_classname == "entity" then
 				if tbl.self.Weapon == true and tbl.self.HideEntity then
-					table.insert(parent.children, {
-						self = {
-							ClassName = "weapon",
-							UniqueID = util.CRC(tostring({})),
-							NoDraw = true
-						},
-						children = {},
-					})
+					table.insert(
+						parent.children,
+						{
+							self = {
+								ClassName = "weapon",
+								UniqueID = util.CRC(tostring({})),
+								NoDraw = true,
+							},
+							children = {},
+						})
 				end
 			end
 
 			for key in pairs(get_storable(old_classname)) do
 				local value = tbl.self[key]
+
 				if value == nil then
 					value = registered_parts[old_classname][key]
 				end
@@ -153,27 +167,33 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 				if prop_translate[old_classname] and prop_translate[old_classname][key] then
 					tbl.self[key] = nil
 					prop_translate[old_classname][key](tbl.self, value)
-					pac.Message("translated property: ", key, " = ", value, " to ", tbl.self[key])
+					pac.Message(
+						"translated property: ",
+						key,
+						" = ",
+						value,
+						" to ",
+						tbl.self[key])
 				elseif not get_storable(new_classname)[key] then
 					local msg = tbl.self.ClassName .. "." .. key
+
 					if not done[msg] then
-						pac.Message(Color(255,100,100), "cannot translate property ", msg)
+						pac.Message(Color(255, 100, 100), "cannot translate property ", msg)
 						done[msg] = true
 					end
 				end
 			end
-
 		end
 
 		if tbl.self.ClassName == "proxy" and tbl.self.VariableName == "Color" then
 			if tbl.self.Expression ~= "" then
-				local r,g,b = unpack(tbl.self.Expression:Split(","))
+				local r, g, b = unpack(tbl.self.Expression:Split(","))
 				r = tonumber(r)
 				g = tonumber(g)
 				b = tonumber(b)
 
 				if r and g and b then
-					tbl.self.Expression = (r/255)..","..(g/255)..","..(b/255)
+					tbl.self.Expression = (r / 255) .. "," .. (g / 255) .. "," .. (b / 255)
 				end
 			end
 		end
@@ -199,12 +219,9 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 	end
 end)
 
-
 pace.AddTool(L"fix origin", function(part, suboption)
 	if not part.GetEntity then return end
-
 	local ent = part:GetEntity()
-
 	part:SetPositionOffset(-ent:OBBCenter() * part.Scale * part.Size)
 end)
 
@@ -212,17 +229,15 @@ pace.AddTool(L"replace ogg with webaudio", function(part, suboption)
 	for _, part in pairs(pac.GetLocalParts()) do
 		if part.ClassName == "ogg" then
 			local parent = part:GetParent()
-
 			local audio = pac.CreatePart("webaudio")
 			audio:SetParent(parent)
-
 			audio:SetURL(part:GetURL())
 			audio:SetVolume(part:GetVolume())
 			audio:SetPitch(part:GetPitch())
 			audio:SetStopOnHide(not part:GetStopOnHide())
 			audio:SetPauseOnHide(part:GetPauseOnHide())
 
-			for k,v in ipairs(part:GetChildren()) do
+			for k, v in ipairs(part:GetChildren()) do
 				v:SetParent(audio)
 			end
 
@@ -268,16 +283,17 @@ pace.AddTool(L"scale this and children", function(part, suboption)
 	end)
 end)
 
-pace.AddTool(L"free children from part" ,function(part, suboption)
+pace.AddTool(L"free children from part", function(part, suboption)
 	if part:IsValid() then
 		local grandparent = part:GetParent()
 		local parent = part
+
 		for _, child in ipairs(parent:GetChildren()) do
-				child:SetAngles(child.Angles + parent.Angles)
-				child:SetPosition(child.Position + parent.Position)
-				child:SetAngleOffset(child.AngleOffset + parent.AngleOffset)
-				child:SetPositionOffset(child.PositionOffset + parent.PositionOffset)
-				child:SetParent(grandparent)
+			child:SetAngles(child.Angles + parent.Angles)
+			child:SetPosition(child.Position + parent.Position)
+			child:SetAngleOffset(child.AngleOffset + parent.AngleOffset)
+			child:SetPositionOffset(child.PositionOffset + parent.PositionOffset)
+			child:SetParent(grandparent)
 		end
 	end
 end)
@@ -295,7 +311,8 @@ pace.AddTool(L"square model scales...", function(part, suboption)
 						part:SetScale(part:GetScale() * part:GetScale())
 					end
 				end
-				if string.find(part:GetModel(),model) then
+
+				if string.find(part:GetModel(), model) then
 					square_scale(part)
 				end
 			end
@@ -306,36 +323,41 @@ end)
 pace.AddTool(L"show only with active weapon", function(part, suboption)
 	local event = part:CreatePart("event")
 	local owner = part:GetOwner(true)
+
 	if not owner.GetActiveWeapon or not owner:GetActiveWeapon():IsValid() then
 		owner = pac.LocalPlayer
 	end
 
 	local class_name = owner:GetActiveWeapon():GetClass()
-
 	event:SetEvent("weapon_class")
 	event:SetOperator("equal")
 	event:SetInvert(true)
 	event:SetRootOwner(true)
-
 	event:ParseArguments(class_name, suboption == 1)
-
 end, L"hide weapon", L"show weapon")
 
 pace.AddTool(L"import editor tool from file...", function()
 	local allowcslua = GetConVar("sv_allowcslua")
+
 	if allowcslua:GetBool() then
 		Derma_StringRequest(L"filename", L"relative to garrysmod/data/pac3_editor/tools/", "mytool.txt", function(toolfile)
-			if file.Exists("pac3_editor/tools/" .. toolfile,"DATA") then
-				local toolstr = file.Read("pac3_editor/tools/" .. toolfile,"DATA")
+			if file.Exists("pac3_editor/tools/" .. toolfile, "DATA") then
+				local toolstr = file.Read("pac3_editor/tools/" .. toolfile, "DATA")
 				ctoolstr = [[pace.AddTool(L"]] .. toolfile .. [[", function(part, suboption) ]] .. toolstr .. " end)"
 				RunStringEx(ctoolstr, "pac_editor_import_tool")
 				LocalPlayer():ConCommand("pac_editor") --close and reopen editor
 			else
-				Derma_Message("File " .. "garrysmod/data/pac3_editor/tools/" .. toolfile .. " not found.","Error: File Not Found","OK")
+				Derma_Message(
+					"File " .. "garrysmod/data/pac3_editor/tools/" .. toolfile .. " not found.",
+					"Error: File Not Found",
+					"OK")
 			end
 		end)
 	else
-		Derma_Message("Importing pac editor tools is disallowed on this server.","Error: Clientside Lua Disabled","OK")
+		Derma_Message(
+			"Importing pac editor tools is disallowed on this server.",
+			"Error: Clientside Lua Disabled",
+			"OK")
 	end
 end)
 
@@ -350,12 +372,15 @@ pace.AddTool(L"import editor tool from url...", function()
 				LocalPlayer():ConCommand("pac_editor") --close and reopen editor
 			end
 
-			pac.HTTPGet(toolurl,ToolDLSuccess,function(err)
+			pac.HTTPGet(toolurl, ToolDLSuccess, function(err)
 				pace.MessagePrompt(err, "HTTP Request Failed for " .. toolurl, "OK")
 			end)
 		end)
 	else
-		Derma_Message("Importing pac editor tools is disallowed on this server.","Error: Clientside Lua Disabled","OK")
+		Derma_Message(
+			"Importing pac editor tools is disallowed on this server.",
+			"Error: Clientside Lua Disabled",
+			"OK")
 	end
 end)
 
@@ -386,41 +411,27 @@ pace.AddTool(L"round numbers", function(part)
 end)
 
 do
-
 	local function fix_name(str)
 		str = str:lower()
 		str = str:gsub("_", " ")
 		return str
 	end
 
-	local hue =
-	{
-		"red",
-		"orange",
-		"yellow",
-		"green",
-		"turquoise",
-		"blue",
-		"purple",
-		"magenta",
-	}
+	local hue = {
+			"red",
+			"orange",
+			"yellow",
+			"green",
+			"turquoise",
+			"blue",
+			"purple",
+			"magenta",
+		}
+	local sat = {"pale", "", "strong",}
+	local val = {"dark", "", "bright"}
 
-	local sat =
-	{
-		"pale",
-		"",
-		"strong",
-	}
-
-	local val =
-	{
-		"dark",
-		"",
-		"bright"
-	}
-
-	local function HSVToNames(h,s,v)
-		return
+	local function HSVToNames(h, s, v)
+		return 
 			hue[math.Round(1 + (h / 360) * #hue)] or hue[1],
 			sat[math.ceil(s * #sat)] or sat[1],
 			val[math.ceil(v * #val)] or val[1]
@@ -431,24 +442,20 @@ do
 	end
 
 	pace.AddTool(L"clear names", function(part, suboptions)
-		for k,v in pairs(pac.GetLocalParts()) do
+		for k, v in pairs(pac.GetLocalParts()) do
 			v:SetName("")
 		end
+
 		pace.RefreshTree(true)
 	end)
-
 end
 
 pace.AddTool(L"Convert group of models to Expression 2 holograms", function(part)
-
-	local str_ref =
-	[[
+	local str_ref = [[
 
     I++, HN++, HT[HN,table] = table(I, Base, Base, 0, POSITION, ANGLES, SCALE, MODEL, MATERIAL, vec4(COLOR, ALPHA), SKIN)
 	]]
-
-	local str_header =
-	[[
+	local str_header = [[
 @name [NAME]
 #- Entity input directives
 @inputs [Base]:entity
@@ -491,9 +498,7 @@ if (first() | dupefinished()) {
 
 	   # # # # # # # # # HOLOGRAM DATA START # # # # # # # # #
 	]]
-
-	local str_footer =
-	[[
+	local str_footer = [[
 
 	   # # # # # # # # # HOLOGRAM DATA END # # # # # # # # #
 
@@ -595,8 +600,13 @@ elseif (CoreStatus == "RunThisCode") {
     runOnTick(0)
 }]]
 
-	local function tovec(vec) return ("%s, %s, %s"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4)) end
-	local function toang(vec) return ("%s, %s, %s"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4)) end
+	local function tovec(vec)
+		return ("%s, %s, %s"):format(math.Round(vec.x, 4), math.Round(vec.y, 4), math.Round(vec.z, 4))
+	end
+
+	local function toang(vec)
+		return ("%s, %s, %s"):format(math.Round(vec.p, 4), math.Round(vec.y, 4), math.Round(vec.r, 4))
+	end
 
 	local function part_to_holo(part)
 		local str_holo = str_ref
@@ -617,22 +627,26 @@ elseif (CoreStatus == "RunThisCode") {
 
 		local scale = part:GetSize() * part:GetScale()
 		local pos, ang = part.Position, part.Angles
+
 		if not part.PositionOffset:IsZero() or not part.AngleOffset:IsZero() then
 			pos, ang = LocalToWorld(part.PositionOffset, part.AngleOffset, pos, ang)
 		end
 
-		local holo = str_holo:gsub("[A-Z]+",{
-			ALPHA = math.Round(part:GetAlpha() * 255, 4),
-			COLOR = tovec((part.ProperColorRange and part:GetColor()*255) or part:GetColor()),
-			SCALE = "vec(" .. tovec(Vector(scale.x, scale.y, scale.z)) .. ")",
-			ANGLES = "ang(" .. toang(ang) .. ")",
-			POSITION = "vec(" .. tovec(pos) .. ")",
-			MATERIAL = ("%q"):format(part:GetMaterial()),
-			MODEL = ("%q"):format(part:GetModel()),
-			SKIN = part.GetSkin and part:GetSkin() or "0",
-			PARENT = "entity()"
-		})
-
+		local holo = str_holo:gsub(
+			"[A-Z]+",
+			{
+				ALPHA = math.Round(part:GetAlpha() * 255, 4),
+				COLOR = tovec((part.ProperColorRange and part:GetColor() * 255) or part:GetColor()),
+				SCALE = "vec(" .. tovec(Vector(scale.x, scale.y, scale.z)) .. ")",
+				ANGLES = "ang(" .. toang(ang) .. ")",
+				POSITION = "vec(" .. tovec(pos) .. ")",
+				MATERIAL = ("%q"):format(part:GetMaterial()),
+				MODEL = ("%q"):format(part:GetModel()),
+				SKIN = part.GetSkin and
+				part:GetSkin() or
+				"0",
+				PARENT = "entity()",
+			})
 		return holo
 	end
 
@@ -646,9 +660,8 @@ elseif (CoreStatus == "RunThisCode") {
 		end
 
 		out = out .. str_footer
-
-		LocalPlayer():ChatPrint("PAC --> Code saved in your Expression 2 folder under [expression2/pac/" .. part:GetName() .. ".txt" .. "].")
-
+		LocalPlayer():ChatPrint(
+			"PAC --> Code saved in your Expression 2 folder under [expression2/pac/" .. part:GetName() .. ".txt" .. "].")
 		return out
 	end
 
@@ -659,40 +672,33 @@ end)
 pace.AddTool(L"record surrounding props to pac", function(part)
 	local base = pac.CreatePart("group")
 	base:SetName("recorded props")
-
 	local origin = base:CreatePart("model")
 	origin:SetName("origin")
 	origin:SetBone("none")
 	origin:SetModel("models/dav0r/hoverball.mdl")
 
 	for key, ent in pairs(ents.FindInSphere(pac.EyePos, 1000)) do
-		if
-			not ent:IsPlayer() and
-			not ent:IsNPC() and
-			not ent:GetOwner():IsPlayer()
-		then
+		if not ent:IsPlayer() and not ent:IsNPC() and not ent:GetOwner():IsPlayer() then
 			local mdl = origin:CreatePart("model")
 			mdl:SetModel(ent:GetModel())
-
 			local lpos, lang = WorldToLocal(ent:GetPos(), ent:GetAngles(), pac.EyePos, pac.EyeAng)
-
 			mdl:SetMaterial(ent:GetMaterial())
 			mdl:SetPosition(lpos)
 			mdl:SetAngles(lang)
 			local c = ent:GetColor()
-			mdl:SetColor(Vector(c.r,c.g,c.b))
+			mdl:SetColor(Vector(c.r, c.g, c.b))
 			mdl:SetAlpha(c.a / 255)
 			mdl:SetName(ent:GetModel():match(".+/(.-)%.mdl"))
 		end
 	end
 end)
 
-pace.AddTool(L"populate with bones", function(part,suboption)
+pace.AddTool(L"populate with bones", function(part, suboption)
 	local target = part.GetEntity or part.GetOwner
 	local ent = target(part)
 	local bones = pac.GetModelBones(ent)
 
-	for bone,tbl in pairs(bones) do
+	for bone, tbl in pairs(bones) do
 		if not tbl.is_special then
 			local child = pac.CreatePart("bone")
 			child:SetParent(part)
@@ -703,18 +709,18 @@ pace.AddTool(L"populate with bones", function(part,suboption)
 	pace.RefreshTree(true)
 end)
 
-pace.AddTool(L"populate with dummy bones", function(part,suboption)
+pace.AddTool(L"populate with dummy bones", function(part, suboption)
 	local target = part.GetEntity or part.GetOwner
 	local ent = target(part)
 	local bones = pac.GetModelBones(ent)
 
-	for bone,tbl in pairs(bones) do
+	for bone, tbl in pairs(bones) do
 		if not tbl.is_special then
 			local child = pac.CreatePart("model")
 			child:SetParent(part)
 			child:SetName(bone .. "_dummy")
 			child:SetBone(bone)
-			child:SetScale(Vector(0,0,0))
+			child:SetScale(Vector(0, 0, 0))
 		end
 	end
 
@@ -727,8 +733,9 @@ end)
 
 pace.AddTool(L"dump player submaterials", function()
 	local ply = LocalPlayer()
-	for id,mat in pairs(ply:GetMaterials()) do
-		chat.AddText(("%d %s"):format(id,tostring(mat)))
+
+	for id, mat in pairs(ply:GetMaterials()) do
+		chat.AddText(("%d %s"):format(id, tostring(mat)))
 	end
 end)
 
@@ -747,6 +754,7 @@ pace.AddTool(L"copy from faceposer tool", function(part, suboption)
 		local fp_scale = GetConVar("faceposer_scale"):GetFloat()
 		local weight = fp_flex * fp_scale
 		pac.Message(name, weight)
+
 		if weight ~= 0 then
 			local flex = group:CreatePart("flex")
 			flex:SetFlex(name)

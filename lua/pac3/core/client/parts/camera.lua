@@ -1,15 +1,11 @@
 local LerpAngle = LerpAngle
-
 local PART = {}
-
 PART.ClassName = "camera"
-PART.Group = 'entity'
-PART.Icon = 'icon16/camera.png'
-
+PART.Group = "entity"
+PART.Icon = "icon16/camera.png"
 pac.StartStorableVars()
 	pac.GetSet(PART, "EyeAnglesLerp", 1)
 	pac.GetSet(PART, "DrawViewModel", false)
-
 	pac.GetSet(PART, "NearZ", -1)
 	pac.GetSet(PART, "FarZ", -1)
 	pac.GetSet(PART, "FOV", -1)
@@ -32,7 +28,6 @@ end
 
 function PART:CalcView(_, _, eyeang, fov, nearz, farz)
 	local pos, ang = self:GetDrawPosition(nil, true)
-
 	ang = LerpAngle(self.EyeAnglesLerp, ang, eyeang)
 
 	if self.NearZ > 0 then
@@ -51,7 +46,6 @@ function PART:CalcView(_, _, eyeang, fov, nearz, farz)
 end
 
 pac.RegisterPart(PART)
-
 local temp = {}
 
 pac.AddHook("CalcView", "camera_part", function(ply, pos, ang, fov, nearz, farz)
@@ -62,7 +56,7 @@ pac.AddHook("CalcView", "camera_part", function(ply, pos, ang, fov, nearz, farz)
 		if part:IsValid() then
 			if part:IsHidden() and part:IsEventHidden() then
 				for i, event in ipairs(part:GetChildrenList()) do
-					if event.ClassName == 'event' then
+					if event.ClassName == "event" then
 						event.AlwaysThink = true
 						event:Think()
 						part.draw_hidden = part.event_hidden
@@ -71,7 +65,13 @@ pac.AddHook("CalcView", "camera_part", function(ply, pos, ang, fov, nearz, farz)
 			end
 
 			if not part:IsHidden() then
-				pos, ang, fov, nearz, farz = part:CalcView(ply, pos, ang, fov, nearz, farz)
+				pos, ang, fov, nearz, farz = part:CalcView(
+					ply,
+					pos,
+					ang,
+					fov,
+					nearz,
+					farz)
 				temp.origin = pos
 				temp.angles = ang
 				temp.fov = fov

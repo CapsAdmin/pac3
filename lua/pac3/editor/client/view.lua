@@ -1,15 +1,16 @@
-
 local L = pace.LanguageString
-
 local acsfnc = function(key, def)
 	pace["View" .. key] = def
-	pace["SetView" .. key] = function(val) pace["View" .. key] = val end
-	pace["GetView" .. key] = function() return pace["View" .. key] or def end
+	pace["SetView" .. key] = function(val)
+		pace["View" .. key] = val
+	end
+	pace["GetView" .. key] = function()
+		return pace["View" .. key] or def
+	end
 end
-
 acsfnc("Entity", NULL)
-acsfnc("Pos", Vector(5,5,5))
-acsfnc("Angles", Angle(0,0,0))
+acsfnc("Pos", Vector(5, 5, 5))
+acsfnc("Angles", Angle(0, 0, 0))
 acsfnc("FOV", 75)
 
 function pace.GetViewEntity()
@@ -22,6 +23,7 @@ function pace.ResetView()
 
 		if not ent:IsValid() then
 			local _, part = next(pac.GetLocalParts())
+
 			if part then
 				ent = part:GetOwner()
 			end
@@ -47,9 +49,9 @@ end
 
 function pace.SetZoom(fov, smooth)
 	if smooth then
-		pace.ViewFOV = Lerp(FrameTime()*10, pace.ViewFOV, math.Clamp(fov,1,100))
+		pace.ViewFOV = Lerp(FrameTime() * 10, pace.ViewFOV, math.Clamp(fov, 1, 100))
 	else
-		pace.ViewFOV = math.Clamp(fov,1,100)
+		pace.ViewFOV = math.Clamp(fov, 1, 100)
 	end
 end
 
@@ -57,10 +59,11 @@ function pace.ResetZoom()
 	pace.zoom_reset = 75
 end
 
-local worldPanel = vgui.GetWorldPanel();
-function worldPanel.OnMouseWheeled( self, scrollDelta )
+local worldPanel = vgui.GetWorldPanel()
+
+function worldPanel.OnMouseWheeled(self, scrollDelta)
 	if IsValid(pace.Editor) then
-		local zoom_usewheel = GetConVar( "pac_zoom_mousewheel" )
+		local zoom_usewheel = GetConVar("pac_zoom_mousewheel")
 
 		if zoom_usewheel:GetInt() == 1 then
 			local speed = 10
@@ -80,8 +83,8 @@ function worldPanel.OnMouseWheeled( self, scrollDelta )
 	end
 end
 
-local held_ang = Angle(0,0,0)
-local held_mpos = Vector(0,0,0)
+local held_ang = Angle(0, 0, 0)
+local held_mpos = Vector(0, 0, 0)
 local mcode, hoveredPanelCursor, isHoldingMovement
 
 function pace.GUIMousePressed(mc)
@@ -99,7 +102,7 @@ function pace.GUIMousePressed(mc)
 	hoveredPanelCursor = vgui.GetHoveredPanel()
 
 	if IsValid(hoveredPanelCursor) then
-		hoveredPanelCursor:SetCursor('sizeall')
+		hoveredPanelCursor:SetCursor("sizeall")
 	end
 
 	mcode = mc
@@ -110,14 +113,12 @@ function pace.GUIMouseReleased(mc)
 	isHoldingMovement = false
 
 	if IsValid(hoveredPanelCursor) then
-		hoveredPanelCursor:SetCursor('none')
+		hoveredPanelCursor:SetCursor("none")
 		hoveredPanelCursor = nil
 	end
 
 	if pace.mctrl.GUIMouseReleased(mc) then return end
-
 	if pace.editing_viewmodel or pace.editing_hands then return end
-
 	mcode = nil
 end
 
@@ -137,10 +138,12 @@ local function CalcDrag()
 		pace.editing_viewmodel or
 		pace.editing_hands or
 		pace.properties.search:HasFocus()
-	then return end
+	then
+		return
+	end
 
 	local focus = vgui.GetKeyboardFocus()
-	if focus and focus:IsValid() and focus:GetName():lower():find('textentry') then return end
+	if focus and focus:IsValid() and focus:GetName():lower():find("textentry") then return end
 
 	if not system.HasFocus() then
 		held_mpos = Vector(input.GetCursorPos())
@@ -158,13 +161,16 @@ local function CalcDrag()
 
 	if IsValid(part) then
 		local owner = part:GetOwner(true)
+
 		if owner:IsValid() then
 			origin = owner:GetPos()
+
 			if owner == pac.WorldEntity then
 				if part:HasChildren() then
 					for key, child in ipairs(part:GetChildren()) do
 						if not child.NonPhysical then
 							part = child
+
 							break
 						end
 					end
@@ -242,7 +248,8 @@ function pace.CalcView(ply, pos, ang, fov)
 		pace.ViewPos = pos
 		pace.ViewAngles = ang
 		pace.ViewFOV = fov
-	return end
+		return
+	end
 
 	if follow_entity:GetBool() then
 		local ent = pace.GetViewEntity()
@@ -268,18 +275,16 @@ function pace.CalcView(ply, pos, ang, fov)
 		pace.ViewFOV = fov
 	end
 
-	return
-	{
-		origin = pace.ViewPos,
-		angles = pace.ViewAngles,
-		fov = pace.ViewFOV,
-	}
+	return 
+		{
+			origin = pace.ViewPos,
+			angles = pace.ViewAngles,
+			fov = pace.ViewFOV,
+		}
 end
 
 function pace.ShouldDrawLocalPlayer()
-	if not pace.editing_viewmodel and not pace.editing_hands then
-		return true
-	end
+	if not pace.editing_viewmodel and not pace.editing_hands then return true end
 end
 
 local notifText
@@ -294,17 +299,20 @@ end
 
 function pace.PostRenderVGUI()
 	if not pace.mctrl then return end
-
 	local time = RealTime()
 
 	if notifDisplayTimeFade > time then
 		if notifDisplayTime > time then
 			surface.SetTextColor(color_white)
 		else
-			surface.SetTextColor(255, 255, 255, 255 * (notifDisplayTimeFade - RealTime()) / (notifDisplayTimeFade - notifDisplayTime))
+			surface.SetTextColor(
+				255,
+				255,
+				255,
+				255 * (notifDisplayTimeFade - RealTime()) / (notifDisplayTimeFade - notifDisplayTime))
 		end
 
-		surface.SetFont('Trebuchet18')
+		surface.SetFont("Trebuchet18")
 		local w = surface.GetTextSize(notifText)
 		surface.SetTextPos(ScrW() / 2 - w / 2, 30)
 		surface.DrawText(notifText)
@@ -313,9 +321,9 @@ function pace.PostRenderVGUI()
 	if not isHoldingMovement then return end
 
 	if pace.mctrl.LastThinkCall ~= FrameNumber() then
-		surface.SetFont('Trebuchet18')
+		surface.SetFont("Trebuchet18")
 		surface.SetTextColor(color_white)
-		local text = L'You are currently holding the camera, movement is disabled'
+		local text = L"You are currently holding the camera, movement is disabled"
 		local w = surface.GetTextSize(text)
 		surface.SetTextPos(ScrW() / 2 - w / 2, 10)
 		surface.DrawText(text)
@@ -326,7 +334,11 @@ function pace.EnableView(b)
 	if b then
 		pac.AddHook("GUIMousePressed", "editor", pace.GUIMousePressed)
 		pac.AddHook("GUIMouseReleased", "editor", pace.GUIMouseReleased)
-		pac.AddHook("ShouldDrawLocalPlayer", "editor", pace.ShouldDrawLocalPlayer, DLib and -4 or ULib and -1 or nil)
+		pac.AddHook(
+			"ShouldDrawLocalPlayer",
+			"editor",
+			pace.ShouldDrawLocalPlayer,
+			DLib and -4 or ULib and -1 or nil)
 		pac.AddHook("CalcView", "editor", pace.CalcView, DLib and -4 or ULib and -1 or nil)
 		pac.AddHook("HUDPaint", "editor", pace.HUDPaint)
 		pac.AddHook("HUDShouldDraw", "editor", pace.HUDShouldDraw)
@@ -348,36 +360,35 @@ end
 
 local function CalcAnimationFix(ent)
 	if ent.SetEyeAngles then
-		ent:SetEyeAngles(Angle(0,0,0))
+		ent:SetEyeAngles(Angle(0, 0, 0))
 	end
 end
 
-local reset_pose_params =
-{
-	"body_rot_z",
-	"spine_rot_z",
-	"head_rot_z",
-	"head_rot_y",
-	"head_rot_x",
-	"walking",
-	"running",
-	"swimming",
-	"rhand",
-	"lhand",
-	"rfoot",
-	"lfoot",
-	"move_yaw",
-	"aim_yaw",
-	"aim_pitch",
-	"breathing",
-	"vertical_velocity",
-	"vehicle_steer",
-	"body_yaw",
-	"spine_yaw",
-	"head_yaw",
-	"head_pitch",
-	"head_roll",
-}
+local reset_pose_params = {
+		"body_rot_z",
+		"spine_rot_z",
+		"head_rot_z",
+		"head_rot_y",
+		"head_rot_x",
+		"walking",
+		"running",
+		"swimming",
+		"rhand",
+		"lhand",
+		"rfoot",
+		"lfoot",
+		"move_yaw",
+		"aim_yaw",
+		"aim_pitch",
+		"breathing",
+		"vertical_velocity",
+		"vehicle_steer",
+		"body_yaw",
+		"spine_yaw",
+		"head_yaw",
+		"head_pitch",
+		"head_roll",
+	}
 
 function pace.GetTPose()
 	return pace.tposed

@@ -12,10 +12,9 @@ local render_AddBeam = render.AddBeam
 local render_SetMaterial = render.SetMaterial
 local Vector = Vector
 local RealTime = RealTime
-
 local temp_color = Color(255, 255, 255)
 
-function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,ecb,eca, start_size, end_size, stretch)
+function pac.DrawTrail(self, len, spc, pos, ang, mat, scr, scg, scb, sca, ecr, ecg, ecb, eca, start_size, end_size, stretch)
 	self.trail_points = self.trail_points or {}
 	local points = self.trail_points
 
@@ -33,44 +32,42 @@ function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,e
 	end
 
 	local count = #points
-
 	render_SetMaterial(mat)
-
 	render_StartBeam(count)
-		for i = #points, 1, -1 do
-			local data = points[i]
 
-			local f = (data.life_time - time)/len
-			local f2 = f
-			f = -f+1
+	for i = #points, 1, -1 do
+		local data = points[i]
+		local f = (data.life_time - time) / len
+		local f2 = f
+		f = -f + 1
+		local coord = (1 / count) * (i - 1)
+		temp_color.r = math_min(Lerp(coord, ecr, scr), 255)
+		temp_color.g = math_min(Lerp(coord, ecg, scg), 255)
+		temp_color.b = math_min(Lerp(coord, ecb, scb), 255)
+		temp_color.a = math_min(Lerp(coord, eca, sca), 255)
+		render_AddBeam(data.pos, (f * start_size) + (f2 * end_size), coord * stretch, temp_color)
 
-			local coord = (1 / count) * (i - 1)
-
-			temp_color.r = math_min(Lerp(coord, ecr, scr), 255)
-			temp_color.g = math_min(Lerp(coord, ecg, scg), 255)
-			temp_color.b = math_min(Lerp(coord, ecb, scb), 255)
-			temp_color.a = math_min(Lerp(coord, eca, sca), 255)
-
-			render_AddBeam(data.pos, (f * start_size) + (f2 * end_size), coord * stretch, temp_color)
-
-			if f >= 1 then
-				table_remove(points, i)
-			end
+		if f >= 1 then
+			table_remove(points, i)
 		end
+	end
+
 	render_EndBeam()
 
 	if self.CenterAttraction ~= 0 then
 		local attraction = FrameTime() * self.CenterAttraction
-		local center = Vector(0,0,0)
+		local center = Vector(0, 0, 0)
+
 		for _, data in ipairs(points) do
 			center:Zero()
+
 			for _, data in ipairs(points) do
 				center:Add(data.pos)
 			end
+
 			center:Mul(1 / #points)
 			center:Sub(data.pos)
 			center:Mul(attraction)
-
 			data.pos:Add(center)
 		end
 	end
@@ -78,6 +75,7 @@ function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,e
 	if not self.Gravity:IsZero() then
 		local gravity = self.Gravity * FrameTime()
 		gravity:Rotate(ang)
+
 		for _, data in ipairs(points) do
 			data.pos:Add(gravity)
 		end
@@ -85,13 +83,11 @@ function pac.DrawTrail(self, len, spc, pos, ang, mat, scr,scg,scb,sca, ecr,ecg,e
 end
 
 local PART = {}
-
 PART.FriendlyName = "trail"
 PART.ClassName = "trail2"
-PART.Icon = 'icon16/arrow_undo.png'
-PART.Group = 'effects'
+PART.Icon = "icon16/arrow_undo.png"
+PART.Group = "effects"
 PART.ProperColorRange = true
-
 pac.StartStorableVars()
 	pac.GetSet(PART, "Duration", 1)
 	pac.GetSet(PART, "Spacing", 0.25)
@@ -103,7 +99,7 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "EndAlpha", 0)
 	pac.GetSet(PART, "Stretch", 1)
 	pac.GetSet(PART, "CenterAttraction", 0)
-	pac.GetSet(PART, "Gravity", Vector(0,0,0))
+	pac.GetSet(PART, "Gravity", Vector(0, 0, 0))
 	pac.GetSet(PART, "IgnoreZ", false)
 	pac.GetSet(PART, "TrailPath", "trails/laser", {editor_panel = "material"})
 	pac.GetSet(PART, "Translucent", true)
@@ -140,15 +136,20 @@ function PART:SetMaterial(var)
 			self.Materialm = var
 			self:CallEvent("material_changed")
 		end
+
 		self:MakeMaterialUnlit()
 	end
 end
 
 function PART:MakeMaterialUnlit()
 	if not self.Materialm then return end
-
 	local shader = self.Materialm:GetShader()
-	if shader == "VertexLitGeneric" or shader == "Cable" or shader == "LightmappedGeneric" then
+
+	if
+		shader == "VertexLitGeneric" or
+		shader == "Cable" or
+		shader == "LightmappedGeneric"
+	then
 		self.Materialm = pac.MakeMaterialUnlitGeneric(self.Materialm, self.Id)
 	end
 end
@@ -162,23 +163,29 @@ function PART:OnHide()
 end
 
 function PART:OnDraw(owner, pos, ang)
-	local mat = self.material_override and self.material_override[0][1] and self.material_override[0][1]:GetRawMaterial() or self.Materialm
+	local mat = self.material_override and
+		self.material_override[0][1] and
+		self.material_override[0][1]:GetRawMaterial() or
+		self.Materialm
 	if not mat then return end
 	pac.DrawTrail(
 		self,
 		math.min(self.Duration, 10),
-		self.Spacing + (self.StartSize/10),
+		self.Spacing + (self.StartSize / 10),
 		pos,
 		ang,
 		mat,
-
-		self.StartColor.x*255, self.StartColor.y*255, self.StartColor.z*255,self.StartAlpha*255,
-		self.EndColor.x*255, self.EndColor.y*255, self.EndColor.z*255,self.EndAlpha*255,
-
+		self.StartColor.x * 255,
+		self.StartColor.y * 255,
+		self.StartColor.z * 255,
+		self.StartAlpha * 255,
+		self.EndColor.x * 255,
+		self.EndColor.y * 255,
+		self.EndColor.z * 255,
+		self.EndAlpha * 255,
 		self.StartSize,
 		self.EndSize,
-		1/self.Stretch
-	)
+		1 / self.Stretch)
 end
 
 pac.RegisterPart(PART)

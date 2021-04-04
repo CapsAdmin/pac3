@@ -1,51 +1,41 @@
 local PART = {}
-
 PART.ClassName = "player_config"
 PART.Group = "entity"
-PART.Icon = 'icon16/brick.png'
+PART.Icon = "icon16/brick.png"
 PART.NonPhysical = true
-
 local blood_colors = {
-	dont_bleed = _G.DONT_BLEED,
-	red = _G.BLOOD_COLOR_RED,
-	yellow = _G.BLOOD_COLOR_YELLOW,
-	green = _G.BLOOD_COLOR_GREEN,
-	mech = _G.BLOOD_COLOR_MECH,
-	antlion = _G.BLOOD_COLOR_ANTLION,
-	zombie = _G.BLOOD_COLOR_ZOMBIE,
-	antlion_worker = _G.BLOOD_COLOR_ANTLION_WORKER,
-}
-
+		dont_bleed = _G.DONT_BLEED,
+		red = _G.BLOOD_COLOR_RED,
+		yellow = _G.BLOOD_COLOR_YELLOW,
+		green = _G.BLOOD_COLOR_GREEN,
+		mech = _G.BLOOD_COLOR_MECH,
+		antlion = _G.BLOOD_COLOR_ANTLION,
+		zombie = _G.BLOOD_COLOR_ZOMBIE,
+		antlion_worker = _G.BLOOD_COLOR_ANTLION_WORKER,
+	}
 pac.StartStorableVars()
-
-pac.SetPropertyGroup()
-	pac.GetSet(PART, "MuteSounds", false)
-	pac.GetSet(PART, "AllowOggWhenMuted", false)
-	pac.GetSet(PART, "HideBullets", false)
-	pac.GetSet(PART, "HidePhysgunBeam", false)
-	pac.GetSet(PART, "UseLegacyScale", false)
-	pac.GetSet(PART, "BloodColor", "red", {enums = blood_colors})
-
-pac.SetPropertyGroup(PART, "behavior")
-	pac.GetSet(PART, "MuteFootsteps", false)
-
-pac.SetPropertyGroup(PART, "death")
-	pac.GetSet(PART, "FallApartOnDeath", false)
-	pac.GetSet(PART, "DeathRagdollizeParent", true)
-	pac.GetSet(PART, "DrawPlayerOnDeath", false)
-	pac.GetSet(PART, "HideRagdollOnDeath", false)
-
+	pac.SetPropertyGroup()
+		pac.GetSet(PART, "MuteSounds", false)
+		pac.GetSet(PART, "AllowOggWhenMuted", false)
+		pac.GetSet(PART, "HideBullets", false)
+		pac.GetSet(PART, "HidePhysgunBeam", false)
+		pac.GetSet(PART, "UseLegacyScale", false)
+		pac.GetSet(PART, "BloodColor", "red", {enums = blood_colors})
+	pac.SetPropertyGroup(PART, "behavior")
+		pac.GetSet(PART, "MuteFootsteps", false)
+	pac.SetPropertyGroup(PART, "death")
+		pac.GetSet(PART, "FallApartOnDeath", false)
+		pac.GetSet(PART, "DeathRagdollizeParent", true)
+		pac.GetSet(PART, "DrawPlayerOnDeath", false)
+		pac.GetSet(PART, "HideRagdollOnDeath", false)
 pac.EndStorableVars()
 
 local function ENTFIELD(PART, name, field)
 	field = "pac_" .. field
-
 	PART.ent_fields = PART.ent_fields or {}
 	PART.ent_fields[field] = name
-
 	PART["Set" .. name] = function(self, val)
 		self[name] = val
-
 		local owner = self:GetActualOwner()
 
 		if owner:IsValid() then
@@ -68,9 +58,7 @@ ENTFIELD(PART, "HideBullets", "hide_bullets")
 
 function PART:GetActualOwner()
 	local owner = self:GetOwner()
-	if owner:IsValid() and owner:GetRagdollOwner():IsPlayer() then
-		return owner:GetRagdollOwner()
-	end
+	if owner:IsValid() and owner:GetRagdollOwner():IsPlayer() then return owner:GetRagdollOwner() end
 	return owner
 end
 
@@ -90,7 +78,13 @@ end
 
 function PART:OnShow()
 	local ent = self:GetActualOwner()
-	pac.emut.MutateEntity(self:GetPlayerOwner(), "blood_color", ent, blood_colors[self.BloodColor == "" and "red" or self.BloodColor])
+	pac.emut.MutateEntity(
+		self:GetPlayerOwner(),
+		"blood_color",
+		ent,
+		blood_colors[self.BloodColor == "" and
+		"red" or
+		self.BloodColor])
 
 	if ent:IsValid() then
 		for _, field in pairs(self.ent_fields) do
@@ -125,9 +119,14 @@ end
 
 function PART:SetBloodColor(str)
 	self.BloodColor = str
-
 	local ent = self:GetActualOwner()
-	pac.emut.MutateEntity(self:GetPlayerOwner(), "blood_color", ent, blood_colors[self.BloodColor == "" and "red" or self.BloodColor])
+	pac.emut.MutateEntity(
+		self:GetPlayerOwner(),
+		"blood_color",
+		ent,
+		blood_colors[self.BloodColor == "" and
+		"red" or
+		self.BloodColor])
 end
 
 pac.RegisterPart(PART)

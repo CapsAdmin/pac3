@@ -1,9 +1,7 @@
 local PART = {}
-
 PART.ClassName = "woohoo"
 PART.Group = "effects"
 PART.Icon = "icon16/webcam_delete.png"
-
 pac.StartStorableVars()
 	pac.GetSet(PART, "Resolution", 8)
 	pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
@@ -11,14 +9,12 @@ pac.StartStorableVars()
 	pac.GetSet(PART, "BlurFiltering", false)
 	pac.GetSet(PART, "Translucent", true)
 pac.EndStorableVars()
-
 local render_ReadPixel = render.ReadPixel
 local surface_SetDrawColor = surface.SetDrawColor
 local surface_DrawRect = surface.DrawRect
 local render_CapturePixels = render.CapturePixels
-
 local x2, y2
-local r,g,b
+local r, g, b
 
 function PART:SetSize(size)
 	self.Size = math.Clamp(size, 1, 32)
@@ -33,9 +29,7 @@ local function create_rt(self)
 		MATERIAL_RT_DEPTH_NONE,
 		self.BlurFiltering and 2 or 1, -- TEXTUREFLAGS_POINTSAMPLE,
 		CREATERENDERTARGETFLAGS_AUTOMIPMAP,
-		IMAGE_FORMAT_RGB565
-	)
-
+		IMAGE_FORMAT_RGB565)
 	collectgarbage()
 end
 
@@ -54,28 +48,25 @@ function PART:SetResolution(num)
 end
 
 function PART:OnDraw(owner, pos, ang)
-	if not self.rt then create_rt(self) end
-
-	render.CopyTexture(render.GetScreenEffectTexture(), self.rt)
-
-	cam.Start2D()
-
-	local spos = pos:ToScreen()
-	local size = self.Size
-
-	if self.FixedSize then
-		size = size / pos:Distance(pac.EyePos) * 100
+	if not self.rt then
+		create_rt(self)
 	end
 
-	size = size * 64
+	render.CopyTexture(render.GetScreenEffectTexture(), self.rt)
+	cam.Start2D()
+		local spos = pos:ToScreen()
+		local size = self.Size
 
-	local x, y, w, h = spos.x-size, spos.y-size, spos.x + size, spos.y + size
+		if self.FixedSize then
+			size = size / pos:Distance(pac.EyePos) * 100
+		end
 
-	render.SetScissorRect(x,y,w,h, true)
-	render.DrawTextureToScreenRect(self.rt, 0, 0, ScrW(), ScrH())
-	render.SetScissorRect(0, 0, 0, 0, false)
+		size = size * 64
+		local x, y, w, h = spos.x - size, spos.y - size, spos.x + size, spos.y + size
+		render.SetScissorRect(x, y, w, h, true)
+		render.DrawTextureToScreenRect(self.rt, 0, 0, ScrW(), ScrH())
+		render.SetScissorRect(0, 0, 0, 0, false)
+		cam.End2D()
+	end
 
-	cam.End2D()
-end
-
-pac.RegisterPart(PART)
+	pac.RegisterPart(PART)

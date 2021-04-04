@@ -1,25 +1,32 @@
 local PART = {}
-
 PART.ClassName = "flex"
 PART.NonPhysical = true
-PART.Icon = 'icon16/emoticon_smile.png'
-PART.Group = 'entity'
-
+PART.Icon = "icon16/emoticon_smile.png"
+PART.Group = "entity"
 pac.StartStorableVars()
-	pac.GetSet(PART, "Flex", "", {
-		enums = function(part)
-			local tbl = {}
+	pac.GetSet(
+		PART,
+		"Flex",
+		"",
+		{
+			enums = function(part)
+				local tbl = {}
 
-			for _, v in pairs(part:GetFlexMap()) do
-				tbl[v.name] = v.name
-			end
+				for _, v in pairs(part:GetFlexMap()) do
+					tbl[v.name] = v.name
+				end
 
-			return tbl
-		end
-	})
-
+				return tbl
+			end,
+		})
 	pac.GetSet(PART, "Weight", 0)
-	pac.GetSet(PART, "RootOwner", false, { description = "Target the local player instead of the part's parent" })
+	pac.GetSet(
+		PART,
+		"RootOwner",
+		false,
+		{
+			description = "Target the local player instead of the part's parent",
+		})
 	pac.GetSet(PART, "DefaultOnHide", true)
 pac.EndStorableVars()
 
@@ -35,10 +42,7 @@ function PART:GetFlexMap()
 		self.cached_flex_map = nil
 	end
 
-	if self.cached_flex_map then
-		return self.cached_flex_map
-	end
-
+	if self.cached_flex_map then return self.cached_flex_map end
 	local out = {}
 
 	if ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() > 0 then
@@ -49,25 +53,17 @@ function PART:GetFlexMap()
 	end
 
 	self.cached_flex_map = out
-
 	return out
 end
 
 function PART:UpdateFlex()
 	local ent = self:GetOwner(self.RootOwner)
 	if not ent:IsValid() or not ent.GetFlexNum or ent:GetFlexNum() == 0 then return end
-
 	local name = self.Flex:lower()
 	local weight = self.Weight
-
 	local flex_map = self:GetFlexMap()
-
-	if not flex_map[name] then
-		return
-	end
-
+	if not flex_map[name] then return end
 	local id = flex_map[name].i
-
 	ent:SetFlexWeight(id, ent:GetFlexWeight(id) + weight)
 end
 

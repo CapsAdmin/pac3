@@ -1,9 +1,7 @@
-
 include("hands.lua")
 include("pac_weapon.lua")
 include("modifiers.lua")
 include("projectiles.lua")
-
 local cvar = CreateConVar("pac_restrictions", "0", FCVAR_REPLICATED)
 
 if CLIENT then
@@ -19,10 +17,15 @@ if CLIENT then
 				pace.ViewPos = ent:EyePos() + (dir:GetNormalized() * dist)
 			end
 
-			local res = util.TraceHull({start = ent:EyePos(), endpos = pace.ViewPos, filter = filter, mins = Vector(1,1,1)*-8, maxs = Vector(1,1,1)*8})
-			if res.Hit then
-				return res.HitPos
-			end
+			local res = util.TraceHull(
+				{
+					start = ent:EyePos(),
+					endpos = pace.ViewPos,
+					filter = filter,
+					mins = Vector(1, 1, 1) * -8,
+					maxs = Vector(1, 1, 1) * 8,
+				})
+			if res.Hit then return res.HitPos end
 		end
 	end)
 end

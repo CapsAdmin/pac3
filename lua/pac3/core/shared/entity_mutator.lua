@@ -4,16 +4,15 @@ if pac.emut then
 	for _, ent in ipairs(ents.GetAll()) do
 		if ent.pac_mutations then
 			for class_name, mutator in pairs(ent.pac_mutations) do
-				xpcall(pac.emut.RestoreMutations, function() end, mutator.Owner, mutator.ClassName, mutator.Entity)
+				xpcall(pac.emut.RestoreMutations, function() 
+				end, mutator.Owner, mutator.ClassName, mutator.Entity)
 			end
 		end
 	end
 end
 
 local emut = {}
-
 pac.emut = emut
-
 emut.registered_mutators = {}
 
 do
@@ -52,6 +51,7 @@ end
 local function encode_arguments(...)
 	for i = 1, select("#", ...) do
 		local val = select(i, ...)
+
 		if type(val) == "number" then
 			net.WriteDouble(val)
 		elseif type(val) == "string" then
@@ -89,7 +89,6 @@ function emut.MutateEntity(ply, class_name, ent, ...)
 	end
 
 	ent.pac_mutations = ent.pac_mutations or {}
-
 	local mutator = ent.pac_mutations[class_name]
 
 	if not mutator then
@@ -110,9 +109,7 @@ function emut.MutateEntity(ply, class_name, ent, ...)
 	end
 
 	if CLIENT then
-		if not emut.registered_mutators[class_name].cvar:GetBool() then
-			return false
-		end
+		if not emut.registered_mutators[class_name].cvar:GetBool() then return false end
 	end
 
 	if CLIENT then
@@ -146,9 +143,7 @@ function emut.RestoreMutations(ply, class_name, ent)
 
 	if SERVER then
 		if not override_enabled then
-			if not emut.registered_mutators[class_name].cvar:GetBool() then
-				return false
-			end
+			if not emut.registered_mutators[class_name].cvar:GetBool() then return false end
 		end
 	end
 
@@ -161,9 +156,7 @@ function emut.RestoreMutations(ply, class_name, ent)
 	end
 
 	if CLIENT then
-		if not emut.registered_mutators[class_name].cvar:GetBool() then
-			return false
-		end
+		if not emut.registered_mutators[class_name].cvar:GetBool() then return false end
 	end
 
 	if CLIENT then
@@ -188,45 +181,58 @@ function emut.RestoreMutations(ply, class_name, ent)
 end
 
 function emut.Register(meta)
-
 	if Entity(1):IsValid() then
 		for _, ent in ipairs(ents.GetAll()) do
 			if ent.pac_mutations then
 				for class_name, mutator in pairs(ent.pac_mutations) do
 					if class_name == meta.ClassName then
-						xpcall(emut.RestoreMutations, function() end, mutator.Owner, mutator.ClassName, mutator.Entity)
+						xpcall(emut.RestoreMutations, function() 
+						end, mutator.Owner, mutator.ClassName, mutator.Entity)
 					end
 				end
 			end
 		end
 	end
 
-	meta.Mutate = meta.Mutate or function() end
-	meta.StoreState = meta.StoreState or function() end
+	meta.Mutate = meta.Mutate or function() 
+	end
+	meta.StoreState = meta.StoreState or function() 
+	end
 
 	function meta:Disable()
 		if self.disabled_state then return end
-
 		local state = {xpcall(self.StoreState, on_error, self)}
+
 		if state[1] then
 			table.remove(state, 1)
 			self.disabled_state = state
 			override_enabled = true
-			xpcall(emut.MutateEntity, on_error, self.Owner, self.ClassName, self.Entity, unpack(self.original_state))
+			xpcall(
+				emut.MutateEntity,
+				on_error,
+				self.Owner,
+				self.ClassName,
+				self.Entity,
+				unpack(self.original_state))
 			override_enabled = false
 		end
 	end
 
 	function meta:Enable()
 		if not self.disabled_state then return end
-
-		xpcall(emut.MutateEntity, on_error, self.Owner, self.ClassName, self.Entity, unpack(self.disabled_state))
-
+		xpcall(
+			emut.MutateEntity,
+			on_error,
+			self.Owner,
+			self.ClassName,
+			self.Entity,
+			unpack(self.disabled_state))
 		self.disabled_state = nil
 	end
 
 	function meta:__tostring()
-		return "mutator[" .. self.ClassName .. "]" .. "[" .. tostring(self.Owner) .. "]" .. "[" .. tostring(self.Entity) .. "]"
+		return 
+			"mutator[" .. self.ClassName .. "]" .. "[" .. tostring(self.Owner) .. "]" .. "[" .. tostring(self.Entity) .. "]"
 	end
 
 	meta.__index = meta
@@ -234,7 +240,6 @@ function emut.Register(meta)
 
 	do
 		local name = "pac_modifier_" .. meta.ClassName
-
 		local default = 1
 
 		if GAMEMODE and GAMEMODE.FolderName and not GAMEMODE.FolderName:lower():find("sandbox") then
@@ -254,14 +259,12 @@ function emut.Register(meta)
 					pac.Message("entity modifier ", name, " is now disabled")
 					emut.DisableMutator()
 				end
-
 			end, name .. "_change")
 		end
 	end
 
 	if meta.Update then
 		timer.Create("pac_entity_mutator_" .. meta.ClassName, meta.UpdateRate, 0, function()
-
 			if not meta.cvar:GetBool() then return end
 
 			for _, mutator in ipairs(emut.GetAllMutators()) do
@@ -278,10 +281,10 @@ end
 
 if SERVER then
 	util.AddNetworkString("pac_entity_mutator")
+
 	net.Receive("pac_entity_mutator", function(len, ply)
 		local class_name = net.ReadString()
 		if not emut.registered_mutators[class_name] then return end
-
 		local ent = net.ReadEntity()
 		if not ent:IsValid() then return end
 
@@ -289,7 +292,6 @@ if SERVER then
 			emut.RestoreMutations(ply, class_name, ent)
 		else
 			if not pace.CanPlayerModify(ply, ent) then return end
-
 			emut.MutateEntity(ply, class_name, ent, emut.registered_mutators[class_name].ReadArguments())
 		end
 	end)
@@ -318,13 +320,12 @@ if SERVER then
 		end
 	end
 
-	hook.Add("PlayerInitialSpawn", "pac_entity_mutators_spawn", function( ply)
+	hook.Add("PlayerInitialSpawn", "pac_entity_mutators_spawn", function(ply)
 		local id = "pac_entity_mutators_spawn" .. ply:UniqueID()
-		hook.Add( "SetupMove", id, function(self, ply, _, cmd)
+
+		hook.Add("SetupMove", id, function(self, ply, _, cmd)
 			if self == ply and not cmd:IsForced() then
-
 				emut.ReplicateMutatorsForPlayer(ply)
-
 				hook.Remove("SetupMove", id)
 			end
 		end)
@@ -341,6 +342,7 @@ end
 
 hook.Add("EntityRemoved", "pac_entity_mutators_left", function(ent)
 	if not ent:IsValid() then return end
+
 	if ent:IsPlayer() then
 		emut.RemoveMutationsForPlayer(ent)
 	else
@@ -353,7 +355,6 @@ if CLIENT then
 		local ply = net.ReadEntity()
 		local class_name = net.ReadString()
 		local ent = net.ReadEntity()
-
 		suppress_send_to_server = true
 
 		xpcall(function()

@@ -4,47 +4,47 @@ local VectorRand = VectorRand
 local Vector = Vector
 local Angle = Angle
 local physenv_GetGravity = physenv.GetGravity
-
 local PART = {}
-
 PART.ClassName = "jiggle"
-PART.Group = 'model'
-PART.Icon = 'icon16/chart_line.png'
-
+PART.Group = "model"
+PART.Icon = "icon16/chart_line.png"
 pac.StartStorableVars()
-	pac.GetSet(PART, "Strain", 0.5, {editor_onchange = function(self, num)
-		self.sens = 0.25
-		num = tonumber(num)
-		return math.Clamp(num, 0, 1) * 0.999
-	end})
+	pac.GetSet(
+		PART,
+		"Strain",
+		0.5,
+		{
+			editor_onchange = function(self, num)
+				self.sens = 0.25
+				num = tonumber(num)
+				return math.Clamp(num, 0, 1) * 0.999
+			end,
+		})
 	pac.GetSet(PART, "Speed", 1)
 	pac.GetSet(PART, "ConstantVelocity", Vector(0, 0, 0))
 	pac.GetSet(PART, "LocalVelocity", true)
 	pac.GetSet(PART, "JiggleAngle", true)
 	pac.GetSet(PART, "JigglePosition", true)
-
 	pac.GetSet(PART, "ConstrainPitch", false)
 	pac.GetSet(PART, "ConstrainYaw", false)
 	pac.GetSet(PART, "ConstrainRoll", false)
-
 	pac.GetSet(PART, "ConstrainX", false)
 	pac.GetSet(PART, "ConstrainY", false)
 	pac.GetSet(PART, "ConstrainZ", false)
-
 	pac.GetSet(PART, "ConstrainSphere", 0)
 	pac.GetSet(PART, "StopRadius", 0)
 	pac.GetSet(PART, "Ground", false)
 	pac.GetSet(PART, "ResetOnHide", false)
 pac.EndStorableVars()
-
 local math_AngleDifference = math.AngleDifference
 
 function PART:Reset()
-	local pos, ang = self:HasParent() and not self.Parent.NonPhysical and self.Parent:GetDrawPosition() or self:GetBonePosition()
-
+	local pos, ang = self:HasParent() and
+		not self.Parent.NonPhysical and
+		self.Parent:GetDrawPosition() or
+		self:GetBonePosition()
 	self.pos = pos
 	self.vel = Vector()
-
 	self.ang = ang
 	self.angvel = Angle()
 end
@@ -63,13 +63,17 @@ end
 function PART:OnDraw(owner, pos, ang)
 	local delta = FrameTime()
 	local speed = self.Speed * delta
-
 	self.vel = self.vel or VectorRand()
 	self.pos = self.pos or pos * 1
 
-	if self.StopRadius ~= 0 and self.pos and self.pos:Distance(pos) < self.StopRadius then
+	if
+		self.StopRadius ~= 0 and
+		self.pos and
+		self.pos:Distance(pos) < self.StopRadius
+	then
 		self.vel = Vector()
-	return end
+		return
+	end
 
 	if self.JigglePosition then
 		if not self.ConstrainX then
@@ -126,7 +130,6 @@ function PART:OnDraw(owner, pos, ang)
 
 	if self.ConstrainSphere > 0 then
 		local len = math.min(self.pos:Distance(pos), self.ConstrainSphere)
-
 		self.pos = pos + (self.pos - pos):GetNormalized() * len
 	end
 

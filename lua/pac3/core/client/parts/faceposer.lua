@@ -1,11 +1,9 @@
 local PART = {}
-
 PART.ClassName = "faceposer"
 PART.FriendlyName = "face poser"
 PART.NonPhysical = true
-PART.Icon = 'icon16/monkey.png'
-PART.Group = 'entity'
-
+PART.Icon = "icon16/monkey.png"
+PART.Group = "entity"
 pac.StartStorableVars()
 	pac.GetSet(PART, "FlexWeights", "", {editor_panel = "flex_weights"})
 	pac.GetSet(PART, "Scale", 1)
@@ -29,7 +27,6 @@ end
 function PART:UpdateFlex()
 	local ent = self:GetOwner()
 	if not ent:IsValid() then return end
-
 	ent:SetFlexScale(self.Scale)
 
 	for name, weight in pairs(self:GetWeightMap()) do

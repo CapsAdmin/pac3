@@ -16,12 +16,12 @@ local function logn(str)
 end
 
 local function dprint(str)
-    if webaudio.debug  then
-        logn(str)
-    end
+	if webaudio.debug then
+		logn(str)
+	end
 end
 
-cvars.AddChangeCallback("webaudio_buffer_size", function(_,_,val)
+cvars.AddChangeCallback("webaudio_buffer_size", function(_, _, val)
 	dprint("buffer size changed to " .. val)
 	webaudio.Shutdown()
 	webaudio.Initialize()
@@ -34,7 +34,6 @@ end
 
 webaudio.browser_state = "uninitialized"
 webaudio.volume = 1
-
 local script_queue
 
 local function run_javascript(code, stream)
@@ -75,6 +74,7 @@ do
 			if webaudio.browser_state ~= "initializing" then
 				webaudio.Initialize()
 			end
+
 			return
 		end
 
@@ -85,12 +85,9 @@ do
 		end
 
 		local time = RealTime()
-
 		last_eye_pos = last_eye_pos or webaudio.eye_pos
 		last_eye_pos_time = last_eye_pos_time or (time - FrameTime())
-
 		webaudio.eye_velocity = (webaudio.eye_pos - last_eye_pos) / (time - last_eye_pos_time)
-
 		last_eye_pos = webaudio.eye_pos
 		last_eye_pos_time = time
 
@@ -106,9 +103,11 @@ end
 
 function webaudio.Shutdown()
 	webaudio.browser_state = "uninitialized"
+
 	if webaudio.browser_panel then
 		webaudio.browser_panel:Remove()
 	end
+
 	webaudio.browser_panel = nil
 	hook.Remove("RenderScene", "pac_webaudio2")
 	hook.Remove("Think", "pac_webaudio2")
@@ -116,7 +115,6 @@ end
 
 function webaudio.Initialize()
 	if webaudio.browser_state ~= "uninitialized" then return end
-
 	webaudio.browser_state = "initializing"
 
 	if webaudio.browser_panel then
@@ -127,7 +125,6 @@ function webaudio.Initialize()
 	webaudio.browser_panel:SetVisible(false)
 	webaudio.browser_panel:SetPos(ScrW(), ScrH())
 	webaudio.browser_panel:SetSize(1, 1)
-
 	local last_message = nil
 	webaudio.browser_panel.ConsoleMessage = function(self, message)
 		-- why does awesomium crash in the first place?
@@ -140,8 +137,8 @@ function webaudio.Initialize()
 			dprint(message)
 		end
 	end
-
 	webaudio.browser_panel:AddFunction("lua", "print", dprint)
+
 	webaudio.browser_panel:AddFunction("lua", "message", function(typ, ...)
 		local args = {}
 
@@ -154,16 +151,17 @@ function webaudio.Initialize()
 		if typ == "initialized" then
 			webaudio.browser_state = "initialized"
 			webaudio.sample_rate = args[1] or -1
-
 		elseif typ == "stream" then
 			local stream = webaudio.GetStream(tonumber(args[2]) or 0)
+
 			if stream:IsValid() then
 				stream:HandleBrowserMessage(args[1], unpack(args, 3, table.maxn(args)))
 			end
 		end
 	end)
 
-	local js = ([==[
+	local js = (
+			[==[
 /*jslint bitwise: true */
 
 window.onerror = function(description, url, line)
@@ -549,15 +547,13 @@ function DestroyStream(id)
 
 open();
 
-]==])
-
+]==]
+		)
 	webaudio.browser_panel.OnFinishLoadingDocument = function(self)
 		self.OnFinishLoadingDocument = nil
-
 		dprint("OnFinishLoadingDocument")
 		webaudio.browser_panel:RunJavascript(js)
 	end
-
 	file.Write("pac_webaudio2_blankhtml.txt", "<html></html>")
 	webaudio.browser_panel:OpenURL("asset://garrysmod/data/pac_webaudio2_blankhtml.txt")
 
@@ -585,7 +581,6 @@ do
 
 	local function DECLARE_PROPERTY(name, default, javascriptSetterCode, filterFunction)
 		META[name] = default
-
 		META["Set" .. name] = function(self, value)
 			if filterFunction then
 				value = filterFunction(value, self)
@@ -597,7 +592,6 @@ do
 				self:Call(javascriptSetterCode, value)
 			end
 		end
-
 		META["Get" .. name] = function(self, ...)
 			return self[name]
 		end
@@ -607,14 +601,11 @@ do
 	DECLARE_PROPERTY("Paused", true)
 	DECLARE_PROPERTY("SampleCount", 0)
 	DECLARE_PROPERTY("MaxLoopCount", nil)
-
 	DECLARE_PROPERTY("Panning", 0)
 	DECLARE_PROPERTY("Volume", 1)
 	DECLARE_PROPERTY("AdditiveVolumeFraction", 0)
-
 	DECLARE_PROPERTY("3D", false)
 	DECLARE_PROPERTY("Doppler", true)
-
 	DECLARE_PROPERTY("SourceEntity", NULL)
 	DECLARE_PROPERTY("SourcePosition", nil)
 	DECLARE_PROPERTY("LastSourcePosition", nil)
@@ -622,24 +613,27 @@ do
 	DECLARE_PROPERTY("SourceVelocity", nil)
 	DECLARE_PROPERTY("SourceRadius", 4300)
 	DECLARE_PROPERTY("ListenerOutOfRadius", false)
-
 	DECLARE_PROPERTY("Id")
 	DECLARE_PROPERTY("Url", "")
 	DECLARE_PROPERTY("PlaybackSpeed", 1)
 	DECLARE_PROPERTY("AdditivePitchModifier", 0)
 	DECLARE_PROPERTY("SamplePosition", 0, ".position = %f")
-
 	DECLARE_PROPERTY("PitchLFOAmount", nil, ".lfo_pitch_amount = %f")
 	DECLARE_PROPERTY("PitchLFOTime", nil, ".lfo_pitch_time = %f")
-
 	DECLARE_PROPERTY("VolumeLFOAmount", nil, ".lfo_volume_amount = %f")
 	DECLARE_PROPERTY("VolumeLFOTime", nil, ".lfo_volume_time = %f")
-
 	DECLARE_PROPERTY("FilterType", nil, ".filter_type = %i")
-	DECLARE_PROPERTY("FilterFraction", 0, ".filter_fraction = %f", function(num) return math.Clamp(num, 0, 1) end)
+
+	DECLARE_PROPERTY("FilterFraction", 0, ".filter_fraction = %f", function(num)
+		return math.Clamp(num, 0, 1)
+	end)
 
 	DECLARE_PROPERTY("Echo", false, ".useEcho(%s)")
-	DECLARE_PROPERTY("EchoDelay", 1, ".setEchoDelay(Math.ceil(audio.sampleRate * %f))", function(num) return math.Clamp(num, 0, 5) end)
+
+	DECLARE_PROPERTY("EchoDelay", 1, ".setEchoDelay(Math.ceil(audio.sampleRate * %f))", function(num)
+		return math.Clamp(num, 0, 5)
+	end)
+
 	DECLARE_PROPERTY("EchoFeedback", 0.75, ".echo_feedback = %f")
 
 	-- State
@@ -665,8 +659,10 @@ do
 
 	-- Browser
 	function META:Call(fmt, ...)
-		local code = string.format("var id = %d; try { if (streams[id]) { streams[id]%s } } catch(e) { dprint('streams[' + id + '] ' + e.toString()) }", self:GetId(), string.format(fmt, ...))
-
+		local code = string.format(
+			"var id = %d; try { if (streams[id]) { streams[id]%s } } catch(e) { dprint('streams[' + id + '] ' + e.toString()) }",
+			self:GetId(),
+			string.format(fmt, ...))
 		run_javascript(code, self)
 	end
 
@@ -688,7 +684,14 @@ do
 
 	function META:SetMaxLoopCount(maxLoopCount)
 		self.MaxLoopCount = maxLoopCount
-		self:Call(".max_loop = %i", maxLoopCount == true and -1 or maxLoopCount == false and 1 or tonumber(maxLoopCount) or 1)
+		self:Call(
+			".max_loop = %i",
+			maxLoopCount == true and
+			-1 or
+			maxLoopCount == false and
+			1 or
+			tonumber(maxLoopCount) or
+			1)
 	end
 
 	function META:Pause()
@@ -698,23 +701,17 @@ do
 
 	function META:Resume()
 		self.Paused = false
-
 		self:UpdatePlaybackSpeed()
 		self:UpdateVolume()
-
 		self:Call(".play(true)")
 	end
 
 	function META:Play()
 		self.Paused = false
-
 		queue_javascript()
-
 		self:UpdatePlaybackSpeed()
 		self:UpdateVolume()
-
 		self:Call(".play(true, 0)")
-
 		execute_javascript()
 	end
 
@@ -733,21 +730,15 @@ do
 
 	function META:SetPlaybackRate(mult)
 		if self.PlaybackSpeed == mult then return self end
-
 		self.PlaybackSpeed = mult
-
 		self:UpdatePlaybackSpeed()
-
 		return self
 	end
 
 	function META:SetAdditivePitchModifier(additivePitchModifier)
 		if self.AdditivePitchModifier == additivePitchModifier then return self end
-
 		self.AdditivePitchModifier = additivePitchModifier
-
 		self:UpdatePlaybackSpeed()
-
 		return self
 	end
 
@@ -771,31 +762,22 @@ do
 
 	function META:SetPanning(panning)
 		if self.Panning == panning then return self end
-
 		self.Panning = panning
-
 		self:UpdateVolume()
-
 		return self
 	end
 
 	function META:SetVolume(volumeFraction)
 		if self.Volume == volumeFraction then return self end
-
 		self.Volume = volumeFraction
-
 		self:UpdateVolume()
-
 		return self
 	end
 
 	function META:SetAdditiveVolumeModifier(additiveVolumeFraction)
 		if self.AdditiveVolumeFraction == additiveVolumeFraction then return self end
-
 		self.AdditiveVolumeFraction = additiveVolumeFraction
-
 		self:UpdateVolume()
-
 		return self
 	end
 
@@ -809,8 +791,10 @@ do
 		if not ent.findheadpos_head_bone then
 			for i = 0, ent:GetBoneCount() or 0 do
 				local name = ent:GetBoneName(i):lower()
+
 				if name:find("head", nil, true) then
 					ent.findheadpos_head_bone = i
+
 					break
 				end
 			end
@@ -818,11 +802,10 @@ do
 
 		if ent.findheadpos_head_bone then
 			local m = ent:GetBoneMatrix(ent.findheadpos_head_bone)
+
 			if m then
 				local pos = m:GetTranslation()
-				if pos ~= ent:GetPos() then
-					return pos, m:GetAngles()
-				end
+				if pos ~= ent:GetPos() then return pos, m:GetAngles() end
 			end
 		else
 			if not ent.findheadpos_attachment_eyes then
@@ -849,11 +832,13 @@ do
 
 	function META:UpdateVolume()
 		queue_javascript()
+
 		if self:Get3D() then
 			self:UpdateVolume3d()
 		else
 			self:UpdateVolumeFlat()
 		end
+
 		execute_javascript()
 	end
 
@@ -874,6 +859,7 @@ do
 			self:Call(".vol_left= %f", vol)
 			self.last_left_volume = vol
 		end
+
 		self:UpdateVolumeBoth()
 	end
 
@@ -882,6 +868,7 @@ do
 			self:Call(".vol_right = %f", vol)
 			self.last_right_volume = vol
 		end
+
 		self:UpdateVolumeBoth()
 	end
 
@@ -891,21 +878,14 @@ do
 			return
 		end
 
-
 		self:UpdateSourcePosition()
-
 		local time = RealTime()
-
 		self.SourcePosition = self.SourcePosition or Vector()
-
 		self.LastSourcePosition = self.LastSourcePosition or self.SourcePosition
 		self.LastSourcePositionTime = self.LastSourcePositionTime or (time - FrameTime())
-
 		self.SourceVelocity = (self.SourcePosition - self.LastSourcePosition) / (time - self.LastSourcePositionTime)
-
 		self.LastSourcePosition = self.SourcePosition
 		self.LastSourcePositionTime = time + 0.001
-
 		local relativeSourcePosition = self.SourcePosition - webaudio.eye_pos
 		local distanceToSource = relativeSourcePosition:Length()
 
@@ -913,14 +893,12 @@ do
 			local pan = relativeSourcePosition:GetNormalized():Dot(webaudio.eye_ang:Right())
 			local volumeFraction = math.Clamp(1 - distanceToSource / self.SourceRadius, 0, 1) ^ 6
 			volumeFraction = volumeFraction * 0.5
-
 			self:SetRightVolume((math.Clamp(1 + pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
 			self:SetLeftVolume((math.Clamp(1 - pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
 
 			if self:GetDoppler() then
 				local relativeSourceVelocity = self.SourceVelocity - webaudio.eye_velocity
-				local relativeSourceSpeed    = relativeSourcePosition:GetNormalized():Dot(-relativeSourceVelocity) * 0.0254
-
+				local relativeSourceSpeed = relativeSourcePosition:GetNormalized():Dot(-relativeSourceVelocity) * 0.0254
 				self:UpdatePlaybackSpeed(relativeSourceSpeed / webaudio.speed_of_sound)
 			end
 
@@ -950,10 +928,8 @@ do
 		end
 	end
 
-
 	function META:Think()
 		if self.Paused then return end
-
 		self:UpdateVolume()
 	end
 
@@ -976,7 +952,6 @@ do
 	-- Internal browser message handlers
 	function META:HandleCallBrowserMessage(methodName, ...)
 		if not self[methodName] then return end
-
 		self[methodName](self, ...)
 	end
 
@@ -987,9 +962,7 @@ do
 
 	function META:HandleLoadedBrowserMessage(sampleCount)
 		self.Loaded = true
-
 		self.SampleCount = sampleCount
-
 		queue_javascript()
 		self:SetFilterType(0)
 		self:SetMaxLoopCount(self:GetMaxLoopCount())
@@ -1006,6 +979,7 @@ do
 			for _, code in ipairs(self.js_queue) do
 				run_javascript(code)
 			end
+
 			self.js_queue = nil
 		end
 	end
@@ -1018,30 +992,25 @@ do
 end
 
 webaudio.streams = webaudio.streams or {}
-
 webaudio.last_stream_id = 0
 
 function webaudio.CreateStream(path)
 	webaudio.Initialize()
-
 	path = "../" .. path
 	local self = setmetatable({}, webaudio.stream_meta)
-
 	webaudio.last_stream_id = webaudio.last_stream_id + 1
 	self:SetId(webaudio.last_stream_id)
 	self:SetUrl(path)
-
 	webaudio.streams[self:GetId()] = self
-
 	run_javascript(string.format("CreateStream(%q, %i)", self:GetUrl(), self:GetId()))
-
 	return self
 end
 
 function webaudio.Panic(strong)
-	for k,v in pairs(webaudio.streams) do
+	for k, v in pairs(webaudio.streams) do
 		v:Remove()
 	end
+
 	webaudio.last_stream_id = 0
 end
 

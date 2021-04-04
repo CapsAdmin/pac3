@@ -2,13 +2,11 @@ local render_EnableClipping = render.EnableClipping
 local render_PushCustomClipPlane = render.PushCustomClipPlane
 local LocalToWorld = LocalToWorld
 local IsEntity = IsEntity
-
 local PART = {}
-
 PART.FriendlyName = "clip"
 PART.ClassName = "clip2"
-PART.Groups = {'model', 'modifiers'}
-PART.Icon = 'icon16/cut.png'
+PART.Groups = {"model", "modifiers"}
+PART.Icon = "icon16/cut.png"
 
 function PART:OnParent(part)
 	if not part.AddModifier then return end
@@ -27,7 +25,6 @@ end
 function PART:OnUnParent(part)
 	if not part:IsValid() then return end
 	if not part.RemoveModifier then return end
-
 	part:RemoveModifier(self)
 end
 
@@ -36,10 +33,8 @@ do
 
 	function PART:PreOnDraw()
 		bclip = render_EnableClipping(true)
-
 		local pos, ang = LocalToWorld(self.Position + self.PositionOffset, self:CalcAngles(self.Angles + self.AngleOffset), self:GetBonePosition())
 		local normal = ang:Forward()
-
 		render_PushCustomClipPlane(normal, normal:Dot(pos))
 	end
 
@@ -47,7 +42,6 @@ do
 
 	function PART:PostOnDraw()
 		render_PopCustomClipPlane()
-
 		render_EnableClipping(bclip)
 	end
 end

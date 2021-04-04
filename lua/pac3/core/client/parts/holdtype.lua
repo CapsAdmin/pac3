@@ -1,42 +1,37 @@
 local PART = {}
-
 PART.ClassName = "holdtype"
 PART.NonPhysical = true
 PART.ThinkTime = 0
-PART.Group = 'entity'
-PART.Icon = 'icon16/user_edit.png'
-
-local act_mods =
-{
-	"ACT_MP_STAND_IDLE",
-	"ACT_MP_WALK",
-	"ACT_MP_RUN",
-	"ACT_MP_CROUCH_IDLE",
-	"ACT_MP_CROUCHWALK",
-	"ACT_MP_ATTACK_STAND_PRIMARYFIRE",
-	"ACT_MP_ATTACK_CROUCH_PRIMARYFIRE",
-	"ACT_MP_RELOAD_STAND",
-	"ACT_MP_RELOAD_CROUCH",
-	"ACT_MP_JUMP",
-	"ACT_LAND",
-	"ACT_RANGE_ATTACK1",
-	"ACT_MP_SWIM_IDLE",
-	"ACT_MP_SWIM",
-}
+PART.Group = "entity"
+PART.Icon = "icon16/user_edit.png"
+local act_mods = {
+		"ACT_MP_STAND_IDLE",
+		"ACT_MP_WALK",
+		"ACT_MP_RUN",
+		"ACT_MP_CROUCH_IDLE",
+		"ACT_MP_CROUCHWALK",
+		"ACT_MP_ATTACK_STAND_PRIMARYFIRE",
+		"ACT_MP_ATTACK_CROUCH_PRIMARYFIRE",
+		"ACT_MP_RELOAD_STAND",
+		"ACT_MP_RELOAD_CROUCH",
+		"ACT_MP_JUMP",
+		"ACT_LAND",
+		"ACT_RANGE_ATTACK1",
+		"ACT_MP_SWIM_IDLE",
+		"ACT_MP_SWIM",
+	}
 
 do
 	local temp = {}
 
 	for _, act in pairs(act_mods) do
-
 		local key = act
 		key = "_" .. key
 		key = key:gsub("ACT_MP_", "")
-		key = key :lower()
+		key = key:lower()
 		key = key:gsub("_(.)", function(char)
 			return char:upper()
 		end)
-
 		temp[key] = _G[act]
 	end
 
@@ -50,22 +45,21 @@ do
 end
 
 PART.ActMods = act_mods
-
 local udata = {
-	enums = function(part)
-		if not part.GetSequenceList then return {} end -- ???
+		enums = function(part)
+			if not part.GetSequenceList then return {} end -- ???
 
 		local tbl = {}
 
-		for k, v in pairs(part:GetSequenceList()) do
-			tbl[v] = v
-		end
+			for k, v in pairs(part:GetSequenceList()) do
+				tbl[v] = v
+			end
 
-		return tbl
-	end
-}
-
+			return tbl
+		end,
+	}
 pac.StartStorableVars()
+
 	for name in pairs(act_mods) do
 		pac.GetSet(PART, name, "", udata)
 	end
@@ -90,6 +84,7 @@ end
 
 function PART:SetFallback(str)
 	self.Fallback = str
+
 	if not self:IsHidden() then
 		self:UpdateActTable()
 	end
@@ -98,9 +93,7 @@ end
 function PART:UpdateActTable()
 	local ent = self:GetOwner(true)
 	if not ent:IsValid() then return end
-
 	ent.pac_holdtype_alternative_animation_rate = self.AlternativeRate
-
 	ent.pac_holdtypes = ent.pac_holdtypes or {}
 
 	if self.Override then
@@ -108,7 +101,6 @@ function PART:UpdateActTable()
 	end
 
 	ent.pac_holdtypes[self] = ent.pac_holdtypes[self] or {}
-
 	local acts = ent.pac_holdtypes[self]
 
 	for name, act in pairs(act_mods) do
@@ -120,7 +112,6 @@ function PART:UpdateActTable()
 	acts.noclip = ent:GetSequenceActivity(ent:LookupSequence(self.Noclip))
 	acts.air = ent:GetSequenceActivity(ent:LookupSequence(self.Air))
 	acts.sitting = ent:GetSequenceActivity(ent:LookupSequence(self.Sitting))
-
 	acts.part = self
 end
 
@@ -128,7 +119,9 @@ function PART:OnThink()
 	local ent = self:GetOwner(true)
 	if not ent:IsValid() then return end
 
-	if (ent:GetModel() ~= self.last_model or ent.pac_holdtypes ~= self.last_pac_holdtypes)  then
+	if
+		(ent:GetModel() ~= self.last_model or ent.pac_holdtypes ~= self.last_pac_holdtypes)
+	then
 		self:UpdateActTable()
 		self.last_model = ent:GetModel()
 		self.last_pac_holdtypes = ent.pac_holdtypes
@@ -137,11 +130,7 @@ end
 
 function PART:GetSequenceList()
 	local ent = self:GetOwner()
-
-	if ent:IsValid() then
-		return ent:GetSequenceList()
-	end
-
+	if ent:IsValid() then return ent:GetSequenceList() end
 	return {"none"}
 end
 
@@ -160,6 +149,5 @@ end
 function PART:OnShow()
 	self:UpdateActTable()
 end
-
 
 pac.RegisterPart(PART)

@@ -12,9 +12,7 @@ function pacx.PartToContraptionData(part, tbl)
 
 	if part.is_model_part then
 		local data = {}
-
 		local c = part:GetColor()
-
 		data.clr = {c.r, c.g, c.b, part:GetAlpha() * 255}
 		data.ang = part.Entity:GetAngles()
 		data.pos = part.Entity:GetPos()
@@ -22,7 +20,6 @@ function pacx.PartToContraptionData(part, tbl)
 		data.mdl = part:GetModel()
 		data.skn = part:GetSkin()
 		data.id = part.UniqueID
-
 		table.insert(tbl, data)
 	end
 

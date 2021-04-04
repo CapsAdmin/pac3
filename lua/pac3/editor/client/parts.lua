@@ -26,13 +26,23 @@ function pace.WearParts(file, clear)
 	local transmissionID = math.random(1, math.pow(2, 31) - 1)
 
 	for key, part in pairs(pac.GetLocalParts()) do
-		if not part:HasParent() and part.show_in_editor ~= false and pace.IsPartSendable(part) then
+		if
+			not part:HasParent() and
+			part.show_in_editor ~= false and
+			pace.IsPartSendable(part)
+		then
 			table.insert(toWear, part)
 		end
 	end
 
 	for i, part in ipairs(toWear) do
-		pace.SendPartToServer(part, {partID = i, totalParts = #toWear, transmissionID = transmissionID})
+		pace.SendPartToServer(
+			part,
+			{
+				partID = i,
+				totalParts = #toWear,
+				transmissionID = transmissionID,
+			})
 	end
 end
 
@@ -60,14 +70,17 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 		if class_name ~= "group" then
 			local group
 			local parts = pac.GetLocalParts()
+
 			if table.Count(parts) == 1 then
 				local test = select(2, next(parts))
+
 				if test.ClassName == "group" then
 					group = test
 				end
 			else
 				group = pac.CreatePart("group")
 			end
+
 			part = pac.CreatePart(class_name)
 			part:SetParent(group)
 			parent = group
@@ -80,7 +93,6 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 		end
 
 		part = pac.CreatePart(class_name)
-
 		parent = pace.current_part
 
 		if parent:IsValid() then
@@ -90,13 +102,16 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 				if v.ClassName == "group" then
 					part:SetParent(v)
 					parent = v
+
 					break
 				end
 			end
 		end
 	end
 
-	if name then part:SetName(name) end
+	if name then
+		part:SetName(name)
+	end
 
 	if part.SetModel then
 		if mdl then
@@ -118,7 +133,13 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 
 	part.newly_created = true
 
-	if not part.NonPhysical and parent:IsValid() and not parent:HasParent() and parent.OwnerName == "world" and part:GetPlayerOwner() == ply then
+	if
+		not part.NonPhysical and
+		parent:IsValid() and
+		not parent:HasParent() and
+		parent.OwnerName == "world" and
+		part:GetPlayerOwner() == ply
+	then
 		local data = ply:GetEyeTrace()
 
 		if data.HitPos:Distance(ply:GetPos()) < 1000 then
@@ -129,14 +150,16 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 	end
 
 	pace.RefreshTree()
-
 	return part
 end
 
 function pace.OnPartSelected(part, is_selecting)
 	local parent = part:GetRootPart()
 
-	if parent:IsValid() and (parent.OwnerName == "viewmodel" or parent.OwnerName == "hands") then
+	if
+		parent:IsValid() and
+		(parent.OwnerName == "viewmodel" or parent.OwnerName == "hands")
+	then
 		pace.editing_viewmodel = parent.OwnerName == "viewmodel"
 		pace.editing_hands = parent.OwnerName == "hands"
 	elseif pace.editing_viewmodel or pace.editing_hands then
@@ -147,11 +170,8 @@ function pace.OnPartSelected(part, is_selecting)
 	pace.current_part = part
 	pace.PopulateProperties(part)
 	pace.mctrl.SetTarget(part)
-
 	pace.SetViewPart(part)
-
 	pace.Editor:InvalidateLayout()
-
 	pace.SafeRemoveSpecialPanel()
 
 	if pace.tree:IsValid() then
@@ -164,7 +184,7 @@ function pace.OnPartSelected(part, is_selecting)
 		pace.StopSelect()
 	end
 
-	if part.ClassName == 'group' then
+	if part.ClassName == "group" then
 		if #part:GetChildrenList() ~= 0 then
 			local position
 
@@ -208,16 +228,16 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 	local funcGet = obj["Get" .. key]
 	local func = obj["Set" .. key]
 	if not func or not funcGet then return end
-
 	local valType = type(val)
-	if valType == 'Vector' then
+
+	if valType == "Vector" then
 		val = Vector(val)
-	elseif valType == 'Angle' then
+	elseif valType == "Angle" then
 		val = Angle(val)
 	end
 
 	if not not_from_editor then
-	timer.Create("pace_backup", 1, 1, pace.Backup)
+		timer.Create("pace_backup", 1, 1, pace.Backup)
 
 		if not pace.undo_release_varchange then
 			pace.RecordUndoHistory()
@@ -242,10 +262,9 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 		end
 	end
 
-
 	func(obj, val)
-
 	local node = obj.pace_tree_node
+
 	if IsValid(node) then
 		if key == "Event" then
 			pace.PopulateProperties(obj)
@@ -253,14 +272,17 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 			if not obj:HasParent() then
 				pace.RemovePartOnServer(obj:GetUniqueID(), true, true)
 			end
+
 			node:SetText(val)
 		elseif key == "Model" and val and val ~= "" and type(val) == "string" then
 			node:SetModel(val)
 		elseif key == "Parent" then
 			local tree = obj.pace_tree_node
+
 			if IsValid(tree) then
 				node:Remove()
 				tree = tree:GetRoot()
+
 				if tree:IsValid() then
 					tree:SetSelectedItem(nil)
 					pace.RefreshTree(true)
@@ -275,12 +297,12 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 
 	timer.Simple(0, function()
 		if not IsValid(obj) then return end
-
 		local prop_panel = obj.pace_properties and obj.pace_properties[key]
 
 		if IsValid(prop_panel) then
 			local old = prop_panel.OnValueChanged
-			prop_panel.OnValueChanged = function() end
+			prop_panel.OnValueChanged = function() 
+			end
 			prop_panel:SetValue(val)
 			prop_panel.OnValueChanged = old
 		end
@@ -289,6 +311,7 @@ end
 
 function pace.GetRegisteredParts()
 	local out = {}
+
 	for class_name, part in pairs(pac.GetRegisteredParts()) do
 		local cond = (not pace.IsInBasicMode() or pace.BasicParts[class_name]) and
 			not part.Internal and
@@ -308,7 +331,7 @@ do -- menu
 		local partsToShow = {}
 		local clicked = false
 
-		hook.Add('Think', menu, function()
+		hook.Add("Think", menu, function()
 			local ctrl = input.IsControlDown()
 
 			if clicked and not ctrl then
@@ -321,8 +344,9 @@ do -- menu
 			menu:SetDeleteSelf(not ctrl)
 		end)
 
-		hook.Add('CloseDermaMenus', menu, function()
+		hook.Add("CloseDermaMenus", menu, function()
 			clicked = true
+
 			if input.IsControlDown() then
 				menu:SetVisible(true)
 				RegisterDermaMenuForClose(menu)
@@ -330,7 +354,7 @@ do -- menu
 		end)
 
 		local function add_part(menu, part)
-			local newMenuEntry = menu:AddOption(L(part.FriendlyName or part.ClassName:Replace('_', ' ')), function()
+			local newMenuEntry = menu:AddOption(L(part.FriendlyName or part.ClassName:Replace("_", " ")), function()
 				pace.RecordUndoHistory()
 				pace.Call("CreatePart", part.ClassName, nil, nil, parent)
 				pace.RecordUndoHistory()
@@ -342,9 +366,9 @@ do -- menu
 
 				if part.Group == "legacy" then
 					local mat = Material(pace.GroupsIcons.experimental)
-					newMenuEntry.m_Image.PaintOver = function(_, w,h)
+					newMenuEntry.m_Image.PaintOver = function(_, w, h)
 						surface.SetMaterial(mat)
-						surface.DrawTexturedRect(2,6,13,13)
+						surface.DrawTexturedRect(2, 6, 13, 13)
 					end
 				end
 			end
@@ -393,20 +417,25 @@ do -- menu
 						pace.RecordUndoHistory()
 					end
 				end)
-
-				sub.GetDeleteSelf = function() return false end
+				sub.GetDeleteSelf = function()
+					return false
+				end
 
 				if groupData.icon then
 					pnl:SetImage(groupData.icon)
 				end
 
 				local trap = false
-				table.sort(groupData.parts, function(a, b) return a.ClassName < b.ClassName end)
+
+				table.sort(groupData.parts, function(a, b)
+					return a.ClassName < b.ClassName
+				end)
+
 				for i, part in ipairs(groupData.parts) do
 					add_part(sub, part)
 				end
 
-				hook.Add('Think', sub, function()
+				hook.Add("Think", sub, function()
 					local ctrl = input.IsControlDown()
 
 					if clicked and not ctrl then
@@ -419,7 +448,7 @@ do -- menu
 					sub:SetDeleteSelf(not ctrl)
 				end)
 
-				hook.Add('CloseDermaMenus', sub, function()
+				hook.Add("CloseDermaMenus", sub, function()
 					if input.IsControlDown() and trap then
 						trap = false
 						sub:SetVisible(true)
@@ -429,12 +458,12 @@ do -- menu
 				end)
 			end
 
-			for i,v in ipairs(other.parts) do
+			for i, v in ipairs(other.parts) do
 				add_part(menu, v)
 			end
 
 			for class_name, part in pairs(partsToShow) do
-				local newMenuEntry = menu:AddOption(L((part.FriendlyName or part.ClassName):Replace('_', ' ')), function()
+				local newMenuEntry = menu:AddOption(L((part.FriendlyName or part.ClassName):Replace("_", " ")), function()
 					pace.RecordUndoHistory()
 					pace.Call("CreatePart", class_name, nil, nil, parent)
 					pace.RecordUndoHistory()
@@ -459,13 +488,14 @@ do -- menu
 
 		local edit = base:Add("DTextEntry")
 		edit:SetTall(20)
+
 		if pace.IsInBasicMode() then
 			edit:SetTall(0)
 		end
+
 		edit:Dock(TOP)
 		edit:RequestFocus()
 		edit:SetUpdateOnType(true)
-
 		local result = base:Add("DPanel")
 		result:Dock(FILL)
 
@@ -475,6 +505,7 @@ do -- menu
 				pace.Call("CreatePart", result.found[1].ClassName)
 				pace.RecordUndoHistory()
 			end
+
 			base:Remove()
 		end
 
@@ -488,7 +519,9 @@ do -- menu
 				end
 			end
 
-			table.sort(result.found, function(a, b) return #a.ClassName < #b.ClassName end)
+			table.sort(result.found, function(a, b)
+				return #a.ClassName < #b.ClassName
+			end)
 
 			for _, part in ipairs(result.found) do
 				local line = result:Add("DButton")
@@ -500,38 +533,36 @@ do -- menu
 					base:Remove()
 					pace.RecordUndoHistory()
 				end
-
 				local btn = line:Add("DImageButton")
 				btn:SetSize(16, 16)
-				btn:SetPos(4,0)
+				btn:SetPos(4, 0)
 				btn:CenterVertical()
 				btn:SetMouseInputEnabled(false)
+
 				if part.Icon then
 					btn:SetImage(part.Icon)
 
 					if part.Group == "legacy" then
 						local mat = Material(pace.GroupsIcons.experimental)
-						btn.m_Image.PaintOver = function(_, w,h)
+						btn.m_Image.PaintOver = function(_, w, h)
 							surface.SetMaterial(mat)
-							surface.DrawTexturedRect(2,6,13,13)
+							surface.DrawTexturedRect(2, 6, 13, 13)
 						end
 					end
 				end
 
 				local label = line:Add("DLabel")
 				label:SetTextColor(label:GetSkin().Colours.Category.Line.Text)
-				label:SetText(L((part.FriendlyName or part.ClassName):Replace('_', ' ')))
+				label:SetText(L((part.FriendlyName or part.ClassName):Replace("_", " ")))
 				label:SizeToContents()
 				label:MoveRightOf(btn, 4)
 				label:SetMouseInputEnabled(false)
 				label:CenterVertical()
-
 				line:Dock(TOP)
 			end
 
 			base:SetHeight(20 * #result.found + edit:GetTall())
 		end
-
 		edit:OnValueChange("")
 
 		pac.AddHook("VGUIMousePressed", "search_part_menu", function(pnl, code)
@@ -567,10 +598,10 @@ do -- menu
 		if not pace.Clipboard then return end
 		pace.RecordUndoHistory()
 		local tbl = pace.Clipboard
-			tbl.self.Name = nil
-			tbl.self.ParentName = nil
-			tbl.self.Parent = nil
-			tbl.children = {}
+		tbl.self.Name = nil
+		tbl.self.ParentName = nil
+		tbl.self.Parent = nil
+		tbl.children = {}
 		obj:SetTable(tbl)
 		pace.RecordUndoHistory()
 	end
@@ -585,7 +616,6 @@ do -- menu
 		pace.RecordUndoHistory()
 		obj:Remove()
 		pace.RecordUndoHistory()
-
 		pace.RefreshTree()
 
 		if not obj:HasParent() and obj.ClassName == "group" then
@@ -599,36 +629,58 @@ do -- menu
 
 		if obj then
 			if not obj:HasParent() then
-				menu:AddOption(L"wear", function() pace.SendPartToServer(obj) end):SetImage(pace.MiscIcons.wear)
+				menu:AddOption(L"wear", function()
+					pace.SendPartToServer(obj)
+				end):SetImage(pace.MiscIcons.wear)
 			end
 
-			menu:AddOption(L"copy", function() pace.Copy(obj) end):SetImage(pace.MiscIcons.copy)
-			menu:AddOption(L"paste", function() pace.Paste(obj) end):SetImage(pace.MiscIcons.paste)
-			menu:AddOption(L"cut", function() pace.Cut(obj) end):SetImage('icon16/cut.png')
-			menu:AddOption(L"paste properties", function() pace.PasteProperties(obj) end):SetImage(pace.MiscIcons.replace)
-			menu:AddOption(L"clone", function() pace.Clone(obj) end):SetImage(pace.MiscIcons.clone)
-
+			menu:AddOption(L"copy", function()
+				pace.Copy(obj)
+			end):SetImage(pace.MiscIcons.copy)
+			menu:AddOption(L"paste", function()
+				pace.Paste(obj)
+			end):SetImage(pace.MiscIcons.paste)
+			menu:AddOption(L"cut", function()
+				pace.Cut(obj)
+			end):SetImage("icon16/cut.png")
+			menu:AddOption(L"paste properties", function()
+				pace.PasteProperties(obj)
+			end):SetImage(pace.MiscIcons.replace)
+			menu:AddOption(L"clone", function()
+				pace.Clone(obj)
+			end):SetImage(pace.MiscIcons.clone)
 			menu:AddSpacer()
 		end
 
 		pace.AddRegisteredPartsToMenu(menu, not obj)
-
 		menu:AddSpacer()
 
 		if obj then
-			local save, pnl = menu:AddSubMenu(L"save", function() pace.SaveParts() end)
+			local save, pnl = menu:AddSubMenu(L"save", function()
+				pace.SaveParts()
+			end)
 			pnl:SetImage(pace.MiscIcons.save)
-			add_expensive_submenu_load(pnl, function() pace.AddSaveMenuToMenu(save, obj) end)
+
+			add_expensive_submenu_load(pnl, function()
+				pace.AddSaveMenuToMenu(save, obj)
+			end)
 		end
 
-		local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
-		add_expensive_submenu_load(pnl, function() pace.AddSavedPartsToMenu(load, false, obj) end)
+		local load, pnl = menu:AddSubMenu(L"load", function()
+			pace.LoadParts()
+		end)
+
+		add_expensive_submenu_load(pnl, function()
+			pace.AddSavedPartsToMenu(load, false, obj)
+		end)
 
 		pnl:SetImage(pace.MiscIcons.load)
 
 		if obj then
 			menu:AddSpacer()
-			menu:AddOption(L"remove", function() pace.RemovePart(obj) end):SetImage(pace.MiscIcons.clear)
+			menu:AddOption(L"remove", function()
+				pace.RemovePart(obj)
+			end):SetImage(pace.MiscIcons.clear)
 		end
 
 		menu:Open()
@@ -640,19 +692,20 @@ do -- menu
 		local menu = DermaMenu()
 		menu:MakePopup()
 		menu:SetPos(input.GetCursorPos())
-
 		pace.AddRegisteredPartsToMenu(menu)
-
 		menu:AddSpacer()
-
-		local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
+		local load, pnl = menu:AddSubMenu(L"load", function()
+			pace.LoadParts()
+		end)
 		pnl:SetImage(pace.MiscIcons.load)
-		add_expensive_submenu_load(pnl, function() pace.AddSavedPartsToMenu(load, false, obj) end)
+
+		add_expensive_submenu_load(pnl, function()
+			pace.AddSavedPartsToMenu(load, false, obj)
+		end)
 
 		menu:AddOption(L"clear", function()
 			pace.ClearParts()
 		end):SetImage(pace.MiscIcons.clear)
-
 	end
 end
 
@@ -672,7 +725,17 @@ function pace.OnHoverPart(self)
 	if #tbl > 0 then
 		local pulse = math.sin(pac.RealTime * 20) * 0.5 + 0.5
 		pulse = pulse * 255
-		pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
+		pac.haloex.Add(
+			tbl,
+			Color(pulse, pulse, pulse, 255),
+			1,
+			1,
+			1,
+			true,
+			true,
+			5,
+			1,
+			1)
 	end
 end
 
@@ -698,7 +761,10 @@ do
 
 		if hold then return end
 
-		if input.IsControlDown() and ((input.IsKeyDown(KEY_LSHIFT) and input.IsKeyDown(KEY_Z)) or input.IsKeyDown(KEY_Y)) then
+		if
+			input.IsControlDown() and
+			((input.IsKeyDown(KEY_LSHIFT) and input.IsKeyDown(KEY_Z)) or input.IsKeyDown(KEY_Y))
+		then
 			pace.Redo()
 			hold = true
 		elseif input.IsControlDown() and input.IsKeyDown(KEY_Z) then
@@ -721,12 +787,11 @@ do
 		local part = pace.current_part
 
 		if not part or not part:IsValid() then
-			pace.FlashNotification('No part selected to copy')
+			pace.FlashNotification("No part selected to copy")
 			return
 		end
 
 		pace.Copy(part)
-
 		surface.PlaySound("buttons/button9.wav")
 	end
 
@@ -744,12 +809,11 @@ do
 		local part = pace.current_part
 
 		if not part or not part:IsValid() then
-			pace.FlashNotification('No part selected to cut')
+			pace.FlashNotification("No part selected to cut")
 			return
 		end
 
 		pace.Cut(part)
-
 		surface.PlaySound("buttons/button9.wav")
 	end
 
@@ -767,16 +831,15 @@ do
 		local part = pace.current_part
 
 		if not part or not part:IsValid() then
-			pace.FlashNotification('No part to delete')
+			pace.FlashNotification("No part to delete")
 			return
 		end
 
 		pace.RemovePart(part)
-
 		surface.PlaySound("buttons/button9.wav")
 	end
 
-	local REVERSE_COLLAPSE_CONTROLS = CreateConVar('pac_reverse_collapse', '1', {FCVAR_ARCHIVE}, 'Reverse Collapse/Expand hotkeys')
+	local REVERSE_COLLAPSE_CONTROLS = CreateConVar("pac_reverse_collapse", "1", {FCVAR_ARCHIVE}, "Reverse Collapse/Expand hotkeys")
 	local hold = false
 
 	local function thinkExpandAll()
@@ -784,19 +847,25 @@ do
 			hold = false
 		end
 
-		if hold or not input.IsShiftDown() or (not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT)) or not input.IsKeyDown(KEY_0) then return end
+		if
+			hold or
+			not input.IsShiftDown() or
+			(not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT)) or
+			not input.IsKeyDown(KEY_0)
+		then
+			return
+		end
 
 		-- expand all
 		hold = true
 		local part = pace.current_part
 
 		if not part or not part:IsValid() then
-			pace.FlashNotification('No part to expand')
+			pace.FlashNotification("No part to expand")
 			return
 		end
 
-		part:CallRecursive('SetEditorExpand', not REVERSE_COLLAPSE_CONTROLS:GetBool())
-
+		part:CallRecursive("SetEditorExpand", not REVERSE_COLLAPSE_CONTROLS:GetBool())
 		surface.PlaySound("buttons/button9.wav")
 		pace.RefreshTree(true)
 	end
@@ -808,19 +877,25 @@ do
 			hold = false
 		end
 
-		if hold or input.IsShiftDown() or (not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT)) or not input.IsKeyDown(KEY_0) then return end
+		if
+			hold or
+			input.IsShiftDown() or
+			(not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT)) or
+			not input.IsKeyDown(KEY_0)
+		then
+			return
+		end
 
 		-- collapse all
 		hold = true
 		local part = pace.current_part
 
 		if not part or not part:IsValid() then
-			pace.FlashNotification('No part to collapse')
+			pace.FlashNotification("No part to collapse")
 			return
 		end
 
-		part:CallRecursive('SetEditorExpand', REVERSE_COLLAPSE_CONTROLS:GetBool())
-
+		part:CallRecursive("SetEditorExpand", REVERSE_COLLAPSE_CONTROLS:GetBool())
 		surface.PlaySound("buttons/button9.wav")
 		pace.RefreshTree(true)
 	end
@@ -839,7 +914,7 @@ do
 		local part = pace.Clipboard
 
 		if not part then
-			pace.FlashNotification('No part is stored in clipboard')
+			pace.FlashNotification("No part is stored in clipboard")
 			return
 		end
 
@@ -860,14 +935,20 @@ do
 		end
 
 		pace.Paste(findParent)
-
 		surface.PlaySound("buttons/button9.wav")
 	end
 
 	pac.AddHook("Think", "pace_keyboard_shortcuts", function()
 		if not pace.IsActive() then return end
 		if not pace.Focused then return end
-		if IsValid(vgui.GetKeyboardFocus()) and vgui.GetKeyboardFocus():GetClassName():find('Text') then return end
+
+		if
+			IsValid(vgui.GetKeyboardFocus()) and
+			vgui.GetKeyboardFocus():GetClassName():find("Text")
+		then
+			return
+		end
+
 		if gui.IsConsoleVisible() then return end
 		thinkUndo()
 		thinkCopy()

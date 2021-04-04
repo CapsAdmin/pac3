@@ -1,22 +1,21 @@
-
-local consume = test.EventConsumer({
-	"init",
-	"hide",
-	"parent group",
-	"shown from rendering",
-	"think",
-	"draw",
-	"hide",
-	"remove",
-})
+local consume = test.EventConsumer(
+	{
+		"init",
+		"hide",
+		"parent group",
+		"shown from rendering",
+		"think",
+		"draw",
+		"hide",
+		"remove",
+	})
 
 function test.Run(done)
 	do
 		local PART = {}
-
 		PART.FriendlyName = "test"
 		PART.ClassName = "test"
-		PART.Icon = 'icon16/cut.png'
+		PART.Icon = "icon16/cut.png"
 
 		function PART:Initialize()
 			consume("init")

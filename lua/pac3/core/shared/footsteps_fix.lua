@@ -1,7 +1,7 @@
-
 if game.SinglePlayer() then
 	if SERVER then
-		util.AddNetworkString('pac_footstep')
+		util.AddNetworkString("pac_footstep")
+
 		hook.Add("PlayerFootstep", "footstep_fix", function(ply, pos, _, snd, vol)
 			net.Start("pac_footstep")
 				net.WriteEntity(ply)

@@ -1,27 +1,44 @@
 local LocalPlayer = LocalPlayer
 local FrameTime = FrameTime
-
 local PART = {}
-
 PART.ClassName = "event"
 PART.NonPhysical = true
 PART.ThinkTime = 0
 PART.AlwaysThink = true
-PART.Icon = 'icon16/clock.png'
-
+PART.Icon = "icon16/clock.png"
 pac.StartStorableVars()
-	pac.GetSet(PART, "Event", "", {enums = function(part)
-		local output = {}
+	pac.GetSet(
+		PART,
+		"Event",
+		"",
+		{
+			enums = function(part)
+				local output = {}
 
-		for i, event in pairs(part.Events) do
-			if not event.IsAvaliable or event:IsAvaliable(part) then
-				output[i] = event
-			end
-		end
+				for i, event in pairs(part.Events) do
+					if not event.IsAvaliable or event:IsAvaliable(part) then
+						output[i] = event
+					end
+				end
 
-		return output
-	end})
-	pac.GetSet(PART, "Operator", "find simple", {enums = function(part) local tbl = {} for i,v in ipairs(part.Operators) do tbl[v] = v end return tbl end})
+				return output
+			end,
+		})
+	pac.GetSet(
+		PART,
+		"Operator",
+		"find simple",
+		{
+			enums = function(part)
+				local tbl = {}
+
+				for i, v in ipairs(part.Operators) do
+					tbl[v] = v
+				end
+
+				return tbl
+			end,
+		})
 	pac.GetSet(PART, "Arguments", "", {editor_panel = "event_arguments"})
 	pac.GetSet(PART, "Invert", false)
 	pac.GetSet(PART, "RootOwner", true)
@@ -41,10 +58,8 @@ end
 local function calc_velocity(part)
 	local diff = part.cached_pos - (part.last_pos or Vector(0, 0, 0))
 	part.last_pos = part.cached_pos
-
 	part.last_vel_smooth = part.last_vel_smooth or Vector(0, 0, 0)
 	part.last_vel_smooth = part.last_vel_smooth + (diff - part.last_vel_smooth) * FrameTime() * 4
-
 	return part.last_vel_smooth
 end
 
@@ -54,451 +69,397 @@ end
 
 local movetypes = {}
 
-for k,v in pairs(_G) do
-	if type(k) == "string" and type(v) == "number" and k:sub(0,9) == "MOVETYPE_" then
+for k, v in pairs(_G) do
+	if type(k) == "string" and type(v) == "number" and k:sub(0, 9) == "MOVETYPE_" then
 		movetypes[v] = k:sub(10):lower()
 	end
 end
 
 PART.Events = {}
 PART.OldEvents = {
-	random = {
-		arguments = {{compare = "number"}},
-		callback = function(self, ent, compare)
-			return self:NumberOperator(math.random(), compare)
-		end,
-	},
+		random = {
+			arguments = {{compare = "number"}},
+			callback = function(self, ent, compare)
+				return self:NumberOperator(math.random(), compare)
+			end,
+		},
+		randint = {
+			arguments = {
+				{compare = "number"},
+				{min = "number"},
+				{max = "number"},
+			},
+			callback = function(self, ent, compare, min, max)
+				min = min or 0
+				max = max or 1
+				if min > max then return 0 end
+				return self:NumberOperator(math.random(min, max), compare)
+			end,
+		},
+		random_timer = {
+			arguments = {
+				{min = "number"},
+				{max = "number"},
+				{holdtime = "number"},
+			},
+			callback = function(self, ent, min, max, holdtime)
+				holdtime = holdtime or 0.1
+				min = min or 0
+				max = max or 1
+				if min > max then return false end
 
-	randint = {
-		arguments = {{compare = "number"}, {min = "number"}, {max = "number"}},
-		callback = function(self, ent, compare, min, max)
-			min = min or 0
-			max = max or 1
-			if min > max then return 0 end
-			return self:NumberOperator(math.random(min,max), compare)
-		end,
-	},
-
-	random_timer = {
-		arguments = {{min = "number"}, {max = "number"}, {holdtime = "number"}},
-		callback = function(self, ent, min, max, holdtime)
-
-			holdtime = holdtime or 0.1
-			min = min or 0
-			max = max or 1
-
-			if min > max then return false end
-
-			if self.RndTime == nil then
-				self.RndTime = 0
-			end
-
-			if not self.SetRandom then
-				self.RndTime = CurTime() + math.random(min,max)
-				self.SetRandom = true
-			elseif self.SetRandom then
-
-				if CurTime() > self.RndTime then
-					if CurTime() < self.RndTime + holdtime then
-						return true
-					end
-
-					self.SetRandom = false
-					return false
+				if self.RndTime == nil then
+					self.RndTime = 0
 				end
 
-			end
+				if not self.SetRandom then
+					self.RndTime = CurTime() + math.random(min, max)
+					self.SetRandom = true
+				elseif self.SetRandom then
+					if CurTime() > self.RndTime then
+						if CurTime() < self.RndTime + holdtime then return true end
+						self.SetRandom = false
+						return false
+					end
+				end
 
-			return false
-		end,
-	},
-
-	timerx = {
-		arguments = {{seconds = "number"}, {reset_on_hide = "boolean"}, {synced_time = "boolean"}},
-		nice = function(self, ent, seconds)
-			return "timerx: " .. ("%.2f"):format(self.number or 0, 2) .. " " .. self:GetOperator() .. " " .. seconds .. " seconds?"
-		end,
-		callback = function(self, ent, seconds, reset_on_hide, synced_time)
-			local time = synced_time and CurTime() or RealTime()
-
-			self.time = self.time or time
-			self.timerx_reset = reset_on_hide
+				return false
+			end,
+		},
+		timerx = {
+			arguments = {
+				{seconds = "number"},
+				{reset_on_hide = "boolean"},
+				{synced_time = "boolean"},
+			},
+			nice = function(self, ent, seconds)
+				return 
+					"timerx: " .. ("%.2f"):format(self.number or 0, 2) .. " " .. self:GetOperator() .. " " .. seconds .. " seconds?"
+			end,
+			callback = function(self, ent, seconds, reset_on_hide, synced_time)
+				local time = synced_time and CurTime() or RealTime()
+				self.time = self.time or time
+				self.timerx_reset = reset_on_hide
 
 			-- limitation - we can not "not to think" the timer
 			-- when our thinking depends on whenever we control our parent!
 			if self.AffectChildrenOnly then
-				local hidden, event_hidden = self:IsHidden()
-
-				if hidden and (not event_hidden or not self:IsEventHidden(self, true)) then
-					return false
+					local hidden, event_hidden = self:IsHidden()
+					if hidden and (not event_hidden or not self:IsEventHidden(self, true)) then return false end
 				end
-			end
 
-			self.number = time - self.time
-
-			return self:NumberOperator(self.number, seconds)
-		end,
-	},
-
-	timersys = {
-		arguments = {{seconds = "number"}, {reset_on_hide = "boolean"}},
-
-		callback = function(self, ent, seconds, reset_on_hide)
-			local time = SysTime()
-
-			self.time = self.time or time
-			self.timerx_reset = reset_on_hide
+				self.number = time - self.time
+				return self:NumberOperator(self.number, seconds)
+			end,
+		},
+		timersys = {
+			arguments = {{seconds = "number"}, {reset_on_hide = "boolean"}},
+			callback = function(self, ent, seconds, reset_on_hide)
+				local time = SysTime()
+				self.time = self.time or time
+				self.timerx_reset = reset_on_hide
 
 			-- limitation - we can not "not to think" the timer
 			-- when our thinking depends on whenever we control our parent!
 			if self.AffectChildrenOnly then
-				local hidden, event_hidden = self:IsHidden()
-
-				if hidden and (not event_hidden or not self:IsEventHidden(self, true)) then
-					return false
-				end
-			end
-
-			return self:NumberOperator(time - self.time, seconds)
-		end,
-	},
-
-	map_name = {
-		arguments = {{find = "string"}},
-		callback = function(self, ent, find)
-			return self:StringOperator(game.GetMap(), find)
-		end,
-	},
-
-	fov = {
-		arguments = {{fov = "number"}},
-		callback = function(self, ent, fov)
-			ent = try_viewmodel(ent)
-
-			if ent:IsValid() and ent.GetFOV then
-				return self:NumberOperator(ent:GetFOV(), fov)
-			end
-
-			return 0
-		end,
-	},
-	health_lost = {
-		arguments = {{amount = "number"}},
-		callback = function(self, ent, amount)
-
-			ent = try_viewmodel(ent)
-
-			if ent:IsValid() and ent.Health then
-
-				local dmg = self.pac_lastdamage or 0
-
-				if self.dmgCD == nil then
-					self.dmgCD = 0
+					local hidden, event_hidden = self:IsHidden()
+					if hidden and (not event_hidden or not self:IsEventHidden(self, true)) then return false end
 				end
 
-				if not self.pac_wasdmg then
+				return self:NumberOperator(time - self.time, seconds)
+			end,
+		},
+		map_name = {
+			arguments = {{find = "string"}},
+			callback = function(self, ent, find)
+				return self:StringOperator(game.GetMap(), find)
+			end,
+		},
+		fov = {
+			arguments = {{fov = "number"}},
+			callback = function(self, ent, fov)
+				ent = try_viewmodel(ent)
+				if ent:IsValid() and ent.GetFOV then return self:NumberOperator(ent:GetFOV(), fov) end
+				return 0
+			end,
+		},
+		health_lost = {
+			arguments = {{amount = "number"}},
+			callback = function(self, ent, amount)
+				ent = try_viewmodel(ent)
 
-					local dmgDone = dmg - ent:Health()
-					self.pac_lastdamage = ent:Health()
+				if ent:IsValid() and ent.Health then
+					local dmg = self.pac_lastdamage or 0
 
-					if dmgDone == 0 then return false end
-
-					if self:NumberOperator(dmgDone,amount) then
-						self.pac_wasdmg = true
-						self.dmgCD = pac.RealTime + 0.2
+					if self.dmgCD == nil then
+						self.dmgCD = 0
 					end
 
-				else
+					if not self.pac_wasdmg then
+						local dmgDone = dmg - ent:Health()
+						self.pac_lastdamage = ent:Health()
+						if dmgDone == 0 then return false end
 
-					if self.pac_wasdmg and pac.RealTime > self.dmgCD then
-						self.pac_wasdmg = false
+						if self:NumberOperator(dmgDone, amount) then
+							self.pac_wasdmg = true
+							self.dmgCD = pac.RealTime + 0.2
+						end
+					else
+						if self.pac_wasdmg and pac.RealTime > self.dmgCD then
+							self.pac_wasdmg = false
+						end
 					end
 
+					return self.pac_wasdmg
 				end
 
-				return self.pac_wasdmg
-			end
+				return false
+			end,
+		},
+		holdtype = {
+			arguments = {{find = "string"}},
+			callback = function(self, ent, find)
+				ent = try_viewmodel(ent)
+				local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
+				if wep:IsValid() and self:StringOperator(wep:GetHoldType(), find) then return true end
+			end,
+		},
+		is_crouching = {
+			callback = function(self, ent)
+				ent = try_viewmodel(ent)
+				return ent.Crouching and ent:Crouching()
+			end,
+		},
+		is_typing = {
+			callback = function(self, ent)
+				ent = self:GetPlayerOwner()
+				return ent.IsTyping and ent:IsTyping()
+			end,
+		},
+		using_physgun = {
+			callback = function(self, ent)
+				ent = self:GetPlayerOwner()
+				ent.pac_drawphysgun_event_part = self
+				return ent.pac_drawphysgun_event ~= nil
+			end,
+		},
+		eyetrace_entity_class = {
+			arguments = {{class = "string"}},
+			callback = function(self, ent, find)
+				if ent.GetEyeTrace then
+					ent = ent:GetEyeTrace().Entity
+					if ent:IsValid() and self:StringOperator(ent:GetClass(), find) then return true end
+				end
+			end,
+		},
+		owner_health = {
+			arguments = {{health = "number"}},
+			callback = function(self, ent, num)
+				ent = try_viewmodel(ent)
+				if ent:IsValid() and ent.Health then return self:NumberOperator(ent:Health(), num) end
+				return 0
+			end,
+		},
+		owner_max_health = {
+			arguments = {{health = "number"}},
+			callback = function(self, ent, num)
+				ent = try_viewmodel(ent)
+				if ent:IsValid() and ent.GetMaxHealth then return self:NumberOperator(ent:GetMaxHealth(), num) end
+				return 0
+			end,
+		},
+		owner_alive = {
+			callback = function(self, ent)
+				ent = try_viewmodel(ent)
+				if ent:IsValid() and ent.Alive then return ent:Alive() end
+				return 0
+			end,
+		},
+		owner_armor = {
+			arguments = {{armor = "number"}},
+			callback = function(self, ent, num)
+				ent = try_viewmodel(ent)
+				if ent:IsValid() and ent.Armor then return self:NumberOperator(ent:Armor(), num) end
+				return 0
+			end,
+		},
+		owner_scale_x = {
+			arguments = {{scale = "number"}},
+			callback = function(self, ent, num)
+				ent = try_viewmodel(ent)
+				if ent:IsValid() then return self:NumberOperator(
+					ent.pac_model_scale and
+					ent.pac_model_scale.x or
+					(ent.GetModelScale and ent:GetModelScale()) or
+					1,
+					num) end
+				return 1
+			end,
+		},
+		owner_scale_y = {
+			arguments = {{scale = "number"}},
+			callback = function(self, ent, num)
+				ent = try_viewmodel(ent)
+				if ent:IsValid() then return self:NumberOperator(
+					ent.pac_model_scale and
+					ent.pac_model_scale.y or
+					(ent.GetModelScale and ent:GetModelScale()) or
+					1,
+					num) end
+				return 1
+			end,
+		},
+		owner_scale_z = {
+			arguments = {{scale = "number"}},
+			callback = function(self, ent, num)
+				ent = try_viewmodel(ent)
+				if ent:IsValid() then return self:NumberOperator(
+					ent.pac_model_scale and
+					ent.pac_model_scale.z or
+					(ent.GetModelScale and ent:GetModelScale()) or
+					1,
+					num) end
+				return 1
+			end,
+		},
+		pose_parameter = {
+			arguments = {{name = "string"}, {num = "number"}},
+			callback = function(self, ent, name, num)
+				ent = try_viewmodel(ent)
+				return self:NumberOperator(ent:GetPoseParameter(name), num)
+			end,
+		},
+		speed = {
+			arguments = {{speed = "number"}},
+			callback = function(self, ent, num)
+				ent = try_viewmodel(ent)
+				return self:NumberOperator(ent:GetVelocity():Length(), num)
+			end,
+		},
+		is_under_water = {
+			arguments = {{level = "number"}},
+			callback = function(self, ent, num)
+				ent = try_viewmodel(ent)
+				return self:NumberOperator(ent:WaterLevel(), num)
+			end,
+		},
+		is_on_fire = {
+			callback = function(self, ent)
+				ent = try_viewmodel(ent)
+				return ent:IsOnFire()
+			end,
+		},
+		client_spawned = {
+			arguments = {{time = "number"}},
+			callback = function(self, ent, time)
+				time = time or 0.1
+				ent = try_viewmodel(ent)
+				if ent.pac_playerspawn and ent.pac_playerspawn + time > pac.RealTime then return true end
+			end,
+		},
+		is_client = {
+			callback = function(self, ent)
+				ent = try_viewmodel(ent)
+				return self:GetPlayerOwner() == ent
+			end,
+		},
+		is_flashlight_on = {
+			callback = function(self, ent)
+				ent = try_viewmodel(ent)
+				return ent.FlashlightIsOn and ent:FlashlightIsOn()
+			end,
+		},
+		collide = {
+			callback = function(self, ent)
+				ent.pac_event_collide_callback = ent.pac_event_collide_callback or ent:AddCallback("PhysicsCollide", function(ent, data)
+					ent.pac_event_collision_data = data
+				end)
 
-			return false
-		end,
-	},
-
-	holdtype = {
-		arguments = {{find = "string"}},
-		callback = function(self, ent, find)
-			ent = try_viewmodel(ent)
-			local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
-			if wep:IsValid() and self:StringOperator(wep:GetHoldType(), find) then
-				return true
-			end
-		end,
-	},
-
-	is_crouching = {
-		callback = function(self, ent)
-			ent = try_viewmodel(ent)
-			return ent.Crouching and ent:Crouching()
-		end,
-	},
-
-	is_typing = {
-		callback = function(self, ent)
-			ent = self:GetPlayerOwner()
-			return ent.IsTyping and ent:IsTyping()
-		end,
-	},
-
-	using_physgun = {
-		callback = function(self, ent)
-			ent = self:GetPlayerOwner()
-			ent.pac_drawphysgun_event_part = self
-			return ent.pac_drawphysgun_event ~= nil
-		end,
-	},
-
-	eyetrace_entity_class = {
-		arguments = {{class = "string"}},
-		callback = function(self, ent, find)
-			if ent.GetEyeTrace then
-				ent = ent:GetEyeTrace().Entity
-				if ent:IsValid() and self:StringOperator(ent:GetClass(), find) then
+				if ent.pac_event_collision_data then
+					local data = ent.pac_event_collision_data
+					ent.pac_event_collision_data = nil
 					return true
 				end
-			end
-		end,
-	},
 
-	owner_health = {
-		arguments = {{health = "number"}},
-		callback = function(self, ent, num)
-			ent = try_viewmodel(ent)
-			if ent:IsValid() and ent.Health then
-				return self:NumberOperator(ent:Health(), num)
-			end
+				return false
+			end,
+		},
+		ranger = {
+			arguments = {
+				{compare = "number"},
+				{distance = "number"},
+				{npcs_and_players_only = "boolean"},
+			},
+			callback = function(self, ent, compare, distance, npcs_and_players_only)
+				local parent = self:GetParentEx()
 
-			return 0
-		end,
-	},
-	owner_max_health = {
-		arguments = {{health = "number"}},
-		callback = function(self, ent, num)
-			ent = try_viewmodel(ent)
-			if ent:IsValid() and ent.GetMaxHealth then
-				return self:NumberOperator(ent:GetMaxHealth(), num)
-			end
-
-			return 0
-		end,
-	},
-	owner_alive = {
-		callback = function(self, ent)
-			ent = try_viewmodel(ent)
-			if ent:IsValid() and ent.Alive then
-				return ent:Alive()
-			end
-			return 0
-		end,
-	},
-	owner_armor = {
-		arguments = {{armor = "number"}},
-		callback = function(self, ent, num)
-			ent = try_viewmodel(ent)
-			if ent:IsValid() and ent.Armor then
-				return self:NumberOperator(ent:Armor(), num)
-			end
-
-			return 0
-		end,
-	},
-
-	owner_scale_x = {
-		arguments = {{scale = "number"}},
-		callback = function(self, ent, num)
-			ent = try_viewmodel(ent)
-
-			if ent:IsValid() then
-				return self:NumberOperator(ent.pac_model_scale and ent.pac_model_scale.x or (ent.GetModelScale and ent:GetModelScale()) or 1, num)
-			end
-
-			return 1
-		end,
-	},
-	owner_scale_y = {
-		arguments = {{scale = "number"}},
-		callback = function(self, ent, num)
-			ent = try_viewmodel(ent)
-
-			if ent:IsValid() then
-				return self:NumberOperator(ent.pac_model_scale and ent.pac_model_scale.y or (ent.GetModelScale and ent:GetModelScale()) or 1, num)
-			end
-
-			return 1
-		end,
-	},
-	owner_scale_z = {
-		arguments = {{scale = "number"}},
-		callback = function(self, ent, num)
-			ent = try_viewmodel(ent)
-
-			if ent:IsValid() then
-				return self:NumberOperator(ent.pac_model_scale and ent.pac_model_scale.z or (ent.GetModelScale and ent:GetModelScale()) or 1, num)
-			end
-
-			return 1
-		end,
-	},
-
-	pose_parameter = {
-		arguments = {{name = "string"}, {num = "number"}},
-		callback = function(self, ent, name, num)
-			ent = try_viewmodel(ent)
-			return self:NumberOperator(ent:GetPoseParameter(name), num)
-		end,
-	},
-
-	speed = {
-		arguments = {{speed = "number"}},
-		callback = function(self, ent, num)
-			ent = try_viewmodel(ent)
-			return self:NumberOperator(ent:GetVelocity():Length(), num)
-		end,
-	},
-
-	is_under_water = {
-		arguments = {{level = "number"}},
-		callback = function(self, ent, num)
-			ent = try_viewmodel(ent)
-			return self:NumberOperator(ent:WaterLevel(), num)
-		end,
-	},
-
-	is_on_fire = {
-		callback = function(self, ent)
-			ent = try_viewmodel(ent)
-			return ent:IsOnFire()
-		end,
-	},
-
-	client_spawned = {
-		arguments = {{time = "number"}},
-		callback = function(self, ent, time)
-			time = time or 0.1
-			ent = try_viewmodel(ent)
-			if ent.pac_playerspawn and ent.pac_playerspawn + time > pac.RealTime then
-				return true
-			end
-		end,
-	},
-
-	is_client = {
-		callback = function(self, ent)
-			ent = try_viewmodel(ent)
-			return self:GetPlayerOwner() == ent
-		end,
-	},
-
-	is_flashlight_on = {
-		callback = function(self, ent)
-			ent = try_viewmodel(ent)
-			return ent.FlashlightIsOn and ent:FlashlightIsOn()
-		end,
-	},
-
-	collide = {
-		callback = function(self, ent)
-			ent.pac_event_collide_callback = ent.pac_event_collide_callback or ent:AddCallback("PhysicsCollide", function(ent, data)
-				ent.pac_event_collision_data = data
-			end)
-
-			if ent.pac_event_collision_data then
-				local data = ent.pac_event_collision_data
-				ent.pac_event_collision_data = nil
-				return true
-			end
-
-			return false
-		end,
-	},
-
-	ranger = {
-		arguments = {{compare = "number"}, {distance = "number"}, {npcs_and_players_only = "boolean"}},
-		callback = function(self, ent, compare, distance, npcs_and_players_only)
-			local parent = self:GetParentEx()
-
-			if parent:IsValid() then
-				distance = distance or 1
-				compare = compare or 0
-
-				local res = util.TraceLine({
-					start = parent.cached_pos,
-					endpos = parent.cached_pos + parent.cached_ang:Forward() * distance,
-					filter = ent,
-				})
-
-				if npcs_and_players_only and (not res.Entity:IsPlayer() and not res.Entity:IsNPC()) then
-					return false
+				if parent:IsValid() then
+					distance = distance or 1
+					compare = compare or 0
+					local res = util.TraceLine(
+						{
+							start = parent.cached_pos,
+							endpos = parent.cached_pos + parent.cached_ang:Forward() * distance,
+							filter = ent,
+						})
+					if npcs_and_players_only and (not res.Entity:IsPlayer() and not res.Entity:IsNPC()) then return false end
+					return self:NumberOperator(res.Fraction * distance, compare)
 				end
-
-				return self:NumberOperator(res.Fraction * distance, compare)
-			end
-		end,
-	},
-
-	is_on_ground = {
-		arguments = {{exclude_noclip = "boolean"}},
-		callback = function(self, ent, exclude_noclip)
-			ent = try_viewmodel(ent)
-			if exclude_noclip and ent:GetMoveType() == MOVETYPE_NOCLIP then return false end
+			end,
+		},
+		is_on_ground = {
+			arguments = {{exclude_noclip = "boolean"}},
+			callback = function(self, ent, exclude_noclip)
+				ent = try_viewmodel(ent)
+				if exclude_noclip and ent:GetMoveType() == MOVETYPE_NOCLIP then return false end
 			--return ent.IsOnGround and ent:IsOnGround()
 
 			local rad = ent:BoundingRadius() / 2
-			local times = 2
+				local times = 2
 
-			for x = -times, times do
-				for y = -times, times do
-					local xy = Vector(x/times,y/times,0) * rad
-					local res = util.TraceLine({
-						start = ent:GetPos() + xy + Vector(0,0,2.5),
-						endpos = ent:GetPos() + xy/1.25 + Vector(0,0,-10),
+				for x = -times, times do
+					for y = -times, times do
+						local xy = Vector(x / times, y / times, 0) * rad
+						local res = util.TraceLine(
+							{
+								start = ent:GetPos() + xy + Vector(0, 0, 2.5),
+								endpos = ent:GetPos() + xy / 1.25 + Vector(0, 0, -10),
 						--mins = ent:OBBMins(),
 						--maxs = ent:OBBMaxs(),
 						filter = ent,
 						--mask = MASK_SOLID_BRUSHONLY,
 					})
-					if res.Hit and math.abs(res.HitNormal.z) > 0.70 then return true end
+						if res.Hit and math.abs(res.HitNormal.z) > 0.70 then return true end
+					end
 				end
-			end
 
-			return false
-		end,
-	},
+				return false
+			end,
+		},
+		is_touching = {
+			arguments = {{extra_radius = "number"}},
+			callback = function(self, ent, extra_radius)
+				extra_radius = extra_radius or 0
+				local radius = ent:BoundingRadius()
 
-	is_touching = {
-		arguments = {{extra_radius = "number"}},
-		callback = function(self, ent, extra_radius)
-			extra_radius = extra_radius or 0
+				if radius == 0 and IsValid(ent.pac_projectile) then
+					radius = ent.pac_projectile:GetRadius()
+				end
 
-			local radius =  ent:BoundingRadius()
-
-			if radius == 0 and IsValid(ent.pac_projectile) then
-				radius = ent.pac_projectile:GetRadius()
-			end
-
-			radius = radius + extra_radius + 1
-
-			local mins = Vector(-1,-1,-1)
-			local maxs = Vector(1,1,1)
-			local startpos = ent:WorldSpaceCenter()
-			mins = mins * radius
-			maxs = maxs * radius
-
-			local tr = util.TraceHull( {
-				start = startpos,
-				endpos = startpos,
-				maxs = maxs,
-				mins = mins,
-				filter = ent
-			} )
+				radius = radius + extra_radius + 1
+				local mins = Vector(-1, -1, -1)
+				local maxs = Vector(1, 1, 1)
+				local startpos = ent:WorldSpaceCenter()
+				mins = mins * radius
+				maxs = maxs * radius
+				local tr = util.TraceHull(
+					{
+						start = startpos,
+						endpos = startpos,
+						maxs = maxs,
+						mins = mins,
+						filter = ent,
+					})
 
 			--[[
 
@@ -514,575 +475,518 @@ PART.OldEvents = {
 			]]
 
 			return tr.Hit
-		end,
-	},
+			end,
+		},
+		is_in_noclip = {
+			callback = function(self, ent)
+				ent = try_viewmodel(ent)
+				return ent:GetMoveType() == MOVETYPE_NOCLIP and (not ent.GetVehicle or not ent:GetVehicle():IsValid())
+			end,
+		},
+		is_voice_chatting = {
+			callback = function(self, ent)
+				ent = try_viewmodel(ent)
+				return ent.IsSpeaking and ent:IsSpeaking()
+			end,
+		},
+		ammo = {
+			arguments = {{primary = "boolean"}, {amount = "number"}},
+			userdata = {
+				{
+					editor_onchange = function(part, num)
+						return math.Round(num)
+					end,
+				},
+			},
+			callback = function(self, ent, primary, amount)
+				ent = try_viewmodel(ent)
+				ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or ent
+				if ent:IsValid() then return self:NumberOperator(ent.Clip1 and (primary and ent:Clip1() or ent:Clip2()) or 0, amount) end
+			end,
+		},
+		total_ammo = {
+			arguments = {{ammo_id = "string"}, {amount = "number"}},
+			callback = function(self, ent, ammo_id, amount)
+				ent = try_viewmodel(ent)
+				ammo_id = tonumber(ammo_id) or ammo_id:lower()
 
-	is_in_noclip = {
-		callback = function(self, ent)
-			ent = try_viewmodel(ent)
-			return ent:GetMoveType() == MOVETYPE_NOCLIP and (not ent.GetVehicle or not ent:GetVehicle():IsValid())
-		end,
-	},
-
-	is_voice_chatting = {
-		callback = function(self, ent)
-			ent = try_viewmodel(ent)
-			return ent.IsSpeaking and ent:IsSpeaking()
-		end,
-	},
-
-	ammo = {
-		arguments = {{primary = "boolean"}, {amount = "number"}},
-		userdata = {{editor_onchange = function(part, num) return math.Round(num) end}},
-		callback = function(self, ent, primary, amount)
-			ent = try_viewmodel(ent)
-			ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or ent
-
-			if ent:IsValid() then
-				return self:NumberOperator(ent.Clip1 and (primary and ent:Clip1() or ent:Clip2()) or 0, amount)
-			end
-		end,
-	},
-	total_ammo = {
-		arguments = {{ammo_id = "string"}, {amount = "number"}},
-		callback = function(self, ent, ammo_id, amount)
-			ent = try_viewmodel(ent)
-
-			ammo_id = tonumber(ammo_id) or ammo_id:lower()
-
-			if ent:IsValid() and ent.GetAmmoCount then
-				if ammo_id == "primary" then
-					local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
-					return self:NumberOperator(wep:IsValid() and ent:GetAmmoCount(wep:GetPrimaryAmmoType()) or 0, amount)
-				elseif ammo_id == "secondary" then
-					local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
-					return self:NumberOperator(wep:IsValid() and ent:GetAmmoCount(wep:GetSecondaryAmmoType()) or 0, amount)
-				else
-					return self:NumberOperator(ent:GetAmmoCount(ammo_id), amount)
+				if ent:IsValid() and ent.GetAmmoCount then
+					if ammo_id == "primary" then
+						local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
+						return self:NumberOperator(wep:IsValid() and ent:GetAmmoCount(wep:GetPrimaryAmmoType()) or 0, amount)
+					elseif ammo_id == "secondary" then
+						local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
+						return self:NumberOperator(wep:IsValid() and ent:GetAmmoCount(wep:GetSecondaryAmmoType()) or 0, amount)
+					else
+						return self:NumberOperator(ent:GetAmmoCount(ammo_id), amount)
+					end
 				end
-			end
-		end,
-	},
-
-	clipsize = {
-		arguments = {{primary = "boolean"}, {amount = "number"}},
-		callback = function(self, ent, primary, amount)
-			ent = try_viewmodel(ent)
-			ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or ent
-
-			if ent:IsValid() then
-				return self:NumberOperator(ent.GetMaxClip1 and (primary and ent:GetMaxClip1() or ent:GetMaxClip2()) or 0, amount)
-			end
-		end,
-	},
-
-	vehicle_class = {
-		arguments = {{find = "string"}},
-		callback = function(self, ent, find)
-			ent = try_viewmodel(ent)
-			ent = ent.GetVehicle and ent:GetVehicle() or NULL
-
-			if ent:IsValid() then
+			end,
+		},
+		clipsize = {
+			arguments = {{primary = "boolean"}, {amount = "number"}},
+			callback = function(self, ent, primary, amount)
+				ent = try_viewmodel(ent)
+				ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or ent
+				if ent:IsValid() then return self:NumberOperator(
+					ent.GetMaxClip1 and
+					(primary and ent:GetMaxClip1() or ent:GetMaxClip2()) or
+					0,
+					amount) end
+			end,
+		},
+		vehicle_class = {
+			arguments = {{find = "string"}},
+			callback = function(self, ent, find)
+				ent = try_viewmodel(ent)
+				ent = ent.GetVehicle and ent:GetVehicle() or NULL
+				if ent:IsValid() then return self:StringOperator(ent:GetClass(), find) end
+			end,
+		},
+		vehicle_model = {
+			arguments = {{find = "string"}},
+			callback = function(self, ent, find)
+				ent = try_viewmodel(ent)
+				ent = ent.GetVehicle and ent:GetVehicle() or NULL
+				if ent:IsValid() and ent:GetModel() then return self:StringOperator(ent:GetModel():lower(), find) end
+			end,
+		},
+		driver_name = {
+			arguments = {{find = "string"}},
+			callback = function(self, ent, find)
+				ent = ent.GetDriver and ent:GetDriver() or NULL
+				if ent:IsValid() then return self:StringOperator(ent:GetName(), find) end
+			end,
+		},
+		entity_class = {
+			arguments = {{find = "string"}},
+			callback = function(self, ent, find)
 				return self:StringOperator(ent:GetClass(), find)
-			end
-		end,
-	},
+			end,
+		},
+		weapon_class = {
+			arguments = {{find = "string"}, {hide = "boolean"}},
+			callback = function(self, ent, find, hide)
+				ent = try_viewmodel(ent)
+				local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
 
-	vehicle_model = {
-		arguments = {{find = "string"}},
-		callback = function(self, ent, find)
-			ent = try_viewmodel(ent)
-			ent = ent.GetVehicle and ent:GetVehicle() or NULL
+				if wep:IsValid() then
+					local class_name = wep:GetClass()
+					local found = self:StringOperator(class_name, find)
 
-			if ent:IsValid() and ent:GetModel() then
-				return self:StringOperator(ent:GetModel():lower(), find)
-			end
-		end,
-	},
+					if class_name == "hands" and not found then
+						found = self:StringOperator("none", find)
+					end
 
-	driver_name = {
-		arguments = {{find = "string"}},
-		callback = function(self, ent, find)
-			ent = ent.GetDriver and ent:GetDriver() or NULL
-
-			if ent:IsValid() then
-				return self:StringOperator(ent:GetName(), find)
-			end
-		end,
-	},
-
-	entity_class = {
-		arguments = {{find = "string"}},
-		callback = function(self, ent, find)
-			return self:StringOperator(ent:GetClass(), find)
-		end,
-	},
-
-	weapon_class = {
-		arguments = {{find = "string"}, {hide = "boolean"}},
-		callback = function(self, ent, find, hide)
-			ent = try_viewmodel(ent)
-
-			local wep = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
-
-			if wep:IsValid() then
-				local class_name = wep:GetClass()
-				local found = self:StringOperator(class_name, find)
-
-				if class_name == "hands" and not found then
-					found = self:StringOperator("none", find)
-				end
-
-				if found then
-					wep:SetNoDraw(hide)
-					wep.pac_weapon_class = true
-					return true
-				end
-			end
-		end,
-	},
-
-	has_weapon = {
-		arguments = {{find = "string"}},
-		callback = function(self, ent, find)
-			ent = try_viewmodel(ent)
-			local tbl = ent.GetWeapons and ent:GetWeapons()
-			if tbl then
-				for _, val in pairs(tbl) do
-					val = val:GetClass()
-					if self:StringOperator(val, find) then
+					if found then
+						wep:SetNoDraw(hide)
+						wep.pac_weapon_class = true
 						return true
 					end
 				end
-			end
-		end,
-	},
+			end,
+		},
+		has_weapon = {
+			arguments = {{find = "string"}},
+			callback = function(self, ent, find)
+				ent = try_viewmodel(ent)
+				local tbl = ent.GetWeapons and ent:GetWeapons()
 
-	model_name = {
-		arguments = {{find = "string"}},
-		callback = function(self, ent, find)
-			return self:StringOperator(ent:GetModel(), find)
-		end,
-	},
-
-	sequence_name = {
-		arguments = {{find = "string"}},
-		callback = function(self, ent, find)
-			return self:StringOperator(ent:GetSequenceName(ent:GetSequence()), find)
-		end,
-	},
-
-	timer = {
-		arguments = {{interval = "number"}, {offset = "number"}},
-		callback = function(self, ent, interval, offset)
-			interval = interval or 1
-			offset = offset or 0
-
-			if interval == 0 or interval < FrameTime() then
-				self.timer_hack = not self.timer_hack
-				return self.timer_hack
-			end
-
-			return (CurTime() + offset) % interval > (interval / 2)
-		end,
-	},
-
-	animation_event = {
-		arguments = {{find = "string"}, {time = "number"}},
-		callback = function(self, ent, find, time)
-			time = time or 0.1
-
-			ent = try_viewmodel(ent)
-
-			local data = ent.pac_anim_event
-			local b = false
-
-			if data and (self:StringOperator(data.name, find) and (time == 0 or data.time + time > pac.RealTime)) then
-				data.reset = false
-				b = true
-			end
-
-			return b
-		end,
-	},
-
-	fire_bullets = {
-		arguments = {{find_ammo = "string"}, {time = "number"}},
-		callback = function(self, ent, find, time)
-			time = time or 0.1
-
-			ent = try_viewmodel(ent)
-
-			local data = ent.pac_fire_bullets
-			local b = false
-
-			if data and (self:StringOperator(data.name, find) and (time == 0 or data.time + time > pac.RealTime)) then
-				data.reset = false
-				b = true
-			end
-
-			return b
-		end,
-	},
-
-	emit_sound = {
-		arguments = {{find_sound = "string"}, {time = "number"}, {mute = "boolean"}},
-		callback = function(self, ent, find, time, mute)
-			time = time or 0.1
-
-			ent = try_viewmodel(ent)
-
-			local data = ent.pac_emit_sound
-			local b = false
-
-			if data and (self:StringOperator(data.name, find) and (time == 0 or data.time + time > pac.RealTime)) then
-				data.reset = false
-				b = true
-				if mute then
-					data.mute_me = true
+				if tbl then
+					for _, val in pairs(tbl) do
+						val = val:GetClass()
+						if self:StringOperator(val, find) then return true end
+					end
 				end
-			end
+			end,
+		},
+		model_name = {
+			arguments = {{find = "string"}},
+			callback = function(self, ent, find)
+				return self:StringOperator(ent:GetModel(), find)
+			end,
+		},
+		sequence_name = {
+			arguments = {{find = "string"}},
+			callback = function(self, ent, find)
+				return self:StringOperator(ent:GetSequenceName(ent:GetSequence()), find)
+			end,
+		},
+		timer = {
+			arguments = {{interval = "number"}, {offset = "number"}},
+			callback = function(self, ent, interval, offset)
+				interval = interval or 1
+				offset = offset or 0
 
-			return b
-		end,
-	},
+				if interval == 0 or interval < FrameTime() then
+					self.timer_hack = not self.timer_hack
+					return self.timer_hack
+				end
 
-	command = {
-		arguments = {{find = "string"}, {time = "number"}},
-		callback = function(self, ent, find, time)
-			time = time or 0.1
+				return (CurTime() + offset) % interval > (interval / 2)
+			end,
+		},
+		animation_event = {
+			arguments = {{find = "string"}, {time = "number"}},
+			callback = function(self, ent, find, time)
+				time = time or 0.1
+				ent = try_viewmodel(ent)
+				local data = ent.pac_anim_event
+				local b = false
 
-			local ply = self:GetPlayerOwner()
+				if
+					data and
+					(self:StringOperator(data.name, find) and (time == 0 or data.time + time > pac.RealTime))
+				then
+					data.reset = false
+					b = true
+				end
 
-			local events = ply.pac_command_events
+				return b
+			end,
+		},
+		fire_bullets = {
+			arguments = {{find_ammo = "string"}, {time = "number"}},
+			callback = function(self, ent, find, time)
+				time = time or 0.1
+				ent = try_viewmodel(ent)
+				local data = ent.pac_fire_bullets
+				local b = false
 
-			if events then
-				for _, data in pairs(events) do
-					if self:StringOperator(data.name, find) then
-						if data.on > 0 then
-							return data.on == 1
+				if
+					data and
+					(self:StringOperator(data.name, find) and (time == 0 or data.time + time > pac.RealTime))
+				then
+					data.reset = false
+					b = true
+				end
+
+				return b
+			end,
+		},
+		emit_sound = {
+			arguments = {
+				{find_sound = "string"},
+				{time = "number"},
+				{mute = "boolean"},
+			},
+			callback = function(self, ent, find, time, mute)
+				time = time or 0.1
+				ent = try_viewmodel(ent)
+				local data = ent.pac_emit_sound
+				local b = false
+
+				if
+					data and
+					(self:StringOperator(data.name, find) and (time == 0 or data.time + time > pac.RealTime))
+				then
+					data.reset = false
+					b = true
+
+					if mute then
+						data.mute_me = true
+					end
+				end
+
+				return b
+			end,
+		},
+		command = {
+			arguments = {{find = "string"}, {time = "number"}},
+			callback = function(self, ent, find, time)
+				time = time or 0.1
+				local ply = self:GetPlayerOwner()
+				local events = ply.pac_command_events
+
+				if events then
+					for _, data in pairs(events) do
+						if self:StringOperator(data.name, find) then
+							if data.on > 0 then return data.on == 1 end
+							if data.time + time > pac.RealTime then return true end
 						end
+					end
+				end
+			end,
+		},
+		say = {
+			arguments = {
+				{find = "string"},
+				{time = "number"},
+				{all_players = "boolean"},
+			},
+			callback = function(self, ent, find, time, all_players)
+				time = time or 0.1
+				ent = try_viewmodel(ent)
 
-						if data.time + time > pac.RealTime then
+				if all_players then
+					for _, ply in ipairs(player.GetAll()) do
+						local data = ply.pac_say_event
+
+						if
+							data and
+							self:StringOperator(data.str, find) and
+							data.time + time > pac.RealTime
+						then
+							return true
+						end
+					end
+				else
+					local owner = self:GetOwner(true)
+
+					if owner:IsValid() then
+						local data = owner.pac_say_event
+
+						if
+							data and
+							self:StringOperator(data.str, find) and
+							data.time + time > pac.RealTime
+						then
 							return true
 						end
 					end
 				end
-			end
-		end,
-	},
-
-	say = {
-		arguments = {{find = "string"}, {time = "number"}, {all_players = "boolean"}},
-		callback = function(self, ent, find, time, all_players)
-			time = time or 0.1
-
-			ent = try_viewmodel(ent)
-
-			if all_players then
-				for _, ply in ipairs(player.GetAll()) do
-					local data = ply.pac_say_event
-
-					if data and self:StringOperator(data.str, find) and data.time + time > pac.RealTime then
-						return true
-					end
-				end
-			else
-				local owner = self:GetOwner(true)
-				if owner:IsValid() then
-					local data = owner.pac_say_event
-
-					if data and self:StringOperator(data.str, find) and data.time + time > pac.RealTime then
-						return true
-					end
-				end
-			end
-		end,
-	},
+			end,
+		},
 
 	-- outfit owner
 	owner_velocity_length = {
-		arguments = {{speed = "number"}},
-		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-			local parent = self:GetParentEx()
-
-			owner = try_viewmodel(owner)
-
-			if parent:IsValid() and owner:IsValid() then
-				return self:NumberOperator(parent:GetOwner(self.RootOwner):GetVelocity():Length(), speed)
-			end
-
-			return 0
-		end,
-	},
-	owner_velocity_forward = {
-		arguments = {{speed = "number"}},
-		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
-
-			if owner:IsValid() then
-				return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Forward():Dot(owner:GetVelocity()), speed)
-			end
-
-			return 0
-		end,
-	},
-	owner_velocity_right = {
-		arguments = {{speed = "number"}},
-		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
-
-			if owner:IsValid() then
-				return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Right():Dot(owner:GetVelocity()), speed)
-			end
-
-			return 0
-		end,
-	},
-	owner_velocity_up = {
-		arguments = {{speed = "number"}},
-		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
-
-			if owner:IsValid() then
-				return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Up():Dot(owner:GetVelocity()), speed)
-			end
-
-			return 0
-		end,
-	},
-	owner_velocity_world_forward = {
-		arguments = {{speed = "number"}},
-		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
-
-			if owner:IsValid() then
-				return self:NumberOperator(owner:GetVelocity()[1], speed)
-			end
-
-			return 0
-		end,
-	},
-	owner_velocity_world_right = {
-		arguments = {{speed = "number"}},
-		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
-
-			if owner:IsValid() then
-				return self:NumberOperator(owner:GetVelocity()[2], speed)
-			end
-
-			return 0
-		end,
-	},
-	owner_velocity_world_up = {
-		arguments = {{speed = "number"}},
-		callback = function(self, ent, speed)
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
-
-			if owner:IsValid() then
-				return self:NumberOperator(owner:GetVelocity()[3], speed)
-			end
-
-			return 0
-		end,
-	},
+			arguments = {{speed = "number"}},
+			callback = function(self, ent, speed)
+				local owner = self:GetOwner(self.RootOwner)
+				local parent = self:GetParentEx()
+				owner = try_viewmodel(owner)
+				if parent:IsValid() and owner:IsValid() then return self:NumberOperator(parent:GetOwner(self.RootOwner):GetVelocity():Length(), speed) end
+				return 0
+			end,
+		},
+		owner_velocity_forward = {
+			arguments = {{speed = "number"}},
+			callback = function(self, ent, speed)
+				local owner = self:GetOwner(self.RootOwner)
+				owner = try_viewmodel(owner)
+				if owner:IsValid() then return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Forward():Dot(owner:GetVelocity()), speed) end
+				return 0
+			end,
+		},
+		owner_velocity_right = {
+			arguments = {{speed = "number"}},
+			callback = function(self, ent, speed)
+				local owner = self:GetOwner(self.RootOwner)
+				owner = try_viewmodel(owner)
+				if owner:IsValid() then return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Right():Dot(owner:GetVelocity()), speed) end
+				return 0
+			end,
+		},
+		owner_velocity_up = {
+			arguments = {{speed = "number"}},
+			callback = function(self, ent, speed)
+				local owner = self:GetOwner(self.RootOwner)
+				owner = try_viewmodel(owner)
+				if owner:IsValid() then return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Up():Dot(owner:GetVelocity()), speed) end
+				return 0
+			end,
+		},
+		owner_velocity_world_forward = {
+			arguments = {{speed = "number"}},
+			callback = function(self, ent, speed)
+				local owner = self:GetOwner(self.RootOwner)
+				owner = try_viewmodel(owner)
+				if owner:IsValid() then return self:NumberOperator(owner:GetVelocity()[1], speed) end
+				return 0
+			end,
+		},
+		owner_velocity_world_right = {
+			arguments = {{speed = "number"}},
+			callback = function(self, ent, speed)
+				local owner = self:GetOwner(self.RootOwner)
+				owner = try_viewmodel(owner)
+				if owner:IsValid() then return self:NumberOperator(owner:GetVelocity()[2], speed) end
+				return 0
+			end,
+		},
+		owner_velocity_world_up = {
+			arguments = {{speed = "number"}},
+			callback = function(self, ent, speed)
+				local owner = self:GetOwner(self.RootOwner)
+				owner = try_viewmodel(owner)
+				if owner:IsValid() then return self:NumberOperator(owner:GetVelocity()[3], speed) end
+				return 0
+			end,
+		},
 
 	-- parent part
 	parent_velocity_length = {
-		arguments = {{speed = "number"}},
-		callback = function(self, ent, speed)
-			local parent = self:GetParentEx()
+			arguments = {{speed = "number"}},
+			callback = function(self, ent, speed)
+				local parent = self:GetParentEx()
 
-			if not self.TargetPart:IsValid() and parent:HasParent() then
-				parent = parent:GetParent()
-			end
+				if not self.TargetPart:IsValid() and parent:HasParent() then
+					parent = parent:GetParent()
+				end
 
-			if parent:IsValid() then
-				return self:NumberOperator(calc_velocity(parent):Length(), speed)
-			end
+				if parent:IsValid() then return self:NumberOperator(calc_velocity(parent):Length(), speed) end
+				return 0
+			end,
+		},
+		parent_velocity_forward = {
+			arguments = {{speed = "number"}},
+			callback = function(self, ent, speed)
+				local parent = self:GetParentEx()
 
-			return 0
-		end,
-	},
-	parent_velocity_forward = {
-		arguments = {{speed = "number"}},
-		callback = function(self, ent, speed)
-			local parent = self:GetParentEx()
+				if not self.TargetPart:IsValid() and parent:HasParent() then
+					parent = parent:GetParent()
+				end
 
-			if not self.TargetPart:IsValid() and parent:HasParent() then
-				parent = parent:GetParent()
-			end
+				if parent:IsValid() then return self:NumberOperator(parent.cached_ang:Forward():Dot(calc_velocity(parent)), speed) end
+				return 0
+			end,
+		},
+		parent_velocity_right = {
+			arguments = {{speed = "number"}},
+			callback = function(self, ent, speed)
+				local parent = self:GetParentEx()
 
-			if parent:IsValid() then
-				return self:NumberOperator(parent.cached_ang:Forward():Dot(calc_velocity(parent)), speed)
-			end
+				if not self.TargetPart:IsValid() and parent:HasParent() then
+					parent = parent:GetParent()
+				end
 
-			return 0
-		end,
-	},
-	parent_velocity_right = {
-		arguments = {{speed = "number"}},
-		callback = function(self, ent, speed)
-			local parent = self:GetParentEx()
+				if parent:IsValid() then return self:NumberOperator(parent.cached_ang:Right():Dot(calc_velocity(parent)), speed) end
+				return 0
+			end,
+		},
+		parent_velocity_up = {
+			arguments = {{speed = "number"}},
+			callback = function(self, ent, speed)
+				local parent = self:GetParentEx()
 
-			if not self.TargetPart:IsValid() and parent:HasParent() then
-				parent = parent:GetParent()
-			end
+				if not self.TargetPart:IsValid() and parent:HasParent() then
+					parent = parent:GetParent()
+				end
 
-			if parent:IsValid() then
-				return self:NumberOperator(parent.cached_ang:Right():Dot(calc_velocity(parent)), speed)
-			end
+				if parent:IsValid() then return self:NumberOperator(parent.cached_ang:Up():Dot(calc_velocity(parent)), speed) end
+				return 0
+			end,
+		},
+		parent_scale_x = {
+			arguments = {{scale = "number"}},
+			callback = function(self, ent, num)
+				local parent = self:GetParentEx()
 
-			return 0
-		end,
-	},
-	parent_velocity_up = {
-		arguments = {{speed = "number"}},
-		callback = function(self, ent, speed)
-			local parent = self:GetParentEx()
+				if not self.TargetPart:IsValid() and parent:HasParent() then
+					parent = parent:GetParent()
+				end
 
-			if not self.TargetPart:IsValid() and  parent:HasParent() then
-				parent = parent:GetParent()
-			end
+				if parent:IsValid() then return self:NumberOperator(
+					(parent.Type == "part" and parent.Scale and parent.Scale.x * parent.Size) or
+					(parent.pac_model_scale and parent.pac_model_scale.x) or
+					(parent.GetModelScale and parent:GetModelScale()) or
+					1,
+					num) end
+				return 1
+			end,
+		},
+		parent_scale_y = {
+			arguments = {{scale = "number"}},
+			callback = function(self, ent, num)
+				local parent = self:GetParentEx()
 
-			if parent:IsValid() then
-				return self:NumberOperator(parent.cached_ang:Up():Dot(calc_velocity(parent)), speed)
-			end
+				if not self.TargetPart:IsValid() and parent:HasParent() then
+					parent = parent:GetParent()
+				end
 
-			return 0
-		end,
-	},
+				if parent:IsValid() then return self:NumberOperator(
+					(parent.Type == "part" and parent.Scale and parent.Scale.y * parent.Size) or
+					(parent.pac_model_scale and parent.pac_model_scale.y) or
+					(parent.GetModelScale and parent:GetModelScale()) or
+					1,
+					num) end
+				return 1
+			end,
+		},
+		parent_scale_z = {
+			arguments = {{scale = "number"}},
+			callback = function(self, ent, num)
+				local parent = self:GetParentEx()
 
-	parent_scale_x = {
-		arguments = {{scale = "number"}},
-		callback = function(self, ent, num)
-			local parent = self:GetParentEx()
+				if not self.TargetPart:IsValid() and parent:HasParent() then
+					parent = parent:GetParent()
+				end
 
-			if not self.TargetPart:IsValid() and parent:HasParent() then
-				parent = parent:GetParent()
-			end
+				if parent:IsValid() then return self:NumberOperator(
+					(parent.Type == "part" and parent.Scale and parent.Scale.z * parent.Size) or
+					(parent.pac_model_scale and parent.pac_model_scale.z) or
+					(parent.GetModelScale and parent:GetModelScale()) or
+					1,
+					num) end
+				return 1
+			end,
+		},
+		gravitygun_punt = {
+			arguments = {{time = "number"}},
+			callback = function(self, ent, time)
+				time = time or 0.1
+				ent = try_viewmodel(ent)
+				local punted = ent.pac_gravgun_punt
+				if punted and punted + time > pac.RealTime then return true end
+			end,
+		},
+		movetype = {
+			arguments = {{find = "string"}},
+			callback = function(self, ent, find)
+				local mt = ent:GetMoveType()
+				if movetypes[mt] then return self:StringOperator(movetypes[mt], find) end
+			end,
+		},
+		dot_forward = {
+			arguments = {{normal = "number"}},
+			callback = function(self, ent, normal)
+				local owner = self:GetOwner(true)
 
-			if parent:IsValid() then
-				return self:NumberOperator((parent.Type == "part" and parent.Scale and parent.Scale.x * parent.Size) or (parent.pac_model_scale and parent.pac_model_scale.x) or (parent.GetModelScale and parent:GetModelScale()) or 1, num)
-			end
+				if owner:IsValid() then
+					local ang = owner:EyeAngles()
+					ang.p = 0
+					return self:NumberOperator(pac.EyeAng:Forward():Dot(ang:Forward()), normal)
+				end
 
-			return 1
-		end,
-	},
-	parent_scale_y = {
-		arguments = {{scale = "number"}},
-		callback = function(self, ent, num)
-			local parent = self:GetParentEx()
+				return 0
+			end,
+		},
+		dot_right = {
+			arguments = {{normal = "number"}},
+			callback = function(self, ent, normal)
+				local owner = self:GetOwner(true)
 
-			if not self.TargetPart:IsValid() and parent:HasParent() then
-				parent = parent:GetParent()
-			end
+				if owner:IsValid() then
+					local ang = owner:EyeAngles()
+					ang.p = 0
+					return self:NumberOperator(pac.EyeAng:Right():Dot(ang:Forward()), normal)
+				end
 
-			if parent:IsValid() then
-				return self:NumberOperator((parent.Type == "part" and parent.Scale and parent.Scale.y * parent.Size) or (parent.pac_model_scale and parent.pac_model_scale.y) or (parent.GetModelScale and parent:GetModelScale()) or 1, num)
-			end
-
-			return 1
-		end,
-	},
-	parent_scale_z = {
-		arguments = {{scale = "number"}},
-		callback = function(self, ent, num)
-			local parent = self:GetParentEx()
-
-			if not self.TargetPart:IsValid() and parent:HasParent() then
-				parent = parent:GetParent()
-			end
-
-			if parent:IsValid() then
-				return self:NumberOperator((parent.Type == "part" and parent.Scale and parent.Scale.z * parent.Size) or (parent.pac_model_scale and parent.pac_model_scale.z) or (parent.GetModelScale and parent:GetModelScale()) or 1, num)
-			end
-
-			return 1
-		end,
-	},
-
-	gravitygun_punt = {
-		arguments = {{time = "number"}},
-		callback = function(self, ent, time)
-			time = time or 0.1
-
-			ent = try_viewmodel(ent)
-
-			local punted = ent.pac_gravgun_punt
-
-			if punted and punted + time > pac.RealTime then
-				return true
-			end
-		end,
-	},
-
-	movetype = {
-		arguments = {{find = "string"}},
-		callback = function(self, ent, find)
-			local mt = ent:GetMoveType()
-			if movetypes[mt] then
-				return self:StringOperator(movetypes[mt], find)
-			end
-		end,
-	},
-
-	dot_forward = {
-		arguments = {{normal = "number"}},
-		callback = function(self, ent, normal)
-
-			local owner = self:GetOwner(true)
-
-			if owner:IsValid() then
-				local ang = owner:EyeAngles()
-				ang.p = 0
-				return self:NumberOperator(pac.EyeAng:Forward():Dot(ang:Forward()), normal)
-			end
-
-			return 0
-		end,
-	},
-
-	dot_right = {
-		arguments = {{normal = "number"}},
-		callback = function(self, ent, normal)
-
-			local owner = self:GetOwner(true)
-
-			if owner:IsValid() then
-				local ang = owner:EyeAngles()
-				ang.p = 0
-				return self:NumberOperator(pac.EyeAng:Right():Dot(ang:Forward()), normal)
-			end
-
-			return 0
-		end,
-	},
-}
+				return 0
+			end,
+		},
+	}
 
 do
 	local enums = {}
 	local enums2 = {}
+
 	for key, val in pairs(_G) do
 		if type(key) == "string" and type(val) == "number" then
-			if key:sub(0,4) == "KEY_" and not key:find("_LAST$") and not key:find("_FIRST$")  and not key:find("_COUNT$")  then
+			if
+				key:sub(0, 4) == "KEY_" and
+				not key:find("_LAST$") and
+				not key:find("_FIRST$") and
+				not key:find("_COUNT$")
+			then
 				enums[val] = key:sub(5):lower()
 				enums2[enums[val]] = val
-			elseif (key:sub(0,6) == "MOUSE_" or key:sub(0,9) == "JOYSTICK_") and not key:find("_LAST$") and not key:find("_FIRST$")  and not key:find("_COUNT$")  then
+			elseif
+				(key:sub(0, 6) == "MOUSE_" or key:sub(0, 9) == "JOYSTICK_") and
+				not key:find("_LAST$") and
+				not key:find("_FIRST$") and
+				not key:find("_COUNT$")
+			then
 				enums[val] = key:lower()
 				enums2[enums[val]] = val
 			end
@@ -1094,76 +998,75 @@ do
 	--TODO: Rate limit!!!
 	net.Receive("pac.BroadcastPlayerButton", function()
 		local ply = net.ReadEntity()
-
 		if not ply:IsValid() then return end
-
 		if ply == pac.LocalPlayer and (pace and pace.HasFocus() or gui.IsConsoleVisible()) then return end
-
 		local key = net.ReadUInt(8)
 		local down = net.ReadBool()
-
 		key = pac.key_enums[key] or key
-
 		ply.pac_buttons = ply.pac_buttons or {}
 		ply.pac_buttons[key] = down
 	end)
 
 	PART.OldEvents.button = {
-		arguments = {{button = "string"}},
-		userdata = {{enums = function()
-			return enums
-		end}},
-		nice = function(self, ent, button)
-			local ply = self:GetPlayerOwner()
+			arguments = {{button = "string"}},
+			userdata = {
+				{
+					enums = function()
+						return enums
+					end,
+				},
+			},
+			nice = function(self, ent, button)
+				local ply = self:GetPlayerOwner()
+				local active = {}
 
-			local active = {}
-			if ply.pac_buttons then
-				for k,v in pairs(ply.pac_buttons) do
-					if v then
-						table.insert(active, "\"" .. tostring(k) .. "\"")
+				if ply.pac_buttons then
+					for k, v in pairs(ply.pac_buttons) do
+						if v then
+							table.insert(active, "\"" .. tostring(k) .. "\"")
+						end
 					end
 				end
-			end
-			active = table.concat(active, " or ")
 
-			if active == "" then
-				active = "-"
-			end
+				active = table.concat(active, " or ")
 
-			return self:GetOperator() .. " \"" .. button .. "\"" .. " in (" .. active .. ")"
-		end,
-		callback = function(self, ent, button)
-			local ply = self:GetPlayerOwner()
-
-			if ply == pac.LocalPlayer then
-				ply.pac_broadcast_buttons = ply.pac_broadcast_buttons or {}
-				if not ply.pac_broadcast_buttons[button] then
-					local val = enums2[button:lower()]
-					if val then
-						net.Start("pac.AllowPlayerButtons")
-						net.WriteUInt(val, 8)
-						net.SendToServer()
-					end
-					ply.pac_broadcast_buttons[button] = true
+				if active == "" then
+					active = "-"
 				end
-			end
 
-			local buttons = ply.pac_buttons
+				return self:GetOperator() .. " \"" .. button .. "\"" .. " in (" .. active .. ")"
+			end,
+			callback = function(self, ent, button)
+				local ply = self:GetPlayerOwner()
 
-			if buttons then
-				return buttons[button]
-			end
-		end,
-	}
+				if ply == pac.LocalPlayer then
+					ply.pac_broadcast_buttons = ply.pac_broadcast_buttons or {}
+
+					if not ply.pac_broadcast_buttons[button] then
+						local val = enums2[button:lower()]
+
+						if val then
+							net.Start("pac.AllowPlayerButtons")
+								net.WriteUInt(val, 8)
+							net.SendToServer()
+						end
+
+						ply.pac_broadcast_buttons[button] = true
+					end
+				end
+
+				local buttons = ply.pac_buttons
+				if buttons then return buttons[button] end
+			end,
+		}
 end
 
 do
 	local eventMeta = {}
-
-	eventMeta.__name = 'undefined'
-	AccessorFunc(eventMeta, '__name', 'Name')
-	AccessorFunc(eventMeta, '__name', 'EventName')
-	AccessorFunc(eventMeta, '__name', 'Nick')
+	eventMeta.__name = "undefined"
+	AccessorFunc(eventMeta, "__name", "Name")
+	AccessorFunc(eventMeta, "__name", "EventName")
+	AccessorFunc(eventMeta, "__name", "Nick")
 
 	function eventMeta:IsValid(event)
 		return true
@@ -1180,17 +1083,18 @@ do
 
 	function eventMeta:AppendArgument(keyName, keyType, userdata)
 		self.__registeredArguments = self.__registeredArguments or {}
+
 		if not keyType then
-			error('No Type of argument was specified!')
+			error("No Type of argument was specified!")
 		end
 
-		if keyType ~= 'number' and keyType ~= 'string' and keyType ~= 'boolean' then
-			error('Invalid Type of argument was passed. Valids are number, string or boolean')
+		if keyType ~= "number" and keyType ~= "string" and keyType ~= "boolean" then
+			error("Invalid Type of argument was passed. Valids are number, string or boolean")
 		end
 
 		for i, data in ipairs(self.__registeredArguments) do
 			if data[1] == keyName then
-				error('Argument with key ' .. keyName .. ' already exists!')
+				error("Argument with key " .. keyName .. " already exists!")
 			end
 		end
 
@@ -1200,9 +1104,7 @@ do
 
 	function eventMeta:PopArgument(keyName)
 		for i, data in ipairs(self.__registeredArguments) do
-			if data[1] == keyName then
-				return true, i, table.remove(self.__registeredArguments, i)
-			end
+			if data[1] == keyName then return true, i, table.remove(self.__registeredArguments, i) end
 		end
 
 		return false
@@ -1220,10 +1122,7 @@ do
 	end
 
 	function eventMeta:GetNiceName(part, ent)
-		if self.extra_nice_name then
-			return self.extra_nice_name(part, ent, part:GetParsedArgumentsForObject(self))
-		end
-
+		if self.extra_nice_name then return self.extra_nice_name(part, ent, part:GetParsedArgumentsForObject(self)) end
 		local str = part:GetEvent()
 
 		if part:GetArguments() ~= "" then
@@ -1232,6 +1131,7 @@ do
 			if not tonumber(args) then
 				args = [["]] .. args .. [["]]
 			end
+
 			str = str .. " " .. part:GetOperator() .. " " .. args
 		end
 
@@ -1239,31 +1139,24 @@ do
 	end
 
 	local eventMetaTable = {
-		__index = function(self, key)
-			if key == '__class' or key == '__classname' then
-				return rawget(getmetatable(self), '__classname')
-			end
+			__index = function(self, key)
+				if key == "__class" or key == "__classname" then return rawget(getmetatable(self), "__classname") end
+				if rawget(self, key) ~= nil then return rawget(self, key) end
+				return eventMeta[key]
+			end,
+			__call = function(self)
+				local newObj = pac.CreateEvent(self:GetClass())
 
-			if rawget(self, key) ~= nil then
-				return rawget(self, key)
-			end
-
-			return eventMeta[key]
-		end,
-
-		__call = function(self)
-			local newObj = pac.CreateEvent(self:GetClass())
-
-			for k, v in pairs(self) do
-				if type(v) ~= 'table' then
-					newObj[k] = v
-				else
-					newObj[k] = table.Copy(v)
+				for k, v in pairs(self) do
+					if type(v) ~= "table" then
+						newObj[k] = v
+					else
+						newObj[k] = table.Copy(v)
+					end
 				end
-			end
 
-			return newObj
-		end,
+				return newObj
+			end,
 
 		-- __newindex = function(self, key, val)
 		--  rawset(self, key, val)
@@ -1275,14 +1168,17 @@ do
 	end
 
 	function pac.CreateEvent(nClassName, defArguments)
-		if not nClassName then error('No classname was specified!') end
+		if not nClassName then
+			error("No classname was specified!")
+		end
 
-		local newObj = setmetatable({}, {
-			__index = eventMetaTable.__index,
-			__call = eventMetaTable.__call,
-			__classname = nClassName
-		})
-
+		local newObj = setmetatable(
+			{},
+			{
+				__index = eventMetaTable.__index,
+				__call = eventMetaTable.__call,
+				__classname = nClassName,
+			})
 		newObj.__registeredArguments = {}
 		newObj:SetName(nClassName)
 
@@ -1299,7 +1195,7 @@ do
 		local classname = nRegister:GetClass()
 
 		if PART.Events[classname] then
-			pac.Message('WARN: Registering event with already existing classname!: '.. classname)
+			pac.Message("WARN: Registering event with already existing classname!: " .. classname)
 		end
 
 		PART.Events[classname] = nRegister
@@ -1327,97 +1223,113 @@ do
 	end
 
 	timer.Simple(0, function() -- After all addons has loaded
-		hook.Call('PAC3RegisterEvents', nil, pac.CreateEvent, pac.RegisterEvent)
+		hook.Call("PAC3RegisterEvents", nil, pac.CreateEvent, pac.RegisterEvent)
 	end)
 end
 
 -- DarkRP default events
 do
-	local plyMeta = FindMetaTable('Player')
+	local plyMeta = FindMetaTable("Player")
 	local gamemode = engine.ActiveGamemode
-	local isDarkRP = function() return gamemode() == 'darkrp' end
-
+	local isDarkRP = function()
+		return gamemode() == "darkrp"
+	end
 	local events = {
-		{
-			name = 'is_arrested',
-			args = {},
-			avaliable = function() return plyMeta.isArrested ~= nil end,
-			func = function(self, eventPart, ent)
-				ent = try_viewmodel(ent)
-				return ent.isArrested and ent:isArrested() or false
-			end
-		},
-
-		{
-			name = 'is_wanted',
-			args = {},
-			avaliable = function() return plyMeta.isWanted ~= nil end,
-			func = function(self, eventPart, ent)
-				ent = try_viewmodel(ent)
-				return ent.isWanted and ent:isWanted() or false
-			end
-		},
-
-		{
-			name = 'is_police',
-			args = {},
-			avaliable = function() return plyMeta.isCP ~= nil end,
-			func = function(self, eventPart, ent)
-				ent = try_viewmodel(ent)
-				return ent.isCP and ent:isCP() or false
-			end
-		},
-
-		{
-			name = 'wanted_reason',
-			args = {{'find', 'string'}},
-			avaliable = function() return plyMeta.getWantedReason ~= nil and plyMeta.isWanted ~= nil end,
-			func = function(self, eventPart, ent, find)
-				ent = try_viewmodel(ent)
-				return eventPart:StringOperator(ent.isWanted and ent.getWantedReason and ent:isWanted() and ent:getWantedReason() or '', find)
-			end
-		},
-
-		{
-			name = 'is_cook',
-			args = {},
-			avaliable = function() return plyMeta.isCook ~= nil end,
-			func = function(self, eventPart, ent)
-				ent = try_viewmodel(ent)
-				return ent.isCook and ent:isCook() or false
-			end
-		},
-
-		{
-			name = 'is_hitman',
-			args = {},
-			avaliable = function() return plyMeta.isHitman ~= nil end,
-			func = function(self, eventPart, ent)
-				ent = try_viewmodel(ent)
-				return ent.isHitman and ent:isHitman() or false
-			end
-		},
-
-		{
-			name = 'has_hit',
-			args = {},
-			avaliable = function() return plyMeta.hasHit ~= nil end,
-			func = function(self, eventPart, ent)
-				ent = try_viewmodel(ent)
-				return ent.hasHit and ent:hasHit() or false
-			end
-		},
-
-		{
-			name = 'hit_price',
-			args = {{'amount', 'number'}},
-			avaliable = function() return plyMeta.getHitPrice ~= nil end,
-			func = function(self, eventPart, ent, amount)
-				ent = try_viewmodel(ent)
-				return eventPart:NumberOperator(ent.getHitPrice and ent:getHitPrice() or 0, amount)
-			end
-		},
-	}
+			{
+				name = "is_arrested",
+				args = {},
+				avaliable = function()
+					return plyMeta.isArrested ~= nil
+				end,
+				func = function(self, eventPart, ent)
+					ent = try_viewmodel(ent)
+					return ent.isArrested and ent:isArrested() or false
+				end,
+			},
+			{
+				name = "is_wanted",
+				args = {},
+				avaliable = function()
+					return plyMeta.isWanted ~= nil
+				end,
+				func = function(self, eventPart, ent)
+					ent = try_viewmodel(ent)
+					return ent.isWanted and ent:isWanted() or false
+				end,
+			},
+			{
+				name = "is_police",
+				args = {},
+				avaliable = function()
+					return plyMeta.isCP ~= nil
+				end,
+				func = function(self, eventPart, ent)
+					ent = try_viewmodel(ent)
+					return ent.isCP and ent:isCP() or false
+				end,
+			},
+			{
+				name = "wanted_reason",
+				args = {{"find", "string"}},
+				avaliable = function()
+					return plyMeta.getWantedReason ~= nil and plyMeta.isWanted ~= nil
+				end,
+				func = function(self, eventPart, ent, find)
+					ent = try_viewmodel(ent)
+					return eventPart:StringOperator(
+						ent.isWanted and
+						ent.getWantedReason and
+						ent:isWanted() and
+						ent:getWantedReason() or
+						"",
+						find)
+				end,
+			},
+			{
+				name = "is_cook",
+				args = {},
+				avaliable = function()
+					return plyMeta.isCook ~= nil
+				end,
+				func = function(self, eventPart, ent)
+					ent = try_viewmodel(ent)
+					return ent.isCook and ent:isCook() or false
+				end,
+			},
+			{
+				name = "is_hitman",
+				args = {},
+				avaliable = function()
+					return plyMeta.isHitman ~= nil
+				end,
+				func = function(self, eventPart, ent)
+					ent = try_viewmodel(ent)
+					return ent.isHitman and ent:isHitman() or false
+				end,
+			},
+			{
+				name = "has_hit",
+				args = {},
+				avaliable = function()
+					return plyMeta.hasHit ~= nil
+				end,
+				func = function(self, eventPart, ent)
+					ent = try_viewmodel(ent)
+					return ent.hasHit and ent:hasHit() or false
+				end,
+			},
+			{
+				name = "hit_price",
+				args = {{"amount", "number"}},
+				avaliable = function()
+					return plyMeta.getHitPrice ~= nil
+				end,
+				func = function(self, eventPart, ent, amount)
+					ent = try_viewmodel(ent)
+					return eventPart:NumberOperator(ent.getHitPrice and ent:getHitPrice() or 0, amount)
+				end,
+			},
+		}
 
 	for k, v in ipairs(events) do
 		local avaliable = v.avaliable
@@ -1434,19 +1346,13 @@ end
 
 function PART:GetParentEx()
 	local parent = self:GetTargetPart()
-
-	if parent:IsValid() then
-		return parent
-	end
-
+	if parent:IsValid() then return parent end
 	return self:GetParent()
 end
 
 function PART:GetNiceName()
 	local event_name = self:GetEvent()
-
 	if not PART.Events[event_name] then return "unknown event" end
-
 	return PART.Events[event_name]:GetNiceName(self, self:GetOwner(self.RootOwner))
 end
 
@@ -1465,10 +1371,7 @@ function PART:OnRemove()
 end
 
 local function should_hide(self, ent, eventObject)
-	if not eventObject:IsAvaliable(self) then
-		return true
-	end
-
+	if not eventObject:IsAvaliable(self) then return true end
 	local b = false
 
 	if self.hidden or self.event_hidden then
@@ -1477,7 +1380,8 @@ local function should_hide(self, ent, eventObject)
 		if eventObject.ParseArguments then
 			b = eventObject:Think(self, ent, eventObject:ParseArguments(self)) or false
 		else
-			b = eventObject:Think(self, ent, self:GetParsedArgumentsForObject(eventObject)) or false
+			b = eventObject:Think(self, ent, self:GetParsedArgumentsForObject(eventObject)) or
+				false
 		end
 
 		if self.Invert then
@@ -1493,18 +1397,19 @@ PART.last_event_triggered = false
 function PART:OnThink()
 	local ent = self:GetOwner(self.RootOwner)
 	if not ent:IsValid() then return end
-
 	local data = self.Events[self.Event]
 	if not data then return end
-
 	self:TriggerEvent(should_hide(self, ent, data))
 
 	if pace and pace.IsActive() and self.Name == "" then
-		if self.pace_properties and self.pace_properties["Name"] and self.pace_properties["Name"]:IsValid() then
+		if
+			self.pace_properties and
+			self.pace_properties["Name"] and
+			self.pace_properties["Name"]:IsValid()
+		then
 			self.pace_properties["Name"]:SetText(self:GetNiceName())
 		end
 	end
-
 end
 
 function PART:TriggerEvent(b)
@@ -1512,11 +1417,9 @@ function PART:TriggerEvent(b)
 	self.event_triggered = b
 
 	if self.AffectChildrenOnly then
-
 		for _, child in ipairs(self:GetChildren()) do
 			child:SetEventHide(b, self)
 		end
-
 
 		if self.last_event_triggered ~= self.event_triggered then
 			if not self.suppress_event_think then
@@ -1524,11 +1427,11 @@ function PART:TriggerEvent(b)
 				self:CallRecursive("CalcShowHide")
 				self.suppress_event_think = nil
 			end
+
 			self.last_event_triggered = self.event_triggered
 		end
 	elseif self:HasParent() then
 		local parent = self:GetParent()
-
 		parent:SetEventHide(b, self)
 		parent:CallRecursive("FlushFromRenderingState")
 
@@ -1538,26 +1441,23 @@ function PART:TriggerEvent(b)
 				parent:CallRecursive("CalcShowHide")
 				self.suppress_event_think = nil
 			end
+
 			self.last_event_triggered = self.event_triggered
 		end
 	end
 end
 
-PART.Operators =
-{
-	"equal",
-	"not equal",
-	"above",
-	"equal or above",
-	"below",
-	"equal or below",
-
-	"find",
-	"find simple",
-
-	"maybe",
-}
-
+PART.Operators = {
+		"equal",
+		"not equal",
+		"above",
+		"equal or above",
+		"below",
+		"equal or below",
+		"find",
+		"find simple",
+		"maybe",
+	}
 pac.EventArgumentCache = {}
 
 function PART:ParseArguments(...)
@@ -1587,24 +1487,15 @@ end
 
 function PART:GetParsedArguments(eventObject)
 	if not eventObject then return end
-
-	if eventObject.ParseArguments then
-		return eventObject:ParseArguments(self)
-	end
-
+	if eventObject.ParseArguments then return eventObject:ParseArguments(self) end
 	return self:GetParsedArgumentsForObject(eventObject)
 end
 
 function PART:GetParsedArgumentsForObject(eventObject)
 	if not eventObject then return end
-
 	local line = self.Arguments
 	local hash = line .. tostring(eventObject)
-
-	if pac.EventArgumentCache[hash] then
-		return unpack(pac.EventArgumentCache[hash])
-	end
-
+	if pac.EventArgumentCache[hash] then return unpack(pac.EventArgumentCache[hash]) end
 	local args = line:Split("@@")
 
 	for i, argData in pairs(eventObject:GetArguments()) do
@@ -1622,7 +1513,6 @@ function PART:GetParsedArgumentsForObject(eventObject)
 	end
 
 	pac.EventArgumentCache[hash] = args
-
 	return unpack(args)
 end
 
@@ -1630,16 +1520,13 @@ local cache = {}
 
 local function CompareBTable(a, btbl, func, ...)
 	for _, b in pairs(btbl) do
-		if func(a, b, ...) then
-			return true
-		end
+		if func(a, b, ...) then return true end
 	end
 
 	return false
 end
 
 function PART:StringOperator(a, b)
-
 	local args = cache[b]
 
 	if not args then
@@ -1650,9 +1537,13 @@ function PART:StringOperator(a, b)
 	if not self.Operator or not a or not b then
 		return false
 	elseif self.Operator == "equal" then
-		return CompareBTable(a, args, function(x, y) return x == y end)
+		return CompareBTable(a, args, function(x, y)
+			return x == y
+		end)
 	elseif self.Operator == "not equal" then
-		return CompareBTable(a, args, function(x, y) return x ~= y end)
+		return CompareBTable(a, args, function(x, y)
+			return x ~= y
+		end)
 	elseif self.Operator == "find" then
 		return CompareBTable(a, args, pac.StringFind)
 	elseif self.Operator == "find simple" then
@@ -1660,7 +1551,6 @@ function PART:StringOperator(a, b)
 	elseif self.Operator == "changed" then
 		if a ~= self.changed_last_a then
 			self.changed_last_a = a
-
 			return true
 		end
 	elseif self.Operator == "maybe" then
@@ -1696,8 +1586,10 @@ function PART:OnHide()
 
 	if self.Event == "weapon_class" then
 		local ent = self:GetOwner()
+
 		if ent:IsValid() then
 			ent = ent.GetActiveWeapon and ent:GetActiveWeapon() or NULL
+
 			if ent:IsValid() then
 				ent.pac_weapon_class = nil
 				ent:SetNoDraw(false)
@@ -1733,10 +1625,7 @@ function PART:OnEvent(typ, ent)
 	if typ == "emit_sound" then
 		if self.Event == "emit_sound" then
 			self:GetParent():CallRecursive("Think")
-
-			if ent.pac_emit_sound.mute_me then
-				return false
-			end
+			if ent.pac_emit_sound.mute_me then return false end
 		end
 	end
 end
@@ -1755,40 +1644,41 @@ do
 	pac.AddHook("DoAnimationEvent", "animation_events", function(ply, event, data)
 		-- update all parts once so OnShow and OnHide are updated properly for animation events
 		if ply.pac_has_parts then
-			ply.pac_anim_event = {name = enums[event], time = pac.RealTime, reset = true}
-
+			ply.pac_anim_event = {
+				name = enums[event],
+				time = pac.RealTime,
+				reset = true,
+			}
 			pac.CallPartEvent("animation_event")
 		end
 	end)
 end
 
-
 pac.AddHook("EntityEmitSound", "emit_sound", function(data)
 	if pac.playing_sound then return end
 	local ent = data.Entity
-
 	if not ent:IsValid() or not ent.pac_has_parts then return end
-
-	ent.pac_emit_sound = {name = data.SoundName, time = pac.RealTime, reset = true, mute_me = ent.pac_emit_sound and ent.pac_emit_sound.mute_me or false}
-
-	if pac.CallPartEvent("emit_sound", ent) == false then
-		return false
-	end
-
-	if ent.pac_mute_sounds then
-		return false
-	end
+	ent.pac_emit_sound = {
+			name = data.SoundName,
+			time = pac.RealTime,
+			reset = true,
+			mute_me = ent.pac_emit_sound and
+			ent.pac_emit_sound.mute_me or
+			false,
+		}
+	if pac.CallPartEvent("emit_sound", ent) == false then return false end
+	if ent.pac_mute_sounds then return false end
 end)
 
 pac.AddHook("EntityFireBullets", "firebullets", function(ent, data)
 	if not ent:IsValid() or not ent.pac_has_parts then return end
-	ent.pac_fire_bullets = {name = data.AmmoType, time = pac.RealTime, reset = true}
-
+	ent.pac_fire_bullets = {
+		name = data.AmmoType,
+		time = pac.RealTime,
+		reset = true,
+	}
 	pac.CallPartEvent("fire_bullets")
-
-	if ent.pac_hide_bullets then
-		return false
-	end
+	if ent.pac_hide_bullets then return false end
 end)
 
 net.Receive("pac_event", function(umr)
@@ -1866,24 +1756,27 @@ do
 	local function get_events()
 		local available = {}
 
-		for k,v in pairs(pac.GetLocalParts()) do
+		for k, v in pairs(pac.GetLocalParts()) do
 			if v.ClassName == "event" then
 				local e = v:GetEvent()
+
 				if e == "command" then
 					local cmd, time = v:GetParsedArgumentsForObject(v.Events.command)
-
 					available[cmd] = {type = e, time = time}
 				end
 			end
 		end
 
 		local list = {}
-		for k,v in pairs(available) do
+
+		for k, v in pairs(available) do
 			v.trigger = k
 			table.insert(list, v)
 		end
 
-		table.sort(list, function(a, b) return a.trigger > b.trigger end)
+		table.sort(list, function(a, b)
+			return a.trigger > b.trigger
+		end)
 
 		return list
 	end
@@ -1893,115 +1786,139 @@ do
 
 	function pac.openEventSelectionWheel()
 		gui.EnableScreenClicker(true)
-
 		local scrw, scrh = ScrW(), ScrH()
-		local scrw2, scrh2 = scrw*0.5, scrh*0.5
-		local color_red = Color(255,0,0)
+		local scrw2, scrh2 = scrw * 0.5, scrh * 0.5
+		local color_red = Color(255, 0, 0)
 		local R = 48
-
 		local events = get_events()
 		local nevents = #events
 
 		-- Theta size of each wedge
-		local thetadiff = math.pi*2 / nevents
+		local thetadiff = math.pi * 2 / nevents
 		-- Used to compare the dot product
 		local coslimit = math.cos(thetadiff * 0.5)
 		-- Keeps the circles R units from each others' center
 		local radius
+
 		if nevents < 3 then
 			radius = R
 		else
-			radius = R/math.cos((nevents - 2)*math.pi*0.5/nevents)
+			radius = R / math.cos((nevents - 2) * math.pi * 0.5 / nevents)
 		end
 
 		-- Scale down to keep from going out of the screen
 		local gScale
-		if radius+R > scrh2 then
-			gScale = scrh2 / (radius+R)
+
+		if radius + R > scrh2 then
+			gScale = scrh2 / (radius + R)
 		else
 			gScale = 1
 		end
 
 		local selections = {}
+
 		for k, v in ipairs(events) do
-			local theta = (k-1)*thetadiff
+			local theta = (k - 1) * thetadiff
 			selections[k] = {
-				grow = 0,
-				name = v.trigger,
-				event = v,
-				x = math.sin(theta),
-				y = -math.cos(theta),
-			}
+					grow = 0,
+					name = v.trigger,
+					event = v,
+					x = math.sin(theta),
+					y = -math.cos(theta),
+				}
 		end
 
 		local function draw_circle(self, x, y)
-			local dot = self.x*x + self.y*y
+			local dot = self.x * x + self.y * y
 			local grow
+
 			if dot > coslimit then
 				selected = self
 				grow = 0.1
 			else
 				grow = 0
 			end
-			self.grow = self.grow*0.9 + grow -- Framerate will affect this effect's speed but oh well
 
-			local scale = gScale*(1 + self.grow*0.2)
+			self.grow = self.grow * 0.9 + grow -- Framerate will affect this effect's speed but oh well
+
+			local scale = gScale * (1 + self.grow * 0.2)
 			local m = Matrix()
 			m:SetTranslation(Vector(scrw2, scrh2, 0))
 			m:Scale(Vector(scale, scale, scale))
 			cam.PushModelMatrix(m)
-
-			local x, y = self.x*radius, self.y*radius
-
-
+			local x, y = self.x * radius, self.y * radius
 			local ply = pac.LocalPlayer
-			local data = ply.pac_command_events and ply.pac_command_events[self.event.trigger] and ply.pac_command_events[self.event.trigger]
+			local data = ply.pac_command_events and
+				ply.pac_command_events[self.event.trigger] and
+				ply.pac_command_events[self.event.trigger]
+
 			if data then
 				local is_oneshot = self.event.time and self.event.time > 0
 
 				if is_oneshot then
 					local f = (pac.RealTime - data.time) / self.event.time
-					local c = Lerp(math.Clamp(f,0,1), 100, 55)
-					surface.SetDrawColor(c,c,c)
+					local c = Lerp(math.Clamp(f, 0, 1), 100, 55)
+					surface.SetDrawColor(c, c, c)
 				else
 					if data.on == 1 then
-						surface.SetDrawColor(150,150,150)
+						surface.SetDrawColor(150, 150, 150)
 					else
-						surface.SetDrawColor(50,50,50)
+						surface.SetDrawColor(50, 50, 50)
 					end
 				end
 			else
-				surface.SetDrawColor(50,50,50)
+				surface.SetDrawColor(50, 50, 50)
 			end
 
-			surface.DrawTexturedRect(x-48, y-48, 96, 96)
-			draw.SimpleText(self.name, "DermaDefault", x, y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-
+			surface.DrawTexturedRect(x - 48, y - 48, 96, 96)
+			draw.SimpleText(
+				self.name,
+				"DermaDefault",
+				x,
+				y,
+				color_white,
+				TEXT_ALIGN_CENTER,
+				TEXT_ALIGN_CENTER)
 			cam.PopModelMatrix()
 		end
 
-		pac.AddHook("HUDPaint","custom_event_selector",function()
+		pac.AddHook("HUDPaint", "custom_event_selector", function()
 			-- Right clicking cancels
-			if input.IsButtonDown(MOUSE_RIGHT) then pac.closeEventSelectionWheel(true) return end
+			if input.IsButtonDown(MOUSE_RIGHT) then
+				pac.closeEventSelectionWheel(true)
+				return
+			end
 
 			-- Normalize mouse vector from center of screen
 			local x, y = input.GetCursorPos()
 			x = x - scrw2
 			y = y - scrh2
-			if x==0 and y==0 then x = 1 y = 0 else
-				local l = math.sqrt(x^2+y^2)
-				x = x/l
-				y = y/l
+
+			if x == 0 and y == 0 then
+				x = 1
+				y = 0
+			else
+				local l = math.sqrt(x ^ 2 + y ^ 2)
+				x = x / l
+				y = y / l
 			end
 
 			DisableClipping(true)
 			render.PushFilterMag(TEXFILTER.ANISOTROPIC)
 			render.PushFilterMin(TEXFILTER.ANISOTROPIC)
-
 			surface.SetMaterial(selectorBg)
+			draw.SimpleText(
+				"Right click to cancel",
+				"DermaDefault",
+				scrw2,
+				scrh2 + radius + R,
+				color_red,
+				TEXT_ALIGN_CENTER,
+				TEXT_ALIGN_TOP)
 
-			draw.SimpleText("Right click to cancel", "DermaDefault", scrw2, scrh2+radius+R, color_red, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
-			for _, v in ipairs(selections) do draw_circle(v, x, y) end
+			for _, v in ipairs(selections) do
+				draw_circle(v, x, y)
+			end
 
 			render.PopFilterMag()
 			render.PopFilterMin()
@@ -2011,7 +1928,7 @@ do
 
 	function pac.closeEventSelectionWheel(cancel)
 		gui.EnableScreenClicker(false)
-		pac.RemoveHook("HUDPaint","custom_event_selector")
+		pac.RemoveHook("HUDPaint", "custom_event_selector")
 
 		if selected and cancel ~= true then
 			if selected.event.time and selected.event.time > 0 then
@@ -2019,19 +1936,21 @@ do
 			else
 				local ply = pac.LocalPlayer
 
-				if ply.pac_command_events and ply.pac_command_events[selected.event.trigger] and ply.pac_command_events[selected.event.trigger].on == 1 then
+				if
+					ply.pac_command_events and
+					ply.pac_command_events[selected.event.trigger] and
+					ply.pac_command_events[selected.event.trigger].on == 1
+				then
 					RunConsoleCommand("pac_event", selected.event.trigger, "0")
 				else
 					RunConsoleCommand("pac_event", selected.event.trigger, "1")
 				end
 			end
 		end
+
 		selected = nil
 	end
 
 	concommand.Add("+pac_events", pac.openEventSelectionWheel)
 	concommand.Add("-pac_events", pac.closeEventSelectionWheel)
 end
-
-
-

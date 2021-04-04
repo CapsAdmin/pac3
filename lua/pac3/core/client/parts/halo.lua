@@ -1,14 +1,11 @@
 local Color = Color
 local Vector = Vector
-
 local PART = {}
-
 PART.ClassName = "halo"
 PART.NonPhysical = true
 PART.ThinkTime = 0
-PART.Group = {'effects', 'model'}
-PART.Icon = 'icon16/shading.png'
-
+PART.Group = {"effects", "model"}
+PART.Icon = "icon16/shading.png"
 pac.StartStorableVars()
 	pac.SetPropertyGroup()
 		pac.GetSet(PART, "BlurX", 2)
@@ -18,7 +15,6 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "SphericalSize", 1)
 		pac.GetSet(PART, "Shape", 1)
 		pac.GetSet(PART, "AffectChildren", false)
-
 	pac.SetPropertyGroup(PART, "appearance")
 		pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
 		pac.GetSet(PART, "Passes", 1)
@@ -27,7 +23,6 @@ pac.EndStorableVars()
 
 function PART:GetNiceName()
 	local h = pac.ColorToNames(self:GetColor())
-
 	return h .. " halo"
 end
 
@@ -53,7 +48,17 @@ function PART:OnThink()
 			end
 		end
 
-		pac.haloex.Add(tbl, Color(self.Color.r, self.Color.g, self.Color.b), self.BlurX, self.BlurY, self.Passes, self.Additive, self.IgnoreZ, self.Amount, self.SphericalSize, self.Shape)
+		pac.haloex.Add(
+			tbl,
+			Color(self.Color.r, self.Color.g, self.Color.b),
+			self.BlurX,
+			self.BlurY,
+			self.Passes,
+			self.Additive,
+			self.IgnoreZ,
+			self.Amount,
+			self.SphericalSize,
+			self.Shape)
 	end
 end
 

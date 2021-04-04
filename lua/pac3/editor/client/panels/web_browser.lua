@@ -1,5 +1,4 @@
 local PANEL = {}
-
 PANEL.Base = "DFrame"
 PANEL.ClassName = "web_browser"
 
@@ -9,105 +8,99 @@ function PANEL:Init()
 	self:ShowCloseButton(true)
 	self:SetDraggable(true)
 	self:SetSizable(true)
-
 	local top = vgui.Create("EditablePanel", self)
-		top:Dock(TOP)
-		top:SetTall(24)
+	top:Dock(TOP)
+	top:SetTall(24)
 	self.top = top
-
 	local btn = vgui.Create("DButton", top)
-		btn:SetText("Back")
-		btn:SizeToContents()
-		btn:SetWide(btn:GetWide()+8)
-		btn:Dock(LEFT)
-		btn.DoClick = function()
-			self.browser:RunJavascript("history.back();")
-		end
-
+	btn:SetText("Back")
+	btn:SizeToContents()
+	btn:SetWide(btn:GetWide() + 8)
+	btn:Dock(LEFT)
+	btn.DoClick = function()
+		self.browser:RunJavascript("history.back();")
+	end
 	local btn = vgui.Create("DButton", top)
-		btn:SetText("Forward")
-		btn:SizeToContents()
-		btn:SetWide(btn:GetWide()+8)
-		btn:Dock(LEFT)
-		btn.DoClick = function()
-			self.browser:RunJavascript("history.forward();")
-		end
-
+	btn:SetText("Forward")
+	btn:SizeToContents()
+	btn:SetWide(btn:GetWide() + 8)
+	btn:Dock(LEFT)
+	btn.DoClick = function()
+		self.browser:RunJavascript("history.forward();")
+	end
 	local btn = vgui.Create("DButton", top)
-		btn:SetText("Refresh")
-		btn:SizeToContents()
-		btn:SetWide(btn:GetWide() + 8)
-		btn:Dock(LEFT)
+	btn:SetText("Refresh")
+	btn:SizeToContents()
+	btn:SetWide(btn:GetWide() + 8)
+	btn:Dock(LEFT)
+	btn.DoClick = function()
+		self.browser:RunJavascript("location.reload(true);")
+	end
+	btn.Paint = function(btn, w, h)
+		DButton.Paint(btn, w, h)
 
-		btn.DoClick = function()
-			self.browser:RunJavascript("location.reload(true);")
-		end
-
-		btn.Paint = function(btn,w,h)
-			DButton.Paint(btn,w,h)
-
-			if self.loaded then
-				if self.browser:IsLoading() then
-					self.loaded = false
-				end
-
-				surface.SetDrawColor(100, 240, 50, 200)
-				surface.DrawRect(1, 1, w-2, h-2)
-			end
-
+		if self.loaded then
 			if self.browser:IsLoading() then
-				surface.SetDrawColor(240 + math.sin(RealTime()*10)*15, 100, 50, 200)
-				surface.DrawRect(1, 1, w-2, h-2)
+				self.loaded = false
 			end
+
+			surface.SetDrawColor(100, 240, 50, 200)
+			surface.DrawRect(1, 1, w - 2, h - 2)
 		end
 
+		if self.browser:IsLoading() then
+			surface.SetDrawColor(240 + math.sin(RealTime() * 10) * 15, 100, 50, 200)
+			surface.DrawRect(1, 1, w - 2, h - 2)
+		end
+	end
 	local entry = vgui.Create("DTextEntry", top)
-		self.entry = entry
-		entry:Dock(FILL)
-		entry:SetTall( 24)
+	self.entry = entry
+	entry:Dock(FILL)
+	entry:SetTall(24)
+	entry.OnEnter = function(entry)
+		local val = entry:GetText()
+		local js, txt = val:match("javascript:(.+)")
 
-		entry.OnEnter = function(entry)
-			local val = entry:GetText()
-			local js,txt = val:match("javascript:(.+)")
-
-			if js and txt then
-				self.browser:QueueJavascript(txt)
-				return
-			end
-
-			self:OpenURL(val)
+		if js and txt then
+			self.browser:QueueJavascript(txt)
+			return
 		end
 
+		self:OpenURL(val)
+	end
 	local browser = vgui.Create("DHTML", self)
-		self.browser = browser
-		browser:Dock(FILL)
-		browser.Paint = function() end
-		browser.OpeningURL = pac.Message
-		browser.FinishedURL = pac.Message
-		browser:AddFunction("gmod", "LoadedURL", function(url, title)
-			self:LoadedURL(url,title)
-		end)
-		browser:AddFunction("gmod", "dbg", function(...)
-			pac.Message('[Browser] ', ...)
-		end)
-		browser:AddFunction("gmod", "status", function(txt)
-			self:StatusChanged(txt)
-		end)
-		browser.ActionSignal = function(...)
-			pac.Message('[BrowserACT] ', ...)
-		end
+	self.browser = browser
+	browser:Dock(FILL)
+	browser.Paint = function() 
+	end
+	browser.OpeningURL = pac.Message
+	browser.FinishedURL = pac.Message
 
-		browser.OnKeyCodePressed = function(browser,code)
-			if code == 96 then
-				self.browser:RunJavascript[[location.reload(true);]]
-				return
-			end
-		end
+	browser:AddFunction("gmod", "LoadedURL", function(url, title)
+		self:LoadedURL(url, title)
+	end)
 
+	browser:AddFunction("gmod", "dbg", function(...)
+		pac.Message("[Browser] ", ...)
+	end)
+
+	browser:AddFunction("gmod", "status", function(txt)
+		self:StatusChanged(txt)
+	end)
+
+	browser.ActionSignal = function(...)
+		pac.Message("[BrowserACT] ", ...)
+	end
+	browser.OnKeyCodePressed = function(browser, code)
+		if code == 96 then
+			self.browser:RunJavascript[[location.reload(true);]]
+			return
+		end
+	end
 	local status = vgui.Create("DLabel", self)
-		self.status = status
-		status:SetText""
-		status:Dock(BOTTOM)
+	self.status = status
+	status:SetText""
+	status:Dock(BOTTOM)
 end
 
 function PANEL:StatusChanged(txt)
@@ -117,7 +110,7 @@ function PANEL:StatusChanged(txt)
 	end
 end
 
-function PANEL:LoadedURL(url,title)
+function PANEL:LoadedURL(url, title)
 	if self.entry:HasFocus() then return end
 	self.entry:SetText(url)
 	self.loaded = true
@@ -129,8 +122,9 @@ function PANEL:OpenURL(url)
 	self.entry:SetText(url)
 end
 
-function PANEL:Think(w,h)
-	self.BaseClass.Think(self,w,h)
+function PANEL:Think(w, h)
+	self.BaseClass.Think(self, w, h)
+
 	if input.IsKeyDown(KEY_ESCAPE) then
 		self:Close()
 	end
@@ -138,12 +132,15 @@ function PANEL:Think(w,h)
 	if not self.wasloading and self.browser:IsLoading() then
 		self.wasloading = true
 	end
+
 	if self.wasloading and not self.browser:IsLoading() then
 		self.wasloading = false
 		self.browser:QueueJavascript[[gmod.LoadedURL(document.location.href,document.title); gmod.status(""); ]]
 		self.browser:QueueJavascript[[function alert(str) { console.log("Alert: "+str); }]]
-		self.browser:QueueJavascript[[if (!document.body.style.background) { document.body.style.background = 'white'; }; void 0;]]
-		self.browser:QueueJavascript[[
+		self.browser:QueueJavascript
+			[[if (!document.body.style.background) { document.body.style.background = 'white'; }; void 0;]]
+		self.browser:QueueJavascript
+			[[
 			function getLink() {
 				gmod.status(this.href || "-");
 			}
@@ -161,7 +158,6 @@ function PANEL:Think(w,h)
 
 		]]
 	end
-
 end
 
 function PANEL:Show()
@@ -190,7 +186,7 @@ function pace.ShowWiki(url)
 
 	local pnl = pace.CreatePanel("web_browser")
 	pnl:OpenURL(url or pace.WikiURL)
-	pnl:SetSize(ScrW()*0.9, ScrH()*0.8)
+	pnl:SetSize(ScrW() * 0.9, ScrH() * 0.8)
 	pnl:Center()
 	pnl:MakePopup()
 	pace.wiki_panel = pnl

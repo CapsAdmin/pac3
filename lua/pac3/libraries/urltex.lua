@@ -1,5 +1,4 @@
 local urltex = {}
-
 urltex.TextureSize = 1024
 urltex.ActivePanel = urltex.ActivePanel or NULL
 urltex.Queue = urltex.Queue or {}
@@ -15,13 +14,18 @@ if urltex.ActivePanel:IsValid() then
 end
 
 local enable = CreateClientConVar("pac_enable_urltex", "1", true)
-local EMPTY_FUNC = function() end
+local EMPTY_FUNC = function() 
+end
+
 local function findFlag(url, flagID)
 	local startPos, endPos = url:find(flagID)
 	if not startPos then return url, false end
 
-	if url:sub(endPos + 1, endPos + 1) == ' ' or url:sub(startPos - 1, startPos - 1) == ' ' then
-		url = url:gsub(' ?' .. flagID .. ' ?', '')
+	if
+		url:sub(endPos + 1, endPos + 1) == " " or
+		url:sub(startPos - 1, startPos - 1) == " "
+	then
+		url = url:gsub(" ?" .. flagID .. " ?", "")
 		return url, true
 	end
 
@@ -37,28 +41,22 @@ function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size
 	shader = shader or "VertexLitGeneric"
 	if not enable:GetBool() then return end
 	local noclampS, noclamp, noclampT
-
-	url, noclampS = findFlag(url, 'noclamps')
-	url, noclampT = findFlag(url, 'noclampt')
-	url, noclamp = findFlag(url, 'noclamp')
-
+	url, noclampS = findFlag(url, "noclamps")
+	url, noclampT = findFlag(url, "noclampt")
+	url, noclamp = findFlag(url, "noclamp")
 	local urlAddress = url
 	local urlIndex = url
 
 	if noclamp then
-		urlIndex = urlIndex .. ' noclamp'
+		urlIndex = urlIndex .. " noclamp"
 	elseif noclampS then
-		urlIndex = urlIndex .. ' noclampS'
+		urlIndex = urlIndex .. " noclampS"
 	elseif noclampT then
-		urlIndex = urlIndex .. ' noclampT'
+		urlIndex = urlIndex .. " noclampT"
 	end
 
 	noclamp = noclamp or noclampS and noclampT
-
-	local renderTargetNeeded =
-		noclampS or
-		noclamp or
-		noclampT
+	local renderTargetNeeded = noclampS or noclamp or noclampT
 
 	if type(callback) == "function" and not skip_cache and urltex.Cache[urlIndex] then
 		local tex = urltex.Cache[urlIndex]
@@ -74,19 +72,19 @@ function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size
 		table.insert(urltex.Queue[urlIndex].callbacks, callback)
 	else
 		urltex.Queue[urlIndex] = {
-			url = urlAddress,
-			urlIndex = urlIndex,
-			callbacks = {callback},
-			tries = 0,
-			size = size,
-			size_hack = size_hack,
-			shader = shader,
-			noclampS = noclampS,
-			noclampT = noclampT,
-			noclamp = noclamp,
-			rt = renderTargetNeeded,
-			additionalData = additionalData
-		}
+				url = urlAddress,
+				urlIndex = urlIndex,
+				callbacks = {callback},
+				tries = 0,
+				size = size,
+				size_hack = size_hack,
+				shader = shader,
+				noclampS = noclampS,
+				noclampT = noclampT,
+				noclamp = noclamp,
+				rt = renderTargetNeeded,
+				additionalData = additionalData,
+			}
 	end
 end
 
@@ -100,6 +98,7 @@ function urltex.Think()
 				urltex.StartDownload(data.url, data)
 			end
 		end
+
 		urltex.Busy = true
 	else
 		urltex.Busy = false
@@ -124,7 +123,8 @@ function urltex.StartDownload(url, data)
 		-- Tested in PPM/2, this code works perfectly
 		pnl:SetVisible(false)
 		pnl:SetSize(size, size)
-		pnl:SetHTML([[<html>
+		pnl:SetHTML(
+			[[<html>
 				<head>
 				<style type="text/css">
 					html
@@ -146,11 +146,10 @@ function urltex.StartDownload(url, data)
 					<img src="]] .. url .. [[" alt="" width="]] .. size .. [[" height="]] .. size .. [[" />
 				</body>
 			</html>]])
-
 		pnl:Refresh()
 
 		function pnl:ConsoleMessage(msg)
-			if msg == 'REAL_FRAME_PASSED' then
+			if msg == "REAL_FRAME_PASSED" then
 				frames_passed = frames_passed + 1
 			end
 		end
@@ -165,7 +164,10 @@ function urltex.StartDownload(url, data)
 
 	local function onTimeout()
 		timeoutNum = timeoutNum + 1
-		if IsValid(pnl) then pnl:Remove() end
+
+		if IsValid(pnl) then
+			pnl:Remove()
+		end
 
 		if timeoutNum < 5 then
 			pac.dprint("material download %q timed out.. trying again for the %ith time", url, timeoutNum)
@@ -207,7 +209,6 @@ function urltex.StartDownload(url, data)
 				-- tex:Download()
 
 				urltex.Cache[data.urlIndex] = tex
-
 				pac.RemoveHook("Think", id)
 				timer.Remove(id)
 				urltex.Queue[data.urlIndex] = nil
@@ -232,39 +233,53 @@ function urltex.StartDownload(url, data)
 						textureFlags = textureFlags - 8
 					end
 
-					local vertex_mat2 = CreateMaterial("pac3_urltex_" .. crc .. '_hack', 'UnlitGeneric', data.additionalData)
+					local vertex_mat2 = CreateMaterial("pac3_urltex_" .. crc .. "_hack", "UnlitGeneric", data.additionalData)
 					vertex_mat2:SetTexture("$basetexture", tex)
-					rt = GetRenderTargetEx("pac3_urltex_" .. crc, size, size, RT_SIZE_NO_CHANGE, MATERIAL_RT_DEPTH_NONE, textureFlags, CREATERENDERTARGETFLAGS_UNFILTERABLE_OK, IMAGE_FORMAT_RGB888)
+					rt = GetRenderTargetEx(
+						"pac3_urltex_" .. crc,
+						size,
+						size,
+						RT_SIZE_NO_CHANGE,
+						MATERIAL_RT_DEPTH_NONE,
+						textureFlags,
+						CREATERENDERTARGETFLAGS_UNFILTERABLE_OK,
+						IMAGE_FORMAT_RGB888)
 					render.PushRenderTarget(rt)
-					render.Clear(0, 0, 0, 255, false, false)
+					render.Clear(
+						0,
+						0,
+						0,
+						255,
+						false,
+						false)
 					cam.Start2D()
-					surface.SetMaterial(vertex_mat2)
-					surface.SetDrawColor(255, 255, 255)
-					surface.DrawTexturedRect(0, 0, size, size)
-					cam.End2D()
-					render.PopRenderTarget()
-					vertex_mat:SetTexture('$basetexture', rt)
-					urltex.Cache[data.urlIndex] = rt
-				end
+						surface.SetMaterial(vertex_mat2)
+						surface.SetDrawColor(255, 255, 255)
+						surface.DrawTexturedRect(0, 0, size, size)
+						cam.End2D()
+						render.PopRenderTarget()
+						vertex_mat:SetTexture("$basetexture", rt)
+						urltex.Cache[data.urlIndex] = rt
+					end
 
-				timer.Simple(0, function()
-					pnl:Remove()
-				end)
+					timer.Simple(0, function()
+						pnl:Remove()
+					end)
 
-				if data.callbacks then
-					for i, callback in pairs(data.callbacks) do
-						callback(vertex_mat, rt or tex)
+					if data.callbacks then
+						for i, callback in pairs(data.callbacks) do
+							callback(vertex_mat, rt or tex)
+						end
 					end
 				end
 			end
 		end
-	end
 
-	pac.AddHook("Think", id, think)
+		pac.AddHook("Think", id, think)
 
 	-- 5 sec max timeout, 5 maximal timeouts
 	timer.Create(id, 5, 5, onTimeout)
-	createDownloadPanel()
-end
+		createDownloadPanel()
+	end
 
-return urltex
+	return urltex

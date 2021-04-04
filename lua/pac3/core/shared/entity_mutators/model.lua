@@ -1,11 +1,9 @@
 local MUTATOR = {}
-
 MUTATOR.ClassName = "model"
 MUTATOR.UpdateRate = 0.25
 
 function MUTATOR:WriteArguments(path)
 	assert(type(path) == "string", "path must be a string")
-
 	net.WriteString(path:lower())
 end
 
@@ -30,11 +28,9 @@ function MUTATOR:Mutate(path)
 		pac.Message(self.Owner, " wants to use ", path, " as model on ", ent)
 
 		pac.DownloadMDL(path, function(mdl_path)
-			pac.Message(mdl_path, " downloaded for ", ent, ': ', path)
-
+			pac.Message(mdl_path, " downloaded for ", ent, ": ", path)
 			self.Entity:SetModel(mdl_path)
 			self.actual_model = mdl_path
-
 		end, function(err)
 			pac.Message(err)
 		end, self.Owner)
@@ -45,7 +41,7 @@ function MUTATOR:Mutate(path)
 			end
 
 			if not util.IsValidModel(path) then
-				self.Owner:ChatPrint('[PAC3] ERROR: ' .. path .. " is not a valid model on the server.")
+				self.Owner:ChatPrint("[PAC3] ERROR: " .. path .. " is not a valid model on the server.")
 			else
 				self.Entity:SetModel(path)
 			end
@@ -53,7 +49,7 @@ function MUTATOR:Mutate(path)
 			local translated = player_manager.TranslatePlayerModel(path)
 
 			if translated ~= path then
-				self.Owner:ChatPrint('[PAC3] ERROR: ' .. path .. " is not a valid player model on the server.")
+				self.Owner:ChatPrint("[PAC3] ERROR: " .. path .. " is not a valid player model on the server.")
 			else
 				self.Entity:SetModel(path)
 			end

@@ -12,6 +12,7 @@ function pace.SetTPose(b)
 	if b then
 		ply.pace_tpose_last_sequence = ply:GetSequence()
 		ply.pace_tpose_last_layer_sequence = {}
+
 		for i = 0, 16 do
 			ply.pace_tpose_last_layer_sequence[i] = ply:GetLayerSequence(i)
 		end
@@ -42,6 +43,7 @@ function pace.SetTPose(b)
 
 			for i = 0, ply:GetNumPoseParameters() - 1 do
 				local name = ply:GetPoseParameterName(i)
+
 				if name then
 					ply:SetPoseParameter(name, 0)
 				end
@@ -55,7 +57,6 @@ function pace.SetTPose(b)
 				end
 
 				local act = ply:LookupSequence("ragdoll") or ply:LookupSequence("reference")
-
 				return act, act
 			end
 		end)
@@ -91,16 +92,20 @@ end
 function pace.GetBreathing()
 	return pace.breathing
 end
+
 function pace.ResetEyeAngles()
 	local ent = pace.GetViewEntity()
+
 	if ent:IsValid() then
 		if ent:IsPlayer() then
-
 			RunConsoleCommand("+forward")
+
 			timer.Simple(0, function()
 				RunConsoleCommand("-forward")
+
 				timer.Simple(0.1, function()
 					RunConsoleCommand("+back")
+
 					timer.Simple(0.015, function()
 						RunConsoleCommand("-back")
 					end)

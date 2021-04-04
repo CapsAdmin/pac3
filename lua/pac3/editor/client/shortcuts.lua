@@ -1,7 +1,5 @@
-
 function pace.OnShortcutSave()
 	if not IsValid(pace.current_part) then return end
-
 	local part = pace.current_part:GetRootPart()
 	surface.PlaySound("buttons/button9.wav")
 	pace.SaveParts(nil, "part " .. (part:GetName() or "my outfit"), part, true)
@@ -9,7 +7,6 @@ end
 
 function pace.OnShortcutWear()
 	if IsValid(pace.current_part) then return end
-
 	local part = pace.current_part:GetRootPart()
 	surface.PlaySound("buttons/button9.wav")
 	pace.SendPartToServer(part)
@@ -32,7 +29,11 @@ function pace.CheckShortcuts()
 		last = RealTime() + 0.2
 	end
 
-	if input.IsKeyDown(KEY_LALT) and input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_P) then
+	if
+		input.IsKeyDown(KEY_LALT) and
+		input.IsKeyDown(KEY_LCONTROL) and
+		input.IsKeyDown(KEY_P)
+	then
 		RunConsoleCommand("pac_restart")
 	end
 
@@ -59,10 +60,8 @@ function pace.CheckShortcuts()
 			pace.properties.search:RequestFocus()
 			pace.properties.search:SetEnabled(true)
 			pace.property_searching = true
-
 			last = RealTime() + 0.2
 		end
-
 	end
 end
 

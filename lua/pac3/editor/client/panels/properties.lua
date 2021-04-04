@@ -1,10 +1,13 @@
 local L = pace.LanguageString
-
-local languageID = CreateClientConVar("pac_editor_languageid", 1, true, false, "Whether we should show the language indicator inside of editable text entries.")
+local languageID = CreateClientConVar(
+	"pac_editor_languageid",
+	1,
+	true,
+	false,
+	"Whether we should show the language indicator inside of editable text entries.")
 
 function pace.ShowSpecial(pnl, parent, size)
 	size = size or 150
-
 	pnl:SetPos(pace.Editor:GetWide(), select(2, parent:LocalToScreen()) - size + 25)
 	pnl:SetSize(size, size)
 	pnl:MakePopup()
@@ -13,7 +16,9 @@ end
 function pace.FixMenu(menu)
 	menu:SetMaxHeight(500)
 	menu:InvalidateLayout(true, true)
-	menu:SetPos(pace.Editor:GetPos() + pace.Editor:GetWide(), gui.MouseY() - (menu:GetTall() * 0.5))
+	menu:SetPos(
+		pace.Editor:GetPos() + pace.Editor:GetWide(),
+		gui.MouseY() - (menu:GetTall() * 0.5))
 end
 
 local function DefineMoreOptionsLeftClick(self, callFuncLeft, callFuncRight)
@@ -21,10 +26,14 @@ local function DefineMoreOptionsLeftClick(self, callFuncLeft, callFuncRight)
 	btn:SetSize(16, 16)
 	btn:Dock(RIGHT)
 	btn:SetText("...")
-	btn.DoClick = function() callFuncLeft(self, self.CurrentKey) end
+	btn.DoClick = function()
+		callFuncLeft(self, self.CurrentKey)
+	end
 
 	if callFuncRight then
-		btn.DoRightClick = function() callFuncRight(self, self.CurrentKey) end
+		btn.DoRightClick = function()
+			callFuncRight(self, self.CurrentKey)
+		end
 	else
 		btn.DoRightClick = btn.DoClick
 	end
@@ -37,22 +46,20 @@ local function DefineMoreOptionsLeftClick(self, callFuncLeft, callFuncRight)
 end
 
 function pace.CreateSearchList(property, key, name, add_columns, get_list, get_current, add_line, select_value, select_value_search)
-	select_value = select_value or function(val, key) return val end
+	select_value = select_value or function(val, key)
+		return val
+	end
 	select_value_search = select_value_search or select_value
 	pace.SafeRemoveSpecialPanel()
-
 	local frame = vgui.Create("DFrame")
 	frame:SetTitle(L(name))
 	frame:SetSize(300, 300)
 	frame:Center()
 	frame:SetSizable(true)
-
 	local list = vgui.Create("DListView", frame)
 	list:Dock(FILL)
 	list:SetMultiSelect(false)
-
 	add_columns(list)
-
 	list.OnRowSelected = function(_, id, line)
 		local val = select_value(line.list_val, line.list_key)
 
@@ -65,12 +72,10 @@ function pace.CreateSearchList(property, key, name, add_columns, get_list, get_c
 			end
 		end
 	end
-
 	local first = NULL
 
 	local function build(find)
 		list:Clear()
-
 		local cur = get_current()
 		local newList = {}
 
@@ -78,13 +83,21 @@ function pace.CreateSearchList(property, key, name, add_columns, get_list, get_c
 			table.insert(newList, {k, v, tostring(k), tostring(v)})
 		end
 
-		table.sort(newList, function(a, b) return a[1] < b[1] end)
-		if find then find = find:lower() end
+		table.sort(newList, function(a, b)
+			return a[1] < b[1]
+		end)
+
+		if find then
+			find = find:lower()
+		end
 
 		for i, data in ipairs(newList) do
 			local key, val, keyFriendly, valFriendly = data[1], data[2], data[3], data[4]
-			if (not find or find == "") or tostring(select_value_search(valFriendly, keyFriendly)):lower():find(find) then
 
+			if
+				(not find or find == "") or
+				tostring(select_value_search(valFriendly, keyFriendly)):lower():find(find)
+			then
 				local pnl = add_line(list, key, val)
 				pnl.list_key = key
 				pnl.list_val = val
@@ -102,15 +115,20 @@ function pace.CreateSearchList(property, key, name, add_columns, get_list, get_c
 
 	local search = vgui.Create("DTextEntry", frame)
 	search:Dock(BOTTOM)
-	search.OnTextChanged = function() build(search:GetValue()) end
-	search.OnEnter = function() if first:IsValid() then list:SelectItem(first) end frame:Remove() end
+	search.OnTextChanged = function()
+		build(search:GetValue())
+	end
+	search.OnEnter = function()
+		if first:IsValid() then
+			list:SelectItem(first)
+		end
+
+		frame:Remove()
+	end
 	search:RequestFocus()
 	frame:MakePopup()
-
 	build()
-
 	pace.ActiveSpecialPanel = frame
-
 	return frame
 end
 
@@ -125,9 +143,11 @@ end
 
 pac.AddHook("GUIMousePressed", "pace_SafeRemoveSpecialPanel", function()
 	local pnl = pace.ActiveSpecialPanel
+
 	if pnl:IsValid() then
-		local x,y = input.GetCursorPos()
+		local x, y = input.GetCursorPos()
 		local _x, _y = pnl:GetPos()
+
 		if x < _x or y < _y or x > _x + pnl:GetWide() or y > _y + pnl:GetTall() then
 			pnl:Remove()
 		end
@@ -136,7 +156,6 @@ end)
 
 do -- container
 	local PANEL = {}
-
 	PANEL.ClassName = "properties_container"
 	PANEL.Base = "DPanel"
 
@@ -156,7 +175,7 @@ do -- container
 		end
 
 		self.AltLine = self.alt_line
-		derma.SkinHook( "Paint", "CategoryButton", self, w, h )
+		derma.SkinHook("Paint", "CategoryButton", self, w, h)
 	end
 
 	function PANEL:SetContent(pnl)
@@ -166,6 +185,7 @@ do -- container
 
 	function PANEL:PerformLayout()
 		local pnl = self.content or NULL
+
 		if pnl:IsValid() then
 			pnl:SetPos(0, 0)
 			pnl:SetSize(self:GetSize())
@@ -177,14 +197,11 @@ end
 
 do -- list
 	local PANEL = {}
-
 	PANEL.ClassName = "properties"
 	PANEL.Base = "Panel"
-
 	AccessorFunc(PANEL, "item_height", "ItemHeight")
 
 	function PANEL:Init()
-
 		local search = vgui.Create("DTextEntry", self)
 		search:Dock(TOP)
 		search.Kill = function()
@@ -193,18 +210,16 @@ do -- list
 			search:SetText("")
 			search:SetEnabled(false)
 
-			for i,v in ipairs(self.List) do
+			for i, v in ipairs(self.List) do
 				v.left:SetVisible(true)
 				v.right:SetVisible(true)
 			end
 		end
-
 		search.OnEnter = search.Kill
-
 		search.OnTextChanged = function()
 			self.scr:SetScroll(0)
-
 			local pattern = search:GetValue()
+
 			if pattern == "" and search.searched_something then
 				search:Kill()
 				search:KillFocus()
@@ -212,7 +227,7 @@ do -- list
 				search.searched_something = true
 				local group
 
-				for i,v in ipairs(self.List) do
+				for i, v in ipairs(self.List) do
 					local found = false
 
 					if v.panel then
@@ -237,18 +252,17 @@ do -- list
 					end
 				end
 
-				for i,v in ipairs(self.List) do
+				for i, v in ipairs(self.List) do
 					if not v.panel then
 						local hide_group = true
 
-						for i = i+1, #self.List do
+						for i = i + 1, #self.List do
 							local val = self.List[i]
-							if not val.panel then
-								break
-							end
+							if not val.panel then break end
 
 							if val.left:IsVisible() then
 								hide_group = false
+
 								break
 							end
 						end
@@ -263,47 +277,41 @@ do -- list
 		end
 		search:SetVisible(false)
 		self.search = search
-
 		self.List = {}
-
 		local divider = vgui.Create("DHorizontalDivider", self)
-
 		local left = vgui.Create("DPanelList", divider)
-			divider:SetLeft(left)
+		divider:SetLeft(left)
 		self.left = left
-
 		local right = vgui.Create("DPanelList", divider)
-			divider:SetRight(right)
+		divider:SetRight(right)
 		self.right = right
-
 		divider:SetDividerWidth(3)
-
 		surface.SetFont(pace.CurrentFont)
-		local w,h = surface.GetTextSize("W")
+		local w, h = surface.GetTextSize("W")
 		local size = h + 2
-
 		self:SetItemHeight(size)
-
 		self.div = divider
 
 		function divider:PerformLayout()
 			DHorizontalDivider.PerformLayout(self)
 
 			if self.m_pLeft then
-				self.m_pLeft:SetWide( self.m_iLeftWidth + self.m_iDividerWidth )
+				self.m_pLeft:SetWide(self.m_iLeftWidth + self.m_iDividerWidth)
 			end
 		end
 
 		local scroll = vgui.Create("DVScrollBar", self)
 		scroll:Dock(RIGHT)
 		self.scr = scroll
-
-		left.OnMouseWheeled = function(_, delta) scroll:OnMouseWheeled(delta) end
+		left.OnMouseWheeled = function(_, delta)
+			scroll:OnMouseWheeled(delta)
+		end
 		--right.OnMouseWheeled = function(_, delta) scroll:OnMouseWheeled(delta) end
 	end
 
 	function PANEL:GetHeight(hack)
-		return (self.item_height * (#self.List+(hack or 1))) - (self.div:GetDividerWidth() + 1)
+		return 
+			(self.item_height * (#self.List + (hack or 1))) - (self.div:GetDividerWidth() + 1)
 	end
 
 	function PANEL:PerformLayout()
@@ -313,7 +321,7 @@ do -- list
 		self.div:SetPos(0, (self.search:IsVisible() and self.search:GetTall() or 0) + self.scr:GetOffset())
 		local w, h = self:GetSize()
 		local scroll_width = self.scr.Enabled and self.scr:GetWide() or 0
-		self.div:SetLeftWidth((w/2) - scroll_width)
+		self.div:SetLeftWidth((w / 2) - scroll_width)
 		self.div:SetSize(w - scroll_width, self:GetHeight())
 	end
 
@@ -324,84 +332,92 @@ do -- list
 	pace.CollapsedProperties = pace.luadata.ReadFile("pac3_editor/collapsed.txt") or {}
 
 	function PANEL:AddCollapser(name)
-		for i,v in ipairs(self.List) do
-			if v.group == name then
-				return
-			end
+		for i, v in ipairs(self.List) do
+			if v.group == name then return end
 		end
 
 		local left = vgui.Create("DButton", self)
 		left:SetTall(self:GetItemHeight())
 		left:SetText("")
 		left.text = name
-
 		self.left:AddItem(left)
-
 		left.DoClick = function()
 			pace.CollapsedProperties[name] = not pace.CollapsedProperties[name]
 			pace.PopulateProperties(pace.current_part)
-
 			pace.Editor:InvalidateLayout()
 			pace.luadata.WriteFile("pac3_editor/collapsed.txt", pace.CollapsedProperties)
 		end
-
-		left.GetValue = function() return name end
-
+		left.GetValue = function()
+			return name
+		end
 		local right = vgui.Create("DButton", self)
 		right:SetTall(self:GetItemHeight())
 		right:SetText("")
 		self.right:AddItem(right)
-
 		right.DoClick = left.DoClick
-
 		left.Paint = function(_, w, h)
 			--surface.SetDrawColor(left:GetSkin().Colours.Category.Header)
 			--surface.DrawRect(0,0,w*2,h)
-			left:GetSkin().tex.CategoryList.Header( 0, 0, w*2, h )
-
+			left:GetSkin().tex.CategoryList.Header(0, 0, w * 2, h)
 			surface.SetFont(pace.CurrentFont)
-
 			local txt = L(name)
 			local _, _h = surface.GetTextSize(txt)
-			local middle = h/2 - _h/2
+			local middle = h / 2 - _h / 2
 
 			--surface.SetTextPos(11, middle)
 			--surface.SetTextColor(derma.Color("text_dark", self, color_black))
 			--surface.SetFont(pace.CurrentFont)
 			--surface.DrawText(txt)
-			draw.TextShadow({text = txt, font = pace.CurrentFont, pos = {11, middle}, color = left:GetSkin().Colours.Category.Header}, 1, 100)
-
+			draw.TextShadow(
+				{
+					text = txt,
+					font = pace.CurrentFont,
+					pos = {11, middle},
+					color = left:GetSkin().Colours.Category.Header,
+				},
+				1,
+				100)
 			local txt = (pace.CollapsedProperties[name] and "+" or "-")
 			local w = surface.GetTextSize(txt)
-			draw.TextShadow({text = txt, font = pace.CurrentFont, pos = {6-w*0.5, middle}, color = left:GetSkin().Colours.Category.Header}, 1, 100)
-
+			draw.TextShadow(
+				{
+					text = txt,
+					font = pace.CurrentFont,
+					pos = {6 - w * 0.5, middle},
+					color = left:GetSkin().Colours.Category.Header,
+				},
+				1,
+				100)
 		end
-
-		right.Paint = function(_,w,h)
-			left:GetSkin().tex.CategoryList.Header(-w,0,w*2,h)
+		right.Paint = function(_, w, h)
+			left:GetSkin().tex.CategoryList.Header(-w, 0, w * 2, h)
 		end
-
-		table.insert(self.List, {left = left, right = right, panel = var, key = key, group = name})
-
+		table.insert(
+			self.List,
+			{
+				left = left,
+				right = right,
+				panel = var,
+				key = key,
+				group = name,
+			})
 		return #self.List
 	end
 
 	function PANEL:AddKeyValue(key, var, pos, obj, udata, group)
 		local btn = pace.CreatePanel("properties_label")
-			btn:SetTall(self:GetItemHeight())
-			btn:SetValue(L((udata and udata.editor_friendly or key):gsub("%u", " %1"):lower()):Trim())
+		btn:SetTall(self:GetItemHeight())
+		btn:SetValue(L((udata and udata.editor_friendly or key):gsub("%u", " %1"):lower()):Trim())
 
-			if obj then
-				btn.key_name = key
-				btn.part_namepart_name = obj.ClassName
-			end
-
-
+		if obj then
+			btn.key_name = key
+			btn.part_namepart_name = obj.ClassName
+		end
 
 		local pnl = pace.CreatePanel("properties_container")
 		pnl:SetTall(self:GetItemHeight())
 		pnl.right = true
-		pnl.alt_line = #self.List%2 == 1
+		pnl.alt_line = #self.List % 2 == 1
 		btn.alt_line = pnl.alt_line
 
 		if type(var) == "Panel" then
@@ -410,7 +426,6 @@ do -- list
 
 		self.left:AddItem(btn)
 		self.right:AddItem(pnl)
-
 		local pos
 
 		if group then
@@ -418,8 +433,10 @@ do -- list
 				if v.group == group then
 					for i = i + 1, #self.List do
 						local v = self.List[i]
+
 						if v.group or not v then
 							pos = i
+
 							break
 						end
 					end
@@ -430,7 +447,6 @@ do -- list
 		if pos then
 			table.insert(self.left.Items, pos, table.remove(self.left.Items))
 			table.insert(self.right.Items, pos, table.remove(self.right.Items))
-
 			table.insert(self.List, pos, {left = btn, right = pnl, panel = var, key = key})
 		else
 			table.insert(self.List, {left = btn, right = pnl, panel = var, key = key})
@@ -445,12 +461,13 @@ do -- list
 
 		self.left:Clear()
 		self.right:Clear()
-
 		self.List = {}
 	end
 
 	function PANEL:Populate(obj, dont_clear, group_override)
-		if dont_clear == nil then self:Clear() end
+		if dont_clear == nil then
+			self:Clear()
+		end
 
 		local tbl = {}
 
@@ -466,20 +483,35 @@ do -- list
 				udata = pac.GetPropertyUserdata(obj, key)
 			end
 
-			if udata and udata.hidden then goto CONTINUE end
-			if key == "OwnerName" and obj.ClassName ~= "group" then goto CONTINUE end
+			if udata and udata.hidden then
+				goto CONTINUE
+			end
+
+			if key == "OwnerName" and obj.ClassName ~= "group" then
+				goto CONTINUE
+			end
 
 			if not obj.ClassName or not obj.PropertyWhitelist or table.HasValue(obj.PropertyWhitelist, key) then
 				local group = group_override or (udata and udata.group) or "generic"
 				tbl[group] = tbl[group] or {}
-				table.insert(tbl[group], {key = key, val = val, callback = callback, udata = udata})
+				table.insert(
+					tbl[group],
+					{
+						key = key,
+						val = val,
+						callback = callback,
+						udata = udata,
+					})
 			end
+
 			::CONTINUE::
 		end
 
 		for group, vars in pairs(tbl) do
 			if not obj.ClassName then
-				table.sort(tbl[group], function(a, b) return a.key > b.key end)
+				table.sort(tbl[group], function(a, b)
+					return a.key > b.key
+				end)
 			else
 				local sorted_variables = {}
 				local done = {}
@@ -491,6 +523,7 @@ do -- list
 								if not done[name] then
 									table.insert(sorted_variables, v)
 									done[name] = true
+
 									break
 								end
 							end
@@ -505,12 +538,14 @@ do -- list
 								if not done[name] then
 									table.insert(sorted_variables, v)
 									done[name] = true
+
 									break
 								end
 							end
 						end
 					end
 				end
+
 				tbl[group] = sorted_variables
 			end
 		end
@@ -521,7 +556,10 @@ do -- list
 			for k, v in pairs(tbl) do
 				table.insert(sorted_groups, {key = k, val = v})
 			end
-			table.sort(sorted_groups, function(a, b) return a.key > b.key end)
+
+			table.sort(sorted_groups, function(a, b)
+				return a.key > b.key
+			end)
 		else
 			local done = {}
 			local temp = {}
@@ -533,6 +571,7 @@ do -- list
 					if name == k and not done[k] then
 						table.insert(sorted_groups, {key = k, val = v})
 						done[k] = true
+
 						break
 					end
 				end
@@ -543,11 +582,14 @@ do -- list
 
 		for i, tbl in ipairs(sorted_groups) do
 			local group, tbl = tbl.key, tbl.val
+
 			for pos, data in ipairs(tbl) do
 				local key, val, udata = data.key, data.val, data.udata
 				local group_pos = 0
 
-				if obj.ClassName and pace.IsInBasicMode() and not pace.BasicProperties[key] then goto CONTINUE end
+				if obj.ClassName and pace.IsInBasicMode() and not pace.BasicProperties[key] then
+					goto CONTINUE
+				end
 
 				local pnl
 				local T = type(val):lower()
@@ -565,7 +607,9 @@ do -- list
 					T = "string"
 				end
 
-				if pace.CollapsedProperties[group] ~= nil and pace.CollapsedProperties[group] then goto CONTINUE end
+				if pace.CollapsedProperties[group] ~= nil and pace.CollapsedProperties[group] then
+					goto CONTINUE
+				end
 
 				pnl = pace.CreatePanel("properties_" .. T)
 
@@ -590,11 +634,9 @@ do -- list
 									self,
 									self.CurrentKey,
 									L(key),
-
 									function(list)
 										list:AddColumn("enum")
 									end,
-
 									function()
 										local tbl
 
@@ -624,32 +666,32 @@ do -- list
 
 										return enums
 									end,
-
 									function()
 										return pace.current_part[key]
 									end,
-
 									function(list, key, val)
 										return list:AddLine(key)
 									end,
-
 									function(val, key)
 										return val
-									end
-								)
+									end)
 							end)
 						end
+
 						if udata.editor_sensitivity or udata.editor_clamp or udata.editor_round then
 							pnl.LimitValue = function(self, num)
 								if udata.editor_sensitivity then
 									self.sens = udata.editor_sensitivity
 								end
+
 								if udata.editor_clamp then
 									num = math.Clamp(num, unpack(udata.editor_clamp))
 								end
+
 								if udata.editor_round then
 									num = math.Round(num)
 								end
+
 								return num
 							end
 						elseif udata.editor_onchange then
@@ -663,12 +705,12 @@ do -- list
 						if pnl.ExtraPopulate then
 							table.insert(pace.extra_populates, {pnl = pnl, func = pnl.ExtraPopulate})
 							pnl:Remove()
+
 							goto CONTINUE
 						end
 
 						local val = obj["Get" .. key](obj)
 						pnl:SetValue(val)
-
 						pnl.OnValueChanged = function(val)
 							if T == "number" then
 								val = tonumber(val) or 0
@@ -678,13 +720,18 @@ do -- list
 
 							pace.Call("VariableChanged", obj, key, val)
 						end
-
 						self:AddKeyValue(key, pnl, pos, obj, udata)
 					else
 						pnl.CurrentKey = key
 						pnl:SetValue(val)
 						pnl.OnValueChanged = data.callback
-						self:AddKeyValue(key, pnl, pos, nil, udata, group)
+						self:AddKeyValue(
+							key,
+							pnl,
+							pos,
+							nil,
+							udata,
+							group)
 					end
 				end
 
@@ -698,29 +745,25 @@ end
 
 do -- non editable string
 	local DTooltip = _G.DTooltip
+
 	if DTooltip and DTooltip.PositionTooltip then
 		pace_Old_PositionTooltip = pace_Old_PositionTooltip or DTooltip.PositionTooltip
+
 		function DTooltip.PositionTooltip(self, ...)
 			if self.TargetPanel.pac_tooltip_hack then
 				local args = {pace_Old_PositionTooltip(self, ...)}
 
-				if (  not IsValid( self.TargetPanel ) ) then
+				if (not IsValid(self.TargetPanel)) then
 					self:Remove()
-					return;
+					return
 				end
 
 				self:PerformLayout()
-
-				local x, y      = input.GetCursorPos()
-				local w, h      = self:GetSize()
-
-				local lx, ly    = self.TargetPanel:LocalToScreen( 0, 0 )
-
-				y = math.min( y, ly - h )
-
-				self:SetPos( x, y )
-
-
+				local x, y = input.GetCursorPos()
+				local w, h = self:GetSize()
+				local lx, ly = self.TargetPanel:LocalToScreen(0, 0)
+				y = math.min(y, ly - h)
+				self:SetPos(x, y)
 				return unpack(args)
 			end
 
@@ -728,26 +771,26 @@ do -- non editable string
 		end
 	end
 
-
 	local PANEL = {}
-
 	PANEL.ClassName = "properties_label"
 	PANEL.Base = "pace_properties_container"
 
 	function PANEL:SetValue(str)
 		local lbl = vgui.Create("DLabel")
-			lbl:SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text)
-			lbl:SetFont(pace.CurrentFont)
-			lbl:SetText(str)
-			lbl:SetTextInset(10, 0)
-			lbl:SizeToContents()
-			lbl.pac_tooltip_hack = true
-			self.lbl = lbl
+		lbl:SetTextColor(
+			self.alt_line and
+			self:GetSkin().Colours.Category.AltLine.Text or
+			self:GetSkin().Colours.Category.Line.Text)
+		lbl:SetFont(pace.CurrentFont)
+		lbl:SetText(str)
+		lbl:SetTextInset(10, 0)
+		lbl:SizeToContents()
+		lbl.pac_tooltip_hack = true
+		self.lbl = lbl
 		self:SetContent(lbl)
 
 		if self.part_name and self.key_name then
 			lbl.OnCursorEntered = function()
-
 				if lbl.wiki_info then
 					lbl:SetTooltip(lbl.wiki_info)
 					return
@@ -755,6 +798,7 @@ do -- non editable string
 
 				if not lbl.fetching_wiki then
 					lbl:SetCursor("waitarrow")
+
 					pace.GetPropertyDescription(self.part_name, self.key_name, function(str)
 						if lbl:IsValid() then
 							lbl:SetTooltip(str)
@@ -763,6 +807,7 @@ do -- non editable string
 							lbl:SetCursor("arrow")
 						end
 					end)
+
 					lbl.fetching_wiki = true
 				end
 			end
@@ -778,24 +823,21 @@ end
 
 do -- base editable
 	local PANEL = {}
-
 	PANEL.ClassName = "properties_base_type"
 	PANEL.Base = "DLabel"
-
 	PANEL.SingleClick = true
 
 	function PANEL:OnCursorMoved()
 		self:SetCursor("hand")
 	end
 
-	function PANEL:OnValueChanged()
-
+	function PANEL:OnValueChanged() 
 	end
 
 	function PANEL:Init(...)
 		if DLabel and DLabel.Init then
 			local status = DLabel.Init(self, ...)
-			self:SetText('')
+			self:SetText("")
 			self:SetMouseInputEnabled(true)
 			return status
 		end
@@ -815,15 +857,18 @@ do -- base editable
 
 	function PANEL:SetValue(var, skip_encode)
 		if self.editing then return end
-
 		local value = skip_encode and var or self:Encode(var)
+
 		if type(value) == "number" then
 			-- visually round numbers so 0.6 doesn't show up as 0.600000000001231231 on wear
 			value = math.Round(value, 7)
 		end
-		local str = tostring(value)
 
-		self:SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text)
+		local str = tostring(value)
+		self:SetTextColor(
+			self.alt_line and
+			self:GetSkin().Colours.Category.AltLine.Text or
+			self:GetSkin().Colours.Category.Line.Text)
 		self:SetFont(pace.CurrentFont)
 		self:SetText("  " .. str) -- ugh
 		self:SizeToContents()
@@ -854,16 +899,16 @@ do -- base editable
 			--  self:Restart()
 			--else
 				self.MousePressing = true
-				if self:MousePress(true) == false then return end
-				if self.SingleClick or (self.last_press or 0) > RealTime() then
-					self:EditText()
-					self:DoubleClick()
-					self.last_press = 0
+			if self:MousePress(true) == false then return end
 
-					last_focus = self
-				else
-					self.last_press = RealTime() + 0.2
-				end
+			if self.SingleClick or (self.last_press or 0) > RealTime() then
+				self:EditText()
+				self:DoubleClick()
+				self.last_press = 0
+				last_focus = self
+			else
+				self.last_press = RealTime() + 0.2
+			end
 			--end
 		end
 
@@ -878,11 +923,13 @@ do -- base editable
 	function PANEL:PopulateContextMenu(menu)
 		menu:AddOption(L"copy", function()
 			pace.clipboard = pac.class.Copy(self:GetValue())
-		end):SetImage(pace.MiscIcons.copy)
+		end)
+		:SetImage(pace.MiscIcons.copy)
 		menu:AddOption(L"paste", function()
 			self:SetValue(pac.class.Copy(pace.clipboard))
 			self.OnValueChanged(self:GetValue())
-		end):SetImage(pace.MiscIcons.paste)
+		end)
+		:SetImage(pace.MiscIcons.paste)
 		menu:AddSpacer()
 		menu:AddOption(L"reset", function()
 			if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
@@ -890,7 +937,8 @@ do -- base editable
 				self:SetValue(val)
 				self.OnValueChanged(val)
 			end
-		end):SetImage(pace.MiscIcons.clear)
+		end)
+		:SetImage(pace.MiscIcons.clear)
 	end
 
 	function PANEL:OnMouseReleased()
@@ -902,15 +950,14 @@ do -- base editable
 		if not input.IsMouseDown(MOUSE_LEFT) then
 			self.MousePressing = false
 		end
+
 		return self.MousePressing
 	end
 
-	function PANEL:DoubleClick()
-
+	function PANEL:DoubleClick() 
 	end
 
-	function PANEL:MousePress()
-
+	function PANEL:MousePress() 
 	end
 
 	function PANEL:Restart()
@@ -921,7 +968,6 @@ do -- base editable
 	function PANEL:EditText()
 		local oldText = self:GetText()
 		self:SetText("")
-
 		local pnl = vgui.Create("DTextEntry")
 		self.editing = pnl
 		pnl:SetFont(pace.CurrentFont)
@@ -932,19 +978,19 @@ do -- base editable
 		pnl:SetDrawLanguageID(languageID:GetBool())
 		pnl:RequestFocus()
 		pnl:SelectAllOnFocus(true)
-
-		pnl.OnTextChanged = function() oldText = pnl:GetValue() end
-
+		pnl.OnTextChanged = function()
+			oldText = pnl:GetValue()
+		end
 		local hookID = tostring({})
 		local textEntry = pnl
 		local delay = os.clock() + 0.1
 
-		pac.AddHook('Think', hookID, function(code)
-			if not IsValid(self) or not IsValid(textEntry) then return pac.RemoveHook('Think', hookID) end
+		pac.AddHook("Think", hookID, function(code)
+			if not IsValid(self) or not IsValid(textEntry) then return pac.RemoveHook("Think", hookID) end
 			if textEntry:IsHovered() or self:IsHovered() then return end
 			if delay > os.clock() then return end
 			if not input.IsMouseDown(MOUSE_LEFT) and not input.IsKeyDown(KEY_ESCAPE) then return end
-			pac.RemoveHook('Think', hookID)
+			pac.RemoveHook("Think", hookID)
 			self.editing = false
 			pace.BusyWithProperties = NULL
 			textEntry:Remove()
@@ -957,37 +1003,32 @@ do -- base editable
 		--pnl:Dock(FILL)
 		local x, y = self:LocalToScreen()
 		local inset_x = self:GetTextInset()
-		pnl:SetPos(x+5 + inset_x, y)
+		pnl:SetPos(x + 5 + inset_x, y)
 		pnl:SetSize(self:GetSize())
 		pnl:SetWide(ScrW())
 		pnl:MakePopup()
-
 		pnl.OnEnter = function()
 			pace.BusyWithProperties = NULL
 			self.editing = false
-
 			pnl:Remove()
-
 			self:SetValue(tostring(self:Encode(pnl:GetValue() or "")), true)
 			self.OnValueChanged(self:Decode(self:GetValue()))
 		end
-
 		local old = pnl.Paint
 		pnl.Paint = function(...)
-			if not self:IsValid() then pnl:Remove() return end
+			if not self:IsValid() then
+				pnl:Remove()
+				return
+			end
 
 			surface.SetFont(pnl:GetFont())
 			local w = surface.GetTextSize(pnl:GetValue()) + 6
-
 			surface.DrawRect(0, 0, w, pnl:GetTall())
 			surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
 			surface.DrawOutlinedRect(0, 0, w, pnl:GetTall())
-
 			pnl:SetWide(w)
-
 			old(...)
 		end
-
 		pace.BusyWithProperties = pnl
 	end
 
@@ -996,10 +1037,17 @@ do -- base editable
 	local function click()
 		if not input.IsMouseDown(MOUSE_LEFT) then return end
 		local pnl = pace.BusyWithProperties
+
 		if pnl and pnl ~= true and pnl:IsValid() then
 			local x, y = input.GetCursorPos()
 			local _x, _y = pnl:GetParent():LocalToScreen()
-			if x < _x or y < _y or x > _x + pnl:GetParent():GetWide() or y > _y + pnl:GetParent():GetTall() then
+
+			if
+				x < _x or
+				y < _y or
+				x > _x + pnl:GetParent():GetWide() or
+				y > _y + pnl:GetParent():GetTall()
+			then
 				pnl:OnEnter()
 			end
 		end
@@ -1039,34 +1087,33 @@ end
 
 do -- string
 	local PANEL = {}
-
 	PANEL.ClassName = "properties_string"
 	PANEL.Base = "pace_properties_base_type"
-
 	PANEL.SingleClick = true
-
 	pace.RegisterPanel(PANEL)
 end
 
 do -- vector
 	local function VECTOR(ctor, type, arg1, arg2, arg3, encode, special_callback, sens)
 		local PANEL = {}
-
 		PANEL.ClassName = "properties_" .. type
 		PANEL.Base = "pace_properties_container"
-
 		PANEL.vector_type = type
 
 		function PANEL:Init(...)
-			self.vector = ctor(0,0,0)
-
+			self.vector = ctor(0, 0, 0)
 			local left = pace.CreatePanel("properties_number", self)
 			local middle = pace.CreatePanel("properties_number", self)
 			local right = pace.CreatePanel("properties_number", self)
-
-			left.PopulateContextMenu = function(_, menu) self:PopulateContextMenu(menu) end
-			middle.PopulateContextMenu = function(_, menu) self:PopulateContextMenu(menu) end
-			right.PopulateContextMenu = function(_, menu) self:PopulateContextMenu(menu) end
+			left.PopulateContextMenu = function(_, menu)
+				self:PopulateContextMenu(menu)
+			end
+			middle.PopulateContextMenu = function(_, menu)
+				self:PopulateContextMenu(menu)
+			end
+			right.PopulateContextMenu = function(_, menu)
+				self:PopulateContextMenu(menu)
+			end
 
 			if encode then
 				left.Encode = encode
@@ -1089,7 +1136,6 @@ do -- vector
 				elseif input.IsKeyDown(KEY_LSHIFT) then
 					middle:SetValue(num)
 					self.vector[arg2] = num
-
 					right:SetValue(num)
 					self.vector[arg3] = num
 				end
@@ -1101,7 +1147,6 @@ do -- vector
 					self:OnValueSet(self.vector)
 				end
 			end
-
 			middle:SetMouseInputEnabled(true)
 			middle.OnValueChanged = function(num)
 				self.vector[arg2] = num
@@ -1111,7 +1156,6 @@ do -- vector
 				elseif input.IsKeyDown(KEY_LSHIFT) then
 					left:SetValue(num)
 					self.vector[arg1] = num
-
 					right:SetValue(num)
 					self.vector[arg3] = num
 				end
@@ -1123,7 +1167,6 @@ do -- vector
 					self:OnValueSet(self.vector)
 				end
 			end
-
 			right:SetMouseInputEnabled(true)
 			right.OnValueChanged = function(num)
 				self.vector[arg3] = num
@@ -1133,7 +1176,6 @@ do -- vector
 				elseif input.IsKeyDown(KEY_LSHIFT) then
 					middle:SetValue(num)
 					self.vector[arg2] = num
-
 					left:SetValue(num)
 					self.vector[arg1] = num
 				end
@@ -1145,7 +1187,6 @@ do -- vector
 					self:OnValueSet(self.vector)
 				end
 			end
-
 			self.left = left
 			self.middle = middle
 			self.right = right
@@ -1155,25 +1196,33 @@ do -- vector
 				btn:SetSize(16, 16)
 				btn:Dock(RIGHT)
 				btn:SetText("...")
-				btn.DoClick = function() self:MoreOptionsLeftClick(self.CurrentKey) end
-				btn.DoRightClick = self.MoreOptionsRightClick and function() self:MoreOptionsRightClick(self.CurrentKey) end or btn.DoClick
+				btn.DoClick = function()
+					self:MoreOptionsLeftClick(self.CurrentKey)
+				end
+				btn.DoRightClick = self.MoreOptionsRightClick and
+					function()
+						self:MoreOptionsRightClick(self.CurrentKey)
+					end or
+					btn.DoClick
 
 				if type == "color" or type == "color2" then
 					btn:SetText("")
-					btn.Paint = function(_,w,h)
+					btn.Paint = function(_, w, h)
 						if type == "color2" then
-							surface.SetDrawColor(self.vector.x*255, self.vector.y*255, self.vector.z*255, 255)
+							surface.SetDrawColor(self.vector.x * 255, self.vector.y * 255, self.vector.z * 255, 255)
 						else
 							surface.SetDrawColor(self.vector.x, self.vector.y, self.vector.z, 255)
 						end
-						surface.DrawRect(0,0,w,h)
+
+						surface.DrawRect(0, 0, w, h)
 						surface.SetDrawColor(self:GetSkin().Colours.Properties.Border)
-						surface.DrawOutlinedRect(0,0,w,h)
+						surface.DrawOutlinedRect(0, 0, w, h)
 					end
 				end
 			end
 
-			self.Paint = function() end
+			self.Paint = function() 
+			end
 		end
 
 		PANEL.MoreOptionsLeftClick = special_callback
@@ -1182,16 +1231,17 @@ do -- vector
 			self.left:SetValue(0)
 			self.middle:SetValue(0)
 			self.right:SetValue(0)
-
 			self.OnValueChanged(self.vector)
 		end
 
 		function PANEL:PopulateContextMenu(menu)
 			menu:AddOption(L"copy", function()
 				pace.clipboard = pac.class.Copy(self.vector)
-			end):SetImage(pace.MiscIcons.copy)
+			end)
+			:SetImage(pace.MiscIcons.copy)
 			menu:AddOption(L"paste", function()
 				local val = pac.class.Copy(pace.clipboard)
+
 				if _G.type(val) == "number" then
 					val = ctor(val, val, val)
 				elseif _G.type(val) == "Vector" and type == "angle" then
@@ -1202,10 +1252,10 @@ do -- vector
 
 				if _G.type(val):lower() == type or type == "color" then
 					self:SetValue(val)
-
 					self.OnValueChanged(self.vector)
 				end
-			end):SetImage(pace.MiscIcons.paste)
+			end)
+			:SetImage(pace.MiscIcons.paste)
 			menu:AddSpacer()
 			menu:AddOption(L"reset", function()
 				if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
@@ -1213,12 +1263,12 @@ do -- vector
 					self:SetValue(val)
 					self.OnValueChanged(val)
 				end
-			end):SetImage(pace.MiscIcons.clear)
+			end)
+			:SetImage(pace.MiscIcons.clear)
 		end
 
 		function PANEL:SetValue(vec)
 			self.vector = vec
-
 			self.left:SetValue(math.Round(vec[arg1], 4))
 			self.middle:SetValue(math.Round(vec[arg2], 4))
 			self.right:SetValue(math.Round(vec[arg3], 4))
@@ -1227,18 +1277,15 @@ do -- vector
 		function PANEL:PerformLayout()
 			self.left:SizeToContents()
 			self.left:SetWide(math.max(self.left:GetWide(), 22))
-
 			self.middle:SizeToContents()
 			self.middle:SetWide(math.max(self.middle:GetWide(), 22))
-
 			self.right:SizeToContents()
 			self.right:SetWide(math.max(self.right:GetWide(), 22))
-
 			self.middle:MoveRightOf(self.left, 10)
 			self.right:MoveRightOf(self.middle, 10)
 		end
 
-		function PANEL:OnValueChanged(vec)
+		function PANEL:OnValueChanged(vec) 
 		end
 
 		pace.RegisterPanel(PANEL)
@@ -1264,9 +1311,7 @@ do -- vector
 			r, g, b = str:match("#?(..)(..)(..)")
 		end
 
-		if r and g and b then
-			return Color(tonumber(r, 16) or 255, tonumber(g, 16) or 255, tonumber(b, 16) or 255)
-		end
+		if r and g and b then return Color(tonumber(r, 16) or 255, tonumber(g, 16) or 255, tonumber(b, 16) or 255) end
 	end
 
 	local function fromColorStr(str)
@@ -1283,11 +1328,15 @@ do -- vector
 	local function uncodeValue(valIn)
 		local fromHex = fromhex(valIn)
 		local fromShareXColorStr = fromColorStr(valIn)
-
 		return fromHex or fromShareXColorStr
 	end
 
-	VECTOR(Vector, "color", "x", "y", "z",
+	VECTOR(
+		Vector,
+		"color",
+		"x",
+		"y",
+		"z",
 		function(self, num) -- this function needs second argument
 			local pnum = tonumber(num)
 
@@ -1300,29 +1349,24 @@ do -- vector
 						parent.left:SetValue(uncode.r, true)
 						parent.middle:SetValue(uncode.g, true)
 						parent.right:SetValue(uncode.b, true)
-
 						parent.left.OnValueChanged(uncode.r)
 						parent.middle.OnValueChanged(uncode.g)
 						parent.right.OnValueChanged(uncode.b)
 					end)
 
-					return '0'
+					return "0"
 				end
 
-				return '0'
+				return "0"
 			end
 
 			return tostring(math.Clamp(math.Round(pnum or 0), 0, 255))
 		end,
-
 		function(self)
 			pace.SafeRemoveSpecialPanel()
-
 			local dlibbased = vgui.GetControlTable("DLibColorMixer")
-
 			local frm = vgui.Create("DFrame")
 			frm:SetTitle("Color")
-
 			pace.ShowSpecial(frm, self, 300)
 
 			if dlibbased then
@@ -1333,14 +1377,12 @@ do -- vector
 			clr:Dock(FILL)
 			clr:SetAlphaBar(false) -- Alpha isn't needed
 			clr:SetColor(Color(self.vector.x, self.vector.y, self.vector.z))
-
 			local html_color
 
 			if not dlibbased then
 				html_color = vgui.Create("DTextEntry", frm)
 				html_color:Dock(BOTTOM)
 				html_color:SetText(tohex(self.vector))
-
 				html_color.OnEnter = function()
 					local valGet = uncodeValue(html_color:GetValue())
 
@@ -1362,10 +1404,14 @@ do -- vector
 
 			pace.ActiveSpecialPanel = frm
 		end,
-		10
-	)
+		10)
 
-	VECTOR(Vector, "color2", "x", "y", "z",
+	VECTOR(
+		Vector,
+		"color2",
+		"x",
+		"y",
+		"z",
 		function(_, num)
 			num = tonumber(num) or 0
 
@@ -1375,15 +1421,11 @@ do -- vector
 
 			return tostring(num)
 		end,
-
 		function(self)
 			pace.SafeRemoveSpecialPanel()
-
 			local dlibbased = vgui.GetControlTable("DLibColorMixer")
-
 			local frm = vgui.Create("DFrame")
 			frm:SetTitle("color")
-
 			pace.ShowSpecial(frm, self, 300)
 
 			if dlibbased then
@@ -1394,7 +1436,6 @@ do -- vector
 			clr:Dock(FILL)
 			clr:SetAlphaBar(false)
 			clr:SetColor(Color(self.vector.x * 255, self.vector.y * 255, self.vector.z * 255))
-
 			local html_color
 
 			if not dlibbased then
@@ -1403,7 +1444,7 @@ do -- vector
 				end
 
 				local function fromhex(str)
-					local x,y,z = str:match("#?(..)(..)(..)")
+					local x, y, z = str:match("#?(..)(..)(..)")
 					return Vector(tonumber("0x" .. x), tonumber("0x" .. y), tonumber("0x" .. z)) / 255
 				end
 
@@ -1430,18 +1471,14 @@ do -- vector
 
 			pace.ActiveSpecialPanel = frm
 		end,
-		0.25
-	)
+		0.25)
 end
 
 do -- number
 	local PANEL = {}
-
 	PANEL.ClassName = "properties_number"
 	PANEL.Base = "pace_properties_base_type"
-
 	PANEL.sens = 1
-
 	PANEL.SingleClick = false
 
 	function PANEL:MousePress(bool)
@@ -1469,10 +1506,15 @@ do -- number
 	end
 
 	function PANEL:OnMouseWheeled(delta)
-		if not input.IsKeyDown(KEY_LCONTROL) then delta = delta / 10 end
-		if input.IsKeyDown(KEY_LALT) then delta = delta / 10 end
-		local val = self:GetValue() + (delta * self.sens)
+		if not input.IsKeyDown(KEY_LCONTROL) then
+			delta = delta / 10
+		end
 
+		if input.IsKeyDown(KEY_LALT) then
+			delta = delta / 10
+		end
+
+		local val = self:GetValue() + (delta * self.sens)
 		self:SetNumberValue(val)
 	end
 
@@ -1486,10 +1528,9 @@ do -- number
 
 			local delta = (self.mousey - gui.MouseY()) / 10
 			local val = (self.oldval or 0) + (delta * sens)
-
 			self:SetNumberValue(val)
 
-			if gui.MouseY()+1 >= ScrH() then
+			if gui.MouseY() + 1 >= ScrH() then
 				self.mousey = 0
 				self.oldval = val
 				input.SetCursorPos(gui.MouseX(), 0)
@@ -1504,6 +1545,7 @@ do -- number
 	function PANEL:Encode(num)
 		if not tonumber(num) then
 			local ok, res = pac.CompileExpression(num)
+
 			if ok then
 				num = res() or 0
 			end
@@ -1535,7 +1577,6 @@ end
 
 do -- boolean
 	local PANEL = {}
-
 	PANEL.ClassName = "properties_boolean"
 	PANEL.Base = "pace_properties_container"
 
@@ -1547,14 +1588,17 @@ do -- boolean
 			self.lbl:SetText(L(tostring(b)))
 		end
 		self.chck = chck
-
 		local lbl = vgui.Create("DLabel", self)
 		lbl:SetFont(pace.CurrentFont)
-		lbl:SetTextColor(self.alt_line and self:GetSkin().Colours.Category.AltLine.Text or self:GetSkin().Colours.Category.Line.Text)
+		lbl:SetTextColor(
+			self.alt_line and
+			self:GetSkin().Colours.Category.AltLine.Text or
+			self:GetSkin().Colours.Category.Line.Text)
 		self.lbl = lbl
 	end
 
-	function PANEL:Paint() end
+	function PANEL:Paint() 
+	end
 
 	function PANEL:SetValue(b)
 		self.chck:SetChecked(b)
@@ -1563,22 +1607,18 @@ do -- boolean
 		self.lbl:SetText(L(tostring(b)))
 	end
 
-	function PANEL:OnValueChanged()
-
+	function PANEL:OnValueChanged() 
 	end
 
 	function PANEL:PerformLayout()
 		self.BaseClass.PerformLayout(self)
-
 		local s = 4
-
-		self.chck:SetPos(s*0.5, s*0.5+1)
-		self.chck:SetSize(self:GetTall()-s, self:GetTall()-s)
-
+		self.chck:SetPos(s * 0.5, s * 0.5 + 1)
+		self.chck:SetSize(self:GetTall() - s, self:GetTall() - s)
 		self.lbl:MoveRightOf(self.chck, 5)
 		self.lbl:CenterVertical()
-		local w,h = self:GetParent():GetSize()
-		self:SetSize(w-2,h)
+		local w, h = self:GetParent():GetSize()
+		self:SetSize(w - 2, h)
 	end
 
 	pace.RegisterPanel(PANEL)

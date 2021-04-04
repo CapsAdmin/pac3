@@ -11,38 +11,35 @@ local function find_recursive_lua(dir, out)
 end
 
 local write_int32 = function(v)
-	return string.char(
-		bit.band(bit.rshift(v, 24), 0xFF),
-		bit.band(bit.rshift(v, 16), 0xFF),
-		bit.band(bit.rshift(v,  8), 0xFF),
-		bit.band(v, 0xFF)
-	)
+	return string.char(bit.band(bit.rshift(v, 24), 0xFF), bit.band(bit.rshift(v, 16), 0xFF), bit.band(bit.rshift(v, 8), 0xFF), bit.band(v, 0xFF))
 end
 
 local function crc128(str)
 	local hash = ""
-
 	hash = hash .. write_int32(tonumber(util.CRC(str)))
 	hash = hash .. write_int32(tonumber(util.CRC(hash)))
 	hash = hash .. write_int32(tonumber(util.CRC(hash)))
 	hash = hash .. write_int32(tonumber(util.CRC(hash)))
-
 	return hash
 end
 
 local function sum_bytes(bytes)
 	local num = 0
+
 	for i = 1, #bytes do
 		num = num + bytes:byte(i)
 	end
+
 	return num
 end
 
 local function bytes_to_hex(bytes)
 	local out = {}
+
 	for i = 1, #bytes do
 		out[i] = ("%x"):format(bytes:byte(i))
 	end
+
 	return table.concat(out)
 end
 
@@ -54,25 +51,26 @@ local hash_version = {}
 
 local function expand_paths(paths)
 	local out = {}
+
 	for _, path in ipairs(paths) do
 		if path:EndsWith("/") then
 			if path:StartWith("lua/") then
 				path = path:sub(5)
 			end
+
 			find_recursive_lua(path, out)
 		else
 			table.insert(out, path)
 		end
 	end
+
 	return out
 end
 
 function hash_version.LuaPaths(lua_paths)
 	local paths = expand_paths(lua_paths)
-
 	local hash = ""
 	local words = {}
-
 	local done = {}
 	local path_hash = {}
 
@@ -89,26 +87,20 @@ function hash_version.LuaPaths(lua_paths)
 
 		if lua then
 			lua:gsub("(%u%l+)", add_word)
-
 			path_hash[path] = HASH(lua)
 			hash = hash .. path_hash[path]
 		end
 	end
 
-	if not words[1] then
-		return {
-			version_name = "unknown version",
-			hash = "",
-			paths = {},
-		}
-	end
-
+	if not words[1] then return {
+		version_name = "unknown version",
+		hash = "",
+		paths = {},
+	} end
 	table.sort(words)
-
 	local final = HASH(hash)
 	local frac = sum_bytes(final)
 	local seed = frac + 1
-
 	math.randomseed(seed)
 
 	local function get_word()
@@ -117,15 +109,18 @@ function hash_version.LuaPaths(lua_paths)
 
 	local version_name = get_word() .. "-" .. get_word() .. "-" .. get_word()
 	local hash = bytes_to_hex(final)
-
 	math.randomseed(CurTime())
-
 	local list = {}
+
 	for path, hash in pairs(path_hash) do
-		table.insert(list, path .. " - " .. hash:gsub(".", function(char) return ("%x"):format(char:byte()) end))
+		table.insert(list, path .. " - " .. hash:gsub(".", function(char)
+			return ("%x"):format(char:byte())
+		end))
 	end
 
-	table.sort(list, function(a, b) return a:Split("-")[1] < b:Split("-")[1] end)
+	table.sort(list, function(a, b)
+		return a:Split("-")[1] < b:Split("-")[1]
+	end)
 
 	return {
 		version_name = version_name,

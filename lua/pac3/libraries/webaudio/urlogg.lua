@@ -2,47 +2,45 @@
 
 pac.webaudio = pac.webaudio or {}
 local webaudio = pac.webaudio
-
-webaudio.Debug        = 0
-
-webaudio.SampleRate   = nil
-
+webaudio.Debug = 0
+webaudio.SampleRate = nil
 webaudio.SpeedOfSound = 340.29 -- metres per second
 
 function webaudio.DebugPrint(str, ...)
 	if webaudio.Debug == 0 then return end
 
-    if webaudio.Debug >= 1 then
-        if epoe then
+	if webaudio.Debug >= 1 then
+		if epoe then
 			-- Why is this even present here?
             epoe.MsgC(Color(0, 255, 0), "[WebAudio] ")
-            epoe.MsgC(Color(255, 255, 255), str)
-            epoe.Print("")
+			epoe.MsgC(Color(255, 255, 255), str)
+			epoe.Print("")
 		end
 
-        pac.Message(Color(0, 255, 0), "[WebAudio] ", Color(255, 255, 255), str, ...)
-    end
+		pac.Message(Color(0, 255, 0), "[WebAudio] ", Color(255, 255, 255), str, ...)
+	end
 
-    if webaudio.Debug >= 2 then
+	if webaudio.Debug >= 2 then
 		if easylua then
-			easylua.PrintOnServer("[WebAudio] " .. str .. ' ' .. table.concat({...}, ', '))
+			easylua.PrintOnServer("[WebAudio] " .. str .. " " .. table.concat({...}, ", "))
 		end
-    end
+	end
 end
 
-function webaudio.GetSampleRate ()
+function webaudio.GetSampleRate()
 	return webaudio.SampleRate
 end
 
-local volume             = GetConVar("volume")
+local volume = GetConVar("volume")
 local snd_mute_losefocus = GetConVar("snd_mute_losefocus")
-local pac_ogg_volume     = CreateClientConVar("pac_ogg_volume", "1", true)
+local pac_ogg_volume = CreateClientConVar("pac_ogg_volume", "1", true)
 
 pac.AddHook("Think", "webaudio", function()
-	if not webaudio.Browser.IsInitialized () then
-		if not webaudio.Browser.IsInitializing () then
-			webaudio.Browser.Initialize ()
+	if not webaudio.Browser.IsInitialized() then
+		if not webaudio.Browser.IsInitializing() then
+			webaudio.Browser.Initialize()
 		end
+
 		return
 	end
 

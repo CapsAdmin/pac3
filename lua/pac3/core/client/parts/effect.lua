@@ -1,26 +1,28 @@
 local CurTime = CurTime
 local ParticleEffect = ParticleEffect
-
 local PART = {}
-
 PART.ClassName = "effect"
-PART.Groups = {'effects', 'model', 'entity'}
-PART.Icon = 'icon16/wand.png'
-
+PART.Groups = {"effects", "model", "entity"}
+PART.Icon = "icon16/wand.png"
 pac.StartStorableVars()
-	pac.GetSet(PART, "Effect", "default", {enums = function() return pac.particle_list end})
+	pac.GetSet(
+		PART,
+		"Effect",
+		"default",
+		{
+			enums = function()
+				return pac.particle_list
+			end,
+		})
 	pac.GetSet(PART, "Loop", true)
 	pac.GetSet(PART, "Follow", true)
 	pac.GetSet(PART, "Rate", 1, {editor_sensitivity = 0.1})
 	pac.GetSet(PART, "UseParticleTracer", false)
-
 	pac.SetupPartName(PART, "PointA")
 	pac.SetupPartName(PART, "PointB")
 	pac.SetupPartName(PART, "PointC")
 	pac.SetupPartName(PART, "PointD")
-
 pac.EndStorableVars()
-
 pac.RemoveProperty(PART, "Translucent")
 
 function PART:GetNiceName()
@@ -35,7 +37,8 @@ function PART:Initialize()
 
 		for file_name in pairs(pac_loaded_particle_effects) do
 			local ok, err = pcall(function()
-				local data = file.Read("particles/"..file_name, "GAME", "b")
+				local data = file.Read("particles/" .. file_name, "GAME", "b")
+
 				if data then
 					for str in data:gmatch("\3%c([%a_]+)%c") do
 						if #str > 1 then
@@ -56,11 +59,7 @@ end
 
 function PART:GetOwner()
 	local parent = self:GetParent()
-
-	if parent:IsValid() and parent.is_model_part and parent.Entity:IsValid() then
-		return parent.Entity
-	end
-
+	if parent:IsValid() and parent.is_model_part and parent.Entity:IsValid() then return parent.Entity end
 	return self.BaseClass.GetOwner(self)
 end
 
@@ -80,12 +79,13 @@ end
 
 local already = {}
 local alreadyServer = {}
+
 local function pac_request_precache(name)
 	if already[name] then return end
 	already[name] = true
 	PrecacheParticleSystem(name)
 	net.Start("pac_request_precache")
-	net.WriteString(name)
+		net.WriteString(name)
 	net.SendToServer()
 end
 
@@ -119,7 +119,10 @@ end
 
 function PART:OnDraw(owner, pos, ang)
 	if not self.Ready then
-		if not self.waitingForServer then self:SetEffect(self.Effect) end
+		if not self.waitingForServer then
+			self:SetEffect(self.Effect)
+		end
+
 		return
 	end
 
@@ -127,6 +130,7 @@ function PART:OnDraw(owner, pos, ang)
 
 	if ent:IsValid() and self.Loop then
 		local time = CurTime()
+
 		if self.last_spew < time then
 			ent:StopParticles()
 			ent:StopParticleEmission()
@@ -163,45 +167,58 @@ function PART:Emit(pos, ang)
 
 		if self.UseParticleTracer and self.PointA:IsValid() then
 			local ent2 = self.PointA.Entity and self.PointA.Entity or self.PointA:GetOwner()
-
 			util.ParticleTracerEx(
 				self.Effect,
 				ent:GetPos(),
 				ent2:GetPos(),
 				true,
 				ent:EntIndex(),
-				0
-			)
+				0)
 			return
 		end
 
 		if self.PointA:IsValid() then
 			local points = {}
-
-			table.insert(points, {
-				entity = self.PointA.Entity and self.PointA.Entity or self.PointA:GetOwner(),
-				attachtype = PATTACH_ABSORIGIN_FOLLOW,
-			})
-
-			if self.PointB:IsValid() then
-				table.insert(points, {
-					entity = self.PointB.Entity and self.PointB.Entity or self.PointB:GetOwner(),
+			table.insert(
+				points,
+				{
+					entity = self.PointA.Entity and
+					self.PointA.Entity or
+					self.PointA:GetOwner(),
 					attachtype = PATTACH_ABSORIGIN_FOLLOW,
 				})
+
+			if self.PointB:IsValid() then
+				table.insert(
+					points,
+					{
+						entity = self.PointB.Entity and
+						self.PointB.Entity or
+						self.PointB:GetOwner(),
+						attachtype = PATTACH_ABSORIGIN_FOLLOW,
+					})
 			end
 
 			if self.PointC:IsValid() then
-				table.insert(points, {
-					entity = self.PointC.Entity and self.PointC.Entity or self.PointC:GetOwner(),
-					attachtype = PATTACH_ABSORIGIN_FOLLOW,
-				})
+				table.insert(
+					points,
+					{
+						entity = self.PointC.Entity and
+						self.PointC.Entity or
+						self.PointC:GetOwner(),
+						attachtype = PATTACH_ABSORIGIN_FOLLOW,
+					})
 			end
 
 			if self.PointD:IsValid() then
-				table.insert(points, {
-					entity = self.PointD.Entity and self.PointD.Entity or self.PointD:GetOwner(),
-					attachtype = PATTACH_ABSORIGIN_FOLLOW,
-				})
+				table.insert(
+					points,
+					{
+						entity = self.PointD.Entity and
+						self.PointD.Entity or
+						self.PointD:GetOwner(),
+						attachtype = PATTACH_ABSORIGIN_FOLLOW,
+					})
 			end
 
 			ent:CreateParticleEffect(self.Effect, points)

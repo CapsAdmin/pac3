@@ -9,14 +9,10 @@ local cam_IgnoreZ = cam.IgnoreZ
 local render_EndBeam = render.EndBeam
 local render_AddBeam = render.AddBeam
 local render_SetMaterial = render.SetMaterial
-
 local PART = {}
-
 PART.ClassName = "trail"
 PART.Group = "legacy"
-
-PART.Icon = 'icon16/arrow_undo.png'
-
+PART.Icon = "icon16/arrow_undo.png"
 pac.StartStorableVars()
 	pac.SetPropertyGroup(PART, "generic")
 		pac.PropertyOrder(PART, "Name")
@@ -27,7 +23,6 @@ pac.StartStorableVars()
 		pac.GetSet(PART, "EndSize", 0)
 		pac.GetSet(PART, "Length", 100)
 		pac.GetSet(PART, "Spacing", 1)
-
 	pac.SetPropertyGroup(PART, "orientation")
 	pac.SetPropertyGroup(PART, "appearance")
 		pac.GetSet(PART, "StartColor", Vector(255, 255, 255), {editor_panel = "color"})
@@ -50,44 +45,35 @@ PART.LastAdd = 0
 
 function PART:Initialize()
 	self:SetTrailPath(self.TrailPath)
-
 	self.StartColorC = Color(255, 255, 255, 255)
 	self.EndColorC = Color(255, 255, 255, 255)
 end
 
 function PART:SetStartColor(v)
 	self.StartColorC = self.StartColorC or Color(255, 255, 255, 255)
-
 	self.StartColorC.r = v.r
 	self.StartColorC.g = v.g
 	self.StartColorC.b = v.b
-
 	self.StartColor = v
 end
 
 function PART:SetEndColor(v)
 	self.EndColorC = self.EndColorC or Color(255, 255, 255, 255)
-
 	self.EndColorC.r = v.r
 	self.EndColorC.g = v.g
 	self.EndColorC.b = v.b
-
 	self.EndColor = v
 end
 
 function PART:SetStartAlpha(n)
 	self.StartColorC = self.StartColorC or Color(255, 255, 255, 255)
-
 	self.StartColorC.a = n * 255
-
 	self.StartAlpha = n
 end
 
 function PART:SetEndAlpha(n)
 	self.EndColorC = self.EndColorC or Color(255, 255, 255, 255)
-
 	self.EndColorC.a = n * 255
-
 	self.EndAlpha = n
 end
 
@@ -111,7 +97,12 @@ function PART:SetMaterial(var)
 
 	if self.Materialm then
 		local shader = self.Materialm:GetShader()
-		if shader == "VertexLitGeneric" or shader == "Cable" or shader == "LightmappedGeneric" then
+
+		if
+			shader == "VertexLitGeneric" or
+			shader == "Cable" or
+			shader == "LightmappedGeneric"
+		then
 			self.Materialm = pac.MakeMaterialUnlitGeneric(self.Materialm, self.Id)
 		end
 	end
@@ -132,7 +123,6 @@ function PART:OnDraw(owner, pos, ang)
 
 	if mat and self.StartColorC and self.EndColorC then
 		self.points = self.points or {}
-
 		local len = tonumber(self.Length)
 		local spc = tonumber(self.Spacing)
 
@@ -148,20 +138,22 @@ function PART:OnDraw(owner, pos, ang)
 		end
 
 		render_SetMaterial(mat)
-
 		render_StartBeam(count)
-			for k, v in pairs(self.points) do
-				local width = k / (len / self.StartSize)
 
-				local coord = (1 / count) * (k - 1)
+		for k, v in pairs(self.points) do
+			local width = k / (len / self.StartSize)
+			local coord = (1 / count) * (k - 1)
+			temp_color.r = Lerp(coord, self.EndColorC.r, self.StartColorC.r)
+			temp_color.g = Lerp(coord, self.EndColorC.g, self.StartColorC.g)
+			temp_color.b = Lerp(coord, self.EndColorC.b, self.StartColorC.b)
+			temp_color.a = Lerp(coord, self.EndColorC.a, self.StartColorC.a)
+			render_AddBeam(
+				k == count and pos or v,
+				width + self.EndSize,
+				self.Stretch and coord or width,
+				temp_color)
+		end
 
-				temp_color.r = Lerp(coord, self.EndColorC.r, self.StartColorC.r)
-				temp_color.g = Lerp(coord, self.EndColorC.g, self.StartColorC.g)
-				temp_color.b = Lerp(coord, self.EndColorC.b, self.StartColorC.b)
-				temp_color.a = Lerp(coord, self.EndColorC.a, self.StartColorC.a)
-
-				render_AddBeam(k == count and pos or v, width + self.EndSize, self.Stretch and coord or width, temp_color)
-			end
 		render_EndBeam()
 
 		if count >= len then

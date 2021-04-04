@@ -1,10 +1,8 @@
 local PART = {}
-
 PART.ClassName = "group"
 PART.NonPhysical = true
-PART.Icon = 'icon16/world.png'
+PART.Icon = "icon16/world.png"
 PART.Description = "right click to add parts"
-
 pac.StartStorableVars()
 	pac.GetSet(PART, "Duplicate", false)
 pac.EndStorableVars()
@@ -19,7 +17,6 @@ function PART:SetOwnerName(name)
 	end
 
 	self.OwnerName = name
-
 	self:CheckOwner()
 end
 

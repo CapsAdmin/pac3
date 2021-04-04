@@ -1,19 +1,17 @@
 local animations = pac.animations or {}
-
 animations.playing = {}
 animations.playing = animations.playing or {}
 animations.registered = animations.registered or {}
 
 do
 	local old_types = {
-		[0] = "gesture", -- Gestures are keyframed animations that use the current position and angles of the bones. They play once and then stop automatically.
+			[0] = "gesture", -- Gestures are keyframed animations that use the current position and angles of the bones. They play once and then stop automatically.
 		[1] = "posture", -- Postures are static animations that use the current position and angles of the bones. They stay that way until manually stopped. Use TimeToArrive if you want to have a posture lerp.
 		[2] = "stance", -- Stances are keyframed animations that use the current position and angles of the bones. They play forever until manually stopped. Use RestartFrame to specify a frame to go to if the animation ends (instead of frame 1).
 		[3] = "sequence", -- Sequences are keyframed animations that use the reference pose. They play forever until manually stopped. Use RestartFrame to specify a frame to go to if the animation ends (instead of frame 1).
 	}
-
 	local old_interpolations = {
-		[0] = "linear", -- Straight linear interp.
+			[0] = "linear", -- Straight linear interp.
 		[1] = "cosine", -- Best compatability / quality balance.
 		[1] = "cubic", -- Overall best quality blending but may cause animation frames to go 'over the top'.
 	}
@@ -26,7 +24,6 @@ do
 		if tonumber(data.Interpolation) then
 			data.Interpolation = tonumber(data.Interpolation)
 		end
-
 
 		if type(data.Type) == "number" then
 			data.Type = old_types[data.Type]
@@ -48,6 +45,7 @@ end
 function animations.RegisterAnimation(name, tInfo)
 	if tInfo and tInfo.FrameData then
 		local BonesUsed = {}
+
 		for _, tFrame in ipairs(tInfo.FrameData) do
 			for iBoneID, tBoneTable in pairs(tFrame.BoneInfo) do
 				BonesUsed[iBoneID] = (BonesUsed[iBoneID] or 0) + 1
@@ -72,7 +70,11 @@ function animations.RegisterAnimation(name, tInfo)
 	end
 
 	animations.registered[name] = tInfo
-do return end
+
+	do
+		return
+	end
+
 	for _, ent in ipairs(animations.playing) do
 		if ent.pac_animations and ent.pac_animations[name] then
 			local frame, delta = animations.GetEntityAnimationFrame(ent, name)
@@ -89,12 +91,9 @@ local function AdvanceFrame(tGestureTable, tFrameData)
 		local max = #tGestureTable.FrameData
 		local offset = tGestureTable.Offset
 		local start = tGestureTable.RestartFrame or 1
-
-		offset = Lerp(offset%1, start, max + 1)
-
+		offset = Lerp(offset % 1, start, max + 1)
 		tGestureTable.Frame = math.floor(offset)
-		tGestureTable.FrameDelta = offset%1
-
+		tGestureTable.FrameDelta = offset % 1
 		return true
 	end
 
@@ -103,9 +102,9 @@ local function AdvanceFrame(tGestureTable, tFrameData)
 	if tGestureTable.FrameDelta > 1 then
 		tGestureTable.Frame = tGestureTable.Frame + 1
 		tGestureTable.FrameDelta = math.min(1, tGestureTable.FrameDelta - 1)
+
 		if tGestureTable.Frame > #tGestureTable.FrameData then
 			tGestureTable.Frame = math.min(tGestureTable.RestartFrame or 1, #tGestureTable.FrameData)
-
 			return true
 		end
 	end
@@ -125,12 +124,10 @@ local function CubicInterpolation(y0, y1, y2, y3, mu)
 end
 
 local EMPTYBONEINFO = {MU = 0, MR = 0, MF = 0, RU = 0, RR = 0, RF = 0}
+
 local function GetFrameBoneInfo(ent, tGestureTable, iFrame, iBoneID)
 	local tPrev = tGestureTable.FrameData[iFrame]
-	if tPrev then
-		return tPrev.BoneInfo[iBoneID] or tPrev.BoneInfo[ent:GetBoneName(iBoneID)] or EMPTYBONEINFO
-	end
-
+	if tPrev then return tPrev.BoneInfo[iBoneID] or tPrev.BoneInfo[ent:GetBoneName(iBoneID)] or EMPTYBONEINFO end
 	return EMPTYBONEINFO
 end
 
@@ -141,14 +138,28 @@ local function ProcessAnimations(ent)
 		local frame_delta = tbl.FrameDelta
 		local die_time = tbl.DieTime
 		local power = tbl.Power
+
 		if die_time and die_time - 0.125 <= CurTime() then
 			power = power * (die_time - CurTime()) / 0.125
 		end
 
 		if die_time and die_time <= CurTime() then
 			animations.StopEntityAnimation(ent, name)
-		elseif not tbl.PreCallback or not tbl.PreCallback(ent, name, tbl, frame, frame_data, frame_delta) then
-			if tbl.ShouldPlay and not tbl.ShouldPlay(ent, name, tbl, frame, frame_data, frame_delta, power) then
+		elseif not tbl.PreCallback or not tbl.PreCallback(
+			ent,
+			name,
+			tbl,
+			frame,
+			frame_data,
+			frame_delta) then
+			if tbl.ShouldPlay and not tbl.ShouldPlay(
+				ent,
+				name,
+				tbl,
+				frame,
+				frame_data,
+				frame_delta,
+				power) then
 				animations.StopEntityAnimation(ent, name, 0.2)
 			end
 
@@ -168,9 +179,7 @@ local function ProcessAnimations(ent)
 	end
 
 	animations.ResetEntityBoneMatrix(ent)
-
 	if not ent.pac_animations then return end
-
 	local tBuffer = {}
 
 	for _, tbl in pairs(ent.pac_animations) do
@@ -179,22 +188,37 @@ local function ProcessAnimations(ent)
 		local fFrameDelta = tbl.FrameDelta
 		local fDieTime = tbl.DieTime
 		local fPower = tbl.Power
+
 		if fDieTime and fDieTime - 0.125 <= CurTime() then
 			fPower = fPower * (fDieTime - CurTime()) / 0.125
 		end
+
 		local fAmount = fPower * fFrameDelta
 
 		for iBoneID, tBoneInfo in pairs(tFrameData.BoneInfo) do
 			if type(iBoneID) ~= "number" then
 				iBoneID = ent:LookupBone(iBoneID)
 			end
-			if not iBoneID then goto CONTINUE end
 
-			if not tBuffer[iBoneID] then tBuffer[iBoneID] = Matrix() end
+			if not iBoneID then
+				goto CONTINUE
+			end
+
+			if not tBuffer[iBoneID] then
+				tBuffer[iBoneID] = Matrix()
+			end
+
 			local mBoneMatrix = tBuffer[iBoneID]
-
 			local vCurBonePos, aCurBoneAng = mBoneMatrix:GetTranslation(), mBoneMatrix:GetAngles()
-			if not tBoneInfo.Callback or not tBoneInfo.Callback(ent, mBoneMatrix, iBoneID, vCurBonePos, aCurBoneAng, fFrameDelta, fPower) then
+
+			if not tBoneInfo.Callback or not tBoneInfo.Callback(
+				ent,
+				mBoneMatrix,
+				iBoneID,
+				vCurBonePos,
+				aCurBoneAng,
+				fFrameDelta,
+				fPower) then
 				local vUp = aCurBoneAng:Up()
 				local vRight = aCurBoneAng:Right()
 				local vForward = aCurBoneAng:Forward()
@@ -202,49 +226,49 @@ local function ProcessAnimations(ent)
 
 				if iInterp == "linear" then
 					if tbl.Type == "posture" then
-						mBoneMatrix:Translate((tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward) * fAmount)
+						mBoneMatrix:Translate(
+							(tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward) * fAmount)
 						mBoneMatrix:Rotate(Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF) * fAmount)
 					else
 						local bi1 = GetFrameBoneInfo(ent, tbl, iCurFrame - 1, iBoneID)
-
 						mBoneMatrix:Translate(
 							LerpVector(
 								fFrameDelta,
 								bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward,
-								tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward
-							) * fPower
-						)
-
+								tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward) * fPower)
 						mBoneMatrix:Rotate(
-							LerpAngle(
-								fFrameDelta,
-								Angle(bi1.RR, bi1.RU, bi1.RF),
-								Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF)
-							) * fPower
-						)
+							LerpAngle(fFrameDelta, Angle(bi1.RR, bi1.RU, bi1.RF), Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF)) * fPower)
 					end
-				elseif iInterp == "cubic" and tbl.FrameData[iCurFrame - 2] and tbl.FrameData[iCurFrame + 1] then
-						local bi0 = GetFrameBoneInfo(ent, tbl, iCurFrame - 2, iBoneID)
-						local bi1 = GetFrameBoneInfo(ent, tbl, iCurFrame - 1, iBoneID)
-						local bi3 = GetFrameBoneInfo(ent, tbl, iCurFrame + 1, iBoneID)
-
-						mBoneMatrix:Translate(CosineInterpolation(bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward, tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward, fFrameDelta) * fPower)
-						mBoneMatrix:Rotate(CubicInterpolation(
-							Angle(bi0.RR, bi0.RU, bi0.RF),
-							Angle(bi1.RR, bi1.RU, bi1.RF),
-							Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF),
-							Angle(bi3.RR, bi3.RU, bi3.RF),
-							fFrameDelta
-						) * fPower)
+				elseif
+					iInterp == "cubic" and
+					tbl.FrameData[iCurFrame - 2] and
+					tbl.FrameData[iCurFrame + 1]
+				then
+					local bi0 = GetFrameBoneInfo(ent, tbl, iCurFrame - 2, iBoneID)
+					local bi1 = GetFrameBoneInfo(ent, tbl, iCurFrame - 1, iBoneID)
+					local bi3 = GetFrameBoneInfo(ent, tbl, iCurFrame + 1, iBoneID)
+					mBoneMatrix:Translate(
+						CosineInterpolation(
+							bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward,
+							tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward,
+							fFrameDelta) * fPower)
+					mBoneMatrix:Rotate(
+						CubicInterpolation(Angle(bi0.RR, bi0.RU, bi0.RF), Angle(bi1.RR, bi1.RU, bi1.RF), Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF), Angle(bi3.RR, bi3.RU, bi3.RF), fFrameDelta) * fPower)
 				elseif iInterp == "none" then
 					mBoneMatrix:Translate((tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward))
 					mBoneMatrix:Rotate(Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF))
 				else-- Default is Cosine
 					local bi1 = GetFrameBoneInfo(ent, tbl, iCurFrame - 1, iBoneID)
-					mBoneMatrix:Translate(CosineInterpolation(bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward, tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward, fFrameDelta) * fPower)
-					mBoneMatrix:Rotate(CosineInterpolation(Angle(bi1.RR, bi1.RU, bi1.RF), Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF), fFrameDelta) * fPower)
+					mBoneMatrix:Translate(
+						CosineInterpolation(
+							bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward,
+							tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward,
+							fFrameDelta) * fPower)
+					mBoneMatrix:Rotate(
+						CosineInterpolation(Angle(bi1.RR, bi1.RU, bi1.RF), Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF), fFrameDelta) * fPower)
 				end
 			end
+
 			::CONTINUE::
 		end
 	end
@@ -255,9 +279,8 @@ local function ProcessAnimations(ent)
 	end
 end
 
-
 function animations.ResetEntityBoneMatrix(ent)
-	for i=0, ent:GetBoneCount() - 1 do
+	for i = 0, ent:GetBoneCount() - 1 do
 		pac.ManipulateBoneAngles(ent, i, angle_zero)
 		pac.ManipulateBonePosition(ent, i, vector_origin)
 	end
@@ -265,55 +288,63 @@ end
 
 function animations.ResetEntityAnimation(ent, name, fDieTime, fPower, fTimeScale)
 	local animtable = animations.registered[name]
+
 	if animtable then
 		ent.pac_animations = ent.pac_animations or {}
-
 		local framedelta = 0
+
 		if animtable.Type == "posture" and not animtable.TimeToArrive then
 			framedelta = 1
 		end
 
 		ent.pac_animations[name] = {
-			Frame = animtable.StartFrame or 1,
-			Offset = 0,
-			FrameDelta = framedelta,
-			FrameData = animtable.FrameData,
-			TimeScale = fTimeScale or animtable.TimeScale or 1,
-			Type = animtable.Type,
-			RestartFrame = animtable.RestartFrame,
-			TimeToArrive = animtable.TimeToArrive,
-			ShouldPlay = animtable.ShouldPlay,
-			Power = fPower or animtable.Power or 1,
-			DieTime = fDieTime or animtable.DieTime,
-			Group = animtable.Group,
-			UseReferencePose = animtable.UseReferencePose,
-			Interpolation = animtable.Interpolation,
-		}
-
+				Frame = animtable.StartFrame or
+				1,
+				Offset = 0,
+				FrameDelta = framedelta,
+				FrameData = animtable.FrameData,
+				TimeScale = fTimeScale or
+				animtable.TimeScale or
+				1,
+				Type = animtable.Type,
+				RestartFrame = animtable.RestartFrame,
+				TimeToArrive = animtable.TimeToArrive,
+				ShouldPlay = animtable.ShouldPlay,
+				Power = fPower or
+				animtable.Power or
+				1,
+				DieTime = fDieTime or
+				animtable.DieTime,
+				Group = animtable.Group,
+				UseReferencePose = animtable.UseReferencePose,
+				Interpolation = animtable.Interpolation,
+			}
 		animations.ResetEntityAnimationProperties(ent)
 
-		for i,v in ipairs(animations.playing) do
+		for i, v in ipairs(animations.playing) do
 			if v == ent then
 				table.remove(animations.playing, i)
+
 				break
 			end
 		end
 
 		ent:CallOnRemove("pac_animations", function()
-			for i,v in ipairs(animations.playing) do
+			for i, v in ipairs(animations.playing) do
 				if v == ent then
 					table.remove(animations.playing, i)
+
 					break
 				end
 			end
 		end)
+
 		table.insert(animations.playing, ent)
 	end
 end
 
 function animations.SetEntityAnimation(ent, name, fDieTime, fPower, fTimeScale)
 	if ent.pac_animations and ent.pac_animations[name] then return end
-
 	animations.ResetEntityAnimation(ent, name, fDieTime, fPower, fTimeScale)
 end
 
@@ -321,15 +352,11 @@ function animations.GetEntityAnimation(ent, name)
 	if ent.pac_animations and ent.pac_animations[name] then return ent.pac_animations[name] end
 end
 
-
-
 function animations.SetEntityAnimationFrame(ent, name, f, delta)
 	if ent.pac_animations and ent.pac_animations[name] then
 		local data = ent.pac_animations[name]
-
 		f = math.ceil(f)
 		f = math.Clamp(f, 1, #data.FrameData)
-
 		data.Frame = f
 		data.FrameDelta = delta and math.Clamp(delta, 0, 1) or 0
 	end
@@ -346,19 +373,18 @@ function animations.SetEntityAnimationCycle(ent, name, f)
 	if ent.pac_animations and ent.pac_animations[name] then
 		local data = ent.pac_animations[name]
 		local duration = animations.GetAnimationDuration(ent, name)
-		f = f%1
-
-
+		f = f % 1
 		ROFL = f
 		f = f * duration
-
 		local sec = 0
-		for i = 1, #data.FrameData do
-			local dt = (1/data.FrameData[i].FrameRate)
 
-			if sec+dt >= f then
+		for i = 1, #data.FrameData do
+			local dt = (1 / data.FrameData[i].FrameRate)
+
+			if sec + dt >= f then
 				data.Frame = i
-				data.FrameDelta = math.Clamp((f-sec) / dt, 0, 1)
+				data.FrameDelta = math.Clamp((f - sec) / dt, 0, 1)
+
 				break
 			end
 
@@ -367,39 +393,44 @@ function animations.SetEntityAnimationCycle(ent, name, f)
 	end
 end
 
-
 function animations.GetEntityAnimationCycle(ent, name)
 	if ent.pac_animations and ent.pac_animations[name] then
 		local data = ent.pac_animations[name]
-
 		local sec = 0
+
 		for i = 1, data.Frame - 1 do
-			local dt = (1/data.FrameData[i].FrameRate)
+			local dt = (1 / data.FrameData[i].FrameRate)
 			sec = sec + dt
 		end
 
-		sec = Lerp(data.FrameDelta, sec, sec + (1/data.FrameData[data.Frame].FrameRate))
-
-		return sec/animations.GetAnimationDuration(ent, name)
+		sec = Lerp(data.FrameDelta, sec, sec + (1 / data.FrameData[data.Frame].FrameRate))
+		return sec / animations.GetAnimationDuration(ent, name)
 	end
 end
 
 function animations.GetAnimationDuration(ent, name)
 	if ent.pac_animations and ent.pac_animations[name] then
 		local total = 0
-		for i=1, #ent.pac_animations[name].FrameData do
+
+		for i = 1, #ent.pac_animations[name].FrameData do
 			local v = ent.pac_animations[name].FrameData[i]
-			total = total+(1/(v.FrameRate or 1))
+			total = total + (1 / (v.FrameRate or 1))
 		end
+
 		return total
 	end
+
 	return 0
 end
 
 local function ResetInSequence(ent)
 	if ent.pac_animations then
 		for _, tbl in pairs(ent.pac_animations) do
-			if tbl.Type == "sequence" and (not tbl.DieTime or CurTime() < tbl.DieTime - 0.125) or tbl.UseReferencePose then
+			if
+				tbl.Type == "sequence" and
+				(not tbl.DieTime or CurTime() < tbl.DieTime - 0.125) or
+				tbl.UseReferencePose
+			then
 				ent.pac_animations_insequence = true
 				return
 			end
@@ -418,6 +449,7 @@ end)
 
 function animations.ResetEntityAnimationProperties(ent)
 	local anims = ent.pac_animations
+
 	if anims and table.Count(anims) > 0 then
 		ent:SetIK(false)
 		ResetInSequence(ent)
@@ -425,10 +457,9 @@ function animations.ResetEntityAnimationProperties(ent)
 		--ent:SetIK(true)
 		ent.pac_animations = nil
 		ent.pac_animations_insequence = nil
-
 		ent:RemoveCallOnRemove("pac_animations")
 
-		for i,v in ipairs(animations.playing) do
+		for i, v in ipairs(animations.playing) do
 			if v == ent then
 				table.remove(animations.playing, i)
 			end
@@ -439,6 +470,7 @@ end
 -- Time is optional, sets the die time to CurTime() + time
 function animations.StopEntityAnimation(ent, name, time)
 	local anims = ent.pac_animations
+
 	if anims and anims[name] then
 		if time then
 			if anims[name].DieTime then
@@ -463,7 +495,7 @@ function animations.StopAllEntityAnimations(ent, time)
 end
 
 hook.Add("Think", "pac_custom_animations", function()
-	for i,v in ipairs(animations.playing) do
+	for i, v in ipairs(animations.playing) do
 		if v.pac_animations then
 			ProcessAnimations(v)
 		end

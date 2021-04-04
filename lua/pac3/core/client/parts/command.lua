@@ -1,10 +1,8 @@
 local PART = {}
-
 PART.ClassName = "command"
 PART.NonPhysical = true
-PART.Group = 'advanced'
-PART.Icon = 'icon16/application_xp_terminal.png'
-
+PART.Group = "advanced"
+PART.Icon = "icon16/application_xp_terminal.png"
 pac.StartStorableVars()
 	pac.GetSet(PART, "String", "", {editor_panel = "string"})
 	pac.GetSet(PART, "UseLua", false)
@@ -67,7 +65,7 @@ function PART:Execute()
 					ErrorNoHalt(err .. "\n")
 				end
 			else
-				pac.Message(tostring(self) .. ' - sv_allowcslua is 0')
+				pac.Message(tostring(self) .. " - sv_allowcslua is 0")
 			end
 		else
 			ent:ConCommand(self.String)

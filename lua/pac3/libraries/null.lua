@@ -1,5 +1,4 @@
 local NULL = {}
-
 NULL.LuaDataType = "pac_null"
 NULL.ClassName = "NULL"
 
@@ -16,18 +15,9 @@ function NULL:IsValid()
 end
 
 function NULL:__index(key)
-	if key == "IsValid" then
-		return FALSE
-	end
-
-	if key == "ClassName" then
-		return "NULL"
-	end
-
-	if type(key) == "string" and key:sub(0, 2) == "Is" then
-		return FALSE
-	end
-
+	if key == "IsValid" then return FALSE end
+	if key == "ClassName" then return "NULL" end
+	if type(key) == "string" and key:sub(0, 2) == "Is" then return FALSE end
 	error(("tried to index %q on a null part"):format(key), 2)
 end
 

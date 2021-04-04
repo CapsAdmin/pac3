@@ -1,12 +1,10 @@
 local PART = {}
-
 PART.ClassName = "sound"
 PART.FriendlyName = "sound"
 PART.NonPhysical = true
 PART.ThinkTime = 0
-PART.Group = 'effects'
-PART.Icon = 'icon16/sound.png'
-
+PART.Group = "effects"
+PART.Icon = "icon16/sound.png"
 pac.StartStorableVars()
 	pac.GetSet(PART, "Sound", "")
 	pac.GetSet(PART, "Volume", 1, {editor_sensitivity = 0.25})
@@ -40,6 +38,7 @@ function PART:OnShow(from_rendering)
 
 	if ent:IsValid() and ent:IsPlayer() then
 		ent.pac_footstep_override = ent.pac_footstep_override or {}
+
 		if self.PlayOnFootstep then
 			ent.pac_footstep_override[self.UniqueID] = self
 		else
@@ -53,7 +52,6 @@ function PART:OnHide()
 	self:StopSound()
 
 	if self.PlayOnFootstep then
-
 		local ent = self:GetOwner()
 
 		if ent:IsValid() then
@@ -61,8 +59,6 @@ function PART:OnHide()
 
 			if ent:IsPlayer() then
 				ent.pac_footstep_override = ent.pac_footstep_override or {}
-
-
 				ent.pac_footstep_override[self.UniqueID] = nil
 			end
 		end
@@ -75,12 +71,15 @@ function PART:OnThink()
 	else
 		if self.Loop then
 			pac.playing_sound = true
-			if not self.csptch:IsPlaying() then self.csptch:Play() end
+
+			if not self.csptch:IsPlaying() then
+				self.csptch:Play()
+			end
+
 			self.csptch:ChangePitch((self.Pitch * 255) + math.sin(pac.RealTime) / 2, 0)
 			pac.playing_sound = false
 		end
 	end
-
 end
 
 -- fixes by Python 1320
@@ -93,39 +92,46 @@ end
 -- https://developer.valvesoftware.com/wiki/Soundscripts#Sound_Characters
 -- we are using this for bad replacements as it won't break stuff too badly ["*"]=true,
 
-local bad =
-{
-	["#"] = true,
-	["@"] = true,
-	[">"] = true,
-	["<"] = true,
-	["^"] = true,
-	[")"] = true,
-	["}"] = true,
-	["$"] = true,
-	["!"] = true,
-	["?"] = true, -- especially bad
+local bad = {
+		["#"] = true,
+		["@"] = true,
+		[">"] = true,
+		["<"] = true,
+		["^"] = true,
+		[")"] = true,
+		["}"] = true,
+		["$"] = true,
+		["!"] = true,
+		["?"] = true, -- especially bad
 }
 
 local function fix(snd)
-	if bad[snd:sub(1,1)] then
-		snd = snd:gsub("^(.)",function() return "*" end)
+	if bad[snd:sub(1, 1)] then
+		snd = snd:gsub("^(.)", function()
+			return "*"
+		end)
 	end
-	if bad[snd:sub(2,2)] then
-		snd = snd:gsub("^(..)",function(a) return a[1] .. "*" end)
+
+	if bad[snd:sub(2, 2)] then
+		snd = snd:gsub("^(..)", function(a)
+			return a[1] .. "*"
+		end)
 	end
+
 	return snd
 end
 
 function PART:SetSound(str)
-	if type(str) ~= "string" then self.Sound = "" return end
+	if type(str) ~= "string" then
+		self.Sound = ""
+		return
+	end
 
-	if bad[str:sub(1,1)] or bad[str:sub(2,2)] then
+	if bad[str:sub(1, 1)] or bad[str:sub(2, 2)] then
 		str = fix(str)
 	end
 
 	self.Sound = str:gsub("\\", "/")
-
 	self:PlaySound()
 end
 
@@ -162,7 +168,6 @@ function PART:PlaySound(osnd, ovol)
 		end
 
 		if self:GetLocalPlayerOnly() and ent ~= pac.LocalPlayer then return end
-
 		local snd
 
 		if osnd and self.Sound == "" then
@@ -173,16 +178,15 @@ function PART:PlaySound(osnd, ovol)
 			if #sounds > 1 then
 				snd = table.Random(sounds)
 			else
-				snd = self.Sound:gsub(
-					"(%[%d-,%d-%])",
-					function(minmax)
-						local min, max = minmax:match("%[(%d-),(%d-)%]")
-						if max < min then
-							max = min
-						end
-						return math.random(min, max)
+				snd = self.Sound:gsub("(%[%d-,%d-%])", function(minmax)
+					local min, max = minmax:match("%[(%d-),(%d-)%]")
+
+					if max < min then
+						max = min
 					end
-				)
+
+					return math.random(min, max)
+				end)
 			end
 		end
 
@@ -215,8 +219,6 @@ function PART:PlaySound(osnd, ovol)
 			end
 
 			local csptch = CreateSound(ent, snd)
-
-
 			csptch:SetSoundLevel(self.SoundLevel)
 			csptch:PlayEx(vol, pitch)
 			ent.pac_csptch = csptch
@@ -233,28 +235,27 @@ function PART:StopSound()
 	end
 end
 
-local channels =
-{
-	CHAN_AUTO = 0,
-	CHAN_WEAPON = 1,
-	CHAN_VOICE = 2,
-	CHAN_ITEM = 3,
-	CHAN_BODY = 4,
-	CHAN_STREAM = 5,
-	CHAN_STATIC = 6,
-}
+local channels = {
+		CHAN_AUTO = 0,
+		CHAN_WEAPON = 1,
+		CHAN_VOICE = 2,
+		CHAN_ITEM = 3,
+		CHAN_BODY = 4,
+		CHAN_STREAM = 5,
+		CHAN_STATIC = 6,
+	}
 
 for key, CHAN in pairs(channels) do
 	sound.Add(
-	{
-		name = "pac_silence_" .. key:lower(),
-		channel = CHAN,
-		volume = 0,
-		soundlevel = 0,
-		pitchstart = 0,
-		pitchend = 0,
-		sound = "ambient/_period.wav"
-	} )
+		{
+			name = "pac_silence_" .. key:lower(),
+			channel = CHAN,
+			volume = 0,
+			soundlevel = 0,
+			pitchstart = 0,
+			pitchend = 0,
+			sound = "ambient/_period.wav",
+		})
 end
 
 pac.RegisterPart(PART)

@@ -2,43 +2,37 @@
 
 pac.webaudio = pac.webaudio or {}
 local webaudio = pac.webaudio
-
 webaudio.Browser = webaudio.Browser or {}
-
-webaudio.Browser.States =
-{
+webaudio.Browser.States = {
 	Uninitialized = 0,
-	Initializing  = 1,
-	Initialized   = 2
+	Initializing = 1,
+	Initialized = 2,
 }
 
-if webaudio.Browser.Control and
-   webaudio.Browser.Control:IsValid () then
-	webaudio.Browser.Control:Remove ()
+if webaudio.Browser.Control and webaudio.Browser.Control:IsValid() then
+	webaudio.Browser.Control:Remove()
 	webaudio.Browser.Control = nil
 end
 
-webaudio.Browser.State           = webaudio.Browser.States.Uninitialized
-webaudio.Browser.Control         = nil
+webaudio.Browser.State = webaudio.Browser.States.Uninitialized
+webaudio.Browser.Control = nil
 webaudio.Browser.JavascriptQueue = {}
-
-webaudio.Browser.Volume          = nil
-
+webaudio.Browser.Volume = nil
 local CONSOLE_MESSAGE_PREFIX = Color(121, 221, 203)
 local CONSOLE_MESSAGE_COLOR = Color(200, 200, 200)
 
 function webaudio.Browser.Initialize()
 	if webaudio.Browser.State ~= webaudio.Browser.States.Uninitialized then return end
-
 	webaudio.Browser.State = webaudio.Browser.States.Initializing
 
-	if webaudio.Browser.Control then webaudio.Browser.Control:Remove() end
+	if webaudio.Browser.Control then
+		webaudio.Browser.Control:Remove()
+	end
 
 	webaudio.Browser.Control = vgui.Create("DHTML")
 	webaudio.Browser.Control:SetVisible(false)
 	webaudio.Browser.Control:SetPos(ScrW(), ScrH())
 	webaudio.Browser.Control:SetSize(1, 1)
-
 	local lastMessage = nil
 	webaudio.Browser.Control.ConsoleMessage = function(self, message)
 		-- why does awesomium crash in the first place?
@@ -48,15 +42,13 @@ function webaudio.Browser.Initialize()
 
 		if lastMessage ~= message then
 			lastMessage = message
-			pac.Message(CONSOLE_MESSAGE_PREFIX, '[OGG] ', CONSOLE_MESSAGE_COLOR, unpack(pac.RepackMessage(message)))
+			pac.Message(CONSOLE_MESSAGE_PREFIX, "[OGG] ", CONSOLE_MESSAGE_COLOR, unpack(pac.RepackMessage(message)))
 		end
 	end
-
 	webaudio.Browser.Control:AddFunction("lua", "print", webaudio.DebugPrint)
 
 	webaudio.Browser.Control:AddFunction("lua", "message", function(messageType, ...)
 		local args = {...}
-
 		webaudio.DebugPrint(messageType, ...)
 
 		if messageType == "initialized" then
@@ -65,7 +57,6 @@ function webaudio.Browser.Initialize()
 		elseif messageType == "stream" then
 			local stream = webaudio.Streams.GetStream(tonumber(args[2]) or 0)
 			if not stream then return end
-
 			local messageType = args[1]
 			stream:HandleBrowserMessage(messageType, unpack(args, 3, table.maxn(args)))
 		end
@@ -85,27 +76,27 @@ end
 
 -- Javascript
 function webaudio.Browser.RunJavascript(code)
-	if IsValid(webaudio.Browser.Control) then webaudio.Browser.Control:QueueJavascript(code) end
+	if IsValid(webaudio.Browser.Control) then
+		webaudio.Browser.Control:QueueJavascript(code)
+	end
 end
 
 function webaudio.Browser.QueueJavascript(code)
-	webaudio.Browser.JavascriptQueue [#webaudio.Browser.JavascriptQueue + 1] = code
+	webaudio.Browser.JavascriptQueue[#webaudio.Browser.JavascriptQueue + 1] = code
 end
 
 function webaudio.Browser.Think()
 	if #webaudio.Browser.JavascriptQueue == 0 then return end
-
 	local code = table.concat(webaudio.Browser.JavascriptQueue, "\n")
 	webaudio.Browser.RunJavascript(code)
 	webaudio.Browser.JavascriptQueue = {}
 end
 
 -- Audio
-function webaudio.Browser.SetVolume (volumeFraction)
+function webaudio.Browser.SetVolume(volumeFraction)
 	if webaudio.Browser.Volume == volumeFraction then return end
-
 	webaudio.Browser.Volume = volumeFraction
-    webaudio.Browser.QueueJavascript(string.format("gain.gain.value = %f", volumeFraction))
+	webaudio.Browser.QueueJavascript(string.format("gain.gain.value = %f", volumeFraction))
 end
 
 webaudio.Browser.HTML = [==[

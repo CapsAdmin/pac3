@@ -1,15 +1,16 @@
 local pac = pac
 local class = pac.class
-
 local part_count = 0 -- unique id thing
 local pairs = pairs
 
 local function merge_storable(tbl, base)
 	if not base then return end
+
 	if base.StorableVars then
-		for k,v in pairs(base.StorableVars) do
+		for k, v in pairs(base.StorableVars) do
 			tbl.StorableVars[k] = v
 		end
+
 		merge_storable(tbl, base.BaseClass)
 	end
 end
@@ -38,16 +39,14 @@ function pac.CreatePart(name, owner)
 	local part = class.Create("part", name)
 
 	if not part then
-		pac.Message("Tried to create unknown part: " .. name .. '!')
+		pac.Message("Tried to create unknown part: " .. name .. "!")
 		part = class.Create("part", "base")
 	end
 
 	part.Id = part_count
 	part_count = part_count + 1
-
-	part.IsEnabled = pac.CreateClientConVarFast("pac_enable_" .. name, "1", true,"boolean")
+	part.IsEnabled = pac.CreateClientConVarFast("pac_enable_" .. name, "1", true, "boolean")
 	part:SetUniqueID(tostring(util.CRC(os.time() + pac.RealTime + part_count)))
-
 	merge_storable(part, part.BaseClass)
 
 	if part.RemovedStorableVars then
@@ -85,11 +84,10 @@ function pac.CreatePart(name, owner)
 	part.DefaultVars.UniqueID = "" -- uh
 
 	local ok, err = xpcall(initialize, ErrorNoHalt, part, owner)
+
 	if not ok then
 		part:Remove()
-		if part.ClassName ~= "base" then
-			return pac.CreatePart("base", owner)
-		end
+		if part.ClassName ~= "base" then return pac.CreatePart("base", owner) end
 	end
 
 	pac.dprint("creating %s part owned by %s", part.ClassName, tostring(owner))
@@ -104,14 +102,11 @@ function pac.CreatePart(name, owner)
 end
 
 function pac.RegisterPart(META, name)
-
 	if META.Group == "experimental" then
 		-- something is up with the lua cache
 		-- file.Find("pac3/core/client/parts/*.lua", "LUA") will find the experimental parts as well
 		-- maybe because pac3 mounts the workshop version on server?
-		return
-	end
-
+		return end
 	META.TypeBase = "base"
 	local _, name = class.Register(META, "part", name)
 
@@ -141,11 +136,13 @@ end
 
 function pac.LoadParts()
 	local files = file.Find("pac3/core/client/parts/*.lua", "LUA")
+
 	for _, name in pairs(files) do
 		include("pac3/core/client/parts/" .. name)
 	end
 
 	local files = file.Find("pac3/core/client/parts/legacy/*.lua", "LUA")
+
 	for _, name in pairs(files) do
 		include("pac3/core/client/parts/legacy/" .. name)
 	end
@@ -154,6 +151,5 @@ end
 function pac.GetRegisteredParts()
 	return class.GetAll("part")
 end
-
 
 include("base_part.lua")

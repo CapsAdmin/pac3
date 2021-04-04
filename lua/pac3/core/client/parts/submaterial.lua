@@ -1,37 +1,36 @@
 local PART = {}
-
 PART.ClassName = "submaterial"
 PART.NonPhysical = true
-PART.Icon = 'icon16/picture_edit.png'
-PART.Group = {'model', 'entity'}
-
+PART.Icon = "icon16/picture_edit.png"
+PART.Group = {"model", "entity"}
 pac.StartStorableVars()
 	pac.GetSet(PART, "Material", "")
-	pac.GetSet(PART, "SubMaterialId", 1, {
-		editor_onchange = function(self, num)
-			num = tonumber(num) or 0
+	pac.GetSet(
+		PART,
+		"SubMaterialId",
+		1,
+		{
+			editor_onchange = function(self, num)
+				num = tonumber(num) or 0
+				local ent = pace.current_part:GetOwner(pace.current_part.RootOwner)
+				local maxnum = 16
+				return math.floor(math.Clamp(num, 0, maxnum))
+			end,
+			enums = function(part)
+				local tbl = {}
 
-			local ent = pace.current_part:GetOwner(pace.current_part.RootOwner)
+				for i, v in ipairs(part:GetSubMaterialIdList()) do
+					tbl[v] = tostring(i)
+				end
 
-			local maxnum = 16
-
-			return math.floor(math.Clamp(num, 0, maxnum))
-		end,
-
-		enums = function(part)
-			local tbl = {}
-			for i,v in ipairs(part:GetSubMaterialIdList()) do
-				tbl[v] = tostring(i)
-			end
-			return tbl
-		end,
-	})
+				return tbl
+			end,
+		})
 	pac.GetSet(PART, "RootOwner", false)
 pac.EndStorableVars()
 
 function PART:GetSubMaterialIdList()
 	local out = {}
-
 	local ent = self:GetOwner(self.RootOwner)
 
 	if ent:IsValid() and ent.GetMaterials and #ent:GetMaterials() > 0 then
@@ -60,7 +59,6 @@ function PART:UpdateSubMaterialId(id, material)
 
 	if not ent:IsValid() or not ent.GetMaterials then return end
 	ent.pac_submaterials = ent.pac_submaterials or {}
-
 	local mat = self.Materialm
 
 	if not material then
@@ -68,7 +66,7 @@ function PART:UpdateSubMaterialId(id, material)
 			local matName = mat:GetName()
 			material = matName:find("/", 1, true) and matName or "!" .. matName
 		else
-			material = ''
+			material = ""
 		end
 	end
 
@@ -91,19 +89,15 @@ end
 function PART:FixMaterial()
 	local mat = self.Materialm
 	if not mat then return end
-
 	local shader = mat:GetShader()
 	if shader ~= "UnlitGeneric" then return end
 	local tex_path = mat:GetString("$basetexture")
-
 	if not tex_path then return end
 	local params = {}
-
 	params["$basetexture"] = tex_path
 	params["$vertexcolor"] = 1
 	params["$additive"] = 1
-
-	self.Materialm = pac.CreateMaterial('pac_submat_fix_' .. util.CRC(mat:GetName()), "VertexLitGeneric", params)
+	self.Materialm = pac.CreateMaterial("pac_submat_fix_" .. util.CRC(mat:GetName()), "VertexLitGeneric", params)
 end
 
 function PART:UrlTextHandler()
@@ -114,11 +108,14 @@ end
 
 function PART:Handleurltex(mat, tex)
 	if not IsValid(self) then return end
-	if not mat or mat:IsError() or tex:IsError() then self.Materialm = nil return end
+
+	if not mat or mat:IsError() or tex:IsError() then
+		self.Materialm = nil
+		return
+	end
 
 	self.Materialm = mat
 	self:CallEvent("material_changed")
-
 	self:UpdateSubMaterialId()
 end
 

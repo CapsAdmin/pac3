@@ -1,6 +1,5 @@
 local function get_bans()
 	local str = file.Read("pac_bans.txt", "DATA")
-
 	local bans = {}
 
 	if str and str ~= "" then
@@ -8,11 +7,12 @@ local function get_bans()
 	end
 
 	do -- check if this needs to be rebuilt
-		local k,v = next(bans)
+		local k, v = next(bans)
+
 		if type(v) == "string" then
 			local temp = {}
 
-			for k,v in pairs(bans) do
+			for k, v in pairs(bans) do
 				temp[util.CRC("gm_" .. v .. "_gm")] = {steamid = v, name = k}
 			end
 
@@ -24,16 +24,14 @@ local function get_bans()
 end
 
 function pace.Ban(ply)
-
 	ply:ConCommand("pac_clear_parts")
 
-	timer.Simple( 1, function() -- made it a timer because the ConCommand don't run fast enough. - Bizzclaw
+	timer.Simple(1, function() -- made it a timer because the ConCommand don't run fast enough. - Bizzclaw
 
 		net.Start("pac_submit_acknowledged")
 			net.WriteBool(false)
 			net.WriteString("You have been banned from using pac!")
 		net.Send(ply)
-
 		local bans = get_bans()
 
 		for key, data in pairs(bans) do
@@ -43,20 +41,16 @@ function pace.Ban(ply)
 		end
 
 		bans[ply:UniqueID()] = {steamid = ply:SteamID(), nick = ply:Nick()}
-
 		pace.Bans = bans
-
 		file.Write("pac_bans.txt", util.TableToKeyValues(bans), "DATA")
 	end)
 end
 
 function pace.Unban(ply)
-
 	net.Start("pac_submit_acknowledged")
 		net.WriteBool(true)
 		net.WriteString("You are now permitted to use pac!")
 	net.Send(ply)
-
 	local bans = get_bans()
 
 	for key, data in pairs(bans) do
@@ -66,13 +60,16 @@ function pace.Unban(ply)
 	end
 
 	pace.Bans = bans
-
 	file.Write("pac_bans.txt", util.TableToKeyValues(bans), "DATA")
 end
 
 local function GetPlayer(target)
 	for key, ply in pairs(player.GetAll()) do
-		if ply:SteamID() == target or ply:UniqueID() == target or ply:Nick():lower():find(target:lower()) then
+		if
+			ply:SteamID() == target or
+			ply:UniqueID() == target or
+			ply:Nick():lower():find(target:lower())
+		then
 			return ply
 		end
 	end
@@ -80,6 +77,7 @@ end
 
 concommand.Add("pac_ban", function(ply, cmd, args)
 	local target = GetPlayer(args[1])
+
 	if (not IsValid(ply) or ply:IsAdmin()) and target then
 		pace.Ban(target)
 		pac.Message(ply, " banned ", target, " from PAC.")
@@ -88,6 +86,7 @@ end)
 
 concommand.Add("pac_unban", function(ply, cmd, args)
 	local target = GetPlayer(args[1])
+
 	if (not IsValid(ply) or ply:IsAdmin()) and target then
 		pace.Unban(target)
 		pac.Message(ply, " unbanned ", target, " from PAC.")

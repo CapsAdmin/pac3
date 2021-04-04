@@ -1,20 +1,14 @@
 local L = pace.LanguageString
-
 local PANEL = {}
-
 PANEL.ClassName = "tree"
 PANEL.Base = "pac_dtree"
 
 function PANEL:Init()
 	pace.pac_dtree.Init(self)
-
 	self:SetLineHeight(18)
 	self:SetIndentSize(10)
-
 	self.parts = {}
-
 	self:Populate()
-
 	pace.tree = self
 end
 
@@ -23,12 +17,17 @@ do
 
 	local function get_added_nodes(self)
 		local added_nodes = {}
-		for i,v in ipairs(self.added_nodes) do
+
+		for i, v in ipairs(self.added_nodes) do
 			if v.part and v:IsVisible() and v:IsExpanded() then
 				table.insert(added_nodes, v)
 			end
 		end
-		table.sort(added_nodes, function(a, b) return select(2, a:LocalToScreen()) < select(2, b:LocalToScreen()) end)
+
+		table.sort(added_nodes, function(a, b)
+			return select(2, a:LocalToScreen()) < select(2, b:LocalToScreen())
+		end)
+
 		return added_nodes
 	end
 
@@ -36,10 +35,8 @@ do
 		timer.Simple(0.1, function()
 			if not self:IsValid() then return end
 			if not node:IsValid() then return end
-
 			local _, y = self:LocalToScreen()
 			local h = self:GetTall()
-
 			local _, node_y = node:LocalToScreen()
 
 			if node_y > y + h or node_y < y then
@@ -52,11 +49,11 @@ do
 		pnl = vgui.GetHoveredPanel() or NULL
 
 		if
-			not gui.IsGameUIVisible()  and
+			not gui.IsGameUIVisible() and
 			pace.current_part:IsValid() and
 			pace.current_part.pace_tree_node and
-			pace.current_part.pace_tree_node:IsValid() and not
-			(
+			pace.current_part.pace_tree_node:IsValid() and
+			not (
 				pace.BusyWithProperties:IsValid() or
 				pace.ActiveSpecialPanel:IsValid() or
 				pace.editing_viewmodel or
@@ -73,13 +70,16 @@ do
 			if input.IsKeyDown(KEY_UP) or input.IsKeyDown(KEY_PAGEUP) then
 				local added_nodes = get_added_nodes(self)
 				local offset = input.IsKeyDown(KEY_PAGEUP) and 10 or 1
+
 				if not self.scrolled_up or self.scrolled_up < os.clock() then
-					for i,v in ipairs(added_nodes) do
+					for i, v in ipairs(added_nodes) do
 						if v == pace.current_part.pace_tree_node then
 							local node = added_nodes[i - offset] or added_nodes[1]
+
 							if node then
 								node:DoClick()
 								scroll_to_node(self, node)
+
 								break
 							end
 						end
@@ -94,10 +94,12 @@ do
 			if input.IsKeyDown(KEY_DOWN) or input.IsKeyDown(KEY_PAGEDOWN) then
 				local added_nodes = get_added_nodes(self)
 				local offset = input.IsKeyDown(KEY_PAGEDOWN) and 10 or 1
+
 				if not self.scrolled_down or self.scrolled_down < os.clock() then
-					for i,v in ipairs(added_nodes) do
+					for i, v in ipairs(added_nodes) do
 						if v == pace.current_part.pace_tree_node then
 							local node = added_nodes[i + offset] or added_nodes[#added_nodes]
+
 							if node then
 								node:DoClick()
 								--scroll_to_node(self, node)
@@ -114,7 +116,6 @@ do
 		end
 
 		for key, part in pairs(pac.GetLocalParts()) do
-
 			local node = part.pace_tree_node
 
 			if node and node:IsValid() then
@@ -129,6 +130,7 @@ do
 						node.Icon:SetImage(part.Icon)
 					end
 				end
+
 				if (part.ClassName == "proxy" or part.ClassName == "event") and part.Name == "" then
 					node:SetText(part:GetName())
 				end
@@ -140,15 +142,14 @@ do
 
 			if IsValid(pnl) and IsValid(pnl.part) then
 				pace.Call("HoverPart", pnl.part)
+
 				if pnl.add_button then
 					pnl.add_button:SetVisible(true)
 				end
 			end
 		end
 
-		if pace.pac_dtree.Think then
-			return pace.pac_dtree.Think(self, ...)
-		end
+		if pace.pac_dtree.Think then return pace.pac_dtree.Think(self, ...) end
 	end
 end
 
@@ -161,6 +162,7 @@ end
 function PANEL:SetModel(path)
 	if not file.Exists(path, "GAME") then
 		path = player_manager.TranslatePlayerModel(path)
+
 		if not file.Exists(path, "GAME") then
 			print(path, "is invalid")
 			return
@@ -170,10 +172,8 @@ function PANEL:SetModel(path)
 	local pnl = vgui.Create("SpawnIcon", self)
 	pnl:SetModel(path or "")
 	pnl:SetSize(16, 16)
-
 	self.Icon:Remove()
 	self.Icon = pnl
-
 	self.ModelPath = path
 end
 
@@ -183,8 +183,8 @@ end
 
 local function install_drag(node)
 	node:SetDraggableName("pac3")
-
 	local old = node.OnDrop
+
 	function node:OnDrop(child, ...)
 		-- we're hovering on the label, not the actual node
 		-- so get the parent node instead
@@ -210,7 +210,6 @@ local function install_drag(node)
 				pace.RecordUndoHistory()
 				pace.TrySelectPart()
 				called = true
-
 			else
 				pace.RecordUndoHistory()
 				self.part:SetParent()
@@ -225,7 +224,6 @@ local function install_drag(node)
 	end
 
 	function node:DroppedOn(child)
-
 		if not child.part then
 			child = child:GetParent()
 		end
@@ -241,7 +239,6 @@ local function install_drag(node)
 				pace.RecordUndoHistory()
 			end
 		end
-
 	end
 end
 
@@ -253,7 +250,6 @@ local function install_expand(node)
 			return old(self, b, ...)
 		end
 	end
-
 	local old = node.Expander.OnMousePressed
 	node.Expander.OnMousePressed = function(pnl, code, ...)
 		old(pnl, code, ...)
@@ -262,32 +258,39 @@ local function install_expand(node)
 			local menu = DermaMenu()
 			menu:SetPos(input.GetCursorPos())
 			menu:MakePopup()
-
 			menu:AddOption(L"collapse all", function()
-				node.part:CallRecursive('SetEditorExpand', false)
+				node.part:CallRecursive("SetEditorExpand", false)
 				pace.RefreshTree(true)
-			end):SetImage('icon16/arrow_in.png')
-
+			end)
+			:SetImage("icon16/arrow_in.png")
 			menu:AddOption(L"expand all", function()
-				node.part:CallRecursive('SetEditorExpand', true)
+				node.part:CallRecursive("SetEditorExpand", true)
 				pace.RefreshTree(true)
-			end):SetImage('icon16/arrow_down.png')
+			end)
+			:SetImage("icon16/arrow_down.png")
 		end
 	end
 end
 
 local fix_folder_funcs = function(tbl)
-	tbl.MakeFolder = function() end
-	tbl.FilePopulateCallback = function() end
-	tbl.FilePopulate = function() end
-	tbl.PopulateChildren = function() end
-	tbl.ChildExpanded = function() end
-	tbl.PopulateChildrenAndSelf = function() end
+	tbl.MakeFolder = function() 
+	end
+	tbl.FilePopulateCallback = function() 
+	end
+	tbl.FilePopulate = function() 
+	end
+	tbl.PopulateChildren = function() 
+	end
+	tbl.ChildExpanded = function() 
+	end
+	tbl.PopulateChildrenAndSelf = function() 
+	end
 	return tbl
 end
 
 local function node_layout(self, ...)
 	pace.pac_dtree_node.PerformLayout(self, ...)
+
 	if self.Label then
 		self.Label:SetFont(pace.CurrentFont)
 		--self.Label:SetTextColor(derma.Color("text_dark", self, color_black))
@@ -307,7 +310,6 @@ end
 
 -- a hack, because creating a new node button will mess up the layout
 function PANEL:AddNode(...)
-
 	if self.RootNode then
 		install_drag(self.RootNode)
 	end
@@ -315,19 +317,22 @@ function PANEL:AddNode(...)
 	local node = fix_folder_funcs((self.RootNode and pace.pac_dtree.AddNode or pace.pac_dtree_node.AddNode)(self, ...))
 	install_expand(node)
 	install_drag(node)
-
 	local add_button = node:Add("DImageButton")
 	add_button:SetImage(pace.MiscIcons.new)
 	add_button:SetSize(16, 16)
 	add_button:SetVisible(false)
-	add_button.DoClick = function() add_parts_menu(node) pace.Call("PartSelected", node.part) end
-	add_button.DoRightClick = function() node:DoRightClick() end
+	add_button.DoClick = function()
+		add_parts_menu(node)
+		pace.Call("PartSelected", node.part)
+	end
+	add_button.DoRightClick = function()
+		node:DoRightClick()
+	end
 	node.add_button = add_button
 	node.SetModel = self.SetModel
 	node.GetModel = self.GetModel
 	node.AddNode = PANEL.AddNode
 	node.PerformLayout = node_layout
-
 	return node
 end
 
@@ -335,16 +340,16 @@ local enable_model_icons = CreateClientConVar("pac_editor_model_icons", "1")
 
 function PANEL:PopulateParts(node, parts, children)
 	fix_folder_funcs(node)
-
 	local temp = {}
-	for k,v in pairs(parts) do
+
+	for k, v in pairs(parts) do
 		table.insert(temp, v)
 	end
-	parts = temp
 
+	parts = temp
 	local tbl = {}
 
-	table.sort(parts, function(a,b)
+	table.sort(parts, function(a, b)
 		return a and b and a:GetName() < b:GetName()
 	end)
 
@@ -363,7 +368,9 @@ function PANEL:PopulateParts(node, parts, children)
 	for key, part in pairs(tbl) do
 		key = part.Id
 
-		if part:GetRootPart().show_in_editor == false then goto CONTINUE end
+		if part:GetRootPart().show_in_editor == false then
+			goto CONTINUE
+		end
 
 		if not part:HasParent() or children then
 			local part_node
@@ -378,13 +385,13 @@ function PANEL:PopulateParts(node, parts, children)
 
 			fix_folder_funcs(part_node)
 
-			if part.Description then part_node:SetTooltip(L(part.Description)) end
+			if part.Description then
+				part_node:SetTooltip(L(part.Description))
+			end
 
 			part.pace_tree_node = part_node
 			part_node.part = part
-
 			self.parts[key] = part_node
-
 			part_node.DoClick = function()
 				if not part:IsValid() then return end
 				pace.Call("PartSelected", part)
@@ -393,10 +400,8 @@ function PANEL:PopulateParts(node, parts, children)
 
 				return true
 			end
-
 			part_node.DoRightClick = function()
 				if not part:IsValid() then return end
-
 				pace.Call("PartMenu", part)
 				pace.Call("PartSelected", part)
 				part_node:InternalDoClick()
@@ -427,7 +432,6 @@ function PANEL:PopulateParts(node, parts, children)
 				end
 
 				expand(part)
-
 				part_node:SetSelected(true)
 				part.newly_created = nil
 			else
@@ -435,6 +439,7 @@ function PANEL:PopulateParts(node, parts, children)
 				part_node:SetExpanded(part:GetEditorExpand())
 			end
 		end
+
 		::CONTINUE::
 	end
 end
@@ -457,7 +462,6 @@ function PANEL:SelectPart(part)
 end
 
 function PANEL:Populate(reset)
-
 	self:SetLineHeight(18)
 	self:SetIndentSize(2)
 
@@ -475,14 +479,16 @@ function PANEL:Populate(reset)
 	end]]
 
 	self:PopulateParts(self, pac.GetLocalParts())
-
 	self:InvalidateLayout()
 end
 
 pace.RegisterPanel(PANEL)
 
 local function remove_node(part)
-	if (part.pace_tree_node or NULL):IsValid() and part:GetRootPart().show_in_editor ~= false then
+	if
+		(part.pace_tree_node or NULL):IsValid() and
+		part:GetRootPart().show_in_editor ~= false
+	then
 		part.pace_tree_node:SetForceShowExpander()
 		part.pace_tree_node:GetRoot().m_pSelectedItem = nil
 		part.pace_tree_node:Remove()
@@ -497,6 +503,7 @@ local function refresh(part, localplayer)
 		pace.RefreshTree(true)
 	end
 end
+
 pac.AddHook("pac_OnWoreOutfit", "pace_create_tree_nodes", refresh)
 
 local function refresh(part)
@@ -504,11 +511,13 @@ local function refresh(part)
 		pace.RefreshTree(true)
 	end
 end
+
 pac.AddHook("pac_OnPartCreated", "pace_create_tree_nodes", refresh)
 
 pac.AddHook("pace_OnVariableChanged", "pace_create_tree_nodes", function(part, key, val)
 	if key == "EditorExpand" then
 		local node = part.editor_node
+
 		if IsValid(node) then
 			node:SetExpanded(val)
 		end
@@ -517,7 +526,7 @@ end)
 
 function pace.RefreshTree(reset)
 	if pace.tree:IsValid() then
-		timer.Create("pace_refresh_tree",  0.01, 1, function()
+		timer.Create("pace_refresh_tree", 0.01, 1, function()
 			if pace.tree:IsValid() then
 				pace.tree:Populate(reset)
 				pace.tree.RootNode:SetExpanded(true, true) -- why do I have to do this?

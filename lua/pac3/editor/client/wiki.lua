@@ -17,7 +17,6 @@ function pace.GetPropertyDescription(part, field, callback)
 	]==]
 end
 
-
 function pace.ShowHelp(part)
 	pace.ShowWiki(pace.WikiURL)
 	--[[if part then
