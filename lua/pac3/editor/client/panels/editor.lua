@@ -10,7 +10,6 @@ PANEL.pac3_PanelsToRemove = {
 }
 
 local BAR_SIZE = 17
-local RENDERSCORE_SIZE = 20
 
 local use_tabs = CreateClientConVar("pac_property_tabs", 1, true)
 
@@ -25,11 +24,9 @@ function PANEL:Init()
 
 	surface.SetFont(pace.CurrentFont)
 	local _, h = surface.GetTextSize("|")
-	RENDERSCORE_SIZE = h + 1
 
 	local div = vgui.Create("DVerticalDivider", self)
 
-	div:SetDividerHeight(RENDERSCORE_SIZE)
 	div:Dock(FILL)
 	div:SetTopMin(40)
 	div:SetBottomMin(40)
@@ -282,7 +279,7 @@ function PANEL:PerformLayout()
 		local sz = auto_size:GetInt()
 
 		if sz > 0 then
-			local newh = sz > 0 and (ScrH() - math.min(pace.properties:GetHeight() + RENDERSCORE_SIZE + BAR_SIZE - 6, ScrH() / 1.5))
+			local newh = sz > 0 and (ScrH() - math.min(pace.properties:GetHeight() + BAR_SIZE - 6, ScrH() / 1.5))
 
 			if sz >= 2 then
 				local oldh = self.div:GetTopHeight()
@@ -351,18 +348,6 @@ function pace.KillFocus(show_editor)
 			end
 		end)
 	end
-end
-
-local textCol, drawBox
-local boxW, boxH
-
-local function drawTimeBox(text, time, x, y)
-	local str = string.format("%s: %.3f ms", L(text), time)
-	drawBox(x, y, boxW - 5, RENDERSCORE_SIZE - 1)
-
-	surface.SetTextPos(x + 5, y)
-	surface.DrawText(str)
-	return y + RENDERSCORE_SIZE
 end
 
 function PANEL:PaintOver(w, h)
