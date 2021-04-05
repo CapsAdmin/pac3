@@ -29,7 +29,7 @@ function pac.ReverseHash(str, t)
 		if game.SinglePlayer() then
 			return Entity(1)
 		end
-        return player.GetBySteamID64(str)
+        return player.GetBySteamID64(str) or NULL
     elseif t == "Entity" then
         return ents.GetByIndex(tonumber(str))
     else
