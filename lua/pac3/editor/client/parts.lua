@@ -10,59 +10,15 @@ local function add_expensive_submenu_load(pnl, callback)
 	end
 end
 
-function pace.WearParts(file, clear)
-	local allowed, reason = pac.CallHook("CanWearParts", pac.LocalPlayer, file)
+function pace.WearParts(temp_wear_filter)
+	local allowed, reason = pac.CallHook("CanWearParts", pac.LocalPlayer)
 
 	if allowed == false then
 		pac.Message(reason or "the server doesn't want you to wear parts for some reason")
 		return
 	end
 
-	if file then
-		pace.LoadParts(file, clear)
-	end
-
-	return pace.WearOnServer()
-end
-
-function pace.WearOnServer()
-	local ok, reason = pac.CallHook("CanWearParts", pac.LocalPlayer)
-
-	if ok == false then
-		return ok, reason
-	end
-
-	local toWear = {}
-
-	for key, part in pairs(pac.GetLocalParts()) do
-		if pace.IsPartSendable(part) then
-			table.insert(toWear, part)
-		end
-	end
-
-	for i, part in ipairs(toWear) do
-		pace.SendPartToServer(part, {
-			partID = i,
-			totalParts = #toWear,
-			transmissionID = math.random(1, math.pow(2, 31) - 1)
-		})
-	end
-end
-
-function pace.ClearParts()
-	pace.ClearUndo()
-	pac.RemoveAllParts(true, true)
-	pace.RefreshTree()
-
-	timer.Simple(0.1, function()
-		if not pace.Editor:IsValid() then return end
-
-		if table.Count(pac.GetLocalParts()) == 0 then
-			pace.Call("CreatePart", "group", L"my outfit")
-		end
-
-		pace.TrySelectPart()
-	end)
+	return pace.WearOnServer(temp_wear_filter)
 end
 
 function pace.OnCreatePart(class_name, name, mdl, no_parent)
@@ -260,6 +216,10 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 		end
 	end)
 end
+
+pac.AddHook("pac_OnPartParent", "pace_parent", function(parent, child)
+	pace.Call("VariableChanged", parent, "Parent", child, true)
+end)
 
 function pace.GetRegisteredParts()
 	local out = {}
@@ -653,207 +613,4 @@ do
 			pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
 		end
 	end
-end
-
-pac.AddHook("pac_OnPartParent", "pace_parent", function(parent, child)
-	pace.Call("VariableChanged", parent, "Parent", child, true)
-end)
-
-do
-	local hold = false
-	local last = 0
-
-	local function thinkUndo()
-		-- whooaaa
-		-- if input.IsControlDown() and input.IsKeyDown(KEY_X) then
-		--  pace.UndoPosition = math.Round((gui.MouseY() / ScrH()) * #pace.UndoHistory)
-		--  pace.ApplyUndo()
-		--  return
-		-- end
-
-		if not input.IsKeyDown(KEY_Z) and not input.IsKeyDown(KEY_Y) then
-			hold = false
-		end
-
-		if hold then return end
-
-		if input.IsControlDown() and ((input.IsKeyDown(KEY_LSHIFT) and input.IsKeyDown(KEY_Z)) or input.IsKeyDown(KEY_Y)) then
-			pace.Redo()
-			hold = true
-		elseif input.IsControlDown() and input.IsKeyDown(KEY_Z) then
-			pace.Undo()
-			hold = true
-		end
-	end
-
-	local hold = false
-
-	local function thinkCopy()
-		if not input.IsKeyDown(KEY_C) then
-			hold = false
-		end
-
-		if hold or not (input.IsControlDown() and input.IsKeyDown(KEY_C)) then return end
-
-		-- copy
-		hold = true
-		local part = pace.current_part
-
-		if not part or not part:IsValid() then
-			pace.FlashNotification('No part selected to copy')
-			return
-		end
-
-		pace.Copy(part)
-
-		surface.PlaySound("buttons/button9.wav")
-	end
-
-	local hold = false
-
-	local function thinkCut()
-		if not input.IsKeyDown(KEY_X) then
-			hold = false
-		end
-
-		if hold or not (input.IsControlDown() and input.IsKeyDown(KEY_X)) then return end
-
-		-- copy
-		hold = true
-		local part = pace.current_part
-
-		if not part or not part:IsValid() then
-			pace.FlashNotification('No part selected to cut')
-			return
-		end
-
-		pace.Cut(part)
-
-		surface.PlaySound("buttons/button9.wav")
-	end
-
-	local hold = false
-
-	local function thinkDelete()
-		if not input.IsKeyDown(KEY_DELETE) then
-			hold = false
-		end
-
-		if hold or not input.IsKeyDown(KEY_DELETE) then return end
-
-		-- delete
-		hold = true
-		local part = pace.current_part
-
-		if not part or not part:IsValid() then
-			pace.FlashNotification('No part to delete')
-			return
-		end
-
-		pace.RemovePart(part)
-
-		surface.PlaySound("buttons/button9.wav")
-	end
-
-	local REVERSE_COLLAPSE_CONTROLS = CreateConVar('pac_reverse_collapse', '1', {FCVAR_ARCHIVE}, 'Reverse Collapse/Expand hotkeys')
-	local hold = false
-
-	local function thinkExpandAll()
-		if not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT) and not input.IsKeyDown(KEY_0) then
-			hold = false
-		end
-
-		if hold or not input.IsShiftDown() or (not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT)) or not input.IsKeyDown(KEY_0) then return end
-
-		-- expand all
-		hold = true
-		local part = pace.current_part
-
-		if not part or not part:IsValid() then
-			pace.FlashNotification('No part to expand')
-			return
-		end
-
-		part:CallRecursive('SetEditorExpand', not REVERSE_COLLAPSE_CONTROLS:GetBool())
-
-		surface.PlaySound("buttons/button9.wav")
-		pace.RefreshTree(true)
-	end
-
-	local hold = false
-
-	local function thinkCollapseAll()
-		if not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT) and not input.IsKeyDown(KEY_0) then
-			hold = false
-		end
-
-		if hold or input.IsShiftDown() or (not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT)) or not input.IsKeyDown(KEY_0) then return end
-
-		-- collapse all
-		hold = true
-		local part = pace.current_part
-
-		if not part or not part:IsValid() then
-			pace.FlashNotification('No part to collapse')
-			return
-		end
-
-		part:CallRecursive('SetEditorExpand', REVERSE_COLLAPSE_CONTROLS:GetBool())
-
-		surface.PlaySound("buttons/button9.wav")
-		pace.RefreshTree(true)
-	end
-
-	local hold = false
-
-	local function thinkPaste()
-		if not input.IsKeyDown(KEY_V) then
-			hold = false
-		end
-
-		if hold or not (input.IsControlDown() and input.IsKeyDown(KEY_V)) then return end
-
-		-- paste
-		hold = true
-		local part = pace.Clipboard
-
-		if not part then
-			pace.FlashNotification('No part is stored in clipboard')
-			return
-		end
-
-		local findParent
-
-		if part == pace.current_part then
-			findParent = part:GetParent()
-
-			if not findParent or not findParent:IsValid() then
-				findParent = part
-			end
-		elseif pace.current_part and pace.current_part:IsValid() then
-			findParent = pace.current_part
-		else
-			pace.RecordUndoHistory()
-			findParent = pace.Call("CreatePart", "group", L"paste data")
-			pace.RecordUndoHistory()
-		end
-
-		pace.Paste(findParent)
-
-		surface.PlaySound("buttons/button9.wav")
-	end
-
-	pac.AddHook("Think", "pace_keyboard_shortcuts", function()
-		if not pace.IsActive() then return end
-		if not pace.Focused then return end
-		if IsValid(vgui.GetKeyboardFocus()) and vgui.GetKeyboardFocus():GetClassName():find('Text') then return end
-		if gui.IsConsoleVisible() then return end
-		thinkUndo()
-		thinkCopy()
-		thinkPaste()
-		thinkCut()
-		thinkDelete()
-		thinkExpandAll()
-		thinkCollapseAll()
-	end)
 end

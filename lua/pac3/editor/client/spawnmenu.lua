@@ -1,7 +1,13 @@
 local L = pace.LanguageString
 
 concommand.Add("pac_wear_parts", function(ply, _, args)
-	pace.WearParts(args[1], true)
+	local file = args[1]
+
+	if file then
+		pace.LoadParts(file, true)
+	end
+
+	pace.WearParts()
 end)
 
 concommand.Add("pac_clear_parts", function()

@@ -13,9 +13,19 @@ function pac.Hash(obj)
     elseif t == "table" then
         return pac.Hash(("%p"):format(obj))
     elseif t == "Player" then
-        return obj:UniqueID()
+        return obj:SteamID64()
     elseif t == "Entity" then
-        return obj:EntIndex()
+        return tostring(obj:EntIndex())
+    else
+        error("NYI " .. t)
+    end
+end
+
+function pac.ReverseHash(str, t)
+    if t == "Player" then
+        return player.GetBySteamID64(str)
+    elseif t == "Entity" then
+        return ents.GetByIndex(tonumber(str))
     else
         error("NYI " .. t)
     end

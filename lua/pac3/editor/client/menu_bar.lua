@@ -29,93 +29,7 @@ local function populate_pac(menu)
 		menu:SetDeleteSelf(false)
 		icon:SetImage(pace.MiscIcons.wear)
 
-		menu:AddOption(L"wear")
-
-		menu:AddSpacer()
-
-		local function is_blocked(ply)
-			if GetConVar('pac_wear_friends_only'):GetBool() then
-				return ply:GetFriendStatus() ~= "friend"
-			end
-			return cookie.GetString("pac3_wear_block_" .. ply:UniqueID()) == "1"
-		end
-
-		local function is_enabled(ply)
-			if GetConVar("pac_wear_reverse"):GetBool() then
-				return not is_blocked(ply)
-			end
-			return is_blocked(ply)
-		end
-
-		local function set_enabled(ply, b)
-			if b then
-				cookie.Set("pac3_wear_block_" .. ply:UniqueID(), "1")
-			else
-				cookie.Delete("pac3_wear_block_" .. ply:UniqueID())
-			end
-		end
-
-		local function OnMouseReleased( self, mousecode )
-
-			DButton.OnMouseReleased( self, mousecode )
-
-			if ( self.m_MenuClicking && mousecode == MOUSE_LEFT ) then
-
-				self.m_MenuClicking = false
-
-			end
-
-		end
-
-		local updaters = {}
-
-		for _,  ply in ipairs(player.GetAll()) do
-			if ply ~= pac.LocalPlayer then
-				local icon
-
-				local function update()
-					if not ply:IsValid() then
-						icon:SetAlpha(0.5)
-						return
-					end
-
-					icon:SetChecked(is_enabled(ply))
-				end
-
-				icon = menu:AddOption(ply:Nick(), function(self)
-					if not ply:IsValid() then
-						self:SetAlpha(0.5)
-						return
-					end
-
-					set_enabled(ply, not is_blocked(ply))
-
-					update()
-				end)
-				icon.OnMouseReleased = OnMouseReleased
-
-				table.insert(updaters, function() update(icon) end)
-			end
-		end
-
-		menu:AddSpacer()
-
-		local function update_all()
-			for _, func in ipairs(updaters) do
-				func()
-			end
-		end
-
-		menu:AddCVar(L"reverse blocklist", "pac_wear_reverse", "1", "0", update_all).OnMouseReleased = OnMouseReleased
-		menu:AddCVar(L"friends only", "pac_wear_friends_only", "1", "0", update_all).OnMouseReleased = OnMouseReleased
-		menu:AddOption(L"reset", function()
-			for _, ply in ipairs(player.GetAll()) do
-				set_enabled(ply, false)
-			end
-			update_all()
-		end).OnMouseReleased = OnMouseReleased
-
-		update_all()
+		pace.PopulateWearMenu(menu)
 	end
 
 	do
@@ -160,6 +74,11 @@ local function populate_pac(menu)
 			version:AddOption("Editor: " .. info.editor.version_name)
 			version:AddOption("Core: " .. info.core.version_name)
 		end
+
+		help:AddOption(
+			L"about",
+			function() pace.ShowAbout() end
+		):SetImage(pace.MiscIcons.about)
 	end
 
 	do
@@ -175,12 +94,6 @@ local function populate_view(menu)
 	menu:AddCVar(L"camera follow", "pac_camera_follow_entity", "1", "0"):SetImage("icon16/camera_go.png")
 	menu:AddOption(L"reset view position", function() pace.ResetView() end):SetImage("icon16/camera_link.png")
 	menu:AddOption(L"reset zoom", function() pace.ResetZoom() end):SetImage("icon16/magnifier.png")
-
-	menu:AddOption(
-		L"about",
-		function() pace.ShowAbout() end
-	):SetImage(pace.MiscIcons.about)
-
 end
 
 local function populate_options(menu)

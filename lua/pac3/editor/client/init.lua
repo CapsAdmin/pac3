@@ -3,8 +3,6 @@ include("autorun/pac_core_init.lua")
 pace = pace or {}
 pace.luadata = include("pac3/libraries/luadata.lua")
 
-include("friends_only.lua")
-
 include("language.lua")
 include("icons.lua")
 
@@ -36,6 +34,8 @@ include("animation_timeline.lua")
 include("render_scores.lua")
 include("wires.lua")
 
+include("wear_filter.lua")
+include("show_outfit_on_use.lua")
 
 do
 	local hue =
