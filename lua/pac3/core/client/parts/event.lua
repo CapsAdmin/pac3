@@ -650,8 +650,8 @@ PART.OldEvents = {
 
 	sequence_name = {
 		arguments = {{find = "string"}},
-		nice = function(self)
-			return self.sequence_name
+		nice = function(self, ent)
+			return self.sequence_name or ent:GetSequenceName(ent:GetSequence()) or "invalid sequence"
 		end,
 		callback = function(self, ent, find)
 			ent = get_owner(self)
