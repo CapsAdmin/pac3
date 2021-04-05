@@ -835,6 +835,7 @@ do
 
 	function PART:GetBonePosition()
 		local ent = self:GetParentOwner()
+		if not ent:IsValid() then return Vector(), Angle() end
 		local ang = ent:GetAngles()
 		if ent:IsPlayer() then
 			ang.p = 0
