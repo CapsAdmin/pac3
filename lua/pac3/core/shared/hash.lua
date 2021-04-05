@@ -13,6 +13,9 @@ function pac.Hash(obj)
     elseif t == "table" then
         return pac.Hash(("%p"):format(obj))
     elseif t == "Player" then
+		if game.SinglePlayer() then
+			return "SinglePlayer"
+		end
         return obj:SteamID64()
     elseif t == "Entity" then
         return tostring(obj:EntIndex())
@@ -23,6 +26,9 @@ end
 
 function pac.ReverseHash(str, t)
     if t == "Player" then
+		if game.SinglePlayer() then
+			return Entity(1)
+		end
         return player.GetBySteamID64(str)
     elseif t == "Entity" then
         return ents.GetByIndex(tonumber(str))
