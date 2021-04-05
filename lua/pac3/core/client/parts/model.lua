@@ -786,6 +786,7 @@ do
 	BUILDER:RemoveProperty("Bone")
 	BUILDER:RemoveProperty("EyeAngles")
 	BUILDER:RemoveProperty("AimPartName")
+	BUILDER:RemoveProperty("ForceObjUrl")
 
 	function PART:SetStandingHullHeight(val)
 		self.StandingHullHeight = val
@@ -1014,6 +1015,7 @@ do
 		:EndStorableVars()
 
 	BUILDER:RemoveProperty("Model")
+	BUILDER:RemoveProperty("ForceObjUrl")
 
 	function PART:SetDrawShadow(b)
 		self.DrawShadow = b
