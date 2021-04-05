@@ -405,7 +405,9 @@ function PART:SetModel(path)
 
 				pac.ResetBoneCache(ent)
 
-				self:CallRecursiveExcludeSelf('OnShow', true)
+				for _, child in ipairs(self:GetChildrenList()) do
+					child:OnShow(true)
+				end
 			end, function(err)
 				pac.Message(err)
 			end, self:GetPlayerOwner())
@@ -433,7 +435,9 @@ function PART:SetModel(path)
 				ent:SetBodygroup(i, 0)
 			end
 
-			self:CallRecursiveExcludeSelf('OnShow', true)
+			for _, child in ipairs(self:GetChildrenList()) do
+				child:OnShow(true)
+			end
 		end)
 
 		self.mdl_zip = false

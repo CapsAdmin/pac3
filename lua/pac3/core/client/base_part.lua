@@ -262,7 +262,10 @@ do -- scene graph
 
 		function PART:InvalidateParentList()
 			self.parent_list = nil
-			self:CallRecursiveExcludeSelf("InvalidateParentList")
+
+			for _, child in ipairs(self:GetChildrenList()) do
+				child.parent_list = nil
+			end
 		end
 	end
 
@@ -299,7 +302,6 @@ do -- scene graph
 		part:SortChildren()
 		self:SortChildren()
 
-		self:InvalidateParentList()
 		part:InvalidateParentList()
 
 		if self:GetPlayerOwner() == pac.LocalPlayer then
@@ -354,22 +356,15 @@ do -- scene graph
 		return self
 	end
 
-	function PART:CallRecursive(func, ...)
+	function PART:CallRecursive(func, a,b,c)
+		assert(c == nil, "EXTEND ME")
 		if self[func] then
-			self[func](self, ...)
+			self[func](self, a,b,c)
 		end
 
 		for _, child in ipairs(self:GetChildrenList()) do
 			if child[func] then
-				child[func](child, ...)
-			end
-		end
-	end
-
-	function PART:CallRecursiveExcludeSelf(func, ...)
-		for _, child in ipairs(self:GetChildrenList()) do
-			if child[func] then
-				child[func](child, ...)
+				child[func](child, a,b,c)
 			end
 		end
 	end
@@ -632,7 +627,7 @@ do -- serializing
 
 			for _, value in pairs(tbl.children) do
 				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner(), value)
-				part:SetParent(self)
+				self:AddChild(part)
 			end
 		end
 
