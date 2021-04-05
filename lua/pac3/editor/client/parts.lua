@@ -147,7 +147,7 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 	end
 
 	if not not_from_editor then
-	timer.Create("pace_backup", 1, 1, pace.Backup)
+		timer.Create("pace_backup", 1, 1, pace.Backup)
 
 		if not pace.undo_release_varchange then
 			pace.RecordUndoHistory()
@@ -201,6 +201,12 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 		if obj.Name == "" then
 			node:SetText(obj:GetName())
 		end
+	end
+
+	if obj.ClassName:StartWith("sound", nil, true) then
+		timer.Create("pace_preview_sound", 0.25, 1, function()
+			obj:OnShow()
+		end)
 	end
 
 	timer.Simple(0, function()
