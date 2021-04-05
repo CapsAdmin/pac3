@@ -22,17 +22,30 @@ function pace.WearParts(file, clear)
 		pace.LoadParts(file, clear)
 	end
 
+	return pace.WearOnServer()
+end
+
+function pace.WearOnServer()
+	local ok, reason = pac.CallHook("CanWearParts", pac.LocalPlayer)
+
+	if ok == false then
+		return ok, reason
+	end
+
 	local toWear = {}
-	local transmissionID = math.random(1, math.pow(2, 31) - 1)
 
 	for key, part in pairs(pac.GetLocalParts()) do
-		if not part:HasParent() and part.show_in_editor ~= false and pace.IsPartSendable(part) then
+		if pace.IsPartSendable(part) then
 			table.insert(toWear, part)
 		end
 	end
 
 	for i, part in ipairs(toWear) do
-		pace.SendPartToServer(part, {partID = i, totalParts = #toWear, transmissionID = transmissionID})
+		pace.SendPartToServer(part, {
+			partID = i,
+			totalParts = #toWear,
+			transmissionID = math.random(1, math.pow(2, 31) - 1)
+		})
 	end
 end
 

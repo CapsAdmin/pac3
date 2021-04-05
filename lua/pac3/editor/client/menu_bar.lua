@@ -10,56 +10,161 @@ local function add_expensive_submenu_load(pnl, callback)
 end
 
 local function populate_pac(menu)
-	local save, pnl = menu:AddSubMenu(L"save", function() pace.SaveParts() end)
-	save:SetDeleteSelf(false)
-	pnl:SetImage(pace.MiscIcons.save)
-	add_expensive_submenu_load(pnl, function() pace.AddSaveMenuToMenu(save) end)
+	do
+		local menu, icon = menu:AddSubMenu(L"save", function() pace.SaveParts() end)
+		menu:SetDeleteSelf(false)
+		icon:SetImage(pace.MiscIcons.save)
+		add_expensive_submenu_load(icon, function() pace.AddSaveMenuToMenu(menu) end)
+	end
 
-	local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts(nil, true) end)
-	load:SetDeleteSelf(false)
-	pnl:SetImage(pace.MiscIcons.load)
-	add_expensive_submenu_load(pnl, function() pace.AddSavedPartsToMenu(load, true) end)
+	do
+		local menu, icon = menu:AddSubMenu(L"load", function() pace.LoadParts(nil, true) end)
+		menu:SetDeleteSelf(false)
+		icon:SetImage(pace.MiscIcons.load)
+		add_expensive_submenu_load(icon, function() pace.AddSavedPartsToMenu(menu, true) end)
+	end
 
-	menu:AddOption(L"wear", function() pace.WearParts() end):SetImage(pace.MiscIcons.wear)
+	do
+		local menu, icon = menu:AddSubMenu(L"wear", function() pace.WearParts() end)
+		menu:SetDeleteSelf(false)
+		icon:SetImage(pace.MiscIcons.wear)
 
-	local clear, pnl = menu:AddSubMenu(L"clear", function() end)
-	pnl:SetImage(pace.MiscIcons.clear)
-	clear.GetDeleteSelf = function() return false end
-	clear:AddOption(L"OK", function() pace.ClearParts() end):SetImage(pace.MiscIcons.clear)
+		menu:AddOption(L"wear")
+
+		menu:AddSpacer()
+
+		local function is_blocked(ply)
+			if GetConVar('pac_wear_friends_only'):GetBool() then
+				return ply:GetFriendStatus() ~= "friend"
+			end
+			return cookie.GetString("pac3_wear_block_" .. ply:UniqueID()) == "1"
+		end
+
+		local function is_enabled(ply)
+			if GetConVar("pac_wear_reverse"):GetBool() then
+				return not is_blocked(ply)
+			end
+			return is_blocked(ply)
+		end
+
+		local function set_enabled(ply, b)
+			if b then
+				cookie.Set("pac3_wear_block_" .. ply:UniqueID(), "1")
+			else
+				cookie.Delete("pac3_wear_block_" .. ply:UniqueID())
+			end
+		end
+
+		local function OnMouseReleased( self, mousecode )
+
+			DButton.OnMouseReleased( self, mousecode )
+
+			if ( self.m_MenuClicking && mousecode == MOUSE_LEFT ) then
+
+				self.m_MenuClicking = false
+
+			end
+
+		end
+
+		local updaters = {}
+
+		for _,  ply in ipairs(player.GetAll()) do
+			if ply ~= pac.LocalPlayer then
+				local icon
+
+				local function update()
+					if not ply:IsValid() then
+						icon:SetAlpha(0.5)
+						return
+					end
+
+					icon:SetChecked(is_enabled(ply))
+				end
+
+				icon = menu:AddOption(ply:Nick(), function(self)
+					if not ply:IsValid() then
+						self:SetAlpha(0.5)
+						return
+					end
+
+					set_enabled(ply, not is_blocked(ply))
+
+					update()
+				end)
+				icon.OnMouseReleased = OnMouseReleased
+
+				table.insert(updaters, function() update(icon) end)
+			end
+		end
+
+		menu:AddSpacer()
+
+		local function update_all()
+			for _, func in ipairs(updaters) do
+				func()
+			end
+		end
+
+		menu:AddCVar(L"reverse blocklist", "pac_wear_reverse", "1", "0", update_all).OnMouseReleased = OnMouseReleased
+		menu:AddCVar(L"friends only", "pac_wear_friends_only", "1", "0", update_all).OnMouseReleased = OnMouseReleased
+		menu:AddOption(L"reset", function()
+			for _, ply in ipairs(player.GetAll()) do
+				set_enabled(ply, false)
+			end
+			update_all()
+		end).OnMouseReleased = OnMouseReleased
+
+		update_all()
+	end
+
+	do
+		local menu, icon = menu:AddSubMenu(L"clear", function() end)
+		icon:SetImage(pace.MiscIcons.clear)
+		menu.GetDeleteSelf = function() return false end
+		menu:AddOption(L"OK", function() pace.ClearParts() end):SetImage(pace.MiscIcons.clear)
+	end
 
 	menu:AddSpacer()
 
-	local help, help_pnl = menu:AddSubMenu(L"help", function() pace.ShowWiki() end)
-	help.GetDeleteSelf = function() return false end
-	help_pnl:SetImage(pace.MiscIcons.help)
+	do
+		local help, help_pnl = menu:AddSubMenu(L"help", function() pace.ShowWiki() end)
+		help.GetDeleteSelf = function() return false end
+		help_pnl:SetImage(pace.MiscIcons.help)
 
-	help:AddOption(
-		L"Getting Started",
-		function() pace.ShowWiki(pace.WikiURL .. "Beginners-FAQ") end
-	):SetImage(pace.MiscIcons.info)
+		help:AddOption(
+			L"Getting Started",
+			function() pace.ShowWiki(pace.WikiURL .. "Beginners-FAQ") end
+		):SetImage(pace.MiscIcons.info)
 
-	local chat_pnl = help:AddOption(
-		L"Discord / PAC3 Chat",
-		function() gui.OpenURL("https://discord.gg/utpR3gJ") cookie.Set("pac3_discord_ad", 3)  end
-	) chat_pnl:SetImage(pace.MiscIcons.chat)
+		do
+			local chat_pnl = help:AddOption(
+				L"Discord / PAC3 Chat",
+				function() gui.OpenURL("https://discord.gg/utpR3gJ") cookie.Set("pac3_discord_ad", 3)  end
+			) chat_pnl:SetImage(pace.MiscIcons.chat)
 
-	local info = _G.PAC_VERSION and PAC_VERSION()
-	if info then
-		local version, version_pnl = help:AddSubMenu(L"Version", function() pace.ShowWiki() end)
-		version.GetDeleteSelf = function() return false end
-		version_pnl:SetImage(pace.MiscIcons.info)
+			if cookie.GetNumber("pac3_discord_ad", 0) < 3 then
+				help_pnl.PaintOver = function(_,w,h) surface.SetDrawColor(255,255,0,50 + math.sin(SysTime()*20)*20) surface.DrawRect(0,0,w,h) end
+				chat_pnl.PaintOver = help_pnl.PaintOver
+				cookie.Set("pac3_discord_ad", cookie.GetNumber("pac3_discord_ad", 0) + 1)
+			end
+		end
 
-		version:AddOption("Addon: " .. info.addon.version_name)
-		version:AddOption("Editor: " .. info.editor.version_name)
-		version:AddOption("Core: " .. info.core.version_name)
+		local info = _G.PAC_VERSION and PAC_VERSION()
+		if info then
+			local version, version_pnl = help:AddSubMenu(L"Version", function() pace.ShowWiki() end)
+			version.GetDeleteSelf = function() return false end
+			version_pnl:SetImage(pace.MiscIcons.info)
+
+			version:AddOption("Addon: " .. info.addon.version_name)
+			version:AddOption("Editor: " .. info.editor.version_name)
+			version:AddOption("Core: " .. info.core.version_name)
+		end
 	end
-	if cookie.GetNumber("pac3_discord_ad", 0) < 3 then
-		help_pnl.PaintOver = function(_,w,h) surface.SetDrawColor(255,255,0,50 + math.sin(SysTime()*20)*20) surface.DrawRect(0,0,w,h) end
-		chat_pnl.PaintOver = help_pnl.PaintOver
-		cookie.Set("pac3_discord_ad", cookie.GetNumber("pac3_discord_ad", 0) + 1)
-	end
 
-	menu:AddOption(L"exit", function() pace.CloseEditor() end):SetImage(pace.MiscIcons.exit)
+	do
+		menu:AddOption(L"exit", function() pace.CloseEditor() end):SetImage(pace.MiscIcons.exit)
+	end
 end
 
 local function populate_view(menu)
@@ -83,17 +188,17 @@ local function populate_options(menu)
 	menu:AddCVar(L"inverse collapse/expand controls", "pac_reverse_collapse", "1", "0")
 	menu:AddCVar(L"enable shift+move/rotate clone", "pac_grab_clone", "1", "0")
 	menu:AddCVar(L"remember editor position", "pac_editor_remember_position", "1", "0")
-		menu:AddSpacer()
-			menu:AddOption(L"position grid size", function()
-				Derma_StringRequest(L"position grid size", L"size in units:", GetConVarNumber("pac_grid_pos_size"), function(val)
-					RunConsoleCommand("pac_grid_pos_size", val)
-				end)
-			end)
-			menu:AddOption(L"angles grid size", function()
-				Derma_StringRequest(L"angles grid size", L"size in degrees:", GetConVarNumber("pac_grid_ang_size"), function(val)
-					RunConsoleCommand("pac_grid_ang_size", val)
-				end)
-			end)
+	menu:AddSpacer()
+	menu:AddOption(L"position grid size", function()
+		Derma_StringRequest(L"position grid size", L"size in units:", GetConVarNumber("pac_grid_pos_size"), function(val)
+			RunConsoleCommand("pac_grid_pos_size", val)
+		end)
+	end)
+	menu:AddOption(L"angles grid size", function()
+		Derma_StringRequest(L"angles grid size", L"size in degrees:", GetConVarNumber("pac_grid_ang_size"), function(val)
+			RunConsoleCommand("pac_grid_ang_size", val)
+		end)
+	end)
 	menu:AddCVar(L"render attachments as bones", "pac_render_attachments", "1", "0").DoClick = function() pace.ToggleRenderAttachments() end
 	menu:AddSpacer()
 

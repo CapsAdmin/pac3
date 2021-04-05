@@ -43,13 +43,9 @@ do -- to server
 		net.SendToServer()
 	end)
 
-	function pace.IsPartSendable(part, extra)
-		local allowed, reason = pac.CallHook("CanWearParts", pac.LocalPlayer)
+	function pace.IsPartSendable(part)
 
-		if allowed == false then
-			return false
-		end
-
+		if part:HasParent() then return false end
 		if part.ClassName == "group" and not part:HasChildren() then return false end
 		if not part.show_in_editor == false then return false end
 
