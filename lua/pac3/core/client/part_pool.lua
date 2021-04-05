@@ -453,25 +453,28 @@ function pac.GetPartFromUniqueID(owner_id, id)
 	return uid_parts[owner_id] and uid_parts[owner_id][id] or NULL
 end
 
-function pac.FindPartByName(owner_id, str)
+function pac.FindPartByName(owner_id, str, exclude)
 	if uid_parts[owner_id] then
 		if uid_parts[owner_id][str] then
 			return uid_parts[owner_id][str]
 		end
 
 		for _, part in pairs(uid_parts[owner_id]) do
+			if part == exclude then continue end
 			if part:GetName() == str then
 				return part
 			end
 		end
 
 		for _, part in pairs(uid_parts[owner_id]) do
+			if part == exclude then continue end
 			if pac.StringFind(part:GetName(), str) then
 				return part
 			end
 		end
 
 		for _, part in pairs(uid_parts[owner_id]) do
+			if part == exclude then continue end
 			if pac.StringFind(part:GetName(), str, true) then
 				return part
 			end

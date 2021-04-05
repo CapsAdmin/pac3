@@ -85,9 +85,12 @@ do -- part
 	end
 
 	function PANEL:DecodeEdit(name)
-		local part = pac.FindPartByName(pac.Hash(pac.LocalPlayer), name)
-		if part:IsValid() then
-			return part:GetUniqueID()
+
+		if name:Trim() ~= "" then
+			local part = pac.FindPartByName(pac.Hash(pac.LocalPlayer), name, pace.current_part)
+			if part:IsValid() then
+				return part:GetUniqueID()
+			end
 		end
 
 		return ""

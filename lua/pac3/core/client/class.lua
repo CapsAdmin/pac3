@@ -129,6 +129,11 @@ do
 		self:GetSet(key .. "UID", "", udata)
 
 		PART["Set" .. key .. "UID"] = function(self, uid)
+			if uid == "" or not uid then
+				self["Set" .. key](self, NULL)
+				return
+			end
+
 			if type(uid) == "table" then
 				uid = uid.UniqueID
 			end
@@ -139,6 +144,11 @@ do
 			local part = pac.GetPartFromUniqueID(owner_id, uid)
 
 			if part:IsValid() then
+				if part == self then
+					part = NULL
+					self[key.."UID"] = ""
+				end
+
 				self["Set" .. key](self, part)
 			elseif uid ~= "" then
 				self.unresolved_uid_parts = self.unresolved_uid_parts or {}
