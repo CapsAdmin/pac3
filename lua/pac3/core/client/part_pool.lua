@@ -278,7 +278,7 @@ pac.AddHook("Think", "events", function()
 			for _, part in pairs(ent_parts[ply]) do
 				part:SetOwner(rag)
 			end
-
+			rag:SetOwner(ply)
 			pac.ShowEntityParts(rag)
 
 			ply.pac_revert_ragdoll = function()
