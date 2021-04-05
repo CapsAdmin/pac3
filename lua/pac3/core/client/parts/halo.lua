@@ -48,6 +48,16 @@ function PART:OnThink()
 		tbl[1] = ent
 	end
 
+	local parent = self:GetParent()
+	if parent:IsValid() then
+		for _, part in ipairs(parent:GetChildren()) do
+			local ent = part:GetOwner()
+			if ent:IsValid() and not part:IsHiddenCached() then
+				table.insert(tbl, ent)
+			end
+		end
+	end
+
 	if self.AffectChildren then
 		for _, part in ipairs(self:GetChildrenList()) do
 			local ent = part:GetOwner()
