@@ -43,18 +43,17 @@ function PART:OnThink()
 
 	local tbl = {}
 
+	local ent = self:GetOwner()
+	if ent:IsValid() then
+		tbl[1] = ent
+	end
+
 	if self.AffectChildren then
 		for _, part in ipairs(self:GetChildrenList()) do
 			local ent = part:GetOwner()
 			if ent:IsValid() and not part:IsHiddenCached() then
 				table.insert(tbl, ent)
 			end
-		end
-	else
-		local parent = self:GetParent()
-		local ent = self:GetOwner()
-		if ent:IsValid() then
-			tbl[1] = ent
 		end
 	end
 
