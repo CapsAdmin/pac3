@@ -239,10 +239,10 @@ function PART:GetBonePosition()
 
 	local index = self.bone_index
 
-	if not index then return end
+	if not index then return ent:GetPos(), ent:GetAngles() end
 
 	local m = self.bone_matrix or ent:GetBoneMatrix(index)
-	if not m then return end
+	if not m then return ent:GetPos(), ent:GetAngles() end
 
 	local pos = m:GetTranslation()
 	local ang = m:GetAngles()
