@@ -9,6 +9,18 @@ net.Receive("pac.TogglePartDrawing", function()
     end
 end)
 
+local function get_other_real_players()
+	local out = {}
+
+	for _, ply in ipairs(player.GetAll()) do
+		if not ply:SteamID64() then continue end -- this will return nil for bots
+		if ply == pac.LocalPlayer then continue end
+		table.insert(out, ply)
+	end
+
+	return out
+end
+
 -- ignore
 do
     function pac.ToggleIgnoreEntity(ent, status, strID)
@@ -118,7 +130,7 @@ do
     end
 
     local function update_show_list()
-        for _, ply in ipairs(player.GetAll()) do
+        for _, ply in ipairs(get_other_real_players()) do
             pac.ToggleIgnoreEntity(ply, should_ignore(ply), "pac_showlist")
         end
     end
@@ -174,7 +186,7 @@ do
     function pace.CreateWearFilter()
         local filter = {}
 
-        for _, ply in ipairs(player.GetAll()) do
+        for _, ply in ipairs(get_other_real_players()) do
             if not should_ignore(ply) then
                 table.insert(filter, pac.Hash(ply))
             end
@@ -207,9 +219,7 @@ do
 		local root = menu
         local updaters = {}
 
-        for _, ply in ipairs(player.GetAll()) do
-            if ply == pac.LocalPlayer then continue end
-
+        for _, ply in ipairs(get_other_real_players()) do
 			local icon
 
 			local function update()
@@ -285,13 +295,13 @@ do
 			GetConVar("pac_wear_reverse"):SetBool(false)
 			GetConVar("pac_wear_friends_only"):SetBool(false)
 
-            for _, ply in ipairs(player.GetAll()) do
+            for _, ply in ipairs(get_other_real_players()) do
 				cookie.Delete(id(ply))
             end
 
             update_all()
 
-			for _, ply in ipairs(player.GetAll()) do
+			for _, ply in ipairs(get_other_real_players()) do
 				print(ply, should_ignore(ply))
 			end
         end).OnMouseReleased = OnMouseReleased
