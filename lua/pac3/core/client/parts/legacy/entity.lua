@@ -71,13 +71,13 @@ BUILDER:EndStorableVars()
 
 local ent_fields = {}
 
-local function ENTFIELD(PART, name, field)
+function BUILDER:EntityField(name, field)
 
 	field = "pac_" .. field
 
 	ent_fields[field] = name
 
-	PART["Set" .. name] = function(self, val)
+	self.PART["Set" .. name] = function(self, val)
 		self[name] = val
 
 		local owner = self:GetOwner()
@@ -89,24 +89,24 @@ local function ENTFIELD(PART, name, field)
 
 end
 
-ENTFIELD(PART, "InverseKinematics", "enable_ik")
-ENTFIELD(PART, "MuteFootsteps", "hide_weapon")
-ENTFIELD(PART, "AnimationRate", "global_animation_rate")
+BUILDER:EntityField("InverseKinematics", "enable_ik")
+BUILDER:EntityField("MuteFootsteps", "hide_weapon")
+BUILDER:EntityField("AnimationRate", "global_animation_rate")
 
-ENTFIELD(PART, "RunSpeed", "run_speed")
-ENTFIELD(PART, "WalkSpeed", "walk_speed")
-ENTFIELD(PART, "CrouchSpeed", "crouch_speed")
-ENTFIELD(PART, "SprintSpeed", "sprint_speed")
+BUILDER:EntityField("RunSpeed", "run_speed")
+BUILDER:EntityField("WalkSpeed", "walk_speed")
+BUILDER:EntityField("CrouchSpeed", "crouch_speed")
+BUILDER:EntityField("SprintSpeed", "sprint_speed")
 
-ENTFIELD(PART, "FallApartOnDeath", "death_physics_parts")
-ENTFIELD(PART, "DeathRagdollizeParent", "death_ragdollize")
-ENTFIELD(PART, "HideRagdollOnDeath", "death_hide_ragdoll")
-ENTFIELD(PART, "DrawPlayerOnDeath", "draw_player_on_death")
-ENTFIELD(PART, "HidePhysgunBeam", "hide_physgun_beam")
+BUILDER:EntityField("FallApartOnDeath", "death_physics_parts")
+BUILDER:EntityField("DeathRagdollizeParent", "death_ragdollize")
+BUILDER:EntityField("HideRagdollOnDeath", "death_hide_ragdoll")
+BUILDER:EntityField("DrawPlayerOnDeath", "draw_player_on_death")
+BUILDER:EntityField("HidePhysgunBeam", "hide_physgun_beam")
 
-ENTFIELD(PART, "MuteSounds", "mute_sounds")
-ENTFIELD(PART, "AllowOggWhenMuted", "allow_ogg_sounds")
-ENTFIELD(PART, "HideBullets", "hide_bullets")
+BUILDER:EntityField("MuteSounds", "mute_sounds")
+BUILDER:EntityField("AllowOggWhenMuted", "allow_ogg_sounds")
+BUILDER:EntityField("HideBullets", "hide_bullets")
 
 function PART:Initialize()
 	self:SetColor(self:GetColor())

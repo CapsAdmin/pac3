@@ -196,6 +196,10 @@ do
 
 		return setmetatable(builder, META), builder.PART
 	end
+
+	function pac.GetTemplate(name)
+		return pac.PartTemplates[name]
+	end
 end
 
 function pac.GetPropertyUserdata(obj, key)

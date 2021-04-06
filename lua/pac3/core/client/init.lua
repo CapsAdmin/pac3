@@ -61,7 +61,9 @@ hook.Add("OnEntityCreated", "pac_init", function(ent)
 	if not ply:IsValid() then return end
 
 	pac.LocalPlayer = ply
+	pac.in_initialize = true
 	hook.Run("pac_Initialized")
+	pac.in_initialize = nil
 
 	hook.Remove("OnEntityCreated", "pac_init")
 end)

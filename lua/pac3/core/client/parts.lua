@@ -100,7 +100,9 @@ function pac.RegisterPart(META)
 
 	if pac.UpdatePartsWithMetatable and _G.pac_ReloadParts then
 
-		if PAC_RESTART or not Entity(1):IsPlayer() then return end
+		if PAC_RESTART then return end
+		if not Entity(1):IsPlayer() then return end
+		if pac.in_initialize then return end
 
 		if not reloading then
 			reloading = true
