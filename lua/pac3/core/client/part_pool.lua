@@ -371,7 +371,7 @@ pac.AddHook("EntityRemoved", "change_owner", function(ent)
 					IsActuallyRemoved(ent, function()
 						for _, part in pairs(parts) do
 							if part.ClassName == "group" then
-								part:UpdateOwnerName(ent, true)
+								part:HideInvalidOwners()
 							end
 						end
 					end)

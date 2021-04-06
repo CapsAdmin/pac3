@@ -42,7 +42,15 @@ function PART:SetOwner(ent)
 	end
 end
 
-function PART:UpdateOwnerName(ent, removed)
+function PART:HideInvalidOwners()
+	local prev_owner = self:GetOwner()
+
+	if not prev_owner:IsValid() then
+		self:SetOwner(NULL)
+	end
+end
+
+function PART:UpdateOwnerName(ent)
 	-- this is only supported by groups in root
 	if self:HasParent() then return end
 
