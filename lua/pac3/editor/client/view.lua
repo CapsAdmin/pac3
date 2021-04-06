@@ -131,6 +131,7 @@ end
 local WORLD_ORIGIN = Vector(0, 0, 0)
 
 local function CalcDrag()
+
 	if
 		pace.BusyWithProperties:IsValid() or
 		pace.ActiveSpecialPanel:IsValid() or
@@ -159,7 +160,9 @@ local function CalcDrag()
 	if not part:IsValid() then return end
 
 	local owner = part:GetRootOwner()
-	if not owner:IsValid() then return end
+	if not owner:IsValid() then
+		owner = pac.LocalPlayer
+	end
 
 	origin = owner:GetPos()
 	if owner == pac.WorldEntity then
@@ -415,3 +418,5 @@ function pace.HUDShouldDraw(typ)
 		return false
 	end
 end
+
+pace.EnableView(true)
