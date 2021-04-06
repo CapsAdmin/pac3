@@ -19,6 +19,9 @@ local function ADD(PART, name, default, ...)
 		local ply = self:GetRootOwner()
 
 		if ply == pac.LocalPlayer then
+
+			if self:IsHiddenCached() then return end
+
 			local num = GetConVarNumber("pac_free_movement")
 			if num == 1 or (num == -1 and hook.Run("PlayerNoClip", ply, true)) then
 				ply.pac_movement = ply.pac_movement or table.Copy(pac_movement_default)
