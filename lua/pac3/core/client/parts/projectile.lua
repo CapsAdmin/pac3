@@ -117,8 +117,11 @@ function PART:AttachToEntity(ent)
 	part:SetOwner(ent)
 	part.SetOwner = function(s) s.Owner = ent end
 
-
-	local id = part.Id + self:GetPlayerOwnerId()
+	local id = part.Id
+	local owner_id = self:GetPlayerOwnerId()
+	if owner_id then
+		id = id .. owner_id
+	end
 
 	part.show_in_editor = false
 	part:SetHide(false)
