@@ -1012,6 +1012,8 @@ do
 		:SetPropertyGroup("appearance")
 			:GetSet("NoDraw", false)
 			:GetSet("DrawShadow", true)
+		:SetPropertyGroup("orientation")
+			:GetSet("Bone", "right hand")
 		:EndStorableVars()
 
 	BUILDER:RemoveProperty("Model")
