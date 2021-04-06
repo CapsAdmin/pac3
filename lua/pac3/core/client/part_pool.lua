@@ -619,7 +619,6 @@ do -- drawing
 			pac.FrameNumber = FrameNumber()
 
 			draw_dist = cvar_distance:GetInt()
-			fovoverride = true
 			pac_sv_draw_distance = pac_sv_draw_distance or GetConVar("pac_sv_draw_distance")
 			sv_draw_dist = pac_sv_draw_distance:GetFloat()
 			radius = 0
