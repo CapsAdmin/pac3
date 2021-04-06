@@ -351,8 +351,10 @@ end)
 if CLIENT then
 	net.Receive("pac_entity_mutator", function(len)
 		local ply = net.ReadEntity()
+		if not ply:IsValid() then return end
 		local class_name = net.ReadString()
 		local ent = net.ReadEntity()
+		if not ent:IsValid() then return end
 
 		suppress_send_to_server = true
 
