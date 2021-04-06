@@ -25,7 +25,7 @@ BUILDER:EndStorableVars()
 
 local function get_owner(self)
 	if self.RootOwner then
-		return self:GetRootOwner()
+		return self:GetRootPart():GetOwner()
 	end
 
 	return self:GetOwner()

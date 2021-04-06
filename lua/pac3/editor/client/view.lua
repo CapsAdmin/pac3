@@ -159,7 +159,7 @@ local function CalcDrag()
 
 	if not part:IsValid() then return end
 
-	local owner = part:GetRootOwner()
+	local owner = part:GetRootPart():GetOwner()
 	if not owner:IsValid() then
 		owner = pac.LocalPlayer
 	end
@@ -387,7 +387,7 @@ function pace.GetTPose()
 end
 
 function pace.SetViewPart(part, reset_campos)
-	pace.SetViewEntity(part:GetRootOwner())
+	pace.SetViewEntity(part:GetRootPart():GetOwner())
 
 	if reset_campos then
 		pace.ResetView()

@@ -20,7 +20,7 @@ for i, ply in ipairs(player.GetAll()) do
 end
 
 function PART:OnShow()
-	local owner = self:GetRootOwner()
+	local owner = self:GetRootPart():GetOwner()
 	if not owner:IsValid() then return end
 
 	owner.pac_cameras = owner.pac_cameras or {}

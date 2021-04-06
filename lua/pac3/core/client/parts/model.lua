@@ -1060,7 +1060,7 @@ do
 	PART.AlwaysThink = true
 
 	function PART:OnThink()
-		local ent = self:GetRootOwner()
+		local ent = self:GetRootPart():GetOwner()
 		if ent:IsValid() and ent.GetActiveWeapon and not self:IsHidden() then
 			local wep = ent:GetActiveWeapon()
 			if wep:IsValid() then
@@ -1091,7 +1091,7 @@ do
 	end
 
 	function PART:OnHide()
-		local ent = self:GetRootOwner()
+		local ent = self:GetRootPart():GetOwner()
 
 		if ent:IsValid() and ent.GetActiveWeapon then
 			for _, wep in pairs(ent:GetWeapons()) do

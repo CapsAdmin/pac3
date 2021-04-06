@@ -241,7 +241,7 @@ function PART:Shoot(pos, ang)
 					return
 				end
 
-				if not self:GetRootOwner():IsValid() then
+				if not self:GetRootPart():GetOwner():IsValid() then
 					timer.Simple(0, function() SafeRemoveEntity(ent) end)
 				end
 

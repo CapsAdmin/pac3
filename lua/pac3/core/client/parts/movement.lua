@@ -16,7 +16,7 @@ local function ADD(PART, name, default, ...)
 	PART["Set" .. name] = function(self, val)
 		self[name] = val
 
-		local ply = self:GetRootOwner()
+		local ply = self:GetRootPart():GetOwner()
 
 		if ply == pac.LocalPlayer then
 
@@ -77,7 +77,7 @@ BUILDER:StartStorableVars()
 BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
-	local ent = self:GetRootOwner()
+	local ent = self:GetRootPart():GetOwner()
 	local str = self.ClassName
 
 	if ent:IsValid() then
@@ -92,7 +92,7 @@ function PART:GetNiceName()
 end
 
 function PART:OnShow()
-	local ent = self:GetRootOwner()
+	local ent = self:GetRootPart():GetOwner()
 
 	if ent:IsValid() then
 		for i,v in ipairs(update_these) do
@@ -102,7 +102,7 @@ function PART:OnShow()
 end
 
 function PART:OnHide()
-	local ent = self:GetRootOwner()
+	local ent = self:GetRootPart():GetOwner()
 
 	if ent == pac.LocalPlayer then
 		net.Start("pac_modify_movement")

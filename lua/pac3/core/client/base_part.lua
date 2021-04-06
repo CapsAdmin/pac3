@@ -131,10 +131,6 @@ do -- owner
 		return self:GetRootPart().PlayerOwner
 	end
 
-	function PART:GetRootOwner()
-		return self:GetRootPart().Owner
-	end
-
 	function PART:GetParentOwner()
 		local parent = self:GetParent()
 

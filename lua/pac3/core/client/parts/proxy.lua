@@ -165,7 +165,7 @@ end
 
 local function get_owner(self)
 	if self.RootOwner then
-		return try_viewmodel(self:GetRootOwner())
+		return try_viewmodel(self:GetRootPart():GetOwner())
 	else
 		return try_viewmodel(self:GetOwner())
 	end
@@ -764,7 +764,7 @@ PART.Inputs = {
 	end,
 
 	weapon_primary_ammo = function(self)
-		local owner = self:GetRootOwner()
+		local owner = self:GetRootPart():GetOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()
@@ -779,7 +779,7 @@ PART.Inputs = {
 		return 0
 	end,
 	weapon_primary_total_ammo = function(self)
-		local owner = self:GetRootOwner()
+		local owner = self:GetRootPart():GetOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()
@@ -794,7 +794,7 @@ PART.Inputs = {
 		return 0
 	end,
 	weapon_primary_clipsize = function(self)
-		local owner = self:GetRootOwner()
+		local owner = self:GetRootPart():GetOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()
@@ -809,7 +809,7 @@ PART.Inputs = {
 		return 0
 	end,
 	weapon_secondary_ammo = function(self)
-		local owner = self:GetRootOwner()
+		local owner = self:GetRootPart():GetOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()
@@ -824,7 +824,7 @@ PART.Inputs = {
 		return 0
 	end,
 	weapon_secondary_total_ammo = function(self)
-		local owner = self:GetRootOwner()
+		local owner = self:GetRootPart():GetOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()
@@ -839,7 +839,7 @@ PART.Inputs = {
 		return 0
 	end,
 	weapon_secondary_clipsize = function(self)
-		local owner = self:GetRootOwner()
+		local owner = self:GetRootPart():GetOwner()
 
 		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
 			owner = self:GetPlayerOwner()

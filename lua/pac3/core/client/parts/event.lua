@@ -62,7 +62,7 @@ end
 
 local function get_owner(self)
 	if self.RootOwner then
-		return try_viewmodel(self:GetRootOwner())
+		return try_viewmodel(self:GetRootPart():GetOwner())
 	else
 		return try_viewmodel(self:GetOwner())
 	end
@@ -791,7 +791,7 @@ PART.OldEvents = {
 					end
 				end
 			else
-				local owner = self:GetRootOwner()
+				local owner = self:GetRootPart():GetOwner()
 				if owner:IsValid() then
 					local data = owner.pac_say_event
 
@@ -1034,7 +1034,7 @@ PART.OldEvents = {
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
 
-			local owner = self:GetRootOwner()
+			local owner = self:GetRootPart():GetOwner()
 
 			if owner:IsValid() then
 				local ang = owner:EyeAngles()
@@ -1050,7 +1050,7 @@ PART.OldEvents = {
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
 
-			local owner = self:GetRootOwner()
+			local owner = self:GetRootPart():GetOwner()
 
 			if owner:IsValid() then
 				local ang = owner:EyeAngles()
