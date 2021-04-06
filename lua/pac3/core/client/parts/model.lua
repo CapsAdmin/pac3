@@ -380,23 +380,6 @@ local function ent_draw_model(self, ent, pos, ang)
 	end
 end
 
-function PART:DrawLoadingText(ent, pos, ang)
-	cam.Start2D()
-	cam.IgnoreZ(true)
-		local pos2d = pos:ToScreen()
-
-		surface.SetFont("pac_urlobj_loading")
-		surface.SetTextColor(255, 255, 255, 255)
-
-		local str = self.loading .. string.rep(".", pac.RealTime * 3 % 3)
-		local w, h = surface.GetTextSize(self.loading .. "...")
-
-		surface.SetTextPos(pos2d.x - w / 2, pos2d.y - h / 2)
-		surface.DrawText(str)
-	cam.IgnoreZ(false)
-	cam.End2D()
-end
-
 function PART:DrawModel(ent, pos, ang)
 	if self.loading then
 		self:DrawLoadingText(ent, pos)
