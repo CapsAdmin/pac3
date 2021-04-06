@@ -320,6 +320,7 @@ do -- scene graph
 
 		function PART:SortChildren()
 			table.sort(self.Children, sort)
+			self:InvalidateChildrenList()
 		end
 	end
 
