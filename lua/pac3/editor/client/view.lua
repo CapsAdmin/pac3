@@ -418,5 +418,3 @@ function pace.HUDShouldDraw(typ)
 		return false
 	end
 end
-
-pace.EnableView(true)
