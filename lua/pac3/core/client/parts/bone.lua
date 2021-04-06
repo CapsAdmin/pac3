@@ -162,32 +162,7 @@ function PART:BuildBonePositions2(ent, bone_count)
 		m:Rotate(self.Angles)
 	end
 
-	local scale
-
-	if self.HideMesh then
-		scale = inf_scale
-		ent.pac_inf_scale = true
-
-		if self.InvertHideMesh then
-			local count = ent:GetBoneCount()
-
-			for i = 0, count - 1 do
-				if i ~= index then
-					local m = ent:GetBoneMatrix(i)
-					if m then
-						m:Scale(scale)
-						ent:SetBoneMatrix(i, m)
-					end
-				end
-			end
-
-			return
-		end
-	else
-		ent.pac_inf_scale = false
-
-		scale = self.Scale * self.Size
-	end
+	local scale = self.Scale * self.Size
 
 	do
 		local should_scale = self.ScaleChildren
@@ -232,6 +207,30 @@ function PART:BuildBonePositions2(ent, bone_count)
 	m:Scale(scale)
 
 	ent:SetBoneMatrix(index, m)
+
+	if self.HideMesh then
+		local inf_scale = inf_scale
+
+		if ent.GetRagdollEntity and ent:GetRagdollEntity():IsValid() then
+			inf_scale = vector_origin
+		end
+
+		ent.pac_inf_scale = true
+
+		if self.InvertHideMesh then
+			local count = ent:GetBoneCount()
+
+			for i = 0, count - 1 do
+				if i ~= index then
+					ent:ManipulateBoneScale(i, inf_scale)
+				end
+			end
+		else
+			ent:ManipulateBoneScale(index, inf_scale)
+		end
+	else
+		ent.pac_inf_scale = false
+	end
 end
 
 function PART:GetBonePosition()

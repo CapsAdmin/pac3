@@ -103,7 +103,6 @@ local function manang(ent, id, ang, part)
 end
 
 local inf_scale = Vector(math.huge, math.huge, math.huge)
-local inf_scale_tempcrashfix = Vector(1,1,1)*0.001
 
 local function manscale(ent, id, scale, part)
 	if part and part.AlternativeBones then
@@ -286,16 +285,3 @@ function PART:OnBuildBonePositions()
 end
 
 BUILDER:Register()
-
-pac.AddHook("OnEntityCreated", "hide_mesh_no_crash", function(ent)
-	local ply = ent:GetRagdollOwner()
-	if ply:IsPlayer() and ply.pac_inf_scale then
-		for i = 0, ply:GetBoneCount() - 1 do
-			local scale = ply:GetManipulateBoneScale(i)
-			if scale == inf_scale then
-				scale = Vector(0,0,0)
-			end
-			ply:ManipulateBoneScale(i, scale)
-		end
-	end
-end)
