@@ -1061,7 +1061,7 @@ do
 
 	function PART:OnThink()
 		local ent = self:GetRootPart():GetOwner()
-		if ent:IsValid() and ent.GetActiveWeapon and not self:IsHidden() then
+		if ent:IsValid() and ent.GetActiveWeapon then
 			local wep = ent:GetActiveWeapon()
 			if wep:IsValid() then
 				if wep ~= self.Owner then
@@ -1070,6 +1070,10 @@ do
 						self.Owner = wep
 						self:SetEventTrigger(self, false)
 						wep.RenderOverride = function()
+							if self:IsHiddenCached() then
+								wep.RenderOverride = nil
+								return
+							end
 							if wep.pac_render then
 								if not self.NoDraw then
 									if self.DrawShadow then
@@ -1088,6 +1092,10 @@ do
 				end
 			end
 		end
+	end
+
+	function PART:OnShow(from_rendering)
+		self.Owner = NULL
 	end
 
 	function PART:OnHide()
