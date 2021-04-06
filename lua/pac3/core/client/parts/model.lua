@@ -664,6 +664,8 @@ function PART:ApplyMatrix()
 		mat:Scale(self.Scale * self.Size)
 	end
 
+	ent.pac_model_scale = mat:GetScale()
+
 	if mat:IsIdentity() then
 		ent:DisableMatrix("RenderMultiply")
 	else
