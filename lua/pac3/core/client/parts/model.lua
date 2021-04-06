@@ -79,9 +79,10 @@ end
 
 function PART:SetSkin(var)
 	self.Skin = var
+	local owner = self:GetOwner()
 
-	if self.Owner:IsValid() then
-		self.Owner:SetSkin(var)
+	if owner:IsValid() then
+		owner:SetSkin(var)
 	end
 end
 
@@ -112,21 +113,22 @@ end
 
 function PART:SetModelModifiers(str)
 	self.ModelModifiers = str
+	local owner = self:GetOwner()
 
-	if not self.Owner:IsValid() then return end
+	if not owner:IsValid() then return end
 
 	local tbl = self:ModelModifiersToTable(str)
 
 	if tbl.skin then
-		self.Owner:SetSkin(tbl.skin)
+		owner:SetSkin(tbl.skin)
 		tbl.skin = nil
 	end
 
-	if not self.Owner:GetBodyGroups() then return end
+	if not owner:GetBodyGroups() then return end
 
 	self.draw_bodygroups = {}
 
-	for i, info in ipairs(self.Owner:GetBodyGroups()) do
+	for i, info in ipairs(owner:GetBodyGroups()) do
 		local val = tbl[info.name]
 		if val then
 			table.insert(self.draw_bodygroups, {info.id, val})
@@ -467,7 +469,7 @@ function PART:RefreshModel()
 end
 
 function PART:RealSetModel(path)
-	self.Owner:SetModel(path)
+	self:GetOwner():SetModel(path)
 	self:RefreshModel()
 end
 
@@ -669,7 +671,7 @@ function PART:SetSize(var)
 end
 
 function PART:CheckBoneMerge()
-	local ent = self.Owner
+	local ent = self:GetOwner()
 
 	if self.skip_orient then return end
 
