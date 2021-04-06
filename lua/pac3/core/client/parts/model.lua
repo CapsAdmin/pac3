@@ -462,6 +462,8 @@ function PART:RefreshModel()
 	self:SetMaterials(self:GetMaterials())
 	self:SetSize(self:GetSize())
 	self:SetScale(self:GetScale())
+	self:SetSkin(self:GetSkin())
+	self:SetLevelOfDetail(self:GetLevelOfDetail())
 end
 
 function PART:RealSetModel(path)
@@ -890,6 +892,8 @@ do
 		if ent:IsValid() then
 			ent.RenderOverride = nil
 			ent:DisableMatrix("RenderMultiply")
+			ent:SetSkin(0)
+			ent:SetLOD(-1)
 		end
 	end
 
