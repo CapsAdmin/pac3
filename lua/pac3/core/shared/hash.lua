@@ -17,7 +17,7 @@ function pac.Hash(obj)
 			return "SinglePlayer"
 		end
         return obj:SteamID64()
-    elseif t == "Entity" then
+    elseif t == "Entity" or t == "NextBot" then
         return tostring(obj:EntIndex())
     else
         error("NYI " .. t)
@@ -30,7 +30,7 @@ function pac.ReverseHash(str, t)
 			return Entity(1)
 		end
         return player.GetBySteamID64(str) or NULL
-    elseif t == "Entity" then
+    elseif t == "Entity" or t == "NextBot" then
         return ents.GetByIndex(tonumber(str))
     else
         error("NYI " .. t)
