@@ -193,7 +193,7 @@ do -- owner
 		end
 
 		for key, name in pairs(pac.OwnerNames) do
-			menu:AddOption(name, function() pace.current_part:SetOwnerName(name) end)
+			menu:AddOption(name, function() pace.current_part:SetOwnerName(name) self.OnValueChanged(name) end)
 		end
 
 		local entities = menu:AddSubMenu(L"entities", function() end)
