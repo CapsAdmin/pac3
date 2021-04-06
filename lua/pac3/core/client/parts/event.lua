@@ -1,5 +1,9 @@
 local LocalPlayer = LocalPlayer
 local FrameTime = FrameTime
+local CurTime = CurTime
+local NULL = NULL
+local Vector = Vector
+local util = util
 
 local BUILDER, PART = pac.PartTemplate("base")
 
@@ -696,7 +700,7 @@ PART.OldEvents = {
 			end
 
 			if b then
-				self.anim_name = name
+				self.anim_name = data.name
 			else
 				self.anim_name = nil
 			end
@@ -804,7 +808,7 @@ PART.OldEvents = {
 		arguments = {{speed = "number"}},
 		callback = function(self, ent, speed)
 			local parent = self:GetParentEx()
-			owner = try_viewmodel(owner)
+			ent = try_viewmodel(ent)
 
 			if parent:IsValid() and ent:IsValid() then
 				return self:NumberOperator(get_owner(parent):GetVelocity():Length(), speed)
@@ -818,8 +822,8 @@ PART.OldEvents = {
 		callback = function(self, ent, speed)
 			ent = try_viewmodel(ent)
 
-			if owner:IsValid() then
-				return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Forward():Dot(owner:GetVelocity()), speed)
+			if ent:IsValid() then
+				return self:NumberOperator(convert_angles(self, ent:EyeAngles()):Forward():Dot(ent:GetVelocity()), speed)
 			end
 
 			return 0
@@ -830,8 +834,8 @@ PART.OldEvents = {
 		callback = function(self, ent, speed)
 			ent = try_viewmodel(ent)
 
-			if owner:IsValid() then
-				return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Right():Dot(owner:GetVelocity()), speed)
+			if ent:IsValid() then
+				return self:NumberOperator(convert_angles(self, ent:EyeAngles()):Right():Dot(ent:GetVelocity()), speed)
 			end
 
 			return 0
@@ -842,8 +846,8 @@ PART.OldEvents = {
 		callback = function(self, ent, speed)
 			ent = try_viewmodel(ent)
 
-			if owner:IsValid() then
-				return self:NumberOperator(convert_angles(self, owner:EyeAngles()):Up():Dot(owner:GetVelocity()), speed)
+			if ent:IsValid() then
+				return self:NumberOperator(convert_angles(self, ent:EyeAngles()):Up():Dot(ent:GetVelocity()), speed)
 			end
 
 			return 0
@@ -855,7 +859,7 @@ PART.OldEvents = {
 			ent = try_viewmodel(ent)
 
 			if owner:IsValid() then
-				return self:NumberOperator(owner:GetVelocity()[1], speed)
+				return self:NumberOperator(ent:GetVelocity()[1], speed)
 			end
 
 			return 0
@@ -866,8 +870,8 @@ PART.OldEvents = {
 		callback = function(self, ent, speed)
 			ent = try_viewmodel(ent)
 
-			if owner:IsValid() then
-				return self:NumberOperator(owner:GetVelocity()[2], speed)
+			if ent:IsValid() then
+				return self:NumberOperator(ent:GetVelocity()[2], speed)
 			end
 
 			return 0
@@ -878,8 +882,8 @@ PART.OldEvents = {
 		callback = function(self, ent, speed)
 			ent = try_viewmodel(ent)
 
-			if owner:IsValid() then
-				return self:NumberOperator(owner:GetVelocity()[3], speed)
+			if ent:IsValid() then
+				return self:NumberOperator(ent:GetVelocity()[3], speed)
 			end
 
 			return 0
