@@ -63,8 +63,21 @@ do
 				for key, part in pairs(parts) do
 					if part:IsValid() then
 						if not part:HasParent() then
-							part:CallRecursive("BuildBonePositions")
 							part:CallRecursive("Think")
+						end
+					else
+						parts[key] = nil
+					end
+				end
+			end
+
+			if type == "update_legacy_bones" then
+				pac.ResetBones(ent)
+
+				for key, part in pairs(parts) do
+					if part:IsValid() then
+						if not part:HasParent() then
+							part:CallRecursive("BuildBonePositions")
 						end
 					else
 						parts[key] = nil
@@ -583,9 +596,11 @@ do -- drawing
 		local current_frame = 0
 		local current_frame_count = 0
 
-		return function()
-			if force_rendering then return end
-			if not skip_frames:GetBool() then return end
+		return function(force)
+			if not force then
+				if force_rendering then return end
+				if not skip_frames:GetBool() then return end
+			end
 
 			local frame_number = FrameNumber()
 
@@ -610,7 +625,6 @@ do -- drawing
 		local sv_draw_dist = 0
 		local radius = 0
 		local dst = 0
-		local dummyv = Vector(0.577350,0.577350,0.577350)
 		local pac_sv_draw_distance
 
 		pac.AddHook("Think", "update_parts", function()
@@ -711,6 +725,18 @@ do -- drawing
 	end
 
 	do
+		local should_suppress = setup_suppress()
+
+		pac.AddHook("PreDrawOpaqueRenderables", "draw_opaque", function(bDrawingDepth, bDrawingSkybox)
+			if should_suppress(true) then return end
+
+			for ent in next, pac.drawn_entities do
+				if ent.pac_is_drawing and ent_parts[ent] then
+					pac.RenderOverride(ent, "update_legacy_bones")
+				end
+			end
+		end)
+
 		local should_suppress = setup_suppress()
 
 		pac.AddHook("PostDrawOpaqueRenderables", "draw_opaque", function(bDrawingDepth, bDrawingSkybox)
