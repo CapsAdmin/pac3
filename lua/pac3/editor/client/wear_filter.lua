@@ -192,6 +192,9 @@ do
             end
         end
 
+		-- also add the local player so that you can "feel" that it worked
+		table.insert(filter, pac.Hash(pac.LocalPlayer))
+
         return filter
     end
 
