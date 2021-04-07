@@ -365,14 +365,9 @@ local function ent_draw_model(self, ent, pos, ang)
 		ent:SetModelScale(0,0)
 		ent:DrawModel()
 
+		matrix:SetScale(self.Scale * self.Size)
 		matrix:SetAngles(ang)
 		matrix:SetTranslation(pos)
-
-		if ent.pac_model_scale then
-			matrix:SetScale(ent.pac_model_scale)
-		else
-			matrix:SetScale(self.Scale * self.Size)
-		end
 
 		cam_PushModelMatrix(matrix)
 			self.obj_mesh:Draw()

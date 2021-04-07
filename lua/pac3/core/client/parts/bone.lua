@@ -154,12 +154,12 @@ function PART:BuildBonePositions2(ent, bone_count)
 			m:SetTranslation(pos)
 		end
 
-		m:SetAngles(ang)
+		m:SetAngles(ang + self.AngleOffset)
 		m:Rotate(self.Angles)
 		original_matrix:Set(m)
 	else
-		m:Translate(self.Position)
-		m:Rotate(self.Angles)
+		m:Translate(self.Position + self.PositionOffset)
+		m:Rotate(self.Angles + self.AngleOffset)
 	end
 
 	local scale = self.Scale * self.Size
