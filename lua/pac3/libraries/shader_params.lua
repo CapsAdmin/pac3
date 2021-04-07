@@ -1026,6 +1026,7 @@ return {
 				basetexture = {
 					type = "texture",
 					description = "Base Texture with lighting built in",
+					default = "models/debug/debugwhite",
 				},
 				frame = {
 					type = "integer",
@@ -1280,6 +1281,7 @@ return {
 			basetexture = {
 				type = "texture",
 				description = "Base Texture with lighting built in",
+				default = "models/debug/debugwhite",
 			},
 			basetexturetransform = {
 				type = "matrix",
