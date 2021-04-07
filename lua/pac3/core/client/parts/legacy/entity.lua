@@ -435,9 +435,7 @@ function PART:SetModel(path)
 				ent:SetBodygroup(i, 0)
 			end
 
-			for _, child in ipairs(self:GetChildrenList()) do
-				child:OnShow(true)
-			end
+			self:CallRecursive("CalcShowHide", true)
 		end)
 
 		self.mdl_zip = false
