@@ -113,24 +113,28 @@ function PART:AttachToEntity(ent)
 
 	local tbl = self.OutfitPart:ToTable()
 
-	local part = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner(), tbl, tostring(tbl))
-	part:SetOwner(ent)
-	part.SetOwner = function(s) s.Owner = ent end
+	local group = pac.CreatePart("group", self:GetPlayerOwner())
 
-	local id = part.Id
+	local part = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner(), tbl, tostring(tbl))
+	group:AddChild(part)
+
+	group:SetOwner(ent)
+	group.SetOwner = function(s) s.Owner = ent end
+
+	local id = group.Id
 	local owner_id = self:GetPlayerOwnerId()
 	if owner_id then
 		id = id .. owner_id
 	end
 
-	part.show_in_editor = false
-	part:SetHide(false)
+	group.show_in_editor = false
+	group:SetHide(false)
 
-	part:SetOwner(ent)
+	group:SetOwner(ent)
 
-	ent:CallOnRemove("pac_projectile_" .. id, function() part:Remove() end)
+	ent:CallOnRemove("pac_projectile_" .. id, function() group:Remove() end)
 
-	part:CallRecursive("Think")
+	group:CallRecursive("Think")
 
 	ent.RenderOverride = ent.RenderOverride or function()
 		if self.AimDir then
@@ -138,7 +142,7 @@ function PART:AttachToEntity(ent)
 		end
 	end
 
-	ent.pac_projectile_part = part
+	ent.pac_projectile_part = group
 	ent.pac_projectile = self
 
 	return true
