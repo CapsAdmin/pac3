@@ -316,13 +316,17 @@ pac.AddHook("Think", "events", function()
 		local lamp = ProjectedTexture()
 
 		lamp:SetTexture( "effects/flashlight001" )
-		lamp:SetFarZ( 500 )
+		lamp:SetFarZ( 5000 )
+		lamp:SetColor(Color(0,0,0,255))
 
-		lamp:SetPos( pac.LocalPlayer:EyePos() - pac.LocalPlayer:GetAimVector()*100 )
+		lamp:SetPos( pac.LocalPlayer:EyePos() - pac.LocalPlayer:GetAimVector()*400 )
 		lamp:SetAngles( pac.LocalPlayer:EyeAngles() )
 		lamp:Update()
 
-		lamp:Remove()
+		hook.Add("PostRender", "pac_flashlight_stuck_fix", function()
+			hook.Remove("PostRender", "pac_flashlight_stuck_fix")
+			lamp:Remove()
+		end)
 
 		pac.last_flashlight_on = pac.LocalPlayer:FlashlightIsOn()
 	end
