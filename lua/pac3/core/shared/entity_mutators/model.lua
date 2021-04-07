@@ -29,7 +29,14 @@ function MUTATOR:Mutate(path)
 	if path:find("^http") then
 		pac.Message(self.Owner, " wants to use ", path, " as model on ", ent)
 
+		local ent_str = tostring(self.Entity)
+
 		pac.DownloadMDL(path, function(mdl_path)
+			if not self.Entity:IsValid() then
+				pac.Message("cannot set model ", mdl_path, " on ", ent_str ,': entity became invalid')
+				return
+			end
+
 			pac.Message(mdl_path, " downloaded for ", ent, ': ', path)
 
 			self.Entity:SetModel(mdl_path)
