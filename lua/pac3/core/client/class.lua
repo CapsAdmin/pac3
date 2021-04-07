@@ -131,6 +131,7 @@ do
 		PART["Set" .. key .. "UID"] = function(self, uid)
 			if uid == "" or not uid then
 				self["Set" .. key](self, NULL)
+				self[key.."UID"] = ""
 				return
 			end
 
