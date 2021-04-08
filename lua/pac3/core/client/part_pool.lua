@@ -57,19 +57,6 @@ do
 		if parts == nil or next(parts) == nil then
 			pac.UnhookEntityRender(ent)
 		else
-			if type == "update" then
-				pac.ResetBones(ent)
-
-				for key, part in pairs(parts) do
-					if part:IsValid() then
-						if not part:HasParent() then
-							part:CallRecursive("Think")
-						end
-					else
-						parts[key] = nil
-					end
-				end
-			end
 
 			if type == "update_legacy_bones" then
 				pac.ResetBones(ent)
@@ -78,6 +65,18 @@ do
 					if part:IsValid() then
 						if not part:HasParent() then
 							part:CallRecursive("BuildBonePositions")
+						end
+					else
+						parts[key] = nil
+					end
+				end
+			end
+
+			if type == "update" then
+				for key, part in pairs(parts) do
+					if part:IsValid() then
+						if not part:HasParent() then
+							part:CallRecursive("Think")
 						end
 					else
 						parts[key] = nil
