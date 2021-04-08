@@ -3,7 +3,7 @@
 if pac.emut then
 	for _, ent in ipairs(ents.GetAll()) do
 		if ent.pac_mutations then
-			for class_name, mutator in pairs(ent.pac_mutations) do
+			for _, mutator in pairs(ent.pac_mutations) do
 				xpcall(pac.emut.RestoreMutations, function() end, mutator.Owner, mutator.ClassName, mutator.Entity)
 			end
 		end
@@ -48,24 +48,6 @@ do
 	end
 end
 
--- lets keep this simple, mutations should probably not involve more than this
-local function encode_arguments(...)
-	for i = 1, select("#", ...) do
-		local val = select(i, ...)
-		if type(val) == "number" then
-			net.WriteDouble(val)
-		elseif type(val) == "string" then
-			net.WriteString(val)
-		elseif type(val) == "boolean" then
-			net.WriteBool(val)
-		elseif type(val) == "table" then
-			net.WriteTable(val)
-		else
-			error("NYI")
-		end
-	end
-end
-
 local function on_error(msg)
 	print(debug.traceback(msg))
 	ErrorNoHalt(msg)
@@ -74,15 +56,15 @@ end
 local suppress_send_to_server = false
 local override_enabled = false
 
-function emut.MutateEntity(ply, class_name, ent, ...)
-	assert(IsValid(ply) and ply:IsPlayer(), "player is invalid")
+function emut.MutateEntity(owner, class_name, ent, ...)
+	if not IsValid(owner) then owner = game.GetWorld() end
 	assert(emut.registered_mutators[class_name], "invalid mutator " .. class_name)
 	assert(IsValid(ent), "entity is invalid")
 
 	if SERVER then
 		if not override_enabled then
-			if not emut.registered_mutators[class_name].cvar:GetBool() then
-				pac.Message(ply, "tried to set size when it's disabled")
+			if owner:IsPlayer() and not emut.registered_mutators[class_name].cvar:GetBool() then
+				pac.Message(owner, "tried to set size when it's disabled")
 				return false
 			end
 		end
@@ -93,19 +75,19 @@ function emut.MutateEntity(ply, class_name, ent, ...)
 	local mutator = ent.pac_mutations[class_name]
 
 	if not mutator then
-		mutator = setmetatable({Entity = ent, Owner = ply}, emut.registered_mutators[class_name])
+		mutator = setmetatable({Entity = ent, Owner = owner}, emut.registered_mutators[class_name])
 		mutator.original_state = {mutator:StoreState()}
 		ent.pac_mutations[class_name] = mutator
 		emut.AddMutator(mutator)
 	end
 
 	-- notify about owner change?
-	mutator.Owner = ply
+	mutator.Owner = owner
 	mutator.current_state = {...}
 
 	if not xpcall(mutator.Mutate, on_error, mutator, ...) then
 		mutator.current_state = nil
-		emut.RestoreMutations(ply, class_name, ent)
+		emut.RestoreMutations(owner, class_name, ent)
 		return
 	end
 
@@ -116,31 +98,31 @@ function emut.MutateEntity(ply, class_name, ent, ...)
 	end
 
 	if CLIENT then
-		if ply == LocalPlayer() and not suppress_send_to_server then
+		if owner == LocalPlayer() and not suppress_send_to_server then
 			net.Start("pac_entity_mutator")
 				net.WriteString(class_name)
 				net.WriteEntity(ent)
 				net.WriteBool(false)
 				mutator:WriteArguments(...)
-			net.SendToServer(ply)
+			net.SendToServer()
 		end
 	end
 
 	if SERVER then
 		net.Start("pac_entity_mutator")
-			net.WriteEntity(ply)
+			net.WriteEntity(owner)
 			net.WriteString(class_name)
 			net.WriteEntity(ent)
 			net.WriteBool(false)
 			mutator:WriteArguments(...)
-		net.Broadcast(ply)
+		net.Broadcast(owner)
 	end
 
 	return true
 end
 
-function emut.RestoreMutations(ply, class_name, ent)
-	assert(IsValid(ply) and ply:IsPlayer(), "player is invalid")
+function emut.RestoreMutations(owner, class_name, ent)
+	if not IsValid(owner) then owner = game.GetWorld() end
 	assert(emut.registered_mutators[class_name], "invalid mutator " .. class_name)
 	assert(IsValid(ent), "entity is invalid")
 
@@ -167,18 +149,18 @@ function emut.RestoreMutations(ply, class_name, ent)
 	end
 
 	if CLIENT then
-		if ply == LocalPlayer() and not suppress_send_to_server then
+		if owner == LocalPlayer() and not suppress_send_to_server then
 			net.Start("pac_entity_mutator")
 				net.WriteString(class_name)
 				net.WriteEntity(ent)
 				net.WriteBool(true)
-			net.SendToServer(ply)
+			net.SendToServer()
 		end
 	end
 
 	if SERVER then
 		net.Start("pac_entity_mutator")
-			net.WriteEntity(ply)
+			net.WriteEntity(owner)
 			net.WriteString(class_name)
 			net.WriteEntity(ent)
 			net.WriteBool(true)

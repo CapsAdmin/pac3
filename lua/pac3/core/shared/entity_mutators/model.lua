@@ -27,7 +27,9 @@ end
 
 function MUTATOR:Mutate(path)
 	if path:find("^http") then
-		pac.Message(self.Owner, " wants to use ", path, " as model on ", ent)
+		if self.Owner:IsPlayer() then
+			pac.Message(self.Owner, " wants to use ", path, " as model on ", ent)
+		end
 
 		local ent_str = tostring(self.Entity)
 
@@ -49,7 +51,7 @@ function MUTATOR:Mutate(path)
 		if path:EndsWith(".mdl") then
 			self.Entity:SetModel(path)
 
-			if path:lower() ~= self.Entity:GetModel():lower() then
+			if self.Owner:IsPlayer() and path:lower() ~= self.Entity:GetModel():lower() then
 				self.Owner:ChatPrint('[PAC3] ERROR: ' .. path .. " is not a valid model on the server.")
 			end
 		else

@@ -904,10 +904,12 @@ do
 		local ent = self:GetOwner()
 		if not ent:IsValid() then return end
 
-		pac.emut.RestoreMutations(self:GetPlayerOwner(), "model", ent)
+		local player_owner = self:GetPlayerOwner()
+
+		pac.emut.RestoreMutations(player_owner, "model", ent)
 
 		if ent:IsPlayer() or ent:IsNPC() then
-			pac.emut.RestoreMutations(self:GetPlayerOwner(), "size", ent)
+			pac.emut.RestoreMutations(player_owner, "size", ent)
 		end
 
 		ent:DisableMatrix("RenderMultiply")

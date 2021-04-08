@@ -154,7 +154,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 	end
 
 	return pac.resource.Download(url, function(path)
-		if not ply:IsValid() then
+		if ply:IsPlayer() and not ply:IsValid() then
 			pac.Message(Color(255, 50, 50), "player is no longer valid")
 			file.Delete(path)
 			return
