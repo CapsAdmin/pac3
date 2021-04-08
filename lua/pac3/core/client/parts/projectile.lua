@@ -128,7 +128,7 @@ function PART:AttachToEntity(ent)
 	end
 
 	group.show_in_editor = false
-	group:SetHide(false)
+	part:SetHide(false)
 
 	group:SetOwner(ent)
 
