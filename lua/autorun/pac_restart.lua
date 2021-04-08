@@ -5,7 +5,7 @@ if SERVER then
 end
 
 local sv_allowcslua = GetConVar('sv_allowcslua')
-local prefer_local_version = CreateClientConVar("pac_restart_prefer_local", "1")
+local prefer_local_version = CreateClientConVar("pac_restart_prefer_local_version", "0")
 
 function _G.pac_ReloadParts()
 	local pacLocal = _G.pac
