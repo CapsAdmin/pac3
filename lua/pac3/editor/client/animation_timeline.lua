@@ -25,7 +25,7 @@ do
 		local ent = self:GetOwner()
 
 		local index = self:GetModelBoneIndex(self.Bone)
-		if not index then return end
+		if not index then return ent:GetPos(), ent:GetAngles() end
 
 		--ent:SetupBones()
 		local m = ent:GetBoneMatrix(index)
@@ -36,7 +36,7 @@ do
 
 		m = m * lm:GetInverse()
 
-		if not m then return end
+		if not m then return ent:GetPos(), ent:GetAngles() end
 
 		return m:GetTranslation(), m:GetAngles()
 	end
