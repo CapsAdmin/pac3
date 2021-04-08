@@ -806,7 +806,7 @@ do -- serializing
 	end
 
 	function PART:Clone()
-		local part = pac.CreatePart(self.ClassName, self:GetPlayerOwner(), self:ToTable(true))
+		local part = pac.CreatePart(self.ClassName, self:GetPlayerOwner(), self:ToTable(), true)
 		if not part then return end
 
 		part:SetParent(self:GetParent())
