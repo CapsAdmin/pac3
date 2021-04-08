@@ -166,6 +166,13 @@ do -- scene graph
 		local owner_id = part:GetPlayerOwnerId()
 		if not owner_id then return end
 
+		-- this will handle cases like if a part is removed and added again
+		for _, key in pairs(self.PartReferenceKeys) do
+			if self[key] and self[key].UniqueID == part.UniqueID then
+				self["Set" .. key](self, part)
+			end
+		end
+
 		do
 			if not self.unresolved_uid_parts then return end
 			if not self.unresolved_uid_parts[owner_id] then return end

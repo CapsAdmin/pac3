@@ -163,6 +163,9 @@ do
 		PART["Get" .. key] = PART["Get" .. key] or function(self) return self[key] end
 		PART[key] = NULL
 
+		PART.PartReferenceKeys = PART.PartReferenceKeys or {}
+		PART.PartReferenceKeys[key] = key
+
 		return self
 	end
 
