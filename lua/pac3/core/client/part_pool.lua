@@ -551,6 +551,10 @@ function pac.NotifyPartCreated(part)
 
 	for _, p in pairs(uid_parts[owner_id]) do
 		p:OnOtherPartCreated(part)
+
+		if part:GetPlayerOwner() == pac.LocalPlayer then
+			pac.CallHook("OnPartCreated", part)
+		end
 	end
 end
 

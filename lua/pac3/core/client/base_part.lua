@@ -165,18 +165,17 @@ do -- scene graph
 	function PART:OnOtherPartCreated(part)
 		local owner_id = part:GetPlayerOwnerId()
 		if not owner_id then return end
-		if not self.unresolved_uid_parts then return end
-		if not self.unresolved_uid_parts[owner_id] then return end
-		local keys = self.unresolved_uid_parts[owner_id][part.UniqueID]
 
-		if not keys then return end
+		do
+			if not self.unresolved_uid_parts then return end
+			if not self.unresolved_uid_parts[owner_id] then return end
+			local keys = self.unresolved_uid_parts[owner_id][part.UniqueID]
 
-		for _, key in pairs(keys) do
-			self["Set" .. key](self, part)
-		end
+			if not keys then return end
 
-		if self:GetPlayerOwner() == pac.LocalPlayer then
-			pac.CallHook("OnPartCreated", self)
+			for _, key in pairs(keys) do
+				self["Set" .. key](self, part)
+			end
 		end
 	end
 
