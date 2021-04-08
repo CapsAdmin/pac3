@@ -311,8 +311,12 @@ function PART:PreEntityDraw(ent, pos, ang)
 		end
 	end
 
-	if self.EyeTarget.GetWorldPosition then
+	if self.EyeTarget:IsValid() and self.EyeTarget.GetWorldPosition then
 		ent:SetEyeTarget(self.EyeTarget:GetWorldPosition())
+		ent.pac_modified_eyetarget = true
+	elseif ent.pac_modified_eyetarget then
+		ent:SetEyeTarget(vector_origin)
+		ent.pac_modified_eyetarget = nil
 	end
 end
 
