@@ -69,7 +69,7 @@ do
 		if tbl[4] then dst_alpha = blend_modes[tbl[4]] end
 
 		if src_color and dst_color then
-			self.blend_override = {src_color, dst_color, src_alpha, dst_alpha, tbl[5]}
+			self.blend_override = {src_color, dst_color, src_alpha or 0, dst_alpha or 0, tbl[5]}
 		else
 			self.blend_override = nil
 		end
