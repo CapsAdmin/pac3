@@ -249,6 +249,20 @@ function _G.pac_Restart()
 	if model_browser_opened then
 		RunConsoleCommand("pac_asset_browser")
 	end
+
+	local msg = "*•.¸♥¸.•* IF YOU ARE USING PAC_RESTART TO FIX A BUG IT WOULD BE NICE IF YOU COULD ALSO REPORT THE BUG *•.¸♥¸.•*"
+	local words = msg:Split(" ")
+	for i2 = 1, 40 do
+		for i, word in ipairs(words) do
+			local f = i / #words
+			MsgC(HSVToColor(Lerp(f, 0, 360), 0.6, 1), word, " ")
+		end
+		MsgN("")
+	end
+	MsgC(Color(79,155,245), "     https://github.com/CapsAdmin/pac3/issues", "\n")
+	MsgC(Color(79,155,245), "     https://discord.com/invite/utpR3gJ", "\n")
+	MsgC(Color(79,155,245), "     https://steamcommunity.com/sharedfiles/filedetails/?id=104691717", "\n")
+	MsgC(Color(79,155,245), "     https://steamcommunity.com/id/eliashogstvedt", "\n")
 end
 
 concommand.Add("pac_restart", _G.pac_Restart)
