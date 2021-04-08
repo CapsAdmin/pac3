@@ -259,10 +259,10 @@ function _G.pac_Restart()
 		end
 		MsgN("")
 	end
-	MsgC(Color(79,155,245), "     https://github.com/CapsAdmin/pac3/issues", "\n")
-	MsgC(Color(79,155,245), "     https://discord.com/invite/utpR3gJ", "\n")
-	MsgC(Color(79,155,245), "     https://steamcommunity.com/sharedfiles/filedetails/?id=104691717", "\n")
-	MsgC(Color(79,155,245), "     https://steamcommunity.com/id/eliashogstvedt", "\n")
+	MsgC(Color(79,155,245), "https://github.com/CapsAdmin/pac3/issues", "\n")
+	MsgC(Color(79,155,245), "https://discord.com/invite/utpR3gJ", "\n")
+	MsgC(Color(79,155,245), "https://steamcommunity.com/sharedfiles/filedetails/?id=104691717", "\n")
+	MsgC(Color(79,155,245), "https://steamcommunity.com/id/eliashogstvedt", "\n")
 end
 
 concommand.Add("pac_restart", _G.pac_Restart)
