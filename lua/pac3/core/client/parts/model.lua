@@ -312,14 +312,7 @@ function PART:PreEntityDraw(ent, pos, ang)
 	end
 
 	if self.EyeTarget.GetWorldPosition then
-		if self.ClassName == "model2" then
-			local attachment = ent:GetAttachment( ent:LookupAttachment( "eyes" ) )
-			if attachment then
-				ent:SetEyeTarget(WorldToLocal( self.EyeTarget:GetWorldPosition(), self.EyeTarget.cached_ang, attachment.Pos, attachment.Ang ))
-			end
-		else
-			ent:SetEyeTarget(self.EyeTarget:GetWorldPosition())
-		end
+		ent:SetEyeTarget(self.EyeTarget:GetWorldPosition())
 	end
 end
 
