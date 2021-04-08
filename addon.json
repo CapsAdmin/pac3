@@ -4,6 +4,7 @@
 	"tags" : [ "fun", "roleplay" ],
 	"ignore" :
 	[
+		"check.lua",
 		".gitignore",
 		".editorconfig",
 		".git*",

@@ -1,3 +1,28 @@
+--[[#
+	import_type("nattlua/glua.nlua")
+	type pac = any
+	type VLL_CURR_FILE = false
+	type VLL2_FILEDEF = false
+
+
+	type function include(path: string)
+		local full_path = analyzer:ResolvePath("lua/" .. path:GetData())
+
+		local code_data = assert(require("nattlua").File(full_path))
+
+        assert(code_data:Lex())
+        assert(code_data:Parse())
+
+        local res = analyzer:AnalyzeRootStatement(code_data.SyntaxTree)
+
+        analyzer.loaded = analyzer.loaded or {}
+        analyzer.loaded[path] = res
+
+        return res
+	end
+
+]]
+
 -- VLL_CURR_FILE is local to each file
 if CLIENT and pac and not VLL_CURR_FILE and not VLL2_FILEDEF then return end
 
