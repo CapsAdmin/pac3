@@ -356,12 +356,14 @@ end
 
 
 local matrix = Matrix()
+local IDENT_SCALE = Vector(1,1,1)
 
 local function ent_draw_model(self, ent, pos, ang)
 	if self.obj_mesh then
 		ent:SetModelScale(0,0)
 		ent:DrawModel()
 
+		matrix:SetScale(IDENT_SCALE)
 		matrix:SetAngles(ang)
 		matrix:SetTranslation(pos)
 		matrix:SetScale(self.Scale * self.Size)
