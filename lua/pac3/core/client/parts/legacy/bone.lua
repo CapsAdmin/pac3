@@ -204,7 +204,10 @@ function PART:OnBuildBonePositions()
 	if not owner:IsValid() then return end
 
 	local index = self:GetModelBoneIndex()
-	if not index then return end
+
+	if not index then
+		index = 0
+	end
 
 	owner.pac_bone_setup_data = owner.pac_bone_setup_data or {}
 
