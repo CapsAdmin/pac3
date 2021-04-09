@@ -1033,8 +1033,8 @@ do
 		if self.OverridePosition then
 			old = ent:GetParent()
 			ent:SetParent(NULL)
-			ent:SetRenderOrigin(pos)
-			ent:SetRenderAngles(ang)
+			ent:SetPos(pos)
+			ent:SetAngles(ang)
 			ent:SetupBones()
 		end
 		ent.pac_render = true
@@ -1046,7 +1046,7 @@ do
 
 		if self.OverridePosition then
 			ent:MarkShadowAsDirty()
-			--ent:SetParent(old)
+			ent:SetParent(old)
 		end
 		ent.pac_render = nil
 	end
