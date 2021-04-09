@@ -53,8 +53,10 @@ BUILDER:StartStorableVars()
 
 function PART:SetPreset(json)
 	local preset = util.JSONToTable(json)
-	self:SetFlexWeights(preset.weight_map)
-	self:SetScale(preset.scale)
+	if preset then
+		self:SetFlexWeights(preset.weight_map)
+		self:SetScale(preset.scale)
+	end
 	self.Preset = ""
 end
 
