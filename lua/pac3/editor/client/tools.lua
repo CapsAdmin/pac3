@@ -58,6 +58,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 	}
 
 	local registered_parts = pac.GetRegisteredParts()
+	local bones = {}
 
 	local material_translate = {}
 	for old_key in pairs(registered_parts.material.ShaderParams) do
@@ -79,10 +80,27 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 			HideEntity = function(tbl, val) tbl.NoDraw = val end
 		}),
 		material = material_translate,
+		bone = {
+			Bone = function(tbl, val)
+				if bones[tbl.UniqueID] and not bones[tbl.UniqueID][val] then
+					for k,v in pairs(bones[tbl.UniqueID]) do
+						if v.bone == 0 then
+							tbl.Bone = v.friendly
+							return
+						end
+					end
+				end
+
+				tbl.Bone = val
+			end,
+		}
 	}
 
 	local saved = {}
 	for _, part in pairs(pac.GetLocalParts()) do
+		if part.ClassName == "bone" then
+			bones[part.UniqueID] = pac.GetAllBones(part:GetOwner())
+		end
 		if not part:HasParent() then
 			table.insert(saved, part:ToTable())
 		end
