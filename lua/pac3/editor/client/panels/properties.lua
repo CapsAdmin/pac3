@@ -698,7 +698,7 @@ do -- list
 					else
 						pnl.CurrentKey = key
 						pnl:SetValue(val)
-						pnl.OnValueChanged = data.callback
+						pnl.OnValueChanged = function(val) data.callback(val) pnl:SetValue(val) end
 						self:AddKeyValue(key, pnl, pos, nil, udata, group)
 					end
 				end
