@@ -698,7 +698,10 @@ do -- list
 					else
 						pnl.CurrentKey = key
 						pnl:SetValue(val)
-						pnl.OnValueChanged = function(val) data.callback(val) pnl:SetValue(val) end
+						pnl.OnValueChanged = function(val)
+							data.callback(val)
+							pnl:SetValue(val)
+						end
 						self:AddKeyValue(key, pnl, pos, nil, udata, group)
 					end
 				end
@@ -1565,6 +1568,7 @@ do -- boolean
 	function PANEL:Init()
 		local chck = vgui.Create("DCheckBox", self)
 		chck.OnChange = function()
+			if self.during_change then return end
 			local b = chck:GetChecked()
 			self.OnValueChanged(b)
 			self.lbl:SetText(L(tostring(b)))
@@ -1580,10 +1584,12 @@ do -- boolean
 	function PANEL:Paint() end
 
 	function PANEL:SetValue(b)
+		self.during_change = true
 		self.chck:SetChecked(b)
 		self.chck:Toggle()
 		self.chck:Toggle()
 		self.lbl:SetText(L(tostring(b)))
+		self.during_change = false
 	end
 
 	function PANEL:OnValueChanged()
