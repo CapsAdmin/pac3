@@ -318,11 +318,10 @@ if SERVER then
 		end
 	end
 
-	hook.Add("PlayerInitialSpawn", "pac_entity_mutators_spawn", function( ply)
+	hook.Add("PlayerInitialSpawn", "pac_entity_mutators_spawn", function(ply)
 		local id = "pac_entity_mutators_spawn" .. ply:UniqueID()
-		hook.Add( "SetupMove", id, function(self, ply, _, cmd)
-			if self == ply and not cmd:IsForced() then
-
+		hook.Add( "SetupMove", id, function(movingPly, _, cmd)
+			if movingPly == ply and not cmd:IsForced() then
 				emut.ReplicateMutatorsForPlayer(ply)
 
 				hook.Remove("SetupMove", id)
