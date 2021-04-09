@@ -62,13 +62,18 @@ function PART:OnShow()
 	local build_bone_id
 
 	build_bone_id = owner:AddCallback("BuildBonePositions", function(...)
+		if self.in_buildbone then return end
+		self.in_buildbone = true
+
 		if not self:IsValid() then
 			owner:RemoveCallback("BuildBonePositions", build_bone_id)
 			self.build_bone_id = nil
+			self.in_buildbone = false
 			return
 		end
 
 		self:BuildBonePositions2(...)
+		self.in_buildbone = false
 	end)
 
 	self.build_bone_id = build_bone_id
