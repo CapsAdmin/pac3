@@ -493,10 +493,13 @@ do -- hidden / events
 		if val then
 			self:SetKeyValueRecursive("last_hidden", true)
 			self:CallRecursive("OnHide", true)
+			self:CallRecursive("CalcShowHide", false)
 		else
 			self:SetKeyValueRecursive("last_hidden", false)
 			self:CallRecursive("OnShow", true)
+			self:CallRecursive("CalcShowHide", true)
 		end
+
 	end
 
 	function PART:IsDrawHidden()
