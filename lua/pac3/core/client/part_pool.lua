@@ -731,11 +731,19 @@ do -- drawing
 		end)
 	end
 
+	local setup_bones = {}
+
+	function pac.SetupBones(ent)
+		setup_bones[ent] = ent
+	end
+
 	do
 		local should_suppress = setup_suppress()
 
 		pac.AddHook("PreDrawOpaqueRenderables", "draw_opaque", function(bDrawingDepth, bDrawingSkybox)
 			if should_suppress(true) then return end
+
+			setup_bones = {}
 
 			for ent in next, pac.drawn_entities do
 				if ent.pac_is_drawing and ent_parts[ent] then
@@ -748,6 +756,10 @@ do -- drawing
 
 		pac.AddHook("PostDrawOpaqueRenderables", "draw_opaque", function(bDrawingDepth, bDrawingSkybox)
 			if should_suppress() then return end
+
+			for ent in next, setup_bones do
+				ent:SetupBones()
+			end
 
 			for ent in next, pac.drawn_entities do
 				if ent.pac_is_drawing and ent_parts[ent] then
@@ -767,6 +779,10 @@ do -- drawing
 				if ent.pac_is_drawing and ent_parts[ent] then -- accessing table of NULL doesn't do anything
 					pac.RenderOverride(ent, "translucent")
 				end
+			end
+
+			for ent in next, setup_bones do
+				ent:SetupBones()
 			end
 		end)
 	end

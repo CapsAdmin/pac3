@@ -280,8 +280,7 @@ function PART:OnBuildBonePositions()
 
 	manscale(owner, index, scale, self)
 
-	-- TODO: only when actually modified?
-	owner:SetupBones()
+	pac.SetupBones(owner)
 end
 
 BUILDER:Register()
