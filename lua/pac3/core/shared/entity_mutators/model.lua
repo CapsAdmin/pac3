@@ -6,17 +6,17 @@ MUTATOR.UpdateRate = 0.25
 function MUTATOR:WriteArguments(path)
 	assert(type(path) == "string", "path must be a string")
 
-	net.WriteString(path:lower())
+	net.WriteString(path)
 end
 
 function MUTATOR:ReadArguments()
-	return net.ReadString():lower()
+	return net.ReadString()
 end
 
 function MUTATOR:Update(val)
 	if not self.actual_model then return end
 
-	if self.Entity:GetModel():lower() ~= self.actual_model then
+	if self.Entity:GetModel():lower() ~= self.actual_model:lower() then
 		self.Entity:SetModel(self.actual_model)
 	end
 end
