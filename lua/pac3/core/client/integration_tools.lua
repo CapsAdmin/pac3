@@ -164,6 +164,8 @@ function pac.SetupENT(ENT, owner)
 			self:SetShowPACPartsInEditor(false)
 			self.pac_show_in_editor = nil
 		end
+
+		return part
 	end
 
 	function ENT:RemovePACPart(outfit, keep_uniqueid)

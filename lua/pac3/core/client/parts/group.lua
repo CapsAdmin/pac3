@@ -58,14 +58,14 @@ function PART:UpdateOwnerName(ent)
 
 	if self.Duplicate then
 		ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self, function(e) return e.pac_duplicate_attach_uid ~= self.UniqueID end) or NULL
-
 		if ent ~= prev_owner and ent:IsValid() then
 
-			local tbl = self:ToTable(true)
+			local tbl = self:ToTable()
 			tbl.self.OwnerName = "self"
+			tbl.self.Duplicate = false
 			pac.SetupENT(ent)
-			ent:SetShowPACPartsInEditor(false)
-			ent:AttachPACPart(tbl)
+			local part = ent:AttachPACPart(tbl)
+			part.show_in_editor = false
 			ent:CallOnRemove("pac_remove_outfit_" .. tbl.self.UniqueID, function()
 				ent:RemovePACPart(tbl)
 			end)
@@ -74,15 +74,16 @@ function PART:UpdateOwnerName(ent)
 				ent:SetPACDrawDistance(0)
 			end
 
-			ent.pac_duplicate_attach_uid = self.UniqueID
+			ent.pac_duplicate_attach_uid = part:GetUniqueID()
 		end
 	else
 		ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self) or NULL
-
-		if ent ~= prev_owner then
-			self:SetOwner(ent)
-		end
 	end
+
+	if ent ~= prev_owner then
+		self:SetOwner(ent)
+	end
+end
 
 local Base_SetPlayerOwner = PART.SetPlayerOwner
 
