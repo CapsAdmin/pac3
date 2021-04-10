@@ -116,10 +116,12 @@ function PART:AttachToEntity(ent)
 	local group = pac.CreatePart("group", self:GetPlayerOwner())
 
 	local part = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner(), tbl, tostring(tbl))
-	group:AddChild(part)
 
+	group.show_in_editor = false
 	group:SetOwner(ent)
 	group.SetOwner = function(s) s.Owner = ent end
+	part:SetHide(false)
+	group:AddChild(part)
 
 	local id = group.Id
 	local owner_id = self:GetPlayerOwnerId()
@@ -127,13 +129,7 @@ function PART:AttachToEntity(ent)
 		id = id .. owner_id
 	end
 
-	group.show_in_editor = false
-	part:SetHide(false)
-
-	group:SetOwner(ent)
-
 	ent:CallOnRemove("pac_projectile_" .. id, function() group:Remove() end)
-
 	group:CallRecursive("Think")
 
 	ent.RenderOverride = ent.RenderOverride or function()
