@@ -241,7 +241,15 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 	local copy_id = tostring(data)
 
 	if data.self then
-		local part = override_part or pac.CreatePart(data.self.ClassName, nil, data, pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), data.self.UniqueID):IsValid() and copy_id)
+		local part
+
+		if override_part then
+			part = override_part
+			part:SetTable(data)
+		else
+			part = override_part or pac.CreatePart(data.self.ClassName, nil, data, pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), data.self.UniqueID):IsValid() and copy_id)
+		end
+
 		table.insert(partsLoaded, part)
 	else
 		data = pace.FixBadGrouping(data)
