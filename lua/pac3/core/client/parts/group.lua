@@ -83,13 +83,13 @@ function PART:UpdateOwnerName(ent)
 			self:SetOwner(ent)
 		end
 	end
-end
+
+local Base_SetPlayerOwner = PART.SetPlayerOwner
 
 function PART:SetPlayerOwner(ply)
 	local prev = self.PlayerOwner
 
-	self.PlayerOwner = ply
-	self:SetUniqueID(self:GetUniqueID())
+	Base_SetPlayerOwner(self, ply)
 
 	if prev:IsValid() then
 		self:UpdateOwnerName()

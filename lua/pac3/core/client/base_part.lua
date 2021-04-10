@@ -98,6 +98,17 @@ function PART:GetName()
 end
 
 function PART:SetUniqueID(id)
+	if id then
+		local existing = pac.GetPartFromUniqueID(self:GetPlayerOwnerId(), id)
+
+		if existing:IsValid() then
+			pac.Message(Color(255, 50, 50), "unique id collision between ", self, " and ", existing)
+			id = nil
+		end
+	end
+
+	id = id or pac.Hash()
+
 	local owner_id = self:GetPlayerOwnerId()
 
 	if owner_id then
@@ -114,8 +125,18 @@ end
 
 do -- owner
 	function PART:SetPlayerOwner(ply)
+		local owner_id = self:GetPlayerOwnerId()
 		self.PlayerOwner = ply
-		self:SetUniqueID(self:GetUniqueID())
+
+		if owner_id then
+			pac.RemoveUniqueIDPart(owner_id, self.UniqueID)
+		end
+
+		local owner_id = self:GetPlayerOwnerId()
+
+		if owner_id then
+			pac.SetUniqueIDPart(owner_id, self.UniqueID, self)
+		end
 	end
 
 	function PART:GetPlayerOwnerId()
@@ -618,7 +639,7 @@ do -- serializing
 
 	do
 		local function SetTable(self, tbl)
-			self:SetUniqueID(tbl.self.UniqueID or pac.Hash())
+			self:SetUniqueID(tbl.self.UniqueID)
 			self.delayed_variables = self.delayed_variables or {}
 
 			for key, value in pairs(tbl.self) do
