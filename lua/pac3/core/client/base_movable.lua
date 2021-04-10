@@ -3,6 +3,7 @@ local Vector = Vector
 local Angle = Angle
 local NULL = NULL
 local Matrix = Matrix
+local SCALE_IDENTITY = Vector(1,1,1)
 
 local BUILDER, PART = pac.PartTemplate("base")
 
@@ -59,6 +60,8 @@ do -- bones
 
 			bone_matrix:SetTranslation(pos)
 			bone_matrix:SetAngles(ang)
+			bone_matrix:SetScale(SCALE_IDENTITY)
+
 			return bone_matrix
 		end
 	end
@@ -100,6 +103,7 @@ do
 	function PART:BuildWorldMatrix(with_offsets)
 		local_matrix:SetTranslation(self.Position)
 		local_matrix:SetAngles(self.Angles)
+		local_matrix:SetScale(SCALE_IDENTITY)
 
 		local m = self:GetBoneMatrix() * local_matrix
 
