@@ -153,10 +153,21 @@ do -- owner
 	end
 
 	function PART:GetParentOwner()
-		local parent = self:GetParent()
+		for _, parent in ipairs(self:GetParentList()) do
 
-		if parent:IsValid() then
-			return parent:GetOwner()
+			-- legacy behavior
+			if parent.ClassName == "event" then
+				local parent = parent:GetParent()
+				if parent:IsValid() then
+					local parent = parent:GetParent()
+					if parent:IsValid() then
+						return parent:GetOwner()
+					end
+				end
+			end
+
+			local owner = parent:GetOwner()
+			if owner:IsValid() then return owner end
 		end
 
 		return NULL
@@ -167,13 +178,7 @@ do -- owner
 			return self.Owner
 		end
 
-		for _, parent in ipairs(self:GetParentList()) do
-			if parent.Owner:IsValid() then
-				return parent.Owner
-			end
-		end
-
-		return NULL
+		return self:GetParentOwner()
 	end
 end
 
