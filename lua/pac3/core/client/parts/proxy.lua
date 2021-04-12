@@ -66,6 +66,10 @@ function PART:GetTarget(physical)
 			parent = parent.Parent
 		until parent.GetWorldPosition and not parent:GetWorldPosition():IsZero()
 
+		if not parent.GetWorldPosition and parent:GetOwner():IsValid() then
+			return parent:GetOwner()
+		end
+
 		return parent
 	end
 
@@ -482,21 +486,51 @@ PART.Inputs = {
 	end,
 	parent_velocity_forward = function(self, parent)
 		parent = self:GetTarget(true)
+		local ang
+
 		if parent.GetWorldAngles then
-			return -parent:GetWorldAngles():Forward():Dot(self:GetVelocity(parent))
+			ang = parent:GetWorldAngles()
+		elseif parent.GetAngles then
+			ang = parent:GetAngles()
 		end
+
+		if ang then
+			return -ang:Forward():Dot(self:GetVelocity(parent))
+		end
+
+		return 0
 	end,
 	parent_velocity_right = function(self, parent)
 		parent = self:GetTarget(true)
+		local ang
+
 		if parent.GetWorldAngles then
-			return parent:GetWorldAngles():Right():Dot(self:GetVelocity(parent))
+			ang = parent:GetWorldAngles()
+		elseif parent.GetAngles then
+			ang = parent:GetAngles()
 		end
+
+		if ang then
+			return ang:Right():Dot(self:GetVelocity(parent))
+		end
+
+		return 0
 	end,
 	parent_velocity_up = function(self, parent)
 		parent = self:GetTarget(true)
+		local ang
+
 		if parent.GetWorldAngles then
-			return parent:GetWorldAngles():Up():Dot(self:GetVelocity(parent))
+			ang = parent:GetWorldAngles()
+		elseif parent.GetAngles then
+			ang = parent:GetAngles()
 		end
+
+		if ang then
+			return ang:Up():Dot(self:GetVelocity(parent))
+		end
+
+		return 0
 	end,
 
 	parent_scale_x = function(self, parent)
@@ -1094,7 +1128,13 @@ function PART:OnThink()
 		local I = self.Inputs[self.Input]
 
 		if F and I then
-			local num = self.Min + (self.Max - self.Min) * ((F(((I(self, parent) / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
+			local input_number = I(self, parent)
+
+			if type(input_number) ~= "number" then
+				error("proxy function " .. self.Input .. " does not return a number!")
+			end
+
+			local num = self.Min + (self.Max - self.Min) * ((F(((input_number / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
 
 			if self.Additive then
 				self.vec_additive[1] = (self.vec_additive[1] or 0) + num
