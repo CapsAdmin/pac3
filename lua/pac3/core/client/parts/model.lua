@@ -350,7 +350,7 @@ function PART:OnDraw()
 		self:DrawModel(ent, pos, ang)
 	self:PostEntityDraw(ent, pos, ang)
 
-	ent:SetupBones()
+--	ent:SetupBones()
 	pac.ResetBones(ent)
 end
 

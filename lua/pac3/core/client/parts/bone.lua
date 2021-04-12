@@ -54,38 +54,43 @@ end
 function PART:OnShow()
 	self:SetBone(self:GetBone())
 
-	local owner = self:GetOwner()
-	if not owner:IsValid() then return end
+	local ent = self:GetOwner()
+	if not ent:IsValid() then return end
 
-	if self.build_bone_id then return end
+	ent.pac_bone_parts = ent.pac_bone_parts or {}
+	if not table.HasValue(ent.pac_bone_parts, self) then
+		table.insert(ent.pac_bone_parts, self)
+	end
 
-	local build_bone_id
-	build_bone_id = owner:AddCallback("BuildBonePositions", function(...)
-		if owner.pac_in_buildbone then return end
-		owner.pac_in_buildbone = true
+	if ent.pac_build_bone_id then
+		ent:RemoveCallback("BuildBonePositions", ent.pac_build_bone_id)
+	end
 
-
-		if not self:IsValid() then
-			owner:RemoveCallback("BuildBonePositions", build_bone_id)
-			self.build_bone_id = nil
-			owner.pac_in_buildbone = false
+	local id = ent:AddCallback("BuildBonePositions", function(ent, ...)
+		if not ent.pac_bone_parts or not ent.pac_bone_parts[1] then
+			ent:RemoveCallback("BuildBonePositions", ent.pac_build_bone_id)
 			return
 		end
 
-		self:BuildBonePositions2(...)
-		owner.pac_in_buildbone = false
+		for _, bone in ipairs(ent.pac_bone_parts) do
+			bone:BuildBonePositions2(ent)
+		end
 	end)
 
-	self.build_bone_id = build_bone_id
+	ent.pac_build_bone_id = id
 end
 
 function PART:OnHide()
-	local owner = self:GetOwner()
-	if not owner:IsValid() then return end
+	local ent = self:GetOwner()
+	if not ent:IsValid() then return end
 
-	if self.build_bone_id then
-		owner:RemoveCallback("BuildBonePositions", self.build_bone_id)
-		self.build_bone_id = nil
+	if ent.pac_bone_parts then
+		for i,v in ipairs(ent.pac_bone_parts) do
+			if v == self then
+				table.remove(ent.pac_bone_parts, i)
+				break
+			end
+		end
 	end
 end
 
@@ -131,7 +136,8 @@ local function scale_children(ent, root_index, bone_count, scale, move_to_origin
 	end
 end
 
-function PART:BuildBonePositions2(ent, bone_count)
+local original_matrix = Matrix()
+function PART:BuildBonePositions2(ent)
 	local index = self.bone_index
 
 	if not index then return end
@@ -140,10 +146,10 @@ function PART:BuildBonePositions2(ent, bone_count)
 
 	if not m then return end
 
-	local original_matrix = Matrix()
+
 	original_matrix:Set(m)
 
-	self.bone_matrix = m * Matrix()
+	self.bone_matrix = original_matrix
 
 	if self.FollowPart:IsValid() and self.FollowPart.GetWorldPosition then
 		local pos, ang
@@ -245,7 +251,7 @@ function PART:GetBonePosition()
 
 	if not index then return ent:GetPos(), ent:GetAngles() end
 
-	local m = self.bone_matrix or ent:GetBoneMatrix(index)
+	local m = (self.bone_matrix and self.bone_matrix * Matrix()) or ent:GetBoneMatrix(index)
 	if not m then return ent:GetPos(), ent:GetAngles() end
 
 	local pos = m:GetTranslation()
