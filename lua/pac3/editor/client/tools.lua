@@ -93,13 +93,44 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 
 				tbl.Bone = val
 			end,
+
 		}
 	}
 
+	local function calc_manip_offset(ent, bone, pos, ang)
+		if not ent:GetBoneMatrix(bone) then return end
+
+		local prev_pos = ent:GetManipulateBonePosition(bone)
+		local prev_ang = ent:GetManipulateBoneAngles(bone)
+
+		ent:ManipulateBonePosition(bone, Vector())
+		ent:ManipulateBoneAngles(bone, Angle())
+		ent:SetupBones()
+		local pre = ent:GetBoneMatrix(bone)
+
+		ent:ManipulateBonePosition(bone, pos)
+		ent:ManipulateBoneAngles(bone, ang)
+		ent:SetupBones()
+		local post = ent:GetBoneMatrix(bone)
+
+		ent:ManipulateBonePosition(bone, prev_pos)
+		ent:ManipulateBoneAngles(bone, prev_ang)
+
+		local m = pre:GetInverseTR() * post
+
+		return m:GetTranslation(), m:GetAngles()
+	end
+
 	local saved = {}
 	for _, part in pairs(pac.GetLocalParts()) do
-		if part.ClassName == "bone" then
+		if part.ClassName == "bone" or part.ClassName == "bone2" then
 			bones[part.UniqueID] = pac.GetAllBones(part:GetOwner())
+			if part:GetModelBoneIndex() and not part:GetAlternativeBones() then
+				local pos, ang = calc_manip_offset(part:GetOwner(), part:GetModelBoneIndex(), part:GetPosition(), part:GetAngles())
+				part:SetPosition(pos)
+				part:SetAngles(ang)
+			end
+
 		end
 		if not part:HasParent() then
 			table.insert(saved, part:ToTable())
@@ -153,7 +184,9 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 				if prop_translate[old_classname] and prop_translate[old_classname][key] then
 					tbl.self[key] = nil
 					prop_translate[old_classname][key](tbl.self, value)
-					pac.Message("translated property: ", key, " = ", value, " to ", tbl.self[key])
+					if value ~= tbl.self[key] then
+						pac.Message("translated property: ", key, " = ", value, " to ", tbl.self[key])
+					end
 				elseif not registered_parts[new_classname].StorableVars[key] then
 					local msg = tbl.self.ClassName .. "." .. key
 					if not done[msg] then
@@ -751,3 +784,12 @@ pace.AddTool(L"copy from faceposer tool", function(part, suboption)
 		end
 	end
 end)
+
+pace.ClearParts()
+pace.LoadParts("boneupgrade_comparison")
+
+for i,v in pairs(pace.Tools) do
+	if v.name == L"convert legacy parts to new parts" then
+		v.callback()
+	end
+end
