@@ -25,12 +25,14 @@ local function ADD(PART, name, default, ...)
 			local num = GetConVarNumber("pac_free_movement")
 			if num == 1 or (num == -1 and hook.Run("PlayerNoClip", ply, true)) then
 				ply.pac_movement = ply.pac_movement or table.Copy(pac_movement_default)
-				ply.pac_movement[name] = val
 
-				net.Start("pac_modify_movement")
-					net.WriteString(name)
-					net.WriteType(val)
-				net.SendToServer()
+				if ply.pac_movement[name] ~= val then
+					net.Start("pac_modify_movement", true)
+						net.WriteString(name)
+						net.WriteType(val)
+					net.SendToServer()
+				end
+				ply.pac_movement[name] = val
 			end
 		end
 	end
