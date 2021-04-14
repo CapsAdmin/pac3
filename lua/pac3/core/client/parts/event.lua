@@ -1933,17 +1933,18 @@ do
 
 				if is_oneshot then
 					local f = (pac.RealTime - data.time) / self.event.time
-					local c = Lerp(math.Clamp(f,0,1), 100, 55)
-					surface.SetDrawColor(c,c,c)
+					local s = Lerp(math.Clamp(f,0,1), 1, 0)
+					local v = Lerp(math.Clamp(f,0,1), 0.55, 0.15)
+					surface.SetDrawColor(HSVToColor(210,s,v))
 				else
 					if data.on == 1 then
-						surface.SetDrawColor(150,150,150)
+						surface.SetDrawColor(HSVToColor(210,1,0.55))
 					else
-						surface.SetDrawColor(50,50,50)
+						surface.SetDrawColor(HSVToColor(210,0,0.15))
 					end
 				end
 			else
-				surface.SetDrawColor(50,50,50)
+				surface.SetDrawColor(HSVToColor(210,0,0.15))
 			end
 
 			surface.DrawTexturedRect(x-48, y-48, 96, 96)
