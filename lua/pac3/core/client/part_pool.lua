@@ -784,7 +784,9 @@ do -- drawing
 			end
 
 			for ent in next, setup_bones do
-				ent:SetupBones()
+				if ent:IsValid() then
+					ent:SetupBones()
+				end
 			end
 		end)
 	end
