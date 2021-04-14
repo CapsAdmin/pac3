@@ -36,7 +36,7 @@ net.Receive("pac_spawn_part", function()
 		local name = mdl:match(".+/(.+)%.mdl")
 
 		pace.RecordUndoHistory()
-		pace.Call("CreatePart", "model", name, mdl)
+		pace.Call("CreatePart", "model2", name, mdl)
 	else
 		pace.RecordUndoHistory()
 		pace.Call("VariableChanged", pace.current_part, "Model", mdl)
