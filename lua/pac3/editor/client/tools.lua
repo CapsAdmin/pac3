@@ -784,12 +784,3 @@ pace.AddTool(L"copy from faceposer tool", function(part, suboption)
 		end
 	end
 end)
-
-pace.ClearParts()
-pace.LoadParts("boneupgrade_comparison")
-
-for i,v in pairs(pace.Tools) do
-	if v.name == L"convert legacy parts to new parts" then
-		v.callback()
-	end
-end
