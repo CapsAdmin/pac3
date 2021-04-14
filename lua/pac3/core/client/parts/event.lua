@@ -1986,8 +1986,10 @@ do
 		pac.RemoveHook("HUDPaint","custom_event_selector")
 
 		if selected and cancel ~= true then
-			if selected.event.time and selected.event.time > 0 then
+			if not selected.event.time then
 				RunConsoleCommand("pac_event", selected.event.trigger, "toggle")
+			elseif selected.event.time > 0 then
+				RunConsoleCommand("pac_event", selected.event.trigger)
 			else
 				local ply = pac.LocalPlayer
 
