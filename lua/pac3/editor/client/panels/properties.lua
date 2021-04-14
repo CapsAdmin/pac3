@@ -468,10 +468,10 @@ do -- list
 			local sort_key
 
 			if not obj.ClassName then
-				callback = val.callback
-				udata = val.userdata
+				callback = val.set
+				udata = val.udata
 				sort_key = val.sort_key
-				val = val.val
+				val = val.get()
 			else
 				udata = pac.GetPropertyUserdata(obj, key)
 			end

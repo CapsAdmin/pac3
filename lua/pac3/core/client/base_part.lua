@@ -627,18 +627,51 @@ do -- serializing
 		-- override
 	end
 
-	function PART:GetProperties()
-		local tbl = {}
-		for _, key in pairs(self:GetStorableVars()) do
-			local val = {}
-			val.set = function(v) self["Set" .. key](self, v) end
-			val.get = function() return self["Get" .. key](self) end
-			val.key = key
-			val.udata = pac.GetPropertyUserdata(self, key) or {}
 
-			table.insert(tbl, val)
+	do
+		function PART:GetProperty(name)
+			local val = self[name]
+			if val == nil and self.GetDynamicProperties then
+				local info = self:GetDynamicProperties()
+				if info and info[name] then
+					return info[name].get()
+				end
+			end
 		end
-		return tbl
+
+		function PART:SetProperty(key, val)
+			if self[key] ~= nil then
+				self[key] = val
+			elseif self.GetDynamicProperties then
+				local info = self:GetDynamicProperties()[key]
+				if info and info then
+					info.set(val)
+				end
+			end
+		end
+
+		function PART:GetProperties()
+			local tbl = {}
+			for _, key in pairs(self:GetStorableVars()) do
+				local val = {}
+				val.set = function(v) self["Set" .. key](self, v) end
+				val.get = function() return self["Get" .. key](self) end
+				val.key = key
+				val.udata = pac.GetPropertyUserdata(self, key) or {}
+
+				table.insert(tbl, val)
+			end
+			if self.GetDynamicProperties then
+				local props = self:GetDynamicProperties()
+
+				if props then
+					for _, info in pairs(props) do
+						table.insert(tbl, info)
+					end
+				end
+			end
+			return tbl
+		end
 	end
 
 	local function on_error(msg)

@@ -499,38 +499,13 @@ do -- model modifiers
 
 	function PANEL:ExtraPopulate()
 		local part = pace.current_part
-		local ent = part:GetOwner()
-		if not ent:IsValid() or not ent:GetBodyGroups() then return end
 
-		local group = pac.GetPropertyUserdata(part, self.CurrentKey) and pac.GetPropertyUserdata(part, self.CurrentKey).group
-
-		local tbl = {}
-
-		if ent:SkinCount() and ent:SkinCount() > 1 then
-			tbl.skin = {
-				val = ent:GetSkin(),
-				callback = function(val)
-					local tbl = part:ModelModifiersToTable(part:GetModelModifiers())
-					tbl.skin = val
-					part:SetModelModifiers(part:ModelModifiersToString(tbl))
-				end,
-				userdata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, ent:SkinCount() - 1) end, group = group},
-			}
+		local tbl = part:GetDynamicProperties()
+		if not tbl then return end
+		if tbl.skin then
+			tbl.skin.group = pac.GetPropertyUserdata(part, self.CurrentKey) and pac.GetPropertyUserdata(part, self.CurrentKey).group
 		end
 
-		for _, info in ipairs(ent:GetBodyGroups()) do
-			if info.num > 1 then
-				tbl[info.name] = {
-					val = part:ModelModifiersToTable(part:GetModelModifiers())[info.name] or 0,
-					callback = function(val)
-						local tbl = part:ModelModifiersToTable(part:GetModelModifiers())
-						tbl[info.name] = val
-						part:SetModelModifiers(part:ModelModifiersToString(tbl))
-					end,
-					userdata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, info.num - 1) end, group = "bodygroups"},
-				}
-			end
-		end
 		pace.properties:Populate(tbl, true)
 	end
 
@@ -538,123 +513,22 @@ do -- model modifiers
 end
 
 
-do -- flex 2
-
-	-- Make the internal flex names be more presentable, TODO: handle numbers
-	local function PrettifyName( name )
-		name = name:Replace( "_", " " )
-
-		-- Try to split text into words, where words would start with single uppercase character
-		local newParts = {}
-		for id, str in pairs( string.Explode( " ", name ) ) do
-			local wordStart = 1
-			for i = 2, str:len() do
-				local c = str[ i ]
-				if ( c:upper() == c ) then
-					local toAdd = str:sub(wordStart, i - 1)
-					if ( toAdd:upper() == toAdd ) then continue end
-					table.insert( newParts, toAdd )
-					wordStart = i
-				end
-
-			end
-
-			table.insert( newParts, str:sub(wordStart, str:len()))
-		end
-
-		-- Uppercase all first characters
-		for id, str in pairs( newParts ) do
-			if ( str:len() < 2 ) then continue end
-			newParts[ id ] = str:Left( 1 ):upper() .. str:sub( 2 )
-		end
-
-		return table.concat( newParts, " " )
-	end
-
-
+do -- dynamic properties
 	local PANEL = {}
 
-	PANEL.ClassName = "properties_flex_weights"
+	PANEL.ClassName = "properties_dynamic"
 	PANEL.Base = "pace_properties_base_type"
 
 	function PANEL:ExtraPopulate()
-		local part = pace.current_part
-		local ent = part:GetOwner()
-		if ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() and ent:GetFlexNum() == 0 then return end
-
-		local tbl = {}
-		local weight_map = util.JSONToTable(part:GetFlexWeights()) or {}
-
-		for i = 0, ent:GetFlexNum() - 1 do
-			local name = ent:GetFlexName(i)
-
-			weight_map[name] = weight_map[name] or 0
-
-			tbl[name] = {
-				sort_key = -i,
-				val = tonumber(weight_map[name]),
-				callback = function(val)
-					if ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() == 0 then return end
-
-					weight_map[name] = tonumber(val) or 0
-
-					part:SetFlexWeights(util.TableToJSON(weight_map))
-				end,
-				userdata = {
-					editor_friendly = PrettifyName(name),
-					group = "flexes",
-					editor_sensitivity = 0.1,
-					editor_onchange = function(self, num)
-						local min, max = ent:GetFlexBounds(i)
-
-						return math.Clamp(num, min, max)
-					end,
-				},
-			}
+		local props = pace.current_part:GetDynamicProperties()
+		if props then
+			pace.properties:Populate(props, true)
 		end
-
-		pace.properties:Populate(tbl, true)
 	end
 
 	pace.RegisterPanel(PANEL)
 end
 
-
-do -- model modifiers
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_model_materials"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:ExtraPopulate()
-		local part = pace.current_part
-		local ent = part:GetOwner()
-		if not ent:IsValid() or not ent:GetMaterials() or #ent:GetMaterials() == 1 then return end
-
-		local tbl = {}
-		local cur = part.Materials:Split(";")
-
-		for i, name in ipairs(ent:GetMaterials()) do
-			name = name:match(".+/(.+)") or name
-			tbl[name] = {
-				val = cur[i] or "",
-				callback = function(val)
-					if not ent:IsValid() or not ent:GetMaterials() or #ent:GetMaterials() == 1 then return end
-					local tbl = part.Materials:Split(";")
-					tbl[i] = val
-					for i, name in ipairs(ent:GetMaterials()) do
-						tbl[i] = tbl[i] or ""
-					end
-					part:SetMaterials(table.concat(tbl, ";"))
-				end,
-				userdata = {editor_panel = "material", editor_friendly = name, group = "sub materials"},
-			}
-		end
-		pace.properties:Populate(tbl, true)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
 
 do -- arguments
 	local PANEL = {}
@@ -665,45 +539,10 @@ do -- arguments
 	function PANEL:ExtraPopulate()
 		if not pace.current_part:IsValid() or pace.current_part.ClassName ~= "event" then return end
 
-		local data = pace.current_part.Events[pace.current_part.Event]
-		if not data then return end
-
-		local tbl = {}
-		local args = {pace.current_part:GetParsedArguments(data)}
-		if args then
-			for pos, arg in ipairs(data:GetArguments()) do
-				local nam, typ, userdata = unpack(arg)
-				if args[pos] then
-					arg = args[pos]
-				else
-					if typ == "string" then
-						arg = ""
-					elseif typ == "number" then
-						arg = 0
-					elseif typ == "boolean" then
-						arg = false
-					end
-				end
-				if typ == "number" then
-					arg = tonumber(arg) or 0
-				elseif typ == "boolean" then
-					arg = tobool(arg) or false
-				end
-				tbl[nam] = {
-					val = arg,
-					callback = function(val)
-						if not pace.current_part:IsValid() then return end
-						local args = {pace.current_part:GetParsedArguments(data)}
-						args[pos] = val
-						pace.current_part:ParseArguments(unpack(args))
-						--self:SetValue(pace.current_part.Arguments)
-					end,
-					userdata = userdata,
-				}
-			end
-			pace.properties:Populate(tbl, true, L"arguments")
+		local props = pace.current_part:GetDynamicProperties()
+		if props then
+			pace.properties:Populate(props, true, L"arguments")
 		end
-
 	end
 
 	pace.RegisterPanel(PANEL)

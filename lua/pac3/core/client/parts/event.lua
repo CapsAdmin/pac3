@@ -34,6 +34,50 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSetPart("TargetPart")
 BUILDER:EndStorableVars()
 
+function PART:GetDynamicProperties()
+	local data = self.Events[self.Event]
+	if not data then return end
+
+	local tbl = {}
+	local args = {self:GetParsedArguments(data)}
+
+	for pos, arg in ipairs(data:GetArguments()) do
+		local nam, typ, userdata = unpack(arg)
+		if args[pos] then
+			arg = args[pos]
+		else
+			if typ == "string" then
+				arg = ""
+			elseif typ == "number" then
+				arg = 0
+			elseif typ == "boolean" then
+				arg = false
+			end
+		end
+		if typ == "number" then
+			arg = tonumber(arg) or 0
+		elseif typ == "boolean" then
+			arg = tobool(arg) or false
+		end
+
+		tbl[nam] = {
+			key = nam,
+			get = function()
+				local args = {self:GetParsedArguments(data)}
+				return args[pos] or arg
+			end,
+			set = function(val)
+				local args = {self:GetParsedArguments(data)}
+				args[pos] = val
+				self:ParseArguments(unpack(args))
+			end,
+			udata = userdata or {},
+		}
+	end
+
+	return tbl
+end
+
 local function convert_angles(self, ang)
 	if self.ZeroEyePitch then
 		ang.p = 0

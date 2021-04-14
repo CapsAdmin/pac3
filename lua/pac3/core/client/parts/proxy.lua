@@ -13,12 +13,12 @@ BUILDER:StartStorableVars()
 			local parent = part:GetTarget()
 			if not parent:IsValid() then return end
 			local tbl = {}
-			for key, _ in pairs(parent.StorableVars) do
-				if key == "UniqueID" then goto CONTINUE end
+			for _, info in pairs(parent:GetProperties()) do
+				if info.key == "UniqueID" then goto CONTINUE end
 
-				local T = type(parent[key])
+				local T = type(info.get())
 				if T == "number" or T == "Vector" or T == "Angle" or T == "boolean" then
-					tbl[key] = key
+					tbl[info.key] = info.key
 				end
 				::CONTINUE::
 			end
@@ -78,9 +78,6 @@ end
 
 function PART:SetVariableName(str)
 	self.VariableName = str
-
-	self.set_key = "Set" .. str
-	self.get_key = "Get" .. str
 end
 
 function PART:GetNiceName()
@@ -948,10 +945,10 @@ end)
 function PART:CheckLastVar(parent)
 	if self.last_var ~= self.VariableName then
 		if self.last_var then
-			parent[self.set_key](parent, self.last_var_val)
+			parent:SetProperty(self.VariableName, self.last_var_val)
 		end
 		self.last_var = self.VariableName
-		self.last_var_val = parent[self.get_key](parent)
+		self.last_var_val = parent:GetProperty(self.VariableName)
 	end
 end
 
@@ -1005,16 +1002,16 @@ function PART:OnShow()
 end
 
 local function set(self, part, x, y, z, children)
-	local val = part[self.VariableName]
+	local val = part:GetProperty(self.VariableName)
 	local T = type(val)
 
 	if allowed[T] then
 		if T == "boolean" then
 			x = x or val == true and 1 or 0
-			part[self.set_key](part, tonumber(x) > 0)
+			part:SetProperty(self.VariableName, tonumber(x) > 0)
 		elseif T == "number" then
 			x = x or val
-			part[self.set_key](part, tonumber(x) or 0)
+			part:SetProperty(self.VariableName, tonumber(x) or 0)
 		else
 			if self.Axis ~= "" and val[self.Axis] then
 				val = val * 1
@@ -1033,7 +1030,7 @@ local function set(self, part, x, y, z, children)
 				end
 			end
 
-			part[self.set_key](part, val)
+			part:SetProperty(self.VariableName, val)
 		end
 	end
 

@@ -5,8 +5,6 @@ local render_SetBlend = render.SetBlend
 local render_CullMode = render.CullMode
 local MATERIAL_CULLMODE_CW = MATERIAL_CULLMODE_CW
 local MATERIAL_CULLMODE_CCW = MATERIAL_CULLMODE_CCW
-local render_SetMaterial = render.SetMaterial
-local render_ModelMaterialOverride = render.MaterialOverride
 local render_MaterialOverride = render.ModelMaterialOverride
 local cam_PushModelMatrix = cam.PushModelMatrix
 local cam_PopModelMatrix = cam.PopModelMatrix
@@ -15,7 +13,6 @@ local EF_BONEMERGE = EF_BONEMERGE
 local NULL = NULL
 local Color = Color
 local Matrix = Matrix
-local WorldToLocal = WorldToLocal
 
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
@@ -52,7 +49,7 @@ BUILDER:StartStorableVars()
 		:GetSet("Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
 		:GetSet("ModelModifiers", "", {editor_panel = "model_modifiers"})
 		:GetSet("Material", "", {editor_panel = "material"})
-		:GetSet("Materials", "", {editor_panel = "model_materials"})
+		:GetSet("Materials", "", {editor_panel = "dynamic"})
 		:GetSet("Skin", 0, {editor_onchange = function(self, num) return math.Round(math.Clamp(tonumber(num), 0, pace.current_part:GetOwner():SkinCount())) end})
 		:GetSet("LevelOfDetail", 0, {editor_clamp = {-1, 8}, editor_round = true})
 		:GetSetPart("EyeTarget")
@@ -67,7 +64,79 @@ function PART:GetNiceName()
 	return str and str:gsub("%d", "") or "error"
 end
 
-local temp = CreateMaterial(tostring({}), "VertexLitGeneric", {})
+function PART:GetDynamicProperties()
+
+	if self.cached_dynamic_props then
+		return self.cached_dynamic_props
+	end
+
+	print("?!")
+
+	local ent = self:GetOwner()
+	if not ent:IsValid() or not ent:GetBodyGroups() then return end
+
+	local tbl = {}
+
+	if ent:SkinCount() and ent:SkinCount() > 1 then
+		tbl.skin = {
+			key = "skin",
+			set = function(val)
+				local tbl = self:ModelModifiersToTable(self:GetModelModifiers())
+				tbl.skin = val
+				self:SetModelModifiers(self:ModelModifiersToString(tbl))
+			end,
+			get = function()
+				return self:ModelModifiersToTable(self:GetModelModifiers()).skin
+			end,
+			udata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, ent:SkinCount() - 1) end},
+		}
+	end
+
+	for _, info in ipairs(ent:GetBodyGroups()) do
+		if info.num > 1 then
+			tbl[info.name] = {
+				key = info.name,
+				set = function(val)
+					local tbl = self:ModelModifiersToTable(self:GetModelModifiers())
+					tbl[info.name] = val
+					self:SetModelModifiers(self:ModelModifiersToString(tbl))
+				end,
+				get = function()
+					return self:ModelModifiersToTable(self:GetModelModifiers())[info.name] or 0
+				end,
+				udata = {editor_onchange = function(self, num) return math.Clamp(math.Round(num), 0, info.num - 1) end, group = "bodygroups"},
+			}
+		end
+	end
+
+	if ent:GetMaterials() and #ent:GetMaterials() > 1 then
+		for i, name in ipairs(ent:GetMaterials()) do
+			name = name:match(".+/(.+)") or name
+			tbl[name] = {
+				key = name,
+				get = function()
+					local tbl = self.Materials:Split(";")
+					return tbl[i]
+				end,
+				set = function(val)
+					local tbl = self.Materials:Split(";")
+					tbl[i] = val
+
+					for i, name in ipairs(ent:GetMaterials()) do
+						tbl[i] = tbl[i] or ""
+					end
+
+					self:SetMaterials(table.concat(tbl, ";"))
+				end,
+				udata = {editor_panel = "material", editor_friendly = name, group = "sub materials"},
+			}
+		end
+	end
+
+	self.cached_dynamic_props = tbl
+
+	return tbl
+end
 
 function PART:SetLevelOfDetail(val)
 	self.LevelOfDetail = val
@@ -199,6 +268,7 @@ function PART:Reset()
 			self["Set" .. key](self, self["Get" .. key](self))
 		end
 	end
+	self.cached_dynamic_props = nil
 end
 
 function PART:OnBecomePhysics()
@@ -453,6 +523,8 @@ function PART:RefreshModel()
 	if ent:IsValid() then
 		pac.ResetBoneCache(ent)
 	end
+
+	self.cached_dynamic_props = nil
 
 	self:SetModelModifiers(self:GetModelModifiers())
 	self:SetMaterials(self:GetMaterials())

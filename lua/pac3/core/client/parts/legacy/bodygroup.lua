@@ -2,7 +2,7 @@
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "bodygroup"
-PART.Groups = {'entity', 'model', 'modifiers'}
+PART.Group = "legacy"
 PART.Icon = 'icon16/user.png'
 
 BUILDER:StartStorableVars()
