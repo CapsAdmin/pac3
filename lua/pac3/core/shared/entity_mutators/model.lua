@@ -27,8 +27,10 @@ end
 
 function MUTATOR:Mutate(path)
 	if path:find("^http") then
-		if self.Owner:IsPlayer() then
-			pac.Message(self.Owner, " wants to use ", path, " as model on ", ent)
+		if SERVER then
+			if self.Owner:IsPlayer() then
+				pac.Message(self.Owner, " wants to use ", path, " as model on ", ent)
+			end
 		end
 
 		local ent_str = tostring(self.Entity)
@@ -39,7 +41,9 @@ function MUTATOR:Mutate(path)
 				return
 			end
 
-			pac.Message(mdl_path, " downloaded for ", ent, ': ', path)
+			if SERVER then
+				pac.Message(mdl_path, " downloaded for ", ent, ': ', path)
+			end
 
 			self.Entity:SetModel(mdl_path)
 			self.actual_model = mdl_path
