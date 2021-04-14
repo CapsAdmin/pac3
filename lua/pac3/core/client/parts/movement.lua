@@ -107,7 +107,7 @@ function PART:OnHide()
 	local ent = self:GetRootPart():GetOwner()
 
 	if ent == pac.LocalPlayer then
-		net.Start("pac_modify_movement")
+		net.Start("pac_modify_movement", true)
 			net.WriteString("disable")
 		net.SendToServer()
 
