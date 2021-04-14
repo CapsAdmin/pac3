@@ -27,7 +27,7 @@ end
 
 function MUTATOR:Mutate(path)
 	if path:find("^http") then
-		if SERVER then
+		if SERVER and pac.debug then
 			if self.Owner:IsPlayer() then
 				pac.Message(self.Owner, " wants to use ", path, " as model on ", ent)
 			end
@@ -41,7 +41,7 @@ function MUTATOR:Mutate(path)
 				return
 			end
 
-			if SERVER then
+			if SERVER and pac.debug then
 				pac.Message(mdl_path, " downloaded for ", ent, ': ', path)
 			end
 
