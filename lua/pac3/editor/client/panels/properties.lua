@@ -463,6 +463,8 @@ do -- list
 		local tbl = {}
 
 		for key, val in pairs(obj.ClassName and obj:GetVars() or obj) do
+			if key == "pace_properties" then goto CONTINUE end
+
 			local callback
 			local udata
 			local sort_key

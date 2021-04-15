@@ -65,13 +65,6 @@ function PART:GetNiceName()
 end
 
 function PART:GetDynamicProperties()
-
-	if self.cached_dynamic_props then
-		return self.cached_dynamic_props
-	end
-
-	print("?!")
-
 	local ent = self:GetOwner()
 	if not ent:IsValid() or not ent:GetBodyGroups() then return end
 
@@ -116,7 +109,7 @@ function PART:GetDynamicProperties()
 				key = name,
 				get = function()
 					local tbl = self.Materials:Split(";")
-					return tbl[i]
+					return tbl[i] or ""
 				end,
 				set = function(val)
 					local tbl = self.Materials:Split(";")
@@ -132,8 +125,6 @@ function PART:GetDynamicProperties()
 			}
 		end
 	end
-
-	self.cached_dynamic_props = tbl
 
 	return tbl
 end

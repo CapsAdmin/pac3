@@ -630,18 +630,23 @@ do -- serializing
 
 	do
 		function PART:GetProperty(name)
-			local val = self[name]
-			if val == nil and self.GetDynamicProperties then
-				local info = self:GetDynamicProperties()
-				if info and info[name] then
-					return info[name].get()
+			local val = self["Get" .. name]
+
+			if val == nil then
+				if self.GetDynamicProperties then
+					local info = self:GetDynamicProperties()
+					if info and info[name] then
+						return info[name].get()
+					end
 				end
+			else
+				return val(self)
 			end
 		end
 
 		function PART:SetProperty(key, val)
-			if self[key] ~= nil then
-				self[key] = val
+			if self["Set" .. key] ~= nil then
+				self["Set" .. key](self, val)
 			elseif self.GetDynamicProperties then
 				local info = self:GetDynamicProperties()[key]
 				if info and info then

@@ -140,7 +140,6 @@ hook.Add("PostRenderVGUI", "beams", function()
 	local node = part.pace_tree_node
 
 	for _, info in ipairs(part:GetProperties()) do
-
 		if info.udata.part_key then
 			--if info.udata.part_key == "Parent" then continue end
 
