@@ -491,63 +491,6 @@ do -- sound
 	pace.RegisterPanel(PANEL)
 end
 
-do -- model modifiers
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_model_modifiers"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:ExtraPopulate()
-		local part = pace.current_part
-
-		local tbl = part:GetDynamicProperties()
-		if not tbl then return end
-		if tbl.skin then
-			tbl.skin.group = pac.GetPropertyUserdata(part, self.CurrentKey) and pac.GetPropertyUserdata(part, self.CurrentKey).group
-		end
-
-		pace.properties:Populate(tbl, true)
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-
-do -- dynamic properties
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_dynamic"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:ExtraPopulate()
-		local props = pace.current_part:GetDynamicProperties()
-		if props then
-			pace.properties:Populate(props, true)
-		end
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
-
-do -- arguments
-	local PANEL = {}
-
-	PANEL.ClassName = "properties_event_arguments"
-	PANEL.Base = "pace_properties_base_type"
-
-	function PANEL:ExtraPopulate()
-		if not pace.current_part:IsValid() or pace.current_part.ClassName ~= "event" then return end
-
-		local props = pace.current_part:GetDynamicProperties()
-		if props then
-			pace.properties:Populate(props, true, L"arguments")
-		end
-	end
-
-	pace.RegisterPanel(PANEL)
-end
-
 do -- script
 	local PANEL = {}
 

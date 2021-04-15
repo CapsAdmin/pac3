@@ -6,7 +6,7 @@ local L = pace.LanguageString
 
 function pace.PopulateProperties(part)
 	if pace.properties:IsValid() then
-		pace.properties:Populate(part)
+		pace.properties:Populate(part:GetProperties())
 		for k,v in pairs(pace.extra_populates) do
 			v.func(v.pnl)
 		end

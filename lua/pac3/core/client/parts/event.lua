@@ -26,7 +26,7 @@ BUILDER:StartStorableVars()
 		return output
 	end})
 	BUILDER:GetSet("Operator", "find simple", {enums = function(part) local tbl = {} for i,v in ipairs(part.Operators) do tbl[v] = v end return tbl end})
-	BUILDER:GetSet("Arguments", "", {editor_panel = "event_arguments"})
+	BUILDER:GetSet("Arguments", "", {hidden = true})
 	BUILDER:GetSet("Invert", false)
 	BUILDER:GetSet("RootOwner", true)
 	BUILDER:GetSet("AffectChildrenOnly", false)
@@ -34,44 +34,57 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSetPart("TargetPart")
 BUILDER:EndStorableVars()
 
+local function get_default(typ)
+	if typ == "string" then
+		return ""
+	elseif typ == "number" then
+		return 0
+	elseif typ == "boolean" then
+		return false
+	end
+end
+
+local function string_to_type(typ, val)
+	if typ == "number" then
+		return tonumber(val) or 0
+	elseif typ == "boolean" then
+		return tobool(val) or false
+	end
+	return val
+end
+
+local function cast(typ, val)
+	if val == nil then
+		val = get_default(typ)
+	end
+
+	return string_to_type(typ, val)
+end
+
 function PART:GetDynamicProperties()
 	local data = self.Events[self.Event]
 	if not data then return end
 
 	local tbl = {}
-	local args = {self:GetParsedArguments(data)}
-
 	for pos, arg in ipairs(data:GetArguments()) do
-		local nam, typ, userdata = unpack(arg)
-		if args[pos] then
-			arg = args[pos]
-		else
-			if typ == "string" then
-				arg = ""
-			elseif typ == "number" then
-				arg = 0
-			elseif typ == "boolean" then
-				arg = false
-			end
-		end
-		if typ == "number" then
-			arg = tonumber(arg) or 0
-		elseif typ == "boolean" then
-			arg = tobool(arg) or false
-		end
+		local key, typ, udata = unpack(arg)
+		udata = udata or {}
+		udata.group = udata.group or "arguments"
 
-		tbl[nam] = {
-			key = nam,
+		PrintTable(udata)
+
+		tbl[key] = {
+			key = key,
 			get = function()
 				local args = {self:GetParsedArguments(data)}
-				return args[pos] or arg
+				return cast(typ, args[pos])
 			end,
 			set = function(val)
 				local args = {self:GetParsedArguments(data)}
 				args[pos] = val
 				self:ParseArguments(unpack(args))
 			end,
-			udata = userdata or {},
+			udata = udata,
 		}
 	end
 

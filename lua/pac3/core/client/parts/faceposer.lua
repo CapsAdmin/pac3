@@ -47,7 +47,7 @@ BUILDER:StartStorableVars()
 
 		return maps
 	end})
-	:GetSet("FlexWeights", "", {editor_panel = "dynamic"})
+	:GetSet("FlexWeights", "", {hidden = true})
 	:GetSet("Scale", 1)
 :EndStorableVars()
 

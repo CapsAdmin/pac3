@@ -25,7 +25,6 @@ BUILDER
 		:SetPropertyGroup("generic")
 			:GetSet("Name", "")
 			:GetSet("Hide", false)
-			:GetSet("OwnerName", "self")
 			:GetSet("EditorExpand", false, {hidden = true})
 			:GetSet("UniqueID", "", {hidden = true})
 			:GetSetPart("Parent")
@@ -656,26 +655,84 @@ do -- serializing
 		end
 
 		function PART:GetProperties()
-			local tbl = {}
-			for _, key in pairs(self:GetStorableVars()) do
-				local val = {}
-				val.set = function(v) self["Set" .. key](self, v) end
-				val.get = function() return self["Get" .. key](self) end
-				val.key = key
-				val.udata = pac.GetPropertyUserdata(self, key) or {}
+			local out = {}
 
-				table.insert(tbl, val)
+			for _, key in pairs(self:GetStorableVars()) do
+				if self.PropertyWhitelist and not self.PropertyWhitelist[key] then
+					continue
+				end
+
+				table.insert(out, {
+					key = key,
+					set = function(v) self["Set" .. key](self, v) end,
+					get = function() return self["Get" .. key](self) end,
+					udata = pac.GetPropertyUserdata(self, key) or {},
+				})
 			end
+
 			if self.GetDynamicProperties then
 				local props = self:GetDynamicProperties()
 
 				if props then
 					for _, info in pairs(props) do
-						table.insert(tbl, info)
+						if self.PropertyWhitelist and not self.PropertyWhitelist[info.key] then
+							continue
+						end
+						table.insert(out, info)
 					end
 				end
 			end
-			return tbl
+
+			local sorted = {}
+			local done = {}
+
+			for _, key in ipairs({"Name", "Hide"}) do
+				for _, prop in ipairs(out) do
+					if key == prop.key then
+						if not done[key] then
+							table.insert(sorted, prop)
+							done[key] = true
+							break
+						end
+					end
+				end
+			end
+
+			if pac.VariableOrder[self.ClassName] then
+				for _, key in ipairs(pac.VariableOrder[self.ClassName]) do
+					for _, prop in ipairs(out) do
+						if key == prop.key then
+							if not done[key] then
+								table.insert(sorted, prop)
+								done[key] = true
+								break
+							end
+						end
+					end
+				end
+			end
+
+			for _, variables in pairs(pac.VariableOrder) do
+				for _, key in ipairs(variables) do
+					for _, prop in ipairs(out) do
+						if key == prop.key then
+							if not done[key] then
+								table.insert(sorted, prop)
+								done[key] = true
+								break
+							end
+						end
+					end
+				end
+			end
+
+			for _, prop in ipairs(out) do
+				if not done[prop.key] then
+					table.insert(sorted, prop)
+				end
+			end
+
+			return sorted
 		end
 	end
 

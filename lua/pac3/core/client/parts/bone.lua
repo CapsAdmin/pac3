@@ -66,9 +66,10 @@ function PART:OnShow()
 		ent:RemoveCallback("BuildBonePositions", ent.pac_build_bone_id)
 	end
 
-	local id = ent:AddCallback("BuildBonePositions", function(ent, ...)
+	local id
+	id = ent:AddCallback("BuildBonePositions", function(ent, ...)
 		if not ent.pac_bone_parts or not ent.pac_bone_parts[1] then
-			ent:RemoveCallback("BuildBonePositions", ent.pac_build_bone_id)
+			ent:RemoveCallback("BuildBonePositions", id)
 			return
 		end
 

@@ -132,6 +132,8 @@ end
     end
 ]]
 
+local last_part
+
 hook.Add("PostRenderVGUI", "beams", function()
 	if not pace.IsActive() then return end
 	if not pace.IsFocused()  then return end
@@ -139,7 +141,14 @@ hook.Add("PostRenderVGUI", "beams", function()
 	if not part:IsValid() then return end
 	local node = part.pace_tree_node
 
-	for _, info in ipairs(part:GetProperties()) do
+	if part ~= last_part then
+		part.cached_props = nil
+	end
+	part.cached_props = part.cached_props or part:GetProperties()
+	local props = part.cached_props
+	last_part = part
+
+	for _, info in ipairs(props) do
 		if info.udata.part_key then
 			--if info.udata.part_key == "Parent" then continue end
 
