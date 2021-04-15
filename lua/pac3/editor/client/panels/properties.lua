@@ -502,13 +502,7 @@ do -- list
 	function PANEL:Populate(flat_list)
 		self:Clear()
 
-		print("populate")
-
 		for _, data in ipairs(SortGroups(FlatListToGroups(flat_list))) do
-			print("\t", data.group or "generic")
-			for i,v in ipairs(data.props) do
-				print("\t\t", i, v.key)
-			end
 			self:AddCollapser(data.group or "generic")
 			for pos, prop in ipairs(data.props) do
 				local val = prop.get()
