@@ -9,12 +9,12 @@ local function fill_enums(target)
     if not target:IsValid() then return end
 
     local tbl = {}
-    for key, _ in pairs(target.StorableVars) do
-        if key == "UniqueID" then goto CONTINUE end
+    for _, prop in pairs(target:GetProperties()) do
+        if prop.key == "UniqueID" then goto CONTINUE end
 
-        local T = type(target[key])
+        local T = type(prop.get())
         if T == "number" or T == "Vector" or T == "Angle" or T == "boolean" then
-            tbl[key] = key
+            tbl[prop.key] = prop.key
         end
         ::CONTINUE::
     end
@@ -33,8 +33,6 @@ BUILDER:EndStorableVars()
 local function hook_property(a, b, a_prop, b_prop, callback)
     if not a["Get" .. a_prop] or not a["Set" .. a_prop] then return end
     if not b["Get" .. b_prop] or not b["Set" .. b_prop] then return end
-
-    
 end
 
 function PART:SetFrom(from)
@@ -53,7 +51,7 @@ function PART:SetFrom(from)
         local to = self:GetTo()
         if self.ToVariableName == "" then return end
         if not to:IsValid() then return end
-    
+
         local to_setter = to["Set" .. self.FromVariableName]
         if not to_setter then return end
 
