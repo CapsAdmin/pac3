@@ -110,7 +110,7 @@ function pace.GUIMouseReleased(mc)
 	isHoldingMovement = false
 
 	if IsValid(hoveredPanelCursor) then
-		hoveredPanelCursor:SetCursor('none')
+		hoveredPanelCursor:SetCursor('arrow')
 		hoveredPanelCursor = nil
 	end
 

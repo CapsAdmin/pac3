@@ -864,7 +864,7 @@ do
 				self.size_x = nil
 				self.size_w = nil
 				self:MouseCapture(false)
-				self:SetCursor("none")
+				self:SetCursor("sizewe")
 				timeline.Save()
 			elseif self.move then
 				local panels = {}
@@ -892,7 +892,7 @@ do
 				end
 
 				self:MouseCapture(false)
-				self:SetCursor("none")
+				self:SetCursor("hand")
 				self.move = nil
 				self.move_x = nil
 				timeline.frame.moving = false
