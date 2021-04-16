@@ -135,10 +135,6 @@ function pace.OnPartSelected(part, is_selecting)
 end
 
 function pace.OnVariableChanged(obj, key, val, not_from_editor)
-	local funcGet = obj["Get" .. key]
-	local func = obj["Set" .. key]
-	if not func or not funcGet then return end
-
 	local valType = type(val)
 	if valType == 'Vector' then
 		val = Vector(val)
@@ -161,19 +157,19 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 	end
 
 	if key == "OwnerName" then
+		local owner_name = obj:GetProperty(key)
 		if val == "viewmodel" then
 			pace.editing_viewmodel = true
 		elseif val == "hands" then
 			pace.editing_hands = true
-		elseif obj[key] == "hands" then
+		elseif owner_name == "hands" then
 			pace.editing_hands = false
-		elseif obj[key] == "viewmodel" then
+		elseif owner_name == "viewmodel" then
 			pace.editing_viewmodel = false
 		end
 	end
 
-
-	func(obj, val)
+	obj:SetProperty(key, val)
 
 	local node = obj.pace_tree_node
 	if IsValid(node) then
