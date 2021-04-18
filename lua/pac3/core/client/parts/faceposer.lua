@@ -86,7 +86,8 @@ end
 
 function PART:GetDynamicProperties()
 	local ent = self:GetOwner()
-	if ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() and ent:GetFlexNum() == 0 then return end
+	if not ent:IsValid() then return end
+	if ent.GetFlexNum and ent:GetFlexNum() and ent:GetFlexNum() == 0 then return end
 
 	local tbl = {}
 
