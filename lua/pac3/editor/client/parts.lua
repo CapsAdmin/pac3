@@ -493,7 +493,8 @@ do -- menu
 	function pace.Paste(obj)
 		if not pace.Clipboard then return end
 		pace.RecordUndoHistory()
-		local newObj = pac.CreatePart(pace.Clipboard.self.ClassName, nil, pace.Clipboard)
+		local newObj = pac.CreatePart(pace.Clipboard.self.ClassName)
+		newObj:SetTable(pace.Clipboard, true)
 		newObj:SetParent(obj)
 		pace.RecordUndoHistory()
 	end
@@ -502,10 +503,10 @@ do -- menu
 		if not pace.Clipboard then return end
 		pace.RecordUndoHistory()
 		local tbl = pace.Clipboard
-			tbl.self.Name = nil
-			tbl.self.ParentName = nil
-			tbl.self.Parent = nil
-			tbl.children = {}
+		tbl.self.Name = nil
+		tbl.self.ParentUID = nil
+		tbl.self.UniqueID = nil
+		tbl.children = {}
 		obj:SetTable(tbl)
 		pace.RecordUndoHistory()
 	end
