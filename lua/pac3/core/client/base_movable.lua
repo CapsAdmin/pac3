@@ -82,18 +82,6 @@ do -- bones
 
 		return nil
 	end
-
-	function PART:BuildBonePositions()
-		if not self.Enabled then return end
-
-		if not self:IsHiddenCached() then
-			self:OnBuildBonePositions()
-		end
-	end
-
-	function PART:OnBuildBonePositions()
-
-	end
 end
 
 do

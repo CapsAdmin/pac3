@@ -163,7 +163,7 @@ function PART:UpdateFlex()
 	end
 end
 
-function PART:BuildBonePositions()
+function PART:OnBuildBonePositions()
 	self:UpdateFlex()
 end
 

@@ -592,6 +592,18 @@ do -- hidden / events
 	function PART:IsHiddenCached()
 		return self.last_hidden
 	end
+
+	function PART:BuildBonePositions()
+		if not self.Enabled then return end
+
+		if not self:IsHiddenCached() then
+			self:OnBuildBonePositions()
+		end
+	end
+
+	function PART:OnBuildBonePositions()
+
+	end
 end
 
 do -- serializing
