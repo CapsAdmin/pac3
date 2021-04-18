@@ -1760,7 +1760,7 @@ function PART:OnFireBullets()
 	end
 end
 
-function PART:OnEmitSound()
+function PART:OnEmitSound(ent)
 	if self.Event == "emit_sound" then
 		self:GetParent():CallRecursive("Think")
 
