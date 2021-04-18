@@ -306,7 +306,9 @@ do -- scene graph
 			return false
 		end
 
-		part:UnParent()
+		if part:HasParent() then
+			part:UnParent()
+		end
 
 		part.Parent = self
 
@@ -936,9 +938,11 @@ do -- serializing
 	end
 
 	function PART:Clone()
-		local part = pac.CreatePart(self.ClassName, self:GetPlayerOwner(), self:ToTable(), true)
+		local part = pac.CreatePart(self.ClassName, self:GetPlayerOwner())
 		if not part then return end
 
+		part:SetOwner(self:GetOwner())
+		part:SetTable(self:ToTable(), true)
 		part:SetParent(self:GetParent())
 
 		return part
