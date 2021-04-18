@@ -71,8 +71,6 @@ function PART:GetDynamicProperties()
 		udata = udata or {}
 		udata.group = udata.group or "arguments"
 
-		PrintTable(udata)
-
 		tbl[key] = {
 			key = key,
 			get = function()
