@@ -98,7 +98,7 @@ function PART:GetNiceName()
 		end
 	end
 
-	return target .. "." .. pac.PrettifyName(self:GetVariableName()) .. " = " .. (self.debug_var or "?")
+	return (target or "?") .. "." .. pac.PrettifyName(self:GetVariableName()) .. " = " .. (self.debug_var or "?")
 end
 
 function PART:Initialize()
