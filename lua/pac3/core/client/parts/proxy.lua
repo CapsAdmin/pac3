@@ -1008,7 +1008,15 @@ local function set(self, part, x, y, z, children)
 	if allowed[T] then
 		if T == "boolean" then
 			x = x or val == true and 1 or 0
+			if self.VariableName == "Hide" then
+				part.set_hide_from_proxy = true
+			end
+
 			part:SetProperty(self.VariableName, tonumber(x) > 0)
+
+			if self.VariableName == "Hide" then
+				part.set_hide_from_proxy = false
+			end
 		elseif T == "number" then
 			x = x or val
 			part:SetProperty(self.VariableName, tonumber(x) or 0)
