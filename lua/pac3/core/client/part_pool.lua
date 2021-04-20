@@ -660,6 +660,8 @@ do -- drawing
 					goto CONTINUE
 				end
 
+				if ent:IsDormant() then goto CONTINUE end
+
 				pac.ResetRenderTime(ent)
 
 				ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
@@ -746,7 +748,7 @@ do -- drawing
 			setup_bones = {}
 
 			for ent in next, pac.drawn_entities do
-				if ent.pac_is_drawing and ent_parts[ent] then
+				if ent.pac_is_drawing and ent_parts[ent] and not ent:IsDormant() then
 					pac.RenderOverride(ent, "update_legacy_bones")
 				end
 			end
@@ -764,7 +766,7 @@ do -- drawing
 			end
 
 			for ent in next, pac.drawn_entities do
-				if ent.pac_is_drawing and ent_parts[ent] then
+				if ent.pac_is_drawing and ent_parts[ent] and not ent:IsDormant() then
 					pac.RenderOverride(ent, "opaque")
 				end
 			end
@@ -778,7 +780,7 @@ do -- drawing
 			if should_suppress() then return end
 
 			for ent in next, pac.drawn_entities do
-				if ent.pac_is_drawing and ent_parts[ent] then -- accessing table of NULL doesn't do anything
+				if ent.pac_is_drawing and ent_parts[ent] and not ent:IsDormant() then -- accessing table of NULL doesn't do anything
 					pac.RenderOverride(ent, "translucent")
 				end
 			end
