@@ -19,11 +19,13 @@ function pace.WearOnServer(filter)
 		end
 	end
 
+	local transmissionID = math.random(1, 0x7FFFFFFF)
+
 	for i, part in ipairs(toWear) do
 		pace.SendPartToServer(part, {
 			partID = i,
 			totalParts = #toWear,
-			transmissionID = math.random(1, math.pow(2, 31) - 1),
+			transmissionID = transmissionID,
 			temp_wear_filter = filter,
 		})
 	end
