@@ -196,7 +196,7 @@ hook.Add("PostRenderVGUI", "beams", function()
 
 			from_pnl.wire_smooth_hover = from_pnl.wire_smooth_hover or 0
 
-			if from_pnl:IsHovered() or (from.pace_tree_node:IsValid() and from.pace_tree_node.Label:IsHovered()) then
+			if from_pnl:IsHovered() or (from.pace_tree_node and from.pace_tree_node:IsValid() and from.pace_tree_node.Label:IsHovered()) then
 				from_pnl.wire_smooth_hover = from_pnl.wire_smooth_hover + (5 - from_pnl.wire_smooth_hover) * FrameTime() * 20
 			else
 				from_pnl.wire_smooth_hover = from_pnl.wire_smooth_hover + (0 - from_pnl.wire_smooth_hover) * FrameTime() * 20
