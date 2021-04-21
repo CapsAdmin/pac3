@@ -536,7 +536,7 @@ function pace.RefreshTree(reset)
 	end
 end
 
-if Entity(1):IsPlayer() and not PAC_RESTART then
+if Entity(1):IsPlayer() and not PAC_RESTART and not VLL2_FILEDEF then
 	pace.OpenEditor()
 	pace.RefreshTree(true)
 end
