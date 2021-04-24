@@ -502,11 +502,11 @@ do -- hidden / events
 
 		if val then
 			self:CallRecursive("OnHide", from_rendering)
-			self:CallRecursive("CalcShowHide", from_rendering)
 		else
 			self:CallRecursive("OnShow", from_rendering)
-			self:CallRecursive("CalcShowHide", from_rendering)
 		end
+
+		self:CallRecursive("CalcShowHide", from_rendering)
 	end
 
 	function PART:IsDrawHidden()

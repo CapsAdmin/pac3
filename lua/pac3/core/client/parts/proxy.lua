@@ -1008,14 +1008,24 @@ local function set(self, part, x, y, z, children)
 	if allowed[T] then
 		if T == "boolean" then
 			x = x or val == true and 1 or 0
+			local b = tonumber(x) > 0
+
 			if self.VariableName == "Hide" then
 				part.set_hide_from_proxy = true
 			end
 
-			part:SetProperty(self.VariableName, tonumber(x) > 0)
+			part:SetProperty(self.VariableName, b)
 
 			if self.VariableName == "Hide" then
 				part.set_hide_from_proxy = false
+
+				-- SetHide side effects takes care of unhiding the other parts
+
+				-- in case parts start as hidden
+				for _, part in ipairs(part:GetChildrenList()) do
+					part.Hide = b
+				end
+				return
 			end
 		elseif T == "number" then
 			x = x or val
