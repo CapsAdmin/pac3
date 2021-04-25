@@ -145,6 +145,7 @@ function PANEL:Init()
 	local search = vgui.Create("DTextEntry", self)
 	search:Dock(TOP)
 	search:SetPlaceholderText("Search...")
+	search:SetZPos(5)
 	self.lastTopBarHover = 0
 	self.rendertime_data = {}
 	self.okay = true
