@@ -14,9 +14,11 @@ local RENDERSCORE_SIZE = 20
 
 local use_tabs = CreateClientConVar("pac_property_tabs", 1, true)
 
-local zoom_persistent = CreateClientConVar("pac_zoom_persistent", 0, true, false, 'Keep zoom between sessions.')
-local zoom_mousewheel = CreateClientConVar("pac_zoom_mousewheel", 0, true, false, 'Enable zooming with mouse wheel.')
-local zoom_smooth = CreateClientConVar("pac_zoom_smooth", 0, true, false, 'Enable smooth zooming.')
+local zoom_persistent  = CreateClientConVar("pac_zoom_persistent",      0, true, false, "Keep zoom between sessions.")
+local zoom_mousewheel  = CreateClientConVar("pac_zoom_mousewheel",      0, true, false, "Enable zooming with mouse wheel.")
+local zoom_smooth      = CreateClientConVar("pac_zoom_smooth",          0, true, false, "Enable smooth zooming.")
+local split_properties = CreateClientConVar("pac_split_properties",     1, true, false, "Split property from part list")
+local auto_size        = CreateClientConVar("pac_auto_size_properties", 1, true, false, "Auto resize properties list")
 
 function PANEL:Init()
 	self:SetTitle("")
@@ -31,9 +33,30 @@ function PANEL:Init()
 	treePanel:Dock(FILL)
 	self.treePanel = treePanel
 
-	local properties = pace.CreatePanel("properties_frame")
-	properties:MakePopup()
-	self.properties = properties
+	if split_properties:GetBool() then
+		local properties = pace.CreatePanel("properties_frame")
+		properties:MakePopup()
+
+		self.properties = properties
+	else
+		local div = vgui.Create("DVerticalDivider", self)
+
+		div:SetDividerHeight(RENDERSCORE_SIZE)
+		div:Dock(FILL)
+		div:SetTopMin(40)
+		div:SetBottomMin(40)
+		div:SetCookieName("pac3_editor")
+		div:SetTopHeight(ScrH() / 1.4)
+		div:LoadCookies()
+
+		self.div = div
+		self:SetTop(self.treePanel)
+
+		local pnl = pace.CreatePanel("properties", div)
+		pace.properties = pnl
+
+		self:SetBottom(pnl)
+	end
 
 	self.exit_button = vgui.Create("DButton")
 	self.exit_button:SetText("")
@@ -177,7 +200,7 @@ function PANEL:OnRemove()
 		self.zoomframe:Remove()
 	end
 
-	if self.properties:IsValid() then
+	if IsValid(self.properties) then
 		self.properties:Remove()
 	end
 end
@@ -215,7 +238,7 @@ function PANEL:Think(...)
 			stickX = sW - stickW + 4
 		end
 
-		if self.properties:IsValid() then
+		if split_properties:GetBool() and IsValid(self.properties) then
 			-- intereference
 			if stickX >= self.properties:GetPos() and stickX <= self.properties:GetPos() + self.properties:GetWide() or stickX + stickW >= self.properties:GetPos() and stickX + stickW <= self.properties:GetPos() + self.properties:GetWide() then
 				-- stick to right side of properties
@@ -247,7 +270,7 @@ function PANEL:Think(...)
 			stickX, stickY = sW - self.zoomframe:GetWide(), sH - self.zoomframe:GetTall()
 		end
 
-		if self.properties:IsValid() then
+		if split_properties:GetBool() and IsValid(self.properties) then
 			-- intereference
 			if stickX >= self.properties:GetPos() and stickX <= self.properties:GetPos() + self.properties:GetWide() or stickX + stickW >= self.properties:GetPos() and stickX + stickW <= self.properties:GetPos() + self.properties:GetWide() then
 				-- stick to right side of properties
@@ -265,10 +288,16 @@ function PANEL:Think(...)
 			stickY = stickY - _tall
 
 			self:SetTall(sH - _tall)
-			self.properties:SetTall(sH - _tall)
+
+			if split_properties:GetBool() and IsValid(self.properties) then
+				self.properties:SetTall(sH - _tall)
+			end
 		else
 			self:SetTall(sH)
-			self.properties:SetTall(sH)
+
+			if split_properties:GetBool() and IsValid(self.properties) then
+				self.properties:SetTall(sH)
+			end
 		end
 
 		if self.zoomframe:GetPos() ~= stickX or select(2, self.zoomframe:GetPos()) ~= stickY then
@@ -301,7 +330,15 @@ function PANEL:Think(...)
 	end
 end
 
-local auto_size = CreateClientConVar("pac_auto_size_properties", 1, true)
+function PANEL:SetTop(pnl)
+	self.top = pnl
+	self.div:SetTop(pnl)
+end
+
+function PANEL:SetBottom(pnl)
+	self.bottom = pnl
+	self.div:SetBottom(pnl)
+end
 
 function PANEL:PerformLayout()
 	if not self.okay then return end
@@ -315,26 +352,37 @@ function PANEL:PerformLayout()
 	end
 
 	if self.old_part ~= pace.current_part then
-		-- self.div:InvalidateLayout()
-		--self.bottom:PerformLayout()
-		pace.properties:PerformLayout()
+		if IsValid(self.div) then
+			self.div:InvalidateLayout()
+		end
+
+		if IsValid(self.bottom) then
+			self.bottom:PerformLayout()
+		end
+
+		if IsValid(pace.properties) then
+			pace.properties:PerformLayout()
+		end
+
 		self.old_part = pace.current_part
 
-		-- local sz = auto_size:GetInt()
+		if IsValid(self.div) and IsValid(pace.properties) then
+			local sz = auto_size:GetInt()
 
-		-- if sz > 0 then
-		--  local newh = sz > 0 and (ScrH() - math.min(pace.properties:GetHeight() + RENDERSCORE_SIZE + BAR_SIZE - 6, ScrH() / 1.5))
+			if sz > 0 then
+				local newh = sz > 0 and math.min(ScrH() - math.min(pace.properties:GetHeight() + RENDERSCORE_SIZE + BAR_SIZE + 60, ScrH() / 1.5))
 
-		--  if sz >= 2 then
-		--      local oldh = self.div:GetTopHeight()
+				if sz >= 2 then
+					local oldh = self.div:GetTopHeight()
 
-		--      if newh<oldh then
-		--          self.div:SetTopHeight(newh)
-		--      end
-		--  elseif sz >= 1 then
-		--      self.div:SetTopHeight(newh)
-		--  end
-		-- end
+					if newh < oldh then
+						self.div:SetTopHeight(newh)
+					end
+				elseif sz >= 1 then
+					self.div:SetTopHeight(newh)
+				end
+			end
+		end
 	end
 end
 
@@ -350,14 +398,22 @@ function pace.GainFocus(show_editor)
 	if self:IsValid() then
 		if self.allowclick ~= false then
 			self:MakePopup()
-			self.properties:MakePopup()
+
+			if IsValid(self.properties) then
+				self.properties:MakePopup()
+			end
+
 			self.exit_button:MakePopup()
 
 			pace.Focused = true
 
 			if not show_editor then
 				self:AlphaTo(255, 0.1, 0)
-				self.properties:AlphaTo(255, 0.1, 0)
+
+				if IsValid(self.properties) then
+					self.properties:AlphaTo(255, 0.1, 0)
+				end
+
 				self.exit_button:AlphaTo(255, 0.1, 0)
 				self.zoomframe:AlphaTo(255, 0.1, 0)
 			end
@@ -370,34 +426,51 @@ function pace.KillFocus(show_editor)
 
 	if self:IsValid() then
 		self:KillFocus()
-		self.properties:KillFocus()
+
+		if IsValid(self.properties) then
+			self.properties:KillFocus()
+		end
+
 		self.exit_button:KillFocus()
 
 		self:SetMouseInputEnabled(false)
 		self:SetKeyBoardInputEnabled(false)
 
-		self.properties:SetMouseInputEnabled(false)
 		self.exit_button:SetMouseInputEnabled(false)
-		self.properties:SetKeyBoardInputEnabled(false)
 		self.exit_button:SetKeyBoardInputEnabled(false)
+
+		if IsValid(self.properties) then
+			self.properties:SetMouseInputEnabled(false)
+			self.properties:SetKeyBoardInputEnabled(false)
+		end
 
 		gui.EnableScreenClicker(false)
 		pace.Focused = false
 
 		if not show_editor then
 			self:AlphaTo(0, 0.1, 0)
-			self.properties:AlphaTo(0, 0.1, 0)
+
+			if IsValid(self.properties) then
+				self.properties:AlphaTo(0, 0.1, 0)
+			end
+
 			self.exit_button:AlphaTo(0, 0.1, 0)
 			self.zoomframe:AlphaTo(0, 0.1, 0)
 		end
 
 		self.allowclick = false
-		self.properties.allowclick = false
+
+		if IsValid(self.properties) then
+			self.properties.allowclick = false
+		end
 
 		timer.Simple(0.2, function()
 			if self:IsValid() then
 				self.allowclick = true
-				self.properties.allowclick = true
+
+				if IsValid(self.properties) then
+					self.properties.allowclick = true
+				end
 			end
 		end)
 	end
@@ -415,12 +488,6 @@ local function drawTimeBox(text, time, x, y)
 	surface.DrawText(str)
 	return y - RENDERSCORE_SIZE
 end
-
-local function PostRenderVGUI()
-
-end
-
-pac.AddHook('PostRenderVGUI', 'pac_DrawProfileInfos', PostRenderVGUI)
 
 function PANEL:PaintOver(w, h)
 	if not self.okay then return end
