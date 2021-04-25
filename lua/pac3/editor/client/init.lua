@@ -205,6 +205,13 @@ pac.AddHook("pac_Disable", "pac_editor_disable", function()
 	pace.CloseEditor()
 end)
 
+cvars.AddChangeCallback("pac_split_properties", function()
+	if IsValid(pace.Editor) then
+		pace.CloseEditor()
+		timer.Simple(0.2, pace.OpenEditor)
+	end
+end, "PAC3")
+
 function pace.RefreshFiles()
 	pace.CachedFiles = nil
 
