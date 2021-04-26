@@ -194,8 +194,11 @@ function PANEL:Think(...)
 	for k,v in pairs(pac.GetRenderTimeInfo(pac.LocalPlayer)) do
 		self.rendertime_data[k] = Lerp(0.03, self.rendertime_data[k] or 0, v)
 	end
-
 	local sW, sH = ScrW(), ScrH()
+
+--  local bar = self.menu_bar unused??
+
+	local bar = self.menu_bar
 
 	self:SetTall(ScrH())
 	local w = math.max(self:GetWide(), 200)
