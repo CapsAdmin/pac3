@@ -310,7 +310,7 @@ do
 
 	hook.Add("HUDPaint", "pac_in_editor", function()
 		for _, ply in ipairs(player.GetAll()) do
-			if ply ~= pac.LocalPlayer and ply:GetNW2Bool("pac_in_editor") and not ply:IsDormant() then
+			if ply ~= pac.LocalPlayer and ply:GetNW2Bool("pac_in_editor") then
 
 				if ply.pac_editor_cam_pos then
 					if not IsValid(ply.pac_editor_camera) then
