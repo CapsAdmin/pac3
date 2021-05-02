@@ -672,7 +672,7 @@ do -- drawing
 					local ply = ent.pac_player or ent
 					local rag = ply.pac_ragdoll
 
-					if IsValid(rag) and ply.pac_death_hide_ragdoll or ply.pac_draw_player_on_death then
+					if IsValid(rag) and (ply.pac_death_hide_ragdoll or ply.pac_draw_player_on_death) then
 						rag:SetRenderMode(RENDERMODE_TRANSALPHA)
 
 						local c = rag:GetColor()
