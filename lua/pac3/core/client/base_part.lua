@@ -956,7 +956,11 @@ do -- serializing
 		local part = pac.CreatePart(self.ClassName, self:GetPlayerOwner())
 		if not part then return end
 
-		part:SetOwner(self:GetOwner())
+		-- ugly workaround for cloning bugs
+		if self:GetOwner() == self:GetPlayerOwner() then
+			part:SetOwner(self:GetOwner())
+		end
+
 		part:SetTable(self:ToTable(), true)
 		part:SetParent(self:GetParent())
 
