@@ -271,12 +271,21 @@ do -- list
 		search:Dock(TOP)
 		search:SetPlaceholderText("Search...")
 
-		search.OnTextChanged = function()
+		search:SetUpdateOnType(true)
+
+		--[[
+		function search:OnKeyCode(code)
+			if code == KEY_ESCAPE then
+				self:KillFocus()
+			end
+		end
+		]]
+
+		search.OnValueChange = function(_, pattern)
 			self.scr:SetScroll(0)
 
-			local pattern = search:GetValue()
-
 			local group
+
 			for i,v in ipairs(self.List) do
 				local found = false
 
@@ -331,6 +340,7 @@ do -- list
 				end
 			end
 		end
+
 		self.search = search
 
 		self.List = {}

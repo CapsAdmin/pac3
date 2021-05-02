@@ -100,6 +100,14 @@ function pace.GUIMousePressed(mc)
 
 	if IsValid(hoveredPanelCursor) then
 		hoveredPanelCursor:SetCursor('sizeall')
+
+		if IsValid(pace.properties) and IsValid(pace.properties.search) and pace.properties.search:HasFocus() then
+			-- pace.properties.search:KillFocus()
+			-- it won't let it's focus taken easily
+			-- thanks gmod
+			pace.properties:RequestFocus()
+			pace.properties:KillFocus()
+		end
 	end
 
 	mcode = mc
