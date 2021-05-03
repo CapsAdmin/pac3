@@ -21,6 +21,10 @@ function pac.Hash(obj)
 			return "nextbot " .. tostring(obj:EntIndex())
 		end
 
+		if obj:IsBot() then
+			return "bot " .. tostring(obj:EntIndex())
+		end
+
         return obj:SteamID64()
     elseif IsEntity(obj) then
         return tostring(obj:EntIndex())
@@ -35,8 +39,10 @@ function pac.ReverseHash(str, t)
 			return Entity(1)
 		end
 
-		if str:StartWith("nextbot") then
-			return pac.ReverseHash(str:sub(9), "Entity")
+		if str:StartWith("nextbot ") then
+			return pac.ReverseHash(str:sub(#"nextbot " + 1), "Entity")
+		elseif str:StartWith("bot ") then
+			return pac.ReverseHash(str:sub(#"bot " + 1), "Entity")
 		end
 
         return player.GetBySteamID64(str) or NULL

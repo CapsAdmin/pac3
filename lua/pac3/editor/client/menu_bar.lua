@@ -97,6 +97,7 @@ local function populate_view(menu)
 end
 
 local function populate_options(menu)
+	menu:AddOption(L"settings", function() pace.OpenSettings() end)
 	menu:AddCVar(L"advanced mode", "pac_basic_mode", "0", "1").DoClick = function() pace.ToggleBasicMode() end
 	menu:AddCVar(L"inverse collapse/expand controls", "pac_reverse_collapse", "1", "0")
 	menu:AddCVar(L"enable shift+move/rotate clone", "pac_grab_clone", "1", "0")

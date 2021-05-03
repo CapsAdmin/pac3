@@ -1,4 +1,27 @@
+local list_form = include("panels/list.lua")
 local L = pace.LanguageString
+
+local cache = {}
+
+local function store_config(id, tbl)
+	file.CreateDir("pac/config")
+	file.Write("pac/config/"..id..".json", util.TableToJSON(tbl))
+	cache[id] = tbl
+end
+
+local function read_config(id)
+	local tbl = util.JSONToTable(file.Read("pac/config/"..id..".json", "DATA") or "{}") or {}
+	cache[id] = tbl
+	return tbl
+end
+
+local function get_config_value(id, key)
+	return cache[id] and cache[id][key]
+end
+
+local function jsonid(ply)
+	return "_" .. pac.Hash(ply)
+end
 
 net.Receive("pac.TogglePartDrawing", function()
     local ent = net.ReadEntity()
@@ -8,18 +31,6 @@ net.Receive("pac.TogglePartDrawing", function()
         pac.TogglePartDrawing(ent, b)
     end
 end)
-
-local function get_other_real_players()
-	local out = {}
-
-	for _, ply in ipairs(player.GetAll()) do
-		if not ply:SteamID64() then continue end -- this will return nil for bots
-		if ply == pac.LocalPlayer then continue end
-		table.insert(out, ply)
-	end
-
-	return out
-end
 
 -- ignore
 do
@@ -32,6 +43,9 @@ do
     end
 
     function pac.IsEntityIgnored(ent)
+		if pace.ShouldIgnorePlayer(ent) then
+			return true
+		end
         return ent.pac_ignored or false
     end
 
@@ -106,98 +120,127 @@ do
     end
 end
 
--- show
-do
-    CreateClientConVar("pac_use_whitelist", 0, true, false, "Load outfits only from certain players")
-    CreateClientConVar("pac_friendonly", 0, true, false, "Load PACs from friends only")
-    CreateClientConVar("pac_use_whitelist_b", 0, true, false, "Whitelist acts as blacklist")
+CreateClientConVar("pace_wear_filter_mode", "disabled")
+CreateClientConVar("pace_outfit_filter_mode", "disabled")
 
-    local function id(ply)
-        return "pac3_wear_wl_" .. ply:UniqueID()
-    end
+function pace.ShouldIgnorePlayer(ply)
+	local mode = GetConVar("pace_outfit_filter_mode"):GetString()
 
-    local function is_enabled(ply)
-        if GetConVar("pac_friendonly"):GetBool() then return ply:GetFriendStatus() ~= "friend" end
+	if mode == "steam_friends" then
+		return ply:GetFriendStatus() == "friend"
+	elseif mode == "whitelist" then
+		return get_config_value("outfit_whitelist", jsonid(ply)) ~= nil
+	elseif mode == "blacklist" then
+		return get_config_value("outfit_blacklist", jsonid(ply)) ~= nil
+	end
 
-        return cookie.GetString(id(ply)) == "1"
-    end
-
-    local function should_ignore(ply)
-        if ply == pac.LocalPlayer then return false end
-        if GetConVar("pac_use_whitelist_b"):GetBool() then return not is_enabled(ply) end
-
-        return is_enabled(ply)
-    end
-
-    local function update_show_list()
-        for _, ply in ipairs(get_other_real_players()) do
-            pac.ToggleIgnoreEntity(ply, should_ignore(ply), "pac_showlist")
-        end
-    end
-
-    cvars.AddChangeCallback("pac_friendonly", update_show_list, "PAC3")
-    cvars.AddChangeCallback("pac_use_whitelist", update_show_list, "PAC3")
-    cvars.AddChangeCallback("pac_use_whitelist_b", update_show_list, "PAC3")
-
-    pac.AddHook("NetworkEntityCreated", "friendonly", function(ply)
-        if not IsValid(ply) or not ply:IsPlayer() then return end
-
-        timer.Simple(4, function()
-            if not IsValid(ply) or not ply:IsPlayer() then return end
-            update_show_list()
-        end)
-    end)
-
-    pac.AddHook("pac_Initialized", "friendonly", update_show_list)
+	return false
 end
 
--- wear
+function pace.CreateWearFilter()
+	local mode = GetConVar("pace_wear_filter_mode"):GetString()
+
+	local tbl = {}
+
+	for _, ply in ipairs(player.GetAll()) do
+		if ply == pac.LocalPlayer then continue end
+
+		if mode == "steam_friends" then
+			if ply:GetFriendStatus() == "friend" then
+				table.insert(tbl, pac.Hash(ply))
+			end
+		elseif mode == "whitelist" then
+			if get_config_value("wear_whitelist", jsonid(ply)) ~= nil then
+				table.insert(tbl, pac.Hash(ply))
+			end
+		elseif mode == "blacklist" then
+			if get_config_value("wear_blacklist", jsonid(ply)) ~= nil then
+				table.insert(tbl, pac.Hash(ply))
+			end
+		end
+	end
+
+	return tbl
+end
+
+local function generic_form(help)
+	local pnl = vgui.Create("DListLayout")
+
+	local label = pnl:Add("DLabel")
+	label:DockMargin(0,5,0,5)
+	label:SetWrap(true)
+	label:SetDark(true)
+	label:SetAutoStretchVertical(true)
+	label:SetText(help)
+
+	return pnl
+end
+
+local function player_list_form(name, id, help)
+	local pnl = vgui.Create("DListLayout")
+
+	local label = pnl:Add("DLabel")
+	label:DockMargin(0,5,0,5)
+	label:SetWrap(true)
+	label:SetDark(true)
+	label:SetAutoStretchVertical(true)
+	label:SetText(help)
+
+	list_form(pnl, name, {
+		name_left = "players",
+		populate_left = function()
+			local blacklist = read_config(id)
+
+			local tbl = {}
+			for _, ply in ipairs(player.GetHumans()) do
+				if ply == pac.LocalPlayer then continue end
+				if not blacklist[jsonid(ply)] then
+					table.insert(tbl, {
+						name = ply:Nick(),
+						value = ply,
+					})
+				end
+			end
+			return tbl
+		end,
+		store_left = function(kv)
+			local tbl = read_config(id)
+			tbl[jsonid(kv.value)] = kv.name
+			store_config(id, tbl)
+		end,
+
+		name_right = name,
+		populate_right = function()
+			local tbl = {}
+			for id, nick in pairs(read_config(id)) do
+				local ply = pac.ReverseHash(id:sub(2), "Player")
+				if ply == pac.LocalPlayer then continue end
+
+				if IsValid(ply) then
+					table.insert(tbl, {
+						name = ply:Nick(),
+						value = id,
+					})
+				else
+					table.insert(tbl, {
+						name = nick .. " (offline)",
+						value = id,
+					})
+				end
+			end
+			return tbl
+		end,
+		store_right = function(kv)
+			local tbl = read_config(id)
+			tbl[kv.value] = nil
+			store_config(id, tbl)
+		end,
+	})
+
+	return pnl
+end
+
 do
-    CreateClientConVar("pac_use_wear_list", "0", true, false, "Wear outfits only to certain players")
-    CreateClientConVar("pac_wear_friends_only", "0", true, false, "Wear outfits only to friends")
-    CreateClientConVar("pac_wear_reverse", "0", true, false, "Wear to NOBODY but to people from list (Blacklist -> Whitelist)")
-
-    local function id(ply)
-        return "pac3_wear_block_" .. ply:UniqueID()
-    end
-
-    local function is_blocked(ply)
-        if GetConVar("pac_wear_friends_only"):GetBool() then return ply:GetFriendStatus() ~= "friend" end
-
-        return cookie.GetString(id(ply)) == "1"
-    end
-
-    local function should_ignore(ply)
-        if GetConVar("pac_wear_reverse"):GetBool() then return not is_blocked(ply) end
-
-        return is_blocked(ply)
-    end
-
-    local function set_ignore(ply, b)
-		if GetConVar("pac_wear_reverse"):GetBool() then b = not b end
-
-        if b then
-            cookie.Set(id(ply), "1")
-        else
-            cookie.Delete(id(ply))
-        end
-    end
-
-    function pace.CreateWearFilter()
-        local filter = {}
-
-        for _, ply in ipairs(get_other_real_players()) do
-            if not should_ignore(ply) then
-                table.insert(filter, pac.Hash(ply))
-            end
-        end
-
-		-- also add the local player so that you can "feel" that it worked
-		table.insert(filter, pac.Hash(pac.LocalPlayer))
-
-        return filter
-    end
-
     net.Receive("pac_update_playerfilter", function()
         local ids = pace.CreateWearFilter()
         net.Start("pac_update_playerfilter")
@@ -210,105 +253,101 @@ do
         net.SendToServer()
     end)
 
-    local function OnMouseReleased(self, mousecode)
-        DButton.OnMouseReleased(self, mousecode)
-
-        if (self.m_MenuClicking and mousecode == MOUSE_LEFT) then
-            self.m_MenuClicking = false
-        end
-    end
-
     function pace.PopulateWearMenu(menu)
-		local root = menu
-        local updaters = {}
+        for _, ply in ipairs(player.GetHumans()) do
+			if ply == pac.LocalPlayer then continue end
 
-        for _, ply in ipairs(get_other_real_players()) do
-			local icon
-
-			local function update()
-				if not ply:IsValid() then
-					icon:SetAlpha(0.5)
-					return
-				end
-
-				if should_ignore(ply) then
-					icon:SetImage("icon16/cross.png")
-				else
-					icon:SetImage("icon16/tick.png")
-				end
-			end
-
-			do
-
-				local menu
-				menu, icon = root:AddSubMenu(ply:Nick(), function(self)
-					if not ply:IsValid() then
-						self:SetAlpha(0.5)
-
-						return
-					end
-
-					set_ignore(ply, not should_ignore(ply))
-					update()
-				end)
-				menu:SetDeleteSelf(false)
-
-				icon.OnMouseReleased = OnMouseReleased
-
-				do
-					local icon = menu:AddOption(L"wear only for " .. ply:Nick(), function()
-						pace.WearParts(ply)
-					end)
-					icon:SetImage(pace.MiscIcons.wear)
-				end
-				menu:AddSpacer()
-
-				menu:AddOption(L"block", function()
-					set_ignore(ply, true)
-					update()
-				end).OnMouseReleased = OnMouseReleased
-
-				menu:AddOption(L"unblock", function()
-					set_ignore(ply, false)
-					update()
-				end).OnMouseReleased = OnMouseReleased
-			end
-
-			table.insert(updaters, function()
-				update()
+			local icon = menu:AddOption(L"wear only for " .. ply:Nick(), function()
+				pace.WearParts(ply)
 			end)
+			icon:SetImage(pace.MiscIcons.wear)
         end
-
-        menu:AddSpacer()
-
-        local function update_all()
-            for _, func in ipairs(updaters) do
-                func()
-            end
-        end
-
-        menu:AddCVar(L"reverse list", "pac_wear_reverse", "1", "0").OnMouseReleased = OnMouseReleased
-        menu:AddCVar(L"friends only", "pac_wear_friends_only", "1", "0").OnMouseReleased = OnMouseReleased
-
-		cvars.AddChangeCallback("pac_wear_reverse", update_all, "PAC3")
-		cvars.AddChangeCallback("pac_wear_friends_only", update_all, "PAC3")
-
-
-        menu:AddOption(L"reset", function()
-			GetConVar("pac_wear_reverse"):SetBool(false)
-			GetConVar("pac_wear_friends_only"):SetBool(false)
-
-            for _, ply in ipairs(get_other_real_players()) do
-				cookie.Delete(id(ply))
-            end
-
-            update_all()
-
-			for _, ply in ipairs(get_other_real_players()) do
-				print(ply, should_ignore(ply))
-			end
-        end).OnMouseReleased = OnMouseReleased
-
-        update_all()
     end
+end
+
+function pace.FillWearSettings(pnl)
+	local list = vgui.Create("DCategoryList", pnl)
+	list:Dock(FILL)
+
+	do
+		local cat = list:Add(L"wear filter")
+		cat.Header:SetSize(40,40)
+		cat.Header:SetFont("DermaLarge")
+		local list = vgui.Create("DListLayout")
+		list:DockPadding(20,20,20,20)
+		cat:SetContents(list)
+
+		local mode = vgui.Create("DComboBox", list)
+		mode:SetSortItems(false)
+		mode:AddChoice("disabled")
+		mode:AddChoice("steam friends")
+		mode:AddChoice("whitelist")
+		mode:AddChoice("blacklist")
+
+		mode.OnSelect = function(_, _, value)
+			if IsValid(mode.form) then
+				mode.form:Remove()
+			end
+
+			if value == "steam friends" then
+				mode.form = generic_form(L"Only your steam friends can see your worn outfit.")
+			elseif value == "whitelist" then
+				mode.form = player_list_form(L"whitelist", "wear_whitelist", L"Only the players in the whitelist can see your worn outfit.")
+			elseif value == "blacklist" then
+				mode.form = player_list_form( L"blacklist", "wear_blacklist", L"The players in the blacklist cannot see your worn outfit.")
+			elseif value == "disabled" then
+				mode.form = generic_form(L"Everyone can see your worn outfit.")
+			end
+
+			GetConVar("pace_wear_filter_mode"):SetString(value:gsub(" ", "_"))
+
+			mode.form:SetParent(list)
+		end
+
+		local mode_str = GetConVar("pace_wear_filter_mode"):GetString():gsub("_", " ")
+		mode:ChooseOption(mode_str)
+		mode:OnSelect(nil, mode_str)
+	end
+
+	do
+		local cat = list:Add(L"outfit filter")
+		cat.Header:SetSize(40,40)
+		cat.Header:SetFont("DermaLarge")
+		local list = vgui.Create("DListLayout")
+		list:DockPadding(20,20,20,20)
+		cat:SetContents(list)
+
+		local mode = vgui.Create("DComboBox", list)
+		mode:SetSortItems(false)
+		mode:AddChoice("disabled")
+		mode:AddChoice("steam friends")
+		mode:AddChoice("whitelist")
+		mode:AddChoice("blacklist")
+
+		mode.OnSelect = function(_, _, value)
+			if IsValid(mode.form) then
+				mode.form:Remove()
+			end
+
+			if value == "steam friends" then
+				mode.form = generic_form(L"You will only see outfits from your steam friends.")
+			elseif value == "whitelist" then
+				mode.form = player_list_form(L"whitelist", "outfit_whitelist", L"You will only see outfits from the players in the whitelist.")
+			elseif value == "blacklist" then
+				mode.form = player_list_form(L"blacklist", "outfit_blacklist", L"You will see outfits from everyone except the players in the blacklist.")
+			elseif value == "disabled" then
+				mode.form = generic_form(L"You will see everyone's outfits.")
+			end
+
+			GetConVar("pace_outfit_filter_mode"):SetString(value:gsub(" ", "_"))
+
+			mode.form:SetParent(list)
+		end
+
+		local mode_str = GetConVar("pace_outfit_filter_mode"):GetString():gsub("_", " ")
+		mode:ChooseOption(mode_str)
+		mode:OnSelect(nil, mode_str)
+	end
+
+	return list
 end
