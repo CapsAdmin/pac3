@@ -29,36 +29,6 @@ local function update_ignore()
 	end
 end
 
-do
-	local ids = {}
-	for _, val in ipairs(sql.Query("SELECT * FROM cookies WHERE key LIKE 'pac3_wear_block_%'") or {}) do
-		table.insert(ids, val)
-	end
-
-	if ids[1] then
-		local tbl = read_config("wear_blacklist")
-		for _, id in ipairs(ids) do
-			tbl["legacy_".. id] = "old pac3_wear_block id " .. id
-		end
-		store_config("wear_blacklist", tbl)
-	end
-end
-
-do
-	local ids = {}
-	for _, val in ipairs(sql.Query("SELECT * FROM cookies WHERE key LIKE 'pac3_wear_wl_%'") or {}) do
-		table.insert(ids, val)
-	end
-
-	if ids[1] then
-		local tbl = read_config("wear_whitelist")
-		for _, id in ipairs(ids) do
-			tbl["legacy_".. id] = "old pac3_wear_wl id " .. id
-		end
-		store_config("wear_whitelist", tbl)
-	end
-end
-
 hook.Add("PlayerSpawn", "pace_outfit_ignore_update", function()
 	update_ignore()
 end)
