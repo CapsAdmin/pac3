@@ -127,9 +127,9 @@ function pace.ShouldIgnorePlayer(ply)
 	local mode = GetConVar("pace_outfit_filter_mode"):GetString()
 
 	if mode == "steam_friends" then
-		return ply:GetFriendStatus() == "friend"
+		return ply:GetFriendStatus() ~= "friend"
 	elseif mode == "whitelist" then
-		return get_config_value("outfit_whitelist", jsonid(ply)) ~= nil
+		return get_config_value("outfit_whitelist", jsonid(ply)) == nil
 	elseif mode == "blacklist" then
 		return get_config_value("outfit_blacklist", jsonid(ply)) ~= nil
 	end
@@ -142,7 +142,7 @@ function pace.CreateWearFilter()
 
 	local tbl = {}
 
-	for _, ply in ipairs(player.GetAll()) do
+	for _, ply in ipairs(player.GetHumans()) do
 		if ply == pac.LocalPlayer then continue end
 
 		if mode == "steam_friends" then
@@ -154,11 +154,15 @@ function pace.CreateWearFilter()
 				table.insert(tbl, pac.Hash(ply))
 			end
 		elseif mode == "blacklist" then
-			if get_config_value("wear_blacklist", jsonid(ply)) ~= nil then
+			if get_config_value("wear_blacklist", jsonid(ply)) == nil then
 				table.insert(tbl, pac.Hash(ply))
 			end
+		else
+			table.insert(tbl, pac.Hash(ply))
 		end
 	end
+
+	table.insert(tbl, pac.Hash(pac.LocalPlayer))
 
 	return tbl
 end
