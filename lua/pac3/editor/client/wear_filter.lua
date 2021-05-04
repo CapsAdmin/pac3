@@ -25,7 +25,37 @@ end
 
 local function update_ignore()
 	for _, ply in ipairs(player.GetHumans()) do
-		pac.ToggleIgnoreEntity(ply, pace.ShouldIgnorePlayer(ply))
+		pac.ToggleIgnoreEntity(ply, pace.ShouldIgnorePlayer(ply), "wear_filter")
+	end
+end
+
+do
+	local ids = {}
+	for _, val in ipairs(sql.Query("SELECT * FROM cookies WHERE key LIKE 'pac3_wear_block_%'") or {}) do
+		table.insert(ids, val)
+	end
+
+	if ids[1] then
+		local tbl = read_config("wear_blacklist")
+		for _, id in ipairs(ids) do
+			tbl["legacy_".. id] = "old pac3_wear_block id " .. id
+		end
+		store_config("wear_blacklist", tbl)
+	end
+end
+
+do
+	local ids = {}
+	for _, val in ipairs(sql.Query("SELECT * FROM cookies WHERE key LIKE 'pac3_wear_wl_%'") or {}) do
+		table.insert(ids, val)
+	end
+
+	if ids[1] then
+		local tbl = read_config("wear_whitelist")
+		for _, id in ipairs(ids) do
+			tbl["legacy_".. id] = "old pac3_wear_wl id " .. id
+		end
+		store_config("wear_whitelist", tbl)
 	end
 end
 
@@ -201,6 +231,8 @@ local function player_list_form(name, id, help)
 	label:SetText(help)
 
 	list_form(pnl, name, {
+		empty_message = L"No players online.",
+
 		name_left = "players",
 		populate_left = function()
 			local blacklist = read_config(id)

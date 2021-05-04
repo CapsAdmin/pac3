@@ -41,7 +41,9 @@ return function(form, name, props)
 	pnl.right = list(pnl, props.name_right, props.store_right, props.populate_right)
 
 	local button = vgui.Create("DButton", pnl)
-	local store
+	button:SetText(props.empty_message)
+
+	local store = function() end
 	local selected_side = pnl.left
 
 	pnl.left.OnRowSelected = function()
