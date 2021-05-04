@@ -543,7 +543,7 @@ do -- hidden / events
 			return true
 		end
 
-		return part.Hide or part.draw_hidden
+		return part.Hide
 	end
 
 	function PART:IsHidden()

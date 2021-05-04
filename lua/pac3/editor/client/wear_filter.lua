@@ -25,9 +25,13 @@ end
 
 local function update_ignore()
 	for _, ply in ipairs(player.GetHumans()) do
-		pac.TogglePartDrawing(ply, pace.ShouldIgnorePlayer(ply))
+		pac.ToggleIgnoreEntity(ply, pace.ShouldIgnorePlayer(ply))
 	end
 end
+
+hook.Add("PlayerSpawn", "pace_outfit_ignore_update", function()
+	update_ignore()
+end)
 
 net.Receive("pac.TogglePartDrawing", function()
     local ent = net.ReadEntity()
@@ -218,7 +222,7 @@ local function player_list_form(name, id, help)
 			tbl[jsonid(kv.value)] = kv.name
 			store_config(id, tbl)
 
-			if id:StartWith("outift") then
+			if id:StartWith("outfit") then
 				update_ignore()
 			end
 		end,
@@ -248,6 +252,7 @@ local function player_list_form(name, id, help)
 			local tbl = read_config(id)
 			tbl[kv.value] = nil
 			store_config(id, tbl)
+
 			if id:StartWith("outfit") then
 				update_ignore()
 			end

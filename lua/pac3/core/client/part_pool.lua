@@ -91,6 +91,7 @@ do
 							part.OwnerName == "hands" and type == "hands" or
 							part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands"
 						then
+							if part:IsDrawHidden() then continue end
 							part:CallRecursive("Draw", type)
 						end
 					end
