@@ -23,6 +23,12 @@ local function jsonid(ply)
 	return "_" .. pac.Hash(ply)
 end
 
+local function update_ignore()
+	for _, ply in ipairs(player.GetHumans()) do
+		pac.TogglePartDrawing(ply, pace.ShouldIgnorePlayer(ply))
+	end
+end
+
 net.Receive("pac.TogglePartDrawing", function()
     local ent = net.ReadEntity()
 
@@ -211,6 +217,10 @@ local function player_list_form(name, id, help)
 			local tbl = read_config(id)
 			tbl[jsonid(kv.value)] = kv.name
 			store_config(id, tbl)
+
+			if id:StartWith("outift") then
+				update_ignore()
+			end
 		end,
 
 		name_right = name,
@@ -238,6 +248,9 @@ local function player_list_form(name, id, help)
 			local tbl = read_config(id)
 			tbl[kv.value] = nil
 			store_config(id, tbl)
+			if id:StartWith("outfit") then
+				update_ignore()
+			end
 		end,
 	})
 
@@ -346,6 +359,8 @@ function pace.FillWearSettings(pnl)
 			GetConVar("pace_outfit_filter_mode"):SetString(value:gsub(" ", "_"))
 
 			mode.form:SetParent(list)
+
+			update_ignore()
 		end
 
 		local mode_str = GetConVar("pace_outfit_filter_mode"):GetString():gsub("_", " ")
