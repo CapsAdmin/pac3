@@ -391,7 +391,7 @@ pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
 
 	net.ReadStream(ply, function(data)
 		if not data then
-			pac.Message("message from", ply, "timed out")
+			pac.Message("message from ", ply, " timed out")
 			return
 		end
 		if not ply:IsValid() then
