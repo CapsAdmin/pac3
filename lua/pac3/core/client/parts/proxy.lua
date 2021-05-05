@@ -1011,13 +1011,13 @@ local function set(self, part, x, y, z, children)
 			local b = tonumber(x) > 0
 
 			if self.VariableName == "Hide" then
-				part.set_hide_from_proxy = true
+				part.set_hide_from_proxy = self
 			end
 
 			part:SetProperty(self.VariableName, b)
 
 			if self.VariableName == "Hide" then
-				part.set_hide_from_proxy = false
+				part.set_hide_from_proxy = nil
 
 				-- SetHide side effects takes care of unhiding the other parts
 

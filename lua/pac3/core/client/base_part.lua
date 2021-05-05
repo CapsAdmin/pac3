@@ -495,18 +495,27 @@ do -- hidden / events
 	function PART:SetHide(val)
 		self.Hide = val
 
-		local from_rendering = not self.set_hide_from_proxy
+		if self.set_hide_from_proxy then
+			self:SetEventTrigger(self.set_hide_from_proxy, val)
+			self:SetKeyValueRecursive("last_hidden", val)
 
-		-- so that IsHiddenCached works in OnHide/OnShow events
-		self:SetKeyValueRecursive("last_hidden", val)
-
-		if val then
-			self:CallRecursive("OnHide", from_rendering)
+			if val then
+				self:CallRecursive("OnHide", false)
+			else
+				self:CallRecursive("OnShow", false)
+			end
 		else
-			self:CallRecursive("OnShow", from_rendering)
-		end
+			-- so that IsHiddenCached works in OnHide/OnShow events
+			self:SetKeyValueRecursive("last_hidden", val)
 
-		self:CallRecursive("CalcShowHide", from_rendering)
+			if val then
+				self:CallRecursive("OnHide", true)
+			else
+				self:CallRecursive("OnShow", true)
+			end
+
+			self:CallRecursive("CalcShowHide", true)
+		end
 	end
 
 	function PART:IsDrawHidden()
