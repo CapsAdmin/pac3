@@ -211,6 +211,11 @@ net.Receive("pac_submit", function()
 	if not pac.IsEnabled() then return end
 
 	net.ReadStream(ply, function(data)
+		if not data then
+			pac.Message("message from server timed out")
+			return
+		end
+
 		local buffer = pac.StringStream(data)
 		local data = buffer:readTable()
 
