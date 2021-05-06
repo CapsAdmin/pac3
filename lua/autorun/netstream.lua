@@ -40,9 +40,10 @@ function net.Stream.ReadStream:Read(size)
 	local crc = net.ReadString()
 	local data = net.ReadData(size)
 
-	if crc == util.CRC(data) then
+	if crc == pac.Hash(data) then
 		self.chunks[progress] = data
 	end
+
 	if #self.chunks == self.numchunks then
 		self.returndata = table.concat(self.chunks)
 		if self.compressed then
@@ -52,7 +53,6 @@ function net.Stream.ReadStream:Read(size)
 	else
 		self:Request()
 	end
-
 end
 
 --Gets the download progress
@@ -182,7 +182,7 @@ function net.WriteStream(data, callback, dontcompress)
 			crc = pac.Hash(datachunk),
 		}
 	end
-	
+
 	local startid = identifier
 	while net.Stream.WriteStreams[identifier] do
 		identifier = identifier % 1024 + 1
