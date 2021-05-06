@@ -58,6 +58,11 @@ function PART:GetNiceName()
 	return self.ClassName
 end
 
+function PART:GetPrintUniqueID()
+	if not self.UniqueID then return '00000000' end
+	return self.UniqueID:sub(1, 8)
+end
+
 function PART:GetName()
 	if self.Name == "" then
 
@@ -905,7 +910,7 @@ do -- serializing
 						pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
 					end
 
-          			::CONTINUE::
+                    ::CONTINUE::
 				end
 
 				for _, value in pairs(tbl.children) do
@@ -935,7 +940,7 @@ do -- serializing
 				end
 
 				tbl.self[key] = pac.CopyValue(self["Get" .. key](self))
-        		::CONTINUE::
+                ::CONTINUE::
 			end
 
 			for _, part in ipairs(self:GetChildren()) do
