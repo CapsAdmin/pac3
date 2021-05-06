@@ -195,7 +195,7 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 		end
 
 		if obj.Name == "" then
-			node:SetText(string.format("%s (%s)", obj:GetName(), obj:GetPrintUniqueID()))
+			node:SetText(pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", obj:GetName(), obj:GetPrintUniqueID()) or obj:GetName())
 		end
 	end
 

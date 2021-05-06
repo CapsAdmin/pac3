@@ -2,7 +2,7 @@ local L = pace.LanguageString
 
 local function populate_part_menu(menu, part, func)
 	if part:HasChildren() then
-		local menu, pnl = menu:AddSubMenu(string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()), function()
+		local menu, pnl = menu:AddSubMenu(pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName(), function()
 			pace.current_part[func](pace.current_part, part)
 		end)
 
@@ -12,7 +12,7 @@ local function populate_part_menu(menu, part, func)
 			populate_part_menu(menu, part, func)
 		end
 	else
-		menu:AddOption(string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()), function()
+		menu:AddOption(pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName(), function()
 			pace.current_part[func](pace.current_part, part)
 		end):SetImage(part.Icon)
 	end
@@ -107,7 +107,7 @@ do -- part
 			return
 		end
 
-		self:SetText(" " .. string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()))
+		self:SetText(" " .. (pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName()))
 
 		if
 			GetConVar("pac_editor_model_icons"):GetBool() and

@@ -89,7 +89,7 @@ do -- to server
 		local bytes, err = net_write_table(data)
 
 		if not bytes then
-			pace.Notify(false, "unable to transfer data to server: " .. tostring(err or "too big"), string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()))
+			pace.Notify(false, "unable to transfer data to server: " .. tostring(err or "too big"), pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName())
 			return false
 		end
 

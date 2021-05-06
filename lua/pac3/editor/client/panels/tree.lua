@@ -127,7 +127,7 @@ do
 			end
 
 			if (part.ClassName == "proxy" or part.ClassName == "event") and part.Name == "" then
-				node:SetText(string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()))
+				node:SetText(pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName())
 			end
 
 			if part:IsHiddenCached() then
@@ -380,7 +380,7 @@ function PANEL:PopulateParts(node, parts, children)
 			elseif IsValid(self.parts[key]) then
 				part_node = self.parts[key]
 			else
-				part_node = node:AddNode(string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()))
+				part_node = node:AddNode(pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName())
 			end
 
 			fix_folder_funcs(part_node)
