@@ -338,7 +338,7 @@ do -- scene graph
 
 		part:InvalidateParentList()
 
-		if self:GetPlayerOwner() == pac.LocalPlayer then
+		if self:GetPlayerOwner() == pac.LocalPlayer and self:GetShowInEditor() then
 			pac.CallHook("OnPartParent", self, part)
 		end
 
@@ -619,6 +619,16 @@ do -- hidden / events
 	function PART:OnBuildBonePositions()
 
 	end
+end
+
+PART.show_in_editor = true
+
+function PART:GetShowInEditor()
+	return self:GetRootPart().show_in_editor == true
+end
+
+function PART:SetShowInEditor(b)
+	self:GetRootPart().show_in_editor = b
 end
 
 do -- serializing

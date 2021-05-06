@@ -7,7 +7,7 @@ local function get_current_outfit()
 	local data = {}
 
 	for key, part in pairs(pac.GetLocalParts()) do
-		if not part:HasParent() and part.show_in_editor ~= false then
+		if not part:HasParent() and part:GetShowInEditor() then
 			table.insert(data, part:ToUndoTable())
 		end
 	end

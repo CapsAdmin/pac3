@@ -220,7 +220,7 @@ function pac.SetupENT(ENT, owner)
 		self.pac_outfits = self.pac_outfits or {}
 
 		for _, part in pairs(self.pac_outfits) do
-			part.show_in_editor = b
+			part:SetShowInEditor(b)
 		end
 
 		self.pac_show_in_editor = b

@@ -370,7 +370,7 @@ function PANEL:PopulateParts(node, parts, children)
 	for key, part in pairs(tbl) do
 		key = part.Id
 
-		if part:GetRootPart().show_in_editor == false then goto CONTINUE end
+		if not part:GetShowInEditor() then goto CONTINUE end
 
 		if not part:HasParent() or children then
 			local part_node
@@ -489,7 +489,7 @@ end
 pace.RegisterPanel(PANEL)
 
 local function remove_node(part)
-	if part:GetRootPart().show_in_editor == false then return end
+	if not part:GetShowInEditor() then return end
 
 	if (part.pace_tree_node or NULL):IsValid() then
 		part.pace_tree_node:SetForceShowExpander()
@@ -501,10 +501,17 @@ end
 
 pac.AddHook("pac_OnPartRemove", "pace_remove_tree_nodes", remove_node)
 
+
+local last_refresh = 0
 local function refresh(part)
+	if last_refresh > SysTime() then return end
+	if not part:GetShowInEditor() then return end
+
+
+	last_refresh = SysTime() + 0.1
 	timer.Simple(0, function()
 		if not part:IsValid() then return end
-		if part:GetRootPart().show_in_editor == false then return end
+		if not part:GetShowInEditor() then return end
 
 		pace.RefreshTree(true)
 	end)

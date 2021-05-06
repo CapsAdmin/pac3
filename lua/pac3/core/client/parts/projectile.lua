@@ -114,14 +114,14 @@ function PART:AttachToEntity(ent)
 	local tbl = self.OutfitPart:ToTable()
 
 	local group = pac.CreatePart("group", self:GetPlayerOwner())
+	group:SetShowInEditor(false)
 
 	local part = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner(), tbl, tostring(tbl))
+	group:AddChild(part)
 
-	group.show_in_editor = false
 	group:SetOwner(ent)
 	group.SetOwner = function(s) s.Owner = ent end
 	part:SetHide(false)
-	group:AddChild(part)
 
 	local id = group.Id
 	local owner_id = self:GetPlayerOwnerId()

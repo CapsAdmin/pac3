@@ -228,7 +228,7 @@ function pace.GetRegisteredParts()
 	for class_name, part in pairs(pac.GetRegisteredParts()) do
 		local cond = (not pace.IsInBasicMode() or pace.BasicParts[class_name]) and
 			not part.ClassName:StartWith("base") and
-			part.show_in_editor ~= false and
+			part:GetShowInEditor() and
 			part.is_deprecated ~= false
 
 		if cond then

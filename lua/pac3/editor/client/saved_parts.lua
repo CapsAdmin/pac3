@@ -51,7 +51,7 @@ function pace.SaveParts(name, prompt_name, override_part, overrideAsUsual)
 
 	if #data == 0 then
 		for key, part in pairs(pac.GetLocalParts()) do
-			if not part:HasParent() and part.show_in_editor ~= false then
+			if not part:HasParent() and part:GetShowInEditor() then
 				table.insert(data, part:ToSaveTable())
 			end
 		end

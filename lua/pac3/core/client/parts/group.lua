@@ -65,7 +65,7 @@ function PART:UpdateOwnerName(ent)
 			tbl.self.Duplicate = false
 			pac.SetupENT(ent)
 			local part = ent:AttachPACPart(tbl)
-			part.show_in_editor = false
+			part:SetShowInEditor(false)
 			ent:CallOnRemove("pac_remove_outfit_" .. tbl.self.UniqueID, function()
 				ent:RemovePACPart(tbl)
 			end)
