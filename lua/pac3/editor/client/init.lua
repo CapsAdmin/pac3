@@ -88,7 +88,7 @@ pace.Editor = NULL
 
 local remember = CreateConVar("pac_editor_remember_position", "1", {FCVAR_ARCHIVE}, "Remember PAC3 editor position on screen")
 local positionMode = CreateConVar("pac_editor_position_mode", "0", {FCVAR_ARCHIVE}, "Editor position mode. 0 - Left, 1 - middle, 2 - Right. Has no effect if pac_editor_remember_position is true")
-pace.pac_show_uniqueid = CreateConVar("pac_show_uniqueid", "1", {FCVAR_ARCHIVE}, "Show uniqueids of parts inside editor")
+pace.pac_show_uniqueid = CreateConVar("pac_show_uniqueid", "0", {FCVAR_ARCHIVE}, "Show uniqueids of parts inside editor")
 
 function pace.OpenEditor()
 	pace.CloseEditor()
