@@ -338,7 +338,7 @@ do -- scene graph
 
 		part:InvalidateParentList()
 
-		if self:GetPlayerOwner() == pac.LocalPlayer and self:GetShowInEditor() then
+		if self:GetPlayerOwner() == pac.LocalPlayer then
 			pac.CallHook("OnPartParent", self, part)
 		end
 

@@ -225,14 +225,14 @@ end)
 
 function pace.GetRegisteredParts()
 	local out = {}
-	for class_name, part in pairs(pac.GetRegisteredParts()) do
+	for class_name, PART in pairs(pac.GetRegisteredParts()) do
 		local cond = (not pace.IsInBasicMode() or pace.BasicParts[class_name]) and
-			not part.ClassName:StartWith("base") and
-			part:GetShowInEditor() and
-			part.is_deprecated ~= false
+			not PART.ClassName:StartWith("base") and
+			PART.show_in_editor ~= false and
+			PART.is_deprecated ~= false
 
 		if cond then
-			table.insert(out, part)
+			table.insert(out, PART)
 		end
 	end
 
