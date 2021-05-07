@@ -175,7 +175,11 @@ function pace.LoadParts(name, clear, override_part)
 		end
 
 	else
-		pac.dprint("loading Parts %s",  name)
+		if hook.Run("PrePACLoadOutfit", name) == false then
+			return
+		end
+
+		pac.dprint("loading Parts %s", name)
 
 		if name:find("https?://") then
 			local function callback(str)
