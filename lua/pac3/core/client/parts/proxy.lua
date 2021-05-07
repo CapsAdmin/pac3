@@ -1012,6 +1012,7 @@ local function set(self, part, x, y, z, children)
 
 			if self.VariableName == "Hide" then
 				part.set_hide_from_proxy = self
+				part:SetEventTrigger(self, b)
 			end
 
 			part:SetProperty(self.VariableName, b)
