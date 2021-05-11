@@ -184,17 +184,27 @@ local function ProcessAnimations(ent)
 		end
 		local fAmount = fPower * fFrameDelta
 
-		for iBoneID, tBoneInfo in pairs(tFrameData.BoneInfo) do
-			if type(iBoneID) ~= "number" then
-				iBoneID = ent:LookupBone(iBoneID)
-			end
-			if not iBoneID then goto CONTINUE end
+		for boneID, tBoneInfo in pairs(tFrameData.BoneInfo) do
+			local sOriginalBoneID
 
-			if not tBuffer[iBoneID] then tBuffer[iBoneID] = Matrix() end
-			local mBoneMatrix = tBuffer[iBoneID]
+			if type(boneID) ~= "number" then
+				sOriginalBoneID = boneID
+				boneID = ent:LookupBone(boneID)
+			end
+
+			if not boneID then
+				if(not sOriginalBoneID:StartWith(pac.SpecialBoneNamePrefix))then
+					goto CONTINUE
+				end
+
+				boneID = sOriginalBoneID
+			end
+
+			if not tBuffer[boneID] then tBuffer[boneID] = Matrix() end
+			local mBoneMatrix = tBuffer[boneID]
 
 			local vCurBonePos, aCurBoneAng = mBoneMatrix:GetTranslation(), mBoneMatrix:GetAngles()
-			if not tBoneInfo.Callback or not tBoneInfo.Callback(ent, mBoneMatrix, iBoneID, vCurBonePos, aCurBoneAng, fFrameDelta, fPower) then
+			if not tBoneInfo.Callback or not tBoneInfo.Callback(ent, mBoneMatrix, boneID, vCurBonePos, aCurBoneAng, fFrameDelta, fPower) then
 				local vUp = aCurBoneAng:Up()
 				local vRight = aCurBoneAng:Right()
 				local vForward = aCurBoneAng:Forward()
@@ -205,7 +215,7 @@ local function ProcessAnimations(ent)
 						mBoneMatrix:Translate((tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward) * fAmount)
 						mBoneMatrix:Rotate(Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF) * fAmount)
 					else
-						local bi1 = GetFrameBoneInfo(ent, tbl, iCurFrame - 1, iBoneID)
+						local bi1 = GetFrameBoneInfo(ent, tbl, iCurFrame - 1, boneID)
 
 						mBoneMatrix:Translate(
 							LerpVector(
@@ -224,9 +234,9 @@ local function ProcessAnimations(ent)
 						)
 					end
 				elseif iInterp == "cubic" and tbl.FrameData[iCurFrame - 2] and tbl.FrameData[iCurFrame + 1] then
-						local bi0 = GetFrameBoneInfo(ent, tbl, iCurFrame - 2, iBoneID)
-						local bi1 = GetFrameBoneInfo(ent, tbl, iCurFrame - 1, iBoneID)
-						local bi3 = GetFrameBoneInfo(ent, tbl, iCurFrame + 1, iBoneID)
+						local bi0 = GetFrameBoneInfo(ent, tbl, iCurFrame - 2, boneID)
+						local bi1 = GetFrameBoneInfo(ent, tbl, iCurFrame - 1, boneID)
+						local bi3 = GetFrameBoneInfo(ent, tbl, iCurFrame + 1, boneID)
 
 						mBoneMatrix:Translate(CosineInterpolation(bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward, tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward, fFrameDelta) * fPower)
 						mBoneMatrix:Rotate(CubicInterpolation(
@@ -240,7 +250,7 @@ local function ProcessAnimations(ent)
 					mBoneMatrix:Translate((tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward))
 					mBoneMatrix:Rotate(Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF))
 				else-- Default is Cosine
-					local bi1 = GetFrameBoneInfo(ent, tbl, iCurFrame - 1, iBoneID)
+					local bi1 = GetFrameBoneInfo(ent, tbl, iCurFrame - 1, boneID)
 					mBoneMatrix:Translate(CosineInterpolation(bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward, tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward, fFrameDelta) * fPower)
 					mBoneMatrix:Rotate(CosineInterpolation(Angle(bi1.RR, bi1.RU, bi1.RF), Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF), fFrameDelta) * fPower)
 				end
@@ -249,8 +259,14 @@ local function ProcessAnimations(ent)
 		end
 	end
 
-	for iBoneID, mMatrix in pairs(tBuffer) do
-		pac.SetEntityBoneMatrix(ent, iBoneID, mMatrix)
+	for boneID, mMatrix in pairs(tBuffer) do
+		if(isnumber(boneID))then
+			pac.SetEntityBoneMatrix(ent, boneID, mMatrix)
+		else
+			local sKey = boneID:sub(pac.SpecialBoneNamePrefix:len() + 1)
+
+			pac.SetSpecialBoneMatrix(ent, sKey, mMatrix)
+		end
 	end
 end
 
@@ -259,6 +275,8 @@ function animations.ResetEntityBoneMatrix(ent)
 	for i=0, ent:GetBoneCount() - 1 do
 		pac.ResetEntityBoneMatrix(ent, i)
 	end
+
+	pac.ClearSpecialBones(ent)
 end
 
 function animations.ResetEntityAnimation(ent, name, fDieTime, fPower, fTimeScale)

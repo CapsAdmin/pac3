@@ -7,6 +7,7 @@ local util_QuickTrace = util.QuickTrace
 local pac = pac
 local pac_isCameraAllowed = pac.CreateClientConVarFast("pac_enable_camera_as_bone", "1", true, "boolean")
 
+pac.SpecialBoneNamePrefix = "$special_"
 pac.BoneNameReplacements =
 {
 	{"Anim_Attachment", "attach"},
@@ -109,6 +110,16 @@ function pac.GetAllBones(ent)
 		tbl.camera = {friendly = "camera", is_special = true}
 		tbl.player_eyes = {friendly = "player_eyes", is_special = true}
 		tbl.physgun_beam_endpos = {friendly = "physgun_beam_endpos", is_special = true}
+		tbl.base = {friendly = "base (animatable)", is_special = true, force_movable = true}
+		tbl.lower_body = {friendly = "lower body (animatable)", is_special = true, force_movable = true}
+		tbl.min_bound = {friendly = "min bound (animatable)", is_special = true, force_movable = true}
+		tbl.max_bound = {friendly = "max bound (animatable)", is_special = true, force_movable = true}
+
+		for k, v in pairs(tbl) do
+			if(v.force_movable)then
+				v.real = pac.SpecialBoneNamePrefix..k
+			end
+		end
 
 		ent.pac_bone_count = count + 1
 	end
@@ -298,6 +309,35 @@ function pac.GetBonePosAng(ent, id, parent)
 		return LerpVector(0.5, apos, bpos), LerpAngle(0.5, aang, bang)
 	end
 
+	if id == "base" then
+		local pos, ang = ent:GetPos(), ent:EyeAngles()
+		ang = Angle(0, ang.y, 0)
+
+		return pac.ManipulateSpecialBone(ent, "base", pos, ang)
+	end
+
+	if id == "min_bound" then
+		local pos, _ = ent:GetCollisionBounds()
+		pos = ent:GetPos() + pos
+
+		return pac.ManipulateSpecialBone(ent, "min_bound", pos, Angle(0, 0, 0))
+	end
+
+	if id == "max_bound" then
+		local _, pos = ent:GetCollisionBounds()
+		pos = ent:GetPos() + pos
+
+		return pac.ManipulateSpecialBone(ent, "max_bound", pos, Angle(0, 0, 0))
+	end
+
+	if id == "lower_body" then
+		local _, ang = pac.GetBonePosAng(ent, "pelvis", parent)
+		local pos = ent:GetPos()
+		ang = Angle(0, ang.y, 0)
+
+		return pac.ManipulateSpecialBone(ent, "max_bound", pos, ang)
+	end
+
 	local pos, ang
 
 	local bones = pac.GetModelBones(ent)
@@ -365,6 +405,31 @@ do -- bone manipulation for boneanimlib
 	local ManipulateBonePosition = entmeta.ManipulateBonePosition
 	local ManipulateBoneAngles = entmeta.ManipulateBoneAngles
 	local ManipulateBoneJiggle = entmeta.ManipulateBoneJiggle
+
+	function pac.SetSpecialBoneMatrix(ent, boneID, mMatrix)
+		ent.pac_special_bone_anims = ent.pac_special_bone_anims or {}
+		ent.pac_special_bone_anims[boneID] = mMatrix
+	end
+
+	function pac.ClearSpecialBones(ent)
+		if(ent.pac_special_bone_anims)then
+			for boneID, _ in pairs(ent.pac_special_bone_anims) do
+				ent.pac_special_bone_anims[boneID] = nil
+			end
+		end
+	end
+
+	function pac.ManipulateSpecialBone(ent, boneID, pos, ang)
+		if(ent.pac_special_bone_anims and ent.pac_special_bone_anims[boneID])then
+			local matrix = ent.pac_special_bone_anims[boneID]
+			pos = pos + matrix:GetTranslation()
+			ang = ang + matrix:GetAngles()
+
+			return pos, ang
+		end
+
+		return pos, ang
+	end
 
 	function pac.ResetBones(ent)
 		local pac_boneanim = ent.pac_boneanim
