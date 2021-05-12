@@ -297,14 +297,14 @@ function pace.SelectBone(ent, callback, only_movable)
 
 		if models then
 			for k, v in pairs(tbl) do
-				if not v.bone then
+				if not v.force_movable and not v.bone then
 					tbl[k] = nil
 				end
 			end
 		end
 
 		for k, v in pairs(tbl) do
-			if v.is_special or not RENDER_ATTACHMENTS:GetBool() and v.is_attachment then
+			if not v.force_movable and (v.is_special or not RENDER_ATTACHMENTS:GetBool() and v.is_attachment) then
 				tbl[k] = nil
 			end
 		end
@@ -326,7 +326,7 @@ function pace.SelectBone(ent, callback, only_movable)
 		callback,
 
 		function (key, val)
-			if val.is_special or val.is_attachment then return end
+			if not val.force_movable and (val.is_special or val.is_attachment) then return end
 			ent.pac_bones_select_target = val.i
 		end,
 
