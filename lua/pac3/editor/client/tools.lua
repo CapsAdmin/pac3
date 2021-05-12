@@ -751,7 +751,8 @@ pace.AddTool(L"populate with dummy bones", function(part,suboption)
 	pace.RefreshTree(true)
 end)
 
-pace.AddTool(L"extract bones from current animation frame", function(part, suboption)
+pace.AddTool(L"extract bones from current animation frame", function(_, suboption)
+	local part = pace.timeline.animation_part
   local targetFrame = pace.timeline.selected_keyframe
 
 	targetFrame = targetFrame.DataTable
