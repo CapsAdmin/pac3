@@ -125,7 +125,7 @@ function timeline.EditBone()
 
 	if not timeline.selected_bone then
 		for k, v in pairs(boneData) do
-			if not v.is_special and not v.is_attachment then
+			if v.force_movable or (not v.is_special and not v.is_attachment) then
 				timeline.selected_bone = v.real
 				break
 			end
@@ -266,7 +266,7 @@ function timeline.Open(part)
 				timeline.selected_bone = boneData[val] and boneData[val].real or false
 				if not timeline.selected_bone then
 					for k, v in pairs(boneData) do
-						if not v.is_special and not v.is_attachment then
+						if v.force_movable or (not v.is_special and not v.is_attachment) then
 							timeline.selected_bone = v.real
 							break
 						end

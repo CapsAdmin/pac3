@@ -751,6 +751,49 @@ pace.AddTool(L"populate with dummy bones", function(part,suboption)
 	pace.RefreshTree(true)
 end)
 
+pace.AddTool(L"extract bones from current animation frame", function(_, suboption)
+	local part = pace.timeline.animation_part
+  local targetFrame = pace.timeline.selected_keyframe
+
+	targetFrame = targetFrame.DataTable
+
+	if(not targetFrame)then
+		Derma_Message("You must select a Custom Animation keyframe in order to extract the bones from it.","Error: Must Select Custom Animation keyframe","OK")
+		return
+	end
+
+	local ent = part:GetOwner()
+	local bones = pac.GetModelBones(ent)
+
+  local root = pac.CreatePart("group")
+  root:SetName("animation \""..part:GetName().."\" final bones")
+	
+  for iBoneID, boneData in pairs(targetFrame.BoneInfo) do
+		iBoneID = pac.GetFriendlyBoneName(iBoneID)
+
+		if(bones[iBoneID] and not bones[iBoneID].is_special)then
+			local mBoneMatrix = Matrix()
+			local vCurBonePos, aCurBoneAng = mBoneMatrix:GetTranslation(), mBoneMatrix:GetAngles()
+			local vUp = aCurBoneAng:Up()
+			local vRight = aCurBoneAng:Right()
+			local vForward = aCurBoneAng:Forward()
+
+			mBoneMatrix:Translate(boneData.MU * vUp + boneData.MR * vRight + boneData.MF * vForward)
+			mBoneMatrix:Rotate(Angle(boneData.RR, boneData.RU, boneData.RF))
+
+			local bone = pac.CreatePart("bone")
+			bone:SetParent(root)
+			bone:SetBone(iBoneID)
+			bone:SetProperty("PositionOffset", mBoneMatrix:GetTranslation())
+			bone:SetProperty("AngleOffset", mBoneMatrix:GetAngles())
+		end
+	end
+	
+  pace.RefreshTree(true)
+	pace.current_part_uid = root.UniqueID
+	pace.TrySelectPart()
+end)
+
 pace.AddTool(L"print part info", function(part)
 	PrintTable(part:ToTable())
 end)
