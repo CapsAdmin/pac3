@@ -421,9 +421,13 @@ do -- bone manipulation for boneanimlib
 
 	function pac.ManipulateSpecialBone(ent, boneID, pos, ang)
 		if(ent.pac_special_bone_anims and ent.pac_special_bone_anims[boneID])then
-			local matrix = ent.pac_special_bone_anims[boneID]
-			pos = pos + matrix:GetTranslation()
-			ang = ang + matrix:GetAngles()
+			local mMatrix = Matrix()
+			mMatrix:SetTranslation(pos)
+			mMatrix:SetAngles(ang)
+
+			mMatrix = mMatrix * ent.pac_special_bone_anims[boneID]
+			pos = mMatrix:GetTranslation()
+			ang = mMatrix:GetAngles()
 
 			return pos, ang
 		end
