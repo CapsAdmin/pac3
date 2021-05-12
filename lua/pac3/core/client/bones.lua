@@ -27,6 +27,21 @@ pac.BoneNameReplacements =
 	{" L", " left"},
 }
 
+function pac.GetFriendlyBoneName(boneName)
+	local friendly = boneName
+
+	for _, value in pairs(pac.BoneNameReplacements) do
+		friendly = friendly:gsub(value[1], value[2])
+	end
+
+	friendly = friendly
+	:Trim()
+	:lower()
+	:gsub("(.-)(%d+)", "%1 %2")
+
+	return friendly
+end
+
 function pac.GetAllBones(ent)
 	ent = ent or NULL
 
@@ -40,17 +55,9 @@ function pac.GetAllBones(ent)
 
 		for bone = 0, count do
 			local name = ent:GetBoneName(bone)
-			local friendly = name
 
 			if name then
-				for _, value in pairs(pac.BoneNameReplacements) do
-					friendly = friendly:gsub(value[1], value[2])
-				end
-
-				friendly = friendly
-				:Trim()
-				:lower()
-				:gsub("(.-)(%d+)", "%1 %2")
+				local friendly = pac.GetFriendlyBoneName(name)
 
 				local parent_i = ent:GetBoneParent(bone)
 				if parent_i == -1 then
