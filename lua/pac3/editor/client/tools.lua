@@ -751,21 +751,23 @@ pace.AddTool(L"populate with dummy bones", function(part,suboption)
 	pace.RefreshTree(true)
 end)
 
-pace.AddTool(L"extract bones to new group from final animation frame", function(part, suboption)
-	if(part.ClassName ~= "custom_animation")then
-		Derma_Message("You must select a custom animation to generate the bones from the final frame of that animation.","Error: Must Select Custom Animation","OK")
+pace.AddTool(L"extract bones from current animation frame", function(part, suboption)
+  local targetFrame = pace.timeline.selected_keyframe
+
+	targetFrame = targetFrame.DataTable
+
+	if(not targetFrame)then
+		Derma_Message("You must select a Custom Animation keyframe in order to extract the bones from it.","Error: Must Select Custom Animation keyframe","OK")
 		return
 	end
 
 	local ent = part:GetOwner()
-  local animation = pac.animations.registered[part:GetAnimID()]
-  local lastFrame = animation.FrameData[#animation.FrameData]
 	local bones = pac.GetModelBones(ent)
 
   local root = pac.CreatePart("group")
   root:SetName("animation \""..part:GetName().."\" final bones")
 	
-  for iBoneID, boneData in pairs(lastFrame.BoneInfo) do
+  for iBoneID, boneData in pairs(targetFrame.BoneInfo) do
 		iBoneID = pac.GetFriendlyBoneName(iBoneID)
 
 		if(bones[iBoneID] and not bones[iBoneID].is_special)then
@@ -787,6 +789,8 @@ pace.AddTool(L"extract bones to new group from final animation frame", function(
 	end
 	
   pace.RefreshTree(true)
+	pace.current_part_uid = root.UniqueID
+	pace.TrySelectPart()
 end)
 
 pace.AddTool(L"print part info", function(part)
