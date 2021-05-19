@@ -248,6 +248,8 @@ end
 function PART:GetBonePosition()
 	local ent = self:GetOwner()
 
+	if not ent:IsValid() then return Vector(), Angle() end
+
 	local index = self.bone_index
 
 	if not index then return ent:GetPos(), ent:GetAngles() end
