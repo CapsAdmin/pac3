@@ -10,7 +10,7 @@ BUILDER:StartStorableVars()
 
 	BUILDER:SetPropertyGroup()
 		BUILDER:GetSet("VariableName", "", {enums = function(part)
-			local part = part:GetTarget()
+			local part = part:GetOutputTarget()
 			if not part:IsValid() then return end
 			local tbl = {}
 			for _, info in pairs(part:GetProperties()) do
