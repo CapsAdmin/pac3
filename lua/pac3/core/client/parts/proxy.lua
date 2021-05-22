@@ -881,9 +881,9 @@ function PART:OnThink()
 			return
 		end
 
-		if type(x) ~= "number" then x = 0 end
-		if type(y) ~= "number" then y = 0 end
-		if type(z) ~= "number" then z = 0 end
+		if x and type(x) ~= "number" then x = 0 end
+		if y and type(y) ~= "number" then y = 0 end
+		if z and type(z) ~= "number" then z = 0 end
 
 		if self.Additive then
 			if x then
