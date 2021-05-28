@@ -32,7 +32,6 @@ BUILDER:StartStorableVars()
 		:PropertyOrder("Hide")
 		:PropertyOrder("ParentName")
 		:GetSet("Model", "", {editor_panel = "model"})
-		:GetSet("ForceObjUrl", false)
 
 	:SetPropertyGroup("orientation")
 		:GetSet("Size", 1, {editor_sensitivity = 0.25})
@@ -401,12 +400,6 @@ function PART:OnDraw()
 
 	local pos, ang = self:GetDrawPosition()
 
-	if self.loading then
-		self:DrawLoadingText(ent, pos)
-		return
-	end
-
-
 	self:PreEntityDraw(ent, pos, ang)
 		self:DrawModel(ent, pos, ang)
 	self:PostEntityDraw(ent, pos, ang)
@@ -536,100 +529,109 @@ function PART:SetModel(path)
 	if not owner:IsValid() then return end
 
 	if path:find("://", nil, true) then
-
-		if path:StartWith("objhttp") or path:EndsWith(".obj") or self.ForceObjUrl then
-			self.loading = "downloading obj"
-
-			pac.urlobj.GetObjFromURL(path, false, false,
-				function(meshes, err)
-
-					local function set_mesh(part, mesh)
-						local owner = part:GetOwner()
-						part.obj_mesh = mesh
-						pac.ResetBoneCache(owner)
-
-						if not part.Materialm then
-							part.Materialm = Material("error")
-						end
-
-						function owner.pacDrawModel(ent, simple)
-							if simple then
-								RealDrawModel(part, ent, ent:GetPos(), ent:GetAngles())
-							else
-								part:ModifiersPreEvent("OnDraw")
-								part:DrawModel(ent, ent:GetPos(), ent:GetAngles())
-								part:ModifiersPostEvent("OnDraw")
+		
+		self.loading = "parsing type"
+		
+		local onReceive = function(typ)
+			
+			if typ == "obj" then
+				
+				self.loading = "downloading obj"
+				
+				pac.urlobj.GetObjFromURL(path, false, false,
+					function(meshes, err)
+		
+						local function set_mesh(part, mesh)
+							local owner = part:GetOwner()
+							part.obj_mesh = mesh
+							pac.ResetBoneCache(owner)
+		
+							if not part.Materialm then
+								part.Materialm = Material("error")
 							end
+		
+							function owner.pacDrawModel(ent, simple)
+								if simple then
+									RealDrawModel(part, ent, ent:GetPos(), ent:GetAngles())
+								else
+									part:ModifiersPreEvent("OnDraw")
+									part:DrawModel(ent, ent:GetPos(), ent:GetAngles())
+									part:ModifiersPostEvent("OnDraw")
+								end
+							end
+		
+							owner:SetRenderBounds(Vector(1, 1, 1) * -300, Vector(1, 1, 1) * 300)
 						end
-
-						owner:SetRenderBounds(Vector(1, 1, 1) * -300, Vector(1, 1, 1) * 300)
-					end
-
-					if not self:IsValid() then return end
-
-					self.loading = false
-
-					if not meshes and err then
-						owner:SetModel("models/error.mdl")
-						self.obj_mesh = nil
-						return
-					end
-
-					if table.Count(meshes) == 1 then
-						set_mesh(self, select(2, next(meshes)))
-					else
-						for key, mesh in pairs(meshes) do
-							local part = pac.CreatePart("model", self:GetOwnerName())
-							part:SetName(key)
-							part:SetParent(self)
-							part:SetMaterial(self:GetMaterial())
-							set_mesh(part, mesh)
+		
+						if not self:IsValid() then return end
+		
+						self.loading = false
+		
+						if not meshes and err then
+							owner:SetModel("models/error.mdl")
+							self.obj_mesh = nil
+							return
 						end
-
-						self:SetAlpha(0)
+		
+						if table.Count(meshes) == 1 then
+							set_mesh(self, select(2, next(meshes)))
+						else
+							for key, mesh in pairs(meshes) do
+								local part = pac.CreatePart("model", self:GetOwnerName())
+								part:SetName(key)
+								part:SetParent(self)
+								part:SetMaterial(self:GetMaterial())
+								set_mesh(part, mesh)
+							end
+		
+							self:SetAlpha(0)
+						end
+					end,
+					function(finished, statusMessage)
+						if finished then
+							self.loading = nil
+						else
+							self.loading = statusMessage
+						end
 					end
-				end,
-				function(finished, statusMessage)
-					if finished then
-						self.loading = nil
-					else
-						self.loading = statusMessage
-					end
-				end
-			)
-		else
-			local status, reason = hook.Run('PAC3AllowMDLDownload', self:GetPlayerOwner(), self, path)
-
-			if ALLOW_TO_MDL:GetBool() and status ~= false then
-				self.loading = "downloading mdl zip"
-				pac.DownloadMDL(path, function(mdl_path)
-					self.loading = nil
-					self.errored = nil
-
-					if self.ClassName == "entity2" then
-						pac.emut.MutateEntity(self:GetPlayerOwner(), "model", self:GetOwner(), path)
-					end
-
-					self:RealSetModel(mdl_path)
-
-				end, function(err)
-
-					if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
-						pace.MessagePrompt(err, "HTTP Request Failed for " .. path, "OK")
-					else
-						pac.Message(Color(0, 255, 0), "[model] ", Color(255, 255, 255), "HTTP Request Failed for " .. path .. " - " .. err)
-					end
-
-					self.loading = err
-					self.errored = true
-					self:RealSetModel("models/error.mdl")
-				end, self:GetPlayerOwner())
+				)
 			else
-				self.loading = reason or "mdl is not allowed"
-				self:RealSetModel("models/error.mdl")
-				pac.Message(self, ' mdl files are not allowed')
+				local status, reason = hook.Run('PAC3AllowMDLDownload', self:GetPlayerOwner(), self, path)
+		
+				if ALLOW_TO_MDL:GetBool() and status ~= false then
+					self.loading = "downloading mdl zip"
+					pac.DownloadMDL(path, function(mdl_path)
+						self.loading = nil
+						self.errored = nil
+		
+						if self.ClassName == "entity2" then
+							pac.emut.MutateEntity(self:GetPlayerOwner(), "model", self:GetOwner(), path)
+						end
+		
+						self:RealSetModel(mdl_path)
+		
+					end, function(err)
+		
+						if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
+							pace.MessagePrompt(err, "HTTP Request Failed for " .. path, "OK")
+						else
+							pac.Message(Color(0, 255, 0), "[model] ", Color(255, 255, 255), "HTTP Request Failed for " .. path .. " - " .. err)
+						end
+						self.loading = err
+						self.errored = true
+						self:RealSetModel("models/error.mdl")
+					end, self:GetPlayerOwner())
+				else
+					self.loading = reason or "mdl is not allowed"
+					self:RealSetModel("models/error.mdl")
+					pac.Message(self, ' mdl files are not allowed')
+				end
 			end
 		end
+		local onFailure = function()
+			self.loading = "failed to parse type"
+		end
+		pac.ParseType(pac.FixUrl(path),onReceive,onFailure)
 	elseif path ~= "" then
 		if self.ClassName == "entity2" then
 			pac.emut.MutateEntity(self:GetPlayerOwner(), "model", owner, path)
@@ -832,7 +834,6 @@ do
 	BUILDER:RemoveProperty("Bone")
 	BUILDER:RemoveProperty("EyeAngles")
 	BUILDER:RemoveProperty("AimPartName")
-	BUILDER:RemoveProperty("ForceObjUrl")
 
 	function PART:SetStandingHullHeight(val)
 		self.StandingHullHeight = val
@@ -1067,7 +1068,6 @@ do
 		:EndStorableVars()
 
 	BUILDER:RemoveProperty("Model")
-	BUILDER:RemoveProperty("ForceObjUrl")
 
 	function PART:SetDrawShadow(b)
 		self.DrawShadow = b
