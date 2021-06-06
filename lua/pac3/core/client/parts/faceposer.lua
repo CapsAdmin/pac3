@@ -34,7 +34,9 @@ function PART:UpdateFlex()
 
 	for name, weight in pairs(self:GetWeightMap()) do
 		local id = ent:GetFlexIDByName(name)
-		ent:SetFlexWeight(id, ent:GetFlexWeight(id) + weight)
+		if id then
+			ent:SetFlexWeight(id, ent:GetFlexWeight(id) + weight)
+		end
 	end
 end
 
