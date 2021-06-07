@@ -141,7 +141,7 @@ PAC_MDL_SALT = PAC_MDL_SALT or 0
 local cached_paths = {}
 local cached_types = {}
 
-local formats = {["application/zip"]="mdl",["application/binary"]="mdl",["text/plain; charset=utf-8"]="obj",["text/plain"]="obj",["text/html"]="obj",["text/html; charset=UTF-8"]="obj",["application/octet-stream"]="obj",["application/x-tgif"]="obj"}
+local formats = {["application/zip"]="mdl",["application/binary"]="mdl",["text/plain"]="obj",["text/html"]="obj",["application/octet-stream"]="obj",["application/x-tgif"]="obj"}
 function pac.ParseType(link,onReceive,onFailure)
 	if cached_types[link] then 
 		onReceive(cached_types[link]) 
@@ -152,6 +152,7 @@ function pac.ParseType(link,onReceive,onFailure)
 		method		= "HEAD",
 		success = function(code,body,headers)
 			local ct = headers["Content-Type"] or "header not found"
+			ct = ct:match("(.*);") or ct
 			if not formats[ct] then
 				ct = ct and ": "..ct or "."
 				pac.Message(Color(255,0,0),link .. " model format is unknown"..ct)
