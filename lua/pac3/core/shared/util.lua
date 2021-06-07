@@ -151,9 +151,10 @@ function pac.ParseType(link,onReceive,onFailure)
 		url			= link,
 		method		= "HEAD",
 		success = function(code,body,headers)
-			local ct = headers["Content-Type"]
-			if not ct or not formats[ct] then 
-				pac.Message(Color(255,0,0),link .. " model format is unknown.")
+			local ct = headers["Content-Type"] or "header not found"
+			if not formats[ct] then
+				ct = ct and ": "..ct or "."
+				pac.Message(Color(255,0,0),link .. " model format is unknown"..ct)
 				onFailure() 
 				return 
 			end
