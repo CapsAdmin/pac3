@@ -154,8 +154,7 @@ function pac.ParseType(link,onReceive,onFailure)
 			local ct = headers["Content-Type"] or "header not found"
 			ct = ct:match("(.*);") or ct
 			if not formats[ct] then
-				ct = ct and ": "..ct or "."
-				pac.Message(Color(255,0,0),link .. " model format is unknown"..ct)
+				pac.Message(Color(255,0,0),link .. " model format is unknown: "..ct)
 				onFailure() 
 				return 
 			end
