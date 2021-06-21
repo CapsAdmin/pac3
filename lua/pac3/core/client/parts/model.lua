@@ -529,27 +529,27 @@ function PART:SetModel(path)
 	if not owner:IsValid() then return end
 
 	if path:find("://", nil, true) then
-		
+
 		self.loading = "parsing type"
-		
+
 		local onReceive = function(typ)
-			
+
 			if typ == "obj" then
-				
+
 				self.loading = "downloading obj"
-				
+
 				pac.urlobj.GetObjFromURL(path, false, false,
 					function(meshes, err)
-		
+
 						local function set_mesh(part, mesh)
 							local owner = part:GetOwner()
 							part.obj_mesh = mesh
 							pac.ResetBoneCache(owner)
-		
+
 							if not part.Materialm then
 								part.Materialm = Material("error")
 							end
-		
+
 							function owner.pacDrawModel(ent, simple)
 								if simple then
 									RealDrawModel(part, ent, ent:GetPos(), ent:GetAngles())
@@ -559,20 +559,20 @@ function PART:SetModel(path)
 									part:ModifiersPostEvent("OnDraw")
 								end
 							end
-		
+
 							owner:SetRenderBounds(Vector(1, 1, 1) * -300, Vector(1, 1, 1) * 300)
 						end
-		
+
 						if not self:IsValid() then return end
-		
+
 						self.loading = false
-		
+
 						if not meshes and err then
 							owner:SetModel("models/error.mdl")
 							self.obj_mesh = nil
 							return
 						end
-		
+
 						if table.Count(meshes) == 1 then
 							set_mesh(self, select(2, next(meshes)))
 						else
@@ -583,7 +583,7 @@ function PART:SetModel(path)
 								part:SetMaterial(self:GetMaterial())
 								set_mesh(part, mesh)
 							end
-		
+
 							self:SetAlpha(0)
 						end
 					end,
@@ -597,21 +597,21 @@ function PART:SetModel(path)
 				)
 			else
 				local status, reason = hook.Run('PAC3AllowMDLDownload', self:GetPlayerOwner(), self, path)
-		
+
 				if ALLOW_TO_MDL:GetBool() and status ~= false then
 					self.loading = "downloading mdl zip"
 					pac.DownloadMDL(path, function(mdl_path)
 						self.loading = nil
 						self.errored = nil
-		
+
 						if self.ClassName == "entity2" then
 							pac.emut.MutateEntity(self:GetPlayerOwner(), "model", self:GetOwner(), path)
 						end
-		
+
 						self:RealSetModel(mdl_path)
-		
+
 					end, function(err)
-		
+
 						if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
 							pace.MessagePrompt(err, "HTTP Request Failed for " .. path, "OK")
 						else
@@ -628,8 +628,8 @@ function PART:SetModel(path)
 				end
 			end
 		end
-		local onFailure = function()
-			self.loading = "failed to parse type"
+		local onFailure = function(err)
+			self.loading = err
 		end
 		pac.ParseType(pac.FixUrl(path),onReceive,onFailure)
 	elseif path ~= "" then
