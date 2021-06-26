@@ -211,6 +211,10 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 			end
 		end
 
+		if tbl.self.Model and tbl.self.Model:find("://", nil, true) and not tbl.self.Model:find(".zip", nil, true) then
+			tbl.self.ForceObjUrl = true
+		end
+
 		if tbl.children then
 			for _, child in ipairs(tbl.children) do
 				walk(child, tbl)
