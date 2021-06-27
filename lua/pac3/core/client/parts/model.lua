@@ -180,7 +180,7 @@ function PART:SetModelModifiers(str)
 	local tbl = self:ModelModifiersToTable(str)
 
 	if tbl.skin then
-		owner:SetSkin(tbl.skin)
+		self:SetSkin(tbl.skin)
 		tbl.skin = nil
 	end
 
