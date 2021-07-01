@@ -25,11 +25,11 @@ local function spawn(val,ply)
 	ent:SetModel(model)-- insecure
 	ent:SetPos(val.pos)-- insecure
 	ent:SetAngles(val.ang)-- insecure
-	ent:SetColor(val.clr)
 	ent:SetSkin(val.skn)
 	ent:SetMaterial(val.mat) -- insecure
 	ent:Spawn()
 	ent:SetHealth(9999999)
+	ent:SetColor(val.clr)
 
 	hook.Run("PlayerSpawnedProp", ply, model, ent)
 
