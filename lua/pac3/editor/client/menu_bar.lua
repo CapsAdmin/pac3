@@ -127,7 +127,7 @@ local function populate_options(menu)
 	local rendering, pnl = menu:AddSubMenu(L"rendering", function() end)
 		rendering.GetDeleteSelf = function() return false end
 		pnl:SetImage("icon16/camera_edit.png")
-		rendering:AddCVar(L"no outfit reflections", "pac_suppress_frames", "1", "0")
+		rendering:AddCVar(L"no outfit reflections", "pac_optimization_render_once_per_frame", "1", "0")
 end
 
 local function populate_player(menu)
