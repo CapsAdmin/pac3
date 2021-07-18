@@ -573,7 +573,7 @@ end
 function webaudio.SetVolume(vol)
 	if webaudio.volume ~= vol then
 		webaudio.volume = vol
-		run_javascript(string.format("gain.gain.value = %f", vol), self)
+		run_javascript(string.format("gain.gain.value = %f", vol))
 	end
 end
 
