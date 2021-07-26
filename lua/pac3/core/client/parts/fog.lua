@@ -52,7 +52,7 @@ function PART:PreOnDraw()
 	render_FogStart(self.Start * 100)
 	render_FogEnd(self.End * 100)
 	render_FogMaxDensity(self.Alpha)
-	if self.clr then render.FogColor(unpack(self.clr)) end
+	if self.clr then render.FogColor(self.clr[1], self.clr[2], self.clr[3]) end
 
 	if self.Height > 0 then
 		render_FogMode(MATERIAL_FOG_LINEAR_BELOW_FOG_Z)
