@@ -431,23 +431,19 @@ local function RealDrawModel(self, ent, pos, ang)
 	end
 end
 
-function PART:DrawModel(ent, pos, ang)
-	if self.Alpha ~= 0 and self.Size ~= 0 then
-		if self.loading_obj then
-			self:DrawLoadingText(ent, pos, ang)
-		end
+do
+	local _self, _ent, _pos, _ang
+	local _return_status = false
 
-		if self.loading_obj and not self.Mesh then return end
+	local function protected_real_draw_model()
+		RealDrawModel(_self, _ent, _pos, _ang)
+	end
 
-		local textureFilter = self.texfilter_enum or TEXFILTER.ANISOTROPIC
-		if textureFilter ~= TEXFILTER.ANISOTROPIC or self.Mesh then
-			render_PushFilterMin(textureFilter)
-			render_PushFilterMag(textureFilter)
-		end
-
-		local mat = self.MaterialOverride or self.Materialm
+	local function protected_inner_draw_model()
+		local mat = _self.MaterialOverride or _self.Materialm
 
 		render_MaterialOverride(mat)
+
 		if mat then
 			render_SetMaterial(mat)
 		end
@@ -455,28 +451,58 @@ function PART:DrawModel(ent, pos, ang)
 		pac.render_material = mat
 
 		-- Render model
-		local passCount = math_max (1, self.Passes)
-		if self.Alpha >= 1 then
+		local passCount = math_max (1, _self.Passes)
+
+		if _self.Alpha >= 1 then
 			passCount = math_min (passCount, 1)
 		end
 
 		for _ = 1, passCount do
-			RealDrawModel(self, ent, pos, ang)
+			local status = ProtectedCall(protected_real_draw_model)
+
+			if not status then
+				_return_status = false
+				return
+			end
 		end
 
-			render_PushFlashlightMode(true)
+		render_PushFlashlightMode(true)
 
-		RealDrawModel(self, ent, pos, ang)
+		ProtectedCall(protected_real_draw_model)
 
-			render_PopFlashlightMode()
+		render_PopFlashlightMode()
 
-		if textureFilter ~= TEXFILTER.ANISOTROPIC or self.Mesh then
+		_return_status = true
+	end
+
+	function PART:DrawModel(ent, pos, ang)
+		if self.Alpha == 0 or self.Size == 0 then return end
+
+		if self.loading_obj then
+			self:DrawLoadingText(ent, pos, ang)
+		end
+
+		if self.loading_obj and not self.Mesh then return end
+
+		local textureFilter = self.texfilter_enum or TEXFILTER.ANISOTROPIC
+		local filter_updated = textureFilter ~= TEXFILTER.ANISOTROPIC or self.Mesh
+
+		if filter_updated then
+			render_PushFilterMin(textureFilter)
+			render_PushFilterMag(textureFilter)
+		end
+
+		_self, _ent, _pos, _ang = self, ent, pos, ang
+
+		ProtectedCall(protected_inner_draw_model)
+
+		if filter_updated then
 			render_PopFilterMag()
 			render_PopFilterMin()
 		end
 
 		-- Render "blur"
-		if self.BlurLength > 0 then
+		if self.BlurLength > 0 and _return_status then
 			self:DrawBlur(ent, pos, ang)
 		end
 

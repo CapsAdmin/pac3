@@ -164,6 +164,12 @@ function PART:IsDrawHidden()
 	return self.draw_hidden
 end
 
+local _self
+
+local function call_draw()
+	_self:OnDraw()
+end
+
 function PART:Draw(draw_type)
 	if not self.OnDraw then return end
 	if not self.Enabled then return end
@@ -186,7 +192,9 @@ function PART:Draw(draw_type)
 			render_PushFilterMag(TEXFILTER_POINT)
 		end
 
-		self:OnDraw()
+		_self = self
+
+		ProtectedCall(call_draw)
 
 		if self.NoTextureFiltering then
 			render_PopFilterMin()

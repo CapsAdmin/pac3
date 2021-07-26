@@ -411,13 +411,14 @@ function PART:OnDraw()
 		self:DrawModel(ent, pos, ang)
 	self:PostEntityDraw(ent, pos, ang)
 
---	ent:SetupBones()
+--  ent:SetupBones()
 	pac.ResetBones(ent)
 end
 
 
 local matrix = Matrix()
 local IDENT_SCALE = Vector(1,1,1)
+local _self, _ent, _pos, _ang
 
 local function ent_draw_model(self, ent, pos, ang)
 	if self.obj_mesh then
@@ -437,6 +438,10 @@ local function ent_draw_model(self, ent, pos, ang)
 	end
 end
 
+local function protected_ent_draw_model()
+	ent_draw_model(_self, _ent, _pos, _ang)
+end
+
 function PART:DrawModel(ent, pos, ang)
 	if self.loading then
 		self:DrawLoadingText(ent, pos)
@@ -444,7 +449,6 @@ function PART:DrawModel(ent, pos, ang)
 
 	if self.Alpha == 0 or self.Size == 0 then return end
 	if self.loading and not self.obj_mesh then return end
-
 
 	if self.NoCulling or self.Invert then
 		render_CullMode(MATERIAL_CULLMODE_CW)
@@ -460,9 +464,11 @@ function PART:DrawModel(ent, pos, ang)
 
 	render.PushFlashlightMode(true)
 
+	_self, _ent, _pos, _ang = self, ent, pos, ang
+
 	material_bound = self:BindMaterials(ent) or material_bound
 	ent.pac_drawing_model = true
-	ent_draw_model(self, ent, pos, ang)
+	ProtectedCall(protected_ent_draw_model)
 	ent.pac_drawing_model = false
 
 	render.PopFlashlightMode()
@@ -470,7 +476,7 @@ function PART:DrawModel(ent, pos, ang)
 	if self.NoCulling then
 		render_CullMode(MATERIAL_CULLMODE_CCW)
 		material_bound = self:BindMaterials(ent) or material_bound
-		ent_draw_model(self, ent, pos, ang)
+		ProtectedCall(protected_ent_draw_model)
 	elseif self.Invert then
 		render_CullMode(MATERIAL_CULLMODE_CCW)
 	end

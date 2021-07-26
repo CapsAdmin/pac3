@@ -27,6 +27,9 @@ do
 	local setColUnpacked = mtColor.SetUnpacked
 	local colUnpack = mtColor.Unpack
 
+	local black = Color(0,0,0,100)
+	local vector_add = Vector(0, 2.5, 0)
+
 	function DrawHermite(width, x0,y0,x1,y1,c0,c1,alpha,samples)
 
 		--[[if x0 < 0 and x1 < 0 then return end
@@ -40,7 +43,7 @@ do
 		alpha = alpha or 1
 
 		width = width or 5
-        local samples = 20
+		local samples = 20
 		local positions = vsamples
 
 		samples = samples or 20
@@ -51,7 +54,7 @@ do
 		local d = math_sqrt(math_max(dx*dx, 8000), dy*dy) * 1.5
 		d = math_max(d, math_abs(dy))
 		d = math_min(d, 1000)
-        d = d * 1.25 / (-dy/300)
+		d = d * 1.25 / (-dy/300)
 
 		setVecUnpacked(positions[1][1],x0,y0,0)
 		positions[1][2] = c0
@@ -69,29 +72,31 @@ do
 			setColUnpacked(positions[i+1][2],Lerp(t, r0, r1), Lerp(t, g0, g1), Lerp(t, b0, b1), a0 * alpha)
 		end
 
-        render.PushFilterMag( TEXFILTER.LINEAR )
-        render.PushFilterMin( TEXFILTER.LINEAR )
+		render.PushFilterMag( TEXFILTER.LINEAR )
+		render.PushFilterMin( TEXFILTER.LINEAR )
 
+		render_startBeam(samples + 1)
 
-        render_startBeam(samples+1)
-            local black = Color(0,0,0,100)
-            for i=1, samples+1 do
-                render_addBeam(positions[i][1] + Vector(0,2.5,0), width, 0.5, black)
-            end
+		for i = 1, samples + 1 do
+			render_addBeam(positions[i][1] + vector_add, width, 0.5, black)
+		end
+
 		render_endBeam()
-
 
 		--render.SetMaterial(Material("cable/smoke.vmt"))
 		render_startBeam(samples+1)
-            local t = RealTime()
-            for i=1, samples+1 do
-                local curr = positions[i][1]
-                render_addBeam(curr, width, ((i/samples)*10000 - 0.5)%1, positions[i][2])
-            end
+
+		local t = RealTime()
+
+		for i=1, samples+1 do
+			local curr = positions[i][1]
+			render_addBeam(curr, width, ((i/samples)*10000 - 0.5)%1, positions[i][2])
+		end
+
 		render_endBeam()
 
-        render.PopFilterMag()
-        render.PopFilterMin()
+		render.PopFilterMag()
+		render.PopFilterMin()
 	end
 
 end
@@ -125,11 +130,11 @@ local function draw_hermite(x,y, w,h, ...)
 	cam.End(cam3d)
 end
 --[[
-    function PANEL:DrawHermite(...)
-        local x, y = self:ScreenToLocal(0,0)
-        local w, h = self:GetSize()
-        draw_hermite(x,y, w,h)
-    end
+	function PANEL:DrawHermite(...)
+		local x, y = self:ScreenToLocal(0,0)
+		local w, h = self:GetSize()
+		draw_hermite(x,y, w,h)
+	end
 ]]
 
 local last_part
