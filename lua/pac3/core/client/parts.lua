@@ -80,8 +80,12 @@ end
 local reloading = false
 
 function pac.RegisterPart(META)
+	assert(isstring(META.ClassName), "Part has no classname")
+	assert(istable(META.StorableVars), "Part " .. META.ClassName .. " has no StorableVars")
+
 	do
 		local cvar = CreateClientConVar("pac_enable_" .. META.ClassName, "1", true)
+
 		cvars.AddChangeCallback("pac_enable_" .. META.ClassName, function(name, old, new)
 			local enable = tobool(new)
 			META.GloballyEnabled = enable
@@ -92,6 +96,7 @@ function pac.RegisterPart(META)
 			end
 			pac.EnablePartsByClass(META.ClassName, enable)
 		end)
+
 		META.GloballyEnabled = cvar:GetBool()
 	end
 
