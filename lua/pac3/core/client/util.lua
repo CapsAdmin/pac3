@@ -99,6 +99,8 @@ do --dev util
 			ent.pac_ignored_data = nil
 			ent.pac_drawing = nil
 			ent.pac_shouldnotdraw = nil
+			ent.pac_onuse_only = nil
+			ent.pac_onuse_only_check = nil
 		end
 	end
 

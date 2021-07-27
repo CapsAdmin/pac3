@@ -95,11 +95,6 @@ function pace.HandleOnUseReceivedData(data)
 		type(data.totalParts) == 'number' and
 		type(data.transmissionID) == 'number'
 
-	if not validTransmission then
-		pace.HandleReceiveData(data)
-		return
-	end
-
 	if not data.owner.pac_onuse_only then
 		data.owner.pac_onuse_only = true
 		-- if TRUE - hide outfit
@@ -121,6 +116,16 @@ function pace.HandleOnUseReceivedData(data)
 			pac.ToggleIgnoreEntity(data.owner, false, 'pac_onuse_only')
 		end
 	end)
+
+	if not validTransmission then
+		local func = pace.HandleReceiveData(data)
+
+		if isfunction(func) then
+			pac.EntityIgnoreBound(data.owner, func)
+		end
+
+		return
+	end
 
 	local trData = transmissions[data.transmissionID]
 
