@@ -120,8 +120,14 @@ function pace.HandleOnUseReceivedData(data)
 	if not validTransmission then
 		local func = pace.HandleReceiveData(data)
 
+		local part_uid
+
+		if istable(data.part) and istable(data.part.self) then
+			part_uid = data.part.self.UniqueID
+		end
+
 		if isfunction(func) then
-			pac.EntityIgnoreBound(data.owner, func)
+			pac.EntityIgnoreBound(data.owner, func, part_uid)
 		end
 
 		return

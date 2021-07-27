@@ -101,6 +101,7 @@ do --dev util
 			ent.pac_shouldnotdraw = nil
 			ent.pac_onuse_only = nil
 			ent.pac_onuse_only_check = nil
+			ent.pac_ignored_callbacks = nil
 		end
 	end
 

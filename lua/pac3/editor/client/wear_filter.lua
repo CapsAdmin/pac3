@@ -67,10 +67,23 @@ do
         return ent.pac_ignored_data and ent.pac_ignored_data[strID] and table.Count(ent.pac_ignored_data) == 1 or false
     end
 
-    function pac.EntityIgnoreBound(ent, callback)
+    function pac.EntityIgnoreBound(ent, callback, index)
+		assert(isfunction(callback), "isfunction(callback)")
+
         if not pac.IsEntityIgnored(ent) then return callback(ent) end
+
         ent.pac_ignored_callbacks = ent.pac_ignored_callbacks or {}
-        table.insert(ent.pac_ignored_callbacks, callback)
+
+		if index then
+			for i, data in ipairs(ent.pac_ignored_callbacks) do
+				if data.index == index then
+					table.remove(ent.pac_ignored_callbacks, i)
+					break
+				end
+			end
+		end
+
+        table.insert(ent.pac_ignored_callbacks, {callback = callback, index = index})
     end
 
     function pac.CleanupEntityIgnoreBound(ent)
@@ -114,9 +127,9 @@ do
             ent.pac_ignored = newStatus
 
             if not newStatus and ent.pac_ignored_callbacks then
-                for i, callback in ipairs(ent.pac_ignored_callbacks) do
+                for i, data in ipairs(ent.pac_ignored_callbacks) do
                     ProtectedCall(function()
-                        callback(ent)
+                        data.callback(ent)
                     end)
                 end
 
