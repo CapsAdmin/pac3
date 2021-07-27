@@ -34,45 +34,45 @@ hook.Add("PlayerSpawn", "pace_outfit_ignore_update", function()
 end)
 
 net.Receive("pac.TogglePartDrawing", function()
-    local ent = net.ReadEntity()
+	local ent = net.ReadEntity()
 
-    if ent:IsValid() then
-        local b = (net.ReadBit() == 1)
-        pac.TogglePartDrawing(ent, b)
-    end
+	if ent:IsValid() then
+		local b = (net.ReadBit() == 1)
+		pac.TogglePartDrawing(ent, b)
+	end
 end)
 
 -- ignore
 do
-    function pac.ToggleIgnoreEntity(ent, status, strID)
-        if status then
-            return pac.IgnoreEntity(ent, strID)
-        else
-            return pac.UnIgnoreEntity(ent, strID)
-        end
-    end
+	function pac.ToggleIgnoreEntity(ent, status, strID)
+		if status then
+			return pac.IgnoreEntity(ent, strID)
+		else
+			return pac.UnIgnoreEntity(ent, strID)
+		end
+	end
 
-    function pac.IsEntityIgnored(ent)
+	function pac.IsEntityIgnored(ent)
 		if pace.ShouldIgnorePlayer(ent) then
 			return true
 		end
-        return ent.pac_ignored or false
-    end
+		return ent.pac_ignored or false
+	end
 
-    function pac.IsEntityIgnoredBy(ent, strID)
-        return ent.pac_ignored_data and ent.pac_ignored_data[strID] or false
-    end
+	function pac.IsEntityIgnoredBy(ent, strID)
+		return ent.pac_ignored_data and ent.pac_ignored_data[strID] or false
+	end
 
-    function pac.IsEntityIgnoredOnlyBy(ent, strID)
-        return ent.pac_ignored_data and ent.pac_ignored_data[strID] and table.Count(ent.pac_ignored_data) == 1 or false
-    end
+	function pac.IsEntityIgnoredOnlyBy(ent, strID)
+		return ent.pac_ignored_data and ent.pac_ignored_data[strID] and table.Count(ent.pac_ignored_data) == 1 or false
+	end
 
-    function pac.EntityIgnoreBound(ent, callback, index)
+	function pac.EntityIgnoreBound(ent, callback, index)
 		assert(isfunction(callback), "isfunction(callback)")
 
-        if not pac.IsEntityIgnored(ent) then return callback(ent) end
+		if not pac.IsEntityIgnored(ent) then return callback(ent) end
 
-        ent.pac_ignored_callbacks = ent.pac_ignored_callbacks or {}
+		ent.pac_ignored_callbacks = ent.pac_ignored_callbacks or {}
 
 		if index then
 			for i, data in ipairs(ent.pac_ignored_callbacks) do
@@ -83,64 +83,64 @@ do
 			end
 		end
 
-        table.insert(ent.pac_ignored_callbacks, {callback = callback, index = index})
-    end
+		table.insert(ent.pac_ignored_callbacks, {callback = callback, index = index})
+	end
 
-    function pac.CleanupEntityIgnoreBound(ent)
-        ent.pac_ignored_callbacks = nil
-    end
+	function pac.CleanupEntityIgnoreBound(ent)
+		ent.pac_ignored_callbacks = nil
+	end
 
-    function pac.IgnoreEntity(ent, strID)
-        if ent == pac.LocalPlayer then return false end
-        strID = strID or "generic"
-        if ent.pac_ignored_data and ent.pac_ignored_data[strID] then return end
-        ent.pac_ignored = ent.pac_ignored or false
-        ent.pac_ignored_data = ent.pac_ignored_data or {}
-        ent.pac_ignored_data[strID] = true
-        local newStatus = true
+	function pac.IgnoreEntity(ent, strID)
+		if ent == pac.LocalPlayer then return false end
+		strID = strID or "generic"
+		if ent.pac_ignored_data and ent.pac_ignored_data[strID] then return end
+		ent.pac_ignored = ent.pac_ignored or false
+		ent.pac_ignored_data = ent.pac_ignored_data or {}
+		ent.pac_ignored_data[strID] = true
+		local newStatus = true
 
-        if newStatus ~= ent.pac_ignored then
-            ent.pac_ignored = newStatus
-            pac.TogglePartDrawing(ent, not newStatus)
-        end
+		if newStatus ~= ent.pac_ignored then
+			ent.pac_ignored = newStatus
+			pac.TogglePartDrawing(ent, not newStatus)
+		end
 
-        return true
-    end
+		return true
+	end
 
-    function pac.UnIgnoreEntity(ent, strID)
-        if ent == pac.LocalPlayer then return false end
-        strID = strID or "generic"
-        if ent.pac_ignored_data and ent.pac_ignored_data[strID] == nil then return end
-        ent.pac_ignored = ent.pac_ignored or false
-        ent.pac_ignored_data = ent.pac_ignored_data or {}
-        ent.pac_ignored_data[strID] = nil
-        local newStatus = false
+	function pac.UnIgnoreEntity(ent, strID)
+		if ent == pac.LocalPlayer then return false end
+		strID = strID or "generic"
+		if ent.pac_ignored_data and ent.pac_ignored_data[strID] == nil then return end
+		ent.pac_ignored = ent.pac_ignored or false
+		ent.pac_ignored_data = ent.pac_ignored_data or {}
+		ent.pac_ignored_data[strID] = nil
+		local newStatus = false
 
-        for _, v in pairs(ent.pac_ignored_data) do
-            if v then
-                newStatus = true
-                break
-            end
-        end
+		for _, v in pairs(ent.pac_ignored_data) do
+			if v then
+				newStatus = true
+				break
+			end
+		end
 
-        if newStatus ~= ent.pac_ignored then
-            ent.pac_ignored = newStatus
+		if newStatus ~= ent.pac_ignored then
+			ent.pac_ignored = newStatus
 
-            if not newStatus and ent.pac_ignored_callbacks then
-                for i, data in ipairs(ent.pac_ignored_callbacks) do
-                    ProtectedCall(function()
-                        data.callback(ent)
-                    end)
-                end
+			if not newStatus and ent.pac_ignored_callbacks then
+				for i, data in ipairs(ent.pac_ignored_callbacks) do
+					ProtectedCall(function()
+						data.callback(ent)
+					end)
+				end
 
-                ent.pac_ignored_callbacks = nil
-            end
+				ent.pac_ignored_callbacks = nil
+			end
 
-            pac.TogglePartDrawing(ent, not newStatus)
-        end
+			pac.TogglePartDrawing(ent, not newStatus)
+		end
 
-        return newStatus
-    end
+		return newStatus
+	end
 end
 
 CreateClientConVar("pace_wear_filter_mode", "disabled")
@@ -278,28 +278,28 @@ local function player_list_form(name, id, help)
 end
 
 do
-    net.Receive("pac_update_playerfilter", function()
-        local ids = pace.CreateWearFilter()
-        net.Start("pac_update_playerfilter")
-        net.WriteUInt(#ids, 8)
+	net.Receive("pac_update_playerfilter", function()
+		local ids = pace.CreateWearFilter()
+		net.Start("pac_update_playerfilter")
+		net.WriteUInt(#ids, 8)
 
-        for _, val in ipairs(ids) do
-            net.WriteString(val)
-        end
+		for _, val in ipairs(ids) do
+			net.WriteString(val)
+		end
 
-        net.SendToServer()
-    end)
+		net.SendToServer()
+	end)
 
-    function pace.PopulateWearMenu(menu)
-        for _, ply in ipairs(player.GetHumans()) do
+	function pace.PopulateWearMenu(menu)
+		for _, ply in ipairs(player.GetHumans()) do
 			if ply == pac.LocalPlayer then continue end
 
 			local icon = menu:AddOption(L"wear only for " .. ply:Nick(), function()
 				pace.WearParts(ply)
 			end)
 			icon:SetImage(pace.MiscIcons.wear)
-        end
-    end
+		end
+	end
 end
 
 function pace.FillWearSettings(pnl)
