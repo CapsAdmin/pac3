@@ -31,6 +31,10 @@ BUILDER
 			-- this is an unfortunate name, it controls the order in which the scene related functions iterate over children
 			-- in practice it's often used to make something draw above something else in translucent rendering
 			:GetSet("DrawOrder", 0)
+			:GetSet("IsDisturbing", false, {
+				editor_friendly = "IsExplicit",
+				description = "Marks this content as NSFW, and makes it hidden for most of players who have pac_hide_disturbing set to 1"
+			})
 	:EndStorableVars()
 
 
@@ -46,6 +50,7 @@ function PART:PreInitialize()
 	self.modifiers = {}
 	self.RootPart = NULL
 	self.DrawOrder = 0
+	self.hide_disturbing = false
 	self.active_events = {}
 	self.active_events_ref_count = 0
 end
@@ -484,6 +489,15 @@ do -- scene graph
 end
 
 do -- hidden / events
+	local pac_hide_disturbing = CreateClientConVar("pac_hide_disturbing", "1", true, true, "Hide parts which outfit creators marked as 'nsfw' (e.g. gore or explicit content)")
+
+	function PART:SetIsDisturbing(val)
+		self.IsDisturbing = val
+		self.hide_disturbing = pac_hide_disturbing:GetBool() and val
+
+		self:CallRecursive("CalcShowHide", false)
+	end
+
 	function PART:OnHide() end
 	function PART:OnShow() end
 
@@ -557,7 +571,7 @@ do -- hidden / events
 			return true
 		end
 
-		return part.Hide
+		return part.Hide or part.hide_disturbing
 	end
 
 	function PART:IsHidden()
