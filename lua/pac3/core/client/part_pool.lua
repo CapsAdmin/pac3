@@ -225,7 +225,6 @@ function pac.UnhookEntityRender(ent, part)
 end
 
 pac.AddHook("Think", "events", function()
-
 	for _, ply in ipairs(player.GetAll()) do
 		if not ent_parts[ply] then continue end
 		if pac.IsEntityIgnored(ply) then continue end
@@ -310,9 +309,7 @@ pac.AddHook("Think", "events", function()
 		end
 	end
 
-
 	if pac.last_flashlight_on ~= pac.LocalPlayer:FlashlightIsOn() then
-
 		local lamp = ProjectedTexture()
 
 		lamp:SetTexture( "effects/flashlight001" )
@@ -577,6 +574,13 @@ function pac.EnablePartsByClass(classname, enable)
 	end
 end
 
+cvars.AddChangeCallback("pac_hide_disturbing", function()
+	for _, part in pairs(all_parts) do
+		if part:IsValid() then
+			part:UpdateIsDisturbing()
+		end
+	end
+end, "PAC3")
 
 do -- drawing
 	local pac = pac

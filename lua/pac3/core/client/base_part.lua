@@ -498,6 +498,14 @@ do -- hidden / events
 		self:CallRecursive("CalcShowHide", false)
 	end
 
+	function PART:UpdateIsDisturbing()
+		local new_value = pac_hide_disturbing:GetBool() and self.IsDisturbing
+		if new_value == self.hide_disturbing then return end
+		self.hide_disturbing = new_value
+
+		self:CallRecursive("CalcShowHide", false)
+	end
+
 	function PART:OnHide() end
 	function PART:OnShow() end
 
