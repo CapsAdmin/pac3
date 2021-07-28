@@ -187,7 +187,7 @@ function net.WriteStream(data, callback, dontcompress)
 	while net.Stream.WriteStreams[identifier] do
 		identifier = identifier % 1024 + 1
 		if identifier == startid then
-			ErrorNoHalt("Netstream is full of WriteStreams!")
+			ErrorNoHalt("Netstream is full of WriteStreams!\n" .. debug.traceback() .. "\n")
 			net.WriteUInt(0, 32)
 			return
 		end
@@ -266,7 +266,7 @@ function net.ReadStream(ply, callback)
 
 	for _, v in ipairs(queue) do
 		if v.identifier == identifier then
-			ErrorNoHalt("Tried to start a new ReadStream for an already existing stream!")
+			ErrorNoHalt("Tried to start a new ReadStream for an already existing stream!\n" .. debug.traceback() .. "\n")
 			return
 		end
 	end
