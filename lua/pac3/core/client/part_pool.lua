@@ -54,45 +54,46 @@ end
 do
 	local function render_override(ent, type)
 		local parts = ent_parts[ent]
+
 		if parts == nil or next(parts) == nil then
 			pac.UnhookEntityRender(ent)
-		else
+			goto CEASE_FUNCTION
+		end
 
-			if type == "update_legacy_bones" then
-				pac.ResetBones(ent)
+		if type == "update_legacy_bones" then
+			pac.ResetBones(ent)
 
-				for key, part in pairs(parts) do
-					if part:IsValid() then
-						if not part:HasParent() then
-							part:CallRecursive("BuildBonePositions")
-						end
-					else
-						parts[key] = nil
-					end
-				end
-			end
-
-			if type == "update" then
-				for key, part in pairs(parts) do
-					if part:IsValid() then
-						if not part:HasParent() then
-							part:CallRecursive("Think")
-						end
-					else
-						parts[key] = nil
-					end
-				end
-			end
-
-			for key, part in pairs(parts) do
+			for key, part in next, parts do
 				if part:IsValid() then
 					if not part:HasParent() then
-						if part.OwnerName == "viewmodel" and type == "viewmodel" or
+						part:CallRecursive("BuildBonePositions")
+					end
+				else
+					parts[key] = nil
+				end
+			end
+		elseif type == "update" then
+			for key, part in next, parts do
+				if part:IsValid() then
+					if not part:HasParent() then
+						part:CallRecursive("Think")
+					end
+				else
+					parts[key] = nil
+				end
+			end
+		else
+			for key, part in next, parts do
+				if part:IsValid() then
+					if not part:HasParent() then
+						if
+							part.OwnerName == "viewmodel" and type == "viewmodel" or
 							part.OwnerName == "hands" and type == "hands" or
 							part.OwnerName ~= "viewmodel" and part.OwnerName ~= "hands" and type ~= "viewmodel" and type ~= "hands"
 						then
-							if part:IsDrawHidden() then continue end
-							part:CallRecursive("Draw", type)
+							if not part:IsDrawHidden() then
+								part:CallRecursive("Draw", type)
+							end
 						end
 					end
 				else
@@ -100,6 +101,8 @@ do
 				end
 			end
 		end
+
+		::CEASE_FUNCTION::
 
 		render_SetColorModulation(1, 1, 1)
 		render_SetBlend(1)

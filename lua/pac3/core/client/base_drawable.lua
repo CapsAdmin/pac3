@@ -171,15 +171,12 @@ local function call_draw()
 end
 
 function PART:Draw(draw_type)
-	if not self.OnDraw then return end
-	if not self.Enabled then return end
-	if self:IsHiddenCached() then return end
+	if not self.OnDraw or not self.Enabled or self:IsHiddenCached() then return end
 
 	if
 		draw_type == "viewmodel" or draw_type == "hands" or
 		((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
 		((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
-
 	then
 		if not self.HandleModifiersManually then self:ModifiersPreEvent('OnDraw', draw_type) end
 
