@@ -90,6 +90,12 @@ do --dev util
 		end
 	end
 
+	local _part
+
+	local function nuke_part()
+		_part:Remove()
+	end
+
 	function pac.Panic()
 		pac.RemoveAllParts()
 		pac.RemoveAllPACEntities()
@@ -106,6 +112,17 @@ do --dev util
 			if ent.pac_bones_once then
 				pac.ResetBones(ent)
 				ent.pac_bones_once = nil
+			end
+
+			if istable(ent.pac_animation_sequences) then
+				for part in next, ent.pac_animation_sequences do
+					if part:IsValid() then
+						_part = part
+						ProtectedCall(nuke_part)
+					end
+				end
+
+				ent.pac_animation_sequences = nil
 			end
 		end
 	end
