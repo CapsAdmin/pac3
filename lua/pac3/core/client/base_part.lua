@@ -137,6 +137,12 @@ do -- owner
 		local owner_id = self:GetPlayerOwnerId()
 		self.PlayerOwner = ply
 
+		if ply and ply:IsValid() then
+			self.PlayerOwnerHash = pac.Hash(ply)
+		else
+			self.PlayerOwnerHash = nil
+		end
+
 		if owner_id then
 			pac.RemoveUniqueIDPart(owner_id, self.UniqueID)
 		end
@@ -148,17 +154,13 @@ do -- owner
 		end
 	end
 
-	function PART:GetPlayerOwnerId()
-		local owner = self:GetPlayerOwner()
-		if not owner:IsValid() then return end
-
-		return pac.Hash(owner)
-	end
-
-
 	-- always return the root owner
 	function PART:GetPlayerOwner()
 		return self:GetRootPart().PlayerOwner
+	end
+
+	function PART:GetPlayerOwnerId()
+		return self:GetRootPart().PlayerOwnerHash
 	end
 
 	function PART:GetParentOwner()
@@ -240,18 +242,23 @@ do -- scene graph
 			return self.Children
 		end
 
-		local function add_recursive(part, tbl)
-			for _, child in ipairs(part.Children) do
-				table.insert(tbl, child)
-				add_recursive(child, tbl)
+		local function add_recursive(part, tbl, index)
+			local source = part.Children
+
+			for i = 1, #source do
+				tbl[index] = source[i]
+				index = index + 1
+				index = add_recursive(source[i], tbl, index)
 			end
+
+			return index
 		end
 
 		function PART:GetChildrenList()
 			if not self.children_list then
 				local tbl = {}
 
-				add_recursive(self, tbl)
+				add_recursive(self, tbl, 1)
 
 				self.children_list = tbl
 			end
@@ -278,20 +285,20 @@ do -- scene graph
 			end
 		end
 
+		local function quick_copy(input)
+			local output = {}
+			for i = 1, #input do output[i + 1] = input[i] end
+			return output
+		end
+
 		function PART:GetParentList()
 			if not self.parent_list then
-				local tbl = {}
-
-				local part = self.Parent
-				local i = 1
-
-				while part:IsValid() do
-					tbl[i] = part
-					part = part.Parent
-					i = i + 1
+				if self.Parent and self.Parent:IsValid() then
+					self.parent_list = quick_copy(self.Parent:GetParentList())
+					self.parent_list[1] = self.Parent
+				else
+					self.parent_list = {}
 				end
-
-				self.parent_list = tbl
 			end
 
 			return self.parent_list
@@ -302,6 +309,15 @@ do -- scene graph
 
 			for _, child in ipairs(self:GetChildrenList()) do
 				child.parent_list = nil
+			end
+		end
+
+		function PART:InvalidateParentListPartial(parent_list, parent)
+			self.parent_list = quick_copy(parent_list)
+			self.parent_list[1] = parent
+
+			for _, child in ipairs(self:GetChildren()) do
+				child:InvalidateParentListPartial(self.parent_list, self)
 			end
 		end
 	end
@@ -338,10 +354,12 @@ do -- scene graph
 			self:GetParent():SortChildren()
 		end
 
+		-- why would we need to sort part's children
+		-- if it is completely unmodified?
 		part:SortChildren()
 		self:SortChildren()
 
-		part:InvalidateParentList()
+		part:InvalidateParentListPartial(self:GetParentList(), self)
 
 		if self:GetPlayerOwner() == pac.LocalPlayer then
 			pac.CallHook("OnPartParent", self, part)
@@ -353,7 +371,7 @@ do -- scene graph
 	end
 
 	do
-		local sort = function(a, b)
+		local function sort(a, b)
 			return a.DrawOrder < b.DrawOrder
 		end
 
@@ -390,9 +408,7 @@ do -- scene graph
 
 	function PART:GetRootPart()
 		local list = self:GetParentList()
-		if list[1] then
-			return list[#list]
-		end
+		if list[1] then return list[#list] end
 		return self
 	end
 
@@ -722,7 +738,7 @@ do -- serializing
 
 			for _, key in pairs(self:GetStorableVars()) do
 				if self.PropertyWhitelist and not self.PropertyWhitelist[key] then
-					continue
+					goto CONTINUE
 				end
 
 				table.insert(out, {
@@ -731,6 +747,8 @@ do -- serializing
 					get = function() return self["Get" .. key](self) end,
 					udata = pac.GetPropertyUserdata(self, key) or {},
 				})
+
+				::CONTINUE::
 			end
 
 			if self.GetDynamicProperties then
@@ -738,10 +756,9 @@ do -- serializing
 
 				if props then
 					for _, info in pairs(props) do
-						if self.PropertyWhitelist and not self.PropertyWhitelist[info.key] then
-							continue
+						if not self.PropertyWhitelist or self.PropertyWhitelist[info.key] then
+							table.insert(out, info)
 						end
-						table.insert(out, info)
 					end
 				end
 			end
@@ -808,7 +825,7 @@ do -- serializing
 			self:SetUniqueID(tbl.self.UniqueID)
 			self.delayed_variables = self.delayed_variables or {}
 
-			for key, value in pairs(tbl.self) do
+			for key, value in next, tbl.self do
 				if key == "UniqueID" then goto CONTINUE end
 
 				if self["Set" .. key] then

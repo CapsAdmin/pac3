@@ -185,41 +185,48 @@ assert(string_hash(string.rep('aghj', 16)) == DLib.Util.QuickSHA256(string.rep('
 assert(string_hash(string.rep('aghj', 15) .. 'zzz') == DLib.Util.QuickSHA256(string.rep('aghj', 15) .. 'zzz'))
 ]]
 
-function pac.Hash(obj)
-    local t = type(obj)
+local is_singleplayer = game.SinglePlayer()
+local is_bot = FindMetaTable("Player").IsBot
+local steamid64 = FindMetaTable("Player").SteamID64
 
-    if t == "nil" then
-        return string_hash(SysTime() .. ' ' .. os.time() .. ' ' .. RealTime())
-    elseif t == "string" then
-        return string_hash(obj)
-    elseif t == "number" then
-        return string_hash(tostring(t))
-    elseif t == "table" then
-        return string_hash(("%p"):format(obj))
-    elseif t == "Player" then
-		if game.SinglePlayer() then
+function pac.Hash(obj)
+	local t = type(obj)
+
+	if t == "string" then
+		return string_hash(obj)
+	elseif t == "Player" then
+		if is_singleplayer then
 			return "SinglePlayer"
 		end
 
+		-- Player(s) can never be next bots (?)
+		-- IsNextBot is present in Entity and NextBot metatables (and those functions are different)
+		-- but not in Player's one
 		if obj:IsNextBot() then
 			return "nextbot " .. tostring(obj:EntIndex())
 		end
 
-		if obj:IsBot() then
+		if is_bot(obj) then
 			return "bot " .. tostring(obj:EntIndex())
 		end
 
-        return obj:SteamID64()
-    elseif IsEntity(obj) then
-        return tostring(obj:EntIndex())
-    else
-        error("NYI " .. t)
-    end
+		return steamid64(obj)
+	elseif t == "number" then
+		return string_hash(tostring(t))
+	elseif t == "table" then
+		return string_hash(("%p"):format(obj))
+	elseif t == "nil" then
+		return string_hash(SysTime() .. ' ' .. os.time() .. ' ' .. RealTime())
+	elseif IsEntity(obj) then
+		return tostring(obj:EntIndex())
+	else
+		error("NYI " .. t)
+	end
 end
 
 function pac.ReverseHash(str, t)
-    if t == "Player" then
-		if game.SinglePlayer() then
+	if t == "Player" then
+		if is_singleplayer then
 			return Entity(1)
 		end
 
@@ -229,10 +236,10 @@ function pac.ReverseHash(str, t)
 			return pac.ReverseHash(str:sub(#"bot " + 1), "Entity")
 		end
 
-        return player.GetBySteamID64(str) or NULL
-    elseif t == "Entity" then
-        return ents.GetByIndex(tonumber(str))
-    else
-        error("NYI " .. t)
-    end
+		return player.GetBySteamID64(str) or NULL
+	elseif t == "Entity" then
+		return ents.GetByIndex(tonumber(str))
+	else
+		error("NYI " .. t)
+	end
 end
