@@ -102,6 +102,11 @@ do --dev util
 			ent.pac_onuse_only = nil
 			ent.pac_onuse_only_check = nil
 			ent.pac_ignored_callbacks = nil
+
+			if ent.pac_bones_once then
+				pac.ResetBones(ent)
+				ent.pac_bones_once = nil
+			end
 		end
 	end
 

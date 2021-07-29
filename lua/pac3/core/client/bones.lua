@@ -367,6 +367,8 @@ do -- bone manipulation for boneanimlib
 	local ManipulateBoneJiggle = entmeta.ManipulateBoneJiggle
 
 	function pac.ResetBones(ent)
+		ent.pac_bones_once = true
+
 		local pac_boneanim = ent.pac_boneanim
 		local count = (ent:GetBoneCount() or 0) - 1
 
