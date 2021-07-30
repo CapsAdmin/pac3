@@ -72,13 +72,12 @@ function PART:GetFlexMap()
 	return out
 end
 
+-- flexes are additive
 function PART:UpdateFlex()
 	local ent = get_owner(self)
 	if not ent:IsValid() or not ent.GetFlexNum or ent:GetFlexNum() == 0 then return end
 
-	local name = self.Flex:lower()
-	local weight = self.Weight
-
+	local name = self.flex_lower
 	local flex_map = self:GetFlexMap()
 
 	if not flex_map[name] then
@@ -86,8 +85,7 @@ function PART:UpdateFlex()
 	end
 
 	local id = flex_map[name].i
-
-	ent:SetFlexWeight(id, ent:GetFlexWeight(id) + weight)
+	ent:SetFlexWeight(id, ent:GetFlexWeight(id) + self.Weight)
 end
 
 function PART:OnBuildBonePositions()
@@ -96,28 +94,29 @@ end
 
 function PART:SetFlex(num)
 	self.Flex = num
-	self:UpdateFlex()
+	self.flex_lower = num:lower()
+	-- self:UpdateFlex()
 end
 
 function PART:SetWeight(num)
 	self.Weight = num
-	self:UpdateFlex()
+	-- self:UpdateFlex()
 end
 
 function PART:OnShow(from_rendering)
 	--if from_rendering then return end
 
-	self:UpdateFlex()
+	-- self:UpdateFlex()
 end
 
 function PART:OnHide()
-	if self.DefaultOnHide then
+	--[[if self.DefaultOnHide then
 		self:UpdateFlex()
-	end
+	end]]
 end
 
 function PART:OnRemove()
-	self:UpdateFlex()
+	-- self:UpdateFlex()
 end
 
 BUILDER:Register()
