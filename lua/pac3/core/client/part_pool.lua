@@ -748,7 +748,11 @@ do -- drawing
 	local setup_bones = {}
 
 	function pac.SetupBones(ent)
-		setup_bones[ent] = ent
+		if not setup_bones[ent] then
+			setup_bones[ent] = ent
+			-- ent:InvalidateBoneCache()
+			-- ent:SetupBones()
+		end
 	end
 
 	do
@@ -773,6 +777,7 @@ do -- drawing
 
 			for ent in next, setup_bones do
 				if ent:IsValid() then
+					-- ent:InvalidateBoneCache()
 					ent:SetupBones()
 				end
 			end
@@ -799,6 +804,7 @@ do -- drawing
 
 			for ent in next, setup_bones do
 				if ent:IsValid() then
+					-- ent:InvalidateBoneCache()
 					ent:SetupBones()
 				end
 			end

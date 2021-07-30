@@ -34,6 +34,7 @@ function pac.GetAllBones(ent)
 	if ent:IsValid() then
 		ent:InvalidateBoneCache()
 		ent:SetupBones()
+		-- pac.SetupBones(ent)
 
 		local count = ent:GetBoneCount() or 0
 
@@ -123,6 +124,8 @@ function pac.GetModelBones(ent)
 		ent:InvalidateBoneCache()
 		ent:SetupBones()
 
+		-- pac.SetupBones(ent)
+
 		if ent.pac_holdtypes then
 			ent.pac_holdtypes = {}
 		end
@@ -200,17 +203,13 @@ function pac.GetBonePosAng(ent, id, parent)
 
 			return endpos, Angle()
 		end
-	end
-
-	if id == "camera" then
+	elseif id == "camera" then
 		if pac_isCameraAllowed() then
 			return pac.EyePos, pac.EyeAng
 		else
 			return ent:EyePos(), ent:EyeAngles()
 		end
-	end
-
-	if id == "player_eyes" then
+	elseif id == "player_eyes" then
 		local oldEnt = ent -- Track reference to the original entity in case we aren't allowed to draw here
 		local ent = ent.pac_traceres and ent.pac_traceres.Entity or util_QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()}).Entity
 		local allowed = pac_isCameraAllowed()
@@ -224,29 +223,17 @@ function pac.GetBonePosAng(ent, id, parent)
 		else
 			return oldEnt:EyePos(), oldEnt:EyeAngles()
 		end
-	end
-
-	if id == "pos_ang" then
+	elseif id == "pos_ang" then
 		return ent:GetPos(), ent:GetAngles()
-	end
-
-	if id == "pos_noang" then
+	elseif id == "pos_noang" then
 		return ent:GetPos(), angle_origin
-	end
-
-	if id == "pos_eyeang" then
+	elseif id == "pos_eyeang" then
 		return ent:GetPos(), ent:EyeAngles()
-	end
-
-	if id == "eyepos_eyeang" then
+	elseif id == "eyepos_eyeang" then
 		return ent:EyePos(), ent:EyeAngles()
-	end
-
-	if id == "eyepos_ang" then
+	elseif id == "eyepos_ang" then
 		return ent:EyePos(), ent:GetAngles()
-	end
-
-	if id == "hitpos" or id == "hit position" then
+	elseif id == "hitpos" or id == "hit position" then
 		if ent.pac_traceres then
 			return ent.pac_traceres.HitPos, ent.pac_traceres.HitNormal:Angle()
 		else
@@ -254,9 +241,7 @@ function pac.GetBonePosAng(ent, id, parent)
 
 			return res.HitPos, res.HitNormal:Angle()
 		end
-	end
-
-	if id == "hitpos_ent_ang" then
+	elseif id == "hitpos_ent_ang" then
 		if ent.pac_traceres then
 			return ent.pac_traceres.HitPos, ent:EyeAngles()
 		else
@@ -264,9 +249,7 @@ function pac.GetBonePosAng(ent, id, parent)
 
 			return res.HitPos, ent:EyeAngles()
 		end
-	end
-
-	if id == "hitpos_ent_ang_zero_pitch" then
+	elseif id == "hitpos_ent_ang_zero_pitch" then
 		if ent.pac_traceres then
 			local ang = ent:EyeAngles()
 			ang.p = 0
@@ -276,22 +259,16 @@ function pac.GetBonePosAng(ent, id, parent)
 
 			return res.HitPos, ent:EyeAngles()
 		end
-	end
-
-	if id == "footstep" then
+	elseif id == "footstep" then
 		if ent.pac_last_footstep_pos then
 			return ent.pac_last_footstep_pos, UP
 		end
-	end
-
-	if id == "skirt" then
+	elseif id == "skirt" then
 		local apos, aang = pac.GetBonePosAng(ent, "left thigh", parent)
 		local bpos, bang = pac.GetBonePosAng(ent, "right thigh", parent)
 
 		return LerpVector(0.5, apos, bpos), LerpAngle(0.5, aang, bang)
-	end
-
-	if id == "skirt2" then
+	elseif id == "skirt2" then
 		local apos, aang = pac.GetBonePosAng(ent, "left calf", parent)
 		local bpos, bang = pac.GetBonePosAng(ent, "right calf", parent)
 
@@ -324,6 +301,7 @@ function pac.GetBonePosAng(ent, id, parent)
 		else
 			if parent and data.parent_i then
 				pos, ang = GetBonePosition(ent, data.parent_i)
+
 				if not pos or not ang then
 					pos, ang = GetBonePosition(ent, data.bone)
 				end
@@ -333,6 +311,7 @@ function pac.GetBonePosAng(ent, id, parent)
 		end
 	else
 		local bone_id = id and ent:LookupBone(id) or nil
+
 		if bone_id then
 			pos, ang = GetBonePosition(ent, bone_id)
 		end
