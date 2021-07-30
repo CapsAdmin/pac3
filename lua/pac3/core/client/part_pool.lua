@@ -211,7 +211,6 @@ function pac.HookEntityRender(ent, part)
 end
 
 function pac.UnhookEntityRender(ent, part)
-
 	if part and ent_parts[ent] then
 		ent_parts[ent][part] = nil
 	end
@@ -220,6 +219,11 @@ function pac.UnhookEntityRender(ent, part)
 		ent_parts[ent] = nil
 		ent.pac_has_parts = nil
 		pac.drawn_entities[ent] = nil
+
+		if ent.pac_bones_once then
+			pac.ResetBones(ent)
+			ent.pac_bones_once = nil
+		end
 	end
 
 	if part then
