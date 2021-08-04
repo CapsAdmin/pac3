@@ -199,7 +199,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 		end
 
 		if tbl.self.ClassName == "proxy" and tbl.self.VariableName == "Color" then
-			if tbl.self.Expression ~= "" then
+			if isstring(tbl.self.Expression) and tbl.self.Expression ~= "" then
 				local r,g,b = unpack(tbl.self.Expression:Split(","))
 				r = tonumber(r)
 				g = tonumber(g)
