@@ -1036,8 +1036,12 @@ do
 		if not self.Enabled then return end
 		if self.ThinkTime ~= 0 and self.last_think and self.last_think > pac.RealTime then return end
 
-
-		if not self.AlwaysThink and self:IsHiddenCached() then return end
+		if not self.AlwaysThink and self:IsHiddenCached() then
+			self:AlwaysOnThink() -- for things that drive general logic
+			-- such as processing outfit URL downloads
+			-- without calling probably expensive self:OnThink()
+			return
+		end
 
 		if self.delayed_variables then
 
@@ -1048,10 +1052,14 @@ do
 			self.delayed_variables = nil
 		end
 
+		self:AlwaysOnThink() -- for things that drive general logic
+		-- such as processing outfit URL downloads
+		-- without calling probably expensive self:OnThink()
 		self:OnThink()
 	end
 
 	function PART:OnThink() end
+	function PART:AlwaysOnThink() end
 end
 
 BUILDER:Register()

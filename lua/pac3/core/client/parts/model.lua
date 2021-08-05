@@ -295,6 +295,12 @@ function PART:OnThink()
 	self:CheckBoneMerge()
 end
 
+function PART:AlwaysOnThink()
+	if self.waiting_model_change then
+		self:ProcessModelChange()
+	end
+end
+
 function PART:BindMaterials(ent)
 	local materials = self.material_override_self or self.material_override
 	local material_bound = false
@@ -536,14 +542,20 @@ function PART:RealSetModel(path)
 	self:RefreshModel()
 end
 
-function PART:SetModel(path)
-	self.Model = path
+function PART:SetForceObjUrl(value)
+	self.ForceObjUrl = value
+	self.waiting_model_change = true
+end
+
+function PART:ProcessModelChange()
+	self.waiting_model_change = false
+
 	local owner = self:GetOwner()
 	if not owner:IsValid() then return end
+	local path = self.Model
 
 	if path:find("://", nil, true) then
-
-		if path:StartWith("objhttp") or path:EndsWith(".obj") or self.ForceObjUrl then
+		if path:StartWith("objhttp") or path:StartWith("obj:http") or path:EndsWith(".obj") or self.ForceObjUrl then
 			self.loading = "downloading obj"
 
 			pac.urlobj.GetObjFromURL(path, false, false,
@@ -595,6 +607,7 @@ function PART:SetModel(path)
 						self:SetAlpha(0)
 					end
 				end,
+
 				function(finished, statusMessage)
 					if finished then
 						self.loading = nil
@@ -643,6 +656,15 @@ function PART:SetModel(path)
 
 		self:RealSetModel(path)
 	end
+end
+
+function PART:SetModel(path)
+	self.Model = path
+
+	local owner = self:GetOwner()
+	if not owner:IsValid() then return end
+
+	self.waiting_model_change = true
 end
 
 local NORMAL = Vector(1,1,1)
