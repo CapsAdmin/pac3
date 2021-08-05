@@ -39,7 +39,7 @@ function net.Stream.ReadStream:Read(size)
 	local crc = net.ReadString()
 	local data = net.ReadData(size)
 
-	if crc == pac.Hash(data) then
+	if crc == util.CRC(data) then
 		self.chunks[progress] = data
 	else
 		pac.Message("net.Stream.ReadStream:Read(): hash received and hash of chunk do not match match")
@@ -187,7 +187,7 @@ function net.WriteStream(data, callback, dontcompress)
 		local datachunk = string.sub(data, (i - 1) * net.Stream.SendSize + 1, i * net.Stream.SendSize)
 		chunks[i] = {
 			data = datachunk,
-			crc = pac.Hash(datachunk),
+			crc = util.CRC(datachunk),
 		}
 	end
 
