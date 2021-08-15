@@ -674,6 +674,11 @@ do
 		self.Model = modelPath
 		pac.ResetBoneCache(self.Owner)
 		self.Owner:SetModel(real_model)
+
+		if not self:IsHidden() and not self:IsDrawHidden() then
+			-- notify children about model change
+			self:ShowFromRendering()
+		end
 	end
 end
 
