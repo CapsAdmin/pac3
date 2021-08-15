@@ -535,6 +535,11 @@ function PART:RefreshModel()
 	self:SetScale(self:GetScale())
 	self:SetSkin(self:GetSkin())
 	self:SetLevelOfDetail(self:GetLevelOfDetail())
+
+	if not self:IsHidden() and not self:IsDrawHidden() then
+		-- notify children about model change
+		self:ShowFromRendering()
+	end
 end
 
 function PART:RealSetModel(path)
@@ -545,6 +550,30 @@ end
 function PART:SetForceObjUrl(value)
 	self.ForceObjUrl = value
 	self.waiting_model_change = true
+end
+
+local function RealDrawModel(self, ent, pos, ang)
+	if self.Mesh then
+		ent:SetModelScale(0,0)
+		ent:DrawModel()
+
+		local matrix = Matrix()
+
+		matrix:SetAngles(ang)
+		matrix:SetTranslation(pos)
+
+		if ent.pac_model_scale then
+			matrix:Scale(ent.pac_model_scale)
+		else
+			matrix:Scale(self.Scale * self.Size)
+		end
+
+		cam_PushModelMatrix(matrix)
+			self.Mesh:Draw()
+		cam_PopModelMatrix()
+	else
+		ent:DrawModel()
+	end
 end
 
 function PART:ProcessModelChange()
