@@ -142,7 +142,7 @@ do -- from server
 			end
 		end
 
-		local func = function()
+		local function load_outfit()
 			if dupeEnt and not dupeEnt:IsValid() then return end
 
 			dupepart = pac.GetPartFromUniqueID(data.player_uid, part_data.self.UniqueID)
@@ -168,13 +168,15 @@ do -- from server
 
 			part:CallRecursive('OnWorn')
 			part:CallRecursive('PostApplyFixes')
+
+			owner.pac_fix_show_from_render = SysTime() + 1
 		end
 
 		if doItNow then
-			func()
+			load_outfit()
 		end
 
-		return func
+		return load_outfit
 	end
 
 	function pace.RemovePartFromServer(owner, part_name, data)

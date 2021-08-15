@@ -163,7 +163,9 @@ function pac.HideEntityParts(ent)
 end
 
 function pac.ShowEntityParts(ent)
-	if ent_parts[ent] and (not ent.pac_drawing) and (not ent.pac_shouldnotdraw) and (not ent.pac_ignored) then
+	if not ent_parts[ent] or ent.pac_shouldnotdraw or ent.pac_ignored then return end
+
+	if not ent.pac_drawing then
 		for _, part in pairs(ent_parts[ent]) do
 			part:ShowFromRendering()
 		end
@@ -171,6 +173,12 @@ function pac.ShowEntityParts(ent)
 		pac.ResetBones(ent)
 		ent.pac_drawing = true
 		ent.pac_error = nil
+	elseif ent.pac_fix_show_from_render and ent.pac_fix_show_from_render < SysTime() then
+		for _, part in pairs(ent_parts[ent]) do
+			part:ShowFromRendering()
+		end
+
+		ent.pac_fix_show_from_render = nil
 	end
 end
 

@@ -272,6 +272,8 @@ function pace.LoadPartsFromTable(data, clear, override_part)
 		part:CallRecursive('PostApplyFixes')
 	end
 
+	pac.LocalPlayer.pac_fix_show_from_render = SysTime() + 1
+
 	pace.RecordUndoHistory()
 end
 
