@@ -521,6 +521,10 @@ end
 local ALLOW_TO_MDL = CreateConVar('pac_allow_mdl', '1', CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow to use custom MDLs')
 
 function PART:RefreshModel()
+	if self.refreshing_model then return end
+
+	self.refreshing_model = true
+
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
@@ -540,6 +544,8 @@ function PART:RefreshModel()
 		-- notify children about model change
 		self:ShowFromRendering()
 	end
+
+	self.refreshing_model = false
 end
 
 function PART:RealSetModel(path)
