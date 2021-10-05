@@ -15,7 +15,7 @@ end
 
 
 function pace.CallHook(str, ...)
-	hook.Call("pac_" .. str, GAMEMODE, ...)
+	return hook.Call("pac_" .. str, GAMEMODE, ...)
 end
 
 
