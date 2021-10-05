@@ -15,7 +15,7 @@ end
 
 
 function pac.CallHook(str, ...)
-	hook.Call("pac_" .. str, GAMEMODE, ...)
+	return hook.Call("pac_" .. str, GAMEMODE, ...)
 end
 
 function pac.AddHook(str, id, func, priority)
