@@ -296,9 +296,9 @@ function PART:OnThink()
 end
 
 function PART:AlwaysOnThink()
-	if self.waiting_model_change then
-		self:ProcessModelChange()
-	end
+	--if self.waiting_model_change then
+	--	self:ProcessModelChange()
+	--end
 end
 
 function PART:BindMaterials(ent)
@@ -555,7 +555,8 @@ end
 
 function PART:SetForceObjUrl(value)
 	self.ForceObjUrl = value
-	self.waiting_model_change = true
+	--self.waiting_model_change = true
+	self:ProcessModelChange()
 end
 
 local function RealDrawModel(self, ent, pos, ang)
@@ -583,7 +584,7 @@ local function RealDrawModel(self, ent, pos, ang)
 end
 
 function PART:ProcessModelChange()
-	self.waiting_model_change = false
+	--self.waiting_model_change = false
 
 	local owner = self:GetOwner()
 	if not owner:IsValid() then return end
@@ -699,7 +700,8 @@ function PART:SetModel(path)
 	local owner = self:GetOwner()
 	if not owner:IsValid() then return end
 
-	self.waiting_model_change = true
+	--self.waiting_model_change = true
+	self:ProcessModelChange()
 end
 
 local NORMAL = Vector(1,1,1)
