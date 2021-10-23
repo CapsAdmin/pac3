@@ -978,6 +978,12 @@ do
 		function ent.RenderOverride()
 			-- if the draw call is not from pac don't bother
 			if not ent.pac_drawing_model then
+				if not ent.pac_is_drawing and ent ~= LocalPlayer() then
+					ent.RenderOverride = nil
+					ent:DisableMatrix("RenderMultiply")
+					ent:SetSkin(0)
+					ent:SetLOD(-1)
+				end
 				return
 			end
 
