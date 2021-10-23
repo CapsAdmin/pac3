@@ -291,6 +291,10 @@ function PART:OnShow()
 	end
 end
 
+function PART:OnRemove()
+	SafeRemoveEntity(self.Owner)
+end
+
 function PART:OnThink()
 	self:CheckBoneMerge()
 end
