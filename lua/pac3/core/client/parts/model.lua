@@ -1004,6 +1004,7 @@ do
 					return
 				end
 
+				ent:SetSkin(self:GetSkin())
 				self:Draw(self.Translucent and "translucent" or "opaque")
 			else
 				ent.RenderOverride = nil
