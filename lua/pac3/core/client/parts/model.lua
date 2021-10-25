@@ -299,9 +299,6 @@ function PART:OnThink()
 	self:CheckBoneMerge()
 end
 
-function PART:AlwaysOnThink()
-end
-
 function PART:BindMaterials(ent)
 	local materials = self.material_override_self or self.material_override
 	local material_bound = false
