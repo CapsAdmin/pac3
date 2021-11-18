@@ -1027,7 +1027,10 @@ do -- serializing
 		end
 
 		part:SetTable(self:ToTable(), true)
-		part:SetParent(self:GetParent())
+
+		if self:GetParent():IsValid() then
+			part:SetParent(self:GetParent())
+		end
 
 		return part
 	end
