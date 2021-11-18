@@ -34,25 +34,22 @@ function PART:Initialize()
 end
 
 function PART:SetOwner(ent)
-	if not self:HasParent() then
-		if IsValid(self.last_owner) and self.last_owner ~= ent then
-			self:CallRecursive("OnHide", true)
-		end
-
-		self.last_owner = self.Owner
-	end
-
-	self.Owner = ent or NULL
-
-	if not self:HasParent() then
+	if self:HasParent() then
+		self.Owner = ent or NULL
+	else
 		local owner = self:GetOwner()
 
-		if self.last_owner:IsValid() then
-			pac.UnhookEntityRender(self.last_owner, self)
+		if owner:IsValid() then
+			pac.UnhookEntityRender(owner, self)
 		end
 
+		self.Owner = ent or NULL
+		owner = self:GetOwner()
+
 		if owner:IsValid() then
-			pac.HookEntityRender(owner, self)
+			if not pac.HookEntityRender(owner, self) then
+				self:ShowFromRendering()
+			end
 		end
 	end
 end

@@ -198,13 +198,14 @@ end
 
 function pac.HookEntityRender(ent, part)
 	local parts = ent_parts[ent]
+
 	if not parts then
 		parts = {}
 		ent_parts[ent] = parts
 	end
 
 	if parts[part] then
-		return
+		return false
 	end
 
 	pac.dprint("hooking render on %s to draw part %s", tostring(ent), tostring(part))
@@ -216,6 +217,7 @@ function pac.HookEntityRender(ent, part)
 	ent.pac_has_parts = true
 
 	part:ShowFromRendering()
+	return true
 end
 
 function pac.UnhookEntityRender(ent, part)
