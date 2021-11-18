@@ -124,6 +124,17 @@ do --dev util
 
 				ent.pac_animation_sequences = nil
 			end
+
+			if istable(ent.pac_bone_parts) then
+				for part in next, ent.pac_bone_parts do
+					if part:IsValid() then
+						_part = part
+						ProtectedCall(nuke_part)
+					end
+				end
+
+				ent.pac_bone_parts = nil
+			end
 		end
 	end
 
