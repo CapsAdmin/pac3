@@ -22,7 +22,8 @@ local function initialize(part, owner)
 	part:Initialize()
 end
 
-function pac.CreatePart(name, owner, tbl, make_copy)
+function pac.CreatePart(name, owner, tbl, make_copy, level)
+	level = level or 0
 	name = name or "base"
 	owner = owner or pac.LocalPlayer
 
@@ -59,13 +60,14 @@ function pac.CreatePart(name, owner, tbl, make_copy)
 
 	if not ok then
 		part:Remove()
+
 		if part.ClassName ~= "base" then
 			return pac.CreatePart("base", owner, tbl)
 		end
 	end
 
 	if tbl then
-		part:SetTable(tbl, make_copy)
+		part:SetTable(tbl, make_copy, level)
 	end
 
 	if not META.GloballyEnabled then

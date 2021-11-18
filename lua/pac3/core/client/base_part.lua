@@ -322,7 +322,7 @@ do -- scene graph
 		end
 	end
 
-	function PART:AddChild(part)
+	function PART:AddChild(part, ignore_show_hide)
 		if not part or not part:IsValid() then
 			self:UnParent()
 			return
@@ -365,7 +365,9 @@ do -- scene graph
 			pac.CallHook("OnPartParent", self, part)
 		end
 
-		part:CallRecursive("CalcShowHide", true)
+		if not ignore_show_hide then
+			part:CallRecursive("CalcShowHide", true)
+		end
 
 		return part.Id
 	end
@@ -686,11 +688,6 @@ do -- serializing
 		self:RemoveChildren()
 	end
 
-	function PART:SetIsBeingWorn(status)
-		self.isBeingWorn = status
-		return self
-	end
-
 	function PART:OnWorn()
 		-- override
 	end
@@ -821,7 +818,7 @@ do -- serializing
 	end
 
 	do
-		local function SetTable(self, tbl)
+		local function SetTable(self, tbl, level)
 			self:SetUniqueID(tbl.self.UniqueID)
 			self.delayed_variables = self.delayed_variables or {}
 
@@ -841,14 +838,14 @@ do -- serializing
 			end
 
 			for _, value in pairs(tbl.children) do
-				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner(), value)
-				self:AddChild(part)
+				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner(), value, nil --[[make_copy]], level + 1)
+				self:AddChild(part, true)
 			end
 		end
 
 		local function make_copy(tbl, pepper)
 			if pepper == true then
-				pepper = tostring(math.random())
+				pepper = tostring(math.random()) .. tostring(math.random())
 			end
 
 			for key, val in pairs(tbl.self) do
@@ -860,22 +857,27 @@ do -- serializing
 			for _, child in ipairs(tbl.children) do
 				make_copy(child, pepper)
 			end
+
 			return tbl
 		end
 
-		function PART:SetTable(tbl, copy_id)
+		function PART:SetTable(tbl, copy_id, level)
+			level = level or 0
 
 			if copy_id then
 				tbl = make_copy(table.Copy(tbl), copy_id)
 			end
 
-			local ok, err = xpcall(SetTable, on_error, self, tbl)
+			local ok, err = xpcall(SetTable, on_error, self, tbl, level)
+
 			if not ok then
 				pac.Message(Color(255, 50, 50), "SetTable failed: ", err)
 			end
 
 			-- figure out if children needs to be hidden
-			self:CallRecursive("CalcShowHide", true)
+			if level == 0 then
+				self:CallRecursive("CalcShowHide", true)
+			end
 		end
 	end
 

@@ -154,13 +154,12 @@ do -- from server
 
 			owner.pac_render_time_exceeded = false
 
-			local part = pac.CreatePart(part_data.self.ClassName, owner, part_data)
+			-- specify "level" as 1 so we can delay CalcShowHide recursive call until we are ready
+			local part = pac.CreatePart(part_data.self.ClassName, owner, part_data, false, 1)
 
 			if data.is_dupe then
 				part.dupe_remove = true
 			end
-
-			part:CallRecursive('SetIsBeingWorn', false)
 
 			if owner == pac.LocalPlayer then
 				pace.CallHook("OnWoreOutfit", part)
@@ -168,6 +167,11 @@ do -- from server
 
 			part:CallRecursive('OnWorn')
 			part:CallRecursive('PostApplyFixes')
+
+			if part.UpdateOwnerName then
+				part:UpdateOwnerName(true)
+				part:CallRecursive("CalcShowHide", true)
+			end
 
 			owner.pac_fix_show_from_render = SysTime() + 1
 		end

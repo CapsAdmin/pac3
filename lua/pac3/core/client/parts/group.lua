@@ -10,12 +10,27 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSet("OwnerName", "self")
 BUILDER:EndStorableVars()
 
-function PART:Initialize()
-	timer.Simple(0, function()
-		if self:IsValid() and not self:HasParent() and not self.Owner:IsValid() then
+local init_list = {}
+local init_index = 0
+
+pac.AddHook("Think", "group_init", function()
+	if init_index == 0 then return end
+
+	for i = 1, init_index do
+		local self = init_list[i]
+
+		if self:IsValid() and not self:HasParent() and not self.Owner:IsValid() and not self.update_owner_once then
 			self:UpdateOwnerName()
 		end
-	end)
+	end
+
+	init_list = {}
+	init_index = 0
+end)
+
+function PART:Initialize()
+	init_index = init_index + 1
+	init_list[init_index] = self
 end
 
 function PART:SetOwner(ent)
@@ -50,16 +65,18 @@ function PART:HideInvalidOwners()
 	end
 end
 
-function PART:UpdateOwnerName(ent)
+function PART:UpdateOwnerName()
 	-- this is only supported by groups in root
+	self.update_owner_once = true
 	if self:HasParent() then return end
 
+	local ent
 	local prev_owner = self:GetOwner()
 
 	if self.Duplicate then
 		ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self, function(e) return e.pac_duplicate_attach_uid ~= self.UniqueID end) or NULL
-		if ent ~= prev_owner and ent:IsValid() then
 
+		if ent ~= prev_owner and ent:IsValid() then
 			local tbl = self:ToTable()
 			tbl.self.OwnerName = "self"
 			tbl.self.Duplicate = false
