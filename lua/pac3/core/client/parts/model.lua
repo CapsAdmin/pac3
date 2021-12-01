@@ -292,7 +292,9 @@ function PART:OnShow()
 end
 
 function PART:OnRemove()
-	SafeRemoveEntity(self.Owner)
+	if not self.loading then
+		SafeRemoveEntityDelayed(self.Owner,0.1)
+	end
 end
 
 function PART:OnThink()
