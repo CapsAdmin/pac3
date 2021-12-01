@@ -291,12 +291,14 @@ function PART:OnShow()
 	end
 end
 
-function PART:OnRemove()
-	SafeRemoveEntity(self.Owner)
-end
-
 function PART:OnThink()
 	self:CheckBoneMerge()
+end
+
+function PART:AlwaysOnThink()
+	if self.waiting_model_change then
+		self:ProcessModelChange()
+	end
 end
 
 function PART:BindMaterials(ent)
@@ -553,7 +555,7 @@ end
 
 function PART:SetForceObjUrl(value)
 	self.ForceObjUrl = value
-	self:ProcessModelChange()
+	self.waiting_model_change = true
 end
 
 local function RealDrawModel(self, ent, pos, ang)
@@ -581,6 +583,8 @@ local function RealDrawModel(self, ent, pos, ang)
 end
 
 function PART:ProcessModelChange()
+	self.waiting_model_change = false
+
 	local owner = self:GetOwner()
 	if not owner:IsValid() then return end
 	local path = self.Model
@@ -695,7 +699,7 @@ function PART:SetModel(path)
 	local owner = self:GetOwner()
 	if not owner:IsValid() then return end
 
-	self:ProcessModelChange()
+	self.waiting_model_change = true
 end
 
 local NORMAL = Vector(1,1,1)
@@ -972,12 +976,6 @@ do
 		function ent.RenderOverride()
 			-- if the draw call is not from pac don't bother
 			if not ent.pac_drawing_model then
-				if not ent.pac_is_drawing and ent ~= LocalPlayer() then
-					ent.RenderOverride = nil
-					ent:DisableMatrix("RenderMultiply")
-					ent:SetSkin(0)
-					ent:SetLOD(-1)
-				end
 				return
 			end
 
@@ -998,7 +996,6 @@ do
 					return
 				end
 
-				ent:SetSkin(self:GetSkin())
 				self:Draw(self.Translucent and "translucent" or "opaque")
 			else
 				ent.RenderOverride = nil
@@ -1008,11 +1005,9 @@ do
 		if not (self.old_model == self:GetModel()) then
 			self.old_model = self:GetModel()
 			self:SetModel(self:GetModel())
+			self:SetDrawShadow(self:GetDrawShadow())
+			self:ApplyMatrix()
 		end
-
-		self:SetDrawShadow(self:GetDrawShadow())
-		self:RefreshModel()
-		self:ApplyMatrix()
 	end
 
 	function PART:OnHide()
