@@ -4,11 +4,9 @@ util.AddNetworkString('pac_update_playerfilter')
 
 local function find_outfits(ply)
 	for id, outfits in pairs(pace.Parts) do
-		local owner = pac.ReverseHash(id, "Player")
-		if owner:IsValid() then
-			if owner == ply then
-				return outfits
-			end
+		local owner = player.GetByUniqueID(id) or NULL
+		if owner == ply then
+			return outfits
 		end
 	end
 
@@ -25,11 +23,11 @@ pace.PCallNetReceive(net.Receive, "pac_update_playerfilter", function(len, ply)
 
 	local ids = {}
 
-	for i = 1, sizeof do
+	for i = 1, net.ReadUInt(8) do
 		table.insert(ids, net.ReadString())
 	end
 
-	for _, outfit in pairs(find_outfits(ply)) do
+	for _, outfit in ipairs(find_outfits(ply)) do
 
 		if outfit.wear_filter then
 			for _, id in ipairs(ids) do

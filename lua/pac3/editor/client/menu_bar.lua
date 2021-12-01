@@ -33,10 +33,6 @@ local function populate_pac(menu)
 	end
 
 	do
-		menu:AddOption(L"request", function() RunConsoleCommand("pac_request_outfits") pac.Message('Requesting outfits.') end):SetImage(pace.MiscIcons.replace)
-	end
-
-	do
 		local menu, icon = menu:AddSubMenu(L"clear", function() end)
 		icon:SetImage(pace.MiscIcons.clear)
 		menu.GetDeleteSelf = function() return false end

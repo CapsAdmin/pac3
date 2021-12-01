@@ -1002,12 +1002,10 @@ do
 			end
 		end
 
-		if not (self.old_model == self:GetModel()) then
-			self.old_model = self:GetModel()
-			self:SetModel(self:GetModel())
-			self:SetDrawShadow(self:GetDrawShadow())
-			self:ApplyMatrix()
-		end
+		self:SetModel(self:GetModel())
+		self:RefreshModel()
+		self:SetDrawShadow(self:GetDrawShadow())
+		self:ApplyMatrix()
 	end
 
 	function PART:OnHide()
