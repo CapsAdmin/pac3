@@ -244,54 +244,50 @@ end
 function PART:UpdateAnimation(ent)
 	if not self.random_seqname then return end
 
-	local seq = ent:LookupSequence(self.random_seqname) or 0
-
-	local duration = 0
+	local seq, duration = ent:LookupSequence(self.random_seqname)
+	
 	local count = ent:GetSequenceCount() or 0
-	if seq >= 0 and seq < count and count > 0 then
-		duration = ent:SequenceDuration(seq)
-	else
+	if seq < 0 or seq >= count then
 		-- It's an invalid sequence. Don't bother
 		return
 	end
-
-	local rate = math.min(self.Rate * duration, 1)
-
-	if seq ~= -1 then
-
-		if rate == 0 then
-			ent:SetCycle(self.Offset % 1)
-			return
-		end
-	else
-		seq = tonumber(self.random_seqname) or -1
-
-		if seq ~= -1 then
-			if rate == 0 then
-				ent:SetCycle(self.Offset % 1)
-				return
-			end
-		else
-			return
-		end
-	end
-
-	rate = rate / math.abs(self.Min - self.Max)
-	rate = rate * FrameTime()
-
+	
 	local min = self.Min
 	local max = self.Max
 
+	if min == max then
+		local cycle = min
+
+		if pac.IsNumberValid(cycle) then
+			ent:SetCycle(not self.InvertFrames and cycle or (1 - cycle))
+		end
+		return
+	end
+
+	local rate = duration == 0 and 0 or self.Rate / duration
+
+	if rate == 0 then
+		local cycle = min + (self.frame + self.Offset * 2) % 1 * (max - min)
+		
+		if pac.IsNumberValid(cycle) then
+			ent:SetCycle(cycle)
+		end
+		return
+	end
+	
+	rate = rate / math.abs(min - max)
+	rate = rate * FrameTime()
+
 	if self.PingPongLoop then
-		self.frame = self.frame + rate / 2
-		local cycle = min + math.abs(math.Round((self.frame + self.Offset) * 0.5) - (self.frame + self.Offset) * 0.5) * 2 * (max - min)
+		self.frame = self.frame + rate * 0.5
+		local cycle = min + math.abs(math.Round(self.frame + self.Offset * 2) - self.frame - self.Offset * 2) * 2 * (max - min)
 
 		if pac.IsNumberValid(cycle) then
 			ent:SetCycle(not self.InvertFrames and cycle or (1 - cycle))
 		end
 	else
 		self.frame = self.frame + rate
-		local cycle = min + ((self.frame + self.Offset) * 0.5) % 1 * (max - min)
+		local cycle = min + (self.frame + self.Offset * 2) % 1 * (max - min)
 
 		if pac.IsNumberValid(cycle) then
 			ent:SetCycle(not self.InvertFrames and cycle or (1 - cycle))
