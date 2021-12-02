@@ -323,7 +323,7 @@ do
 	local function get_scale(self, field)
 		local owner = get_owner(self)
 
-		if owner:IsValid() then return 1 end
+		if not owner:IsValid() then return 1 end
 
 		return owner.pac_model_scale and owner.pac_model_scale[field] or (owner.GetModelScale and owner:GetModelScale()) or 1
 	end
@@ -484,9 +484,9 @@ end
 PART.Inputs.pose_parameter = function(self, name)
 	if not name then return 0 end
 	local owner = get_owner(self)
-	if owner:IsValid() and owner.GetPoseParameter then return 0 end
+	if owner:IsValid() and owner.GetPoseParameter then return owner:GetPoseParameter(name) end
 
-	return owner:GetPoseParameter(name)
+	return 0
 end
 
 PART.Inputs.command = function(self)
@@ -518,7 +518,6 @@ do -- light amount
 		if not part:IsValid() then return 0 end
 		if not part.GetWorldPosition then return 0 end
 		local v = render.GetLightColor(part:GetWorldPosition()):ToColor()[field]
-		print(v, field)
 
 		if part.ProperColorRange then
 			return v / 255
@@ -590,17 +589,17 @@ do -- weapon and player color
 		local part = self:GetOutputTarget()
 
 		if part.ProperColorRange then
-			return color / 255
+			return color
 		end
 
-		return color
+		return color * 255
 	end
 
 	do
 		local function get_player_color(self)
 			local owner = self:GetPlayerOwner()
 
-			if owner:IsValid() then return Color(255, 255, 255) end
+			if not owner:IsValid() then return Color(255, 255, 255) end
 
 			return owner:GetPlayerColor()
 		end
@@ -614,7 +613,7 @@ do -- weapon and player color
 		local function get_weapon_color(self)
 			local owner = self:GetPlayerOwner()
 
-			if owner:IsValid() then return Color(255, 255, 255) end
+			if not owner:IsValid() then return Color(255, 255, 255) end
 
 			return owner:GetWeaponColor()
 		end
