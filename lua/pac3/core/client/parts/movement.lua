@@ -20,7 +20,7 @@ local function ADD(PART, name, default, ...)
 
 		if ply == pac.LocalPlayer then
 
-			if self:IsHiddenCached() then return end
+			if self:IsHidden() then return end
 
 			local num = GetConVarNumber("pac_free_movement")
 			if num == 1 or (num == -1 and hook.Run("PlayerNoClip", ply, true)) then
