@@ -97,6 +97,7 @@ function PART:OnShow()
 	local ent = self:GetRootPart():GetOwner()
 
 	if ent:IsValid() then
+		ent.last_movement_part = self:GetUniqueID()
 		for i,v in ipairs(update_these) do
 			v(self)
 		end
@@ -106,7 +107,7 @@ end
 function PART:OnHide()
 	local ent = self:GetRootPart():GetOwner()
 
-	if ent == pac.LocalPlayer then
+	if ent == pac.LocalPlayer and ent.last_movement_part == self:GetUniqueID() then
 		net.Start("pac_modify_movement", true)
 			net.WriteString("disable")
 		net.SendToServer()
