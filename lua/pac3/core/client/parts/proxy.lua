@@ -192,6 +192,30 @@ end
 
 PART.Inputs = {}
 
+PART.Inputs.property = function(self, property_name, field)
+	local part = self:GetTarget()
+
+	if part:IsValid() and property_name then 
+		local v = part:GetProperty(property_name)
+
+		local T = type(v)
+		
+		if T == "Vector" or T == "Angle" then
+			if field and v[field] then 
+				return v[field]
+			else
+				return v[1],v[2],v[3]
+			end
+		elseif T == "boolean" then
+			return v and 1 or 0
+		elseif T == "number" then
+			return v
+		end
+	end
+
+	return 0
+end
+
 PART.Inputs.owner_position = function(self)
 	local owner = get_owner(self)
 
