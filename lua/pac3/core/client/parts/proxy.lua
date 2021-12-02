@@ -541,15 +541,16 @@ do -- light amount
 		local part = self:GetPhysicalTarget()
 		if not part:IsValid() then return 0 end
 		if not part.GetWorldPosition then return 0 end
-		local v = render.GetLightColor(part:GetWorldPosition()):ToColor()[field]
+		local v = field and render.GetLightColor(part:GetWorldPosition()):ToColor()[field] or render.GetLightColor(part:GetWorldPosition()):ToColor()
 
 		if part.ProperColorRange then
-			return v / 255
+			if field then return v / 255 else return v['r']/255, v['g']/255, v['b']/255 end
 		end
 
-		return v
+		if field then return v else return v['r'], v['g'], v['b'] end
 	end
 
+	PART.Inputs.light_amount = function(self) return get_color(self) end
 	PART.Inputs.light_amount_r = function(self) return get_color(self, "r") end
 	PART.Inputs.light_amount_g = function(self) return get_color(self, "g") end
 	PART.Inputs.light_amount_b = function(self) return get_color(self, "b") end
@@ -570,15 +571,16 @@ do -- ambient light
 		local part = self:GetOutputTarget()
 		if not part:IsValid() then return 0 end
 
-		local v = render.GetAmbientLightColor():ToColor()[field]
+		local v = field and render.GetAmbientLightColor():ToColor()[field] or render.GetAmbientLightColor():ToColor()
 
 		if part.ProperColorRange then
-			return v / 255
+			if field then return v / 255 else return v['r']/255, v['g']/255, v['b']/255 end
 		end
 
-		return v
+		if field then return v else return v['r'], v['g'], v['b'] end
 	end
 
+	PART.Inputs.ambient_light = function(self) return get_color(self) end
 	PART.Inputs.ambient_light_r = function(self) return get_color(self, "r") end
 	PART.Inputs.ambient_light_g = function(self) return get_color(self, "g") end
 	PART.Inputs.ambient_light_b = function(self) return get_color(self, "b") end
@@ -609,25 +611,26 @@ end
 do -- weapon and player color
 	local Color = Color
 	local function get_color(self, get, field)
-		local color = get(self)[field]
+		local color = field and get(self)[field] or get(self)
 		local part = self:GetOutputTarget()
 
 		if part.ProperColorRange then
-			return color
+			if field then return color else return color[1], color[2], color[3] end
 		end
 
-		return color * 255
+		if field then return color*255 else return color[1]*255, color[2]*255, color[3]*255 end
 	end
 
 	do
 		local function get_player_color(self)
 			local owner = self:GetPlayerOwner()
 
-			if not owner:IsValid() then return Color(255, 255, 255) end
+			if not owner:IsValid() then return Vector(1,1,1) end
 
 			return owner:GetPlayerColor()
 		end
 
+		PART.Inputs.player_color = function(self) return get_color(self, get_player_color) end
 		PART.Inputs.player_color_r = function(self) return get_color(self, get_player_color, "r") end
 		PART.Inputs.player_color_g = function(self) return get_color(self, get_player_color, "g") end
 		PART.Inputs.player_color_b = function(self) return get_color(self, get_player_color, "b") end
@@ -637,11 +640,12 @@ do -- weapon and player color
 		local function get_weapon_color(self)
 			local owner = self:GetPlayerOwner()
 
-			if not owner:IsValid() then return Color(255, 255, 255) end
+			if not owner:IsValid() then return Vector(1,1,1) end
 
 			return owner:GetWeaponColor()
 		end
 
+		PART.Inputs.weapon_color = function(self) return get_color(self, get_weapon_color) end
 		PART.Inputs.weapon_color_r = function(self) return get_color(self, get_weapon_color, "r") end
 		PART.Inputs.weapon_color_g = function(self) return get_color(self, get_weapon_color, "g") end
 		PART.Inputs.weapon_color_b = function(self) return get_color(self, get_weapon_color, "b") end
