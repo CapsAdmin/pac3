@@ -279,14 +279,14 @@ function PART:UpdateAnimation(ent)
 	rate = rate * FrameTime()
 
 	if self.PingPongLoop then
-		self.frame = self.frame + rate * 0.5
+		self.frame = (self.frame + rate * 0.5) % 1
 		local cycle = min + math.abs(math.Round(self.frame + self.Offset * 2) - self.frame - self.Offset * 2) * 2 * (max - min)
 
 		if pac.IsNumberValid(cycle) then
 			ent:SetCycle(not self.InvertFrames and cycle or (1 - cycle))
 		end
 	else
-		self.frame = self.frame + rate
+		self.frame = (self.frame + rate) % 1
 		local cycle = min + (self.frame + self.Offset * 2) % 1 * (max - min)
 
 		if pac.IsNumberValid(cycle) then
