@@ -268,7 +268,7 @@ function PART:OnUpdateAnimation()
 
 		if self.PingPongLoop then
 			if self.Loop then
-				self.frame = (self.frame + rate) % 4
+				self.frame = (self.frame + rate) % 2
 			else
 				self.frame = math.max(math.min(self.frame + rate, 2), 0)
 			end
@@ -279,7 +279,7 @@ function PART:OnUpdateAnimation()
 			end
 		else
 			if self.Loop then
-				self.frame = (self.frame + rate) % 4
+				self.frame = (self.frame + rate) % 2
 			else
 				self.frame = math.max(math.min(self.frame + rate, 1), 0)
 			end
