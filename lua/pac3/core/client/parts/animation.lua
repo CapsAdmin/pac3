@@ -270,7 +270,7 @@ function PART:OnUpdateAnimation()
 			if self.Loop then
 				self.frame = (self.frame + rate) % 4
 			else
-				self.frame = (math.min(self.frame + rate, 2)) % 4
+				self.frame = math.max(math.min(self.frame + rate, 2), 0)
 			end
 			local cycle = min + math.abs(1 - (self.frame + 1 + self.Offset) % 2) * maxmin
 
@@ -281,7 +281,7 @@ function PART:OnUpdateAnimation()
 			if self.Loop then
 				self.frame = (self.frame + rate) % 4
 			else
-				self.frame = (math.min(self.frame + rate, 1)) % 4
+				self.frame = math.max(math.min(self.frame + rate, 1), 0)
 			end
 			local cycle = min + (self.frame + self.Offset) % 1 * maxmin
 
