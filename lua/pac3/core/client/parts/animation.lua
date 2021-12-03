@@ -267,14 +267,22 @@ function PART:OnUpdateAnimation()
 		local rate = (duration == 0) and 0 or (self.Rate / duration / math.abs(maxmin) * FrameTime() * 0.5)
 
 		if self.PingPongLoop then
-			self.frame = (self.frame + rate) % 2
+			if self.Loop then
+				self.frame = (self.frame + rate) % 4
+			else
+				self.frame = (math.min(self.frame + rate, 2)) % 4
+			end
 			local cycle = min + math.abs(1 - (self.frame + 1 + self.Offset) % 2) * maxmin
 
 			if pac.IsNumberValid(cycle) then
 				ent:SetCycle(self.InvertFrames and (1 - cycle) or cycle)
 			end
 		else
-			self.frame = (self.frame + rate) % 2
+			if self.Loop then
+				self.frame = (self.frame + rate) % 4
+			else
+				self.frame = (math.min(self.frame + rate, 1)) % 4
+			end
 			local cycle = min + (self.frame + self.Offset) % 1 * maxmin
 
 			if pac.IsNumberValid(cycle) then
