@@ -499,37 +499,37 @@ if (first() | dupefinished()) {
     ToggleShading = 0 #- Toggle for shading.
     Indices = 1
 
-	   #- Data structure
-	   #- HN++, HT[HN, table] = table(Index, Local Entity (Entity:toWorld()), Parent Entity, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin)
-	   #- CN++, CT[CN, table] = table(Index, Clip Index, Pos, Ang)
+        #- Data structure
+        #- HN++, HT[HN, table] = table(Index, Local Entity (Entity:toWorld()), Parent Entity, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin)
+        #- CN++, CT[CN, table] = table(Index, Clip Index, Pos, Ang)
 
-	   #- Editing holograms
-	   #- Scroll down to the bottom of the code to find where to insert your holo() code. In order to reference indexes
-	   #- add a ", I_HologramName"" to the end of that holograms data line with "HologramName" being of your choosing.
-	   #- Finally add this to a @persist directive eg "@persist [I_HologramName]", now you can address this in your holo() code.
-	   #- For example, "holoBodygroup(I_HologramName, 2, 3)" which would be put in the "InitPostSpawn" section.
+        #- Editing holograms
+        #- Scroll down to the bottom of the code to find where to insert your holo() code. In order to reference indexes
+        #- add a ", I_HologramName"" to the end of that holograms data line with "HologramName" being of your choosing.
+        #- Finally add this to a @persist directive eg "@persist [I_HologramName]", now you can address this in your holo() code.
+        #- For example, "holoBodygroup(I_HologramName, 2, 3)" which would be put in the "InitPostSpawn" section.
 
-	   #- Advanced functionality
-	   #- If you wish to take this system to the next level, you can. Instead of using multiple e2s for each "set" of holograms,
-	   #- instead save each set of hologram data to a new file inside a folder of your liking. You can now use the #include "" directive
-	   #- to bring that hologram data into a single e2 with this spawn code and compile multiple files into a single e2.
-	   #- This has many benefits such as 1 interval instead of many, auto updating due to the chip pulling saved data and increased
-	   #- organisation!
+        #- Advanced functionality
+        #- If you wish to take this system to the next level, you can. Instead of using multiple e2s for each "set" of holograms,
+        #- instead save each set of hologram data to a new file inside a folder of your liking. You can now use the #include "" directive
+        #- to bring that hologram data into a single e2 with this spawn code and compile multiple files into a single e2.
+        #- This has many benefits such as 1 interval instead of many, auto updating due to the chip pulling saved data and increased
+        #- organisation!
 
-	   #- Your file hierarchy should look like this.
-	   #- /expression2/
-	   #- --> /yourfolder/
-	   #-     --> /hologram_data.txt & hologram_spawner.txt
+        #- Your file hierarchy should look like this.
+        #- /expression2/
+        #- --> /yourfolder/
+        #-     --> /hologram_data.txt & hologram_spawner.txt
 
-	   # # # # # # # # # HOLOGRAM DATA START # # # # # # # # #
+        # # # # # # # # # HOLOGRAM DATA START # # # # # # # # #
 	]]
 
 	local str_footer =
 	[[
 
-	   # # # # # # # # # HOLOGRAM DATA END # # # # # # # # #
+        # # # # # # # # # HOLOGRAM DATA END # # # # # # # # #
 
-	   #- Create a hologram from data array
+        #- Create a hologram from data array
     function table:holo() {
         local Index = This[1, number] * Indices
         if (This[2,entity]:isValid()) { Entity = This[2,entity] } else { Entity = holoEntity(This[2,number]) }
@@ -669,19 +669,26 @@ elseif (CoreStatus == "RunThisCode") {
 	end
 
 	local function convert(part)
-		local out = string.Replace(str_header, "[NAME]", part:GetName() or "savedpacholos")
+		local out = {string.Replace(str_header, "[NAME]", part:GetName() or "savedpacholos")}
 
-		for key, part in ipairs(part:GetChildren()) do
-			if part.is_model_part and not part:IsHidden() then
-				out = out .. part_to_holo(part)
+		local completed = {}
+		local function recursiveConvert(parent)
+			if completed[parent] then return end
+			completed[parent] = true
+			for key, part in ipairs(parent:GetChildren()) do
+				if part.is_model_part and not part:IsHidden() then
+					out[#out + 1] = part_to_holo(part)
+					recursiveConvert(part)
+				end
 			end
 		end
+		recursiveConvert(part)
 
-		out = out .. str_footer
+		out[#out + 1] = str_footer
 
 		pac.LocalPlayer:ChatPrint("PAC --> Code saved in your Expression 2 folder under [expression2/pac/" .. part:GetName() .. ".txt" .. "].")
 
-		return out
+		return table.concat(out)
 	end
 
 	file.CreateDir("expression2/pac")
