@@ -41,6 +41,180 @@ do
 	end
 end
 
+local eases = {}
+
+do
+	local c1 = 1.70158
+	local c3 = c1 + 1
+	local c2 = c1 * 1.525
+	local c4 = ( 2 * math.pi ) / 3
+	local c5 = ( 2 * math.pi ) / 4.5
+	local n1 = 7.5625
+	local d1 = 2.75
+	local pi = math.pi
+	local cos = math.cos
+	local sin = math.sin
+	local sqrt = math.sqrt
+
+
+	eases.InSine = function(x)
+		return 1 - cos( ( x * pi ) / 2 )
+	end
+
+	eases.OutSine = function(x)
+		return sin( ( x * pi ) / 2 )
+	end
+
+	eases.InOutSine = function(x)
+		return -( cos( pi * x ) - 1 ) / 2
+	end
+
+	eases.InQuad = function(x)
+		return x ^ 2
+	end
+
+	eases.OutQuad = function(x)
+		return 1 - ( 1 - x ) * ( 1 - x )
+	end
+
+	eases.InOutQuad = function(x)
+		return x < 0.5 && 2 * x ^ 2 || 1 - ( ( -2 * x + 2 ) ^ 2 ) / 2
+	end
+
+	eases.InCubic = function(x)
+		return x ^ 3
+	end
+
+	eases.OutCubic = function(x)
+		return 1 - ( ( 1 - x ) ^ 3 )
+	end
+
+	eases.InOutCubic = function(x)
+		return x < 0.5 && 4 * x ^ 3 || 1 - ( ( -2 * x + 2 ) ^ 3 ) / 2
+	end
+
+	eases.InQuart = function(x)
+		return x ^ 4
+	end
+
+	eases.OutQuart = function(x)
+		return 1 - ( ( 1 - x ) ^ 4 )
+	end
+
+	eases.InOutQuart = function(x)
+		return x < 0.5 && 8 * x ^ 4 || 1 - ( ( -2 * x + 2 ) ^ 4 ) / 2
+	end
+
+	eases.InQuint = function(x)
+		return x ^ 5
+	end
+
+	eases.OutQuint = function(x)
+		return 1 - ( ( 1 - x ) ^ 5 )
+	end
+
+	eases.InOutQuint = function(x)
+		return x < 0.5 && 16 * x ^ 5 || 1 - ( ( -2 * x + 2 ) ^ 5 ) / 2
+	end
+
+	eases.InExpo = function(x)
+		return x == 0 && 0 || ( 2 ^ ( 10 * x - 10 ) )
+	end
+
+	eases.OutExpo = function(x)
+		return x == 1 && 1 || 1 - ( 2 ^ ( -10 * x ) )
+	end
+
+	eases.InOutExpo = function(x)
+		return x == 0
+			&& 0
+			|| x == 1
+			&& 1
+			|| x < 0.5 && ( 2 ^ ( 20 * x - 10 ) ) / 2
+			|| ( 2 - ( 2 ^ ( -20 * x + 10 ) ) ) / 2
+	end
+
+	eases.InCirc = function(x)
+		return 1 - sqrt( 1 - ( x ^ 2 ) )
+	end
+
+	eases.OutCirc = function(x)
+		return sqrt( 1 - ( ( x - 1 ) ^ 2 ) )
+	end
+
+	eases.InOutCirc = function(x)
+		return x < 0.5
+			&& ( 1 - sqrt( 1 - ( ( 2 * x ) ^ 2 ) ) ) / 2
+			|| ( sqrt( 1 - ( ( -2 * x + 2 ) ^ 2 ) ) + 1 ) / 2
+	end
+
+	eases.InBack = function(x)
+		return c3 * x ^ 3 - c1 * x ^ 2
+	end
+
+	eases.OutBack = function(x)
+		return 1 + c3 * ( ( x - 1 ) ^ 3 ) + c1 * ( ( x - 1 ) ^ 2 )
+	end
+
+	eases.InOutBack = function(x)
+		return x < 0.5
+			&& ( ( ( 2 * x ) ^ 2 ) * ( ( c2 + 1 ) * 2 * x - c2 ) ) / 2
+			|| ( ( ( 2 * x - 2 ) ^ 2 ) * ( ( c2 + 1 ) * ( x * 2 - 2 ) + c2 ) + 2 ) / 2
+	end
+
+	eases.InElastic = function(x)
+		return x == 0
+			&& 0
+			|| x == 1
+			&& 1
+			|| -( 2 ^ ( 10 * x - 10 ) ) * sin( ( x * 10 - 10.75 ) * c4 )
+	end
+
+	eases.OutElastic = function(x)
+		return x == 0
+			&& 0
+			|| x == 1
+			&& 1
+			|| ( 2 ^ ( -10 * x ) ) * sin( ( x * 10 - 0.75 ) * c4 ) + 1
+	end
+
+	eases.InOutElastic = function(x)
+		return x == 0
+			&& 0
+			|| x == 1
+			&& 1
+			|| x < 0.5
+			&& -( ( 2 ^ ( 20 * x - 10 ) ) * sin( ( 20 * x - 11.125 ) * c5 ) ) / 2
+			|| ( ( 2 ^ ( -20 * x + 10 ) ) * sin( ( 20 * x - 11.125 ) * c5 ) ) / 2 + 1
+	end
+
+	eases.InBounce = function(x)
+		return 1 - OutBounce( 1 - x )
+	end
+
+	eases.OutBounce = function(x)
+		if ( x < 1 / d1 ) then
+			return n1 * x ^ 2
+		elseif ( x < 2 / d1 ) then
+			x = x - ( 1.5 / d1 )
+			return n1 * x ^ 2 + 0.75
+		elseif ( x < 2.5 / d1 ) then
+			x = x - ( 2.25 / d1 )
+			return n1 * x ^ 2 + 0.9375
+		else
+			x = x - ( 2.625 / d1 )
+			return n1 * x ^ 2 + 0.984375
+		end
+	end
+
+	eases.InOutBounce = function(x)
+		return x < 0.5
+			&& ( 1 - OutBounce( 1 - 2 * x ) ) / 2
+			|| ( 1 + OutBounce( 2 * x - 1 ) ) / 2
+	end
+	
+end
+
 function animations.GetRegisteredAnimations()
 	return animations.registered
 end
@@ -207,21 +381,40 @@ local function ProcessAnimations(ent)
 					else
 						local bi1 = GetFrameBoneInfo(ent, tbl, iCurFrame - 1, iBoneID)
 
-						mBoneMatrix:Translate(
-							LerpVector(
-								fFrameDelta,
-								bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward,
-								tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward
-							) * fPower
-						)
+						if tFrameData["EaseStyle"] then
+							local curease = tFrameData["EaseStyle"]
+							mBoneMatrix:Translate(
+								LerpVector(
+									eases[curease](fFrameDelta),
+									bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward,
+									tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward
+								) * fPower
+							)
 
-						mBoneMatrix:Rotate(
-							LerpAngle(
-								fFrameDelta,
-								Angle(bi1.RR, bi1.RU, bi1.RF),
-								Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF)
-							) * fPower
-						)
+							mBoneMatrix:Rotate(
+								LerpAngle(
+									eases[curease](fFrameDelta),
+									Angle(bi1.RR, bi1.RU, bi1.RF),
+									Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF)
+								) * fPower
+							)
+						else
+							mBoneMatrix:Translate(
+								LerpVector(
+									fFrameDelta,
+									bi1.MU * vUp + bi1.MR * vRight + bi1.MF * vForward,
+									tBoneInfo.MU * vUp + tBoneInfo.MR * vRight + tBoneInfo.MF * vForward
+								) * fPower
+							)
+
+							mBoneMatrix:Rotate(
+								LerpAngle(
+									fFrameDelta,
+									Angle(bi1.RR, bi1.RU, bi1.RF),
+									Angle(tBoneInfo.RR, tBoneInfo.RU, tBoneInfo.RF)
+								) * fPower
+							)
+						end
 					end
 				elseif iInterp == "cubic" and tbl.FrameData[iCurFrame - 2] and tbl.FrameData[iCurFrame + 1] then
 						local bi0 = GetFrameBoneInfo(ent, tbl, iCurFrame - 2, iBoneID)
