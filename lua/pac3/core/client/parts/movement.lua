@@ -20,7 +20,7 @@ local function ADD(PART, name, default, ...)
 
 		if ply == pac.LocalPlayer then
 
-			if self:IsHiddenCached() then return end
+			if self:IsHidden() then return end
 
 			local num = GetConVarNumber("pac_free_movement")
 			if num == 1 or (num == -1 and hook.Run("PlayerNoClip", ply, true)) then
@@ -97,6 +97,7 @@ function PART:OnShow()
 	local ent = self:GetRootPart():GetOwner()
 
 	if ent:IsValid() then
+		ent.last_movement_part = self:GetUniqueID()
 		for i,v in ipairs(update_these) do
 			v(self)
 		end
@@ -106,7 +107,7 @@ end
 function PART:OnHide()
 	local ent = self:GetRootPart():GetOwner()
 
-	if ent == pac.LocalPlayer then
+	if ent == pac.LocalPlayer and ent.last_movement_part == self:GetUniqueID() then
 		net.Start("pac_modify_movement", true)
 			net.WriteString("disable")
 		net.SendToServer()
