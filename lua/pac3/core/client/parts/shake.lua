@@ -19,10 +19,13 @@ function PART:OnShow(from_rendering)
 		local position = self:GetDrawPosition()
 		local eyedistance = position:Distance(pac.EyePos)
 		local radius = math.Clamp(self.Radius, 0.0001, 500)
-		
-		local amplitude = (self.Falloff and (1 - (eyedistance / radius)) * self.Amplitude) or (eyedistance < radius and self.Amplitude or 0)
 
-		util.ScreenShake(position, amplitude, self.Frequency, math.Clamp(self.Duration, 0.0001, 2), 0)
+		if eyedistance < radius then
+			if self.Falloff then
+				amplitude = (1 - (eyedistance / radius)) * self.Amplitude
+			end
+			util.ScreenShake(position, amplitude, self.Frequency, math.Clamp(self.Duration, 0.0001, 2), 0)
+		end
 	end
 end
 
