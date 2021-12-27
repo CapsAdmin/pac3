@@ -21,8 +21,9 @@ function PART:OnShow(from_rendering)
 		local radius = math.Clamp(self.Radius, 0.0001, 500)
 
 		if eyedistance < radius then
+			local amplitude = self.Amplitude
 			if self.Falloff then
-				amplitude = (1 - (eyedistance / radius)) * self.Amplitude
+				amplitude = amplitude * (1 - (eyedistance / radius))
 			end
 			util.ScreenShake(position, amplitude, self.Frequency, math.Clamp(self.Duration, 0.0001, 2), 0)
 		end
