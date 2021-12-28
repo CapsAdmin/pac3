@@ -8,7 +8,7 @@ function pace.OnShortcutSave()
 end
 
 function pace.OnShortcutWear()
-	if IsValid(pace.current_part) then return end
+	if not IsValid(pace.current_part) then return end
 
 	local part = pace.current_part:GetRootPart()
 	surface.PlaySound("buttons/button9.wav")
