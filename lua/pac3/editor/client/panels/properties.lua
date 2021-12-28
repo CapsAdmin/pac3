@@ -208,6 +208,8 @@ do -- list
 			if pattern == "" and search.searched_something then
 				search:Kill()
 				search:KillFocus()
+				pace.Editor:KillFocus()
+				pace.Editor:MakePopup()
 			else
 				search.searched_something = true
 				local group
