@@ -324,6 +324,10 @@ function pace.GainFocus(show_editor)
 			self:MakePopup()
 			pace.Focused = true
 			if not show_editor then
+				self:SetVisible(true)
+				self.exit_button:SetVisible(true)
+				self.zoomframe:SetVisible(true)
+
 				self:AlphaTo(255, 0.1, 0)
 				self.exit_button:AlphaTo(255, 0.1, 0)
 				self.zoomframe:AlphaTo(255, 0.1, 0)
@@ -345,6 +349,10 @@ function pace.KillFocus(show_editor)
 			self:AlphaTo(0, 0.1, 0)
 			self.exit_button:AlphaTo(0, 0.1, 0)
 			self.zoomframe:AlphaTo(0, 0.1, 0)
+			
+			self:SetVisible(false)
+			self.exit_button:SetVisible(false)
+			self.zoomframe:SetVisible(false)
 		end
 
 		self.allowclick = false
