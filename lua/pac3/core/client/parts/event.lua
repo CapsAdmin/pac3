@@ -1141,7 +1141,7 @@ do
 
 		if not ply:IsValid() then return end
 
-		if ply == pac.LocalPlayer and (pace and pace.HasFocus() or gui.IsConsoleVisible()) then return end
+		if ply == pac.LocalPlayer and (pace and pace.IsFocused() or gui.IsConsoleVisible()) then return end
 
 		local key = net.ReadUInt(8)
 		local down = net.ReadBool()
