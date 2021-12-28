@@ -13,6 +13,7 @@ function pace.OnShortcutWear()
 	local part = pace.current_part:GetRootPart()
 	surface.PlaySound("buttons/button9.wav")
 	pace.SendPartToServer(part)
+	pace.FlashNotification('Wearing group: ' .. part:GetName())
 end
 
 local last = 0
