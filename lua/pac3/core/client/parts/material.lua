@@ -424,7 +424,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 						if not pac.resource.DownloadTexture(val, function(tex, frames)
 							if frames then
 								self.vtf_frame_limit = self.vtf_frame_limit or {}
-								self.vtf_frame_limit[group] = frames
+								self.vtf_frame_limit[property_name] = frames
 							end
 							self:GetRawMaterial():SetTexture(key, tex)
 						end, self:GetPlayerOwner()) then
@@ -434,7 +434,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 							if texture then
 								self.vtf_frame_limit = self.vtf_frame_limit or {}
-								self.vtf_frame_limit[group] = texture:GetNumAnimationFrames()
+								self.vtf_frame_limit[property_name] = texture:GetNumAnimationFrames()
 							end
 						end
 					end
@@ -464,8 +464,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 					if property_name:lower():find("frame") then
 						PART["Set" .. property_name] = function(self, val)
 							self[property_name] = val
-							if self.vtf_frame_limit and self.vtf_frame_limit[group] then
-								self:GetRawMaterial():SetInt(key, math.abs(val)%self.vtf_frame_limit[group])
+							if self.vtf_frame_limit and info.linked and self.vtf_frame_limit[info.linked] then
+								self:GetRawMaterial():SetInt(key, math.abs(val)%self.vtf_frame_limit[info.linked])
 							else
 								self:GetRawMaterial():SetInt(key, val)
 							end

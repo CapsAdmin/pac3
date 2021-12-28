@@ -61,12 +61,6 @@ return {
 					default = true,
 					friendly = "RayTraceSphere",
 				},
-				irisframe = {
-					type = "integer",
-					description = "frame for the iris texture",
-					default = 0,
-					friendly = "IrisFrame",
-				},
 				eyeorigin = {
 					type = "vec3",
 					description = "origin for the eyes",
@@ -78,6 +72,13 @@ return {
 					description = "iris texture",
 					default = "shadertest/BaseTexture",
 					friendly = "Iris",
+				},
+				irisframe = {
+					type = "integer",
+					description = "frame for the iris texture",
+					default = 0,
+					friendly = "IrisFrame",
+					linked = "iris"
 				},
 				dilation = {
 					type = "float",
@@ -216,6 +217,7 @@ return {
 					description = "",
 					default = 0,
 					friendly = "MaskFrame",
+					linked = "sheenmap"
 				},
 				sheenmapmaskdirection = {
 					type = "integer",
@@ -615,6 +617,7 @@ return {
 					friendly = "Frame",
 					default = 0,
 					description = "The frame to start an animated bump map on.",
+					linked = "bumpmap"
 				},
 				bumptransform = {
 					type = "matrix",
@@ -1033,6 +1036,7 @@ return {
 					friendly = "Frame",
 					default = 0,
 					description = "Animation Frame",
+					linked = "basetexture"
 				},
 			},
 			["self illumination"] = {
@@ -1181,14 +1185,15 @@ return {
 				refracttinttextureframe = {
 					type = "integer",
 					friendly = "TintTextureFrame",
-					description = "",
+					description = "Frame to start an animated tint texture on.",
 					default = 0,
+					linked = "refracttinttexture"
 				},
 				refracttint = {
 					type = "color",
 					friendly = "Tint",
 					default = Vector(1, 1, 1),
-					description = "The pattern of refraction is defined by a normal map (DX9+) or DUDV map (DX8-). May be animated.",
+					description = "Tint color of the refraction.",
 				},
 				refractamount = {
 					type = "float",
@@ -1279,13 +1284,25 @@ return {
 					default = 0,
 					friendly = "BumpFrame",
 					description = "The frame to start the first animated bump map on.",
+					linked = "normalmap"
 				},
 				bumpframe2 = {
 					type = "int",
 					default = 0,
 					friendly = "SecondBumpFrame",
 					description = "The frame to start the second animated bump map on.",
-				}
+					linked = "normalmap2"
+				},
+				bumptransform = {
+					type = "matrix",
+					friendly = "Transform",
+					description = "Transform of the first bump map.",
+				},
+				bumptransform2 = {
+					type = "matrix",
+					friendly = "Second Transform",
+					description = "Transform of the second bump map.",
+				},
 			},
 		},
 	},
@@ -1306,6 +1323,7 @@ return {
 				friendly = "Frame",
 				default = 0,
 				description = "Base Texture Animation Frame",
+				linked = "basetexture"
 			},
 		},
 		detail = {
@@ -1325,6 +1343,7 @@ return {
 				friendly = "Frame",
 				default = 0,
 				description = "frame number for $detail",
+				linked = "detail"
 			},
 			detailblendmode = {
 				recompute = true,
@@ -1358,19 +1377,6 @@ return {
 				type = "matrix",
 				friendly = "Transform",
 				description = "$detail texcoord transform",
-			},
-		},
-		["environment map"] = {
-			envmapmasktransform = {
-				type = "matrix",
-				friendly = "MaskTransform",
-				description = "$envmapmask texcoord transform",
-			},
-			envmapmaskframe = {
-				type = "integer",
-				friendly = "MaskFrame",
-				default = 0,
-				description = "",
 			},
 		},
 		["depth blend"] = {
@@ -1469,6 +1475,7 @@ return {
 				friendly = "Frame",
 				default = 0,
 				description = "Animation Frame for $flashlight",
+				linked = "flashlighttexture"
 			},
 			receiveflashlight = {
 				type = "bool",
@@ -1494,6 +1501,11 @@ return {
 			},
 		},
 		["environment map"] = {
+			envmapmasktransform = {
+				type = "matrix",
+				friendly = "MaskTransform",
+				description = "$envmapmask texcoord transform",
+			},
 			envmapsaturation = {
 				type = "float",
 				friendly = "Saturation",
@@ -1511,6 +1523,13 @@ return {
 				friendly = "Mask",
 				description = "envmap mask",
 			},
+			envmapmaskframe = {
+				type = "integer",
+				friendly = "MaskFrame",
+				default = 0,
+				description = "Frame of the animated mask.",
+				linked = "envmapmask"
+			},
 			envmapcameraspace = {
 				is_flag = true,
 				type = "integer",
@@ -1524,6 +1543,13 @@ return {
 				description = "envmap. won't work if hdr is enabled",
 				default = "",
 				partial_hdr = true
+			},
+			envmapframe = {
+				type = "integer",
+				friendly = "Frame",
+				default = 0,
+				description = "envmap frame number",
+				linked = "envmap"
 			},
 			envmapmode = {
 				is_flag = true,
@@ -1544,12 +1570,6 @@ return {
 				friendly = "Sphere",
 				default = false,
 				description = "flag",
-			},
-			envmapframe = {
-				type = "integer",
-				friendly = "Frame",
-				default = 0,
-				description = "envmap frame number",
 			},
 			normalmapalphaenvmapmask = {
 				is_flag = true,
