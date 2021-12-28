@@ -429,6 +429,13 @@ for shader_name, groups in pairs(shader_params.shaders) do
 							self:GetRawMaterial():SetTexture(key, tex)
 						end, self:GetPlayerOwner()) then
 							self:GetRawMaterial():SetTexture(key, val)
+
+							local texture = self:GetRawMaterial():GetTexture(key)
+
+							if texture then
+								self.vtf_frame_limit = self.vtf_frame_limit or {}
+								self.vtf_frame_limit[group] = texture:GetNumAnimationFrames()
+							end
 						end
 					end
 				end
@@ -459,6 +466,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 							self[property_name] = val
 							if self.vtf_frame_limit and self.vtf_frame_limit[group] then
 								self:GetRawMaterial():SetInt(key, math.abs(val)%self.vtf_frame_limit[group])
+							else
+								self:GetRawMaterial():SetInt(key, val)
 							end
 						end
 					end
@@ -534,7 +543,6 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				end
 			end
 		end
-
 		return self.Materialm
 	end
 
