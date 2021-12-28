@@ -1199,8 +1199,8 @@ return {
 			},
 			generic = {
 				vertexcolormodulate = {
-					type = "color",
-					default = Vector(0, 0, 0),
+					type = "bool",
+					default = false,
 					friendly = "VertexColorModulate",
 					recompute = true,
 				},
