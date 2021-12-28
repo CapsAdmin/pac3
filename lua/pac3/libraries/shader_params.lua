@@ -1259,11 +1259,6 @@ return {
 				},
 			},
 			normal = {
-				normalmap2 = {
-					type = "texture",
-					friendly = "NormalMap2",
-					description = "If a second normal map is specified, it will be blended with the first one.",
-				},
 				dudvmap = {
 					type = "texture",
 					friendly = "DudvMap",
@@ -1272,7 +1267,25 @@ return {
 				normalmap = {
 					type = "texture",
 					friendly = "NormalMap",
+					description = "The pattern of refraction is defined by a normal map (DX9+) or DUDV map (DX8-). May be animated.",
 				},
+				normalmap2 = {
+					type = "texture",
+					friendly = "SecondNormalMap",
+					description = "If a second normal map is specified, it will be blended with the first one.",
+				},
+				bumpframe = {
+					type = "int",
+					default = 0,
+					friendly = "BumpFrame",
+					description = "The frame to start the first animated bump map on.",
+				},
+				bumpframe2 = {
+					type = "int",
+					default = 0,
+					friendly = "SecondBumpFrame",
+					description = "The frame to start the second animated bump map on.",
+				}
 			},
 		},
 	},
