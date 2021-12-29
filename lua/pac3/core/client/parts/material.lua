@@ -128,10 +128,15 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 
 		for k,v in pairs(self:GetVars()) do
-			if PART.ShaderParams[k] and PART.ShaderParams[k].default ~= nil then
-				self["Set" .. k](self, PART.ShaderParams[k].default)
+			local param = PART.ShaderParams[k]
+			if param and param.default ~= nil then
+				self["Set" .. k](self, param.default)
+			end
+			if param and param.type == "texture" then
+				self["Set" .. k](self, "")
 			end
 		end
+		
 		print(str)
 		print("======")
 		PrintTable(vmt)
