@@ -136,7 +136,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				self["Set" .. k](self, "")
 			end
 		end
-		
+
 		print(str)
 		print("======")
 		PrintTable(vmt)
@@ -156,6 +156,12 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 						if type(info.default) == "number" then
 							v = v.x
+						end
+					elseif v:find("{", nil, true) then
+						v = Vector(v:gsub("[%{%}]", ""):gsub("%s+", " "):Trim())
+
+						if info.type == "color" then
+							v = v / 255
 						end
 					end
 				end
