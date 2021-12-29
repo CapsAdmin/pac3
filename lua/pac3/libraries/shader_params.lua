@@ -22,24 +22,17 @@ return {
 				corneatexture = {
 					type = "texture",
 					description = "cornea texture",
-					default = "shadertest/BaseTexture",
+					default = "Engine/eye-cornea",
 				},
 				ambientoccltexture = {
 					type = "texture",
 					description = "reflection texture",
-					default = "shadertest/BaseTexture",
-				},
-				envmap = {
-					type = "texture",
-					friendly = "Envmap",
-					description = "envmap. won't work if hdr is enabled",
-					default = "",
-					partial_hdr = true
+					default = "Engine/eye-extra",
 				},
 				ambientocclcolor = {
 					type = "vec3",
 					description = "Ambient occlusion color",
-					default = Vector(1,1,1),
+					default = Vector(0.33,0.33,0.33),
 				},
 			},
 			eye = {
@@ -51,15 +44,21 @@ return {
 				},
 				eyeballradius = {
 					type = "float",
-					description = "Eyeball radius for ray casting",
-					default = 0,
+					description = "Requires $raytracesphere 1. Radius of the eyeball. Should be the diameter of the eyeball divided by 2.",
+					default = 0.5,
 					friendly = "EyeballRadius",
 				},
 				raytracesphere = {
 					type = "bool",
-					description = "Raytrace sphere",
+					description = "Enables sphere raytracing. Each pixel is raytraced to allow sharper angles to look more accurate.",
 					default = true,
 					friendly = "RayTraceSphere",
+				},
+				spheretexkillcombo = {
+					type = "bool",
+					description = "Requires $raytracesphere 1. Causes pixels which don't hit the raytraced sphere to be transparent",
+					default = true,
+					friendly = "SphereTexkillCombo",
 				},
 				eyeorigin = {
 					type = "vec3",
@@ -70,7 +69,7 @@ return {
 				iris = {
 					type = "texture",
 					description = "iris texture",
-					default = "shadertest/BaseTexture",
+					default = "engine/eye-iris-green",
 					friendly = "Iris",
 				},
 				irisframe = {
@@ -83,7 +82,7 @@ return {
 				dilation = {
 					type = "float",
 					description = "Pupil dilation (0 is none, 1 is maximal)",
-					default = 0,
+					default = 0.5,
 					friendly = "Dilation",
 				},
 				irisu = {
@@ -101,7 +100,7 @@ return {
 				parallaxstrength = {
 					type = "float",
 					description = "Parallax strength",
-					default = 1,
+					default = 0.25,
 					friendly = "ParallaxStrength",
 				},
 				corneabumpstrength = {
@@ -109,6 +108,25 @@ return {
 					description = "Cornea strength",
 					default = 1,
 					friendly = "CorneaBumpStrength",
+				},
+				halflambert = {
+					type = "bool",
+					description = "Enables half-lambertian lighting.",
+					default = 1,
+					friendly = "HalfLambert",
+				},
+				glossiness = {
+					type = "float",
+					description = "The opacity of the cubemap reflection.",
+					default = 0.5,
+					friendly = "Glossiness",
+				},
+				envmap = {
+					type = "texture",
+					friendly = "Envmap",
+					description = "Enables cubemap reflections.",
+					default = "",
+					partial_hdr = true
 				},
 			},
 			cloak = {
