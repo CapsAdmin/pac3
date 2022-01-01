@@ -57,7 +57,7 @@ return {
 				spheretexkillcombo = {
 					type = "bool",
 					description = "Requires $raytracesphere 1. Causes pixels which don't hit the raytraced sphere to be transparent",
-					default = true,
+					default = false,
 					friendly = "SphereTexkillCombo",
 				},
 				eyeorigin = {
@@ -121,13 +121,6 @@ return {
 					default = 0.5,
 					friendly = "Glossiness",
 				},
-				envmap = {
-					type = "texture",
-					friendly = "Envmap",
-					description = "Enables cubemap reflections.",
-					default = "",
-					partial_hdr = true
-				},
 			},
 			cloak = {
 				cloakpassenabled = {
@@ -155,6 +148,15 @@ return {
 					description = "How strong the refraction effect should be when the material is partially cloaked (default = 2).",
 				},
 			},
+			["environment map"] = {
+				envmap = {
+					type = "texture",
+					friendly = "Envmap",
+					description = "Enables cubemap reflections.",
+					default = "Engine/eye-reflection-cubemap-",
+					partial_hdr = true
+				},
+			}
 		},
 		vertexlitgeneric = {
 			wrinkle = {
@@ -1167,6 +1169,13 @@ return {
 			},
 		},
 		refract = {
+			["base texture"] = {
+				basetexture = {
+					type = "texture",
+					description = "Use a texture instead of rendering the view for the source of the distorted pixels.",
+					default = "",
+				},
+			},
 			["local"] = {
 				localrefract = {
 					type = "bool",
@@ -1216,7 +1225,7 @@ return {
 				refractamount = {
 					type = "float",
 					friendly = "RefractAmount",
-					default = 0,
+					default = 0.5,
 					description = "How strong the refraction effect should be when the material is partially cloaked (default = 2).",
 				},
 			},
@@ -1286,11 +1295,13 @@ return {
 					type = "texture",
 					friendly = "DudvMap",
 					description = "The pattern of refraction is defined by a normal map (DX9+) or DUDV map (DX8-). May be animated.",
+					default = "dev/water_dudv",
 				},
 				normalmap = {
 					type = "texture",
 					friendly = "NormalMap",
 					description = "The pattern of refraction is defined by a normal map (DX9+) or DUDV map (DX8-). May be animated.",
+					default = "dev/water_normal",
 				},
 				normalmap2 = {
 					type = "texture",
