@@ -259,15 +259,27 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 
 	function PART:GetNiceName()
-		local path = self:Getbasetexture()
+		local path = ""
+
+		if shader_name == "refract" then
+			path = self:Getnormalmap()
+		elseif shader_name == "eyerefract" then
+			path = self:Getiris()
+		else
+			path = self:Getbasetexture()
+		end
+
 		path = path:gsub("%%(..)", function(char)
 			local num = tonumber("0x" .. char)
 			if num then
 				return string.char(num)
 			end
 		end)
+
 		local name = ("/".. path):match(".+/(.-)%.") or ("/".. path):match(".+/(.+)")
-		return pac.PrettifyName(name) or "?"
+		local nice_name = (pac.PrettifyName(name) or "no texture") .. " | " .. shader_name
+
+		return nice_name
 	end
 
 	function PART:SetMaterialOverride(num)
