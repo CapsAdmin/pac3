@@ -82,7 +82,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	for group_name, base_group in pairs(shader_params.base) do
 		if groups[group_name] then
 			for k,v in pairs(base_group) do
-				groups[group_name][k] = v
+				if not groups[group_name][k] then
+					groups[group_name][k] = v
+				end
 			end
 		else
 			groups[group_name] = base_group
