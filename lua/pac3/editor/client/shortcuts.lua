@@ -8,11 +8,12 @@ function pace.OnShortcutSave()
 end
 
 function pace.OnShortcutWear()
-	if IsValid(pace.current_part) then return end
+	if not IsValid(pace.current_part) then return end
 
 	local part = pace.current_part:GetRootPart()
 	surface.PlaySound("buttons/button9.wav")
 	pace.SendPartToServer(part)
+	pace.FlashNotification('Wearing group: ' .. part:GetName())
 end
 
 local last = 0
@@ -37,7 +38,7 @@ function pace.CheckShortcuts()
 	end
 
 	-- Only if the editor is in the foreground
-	if pace.HasFocus() then
+	if pace.IsFocused() then
 		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_S) then
 			pace.Call("ShortcutSave")
 			last = RealTime() + 0.2

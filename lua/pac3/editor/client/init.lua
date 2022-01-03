@@ -161,6 +161,7 @@ function pace.CloseEditor()
 
 		pace.Editor:Remove()
 		pace.Active = false
+		pace.Focused = false
 		pace.Call("CloseEditor")
 
 		if pace.timeline.IsActive() then
