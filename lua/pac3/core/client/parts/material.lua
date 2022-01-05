@@ -511,8 +511,13 @@ for shader_name, groups in pairs(shader_params.shaders) do
 						end
 					else
 						PART["Set" .. property_name] = function(self, val)
+							if type(val) == "Vector" then 
+								val = (val == Vector(1,1,1)) and true or false 
+							end
+	
 							self[property_name] = val
 							local mat = self:GetRawMaterial()
+
 							mat:SetInt(key, val and 1 or 0)
 							if info.recompute then mat:Recompute() end
 						end
