@@ -405,7 +405,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 											if v.file_name == mat then
 												found = v.file_path
 												break
-											elseif v.file_name == mat:match(".+/(.+)") then
+											elseif v.file_path == ("materials/" .. mat) or v.file_path:match(mat) or v.file_name == mat:match(".+/(.+)") then
 												v.file_name = mat
 												found = v.file_path
 												break
