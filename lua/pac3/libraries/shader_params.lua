@@ -22,24 +22,17 @@ return {
 				corneatexture = {
 					type = "texture",
 					description = "cornea texture",
-					default = "shadertest/BaseTexture",
+					default = "Engine/eye-cornea",
 				},
 				ambientoccltexture = {
 					type = "texture",
 					description = "reflection texture",
-					default = "shadertest/BaseTexture",
-				},
-				envmap = {
-					type = "texture",
-					friendly = "Envmap",
-					description = "envmap. won't work if hdr is enabled",
-					default = "",
-					partial_hdr = true
+					default = "Engine/eye-extra",
 				},
 				ambientocclcolor = {
 					type = "vec3",
 					description = "Ambient occlusion color",
-					default = Vector(1,1,1),
+					default = Vector(0.33,0.33,0.33),
 				},
 			},
 			eye = {
@@ -51,21 +44,21 @@ return {
 				},
 				eyeballradius = {
 					type = "float",
-					description = "Eyeball radius for ray casting",
-					default = 0,
+					description = "Requires $raytracesphere 1. Radius of the eyeball. Should be the diameter of the eyeball divided by 2.",
+					default = 0.5,
 					friendly = "EyeballRadius",
 				},
 				raytracesphere = {
 					type = "bool",
-					description = "Raytrace sphere",
+					description = "Enables sphere raytracing. Each pixel is raytraced to allow sharper angles to look more accurate.",
 					default = true,
 					friendly = "RayTraceSphere",
 				},
-				irisframe = {
-					type = "integer",
-					description = "frame for the iris texture",
-					default = 0,
-					friendly = "IrisFrame",
+				spheretexkillcombo = {
+					type = "bool",
+					description = "Requires $raytracesphere 1. Causes pixels which don't hit the raytraced sphere to be transparent",
+					default = false,
+					friendly = "SphereTexkillCombo",
 				},
 				eyeorigin = {
 					type = "vec3",
@@ -76,13 +69,20 @@ return {
 				iris = {
 					type = "texture",
 					description = "iris texture",
-					default = "shadertest/BaseTexture",
+					default = "engine/eye-iris-green",
 					friendly = "Iris",
+				},
+				irisframe = {
+					type = "integer",
+					description = "frame for the iris texture",
+					default = 0,
+					friendly = "IrisFrame",
+					linked = "iris"
 				},
 				dilation = {
 					type = "float",
 					description = "Pupil dilation (0 is none, 1 is maximal)",
-					default = 0,
+					default = 0.5,
 					friendly = "Dilation",
 				},
 				irisu = {
@@ -100,7 +100,7 @@ return {
 				parallaxstrength = {
 					type = "float",
 					description = "Parallax strength",
-					default = 1,
+					default = 0.25,
 					friendly = "ParallaxStrength",
 				},
 				corneabumpstrength = {
@@ -108,6 +108,18 @@ return {
 					description = "Cornea strength",
 					default = 1,
 					friendly = "CorneaBumpStrength",
+				},
+				halflambert = {
+					type = "bool",
+					description = "Enables half-lambertian lighting.",
+					default = 1,
+					friendly = "HalfLambert",
+				},
+				glossiness = {
+					type = "float",
+					description = "The opacity of the cubemap reflection.",
+					default = 0.5,
+					friendly = "Glossiness",
 				},
 			},
 			cloak = {
@@ -136,6 +148,15 @@ return {
 					description = "How strong the refraction effect should be when the material is partially cloaked (default = 2).",
 				},
 			},
+			["environment map"] = {
+				envmap = {
+					type = "texture",
+					friendly = "Envmap",
+					description = "Enables cubemap reflections.",
+					default = "Engine/eye-reflection-cubemap-",
+					partial_hdr = true
+				},
+			}
 		},
 		vertexlitgeneric = {
 			wrinkle = {
@@ -216,6 +237,7 @@ return {
 					description = "",
 					default = 0,
 					friendly = "MaskFrame",
+					linked = "sheenmap"
 				},
 				sheenmapmaskdirection = {
 					type = "integer",
@@ -615,6 +637,7 @@ return {
 					friendly = "Frame",
 					default = 0,
 					description = "The frame to start an animated bump map on.",
+					linked = "bumpmap"
 				},
 				bumptransform = {
 					type = "matrix",
@@ -1033,6 +1056,7 @@ return {
 					friendly = "Frame",
 					default = 0,
 					description = "Animation Frame",
+					linked = "basetexture"
 				},
 			},
 			["self illumination"] = {
@@ -1145,6 +1169,13 @@ return {
 			},
 		},
 		refract = {
+			["base texture"] = {
+				basetexture = {
+					type = "texture",
+					description = "Use a texture instead of rendering the view for the source of the distorted pixels.",
+					default = "",
+				},
+			},
 			["local"] = {
 				localrefract = {
 					type = "bool",
@@ -1181,26 +1212,27 @@ return {
 				refracttinttextureframe = {
 					type = "integer",
 					friendly = "TintTextureFrame",
-					description = "",
+					description = "Frame to start an animated tint texture on.",
 					default = 0,
+					linked = "refracttinttexture"
 				},
 				refracttint = {
 					type = "color",
 					friendly = "Tint",
 					default = Vector(1, 1, 1),
-					description = "The pattern of refraction is defined by a normal map (DX9+) or DUDV map (DX8-). May be animated.",
+					description = "Tint color of the refraction.",
 				},
 				refractamount = {
 					type = "float",
 					friendly = "RefractAmount",
-					default = 0,
+					default = 0.5,
 					description = "How strong the refraction effect should be when the material is partially cloaked (default = 2).",
 				},
 			},
 			generic = {
 				vertexcolormodulate = {
-					type = "color",
-					default = Vector(0, 0, 0),
+					type = "bool",
+					default = false,
 					friendly = "VertexColorModulate",
 					recompute = true,
 				},
@@ -1259,19 +1291,46 @@ return {
 				},
 			},
 			normal = {
-				normalmap2 = {
-					type = "texture",
-					friendly = "NormalMap2",
-					description = "If a second normal map is specified, it will be blended with the first one.",
-				},
 				dudvmap = {
 					type = "texture",
 					friendly = "DudvMap",
 					description = "The pattern of refraction is defined by a normal map (DX9+) or DUDV map (DX8-). May be animated.",
+					default = "dev/water_dudv",
 				},
 				normalmap = {
 					type = "texture",
 					friendly = "NormalMap",
+					description = "The pattern of refraction is defined by a normal map (DX9+) or DUDV map (DX8-). May be animated.",
+					default = "dev/water_normal",
+				},
+				normalmap2 = {
+					type = "texture",
+					friendly = "SecondNormalMap",
+					description = "If a second normal map is specified, it will be blended with the first one.",
+				},
+				bumpframe = {
+					type = "int",
+					default = 0,
+					friendly = "BumpFrame",
+					description = "The frame to start the first animated bump map on.",
+					linked = "normalmap"
+				},
+				bumpframe2 = {
+					type = "int",
+					default = 0,
+					friendly = "SecondBumpFrame",
+					description = "The frame to start the second animated bump map on.",
+					linked = "normalmap2"
+				},
+				bumptransform = {
+					type = "matrix",
+					friendly = "Transform",
+					description = "Transform of the first bump map.",
+				},
+				bumptransform2 = {
+					type = "matrix",
+					friendly = "Second Transform",
+					description = "Transform of the second bump map.",
 				},
 			},
 		},
@@ -1293,6 +1352,7 @@ return {
 				friendly = "Frame",
 				default = 0,
 				description = "Base Texture Animation Frame",
+				linked = "basetexture"
 			},
 		},
 		detail = {
@@ -1312,6 +1372,7 @@ return {
 				friendly = "Frame",
 				default = 0,
 				description = "frame number for $detail",
+				linked = "detail"
 			},
 			detailblendmode = {
 				recompute = true,
@@ -1345,19 +1406,6 @@ return {
 				type = "matrix",
 				friendly = "Transform",
 				description = "$detail texcoord transform",
-			},
-		},
-		["environment map"] = {
-			envmapmasktransform = {
-				type = "matrix",
-				friendly = "MaskTransform",
-				description = "$envmapmask texcoord transform",
-			},
-			envmapmaskframe = {
-				type = "integer",
-				friendly = "MaskFrame",
-				default = 0,
-				description = "",
 			},
 		},
 		["depth blend"] = {
@@ -1456,6 +1504,7 @@ return {
 				friendly = "Frame",
 				default = 0,
 				description = "Animation Frame for $flashlight",
+				linked = "flashlighttexture"
 			},
 			receiveflashlight = {
 				type = "bool",
@@ -1481,6 +1530,11 @@ return {
 			},
 		},
 		["environment map"] = {
+			envmapmasktransform = {
+				type = "matrix",
+				friendly = "MaskTransform",
+				description = "$envmapmask texcoord transform",
+			},
 			envmapsaturation = {
 				type = "float",
 				friendly = "Saturation",
@@ -1498,6 +1552,13 @@ return {
 				friendly = "Mask",
 				description = "envmap mask",
 			},
+			envmapmaskframe = {
+				type = "integer",
+				friendly = "MaskFrame",
+				default = 0,
+				description = "Frame of the animated mask.",
+				linked = "envmapmask"
+			},
 			envmapcameraspace = {
 				is_flag = true,
 				type = "integer",
@@ -1511,6 +1572,13 @@ return {
 				description = "envmap. won't work if hdr is enabled",
 				default = "",
 				partial_hdr = true
+			},
+			envmapframe = {
+				type = "integer",
+				friendly = "Frame",
+				default = 0,
+				description = "envmap frame number",
+				linked = "envmap"
 			},
 			envmapmode = {
 				is_flag = true,
@@ -1531,12 +1599,6 @@ return {
 				friendly = "Sphere",
 				default = false,
 				description = "flag",
-			},
-			envmapframe = {
-				type = "integer",
-				friendly = "Frame",
-				default = 0,
-				description = "envmap frame number",
 			},
 			normalmapalphaenvmapmask = {
 				is_flag = true,
