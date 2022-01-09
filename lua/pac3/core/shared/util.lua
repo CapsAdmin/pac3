@@ -399,6 +399,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 									f:seek(offset)
 									for i = 1, vmt_dir_count do
 										local mat = (f:readString() .. ".vmt"):lower()
+										if mat:EndsWith("\\.vmt") or mat:EndsWith("/.vmt") or mat == (".vmt") then break end
 										local found = false
 
 										for i, v in pairs(files) do
