@@ -401,8 +401,13 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 										local mat = (f:readString() .. ".vmt"):lower()
 										local found = false
 
+										if mat:EndsWith("\\.vmt") or mat:EndsWith("/.vmt") or mat == (".vmt") then goto CONTINUE end
 										for i, v in pairs(files) do
 											if v.file_name == mat then
+												found = v.file_path
+												break
+											elseif v.file_path == ("materials/" .. mat) or string.find(v.file_path, mat, 1, true) or string.find(mat, v.file_name, 1, true) then
+												v.file_name = mat
 												found = v.file_path
 												break
 											end
@@ -417,6 +422,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 										end
 
 										table.insert(found_materials, mat)
+										::CONTINUE::
 									end
 								end
 							f:seek(old_pos)
