@@ -100,7 +100,7 @@ pace.PCallNetReceive(net.Receive, "pac_to_contraption", function(len, ply)
 	if count > max then
 		net.Start("pac_submit_acknowledged")
 			net.WriteBool(false)
-			net.WriteString("You can only spawn ", max, " props at a time!")
+			net.WriteString("You can only spawn " .. max .. " props at a time!")
 		net.Send(ply)
 
 		pac.Message(ply, " might have tried to crash the server by attempting to spawn ", count, " entities with the contraption system!")
