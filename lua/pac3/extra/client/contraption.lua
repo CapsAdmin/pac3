@@ -19,7 +19,7 @@ function pacx.PartToContraptionData(part, tbl)
 		if part.ProperColorRange then
 			data.clr = Color(color.r * 255, color.g * 255, color.b * 255, alpha * 255)
 		else
-			data.clr = Color(color.r, color.g, color.b, alpha)
+			data.clr = Color(color.r, color.g, color.b, alpha * 255)
 		end
 
 		data.ang = part:GetOwner():GetAngles()

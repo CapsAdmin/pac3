@@ -30,6 +30,7 @@ local function spawn(val,ply)
 	ent:Spawn()
 	ent:SetHealth(9999999)
 	ent:SetColor(val.clr)
+	ent:SetRenderMode( RENDERMODE_TRANSCOLOR )
 
 	hook.Run("PlayerSpawnedProp", ply, model, ent)
 
