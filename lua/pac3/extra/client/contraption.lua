@@ -13,9 +13,15 @@ function pacx.PartToContraptionData(part, tbl)
 	if part.is_model_part then
 		local data = {}
 
-		local c = part:GetColor()
+		local color = part:GetColor()
+		local alpha = part:GetAlpha()
 
-		data.clr = {c.r, c.g, c.b, part:GetAlpha() * 255}
+		if part.ProperColorRange then
+			data.clr = Color(color.r * 255, color.g * 255, color.b * 255, alpha * 255)
+		else
+			data.clr = Color(color.r, color.g, color.b, alpha * 255)
+		end
+
 		data.ang = part:GetOwner():GetAngles()
 		data.pos = part:GetOwner():GetPos()
 		data.mat = part:GetMaterial()
