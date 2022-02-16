@@ -82,7 +82,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	for group_name, base_group in pairs(shader_params.base) do
 		if groups[group_name] then
 			for k,v in pairs(base_group) do
-				groups[group_name][k] = v
+				if not groups[group_name][k] then
+					groups[group_name][k] = v
+				end
 			end
 		else
 			groups[group_name] = base_group
@@ -93,11 +95,11 @@ end
 for shader_name, groups in pairs(shader_params.shaders) do
 	local temp = CreateMaterial(tostring({}), shader_name, {})
 
-	local PART = {}
+	local BUILDER, PART = pac.PartTemplate("base")
 
 	PART.ClassName = "material_" .. (shader_name_translate[shader_name] or shader_name)
 	PART.Description = shader_name
-	PART.NonPhysical = true
+
 	PART.ProperColorRange = true
 
 	if shader_name == "vertexlitgeneric" then
@@ -110,12 +112,12 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 	PART.Icon = "icon16/paintcan.png"
 
-	pac.StartStorableVars()
+	BUILDER:StartStorableVars()
 
-	pac.SetPropertyGroup(PART, "generic")
+	BUILDER:SetPropertyGroup("generic")
 
 	-- move this to tools or something
-	pac.GetSet(PART, "LoadVmt", "", {editor_panel = "material"})
+	BUILDER:GetSet("LoadVmt", "", {editor_panel = "material"})
 	function PART:SetLoadVmt(path)
 		if not path or path == "" then return end
 
@@ -128,10 +130,15 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 
 		for k,v in pairs(self:GetVars()) do
-			if PART.ShaderParams[k] and PART.ShaderParams[k].default ~= nil then
-				self["Set" .. k](self, PART.ShaderParams[k].default)
+			local param = PART.ShaderParams[k]
+			if param and param.default ~= nil then
+				self["Set" .. k](self, param.default)
+			end
+			if param and param.type == "texture" then
+				self["Set" .. k](self, "")
 			end
 		end
+
 		print(str)
 		print("======")
 		PrintTable(vmt)
@@ -152,6 +159,12 @@ for shader_name, groups in pairs(shader_params.shaders) do
 						if type(info.default) == "number" then
 							v = v.x
 						end
+					elseif v:find("{", nil, true) then
+						v = Vector(v:gsub("[%{%}]", ""):gsub("%s+", " "):Trim())
+
+						if info.type == "color" then
+							v = v / 255
+						end
 					end
 				end
 
@@ -168,17 +181,12 @@ for shader_name, groups in pairs(shader_params.shaders) do
 		end
 	end
 
-	pac.GetSet(PART, "MaterialOverride", "all", {enums = function(self, str)
+	BUILDER:GetSet("MaterialOverride", "all", {enums = function(self, str)
 
 		local materials = {}
 
-		if
-			pace.current_part:HasParent() and
-			pace.current_part:GetParent().GetEntity and
-			pace.current_part:GetParent():GetEntity():IsValid() and
-			pace.current_part:GetParent():GetEntity():GetMaterials()
-		then
-			materials = pace.current_part:GetParent():GetEntity():GetMaterials()
+		if pace.current_part:GetOwner():IsValid() then
+			materials = pace.current_part:GetOwner():GetMaterials()
 		end
 
 		table.insert(materials, "all")
@@ -217,8 +225,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 			if parent:IsValid() then
 				if tonumber(str) then
 					num = tonumber(str)
-				elseif str ~= "all" and parent.GetEntity and parent:GetEntity():IsValid() and parent:GetEntity():GetMaterials() then
-					for i, v in ipairs(parent:GetEntity():GetMaterials()) do
+				elseif str ~= "all" and self:GetOwner():IsValid() then
+					for i, v in ipairs(parent:GetOwner():GetMaterials()) do
 						if (v:match(".+/(.+)") or v):lower() == str:lower() then
 							num = i
 							break
@@ -253,15 +261,27 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 
 	function PART:GetNiceName()
-		local path = self:Getbasetexture()
+		local path = ""
+
+		if shader_name == "refract" then
+			path = self:Getnormalmap()
+		elseif shader_name == "eyerefract" then
+			path = self:Getiris()
+		else
+			path = self:Getbasetexture()
+		end
+
 		path = path:gsub("%%(..)", function(char)
 			local num = tonumber("0x" .. char)
 			if num then
 				return string.char(num)
 			end
 		end)
+
 		local name = ("/".. path):match(".+/(.-)%.") or ("/".. path):match(".+/(.+)")
-		return pac.PrettifyName(name) or "?"
+		local nice_name = (pac.PrettifyName(name) or "no texture") .. " | " .. shader_name
+
+		return nice_name
 	end
 
 	function PART:SetMaterialOverride(num)
@@ -271,9 +291,8 @@ for shader_name, groups in pairs(shader_params.shaders) do
 	end
 
 	function PART:OnThink()
-		local parent = self:GetParent()
-		if parent.GetEntity and parent:GetEntity():IsValid() then
-			local materials = parent:GetEntity():GetMaterials()
+		if self:GetOwner():IsValid() then
+			local materials = self:GetOwner():GetMaterials()
 			if materials and #materials ~= self.last_material_count then
 				update_submaterial(self)
 				self.last_material_count = #materials
@@ -305,9 +324,9 @@ for shader_name, groups in pairs(shader_params.shaders) do
 			PART.ShaderParams[key] = info
 
 			if info.is_flag and group == "generic" then
-				pac.SetPropertyGroup(PART, "flags")
+				BUILDER:SetPropertyGroup("flags")
 			else
-				pac.SetPropertyGroup(PART, group)
+				BUILDER:SetPropertyGroup(group)
 			end
 
 			if info.default == nil then
@@ -333,10 +352,10 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				local angle_center_key = property_name .. "AngleCenter"
 
 				local friendly_name = info.friendly:gsub("Transform", "")
-				pac.GetSet(PART, position_key, Vector(0, 0, 0), {editor_friendly = friendly_name .. "Position", description = description})
-				pac.GetSet(PART, scale_key, Vector(1, 1, 1), {editor_friendly = friendly_name .. "Scale", description = description})
-				pac.GetSet(PART, angle_key, 0, {editor_panel = "number", editor_friendly = friendly_name .. "Angle", description = description})
-				pac.GetSet(PART, angle_center_key, Vector(0.5, 0.5, 0), {editor_friendly = friendly_name .. "AngleCenter", description = description})
+				BUILDER:GetSet(position_key, Vector(0, 0, 0), {editor_friendly = friendly_name .. "Position", description = description})
+				BUILDER:GetSet(scale_key, Vector(1, 1, 1), {editor_friendly = friendly_name .. "Scale", description = description})
+				BUILDER:GetSet(angle_key, 0, {editor_panel = "number", editor_friendly = friendly_name .. "Angle", description = description})
+				BUILDER:GetSet(angle_center_key, Vector(0.5, 0.5, 0), {editor_friendly = friendly_name .. "AngleCenter", description = description})
 
 				PART.TransformVars[position_key] = true
 				PART.TransformVars[scale_key] = true
@@ -398,7 +417,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				local getnohdr = "Get" .. property_name .. "NoHDR"
 
 				if info.partial_hdr then
-					pac.GetSet(PART, property_name .. "NoHDR", false, {
+					BUILDER:GetSet(property_name .. "NoHDR", false, {
 						editor_friendly = info.friendly .. " No HDR",
 						description = "Disables bound param when HDR is enabled",
 					})
@@ -406,7 +425,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 
 				info.default = info.default or ""
 
-				pac.GetSet(PART, property_name, info.default, {
+				BUILDER:GetSet(property_name, info.default, {
 					editor_panel = "textures",
 					editor_friendly = info.friendly,
 					description = description,
@@ -430,16 +449,23 @@ for shader_name, groups in pairs(shader_params.shaders) do
 						if not pac.resource.DownloadTexture(val, function(tex, frames)
 							if frames then
 								self.vtf_frame_limit = self.vtf_frame_limit or {}
-								self.vtf_frame_limit[group] = frames
+								self.vtf_frame_limit[property_name] = frames
 							end
 							self:GetRawMaterial():SetTexture(key, tex)
 						end, self:GetPlayerOwner()) then
 							self:GetRawMaterial():SetTexture(key, val)
+
+							local texture = self:GetRawMaterial():GetTexture(key)
+
+							if texture then
+								self.vtf_frame_limit = self.vtf_frame_limit or {}
+								self.vtf_frame_limit[property_name] = texture:GetNumAnimationFrames()
+							end
 						end
 					end
 				end
 			else
-				pac.GetSet(PART, property_name, info.default, {
+				BUILDER:GetSet(property_name, info.default, {
 					editor_friendly = info.friendly,
 					enums = info.enums,
 					description = description,
@@ -463,8 +489,10 @@ for shader_name, groups in pairs(shader_params.shaders) do
 					if property_name:lower():find("frame") then
 						PART["Set" .. property_name] = function(self, val)
 							self[property_name] = val
-							if self.vtf_frame_limit and self.vtf_frame_limit[group] then
-								self:GetRawMaterial():SetInt(key, math.abs(val)%self.vtf_frame_limit[group])
+							if self.vtf_frame_limit and info.linked and self.vtf_frame_limit[info.linked] then
+								self:GetRawMaterial():SetInt(key, math.abs(val)%self.vtf_frame_limit[info.linked])
+							else
+								self:GetRawMaterial():SetInt(key, val)
 							end
 						end
 					end
@@ -483,8 +511,13 @@ for shader_name, groups in pairs(shader_params.shaders) do
 						end
 					else
 						PART["Set" .. property_name] = function(self, val)
+							if type(val) == "Vector" then 
+								val = (val == Vector(1,1,1)) and true or false 
+							end
+	
 							self[property_name] = val
 							local mat = self:GetRawMaterial()
+
 							mat:SetInt(key, val and 1 or 0)
 							if info.recompute then mat:Recompute() end
 						end
@@ -526,7 +559,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 		end
 	end
 
-	pac.EndStorableVars()
+	BUILDER:EndStorableVars()
 
 	function PART:GetRawMaterial()
 		if not self.Materialm then
@@ -540,7 +573,6 @@ for shader_name, groups in pairs(shader_params.shaders) do
 				end
 			end
 		end
-
 		return self.Materialm
 	end
 
@@ -564,5 +596,5 @@ for shader_name, groups in pairs(shader_params.shaders) do
 		update_submaterial(self)
 	end
 
-	pac.RegisterPart(PART)
+	BUILDER:Register()
 end

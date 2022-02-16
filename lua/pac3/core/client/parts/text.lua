@@ -11,27 +11,27 @@ local TEXT_ALIGN_CENTER = TEXT_ALIGN_CENTER
 local surface_SetFont = surface.SetFont
 local Color = Color
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "text"
 PART.Group = 'effects'
 PART.Icon = 'icon16/text_align_center.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Text", "")
-	pac.GetSet(PART, "Font", "default")
-	pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, "Outline", 0)
-	pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
-	pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
-	pac.GetSet(PART, "OutlineColor", Vector(255, 255, 255), {editor_panel = "color"})
-	pac.GetSet(PART, "OutlineAlpha", 1, {editor_onchange = function(self, num)
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Text", "")
+	BUILDER:GetSet("Font", "default")
+	BUILDER:GetSet("Size", 1, {editor_sensitivity = 0.25})
+	BUILDER:GetSet("Outline", 0)
+	BUILDER:GetSet("Color", Vector(255, 255, 255), {editor_panel = "color"})
+	BUILDER:GetSet("Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
+	BUILDER:GetSet("OutlineColor", Vector(255, 255, 255), {editor_panel = "color"})
+	BUILDER:GetSet("OutlineAlpha", 1, {editor_onchange = function(self, num)
 		self.sens = 0.25
 		num = tonumber(num)
 		return math.Clamp(num, 0, 1)
 	end})
-	pac.GetSet(PART, "Translucent", true)
-pac.EndStorableVars()
+	BUILDER:GetSet("Translucent", true)
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	return '"' .. self:GetText() .. '"'
@@ -79,7 +79,9 @@ function PART:SetFont(str)
 	self.Font = str
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
+	local pos, ang = self:GetDrawPosition()
+
 	if self.Text ~= "" then
 		cam_Start3D(EyePos(), EyeAngles())
 			cam_Start3D2D(pos, ang, self.Size)
@@ -97,12 +99,8 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
-function PART:OnRestore(data)
-	self:SetMaterial(data.SpritePath)
-end
-
 function PART:SetText(str)
 	self.Text = str
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

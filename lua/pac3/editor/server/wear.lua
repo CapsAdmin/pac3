@@ -19,7 +19,7 @@ end)
 
 local function make_copy(tbl, input)
 	if tbl.self.UniqueID then
-		tbl.self.UniqueID = util.CRC(tbl.self.UniqueID .. input)
+		tbl.self.UniqueID = pac.Hash(tbl.self.UniqueID .. input)
 	end
 
 	for key, val in pairs(tbl.children) do
@@ -94,7 +94,7 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 			end
 
 			data.owner = ply
-			data.uid = ply:UniqueID()
+			data.uid = pac.Hash(ply)
 			data.is_dupe = true
 
 			-- clientside sent variables cleanup for sanity
@@ -129,7 +129,7 @@ function pace.SubmitPart(data, filter)
 			else
 				if not data.is_dupe then
 					ent.pac_parts = ent.pac_parts or {}
-					ent.pac_parts[data.owner:UniqueID()] = data
+					ent.pac_parts[pac.Hash(data.owner)] = data
 
 					pace.dupe_ents[ent:EntIndex()] = {owner = data.owner, ent = ent}
 
@@ -186,7 +186,7 @@ function pace.SubmitPart(data, filter)
 			--[[for key, v in pairs(pace.dupe_ents) do
 				if v.owner:IsValid() and v.owner == data.owner then
 					if v.ent:IsValid() and v.ent.pac_parts then
-						local id = util.CRC(data.part .. v.ent:EntIndex())
+						local id = pac.Hash(data.part .. v.ent:EntIndex())
 						v.ent.pac_parts[id] = nil
 						duplicator.ClearEntityModifier(v.ent, "pac_config")
 						duplicator.StoreEntityModifier(v.ent, "pac_config", v.ent.pac_parts)
@@ -202,44 +202,14 @@ function pace.SubmitPart(data, filter)
 	end
 
 	local players
-
-	if type(data.wear_filter) == 'table' then
+	if IsValid(data.temp_wear_filter) and type(data.temp_wear_filter) == "Player" then
+		players = {data.temp_wear_filter}
+	elseif type(data.wear_filter) == 'table' then
 		players = {}
 
-		local lookup = {}
-
-		if game.SinglePlayer() then
-			--[[
-				CapsAdminToday at 12:03 AM
-					] lua_run print(player.GetAll()[1]:SteamID())
-					STEAM_0:0:0
-					] lua_run_cl print(player.GetAll()[1]:SteamID())
-					STEAM_0:1:9355639
-
-					what
-					singleplayer
-
-				noruzenchi86Today at 12:04 AM
-					definitely a single player moment
-
-				nforceToday at 12:04 AM
-					just use Entity(1) for sp
-
-				CapsAdminToday at 12:05 AM
-					thx for the tip
-			]]
-
-			table.insert(data.wear_filter, Entity(1):SteamID())
-		end
-
-		for i, ply in ipairs(player.GetAll()) do
-			lookup[ply:SteamID()] = ply
-		end
-
-		for i, v in ipairs(data.wear_filter) do
-			local ply = lookup[v]
-
-			if IsValid(ply) then
+		for _, id in ipairs(data.wear_filter) do
+			local ply = pac.ReverseHash(id, "Player")
+			if ply:IsValid() then
 				table.insert(players, ply)
 			end
 		end
@@ -263,7 +233,7 @@ function pace.SubmitPart(data, filter)
 
 	if not data.server_only then
 		if data.owner:IsValid() then
-			data.player_uid = data.owner:UniqueID()
+			data.player_uid = pac.Hash(data.owner)
 		end
 
 		local players = filter or players
@@ -362,21 +332,11 @@ end
 
 function pace.HandleReceivedData(ply, data)
 	data.owner = ply
-	data.uid = ply:UniqueID()
+	data.uid = pac.Hash(ply)
 
-	if data.wear_filter then
-		if #data.wear_filter <= game.MaxPlayers() then
-			local assemble = {}
-
-			for i, steamid in ipairs(data.wear_filter) do
-				table.insert(assemble, "STEAM_" .. tostring(steamid))
-			end
-
-			data.wear_filter = assemble
-		else
-			pac.Message("Player ", ply, " tried to submit extraordinary wear filter size of ", #data.wear_filter, ", dropping.")
-			data.wear_filter = nil
-		end
+	if data.wear_filter and #data.wear_filter > game.MaxPlayers() then
+		pac.Message("Player ", ply, " tried to submit extraordinary wear filter size of ", #data.wear_filter, ", dropping.")
+		data.wear_filter = nil
 	end
 
 	if type(data.part) == "table" and data.part.self then
@@ -430,15 +390,23 @@ pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
 	end
 
 	net.ReadStream(ply, function(data)
+		if not data then
+			pac.Message("message from ", ply, " timed out")
+			return
+		end
+		if not ply:IsValid() then
+			pac.Message("received message from ", ply, " but player is no longer valid!")
+			return
+		end
 		local buffer = pac.StringStream(data)
 		pace.HandleReceivedData(ply, buffer:readTable())
 	end)
 end)
 
 function pace.ClearOutfit(ply)
-	local uid = ply:UniqueID()
+	local uid = pac.Hash(ply)
 
-	pace.SubmitPart({part = "__ALL__", uid = ply:UniqueID(), owner = ply})
+	pace.SubmitPart({part = "__ALL__", uid = pac.Hash(ply), owner = ply})
 	pace.CallHook("RemoveOutfit", ply)
 end
 
@@ -451,19 +419,18 @@ function pace.RequestOutfits(ply)
 
 	ply.pac_gonna_receive_outfits = true
 
-	net.Start('pac_update_playerfilter')
-	net.Broadcast()
+	pace.UpdateWearFilters()
 
 	timer.Simple(6, function()
 		if not IsValid(ply) then return end
 		ply.pac_gonna_receive_outfits = false
 
 		for id, outfits in pairs(pace.Parts) do
-			local owner = player.GetByUniqueID(id) or NULL
+			local owner = pac.ReverseHash(id, "Player")
 
-			if owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= ply:UniqueID() then
+			if owner:IsValid() and owner:IsPlayer() and owner.GetPos and id ~= pac.Hash(ply) then
 				for key, outfit in pairs(outfits) do
-					if not outfit.wear_filter or table.HasValue(outfit.wear_filter, ply:SteamID()) then
+					if not outfit.wear_filter or table.HasValue(outfit.wear_filter, pac.Hash(ply)) then
 						pace.SubmitPart(outfit, ply)
 					end
 				end
@@ -472,74 +439,4 @@ function pace.RequestOutfits(ply)
 	end)
 end
 
-local function qhasvalue(tab, value)
-	for i, val in ipairs(tab) do
-		if val == value then
-			return true
-		end
-	end
-
-	return false
-end
-
-local function pac_update_playerfilter(len, ply)
-	if not IsValid(ply) then return end
-
-	if pac_submit_spam:GetBool() then
-		if player.GetCount() > 4 and len < 16 then return end
-
-		ply.pac_submit_spam2 = ply.pac_submit_spam2 + 1
-
-		if ply.pac_submit_spam2 >= pac_submit_limit:GetInt() / 2 then
-			if not ply.pac_submit_spam_msg2 then
-				pac.Message("Player ", ply, " is spamming pac_update_playerfilter!")
-				ply.pac_submit_spam_msg2 = true
-			end
-
-			return
-		end
-	end
-
-	local filter = {}
-	local sizeof = net.ReadUInt(8)
-
-	if sizeof > game.MaxPlayers() then
-		pac.Message("Player ", ply, " tried to submit extraordinary wear filter size of ", sizeof, ", dropping.")
-		return
-	end
-
-	for i = 1, net.ReadUInt(8) do
-		table.insert(filter, "STEAM_" .. net.ReadString())
-	end
-
-	local players = {}
-
-	for i, ply in ipairs(player.GetAll()) do
-		players[ply:SteamID()] = ply
-	end
-
-	for id, outfits in pairs(pace.Parts) do
-		local owner = player.GetByUniqueID(id) or NULL
-
-		if owner == ply then
-			for key, outfit in pairs(outfits) do
-				if outfit.wear_filter then
-					for i, plyID in ipairs(filter) do
-						if not qhasvalue(outfit.wear_filter, plyID) then
-							local getPly = players[plyID]
-
-							if getPly and getPly.pac_requested_outfits and not getPly.pac_gonna_receive_outfits then
-								pace.SubmitPart(outfit, getPly)
-							end
-						end
-					end
-				end
-
-				outfit.wear_filter = filter
-			end
-		end
-	end
-end
-
 concommand.Add("pac_request_outfits", pace.RequestOutfits)
-net.Receive('pac_update_playerfilter', pac_update_playerfilter)

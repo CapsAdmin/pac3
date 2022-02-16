@@ -10,6 +10,8 @@ function MUTATOR:WriteArguments(multiplier, other)
 		net.WriteDouble(other.StandingHullHeight)
 		net.WriteDouble(other.CrouchingHullHeight)
 		net.WriteDouble(other.HullWidth)
+	else
+		net.WriteBool(false)
 	end
 
 	if SERVER then

@@ -1,7 +1,13 @@
-pac.urlobj = pac.urlobj or {}
-local urlobj = pac.urlobj
+local urlobj = {}
 
-urlobj.DataCache  = pac.CreateCache("objcache")
+_G.pac_urlobj = urlobj
+
+local CreateCache = include("pac3/libraries/urlobj/cache.lua")
+local CreateQueueItem = include("pac3/libraries/urlobj/queueitem.lua")
+
+_G.pac_urlobj = nil
+
+urlobj.DataCache  = CreateCache("objcache")
 
 concommand.Add("pac_urlobj_clear_disk", function()
 	urlobj.DataCache:Clear()
@@ -58,7 +64,7 @@ function urlobj.GetObjFromURL(url, forceReload, generateNormals, callback, statu
 
 	-- Add item to queue
 	if not urlobj.Queue[url] then
-		local queueItem = urlobj.CreateQueueItem(url)
+		local queueItem = CreateQueueItem(url)
 
 		urlobj.Queue[url] = queueItem
 		urlobj.QueueCount = urlobj.QueueCount + 1
@@ -185,13 +191,9 @@ local numberMatch = '(-?[0-9.+-e0-9]+)'
 local vMatch = '^ *v *' .. numberMatch .. ' +' .. numberMatch .. ' +' .. numberMatch
 local vtMatch = '^ *vt *' .. numberMatch .. ' +' .. numberMatch
 local vnMatch = '^ *vn *' .. numberMatch .. ' +' .. numberMatch .. ' +' .. numberMatch
-local ASYNC_PROCESSING = CreateConVar('pac_obj_async', '1', {FCVAR_ARCHIVE}, 'Process OBJ files in background')
 
 function urlobj.ParseObj(data, generateNormals)
 	local coroutine_yield = coroutine.running () and coroutine.yield or function () end
-	if not ASYNC_PROCESSING:GetBool() then
-		coroutine_yield = function () end
-	end
 
 	local positions  = {}
 	local texCoordsU = {}
@@ -684,3 +686,5 @@ function urlobj.DownloadQueueThink()
 end
 
 timer.Create("urlobj_download_queue", 0.1, 0, urlobj.DownloadQueueThink)
+
+return urlobj

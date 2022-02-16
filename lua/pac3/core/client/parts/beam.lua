@@ -75,37 +75,36 @@ do
 	end
 end
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "beam"
 PART.Group = 'effects'
 PART.Icon = 'icon16/vector.png'
 
-pac.StartStorableVars()
-	pac.SetPropertyGroup(PART, "generic")
-		pac.PropertyOrder(PART, "Name")
-		pac.PropertyOrder(PART, "Hide")
-		pac.PropertyOrder(PART, "ParentName")
-		pac.GetSet(PART, "Material", "cable/rope")
-		pac.SetupPartName(PART, "EndPoint")
-		pac.GetSet(PART, "Bend", 10)
-		pac.GetSet(PART, "Frequency", 1)
-		pac.GetSet(PART, "Resolution", 16)
-		pac.GetSet(PART, "Width", 1)
-		pac.GetSet(PART, "WidthBend", 0)
-		pac.GetSet(PART, "WidthBendSize", 1)
-		pac.GetSet(PART, "TextureStretch", 1)
-		pac.GetSet(PART, "TextureScroll", 0)
-		pac.GetSet(PART, "UseEndpointOffsets", false)
-	pac.SetPropertyGroup(PART, "orientation")
-	pac.SetPropertyGroup(PART, "appearance")
-		pac.GetSet(PART, "StartColor", Vector(255, 255, 255), {editor_panel = "color"})
-		pac.GetSet(PART, "EndColor", Vector(255, 255, 255), {editor_panel = "color"})
-		pac.GetSet(PART, "StartAlpha", 1)
-		pac.GetSet(PART, "EndAlpha", 1)
-	pac.SetPropertyGroup(PART, "other")
-		pac.PropertyOrder(PART, "DrawOrder")
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:SetPropertyGroup("generic")
+		BUILDER:PropertyOrder("Name")
+		BUILDER:PropertyOrder("Hide")
+		BUILDER:PropertyOrder("ParentName")
+		BUILDER:GetSet("Material", "cable/rope")
+		BUILDER:GetSetPart("EndPoint")
+		BUILDER:GetSet("Bend", 10)
+		BUILDER:GetSet("Frequency", 1)
+		BUILDER:GetSet("Resolution", 16)
+		BUILDER:GetSet("Width", 1)
+		BUILDER:GetSet("WidthBend", 0)
+		BUILDER:GetSet("WidthBendSize", 1)
+		BUILDER:GetSet("TextureStretch", 1)
+		BUILDER:GetSet("TextureScroll", 0)
+	BUILDER:SetPropertyGroup("orientation")
+	BUILDER:SetPropertyGroup("appearance")
+		BUILDER:GetSet("StartColor", Vector(255, 255, 255), {editor_panel = "color"})
+		BUILDER:GetSet("EndColor", Vector(255, 255, 255), {editor_panel = "color"})
+		BUILDER:GetSet("StartAlpha", 1)
+		BUILDER:GetSet("EndAlpha", 1)
+	BUILDER:SetPropertyGroup("other")
+		BUILDER:PropertyOrder("DrawOrder")
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	local found = ("/" .. self:GetMaterial()):match(".*/(.+)")
@@ -186,35 +185,26 @@ function PART:SetMaterial(var)
 		if type(var) == "string" then
 			self.Materialm = pac.Material(var, self)
 			self:FixMaterial()
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		elseif type(var) == "IMaterial" then
 			self.Materialm = var
 			self:FixMaterial()
-			self:CallEvent("material_changed")
+			self:CallRecursive("OnMaterialChanged")
 		end
 	end
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
 	local part = self.EndPoint
-	if self.Materialm and self.StartColorC and self.EndColorC and part:IsValid() then
-
-		if not part.cached_pos or not part.cached_ang then return end
-
+	if self.Materialm and self.StartColorC and self.EndColorC and part:IsValid() and part.GetWorldPosition then
+		local pos, ang = self:GetDrawPosition()
 		render.SetMaterial(self.Materialm)
-		--(veca, vecb, dira, dirb, bend, res, width, start_color, end_color, frequency, tex_stretch, width_bend, width_bend_size)
-		local opos = Vector(0,0,0)
-		local oang = Angle(0,0,0)
-		if self.UseEndpointOffsets then
-			opos, oang = LocalToWorld(part.PositionOffset,part.AngleOffset,part.cached_pos,part.cached_ang) - part.cached_pos, part.cached_ang
-		end
 		pac.DrawBeam(
-
 			pos,
-			part.cached_pos + opos,
+			part:GetWorldPosition(),
 
 			ang:Forward(),
-			(part.cached_ang + oang):Forward(),
+			part:GetWorldAngles():Forward(),
 
 			self.Bend,
 			math.Clamp(self.Resolution, 1, 256),
@@ -230,4 +220,4 @@ function PART:OnDraw(owner, pos, ang)
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

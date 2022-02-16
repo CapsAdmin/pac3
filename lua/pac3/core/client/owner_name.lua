@@ -24,7 +24,7 @@ local function check_owner(a, b)
 	return a:GetOwner() == b or (not b.CPPIGetOwner or b:CPPIGetOwner() == a or b:CPPIGetOwner() == true)
 end
 
-function pac.CalcEntityCRC(ent)
+local function calc_entity_crc(ent)
 	local pos = ent:GetPos()
 	local ang = ent:GetAngles()
 	local mdl = ent:GetModel():lower():gsub("\\", "/")
@@ -33,7 +33,7 @@ function pac.CalcEntityCRC(ent)
 
 	local crc = x .. y .. z .. p .. _y .. r .. mdl
 
-	return util.CRC(crc)
+	return pac.Hash(crc)
 end
 
 SafeRemoveEntity(pac.WorldEntity)
@@ -80,7 +80,7 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 			end
 
 			if ent.GetPersistent and ent:GetPersistent() then
-				part:SetOwnerName("persist " .. pac.CalcEntityCRC(ent))
+				part:SetOwnerName("persist " .. calc_entity_crc(ent))
 			end
 
 			return ent
@@ -122,7 +122,7 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 	if name:find("persist ", nil, true) then
 		local crc = name:match("persist (.+)")
 		for _, val in pairs(ents.GetAll()) do
-			if val.GetPersistent and val:GetModel() and val:GetPersistent() and crc == pac.CalcEntityCRC(val) then
+			if val.GetPersistent and val:GetModel() and val:GetPersistent() and crc == calc_entity_crc(val) then
 				return val
 			end
 		end

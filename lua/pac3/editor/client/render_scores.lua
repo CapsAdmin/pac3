@@ -7,7 +7,7 @@ pace.RenderTimes = {} -- render times in seconds
 
 
 function pace.GetProfilingData(ent)
-	local profile_data = pac.profile_info[ent]
+	local profile_data = false --pac.profile_info[ent]
 
 	if profile_data then
 		local out = {events = {}}
@@ -48,7 +48,7 @@ pac.AddHook("HUDPaint", "pac_show_render_times", function()
 	if not pace.IsActive() or not pace.IsFocused() or not enable:GetBool() or pace.IsInBasicMode() then return end
 
 	for key, ply in pairs(player.GetHumans()) do
-		if ply == LocalPlayer() then goto CONTINUE end
+		if ply == pac.LocalPlayer then goto CONTINUE end
 
 		local pos = ply:EyePos()
 

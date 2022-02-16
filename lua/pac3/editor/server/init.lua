@@ -6,8 +6,20 @@ resource.AddWorkshop("104691717")
 pace.Parts = pace.Parts or {}
 pace.Errors = {}
 
-util.AddNetworkString('pac_submit_acknowledged')
-util.AddNetworkString('pac_update_playerfilter')
+do
+	util.AddNetworkString("pac.TogglePartDrawing")
+
+	function pac.TogglePartDrawing(ent, b, who) --serverside interface to clientside function of the same name
+		net.Start("pac.TogglePartDrawing")
+		net.WriteEntity(ent)
+		net.WriteBit(b)
+		if not who then
+			net.Broadcast()
+		else
+			net.Send(who)
+		end
+	end
+end
 
 function pace.CanPlayerModify(ply, ent)
 	if not IsValid(ply) or not IsValid(ent) then
@@ -39,6 +51,7 @@ end
 
 include("util.lua")
 include("wear.lua")
+include("wear_filter.lua")
 include("bans.lua")
 include("spawnmenu.lua")
 

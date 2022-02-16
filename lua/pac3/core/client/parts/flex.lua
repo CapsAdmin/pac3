@@ -1,12 +1,12 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "flex"
-PART.NonPhysical = true
+
 PART.Icon = 'icon16/emoticon_smile.png'
 PART.Group = 'entity'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Flex", "", {
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Flex", "", {
 		enums = function(part)
 			local tbl = {}
 
@@ -18,17 +18,36 @@ pac.StartStorableVars()
 		end
 	})
 
-	pac.GetSet(PART, "Weight", 0)
-	pac.GetSet(PART, "RootOwner", false, { description = "Target the local player instead of the part's parent" })
-	pac.GetSet(PART, "DefaultOnHide", true)
-pac.EndStorableVars()
+	BUILDER:GetSet("Weight", 0)
+	BUILDER:GetSet("RootOwner", false, { description = "Target the local player instead of the part's parent" })
+	BUILDER:GetSet("DefaultOnHide", true)
+BUILDER:EndStorableVars()
+
+local function get_owner(self)
+	if self.RootOwner then
+		return self:GetRootPart():GetOwner()
+	end
+
+	return self:GetOwner()
+end
 
 function PART:GetNiceName()
 	return self:GetFlex() ~= "" and self:GetFlex() or "no flex"
 end
 
 function PART:GetFlexMap()
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = get_owner(self)
+
+	if self.last_owner ~= ent then
+		self.last_owner = ent
+		self.cached_flex_map = nil
+	end
+
+	if self.cached_flex_map then
+		return self.cached_flex_map
+	end
+
+	local out = {}
 
 	if self.last_owner ~= ent then
 		self.last_owner = ent
@@ -53,13 +72,12 @@ function PART:GetFlexMap()
 	return out
 end
 
+-- flexes are additive
 function PART:UpdateFlex()
-	local ent = self:GetOwner(self.RootOwner)
+	local ent = get_owner(self)
 	if not ent:IsValid() or not ent.GetFlexNum or ent:GetFlexNum() == 0 then return end
 
-	local name = self.Flex:lower()
-	local weight = self.Weight
-
+	local name = self.flex_lower
 	local flex_map = self:GetFlexMap()
 
 	if not flex_map[name] then
@@ -67,8 +85,7 @@ function PART:UpdateFlex()
 	end
 
 	local id = flex_map[name].i
-
-	ent:SetFlexWeight(id, ent:GetFlexWeight(id) + weight)
+	ent:SetFlexWeight(id, ent:GetFlexWeight(id) + self.Weight)
 end
 
 function PART:OnBuildBonePositions()
@@ -77,28 +94,29 @@ end
 
 function PART:SetFlex(num)
 	self.Flex = num
-	self:UpdateFlex()
+	self.flex_lower = num:lower()
+	-- self:UpdateFlex()
 end
 
 function PART:SetWeight(num)
 	self.Weight = num
-	self:UpdateFlex()
+	-- self:UpdateFlex()
 end
 
 function PART:OnShow(from_rendering)
 	--if from_rendering then return end
 
-	self:UpdateFlex()
+	-- self:UpdateFlex()
 end
 
 function PART:OnHide()
-	if self.DefaultOnHide then
+	--[[if self.DefaultOnHide then
 		self:UpdateFlex()
-	end
+	end]]
 end
 
 function PART:OnRemove()
-	self:UpdateFlex()
+	-- self:UpdateFlex()
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

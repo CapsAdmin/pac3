@@ -1,28 +1,28 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "projected_texture"
 PART.Group = "effects"
 PART.Icon = 'icon16/lightbulb.png'
 PART.ProperColorRange = true
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Shadows", true)
-	pac.GetSet(PART, "Orthographic", false)
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Shadows", true)
+	BUILDER:GetSet("Orthographic", false)
 
-	pac.GetSet(PART, "NearZ", 1)
-	pac.GetSet(PART, "FarZ", 2048)
+	BUILDER:GetSet("NearZ", 1)
+	BUILDER:GetSet("FarZ", 2048)
 
-	pac.GetSet(PART, "FOV", 90)
-	pac.GetSet(PART, "HorizontalFOV", 90)
-	pac.GetSet(PART, "VerticalFOV", 90)
+	BUILDER:GetSet("FOV", 90)
+	BUILDER:GetSet("HorizontalFOV", 90)
+	BUILDER:GetSet("VerticalFOV", 90)
 
-	pac.GetSet(PART, "Texture", "effects/flashlight/hard", {editor_panel = "textures"})
-	pac.GetSet(PART, "TextureFrame", 0)
+	BUILDER:GetSet("Texture", "effects/flashlight/hard", {editor_panel = "textures"})
+	BUILDER:GetSet("TextureFrame", 0)
 
-	pac.SetPropertyGroup(PART, "appearance")
-		pac.GetSet(PART, "Brightness", 8)
-		pac.GetSet(PART, "Color", Vector(1, 1, 1), {editor_panel = "color2"})
-pac.EndStorableVars()
+	BUILDER:SetPropertyGroup("appearance")
+		BUILDER:GetSet("Brightness", 8)
+		BUILDER:GetSet("Color", Vector(1, 1, 1), {editor_panel = "color2"})
+BUILDER:EndStorableVars()
 
 function PART:GetProjectedTexture()
 	if not self.ptex then
@@ -61,7 +61,8 @@ function PART:OnShow()
 	end
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
+	local pos, ang = self:GetDrawPosition()
 	local ptex = self:GetProjectedTexture()
 	ptex:SetPos(pos)
 	ptex:SetAngles(ang)
@@ -124,8 +125,6 @@ function PART:SetTextureFrame(val)
 	end
 end
 
-
-
 function PART:SetTexture(val)
 	if not val then
 		return
@@ -144,8 +143,20 @@ function PART:SetTexture(val)
 end
 
 function PART:OnHide()
-	self:GetProjectedTexture():Remove()
+	local tex = self:GetProjectedTexture()
+	tex:SetBrightness(0)
+	tex:Update()
+	-- give it one frame to update
+	timer.Simple(0, function()
+		if tex:IsValid() then
+			tex:Remove()
+		end
+	end)
 	self.ptex = nil
 end
 
-pac.RegisterPart(PART)
+function PART:OnRemove()
+	self:OnHide()
+end
+
+BUILDER:Register()

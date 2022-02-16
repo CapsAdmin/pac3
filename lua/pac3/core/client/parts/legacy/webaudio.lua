@@ -1,29 +1,30 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 local snd_mute_losefocus = GetConVar('snd_mute_losefocus')
 
+PART.FriendlyName = "legacy webaudio"
 PART.ClassName = "webaudio"
 PART.Group = 'legacy'
 PART.Icon = 'icon16/sound_add.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "URL", "")
-	pac.GetSet(PART, "Volume", 1, {editor_sensitivity = 0.125})
-	pac.GetSet(PART, "Pitch", 1, {editor_sensitivity = 0.125})
-	pac.GetSet(PART, "MinimumRadius", 0)
-	pac.GetSet(PART, "MaximumRadius", 0)
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("URL", "")
+	BUILDER:GetSet("Volume", 1, {editor_sensitivity = 0.125})
+	BUILDER:GetSet("Pitch", 1, {editor_sensitivity = 0.125})
+	BUILDER:GetSet("MinimumRadius", 0)
+	BUILDER:GetSet("MaximumRadius", 0)
 
-	pac.GetSet(PART, "InnerAngle", 360)
-	pac.GetSet(PART, "OuterAngle", 360)
-	pac.GetSet(PART, "OuterVolume", 0)
+	BUILDER:GetSet("InnerAngle", 360)
+	BUILDER:GetSet("OuterAngle", 360)
+	BUILDER:GetSet("OuterVolume", 0)
 
-	pac.GetSet(PART, "Loop", false)
-	pac.GetSet(PART, "StopOnHide", true)
-	pac.GetSet(PART, "PauseOnHide", false)
-	pac.GetSet(PART, "Overlapping", false)
+	BUILDER:GetSet("Loop", false)
+	BUILDER:GetSet("StopOnHide", true)
+	BUILDER:GetSet("PauseOnHide", false)
+	BUILDER:GetSet("Overlapping", false)
 
-	pac.GetSet(PART, "PlayOnFootstep", false)
-	pac.GetSet(PART, "RandomPitch", 0, {editor_sensitivity = 0.125})
-pac.EndStorableVars()
+	BUILDER:GetSet("PlayOnFootstep", false)
+	BUILDER:GetSet("RandomPitch", 0, {editor_sensitivity = 0.125})
+BUILDER:EndStorableVars()
 
 function PART:Initialize()
 	self.streams = {}
@@ -56,8 +57,9 @@ function PART:OnThink()
 	end
 end
 
-function PART:OnDraw(ent, pos, ang)
+function PART:OnDraw()
 	if not self.streams then return end
+	local pos, ang = self:GetDrawPosition()
 	local forward = ang:Forward()
 
 	local shouldMute = snd_mute_losefocus:GetBool()
@@ -308,4 +310,4 @@ function PART:OnRemove()
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

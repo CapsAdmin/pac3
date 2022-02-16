@@ -4,7 +4,6 @@ local consume = test.EventConsumer({
 	"hide",
 	"parent group",
 	"shown from rendering",
-	"think",
 	"draw",
 	"hide",
 	"remove",
@@ -12,7 +11,7 @@ local consume = test.EventConsumer({
 
 function test.Run(done)
 	do
-		local PART = {}
+		local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 		PART.FriendlyName = "test"
 		PART.ClassName = "test"
@@ -28,13 +27,13 @@ function test.Run(done)
 			end
 		end
 
-		function PART:OnDraw(owner, pos, ang)
+		function PART:OnDraw()
 			consume("draw")
 			self:Remove()
 		end
 
 		function PART:OnThink()
-			consume("think")
+			--consume("think")
 		end
 
 		function PART:OnHide()
@@ -57,6 +56,6 @@ function test.Run(done)
 		pac.RegisterPart(PART)
 	end
 
-	local root = pac.CreatePart("group", LocalPlayer())
+	local root = pac.CreatePart("group")
 	local part = root:CreatePart("test")
 end

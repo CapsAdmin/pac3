@@ -23,7 +23,6 @@ include("asset_browser.lua")
 include("menu_bar.lua")
 
 include("mctrl.lua")
-include("screenvec.lua")
 
 include("panels.lua")
 include("tools.lua")
@@ -33,7 +32,10 @@ include("examples.lua")
 include("about.lua")
 include("animation_timeline.lua")
 include("render_scores.lua")
+include("wires.lua")
 
+include("wear_filter.lua")
+include("show_outfit_on_use.lua")
 
 do
 	local hue =
@@ -86,11 +88,12 @@ pace.Editor = NULL
 
 local remember = CreateConVar("pac_editor_remember_position", "1", {FCVAR_ARCHIVE}, "Remember PAC3 editor position on screen")
 local positionMode = CreateConVar("pac_editor_position_mode", "0", {FCVAR_ARCHIVE}, "Editor position mode. 0 - Left, 1 - middle, 2 - Right. Has no effect if pac_editor_remember_position is true")
+pace.pac_show_uniqueid = CreateConVar("pac_show_uniqueid", "0", {FCVAR_ARCHIVE}, "Show uniqueids of parts inside editor")
 
 function pace.OpenEditor()
 	pace.CloseEditor()
 
-	if hook.Run("PrePACEditorOpen", LocalPlayer()) == false then return end
+	if hook.Run("PrePACEditorOpen", pac.LocalPlayer) == false then return end
 
 	pac.Enable()
 
@@ -158,6 +161,7 @@ function pace.CloseEditor()
 
 		pace.Editor:Remove()
 		pace.Active = false
+		pace.Focused = false
 		pace.Call("CloseEditor")
 
 		if pace.timeline.IsActive() then
@@ -296,7 +300,7 @@ do
 
 	hook.Add("HUDPaint", "pac_in_editor", function()
 		for _, ply in ipairs(player.GetAll()) do
-			if ply ~= LocalPlayer() and ply:GetNW2Bool("pac_in_editor") then
+			if ply ~= pac.LocalPlayer and ply:GetNW2Bool("pac_in_editor") then
 
 				if ply.pac_editor_cam_pos then
 					if not IsValid(ply.pac_editor_camera) then
@@ -358,7 +362,9 @@ do
 		timer.Create("pac_in_editor", 0.25, 0, function()
 			if not pace.current_part:IsValid() then return end
 			local pos, ang = pace.GetViewPos(), pace.GetViewAngles()
-			local target_pos = (pace.mctrl.GetTargetPos()) or pace.current_part:GetDrawPosition() or vector_origin
+			local target_pos = pace.mctrl.GetWorldPosition()
+
+			if not target_pos then return end
 
 			if lastViewPos == pos and lastViewAngle == ang and lastTargetPos == target_pos then return end
 			lastViewPos, lastViewAngle, lastTargetPos = pos, ang, target_pos

@@ -1,32 +1,30 @@
 --!lc util.DecalEx(Material("sprites/key_0"), this:IsValid() and this or Entity(0), there + trace.Normal, -trace.HitNormal, Color(255,255,255,255), 0.5,0.5)
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "decal"
 PART.Group = 'effects'
 PART.Icon = 'icon16/paintbrush.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Color", Vector(255, 255, 255), {editor_panel = "color"})
-	--pac.GetSet(PART, "Width", 1)
-	--pac.GetSet(PART, "Height", 1)
-	pac.GetSet(PART, "Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
-	pac.GetSet(PART, "Material", "")
-	pac.GetSet(PART, "IgnoreOwner", true)
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Color", Vector(255, 255, 255), {editor_panel = "color"})
+	--BUILDER:GetSet("Width", 1)
+	--BUILDER:GetSet("Height", 1)
+	BUILDER:GetSet("Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
+	BUILDER:GetSet("Material", "")
+	BUILDER:GetSet("IgnoreOwner", true)
+BUILDER:EndStorableVars()
 
 function PART:SetMaterial(var)
 	self.Material = var
 	if not pac.Handleurltex(self, var) then
 		self.Materialm = pac.Material(var, self)
-		self:CallEvent("material_changed")
+		self:CallRecursive("OnMaterialChanged")
 	end
 end
 
 function PART:OnShow()
 	local pos, ang = self:GetDrawPosition()
-	self.cached_pos = pos
-	self.cached_ang = ang
 	if self.Materialm then
 		local filter
 		if self.IgnoreOwner then
@@ -48,4 +46,4 @@ function PART:OnShow()
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

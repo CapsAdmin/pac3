@@ -36,12 +36,12 @@ end
 
 
 pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
-
 	local class_translate = {
 		model = "model2",
 		material = "material_3d",
 		entity = "entity2",
-		bone = "bone2",
+		bone = "bone3",
+		bone2 = "bone3",
 		light = "light2",
 		trail = "trail2",
 		clip = "clip2",
@@ -58,6 +58,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 	}
 
 	local registered_parts = pac.GetRegisteredParts()
+	local bones = {}
 
 	local material_translate = {}
 	for old_key in pairs(registered_parts.material.ShaderParams) do
@@ -79,28 +80,58 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 			HideEntity = function(tbl, val) tbl.NoDraw = val end
 		}),
 		material = material_translate,
+		bone = {
+			Bone = function(tbl, val)
+				if bones[tbl.UniqueID] and not bones[tbl.UniqueID][val] then
+					for k,v in pairs(bones[tbl.UniqueID]) do
+						if v.bone == 0 then
+							tbl.Bone = v.friendly
+							return
+						end
+					end
+				end
+
+				tbl.Bone = val
+			end,
+
+		}
 	}
 
-	local temp = {}
+	local function calc_manip_offset(ent, bone, pos, ang)
+		if not ent:GetBoneMatrix(bone) then return end
 
-	local function get_storable(classname)
-		if registered_parts[classname].StorableVars then
-			return registered_parts[classname].StorableVars
-		end
+		local prev_pos = ent:GetManipulateBonePosition(bone)
+		local prev_ang = ent:GetManipulateBoneAngles(bone)
 
-		if temp[classname] then
-			return temp[classname]
-		end
+		ent:ManipulateBonePosition(bone, Vector())
+		ent:ManipulateBoneAngles(bone, Angle())
+		ent:SetupBones()
+		local pre = ent:GetBoneMatrix(bone)
 
-		local part = pac.CreatePart(classname, pac.LocalPlayer)
-		temp[classname] = part.StorableVars
-		part:Remove()
+		ent:ManipulateBonePosition(bone, pos)
+		ent:ManipulateBoneAngles(bone, ang)
+		ent:SetupBones()
+		local post = ent:GetBoneMatrix(bone)
 
-		return temp[classname]
+		ent:ManipulateBonePosition(bone, prev_pos)
+		ent:ManipulateBoneAngles(bone, prev_ang)
+
+		local m = pre:GetInverseTR() * post
+
+		return m:GetTranslation(), m:GetAngles()
 	end
 
 	local saved = {}
 	for _, part in pairs(pac.GetLocalParts()) do
+		if part.ClassName == "bone" or part.ClassName == "bone2" then
+			bones[part.UniqueID] = pac.GetAllBones(part:GetOwner())
+			if part:GetModelBoneIndex() and not part:GetAlternativeBones() then
+				local pos, ang = calc_manip_offset(part:GetOwner(), part:GetModelBoneIndex(), part:GetPosition(), part:GetAngles())
+				part:SetPosition(pos)
+				part:SetAngles(ang)
+			end
+
+		end
 		if not part:HasParent() then
 			table.insert(saved, part:ToTable())
 		end
@@ -122,7 +153,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 					table.insert(tbl.children, {
 						self = {
 							ClassName = "motion_blur",
-							UniqueID = util.CRC(tostring({})),
+							UniqueID = pac.Hash(),
 							BlurLength = tbl.self.BlurLength,
 							BlurSpacing = tbl.self.BlurSpacing,
 						},
@@ -136,7 +167,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 					table.insert(parent.children, {
 						self = {
 							ClassName = "weapon",
-							UniqueID = util.CRC(tostring({})),
+							UniqueID = pac.Hash(),
 							NoDraw = true
 						},
 						children = {},
@@ -144,7 +175,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 				end
 			end
 
-			for key in pairs(get_storable(old_classname)) do
+			for key in pairs(registered_parts[old_classname].StorableVars) do
 				local value = tbl.self[key]
 				if value == nil then
 					value = registered_parts[old_classname][key]
@@ -153,8 +184,10 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 				if prop_translate[old_classname] and prop_translate[old_classname][key] then
 					tbl.self[key] = nil
 					prop_translate[old_classname][key](tbl.self, value)
-					pac.Message("translated property: ", key, " = ", value, " to ", tbl.self[key])
-				elseif not get_storable(new_classname)[key] then
+					if value ~= tbl.self[key] then
+						pac.Message("translated property: ", key, " = ", value, " to ", tbl.self[key])
+					end
+				elseif not registered_parts[new_classname].StorableVars[key] then
 					local msg = tbl.self.ClassName .. "." .. key
 					if not done[msg] then
 						pac.Message(Color(255,100,100), "cannot translate property ", msg)
@@ -166,7 +199,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 		end
 
 		if tbl.self.ClassName == "proxy" and tbl.self.VariableName == "Color" then
-			if tbl.self.Expression ~= "" then
+			if isstring(tbl.self.Expression) and tbl.self.Expression ~= "" then
 				local r,g,b = unpack(tbl.self.Expression:Split(","))
 				r = tonumber(r)
 				g = tonumber(g)
@@ -178,7 +211,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 			end
 		end
 
-		if tbl.self.Model and tbl.self.Model:find("://", nil, true) then
+		if tbl.self.Model and tbl.self.Model:find("://", nil, true) and not tbl.self.Model:find(".zip", nil, true) then
 			tbl.self.ForceObjUrl = true
 		end
 
@@ -194,8 +227,7 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 	end
 
 	for _, tbl in ipairs(saved) do
-		local part = pac.CreatePart(tbl.self.ClassName, pac.LocalPlayer)
-		part:SetTable(tbl)
+		local part = pac.CreatePart(tbl.self.ClassName, pac.LocalPlayer, tbl)
 	end
 end)
 
@@ -203,7 +235,7 @@ end)
 pace.AddTool(L"fix origin", function(part, suboption)
 	if not part.GetEntity then return end
 
-	local ent = part:GetEntity()
+	local ent = part:GetOwner()
 
 	part:SetPositionOffset(-ent:OBBCenter() * part.Scale * part.Size)
 end)
@@ -305,7 +337,7 @@ end)
 
 pace.AddTool(L"show only with active weapon", function(part, suboption)
 	local event = part:CreatePart("event")
-	local owner = part:GetOwner(true)
+	local owner = part:GetRootPart():GetOwner()
 	if not owner.GetActiveWeapon or not owner:GetActiveWeapon():IsValid() then
 		owner = pac.LocalPlayer
 	end
@@ -329,7 +361,7 @@ pace.AddTool(L"import editor tool from file...", function()
 				local toolstr = file.Read("pac3_editor/tools/" .. toolfile,"DATA")
 				ctoolstr = [[pace.AddTool(L"]] .. toolfile .. [[", function(part, suboption) ]] .. toolstr .. " end)"
 				RunStringEx(ctoolstr, "pac_editor_import_tool")
-				LocalPlayer():ConCommand("pac_editor") --close and reopen editor
+				pac.LocalPlayer:ConCommand("pac_editor") --close and reopen editor
 			else
 				Derma_Message("File " .. "garrysmod/data/pac3_editor/tools/" .. toolfile .. " not found.","Error: File Not Found","OK")
 			end
@@ -347,7 +379,7 @@ pace.AddTool(L"import editor tool from url...", function()
 				local toolstr = body
 				ctoolstr = [[pace.AddTool(L"]] .. toolname .. [[", function(part, suboption)]] .. toolstr .. " end)"
 				RunStringEx(ctoolstr, "pac_editor_import_tool")
-				LocalPlayer():ConCommand("pac_editor") --close and reopen editor
+				pac.LocalPlayer:ConCommand("pac_editor") --close and reopen editor
 			end
 
 			pac.HTTPGet(toolurl,ToolDLSuccess,function(err)
@@ -467,37 +499,37 @@ if (first() | dupefinished()) {
     ToggleShading = 0 #- Toggle for shading.
     Indices = 1
 
-	   #- Data structure
-	   #- HN++, HT[HN, table] = table(Index, Local Entity (Entity:toWorld()), Parent Entity, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin)
-	   #- CN++, CT[CN, table] = table(Index, Clip Index, Pos, Ang)
+        #- Data structure
+        #- HN++, HT[HN, table] = table(Index, Local Entity (Entity:toWorld()), Parent Entity, ScaleType (Default 0), Pos, Ang, Scale, Model, Material, Color, Skin)
+        #- CN++, CT[CN, table] = table(Index, Clip Index, Pos, Ang)
 
-	   #- Editing holograms
-	   #- Scroll down to the bottom of the code to find where to insert your holo() code. In order to reference indexes
-	   #- add a ", I_HologramName"" to the end of that holograms data line with "HologramName" being of your choosing.
-	   #- Finally add this to a @persist directive eg "@persist [I_HologramName]", now you can address this in your holo() code.
-	   #- For example, "holoBodygroup(I_HologramName, 2, 3)" which would be put in the "InitPostSpawn" section.
+        #- Editing holograms
+        #- Scroll down to the bottom of the code to find where to insert your holo() code. In order to reference indexes
+        #- add a ", I_HologramName"" to the end of that holograms data line with "HologramName" being of your choosing.
+        #- Finally add this to a @persist directive eg "@persist [I_HologramName]", now you can address this in your holo() code.
+        #- For example, "holoBodygroup(I_HologramName, 2, 3)" which would be put in the "InitPostSpawn" section.
 
-	   #- Advanced functionality
-	   #- If you wish to take this system to the next level, you can. Instead of using multiple e2s for each "set" of holograms,
-	   #- instead save each set of hologram data to a new file inside a folder of your liking. You can now use the #include "" directive
-	   #- to bring that hologram data into a single e2 with this spawn code and compile multiple files into a single e2.
-	   #- This has many benefits such as 1 interval instead of many, auto updating due to the chip pulling saved data and increased
-	   #- organisation!
+        #- Advanced functionality
+        #- If you wish to take this system to the next level, you can. Instead of using multiple e2s for each "set" of holograms,
+        #- instead save each set of hologram data to a new file inside a folder of your liking. You can now use the #include "" directive
+        #- to bring that hologram data into a single e2 with this spawn code and compile multiple files into a single e2.
+        #- This has many benefits such as 1 interval instead of many, auto updating due to the chip pulling saved data and increased
+        #- organisation!
 
-	   #- Your file hierarchy should look like this.
-	   #- /expression2/
-	   #- --> /yourfolder/
-	   #-     --> /hologram_data.txt & hologram_spawner.txt
+        #- Your file hierarchy should look like this.
+        #- /expression2/
+        #- --> /yourfolder/
+        #-     --> /hologram_data.txt & hologram_spawner.txt
 
-	   # # # # # # # # # HOLOGRAM DATA START # # # # # # # # #
+        # # # # # # # # # HOLOGRAM DATA START # # # # # # # # #
 	]]
 
 	local str_footer =
 	[[
 
-	   # # # # # # # # # HOLOGRAM DATA END # # # # # # # # #
+        # # # # # # # # # HOLOGRAM DATA END # # # # # # # # #
 
-	   #- Create a hologram from data array
+        #- Create a hologram from data array
     function table:holo() {
         local Index = This[1, number] * Indices
         if (This[2,entity]:isValid()) { Entity = This[2,entity] } else { Entity = holoEntity(This[2,number]) }
@@ -637,19 +669,26 @@ elseif (CoreStatus == "RunThisCode") {
 	end
 
 	local function convert(part)
-		local out = string.Replace(str_header, "[NAME]", part:GetName() or "savedpacholos")
+		local out = {string.Replace(str_header, "[NAME]", part:GetName() or "savedpacholos")}
 
-		for key, part in ipairs(part:GetChildren()) do
-			if part.is_model_part and not part:IsHidden() then
-				out = out .. part_to_holo(part)
+		local completed = {}
+		local function recursiveConvert(parent)
+			if completed[parent] then return end
+			completed[parent] = true
+			for key, part in ipairs(parent:GetChildren()) do
+				if part.is_model_part and not part:IsHidden() then
+					out[#out + 1] = part_to_holo(part)
+					recursiveConvert(part)
+				end
 			end
 		end
+		recursiveConvert(part)
 
-		out = out .. str_footer
+		out[#out + 1] = str_footer
 
-		LocalPlayer():ChatPrint("PAC --> Code saved in your Expression 2 folder under [expression2/pac/" .. part:GetName() .. ".txt" .. "].")
+		pac.LocalPlayer:ChatPrint("PAC --> Code saved in your Expression 2 folder under [expression2/pac/" .. part:GetName() .. ".txt" .. "].")
 
-		return out
+		return table.concat(out)
 	end
 
 	file.CreateDir("expression2/pac")
@@ -688,8 +727,7 @@ pace.AddTool(L"record surrounding props to pac", function(part)
 end)
 
 pace.AddTool(L"populate with bones", function(part,suboption)
-	local target = part.GetEntity or part.GetOwner
-	local ent = target(part)
+	local ent = part:GetOwner()
 	local bones = pac.GetModelBones(ent)
 
 	for bone,tbl in pairs(bones) do
@@ -704,8 +742,7 @@ pace.AddTool(L"populate with bones", function(part,suboption)
 end)
 
 pace.AddTool(L"populate with dummy bones", function(part,suboption)
-	local target = part.GetEntity or part.GetOwner
-	local ent = target(part)
+	local ent = part:GetOwner()
 	local bones = pac.GetModelBones(ent)
 
 	for bone,tbl in pairs(bones) do
@@ -726,20 +763,20 @@ pace.AddTool(L"print part info", function(part)
 end)
 
 pace.AddTool(L"dump player submaterials", function()
-	local ply = LocalPlayer()
+	local ply = pac.LocalPlayer
 	for id,mat in pairs(ply:GetMaterials()) do
 		chat.AddText(("%d %s"):format(id,tostring(mat)))
 	end
 end)
 
 pace.AddTool(L"stop all custom animations", function()
-	pac.animations.StopAllEntityAnimations(LocalPlayer())
-	pac.animations.ResetEntityBoneMatrix(LocalPlayer())
+	pac.animations.StopAllEntityAnimations(pac.LocalPlayer)
+	pac.animations.ResetEntityBoneMatrix(pac.LocalPlayer)
 end)
 
 pace.AddTool(L"copy from faceposer tool", function(part, suboption)
 	local group = pac.CreatePart("group")
-	local ent = LocalPlayer()
+	local ent = pac.LocalPlayer
 
 	for i = 0, ent:GetFlexNum() - 1 do
 		local name = ent:GetFlexName(i)

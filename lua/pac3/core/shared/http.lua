@@ -48,7 +48,7 @@ local function http(method, url, headers, cb, failcb)
 				err = err .. data .. "\n"
 
 				err = err .. "================\n"
-				failcb(err, code >= 400)
+				failcb(err, code >= 400, code)
 			end
 		end,
 		failed = function(err)
@@ -91,6 +91,58 @@ function pac.FixUrl(url)
 	return url
 end
 
+function pac.getContentLength(url, cb, failcb)
+	return http("HEAD", url, {["Accept-Encoding"] = "none"}, function(_, _, headers)
+		local length
+
+		-- server have rights to send headers in any case
+		for key, value in pairs(headers) do
+			if string.lower(key) == "content-length" then
+				length = tonumber(value)
+
+				if not length or math.floor(length) ~= length then
+					return failcb(string.format("malformed server reply with header content-length (got %q, expected valid integer number)", value), true)
+				end
+
+				break
+			end
+		end
+
+		if length then return cb(length) end
+
+		return pac.contentLengthFallback(url, cb, failcb)
+	end, function(err, over400, code)
+		if code == 405 then
+			return pac.contentLengthFallback(url, cb, failcb)
+		end
+
+		return failcb(err, over400)
+	end )
+end
+
+-- Performs a GET but requests 0 bytes
+-- We can then read the response headers to determine the content size.
+-- This allows Google Drive and other hosts to work with PAC even with content-length limits set
+-- (They typically block HEAD requests)
+function pac.contentLengthFallback(url, cb, failcb)
+	local function fail()
+		return failcb("unable to determine content length", true)
+	end
+
+	return http("GET", url, {["Range"] = "bytes=0-0"}, function(data, data_length, headers)
+		-- e.g. "bytes 0-0/11784402"
+		local contentRange = headers["Content-Range"]
+		if not contentRange then return fail() end
+
+		local spl = string.Split(contentRange, "/")
+		local contentLength = spl[2]
+
+		if contentLength then return cb(tonumber(contentLength)) end
+
+		return fail()
+	end )
+end
+
 function pac.HTTPGet(url, cb, failcb)
 	if not url or url:len() < 4 then
 		failcb("url length is less than 4 (" .. tostring(url) .. ")", true)
@@ -109,21 +161,7 @@ function pac.HTTPGet(url, cb, failcb)
 		return http("GET", url, nil, cb, failcb)
 	end
 
-	return http("HEAD", url, {["Accept-Encoding"] = "none"}, function(data, data_length, headers)
-		-- server have rights to send headers in any case
-		for key, value in pairs(headers) do
-			if string.lower(key) == "content-length" then
-				length = tonumber(value)
-
-				if not length or math.floor(length) ~= length then
-					failcb(string.format("malformed server reply with header content-length (got %q, expected valid integer number)", value), true)
-					return
-				end
-
-				break
-			end
-		end
-
+	return pac.getContentLength(url, function(length)
 		if length then
 			if length <= (limit * 1024) then
 				http("GET", url, nil, cb, failcb)

@@ -62,7 +62,7 @@ function urltex.GetMaterialFromURL(url, callback, skip_cache, shader, size, size
 
 	if type(callback) == "function" and not skip_cache and urltex.Cache[urlIndex] then
 		local tex = urltex.Cache[urlIndex]
-		local mat = CreateMaterial("pac3_urltex_" .. util.CRC(url .. SysTime()), shader, additionalData)
+		local mat = CreateMaterial("pac3_urltex_" .. pac.Hash(), shader, additionalData)
 		mat:SetTexture("$basetexture", tex)
 		callback(mat, tex)
 		return
@@ -199,7 +199,7 @@ function urltex.StartDownload(url, data)
 			local html_mat = pnl:GetHTMLMaterial()
 
 			if html_mat then
-				local crc = util.CRC(data.urlIndex .. SysTime())
+				local crc = pac.Hash()
 				local vertex_mat = CreateMaterial("pac3_urltex_" .. crc, data.shader, data.additionalData)
 				local tex = html_mat:GetTexture("$basetexture")
 				tex:Download()

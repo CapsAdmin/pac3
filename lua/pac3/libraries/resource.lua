@@ -231,7 +231,7 @@ function resource.Download(path, callback, on_fail, crc, check_etag)
 		end
 
 		url = path
-		local crc = (crc or util.CRC(path))
+		local crc = (crc or pac.Hash(path))
 
 		if not redownload and resource.url_cache_lookup[crc] then
 			path = resource.url_cache_lookup[crc]

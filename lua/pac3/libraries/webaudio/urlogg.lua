@@ -36,7 +36,6 @@ end
 
 local volume             = GetConVar("volume")
 local snd_mute_losefocus = GetConVar("snd_mute_losefocus")
-local pac_ogg_volume     = CreateClientConVar("pac_ogg_volume", "1", true)
 
 pac.AddHook("Think", "webaudio", function()
 	if not webaudio.Browser.IsInitialized () then
@@ -51,7 +50,7 @@ pac.AddHook("Think", "webaudio", function()
 		-- Garry's Mod not in foreground and we're not supposed to be making any sound
 		webaudio.Browser.SetVolume(0)
 	else
-		webaudio.Browser.SetVolume(pac_ogg_volume:GetFloat() * volume:GetFloat())
+		webaudio.Browser.SetVolume(volume:GetFloat())
 	end
 
 	webaudio.Streams.Think()

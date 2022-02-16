@@ -10,46 +10,15 @@ local function add_expensive_submenu_load(pnl, callback)
 	end
 end
 
-function pace.WearParts(file, clear)
-	local allowed, reason = pac.CallHook("CanWearParts", LocalPlayer(), file)
+function pace.WearParts(temp_wear_filter)
+	local allowed, reason = pac.CallHook("CanWearParts", pac.LocalPlayer)
 
 	if allowed == false then
 		pac.Message(reason or "the server doesn't want you to wear parts for some reason")
 		return
 	end
 
-	if file then
-		pace.LoadParts(file, clear)
-	end
-
-	local toWear = {}
-	local transmissionID = math.random(1, math.pow(2, 31) - 1)
-
-	for key, part in pairs(pac.GetLocalParts()) do
-		if not part:HasParent() and part.show_in_editor ~= false and pace.IsPartSendable(part) then
-			table.insert(toWear, part)
-		end
-	end
-
-	for i, part in ipairs(toWear) do
-		pace.SendPartToServer(part, {partID = i, totalParts = #toWear, transmissionID = transmissionID})
-	end
-end
-
-function pace.ClearParts()
-	pace.ClearUndo()
-	pac.RemoveAllParts(true, true)
-	pace.RefreshTree()
-
-	timer.Simple(0.1, function()
-		if not pace.Editor:IsValid() then return end
-
-		if table.Count(pac.GetLocalParts()) == 0 then
-			pace.Call("CreatePart", "group", L"my outfit")
-		end
-
-		pace.TrySelectPart()
-	end)
+	return pace.WearOnServer(temp_wear_filter)
 end
 
 function pace.OnCreatePart(class_name, name, mdl, no_parent)
@@ -106,7 +75,7 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 		end
 	end
 
-	local ply = LocalPlayer()
+	local ply = pac.LocalPlayer
 
 	if part:GetPlayerOwner() == ply then
 		pace.SetViewPart(part)
@@ -118,7 +87,7 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 
 	part.newly_created = true
 
-	if not part.NonPhysical and parent:IsValid() and not parent:HasParent() and parent.OwnerName == "world" and part:GetPlayerOwner() == ply then
+	if parent.GetDrawPosition and parent:IsValid() and not parent:HasParent() and parent.OwnerName == "world" and part:GetPlayerOwner() == ply then
 		local data = ply:GetEyeTrace()
 
 		if data.HitPos:Distance(ply:GetPos()) < 1000 then
@@ -163,52 +132,9 @@ function pace.OnPartSelected(part, is_selecting)
 	if not is_selecting then
 		pace.StopSelect()
 	end
-
-	if part.ClassName == 'group' then
-		if #part:GetChildrenList() ~= 0 then
-			local position
-
-			for i, child in ipairs(part:GetChildrenList()) do
-				if not position then
-					local pos = child:GetDrawPosition()
-
-					if not position then
-						position = pos
-					else
-						position = LerpVector(0.5, position, pos)
-					end
-				end
-			end
-
-			if not position then
-				-- wtf
-				part.centreAngle = nil
-				part.centrePosMV = nil
-				part.centrePosCTRL = nil
-				part.centrePosO = nil
-				part.centrePos = nil
-			else
-				part.centrePos = Vector(position)
-				part.centrePosO = Vector(position)
-				part.centrePosMV = Vector()
-				part.centrePosCTRL = Vector()
-				part.centreAngle = Angle(0, pac.LocalPlayer:EyeAngles().y, 0)
-			end
-		else
-			part.centrePos = nil
-			part.centrePosO = nil
-			part.centrePosMV = nil
-			part.centrePosCTRL = nil
-			part.centreAngle = nil
-		end
-	end
 end
 
 function pace.OnVariableChanged(obj, key, val, not_from_editor)
-	local funcGet = obj["Get" .. key]
-	local func = obj["Set" .. key]
-	if not func or not funcGet then return end
-
 	local valType = type(val)
 	if valType == 'Vector' then
 		val = Vector(val)
@@ -217,7 +143,7 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 	end
 
 	if not not_from_editor then
-	timer.Create("pace_backup", 1, 1, pace.Backup)
+		timer.Create("pace_backup", 1, 1, pace.Backup)
 
 		if not pace.undo_release_varchange then
 			pace.RecordUndoHistory()
@@ -231,19 +157,19 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 	end
 
 	if key == "OwnerName" then
+		local owner_name = obj:GetProperty(key)
 		if val == "viewmodel" then
 			pace.editing_viewmodel = true
 		elseif val == "hands" then
 			pace.editing_hands = true
-		elseif obj[key] == "hands" then
+		elseif owner_name == "hands" then
 			pace.editing_hands = false
-		elseif obj[key] == "viewmodel" then
+		elseif owner_name == "viewmodel" then
 			pace.editing_viewmodel = false
 		end
 	end
 
-
-	func(obj, val)
+	obj:SetProperty(key, val)
 
 	local node = obj.pace_tree_node
 	if IsValid(node) then
@@ -269,8 +195,14 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 		end
 
 		if obj.Name == "" then
-			node:SetText(obj:GetName())
+			node:SetText(pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", obj:GetName(), obj:GetPrintUniqueID()) or obj:GetName())
 		end
+	end
+
+	if obj.ClassName:StartWith("sound", nil, true) then
+		timer.Create("pace_preview_sound", 0.25, 1, function()
+			obj:OnShow()
+		end)
 	end
 
 	timer.Simple(0, function()
@@ -287,16 +219,20 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 	end)
 end
 
+pac.AddHook("pac_OnPartParent", "pace_parent", function(parent, child)
+	pace.Call("VariableChanged", parent, "Parent", child, true)
+end)
+
 function pace.GetRegisteredParts()
 	local out = {}
-	for class_name, part in pairs(pac.GetRegisteredParts()) do
+	for class_name, PART in pairs(pac.GetRegisteredParts()) do
 		local cond = (not pace.IsInBasicMode() or pace.BasicParts[class_name]) and
-			not part.Internal and
-			part.show_in_editor ~= false and
-			part.is_deprecated ~= false
+			not PART.ClassName:StartWith("base") and
+			PART.show_in_editor ~= false and
+			PART.is_deprecated ~= false
 
 		if cond then
-			table.insert(out, part)
+			table.insert(out, PART)
 		end
 	end
 
@@ -567,10 +503,10 @@ do -- menu
 		if not pace.Clipboard then return end
 		pace.RecordUndoHistory()
 		local tbl = pace.Clipboard
-			tbl.self.Name = nil
-			tbl.self.ParentName = nil
-			tbl.self.Parent = nil
-			tbl.children = {}
+		tbl.self.Name = nil
+		tbl.self.ParentUID = nil
+		tbl.self.UniqueID = nil
+		tbl.children = {}
 		obj:SetTable(tbl)
 		pace.RecordUndoHistory()
 	end
@@ -636,7 +572,7 @@ do -- menu
 	end
 
 	function pace.OnNewPartMenu()
-		pace.current_part = pac.NULL
+		pace.current_part = NULL
 		local menu = DermaMenu()
 		menu:MakePopup()
 		menu:SetPos(input.GetCursorPos())
@@ -656,225 +592,28 @@ do -- menu
 	end
 end
 
-function pace.OnHoverPart(self)
-	local tbl = {}
-
-	if self.Entity and self.Entity:IsValid() then
-		table.insert(tbl, self.Entity)
-	end
-
-	for _, child in ipairs(self:GetChildrenList()) do
-		if child.Entity and child.Entity:IsValid() then
-			table.insert(tbl, child.Entity)
-		end
-	end
-
-	if #tbl > 0 then
-		local pulse = math.sin(pac.RealTime * 20) * 0.5 + 0.5
-		pulse = pulse * 255
-		pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
-	end
-end
-
-pac.AddHook("pac_OnPartParent", "pace_parent", function(parent, child)
-	pace.Call("VariableChanged", parent, "Parent", child, true)
-end)
-
 do
-	local hold = false
-	local last = 0
+	pac.haloex = include("pac3/libraries/haloex.lua")
 
-	local function thinkUndo()
-		-- whooaaa
-		-- if input.IsControlDown() and input.IsKeyDown(KEY_X) then
-		--  pace.UndoPosition = math.Round((gui.MouseY() / ScrH()) * #pace.UndoHistory)
-		--  pace.ApplyUndo()
-		--  return
-		-- end
+	function pace.OnHoverPart(self)
+		local tbl = {}
+		local ent = self:GetOwner()
 
-		if not input.IsKeyDown(KEY_Z) and not input.IsKeyDown(KEY_Y) then
-			hold = false
+		if ent:IsValid() then
+			table.insert(tbl, ent)
 		end
 
-		if hold then return end
-
-		if input.IsControlDown() and ((input.IsKeyDown(KEY_LSHIFT) and input.IsKeyDown(KEY_Z)) or input.IsKeyDown(KEY_Y)) then
-			pace.Redo()
-			hold = true
-		elseif input.IsControlDown() and input.IsKeyDown(KEY_Z) then
-			pace.Undo()
-			hold = true
-		end
-	end
-
-	local hold = false
-
-	local function thinkCopy()
-		if not input.IsKeyDown(KEY_C) then
-			hold = false
-		end
-
-		if hold or not (input.IsControlDown() and input.IsKeyDown(KEY_C)) then return end
-
-		-- copy
-		hold = true
-		local part = pace.current_part
-
-		if not part or not part:IsValid() then
-			pace.FlashNotification('No part selected to copy')
-			return
-		end
-
-		pace.Copy(part)
-
-		surface.PlaySound("buttons/button9.wav")
-	end
-
-	local hold = false
-
-	local function thinkCut()
-		if not input.IsKeyDown(KEY_X) then
-			hold = false
-		end
-
-		if hold or not (input.IsControlDown() and input.IsKeyDown(KEY_X)) then return end
-
-		-- copy
-		hold = true
-		local part = pace.current_part
-
-		if not part or not part:IsValid() then
-			pace.FlashNotification('No part selected to cut')
-			return
-		end
-
-		pace.Cut(part)
-
-		surface.PlaySound("buttons/button9.wav")
-	end
-
-	local hold = false
-
-	local function thinkDelete()
-		if not input.IsKeyDown(KEY_DELETE) then
-			hold = false
-		end
-
-		if hold or not input.IsKeyDown(KEY_DELETE) then return end
-
-		-- delete
-		hold = true
-		local part = pace.current_part
-
-		if not part or not part:IsValid() then
-			pace.FlashNotification('No part to delete')
-			return
-		end
-
-		pace.RemovePart(part)
-
-		surface.PlaySound("buttons/button9.wav")
-	end
-
-	local REVERSE_COLLAPSE_CONTROLS = CreateConVar('pac_reverse_collapse', '1', {FCVAR_ARCHIVE}, 'Reverse Collapse/Expand hotkeys')
-	local hold = false
-
-	local function thinkExpandAll()
-		if not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT) and not input.IsKeyDown(KEY_0) then
-			hold = false
-		end
-
-		if hold or not input.IsShiftDown() or (not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT)) or not input.IsKeyDown(KEY_0) then return end
-
-		-- expand all
-		hold = true
-		local part = pace.current_part
-
-		if not part or not part:IsValid() then
-			pace.FlashNotification('No part to expand')
-			return
-		end
-
-		part:CallRecursive('SetEditorExpand', not REVERSE_COLLAPSE_CONTROLS:GetBool())
-
-		surface.PlaySound("buttons/button9.wav")
-		pace.RefreshTree(true)
-	end
-
-	local hold = false
-
-	local function thinkCollapseAll()
-		if not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT) and not input.IsKeyDown(KEY_0) then
-			hold = false
-		end
-
-		if hold or input.IsShiftDown() or (not input.IsKeyDown(KEY_LALT) and not input.IsKeyDown(KEY_RALT)) or not input.IsKeyDown(KEY_0) then return end
-
-		-- collapse all
-		hold = true
-		local part = pace.current_part
-
-		if not part or not part:IsValid() then
-			pace.FlashNotification('No part to collapse')
-			return
-		end
-
-		part:CallRecursive('SetEditorExpand', REVERSE_COLLAPSE_CONTROLS:GetBool())
-
-		surface.PlaySound("buttons/button9.wav")
-		pace.RefreshTree(true)
-	end
-
-	local hold = false
-
-	local function thinkPaste()
-		if not input.IsKeyDown(KEY_V) then
-			hold = false
-		end
-
-		if hold or not (input.IsControlDown() and input.IsKeyDown(KEY_V)) then return end
-
-		-- paste
-		hold = true
-		local part = pace.Clipboard
-
-		if not part then
-			pace.FlashNotification('No part is stored in clipboard')
-			return
-		end
-
-		local findParent
-
-		if part == pace.current_part then
-			findParent = part:GetParent()
-
-			if not findParent or not findParent:IsValid() then
-				findParent = part
+		for _, child in ipairs(self:GetChildrenList()) do
+			local ent = self:GetOwner()
+			if ent:IsValid() then
+				table.insert(tbl, ent)
 			end
-		elseif pace.current_part and pace.current_part:IsValid() then
-			findParent = pace.current_part
-		else
-			pace.RecordUndoHistory()
-			findParent = pace.Call("CreatePart", "group", L"paste data")
-			pace.RecordUndoHistory()
 		end
 
-		pace.Paste(findParent)
-
-		surface.PlaySound("buttons/button9.wav")
+		if #tbl > 0 then
+			local pulse = math.sin(pac.RealTime * 20) * 0.5 + 0.5
+			pulse = pulse * 255
+			pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
+		end
 	end
-
-	pac.AddHook("Think", "pace_keyboard_shortcuts", function()
-		if not pace.IsActive() then return end
-		if not pace.Focused then return end
-		if IsValid(vgui.GetKeyboardFocus()) and vgui.GetKeyboardFocus():GetClassName():find('Text') then return end
-		if gui.IsConsoleVisible() then return end
-		thinkUndo()
-		thinkCopy()
-		thinkPaste()
-		thinkCut()
-		thinkDelete()
-		thinkExpandAll()
-		thinkCollapseAll()
-	end)
 end

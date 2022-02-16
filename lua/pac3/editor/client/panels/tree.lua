@@ -19,8 +19,6 @@ function PANEL:Init()
 end
 
 do
-	local pnl = NULL
-
 	local function get_added_nodes(self)
 		local added_nodes = {}
 		for i,v in ipairs(self.added_nodes) do
@@ -49,11 +47,9 @@ do
 	end
 
 	function PANEL:Think(...)
-		pnl = vgui.GetHoveredPanel() or NULL
+		if not pace.current_part:IsValid() then return end
 
 		if
-			not gui.IsGameUIVisible()  and
-			pace.current_part:IsValid() and
 			pace.current_part.pace_tree_node and
 			pace.current_part.pace_tree_node:IsValid() and not
 			(
@@ -62,7 +58,8 @@ do
 				pace.editing_viewmodel or
 				pace.editing_hands or
 				pace.properties.search:HasFocus()
-			)
+			) and
+			not gui.IsConsoleVisible()
 		then
 			if input.IsKeyDown(KEY_LEFT) then
 				pace.Call("VariableChanged", pace.current_part, "EditorExpand", false)
@@ -113,27 +110,45 @@ do
 			end
 		end
 
-		for key, part in pairs(pac.GetLocalParts()) do
-
+		for _, part in pairs(pac.GetLocalParts()) do
 			local node = part.pace_tree_node
+			if not node or not node:IsValid() then continue end
 
-			if node and node:IsValid() then
-				if node.add_button then
-					node.add_button:SetVisible(false)
+			if node.add_button then
+				node.add_button:SetVisible(false)
+			end
+
+			if part.ClassName == "event" then
+				if part.is_active then
+					node.Icon:SetImage("icon16/clock_red.png")
+				else
+					node.Icon:SetImage(part.Icon)
+				end
+			end
+
+			if (part.ClassName == "proxy" or part.ClassName == "event") and part.Name == "" then
+				node:SetText(pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName())
+			end
+
+			if part:IsHiddenCached() then
+				if not node.Icon.event_icon then
+					local pnl = vgui.Create("DImage", node.Icon)
+					pnl:SetImage("icon16/clock_red.png")
+					pnl:SetSize(8, 8)
+					pnl:SetPos(8, 8)
+					pnl:SetVisible(false)
+					node.Icon.event_icon = pnl
 				end
 
-				if part.event_triggered ~= nil then
-					if part.event_triggered then
-						node.Icon:SetImage("icon16/clock_red.png")
-					else
-						node.Icon:SetImage(part.Icon)
-					end
-				end
-				if (part.ClassName == "proxy" or part.ClassName == "event") and part.Name == "" then
-					node:SetText(part:GetName())
+				node.Icon.event_icon:SetVisible(true)
+			else
+				if node.Icon.event_icon then
+					node.Icon.event_icon:SetVisible(false)
 				end
 			end
 		end
+
+		local pnl = vgui.GetHoveredPanel() or NULL
 
 		if pnl:IsValid() then
 			local pnl = pnl:GetParent()
@@ -144,10 +159,6 @@ do
 					pnl.add_button:SetVisible(true)
 				end
 			end
-		end
-
-		if pace.pac_dtree.Think then
-			return pace.pac_dtree.Think(self, ...)
 		end
 	end
 end
@@ -196,7 +207,6 @@ local function install_drag(node)
 			if self.part and self.part:IsValid() and self.part:GetParent() ~= child.part then
 				pace.RecordUndoHistory()
 				self.part:SetParent(child.part)
-				self.part:ResolvePartNames()
 				pace.RecordUndoHistory()
 				called = true
 			end
@@ -206,7 +216,6 @@ local function install_drag(node)
 				local group = pac.CreatePart("group", self.part:GetPlayerOwner())
 				group:SetEditorExpand(true)
 				self.part:SetParent(group)
-				self.part:ResolvePartNames()
 				pace.RecordUndoHistory()
 				pace.TrySelectPart()
 				called = true
@@ -214,7 +223,6 @@ local function install_drag(node)
 			else
 				pace.RecordUndoHistory()
 				self.part:SetParent()
-				self.part:ResolvePartNames()
 				pace.RecordUndoHistory()
 				pace.RefreshTree(true)
 				called = true
@@ -237,7 +245,6 @@ local function install_drag(node)
 			if self.part and self.part:IsValid() and child.part:GetParent() ~= self.part then
 				pace.RecordUndoHistory()
 				child.part:SetParent(self.part)
-				child.part:ResolvePartNames()
 				pace.RecordUndoHistory()
 			end
 		end
@@ -363,7 +370,7 @@ function PANEL:PopulateParts(node, parts, children)
 	for key, part in pairs(tbl) do
 		key = part.Id
 
-		if part:GetRootPart().show_in_editor == false then goto CONTINUE end
+		if not part:GetShowInEditor() then goto CONTINUE end
 
 		if not part:HasParent() or children then
 			local part_node
@@ -373,7 +380,7 @@ function PANEL:PopulateParts(node, parts, children)
 			elseif IsValid(self.parts[key]) then
 				part_node = self.parts[key]
 			else
-				part_node = node:AddNode(part:GetName())
+				part_node = node:AddNode(pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName())
 			end
 
 			fix_folder_funcs(part_node)
@@ -407,9 +414,9 @@ function PANEL:PopulateParts(node, parts, children)
 				enable_model_icons:GetBool() and
 				part.is_model_part and
 				part.GetModel and
-				part:GetEntity():IsValid()
+				part:GetOwner():IsValid()
 			then
-				part_node:SetModel(part:GetEntity():GetModel(), part.Icon)
+				part_node:SetModel(part:GetOwner():GetModel(), part.Icon)
 			elseif type(part.Icon) == "string" then
 				part_node.Icon:SetImage(part.Icon)
 			end
@@ -482,7 +489,9 @@ end
 pace.RegisterPanel(PANEL)
 
 local function remove_node(part)
-	if (part.pace_tree_node or NULL):IsValid() and part:GetRootPart().show_in_editor ~= false then
+	if not part:GetShowInEditor() then return end
+
+	if (part.pace_tree_node or NULL):IsValid() then
 		part.pace_tree_node:SetForceShowExpander()
 		part.pace_tree_node:GetRoot().m_pSelectedItem = nil
 		part.pace_tree_node:Remove()
@@ -492,19 +501,25 @@ end
 
 pac.AddHook("pac_OnPartRemove", "pace_remove_tree_nodes", remove_node)
 
-local function refresh(part, localplayer)
-	if localplayer and part:GetRootPart().show_in_editor ~= false then
-		pace.RefreshTree(true)
-	end
-end
-pac.AddHook("pac_OnWoreOutfit", "pace_create_tree_nodes", refresh)
 
+local last_refresh = 0
 local function refresh(part)
-	if part:GetRootPart().show_in_editor ~= false then
+	if last_refresh > SysTime() then return end
+	if not part:GetShowInEditor() then return end
+
+
+	last_refresh = SysTime() + 0.1
+	timer.Simple(0, function()
+		if not part:IsValid() then return end
+		if not part:GetShowInEditor() then return end
+
 		pace.RefreshTree(true)
-	end
+	end)
 end
-pac.AddHook("pac_OnPartCreated", "pace_create_tree_nodes", refresh)
+
+pac.AddHook("pac_OnWoreOutfit", "pace_refresh_tree_nodes", refresh)
+pac.AddHook("pac_OnPartParent", "pace_refresh_tree_nodes", refresh)
+pac.AddHook("pac_OnPartCreated", "pace_refresh_tree_nodes", refresh)
 
 pac.AddHook("pace_OnVariableChanged", "pace_create_tree_nodes", function(part, key, val)
 	if key == "EditorExpand" then
@@ -526,4 +541,9 @@ function pace.RefreshTree(reset)
 			end
 		end)
 	end
+end
+
+if Entity(1):IsPlayer() and not PAC_RESTART and not VLL2_FILEDEF then
+	pace.OpenEditor()
+	pace.RefreshTree(true)
 end

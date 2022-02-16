@@ -154,7 +154,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 	end
 
 	return pac.resource.Download(url, function(path)
-		if not ply:IsValid() then
+		if ply:IsPlayer() and not ply:IsValid() then
 			pac.Message(Color(255, 50, 50), "player is no longer valid")
 			file.Delete(path)
 			return
@@ -168,7 +168,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			return
 		end
 
-		local id = util.CRC(url .. file_content .. PAC_MDL_SALT)
+		local id = util.CRC(url .. file_content)
 
 		if skip_cache then
 			id = util.CRC(id .. os.clock())
@@ -401,8 +401,13 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 										local mat = (f:readString() .. ".vmt"):lower()
 										local found = false
 
+										if mat:EndsWith("\\.vmt") or mat:EndsWith("/.vmt") or mat == (".vmt") then goto CONTINUE end
 										for i, v in pairs(files) do
 											if v.file_name == mat then
+												found = v.file_path
+												break
+											elseif v.file_path == ("materials/" .. mat) or string.find(v.file_path, mat, 1, true) or string.find(mat, v.file_name, 1, true) then
+												v.file_name = mat
 												found = v.file_path
 												break
 											end
@@ -417,6 +422,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 										end
 
 										table.insert(found_materials, mat)
+										::CONTINUE::
 									end
 								end
 							f:seek(old_pos)

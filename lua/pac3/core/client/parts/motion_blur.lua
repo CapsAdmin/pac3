@@ -2,18 +2,18 @@ local render_SetBlend = render.SetBlend
 local table_insert = table.insert
 local table_remove = table.remove
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "motion_blur"
 PART.Group = 'modifiers'
 PART.Icon = 'icon16/shape_ungroup.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Bone", "none")
-	pac.GetSet(PART, "Alpha", 0.5)
-	pac.GetSet(PART, "BlurLength", 10)
-	pac.GetSet(PART, "BlurSpacing", 0.1)
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	:GetSet("Bone", "none")
+	:GetSet("Alpha", 0.5)
+	:GetSet("BlurLength", 10)
+	:GetSet("BlurSpacing", 0.1)
+:EndStorableVars()
 
 
 function PART:OnShow()
@@ -27,7 +27,7 @@ end
 function PART:DrawBlur(pos, ang)
 	local parent = self:GetParent()
 	if not parent:IsValid() then return end
-	local ent = parent.GetEntity and parent:GetEntity():IsValid() and parent:GetEntity()
+	local ent = parent:GetOwner()
 
 	if not parent.OnDraw then return end
 
@@ -69,7 +69,7 @@ function PART:DrawBlur(pos, ang)
 		end
 
 		pac.drawing_motionblur_alpha = alpha
-		parent:OnDraw(parent:GetOwner(), pos, ang)
+		parent:OnDraw(ent, pos, ang)
 		pac.drawing_motionblur_alpha = false
 
 		if ent then
@@ -85,12 +85,14 @@ function PART:DrawBlur(pos, ang)
 	end
 end
 
-function PART:OnDraw(ent, pos, ang)
+function PART:OnDraw()
 	if pac.drawing_motionblur_alpha then return end
 
 	if self.BlurLength > 0 then
+		local pos, ang = self:GetDrawPosition()
+
 		self:DrawBlur(pos, ang)
 	end
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

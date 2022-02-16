@@ -1,24 +1,24 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "proxy"
-PART.NonPhysical = true
+
 PART.ThinkTime = 0
 PART.Group = 'modifiers'
 PART.Icon = 'icon16/calculator.png'
 
-pac.StartStorableVars()
+BUILDER:StartStorableVars()
 
-	pac.SetPropertyGroup()
-		pac.GetSet(PART, "VariableName", "", {enums = function(part)
-			local parent = part:GetTarget()
-			if not parent:IsValid() then return end
+	BUILDER:SetPropertyGroup()
+		BUILDER:GetSet("VariableName", "", {enums = function(part)
+			local part = part:GetOutputTarget()
+			if not part:IsValid() then return end
 			local tbl = {}
-			for key, _ in pairs(parent.StorableVars) do
-				if key == "UniqueID" then goto CONTINUE end
+			for _, info in pairs(part:GetProperties()) do
+				if info.key == "UniqueID" then goto CONTINUE end
 
-				local T = type(parent[key])
+				local T = type(info.get())
 				if T == "number" or T == "Vector" or T == "Angle" or T == "boolean" then
-					tbl[key] = key
+					tbl[info.key] = info.key
 				end
 				::CONTINUE::
 			end
@@ -26,47 +26,69 @@ pac.StartStorableVars()
 			return tbl
 		end})
 
-		pac.GetSet(PART, "RootOwner", false)
-		pac.SetupPartName(PART, "TargetPart")
-		pac.GetSet(PART, "AffectChildren", false)
-		pac.GetSet(PART, "Expression", "")
+		BUILDER:GetSet("RootOwner", false)
+		BUILDER:GetSetPart("TargetPart")
+		BUILDER:GetSetPart("OutputTargetPart")
+		BUILDER:GetSet("AffectChildren", false)
+		BUILDER:GetSet("Expression", "")
 
-	pac.SetPropertyGroup(PART, "easy setup")
-		pac.GetSet(PART, "Input", "time", {enums = function(part) return part.Inputs end})
-		pac.GetSet(PART, "Function", "sin", {enums = function(part) return part.Functions end})
-		pac.GetSet(PART, "Axis", "")
-		pac.GetSet(PART, "Min", 0)
-		pac.GetSet(PART, "Max", 1)
-		pac.GetSet(PART, "Offset", 0)
-		pac.GetSet(PART, "InputMultiplier", 1)
-		pac.GetSet(PART, "InputDivider", 1)
-		pac.GetSet(PART, "Pow", 1)
+	BUILDER:SetPropertyGroup("easy setup")
+		BUILDER:GetSet("Input", "time", {enums = function(part) return part.Inputs end})
+		BUILDER:GetSet("Function", "sin", {enums = function(part) return part.Functions end})
+		BUILDER:GetSet("Axis", "")
+		BUILDER:GetSet("Min", 0)
+		BUILDER:GetSet("Max", 1)
+		BUILDER:GetSet("Offset", 0)
+		BUILDER:GetSet("InputMultiplier", 1)
+		BUILDER:GetSet("InputDivider", 1)
+		BUILDER:GetSet("Pow", 1)
 
-	pac.SetPropertyGroup(PART, "behavior")
-		pac.GetSet(PART, "Additive", false)
-		pac.GetSet(PART, "PlayerAngles", false)
-		pac.GetSet(PART, "ZeroEyePitch", false)
-		pac.GetSet(PART, "ResetVelocitiesOnHide", true)
-		pac.GetSet(PART, "VelocityRoughness", 10)
+	BUILDER:SetPropertyGroup("behavior")
+		BUILDER:GetSet("Additive", false)
+		BUILDER:GetSet("PlayerAngles", false)
+		BUILDER:GetSet("ZeroEyePitch", false)
+		BUILDER:GetSet("ResetVelocitiesOnHide", true)
+		BUILDER:GetSet("VelocityRoughness", 10)
 
-pac.EndStorableVars()
+BUILDER:EndStorableVars()
 
-function PART:GetTarget(physical)
+function PART:GetOutputTarget()
+	local part = self:GetOutputTargetPart()
+	if part:IsValid() then
+		return part
+	end
+	return self:GetTarget()
+end
+
+function PART:GetPhysicalTarget()
 	local part = self:GetTargetPart()
 
 	if part:IsValid() then
 		return part
 	end
 
-	if physical then
-		local parent = self:GetParent()
+	local parent = self:GetParent()
 
-		repeat
-			if not parent.Parent:IsValid() then break end
-			parent = parent.Parent
-		until not parent.cached_pos:IsZero()
+	while not parent.GetWorldPosition or parent:GetWorldPosition():IsZero() do
+		if not parent.Parent:IsValid() then break end
+		parent = parent.Parent
+	end
 
-		return parent
+	if not parent.GetWorldPosition then
+		local owner = parent:GetOwner()
+		if owner:IsValid() then
+			return owner
+		end
+	end
+
+	return parent
+end
+
+function PART:GetTarget()
+	local part = self:GetTargetPart()
+
+	if part:IsValid() then
+		return part
 	end
 
 	return self:GetParent()
@@ -74,9 +96,6 @@ end
 
 function PART:SetVariableName(str)
 	self.VariableName = str
-
-	self.set_key = "Set" .. str
-	self.get_key = "Get" .. str
 end
 
 function PART:GetNiceName()
@@ -89,15 +108,15 @@ function PART:GetNiceName()
 	if self.AffectChildren then
 		target = "children"
 	else
-		local part = self:GetTarget()
-		if part == self.Parent then
+		local part = self.debug_target or self:GetOutputTarget()
+		if false and part == self.Parent then
 			target = "parent"
 		else
 			target = part:GetName()
 		end
 	end
 
-	return target .. "." .. pac.PrettifyName(self:GetVariableName()) .. " = " .. (self.debug_var or "?")
+	return (target or "?") .. "." .. pac.PrettifyName(self:GetVariableName()) .. " = " .. (self.debug_var or "?")
 end
 
 function PART:Initialize()
@@ -126,9 +145,11 @@ function PART:CalcVelocity()
 end
 
 function PART:GetVelocity(part)
-	local pos = part.cached_pos
+	local pos
 
-	if not pos or pos == Vector() then
+	if part.GetWorldPosition then
+		pos = part:GetWorldPosition()
+	else
 		if IsEntity(part) then
 			pos = part:GetPos()
 		elseif part:GetOwner():IsValid() then
@@ -158,781 +179,573 @@ function PART:CalcEyeAngles(ent)
 end
 
 local function try_viewmodel(ent)
-	return ent == pac.LocalPlayer:GetViewModel() and pac.LocalPlayer or ent
+	return ent == pac.LocalViewModel and pac.LocalPlayer or ent
 end
 
-PART.Inputs = {
-	owner_position = function(s, p)
-		local owner = s:GetOwner(s.RootOwner)
-		owner = try_viewmodel(owner)
+local function get_owner(self)
+	if self.RootOwner then
+		return try_viewmodel(self:GetRootPart():GetOwner())
+	else
+		return try_viewmodel(self:GetOwner())
+	end
+end
 
-		if owner:IsValid() then
-			local pos = owner:GetPos()
+PART.Inputs = {}
 
-			return pos.x, pos.y, pos.z
-		end
+PART.Inputs.property = function(self, property_name, field)
+	local part = self:GetTarget()
 
-		return 0,0,0
-	end,
+	if part:IsValid() and property_name then 
+		local v = part:GetProperty(property_name)
 
-	owner_fov = function(s, p)
-		local owner = s:GetOwner(s.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() and owner.GetFOV then
-			return owner:GetFOV()
-		end
-
-		return 0
-	end,
-
-	visible = function(s, p, radius)
-		p.proxy_pixvis = p.proxy_pixvis or util.GetPixelVisibleHandle()
-		return util.PixelVisible(p.cached_pos, radius or 16, p.proxy_pixvis) or 0
-	end,
-
-	time = RealTime,
-	synced_time = CurTime,
-	systime = SysTime,
-	stime = SysTime,
-	frametime = FrameTime,
-	ftime = FrameTime,
-	framenumber = FrameNumber,
-	fnumber = FrameNumber,
-
-	random = function(s, p)
-		return math.random()
-	end,
-
-	timeex = function(s, p)
-		s.time = s.time or pac.RealTime
-
-		return pac.RealTime - s.time
-	end,
-
-	eye_position_distance = function(self, parent)
-		local pos = parent.cached_pos
-
-		if parent.NonPhysical then
-			local owner = parent:GetOwner(self.RootOwner)
-			if owner:IsValid() then
-				pos = owner:GetPos()
+		local T = type(v)
+		
+		if T == "Vector" or T == "Angle" then
+			if field and v[field] then 
+				return v[field]
+			else
+				return v[1],v[2],v[3]
 			end
+		elseif T == "boolean" then
+			return v and 1 or 0
+		elseif T == "number" then
+			return v
 		end
+	end
+
+	return 0
+end
+
+PART.Inputs.owner_position = function(self)
+	local owner = get_owner(self)
+
+	if owner:IsValid() then
+		local pos = owner:GetPos()
+
+		return pos.x, pos.y, pos.z
+	end
+
+	return 0,0,0
+end
+
+PART.Inputs.owner_fov = function(self)
+	local owner = get_owner(self)
+
+	if owner:IsValid() and owner.GetFOV then
+		return owner:GetFOV()
+	end
+
+	return 0
+end
+
+PART.Inputs.visible = function(self, radius)
+	local part = self:GetPhysicalTarget()
+	if not part.GetWorldPosition then return 0 end
+	part.proxy_pixvis = part.proxy_pixvis or util.GetPixelVisibleHandle()
+	return util.PixelVisible(part:GetWorldPosition(), radius or 16, part.proxy_pixvis) or 0
+end
+
+PART.Inputs.time = RealTime
+PART.Inputs.synced_time = CurTime
+PART.Inputs.systime = SysTime
+PART.Inputs.stime = SysTime
+PART.Inputs.frametime = FrameTime
+PART.Inputs.ftime = FrameTime
+PART.Inputs.framenumber = FrameNumber
+PART.Inputs.fnumber = FrameNumber
+
+PART.Inputs.random = function(self)
+	return math.random()
+end
+
+
+PART.Inputs.lerp = function(self, m, a, b)
+	m = tonumber(m) or 0
+	a = tonumber(a) or -1
+	b = tonumber(b) or 1
+
+	return (b - a) * m + a
+end
+
+PART.Inputs.timeex = function(s)
+	s.time = s.time or pac.RealTime
+
+	return pac.RealTime - s.time
+end
+
+do
+	local function get_pos(self)
+		local part = self:GetPhysicalTarget()
+		if not part:IsValid() then return end
+
+		local pos
+		if part.GetWorldPosition then
+			pos = part:GetWorldPosition()
+		else
+			local owner = get_owner(part)
+			if not owner:IsValid() then return end
+			pos = owner:GetPos()
+		end
+
+		return pos
+	end
+
+	PART.Inputs.eye_position_distance = function(self)
+		local pos = get_pos(self)
+		if not pos then return 0 end
 
 		return pos:Distance(pac.EyePos)
-	end,
-	eye_angle_distance = function(self, parent)
-		local pos = parent.cached_pos
+	end
 
-		if parent.NonPhysical then
-			local owner = parent:GetOwner(self.RootOwner)
-			if owner:IsValid() then
-				pos = owner:GetPos()
-			end
-		end
+	PART.Inputs.eye_angle_distance = function(self)
+		local pos = get_pos(self)
+		if not pos then return 0 end
 
 		return math.Clamp(math.abs(pac.EyeAng:Forward():DotProduct((pos - pac.EyePos):GetNormalized())) - 0.5, 0, 1)
-	end,
+	end
 
-	aim_length = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
+end
 
-		owner = try_viewmodel(owner)
+PART.Inputs.aim_length = function(self)
+	local owner = get_owner(self)
+	if not owner:IsValid() then return 0 end
 
-		if owner:IsValid() then
-			local res = util.QuickTrace(owner:EyePos(), self:CalcEyeAngles(owner):Forward() * 16000, {owner, owner:GetParent()})
+	local res = util.QuickTrace(owner:EyePos(), self:CalcEyeAngles(owner):Forward() * 16000, {owner, owner:GetParent()})
 
-			return res.StartPos:Distance(res.HitPos)
-		end
+	return res.StartPos:Distance(res.HitPos)
+end
 
-		return 0
-	end,
-	aim_length_fraction = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
+PART.Inputs.aim_length_fraction = function(self)
+	local owner = get_owner(self)
+	if not owner:IsValid() then return 0 end
 
-		owner = try_viewmodel(owner)
+	local res = util.QuickTrace(owner:EyePos(), self:CalcEyeAngles(owner):Forward() * 16000, {owner, owner:GetParent()})
 
-		if owner:IsValid() then
-			local res = util.QuickTrace(owner:EyePos(), self:CalcEyeAngles(owner):Forward() * 16000, {owner, owner:GetParent()})
+	return res.Fraction
+end
 
-			return res.Fraction
-		end
+do
+	local function get_eye_angle(self, field)
+		local owner = get_owner(self)
 
-		return 0
-	end,
+		if not owner:IsValid() then return 0 end
+		local n = self:CalcEyeAngles(owner)[field]
 
-	owner_eye_angle_pitch = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			local n = self:CalcEyeAngles(owner).p
+		if field == "p" then
 			return -(1 + math.NormalizeAngle(n) / 89) / 2 + 1
 		end
 
-		return 0
-	end,
-	owner_eye_angle_yaw = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
+		return math.NormalizeAngle(n)/90
+	end
 
-		owner = try_viewmodel(owner)
+	PART.Inputs.owner_eye_angle_pitch = function(self) return get_eye_angle(self, "p") end
+	PART.Inputs.owner_eye_angle_yaw = function(self) return get_eye_angle(self, "y") end
+	PART.Inputs.owner_eye_angle_roll = function(self) return get_eye_angle(self, "r") end
+end
 
-		if owner:IsValid() then
-			local n = self:CalcEyeAngles(owner).y
-			return math.NormalizeAngle(n)/90
+do
+	local function get_scale(self, field)
+		local owner = get_owner(self)
+
+		if not owner:IsValid() then return 1 end
+
+		return owner.pac_model_scale and owner.pac_model_scale[field] or (owner.GetModelScale and owner:GetModelScale()) or 1
+	end
+	PART.Inputs.owner_scale_x = function(self) return get_scale(self, "x") end
+	PART.Inputs.owner_scale_y = function(self) return get_scale(self, "y") end
+	PART.Inputs.owner_scale_z = function(self) return get_scale(self, "z") end
+end
+
+-- outfit owner
+PART.Inputs.owner_velocity_length = function(self)
+	local owner = get_owner(self)
+	if not owner:IsValid() then return 0 end
+
+	return self:GetVelocity(owner):Length()
+end
+
+do
+	local function get_velocity(self, field)
+		local owner = get_owner(self)
+		if not owner:IsValid() then return 0 end
+
+		local dir = self:CalcEyeAngles(owner)
+		return dir[field](dir):Dot(self:GetVelocity(owner))
+	end
+
+	PART.Inputs.owner_velocity_forward = function(self) return get_velocity(self, "Forward") end
+	PART.Inputs.owner_velocity_right = function(self) return get_velocity(self, "Right") end
+	PART.Inputs.owner_velocity_up = function(self) return get_velocity(self, "Up") end
+end
+
+do -- velocity world
+	local function get_velocity(self)
+		local owner = get_owner(self)
+		if not owner:IsValid() then return 0 end
+
+		return self:GetVelocity(owner)
+	end
+
+	PART.Inputs.owner_velocity_world_forward = function(self) return get_velocity(self)[1] end
+	PART.Inputs.owner_velocity_world_right = function(self) return get_velocity(self)[2] end
+	PART.Inputs.owner_velocity_world_up = function(self) return get_velocity(self)[3] end
+end
+
+-- outfit owner vel increase
+PART.Inputs.owner_velocity_length_increase = function(self)
+	local owner = get_owner(self)
+	if not owner:IsValid() then return 0 end
+
+	local vel = self:GetVelocity(owner):Length()
+	self.ov_length_i = (self.ov_length_i or 0) + vel * FrameTime()
+	return self.ov_length_i
+end
+
+do
+	PART.Inputs.owner_velocity_forward_increase = function(self)
+		local owner = get_owner(self)
+		if not owner:IsValid() then return 0 end
+
+		local vel = self:CalcEyeAngles(owner):Forward():Dot(self:GetVelocity(owner))
+		self.ov_forward_i = (self.ov_forward_i or 0) + vel * FrameTime()
+		return self.ov_forward_i
+	end
+	PART.Inputs.owner_velocity_right_increase = function(self)
+		local owner = get_owner(self)
+		if not owner:IsValid() then return 0 end
+
+		local vel = self:CalcEyeAngles(owner):Right():Dot(self:GetVelocity(owner))
+		self.ov_right_i = (self.ov_right_i or 0) + vel * FrameTime()
+		return self.ov_right_i
+	end
+	PART.Inputs.owner_velocity_up_increase = function(self)
+		local owner = get_owner(self)
+		if not owner:IsValid() then return 0 end
+
+		local vel = self:CalcEyeAngles(owner):Up():Dot(self:GetVelocity(owner))
+		self.ov_up_i = (self.ov_up_i or 0) + vel * FrameTime()
+		return self.ov_up_i
+	end
+end
+
+do --
+	PART.Inputs.owner_velocity_world_forward_increase = function(self)
+		local owner = get_owner(self)
+		if not owner:IsValid() then return 0 end
+
+		local vel = self:GetVelocity(owner)[1]
+		self.ov_wforward_i = (self.ov_wforward_i or 0) + vel * FrameTime()
+		return self.ov_wforward_i
+	end
+	PART.Inputs.owner_velocity_world_right_increase = function(self)
+		local owner = get_owner(self)
+		if not owner:IsValid() then return 0 end
+
+		local vel = self:GetVelocity(owner)[2]
+		self.ov_wright_i = (self.ov_wright_i or 0) + vel * FrameTime()
+		return self.ov_wright_i
+	end
+	PART.Inputs.owner_velocity_world_up_increase = function(self)
+		local owner = get_owner(self)
+		if not owner:IsValid() then return 0 end
+
+		local vel = self:GetVelocity(owner)[3]
+		self.ov_wup_i = (self.ov_wup_i or 0) + vel * FrameTime()
+		return self.ov_wup_i
+	end
+end
+
+do -- velocity
+	PART.Inputs.parent_velocity_length = function(self)
+		return self:GetVelocity(self:GetPhysicalTarget()):Length()
+	end
+
+	local function get_velocity(self)
+		local part = self:GetPhysicalTarget()
+		local ang
+
+		if part.GetWorldAngles then
+			ang = part:GetWorldAngles()
+		elseif part.GetAngles then
+			ang = part:GetAngles()
 		end
 
-		return 0
-	end,
-	owner_eye_angle_roll = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
+		return ang and self:GetVelocity(part), ang
+	end
 
-		owner = try_viewmodel(owner)
+	PART.Inputs.parent_velocity_forward = function(self)
+		local vel, ang = get_velocity(self)
+		if not vel then return 0 end
 
-		if owner:IsValid() then
-			local n = self:CalcEyeAngles(owner).r
-			return math.NormalizeAngle(n)/90
+		return -ang:Forward():Dot(vel)
+	end
+	PART.Inputs.parent_velocity_right = function(self)
+		local vel, ang = get_velocity(self)
+		if not vel then return 0 end
+
+		return ang:Right():Dot(vel)
+	end
+	PART.Inputs.parent_velocity_up = function(self)
+		local vel, ang = get_velocity(self)
+		if not vel then return 0 end
+
+		return ang:Up():Dot(vel)
+	end
+end
+
+do -- scale
+	local function get_scale(self, field)
+		local part = self:GetPhysicalTarget()
+		if not part:IsValid() then return 1 end
+
+		return part.Scale and part.Scale[field]*part.Size or 1
+	end
+	PART.Inputs.parent_scale_x = function(self) return get_scale(self, "x") end
+	PART.Inputs.parent_scale_y = function(self) return get_scale(self, "y") end
+	PART.Inputs.parent_scale_z = function(self) return get_scale(self, "z") end
+end
+
+PART.Inputs.pose_parameter = function(self, name)
+	if not name then return 0 end
+	local owner = get_owner(self)
+	if owner:IsValid() and owner.GetPoseParameter then return owner:GetPoseParameter(name) end
+
+	return 0
+end
+
+PART.Inputs.command = function(self)
+	local ply = self:GetPlayerOwner()
+	if ply.pac_proxy_events then
+		local data = ply.pac_proxy_events[self.Name]
+		if data then
+			data.x = data.x or 0
+			data.y = data.y or 0
+			data.z = data.z or 0
+
+			return data.x, data.y, data.z
+		end
+	end
+
+	return 0, 0, 0
+end
+
+PART.Inputs.voice_volume = function(self)
+	local ply = self:GetPlayerOwner()
+	return ply:VoiceVolume()
+end
+
+do -- light amount
+	local ColorToHSV = ColorToHSV
+	local render = render
+	local function get_color(self, field)
+		local part = self:GetPhysicalTarget()
+		if not part:IsValid() then return 0 end
+		if not part.GetWorldPosition then return 0 end
+		local v = field and render.GetLightColor(part:GetWorldPosition()):ToColor()[field] or render.GetLightColor(part:GetWorldPosition()):ToColor()
+
+		if part.ProperColorRange then
+			if field then return v / 255 else return v['r']/255, v['g']/255, v['b']/255 end
 		end
 
-		return 0
-	end,
+		if field then return v else return v['r'], v['g'], v['b'] end
+	end
 
-	owner_scale_x = function(self)
-		local owner = self:GetOwner(self.RootOwner)
+	PART.Inputs.light_amount = function(self) return get_color(self) end
+	PART.Inputs.light_amount_r = function(self) return get_color(self, "r") end
+	PART.Inputs.light_amount_g = function(self) return get_color(self, "g") end
+	PART.Inputs.light_amount_b = function(self) return get_color(self, "b") end
 
-		owner = try_viewmodel(owner)
+	PART.Inputs.light_value = function(self)
+		local part = self:GetPhysicalTarget()
+		if not part:IsValid() then return 0 end
+		if not part.GetWorldPosition then return 0 end
 
-		if owner:IsValid() then
-			return owner.pac_model_scale and owner.pac_model_scale.x or (owner.GetModelScale and owner:GetModelScale()) or 1
+		local h, s, v = ColorToHSV(render.GetLightColor(part:GetWorldPosition()):ToColor())
+		return v
+	end
+end
+
+do -- ambient light
+	local render = render
+	local function get_color(self, field)
+		local part = self:GetOutputTarget()
+		if not part:IsValid() then return 0 end
+
+		local v = field and render.GetAmbientLightColor():ToColor()[field] or render.GetAmbientLightColor():ToColor()
+
+		if part.ProperColorRange then
+			if field then return v / 255 else return v['r']/255, v['g']/255, v['b']/255 end
 		end
 
-		return 1
-	end,
-	owner_scale_y = function(self)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			return owner.pac_model_scale and owner.pac_model_scale.y or (owner.GetModelScale and owner:GetModelScale()) or 1
-		end
-
-		return 1
-	end,
-	owner_scale_z = function(self)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			return owner.pac_model_scale and owner.pac_model_scale.z or (owner.GetModelScale and owner:GetModelScale()) or 1
-		end
-
-		return 1
-	end,
-
-	-- outfit owner
-	owner_velocity_length = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			return self:GetVelocity(owner):Length()
-		end
-
-		return 0
-	end,
-	owner_velocity_forward = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			return self:CalcEyeAngles(owner):Forward():Dot(self:GetVelocity(owner))
-		end
-
-		return 0
-	end,
-	owner_velocity_right = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			return self:CalcEyeAngles(owner):Right():Dot(self:GetVelocity(owner))
-		end
-
-		return 0
-	end,
-	owner_velocity_up = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			return self:CalcEyeAngles(owner):Up():Dot(self:GetVelocity(owner))
-		end
-
-		return 0
-	end,
-	owner_velocity_world_forward = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			return self:GetVelocity(owner)[1]
-		end
-
-		return 0
-	end,
-	owner_velocity_world_right = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			return self:GetVelocity(owner)[2]
-		end
-
-		return 0
-	end,
-	owner_velocity_world_up = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			return self:GetVelocity(owner)[3]
-		end
-
-		return 0
-	end,
-
-	-- outfit owner vel increase
-	owner_velocity_length_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			local vel = self:GetVelocity(owner):Length()
-			self.ov_length_i = (self.ov_length_i or 0) + vel * FrameTime()
-			return self.ov_length_i
-		end
-
-		return 0
-	end,
-	owner_velocity_forward_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			local vel = self:CalcEyeAngles(owner):Forward():Dot(self:GetVelocity(owner))
-			self.ov_forward_i = (self.ov_forward_i or 0) + vel * FrameTime()
-			return self.ov_forward_i
-		end
-
-		return 0
-	end,
-	owner_velocity_right_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			local vel = self:CalcEyeAngles(owner):Right():Dot(self:GetVelocity(owner))
-			self.ov_right_i = (self.ov_right_i or 0) + vel * FrameTime()
-			return self.ov_right_i
-		end
-
-		return 0
-	end,
-	owner_velocity_up_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			local vel = self:CalcEyeAngles(owner):Up():Dot(self:GetVelocity(owner))
-			self.ov_up_i = (self.ov_up_i or 0) + vel * FrameTime()
-			return self.ov_up_i
-		end
-
-		return 0
-	end,
-	owner_velocity_world_forward_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			local vel = self:GetVelocity(owner)[1]
-			self.ov_wforward_i = (self.ov_wforward_i or 0) + vel * FrameTime()
-			return self.ov_wforward_i
-		end
-
-		return 0
-	end,
-	owner_velocity_world_right_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			local vel = self:GetVelocity(owner)[2]
-			self.ov_wright_i = (self.ov_wright_i or 0) + vel * FrameTime()
-			return self.ov_wright_i
-		end
-
-		return 0
-	end,
-	owner_velocity_world_up_increase = function(self, parent)
-		local owner = self:GetOwner(self.RootOwner)
-
-		owner = try_viewmodel(owner)
-
-		if owner:IsValid() then
-			local vel = self:GetVelocity(owner)[3]
-			self.ov_wup_i = (self.ov_wup_i or 0) + vel * FrameTime()
-			return self.ov_wup_i
-		end
-
-		return 0
-	end,
-
-	-- parent part
-	parent_velocity_length = function(self, parent)
-		parent = self:GetTarget(true)
-		return self:GetVelocity(parent):Length()
-	end,
-	parent_velocity_forward = function(self, parent)
-		parent = self:GetTarget(true)
-		return -parent.cached_ang:Forward():Dot(self:GetVelocity(parent))
-	end,
-	parent_velocity_right = function(self, parent)
-		parent = self:GetTarget(true)
-		return parent.cached_ang:Right():Dot(self:GetVelocity(parent))
-	end,
-	parent_velocity_up = function(self, parent)
-		parent = self:GetTarget(true)
-		return parent.cached_ang:Up():Dot(self:GetVelocity(parent))
-	end,
-
-	parent_scale_x = function(self, parent)
-		if parent:IsValid() then
-			return parent.Scale and parent.Scale.x*parent.Size or 1
-		end
-
-		return 1
-	end,
-	parent_scale_y = function(self, parent)
-		if parent:IsValid() then
-			return parent.Scale and parent.Scale.y*parent.Size or 1
-		end
-
-		return 1
-	end,
-	parent_scale_z = function(self, parent)
-		if parent:IsValid() then
-			return parent.Scale and parent.Scale.z*parent.Size or 1
-		end
-
-		return 1
-	end,
-
-	pose_parameter = function(self, parent, name)
-		if name then
-			local owner = self:GetOwner(self.RootOwner)
-
-			owner = try_viewmodel(owner)
-
-			if owner:IsValid() and owner.GetPoseParameter then
-				return owner:GetPoseParameter(name)
-			end
-		end
-
-		return 0
-	end,
-
-	command = function(self, index)
-		local ply = self:GetPlayerOwner()
-		if ply.pac_proxy_events then
-			local data = ply.pac_proxy_events[self.Name]
-			if data then
-				data.x = data.x or 0
-				data.y = data.y or 0
-				data.z = data.z or 0
-
-				return data.x, data.y, data.z
-			end
-		end
-
-		return 0, 0, 0
-	end,
-
-	voice_volume = function(self)
-		local ply = self:GetPlayerOwner()
-
-		return ply:VoiceVolume()
-	end,
-
-	light_amount_r = function(self, parent)
-		if parent:IsValid() then
-			local v = render.GetLightColor(parent.cached_pos):ToColor().r
-
-			if parent.ProperColorRange then
-				return v / 255
-			end
-
-			return v
-		end
-
-		return 0
-	end,
-	light_amount_g = function(self, parent)
-		if parent:IsValid() then
-			local v = render.GetLightColor(parent.cached_pos):ToColor().g
-
-			if parent.ProperColorRange then
-				return v / 255
-			end
-
-			return v
-		end
-
-		return 0
-	end,
-	light_amount_b = function(self, parent)
-		if parent:IsValid() then
-			local v = render.GetLightColor(parent.cached_pos):ToColor().b
-
-			if parent.ProperColorRange then
-				return v / 255
-			end
-
-			return v
-		end
-
-		return 0
-	end,
-	light_value = function(self, parent)
-		if parent:IsValid() then
-			local h, s, v = ColorToHSV(render.GetLightColor(parent.cached_pos):ToColor())
-			return v
-		end
-
-		return 0
-	end,
-
-	ambient_light_r = function(self, parent)
-		if parent:IsValid() then
-			local v = render.GetAmbientLightColor():ToColor().r
-
-			if parent.ProperColorRange then
-				return v / 255
-			end
-
-			return v
-		end
-
-		return 0
-	end,
-	ambient_light_g = function(self, parent)
-		if parent:IsValid() then
-			local v = render.GetAmbientLightColor():ToColor().g
-
-			if parent.ProperColorRange then
-				return v / 255
-			end
-
-			return v
-		end
-
-		return 0
-	end,
-	ambient_light_b = function(self, parent)
-		if parent:IsValid() then
-			local v = render.GetAmbientLightColor():ToColor().b
-
-			if parent.ProperColorRange then
-				return v / 255
-			end
-
-			return v
-		end
-
-		return 0
-    end,
-
-	owner_health = function(self)
+		if field then return v else return v['r'], v['g'], v['b'] end
+	end
+
+	PART.Inputs.ambient_light = function(self) return get_color(self) end
+	PART.Inputs.ambient_light_r = function(self) return get_color(self, "r") end
+	PART.Inputs.ambient_light_g = function(self) return get_color(self, "g") end
+	PART.Inputs.ambient_light_b = function(self) return get_color(self, "b") end
+end
+
+do -- health and armor
+	PART.Inputs.owner_health = function(self)
 		local owner = self:GetPlayerOwner()
+		if not owner:IsValid() then return 0 end
 
-		if owner:IsValid() then
-			return owner:Health()
-		end
-
-		return 0
-	end,
-	owner_max_health = function(self)
+		return owner:Health()
+	end
+	PART.Inputs.owner_max_health = function(self)
 		local owner = self:GetPlayerOwner()
+		if not owner:IsValid() then return 0 end
 
-		if owner:IsValid() then
-			return owner:GetMaxHealth()
-		end
+		return owner:GetMaxHealth()
+	end
 
-		return 0
-	end,
-	owner_armor = function(self)
+	PART.Inputs.owner_armor = function(self)
 		local owner = self:GetPlayerOwner()
+		if not owner:IsValid() then return 0 end
 
-		if owner:IsValid() then
-			return owner:Armor()
+		return owner:Armor()
+	end
+end
+
+do -- weapon and player color
+	local Color = Color
+	local function get_color(self, get, field)
+		local color = field and get(self)[field] or get(self)
+		local part = self:GetOutputTarget()
+
+		if part.ProperColorRange then
+			if field then return color else return color[1], color[2], color[3] end
 		end
 
-		return 0
-	end,
-	owner_total_ammo = function(self, parent, id)
+		if field then return color*255 else return color[1]*255, color[2]*255, color[3]*255 end
+	end
+
+	do
+		local function get_player_color(self)
+			local owner = self:GetPlayerOwner()
+
+			if not owner:IsValid() then return Vector(1,1,1) end
+
+			return owner:GetPlayerColor()
+		end
+
+		PART.Inputs.player_color = function(self) return get_color(self, get_player_color) end
+		PART.Inputs.player_color_r = function(self) return get_color(self, get_player_color, "r") end
+		PART.Inputs.player_color_g = function(self) return get_color(self, get_player_color, "g") end
+		PART.Inputs.player_color_b = function(self) return get_color(self, get_player_color, "b") end
+	end
+
+	do
+		local function get_weapon_color(self)
+			local owner = self:GetPlayerOwner()
+
+			if not owner:IsValid() then return Vector(1,1,1) end
+
+			return owner:GetWeaponColor()
+		end
+
+		PART.Inputs.weapon_color = function(self) return get_color(self, get_weapon_color) end
+		PART.Inputs.weapon_color_r = function(self) return get_color(self, get_weapon_color, "r") end
+		PART.Inputs.weapon_color_g = function(self) return get_color(self, get_weapon_color, "g") end
+		PART.Inputs.weapon_color_b = function(self) return get_color(self, get_weapon_color, "b") end
+	end
+end
+
+do -- ammo
+	local function get_weapon(self)
+		local owner = self:GetRootPart():GetOwner()
+		if not owner:IsValid() then return 0 end
+
+		if owner.GetActiveWeapon and not owner:IsWeapon() then
+			owner = self:GetPlayerOwner()
+		end
+
+		if not owner:IsValid() then return 0 end
+
+		return owner.GetActiveWeapon and owner:GetActiveWeapon() or owner, owner
+	end
+
+	PART.Inputs.owner_total_ammo = function(self, id)
 		local owner = self:GetPlayerOwner()
 		id = id and id:lower()
 
-		if owner:IsValid() then
-			return (owner.GetAmmoCount and id) and owner:GetAmmoCount(id) or 0
-		end
+		if not owner:IsValid() then return 0 end
 
-		return 0
-	end,
+		return (owner.GetAmmoCount and id) and owner:GetAmmoCount(id) or 0
+	end
 
-	player_color_r = function(self, parent)
-		local owner = self:GetPlayerOwner()
+	PART.Inputs.weapon_primary_ammo = function(self)
+		local wep = get_weapon(self)
 
-		if owner:IsValid() then
-			local v =  owner:GetPlayerColor().r
+		return wep:IsValid() and wep.Clip1 and wep:Clip1() or 0
+	end
+	PART.Inputs.weapon_primary_total_ammo = function(self)
+		local wep, owner = get_weapon(self)
 
-			if parent.ProperColorRange then
-				return v / 255
-			end
+		return wep:IsValid() and (wep.GetPrimaryAmmoType and owner.GetAmmoCount) and owner:GetAmmoCount(wep:GetPrimaryAmmoType()) or 0
+	end
+	PART.Inputs.weapon_primary_clipsize = function(self)
+		local wep = get_weapon(self)
 
-			return v
-		end
+		return wep:IsValid() and wep.GetMaxClip1 and wep:GetMaxClip1() or 0
+	end
+	PART.Inputs.weapon_secondary_ammo = function(self)
+		local wep = get_weapon(self)
 
-		return 1
-	end,
-	player_color_g = function(self, parent)
-		local owner = self:GetPlayerOwner()
+		return wep:IsValid() and wep.Clip2 and wep:Clip2() or 0
+	end
+	PART.Inputs.weapon_secondary_total_ammo = function(self)
+		local wep, owner = get_weapon(self)
 
-		if owner:IsValid() then
-			local v = owner:GetPlayerColor().g
+		return wep:IsValid() and (wep.GetSecondaryAmmoType and owner.GetAmmoCount) and owner:GetAmmoCount(wep:GetSecondaryAmmoType()) or 0
+	end
+	PART.Inputs.weapon_secondary_clipsize = function(self)
+		local wep = get_weapon(self)
 
-			if parent.ProperColorRange then
-				return v / 255
-			end
+		return wep:IsValid() and wep.GetMaxClip2 and wep:GetMaxClip2() or 0
+	end
+end
 
-			return v
-		end
+PART.Inputs.hsv_to_color = function(self, h, s, v)
 
-		return 1
-	end,
-	player_color_b = function(self, parent)
-		local owner = self:GetPlayerOwner()
+	local part = self:GetOutputTarget()
+	if not part:IsValid() then return end
 
-		if owner:IsValid() then
-			local v = owner:GetPlayerColor().b
+	h = tonumber(h) or 0
+	s = tonumber(s) or 1
+	v = tonumber(v) or 1
 
-			if parent.ProperColorRange then
-				return v / 255
-			end
+	local c = HSVToColor(h%360, s, v)
 
-			return v
-		end
+	if part.ProperColorRange then
+		return c.r/255, c.g/255, c.b/255
+	end
 
-		return 1
-	end,
+	return c.r, c.g, c.b
+end
 
-	weapon_color_r = function(self, parent)
-		local owner = self:GetPlayerOwner()
-
-		if owner:IsValid() then
-			local v = owner:GetWeaponColor().r
-
-			if parent.ProperColorRange then
-				return v / 255
-			end
-
-			return v
-		end
-
-		return 1
-	end,
-	weapon_color_g = function(self, parent)
-		local owner = self:GetPlayerOwner()
-
-		if owner:IsValid() then
-			local v = owner:GetWeaponColor().g
-
-			if parent.ProperColorRange then
-				return v / 255
-			end
-
-			return v
-		end
-
-		return 1
-	end,
-	weapon_color_b = function(self, parent)
-		local owner = self:GetPlayerOwner()
-
-		if owner:IsValid() then
-			local v = owner:GetWeaponColor().b
-
-			if parent.ProperColorRange then
-				return v / 255
-			end
-
-			return v
-		end
-
-		return 1
-	end,
-
-	weapon_primary_ammo = function(self)
-		local owner = self:GetOwner(true)
-
-		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
-			owner = self:GetPlayerOwner()
-		end
-
-		if owner:IsValid() then
-			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
-
-			return owner.Clip1 and owner:Clip1() or 0
-		end
-
-		return 0
-	end,
-	weapon_primary_total_ammo = function(self)
-		local owner = self:GetOwner(true)
-
-		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
-			owner = self:GetPlayerOwner()
-		end
-
-		if owner:IsValid() then
-			local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
-
-			return (wep.GetPrimaryAmmoType and owner.GetAmmoCount) and owner:GetAmmoCount(wep:GetPrimaryAmmoType()) or 0
-		end
-
-		return 0
-	end,
-	weapon_primary_clipsize = function(self)
-		local owner = self:GetOwner(true)
-
-		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
-			owner = self:GetPlayerOwner()
-		end
-
-		if owner:IsValid() then
-			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
-
-			return owner.GetMaxClip1 and owner:GetMaxClip1() or 0
-		end
-
-		return 0
-	end,
-	weapon_secondary_ammo = function(self)
-		local owner = self:GetOwner(true)
-
-		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
-			owner = self:GetPlayerOwner()
-		end
-
-		if owner:IsValid() then
-			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
-
-			return owner.Clip2 and owner:Clip2() or 0
-		end
-
-		return 0
-	end,
-	weapon_secondary_total_ammo = function(self)
-		local owner = self:GetOwner(true)
-
-		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
-			owner = self:GetPlayerOwner()
-		end
-
-		if owner:IsValid() then
-			local wep = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
-
-			return (wep.GetSecondaryAmmoType and owner.GetAmmoCount) and owner:GetAmmoCount(wep:GetSecondaryAmmoType()) or 0
-		end
-
-		return 0
-	end,
-	weapon_secondary_clipsize = function(self)
-		local owner = self:GetOwner(true)
-
-		if owner:IsValid() and not owner.GetActiveWeapon and not owner:IsWeapon() then
-			owner = self:GetPlayerOwner()
-		end
-
-		if owner:IsValid() then
-			owner = owner.GetActiveWeapon and owner:GetActiveWeapon() or owner
-
-			return owner.GetMaxClip2 and owner:GetMaxClip2() or 0
-		end
-
-		return 0
-	end,
-
-	hsv_to_color = function(self, parent, h, s, v)
-		h = tonumber(h) or 0
-		s = tonumber(s) or 1
-		v = tonumber(v) or 1
-
-		local c = HSVToColor(h%360, s, v)
-
-		if parent.ProperColorRange then
-			return c.r/255, c.g/255, c.b/255
-		end
-
-		return c.r, c.g, c.b
-	end,
-
-	lerp = function(self, parent, m, a, b)
-		m = tonumber(m) or 0
-		a = tonumber(a) or -1
-		b = tonumber(b) or 1
-
-		return (b - a) * m + a
-	end,
-
-	feedback = function(self)
+do
+	PART.Inputs.feedback = function(self)
 		if not self.feedback then return 0 end
 		return self.feedback[1] or 0
-	end,
+	end
 
-	feedback_x = function(self)
+	PART.Inputs.feedback_x = function(self)
 		if not self.feedback then return 0 end
 		return self.feedback[1] or 0
-	end,
+	end
 
-	feedback_y = function(self)
+	PART.Inputs.feedback_y = function(self)
 		if not self.feedback then return 0 end
 		return self.feedback[2] or 0
-	end,
+	end
 
-	feedback_z = function(self)
+	PART.Inputs.feedback_z = function(self)
 		if not self.feedback then return 0 end
 		return self.feedback[3] or 0
-	end,
-}
+	end
+end
 
 net.Receive("pac_proxy", function()
 	local ply = net.ReadEntity()
@@ -948,13 +761,13 @@ net.Receive("pac_proxy", function()
 	end
 end)
 
-function PART:CheckLastVar(parent)
+function PART:CheckLastVar(part)
 	if self.last_var ~= self.VariableName then
 		if self.last_var then
-			parent[self.set_key](parent, self.last_var_val)
+			part:SetProperty(self.VariableName, self.last_var_val)
 		end
 		self.last_var = self.VariableName
-		self.last_var_val = parent[self.get_key](parent)
+		self.last_var_val = part:GetProperty(self.VariableName)
 	end
 end
 
@@ -970,14 +783,10 @@ function PART:SetExpression(str)
 	self.ExpressionFunc = nil
 
 	if str and str ~= "" then
-		local parent = self:GetTarget()
-
-		if not parent:IsValid() then return end
-
 		local lib = {}
 
 		for name, func in pairs(PART.Inputs) do
-			lib[name] = function(...) return func(self, parent, ...) end
+			lib[name] = function(...) return func(self, ...) end
 		end
 
 		local ok, res = pac.CompileExpression(str, lib)
@@ -1008,32 +817,54 @@ function PART:OnShow()
 end
 
 local function set(self, part, x, y, z, children)
-	local val = part[self.VariableName]
+	local val = part:GetProperty(self.VariableName)
 	local T = type(val)
 
 	if allowed[T] then
 		if T == "boolean" then
 			x = x or val == true and 1 or 0
-			part[self.set_key](part, tonumber(x) > 0)
+			local b = tonumber(x) > 0
+
+			if self.VariableName == "Hide" then
+				part.set_hide_from_proxy = self
+				part:SetEventTrigger(self, b)
+			end
+
+			part:SetProperty(self.VariableName, b)
+
+			if self.VariableName == "Hide" then
+				part.set_hide_from_proxy = nil
+
+				-- SetHide side effects takes care of unhiding the other parts
+
+				-- in case parts start as hidden
+				for _, part in ipairs(part:GetChildrenList()) do
+					part.Hide = b
+				end
+				return
+			end
 		elseif T == "number" then
 			x = x or val
-			part[self.set_key](part, tonumber(x) or 0)
+			part:SetProperty(self.VariableName, tonumber(x) or 0)
 		else
 			if self.Axis ~= "" and val[self.Axis] then
+				val = val * 1
 				val[self.Axis] = x
 			else
 				if T == "Angle" then
+					val = val * 1
 					val.p = x or val.p
 					val.y = y or val.y
 					val.r = z or val.r
 				elseif T == "Vector" then
+					val = val * 1
 					val.x = x or val.x
 					val.y = y or val.y
 					val.z = z or val.z
 				end
 			end
 
-			part[self.set_key](part, val)
+			part:SetProperty(self.VariableName, val)
 		end
 	end
 
@@ -1052,10 +883,9 @@ function PART:RunExpression(ExpressionFunc)
 end
 
 function PART:OnThink()
-	local parent = self:GetTarget()
-
-	if not parent:IsValid() then return end
-	if parent.ClassName == 'woohoo' then return end
+	local part = self:GetOutputTarget()
+	if not part:IsValid() then return end
+	if part.ClassName == 'woohoo' then return end
 
 	self:CalcVelocity()
 
@@ -1077,6 +907,10 @@ function PART:OnThink()
 			end
 			return
 		end
+
+		if x and type(x) ~= "number" then x = 0 end
+		if y and type(y) ~= "number" then y = 0 end
+		if z and type(z) ~= "number" then z = 0 end
 
 		if self.Additive then
 			if x then
@@ -1105,7 +939,7 @@ function PART:OnThink()
 				set(self, part, x, y, z, true)
 			end
 		else
-			set(self, parent, x, y, z)
+			set(self, part, x, y, z)
 		end
 
 		if pace and pace.IsActive() then
@@ -1124,11 +958,17 @@ function PART:OnThink()
 		end
 	else
 
-		local F = self.Functions[self.Function]
-		local I = self.Inputs[self.Input]
+		local post_function = self.Functions[self.Function]
+		local input_function = self.Inputs[self.Input]
 
-		if F and I then
-			local num = self.Min + (self.Max - self.Min) * ((F(((I(self, parent) / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
+		if post_function and input_function then
+			local input_number = input_function(self)
+
+			if type(input_number) ~= "number" then
+				error("proxy function " .. self.Input .. " does not return a number!")
+			end
+
+			local num = self.Min + (self.Max - self.Min) * ((post_function(((input_number / self.InputDivider) + self.Offset) * self.InputMultiplier, self) + 1) / 2) ^ self.Pow
 
 			if self.Additive then
 				self.vec_additive[1] = (self.vec_additive[1] or 0) + num
@@ -1140,7 +980,7 @@ function PART:OnThink()
 					set(self, part, num, nil, nil, true)
 				end
 			else
-				set(self, parent, num)
+				set(self, part, num)
 			end
 
 			if pace and pace.IsActive() then
@@ -1155,4 +995,4 @@ function PART:OnThink()
 
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

@@ -27,7 +27,6 @@ function net.Stream.ReadStream:Request()
 	if CLIENT then net.SendToServer() else net.Send(self.player) end
 
 	timer.Create("NetStreamReadTimeout" .. self.identifier, net.Stream.Timeout/2, 1, function() self:Request() end)
-
 end
 
 --Received data so process it
@@ -42,17 +41,25 @@ function net.Stream.ReadStream:Read(size)
 
 	if crc == util.CRC(data) then
 		self.chunks[progress] = data
+	else
+		pac.Message("net.Stream.ReadStream:Read(): hash received and hash of chunk do not match match")
 	end
+
 	if #self.chunks == self.numchunks then
 		self.returndata = table.concat(self.chunks)
+
 		if self.compressed then
 			self.returndata = util.Decompress(self.returndata)
+
+			if not self.returndata then
+				pac.Message("net.Stream.ReadStream:Read(): Failed to decompress data")
+			end
 		end
+
 		self:Remove()
 	else
 		self:Request()
 	end
-
 end
 
 --Gets the download progress
@@ -62,7 +69,6 @@ end
 
 --Pop the queue and start the next task
 function net.Stream.ReadStream:Remove()
-
 	local ok, err = xpcall(self.callback, debug.traceback, self.returndata)
 	if not ok then ErrorNoHalt(err) end
 
@@ -116,6 +122,7 @@ end
 -- The player notified us they finished downloading or cancelled
 function net.Stream.WriteStream:Finished(ply)
 	self.clients[ply].finished = true
+
 	if self.callback then
 		local ok, err = xpcall(self.callback, debug.traceback, ply)
 		if not ok then ErrorNoHalt(err) end
@@ -148,11 +155,12 @@ net.Stream.WriteStream.__index = net.Stream.WriteStream
 
 --Store the data and write the file info so receivers can request it.
 local identifier = 1
-function net.WriteStream(data, callback, dontcompress)
 
+function net.WriteStream(data, callback, dontcompress)
 	if not isstring(data) then
 		error("bad argument #1 to 'WriteStream' (string expected, got " .. type(data) .. ")", 2)
 	end
+
 	if callback ~= nil and not isfunction(callback) then
 		error("bad argument #2 to 'WriteStream' (function expected, got " .. type(callback) .. ")", 2)
 	end
@@ -182,12 +190,12 @@ function net.WriteStream(data, callback, dontcompress)
 			crc = util.CRC(datachunk),
 		}
 	end
-	
+
 	local startid = identifier
 	while net.Stream.WriteStreams[identifier] do
 		identifier = identifier % 1024 + 1
 		if identifier == startid then
-			ErrorNoHalt("Netstream is full of WriteStreams!")
+			ErrorNoHalt("Netstream is full of WriteStreams!\n" .. debug.traceback() .. "\n")
 			net.WriteUInt(0, 32)
 			return
 		end
@@ -208,6 +216,7 @@ function net.WriteStream(data, callback, dontcompress)
 			} t[k]=r return r
 		end})
 	}
+
 	setmetatable(stream, net.Stream.WriteStream)
 
 	net.Stream.WriteStreams[identifier] = stream
@@ -223,7 +232,6 @@ end
 --If the receiver is a player then add it to a queue.
 --If the receiver is the server then add it to a queue for each individual player
 function net.ReadStream(ply, callback)
-
 	if CLIENT then
 		ply = NULL
 	else
@@ -233,6 +241,7 @@ function net.ReadStream(ply, callback)
 			error("bad argument #1 to 'ReadStream' (Tried to use a NULL entity!)", 2)
 		end
 	end
+
 	if not isfunction(callback) then
 		error("bad argument #2 to 'ReadStream' (function expected, got " .. type(callback) .. ")", 2)
 	end
@@ -248,6 +257,7 @@ function net.ReadStream(ply, callback)
 	end
 
 	local numchunks = net.ReadUInt(32)
+
 	if numchunks == nil then
 		return
 	elseif numchunks == 0 then
@@ -255,6 +265,7 @@ function net.ReadStream(ply, callback)
 		if not ok then ErrorNoHalt(err) end
 		return
 	end
+
 	if SERVER and numchunks > net.Stream.MaxServerChunks then
 		ErrorNoHalt("ReadStream requests from ", ply, " is too large! ", numchunks * net.Stream.SendSize / 1048576, "MiB")
 		return
@@ -266,7 +277,7 @@ function net.ReadStream(ply, callback)
 
 	for _, v in ipairs(queue) do
 		if v.identifier == identifier then
-			ErrorNoHalt("Tried to start a new ReadStream for an already existing stream!")
+			ErrorNoHalt("Tried to start a new ReadStream for an already existing stream!\n" .. debug.traceback() .. "\n")
 			return
 		end
 	end
@@ -281,6 +292,7 @@ function net.ReadStream(ply, callback)
 		player = ply,
 		downloads = 0
 	}
+
 	setmetatable(stream, net.Stream.ReadStream)
 
 	queue[#queue + 1] = stream

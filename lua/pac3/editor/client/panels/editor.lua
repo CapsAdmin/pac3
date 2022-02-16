@@ -130,7 +130,7 @@ function PANEL:Init()
 
 	self:MakeBar()
 	self.lastTopBarHover = 0
-
+	self.rendertime_data = {}
 	self.okay = true
 end
 
@@ -192,6 +192,10 @@ function PANEL:Think(...)
 	if self.Hovered and self.m_bSizable and gui.MouseX() > (self.x + self:GetWide() - 20) then
 		self:SetCursor("sizewe")
 		return
+	end
+
+	for k,v in pairs(pac.GetRenderTimeInfo(pac.LocalPlayer)) do
+		self.rendertime_data[k] = Lerp(0.03, self.rendertime_data[k] or 0, v)
 	end
 
 	local bar = self.menu_bar
@@ -313,17 +317,24 @@ function pace.IsFocused()
 	return pace.Focused
 end
 
+local fade_time = 0.1
+
 function pace.GainFocus(show_editor)
 	local self = pace.Editor
 	if self:IsValid() then
 		if self.allowclick ~= false then
 			self:MakePopup()
 			pace.Focused = true
-			if not show_editor then
-				self:AlphaTo(255, 0.1, 0)
-				self.exit_button:AlphaTo(255, 0.1, 0)
-				self.zoomframe:AlphaTo(255, 0.1, 0)
-			end
+
+			timer.Remove("pac_editor_visibility")
+
+			self:SetVisible(true)
+			self.exit_button:SetVisible(true)
+			self.zoomframe:SetVisible(true)
+
+			self:AlphaTo(255, fade_time, 0)
+			self.exit_button:AlphaTo(255, fade_time, 0)
+			self.zoomframe:AlphaTo(255, fade_time, 0)
 		end
 	end
 end
@@ -338,9 +349,15 @@ function pace.KillFocus(show_editor)
 		pace.Focused = false
 
 		if not show_editor then
-			self:AlphaTo(0, 0.1, 0)
-			self.exit_button:AlphaTo(0, 0.1, 0)
-			self.zoomframe:AlphaTo(0, 0.1, 0)
+			self:AlphaTo(0, fade_time, 0)
+			self.exit_button:AlphaTo(0, fade_time, 0)
+			self.zoomframe:AlphaTo(0, fade_time, 0)
+			
+			timer.Create("pac_editor_visibility", fade_time, 1, function()
+				self:SetVisible(false)
+				self.exit_button:SetVisible(false)
+				self.zoomframe:SetVisible(false)
+			end)
 		end
 
 		self.allowclick = false
@@ -367,64 +384,14 @@ local function drawTimeBox(text, time, x, y)
 end
 
 local function PostRenderVGUI()
-	if drawProfileInfos ~= FrameNumber() then return end
-	local x, y = input.GetCursorPos()
-	x = x + 3
-	y = y + 3
 
-	surface.SetFont(pace.CurrentFont)
-
-	local part = pace.current_part
-	surface.SetTextColor(textCol)
-
-	if not IsValid(part) then return end
-	local selfTime = part.selfDrawTime
-	local selfTimeB = part.BuildBonePositionsRuntime
-	local selfTimeT = part.CThinkRuntime
-	local childTimeO = part.childrenOpaqueDrawTime or 0
-	local childTimeTD = part.childrenTranslucentDrawTime or 0
-	local childTimeB = part.BuildBonePositionsRuntimeChildren or 0
-	local childTimeT = part.CThinkRuntimeChildren or 0
-	local childTime = childTimeO + childTimeT + childTimeB + childTimeTD
-
-	part.childEditorAverageTime = Lerp(0.03, part.childEditorAverageTime or 0, childTime)
-	y = drawTimeBox("overall children render time", part.childEditorAverageTime * 1000, x, y)
-
-	if selfTime or selfTimeB or selfTimeT then
-		local selfTime2 = (selfTime or 0) + (selfTimeB or 0) + (selfTimeT + 0)
-		part.selfEditorAverageTime = Lerp(0.03, part.selfEditorAverageTime or 0, selfTime2)
-		y = drawTimeBox("overall part render time", part.selfEditorAverageTime * 1000, x, y)
-	end
-
-	if selfTime then
-		part.selfEditorAverageTimeR = Lerp(0.03, part.selfEditorAverageTimeR or 0, selfTime)
-		y = drawTimeBox("part draw time", part.selfEditorAverageTimeR * 1000, x, y)
-	end
-
-	if selfTimeT then
-		part.selfEditorAverageTimeT = Lerp(0.03, part.selfEditorAverageTimeT or 0, selfTimeT)
-		y = drawTimeBox("part think time", part.selfEditorAverageTimeT * 1000, x, y)
-	end
-
-	if selfTimeB then
-		part.selfEditorAverageTimeB = Lerp(0.03, part.selfEditorAverageTimeB or 0, selfTimeB)
-		y = drawTimeBox("part bones time", part.selfEditorAverageTimeB * 1000, x, y)
-	end
-
-	part.childEditorAverageTimeTD = Lerp(0.03, part.childEditorAverageTimeTD or 0, childTimeTD + childTimeO)
-	y = drawTimeBox("overall children draw time", part.childEditorAverageTimeTD * 1000, x, y)
-
-	part.childEditorAverageTimeT = Lerp(0.03, part.childEditorAverageTimeT or 0, childTimeT)
-	y = drawTimeBox("overall children think time", part.childEditorAverageTimeT * 1000, x, y)
-
-	part.childEditorAverageTimeB = Lerp(0.03, part.childEditorAverageTimeB or 0, childTimeB)
-	y = drawTimeBox("overall children bones time", part.childEditorAverageTimeB * 1000, x, y)
 end
+
+pac.AddHook('PostRenderVGUI', 'pac_DrawProfileInfos', PostRenderVGUI)
 
 function PANEL:PaintOver(w, h)
 	if not self.okay then return end
-
-
+	textCol = self:GetSkin().Colours.Category.Line.Text
 	local info = _G.PAC_VERSION and PAC_VERSION()
 	if info then
 		local text = info.addon.version_name
@@ -436,6 +403,8 @@ function PANEL:PaintOver(w, h)
 		y = y + self:GetTall() - 4 - h
 
 		local mx, my = gui.MousePos()
+		local cx, cy = self:LocalToScreen(x, y)
+
 		local hovering = false
 		DisableClipping(true)
 
@@ -448,16 +417,13 @@ function PANEL:PaintOver(w, h)
 			surface.DrawRect(x,y,w,h)
 		end
 
-
 		surface.SetTextPos(x,y)
 		surface.SetTextColor(255,255,255,hovering and 255 or 100)
 		surface.DrawText(text)
 		DisableClipping(false )
 	end
 
-	local renderTime = pace.RenderTimes and pace.RenderTimes[LocalPlayer():EntIndex()]
-
-	if not renderTime then return end
+	local data = self.rendertime_data
 
 	local x = 2
 	local y = 2
@@ -465,21 +431,38 @@ function PANEL:PaintOver(w, h)
 	y = y + self.top:GetTall()
 	boxW, boxH = w, h
 
-	local mx, my = input.GetCursorPos()
-	local cx, cy = self:LocalToScreen(x, y)
-
-	if cx <= mx and cy <= my and mx <= cx + w - 5 and my <= cy + RENDERSCORE_SIZE - 1 and self:IsChildHovered() then
-		drawProfileInfos = FrameNumber()
-	end
-
 	surface.SetFont(pace.CurrentFont)
 
 	textCol = self:GetSkin().Colours.Category.Line.Text
 	drawBox = self:GetSkin().tex.Menu_Strip
 	surface.SetTextColor(textCol)
 	cam.IgnoreZ(true)
-	local str = string.format("%s: %.3f ms", L("average render time"), renderTime * 1000)
+
+	local total = 0
+	for k,v in pairs(data) do
+		total = total + v
+	end
+
+	local str = string.format("%s: %.3f ms", L("average render time"), total * 1000)
 	drawBox(x, y, w - 5, RENDERSCORE_SIZE - 1)
+
+	local mx, my = input.GetCursorPos()
+	local cx, cy = self:LocalToScreen(x, y)
+
+	if cx <= mx and cy <= my and mx <= cx + w - 5 and my <= cy + RENDERSCORE_SIZE - 1 and self:IsChildHovered() then
+		surface.SetFont(pace.CurrentFont)
+		surface.SetTextColor(textCol)
+
+		local x, y = input.GetCursorPos()
+		x = x + 3
+		y = y + 3
+
+		DisableClipping(true)
+		for type, time in pairs(self.rendertime_data) do
+			y = drawTimeBox(type, time * 1000, x, y)
+		end
+		DisableClipping(false)
+	end
 
 	surface.SetTextPos(x + 5, y)
 	surface.DrawText(str)
@@ -501,5 +484,3 @@ function PANEL:Paint(w,h)
 end
 
 pace.RegisterPanel(PANEL)
-
-pac.AddHook('PostRenderVGUI', 'pac_DrawProfileInfos', PostRenderVGUI)

@@ -87,13 +87,11 @@ function haloex.Render( entry )
 
 			if (  not IsValid( v ) ) then goto CONTINUE end
 
-			render.PushFlashlightMode( true )
 				if v.pacDrawModel then
 					v:pacDrawModel()
 				else
 					v:DrawModel()
 				end
-			render.PopFlashlightMode()
 
 			::CONTINUE::
 		end
@@ -212,5 +210,9 @@ pac.AddHook( "PostDrawEffects", "RenderHaloexs", function()
 	List = {}
 
 end )
+
+if pac.haloex then
+	pac.haloex = haloex
+end
 
 return haloex
