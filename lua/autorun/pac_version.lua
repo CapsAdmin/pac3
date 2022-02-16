@@ -31,6 +31,6 @@ function _G.PAC_VERSION()
     return GetGlobalString("pac_version")
 end
 
-concommand.Add("pac_version", function(_, _, args)
+concommand.Add("pac_version", function()
 	print(PAC_VERSION())
 end)
