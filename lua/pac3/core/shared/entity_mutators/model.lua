@@ -6,17 +6,17 @@ MUTATOR.UpdateRate = 0.25
 function MUTATOR:WriteArguments(path)
 	assert(type(path) == "string", "path must be a string")
 
-	net.WriteString(path:lower())
+	net.WriteString(path)
 end
 
 function MUTATOR:ReadArguments()
-	return net.ReadString():lower()
+	return net.ReadString()
 end
 
 function MUTATOR:Update(val)
 	if not self.actual_model then return end
 
-	if self.Entity:GetModel():lower() ~= self.actual_model then
+	if self.Entity:GetModel():lower() ~= self.actual_model:lower() then
 		self.Entity:SetModel(self.actual_model)
 	end
 end
@@ -27,10 +27,23 @@ end
 
 function MUTATOR:Mutate(path)
 	if path:find("^http") then
-		pac.Message(self.Owner, " wants to use ", path, " as model on ", ent)
+		if SERVER and pac.debug then
+			if self.Owner:IsPlayer() then
+				pac.Message(self.Owner, " wants to use ", path, " as model on ", ent)
+			end
+		end
+
+		local ent_str = tostring(self.Entity)
 
 		pac.DownloadMDL(path, function(mdl_path)
-			pac.Message(mdl_path, " downloaded for ", ent, ': ', path)
+			if not self.Entity:IsValid() then
+				pac.Message("cannot set model ", mdl_path, " on ", ent_str ,': entity became invalid')
+				return
+			end
+
+			if SERVER and pac.debug then
+				pac.Message(mdl_path, " downloaded for ", ent, ': ', path)
+			end
 
 			self.Entity:SetModel(mdl_path)
 			self.actual_model = mdl_path
@@ -40,23 +53,14 @@ function MUTATOR:Mutate(path)
 		end, self.Owner)
 	else
 		if path:EndsWith(".mdl") then
-			if not util.IsValidModel(path) then
-				util.PrecacheModel(path)
-			end
+			self.Entity:SetModel(path)
 
-			if not util.IsValidModel(path) then
+			if self.Owner:IsPlayer() and path:lower() ~= self.Entity:GetModel():lower() then
 				self.Owner:ChatPrint('[PAC3] ERROR: ' .. path .. " is not a valid model on the server.")
-			else
-				self.Entity:SetModel(path)
 			end
 		else
 			local translated = player_manager.TranslatePlayerModel(path)
-
-			if translated ~= path then
-				self.Owner:ChatPrint('[PAC3] ERROR: ' .. path .. " is not a valid player model on the server.")
-			else
-				self.Entity:SetModel(path)
-			end
+			self.Entity:SetModel(translated)
 		end
 	end
 end

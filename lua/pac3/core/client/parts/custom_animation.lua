@@ -1,47 +1,40 @@
 local animations = pac.animations
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "custom_animation"
-PART.NonPhysical = true
+
 PART.Group = 'advanced'
 PART.Icon = 'icon16/film.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "URL", "")
-	pac.GetSet(PART, "Data", "")
-	pac.GetSet(PART, "StopOnHide", true)
-	pac.GetSet(PART, "StopOtherAnimations", false)
-	pac.GetSet(PART, "AnimationType", "sequence", {enums = {
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("URL", "")
+	BUILDER:GetSet("Data", "")
+	BUILDER:GetSet("StopOnHide", true)
+	BUILDER:GetSet("StopOtherAnimations", false)
+	BUILDER:GetSet("AnimationType", "sequence", {enums = {
 		gesture = "gesture",
 		posture = "posture",
 		sequence = "sequence",
 		stance = "stance",
 	}})
-	pac.GetSet(PART, "Interpolation", "cosine", {enums = {
+	BUILDER:GetSet("Interpolation", "cosine", {enums = {
 		linear = "linear",
 		cosine = "cosine",
 		cubic = "cubic",
 		none = "none",
 	}})
-	pac.GetSet(PART, "Rate", 1)
-	pac.GetSet(PART, "BonePower", 1)
-	pac.GetSet(PART, "Offset", 0)
-pac.EndStorableVars()
+	BUILDER:GetSet("Rate", 1)
+	BUILDER:GetSet("BonePower", 1)
+	BUILDER:GetSet("Offset", 0)
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	return pac.PrettifyName(("/".. self:GetURL()):match(".+/(.-)%.")) or "no anim"
 end
 
 function PART:GetAnimID()
-	if not self:GetPlayerOwner():IsPlayer() then
-		-- Jazztronauts "issue"
-		-- actually im pretty sure they did this due to limitations of source engine
-		-- and gmod api
-		return "pac_anim_" .. (self:GetPlayerOwner():IsValid() and string.format("%p", self:GetPlayerOwner()) or "!") .. "_" .. self:GetUniqueID()
-	end
-
-	return "pac_anim_" .. (self:GetPlayerOwner():IsValid() and self:GetPlayerOwner():UniqueID() or "") .. self:GetUniqueID()
+	return "pac_anim_" .. (self:GetPlayerOwnerId() or "null") .. "_" .. self:GetUniqueID()
 end
 
 function PART:SetRate(num)
@@ -111,7 +104,7 @@ function PART:SetURL(url)
 			end
 		end,
 		function(err)
-			if self:IsValid() and LocalPlayer() == self:GetPlayerOwner() and pace and pace.IsActive() then
+			if self:IsValid() and pac.LocalPlayer == self:GetPlayerOwner() and pace and pace.IsActive() then
 				if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
 					pace.MessagePrompt(err, "HTTP Request Failed for " .. url, "OK")
 				else
@@ -139,8 +132,7 @@ function PART:SetData(str)
 	end
 end
 
-function PART:OnShow(owner)
-	--play animation
+function PART:OnShow(from_rendering)
 	local owner = self:GetOwner()
 
 	if not animations.GetRegisteredAnimations()[self:GetAnimID()] then
@@ -191,4 +183,4 @@ function PART:OnRemove()
 	animations.GetRegisteredAnimations()[self:GetAnimID()] = nil
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

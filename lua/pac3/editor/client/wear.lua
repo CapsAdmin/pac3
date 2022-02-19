@@ -1,61 +1,55 @@
 
-local pac_wear_friends_only = CreateClientConVar("pac_wear_friends_only", "0", true, false, 'Wear outfits only to friends')
-local pac_wear_reverse = CreateClientConVar("pac_wear_reverse", "0", true, false, 'Wear to NOBODY but to people from list (Blacklist -> Whitelist)')
+local L = pace.LanguageString
+
+function pace.IsPartSendable(part)
+
+	if part:HasParent() then return false end
+	if part.ClassName == "group" and not part:HasChildren() then return false end
+	if not part:GetShowInEditor() then return false end
+
+	return true
+end
+
+function pace.WearOnServer(filter)
+	local toWear = {}
+
+	for key, part in pairs(pac.GetLocalParts()) do
+		if pace.IsPartSendable(part) then
+			table.insert(toWear, part)
+		end
+	end
+
+	local transmissionID = math.random(1, 0x7FFFFFFF)
+
+	for i, part in ipairs(toWear) do
+		pace.SendPartToServer(part, {
+			partID = i,
+			totalParts = #toWear,
+			transmissionID = transmissionID,
+			temp_wear_filter = filter,
+		})
+	end
+end
+
+function pace.ClearParts()
+	pace.ClearUndo()
+	pac.RemoveAllParts(true, true)
+	pace.RefreshTree()
+
+	timer.Simple(0.1, function()
+		if not pace.Editor:IsValid() then return end
+
+		if table.Count(pac.GetLocalParts()) == 0 then
+			pace.Call("CreatePart", "group", L"my outfit")
+		end
+
+		pace.TrySelectPart()
+	end)
+end
+
+
 
 do -- to server
-	local function assemblePlayerFilter()
-		local filter = {}
-
-		if pac_wear_friends_only:GetBool() then
-			for i, v in ipairs(player.GetAll()) do
-				if v:GetFriendStatus() == "friend" then
-					table.insert(filter, v:SteamID():sub(7))
-				end
-			end
-		elseif pac_wear_reverse:GetBool() then
-			for i, v in ipairs(player.GetAll()) do
-				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') == '1' then
-					table.insert(filter, v:SteamID():sub(7))
-				end
-			end
-		else
-			for i, v in ipairs(player.GetAll()) do
-				if cookie.GetString('pac3_wear_block_' .. v:UniqueID(), '0') ~= '1' then
-					table.insert(filter, v:SteamID():sub(7))
-				end
-			end
-		end
-
-		return filter
-	end
-
-	net.Receive('pac_update_playerfilter', function()
-		local filter = assemblePlayerFilter()
-
-		net.Start('pac_update_playerfilter')
-
-		net.WriteUInt(#filter, 8)
-
-		for i, id in ipairs(filter) do
-			net.WriteString(id)
-		end
-
-		net.SendToServer()
-	end)
-
-	function pace.IsPartSendable(part, extra)
-		local allowed, reason = pac.CallHook("CanWearParts", LocalPlayer())
-
-		if allowed == false then
-			return false
-		end
-
-		if part.ClassName == "group" and not part:HasChildren() then return false end
-		if not part.show_in_editor == false then return false end
-
-		return true
-	end
-
 	local function net_write_table(tbl)
 
 		local buffer = pac.StringStream()
@@ -72,16 +66,14 @@ do -- to server
 	end
 
 	function pace.SendPartToServer(part, extra)
-		local allowed, reason = pac.CallHook("CanWearParts", LocalPlayer())
+		local allowed, reason = pac.CallHook("CanWearParts", pac.LocalPlayer)
 
 		if allowed == false then
 			pac.Message(reason or "the server doesn't want you to wear parts for some reason")
 			return false
 		end
 
-		-- if it's (ok not very exact) the "my outfit" part without anything added to it, don't bother sending it
-		if part.ClassName == "group" and not part:HasChildren() then return false end
-		if not part.show_in_editor == false then return false end
+		if not pace.IsPartSendable(part) then return false end
 
 		local data = {part = part:ToTable()}
 
@@ -90,14 +82,14 @@ do -- to server
 		end
 
 		data.owner = part:GetPlayerOwner()
-		data.wear_filter = assemblePlayerFilter()
+		data.wear_filter = pace.CreateWearFilter()
 
 		net.Start("pac_submit")
 
 		local bytes, err = net_write_table(data)
 
 		if not bytes then
-			pace.Notify(false, "unable to transfer data to server: " .. tostring(err or "too big"), part:GetName())
+			pace.Notify(false, "unable to transfer data to server: " .. tostring(err or "too big"), pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName())
 			return false
 		end
 
@@ -111,7 +103,7 @@ do -- to server
 		local data = {part = name, server_only = server_only, filter = filter}
 
 		if name == "__ALL__" then
-			pace.CallHook("RemoveOutfit", LocalPlayer())
+			pace.CallHook("RemoveOutfit", pac.LocalPlayer)
 		end
 
 		net.Start("pac_submit")
@@ -150,7 +142,7 @@ do -- from server
 			end
 		end
 
-		local func = function()
+		local function load_outfit()
 			if dupeEnt and not dupeEnt:IsValid() then return end
 
 			dupepart = pac.GetPartFromUniqueID(data.player_uid, part_data.self.UniqueID)
@@ -162,15 +154,12 @@ do -- from server
 
 			owner.pac_render_time_exceeded = false
 
-			local part = pac.CreatePart(part_data.self.ClassName, owner)
-			part:SetIsBeingWorn(true)
-			part:SetTable(part_data)
+			-- specify "level" as 1 so we can delay CalcShowHide recursive call until we are ready
+			local part = pac.CreatePart(part_data.self.ClassName, owner, part_data, false, 1)
 
 			if data.is_dupe then
 				part.dupe_remove = true
 			end
-
-			part:CallRecursive('SetIsBeingWorn', false)
 
 			if owner == pac.LocalPlayer then
 				pace.CallHook("OnWoreOutfit", part)
@@ -178,13 +167,20 @@ do -- from server
 
 			part:CallRecursive('OnWorn')
 			part:CallRecursive('PostApplyFixes')
+
+			if part.UpdateOwnerName then
+				part:UpdateOwnerName(true)
+				part:CallRecursive("CalcShowHide", true)
+			end
+
+			owner.pac_fix_show_from_render = SysTime() + 1
 		end
 
 		if doItNow then
-			func()
+			load_outfit()
 		end
 
-		return func
+		return load_outfit
 	end
 
 	function pace.RemovePartFromServer(owner, part_name, data)
@@ -205,149 +201,27 @@ do -- from server
 	end
 end
 
-do
-	local pac_onuse_only = CreateClientConVar('pac_onuse_only', '0', true, false, 'Enable "on +use only" mode. Within this mode, outfits are not being actually "loaded" until you hover over player and press your use button')
-	local transmissions = {}
+function pace.HandleReceiveData(data, doitnow)
+	local T = type(data.part)
 
-	function pace.OnUseOnlyUpdates(cvar, ...)
-		hook.Call('pace_OnUseOnlyUpdates', nil, ...)
-	end
-
-	cvars.AddChangeCallback("pac_onuse_only", pace.OnUseOnlyUpdates, "PAC3")
-
-	concommand.Add("pac_onuse_reset", function()
-		for i, ent in ipairs(ents.GetAll()) do
-			if ent.pac_onuse_only then
-				ent.pac_onuse_only_check = true
-
-				if pac_onuse_only:GetBool() then
-					pac.ToggleIgnoreEntity(ent, ent.pac_onuse_only_check, 'pac_onuse_only')
-				else
-					pac.ToggleIgnoreEntity(ent, false, 'pac_onuse_only')
-				end
-			end
-		end
-	end)
-
-	timer.Create('pac3_transmissions_ttl', 1, 0, function()
-		local time = RealTime()
-
-		for transmissionID, data in pairs(transmissions) do
-			if data.activity + 10 < time then
-				transmissions[transmissionID] = nil
-				pac.Message('Marking transmission session with id ', transmissionID, ' as dead. Received ', #data.list, ' out from ', data.total, ' parts.')
-			end
-		end
-	end)
-
-	local function defaultHandler(data)
-		local T = type(data.part)
-
-		if T == "table" then
-			return pace.WearPartFromServer(data.owner, data.part, data)
-		elseif T ==  "string" then
-			return pace.RemovePartFromServer(data.owner, data.part, data)
-		else
-			ErrorNoHalt("PAC: Unhandled "..T..'!?\n')
-		end
-	end
-
-	local function defaultHandlerNow(data)
-		local T = type(data.part)
-
-		if T == "table" then
-			pace.WearPartFromServer(data.owner, data.part, data, true)
-		elseif T ==  "string" then
-			pace.RemovePartFromServer(data.owner, data.part, data)
-		else
-			ErrorNoHalt("PAC: Unhandled "..T..'!?\n')
-		end
-	end
-
-	function pace.HandleReceivedData(data)
-		if data.owner ~= LocalPlayer() then
-			if not data.owner.pac_onuse_only then
-				data.owner.pac_onuse_only = true
-				-- if TRUE - hide outfit
-				data.owner.pac_onuse_only_check = true
-
-				if pac_onuse_only:GetBool() then
-					pac.ToggleIgnoreEntity(data.owner, data.owner.pac_onuse_only_check, 'pac_onuse_only')
-				else
-					pac.ToggleIgnoreEntity(data.owner, false, 'pac_onuse_only')
-				end
-			end
-
-			-- behaviour of this (if one of entities on this hook becomes invalid)
-			-- is undefined if DLib is not installed, but anyway
-			hook.Add('pace_OnUseOnlyUpdates', data.owner, function()
-				if pac_onuse_only:GetBool() then
-					pac.ToggleIgnoreEntity(data.owner, data.owner.pac_onuse_only_check, 'pac_onuse_only')
-				else
-					pac.ToggleIgnoreEntity(data.owner, false, 'pac_onuse_only')
-				end
-			end)
-		else
-			return defaultHandlerNow(data)
-		end
-
-		local validTransmission = type(data.partID) == 'number' and
-			type(data.totalParts) == 'number' and
-			type(data.transmissionID) == 'number'
-
-		if not validTransmission then
-			local func = defaultHandler(data)
-
-			if type(func) == 'function' then
-				pac.EntityIgnoreBound(data.owner, func)
-			end
-		else
-			local trData = transmissions[data.transmissionID]
-
-			if not trData then
-				trData = {
-					id = data.transmissionID,
-					total = data.totalParts,
-					list = {},
-					activity = RealTime()
-				}
-
-				transmissions[data.transmissionID] = trData
-			end
-
-			local transmissionID = data.transmissionID
-			data.transmissionID = nil
-			data.totalParts = nil
-			data.partID = nil
-			table.insert(trData.list, data)
-			trData.activity = RealTime()
-
-			if #trData.list == trData.total then
-				local funcs = {}
-
-				for i, part in ipairs(trData.list) do
-					local func = defaultHandler(part)
-
-					if type(func) == 'function' then
-						table.insert(funcs, func)
-					end
-				end
-
-				for i, func in ipairs(funcs) do
-					pac.EntityIgnoreBound(data.owner, func)
-				end
-
-				transmissions[data.transmissionID or transmissionID] = nil
-			end
-		end
+	if T == "table" then
+		return pace.WearPartFromServer(data.owner, data.part, data, doitnow)
+	elseif T ==  "string" then
+		return pace.RemovePartFromServer(data.owner, data.part, data)
+	else
+		ErrorNoHalt("PAC: Unhandled "..T..'!?\n')
 	end
 end
 
 net.Receive("pac_submit", function()
 	if not pac.IsEnabled() then return end
 
-
 	net.ReadStream(ply, function(data)
+		if not data then
+			pac.Message("message from server timed out")
+			return
+		end
+
 		local buffer = pac.StringStream(data)
 		local data = buffer:readTable()
 
@@ -356,7 +230,11 @@ net.Receive("pac_submit", function()
 			return
 		end
 
-		pace.HandleReceivedData(data)
+		if GetConVar("pac_onuse_only") and GetConVar("pac_onuse_only"):GetBool() and data.owner ~= pac.LocalPlayer then
+			pace.HandleOnUseReceivedData(data)
+		else
+			pace.HandleReceiveData(data, true)
+		end
 	end)
 end)
 
@@ -375,14 +253,15 @@ net.Receive("pac_submit_acknowledged", function(umr)
 end)
 
 do
-	function pace.LoadUpDefault()
+	local function LoadUpDefault()
 		if next(pac.GetLocalParts()) then
 			pac.Message("not wearing autoload outfit, already wearing something")
 		elseif pace.IsActive() then
 			pac.Message("not wearing autoload outfit, editor is open")
 		else
 			pac.Message("Wearing autoload...")
-			pace.WearParts("autoload")
+			pace.LoadParts("autoload")
+			pace.WearParts()
 		end
 
 		pac.RemoveHook("Think", "pac_request_outfits")
@@ -407,13 +286,13 @@ do
 			return
 		end
 
-		pace.LoadUpDefault()
+		LoadUpDefault()
 	end
 
 	hook.Add("pac_Enable", "pac_LoadUpDefault", function()
 		if not pace.NeverLoaded then return end
 		pace.NeverLoaded = nil
-		pace.LoadUpDefault()
+		LoadUpDefault()
 	end)
 
 	local frames = 0
@@ -426,7 +305,10 @@ do
 		frames = frames + 1
 
 		if frames > 400 then
-			Initialize()
+			if not xpcall(Initialize, ErrorNoHalt) then
+				pac.RemoveHook("Think", "pac_request_outfits")
+				pace.NeverLoaded = true
+			end
 		end
 	end)
 

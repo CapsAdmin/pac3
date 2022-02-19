@@ -2,28 +2,29 @@ local ScrW = ScrW
 local ScrH = ScrH
 local DrawSunbeams
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "sunbeams"
 PART.Group = 'effects'
 PART.Icon = 'icon16/weather_sun.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Darken", 0)
-	pac.GetSet(PART, "Multiplier", 0.25, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, "Size", 0.1, {editor_sensitivity = 0.25})
-	pac.GetSet(PART, "Translucent", true)
-pac.EndStorableVars()
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Darken", 0)
+	BUILDER:GetSet("Multiplier", 0.25, {editor_sensitivity = 0.25})
+	BUILDER:GetSet("Size", 0.1, {editor_sensitivity = 0.25})
+	BUILDER:GetSet("Translucent", true)
+BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
 	local mult = self:GetMultiplier()
 	return mult > 0 and "bright sunbeams" or mult < 0 and "dark sunbeams" or self.ClassName
 end
 
-function PART:OnDraw(owner, pos, ang)
+function PART:OnDraw()
 	if not DrawSunbeams then DrawSunbeams = _G.DrawSunbeams end
 
 	cam.Start2D()
+	local pos = self:GetDrawPosition()
 	local spos = pos:ToScreen()
 
 	local dist_mult = - math.Clamp(pac.EyePos:Distance(pos) / 1000, 0, 1) + 1
@@ -38,4 +39,4 @@ function PART:OnDraw(owner, pos, ang)
 	cam.End2D()
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()

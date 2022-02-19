@@ -25,11 +25,12 @@ local function spawn(val,ply)
 	ent:SetModel(model)-- insecure
 	ent:SetPos(val.pos)-- insecure
 	ent:SetAngles(val.ang)-- insecure
-	ent:SetColor(val.clr)
 	ent:SetSkin(val.skn)
 	ent:SetMaterial(val.mat) -- insecure
 	ent:Spawn()
 	ent:SetHealth(9999999)
+	ent:SetColor(val.clr)
+	ent:SetRenderMode( RENDERMODE_TRANSCOLOR )
 
 	hook.Run("PlayerSpawnedProp", ply, model, ent)
 
@@ -100,7 +101,7 @@ pace.PCallNetReceive(net.Receive, "pac_to_contraption", function(len, ply)
 	if count > max then
 		net.Start("pac_submit_acknowledged")
 			net.WriteBool(false)
-			net.WriteString("You can only spawn ", max, " props at a time!")
+			net.WriteString("You can only spawn " .. max .. " props at a time!")
 		net.Send(ply)
 
 		pac.Message(ply, " might have tried to crash the server by attempting to spawn ", count, " entities with the contraption system!")

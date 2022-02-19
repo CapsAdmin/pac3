@@ -1,4 +1,5 @@
 local function equal(a,b, msg, level)
+	level = level or 0
 	if a ~= b then
 		error(tostring(a) .. " != " .. tostring(b) .. ": " .. msg, 2 + level)
 	end
@@ -17,6 +18,9 @@ function test.Run(done)
 
 		entity:SetSize(0.5)
 
+		-- the owner is not valid right away, when the owner is valid, the changes are applied
+		repeat yield() until entity:GetOwner():IsValid()
+
 		equal(owner:GetModelScale(), 0.5, "after :SetSize")
 		root:Remove()
 		equal(owner:GetModelScale(), 1, "should revert after root is removed")
@@ -27,16 +31,14 @@ function test.Run(done)
 	RunConsoleCommand("pac_modifier_size", "1")
 	repeat yield() until GetConVar("pac_modifier_size"):GetBool()
 
-
-	pacx.SetEntitySizeMultiplier(owner, 0.5)
-
+	pac.emut.MutateEntity(owner, "size", owner, 0.5)
 	repeat yield() until owner:GetModelScale() == 0.5
 
 	check_shared(owner, "GetCurrentViewOffset", Vector(0,0,32))
 
 	equal(test.RunLuaOnServer("return Entity(" .. owner:EntIndex() .. "):GetModelScale()"), 0.5, " server mismatch with client")
 
-	pacx.SetEntitySizeMultiplier(owner, 1)
+	pac.emut.MutateEntity(owner, "size", owner, 1)
 
 	repeat yield() until owner:GetModelScale() == 1
 	check_shared(owner, "GetCurrentViewOffset", Vector(0,0,64))
@@ -44,12 +46,12 @@ function test.Run(done)
 	RunConsoleCommand("pac_modifier_size", "0")
 	repeat yield() until not GetConVar("pac_modifier_size"):GetBool()
 
-	pacx.SetEntitySizeMultiplier(owner, 2)
+	pac.emut.MutateEntity(owner, "size", owner, 2)
 
 	repeat yield() until owner:GetModelScale() == 1
 	check_shared(owner, "GetCurrentViewOffset", Vector(0,0,64))
 
-	pacx.SetEntitySizeMultiplier(owner)
+	pac.emut.RestoreMutations(owner, "size", owner)
 
 	RunConsoleCommand("pac_modifier_size", "1")
 	repeat yield() until GetConVar("pac_modifier_size"):GetBool()

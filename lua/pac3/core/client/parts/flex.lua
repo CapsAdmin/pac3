@@ -1,16 +1,16 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "flex"
-PART.NonPhysical = true
+
 PART.Icon = 'icon16/emoticon_smile.png'
 PART.Group = 'entity'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Flex", "", {
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Flex", "", {
 		enums = function(part)
 			local tbl = {}
 
-			for _, v in pairs(part:GetFlexList()) do
+			for _, v in pairs(part:GetFlexMap()) do
 				tbl[v.name] = v.name
 			end
 
@@ -18,19 +18,47 @@ pac.StartStorableVars()
 		end
 	})
 
-	pac.GetSet(PART, "Weight", 0)
-	pac.GetSet(PART, "RootOwner", false, { description = "Target the local player instead of the part's parent" })
-	pac.GetSet(PART, "DefaultOnHide", true)
-pac.EndStorableVars()
+	BUILDER:GetSet("Weight", 0)
+	BUILDER:GetSet("RootOwner", false, { description = "Target the local player instead of the part's parent" })
+	BUILDER:GetSet("DefaultOnHide", true)
+BUILDER:EndStorableVars()
+
+local function get_owner(self)
+	if self.RootOwner then
+		return self:GetRootPart():GetOwner()
+	end
+
+	return self:GetOwner()
+end
 
 function PART:GetNiceName()
 	return self:GetFlex() ~= "" and self:GetFlex() or "no flex"
 end
 
-function PART:GetFlexList()
+function PART:GetFlexMap()
+	local ent = get_owner(self)
+
+	if self.last_owner ~= ent then
+		self.last_owner = ent
+		self.cached_flex_map = nil
+	end
+
+	if self.cached_flex_map then
+		return self.cached_flex_map
+	end
+
 	local out = {}
 
-	local ent = self:GetOwner(self.RootOwner)
+	if self.last_owner ~= ent then
+		self.last_owner = ent
+		self.cached_flex_map = nil
+	end
+
+	if self.cached_flex_map then
+		return self.cached_flex_map
+	end
+
+	local out = {}
 
 	if ent:IsValid() and ent.GetFlexNum and ent:GetFlexNum() > 0 then
 		for i = 0, ent:GetFlexNum() - 1 do
@@ -39,90 +67,56 @@ function PART:GetFlexList()
 		end
 	end
 
+	self.cached_flex_map = out
+
 	return out
 end
 
-function PART:UpdateFlex(flex, weight)
-	local ent = self:GetOwner(self.RootOwner)
+-- flexes are additive
+function PART:UpdateFlex()
+	local ent = get_owner(self)
 	if not ent:IsValid() or not ent.GetFlexNum or ent:GetFlexNum() == 0 then return end
 
-	if self.flex_ent ~= ent then
-		self.flex_ent = ent
-		self.pac_flex_list = self:GetFlexList()
+	local name = self.flex_lower
+	local flex_map = self:GetFlexMap()
+
+	if not flex_map[name] then
+		return
 	end
 
-	ent.pac_flex_params = ent.pac_flex_params or {}
-
-	flex = flex or self.Flex
-	weight = weight or self.Weight
-
-	flex = flex:lower()
-	flex = self.pac_flex_list[flex] and self.pac_flex_list[flex].i or tonumber(flex)
-
-	if type(flex) == "number" then
-		if weight ~= 0 then
-			ent.pac_flex_params[flex] = weight
-		else
-			ent.pac_flex_params[flex] = nil
-			ent:SetFlexWeight(flex, 0)
-
-			if table.Count(ent.pac_flex_params) == 0 then ent.pac_flex_params = nil end
-		end
-	end
-
-	self.flex_params = ent.pac_flex_params
-end
-
-function PART:OnDraw(owner, pos, ang)
-	if not IsValid(self.flex_ent) then return end
-
-	for k, v in pairs(self.flex_params) do
-		self.flex_ent:SetFlexWeight(k, v)
-	end
+	local id = flex_map[name].i
+	ent:SetFlexWeight(id, ent:GetFlexWeight(id) + self.Weight)
 end
 
 function PART:OnBuildBonePositions()
-	if not IsValid(self.flex_ent) then return end
-	if not self.flex_params then return end
-
-	for k, v in pairs(self.flex_params) do
-		self.flex_ent:SetFlexWeight(k, v)
-	end
+	self:UpdateFlex()
 end
 
 function PART:SetFlex(num)
-	self:UpdateFlex(self.Flex, 0)
-
 	self.Flex = num
-	self:UpdateFlex()
+	self.flex_lower = num:lower()
+	-- self:UpdateFlex()
 end
 
 function PART:SetWeight(num)
 	self.Weight = num
-	self:UpdateFlex()
+	-- self:UpdateFlex()
 end
 
-function PART:OnShow()
-	local ent = self:GetOwner(self.RootOwner)
+function PART:OnShow(from_rendering)
+	--if from_rendering then return end
 
-	if ent:IsValid() then
+	-- self:UpdateFlex()
+end
+
+function PART:OnHide()
+	--[[if self.DefaultOnHide then
 		self:UpdateFlex()
-	end
-end
-
-function PART:OnHide(force)
-	if self.DefaultOnHide or force then
-		self:UpdateFlex(self.Flex, 0)
-	end
+	end]]
 end
 
 function PART:OnRemove()
-	self:OnHide(true)
+	-- self:UpdateFlex()
 end
 
-function PART:Clear()
-	self:RemoveChildren()
-	self:UpdateFlex(self.Flex, 0)
-end
-
-pac.RegisterPart(PART)
+BUILDER:Register()

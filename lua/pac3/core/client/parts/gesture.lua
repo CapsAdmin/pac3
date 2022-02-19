@@ -1,19 +1,17 @@
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "gesture"
-PART.NonPhysical = true
+
 PART.ThinkTime = 0
 PART.Group = 'entity'
 PART.Icon = 'icon16/thumb_up.png'
 
-pac.StartStorableVars()
-	pac.GetSet(PART, "Loop", false)
-	pac.GetSet(PART, "GestureName", "", {editor_panel = "sequence"})
-	pac.GetSet(PART, "SlotName", "attackreload", {enums = function(part) return part.ValidGestureSlots end})
-	pac.GetSet(PART, "SlotWeight", 1)
-pac.EndStorableVars()
-
-PART.random_gestlist = {}
+BUILDER:StartStorableVars()
+	BUILDER:GetSet("Loop", false)
+	BUILDER:GetSet("GestureName", "", {editor_panel = "sequence"})
+	BUILDER:GetSet("SlotName", "attackreload", {enums = function(part) return part.ValidGestureSlots end})
+	BUILDER:GetSet("SlotWeight", 1)
+BUILDER:EndStorableVars()
 
 PART.ValidGestureSlots = {
 	attackreload = GESTURE_SLOT_ATTACK_AND_RELOAD,
@@ -24,10 +22,6 @@ PART.ValidGestureSlots = {
 	vcd = GESTURE_SLOT_VCD,
 	custom = GESTURE_SLOT_CUSTOM
 }
-
-function PART:GetOwner()
-	return self.BaseClass.GetOwner(self)	-- until gesture functions for non-players
-end
 
 function PART:GetSequenceList()
 	local ent = self:GetOwner()
@@ -118,4 +112,4 @@ end
 
 PART.OnRemove = PART.OnHide
 
-pac.RegisterPart(PART)
+BUILDER:Register()

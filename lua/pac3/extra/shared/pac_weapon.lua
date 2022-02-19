@@ -64,26 +64,26 @@ function SWEP:ShouldDropOnDie() return false end
 weapons.Register(SWEP, "pac_weapon", true)
 
 if CLIENT then
-	local PART = {}
+	local BUILDER, PART = pac.PartTemplate("base")
 
 	PART.ClassName = "weapon"
-	PART.NonPhysical = true
 
-	pac.StartStorableVars()
+
+	BUILDER:StartStorableVars()
 		for key, val in pairs(SWEP) do
 			if type(val) ~= "table" and type(val) ~= "function" then
-				pac.GetSet(PART, key, val)
+				BUILDER:GetSet(key, val)
 			end
 		end
 
 		for key, val in pairs(SWEP.Primary) do
-			pac.GetSet(PART, "Primary"..key, val)
+			BUILDER:GetSet("Primary"..key, val)
 		end
 
 		for key, val in pairs(SWEP.Secondary) do
-			pac.GetSet(PART, "Secondary"..key, val)
+			BUILDER:GetSet("Secondary"..key, val)
 		end
-	pac.EndStorableVars()
+	BUILDER:EndStorableVars()
 
-	pac.RegisterPart(PART)
+	BUILDER:Register()
 end

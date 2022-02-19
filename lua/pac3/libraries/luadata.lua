@@ -26,17 +26,17 @@
 local opcode_checker
 do
 	local bcnames
-	
+
 	local jit = jit or require("jit")
 	local ver = jit and jit.version_num or 0
-	
+
 	-- what are these magic versions?
 	if ver >= 20000 and ver <= 20009 then
 		bcnames = "ISLT  ISGE  ISLE  ISGT  ISEQV ISNEV ISEQS ISNES ISEQN ISNEN ISEQP ISNEP ISTC  ISFC  IST   ISF   MOV   NOT   UNM   LEN   ADDVN SUBVN MULVN DIVVN MODVN ADDNV SUBNV MULNV DIVNV MODNV ADDVV SUBVV MULVV DIVVV MODVV POW   CAT   KSTR  KCDATAKSHORTKNUM  KPRI  KNIL  UGET  USETV USETS USETN USETP UCLO  FNEW  TNEW  TDUP  GGET  GSET  TGETV TGETS TGETB TSETV TSETS TSETB TSETM CALLM CALL  CALLMTCALLT ITERC ITERN VARG  ISNEXTRETM  RET   RET0  RET1  FORI  JFORI FORL  IFORL JFORL ITERL IITERLJITERLLOOP  ILOOP JLOOP JMP   FUNCF IFUNCFJFUNCFFUNCV IFUNCVJFUNCVFUNCC FUNCCW"
 	elseif ver==20100 then -- LuaJIT 2.1.0-beta3
 		bcnames = "ISLT  ISGE  ISLE  ISGT  ISEQV ISNEV ISEQS ISNES ISEQN ISNEN ISEQP ISNEP ISTC  ISFC  IST   ISF   ISTYPEISNUM MOV   NOT   UNM   LEN   ADDVN SUBVN MULVN DIVVN MODVN ADDNV SUBNV MULNV DIVNV MODNV ADDVV SUBVV MULVV DIVVV MODVV POW   CAT   KSTR  KCDATAKSHORTKNUM  KPRI  KNIL  UGET  USETV USETS USETN USETP UCLO  FNEW  TNEW  TDUP  GGET  GSET  TGETV TGETS TGETB TGETR TSETV TSETS TSETB TSETM TSETR CALLM CALL  CALLMTCALLT ITERC ITERN VARG  ISNEXTRETM  RET   RET0  RET1  FORI  JFORI FORL  IFORL JFORL ITERL IITERLJITERLLOOP  ILOOP JLOOP JMP   FUNCF IFUNCFJFUNCFFUNCV IFUNCVJFUNCVFUNCC FUNCCW"
 	end
-	
+
 	local jutil = jit.util
 	if not jutil then
 		local ok, _jutil = pcall(require,'jit.util')
@@ -46,7 +46,7 @@ do
 			jutil = _jutil
 		end
 	end
-		
+
 	if not bcnames then
 		if not jutil then
 			print("[luadata] Verifier could not be loaded. luadata may cause infinite loops.")
@@ -205,22 +205,6 @@ luadata.Types = {
 	["Angle"] = function(var)
 		return ("Angle(%s, %s, %s)"):format(var.p, var.y, var.r)
 	end,
-
---[[ 	-- comment these out if you don't want shit like this to be storeable
-	["Entity"] = function(var)
-		if var:IsPlayer() then
-			return ("player.GetByUniqueID(%q)"):format(var:UniqueID())
-		end
-
-		return ("Entity(%i)"):format(var:EntIndex())
-	end,
-	["Panel"] = function(var)
-		return "NULL"
-	end,
-	["NULL"] = function(var)
-		return "NULL"
-	end, ]]
-
 	["table"] = function(var)
 		if
 			type(var.r) == "number" and

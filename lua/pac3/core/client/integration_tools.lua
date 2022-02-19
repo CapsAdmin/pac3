@@ -3,6 +3,26 @@ local LocalPlayer = LocalPlayer
 local RealTime = RealTime
 local NULL = NULL
 
+function pac.GenerateNewUniqueID(part_data, base)
+	local part_data = table.Copy(part_data)
+	base = base or tostring(part_data)
+
+	local function fixpart(part)
+		for key, val in pairs(part.self) do
+			if val ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
+				part.self[key] = pac.Hash(base .. val)
+			end
+		end
+
+		for _, part in pairs(part.children) do
+			fixpart(part)
+		end
+	end
+
+	return part_data
+end
+
+
 do
 	local force_draw_localplayer = false
 
@@ -17,7 +37,7 @@ do
 		pac.ShowEntityParts(ent)
 		pac.ForceRendering(true)
 
-		ent = ent or LocalPlayer()
+		ent = ent or pac.LocalPlayer
 		x = x or 0
 		y = y or 0
 		w = w or 64
@@ -35,7 +55,7 @@ do
 				force_draw_localplayer = true
 				ent:DrawModel()
 				pac.RenderOverride(ent, "opaque")
-				pac.RenderOverride(ent, "translucent", true)
+				pac.RenderOverride(ent, "translucent")
 				force_draw_localplayer = false
 
 				pac.FlashlightDisable(false)
@@ -73,15 +93,15 @@ function pac.SetupENT(ENT, owner)
 				end
 			end
 
-			return pac.NULL
+			return NULL
 		end
 
 		self.pac_part_find_cache = self.pac_part_find_cache or {}
 
-		local part = self.pac_outfits[outfit.self.UniqueID] or pac.NULL
+		local part = self.pac_outfits[outfit.self.UniqueID] or NULL
 
 		if part:IsValid() then
-			local cached = self.pac_part_find_cache[name] or pac.NULL
+			local cached = self.pac_part_find_cache[name] or NULL
 
 			if cached:IsValid() then return cached end
 
@@ -95,7 +115,7 @@ function pac.SetupENT(ENT, owner)
 			end
 		end
 
-		return pac.NULL
+		return NULL
 	end
 
 	function ENT:AttachPACPart(outfit, owner, keep_uniqueid)
@@ -104,7 +124,13 @@ function pac.SetupENT(ENT, owner)
 			return self:AttachPACSession(outfit, owner)
 		end
 
-		if (outfit.self.OwnerName == "viewmodel" or outfit.self.OwnerName == "hands") and self:IsWeapon() and self.Owner:IsValid() and self.Owner:IsPlayer() and self.Owner ~= LocalPlayer() then
+		if
+			(outfit.self.OwnerName == "viewmodel" or outfit.self.OwnerName == "hands") and
+			self:IsWeapon() and
+			self.Owner:IsValid() and
+			self.Owner:IsPlayer() and
+			self.Owner ~= pac.LocalPlayer
+		then
 			return
 		end
 
@@ -122,14 +148,13 @@ function pac.SetupENT(ENT, owner)
 
 		self.pac_outfits = self.pac_outfits or {}
 
-		local part = self.pac_outfits[outfit.self.UniqueID] or pac.NULL
+		local part = self.pac_outfits[outfit.self.UniqueID] or NULL
 
 		if part:IsValid() then
 			part:Remove()
 		end
 
-		part = pac.CreatePart(outfit.self.ClassName, owner)
-		part:SetTable(outfit)
+		part = pac.CreatePart(outfit.self.ClassName, owner, outfit)
 
 		self.pac_outfits[outfit.self.UniqueID] = part
 
@@ -139,6 +164,8 @@ function pac.SetupENT(ENT, owner)
 			self:SetShowPACPartsInEditor(false)
 			self.pac_show_in_editor = nil
 		end
+
+		return part
 	end
 
 	function ENT:RemovePACPart(outfit, keep_uniqueid)
@@ -152,7 +179,7 @@ function pac.SetupENT(ENT, owner)
 
 		self.pac_outfits = self.pac_outfits or {}
 
-		local part = self.pac_outfits[outfit.self.UniqueID] or pac.NULL
+		local part = self.pac_outfits[outfit.self.UniqueID] or NULL
 
 		if part:IsValid() then
 			part:Remove()
@@ -164,8 +191,8 @@ function pac.SetupENT(ENT, owner)
 	function ENT:GetPACPartPosAng(outfit, name)
 		local part = self:FindPACPart(outfit, name)
 
-		if part:IsValid() then
-			return part.cached_pos, part.cached_ang
+		if part:IsValid() and part.GetWorldPosition then
+			return part:GetWorldPosition(), part:GetWorldAngles()
 		end
 	end
 
@@ -193,7 +220,7 @@ function pac.SetupENT(ENT, owner)
 		self.pac_outfits = self.pac_outfits or {}
 
 		for _, part in pairs(self.pac_outfits) do
-			part.show_in_editor = b
+			part:SetShowInEditor(b)
 		end
 
 		self.pac_show_in_editor = b

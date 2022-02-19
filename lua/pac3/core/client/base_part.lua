@@ -2,168 +2,81 @@ local pac = pac
 local pairs = pairs
 local ipairs = ipairs
 local table = table
-local Vector = Vector
-local Angle = Angle
 local Color = Color
 local NULL = NULL
-local SysTime = SysTime
+local IsValid = IsValid
+local ErrorNoHalt = ErrorNoHalt
 
-local LocalToWorld = LocalToWorld
-
-local function SETUP_CACHE_FUNC(tbl, func_name)
-	local old_func = tbl[func_name]
-
-	local cached_key = "cached_" .. func_name
-	local cached_key2 = "cached_" .. func_name .. "_2"
-	local last_key = "last_" .. func_name .. "_framenumber"
-
-	tbl[func_name] = function(self, a,b,c,d,e)
-		if self[last_key] ~= pac.FrameNumber or self[cached_key] == nil then
-			self[cached_key], self[cached_key2] = old_func(self, a,b,c,d,e)
-			self[last_key] = pac.FrameNumber
-		end
-
-		return self[cached_key], self[cached_key2]
-	end
-end
-
-local PART = {}
+local BUILDER, PART = pac.PartTemplate()
 
 PART.ClassName = "base"
-PART.Internal = true
 
 function PART:__tostring()
-	return string.format("%s[%s][%s][%i]", self.Type, self.ClassName, self.Name, self.Id)
+	return string.format("part[%s][%s][%i]", self.ClassName, self:GetName(), self.Id)
 end
 
-local pac_hide_disturbing = GetConVar("pac_hide_disturbing")
+BUILDER
+	:GetSet("PlayerOwner", NULL)
+	:GetSet("Owner", NULL)
+	:GetSet("Enabled", true)
 
-pac.GetSet(PART, "BoneIndex")
-pac.GetSet(PART, "PlayerOwner", NULL)
-pac.GetSet(PART, "Owner", NULL)
+BUILDER
+	:StartStorableVars()
+		:SetPropertyGroup("generic")
+			:GetSet("Name", "")
+			:GetSet("Hide", false)
+			:GetSet("EditorExpand", false, {hidden = true})
+			:GetSet("UniqueID", "", {hidden = true})
+			:GetSetPart("Parent")
+			-- this is an unfortunate name, it controls the order in which the scene related functions iterate over children
+			-- in practice it's often used to make something draw above something else in translucent rendering
+			:GetSet("DrawOrder", 0)
+			:GetSet("IsDisturbing", false, {
+				editor_friendly = "IsExplicit",
+				description = "Marks this content as NSFW, and makes it hidden for most of players who have pac_hide_disturbing set to 1"
+			})
+	:EndStorableVars()
 
-pac.StartStorableVars()
 
-	pac.SetPropertyGroup(PART, "generic")
-		pac.GetSet(PART, "Name", "")
-		pac.GetSet(PART, "Hide", false)
-		pac.GetSet(PART, "OwnerName", "self")
-		pac.GetSet(PART, "EditorExpand", false, {hidden = true})
-		pac.GetSet(PART, "UniqueID", "", {hidden = true})
-		pac.GetSet(PART, "IsDisturbing", false, {
-			editor_friendly = "IsExplicit",
-			description = "Marks this content as NSFW, and makes it hidden for most of players who have pac_hide_disturbing set to 1"
-		})
+PART.is_valid = true
 
-	pac.SetPropertyGroup(PART, "orientation")
-		pac.GetSet(PART, "Bone", "head")
-		pac.GetSet(PART, "Position", Vector(0,0,0))
-		pac.GetSet(PART, "Angles", Angle(0,0,0))
-		pac.GetSet(PART, "EyeAngles", false)
-		pac.GetSet(PART, "PositionOffset", Vector(0,0,0))
-		pac.GetSet(PART, "AngleOffset", Angle(0,0,0))
-		pac.SetupPartName(PART, "AimPart", {editor_panel = "aimpartname"})
-		pac.SetupPartName(PART, "Parent")
-
-	pac.SetPropertyGroup(PART, "appearance")
-		pac.GetSet(PART, "Translucent", false)
-		pac.GetSet(PART, "IgnoreZ", false)
-		pac.GetSet(PART, "NoTextureFiltering", false)
-		pac.GetSet(PART, "BlendMode", "", {enums = {
-			none = "one;zero;one;zero",
-			alpha = "src_alpha;one_minus_src_alpha;one;one_minus_src_alpha",
-			multiplicative = "dst_color;zero;dst_color;zero",
-			premultiplied = "one;one_src_minus_alpha;one;one_src_minus_alpha",
-			additive = "src_alpha;one;src_alpha;one",
-		}})
-
-		pac.GetSet(PART, "DrawOrder", 0)
-
-pac.EndStorableVars()
-
-PART.AllowSetupPositionFrameSkip = true
-
-local blend_modes = {
-	zero = 0,
-	one = 1,
-	dst_color = 2,
-	one_minus_dst_color = 3,
-	src_alpha = 4,
-	one_minus_src_alpha = 5,
-	dst_alpha = 6,
-	one_minus_dst_alpha = 7,
-	src_alpha_saturate = 8,
-	src_color = 9,
-	one_minus_src_color = 10,
-}
-
-function PART:SetBlendMode(str)
-	str = str:lower():gsub("%s+", ""):gsub(",", ";"):gsub("blend_", "")
-
-	self.BlendMode = str
-
-	local tbl = str:Split(";")
-	local src_color
-	local dst_color
-
-	local src_alpha
-	local dst_alpha
-
-	if tbl[1] then src_color = blend_modes[tbl[1]] end
-	if tbl[2] then dst_color = blend_modes[tbl[2]] end
-
-	if tbl[3] then src_alpha = blend_modes[tbl[3]] end
-	if tbl[4] then dst_alpha = blend_modes[tbl[4]] end
-
-	if src_color and dst_color then
-		self.blend_override = {src_color, dst_color, src_alpha, dst_alpha, tbl[5]}
-	else
-		self.blend_override = nil
-	end
-end
-
-function PART:SetUniqueID(id)
-	if self.owner_id then
-		pac.RemoveUniqueIDPart(self.owner_id, self.UniqueID)
-	end
-
-	self.UniqueID = id
-
-	if self.owner_id then
-		pac.SetUniqueIDPart(self.owner_id, id, self)
-	end
+function PART:IsValid()
+	return self.is_valid
 end
 
 function PART:PreInitialize()
 	self.Children = {}
-	self.Children2 = {}
+	self.ChildrenMap = {}
 	self.modifiers = {}
 	self.RootPart = NULL
 	self.DrawOrder = 0
 	self.hide_disturbing = false
-	self.event_hide_registry = {}
-
-	self.cached_pos = Vector(0,0,0)
-	self.cached_ang = Angle(0,0,0)
+	self.active_events = {}
+	self.active_events_ref_count = 0
 end
+
+function PART:Initialize() end
+
+function PART:OnRemove() end
 
 function PART:GetNiceName()
 	return self.ClassName
 end
 
-function PART:RemoveOnNULLOwner(b)
-	self.remove_on_null_owner = b
+function PART:GetPrintUniqueID()
+	if not self.UniqueID then return '00000000' end
+	return self.UniqueID:sub(1, 8)
 end
 
 function PART:GetName()
 	if self.Name == "" then
 
 		-- recursive call guard
-		if self.last_nice_name_frame and self.last_nice_name_frame == FrameNumber() then
+		if self.last_nice_name_frame and self.last_nice_name_frame == pac.FrameNumber then
 			return self.last_nice_name
 		end
 
-		self.last_nice_name_frame = FrameNumber()
+		self.last_nice_name_frame = pac.FrameNumber
 
 		local nice = self:GetNiceName()
 		local num
@@ -193,240 +106,120 @@ function PART:GetName()
 	return self.Name
 end
 
-function PART:GetEnabled()
+function PART:SetUniqueID(id)
+	if id then
+		local existing = pac.GetPartFromUniqueID(self:GetPlayerOwnerId(), id)
 
-	local enabled = self:IsEnabled()
-
-	if self.last_enabled == enabled then
-		return enabled
-	end
-
-	-- changed
-
-	if self.last_enabled == nil then
-		self.last_enabled = enabled
-	else
-		self.last_enabled = enabled
-
-		if enabled then
-			self:CallRecursive("OnShow")
-		else
-			self:CallRecursive("OnHide")
+		if existing:IsValid() then
+			pac.Message(Color(255, 50, 50), "unique id collision between ", self, " and ", existing)
+			id = nil
 		end
-
 	end
 
-	return enabled
+	id = id or pac.Hash()
 
+	local owner_id = self:GetPlayerOwnerId()
+
+	if owner_id then
+		pac.RemoveUniqueIDPart(owner_id, self.UniqueID)
+	end
+
+	self.UniqueID = id
+
+	if owner_id then
+		pac.SetUniqueIDPart(owner_id, id, self)
+	end
 end
 
-do -- modifiers
-	PART.HandleModifiersManually = false
-
-	function PART:AddModifier(part)
-		self:RemoveModifier(part)
-		table.insert(self.modifiers, part)
-	end
-
-	function PART:RemoveModifier(part)
-		for i, v in ipairs(self.modifiers) do
-			if v == part then
-				table.remove(self.modifiers, i)
-				break
-			end
-		end
-	end
-
-	function PART:ModifiersPreEvent(event)
-		if #self.modifiers > 0 then
-			for _, part in ipairs(self.modifiers) do
-				if not part:IsHidden() then
-
-					if not part.pre_draw_events then part.pre_draw_events = {} end
-					if not part.pre_draw_events[event] then part.pre_draw_events[event] = "Pre" .. event end
-
-					if part[part.pre_draw_events[event]] then
-						part[part.pre_draw_events[event]](part)
-					end
-				end
-			end
-		end
-	end
-
-	function PART:ModifiersPostEvent(event)
-		if #self.modifiers > 0 then
-			for _, part in ipairs(self.modifiers) do
-				if not part:IsHidden() then
-
-					if not part.post_draw_events then part.post_draw_events = {} end
-					if not part.post_draw_events[event] then part.post_draw_events[event] = "Post" .. event end
-
-					if part[part.post_draw_events[event]] then
-						part[part.post_draw_events[event]](part)
-					end
-				end
-			end
-		end
-	end
-
-end
 
 do -- owner
 	function PART:SetPlayerOwner(ply)
+		local owner_id = self:GetPlayerOwnerId()
 		self.PlayerOwner = ply
 
-		if ply:IsValid() then
-			self.owner_id = ply:IsPlayer() and ply:UniqueID() or ply:EntIndex()
-		end
-
-		if not self:HasParent() then
-			self:CheckOwner()
-		end
-
-		self:SetUniqueID(self:GetUniqueID())
-	end
-	function PART:SetOwnerName(name)
-		self.OwnerName = name
-		self:CheckOwner()
-	end
-
-	function PART:CheckOwner(ent, removed)
-		self = self:GetRootPart()
-
-		local prev_owner = self:GetOwner()
-
-		if self.Duplicate then
-
-			ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self, function(e) return e.pac_duplicate_attach_uid ~= self.UniqueID end) or NULL
-
-			if ent ~= prev_owner and ent:IsValid() then
-
-				local tbl = self:ToTable(true)
-				tbl.self.OwnerName = "self"
-				pac.SetupENT(ent)
-				ent:SetShowPACPartsInEditor(false)
-				ent:AttachPACPart(tbl)
-				ent:CallOnRemove("pac_remove_outfit_" .. tbl.self.UniqueID, function()
-					ent:RemovePACPart(tbl)
-				end)
-
-				if self:GetPlayerOwner() == pac.LocalPlayer then
-					ent:SetPACDrawDistance(0)
-				end
-
-				ent.pac_duplicate_attach_uid = self.UniqueID
-			end
-
+		if ply and ply:IsValid() then
+			self.PlayerOwnerHash = pac.Hash(ply)
 		else
-			if removed and prev_owner == ent then
-				self:SetOwner(NULL)
-				self.temp_hidden = true
-				return
-			end
-
-			if not removed and self.OwnerName ~= "" then
-				ent = pac.HandleOwnerName(self:GetPlayerOwner(), self.OwnerName, ent, self) or NULL
-				if ent ~= prev_owner then
-					self:SetOwner(ent)
-					self.temp_hidden = false
-					return true
-				end
-			end
-
-		end
-	end
-
-	function PART:SetOwner(ent)
-
-		if IsValid(self.last_owner) and self.last_owner ~= ent then
-			self:CallRecursive("OnHide", true)
+			self.PlayerOwnerHash = nil
 		end
 
-		self.last_owner = self.Owner
-		self.Owner = ent or NULL
-		pac.RunNextFrame(self:GetRootPart().Id .. "_hook_render", function()
-			if self:IsValid() then
-				self:HookEntityRender()
-			end
-		end)
+		if owner_id then
+			pac.RemoveUniqueIDPart(owner_id, self.UniqueID)
+		end
+
+		local owner_id = self:GetPlayerOwnerId()
+
+		if owner_id then
+			pac.SetUniqueIDPart(owner_id, self.UniqueID, self)
+		end
 	end
 
 	-- always return the root owner
 	function PART:GetPlayerOwner()
-		if not self.PlayerOwner then
-			return self:GetOwner(true) or NULL
-		end
-
-		return self.PlayerOwner
+		return self:GetRootPart().PlayerOwner
 	end
 
-	function PART:GetOwner(root)
-		if self.owner_override then
-			return self.owner_override
-		end
+	function PART:GetPlayerOwnerId()
+		return self:GetRootPart().PlayerOwnerHash
+	end
 
-		if root then
-			return self:GetRootPart():GetOwner()
-		end
+	function PART:GetParentOwner()
+		for _, parent in ipairs(self:GetParentList()) do
 
-		local parent = self:GetParent()
-
-		if parent:IsValid() then
-			if
-				self.ClassName ~= "event" and
-				parent.is_model_part and
-				parent.Entity:IsValid()
-			then
-				return parent.Entity
+			-- legacy behavior
+			if parent.ClassName == "event" then
+				local parent = parent:GetParent()
+				if parent:IsValid() then
+					local parent = parent:GetParent()
+					if parent:IsValid() then
+						return parent:GetOwner()
+					end
+				end
 			end
 
-			return parent:GetOwner()
+			local owner = parent:GetOwner()
+			if owner:IsValid() then return owner end
 		end
 
-		return self.Owner or NULL
+		return NULL
 	end
 
-	--SETUP_CACHE_FUNC(PART, "GetOwner")
+	function PART:GetOwner()
+		if self.Owner:IsValid() then
+			return self.Owner
+		end
+
+		return self:GetParentOwner()
+	end
 end
 
-function PART:SetIsDisturbing(val)
-	self.IsDisturbing = val
-	self.hide_disturbing = pac_hide_disturbing:GetBool() and val
-end
+do -- scene graph
 
-do -- parenting
-	function PART:GetChildren()
-		return self.Children
-	end
+	function PART:OnParent() end
+	function PART:OnChildAdd() end
+	function PART:OnUnParent() end
 
-	function PART:GetChildrenList()
-		if not self.children_list then
-			self:BuildChildrenList()
+	function PART:OnOtherPartCreated(part)
+		local owner_id = part:GetPlayerOwnerId()
+		if not owner_id then return end
+
+		-- this will handle cases like if a part is removed and added again
+		for _, key in pairs(self.PartReferenceKeys) do
+			if self[key] and self[key].UniqueID == part.UniqueID then
+				self["Set" .. key](self, part)
+			end
 		end
 
-		return self.children_list
-	end
+		do
+			if not self.unresolved_uid_parts then return end
+			if not self.unresolved_uid_parts[owner_id] then return end
+			local keys = self.unresolved_uid_parts[owner_id][part.UniqueID]
 
-	local function add_children_to_list(parent, list, drawOrder)
-		for _, child in ipairs(parent:GetChildren()) do
-			table.insert(list, {child, child.DrawOrder + drawOrder})
-			add_children_to_list(child, list, drawOrder + child.DrawOrder)
-		end
-	end
+			if not keys then return end
 
-	function PART:BuildChildrenList()
-		local child = {}
-		self.children_list = child
-
-		local tableToSort = {}
-		add_children_to_list(self, tableToSort, self.DrawOrder)
-
-		table.sort(tableToSort, function(a, b)
-			return a[2] < b[2]
-		end)
-
-		for i, data in ipairs(tableToSort) do
-			child[#child + 1] = data[1]
+			for _, key in pairs(keys) do
+				self["Set" .. key](self, part)
+			end
 		end
 	end
 
@@ -437,42 +230,99 @@ do -- parenting
 		return part
 	end
 
-	function PART:SetParent(part)
-		if not part or not part:IsValid() then
-			self:UnParent()
-			return false
-		else
-			return part:AddChild(self)
+	function PART:SetDrawOrder(num)
+		self.DrawOrder = num
+		if self:HasParent() then
+			self:GetParent():SortChildren()
 		end
 	end
 
-	function PART:BuildParentList()
-
-		if not self:HasParent() then return end
-
-		self.parent_list = {}
-
-		local temp = self:GetParent()
-
-		table.insert(self.parent_list, temp)
-
-		for _ = 1, 100 do
-			local parent = temp:GetParent()
-			if not parent:IsValid() then break end
-
-			table.insert(self.parent_list, parent)
-
-			temp = parent
+	do -- children
+		function PART:GetChildren()
+			return self.Children
 		end
 
-		self.RootPart = temp
+		local function add_recursive(part, tbl, index)
+			local source = part.Children
 
-		for _, part in ipairs(self:GetChildren()) do
-			part:BuildParentList()
+			for i = 1, #source do
+				tbl[index] = source[i]
+				index = index + 1
+				index = add_recursive(source[i], tbl, index)
+			end
+
+			return index
+		end
+
+		function PART:GetChildrenList()
+			if not self.children_list then
+				local tbl = {}
+
+				add_recursive(self, tbl, 1)
+
+				self.children_list = tbl
+			end
+
+			return self.children_list
+		end
+
+		function PART:InvalidateChildrenList()
+			self.children_list = nil
+
+			for _, parent in ipairs(self:GetParentList()) do
+				parent.children_list = nil
+			end
 		end
 	end
 
-	function PART:AddChild(part)
+	do -- parent
+		function PART:SetParent(part)
+			if not part or not part:IsValid() then
+				self:UnParent()
+				return false
+			else
+				return part:AddChild(self)
+			end
+		end
+
+		local function quick_copy(input)
+			local output = {}
+			for i = 1, #input do output[i + 1] = input[i] end
+			return output
+		end
+
+		function PART:GetParentList()
+			if not self.parent_list then
+				if self.Parent and self.Parent:IsValid() then
+					self.parent_list = quick_copy(self.Parent:GetParentList())
+					self.parent_list[1] = self.Parent
+				else
+					self.parent_list = {}
+				end
+			end
+
+			return self.parent_list
+		end
+
+		function PART:InvalidateParentList()
+			self.parent_list = nil
+
+			for _, child in ipairs(self:GetChildrenList()) do
+				child.parent_list = nil
+			end
+		end
+
+		function PART:InvalidateParentListPartial(parent_list, parent)
+			self.parent_list = quick_copy(parent_list)
+			self.parent_list[1] = parent
+
+			for _, child in ipairs(self:GetChildren()) do
+				child:InvalidateParentListPartial(self.parent_list, self)
+			end
+		end
+	end
+
+	function PART:AddChild(part, ignore_show_hide)
 		if not part or not part:IsValid() then
 			self:UnParent()
 			return
@@ -482,22 +332,20 @@ do -- parenting
 			return false
 		end
 
-		part:UnParent()
+		if part:HasParent() then
+			part:UnParent()
+		end
 
 		part.Parent = self
 
 		if not part:HasChild(self) then
-			self.Children2[part] = part
+			self.ChildrenMap[part] = part
 			table.insert(self.Children, part)
 		end
 
 		self:InvalidateChildrenList()
 
-		part.ParentName = self:GetName()
 		part.ParentUID = self:GetUniqueID()
-
-		self:ClearBone()
-		part:ClearBone()
 
 		part:OnParent(self)
 		self:OnChildAdd(part)
@@ -506,28 +354,32 @@ do -- parenting
 			self:GetParent():SortChildren()
 		end
 
+		-- why would we need to sort part's children
+		-- if it is completely unmodified?
 		part:SortChildren()
 		self:SortChildren()
 
-		self:BuildParentList()
-		part:BuildParentList()
+		part:InvalidateParentListPartial(self:GetParentList(), self)
 
-		pac.CallHook("OnPartParent", self, part)
+		if self:GetPlayerOwner() == pac.LocalPlayer then
+			pac.CallHook("OnPartParent", self, part)
+		end
 
-		part.shown_from_rendering = true
-		part:SetKeyValueRecursive("last_hidden", nil)
-		part:SetKeyValueRecursive("last_hidden_by_event", nil)
+		if not ignore_show_hide then
+			part:CallRecursive("CalcShowHide", true)
+		end
 
 		return part.Id
 	end
 
 	do
-		local sort = function(a, b)
+		local function sort(a, b)
 			return a.DrawOrder < b.DrawOrder
 		end
 
 		function PART:SortChildren()
 			table.sort(self.Children, sort)
+			self:InvalidateChildrenList()
 		end
 	end
 
@@ -540,11 +392,11 @@ do -- parenting
 	end
 
 	function PART:HasChild(part)
-		return self.Children2[part] ~= nil
+		return self.ChildrenMap[part] ~= nil
 	end
 
 	function PART:RemoveChild(part)
-		self.Children2[part] = nil
+		self.ChildrenMap[part] = nil
 
 		for i, val in ipairs(self:GetChildren()) do
 			if val == part then
@@ -557,197 +409,32 @@ do -- parenting
 	end
 
 	function PART:GetRootPart()
-
-		if not self:HasParent() then return self end
-
-		if not self.RootPart:IsValid() then
-			self:BuildParentList()
-		end
-
-		return self.RootPart
+		local list = self:GetParentList()
+		if list[1] then return list[#list] end
+		return self
 	end
 
-	SETUP_CACHE_FUNC(PART, "GetRootPart")
-
-	do
-		local function doRecursiveCall(childrens, func, profileName, profileNameChildren, ...)
-			for i, child in ipairs(childrens) do
-				local sysTime = SysTime()
-				child[func](child, func, ...)
-				child[profileName] = SysTime() - sysTime
-
-				sysTime = SysTime()
-				doRecursiveCall(child:GetChildren(), func, profileName, profileNameChildren, ...)
-				child[profileNameChildren] = SysTime() - sysTime
-			end
+	function PART:CallRecursive(func, a,b,c)
+		assert(c == nil, "EXTEND ME")
+		if self[func] then
+			self[func](self, a,b,c)
 		end
 
-		function PART:CallRecursiveProfiled(func, ...)
-			local profileName = func .. 'Runtime'
-			local profileNameChildren = func .. 'RuntimeChildren'
-
-			if self[func] then
-				local sysTime = SysTime()
-				self[func](self, ...)
-				self[profileName] = SysTime() - sysTime
-			end
-
-			local sysTime = SysTime()
-			doRecursiveCall(self:GetChildren(), func, profileName, profileNameChildren, ...)
-			self[profileNameChildren] = SysTime() - sysTime
-		end
-
-		function PART:CallRecursive(func, ...)
-			if self[func] then
-				self[func](self, ...)
-			end
-
-			local child = self:GetChildrenList()
-
-			for i = 1, #child do
-				if child[i][func] then
-					child[i][func](child[i], ...)
-				end
-			end
-		end
-
-		function PART:CallRecursiveExclude(func, ...)
-			local child = self:GetChildrenList()
-
-			for i = 1, #child do
-				if child[i][func] then
-					child[i][func](child[i], ...)
-				end
-			end
-		end
-
-		function PART:SetKeyValueRecursive(key, val)
-			self[key] = val
-
-			local child = self:GetChildrenList()
-
-			for i = 1, #child do
-				child[i][key] = val
-			end
-		end
-
-		function PART:SetHide(b)
-			self.Hide = b
-
-			self:SetKeyValueRecursive("hidden", b)
-		end
-
-		function PART:RemoveEventHide(object)
-			self.event_hide_registry[object] = nil
-		end
-
-		function PART:SetEventHide(b, object)
-			object = object or self
-
-			-- this can and will produce undefined behavior (like skipping keys)
-			-- but still, it will do the job at cleaning up at least a part of table
-			for k, v in pairs(self.event_hide_registry) do
-				if not IsValid(k) then
-					self.event_hide_registry[k] = nil
-				end
-			end
-
-			self.event_hide_registry[object] = b
-			self.event_hidden = self:CalculateEventHidden()
-
-			if self.event_hidden ~= b then
-				self.shown_from_rendering = nil
-			end
-		end
-
-		function PART:FlushFromRenderingState(newState)
-			self.shown_from_rendering = nil
-		end
-
-		function PART:IsDrawHidden()
-			return self.draw_hidden
-		end
-
-		function PART:CalculateEventHidden()
-			for k, v in pairs(self.event_hide_registry) do
-				if v then
-					return true
-				end
-			end
-
-			return false
-		end
-
-		function PART:IsEventHidden(object, invert)
-			if object then
-				if invert then
-					for k, v in pairs(self.event_hide_registry) do
-						if k ~= object and v then
-							return true
-						end
-					end
-
-					return false
-				end
-
-				return self.event_hide_registry[object] == true
-			end
-
-			if self.event_hidden == nil then
-				self.event_hidden = self:CalculateEventHidden()
-			end
-
-			return self.event_hidden
-		end
-
-		function PART:IsHiddenInternal()
-			return self.hidden
-		end
-
-		function PART:IsHidden()
-			if
-				self.draw_hidden or
-				self.temp_hidden or
-				self.hidden or
-				self.hide_disturbing or
-				self:IsEventHidden()
-			then
-				return true, self:IsEventHidden()
-			end
-
-			if not self:HasParent() then
-				return false
-			end
-
-			if not self.parent_list then
-				self:BuildParentList()
-			end
-
-			for _, parent in ipairs(self.parent_list) do
-				if
-					parent.draw_hidden or
-					parent.temp_hidden or
-					parent.hidden or
-					parent.event_hidden
-				then
-					return true, parent:IsEventHidden()
-				end
-			end
-
-			return false
-		end
-
-		SETUP_CACHE_FUNC(PART, "IsHidden")
-	end
-
-	function PART:InvalidateChildrenList()
-		self.children_list = nil
-		if self.parent_list then
-			for _, part in ipairs(self.parent_list) do
-				part.children_list = nil
+		for _, child in ipairs(self:GetChildrenList()) do
+			if child[func] then
+				child[func](child, a,b,c)
 			end
 		end
 	end
+
+	function PART:SetKeyValueRecursive(key, val)
+		self[key] = val
+
+		for _, child in ipairs(self:GetChildrenList()) do
+			child[key] = val
+		end
+	end
+
 
 	function PART:RemoveChildren()
 		self:InvalidateChildrenList()
@@ -755,19 +442,7 @@ do -- parenting
 		for i, part in ipairs(self:GetChildren()) do
 			part:Remove(true)
 			self.Children[i] = nil
-			self.Children2[part] = nil
-		end
-	end
-
-	function PART:DeattachChildren()
-		self:InvalidateChildrenList()
-
-		for i, part in ipairs(self:GetChildren()) do
-			if part.owner_id and part.UniqueID then
-				pac.RemoveUniqueIDPart(part.owner_id, part.UniqueID)
-			end
-
-			pac.RemovePart(part)
+			self.ChildrenMap[part] = nil
 		end
 	end
 
@@ -778,48 +453,222 @@ do -- parenting
 			parent:RemoveChild(self)
 		end
 
-		self:ClearBone()
-
 		self:OnUnParent(parent)
 
 		self.Parent = NULL
-		self.ParentName = ""
 		self.ParentUID = ""
 
 		self:CallRecursive("OnHide")
 	end
+
+	function PART:Remove(skip_removechild)
+		self:Deattach()
+
+		if not skip_removechild and self:HasParent() then
+			self:GetParent():RemoveChild(self)
+		end
+
+		self:RemoveChildren()
+	end
+
+	function PART:Deattach()
+		if not self.is_valid or self.is_deattached then return end
+		self.is_deattached = true
+		self.PlayerOwner_ = self.PlayerOwner
+
+		if self:GetPlayerOwner() == pac.LocalPlayer then
+			pac.CallHook("OnPartRemove", self)
+		end
+
+		self:CallRecursive("OnHide")
+		self:CallRecursive("OnRemove")
+
+		local owner_id = self:GetPlayerOwnerId()
+		if owner_id then
+			pac.RemoveUniqueIDPart(owner_id, self.UniqueID)
+		end
+
+		pac.RemovePart(self)
+		self.is_valid = false
+
+		self:InvalidateChildrenList()
+
+		for _, part in ipairs(self:GetChildren()) do
+			local owner_id = part:GetPlayerOwnerId()
+
+			if owner_id then
+				pac.RemoveUniqueIDPart(owner_id, part.UniqueID)
+			end
+
+			pac.RemovePart(part)
+		end
+	end
+
 end
 
-do -- bones
-	function PART:SetBone(var)
-		self.Bone = var
-		self:ClearBone()
+do -- hidden / events
+	local pac_hide_disturbing = CreateClientConVar("pac_hide_disturbing", "1", true, true, "Hide parts which outfit creators marked as 'nsfw' (e.g. gore or explicit content)")
+
+	function PART:SetIsDisturbing(val)
+		self.IsDisturbing = val
+		self.hide_disturbing = pac_hide_disturbing:GetBool() and val
+
+		self:CallRecursive("CalcShowHide", false)
 	end
 
-	function PART:ClearBone()
-		self.BoneIndex = nil
-		self.TriedToFindBone = nil
-		local owner = self:GetOwner()
-		if owner:IsValid() then
-			owner.pac_bones = nil
+	function PART:UpdateIsDisturbing()
+		local new_value = pac_hide_disturbing:GetBool() and self.IsDisturbing
+		if new_value == self.hide_disturbing then return end
+		self.hide_disturbing = new_value
+
+		self:CallRecursive("CalcShowHide", false)
+	end
+
+	function PART:OnHide() end
+	function PART:OnShow() end
+
+	function PART:SetEnabled(val)
+		self.Enabled = val
+
+		if val then
+			self:ShowFromRendering()
+		else
+			self:HideFromRendering()
 		end
 	end
 
-	function PART:GetModelBones(owner)
-		return pac.GetModelBones(owner or self:GetOwner())
+	function PART:SetHide(val)
+		self.Hide = val
+
+		if self.set_hide_from_proxy then
+			self:SetEventTrigger(self.set_hide_from_proxy, val)
+			self:SetKeyValueRecursive("last_hidden", val)
+
+			if val then
+				self:CallRecursive("OnHide", false)
+			else
+				self:CallRecursive("OnShow", false)
+			end
+		else
+			-- so that IsHiddenCached works in OnHide/OnShow events
+			self:SetKeyValueRecursive("last_hidden", val)
+
+			if val then
+				self:CallRecursive("OnHide", true)
+			else
+				self:CallRecursive("OnShow", true)
+			end
+
+			self:CallRecursive("CalcShowHide", true)
+		end
 	end
 
-	function PART:GetRealBoneName(name, owner)
-		owner = owner or self:GetOwner()
+	function PART:IsDrawHidden()
+		return self.draw_hidden
+	end
 
-		local bones = self:GetModelBones(owner)
+	function PART:SetDrawHidden(b)
+		self.draw_hidden = b
+	end
 
-		if owner:IsValid() and bones and bones[name] and not bones[name].is_special then
-			return bones[name].real
+	function PART:ShowFromRendering()
+		self:SetDrawHidden(false)
+
+		if not self:IsHidden() then
+			self:OnShow(true)
 		end
 
-		return name
+		for _, child in ipairs(self:GetChildrenList()) do
+			child:SetDrawHidden(false)
+
+			if not child:IsHidden() then
+				child:OnShow(true)
+			end
+		end
 	end
+
+	function PART:HideFromRendering()
+		self:SetDrawHidden(true)
+		self:CallRecursive("OnHide", true)
+	end
+
+	local function is_hidden(part)
+		if part.active_events_ref_count > 0 then
+			return true
+		end
+
+		return part.Hide or part.hide_disturbing
+	end
+
+	function PART:IsHidden()
+		if is_hidden(self) then
+			return true
+		end
+
+		for _, parent in ipairs(self:GetParentList()) do
+			if is_hidden(parent) then
+				return true
+			end
+		end
+
+		return false
+	end
+
+	function PART:SetEventTrigger(event_part, enable)
+		if enable then
+			if not self.active_events[event_part] then
+				self.active_events[event_part] = event_part
+				self.active_events_ref_count = self.active_events_ref_count + 1
+				self:CallRecursive("CalcShowHide", false)
+			end
+		else
+			if self.active_events[event_part] then
+				self.active_events[event_part] = nil
+				self.active_events_ref_count = self.active_events_ref_count - 1
+				self:CallRecursive("CalcShowHide", false)
+			end
+		end
+	end
+
+	function PART:CalcShowHide(from_rendering)
+		local b = self:IsHidden()
+
+		if b ~= self.last_hidden then
+			if b then
+				self:OnHide(from_rendering)
+			else
+				self:OnShow(from_rendering)
+			end
+		end
+
+		self.last_hidden = b
+	end
+
+	function PART:IsHiddenCached()
+		return self.last_hidden
+	end
+
+	function PART:BuildBonePositions()
+		if not self.Enabled then return end
+
+		if not self:IsHiddenCached() then
+			self:OnBuildBonePositions()
+		end
+	end
+
+	function PART:OnBuildBonePositions()
+
+	end
+end
+
+PART.show_in_editor = true
+
+function PART:GetShowInEditor()
+	return self:GetRootPart().show_in_editor == true
+end
+
+function PART:SetShowInEditor(b)
+	self:GetRootPart().show_in_editor = b
 end
 
 do -- serializing
@@ -839,15 +688,6 @@ do -- serializing
 		self:RemoveChildren()
 	end
 
-	function PART:IsBeingWorn()
-		return self.isBeingWorn
-	end
-
-	function PART:SetIsBeingWorn(status)
-		self.isBeingWorn = status
-		return self
-	end
-
 	function PART:OnWorn()
 		-- override
 	end
@@ -860,79 +700,196 @@ do -- serializing
 		-- override
 	end
 
+
 	do
-		local function SetTable(self, tbl)
-			self.supress_part_name_find = true
-			self.delayed_variables = self.delayed_variables or {}
+		function PART:GetProperty(name)
+			local val = self["Get" .. name]
 
-			-- this needs to be set first
-			self:SetUniqueID(tbl.self.UniqueID or util.CRC(tostring(tbl.self)))
+			if val == nil then
+				if self.GetDynamicProperties then
+					local info = self:GetDynamicProperties()
+					if info and info[name] then
+						return info[name].get()
+					end
+				end
+			else
+				return val(self)
+			end
+		end
 
-			for key, value in pairs(tbl.self) do
+		function PART:SetProperty(key, val)
+			if self["Set" .. key] ~= nil then
+				if self["Get" .. key](self) ~= val then
+					self["Set" .. key](self, val)
+				end
+			elseif self.GetDynamicProperties then
+				local info = self:GetDynamicProperties()[key]
+				if info and info then
+					info.set(val)
+				end
+			end
+		end
 
-				-- these arent needed because parent system uses the tree structure
-				local cond = key ~= "ParentUID" and
-					key ~= "ParentName" and
-					key ~= "UniqueID" and
-					(key ~= "AimPartName" and not (pac.PartNameKeysToIgnore and pac.PartNameKeysToIgnore[key]) or
-					key == "AimPartName" and table.HasValue(pac.AimPartNames, value))
+		function PART:GetProperties()
+			local out = {}
 
-				if cond then
-					if self["Set" .. key] then
-						if key == "Material" then
-							table.insert(self.delayed_variables, {key = key, val = value})
+			for _, key in pairs(self:GetStorableVars()) do
+				if self.PropertyWhitelist and not self.PropertyWhitelist[key] then
+					goto CONTINUE
+				end
+
+				table.insert(out, {
+					key = key,
+					set = function(v) self["Set" .. key](self, v) end,
+					get = function() return self["Get" .. key](self) end,
+					udata = pac.GetPropertyUserdata(self, key) or {},
+				})
+
+				::CONTINUE::
+			end
+
+			if self.GetDynamicProperties then
+				local props = self:GetDynamicProperties()
+
+				if props then
+					for _, info in pairs(props) do
+						if not self.PropertyWhitelist or self.PropertyWhitelist[info.key] then
+							table.insert(out, info)
 						end
-
-						self["Set" .. key](self, value)
-					elseif key ~= "ClassName" then
-						pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
 					end
 				end
 			end
 
+			local sorted = {}
+			local done = {}
+
+			for _, key in ipairs({"Name", "Hide"}) do
+				for _, prop in ipairs(out) do
+					if key == prop.key then
+						if not done[key] then
+							table.insert(sorted, prop)
+							done[key] = true
+							break
+						end
+					end
+				end
+			end
+
+			if pac.VariableOrder[self.ClassName] then
+				for _, key in ipairs(pac.VariableOrder[self.ClassName]) do
+					for _, prop in ipairs(out) do
+						if key == prop.key then
+							if not done[key] then
+								table.insert(sorted, prop)
+								done[key] = true
+								break
+							end
+						end
+					end
+				end
+			end
+
+			for _, variables in pairs(pac.VariableOrder) do
+				for _, key in ipairs(variables) do
+					for _, prop in ipairs(out) do
+						if key == prop.key then
+							if not done[key] then
+								table.insert(sorted, prop)
+								done[key] = true
+								break
+							end
+						end
+					end
+				end
+			end
+
+			for _, prop in ipairs(out) do
+				if not done[prop.key] then
+					table.insert(sorted, prop)
+				end
+			end
+
+			return sorted
+		end
+	end
+
+	local function on_error(msg)
+		ErrorNoHalt(debug.traceback(msg))
+	end
+
+	do
+		local function SetTable(self, tbl, level)
+			self:SetUniqueID(tbl.self.UniqueID)
+			self.delayed_variables = self.delayed_variables or {}
+
+			for key, value in next, tbl.self do
+				if key == "UniqueID" then goto CONTINUE end
+
+				if self["Set" .. key] then
+					if key == "Material" then
+						table.insert(self.delayed_variables, {key = key, val = value})
+					end
+					self["Set" .. key](self, value)
+				elseif key ~= "ClassName" then
+					pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
+				end
+
+		        ::CONTINUE::
+			end
+
 			for _, value in pairs(tbl.children) do
-				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner())
-				part:SetIsBeingWorn(self:IsBeingWorn())
-				part:SetParent(self)
-				part:SetTable(value)
+				local part = pac.CreatePart(value.self.ClassName, self:GetPlayerOwner(), value, nil --[[make_copy]], level + 1)
+				self:AddChild(part, true)
 			end
 		end
 
 		local function make_copy(tbl, pepper)
+			if pepper == true then
+				pepper = tostring(math.random()) .. tostring(math.random())
+			end
+
 			for key, val in pairs(tbl.self) do
 				if key == "UniqueID" or key:sub(-3) == "UID" then
-					tbl.self[key] = util.CRC(val .. pepper)
+					tbl.self[key] = pac.Hash(val .. pepper)
 				end
 			end
 
 			for _, child in ipairs(tbl.children) do
 				make_copy(child, pepper)
 			end
+
 			return tbl
 		end
 
-		function PART:SetTable(tbl, copy_id)
+		function PART:SetTable(tbl, copy_id, level)
+			level = level or 0
 
 			if copy_id then
 				tbl = make_copy(table.Copy(tbl), copy_id)
 			end
 
-			local ok, err = xpcall(SetTable, ErrorNoHalt, self, tbl)
+			local ok, err = xpcall(SetTable, on_error, self, tbl, level)
+
 			if not ok then
 				pac.Message(Color(255, 50, 50), "SetTable failed: ", err)
+			end
+
+			-- figure out if children needs to be hidden
+			if level == 0 then
+				self:CallRecursive("CalcShowHide", true)
 			end
 		end
 	end
 
-	function PART:ToTable(make_copy_name)
+	function PART:ToTable()
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 		for _, key in pairs(self:GetStorableVars()) do
 			local var = self[key] and self["Get" .. key](self) or self[key]
-			var = pac.class.Copy(var) or var
+			var = pac.CopyValue(var) or var
 
 			if make_copy_name and var ~= "" and (key == "UniqueID" or key:sub(-3) == "UID") then
-				var = util.CRC(var .. var)
+				var = pac.Hash(var .. var)
 			end
 
 			if key == "Name" and self[key] == "" then
@@ -940,11 +897,7 @@ do -- serializing
 			end
 
 			-- these arent needed because parent system uses the tree structure
-			if
-				key ~= "ParentUID" and
-				key ~= "ParentName" and
-				var ~= self.DefaultVars[key]
-			then
+			if key ~= "ParentUID" and var ~= self.DefaultVars[key] then
 				tbl.self[key] = var
 			end
 		end
@@ -953,7 +906,7 @@ do -- serializing
 			if not self.is_valid or self.is_deattached then
 
 			else
-				table.insert(tbl.children, part:ToTable(make_copy_name))
+				table.insert(tbl.children, part:ToTable())
 			end
 		end
 
@@ -961,23 +914,20 @@ do -- serializing
 	end
 
 	function PART:ToSaveTable()
-		if self:GetPlayerOwner() ~= LocalPlayer() then return end
+		if self:GetPlayerOwner() ~= pac.LocalPlayer then return end
 
 		local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 		for _, key in pairs(self:GetStorableVars()) do
 			local var = self[key] and self["Get" .. key](self) or self[key]
-			var = pac.class.Copy(var) or var
+			var = pac.CopyValue(var) or var
 
 			if key == "Name" and self[key] == "" then
 				var = ""
 			end
 
 			-- these arent needed because parent system uses the tree structure
-			if
-				key ~= "ParentUID" and
-				key ~= "ParentName"
-			then
+			if key ~= "ParentUID" then
 				tbl.self[key] = var
 			end
 		end
@@ -996,22 +946,22 @@ do -- serializing
 	do -- undo
 		do
 			local function SetTable(self, tbl)
-				self.supress_part_name_find = true
+				self:SetUniqueID(tbl.self.UniqueID)
 				self.delayed_variables = self.delayed_variables or {}
 
-				-- this needs to be set first
-				self:SetUniqueID(tbl.self.UniqueID or util.CRC(tostring(tbl.self)))
-
 				for key, value in pairs(tbl.self) do
+					if key == "UniqueID" then goto CONTINUE end
+
 					if self["Set" .. key] then
 						if key == "Material" then
 							table.insert(self.delayed_variables, {key = key, val = value})
 						end
-
 						self["Set" .. key](self, value)
 					elseif key ~= "ClassName" then
 						pac.dprint("settable: unhandled key [%q] = %q", key, tostring(value))
 					end
+
+                    ::CONTINUE::
 				end
 
 				for _, value in pairs(tbl.children) do
@@ -1022,7 +972,7 @@ do -- serializing
 			end
 
 			function PART:SetUndoTable(tbl)
-				local ok, err = xpcall(SetTable, ErrorNoHalt, self, tbl)
+				local ok, err = xpcall(SetTable, on_error, self, tbl)
 				if not ok then
 					pac.Message(Color(255, 50, 50), "SetUndoTable failed: ", err)
 				end
@@ -1030,20 +980,18 @@ do -- serializing
 		end
 
 		function PART:ToUndoTable()
-			if self:GetPlayerOwner() ~= LocalPlayer() then return end
+			if self:GetPlayerOwner() ~= pac.LocalPlayer then return end
 
 			local tbl = {self = {ClassName = self.ClassName}, children = {}}
 
 			for _, key in pairs(self:GetStorableVars()) do
-				if not pac.PartNameKeysToIgnore[key] then
-
-					if key == "Name" and self.Name == "" then
-						-- TODO: seperate debug name and name !!!
-						continue
-					end
-
-					tbl.self[key] = pac.class.Copy(self["Get" .. key](self))
+				if key == "Name" and self.Name == "" then
+					-- TODO: seperate debug name and name !!!
+					goto CONTINUE
 				end
+
+				tbl.self[key] = pac.CopyValue(self["Get" .. key](self))
+                ::CONTINUE::
 			end
 
 			for _, part in ipairs(self:GetChildren()) do
@@ -1063,7 +1011,7 @@ do -- serializing
 		local tbl = {}
 
 		for _, key in pairs(self:GetStorableVars()) do
-			tbl[key] = pac.class.Copy(self[key])
+			tbl[key] = pac.CopyValue(self[key])
 		end
 
 		return tbl
@@ -1072,463 +1020,51 @@ do -- serializing
 	function PART:Clone()
 		local part = pac.CreatePart(self.ClassName, self:GetPlayerOwner())
 		if not part then return end
-		part:SetTable(self:ToTable(true))
 
-		part:SetParent(self:GetParent())
+		-- ugly workaround for cloning bugs
+		if self:GetOwner() == self:GetPlayerOwner() then
+			part:SetOwner(self:GetOwner())
+		end
+
+		part:SetTable(self:ToTable(), true)
+
+		if self:GetParent():IsValid() then
+			part:SetParent(self:GetParent())
+		end
 
 		return part
 	end
 end
 
-function PART:CallEvent(event, ...)
-	self:OnEvent(event, ...)
-	for _, part in ipairs(self:GetChildren()) do
-		part:CallEvent(event, ...)
-	end
-end
+do
+	function PART:Think()
+		if not self.Enabled then return end
+		if self.ThinkTime ~= 0 and self.last_think and self.last_think > pac.RealTime then return end
 
-do -- events
-	function PART:Initialize() end
-	function PART:OnRemove() end
-
-	function PART:IsDeattached()
-		return self.is_deattached
-	end
-
-	function PART:Deattach()
-		if not self.is_valid or self.is_deattached then return end
-		self.is_deattached = true
-		self.PlayerOwner_ = self.PlayerOwner
-
-		if self:GetPlayerOwner() == pac.LocalPlayer then
-			pac.CallHook("OnPartRemove", self)
+		if not self.AlwaysThink and self:IsHiddenCached() then
+			self:AlwaysOnThink() -- for things that drive general logic
+			-- such as processing outfit URL downloads
+			-- without calling probably expensive self:OnThink()
+			return
 		end
 
-		self:CallRecursive("OnHide")
-		self:CallRecursive("OnRemove")
+		if self.delayed_variables then
 
-		if self.owner_id and self.UniqueID then
-			pac.RemoveUniqueIDPart(self.owner_id, self.UniqueID)
-		end
-
-		pac.RemovePart(self)
-		self.is_valid = false
-
-		self:DeattachChildren()
-	end
-
-	function PART:DeattachFull()
-		self:Deattach()
-
-		if self:HasParent() then
-			self:GetParent():RemoveChild(self)
-		end
-	end
-
-	function PART:Attach(parent)
-		if not self.is_deattached then
-			return self:SetParent(parent)
-		end
-
-		self.is_deattached = false
-		self.is_valid = true
-		self:CallRecursive("OnShow")
-		self:SetParent(parent)
-
-		if self.SetPlayerOwner then
-			self:SetPlayerOwner(self.PlayerOwner_)
-		end
-
-		timer.Simple(0.1, function()
-			if self:IsValid() and self.show_in_editor ~= false and self.PlayerOwner_ == pac.LocalPlayer then
-				pac.CallHook("OnPartCreated", self)
+			for _, data in ipairs(self.delayed_variables) do
+				self["Set" .. data.key](self, data.val)
 			end
-		end)
 
-		pac.AddPart(self)
-	end
-
-	function PART:Remove(skip_removechild)
-		self:Deattach()
-
-		if not skip_removechild and self:HasParent() then
-			self:GetParent():RemoveChild(self)
+			self.delayed_variables = nil
 		end
 
-		self:RemoveChildren()
+		self:AlwaysOnThink() -- for things that drive general logic
+		-- such as processing outfit URL downloads
+		-- without calling probably expensive self:OnThink()
+		self:OnThink()
 	end
-
-	function PART:OnStore() end
-	function PART:OnRestore() end
 
 	function PART:OnThink() end
-	function PART:OnBuildBonePositions() end
-	function PART:OnParent() end
-	function PART:OnChildAdd() end
-	function PART:OnUnParent() end
-
-	function PART:OnHide() end
-	function PART:OnShow() end
-
-	function PART:OnSetOwner(ent) end
-
-	function PART:OnEvent(event, ...) end
+	function PART:AlwaysOnThink() end
 end
 
-do -- drawing. this code is running every frame
-	PART.cached_pos = Vector(0, 0, 0)
-	PART.cached_ang = Angle(0, 0, 0)
-
-	function PART:DrawChildren(event, pos, ang, draw_type, drawAll)
-		if drawAll then
-			for i, child in ipairs(self:GetChildrenList()) do
-				child:Draw(pos, ang, draw_type, true)
-			end
-		else
-			for i, child in ipairs(self:GetChildren()) do
-				child:Draw(pos, ang, draw_type)
-			end
-		end
-	end
-
-	--function PART:Draw(pos, ang, draw_type, isNonRoot)
-	function PART:Draw(pos, ang, draw_type)
-		-- Think takes care of polling this
-		if not self.last_enabled then return end
-
-		if self:IsHidden() then return end
-
-		if
-			self.OnDraw and
-			(
-				draw_type == "viewmodel" or draw_type == "hands" or
-				((self.Translucent == true or self.force_translucent == true) and draw_type == "translucent")  or
-				((self.Translucent == false or self.force_translucent == false) and draw_type == "opaque")
-			)
-		then
-			local sysTime = SysTime()
-			pos, ang = self:GetDrawPosition()
-
-			self.cached_pos = pos
-			self.cached_ang = ang
-
-			if not self.PositionOffset:IsZero() or not self.AngleOffset:IsZero() then
-				pos, ang = LocalToWorld(self.PositionOffset, self.AngleOffset, pos, ang)
-			end
-
-			if not self.HandleModifiersManually then self:ModifiersPreEvent('OnDraw', draw_type) end
-
-			if self.IgnoreZ then cam.IgnoreZ(true) end
-
-			if self.blend_override then
-				render.OverrideBlendFunc(true,
-					self.blend_override[1],
-					self.blend_override[2],
-					self.blend_override[3],
-					self.blend_override[4]
-				)
-
-				if self.blend_override[5] then
-					render.OverrideAlphaWriteEnable(true, self.blend_override[5] == "write_alpha")
-				end
-
-				if self.blend_override[6] then
-					render.OverrideColorWriteEnable(true, self.blend_override[6] == "write_color")
-				end
-			end
-
-			if self.NoTextureFiltering then
-				render.PushFilterMin(TEXFILTER.POINT)
-				render.PushFilterMag(TEXFILTER.POINT)
-			end
-
-			self:OnDraw(self:GetOwner(), pos, ang)
-
-			if self.NoTextureFiltering then
-				render.PopFilterMin()
-				render.PopFilterMag()
-			end
-
-			if self.blend_override then
-				render.OverrideBlendFunc(false)
-
-				if self.blend_override[5] then
-					render.OverrideAlphaWriteEnable(false)
-				end
-
-				if self.blend_override[6] then
-					render.OverrideColorWriteEnable(false)
-				end
-			end
-
-			if self.IgnoreZ then cam.IgnoreZ(false) end
-
-			if not self.HandleModifiersManually then self:ModifiersPostEvent('OnDraw', draw_type) end
-			self.selfDrawTime = SysTime() - sysTime
-		end
-
-		-- if not isNonRoot then
-		--  for i, child in ipairs(self:GetChildrenList()) do
-		--      child:Draw(pos, ang, draw_type, true)
-		--  end
-		-- end
-
-		local sysTime = SysTime()
-
-		for _, child in ipairs(self:GetChildren()) do
-			child:Draw(pos, ang, draw_type)
-		end
-
-		if draw_type == "translucent" then
-			self.childrenTranslucentDrawTime = SysTime() - sysTime
-		elseif draw_type == "opaque" then
-			self.childrenOpaqueDrawTime = SysTime() - sysTime
-		end
-	end
-
-	function PART:GetDrawPosition(bone_override, skip_cache)
-		if not self.AllowSetupPositionFrameSkip or pac.FrameNumber ~= self.last_drawpos_framenum or not self.last_drawpos or skip_cache then
-			self.last_drawpos_framenum = pac.FrameNumber
-
-			local owner = self:GetOwner()
-			if owner:IsValid() then
-				local pos, ang = self:GetBonePosition(bone_override, skip_cache)
-
-				pos, ang = LocalToWorld(
-					self.Position or Vector(),
-					self.Angles or Angle(),
-					pos or owner:GetPos(),
-					ang or owner:GetAngles()
-				)
-
-				ang = self:CalcAngles(ang) or ang
-
-				self.last_drawpos = pos
-				self.last_drawang = ang
-
-				return pos, ang
-			end
-		end
-
-		return self.last_drawpos, self.last_drawang
-	end
-
-	function PART:GetBonePosition(bone_override, skip_cache)
-		if not self.AllowSetupPositionFrameSkip or pac.FrameNumber ~= self.last_bonepos_framenum or not self.last_bonepos or skip_cache then
-			self.last_bonepos_framenum = pac.FrameNumber
-
-			local owner = self:GetOwner()
-			local parent = self:GetParent()
-
-			if parent:IsValid() and parent.ClassName == "jiggle" then
-				if skip_cache then
-					if parent.Translucent then
-						parent:Draw(nil, nil, "translucent")
-					else
-						parent:Draw(nil, nil, "opaque")
-					end
-				end
-
-				return parent.pos, parent.ang
-			end
-
-			local pos, ang
-
-			if parent:IsValid() and not parent.NonPhysical then
-				local ent = parent.Entity or NULL
-
-				if ent:IsValid() then
-					-- if the parent part is a model, get the bone position of the parent model
-					if ent.pac_bone_affected ~= FrameNumber() then
-						ent:InvalidateBoneCache()
-					end
-
-					pos, ang = pac.GetBonePosAng(ent, bone_override or self.Bone)
-				else
-					-- else just get the origin of the part
-					-- unless we've passed it from parent
-					pos, ang = parent:GetDrawPosition()
-				end
-			elseif owner:IsValid() then
-				-- if there is no parent, default to owner bones
-				owner:InvalidateBoneCache()
-				pos, ang = pac.GetBonePosAng(owner, self.Bone)
-			end
-
-			self.last_bonepos = pos
-			self.last_boneang = ang
-
-			return pos, ang
-		end
-
-		return self.last_bonepos, self.last_boneang
-	end
-
-	-- since this is kind of like a hack I choose to have upper case names to avoid name conflicts with parts
-	-- the editor can use the keys as friendly names
-	pac.AimPartNames =
-	{
-		["local eyes"] = "LOCALEYES",
-		["player eyes"] = "PLAYEREYES",
-		["local eyes yaw"] = "LOCALEYES_YAW",
-		["local eyes pitch"] = "LOCALEYES_PITCH",
-	}
-
-	function PART:CalcAngles(ang)
-		local owner = self:GetOwner(true)
-
-		if pac.StringFind(self.AimPartName, "LOCALEYES_YAW", true, true) then
-			ang = (pac.EyePos - self.cached_pos):Angle()
-			ang.p = 0
-			return self.Angles + ang
-		end
-
-		if pac.StringFind(self.AimPartName, "LOCALEYES_PITCH", true, true) then
-			ang = (pac.EyePos - self.cached_pos):Angle()
-			ang.y = 0
-			return self.Angles + ang
-		end
-
-		if pac.StringFind(self.AimPartName, "LOCALEYES", true, true) then
-			return self.Angles + (pac.EyePos - self.cached_pos):Angle()
-		end
-
-
-		if pac.StringFind(self.AimPartName, "PLAYEREYES", true, true) then
-			local ent = owner.pac_traceres and owner.pac_traceres.Entity or NULL
-
-			if ent:IsValid() then
-				return self.Angles + (ent:EyePos() - self.cached_pos):Angle()
-			end
-
-			return self.Angles + (pac.EyePos - self.cached_pos):Angle()
-		end
-
-		if self.AimPart:IsValid() then
-			return self.Angles + (self.AimPart.cached_pos - self.cached_pos):Angle()
-		end
-
-		if self.EyeAngles then
-			if owner:IsPlayer() then
-				return self.Angles + ((owner.pac_hitpos or owner:GetEyeTraceNoCursor().HitPos) - self.cached_pos):Angle()
-			elseif owner:IsNPC() then
-				return self.Angles + ((owner:EyePos() + owner:GetForward() * 100) - self.cached_pos):Angle()
-			end
-		end
-
-		return ang or Angle(0,0,0)
-	end
-
-	--SETUP_CACHE_FUNC(PART, "CalcAngles")
-end
-
-function PART:CalcShowHide()
-	local b, byEvent = self:IsHidden()
-	local triggerUpdate = b ~= self.last_hidden or self.last_hidden_by_event ~= byEvent
-
-	if not triggerUpdate then return end
-
-	if b ~= self.last_hidden then
-		if b then
-			self:OnHide()
-		else
-			self:OnShow(self.shown_from_rendering == true or self.shown_from_rendering == FrameNumber())
-		end
-	end
-
-	if FrameNumber() ~= self.shown_from_rendering then
-		self.shown_from_rendering = nil
-	end
-
-	self.last_hidden = b
-	self.last_hidden_by_event = byEvent
-end
-
-function PART:HookEntityRender()
-	local root = self:GetRootPart()
-	local owner = root:GetOwner()
-
-	if root.ClassName ~= "group" then return end -- FIX ME
-
-	if root.last_owner:IsValid() then
-		pac.UnhookEntityRender(root.last_owner, root)
-	end
-
-	if owner:IsValid() then
-		pac.HookEntityRender(owner, root)
-	end
-end
-
-function PART:CThink()
-	if self.ThinkTime == 0 then
-		if self.last_think ~= pac.FrameNumber then
-			self:Think()
-			self.last_think = pac.FrameNumber
-		end
-	elseif not self.last_think or self.last_think < pac.RealTime then
-		self:Think()
-		self.last_think = pac.RealTime + (self.ThinkTime or 0.1)
-	end
-end
-
-function PART:Think()
-	if not self:GetEnabled() then return end
-
-	self:CalcShowHide()
-
-	if not self.AlwaysThink and self:IsHidden() then return end
-
-	local owner = self:GetOwner()
-
-	if owner:IsValid() then
-		if owner ~= self.last_owner then
-			self.last_hidden = false
-			self.last_hidden_by_event = false
-			self.last_owner = owner
-		end
-
-		if not owner.pac_bones then
-			self:GetModelBones()
-		end
-	end
-
-	if self.ResolvePartNames then
-		self:ResolvePartNames()
-	end
-
-	if self.delayed_variables then
-
-		for _, data in ipairs(self.delayed_variables) do
-			self["Set" .. data.key](self, data.val)
-		end
-
-		self.delayed_variables = nil
-	end
-
-	self:OnThink()
-
-	self.supress_part_name_find = false
-end
-
-function PART:BuildBonePositions()
-	if not self:IsHidden() then
-		self:OnBuildBonePositions()
-	end
-end
-
-function PART:SubmitToServer()
-	pac.SubmitPart(self:ToTable())
-end
-
-PART.is_valid = true
-
-function PART:IsValid()
-	return self.is_valid
-end
-
-function PART:SetDrawOrder(num)
-	self.DrawOrder = num
-	if self:HasParent() then self:GetParent():SortChildren() end
-end
-
-pac.RegisterPart(PART)
+BUILDER:Register()

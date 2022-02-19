@@ -573,7 +573,7 @@ end
 function webaudio.SetVolume(vol)
 	if webaudio.volume ~= vol then
 		webaudio.volume = vol
-		run_javascript(string.format("gain.gain.value = %f", vol), self)
+		run_javascript(string.format("gain.gain.value = %f", vol))
 	end
 end
 
@@ -886,7 +886,7 @@ do
 	end
 
 	function META:UpdateVolume3d()
-		if self.SourceEntity == LocalPlayer() and not self.SourceEntity:ShouldDrawLocalPlayer() then
+		if self.SourceEntity == pac.LocalPlayer and not pac.LocalPlayer:ShouldDrawLocalPlayer() then
 			self:UpdateVolumeFlat()
 			return
 		end
@@ -917,7 +917,7 @@ do
 			self:SetRightVolume((math.Clamp(1 + pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
 			self:SetLeftVolume((math.Clamp(1 - pan, 0, 1) * volumeFraction) + self.AdditiveVolumeFraction)
 
-			if self:GetDoppler() then
+			if self:GetDoppler() and webaudio.eye_velocity then
 				local relativeSourceVelocity = self.SourceVelocity - webaudio.eye_velocity
 				local relativeSourceSpeed    = relativeSourcePosition:GetNormalized():Dot(-relativeSourceVelocity) * 0.0254
 

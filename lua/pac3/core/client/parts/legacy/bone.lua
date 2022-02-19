@@ -5,50 +5,53 @@ for _, v in pairs(ents.GetAll()) do
 	v.pac_bone_setup_data = nil
 end
 
-local PART = {}
+local BUILDER, PART = pac.PartTemplate("base_movable")
 
+PART.FriendlyName = "legacy bone"
 PART.ClassName = "bone"
 PART.Group = "legacy"
 
 PART.Icon = 'icon16/connect.png'
 
-pac.StartStorableVars()
-	pac.SetPropertyGroup(PART, "generic")
-		pac.PropertyOrder(PART, "Name")
-		pac.PropertyOrder(PART, "Hide")
-		pac.PropertyOrder(PART, "ParentName")
-		pac.GetSet(PART, "Jiggle", false)
-		pac.GetSet(PART, "ScaleChildren", false)
-		pac.GetSet(PART, "AlternativeBones", false)
-		pac.GetSet(PART, "MoveChildrenToOrigin", false)
-		pac.GetSet(PART, "FollowAnglesOnly", false)
-		--pac.GetSet(PART, "HideMesh", false)
-		--pac.GetSet(PART, "InvertHideMesh", false)
-		pac.SetupPartName(PART, "FollowPart")
+BUILDER:StartStorableVars()
+	BUILDER:SetPropertyGroup("generic")
+		BUILDER:PropertyOrder("Name")
+		BUILDER:PropertyOrder("Hide")
+		BUILDER:PropertyOrder("ParentName")
+		BUILDER:GetSet("Jiggle", false)
+		BUILDER:GetSet("ScaleChildren", false)
+		BUILDER:GetSet("AlternativeBones", false)
+		BUILDER:GetSet("MoveChildrenToOrigin", false)
+		BUILDER:GetSet("FollowAnglesOnly", false)
+		--BUILDER:GetSet("HideMesh", false)
+		--BUILDER:GetSet("InvertHideMesh", false)
+		BUILDER:GetSetPart("FollowPart")
 
-	pac.SetPropertyGroup(PART, "orientation")
-		pac.PropertyOrder(PART, "AimPartName")
-		pac.PropertyOrder(PART, "Bone")
-		pac.PropertyOrder(PART, "Position")
-		pac.PropertyOrder(PART, "Angles")
-		pac.PropertyOrder(PART, "EyeAngles")
-		pac.GetSet(PART, "Size", 1, {editor_sensitivity = 0.25})
-		pac.GetSet(PART, "Scale", Vector(1,1,1), {editor_sensitivity = 0.25})
-		pac.PropertyOrder(PART, "PositionOffset")
-		pac.PropertyOrder(PART, "AngleOffset")
+	BUILDER:SetPropertyGroup("orientation")
+		BUILDER:PropertyOrder("AimPartName")
+		BUILDER:PropertyOrder("Bone")
+		BUILDER:PropertyOrder("Position")
+		BUILDER:PropertyOrder("Angles")
+		BUILDER:PropertyOrder("EyeAngles")
+		BUILDER:GetSet("Size", 1, {editor_sensitivity = 0.25})
+		BUILDER:GetSet("Scale", Vector(1,1,1), {editor_sensitivity = 0.25})
+		BUILDER:PropertyOrder("PositionOffset")
+		BUILDER:PropertyOrder("AngleOffset")
 
-	pac.SetPropertyGroup(PART, "appearance")
+	BUILDER:SetPropertyGroup("appearance")
 
 
-	pac.SetPropertyGroup(PART, "other")
-		pac.PropertyOrder(PART, "DrawOrder")
+	BUILDER:SetPropertyGroup("other")
+		BUILDER:PropertyOrder("DrawOrder")
 
-pac.EndStorableVars()
+BUILDER:EndStorableVars()
 
-pac.RemoveProperty(PART, "Translucent")
-pac.RemoveProperty(PART, "IgnoreZ")
-pac.RemoveProperty(PART, "BlendMode")
-pac.RemoveProperty(PART, "NoTextureFiltering")
+BUILDER:RemoveProperty("Translucent")
+BUILDER:RemoveProperty("IgnoreZ")
+BUILDER:RemoveProperty("BlendMode")
+BUILDER:RemoveProperty("NoTextureFiltering")
+
+local BaseClass_GetOwner = PART.GetOwner
 
 function PART:GetNiceName()
 	return self:GetBone()
@@ -57,20 +60,9 @@ end
 PART.ThinkTime = 0
 
 function PART:OnShow()
-	self.BoneIndex = nil
+	self:SetBone(self:GetBone())
 end
-
 PART.OnParent = PART.OnShow
-
-function PART:GetOwner(root)
-	local parent = self:GetParent()
-
-	if parent:IsValid() and parent.is_model_part then
-		return parent.Entity
-	end
-
-	return self.BaseClass.GetOwner(self, root)
-end
 
 function PART:OnThink()
 	-- this is to setup the cached values
@@ -94,10 +86,6 @@ function PART:GetBonePosition()
 	local pos, ang
 
 	pos, ang = pac.GetBonePosAng(owner, self.Bone, true)
-	if owner:IsValid() then owner:InvalidateBoneCache() end
-
-	self.cached_pos = pos
-	self.cached_ang = ang
 
 	return pos, ang
 end
@@ -107,7 +95,7 @@ local function manpos(ent, id, pos, part)
 		ent.pac_bone_setup_data[part.UniqueID].pos = part.Position + part.PositionOffset
 	else
 		ent:ManipulateBonePosition(id, ent:GetManipulateBonePosition(id) + pos)
-		if ent:EntIndex() == -1 then ent.pac_bone_affected = FrameNumber() end
+		part.modified_bones = true
 	end
 end
 
@@ -116,7 +104,7 @@ local function manang(ent, id, ang, part)
 		ent.pac_bone_setup_data[part.UniqueID].ang = part.Angles + part.AngleOffset
 	else
 		ent:ManipulateBoneAngles(id, ent:GetManipulateBoneAngles(id) + ang)
-		if ent:EntIndex() == -1 then ent.pac_bone_affected = FrameNumber() end
+		part.modified_bones = true
 	end
 end
 
@@ -128,7 +116,7 @@ local function manscale(ent, id, scale, part)
 		ent.pac_bone_setup_data[part.UniqueID].scale = scale
 	else
 		ent:ManipulateBoneScale(id, ent:GetManipulateBoneScale(id) * scale)
-		if ent:EntIndex() == -1 then ent.pac_bone_affected = FrameNumber() end
+		part.modified_bones = true
 	end
 end
 
@@ -156,8 +144,11 @@ local function scale_children(owner, id, scale, origin, ownerScale)
 		::CONTINUE::
 	end
 end
-
+local in_build = false
 function pac.build_bone_callback(ent)
+	if in_build then return end
+
+	in_build = true
 	if ent.pac_matrixhack then
 		pac.LegacyScale(ent)
 	end
@@ -169,14 +160,14 @@ function pac.build_bone_callback(ent)
 			if part:IsValid() then
 				local mat = ent:GetBoneMatrix(data.bone)
 				if mat then
-					if part.FollowPart:IsValid() and part.FollowPart.cached_ang and part.FollowPart.cached_pos then
+					if part.FollowPart:IsValid() and part.FollowPart.GetWorldAngles and part.FollowPart.GetWorldPosition then
 						if part.FollowAnglesOnly then
 							local pos = mat:GetTranslation()
-							mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart.cached_ang)
+							mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart:GetWorldAngles())
 							mat:SetTranslation(pos)
 						else
-							mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart.cached_ang)
-							mat:SetTranslation(part.Position + part.PositionOffset + part.FollowPart.cached_pos)
+							mat:SetAngles(part.Angles + part.AngleOffset + part.FollowPart:GetWorldAngles())
+							mat:SetTranslation(part.Position + part.PositionOffset + part.FollowPart:GetWorldPosition())
 						end
 					else
 						if data.pos then
@@ -204,6 +195,7 @@ function pac.build_bone_callback(ent)
 			end
 		end
 	end
+	in_build = false
 end
 
 function PART:OnBuildBonePositions()
@@ -211,19 +203,17 @@ function PART:OnBuildBonePositions()
 
 	if not owner:IsValid() then return end
 
-	if self.last_model ~= owner:GetModel() then
-		self.BoneIndex = nil
-		self.last_model = owner:GetModel()
+	local index = self:GetModelBoneIndex()
+
+	if not index then
+		index = 0
 	end
-
-
-	self.BoneIndex = self.BoneIndex or owner:LookupBone(self:GetRealBoneName(self.Bone)) or 0
 
 	owner.pac_bone_setup_data = owner.pac_bone_setup_data or {}
 
 	if self.AlternativeBones or self.ScaleChildren or self.FollowPart:IsValid() then
 		owner.pac_bone_setup_data[self.UniqueID] = owner.pac_bone_setup_data[self.UniqueID] or {}
-		owner.pac_bone_setup_data[self.UniqueID].bone = self.BoneIndex
+		owner.pac_bone_setup_data[self.UniqueID].bone = index
 		owner.pac_bone_setup_data[self.UniqueID].part = self
 	else
 		owner.pac_bone_setup_data[self.UniqueID] = nil
@@ -242,8 +232,8 @@ function PART:OnBuildBonePositions()
 			ang.y = -ang.p
 		end
 
-		manpos(owner, self.BoneIndex, self.Position + self.PositionOffset, self)
-		manang(owner, self.BoneIndex, ang + self.AngleOffset, self)
+		manpos(owner, index, self.Position + self.PositionOffset, self)
+		manang(owner, index, ang + self.AngleOffset, self)
 	end
 
 	if owner.pac_bone_setup_data[self.UniqueID] then
@@ -254,7 +244,7 @@ function PART:OnBuildBonePositions()
 		end
 	end
 
-	owner:ManipulateBoneJiggle(self.BoneIndex, type(self.Jiggle) == "number" and self.Jiggle or (self.Jiggle and 1 or 0)) -- afaik anything but 1 is not doing anything at all
+	owner:ManipulateBoneJiggle(index, type(self.Jiggle) == "number" and self.Jiggle or (self.Jiggle and 1 or 0)) -- afaik anything but 1 is not doing anything at all
 
 	local scale
 
@@ -267,7 +257,7 @@ function PART:OnBuildBonePositions()
 			local count = owner:GetBoneCount()
 
 			for i = 0, count - 1 do
-				if i ~= self.BoneIndex then
+				if i ~= index then
 					manscale(owner, i, inf_scale, self)
 				end
 			end
@@ -281,10 +271,9 @@ function PART:OnBuildBonePositions()
 		scale = self.Scale * self.Size
 	end
 
-	manscale(owner, self.BoneIndex, scale, self)
+	manscale(owner, index, scale, self)
 
-	-- TODO: only when actually modified?
-	owner:SetupBones()
+	pac.SetupBones(owner)
 end
 
-pac.RegisterPart(PART)
+BUILDER:Register()
