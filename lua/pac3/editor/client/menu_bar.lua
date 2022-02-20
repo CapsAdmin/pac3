@@ -68,15 +68,13 @@ local function populate_pac(menu)
 			end
 		end
 
-		local info = _G.PAC_VERSION and PAC_VERSION()
-		if info then
+		local version_string = _G.PAC_VERSION and PAC_VERSION()
+		if version_string then
 			local version, version_pnl = help:AddSubMenu(L"Version", function() pace.ShowWiki() end)
 			version.GetDeleteSelf = function() return false end
 			version_pnl:SetImage(pace.MiscIcons.info)
 
-			version:AddOption("Addon: " .. info.addon.version_name)
-			version:AddOption("Editor: " .. info.editor.version_name)
-			version:AddOption("Core: " .. info.core.version_name)
+			version:AddOption(version_string)
 		end
 
 		help:AddOption(
