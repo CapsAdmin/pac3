@@ -293,6 +293,7 @@ end
 function PART:OnRemove()
 	if self.Physical then
 		net.Start("pac_projectile_remove_all")
+			net.WriteString(self.UniqueID)
 		net.SendToServer()
 	elseif self.projectiles then
 		for key, ent in pairs(self.projectiles) do
