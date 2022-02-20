@@ -352,7 +352,7 @@ function pace.KillFocus(show_editor)
 			self:AlphaTo(0, fade_time, 0)
 			self.exit_button:AlphaTo(0, fade_time, 0)
 			self.zoomframe:AlphaTo(0, fade_time, 0)
-			
+
 			timer.Create("pac_editor_visibility", fade_time, 1, function()
 				self:SetVisible(false)
 				self.exit_button:SetVisible(false)
@@ -392,10 +392,8 @@ pac.AddHook('PostRenderVGUI', 'pac_DrawProfileInfos', PostRenderVGUI)
 function PANEL:PaintOver(w, h)
 	if not self.okay then return end
 	textCol = self:GetSkin().Colours.Category.Line.Text
-	local info = _G.PAC_VERSION and PAC_VERSION()
-	if info then
-		local text = info.addon.version_name
-
+	local text = _G.PAC_VERSION and PAC_VERSION()
+	if text then
 		surface.SetFont("DermaDefault")
 		local x, y = self:LocalToScreen()
 		local w, h = surface.GetTextSize(text)
@@ -410,7 +408,7 @@ function PANEL:PaintOver(w, h)
 
 		if mx > x and mx < x + w and my > y and my < y + h then
 			hovering = true
-			text = "pac version: " .. info.addon.version_name
+			text = "pac version: " .. text
 			w, h = surface.GetTextSize(text)
 
 			surface.SetDrawColor(0,0,0,255)
