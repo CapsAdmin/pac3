@@ -56,7 +56,7 @@ do -- bones
 
 		do -- legacy behavior, inherit parent matrix from sprite, particle, etc
 			local parent = self:GetParent()
-			if not parent.is_model_part and parent.WorldMatrix then
+			if not parent.is_model_part and parent.WorldMatrix and parent.ClassName ~= "jiggle" then
 				return parent.WorldMatrix
 			end
 		end
