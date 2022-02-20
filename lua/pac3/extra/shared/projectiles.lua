@@ -401,9 +401,14 @@ if SERVER then
 	util.AddNetworkString("pac_projectile_remove_all")
 
 	net.Receive("pac_projectile_remove_all", function(len, ply)
+		if len > 1024 then return end
+		local uid = net.ReadString()
+
 		ply.pac_projectiles = ply.pac_projectiles or {}
 		for k,v in pairs(ply.pac_projectiles) do
-			SafeRemoveEntity(v)
+			if v.pac_projectile_uid == uid then
+				SafeRemoveEntity(v)
+			end
 		end
 		ply.pac_projectiles = {}
 	end)
@@ -474,6 +479,8 @@ if SERVER then
 				net.WriteInt(ent:EntIndex(), 16)
 				net.WriteString(part.UniqueID)
 			net.Broadcast()
+
+			ent.pac_projectile_uid = part.UniqueID
 
 			ply.pac_projectiles[ent] = ent
 

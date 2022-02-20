@@ -51,18 +51,23 @@ do -- bones
 		return Vector(), Angle()
 	end
 
-	do
+	function PART:GetBoneMatrix()
 		local bone_matrix = Matrix()
 
-		function PART:GetBoneMatrix()
-			local pos, ang = self:GetBonePosition()
-
-			bone_matrix:Identity()
-			bone_matrix:SetTranslation(pos)
-			bone_matrix:SetAngles(ang)
-
-			return bone_matrix
+		do -- legacy behavior, inherit parent matrix from sprite, particle, etc
+			local parent = self:GetParent()
+			if not parent.is_model_part and parent.WorldMatrix then
+				return parent.WorldMatrix
+			end
 		end
+
+		local pos, ang = self:GetBonePosition()
+
+		bone_matrix:Identity()
+		bone_matrix:SetTranslation(pos)
+		bone_matrix:SetAngles(ang)
+
+		return bone_matrix
 	end
 
 	function PART:GetModelBones()
@@ -84,25 +89,22 @@ do -- bones
 	end
 end
 
-do
+function PART:BuildWorldMatrix(with_offsets)
 	local local_matrix = Matrix()
+	local_matrix:Identity()
+	local_matrix:SetTranslation(self.Position)
+	local_matrix:SetAngles(self.Angles)
 
-	function PART:BuildWorldMatrix(with_offsets)
-		local_matrix:Identity()
-		local_matrix:SetTranslation(self.Position)
-		local_matrix:SetAngles(self.Angles)
+	local m = self:GetBoneMatrix() * local_matrix
 
-		local m = self:GetBoneMatrix() * local_matrix
+	m:SetAngles(self:CalcAngles(m:GetAngles(), m:GetTranslation()))
 
-		m:SetAngles(self:CalcAngles(m:GetAngles(), m:GetTranslation()))
-
-		if with_offsets then
-			m:Translate(self.PositionOffset)
-			m:Rotate(self.AngleOffset)
-		end
-
-		return m
+	if with_offsets then
+		m:Translate(self.PositionOffset)
+		m:Rotate(self.AngleOffset)
 	end
+
+	return m
 end
 
 function PART:GetWorldMatrixWithoutOffsets()
