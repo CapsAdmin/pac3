@@ -436,7 +436,7 @@ if SERVER then
 			ply.pac_projectiles = ply.pac_projectiles or {}
 
 			local projectile_count = 0
-			for ent in paris(ply.pac_projectiles) do
+			for ent in pairs(ply.pac_projectiles) do
 				if ent:IsValid() then
 					projectile_count = projectile_count + 1
 				else
