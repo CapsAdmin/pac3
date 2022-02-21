@@ -546,13 +546,8 @@ do -- hidden / events
 
 		if self.set_hide_from_proxy then
 			self:SetEventTrigger(self.set_hide_from_proxy, val)
-			self:SetKeyValueRecursive("last_hidden", val)
 
-			if val then
-				self:CallRecursive("OnHide", false)
-			else
-				self:CallRecursive("OnShow", false)
-			end
+			self:CallRecursive("CalcShowHide", false)
 		else
 			-- so that IsHiddenCached works in OnHide/OnShow events
 			self:SetKeyValueRecursive("last_hidden", val)

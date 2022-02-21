@@ -195,13 +195,13 @@ PART.Inputs = {}
 PART.Inputs.property = function(self, property_name, field)
 	local part = self:GetTarget()
 
-	if part:IsValid() and property_name then 
+	if part:IsValid() and property_name then
 		local v = part:GetProperty(property_name)
 
 		local T = type(v)
-		
+
 		if T == "Vector" or T == "Angle" then
-			if field and v[field] then 
+			if field and v[field] then
 				return v[field]
 			else
 				return v[1],v[2],v[3]
