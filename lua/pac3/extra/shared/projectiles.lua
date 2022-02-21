@@ -398,20 +398,6 @@ if SERVER then
 
 	util.AddNetworkString("pac_projectile")
 	util.AddNetworkString("pac_projectile_attach")
-	util.AddNetworkString("pac_projectile_remove_all")
-
-	net.Receive("pac_projectile_remove_all", function(len, ply)
-		if len > 1024 then return end
-		local uid = net.ReadString()
-
-		ply.pac_projectiles = ply.pac_projectiles or {}
-		for k,v in pairs(ply.pac_projectiles) do
-			if v.pac_projectile_uid == uid then
-				SafeRemoveEntity(v)
-			end
-		end
-		ply.pac_projectiles = {}
-	end)
 
 	net.Receive("pac_projectile", function(len, ply)
 		if not enable:GetBool() then return end
@@ -449,7 +435,21 @@ if SERVER then
 
 			ply.pac_projectiles = ply.pac_projectiles or {}
 
-			if part.Maximum > 0 and table.Count(ply.pac_projectiles) >= part.Maximum then
+			local projectile_count = 0
+			for ent in paris(ply.pac_projectiles) do
+				if ent:IsValid() then
+					projectile_count = projectile_count + 1
+				else
+					ply.pac_projectiles[ent] = nil
+				end
+			end
+
+			if projectile_count > 50 then
+				pac.Message("Player ", ply, " has more than 50 projectiles spawned!")
+				return
+			end
+
+			if part.Maximum > 0 and projectile_count >= part.Maximum then
 				return
 			end
 
