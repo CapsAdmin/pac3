@@ -168,11 +168,15 @@ do -- owner
 
 			-- legacy behavior
 			if parent.ClassName == "event" then
-				local parent = parent:GetParent()
-				if parent:IsValid() then
+				if parent.RootOwner then
+					return parent:GetRootPart():GetOwner()
+				else
 					local parent = parent:GetParent()
 					if parent:IsValid() then
-						return parent:GetOwner()
+						local parent = parent:GetParent()
+						if parent:IsValid() then
+							return parent:GetOwner()
+						end
 					end
 				end
 			end
