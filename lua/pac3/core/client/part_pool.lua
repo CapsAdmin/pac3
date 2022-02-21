@@ -618,7 +618,7 @@ do -- drawing
 	pac.RealTime = 0
 	pac.FrameNumber = 0
 
-	local skip_frames = CreateConVar('pac_optimization_render_once_per_frame', '0', {FCVA_ARCHIVE}, 'render only once per frame (will break water reflections and vr)')
+	local skip_frames = CreateConVar('pac_optimization_render_once_per_frame', '0', {FCVAR_ARCHIVE}, 'render only once per frame (will break water reflections and vr)')
 
 	local function setup_suppress()
 		local last_framenumber = 0
