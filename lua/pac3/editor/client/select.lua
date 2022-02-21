@@ -339,7 +339,7 @@ function pace.SelectPart(parts, callback)
 		parts,
 
 		function(_, part)
-			return part:IsHidden()
+			return part:IsHidden() and part:GetShowInEditor()
 		end,
 
 		function(_, part)
