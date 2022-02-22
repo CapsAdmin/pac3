@@ -544,22 +544,16 @@ do -- hidden / events
 	function PART:SetHide(val)
 		self.Hide = val
 
-		if self.set_hide_from_proxy then
-			self:SetEventTrigger(self.set_hide_from_proxy, val)
+		-- so that IsHiddenCached works in OnHide/OnShow events
+		self:SetKeyValueRecursive("last_hidden", val)
 
-			self:CallRecursive("CalcShowHide", false)
+		if val then
+			self:CallRecursive("OnHide", true)
 		else
-			-- so that IsHiddenCached works in OnHide/OnShow events
-			self:SetKeyValueRecursive("last_hidden", val)
-
-			if val then
-				self:CallRecursive("OnHide", true)
-			else
-				self:CallRecursive("OnShow", true)
-			end
-
-			self:CallRecursive("CalcShowHide", true)
+			self:CallRecursive("OnShow", true)
 		end
+
+		self:CallRecursive("CalcShowHide", true)
 	end
 
 	function PART:IsDrawHidden()

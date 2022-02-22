@@ -825,23 +825,20 @@ local function set(self, part, x, y, z, children)
 			x = x or val == true and 1 or 0
 			local b = tonumber(x) > 0
 
+
+			-- special case for hide to make it behave like events
 			if self.VariableName == "Hide" then
-				part.set_hide_from_proxy = self
 				part:SetEventTrigger(self, b)
-			end
-
-			part:SetProperty(self.VariableName, b)
-
-			if self.VariableName == "Hide" then
-				part.set_hide_from_proxy = nil
-
-				-- SetHide side effects takes care of unhiding the other parts
 
 				-- in case parts start as hidden
-				for _, part in ipairs(part:GetChildrenList()) do
-					part.Hide = b
-				end
+				part:SetKeyValueRecursive("Hide", b)
+
+				self:CallRecursive("CalcShowHide", false)
+
+				-- don't apply anything to children
 				return
+			else
+				part:SetProperty(self.VariableName, b)
 			end
 		elseif T == "number" then
 			x = x or val
