@@ -147,7 +147,6 @@ function PART:BuildBonePositions2(ent)
 
 	if not m then return end
 
-
 	original_matrix:Set(m)
 
 	self.bone_matrix = original_matrix * Matrix()
@@ -176,22 +175,18 @@ function PART:BuildBonePositions2(ent)
 
 	local scale = self.Scale * self.Size
 
-	do
-		local should_scale = self.ScaleChildren
-		local scale_origin = self.MoveChildrenToOrigin and m:GetTranslation()
+	if self.ScaleChildren then
+		local scale_origin = self.MoveChildrenToOrigin and original_matrix:GetTranslation()
 
 		for _, child_index in ipairs(get_children_bones_cached(ent, index)) do
 			local m = ent:GetBoneMatrix(child_index)
 			if not m then continue end
 
-			if should_scale then
-				if scale_origin then
-					m:SetTranslation(scale_origin)
-				end
-
-
-				m:Scale(scale)
+			if scale_origin then
+				m:SetTranslation(scale_origin)
 			end
+
+			m:Scale(scale)
 
 			ent:SetBoneMatrix(child_index, m)
 		end
