@@ -52,7 +52,11 @@ local function http(method, url, headers, cb, failcb)
 			end
 		end,
 		failed = function(err)
-			failcb("_G.HTTP error: " .. err)
+			if failcb then
+				failcb("_G.HTTP error: " .. err)
+			else
+				pac.Message("_G.HTTP error: " .. err)
+			end
 		end
 	})
 end
