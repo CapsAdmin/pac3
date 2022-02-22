@@ -833,7 +833,7 @@ local function set(self, part, x, y, z, children)
 				-- in case parts start as hidden
 				part:SetKeyValueRecursive("Hide", b)
 
-				self:CallRecursive("CalcShowHide", false)
+				part:CallRecursive("CalcShowHide", false)
 
 				-- don't apply anything to children
 				return
