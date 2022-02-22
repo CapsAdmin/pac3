@@ -82,6 +82,10 @@ function PART:OnShow()
 	ent.pac_build_bone_id = id
 end
 
+function PART:OnParent()
+	self:OnShow()
+end
+
 function PART:OnHide()
 	local ent = self:GetOwner()
 	if not ent:IsValid() then return end
