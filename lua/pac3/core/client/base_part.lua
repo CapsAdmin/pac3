@@ -167,16 +167,12 @@ do -- owner
 		for _, parent in ipairs(self:GetParentList()) do
 
 			-- legacy behavior
-			if parent.ClassName == "event" then
-				if parent.RootOwner then
-					return parent:GetRootPart():GetOwner()
-				else
+			if parent.ClassName == "event" and not parent.RootOwner then
+				local parent = parent:GetParent()
+				if parent:IsValid() then
 					local parent = parent:GetParent()
 					if parent:IsValid() then
-						local parent = parent:GetParent()
-						if parent:IsValid() then
-							return parent:GetOwner()
-						end
+						return parent:GetOwner()
 					end
 				end
 			end
