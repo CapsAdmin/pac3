@@ -150,7 +150,7 @@ function PART:BuildBonePositions2(ent)
 
 	original_matrix:Set(m)
 
-	self.bone_matrix = original_matrix
+	self.bone_matrix = original_matrix * Matrix()
 
 	if self.FollowPart:IsValid() and self.FollowPart.GetWorldPosition then
 		local pos, ang
