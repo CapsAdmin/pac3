@@ -10,6 +10,7 @@ local BUILDER, PART = pac.PartTemplate("base_movable")
 PART.FriendlyName = "legacy bone"
 PART.ClassName = "bone"
 PART.Group = "legacy"
+PART.is_bone_part = true
 
 PART.Icon = 'icon16/connect.png'
 

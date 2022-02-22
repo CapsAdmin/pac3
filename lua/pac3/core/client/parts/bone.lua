@@ -11,6 +11,7 @@ PART.FriendlyName = "bone"
 PART.ClassName = "bone3"
 PART.Groups = {'entity', 'model'}
 PART.Icon = 'icon16/connect.png'
+PART.is_bone_part = true
 
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")
@@ -256,6 +257,10 @@ function PART:GetBonePosition()
 	local ang = m:GetAngles()
 
 	return pos, ang
+end
+
+function PART:GetBoneMatrix()
+	return self.bone_matrix or Matrix()
 end
 
 BUILDER:Register()
