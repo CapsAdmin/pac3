@@ -137,7 +137,6 @@ local function scale_children(ent, root_index, bone_count, scale, move_to_origin
 	end
 end
 
-local original_matrix = Matrix()
 function PART:BuildBonePositions2(ent)
 	local index = self.bone_index
 
@@ -147,6 +146,7 @@ function PART:BuildBonePositions2(ent)
 
 	if not m then return end
 
+	local original_matrix = Matrix()
 	original_matrix:Set(m)
 
 	self.bone_matrix = original_matrix * Matrix()
