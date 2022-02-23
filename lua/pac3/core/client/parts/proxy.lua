@@ -195,13 +195,13 @@ PART.Inputs = {}
 PART.Inputs.property = function(self, property_name, field)
 	local part = self:GetTarget()
 
-	if part:IsValid() and property_name then 
+	if part:IsValid() and property_name then
 		local v = part:GetProperty(property_name)
 
 		local T = type(v)
-		
+
 		if T == "Vector" or T == "Angle" then
-			if field and v[field] then 
+			if field and v[field] then
 				return v[field]
 			else
 				return v[1],v[2],v[3]
@@ -825,23 +825,29 @@ local function set(self, part, x, y, z, children)
 			x = x or val == true and 1 or 0
 			local b = tonumber(x) > 0
 
+
+			-- special case for hide to make it behave like events
 			if self.VariableName == "Hide" then
-				part.set_hide_from_proxy = self
-				part:SetEventTrigger(self, b)
-			end
 
-			part:SetProperty(self.VariableName, b)
+				if part.proxy_hide ~= b then
 
-			if self.VariableName == "Hide" then
-				part.set_hide_from_proxy = nil
+					-- in case parts start as hidden
+					if b == false then
+						part:SetKeyValueRecursive("Hide", b)
+					end
 
-				-- SetHide side effects takes care of unhiding the other parts
+					-- we want any nested proxies to think twice before they decide to enable themselves
+					part:CallRecursive("OnThink")
 
-				-- in case parts start as hidden
-				for _, part in ipairs(part:GetChildrenList()) do
-					part.Hide = b
+					part:SetEventTrigger(self, b)
+
+					part.proxy_hide = b
 				end
+
+				-- don't apply anything to children
 				return
+			else
+				part:SetProperty(self.VariableName, b)
 			end
 		elseif T == "number" then
 			x = x or val

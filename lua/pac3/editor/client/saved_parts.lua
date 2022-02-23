@@ -102,7 +102,7 @@ function pace.Backup(data, name)
 	if not data then
 		data = {}
 		for key, part in pairs(pac.GetLocalParts()) do
-			if not part:HasParent() then
+			if not part:HasParent() and part:GetShowInEditor()  then
 				table.insert(data, part:ToSaveTable())
 			end
 		end

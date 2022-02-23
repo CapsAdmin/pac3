@@ -167,16 +167,12 @@ do -- owner
 		for _, parent in ipairs(self:GetParentList()) do
 
 			-- legacy behavior
-			if parent.ClassName == "event" then
-				if parent.RootOwner then
-					return parent:GetRootPart():GetOwner()
-				else
+			if parent.ClassName == "event" and not parent.RootOwner then
+				local parent = parent:GetParent()
+				if parent:IsValid() then
 					local parent = parent:GetParent()
 					if parent:IsValid() then
-						local parent = parent:GetParent()
-						if parent:IsValid() then
-							return parent:GetOwner()
-						end
+						return parent:GetOwner()
 					end
 				end
 			end
@@ -517,7 +513,7 @@ do -- hidden / events
 		self.IsDisturbing = val
 		self.hide_disturbing = pac_hide_disturbing:GetBool() and val
 
-		self:CallRecursive("CalcShowHide", false)
+		self:CallRecursive("CalcShowHide", true)
 	end
 
 	function PART:UpdateIsDisturbing()
@@ -525,7 +521,7 @@ do -- hidden / events
 		if new_value == self.hide_disturbing then return end
 		self.hide_disturbing = new_value
 
-		self:CallRecursive("CalcShowHide", false)
+		self:CallRecursive("CalcShowHide", true)
 	end
 
 	function PART:OnHide() end
@@ -544,27 +540,16 @@ do -- hidden / events
 	function PART:SetHide(val)
 		self.Hide = val
 
-		if self.set_hide_from_proxy then
-			self:SetEventTrigger(self.set_hide_from_proxy, val)
-			self:SetKeyValueRecursive("last_hidden", val)
+		-- so that IsHiddenCached works in OnHide/OnShow events
+		self:SetKeyValueRecursive("last_hidden", val)
 
-			if val then
-				self:CallRecursive("OnHide", false)
-			else
-				self:CallRecursive("OnShow", false)
-			end
+		if val then
+			self:CallRecursive("OnHide", true)
 		else
-			-- so that IsHiddenCached works in OnHide/OnShow events
-			self:SetKeyValueRecursive("last_hidden", val)
-
-			if val then
-				self:CallRecursive("OnHide", true)
-			else
-				self:CallRecursive("OnShow", true)
-			end
-
-			self:CallRecursive("CalcShowHide", true)
+			self:CallRecursive("OnShow", true)
 		end
+
+		self:CallRecursive("CalcShowHide", true)
 	end
 
 	function PART:IsDrawHidden()

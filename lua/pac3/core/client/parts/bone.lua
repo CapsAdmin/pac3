@@ -11,6 +11,7 @@ PART.FriendlyName = "bone"
 PART.ClassName = "bone3"
 PART.Groups = {'entity', 'model'}
 PART.Icon = 'icon16/connect.png'
+PART.is_bone_part = true
 
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")
@@ -81,6 +82,10 @@ function PART:OnShow()
 	ent.pac_build_bone_id = id
 end
 
+function PART:OnParent()
+	self:OnShow()
+end
+
 function PART:OnHide()
 	local ent = self:GetOwner()
 	if not ent:IsValid() then return end
@@ -137,7 +142,6 @@ local function scale_children(ent, root_index, bone_count, scale, move_to_origin
 	end
 end
 
-local original_matrix = Matrix()
 function PART:BuildBonePositions2(ent)
 	local index = self.bone_index
 
@@ -147,10 +151,10 @@ function PART:BuildBonePositions2(ent)
 
 	if not m then return end
 
-
+	local original_matrix = Matrix()
 	original_matrix:Set(m)
 
-	self.bone_matrix = original_matrix
+	self.bone_matrix = original_matrix * Matrix()
 
 	if self.FollowPart:IsValid() and self.FollowPart.GetWorldPosition then
 		local pos, ang
@@ -176,22 +180,18 @@ function PART:BuildBonePositions2(ent)
 
 	local scale = self.Scale * self.Size
 
-	do
-		local should_scale = self.ScaleChildren
-		local scale_origin = self.MoveChildrenToOrigin and m:GetTranslation()
+	if self.ScaleChildren then
+		local scale_origin = self.MoveChildrenToOrigin and original_matrix:GetTranslation()
 
 		for _, child_index in ipairs(get_children_bones_cached(ent, index)) do
 			local m = ent:GetBoneMatrix(child_index)
 			if not m then continue end
 
-			if should_scale then
-				if scale_origin then
-					m:SetTranslation(scale_origin)
-				end
-
-
-				m:Scale(scale)
+			if scale_origin then
+				m:SetTranslation(scale_origin)
 			end
+
+			m:Scale(scale)
 
 			ent:SetBoneMatrix(child_index, m)
 		end
@@ -261,6 +261,10 @@ function PART:GetBonePosition()
 	local ang = m:GetAngles()
 
 	return pos, ang
+end
+
+function PART:GetBoneMatrix()
+	return self.bone_matrix or Matrix()
 end
 
 BUILDER:Register()
