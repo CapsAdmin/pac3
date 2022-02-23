@@ -454,7 +454,7 @@ if SERVER then
 			end
 
 			local ent = ents.Create("pac_projectile")
-			SafeRemoveEntityDelayed(ent,math.Clamp(part.LifeTime, 0, 10))
+			SafeRemoveEntityDelayed(ent,math.Clamp(part.LifeTime, 0, 50))
 
 			ent:SetModel("models/props_junk/popcan01a.mdl")
 			ent:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE_DEBRIS)
