@@ -828,14 +828,10 @@ do -- drawing
 	end)
 
 	do
-		local alreadyDrawing = 0
+		pac.LocalViewModel = NULL
 
 		pac.AddHook("PostDrawViewModel", "draw_firstperson", function(viewmodelIn, playerIn, weaponIn)
-			if alreadyDrawing == FrameNumber() then return end
-
 			pac.LocalViewModel = viewmodelIn
-
-			alreadyDrawing = FrameNumber()
 
 			for ent in next, pac.drawn_entities do
 				if IsValid(ent) then
@@ -846,26 +842,14 @@ do -- drawing
 					pac.drawn_entities[ent] = nil
 				end
 			end
-
-			alreadyDrawing = 0
 		end)
 	end
 
 	do
-		local alreadyDrawing = 0
-		local redrawCount = 0
-
 		pac.LocalHands = NULL
 
 		pac.AddHook("PostDrawPlayerHands", "draw_firstperson_hands", function(handsIn, viewmodelIn, playerIn, weaponIn)
-			if alreadyDrawing == FrameNumber() then
-				redrawCount = redrawCount + 1
-				if redrawCount >= 5 then return end
-			end
-
 			pac.LocalHands = handsIn
-
-			alreadyDrawing = FrameNumber()
 
 			for ent in next, pac.drawn_entities do
 				if IsValid(ent) then
@@ -876,9 +860,6 @@ do -- drawing
 					pac.drawn_entities[ent] = nil
 				end
 			end
-
-			alreadyDrawing = 0
-			redrawCount = 0
 		end)
 	end
 end
