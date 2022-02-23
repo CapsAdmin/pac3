@@ -1133,7 +1133,7 @@ do -- vector
 			self.middle:SetValue(0)
 			self.right:SetValue(0)
 
-			self.OnValueChanged(self.vector)
+			self.OnValueChanged(self.vector * 1)
 		end
 
 		function PANEL:PopulateContextMenu(menu)
@@ -1153,7 +1153,7 @@ do -- vector
 				if _G.type(val):lower() == type or type == "color" then
 					self:SetValue(val)
 
-					self.OnValueChanged(self.vector)
+					self.OnValueChanged(self.vector * 1)
 				end
 			end):SetImage(pace.MiscIcons.paste)
 			menu:AddSpacer()
@@ -1167,7 +1167,7 @@ do -- vector
 		end
 
 		function PANEL:SetValue(vec)
-			self.vector = vec
+			self.vector = vec * 1
 
 			self.left:SetValue(math.Round(vec[arg1], 4))
 			self.middle:SetValue(math.Round(vec[arg2], 4))
