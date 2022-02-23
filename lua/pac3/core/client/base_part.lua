@@ -513,7 +513,7 @@ do -- hidden / events
 		self.IsDisturbing = val
 		self.hide_disturbing = pac_hide_disturbing:GetBool() and val
 
-		self:CallRecursive("CalcShowHide", false)
+		self:CallRecursive("CalcShowHide", true)
 	end
 
 	function PART:UpdateIsDisturbing()
@@ -521,7 +521,7 @@ do -- hidden / events
 		if new_value == self.hide_disturbing then return end
 		self.hide_disturbing = new_value
 
-		self:CallRecursive("CalcShowHide", false)
+		self:CallRecursive("CalcShowHide", true)
 	end
 
 	function PART:OnHide() end
