@@ -171,10 +171,7 @@ function PART:OnThink()
 end
 
 function PART:OnBuildBonePositions()
-	local ent = self:GetOwner()
-	if ent:IsPlayer() then
-		self:UpdateFlex()
-	end
+	self:UpdateFlex()
 end
 
 function PART:OnShow(from_rendering)

@@ -755,8 +755,10 @@ function PART:ApplyMatrix()
 		})
 
 		if self.Size == 1 and self.Scale == vec_one then
-			if ent.pac_enable_ik then
-				ent:SetModelScale(1, 0)
+			if self.InverseKinematics then
+				if ent:GetModelScale() ~= 1 then
+					ent:SetModelScale(1, 0)
+				end
 				ent:SetIK(true)
 			else
 				ent:SetModelScale(1.000001, 0)
@@ -881,7 +883,7 @@ do
 		:SetPropertyGroup("appearance")
 			:GetSet("NoDraw", false)
 			:GetSet("DrawShadow", true)
-			:GetSet("InverseKinematics", false)
+			:GetSet("InverseKinematics", true)
 
 		:SetPropertyGroup("hull")
 			:GetSet("StandingHullHeight", 72, {editor_panel = "hull"})
@@ -974,7 +976,7 @@ do
 		function ent.RenderOverride()
 			-- if the draw call is not from pac don't bother
 			if not ent.pac_drawing_model then
-				if not ent.pac_is_drawing and ent ~= LocalPlayer() then
+				if not ent.pac_is_drawing and ent ~= pac.LocalPlayer and ent.pac_player ~= pac.LocalPlayer then
 					ent.RenderOverride = nil
 					ent:DisableMatrix("RenderMultiply")
 					ent:SetSkin(0)
