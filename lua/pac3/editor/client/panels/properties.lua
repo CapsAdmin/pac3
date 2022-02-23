@@ -1044,11 +1044,11 @@ do -- vector
 					self.vector[arg3] = num
 				end
 
-				self.OnValueChanged(self.vector)
+				self.OnValueChanged(self.vector * 1)
 				self:InvalidateLayout()
 
 				if self.OnValueSet then
-					self:OnValueSet(self.vector)
+					self:OnValueSet(self.vector * 1)
 				end
 			end
 
@@ -1066,11 +1066,11 @@ do -- vector
 					self.vector[arg3] = num
 				end
 
-				self.OnValueChanged(self.vector)
+				self.OnValueChanged(self.vector * 1)
 				self:InvalidateLayout()
 
 				if self.OnValueSet then
-					self:OnValueSet(self.vector)
+					self:OnValueSet(self.vector * 1)
 				end
 			end
 
@@ -1088,11 +1088,11 @@ do -- vector
 					self.vector[arg1] = num
 				end
 
-				self.OnValueChanged(self.vector)
+				self.OnValueChanged(self.vector * 1)
 				self:InvalidateLayout()
 
 				if self.OnValueSet then
-					self:OnValueSet(self.vector)
+					self:OnValueSet(self.vector * 1)
 				end
 			end
 
