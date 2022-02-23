@@ -68,7 +68,9 @@ local functions = {
 function MUTATOR:Mutate(multiplier, other, hidden_state)
 	local ent = self.Entity
 
-	ent:SetModelScale(multiplier)
+	if ent:GetModelScale() ~= multiplier then
+		ent:SetModelScale(multiplier)
+	end
 
 	-- hmmm
 	hidden_state = hidden_state or self.original_state[3]
