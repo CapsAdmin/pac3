@@ -205,9 +205,11 @@ function pace.Panic()
 	end
 
 	for i, ent in ipairs(ents.GetAll()) do
-		ent.pac_onuse_only = nil
-		ent.pac_onuse_only_check = nil
-		hook.Remove('pace_OnUseOnlyUpdates', ent)
+		if ent:IsValid() then
+			ent.pac_onuse_only = nil
+			ent.pac_onuse_only_check = nil
+			hook.Remove('pace_OnUseOnlyUpdates', ent)
+		end
 	end
 end
 
