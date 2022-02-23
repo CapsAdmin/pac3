@@ -828,12 +828,21 @@ local function set(self, part, x, y, z, children)
 
 			-- special case for hide to make it behave like events
 			if self.VariableName == "Hide" then
-				part:SetEventTrigger(self, b)
 
-				-- in case parts start as hidden
-				part:SetKeyValueRecursive("Hide", b)
+				if part.proxy_hide ~= b then
 
-				part:CallRecursive("CalcShowHide", false)
+					-- in case parts start as hidden
+					if b == false then
+						part:SetKeyValueRecursive("Hide", b)
+					end
+
+					-- we want any nested proxies to think twice before they decide to enable themselves
+					part:CallRecursive("OnThink")
+
+					part:SetEventTrigger(self, b)
+
+					part.proxy_hide = b
+				end
 
 				-- don't apply anything to children
 				return
