@@ -152,7 +152,7 @@ end
 local UP = Vector(0,0,1):Angle()
 
 local function GetBonePosition(ent, id)
-	local pos, ang, mat = ent:GetBonePosition(id)
+	local pos, ang = ent:GetBonePosition(id)
 
 	if not pos then return end
 
@@ -161,7 +161,7 @@ local function GetBonePosition(ent, id)
 	if ang.r ~= ang.r then ang.r = 0 end
 
 	if pos == ent:GetPos() then
-		mat = ent:GetBoneMatrix(id)
+		local mat = ent:GetBoneMatrix(id)
 		if mat then
 			pos = mat:GetTranslation()
 			ang = mat:GetAngles()

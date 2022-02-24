@@ -52,7 +52,6 @@ do -- bones
 	end
 
 	function PART:GetBoneMatrix()
-		local bone_matrix = Matrix()
 
 		do -- legacy behavior, inherit parent matrix from sprite, particle, etc
 			local parent = self:GetParent()
@@ -68,7 +67,7 @@ do -- bones
 
 		local pos, ang = self:GetBonePosition()
 
-		bone_matrix:Identity()
+		local bone_matrix = Matrix()
 		bone_matrix:SetTranslation(pos)
 		bone_matrix:SetAngles(ang)
 
@@ -96,7 +95,6 @@ end
 
 function PART:BuildWorldMatrix(with_offsets)
 	local local_matrix = Matrix()
-	local_matrix:Identity()
 	local_matrix:SetTranslation(self.Position)
 	local_matrix:SetAngles(self.Angles)
 

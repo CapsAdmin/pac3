@@ -1030,71 +1030,45 @@ do -- vector
 				right.sens = sens
 			end
 
-			left:SetMouseInputEnabled(true)
-			left.OnValueChanged = function(num)
-				self.vector[arg1] = num
+			local function on_change(arg1, arg2, arg3)
+				local restart = 0
 
-				if input.IsKeyDown(KEY_R) then
-					self:Restart()
-				elseif input.IsKeyDown(KEY_LSHIFT) then
-					middle:SetValue(num)
-					self.vector[arg2] = num
+				return function(num)
+					self.vector[arg1] = num
 
-					right:SetValue(num)
-					self.vector[arg3] = num
-				end
+					if input.IsKeyDown(KEY_R) then
+						self:Restart()
+						restart = os.clock() + 0.1
+					elseif input.IsKeyDown(KEY_LSHIFT) then
+						middle:SetValue(num)
+						self.vector[arg2] = num
 
-				self.OnValueChanged(self.vector)
-				self:InvalidateLayout()
+						right:SetValue(num)
+						self.vector[arg3] = num
+					end
 
-				if self.OnValueSet then
-					self:OnValueSet(self.vector)
+					if restart > os.clock() then
+						self:Restart()
+						return
+					end
+
+					self.OnValueChanged(self.vector * 1)
+					self:InvalidateLayout()
+
+					if self.OnValueSet then
+						self:OnValueSet(self.vector * 1)
+					end
 				end
 			end
+
+			left:SetMouseInputEnabled(true)
+			left.OnValueChanged = on_change(arg1, arg2, arg3)
 
 			middle:SetMouseInputEnabled(true)
-			middle.OnValueChanged = function(num)
-				self.vector[arg2] = num
-
-				if input.IsKeyDown(KEY_R) then
-					self:Restart()
-				elseif input.IsKeyDown(KEY_LSHIFT) then
-					left:SetValue(num)
-					self.vector[arg1] = num
-
-					right:SetValue(num)
-					self.vector[arg3] = num
-				end
-
-				self.OnValueChanged(self.vector)
-				self:InvalidateLayout()
-
-				if self.OnValueSet then
-					self:OnValueSet(self.vector)
-				end
-			end
+			middle.OnValueChanged = on_change(arg2, arg1, arg3)
 
 			right:SetMouseInputEnabled(true)
-			right.OnValueChanged = function(num)
-				self.vector[arg3] = num
-
-				if input.IsKeyDown(KEY_R) then
-					self:Restart()
-				elseif input.IsKeyDown(KEY_LSHIFT) then
-					middle:SetValue(num)
-					self.vector[arg2] = num
-
-					left:SetValue(num)
-					self.vector[arg1] = num
-				end
-
-				self.OnValueChanged(self.vector)
-				self:InvalidateLayout()
-
-				if self.OnValueSet then
-					self:OnValueSet(self.vector)
-				end
-			end
+			right.OnValueChanged = on_change(arg3, arg2, arg1)
 
 			self.left = left
 			self.middle = middle
@@ -1129,11 +1103,17 @@ do -- vector
 		PANEL.MoreOptionsLeftClick = special_callback
 
 		function PANEL:Restart()
-			self.left:SetValue(0)
-			self.middle:SetValue(0)
-			self.right:SetValue(0)
+			if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
+				self.vector = pac.CopyValue(pace.current_part.DefaultVars[self.CurrentKey])
+			else
+				self.vector = ctor(0,0,0)
+			end
 
-			self.OnValueChanged(self.vector)
+			self.left:SetValue(self.vector[arg1])
+			self.middle:SetValue(self.vector[arg2])
+			self.right:SetValue(self.vector[arg3])
+
+			self.OnValueChanged(self.vector * 1)
 		end
 
 		function PANEL:PopulateContextMenu(menu)
@@ -1153,7 +1133,7 @@ do -- vector
 				if _G.type(val):lower() == type or type == "color" then
 					self:SetValue(val)
 
-					self.OnValueChanged(self.vector)
+					self.OnValueChanged(self.vector * 1)
 				end
 			end):SetImage(pace.MiscIcons.paste)
 			menu:AddSpacer()
@@ -1167,7 +1147,7 @@ do -- vector
 		end
 
 		function PANEL:SetValue(vec)
-			self.vector = vec
+			self.vector = vec * 1
 
 			self.left:SetValue(math.Round(vec[arg1], 4))
 			self.middle:SetValue(math.Round(vec[arg2], 4))
@@ -1436,6 +1416,12 @@ do -- number
 
 			local delta = (self.mousey - gui.MouseY()) / 10
 			local val = (self.oldval or 0) + (delta * sens)
+
+			if input.IsKeyDown(KEY_R) then
+				if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
+					val = pace.current_part.DefaultVars[self.CurrentKey]
+				end
+			end
 
 			self:SetNumberValue(val)
 
