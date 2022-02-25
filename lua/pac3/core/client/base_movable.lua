@@ -56,6 +56,7 @@ do -- bones
 			local parent = self:GetParent()
 			if
 				not parent.is_model_part and
+				not parent.is_bone_part and
 				not self.is_bone_part and
 				parent.WorldMatrix and
 				parent.ClassName ~= "jiggle"
