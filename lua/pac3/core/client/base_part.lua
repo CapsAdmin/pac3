@@ -28,6 +28,7 @@ BUILDER
 			:GetSet("EditorExpand", false, {hidden = true})
 			:GetSet("UniqueID", "", {hidden = true})
 			:GetSetPart("Parent")
+			:GetSetPart("TargetEntity")
 			-- this is an unfortunate name, it controls the order in which the scene related functions iterate over children
 			-- in practice it's often used to make something draw above something else in translucent rendering
 			:GetSet("DrawOrder", 0)
@@ -164,6 +165,12 @@ do -- owner
 	end
 
 	function PART:GetParentOwner()
+
+		if self.TargetEntity:IsValid() and self.TargetEntity ~= self then
+			return self.TargetEntity:GetOwner()
+		end
+
+
 		for _, parent in ipairs(self:GetParentList()) do
 
 			-- legacy behavior
