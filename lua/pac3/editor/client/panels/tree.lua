@@ -126,6 +126,13 @@ do
 				end
 			end
 
+			if part.ClassName == "custom_animation" then
+				local anim = part:GetLuaAnimation()
+				if anim then
+					node:SetText(part:GetName() .. " [" .. string.format("%.2f", anim.Frame + anim.FrameDelta) .. "]")
+				end
+			end
+
 			if (part.ClassName == "proxy" or part.ClassName == "event") and part.Name == "" then
 				node:SetText(pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName())
 			end
