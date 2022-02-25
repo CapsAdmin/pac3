@@ -34,9 +34,8 @@ do -- bones
 	end
 
 	function PART:GetBonePosition()
-		local bone = self.BoneOverride or self.Bone
-
 		local parent = self:GetParent()
+
 		if parent:IsValid() and parent.ClassName == "jiggle" then
 			return parent.pos, parent.ang
 		end
@@ -45,7 +44,7 @@ do -- bones
 
 		if owner:IsValid() then
 			-- if there is no parent, default to owner bones
-			return pac.GetBonePosAng(owner, bone)
+			return pac.GetBonePosAng(owner, self.BoneOverride or self.Bone)
 		end
 
 		return Vector(), Angle()
