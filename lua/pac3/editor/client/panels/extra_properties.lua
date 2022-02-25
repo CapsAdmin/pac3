@@ -128,6 +128,22 @@ do -- part
 
 
 		if not part:IsValid() then
+			if self.CurrentKey == "TargetEntityUID" then
+				local owner = pace.current_part:GetOwner()
+				self:SetText(" " .. get_friendly_name(owner))
+				local pnl = vgui.Create("DImage", self)
+				pnl:SetImage(pace.GroupsIcons.entity)
+				self.Icon = pnl
+			end
+			return
+		end
+
+		if self.CurrentKey == "TargetEntityUID" then
+			local owner = part:GetOwner()
+			self:SetText(" " .. get_friendly_name(owner))
+			local pnl = vgui.Create("DImage", self)
+			pnl:SetImage(pace.GroupsIcons.entity)
+			self.Icon = pnl
 			return
 		end
 
