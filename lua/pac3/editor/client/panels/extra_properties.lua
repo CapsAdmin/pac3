@@ -3,7 +3,7 @@ local L = pace.LanguageString
 local function populate_part_menu(menu, part, func)
 	if part:HasChildren() then
 		local menu, pnl = menu:AddSubMenu(pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName(), function()
-			pace.current_part[func](pace.current_part, part)
+			func(part)
 		end)
 
 		pnl:SetImage(part.Icon)
@@ -13,9 +13,33 @@ local function populate_part_menu(menu, part, func)
 		end
 	else
 		menu:AddOption(pace.pac_show_uniqueid:GetBool() and string.format("%s (%s)", part:GetName(), part:GetPrintUniqueID()) or part:GetName(), function()
-			pace.current_part[func](pace.current_part, part)
+			func(part)
 		end):SetImage(part.Icon)
 	end
+end
+
+
+local function get_friendly_name(ent)
+	if not IsValid(ent) then return "NULL" end
+	local name = ent.GetName and ent:GetName()
+	if not name or name == "" then
+		name = ent:GetClass()
+	end
+
+	if ent:EntIndex() == -1 then
+
+		if name == "10C_BaseFlex" then
+			return "csentity - " .. ent:GetModel()
+		end
+
+		return name
+	end
+
+	if ent == pac.LocalPlayer then
+		return name
+	end
+
+	return ent:EntIndex() .. " - " .. name
 end
 
 do -- bone
@@ -141,7 +165,7 @@ do -- part
 	function PANEL:MoreOptionsLeftClick()
 		pace.SelectPart(pac.GetLocalParts(), function(part)
 			if not self:IsValid() then return end
-			self:SetValue(part:GetName())
+			self:SetValue(part:GetUniqueID())
 			self.OnValueChanged(part)
 		end)
 	end
@@ -153,7 +177,11 @@ do -- part
 
 		for _, part in pairs(pac.GetLocalParts()) do
 			if not part:HasParent() then
-				populate_part_menu(menu, part, "Set" .. key)
+				populate_part_menu(menu, part, function(part)
+					if not self:IsValid() then return end
+					self:SetValue(part:GetUniqueID())
+					self.OnValueChanged(part)
+				end)
 			end
 		end
 
@@ -182,15 +210,6 @@ do -- owner
 	function PANEL:MoreOptionsRightClick()
 		local menu = DermaMenu()
 		menu:MakePopup()
-
-		local function get_friendly_name(ent)
-			local name = ent.GetName and ent:GetName()
-			if not name or name == "" then
-				name = ent:GetClass()
-			end
-
-			return ent:EntIndex() .. " - " .. name
-		end
 
 		for key, name in pairs(pac.OwnerNames) do
 			menu:AddOption(name, function() pace.current_part:SetOwnerName(name) self.OnValueChanged(name) end)
