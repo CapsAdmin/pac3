@@ -18,5 +18,6 @@ include("effects.lua")
 include("event.lua")
 include("net_messages.lua")
 include("test_suite_backdoor.lua")
+include("in_skybox.lua")
 
 hook.Run("pac_Initialized")
