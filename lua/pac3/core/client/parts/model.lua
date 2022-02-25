@@ -897,6 +897,16 @@ do
 	BUILDER:RemoveProperty("AimPartName")
 	BUILDER:RemoveProperty("ForceObjUrl")
 
+	function PART:SetDrawShadow(b)
+		self.DrawShadow = b
+
+		local ent = self:GetOwner()
+		if not ent:IsValid() then return end
+
+		ent:DrawShadow(b)
+		ent:MarkShadowAsDirty()
+	end
+
 	function PART:SetStandingHullHeight(val)
 		self.StandingHullHeight = val
 		self:ApplyMatrix()
