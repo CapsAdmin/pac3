@@ -37,47 +37,42 @@ function PART:GetAnimID()
 	return "pac_anim_" .. (self:GetPlayerOwnerId() or "null") .. "_" .. self:GetUniqueID()
 end
 
-function PART:SetRate(num)
-	self.Rate = num
+function PART:GetLuaAnimation()
 	local owner = self:GetOwner()
 	if owner:IsValid() and owner.pac_animations then
-		local anim = owner.pac_animations[self:GetAnimID()]
-		if anim then
-			anim.TimeScale = self.Rate
-		end
+		return owner.pac_animations[self:GetAnimID()]
+	end
+end
+
+function PART:SetRate(num)
+	self.Rate = num
+	local anim = self:GetLuaAnimation()
+	if anim then
+		anim.TimeScale = self.Rate
 	end
 end
 
 function PART:SetBonePower(num)
 	self.BonePower = num
-	local owner = self:GetOwner()
-	if owner:IsValid() and owner.pac_animations then
-		local anim = owner.pac_animations[self:GetAnimID()]
-		if anim then
-			anim.Power = self.BonePower
-		end
+	local anim = self:GetLuaAnimation()
+	if anim then
+		anim.Power = self.BonePower
 	end
 end
 
 function PART:SetInterpolation(mode)
 	self.Interpolation = mode
-	local owner = self:GetOwner()
-	if owner:IsValid() and owner.pac_animations then
-		local anim = owner.pac_animations[self:GetAnimID()]
-		if anim then
-			anim.Interpolation = mode
-		end
+	local anim = self:GetLuaAnimation()
+	if anim then
+		anim.Interpolation = mode
 	end
 end
 
 function PART:SetOffset(num)
 	self.Offset = num
-	local owner = self:GetOwner()
-	if owner:IsValid() and owner.pac_animations then
-		local anim = owner.pac_animations[self:GetAnimID()]
-		if anim then
-			anim.Offset = num
-		end
+	local anim = self:GetLuaAnimation()
+	if anim then
+		anim.Offset = num
 	end
 end
 
