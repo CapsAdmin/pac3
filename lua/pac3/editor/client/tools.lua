@@ -732,7 +732,7 @@ pace.AddTool(L"populate with bones", function(part,suboption)
 
 	for bone,tbl in pairs(bones) do
 		if not tbl.is_special then
-			local child = pac.CreatePart("bone")
+			local child = pac.CreatePart("bone3")
 			child:SetParent(part)
 			child:SetBone(bone)
 		end
