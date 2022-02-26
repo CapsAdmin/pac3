@@ -180,7 +180,7 @@ function PART:BuildBonePositions2(ent)
 
 	local scale = self.Scale * self.Size
 
-	if self.ScaleChildren then
+	if self.ScaleChildren or self.MoveChildrenToOrigin then
 		local scale_origin = self.MoveChildrenToOrigin and original_matrix:GetTranslation()
 
 		for _, child_index in ipairs(get_children_bones_cached(ent, index)) do
@@ -191,7 +191,9 @@ function PART:BuildBonePositions2(ent)
 				m:SetTranslation(scale_origin)
 			end
 
-			m:Scale(scale)
+			if self.ScaleChildren then
+				m:Scale(scale)
+			end
 
 			ent:SetBoneMatrix(child_index, m)
 		end
