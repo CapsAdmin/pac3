@@ -468,16 +468,18 @@ function PART:DrawModel(ent, pos, ang)
 	ent_draw_model(self, ent, pos, ang)
 	ent.pac_drawing_model = false
 
-	render.PushFlashlightMode(true)
+	if self.ClassName ~= "entity2" then
+		render.PushFlashlightMode(true)
 
-	_self, _ent, _pos, _ang = self, ent, pos, ang
+		_self, _ent, _pos, _ang = self, ent, pos, ang
 
-	material_bound = self:BindMaterials(ent) or material_bound
-	ent.pac_drawing_model = true
-	ProtectedCall(protected_ent_draw_model)
-	ent.pac_drawing_model = false
+		material_bound = self:BindMaterials(ent) or material_bound
+		ent.pac_drawing_model = true
+		ProtectedCall(protected_ent_draw_model)
+		ent.pac_drawing_model = false
 
-	render.PopFlashlightMode()
+		render.PopFlashlightMode()
+	end
 
 	if self.NoCulling then
 		render_CullMode(MATERIAL_CULLMODE_CCW)
