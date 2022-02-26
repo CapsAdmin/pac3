@@ -4,7 +4,6 @@ local L = pace.LanguageString
 function pace.IsPartSendable(part)
 
 	if part:HasParent() then return false end
-	if part.ClassName == "group" and not part:HasChildren() then return false end
 	if not part:GetShowInEditor() then return false end
 
 	return true
