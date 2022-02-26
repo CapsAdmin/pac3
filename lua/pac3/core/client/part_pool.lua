@@ -659,7 +659,7 @@ do -- drawing
 		pac.AddHook("Think", "update_parts", function()
 			-- commonly used variables
 			pac.RealTime = RealTime()
-			pac.FrameNumber = FrameNumber()
+			pac.FrameNumber = pac.FrameNumber + 1
 
 			draw_dist = cvar_distance:GetInt()
 			pac_sv_draw_distance = pac_sv_draw_distance or GetConVar("pac_sv_draw_distance")
@@ -752,6 +752,10 @@ do -- drawing
 
 				::CONTINUE::
 			end
+
+			-- we increment the framenumber here because we want to invalidate any FrameNumber caches when we draw
+			-- this prevents functions like movable:GetWorldMatrix() from caching the matrix in the update hook
+			pac.FrameNumber = pac.FrameNumber + 1
 		end)
 	end
 
