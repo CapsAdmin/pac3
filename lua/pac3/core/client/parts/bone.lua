@@ -1,5 +1,8 @@
 local NULL = NULL
 local pairs = pairs
+local Matrix = Matrix
+local vector_origin = vector_origin
+local Vector = Vector
 
 for _, v in pairs(ents.GetAll()) do
 	v.pac_bone_setup_data = nil
@@ -77,6 +80,7 @@ function PART:OnShow()
 		for _, bone in ipairs(ent.pac_bone_parts) do
 			bone:BuildBonePositions2(ent)
 		end
+
 	end)
 
 	ent.pac_build_bone_id = id
@@ -142,19 +146,45 @@ local function scale_children(ent, root_index, bone_count, scale, move_to_origin
 	end
 end
 
+local temp_matrix_1 = Matrix()
+local temp_matrix_2 = Matrix()
+local temp_vector = Vector()
+local temp_vector_2 = Vector()
+local temp_angle = Angle()
+
+local function temp_vector_add(a, b)
+	temp_vector:Set(a)
+	temp_vector:Add(b)
+	return temp_vector
+end
+
+local function temp_vector_scale(a, b)
+	temp_vector_2:Set(a)
+	temp_vector_2:Mul(b)
+	return temp_vector_2
+end
+
+
+local function temp_angle_add(a, b)
+	temp_angle:Set(a)
+	temp_angle:Add(b)
+	return temp_angle
+end
+
 function PART:BuildBonePositions2(ent)
 	local index = self.bone_index
 
 	if not index then return end
 
-	local m = ent:GetBoneMatrix(index)
+	local world_matrix = ent:GetBoneMatrix(index)
 
-	if not m then return end
+	if not world_matrix then return end
 
-	local original_matrix = Matrix()
-	original_matrix:Set(m)
+	temp_matrix_2:Set(world_matrix)
+	local unmodified_world_matrix = temp_matrix_2
 
-	self.bone_matrix = original_matrix * Matrix()
+	self.bone_matrix = self.bone_matrix or Matrix()
+	self.bone_matrix:Set(unmodified_world_matrix)
 
 	if self.FollowPart:IsValid() and self.FollowPart.GetWorldPosition then
 		local pos, ang
@@ -167,60 +197,63 @@ function PART:BuildBonePositions2(ent)
 		end
 
 		if not self.FollowAnglesOnly then
-			m:SetTranslation(pos)
+			world_matrix:SetTranslation(pos)
 		end
 
-		m:SetAngles(ang + self.AngleOffset)
-		m:Rotate(self.Angles)
-		original_matrix:Set(m)
+		world_matrix:SetAngles(temp_angle_add(ang, self.AngleOffset))
+		world_matrix:Rotate(self.Angles)
 	else
-		m:Translate(self.Position + self.PositionOffset)
-		m:Rotate(self.Angles + self.AngleOffset)
+		world_matrix:Translate(temp_vector_add(self.Position, self.PositionOffset))
+		world_matrix:Rotate(temp_angle_add(self.Angles, self.AngleOffset))
 	end
 
-	local scale = self.Scale * self.Size
+	local scale = temp_vector_scale(self.Scale, self.Size)
 
 	if self.ScaleChildren or self.MoveChildrenToOrigin then
-		local scale_origin = self.MoveChildrenToOrigin and original_matrix:GetTranslation()
+		local scale_origin = self.MoveChildrenToOrigin and unmodified_world_matrix:GetTranslation()
 
 		for _, child_index in ipairs(get_children_bones_cached(ent, index)) do
-			local m = ent:GetBoneMatrix(child_index)
-			if not m then continue end
+			local world_matrix = ent:GetBoneMatrix(child_index)
+			if not world_matrix then continue end
 
 			if scale_origin then
-				m:SetTranslation(scale_origin)
+				world_matrix:SetTranslation(scale_origin)
 			end
 
 			if self.ScaleChildren then
-				m:Scale(scale)
+				world_matrix:Scale(scale)
 			end
 
-			ent:SetBoneMatrix(child_index, m)
+			ent:SetBoneMatrix(child_index, world_matrix)
 		end
 	end
 
+	local parent_world_matrix = world_matrix
+	unmodified_world_matrix:Invert()
+	local last_inverted_world_matrix = unmodified_world_matrix
 
-	local parent_matrix = m
-	local prev_matrix = original_matrix
 
 	for _, child_index in ipairs(get_children_bones_cached(ent, index)) do
-		local child_matrix = ent:GetBoneMatrix(child_index)
-		if not child_matrix then continue end
-		local inverse_prev_matrix = prev_matrix:GetInverse()
-		if inverse_prev_matrix then
-			local m = parent_matrix * inverse_prev_matrix
-			m = m * child_matrix
+		local child_world_matrix = ent:GetBoneMatrix(child_index)
+		if not child_world_matrix then continue end
 
-			ent:SetBoneMatrix(child_index, m)
+		temp_matrix_1:Set(parent_world_matrix)
+		temp_matrix_1:Mul(last_inverted_world_matrix)
+		temp_matrix_1:Mul(child_world_matrix)
 
-			parent_matrix = m
-			prev_matrix = child_matrix
-		end
+		local world_matrix = temp_matrix_1
+
+		ent:SetBoneMatrix(child_index, world_matrix)
+
+		parent_world_matrix = world_matrix
+
+		child_world_matrix:Invert()
+		last_inverted_world_matrix = child_world_matrix
 	end
 
-	m:Scale(scale)
+	world_matrix:Scale(scale)
 
-	ent:SetBoneMatrix(index, m)
+	ent:SetBoneMatrix(index, world_matrix)
 
 	if self.HideMesh then
 		local inf_scale = inf_scale
@@ -252,11 +285,9 @@ function PART:GetBonePosition()
 
 	if not ent:IsValid() then return Vector(), Angle() end
 
-	local index = self.bone_index
+	if not self.bone_index then return ent:GetPos(), ent:GetAngles() end
 
-	if not index then return ent:GetPos(), ent:GetAngles() end
-
-	local m = (self.bone_matrix and self.bone_matrix * Matrix()) or ent:GetBoneMatrix(index)
+	local m = ent:GetBoneMatrix(self.bone_index)
 	if not m then return ent:GetPos(), ent:GetAngles() end
 
 	local pos = m:GetTranslation()
