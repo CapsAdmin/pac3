@@ -110,7 +110,9 @@ local function get_children_bones(ent, root_index, bone_count, out)
 	ent:SetLOD(0)
 	for child_index = 0, bone_count - 1 do
 		if ent:GetBoneParent(child_index) == root_index then
-			table.insert(out, child_index)
+			if ent:GetBoneMatrix(child_index) then
+				table.insert(out, child_index)
+			end
 			get_children_bones(ent, child_index, bone_count, out)
 		end
 	end
