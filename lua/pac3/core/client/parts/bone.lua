@@ -3,6 +3,7 @@ local pairs = pairs
 local Matrix = Matrix
 local vector_origin = vector_origin
 local Vector = Vector
+local Angle = Angle
 
 for _, v in pairs(ents.GetAll()) do
 	v.pac_bone_setup_data = nil
