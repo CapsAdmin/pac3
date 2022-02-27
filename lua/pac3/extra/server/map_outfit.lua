@@ -144,7 +144,7 @@ concommand.Add("pac_spawn_map", function(ply, _, args)
 	if data then
 		data = CompileString("return {" .. data .. "}", "luadata", true)
 
-		if type(data) == "function" then
+		if isfunction(data) then
 			pacx.SpawnMapOutfit(data())
 		else
 			pac.Message(data)

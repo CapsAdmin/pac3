@@ -914,9 +914,9 @@ function PART:OnThink()
 			return
 		end
 
-		if x and type(x) ~= "number" then x = 0 end
-		if y and type(y) ~= "number" then y = 0 end
-		if z and type(z) ~= "number" then z = 0 end
+		if x and not isnumber(x) then x = 0 end
+		if y and not isnumber(y) then y = 0 end
+		if z and not isnumber(y) then z = 0 end
 
 		if self.Additive then
 			if x then
@@ -970,7 +970,7 @@ function PART:OnThink()
 		if post_function and input_function then
 			local input_number = input_function(self)
 
-			if type(input_number) ~= "number" then
+			if not isnumber(input_number) then
 				error("proxy function " .. self.Input .. " does not return a number!")
 			end
 

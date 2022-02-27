@@ -31,7 +31,7 @@ function _G.pac_ReloadParts()
 					local str = file.Read("addons/" .. dir .. "/lua/" .. new_path, "MOD")
 					if str then
 						local func = CompileString(str, "addons/" .. dir .. "/lua/" .. new_path)
-						if type(func) == "function" then
+						if isfunction(func) then
 							local res = {pcall(func, ...)}
 
 							if res[1] then
@@ -170,7 +170,7 @@ function _G.pac_Restart()
 						local str = file.Read("addons/" .. dir .. "/lua/" .. new_path, "MOD")
 						if str then
 							local func = CompileString(str, "addons/" .. dir .. "/lua/" .. new_path)
-							if type(func) == "function" then
+							if isfunction(func) then
 								local res = {pcall(func, ...)}
 
 								if res[1] then

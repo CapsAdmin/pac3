@@ -28,11 +28,11 @@ do
 		end
 
 
-		if type(data.Type) == "number" then
+		if isnumber(data.Type) then
 			data.Type = old_types[data.Type]
 		end
 
-		if type(data.Interpolation) == "number" then
+		if isnumber(data.Interpolation) then
 			data.Interpolation = old_interpolations[data.Interpolation]
 		end
 
@@ -212,7 +212,7 @@ do
 			&& ( 1 - OutBounce( 1 - 2 * x ) ) / 2
 			|| ( 1 + OutBounce( 2 * x - 1 ) ) / 2
 	end
-	
+
 end
 
 function animations.GetRegisteredAnimations()
@@ -359,7 +359,7 @@ local function ProcessAnimations(ent)
 		local fAmount = fPower * fFrameDelta
 
 		for iBoneID, tBoneInfo in pairs(tFrameData.BoneInfo) do
-			if type(iBoneID) ~= "number" then
+			if not isnumber(iBoneID) then
 				iBoneID = ent:LookupBone(iBoneID)
 			end
 			if not iBoneID then goto CONTINUE end

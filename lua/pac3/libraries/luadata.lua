@@ -207,10 +207,10 @@ luadata.Types = {
 	end,
 	["table"] = function(var)
 		if
-			type(var.r) == "number" and
-			type(var.g) == "number" and
-			type(var.b) == "number" and
-			type(var.a) == "number"
+			isnumber(var.r) and
+			isnumber(var.g) and
+			isnumber(var.b) and
+			isnumber(var.a)
 		then
 			return ("Color(%s, %s, %s, %s)"):format(var.r, var.g, var.b, var.a)
 		end
@@ -283,7 +283,7 @@ local env = {
 function luadata.Decode(str,nojail)
 	local func = CompileString(string.format("return { %s }",str), "luadata_decode", false)
 
-	if type(func) == "string" then
+	if isstring(func) then
 		--ErrorNoHalt("Luadata decode syntax: "..tostring(func):gsub("^luadata_decode","")..'\n')
 
 		return nil,func

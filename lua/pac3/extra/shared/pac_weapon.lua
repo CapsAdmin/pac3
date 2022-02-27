@@ -71,7 +71,7 @@ if CLIENT then
 
 	BUILDER:StartStorableVars()
 		for key, val in pairs(SWEP) do
-			if type(val) ~= "table" and type(val) ~= "function" then
+			if not istable(val) and not isfunction(val) then
 				BUILDER:GetSet(key, val)
 			end
 		end
