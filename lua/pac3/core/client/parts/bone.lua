@@ -73,7 +73,7 @@ function PART:OnShow()
 
 	local id
 	id = ent:AddCallback("BuildBonePositions", function(ent, ...)
-		if not ent.pac_bone_parts or not ent.pac_bone_parts[1] then
+		if not self:IsValid() or ent.pac_bone_parts or not ent.pac_bone_parts[1] then
 			ent:RemoveCallback("BuildBonePositions", id)
 			return
 		end

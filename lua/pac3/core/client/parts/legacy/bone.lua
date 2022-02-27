@@ -224,7 +224,14 @@ function PART:OnBuildBonePositions()
 
 	if not owner.pac_follow_bones_function then
 		owner.pac_follow_bones_function = pac.build_bone_callback
-		owner:AddCallback("BuildBonePositions", function(ent) pac.build_bone_callback(ent) end)
+		local id
+		id = owner:AddCallback("BuildBonePositions", function(ent)
+			if not self:IsValid() then
+				owner:RemoveCallback("BuildBonePositions", id)
+				return
+			end
+			pac.build_bone_callback(ent)
+		end)
 	end
 
 	if not self.FollowPart:IsValid() then
