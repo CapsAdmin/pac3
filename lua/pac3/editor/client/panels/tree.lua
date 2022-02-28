@@ -424,7 +424,7 @@ function PANEL:PopulateParts(node, parts, children)
 				part:GetOwner():IsValid()
 			then
 				part_node:SetModel(part:GetOwner():GetModel(), part.Icon)
-			elseif type(part.Icon) == "string" then
+			elseif isstring(part.Icon) then
 				part_node.Icon:SetImage(part.Icon)
 			end
 

@@ -440,7 +440,7 @@ function pac.UpdatePartsWithMetatable(META)
 			for k, v in pairs(META) do
 				-- update part functions only
 				-- updating variables might mess things up
-				if type(v) == "function" then
+				if isfunction(v) then
 					part[k] = v
 				end
 			end

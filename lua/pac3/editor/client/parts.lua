@@ -180,7 +180,7 @@ function pace.OnVariableChanged(obj, key, val, not_from_editor)
 				pace.RemovePartOnServer(obj:GetUniqueID(), true, true)
 			end
 			node:SetText(val)
-		elseif key == "Model" and val and val ~= "" and type(val) == "string" then
+		elseif key == "Model" and val and val ~= "" and isstring(val) then
 			node:SetModel(val)
 		elseif key == "Parent" then
 			local tree = obj.pace_tree_node
@@ -296,7 +296,7 @@ do -- menu
 			for _, part in pairs(pace.GetRegisteredParts()) do
 				local group = part.Group or part.Groups or "other"
 
-				if type(group) == "string" then
+				if isstring(group) then
 					group = {group}
 				end
 

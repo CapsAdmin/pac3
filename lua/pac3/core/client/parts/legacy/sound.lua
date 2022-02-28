@@ -119,7 +119,7 @@ local function fix(snd)
 end
 
 function PART:SetSound(str)
-	if type(str) ~= "string" then self.Sound = "" return end
+	if not isstring(str) then self.Sound = "" return end
 
 	if bad[str:sub(1,1)] or bad[str:sub(2,2)] then
 		str = fix(str)

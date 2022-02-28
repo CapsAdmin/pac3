@@ -133,7 +133,7 @@ function PART:SetMaterial(var)
 		self.Materialm = mat
 		self:MakeMaterialUnlit()
 	end) then
-		if type(var) == "string" then
+		if isstring(var) then
 			self.Materialm = pac.Material(var, self)
 			self:CallRecursive("OnMaterialChanged")
 		elseif type(var) == "IMaterial" then

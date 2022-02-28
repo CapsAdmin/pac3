@@ -88,7 +88,7 @@ function PART:SetMaterial(var)
 	var = var or ""
 
 	if not pac.Handleurltex(self, var, nil, "UnlitGeneric", {["$translucent"] = "1"}) then
-		if type(var) == "string" then
+		if isstring(var) then
 			self.Materialm = pac.Material(var, self)
 			self:CallRecursive("OnMaterialChanged")
 		elseif type(var) == "IMaterial" then

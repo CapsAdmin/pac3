@@ -202,7 +202,7 @@ end
 surface.CreateFont("pace_about_1", {font = "Roboto Bold", size = 512, weight = 800, additive = false, antialias = true})
 
 local credits = {}
-local A = function(str, size, ...) table.insert(credits, {str, size or type(str) == "string" and 1 or nil, ...}) end
+local A = function(str, size, ...) table.insert(credits, {str, size or isstring(str) and 1 or nil, ...}) end
 
 local cast = {
 	"morshmellow",

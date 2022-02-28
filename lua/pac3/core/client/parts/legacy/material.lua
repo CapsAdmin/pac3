@@ -143,7 +143,7 @@ local function setup(PART)
 
 				local found
 
-				if type(info.pattern) == "table" then
+				if istable(info.pattern) then
 					for k,v in pairs(info.pattern) do
 						if name:lower():find(v) then
 							found = true
@@ -170,7 +170,7 @@ local function setup(PART)
 
 				do
 					local extra
-					if type(T) == "table" then
+					if istable(T) then
 						extra = T.extra
 						T = T.type
 					end
