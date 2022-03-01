@@ -159,7 +159,14 @@ do
 			end
 		end
 
-		PART["Set" .. key] = PART["Set" .. key] or function(self, var) self[key] = var end
+		PART["Set" .. key] = PART["Set" .. key] or function(self, var)
+			self[key] = var
+			if var and var:IsValid() then
+				self[key.."UID"] = var:GetUniqueID()
+			else
+				self[key.."UID"] = ""
+			end
+		end
 		PART["Get" .. key] = PART["Get" .. key] or function(self) return self[key] end
 		PART[key] = NULL
 
