@@ -137,12 +137,35 @@ function pac.GetModelBones(ent)
 	return ent.pac_bones
 end
 
+function pac.GetAllFlexes(ent)
+	local out = {}
+	if ent.GetFlexNum and ent:GetFlexNum() > 0 then
+		for i = 0, ent:GetFlexNum() - 1 do
+			local name = ent:GetFlexName(i)
+			out[name:lower()] = {i = i, name = name}
+		end
+	end
+	return out
+end
+
+function pac.GetFlexMap(ent)
+	if not ent or not ent:IsValid() then return {} end
+
+	if not ent.pac_flex_map or ent:GetModel() ~= ent.pac_last_model_flex then
+		ent.pac_flex_map = pac.GetAllFlexes(ent)
+		ent.pac_last_model_flex = ent:GetModel()
+	end
+
+	return ent.pac_flex_map
+end
+
 function pac.ResetBoneCache(ent)
 	if not IsValid(ent) then return end
 
 	ent.pac_last_model = nil
 	ent.pac_bones = nil
 	ent.pac_cached_child_bones = nil
+	ent.pac_flex_map = nil
 
 	if ent.pac_holdtypes then
 		ent.pac_holdtypes = {}
