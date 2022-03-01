@@ -51,13 +51,13 @@ local function translate_old_dupe(tableIn, target)
 	for key, value2 in pairs(tableIn) do
 		local value
 
-		if type(value2) == 'table' then
+		if istable(value2) then
 			value = translate_old_dupe(value2, {})
 		else
 			value = value2
 		end
 
-		if type(key) == 'number' and key > 10000 then
+		if isnumber(key) and key > 10000 then
 			local str = uid2key[key] or key
 			target[str] = value
 		else
@@ -86,7 +86,7 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 	-- give source engine time
 	timer.Simple(0, function()
 		for uid, data in pairs(parts) do
-			if type(data.part) == "table" then
+			if istable(data.part) then
 				make_copy(data.part, id)
 
 				data.part.self.Name = tostring(ent)
@@ -109,7 +109,7 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 end)
 
 function pace.SubmitPart(data, filter)
-	if type(data.part) == "table" then
+	if istable(data.part) then
 		if last_frame == frame_number then
 			table.insert(pace.StreamQueue, {data, filter})
 			pace.dprint("queuing part %q from %s", data.part.self.Name, tostring(data.owner))
@@ -120,7 +120,7 @@ function pace.SubmitPart(data, filter)
 	-- last arg "true" is pac3 only in case you need to do your checking differnetly from pac2
 	local allowed, reason = hook.Run("PrePACConfigApply", data.owner, data, true)
 
-	if type(data.part) == "table" then
+	if istable(data.part) then
 		local ent = Entity(tonumber(data.part.self.OwnerName) or -1)
 		if ent:IsValid() then
 			if not pace.CanPlayerModify(data.owner, ent) then
@@ -142,7 +142,7 @@ function pace.SubmitPart(data, filter)
 				ent:CallOnRemove("pac_config", function(ent)
 					if ent.pac_parts then
 						for _, data in pairs(ent.pac_parts) do
-							if type(data.part) == "table" then
+							if istable(data.part) then
 								data.part = data.part.self.UniqueID
 							end
 							pace.RemovePart(data)
@@ -161,7 +161,7 @@ function pace.SubmitPart(data, filter)
 	local uid = data.uid
 	pace.Parts[uid] = pace.Parts[uid] or {}
 
-	if type(data.part) == "table" then
+	if istable(data.part) then
 		pace.Parts[uid][data.part.self.UniqueID] = data
 	else
 		if data.part == "__ALL__" then
@@ -204,7 +204,7 @@ function pace.SubmitPart(data, filter)
 	local players
 	if IsValid(data.temp_wear_filter) and type(data.temp_wear_filter) == "Player" then
 		players = {data.temp_wear_filter}
-	elseif type(data.wear_filter) == 'table' then
+	elseif istable(data.wear_filter) then
 		players = {}
 
 		for _, id in ipairs(data.wear_filter) do
@@ -238,7 +238,7 @@ function pace.SubmitPart(data, filter)
 
 		local players = filter or players
 
-		if type(players) == "table" then
+		if istable(players) then
 			for key = #players, 1, -1 do
 				local ply = players[key]
 				if not ply.pac_requested_outfits and ply ~= data.owner then
@@ -251,7 +251,7 @@ function pace.SubmitPart(data, filter)
 				for key, ply in pairs(players) do
 					local steamid = ply:SteamID()
 					for var, reason in pairs(pace.GlobalBans) do
-						if  var == steamid or type(var) == "table" and (table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):") or ""))) then
+						if  var == steamid or istable(var) and (table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):") or ""))) then
 							table.remove(players, key)
 
 							if owner_steamid == steamid then
@@ -267,7 +267,7 @@ function pace.SubmitPart(data, filter)
 			return true
 		end
 
-		if not players or type(players) == "table" and not next(players) then return true end
+		if not players or istable(players) and not next(players) then return true end
 
 		-- Alternative transmission system
 		local ret = hook.Run("pac_SendData", players, data)
@@ -286,7 +286,7 @@ function pace.SubmitPart(data, filter)
 			end
 		end
 
-		if type(data.part) == "table" then
+		if istable(data.part) then
 			last_frame = frame_number
 			pace.CallHook("OnWoreOutfit", data.owner, data.part)
 		end
@@ -306,7 +306,7 @@ function pace.SubmitPartNotify(data)
 	if data.owner:IsPlayer() then
 		if allowed == "queue" then return end
 
-		if not reason and allowed and type(data.part) == 'table' then
+		if not reason and allowed and istable(data.part) then
 			reason = string.format('Your part %q has been applied', data.part.self.Name or '<unknown>')
 		end
 
@@ -339,11 +339,11 @@ function pace.HandleReceivedData(ply, data)
 		data.wear_filter = nil
 	end
 
-	if type(data.part) == "table" and data.part.self then
-		if type(data.part.self) == "table" and not data.part.self.UniqueID then return end -- bogus data
+	if istable(data.part) and data.part.self then
+		if istable(data.part.self) and not data.part.self.UniqueID then return end -- bogus data
 
 		pace.SubmitPartNotify(data)
-	elseif type(data.part) == "string" then
+	elseif isstring(data.part) then
 		pace.RemovePart(data)
 	end
 end

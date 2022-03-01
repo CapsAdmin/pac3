@@ -415,7 +415,7 @@ do -- list
 		pnl.alt_line = #self.List%2 == 1
 		btn.alt_line = pnl.alt_line
 
-		if type(var) == "Panel" then
+		if ispanel(var) then
 			pnl:SetContent(var)
 		end
 
@@ -550,7 +550,7 @@ do -- list
 							function()
 								local tbl
 
-								if type(prop.udata.enums) == "function" then
+								if isfunction(prop.udata.enums) then
 									if pace.current_part:IsValid() then
 										tbl = prop.udata.enums(pace.current_part)
 									end
@@ -562,11 +562,11 @@ do -- list
 
 								if tbl then
 									for k, v in pairs(tbl) do
-										if type(v) ~= "string" then
+										if not isstring(v) then
 											v = k
 										end
 
-										if type(k) ~= "string" then
+										if not isstring(v) then
 											k = v
 										end
 
@@ -759,7 +759,7 @@ do -- base editable
 		if self.editing then return end
 
 		local value = skip_encode and var or self:Encode(var)
-		if type(value) == "number" then
+		if isnumber(value) then
 			-- visually round numbers so 0.6 doesn't show up as 0.600000000001231231 on wear
 			value = math.Round(value, 7)
 		end
@@ -1122,11 +1122,11 @@ do -- vector
 			end):SetImage(pace.MiscIcons.copy)
 			menu:AddOption(L"paste", function()
 				local val = pac.CopyValue(pace.clipboard)
-				if _G.type(val) == "number" then
+				if isnumber(val) then
 					val = ctor(val, val, val)
-				elseif _G.type(val) == "Vector" and type == "angle" then
+				elseif isvector(val) and type == "angle" then
 					val = ctor(val.x, val.y, val.z)
-				elseif _G.type(val) == "Angle" and type == "vector" then
+				elseif isangle(val) and type == "vector" then
 					val = ctor(val.p, val.y, val.r)
 				end
 

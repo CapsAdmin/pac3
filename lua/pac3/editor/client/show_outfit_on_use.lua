@@ -91,9 +91,8 @@ timer.Create('pac3_transmissions_ttl', 1, 0, function()
 end)
 
 function pace.HandleOnUseReceivedData(data)
-	local validTransmission = type(data.partID) == 'number' and
-		type(data.totalParts) == 'number' and
-		type(data.transmissionID) == 'number'
+	local validTransmission = isnumber(data.partID) and
+		isnumber(data.totalParts) and isnumber(data.transmissionID)
 
 	if not data.owner.pac_onuse_only then
 		data.owner.pac_onuse_only = true
@@ -159,7 +158,7 @@ function pace.HandleOnUseReceivedData(data)
 		for i, part in ipairs(trData.list) do
 			local func = pace.HandleReceiveData(part)
 
-			if type(func) == 'function' then
+			if isfunction(func) then
 				table.insert(funcs, func)
 			end
 		end

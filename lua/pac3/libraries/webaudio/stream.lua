@@ -412,7 +412,7 @@ end
 
 function STREAM:__newindex(key, val)
 	if key == "OnFFT" then
-		if type(val) == "function" then
+		if isfunction(val) then
 			self:Call(".usefft(true)")
 		else
 			self:Call(".usefft(false)")

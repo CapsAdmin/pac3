@@ -9,7 +9,7 @@ local function get_bans()
 
 	do -- check if this needs to be rebuilt
 		local k,v = next(bans)
-		if type(v) == "string" then
+		if isstring(v) then
 			local temp = {}
 
 			for k,v in pairs(bans) do

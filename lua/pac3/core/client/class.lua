@@ -91,10 +91,10 @@ do
 		pac.VariableOrder[tbl.ClassName] = pac.VariableOrder[tbl.ClassName] or {}
 		insert_key(pac.VariableOrder[tbl.ClassName], key)
 
-		if type(def) == "number" then
+		if isnumber(def) then
 			tbl["Set" .. key] = tbl["Set" .. key] or function(self, var) self[key] = tonumber(var) end
 			tbl["Get" .. key] = tbl["Get" .. key] or function(self) return tonumber(self[key]) end
-		elseif type(def) == "string" then
+		elseif isstring(def) then
 			tbl["Set" .. key] = tbl["Set" .. key] or function(self, var) self[key] = tostring(var) end
 			tbl["Get" .. key] = tbl["Get" .. key] or function(self) return tostring(self[key]) end
 		else
@@ -135,7 +135,7 @@ do
 				return
 			end
 
-			if type(uid) == "table" then
+			if istable(uid) then
 				uid = uid.UniqueID
 			end
 

@@ -212,7 +212,7 @@ function PART:CompileCode()
 
 	local func = CompileString(code, "SCRIPT_ENV", false)
 
-	if type(func) == "string" then
+	if isstring(func) then
 		return false, func
 	end
 
@@ -362,7 +362,7 @@ function PART:CompileCode()
 		for key, val in pairs(tbl) do
 			self.valid_functions[key] = val
 
-			if type(val) == "table" then
+			if istable(val) then
 				scan(val)
 			end
 		end
