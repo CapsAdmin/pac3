@@ -10,7 +10,7 @@ PART.Group = {'effects', 'model'}
 PART.Icon = 'icon16/shading.png'
 
 BUILDER:StartStorableVars()
-	BUILDER:SetPropertyGroup()
+	BUILDER:SetPropertyGroup("generic")
 		BUILDER:GetSet("BlurX", 2)
 		BUILDER:GetSet("BlurY", 2)
 		BUILDER:GetSet("Amount", 1)

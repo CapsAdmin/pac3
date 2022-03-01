@@ -11,7 +11,7 @@ PART.Group = 'effects'
 PART.Icon = 'icon16/layers.png'
 
 BUILDER:StartStorableVars()
-	BUILDER:SetPropertyGroup()
+	BUILDER:SetPropertyGroup("generic")
 		BUILDER:GetSet("IgnoreZ", false)
 		BUILDER:GetSet("SizeX", 1, {editor_sensitivity = 0.25})
 		BUILDER:GetSet("SizeY", 1, {editor_sensitivity = 0.25})

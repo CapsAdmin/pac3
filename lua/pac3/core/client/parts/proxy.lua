@@ -8,7 +8,7 @@ PART.Icon = 'icon16/calculator.png'
 
 BUILDER:StartStorableVars()
 
-	BUILDER:SetPropertyGroup()
+	BUILDER:SetPropertyGroup("generic")
 		BUILDER:GetSet("VariableName", "", {enums = function(part)
 			local part = part:GetOutputTarget()
 			if not part:IsValid() then return end

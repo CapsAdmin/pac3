@@ -18,7 +18,7 @@ local blood_colors = {
 
 BUILDER:StartStorableVars()
 
-BUILDER:SetPropertyGroup()
+BUILDER:SetPropertyGroup("generic")
 	BUILDER:GetSet("MuteSounds", false)
 	BUILDER:GetSet("AllowOggWhenMuted", false)
 	BUILDER:GetSet("HideBullets", false)
