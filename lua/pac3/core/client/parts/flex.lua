@@ -28,7 +28,6 @@ BUILDER:StartStorableVars()
 
 	BUILDER:GetSet("Weight", 0)
 	BUILDER:GetSet("RootOwner", false, { description = "Target the local player instead of the part's parent" })
-	BUILDER:GetSet("DefaultOnHide", true)
 BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
