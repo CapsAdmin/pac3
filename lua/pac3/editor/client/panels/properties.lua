@@ -772,6 +772,8 @@ do -- base editable
 
 		if #str > 10 then
 			self:SetTooltip(str)
+		else
+			self:SetTooltip()
 		end
 
 		self.original_str = str
