@@ -206,6 +206,11 @@ do -- part
 			end
 		end
 
+		menu:AddOption("none", function()
+			self:SetValue("")
+			self.OnValueChanged("")
+		end):SetImage(pace.MiscIcons.clear)
+
 		pace.FixMenu(menu)
 	end
 
