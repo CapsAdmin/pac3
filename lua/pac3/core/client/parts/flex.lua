@@ -45,6 +45,8 @@ function PART:OnBuildBonePositions()
 	if not id then return end
 	-- flexes are additive
 	ent:SetFlexWeight(id, ent:GetFlexWeight(id) + self.Weight)
+	ent.pac_touching_flexes = ent.pac_touching_flexes or {}
+	ent.pac_touching_flexes[id] = pac.RealTime + 0.1
 end
 
 BUILDER:Register()

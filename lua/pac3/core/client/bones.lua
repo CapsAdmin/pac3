@@ -396,10 +396,21 @@ do -- bone manipulation for boneanimlib
 			ent.pac_bones_select_target = nil
 		end
 
-		ent:SetFlexScale(1)
+		if ent.pac_touching_flexes then
+			local reset_scale = false
+			for id, time in pairs(ent.pac_touching_flexes) do
 
-		for i = 0, ent:GetFlexNum() - 1 do
-			ent:SetFlexWeight(i, 0)
+				if not reset_scale then
+					ent:SetFlexScale(1)
+					reset_scale = true
+				end
+
+				if time < pac.RealTime then
+					ent:SetFlexWeight(i, 0)
+				else
+					ent.pac_touching_flexes[id] = nil
+				end
+			end
 		end
 
 		hook.Call("PAC3ResetBones", nil, ent)

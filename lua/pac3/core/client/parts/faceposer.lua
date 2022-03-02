@@ -154,11 +154,13 @@ function PART:UpdateFlex()
 	if not ent:IsValid() then return end
 
 	ent:SetFlexScale(self.Scale)
+	ent.pac_touching_flexes = ent.pac_touching_flexes or {}
 
 	for name, weight in pairs(self:GetWeightMap()) do
 		local id = ent:GetFlexIDByName(name)
 		if id then
 			ent:SetFlexWeight(id, ent:GetFlexWeight(id) + weight)
+			ent.pac_touching_flexes[id] = pac.RealTime + 0.1
 		end
 	end
 end
