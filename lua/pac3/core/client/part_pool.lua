@@ -266,7 +266,7 @@ pac.AddHook("Think", "events", function()
 		-- so it only runs once
 		if ply.pac_ragdoll == rag then continue end
 		ply.pac_ragdoll = rag
-		rag.pac_player = ply
+		rag.pac_ragdoll_owner = ply
 
 		rag = hook.Run("PACChooseDeathRagdoll", ply, rag) or rag
 
