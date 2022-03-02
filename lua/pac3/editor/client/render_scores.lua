@@ -45,7 +45,7 @@ timer.Create("pac_render_times", 0.1, 0, function()
 end)
 
 pac.AddHook("HUDPaint", "pac_show_render_times", function()
-	if not pace.IsActive() or not pace.IsFocused() or not enable:GetBool() or pace.IsInBasicMode() then return end
+	if not pace.IsActive() or not pace.IsFocused() or not enable:GetBool() then return end
 
 	for key, ply in pairs(player.GetHumans()) do
 		if ply == pac.LocalPlayer then goto CONTINUE end

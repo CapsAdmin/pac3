@@ -226,8 +226,7 @@ end)
 function pace.GetRegisteredParts()
 	local out = {}
 	for class_name, PART in pairs(pac.GetRegisteredParts()) do
-		local cond = (not pace.IsInBasicMode() or pace.BasicParts[class_name]) and
-			not PART.ClassName:StartWith("base") and
+		local cond = not PART.ClassName:StartWith("base") and
 			PART.show_in_editor ~= false and
 			PART.is_deprecated ~= false
 
@@ -286,99 +285,93 @@ do -- menu
 			end
 		end
 
-		if pace.IsInBasicMode() then
-			for _, part in ipairs(pace.GetRegisteredParts()) do
-				add_part(menu, part)
-			end
-		else
-			local sortedTree = {}
+		local sortedTree = {}
 
-			for _, part in pairs(pace.GetRegisteredParts()) do
-				local group = part.Group or part.Groups or "other"
+		for _, part in pairs(pace.GetRegisteredParts()) do
+			local group = part.Group or part.Groups or "other"
 
-				if isstring(group) then
-					group = {group}
-				end
-
-				for i, name in ipairs(group) do
-					if not sortedTree[name] then
-						sortedTree[name] = {}
-						sortedTree[name].parts = {}
-						sortedTree[name].icon = pace.GroupsIcons[name]
-						sortedTree[name].name = L(name)
-					end
-
-					partsToShow[part.ClassName] = nil
-
-					if name == part.ClassName or name == part.FriendlyName then
-						sortedTree[name].group_class_name = part.ClassName
-					else
-						table.insert(sortedTree[name].parts, part)
-					end
-				end
+			if isstring(group) then
+				group = {group}
 			end
 
-			local other = sortedTree.other
-			sortedTree.other = nil
-
-			for group, groupData in pairs(sortedTree) do
-				local sub, pnl = menu:AddSubMenu(groupData.name, function()
-					if groupData.group_class_name then
-						pace.RecordUndoHistory()
-						pace.Call("CreatePart", groupData.group_class_name, nil, nil, parent)
-						pace.RecordUndoHistory()
-					end
-				end)
-
-				sub.GetDeleteSelf = function() return false end
-
-				if groupData.icon then
-					pnl:SetImage(groupData.icon)
+			for i, name in ipairs(group) do
+				if not sortedTree[name] then
+					sortedTree[name] = {}
+					sortedTree[name].parts = {}
+					sortedTree[name].icon = pace.GroupsIcons[name]
+					sortedTree[name].name = L(name)
 				end
 
-				local trap = false
-				table.sort(groupData.parts, function(a, b) return a.ClassName < b.ClassName end)
-				for i, part in ipairs(groupData.parts) do
-					add_part(sub, part)
+				partsToShow[part.ClassName] = nil
+
+				if name == part.ClassName or name == part.FriendlyName then
+					sortedTree[name].group_class_name = part.ClassName
+				else
+					table.insert(sortedTree[name].parts, part)
 				end
+			end
+		end
 
-				hook.Add('Think', sub, function()
-					local ctrl = input.IsControlDown()
+		local other = sortedTree.other
+		sortedTree.other = nil
 
-					if clicked and not ctrl then
-						sub:SetDeleteSelf(true)
-						RegisterDermaMenuForClose(sub)
-						CloseDermaMenus()
-						return
-					end
+		for group, groupData in pairs(sortedTree) do
+			local sub, pnl = menu:AddSubMenu(groupData.name, function()
+				if groupData.group_class_name then
+					pace.RecordUndoHistory()
+					pace.Call("CreatePart", groupData.group_class_name, nil, nil, parent)
+					pace.RecordUndoHistory()
+				end
+			end)
 
-					sub:SetDeleteSelf(not ctrl)
-				end)
+			sub.GetDeleteSelf = function() return false end
 
-				hook.Add('CloseDermaMenus', sub, function()
-					if input.IsControlDown() and trap then
-						trap = false
-						sub:SetVisible(true)
-					end
+			if groupData.icon then
+				pnl:SetImage(groupData.icon)
+			end
 
+			local trap = false
+			table.sort(groupData.parts, function(a, b) return a.ClassName < b.ClassName end)
+			for i, part in ipairs(groupData.parts) do
+				add_part(sub, part)
+			end
+
+			hook.Add('Think', sub, function()
+				local ctrl = input.IsControlDown()
+
+				if clicked and not ctrl then
+					sub:SetDeleteSelf(true)
 					RegisterDermaMenuForClose(sub)
-				end)
-			end
-
-			for i,v in ipairs(other.parts) do
-				add_part(menu, v)
-			end
-
-			for class_name, part in pairs(partsToShow) do
-				local newMenuEntry = menu:AddOption(L((part.FriendlyName or part.ClassName):Replace('_', ' ')), function()
-					pace.RecordUndoHistory()
-					pace.Call("CreatePart", class_name, nil, nil, parent)
-					pace.RecordUndoHistory()
-				end)
-
-				if part.Icon then
-					newMenuEntry:SetImage(part.Icon)
+					CloseDermaMenus()
+					return
 				end
+
+				sub:SetDeleteSelf(not ctrl)
+			end)
+
+			hook.Add('CloseDermaMenus', sub, function()
+				if input.IsControlDown() and trap then
+					trap = false
+					sub:SetVisible(true)
+				end
+
+				RegisterDermaMenuForClose(sub)
+			end)
+		end
+
+		for i,v in ipairs(other.parts) do
+			add_part(menu, v)
+		end
+
+		for class_name, part in pairs(partsToShow) do
+			local newMenuEntry = menu:AddOption(L((part.FriendlyName or part.ClassName):Replace('_', ' ')), function()
+				pace.RecordUndoHistory()
+				pace.Call("CreatePart", class_name, nil, nil, parent)
+				pace.RecordUndoHistory()
+			end)
+
+			if part.Icon then
+				newMenuEntry:SetImage(part.Icon)
 			end
 		end
 	end
@@ -395,9 +388,6 @@ do -- menu
 
 		local edit = base:Add("DTextEntry")
 		edit:SetTall(20)
-		if pace.IsInBasicMode() then
-			edit:SetTall(0)
-		end
 		edit:Dock(TOP)
 		edit:RequestFocus()
 		edit:SetUpdateOnType(true)
