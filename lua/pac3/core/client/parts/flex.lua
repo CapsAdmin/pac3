@@ -5,20 +5,12 @@ PART.ClassName = "flex"
 PART.Icon = 'icon16/emoticon_smile.png'
 PART.Group = 'entity'
 
-local function get_owner(self)
-	if self.RootOwner then
-		return self:GetRootPart():GetOwner()
-	end
-
-	return self:GetOwner()
-end
-
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("Flex", "", {
 		enums = function(part)
 			local tbl = {}
 
-			for _, v in pairs(pac.GetFlexMap(get_owner(part))) do
+			for _, v in pairs(pac.GetFlexMap(part:GetOwner())) do
 				tbl[v.name] = v.name
 			end
 
@@ -27,15 +19,19 @@ BUILDER:StartStorableVars()
 	})
 
 	BUILDER:GetSet("Weight", 0)
-	BUILDER:GetSet("RootOwner", false, { description = "Target the local player instead of the part's parent" })
+	BUILDER:GetSet("RootOwner", false, { hide_in_editor = true })
 BUILDER:EndStorableVars()
+
+function PART:SetRootOwner(b)
+	self:SetRootOwnerDeprecated(b)
+end
 
 function PART:GetNiceName()
 	return self:GetFlex() ~= "" and self:GetFlex() or "no flex"
 end
 
 function PART:GetFlexID()
-	local ent = get_owner(self)
+	local ent = self:GetOwner()
 	if not ent:IsValid() or not ent.GetFlexNum or ent:GetFlexNum() == 0 then return end
 
 	local flex_map = pac.GetFlexMap(ent)

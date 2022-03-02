@@ -28,7 +28,7 @@ BUILDER
 			:GetSet("EditorExpand", false, {hidden = true})
 			:GetSet("UniqueID", "", {hidden = true})
 			:GetSetPart("Parent")
-			:GetSetPart("TargetEntity")
+			:GetSetPart("TargetEntity", {description = "allows you to change which entity this part targets"})
 			-- this is an unfortunate name, it controls the order in which the scene related functions iterate over children
 			-- in practice it's often used to make something draw above something else in translucent rendering
 			:GetSet("DrawOrder", 0)
@@ -162,6 +162,16 @@ do -- owner
 
 	function PART:GetPlayerOwnerId()
 		return self:GetRootPart().PlayerOwnerHash
+	end
+
+	function PART:SetRootOwnerDeprecated(b)
+		if b then
+			self:SetTargetEntity(self:GetRootPart())
+			self.RootOwner = false
+			if pace then
+				pace.Call("VariableChanged", self, "TargetEntityUID", self:GetTargetEntityUID(), 0.25)
+			end
+		end
 	end
 
 	function PART:GetParentOwner()

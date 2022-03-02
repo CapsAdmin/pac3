@@ -507,6 +507,11 @@ do -- list
 		for _, data in ipairs(SortGroups(FlatListToGroups(flat_list))) do
 			self:AddCollapser(data.group or "generic")
 			for pos, prop in ipairs(data.props) do
+
+				if prop.udata and prop.udata.hide_in_editor then
+					continue
+				end
+
 				local val = prop.get()
 				local T = type(val):lower()
 
