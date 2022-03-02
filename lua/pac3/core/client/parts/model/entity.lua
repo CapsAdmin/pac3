@@ -124,7 +124,7 @@ function PART:OnShow()
 	function ent.RenderOverride()
 		-- if the draw call is not from pac don't bother
 		if not ent.pac_drawing_model then
-			if not ent.pac_is_drawing and ent ~= pac.LocalPlayer and ent.pac_player ~= pac.LocalPlayer then
+			if not ent.pac_is_drawing and ent ~= pac.LocalPlayer and ent.pac_ragdoll_owner ~= pac.LocalPlayer then
 				ent.RenderOverride = nil
 				ent:DisableMatrix("RenderMultiply")
 				ent:SetSkin(0)

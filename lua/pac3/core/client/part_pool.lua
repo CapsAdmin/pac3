@@ -692,12 +692,11 @@ do -- drawing
 
 				pac.ResetRenderTime(ent)
 
-				ent.pac_pixvis = ent.pac_pixvis or util.GetPixelVisibleHandle()
 				dst = ent:EyePos():Distance(pac.EyePos)
 				radius = ent:BoundingRadius() * 3 * (ent:GetModelScale() or 1)
 
-				if ent:IsPlayer() or IsValid(ent.pac_player) then
-					local ply = ent.pac_player or ent
+				if ent:IsPlayer() or IsValid(ent.pac_ragdoll_owner) then
+					local ply = ent.pac_ragdoll_owner or ent
 					local rag = ply.pac_ragdoll
 
 					if IsValid(rag) and (ply.pac_death_hide_ragdoll or ply.pac_draw_player_on_death) then
