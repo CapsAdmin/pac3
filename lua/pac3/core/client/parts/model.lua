@@ -799,6 +799,8 @@ end
 function PART:CheckBoneMerge()
 	local ent = self:GetOwner()
 
+	if ent == pac.LocalHands or ent == pac.LocalViewModel then return end
+
 	if self.skip_orient then return end
 
 	if ent:IsValid() and not ent:IsPlayer() and ent:GetModel() then

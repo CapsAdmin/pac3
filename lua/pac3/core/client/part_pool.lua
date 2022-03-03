@@ -664,6 +664,9 @@ do -- drawing
 
 		pac.AddHook("Think", "update_parts", function()
 			-- commonly used variables
+			pac.LocalPlayer = LocalPlayer()
+			pac.LocalViewModel = pac.LocalPlayer:GetViewModel()
+			pac.LocalHands = pac.LocalPlayer:GetHands()
 			pac.RealTime = RealTime()
 			pac.FrameNumber = pac.FrameNumber + 1
 
@@ -723,23 +726,35 @@ do -- drawing
 					radius = radius * 4
 				end
 
+				-- if it's a world entity always draw
 				local cond = ent.IsPACWorldEntity
 
+				-- if the entity is the hands, check if we should not draw the localplayer
+				if (ent == pac.LocalHands or ent == pac.LocalViewModel) and not pac.LocalPlayer:ShouldDrawLocalPlayer() then
+					cond = true
+				end
+
+				-- if it's a player, draw if we can see them
 				if not cond and ent == pac.LocalPlayer then
 					cond = ent:ShouldDrawLocalPlayer()
 				end
 
+				-- if the entity has a camera part, draw if it's valid
 				if not cond and ent.pac_camera then
 					cond = ent.pac_camera:IsValid()
 				end
 
+				-- if the condition is not satisified, check draw distance
 				if not cond and ent ~= pac.LocalPlayer then
 					if ent.pac_draw_distance then
+						-- custom draw distance
 						cond = ent.pac_draw_distance <= 0 or ent.pac_draw_distance <= dst
 					else
+						-- otherwise check the cvar
 						cond = dst <= draw_dist
 					end
 				end
+
 
 				ent.pac_is_drawing = cond
 
@@ -846,39 +861,36 @@ do -- drawing
 		end
 	end)
 
-	do
-		pac.LocalViewModel = NULL
+	local drawing_viewmodel = false
 
-		pac.AddHook("PostDrawViewModel", "draw_firstperson", function(viewmodelIn, playerIn, weaponIn)
-			pac.LocalViewModel = viewmodelIn
-
-			for ent in next, pac.drawn_entities do
-				if IsValid(ent) then
-					if ent.pac_drawing and ent_parts[ent] then
-						pac.RenderOverride(ent, "viewmodel")
-					end
-				else
-					pac.drawn_entities[ent] = nil
+	pac.AddHook("PostDrawViewModel", "draw_firstperson", function(viewmodelIn, playerIn, weaponIn)
+		if drawing_viewmodel then return end
+		for ent in next, pac.drawn_entities do
+			if IsValid(ent) then
+				if ent.pac_drawing and ent_parts[ent] then
+					drawing_viewmodel=true
+					pac.RenderOverride(ent, "viewmodel")
+					drawing_viewmodel=false
 				end
+			else
+				pac.drawn_entities[ent] = nil
 			end
-		end)
-	end
+		end
+	end)
 
-	do
-		pac.LocalHands = NULL
-
-		pac.AddHook("PostDrawPlayerHands", "draw_firstperson_hands", function(handsIn, viewmodelIn, playerIn, weaponIn)
-			pac.LocalHands = handsIn
-
-			for ent in next, pac.drawn_entities do
-				if IsValid(ent) then
-					if ent.pac_drawing and ent_parts[ent] then
-						pac.RenderOverride(ent, "hands")
-					end
-				else
-					pac.drawn_entities[ent] = nil
+	local drawing_hands = false
+	pac.AddHook("PostDrawPlayerHands", "draw_firstperson_hands", function(handsIn, viewmodelIn, playerIn, weaponIn)
+		if drawing_hands then return end
+		for ent in next, pac.drawn_entities do
+			if IsValid(ent) then
+				if ent.pac_drawing and ent_parts[ent] then
+					drawing_hands = true
+					pac.RenderOverride(ent, "hands")
+					drawing_hands = false
 				end
+			else
+				pac.drawn_entities[ent] = nil
 			end
-		end)
-	end
+		end
+	end)
 end

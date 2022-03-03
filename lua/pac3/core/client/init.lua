@@ -1,7 +1,8 @@
 pac = pac or {}
 
-pac.LocalPlayer = LocalPlayer()
-
+pac.LocalPlayer = NULL
+pac.LocalViewModel = NULL
+pac.LocalHands = NULL
 do
 	local pac_enable = CreateClientConVar("pac_enable", "1", true)
 
@@ -61,6 +62,9 @@ hook.Add("OnEntityCreated", "pac_init", function(ent)
 	if not ply:IsValid() then return end
 
 	pac.LocalPlayer = ply
+	pac.LocalViewModel = pac.LocalPlayer:GetViewModel()
+	pac.LocalHands = pac.LocalPlayer:GetHands()
+
 	pac.in_initialize = true
 	hook.Run("pac_Initialized")
 	pac.in_initialize = nil

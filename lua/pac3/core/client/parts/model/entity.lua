@@ -116,42 +116,55 @@ end
 
 local temp_mat = Material( "models/error/new light1" )
 
+function PART:RenderOverride(ent)
+	-- if the draw call is not from pac don't bother
+	if not ent.pac_drawing_model then
+		if not ent.pac_is_drawing and ent ~= pac.LocalPlayer and ent.pac_ragdoll_owner ~= pac.LocalPlayer then
+			ent.RenderOverride = nil
+			ent:DisableMatrix("RenderMultiply")
+			ent:SetSkin(0)
+			ent:SetLOD(-1)
+		end
+		return
+	end
+
+	if self:IsValid() and self:GetParentOwner():IsValid() then
+		if ent.pac_bonemerged then
+			for _, e in ipairs(ent.pac_bonemerged) do
+				if e.pac_drawing_model then return end
+			end
+		end
+
+		-- so eyes work
+		if self.NoDraw then
+			if ent == pac.LocalViewModel or ent == pac.LocalHands then return end
+			render.SetBlend(0)
+			render.ModelMaterialOverride(temp_mat)
+			ent.pac_drawing_model = true
+			ent:DrawModel()
+			ent.pac_drawing_model = false
+			render.SetBlend(1)
+			render.ModelMaterialOverride()
+			return
+		end
+
+		ent:SetSkin(self:GetSkin())
+		self:Draw(self.Translucent and "translucent" or "opaque")
+	else
+		ent.RenderOverride = nil
+	end
+end
+
 function PART:OnShow()
 	local ent = self:GetOwner()
 
 	if not ent:IsValid() then return end
 
+	print(self, "OnShow")
+
 	function ent.RenderOverride()
-		-- if the draw call is not from pac don't bother
-		if not ent.pac_drawing_model then
-			if not ent.pac_is_drawing and ent ~= pac.LocalPlayer and ent.pac_ragdoll_owner ~= pac.LocalPlayer then
-				ent.RenderOverride = nil
-				ent:DisableMatrix("RenderMultiply")
-				ent:SetSkin(0)
-				ent:SetLOD(-1)
-			end
-			return
-		end
-
-		if self:IsValid() and self:GetParentOwner():IsValid() then
-			if ent.pac_bonemerged then
-				for _, e in ipairs(ent.pac_bonemerged) do
-					if e.pac_drawing_model then return end
-				end
-			end
-
-			-- so eyes work
-			if self.NoDraw then
-				render.SetBlend(0)
-				render.ModelMaterialOverride(temp_mat)
-				ent:DrawModel()
-				render.SetBlend(1)
-				render.ModelMaterialOverride()
-				return
-			end
-
-			ent:SetSkin(self:GetSkin())
-			self:Draw(self.Translucent and "translucent" or "opaque")
+		if self:IsValid() then
+			self:RenderOverride(ent)
 		else
 			ent.RenderOverride = nil
 		end
