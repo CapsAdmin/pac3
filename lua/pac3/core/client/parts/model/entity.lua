@@ -160,8 +160,6 @@ function PART:OnShow()
 
 	if not ent:IsValid() then return end
 
-	print(self, "OnShow")
-
 	function ent.RenderOverride()
 		if self:IsValid() then
 			self:RenderOverride(ent)
