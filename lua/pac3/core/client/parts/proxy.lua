@@ -10,7 +10,7 @@ BUILDER:StartStorableVars()
 
 	BUILDER:SetPropertyGroup("generic")
 		BUILDER:GetSet("VariableName", "", {enums = function(part)
-			local part = part:GetOutputTarget()
+			local part = part:GetTarget()
 			if not part:IsValid() then return end
 			local tbl = {}
 			for _, info in pairs(part:GetProperties()) do
@@ -28,7 +28,7 @@ BUILDER:StartStorableVars()
 
 		BUILDER:GetSet("RootOwner", false)
 		BUILDER:GetSetPart("TargetPart")
-		BUILDER:GetSetPart("OutputTargetPart")
+		BUILDER:GetSetPart("OutputTargetPart", {hide_in_editor = true})
 		BUILDER:GetSet("AffectChildren", false)
 		BUILDER:GetSet("Expression", "")
 
@@ -52,12 +52,9 @@ BUILDER:StartStorableVars()
 
 BUILDER:EndStorableVars()
 
-function PART:GetOutputTarget()
-	local part = self:GetOutputTargetPart()
-	if part:IsValid() then
-		return part
-	end
-	return self:GetTarget()
+-- redirect
+function PART:SetOutputTarget(part)
+	self:SetTargetPart(part)
 end
 
 function PART:GetPhysicalTarget()
@@ -108,10 +105,8 @@ function PART:GetNiceName()
 	if self.AffectChildren then
 		target = "children"
 	else
-		local part = self.debug_target or self:GetOutputTarget()
-		if false and part == self.Parent then
-			target = "parent"
-		else
+		local part = self:GetTarget()
+		if part:IsValid() then
 			target = part:GetName()
 		end
 	end
@@ -568,7 +563,7 @@ end
 do -- ambient light
 	local render = render
 	local function get_color(self, field)
-		local part = self:GetOutputTarget()
+		local part = self:GetTarget()
 		if not part:IsValid() then return 0 end
 
 		local v = field and render.GetAmbientLightColor():ToColor()[field] or render.GetAmbientLightColor():ToColor()
@@ -612,7 +607,7 @@ do -- weapon and player color
 	local Color = Color
 	local function get_color(self, get, field)
 		local color = field and get(self)[field] or get(self)
-		local part = self:GetOutputTarget()
+		local part = self:GetTarget()
 
 		if part.ProperColorRange then
 			if field then return color else return color[1], color[2], color[3] end
@@ -709,7 +704,7 @@ end
 
 PART.Inputs.hsv_to_color = function(self, h, s, v)
 
-	local part = self:GetOutputTarget()
+	local part = self:GetTarget()
 	if not part:IsValid() then return end
 
 	h = tonumber(h) or 0
@@ -889,7 +884,7 @@ function PART:RunExpression(ExpressionFunc)
 end
 
 function PART:OnThink()
-	local part = self:GetOutputTarget()
+	local part = self:GetTarget()
 	if not part:IsValid() then return end
 	if part.ClassName == 'woohoo' then return end
 
