@@ -73,7 +73,7 @@ function PART:OnShow()
 
 	local id
 	id = ent:AddCallback("BuildBonePositions", function(ent, ...)
-		if not self:IsValid() or ent.pac_bone_parts or not ent.pac_bone_parts[1] then
+		if not self:IsValid() or not ent.pac_bone_parts or not ent.pac_bone_parts[1] then
 			ent:RemoveCallback("BuildBonePositions", id)
 			return
 		end
@@ -234,7 +234,6 @@ function PART:BuildBonePositions2(ent)
 	local parent_world_matrix = world_matrix
 	unmodified_world_matrix:Invert()
 	local last_inverted_world_matrix = unmodified_world_matrix
-
 
 	for _, child_index in ipairs(get_children_bones_cached(ent, index)) do
 		local child_world_matrix = ent:GetBoneMatrix(child_index)
