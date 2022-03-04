@@ -111,7 +111,12 @@ function PART:GetNiceName()
 		end
 	end
 
-	return (target or "?") .. "." .. pac.PrettifyName(self:GetVariableName()) .. " = " .. (self.debug_var or "?")
+	local axis = self:GetAxis()
+	if axis ~= "" then
+		axis = "." .. axis
+	end
+
+	return (target or "?") .. "." .. pac.PrettifyName(self:GetVariableName()) .. axis .. " = " .. (self.debug_var or "?")
 end
 
 function PART:Initialize()
