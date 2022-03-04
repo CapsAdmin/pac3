@@ -429,17 +429,25 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 			"",
 
 			function(name)
-				if name:find("{", nil, true) and name:find("}", nil, true) then
-					local data,err = pace.luadata.Decode(name)
-					if data then
-						pace.LoadPartsFromTable(data, clear, override_part)
-					end
-				else
-					pace.LoadParts(name, clear, override_part)
-				end
+				pace.LoadParts(name, clear, override_part)
 			end
 		)
 	end):SetImage(pace.MiscIcons.url)
+
+	menu:AddOption(L"load from clipboard", function()
+		pace.MultilineStringRequest(
+			L"load parts from clipboard",
+			L"Paste the outfits content here.",
+			"",
+
+			function(name)
+				local data,err = pace.luadata.Decode(name)
+				if data then
+					pace.LoadPartsFromTable(data, clear, override_part)
+				end
+			end
+		)
+	end):SetImage(pace.MiscIcons.paste)
 
 	if not override_part and pace.example_outfits then
 		local examples, pnl = menu:AddSubMenu(L"examples")
@@ -541,6 +549,17 @@ local function populate_parts(menu, tbl, dir, override_part)
 		)
 	end)
 	:SetImage("icon16/folder_add.png")
+
+	menu:AddOption(L"to clipboard", function()
+		local data = {}
+		for key, part in pairs(pac.GetLocalParts()) do
+			if not part:HasParent() and part:GetShowInEditor() then
+				table.insert(data, part:ToSaveTable())
+			end
+		end
+		SetClipboardText(pace.luadata.Encode(data):sub(1, -1))
+	end)
+	:SetImage(pace.MiscIcons.copy)
 
 	menu:AddSpacer()
 	for key, data in pairs(tbl) do

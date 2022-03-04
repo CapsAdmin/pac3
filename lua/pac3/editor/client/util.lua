@@ -166,3 +166,65 @@ function pace.MessagePrompt( strText, strTitle, strButtonText )
 
 	return Window
 end
+
+function pace.MultilineStringRequest( strTitle, strText, strDefaultText, fnEnter, fnCancel, strButtonText, strButtonCancelText )
+	if IsValid(pace.last_modal) then pace.last_modal:Remove() end
+	local Window = vgui.Create( "DFrame" )
+	pace.last_modal = Window
+	Window:SetTitle( strTitle or "Message Title (First Parameter)" )
+	Window:SetDraggable( false )
+	Window:ShowCloseButton( false )
+	Window:SetBackgroundBlur( true )
+	Window:SetDrawOnTop( true )
+	Window:SetSize(400, 400)
+
+	local InnerPanel = vgui.Create( "DPanel", Window )
+	InnerPanel:SetPaintBackground( false )
+	InnerPanel:Dock( FILL )
+
+	local Text = vgui.Create( "DLabel", InnerPanel )
+	Text:SetText( strText or "Message Text (Second Parameter)" )
+	Text:SizeToContents()
+	Text:SetContentAlignment( 5 )
+	Text:SetTextColor( color_white )
+	Text:Dock( TOP )
+
+	local TextEntry = vgui.Create( "DTextEntry", InnerPanel )
+	TextEntry:SetText( strDefaultText or "" )
+	TextEntry:SetMultiline(true)
+	TextEntry:Dock(FILL)
+	TextEntry:SetUpdateOnType(true)
+	TextEntry.OnChange = function(self) self:SetText(self:GetValue():gsub("\t", "    ")) end
+	TextEntry.OnEnter = function() Window:Close() fnEnter( TextEntry:GetValue() ) end
+
+	local ButtonPanel = vgui.Create( "DPanel", Window )
+	ButtonPanel:SetTall( 30 )
+	ButtonPanel:SetPaintBackground( false )
+	ButtonPanel:Dock(BOTTOM)
+
+	local Button = vgui.Create( "DButton", ButtonPanel )
+	Button:SetText( strButtonText or "OK" )
+	Button:SizeToContents()
+	Button:SetTall( 20 )
+	Button:SetWide( Button:GetWide() + 20 )
+	Button:SetPos( 5, 5 )
+	Button.DoClick = function() Window:Close() fnEnter( TextEntry:GetValue() ) end
+
+	local ButtonCancel = vgui.Create( "DButton", ButtonPanel )
+	ButtonCancel:SetText( strButtonCancelText or "Cancel" )
+	ButtonCancel:SizeToContents()
+	ButtonCancel:SetTall( 20 )
+	ButtonCancel:SetWide( Button:GetWide() + 20 )
+	ButtonCancel:SetPos( 5, 5 )
+	ButtonCancel.DoClick = function() Window:Close() if ( fnCancel ) then fnCancel( TextEntry:GetValue() ) end end
+	ButtonCancel:MoveRightOf( Button, 5 )
+
+	ButtonPanel:SetWide( Button:GetWide() + 5 + ButtonCancel:GetWide() + 10 )
+
+	Window:MakePopup()
+	Window:DoModal()
+	Window:Center()
+
+	return Window
+
+end
