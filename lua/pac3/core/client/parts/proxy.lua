@@ -817,9 +817,11 @@ function PART:OnHide()
 		if self.AffectChildren then
 			for _, part in ipairs(self:GetChildren()) do
 				part:SetEventTrigger(self, false)
+				part.proxy_hide = nil
 			end
 		elseif part:IsValid() then
 			part:SetEventTrigger(self, false)
+			part.proxy_hide = nil
 		end
 	end
 end
