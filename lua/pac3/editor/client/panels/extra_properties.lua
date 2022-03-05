@@ -206,10 +206,12 @@ do -- part
 			end
 		end
 
-		menu:AddOption("none", function()
-			self:SetValue("")
-			self.OnValueChanged("")
-		end):SetImage(pace.MiscIcons.clear)
+		if key ~= "ParentUID" then
+			menu:AddOption("none", function()
+				self:SetValue("")
+				self.OnValueChanged("")
+			end):SetImage(pace.MiscIcons.clear)
+		end
 
 		pace.FixMenu(menu)
 	end
