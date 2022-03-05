@@ -406,7 +406,7 @@ do -- bone manipulation for boneanimlib
 				end
 
 				if time < pac.RealTime then
-					ent:SetFlexWeight(i, 0)
+					ent:SetFlexWeight(id, 0)
 				else
 					ent.pac_touching_flexes[id] = nil
 				end
