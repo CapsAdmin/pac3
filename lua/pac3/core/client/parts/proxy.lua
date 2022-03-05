@@ -956,6 +956,17 @@ function PART:OnThink()
 			if y then str = str .. ", " .. math.Round(y, 3) end
 			if z then str = str .. ", " .. math.Round(z, 3) end
 
+			local val = part:GetProperty(self.VariableName)
+			local T = type(val)
+
+			if T == "boolean" then
+				str = tonumber(x) > 0 and "true" or "false"
+			elseif T == "Vector" then
+				str = "Vector(" .. str .. ")"
+			elseif T == "Angle" then
+				str = "Angle(" .. str .. ")"
+			end
+
 			self.debug_var = str
 
 			if self.Name == "" and pace.current_part == self and self.pace_properties and IsValid(self.pace_properties["Name"]) then
