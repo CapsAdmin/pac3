@@ -53,7 +53,8 @@ BUILDER:StartStorableVars()
 BUILDER:EndStorableVars()
 
 -- redirect
-function PART:SetOutputTarget(part)
+function PART:SetOutputTargetPart(part)
+	self.SetOutputTargetPartUID = ""
 	self:SetTargetPart(part)
 end
 
