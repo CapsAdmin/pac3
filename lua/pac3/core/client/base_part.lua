@@ -444,6 +444,19 @@ do -- scene graph
 		end
 	end
 
+	function PART:CallRecursiveOnClassName(class_name, func, a,b,c)
+		assert(c == nil, "EXTEND ME")
+		if self[func] and self.ClassName == class_name then
+			self[func](self, a,b,c)
+		end
+
+		for _, child in ipairs(self:GetChildrenList()) do
+			if child[func] and self.ClassName == class_name then
+				child[func](child, a,b,c)
+			end
+		end
+	end
+
 	function PART:SetKeyValueRecursive(key, val)
 		self[key] = val
 

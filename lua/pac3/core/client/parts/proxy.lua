@@ -850,7 +850,7 @@ local function set(self, part, x, y, z, children)
 					end
 
 					-- we want any nested proxies to think twice before they decide to enable themselves
-					part:CallRecursive("OnThink")
+					part:CallRecursiveOnClassName("proxy", "OnThink")
 
 					part:SetEventTrigger(self, b)
 
