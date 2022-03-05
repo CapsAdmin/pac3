@@ -1,6 +1,11 @@
 #!/bin/bash
-
 WORKSHOP_ID=104691717
+
+if [ "$(git status --porcelain)" ]; then
+	echo "You have uncommitted changes in your workspace."
+	echo "Please commit or stash them before continuing."
+	exit 1
+fi
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     gmad='../../../bin/gmad'
