@@ -929,7 +929,8 @@ function PART:OnThink()
 
 		if x and not isnumber(x) then x = 0 end
 		if y and not isnumber(y) then y = 0 end
-		if z and not isnumber(y) then z = 0 end
+		if z and not isnumber(z) then z = 0 end
+
 
 		if self.Additive then
 			if x then
