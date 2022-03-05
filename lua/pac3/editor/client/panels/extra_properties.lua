@@ -197,7 +197,7 @@ do -- part
 		menu:MakePopup()
 
 		for _, part in pairs(pac.GetLocalParts()) do
-			if not part:HasParent() then
+			if not part:HasParent() and part:GetShowInEditor() then
 				populate_part_menu(menu, part, function(part)
 					if not self:IsValid() then return end
 					self:SetValue(part:GetUniqueID())
