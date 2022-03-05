@@ -636,6 +636,28 @@ do -- hidden / events
 		end
 	end
 
+	function PART:GetReasonHidden()
+		local found = {}
+
+		for part in pairs(self.active_events) do
+			table.insert(found, tostring(part) .. " is event hiding")
+		end
+
+		if found[1] then
+			return table.concat(found, "\n")
+		end
+
+		if self.Hide then
+			return "hide enabled"
+		end
+
+		if self.hide_disturbing then
+			return "pac_hide_disturbing is set to 1"
+		end
+
+		return ""
+	end
+
 	function PART:CalcShowHide(from_rendering)
 		local b = self:IsHidden()
 

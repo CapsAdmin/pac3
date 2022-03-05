@@ -809,6 +809,18 @@ function PART:OnHide()
 		self.last_pos = nil
 		self.last_vel_smooth = nil
 	end
+
+	if self.VariableName == "Hide" then
+		-- cleanup event triggers on hide
+		local part = self:GetTarget()
+		if self.AffectChildren then
+			for _, part in ipairs(self:GetChildren()) do
+				part:SetEventTrigger(self, false)
+			end
+		else
+			part:SetEventTrigger(self, false)
+		end
+	end
 end
 
 function PART:OnShow()
