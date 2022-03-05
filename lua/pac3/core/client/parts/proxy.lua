@@ -817,7 +817,7 @@ function PART:OnHide()
 			for _, part in ipairs(self:GetChildren()) do
 				part:SetEventTrigger(self, false)
 			end
-		else
+		elseif part:IsValid() then
 			part:SetEventTrigger(self, false)
 		end
 	end
