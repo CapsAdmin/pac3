@@ -19,6 +19,7 @@ BUILDER:StartStorableVars()
 	})
 
 	BUILDER:GetSet("Weight", 0)
+	BUILDER:GetSet("Additive", false)
 	BUILDER:GetSet("RootOwner", false, { hide_in_editor = true })
 BUILDER:EndStorableVars()
 
@@ -43,8 +44,11 @@ end
 function PART:OnBuildBonePositions()
 	local id, ent = self:GetFlexID()
 	if not id then return end
-	-- flexes are additive
-	ent:SetFlexWeight(id, ent:GetFlexWeight(id) + self.Weight)
+	local weight = self.Weight
+	if self.Additive then
+		weight = weight + ent:GetFlexWeight(id)
+	end
+	ent:SetFlexWeight(id, weight)
 	ent.pac_touching_flexes = ent.pac_touching_flexes or {}
 	ent.pac_touching_flexes[id] = pac.RealTime + 0.1
 end
