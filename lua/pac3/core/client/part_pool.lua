@@ -784,8 +784,7 @@ do -- drawing
 	function pac.SetupBones(ent)
 		if not setup_bones[ent] then
 			setup_bones[ent] = ent
-			-- ent:InvalidateBoneCache()
-			-- ent:SetupBones()
+			ent.needs_setupbones_from_legacy_bone_parts = true
 		end
 	end
 
@@ -811,7 +810,6 @@ do -- drawing
 
 			for ent in next, setup_bones do
 				if ent:IsValid() then
-					-- ent:InvalidateBoneCache()
 					ent:SetupBones()
 				end
 			end
@@ -825,6 +823,10 @@ do -- drawing
 
 					pac.RenderOverride(ent, "opaque")
 				end
+			end
+
+			for ent in next, setup_bones do
+				setup_bones[ent] = nil
 			end
 		end)
 	end
