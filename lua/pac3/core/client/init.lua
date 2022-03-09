@@ -1,8 +1,8 @@
 pac = pac or {}
 
-pac.LocalPlayer = NULL
-pac.LocalViewModel = NULL
-pac.LocalHands = NULL
+pac.LocalPlayer = LocalPlayer()
+pac.LocalViewModel = pac.LocalPlayer:IsValid() and pac.LocalPlayer:GetViewModel() or NULL
+pac.LocalHands = pac.LocalPlayer:IsValid() and pac.LocalPlayer:GetHands() or NULL
 do
 	local pac_enable = CreateClientConVar("pac_enable", "1", true)
 
