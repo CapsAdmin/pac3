@@ -859,7 +859,10 @@ do -- drawing
 
 	pac.AddHook("UpdateAnimation", "update_animation_parts", function(ply)
 		if ply.pac_is_drawing and ent_parts[ply] then -- accessing table of NULL doesn't do anything
-			pac.CallRecursiveOnAllParts("OnUpdateAnimation")
+			local parts = ent_parts[ply]
+			for _, part in pairs(parts) do
+				part:CallRecursive("OnUpdateAnimation")
+			end
 		end
 	end)
 

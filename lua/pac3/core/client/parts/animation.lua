@@ -218,13 +218,6 @@ function PART:OnShow()
 	end
 end
 
-function PART:OnThink()
-	local ent = self:GetOwner()
-	if not ent:IsPlayer() then
-		self:OnUpdateAnimation()
-	end
-end
-
 function PART:OnUpdateAnimation()
 	local ent = self:GetOwner()
 
@@ -250,11 +243,11 @@ function PART:OnUpdateAnimation()
 
 			return
 		end
-		
+
 		local min = self.Min
 		local max = self.Max
 		local maxmin = max - min
-		
+
 		if min == max then
 			local cycle = min
 
