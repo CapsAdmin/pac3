@@ -268,7 +268,7 @@ function PART:OnUpdateAnimation(ply)
 		return
 	end
 
-	local rate = (duration == 0) and 0 or (self.Rate / duration / math.abs(maxmin) * FrameTime() * 0.5)
+	local rate = (duration == 0) and 0 or (self.Rate / duration / math.abs(maxmin) * FrameTime())
 
 	if self.PingPongLoop then
 		if self.Loop then
