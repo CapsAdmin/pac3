@@ -861,7 +861,7 @@ do -- drawing
 		if ply.pac_is_drawing and ent_parts[ply] then -- accessing table of NULL doesn't do anything
 			local parts = ent_parts[ply]
 			for _, part in pairs(parts) do
-				part:CallRecursive("OnUpdateAnimation")
+				part:CallRecursive("OnUpdateAnimation", ply)
 			end
 		end
 	end)
