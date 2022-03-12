@@ -1,4 +1,6 @@
 local enable = CreateConVar("pac_sv_projectiles", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED})
+local pac_sv_projectile_max_attract_radius = CreateConVar("pac_sv_projectile_max_attract_radius", 300, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED})
+local pac_sv_projectile_max_damage_radius = CreateConVar("pac_sv_projectile_max_damage_radius", 100, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED})
 
 do -- projectile entity
 	local ENT = {}
@@ -58,7 +60,7 @@ do -- projectile entity
 
 			self.projectile_owner = ply
 
-			local radius = math.Clamp(part.Radius, 1, 100)
+			local radius = math.Clamp(part.Radius, 1, pac_sv_projectile_max_damage_radius:GetFloat())
 
 			if part.Sphere then
 				self:PhysicsInitSphere(radius)
@@ -174,7 +176,7 @@ do -- projectile entity
 					phys:SetVelocity(phys:GetVelocity() + dir)
 				elseif self.part_data.AttractMode == "closest_to_projectile" or self.part_data.AttractMode == "closest_to_hitpos" then
 					if self.next_target < CurTime() then
-						local radius = math.Clamp(self.part_data.AttractRadius, 0, 300)
+						local radius = math.Clamp(self.part_data.AttractRadius, 0, pac_sv_projectile_max_attract_radius:GetFloat())
 						local pos
 
 						if self.part_data.AttractMode == "closest_to_projectile" then
