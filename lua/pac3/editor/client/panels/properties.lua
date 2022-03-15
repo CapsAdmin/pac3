@@ -571,7 +571,7 @@ do -- list
 											v = k
 										end
 
-										if not isstring(v) then
+										if not isstring(k) then
 											k = v
 										end
 
