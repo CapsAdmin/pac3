@@ -40,6 +40,18 @@ do -- bones
 			return parent.pos, parent.ang
 		end
 
+		do -- legacy behavior, inherit parent matrix from sprite, particle, etc
+			if
+				not parent.is_model_part and
+				not parent.is_bone_part and
+				not self.is_bone_part and
+				parent.WorldMatrix and
+				parent.ClassName ~= "jiggle"
+			then
+				return parent:GetWorldPosition(), parent:GetWorldAngles()
+			end
+		end
+
 		local owner = self:GetParentOwner()
 
 		if owner:IsValid() then
