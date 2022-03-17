@@ -35,25 +35,21 @@ do -- bones
 
 	function PART:GetBonePosition()
 		local parent = self:GetParent()
-
-		if parent:IsValid() and parent.ClassName == "jiggle" then
-			return parent.pos, parent.ang
-		end
-
-		do -- legacy behavior, inherit parent matrix from sprite, particle, etc
-			if
+		if parent:IsValid() then
+			if parent.ClassName == "jiggle" then
+				return parent.pos, parent.ang
+			elseif
 				not parent.is_model_part and
+				not parent.is_entity_part and
 				not parent.is_bone_part and
 				not self.is_bone_part and
-				parent.WorldMatrix and
-				parent.ClassName ~= "jiggle"
+				parent.WorldMatrix
 			then
 				return parent:GetWorldPosition(), parent:GetWorldAngles()
 			end
 		end
 
 		local owner = self:GetParentOwner()
-
 		if owner:IsValid() then
 			-- if there is no parent, default to owner bones
 			return pac.GetBonePosAng(owner, self.BoneOverride or self.Bone)
@@ -63,25 +59,32 @@ do -- bones
 	end
 
 	function PART:GetBoneMatrix()
-
-		do -- legacy behavior, inherit parent matrix from sprite, particle, etc
-			local parent = self:GetParent()
-			if
+		local parent = self:GetParent()
+		if parent:IsValid() then
+			if parent.ClassName == "jiggle" then
+				local bone_matrix = Matrix()
+				bone_matrix:SetTranslation(parent.pos)
+				bone_matrix:SetAngles(parent.ang)
+				return bone_matrix
+			elseif
 				not parent.is_model_part and
+				not parent.is_entity_part and
 				not parent.is_bone_part and
 				not self.is_bone_part and
-				parent.WorldMatrix and
-				parent.ClassName ~= "jiggle"
+				parent.WorldMatrix
 			then
 				return parent.WorldMatrix
 			end
 		end
 
-		local pos, ang = self:GetBonePosition()
-
 		local bone_matrix = Matrix()
-		bone_matrix:SetTranslation(pos)
-		bone_matrix:SetAngles(ang)
+		local owner = self:GetParentOwner()
+		if owner:IsValid() then
+			-- if there is no parent, default to owner bones
+			local pos, ang = pac.GetBonePosAng(owner, self.BoneOverride or self.Bone)
+			bone_matrix:SetTranslation(pos)
+			bone_matrix:SetAngles(ang)
+		end
 
 		return bone_matrix
 	end
