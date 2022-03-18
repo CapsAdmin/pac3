@@ -54,6 +54,7 @@ BUILDER:EndStorableVars()
 
 -- redirect
 function PART:SetOutputTargetPart(part)
+	if not part:IsValid() then return end
 	self.SetOutputTargetPartUID = ""
 	self:SetTargetPart(part)
 end
