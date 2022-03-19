@@ -82,6 +82,7 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSetPart("OutfitPart")
 	BUILDER:GetSet("Physical", false)
 	BUILDER:GetSet("CollideWithOwner", false)
+	BUILDER:GetSet("CollideWithSelf", false)
 	BUILDER:GetSet("RemoveOnCollide", false)
 BUILDER:EndStorableVars()
 

@@ -444,6 +444,10 @@ local function ent_draw_model(self, ent, pos, ang)
 			self.obj_mesh:Draw()
 		cam_PopModelMatrix()
 	else
+		if ent.needs_setupbones_from_legacy_bone_parts then
+			ent:SetupBones()
+			ent.needs_setupbones_from_legacy_bone_parts = nil
+		end
 		ent:DrawModel()
 	end
 end

@@ -197,7 +197,7 @@ do -- part
 		menu:MakePopup()
 
 		for _, part in pairs(pac.GetLocalParts()) do
-			if not part:HasParent() then
+			if not part:HasParent() and part:GetShowInEditor() then
 				populate_part_menu(menu, part, function(part)
 					if not self:IsValid() then return end
 					self:SetValue(part:GetUniqueID())
@@ -206,10 +206,12 @@ do -- part
 			end
 		end
 
-		menu:AddOption("none", function()
-			self:SetValue("")
-			self.OnValueChanged("")
-		end):SetImage(pace.MiscIcons.clear)
+		if key ~= "ParentUID" then
+			menu:AddOption("none", function()
+				self:SetValue("")
+				self.OnValueChanged("")
+			end):SetImage(pace.MiscIcons.clear)
+		end
 
 		pace.FixMenu(menu)
 	end

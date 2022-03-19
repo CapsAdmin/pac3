@@ -83,7 +83,7 @@ function pace.CreateSearchList(property, key, name, add_columns, get_list, get_c
 
 		for i, data in ipairs(newList) do
 			local key, val, keyFriendly, valFriendly = data[1], data[2], data[3], data[4]
-			if (not find or find == "") or tostring(select_value_search(valFriendly, keyFriendly)):lower():find(find) then
+			if (not find or find == "") or tostring(select_value_search(valFriendly, keyFriendly)):lower():find(find, nil, true) then
 
 				local pnl = add_line(list, key, val)
 				pnl.list_key = key
@@ -571,7 +571,7 @@ do -- list
 											v = k
 										end
 
-										if not isstring(v) then
+										if not isstring(k) then
 											k = v
 										end
 

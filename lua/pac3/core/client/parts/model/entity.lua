@@ -11,7 +11,7 @@ PART.ManualDraw = true
 PART.HandleModifiersManually = true
 PART.Icon = 'icon16/brick.png'
 PART.Group = "entity"
-PART.is_model_part = false
+PART.is_entity_part = true
 
 BUILDER:StartStorableVars()
 	:SetPropertyGroup("generic")
