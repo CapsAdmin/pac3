@@ -57,10 +57,13 @@ function MUTATOR:Mutate(path)
 
 			if self.Owner:IsPlayer() and path:lower() ~= self.Entity:GetModel():lower() then
 				self.Owner:ChatPrint('[PAC3] ERROR: ' .. path .. " is not a valid model on the server.")
+			else
+				self.actual_model = path
 			end
 		else
 			local translated = player_manager.TranslatePlayerModel(path)
 			self.Entity:SetModel(translated)
+			self.actual_model = translated
 		end
 	end
 end
