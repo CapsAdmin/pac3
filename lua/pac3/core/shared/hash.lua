@@ -27,7 +27,9 @@ function pac.Hash(obj)
 
 		local hash = steamid64(obj)
 		if not hash then
-			ErrorNoHalt( "FIXME: Did not get a steamid64 for a player object " .. tostring(obj) .. ', valid=' .. tostring(IsValid(obj)) .. '\n' )
+			if pac.debug then
+				ErrorNoHaltWithStack( "FIXME: Did not get a steamid64 for a player object " .. tostring(obj) .. ', valid=' .. tostring(IsValid(obj)) .. ', steamid=' .. tostring(obj:SteamID()) .. '\n' )
+			end
 			hash = "0"
 		end
 		return hash
