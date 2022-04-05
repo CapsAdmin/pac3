@@ -260,7 +260,7 @@ function pac.GetBonePosAng(ent, id, parent)
 		if ent.pac_traceres then
 			return ent.pac_traceres.HitPos, ent.pac_traceres.HitNormal:Angle()
 		else
-			local res = util_QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()})
+			local res = util_QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetOwner()})
 
 			return res.HitPos, res.HitNormal:Angle()
 		end
@@ -268,7 +268,7 @@ function pac.GetBonePosAng(ent, id, parent)
 		if ent.pac_traceres then
 			return ent.pac_traceres.HitPos, ent:EyeAngles()
 		else
-			local res = util_QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()})
+			local res = util_QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetOwner()})
 
 			return res.HitPos, ent:EyeAngles()
 		end
@@ -278,7 +278,7 @@ function pac.GetBonePosAng(ent, id, parent)
 			ang.p = 0
 			return ent.pac_traceres.HitPos, ang
 		else
-			local res = util_QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetParent()})
+			local res = util_QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, {ent, ent:GetOwner()})
 
 			return res.HitPos, ent:EyeAngles()
 		end
