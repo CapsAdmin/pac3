@@ -168,7 +168,7 @@ function PART:OnShow()
 		end
 	end
 
-	if not (self.old_model == self:GetModel()) then
+	if not (self.old_model == self:GetModel()) or ent == self:GetPlayerOwner():GetHands() then
 		self.old_model = self:GetModel()
 		self:SetModel(self:GetModel())
 	end
