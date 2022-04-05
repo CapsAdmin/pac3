@@ -12,12 +12,13 @@ pac.AddHook("DrawPhysgunBeam", "physgun_event", function(ply, wep, enabled, targ
 		ply.pac_drawphysgun_event = nil
 	end
 
-	if ply.pac_drawphysgun_event_part then
-		for event in pairs(ply.pac_drawphysgun_event_part) do
+	local pac_drawphysgun_event_part = ply.pac_drawphysgun_event_part
+	if pac_drawphysgun_event_part then
+		for event in pairs(pac_drawphysgun_event_part) do
 			if event:IsValid() then
 				event:OnThink()
 			else
-				ply.pac_drawphysgun_event_part[event] = nil
+				pac_drawphysgun_event_part[event] = nil
 			end
 		end
 	end
