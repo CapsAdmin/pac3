@@ -599,6 +599,7 @@ function PART:ProcessModelChange()
 
 	if path:find("://", nil, true) then
 		if path:StartWith("objhttp") or path:StartWith("obj:http") or path:EndsWith(".obj") or self.ForceObjUrl then
+			path = path:gsub("^objhttp","http"):gsub("^obj:http","http")
 			self.loading = "downloading obj"
 
 			pac.urlobj.GetObjFromURL(path, false, false,
