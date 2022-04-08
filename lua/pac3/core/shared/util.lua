@@ -242,7 +242,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 			local other_models = {}
 
 			table.sort(files, function(a, b) return #a.buffer > #b.buffer end)
-			
+
 			for i, v in ipairs(files) do
 				if v.file_name:EndsWith(".mdl") then
 					local name = v.file_name:match("(.+)%.mdl")
@@ -416,7 +416,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 									end
 								end
 
-								if not found then 
+								if not found then
 									for i, v in pairs(files) do
 										if string.find(v.file_path, material_name, 1, true) or string.find(material_name, v.file_name, 1, true) then
 											v.file_name = material_name
@@ -428,10 +428,10 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 								if not found then
 									if ply == pac.LocalPlayer then
-										pac.Message(Color(255, 50,50), url, " the model wants to find ", mat, " but it was not found in the zip archive")
+										pac.Message(Color(255, 50,50), url, " the model wants to find ", material_name , " but it was not found in the zip archive")
 									end
 									local dummy = "VertexLitGeneric\n{\n\t$basetexture \"error\"\n}"
-									table.insert(files, {file_name = material, buffer = dummy, crc = util.CRC(dummy), file_path = material})
+									table.insert(files, {file_name = material_name, buffer = dummy, crc = util.CRC(dummy), file_path = material_name})
 								end
 
 								table.insert(found_materials, {name = material_name, offset = material_name_pos})
