@@ -558,8 +558,7 @@ open();
 		webaudio.browser_panel:RunJavascript(js)
 	end
 
-	file.Write("pac_webaudio2_blankhtml.txt", "<html></html>")
-	webaudio.browser_panel:OpenURL("asset://garrysmod/data/pac_webaudio2_blankhtml.txt")
+	webaudio.browser_panel:SetHTML("<html></html>")
 
 	webaudio.eye_pos = Vector()
 	webaudio.eye_ang = Angle()
