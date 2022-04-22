@@ -476,10 +476,10 @@ function PART:DrawModel(ent, pos, ang)
 	ent_draw_model(self, ent, pos, ang)
 	ent.pac_drawing_model = false
 
+	_self, _ent, _pos, _ang = self, ent, pos, ang
+	
 	if self.ClassName ~= "entity2" then
 		render.PushFlashlightMode(true)
-
-		_self, _ent, _pos, _ang = self, ent, pos, ang
 
 		material_bound = self:BindMaterials(ent) or material_bound
 		ent.pac_drawing_model = true
