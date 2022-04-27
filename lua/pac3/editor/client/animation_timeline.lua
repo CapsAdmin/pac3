@@ -1,4 +1,5 @@
 local animations = pac.animations
+local eases = animations.eases
 local L = pace.LanguageString
 
 pace.timeline = pace.timeline or {}
@@ -569,8 +570,10 @@ do
 			local scrub = Material("icon16/bullet_arrow_down.png")
 			local start = Material("icon16/control_play_blue.png")
 			local restart = Material("icon16/control_repeat_blue.png")
+			local estyle = Material("icon16/arrow_branch.png")
 			pnl.Paint = function(s,w,h)
 				local offset = -self.keyframe_scroll:GetCanvas():GetPos()
+				local esoffset = self.keyframe_scroll:GetCanvas():GetPos()
 
 				self:GetSkin().tex.Tab_Control( 0, 0, w, h )
 				self:GetSkin().tex.CategoryList.Header( 0, 0, w, h )
@@ -617,16 +620,28 @@ do
 
 				for i, v in ipairs(self.keyframe_scroll:GetCanvas():GetChildren()) do
 					local mat = v.restart and restart or v.start and start or false
+					local esmat = v.estyle and estyle or false
 
 					if mat then
-						local x = v:GetPos() - offset
+						local x = v:GetPos()
 						surface.SetDrawColor(255,255,255,200)
 						surface.DrawLine(x, -mat:Height()/2 - 5, x, h)
 
 						surface.SetDrawColor(255,255,255,255)
 						surface.SetMaterial(mat)
-						surface.DrawTexturedRect(1+x - mat:Width()/2,-mat:Height() - 5,mat:Width(), mat:Height())
+						surface.DrawTexturedRect(1+x,mat:Height() - 5,mat:Width(), mat:Height())
 
+					end
+					
+					if esmat then
+						local ps = v:GetSize()
+						local x = v:GetPos() + (ps * 0.5)
+						surface.SetDrawColor(255,255,255,255)
+						surface.SetMaterial(esmat)
+						surface.DrawTexturedRect(1+x - (esmat:Width() * 0.5), esmat:Height(),esmat:Width(), esmat:Height())
+						if ps >= 65 then
+							draw.SimpleText( v.estyle, "Default", x, esmat:Height() * 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP )
+						end
 					end
 				end
 
@@ -811,7 +826,7 @@ do
 	function KEYFRAME:GetRestart()
 		return self.restart
 	end
-
+	
 	function KEYFRAME:GetData()
 		return self.DataTable
 	end
@@ -819,6 +834,9 @@ do
 		self.DataTable = tbl
 		self.AnimationKeyIndex = index
 		self:GetParent():GetParent():InvalidateLayout() --rebuild the timeline
+		if tbl.EaseStyle then
+			self.estyle = tbl.EaseStyle
+		end
 		if timeline.data.RestartFrame == index then
 			self:SetRestart(true)
 		end
@@ -1033,6 +1051,37 @@ do
 
 				timeline.SelectKeyframe(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()[#timeline.frame.keyframe_scroll:GetCanvas():GetChildren()])
 			end):SetImage("icon16/application_delete.png")
+			
+			menu:AddOption(L"set easing style", function()
+				local frameNum = self:GetAnimationIndex()
+			
+				local frame = vgui.Create( "DFrame" )
+				frame:SetSize( 200, 100 )
+				frame:Center()
+				frame:SetTitle("Select easing type")
+				frame:MakePopup()
+				
+				local combo = vgui.Create( "DComboBox", frame )
+				
+				combo:SetPos( 5, 30 )
+				combo:SetSize( 100, 20 )
+				combo:SetValue("None")
+				
+				for easeName, _ in pairs(eases) do
+					combo:AddChoice(easeName)
+				end
+				
+				combo.OnSelect = function(sf, index, val)
+					self:SetEaseStyle(val)
+					frame:Close()
+				end
+			end):SetImage("icon16/arrow_turn_right.png")
+			
+			if self:GetEaseStyle() then
+				menu:AddOption(L"unset easing style", function()
+					self:RemoveEaseStyle()
+				end):SetImage("icon16/arrow_up.png")
+			end
 
 			menu:Open()
 
@@ -1043,6 +1092,21 @@ do
 		if not int then return end
 		self:GetParent():GetParent():InvalidateLayout() --rebuild the timeline
 		self:GetData().FrameRate = 1/math.max(int, 0.001) --set animation frame rate
+	end
+	
+	function KEYFRAME:GetEaseStyle()
+		return self.estyle
+	end
+	
+	function KEYFRAME:SetEaseStyle(style)
+		if not style then return end
+		self:GetData().EaseStyle = style
+		self.estyle = style
+	end
+	
+	function KEYFRAME:RemoveEaseStyle()
+		self:GetData().EaseStyle = nil
+		self.estyle = nil
 	end
 
 	vgui.Register("pac3_timeline_keyframe",KEYFRAME,"DPanel")
