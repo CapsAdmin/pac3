@@ -41,7 +41,8 @@ do
 	end
 end
 
-local eases = {}
+animations.eases = {}
+local eases = animations.eases
 
 do
 	local c1 = 1.70158
