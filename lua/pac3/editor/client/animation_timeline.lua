@@ -1053,6 +1053,23 @@ do
 			end):SetImage("icon16/application_delete.png")
 			
 			menu:AddOption(L"set easing style", function()
+				if timeline.data.Interpolation != "linear" then
+					local frame = vgui.Create("DFrame")
+					frame:SetSize(300, 100)
+					frame:Center()
+					frame:SetTitle("Easing styles work only with the linear interpolation type!")
+					frame:ShowCloseButton(false)
+					
+					local button = vgui.Create("DButton", frame)
+					button:SetText("Okay")
+					button:Dock(FILL)
+					button.DoClick = function()
+						frame:Close()
+					end
+					frame:MakePopup()
+					return
+				end
+			
 				local frameNum = self:GetAnimationIndex()
 			
 				local frame = vgui.Create( "DFrame" )
@@ -1064,7 +1081,7 @@ do
 				local combo = vgui.Create( "DComboBox", frame )
 				
 				combo:SetPos( 5, 30 )
-				combo:SetSize( 100, 20 )
+				combo:Dock(FILL)
 				combo:SetValue("None")
 				
 				for easeName, _ in pairs(eases) do

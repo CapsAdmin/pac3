@@ -190,7 +190,7 @@ do
 	end
 
 	eases.InBounce = function(x)
-		return 1 - OutBounce( 1 - x )
+		return 1 - eases.OutBounce( 1 - x )
 	end
 
 	eases.OutBounce = function(x)
@@ -210,8 +210,8 @@ do
 
 	eases.InOutBounce = function(x)
 		return x < 0.5
-			&& ( 1 - OutBounce( 1 - 2 * x ) ) / 2
-			|| ( 1 + OutBounce( 2 * x - 1 ) ) / 2
+			&& ( 1 - eases.OutBounce( 1 - 2 * x ) ) / 2
+			|| ( 1 + eases.OutBounce( 2 * x - 1 ) ) / 2
 	end
 
 end
