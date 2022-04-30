@@ -592,6 +592,18 @@ function pac.CallRecursiveOnAllParts(func_name, ...)
 	end
 end
 
+function pac.CallRecursiveOnOwnedParts(ent, func_name, ...)
+	local owned_parts = parts_from_ent(ent)
+	for _, part in pairs(owned_parts) do
+		if part[func_name] then
+			local ret = part[func_name](part, ...)
+			if ret ~= nil then
+				return ret
+			end
+		end
+	end
+end
+
 function pac.EnablePartsByClass(classname, enable)
 	for _, part in pairs(all_parts) do
 		if part.ClassName == classname then
