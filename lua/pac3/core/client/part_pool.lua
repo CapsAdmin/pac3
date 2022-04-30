@@ -261,7 +261,10 @@ pac.AddHook("Think", "events", function()
 		end
 
 		local rag = ply:GetRagdollEntity()
-		if not IsValid(rag) then continue end
+		if not IsValid(rag) then
+			pac.HideEntityParts(ply)
+			continue 
+		end
 
 		-- so it only runs once
 		if ply.pac_ragdoll == rag then continue end
