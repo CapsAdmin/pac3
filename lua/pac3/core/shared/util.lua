@@ -608,6 +608,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 								local new_path
 								for _, info in ipairs(found_vmt_directories) do
+									if info.dir == "" then continue end
+
 									new_path, count = vtf_path:gsub("^" .. info.dir:gsub("\\", "/"):lower(), dir)
 									if count == 0 then
 										new_path = nil
