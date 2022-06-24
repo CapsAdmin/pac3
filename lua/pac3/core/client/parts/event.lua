@@ -471,7 +471,8 @@ PART.OldEvents = {
 	},
 
 	ranger = {
-		arguments = {{compare = "number"}, {distance = "number"}, {npcs_and_players_only = "boolean"}},
+		arguments = {{distance = "number"}, {compare = "number"}, {npcs_and_players_only = "boolean"}},
+		userdata = {{editor_panel = "ranger"}},
 		callback = function(self, ent, compare, distance, npcs_and_players_only)
 			local parent = self:GetParentEx()
 
@@ -2067,6 +2068,3 @@ do
 	concommand.Add("+pac_events", pac.openEventSelectionWheel)
 	concommand.Add("-pac_events", pac.closeEventSelectionWheel)
 end
-
-
-

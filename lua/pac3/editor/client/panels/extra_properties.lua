@@ -651,3 +651,40 @@ do -- hull
 
 	pace.RegisterPanel(PANEL)
 end
+
+do -- event ranger
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_ranger"
+	PANEL.Base = "pace_properties_number"
+
+	function PANEL:OnValueSet()
+		local function stop()
+			hook.Remove("PostDrawOpaqueRenderables", "pace_draw_ranger")
+		end
+
+		local time = os.clock() + 3
+
+		hook.Add("PostDrawOpaqueRenderables", "pace_draw_ranger", function()
+			local part = pace.current_part
+			if not part:IsValid() then stop() return end
+			if part.ClassName ~= "event" then stop() return end
+			if part:GetEvent() ~= "ranger" then stop() return end
+
+			local distance = part:GetProperty("distance")
+			local compare = part:GetProperty("compare")
+			local trigger = part.event_triggered
+			local parent = part:GetParent()
+			if not parent:IsValid() then stop() return end
+			local startpos = parent:GetWorldPosition()
+			local endpos = startpos + parent:GetWorldAngles():Forward() * distance
+			render.DrawLine( startpos, endpos, trigger and Color(255,0,0) or Color(255,255,255) )
+
+			if time < os.clock() then
+				stop()
+			end
+		end)
+	end
+
+	pace.RegisterPanel(PANEL)
+end
