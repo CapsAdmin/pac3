@@ -473,7 +473,7 @@ PART.OldEvents = {
 	ranger = {
 		arguments = {{distance = "number"}, {compare = "number"}, {npcs_and_players_only = "boolean"}},
 		userdata = {{editor_panel = "ranger"}},
-		callback = function(self, ent, compare, distance, npcs_and_players_only)
+		callback = function(self, ent, distance, compare, npcs_and_players_only)
 			local parent = self:GetParentEx()
 
 			if parent:IsValid() and parent.GetWorldPosition then
