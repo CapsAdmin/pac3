@@ -472,7 +472,7 @@ PART.OldEvents = {
 
 	ranger = {
 		arguments = {{distance = "number"}, {compare = "number"}, {npcs_and_players_only = "boolean"}},
-		userdata = {{editor_panel = "ranger"}},
+		userdata = {{editor_panel = "ranger", ranger_property = "distance"}, {editor_panel = "ranger", ranger_property = "compare"}},
 		callback = function(self, ent, distance, compare, npcs_and_players_only)
 			local parent = self:GetParentEx()
 

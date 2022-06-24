@@ -677,8 +677,20 @@ do -- event ranger
 			local parent = part:GetParent()
 			if not parent:IsValid() then stop() return end
 			local startpos = parent:GetWorldPosition()
-			local endpos = startpos + parent:GetWorldAngles():Forward() * distance
-			render.DrawLine( startpos, endpos, trigger and Color(255,0,0) or Color(255,255,255) )
+			local endpos
+			local color 
+
+			if self.udata then
+				if self.udata.ranger_property == "distance" then
+					endpos = startpos + parent:GetWorldAngles():Forward() * distance
+					color = Color(255,255,255)
+				elseif self.udata.ranger_property == "compare" then
+					endpos = startpos + parent:GetWorldAngles():Forward() * compare
+					color = Color(10,255,10)
+				end
+
+				render.DrawLine( startpos, endpos, trigger and Color(255,0,0) or color)
+			end
 
 			if time < os.clock() then
 				stop()
