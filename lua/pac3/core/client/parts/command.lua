@@ -62,12 +62,12 @@ function PART:Execute()
 				local status, err = pcall(self.func)
 
 				if not status then
-					self.Error(err)
+					self:SetError(err)
 					ErrorNoHalt(err .. "\n")
 				end
 			else
 				local msg = "clientside lua is disabled (sv_allowcslua 0)"
-				self.Error(msg)
+				self:SetError(msg)
 				pac.Message(tostring(self) .. ' - '.. msg)
 			end
 		else
