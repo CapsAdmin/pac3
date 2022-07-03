@@ -496,7 +496,7 @@ PART.OldEvents = {
 			else
 				local classname = parent:GetNiceName()
 				local name = parent:GetName()
-				self:SetWarning(("ranger doesn't work on [%s] %s"):format(classnname, classname ~= name and "(" .. name .. ")" or ""))
+				self:SetWarning(("ranger doesn't work on [%s] %s"):format(classname, classname ~= name and "(" .. name .. ")" or ""))
 			end
 		end,
 	},
@@ -532,6 +532,7 @@ PART.OldEvents = {
 
 	is_touching = {
 		arguments = {{extra_radius = "number"}},
+		userdata = {{editor_panel = "is_touching", is_touching_property = "extra_radius"}},
 		callback = function(self, ent, extra_radius)
 			extra_radius = extra_radius or 0
 
@@ -556,20 +557,6 @@ PART.OldEvents = {
 				mins = mins,
 				filter = ent
 			} )
-
-			--[[
-
-
-			if tr.Hit then
-				debugoverlay.Text(tr.HitPos, "hit!", 1, false)
-			end
-
-			cam.IgnoreZ(true)
-			render.DrawWireframeBox( startpos, Angle( 0, 0, 0 ), mins, maxs, tr.Hit and Color(255,0,0) or Color(255,255,255), true )
-			cam.IgnoreZ(false)
-
-			]]
-
 			return tr.Hit
 		end,
 	},

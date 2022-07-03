@@ -663,11 +663,12 @@ do -- event ranger
 			hook.Remove("PostDrawOpaqueRenderables", "pace_draw_ranger")
 		end
 
-		local time = os.clock() + 3
+		local last_part = pace.current_part
 
 		hook.Add("PostDrawOpaqueRenderables", "pace_draw_ranger", function()
 			local part = pace.current_part
 			if not part:IsValid() then stop() return end
+			if part ~= last_part then stop() return end
 			if part.ClassName ~= "event" then stop() return end
 			if part:GetEvent() ~= "ranger" then stop() return end
 
@@ -688,13 +689,64 @@ do -- event ranger
 					endpos = startpos + parent:GetWorldAngles():Forward() * compare
 					color = Color(10,255,10)
 				end
-
 				render.DrawLine( startpos, endpos, trigger and Color(255,0,0) or color)
 			end
+		end)
+	end
 
-			if time < os.clock() then
-				stop()
+	pace.RegisterPanel(PANEL)
+end
+
+do -- event is_touching
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_is_touching"
+	PANEL.Base = "pace_properties_number"
+
+	function PANEL:OnValueSet()
+		local function stop()
+			hook.Remove("PostDrawOpaqueRenderables", "pace_draw_is_touching")
+		end
+		local last_part = pace.current_part
+
+		hook.Add("PostDrawOpaqueRenderables", "pace_draw_is_touching", function()
+			local part = pace.current_part
+			if part ~= last_part then stop() return end
+			if not part:IsValid() then stop() return end
+			if part.ClassName ~= "event" then stop() return end
+			if part:GetEvent() ~= "is_touching" then stop() return end
+
+			local extra_radius = part:GetProperty("extra_radius") or 0
+			local ent
+			if part.RootOwner then
+				ent = part:GetRootPart():GetOwner()
+			else
+				ent = part:GetOwner()
 			end
+
+			if not IsValid(ent) then stop() return end
+			local radius =  ent:BoundingRadius()
+
+			if radius == 0 and IsValid(ent.pac_projectile) then
+				radius = ent.pac_projectile:GetRadius()
+			end
+
+			radius = radius + extra_radius + 1
+
+			local mins = Vector(-1,-1,-1)
+			local maxs = Vector(1,1,1)
+			local startpos = ent:WorldSpaceCenter()
+			mins = mins * radius
+			maxs = maxs * radius
+
+			local tr = util.TraceHull( {
+				start = startpos,
+				endpos = startpos,
+				maxs = maxs,
+				mins = mins,
+				filter = ent
+			} )
+			render.DrawWireframeBox( startpos, Angle( 0, 0, 0 ), mins, maxs, tr.Hit and Color(255,0,0) or Color(255,255,255), true )
 		end)
 	end
 
