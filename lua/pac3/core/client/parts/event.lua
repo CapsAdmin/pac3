@@ -64,6 +64,7 @@ end
 function PART:GetDynamicProperties()
 	local data = self.Events[self.Event]
 	if not data then return end
+	self:SetWarning()
 
 	local tbl = {}
 	for pos, arg in ipairs(data:GetArguments()) do
