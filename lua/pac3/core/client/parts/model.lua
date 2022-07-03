@@ -711,7 +711,8 @@ function PART:SetModel(path)
 
 	local owner = self:GetOwner()
 	if not owner:IsValid() then return end
-
+	
+	self.old_model = path
 	self:ProcessModelChange()
 end
 

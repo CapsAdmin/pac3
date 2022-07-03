@@ -168,7 +168,8 @@ function PART:OnShow()
 		end
 	end
 
-	if not (self.old_model == self:GetModel()) or ent == self:GetPlayerOwner():GetHands() then
+	if not (self.old_model == self:GetModel()) or 
+	(ent == pac.LocalHands and not (self.real_model == pac.LocalHands:GetModel())) then
 		self.old_model = self:GetModel()
 		self:SetModel(self:GetModel())
 	end
@@ -194,7 +195,7 @@ function PART:RealSetModel(path)
 	if not ent:IsValid() then return end
 
 	ent:SetModel(path)
-
+	self.real_model = path
 	self:RefreshModel()
 end
 
