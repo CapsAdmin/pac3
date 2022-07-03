@@ -477,6 +477,7 @@ PART.OldEvents = {
 			local parent = self:GetParentEx()
 
 			if parent:IsValid() and parent.GetWorldPosition then
+				self:SetWarning()
 				distance = distance or 1
 				compare = compare or 0
 
@@ -492,7 +493,9 @@ PART.OldEvents = {
 
 				return self:NumberOperator(res.Fraction * distance, compare)
 			else
-				self:SetWarning("ranger doesn't work on " .. parent:GetNiceName())
+				local classname = parent:GetNiceName()
+				local name = parent:GetName()
+				self:SetWarning(("ranger doesn't work on [%s] %s"):format(classnname, classname ~= name and "(" .. name .. ")" or ""))
 			end
 		end,
 	},
