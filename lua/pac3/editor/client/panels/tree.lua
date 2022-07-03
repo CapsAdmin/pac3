@@ -369,6 +369,7 @@ function PANEL:AddNode(...)
 	info:SetImage(pace.MiscIcons.info)
 	info:SetSize(16, 16)
 	info:SetVisible(false)
+	info.DoClick = function() pace.MessagePrompt(info:GetTooltip()) end
 	node.info = info
 
 	return node
