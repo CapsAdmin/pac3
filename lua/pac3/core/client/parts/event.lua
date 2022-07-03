@@ -491,6 +491,8 @@ PART.OldEvents = {
 				end
 
 				return self:NumberOperator(res.Fraction * distance, compare)
+			else
+				self:SetWarning("ranger doesn't work on " .. parent:GetNiceName())
 			end
 		end,
 	},

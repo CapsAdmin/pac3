@@ -675,10 +675,10 @@ do -- event ranger
 			local compare = part:GetProperty("compare")
 			local trigger = part.event_triggered
 			local parent = part:GetParent()
-			if not parent:IsValid() then stop() return end
+			if not parent:IsValid() or not parent.GetWorldPosition then stop() return end
 			local startpos = parent:GetWorldPosition()
 			local endpos
-			local color 
+			local color
 
 			if self.udata then
 				if self.udata.ranger_property == "distance" then
