@@ -78,12 +78,14 @@ end
 
 function PART:SetURL(url)
 	self.URL = url
+	self:SetError()
 
 	if url:find("http") then
 		pac.HTTPGet(url, function(str)
 			local tbl = util.JSONToTable(str)
 			if not tbl then
 				pac.Message("Animation failed to parse from ", url)
+				self:SetError("Animation failed to parse from " .. url)
 				return
 			end
 
@@ -103,7 +105,9 @@ function PART:SetURL(url)
 				if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
 					pace.MessagePrompt(err, "HTTP Request Failed for " .. url, "OK")
 				else
-					pac.Message(Color(0, 255, 0), "[animation] ", Color(255, 255, 255), "HTTP Request Failed for " .. url .. " - " .. err)
+					local msg = "HTTP Request failed for " .. url .. " - " .. err
+					self:SetError(msg)
+					pac.Message(Color(0, 255, 0), "[animation] ", Color(255, 255, 255), msg)
 				end
 			end
 		end)

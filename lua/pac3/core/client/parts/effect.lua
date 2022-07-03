@@ -49,7 +49,9 @@ function PART:Initialize()
 			end)
 
 			if not ok then
-				pac.Message(Color(255, 50, 50), "unable to parse particle file " .. file_name .. ": " .. err)
+				local msg = "unable to parse particle file " .. file_name .. ": " .. err
+				self:SetError(msg)
+				pac.Message(Color(255, 50, 50), msg)
 			end
 		end
 

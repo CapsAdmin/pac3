@@ -195,7 +195,8 @@ function PART:SetPath(path)
 				if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
 					pace.MessagePrompt(err .. "\n" .. info, "OGG error for" .. path, "OK")
 				else
-					pac.Message("OGG error: ", err, " reason: ", info)
+					pac.Message("OGG error: ", err, " reason: ", err .. "\n" .. info, "OGG error for" .. path)
+					self:SetError("OGG error: " .. err .. "\n" .. info .. "\nfor:" .. path)
 				end
 			end
 		end

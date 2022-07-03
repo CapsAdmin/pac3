@@ -331,7 +331,7 @@ local function node_layout(self, ...)
 
 	if self.info then
 		local is_adding = self.add_button:IsVisible()
-		local x = self.Label:GetPos()+ self.Label:GetTextInset() + (is_adding and self.add_button:GetWide() + 4 or 4)
+		local x = self.Label:GetPos() + self.Label:GetTextInset() + (is_adding and self.add_button:GetWide() + 4 or 4)
 		surface.SetFont(pace.CurrentFont)
 		local w = surface.GetTextSize(self.Label:GetText())
 		self.info:SetPos(x + w, (self.Label:GetTall() - self.info:GetTall()) / 2)

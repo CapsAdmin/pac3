@@ -477,7 +477,7 @@ function PART:DrawModel(ent, pos, ang)
 	ent.pac_drawing_model = false
 
 	_self, _ent, _pos, _ang = self, ent, pos, ang
-	
+
 	if self.ClassName ~= "entity2" then
 		render.PushFlashlightMode(true)
 
@@ -516,6 +516,7 @@ function PART:DrawLoadingText(ent, pos)
 			local w, h = surface.GetTextSize(str)
 			surface.SetTextPos(pos2d.x - w / 2, pos2d.y - h / 2)
 			surface.DrawText(str)
+			self:SetError(str)
 		else
 			surface.SetTextColor(255, 255, 255, 255)
 			local str = self.loading .. string.rep(".", pac.RealTime * 3 % 3)
@@ -523,6 +524,7 @@ function PART:DrawLoadingText(ent, pos)
 
 			surface.SetTextPos(pos2d.x - w / 2, pos2d.y - h / 2)
 			surface.DrawText(str)
+			self:SetError()
 		end
 	cam.IgnoreZ(false)
 	cam.End2D()
@@ -688,9 +690,11 @@ function PART:ProcessModelChange()
 					self:RealSetModel("models/error.mdl")
 				end, self:GetPlayerOwner())
 			else
-				self.loading = reason or "mdl is not allowed"
+				local msg = reason or "mdl's are not allowed"
+				self.loading = msg
+				self:SetError(msg)
 				self:RealSetModel("models/error.mdl")
-				pac.Message(self, ' mdl files are not allowed')
+				pac.Message(self, msg)
 			end
 		end
 	elseif path ~= "" then

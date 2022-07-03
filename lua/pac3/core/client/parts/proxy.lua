@@ -795,9 +795,11 @@ function PART:SetExpression(str)
 		if ok then
 			self.ExpressionFunc = res
 			self.ExpressionError = nil
+			self:SetError()
 		else
 			self.ExpressionFunc = true
 			self.ExpressionError = res
+			self:SetError(res)
 		end
 	end
 end
