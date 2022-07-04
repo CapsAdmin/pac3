@@ -8,19 +8,19 @@ PART.Icon = 'icon16/application_xp_terminal.png'
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("String", "", {editor_panel = "string"})
 	BUILDER:GetSet("UseLua", false)
-	BUILDER:GetSet("ExectueOnWear", false)
-	BUILDER:GetSet("ExectueOnShow", true)
+	BUILDER:GetSet("ExecuteOnWear", false)
+	BUILDER:GetSet("ExecuteOnShow", true)
 BUILDER:EndStorableVars()
 
-function PART:Initialize()
-	if self:GetExectueOnWear() then
+function PART:OnWorn()
+	if self:GetExecuteOnWear() then
 		self:Execute()
 	end
 end
 
 function PART:OnShow(from_rendering)
 	if not from_rendering then
-		if self:GetExectueOnShow() then
+		if self:GetExecuteOnShow() then
 			self:Execute()
 		end
 	end
