@@ -168,8 +168,13 @@ function PART:OnShow()
 		end
 	end
 
+	if not self.real_model then 
+		self.real_model = ent:GetModel() 
+	end
+
 	if not (self.old_model == self:GetModel()) or 
-	(ent == pac.LocalHands and not (self.real_model == pac.LocalHands:GetModel())) then
+	(pac.LocalHands:IsValid() and ent == pac.LocalHands
+	and not (self.real_model == pac.LocalHands:GetModel())) then
 		self.old_model = self:GetModel()
 		self:SetModel(self:GetModel())
 	end

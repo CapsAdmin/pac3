@@ -102,8 +102,7 @@ function emut.MutateEntity(owner, class_name, ent, ...)
 	end
 
 	if CLIENT then
-		if owner == LocalPlayer() and not suppress_send_to_server 
-		and not (ent == pac.LocalHands or ent == pac.LocalViewModel) then 
+		if owner == LocalPlayer() and not suppress_send_to_server then 
 			net.Start("pac_entity_mutator")
 				net.WriteString(class_name)
 				net.WriteEntity(ent)
@@ -154,8 +153,7 @@ function emut.RestoreMutations(owner, class_name, ent)
 	end
 
 	if CLIENT then
-		if owner == LocalPlayer() and not suppress_send_to_server 
-		and not (ent == pac.LocalHands or ent == pac.LocalViewModel) then
+		if owner == LocalPlayer() and not suppress_send_to_server then
 			net.Start("pac_entity_mutator")
 				net.WriteString(class_name)
 				net.WriteEntity(ent)
