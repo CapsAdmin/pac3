@@ -63,11 +63,7 @@ end
 
 function pac.FixUrl(url)
 	url = url:Trim()
-
-	url = string.Replace(url, [["]], "")
-	url = string.Replace(url, [[']], "")
-	url = string.Replace(url, ">", "")
-	url = string.Replace(url, "<", "")
+	url = url:gsub("[\"'<>\n\\]+", "")
 
 	if url:find("dropbox", 1, true) then
 		url = url:gsub([[^http%://dl%.dropboxusercontent%.com/]], [[https://dl.dropboxusercontent.com/]])
