@@ -114,7 +114,7 @@ function urltex.StartDownload(url, data)
 	end
 
 	url = pac.FixUrl(url)
-	local size = data.size or urltex.TextureSize
+	local size = tonumber(data.size or urltex.TextureSize)
 	local id = "urltex_download_" .. url
 	local pnl
 	local frames_passed = 0
