@@ -16,7 +16,7 @@ PART.FriendlyName = "legacy trail"
 PART.ClassName = "trail"
 PART.Group = "legacy"
 
-PART.Icon = 'icon16/arrow_undo.png'
+PART.Icon = 'icon16/plugin_error.png'
 
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")

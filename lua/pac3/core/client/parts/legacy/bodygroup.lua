@@ -3,7 +3,7 @@ local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "bodygroup"
 PART.Group = "legacy"
-PART.Icon = 'icon16/user.png'
+PART.Icon = 'icon16/user_delete.png'
 
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("BodyGroupName", "", {

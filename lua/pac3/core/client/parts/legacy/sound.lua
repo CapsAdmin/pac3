@@ -6,7 +6,7 @@ PART.ClassName = "sound"
 
 PART.ThinkTime = 0
 PART.Group = 'effects'
-PART.Icon = 'icon16/sound.png'
+PART.Icon = 'icon16/sound_delete.png'
 
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("Sound", "")

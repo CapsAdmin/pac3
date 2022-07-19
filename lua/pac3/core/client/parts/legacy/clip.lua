@@ -8,7 +8,7 @@ local BUILDER, PART = pac.PartTemplate("base_drawable")
 PART.FriendlyName = "legacy clip"
 PART.ClassName = "clip"
 PART.Group = "legacy"
-PART.Icon = 'icon16/cut.png'
+PART.Icon = 'icon16/cut_red.png'
 
 BUILDER:SetPropertyGroup("generic")
 	BUILDER:PropertyOrder("Name")
