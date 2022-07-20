@@ -15,7 +15,7 @@ local BUILDER, PART = pac.PartTemplate("base_drawable")
 PART.FriendlyName = "legacy entity"
 PART.ClassName = "entity"
 PART.Group = 'legacy'
-PART.Icon = 'icon16/brick_error.png'
+PART.Icon = 'icon16/brick.png'
 
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")

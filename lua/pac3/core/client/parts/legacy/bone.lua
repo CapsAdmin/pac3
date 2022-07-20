@@ -12,7 +12,7 @@ PART.ClassName = "bone"
 PART.Group = "legacy"
 PART.is_bone_part = true
 
-PART.Icon = 'icon16/plugin_error.png'
+PART.Icon = 'icon16/connect.png'
 
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")

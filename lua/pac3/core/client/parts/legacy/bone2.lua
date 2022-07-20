@@ -10,7 +10,7 @@ local BUILDER, PART = pac.PartTemplate("base_movable")
 PART.FriendlyName = "legacy experimental bone"
 PART.ClassName = "bone2"
 PART.Group = "legacy"
-PART.Icon = 'icon16/plugin_error.png'
+PART.Icon = 'icon16/connect.png'
 PART.is_bone_part = true
 
 BUILDER:StartStorableVars()

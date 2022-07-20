@@ -9,7 +9,7 @@ PART.FriendlyName = "legacy ogg"
 PART.ClassName = "ogg"
 
 PART.Group = "legacy"
-PART.Icon = 'icon16/plugin_error.png'
+PART.Icon = 'icon16/music.png'
 
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("URL", "")

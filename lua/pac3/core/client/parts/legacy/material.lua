@@ -3,7 +3,7 @@ local BUILDER, PART = pac.PartTemplate("base")
 PART.FriendlyName = "legacy material"
 PART.ClassName = "material"
 
-PART.Icon = 'icon16/plugin_error.png'
+PART.Icon = 'icon16/paintcan.png'
 PART.Group = "legacy"
 
 local group_ordering = {

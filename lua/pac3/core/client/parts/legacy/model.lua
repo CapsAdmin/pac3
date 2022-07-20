@@ -50,7 +50,7 @@ PART.ClassName = "model"
 PART.Category = "model"
 PART.ManualDraw = true
 PART.HandleModifiersManually = true
-PART.Icon = 'icon16/shape_square_error.png'
+PART.Icon = 'icon16/shape_square.png'
 PART.Group = "legacy"
 PART.ThinkTime = 0.5
 
