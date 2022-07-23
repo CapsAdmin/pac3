@@ -14,6 +14,7 @@ PART.AlwaysThink = true
 PART.Icon = 'icon16/clock.png'
 
 BUILDER:StartStorableVars()
+	BUILDER:GetSet("HideInEventWheel", false)
 	BUILDER:GetSet("Event", "", {enums = function(part)
 		local output = {}
 
@@ -1895,7 +1896,7 @@ do
 		for k,v in pairs(pac.GetLocalParts()) do
 			if v.ClassName == "event" then
 				local e = v:GetEvent()
-				if e == "command" then
+				if e == "command" and not v.HideInEventWheel then
 					local cmd, time = v:GetParsedArgumentsForObject(v.Events.command)
 
 					available[cmd] = {type = e, time = time}
