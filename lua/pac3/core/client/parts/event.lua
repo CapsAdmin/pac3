@@ -14,7 +14,6 @@ PART.AlwaysThink = true
 PART.Icon = 'icon16/clock.png'
 
 BUILDER:StartStorableVars()
-	BUILDER:GetSet("HideInEventWheel", false)
 	BUILDER:GetSet("Event", "", {enums = function(part)
 		local output = {}
 
@@ -806,7 +805,7 @@ PART.OldEvents = {
 	},
 
 	command = {
-		arguments = {{find = "string"}, {time = "number"}},
+		arguments = {{find = "string"}, {time = "number"}, {hide_in_eventwheel = "boolean"}},
 		callback = function(self, ent, find, time)
 			time = time or 0.1
 
@@ -1896,8 +1895,9 @@ do
 		for k,v in pairs(pac.GetLocalParts()) do
 			if v.ClassName == "event" then
 				local e = v:GetEvent()
-				if e == "command" and not v.HideInEventWheel then
-					local cmd, time = v:GetParsedArgumentsForObject(v.Events.command)
+				if e == "command" then
+					local cmd, time, hide = v:GetParsedArgumentsForObject(v.Events.command)
+					if hide then continue end
 
 					available[cmd] = {type = e, time = time}
 				end
