@@ -1431,12 +1431,18 @@ do
 		end,
 		func = function (self, eventPart, ent, animation, frame_start, frame_end)
 			local frame_start = frame_start or 1
+			local frame_end = frame_end or 1
 			if not animation or animation == "" then return end
+			if not IsValid(ent) then return end
 			if not next(animations.playing) then return end
-			local part = pac.GetLocalPart(animation)
-			if not IsValid(part) then return end
-			local frame, delta = animations.GetEntityAnimationFrame(ent, part:GetAnimID())
-			return frame >= frame_start and frame <= frame_end
+			for i,v in ipairs(animations.playing) do
+				if v == ent then
+					local part = pac.GetPartFromUniqueID(pac.Hash(ent), animation)
+					if not IsValid(part) then return end
+					local frame, delta = animations.GetEntityAnimationFrame(ent, part:GetAnimID())
+					return frame >= frame_start and frame <= frame_end
+				end
+			end
 		end
 	}
 
