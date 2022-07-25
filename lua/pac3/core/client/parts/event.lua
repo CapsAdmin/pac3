@@ -18,7 +18,7 @@ BUILDER:StartStorableVars()
 		local output = {}
 
 		for i, event in pairs(part.Events) do
-			if not event.IsAvaliable or event:IsAvaliable(part) then
+			if not event.IsAvailable or event:IsAvailable(part) then
 				output[i] = event
 			end
 		end
@@ -1212,7 +1212,7 @@ do
 		return true
 	end
 
-	function eventMeta:IsAvaliable(eventPart)
+	function eventMeta:IsAvailable(eventPart)
 		return true
 	end
 
@@ -1374,6 +1374,80 @@ do
 	end)
 end
 
+-- custom animation event
+do
+	local animations = pac.animations
+	local event = {
+		name = "custom_animation_frame",
+		nice = function(self, ent, animation)
+			if animation == "" then self:SetWarning("no animation selected") return "no animation" end
+			local part = pac.GetLocalPart(animation)
+			if not IsValid(part) then self:SetError("invalid animation selected") return "invalid animation" end
+			self:SetWarning()
+			return part:GetName()
+		end,
+		args = {
+			{"animation", "string", {
+				enums = function(part)
+					local output = {}
+					local parts = pac.GetLocalParts()
+
+					for i, part in pairs(parts) do
+						if part.ClassName == "custom_animation" then
+							output[i] = part
+						end
+					end
+
+					return output
+				end
+			}},
+			{"frame_start", "number", {
+				editor_onchange = function(self, num)
+					local anim = pace.current_part:GetProperty("animation")
+					if anim ~= "" then
+						local part = pac.GetLocalPart(anim)
+						-- GetAnimationDuration only works while editor is active for some reason
+						local data = util.JSONToTable(part:GetData())
+						return math.Clamp(math.ceil(num), 1, #data.FrameData)
+					end
+				end
+			}},
+			{"frame_end", "number", {
+				editor_onchange = function(self, num)
+					local anim = pace.current_part:GetProperty("animation")
+					local start = pace.current_part:GetProperty("frame_start")
+					if anim ~= "" then
+						local part = pac.GetLocalPart(anim)
+						-- GetAnimationDuration only works while editor is active for some reason
+						local data = util.JSONToTable(part:GetData())
+						return math.Clamp(math.ceil(num), start, #data.FrameData)
+					end
+				end
+			}},
+			--{"framedelta", "number", {editor_clamp = {0,1}, editor_sensitivity = 0.15}}
+		},
+		available = function(self, eventPart)
+			return next(animations.registered) and true or false
+		end,
+		func = function (self, eventPart, ent, animation, frame_start, frame_end)
+			local frame_start = frame_start or 1
+			if not animation or animation == "" then return end
+			if not next(animations.playing) then return end
+			local part = pac.GetLocalPart(animation)
+			if not IsValid(part) then return end
+			local frame, delta = animations.GetEntityAnimationFrame(ent, part:GetAnimID())
+			return frame >= frame_start and frame <= frame_end
+		end
+	}
+
+	local eventObject = pac.CreateEvent(event.name, event.args)
+	eventObject.Think = event.func
+	eventObject.IsAvailable = event.available
+	eventObject.extra_nice_name = event.nice
+
+	pac.RegisterEvent(eventObject)
+end
+
 -- DarkRP default events
 do
 	local plyMeta = FindMetaTable('Player')
@@ -1384,7 +1458,7 @@ do
 		{
 			name = 'is_arrested',
 			args = {},
-			avaliable = function() return plyMeta.isArrested ~= nil end,
+			available = function() return plyMeta.isArrested ~= nil end,
 			func = function(self, eventPart, ent)
 				ent = try_viewmodel(ent)
 				return ent.isArrested and ent:isArrested() or false
@@ -1394,7 +1468,7 @@ do
 		{
 			name = 'is_wanted',
 			args = {},
-			avaliable = function() return plyMeta.isWanted ~= nil end,
+			available = function() return plyMeta.isWanted ~= nil end,
 			func = function(self, eventPart, ent)
 				ent = try_viewmodel(ent)
 				return ent.isWanted and ent:isWanted() or false
@@ -1404,7 +1478,7 @@ do
 		{
 			name = 'is_police',
 			args = {},
-			avaliable = function() return plyMeta.isCP ~= nil end,
+			available = function() return plyMeta.isCP ~= nil end,
 			func = function(self, eventPart, ent)
 				ent = try_viewmodel(ent)
 				return ent.isCP and ent:isCP() or false
@@ -1414,7 +1488,7 @@ do
 		{
 			name = 'wanted_reason',
 			args = {{'find', 'string'}},
-			avaliable = function() return plyMeta.getWantedReason ~= nil and plyMeta.isWanted ~= nil end,
+			available = function() return plyMeta.getWantedReason ~= nil and plyMeta.isWanted ~= nil end,
 			func = function(self, eventPart, ent, find)
 				ent = try_viewmodel(ent)
 				return eventPart:StringOperator(ent.isWanted and ent.getWantedReason and ent:isWanted() and ent:getWantedReason() or '', find)
@@ -1424,7 +1498,7 @@ do
 		{
 			name = 'is_cook',
 			args = {},
-			avaliable = function() return plyMeta.isCook ~= nil end,
+			available = function() return plyMeta.isCook ~= nil end,
 			func = function(self, eventPart, ent)
 				ent = try_viewmodel(ent)
 				return ent.isCook and ent:isCook() or false
@@ -1434,7 +1508,7 @@ do
 		{
 			name = 'is_hitman',
 			args = {},
-			avaliable = function() return plyMeta.isHitman ~= nil end,
+			available = function() return plyMeta.isHitman ~= nil end,
 			func = function(self, eventPart, ent)
 				ent = try_viewmodel(ent)
 				return ent.isHitman and ent:isHitman() or false
@@ -1444,7 +1518,7 @@ do
 		{
 			name = 'has_hit',
 			args = {},
-			avaliable = function() return plyMeta.hasHit ~= nil end,
+			available = function() return plyMeta.hasHit ~= nil end,
 			func = function(self, eventPart, ent)
 				ent = try_viewmodel(ent)
 				return ent.hasHit and ent:hasHit() or false
@@ -1454,7 +1528,7 @@ do
 		{
 			name = 'hit_price',
 			args = {{'amount', 'number'}},
-			avaliable = function() return plyMeta.getHitPrice ~= nil end,
+			available = function() return plyMeta.getHitPrice ~= nil end,
 			func = function(self, eventPart, ent, amount)
 				ent = try_viewmodel(ent)
 				return eventPart:NumberOperator(ent.getHitPrice and ent:getHitPrice() or 0, amount)
@@ -1463,12 +1537,12 @@ do
 	}
 
 	for k, v in ipairs(events) do
-		local avaliable = v.avaliable
+		local available = v.available
 		local eventObject = pac.CreateEvent(v.name, v.args)
 		eventObject.Think = v.func
 
-		function eventObject:IsAvaliable()
-			return isDarkRP() and avaliable()
+		function eventObject:IsAvailable()
+			return isDarkRP() and available()
 		end
 
 		pac.RegisterEvent(eventObject)
@@ -1518,7 +1592,7 @@ function PART:IsHiddenBySomethingElse(only_self)
 end
 
 local function should_trigger(self, ent, eventObject)
-	if not eventObject:IsAvaliable(self) then
+	if not eventObject:IsAvailable(self) then
 		return true
 	end
 
