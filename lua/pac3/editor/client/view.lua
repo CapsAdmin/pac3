@@ -452,7 +452,7 @@ function pace.SetTPose(b)
 				ply:SetLayerSequence(i, 0)
 			end
 
-			ply:SetSequence(ply:LookupSequence("ragdoll") or ply:LookupSequence("reference"))
+			ply:SetSequence(ply:LookupSequence("reference"))
 			reset_angles(ply)
 		end)
 
@@ -475,7 +475,7 @@ function pace.SetTPose(b)
 					ply:SetLayerSequence(i, 0)
 				end
 
-				local act = ply:LookupSequence("ragdoll") or ply:LookupSequence("reference")
+				local act = ply:LookupSequence("reference")
 
 				return act, act
 			end
