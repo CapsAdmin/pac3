@@ -448,8 +448,7 @@ function pace.SetTPose(b)
 		local function get_ref_anim(ply)
 			local id = ply:LookupSequence("reference")
 			local id2 = ply:LookupSequence("ragdoll")
-			local id3 = ply:LookupSequence("idle")
-			return id ~= -1 and id or id2 ~= -1 and id2 or id3
+			return id ~= -1 and id or id2 ~= -1 and id2 or 0
 		end
 
 		pac.AddHook("PrePlayerDraw", "pace_tpose", function(ply)
