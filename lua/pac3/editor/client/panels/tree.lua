@@ -560,7 +560,7 @@ pac.AddHook("pac_OnPartCreated", "pace_refresh_tree_nodes", refresh)
 
 pac.AddHook("pace_OnVariableChanged", "pace_create_tree_nodes", function(part, key, val)
 	if key == "EditorExpand" then
-		local node = part.editor_node
+		local node = part.pace_tree_node
 		if IsValid(node) then
 			node:SetExpanded(val)
 		end
