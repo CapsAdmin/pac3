@@ -94,7 +94,7 @@ local BIND = function(propertyName, setterMethodName, check)
 	end
 end
 
-BIND("Pitch",     "SetPlaybackSpeed")
+BIND("Pitch",     "SetPlaybackRate")
 BIND("PlayCount", "SetMaxLoopCount" )
 BIND("Volume",    nil, function(n) return math.Clamp(n, 0, 4) end)
 BIND("Radius",    "SetSourceRadius" )
