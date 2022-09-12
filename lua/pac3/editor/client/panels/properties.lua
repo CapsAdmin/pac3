@@ -833,6 +833,18 @@ do -- base editable
 			self.OnValueChanged(self:GetValue())
 		end):SetImage(pace.MiscIcons.paste)
 		menu:AddSpacer()
+		menu:AddOption(L"change sides", function()
+			local content = self:GetValue()
+			local content_flip
+			if string.match(content, "left") != nil then
+				content_flip = string.gsub(content,"left","right")
+			elseif string.match(content, "right") != nil then
+				content_flip = string.gsub(content,"right","left")
+			end
+			self:SetValue(content_flip or content)
+			self.OnValueChanged(self:GetValue())
+		end):SetImage("icon16/arrow_switch.png")
+		menu:AddSpacer()
 		menu:AddOption(L"reset", function()
 			if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
 				local val = pac.CopyValue(pace.current_part.DefaultVars[self.CurrentKey])
@@ -1457,6 +1469,8 @@ do -- number
 		if self:IsMouseDown() then
 			if input.IsKeyDown(KEY_LCONTROL) then
 				num = math.Round(num)
+			elseif input.IsKeyDown(KEY_PAD_MINUS) or input.IsKeyDown(KEY_MINUS) then
+				num = -num
 			end
 
 			if input.IsKeyDown(KEY_LALT) then
