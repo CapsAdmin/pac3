@@ -542,7 +542,7 @@ PART.OldEvents = {
 				radius = ent.pac_projectile:GetRadius()
 			end
 
-			radius = radius + extra_radius + 1
+			radius = math.max(radius + extra_radius + 1, 1)
 
 			local mins = Vector(-1,-1,-1)
 			local maxs = Vector(1,1,1)

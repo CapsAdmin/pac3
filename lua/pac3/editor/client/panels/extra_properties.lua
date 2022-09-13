@@ -725,13 +725,13 @@ do -- event is_touching
 			end
 
 			if not IsValid(ent) then stop() return end
-			local radius =  ent:BoundingRadius()
+			local radius = ent:BoundingRadius()
 
 			if radius == 0 and IsValid(ent.pac_projectile) then
 				radius = ent.pac_projectile:GetRadius()
 			end
 
-			radius = radius + extra_radius + 1
+			radius = math.max(radius + extra_radius + 1, 1)
 
 			local mins = Vector(-1,-1,-1)
 			local maxs = Vector(1,1,1)
@@ -746,7 +746,10 @@ do -- event is_touching
 				mins = mins,
 				filter = ent
 			} )
-			render.DrawWireframeBox( startpos, Angle( 0, 0, 0 ), mins, maxs, tr.Hit and Color(255,0,0) or Color(255,255,255), true )
+			
+			if self.udata then
+				render.DrawWireframeBox( startpos, Angle( 0, 0, 0 ), mins, maxs, tr.Hit and Color(255,0,0) or Color(255,255,255), true )
+			end
 		end)
 	end
 
