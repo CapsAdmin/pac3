@@ -132,6 +132,24 @@ function PART:SetUniqueID(id)
 	end
 end
 
+local function set_info(msg, info_type)
+	if not msg then return nil end
+	local msg = tostring(msg)
+	return {
+		message = msg,
+		type = info_type or 1
+	}
+end
+
+function PART:SetInfo(message)
+	self.Info = set_info(message, 1)
+end
+function PART:SetWarning(message)
+	self.Info = set_info(message, 2)
+end
+function PART:SetError(message)
+	self.Info = set_info(message, 3)
+end
 
 do -- owner
 	function PART:SetPlayerOwner(ply)

@@ -46,6 +46,12 @@ do
 		end)
 	end
 
+	local info_image = {
+		pace.MiscIcons.info,
+		pace.MiscIcons.warning,
+		pace.MiscIcons.error,
+	}
+
 	function PANEL:Think(...)
 		if not pace.current_part:IsValid() then return end
 
@@ -116,6 +122,15 @@ do
 
 			if node.add_button then
 				node.add_button:SetVisible(false)
+			end
+
+			if part.Info then
+				local info = part.Info
+				node.info:SetTooltip(info.message)
+				node.info:SetImage(info_image[info.type])
+				node.info:SetVisible(true)
+			else
+				node.info:SetVisible(false)
 			end
 
 			if part.ClassName == "event" then
@@ -313,6 +328,14 @@ local function node_layout(self, ...)
 		local w = surface.GetTextSize(self.Label:GetText())
 		self.add_button:SetPos(x + w, (self.Label:GetTall() - self.add_button:GetTall()) / 2)
 	end
+
+	if self.info then
+		local is_adding = self.add_button:IsVisible()
+		local x = self.Label:GetPos() + self.Label:GetTextInset() + (is_adding and self.add_button:GetWide() + 4 or 4)
+		surface.SetFont(pace.CurrentFont)
+		local w = surface.GetTextSize(self.Label:GetText())
+		self.info:SetPos(x + w, (self.Label:GetTall() - self.info:GetTall()) / 2)
+	end
 end
 
 local function add_parts_menu(node)
@@ -341,6 +364,13 @@ function PANEL:AddNode(...)
 	node.GetModel = self.GetModel
 	node.AddNode = PANEL.AddNode
 	node.PerformLayout = node_layout
+
+	local info = node:Add("DImageButton")
+	info:SetImage(pace.MiscIcons.info)
+	info:SetSize(16, 16)
+	info:SetVisible(false)
+	info.DoClick = function() pace.MessagePrompt(info:GetTooltip()) end
+	node.info = info
 
 	return node
 end
@@ -530,7 +560,7 @@ pac.AddHook("pac_OnPartCreated", "pace_refresh_tree_nodes", refresh)
 
 pac.AddHook("pace_OnVariableChanged", "pace_create_tree_nodes", function(part, key, val)
 	if key == "EditorExpand" then
-		local node = part.editor_node
+		local node = part.pace_tree_node
 		if IsValid(node) then
 			node:SetExpanded(val)
 		end

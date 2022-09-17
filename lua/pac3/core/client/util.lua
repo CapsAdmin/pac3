@@ -430,9 +430,7 @@ function pac.Handleurltex(part, url, callback, shader, additionalData)
 	if not url or not pac.urltex or not url:find("http") then return false end
 	local skip_cache = url:sub(1,1) == "_"
 
-	local urlMatch = url:match("http[s]-://.+/.-%.%a+")
-
-	if not urlMatch then return false end
+	if not url:match("https?://.+/%S*") then return false end
 
 	pac.urltex.GetMaterialFromURL(
 		pac.FixUrl(url),

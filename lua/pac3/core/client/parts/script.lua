@@ -386,9 +386,9 @@ function PART:SetCode(code)
 
 	if ok then
 		self.func = func
-		self.Error = nil
+		self:SetError()
 	else
-		self.Error = func
+		self:SetError(func)
 		self.func = nil
 	end
 end
@@ -397,10 +397,10 @@ function PART:OnThink()
 	if self.func then
 		local ok, err = pcall(self.func)
 		if not ok then
-			self.Error = err
+			self:SetError(err)
 			self.func = nil
 		else
-			self.Error = nil
+			self:SetError()
 		end
 	end
 end

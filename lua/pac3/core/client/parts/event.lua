@@ -18,7 +18,7 @@ BUILDER:StartStorableVars()
 		local output = {}
 
 		for i, event in pairs(part.Events) do
-			if not event.IsAvaliable or event:IsAvaliable(part) then
+			if not event.IsAvailable or event:IsAvailable(part) then
 				output[i] = event
 			end
 		end
@@ -27,7 +27,7 @@ BUILDER:StartStorableVars()
 	end})
 	BUILDER:GetSet("Operator", "find simple", {enums = function(part) local tbl = {} for i,v in ipairs(part.Operators) do tbl[v] = v end return tbl end})
 	BUILDER:GetSet("Arguments", "", {hidden = true})
-	BUILDER:GetSet("Invert", false)
+	BUILDER:GetSet("Invert", true)
 	BUILDER:GetSet("RootOwner", true)
 	BUILDER:GetSet("AffectChildrenOnly", false)
 	BUILDER:GetSet("ZeroEyePitch", false)
@@ -64,6 +64,7 @@ end
 function PART:GetDynamicProperties()
 	local data = self.Events[self.Event]
 	if not data then return end
+	self:SetWarning()
 
 	local tbl = {}
 	for pos, arg in ipairs(data:GetArguments()) do
@@ -308,7 +309,12 @@ PART.OldEvents = {
 	using_physgun = {
 		callback = function(self, ent)
 			ent = self:GetPlayerOwner()
-			ent.pac_drawphysgun_event_part = self
+			local pac_drawphysgun_event_part = ent.pac_drawphysgun_event_part
+			if not pac_drawphysgun_event_part then
+				pac_drawphysgun_event_part = {}
+				ent.pac_drawphysgun_event_part = pac_drawphysgun_event_part
+			end
+			pac_drawphysgun_event_part[self] = true
 			return ent.pac_drawphysgun_event ~= nil
 		end,
 	},
@@ -466,11 +472,13 @@ PART.OldEvents = {
 	},
 
 	ranger = {
-		arguments = {{compare = "number"}, {distance = "number"}, {npcs_and_players_only = "boolean"}},
-		callback = function(self, ent, compare, distance, npcs_and_players_only)
+		arguments = {{distance = "number"}, {compare = "number"}, {npcs_and_players_only = "boolean"}},
+		userdata = {{editor_panel = "ranger", ranger_property = "distance"}, {editor_panel = "ranger", ranger_property = "compare"}},
+		callback = function(self, ent, distance, compare, npcs_and_players_only)
 			local parent = self:GetParentEx()
 
 			if parent:IsValid() and parent.GetWorldPosition then
+				self:SetWarning()
 				distance = distance or 1
 				compare = compare or 0
 
@@ -485,6 +493,10 @@ PART.OldEvents = {
 				end
 
 				return self:NumberOperator(res.Fraction * distance, compare)
+			else
+				local classname = parent:GetNiceName()
+				local name = parent:GetName()
+				self:SetWarning(("ranger doesn't work on [%s] %s"):format(classname, classname ~= name and "(" .. name .. ")" or ""))
 			end
 		end,
 	},
@@ -520,6 +532,7 @@ PART.OldEvents = {
 
 	is_touching = {
 		arguments = {{extra_radius = "number"}},
+		userdata = {{editor_panel = "is_touching", is_touching_property = "extra_radius"}},
 		callback = function(self, ent, extra_radius)
 			extra_radius = extra_radius or 0
 
@@ -529,7 +542,7 @@ PART.OldEvents = {
 				radius = ent.pac_projectile:GetRadius()
 			end
 
-			radius = radius + extra_radius + 1
+			radius = math.max(radius + extra_radius + 1, 1)
 
 			local mins = Vector(-1,-1,-1)
 			local maxs = Vector(1,1,1)
@@ -544,20 +557,6 @@ PART.OldEvents = {
 				mins = mins,
 				filter = ent
 			} )
-
-			--[[
-
-
-			if tr.Hit then
-				debugoverlay.Text(tr.HitPos, "hit!", 1, false)
-			end
-
-			cam.IgnoreZ(true)
-			render.DrawWireframeBox( startpos, Angle( 0, 0, 0 ), mins, maxs, tr.Hit and Color(255,0,0) or Color(255,255,255), true )
-			cam.IgnoreZ(false)
-
-			]]
-
 			return tr.Hit
 		end,
 	},
@@ -806,7 +805,7 @@ PART.OldEvents = {
 	},
 
 	command = {
-		arguments = {{find = "string"}, {time = "number"}},
+		arguments = {{find = "string"}, {time = "number"}, {hide_in_eventwheel = "boolean"}},
 		callback = function(self, ent, find, time)
 			time = time or 0.1
 
@@ -1213,7 +1212,7 @@ do
 		return true
 	end
 
-	function eventMeta:IsAvaliable(eventPart)
+	function eventMeta:IsAvailable(eventPart)
 		return true
 	end
 
@@ -1375,6 +1374,86 @@ do
 	end)
 end
 
+-- custom animation event
+do
+	local animations = pac.animations
+	local event = {
+		name = "custom_animation_frame",
+		nice = function(self, ent, animation)
+			if animation == "" then self:SetWarning("no animation selected") return "no animation" end
+			local part = pac.GetLocalPart(animation)
+			if not IsValid(part) then self:SetError("invalid animation selected") return "invalid animation" end
+			self:SetWarning()
+			return part:GetName()
+		end,
+		args = {
+			{"animation", "string", {
+				enums = function(part)
+					local output = {}
+					local parts = pac.GetLocalParts()
+
+					for i, part in pairs(parts) do
+						if part.ClassName == "custom_animation" then
+							output[i] = part
+						end
+					end
+
+					return output
+				end
+			}},
+			{"frame_start", "number", {
+				editor_onchange = function(self, num)
+					local anim = pace.current_part:GetProperty("animation")
+					if anim ~= "" then
+						local part = pac.GetLocalPart(anim)
+						-- GetAnimationDuration only works while editor is active for some reason
+						local data = util.JSONToTable(part:GetData())
+						return math.Clamp(math.ceil(num), 1, #data.FrameData)
+					end
+				end
+			}},
+			{"frame_end", "number", {
+				editor_onchange = function(self, num)
+					local anim = pace.current_part:GetProperty("animation")
+					local start = pace.current_part:GetProperty("frame_start")
+					if anim ~= "" then
+						local part = pac.GetLocalPart(anim)
+						-- GetAnimationDuration only works while editor is active for some reason
+						local data = util.JSONToTable(part:GetData())
+						return math.Clamp(math.ceil(num), start, #data.FrameData)
+					end
+				end
+			}},
+			--{"framedelta", "number", {editor_clamp = {0,1}, editor_sensitivity = 0.15}}
+		},
+		available = function(self, eventPart)
+			return next(animations.registered) and true or false
+		end,
+		func = function (self, eventPart, ent, animation, frame_start, frame_end)
+			local frame_start = frame_start or 1
+			local frame_end = frame_end or 1
+			if not animation or animation == "" then return end
+			if not IsValid(ent) then return end
+			if not next(animations.playing) then return end
+			for i,v in ipairs(animations.playing) do
+				if v == ent then
+					local part = pac.GetPartFromUniqueID(pac.Hash(ent), animation)
+					if not IsValid(part) then return end
+					local frame, delta = animations.GetEntityAnimationFrame(ent, part:GetAnimID())
+					return frame >= frame_start and frame <= frame_end
+				end
+			end
+		end
+	}
+
+	local eventObject = pac.CreateEvent(event.name, event.args)
+	eventObject.Think = event.func
+	eventObject.IsAvailable = event.available
+	eventObject.extra_nice_name = event.nice
+
+	pac.RegisterEvent(eventObject)
+end
+
 -- DarkRP default events
 do
 	local plyMeta = FindMetaTable('Player')
@@ -1385,7 +1464,7 @@ do
 		{
 			name = 'is_arrested',
 			args = {},
-			avaliable = function() return plyMeta.isArrested ~= nil end,
+			available = function() return plyMeta.isArrested ~= nil end,
 			func = function(self, eventPart, ent)
 				ent = try_viewmodel(ent)
 				return ent.isArrested and ent:isArrested() or false
@@ -1395,7 +1474,7 @@ do
 		{
 			name = 'is_wanted',
 			args = {},
-			avaliable = function() return plyMeta.isWanted ~= nil end,
+			available = function() return plyMeta.isWanted ~= nil end,
 			func = function(self, eventPart, ent)
 				ent = try_viewmodel(ent)
 				return ent.isWanted and ent:isWanted() or false
@@ -1405,7 +1484,7 @@ do
 		{
 			name = 'is_police',
 			args = {},
-			avaliable = function() return plyMeta.isCP ~= nil end,
+			available = function() return plyMeta.isCP ~= nil end,
 			func = function(self, eventPart, ent)
 				ent = try_viewmodel(ent)
 				return ent.isCP and ent:isCP() or false
@@ -1415,7 +1494,7 @@ do
 		{
 			name = 'wanted_reason',
 			args = {{'find', 'string'}},
-			avaliable = function() return plyMeta.getWantedReason ~= nil and plyMeta.isWanted ~= nil end,
+			available = function() return plyMeta.getWantedReason ~= nil and plyMeta.isWanted ~= nil end,
 			func = function(self, eventPart, ent, find)
 				ent = try_viewmodel(ent)
 				return eventPart:StringOperator(ent.isWanted and ent.getWantedReason and ent:isWanted() and ent:getWantedReason() or '', find)
@@ -1425,7 +1504,7 @@ do
 		{
 			name = 'is_cook',
 			args = {},
-			avaliable = function() return plyMeta.isCook ~= nil end,
+			available = function() return plyMeta.isCook ~= nil end,
 			func = function(self, eventPart, ent)
 				ent = try_viewmodel(ent)
 				return ent.isCook and ent:isCook() or false
@@ -1435,7 +1514,7 @@ do
 		{
 			name = 'is_hitman',
 			args = {},
-			avaliable = function() return plyMeta.isHitman ~= nil end,
+			available = function() return plyMeta.isHitman ~= nil end,
 			func = function(self, eventPart, ent)
 				ent = try_viewmodel(ent)
 				return ent.isHitman and ent:isHitman() or false
@@ -1445,7 +1524,7 @@ do
 		{
 			name = 'has_hit',
 			args = {},
-			avaliable = function() return plyMeta.hasHit ~= nil end,
+			available = function() return plyMeta.hasHit ~= nil end,
 			func = function(self, eventPart, ent)
 				ent = try_viewmodel(ent)
 				return ent.hasHit and ent:hasHit() or false
@@ -1455,7 +1534,7 @@ do
 		{
 			name = 'hit_price',
 			args = {{'amount', 'number'}},
-			avaliable = function() return plyMeta.getHitPrice ~= nil end,
+			available = function() return plyMeta.getHitPrice ~= nil end,
 			func = function(self, eventPart, ent, amount)
 				ent = try_viewmodel(ent)
 				return eventPart:NumberOperator(ent.getHitPrice and ent:getHitPrice() or 0, amount)
@@ -1464,12 +1543,12 @@ do
 	}
 
 	for k, v in ipairs(events) do
-		local avaliable = v.avaliable
+		local available = v.available
 		local eventObject = pac.CreateEvent(v.name, v.args)
 		eventObject.Think = v.func
 
-		function eventObject:IsAvaliable()
-			return isDarkRP() and avaliable()
+		function eventObject:IsAvailable()
+			return isDarkRP() and available()
 		end
 
 		pac.RegisterEvent(eventObject)
@@ -1519,7 +1598,7 @@ function PART:IsHiddenBySomethingElse(only_self)
 end
 
 local function should_trigger(self, ent, eventObject)
-	if not eventObject:IsAvaliable(self) then
+	if not eventObject:IsAvailable(self) then
 		return true
 	end
 
@@ -1897,7 +1976,8 @@ do
 			if v.ClassName == "event" then
 				local e = v:GetEvent()
 				if e == "command" then
-					local cmd, time = v:GetParsedArgumentsForObject(v.Events.command)
+					local cmd, time, hide = v:GetParsedArgumentsForObject(v.Events.command)
+					if hide then continue end
 
 					available[cmd] = {type = e, time = time}
 				end
@@ -2062,6 +2142,3 @@ do
 	concommand.Add("+pac_events", pac.openEventSelectionWheel)
 	concommand.Add("-pac_events", pac.closeEventSelectionWheel)
 end
-
-
-

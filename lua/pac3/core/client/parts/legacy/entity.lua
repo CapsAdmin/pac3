@@ -410,11 +410,14 @@ function PART:SetModel(path)
 				end
 			end, function(err)
 				pac.Message(err)
+				self:SetError(err)
 			end, self:GetPlayerOwner())
 
 			self.mdl_zip = true
 		else
-			self.loading = reason2 or reason or "mdl is not allowed"
+			local msg = reason2 or reason or "mdl is not allowed"
+			self.loading = msg
+			self:SetError(msg)
 			pac.Message(self:GetPlayerOwner(), ' - mdl files are not allowed')
 		end
 	elseif self.Model ~= "" then

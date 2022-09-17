@@ -261,7 +261,10 @@ pac.AddHook("Think", "events", function()
 		end
 
 		local rag = ply:GetRagdollEntity()
-		if not IsValid(rag) then continue end
+		if not IsValid(rag) then
+			pac.HideEntityParts(ply)
+			continue 
+		end
 
 		-- so it only runs once
 		if ply.pac_ragdoll == rag then continue end
@@ -408,6 +411,9 @@ pac.AddHook("EntityRemoved", "change_owner", function(ent)
 					IsActuallyRemoved(ent, function()
 						for _, part in pairs(parts) do
 							if part.ClassName == "group" then
+								if part:GetOwnerName() == "hands" then
+									part:UpdateOwnerName()
+								end
 								part:HideInvalidOwners()
 							end
 						end
@@ -580,6 +586,18 @@ end
 
 function pac.CallRecursiveOnAllParts(func_name, ...)
 	for _, part in pairs(all_parts) do
+		if part[func_name] then
+			local ret = part[func_name](part, ...)
+			if ret ~= nil then
+				return ret
+			end
+		end
+	end
+end
+
+function pac.CallRecursiveOnOwnedParts(ent, func_name, ...)
+	local owned_parts = parts_from_ent(ent)
+	for _, part in pairs(owned_parts) do
 		if part[func_name] then
 			local ret = part[func_name](part, ...)
 			if ret ~= nil then

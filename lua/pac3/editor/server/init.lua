@@ -42,8 +42,11 @@ function pace.CanPlayerModify(ply, ent)
 		return true
 	end
 
-	if hook.Run("CanTool", ply, util.TraceLine({ start = ply:EyePos(), endpos = ent:WorldSpaceCenter(), filter = ply }), "paint") == true then
-		return true
+	do
+		local tr = util.TraceLine({ start = ply:EyePos(), endpos = ent:WorldSpaceCenter(), filter = ply })
+		if tr.Entity == ent and hook.Run("CanTool", ply, tr, "paint") == true then
+			return true
+		end
 	end
 
 	return false
