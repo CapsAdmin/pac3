@@ -797,13 +797,11 @@ do -- drawing
 		end)
 	end
 
-	local setup_bones = {}
-
 	function pac.SetupBones(ent)
-		if not setup_bones[ent] then
-			setup_bones[ent] = ent
-			ent.needs_setupbones_from_legacy_bone_parts = true
-		end
+		local t = CurTime()
+		if ent.pac_setup_bone_t == t then return end
+		ent.pac_setup_bone_t = t
+		ent:SetupBones()
 	end
 
 	do
