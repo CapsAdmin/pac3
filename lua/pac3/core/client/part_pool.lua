@@ -797,11 +797,14 @@ do -- drawing
 		end)
 	end
 
+	local setupBonesGuard = false
 	function pac.SetupBones(ent)
-		local t = CurTime()
-		if ent.pac_setup_bone_t == t then return end
-		ent.pac_setup_bone_t = t
-		ent:SetupBones()
+		-- Reentrant protection
+		if setupBonesGuard then return end
+		setupBonesGuard = true
+		local ok, err = pcall(ent.SetupBones, ent)
+		setupBonesGuard = false
+		if not ok then error(err) end
 	end
 
 	do
