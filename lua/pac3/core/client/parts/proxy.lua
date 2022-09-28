@@ -536,6 +536,11 @@ PART.Inputs.voice_volume = function(self)
 	return ply:VoiceVolume()
 end
 
+PART.Inputs.voice_volume_scale = function(self)
+	local ply = self:GetPlayerOwner()
+	return ply:GetVoiceVolumeScale()
+end
+
 do -- light amount
 	local ColorToHSV = ColorToHSV
 	local render = render
