@@ -421,7 +421,6 @@ function PART:OnDraw()
 		self:DrawModel(ent, pos, ang)
 	self:PostEntityDraw(ent, pos, ang)
 
---  ent:SetupBones()
 	pac.ResetBones(ent)
 end
 
@@ -444,7 +443,6 @@ local function ent_draw_model(self, ent, pos, ang)
 			self.obj_mesh:Draw()
 		cam_PopModelMatrix()
 	else
-		pac.SetupBones(ent)
 		ent:DrawModel()
 	end
 end

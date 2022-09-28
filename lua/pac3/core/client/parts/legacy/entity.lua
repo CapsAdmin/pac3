@@ -327,7 +327,7 @@ function PART:OnShow()
 					local pos, ang = self:GetDrawPosition()
 					ent:SetPos(pos)
 					ent:SetRenderAngles(ang)
-					ent:SetupBones()
+					pac.SetupBones(ent)
 				end
 
 				ent:SetSkin(self.Skin)

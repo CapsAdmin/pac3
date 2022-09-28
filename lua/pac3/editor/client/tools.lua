@@ -105,12 +105,12 @@ pace.AddTool(L"convert legacy parts to new parts", function(part, suboption)
 
 		ent:ManipulateBonePosition(bone, Vector())
 		ent:ManipulateBoneAngles(bone, Angle())
-		ent:SetupBones()
+		pac.SetupBones(ent)
 		local pre = ent:GetBoneMatrix(bone)
 
 		ent:ManipulateBonePosition(bone, pos)
 		ent:ManipulateBoneAngles(bone, ang)
-		ent:SetupBones()
+		pac.SetupBones(ent)
 		local post = ent:GetBoneMatrix(bone)
 
 		ent:ManipulateBonePosition(bone, prev_pos)

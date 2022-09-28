@@ -539,6 +539,6 @@ function pace.ResetEyeAngles()
 			ent:SetAngles(Angle(0, 0, 0))
 		end
 
-		ent:SetupBones()
+		pac.SetupBones(ent)
 	end
 end

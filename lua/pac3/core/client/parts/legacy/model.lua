@@ -388,7 +388,7 @@ function PART:OnDraw()
 		self:DrawModel(ent, pos, ang)
 	self:PostEntityDraw(ent, pos, ang)
 
-	ent:SetupBones()
+	pac.SetupBones(ent)
 	pac.ResetBones(ent)
 
 	if ent.pac_can_legacy_scale ~= false then
@@ -546,7 +546,7 @@ function PART:DrawBlur(ent, pos, ang)
 
 		ent:SetPos(pos)
 		ent:SetAngles(ang)
-		ent:SetupBones()
+		pac.SetupBones(ent)
 
 		RealDrawModel(self, ent, pos, ang)
 	end

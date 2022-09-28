@@ -813,8 +813,6 @@ do -- drawing
 		pac.AddHook("PreDrawOpaqueRenderables", "draw_opaque", function(bDrawingDepth, bDrawingSkybox)
 			if should_suppress(true) then return end
 
-			setup_bones = {}
-
 			for ent in next, pac.drawn_entities do
 				if ent.pac_is_drawing and ent_parts[ent] and not ent:IsDormant() then
 					pac.RenderOverride(ent, "update_legacy_bones")
@@ -827,12 +825,6 @@ do -- drawing
 		pac.AddHook("PostDrawOpaqueRenderables", "draw_opaque", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
 			if should_suppress() then return end
 
-			for ent in next, setup_bones do
-				if ent:IsValid() then
-					ent:SetupBones()
-				end
-			end
-
 			for ent in next, pac.drawn_entities do
 				if ent.pac_is_drawing and ent_parts[ent] and not ent:IsDormant() then
 
@@ -842,10 +834,6 @@ do -- drawing
 
 					pac.RenderOverride(ent, "opaque")
 				end
-			end
-
-			for ent in next, setup_bones do
-				setup_bones[ent] = nil
 			end
 		end)
 	end
@@ -864,13 +852,6 @@ do -- drawing
 					end
 
 					pac.RenderOverride(ent, "translucent")
-				end
-			end
-
-			for ent in next, setup_bones do
-				if ent:IsValid() then
-					-- ent:InvalidateBoneCache()
-					ent:SetupBones()
 				end
 			end
 		end)
