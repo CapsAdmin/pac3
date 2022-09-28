@@ -28,7 +28,7 @@ do
 		local index = self:GetModelBoneIndex(self.Bone)
 		if not index then return ent:GetPos(), ent:GetAngles() end
 
-		--ent:SetupBones()
+		pac.SetupBones(ent)
 		local m = ent:GetBoneMatrix(index)
 
 		local lm = Matrix()

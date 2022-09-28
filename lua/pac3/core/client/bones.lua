@@ -33,8 +33,7 @@ function pac.GetAllBones(ent)
 
 	if ent:IsValid() then
 		ent:InvalidateBoneCache()
-		ent:SetupBones()
-		-- pac.SetupBones(ent)
+		pac.SetupBones(ent)
 
 		local count = ent:GetBoneCount() or 0
 
@@ -122,9 +121,7 @@ function pac.GetModelBones(ent)
 
 	if not ent.pac_bones or ent:GetModel() ~= ent.pac_last_model then
 		ent:InvalidateBoneCache()
-		ent:SetupBones()
-
-		-- pac.SetupBones(ent)
+		pac.SetupBones(ent)
 
 		if ent.pac_holdtypes then
 			ent.pac_holdtypes = {}

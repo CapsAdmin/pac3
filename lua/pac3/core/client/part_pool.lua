@@ -797,13 +797,14 @@ do -- drawing
 		end)
 	end
 
-	local setup_bones = {}
-
+	local setupBonesGuard = false
 	function pac.SetupBones(ent)
-		if not setup_bones[ent] then
-			setup_bones[ent] = ent
-			ent.needs_setupbones_from_legacy_bone_parts = true
-		end
+		-- Reentrant protection
+		if setupBonesGuard then return end
+		setupBonesGuard = true
+		local ok, err = pcall(ent.SetupBones, ent)
+		setupBonesGuard = false
+		if not ok then error(err) end
 	end
 
 	do
@@ -811,8 +812,6 @@ do -- drawing
 
 		pac.AddHook("PreDrawOpaqueRenderables", "draw_opaque", function(bDrawingDepth, bDrawingSkybox)
 			if should_suppress(true) then return end
-
-			setup_bones = {}
 
 			for ent in next, pac.drawn_entities do
 				if ent.pac_is_drawing and ent_parts[ent] and not ent:IsDormant() then
@@ -826,12 +825,6 @@ do -- drawing
 		pac.AddHook("PostDrawOpaqueRenderables", "draw_opaque", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
 			if should_suppress() then return end
 
-			for ent in next, setup_bones do
-				if ent:IsValid() then
-					ent:SetupBones()
-				end
-			end
-
 			for ent in next, pac.drawn_entities do
 				if ent.pac_is_drawing and ent_parts[ent] and not ent:IsDormant() then
 
@@ -841,10 +834,6 @@ do -- drawing
 
 					pac.RenderOverride(ent, "opaque")
 				end
-			end
-
-			for ent in next, setup_bones do
-				setup_bones[ent] = nil
 			end
 		end)
 	end
@@ -863,13 +852,6 @@ do -- drawing
 					end
 
 					pac.RenderOverride(ent, "translucent")
-				end
-			end
-
-			for ent in next, setup_bones do
-				if ent:IsValid() then
-					-- ent:InvalidateBoneCache()
-					ent:SetupBones()
 				end
 			end
 		end)
