@@ -301,8 +301,15 @@ function PART:EmitParticles(pos, ang, real_ang)
 				particle:SetEndSize(self.EndSize)
 				particle:SetStartLength(self.StartLength)
 				particle:SetEndLength(self.EndLength)
-				particle:SetRoll(self.RandomRollSpeed * 36)
-				particle:SetRollDelta(self.RollDelta + roll)
+
+				if self.RandomRollSpeed ~= 0 then
+					particle:SetRoll(self.RandomRollSpeed * 36)
+				end
+
+				if self.RollDelta ~= 0 then 
+					particle:SetRollDelta(self.RollDelta + roll)
+				end
+				
 				particle:SetAirResistance(self.AirResistance)
 				particle:SetBounce(self.Bounce)
 				particle:SetGravity(self.Gravity)
