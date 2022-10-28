@@ -65,9 +65,9 @@ function emut.MutateEntity(owner, class_name, ent, ...)
 		return
 	end
 
-	if pace.IsBanned(owner) then return end
-
 	if SERVER then
+		if pace.IsBanned(owner) then return end
+
 		if not override_enabled then
 			if owner:IsPlayer() and not emut.registered_mutators[class_name].cvar:GetBool() then
 				pac.Message(owner, "tried to set size when it's disabled")
