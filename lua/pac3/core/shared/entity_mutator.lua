@@ -65,6 +65,8 @@ function emut.MutateEntity(owner, class_name, ent, ...)
 		return
 	end
 
+	if pace.IsBanned(owner) then return end
+
 	if SERVER then
 		if pace.IsBanned(owner) then return end
 
