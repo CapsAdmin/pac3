@@ -65,6 +65,8 @@ function emut.MutateEntity(owner, class_name, ent, ...)
 		return
 	end
 
+	if pace.IsBanned(owner) then return end
+
 	if SERVER then
 		if not override_enabled then
 			if owner:IsPlayer() and not emut.registered_mutators[class_name].cvar:GetBool() then
