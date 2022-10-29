@@ -3,6 +3,7 @@ pace = pace or {}
 -- for the default models
 resource.AddWorkshop("104691717")
 
+pace.luadata = include("pac3/libraries/luadata.lua")
 pace.Parts = pace.Parts or {}
 pace.Errors = {}
 
