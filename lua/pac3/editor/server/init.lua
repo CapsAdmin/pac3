@@ -68,7 +68,9 @@ do
 	util.AddNetworkString("pac_in_editor_posang")
 
 	net.Receive("pac_in_editor_posang", function(_, ply)
-		ply.pac_last_editor_message = ply.pac_last_editor_message or 0
+		if not ply.pac_last_editor_message then
+			ply.pac_last_editor_message = 0
+		end
 		if ply.pac_last_editor_message > CurTime() then return end
 		ply.pac_last_editor_message = CurTime() + 0.2
 
