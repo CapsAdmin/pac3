@@ -68,6 +68,10 @@ do
 	util.AddNetworkString("pac_in_editor_posang")
 
 	net.Receive("pac_in_editor_posang", function(_, ply)
+		ply.pac_last_editor_message = ply.pac_last_editor_message or 0
+		if ply.pac_last_editor_message > CurTime() then return end
+		ply.pac_last_editor_message = CurTime() + 0.2
+
 		local pos = net.ReadVector()
 		local ang = net.ReadAngle()
 		local part_pos = net.ReadVector()
