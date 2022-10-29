@@ -5,7 +5,7 @@
 util.AddNetworkString("pac3_test_suite_backdoor_receive_results")
 util.AddNetworkString("pac3_test_suite_backdoor")
 
-local enabledConvar = CreateConVar("pac_test_suite_backdoor_enabled", 0, false, false, "Should the pac test suite backdoor be enabled, this allows lua access for superadmins.", 0, 1)
+local enabledConvar = CreateConVar("pac_test_suite_backdoor_enabled", "0", {FCVAR_PROTECTED}, "Should the pac test suite backdoor be enabled, this allows lua access for superadmins.", 0, 1)
 
 net.Receive("pac3_test_suite_backdoor", function(len, ply)
 	-- need to be at least super admin
