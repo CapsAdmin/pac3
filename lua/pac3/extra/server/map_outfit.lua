@@ -133,22 +133,20 @@ end
 concommand.Add("pac_spawn_map", function(ply, _, args)
 	if not ply:IsAdmin() then return end
 
-	for k,v in pairs(pacx.SpawnedMapEntities) do
+	if not args[1] then
+		return ply:PrintMessage(HUD_PRINTCONSOLE, "Please enter a pac name")
+	end
+
+	for _,v in pairs(pacx.SpawnedMapEntities) do
 		SafeRemoveEntity(v)
 	end
 
 	pacx.SpawnedMapEntities = {}
 
-	local data = file.Read("pac3/" .. args[1] .. ".txt", "DATA")
+	local data = pace.luadata.ReadFile("pac3/" .. args[1] .. ".txt")
 
 	if data then
-		data = CompileString("return {" .. data .. "}", "luadata", true)
-
-		if isfunction(data) then
-			pacx.SpawnMapOutfit(data())
-		else
-			pac.Message(data)
-		end
+		pacx.SpawnMapOutfit(data)
 	else
 		pac.Message(data)
 	end
