@@ -46,19 +46,6 @@ function pac.RemoveHook(str, id)
 	hook.Remove(str, id)
 end
 
-function pac.RateLimitPlayer(ply, name)
-	local ratelimitName = "pac_ratelimit_" .. name
-	if not ply[ratelimitName] then
-		ply[ratelimitName] = 0
-	end
-
-	if ply[ratelimitName] > CurTime() then
-		return false
-	end
-
-	ply["pac_rate_limit_" .. name] = ply["pac_rate_limit_" .. name] + 1
-end
-
 function pac.RatelimitPlayer( ply, name, buffer, refill )
 	local ratelimitName = "pac_ratelimit_" .. name
 	local checkName = "pac_ratelimit_check_" .. name
