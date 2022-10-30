@@ -6,8 +6,8 @@ util.AddNetworkString("pac_e2_setkeyvalue_vec")
 util.AddNetworkString("pac_e2_setkeyvalue_ang")
 
 local enabledConvar = CreateConVar("pac_e2_ratelimit_enable", "1", {FCVAR_ARCHIVE}, "If the e2 ratelimit should be enabled.", 0, 1)
-local rate = CreateConVar("pac_e2_ratelimit_refill", "0.25", {FCVAR_ARCHIVE}, "The speed at which the ratelimit buffer refills.", 0, 1000)
-local buffer = CreateConVar("pac_e2_ratelimit_buffer", "30", {FCVAR_ARCHIVE}, "How large the ratelimit buffer should be.", 0, 1000)
+local rate = CreateConVar("pac_e2_ratelimit_refill", "0.025", {FCVAR_ARCHIVE}, "The speed at which the ratelimit buffer refills.", 0, 1000)
+local buffer = CreateConVar("pac_e2_ratelimit_buffer", "300", {FCVAR_ARCHIVE}, "How large the ratelimit buffer should be.", 0, 1000)
 
 local function canRunFunction(self)
 	if not enabledConvar:GetBool() then return true end
