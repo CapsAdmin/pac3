@@ -1,3 +1,5 @@
+local IsValid = IsValid
+
 hook.Add("pac_Initialized", "pac_e2_extension", function()
 	if E2Helper then
 		E2Helper.Descriptions["pacSetKeyValue"] = "Sets a property value on given part. Part unique id is recommended but you can also input name."
@@ -8,6 +10,7 @@ local function SetKeyValue(ply, ent, unique_id, key, val)
 	local set = "Set" .. key
 
 	local part = pac.GetPartFromUniqueID(pac.Hash(ply), unique_id)
+	if not IsValid( part ) then return end
 
 	if part:GetRootPart():GetOwner() == ent then
 		if key == "EventHide" then
