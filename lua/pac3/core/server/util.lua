@@ -83,3 +83,8 @@ function pac.RatelimitPlayer( ply, name, buffer, refill )
 		return false
 	end
 end
+
+function pac.GetRateLimitPlayerBuffer( ply, name )
+	local ratelimitName = "pac_ratelimit_" .. name
+	return ply[ratelimitName] or 0
+end
