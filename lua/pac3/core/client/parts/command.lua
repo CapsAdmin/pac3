@@ -71,6 +71,7 @@ function PART:Execute()
 				pac.Message(tostring(self) .. ' - '.. msg)
 			end
 		else
+			if hook.Run("PACRunConsoleCommand", self.String) == false then return end
 			ent:ConCommand(self.String)
 		end
 	end
