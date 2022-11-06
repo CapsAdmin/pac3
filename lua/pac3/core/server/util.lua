@@ -46,6 +46,26 @@ function pac.RemoveHook(str, id)
 	hook.Remove(str, id)
 end
 
+function pac.RatelimitAlert( ply, id, message )
+	if not ply.pac_ratelimit_alerts then
+		ply.pac_ratelimit_alerts = {}
+	end
+
+	if not ply.pac_ratelimit_alerts[id] then
+		ply.pac_ratelimit_alerts[id] = CurTime() + 3
+	end
+
+	if CurTime() > ply.pac_ratelimit_alerts[id] then
+		ply.pac_ratelimit_alerts[id] = CurTime() + 3
+		if isstring(message) then
+			pac.Message(message)
+		end
+		if istable(message) then
+			pac.Message(unpack(message))
+		end
+	end
+end
+
 function pac.RatelimitPlayer( ply, name, buffer, refill )
 	local ratelimitName = "pac_ratelimit_" .. name
 	local checkName = "pac_ratelimit_check_" .. name
@@ -75,3 +95,4 @@ function pac.GetRateLimitPlayerBuffer( ply, name )
 	local ratelimitName = "pac_ratelimit_" .. name
 	return ply[ratelimitName] or 0
 end
+
