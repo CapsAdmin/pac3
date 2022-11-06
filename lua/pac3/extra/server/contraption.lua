@@ -58,18 +58,7 @@ local function spawn(val,ply)
 end
 
 local pac_to_contraption_allow = CreateConVar("pac_to_contraption_allow", "1")
-
 local max_contraptions = CreateConVar("pac_max_contraption_entities", 60)
-
-timer.Create("pac_contraption_spam", 3, 0, function()
-	for i, ply in ipairs(player.GetAll()) do
-		ply.pac_submit_spam3 = math.max((ply.pac_submit_spam3 or 0) - 3, 0)
-
-		if ply.pac_submit_spam3_msg then
-			ply.pac_submit_spam3_msg = ply.pac_submit_spam3 >= 20
-		end
-	end
-end)
 
 pace.PCallNetReceive(net.Receive, "pac_to_contraption", function(len, ply)
 	if not pac_to_contraption_allow:GetBool() then
@@ -83,14 +72,9 @@ pace.PCallNetReceive(net.Receive, "pac_to_contraption", function(len, ply)
 
 	if len < 64 then return end
 
-	ply.pac_submit_spam3 = ply.pac_submit_spam3 + 1
-
-	if ply.pac_submit_spam3 >= 8 then
-		if not ply.pac_submit_spam3_msg then
-			pac.Message("Player ", ply, " is spamming pac_to_contraption!")
-			ply.pac_submit_spam3_msg = true
-		end
-
+	local allowed = pac.RatelimitPlayer( ply, "pac_to_contraption", 5, 1 )
+	if not allowed then
+		pac.RatelimitAlert(ply, "pac_to_contraption", {"Player ", ply, " is spamming pac_to_contraption!"})
 		return
 	end
 
