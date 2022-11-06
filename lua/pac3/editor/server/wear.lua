@@ -369,24 +369,19 @@ local pac_submit_spam = CreateConVar('pac_submit_spam', '1', {FCVAR_NOTIFY, FCVA
 local pac_submit_limit = CreateConVar('pac_submit_limit', '30', {FCVAR_NOTIFY, FCVAR_ARCHIVE}, 'pac_submit spam limit')
 
 pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
-	if pac.CallHook("CanWearParts", ply) == false then
-		return
-	end
-
-	if pac_submit_spam:GetBool() and not game.SinglePlayer() then
-		-- data is too short, not even 8 bytes
-		if len < 64 then return end
-
-		ply.pac_submit_spam = ply.pac_submit_spam + 1
-
-		if ply.pac_submit_spam >= pac_submit_limit:GetInt() then
-			if not ply.pac_submit_spam_msg then
+	if pac_submit_spam:GetBool() and not game.SinglePlayer() and len > 64 then
+		local allowed = pac.RatelimitPlayer( ply, "pac_submit", pac_submit_limit:GetInt(), 5 )
+		if not allowed then
+			if not ply.pac_submit_spam_msg_next or CurTime() > ply.pac_submit_spam_msg_next then
 				pac.Message("Player ", ply, " is spamming pac_submit!")
-				ply.pac_submit_spam_msg = true
+				ply.pac_submit_spam_msg_next = CurTime() + 3
 			end
-
 			return
 		end
+	end
+
+	if pac.CallHook("CanWearParts", ply) == false then
+		return
 	end
 
 	net.ReadStream(ply, function(data)
