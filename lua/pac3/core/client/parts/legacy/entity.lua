@@ -4,7 +4,6 @@ local render_SetBlend = render.SetBlend
 local render_SetColorModulation = render.SetColorModulation
 local render_MaterialOverride = render.MaterialOverride
 local game_SinglePlayer = game.SinglePlayer
-local RunConsoleCommand = RunConsoleCommand
 local Angle = Angle
 local Vector = Vector
 local NULL = NULL
