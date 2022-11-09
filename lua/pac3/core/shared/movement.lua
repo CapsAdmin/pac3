@@ -30,7 +30,7 @@ if SERVER then
 
 	net.Receive("pac_modify_movement", function(len, ply)
 		local cvar = movementConvar:GetInt()
-		if cvar ~= 1 or cvar ~= -1 or not hook.Run("PlayerNoClip", ply, true) then return end
+		if cvar == 0 or (cvar == -1 and hook.Run("PlayerNoClip", ply, true)==false) then return end
 
 		local str = net.ReadString()
 		if str == "disable" then
