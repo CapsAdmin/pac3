@@ -354,7 +354,8 @@ local pac_submit_spam = CreateConVar('pac_submit_spam', '1', {FCVAR_NOTIFY, FCVA
 local pac_submit_limit = CreateConVar('pac_submit_limit', '30', {FCVAR_NOTIFY, FCVAR_ARCHIVE}, 'pac_submit spam limit')
 
 pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
-	if pac_submit_spam:GetBool() and not game.SinglePlayer() and len > 64 then
+	if pac_submit_spam:GetBool() and not game.SinglePlayer() then
+		if len < 64 then return end
 		local allowed = pac.RatelimitPlayer( ply, "pac_submit", pac_submit_limit:GetInt(), 5 )
 		if not allowed then
 			pac.RatelimitAlert(ply, "pac_submit", {"Player ", ply, " is spamming pac_submit!"})
