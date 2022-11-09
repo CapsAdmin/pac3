@@ -1,45 +1,46 @@
-CreateConVar("pac_free_movement", -1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow players to modify movement. -1 apply only allow when noclip is allowed, 1 allow for all gamemodes, 0 to disable")
+local movementConvar = CreateConVar("pac_free_movement", -1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow players to modify movement. -1 apply only allow when noclip is allowed, 1 allow for all gamemodes, 0 to disable")
 
-local default = {}
-default.JumpHeight = 200
-default.StickToGround = true
-default.GroundFriction = 0.12
-default.AirFriction = 0.01
-default.Gravity = Vector(0,0,-600)
-default.Noclip = false
-default.MaxGroundSpeed = 750
-default.MaxAirSpeed = 1
-default.AllowZVelocity = false
-default.ReversePitch = false
-default.UnlockPitch = false
-default.VelocityToViewAngles = 0
-default.RollAmount = 0
+local default = {
+	JumpHeight = 200,
+	StickToGround = true,
+	GroundFriction = 0.12,
+	AirFriction = 0.01,
+	Gravity = Vector(0,0,-600),
+	Noclip = false,
+	MaxGroundSpeed = 750,
+	MaxAirSpeed = 1,
+	AllowZVelocity = false,
+	ReversePitch = false,
+	UnlockPitch = false,
+	VelocityToViewAngles = 0,
+	RollAmount = 0,
 
-default.SprintSpeed = 750
-default.RunSpeed = 300
-default.WalkSpeed = 100
-default.DuckSpeed = 25
+	SprintSpeed = 750,
+	RunSpeed = 300,
+	WalkSpeed = 100,
+	DuckSpeed = 25,
 
-default.FinEfficiency = 0
-default.FinLiftMode = "normal"
-default.FinCline = false
+	FinEfficiency = 0,
+	FinLiftMode = "normal",
+	FinCline = false
+}
 
 if SERVER then
 	util.AddNetworkString("pac_modify_movement")
 
 	net.Receive("pac_modify_movement", function(len, ply)
-		local cvar = GetConVarNumber("pac_free_movement")
-		if cvar == 1 or (cvar == -1 and hook.Run("PlayerNoClip", ply, true)) then
-			local str = net.ReadString()
-			if str == "disable" then
-				ply.pac_movement = nil
-			else
-				if default[str] ~= nil then
-					local val = net.ReadType()
-					if type(val) == type(default[str]) then
-						ply.pac_movement = ply.pac_movement or table.Copy(default)
-						ply.pac_movement[str] = val
-					end
+		local cvar = movementConvar:GetInt()
+		if cvar == 0 or (cvar == -1 and hook.Run("PlayerNoClip", ply, true)==false) then return end
+
+		local str = net.ReadString()
+		if str == "disable" then
+			ply.pac_movement = nil
+		else
+			if default[str] ~= nil then
+				local val = net.ReadType()
+				if type(val) == type(default[str]) then
+					ply.pac_movement = ply.pac_movement or table.Copy(default)
+					ply.pac_movement[str] = val
 				end
 			end
 		end
@@ -47,6 +48,7 @@ if SERVER then
 end
 
 if CLIENT then
+	local sensitivityConvar = GetConVar("sensitivity")
 	pac.AddHook("InputMouseApply", "custom_movement", function(cmd, x,y, ang)
 		local ply = pac.LocalPlayer
 		local self = ply.pac_movement
@@ -65,7 +67,7 @@ if CLIENT then
 			ply.pac_movement_viewang = ply.pac_movement_viewang or ang
 			ang = ply.pac_movement_viewang
 
-			local sens = GetConVarNumber("sensitivity") * 20
+			local sens = sensitivityConvar:GetFloat() * 20
 			x = x / sens
 			y = y / sens
 
@@ -110,6 +112,7 @@ local function badMovetype(ply)
 		or mvtype == MOVETYPE_ISOMETRIC
 end
 
+local frictionConvar = GetConVar("sv_friction")
 pac.AddHook("Move", "custom_movement", function(ply, mv)
 	local self = ply.pac_movement
 
@@ -209,14 +212,12 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 
 	local vel = mv:GetVelocity()
 
-	if on_ground then
-		if not self.Noclip and self.StickToGround then -- work against ground friction
-			local sv_friction = GetConVarNumber("sv_friction")
+	if on_ground and not self.Noclip and self.StickToGround then -- work against ground friction
+		local sv_friction = frictionConvar:GetInt()
 
-			if sv_friction > 0 then
-				sv_friction = 1 - (sv_friction * 15) / 1000
-				vel = vel / sv_friction
-			end
+		if sv_friction > 0 then
+			sv_friction = 1 - (sv_friction * 15) / 1000
+			vel = vel / sv_friction
 		end
 	end
 

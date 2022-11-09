@@ -11,13 +11,14 @@ do -- button event
 	end)
 
 	local function broadcast_key(ply, key, down)
-		if ply.pac_broadcast_buttons and ply.pac_broadcast_buttons[key] then
-			net.Start("pac.BroadcastPlayerButton")
-			net.WriteEntity(ply)
-			net.WriteUInt(key, 8)
-			net.WriteBool(down)
-			net.Broadcast()
-		end
+		if not ply.pac_broadcast_buttons then return end
+		if not ply.pac_broadcast_buttons[key] then return end
+
+		net.Start("pac.BroadcastPlayerButton")
+		net.WriteEntity(ply)
+		net.WriteUInt(key, 8)
+		net.WriteBool(down)
+		net.Broadcast()
 	end
 
 	pac.AddHook("PlayerButtonDown", "event", function(ply, key)

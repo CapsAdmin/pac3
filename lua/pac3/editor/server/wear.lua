@@ -350,43 +350,18 @@ end
 
 util.AddNetworkString("pac_submit")
 
-timer.Create("pac_submit_spam", 3, 0, function()
-	for k, ply in ipairs(player.GetAll()) do
-		ply.pac_submit_spam = math.max((ply.pac_submit_spam or 0) - 5, 0)
-		ply.pac_submit_spam2 = math.max((ply.pac_submit_spam2 or 0) - 5, 0)
-
-		if ply.pac_submit_spam_msg then
-			ply.pac_submit_spam_msg = ply.pac_submit_spam >= 20
-		end
-
-		if ply.pac_submit_spam_msg2 then
-			ply.pac_submit_spam_msg2 = ply.pac_submit_spam2 >= 20
-		end
-	end
-end)
-
 local pac_submit_spam = CreateConVar('pac_submit_spam', '1', {FCVAR_NOTIFY, FCVAR_ARCHIVE}, 'Prevent users from spamming pac_submit')
 local pac_submit_limit = CreateConVar('pac_submit_limit', '30', {FCVAR_NOTIFY, FCVAR_ARCHIVE}, 'pac_submit spam limit')
 
 pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
-	if pac.CallHook("CanWearParts", ply) == false then
-		return
+	if len < 64 then return end
+	if pac_submit_spam:GetBool() and not game.SinglePlayer() then
+		local allowed = pac.RatelimitPlayer( ply, "pac_submit", pac_submit_limit:GetInt(), 5, {"Player ", ply, " is spamming pac_submit!"} )
+		if not allowed then return end
 	end
 
-	if pac_submit_spam:GetBool() and not game.SinglePlayer() then
-		-- data is too short, not even 8 bytes
-		if len < 64 then return end
-
-		ply.pac_submit_spam = ply.pac_submit_spam + 1
-
-		if ply.pac_submit_spam >= pac_submit_limit:GetInt() then
-			if not ply.pac_submit_spam_msg then
-				pac.Message("Player ", ply, " is spamming pac_submit!")
-				ply.pac_submit_spam_msg = true
-			end
-
-			return
-		end
+	if pac.CallHook("CanWearParts", ply) == false then
+		return
 	end
 
 	net.ReadStream(ply, function(data)
