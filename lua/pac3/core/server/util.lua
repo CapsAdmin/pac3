@@ -66,7 +66,9 @@ function pac.RatelimitAlert( ply, id, message )
 	end
 end
 
-function pac.RatelimitPlayer( ply, name, buffer, refill )
+local RatelimitAlert = pac.RatelimitAlert
+
+function pac.RatelimitPlayer( ply, name, buffer, refill, message )
 	local ratelimitName = "pac_ratelimit_" .. name
 	local checkName = "pac_ratelimit_check_" .. name
 
@@ -87,6 +89,9 @@ function pac.RatelimitPlayer( ply, name, buffer, refill )
 		ply[ratelimitName] = ply[ratelimitName] - 1
 		return true
 	else
+		if message then
+			RatelimitAlert(ply, name, message)
+		end
 		return false
 	end
 end

@@ -72,11 +72,8 @@ pace.PCallNetReceive(net.Receive, "pac_to_contraption", function(len, ply)
 
 	if len < 64 then return end
 
-	local allowed = pac.RatelimitPlayer( ply, "pac_to_contraption", 5, 1 )
-	if not allowed then
-		pac.RatelimitAlert(ply, "pac_to_contraption", {"Player ", ply, " is spamming pac_to_contraption!"})
-		return
-	end
+	local allowed = pac.RatelimitPlayer( ply, "pac_to_contraption", 5, 1, {"Player ", ply, " is spamming pac_to_contraption!"} )
+	if not allowed then return end
 
 	local data = net.ReadTable()
 
