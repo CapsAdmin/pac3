@@ -1,5 +1,4 @@
-pac.OwnerNames =
-{
+pac.OwnerNames = {
 	"self",
 	"viewmodel",
 	"hands",
@@ -7,6 +6,8 @@ pac.OwnerNames =
 	"active weapon",
 	"world",
 }
+
+local IsValid = IsValid
 
 local function find_ent(ent, str)
 	return
@@ -41,7 +42,7 @@ SafeRemoveEntity(pac.WorldEntity)
 pac.WorldEntity = NULL
 
 function pac.GetWorldEntity()
-	if not pac.WorldEntity:IsValid() then
+	if not IsValid(pac.WorldEntity) then
 		ent = pac.CreateEntity("models/error.mdl")
 
 		ent:SetPos(Vector(0,0,0))
@@ -63,13 +64,13 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 	if idx then
 		ent = Entity(idx)
 
-		if ent:IsValid() then
-			if owner:IsValid() and owner.GetViewModel and ent == owner:GetViewModel() then
+		if IsValid(ent) then
+			if IsValid(owner) and owner.GetViewModel and ent == owner:GetViewModel() then
 				part:SetOwnerName("viewmodel")
 				return ent
 			end
 
-			if owner:IsValid() and owner.GetHands and ent == owner:GetHands() then
+			if IsValid(owner) and owner.GetHands and ent == owner:GetHands() then
 				part:SetOwnerName("hands")
 				return ent
 			end
@@ -97,16 +98,16 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 		return owner
 	end
 
-	if owner:IsValid() then
-		if name == "active weapon" and owner.GetActiveWeapon and owner:GetActiveWeapon():IsValid() then
+	if IsValid(owner) then
+		if name == "active weapon" and owner.GetActiveWeapon and IsValid(owner:GetActiveWeapon()) then
 			return owner:GetActiveWeapon()
 		end
 
-		if name == "active vehicle" and owner.GetVehicle and owner:GetVehicle():IsValid() then
+		if name == "active vehicle" and owner.GetVehicle and IsValid(owner:GetVehicle()) then
 			return owner:GetVehicle()
 		end
 
-		if name == "hands" and owner == pac.LocalPlayer and pac.LocalHands:IsValid() then
+		if name == "hands" and owner == pac.LocalPlayer and IsValid(pac.LocalHands) then
 			return pac.LocalHands
 		end
 
@@ -117,6 +118,16 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 		if name == "viewmodel" and owner.GetViewModel then
 			return owner:GetViewModel()
 		end
+
+		if IsValid(ent) and (not check_func or check_func(ent)) and check_owner(ent, owner) and find_ent(ent, name) then
+			return ent
+		end
+
+		for _, val in pairs(ents.GetAll()) do
+			if IsValid(val) and (not check_func or check_func(val)) and check_owner(val, owner) and find_ent(val, name) then
+				return val
+			end
+		end
 	end
 
 	if name:find("persist ", nil, true) then
@@ -125,16 +136,6 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 			if val.GetPersistent and val:GetModel() and val:GetPersistent() and crc == calc_entity_crc(val) then
 				return val
 			end
-		end
-	end
-
-	if IsValid(ent) and (not check_func or check_func(ent)) and check_owner(ent, owner) and find_ent(ent, name) then
-		return ent
-	end
-
-	for _, val in pairs(ents.GetAll()) do
-		if val:IsValid() and (not check_func or check_func(val)) and check_owner(val, owner) and find_ent(val, name) then
-			return val
 		end
 	end
 
