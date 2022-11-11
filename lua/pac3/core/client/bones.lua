@@ -2,7 +2,6 @@ local pairs = pairs
 local IsValid = IsValid
 local unpack = unpack
 local LocalToWorld = LocalToWorld
-local FindMetaTable = FindMetaTable
 local math_sin = math.sin
 local RealTime = RealTime
 local Entity = Entity

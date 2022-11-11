@@ -2,7 +2,6 @@ local string_format = string.format
 local tostring = tostring
 local pace = pace
 local assert = assert
-local CreateClientConVar = CreateClientConVar
 local debug_traceback = debug.traceback
 local math_random = math.random
 local xpcall = xpcall
@@ -12,6 +11,7 @@ local ipairs = ipairs
 local table = table
 local Color = Color
 local NULL = NULL
+local table_insert = table.insert
 
 local BUILDER, PART = pac.PartTemplate()
 
@@ -381,7 +381,7 @@ do -- scene graph
 
 		if not part:HasChild(self) then
 			self.ChildrenMap[part] = part
-			table.insert(self.Children, part)
+			table_insert(self.Children, part)
 		end
 
 		self:InvalidateChildrenList()
@@ -677,7 +677,7 @@ do -- hidden / events
 		local found = {}
 
 		for part in pairs(self.active_events) do
-			table.insert(found, tostring(part) .. " is event hiding")
+			table_insert(found, tostring(part) .. " is event hiding")
 		end
 
 		if found[1] then
@@ -803,7 +803,7 @@ do -- serializing
 					goto CONTINUE
 				end
 
-				table.insert(out, {
+				table_insert(out, {
 					key = key,
 					set = function(v) self["Set" .. key](self, v) end,
 					get = function() return self["Get" .. key](self) end,
@@ -819,7 +819,7 @@ do -- serializing
 				if props then
 					for _, info in pairs(props) do
 						if not self.PropertyWhitelist or self.PropertyWhitelist[info.key] then
-							table.insert(out, info)
+							table_insert(out, info)
 						end
 					end
 				end
@@ -832,7 +832,7 @@ do -- serializing
 				for _, prop in ipairs(out) do
 					if key == prop.key then
 						if not done[key] then
-							table.insert(sorted, prop)
+							table_insert(sorted, prop)
 							done[key] = true
 							break
 						end
@@ -845,7 +845,7 @@ do -- serializing
 					for _, prop in ipairs(out) do
 						if key == prop.key then
 							if not done[key] then
-								table.insert(sorted, prop)
+								table_insert(sorted, prop)
 								done[key] = true
 								break
 							end
@@ -859,7 +859,7 @@ do -- serializing
 					for _, prop in ipairs(out) do
 						if key == prop.key then
 							if not done[key] then
-								table.insert(sorted, prop)
+								table_insert(sorted, prop)
 								done[key] = true
 								break
 							end
@@ -870,7 +870,7 @@ do -- serializing
 
 			for _, prop in ipairs(out) do
 				if not done[prop.key] then
-					table.insert(sorted, prop)
+					table_insert(sorted, prop)
 				end
 			end
 
@@ -892,7 +892,7 @@ do -- serializing
 
 				if self["Set" .. key] then
 					if key == "Material" then
-						table.insert(self.delayed_variables, {key = key, val = value})
+						table_insert(self.delayed_variables, {key = key, val = value})
 					end
 					self["Set" .. key](self, value)
 				elseif key ~= "ClassName" then
@@ -971,7 +971,7 @@ do -- serializing
 			if not self.is_valid or self.is_deattached then
 
 			else
-				table.insert(tbl.children, part:ToTable())
+				table_insert(tbl.children, part:ToTable())
 			end
 		end
 
@@ -1001,7 +1001,7 @@ do -- serializing
 			if not self.is_valid or self.is_deattached then
 
 			else
-				table.insert(tbl.children, part:ToSaveTable())
+				table_insert(tbl.children, part:ToSaveTable())
 			end
 		end
 
@@ -1019,7 +1019,7 @@ do -- serializing
 
 					if self["Set" .. key] then
 						if key == "Material" then
-							table.insert(self.delayed_variables, {key = key, val = value})
+							table_insert(self.delayed_variables, {key = key, val = value})
 						end
 						self["Set" .. key](self, value)
 					elseif key ~= "ClassName" then
@@ -1063,7 +1063,7 @@ do -- serializing
 				if not self.is_valid or self.is_deattached then
 
 				else
-					table.insert(tbl.children, part:ToUndoTable())
+					table_insert(tbl.children, part:ToUndoTable())
 				end
 			end
 
