@@ -230,7 +230,6 @@ local function install_drag(node)
 				pace.RecordUndoHistory()
 				self.part:SetParent(child.part)
 				pace.RecordUndoHistory()
-				called = true
 			end
 		elseif self.part and self.part:IsValid() then
 			if self.part.ClassName ~= "group" then
@@ -240,14 +239,12 @@ local function install_drag(node)
 				self.part:SetParent(group)
 				pace.RecordUndoHistory()
 				pace.TrySelectPart()
-				called = true
 
 			else
 				pace.RecordUndoHistory()
 				self.part:SetParent()
 				pace.RecordUndoHistory()
 				pace.RefreshTree(true)
-				called = true
 			end
 		end
 
