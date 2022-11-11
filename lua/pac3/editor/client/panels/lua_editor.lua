@@ -229,7 +229,7 @@ function PANEL:SyntaxColorLine(row)
 	self:NextChar();
 
 	while self.char do
-		token = "";
+		local token = "";
 		self.str = "";
 
 		while self.char and self.char == " " do self:NextChar() end
