@@ -1,3 +1,6 @@
+local pairs = pairs
+local IsEntity = IsEntity
+local next = next
 
 pac.AddHook("RenderScene", "eyeangles_eyepos", function(pos, ang)
 	pac.EyePos = pos

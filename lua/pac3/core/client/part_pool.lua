@@ -9,6 +9,8 @@ local NULL = NULL
 local pairs = pairs
 local force_rendering = false
 local forced_rendering = false
+local IsEntity = IsEntity
+local next = next
 
 local entMeta = FindMetaTable('Entity')
 local plyMeta = FindMetaTable('Player')
@@ -263,7 +265,7 @@ pac.AddHook("Think", "events", function()
 		local rag = ply:GetRagdollEntity()
 		if not IsValid(rag) then
 			pac.HideEntityParts(ply)
-			continue 
+			continue
 		end
 
 		-- so it only runs once
@@ -629,7 +631,6 @@ do -- drawing
 	local FrameNumber = FrameNumber
 	local RealTime = RealTime
 	local GetConVar = GetConVar
-	local NULL = NULL
 	local EF_BONEMERGE = EF_BONEMERGE
 	local RENDERMODE_TRANSALPHA = RENDERMODE_TRANSALPHA
 

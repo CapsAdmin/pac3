@@ -17,6 +17,8 @@ local vector_origin = vector_origin
 local render = render
 local cam = cam
 local surface = surface
+local render_MaterialOverrideByIndex = render.MaterialOverrideByIndex
+local render_SuppressEngineLighting = render.SuppressEngineLighting
 
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
@@ -319,9 +321,9 @@ function PART:BindMaterials(ent)
 			local mat = materials[i]
 
 			if mat then
-				render.MaterialOverrideByIndex(i-1, mat)
+				render_MaterialOverrideByIndex(i-1, mat)
 			else
-				render.MaterialOverrideByIndex(i-1, nil)
+				render_MaterialOverrideByIndex(i-1, nil)
 			end
 		end
 	elseif self.material_override then
@@ -336,9 +338,9 @@ function PART:BindMaterials(ent)
 				local mat = stack[1]
 
 				if mat then
-					render.MaterialOverrideByIndex(i-1, mat:GetRawMaterial())
+					render_MaterialOverrideByIndex(i-1, mat:GetRawMaterial())
 				else
-					render.MaterialOverrideByIndex(i-1, nil)
+					render_MaterialOverrideByIndex(i-1, nil)
 				end
 			end
 		end
@@ -372,7 +374,7 @@ function PART:PreEntityDraw(ent, pos, ang)
 		end
 
 		if self.NoLighting then
-			render.SuppressEngineLighting(true)
+			render_SuppressEngineLighting(true)
 		end
 	end
 
@@ -396,7 +398,7 @@ function PART:PostEntityDraw(ent, pos, ang)
 		self:ModifiersPostEvent("OnDraw")
 
 		if self.NoLighting then
-			render.SuppressEngineLighting(false)
+			render_SuppressEngineLighting(false)
 		end
 	end
 end
@@ -710,7 +712,7 @@ function PART:SetModel(path)
 
 	local owner = self:GetOwner()
 	if not owner:IsValid() then return end
-	
+
 	self.old_model = path
 	self:ProcessModelChange()
 end

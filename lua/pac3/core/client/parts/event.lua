@@ -1,9 +1,9 @@
-local LocalPlayer = LocalPlayer
 local FrameTime = FrameTime
 local CurTime = CurTime
 local NULL = NULL
 local Vector = Vector
 local util = util
+local SysTime = SysTime
 
 local BUILDER, PART = pac.PartTemplate("base")
 

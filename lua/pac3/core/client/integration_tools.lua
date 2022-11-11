@@ -1,5 +1,4 @@
 local Angle = Angle
-local LocalPlayer = LocalPlayer
 local RealTime = RealTime
 local NULL = NULL
 
