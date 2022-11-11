@@ -212,7 +212,7 @@ function PANEL:SyntaxColorLine(row)
 	self.str = ""
 
 	-- TODO: Color customization?
-	colors = {
+	local colors = {
 		["none"] =  { Color(200, 200, 200, 255), false},
 		["number"] =    { Color(218, 165, 32, 255), false},
 		["function"] =  { Color(100, 100, 255, 255), false},
@@ -318,7 +318,7 @@ function PANEL:SyntaxColorLine(row)
 
 		end
 
-		color = colors[token]
+		local color = colors[token]
 		if(#cols > 1 and color == cols[#cols][2]) then
 			cols[#cols][1] = cols[#cols][1] .. self.str
 		else
