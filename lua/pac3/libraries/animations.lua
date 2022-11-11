@@ -541,7 +541,6 @@ function animations.SetEntityAnimationCycle(ent, name, f)
 		f = f%1
 
 
-		ROFL = f
 		f = f * duration
 
 		local sec = 0

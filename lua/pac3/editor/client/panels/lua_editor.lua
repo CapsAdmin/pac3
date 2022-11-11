@@ -212,7 +212,7 @@ function PANEL:SyntaxColorLine(row)
 	self.str = ""
 
 	-- TODO: Color customization?
-	colors = {
+	local colors = {
 		["none"] =  { Color(200, 200, 200, 255), false},
 		["number"] =    { Color(218, 165, 32, 255), false},
 		["function"] =  { Color(100, 100, 255, 255), false},
@@ -229,7 +229,7 @@ function PANEL:SyntaxColorLine(row)
 	self:NextChar();
 
 	while self.char do
-		token = "";
+		local token = "";
 		self.str = "";
 
 		while self.char and self.char == " " do self:NextChar() end
@@ -318,7 +318,7 @@ function PANEL:SyntaxColorLine(row)
 
 		end
 
-		color = colors[token]
+		local color = colors[token]
 		if(#cols > 1 and color == cols[#cols][2]) then
 			cols[#cols][1] = cols[#cols][1] .. self.str
 		else
@@ -377,7 +377,7 @@ function PANEL:PaintLine(row)
 	for i,cell in ipairs(self.PaintRows[row]) do
 		if(offset < 0) then
 			if(string.len(cell[1]) > -offset) then
-				line = string.sub(cell[1], -offset + 1)
+				local line = string.sub(cell[1], -offset + 1)
 				offset = string.len(line)
 
 				if(cell[2][2]) then
@@ -702,7 +702,7 @@ function PANEL:ScrollCaret()
 	self.ScrollBar:SetScroll(self.Scroll[1] - 1)
 end
 
-function unindent(line)
+local function unindent(line)
 	local i = line:find("%S")
 	if(i == nil or i > 5) then i = 5 end
 	return line:sub(i)

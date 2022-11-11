@@ -98,7 +98,6 @@ function test.Run(done)
 		local event = root:CreatePart("event")
 		event:SetEvent("test")
 		event:SetAffectChildrenOnly(true)
-		event_part = event
 
 		local child = event:CreatePart("test")
 	end
