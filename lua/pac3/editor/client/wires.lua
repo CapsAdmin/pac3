@@ -84,8 +84,6 @@ local function DrawHermite(width, x0,y0,x1,y1,c0,c1,alpha,samples)
 	--render.SetMaterial(Material("cable/smoke.vmt"))
 	render_startBeam(samples+1)
 
-	local t = RealTime()
-
 	for i=1, samples+1 do
 		local curr = positions[i][1]
 		render_addBeam(curr, width, ((i/samples)*10000 - 0.5)%1, positions[i][2])
