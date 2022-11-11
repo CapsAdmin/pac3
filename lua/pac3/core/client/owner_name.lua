@@ -41,7 +41,7 @@ pac.WorldEntity = NULL
 
 function pac.GetWorldEntity()
 	if not pac.WorldEntity:IsValid() then
-		ent = pac.CreateEntity("models/error.mdl")
+		local ent = pac.CreateEntity("models/error.mdl")
 
 		ent:SetPos(Vector(0,0,0))
 

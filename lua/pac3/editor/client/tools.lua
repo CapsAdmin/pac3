@@ -374,7 +374,7 @@ end)
 pace.AddTool(L"import editor tool from url...", function()
 	if GetConVar("sv_allowcslua"):GetBool() then
 		Derma_StringRequest(L"URL", L"URL to PAC Editor tool txt file", "http://www.example.com/tool.txt", function(toolurl)
-			function ToolDLSuccess(body)
+			local function ToolDLSuccess(body)
 				local toolname = pac.PrettifyName(toolurl:match(".+/(.-)%."))
 				local toolstr = body
 				ctoolstr = [[pace.AddTool(L"]] .. toolname .. [[", function(part, suboption)]] .. toolstr .. " end)"

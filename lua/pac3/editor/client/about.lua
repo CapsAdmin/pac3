@@ -68,8 +68,8 @@ do
 		}
 	end
 
-	def_color1 = Color(255, 255, 255, 255)
-	def_color2 = Color(0, 0, 0, 255)
+	local def_color1 = Color(255, 255, 255, 255)
+	local def_color2 = Color(0, 0, 0, 255)
 
 	local surface_SetFont = surface.SetFont
 	local surface_SetTextColor = surface.SetTextColor
