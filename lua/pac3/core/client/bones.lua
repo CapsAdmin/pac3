@@ -1,3 +1,12 @@
+local pairs = pairs
+local IsValid = IsValid
+local unpack = unpack
+local LocalToWorld = LocalToWorld
+local FindMetaTable = FindMetaTable
+local math_sin = math.sin
+local RealTime = RealTime
+local Entity = Entity
+local ipairs = ipairs
 local NULL = NULL
 local LerpVector = LerpVector
 local LerpAngle = LerpAngle
@@ -389,7 +398,7 @@ do -- bone manipulation for boneanimlib
 
 		local i = ent.pac_bones_select_target
 		if i and count >= i then
-			ManipulateBoneScale(ent, i, ent:GetManipulateBoneScale(i) * (1 + math.sin(RealTime() * 4) * 0.1))
+			ManipulateBoneScale(ent, i, ent:GetManipulateBoneScale(i) * (1 + math_sin(RealTime() * 4) * 0.1))
 			ent.pac_bones_select_target = nil
 		end
 
@@ -404,7 +413,7 @@ do -- bone manipulation for boneanimlib
 
 				if time < pac.RealTime then
 					ent:SetFlexWeight(id, 0)
-				else 
+				else
 					if ent:GetFlexWeight(id) == 0 then
 						ent.pac_touching_flexes[id] = nil
 					end

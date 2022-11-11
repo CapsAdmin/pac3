@@ -1,4 +1,3 @@
-local FrameNumber = FrameNumber
 local SysTime = SysTime
 local pairs = pairs
 local Color = Color

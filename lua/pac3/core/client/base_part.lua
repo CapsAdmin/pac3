@@ -1,18 +1,24 @@
+local string_format = string.format
+local tostring = tostring
+local pace = pace
+local assert = assert
+local CreateClientConVar = CreateClientConVar
+local debug_traceback = debug.traceback
+local math_random = math.random
+local xpcall = xpcall
 local pac = pac
 local pairs = pairs
 local ipairs = ipairs
 local table = table
 local Color = Color
 local NULL = NULL
-local IsValid = IsValid
-local ErrorNoHalt = ErrorNoHalt
 
 local BUILDER, PART = pac.PartTemplate()
 
 PART.ClassName = "base"
 
 function PART:__tostring()
-	return string.format("part[%s][%s][%i]", self.ClassName, self:GetName(), self.Id)
+	return string_format("part[%s][%s][%i]", self.ClassName, self:GetName(), self.Id)
 end
 
 BUILDER
@@ -873,7 +879,7 @@ do -- serializing
 	end
 
 	local function on_error(msg)
-		ErrorNoHalt(debug.traceback(msg))
+		ErrorNoHalt(debug_traceback(msg))
 	end
 
 	do
@@ -904,7 +910,7 @@ do -- serializing
 
 		local function make_copy(tbl, pepper)
 			if pepper == true then
-				pepper = tostring(math.random()) .. tostring(math.random())
+				pepper = tostring(math_random()) .. tostring(math_random())
 			end
 
 			for key, val in pairs(tbl.self) do

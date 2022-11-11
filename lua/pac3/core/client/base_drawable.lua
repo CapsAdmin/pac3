@@ -1,20 +1,16 @@
+local render_OverrideAlphaWriteEnable = render.OverrideAlphaWriteEnable
+local render_OverrideColorWriteEnable = render.OverrideColorWriteEnable
+local render_OverrideBlendFunc = render.OverrideBlendFunc
+local ProtectedCall = ProtectedCall
+local cam_IgnoreZ = cam.IgnoreZ
 local pac = pac
-local pairs = pairs
 local ipairs = ipairs
 local table = table
-local Vector = Vector
-local Angle = Angle
-local Color = Color
-local NULL = NULL
-local SysTime = SysTime
 local TEXFILTER_POINT = TEXFILTER.POINT
 local render_PopFilterMag = render.PopFilterMag
 local render_PopFilterMin = render.PopFilterMin
 local render_PushFilterMin = render.PushFilterMin
 local render_PushFilterMag = render.PushFilterMag
-local LocalToWorld = LocalToWorld
-local cam_IgnoreZ = cam.IgnoreZ
-local render_OverrideBlendFunc = render.OverrideBlendFunc
 
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
@@ -85,25 +81,25 @@ do
 			)
 
 			if self.blend_override[5] then
-				render.OverrideAlphaWriteEnable(true, self.blend_override[5] == "write_alpha")
+				render_OverrideAlphaWriteEnable(true, self.blend_override[5] == "write_alpha")
 			end
 
 			if self.blend_override[6] then
-				render.OverrideColorWriteEnable(true, self.blend_override[6] == "write_color")
+				render_OverrideColorWriteEnable(true, self.blend_override[6] == "write_color")
 			end
 		end
 	end
 
 	function PART:StopBlend()
 		if self.blend_override then
-			render.OverrideBlendFunc(false)
+			render_OverrideBlendFunc(false)
 
 			if self.blend_override[5] then
-				render.OverrideAlphaWriteEnable(false)
+				render_OverrideAlphaWriteEnable(false)
 			end
 
 			if self.blend_override[6] then
-				render.OverrideColorWriteEnable(false)
+				render_OverrideColorWriteEnable(false)
 			end
 		end
 	end
@@ -200,7 +196,7 @@ function PART:Draw(draw_type)
 
 		self:StopBlend()
 
-		if self.IgnoreZ then cam.IgnoreZ(false) end
+		if self.IgnoreZ then cam_IgnoreZ(false) end
 
 		if not self.HandleModifiersManually then self:ModifiersPostEvent('OnDraw', draw_type) end
 	end
