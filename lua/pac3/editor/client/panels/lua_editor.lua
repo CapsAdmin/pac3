@@ -377,7 +377,7 @@ function PANEL:PaintLine(row)
 	for i,cell in ipairs(self.PaintRows[row]) do
 		if(offset < 0) then
 			if(string.len(cell[1]) > -offset) then
-				line = string.sub(cell[1], -offset + 1)
+				local line = string.sub(cell[1], -offset + 1)
 				offset = string.len(line)
 
 				if(cell[2][2]) then

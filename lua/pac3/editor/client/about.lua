@@ -554,7 +554,7 @@ function pace.ShowAbout()
 
 		first = false
 
-		quit = input.IsKeyDown(KEY_SPACE) or input.IsKeyDown(KEY_ESCAPE) or not ok
+		local quit = input.IsKeyDown(KEY_SPACE) or input.IsKeyDown(KEY_ESCAPE) or not ok
 
 		if quit then
 			if not ok then print(err) end
