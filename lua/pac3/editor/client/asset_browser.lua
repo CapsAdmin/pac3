@@ -632,13 +632,14 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 	local last_w
 	local last_h
 	local div_x
+	local last_div_x
 
 	local old_think = frame.Think
 	frame.Think = function(...)
 		local x,y = frame:GetPos()
 		local w,h = frame:GetSize()
 
-		local div_x = divider:GetLeftWidth()
+		div_x = divider:GetLeftWidth()
 
 		if x ~= last_x then frame:SetCookie("x", x) last_x = x end
 		if y ~= last_y then frame:SetCookie("y", y) last_y = y end
