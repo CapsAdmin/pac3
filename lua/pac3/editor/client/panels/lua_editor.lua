@@ -702,7 +702,7 @@ function PANEL:ScrollCaret()
 	self.ScrollBar:SetScroll(self.Scroll[1] - 1)
 end
 
-function unindent(line)
+local function unindent(line)
 	local i = line:find("%S")
 	if(i == nil or i > 5) then i = 5 end
 	return line:sub(i)
