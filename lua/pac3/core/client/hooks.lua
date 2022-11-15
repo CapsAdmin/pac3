@@ -1,3 +1,6 @@
+local pairs = pairs
+local IsEntity = IsEntity
+local next = next
 
 pac.AddHook("RenderScene", "eyeangles_eyepos", function(pos, ang)
 	pac.EyePos = pos
@@ -12,8 +15,15 @@ pac.AddHook("DrawPhysgunBeam", "physgun_event", function(ply, wep, enabled, targ
 		ply.pac_drawphysgun_event = nil
 	end
 
-	if ply.pac_drawphysgun_event_part and ply.pac_drawphysgun_event_part:IsValid() then
-		ply.pac_drawphysgun_event_part:OnThink()
+	local pac_drawphysgun_event_part = ply.pac_drawphysgun_event_part
+	if pac_drawphysgun_event_part then
+		for event in pairs(pac_drawphysgun_event_part) do
+			if event:IsValid() then
+				event:OnThink()
+			else
+				pac_drawphysgun_event_part[event] = nil
+			end
+		end
 	end
 
 
@@ -27,7 +37,7 @@ do
 		if not IsEntity(ply) or not ply:IsValid() then return end
 
 		if ply.pac_death_physics_parts and ply:Alive() and ply.pac_physics_died then
-			pac.CallRecursiveOnAllParts("OnBecomePhysics")
+			pac.CallRecursiveOnOwnedParts(ply, "OnBecomePhysics")
 			ply.pac_physics_died = false
 		end
 

@@ -1,5 +1,4 @@
 local Angle = Angle
-local LocalPlayer = LocalPlayer
 local RealTime = RealTime
 local NULL = NULL
 
@@ -46,7 +45,7 @@ do
 		cam_pos = cam_pos or ent:LocalToWorld(ent:OBBCenter()) - cam_ang:Forward() * ent:BoundingRadius() * 2
 		cam_fov = cam_fov or 90
 
-		ent:SetupBones()
+		pac.SetupBones(ent)
 
 		cam.Start2D()
 			cam.Start3D(cam_pos, cam_ang, cam_fov, x, y, w, h, cam_nearz or 5, cam_farz or 4096)

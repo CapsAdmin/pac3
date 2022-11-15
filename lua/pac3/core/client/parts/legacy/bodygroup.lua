@@ -51,6 +51,7 @@ function PART:UpdateBodygroupData()
 	self.bodygroup_index = nil
 	self.minIndex = 0
 	self.maxIndex = 0
+	self:SetError()
 	local ent = self:GetOwner()
 
 	if not IsValid(ent) or not ent:GetBodyGroups() then return end
@@ -72,6 +73,7 @@ function PART:UpdateBodygroupData()
 
 	if not self.markedFailed then
 		pac.Message(self, ' - Unable to find bodygroup ' .. fName .. ' on ', ent)
+		self:SetError("Unable to find bodygroup " .. fName .. " on " .. tostring(ent))
 		self.markedFailed = true
 	end
 end

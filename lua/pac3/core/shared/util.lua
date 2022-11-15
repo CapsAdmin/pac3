@@ -356,8 +356,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						local vtf_dir_offset
 						local vtf_dir_count
 
-						local vmt_dir_offset
-						local vmt_dir_count
+						local material_offset
+						local material_count
 
 						local include_mdl_dir_offset
 						local include_mdl_dir_count
@@ -387,49 +387,62 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						f:skip(8) -- activitylistversion + eventsindexed
 
 						do
-							vmt_dir_count = f:readUInt32()
-							vmt_dir_offset = f:readUInt32() + 1 -- +1 to convert 0 indexed to 1 indexed
+							material_count = f:readUInt32()
+							material_offset = f:readUInt32() + 1 -- +1 to convert 0 indexed to 1 indexed
 
 							local old_pos = f:tell()
-							f:seek(vmt_dir_offset)
-								local offset = f:readInt32()
-								if offset > -1 then
-									offset = offset + vmt_dir_offset
-									if VERBOSE then print(data.file_name, "MATERIAL OFFSET:", offset) end
-									f:seek(offset)
-									for i = 1, vmt_dir_count do
-										local mat = (f:readString() .. ".vmt"):lower()
-										local found = false
+							f:seek(material_offset)
 
-										if mat:EndsWith("\\.vmt") or mat:EndsWith("/.vmt") or mat == (".vmt") then goto CONTINUE end
-										for i, v in pairs(files) do
-											if v.file_name == mat then
-												found = v.file_path
-												break
-											elseif v.file_path == ("materials/" .. mat) or string.find(v.file_path, mat, 1, true) or string.find(mat, v.file_name, 1, true) then
-												v.file_name = mat
-												found = v.file_path
-												break
-											end
-										end
+							for i = 1, material_count do
+								local material_start = f:tell()
+								local material_name_offset = f:readInt32()
+								f:skip(60)
+								local material_end = f:tell()
 
-										if not found then
-											if ply == pac.LocalPlayer then
-												pac.Message(Color(255, 50,50), url, " the model wants to find ", mat, " but it was not found in the zip archive")
-											end
-											local dummy = "VertexLitGeneric\n{\n\t$basetexture \"error\"\n}"
-											table.insert(files, {file_name = mat, buffer = dummy, crc = util.CRC(dummy), file_path = mat})
-										end
+								local material_name_pos = material_start + material_name_offset
+								f:seek(material_name_pos)
 
-										table.insert(found_materials, mat)
-										::CONTINUE::
+								local material_name = (f:readString() .. ".vmt"):lower()
+								local found = false
+
+								for i, v in pairs(files) do
+									if v.file_name == material_name then
+										found = v.file_path
+										break
+									elseif v.file_path == ("materials/" .. material_name) then
+										v.file_name = material_name
+										found = v.file_path
+										break
 									end
 								end
-							f:seek(old_pos)
+
+								if not found then
+									for i, v in pairs(files) do
+										if string.find(v.file_path, material_name, 1, true) or string.find(material_name, v.file_name, 1, true) then
+											v.file_name = material_name
+											found = v.file_path
+											break
+										end
+									end
+								end
+
+								if not found then
+									if ply == pac.LocalPlayer then
+										pac.Message(Color(255, 50,50), url, " the model wants to find ", material_name , " but it was not found in the zip archive")
+									end
+									local dummy = "VertexLitGeneric\n{\n\t$basetexture \"error\"\n}"
+									table.insert(files, {file_name = material_name, buffer = dummy, crc = util.CRC(dummy), file_path = material_name})
+								end
+
+								table.insert(found_materials, {name = material_name, offset = material_name_pos})
+								f:seek(material_end)
+							end
 
 							if ply == pac.LocalPlayer and #found_materials == 0 then
 								pac.Message(Color(255, 200, 50), url, ": could not find any materials in this model")
 							end
+
+							f:seek(old_pos)
 						end
 
 
@@ -452,6 +465,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 							end
 							f:seek(old_pos)
 						end
+
 						f:skip(4 + 8) -- skin
 						f:skip(8) -- bodypart
 						f:skip(8) -- attachment
@@ -594,6 +608,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 								local new_path
 								for _, info in ipairs(found_vmt_directories) do
+									if info.dir == "" then continue end
+
 									new_path, count = vtf_path:gsub("^" .. info.dir:gsub("\\", "/"):lower(), dir)
 									if count == 0 then
 										new_path = nil
@@ -636,6 +652,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 					end
 				end
 			end
+
 			if skip_cache then
 				id = id .. "_temp"
 			end

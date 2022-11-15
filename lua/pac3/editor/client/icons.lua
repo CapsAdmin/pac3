@@ -8,6 +8,7 @@ pace.MiscIcons = {
 	clone = "icon16/page_copy.png",
 	copy = "icon16/page_white_text.png",
 	edit = "icon16/table_edit.png",
+	error = "icon16/exclamation.png",
 	exit = "icon16/cancel.png",
 	font = "icon16/text_smallcaps.png",
 	help = "icon16/help.png",
@@ -23,6 +24,7 @@ pace.MiscIcons = {
 	save = "icon16/disk.png",
 	uniqueid = "icon16/vcard.png",
 	url = "icon16/server_go.png",
+	warning = "icon16/error.png",
 	wear = "icon16/transmit.png",
 }
 

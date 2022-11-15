@@ -94,7 +94,7 @@ local BIND = function(propertyName, setterMethodName, check)
 	end
 end
 
-BIND("Pitch",     "SetPlaybackSpeed")
+BIND("Pitch",     "SetPlaybackRate")
 BIND("PlayCount", "SetMaxLoopCount" )
 BIND("Volume",    nil, function(n) return math.Clamp(n, 0, 4) end)
 BIND("Radius",    "SetSourceRadius" )
@@ -195,7 +195,8 @@ function PART:SetPath(path)
 				if pace and pace.current_part == self and not IsValid(pace.BusyWithProperties) then
 					pace.MessagePrompt(err .. "\n" .. info, "OGG error for" .. path, "OK")
 				else
-					pac.Message("OGG error: ", err, " reason: ", info)
+					pac.Message("OGG error: ", err, " reason: ", err .. "\n" .. info, "OGG error for" .. path)
+					self:SetError("OGG error: " .. err .. "\n" .. info .. "\nfor:" .. path)
 				end
 			end
 		end
@@ -223,7 +224,7 @@ function PART:SetPath(path)
 			path = info.sound
 		end
 
-		if not pac.resource.Download(path, function(path) load("data/" .. path) end) then
+		if not path:StartWith("http") or not pac.resource.Download(path, function(path) load("data/" .. path) end) then
 			load("sound/" .. path)
 		end
 	end

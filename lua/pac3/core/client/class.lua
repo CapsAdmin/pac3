@@ -1,3 +1,14 @@
+local ipairs = ipairs
+local table_insert = table.insert
+local isnumber = isnumber
+local tonumber = tonumber
+local isstring = isstring
+local tostring = tostring
+local table_Merge = table.Merge
+local istable = istable
+local pac = pac
+local setmetatable = setmetatable
+
 pac.PartTemplates = pac.PartTemplates or {}
 pac.VariableOrder = {}
 pac.GroupOrder = pac.GroupOrder or {}
@@ -52,7 +63,7 @@ do
 			end
 		end
 
-		table.insert(tbl, key)
+		table_insert(tbl, key)
 	end
 
 	function META:SetPropertyGroup(name)
@@ -105,7 +116,7 @@ do
 		tbl[key] = def
 
 		if udata then
-			table.Merge(self:PropData(key), udata)
+			table_Merge(self:PropData(key), udata)
 		end
 
 		if self.store then

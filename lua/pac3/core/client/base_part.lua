@@ -1,18 +1,24 @@
+local string_format = string.format
+local tostring = tostring
+local pace = pace
+local assert = assert
+local debug_traceback = debug.traceback
+local math_random = math.random
+local xpcall = xpcall
 local pac = pac
 local pairs = pairs
 local ipairs = ipairs
 local table = table
 local Color = Color
 local NULL = NULL
-local IsValid = IsValid
-local ErrorNoHalt = ErrorNoHalt
+local table_insert = table.insert
 
 local BUILDER, PART = pac.PartTemplate()
 
 PART.ClassName = "base"
 
 function PART:__tostring()
-	return string.format("part[%s][%s][%i]", self.ClassName, self:GetName(), self.Id)
+	return string_format("part[%s][%s][%i]", self.ClassName, self:GetName(), self.Id)
 end
 
 BUILDER
@@ -132,6 +138,24 @@ function PART:SetUniqueID(id)
 	end
 end
 
+local function set_info(msg, info_type)
+	if not msg then return nil end
+	local msg = tostring(msg)
+	return {
+		message = msg,
+		type = info_type or 1
+	}
+end
+
+function PART:SetInfo(message)
+	self.Info = set_info(message, 1)
+end
+function PART:SetWarning(message)
+	self.Info = set_info(message, 2)
+end
+function PART:SetError(message)
+	self.Info = set_info(message, 3)
+end
 
 do -- owner
 	function PART:SetPlayerOwner(ply)
@@ -357,7 +381,7 @@ do -- scene graph
 
 		if not part:HasChild(self) then
 			self.ChildrenMap[part] = part
-			table.insert(self.Children, part)
+			table_insert(self.Children, part)
 		end
 
 		self:InvalidateChildrenList()
@@ -653,7 +677,7 @@ do -- hidden / events
 		local found = {}
 
 		for part in pairs(self.active_events) do
-			table.insert(found, tostring(part) .. " is event hiding")
+			table_insert(found, tostring(part) .. " is event hiding")
 		end
 
 		if found[1] then
@@ -779,7 +803,7 @@ do -- serializing
 					goto CONTINUE
 				end
 
-				table.insert(out, {
+				table_insert(out, {
 					key = key,
 					set = function(v) self["Set" .. key](self, v) end,
 					get = function() return self["Get" .. key](self) end,
@@ -795,7 +819,7 @@ do -- serializing
 				if props then
 					for _, info in pairs(props) do
 						if not self.PropertyWhitelist or self.PropertyWhitelist[info.key] then
-							table.insert(out, info)
+							table_insert(out, info)
 						end
 					end
 				end
@@ -808,7 +832,7 @@ do -- serializing
 				for _, prop in ipairs(out) do
 					if key == prop.key then
 						if not done[key] then
-							table.insert(sorted, prop)
+							table_insert(sorted, prop)
 							done[key] = true
 							break
 						end
@@ -821,7 +845,7 @@ do -- serializing
 					for _, prop in ipairs(out) do
 						if key == prop.key then
 							if not done[key] then
-								table.insert(sorted, prop)
+								table_insert(sorted, prop)
 								done[key] = true
 								break
 							end
@@ -835,7 +859,7 @@ do -- serializing
 					for _, prop in ipairs(out) do
 						if key == prop.key then
 							if not done[key] then
-								table.insert(sorted, prop)
+								table_insert(sorted, prop)
 								done[key] = true
 								break
 							end
@@ -846,7 +870,7 @@ do -- serializing
 
 			for _, prop in ipairs(out) do
 				if not done[prop.key] then
-					table.insert(sorted, prop)
+					table_insert(sorted, prop)
 				end
 			end
 
@@ -855,7 +879,7 @@ do -- serializing
 	end
 
 	local function on_error(msg)
-		ErrorNoHalt(debug.traceback(msg))
+		ErrorNoHalt(debug_traceback(msg))
 	end
 
 	do
@@ -868,7 +892,7 @@ do -- serializing
 
 				if self["Set" .. key] then
 					if key == "Material" then
-						table.insert(self.delayed_variables, {key = key, val = value})
+						table_insert(self.delayed_variables, {key = key, val = value})
 					end
 					self["Set" .. key](self, value)
 				elseif key ~= "ClassName" then
@@ -886,7 +910,7 @@ do -- serializing
 
 		local function make_copy(tbl, pepper)
 			if pepper == true then
-				pepper = tostring(math.random()) .. tostring(math.random())
+				pepper = tostring(math_random()) .. tostring(math_random())
 			end
 
 			for key, val in pairs(tbl.self) do
@@ -947,7 +971,7 @@ do -- serializing
 			if not self.is_valid or self.is_deattached then
 
 			else
-				table.insert(tbl.children, part:ToTable())
+				table_insert(tbl.children, part:ToTable())
 			end
 		end
 
@@ -977,7 +1001,7 @@ do -- serializing
 			if not self.is_valid or self.is_deattached then
 
 			else
-				table.insert(tbl.children, part:ToSaveTable())
+				table_insert(tbl.children, part:ToSaveTable())
 			end
 		end
 
@@ -995,7 +1019,7 @@ do -- serializing
 
 					if self["Set" .. key] then
 						if key == "Material" then
-							table.insert(self.delayed_variables, {key = key, val = value})
+							table_insert(self.delayed_variables, {key = key, val = value})
 						end
 						self["Set" .. key](self, value)
 					elseif key ~= "ClassName" then
@@ -1039,7 +1063,7 @@ do -- serializing
 				if not self.is_valid or self.is_deattached then
 
 				else
-					table.insert(tbl.children, part:ToUndoTable())
+					table_insert(tbl.children, part:ToUndoTable())
 				end
 			end
 

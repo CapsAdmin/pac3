@@ -239,6 +239,7 @@ function pace.GetRegisteredParts()
 end
 
 do -- menu
+	local trap
 	function pace.AddRegisteredPartsToMenu(menu, parent)
 		local partsToShow = {}
 		local clicked = false
@@ -330,7 +331,7 @@ do -- menu
 				pnl:SetImage(groupData.icon)
 			end
 
-			local trap = false
+			trap = false
 			table.sort(groupData.parts, function(a, b) return a.ClassName < b.ClassName end)
 			for i, part in ipairs(groupData.parts) do
 				add_part(sub, part)

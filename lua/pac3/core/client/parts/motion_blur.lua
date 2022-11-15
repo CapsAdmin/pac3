@@ -73,7 +73,7 @@ function PART:DrawBlur(pos, ang)
 		pac.drawing_motionblur_alpha = false
 
 		if ent then
-			ent:SetupBones()
+			pac.SetupBones(ent)
 		end
 	end
 

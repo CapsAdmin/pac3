@@ -3,6 +3,7 @@ pace.properties = NULL
 pace.tree = NULL
 
 local L = pace.LanguageString
+local alreadyInCall
 
 function pace.PopulateProperties(part)
 	if pace.properties:IsValid() then

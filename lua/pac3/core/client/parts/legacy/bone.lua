@@ -281,7 +281,7 @@ function PART:OnBuildBonePositions()
 
 	manscale(owner, index, scale, self)
 
-	pac.SetupBones(owner)
+	owner.needs_setupbones_from_legacy_bone_parts = true
 end
 
 BUILDER:Register()

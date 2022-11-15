@@ -25,7 +25,14 @@ function pac.Hash(obj)
 			return "bot " .. tostring(obj:EntIndex())
 		end
 
-		return steamid64(obj)
+		local hash = steamid64(obj)
+		if not hash then
+			if pac.debug then
+				ErrorNoHaltWithStack( "FIXME: Did not get a steamid64 for a player object " .. tostring(obj) .. ', valid=' .. tostring(IsValid(obj)) .. ', steamid=' .. tostring(obj:SteamID()) .. '\n' )
+			end
+			hash = "0"
+		end
+		return hash
 	elseif t == "number" then
 		return string_hash(tostring(t))
 	elseif t == "table" then

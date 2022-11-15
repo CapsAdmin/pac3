@@ -34,6 +34,7 @@ local lib = {
 	sgn = function(n) return n>0 and 1 or n<0 and -1 or 0 end,
 
 	clamp = math.Clamp,
+	round = math.Round,
 }
 
 local blacklist = {"repeat", "until", "function", "end"}

@@ -1,5 +1,4 @@
-pac.OwnerNames =
-{
+pac.OwnerNames = {
 	"self",
 	"viewmodel",
 	"hands",
@@ -42,7 +41,7 @@ pac.WorldEntity = NULL
 
 function pac.GetWorldEntity()
 	if not pac.WorldEntity:IsValid() then
-		ent = pac.CreateEntity("models/error.mdl")
+		local ent = pac.CreateEntity("models/error.mdl")
 
 		ent:SetPos(Vector(0,0,0))
 
@@ -117,6 +116,16 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 		if name == "viewmodel" and owner.GetViewModel then
 			return owner:GetViewModel()
 		end
+
+		if IsValid(ent) and (not check_func or check_func(ent)) and check_owner(ent, owner) and find_ent(ent, name) then
+			return ent
+		end
+
+		for _, val in pairs(ents.GetAll()) do
+			if val:IsValid() and (not check_func or check_func(val)) and check_owner(val, owner) and find_ent(val, name) then
+				return val
+			end
+		end
 	end
 
 	if name:find("persist ", nil, true) then
@@ -125,16 +134,6 @@ function pac.HandleOwnerName(owner, name, ent, part, check_func)
 			if val.GetPersistent and val:GetModel() and val:GetPersistent() and crc == calc_entity_crc(val) then
 				return val
 			end
-		end
-	end
-
-	if IsValid(ent) and (not check_func or check_func(ent)) and check_owner(ent, owner) and find_ent(ent, name) then
-		return ent
-	end
-
-	for _, val in pairs(ents.GetAll()) do
-		if val:IsValid() and (not check_func or check_func(val)) and check_owner(val, owner) and find_ent(val, name) then
-			return val
 		end
 	end
 

@@ -87,7 +87,7 @@ function PART:OnDraw()
 		ent:SetParent(NULL)
 		ent:SetPos(pos)
 		ent:SetAngles(ang)
-		ent:SetupBones()
+		pac.SetupBones(ent)
 	end
 	ent.pac_render = true
 

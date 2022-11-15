@@ -8,19 +8,19 @@ PART.Icon = 'icon16/application_xp_terminal.png'
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("String", "", {editor_panel = "string"})
 	BUILDER:GetSet("UseLua", false)
-	BUILDER:GetSet("ExectueOnWear", false)
-	BUILDER:GetSet("ExectueOnShow", true)
+	BUILDER:GetSet("ExecuteOnWear", false)
+	BUILDER:GetSet("ExecuteOnShow", true)
 BUILDER:EndStorableVars()
 
-function PART:Initialize()
-	if self:GetExectueOnWear() then
+function PART:OnWorn()
+	if self:GetExecuteOnWear() then
 		self:Execute()
 	end
 end
 
 function PART:OnShow(from_rendering)
 	if not from_rendering then
-		if self:GetExectueOnShow() then
+		if self:GetExecuteOnShow() then
 			self:Execute()
 		end
 	end
@@ -62,12 +62,16 @@ function PART:Execute()
 				local status, err = pcall(self.func)
 
 				if not status then
+					self:SetError(err)
 					ErrorNoHalt(err .. "\n")
 				end
 			else
-				pac.Message(tostring(self) .. ' - sv_allowcslua is 0')
+				local msg = "clientside lua is disabled (sv_allowcslua 0)"
+				self:SetError(msg)
+				pac.Message(tostring(self) .. ' - '.. msg)
 			end
 		else
+			if hook.Run("PACCanRunConsoleCommand", self.String) == false then return end
 			ent:ConCommand(self.String)
 		end
 	end

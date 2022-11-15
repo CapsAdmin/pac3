@@ -9,6 +9,8 @@ local NULL = NULL
 local pairs = pairs
 local force_rendering = false
 local forced_rendering = false
+local IsEntity = IsEntity
+local next = next
 
 local entMeta = FindMetaTable('Entity')
 local plyMeta = FindMetaTable('Player')
@@ -261,7 +263,10 @@ pac.AddHook("Think", "events", function()
 		end
 
 		local rag = ply:GetRagdollEntity()
-		if not IsValid(rag) then continue end
+		if not IsValid(rag) then
+			pac.HideEntityParts(ply)
+			continue
+		end
 
 		-- so it only runs once
 		if ply.pac_ragdoll == rag then continue end
@@ -408,6 +413,9 @@ pac.AddHook("EntityRemoved", "change_owner", function(ent)
 					IsActuallyRemoved(ent, function()
 						for _, part in pairs(parts) do
 							if part.ClassName == "group" then
+								if part:GetOwnerName() == "hands" then
+									part:UpdateOwnerName()
+								end
 								part:HideInvalidOwners()
 							end
 						end
@@ -589,6 +597,18 @@ function pac.CallRecursiveOnAllParts(func_name, ...)
 	end
 end
 
+function pac.CallRecursiveOnOwnedParts(ent, func_name, ...)
+	local owned_parts = parts_from_ent(ent)
+	for _, part in pairs(owned_parts) do
+		if part[func_name] then
+			local ret = part[func_name](part, ...)
+			if ret ~= nil then
+				return ret
+			end
+		end
+	end
+end
+
 function pac.EnablePartsByClass(classname, enable)
 	for _, part in pairs(all_parts) do
 		if part.ClassName == classname then
@@ -611,7 +631,6 @@ do -- drawing
 	local FrameNumber = FrameNumber
 	local RealTime = RealTime
 	local GetConVar = GetConVar
-	local NULL = NULL
 	local EF_BONEMERGE = EF_BONEMERGE
 	local RENDERMODE_TRANSALPHA = RENDERMODE_TRANSALPHA
 
@@ -779,13 +798,14 @@ do -- drawing
 		end)
 	end
 
-	local setup_bones = {}
-
+	local setupBonesGuard = false
 	function pac.SetupBones(ent)
-		if not setup_bones[ent] then
-			setup_bones[ent] = ent
-			ent.needs_setupbones_from_legacy_bone_parts = true
-		end
+		-- Reentrant protection
+		if setupBonesGuard then return end
+		setupBonesGuard = true
+		local ok, err = pcall(ent.SetupBones, ent)
+		setupBonesGuard = false
+		if not ok then error(err) end
 	end
 
 	do
@@ -793,8 +813,6 @@ do -- drawing
 
 		pac.AddHook("PreDrawOpaqueRenderables", "draw_opaque", function(bDrawingDepth, bDrawingSkybox)
 			if should_suppress(true) then return end
-
-			setup_bones = {}
 
 			for ent in next, pac.drawn_entities do
 				if ent.pac_is_drawing and ent_parts[ent] and not ent:IsDormant() then
@@ -808,12 +826,6 @@ do -- drawing
 		pac.AddHook("PostDrawOpaqueRenderables", "draw_opaque", function(bDrawingDepth, bDrawingSkybox, isDraw3DSkybox)
 			if should_suppress() then return end
 
-			for ent in next, setup_bones do
-				if ent:IsValid() then
-					ent:SetupBones()
-				end
-			end
-
 			for ent in next, pac.drawn_entities do
 				if ent.pac_is_drawing and ent_parts[ent] and not ent:IsDormant() then
 
@@ -823,10 +835,6 @@ do -- drawing
 
 					pac.RenderOverride(ent, "opaque")
 				end
-			end
-
-			for ent in next, setup_bones do
-				setup_bones[ent] = nil
 			end
 		end)
 	end
@@ -845,13 +853,6 @@ do -- drawing
 					end
 
 					pac.RenderOverride(ent, "translucent")
-				end
-			end
-
-			for ent in next, setup_bones do
-				if ent:IsValid() then
-					-- ent:InvalidateBoneCache()
-					ent:SetupBones()
 				end
 			end
 		end)

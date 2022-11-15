@@ -445,6 +445,12 @@ function pace.SetTPose(b)
 			ply:SetAngles(ang)
 		end
 
+		local function get_ref_anim(ply)
+			local id = ply:LookupSequence("reference")
+			local id2 = ply:LookupSequence("ragdoll")
+			return id ~= -1 and id or id2 ~= -1 and id2 or 0
+		end
+
 		pac.AddHook("PrePlayerDraw", "pace_tpose", function(ply)
 			if ply ~= pac.LocalPlayer then return end
 
@@ -452,7 +458,7 @@ function pace.SetTPose(b)
 				ply:SetLayerSequence(i, 0)
 			end
 
-			ply:SetSequence(ply:LookupSequence("ragdoll") or ply:LookupSequence("reference"))
+			ply:SetSequence(get_ref_anim(ply))
 			reset_angles(ply)
 		end)
 
@@ -475,7 +481,7 @@ function pace.SetTPose(b)
 					ply:SetLayerSequence(i, 0)
 				end
 
-				local act = ply:LookupSequence("ragdoll") or ply:LookupSequence("reference")
+				local act = get_ref_anim(ply)
 
 				return act, act
 			end
@@ -533,6 +539,6 @@ function pace.ResetEyeAngles()
 			ent:SetAngles(Angle(0, 0, 0))
 		end
 
-		ent:SetupBones()
+		pac.SetupBones(ent)
 	end
 end

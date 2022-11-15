@@ -104,7 +104,7 @@ function emut.MutateEntity(owner, class_name, ent, ...)
 	end
 
 	if CLIENT then
-		if owner == LocalPlayer() and not suppress_send_to_server then
+		if owner == LocalPlayer() and not suppress_send_to_server then 
 			net.Start("pac_entity_mutator")
 				net.WriteString(class_name)
 				net.WriteEntity(ent)

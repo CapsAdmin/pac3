@@ -149,6 +149,8 @@ function PART:SetURL(URL)
 
 	self.streams = {}
 
+	self:SetError()
+
 	for _, url in pairs(urls) do
 		local stream = pac.webaudio.Streams.CreateStream(url)
 		self.streams[url] = stream
@@ -161,7 +163,7 @@ function PART:SetURL(URL)
 		end
 		stream.OnError =  function(err, info)
 			pac.Message("OGG error: ", err, " reason: ", info or "none")
-			self.Errored = str
+			self:SetError(str)
 		end
 
 		if pace and pace.Editor:IsValid() and pace.current_part:IsValid() and pace.current_part.ClassName == "ogg" and self:GetPlayerOwner() == pac.LocalPlayer then
@@ -180,6 +182,7 @@ function PART:PlaySound(_, additiveVolumeFraction)
 
 	if pac.webaudio.sample_rate and pac.webaudio.sample_rate > 48000 then
 		pac.Message(Color(255, 0, 0), "The ogg part (custom sounds) might not work because you have your sample rate set to ", pac.webaudio.sample_rate, " Hz. Set it to 48000 or below if you experience any issues.")
+		self:SetInfo("The ogg part (custom sounds) might not work because you have your sample rate set to " .. pac.webaudio.sample_rate .. " Hz. Set it to 48000 or below if you experience any issues.")
 	end
 
 	if not stream:IsValid() then return end
