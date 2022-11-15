@@ -203,6 +203,8 @@ function pace.Panic()
 		end
 	end
 
+	pace.SafeRemoveSpecialPanel()
+
 	for i, ent in ipairs(ents.GetAll()) do
 		if ent:IsValid() then
 			ent.pac_onuse_only = nil
