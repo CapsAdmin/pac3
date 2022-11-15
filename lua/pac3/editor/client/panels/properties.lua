@@ -832,7 +832,7 @@ do -- base editable
 			self:SetValue(pac.CopyValue(pace.clipboard))
 			self.OnValueChanged(self:GetValue())
 		end):SetImage(pace.MiscIcons.paste)
-		
+
 		--left right swap available on strings (and parts)
 		if type(self:GetValue()) == 'string' then
 			menu:AddSpacer()
@@ -845,14 +845,14 @@ do -- base editable
 				else
 					var = self:GetValue()
 				end
-				
+
 				local var_flip
 				if string.match(var, "left") != nil then
 					var_flip = string.gsub(var,"left","right")
 				elseif string.match(var, "right") != nil then
 					var_flip = string.gsub(var,"right","left")
 				end
-				
+
 				if self.udata and self.udata.editor_panel == "part" then
 					local target = pac.FindPartByName(pac.Hash(pac.LocalPlayer), var_flip or var, pace.current_part)
 					self:SetValue(target or part)
@@ -862,7 +862,7 @@ do -- base editable
                 self.OnValueChanged(var_flip or var)
             end
 		end):SetImage("icon16/arrow_switch.png")
-		
+
 		--numeric sign flip available on numbers
 		elseif type(self:GetValue()) == 'number' then
 			menu:AddSpacer()
@@ -872,7 +872,7 @@ do -- base editable
 				self.OnValueChanged(self:GetValue())
 			end):SetImage("icon16/arrow_switch.png")
 		end
-		
+
 		menu:AddSpacer()
 		menu:AddOption(L"reset", function()
 			if pace.current_part and pace.current_part.DefaultVars[self.CurrentKey] then
@@ -1225,8 +1225,8 @@ do -- vector
 	VECTOR(Vector, "vector", "x", "y", "z")
 	VECTOR(Angle, "angle", "p", "y", "r")
 
-	local function tohex(vec)
-		return ("#%.2X%.2X%.2X"):format(vec.x, vec.y, vec.z)
+	local function tohex(vec, color2)
+		return color2 and ("#%.2X%.2X%.2X"):format(vec.x * 255, vec.y * 255, vec.z * 255) or ("#%.2X%.2X%.2X"):format(vec.x, vec.y, vec.z)
 	end
 
 	local function fromhex(str)
@@ -1350,7 +1350,7 @@ do -- vector
 			if input.IsKeyDown(KEY_LCONTROL) then
 				num = math.Round(num)
 			end
-			
+
 			return tostring(num)
 		end,
 
@@ -1376,23 +1376,17 @@ do -- vector
 			local html_color
 
 			if not dlibbased then
-				local function tohex(vec)
-					return ("#%X%X%X"):format(vec.x * 255, vec.y * 255, vec.z * 255)
-				end
-
-				local function fromhex(str)
-					local x,y,z = str:match("#?(..)(..)(..)")
-					return Vector(tonumber("0x" .. x), tonumber("0x" .. y), tonumber("0x" .. z)) / 255
-				end
-
 				html_color = vgui.Create("DTextEntry", frm)
 				html_color:Dock(BOTTOM)
-				html_color:SetText(tohex(self.vector))
+				html_color:SetText(tohex(self.vector, true))
 				html_color.OnEnter = function()
-					local vec = fromhex(html_color:GetValue())
-					clr:SetColor(Color(vec.x * 255, vec.y * 255, vec.z * 255))
-					self.OnValueChanged(vec)
-					self:SetValue(vec)
+					local col = uncodeValue(html_color:GetValue())
+					if col then
+						local vec = col:ToVector()
+						clr:SetColor(col)
+						self.OnValueChanged(vec)
+						self:SetValue(vec)
+					end
 				end
 			end
 
@@ -1402,7 +1396,7 @@ do -- vector
 				self:SetValue(vec)
 
 				if not dlibbased then
-					html_color:SetText(tohex(vec))
+					html_color:SetText(tohex(vec, true))
 				end
 			end
 
@@ -1501,7 +1495,7 @@ do -- number
 			elseif input.IsKeyDown(KEY_PAD_MINUS) or input.IsKeyDown(KEY_MINUS) then
 				num = -num
 			end
-			
+
 
 			if input.IsKeyDown(KEY_LALT) then
 				num = math.Round(num, 5)
