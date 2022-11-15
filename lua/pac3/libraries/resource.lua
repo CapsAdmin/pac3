@@ -317,8 +317,8 @@ end
 function resource.BuildCacheFolderList(file_name)
 	if not resource.url_cache_lookup then
 		local tbl = {}
-		for _, file_name in ipairs((file.Find(DOWNLOAD_FOLDER, "DATA"))) do
-			local name = file_name:match("(%d)%.")
+		for _, file_name in ipairs((file.Find(DOWNLOAD_FOLDER .. "*", "DATA"))) do
+			local name = file_name:match("(%w+)%.")
 			if name then
 				tbl[name] = file_name
 			else
