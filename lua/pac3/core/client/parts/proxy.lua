@@ -195,9 +195,10 @@ end
 PART.Inputs = {}
 
 PART.Inputs.property = function(self, property_name, field)
-	local part = self:GetTarget()
 
-	if part:IsValid() and property_name then
+	local part = self.TargetEntity:IsValid() and self.TargetEntity or self:GetParent()
+
+	if part:IsValid() and part.GetProperty and property_name then
 		local v = part:GetProperty(property_name)
 
 		local T = type(v)
