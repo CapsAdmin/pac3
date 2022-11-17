@@ -74,12 +74,15 @@ do -- projectile entity
 			if part.AddOwnerSpeed then
 				phys:AddVelocity(ply:GetVelocity())
 			end
-			phys:EnableCollisions(part.Collisions)
 
-			if part.CollideWithSelf then
-				self:SetCollisionGroup(COLLISION_GROUP_NONE)
-			elseif not part.Collisions then
-				self:SetCollisionGroup(COLLISION_GROUP_DEBRIS)
+			if part.Collisions then
+				if part.CollideWithSelf then
+					self:SetCollisionGroup(COLLISION_GROUP_NONE)
+				else
+					self:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE_DEBRIS)
+				end
+			else
+				phys:EnableCollisions(false)
 			end
 
 			phys:SetMass(math.Clamp(part.Mass, 0.001, 50000))
@@ -462,11 +465,6 @@ if SERVER then
 			SafeRemoveEntityDelayed(ent,math.Clamp(part.LifeTime, 0, 50))
 
 			ent:SetModel("models/props_junk/popcan01a.mdl")
-			if part.CollideWithSelf then
-				ent:SetCollisionGroup(COLLISION_GROUP_NONE)
-			elseif not part.Collisions then
-				ent:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE_DEBRIS)
-			end
 			ent:SetPos(pos)
 			ent:SetAngles(ang)
 			ent:Spawn()
