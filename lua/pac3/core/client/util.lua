@@ -573,3 +573,11 @@ end
 function pac.FlashlightDisable(b)
 	pac.flashlight_disabled = b
 end
+
+
+local pacOnUseConvar = CreateClientConVar('pac_onuse_only', '0', true, false, 'Enable "on +use only" mode. Within this mode, outfits are not being actually "loaded" until you hover over player and press your use button')
+function pac.IsPacOnUseOnly()
+	local clientConvarBool = pacOnUseConvar:GetBool()
+
+	return clientConvarBool
+end
