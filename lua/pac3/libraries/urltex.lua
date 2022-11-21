@@ -175,7 +175,7 @@ function urltex.StartDownload(url, data)
 			createDownloadPanel()
 		else
 			pac.dprint("material download %q timed out for good", url, timeoutNum)
-			hook.Remove("Think", id)
+			pac.RemoveHook("Think", id)
 			timer.Remove(id)
 			urltex.Queue[data.urlIndex] = nil
 		end
