@@ -1,5 +1,23 @@
 local L = pace.LanguageString
 local MAX_DIST = 270
+
+local pacOnUseConvar = CreateClientConVar("pac_onuse_only", "0", true, false, 'Enable "on +use only" mode. Within this mode, outfits are not being actually "loaded" until you hover over player and press your use button')
+local pacOnUseOverrideConvar = CreateClientConVar("pac_onuse_only_override", "0", true, false, 'Overrides the server default "on +use only" mode. This is useful if you want to enable "on +use only" mode on servers that have it disabled')
+local pacOnUseForceConvar = CreateConVar("pac_onuse_only_force", "0", FCVAR_REPLICATED, 'Forces the default for onuse to be ON on players that have not enabled the override.')
+
+function pac.IsPacOnUseOnly()
+	local clientConvarBool = pacOnUseConvar:GetBool()
+
+	if pacOnUseForceConvar:GetBool() then
+		if pacOnUseOverrideConvar:GetBool() then
+			return false
+		end
+		return true
+	end
+
+	return clientConvarBool
+end
+
 local pac_IsPacOnUseOnly = pac.IsPacOnUseOnly
 
 hook.Add("PlayerBindPress", "pac_onuse_only", function(ply, bind, isPressed)
