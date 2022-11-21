@@ -58,6 +58,7 @@ include("wear.lua")
 include("wear_filter.lua")
 include("bans.lua")
 include("spawnmenu.lua")
+include("show_outfit_on_use.lua")
 
 do
 	util.AddNetworkString("pac_in_editor")
