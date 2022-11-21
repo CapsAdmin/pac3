@@ -1440,6 +1440,7 @@ do
 					local part = pac.GetPartFromUniqueID(pac.Hash(ent), animation)
 					if not IsValid(part) then return end
 					local frame, delta = animations.GetEntityAnimationFrame(ent, part:GetAnimID())
+					if not frame or not delta then return end -- different animation part is playing
 					return frame >= frame_start and frame <= frame_end
 				end
 			end
