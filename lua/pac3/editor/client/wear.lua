@@ -229,7 +229,7 @@ net.Receive("pac_submit", function()
 			return
 		end
 
-		if GetConVar("pac_onuse_only") and GetConVar("pac_onuse_only"):GetBool() and data.owner ~= pac.LocalPlayer then
+		if pac.IsPacOnUseOnly() and data.owner ~= pac.LocalPlayer then
 			pace.HandleOnUseReceivedData(data)
 		else
 			pace.HandleReceiveData(data, true)
