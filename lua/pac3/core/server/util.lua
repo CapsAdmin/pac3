@@ -51,11 +51,7 @@ function pac.RatelimitAlert( ply, id, message )
 		ply.pac_ratelimit_alerts = {}
 	end
 
-	if not ply.pac_ratelimit_alerts[id] then
-		ply.pac_ratelimit_alerts[id] = CurTime() + 3
-	end
-
-	if CurTime() > ply.pac_ratelimit_alerts[id] then
+	if CurTime() >= ( ply.pac_ratelimit_alerts[id] or 0 ) then
 		ply.pac_ratelimit_alerts[id] = CurTime() + 3
 		if isstring(message) then
 			pac.Message(message)
