@@ -1,17 +1,16 @@
-
 local L = pace.LanguageString
 local MAX_DIST = 270
 
 local pac_onuse_only = CreateClientConVar("pac_onuse_only", "0", true, false, 'Enable "on +use only" mode. Within this mode, outfits are not being actually "loaded" until you hover over player and press your use button')
-local pac_onuse_only_override = CreateClientConVar("pac_onuse_only_override", "0", true, false, "Ignore value of pac_sv_onuse_only")
-local pac_sv_onuse_only = CreateConVar("pac_sv_onuse_only", "0", FCVAR_REPLICATED, "Sets pac_onuse_only for clients")
+local pac_onuse_only_override = CreateClientConVar("pac_onuse_only_override", "0", true, false, "Ignore value of pac_onuse_only_force")
+local pac_onuse_only_force = CreateConVar("pac_onuse_only_force", "0", FCVAR_REPLICATED, "Sets pac_onuse_only for clients")
 
 function pac.IsPacOnUseOnly()
 	if pac_onuse_only_override:GetBool() then
 		return pac_onuse_only:GetBool()
 	end
 
-	return pac_sv_onuse_only:GetBool() or pac_onuse_only:GetBool()
+	return pac_onuse_only_force:GetBool() or pac_onuse_only:GetBool()
 end
 
 local pac_IsPacOnUseOnly = pac.IsPacOnUseOnly
