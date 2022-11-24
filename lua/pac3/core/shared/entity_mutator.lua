@@ -104,7 +104,7 @@ function emut.MutateEntity(owner, class_name, ent, ...)
 	end
 
 	if CLIENT then
-		if owner == LocalPlayer() and not suppress_send_to_server then 
+		if owner == LocalPlayer() and not suppress_send_to_server then
 			net.Start("pac_entity_mutator")
 				net.WriteString(class_name)
 				net.WriteEntity(ent)
@@ -329,7 +329,7 @@ function emut.RemoveMutationsForPlayer(ply)
 end
 
 hook.Add("EntityRemoved", "pac_entity_mutators_left", function(ent)
-	if not ent:IsValid() then return end
+	if not IsValid(ent) then return end
 	if ent:IsPlayer() then
 		emut.RemoveMutationsForPlayer(ent)
 	else
