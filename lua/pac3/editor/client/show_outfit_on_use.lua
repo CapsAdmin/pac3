@@ -1,5 +1,7 @@
 local L = pace.LanguageString
 local MAX_DIST = 270
+local input_LookupBinding = input.LookupBinding
+local string_upper = string.upper
 
 local pac_onuse_only = CreateClientConVar("pac_onuse_only", "0", true, false, 'Enable "on +use only" mode. Within this mode, outfits are not being actually "loaded" until you hover over player and press your use button')
 local pac_onuse_only_override = CreateClientConVar("pac_onuse_only_override", "0", true, false, "Ignore value of pac_onuse_only_force")
@@ -45,7 +47,7 @@ do
 		weight = 600,
 	})
 
-	hook.Add("HUDPaint", "pac_onuse_only", function(ply, bind, isPressed)
+	hook.Add("HUDPaint", "pac_onuse_only", function()
 		if not pac_IsPacOnUseOnly() then return end
 		local ply = pac.LocalPlayer
 		local eyes, aim = ply:EyePos(), ply:GetAimVector()
@@ -62,8 +64,9 @@ do
 
 		if lastDisplayLabel < RealTime() then return end
 
-		local alpha = (lastDisplayLabel - RealTime()) / 3
-		draw.DrawText(L"Press +use to reveal PAC3 outfit", "pac_onuse_only_hint", ScrW() / 2, ScrH() * 0.3, Color(255, 255, 255, alpha * 255), TEXT_ALIGN_CENTER)
+		local alpha = (lastDisplayLabel - RealTime()) / 2
+		local key = string_upper( input_LookupBinding( "use" ) or "use" )
+		draw.DrawText(L"Press " .. key .. " to reveal this persons PAC3 outfit", "pac_onuse_only_hint", ScrW() / 2, ScrH() * 0.3, Color(255, 255, 255, alpha * 255), TEXT_ALIGN_CENTER)
 	end)
 end
 
