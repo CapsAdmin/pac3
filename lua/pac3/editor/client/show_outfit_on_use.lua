@@ -66,7 +66,8 @@ do
 
 		local alpha = (lastDisplayLabel - RealTime()) / 2
 		local key = string_upper( input_LookupBinding( "use" ) or "use" )
-		draw.DrawText(L"Press " .. key .. " to reveal this persons PAC3 outfit", "pac_onuse_only_hint", ScrW() / 2, ScrH() * 0.3, Color(255, 255, 255, alpha * 255), TEXT_ALIGN_CENTER)
+		local text = "Press " .. key .. " to reveal this persons PAC3 outfit"
+		draw.DrawText(L(text), "pac_onuse_only_hint", ScrW() / 2, ScrH() * 0.3, Color(255, 255, 255, alpha * 255), TEXT_ALIGN_CENTER)
 	end)
 end
 
