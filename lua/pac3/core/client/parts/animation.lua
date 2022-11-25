@@ -77,7 +77,8 @@ end
 
 PART.GetSequenceNameList = PART.GetSequenceList
 
-function PART:OnHide()
+function PART:OnStackStop()
+	-- Move code from PART:OnHide() to here
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
@@ -104,6 +105,33 @@ function PART:OnHide()
 	end
 end
 
+-- Stop animation and remove from animation stack
+function PART:OnHide()
+	self:OnStackStop()
+
+	local ent = self:GetOwner()
+	if ent:IsValid() then
+		local stack = ent.pac_animation_stack
+		-- Remove self from animation stack
+		if stack then
+			if self.pac_animation_stack_contains then
+				table.RemoveByValue(stack, self)
+			end
+
+			local count = #stack
+			if self.pac_animation_stack_current and count ~= 0 then
+				-- This was the current animation so play the next in the stack
+				local part = stack[count]
+				part:OnStackStart()
+				part.pac_animation_stack_current = true
+			end
+		end
+	end
+
+	self.pac_animation_stack_current = false
+	self.pac_animation_stack_contains = false
+end
+
 PART.random_seqname = ""
 
 function PART:SetSequenceName(name)
@@ -115,7 +143,8 @@ function PART:SetSequenceName(name)
 	end
 end
 
-function PART:OnShow()
+function PART:OnStackStart()
+	-- Moved code from PART:OnShow() to here
 	self.PlayingSequenceFrom = RealTime()
 	local ent = self:GetOwner()
 
@@ -218,6 +247,41 @@ function PART:OnShow()
 	end
 end
 
+-- Play animation and move to top of animation stack
+function PART:OnShow()
+	local ent = self:GetOwner()
+	if ent:IsValid() then
+		local stack = ent.pac_animation_stack
+		if stack then
+			local count = #stack
+			if count == 0 then
+				-- Empty stack
+				table.insert(stack, self)
+			else
+				-- Stop the current animation if it's not self
+				local part = stack[count]
+				if part ~= self then
+					part:OnStackStop()
+					part.pac_animation_stack_current = false
+					if self.pac_animation_stack_contains then
+						-- Check this variable to save some perf
+						-- Remove self from stack to move to end and also prevent things from breaking because table.RemoveByValue() only removes the first instance
+						table.RemoveByValue(stack, self)
+					end
+					table.insert(stack, self)
+				end
+			end
+		else
+			-- Create stack
+			ent.pac_animation_stack = {self}
+		end
+	end
+
+	self:OnStackStart()
+	self.pac_animation_stack_current = true
+	self.pac_animation_stack_contains = true
+end
+
 
 function PART:OnThink()
 	local ent = self:GetOwner()
@@ -227,7 +291,7 @@ function PART:OnThink()
 end
 
 function PART:OnUpdateAnimation(ply)
-	if self:IsHiddenCached() then return end
+	if self:IsHiddenCached() or not self.pac_animation_stack_current then return end
 
 	local ent = self:GetOwner()
 	if not ent:IsValid() then return end
