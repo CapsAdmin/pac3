@@ -112,8 +112,8 @@ function PART:OnHide()
 	local ent = self:GetOwner()
 	if ent:IsValid() then
 		local stack = ent.pac_animation_stack
-		-- Remove self from animation stack
 		if stack then
+			-- Remove self from animation stack
 			if self.pac_animation_stack_contains then
 				table.RemoveByValue(stack, self)
 			end
