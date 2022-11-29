@@ -268,15 +268,15 @@ function PART:OnShow()
 			if part ~= self then
 				part:OnStackStop()
 				part.pac_animation_stack_current = false
-			end
+				
+				if self.pac_animation_stack_contains then
+					-- Check this variable to save some perf
+					-- Remove self from stack to move to end and also prevent things from breaking because table.RemoveByValue() only removes the first instance
+					table.RemoveByValue(stack, self)
+				end
 
-			if self.pac_animation_stack_contains then
-				-- Check this variable to save some perf
-				-- Remove self from stack to move to end and also prevent things from breaking because table.RemoveByValue() only removes the first instance
-				table.RemoveByValue(stack, self)
+				table.insert(stack, self)
 			end
-
-			table.insert(stack, self)
 		end
 	else
 		ent.pac_animation_stack = {self}
