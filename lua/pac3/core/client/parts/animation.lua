@@ -107,39 +107,32 @@ end
 
 -- Stop animation and remove from animation stack
 function PART:OnHide()
+	local ent = self:GetOwner()
+	if not ent:IsValid() then
+		self.pac_animation_stack_current = false
+		self.pac_animation_stack_contains = false
+		return
+	end
+	
 	self:OnStackStop()
 
-	self.pac_animation_stack_current = false
-	self.pac_animation_stack_contains = false
-
-	local ent = self:GetOwner()
-	if not ent:IsValid() then return end
-
 	local stack = ent.pac_animation_stack
-	if not stack then return end
-
-	-- Remove self from animation stack
-	if self.pac_animation_stack_contains then
-		table.RemoveByValue(stack, self)
-	end
-
-	local count = #stack
-
-	if self.pac_animation_stack_current and count ~= 0 then
-		-- This was the current animation so play the next in the stack
-		local part = stack[count]
-
-		while part ~= nil and not part:IsValid() do
-			stack[count] = nil
-			count = count - 1
-			part = stack[count]
+	if stack then
+		-- Remove self from animation stack
+		if self.pac_animation_stack_contains then
+			table.RemoveByValue(stack, self)
 		end
 
-		if part then
+		local part = stack[#stack]
+		if self.pac_animation_stack_current and part then
+			-- This was the current animation so play the next in the stack
 			part:OnStackStart()
 			part.pac_animation_stack_current = true
 		end
 	end
+	
+	self.pac_animation_stack_current = false
+	self.pac_animation_stack_contains = false
 end
 
 PART.random_seqname = ""
@@ -262,25 +255,17 @@ function PART:OnShow()
 	local ent = self:GetOwner()
 	if not ent:IsValid() then return end
 
-	local stack = ent.pac_animation_stack or {}
+	local stack = ent.pac_animation_stack
 
-	local count = #stack
-
-	if count == 0 then
-		-- Empty stack
-		stack[count + 1] = self
-	else
-		-- Stop the current animation if it's not self
-		local part = stack[count]
-
-		while part ~= nil and not part:IsValid() do
-			stack[count] = nil
-			count = count - 1
-			part = stack[count]
-		end
-
-		if part ~= self then
-			if part then
+	if stack then
+		local count = #stack
+		if count == 0 then
+			-- Empty stack
+			table.insert(stack, self)
+		else
+			-- Stop the current animation if it's not self
+			local part = stack[count]
+			if part ~= self then
 				part:OnStackStop()
 				part.pac_animation_stack_current = false
 			end
@@ -293,6 +278,8 @@ function PART:OnShow()
 
 			table.insert(stack, self)
 		end
+	else
+		ent.pac_animation_stack = {self}
 	end
 
 	self:OnStackStart()
