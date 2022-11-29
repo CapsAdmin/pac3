@@ -125,7 +125,8 @@ function PART:OnHide()
 
 		if self.pac_animation_stack_current then
 			-- This was the current animation so play the next in the stack
-			local part = stack[#stack]
+			local count = #stack
+			local part = stack[count]
 			
 			-- Remove invalid parts
 			while part and not part:IsValid() do
