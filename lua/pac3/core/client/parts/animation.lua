@@ -128,8 +128,17 @@ function PART:OnHide()
 	if self.pac_animation_stack_current and count ~= 0 then
 		-- This was the current animation so play the next in the stack
 		local part = stack[count]
-		part:OnStackStart()
-		part.pac_animation_stack_current = true
+
+		while part ~= nil and not part:IsValid() do
+			stack[count] = nil
+			count = count - 1
+			part = stack[count]
+		end
+
+		if part then
+			part:OnStackStart()
+			part.pac_animation_stack_current = true
+		end
 	end
 end
 
@@ -264,9 +273,17 @@ function PART:OnShow()
 		-- Stop the current animation if it's not self
 		local part = stack[count]
 
+		while part ~= nil and not part:IsValid() do
+			stack[count] = nil
+			count = count - 1
+			part = stack[count]
+		end
+
 		if part ~= self then
-			part:OnStackStop()
-			part.pac_animation_stack_current = false
+			if part then
+				part:OnStackStop()
+				part.pac_animation_stack_current = false
+			end
 
 			if self.pac_animation_stack_contains then
 				-- Check this variable to save some perf
