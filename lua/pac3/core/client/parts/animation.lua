@@ -123,11 +123,21 @@ function PART:OnHide()
 			table.RemoveByValue(stack, self)
 		end
 
-		local part = stack[#stack]
-		if self.pac_animation_stack_current and part then
+		if self.pac_animation_stack_current then
 			-- This was the current animation so play the next in the stack
-			part:OnStackStart()
-			part.pac_animation_stack_current = true
+			local part = stack[#stack]
+			
+			-- Remove invalid parts
+			while part and not part:IsValid() do
+				stack[count] = nil
+				count = count - 1
+				part = stack[count]
+			end
+			
+			if part then
+				part:OnStackStart()
+				part.pac_animation_stack_current = true
+			end
 		end
 	end
 	
@@ -264,10 +274,21 @@ function PART:OnShow()
 			table.insert(stack, self)
 		else
 			-- Stop the current animation if it's not self
+			local count = #stack
 			local part = stack[count]
+			
+			-- Remove invalid parts
+			while part and not part:IsValid() do
+				stack[count] = nil
+				count = count - 1
+				part = stack[count]
+			end
+			
 			if part ~= self then
-				part:OnStackStop()
-				part.pac_animation_stack_current = false
+				if part then
+					part:OnStackStop()
+					part.pac_animation_stack_current = false
+				end
 				
 				if self.pac_animation_stack_contains then
 					-- Check this variable to save some perf
