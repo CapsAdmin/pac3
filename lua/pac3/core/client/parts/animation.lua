@@ -2,6 +2,86 @@ local FrameTime = FrameTime
 
 local BUILDER, PART = pac.PartTemplate("base")
 
+local AnimStack = {
+	__index = {
+		push = function(self, part)
+			local stack = self.stack
+
+			local count = #stack
+			if count == 0 then
+				-- Empty stack
+				table.insert(stack, part)
+			else
+				-- Stop the current animation if it's not self
+				local count = #stack
+				local part2 = stack[count]
+			
+				-- Remove invalid parts
+				while part2 and not part2:IsValid() do
+					stack[count] = nil
+					count = count - 1
+					part2 = stack[count]
+				end
+			
+				if part2 ~= part then
+					if part2 then
+						part2:OnStackStop()
+						part2.pac_animation_stack_current = false
+					end
+				
+					if part.pac_animation_stack_contains then
+						-- Check this variable to save some perf
+						-- Remove self from stack to move to end and also prevent things from breaking because table.RemoveByValue() only removes the first instance
+						table.RemoveByValue(stack, part)
+					end
+
+					table.insert(stack, part)
+				end
+			end
+
+			part:OnStackStart()
+			part.pac_animation_stack_current = true
+			part.pac_animation_stack_contains = true
+		end,
+		pop = function(self, part)
+			part:OnStackStop()
+			local stack = self.stack
+			
+			-- Remove self from animation stack
+			if part.pac_animation_stack_contains then
+				table.RemoveByValue(stack, part)
+			end
+
+			if part.pac_animation_stack_current then
+				-- This was the current animation so play the next in the stack
+				local count = #stack
+				local part = stack[count]
+			
+				-- Remove invalid parts
+				while part and not part:IsValid() do
+					stack[count] = nil
+					count = count - 1
+					part = stack[count]
+				end
+			
+				if part then
+					part:OnStackStart()
+					part.pac_animation_stack_current = true
+				end
+			end
+	
+			part.pac_animation_stack_current = false
+			part.pac_animation_stack_contains = false
+		end
+	},
+	__call = function(meta)
+		return setmetatable({
+			stack = {}
+		}, meta)
+	end
+}
+setmetatable(AnimStack)
+
 PART.ClassName = "animation"
 PART.ThinkTime = 0
 PART.Groups = {'entity', 'model', 'modifiers'}
@@ -107,43 +187,11 @@ end
 
 -- Stop animation and remove from animation stack
 function PART:OnHide()
-	local ent = self:GetOwner()
-	if not ent:IsValid() then
-		self.pac_animation_stack_current = false
-		self.pac_animation_stack_contains = false
-		return
+	local ent = part:GetOwner()
+	if ent:IsValid() then
+		ent.pac_animation_stack = ent.pac_animation_stack or AnimStack()
+		ent.pac_animation_stack:pop(self)
 	end
-	
-	self:OnStackStop()
-
-	local stack = ent.pac_animation_stack
-	if stack then
-		-- Remove self from animation stack
-		if self.pac_animation_stack_contains then
-			table.RemoveByValue(stack, self)
-		end
-
-		if self.pac_animation_stack_current then
-			-- This was the current animation so play the next in the stack
-			local count = #stack
-			local part = stack[count]
-			
-			-- Remove invalid parts
-			while part and not part:IsValid() do
-				stack[count] = nil
-				count = count - 1
-				part = stack[count]
-			end
-			
-			if part then
-				part:OnStackStart()
-				part.pac_animation_stack_current = true
-			end
-		end
-	end
-	
-	self.pac_animation_stack_current = false
-	self.pac_animation_stack_contains = false
 end
 
 PART.random_seqname = ""
@@ -264,49 +312,10 @@ end
 -- Play animation and move to top of animation stack
 function PART:OnShow()
 	local ent = self:GetOwner()
-	if not ent:IsValid() then return end
-
-	local stack = ent.pac_animation_stack
-
-	if stack then
-		local count = #stack
-		if count == 0 then
-			-- Empty stack
-			table.insert(stack, self)
-		else
-			-- Stop the current animation if it's not self
-			local count = #stack
-			local part = stack[count]
-			
-			-- Remove invalid parts
-			while part and not part:IsValid() do
-				stack[count] = nil
-				count = count - 1
-				part = stack[count]
-			end
-			
-			if part ~= self then
-				if part then
-					part:OnStackStop()
-					part.pac_animation_stack_current = false
-				end
-				
-				if self.pac_animation_stack_contains then
-					-- Check this variable to save some perf
-					-- Remove self from stack to move to end and also prevent things from breaking because table.RemoveByValue() only removes the first instance
-					table.RemoveByValue(stack, self)
-				end
-
-				table.insert(stack, self)
-			end
-		end
-	else
-		ent.pac_animation_stack = {self}
+	if ent:IsValid() then
+		ent.pac_animation_stack = ent.pac_animation_stack or AnimStack()
+		ent.pac_animation_stack:push(self)
 	end
-
-	self:OnStackStart()
-	self.pac_animation_stack_current = true
-	self.pac_animation_stack_contains = true
 end
 
 
