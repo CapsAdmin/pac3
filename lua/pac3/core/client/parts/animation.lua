@@ -7,26 +7,22 @@ local AnimStack = {
 		push = function(self, part)
 			local stack = self.stack
 
-			local count = #stack
-			if count == 0 then
+			if #stack == 0 then
 				-- Empty stack
 				table.insert(stack, part)
 			else
 				-- Stop the current animation if it's not self
-				local count = #stack
-				local part2 = stack[count]
+				local top = stack[#stack]
 			
 				-- Remove invalid parts
-				while part2 and not part2:IsValid() do
-					stack[count] = nil
-					count = count - 1
-					part2 = stack[count]
+				while top and not top:IsValid() do
+					top = table.remove(stack)
 				end
 			
-				if part2 ~= part then
-					if part2 then
-						part2:OnStackStop()
-						part2.pac_animation_stack_current = false
+				if top ~= part then
+					if top then
+						top:OnStackStop()
+						top.pac_animation_stack_current = false
 					end
 				
 					if part.pac_animation_stack_contains then
@@ -54,14 +50,11 @@ local AnimStack = {
 
 			if part.pac_animation_stack_current then
 				-- This was the current animation so play the next in the stack
-				local count = #stack
-				local part = stack[count]
+				local part = stack[#stack]
 			
 				-- Remove invalid parts
 				while part and not part:IsValid() do
-					stack[count] = nil
-					count = count - 1
-					part = stack[count]
+					part = table.remove(stack)
 				end
 			
 				if part then
@@ -187,11 +180,14 @@ end
 
 -- Stop animation and remove from animation stack
 function PART:OnHide()
-	local ent = part:GetOwner()
-	if ent:IsValid() then
-		ent.pac_animation_stack = ent.pac_animation_stack or AnimStack()
-		ent.pac_animation_stack:pop(self)
+	local ent = self:GetOwner()
+	if not ent:IsValid() then return end
+	local animStack = ent.pac_animation_stack
+	if not animStack then
+		animStack = AnimStack()
+		ent.pac_animation_stack = animStack
 	end
+	animStack:pop(self)
 end
 
 PART.random_seqname = ""
@@ -312,10 +308,13 @@ end
 -- Play animation and move to top of animation stack
 function PART:OnShow()
 	local ent = self:GetOwner()
-	if ent:IsValid() then
-		ent.pac_animation_stack = ent.pac_animation_stack or AnimStack()
-		ent.pac_animation_stack:push(self)
+	if not ent:IsValid() then return end
+	local animStack = ent.pac_animation_stack
+	if not animStack then
+		animStack = AnimStack()
+		ent.pac_animation_stack = animStack
 	end
+	animStack:push(self)
 end
 
 
