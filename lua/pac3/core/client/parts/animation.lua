@@ -50,16 +50,16 @@ local AnimStack = {
 
 			if part.pac_animation_stack_current then
 				-- This was the current animation so play the next in the stack
-				local part = stack[#stack]
+				local top = stack[#stack]
 			
 				-- Remove invalid parts
-				while part and not part:IsValid() do
-					part = table.remove(stack)
+				while top and not top:IsValid() do
+					top = table.remove(stack)
 				end
 			
-				if part then
-					part:OnStackStart()
-					part.pac_animation_stack_current = true
+				if top then
+					top:OnStackStart()
+					top.pac_animation_stack_current = true
 				end
 			end
 	
