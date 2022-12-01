@@ -73,7 +73,7 @@ local AnimStack = {
 		}, meta)
 	end
 }
-setmetatable(AnimStack)
+setmetatable(AnimStack, AnimStack)
 
 PART.ClassName = "animation"
 PART.ThinkTime = 0
