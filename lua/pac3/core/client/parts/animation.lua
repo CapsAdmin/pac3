@@ -12,13 +12,7 @@ local AnimStack = {
 				table.insert(stack, part)
 			else
 				-- Stop the current animation if it's not self
-				local top = stack[#stack]
-			
-				-- Remove invalid parts
-				while top and not top:IsValid() do
-					top = table.remove(stack)
-				end
-			
+				local top = self:getTop()
 				if top ~= part then
 					if top then
 						top:OnStackStop()
@@ -50,13 +44,7 @@ local AnimStack = {
 
 			if part.pac_animation_stack_current then
 				-- This was the current animation so play the next in the stack
-				local top = stack[#stack]
-			
-				-- Remove invalid parts
-				while top and not top:IsValid() do
-					top = table.remove(stack)
-				end
-			
+				local top = self:getTop()
 				if top then
 					top:OnStackStart()
 					top.pac_animation_stack_current = true
@@ -65,6 +53,14 @@ local AnimStack = {
 	
 			part.pac_animation_stack_current = false
 			part.pac_animation_stack_contains = false
+		end,
+		getTop = function(self)
+			local top = self.stack[#self.stack]
+			-- Remove invalid parts
+			while top and not top:IsValid() do
+				top = table.remove(self.stack)
+			end
+			return top
 		end
 	},
 	__call = function(meta)
