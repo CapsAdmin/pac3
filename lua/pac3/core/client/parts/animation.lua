@@ -14,51 +14,34 @@ local AnimStack = {
 				-- Stop the current animation if it's not self
 				local top = self:getTop()
 				if top ~= part then
-					if top then
-						top:OnStackStop()
-						top.pac_animation_stack_current = false
-					end
+					if top then top:OnStackStop() end
 				
-					if part.pac_animation_stack_contains then
-						-- Check this variable to save some perf
-						-- Remove self from stack to move to end and also prevent things from breaking because table.RemoveByValue() only removes the first instance
-						table.RemoveByValue(stack, part)
-					end
-
+					-- Remove self from stack to move to end and also prevent things from breaking because table.RemoveByValue() only removes the first instance
+					table.RemoveByValue(stack, part)
 					table.insert(stack, part)
 				end
 			end
 
 			part:OnStackStart()
-			part.pac_animation_stack_current = true
-			part.pac_animation_stack_contains = true
 		end,
 		pop = function(self, part)
 			part:OnStackStop()
 			local stack = self.stack
 			
 			-- Remove self from animation stack
-			if part.pac_animation_stack_contains then
-				table.RemoveByValue(stack, part)
-			end
-
-			if part.pac_animation_stack_current then
+			if table.RemoveByValue(stack, part) == #stack + 1 then
 				-- This was the current animation so play the next in the stack
 				local top = self:getTop()
-				if top then
-					top:OnStackStart()
-					top.pac_animation_stack_current = true
-				end
+				if top then top:OnStackStart() end
 			end
-	
-			part.pac_animation_stack_current = false
-			part.pac_animation_stack_contains = false
 		end,
 		getTop = function(self)
-			local top = self.stack[#self.stack]
+			local stack = self.stack
+			local top = stack[#stack]
 			-- Remove invalid parts
 			while top and not top:IsValid() do
-				top = table.remove(self.stack)
+				table.remove(stack)
+				top = stack[#stack]
 			end
 			return top
 		end
@@ -322,10 +305,10 @@ function PART:OnThink()
 end
 
 function PART:OnUpdateAnimation(ply)
-	if self:IsHiddenCached() or not self.pac_animation_stack_current then return end
+	if self:IsHiddenCached() then return end
 
 	local ent = self:GetOwner()
-	if not ent:IsValid() then return end
+	if not ent:IsValid() or not ent.pac_animation_stack or ent.pac_animation_stack.stack[#ent.pac_animation_stack.stack] ~= self then return end
 
 	-- from UpdateAnimation hook
 	if ply and ent ~= ply then return end
