@@ -2,6 +2,66 @@ local FrameTime = FrameTime
 
 local BUILDER, PART = pac.PartTemplate("base")
 
+local AnimStack = {
+	__index = {
+		push = function(self, part)
+			local stack = self.stack
+
+			if #stack == 0 then
+				-- Empty stack
+				table.insert(stack, part)
+			else
+				-- Stop the current animation if it's not self
+				local top = self:getTop()
+				if top ~= part then
+					if top then top:OnStackStop() end
+				
+					-- Remove self from stack to move to end and also prevent things from breaking because table.RemoveByValue() only removes the first instance
+					table.RemoveByValue(stack, part)
+					table.insert(stack, part)
+				end
+			end
+
+			part:OnStackStart()
+		end,
+		pop = function(self, part)
+			part:OnStackStop()
+			local stack = self.stack
+			
+			-- Remove self from animation stack
+			if table.RemoveByValue(stack, part) == #stack + 1 then
+				-- This was the current animation so play the next in the stack
+				local top = self:getTop()
+				if top then top:OnStackStart() end
+			end
+		end,
+		getTop = function(self)
+			local stack = self.stack
+			local top = stack[#stack]
+			-- Remove invalid parts
+			while top and not top:IsValid() do
+				table.remove(stack)
+				top = stack[#stack]
+			end
+			return top
+		end
+	},
+	__call = function(meta)
+		return setmetatable({
+			stack = {}
+		}, meta)
+	end,
+	get = function(ent)
+		local animStack = ent.pac_animation_stack
+		if not animStack then
+			animStack = AnimStack()
+			ent.pac_animation_stack = animStack
+		end
+		return animStack
+	end
+}
+setmetatable(AnimStack, AnimStack)
+
 PART.ClassName = "animation"
 PART.ThinkTime = 0
 PART.Groups = {'entity', 'model', 'modifiers'}
@@ -77,7 +137,8 @@ end
 
 PART.GetSequenceNameList = PART.GetSequenceList
 
-function PART:OnHide()
+function PART:OnStackStop()
+	-- Move code from PART:OnHide() to here
 	local ent = self:GetOwner()
 
 	if ent:IsValid() then
@@ -104,6 +165,13 @@ function PART:OnHide()
 	end
 end
 
+-- Stop animation and remove from animation stack
+function PART:OnHide()
+	local ent = self:GetOwner()
+	if not ent:IsValid() then return end
+	AnimStack.get(ent):pop(self)
+end
+
 PART.random_seqname = ""
 
 function PART:SetSequenceName(name)
@@ -115,7 +183,8 @@ function PART:SetSequenceName(name)
 	end
 end
 
-function PART:OnShow()
+function PART:OnStackStart()
+	-- Moved code from PART:OnShow() to here
 	self.PlayingSequenceFrom = RealTime()
 	local ent = self:GetOwner()
 
@@ -218,6 +287,13 @@ function PART:OnShow()
 	end
 end
 
+-- Play animation and move to top of animation stack
+function PART:OnShow()
+	local ent = self:GetOwner()
+	if not ent:IsValid() then return end
+	AnimStack.get(ent):push(self)
+end
+
 
 function PART:OnThink()
 	local ent = self:GetOwner()
@@ -230,7 +306,7 @@ function PART:OnUpdateAnimation(ply)
 	if self:IsHiddenCached() then return end
 
 	local ent = self:GetOwner()
-	if not ent:IsValid() then return end
+	if not ent:IsValid() or not ent.pac_animation_stack or ent.pac_animation_stack.stack[#ent.pac_animation_stack.stack] ~= self then return end
 
 	-- from UpdateAnimation hook
 	if ply and ent ~= ply then return end

@@ -135,6 +135,8 @@ do --dev util
 
 				ent.pac_bone_parts = nil
 			end
+
+			ent.pac_animation_stack = nil
 		end
 	end
 
