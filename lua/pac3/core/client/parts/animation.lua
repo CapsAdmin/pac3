@@ -50,6 +50,14 @@ local AnimStack = {
 		return setmetatable({
 			stack = {}
 		}, meta)
+	end,
+	get = function(ent)
+		local animStack = ent.pac_animation_stack
+		if not animStack then
+			animStack = AnimStack()
+			ent.pac_animation_stack = animStack
+		end
+		return animStack
 	end
 }
 setmetatable(AnimStack, AnimStack)
@@ -161,12 +169,7 @@ end
 function PART:OnHide()
 	local ent = self:GetOwner()
 	if not ent:IsValid() then return end
-	local animStack = ent.pac_animation_stack
-	if not animStack then
-		animStack = AnimStack()
-		ent.pac_animation_stack = animStack
-	end
-	animStack:pop(self)
+	AnimStack.get(ent):pop(self)
 end
 
 PART.random_seqname = ""
@@ -288,12 +291,7 @@ end
 function PART:OnShow()
 	local ent = self:GetOwner()
 	if not ent:IsValid() then return end
-	local animStack = ent.pac_animation_stack
-	if not animStack then
-		animStack = AnimStack()
-		ent.pac_animation_stack = animStack
-	end
-	animStack:push(self)
+	AnimStack.get(ent):push(self)
 end
 
 
