@@ -2,7 +2,8 @@ local FrameTime = FrameTime
 
 local BUILDER, PART = pac.PartTemplate("base")
 
-local AnimStack = {
+local AnimStack
+AnimStack = {
 	__index = {
 		push = function(self, part)
 			local stack = self.stack
