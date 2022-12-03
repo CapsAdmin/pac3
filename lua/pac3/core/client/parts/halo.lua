@@ -11,18 +11,18 @@ PART.Icon = 'icon16/shading.png'
 
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")
+	BUILDER:SetPropertyGroup("appearance")
 		BUILDER:GetSet("BlurX", 2)
 		BUILDER:GetSet("BlurY", 2)
 		BUILDER:GetSet("Amount", 1)
-		BUILDER:GetSet("IgnoreZ", false)
+		BUILDER:GetSet("Passes", 1)
 		BUILDER:GetSet("SphericalSize", 1)
 		BUILDER:GetSet("Shape", 1)
+		BUILDER:GetSet("Color", Vector(255, 255, 255), {editor_panel = "color"})
+		BUILDER:GetSet("Additive", true)
+		BUILDER:GetSet("IgnoreZ", false)
 		BUILDER:GetSet("AffectChildren", false)
 		BUILDER:GetSet("AffectTargetChildren", false)
-	BUILDER:SetPropertyGroup("appearance")
-		BUILDER:GetSet("Color", Vector(255, 255, 255), {editor_panel = "color"})
-		BUILDER:GetSet("Passes", 1)
-		BUILDER:GetSet("Additive", true) -- haaaa
 BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
