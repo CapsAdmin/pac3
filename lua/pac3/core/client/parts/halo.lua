@@ -18,7 +18,7 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("SphericalSize", 1)
 		BUILDER:GetSet("Shape", 1)
 		BUILDER:GetSet("AffectChildren", false)
-
+		BUILDER:GetSet("AffectTargetChildren", false)
 	BUILDER:SetPropertyGroup("appearance")
 		BUILDER:GetSet("Color", Vector(255, 255, 255), {editor_panel = "color"})
 		BUILDER:GetSet("Passes", 1)
@@ -39,6 +39,16 @@ function PART:SetPasses(n)
 	self.Passes = math.min(n, 50)
 end
 
+function PART:GetTarget()
+	local parent = self:GetTargetEntity()
+
+	if parent:IsValid() then
+		return parent
+	end
+
+	return self:GetParent()
+end
+
 function PART:OnThink()
 
 	local tbl = {}
@@ -48,9 +58,10 @@ function PART:OnThink()
 		tbl[1] = ent
 	end
 
-	local parent = self:GetParent()
-	if parent:IsValid() then
-		for _, part in ipairs(parent:GetChildren()) do
+	local target = self:GetTarget()
+
+	if self.AffectTargetChildren and target:IsValid() then
+		for _, part in ipairs(target:GetChildrenList()) do
 			local ent = part:GetOwner()
 			if ent:IsValid() and not part:IsHiddenCached() then
 				table.insert(tbl, ent)
