@@ -2,14 +2,18 @@ local L = pace.LanguageString
 
 concommand.Add("pac_wear_parts", function(ply, _, _, file)
 	if file then
-		pace.LoadParts(file, true)
+		file = string.Trim(string.Replace(file, "\"", ""))
+		if file ~= "" then
+			pace.LoadParts(string.Trim(string.Replace(file, "\"", "")), true)
+		end
 	end
 
 	pace.WearParts()
 end,
 function(cmd, args)
 	-- Replace \ with /
-	args = string.Replace(string.sub(args, 2), "\\", "/")
+	args = string.Replace(args, "\\", "/")
+	args = string.Trim(string.Replace(args, "\"", ""))
 
 	-- Find path
 	local path = ""
