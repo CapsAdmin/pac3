@@ -24,7 +24,7 @@ function(cmd, args)
 
 	-- Find files and directories
 	local files, dirs = file.Find("pac3/" .. args .. "*", "DATA")
-	if not files and not dirs then return end
+	if not dirs then return end
 
 	-- Format directories
 	for k, v in ipairs(dirs) do
