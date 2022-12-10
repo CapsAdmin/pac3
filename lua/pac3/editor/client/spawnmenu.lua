@@ -1,13 +1,42 @@
 local L = pace.LanguageString
 
-concommand.Add("pac_wear_parts", function(ply, _, args)
-	local file = args[1]
-
+concommand.Add("pac_wear_parts", function(ply, _, _, file)
 	if file then
-		pace.LoadParts(file, true)
+		file = string.Trim(file)
+		if file ~= "" then
+			pace.LoadParts(string.Trim(string.Replace(file, "\"", "")), true)
+		end
 	end
 
 	pace.WearParts()
+end,
+function(cmd, args)
+	-- Replace \ with /
+	args = string.Trim(string.Replace(args, "\\", "/"))
+
+	-- Find path
+	local path = ""
+	local slashPos = string.find(args, "/[^/]*$")
+	if slashPos then
+		-- Set path to the directory without the file name
+		path = string.sub(args, 1, slashPos)
+	end
+
+	-- Find files and directories
+	local files, dirs = file.Find("pac3/" .. args .. "*", "DATA")
+	if not dirs then return end
+
+	-- Format directories
+	for k, v in ipairs(dirs) do
+		dirs[k] = v .. "/"
+	end
+
+	-- Format results
+	for k, v in ipairs(table.Add(dirs, files)) do
+		dirs[k] = cmd .. " " .. path .. v
+	end
+
+	return dirs
 end)
 
 concommand.Add("pac_clear_parts", function()
