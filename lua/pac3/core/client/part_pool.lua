@@ -767,7 +767,7 @@ do -- drawing
 				if not cond and ent ~= pac.LocalPlayer then
 					if ent.pac_draw_distance then
 						-- custom draw distance
-						cond = ent.pac_draw_distance <= 0 or ent.pac_draw_distance <= dst
+						cond = ent.pac_draw_distance <= 0 or dst <= ent.pac_draw_distance
 					else
 						-- otherwise check the cvar
 						cond = dst <= draw_dist
