@@ -87,6 +87,8 @@ pace.Editor = NULL
 
 local remember = CreateConVar("pac_editor_remember_position", "1", {FCVAR_ARCHIVE}, "Remember PAC3 editor position on screen")
 local positionMode = CreateConVar("pac_editor_position_mode", "0", {FCVAR_ARCHIVE}, "Editor position mode. 0 - Left, 1 - middle, 2 - Right. Has no effect if pac_editor_remember_position is true")
+local showCameras = CreateConVar("pac_show_cameras", "1", {FCVAR_ARCHIVE}, "Show the PAC cameras of players using the editor")
+local showInEditor = CreateConVar("pac_show_in_editor", "1", {FCVAR_ARCHIVE}, "Show the 'In PAC3 Editor' text above players using the editor")
 pace.pac_show_uniqueid = CreateConVar("pac_show_uniqueid", "0", {FCVAR_ARCHIVE}, "Show uniqueids of parts inside editor")
 
 function pace.OpenEditor()
@@ -305,50 +307,59 @@ do
 		for _, ply in ipairs(player.GetAll()) do
 			if ply ~= pac.LocalPlayer and ply:GetNW2Bool("pac_in_editor") then
 
-				if ply.pac_editor_cam_pos then
-					if not IsValid(ply.pac_editor_camera) then
-						ply.pac_editor_camera = ClientsideModel("models/tools/camera/camera.mdl")
-						ply.pac_editor_camera:SetModelScale(0.25,0)
+				if showCameras:GetInt() == 1 then
+					if ply.pac_editor_cam_pos then
+						if not IsValid(ply.pac_editor_camera) then
+							ply.pac_editor_camera = ClientsideModel("models/tools/camera/camera.mdl")
+							ply.pac_editor_camera:SetModelScale(0.25,0)
+							local ent = ply.pac_editor_camera
+							ply:CallOnRemove("pac_editor_camera", function()
+								SafeRemoveEntity(ent)
+							end)
+						end
+
 						local ent = ply.pac_editor_camera
-						ply:CallOnRemove("pac_editor_camera", function()
-							SafeRemoveEntity(ent)
-						end)
-					end
 
-					local ent = ply.pac_editor_camera
+						local dt = math.Clamp(FrameTime() * 5, 0.0001, 0.5)
 
-					local dt = math.Clamp(FrameTime() * 5, 0.0001, 0.5)
+						ent:SetPos(LerpVector(dt, ent:GetPos(), ply.pac_editor_cam_pos))
+						ent:SetAngles(LerpAngle(dt, ent:GetAngles(), ply.pac_editor_cam_ang))
 
-					ent:SetPos(LerpVector(dt, ent:GetPos(), ply.pac_editor_cam_pos))
-					ent:SetAngles(LerpAngle(dt, ent:GetAngles(), ply.pac_editor_cam_ang))
+						local pos_3d = ent:GetPos()
+						local dist = pos_3d:Distance(EyePos())
 
-					local pos_3d = ent:GetPos()
-					local dist = pos_3d:Distance(EyePos())
+						if dist > 10 then
+							local pos_2d = pos_3d:ToScreen()
+							if pos_2d.visible then
+								local alpha = math.Clamp(pos_3d:Distance(EyePos()) * -1 + 500, 0, 500)/500
+								if alpha > 0 then
+									draw.DrawText(ply:Nick() .. "'s PAC3 camera", "ChatFont", pos_2d.x, pos_2d.y, Color(255,255,255,alpha*255), 1)
 
-					if dist > 10 then
-						local pos_2d = pos_3d:ToScreen()
-						if pos_2d.visible then
-							local alpha = math.Clamp(pos_3d:Distance(EyePos()) * -1 + 500, 0, 500)/500
-							if alpha > 0 then
-								draw.DrawText(ply:Nick() .. "'s PAC3 camera", "ChatFont", pos_2d.x, pos_2d.y, Color(255,255,255,alpha*255), 1)
-
-								if not ply.pac_editor_part_pos:IsZero() then
-									surface.SetDrawColor(255, 255, 255, alpha*100)
-									local endpos = ply.pac_editor_part_pos:ToScreen()
-									if endpos.visible then
-										surface.DrawLine(pos_2d.x, pos_2d.y, endpos.x, endpos.y)
+									if not ply.pac_editor_part_pos:IsZero() then
+										surface.SetDrawColor(255, 255, 255, alpha*100)
+										local endpos = ply.pac_editor_part_pos:ToScreen()
+										if endpos.visible then
+											surface.DrawLine(pos_2d.x, pos_2d.y, endpos.x, endpos.y)
+										end
 									end
 								end
 							end
 						end
 					end
+				else
+					if ply.pac_editor_camera then
+						SafeRemoveEntity(ply.pac_editor_camera)
+						ply.pac_editor_camera = nil
+					end
 				end
 
-				local pos_3d = ply:NearestPoint(ply:EyePos() + up) + Vector(0,0,5)
-				local alpha = math.Clamp(pos_3d:Distance(EyePos()) * -1 + 500, 0, 500)/500
-				if alpha > 0 then
-					local pos_2d = pos_3d:ToScreen()
-					draw.DrawText("In PAC3 Editor", "ChatFont", pos_2d.x, pos_2d.y, Color(255,255,255,alpha*255), 1)
+				if showInEditor:GetInt() == 1 then 
+					local pos_3d = ply:NearestPoint(ply:EyePos() + up) + Vector(0,0,5)
+					local alpha = math.Clamp(pos_3d:Distance(EyePos()) * -1 + 500, 0, 500)/500
+					if alpha > 0 then
+						local pos_2d = pos_3d:ToScreen()
+						draw.DrawText("In PAC3 Editor", "ChatFont", pos_2d.x, pos_2d.y, Color(255,255,255,alpha*255), 1)
+					end
 				end
 			else
 				if ply.pac_editor_camera then
