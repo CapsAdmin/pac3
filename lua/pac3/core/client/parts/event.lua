@@ -1142,24 +1142,16 @@ PART.OldEvents = {
 	bearing = {
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
-			local owner = self:GetRootPart():GetOwner()
+			local owner = self:GetParentEx()
 
-			if owner:IsValid() then
-				local pos = WorldToLocal(pac.EyePos, Angle(), owner:GetPos(), owner:EyeAngles())
-				return self:NumberOperator(180 / math.pi * math.atan2( pos.y, pos.x ), normal)
+			if not self.TargetPart:IsValid() and parent:HasParent() then
+				parent = parent:GetParent()
 			end
 
-			return 0
-		end
-	},
-
-	parent_bearing = {
-		arguments = {{normal = "number"}},
-		callback = function(self, ent, normal)
-			local owner = get_owner(self)
-
 			if owner:IsValid() then
-				local pos = WorldToLocal(pac.EyePos, Angle(), owner:GetPos(), owner:GetAngles())
+				local pos
+				if owner.IsPlayer and owner:IsPlayer() then pos = WorldToLocal(pac.EyePos, Angle(), owner:GetPos(), owner:EyeAngles())
+				else pos = WorldToLocal(pac.EyePos, Angle(), owner:GetWorldPosition(), owner:GetWorldAngles()) end
 				return self:NumberOperator(180 / math.pi * math.atan2( pos.y, pos.x ), normal)
 			end
 
