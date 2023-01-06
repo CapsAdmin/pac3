@@ -1144,8 +1144,12 @@ PART.OldEvents = {
 		callback = function(self, ent, normal)
 			local owner = self:GetParentEx()
 
-			if not self.TargetPart:IsValid() and parent:HasParent() then
-				parent = parent:GetParent()
+			if not self.TargetPart:IsValid() and owner:HasParent() then
+				owner = owner:GetParent()
+			end
+
+			if not owner.GetWorldPosition then
+				owner = self:GetRootPart():GetOwner()
 			end
 
 			if owner:IsValid() then
