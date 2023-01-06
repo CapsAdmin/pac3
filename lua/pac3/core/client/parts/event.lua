@@ -1142,21 +1142,47 @@ PART.OldEvents = {
 	bearing = {
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
-			local owner = self:GetParentEx()
-
-			if not self.TargetPart:IsValid() and owner:HasParent() then
-				owner = owner:GetParent()
-			end
-
-			if not owner.GetWorldPosition then
-				owner = self:GetRootPart():GetOwner()
-			end
+			local owner = self:GetRootPart():GetOwner()
 
 			if owner:IsValid() then
-				local pos
-				if owner.IsPlayer and owner:IsPlayer() then pos = WorldToLocal(pac.EyePos, Angle(), owner:GetPos(), owner:EyeAngles())
-				else pos = WorldToLocal(pac.EyePos, Angle(), owner:GetWorldPosition(), owner:GetWorldAngles()) end
+				local pos = WorldToLocal(pac.EyePos, Angle(), owner:GetPos(), owner:EyeAngles())
 				return self:NumberOperator(180 / math.pi * math.atan2( pos.y, pos.x ), normal)
+			end
+
+			return 0
+		end
+	},
+
+	bearing_dot_forward = {
+		arguments = {{normal = "number"}},
+		callback = function(self, ent, normal)
+			local owner = self:GetRootPart():GetOwner()
+
+			if owner:IsValid() then
+				local ang = owner:EyeAngles()
+				local eyeUp = owner:EyeAngles():Up()
+				local dir = owner:EyePos() - pac.EyePos
+				dir = dir - dir:Dot(eyeUp) * eyeUp
+				dir:Normalize()
+				return self:NumberOperator(-dir:Dot(ang:Forward()), normal)
+			end
+
+			return 0
+		end
+	},
+
+	bearing_dot_right = {
+		arguments = {{normal = "number"}},
+		callback = function(self, ent, normal)
+			local owner = self:GetRootPart():GetOwner()
+
+			if owner:IsValid() then
+				local ang = owner:EyeAngles()
+				local eyeUp = ang:Up()
+				local dir = owner:EyePos() - pac.EyePos
+				dir = dir - dir:Dot(eyeUp) * eyeUp
+				dir:Normalize()
+				return self:NumberOperator(-dir:Dot(ang:Right()), normal)
 			end
 
 			return 0
