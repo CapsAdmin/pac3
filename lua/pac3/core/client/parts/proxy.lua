@@ -759,7 +759,29 @@ PART.Inputs.bearing = function(self)
 	local owner = self:GetPlayerOwner()
 
 	if owner:IsValid() then
-		local pos = owner:WorldToLocal(pac.EyePos)
+		local pos = WorldToLocal(pac.EyePos, Angle(), owner:GetPos(), owner:EyeAngles())
+		return math.atan2( pos.y, pos.x )
+	end
+
+	return 0
+end
+
+PART.Inputs.parent_bearing = function(self)
+	local part = self:GetPhysicalTarget()
+
+	if part:IsValid() then
+		local pos = WorldToLocal(pac.EyePos, Angle(), part:GetPos(), part:GetAngles())
+		return math.atan2( pos.y, pos.x )
+	end
+
+	return 0
+end
+
+PART.Inputs.owner_bearing = function(self)
+	local part = get_owner(self)
+
+	if part:IsValid() then
+		local pos = WorldToLocal(pac.EyePos, Angle(), part:GetPos(), part:GetAngles())
 		return math.atan2( pos.y, pos.x )
 	end
 
