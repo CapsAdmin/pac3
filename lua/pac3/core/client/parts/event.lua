@@ -34,6 +34,13 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSetPart("TargetPart")
 BUILDER:EndStorableVars()
 
+function PART:SetEvent(event)
+	local reset = self.Event and self.Event ~= "" and self.Event ~= event
+	self.Event = event
+	self:SetWarning()
+	self:GetDynamicProperties(reset) 
+end
+
 local function get_default(typ)
 	if typ == "string" then
 		return ""
@@ -61,10 +68,9 @@ local function cast(typ, val)
 	return string_to_type(typ, val)
 end
 
-function PART:GetDynamicProperties()
+function PART:GetDynamicProperties(reset_to_default)
 	local data = self.Events[self.Event]
 	if not data then return end
-	self:SetWarning()
 
 	local tbl = {}
 	for pos, arg in ipairs(data:GetArguments()) do
@@ -85,6 +91,15 @@ function PART:GetDynamicProperties()
 			end,
 			udata = udata,
 		}
+
+		local arg = tbl[key]
+		if arg.get() == nil or reset_to_default then 
+			if udata.default then 
+				arg.set(udata.default)
+			else
+				arg.set(nil)
+			end
+		end
 	end
 
 	return tbl
@@ -806,6 +821,14 @@ PART.OldEvents = {
 
 	command = {
 		arguments = {{find = "string"}, {time = "number"}, {hide_in_eventwheel = "boolean"}},
+		userdata = {
+			{default = "change_me", editor_friendly = "CommandName"}, 
+			{default = 0.1, editor_friendly = "EventDuration"}, 
+			{default = false, group = "event wheel", editor_friendly = "HideInEventWheel"}
+		},
+		nice = function(self, ent, find, time)
+			return "command: " .. find .. " | " .. "duration: " .. time
+		end,
 		callback = function(self, ent, find, time)
 			time = time or 0.1
 
