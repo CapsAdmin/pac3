@@ -1145,7 +1145,21 @@ PART.OldEvents = {
 			local owner = self:GetRootPart():GetOwner()
 
 			if owner:IsValid() then
-				local pos = owner:WorldToLocal(pac.EyePos)
+				local pos = WorldToLocal(pac.EyePos, Angle(), owner:GetPos(), owner:EyeAngles())
+				return self:NumberOperator(180 / math.pi * math.atan2( pos.y, pos.x ), normal)
+			end
+
+			return 0
+		end
+	},
+
+	parent_bearing = {
+		arguments = {{normal = "number"}},
+		callback = function(self, ent, normal)
+			local owner = get_owner(self)
+
+			if owner:IsValid() then
+				local pos = WorldToLocal(pac.EyePos, Angle(), owner:GetPos(), owner:GetAngles())
 				return self:NumberOperator(180 / math.pi * math.atan2( pos.y, pos.x ), normal)
 			end
 
