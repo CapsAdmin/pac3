@@ -1160,7 +1160,7 @@ PART.OldEvents = {
 
 			if owner:IsValid() then
 				local ang = owner:EyeAngles()
-				local eyeUp = owner:EyeAngles():Up()
+				local eyeUp = ang:Up()
 				local dir = owner:EyePos() - pac.EyePos
 				dir = dir - dir:Dot(eyeUp) * eyeUp
 				dir:Normalize()
