@@ -770,7 +770,7 @@ PART.Inputs.parent_bearing = function(self)
 	local part = self:GetPhysicalTarget()
 
 	if part:IsValid() then
-		local pos = WorldToLocal(pac.EyePos, Angle(), part:GetPos(), part:GetAngles())
+		local pos = WorldToLocal(pac.EyePos, Angle(), part:GetWorldPosition(), part:GetWorldAngles())
 		return math.atan2( pos.y, pos.x )
 	end
 
