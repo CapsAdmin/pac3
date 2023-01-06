@@ -755,6 +755,17 @@ do
 	end
 end
 
+PART.Inputs.bearing = function(self)
+	local owner = self:GetPlayerOwner()
+
+	if owner:IsValid() then
+		local pos = owner:WorldToLocal(pac.EyePos)
+		return math.atan2( pos.y, pos.x )
+	end
+
+	return 0
+end
+
 net.Receive("pac_proxy", function()
 	local ply = net.ReadEntity()
 	local str = net.ReadString()
