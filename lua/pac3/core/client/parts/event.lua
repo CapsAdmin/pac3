@@ -35,7 +35,9 @@ BUILDER:StartStorableVars()
 BUILDER:EndStorableVars()
 
 function PART:SetEvent(event)
-	local reset = self.Event and self.Event ~= "" and self.Event ~= event
+	local reset = (self.Arguments == "") or 
+	(self.Arguments ~= "" and self.Event ~= "" and self.Event ~= event)
+
 	self.Event = event
 	self:SetWarning()
 	self:GetDynamicProperties(reset) 
@@ -827,6 +829,8 @@ PART.OldEvents = {
 			{default = false, group = "event wheel", editor_friendly = "HideInEventWheel"}
 		},
 		nice = function(self, ent, find, time)
+			find = find or "?"
+			time = time or "?"
 			return "command: " .. find .. " | " .. "duration: " .. time
 		end,
 		callback = function(self, ent, find, time)
