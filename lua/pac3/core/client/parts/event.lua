@@ -1138,6 +1138,20 @@ PART.OldEvents = {
 			return 0
 		end,
 	},
+	
+	bearing = {
+		arguments = {{normal = "number"}},
+		callback = function(self, ent, normal)
+			local owner = self:GetRootPart():GetOwner()
+
+			if owner:IsValid() then
+				local pos = owner:WorldToLocal(pac.EyePos)
+				return self:NumberOperator(180 / math.pi * math.atan2( pos.y, pos.x ), normal)
+			end
+
+			return 0
+		end
+	}
 }
 
 do
