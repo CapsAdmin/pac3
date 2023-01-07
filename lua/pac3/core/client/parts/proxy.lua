@@ -758,12 +758,8 @@ end
 PART.Inputs.bearing_dot_forward = function(self)
 	local part = get_owner(self)
 
-	if not part:IsValid() or not part.GetPos then
-		part = self:GetPlayerOwner()
-	end
-
 	if part:IsValid() then
-		local ang = part:EyeAngles()
+		local ang = part:IsPlayer() and part:EyeAngles() or part:GetAngles()
 		ang.p = 0
 		ang.r = 0
 		local dir = pac.EyePos - part:EyePos()
@@ -778,12 +774,8 @@ end
 PART.Inputs.bearing_dot_right = function(self)
 	local part = get_owner(self)
 
-	if not part:IsValid() or not part.GetPos then
-		part = self:GetPlayerOwner()
-	end
-
 	if part:IsValid() then
-		local ang = part:EyeAngles()
+		local ang = part:IsPlayer() and part:EyeAngles() or part:GetAngles()
 		ang.p = 0
 		ang.r = 0
 		local dir = pac.EyePos - part:EyePos()
