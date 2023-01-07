@@ -755,35 +755,7 @@ do
 	end
 end
 
-PART.Inputs.bearing = function(self)
-	local owner = self:GetPlayerOwner()
-
-	if owner:IsValid() then
-		local pos = WorldToLocal(pac.EyePos, Angle(), owner:GetPos(), owner:EyeAngles())
-		return math.atan2( pos.y, pos.x )
-	end
-
-	return 0
-end
-
-PART.Inputs.parent_bearing = function(self)
-	local part = self:GetPhysicalTarget()
-
-	if not part:IsValid() or not part.GetWorldPosition then
-		part = self:GetPlayerOwner()
-	end
-
-	if part:IsValid() then
-		local pos
-		if owner.IsPlayer and part:IsPlayer() then pos = WorldToLocal(pac.EyePos, Angle(), part:GetPos(), part:EyeAngles())
-		else pos = WorldToLocal(pac.EyePos, Angle(), part:GetWorldPosition(), part:GetWorldAngles()) end
-		return math.atan2( pos.y, pos.x )
-	end
-
-	return 0
-end
-
-PART.Inputs.owner_bearing = function(self)
+PART.Inputs.bearing_dot_forward = function(self)
 	local part = get_owner(self)
 
 	if not part:IsValid() or not part.GetPos then
@@ -791,10 +763,33 @@ PART.Inputs.owner_bearing = function(self)
 	end
 
 	if part:IsValid() then
-		local pos
-		if owner.IsPlayer and part:IsPlayer() then pos = WorldToLocal(pac.EyePos, Angle(), part:GetPos(), part:EyeAngles())
-		else pos = WorldToLocal(pac.EyePos, Angle(), part:GetPos(), part:GetAngles()) end
-		return math.atan2( pos.y, pos.x )
+		local ang = part:EyeAngles()
+		ang.p = 0
+		ang.r = 0
+		local dir = pac.EyePos - part:EyePos()
+		dir[3] = 0
+		dir:Normalize()
+		return dir:Dot(ang:Forward())
+	end
+
+	return 0
+end
+
+PART.Inputs.bearing_dot_right = function(self)
+	local part = get_owner(self)
+
+	if not part:IsValid() or not part.GetPos then
+		part = self:GetPlayerOwner()
+	end
+
+	if part:IsValid() then
+		local ang = part:EyeAngles()
+		ang.p = 0
+		ang.r = 0
+		local dir = pac.EyePos - part:EyePos()
+		dir[3] = 0
+		dir:Normalize()
+		return dir:Dot(ang:Right())
 	end
 
 	return 0
