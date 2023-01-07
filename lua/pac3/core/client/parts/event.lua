@@ -1160,9 +1160,10 @@ PART.OldEvents = {
 
 			if owner:IsValid() then
 				local ang = owner:EyeAngles()
-				local eyeUp = ang:Up()
+				ang.p = 0
+				ang.r = 0
 				local dir = pac.EyePos - owner:EyePos()
-				dir = dir - dir:Dot(eyeUp) * eyeUp
+				dir[3] = 0
 				dir:Normalize()
 				return self:NumberOperator(dir:Dot(ang:Forward()), normal)
 			end
@@ -1178,9 +1179,10 @@ PART.OldEvents = {
 
 			if owner:IsValid() then
 				local ang = owner:EyeAngles()
-				local eyeUp = ang:Up()
+				ang.p = 0
+				ang.r = 0
 				local dir = pac.EyePos - owner:EyePos()
-				dir = dir - dir:Dot(eyeUp) * eyeUp
+				dir[3] = 0
 				dir:Normalize()
 				return self:NumberOperator(dir:Dot(ang:Right()), normal)
 			end
