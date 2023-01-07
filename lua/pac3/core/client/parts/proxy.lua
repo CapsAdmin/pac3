@@ -755,7 +755,7 @@ do
 	end
 end
 
-PART.Inputs.bearing_dot_forward = function(self)
+PART.Inputs.flat_dot_forward = function(self)
 	local part = get_owner(self)
 
 	if part:IsValid() then
@@ -771,7 +771,7 @@ PART.Inputs.bearing_dot_forward = function(self)
 	return 0
 end
 
-PART.Inputs.bearing_dot_right = function(self)
+PART.Inputs.flat_dot_right = function(self)
 	local part = get_owner(self)
 
 	if part:IsValid() then

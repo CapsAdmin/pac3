@@ -1138,22 +1138,8 @@ PART.OldEvents = {
 			return 0
 		end,
 	},
-	
-	bearing = {
-		arguments = {{normal = "number"}},
-		callback = function(self, ent, normal)
-			local owner = self:GetRootPart():GetOwner()
 
-			if owner:IsValid() then
-				local pos = WorldToLocal(pac.EyePos, Angle(), owner:GetPos(), owner:EyeAngles())
-				return self:NumberOperator(180 / math.pi * math.atan2( pos.y, pos.x ), normal)
-			end
-
-			return 0
-		end
-	},
-
-	bearing_dot_forward = {
+	flat_dot_forward = {
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
 			local owner = self:GetRootPart():GetOwner()
@@ -1172,7 +1158,7 @@ PART.OldEvents = {
 		end
 	},
 
-	bearing_dot_right = {
+	flat_dot_right = {
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
 			local owner = self:GetRootPart():GetOwner()
