@@ -1142,6 +1142,44 @@ PART.OldEvents = {
 			return 0
 		end,
 	},
+
+	flat_dot_forward = {
+		arguments = {{normal = "number"}},
+		callback = function(self, ent, normal)
+			local owner = self:GetRootPart():GetOwner()
+
+			if owner:IsValid() then
+				local ang = owner:EyeAngles()
+				ang.p = 0
+				ang.r = 0
+				local dir = pac.EyePos - owner:EyePos()
+				dir[3] = 0
+				dir:Normalize()
+				return self:NumberOperator(dir:Dot(ang:Forward()), normal)
+			end
+
+			return 0
+		end
+	},
+
+	flat_dot_right = {
+		arguments = {{normal = "number"}},
+		callback = function(self, ent, normal)
+			local owner = self:GetRootPart():GetOwner()
+
+			if owner:IsValid() then
+				local ang = owner:EyeAngles()
+				ang.p = 0
+				ang.r = 0
+				local dir = pac.EyePos - owner:EyePos()
+				dir[3] = 0
+				dir:Normalize()
+				return self:NumberOperator(dir:Dot(ang:Right()), normal)
+			end
+
+			return 0
+		end
+	}
 }
 
 do

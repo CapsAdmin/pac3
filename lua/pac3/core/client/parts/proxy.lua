@@ -755,6 +755,38 @@ do
 	end
 end
 
+PART.Inputs.flat_dot_forward = function(self)
+	local part = get_owner(self)
+
+	if part:IsValid() then
+		local ang = part:IsPlayer() and part:EyeAngles() or part:GetAngles()
+		ang.p = 0
+		ang.r = 0
+		local dir = pac.EyePos - part:EyePos()
+		dir[3] = 0
+		dir:Normalize()
+		return dir:Dot(ang:Forward())
+	end
+
+	return 0
+end
+
+PART.Inputs.flat_dot_right = function(self)
+	local part = get_owner(self)
+
+	if part:IsValid() then
+		local ang = part:IsPlayer() and part:EyeAngles() or part:GetAngles()
+		ang.p = 0
+		ang.r = 0
+		local dir = pac.EyePos - part:EyePos()
+		dir[3] = 0
+		dir:Normalize()
+		return dir:Dot(ang:Right())
+	end
+
+	return 0
+end
+
 net.Receive("pac_proxy", function()
 	local ply = net.ReadEntity()
 	local str = net.ReadString()
