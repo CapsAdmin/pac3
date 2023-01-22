@@ -68,7 +68,7 @@ BUILDER:StartStorableVars()
 		}
 	})
 	BUILDER:GetSet("Spread", 0)
-	BUILDER:GetSet("NumberProjectiles", 1, {editor_friendly = "Number of projectiles shot"})
+	BUILDER:GetSet("NumberProjectiles", 1)
 	BUILDER:GetSet("Delay", 0)
 	BUILDER:GetSet("Maximum", 0)
 	BUILDER:GetSet("Mass", 100)
@@ -105,6 +105,7 @@ function PART:OnShow(from_rendering)
 				part:Draw("opaque")
 			end
 		end
+		if self.NumberProjectiles <= 0 then self.NumberProjectiles = 0 end
 		if self.NumberProjectiles <= 50 then
 			local pos,ang = self:GetDrawPosition()
 			self:Shoot(pos,ang,self.NumberProjectiles)
@@ -292,7 +293,7 @@ function PART:Shoot(pos, ang, multi_projectile_count)
 
 		if self.Delay == 0 then
 			for i = multi_projectile_count,1,-1 do
-			spawn()
+				spawn()
 			end
 		else
 			timer.Simple(self.Delay, spawn)
