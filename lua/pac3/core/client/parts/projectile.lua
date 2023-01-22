@@ -68,11 +68,12 @@ BUILDER:StartStorableVars()
 		}
 	})
 	BUILDER:GetSet("Spread", 0)
+	BUILDER:GetSet("NumberProjectiles", 1, {editor_friendly = "Number of projectiles shot"})
 	BUILDER:GetSet("Delay", 0)
 	BUILDER:GetSet("Maximum", 0)
 	BUILDER:GetSet("Mass", 100)
 	BUILDER:GetSet("Attract", 0)
-	BUILDER:GetSet("AttractMode", "projectile_nearest", {enums = {
+	BUILDER:GetSet("AttractMode", "closest_to_projectile", {enums = {
 		hitpos = "hitpos",
 		hitpos_radius = "hitpos_radius",
 		closest_to_projectile = "closest_to_projectile",
@@ -84,6 +85,7 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSet("CollideWithOwner", false)
 	BUILDER:GetSet("CollideWithSelf", false)
 	BUILDER:GetSet("RemoveOnCollide", false)
+
 BUILDER:EndStorableVars()
 
 PART.Translucent = false
@@ -103,7 +105,10 @@ function PART:OnShow(from_rendering)
 				part:Draw("opaque")
 			end
 		end
-		self:Shoot(self:GetDrawPosition())
+		for i = self.NumberProjectiles, 1, -1 do
+			self:Shoot(self:GetDrawPosition())
+		end
+		
 	end
 end
 
