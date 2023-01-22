@@ -105,10 +105,10 @@ function PART:OnShow(from_rendering)
 				part:Draw("opaque")
 			end
 		end
-		for i = self.NumberProjectiles, 1, -1 do
-			self:Shoot(self:GetDrawPosition())
-		end
-		
+		if self.NumberProjectiles <= 50 then
+			local pos,ang = self:GetDrawPosition()
+			self:Shoot(pos,ang,self.NumberProjectiles)
+		else chat.AddText(Color(255,0,0),"[PAC3] Trying to spawn too many projectiles! The limit is " .. 50) end
 	end
 end
 
@@ -152,8 +152,9 @@ end
 
 local enable = CreateClientConVar("pac_sv_projectiles", 0, true)
 
-function PART:Shoot(pos, ang)
+function PART:Shoot(pos, ang, multi_projectile_count)
 	local physics = self.Physical
+	local multi_projectile_count = multi_projectile_count or 1
 
 	if physics then
 		if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
@@ -164,6 +165,7 @@ function PART:Shoot(pos, ang)
 		end
 
 		net.Start("pac_projectile")
+			net.WriteUInt(multi_projectile_count,7)
 			net.WriteVector(pos)
 			net.WriteAngle(ang)
 			net.WriteTable(tbl)
@@ -289,7 +291,9 @@ function PART:Shoot(pos, ang)
 		end
 
 		if self.Delay == 0 then
+			for i = multi_projectile_count,1,-1 do
 			spawn()
+			end
 		else
 			timer.Simple(self.Delay, spawn)
 		end
