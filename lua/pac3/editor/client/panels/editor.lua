@@ -311,7 +311,7 @@ function PANEL:SetBottom(pnl)
 	self.div:SetBottom(pnl)
 end
 
-pace.Focused = true
+pace.Focused = false
 
 function pace.IsFocused()
 	return pace.Focused
