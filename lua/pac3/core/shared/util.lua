@@ -135,6 +135,8 @@ for _, params in pairs(shader_params.base) do
 	end
 end
 
+texture_keys["include"] = "include"
+
 -- for pac_restart
 PAC_MDL_SALT = PAC_MDL_SALT or 0
 
@@ -601,7 +603,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 						end
 
 						for shader_param in pairs(texture_keys) do
-							data.buffer = data.buffer:gsub('("?%$' .. shader_param .. '"?%s+")(.-)(")', function(l, vtf_path, r)
+							data.buffer = data.buffer:gsub('("?%$?%f[%w_]' .. shader_param .. '%f[^%w_]"?%s+"?)([^"%c]+)("?%s?)', function(l, vtf_path, r)
 								if vtf_path == "env_cubemap" then
 									return
 								end
@@ -618,12 +620,19 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 									end
 								end
 
-								for _, info in ipairs(files) do
-									if info.file_name:EndsWith(".vtf") then
+								if not new_path then
+									for _, info in ipairs(files) do
 										local vtf_name = (vtf_path:match(".+/(.+)") or vtf_path)
-										if info.file_name == vtf_name .. ".vtf" then
-											new_path = dir .. vtf_name
-											break
+										if info.file_name:EndsWith(".vtf") then
+											if info.file_name == vtf_name .. ".vtf" or info.file_name == vtf_name then
+												new_path = dir .. vtf_name
+												break
+											end
+										elseif (info.file_name:EndsWith(".vmt") and l:StartWith("include")) then
+											if info.file_name == vtf_name then
+												new_path = "materials/" .. dir .. vtf_name
+												break
+											end
 										end
 									end
 								end
