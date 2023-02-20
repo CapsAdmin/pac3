@@ -465,6 +465,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								table.insert(found_vmt_directories, {dir = dir})
 								f:seek(old_pos)
 							end
+							table.sort(found_vmt_directories, function(a,b) return #a.dir>#b.dir end)
 							f:seek(old_pos)
 						end
 
