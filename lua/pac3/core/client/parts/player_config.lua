@@ -56,7 +56,7 @@ function BUILDER:EntityField(name, field)
 end
 
 BUILDER:EntityField("InverseKinematics", "enable_ik")
-BUILDER:EntityField("MuteFootsteps", "pac_mute_footsteps")
+BUILDER:EntityField("MuteFootsteps", "mute_footsteps")
 BUILDER:EntityField("AnimationRate", "global_animation_rate")
 BUILDER:EntityField("FallApartOnDeath", "death_physics_parts")
 BUILDER:EntityField("DeathRagdollizeParent", "death_ragdollize")

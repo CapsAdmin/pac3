@@ -10,7 +10,10 @@ local Color = Color
 local Matrix = Matrix
 local vector_origin = vector_origin
 
-local BUILDER, PART = pac.PartTemplate("base_movable")
+local pos
+local ang
+
+local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "interpolated_multibone"
 PART.Group = 'advanced'
@@ -41,37 +44,47 @@ BUILDER:StartStorableVars()
 --PART:GetWorldAngles()
 function PART:Initialize()
 	print("a multiboner is born")
-	
-	self.pos = Vector()
-	self.vel = Vector()
-
-	self.ang = Angle()
-	self.angvel = Angle()
-	--[[]
-	self:SetLerpValue(self.LerpValue or 0)
-	self:SetInterpolatePosition(self.InterpolatePosition or true)
-	self:SetInterpolateAngles(self.InterpolateAngles or true)]]
 end
 
+function PART:OnShow()
+
+end
+--NODES			self	1		2		3
+--STAGE			0		1		2		3
+--PROPORTION	0	0.5	0	0.5	0	0.5	3
 function PART:OnDraw()
-	self:GetWorldPosition()
-	self:GetWorldAngles()
-	--self:ModifiersPreEvent("OnDraw")
-	--self:ModifiersPostEvent("OnDraw")
+	local ent = self:GetOwner()
+	self.pos,self.ang = self:GetDrawPosition()
+	if not self.Test1 then hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw") end
+
+	local stage = math.max(0,math.floor(self.LerpValue))
+	local proportion = math.max(0,self.LerpValue) % 1
+
+	if self.Test1 then
+		hook.Add("PostDrawOpaqueRenderables", "Multibone_draw", function()
+			render.DrawLine(self.pos,self.pos + self.ang:Forward()*150, Color(255,0,0))
+			render.DrawLine(self.pos,self.pos - self.ang:Right()*150, Color(0,255,0))
+			render.DrawLine(self.pos,self.pos + self.ang:Up()*150, Color(0,0,255))
+			render.DrawWireframeSphere(self.pos, 20 + 5*math.sin(5*RealTime()), 15, 15, Color(255,255,255), true)
+		end)
+	end
+	self:Interpolate(stage,proportion)
+
+	--[[self:PreEntityDraw(ent, pos, ang)
+	self:DrawModel(ent, pos, ang)
+	self:PostEntityDraw(ent, pos, ang)]]
+	ent:SetPos(self.pos)
+	ent:SetAngles(self.ang)
+	pac.ResetBones(ent)
+	--ent:DrawModel()
 end
 
 function PART:OnThink()
-	self:OnDraw()
-
-	if self.Force000 then
-		print("forcing 0 0 0 world position")
-		self:SetWorldPos(0,0,0)
-	end
-	--self:GetWorldPosition()
-	--self:GetWorldAngles()
-	--self:GetDrawPosition()
-	--print(self.pos.x, self.pos.y, self.pos.z)
-	--print(self:GetDrawPosition().x, self:GetDrawPosition().y, self:GetDrawPosition().z)
+	if self.Node1 ~= nil then nodes["Node1"] = self.Node1 end
+	if self.Node2 ~= nil then nodes["Node2"] = self.Node2 end
+	if self.Node3 ~= nil then nodes["Node3"] = self.Node3 end
+	if self.Node4 ~= nil then nodes["Node4"] = self.Node4 end
+	if self.Node5 ~= nil then nodes["Node5"] = self.Node5 end
 end
 
 function PART:SetWorldPos(x,y,z)
@@ -81,17 +94,46 @@ function PART:SetWorldPos(x,y,z)
 end
 
 function PART:Interpolate(stage, proportion)
+	--print("Calculated the stage. We are at stage " .. stage .. " between nodes " .. stage .. " and " .. (stage + 1))
+	local firstnode
+	if stage <= 0 then
+		firstnode = self
+	else
+		firstnode = nodes["Node"..stage] or self
+	end
+	
+	
+	local secondnode = nodes["Node"..stage+1]
+	if firstnode == nil or firstnode == NULL then firstnode = self end
+	if secondnode == nil or secondnode == NULL then secondnode = self end
+
+	if secondnode ~= nil and secondnode ~= NULL then
+		self.pos = (1-proportion)*firstnode:GetWorldPosition() + (secondnode:GetWorldPosition())*proportion
+		self.ang = (1-proportion)*firstnode:GetWorldAngles() + (secondnode:GetWorldAngles())*proportion
+	elseif proportion == 0 then
+		self.pos = firstnode:GetWorldPosition()
+		self.ang = firstnode:GetWorldAngles()
+	else
+		self.pos = (1-proportion)*self:GetWorldPosition() + (self:GetWorldPosition())*proportion
+		self.ang = (1-proportion)*self:GetWorldPosition() + (self:GetWorldPosition())*proportion
+	end
+
+end
+
+function PART:GoTo(part)
+	self.pos = part:GetWorldPosition() or self:GetWorldPosition()
+	self.ang = part:GetWorldAngles() or self:GetWorldAngles()
 end
 
 --we need to know the stage and proportion (progress)
 --e.g. lerp 0.5 is stage 0, proportion 0.5 because it's 50% toward Node 1
 --e.g. lerp 2.2 is stage 2, proportion 0.2 because it's 20% toward Node 3
 function PART:GetInterpolationParameters()
-	--[[stage = math.max(0,math.floor(self.LerpValue))
+	stage = math.max(0,math.floor(self.LerpValue))
 	proportion = math.max(0,self.LerpValue) % 1
-	print("Calculated the stage. We are at stage " .. stage .. " between nodes " .. stage .. " and " .. (stage + 1))
-	print("proportion is " .. proportion)
-	return stage, proportion]]--
+	--print("Calculated the stage. We are at stage " .. stage .. " between nodes " .. stage .. " and " .. (stage + 1))
+	--print("proportion is " .. proportion)
+	return stage, proportion
 end
 
 function PART:GetNodeAngle(nodenumber)
@@ -122,8 +164,6 @@ function PART:InterpolateAngle()
 
 end
 
-
-
 --[[function PART:ApplyMatrix()
 	print("MATRIX???")
 	local ent = self:GetOwner()
@@ -143,13 +183,13 @@ end
 	end
 end--]]
 
-function PART:SetLerpValue(var)
-	--[[print("adjusted lerp value. "..type(var).." "..var)
+--[[function PART:SetLerpValue(var)
+	print("adjusted lerp value. "..type(var).." "..var)
 	self.LerpValue = var
 	assert(self.LerpValue == var)
 	assert(self.LerpValue ~= nil)
-	self:Interpolate(self:GetInterpolationParameters())]]--
-end
+	self:Interpolate(self:GetInterpolationParameters())
+end]]
 
 function PART:SetInterpolatePosition(b)
 	--print(type(b).." "..b)

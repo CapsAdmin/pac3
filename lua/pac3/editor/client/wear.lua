@@ -1,4 +1,4 @@
-include("pac3/editor/client/parts.lua")
+
 local L = pace.LanguageString
 
 function pace.IsPartSendable(part)
@@ -35,12 +35,6 @@ function pace.ClearParts()
 	pac.RemoveAllParts(true, true)
 	pace.RefreshTree()
 	
-	--clean up the bulk selection
-	pace.ClearBulkList()
-	BulkSelectList = nil
-	hook.Remove('PreDrawHalos', "BulkSelectHighlights")
-	refresh_halo_hook = true
-
 	timer.Simple(0.1, function()
 		if not pace.Editor:IsValid() then return end
 

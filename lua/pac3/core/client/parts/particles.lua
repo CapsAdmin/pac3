@@ -37,9 +37,6 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("StickEndSize", 0)
 		BUILDER:GetSet("StickStartAlpha", 255)
 		BUILDER:GetSet("StickEndAlpha", 0)
-	BUILDER:SetPropertyGroup("attract")
-		BUILDER:GetSet("AttractPart")
-		BUILDER:GetSet("AttractForce", 0)
 	BUILDER:SetPropertyGroup("appearance")
 		BUILDER:GetSet("Material", "effects/slime1")
 		BUILDER:GetSet("StartAlpha", 255)
@@ -147,6 +144,7 @@ end
 
 function PART:OnShow(from_rendering)
 	self.CanKeepFiring = true
+	self.FirstShot = true
 	if not from_rendering then
 		self.NextShot = 0
 		local pos, ang = self:GetDrawPosition()
@@ -155,7 +153,7 @@ function PART:OnShow(from_rendering)
 end
 
 function PART:OnDraw()
-
+	if not self.FireOnce then self.CanKeepFiring = true end
 	local pos, ang = self:GetDrawPosition()
 	local emitter = self:GetEmitter()
 
@@ -212,7 +210,7 @@ function PART:SetMaterial(var)
 end
 
 function PART:EmitParticles(pos, ang, real_ang)
-	if not self.FireOnce then self.CanKeepFiring = true end
+	if self.FireOnce and not self.FirstShot then self.CanKeepFiring = false end
 	local emt = self:GetEmitter()
 	if not emt then return end
 
@@ -358,13 +356,10 @@ function PART:EmitParticles(pos, ang, real_ang)
 			end
 		end
 
-		if self.FireDelay == 0 then
-			self.CanKeepFiring = false
-		else
-			self.NextShot = pac.RealTime + self.FireDelay
-			self.CanKeepFiring = true
-		end
+		
+		self.NextShot = pac.RealTime + self.FireDelay
 	end
+	self.FirstShot = false
 end
 
 BUILDER:Register()
