@@ -89,7 +89,7 @@ function BUILDER:EntityField(name, field)
 end
 
 BUILDER:EntityField("InverseKinematics", "enable_ik")
-BUILDER:EntityField("MuteFootsteps", "hide_weapon")
+BUILDER:EntityField("MuteFootsteps", "mute_footsteps")
 BUILDER:EntityField("AnimationRate", "global_animation_rate")
 
 BUILDER:EntityField("RunSpeed", "run_speed")
