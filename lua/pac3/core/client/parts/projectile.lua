@@ -68,11 +68,12 @@ BUILDER:StartStorableVars()
 		}
 	})
 	BUILDER:GetSet("Spread", 0)
+	BUILDER:GetSet("NumberProjectiles", 1)
 	BUILDER:GetSet("Delay", 0)
 	BUILDER:GetSet("Maximum", 0)
 	BUILDER:GetSet("Mass", 100)
 	BUILDER:GetSet("Attract", 0)
-	BUILDER:GetSet("AttractMode", "projectile_nearest", {enums = {
+	BUILDER:GetSet("AttractMode", "closest_to_projectile", {enums = {
 		hitpos = "hitpos",
 		hitpos_radius = "hitpos_radius",
 		closest_to_projectile = "closest_to_projectile",
@@ -84,6 +85,7 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSet("CollideWithOwner", false)
 	BUILDER:GetSet("CollideWithSelf", false)
 	BUILDER:GetSet("RemoveOnCollide", false)
+
 BUILDER:EndStorableVars()
 
 PART.Translucent = false
@@ -103,7 +105,11 @@ function PART:OnShow(from_rendering)
 				part:Draw("opaque")
 			end
 		end
-		self:Shoot(self:GetDrawPosition())
+		if self.NumberProjectiles <= 0 then self.NumberProjectiles = 0 end
+		if self.NumberProjectiles <= 50 then
+			local pos,ang = self:GetDrawPosition()
+			self:Shoot(pos,ang,self.NumberProjectiles)
+		else chat.AddText(Color(255,0,0),"[PAC3] Trying to spawn too many projectiles! The limit is " .. 50) end
 	end
 end
 
@@ -147,8 +153,9 @@ end
 
 local enable = CreateClientConVar("pac_sv_projectiles", 0, true)
 
-function PART:Shoot(pos, ang)
+function PART:Shoot(pos, ang, multi_projectile_count)
 	local physics = self.Physical
+	local multi_projectile_count = multi_projectile_count or 1
 
 	if physics then
 		if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
@@ -159,6 +166,7 @@ function PART:Shoot(pos, ang)
 		end
 
 		net.Start("pac_projectile")
+			net.WriteUInt(multi_projectile_count,7)
 			net.WriteVector(pos)
 			net.WriteAngle(ang)
 			net.WriteTable(tbl)
@@ -284,7 +292,9 @@ function PART:Shoot(pos, ang)
 		end
 
 		if self.Delay == 0 then
-			spawn()
+			for i = multi_projectile_count,1,-1 do
+				spawn()
+			end
 		else
 			timer.Simple(self.Delay, spawn)
 		end

@@ -1,3 +1,123 @@
+CreateClientConVar( "pac_focus_input1", "", true, false, "Set the first key for the custom shorctut of pac3 editor focus. Format according to internal names of the keys as console binds e.g. e or ctrl" )
+CreateClientConVar( "pac_focus_input2", "", true, false, "Set the second key for the custom shorctut of pac3 editor focus. Format according to internal names of the keys as console binds e.g. e or ctrl" )
+concommand.Add( "pac_toggle_focus", function() pace.Call("ToggleFocus") end)
+concommand.Add( "pac_focus", function() pace.Call("ToggleFocus") end)
+
+local last_recorded_combination
+
+local focusKeyPrimary
+local focusKeySecondary
+
+local ShortcutActions
+
+ShortcutActions = {}
+ShortcutActions["wear"] = {0}
+ShortcutActions["save"] = {1,2,3}
+ShortcutActions["focus"] = {67,83}
+ShortcutActions["copy"] = {0}
+ShortcutActions["paste"] = {0}
+ShortcutActions["cut"] = {0}
+ShortcutActions["delete"] = {0}
+ShortcutActions["expand_all"] = {0}
+ShortcutActions["collapse_all"] = {0}
+ShortcutActions["undo"] = {0}
+ShortcutActions["redo"] = {0}
+
+concommand.Add( "pac_echo_shortcut", function()
+	timer.Simple( 3, function()
+		surface.PlaySound("buttons/button1.wav")
+		inputs = get_all_inputs()
+		print("inputs:")
+		printed_list = ""
+		input_list = {}
+		for k,v in pairs(inputs) do
+			printed_list = printed_list .. "key" .. k .. ", (code " .. v .. ", named " .. input.GetKeyName(v) .. ")\n"
+			input_list[k] = v
+		end
+		print(printed_list)
+		print(unpack(input_list))
+		last_recorded_combination = input_list
+		end
+	)
+end)
+--[[
+concommand.Add( "pac_assign_shortcut", function()
+	local action_name = "focus"
+	ShortcutActions[action_name] = last_recorded_combination
+	print("assigned "..action_name.." for ")
+	print(unpack(ShortcutActions[action_name]))
+end)
+
+
+
+
+concommand.Add( "pac_echo_shortcut_megatable", function() 
+	for k,v in ipairs(ShortcutActions) do
+		unpacked_combo_string = ""
+		for k2,v2 in ipairs(ShortcutActions[k][2]) do
+			if (ShortcutActions[k][2][k2] ~= nil) then
+				unpacked_combo_string = unpacked_combo_string .. ShortcutActions[k][2][k2] .. ","
+			end
+		end
+		print(ShortcutActions[k][1] .. " " .. unpacked_combo_string)
+	end
+	
+	test_combos = {
+		{1,2},
+		{1,3,2},
+		{1,2,3},
+		{0},
+		{4},
+		{54,57},
+	}
+	
+	print("the match between " .. "{1,2}" .. " and {\"save\",{1,2,3}} is ", matches_input(test_combos[1], "save"))
+	
+end)
+
+function get_all_inputs()
+	list = {}
+	count = 1
+	for key=1,BUTTON_CODE_LAST do
+		if input.IsKeyDown(key) then
+			list[count] = key
+			count = count + 1
+		end
+	end
+	return list
+end
+
+
+function matches_input(combo_in, action_name)
+	local target = ShortcutActions[action_name][2]
+	print("combo_in length is ", #combo_in, ", target length is ", #target)
+	if #combo_in ~= #target.length then return false end
+	full_match = true
+	print("trying to match")
+	for k,v in pairs(combo_in) do
+		if ((combo_in[v] == nil) or (target[v] == nil)) then
+			full_match = false
+		else
+			if (combo_in[v] == target[v]) then
+				print("matched " .. target[v])
+			else
+				full_match = false
+			end
+		end
+	end
+	return full_match
+end
+]]--
+
+
+	--[[thinkUndo()
+	thinkCopy()
+	thinkPaste()
+	thinkCut()
+	thinkDelete()
+	thinkExpandAll()
+	thinkCollapseAll()]]--
+
 
 function pace.OnShortcutSave()
 	if not IsValid(pace.current_part) then return end
@@ -17,8 +137,23 @@ function pace.OnShortcutWear()
 end
 
 local last = 0
+local last_print_time = CurTime()
 
 function pace.CheckShortcuts()
+	--[[
+	if input.IsKeyDown(KEY_H) then 
+		if last_print_time + 1 < CurTime() then
+			surface.PlaySound("buttons/button9.wav")
+			print("input report!")
+			print(unpack(get_all_inputs()))
+			print("done at time of "..last_print_time.."\n")
+			--chat.print("input report!\n"..unpack(get_all_inputs()).."\ndone at time of "..last_print_time)
+			last_print_time = CurTime()
+		end
+	end]]--
+	focusKeyPrimary = input.GetKeyCode(GetConVar("pac_focus_input1"):GetString())
+	focusKeySecondary = input.GetKeyCode(GetConVar("pac_focus_input2"):GetString())
+	
 	if gui.IsConsoleVisible() then return end
 	if not pace.Editor or not pace.Editor:IsValid() then return end
 	if last > RealTime() or input.IsMouseDown(MOUSE_LEFT) then return end
@@ -32,6 +167,18 @@ function pace.CheckShortcuts()
 		pace.Call("ToggleFocus")
 		last = RealTime() + 0.2
 	end
+	-- can make new hardcoded custom shortcuts for focus
+	--[[if input.IsKeyDown(KEY_LSHIFT) and input.IsKeyDown(KEY_R) then
+		pace.Call("ToggleFocus")
+		last = RealTime() + 0.2
+	end]]--
+	--convar custom inputs
+	--if not ((focusKeyPrimary == -1) and (focusKeySecondary == -1)) then
+		if input.IsKeyDown(focusKeyPrimary) and input.IsKeyDown(focusKeySecondary) then
+			pace.Call("ToggleFocus")
+			last = RealTime() + 0.2
+		end
+	--end
 
 	if input.IsKeyDown(KEY_LALT) and input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_P) then
 		RunConsoleCommand("pac_restart")
@@ -66,6 +213,31 @@ function pace.CheckShortcuts()
 
 	end
 end
+
+--[[
+function pace.FillShortcutSettings(pnl)
+	local list = vgui.Create("DCategoryList", pnl)
+	list:Dock(FILL)
+	do
+		local cat = list:Add(L"Wear")
+		cat.Header:SetSize(40,40)
+		cat.Header:SetFont("DermaLarge")
+		local list = vgui.Create("DListLayout")
+		list:DockPadding(20,20,20,20)
+		cat:SetContents(list)
+
+		local mode = vgui.Create("DComboBox", list)
+
+		mode.OnSelect = function(_, _, value)
+			if IsValid(mode.form) then
+				mode.form:Remove()
+			end
+			mode.form:SetParent(list)
+		end
+	end
+	return list
+end
+]]--
 
 pac.AddHook("Think", "pace_shortcuts", pace.CheckShortcuts)
 

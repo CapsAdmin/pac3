@@ -17,6 +17,7 @@ BUILDER:StartStorableVars()
 		BUILDER:PropertyOrder("ParentName")
 		BUILDER:GetSet("Follow", false)
 		BUILDER:GetSet("Additive", false)
+		BUILDER:GetSet("FireOnce", false)
 		BUILDER:GetSet("FireDelay", 0.2)
 		BUILDER:GetSet("NumberParticles", 1)
 		BUILDER:GetSet("PositionSpread", 0)
@@ -36,6 +37,9 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("StickEndSize", 0)
 		BUILDER:GetSet("StickStartAlpha", 255)
 		BUILDER:GetSet("StickEndAlpha", 0)
+	BUILDER:SetPropertyGroup("attract")
+		BUILDER:GetSet("AttractPart")
+		BUILDER:GetSet("AttractForce", 0)
 	BUILDER:SetPropertyGroup("appearance")
 		BUILDER:GetSet("Material", "effects/slime1")
 		BUILDER:GetSet("StartAlpha", 255)
@@ -49,6 +53,7 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("DoubleSided", true)
 		BUILDER:GetSet("DrawManual", false)
 	BUILDER:SetPropertyGroup("rotation")
+		BUILDER:GetSet("ZeroAngle",true)
 		BUILDER:GetSet("RandomRollSpeed", 0)
 		BUILDER:GetSet("RollDelta", 0)
 		BUILDER:GetSet("ParticleAngleVelocity", Vector(50, 50, 50))
@@ -141,6 +146,7 @@ function PART:Set3D(b)
 end
 
 function PART:OnShow(from_rendering)
+	self.CanKeepFiring = true
 	if not from_rendering then
 		self.NextShot = 0
 		local pos, ang = self:GetDrawPosition()
@@ -206,10 +212,11 @@ function PART:SetMaterial(var)
 end
 
 function PART:EmitParticles(pos, ang, real_ang)
+	if not self.FireOnce then self.CanKeepFiring = true end
 	local emt = self:GetEmitter()
 	if not emt then return end
 
-	if self.NextShot < pac.RealTime then
+	if self.NextShot < pac.RealTime and self.CanKeepFiring then
 		if self.Material == "" then return end
 		if self.Velocity == 500.01 then return end
 
@@ -222,7 +229,11 @@ function PART:EmitParticles(pos, ang, real_ang)
 		end
 
 		for _ = 1, self.NumberParticles do
-
+			local mats = self.Material:Split(";")
+			if #mats > 1 then
+				self.Materialm = pac.Material(table.Random(mats), self)
+				self:CallRecursive("OnMaterialChanged")
+			end
 			local vec = Vector()
 
 			if self.Spread ~= 0 then
@@ -306,14 +317,15 @@ function PART:EmitParticles(pos, ang, real_ang)
 					particle:SetRoll(self.RandomRollSpeed * 36)
 				end
 
-				if self.RollDelta ~= 0 then 
+				if self.RollDelta ~= 0 then
 					particle:SetRollDelta(self.RollDelta + roll)
 				end
-				
+
 				particle:SetAirResistance(self.AirResistance)
 				particle:SetBounce(self.Bounce)
 				particle:SetGravity(self.Gravity)
-				particle:SetAngles(particle:GetAngles() + self.ParticleAngle)
+				if self.ZeroAngle then particle:SetAngles(Angle(0,0,0))
+				else particle:SetAngles(particle:GetAngles() + self.ParticleAngle) end
 				particle:SetLighting(self.Lighting)
 
 				if not self.Follow then
@@ -346,7 +358,12 @@ function PART:EmitParticles(pos, ang, real_ang)
 			end
 		end
 
-		self.NextShot = pac.RealTime + self.FireDelay
+		if self.FireDelay == 0 then
+			self.CanKeepFiring = false
+		else
+			self.NextShot = pac.RealTime + self.FireDelay
+			self.CanKeepFiring = true
+		end
 	end
 end
 
