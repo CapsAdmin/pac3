@@ -51,6 +51,12 @@ function PART:ShouldHighlight(str)
 	return _G[str] ~= nil
 end
 
+function PART:GetNiceName()
+	if self.UseLua then return ("lua: " .. self.String) end
+	return "command: " .. self.String
+	
+end
+
 local sv_allowcslua = GetConVar("sv_allowcslua")
 
 function PART:Execute()

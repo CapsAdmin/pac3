@@ -1,4 +1,16 @@
 local L = pace.LanguageString
+local BulkSelectList = {}
+local BulkSelectUIDs = {}
+pace.BulkSelectClipboard = {}
+refresh_halo_hook = true
+
+
+CreateConVar( "pac_hover_color", "255 255 255", FCVAR_ARCHIVE, "R G B value of the highlighting when hovering over pac3 parts, there are also special options: none, ocean, funky, rave, rainbow")
+CreateConVar( "pac_hover_pulserate", 20, FCVAR_ARCHIVE, "pulse rate of the highlighting when hovering over pac3 parts")
+CreateConVar( "pac_hover_halo_limit", 100, FCVAR_ARCHIVE, "max number of parts before hovering over pac3 parts stops computing to avoid lag")
+
+CreateConVar( "pac_bulk_select_key", "ctrl", FCVAR_ARCHIVE, "Button to hold to use bulk select")
+CreateConVar( "pac_bulk_select_halo_mode", 1, FCVAR_ARCHIVE, "Halo Highlight mode.\n0 is no highlighting\n1 is passive\n2 is when the same key as bulk select is pressed\n3 is when control key pressed\n4 is when shift key is pressed.")
 
 -- load only when hovered above
 local function add_expensive_submenu_load(pnl, callback)
@@ -11,6 +23,7 @@ local function add_expensive_submenu_load(pnl, callback)
 end
 
 function pace.WearParts(temp_wear_filter)
+
 	local allowed, reason = pac.CallHook("CanWearParts", pac.LocalPlayer)
 
 	if allowed == false then
@@ -98,13 +111,65 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 	end
 
 	pace.RefreshTree()
-
+	timer.Simple(0.3, function() BulkSelectRefreshFadedNodes() end)
 	return part
 end
 
-function pace.OnPartSelected(part, is_selecting)
-	local parent = part:GetRootPart()
+local last_span_select_part
+local last_select_was_span = false
+local last_direction
 
+function pace.OnPartSelected(part, is_selecting)
+
+	if input.IsKeyDown(input.GetKeyCode(GetConVar("pac_bulk_select_key"):GetString())) and not input.IsKeyDown(input.GetKeyCode("z")) and not input.IsKeyDown(input.GetKeyCode("y")) then
+		--jumping multi-select if holding shift + ctrl
+		if input.IsControlDown() and input.IsShiftDown() and not input.IsKeyDown(input.GetKeyCode("z")) and not input.IsKeyDown(input.GetKeyCode("y")) then
+			--ripped some local functions from tree.lua
+			local added_nodes = {}
+			for i,v in ipairs(pace.tree.added_nodes) do
+				if v.part and v:IsVisible() and v:IsExpanded() then
+					table.insert(added_nodes, v)
+				end
+			end
+
+			local startnodenumber = table.KeyFromValue( added_nodes, pace.current_part.pace_tree_node)
+			local endnodenumber = table.KeyFromValue( added_nodes, part.pace_tree_node)
+
+			table.sort(added_nodes, function(a, b) return select(2, a:LocalToScreen()) < select(2, b:LocalToScreen()) end)
+
+			local i = startnodenumber
+
+			direction = math.Clamp(endnodenumber - startnodenumber,-1,1)
+			if direction == 0 then last_direction = direction return end
+			last_direction = last_direction or 0
+			if last_span_select_part == nil then last_span_select_part = part end
+
+			if last_select_was_span then
+				if last_direction == -direction then
+					pace.DoBulkSelect(pace.current_part, true)
+				end
+				if last_span_select_part == pace.current_part then
+					pace.DoBulkSelect(pace.current_part, true)
+				end
+			end
+			while (i ~= endnodenumber) do
+				pace.DoBulkSelect(added_nodes[i].part, true)
+				i = i + direction
+			end
+			pace.DoBulkSelect(part)
+			last_direction = direction
+			last_select_was_span = true
+		else
+			pace.DoBulkSelect(part)
+			last_select_was_span = false
+		end
+
+	else last_select_was_span = false end
+	last_span_select_part = part
+
+
+
+	local parent = part:GetRootPart()
 	if parent:IsValid() and (parent.OwnerName == "viewmodel" or parent.OwnerName == "hands") then
 		pace.editing_viewmodel = parent.OwnerName == "viewmodel"
 		pace.editing_hands = parent.OwnerName == "hands"
@@ -132,6 +197,7 @@ function pace.OnPartSelected(part, is_selecting)
 	if not is_selecting then
 		pace.StopSelect()
 	end
+
 end
 
 function pace.OnVariableChanged(obj, key, val, not_from_editor)
@@ -239,7 +305,12 @@ function pace.GetRegisteredParts()
 end
 
 do -- menu
+
 	local trap
+	if not pace.Active or refresh_halo_hook then
+		hook.Remove('PreDrawHalos', "BulkSelectHighlights")
+	end
+
 	function pace.AddRegisteredPartsToMenu(menu, parent)
 		local partsToShow = {}
 		local clicked = false
@@ -509,6 +580,8 @@ do -- menu
 	end
 
 	function pace.RemovePart(obj)
+		if table.HasValue(BulkSelectList,obj) then table.RemoveByValue(BulkSelectList,obj) end
+
 		pace.RecordUndoHistory()
 		obj:Remove()
 		pace.RecordUndoHistory()
@@ -520,13 +593,177 @@ do -- menu
 		end
 	end
 
+	function pace.ClearBulkList()
+		for _,v in ipairs(BulkSelectList) do
+			if v.pace_tree_node ~= nil then v.pace_tree_node:SetAlpha( 255 ) end
+			v:SetInfo()
+		end
+		BulkSelectList = {}
+		print("Bulk list deleted!")
+		--surface.PlaySound('buttons/button16.wav')
+	end
+//@note pace.DoBulkSelect
+	function pace.DoBulkSelect(obj, silent)
+		refresh_halo_hook = false
+		--print(obj.pace_tree_node, "color", obj.pace_tree_node:GetFGColor().r .. " " .. obj.pace_tree_node:GetFGColor().g .. " " .. obj.pace_tree_node:GetFGColor().b)
+		if obj.ClassName == "timeline_dummy_bone" then return end
+		local selected_part_added = false	--to decide the sound to play afterward
+
+		BulkSelectList = BulkSelectList or {}
+		if (table.HasValue(BulkSelectList, obj)) then
+			pace.RemoveFromBulkSelect(obj)
+			selected_part_added = false
+		elseif (BulkSelectList[obj] == nil) then
+			pace.AddToBulkSelect(obj)
+			selected_part_added = true
+			for _,v in ipairs(obj:GetChildrenList()) do
+				pace.RemoveFromBulkSelect(v)
+			end
+		end
+
+		--check parents and children
+		for _,v in ipairs(BulkSelectList) do
+			if table.HasValue(v:GetChildrenList(), obj) then
+				--print("selected part is already child to a bulk-selected part!")
+				pace.RemoveFromBulkSelect(obj)
+				selected_part_added = false
+			elseif table.HasValue(obj:GetChildrenList(), v) then
+				--print("selected part is already parent to a bulk-selected part!")
+				pace.RemoveFromBulkSelect(v)
+				selected_part_added = false
+			end
+		end
+
+		RebuildBulkHighlight()
+		if not silent then
+			if selected_part_added then
+				surface.PlaySound('buttons/button1.wav')
+				--test print
+				for i,v in ipairs(BulkSelectList) do
+					print("["..i.."] = "..v.UniqueID)
+				end
+				print("\n")
+			else surface.PlaySound('buttons/button16.wav') end
+		end
+
+		if table.IsEmpty(BulkSelectList) then
+			--remove halo hook
+			hook.Remove('PreDrawHalos', "BulkSelectHighlights")
+		else
+			--start halo hook
+			hook.Add('PreDrawHalos', "BulkSelectHighlights", function()
+				local mode = GetConVar("pac_bulk_select_halo_mode"):GetInt()
+				if mode == 0 then return
+				elseif mode == 1 then ThinkBulkHighlight()
+				elseif mode == 2 then if input.IsKeyDown(input.GetKeyCode(GetConVar("pac_bulk_select_key"):GetString())) then ThinkBulkHighlight() end
+				elseif mode == 3 then if input.IsControlDown() then ThinkBulkHighlight() end
+				elseif mode == 4 then if input.IsShiftDown() then ThinkBulkHighlight() end
+				end
+			end)
+		end
+
+		for _,v in ipairs(BulkSelectList) do
+			--v.pace_tree_node:SetAlpha( 150 )
+		end
+	end
+
+	function pace.RemoveFromBulkSelect(obj)
+		table.RemoveByValue(BulkSelectList, obj)
+		obj.pace_tree_node:SetAlpha( 255 )
+		obj:SetInfo()
+		--RebuildBulkHighlight()
+	end
+
+	function pace.AddToBulkSelect(obj)
+		table.insert(BulkSelectList, obj)
+		if obj.pace_tree_node == nil then return end
+		obj:SetInfo("selected in bulk select")
+		obj.pace_tree_node:SetAlpha( 150 )
+		--RebuildBulkHighlight()
+	end
+
+	function pace.BulkCutPaste(obj)
+		pace.RecordUndoHistory()
+		for _,v in ipairs(BulkSelectList) do
+			--if a part is inserted onto itself, it should instead serve as a parent
+			if v ~= obj then v:SetParent(obj) end
+		end
+		pace.RecordUndoHistory()
+		pace.RefreshTree()
+	end
+
+	function pace.BulkCopy(obj)
+		if #BulkSelectList == 1 then pace.Copy(obj) end				--at least if there's one selected, we can take it that we want to copy that part
+		pace.BulkSelectClipboard = table.Copy(BulkSelectList)		--if multiple parts are selected, copy it to a new bulk clipboard
+		print("copied: ")
+		TestPrintTable(pace.BulkSelectClipboard,"pace.BulkSelectClipboard")
+	end
+
+	function pace.BulkPasteFromBulkClipboard(obj) --paste bulk clipboard into one part
+		pace.RecordUndoHistory()
+		if not table.IsEmpty(pace.BulkSelectClipboard) then
+			for _,v in ipairs(pace.BulkSelectClipboard) do
+				local newObj = pac.CreatePart(v.ClassName)
+				newObj:SetTable(v:ToTable(), true)
+				newObj:SetParent(obj)
+			end
+		end
+		pace.RecordUndoHistory()
+		--timer.Simple(0.3, function BulkSelectRefreshFadedNodes(obj) end)
+	end
+
+	function pace.BulkPasteFromBulkSelectToSinglePart(obj) --paste bulk selection into one part
+		pace.RecordUndoHistory()
+		if not table.IsEmpty(BulkSelectList) then
+			for _,v in ipairs(BulkSelectList) do
+				local newObj = pac.CreatePart(v.ClassName)
+				newObj:SetTable(v:ToTable(), true)
+				newObj:SetParent(obj)
+			end
+		end
+		pace.RecordUndoHistory()
+	end
+
+	function pace.BulkPasteFromSingleClipboard() --paste the normal clipboard into each bulk select item
+		pace.RecordUndoHistory()
+		if not table.IsEmpty(BulkSelectList) then
+			for _,v in ipairs(BulkSelectList) do
+				local newObj = pac.CreatePart(pace.Clipboard.self.ClassName)
+				newObj:SetTable(pace.Clipboard, true)
+				newObj:SetParent(v)
+			end
+		end
+		pace.RecordUndoHistory()
+		--timer.Simple(0.3, function BulkSelectRefreshFadedNodes(obj) end)
+	end
+
+	function pace.BulkRemovePart()
+		pace.RecordUndoHistory()
+		if not table.IsEmpty(BulkSelectList) then
+			for _,v in ipairs(BulkSelectList) do
+				v:Remove()
+
+				if not v:HasParent() and v.ClassName == "group" then
+					pace.RemovePartOnServer(v:GetUniqueID(), false, true)
+				end
+			end
+		end
+		pace.RefreshTree()
+		pace.RecordUndoHistory()
+		pace.ClearBulkList()
+		--timer.Simple(0.1, function BulkSelectRefreshFadedNodes() end)
+	end
+//@note part menu
 	function pace.OnPartMenu(obj)
 		local menu = DermaMenu()
 		menu:SetPos(input.GetCursorPos())
 
 		if obj then
 			if not obj:HasParent() then
-				menu:AddOption(L"wear", function() pace.SendPartToServer(obj) end):SetImage(pace.MiscIcons.wear)
+				menu:AddOption(L"wear", function()
+					pace.SendPartToServer(obj)
+					BulkSelectList = {}
+				end):SetImage(pace.MiscIcons.wear)
 			end
 
 			menu:AddOption(L"copy", function() pace.Copy(obj) end):SetImage(pace.MiscIcons.copy)
@@ -534,6 +771,77 @@ do -- menu
 			menu:AddOption(L"cut", function() pace.Cut(obj) end):SetImage('icon16/cut.png')
 			menu:AddOption(L"paste properties", function() pace.PasteProperties(obj) end):SetImage(pace.MiscIcons.replace)
 			menu:AddOption(L"clone", function() pace.Clone(obj) end):SetImage(pace.MiscIcons.clone)
+
+			--multi select
+			bulk_menu, icon = menu:AddSubMenu(L"bulk select ("..#BulkSelectList..")", function() pace.DoBulkSelect(obj) end)
+				icon:SetImage('icon16/table_multiple.png')
+				bulk_menu.GetDeleteSelf = function() return false end
+
+				local mode = GetConVar("pac_bulk_select_halo_mode"):GetInt()
+				local info
+				if mode == 0 then info = "not halo-highlighted"
+				elseif mode == 1 then info = "automatically halo-highlighted"
+				elseif mode == 2 then info = "halo-highlighted on custom keypress:"..GetConVar("pac_bulk_select_halo_key"):GetString()
+				elseif mode == 3 then info = "halo-highlighted on preset keypress: control"
+				elseif mode == 4 then info = "halo-highlighted on preset keypress: shift" end
+
+				bulk_menu:AddOption(L"Bulk select info: "..info, function() end):SetImage(pace.MiscIcons.info)
+				bulk_menu:AddOption(L"Bulk select clipboard info: " .. #pace.BulkSelectClipboard .. " copied parts", function() end):SetImage(pace.MiscIcons.info)
+
+				bulk_menu:AddOption(L"Insert (Move / Cut + Paste)", function()
+					pace.BulkCutPaste(obj)
+				end):SetImage('icon16/arrow_join.png')
+
+				bulk_menu:AddOption(L"Copy to Bulk Clipboard", function()
+					pace.BulkCopy(obj)
+				end):SetImage(pace.MiscIcons.copy)
+
+				bulk_menu:AddSpacer()
+
+				--bulk paste modes
+				bulk_menu:AddOption(L"Bulk Paste (bulk select -> into this part)", function()
+					pace.BulkPasteFromBulkSelectToSinglePart(obj)
+				end):SetImage('icon16/arrow_join.png')
+
+				bulk_menu:AddOption(L"Bulk Paste (clipboard or this part -> into bulk selection)", function()
+					if not pace.Clipboard then pace.Copy(obj) end
+					pace.BulkPasteFromSingleClipboard()
+				end):SetImage('icon16/arrow_divide.png')
+
+				bulk_menu:AddOption(L"Bulk Paste (Single paste from bulk clipboard -> into this part)", function()
+					pace.BulkPasteFromBulkClipboard(obj)
+				end):SetImage('icon16/arrow_join.png')
+
+				bulk_menu:AddOption(L"Bulk Paste (Multi-paste from bulk clipboard -> into bulk selection)", function()
+					for _,v in ipairs(BulkSelectList) do
+						pace.BulkPasteFromBulkClipboard(v)
+					end
+				end):SetImage('icon16/arrow_divide.png')
+
+				bulk_menu:AddSpacer()
+
+				bulk_menu:AddOption(L"Bulk paste properties from selected part", function()
+					pace.Copy(obj)
+					for _,v in ipairs(BulkSelectList) do
+						pace.PasteProperties(v)
+					end
+				end):SetImage(pace.MiscIcons.replace)
+
+				bulk_menu:AddOption(L"Bulk paste properties from clipboard", function()
+					for _,v in ipairs(BulkSelectList) do
+						pace.PasteProperties(v)
+					end
+				end):SetImage(pace.MiscIcons.replace)
+
+				bulk_menu:AddSpacer()
+
+				bulk_menu:AddOption(L"Bulk Delete", function()
+					pace.BulkRemovePart()
+				end):SetImage(pace.MiscIcons.clear)
+
+				bulk_menu:AddOption(L"Clear Bulk List", function()
+					pace.ClearBulkList()
+				end):SetImage('icon16/table_delete.png')
 
 			menu:AddSpacer()
 		end
@@ -575,36 +883,198 @@ do -- menu
 		local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
 		pnl:SetImage(pace.MiscIcons.load)
 		add_expensive_submenu_load(pnl, function() pace.AddSavedPartsToMenu(load, false, obj) end)
-
 		menu:AddOption(L"clear", function()
+			pace.ClearBulkList()
 			pace.ClearParts()
 		end):SetImage(pace.MiscIcons.clear)
 
 	end
 end
 
-do
+
+do --hover highlight halo
 	pac.haloex = include("pac3/libraries/haloex.lua")
 
+	local hover_halo_limit
+	local warn = false
+	local post_warn_next_allowed_check_time = 0
+	local post_warn_next_allowed_warn_time = 0
+	local last_culprit_UID = 0
+	local last_checked_partUID = 0
+	local last_tbl = {}
+	local last_bulk_select_tbl = nil
+	local last_root_ent = {}
+	local last_time_checked = 0
+
 	function pace.OnHoverPart(self)
+		local skip = false
+		if GetConVar("pac_hover_color"):GetString() == "none" then return end
+		hover_halo_limit = GetConVar("pac_hover_halo_limit"):GetInt()
+
 		local tbl = {}
 		local ent = self:GetOwner()
+		local is_root = ent == self:GetRootPart():GetOwner()
 
-		if ent:IsValid() then
-			table.insert(tbl, ent)
+		--decide whether to skip
+		--it will skip the part-search loop if we already checked the part recently
+		if self.UniqueID == last_checked_partUID then
+			skip = true
+			if is_root and last_root_ent ~= self:GetRootPart():GetOwner() then
+				table.RemoveByValue(last_tbl, last_root_ent)
+				table.insert(last_tbl, self:GetRootPart():GetOwner())
+			end
+			tbl = last_tbl
 		end
 
-		for _, child in ipairs(self:GetChildrenList()) do
-			local ent = self:GetOwner()
-			if ent:IsValid() then
+		--operations : search the part and look for entity-candidates to halo
+		if not skip then
+			--start with entity, which could be part or entity
+			if (is_root and ent:IsValid()) then
 				table.insert(tbl, ent)
+			else
+				if not ((self.ClassName == "group" or self.ClassName == "jiggle") or (self.Hide == true) or (self.Size == 0) or (self.Alpha == 0)) then
+					table.insert(tbl, ent)
+				end
+			end
+
+			--get the children if any
+			if self:HasChildren() then
+				for _,v in ipairs(self:GetChildrenList()) do
+					local can_add = false
+					local ent = v:GetOwner()
+
+					--we're not gonna add parts that don't have a specific reason to be haloed or that don't at least group up some haloable models
+					--because the table.insert function has a processing load on the memory, and so is halo-drawing
+					if (v.ClassName == "model" or v.ClassName ==  "model2" or v.ClassName == "jiggle") then
+						can_add = true
+					else can_add = false end
+					if (v.Hide == true) or (v.Size == 0) or (v.Alpha == 0) or (v:IsHidden()) then
+						can_add = false
+					end
+					if can_add then table.insert(tbl, ent) end
+				end
 			end
 		end
 
-		if #tbl > 0 then
-			local pulse = math.sin(pac.RealTime * 20) * 0.5 + 0.5
-			pulse = pulse * 255
-			pac.haloex.Add(tbl, Color(pulse, pulse, pulse, 255), 1, 1, 1, true, true, 5, 1, 1)
+		last_tbl = tbl
+		last_root_ent = self:GetRootPart():GetOwner()
+		last_checked_partUID = self.UniqueID
+
+		DrawHaloHighlight(tbl)
+
+		--also refresh the bulk-selected nodes' labels because pace.RefreshTree() resets their alphas, but I want to keep the fade because it indicates what's being bulk-selected
+		if not skip then timer.Simple(0.3, function() BulkSelectRefreshFadedNodes(self) end) end
+	end
+
+	function BulkSelectRefreshFadedNodes(part_trace)
+		if refresh_halo_hook then return end
+		if part_trace then
+			for _,v in ipairs(part_trace:GetRootPart():GetChildrenList()) do
+				v.pace_tree_node:SetAlpha( 255 )
+			end
 		end
+
+		for _,v in ipairs(BulkSelectList) do
+			v.pace_tree_node:SetAlpha( 150 )
+		end
+	end
+
+	function RebuildBulkHighlight()
+		local parts_tbl = {}
+		local ents_tbl = {}
+		local hover_tbl = {}
+		local ent = {}
+
+		--get potential entities and part-children from each parent in the bulk list
+		for _,v in pairs(BulkSelectList) do --this will get parts
+
+			if (v == v:GetRootPart()) then --if this is the root part, send the entity
+				table.insert(ents_tbl,v:GetRootPart():GetOwner())
+				table.insert(parts_tbl,v)
+			else
+				table.insert(parts_tbl,v)
+			end
+
+			for _,child in ipairs(v:GetChildrenList()) do --now do its children
+				table.insert(parts_tbl,child)
+			end
+		end
+
+		--check what parts are candidates we can give to halo
+		for _,v in ipairs(parts_tbl) do
+			local can_add = false
+			if (v.ClassName == "model" or v.ClassName ==  "model2") then
+				can_add = true
+			end
+			if (v.ClassName == "group") or (v.Hide == true) or (v.Size == 0) or (v.Alpha == 0) or (v:IsHidden()) then
+				can_add = false
+			end
+			if can_add then
+				table.insert(hover_tbl, v:GetOwner())
+			end
+		end
+
+		table.Add(hover_tbl,ents_tbl)
+		--TestPrintTable(hover_tbl, "hover_tbl")
+
+		last_bulk_select_tbl = hover_tbl
+	end
+
+	function TestPrintTable(tbl, tbl_name)
+		MsgC(Color(200,255,200), "TABLE CONTENTS:" .. tbl_name .. " = {\n")
+		for _,v in pairs(tbl) do
+			MsgC(Color(200,255,200), "\t", tostring(v), ", \n")
+		end
+		MsgC(Color(200,255,200), "}\n")
+	end
+
+	function ThinkBulkHighlight()
+		if table.IsEmpty(BulkSelectList) or last_bulk_select_tbl == nil or table.IsEmpty(pac.GetLocalParts()) or (#pac.GetLocalParts() == 1) then
+			hook.Remove('PreDrawHalos', "BulkSelectHighlights")
+			return
+		end
+		DrawHaloHighlight(last_bulk_select_tbl)
+	end
+
+	function DrawHaloHighlight(tbl)
+		if (type(tbl) ~= "table") then return end
+		if not pace.Active then
+			hook.Remove('PreDrawHalos', "BulkSelectHighlights")
+		end
+
+		--Find out the color and apply the halo
+		local color_string = GetConVar("pac_hover_color"):GetString()
+		local pulse_rate = math.min(math.abs(GetConVar("pac_hover_pulserate"):GetFloat()), 100)
+		local pulse = math.sin(SysTime() * pulse_rate) * 0.5 + 0.5
+		if pulse_rate == 0 then pulse = 1 end
+		local pulseamount
+
+		local halo_color
+
+		if color_string == "rave" then
+			halo_color = Color(255*((0.33 + SysTime() * pulse_rate/20)%1), 255*((0.66 + SysTime() * pulse_rate/20)%1), 255*((SysTime() * pulse_rate/20)%1), 255)
+			pulseamount = 8
+		elseif color_string == "ocean" then
+			halo_color = Color(0, 80 + 30*(pulse), 200 + 50*(pulse) * 0.5 + 0.5, 255)
+			pulseamount = 4
+		elseif color_string == "rainbow" then
+			--halo_color = Color(255*(0.5 + 0.5*math.sin(pac.RealTime * pulse_rate/20)),255*(0.5 + 0.5*-math.cos(pac.RealTime * pulse_rate/20)),255*(0.5 + 0.5*math.sin(1 + pac.RealTime * pulse_rate/20)), 255)
+			halo_color = HSVToColor(SysTime() * 360 * pulse_rate/20, 1, 1)
+			pulseamount = 4
+		elseif #string.Split(color_string, " ") == 3 then
+			halo_color_tbl = string.Split( color_string, " " )
+			for i,v in ipairs(halo_color_tbl) do
+				if not isnumber(tonumber(halo_color_tbl[i])) then halo_color_tbl[i] = 0 end
+			end
+			halo_color = Color(pulse*halo_color_tbl[1],pulse*halo_color_tbl[2],pulse*halo_color_tbl[3],255)
+			pulseamount = 4
+		else
+			halo_color = Color(255,255,255,255)
+			pulseamount = 2
+		end
+		--print("using", halo_color, "blurs=" .. 2, "amount=" .. pulseamount)
+
+		pac.haloex.Add(tbl, halo_color, 2, 2, pulseamount, true, true, pulseamount, 1, 1)
+		--haloex.Add( ents, color, blurx, blury, passes, add, ignorez, amount, spherical, shape )
 	end
 end

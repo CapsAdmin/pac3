@@ -2,6 +2,7 @@
 include("hands.lua")
 include("pac_weapon.lua")
 include("projectiles.lua")
+include("net_combat.lua")
 
 local cvar = CreateConVar("pac_restrictions", "0", FCVAR_REPLICATED)
 

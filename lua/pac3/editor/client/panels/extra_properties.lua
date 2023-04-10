@@ -714,9 +714,12 @@ do -- event is_touching
 			if part ~= last_part then stop() return end
 			if not part:IsValid() then stop() return end
 			if part.ClassName ~= "event" then stop() return end
-			if part:GetEvent() ~= "is_touching" then stop() return end
+			if not (part:GetEvent() == "is_touching" or part:GetEvent() == "is_touching_scalable") then stop() return end
 
 			local extra_radius = part:GetProperty("extra_radius") or 0
+			local x_stretch = part:GetProperty("x_stretch") or 1
+			local y_stretch = part:GetProperty("y_stretch") or 1
+			local z_stretch = part:GetProperty("z_stretch") or 1
 			local ent
 			if part.RootOwner then
 				ent = part:GetRootPart():GetOwner()
@@ -725,28 +728,36 @@ do -- event is_touching
 			end
 
 			if not IsValid(ent) then stop() return end
-			local radius = ent:BoundingRadius()
+			local radius
 
 			if radius == 0 and IsValid(ent.pac_projectile) then
 				radius = ent.pac_projectile:GetRadius()
 			end
 
-			radius = math.max(radius + extra_radius + 1, 1)
+			local mins = Vector(-x_stretch,-y_stretch,-z_stretch)
+			local maxs = Vector(x_stretch,y_stretch,z_stretch)
 
-			local mins = Vector(-1,-1,-1)
-			local maxs = Vector(1,1,1)
+			if part:GetEvent() == "is_touching" then
+				radius = math.max(ent:BoundingRadius() + extra_radius + 1, 1)
+				mins = mins * radius
+				maxs = maxs * radius
+			end
+			if part:GetEvent() == "is_touching_scalable" then
+				radius = math.max(extra_radius, 1)
+				mins = mins * radius
+				maxs = maxs * radius
+			end
+
 			local startpos = ent:WorldSpaceCenter()
-			mins = mins * radius
-			maxs = maxs * radius
 
 			local tr = util.TraceHull( {
 				start = startpos,
 				endpos = startpos,
 				maxs = maxs,
 				mins = mins,
-				filter = ent
+				filter = {part:GetRootPart():GetOwner(),ent}
 			} )
-			
+
 			if self.udata then
 				render.DrawWireframeBox( startpos, Angle( 0, 0, 0 ), mins, maxs, tr.Hit and Color(255,0,0) or Color(255,255,255), true )
 			end

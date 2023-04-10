@@ -5,10 +5,13 @@ function PANEL:Init()
 	local pnl = vgui.Create("DPropertySheet", self)
 	pnl:Dock(FILL)
 
-	local props = pace.FillWearSettings(pnl)
-
-	pnl:AddSheet("Wear / Ignore", props)
+	local properties_filter = pace.FillWearSettings(pnl)
+	
+	pnl:AddSheet("Wear / Ignore", properties_filter)
 	self.sheet = pnl
+	
+	--local properties_shortcuts = pace.FillShortcutSettings(pnl)
+	--pnl:AddSheet("Editor Shortcuts", properties_shortcuts)
 end
 
 vgui.Register( "pace_settings", PANEL, "DPanel" )

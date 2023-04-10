@@ -417,6 +417,7 @@ if SERVER then
 		end
 		pace.suppress_prop_spawn = nil
 
+		local multi_projectile_count = net.ReadUInt(7)
 		local pos = net.ReadVector()
 		local ang = net.ReadAngle()
 		local part = net.ReadTable()
@@ -453,7 +454,7 @@ if SERVER then
 			end
 
 			if projectile_count > 50 then
-				pac.Message("Player ", ply, " has more than 50 projectiles spawned!")
+				pac.Message("Player ", ply, " has more than 50 projectiles spawned! No more will be spawned until some expire.")
 				return
 			end
 
@@ -494,10 +495,57 @@ if SERVER then
 			ent.pac_projectile_owner = ply
 		end
 
-		if part.Delay == 0 then
-			spawn()
+		local function multispawn()
+			if not ply:IsValid() then return end
+
+			ply.pac_projectiles = ply.pac_projectiles or {}
+
+			local projectile_count = 0
+			for ent in pairs(ply.pac_projectiles) do
+				if ent:IsValid() then
+					projectile_count = projectile_count + 1
+				else
+					ply.pac_projectiles[ent] = nil
+				end
+			end
+
+			local remaining_projectile_slots = math.max(50 - projectile_count,0)
+
+			if (multi_projectile_count > remaining_projectile_slots) then
+				if remaining_projectile_slots == 0 then
+					--block the spawns
+					pac.Message("Player ", ply, " has 50 projectiles spawned! No more will be spawned until some expire.")
+					goto CONTINUE
+				else
+					--adjust the spawn to just the limit
+					pac.Message("Player ", ply, " will spawn only ",remaining_projectile_slots," projectiles to prevent going over-limit")
+					multi_projectile_count = remaining_projectile_slots
+				end
+
+			end
+			if part.Maximum > 0 and projectile_count >= part.Maximum then
+				return
+			end
+
+			for i = multi_projectile_count - 1, 0, -1 do
+				spawn()
+			end
+
+			::CONTINUE::
+		end
+
+		if multi_projectile_count == 1 then
+			if part.Delay == 0 then
+				spawn()
+			else
+				timer.Simple(part.Delay, spawn)
+			end
 		else
-			timer.Simple(part.Delay, spawn)
+			if part.Delay == 0 then
+				multispawn()
+			else
+				timer.Simple(part.Delay, multispawn)
+			end
 		end
 	end)
 end

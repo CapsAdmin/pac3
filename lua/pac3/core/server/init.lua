@@ -17,6 +17,7 @@ include("pac3/core/shared/init.lua")
 include("effects.lua")
 include("event.lua")
 include("net_messages.lua")
+include("net_combat.lua")
 include("test_suite_backdoor.lua")
 include("in_skybox.lua")
 
