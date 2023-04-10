@@ -741,10 +741,13 @@ function PART:SetAlternativeScaling(b)
 	self:SetScale(self.Scale)
 end
 
-function PART:SetScale(var)
-	var = var or Vector(1,1,1)
+function PART:SetScale(vec)
+	if vec then
+		vec = Vector(math.Clamp(vec.x, -100, 100), math.Clamp(vec.y, -100, 100), math.Clamp(vec.z, -100, 100))
+	end
+	vec = vec or Vector(1,1,1)
 
-	self.Scale = var
+	self.Scale = vec
 
 	if not self:CheckScale() then
 		self:ApplyMatrix()
