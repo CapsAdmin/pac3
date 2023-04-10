@@ -8,8 +8,8 @@ util.AddNetworkString("pac3_test_suite_backdoor")
 net.Receive("pac3_test_suite_backdoor", function(len, ply)
 	-- needs to be enabled through lua first, eg lua_run pac.test_suite_backdoor_enabled = true
 	if not pac.test_suite_backdoor_enabled then return end
+	
 	-- need to be at least super admin
-	if not enabledConvar:GetBool() then return end
 	if not ply:IsSuperAdmin() then return end
 
 	local id = net.ReadString()
