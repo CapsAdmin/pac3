@@ -7,7 +7,7 @@ local DisableClipping = DisableClipping
 local render_CullMode = render.CullMode
 local cam_End3D2D = cam.End3D2D
 local cam_End3D = cam.End3D
-local TEXT_ALIGN_CENTER = TEXT_ALIGN_CENTER
+--local Text_Align = TEXT_ALIGN_CENTER
 local surface_SetFont = surface.SetFont
 local Color = Color
 
@@ -18,9 +18,36 @@ PART.Group = 'effects'
 PART.Icon = 'icon16/text_align_center.png'
 
 BUILDER:StartStorableVars()
-	BUILDER:GetSet("Text", "")
-	BUILDER:GetSet("Font", "default")
-	BUILDER:GetSet("Size", 1, {editor_sensitivity = 0.25})
+	:SetPropertyGroup("generic")
+		:PropertyOrder("Name")
+		:PropertyOrder("Hide")
+		:GetSet("Text", "")
+		:GetSet("Font", "default")
+		:GetSet("Size", 1, {editor_sensitivity = 0.25})
+
+
+	:SetPropertyGroup("text layout")
+		:GetSet("HorizontalTextAlign", TEXT_ALIGN_CENTER, {enums = {["Left"] = "0", ["Center"] = "1", ["Right"] = "2"}})
+		:GetSet("VerticalTextAlign", TEXT_ALIGN_CENTER, {enums = {["Center"] = "1", ["Top"] = "3", ["Bottom"] = "4"}})
+		:GetSet("ConcatenateTextAndOverrideValue",false,{editor_friendly = "CombinedText"})
+
+	:SetPropertyGroup("data source")
+		:GetSet("TextOverride", "Text", {enums = {
+			["Text"] = "Text",
+			["Health"] = "Health",
+			["Maximum Health"] = "MaxHealth",
+			["Armor"] = "Armor",
+			["Maximum Armor"] = "MaxArmor",
+			["Timerx"] = "Timerx",
+			["CurTime"] = "CurTime",
+			["RealTime"] = "RealTime",
+			["Clip current Ammo"] = "Ammo",
+			["Clip Size"] = "ClipSize",
+			["Ammo Reserve"] = "AmmoReserve",
+			["Proxy value (Using DynamicTextValue)"] = "Proxy"}})
+		:GetSet("DynamicTextValue", 0)
+
+	:SetPropertyGroup("appearance")
 	BUILDER:GetSet("Outline", 0)
 	BUILDER:GetSet("Color", Vector(255, 255, 255), {editor_panel = "color"})
 	BUILDER:GetSet("Alpha", 1, {editor_sensitivity = 0.25, editor_clamp = {0, 1}})
@@ -34,7 +61,9 @@ BUILDER:StartStorableVars()
 BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
-	return '"' .. self:GetText() .. '"'
+	if self.TextOverride ~= "Text" then return self.TextOverride end
+
+	return 'Text: "' .. self:GetText() .. '"'
 end
 
 function PART:SetColor(v)
@@ -73,6 +102,7 @@ end
 
 function PART:SetFont(str)
 	if not pcall(surface_SetFont, str) then
+		pac.Message(Color(255,150,0),str.." Font not found! Reverting to DermaDefault!")
 		str = "DermaDefault"
 	end
 
@@ -81,22 +111,55 @@ end
 
 function PART:OnDraw()
 	local pos, ang = self:GetDrawPosition()
+	local DisplayText = self.Text or ""
+	if self.TextOverride == "Text" then goto DRAW end
 
-	if self.Text ~= "" then
+	if self.TextOverride == "Health"then DisplayText = self:GetPlayerOwner():Health()
+	elseif self.TextOverride == "MaxHealth"	then
+		DisplayText = self:GetPlayerOwner():GetMaxHealth()
+	elseif self.TextOverride == "Ammo" then
+		DisplayText = self:GetPlayerOwner():GetActiveWeapon():Clip1()
+	elseif self.TextOverride == "ClipSize" then
+		DisplayText = self:GetPlayerOwner():GetActiveWeapon():GetMaxClip1()
+	elseif self.TextOverride == "AmmoReserve" then
+		DisplayText = self:GetPlayerOwner():GetAmmoCount(self:GetPlayerOwner():GetActiveWeapon():GetPrimaryAmmoType())
+	elseif self.TextOverride == "Armor" then
+		DisplayText = self:GetPlayerOwner():Armor()
+	elseif self.TextOverride == "MaxArmor" then
+		DisplayText = self:GetPlayerOwner():GetMaxArmor()
+	elseif self.TextOverride == "Timerx" then
+		DisplayText = ""..math.Round(CurTime() - self.time,2)
+	elseif self.TextOverride == "CurTime" then
+		DisplayText = ""..math.Round(CurTime(),2)
+	elseif self.TextOverride == "RealTime" then
+		DisplayText = ""..math.Round(RealTime(),2)
+	elseif self.TextOverride == "Proxy" then
+		--print(type(self.DynamicTextValue))
+		DisplayText = ""..math.Round(self.DynamicTextValue,2)
+	end
+
+	if self.ConcatenateTextAndOverrideValue then DisplayText = ""..self.Text..DisplayText end
+
+	::DRAW::
+	if DisplayText ~= "" then
 		cam_Start3D(EyePos(), EyeAngles())
 			cam_Start3D2D(pos, ang, self.Size)
 			local oldState = DisableClipping(true)
 
-			draw_SimpleTextOutlined(self.Text, self.Font, 0,0, self.ColorC, TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER, self.Outline, self.OutlineColorC)
+			draw_SimpleTextOutlined(DisplayText, self.Font, 0,0, self.ColorC, self.HorizontalTextAlign,self.VerticalTextAlign, self.Outline, self.OutlineColorC)
 			render_CullMode(1) -- MATERIAL_CULLMODE_CW
 
-			draw_SimpleTextOutlined(self.Text, self.Font, 0,0, self.ColorC, TEXT_ALIGN_CENTER,TEXT_ALIGN_CENTER, self.Outline, self.OutlineColorC)
+			draw_SimpleTextOutlined(DisplayText, self.Font, 0,0, self.ColorC, self.HorizontalTextAlign,self.VerticalTextAlign, self.Outline, self.OutlineColorC)
 			render_CullMode(0) -- MATERIAL_CULLMODE_CCW
 
 			DisableClipping(oldState)
 			cam_End3D2D()
 		cam_End3D()
 	end
+end
+
+function PART:OnShow()
+	self.time = CurTime()
 end
 
 function PART:SetText(str)
