@@ -243,7 +243,7 @@ if SERVER then
 		for _,ent in pairs(ents_hits) do
 			if IsEntity(ent) then
 				if (not tbl.AffectSelf) and ent == dmg_info:GetInflictor() then --nothing
-				elseif (ent:IsPlayer() and tbl.Players) or (ent:IsNPC() and tbl.NPC) or (string.find(ent:GetClass(), "npc") ~= nil) or (ent:GetClass() == "prop_physics") then
+				elseif (ent:IsPlayer() and tbl.Players) or (ent:IsNPC() and tbl.NPC) or (string.find(ent:GetClass(), "npc") ~= nil) or (string.find(ent:GetClass(), "drg_") ~= nil) or (ent:GetClass() == "prop_physics") then
 					--local oldvel = ent:GetVelocity()
 					local ents2 = {dmg_info:GetInflictor()}
 					if tbl.Bullet then
