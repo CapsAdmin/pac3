@@ -1,5 +1,6 @@
 local grab_consents = {}
 local damage_zone_consents = {}
+local grab_pairs = {}
 
 local damage_types = {
 	generic = 0, --generic damage
@@ -54,7 +55,9 @@ if SERVER then
 	util.AddNetworkString("pac_request_velocity_force_on_entity")
 	util.AddNetworkString("pac_request_zone_damage")
 	util.AddNetworkString("pac_signal_player_combat_consent")
+	util.AddNetworkString("pac_signal_stop_lock")
 	util.AddNetworkString("pac_request_player_combat_consent_update")
+	
 
 	net.Receive("pac_hitscan", function(len,ply)
 		print("WE SHOULD DO A BULLET IN THE SERVER!")
@@ -240,7 +243,7 @@ if SERVER then
 		for _,ent in pairs(ents_hits) do
 			if IsEntity(ent) then
 				if (not tbl.AffectSelf) and ent == dmg_info:GetInflictor() then --nothing
-				elseif (ent:IsPlayer() and tbl.Players) or (ent:IsNPC() and tbl.NPC) or (ent:GetClass() == "prop_physics") then
+				elseif (ent:IsPlayer() and tbl.Players) or (ent:IsNPC() and tbl.NPC) or (string.find(ent:GetClass(), "npc") ~= nil) or (ent:GetClass() == "prop_physics") then
 					--local oldvel = ent:GetVelocity()
 					local ents2 = {dmg_info:GetInflictor()}
 					if tbl.Bullet then
@@ -288,6 +291,7 @@ if SERVER then
 		local override_ang = net.ReadBool()
 		local targ_ent = net.ReadEntity()
 		local auth_ent = net.ReadEntity()
+		grab_pairs[auth_ent] = targ_ent
 
 		if targ_ent:EntIndex() == 0 then return end
 		if targ_ent ~= auth_ent and grab_consents[targ_ent] == false then return end
@@ -331,6 +335,15 @@ if SERVER then
 		end
 	end)
 
+	net.Receive("pac_signal_stop_lock", function(len,ply)
+		for targ,ply in pairs(grab_pairs) do
+			if grab_pairs[ply] == targ then
+				net.Start("pac_request_lock_break")
+				net.Send(ply)
+			end
+		end
+	end)
+
 	concommand.Add("pac_refresh_consents", function()
 		pac_combat_RefreshConsents()
 	end)
@@ -352,6 +365,10 @@ end
 if CLIENT then
 	CreateConVar("pac_client_grab_consent", "0", true, true)
 	CreateConVar("pac_client_damage_zone_consent", "0", true, true)
+	concommand.Add( "pac_stop_lock", function()
+		net.Start("pac_signal_stop_lock")
+		net.SendToServer()
+	end, "asks the server to breakup any lockpart hold on your player")
 	net.Receive("pac_request_player_combat_consent_update", function()
 		print("player receives request to update consents")
 		net.Start("pac_signal_player_combat_consent")
