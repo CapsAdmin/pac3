@@ -18,20 +18,27 @@ PART.Icon = 'icon16/lock.png'
 
 
 BUILDER:StartStorableVars()
-	:SetPropertyGroup("Conditions")
-		:GetSet("Players", false)
-		:GetSet("PhysicsProps", false)
-		:GetSet("NPC", false)
+	:SetPropertyGroup("Behaviour")
+		:GetSet("Mode", "None", {enums = {["None"] = "None", ["Grab"] = "Grab", ["Teleport"] = "Teleport"}})
+		:GetSet("OverrideAngles", true, {description = "Whether the part will rotate the entity alongside it, otherwise it changes just the position"})
+		:GetSet("RelativeGrab", false)
+		:GetSet("RestoreDelay", 1, {description = "Seconds until the entity's original angles before grabbing are re-applied"})
+
 	:SetPropertyGroup("DetectionOrigin")
 		:GetSet("Radius", 20)
 		:GetSet("RadiusOffsetDown", false, {description = "Lowers the detect origin by the radius distance"})
 		:GetSetPart("TargetPart")
 		:GetSet("ContinuousSearch", false, {description = "Will search for entities until one is found. Otherwise only try once when part is shown."})
-	:SetPropertyGroup("Behaviour")
-		:GetSet("OverrideAngles", true, {description = "Whether the part will rotate the entity alongside it, otherwise it changes just the position"})
-		:GetSet("RelativeGrab", false)
-		:GetSet("RestoreDelay", 1, {description = "Seconds until the entity's original angles before grabbing are re-applied"})
-		:GetSet("Mode", "None", {enums = {["None"] = "None", ["Grab"] = "Grab", ["Teleport"] = "Teleport"}})
+
+	:SetPropertyGroup("PlayerCameraOverride")
+		:GetSet("OverrideEyeAngles", true, {description = "Whether the part will try to override players' eye angles. Requires OverrideAngles and user consent"})
+		:GetSetPart("OverrideEyePositionPart")
+
+	:SetPropertyGroup("Targets")
+		:GetSet("Players", false)
+		:GetSet("PhysicsProps", false)
+		:GetSet("NPC", false)
+
 BUILDER:EndStorableVars()
 
 local valid_ent = false
@@ -40,7 +47,19 @@ local last_request_time = SysTime()
 local last_entsearch =  SysTime()
 local default_ang = Angle(0,0,0)
 
+local forcebreak = false
+local next_allowed_grab = SysTime()
+
 function PART:OnThink()
+	
+	if SysTime() > next_allowed_grab then
+		forcebreak = false
+	elseif forcebreak then
+		valid_ent = false
+		self:reset_ent_ang()
+		target_ent = nil
+		return
+	end
 
 	self:GetWorldPosition()
 	self:GetWorldAngles()
@@ -59,15 +78,19 @@ function PART:OnThink()
 
 	--self:DecideTarget()
 	if self.Mode == "Grab" then
+		if self.OverrideAngles then
+			default_ang = self.target_ent:GetAngles()
+			if self.OverrideEyeAngles then default_ang.y = self:GetWorldAngles().y end
+		end
 		if not grabbing and not self.OverrideAngles then default_ang = self.target_ent:GetAngles() end
 
-		relative_transform_matrix = self.relative_transform_matrix or Matrix():Identity()
+		local relative_transform_matrix = self.relative_transform_matrix or Matrix():Identity()
 		if not self.RelativeGrab then
 			relative_transform_matrix = Matrix()
 			relative_transform_matrix:Identity()
 		end
 
-		offset_matrix = Matrix()
+		local offset_matrix = Matrix()
 		offset_matrix:Translate(self:GetWorldPosition())
 		offset_matrix:Rotate(self:GetWorldAngles())
 		offset_matrix:Mul(relative_transform_matrix)
@@ -75,76 +98,129 @@ function PART:OnThink()
 		local relative_offset_pos = offset_matrix:GetTranslation()
 		local relative_offset_ang = offset_matrix:GetAngles()
 
-		net.Start("pac_request_position_override_on_entity")
-		net.WriteVector(relative_offset_pos)
-		net.WriteAngle(relative_offset_ang)
+		if LocalPlayer() == self:GetPlayerOwner() then
+			net.Start("pac_request_position_override_on_entity")
+			if self.RelativeGrab then
+				net.WriteVector(relative_offset_pos)
+				net.WriteAngle(relative_offset_ang)
+			else
+				net.WriteVector(self:GetWorldPosition())
+				net.WriteAngle(self:GetWorldAngles())
+			end
+		end
+
 		local can_rotate = self.OverrideAngles
 		if self.target_ent:IsPlayer() then can_rotate = false end
-		net.WriteBool(can_rotate)
-		net.WriteEntity(self.target_ent)
-		net.WriteEntity(self:GetRootPart():GetOwner())
+		if LocalPlayer() == self:GetPlayerOwner() then
+			net.WriteBool(can_rotate)
+			net.WriteEntity(self.target_ent)
+			net.WriteEntity(self:GetRootPart():GetOwner())
+			net.SendToServer()
+		end
 		--print(self:GetRootPart():GetOwner())
-		net.SendToServer()
-		if self.Players and self.target_ent:IsPlayer() then
+
+		if self.Players and self.target_ent:IsPlayer() and self.OverrideAngles then
+			
 			local mat = Matrix()
 			mat:Identity()
-			mat:Rotate(Angle(0,270,0))
+			mat:Rotate(Angle(0,0,0))
 			mat:Rotate(self:GetWorldAngles())
+			--mat:Rotate(Angle(self:GetWorldAngles().p,self:GetWorldAngles().y,self:GetWorldAngles().r))
 			self.target_ent:EnableMatrix("RenderMultiply", mat)
+			if self.OverrideEyeAngles then
+				--self.target_ent:SetEyeAngles(Angle(self:GetWorldAngles().p,default_ang.y,default_ang.r))
+			end
+			if self.OverrideEyePositionPart then
+				--[[if self.OverrideEyePositionPart:IsValid() then
+					self.target_ent:SetCurrentViewOffset(self.OverrideEyePositionPart:GetWorldPosition() - self:GetWorldPosition())
+				end]]
+			end
+			--if self.OverrideEyeAngles then self.target_ent:SetEyeAngles(self:GetWorldAngles()) end
 		end
+		
 		last_request_time = SysTime()
 		grabbing = true
 		teleported = false
 	elseif self.Mode == "Teleport" and not teleported then
 
 		self.target_ent = nil
-		net.Start("pac_request_position_override_on_entity")
-		net.WriteVector(self:GetWorldPosition())
+		
 		local ang_yaw_only = self:GetWorldAngles()
 		ang_yaw_only.p = 0
 		ang_yaw_only.r = 0
-		net.WriteAngle(ang_yaw_only)
-		net.WriteBool(self.OverrideAngles)
-		net.WriteEntity(self:GetPlayerOwner())
-		net.WriteEntity(self:GetPlayerOwner())
-		net.SendToServer()
+		if LocalPlayer() == self:GetPlayerOwner() then
+			net.Start("pac_request_position_override_on_entity")
+			net.WriteVector(self:GetWorldPosition())
+			net.WriteAngle(ang_yaw_only)
+			net.WriteBool(self.OverrideAngles)
+			net.WriteEntity(self:GetPlayerOwner())
+			net.WriteEntity(self:GetPlayerOwner())
+			net.SendToServer()
+		end
 		self:GetPlayerOwner():SetAngles( ang_yaw_only )
 
 		teleported = true
 		grabbing = false
 	end
+
+	if CLIENT then
+		net.Receive("pac_request_lock_break", function(len)
+			local target_to_release = net.ReadEntity()
+			print("YOU'RE HOLDING " .. tostring(self.target_ent))
+			pac.Message(Color(255, 50, 50), tostring(target_to_release) .. " WANTS TO BREAK FREE!!")
+			if self.target_ent == target_to_release then
+				forcebreak = true
+				next_allowed_grab = SysTime() + 3
+			end
+		end)
+	end
 end
 
---continuous : keep trying until hit
---not : try only once
 
 
 function PART:OnShow()
+
+	if self.Preview then 
+		hook.Add("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview", function()
+			if self.RadiusOffsetDown then
+				render.DrawLine(self:GetWorldPosition(),self:GetWorldPosition() + Vector(0,0,-self.Radius),Color(255,255,255))
+				render.DrawWireframeSphere(self:GetWorldPosition() + Vector(0,0,-self.Radius), self.Radius, 30, 30, Color(255,255,255),true)
+			else render.DrawWireframeSphere(self:GetWorldPosition(), self.Radius, 30, 30, Color(255,255,255),true) end
+		end)
+	end
 	self.target_ent = nil
-	self.relative_transform_matrix = Matrix():Identity()
+	--self.relative_transform_matrix = Matrix():Identity()
 	self:DecideTarget()
 	self:CheckEntValidity()
-	self:CalculateRelativeOffset()
+	--self:CalculateRelativeOffset()
 end
 
 function PART:OnHide()
+	hook.Remove("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview")
 	teleported = false
 	grabbing = false
 	if self.target_ent == nil then return end
 	timer.Simple(math.min(self.RestoreDelay,5), function()
 		if self.target_ent == nil then return end
-		if self.target_ent:IsValid() then
+		self:reset_ent_ang()
+	end)
+end
+
+function PART:reset_ent_ang()
+	if self.target_ent:IsValid() then
+		--if self.target_ent:GetClass() == "prop_physics" then return end
+		if LocalPlayer() == self:GetPlayerOwner() then
 			net.Start("pac_request_angle_reset_on_entity")
 			net.WriteAngle(default_ang)
 			net.WriteFloat(self.RestoreDelay)
 			net.WriteEntity(self.target_ent)
 			net.WriteEntity(self:GetPlayerOwner())
 			net.SendToServer()
-			if self.Players then
-				self.target_ent:DisableMatrix("RenderMultiply")
-			end
 		end
-	end)
+		if self.Players then
+			self.target_ent:DisableMatrix("RenderMultiply")
+		end
+	end
 end
 
 function PART:OnRemove()
@@ -155,14 +231,15 @@ function PART:DecideTarget()
 	local ents = ents.GetAll()
 	local ents_candidates = {}
 	local chosen_ent = nil
+	local target_part = self.TargetPart
 	--filter entities
 	for i, ent_candidate in ipairs(ents) do
 		--print(ent_candidate:GetClass())
 		if ent_candidate:IsValid() then
 			local origin
 
-			if self.TargetPart and self.TargetPart:IsValid() then
-				origin = self.TargetPart:GetWorldPosition()
+			if self.TargetPart and (self.TargetPart):IsValid() then
+				origin = (self.TargetPart):GetWorldPosition()
 			else
 				origin = self:GetWorldPosition()
 			end
@@ -179,7 +256,7 @@ function PART:DecideTarget()
 						chosen_ent = ent_candidate
 						table.insert(ents_candidates, ent_candidate)
 					end
-				elseif self.PhysicsProps and ent_candidate:GetClass() == "prop_physics" then
+				elseif self.PhysicsProps and (ent_candidate:GetClass() == "prop_physics" or ent_candidate:GetClass() == "prop_ragdoll") then
 					chosen_ent = ent_candidate
 					table.insert(ents_candidates, ent_candidate)
 				elseif self.NPC and ent_candidate:IsNPC() then

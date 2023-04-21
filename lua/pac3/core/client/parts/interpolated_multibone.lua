@@ -30,6 +30,7 @@ BUILDER:StartStorableVars()
 		:GetSet("Force000", false)
 	:SetPropertyGroup("Interpolation")
 		:GetSet("LerpValue",0)
+		:GetSet("Power",1)
 		:GetSet("InterpolatePosition", true)
 		:GetSet("InterpolateAngles", true)
 	:SetPropertyGroup("Nodes")
@@ -42,17 +43,38 @@ BUILDER:StartStorableVars()
 
 --PART:GetWorldPosition()
 --PART:GetWorldAngles()
+function PART:OnRemove()
+	SafeRemoveEntityDelayed(self.Owner,0.1)
+end
+
 function PART:Initialize()
 	print("a multiboner is born")
+
+	self:SetOwner(pac.CreateEntity("models/pac/default.mdl"))
+	self.Owner:SetNoDraw(true)
+	pac.HookEntityRender(self.Owner, self)
+	pac.HookEntityRender(self.Owner, self)
+	self.Owner.PACPart = self
 end
 
 function PART:OnShow()
 
 end
+
+function PART:OnHide()
+	hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw")
+
+end
+
+function PART:OnRemove()
+	hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw")
+end
 --NODES			self	1		2		3
 --STAGE			0		1		2		3
 --PROPORTION	0	0.5	0	0.5	0	0.5	3
 function PART:OnDraw()
+	
+
 	local ent = self:GetOwner()
 	self.pos,self.ang = self:GetDrawPosition()
 	if not self.Test1 then hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw") end
@@ -62,10 +84,10 @@ function PART:OnDraw()
 
 	if self.Test1 then
 		hook.Add("PostDrawOpaqueRenderables", "Multibone_draw", function()
-			render.DrawLine(self.pos,self.pos + self.ang:Forward()*150, Color(255,0,0))
-			render.DrawLine(self.pos,self.pos - self.ang:Right()*150, Color(0,255,0))
-			render.DrawLine(self.pos,self.pos + self.ang:Up()*150, Color(0,0,255))
-			render.DrawWireframeSphere(self.pos, 20 + 5*math.sin(5*RealTime()), 15, 15, Color(255,255,255), true)
+			render.DrawLine(self.pos,self.pos + self.ang:Forward()*50, Color(255,0,0))
+			render.DrawLine(self.pos,self.pos - self.ang:Right()*50, Color(0,255,0))
+			render.DrawLine(self.pos,self.pos + self.ang:Up()*50, Color(0,0,255))
+			render.DrawWireframeSphere(self.pos, 8 + 2*math.sin(5*RealTime()), 15, 15, Color(255,255,255), true)
 		end)
 	end
 	self:Interpolate(stage,proportion)
@@ -75,7 +97,8 @@ function PART:OnDraw()
 	self:PostEntityDraw(ent, pos, ang)]]
 	ent:SetPos(self.pos)
 	ent:SetAngles(self.ang)
-	pac.ResetBones(ent)
+	--self:ShowFromRendering()
+	--pac.ResetBones(ent)
 	--ent:DrawModel()
 end
 
@@ -85,6 +108,8 @@ function PART:OnThink()
 	if self.Node3 ~= nil then nodes["Node3"] = self.Node3 end
 	if self.Node4 ~= nil then nodes["Node4"] = self.Node4 end
 	if self.Node5 ~= nil then nodes["Node5"] = self.Node5 end
+
+
 end
 
 function PART:SetWorldPos(x,y,z)
@@ -107,15 +132,16 @@ function PART:Interpolate(stage, proportion)
 	if firstnode == nil or firstnode == NULL then firstnode = self end
 	if secondnode == nil or secondnode == NULL then secondnode = self end
 
+	proportion = math.pow(proportion,self.Power)
 	if secondnode ~= nil and secondnode ~= NULL then
-		self.pos = (1-proportion)*firstnode:GetWorldPosition() + (secondnode:GetWorldPosition())*proportion
-		self.ang = (1-proportion)*firstnode:GetWorldAngles() + (secondnode:GetWorldAngles())*proportion
+		self.pos = (1-proportion)*(firstnode:GetWorldPosition()) + (secondnode:GetWorldPosition())*proportion
+		self.ang = (1-proportion)*(firstnode:GetWorldAngles() + Angle(360,360,360)) + (secondnode:GetWorldAngles() + Angle(360,360,360))*proportion
 	elseif proportion == 0 then
 		self.pos = firstnode:GetWorldPosition()
 		self.ang = firstnode:GetWorldAngles()
 	else
 		self.pos = (1-proportion)*self:GetWorldPosition() + (self:GetWorldPosition())*proportion
-		self.ang = (1-proportion)*self:GetWorldPosition() + (self:GetWorldPosition())*proportion
+		self.ang = (1-proportion)*(self:GetWorldAngles() + Angle(360,360,360)) + (self:GetWorldAngles() + Angle(360,360,360))*proportion
 	end
 
 end

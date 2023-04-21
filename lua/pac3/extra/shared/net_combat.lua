@@ -1,6 +1,7 @@
 local grab_consents = {}
 local damage_zone_consents = {}
 local grab_pairs = {}
+local pairs_grabbed_by = {}
 
 local damage_types = {
 	generic = 0, --generic damage
@@ -56,6 +57,7 @@ if SERVER then
 	util.AddNetworkString("pac_request_zone_damage")
 	util.AddNetworkString("pac_signal_player_combat_consent")
 	util.AddNetworkString("pac_signal_stop_lock")
+	util.AddNetworkString("pac_request_lock_break")
 	util.AddNetworkString("pac_request_player_combat_consent_update")
 	
 
@@ -81,7 +83,6 @@ if SERVER then
 		dmg_info:SetAttacker(ply_ent)
 		dmg_info:SetInflictor(ply_ent)
 		--print("entity: ",ply_ent)
-		if tbl.OverrideKnockback then print("should override") end
 
 		dmg_info:SetDamageType(damage_types[tbl.DamageType]) --print(tbl.DamageType .. " resolves to " .. damage_types[tbl.DamageType])
 
@@ -291,7 +292,11 @@ if SERVER then
 		local override_ang = net.ReadBool()
 		local targ_ent = net.ReadEntity()
 		local auth_ent = net.ReadEntity()
-		grab_pairs[auth_ent] = targ_ent
+		if not grab_pairs[auth_ent] then
+			grab_pairs[auth_ent] = targ_ent
+			pairs_grabbed_by[targ_ent] = auth_ent
+			print(auth_ent, "grabs", targ_ent)
+		end
 
 		if targ_ent:EntIndex() == 0 then return end
 		if targ_ent ~= auth_ent and grab_consents[targ_ent] == false then return end
@@ -304,6 +309,8 @@ if SERVER then
 		targ_ent:SetPos(pos)
 		
 		if targ_ent:IsPlayer() then targ_ent:SetVelocity(-targ_ent:GetVelocity()) end
+
+		if targ_ent:GetClass() == "prop_ragdoll" then targ_ent:GetPhysicsObject():SetPos(pos) end
 	end)
 
 	net.Receive("pac_request_angle_reset_on_entity", function(len, ply)
@@ -313,6 +320,8 @@ if SERVER then
 		local auth_ent = net.ReadEntity()
 
 		targ_ent:SetAngles(ang)
+		targ_ent:PhysWake()
+		table.RemoveByValue(grab_pairs,auth_ent)
 	end)
 
 	net.Receive("pac_request_velocity_force_on_entity", function(len,ply)
@@ -336,10 +345,21 @@ if SERVER then
 	end)
 
 	net.Receive("pac_signal_stop_lock", function(len,ply)
-		for targ,ply in pairs(grab_pairs) do
-			if grab_pairs[ply] == targ then
-				net.Start("pac_request_lock_break")
-				net.Send(ply)
+		print("Requesting lock break")
+		PrintTable(grab_pairs)
+		for p,targ in pairs(grab_pairs) do
+			if grab_pairs[p] == targ and ply == targ then
+				print("from",p)
+				if p:IsPlayer() then
+					net.Start("pac_request_lock_break")
+					net.WriteEntity(ply)
+					net.Send(p)
+				elseif targ:IsPlayer() then
+					net.Start("pac_request_lock_break")
+					net.WriteEntity(ply)
+					net.Send(targ)
+				end
+
 			end
 		end
 	end)
@@ -353,24 +373,30 @@ if SERVER then
 			if ent:IsPlayer() then
 				net.Start("pac_request_player_combat_consent_update")
 				net.Send(ent)
-				print(ent, "does that player consent grabs?", grab_consents[ent], "and damage zone?", damage_zone_consents[ent])
+				--print(ent, "does that player consent grabs?", grab_consents[ent], "and damage zone?", damage_zone_consents[ent])
 			end
 		end
-		PrintTable(grab_consents)
 	end
 
-
+	timer.Create("pac_timer_refresh_client_consents", 10, 0, function() pac_combat_RefreshConsents() end)
 end
 
 if CLIENT then
-	CreateConVar("pac_client_grab_consent", "0", true, true)
-	CreateConVar("pac_client_damage_zone_consent", "0", true, true)
+	CreateConVar("pac_client_grab_consent", "0", FCVAR_ARCHIVE, true)
+	CreateConVar("pac_client_damage_zone_consent", "0", FCVAR_ARCHIVE, true)
+
 	concommand.Add( "pac_stop_lock", function()
 		net.Start("pac_signal_stop_lock")
 		net.SendToServer()
 	end, "asks the server to breakup any lockpart hold on your player")
+
+	concommand.Add( "pac_break_lock", function()
+		net.Start("pac_signal_stop_lock")
+		net.SendToServer()
+	end, "asks the server to breakup any lockpart hold on your player")
+
 	net.Receive("pac_request_player_combat_consent_update", function()
-		print("player receives request to update consents")
+		--print("player receives request to update consents")
 		net.Start("pac_signal_player_combat_consent")
 		net.WriteString("grab")
 		net.WriteBool(GetConVar("pac_client_grab_consent"):GetBool())
