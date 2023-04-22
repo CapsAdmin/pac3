@@ -6,12 +6,12 @@ local function CreateCache(cacheId)
 	local cache = {}
 	setmetatable (cache, { __index = CACHE })
 
-	cache:Initialize (cacheId)
+	cache:Initialize(cacheId)
 
 	return cache
 end
 
-function CACHE:Initialize (cacheId)
+function CACHE:Initialize(cacheId)
 	self.Version = 3 -- Update this if the crypto library changes
 
 	self.Path    = "pac3_cache/" .. string.lower (cacheId)
@@ -19,7 +19,7 @@ function CACHE:Initialize (cacheId)
 	file.CreateDir (self.Path)
 end
 
-function CACHE:AddItem (itemId, data)
+function CACHE:AddItem(itemId, data)
 	local hash = self:GetItemIdHash (itemId)
 	local path = self.Path .. "/" .. hash .. ".txt"
 
@@ -44,26 +44,34 @@ function CACHE:AddItem (itemId, data)
 	f:Close ()
 end
 
-function CACHE:Clear ()
-	for _, fileName in ipairs (file.Find (self.Path .. "/*", "DATA")) do
+function CACHE:Clear()
+	for _, fileName in ipairs(file.Find (self.Path .. "/*", "DATA")) do
 		file.Delete (self.Path .. "/" .. fileName)
 	end
 end
 
-function CACHE:ContainsItem (itemId)
-	return self:GetItem (itemId) ~= nil
+function CACHE:ClearBefore(time)
+	for _, fileName in ipairs(file.Find(self.Path .. "/*", "DATA")) do
+		if file.Time (self.Path .. "/" .. fileName, "DATA") < time then
+			file.Delete (self.Path .. "/" .. fileName)
+		end
+	end
 end
 
-function CACHE:GetItem (itemId)
-	local hash = self:GetItemIdHash (itemId)
+function CACHE:ContainsItem(itemId)
+	return self:GetItem(itemId) ~= nil
+end
+
+function CACHE:GetItem(itemId)
+	local hash = self:GetItemIdHash(itemId)
 	local path = self.Path .. "/" .. hash .. ".txt"
 
-	if not file.Exists (path, "DATA") then return nil end
+	if not file.Exists(path, "DATA") then return nil end
 
-	local f = file.Open (path, "rb", "DATA")
+	local f = file.Open(path, "rb", "DATA")
 	if not f then return nil end
 
-	local key = self:GetItemIdEncryptionKey (itemId)
+	local key = self:GetItemIdEncryptionKey(itemId)
 
 	-- Version
 	local version = f:ReadLong ()
@@ -74,8 +82,8 @@ function CACHE:GetItem (itemId)
 
 	-- Header
 	local entryItemIdLength = f:ReadLong ()
-	local entryItemId = crypto.DecryptString (f:Read (entryItemIdLength), key)
-	entryItemId = util.Decompress (entryItemId)
+	local entryItemId = crypto.DecryptString (f:Read(entryItemIdLength), key)
+	entryItemId = util.Decompress(entryItemId)
 
 	if itemId ~= entryItemId then
 		f:Close ()
@@ -84,22 +92,22 @@ function CACHE:GetItem (itemId)
 
 	-- Data
 	local dataLength = f:ReadLong ()
-	local data       = f:Read (dataLength, key)
+	local data       = f:Read(dataLength, key)
 
 	f:Close ()
 
-	data = crypto.DecryptString (data, key)
-	data = util.Decompress (data)
+	data = crypto.DecryptString(data, key)
+	data = util.Decompress(data)
 
 	return data
 end
 
-function CACHE:GetItemIdEncryptionKey (itemId)
-	return crypto.GenerateKey (string.reverse (itemId))
+function CACHE:GetItemIdEncryptionKey(itemId)
+	return crypto.GenerateKey(string.reverse (itemId))
 end
 
 function CACHE:GetItemIdHash(itemId)
-	return string.format ("%08x", tonumber (util.CRC (itemId)))
+	return string.format("%08x", tonumber (util.CRC (itemId)))
 end
 
 return CreateCache
