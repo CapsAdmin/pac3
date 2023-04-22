@@ -1337,7 +1337,10 @@ do --hover highlight halo
 		end
 
 		for _,v in ipairs(BulkSelectList) do
-			v.pace_tree_node:SetAlpha( 150 )
+			if not v:IsValid() then table.RemoveByValue(BulkSelectList, v)
+			else
+				v.pace_tree_node:SetAlpha( 150 )
+			end
 		end
 	end
 
