@@ -102,7 +102,7 @@ end
 
 function PART:SetFont(str)
 	if not pcall(surface_SetFont, str) then
-		pac.Message(Color(255,150,0),"[PAC3] "..str.." Font not found! Reverting to DermaDefault!")
+		pac.Message(Color(255,150,0),str.." Font not found! Reverting to DermaDefault!")
 		str = "DermaDefault"
 	end
 
@@ -158,13 +158,8 @@ function PART:OnDraw()
 	end
 end
 
-function PART:OnThink()
-	self:OnDraw()
-end
-
 function PART:OnShow()
 	self.time = CurTime()
-	self:OnDraw()
 end
 
 function PART:SetText(str)

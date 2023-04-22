@@ -45,8 +45,6 @@ BUILDER:StartStorableVars()
 		:GetSet("PhaseRandomize", 1)
 	:SetPropertyGroup("Behaviour")
 		:GetSet("Delay", 0)
-		:GetSet("OverrideKnockback", true)
-		:GetSet("KnockbackAmount", Vector(0,0,0))
 	:SetPropertyGroup("Preview Rendering")
 		:GetSet("NoPreview", false)
 		:GetSet("RenderingHook", "PostDrawOpaqueRenderables", {enums = {

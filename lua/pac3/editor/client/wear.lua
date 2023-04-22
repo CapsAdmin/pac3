@@ -34,7 +34,7 @@ function pace.ClearParts()
 	pace.ClearUndo()
 	pac.RemoveAllParts(true, true)
 	pace.RefreshTree()
-	
+
 	timer.Simple(0.1, function()
 		if not pace.Editor:IsValid() then return end
 

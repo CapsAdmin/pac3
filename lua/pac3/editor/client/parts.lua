@@ -1,3 +1,4 @@
+include("pac3/editor/client/panels/properties.lua")
 local L = pace.LanguageString
 local BulkSelectList = {}
 local BulkSelectUIDs = {}
@@ -681,6 +682,362 @@ do -- menu
 		obj.pace_tree_node:SetAlpha( 150 )
 		--RebuildBulkHighlight()
 	end
+//@note apply properties
+	function pace.BulkApplyProperties(obj, policy)
+		local basepart = obj
+		--[[if not table.HasValue(BulkSelectList,obj) then
+			basepart = BulkSelectList[1]
+		end]]
+		
+		local Panel = vgui.Create( "DFrame" )
+		Panel:SetSize( 500, 600 )
+		Panel:Center()
+		Panel:SetTitle("BULK SELECT PROPERTY EDIT - WARNING! EXPERIMENTAL FEATURE!")
+		
+		Panel:MakePopup()
+		surface.CreateFont("Font", {
+			font = "Arial",
+			extended = true,
+			weight = 700,
+			size = 15
+		})
+
+		local scroll_panel = vgui.Create("DScrollPanel", Panel)
+		scroll_panel:SetSize( 500, 540 )
+		scroll_panel:SetPos( 0, 60 )
+		local thoroughness_tickbox = vgui.Create("DCheckBox", Panel)
+		thoroughness_tickbox:SetSize(20,20)
+		thoroughness_tickbox:SetPos( 5, 30 )
+		local thoroughness_tickbox_label = vgui.Create("DLabel", Panel)
+		thoroughness_tickbox_label:SetSize(150,30)
+		thoroughness_tickbox_label:SetPos( 30, 25 )
+		thoroughness_tickbox_label:SetText("Affect children?")
+		thoroughness_tickbox_label:SetFont("Font")
+		local basepart_label = vgui.Create("DLabel", Panel)
+		basepart_label:SetSize(340,30)
+		basepart_label:SetPos( 160, 25 )
+		local partinfo = basepart.ClassName
+		if basepart.ClassName == "event" then partinfo = basepart.Event  .. " " .. partinfo  end
+		local partinfo_icon = vgui.Create("DImage",basepart_label)
+		partinfo_icon:SetSize(30,30)
+		partinfo_icon:SetPos( 300, 0 )
+		partinfo_icon:SetImage(basepart.Icon)
+		
+		basepart_label:SetText("base part: "..partinfo)
+		basepart_label:SetFont("Font")
+
+		local excluded_vars = {"Duplicate","OwnerName","ParentUID","UniqueID","TargetEntityUID"}
+		local var_candidates = {}
+		
+		local shared_properties = {}
+		local shared_udata_properties = {}
+
+		for _,prop in pairs(basepart:GetProperties()) do
+			
+			local shared = true
+			for _,part2 in pairs(BulkSelectList) do
+				if basepart ~= part2 and basepart.ClassName ~= part2.ClassName then
+					if part2["Get" .. prop["key"]] == nil then
+						if policy == "harsh" then shared = false end
+					end
+				end
+			end
+			if shared and not prop.udata.editor_friendly and basepart["Get" .. prop["key"]] ~= nil then
+				shared_properties[#shared_properties + 1] = prop["key"]
+			elseif shared and prop.udata.editor_friendly and basepart["Get" .. prop["key"]] == nil then
+				shared_udata_properties[#shared_udata_properties + 1] = "event_udata_"..prop["key"]
+			end
+		end
+
+		if policy == "lenient" then
+			local initial_shared_properties = table.Copy(shared_properties)
+			local initial_shared_udata_properties = table.Copy(shared_udata_properties)
+			for _,part2 in pairs(BulkSelectList) do
+				for _,prop in ipairs(part2:GetProperties()) do
+					if not (table.HasValue(shared_properties, prop["key"]) or table.HasValue(shared_udata_properties, "event_udata_"..prop["key"])) then
+						if part2["Get" .. prop["key"]] ~= nil then
+							initial_shared_properties[#initial_shared_properties + 1] = prop["key"]
+						elseif part2["Get" .. prop["key"]] == nil then
+							initial_shared_udata_properties[#initial_shared_udata_properties + 1] = "event_udata_"..prop["key"]
+						end
+					end
+				end
+			end
+			shared_properties = initial_shared_properties
+			shared_udata_properties = initial_shared_udata_properties
+		end
+		--populate panels for standard GetSet part properties
+		for i,v in pairs(shared_properties) do
+			local VAR_PANEL = vgui.Create("DFrame")
+			VAR_PANEL:SetSize(500,30)
+			VAR_PANEL:SetPos(0,0)
+			VAR_PANEL:ShowCloseButton( false )
+			local VAR_PANEL_BUTTON = VAR_PANEL:Add("DButton")
+			VAR_PANEL_BUTTON:SetSize(80,30)
+			VAR_PANEL_BUTTON:SetPos(400,0)
+			local VAR_PANEL_EDITZONE
+			local var_type
+			for _,testpart in ipairs(BulkSelectList) do
+				if
+				testpart["Get" .. v] ~= nil
+				then
+					var_type = type(testpart["Get" .. v](testpart))
+				end
+			end
+			if basepart["Get" .. v] ~= nil then var_type = type(basepart["Get" .. v](basepart)) end
+			
+			if var_type == "number" then
+				VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
+				VAR_PANEL_EDITZONE:SetSize(200,30)
+			elseif var_type == "boolean" then
+				VAR_PANEL_EDITZONE = vgui.Create("DCheckBox", VAR_PANEL)
+				VAR_PANEL_EDITZONE:SetSize(30,30)
+			elseif var_type == "string" then
+				VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
+				VAR_PANEL_EDITZONE:SetSize(200,30)
+			elseif var_type == "Vector" then
+				VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
+				VAR_PANEL_EDITZONE:SetSize(200,30)
+			elseif var_type == "Angle" then
+				VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
+				VAR_PANEL_EDITZONE:SetSize(200,30)
+			else
+				VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
+				VAR_PANEL_EDITZONE:SetSize(200,30)
+			end
+			VAR_PANEL_EDITZONE:SetPos(200,0)
+			
+			VAR_PANEL_BUTTON:SetText("APPLY")
+			
+			VAR_PANEL:SetTitle("[" .. i .. "]   "..v.."   "..var_type)
+			
+			VAR_PANEL:Dock( TOP )
+			VAR_PANEL:DockMargin( 5, 0, 0, 5 )
+			VAR_PANEL_BUTTON.DoClick = function()
+				for i,part in pairs(BulkSelectList) do
+					local sent_var
+					if var_type == "number" then
+						sent_var = VAR_PANEL_EDITZONE:GetValue()
+						if not tonumber(sent_var) then
+							local ok, res = pac.CompileExpression(sent_var)
+							if ok then
+								sent_var = res() or 0
+							end
+						end
+					elseif var_type == "boolean" then
+						sent_var = VAR_PANEL_EDITZONE:GetChecked()
+					elseif var_type == "string" then
+						sent_var = VAR_PANEL_EDITZONE:GetValue()
+						if v == "Name" and sent_var ~= "" then 
+							sent_var = sent_var..i
+						end
+					elseif var_type == "Vector" then
+						local str = string.Split(VAR_PANEL_EDITZONE:GetValue(), ",")
+						sent_var = Vector()
+						sent_var.x = tonumber(str[1]) or 1
+						sent_var.y = tonumber(str[2]) or 1
+						sent_var.z = tonumber(str[3]) or 1
+						if v and not part.ProperColorRange then sent_var = sent_var*255 end
+					elseif var_type == "Angle" then
+						local str = string.Split(VAR_PANEL_EDITZONE:GetValue(), ",")
+						sent_var = Angle()
+						sent_var.r = tonumber(str[1]) or 1
+						sent_var.g = tonumber(str[2]) or 1
+						sent_var.b = tonumber(str[3]) or 1
+					else sent_var = VAR_PANEL_EDITZONE:GetValue() end
+
+
+					if policy == "harsh" then part["Set" .. v](part, sent_var)
+					elseif policy == "lenient" then
+						if part["Get" .. v] ~= nil then part["Set" .. v](part, sent_var) end
+					end
+					if thoroughness_tickbox:GetChecked() then
+						for _,child in pairs(part:GetChildrenList()) do
+							if part["Get" .. v] ~= nil then child["Set" .. v](child, sent_var) end
+						end
+					end
+				end
+
+				pace.RefreshTree(true)
+				timer.Simple(0.3, function() BulkSelectRefreshFadedNodes() end)
+			end
+			scroll_panel:AddItem( VAR_PANEL )
+		end
+		
+		--populate panels for event "userdata" packaged into arguments
+		if #shared_udata_properties > 1 then
+			local udata_types = {
+				hide_in_eventwheel = "boolean",
+				find = "string",
+				time = "number",
+				distance = "number",
+				compare = "number",
+				min = "number",
+				max = "number",
+				primary = "boolean",
+				amount = "number",
+				ammo_id = "number",
+				find_ammo = "string",
+				hide = "boolean",
+				interval = "number",
+				offset = "number",
+				find_sound = "string",
+				mute = "boolean",
+				all_players = "boolean"}
+			local udata_orders = {
+				["command"] = {[1] = "find", [2] = "time", [3] = "hide_in_eventwheel"},
+				["timerx"] = {[1] = "seconds", [2] = "reset_on_hide", [3] = "synced_time"},
+				["ranger"] = {[1] = "distance", [2] = "compare", [3] = "npcs_and_players_only"},
+				["randint"] = {[1] = "compare", [2] = "min", [3] = "max"},
+				["random_timer"] = {[1] = "min", [2] = "max", [3] = "compare"},
+				["timersys"] = {[1] = "seconds", [2] = "reset_on_hide"},
+				["pose_parameter"] = {[1] = "name", [2] = "num"},
+				["ammo"] = {[1] = "primary", [2] = "amount"},
+				["total_ammo"] = {[1] = "ammo_id", [2] = "amount"},
+				["clipsize"] = {[1] = "primary", [2] = "amount"},
+				["weapon_class"] = {[1] = "find", [2] = "hide"},
+				["timer"] = {[1] = "interval", [2] = "offset"},
+				["animation_event"] = {[1] = "find", [2] = "time"},
+				["fire_bullets"] = {[1] = "find_ammo", [2] = "time"},
+				["emit_sound"] = {[1] = "find_sound", [2] = "time", [3] = "mute"},
+				["say"] = {[1] = "find", [2] = "time", [3] = "all_players"}}
+			for i,v in pairs(shared_udata_properties) do
+				local udata_val_name = string.gsub(v, "event_udata_", "")
+				
+				local var_type = udata_types[udata_val_name]
+
+				local VAR_PANEL = vgui.Create("DFrame")
+				
+				VAR_PANEL:SetSize(500,30)
+				VAR_PANEL:SetPos(0,0)
+				VAR_PANEL:ShowCloseButton( false )
+				local VAR_PANEL_BUTTON = VAR_PANEL:Add("DButton")
+				VAR_PANEL_BUTTON:SetSize(80,30)
+				VAR_PANEL_BUTTON:SetPos(400,0)
+				local VAR_PANEL_EDITZONE
+				if var_type == "number" then
+					VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
+					VAR_PANEL_EDITZONE:SetSize(200,30)
+				elseif var_type == "boolean" then
+					VAR_PANEL_EDITZONE = vgui.Create("DCheckBox", VAR_PANEL)
+					VAR_PANEL_EDITZONE:SetSize(30,30)
+				elseif var_type == "string" then
+					VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
+					VAR_PANEL_EDITZONE:SetSize(200,30)
+				elseif var_type == "Vector" then
+					VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
+					VAR_PANEL_EDITZONE:SetSize(200,30)
+				elseif var_type == "Angle" then
+					VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
+					VAR_PANEL_EDITZONE:SetSize(200,30)
+				else
+					VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
+					VAR_PANEL_EDITZONE:SetSize(200,30)
+				end
+
+				VAR_PANEL_EDITZONE:SetPos(200,0)
+				VAR_PANEL:SetTitle("[" .. i .. "]   "..string.gsub(v, "event_udata_", "").."   "..var_type)
+				VAR_PANEL_BUTTON:SetText("APPLY")
+				
+				
+				VAR_PANEL:Dock( TOP )
+				VAR_PANEL:DockMargin( 5, 0, 0, 5 )
+				VAR_PANEL_BUTTON.DoClick = function()
+					
+					for i,part in pairs(BulkSelectList) do
+						if part.ClassName == "event" and part.Event == basepart.Event then
+							local sent_var
+							if var_type == "number" then
+								sent_var = VAR_PANEL_EDITZONE:GetValue()
+								if not tonumber(sent_var) then
+									local ok, res = pac.CompileExpression(sent_var)
+									if ok then
+										sent_var = res() or 0
+									end
+								end
+							elseif var_type == "boolean" then
+								sent_var = VAR_PANEL_EDITZONE:GetChecked()
+								if sent_var == true then sent_var = "1"
+								else sent_var = "0" end
+							elseif var_type == "string" then
+								sent_var = VAR_PANEL_EDITZONE:GetValue()
+								if v == "Name" and sent_var ~= "" then 
+									sent_var = sent_var..i
+								end
+							else sent_var = VAR_PANEL_EDITZONE:GetValue() end
+
+							local arg_split = string.Split(part:GetArguments(), "@@")
+							if #udata_orders[part.Event] ~= #string.Split(part:GetArguments(), "@@") then arg_split[#arg_split + 1] = "0" end
+
+							local sent_var_final = ""
+							--		PRESCRIBED			X @@ Y @@ Z ...
+							--      EVERY STEP  		ADD
+							--		EVERY STEP EXCEPT LAST..@@
+							for n,arg in ipairs(arg_split) do
+								if udata_orders[part.Event][n] == udata_val_name then
+									sent_var_final = sent_var_final .. sent_var
+								else
+									sent_var_final = sent_var_final .. arg_split[n]
+								end
+								if n ~= #arg_split then
+									sent_var_final = sent_var_final .. "@@"
+								end
+							end
+
+							part:SetArguments(sent_var_final)
+						end
+
+						if thoroughness_tickbox:GetChecked() then
+							for _,child in pairs(part:GetChildrenList()) do
+								if child.ClassName == "event" and child.Event == basepart.Event then
+									local sent_var
+									if var_type == "number" then
+										sent_var = VAR_PANEL_EDITZONE:GetValue()
+										if not tonumber(sent_var) then
+											local ok, res = pac.CompileExpression(sent_var)
+											if ok then
+												sent_var = res() or 0
+											end
+										end
+									elseif var_type == "boolean" then
+										sent_var = VAR_PANEL_EDITZONE:GetChecked()
+										if sent_var == true then sent_var = "1"
+										else sent_var = "0" end
+									elseif var_type == "string" then
+										sent_var = VAR_PANEL_EDITZONE:GetValue()
+										if v == "Name" and sent_var ~= "" then 
+											sent_var = sent_var..i
+										end
+									else sent_var = VAR_PANEL_EDITZONE:GetValue() end
+
+									local arg_split = string.Split(child:GetArguments(), "@@")
+									if #udata_orders[basepart.Event] ~= #string.Split(child:GetArguments(), "@@") then arg_split[#arg_split + 1] = "0" end
+									local sent_var_final = ""
+
+									for n,arg in ipairs(arg_split) do
+										if udata_orders[child.Event][n] == udata_val_name then
+											sent_var_final = sent_var_final .. sent_var
+										else
+											sent_var_final = sent_var_final .. arg_split[n]
+										end
+										if n ~= #arg_split then
+											sent_var_final = sent_var_final .. "@@"
+										end
+									end
+		
+									child:SetArguments(sent_var_final)
+								end
+							end
+						end
+					end
+					
+					pace.RefreshTree(true)
+					timer.Simple(0.3, function() BulkSelectRefreshFadedNodes() end)
+				end
+				scroll_panel:AddItem( VAR_PANEL )
+			end
+		end
+	end
 
 	function pace.BulkCutPaste(obj)
 		pace.RecordUndoHistory()
@@ -771,10 +1128,15 @@ do -- menu
 			menu:AddOption(L"cut", function() pace.Cut(obj) end):SetImage('icon16/cut.png')
 			menu:AddOption(L"paste properties", function() pace.PasteProperties(obj) end):SetImage(pace.MiscIcons.replace)
 			menu:AddOption(L"clone", function() pace.Clone(obj) end):SetImage(pace.MiscIcons.clone)
+			
+			local bulk_apply_properties,bap_icon = menu:AddSubMenu(L"bulk change properties", function() pace.BulkApplyProperties(obj, "harsh") end)
+			bap_icon:SetImage('icon16/table_multiple.png')
+			bulk_apply_properties:AddOption("Policy: harsh filtering", function() pace.BulkApplyProperties(obj, "harsh") end)
+			bulk_apply_properties:AddOption("Policy: lenient filtering", function() pace.BulkApplyProperties(obj, "lenient") end)
 
-			--multi select
-			bulk_menu, icon = menu:AddSubMenu(L"bulk select ("..#BulkSelectList..")", function() pace.DoBulkSelect(obj) end)
-				icon:SetImage('icon16/table_multiple.png')
+			--bulk select
+			bulk_menu, bs_icon = menu:AddSubMenu(L"bulk select ("..#BulkSelectList..")", function() pace.DoBulkSelect(obj) end)
+				bs_icon:SetImage('icon16/table_multiple.png')
 				bulk_menu.GetDeleteSelf = function() return false end
 
 				local mode = GetConVar("pac_bulk_select_halo_mode"):GetInt()
@@ -1078,3 +1440,38 @@ do --hover highlight halo
 		--haloex.Add( ents, color, blurx, blury, passes, add, ignorez, amount, spherical, shape )
 	end
 end
+
+
+--[[ test visualise part
+local cachedmodel = ClientsideModel( obj:GetRootPart():GetOwner():GetModel(), RENDERGROUP_BOTH )
+		
+print(tbl ~= nil)
+previewmdl_tbl = previewmdl_tbl or obj:ToTable()
+
+timer.Simple(8,function() Panel:Remove() end)
+
+ENT = cachedmodel
+--ENT = icon:GetEntity()
+pac.SetupENT(ENT)
+ENT:AttachPACPart(tbl, ENT:GetOwner(), false)
+
+
+function Panel:Paint( w, h )
+
+	local x, y = self:GetPos()
+	local vec = LocalPlayer():GetPos()
+
+	cachedmodel:SetPos(vec + Vector(100,0,50))
+	cachedmodel:SetAngles(Angle(0,180 + SysTime()*60,0))
+	render.RenderView( {
+		origin = vec + Vector( 0, 0, 90 ),
+		angles = Angle(0,0,0),
+		x = x, y = y,
+		w = w, h = h,
+		fov = 50, aspect = w/h
+	} )
+
+end
+timer.Simple(8, function()
+	SafeRemoveEntity(cachedmodel)
+end)]]

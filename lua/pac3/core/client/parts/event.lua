@@ -26,7 +26,7 @@ BUILDER:StartStorableVars()
 		return output
 	end})
 	BUILDER:GetSet("Operator", "find simple", {enums = function(part) local tbl = {} for i,v in ipairs(part.Operators) do tbl[v] = v end return tbl end})
-	BUILDER:GetSet("Arguments", "", {hidden = false})
+	BUILDER:GetSet("Arguments", "", {hidden = true})
 	BUILDER:GetSet("Invert", true)
 	BUILDER:GetSet("RootOwner", true)
 	BUILDER:GetSet("AffectChildrenOnly", false)
@@ -35,12 +35,12 @@ BUILDER:StartStorableVars()
 BUILDER:EndStorableVars()
 
 function PART:SetEvent(event)
-	local reset = (self.Arguments == "") or
+	local reset = (self.Arguments == "") or 
 	(self.Arguments ~= "" and self.Event ~= "" and self.Event ~= event)
 
 	self.Event = event
 	self:SetWarning()
-	self:GetDynamicProperties(reset)
+	self:GetDynamicProperties(reset) 
 end
 
 local function get_default(typ)
@@ -95,8 +95,8 @@ function PART:GetDynamicProperties(reset_to_default)
 		}
 
 		local arg = tbl[key]
-		if arg.get() == nil or reset_to_default then
-			if udata.default then
+		if arg.get() == nil or reset_to_default then 
+			if udata.default then 
 				arg.set(udata.default)
 			else
 				arg.set(nil)
@@ -204,10 +204,6 @@ PART.OldEvents = {
 
 	timerx = {
 		arguments = {{seconds = "number"}, {reset_on_hide = "boolean"}, {synced_time = "boolean"}},
-		userdata = {
-			{default = 0, timerx_property = "seconds"},
-			{default = true, timerx_property = "reset_on_hide"}
-		},
 		nice = function(self, ent, seconds)
 			return "timerx: " .. ("%.2f"):format(self.number or 0, 2) .. " " .. self:GetOperator() .. " " .. seconds .. " seconds?"
 		end,
@@ -494,16 +490,8 @@ PART.OldEvents = {
 
 	ranger = {
 		arguments = {{distance = "number"}, {compare = "number"}, {npcs_and_players_only = "boolean"}},
-		userdata = {
-			{default = 15, ranger_property = "distance"},
-			{default = 5, ranger_property = "compare"},
-			{default = false, ranger_property = "npcs_and_players_only"}
-		},
+		userdata = {{editor_panel = "ranger", ranger_property = "distance"}, {editor_panel = "ranger", ranger_property = "compare"}},
 		callback = function(self, ent, distance, compare, npcs_and_players_only)
-			if npcs_and_players_only == nil then
-				self.Arguments = self.Arguments .. "@@0"
-				self.npcs_and_players_only = false
-			end
 			local parent = self:GetParentEx()
 
 			if parent:IsValid() and parent.GetWorldPosition then
@@ -584,43 +572,10 @@ PART.OldEvents = {
 				endpos = startpos,
 				maxs = maxs,
 				mins = mins,
-				filter = {self:GetRootPart():GetOwner(),ent}
+				filter = ent
 			} )
 			return tr.Hit
 		end,
-	},
-
-	is_touching_scalable = {
-		arguments = {{extra_radius = "number"}, {x_stretch = "number"}, {y_stretch = "number"}, {z_stretch = "number"}},
-		userdata = {{editor_panel = "is_touching"}, {x = "x_stretch"}, {y = "y_stretch"}, {z = "z_stretch"}},
-		callback = function(self, ent, extra_radius, x_stretch, y_stretch, z_stretch)
-			extra_radius = extra_radius or 0
-			x_stretch = x_stretch or 1
-			y_stretch = y_stretch or 1
-			z_stretch = z_stretch or 1
-			local mins = Vector(-x_stretch,-y_stretch,-z_stretch)
-			local maxs = Vector(x_stretch,y_stretch,z_stretch)
-			local startpos = ent:WorldSpaceCenter()
-
-			radius = math.max(extra_radius, 1)
-			mins = mins * radius
-			maxs = maxs * radius
-
-			local tr = util.TraceHull( {
-				start = startpos,
-				endpos = startpos,
-				maxs = maxs,
-				mins = mins,
-				filter = {self:GetRootPart():GetOwner(),ent}
-			} )
-			return tr.Hit
-		end,
-	},
-
-	is_explicit = {
-		callback = function(self, ent)
-			return GetConVar("pac_hide_disturbing"):GetBool()
-		end
 	},
 
 	is_in_noclip = {
@@ -869,8 +824,8 @@ PART.OldEvents = {
 	command = {
 		arguments = {{find = "string"}, {time = "number"}, {hide_in_eventwheel = "boolean"}},
 		userdata = {
-			{default = "change_me", editor_friendly = "CommandName"},
-			{default = 0.1, editor_friendly = "EventDuration"},
+			{default = "change_me", editor_friendly = "CommandName"}, 
+			{default = 0.1, editor_friendly = "EventDuration"}, 
 			{default = false, group = "event wheel", editor_friendly = "HideInEventWheel"}
 		},
 		nice = function(self, ent, find, time)
@@ -879,14 +834,6 @@ PART.OldEvents = {
 			return "command: " .. find .. " | " .. "duration: " .. time
 		end,
 		callback = function(self, ent, find, time)
-			if time == nil then
-				self.Arguments = self.Arguments .. "@@0"
-				time = 0
-			end
-			if hide_in_eventwheel == nil then
-				self.Arguments = self.Arguments .. "@@0"
-				hide_in_eventwheel = false
-			end
 			time = time or 0.1
 
 			local ply = self:GetPlayerOwner()

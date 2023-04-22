@@ -458,77 +458,6 @@ do --
 	end
 end
 
-
-
-
---[[
-self.truevel_ent = nil
-self.truevel_last_ent = nil
-self.truevel_next_log = 0
-do --true velocity (tm)
-	function seek_past_neighboring_timestamp()
-		local offset = math.floor(self.VelocityRoughness)
-		local begin_seek_position = math.floor(SysTime() * 100)
-		if self.truevel_ent.position_timestamps[begin_seek_position - offset] ~= nil then 
-			return self.truevel_ent.position_timestamps[begin_seek_position - offset]
-		else
-			local latest_past_timestamp
-			for stamp,logged_pos in ipairs(self.truevel_ent.position_timestamps) do
-				if self.truevel_ent.position_timestamps[stamp] ~= nil then
-					if stamp < begin_seek_position - offset then
-						
-					end
-				end
-			end
-		end
-	end
-
-	function PART:GetTrueVelocity()
-		self.true_vel = self.true_vel or Vector()
-		local systime = SysTime()
-		local logtime = math.floor(systime * 100)
-		self.truevel_next_log = self.truevel_next_log or systime
-		if systime < self.truevel_next_log then return self.true_vel
-		else self.truevel_next_log = systime + 0.05 end
-		print("log time ", logtime)
-		if self.truevel_ent then self.truevel_ent.position_timestamps = ent.position_timestamps or {} end
-		
-		self.last_pos = seek_past_neighboring_timestamp()
-
-		local pos
-
-		if self.RootOwner then
-			self.truevel_ent = self:GetRootPart():GetOwner()
-			pos = self:GetRootPart():GetOwner():GetPos()
-		elseif self.truevel_ent ~= nil then
-			self.truevel_ent = self:GetOwner()
-			pos = self:GetOwner():GetWorldPosition() or self:GetOwner():GetPos()
-		end
-		
-		self.truevel_last_ent = self.truevel_ent
-		self.truevel_ent.position_timestamps[logtime] = pos
-
-		self.true_vel = pos - self.truevel_ent.position_timestamps[seek_past_neighboring_timestamp()]
-		
-		return self.true_vel or Vector()
-	end
-
-	PART.Inputs.owner_true_velocity_length = function(self)
-		
-		if self:GetPhysicalTarget():IsValid() then
-			ent = self:GetPhysicalTarget()
-		end
-		if self.RootOwner then
-			ent = self:GetRootPart():GetOwner()
-		end
-		return self:GetTrueVelocity():Length()
-	end
-end
-]]
-
-
-
-
 do -- velocity
 	PART.Inputs.parent_velocity_length = function(self)
 		return self:GetVelocity(self:GetPhysicalTarget()):Length()
@@ -581,20 +510,9 @@ end
 
 PART.Inputs.pose_parameter = function(self, name)
 	if not name then return 0 end
-	local owner = self:GetPlayerOwner()
+	local owner = get_owner(self)
 	if owner:IsValid() and owner.GetPoseParameter then return owner:GetPoseParameter(name) end
 
-	return 0
-end
-
-PART.Inputs.pose_parameter_true = function(self, name)
-	if not name then return 0 end
-	local owner = self:GetPlayerOwner()
-	if owner:IsValid() then
-		mini,maxi = owner:GetPoseParameterRange(owner:LookupPoseParameter(name))
-		actual_value = mini + (maxi - mini)*(owner:GetPoseParameter(name))
-		return actual_value
-	else end
 	return 0
 end
 
@@ -835,6 +753,38 @@ do
 		if not self.feedback then return 0 end
 		return self.feedback[3] or 0
 	end
+end
+
+PART.Inputs.flat_dot_forward = function(self)
+	local part = get_owner(self)
+
+	if part:IsValid() then
+		local ang = part:IsPlayer() and part:EyeAngles() or part:GetAngles()
+		ang.p = 0
+		ang.r = 0
+		local dir = pac.EyePos - part:EyePos()
+		dir[3] = 0
+		dir:Normalize()
+		return dir:Dot(ang:Forward())
+	end
+
+	return 0
+end
+
+PART.Inputs.flat_dot_right = function(self)
+	local part = get_owner(self)
+
+	if part:IsValid() then
+		local ang = part:IsPlayer() and part:EyeAngles() or part:GetAngles()
+		ang.p = 0
+		ang.r = 0
+		local dir = pac.EyePos - part:EyePos()
+		dir[3] = 0
+		dir:Normalize()
+		return dir:Dot(ang:Right())
+	end
+
+	return 0
 end
 
 net.Receive("pac_proxy", function()

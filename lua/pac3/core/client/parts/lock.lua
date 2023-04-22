@@ -29,6 +29,7 @@ BUILDER:StartStorableVars()
 		:GetSet("RadiusOffsetDown", false, {description = "Lowers the detect origin by the radius distance"})
 		:GetSetPart("TargetPart")
 		:GetSet("ContinuousSearch", false, {description = "Will search for entities until one is found. Otherwise only try once when part is shown."})
+		:GetSet("Preview", false)
 
 	:SetPropertyGroup("PlayerCameraOverride")
 		:GetSet("OverrideEyeAngles", true, {description = "Whether the part will try to override players' eye angles. Requires OverrideAngles and user consent"})
@@ -179,13 +180,13 @@ end
 
 
 function PART:OnShow()
-
+	local targ = self.TargetPart or self
 	if self.Preview then 
 		hook.Add("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview", function()
 			if self.RadiusOffsetDown then
-				render.DrawLine(self:GetWorldPosition(),self:GetWorldPosition() + Vector(0,0,-self.Radius),Color(255,255,255))
-				render.DrawWireframeSphere(self:GetWorldPosition() + Vector(0,0,-self.Radius), self.Radius, 30, 30, Color(255,255,255),true)
-			else render.DrawWireframeSphere(self:GetWorldPosition(), self.Radius, 30, 30, Color(255,255,255),true) end
+				render.DrawLine(targ:GetWorldPosition(),targ:GetWorldPosition() + Vector(0,0,-self.Radius),Color(255,255,255))
+				render.DrawWireframeSphere(targ:GetWorldPosition() + Vector(0,0,-self.Radius), self.Radius, 30, 30, Color(255,255,255),true)
+			else render.DrawWireframeSphere(targ:GetWorldPosition(), self.Radius, 30, 30, Color(255,255,255),true) end
 		end)
 	end
 	self.target_ent = nil
@@ -211,7 +212,7 @@ function PART:reset_ent_ang()
 		--if self.target_ent:GetClass() == "prop_physics" then return end
 		if LocalPlayer() == self:GetPlayerOwner() then
 			net.Start("pac_request_angle_reset_on_entity")
-			net.WriteAngle(default_ang)
+			net.WriteAngle(Angle(0,0,0))
 			net.WriteFloat(self.RestoreDelay)
 			net.WriteEntity(self.target_ent)
 			net.WriteEntity(self:GetPlayerOwner())

@@ -24,7 +24,7 @@ do
 	local vector = Vector()
 	local color = Color(255, 255, 255, 255)
 
-	function pac.DrawBeam(veca, vecb, dira, dirb, bend, res, width, start_color, end_color, frequency, tex_stretch, tex_scroll, width_bend, width_bend_size)
+	function pac.DrawBeam(veca, vecb, dira, dirb, bend, res, width, start_color, end_color, frequency, tex_stretch, tex_scroll, width_bend, width_bend_size, width_start_mul, width_end_mul)
 
 		if not veca or not vecb or not dira or not dirb then return end
 
@@ -44,6 +44,8 @@ do
 		width_bend = width_bend or 0
 		width_bend_size = width_bend_size or 1
 		tex_scroll = tex_scroll or 0
+		width_start_mul = width_start_mul or 1
+		width_end_mul = width_end_mul or 1
 
 		render_StartBeam(res + 1)
 
@@ -64,7 +66,7 @@ do
 
 				render_AddBeam(
 					vector,
-					width + ((math_sin(wave) ^ width_bend_size) * width_bend),
+					(width + ((math_sin(wave) ^ width_bend_size) * width_bend)) * Lerp(frac, width_start_mul, width_end_mul),
 					(i / tex_stretch) + tex_scroll,
 					color
 				)
@@ -80,6 +82,7 @@ local BUILDER, PART = pac.PartTemplate("base_drawable")
 PART.ClassName = "beam"
 PART.Group = 'effects'
 PART.Icon = 'icon16/vector.png'
+PART.HandleModifiersManually = true
 
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")
@@ -94,6 +97,8 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("Width", 1)
 		BUILDER:GetSet("WidthBend", 0)
 		BUILDER:GetSet("WidthBendSize", 1)
+		BUILDER:GetSet("StartWidthMultiplier", 1)
+		BUILDER:GetSet("EndWidthMultiplier", 1)
 		BUILDER:GetSet("TextureStretch", 1)
 		BUILDER:GetSet("TextureScroll", 0)
 	BUILDER:SetPropertyGroup("orientation")
@@ -196,6 +201,7 @@ end
 
 function PART:OnDraw()
 	local part = self.EndPoint
+	
 	if self.Materialm and self.StartColorC and self.EndColorC and part:IsValid() and part.GetWorldPosition then
 		local pos, ang = self:GetDrawPosition()
 		render.SetMaterial(self.Materialm)
@@ -215,7 +221,9 @@ function PART:OnDraw()
 			self.TextureStretch,
 			self.TextureScroll,
 			self.WidthBend,
-			self.WidthBendSize
+			self.WidthBendSize,
+			self.StartWidthMultiplier,
+			self.EndWidthMultiplier
 		)
 	end
 end
