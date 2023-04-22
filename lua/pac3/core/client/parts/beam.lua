@@ -82,7 +82,6 @@ local BUILDER, PART = pac.PartTemplate("base_drawable")
 PART.ClassName = "beam"
 PART.Group = 'effects'
 PART.Icon = 'icon16/vector.png'
-PART.HandleModifiersManually = true
 
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")
