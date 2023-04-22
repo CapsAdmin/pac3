@@ -516,15 +516,28 @@ PART.Inputs.pose_parameter = function(self, name)
 	return 0
 end
 
-PART.Inputs.command = function(self)
+PART.Inputs.pose_parameter_true = function(self, name)
+	if not name then return 0 end
+	local owner = get_owner(self)
+	if owner:IsValid() then
+		min,max = owner:GetPoseParameterRange(owner:LookupPoseParameter(name))
+		actual_value = min + (max - min)*(owner:GetPoseParameter(name))
+		return actual_value
+	else end
+	return 0
+end
+
+PART.Inputs.command = function(self, name)
 	local ply = self:GetPlayerOwner()
 	if ply.pac_proxy_events then
-		local data = ply.pac_proxy_events[self.Name]
+		local data
+		if not name then data = ply.pac_proxy_events[self.Name]
+		else data = ply.pac_proxy_events[name] end
+
 		if data then
 			data.x = data.x or 0
 			data.y = data.y or 0
 			data.z = data.z or 0
-
 			return data.x, data.y, data.z
 		end
 	end
@@ -607,12 +620,30 @@ do -- health and armor
 
 		return owner:GetMaxHealth()
 	end
+	PART.Inputs.owner_health_fraction = function(self)
+		local owner = self:GetPlayerOwner()
+		if not owner:IsValid() then return 0 end
+
+		return owner:Health() / owner:GetMaxHealth()
+	end
 
 	PART.Inputs.owner_armor = function(self)
 		local owner = self:GetPlayerOwner()
 		if not owner:IsValid() then return 0 end
 
 		return owner:Armor()
+	end
+	PART.Inputs.owner_max_armor = function(self)
+		local owner = self:GetPlayerOwner()
+		if not owner:IsValid() then return 0 end
+
+		return owner:GetMaxArmor()
+	end
+	PART.Inputs.owner_armor_fraction = function(self)
+		local owner = self:GetPlayerOwner()
+		if not owner:IsValid() then return 0 end
+
+		return owner:Armor() / owner:GetMaxArmor()
 	end
 end
 
