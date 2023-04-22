@@ -1,3 +1,8 @@
+CreateConVar( "pac_model_max_scales", "10000", FCVAR_ARCHIVE, "Maximum scales model can have")
+
+
+
+
 local pac = pac
 
 local render_SetColorModulation = render.SetColorModulation
@@ -742,9 +747,15 @@ function PART:SetAlternativeScaling(b)
 end
 
 function PART:SetScale(vec)
-	if vec then
-		vec = Vector(math.Clamp(vec.x, -100, 100), math.Clamp(vec.y, -100, 100), math.Clamp(vec.z, -100, 100))
-	end
+	max_scale = GetConVar("pac_model_max_scales"):GetFloat()
+	largest_scale = math.max(math.abs(vec.x), math.abs(vec.y), math.abs(vec.z))
+	if vec and not LocalPlayer() == self:GetPlayerOwner() and max_scale > 0 then --clamp for other players if they have pac_model_max_scales convar more than 0
+		vec = Vector(math.Clamp(vec.x, -max_scale, max_scale), math.Clamp(vec.y, -max_scale, max_scale), math.Clamp(vec.z, -max_scale, max_scale))
+	elseif largest_scale > 10000 then --warn about the default max scale
+		pac.Message("Your model ", self, " scale is beyond the default limit! It will be limited on other clients' rendering. But then again you probably shouldn't have gigantic scales to begin with.")
+		self:SetError("Scale is being limited due to having an excessive component")
+	else self:SetError() end --if ok, clear the warning
+
 	vec = vec or Vector(1,1,1)
 
 	self.Scale = vec
