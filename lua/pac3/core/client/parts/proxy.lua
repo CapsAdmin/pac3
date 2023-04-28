@@ -1036,7 +1036,13 @@ function PART:OnThink()
 		local input_function = self.Inputs[self.Input]
 
 		if post_function and input_function then
-			local input_number = input_function(self)
+			local ran, err = pcall( input_function, self )
+
+			if not ran then
+				error("proxy function " .. tostring( self.Function ) .. " " .. tostring( self ) .. " failed: " .. err)
+			end
+
+			local input_number = err
 
 			if not isnumber(input_number) then
 				error("proxy function " .. self.Input .. " does not return a number!")
