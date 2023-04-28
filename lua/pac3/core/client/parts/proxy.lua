@@ -1039,7 +1039,7 @@ function PART:OnThink()
 			local ran, err = pcall( input_function, self )
 
 			if not ran then
-				error("proxy function " .. tostring( self.Function ) .. " " .. tostring( self ) .. " failed: " .. err)
+				error("proxy function " .. tostring( self.Input ) .. " | " .. tostring( self.Function ) .. " | " .. tostring( self ) .. " failed: " .. err)
 			end
 
 			local input_number = err
