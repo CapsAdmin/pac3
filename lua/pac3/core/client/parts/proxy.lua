@@ -534,6 +534,7 @@ end
 
 PART.Inputs.voice_volume = function(self)
 	local ply = self:GetPlayerOwner()
+	if not IsValid(ply) then return 0 end
 	return ply:VoiceVolume()
 end
 
