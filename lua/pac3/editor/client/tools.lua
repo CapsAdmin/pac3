@@ -301,13 +301,14 @@ pace.AddTool(L"scale this and children", function(part, suboption)
 end)
 
 pace.AddTool(L"free children from part" ,function(part, suboption)
-	local children = part.Children
-	if #children == 0 then
-		Derma_Message(L"this part has no children...", L"free children from part", "ok")
-		return
-	end
-	Derma_Query(L"this process cannot be undone, are you sure?", L"free children from part", L"yes", function()
-		if part:IsValid() then
+	if part:IsValid() then
+		local children = part.Children
+		if #children == 0 then
+			Derma_Message(L"this part has no children...", L"free children from part", "ok")
+			return
+		end
+
+		Derma_Query(L"this process cannot be undone, are you sure?", L"free children from part", L"yes", function()
 			local grandparent = part:GetParent()
 			if grandparent == NULL then
 				grandparent = part:GetRootPart()
@@ -322,8 +323,8 @@ pace.AddTool(L"free children from part" ,function(part, suboption)
 				end
 				child:SetParent(grandparent)
 			end
-		end
-	end, L"no", function() end)
+		end, L"no", function() end)
+	end
 end)
 
 pace.AddTool(L"square model scales...", function(part, suboption)
