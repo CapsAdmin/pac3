@@ -15,6 +15,7 @@ local render_PushFilterMag = render.PushFilterMag
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "base_drawable"
+PART.BaseName = PART.ClassName
 
 BUILDER
 	:StartStorableVars()

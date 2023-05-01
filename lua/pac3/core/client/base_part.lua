@@ -16,6 +16,7 @@ local table_insert = table.insert
 local BUILDER, PART = pac.PartTemplate()
 
 PART.ClassName = "base"
+PART.BaseName = PART.ClassName
 
 function PART:__tostring()
 	return string_format("part[%s][%s][%i]", self.ClassName, self:GetName(), self.Id)

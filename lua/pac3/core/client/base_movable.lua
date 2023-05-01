@@ -7,6 +7,7 @@ local Matrix = Matrix
 local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "base_movable"
+PART.BaseName = PART.ClassName
 
 BUILDER
 	:StartStorableVars()
