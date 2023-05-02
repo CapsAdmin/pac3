@@ -52,7 +52,8 @@ local forcebreak = false
 local next_allowed_grab = SysTime()
 
 function PART:OnThink()
-	
+	self:CheckEntValidity()
+
 	if SysTime() > next_allowed_grab then
 		forcebreak = false
 	elseif forcebreak then
@@ -75,11 +76,10 @@ function PART:OnThink()
 		end
 	end
 	--good hit and can search = search more and try the move later
-	self:CheckEntValidity()
-
+	
 	--self:DecideTarget()
-	if self.Mode == "Grab" then
-		if self.OverrideAngles then
+	if self.Mode == "Grab" and valid_ent then
+		if self.OverrideAngles and valid_ent and self.target_ent:IsValid() then
 			default_ang = self.target_ent:GetAngles()
 			if self.OverrideEyeAngles then default_ang.y = self:GetWorldAngles().y end
 		end
@@ -177,18 +177,22 @@ function PART:OnThink()
 	end
 end
 
-
-
 function PART:OnShow()
-	local targ = self.TargetPart or self
-	if self.Preview then 
-		hook.Add("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview", function()
-			if self.RadiusOffsetDown then
-				render.DrawLine(targ:GetWorldPosition(),targ:GetWorldPosition() + Vector(0,0,-self.Radius),Color(255,255,255))
-				render.DrawWireframeSphere(targ:GetWorldPosition() + Vector(0,0,-self.Radius), self.Radius, 30, 30, Color(255,255,255),true)
-			else render.DrawWireframeSphere(targ:GetWorldPosition(), self.Radius, 30, 30, Color(255,255,255),true) end
-		end)
-	end
+	local origin_part
+	hook.Add("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview"..self.UniqueID, function()
+		if self.TargetPart:IsValid() then
+			origin_part = self.TargetPart
+		else
+			origin_part = self
+		end
+		if origin_part == nil or not self.Preview or LocalPlayer() ~= self:GetPlayerOwner() then return end
+		if self.RadiusOffsetDown then
+			render.DrawLine(origin_part:GetWorldPosition(),origin_part:GetWorldPosition() + Vector(0,0,-self.Radius),Color(255,255,255))
+			render.DrawWireframeSphere(origin_part:GetWorldPosition() + Vector(0,0,-self.Radius), self.Radius, 30, 30, Color(255,255,255),true)
+		else
+			render.DrawWireframeSphere(origin_part:GetWorldPosition(), self.Radius, 30, 30, Color(255,255,255),true)
+		end
+	end)
 	self.target_ent = nil
 	--self.relative_transform_matrix = Matrix():Identity()
 	self:DecideTarget()
@@ -197,30 +201,30 @@ function PART:OnShow()
 end
 
 function PART:OnHide()
-	hook.Remove("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview")
+	hook.Remove("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview"..self.UniqueID)
 	teleported = false
 	grabbing = false
 	if self.target_ent == nil then return end
-	timer.Simple(math.min(self.RestoreDelay,5), function()
-		if self.target_ent == nil then return end
-		self:reset_ent_ang()
-	end)
+	self:reset_ent_ang()
 end
 
 function PART:reset_ent_ang()
-	if self.target_ent:IsValid() then
-		--if self.target_ent:GetClass() == "prop_physics" then return end
-		if LocalPlayer() == self:GetPlayerOwner() then
-			net.Start("pac_request_angle_reset_on_entity")
-			net.WriteAngle(Angle(0,0,0))
-			net.WriteFloat(self.RestoreDelay)
-			net.WriteEntity(self.target_ent)
-			net.WriteEntity(self:GetPlayerOwner())
-			net.SendToServer()
-		end
-		if self.Players then
-			self.target_ent:DisableMatrix("RenderMultiply")
-		end
+	if self.target_ent == nil then return end
+	local reset_ent = self.target_ent
+	if reset_ent:IsValid() then
+		timer.Simple(math.min(self.RestoreDelay,5), function()
+			if LocalPlayer() == self:GetPlayerOwner() then
+				net.Start("pac_request_angle_reset_on_entity")
+				net.WriteAngle(Angle(0,0,0))
+				net.WriteFloat(self.RestoreDelay)
+				net.WriteEntity(reset_ent)
+				net.WriteEntity(self:GetPlayerOwner())
+				net.SendToServer()
+			end
+			if self.Players then
+				self.target_ent:DisableMatrix("RenderMultiply")
+			end
+		end)
 	end
 end
 
