@@ -93,7 +93,8 @@ local function populate_view(menu)
 		function() pace.Call("ToggleFocus") chat.AddText("[PAC3] \"ctrl + e\" to get the editor back")
 	end):SetImage("icon16/application_delete.png")
 
-	menu:AddCVar(L"camera follow", "pac_camera_follow_entity", "1", "0"):SetImage("icon16/camera_go.png")
+	menu:AddCVar(L"camera follow: "..GetConVar("pac_camera_follow_entity"):GetInt(), "pac_camera_follow_entity", "1", "0"):SetImage("icon16/camera_go.png")
+	menu:AddCVar(L"enable editor camera: "..GetConVar("pac_enable_editor_view"):GetInt(), "pac_enable_editor_view", "1", "0"):SetImage("icon16/camera.png")
 	menu:AddOption(L"reset view position", function() pace.ResetView() end):SetImage("icon16/camera_link.png")
 	menu:AddOption(L"reset zoom", function() pace.ResetZoom() end):SetImage("icon16/magnifier.png")
 end
