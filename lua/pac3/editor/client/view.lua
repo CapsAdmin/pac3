@@ -368,7 +368,6 @@ function pace.EnableView(b)
 		pac.AddHook("CalcView", "camera_part", function(ply, pos, ang, fov, nearz, farz)
 			for _, part in pairs(pac.GetLocalParts()) do
 				if part:IsValid() and part.ClassName == "camera" then
-					print(part)
 					part:CalcShowHide()
 					local temp = {}
 					if not part:IsHidden() then
