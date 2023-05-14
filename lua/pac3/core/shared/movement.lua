@@ -158,7 +158,7 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 	end
 	
 	if (movementConvar:GetInt() == 1 or (movementConvar:GetInt() == -1 and hook.Run("PlayerNoClip", ply, true) == true)) and massDamageScale:GetInt() == 1 then
-		scale_mass = 85/math.Clamp(self.Mass, massLowerLimit:GetFloat(), massUpperLimit:GetFloat())
+		scale_mass = 85/math.Clamp(self.Mass, math.max(massLowerLimit:GetFloat(), 0.01), massUpperLimit:GetFloat())
 	else
 		scale_mass = 1
 	end
