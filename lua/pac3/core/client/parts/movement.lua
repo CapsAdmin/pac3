@@ -44,6 +44,7 @@ BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")
 		ADD(PART, "Noclip", false)
 		ADD(PART, "Gravity", Vector(0, 0, -600))
+		ADD(PART, "Mass", 85)
 
 	BUILDER:SetPropertyGroup("movement")
 		ADD(PART, "SprintSpeed", 400)
