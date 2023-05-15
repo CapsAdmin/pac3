@@ -107,6 +107,9 @@ function pac.GetAllBones(ent)
 		tbl.footstep = {friendly = "footsteps", is_special = true}
 		tbl.skirt = {friendly = "skirt", is_special = true}
 		tbl.skirt2 = {friendly = "skirt2", is_special = true}
+		tbl.hitpos_world_props = {friendly = "hitpos_world_props", is_special = true}
+		tbl.hitpos_world = {friendly = "hitpos_world", is_special = true}
+		tbl.hitpos_world_noang = {friendly = "hitpos_world_noang", is_special = true}
 		tbl.hitpos_ent_ang = {friendly = "hitpos_ent_ang", is_special = true}
 		tbl.hitpos_ent_ang_zero_pitch = {friendly = "hitpos_ent_ang_zero_pitch", is_special = true}
 		tbl.pos_ang = {friendly = "pos_ang", is_special = true}
@@ -261,6 +264,21 @@ function pac.GetBonePosAng(ent, id, parent)
 		return ent:EyePos(), ent:EyeAngles()
 	elseif id == "eyepos_ang" then
 		return ent:EyePos(), ent:GetAngles()
+	elseif id == "hitpos_world_props" then
+		local res = util_QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, function(ent)
+			return ent:GetClass() == "prop_physics"
+		end)
+		return res.HitPos, res.HitNormal:Angle()
+	elseif id == "hitpos_world" then
+		local res = util_QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, function(ent)
+			return ent:IsWorld()
+		end)
+		return res.HitPos, res.HitNormal:Angle()
+	elseif id == "hitpos_world_noang" then
+		local res = util_QuickTrace(ent:EyePos(), ent:EyeAngles():Forward() * 16000, function(ent)
+			return ent:IsWorld()
+		end)
+		return res.HitPos, angle_origin
 	elseif id == "hitpos" or id == "hit position" then
 		if ent.pac_traceres then
 			return ent.pac_traceres.HitPos, ent.pac_traceres.HitNormal:Angle()

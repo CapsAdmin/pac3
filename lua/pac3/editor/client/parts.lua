@@ -837,7 +837,7 @@ do -- menu
 						sent_var.x = tonumber(str[1]) or 1
 						sent_var.y = tonumber(str[2]) or 1
 						sent_var.z = tonumber(str[3]) or 1
-						if v and not part.ProperColorRange then sent_var = sent_var*255 end
+						if v == "Color" and not part.ProperColorRange then sent_var = sent_var*255 end
 					elseif var_type == "Angle" then
 						local str = string.Split(VAR_PANEL_EDITZONE:GetValue(), ",")
 						sent_var = Angle()
@@ -905,6 +905,7 @@ do -- menu
 				local udata_val_name = string.gsub(v, "event_udata_", "")
 				
 				local var_type = udata_types[udata_val_name]
+				if var_type == nil then var_type = "string" end
 
 				local VAR_PANEL = vgui.Create("DFrame")
 				
@@ -967,23 +968,25 @@ do -- menu
 							else sent_var = VAR_PANEL_EDITZONE:GetValue() end
 
 							local arg_split = string.Split(part:GetArguments(), "@@")
-							if #udata_orders[part.Event] ~= #string.Split(part:GetArguments(), "@@") then arg_split[#arg_split + 1] = "0" end
 
-							local sent_var_final = ""
-							--		PRESCRIBED			X @@ Y @@ Z ...
-							--      EVERY STEP  		ADD
-							--		EVERY STEP EXCEPT LAST..@@
-							for n,arg in ipairs(arg_split) do
-								if udata_orders[part.Event][n] == udata_val_name then
-									sent_var_final = sent_var_final .. sent_var
-								else
-									sent_var_final = sent_var_final .. arg_split[n]
-								end
-								if n ~= #arg_split then
-									sent_var_final = sent_var_final .. "@@"
-								end
-							end
+							if #arg_split > 1 then
+								if #udata_orders[part.Event] ~= #string.Split(part:GetArguments(), "@@") then arg_split[#arg_split + 1] = "0" end
 
+								local sent_var_final = ""
+								--		PRESCRIBED			X @@ Y @@ Z ...
+								--      EVERY STEP  		ADD
+								--		EVERY STEP EXCEPT LAST..@@
+								for n,arg in ipairs(arg_split) do
+									if udata_orders[part.Event][n] == udata_val_name then
+										sent_var_final = sent_var_final .. sent_var
+									else
+										sent_var_final = sent_var_final .. arg_split[n]
+									end
+									if n ~= #arg_split then
+										sent_var_final = sent_var_final .. "@@"
+									end
+								end
+							else sent_var_final = sent_var end
 							part:SetArguments(sent_var_final)
 						end
 
@@ -1443,38 +1446,3 @@ do --hover highlight halo
 		--haloex.Add( ents, color, blurx, blury, passes, add, ignorez, amount, spherical, shape )
 	end
 end
-
-
---[[ test visualise part
-local cachedmodel = ClientsideModel( obj:GetRootPart():GetOwner():GetModel(), RENDERGROUP_BOTH )
-		
-print(tbl ~= nil)
-previewmdl_tbl = previewmdl_tbl or obj:ToTable()
-
-timer.Simple(8,function() Panel:Remove() end)
-
-ENT = cachedmodel
---ENT = icon:GetEntity()
-pac.SetupENT(ENT)
-ENT:AttachPACPart(tbl, ENT:GetOwner(), false)
-
-
-function Panel:Paint( w, h )
-
-	local x, y = self:GetPos()
-	local vec = LocalPlayer():GetPos()
-
-	cachedmodel:SetPos(vec + Vector(100,0,50))
-	cachedmodel:SetAngles(Angle(0,180 + SysTime()*60,0))
-	render.RenderView( {
-		origin = vec + Vector( 0, 0, 90 ),
-		angles = Angle(0,0,0),
-		x = x, y = y,
-		w = w, h = h,
-		fov = 50, aspect = w/h
-	} )
-
-end
-timer.Simple(8, function()
-	SafeRemoveEntity(cachedmodel)
-end)]]

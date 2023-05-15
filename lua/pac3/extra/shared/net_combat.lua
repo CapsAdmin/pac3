@@ -50,6 +50,22 @@ local damage_types = {
 }
 
 if SERVER then
+	local function maximized_ray_mins_maxs(startpos,endpos,padding)
+		local maxsx,maxsy,maxsz
+		local highest_sq_distance = 0
+		for xsign = -1, 1, 2 do
+			for ysign = -1, 1, 2 do
+				for zsign = -1, 1, 2 do
+					local distance_tried = (startpos + Vector(padding*xsign,padding*ysign,padding*zsign)):DistToSqr(endpos - Vector(padding*xsign,padding*ysign,padding*zsign))
+					if distance_tried > highest_sq_distance then
+						highest_sq_distance = distance_tried
+						maxsx,maxsy,maxsz = xsign,ysign,zsign
+					end
+				end
+			end
+		end
+		return Vector(padding*maxsx,padding*maxsy,padding*maxsz),Vector(padding*-maxsx,padding*-maxsy,padding*-maxsz)
+	end
 	util.AddNetworkString("pac_hitscan")
 	util.AddNetworkString("pac_request_position_override_on_entity")
 	util.AddNetworkString("pac_request_angle_reset_on_entity")
@@ -93,9 +109,17 @@ if SERVER then
 		if tbl.HitboxMode == "Sphere" then
 			local ents_hits = ents.FindInSphere(pos, tbl.Radius)
 			ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang)
-		elseif tbl.HitboxMode == "Box" then
-			local mins = pos - Vector(tbl.Radius, tbl.Radius, tbl.Radius)
-			local maxs = pos + Vector(tbl.Radius, tbl.Radius, tbl.Radius)
+		elseif tbl.HitboxMode == "Box" or tbl.HitboxMode == "Cube" then
+			local mins
+			local maxs
+			if tbl.HitboxMode == "Box" then
+				mins = pos - Vector(tbl.Radius, tbl.Radius, tbl.Length)
+				maxs = pos + Vector(tbl.Radius, tbl.Radius, tbl.Length)
+			elseif tbl.HitboxMode == "Cube" then
+				mins = pos - Vector(tbl.Radius, tbl.Radius, tbl.Radius)
+				maxs = pos + Vector(tbl.Radius, tbl.Radius, tbl.Radius)
+			end
+
 			local ents_hits = ents.FindInBox(mins, maxs)
 			ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang)
 		elseif tbl.HitboxMode == "Cylinder" or tbl.HitboxMode == "CylinderHybrid" then
@@ -114,24 +138,25 @@ if SERVER then
 				--print("steps",steps, "total casts will be "..steps*self.Detail)
 				for ringnumber=1,0,-1/steps do --concentric circles go smaller and smaller by lowering the i multiplier
 					phase = math.random()
+					local ray_thickness = math.Clamp(0.5*math.log(tbl.Radius) + 0.05*tbl.Radius,0,10)*(1 - 0.7*ringnumber)
 					for i=1,0,-1/sides do
 						if ringnumber == 0 then i = 0 end
 						x = ang:Right()*math.cos(2 * math.pi * i + phase * tbl.PhaseRandomize)*tbl.Radius*ringnumber*(1 - math.random() * (ringnumber) * tbl.RadialRandomize)
 						y = ang:Up()   *math.sin(2 * math.pi * i + phase * tbl.PhaseRandomize)*tbl.Radius*ringnumber*(1 - math.random() * (ringnumber) * tbl.RadialRandomize)
 						local startpos = pos + x + y
 						local endpos = pos + ang:Forward()*tbl.Length + x + y
-						table.Merge(ents_hits, ents.FindAlongRay(startpos, endpos))
+						MergeTargetsByID(ents_hits, ents.FindAlongRay(startpos, endpos, maximized_ray_mins_maxs(startpos,endpos,ray_thickness)))
 					end
 				end
 				if tbl.HitboxMode == "CylinderHybrid" and tbl.Length ~= 0 then
 					--fast sphere check on the wide end
 					if tbl.Length/tbl.Radius >= 2 then
-						table.Inherit(ents_hits,ents.FindInSphere(pos + ang:Forward()*(tbl.Length - tbl.Radius), tbl.Radius))
-						table.Inherit(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Radius, tbl.Radius))
+						MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*(tbl.Length - tbl.Radius), tbl.Radius))
+						MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Radius, tbl.Radius))
 						if tbl.Radius ~= 0 then
 							local counter = 0
 							for i=math.floor(tbl.Length / tbl.Radius) - 1,1,-1 do
-								table.Inherit(ents_hits,ents.FindInSphere(pos + ang:Forward()*(tbl.Radius*i), tbl.Radius))
+								MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*(tbl.Radius*i), tbl.Radius))
 								if counter == 100 then break end
 								counter = counter + 1
 							end
@@ -139,21 +164,21 @@ if SERVER then
 						--render.DrawWireframeSphere( self:GetWorldPosition() + self:GetWorldAngles():Forward()*(self.Length - 0.5*self.Radius), 0.5*self.Radius, 10, 10, Color( 255, 255, 255 ) )
 					end
 				end
-			elseif tbl.Radius == 0 then table.Inherit(ents_hits,ents.FindAlongRay(pos, pos + ang:Forward()*tbl.Length)) end
+			elseif tbl.Radius == 0 then MergeTargetsByID(ents_hits,ents.FindAlongRay(pos, pos + ang:Forward()*tbl.Length)) end
 			ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang)
 		elseif tbl.HitboxMode == "CylinderSpheres" then
 			local ents_hits = {}
 			if tbl.Length ~= 0 and tbl.Radius ~= 0 then
 				local counter = 0
-				table.Inherit(ents_hits,ents.FindInSphere(pos, tbl.Radius))
+				MergeTargetsByID(ents_hits,ents.FindInSphere(pos, tbl.Radius))
 				for i=0,1,1/(math.abs(tbl.Length/tbl.Radius)) do
-					table.Inherit(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Length*i, tbl.Radius))
+					MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Length*i, tbl.Radius))
 					if counter == 200 then break end
 					counter = counter + 1
 				end
-				table.Inherit(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Length, tbl.Radius))
+				MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Length, tbl.Radius))
 				--render.DrawWireframeSphere( self:GetWorldPosition() + self:GetWorldAngles():Forward()*(self.Length - 0.5*self.Radius), 0.5*self.Radius, 10, 10, Color( 255, 255, 255 ) )
-			elseif tbl.Radius == 0 then table.Inherit(ents_hits,ents.FindAlongRay(pos, pos + ang:Forward()*tbl.Length)) end
+			elseif tbl.Radius == 0 then MergeTargetsByID(ents_hits,ents.FindAlongRay(pos, pos + ang:Forward()*tbl.Length)) end
 			ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang)
 		elseif tbl.HitboxMode == "Cone" or tbl.HitboxMode == "ConeHybrid" then
 			local ents_hits = {}
@@ -170,9 +195,11 @@ if SERVER then
 				steps = math.max(steps + math.abs(tbl.ExtraSteps),1)
 				--print("steps",steps, "total casts will be "..steps*self.Detail)
 				local timestart = SysTime()
-				for ringnumber=1,0,-1/steps do --concentric circles go smaller and smaller by lowering the i multiplier
-					
+				local casts = 0
+				for ringnumber=1,0,-1/steps do --concentric circles go smaller and smaller by lowering the ringnumber multiplier
 					phase = math.random()
+					local ray_thickness = 5 * (2 - ringnumber)
+					
 					--print("ring " .. ringnumber .. " phase " .. phase)
 					for i=1,0,-1/sides do
 						--print("radius " .. tbl.Radius*ringnumber*(1 - math.random() * (ringnumber) * tbl.RadialRandomize))
@@ -180,17 +207,19 @@ if SERVER then
 						x = ang:Right()*math.cos(2 * math.pi * i + phase * tbl.PhaseRandomize)*tbl.Radius*ringnumber*(1 - math.random() * (ringnumber) * tbl.RadialRandomize)
 						y = ang:Up()   *math.sin(2 * math.pi * i + phase * tbl.PhaseRandomize)*tbl.Radius*ringnumber*(1 - math.random() * (ringnumber) * tbl.RadialRandomize)
 						local endpos = pos + ang:Forward()*tbl.Length + x + y
-						table.Inherit(ents_hits,ents.FindAlongRay(startpos, endpos))
+						MergeTargetsByID(ents_hits,ents.FindAlongRay(startpos, endpos, maximized_ray_mins_maxs(startpos,endpos,ray_thickness)))
+						casts = casts + 1
 					end
 				end
+				print(casts .. " casts")
 				if tbl.HitboxMode == "ConeHybrid" and tbl.Length ~= 0 then
 					--fast sphere check on the wide end
 					local radius_multiplier = math.atan(math.abs(ratio)) / (1.5 + 0.1*math.sqrt(ratio))
 					if ratio > 0.5 then
-						table.Inherit(ents_hits,ents.FindInSphere(pos + ang:Forward()*(tbl.Length - tbl.Radius * radius_multiplier), tbl.Radius * radius_multiplier))
+						MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*(tbl.Length - tbl.Radius * radius_multiplier), tbl.Radius * radius_multiplier))
 					end
 				end
-			elseif tbl.Radius == 0 then table.Inherit(ents_hits,ents.FindAlongRay(pos, pos + ang:Forward()*tbl.Length)) end
+			elseif tbl.Radius == 0 then MergeTargetsByID(ents_hits,ents.FindAlongRay(pos, pos + ang:Forward()*tbl.Length)) end
 			ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang)
 		elseif tbl.HitboxMode == "ConeSpheres" then
 			local ents_hits = {}
@@ -198,15 +227,15 @@ if SERVER then
 			steps = math.Clamp(4*math.ceil(tbl.Length / (tbl.Radius or 1)),1,50)
 			for i = 1,0,-1/steps do
 				--PrintTable(ents.FindInSphere(pos + ang:Forward()*tbl.Length*i, i * tbl.Radius))
-				table.Inherit(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Length*i, i * tbl.Radius))
+				MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Length*i, i * tbl.Radius))
 			end
 
 			steps = math.Clamp(math.ceil(tbl.Length / (tbl.Radius or 1)),1,4)
 			for i = 0,1/8,1/128 do
 				--PrintTable(ents.FindInSphere(pos + ang:Forward()*tbl.Length*i, i * tbl.Radius))
-				table.Inherit(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Length*i, i * tbl.Radius))
+				--MergeTargetsByID(ents_hits,ents.FindInSphere(pos + ang:Forward()*tbl.Length*i, i * tbl.Radius))
 			end
-			if tbl.Radius == 0 then table.Inherit(ents_hits,ents.FindAlongRay(pos, pos + ang:Forward()*tbl.Length)) end
+			if tbl.Radius == 0 then MergeTargetsByID(ents_hits,ents.FindAlongRay(pos, pos + ang:Forward()*tbl.Length)) end
 			ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang)
 		elseif tbl.HitboxMode =="Ray" then
 			local startpos = pos + Vector(0,0,0)
@@ -228,6 +257,9 @@ if SERVER then
 	end)
 
 	function ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang)
+		print("received", #ents_hits, "potential targets")
+		--print("process hurt ", #ents_hits)
+		--PrintTable(ents_hits)
 		local bullet = {}
 		bullet.Src = pos + ang:Forward()
 		bullet.Dir = ang:Forward()*50000
@@ -269,10 +301,10 @@ if SERVER then
 							if (ent == dmg_info:GetInflictor() and tbl.AffectSelf) then
 								ent:TakeDamageInfo(dmg_info)
 								print(ent, "hurt themself")
-							elseif damage_zone_consents[ent] == true then
+							elseif damage_zone_consents[ent] == true or ent:IsBot() then
 								ent:TakeDamageInfo(dmg_info)
 								print(dmg_info:GetAttacker(), "hurt", ent)
-							end
+							else print("can't do that because",ent,damage_zone_consents[ent]) end
 						else
 							ent:TakeDamageInfo(dmg_info)
 							print(dmg_info:GetAttacker(), "hurt", ent)
@@ -282,6 +314,12 @@ if SERVER then
 					--ent:SetVelocity( oldvel - newvel)
 				end
 			end
+		end
+	end
+
+	function MergeTargetsByID(tbl1, tbl2)
+		for i,v in pairs(tbl2) do
+			tbl1[v:EntIndex()] = v
 		end
 	end
 

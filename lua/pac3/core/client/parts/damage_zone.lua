@@ -30,6 +30,7 @@ BUILDER:StartStorableVars()
 		:GetSet("Length", 50)
 		:GetSet("HitboxMode", "Box", {enums = {
 			["Box"] = "Box",
+			["Cube"] = "Cube",
 			["Sphere"] = "Sphere",
 			["Cylinder (Raycasts Only)"] = "Cylinder",
 			["Cylinder (Hybrid)"] = "CylinderHybrid",
@@ -157,12 +158,14 @@ function PART:PreviewHitbox()
 	hook.Add(self.RenderingHook, "pace_draw_hitbox", function()
 		self:GetWorldPosition()
 		if self.HitboxMode == "Box" then
-			local mat = Matrix()
-			mat:Rotate(self:GetWorldAngles())
+			local mins =  Vector(-self.Radius, -self.Radius, -self.Length)
+			local maxs = Vector(self.Radius, self.Radius, self.Length)
+			render.DrawWireframeBox( self:GetWorldPosition(), Angle(0,0,0), mins, maxs, Color( 255, 255, 255 ) )
+		elseif self.HitboxMode == "Cube" then
 			--mat:Rotate(Angle(SysTime()*100,0,0))
 			local mins =  Vector(-self.Radius, -self.Radius, -self.Radius)
 			local maxs = Vector(self.Radius, self.Radius, self.Radius)
-			render.DrawWireframeBox( self:GetWorldPosition(), Angle(0,0,0) --[[mat:GetAngles()]], mins, maxs, Color( 255, 255, 255 ) )
+			render.DrawWireframeBox( self:GetWorldPosition(), Angle(0,0,0), mins, maxs, Color( 255, 255, 255 ) )
 		elseif self.HitboxMode == "Sphere" then
 			render.DrawWireframeSphere( self:GetWorldPosition(), self.Radius, 10, 10, Color( 255, 255, 255 ) )
 		elseif self.HitboxMode == "Cylinder" or self.HitboxMode == "CylinderHybrid" then
@@ -266,6 +269,7 @@ function PART:PreviewHitbox()
 					--print("steps",steps, "total casts will be "..steps*self.Detail)
 					for ringnumber=1,0,-1/steps do --concentric circles go smaller and smaller by lowering the i multiplier
 						phase = math.random()
+						local ray_thickness = math.Clamp(0.5*math.log(self.Radius) + 0.05*self.Radius,0,10)*(1.5 - 0.7*ringnumber)
 						for i=1,0,-1/sides do
 							if ringnumber == 0 then i = 0 end
 							x = self:GetWorldAngles():Right()*math.cos(2 * math.pi * i + phase * self.PhaseRandomize)*self.Radius*ringnumber*(1 - math.random() * (ringnumber) * self.RadialRandomize)
@@ -273,6 +277,10 @@ function PART:PreviewHitbox()
 							local endpos = self:GetWorldPosition() + self:GetWorldAngles():Forward()*self.Length + x + y
 							render.DrawLine( startpos, endpos, Color( 255, 255, 255 ), false )
 						end
+						--[[render.DrawWireframeBox(self:GetWorldPosition() + self:GetWorldAngles():Forward()*self.Length + self:GetWorldAngles():Right() * self.Radius * ringnumber, Angle(0,0,0),
+							Vector(ray_thickness,ray_thickness,ray_thickness),
+							Vector(-ray_thickness,-ray_thickness,-ray_thickness),
+							Color(255,255,255))]]
 					end
 					if self.HitboxMode == "ConeHybrid" and self.Length ~= 0 then
 						--fast sphere check on the wide end

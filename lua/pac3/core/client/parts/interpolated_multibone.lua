@@ -39,6 +39,11 @@ BUILDER:StartStorableVars()
 		:GetSetPart("Node3")
 		:GetSetPart("Node4")
 		:GetSetPart("Node5")
+		:GetSetPart("Node6")
+		:GetSetPart("Node7")
+		:GetSetPart("Node8")
+		:GetSetPart("Node9")
+		:GetSetPart("Node10")
 :EndStorableVars()
 
 --PART:GetWorldPosition()
@@ -49,41 +54,41 @@ end
 
 function PART:Initialize()
 	print("a multiboner is born")
-
-	self:SetOwner(pac.CreateEntity("models/pac/default.mdl"))
+	self.Owner = pac.CreateEntity("models/pac/default.mdl")
 	self.Owner:SetNoDraw(true)
-	pac.HookEntityRender(self.Owner, self)
-	pac.HookEntityRender(self.Owner, self)
-	self.Owner.PACPart = self
+	--self:SetOwner(pac.CreateEntity("models/pac/default.mdl"))
+	
+	--pac.HookEntityRender(self.Owner, self)
+	--self.Owner.PACPart = self
+	
 end
 
 function PART:OnShow()
-
+	
 end
 
 function PART:OnHide()
-	hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw")
+	hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID)
 
 end
 
 function PART:OnRemove()
-	hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw")
+	hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID)
 end
 --NODES			self	1		2		3
 --STAGE			0		1		2		3
 --PROPORTION	0	0.5	0	0.5	0	0.5	3
 function PART:OnDraw()
 	
-
-	local ent = self:GetOwner()
+	--local ent = self:GetOwner()
 	self.pos,self.ang = self:GetDrawPosition()
-	if not self.Test1 then hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw") end
+	if not self.Test1 then hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID) end
 
 	local stage = math.max(0,math.floor(self.LerpValue))
 	local proportion = math.max(0,self.LerpValue) % 1
 
 	if self.Test1 then
-		hook.Add("PostDrawOpaqueRenderables", "Multibone_draw", function()
+		hook.Add("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID, function()
 			render.DrawLine(self.pos,self.pos + self.ang:Forward()*50, Color(255,0,0))
 			render.DrawLine(self.pos,self.pos - self.ang:Right()*50, Color(0,255,0))
 			render.DrawLine(self.pos,self.pos + self.ang:Up()*50, Color(0,0,255))
@@ -91,15 +96,9 @@ function PART:OnDraw()
 		end)
 	end
 	self:Interpolate(stage,proportion)
-
-	--[[self:PreEntityDraw(ent, pos, ang)
-	self:DrawModel(ent, pos, ang)
-	self:PostEntityDraw(ent, pos, ang)]]
-	ent:SetPos(self.pos)
-	ent:SetAngles(self.ang)
-	--self:ShowFromRendering()
-	--pac.ResetBones(ent)
-	--ent:DrawModel()
+	--ent:SetPos(self.pos)
+	--ent:SetAngles(self.ang)
+	--self.pos = Vector(0,0,0)
 end
 
 function PART:OnThink()
@@ -108,7 +107,6 @@ function PART:OnThink()
 	if self.Node3 ~= nil then nodes["Node3"] = self.Node3 end
 	if self.Node4 ~= nil then nodes["Node4"] = self.Node4 end
 	if self.Node5 ~= nil then nodes["Node5"] = self.Node5 end
-
 
 end
 
@@ -135,15 +133,48 @@ function PART:Interpolate(stage, proportion)
 	proportion = math.pow(proportion,self.Power)
 	if secondnode ~= nil and secondnode ~= NULL then
 		self.pos = (1-proportion)*(firstnode:GetWorldPosition()) + (secondnode:GetWorldPosition())*proportion
-		self.ang = (1-proportion)*(firstnode:GetWorldAngles() + Angle(360,360,360)) + (secondnode:GetWorldAngles() + Angle(360,360,360))*proportion
+		self.ang = GetClosestAngleMidpoint(firstnode:GetWorldAngles(), secondnode:GetWorldAngles(), proportion)
+		--self.ang = (1-proportion)*(firstnode:GetWorldAngles() + Angle(360,360,360)) + (secondnode:GetWorldAngles() + Angle(360,360,360))*proportion
 	elseif proportion == 0 then
 		self.pos = firstnode:GetWorldPosition()
 		self.ang = firstnode:GetWorldAngles()
 	else
 		self.pos = (1-proportion)*self:GetWorldPosition() + (self:GetWorldPosition())*proportion
-		self.ang = (1-proportion)*(self:GetWorldAngles() + Angle(360,360,360)) + (self:GetWorldAngles() + Angle(360,360,360))*proportion
+		self.ang = GetClosestAngleMidpoint(self:GetWorldAngles(), self:GetWorldAngles(), proportion)
+		--self.ang = (1-proportion)*(self:GetWorldAngles() + Angle(360,360,360)) + (self:GetWorldAngles() + Angle(360,360,360))*proportion
+	end
+	self.Owner:SetPos(self.pos)
+	self.Owner:SetAngles(self.ang)
+end
+
+function GetClosestAngleMidpoint(a1, a2, proportion)
+	--print(a1)
+	--print(a2)
+	local axes = {"p","y","r"}
+	local ang_delta_candidate1
+	local ang_delta_candidate2
+	local ang_delta_candidate3
+	local ang_delta_final
+	local final_ang = Angle()
+	for _,ax in pairs(axes) do
+		ang_delta_candidate1 = a2[ax] - a1[ax]
+		ang_delta_candidate2 = (a2[ax] + 360) - a1[ax]
+		ang_delta_candidate3 = (a2[ax] - 360) - a1[ax]
+		ang_delta_final = 180
+		if math.abs(ang_delta_candidate1) < math.abs(ang_delta_final) then
+			ang_delta_final = ang_delta_candidate1
+		end
+		if math.abs(ang_delta_candidate2) < math.abs(ang_delta_final) then
+			ang_delta_final = ang_delta_candidate2
+		end
+		if math.abs(ang_delta_candidate3) < math.abs(ang_delta_final) then 
+			ang_delta_final = ang_delta_candidate3
+		end
+		--print("at "..ax.." 1:"..ang_delta_candidate1.." 2:"..ang_delta_candidate2.." 3:"..ang_delta_candidate3.." pick "..ang_delta_final)
+		final_ang[ax] = a1[ax] + proportion * ang_delta_final
 	end
 
+	return final_ang
 end
 
 function PART:GoTo(part)

@@ -31,6 +31,10 @@ BUILDER:StartStorableVars()
 		:GetSet("ContinuousSearch", false, {description = "Will search for entities until one is found. Otherwise only try once when part is shown."})
 		:GetSet("Preview", false)
 
+	:SetPropertyGroup("TeleportSafety")
+		:GetSet("ClampDistance", false, {description = "Prevents the teleport from going too far (By Radius amount). For example, if you use hitpos bone on a pac model, it can act as a safety in case the raycast falls out of bounds."})
+		:GetSet("SlopeSafety", false, {description = "Teleports a bit up in case you end up on a slope and get stuck."})
+
 	:SetPropertyGroup("PlayerCameraOverride")
 		:GetSet("OverrideEyeAngles", true, {description = "Whether the part will try to override players' eye angles. Requires OverrideAngles and user consent"})
 		:GetSetPart("OverrideEyePositionPart")
@@ -150,8 +154,22 @@ function PART:OnThink()
 		ang_yaw_only.p = 0
 		ang_yaw_only.r = 0
 		if LocalPlayer() == self:GetPlayerOwner() then
+			
+			local teleport_pos_final = self:GetWorldPosition()
+
+			if self.LimitTeleportDistanceByRadius then
+				local ply_pos = self:GetPlayerOwner():GetPos()
+				local pos = self:GetWorldPosition()
+				
+				if pos:Distance(ply_pos) > self.Radius then
+					local clamped_pos = ply_pos + (pos - ply_pos):GetNormalized()*self.Radius
+					--print(clamped_pos:Length())
+					teleport_pos_final = clamped_pos
+				end
+			end
+			if self.SlopeSafety then teleport_pos_final = teleport_pos_final + Vector(0,0,30) end
 			net.Start("pac_request_position_override_on_entity")
-			net.WriteVector(self:GetWorldPosition())
+			net.WriteVector(teleport_pos_final)
 			net.WriteAngle(ang_yaw_only)
 			net.WriteBool(self.OverrideAngles)
 			net.WriteEntity(self:GetPlayerOwner())
