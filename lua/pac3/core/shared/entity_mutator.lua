@@ -329,12 +329,14 @@ function emut.RemoveMutationsForPlayer(ply)
 end
 
 hook.Add("EntityRemoved", "pac_entity_mutators_left", function(ent)
-	if not IsValid(ent) then return end
-	if ent:IsPlayer() then
-		emut.RemoveMutationsForPlayer(ent)
-	else
-		emut.RemoveMutatorsOwnedByEntity(ent)
-	end
+	timer.Simple(0, function()
+		if not IsValid(ent) then return end
+		if ent:IsPlayer() then
+			emut.RemoveMutationsForPlayer(ent)
+		else
+			emut.RemoveMutatorsOwnedByEntity(ent)
+		end
+	end)
 end)
 
 if CLIENT then
