@@ -2,7 +2,7 @@
 local CL_LIMIT, CL_LIMIT_OVERRIDE, CL_NO_CLENGTH
 
 if CLIENT then
-	CL_LIMIT = CreateConVar("pac_webcontent_limit", "-1", {FCVAR_ARCHIVE}, "webcontent limit, -1 = unlimited, 1024 = 1mb")
+	CL_LIMIT = CreateConVar("pac_webcontent_limit", "-1", {FCVAR_ARCHIVE}, "webcontent limit in mb, -1 = unlimited")
 	CL_NO_CLENGTH = CreateConVar("pac_webcontent_allow_no_content_length", "0", {FCVAR_ARCHIVE}, "allow downloads with no content length")
 	CL_LIMIT_OVERRIDE = CreateConVar("pac_webcontent_limit_force", "0", {FCVAR_ARCHIVE}, "Override serverside setting")
 end
