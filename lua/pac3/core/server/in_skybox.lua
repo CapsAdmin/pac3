@@ -5,6 +5,9 @@ hook.Add("InitPostEntity","pac_get_sky_camera",function()
 		local in_skybox = {}
 
 		timer.Create("pac_in_skybox", 0.5, 0, function()
+			if not IsValid(sky_camera) then
+				sky_camera = ents.FindByClass("sky_camera")[1]
+			end
 			local new_in_skybox = {}
 			for _, ent in ipairs(ents.FindInPVS(sky_camera:GetPos())) do
 				if not in_skybox[ent] then
