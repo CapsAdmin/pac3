@@ -334,7 +334,7 @@ function pace.HandleReceivedData(ply, data)
 	data.owner = ply
 	data.uid = pac.Hash(ply)
 
-	pac.Message("Received pac data from ", ply, " with ", data.totalParts or 0, " parts")
+	pac.Message("Received pac group ", data.partID or 0 , "/", data.totalParts or 0, " from ", ply)
 
 	if data.wear_filter and #data.wear_filter > game.MaxPlayers() then
 		pac.Message("Player ", ply, " tried to submit extraordinary wear filter size of ", #data.wear_filter, ", dropping.")
