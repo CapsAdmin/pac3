@@ -9,17 +9,27 @@ PART.Group = 'effects'
 PART.Icon = 'icon16/sound.png'
 
 BUILDER:StartStorableVars()
+BUILDER:SetPropertyGroup("generic")
 	BUILDER:GetSet("Sound", "")
 	BUILDER:GetSet("Volume", 1, {editor_sensitivity = 0.25})
 	BUILDER:GetSet("Pitch", 0.4, {editor_sensitivity = 0.125})
 	BUILDER:GetSet("MinPitch", 100, {editor_sensitivity = 0.125})
 	BUILDER:GetSet("MaxPitch", 100, {editor_sensitivity = 0.125})
 	BUILDER:GetSet("RootOwner", true)
+	BUILDER:GetSet("SoundLevel", 100)
+	BUILDER:GetSet("LocalPlayerOnly", false)
+BUILDER:SetPropertyGroup("playback")
 	BUILDER:GetSet("PlayOnFootstep", false)
 	BUILDER:GetSet("Overlapping", false)
-	BUILDER:GetSet("SoundLevel", 100)
 	BUILDER:GetSet("Loop", false)
-	BUILDER:GetSet("LocalPlayerOnly", false)
+	BUILDER:GetSet("Sequential", false, {description = "if there are multiple sounds (separated by ; or using [min,max] notation), plays these sounds in sequential order instead of randomly"})
+	BUILDER:GetSet("SequentialStep",1,
+		{editor_onchange =
+		function(self, num)
+			self.sens = 0.25
+			num = tonumber(num)
+			return math.Round(num)
+		end})
 BUILDER:EndStorableVars()
 
 function PART:GetNiceName()
@@ -170,20 +180,57 @@ function PART:PlaySound(osnd, ovol)
 			snd = osnd
 		else
 			local sounds = self.Sound:Split(";")
-
+			
+			--case 1: proper semicolon list
 			if #sounds > 1 then
-				snd = table.Random(sounds)
-			else
-				snd = self.Sound:gsub(
-					"(%[%d-,%d-%])",
-					function(minmax)
+				if self.Sequential then
+					self.seq_index = self.seq_index or 1
+					
+					snd = sounds[self.seq_index]
+					
+					self.seq_index = self.seq_index + self.SequentialStep
+					self.seq_index = self.seq_index % #sounds
+				else snd = table.Random(sounds) end
+			--case 2: one sound, which may or may not be bracket notation
+			elseif #sounds == 1 then
+				--bracket notation
+				if string.match(sounds[1],"%[(%d-),(%d-)%]") then
+					local function minmaxpath(minmax,str)
 						local min, max = minmax:match("%[(%d-),(%d-)%]")
+						if minmax:match("%[(%d-),(%d-)%]") == nil then return 1 end
 						if max < min then
 							max = min
 						end
-						return math.random(min, max)
+						if str == "min" then return tonumber(min)
+						elseif str == "max" then return tonumber(max) else return tonumber(max) end
 					end
-				)
+					if self.Sequential then
+						self.seq_index = self.seq_index or minmaxpath(self.Sound,"min")
+						snd = self.Sound:gsub(
+							"(%[%d-,%d-%])",self.seq_index
+						)
+						self.seq_index = self.seq_index + self.SequentialStep
+						
+						local span = minmaxpath(self.Sound,"max") - minmaxpath(self.Sound,"min") + 1
+						if self.seq_index > minmaxpath(self.Sound,"max") then
+							self.seq_index = self.seq_index - span
+						elseif self.seq_index < minmaxpath(self.Sound,"min") then
+							self.seq_index = self.seq_index + span
+						end
+					else
+						snd = self.Sound:gsub(
+							"(%[%d-,%d-%])",
+							function(minmax)
+								local min, max = minmax:match("%[(%d-),(%d-)%]")
+								if max < min then
+									max = min
+								end
+								return math.random(min, max)
+							end
+						)
+					end
+				--single sound
+				else snd = sounds[1] or osnd end
 			end
 		end
 
