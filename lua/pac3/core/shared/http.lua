@@ -70,6 +70,7 @@ function pac.FixUrl(url)
 		url = url:gsub([[^https?://dl.dropbox.com/]], [[https://www.dropbox.com/]])
 		url = url:gsub([[^https?://www.dropbox.com/s/(.+)%?dl%=[01]$]], [[https://dl.dropboxusercontent.com/s/%1]])
 		url = url:gsub([[^https?://www.dropbox.com/s/(.+)$]], [[https://dl.dropboxusercontent.com/s/%1]])
+		url = url:gsub([[^https?://www.dropbox.com/scl/(.+)$]], [[https://dl.dropboxusercontent.com/scl/%1]]) --Fixes new dropbox scl link formats
 		return url
 	end
 
