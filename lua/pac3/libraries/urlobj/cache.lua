@@ -22,11 +22,11 @@ end
 function CACHE:AddItem(itemId, data)
 	local hash = self:GetItemIdHash (itemId)
 	local path = self.Path .. "/" .. hash .. ".txt"
-
 	local key  = self:GetItemIdEncryptionKey (itemId)
 
 	-- Version
 	local f = file.Open (path, "wb", "DATA")
+	if not f then return end
 	f:WriteLong (self.Version)
 
 	-- Header
