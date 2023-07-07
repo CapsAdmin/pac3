@@ -54,7 +54,7 @@ end
 function PART:GetNiceName()
 	if self.UseLua then return ("lua: " .. self.String) end
 	return "command: " .. self.String
-	
+
 end
 
 local sv_allowcslua = GetConVar("sv_allowcslua")
@@ -78,6 +78,10 @@ function PART:Execute()
 			end
 		else
 			if hook.Run("PACCanRunConsoleCommand", self.String) == false then return end
+			if IsConCommandBlocked(self.String) then
+				self:SetError("Concommand is blocked")
+				return
+			end
 			ent:ConCommand(self.String)
 		end
 	end
