@@ -12,6 +12,11 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSet("ExecuteOnShow", true)
 BUILDER:EndStorableVars()
 
+local sv_allowcslua = GetConVar("sv_allowcslua")
+local function canRunLua()
+	return sv_allowcslua:GetBool() or pac.AllowClientsideLUA
+end
+
 function PART:OnWorn()
 	if self:GetExecuteOnWear() then
 		self:Execute()
@@ -32,7 +37,7 @@ function PART:SetUseLua(b)
 end
 
 function PART:SetString(str)
-	if self.UseLua and self:GetPlayerOwner() == pac.LocalPlayer then
+	if self.UseLua and canRunLua() and self:GetPlayerOwner() == pac.LocalPlayer then
 		self.func = CompileString(str, "pac_event")
 	end
 
@@ -57,14 +62,12 @@ function PART:GetNiceName()
 
 end
 
-local sv_allowcslua = GetConVar("sv_allowcslua")
-
 function PART:Execute()
 	local ent = self:GetPlayerOwner()
 
 	if ent == pac.LocalPlayer then
 		if self.UseLua and self.func then
-			if sv_allowcslua:GetBool() or pac.AllowClientsideLUA then
+			if canRunLua() then
 				local status, err = pcall(self.func)
 
 				if not status then
