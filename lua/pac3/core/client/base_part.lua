@@ -200,11 +200,9 @@ do -- owner
 	end
 
 	function PART:GetParentOwner()
-
 		if self.TargetEntity:IsValid() and self.TargetEntity ~= self then
 			return self.TargetEntity:GetOwner()
 		end
-
 
 		for _, parent in ipairs(self:GetParentList()) do
 
@@ -219,8 +217,10 @@ do -- owner
 				end
 			end
 
-			local owner = parent:GetOwner()
-			if owner:IsValid() then return owner end
+			if parent ~= self then
+				local owner = parent:GetOwner()
+				if owner:IsValid() then return owner end
+			end
 		end
 
 		return NULL
