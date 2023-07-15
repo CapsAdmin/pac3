@@ -21,6 +21,7 @@ SWEP.AutoSwitchFrom	= true
 SWEP.Weight 		= 1
 
 SWEP.HoldType = "normal"
+SWEP.ViewModel = "models/effects/vol_light.mdl" --Invisible ViewModel
 
 SWEP.Primary.ClipSize      = -1
 SWEP.Primary.DefaultClip   = -1
@@ -59,27 +60,6 @@ function SWEP:Initialize()
 
 	self:DrawShadow(false)
 end
-
-function SWEP:Deploy()
-	self.Thinking = true
-	return true
-end
-
-function SWEP:Think()
-	if self.Thinking and self.Owner and self.Owner:IsValid() and self.Owner:GetViewModel():IsValid() then
-		self.Thinking = false
-	end
-end
-
-local gtfo=Vector(1,1,1)*65000
-function SWEP:GetViewModelPosition( pos, ang )
-	return gtfo,ang
-end
-
-function SWEP:PreDrawViewModel( )
-	return true
-end
-
 
 function SWEP:OnDrop()
     if SERVER then
