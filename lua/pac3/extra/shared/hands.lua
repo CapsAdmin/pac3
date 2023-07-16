@@ -34,44 +34,42 @@ SWEP.Secondary.Automatic   = false
 SWEP.Secondary.Ammo        = "none"
 
 
-function SWEP:DrawHUD() 			end
-function SWEP:PrintWeaponInfo() 	end
+function SWEP:DrawHUD() end
+function SWEP:PrintWeaponInfo() end
+function SWEP:DrawWorldModel() end
+function SWEP:DrawWorldModelTranslucent() end
+function SWEP:CanPrimaryAttack() return false end
+function SWEP:CanSecondaryAttack() return false end
+function SWEP:Reload() return false end
+function SWEP:Holster() return true  end
+function SWEP:ShouldDropOnDie() return false end
 
-function SWEP:DrawWeaponSelection(x,y,w,t,a)
-
-    draw.SimpleText("C","creditslogo",x+w/2,y,Color(255, 220, 0,a),TEXT_ALIGN_CENTER)
-
+local weaponSelectionColor = Color( 255, 220, 0, 255 )
+function SWEP:DrawWeaponSelection( x, y, w, _, a )
+    weaponSelectionColor.a = a
+    draw.SimpleText( "C", "creditslogo", x + w / 2, y, weaponSelectionColor, TEXT_ALIGN_CENTER )
 end
-
-function SWEP:DrawWorldModel() 						 end
-function SWEP:DrawWorldModelTranslucent() 			 end
-function SWEP:CanPrimaryAttack()		return false end
-function SWEP:CanSecondaryAttack()		return false end
-function SWEP:Reload()					return false end
-function SWEP:Holster()					return true  end
-function SWEP:ShouldDropOnDie()			return false end
 
 function SWEP:Initialize()
     if self.SetHoldType then
-		self:SetHoldType"normal"
-	else
-		self:SetWeaponHoldType( "normal" )
-	end
+        self:SetHoldType"normal"
+    else
+        self:SetWeaponHoldType( "normal" )
+    end
 
-	self:DrawShadow(false)
+    self:DrawShadow( false )
 end
 
 function SWEP:OnDrop()
     if SERVER then
-		self:Remove()
-	end
+        self:Remove()
+    end
 end
 
 function SWEP:SecondaryAttack()
-	if not IsFirstTimePredicted() then return end
-	self.DrawCrosshair = not self.DrawCrosshair
-	self:SetNextSecondaryFire(CurTime() + 0.3)
+    if not IsFirstTimePredicted() then return end
+    self.DrawCrosshair = not self.DrawCrosshair
+    self:SetNextSecondaryFire( CurTime() + 0.3 )
 end
 
-
-weapons.Register(SWEP, "none", true)
+weapons.Register( SWEP, "none", true )
