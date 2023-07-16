@@ -1,5 +1,8 @@
 -- rate limit?
 
+local CLIENT = CLIENT
+local SERVER = SERVER
+
 if pac.emut then
 	for _, ent in ipairs(ents.GetAll()) do
 		if ent.pac_mutations then
@@ -68,11 +71,9 @@ function emut.MutateEntity(owner, class_name, ent, ...)
 	if SERVER then
 		if pace.IsBanned(owner) then return end
 
-		if not override_enabled then
-			if owner:IsPlayer() and not emut.registered_mutators[class_name].cvar:GetBool() then
-				pac.Message(owner, "tried to set size when it's disabled")
-				return false
-			end
+		if override_enabled and owner:IsPlayer() and not emut.registered_mutators[class_name].cvar:GetBool() then
+			pac.Message(owner, "tried to set size when it's disabled")
+			return false
 		end
 	end
 
@@ -97,10 +98,8 @@ function emut.MutateEntity(owner, class_name, ent, ...)
 		return
 	end
 
-	if CLIENT then
-		if not emut.registered_mutators[class_name].cvar:GetBool() then
-			return false
-		end
+	if CLIENT and not emut.registered_mutators[class_name].cvar:GetBool() then
+		return false
 	end
 
 	if CLIENT and owner == LocalPlayer() and not suppress_send_to_server then
@@ -109,6 +108,7 @@ function emut.MutateEntity(owner, class_name, ent, ...)
 			net.WriteEntity(ent)
 			net.WriteBool(false)
 			mutator:WriteArguments(...)
+			print( net.BytesWritten() )
 		net.SendToServer()
 	end
 
@@ -119,6 +119,7 @@ function emut.MutateEntity(owner, class_name, ent, ...)
 			net.WriteEntity(ent)
 			net.WriteBool(false)
 			mutator:WriteArguments(...)
+			print( net.BytesWritten() )
 		net.SendPVS(owner:GetPos())
 	end
 
