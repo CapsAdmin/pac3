@@ -74,8 +74,16 @@ function SWEP:SecondaryAttack()
     self:SetNextSecondaryFire( CurTime() + 0.3 )
 end
 
+local invisibleColor = Color( 0, 0, 0, 0 )
 function SWEP:Deploy()
-    self:GetOwner():GetViewModel():SetColor( Color( 0, 0, 0, 0 ) )
+    local vm = self:GetOwner():GetViewModel()
+    self.OriginalVMColor = vm:GetColor()
+    vm:SetColor( invisibleColor )
+    return true
+end
+
+function SWEP:Holster()
+    self:GetOwner():GetViewModel():SetColor( self.OriginalVMColor or color_white )
     return true
 end
 
