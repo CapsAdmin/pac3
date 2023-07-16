@@ -108,7 +108,6 @@ function emut.MutateEntity(owner, class_name, ent, ...)
 			net.WriteEntity(ent)
 			net.WriteBool(false)
 			mutator:WriteArguments(...)
-			print( net.BytesWritten() )
 		net.SendToServer()
 	end
 
@@ -119,7 +118,6 @@ function emut.MutateEntity(owner, class_name, ent, ...)
 			net.WriteEntity(ent)
 			net.WriteBool(false)
 			mutator:WriteArguments(...)
-			print( net.BytesWritten() )
 		net.SendPVS(owner:GetPos())
 	end
 
