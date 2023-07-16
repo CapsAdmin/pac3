@@ -1,13 +1,15 @@
 local SWEP = { Primary = {}, Secondary = {} }
 
+local baseClass = baseclass.Get( "weapon_base" )
+
 SWEP.Author     	= ""
 SWEP.Contact      	= ""
 SWEP.Purpose      	= ""
 SWEP.Instructions   = "Right-Click to toggle crosshair"
-SWEP.PrintName      = "hands"
+SWEP.PrintName      = "Hands"
 SWEP.DrawAmmo       = false
 SWEP.DrawCrosshair	= true
-SWEP.DrawWeaponInfoBox = false
+SWEP.DrawWeaponInfoBox = true
 
 SWEP.SlotPos      	= 1
 SWEP.Slot         	= 1
@@ -34,7 +36,6 @@ SWEP.Secondary.Ammo        = "none"
 
 
 function SWEP:DrawHUD() end
-function SWEP:PrintWeaponInfo() end
 function SWEP:DrawWorldModel() end
 function SWEP:DrawWorldModelTranslucent() end
 function SWEP:CanPrimaryAttack() return false end
@@ -44,9 +45,11 @@ function SWEP:Holster() return true  end
 function SWEP:ShouldDropOnDie() return false end
 
 local weaponSelectionColor = Color( 255, 220, 0, 255 )
-function SWEP:DrawWeaponSelection( x, y, w, _, a )
+function SWEP:DrawWeaponSelection( x, y, w, t, a )
     weaponSelectionColor.a = a
     draw.SimpleText( "C", "creditslogo", x + w / 2, y, weaponSelectionColor, TEXT_ALIGN_CENTER )
+
+    baseClass.PrintWeaponInfo( self, x + w + 20, y + t * 0.95, alpha )
 end
 
 function SWEP:Initialize()
