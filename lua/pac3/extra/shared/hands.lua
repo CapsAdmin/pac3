@@ -74,4 +74,9 @@ function SWEP:SecondaryAttack()
     self:SetNextSecondaryFire( CurTime() + 0.3 )
 end
 
+function SWEP:Deploy()
+    self:GetOwner():GetViewModel():SetColor( Color( 0, 0, 0, 0 ) )
+    return true
+end
+
 weapons.Register( SWEP, "none", true )
