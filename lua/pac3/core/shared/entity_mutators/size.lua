@@ -3,13 +3,12 @@ local MUTATOR = {}
 MUTATOR.ClassName = "size"
 
 function MUTATOR:WriteArguments(multiplier, other)
-	net.WriteDouble(multiplier)
-
+	net.WriteFloat(multiplier)
 	if other then
 		net.WriteBool(true)
-		net.WriteDouble(other.StandingHullHeight)
-		net.WriteDouble(other.CrouchingHullHeight)
-		net.WriteDouble(other.HullWidth)
+		net.WriteFloat(other.StandingHullHeight)
+		net.WriteFloat(other.CrouchingHullHeight)
+		net.WriteFloat(other.HullWidth)
 	else
 		net.WriteBool(false)
 	end
@@ -28,15 +27,15 @@ function MUTATOR:WriteArguments(multiplier, other)
 end
 
 function MUTATOR:ReadArguments()
-	local multiplier = math.Clamp(net.ReadDouble(), 0.1, 10)
+	local multiplier = math.Clamp(net.ReadFloat(), 0.1, 10)
 	local other = false
 	local hidden_state
 
 	if net.ReadBool() then
 		other = {}
-		other.StandingHullHeight = net.ReadDouble()
-		other.CrouchingHullHeight = net.ReadDouble()
-		other.HullWidth = net.ReadDouble()
+		other.StandingHullHeight = net.ReadFloat()
+		other.CrouchingHullHeight = net.ReadFloat()
+		other.HullWidth = net.ReadFloat()
 	end
 
 	if net.ReadBool() then
@@ -50,7 +49,7 @@ function MUTATOR:StoreState()
 	local ent = self.Entity
 
 	return
-		1,--ent:GetModelScale(),
+		1, --ent:GetModelScale(),
 		false, -- we will just ent:ResetHull()
 		{
 			ViewOffset = ent.GetViewOffset and ent:GetViewOffset() or nil,
