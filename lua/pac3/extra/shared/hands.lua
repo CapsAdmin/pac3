@@ -22,7 +22,7 @@ SWEP.AutoSwitchFrom	= true
 SWEP.Weight 		= 1
 
 SWEP.HoldType = "normal"
-SWEP.ViewModel = "models/effects/vol_light.mdl" --Invisible ViewModel
+SWEP.ViewModel = "models/weapons/c_arms.mdl"
 
 SWEP.Primary.ClipSize      = -1
 SWEP.Primary.DefaultClip   = -1
@@ -60,6 +60,7 @@ function SWEP:Initialize()
     end
 
     self:DrawShadow( false )
+    self:SetSequence( "ragdoll" ) -- paired with SWEP.ViewModel = "models/weapons/c_arms.mdl" to make the arms invisible
 end
 
 function SWEP:OnDrop()
@@ -72,19 +73,6 @@ function SWEP:SecondaryAttack()
     if not IsFirstTimePredicted() then return end
     self.DrawCrosshair = not self.DrawCrosshair
     self:SetNextSecondaryFire( CurTime() + 0.3 )
-end
-
-local invisibleColor = Color( 0, 0, 0, 0 )
-function SWEP:Deploy()
-    local vm = self:GetOwner():GetViewModel()
-    self.OriginalVMColor = vm:GetColor()
-    vm:SetColor( invisibleColor )
-    return true
-end
-
-function SWEP:Holster()
-    self:GetOwner():GetViewModel():SetColor( self.OriginalVMColor or color_white )
-    return true
 end
 
 weapons.Register( SWEP, "none", true )
