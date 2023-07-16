@@ -82,6 +82,19 @@ local etags_file = "pac3_cache/resource_etags.txt"
 
 file.CreateDir(DOWNLOAD_FOLDER)
 
+local maxAgeConvar = CreateConVar("pac_downloads_cache_maxage", "604800", FCVAR_ARCHIVE, "Maximum age of cache entries in seconds, default is 1 week.")
+local function clearCacheAfter( time )
+	for _, fileName in ipairs(file.Find(DOWNLOAD_FOLDER .. "*", "DATA")) do
+		local fullPath = DOWNLOAD_FOLDER .. fileName
+
+		if file.Time(fullPath, "DATA") < time then
+			file.Delete(fullPath)
+		end
+	end
+end
+
+clearCacheAfter(os.time() - maxAgeConvar:GetInt())
+
 local function rename_file(a, b)
 	local str_a = file.Read(a, "DATA")
 	file.Delete(a, "DATA")

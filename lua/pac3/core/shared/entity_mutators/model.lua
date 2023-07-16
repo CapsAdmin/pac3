@@ -14,7 +14,7 @@ function MUTATOR:ReadArguments()
 end
 
 function MUTATOR:Update(val)
-	if not self.actual_model then return end
+	if not self.actual_model or not IsValid(self.Entity) then return end
 
 	if self.Entity:GetModel():lower() ~= self.actual_model:lower() then
 		self.Entity:SetModel(self.actual_model)

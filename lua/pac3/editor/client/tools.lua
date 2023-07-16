@@ -302,15 +302,28 @@ end)
 
 pace.AddTool(L"free children from part" ,function(part, suboption)
 	if part:IsValid() then
-		local grandparent = part:GetParent()
-		local parent = part
-		for _, child in ipairs(parent:GetChildren()) do
-				child:SetAngles(child.Angles + parent.Angles)
-				child:SetPosition(child.Position + parent.Position)
-				child:SetAngleOffset(child.AngleOffset + parent.AngleOffset)
-				child:SetPositionOffset(child.PositionOffset + parent.PositionOffset)
-				child:SetParent(grandparent)
+		local children = part.Children
+		if #children == 0 then
+			Derma_Message(L"this part has no children...", L"free children from part", "ok")
+			return
 		end
+
+		Derma_Query(L"this process cannot be undone, are you sure?", L"free children from part", L"yes", function()
+			local grandparent = part:GetParent()
+			if grandparent == NULL then
+				grandparent = part:GetRootPart()
+			end
+			local parent = part
+			for _, child in ipairs(children) do
+				if child.BaseName ~= "base" and parent.BaseName ~= "base" then
+					child:SetAngles(child.Angles + parent.Angles)
+					child:SetPosition(child.Position + parent.Position)
+					child:SetAngleOffset(child.AngleOffset + parent.AngleOffset)
+					child:SetPositionOffset(child.PositionOffset + parent.PositionOffset)
+				end
+				child:SetParent(grandparent)
+			end
+		end, L"no", function() end)
 	end
 end)
 

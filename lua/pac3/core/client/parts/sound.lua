@@ -9,22 +9,36 @@ PART.Icon = 'icon16/music.png'
 PART.Group = 'effects'
 
 BUILDER:StartStorableVars()
-	BUILDER:GetSet("Path", "", {editor_panel = "sound"})
-	BUILDER:GetSet("Volume", 1, {editor_sensitivity = 0.25})
-	BUILDER:GetSet("Pitch", 1, {editor_sensitivity = 0.125})
-	BUILDER:GetSet("Radius", 1500)
-	BUILDER:GetSet("PlayCount", 1, {editor_onchange = function(self, num)
-		self.sens = 0.25
-		num = tonumber(num)
-		return math.Round(math.max(num, 0))
-	end})
-	BUILDER:GetSet("Doppler", false)
-	BUILDER:GetSet("StopOnHide", false)
-	BUILDER:GetSet("PauseOnHide", false)
-	BUILDER:GetSet("Overlapping", false)
-	BUILDER:GetSet("PlayOnFootstep", false)
-	BUILDER:GetSet("MinPitch", 0, {editor_sensitivity = 0.125})
-	BUILDER:GetSet("MaxPitch", 0, {editor_sensitivity = 0.125})
+	BUILDER:SetPropertyGroup("generic")
+		BUILDER:GetSet("Path", "", {editor_panel = "sound"})
+		BUILDER:GetSet("Volume", 1, {editor_sensitivity = 0.25})
+		BUILDER:GetSet("Pitch", 1, {editor_sensitivity = 0.125})
+		BUILDER:GetSet("Radius", 1500)
+		BUILDER:GetSet("Doppler", false)
+		BUILDER:GetSet("MinPitch", 0, {editor_sensitivity = 0.125})
+		BUILDER:GetSet("MaxPitch", 0, {editor_sensitivity = 0.125})
+
+	BUILDER:SetPropertyGroup("playback")
+		BUILDER:GetSet("PlayCount", 1, 
+			{editor_onchange =
+			function(self, num)
+				self.sens = 0.25
+				num = tonumber(num)
+				return math.Round(math.max(num, 0))
+			end, editor_friendly = "PlayCount (0=loop)"}
+		)
+		BUILDER:GetSet("Sequential",false,{description = "if there are multiple sounds (separated by ; ), plays these sounds in sequential order instead of randomly"})
+		BUILDER:GetSet("SequentialStep", 1,
+			{editor_onchange =
+			function(self, num)
+				self.sens = 0.25
+				num = tonumber(num)
+				return math.Round(num)
+			end})
+		BUILDER:GetSet("StopOnHide", false)
+		BUILDER:GetSet("PauseOnHide", false)
+		BUILDER:GetSet("Overlapping", false)
+		BUILDER:GetSet("PlayOnFootstep", false)
 
 	BUILDER:SetPropertyGroup("filter")
 		BUILDER:GetSet("FilterType", 0, {enums = {
@@ -152,6 +166,7 @@ function PART:OnThink()
 end
 
 function PART:SetPath(path)
+	self.seq_index = 1
 	self.Path = path
 
 	local paths = {}
@@ -224,21 +239,50 @@ function PART:SetPath(path)
 			path = info.sound
 		end
 
-		if not path:StartWith("http") or not pac.resource.Download(path, function(path) load("data/" .. path) end) then
-			load("sound/" .. path)
+		if 
+			not path:StartWith("http")
+			or not pac.resource.Download(path, function(path) load("data/" .. path) end)
+		
+			then load("sound/" .. path)
 		end
 	end
+	self.paths = paths
 end
 
 PART.last_stream = NULL
 
 function PART:PlaySound(_, additiveVolumeFraction)
+	--PrintTable(self.streams)
 	additiveVolumeFraction = additiveVolumeFraction or 0
 
 	local stream = table.Random(self.streams) or NULL
-
 	if not stream:IsValid() then return end
 
+	if self.Sequential then
+		
+		self.seq_index = self.seq_index or 1
+		
+		local basepath = self.paths[self.seq_index] or self.paths[1]
+		local snd = "sound/".. basepath
+		
+		local cached_path = "data/pac3_cache/downloads/" .. pac.Hash(basepath) .. ".dat"
+		
+		if string.find(basepath, "^http") then
+			snd = cached_path
+		end
+
+		if self.streams[snd]:IsValid() then
+			stream = self.streams[snd]
+			print(snd,self.seq_index)
+		end
+		self.seq_index = self.seq_index + self.SequentialStep
+		if self.seq_index > #self.paths then
+			self.seq_index = self.seq_index - #self.paths
+		elseif self.seq_index < 1 then
+			self.seq_index = self.seq_index + #self.paths
+		end
+	end
+	
 	stream:SetAdditiveVolumeModifier(additiveVolumeFraction)
 
 	if self.last_stream:IsValid() and not self.Overlapping and not self.PauseOnHide  then

@@ -16,6 +16,7 @@ local table_insert = table.insert
 local BUILDER, PART = pac.PartTemplate()
 
 PART.ClassName = "base"
+PART.BaseName = PART.ClassName
 
 function PART:__tostring()
 	return string_format("part[%s][%s][%i]", self.ClassName, self:GetName(), self.Id)
@@ -199,11 +200,9 @@ do -- owner
 	end
 
 	function PART:GetParentOwner()
-
 		if self.TargetEntity:IsValid() and self.TargetEntity ~= self then
 			return self.TargetEntity:GetOwner()
 		end
-
 
 		for _, parent in ipairs(self:GetParentList()) do
 
@@ -218,8 +217,10 @@ do -- owner
 				end
 			end
 
-			local owner = parent:GetOwner()
-			if owner:IsValid() then return owner end
+			if parent ~= self then
+				local owner = parent:GetOwner()
+				if owner:IsValid() then return owner end
+			end
 		end
 
 		return NULL

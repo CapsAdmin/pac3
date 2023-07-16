@@ -2,8 +2,8 @@ local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "command"
 
-PART.Group = 'advanced'
-PART.Icon = 'icon16/application_xp_terminal.png'
+PART.Group = "advanced"
+PART.Icon = "icon16/application_xp_terminal.png"
 
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("String", "", {editor_panel = "string"})
@@ -12,6 +12,11 @@ BUILDER:StartStorableVars()
 	BUILDER:GetSet("ExecuteOnShow", true)
 BUILDER:EndStorableVars()
 
+local sv_allowcslua = GetConVar("sv_allowcslua")
+local function canRunLua()
+	return sv_allowcslua:GetBool() or pac.AllowClientsideLUA
+end
+
 function PART:OnWorn()
 	if self:GetExecuteOnWear() then
 		self:Execute()
@@ -19,10 +24,8 @@ function PART:OnWorn()
 end
 
 function PART:OnShow(from_rendering)
-	if not from_rendering then
-		if self:GetExecuteOnShow() then
-			self:Execute()
-		end
+	if not from_rendering and self:GetExecuteOnShow() then
+		self:Execute()
 	end
 end
 
@@ -32,7 +35,7 @@ function PART:SetUseLua(b)
 end
 
 function PART:SetString(str)
-	if self.UseLua and self:GetPlayerOwner() == pac.LocalPlayer then
+	if self.UseLua and canRunLua() and self:GetPlayerOwner() == pac.LocalPlayer then
 		self.func = CompileString(str, "pac_event")
 	end
 
@@ -52,19 +55,18 @@ function PART:ShouldHighlight(str)
 end
 
 function PART:GetNiceName()
-	if self.UseLua then return ("lua: " .. self.String) end
+	if self.UseLua then
+		return ("lua: " .. self.String)
+	end
 	return "command: " .. self.String
-	
 end
-
-local sv_allowcslua = GetConVar("sv_allowcslua")
 
 function PART:Execute()
 	local ent = self:GetPlayerOwner()
 
 	if ent == pac.LocalPlayer then
 		if self.UseLua and self.func then
-			if sv_allowcslua:GetBool() or pac.AllowClientsideLUA then
+			if canRunLua() then
 				local status, err = pcall(self.func)
 
 				if not status then
@@ -74,10 +76,14 @@ function PART:Execute()
 			else
 				local msg = "clientside lua is disabled (sv_allowcslua 0)"
 				self:SetError(msg)
-				pac.Message(tostring(self) .. ' - '.. msg)
+				pac.Message(tostring(self) .. " - ".. msg)
 			end
 		else
 			if hook.Run("PACCanRunConsoleCommand", self.String) == false then return end
+			if IsConCommandBlocked(self.String) then
+				self:SetError("Concommand is blocked")
+				return
+			end
 			ent:ConCommand(self.String)
 		end
 	end

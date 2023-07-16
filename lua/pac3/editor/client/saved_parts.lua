@@ -183,9 +183,15 @@ function pace.LoadParts(name, clear, override_part)
 
 		if name:find("https?://") then
 			local function callback(str)
-				local data,err = pace.luadata.Decode(str)
+				if string.find( str, "<!DOCTYPE html>" ) then
+					pace.MessagePrompt("Invalid URL, the website returned a HTML file. If you're using Github then use the RAW option.", "URL Failed", "OK")
+					return
+				end
+
+				local data, err = pace.luadata.Decode(str)
 				if not data then
-					ErrorNoHalt(("URL fail: %s : %s\n"):format(name,err))
+					local message = string.format("URL fail: %s : %s\n", name, err)
+					pace.MessagePrompt(message, "URL Failed", "OK")
 					return
 				end
 

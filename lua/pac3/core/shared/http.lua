@@ -2,12 +2,12 @@
 local CL_LIMIT, CL_LIMIT_OVERRIDE, CL_NO_CLENGTH
 
 if CLIENT then
-	CL_LIMIT = CreateConVar("pac_webcontent_limit", "-1", {FCVAR_ARCHIVE}, "webcontent limit, -1 = unlimited, 1024 = 1mb")
+	CL_LIMIT = CreateConVar("pac_webcontent_limit", "-1", {FCVAR_ARCHIVE}, "webcontent limit in mb, -1 = unlimited")
 	CL_NO_CLENGTH = CreateConVar("pac_webcontent_allow_no_content_length", "0", {FCVAR_ARCHIVE}, "allow downloads with no content length")
 	CL_LIMIT_OVERRIDE = CreateConVar("pac_webcontent_limit_force", "0", {FCVAR_ARCHIVE}, "Override serverside setting")
 end
 
-local SV_LIMIT = CreateConVar("sv_pac_webcontent_limit", "-1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "webcontent limit, -1 = unlimited, 1024 = 1mb")
+local SV_LIMIT = CreateConVar("sv_pac_webcontent_limit", "-1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "webcontent limit in mb, -1 = unlimited")
 local SV_NO_CLENGTH = CreateConVar("sv_pac_webcontent_allow_no_content_length", "-1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow downloads with no content length")
 
 function pac.FixGMODUrl(url)
@@ -70,6 +70,7 @@ function pac.FixUrl(url)
 		url = url:gsub([[^https?://dl.dropbox.com/]], [[https://www.dropbox.com/]])
 		url = url:gsub([[^https?://www.dropbox.com/s/(.+)%?dl%=[01]$]], [[https://dl.dropboxusercontent.com/s/%1]])
 		url = url:gsub([[^https?://www.dropbox.com/s/(.+)$]], [[https://dl.dropboxusercontent.com/s/%1]])
+		url = url:gsub([[^https?://www.dropbox.com/scl/(.+)$]], [[https://dl.dropboxusercontent.com/scl/%1]]) --Fix for new dropbox format.
 		return url
 	end
 

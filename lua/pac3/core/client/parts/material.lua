@@ -224,7 +224,7 @@ for shader_name, groups in pairs(shader_params.shaders) do
 			if parent:IsValid() then
 				if tonumber(str) then
 					num = tonumber(str)
-				elseif str ~= "all" and self:GetOwner():IsValid() then
+				elseif str ~= "all" and parent:GetOwner():IsValid() then
 					for i, v in ipairs(parent:GetOwner():GetMaterials()) do
 						if (v:match(".+/(.+)") or v):lower() == str:lower() then
 							num = i

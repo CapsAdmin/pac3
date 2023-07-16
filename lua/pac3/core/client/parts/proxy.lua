@@ -231,6 +231,42 @@ PART.Inputs.owner_position = function(self)
 	return 0,0,0
 end
 
+PART.Inputs.owner_position_x = function(self)
+	local owner = get_owner(self)
+
+	if owner:IsValid() then
+		local pos = owner:GetPos()
+
+		return pos.x
+	end
+
+	return 0
+end
+
+PART.Inputs.owner_position_y = function(self)
+	local owner = get_owner(self)
+
+	if owner:IsValid() then
+		local pos = owner:GetPos()
+
+		return pos.y
+	end
+
+	return 0
+end
+
+PART.Inputs.owner_position_z = function(self)
+	local owner = get_owner(self)
+
+	if owner:IsValid() then
+		local pos = owner:GetPos()
+
+		return pos.z
+	end
+
+	return 0
+end
+
 PART.Inputs.owner_fov = function(self)
 	local owner = get_owner(self)
 
@@ -547,6 +583,7 @@ end
 
 PART.Inputs.voice_volume = function(self)
 	local ply = self:GetPlayerOwner()
+	if not IsValid(ply) then return 0 end
 	return ply:VoiceVolume()
 end
 
@@ -1067,7 +1104,13 @@ function PART:OnThink()
 		local input_function = self.Inputs[self.Input]
 
 		if post_function and input_function then
-			local input_number = input_function(self)
+			local ran, err = pcall( input_function, self )
+
+			if not ran then
+				error("proxy function " .. tostring( self.Input ) .. " | " .. tostring( self.Function ) .. " | " .. tostring( self ) .. " failed: " .. err)
+			end
+
+			local input_number = err
 
 			if not isnumber(input_number) then
 				error("proxy function " .. self.Input .. " does not return a number!")
