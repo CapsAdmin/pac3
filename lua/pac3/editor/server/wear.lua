@@ -174,7 +174,6 @@ function pace.SubmitPartNow(data, filter)
 		end
 	end
 
-
 	pace.Parts[uid] = pace.Parts[uid] or {}
 
 	if istable(part) then
