@@ -241,6 +241,7 @@ function pace.Notify(allowed, reason, name)
 	name = name or "???"
 
 	 if allowed == true then
+		 print("PAC3 CL wear: " .. name .. " applied")
 		pac.Message(string.format('Your part %q has been applied', name))
 	else
 		chat.AddText(Color(255, 255, 0), "[PAC3] ", Color(255, 0, 0), string.format('The server rejected applying your part (%q) - %s', name, reason))
@@ -248,6 +249,7 @@ function pace.Notify(allowed, reason, name)
 end
 
 net.Receive("pac_submit_acknowledged", function(umr)
+	print("PAC3 CL wear: acknowledged")
 	pace.Notify(net.ReadBool(), net.ReadString(), net.ReadString())
 end)
 
