@@ -3,6 +3,7 @@ local type = type
 local istable = istable
 local IsValid = IsValid
 local tostring = tostring
+local isfunction = isfunction
 local ProtectedCall = ProtectedCall
 
 pace.StreamQueue = pace.StreamQueue or {}
@@ -24,13 +25,16 @@ timer.Create("pac_check_stream_queue", 0.1, 0, function()
 
 	local success = ProtectedCall(submitPart)
 
-	if isfunction(callback) then
-		if success then
-			callback(false, "Unexpected Error")
-		else
-			callback(allowed, reason)
-		end
+	if not isfunction(callback) then return end
+
+	if not success then
+		allowed = false
+		reason = "Unexpected Error"
 	end
+
+	ProtectedCall(function()
+		callback(allowed, reason)
+	end)
 end)
 
 local function make_copy(tbl, input)
@@ -38,7 +42,7 @@ local function make_copy(tbl, input)
 		tbl.self.UniqueID = pac.Hash(tbl.self.UniqueID .. input)
 	end
 
-	for key, val in pairs(tbl.children) do
+	for _, val in pairs(tbl.children) do
 		make_copy(val, input)
 	end
 end
