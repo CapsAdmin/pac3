@@ -63,7 +63,7 @@ end
 
 pace.dupe_ents = pace.dupe_ents or {}
 
-local uid2key = include("legacy_network_dictionary_translate.lua")
+local uid2key = include("pac3/editor/server/legacy_network_dictionary_translate.lua")
 
 local function translate_old_dupe(tableIn, target)
 	for key, value2 in pairs(tableIn) do
