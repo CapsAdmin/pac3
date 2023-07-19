@@ -146,8 +146,8 @@ function pace.SubmitPartNow(data, filter)
 			if not pace.CanPlayerModify(owner, ent) then
 				local entOwner = ent.CPPIGetOwner and ent:CPPIGetOwner()
 				entOwner = tostring(entOwner or "world")
-				allowed = false
-				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. entOwner
+
+				return false, "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. entOwner
 			else
 				if not data.is_dupe then
 					ent.pac_parts = ent.pac_parts or {}
