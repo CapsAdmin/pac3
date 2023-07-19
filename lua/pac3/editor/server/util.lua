@@ -1,19 +1,3 @@
-function pace.dprint(fmt, ...)
-	if pace.debug then
-		MsgN("\n")
-		MsgN(">>>PAC3>>>")
-		MsgN(fmt:format(...))
-		if pace.debug_trace then
-			MsgN("==TRACE==")
-			debug.Trace()
-			MsgN("==TRACE==")
-		end
-		MsgN("<<<PAC3<<<")
-		MsgN("\n")
-	end
-end
-
-
 function pace.CallHook(str, ...)
 	return hook.Call("pac_" .. str, GAMEMODE, ...)
 end
