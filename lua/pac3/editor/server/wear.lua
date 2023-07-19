@@ -9,8 +9,6 @@ local ProtectedCall = ProtectedCall
 pace.StreamQueue = pace.StreamQueue or {}
 
 timer.Create("pac_check_stream_queue", 0.1, 0, function()
-	if pace.BusyStreaming then return end
-
 	local item = table.remove(pace.StreamQueue)
 	if not item then return end
 
