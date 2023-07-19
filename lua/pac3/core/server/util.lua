@@ -1,22 +1,6 @@
 local CurTime = CurTime
 local math_Clamp = math.Clamp
 
-function pac.dprint(fmt, ...)
-	if pac.debug then
-		MsgN("\n")
-		MsgN(">>>PAC3>>>")
-		MsgN(fmt:format(...))
-		if pac.debug_trace then
-			MsgN("==TRACE==")
-			debug.Trace()
-			MsgN("==TRACE==")
-		end
-		MsgN("<<<PAC3<<<")
-		MsgN("\n")
-	end
-end
-
-
 function pac.CallHook(str, ...)
 	return hook.Call("pac_" .. str, GAMEMODE, ...)
 end
