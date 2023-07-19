@@ -3,33 +3,35 @@ local type = type
 local istable = istable
 local IsValid = IsValid
 local tostring = tostring
+local ProtectedCall = ProtectedCall
 
 pace.StreamQueue = pace.StreamQueue or {}
 
-local function startQueueTimer()
-	timer.Create("pac_check_stream_queue", 0.1, 0, function()
-		if pace.BusyStreaming then return end
+timer.Create("pac_check_stream_queue", 0.1, 0, function()
+	if pace.BusyStreaming then return end
 
-		local item = table.remove(pace.StreamQueue)
-		if not item then return end
+	local item = table.remove(pace.StreamQueue)
+	if not item then return end
 
-		local data = item.data
-		local filter = item.filter
-		local callback = item.callback
+	local data = item.data
+	local filter = item.filter
+	local callback = item.callback
 
-		local allowed, reason = pace.SubmitPartNow(data, filter)
-		if isfunction(callback) then
+	local allowed, reason
+	local function submitPart()
+		allowed, reason = pace.SubmitPartNow(data, filter)
+	end
+
+	local success = ProtectedCall(submitPart)
+
+	if isfunction(callback) then
+		if success then
+			callback(false, "Unexpected Error")
+		else
 			callback(allowed, reason)
 		end
-	end)
-end
-
-timer.Create("pac_check_stream_queue_timer", 0.2, 0, function()
-	if not timer.Exists("pac_check_stream_queue") then
-		startQueueTimer()
 	end
 end)
-startQueueTimer()
 
 local function make_copy(tbl, input)
 	if tbl.self.UniqueID then
