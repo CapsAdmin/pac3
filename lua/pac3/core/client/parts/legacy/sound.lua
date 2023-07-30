@@ -180,7 +180,7 @@ function PART:PlaySound(osnd, ovol)
 			snd = osnd
 		else
 			local sounds = self.Sound:Split(";")
-			
+
 			--case 1: proper semicolon list
 			if #sounds > 1 then
 				if self.Sequential then
@@ -189,8 +189,10 @@ function PART:PlaySound(osnd, ovol)
 					snd = sounds[self.seq_index]
 					
 					self.seq_index = self.seq_index + self.SequentialStep
-					self.seq_index = self.seq_index % #sounds
+					self.seq_index = self.seq_index % (#sounds+1)
+					if self.seq_index == 0 then self.seq_index = 1 end
 				else snd = table.Random(sounds) end
+
 			--case 2: one sound, which may or may not be bracket notation
 			elseif #sounds == 1 then
 				--bracket notation
