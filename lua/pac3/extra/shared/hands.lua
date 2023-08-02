@@ -1,14 +1,15 @@
-local SWEP = {Primary = {}, Secondary = {}}
+local SWEP = { Primary = {}, Secondary = {} }
 
+local baseClass = baseclass.Get( "weapon_base" )
 
 SWEP.Author     	= ""
 SWEP.Contact      	= ""
 SWEP.Purpose      	= ""
 SWEP.Instructions   = "Right-Click to toggle crosshair"
-SWEP.PrintName      = "hands"
+SWEP.PrintName      = "Hands"
 SWEP.DrawAmmo       = false
 SWEP.DrawCrosshair	= true
-SWEP.DrawWeaponInfoBox = false
+SWEP.DrawWeaponInfoBox = true
 
 SWEP.SlotPos      	= 1
 SWEP.Slot         	= 1
@@ -21,6 +22,7 @@ SWEP.AutoSwitchFrom	= true
 SWEP.Weight 		= 1
 
 SWEP.HoldType = "normal"
+SWEP.ViewModel = "models/weapons/c_arms.mdl"
 
 SWEP.Primary.ClipSize      = -1
 SWEP.Primary.DefaultClip   = -1
@@ -33,65 +35,44 @@ SWEP.Secondary.Automatic   = false
 SWEP.Secondary.Ammo        = "none"
 
 
-function SWEP:DrawHUD() 			end
-function SWEP:PrintWeaponInfo() 	end
+function SWEP:DrawHUD() end
+function SWEP:DrawWorldModel() end
+function SWEP:DrawWorldModelTranslucent() end
+function SWEP:CanPrimaryAttack() return false end
+function SWEP:CanSecondaryAttack() return false end
+function SWEP:Reload() return false end
+function SWEP:Holster() return true  end
+function SWEP:ShouldDropOnDie() return false end
 
-function SWEP:DrawWeaponSelection(x,y,w,t,a)
+local weaponSelectionColor = Color( 255, 220, 0, 255 )
+function SWEP:DrawWeaponSelection( x, y, w, t, a )
+    weaponSelectionColor.a = a
+    draw.SimpleText( "C", "creditslogo", x + w / 2, y, weaponSelectionColor, TEXT_ALIGN_CENTER )
 
-    draw.SimpleText("C","creditslogo",x+w/2,y,Color(255, 220, 0,a),TEXT_ALIGN_CENTER)
-
+    baseClass.PrintWeaponInfo( self, x + w + 20, y + t * 0.95, alpha )
 end
-
-function SWEP:DrawWorldModel() 						 end
-function SWEP:DrawWorldModelTranslucent() 			 end
-function SWEP:CanPrimaryAttack()		return false end
-function SWEP:CanSecondaryAttack()		return false end
-function SWEP:Reload()					return false end
-function SWEP:Holster()					return true  end
-function SWEP:ShouldDropOnDie()			return false end
 
 function SWEP:Initialize()
     if self.SetHoldType then
-		self:SetHoldType"normal"
-	else
-		self:SetWeaponHoldType( "normal" )
-	end
+        self:SetHoldType( "normal" )
+    else
+        self:SetWeaponHoldType( "normal" )
+    end
 
-	self:DrawShadow(false)
+    self:DrawShadow( false )
+    self:SetSequence( "ragdoll" ) -- paired with SWEP.ViewModel = "models/weapons/c_arms.mdl" to make the arms invisible
 end
-
-function SWEP:Deploy()
-	self.Thinking = true
-	return true
-end
-
-function SWEP:Think()
-	if self.Thinking and self.Owner and self.Owner:IsValid() and self.Owner:GetViewModel():IsValid() then
-		self.Thinking = false
-	end
-end
-
-local gtfo=Vector(1,1,1)*65000
-function SWEP:GetViewModelPosition( pos, ang )
-	return gtfo,ang
-end
-
-function SWEP:PreDrawViewModel( )
-	return true
-end
-
 
 function SWEP:OnDrop()
     if SERVER then
-		self:Remove()
-	end
+        self:Remove()
+    end
 end
 
 function SWEP:SecondaryAttack()
-	if not IsFirstTimePredicted() then return end
-	self.DrawCrosshair = not self.DrawCrosshair
-	self:SetNextSecondaryFire(CurTime() + 0.3)
+    if not IsFirstTimePredicted() then return end
+    self.DrawCrosshair = not self.DrawCrosshair
+    self:SetNextSecondaryFire( CurTime() + 0.3 )
 end
 
-
-weapons.Register(SWEP, "none", true)
+weapons.Register( SWEP, "none", true )
