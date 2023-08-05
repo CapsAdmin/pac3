@@ -112,7 +112,7 @@ function pace.SubmitPart(data, filter)
 	if istable(data.part) then
 		if last_frame == frame_number then
 			table.insert(pace.StreamQueue, {data, filter})
-			pace.dprint("queuing part %q from %s", data.part.self.Name, tostring(data.owner))
+			pac.dprint("queuing part %q from %s", data.part.self.Name, tostring(data.owner))
 			return "queue"
 		end
 	end
@@ -299,7 +299,7 @@ function pace.SubmitPart(data, filter)
 end
 
 function pace.SubmitPartNotify(data)
-	pace.dprint("submitted outfit %q from %s with %i number of children to set on %s", data.part.self.Name or "", data.owner:GetName(), table.Count(data.part.children), data.part.self.OwnerName or "")
+	pac.dprint("submitted outfit %q from %s with %i number of children to set on %s", data.part.self.Name or "", data.owner:GetName(), table.Count(data.part.children), data.part.self.OwnerName or "")
 
 	local allowed, reason = pace.SubmitPart(data)
 
@@ -321,7 +321,7 @@ function pace.SubmitPartNotify(data)
 end
 
 function pace.RemovePart(data)
-	pace.dprint("%s is removed %q", data.owner and data.owner:IsValid() and data.owner:GetName(), data.part)
+	pac.dprint("%s is removed %q", data.owner and data.owner:IsValid() and data.owner:GetName(), data.part)
 
 	if data.part == "__ALL__" then
 		pace.CallHook("RemoveOutfit", data.owner)

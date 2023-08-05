@@ -5,7 +5,6 @@ local PREFIX_COLOR = Color(255, 255, 0)
 local DEFAULT_TEXT_COLOR = Color(200, 200, 200)
 local BOOLEAN_COLOR = Color(33, 83, 226)
 local NUMBER_COLOR = Color(245, 199, 64)
-local STEAMID_COLOR = Color(255, 255, 255)
 local ENTITY_COLOR = Color(180, 232, 180)
 local FUNCTION_COLOR = Color(62, 106, 255)
 local TABLE_COLOR = Color(107, 200, 224)
@@ -97,12 +96,16 @@ function pac.Message(...)
 	return formatted
 end
 
+local debugLevel = CreateConVar("pac_debug", "0", FCVAR_ARCHIVE, "Debug mode for PAC3. 0 = off | 1 = debug | 2 = debug + trace", 0, 3)
+
 function pac.dprint(fmt, ...)
-	if not pac.debug then return end
+	local debugInt = debugLevel:GetInt()
+	if debugInt == 0 then return end
+
 	MsgN("\n")
 	MsgN(">>>PAC3>>>")
 	MsgN(fmt:format(...))
-	if pac.debug_trace then
+	if debugInt == 2 then
 		MsgN("==TRACE==")
 		debug.Trace()
 		MsgN("==TRACE==")
