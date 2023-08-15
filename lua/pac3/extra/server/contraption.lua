@@ -42,6 +42,10 @@ local function spawn(val,ply)
 
 	if phys:IsValid() then
 		phys:EnableMotion(false)
+		for i=0, ent:GetBoneCount() do
+			ent:ManipulateBoneScale( i, Vector(val.scale.Y,val.scale.Z,val.scale.X) )
+		end
+		print(val.scale)
 
 		undo.Create("Prop")
 			undo.SetPlayer(ply)
