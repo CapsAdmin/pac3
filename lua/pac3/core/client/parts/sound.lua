@@ -239,9 +239,7 @@ function PART:SetPath(path)
 			path = info.sound
 		end
 
-		if
-			not path:StartWith("http")
-			or not pac.resource.Download(path, function(path) load("data/" .. path) end)
+		if not string.StartsWith(path, "http") or not pac.resource.Download(path, function(path) load("data/" .. path) end)
 
 			then load("sound/" .. path)
 		end
