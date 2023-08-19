@@ -35,12 +35,12 @@ BUILDER:StartStorableVars()
 BUILDER:EndStorableVars()
 
 function PART:SetEvent(event)
-	local reset = (self.Arguments == "") or 
+	local reset = (self.Arguments == "") or
 	(self.Arguments ~= "" and self.Event ~= "" and self.Event ~= event)
 
 	self.Event = event
 	self:SetWarning()
-	self:GetDynamicProperties(reset) 
+	self:GetDynamicProperties(reset)
 end
 
 local function get_default(typ)
@@ -95,8 +95,8 @@ function PART:GetDynamicProperties(reset_to_default)
 		}
 
 		local arg = tbl[key]
-		if arg.get() == nil or reset_to_default then 
-			if udata.default then 
+		if arg.get() == nil or reset_to_default then
+			if udata.default then
 				arg.set(udata.default)
 			else
 				arg.set(nil)
@@ -824,8 +824,8 @@ PART.OldEvents = {
 	command = {
 		arguments = {{find = "string"}, {time = "number"}, {hide_in_eventwheel = "boolean"}},
 		userdata = {
-			{default = "change_me", editor_friendly = "CommandName"}, 
-			{default = 0.1, editor_friendly = "EventDuration"}, 
+			{default = "change_me", editor_friendly = "CommandName"},
+			{default = 0.1, editor_friendly = "EventDuration"},
 			{default = false, group = "event wheel", editor_friendly = "HideInEventWheel"}
 		},
 		nice = function(self, ent, find, time)

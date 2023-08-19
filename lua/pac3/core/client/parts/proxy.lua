@@ -307,7 +307,7 @@ PART.Inputs.random_once = function(self, seed, min, max)
 	self.rand_id = self.rand_id or {}
 	if seed then
 		self.rand_id[seed] = self.rand_id[seed] or min + math.random()*(max-min)
-	else 
+	else
 		self.rand = self.rand or min + math.random()*(max-min)
 	end
 

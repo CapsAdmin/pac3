@@ -185,9 +185,9 @@ function PART:PlaySound(osnd, ovol)
 			if #sounds > 1 then
 				if self.Sequential then
 					self.seq_index = self.seq_index or 1
-					
+
 					snd = sounds[self.seq_index]
-					
+
 					self.seq_index = self.seq_index + self.SequentialStep
 					self.seq_index = self.seq_index % (#sounds+1)
 					if self.seq_index == 0 then self.seq_index = 1 end
@@ -212,7 +212,7 @@ function PART:PlaySound(osnd, ovol)
 							"(%[%d-,%d-%])",self.seq_index
 						)
 						self.seq_index = self.seq_index + self.SequentialStep
-						
+
 						local span = minmaxpath(self.Sound,"max") - minmaxpath(self.Sound,"min") + 1
 						if self.seq_index > minmaxpath(self.Sound,"max") then
 							self.seq_index = self.seq_index - span
