@@ -42,8 +42,15 @@ local function spawn(val,ply)
 
 	if phys:IsValid() then
 		phys:EnableMotion(false)
-		for i=0, ent:GetBoneCount() do
-			ent:ManipulateBoneScale( i, Vector(val.scale.Y,val.scale.Z,val.scale.X) )
+
+		local maxabs = 150
+
+		val.scale.X = math.Clamp(val.scale.X,-maxabs,maxabs)
+		val.scale.Y = math.Clamp(val.scale.Y,-maxabs,maxabs)
+		val.scale.Z = math.Clamp(val.scale.Z,-maxabs,maxabs)
+
+		for i=0, ent:GetBoneCount()-1 do
+			ent:ManipulateBoneScale( i, val.scale )
 		end
 
 		undo.Create("Prop")
