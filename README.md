@@ -114,7 +114,7 @@ this sets the series to 3
 
  	pac_event_sequenced hat_style set 3
 
-keywords for going forward: +, add, backward, advance, sequence+
+keywords for going forward: +, add, forward, advance, sequence+
 
 keywords for going backward: -, sub, backward, sequence-
 
