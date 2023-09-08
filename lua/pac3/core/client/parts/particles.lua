@@ -356,7 +356,7 @@ function PART:EmitParticles(pos, ang, real_ang)
 			end
 		end
 
-		
+
 		self.NextShot = pac.RealTime + self.FireDelay
 	end
 	self.FirstShot = false

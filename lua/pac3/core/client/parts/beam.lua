@@ -200,7 +200,7 @@ end
 
 function PART:OnDraw()
 	local part = self.EndPoint
-	
+
 	if self.Materialm and self.StartColorC and self.EndColorC and part:IsValid() and part.GetWorldPosition then
 		local pos, ang = self:GetDrawPosition()
 		render.SetMaterial(self.Materialm)

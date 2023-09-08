@@ -2555,7 +2555,7 @@ pace.example_outfits["southpark"] = {
 			["Duplicate"] = false,
 			["ClassName"] = "group",
 		},
-	},	
+	},
 
 }
 

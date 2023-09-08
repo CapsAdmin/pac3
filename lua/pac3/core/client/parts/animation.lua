@@ -16,7 +16,7 @@ AnimStack = {
 				local top = self:getTop()
 				if top ~= part then
 					if top then top:OnStackStop() end
-				
+
 					-- Remove self from stack to move to end and also prevent things from breaking because table.RemoveByValue() only removes the first instance
 					table.RemoveByValue(stack, part)
 					table.insert(stack, part)
@@ -28,7 +28,7 @@ AnimStack = {
 		pop = function(self, part)
 			part:OnStackStop()
 			local stack = self.stack
-			
+
 			-- Remove self from animation stack
 			if table.RemoveByValue(stack, part) == #stack + 1 then
 				-- This was the current animation so play the next in the stack

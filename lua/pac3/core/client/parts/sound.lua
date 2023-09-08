@@ -19,7 +19,7 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("MaxPitch", 0, {editor_sensitivity = 0.125})
 
 	BUILDER:SetPropertyGroup("playback")
-		BUILDER:GetSet("PlayCount", 1, 
+		BUILDER:GetSet("PlayCount", 1,
 			{editor_onchange =
 			function(self, num)
 				self.sens = 0.25
@@ -239,10 +239,8 @@ function PART:SetPath(path)
 			path = info.sound
 		end
 
-		if 
-			not path:StartWith("http")
-			or not pac.resource.Download(path, function(path) load("data/" .. path) end)
-		
+		if not string.StartsWith(path, "http") or not pac.resource.Download(path, function(path) load("data/" .. path) end)
+
 			then load("sound/" .. path)
 		end
 	end
@@ -259,14 +257,14 @@ function PART:PlaySound(_, additiveVolumeFraction)
 	if not stream:IsValid() then return end
 
 	if self.Sequential then
-		
+
 		self.seq_index = self.seq_index or 1
-		
+
 		local basepath = self.paths[self.seq_index] or self.paths[1]
 		local snd = "sound/".. basepath
-		
+
 		local cached_path = "data/pac3_cache/downloads/" .. pac.Hash(basepath) .. ".dat"
-		
+
 		if string.find(basepath, "^http") then
 			snd = cached_path
 		end
@@ -282,7 +280,7 @@ function PART:PlaySound(_, additiveVolumeFraction)
 			self.seq_index = self.seq_index + #self.paths
 		end
 	end
-	
+
 	stream:SetAdditiveVolumeModifier(additiveVolumeFraction)
 
 	if self.last_stream:IsValid() and not self.Overlapping and not self.PauseOnHide  then

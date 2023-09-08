@@ -1,20 +1,38 @@
+local next = next
+local type = type
+local istable = istable
+local IsValid = IsValid
+local tostring = tostring
+local isfunction = isfunction
+local ProtectedCall = ProtectedCall
+
 pace.StreamQueue = pace.StreamQueue or {}
 
-local frame_number = 0
-local last_frame
-local ERROR_COLOR = Color(228, 37, 37)
-
-local function catchError(err)
-	pac.Message(ERROR_COLOR, 'Error: ', err)
-	pac.Message(debug.traceback())
-end
-
 timer.Create("pac_check_stream_queue", 0.1, 0, function()
-	if not pace.BusyStreaming and #pace.StreamQueue ~= 0 then
-		xpcall(pace.SubmitPart, catchError, unpack(table.remove(pace.StreamQueue)))
+	local item = table.remove(pace.StreamQueue)
+	if not item then return end
+
+	local data = item.data
+	local filter = item.filter
+	local callback = item.callback
+
+	local allowed, reason
+	local function submitPart()
+		allowed, reason = pace.SubmitPartNow(data, filter)
 	end
 
-	frame_number = frame_number + 1
+	local success = ProtectedCall(submitPart)
+
+	if not isfunction(callback) then return end
+
+	if not success then
+		allowed = false
+		reason = "Unexpected Error"
+	end
+
+	ProtectedCall(function()
+		callback(allowed, reason)
+	end)
 end)
 
 local function make_copy(tbl, input)
@@ -22,7 +40,7 @@ local function make_copy(tbl, input)
 		tbl.self.UniqueID = pac.Hash(tbl.self.UniqueID .. input)
 	end
 
-	for key, val in pairs(tbl.children) do
+	for _, val in pairs(tbl.children) do
 		make_copy(val, input)
 	end
 end
@@ -45,7 +63,7 @@ end
 
 pace.dupe_ents = pace.dupe_ents or {}
 
-local uid2key = include("legacy_network_dictionary_translate.lua")
+local uid2key = include("pac3/editor/server/legacy_network_dictionary_translate.lua")
 
 local function translate_old_dupe(tableIn, target)
 	for key, value2 in pairs(tableIn) do
@@ -85,7 +103,7 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 
 	-- give source engine time
 	timer.Simple(0, function()
-		for uid, data in pairs(parts) do
+		for _, data in pairs(parts) do
 			if istable(data.part) then
 				make_copy(data.part, id)
 
@@ -108,44 +126,47 @@ duplicator.RegisterEntityModifier("pac_config", function(ply, ent, parts)
 	end)
 end)
 
-function pace.SubmitPart(data, filter)
-	if istable(data.part) then
-		if last_frame == frame_number then
-			table.insert(pace.StreamQueue, {data, filter})
-			pace.dprint("queuing part %q from %s", data.part.self.Name, tostring(data.owner))
-			return "queue"
-		end
+function pace.SubmitPartNow(data, filter)
+	local part = data.part
+	local owner = data.owner
+
+	-- last arg "true" is pac3 only in case you need to do your checking differently from pac2
+	local allowed, reason = hook.Run("PrePACConfigApply", owner, data, true)
+	if allowed == false then return allowed, reason end
+
+	local uid = data.uid
+	if uid ~= false and pace.IsBanned(owner) then
+		return false, "you are banned from using pac"
 	end
 
-	-- last arg "true" is pac3 only in case you need to do your checking differnetly from pac2
-	local allowed, reason = hook.Run("PrePACConfigApply", data.owner, data, true)
+	if istable(part) then
+		local ent = Entity(tonumber(part.self.OwnerName) or -1)
 
-	if istable(data.part) then
-		local ent = Entity(tonumber(data.part.self.OwnerName) or -1)
 		if ent:IsValid() then
-			if not pace.CanPlayerModify(data.owner, ent) then
-				allowed = false
-				reason = "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. tostring(ent.CPPIGetOwner and ent:CPPIGetOwner() or "world")
+			if not pace.CanPlayerModify(owner, ent) then
+				local entOwner = ent.CPPIGetOwner and ent:CPPIGetOwner()
+				entOwner = tostring(entOwner or "world")
+
+				return false, "you are not allowed to modify this entity: " .. tostring(ent) .. " owned by: " .. entOwner
 			else
 				if not data.is_dupe then
 					ent.pac_parts = ent.pac_parts or {}
-					ent.pac_parts[pac.Hash(data.owner)] = data
+					ent.pac_parts[pac.Hash(owner)] = data
 
-					pace.dupe_ents[ent:EntIndex()] = {owner = data.owner, ent = ent}
+					pace.dupe_ents[ent:EntIndex()] = {owner = owner, ent = ent}
 
 					duplicator.ClearEntityModifier(ent, "pac_config")
-					--duplicator.StoreEntityModifier(ent, "pac_config", ent.pac_parts)
-					--duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(ent.pac_parts)})
 					-- fresh table copy
 					duplicator.StoreEntityModifier(ent, "pac_config", {json = util.TableToJSON(table.Copy(ent.pac_parts))})
 				end
-				ent:CallOnRemove("pac_config", function(ent)
-					if ent.pac_parts then
-						for _, data in pairs(ent.pac_parts) do
-							if istable(data.part) then
-								data.part = data.part.self.UniqueID
+
+				ent:CallOnRemove("pac_config", function(e)
+					if e.pac_parts then
+						for _, eData in pairs(e.pac_parts) do
+							if istable(eData.part) then
+								eData.part = eData.part.self.UniqueID
 							end
-							pace.RemovePart(data)
+							pace.RemovePart(eData)
 						end
 					end
 				end)
@@ -153,23 +174,17 @@ function pace.SubmitPart(data, filter)
 		end
 	end
 
-	if data.uid ~= false then
-		if allowed == false then return allowed, reason end
-		if pace.IsBanned(data.owner) then return false, "you are banned from using pac" end
-	end
-
-	local uid = data.uid
 	pace.Parts[uid] = pace.Parts[uid] or {}
 
-	if istable(data.part) then
-		pace.Parts[uid][data.part.self.UniqueID] = data
+	if istable(part) then
+		pace.Parts[uid][part.self.UniqueID] = data
 	else
-		if data.part == "__ALL__" then
+		if part == "__ALL__" then
 			pace.Parts[uid] = {}
 			filter = true
 
 			for key, v in pairs(pace.dupe_ents) do
-				if v.owner:IsValid() and v.owner == data.owner then
+				if v.owner:IsValid() and v.owner == owner then
 					if v.ent:IsValid() and v.ent.pac_parts then
 						v.ent.pac_parts = nil
 						duplicator.ClearEntityModifier(v.ent, "pac_config")
@@ -178,26 +193,8 @@ function pace.SubmitPart(data, filter)
 
 				pace.dupe_ents[key] = nil
 			end
-		elseif data.part then
-			pace.Parts[uid][data.part] = nil
-
-			-- this doesn't work because the unique id is different for some reason
-			-- use clear for now if you wanna clear a dupes outfit
-			--[[for key, v in pairs(pace.dupe_ents) do
-				if v.owner:IsValid() and v.owner == data.owner then
-					if v.ent:IsValid() and v.ent.pac_parts then
-						local id = pac.Hash(data.part .. v.ent:EntIndex())
-						v.ent.pac_parts[id] = nil
-						duplicator.ClearEntityModifier(v.ent, "pac_config")
-						duplicator.StoreEntityModifier(v.ent, "pac_config", v.ent.pac_parts)
-						return
-					else
-						pace.dupe_ents[key] = nil
-					end
-				else
-					pace.dupe_ents[key] = nil
-				end
-			end]]
+		elseif part then
+			pace.Parts[uid][part] = nil
 		end
 	end
 
@@ -218,12 +215,12 @@ function pace.SubmitPart(data, filter)
 	end
 
 	if filter == false then
-		filter = data.owner
+		filter = owner
 	elseif filter == true then
 		local tbl = {}
 
-		for k, v in pairs(players) do
-			if v ~= data.owner then
+		for _, v in pairs(players) do
+			if v ~= owner then
 				table.insert(tbl, v)
 			end
 		end
@@ -232,26 +229,28 @@ function pace.SubmitPart(data, filter)
 	end
 
 	if not data.server_only then
-		if data.owner:IsValid() then
-			data.player_uid = pac.Hash(data.owner)
+		if owner:IsValid() then
+			data.player_uid = pac.Hash(owner)
 		end
 
-		local players = filter or players
+		players = filter or players
 
 		if istable(players) then
 			for key = #players, 1, -1 do
 				local ply = players[key]
-				if not ply.pac_requested_outfits and ply ~= data.owner then
+				if not ply.pac_requested_outfits and ply ~= owner then
 					table.remove(players, key)
 				end
 			end
 
-			if pace.GlobalBans and data.owner:IsValid() then
-				local owner_steamid = data.owner:SteamID()
+			if pace.GlobalBans and owner:IsValid() then
+				local owner_steamid = owner:SteamID()
+
 				for key, ply in pairs(players) do
 					local steamid = ply:SteamID()
-					for var, reason in pairs(pace.GlobalBans) do
-						if  var == steamid or istable(var) and (table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):") or ""))) then
+
+					for var in pairs(pace.GlobalBans) do
+						if var == steamid or istable(var) and (table.HasValue(var, steamid) or table.HasValue(var, util.CRC(ply:IPAddress():match("(.+):") or ""))) then
 							table.remove(players, key)
 
 							if owner_steamid == steamid then
@@ -262,7 +261,7 @@ function pace.SubmitPart(data, filter)
 					end
 				end
 			end
-		elseif type(players) == "Player" and (not players.pac_requested_outfits and players ~= data.owner) then
+		elseif type(players) == "Player" and (not players.pac_requested_outfits and players ~= owner) then
 			data.transmissionID = nil
 			return true
 		end
@@ -276,19 +275,19 @@ function pace.SubmitPart(data, filter)
 			local bytes, err = net_write_table(data)
 
 			if not bytes then
-				ErrorNoHalt("[PAC3] Outfit broadcast failed for " .. tostring(data.owner) .. ": " .. tostring(err) .. '\n')
+				local errStr = tostring(err)
+				ErrorNoHalt("[PAC3] Outfit broadcast failed for " .. tostring(owner) .. ": " .. errStr .. '\n')
 
-				if data.owner and data.owner:IsValid() then
-					data.owner:ChatPrint('[PAC3] ERROR: Could not broadcast your outfit: ' .. tostring(err))
+				if owner and owner:IsValid() then
+					owner:ChatPrint('[PAC3] ERROR: Could not broadcast your outfit: ' .. errStr)
 				end
 			else
 				net.Send(players)
 			end
 		end
 
-		if istable(data.part) then
-			last_frame = frame_number
-			pace.CallHook("OnWoreOutfit", data.owner, data.part)
+		if istable(part) then
+			pace.CallHook("OnWoreOutfit", owner, part)
 		end
 	end
 
@@ -298,33 +297,58 @@ function pace.SubmitPart(data, filter)
 	return true
 end
 
+-- Inserts the given part into the StreamQueue
+function pace.SubmitPart(data, filter, callback)
+	if istable(data.part) then
+		pac.dprint("queuing part %q from %s", data.part.self.Name, tostring(data.owner))
+		table.insert(pace.StreamQueue, {
+			data = data,
+			filter = filter,
+			callback = callback
+		})
+
+		return "queue"
+	end
+
+	return pace.SubmitPartNow(data, filter)
+end
+
+-- Inserts the given part into the StreamQueue, and notifies when it completes
 function pace.SubmitPartNotify(data)
-	pace.dprint("submitted outfit %q from %s with %i number of children to set on %s", data.part.self.Name or "", data.owner:GetName(), table.Count(data.part.children), data.part.self.OwnerName or "")
+	local part = data.part
+	local partName = part.self.Name or "no name"
 
-	local allowed, reason = pace.SubmitPart(data)
+	pac.dprint("submitted outfit %q from %s with %i children to set on %s", partName, data.owner:GetName(), table.Count(part.children), part.self.OwnerName or "")
 
-	if data.owner:IsPlayer() then
+	local function callback(allowed, reason)
 		if allowed == "queue" then return end
+		if not data.owner:IsPlayer() then return end
 
-		if not reason and allowed and istable(data.part) then
-			reason = string.format('Your part %q has been applied', data.part.self.Name or '<unknown>')
+		reason = reason or ""
+
+		if not reason and allowed and istable(part) then
+			reason = string.format("Your part %q has been applied", partName or "<unknown>")
 		end
 
 		net.Start("pac_submit_acknowledged")
 			net.WriteBool(allowed)
-			net.WriteString(reason or "")
-			net.WriteString(data.part.self.Name or "no name")
+			net.WriteString(reason)
+			net.WriteString(partName)
 		net.Send(data.owner)
 
-		hook.Run("PACSubmitAcknowledged", data.owner, util.tobool(allowed), reason or "", data.part.self.Name or "no name", data)
+		hook.Run("PACSubmitAcknowledged", data.owner, not not allowed, reason, partName, data)
 	end
+
+	pace.SubmitPart(data, nil, callback)
 end
 
 function pace.RemovePart(data)
-	pace.dprint("%s is removed %q", data.owner and data.owner:IsValid() and data.owner:GetName(), data.part)
+	local part = data.part
+	local owner = data.owner
+	pac.dprint("%s is removed %q", owner and owner:IsValid() and owner:GetName(), part)
 
-	if data.part == "__ALL__" then
-		pace.CallHook("RemoveOutfit", data.owner)
+	if part == "__ALL__" then
+		pace.CallHook("RemoveOutfit", owner)
 	end
 
 	pace.SubmitPart(data, data.filter)
