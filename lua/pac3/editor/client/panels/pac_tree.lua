@@ -30,7 +30,7 @@ AccessorFunc(PANEL, "m_bClickOnDragHover",      "ClickOnDragHover")
 function PANEL:Init()
 	self:SetShowIcons(true)
 	self:SetIndentSize(14)
-	self:SetLineHeight(17)
+	self:SetLineHeight(17 * GetConVar("pac_editor_scale"):GetFloat())
 
 	self.RootNode = self:GetCanvas():Add("pac_dtree_node")
 	self.RootNode:SetRoot(self)

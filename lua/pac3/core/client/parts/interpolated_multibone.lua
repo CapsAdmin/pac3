@@ -1,18 +1,3 @@
-nodes = {}
-
-local cam_PushModelMatrix = cam.PushModelMatrix
-local cam_PopModelMatrix = cam.PopModelMatrix
-local Vector = Vector
-local Angle = Angle
-local EF_BONEMERGE = EF_BONEMERGE
-local NULL = NULL
-local Color = Color
-local Matrix = Matrix
-local vector_origin = vector_origin
-
-local pos
-local ang
-
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "interpolated_multibone"
@@ -21,13 +6,11 @@ PART.Icon = 'icon16/table_multiple.png'
 PART.is_model_part = false
 
 PART.ManualDraw = true
-PART.HandleModifiersManually = true
+PART.HandleModifiersManually = false
 
 BUILDER:StartStorableVars()
 	:SetPropertyGroup("test")
-		:GetSet("Test1", false)
-		:GetSet("Test2", false)
-		:GetSet("Force000", false)
+		:GetSet("Preview", false)
 	:SetPropertyGroup("Interpolation")
 		:GetSet("LerpValue",0)
 		:GetSet("Power",1)
@@ -44,27 +27,31 @@ BUILDER:StartStorableVars()
 		:GetSetPart("Node8")
 		:GetSetPart("Node9")
 		:GetSetPart("Node10")
+		:GetSetPart("Node11")
+		:GetSetPart("Node12")
+		:GetSetPart("Node13")
+		:GetSetPart("Node14")
+		:GetSetPart("Node15")
+		:GetSetPart("Node16")
+		:GetSetPart("Node17")
+		:GetSetPart("Node18")
+		:GetSetPart("Node19")
+		:GetSetPart("Node20")
 :EndStorableVars()
 
---PART:GetWorldPosition()
---PART:GetWorldAngles()
 function PART:OnRemove()
 	SafeRemoveEntityDelayed(self.Owner,0.1)
 end
 
 function PART:Initialize()
-	print("a multiboner is born")
+	self.nodes = {}
 	self.Owner = pac.CreateEntity("models/pac/default.mdl")
 	self.Owner:SetNoDraw(true)
-	--self:SetOwner(pac.CreateEntity("models/pac/default.mdl"))
-	
-	--pac.HookEntityRender(self.Owner, self)
-	--self.Owner.PACPart = self
-	
+	self.valid_time = CurTime() + 1
 end
 
 function PART:OnShow()
-	
+	self.valid_time = CurTime()
 end
 
 function PART:OnHide()
@@ -79,15 +66,18 @@ end
 --STAGE			0		1		2		3
 --PROPORTION	0	0.5	0	0.5	0	0.5	3
 function PART:OnDraw()
+	self:UpdateNodes()
+	if self.valid_time > CurTime() then print("returned") return end
 	
-	--local ent = self:GetOwner()
-	self.pos,self.ang = self:GetDrawPosition()
-	if not self.Test1 then hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID) end
+	self.pos = self.pos or self:GetWorldPosition()
+	self.ang = self.ang or self:GetWorldAngles()
+	
+	if not self.Preview then hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID) end
 
 	local stage = math.max(0,math.floor(self.LerpValue))
 	local proportion = math.max(0,self.LerpValue) % 1
 
-	if self.Test1 then
+	if self.Preview then
 		hook.Add("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID, function()
 			render.DrawLine(self.pos,self.pos + self.ang:Forward()*50, Color(255,0,0))
 			render.DrawLine(self.pos,self.pos - self.ang:Right()*50, Color(0,255,0))
@@ -96,18 +86,13 @@ function PART:OnDraw()
 		end)
 	end
 	self:Interpolate(stage,proportion)
-	--ent:SetPos(self.pos)
-	--ent:SetAngles(self.ang)
-	--self.pos = Vector(0,0,0)
+	
 end
 
-function PART:OnThink()
-	if self.Node1 ~= nil then nodes["Node1"] = self.Node1 end
-	if self.Node2 ~= nil then nodes["Node2"] = self.Node2 end
-	if self.Node3 ~= nil then nodes["Node3"] = self.Node3 end
-	if self.Node4 ~= nil then nodes["Node4"] = self.Node4 end
-	if self.Node5 ~= nil then nodes["Node5"] = self.Node5 end
-
+function PART:UpdateNodes()
+	for i=1,10,1 do
+		self.nodes["Node"..i] = self["Node"..i]
+	end
 end
 
 function PART:SetWorldPos(x,y,z)
@@ -122,13 +107,13 @@ function PART:Interpolate(stage, proportion)
 	if stage <= 0 then
 		firstnode = self
 	else
-		firstnode = nodes["Node"..stage] or self
+		firstnode = self.nodes["Node"..stage] or self
 	end
 	
 	
-	local secondnode = nodes["Node"..stage+1]
-	if firstnode == nil or firstnode == NULL then firstnode = self end
-	if secondnode == nil or secondnode == NULL then secondnode = self end
+	local secondnode = self.nodes["Node"..stage+1]
+	if firstnode == nil or firstnode == NULL or not firstnode.GetWorldPosition then firstnode = self end
+	if secondnode == nil or secondnode == NULL or not secondnode.GetWorldPosition then secondnode = self end
 
 	proportion = math.pow(proportion,self.Power)
 	if secondnode ~= nil and secondnode ~= NULL then
@@ -139,9 +124,16 @@ function PART:Interpolate(stage, proportion)
 		self.pos = firstnode:GetWorldPosition()
 		self.ang = firstnode:GetWorldAngles()
 	else
-		self.pos = (1-proportion)*self:GetWorldPosition() + (self:GetWorldPosition())*proportion
-		self.ang = GetClosestAngleMidpoint(self:GetWorldAngles(), self:GetWorldAngles(), proportion)
+		if self.InterpolatePosition then self.pos = (1-proportion)*self:GetWorldPosition() + (self:GetWorldPosition())*proportion end
+		if self.InterpolateAngles then self.ang = GetClosestAngleMidpoint(self:GetWorldAngles(), self:GetWorldAngles(), proportion) end
 		--self.ang = (1-proportion)*(self:GetWorldAngles() + Angle(360,360,360)) + (self:GetWorldAngles() + Angle(360,360,360))*proportion
+	end
+
+	if not self.InterpolatePosition then
+		self.pos = self:GetWorldPosition()
+	end
+	if not self.InterpolateAngles then
+		self.ang = self:GetWorldAngles()
 	end
 	self.Owner:SetPos(self.pos)
 	self.Owner:SetAngles(self.ang)
@@ -221,32 +213,6 @@ function PART:InterpolateAngle()
 
 end
 
---[[function PART:ApplyMatrix()
-	print("MATRIX???")
-	local ent = self:GetOwner()
-	if not ent:IsValid() then return end
-
-	local mat = Matrix()
-
-	if self.ClassName ~= "model2" then
-		mat:Translate(self.Position + self.PositionOffset)
-		mat:Rotate(self.Angles + self.AngleOffset)
-	end
-
-	if mat:IsIdentity() then
-		ent:DisableMatrix("RenderMultiply")
-	else
-		ent:EnableMatrix("RenderMultiply", mat)
-	end
-end--]]
-
---[[function PART:SetLerpValue(var)
-	print("adjusted lerp value. "..type(var).." "..var)
-	self.LerpValue = var
-	assert(self.LerpValue == var)
-	assert(self.LerpValue ~= nil)
-	self:Interpolate(self:GetInterpolationParameters())
-end]]
 
 function PART:SetInterpolatePosition(b)
 	--print(type(b).." "..b)

@@ -2,7 +2,7 @@ local L = pace.LanguageString
 
 pace.Fonts = {}
 
-for i = 1, 5 do
+for i = 1, 34 do
 	surface.CreateFont("pac_font_"..i,
 	{
 		font = "Arial",
@@ -14,7 +14,7 @@ for i = 1, 5 do
 	table.insert(pace.Fonts, "pac_font_"..i)
 end
 
-for i = 1, 5 do
+for i = 1, 34 do
 	surface.CreateFont("pac_font_bold"..i,
 	{
 		font = "Arial",

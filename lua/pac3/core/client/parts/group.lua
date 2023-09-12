@@ -8,6 +8,8 @@ PART.Description = "right click to add parts"
 BUILDER:StartStorableVars()
 	BUILDER:GetSet("Duplicate", false)
 	BUILDER:GetSet("OwnerName", "self")
+	BUILDER:GetSet("ModelTracker", "", {hide_in_editor = true})
+	BUILDER:GetSet("ClassTracker", "", {hide_in_editor = true})
 BUILDER:EndStorableVars()
 
 local init_list = {}
@@ -50,6 +52,8 @@ function PART:SetOwner(ent)
 			if not pac.HookEntityRender(owner, self) then
 				self:ShowFromRendering()
 			end
+			self.ModelTracker = owner:GetModel()
+			self.ClassTracker = owner:GetClass()
 		end
 	end
 end

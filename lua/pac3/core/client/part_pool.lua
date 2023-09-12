@@ -44,6 +44,10 @@ local ent_parts = _G.pac_local_parts or {}
 local all_parts = _G.pac_all_parts or {}
 local uid_parts = _G.pac_uid_parts or {}
 
+function pac.getentparts() return ent_parts or _G.pac_ent_parts or {} end
+function pac.getallparts() return all_parts or _G.pac_all_parts or {} end
+function pac.getuidparts() return uid_parts or _G.pac_uid_parts or {} end
+
 if game.SinglePlayer() or (player.GetCount() == 1 and LocalPlayer():IsSuperAdmin()) then
 	_G.pac_local_parts = ent_parts
 	_G.pac_all_parts = all_parts

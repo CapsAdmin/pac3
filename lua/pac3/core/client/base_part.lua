@@ -31,6 +31,7 @@ BUILDER
 	:StartStorableVars()
 		:SetPropertyGroup("generic")
 			:GetSet("Name", "")
+			:GetSet("Notes", "")
 			:GetSet("Hide", false)
 			:GetSet("EditorExpand", false, {hidden = true})
 			:GetSet("UniqueID", "", {hidden = true})
@@ -200,9 +201,11 @@ do -- owner
 	end
 
 	function PART:GetParentOwner()
+
 		if self.TargetEntity:IsValid() and self.TargetEntity ~= self then
 			return self.TargetEntity:GetOwner()
 		end
+
 
 		for _, parent in ipairs(self:GetParentList()) do
 
@@ -1145,6 +1148,78 @@ do
 
 	function PART:OnThink() end
 	function PART:AlwaysOnThink() end
+end
+
+--the popup system
+function PART:SetupEditorPopup(str, force_open, tbl)
+	
+	if not IsValid(self) then return end
+
+	local popup_config_table = tbl or {
+		pac_part = self, obj_type = GetConVar("pac_popups_preferred_location"):GetString(),
+		hoverfunc = function() end,
+		doclickfunc = function() end,
+		panel_exp_width = 900, panel_exp_height = 400
+	}
+
+	local default_state = str == nil or str == ""
+	local info_string = str or self.ClassName .. "\nno special information available"
+	
+	if default_state and pace then
+		local partsize_tbl = pace.GetPartSizeInformation(self)
+		info_string = info_string .. "\n" .. partsize_tbl.info .. ", " .. partsize_tbl.all_share_percent .. "% of all parts"
+	end
+
+	if self.Notes and self.Notes ~= "" then
+		info_string = info_string .. "\n\nNotes:\n\n" .. self.Notes
+	end
+
+	local tree_node = self.pace_tree_node
+	local part = self
+	self.killpopup = false
+	local pnl
+	
+	--local pace = pace or {}
+	if tree_node then
+		tree_node.Label:SetTooltip(self.ClassName)
+		local part = self
+
+		function tree_node:Think()
+			--if not part.killpopup and ((self.Label:IsHovered() and GetConVar("pac_popups_preferred_location"):GetString() == "pac tree label") or input.IsButtonDown(KEY_F1) or force_open) then
+			if not part.killpopup and ((self.Label:IsHovered() and GetConVar("pac_popups_preferred_location"):GetString() == "pac tree label") or force_open) then
+				if not self.popuppnl_is_up and not IsValid(self.popupinfopnl) and not part.killpopup then
+					self.popupinfopnl = pac.InfoPopup(
+						info_string,
+						popup_config_table
+					)
+					self.popuppnl_is_up = true
+				end
+				
+				--if IsValid(self.popupinfopnl) then self.popupinfopnl:MakePopup() end
+				pnl = self.popupinfopnl
+				
+			end
+			if not IsValid(self.popupinfopnl) then self.popupinfopnl = nil self.popuppnl_is_up = false end
+		end
+	end
+	return pnl
+end
+
+function PART:AttachEditorPopup(str, flash, tbl)
+	local pnl = self:SetupEditorPopup(str, flash, tbl)
+	if flash and pnl then
+		pnl:MakePopup()
+	end
+end
+
+function PART:DetachEditorPopup()
+	local tree_node = self.pace_tree_node
+	if tree_node then
+		if tree_node.popupinfopnl then
+			tree_node.popupinfopnl:Remove()
+		end
+		if not IsValid(tree_node.popupinfopnl) then tree_node.popupinfopnl = nil end
+	end
 end
 
 BUILDER:Register()

@@ -11,6 +11,7 @@ PART.Group = 'effects'
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")
 		BUILDER:GetSet("Path", "", {editor_panel = "sound"})
+		BUILDER:GetSet("AllPaths", "", {hide_in_editor = true})
 		BUILDER:GetSet("Volume", 1, {editor_sensitivity = 0.25})
 		BUILDER:GetSet("Pitch", 1, {editor_sensitivity = 0.125})
 		BUILDER:GetSet("Radius", 1500)
@@ -166,6 +167,15 @@ function PART:OnThink()
 end
 
 function PART:SetPath(path)
+	if #path > 1024 then
+		self:AttachEditorPopup("This part has more sounds than the 1024-letter limit! Please do not touch the path field now!")
+		self:SetInfo("This part has more sounds than the 1024-letter limit! Please do not touch the path field now!")
+		if self.Name == "" then
+			self:SetName("big sound list")
+			pace.RefreshTree()
+		end
+	end
+	
 	self.seq_index = 1
 	self.Path = path
 
@@ -180,10 +190,13 @@ function PART:SetPath(path)
 		if min and max then
 			for i = min, max do
 				table.insert(paths, (path:gsub("%[.-%]", i)))
+				self.AllPaths = self.AllPaths .. ";" .. path
 			end
 		else
 			table.insert(paths, path)
+			self.AllPaths = self.AllPaths .. ";" .. path
 		end
+		
 	end
 
 	for _, stream in pairs(self.streams) do
@@ -245,9 +258,14 @@ function PART:SetPath(path)
 		end
 	end
 	self.paths = paths
+
 end
 
 PART.last_stream = NULL
+
+function PART:UpdateSoundsFromAll()
+	self:SetPath(self.AllPaths)
+end
 
 function PART:PlaySound(_, additiveVolumeFraction)
 	--PrintTable(self.streams)
@@ -271,7 +289,7 @@ function PART:PlaySound(_, additiveVolumeFraction)
 
 		if self.streams[snd]:IsValid() then
 			stream = self.streams[snd]
-			print(snd,self.seq_index)
+			--print(snd,self.seq_index)
 		end
 		self.seq_index = self.seq_index + self.SequentialStep
 		if self.seq_index > #self.paths then

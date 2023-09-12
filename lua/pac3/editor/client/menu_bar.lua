@@ -55,6 +55,11 @@ local function populate_pac(menu)
 			function() pace.ShowWiki(pace.WikiURL .. "Beginners-FAQ") end
 		):SetImage(pace.MiscIcons.info)
 
+		help:AddOption(
+			L"PAC3 Wiki",
+			function() pace.ShowWiki("https://wiki.pac3.info/start") end
+		):SetImage(pace.MiscIcons.info)
+
 		do
 			local chat_pnl = help:AddOption(
 				L"Discord / PAC3 Chat",
@@ -75,7 +80,11 @@ local function populate_pac(menu)
 			version_pnl:SetImage(pace.MiscIcons.info)
 
 			version:AddOption(version_string)
+
+			version:AddOption("update news", function() pac.OpenMOTD(false) end)
 		end
+
+		
 
 		help:AddOption(
 			L"about",
@@ -101,10 +110,39 @@ end
 
 local function populate_options(menu)
 	menu:AddOption(L"settings", function() pace.OpenSettings() end)
+	menu:AddCVar(L"Keyboard shortcuts: Legacy mode", "pac_editor_shortcuts_legacy_mode", "1", "0")
 	menu:AddCVar(L"inverse collapse/expand controls", "pac_reverse_collapse", "1", "0")
 	menu:AddCVar(L"enable shift+move/rotate clone", "pac_grab_clone", "1", "0")
 	menu:AddCVar(L"remember editor position", "pac_editor_remember_position", "1", "0")
+	menu:AddCVar(L"ask before loading autoload", "pac_prompt_for_autoload", "1", "0")
+	if game.SinglePlayer() then menu:AddCVar(L"queue prop / npc outfits for next spawned entity", "pac_prompt_for_autoload", "2", "0") end
 	menu:AddCVar(L"show parts IDs", "pac_show_uniqueid", "1", "0")
+	local popups, pnlp = menu:AddSubMenu("configure editor popups", function() end)
+		popups.GetDeleteSelf = function() return false end
+		pnlp:SetImage("icon16/comment.png")
+		popups:AddCVar(L"enable editor popups", "pac_popups_enable", "1", "0")
+		popups:AddCVar(L"don't kill popups on autofade", "pac_popups_preserve_on_autofade", "1", "0")
+		popups:AddOption("Configure popups appearance", function() pace.OpenPopupConfig() end):SetImage('icon16/color_wheel.png')
+		local popup_pref_mode, pnlppm = popups:AddSubMenu("prefered location", function() end)
+			pnlppm:SetImage("icon16/layout_header.png")
+			popup_pref_mode.GetDeleteSelf = function() return false end
+			popup_pref_mode:AddOption(L"parts on viewport", function() RunConsoleCommand("pac_popups_preferred_location", "part world") end):SetImage('icon16/camera.png')
+			popup_pref_mode:AddOption(L"part label on tree", function() RunConsoleCommand("pac_popups_preferred_location", "pac tree label") end):SetImage('icon16/layout_content.png')
+			popup_pref_mode:AddOption(L"menu bar", function() RunConsoleCommand("pac_popups_preferred_location", "menu bar") end):SetImage('icon16/layout_header.png')
+			popup_pref_mode:AddOption(L"cursor", function() RunConsoleCommand("pac_popups_preferred_location", "cursor") end):SetImage('icon16/mouse.png')
+			popup_pref_mode:AddOption(L"screen", function() RunConsoleCommand("pac_popups_preferred_location", "screen") end):SetImage('icon16/monitor.png')
+
+	local combat_consents, pnlcc = menu:AddSubMenu("pac combat consents", function() end)
+	combat_consents.GetDeleteSelf = function() return false end
+	pnlcc:SetImage("icon16/joystick.png")
+	
+	combat_consents:AddCVar(L"damage_zone part (area damage)", "pac_client_damage_zone_consent", "1", "0")
+	combat_consents:AddCVar(L"hitscan part (bullets)", "pac_client_hitscan_consent", "1", "0")
+	combat_consents:AddCVar(L"force part (physics forces)", "pac_client_force_consent", "1", "0")
+	combat_consents:AddCVar(L"lock part's grab (can take control of your position)", "pac_client_grab_consent", "1", "0")
+	combat_consents:AddCVar(L"lock part's grab calcview (can take control of your view)", "pac_client_lock_camera_consent", "1", "0")
+	
+	
 	menu:AddSpacer()
 	menu:AddOption(L"position grid size", function()
 		Derma_StringRequest(L"position grid size", L"size in units:", GetConVarNumber("pac_grid_pos_size"), function(val)
@@ -149,6 +187,18 @@ local function populate_player(menu)
 	end
 end
 
+function pace.PopulateMenuBarTab(menu, tab)
+	if tab == "pac" then
+		populate_pac(menu)
+	elseif tab == "player" then
+		populate_player(menu)
+	elseif tab == "options" then
+		populate_options(menu)
+	elseif tab == "view" then
+		populate_view(menu)
+	end
+end
+
 function pace.OnMenuBarPopulate(bar)
 	for k,v in pairs(bar.Menus) do
 		v:Remove()
@@ -161,6 +211,11 @@ function pace.OnMenuBarPopulate(bar)
 	pace.AddToolsToMenu(bar:AddMenu(L"tools"))
 
 	bar:RequestFocus(true)
+	timer.Simple(0.2, function()
+		if IsValid(bar) then
+			bar:RequestFocus(true)
+		end
+	end)
 end
 
 function pace.OnOpenMenu()

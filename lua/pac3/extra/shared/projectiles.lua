@@ -1,6 +1,10 @@
-local enable = CreateConVar("pac_sv_projectiles", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED})
-local pac_sv_projectile_max_attract_radius = CreateConVar("pac_sv_projectile_max_attract_radius", 300, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED})
-local pac_sv_projectile_max_damage_radius = CreateConVar("pac_sv_projectile_max_damage_radius", 100, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED})
+local enable = CreateConVar("pac_sv_projectiles", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'allow physical projectiles serverside')
+local pac_sv_projectile_max_attract_radius = CreateConVar("pac_sv_projectile_max_attract_radius", 300, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'maximum attract radius for physical projectiles')
+local pac_sv_projectile_max_damage_radius = CreateConVar("pac_sv_projectile_max_damage_radius", 100, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'maximum damage radius for physical projectiles')
+local pac_sv_projectile_max_phys_radius = CreateConVar("pac_sv_projectile_max_phys_radius", 100, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'maximum physical radius for physical projectiles')
+local pac_sv_projectile_max_speed = CreateConVar("pac_sv_projectile_max_speed", 100, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'maximum speed for physical projectiles')
+local pac_sv_projectile_max_damage = CreateConVar("pac_sv_projectile_max_damage", 100000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'maximum damage for physical projectiles')
+local pac_sv_projectile_max_mass = CreateConVar("pac_sv_projectile_max_mass", 50000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'maximum speed for physical projectiles')
 
 do -- projectile entity
 	local ENT = {}
@@ -60,17 +64,49 @@ do -- projectile entity
 
 			self.projectile_owner = ply
 
-			local radius = math.Clamp(part.Radius, 1, pac_sv_projectile_max_damage_radius:GetFloat())
+			local radius = math.Clamp(part.Radius, 1, pac_sv_projectile_max_phys_radius:GetFloat())
 
 			if part.Sphere then
-				self:PhysicsInitSphere(radius)
+				self:PhysicsInitSphere(radius, part.SurfaceProperties)
 			else
-				self:PhysicsInitBox(Vector(1,1,1) * - radius, Vector(1,1,1) * radius)
+				local valid_fallback = util.IsValidModel( part.FallbackSurfpropModel ) and not IsUselessModel(part.FallbackSurfpropModel)
+				print("valid fallback? " .. part.FallbackSurfpropModel , valid_fallback)
+				self:PhysicsInitBox(Vector(1,1,1) * - radius, Vector(1,1,1) * radius, part.SurfaceProperties)
+
+				if part.OverridePhysMesh and valid_fallback then
+					self:SetModel(part.FallbackSurfpropModel)
+					self:PhysicsInit(SOLID_VPHYSICS)
+					self:PhysicsInitMultiConvex(self:GetPhysicsObject():GetMeshConvexes(), part.SurfaceProperties)
+				end
+
+				if part.RescalePhysMesh then
+					local physmesh = self:GetPhysicsObject():GetMeshConvexes()
+					--hack from prop resizer
+					for convexkey, convex in pairs( physmesh ) do
+						for poskey, postab in pairs( convex ) do
+							convex[ poskey ] = postab.pos * radius
+						end
+					end
+
+					self:PhysicsInitMultiConvex( physmesh, part.SurfaceProperties)
+					self:EnableCustomCollisions( true )
+				elseif not valid_fallback then
+					self:PhysicsInitBox(Vector(1,1,1) * - radius, Vector(1,1,1) * radius, part.SurfaceProperties)
+				end
+				
 			end
+			
 
 			local phys = self:GetPhysicsObject()
+			phys:SetMaterial(part.SurfaceProperties)
+
+
 			phys:EnableGravity(part.Gravity)
 			phys:AddVelocity((ang:Forward() + (VectorRand():Angle():Forward() * part.Spread)) * part.Speed * 1000)
+			phys:AddAngleVelocity(Vector(part.RandomAngleVelocity.x * math.Rand(-1,1), part.RandomAngleVelocity.y * math.Rand(-1,1), part.RandomAngleVelocity.z * math.Rand(-1,1)))
+
+			phys:AddAngleVelocity(part.LocalAngleVelocity)
+
 			if part.AddOwnerSpeed then
 				phys:AddVelocity(ply:GetVelocity())
 			end
@@ -84,12 +120,14 @@ do -- projectile entity
 			else
 				phys:EnableCollisions(false)
 			end
+			
 
-			phys:SetMass(math.Clamp(part.Mass, 0.001, 50000))
+			phys:SetMass(math.Clamp(part.Mass, 0.001, pac_sv_projectile_max_mass:GetFloat()))
 			phys:SetDamping(0, 0)
 
+			self.phys = phys
 			self:SetAimDir(part.AimDir)
-
+			self:DrawShadow(part.DrawShadow)
 			self.part_data = part
 		end
 
@@ -314,7 +352,7 @@ do -- projectile entity
 				end
 			end
 
-			local damage_radius = math.Clamp(self.part_data.DamageRadius, 0, 300)
+			local damage_radius = math.Clamp(self.part_data.DamageRadius, 0, pac_sv_projectile_max_damage_radius:GetFloat())
 
 			if self.part_data.Damage > 0 then
 				if self.part_data.DamageType == "heal" then
@@ -359,7 +397,7 @@ do -- projectile entity
 						end
 					elseif self.part_data.DamageType == "explosion" then
 						info:SetDamageType(damage_types.blast)
-						info:SetDamage(math.Clamp(self.part_data.Damage, 0, 100000))
+						info:SetDamage(math.Clamp(self.part_data.Damage, 0, pac_sv_projectile_max_damage:GetFloat()))
 						util.BlastDamageInfo(info, data.HitPos, damage_radius)
 					else
 						info:SetDamageForce(data.OurOldVelocity)
@@ -406,12 +444,13 @@ if SERVER then
 
 	util.AddNetworkString("pac_projectile")
 	util.AddNetworkString("pac_projectile_attach")
+	util.AddNetworkString("pac_projectile_remove")
 
 	net.Receive("pac_projectile", function(len, ply)
 		if not enable:GetBool() then return end
 
 		pace.suppress_prop_spawn = true
-		if hook.Run("PlayerSpawnProp", ply, "models/props_junk/popcan01a.mdl") == false then
+		if hook.Run("PlayerSpawnProp", ply, "models/props_junk/PopCan01a.mdl") == false then
 			pace.suppress_prop_spawn = nil
 			return
 		end
@@ -465,10 +504,11 @@ if SERVER then
 			local ent = ents.Create("pac_projectile")
 			SafeRemoveEntityDelayed(ent,math.Clamp(part.LifeTime, 0, 50))
 
-			ent:SetModel("models/props_junk/popcan01a.mdl")
+			ent:SetModel(part.FallbackSurfpropModel)
 			ent:SetPos(pos)
 			ent:SetAngles(ang)
 			ent:Spawn()
+			
 
 			if not part.CollideWithOwner then
 				ent:SetOwner(ply)
@@ -486,6 +526,7 @@ if SERVER then
 				net.WriteEntity(ply)
 				net.WriteInt(ent:EntIndex(), 16)
 				net.WriteString(part.UniqueID)
+				net.WriteString(part.SurfaceProperties)
 			net.Broadcast()
 
 			ent.pac_projectile_uid = part.UniqueID
@@ -548,4 +589,15 @@ if SERVER then
 			end
 		end
 	end)
+
+	net.Receive("pac_projectile_remove", function()
+		local id = net.ReadInt(16)
+		local ent = ents.GetByIndex(id)
+
+		if ent.part_data.RemoveOnHide then
+			SafeRemoveEntity(ent)
+		end
+		
+	end)
+		
 end
