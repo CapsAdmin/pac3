@@ -421,7 +421,7 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 								if not found then
 									for i, v in pairs(files) do
 										if string.find(v.file_path, material_name, 1, true) or string.find(material_name, v.file_name, 1, true) then
-											v.file_name = material_name
+											table.insert(files, {file_name = material_name, buffer = v.buffer, crc = v.crc, file_path = v.file_path})
 											found = v.file_path
 											break
 										end
