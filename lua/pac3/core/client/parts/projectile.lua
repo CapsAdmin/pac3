@@ -425,15 +425,18 @@ do -- physical
 			if ent.pac_projectile_part then
 				local tbl = ent.pac_projectile_part:GetChildren()
 				local partchild = tbl[next(tbl)] --ent.pac_projectile_part is the root group, but outfit part is the first child
-				if partchild:IsHidden() then
-					if ent.pac_projectile.RemoveOnHide and not ent.markedforremove then
-						ent.markedforremove = true
-						net.Start("pac_projectile_remove")
-						net.WriteInt(ent_id, 16)
-						net.SendToServer()
-						
+				if IsValid(partchild) then
+					if partchild:IsHidden() then
+						if ent.pac_projectile.RemoveOnHide and not ent.markedforremove then
+							ent.markedforremove = true
+							net.Start("pac_projectile_remove")
+							net.WriteInt(ent_id, 16)
+							net.SendToServer()
+							
+						end
 					end
 				end
+				
 			end
 		end
 	end)
