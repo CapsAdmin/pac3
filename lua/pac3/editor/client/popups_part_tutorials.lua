@@ -186,6 +186,7 @@ pac.InfoPopup(str, tbl, x, y)
 
 
 function pac.InfoPopup(str, tbl, x, y)
+    if not GetConVar("pac_popups_enable"):GetBool() then return end
     local x = x
     local y = y
     if not x or not y then
