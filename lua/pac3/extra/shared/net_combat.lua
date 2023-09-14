@@ -1333,7 +1333,14 @@ if SERVER then
 					is_phys = false
 				end
 
-				local oldvel = phys_ent:GetVelocity()
+				local oldvel
+
+				if IsValid(phys_ent) then
+					oldvel = phys_ent:GetVelocity()
+				else
+					oldvel = Vector(0,0,0)
+				end
+				
 
 				local addvel = Vector(0,0,0)
 				local add_angvel = Vector(0,0,0)
@@ -1418,15 +1425,17 @@ if SERVER then
 
 				elseif (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or ent:IsWeapon()) and tbl.PhysicsProps then
 					if not IsPropProtected(ent, ply) and not (global_combat_prop_protection:GetBool() and unconsenting_owner) then
-						ent:PhysWake()
-						if islocaltorque then
-							phys_ent:AddAngleVelocity(add_angvel)
-						else
-							add_angvel = phys_ent:WorldToLocalVector( add_angvel )
-							phys_ent:ApplyTorqueCenter(add_angvel)
+						if IsValid(phys_ent) then
+							ent:PhysWake()
+							if islocaltorque then
+								phys_ent:AddAngleVelocity(add_angvel)
+							else
+								add_angvel = phys_ent:WorldToLocalVector( add_angvel )
+								phys_ent:ApplyTorqueCenter(add_angvel)
+							end
+							ent:SetPos(ent:GetPos() + Vector(0,0,0.0001)) --dumb workaround to fight against the ground friction reversing the forces
+							phys_ent:SetVelocity(oldvel + addvel)
 						end
-						ent:SetPos(ent:GetPos() + Vector(0,0,0.0001)) --dumb workaround to fight against the ground friction reversing the forces
-						phys_ent:SetVelocity(oldvel + addvel)
 					end
 				elseif (ent:IsNPC() or string.find(ent:GetClass(), "npc") ~= nil) and tbl.NPC then
 					if not IsPropProtected(ent, ply) and not global_combat_prop_protection:GetBool() and not unconsenting_owner then
