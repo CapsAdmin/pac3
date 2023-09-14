@@ -989,6 +989,8 @@ if SERVER then
 				if tbl.DoNotKill then
 					local dmg_info2 = DamageInfo()
 					
+					dmg_info2:SetDamagePosition(ent:NearestPoint(pos))
+					dmg_info2:SetReportedPosition(pos)
 					dmg_info2:SetDamage( math.min(ent:Health() - tbl.CriticalHealth, tbl.Damage))
 					dmg_info2:IsBulletDamage(tbl.Bullet)
 					dmg_info2:SetDamageForce(Vector(0,0,0))
@@ -1005,6 +1007,8 @@ if SERVER then
 					if string.find(tbl.DamageType, "dissolve") and IsDissolvable(ent) and pac_sv_damage_zone_allow_dissolve then
 						dissolve(ent, dmg_info:GetInflictor(), damage_types[tbl.DamageType])
 					end
+					dmg_info:SetDamagePosition(ent:NearestPoint(pos))
+					dmg_info:SetReportedPosition(pos)
 					ent:TakeDamageInfo(dmg_info)
 					max_dmg = math.max(max_dmg, dmg_info:GetDamage())
 				end
