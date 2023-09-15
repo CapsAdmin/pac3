@@ -71,6 +71,10 @@ pace.PACActionShortcut_Default = {
 	["hide_editor"] = {
 		[1] = {"CTRL", "e"}
 	},
+	
+	["help_info_popup"] = {
+		[1] = {"F1"}
+	},
 
 	["hide_editor_visible"] = {
 		[1] = {"ALT", "e"}
