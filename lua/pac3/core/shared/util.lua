@@ -598,6 +598,8 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 				for i, data in ipairs(files) do
 					if data.file_name:EndsWith(".vmt") then
 						data.buffer = data.buffer:lower():gsub("\\", "/")
+							:gsub('("?%f[%w_]playercolor%f[^%w_]"?)','PlayerColor')
+							:gsub('("?%f[%w_]playerweaponcolor%f[^%w_]"?)','PlayerWeaponColor')
 
 						if DEBUG_MDL or VERBOSE then
 							print(data.file_name .. ":")
