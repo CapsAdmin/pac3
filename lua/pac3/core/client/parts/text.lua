@@ -92,7 +92,8 @@ BUILDER:StartStorableVars()
 		:GetSet("Font", "default", {enums = default_fonts})
 		:GetSet("Size", 1, {editor_sensitivity = 0.25})
 		:GetSet("DrawMode", "DrawTextOutlined", {enums = {
-			["draw.SimpleTextOutlined"] = "DrawTextOutlined",
+			["draw.SimpleTextOutlined 3D2D"] = "DrawTextOutlined",
+			["draw.SimpleTextOutlined 2D"] = "DrawTextOutlined2D",
 			["surface.DrawText"] = "SurfaceText"
 		}})
 		
@@ -406,12 +407,12 @@ function PART:OnDraw()
 				DisableClipping(oldState)
 				cam_End3D2D()
 			cam_End3D()
-		elseif self.DrawMode == "SurfaceText" then
+		elseif self.DrawMode == "SurfaceText" or self.DrawMode == "DrawTextOutlined2D" then
 			hook.Add("HUDPaint", "pac.DrawText"..self.UniqueID, function()
 				if not pcall(surface_SetFont, self.UsedFont) then return end
 				self:SetFont(self.UsedFont)
 
-				surface.SetTextColor(self.Color.r, self.Color.g, self.Color.b)
+				surface.SetTextColor(self.Color.r, self.Color.g, self.Color.b, 255*self.Alpha)
 				
 				surface.SetFont(self.UsedFont)
 				local pos2d = self:GetDrawPosition():ToScreen()
@@ -450,16 +451,27 @@ function PART:OnDraw()
 				
 				if dist < fadeenddist then
 					if dist < fadestartdist then
-						surface.DrawText(DisplayText, self.ForceAdditive)
+						if self.DrawMode == "DrawTextOutlined2D" then
+							draw.SimpleTextOutlined(DisplayText, self.UsedFont, pos2d.x, pos2d.y, Color(self.Color.r,self.Color.g,self.Color.b,255*self.Alpha), TEXT_ALIGN_TOP, TEXT_ALIGN_LEFT, self.Outline, Color(self.OutlineColor.r,self.OutlineColor.g,self.OutlineColor.b, 255*self.OutlineAlpha))
+						elseif self.DrawMode == "SurfaceText" then
+							surface.DrawText(DisplayText, self.ForceAdditive)
+						end
+						
 					else
 						local fade = math.pow(math.Clamp(1 - (dist-fadestartdist)/fadeenddist,0,1),3)
-						surface.SetTextColor(self.Color.r * fade, self.Color.g * fade, self.Color.b * fade)
-						surface.DrawText(DisplayText, true)
+
+						if self.DrawMode == "DrawTextOutlined2D" then
+							draw.SimpleTextOutlined(DisplayText, self.UsedFont, pos2d.x, pos2d.y, Color(self.Color.r,self.Color.g,self.Color.b,255*self.Alpha*fade), TEXT_ALIGN_TOP, TEXT_ALIGN_LEFT, self.Outline, Color(self.OutlineColor.r,self.OutlineColor.g,self.OutlineColor.b, 255*self.OutlineAlpha*fade))
+						elseif self.DrawMode == "SurfaceText" then
+							surface.SetTextColor(self.Color.r * fade, self.Color.g * fade, self.Color.b * fade)
+							surface.DrawText(DisplayText, true)
+						end
+
 					end
 				end
 			end)
 		end
-		if self.DrawMode ~= "SurfaceText" then
+		if self.DrawMode == "DrawTextOutlined" then
 			hook.Remove("HUDPaint", "pac.DrawText"..self.UniqueID)
 		end
 	else hook.Remove("HUDPaint", "pac.DrawText"..self.UniqueID) end
