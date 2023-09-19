@@ -496,7 +496,6 @@ do -- menu
 						end
 					end
 				end)
-
 				
 --@note partmenu definer
 				sub.GetDeleteSelf = function() return false end
@@ -730,8 +729,11 @@ do -- menu
 			b_part:SetParent(a_part.Parent) b_part:SetEditorExpand(true)
 			a_part:SetParent(b_part) a_part:SetEditorExpand(true)
 		else
-			a_part:SetParent(b_part.Parent)
-			b_part:SetParent(a_part.Parent)
+			local a_parent = a_part.Parent
+			local b_parent = b_part.Parent
+
+			a_part:SetParent(b_parent)
+			b_part:SetParent(a_parent)
 		end
 		pace.RefreshTree()
 	end
@@ -957,7 +959,9 @@ do -- menu
 			if shared and not prop.udata.editor_friendly and basepart["Get" .. prop["key"]] ~= nil then
 				shared_properties[#shared_properties + 1] = prop["key"]
 			elseif shared and prop.udata.editor_friendly and basepart["Get" .. prop["key"]] == nil then
-				shared_udata_properties[#shared_udata_properties + 1] = "event_udata_"..prop["key"]
+				if not table.HasValue(shared_udata_properties, "event_udata_"..prop["key"]) then
+					shared_udata_properties[#shared_udata_properties + 1] = "event_udata_"..prop["key"]
+				end
 			end
 		end
 
@@ -970,7 +974,9 @@ do -- menu
 						if part2["Get" .. prop["key"]] ~= nil then
 							initial_shared_properties[#initial_shared_properties + 1] = prop["key"]
 						elseif part2["Get" .. prop["key"]] == nil then
-							initial_shared_udata_properties[#initial_shared_udata_properties + 1] = "event_udata_"..prop["key"]
+							if not table.HasValue(initial_shared_udata_properties, "event_udata_"..prop["key"]) then
+								initial_shared_udata_properties[#initial_shared_udata_properties + 1] = "event_udata_"..prop["key"]
+							end
 						end
 					end
 				end
@@ -1077,46 +1083,67 @@ do -- menu
 		end
 		
 		--populate panels for event "userdata" packaged into arguments
-		if #shared_udata_properties > 1 then
-			local udata_types = {
-				hide_in_eventwheel = "boolean",
-				find = "string",
-				time = "number",
-				distance = "number",
-				compare = "number",
-				min = "number",
-				max = "number",
-				primary = "boolean",
-				amount = "number",
-				ammo_id = "number",
-				find_ammo = "string",
-				hide = "boolean",
-				interval = "number",
-				offset = "number",
-				find_sound = "string",
-				mute = "boolean",
-				all_players = "boolean"}
-			local udata_orders = {
-				["command"] = {[1] = "find", [2] = "time", [3] = "hide_in_eventwheel"},
-				["timerx"] = {[1] = "seconds", [2] = "reset_on_hide", [3] = "synced_time"},
-				["ranger"] = {[1] = "distance", [2] = "compare", [3] = "npcs_and_players_only"},
-				["randint"] = {[1] = "compare", [2] = "min", [3] = "max"},
-				["random_timer"] = {[1] = "min", [2] = "max", [3] = "compare"},
-				["timersys"] = {[1] = "seconds", [2] = "reset_on_hide"},
-				["pose_parameter"] = {[1] = "name", [2] = "num"},
-				["ammo"] = {[1] = "primary", [2] = "amount"},
-				["total_ammo"] = {[1] = "ammo_id", [2] = "amount"},
-				["clipsize"] = {[1] = "primary", [2] = "amount"},
-				["weapon_class"] = {[1] = "find", [2] = "hide"},
-				["timer"] = {[1] = "interval", [2] = "offset"},
-				["animation_event"] = {[1] = "find", [2] = "time"},
-				["fire_bullets"] = {[1] = "find_ammo", [2] = "time"},
-				["emit_sound"] = {[1] = "find_sound", [2] = "time", [3] = "mute"},
-				["say"] = {[1] = "find", [2] = "time", [3] = "all_players"}}
-			for i,v in pairs(shared_udata_properties) do
-				local udata_val_name = string.gsub(v, "event_udata_", "")
+		if #shared_udata_properties > 0 then
+			local fallback_event_types = {}
+			local fallback_event
+			for i,v in ipairs(pace.BulkSelectList) do
+				if v.ClassName == "event" then
+					table.Add(fallback_event_types,v.Event)
+					fallback_event = v
+				end
+			end
+
+			--[[example udata arg from part.Events[part.Event].__registeredArguments
+			1:
+				1	=	button
+				2	=	string
+				3:
+						default	=	mouse_left
+						enums	=	function: 0xa88929ea
+						group	=	arguments
+			]]
+
+			local function GetEventArgType(part, str)
 				
-				local var_type = udata_types[udata_val_name]
+				for argn,arg in ipairs(part.Events[part.Event].__registeredArguments) do
+					if arg[1] == str then
+						return arg[2]
+					end
+				end
+				if fallback_event then
+					for i,e in ipairs(fallback_event_types) do
+						for argn,arg in ipairs(fallback_event.Events[e].__registeredArguments) do
+							if arg[1] == str then
+								return arg[2]
+							end
+						end
+					end
+				end
+				return "string"
+			end
+
+			local function GetEventArgIndex(part,str)
+				str = string.gsub(str, "event_udata_", "")
+				
+				for argn,arg in ipairs(part.Events[part.Event].__registeredArguments) do
+					if arg[1] == str then
+						return argn
+					end
+				end
+				return 1
+			end
+
+			local function ApplyArgToIndex(args_str, str, index)
+				local args_tbl = string.Split(args_str,"@@")
+				args_tbl[index] = str
+				return table.concat(args_tbl,"@@")
+			end
+
+			for i,v in ipairs(shared_udata_properties) do
+
+				local udata_val_name = string.gsub(v, "event_udata_", "")
+
+				local var_type = GetEventArgType(obj, udata_val_name)
 				if var_type == nil then var_type = "string" end
 
 				local VAR_PANEL = vgui.Create("DFrame")
@@ -1149,7 +1176,7 @@ do -- menu
 				end
 
 				VAR_PANEL_EDITZONE:SetPos(200,0)
-				VAR_PANEL:SetTitle("[" .. i .. "]   "..string.gsub(v, "event_udata_", "").."   "..var_type)
+				VAR_PANEL:SetTitle("[" .. i .. "]   "..udata_val_name.."   "..var_type)
 				VAR_PANEL_BUTTON:SetText("APPLY")
 				
 				
@@ -1157,7 +1184,8 @@ do -- menu
 				VAR_PANEL:DockMargin( 5, 0, 0, 5 )
 				VAR_PANEL_BUTTON.DoClick = function()
 					
-					for i,part in pairs(pace.BulkSelectList) do
+					for i,part in ipairs(pace.BulkSelectList) do
+						--PrintTable(part.Events[part.Event].__registeredArguments)
 						if part.ClassName == "event" and part.Event == basepart.Event then
 							local sent_var
 							if var_type == "number" then
@@ -1178,28 +1206,10 @@ do -- menu
 									sent_var = sent_var..i
 								end
 							else sent_var = VAR_PANEL_EDITZONE:GetValue() end
-
-							local arg_split = string.Split(part:GetArguments(), "@@")
-
-							if #arg_split > 1 then
-								if #udata_orders[part.Event] ~= #string.Split(part:GetArguments(), "@@") then arg_split[#arg_split + 1] = "0" end
-
-								local sent_var_final = ""
-								--		PRESCRIBED			X @@ Y @@ Z ...
-								--      EVERY STEP  		ADD
-								--		EVERY STEP EXCEPT LAST..@@
-								for n,arg in ipairs(arg_split) do
-									if udata_orders[part.Event][n] == udata_val_name then
-										sent_var_final = sent_var_final .. sent_var
-									else
-										sent_var_final = sent_var_final .. arg_split[n]
-									end
-									if n ~= #arg_split then
-										sent_var_final = sent_var_final .. "@@"
-									end
-								end
-							else sent_var_final = sent_var end
-							part:SetArguments(sent_var_final)
+							
+							print(part, part:GetArguments(), v, sent_var, GetEventArgIndex(part,v))
+							part:SetArguments(ApplyArgToIndex(part:GetArguments(), sent_var, GetEventArgIndex(part,v)))
+							print(part:GetArguments())
 						end
 
 						if thoroughness_tickbox:GetChecked() then
@@ -1225,22 +1235,7 @@ do -- menu
 										end
 									else sent_var = VAR_PANEL_EDITZONE:GetValue() end
 
-									local arg_split = string.Split(child:GetArguments(), "@@")
-									if #udata_orders[basepart.Event] ~= #string.Split(child:GetArguments(), "@@") then arg_split[#arg_split + 1] = "0" end
-									local sent_var_final = ""
-
-									for n,arg in ipairs(arg_split) do
-										if udata_orders[child.Event][n] == udata_val_name then
-											sent_var_final = sent_var_final .. sent_var
-										else
-											sent_var_final = sent_var_final .. arg_split[n]
-										end
-										if n ~= #arg_split then
-											sent_var_final = sent_var_final .. "@@"
-										end
-									end
-		
-									child:SetArguments(sent_var_final)
+									child:SetArguments(ApplyArgToIndex(child:GetArguments(), sent_var, GetEventArgIndex(child,v)))
 								end
 							end
 						end
@@ -1369,7 +1364,7 @@ do -- menu
 		menu:SetPos(input.GetCursorPos())
 			--new_operations_order
 			--default_operations_order
-		
+		if not obj then obj = pace.current_part end
 		for _,option_name in ipairs(pace.operations_order) do
 			pace.addPartMenuComponent(menu, obj, option_name)
 		end
@@ -1623,43 +1618,38 @@ function pace.GetPartSizeInformation(obj)
 end
 
 function pace.addPartMenuComponent(menu, obj, option_name)
-	if option_name == "save" then
-		if obj then
-			local save, pnl = menu:AddSubMenu(L"save", function() pace.SaveParts() end)
-			pnl:SetImage(pace.MiscIcons.save)
-			add_expensive_submenu_load(pnl, function() pace.AddSaveMenuToMenu(save, obj) end)
-		end
-	elseif option_name == "load" then
+	
+	if option_name == "save" and obj then
+		local save, pnl = menu:AddSubMenu(L"save", function() pace.SaveParts() end)
+		pnl:SetImage(pace.MiscIcons.save)
+		add_expensive_submenu_load(pnl, function() pace.AddSaveMenuToMenu(save, obj) end)
+	elseif option_name == "load" and obj then
 		local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
 		add_expensive_submenu_load(pnl, function() pace.AddSavedPartsToMenu(load, false, obj) end)
 		pnl:SetImage(pace.MiscIcons.load)
-	elseif option_name == "wear" then
-		if obj then
-			if not obj:HasParent() then
-				menu:AddOption(L"wear", function()
-					pace.SendPartToServer(obj)
-					pace.BulkSelectList = {}
-				end):SetImage(pace.MiscIcons.wear)
-			end
+	elseif option_name == "wear" and obj then
+		if not obj:HasParent() then
+			menu:AddOption(L"wear", function()
+				pace.SendPartToServer(obj)
+				pace.BulkSelectList = {}
+			end):SetImage(pace.MiscIcons.wear)
 		end
-	elseif option_name == "remove" then
-		if obj then
-			menu:AddOption(L"remove", function() pace.RemovePart(obj) end):SetImage(pace.MiscIcons.clear)
-		end
-	elseif option_name == "copy" then
+	elseif option_name == "remove" and obj then
+		menu:AddOption(L"remove", function() pace.RemovePart(obj) end):SetImage(pace.MiscIcons.clear)
+	elseif option_name == "copy" and obj then
 		local menu2, pnl = menu:AddSubMenu(L"copy", function() pace.Copy(obj) end)
 		pnl:SetIcon(pace.MiscIcons.copy)
 		--menu:AddOption(L"copy", function() pace.Copy(obj) end):SetImage(pace.MiscIcons.copy)
 		menu2:AddOption(L"Copy part UniqueID", function() pace.CopyUID(obj) end):SetImage(pace.MiscIcons.uniqueid)
-	elseif option_name == "paste" then
+	elseif option_name == "paste" and obj then
 		menu:AddOption(L"paste", function() pace.Paste(obj) end):SetImage(pace.MiscIcons.paste)
-	elseif option_name == "cut" then
+	elseif option_name == "cut" and obj then
 		menu:AddOption(L"cut", function() pace.Cut(obj) end):SetImage('icon16/cut.png')
-	elseif option_name == "paste_properties" then
+	elseif option_name == "paste_properties" and obj then
 		menu:AddOption(L"paste properties", function() pace.PasteProperties(obj) end):SetImage(pace.MiscIcons.replace)
-	elseif option_name == "clone" then
+	elseif option_name == "clone" and obj then
 		menu:AddOption(L"clone", function() pace.Clone(obj) end):SetImage(pace.MiscIcons.clone)
-	elseif option_name == "partsize_info" then
+	elseif option_name == "partsize_info" and obj then
 		local function GetTableSizeInfo(obj_arg)
 			return pace.GetPartSizeInformation(obj_arg)
 		end
@@ -1816,38 +1806,36 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 		pace.AddRegisteredPartsToMenu(menu, not obj)
 	elseif option_name == "hide_editor" then
 		menu:AddOption(L"hide editor / toggle focus", function() pace.Call("ToggleFocus") end):SetImage('icon16/zoom.png')
-	elseif option_name == "expand_all" then
+	elseif option_name == "expand_all" and obj then
 		menu:AddOption(L"expand all", function()
 		obj:CallRecursive('SetEditorExpand', true)
 		pace.RefreshTree(true) end):SetImage('icon16/arrow_down.png')
-	elseif option_name == "collapse_all" then
+	elseif option_name == "collapse_all" and obj then
 		menu:AddOption(L"collapse all", function()
 		obj:CallRecursive('SetEditorExpand', false)
 		pace.RefreshTree(true) end):SetImage('icon16/arrow_in.png')
-	elseif option_name == "copy_uid" then
+	elseif option_name == "copy_uid" and obj then
 		local menu2, pnl = menu:AddSubMenu(L"Copy part UniqueID", function() pace.CopyUID(obj) end)
 		pnl:SetIcon(pace.MiscIcons.uniqueid)
-	elseif option_name == "help_part_info" then
+	elseif option_name == "help_part_info" and obj then
 		menu:AddOption(L"View help or info about this part", function() pac.AttachInfoPopupToPart(obj, nil, {
 			obj_type = GetConVar("pac_popups_preferred_location"):GetString(),
 			hoverfunc = "open",
 			pac_part = pace.current_part,
 			panel_exp_width = 900, panel_exp_height = 400
 		}) end):SetImage('icon16/information.png')
-	elseif option_name == "reorder_movables" then
-		if obj then
-			if obj.Position and obj.Angles and obj.PositionOffset then
-				local substitute, pnl = menu:AddSubMenu("Reorder / replace base movable")
-				pnl:SetImage('icon16/application_double.png')
-				substitute:AddOption("Create a parent for position substitution", function() pace.SubstituteBaseMovable(obj, "create_parent") end)
-				if obj.Parent then
-					if obj.Parent.Position and obj.Parent.Angles then
-						substitute:AddOption("Switch with parent", function() pace.SubstituteBaseMovable(obj, "reorder_child") end)
-					end
+	elseif option_name == "reorder_movables" and obj then
+		if (obj.Position and obj.Angles and obj.PositionOffset) then
+			local substitute, pnl = menu:AddSubMenu("Reorder / replace base movable")
+			pnl:SetImage('icon16/application_double.png')
+			substitute:AddOption("Create a parent for position substitution", function() pace.SubstituteBaseMovable(obj, "create_parent") end)
+			if obj.Parent then
+				if obj.Parent.Position and obj.Parent.Angles then
+					substitute:AddOption("Switch with parent", function() pace.SubstituteBaseMovable(obj, "reorder_child") end)
 				end
-				substitute:AddOption("Switch with another (select two parts with bulk select)", function() pace.SwapBaseMovables(pace.BulkSelectList[1], pace.BulkSelectList[2], false) end)
-				substitute:AddOption("Recast into new class (warning!)", function() pace.SubstituteBaseMovable(obj, "cast") end)
 			end
+			substitute:AddOption("Switch with another (select two parts with bulk select)", function() pace.SwapBaseMovables(pace.BulkSelectList[1], pace.BulkSelectList[2], false) end)
+			substitute:AddOption("Recast into new class (warning!)", function() pace.SubstituteBaseMovable(obj, "cast") end)
 		end
 	end
 
@@ -2221,7 +2209,7 @@ do --hover highlight halo
 		if refresh_halo_hook then return end
 		if part_trace then
 			for _,v in ipairs(part_trace:GetRootPart():GetChildrenList()) do
-				if v.pace_tree_node then
+				if IsValid(v.pace_tree_node) then
 					v.pace_tree_node:SetAlpha( 255 )
 				end
 				
