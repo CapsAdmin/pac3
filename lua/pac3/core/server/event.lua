@@ -6,6 +6,7 @@ util.AddNetworkString("pac_event_set_sequence")
 net.Receive("pac_event_set_sequence", function(len, ply)
 	local event = net.ReadString()
 	local num = net.ReadUInt(8)
+	ply.pac_command_events = ply.pac_command_events or {}
 	for i=1,100,1 do
 		ply.pac_command_events[event..i] = nil
 	end
