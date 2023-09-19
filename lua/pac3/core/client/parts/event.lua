@@ -99,9 +99,13 @@ function PART:AttachEditorPopup(str)
 	local info_string = str or "no information available"
 	local verbosity = ""
 	if self.Event ~= "" then
-		
-		--if verbosity == "reference tutorial" or verbosity == "beginner tutorial" then
+		if PART.Events[self.Event] then
 			info_string = PART.Events[self.Event].tutorial_explanation or "no tutorial entry was added, probably because this event is self-explanatory"
+		else
+			info_string = "invalid event"
+		end
+		--if verbosity == "reference tutorial" or verbosity == "beginner tutorial" then
+			
 		--end
 		
 		str = info_string or str
