@@ -1,0 +1,29 @@
+name: update_workshop_develop
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  linter:
+    uses: CapsAdmin/pac3/.github/workflows/lua_linter.yaml@develop
+
+  update-workshop-develop:
+      if: github.repository == 'CapsAdmin/pac3/'
+      needs: linter
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v2
+
+        - name: Rename addon.json
+          run: mv addon_develop.json addon.json
+
+        - name: Publish to Steam Workshop
+          uses: Earu/GSW-action@V2.1
+          with:
+            account-name: ${{secrets.STEAM_NAME}}
+            account-password: ${{secrets.STEAM_PASSWORD}}
+            workshop-id: '3038093543'
+            addon-path: ${{env.GITHUB_WORKSPACE}}
