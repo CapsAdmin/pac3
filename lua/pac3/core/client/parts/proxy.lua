@@ -944,6 +944,32 @@ PART.Inputs.flat_dot_right = function(self)
 	return 0
 end
 
+
+PART.Inputs.pac_healthbars_total = function(self)
+	local ent = self:GetPlayerOwner()
+	if ent.pac_healthbars then
+		return ent.pac_healthbars_total or 0
+	end
+	return 0
+end
+
+PART.Inputs.pac_healthbars_layertotal = function(self, layer)
+	local ent = self:GetPlayerOwner()
+	if ent.pac_healthbars and ent.pac_healthbars_layertotals then
+		return ent.pac_healthbars_layertotals[layer] or 0
+	end
+	return 0
+end
+
+PART.Inputs.pac_healthbar_uidvalue = function(self, uid)
+	local ent = self:GetPlayerOwner()
+	if ent.pac_healthbars and ent.pac_healthbars_uidtotals then
+		return ent.pac_healthbars_uidtotals[uid] or 0
+	end
+	return 0
+end
+
+
 net.Receive("pac_proxy", function()
 	local ply = net.ReadEntity()
 	local str = net.ReadString()
