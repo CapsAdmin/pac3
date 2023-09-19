@@ -2064,7 +2064,7 @@ PART.OldEvents = {
 				local damage_enums = {}
 				for k,v in pairs(_G) do
 					if isstring(k) and isnumber(v) and k:sub(0,4) == "DMG_" then
-						damage_enums[k] = tonumber(v)
+						damage_enums[k] = tostring(v)
 					end
 				end
 				return damage_enums
@@ -2072,13 +2072,15 @@ PART.OldEvents = {
 		}},
 		callback = function(self, ent, time, damage, attackers, inflictors, damage_type)
 			local time = time or 0
-			local ent = self:GetRootPart():GetOwner()
 			if not IsValid(ent) then return false end
 			local found_inflictor = inflictors == "" or inflictors == "any" or inflictors == "all"
 			local found_attacker = attackers == "" or attackers == "anyone" or attackers == "any" or attackers == "all"
+			
 			local unspec_inflictor = found_inflictor
 			local unspec_attacker = found_attacker
+
 			local unspec_dmg = damage_type == -1
+			local matching_dmg = unspec_dmg
 
 			local lastest_attacker = nil
 			local latest_hit_time = 0
@@ -2114,7 +2116,8 @@ PART.OldEvents = {
 							--print("tested attacker ", tbl.attacker:GetClass(), "it aint it.", v)
 						end
 					end
-					if tbl.hit_time > latest_hit_time and (bit.bor(tbl.dmg_type, damage_type) or damage_type == -1) then
+					if tbl.hit_time > latest_hit_time and (bit.band(tbl.dmg_type, damage_type) ~= 0 or unspec_dmg) then
+						matching_dmg = true
 						latest_hit_time = tbl.hit_time
 						lastest_attacker = attacker
 					end
@@ -2127,11 +2130,12 @@ PART.OldEvents = {
 				end
 				
 			end
-			
+			if not unspec_dmg and not matching_dmg then return false end
 			--print(ent.pac_damage_attributions.IngoingGraceTime)
 			ent.pac_damage_attributions.IngoingGraceTime = ent.pac_damage_attributions.IngoingGraceTime or 0
 			
 			--print("CurTime:"..CurTime(), "Grace:" .. ent.pac_damage_attributions.IngoingGraceTime)
+			
 			
 			if found_attacker and found_inflictor then
 				if ent.pac_damage_attributions[lastest_attacker] then
@@ -2206,7 +2210,7 @@ PART.OldEvents = {
 				local damage_enums = {}
 				for k,v in pairs(_G) do
 					if isstring(k) and isnumber(v) and k:sub(0,4) == "DMG_" then
-						damage_enums[k] = tonumber(v)
+						damage_enums[k] = tostring(v)
 					end
 				end
 				return damage_enums
@@ -2214,7 +2218,7 @@ PART.OldEvents = {
 		}},
 		callback = function(self, ent, time, damage, targets, inflictors, damage_type)
 			local time = time or 0
-			local ent = self:GetRootPart():GetOwner()
+			
 			if not IsValid(ent) then return false end
 			local found_inflictor = inflictors == "" or inflictors == "any" or inflictors == "all"
 			local found_target = targets == "" or targets == "anyone" or targets == "any" or targets == "all"
@@ -2248,7 +2252,8 @@ PART.OldEvents = {
 								end
 							end
 						end
-						if tbl.hit_time > latest_hit_time and (bit.bor(tbl.dmg_type, damage_type) or damage_type == -1) then
+						
+						if tbl.hit_time > latest_hit_time and (bit.band(tbl.dmg_type, damage_type) ~= 0 or unspec_dmg) then
 							latest_hit_time = CurTime()
 							ent.pac_damage_attributions.OutgoingGraceTime = CurTime()
 							ent.pac_damage_attributions.OutgoingGraceTimeDMG = tbl.dmg_amount
@@ -2533,9 +2538,8 @@ do
 
 		--print("button update from" , ply, key, down)
 		--PrintTable(ply.pac_buttons)
-
+		ply.pac_broadcasted_buttons_lastpressed = ply.pac_broadcasted_buttons_lastpressed or {}
 		if down then
-			ply.pac_broadcasted_buttons_lastpressed = ply.pac_broadcasted_buttons_lastpressed or {}
 			ply.pac_broadcasted_buttons_lastpressed[key] = SysTime()
 		end
 
@@ -3696,15 +3700,15 @@ reload
 custom gesture
 --]]
 
-local eventwheel_visibility_rule = CreateConVar("pac_eventwheel_visibility_rule" , "00", FCVAR_ARCHIVE,
+local eventwheel_visibility_rule = CreateConVar("pac_eventwheel_visibility_rule" , "0", FCVAR_ARCHIVE,
 "Different ways to filter your command events for the wheel.\n"..
 "-1 ignores hide flags completely\n"..
 "0 will hide a command if at least one event of one name has the \"hide in event wheel\" flag\n"..
-"00 will hide a command only if ALL events of one name have the \"hide in event wheel\" flag\n"..
-"1 will hide a command as soon as one event of a name is being hidden\n"..
-"11 will hide a command only if ALL events of a name are being hidden\n"..
-"2 will only show commands containing the following substrings, separated by spaces\n"..
-"-2 will hide commands containing the following substrings, separated by spaces")
+"1 will hide a command only if ALL events of one name have the \"hide in event wheel\" flag\n"..
+"2 will hide a command as soon as one event of a name is being hidden\n"..
+"3 will hide a command only if ALL events of a name are being hidden\n"..
+"4 will only show commands containing the following substrings, separated by spaces\n"..
+"-4 will hide commands containing the following substrings, separated by spaces")
 -- Custom event selector wheel
 do
 	local function get_events()
@@ -3766,15 +3770,15 @@ do
 				if v.wheel_hidden then
 					remove = true
 				end
-			elseif args[1] == "00" then --all hide_in_eventwheel
+			elseif args[1] == "1" then --all hide_in_eventwheel
 				if v.all_wheel_hidden then
 					remove = true
 				end
-			elseif args[1] == "1" then --one hidden
+			elseif args[1] == "2" then --one hidden
 				if v.possible_hidden then
 					remove = true
 				end
-			elseif args[1] == "11" then --all hidden
+			elseif args[1] == "3" then --all hidden
 				if v.all_possible_hidden then
 					remove = true
 				end
@@ -3789,9 +3793,9 @@ do
 						end
 					end
 
-					if args[1] == "2" and not match then
+					if args[1] == "4" and not match then
 						remove = true
-					elseif args[1] == "-2" and match then
+					elseif args[1] == "-4" and match then
 						remove = true
 					end
 
@@ -4056,4 +4060,29 @@ net.Receive("pac.BroadcastDamageAttributions", function()
 		end
 	end
 	
+end)
+
+net.Receive("pac_update_healthbars", function()
+	local ent = net.ReadEntity()
+	local tbl = net.ReadTable()
+
+	ent.pac_healthbars = tbl
+
+	ent.pac_healthbars_layertotals = ent.pac_healthbars_layertotals or {}
+	ent.pac_healthbars_uidtotals = ent.pac_healthbars_uidtotals or {}
+	ent.pac_healthbars_total = 0
+
+	for layer=15,0,-1 do --go progressively inward in the layers
+		ent.pac_healthbars_layertotals[layer] = 0
+		if tbl[layer] then
+			for uid,value in pairs(tbl[layer]) do --check the healthbars by uid
+				ent.pac_healthbars_uidtotals[uid] = value
+				ent.pac_healthbars_layertotals[layer] = ent.pac_healthbars_layertotals[layer] + value
+				ent.pac_healthbars_total = ent.pac_healthbars_total + value
+			end
+		else
+			ent.pac_healthbars_layertotals[layer] = nil
+		end
+	end
+
 end)
