@@ -314,6 +314,10 @@ if SERVER then
 		--for each uid, we have the current uid bar cluster's health value
 		--instead of keeping track of every bar, it will update the status with a remainder calculation
 
+		--ply.pac_healthbars
+		--ply.pac_healthbars[layer]
+		--ply.pac_healthbars[layer][part_uid] = healthvalue
+
 	local function UpdateHealthBars(ply, num, barsize, layer, absorbfactor, part_uid, follow)
 		local existing_uidlayer = true
 		local healthvalue = 0
@@ -467,6 +471,7 @@ if SERVER then
 				end
 			end
 		end
+		
 		return remaining_dmg,surviving_layer,side_effect_dmg
 	end
 
@@ -486,6 +491,15 @@ if SERVER then
 	util.AddNetworkString("pac_notify_grabbed_player")
 	util.AddNetworkString("pac_request_player_combat_consent_update")
 	util.AddNetworkString("pac_request_healthmod")
+	util.AddNetworkString("pac_update_healthbars")
+
+	local function SendUpdateHealthBars(target)
+		if not target:IsPlayer() or not target.pac_healthbars then return end
+		net.Start("pac_update_healthbars")
+		net.WriteEntity(target)
+		net.WriteTable(target.pac_healthbars)
+		net.Broadcast()
+	end
 	
 	net.Receive("pac_request_healthmod", function(len,ply)
 		if not healthmod_allow:GetBool() then return end
@@ -547,7 +561,7 @@ if SERVER then
 			FixMaxHealths(ply)
 			UpdateHealthBars(ply, 0, 0, 0, 0, part_uid, follow)
 		end
-		
+		SendUpdateHealthBars(ply)
 	end)
 
 	net.Receive("pac_hitscan", function(len,ply)
@@ -589,6 +603,18 @@ if SERVER then
 		
 	end)
 
+
+	--healthbars work with a 2 levels-deep table
+		--for each player, an index table (priority) to decide which layer is damaged first
+		--for each layer, one table for each part uid
+		--for each uid, we have the current uid bar cluster's health value
+		--instead of keeping track of every bar, it will update the status with a remainder calculation
+
+		--ply.pac_healthbars
+		--ply.pac_healthbars[layer]
+		--ply.pac_healthbars[layer][part_uid] = healthvalue
+
+	
 	--apply hitscan consents, eat into extra healthbars first and calculate final damage multipliers from pac3
 	hook.Add( "EntityTakeDamage", "ApplyPACDamageModifiers", function( target, dmginfo )
 		if target:IsPlayer() then
@@ -596,26 +622,30 @@ if SERVER then
 			
 			dmginfo:ScaleDamage(cumulative_mult)
 			local remaining_dmg,surviving_layer,side_effect_dmg = GetHPBarDamage(target, dmginfo:GetDamage())
-			
 
-			if dmginfo:GetInflictor():GetClass() == "pac_bullet_emitter" and not hitscan_consents[target] then
+
+			if dmginfo:GetInflictor():GetClass() == "pac_bullet_emitter" and hitscan_consents[target] == false then
 				dmginfo:SetDamage(0)
 			else
 				local total_hp_value,built_tbl = GatherExtraHPBars(target)
-				if total_hp_value ==  0 or not built_tbl then --no shields = use the dmginfo base damage scaled with the cumulative mult
+				if surviving_layer == nil or total_hp_value == 0 or not built_tbl then --no shields = use the dmginfo base damage scaled with the cumulative mult
 
 					if cumulative_mult < 0 then
 						target:SetHealth(math.floor(math.Clamp(target:Health() + math.abs(dmginfo:GetDamage()),0,target:GetMaxHealth())))
 						return true
+					else
+						dmginfo:SetDamage(remaining_dmg)
+						if target.pac_healthbars then SendUpdateHealthBars(target) end
 					end
 
 				else --shields = use the calculated cumulative side effect damage from each uid's related absorbfactor
-					
+
 					if side_effect_dmg < 0 then
 						target:SetHealth(math.floor(math.Clamp(target:Health() + math.abs(side_effect_dmg),0,target:GetMaxHealth())))
 						return true
 					else
-						dmginfo:SetDamage(side_effect_dmg)
+						dmginfo:SetDamage(side_effect_dmg + remaining_dmg)
+						SendUpdateHealthBars(target)
 					end
 					
 				end
@@ -1605,8 +1635,8 @@ if CLIENT then
 	CreateConVar("pac_client_grab_consent", "0", FCVAR_ARCHIVE, "Whether you want to consent to being grabbed by other players in PAC3 with the lock part")
 	CreateConVar("pac_client_lock_camera_consent", "0", FCVAR_ARCHIVE, "Whether you want to consent to having lock parts override your view")
 	CreateConVar("pac_client_damage_zone_consent", "0", FCVAR_ARCHIVE, "Whether you want to consent to receiving damage by other players in PAC3 with the damage zone part")
-	CreateConVar("pac_client_force_consent", "1", FCVAR_ARCHIVE, "Whether you want to consent to pac3 physics forces")
-	CreateConVar("pac_client_hitscan_consent", "1", FCVAR_ARCHIVE, "Whether you want to consent to receiving damage by other players in PAC3 with the hitscan part.")
+	CreateConVar("pac_client_force_consent", "0", FCVAR_ARCHIVE, "Whether you want to consent to pac3 physics forces")
+	CreateConVar("pac_client_hitscan_consent", "0", FCVAR_ARCHIVE, "Whether you want to consent to receiving damage by other players in PAC3 with the hitscan part.")
 	
 	CreateConVar("pac_break_lock_verbosity", "3", FCVAR_ARCHIVE, "How much info you want for the PAC3 lock notifications\n3:full information\n2:grabbing player + basic reminder of the lock break command\n1:grabbing player\n0:suppress the notifications")
 
