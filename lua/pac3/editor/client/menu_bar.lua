@@ -115,7 +115,14 @@ local function populate_options(menu)
 	menu:AddCVar(L"enable shift+move/rotate clone", "pac_grab_clone", "1", "0")
 	menu:AddCVar(L"remember editor position", "pac_editor_remember_position", "1", "0")
 	menu:AddCVar(L"ask before loading autoload", "pac_prompt_for_autoload", "1", "0")
-	if game.SinglePlayer() then menu:AddCVar(L"queue prop / npc outfits for next spawned entity", "pac_prompt_for_autoload", "2", "0") end
+
+	local prop_pac_load_mode, pnlpplm = menu:AddSubMenu("(singleplayer only) How to handle prop/npc outfits", function() end)
+		prop_pac_load_mode.GetDeleteSelf = function() return false end
+		pnlpplm:SetImage("icon16/transmit.png")
+		prop_pac_load_mode:AddOption(L"Load without queuing", function() RunConsoleCommand("pac_autoload_preferred_prop", "0") end)
+		prop_pac_load_mode:AddOption(L"Queue parts if there's only one group", function() RunConsoleCommand("pac_autoload_preferred_prop", "1") end)
+		prop_pac_load_mode:AddOption(L"Queue parts if there's one or more groups", function() RunConsoleCommand("pac_autoload_preferred_prop", "2") end)
+
 	menu:AddCVar(L"show parts IDs", "pac_show_uniqueid", "1", "0")
 	local popups, pnlp = menu:AddSubMenu("configure editor popups", function() end)
 		popups.GetDeleteSelf = function() return false end
