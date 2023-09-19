@@ -522,6 +522,7 @@ function pac.InfoPopup(str, tbl, x, y)
 end
 
 function pac.AttachInfoPopupToPart(obj, str, tbl)
+    if not obj then return end
 	obj:AttachEditorPopup(str, true, tbl)
 end
 
