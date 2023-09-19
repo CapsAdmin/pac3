@@ -99,10 +99,14 @@ do -- input event
 					pac_broadcast_inputs[ply][v] = false
 				end
 
-				if last_broadcast_inputs[ply][v] ~= pac_broadcast_inputs[ply][v] then
-					update = true
-					player_last_input_broadcast_times[ply] = CurTime()
+				if last_broadcast_inputs[ply] and pac_broadcast_inputs[ply] then
+					if last_broadcast_inputs[ply][v] ~= pac_broadcast_inputs[ply][v] then
+						update = true
+						player_last_input_broadcast_times[ply] = CurTime()
+					end
 				end
+
+				
 			end
 		end
 		broadcast_inputs(update)
@@ -149,7 +153,7 @@ do --is_using_entity
 end
 
 do --damage attribution
-	timer.Simple(1, --call it regularly in case a new hook overrides the damage, we want the final one
+	timer.Simple(1, function()--call it regularly in case a new hook overrides the damage, we want the final one
 		pac.AddHook("EntityTakeDamage", "pac.AttributeDamage", function(ent, dmg)
 			local time = CurTime()
 			if IsValid(dmg:GetAttacker()) then
@@ -163,5 +167,5 @@ do --damage attribution
 			end
 			
 		end)
-	)
+	end)
 end
