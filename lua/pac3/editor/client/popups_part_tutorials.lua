@@ -236,7 +236,7 @@ function pac.InfoPopup(str, tbl, x, y)
 	pnl.hoverfunc = function() end
 	pnl.doclickfunc = function() end
 	pnl.titletext = "Click for more information! (or F1)"
-	pnl.alternativetitle = "Right click to kill the popup. \"pac_popups_preserve_on_autofade\" is set to " .. GetConVar("pac_popups_preserve_on_autofade"):GetInt() .. ", " .. (GetConVar("pac_popups_preserve_on_autofade"):GetBool() and "If it fades away, the popup is allowed to reappear on hover or F1" or "If it fades away, the popup will not reappear")
+	pnl.alternativetitle = "Right click / Alt+P to kill popups. \"pac_popups_preserve_on_autofade\" is set to " .. GetConVar("pac_popups_preserve_on_autofade"):GetInt() .. ", " .. (GetConVar("pac_popups_preserve_on_autofade"):GetBool() and "If it fades away, the popup is allowed to reappear on hover or F1" or "If it fades away, the popup will not reappear")
 	
 	--pnl:SetPos(ScrW()/2 + math.Rand(-100,100), ScrH()/2 + math.Rand(-100,100))
 
@@ -362,6 +362,7 @@ function pac.InfoPopup(str, tbl, x, y)
 	function pnl:Think()
 		self:MoveToObj(tbl)
 		if input.IsButtonDown(KEY_P) and input.IsButtonDown(KEY_LALT) then --auto-kill if alt-p
+            tbl.pac_part.killpopup = true
 			self:Remove()
 		end
 
