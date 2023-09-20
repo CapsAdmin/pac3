@@ -344,10 +344,10 @@ end
 PART.Inputs.part_distance = function(self, uid1, uid2)
 	if not uid1 or not uid2 then return 0 end
 
-	PartA = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid1)
+	local PartA = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid1)
 	if not PartA:IsValid() then PartA = pac.FindPartByName(pac.Hash(pac.LocalPlayer), uid1, self) end
 
-	PartB = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid2)
+	local PartB = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid2)
 	if not PartB:IsValid() then PartB = pac.FindPartByName(pac.Hash(pac.LocalPlayer), uid2, self) end
 
 	if not PartA:IsValid() or not PartB:IsValid() then return 0 end
@@ -357,7 +357,7 @@ end
 PART.Inputs.event_alternative = function(self, uid1, num1, num2)
 	if not uid1 then return 0 end
 
-	PartA = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid1)
+	local PartA = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid1)
 	if not PartA:IsValid() then PartA = pac.FindPartByName(pac.Hash(pac.LocalPlayer), uid1, self) end
 
 	if PartA.ClassName == "event" then
@@ -631,10 +631,9 @@ PART.Inputs.pose_parameter_true = function(self, name)
 	if not name then return 0 end
 	local owner = get_owner(self)
 	if owner:IsValid() then
-		min,max = owner:GetPoseParameterRange(owner:LookupPoseParameter(name))
-		actual_value = min + (max - min)*(owner:GetPoseParameter(name))
-		return actual_value
-	else end
+		local min, max = owner:GetPoseParameterRange(owner:LookupPoseParameter(name))
+		return min + (max - min)*(owner:GetPoseParameter(name))
+	end
 	return 0
 end
 
