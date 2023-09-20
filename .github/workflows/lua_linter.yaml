@@ -21,4 +21,3 @@ jobs:
           lint_unusedParameters: false
           lint_unusedLoopVars: false
           lint_shadowing: false
-          lint_inconsistentVariableStyle: false
