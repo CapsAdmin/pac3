@@ -19,7 +19,7 @@ jobs:
           uses: actions/checkout@v2
 
         - name: Rename addon.json
-          run: mv -Force addon_develop.json addon.json
+          run: mv addon_develop.json addon.json
 
         - name: Publish to Steam Workshop
           uses: Earu/GSW-action@V2.1
