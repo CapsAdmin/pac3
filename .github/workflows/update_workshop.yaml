@@ -1,16 +1,17 @@
-name: update_workshop_develop
+name: update_workshop
 
 on:
   push:
     branches:
       - develop
+      - master
   workflow_dispatch:
 
 jobs:
   linter:
     uses: CapsAdmin/pac3/.github/workflows/lua_linter.yaml@develop
 
-  update-workshop-develop:
+  update-workshop:
       if: github.repository == 'CapsAdmin/pac3'
       needs: linter
       runs-on: ubuntu-latest
@@ -24,6 +25,6 @@ jobs:
             STEAM_USERNAME: ${{ secrets.STEAM_NAME }}
             STEAM_PASSWORD: ${{ secrets.STEAM_PASSWORD }}
           with:
-            id: '3038093543'
+            id: ${{ github.ref == 'refs/heads/master' && '104691717' || '3038093543' }}
             changelog: ${{ github.event.head_commit.message }}
-            config: "addon_develop.json"
+            config: ${{ github.ref == 'refs/heads/master' && 'addon.json' || 'addon_develop.json' }}
