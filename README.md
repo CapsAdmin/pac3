@@ -10,11 +10,10 @@ You can wear your outfit on any server with PAC3 and everyone should be able to 
 
 <img width="650" alt="Screenshot 2023-09-02 at 06 54 28" src="https://github.com/CapsAdmin/pac3/assets/204157/276c7bfc-f5a9-422a-bfb6-683a26981539">
 
-The Wiki for PAC3 can be found [here](https://wiki.pac3.info/start "PAC3 Wiki")
-
-This addon is also on the [workshop](http://steamcommunity.com/sharedfiles/filedetails/?id=104691717 "Workshop Version") 
-
-You can join the official pac3 discord server [here](https://discord.gg/utpR3gJ "Join PAC3 Discord Server") 
+Some links to check out:
+* [wiki](https://wiki.pac3.info/start "PAC3 Wiki")
+* [steam workshop](http://steamcommunity.com/sharedfiles/filedetails/?id=104691717 "Workshop Version") 
+* [discord server](https://discord.gg/utpR3gJ "Join PAC3 Discord Server") 
 
 ---
 
