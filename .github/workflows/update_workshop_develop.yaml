@@ -13,7 +13,7 @@ jobs:
   update-workshop-develop:
       if: github.repository == 'CapsAdmin/pac3'
       needs: linter
-      runs-on: windows-latest
+      runs-on: ubuntu-latest
       steps:
         - name: Checkout
           uses: actions/checkout@v2
