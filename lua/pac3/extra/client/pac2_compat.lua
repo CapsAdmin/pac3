@@ -1,5 +1,4 @@
-local bones =
-{
+local bones = {
 	["pelvis"] = "valvebiped.bip01_pelvis",
 	["spine"] = "valvebiped.bip01_spine",
 	["spine 2"] = "valvebiped.bip01_spine1",
@@ -326,6 +325,22 @@ end
 local glon = {}
 
 do
+	local function Read(reader, rtabs)
+		local t, pos = reader:Peek()
+		if not t then
+			error(string.format("Expected type ID at %s! (Got EOF)",
+				pos))
+		else
+			local dt = decode_types[string.byte(t)]
+			if not dt then
+				error(string.format("Unknown type ID, %s!",
+					string.byte(t)))
+			else
+				return dt(reader, rtabs or {0})
+			end
+		end
+	end
+
 	local decode_types
 	decode_types = {
 		-- \2\6omg\1\6omgavalue\1\1
@@ -462,21 +477,6 @@ do
 			return rtabs[decode_types[6](reader) - 1]
 		end,
 	}
-	function Read(reader, rtabs)
-		local t, pos = reader:Peek()
-		if not t then
-			error(string.format("Expected type ID at %s! (Got EOF)",
-				pos))
-		else
-			local dt = decode_types[string.byte(t)]
-			if not dt then
-				error(string.format("Unknown type ID, %s!",
-					string.byte(t)))
-			else
-				return dt(reader, rtabs or {0})
-			end
-		end
-	end
 	local reader_meta = {}
 	reader_meta.__index = reader_meta
 	function reader_meta:Next()
