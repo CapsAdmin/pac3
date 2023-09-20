@@ -11,7 +11,7 @@ jobs:
     uses: CapsAdmin/pac3/.github/workflows/lua_linter.yaml@develop
 
   update-workshop-develop:
-      if: github.repository == 'CapsAdmin/pac3/'
+      if: github.repository == 'CapsAdmin/pac3'
       needs: linter
       runs-on: ubuntu-latest
       steps:
