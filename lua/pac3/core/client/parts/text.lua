@@ -251,7 +251,6 @@ function PART:OnDraw()
 	self:CheckFont()
 	if not pcall(surface_SetFont, self.UsedFont) then return end
 	
-
 	local DisplayText = self.Text or ""
 	if self.TextOverride == "Text" then goto DRAW end
 	DisplayText = ""
@@ -259,11 +258,11 @@ function PART:OnDraw()
 	elseif self.TextOverride == "MaxHealth"	then
 		DisplayText = self:GetRootPart():GetOwner():GetMaxHealth()
 	elseif self.TextOverride == "Ammo" then
-		DisplayText = self:GetPlayerOwner():GetActiveWeapon():Clip1()
+		DisplayText = IsValid(self:GetPlayerOwner():GetActiveWeapon()) and self:GetPlayerOwner():GetActiveWeapon():Clip1() or ""
 	elseif self.TextOverride == "ClipSize" then
-		DisplayText = self:GetPlayerOwner():GetActiveWeapon():GetMaxClip1()
+		DisplayText = IsValid(self:GetPlayerOwner():GetActiveWeapon()) and self:GetPlayerOwner():GetActiveWeapon():GetMaxClip1() or ""
 	elseif self.TextOverride == "AmmoReserve" then
-		DisplayText = self:GetPlayerOwner():GetAmmoCount(self:GetPlayerOwner():GetActiveWeapon():GetPrimaryAmmoType())
+		DisplayText = IsValid(self:GetPlayerOwner():GetActiveWeapon()) and self:GetPlayerOwner():GetAmmoCount(self:GetPlayerOwner():GetActiveWeapon():GetPrimaryAmmoType()) or ""
 	elseif self.TextOverride == "Armor" then
 		DisplayText = self:GetPlayerOwner():Armor()
 	elseif self.TextOverride == "MaxArmor" then
@@ -358,8 +357,8 @@ function PART:OnDraw()
 	elseif self.TextOverride == "MaxPlayers" then
 		DisplayText = game.MaxPlayers()
 	elseif self.TextOverride == "Weapon" then
-		if IsValid(self:GetRootPart():GetOwner():GetActiveWeapon()) then 
-			DisplayText = self:GetRootPart():GetOwner():GetActiveWeapon():GetClass()
+		if IsValid(self:GetPlayerOwner():GetActiveWeapon()) then 
+			DisplayText = self:GetPlayerOwner():GetActiveWeapon():GetClass()
 		else DisplayText = "unarmed" end
 	elseif self.TextOverride == "VehicleClass" then
 		if IsValid(self:GetPlayerOwner():GetVehicle()) then
@@ -446,8 +445,6 @@ function PART:OnDraw()
 					fadestartdist = fadeenddist
 					fadeenddist = temp
 				end
-				
-				--print("dist:",dist,"start",fadestartdist,"end",fadeenddist, "factor = ", math.pow(math.Clamp((fadeenddist - dist)/fadestartdist,0,1),1))
 				
 				if dist < fadeenddist then
 					if dist < fadestartdist then
