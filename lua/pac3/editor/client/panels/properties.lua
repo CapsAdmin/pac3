@@ -1,6 +1,9 @@
 local L = pace.LanguageString
 
 local languageID = CreateClientConVar("pac_editor_languageid", 1, true, false, "Whether we should show the language indicator inside of editable text entries.")
+local favorites_menu_expansion = CreateClientConVar("pac_favorites_try_to_build_asset_series", "0", true, false)
+
+local searched_cache_series_results = {}
 
 function pace.ShowSpecial(pnl, parent, size)
 	size = size or 150
@@ -15,6 +18,157 @@ function pace.FixMenu(menu)
 	menu:InvalidateLayout(true, true)
 	menu:SetPos(pace.Editor:GetPos() + pace.Editor:GetWide(), gui.MouseY() - (menu:GetTall() * 0.5))
 end
+
+---returns table
+--start_index is the first known index
+--continuous is whether it's continuous (some series have holes)
+--end_index is the last known
+function pace.FindAssetSeriesBounds(base_directory, base_file, extension)
+
+	--LEADING ZEROES FIX NOT YET IMPLEMENTED
+	local function leading_zeros(str)
+		str = string.StripExtension(str)
+		
+		local untilzero_pattern = "%f[1-9][0-9]+$"
+		local afterzero_pattern = "0+%f[1-9+]"
+		local beforenumbers_pattern = "%f[%f[1-9][0-9]+$]"
+		--string.gsub(str, "%f[1-9][0-9]+$", "") --get the start until the zeros stop
+		
+		--string.gsub(str, "0+%f[1-9+]", "") --leave start
+
+		if string.find(str, afterzero_pattern) then
+			return string.gsub(str, untilzero_pattern, string.match(str, afterzero_pattern))
+		end
+	end
+	--print(base_file .. "leading zeros?" , leading_zeros(base_file))
+	if searched_cache_series_results[base_directory .. "/" .. base_file] then return searched_cache_series_results[base_directory .. "/" .. base_file] end
+	local tbl = {}
+	local i = 0 --try with 0 at first
+	local keep_looking = true
+	local file_n
+	local lookaheads_left = 15
+	local next_exists
+	tbl.start_index = nil
+	tbl.all_paths = {}
+	local index_compressed = 1 --increasing ID number of valid files
+
+	while keep_looking do
+		
+		file_n = base_directory .. "/" .. base_file .. i .. "." .. extension
+		--print(file_n , "file" , file.Exists(file_n, "GAME") and "exists" or "doesn't exist")
+		--print("checking" , file_n) print("\tThe file" , file.Exists(file_n, "GAME") and "exists" or "doesn't exist")
+		if file.Exists(file_n, "GAME") then
+			if not tbl.start_index then tbl.start_index = i end
+			tbl.end_index = i
+			tbl.all_paths[index_compressed] = file_n
+			index_compressed = index_compressed + 1
+		end
+		
+		
+		i = i + 1
+		file_n = base_directory .. "/" .. base_file .. i .. "." .. extension
+		next_exists = file.Exists(file_n, "GAME")
+		if not next_exists then
+			if tbl.start_index then tbl.continuous = false end
+			lookaheads_left = lookaheads_left - 1
+		else
+			lookaheads_left = 15
+		end
+		keep_looking = next_exists or lookaheads_left > 0
+	end
+	if not tbl.start_index then tbl.continuous = false end
+	--print("result of search:")
+	--PrintTable(tbl)
+	searched_cache_series_results[base_directory .. "/" .. base_file] = tbl
+	return tbl
+end
+
+
+function pace.AddSubmenuWithBracketExpansion(pnl, func, base_file, extension, base_directory)
+	if extension == "vmt" then base_directory = "materials" end --prescribed format: short
+	if extension == "mdl" then base_directory = "models" end --prescribed format: full
+	if extension == "wav" or extension == "mp3" or extension == "ogg" then base_directory = "sound" end  --prescribed format: no trunk
+
+	local base_file_original = base_file
+	if string.find(base_file, "%[%d+,%d+%]") then --find the bracket notation
+		base_file = string.gsub(base_file, "%[%d+,%d+%]$", "")
+	elseif string.find(base_file, "%d+") then
+		base_file = string.gsub(base_file, "%d+$", "")
+	end
+
+	local tbl = pace.FindAssetSeriesBounds(base_directory, base_file, extension)
+
+	local icon = "icon16/sound.png"
+
+	if string.find(base_file, "music") or string.find(base_file, "theme") then
+		icon = "icon16/music.png"
+	elseif string.find(base_file, "loop") then
+		icon = "icon16/arrow_rotate_clockwise.png"
+	end
+
+	if base_directory == "materials" then
+		icon = "icon16/paint_can.png"
+	elseif base_directory == "models" then
+		icon = "materials/spawnicons/"..string.gsub(base_file, ".mdl", "")..".png"
+	end
+
+	local pnl2
+	local menu2
+	--print(base_file , #tbl.all_paths)
+	if #tbl.all_paths > 1 then
+		pnl2, menu2 = pnl:AddSubMenu(base_file .. " series", function()
+			func(base_file_original .. "." .. extension)
+		end)
+
+		if base_directory == "materials" then
+			menu2:SetImage("icon16/table_multiple.png")
+			--local mat = string.gsub(base_file_original, "." .. string.GetExtensionFromFilename(base_file_original), "")
+			--pnl2:AddOption(mat, function() func(base_file_original) end):SetImage("icon16/paint_can.png")
+		elseif base_directory == "models" then
+			menu2:SetImage(icon)
+		elseif base_directory == "sound" then
+			--print("\t" .. icon)
+			menu2:SetImage(icon)
+		end
+
+	else
+		if base_directory == "materials" then
+			--local mat = string.gsub(base_file_original, "." .. string.GetExtensionFromFilename(base_file_original), "")
+			--pnl2:AddOption(mat, function() func(base_file_original) end):SetImage("icon16/paint_can.png")
+		elseif base_directory == "models" then
+			
+		elseif base_directory == "sound" then
+			local snd = base_file_original
+			menu2 = pnl:AddOption(snd, function() func(snd) end):SetImage(icon)
+		end
+	end
+	
+
+	--print(tbl)
+	--PrintTable(tbl.all_paths)
+	if not tbl then return end
+	if #tbl.all_paths > 1 then
+		for _,path in ipairs(tbl.all_paths) do
+			path_no_trunk = string.gsub(path, base_directory .. "/", "")
+			if base_directory == "materials" then
+				local mat = string.gsub(path_no_trunk, "." .. string.GetExtensionFromFilename(path_no_trunk), "")
+				pnl2:AddOption(mat, function() func(mat) end):SetMaterial(pace.get_unlit_mat(path))
+				
+			elseif base_directory == "models" then
+				local mdl = path
+				pnl2:AddOption(string.GetFileFromFilename(mdl), function() func(mdl) end):SetImage("materials/spawnicons/"..string.gsub(mdl, ".mdl", "")..".png")
+
+			elseif base_directory == "sound" then
+				local snd = path_no_trunk
+				pnl2:AddOption(snd, function() func(snd) end):SetImage(icon)
+			end
+		end
+	end
+
+	
+
+end
+
 
 local function DefineMoreOptionsLeftClick(self, callFuncLeft, callFuncRight)
 	local btn = vgui.Create("DButton", self)
@@ -833,6 +987,436 @@ do -- base editable
 			self.OnValueChanged(self:GetValue())
 		end):SetImage(pace.MiscIcons.paste)
 
+		--command's String variable
+		if self.CurrentKey == "String" then
+			
+			pace.bookmarked_ressources = pace.bookmarked_ressources or {}
+			pace.bookmarked_ressources["command"] = 
+				{
+					--[[["user"] = {
+						
+					},]]
+					["basic lua"] = {
+						{
+							lua = true,
+							nicename = "if alive then say I\'m alive",
+							expression = "if LocalPlayer():Health() > 0 then print(\"I\'m alive\") RunConsoleCommand(\"say\", \"I\'m alive\") else RunConsoleCommand(\"say\", \"I\'m DEAD\") end",
+							explanation = "To showcase a basic if/else statement, this will make you say \"I'm alive\" or \"I\'m DEAD\" depending on whether you have more than 0 health."
+						},
+						{
+							lua = true,
+							nicename = "print 100 first numbers",
+							expression = "for i=0,100,1 do print(\"number\" .. i) end",
+							explanation = "To showcase a basic for loop (with the number setup), this will print the first 100 numbers in the console."
+						},
+						{
+							lua = true,
+							nicename = "print all entities' health",
+							expression = "for _,ent in pairs(ents.GetAll()) do print(ent, ent:Health()) end",
+							explanation = "To showcase a basic for loop (using a table iterator), this will print the list of all entities\' health"
+						},
+						{
+							lua = true,
+							nicename = "print all entities' health",
+							expression = "local random_n = 1 + math.floor(math.random()*5) RunConsoleCommand(\"pac_event\", \"event_\"..random_n)",
+							explanation = "To showcase basic number handling and variables, this will run a pac_event command for \"event_1\" to \"event_5\""
+						}
+					},
+					["movement"] ={
+						{
+							lua = false,
+							nicename = "dash",
+							expression = "+forward;+speed",
+							explanation = "go forward. WARNING. It holds forever until you release it with -forward;-speed"
+						},
+					},
+					["weapons"] = {
+						{
+							lua = false,
+							nicename = "go unarmed (using console)",
+							expression = "give none; use none",
+							explanation = "use the hands swep (\"none\"). In truth, we need to split the command and run the second one after a delay, or run the full thing twice. the console doesn't let us switch to a weapon we don't yet have"
+						},
+						{
+							lua = true,
+							nicename = "go unarmed (using lua)",
+							expression = "RunConsoleCommand(\"give\", \"none\") timer.Simple(0.1, function() RunConsoleCommand(\"use\", \"none\") end)",
+							explanation = "use the hands swep (\"none\"). we need lua because the console doesn't let us switch to a weapon we don't yet have"
+						}
+					},
+					["events logic"] = {
+						{
+							lua = true,
+							nicename = "random command event activation",
+							expression = "RunConsoleCommand(\"pac_event\", \"COMMAND\" .. math.ceil(math.random()*4))",
+							explanation = "randomly pick between commands COMMAND1 to COMMAND4.\nReplace 4 to another whole number if you need more or less"
+						},
+						{
+							lua = true,
+							nicename = "command series (held down)",
+							expression = "local i = LocalPlayer()[\"COMMAND\"] RunConsoleCommand(\"pac_event\", \"COMMAND\" .. i, \"1\") RunConsoleCommand(\"pac_event\", \"COMMAND\" .. i-1, \"0\") if i > 5 then i = 0 end LocalPlayer()[\"COMMAND\"] = i + 1",
+							explanation = "goes in the series of COMMAND1 to COMMAND5 activating the current number and deactivating the previous.\nYou can replace COMMAND for another name, and replace the i > 5 for another limit to loop back around\nAlthough now you can use pac_event_sequenced to control event series"
+						},
+						{
+							lua = true,
+							nicename = "command series (impulse)",
+							expression = "local i = LocalPlayer()[\"COMMAND\"] RunConsoleCommand(\"pac_event\", \"COMMAND\" .. i) if i >= 5 then i = 0 end LocalPlayer()[\"COMMAND\"] = i + 1",
+							explanation = "goes in the series of COMMAND1 to COMMAND5 activating one command instantaneously.\nYou can replace COMMAND for another name, and replace the i >= 5 for another limit to loop back around"
+						},
+						{
+							lua = nil,
+							nicename = "save current events to a single command",
+							explanation = "this hardcoded preset should build a list of all your active command events and save it as a single command string for you"
+						}
+					},
+					--[[["experimental things"] = {
+						{
+							nicename = "",
+							expression = "",
+							explanation = ""
+						},
+					}]]
+				}
+				
+			local menu1, pnl1 = menu:AddSubMenu(L"example commands", function()
+            end)
+			pnl1:SetIcon("icon16/cart_go.png")
+			for group, tbl in pairs(pace.bookmarked_ressources["command"]) do
+				local icon = "icon16/bullet_white.png"
+				if group == "user" then icon = "icon16/user.png"
+				elseif group == "movement" then icon = "icon16/user_go.png"
+				elseif group == "weapons" then icon = "icon16/bomb.png"
+				elseif group == "events logic" then icon = "icon16/clock.png"
+				elseif group == "spatial" then icon = "icon16/world.png"
+				elseif group == "experimental things" then icon = "icon16/ruby.png"
+				end
+				local menu2, pnl2 = menu1:AddSubMenu(group)
+				pnl2:SetIcon(icon)
+
+				if not table.IsEmpty(tbl) then
+					for i,tbl2 in pairs(tbl) do
+						--print(tbl2.nicename)
+						local str = tbl2.nicename or "invalid name"
+						local pnl3 = menu2:AddOption(str, function()
+							if pace.current_part.ClassName == "command" then
+								local expression = pace.current_part.String
+								local hardcode = tbl2.lua == nil
+								local new_expression = ""
+								if hardcode then
+
+									if tbl2.nicename == "save current events to a single command" then
+										local tbl3 = {}
+										for i,v in pairs(LocalPlayer().pac_command_events) do tbl3[i] = v.on end
+										for i,v in pairs(LocalPlayer().pac_command_events) do RunConsoleCommand("pac_event", i, "0") end
+										new_expression = ""
+										
+										for i,v in pairs(tbl3) do new_expression = new_expression .. "pac_event " .. i .. " " .. v .. ";" end
+										pace.current_part:SetUseLua(false)
+									end
+
+								end
+								if expression == "" then --blank: bare insert
+									expression = tbl2.expression
+									pace.current_part:SetUseLua(tbl2.lua)
+								elseif pace.current_part.UseLua == tbl2.lua then --something present: concatenate the existing bit but only if we're on the same mode
+									expression = expression .. ";" .. tbl2.expression
+									pace.current_part:SetUseLua(tbl2.lua)
+								end
+								
+								if not hardcode then
+									pace.current_part:SetString(expression)
+									self:SetValue(expression)
+								else
+									pace.current_part:SetString(new_expression)
+									self:SetValue(new_expression)
+								end
+							end
+							
+						end)
+						pnl3:SetIcon(icon)
+						pnl3:SetTooltip(tbl2.explanation)
+					end
+					
+				end
+			end
+		end
+
+		--proxy expression
+		if self.CurrentKey == "Expression" then
+			
+			
+			pace.bookmarked_ressources = pace.bookmarked_ressources or {}
+			pace.bookmarked_ressources["proxy"] = pace.bookmarked_ressources["proxy"]
+			local menu1, pnl1 = menu:AddSubMenu(L"Proxy template bits", function()
+            end)
+			pnl1:SetIcon("icon16/cart_go.png")
+			for group, tbl in pairs(pace.bookmarked_ressources["proxy"]) do
+				local icon = "icon16/bullet_white.png"
+				if group == "user" then icon = "icon16/user.png"
+				elseif group == "fades and transitions" then icon = "icon16/shading.png"
+				elseif group == "pulses" then icon = "icon16/transmit_blue.png"
+				elseif group == "facial expressions" then icon = "icon16/emoticon_smile.png"
+				elseif group == "spatial" then icon = "icon16/world.png"
+				elseif group == "experimental things" then icon = "icon16/ruby.png"
+				end
+				local menu2, pnl2 = menu1:AddSubMenu(group)
+				pnl2:SetIcon(icon)
+
+				if not table.IsEmpty(tbl) then
+					for i,tbl2 in pairs(tbl) do
+						--print(tbl2.nicename)
+						local str = tbl2.nicename or "invalid name"
+						local pnl3 = menu2:AddOption(str, function()
+							if pace.current_part.ClassName == "proxy" then
+								local expression = pace.current_part.Expression
+								if expression == "" then --blank: bare insert
+									expression = tbl2.expression
+								elseif true then --something present: multiply the existing bit?
+									expression = expression .. " * " .. tbl2.expression
+								end
+								
+								pace.current_part:SetExpression(expression)
+								self:SetValue(expression)
+							end
+							
+						end)
+						pnl3:SetIcon(icon)
+						pnl3:SetTooltip(tbl2.explanation)
+					end
+					
+				end
+			end
+		end
+
+		if self.CurrentKey == "LoadVmt" then
+			local owner = pace.current_part:GetOwner()
+			local name = string.GetFileFromFilename( owner:GetModel() )
+			local mats = owner:GetMaterials()
+
+			local pnl, menu2 = menu:AddSubMenu(L"Load " .. name .. "'s material", function()
+            end)
+			menu2:SetImage("icon16/paintcan.png")
+
+			for id,mat in ipairs(mats) do
+				pnl:AddOption(string.GetFileFromFilename(mat), function()
+					pace.current_part:SetLoadVmt(mat)
+				end)
+			end
+		end
+
+		if self.CurrentKey == "SurfaceProperties" and pace.current_part.GetSurfacePropsTable then
+			local tbl = pace.current_part:GetSurfacePropsTable()
+			menu:AddOption(L"See physics info", function()
+				local pnl2 = vgui.Create("DFrame")
+				local txt_zone = vgui.Create("DTextEntry", pnl2)
+				local str = ""
+				for i,v in pairs(tbl) do
+					str = str .. i .. "  =  " .. v .."\n"	
+				end
+				txt_zone:SetMultiline(true)
+				txt_zone:SetText(str)
+				txt_zone:Dock(FILL)
+				pnl2:SetTitle("SurfaceProp info : " .. pace.current_part.SurfaceProperties)
+				pnl2:SetSize(500, 500)
+				pnl2:SetPos(ScrW()/2, ScrH()/2)
+				pnl2:MakePopup()
+
+            end):SetImage("icon16/table.png")
+			
+		end
+
+		if self.CurrentKey == "Model" then
+			pace.bookmarked_ressources = pace.bookmarked_ressources or {}
+			if not pace.bookmarked_ressources["models"] then
+				pace.bookmarked_ressources["models"] = {
+					"models/pac/default.mdl",
+					"models/cedrics_models/basic_shapes/plane.mdl",
+					"models/cedrics_models/basic_shapes/circle.mdl",
+					"models/hunter/blocks/cube025x025x025.mdl",
+					"models/editor/axis_helper.mdl",
+					"models/editor/axis_helper_thick.mdl"
+				}
+			end
+
+			local pnl, menu2 = menu:AddSubMenu(L"Load favourite models", function()
+            end)
+			menu2:SetImage("icon16/cart_go.png")
+
+			local pm = pace.current_part:GetPlayerOwner():GetModel()
+
+			pnl:AddOption("Current playermodel - " .. string.gsub(string.GetFileFromFilename(pm), ".mdl", ""), function()
+				pace.current_part:SetModel(pm)
+			end):SetImage("materials/spawnicons/"..string.gsub(pm, ".mdl", "")..".png")
+			
+			for id,mdl in ipairs(pace.bookmarked_ressources["models"]) do
+				pnl:AddOption(string.GetFileFromFilename(mdl), function()
+					self:SetValue(mdl)
+					pace.current_part:SetModel(mdl)
+				end):SetImage("materials/spawnicons/"..string.gsub(mdl, ".mdl", "")..".png")
+			end
+		end
+		
+		if self.CurrentKey == "Material" or self.CurrentKey == "SpritePath" then
+			pace.bookmarked_ressources = pace.bookmarked_ressources or {}
+			if not pace.bookmarked_ressources["materials"] then
+				pace.bookmarked_ressources["materials"] = {
+					"models/debug/debugwhite.vmt",
+					"vgui/null.vmt",
+					"debug/env_cubemap_model.vmt",
+					"models/wireframe.vmt",
+					"cable/physbeam.vmt",
+					"cable/cable2.vmt",
+					"effects/tool_tracer.vmt",
+					"effects/flashlight/logo.vmt",
+					"particles/flamelet[1,5]",
+					"sprites/key_[0,9]",
+					"vgui/spawnmenu/generating.vmt",
+					"vgui/spawnmenu/hover.vmt",
+					"metal"
+				}
+			end
+			
+			local pnl, menu2 = menu:AddSubMenu(L"Load favourite materials", function()
+            end)
+			menu2:SetImage("icon16/cart_go.png")
+			
+			for id,mat in ipairs(pace.bookmarked_ressources["materials"]) do
+				mat = string.gsub(mat, "^materials/", "")
+				local mat_no_ext = string.StripExtension(mat)
+				
+				if string.find(mat, "%[%d+,%d+%]") then --find the bracket notation
+					mat_no_ext = string.gsub(mat_no_ext, "%[%d+,%d+%]", "")
+					pace.AddSubmenuWithBracketExpansion(pnl, function(str)
+						str = str or ""
+						str = string.StripExtension(string.gsub(str, "^materials/", ""))
+						self:SetValue(str)
+						if self.CurrentKey == "Material" then
+							pace.current_part:SetMaterial(str)
+						elseif self.CurrentKey == "SpritePath" then
+							pace.current_part:SetSpritePath(str)
+						end
+					end, mat_no_ext, "vmt", "materials")
+					
+				else
+					pnl:AddOption(string.StripExtension(mat), function()
+						self:SetValue(mat_no_ext)
+						if self.CurrentKey == "Material" then
+							pace.current_part:SetMaterial(mat_no_ext)
+						elseif self.CurrentKey == "SpritePath" then
+							pace.current_part:SetSpritePath(mat_no_ext)
+						end
+					end):SetMaterial(mat)
+				end
+				
+			end
+		end
+
+		if string.find(pace.current_part.ClassName, "sound") then
+			if self.CurrentKey == "Sound" or self.CurrentKey == "Path" then
+				pace.bookmarked_ressources = pace.bookmarked_ressources or {}
+				if not pace.bookmarked_ressources["sound"] then
+					pace.bookmarked_ressources["sound"] = {
+						"music/hl1_song11.mp3",
+						"music/hl2_song23_suitsong3.mp3",
+						"music/hl2_song1.mp3",
+						"npc/combine_gunship/dropship_engine_near_loop1.wav",
+						"ambient/alarms/warningbell1.wav",
+						"phx/epicmetal_hard7.wav",
+						"phx/explode02.wav"
+					}
+				end
+				
+				local pnl, menu2 = menu:AddSubMenu(L"Load favourite sounds", function()
+				end)
+				menu2:SetImage("icon16/cart_go.png")
+				
+				for id,snd in ipairs(pace.bookmarked_ressources["sound"]) do
+					local extension = string.GetExtensionFromFilename(snd)
+					local snd_no_ext = string.StripExtension(snd)
+					local single_menu = not favorites_menu_expansion:GetBool()
+
+					if string.find(snd_no_ext, "%[%d+,%d+%]") then --find the bracket notation
+						pace.AddSubmenuWithBracketExpansion(pnl, function(str)
+							self:SetValue(str)
+							if self.CurrentKey == "Sound" then
+								pace.current_part:SetSound(str)
+							elseif self.CurrentKey == "Path" then
+								pace.current_part:SetPath(str)
+							end
+						end, snd_no_ext, extension, "sound")
+						
+					elseif not single_menu and string.find(snd_no_ext, "%d+") then	--find a file ending in a number
+																					--expand only if we want it with the cvar
+						pace.AddSubmenuWithBracketExpansion(pnl, function(str)
+							self:SetValue(str)
+							if self.CurrentKey == "Sound" then
+								pace.current_part:SetSound(str)
+							elseif self.CurrentKey == "Path" then
+								pace.current_part:SetPath(str)
+							end
+						end, snd_no_ext, extension, "sound")
+
+					else
+						
+						local icon = "icon16/sound.png"
+
+						if string.find(snd, "music") or string.find(snd, "theme") then
+							icon = "icon16/music.png"
+						elseif string.find(snd, "loop") then
+							icon = "icon16/arrow_rotate_clockwise.png"
+						end
+						
+						pnl:AddOption(snd, function()
+							self:SetValue(snd)
+							if self.CurrentKey == "Sound" then
+								pace.current_part:SetSound(snd)
+							elseif self.CurrentKey == "Path" then
+								pace.current_part:SetPath(snd)
+							end
+							
+						end):SetIcon(icon)
+					end
+					
+					
+				end
+			end
+		end
+
+		--long string menu to bypass the DLabel's limits, only applicable for sound2 for urls and base part's notes
+		if (pace.current_part.ClassName == "sound2" and self.CurrentKey == "Path") or self.CurrentKey == "Notes" then
+			
+			menu:AddOption(L"Insert long text", function()
+				local pnl = vgui.Create("DFrame")
+				local DText = vgui.Create("DTextEntry", pnl)
+				local DButtonOK = vgui.Create("DButton", pnl)
+				DText:SetMaximumCharCount(50000)
+				
+				pnl:SetSize(1200,800)
+				pnl:SetTitle("Long text for " .. self.CurrentKey .. ". Do not touch the label after this!")
+				pnl:SetPos(200, 100)
+				DButtonOK:SetText("OK")
+				DButtonOK:SetSize(80,20)
+				DButtonOK:SetPos(500, 775)
+				DText:SetPos(5,25)
+				DText:SetSize(1190,700)
+				DText:SetMultiline(true)
+				DText:SetContentAlignment(7)
+				pnl:MakePopup()
+				DText:RequestFocus()
+
+				DButtonOK.DoClick = function()
+					local str = DText:GetText()
+					if self.CurrentKey == "Notes" then
+						pace.current_part.Notes = str
+					elseif pace.current_part.ClassName == "sound2" then
+						pace.current_part.AllPaths = str
+						pace.current_part:UpdateSoundsFromAll()
+					end
+					pnl:Remove()
+				end
+			end):SetImage('icon16/text_letter_omega.png')
+		end
+
 		--left right swap available on strings (and parts)
 		if type(self:GetValue()) == 'string' then
 			menu:AddSpacer()
@@ -1178,7 +1762,7 @@ do -- vector
 					val = ctor(val.p, val.y, val.r)
 				end
 
-				if _G.type(val):lower() == type or type == "color" then
+				if _G.type(val):lower() == type or type == "color" or type == "color2" then
 					self:SetValue(val)
 
 					self.OnValueChanged(self.vector * 1)

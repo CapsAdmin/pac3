@@ -240,7 +240,7 @@ end)
 function pace.Notify(allowed, reason, name)
 	name = name or "???"
 
-	if allowed == true then
+	 if allowed == true then
 		pac.Message(string.format('Your part %q has been applied', name))
 	else
 		chat.AddText(Color(255, 255, 0), "[PAC3] ", Color(255, 0, 0), string.format('The server rejected applying your part (%q) - %s', name, reason))
@@ -253,15 +253,62 @@ end)
 
 do
 	local function LoadUpDefault()
-		if next(pac.GetLocalParts()) then
-			pac.Message("not wearing autoload outfit, already wearing something")
-		elseif pace.IsActive() then
-			pac.Message("not wearing autoload outfit, editor is open")
+		if GetConVar("pac_prompt_for_autoload"):GetBool() then
+			local files, directories = file.Find( "pac3/__backup/*.txt", "DATA", "datedesc")
+			if not files then
+				Derma_Query("Do you want to load your autoload outfit?", "PAC3 autoload (pac_prompt_for_autoload)",
+					"load pac3/autoload.txt : " .. string.NiceSize(file.Size("pac3/autoload.txt", "DATA")), function()
+						pac.Message("Wearing autoload...")
+						pace.LoadParts("autoload") 
+						pace.WearParts()
+					end,
+
+					"cancel", function() pac.Message("Not loading autoload or backups...")  end
+				)
+			else
+				if files[1] then
+					local latest_autosave = "pac3/__backup/" .. files[1]
+					Derma_Query("Do you want to load an outfit?", "PAC3 autoload (pac_prompt_for_autoload)",
+						"load pac3/autoload.txt : " .. string.NiceSize(file.Size("pac3/autoload.txt", "DATA")), function()
+							pac.Message("Wearing autoload...")
+							pace.LoadParts("autoload") 
+							pace.WearParts()
+						end,
+
+						"load latest backup : " .. latest_autosave .. " " .. string.NiceSize(file.Size(latest_autosave, "DATA")), function()
+							pac.Message("Wearing latest backup outfit...")
+							pace.LoadParts("__backup/" .. files[1], true)
+							pace.WearParts()
+						end,
+
+						"cancel", function() pac.Message("Not loading autoload or backups...")  end
+					)
+				else
+					Derma_Query("Do you want to load your autoload outfit?", "PAC3 autoload (pac_prompt_for_autoload)",
+						"load pac3/autoload.txt : " .. string.NiceSize(file.Size("pac3/autoload.txt", "DATA")), function()
+							pac.Message("Wearing autoload...")
+							pace.LoadParts("autoload") 
+							pace.WearParts()
+						end,
+
+						"cancel", function() pac.Message("Not loading autoload or backups...")  end
+					)
+				end
+				
+			end
+
 		else
-			pac.Message("Wearing autoload...")
-			pace.LoadParts("autoload")
-			pace.WearParts()
+			if next(pac.GetLocalParts()) then
+				pac.Message("not wearing autoload outfit, already wearing something")
+			elseif pace.IsActive() then
+				pac.Message("not wearing autoload outfit, editor is open")
+			else
+				pac.Message("Wearing autoload...")
+				pace.LoadParts("autoload")
+				pace.WearParts()
+			end
 		end
+		
 
 		pac.RemoveHook("Think", "pac_request_outfits")
 		pac.Message("Requesting outfits in 8 seconds...")

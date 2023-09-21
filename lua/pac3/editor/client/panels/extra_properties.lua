@@ -714,9 +714,16 @@ do -- event is_touching
 			if part ~= last_part then stop() return end
 			if not part:IsValid() then stop() return end
 			if part.ClassName ~= "event" then stop() return end
-			if part:GetEvent() ~= "is_touching" then stop() return end
+			if not (part:GetEvent() == "is_touching" or part:GetEvent() == "is_touching_scalable" or part:GetEvent() == "is_touching_filter" or part:GetEvent() == "is_touching_life") then stop() return end
 
 			local extra_radius = part:GetProperty("extra_radius") or 0
+			local nearest_model = part:GetProperty("nearest_model") or false
+			local no_npc = part:GetProperty("no_npc") or false
+			local no_players = part:GetProperty("no_players") or false
+			local x_stretch = part:GetProperty("x_stretch") or 1
+			local y_stretch = part:GetProperty("y_stretch") or 1
+			local z_stretch = part:GetProperty("z_stretch") or 1
+			
 			local ent
 			if part.RootOwner then
 				ent = part:GetRootPart():GetOwner()
@@ -724,31 +731,99 @@ do -- event is_touching
 				ent = part:GetOwner()
 			end
 
+			if nearest_model then ent = part:GetOwner() end 
+
 			if not IsValid(ent) then stop() return end
-			local radius = ent:BoundingRadius()
+			local radius
 
 			if radius == 0 and IsValid(ent.pac_projectile) then
 				radius = ent.pac_projectile:GetRadius()
 			end
 
-			radius = math.max(radius + extra_radius + 1, 1)
+			local mins = Vector(-x_stretch,-y_stretch,-z_stretch)
+			local maxs = Vector(x_stretch,y_stretch,z_stretch)
 
-			local mins = Vector(-1,-1,-1)
-			local maxs = Vector(1,1,1)
-			local startpos = ent:WorldSpaceCenter()
+			radius = math.max(ent:BoundingRadius() + extra_radius + 1, 1)
 			mins = mins * radius
 			maxs = maxs * radius
-
-			local tr = util.TraceHull( {
-				start = startpos,
-				endpos = startpos,
-				maxs = maxs,
-				mins = mins,
-				filter = ent
-			} )
-
+			
+			local startpos = ent:WorldSpaceCenter()
+			local b = false 
+			if part:GetEvent() == "is_touching" or part:GetEvent() == "is_touching_scalable" then
+				local tr = util.TraceHull( {
+					start = startpos,
+					endpos = startpos,
+					maxs = maxs,
+					mins = mins,
+					filter = {part:GetRootPart():GetOwner(),ent}
+				} )
+				b = tr.Hit
+			elseif part:GetEvent() == "is_touching_life" then
+				local found = false
+				local ents_hits = ents.FindInBox(startpos + mins, startpos + maxs)
+				for _,ent2 in pairs(ents_hits) do
+					
+					if IsValid(ent2) and (ent2 ~= ent and ent2 ~= part:GetRootPart():GetOwner()) and
+					(ent2:IsNPC() or ent2:IsPlayer())
+					then
+						found = true
+						if ent2:IsNPC() and no_npc then
+							found = false
+						elseif ent2:IsPlayer() and no_players then
+							found = false
+						end
+						if found then b = true end
+					end
+				end
+			elseif part:GetEvent() == "is_touching_filter" then
+				local ents_hits = ents.FindInBox(startpos + mins, startpos + maxs)
+				for _,ent2 in pairs(ents_hits) do
+					if (ent2 ~= ent and ent2 ~= part:GetRootPart():GetOwner()) and
+						(ent2:IsNPC() or ent2:IsPlayer()) and
+						not ( (no_npc and ent2:IsNPC()) or (no_players and ent2:IsPlayer()) )
+					then b = true end
+				end
+			end
+			
 			if self.udata then
-				render.DrawWireframeBox( startpos, Angle( 0, 0, 0 ), mins, maxs, tr.Hit and Color(255,0,0) or Color(255,255,255), true )
+				render.DrawWireframeBox( startpos, Angle( 0, 0, 0 ), mins, maxs, b and Color(255,0,0) or Color(255,255,255), true )
+			end
+		end)
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
+do --projectile radius
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_projectile_radii"
+	PANEL.Base = "pace_properties_number"
+
+	function PANEL:OnValueSet()
+		time = os.clock() + 6
+		local function stop()
+			hook.Remove("PostDrawOpaqueRenderables", "pace_draw_projectile_radii")
+		end
+		local last_part = pace.current_part
+
+		hook.Add("PostDrawOpaqueRenderables", "pace_draw_projectile_radii", function()
+			if time < os.clock() then
+				stop()
+			end
+			if not pace.current_part:IsValid() then stop() return end
+			if pace.current_part.ClassName ~= "projectile" then stop() return end
+			if self.udata then
+				if last_part.Sphere then
+					render.DrawWireframeSphere( last_part:GetWorldPosition(), last_part.Radius, 10, 10, Color(255,255,255), true )
+					render.DrawWireframeSphere( last_part:GetWorldPosition(), last_part.DamageRadius, 10, 10, Color(255,0,0), true )
+				else
+					local mins_ph = Vector(last_part.Radius,last_part.Radius,last_part.Radius)
+					local mins_dm = Vector(last_part.DamageRadius,last_part.DamageRadius,last_part.DamageRadius)
+					render.DrawWireframeBox( last_part:GetWorldPosition(), last_part:GetWorldAngles(), -mins_ph, mins_ph, Color(255,255,255), true )
+					render.DrawWireframeBox( last_part:GetWorldPosition(), last_part:GetWorldAngles(), -mins_dm, mins_dm, Color(255,0,0), true )
+				end
+				
 			end
 		end)
 	end

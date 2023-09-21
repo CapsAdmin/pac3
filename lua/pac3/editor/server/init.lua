@@ -22,6 +22,8 @@ do
 	end
 end
 
+CreateConVar("pac_sv_prop_outfits", "0", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow applying parts on props serverside')
+
 function pace.CanPlayerModify(ply, ent)
 	if not IsValid(ply) or not IsValid(ent) then
 		return false
@@ -42,13 +44,19 @@ function pace.CanPlayerModify(ply, ent)
 	if ent.CPPIGetOwner and ent:CPPIGetOwner() == ply then
 		return true
 	end
-
+	
+	if GetConVar("pac_sv_prop_outfits"):GetBool() then
+		return true
+	end
+	
 	do
 		local tr = util.TraceLine({ start = ply:EyePos(), endpos = ent:WorldSpaceCenter(), filter = ply })
 		if tr.Entity == ent and hook.Run("CanTool", ply, tr, "paint") == true then
 			return true
 		end
 	end
+	
+	
 
 	return false
 end
@@ -59,6 +67,7 @@ include("wear_filter.lua")
 include("bans.lua")
 include("spawnmenu.lua")
 include("show_outfit_on_use.lua")
+include("pac_settings_manager.lua")
 
 do
 	util.AddNetworkString("pac_in_editor")

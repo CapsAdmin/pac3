@@ -16,7 +16,8 @@ local function ADD(PART, name, default, ...)
 	PART["Set" .. name] = function(self, val)
 		self[name] = val
 
-		local ply = self:GetRootPart():GetOwner()
+		local ply = self:GetPlayerOwner()
+		--if ply:GetClass() == "viewmodel" then ply = self:GetRootPart():GetOwner() end
 
 		if ply == pac.LocalPlayer then
 
@@ -44,6 +45,8 @@ BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("generic")
 		ADD(PART, "Noclip", false)
 		ADD(PART, "Gravity", Vector(0, 0, -600))
+		ADD(PART, "Mass", 85)
+	BUILDER:GetSet("PreserveInFirstPerson", false, {description = "keeps the movement modification active in first person"})
 
 	BUILDER:SetPropertyGroup("movement")
 		ADD(PART, "SprintSpeed", 400)
@@ -60,7 +63,10 @@ BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("air")
 		ADD(PART, "AllowZVelocity", false)
 		ADD(PART, "AirFriction", 0.01, {editor_clamp = {0,  1}, editor_sensitivity = 0.1})
-		ADD(PART, "MaxAirSpeed", 1)
+		ADD(PART, "HorizontalAirFrictionMultiplier", 1, {editor_clamp = {0,  1}, editor_sensitivity = 0.1})
+		ADD(PART, "MaxAirSpeed", 750)
+		ADD(PART, "StrafingStrengthMultiplier", 1)
+		
 
 	BUILDER:SetPropertyGroup("view angles")
 		ADD(PART, "ReversePitch", false)
@@ -94,9 +100,10 @@ function PART:GetNiceName()
 end
 
 function PART:OnShow()
-	local ent = self:GetRootPart():GetOwner()
-
-	if ent:IsValid() then
+	local ent = self:GetPlayerOwner()
+	
+	if ent:IsValid() then 
+		if ent:GetClass() == "viewmodel" then ent = self:GetPlayerOwner() end
 		ent.last_movement_part = self:GetUniqueID()
 		for i,v in ipairs(update_these) do
 			v(self)
@@ -105,9 +112,21 @@ function PART:OnShow()
 end
 
 function PART:OnHide()
-	local ent = self:GetRootPart():GetOwner()
-
+	local ent = self:GetRootPart():GetOwner() or self:GetOwner() or self:GetPlayerOwner()
+	if not IsValid(ent) then return end
+	if ent:GetClass() == "viewmodel" then ent = self:GetPlayerOwner() end
+	if not self:IsHidden() and self.PreserveInFirstPerson then return end
 	if ent == pac.LocalPlayer and ent.last_movement_part == self:GetUniqueID() then
+		net.Start("pac_modify_movement", true)
+			net.WriteString("disable")
+		net.SendToServer()
+		ent.pac_movement = nil
+	end
+end
+
+function PART:OnRemove()
+	local ent = self:GetRootPart():GetOwner()
+	if ent == pac.LocalPlayer then
 		net.Start("pac_modify_movement", true)
 			net.WriteString("disable")
 		net.SendToServer()

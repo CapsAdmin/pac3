@@ -219,6 +219,20 @@ PART.Inputs.property = function(self, property_name, field)
 	return 0
 end
 
+PART.Inputs.polynomial = function(self, x, ...)
+	x = x or 1
+	local total = 0
+	local args = { ... }
+
+	pow = 0
+	for _, coefficient in ipairs(args) do
+		total = total + coefficient*math.pow(x, pow)
+		pow = pow + 1
+	end
+	return total
+
+end
+
 PART.Inputs.owner_position = function(self)
 	local owner = get_owner(self)
 
@@ -307,7 +321,7 @@ PART.Inputs.random_once = function(self, seed, min, max)
 	self.rand_id = self.rand_id or {}
 	if seed then
 		self.rand_id[seed] = self.rand_id[seed] or min + math.random()*(max-min)
-	else
+	else 
 		self.rand = self.rand or min + math.random()*(max-min)
 	end
 
@@ -929,6 +943,32 @@ PART.Inputs.flat_dot_right = function(self)
 	return 0
 end
 
+
+PART.Inputs.pac_healthbars_total = function(self)
+	local ent = self:GetPlayerOwner()
+	if ent.pac_healthbars then
+		return ent.pac_healthbars_total or 0
+	end
+	return 0
+end
+
+PART.Inputs.pac_healthbars_layertotal = function(self, layer)
+	local ent = self:GetPlayerOwner()
+	if ent.pac_healthbars and ent.pac_healthbars_layertotals then
+		return ent.pac_healthbars_layertotals[layer] or 0
+	end
+	return 0
+end
+
+PART.Inputs.pac_healthbar_uidvalue = function(self, uid)
+	local ent = self:GetPlayerOwner()
+	if ent.pac_healthbars and ent.pac_healthbars_uidtotals then
+		return ent.pac_healthbars_uidtotals[uid] or 0
+	end
+	return 0
+end
+
+
 net.Receive("pac_proxy", function()
 	local ply = net.ReadEntity()
 	local str = net.ReadString()
@@ -940,6 +980,9 @@ net.Receive("pac_proxy", function()
 	if ply:IsValid() then
 		ply.pac_proxy_events = ply.pac_proxy_events or {}
 		ply.pac_proxy_events[str] = {name = str, x = x, y = y, z = z}
+		if LocalPlayer() == ply then
+			pac.Message("pac_proxy -> command(\""..str.."\") is " .. x .. "," .. y .. "," .. z)
+		end
 	end
 end)
 
@@ -1093,7 +1136,21 @@ end
 function PART:OnThink()
 	local part = self:GetTarget()
 	if not part:IsValid() then return end
-	if part.ClassName == 'woohoo' then return end
+	if part.ClassName == 'woohoo' then --why a part hardcode exclusion??
+		--ok fine I guess it's because it's super expensive, but at least we can be selective about it, the other parameters are safe
+		if self.VariableName == "Resolution" or self.VariableName == "BlurFiltering" and self.touched then
+			return
+		end
+	end
+
+	--foolproofing: scream at the user if they didn't set a variable name
+	if self == pace.current_part then self.touched = true end
+	if self ~= pace.current_part and self.VariableName == "" and self.touched then
+		self:AttachEditorPopup("You forgot to set a variable name! The proxy won't work until it knows where to send the math!", true)
+		pace.FlashNotification("An edited proxy still has no variable name! The proxy won't work until it knows where to send the math!")
+		self:SetWarning("You forgot to set a variable name! The proxy won't work until it knows where to send the math!")
+		self.touched = false
+	elseif self.VariableName ~= "" then self:SetWarning() end
 
 	self:CalcVelocity()
 
