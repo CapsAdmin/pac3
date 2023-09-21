@@ -1,0 +1,23 @@
+name: lint
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_call:
+
+jobs:
+  lua-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: GLua Linter
+        uses: TASSIA710/action-glua-lint@v1.1.4
+        with:
+          lint_maxScopeDepth: 0
+          lint_deprecated: false
+          lint_emptyBlocks: false
+          lint_unusedParameters: false
+          lint_unusedLoopVars: false
+          lint_shadowing: false

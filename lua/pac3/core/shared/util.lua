@@ -597,7 +597,12 @@ function pac.DownloadMDL(url, callback, onfail, ply)
 
 				for i, data in ipairs(files) do
 					if data.file_name:EndsWith(".vmt") then
+						local proxies = data.buffer:match('("?%f[%w_]P?p?roxies%f[^%w_]"?%s*%b{})')
 						data.buffer = data.buffer:lower():gsub("\\", "/")
+
+						if proxies then
+							data.buffer = data.buffer:gsub('("?%f[%w_]proxies%f[^%w_]"?%s*%b{})', proxies)
+						end
 
 						if DEBUG_MDL or VERBOSE then
 							print(data.file_name .. ":")

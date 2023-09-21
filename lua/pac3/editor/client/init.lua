@@ -353,7 +353,7 @@ do
 					end
 				end
 
-				if showInEditor:GetInt() == 1 then 
+				if showInEditor:GetInt() == 1 then
 					local pos_3d = ply:NearestPoint(ply:EyePos() + up) + Vector(0,0,5)
 					local alpha = math.Clamp(pos_3d:Distance(EyePos()) * -1 + 500, 0, 500)/500
 					if alpha > 0 then

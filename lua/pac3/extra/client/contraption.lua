@@ -30,7 +30,7 @@ function pacx.PartToContraptionData(part, tbl)
 
 		local size = part:GetSize()
 		data.scale = part:GetScale()*size
-		
+
 		data.id = part.UniqueID
 
 		table.insert(tbl, data)

@@ -199,7 +199,9 @@ function pace.OnPartSelected(part, is_selecting)
 
 	pace.SetViewPart(part)
 
-	pace.Editor:InvalidateLayout()
+	if pace.Editor:IsValid() then
+		pace.Editor:InvalidateLayout()
+	end
 
 	pace.SafeRemoveSpecialPanel()
 
