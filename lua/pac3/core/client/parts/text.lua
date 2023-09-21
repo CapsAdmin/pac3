@@ -81,8 +81,8 @@ local default_fonts = {
 
 
 PART.ClassName = "text"
-PART.Group = 'effects'
-PART.Icon = 'icon16/text_align_center.png'
+PART.Group = "effects"
+PART.Icon = "icon16/text_align_center.png"
 
 BUILDER:StartStorableVars()
 	:SetPropertyGroup("generic")
@@ -96,7 +96,7 @@ BUILDER:StartStorableVars()
 			["draw.SimpleTextOutlined 2D"] = "DrawTextOutlined2D",
 			["surface.DrawText"] = "SurfaceText"
 		}})
-		
+
 	:SetPropertyGroup("text layout")
 		:GetSet("HorizontalTextAlign", TEXT_ALIGN_CENTER, {enums = {["Left"] = "0", ["Center"] = "1", ["Right"] = "2"}})
 		:GetSet("VerticalTextAlign", TEXT_ALIGN_CENTER, {enums = {["Center"] = "1", ["Top"] = "3", ["Bottom"] = "4"}})
@@ -219,7 +219,7 @@ function PART:SetFont(str)
 	if not self.CreateCustomFont then
 		if not pcall(surface_SetFont, str) then
 			if #self.Font > 20 then
-				
+
 				self.lastwarn = self.lastwarn or CurTime()
 				if self.lastwarn > CurTime() + 1 then
 					pac.Message(Color(255,150,0),str.." Font not found! Could be custom font, trying again in 4 seconds!")
@@ -250,7 +250,7 @@ function PART:OnDraw()
 	local pos, ang = self:GetDrawPosition()
 	self:CheckFont()
 	if not pcall(surface_SetFont, self.UsedFont) then return end
-	
+
 	local DisplayText = self.Text or ""
 	if self.TextOverride == "Text" then goto DRAW end
 	DisplayText = ""
@@ -357,7 +357,7 @@ function PART:OnDraw()
 	elseif self.TextOverride == "MaxPlayers" then
 		DisplayText = game.MaxPlayers()
 	elseif self.TextOverride == "Weapon" then
-		if IsValid(self:GetPlayerOwner():GetActiveWeapon()) then 
+		if IsValid(self:GetPlayerOwner():GetActiveWeapon()) then
 			DisplayText = self:GetPlayerOwner():GetActiveWeapon():GetClass()
 		else DisplayText = "unarmed" end
 	elseif self.TextOverride == "VehicleClass" then
@@ -367,7 +367,7 @@ function PART:OnDraw()
 	elseif self.TextOverride == "Proxy" then
 		DisplayText = ""..math.Round(self.DynamicTextValue,self.RoundingPosition)
 	end
-	
+
 	if self.ConcatenateTextAndOverrideValue then
 		if self.TextPosition == "Prefix" then
 			DisplayText = ""..self.Text..DisplayText
@@ -375,9 +375,9 @@ function PART:OnDraw()
 			DisplayText = ""..DisplayText..self.Text
 		end
 	end
-	
+
 	::DRAW::
-	
+
 	if DisplayText ~= "" then
 		if self.DrawMode == "DrawTextOutlined" then
 			cam_Start3D(EyePos(), EyeAngles())
@@ -412,7 +412,7 @@ function PART:OnDraw()
 				self:SetFont(self.UsedFont)
 
 				surface.SetTextColor(self.Color.r, self.Color.g, self.Color.b, 255*self.Alpha)
-				
+
 				surface.SetFont(self.UsedFont)
 				local pos2d = self:GetDrawPosition():ToScreen()
 				local w, h = surface.GetTextSize(DisplayText)
@@ -432,7 +432,7 @@ function PART:OnDraw()
 				elseif self.VerticalTextAlign == 4 then --bottom
 					pos2d.y = pos2d.y - h
 				end
-				
+
 				surface.SetTextPos(pos2d.x, pos2d.y)
 				local dist = (EyePos() - self:GetWorldPosition()):Length()
 				local fadestartdist = 200
@@ -445,7 +445,7 @@ function PART:OnDraw()
 					fadestartdist = fadeenddist
 					fadeenddist = temp
 				end
-				
+
 				if dist < fadeenddist then
 					if dist < fadestartdist then
 						if self.DrawMode == "DrawTextOutlined2D" then
@@ -453,7 +453,7 @@ function PART:OnDraw()
 						elseif self.DrawMode == "SurfaceText" then
 							surface.DrawText(DisplayText, self.ForceAdditive)
 						end
-						
+
 					else
 						local fade = math.pow(math.Clamp(1 - (dist-fadestartdist)/fadeenddist,0,1),3)
 
@@ -485,9 +485,9 @@ function PART:CheckFont()
 			self:TryCreateFont()
 		end
 	else
-		self:SetFont(self.Font) 
+		self:SetFont(self.Font)
 	end
-	
+
 end
 
 function PART:TryCreateFont()
