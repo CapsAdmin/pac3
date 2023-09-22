@@ -536,6 +536,7 @@ if SERVER then
 
 		--strings
 		part.FallbackSurfpropModel = "models/" .. net.ReadString()
+
 		part.UniqueID = net.ReadString()
 		part.SurfaceProperties = util.GetSurfacePropName(net.ReadUInt(10))
 		part.DamageType = table.KeyFromValue(damage_ids, net.ReadUInt(7))
@@ -598,6 +599,9 @@ if SERVER then
 
 			local ent = ents.Create("pac_projectile")
 			SafeRemoveEntityDelayed(ent,math.Clamp(part.LifeTime, 0, 50))
+
+			local valid_fallback = util.IsValidModel( part.FallbackSurfpropModel ) and not IsUselessModel(part.FallbackSurfpropModel)
+			if not valid_fallback or part.FallbackSurfpropModel == "models/" or not part.OverridePhysMesh then part.FallbackSurfpropModel = "models/props_junk/PopCan01a.mdl" end
 
 			ent:SetModel(part.FallbackSurfpropModel)
 			ent:SetPos(pos)
