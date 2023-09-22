@@ -70,7 +70,7 @@ do -- projectile entity
 				self:PhysicsInitSphere(radius, part.SurfaceProperties)
 			else
 				local valid_fallback = util.IsValidModel( part.FallbackSurfpropModel ) and not IsUselessModel(part.FallbackSurfpropModel)
-				print("valid fallback? " .. part.FallbackSurfpropModel , valid_fallback)
+				--print("valid fallback? " .. part.FallbackSurfpropModel , valid_fallback)
 				self:PhysicsInitBox(Vector(1,1,1) * - radius, Vector(1,1,1) * radius, part.SurfaceProperties)
 
 				if part.OverridePhysMesh and valid_fallback then
@@ -437,6 +437,59 @@ do -- projectile entity
 	scripted_ents.Register(ENT, ENT.ClassName)
 end
 
+
+local damage_ids = {
+	generic = 0, --generic damage
+	crush = 1, --caused by physics interaction
+	bullet = 2, --bullet damage
+	slash = 3, --sharp objects, such as manhacks or other npcs attacks
+	burn = 4, --damage from fire
+	vehicle = 5, --hit by a vehicle
+	fall = 6, --fall damage
+	blast = 7, --explosion damage
+	club = 8, --crowbar damage
+	shock = 9, --electrical damage, shows smoke at the damage position
+	sonic = 10, --sonic damage,used by the gargantua and houndeye npcs
+	energybeam = 11, --laser
+	nevergib = 12, --don't create gibs
+	alwaysgib = 13, --always create gibs
+	drown = 14, --drown damage
+	paralyze = 15, --same as dmg_poison
+	nervegas = 16, --neurotoxin damage
+	poison = 17, --poison damage
+	acid = 18, --
+	airboat = 19, --airboat gun damage
+	blast_surface = 20, --this won't hurt the player underwater
+	buckshot = 21, --the pellets fired from a shotgun
+	direct = 22, --
+	dissolve = 23, --forces the entity to dissolve on death
+	drownrecover = 24, --damage applied to the player to restore health after drowning
+	physgun = 25, --damage done by the gravity gun
+	plasma = 26, --
+	prevent_physics_force = 27, --
+	radiation = 28, --radiation
+	removenoragdoll = 29, --don't create a ragdoll on death
+	slowburn = 30, --
+
+	explosion = 31, -- ent:Ignite(5)
+	fire = 32, -- ent:Ignite(5)
+
+	-- env_entity_dissolver
+	dissolve_energy = 33,
+	dissolve_heavy_electrical = 34,
+	dissolve_light_electrical = 35,
+	dissolve_core_effect = 36,
+
+	heal = 37,
+	armor = 38,
+}
+local attract_ids = {
+	hitpos = 0,
+	hitpos_radius = 1,
+	closest_to_projectile = 2,
+	closest_to_hitpos = 3,
+}
+
 if SERVER then
 	for key, ent in pairs(ents.FindByClass("pac_projectile")) do
 		ent:Remove()
@@ -446,6 +499,7 @@ if SERVER then
 	util.AddNetworkString("pac_projectile_attach")
 	util.AddNetworkString("pac_projectile_remove")
 
+	--REWORKED NET MESSAGE STRUCTURE MEANS THERE'S A LIMITED AMOUNT OF RECEIVED TABLE FIELDS
 	net.Receive("pac_projectile", function(len, ply)
 		if not enable:GetBool() then return end
 
@@ -459,7 +513,48 @@ if SERVER then
 		local multi_projectile_count = net.ReadUInt(7)
 		local pos = net.ReadVector()
 		local ang = net.ReadAngle()
-		local part = net.ReadTable()
+		local part = {}
+
+		--bools
+		part.Sphere = net.ReadBool()
+		part.RemoveOnCollide = net.ReadBool()
+		part.CollideWithOwner = net.ReadBool()
+		part.RemoveOnHide = net.ReadBool()
+		part.OverridePhysMesh = net.ReadBool()
+		part.Gravity = net.ReadBool()
+		part.AddOwnerSpeed = net.ReadBool()
+		part.Collisions = net.ReadBool()
+		part.CollideWithSelf = net.ReadBool()
+		part.AimDir = net.ReadBool()
+		part.DrawShadow = net.ReadBool()
+		part.Sticky = net.ReadBool()
+		part.BulletImpact = net.ReadBool()
+
+		--vectors
+		part.RandomAngleVelocity = net.ReadVector()
+		part.LocalAngleVelocity = net.ReadVector()
+
+		--strings
+		part.FallbackSurfpropModel = "models/" .. net.ReadString()
+		part.UniqueID = net.ReadString()
+		part.SurfaceProperties = util.GetSurfacePropName(net.ReadUInt(10))
+		part.DamageType = table.KeyFromValue(damage_ids, net.ReadUInt(7))
+		part.AttractMode = table.KeyFromValue(attract_ids, net.ReadUInt(3))
+
+		--numbers
+		part.Radius = net.ReadUInt(8)
+		part.DamageRadius = net.ReadUInt(10)
+		part.Damage = net.ReadUInt(24)
+		part.Speed = net.ReadUInt(16) / 1000
+		part.Maximum = net.ReadUInt(7)
+		part.LifeTime = net.ReadUInt(14) / 100
+		part.Delay = net.ReadUInt(9) / 100
+		part.Mass = net.ReadUInt(18)
+		part.Spread = net.ReadInt(10) / 100
+		part.Damping = net.ReadInt(20) / 100
+		part.Attract = net.ReadInt(14)
+		part.AttractRadius = net.ReadUInt(10)
+		part.Bounce = net.ReadInt(8) / 100
 
 		local radius_limit = 2000
 

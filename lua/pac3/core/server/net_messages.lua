@@ -37,7 +37,7 @@ do -- button event
 	end)
 end
 
-do -- input event
+--[[do -- input event
 	local input_enums = {
 		IN_ATTACK,			--1
 		IN_JUMP,			--2
@@ -70,10 +70,10 @@ do -- input event
 	local last_input_broadcast = 0
 	local player_last_input_broadcast_times = {}
 
-	local function broadcast_inputs(ply, update)
+	local function broadcast_inputs(update)
 
-		if not update and not (last_input_broadcast + 0.05 < CurTime()) then return
-		else
+		if not update or not (last_input_broadcast + 0.05 < CurTime()) then return
+		elseif update
 			net.Start("pac.BroadcastPlayerInputs")
 			net.WriteTable(pac_broadcast_inputs)
 			net.WriteTable(player_last_input_broadcast_times)
@@ -112,7 +112,7 @@ do -- input event
 		broadcast_inputs(update)
 		
 	end)
-end
+end]]
 
 do --is_using_entity
 	local function send_player_used_object(client, ent, class, b, from_client)

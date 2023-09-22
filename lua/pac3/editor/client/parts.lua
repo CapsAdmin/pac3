@@ -182,8 +182,6 @@ function pace.OnPartSelected(part, is_selecting)
 	else last_select_was_span = false end
 	last_span_select_part = part
 
-
-
 	local parent = part:GetRootPart()
 	if parent:IsValid() and (parent.OwnerName == "viewmodel" or parent.OwnerName == "hands") then
 		pace.editing_viewmodel = parent.OwnerName == "viewmodel"
@@ -198,11 +196,9 @@ function pace.OnPartSelected(part, is_selecting)
 	pace.mctrl.SetTarget(part)
 
 	pace.SetViewPart(part)
-
 	if pace.Editor:IsValid() then
 		pace.Editor:InvalidateLayout()
 	end
-
 	pace.SafeRemoveSpecialPanel()
 
 	if pace.tree:IsValid() then
@@ -789,9 +785,13 @@ do -- menu
 				if str == obj.ClassName then return end
 				if str == "model" then str = "model2" end --I don't care, stop using legacy
 				local uid = obj.UniqueID
-				pace.RefreshTree()
-				pace.Editor:InvalidateLayout()
-				pace.RefreshTree()
+
+				if pace.Editor:IsValid() then
+					pace.RefreshTree()
+					pace.Editor:InvalidateLayout()
+					pace.RefreshTree()
+				end
+				
 
 				obj.ClassName = str
 				

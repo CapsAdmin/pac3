@@ -1,10 +1,275 @@
 include("parts.lua")
 include("shortcuts.lua")
-if SERVER then
-	include("pac3/editor/server/combat_bans.lua")
-end
+
+local pac_submit_spam = CreateConVar('pac_submit_spam', '1', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE}, 'Prevent users from spamming pac_submit')
+local pac_submit_limit = CreateConVar('pac_submit_limit', '30', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE}, 'pac_submit spam limit')
+local hitscan_allow = CreateConVar('pac_sv_hitscan', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow hitscan parts serverside')
+local hitscan_max_bullets = CreateConVar('pac_sv_hitscan_max_bullets', '200', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'hitscan part maximum number of bullets')
+local hitscan_max_damage = CreateConVar('pac_sv_hitscan_max_damage', '20000', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'hitscan part maximum damage')
+local hitscan_spreadout_dmg = CreateConVar('pac_sv_hitscan_divide_max_damage_by_max_bullets', 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Whether or not force hitscans to divide their damage among the number of bullets fired')
+
+local damagezone_allow = CreateConVar('pac_sv_damage_zone', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow damage zone parts serverside')
+local damagezone_max_damage = CreateConVar('pac_sv_damage_zone_max_damage', '20000', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'damage zone maximum damage')
+local damagezone_max_length = CreateConVar('pac_sv_damage_zone_max_length', '20000', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'damage zone maximum length')
+local damagezone_max_radius = CreateConVar('pac_sv_damage_zone_max_radius', '10000', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'damage zone maximum radius')
+local damagezone_allow_dissolve = CreateConVar('pac_sv_damage_zone_allow_dissolve', '1', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Whether to enable entity dissolvers and removing NPCs\' weapons on death for damagezone')
+
+local lock_allow = CreateConVar('pac_sv_lock', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow lock parts serverside')
+local lock_allow_grab = CreateConVar('pac_sv_lock_grab', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow lock part grabs serverside')
+local lock_allow_teleport = CreateConVar('pac_sv_lock_teleport', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow lock part teleports serverside')
+local lock_max_radius = CreateConVar('pac_sv_lock_max_grab_radius', '200', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'lock part maximum grab radius')
+local lock_allow_grab_ply = CreateConVar('pac_sv_lock_allow_grab_ply', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'allow grabbing players with lock part')
+local lock_allow_grab_npc = CreateConVar('pac_sv_lock_allow_grab_npc', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'allow grabbing NPCs with lock part')
+local lock_allow_grab_ent = CreateConVar('pac_sv_lock_allow_grab_ent', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'allow grabbing other entities with lock part')
+
+local force_allow = CreateConVar('pac_sv_force', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow force parts serverside')
+local force_max_length = CreateConVar('pac_sv_force_max_length', '10000', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'force part maximum length')
+local force_max_radius = CreateConVar('pac_sv_force_max_radius', '10000', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'force part maximum radius')
+local force_max_amount = CreateConVar('pac_sv_force_max_amount', '10000', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'force part maximum amount of force')
+
+local healthmod_allow = CreateConVar('pac_sv_health_modifier', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow health modifier parts serverside')
+local healthmod_allowed_extra_bars = CreateConVar('pac_sv_health_modifier_extra_bars', 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Extra health bars')
+local healthmod_allow_change_maxhp = CreateConVar('pac_sv_health_modifier_allow_maxhp', 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow players to change their maximum health and armor.')
+local healthmod_minimum_dmgscaling = CreateConVar('pac_sv_health_modifier_min_damagescaling', -1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Minimum health modifier amount. Negative values can heal.')
+
+local master_init_featureblocker = CreateConVar('pac_sv_block_combat_features_on_next_restart', 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Whether to stop initializing the net receivers for the networking of PAC3 combat parts those selectively disabled. This requires a restart!\n0=initialize all the receivers\n1=disable those whose corresponding part cvar is disabled\n2=block all combat features\nAfter updating the sv cvars, you can still reinitialize the net receivers with pac_sv_combat_reinitialize_missing_receivers, but you cannot turn them off after they are turned on')
+local enforce_netrate = CreateConVar("pac_sv_combat_enforce_netrate", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'whether to enforce a limit on how often any pac combat net messages can be sent. 0 to disable, otherwise a number in mililiseconds')
+local enforce_netrate_buffer = CreateConVar("pac_sv_combat_enforce_netrate_buffersize", 5000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'the budgeted allowance to limit how often pac combat net messages can be sent. 0 to disable, otherwise a number in bit size')
+
+local global_combat_whitelisting = CreateConVar('pac_sv_combat_whitelisting', 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'How the server should decide which players are allowed to use the main PAC3 combat parts (lock, damagezone, force).\n0:Everyone is allowed unless the parts are disabled serverwide\n1:No one is allowed until they get verified as trustworthy\tpac_sv_whitelist_combat <playername>\n\tpac_sv_blacklist_combat <playername>')
+local global_combat_prop_protection = CreateConVar('pac_sv_prop_protection', 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Whether players\' owned (created) entities (physics props and gmod contraption entities) will be considered in the consent calculations, protecting them. Without this cvar, only the player is protected.')
+
+
+include("pac3/editor/server/combat_bans.lua")
+
 
 pace = pace
+
+pace.partmenu_categories_cedrics = 
+{
+	["new!"] =
+	{
+		["icon"]				=		"icon16/new.png",
+		["interpolated_multibone"]=	"interpolated_multibone",
+		["damage_zone"]			=	"damage_zone",
+		["hitscan"]				=	"hitscan",
+		["lock"]				=		"lock",
+		["force"]				=		"force",
+		["health_modifier"]		=		"health_modifier",
+	},
+	["logic"] =
+	{
+		["icon"]				=		"icon16/server_chart.png",
+		["proxy"]				=	"proxy",
+		["command"]				=	"command",
+		["event"]				=		"event",
+		["text"]				=		"text",
+		["link"]				=		"link",
+	},
+	["scaffolds"] = 
+	{
+		["tooltip"]				=	"useful to build up structures with specific positioning rules",
+		["icon"]				=		"map",
+		["jiggle"]				=	"jiggle",
+		["model2"]				=	"model2",
+		["projectile"]			=	"projectile",
+		["interpolated_multibone"]=	"interpolated_multibone",
+	},
+	["combat"] =  
+	{
+		["icon"]				=		"icon16/joystick.png",
+		["damage_zone"]			=	"damage_zone",
+		["hitscan"]				=	"hitscan",
+		["projectile"]			=	"projectile",
+		["lock"]				=		"lock",
+		["force"]				=		"force",
+		["health_modifier"]		=		"health_modifier",
+		["player_movement"]		=	"player_movement",
+	},
+	["animation"]=
+	{
+		["icon"]				=		"icon16/world.png",
+		["group"]				=		"group",
+		["event"]				=		"event",
+		["custom_animation"]	=		"custom_animation",
+		["proxy"]				=		"proxy",
+		["sprite"]				=	"sprite",
+		["particle"]			=		"particle",
+	},
+	["materials"]=
+	{
+		["icon"]				=		"pace.MiscIcons.appearance",
+		["material_3d"]			=	"material_3d",
+		["material_2d"]			=	"material_2d",
+		["material_refract"]	=		"material_refract",
+		["material_eye refract"]=		"material_eye refract",
+		["submaterial"]			=	"submaterial",
+	},
+	["entity"] = 
+	{
+		["icon"]				=		"icon16/cd_go.png",
+		["bone3"]				=		"bone3",
+		["custom_animation"]	=		"custom_animation",
+		["gesture"]				=	"gesture",
+		["entity2"]				=	"entity2",
+		["poseparameter"]		=		"poseparameter",
+		["camera"]				=	"camera",
+		["holdtype"]		=			"holdtype",
+		["effect"]				=	"effect",
+		["player_config"]		=		"player_config",
+		["player_movement"]	=		"player_movement",
+		["animation"]		=			"animation",
+		["submaterial"]		=		"submaterial",
+		["faceposer"]		=			"faceposer",
+		["flex"]			=			"flex",
+		["material_3d"]		=		"material_3d",
+		["weapon"]			=		"weapon",
+	},
+	["model"] = 
+	{
+		["icon"]			=			"icon16/bricks.png",
+		["jiggle"]			=		"jiggle",
+		["physics"]			=		"physics",
+		["animation"]		=		"animation",
+		["bone3"]			=			"bone3",
+		["effect"]			=		"effect",
+		["submaterial"]		=		"submaterial",
+		["clip2"]			=			"clip2",
+		["halo"]			=			"halo",
+		["material_3d"]		=		"material_3d",
+		["model2"]			=		"model2",
+	},
+	["modifiers"] = 
+	{
+		["icon"]			=			"icon16/connect.png",
+		["fog"]				=		"fog",
+		["motion_blur"]		=		"motion_blur",
+		["halo"]			=			"halo",
+		["clip2"]			=			"clip2",
+		["bone3"]			=			"bone3",
+		["poseparameter"]	=			"poseparameter",
+		["material_3d"]	=			"material_3d",
+		["proxy"]=						"proxy",
+	},
+	["effects"] = 
+	{
+		["icon"]	=					"icon16/wand.png",
+		["sprite"]	=				"sprite",
+		["sound2"]	=				"sound2",
+		["effect"]	=				"effect",
+		["halo"]	=					"halo",
+		["particles"]=					"particles",
+		["sunbeams"]=					"sunbeams",
+		["beam"]=						"beam",
+		["projected_texture"]=		"projected_texture",
+		["decal"]=					"decal",
+		["text"]=					"text",
+		["trail2"]=				"trail2",
+		["sound"]=						"sound",
+		["woohoo"]=					"woohoo",
+		["light2"]=					"light2",
+		["shake"]=						"shake",
+	}
+}
+
+pace.partmenu_categories_default = 
+{
+	["legacy"]=
+	{
+		["icon"]				=		pace.GroupsIcons.legacy,
+		["trail"]=		"trail",
+		["bone2"]=		"bone2",
+		["model"]=		"model",
+		["bodygroup"]=		"bodygroup",
+		["material"]=		"material",
+		["light"]=		"light",
+		["entity"]=		"entity",
+		["clip"]=		"clip",
+		["bone"]=		"bone",
+		["webaudio"]=		"webaudio",
+		["ogg"]	=	"ogg",
+	},
+	["advanced"]=
+	{
+		["icon"]				=		pace.GroupsIcons.advanced,
+		["lock"]=		"lock",
+		["force"]=		"force",
+		["custom_animation"]=		"custom_animation",
+		["material_refract"]=		"material_refract",
+		["projectile"]=		"projectile",
+		["link"]	=	"link",
+		["damage_zone"]	=	"damage_zone",
+		["interpolated_multibone"]	=	"interpolated_multibone",
+		["material_2d"]	=	"material_2d",
+		["material_eye refract"]	=	"material_eye refract",
+		["hitscan"]	=	"hitscan",
+		["health_modifier"]	=	"health_modifier",
+		["command"]		="command",
+	},
+	["entity"]=
+	{
+		["icon"]				=		pace.GroupsIcons.entity,
+		["bone3"]	=	"bone3",
+		["gesture"]	=	"gesture",
+		["entity2"]		="entity2",
+		["poseparameter"]	=	"poseparameter",
+		["camera"]	=	"camera",
+		["holdtype"]=		"holdtype",
+		["effect"]	=	"effect",
+		["player_config"]	=	"player_config",
+		["player_movement"]	=	"player_movement",
+		["animation"]	=	"animation",
+		["submaterial"]	=	"submaterial",
+		["faceposer"]	=	"faceposer",
+		["flex"]	=	"flex",
+		["material_3d"]	=	"material_3d",
+		["weapon"]=		"weapon",
+	},
+	["model"]=
+	{
+		["icon"]				=		pace.GroupsIcons.model,
+		["jiggle"]	=	"jiggle",
+		["physics"]	=	"physics",
+		["animation"]=		"animation",
+		["bone3"]	=	"bone3",
+		["effect"]	=	"effect",
+		["submaterial"]		="submaterial",
+		["clip2"]	=	"clip2",
+		["halo"]	=	"halo",
+		["material_3d"]	=	"material_3d",
+		["model2"]=		"model2",
+	},
+	["modifiers"]=
+	{
+		["icon"]				=		pace.GroupsIcons.modifiers,
+		["animation"]	=	"animation",
+		["fog"]	=	"fog",
+		["motion_blur"]	=	"motion_blur",
+		["clip2"]=		"clip2",
+		["poseparameter"]	=	"poseparameter",
+		["material_3d"]	=	"material_3d",
+		["proxy"]	=	"proxy",
+	},
+	["effects"]=
+	{
+		["icon"]				=		pace.GroupsIcons.effects,
+		["sprite"]	=	"sprite",
+		["sound2"]	=	"sound2",
+		["effect"]	=	"effect",
+		["halo"]	=	"halo",
+		["particles"]=		"particles",
+		["sunbeams"]	=	"sunbeams",
+		["beam"]	=	"beam",
+		["projected_texture"]=		"projected_texture",
+		["decal"]	=	"decal",
+		["text"]	=	"text",
+		["trail2"]	=	"trail2",
+		["sound"]	=	"sound",
+		["woohoo"]	=	"woohoo",
+		["light2"]	=	"light2",
+		["shake"]	=	"shake"
+	}
+}
 
 
 local function rebuild_bookmarks()
@@ -505,7 +770,7 @@ function pace.FillCombatBanPanel(pnl)
 		--ban_request_list_button:SetColor(Color(255,0,0))
 		ban_request_list_button:SetSize(200, 40)
 		ban_request_list_button:SetPos(450, 60)
-		
+
 		function ban_request_list_button:DoClick()
 			net.Start("pac.RequestCombatBanStates")
 			net.SendToServer()
@@ -513,9 +778,22 @@ function pace.FillCombatBanPanel(pnl)
 
 		net.Receive("pac.SendCombatBanStates", function()
 			pac.global_combat_whitelist = net.ReadTable()
-			PrintTable(pac.global_combat_whitelist)
+			ban_list:Clear()
+			local combat_bans_temp_merger = {}
+
+			for _,ply in pairs(player.GetAll()) do
+				combat_bans_temp_merger[ply:SteamID()] = pac.global_combat_whitelist[ply:SteamID()]-- or {nick = ply:Nick(), steamid = ply:SteamID(), permission = "Default"}
+			end
+
+			for id,data in pairs(pac.global_combat_whitelist) do
+				combat_bans_temp_merger[id] = data
+			end
+			
+			for id,data in pairs(combat_bans_temp_merger) do
+				ban_list:AddLine(data.nick,data.steamid,data.permission)
+			end
 		end)
-		
+
 
 	return BAN
 end
@@ -535,16 +813,22 @@ function pace.FillCombatSettings(pnl)
 		general_list:SetContents(general_list_list)
 
 		local sv_prop_protection_props_box = vgui.Create("DCheckBoxLabel", general_list_list)
-		sv_prop_protection_props_box:SetText("Enforce generic prop protection for player-owned props and physics entities")
+		sv_prop_protection_props_box:SetText("Enforce generic prop protection for player-owned props and physics entities.\nRelated to client consents, but the policies for each part are not uniform.")
 		sv_prop_protection_props_box:SetSize(400,30)
 		sv_prop_protection_props_box:SetConVar("pac_sv_prop_protection")
 
 
 		local sv_combat_whitelisting_box = vgui.Create("DCheckBoxLabel", general_list_list)
-		sv_combat_whitelisting_box:SetText("Restrict new pac3 combat (damage zone, lock, force) to only whitelisted users.")
+		sv_combat_whitelisting_box:SetText("Restrict new pac3 combat (damage zone, lock, force, hitscan, health modifier) to only whitelisted users.")
 		sv_combat_whitelisting_box:SetSize(400,30)
 		sv_combat_whitelisting_box:SetConVar("pac_sv_combat_whitelisting")
 		sv_combat_whitelisting_box:SetTooltip("off = Blacklist mode: Default players are allowed to use the combat features\non = Whitelist mode: Default players aren't allowed to use the combat features until set to Allowed")
+
+		local sv_master_break_box = vgui.Create("DCheckBoxLabel", general_list_list)
+		sv_master_break_box:SetText("Block the combat features that aren't enabled. WARNING! Requires a restart!\nThis applies to damage zone, lock, force, hitscan and health modifier parts")
+		sv_master_break_box:SetSize(400,30)
+		sv_master_break_box:SetConVar("pac_sv_block_combat_features_on_next_restart")
+		sv_master_break_box:SetTooltip("You can go to the console and set pac_sv_block_combat_features_on_next_restart to 2 to block everything.\nif you re-enable a blocked part, update with pac_sv_combat_reinitialize_missing_receivers")
 
 	end
 
@@ -564,9 +848,9 @@ function pace.FillCombatSettings(pnl)
 		hitscans_list:SetContents(hitscans_list_list)
 
 		local sv_hitscans_box = vgui.Create("DCheckBoxLabel", hitscans_list_list)
-			sv_hitscans_box:SetText("allow serverside physical projectiles")
+			sv_hitscans_box:SetText("allow serverside bullets")
 			sv_hitscans_box:SetSize(400,30)
-			sv_hitscans_box:SetConVar("pac_sv_projectiles")
+			sv_hitscans_box:SetConVar("pac_sv_hitscan")
 
 		local hitscans_max_dmg_numbox = vgui.Create("DNumSlider", hitscans_list_list)
 			hitscans_max_dmg_numbox:SetText("Max hitscan damage (per bullet, per multishot,\ndepending on the next setting)")
@@ -746,24 +1030,56 @@ function pace.FillCombatSettings(pnl)
 
 		local max_force_radius_numbox = vgui.Create("DNumSlider", force_list_list)
 			max_force_radius_numbox:SetText("Max force part radius")
-			max_force_radius_numbox:SetValue(GetConVar("pac_max_contraption_entities"):GetInt())
+			max_force_radius_numbox:SetValue(GetConVar("pac_sv_force_max_radius"):GetInt())
 			max_force_radius_numbox:SetMin(0) max_force_radius_numbox:SetDecimals(0) max_force_radius_numbox:SetMax(50000)
 			max_force_radius_numbox:SetSize(400,30)
 			max_force_radius_numbox:SetConVar("pac_sv_force_max_radius")
 
 		local max_force_length_numbox = vgui.Create("DNumSlider", force_list_list)
 			max_force_length_numbox:SetText("Max force part length")
-			max_force_length_numbox:SetValue(GetConVar("pac_max_contraption_entities"):GetInt())
+			max_force_length_numbox:SetValue(GetConVar("pac_sv_force_max_length"):GetInt())
 			max_force_length_numbox:SetMin(0) max_force_length_numbox:SetDecimals(0) max_force_length_numbox:SetMax(50000)
 			max_force_length_numbox:SetSize(400,30)
 			max_force_length_numbox:SetConVar("pac_sv_force_max_length")
 
 		local max_force_amount_numbox = vgui.Create("DNumSlider", force_list_list)
 			max_force_amount_numbox:SetText("Max force part amount")
-			max_force_amount_numbox:SetValue(GetConVar("pac_max_contraption_entities"):GetInt())
+			max_force_amount_numbox:SetValue(GetConVar("pac_sv_force_max_amount"):GetInt())
 			max_force_amount_numbox:SetMin(0) max_force_amount_numbox:SetDecimals(0) max_force_amount_numbox:SetMax(10000000)
 			max_force_amount_numbox:SetSize(400,30)
 			max_force_amount_numbox:SetConVar("pac_sv_force_max_amount")
+	end
+
+	do --health_modifier
+		local healthmod_list = master_list:Add("Health modifier part")
+		healthmod_list.Header:SetSize(40,40)
+		healthmod_list.Header:SetFont("DermaLarge")
+		local healthmod_list_list = vgui.Create("DListLayout")
+		healthmod_list_list:DockPadding(20,0,20,20)
+		healthmod_list:SetContents(healthmod_list_list)
+
+		local sv_healthmod_box = vgui.Create("DCheckBoxLabel", healthmod_list_list)
+			sv_healthmod_box:SetText("Allow health modifier part")
+			sv_healthmod_box:SetSize(400,30)
+			sv_healthmod_box:SetConVar("pac_sv_health_modifier")
+
+		local healthmod_extrabars_box = vgui.Create("DCheckBoxLabel", healthmod_list_list)
+			healthmod_extrabars_box:SetText("Allow changing max health and max armor")
+			healthmod_extrabars_box:SetSize(400,30)
+			healthmod_extrabars_box:SetConVar("pac_sv_health_modifier_allow_maxhp")
+
+		local min_healthmod_dmgmult_box = vgui.Create("DNumSlider", healthmod_list_list)
+			min_healthmod_dmgmult_box:SetText("Minimum combined damage multiplier allowed.\nNegative values lead to healing from damage.")
+			min_healthmod_dmgmult_box:SetValue(GetConVar("pac_sv_health_modifier_min_damagescaling"):GetInt())
+			min_healthmod_dmgmult_box:SetMin(-10) min_healthmod_dmgmult_box:SetDecimals(2) min_healthmod_dmgmult_box:SetMax(1)
+			min_healthmod_dmgmult_box:SetSize(400,30)
+			min_healthmod_dmgmult_box:SetConVar("pac_sv_health_modifier_min_damagescaling")
+
+		local healthmod_extrabars_box = vgui.Create("DCheckBoxLabel", healthmod_list_list)
+			healthmod_extrabars_box:SetText("Allow extra healthbars")
+			healthmod_extrabars_box:SetSize(400,30)
+			healthmod_extrabars_box:SetConVar("pac_sv_health_modifier_extra_bars")
+			healthmod_extrabars_box:SetToolTip("What are those? It's like an armor layer that takes damage before it gets applied to the entity.")
 	end
 	return master_list
 end
@@ -972,7 +1288,6 @@ function pace.FillServerSettings(pnl)
 end
 
 
-
 --part order, shortcuts
 function pace.FillEditorSettings(pnl)
 
@@ -1081,11 +1396,18 @@ function pace.FillEditorSettings(pnl)
 	shortcutaction_presets:AddChoice("factory preset", pace.PACActionShortcut_Default)
 	shortcutaction_presets:AddChoice("no CTRL preset", pace.PACActionShortcut_NoCTRL)
 	shortcutaction_presets:AddChoice("Cedric's preset", pace.PACActionShortcut_Cedric)
+
+	for i,filename in ipairs(file.Find("pac3_config/pac_editor_shortcuts*.txt","DATA")) do
+		local data = file.Read("pac3_config/" .. filename, "DATA")
+		shortcutaction_presets:AddChoice(string.GetFileFromFilename(filename), util.KeyValuesToTable(data))
+	end
+
 	shortcutaction_presets:SetX(10) shortcutaction_presets:SetY(420)
 	shortcutaction_presets:SetWidth(170)
 	shortcutaction_presets:SetHeight(20)
 	function shortcutaction_presets:OnSelect(num, name, data)
 		pace.PACActionShortcut = data
+		pace.FlashNotification("Selected shortcut preset: " .. name .. ". View console for more info")
 		pac.Message("Selected shortcut preset: " .. name)
 		for i,v in pairs(data) do
 			if #v > 0 then MsgC(Color(50,250,50), i .. "\n") end
@@ -1200,13 +1522,14 @@ function pace.FillEditorSettings(pnl)
 	end
 
 	local bindclear = vgui.Create("DButton", LeftPanel)
-	bindclear:SetText("clear keys")
+	bindclear:SetText("clear")
 	bindclear:SetTooltip("deletes the current shortcut at the current index")
 	bindclear:SetX(10)
 	bindclear:SetY(480)
 	bindclear:SetHeight(30)
 	bindclear:SetWidth(90)
 	bindclear:SetColor(Color(200,0,0))
+	bindclear:SetIcon("icon16/keyboard_delete.png")
 	function bindclear:DoClick()
 		binder1:SetSelectedNumber(0)
 		binder2:SetSelectedNumber(0)
@@ -1223,6 +1546,7 @@ function pace.FillEditorSettings(pnl)
 	bindoverwrite:SetHeight(30)
 	bindoverwrite:SetWidth(90)
 	bindoverwrite:SetColor(Color(0,200,0))
+	bindoverwrite:SetIcon("icon16/disk.png")
 	function bindoverwrite:DoClick()
 		local tbl = {}
 		local i = 1
@@ -1241,6 +1565,14 @@ function pace.FillEditorSettings(pnl)
 		encode_table_to_file("pac_editor_shortcuts")
 	end
 
+	function bindoverwrite:DoRightClick()
+		Derma_StringRequest("Save preset", "Save a keyboard shortcuts preset?", "pac_editor_shortcuts",
+			function(name) file.Write("pac3_config/"..name..".txt", util.TableToKeyValues(pace.PACActionShortcut))
+				shortcutaction_presets:AddChoice(name..".txt")
+			end
+		)
+	end
+
 	local bindcapture_text = vgui.Create("DLabel", LeftPanel)
 	bindcapture_text:SetFont("DermaDefaultBold")
 	bindcapture_text:SetText("")
@@ -1248,6 +1580,7 @@ function pace.FillEditorSettings(pnl)
 	bindcapture_text:SetX(300)
 	bindcapture_text:SetY(480)
 	bindcapture_text:SetSize(300, 30)
+	
 	function bindcapture_text:Think()
 		self:SetText(pace.bindcapturelabel_text)
 	end
@@ -1495,14 +1828,28 @@ function pace.FillEditorSettings2(pnl)
 		}
 	]]
 
-	local movement_binders_label = vgui.Create("DLabel", panel)
+	local LeftPanel = vgui.Create( "DPanel", panel ) -- Can be any panel, it will be stretched
+	local RightPanel = vgui.Create( "DPanel", panel ) -- Can be any panel, it will be stretched
+	LeftPanel:SetSize(300,600)
+	RightPanel:SetSize(300,600)
+	local div = vgui.Create( "DHorizontalDivider", panel )
+	div:Dock( FILL )
+	div:SetLeft( LeftPanel )
+	div:SetRight( RightPanel )
+
+	div:SetDividerWidth( 8 )
+	div:SetLeftMin( 50 )
+	div:SetRightMin( 50 )
+	div:SetLeftWidth( 400 )
+
+	local movement_binders_label = vgui.Create("DLabel", LeftPanel)
 	movement_binders_label:SetText("PAC editor camera movement")
 	movement_binders_label:SetFont("DermaDefaultBold")
 	movement_binders_label:SetColor(Color(0,0,0))
 	movement_binders_label:SetSize(200,40)
 	movement_binders_label:SetPos(30,5)
 
-	local forward_binder = vgui.Create("DBinder", panel)
+	local forward_binder = vgui.Create("DBinder", LeftPanel)
 		forward_binder:SetSize(40,40)
 		forward_binder:SetPos(100,40)
 		forward_binder:SetTooltip("move forward")
@@ -1511,7 +1858,7 @@ function pace.FillEditorSettings2(pnl)
 			pace.camera_movement_binds["forward"]:SetString(input.GetKeyName( num ))
 		end
 
-	local back_binder = vgui.Create("DBinder", panel)
+	local back_binder = vgui.Create("DBinder", LeftPanel)
 		back_binder:SetSize(40,40)
 		back_binder:SetPos(100,80)
 		back_binder:SetTooltip("move back")
@@ -1520,7 +1867,7 @@ function pace.FillEditorSettings2(pnl)
 			pace.camera_movement_binds["back"]:SetString(input.GetKeyName( num ))
 		end
 
-	local moveleft_binder = vgui.Create("DBinder", panel)
+	local moveleft_binder = vgui.Create("DBinder", LeftPanel)
 		moveleft_binder:SetSize(40,40)
 		moveleft_binder:SetPos(60,80)
 		moveleft_binder:SetTooltip("move left")
@@ -1529,7 +1876,7 @@ function pace.FillEditorSettings2(pnl)
 			pace.camera_movement_binds["moveleft"]:SetString(input.GetKeyName( num ))
 		end
 
-	local moveright_binder = vgui.Create("DBinder", panel)
+	local moveright_binder = vgui.Create("DBinder", LeftPanel)
 		moveright_binder:SetSize(40,40)
 		moveright_binder:SetPos(140,80)
 		moveright_binder:SetTooltip("move right")
@@ -1538,7 +1885,7 @@ function pace.FillEditorSettings2(pnl)
 			pace.camera_movement_binds["moveright"]:SetString(input.GetKeyName( num ))
 		end
 
-	local up_binder = vgui.Create("DBinder", panel)
+	local up_binder = vgui.Create("DBinder", LeftPanel)
 		up_binder:SetSize(40,40)
 		up_binder:SetPos(180,40)
 		up_binder:SetTooltip("move up")
@@ -1547,7 +1894,7 @@ function pace.FillEditorSettings2(pnl)
 			pace.camera_movement_binds["up"]:SetString(input.GetKeyName( num ))
 		end
 
-	local down_binder = vgui.Create("DBinder", panel)
+	local down_binder = vgui.Create("DBinder", LeftPanel)
 		down_binder:SetSize(40,40)
 		down_binder:SetPos(180,80)
 		down_binder:SetTooltip("move down")
@@ -1557,7 +1904,7 @@ function pace.FillEditorSettings2(pnl)
 			pace.camera_movement_binds["down"]:SetString(input.GetKeyName( num ))
 		end
 
-	local slow_binder = vgui.Create("DBinder", panel)
+	local slow_binder = vgui.Create("DBinder", LeftPanel)
 		slow_binder:SetSize(40,40)
 		slow_binder:SetPos(20,80)
 		slow_binder:SetTooltip("go slow")
@@ -1566,7 +1913,7 @@ function pace.FillEditorSettings2(pnl)
 			pace.camera_movement_binds["slow"]:SetString(input.GetKeyName( num ))
 		end
 
-	local speed_binder = vgui.Create("DBinder", panel)
+	local speed_binder = vgui.Create("DBinder", LeftPanel)
 		speed_binder:SetSize(40,40)
 		speed_binder:SetPos(20,40)
 		speed_binder:SetTooltip("go fast")
@@ -1575,6 +1922,347 @@ function pace.FillEditorSettings2(pnl)
 			pace.camera_movement_binds["speed"]:SetString(input.GetKeyName( num ))
 		end
 	
+	--[[pace.partmenu_categories_cedrics = 
+		{
+			["new!"] =
+			{
+				["icon"]				=		"icon16/new.png",
+				["interpolated_multibone"]=	"interpolated_multibone",
+				["damage_zone"]			=	"damage_zone",
+				["hitscan"]				=	"hitscan",
+				["lock"]				=		"lock",
+				["force"]				=		"force",
+				["health_modifier"]		=		"health_modifier",
+			},
+			["logic"] =
+			{
+				["icon"]				=		"icon16/server_chart.png",
+				["proxy"]				=	"proxy",
+				["command"]				=	"command",
+				["event"]				=		"event",
+				["text"]				=		"text",
+				["link"]				=		"link",
+		},]]
+	local Parts = pac.GetRegisteredParts()
+	local function get_icon(str, fallback)
+		if str then
+			if pace.MiscIcons[string.gsub(str, "pace.MiscIcons.", "")] then
+				return pace.MiscIcons[string.gsub(str, "pace.MiscIcons.", "")]
+			else
+				local img = string.gsub(str, ".png", "") --remove the png extension
+				img = string.gsub(img, "icon16/", "") --remove the icon16 base path
+				img = "icon16/" .. img .. ".png" --why do this? to be able to write any form and let the program fix the form
+				return img
+			end
+		elseif Parts[fallback] then
+			return Parts[fallback].Icon
+		else
+			return "icon16/page_white.png"
+		end
+		
+	end
+		
+	local categorytree = vgui.Create("DTree", RightPanel)
+		categorytree:SetY(30)
+		categorytree:SetSize(360,400)
+
+	local function class_partnode_add(parentnode, class)
+		if Parts[class] then
+			for i,v in ipairs(parentnode:GetChildNodes()) do --can't make duplicates so remove to place it at the end
+				if v:GetText() == class then v:Remove() end
+			end
+
+			local part_node = parentnode:AddNode(class)
+			part_node:SetIcon(get_icon(nil, class))
+			part_node.DoRightClick = function()
+				local menu = DermaMenu()
+				menu:AddOption("remove", function() part_node:Remove() end):SetImage("icon16/cross.png")
+				menu:MakePopup()
+				menu:SetPos(input.GetCursorPos())
+			end
+		end
+	end
+	local function bring_up_partclass_list(cat_node)
+
+		--function from pace.OnAddPartMenu(obj)
+		local base = vgui.Create("EditablePanel")
+		base:SetPos(input.GetCursorPos())
+		base:SetSize(200, 300)
+		
+		base:MakePopup()
+
+		function base:OnRemove()
+			pac.RemoveHook("VGUIMousePressed", "search_part_menu")
+		end
+
+		local edit = base:Add("DTextEntry")
+		edit:SetTall(20)
+		edit:Dock(TOP)
+		edit:RequestFocus()
+		edit:SetUpdateOnType(true)
+
+		local result = base:Add("DScrollPanel")
+		result:Dock(FILL)
+
+		function edit:OnEnter()
+			if result.found[1] then
+				class_partnode_add(cat_node, result.found[1].ClassName)
+			end
+			base:Remove()
+		end
+
+		edit.OnValueChange = function(_, str)
+			result:Clear()
+			result.found = {}
+
+			for _, part in ipairs(pace.GetRegisteredParts()) do
+				if (part.FriendlyName or part.ClassName):find(str, nil, true) then
+					table.insert(result.found, part)
+				end
+			end
+
+			table.sort(result.found, function(a, b) return #a.ClassName < #b.ClassName end)
+
+			for _, part in ipairs(result.found) do
+				local line = result:Add("DButton")
+				line:SetText("")
+				line:SetTall(20)
+				line.DoClick = function()
+					class_partnode_add(cat_node, part.ClassName)
+				end
+
+				local btn = line:Add("DImageButton")
+				btn:SetSize(16, 16)
+				btn:SetPos(4,0)
+				btn:CenterVertical()
+				btn:SetMouseInputEnabled(false)
+				if part.Icon then
+					btn:SetImage(part.Icon)
+				end
+
+				local label = line:Add("DLabel")
+				label:SetTextColor(label:GetSkin().Colours.Category.Line.Text)
+				label:SetText((part.FriendlyName or part.ClassName):Replace('_', ' '))
+				label:SizeToContents()
+				label:MoveRightOf(btn, 4)
+				label:SetMouseInputEnabled(false)
+				label:CenterVertical()
+
+				line:Dock(TOP)
+			end
+
+			--base:SetHeight(20 * #result.found + edit:GetTall())
+			base:SetHeight(600 + edit:GetTall())
+			
+		end
+
+		edit:OnValueChange("")
+
+		pac.AddHook("VGUIMousePressed", "search_part_menu", function(pnl, code)
+			if code == MOUSE_LEFT or code == MOUSE_RIGHT then
+				if not base:IsOurChild(pnl) then
+					base:Remove()
+				end
+			end
+		end)
+	end
+	local function bring_up_category_icon_browser(category_node)
+		local master_frame = vgui.Create("DFrame")
+		master_frame:SetPos(input.GetCursorPos())
+		master_frame:SetSize(400,400)
+
+		local browser = vgui.Create("DIconBrowser", master_frame)
+		function browser:OnChange()
+			category_node:SetIcon(self:GetSelectedIcon())
+		end
+		browser:SetSize(400,380)
+		browser:SetPos(0,40)
+
+		local frame = vgui.Create("EditablePanel", master_frame)
+		local edit = vgui.Create("DTextEntry", frame)
+		frame:SetSize(300,20)
+		function browser:Think()
+			if not IsValid(category_node) then master_frame:Remove() end
+			x = master_frame:GetX()
+			y = master_frame:GetY()
+			frame:SetPos(x,y+20)
+			frame:MakePopup()
+		end
+
+		function edit:OnValueChange(value)
+			browser:FilterByText( value )
+		end
+		master_frame:MakePopup()
+		frame:MakePopup()
+		edit:Dock(TOP)
+		edit:RequestFocus()
+		edit:SetUpdateOnType(true)
+	end
+	local function bring_up_tooltip_edit(category_node)
+		local frame = vgui.Create("EditablePanel")
+		local edit = vgui.Create("DTextEntry", frame)
+		function edit:OnEnter(value)
+			category_node:SetTooltip(value)
+			frame:Remove()
+		end
+		function frame:Think()
+			if input.IsMouseDown(MOUSE_LEFT) and not (self:IsHovered() or edit:IsHovered()) then self:Remove() end
+		end
+		frame:MakePopup()
+		
+		frame:SetSize(300,30)
+		frame:SetPos(input.GetCursorPos())
+		
+		edit:Dock(TOP)
+		edit:RequestFocus()
+		edit:SetUpdateOnType(true)
+	end
+	local function bring_up_name_edit(category_node)
+		local frame = vgui.Create("EditablePanel")
+		local edit = vgui.Create("DTextEntry", frame)
+		edit:SetText(category_node:GetText())
+		function edit:OnEnter(value)
+			category_node:SetText(value)
+			frame:Remove()
+		end
+		function frame:Think()
+			if input.IsMouseDown(MOUSE_LEFT) and not (self:IsHovered() or edit:IsHovered()) then self:Remove() end
+		end
+		frame:MakePopup()
+		
+		frame:SetSize(300,30)
+		frame:SetPos(category_node.Label:LocalToScreen(category_node.Label:GetPos()))
+		
+		edit:Dock(TOP)
+		edit:RequestFocus()
+		edit:SetUpdateOnType(true)
+	end
+	
+	local function load_partgroup_template_into_tree(categorytree, tbl)
+		
+		categorytree:Clear()
+		for category,category_contents in pairs(tbl) do
+			
+			local category_node = categorytree:AddNode(category)
+			category_node:SetIcon(get_icon(category_contents.icon, category))
+
+			category_node.DoRightClick = function()
+				local menu = DermaMenu()
+				menu:AddOption("insert part in category", function() bring_up_partclass_list(category_node) end):SetImage("icon16/add.png")
+				menu:AddOption("select icon", function() bring_up_category_icon_browser(category_node) end):SetImage("icon16/picture.png")
+				menu:AddOption("write a tooltip", function() bring_up_tooltip_edit(category_node) end):SetImage("icon16/comment.png")
+				menu:AddOption("rename this category", function() bring_up_name_edit(category_node) end):SetImage("icon16/textfield_rename.png")
+				menu:AddOption("remove this category", function() category_node:Remove() end):SetImage("icon16/cross.png")
+				menu:MakePopup()
+				menu:SetPos(input.GetCursorPos())
+			end
+
+			if category_contents["tooltip"] then
+				category_node:SetTooltip(category_contents["tooltip"])
+			end
+
+			for field,value in pairs(category_contents) do
+				if Parts[field] then
+					class_partnode_add(category_node, field)
+				end
+			end
+		end
+	end
+
+	local function extract_partgroup_template_from_tree(categorytree)
+		local tbl = {}
+		for i,category_node in ipairs(categorytree:Root():GetChildNodes()) do
+			tbl[category_node:GetText()] = {}
+			--print(i,category_node:GetText(),category_node.Label:GetTooltip(),  category_node:GetIcon())
+			if category_node:GetTooltip() ~= nil and category_node:GetTooltip() ~= "" then tbl[category_node:GetText()]["tooltip"] = category_node:GetTooltip() end
+			tbl[category_node:GetText()]["icon"] = category_node:GetIcon()
+
+			for i2,part_node in ipairs(category_node:GetChildNodes()) do
+				tbl[category_node:GetText()][part_node:GetText()] = part_node:GetText()
+				--print("\t",part_node:GetText())
+			end
+		end
+		return tbl
+	end
+
+	load_partgroup_template_into_tree(categorytree, pace.partgroups)
+
+	local part_categories_presets = vgui.Create("DComboBox", RightPanel)
+		part_categories_presets:SetText("Select a part category preset")
+		part_categories_presets:AddChoice("active preset")
+		part_categories_presets:AddChoice("factory preset")
+		part_categories_presets:AddChoice("Cedric's preset")
+		local default_partgroup_presets = {
+			["pac_part_categories.txt"] = true,
+			["pac_part_categories_cedrics.txt"] = true,
+			["pac_part_categories_default.txt"] = true
+		}
+		for i,filename in ipairs(file.Find("pac3_config/pac_part_categories*.txt","DATA")) do
+			if not default_partgroup_presets[string.GetFileFromFilename(filename)] then
+				part_categories_presets:AddChoice(string.GetFileFromFilename(filename))
+			end
+		end
+		
+		part_categories_presets:SetX(10) part_categories_presets:SetY(10)
+		part_categories_presets:SetWidth(170)
+		part_categories_presets:SetHeight(20)
+
+	part_categories_presets.OnSelect = function( self, index, value )
+		if value == "factory preset" then
+			pace.partgroups = pace.partmenu_categories_default
+		elseif value == "Cedric's preset" then
+			pace.partgroups = pace.partmenu_categories_cedrics
+		elseif string.find(value, ".txt") then
+			pace.partgroups = util.KeyValuesToTable(file.Read("pac3_config/"..value))
+		elseif value == "active preset" then
+			decode_table_from_file("pac_part_categories")
+			if not pace.partgroups_user then pace.partgroups_user = pace.partgroups end
+			file.Write("pac3_config/pac_part_categories_user.txt", util.TableToKeyValues(pace.partgroups_user))
+		end
+		load_partgroup_template_into_tree(categorytree, pace.partgroups)
+	end
+
+	local part_categories_save = vgui.Create("DButton", RightPanel)
+		part_categories_save:SetText("Save")
+		part_categories_save:SetImage("icon16/disk.png")
+		part_categories_save:SetX(180) part_categories_save:SetY(10)
+		part_categories_save:SetWidth(80)
+		part_categories_save:SetHeight(20)
+		part_categories_save:SetTooltip("Left click to save preset to the active slot\nRight click to save to a new file")
+		part_categories_save.DoClick = function()
+			pace.partgroups = extract_partgroup_template_from_tree(categorytree)
+			file.Write("pac3_config/pac_part_categories.txt", util.TableToKeyValues(extract_partgroup_template_from_tree(categorytree)))
+		end
+		part_categories_save.DoRightClick = function()
+			Derma_StringRequest("Save preset", "Save a part category preset?", "pac_part_categories",
+				function(name) file.Write("pac3_config/"..name..".txt", util.TableToKeyValues(extract_partgroup_template_from_tree(categorytree)))
+					part_categories_presets:AddChoice(name..".txt")
+				end
+			)
+		end
+
+	local part_categories_add_cat = vgui.Create("DButton", RightPanel)
+		part_categories_add_cat:SetText("Add category")
+		part_categories_add_cat:SetImage("icon16/add.png")
+		part_categories_add_cat:SetX(260) part_categories_add_cat:SetY(10)
+		part_categories_add_cat:SetWidth(100)
+		part_categories_add_cat:SetHeight(20)
+		part_categories_add_cat.DoClick = function()
+			local category_node = categorytree:AddNode("Category " .. categorytree:Root():GetChildNodeCount() + 1)
+			category_node:SetIcon("icon16/page_white.png")
+
+			category_node.DoRightClick = function()
+				local menu = DermaMenu()
+				menu:AddOption("insert part in category", function() bring_up_partclass_list(category_node) end):SetImage("icon16/add.png")
+				menu:AddOption("select icon", function() bring_up_category_icon_browser(category_node) end):SetImage("icon16/picture.png")
+				menu:AddOption("write a tooltip", function() bring_up_tooltip_edit(category_node) end):SetImage("icon16/comment.png")
+				menu:AddOption("rename this category", function() bring_up_name_edit(category_node) end):SetImage("icon16/textfield_rename.png")
+				menu:AddOption("remove this category", function() category_node:Remove() end):SetImage("icon16/cross.png")
+				menu:MakePopup()
+				menu:SetPos(input.GetCursorPos())
+			end
+		end
+
 	return panel
 end
 
@@ -1587,4 +2275,11 @@ end
 
 decode_table_from_file("pac_editor_shortcuts")
 decode_table_from_file("pac_editor_partmenu_layouts")
+
+if not file.Exists("pac_part_categories_cedrics.txt", "DATA") then
+	file.Write("pac3_config/pac_part_categories_cedrics.txt", util.TableToKeyValues(pace.partmenu_categories_cedrics))
+end
+if not file.Exists("pac_part_categories_default.txt", "DATA") then
+	file.Write("pac3_config/pac_part_categories_default.txt", util.TableToKeyValues(pace.partmenu_categories_default))
+end
 decode_table_from_file("pac_part_categories")

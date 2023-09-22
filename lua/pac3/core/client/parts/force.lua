@@ -1,8 +1,8 @@
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "force"
-PART.Group = 'advanced'
-PART.Icon = 'icon16/database_go.png'
+PART.Group = "advanced"
+PART.Icon = "icon16/database_go.png"
 
 PART.ManualDraw = true
 PART.HandleModifiersManually = true
@@ -17,8 +17,8 @@ BUILDER:StartStorableVars()
 			["Cone"] = "Cone",
 			["Ray"] = "Ray"
 		}})
-		:GetSet("Length",50)
-		:GetSet("Radius",50)
+		:GetSet("Length", 50, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,-32768,32767)) end})
+		:GetSet("Radius", 50, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,-32768,32767)) end})
 		:GetSet("Preview",false)
 	:SetPropertyGroup("Forces")
 		:GetSet("BaseForce", 0)
@@ -38,12 +38,17 @@ BUILDER:StartStorableVars()
 		:GetSet("NPC",false)
 :EndStorableVars()
 
+local force_hitbox_ids = {["Box"] = 0,["Cube"] = 1,["Sphere"] = 2,["Cylinder"] = 3,["Cone"] = 4,["Ray"] = 5}
+local base_force_mode_ids = {["Radial"] = 0, ["Locus"] = 1, ["Local"] = 2}
+local vect_force_mode_ids = {["Global"] = 0, ["Local"] = 1, ["Radial"] = 2,  ["RadialNoPitch"] = 3}
+local ang_torque_mode_ids = {["Global"] = 0, ["TargetLocal"] = 1, ["Local"] = 2, ["Radial"] = 3}
 
 function PART:OnRemove()
 end
 
 function PART:Initialize()
 	self.next_impulse = CurTime() + 0.05
+	if not GetConVar("pac_sv_force"):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then self:SetError("force parts are disabled on this server!") end
 end
 
 function PART:OnShow()
@@ -136,39 +141,50 @@ function PART:OnThink()
 end
 
 function PART:Impulse(on)
-	self.next_impulse = CurTime() + 0.05
-	local tbl = {}
-	tbl.HitboxMode = self.HitboxMode
-	tbl.Length = self.Length
-	tbl.Radius = self.Radius
-	tbl.BaseForce = self.BaseForce
-	tbl.BaseForceAngleMode = self.BaseForceAngleMode
-	tbl.AddedVectorForce = self.AddedVectorForce
-	tbl.VectorForceAngleMode = self.VectorForceAngleMode
-	tbl.Torque = self.Torque
-	tbl.TorqueMode = self.TorqueMode
-	tbl.Continuous = self.Continuous
-	tbl.AccountMass = self.AccountMass
-	tbl.Falloff = self.Falloff
-	tbl.AffectSelf = self.AffectSelf
-	tbl.Players = self.Players
-	tbl.PhysicsProps = self.PhysicsProps
-	tbl.NPC = self.NPC
+	self.next_impulse = CurTime() + 0.1
+	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
+	if not on and not self.Continuous then return end
+	if not GetConVar("pac_sv_force"):GetBool() then return end
+	if pac.Blocked_Combat_Parts then
+		if pac.Blocked_Combat_Parts[self.ClassName] then return end
+	end
 
-	tbl.UniqueID = self.UniqueID
-	tbl.PlayerOwner = self:GetPlayerOwner()
-	tbl.RootPartOwner = self:GetRootPart():GetOwner()
-
+	local locus_pos = Vector(0,0,0)
 	if self.Locus ~= nil then
 		if self.Locus:IsValid() then 
-			tbl.Locus_pos = self.Locus:GetWorldPosition()
+			locus_pos = self.Locus:GetWorldPosition()
 		end
-	else tbl.Locus_pos = self:GetWorldPosition() end
-	net.Start("pac_request_force")
-	net.WriteTable(tbl)
+	else locus_pos = self:GetWorldPosition() end
+
+
+	net.Start("pac_request_force", true)
 	net.WriteVector(self:GetWorldPosition())
 	net.WriteAngle(self:GetWorldAngles())
+	net.WriteVector(locus_pos)
 	net.WriteBool(on)
+
+	net.WriteString(string.sub(self.UniqueID,1,12))
+	net.WriteEntity(self:GetRootPart():GetOwner())
+
+	net.WriteUInt(force_hitbox_ids[self.HitboxMode],4)
+	net.WriteUInt(base_force_mode_ids[self.BaseForceAngleMode],3)
+	net.WriteUInt(vect_force_mode_ids[self.VectorForceAngleMode],2)
+	net.WriteUInt(ang_torque_mode_ids[self.TorqueMode],2)
+
+	net.WriteInt(self.Length, 16)
+	net.WriteInt(self.Radius, 16)
+
+	net.WriteInt(self.BaseForce, 18)
+	net.WriteVector(self.AddedVectorForce)
+	net.WriteVector(self.Torque)
+
+	net.WriteBool(self.Continuous)
+	net.WriteBool(self.AccountMass)
+	net.WriteBool(self.Falloff)
+	net.WriteBool(self.AffectSelf)
+	net.WriteBool(self.Players)
+	net.WriteBool(self.PhysicsProps)
+	net.WriteBool(self.NPC)
 	net.SendToServer()
 end
 

@@ -2542,8 +2542,7 @@ do
 		ply.pac_buttons = ply.pac_buttons or {}
 		ply.pac_buttons[key] = down
 
-		--print("button update from" , ply, key, down)
-		--PrintTable(ply.pac_buttons)
+
 		ply.pac_broadcasted_buttons_lastpressed = ply.pac_broadcasted_buttons_lastpressed or {}
 		if down then
 			ply.pac_broadcasted_buttons_lastpressed[key] = SysTime()
@@ -2555,6 +2554,7 @@ do
 				part.holdtime = part.holdtime or 0
 				part.toggleimpulsekey = part.toggleimpulsekey or {}
 				part.toggleimpulsekey[key] = down
+				part.pac_broadcasted_buttons_holduntil[key] = part.pac_broadcasted_buttons_holduntil[key] or 0
 				part.pac_broadcasted_buttons_holduntil[key] = ply.pac_broadcasted_buttons_lastpressed[key] + part.holdtime
 			end
 		end
@@ -2654,32 +2654,32 @@ do
 		end,
 	}
 
-	PART.OldEvents.input = {
-		operator_type = "none",
-		arguments = {{UserInputs = "string"}, {RequireAllInputs = "boolean"}},
-		userdata = {{enums = function()
-			return base_input_enums_names
-		end}},
-		callback = function(self, ent, UserInputs, RequireAllInputs)
-			local ply = self:GetPlayerOwner()
-			UserInputs = UserInputs or ""
-			pac.player_inputs[ply] = pac.player_inputs[ply] or {}
-			local detect = false
-			local fulldetect = true
-			local input_list = string.Split(UserInputs, ";")
-			
-			for i,v in pairs(pac.player_inputs[ply]) do
-				for _,v2 in pairs(input_list) do
-					if pac.player_inputs[ply][input_aliases[v2]] then detect = true
-					else fulldetect = false end
-				end
-			end
-			if RequireAllInputs then return fulldetect
-			else return detect end
-		end
-	}
+	--PART.OldEvents.input = {
+	--	operator_type = "none",
+	--	arguments = {{UserInputs = "string"}, {RequireAllInputs = "boolean"}},
+	--	userdata = {{enums = function()
+	--		return base_input_enums_names
+	--	end}},
+	--	callback = function(self, ent, UserInputs, RequireAllInputs)
+	--		local ply = self:GetPlayerOwner()
+	--		UserInputs = UserInputs or ""
+	--		pac.player_inputs[ply] = pac.player_inputs[ply] or {}
+	--		local detect = false
+	--		local fulldetect = true
+	--		local input_list = string.Split(UserInputs, ";")
+	--		
+	--		for i,v in pairs(pac.player_inputs[ply]) do
+	--			for _,v2 in pairs(input_list) do
+	--				if pac.player_inputs[ply][input_aliases[v2]] then detect = true
+	--				else fulldetect = false end
+	--			end
+	--		end
+	--		if RequireAllInputs then return fulldetect
+	--		else return detect end
+	--	end
+	--}
 
-	PART.OldEvents.is_moving = {
+	--[[PART.OldEvents.is_moving = {
 		operator_type = "none",
 		callback = function(self)
 			local ply = self:GetPlayerOwner()
@@ -2691,9 +2691,9 @@ do
 			pac.player_inputs[ply][IN_MOVERIGHT] or
 			pac.player_inputs[ply][IN_JUMP]
 		end
-	}
+	}]]
 
-	PART.OldEvents.afk = {
+	--[[PART.OldEvents.afk = {
 		operator_type = "none",
 		arguments = {{time = "number"}, {IncludeEyeAngles = "boolean"}},
 		callback = function(self, ent, time, IncludeEyeAngles)
@@ -2724,7 +2724,7 @@ do
 			end
 			return true
 		end
-	}
+	}]]
 
 end
 

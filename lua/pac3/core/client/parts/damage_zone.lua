@@ -3,8 +3,8 @@ local BUILDER, PART = pac.PartTemplate("base_movable")
 --ultrakill parryables: club, slash, buckshot
 
 PART.ClassName = "damage_zone"
-PART.Group = 'advanced'
-PART.Icon = 'icon16/package.png'
+PART.Group = "advanced"
+PART.Icon = "icon16/package.png"
 
 local renderhooks = {
 	"PostDraw2DSkyBox",
@@ -29,8 +29,8 @@ BUILDER:StartStorableVars()
 		:GetSet("NPC",true)
 		:GetSet("PointEntities",true, {description = "Other source engine entities such as item_item_crate and prop_physics"})
 	:SetPropertyGroup("Shape and Sampling")
-		:GetSet("Radius", 20)
-		:GetSet("Length", 50)
+		:GetSet("Radius", 20, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,-32768,32767)) end})
+		:GetSet("Length", 50, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,-32768,32767)) end})
 		:GetSet("HitboxMode", "Box", {enums = {
 			["Box"] = "Box",
 			["Cube"] = "Cube",
@@ -43,13 +43,13 @@ BUILDER:StartStorableVars()
 			["Cone (From Spheres)"] = "ConeSpheres",
 			["Ray"] = "Ray"
 		}})
-		:GetSet("Detail", 20)
-		:GetSet("ExtraSteps",0)
-		:GetSet("RadialRandomize", 1)
-		:GetSet("PhaseRandomize", 1)
+		:GetSet("Detail", 20, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,-32,31)) end})
+		:GetSet("ExtraSteps",0, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,-8,7)) end})
+		:GetSet("RadialRandomize", 1, {editor_onchange = function(self,num) return math.Clamp(num,-8,7) end})
+		:GetSet("PhaseRandomize", 1, {editor_onchange = function(self,num) return math.Clamp(num,-8,7) end})
 	:SetPropertyGroup("Falloff")
 		:GetSet("DamageFalloff", false)
-		:GetSet("DamageFalloffPower", 1)
+		:GetSet("DamageFalloffPower", 1, {editor_onchange = function(self,num) return math.Clamp(num,-64,63) end})
 	:SetPropertyGroup("Preview Rendering")
 		:GetSet("Preview", false)
 		:GetSet("RenderingHook", "PostDrawOpaqueRenderables", {enums = {
@@ -68,7 +68,7 @@ BUILDER:StartStorableVars()
 		}})
 	:SetPropertyGroup("DamageInfo")
 		:GetSet("Bullet", false, {description = "Fires a bullet on each target for the added hit decal"})
-		:GetSet("Damage", 0)
+		:GetSet("Damage", 0, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,0,268435455)) end})
 		:GetSet("DamageType", "generic", {enums = {
 			generic = 0, --generic damage
 			crush = 1, --caused by physics interaction
@@ -114,7 +114,7 @@ BUILDER:StartStorableVars()
 			armor = -1,
 		}})
 		:GetSet("DoNotKill",false, {description = "Will only damage to as low as critical health"})
-		:GetSet("CriticalHealth",1)
+		:GetSet("CriticalHealth",1, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,0,65535)) end})
 	:SetPropertyGroup("HitOutcome")
 		:GetSetPart("HitSoundPart")
 		:GetSetPart("KillSoundPart")
@@ -366,7 +366,104 @@ local function RecursedHitmarker(part)
 	
 end
 
+
+--NOT THE ACTUAL DAMAGE TYPES. UNIQUE IDS TO COMPRESS NET MESSAGES
+local damage_ids = {
+	generic = 0, --generic damage
+	crush = 1, --caused by physics interaction
+	bullet = 2, --bullet damage
+	slash = 3, --sharp objects, such as manhacks or other npcs attacks
+	burn = 4, --damage from fire
+	vehicle = 5, --hit by a vehicle
+	fall = 6, --fall damage
+	blast = 7, --explosion damage
+	club = 8, --crowbar damage
+	shock = 9, --electrical damage, shows smoke at the damage position
+	sonic = 10, --sonic damage,used by the gargantua and houndeye npcs
+	energybeam = 11, --laser
+	nevergib = 12, --don't create gibs
+	alwaysgib = 13, --always create gibs
+	drown = 14, --drown damage
+	paralyze = 15, --same as dmg_poison
+	nervegas = 16, --neurotoxin damage
+	poison = 17, --poison damage
+	acid = 18, --
+	airboat = 19, --airboat gun damage
+	blast_surface = 20, --this won't hurt the player underwater
+	buckshot = 21, --the pellets fired from a shotgun
+	direct = 22, --
+	dissolve = 23, --forces the entity to dissolve on death
+	drownrecover = 24, --damage applied to the player to restore health after drowning
+	physgun = 25, --damage done by the gravity gun
+	plasma = 26, --
+	prevent_physics_force = 27, --
+	radiation = 28, --radiation
+	removenoragdoll = 29, --don't create a ragdoll on death
+	slowburn = 30, --
+
+	fire = 31, -- ent:Ignite(5)
+
+	-- env_entity_dissolver
+	dissolve_energy = 32,
+	dissolve_heavy_electrical = 33,
+	dissolve_light_electrical = 34,
+	dissolve_core_effect = 35,
+
+	heal = 36,
+	armor = 37,
+}
+
+local hitbox_ids = {
+	["Box"] = 1,
+	["Cube"] = 2,
+	["Sphere"] = 3,
+	["Cylinder"] = 4,
+	["CylinderHybrid"] = 5,
+	["CylinderSpheres"] = 6,
+	["Cone"] = 7,
+	["ConeHybrid"] = 8,
+	["ConeSpheres"] = 9,
+	["Ray"] = 10
+}
+
+--more compressed net message
+function PART:SendNetMessage()
+	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
+	if not GetConVar('pac_sv_damage_zone'):GetBool() then return end
+	if pac.Blocked_Combat_Parts then
+		if pac.Blocked_Combat_Parts[self.ClassName] then return end
+	end
+
+	if not GetConVar("pac_sv_combat_enforce_netrate"):GetInt() == 0 then return end
+
+	net.Start("pac_request_zone_damage", true)
+
+	net.WriteVector(self:GetWorldPosition())
+	net.WriteAngle(self:GetWorldAngles())
+	net.WriteUInt(self.Damage, 28)
+	net.WriteInt(self.Length, 16)
+	net.WriteInt(self.Radius, 16)
+	net.WriteBool(self.AffectSelf)
+	net.WriteBool(self.NPC)
+	net.WriteBool(self.Players)
+	net.WriteBool(self.PointEntities)
+	net.WriteUInt(hitbox_ids[self.HitboxMode] or 1,5)
+	net.WriteUInt(damage_ids[self.DamageType] or 0,7)
+	net.WriteInt(self.Detail,6)
+	net.WriteInt(self.ExtraSteps,4)
+	net.WriteInt(math.floor(math.Clamp(8*self.RadialRandomize,-64, 63)), 7)
+	net.WriteInt(math.floor(math.Clamp(8*self.PhaseRandomize,-64, 63)), 7)
+	net.WriteBool(self.DamageFalloff)
+	net.WriteInt(math.floor(math.Clamp(8*self.DamageFalloffPower,-512, 511)), 12)
+	net.WriteBool(self.Bullet)
+	net.WriteBool(self.DoNotKill)
+	net.WriteUInt(self.CriticalHealth, 16)
+	net.WriteBool(self.RemoveNPCWeaponsOnKill)
+	net.SendToServer()
+end
+
 function PART:OnShow()
+
 	if self.Preview then
 		self:PreviewHitbox()
 	end
@@ -380,32 +477,13 @@ function PART:OnShow()
 			if self.Preview then
 				self:PreviewHitbox()
 			end
-			if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
-			local tbl = {}
-			for key in pairs(self:GetStorableVars()) do
-				tbl[key] = self[key]
-			end
-			net.Start("pac_request_zone_damage")
-			net.WriteVector(self:GetWorldPosition())
-			net.WriteAngle(self:GetWorldAngles())
-			net.WriteTable(tbl)
-			net.WriteEntity(self:GetPlayerOwner())
-			net.SendToServer()
+
+			self:SendNetMessage()
 		end)
 	elseif (self.validTime > SysTime()) then
 		return
 	else
-		if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
-		local tbl = {}
-		for key in pairs(self:GetStorableVars()) do
-			tbl[key] = self[key]
-		end
-		net.Start("pac_request_zone_damage")
-		net.WriteVector(self:GetWorldPosition())
-		net.WriteAngle(self:GetWorldAngles())
-		net.WriteTable(tbl)
-		net.WriteEntity(self:GetPlayerOwner())
-		net.SendToServer()
+		self:SendNetMessage()
 	end
 
 	net.Receive("pac_hit_results", function()
@@ -837,6 +915,8 @@ function PART:BuildCone(obj)
 end
 
 function PART:Initialize()
+	
+	if not GetConVar("pac_sv_damage_zone"):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then self:SetError("damage zones are disabled on this server!") end
 	self.validTime = SysTime() + 2
 end
 

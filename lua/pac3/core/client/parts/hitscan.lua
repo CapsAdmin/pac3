@@ -6,19 +6,19 @@ language.Add("pac_hitscan", "Hitscan")
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "hitscan"
-PART.Group = 'advanced'
-PART.Icon = 'icon16/user_gray.png'
+PART.Group = "advanced"
+PART.Icon = "icon16/user_gray.png"
 
 BUILDER:StartStorableVars()
-	:GetSet("ServerBullets",true, {description = "serverside bullets can do damage and exert a physical impact force"})
+	:GetSet("ServerBullets", true, {description = "serverside bullets can do damage and exert a physical impact force"})
 	:SetPropertyGroup("bullet properties")
 		:GetSet("BulletImpact", false)
-		:GetSet("Damage", 0)
-		:GetSet("Force",1000)
+		:GetSet("Damage", 0, {editor_onchange = function (self,val) return math.floor(math.Clamp(val,0,268435455)) end})
+		:GetSet("Force",1000, {editor_onchange = function (self,val) return math.floor(math.Clamp(val,0,65535)) end})
+		:GetSet("AffectSelf", false, {description = "whether to allow to damage yourself"})
 		:GetSet("DamageFalloff", false, {description = "enable damage falloff. The lowest damage is not a fixed damage number, but a fraction of the total initial damage.\nThe server can still restrict the maximum distance of all bullets"})
-		:GetSet("DamageFalloffDistance", 5000)
-		:GetSet("DamageFalloffFraction", 0.5)
-		
+		:GetSet("DamageFalloffDistance", 5000, {editor_onchange = function (self,val) return math.floor(math.Clamp(val,0,65535)) end})
+		:GetSet("DamageFalloffFraction", 0.5, {editor_clamp = {0,1}})
 		:GetSet("DamageType", "generic", {enums = {
 			generic = 0, --generic damage
 			crush = 1, --caused by physics interaction
@@ -63,15 +63,15 @@ BUILDER:StartStorableVars()
 
 			heal = -1,
 			armor = -1,
-		}
-	})
+			}
+		})
 		:GetSet("Spread", 0)
 		:GetSet("SpreadX", 1)
 		:GetSet("SpreadY", 1)
-		:GetSet("NumberBullets", 1)
+		:GetSet("NumberBullets", 1, {editor_onchange = function (self,val) return math.floor(math.Clamp(val,0,511)) end})
 		:GetSet("DistributeDamage", false, {description = "whether or not the damage should be divided equally to all bullets in NumberBullets.\nThe server can still force multi-shots to do that"})
-		:GetSet("TracerSparseness", 1)
-		:GetSet("MaxDistance", 10000)
+		:GetSet("TracerSparseness", 1, {editor_onchange = function (self,val) return math.floor(math.Clamp(val,0,255)) end})
+		:GetSet("MaxDistance", 10000, {editor_onchange = function (self,val) return math.floor(math.Clamp(val,0,65535)) end})
 		:GetSet("TracerName", "Tracer", {enums = {
 			["Default bullet tracer"] = "Tracer",
 			["AR2 pulse-rifle tracer"] = "AR2Tracer",
@@ -90,15 +90,11 @@ BUILDER:EndStorableVars()
 
 function PART:Initialize()
 	self.bulletinfo = {}
-	self.ent = self:GetRootPart():GetOwner()
-	self:UpdateBulletInfo()
+	if not GetConVar("pac_sv_hitscan"):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then self:SetError("hitscan parts are disabled on this server!") end
 end
 
 function PART:OnShow()
-	self:UpdateBulletInfo()
-	--self:GetWorldPosition()
-	--self:GetWorldAngles()
-	self:Shoot(self:GetDrawPosition())
+	self:Shoot()
 end
 
 function PART:OnDraw()
@@ -106,58 +102,126 @@ function PART:OnDraw()
 	self:GetWorldAngles()
 end
 
-function PART:Shoot(pos, ang)
-	if not self.ent then self:UpdateBulletInfo() end
-	if not IsValid(self.ent) then return end
-
-	self.bulletinfo.Src = pos
-	self.bulletinfo.Dir = ang:Forward()
-	self.bulletinfo.Spread = Vector(self.SpreadX*self.Spread,self.SpreadY*self.Spread,0)
-
+function PART:Shoot()
 	if self.NumberBullets == 0 then return end
 	if self.ServerBullets and self.Damage ~= 0 then
-		--print("WE NEED A BULLET IN THE SERVER!")
-		--PrintTable(self.bulletinfo)
-		
-		net.Start("pac_hitscan")
-		net.WriteEntity(self:GetRootPart():GetOwner())
-		net.WriteTable(self.bulletinfo)
-		net.WriteAngle(ang)
-		net.WriteString(self.UniqueID)
-		net.SendToServer()
+		self:SendNetMessage()
 	else
-		self.ent:FireBullets(self.bulletinfo)
+		self.bulletinfo.Attacker = self:GetRootPart():GetOwner()
+		self.ent = self:GetRootPart():GetOwner()
+		if self.Damage ~= 0 then self.bulletinfo.Damage = self.Damage end
+
+		self.bulletinfo.Src = self:GetWorldPosition()
+		self.bulletinfo.Dir = self:GetWorldAngles():Forward()
+		self.bulletinfo.Spread = Vector(self.SpreadX*self.Spread,self.SpreadY*self.Spread,0)
+
+		self.bulletinfo.Force = self.Force
+		self.bulletinfo.Distance = self.MaxDistance
+		self.bulletinfo.Num = self.NumberBullets
+		self.bulletinfo.Tracer = self.TracerSparseness --tracer every x bullets
+		self.bulletinfo.TracerName = self.TracerName
+		self.bulletinfo.DistributeDamage = self.DistributeDamage
+
+		self.bulletinfo.DamageFalloff = self.DamageFalloff
+		self.bulletinfo.DamageFalloffDistance = self.DamageFalloffDistance
+		self.bulletinfo.DamageFalloffFraction = self.DamageFalloffFraction
+
+		if IsValid(self.ent) then self.ent:FireBullets(self.bulletinfo) end
 	end
 end
 
-function PART:UpdateBulletInfo()
-	self.bulletinfo.Attacker = self:GetRootPart():GetOwner()
-	self.ent = self:GetRootPart():GetOwner()
-	if self.Damage == 0 then
-	else self.bulletinfo.Damage = self.Damage end
 
-	self.bulletinfo.Tracer = self.TracerSparseness
+--NOT THE ACTUAL DAMAGE TYPES. UNIQUE IDS TO COMPRESS NET MESSAGES
+local damage_ids = {
+	generic = 0, --generic damage
+	crush = 1, --caused by physics interaction
+	bullet = 2, --bullet damage
+	slash = 3, --sharp objects, such as manhacks or other npcs attacks
+	burn = 4, --damage from fire
+	vehicle = 5, --hit by a vehicle
+	fall = 6, --fall damage
+	blast = 7, --explosion damage
+	club = 8, --crowbar damage
+	shock = 9, --electrical damage, shows smoke at the damage position
+	sonic = 10, --sonic damage,used by the gargantua and houndeye npcs
+	energybeam = 11, --laser
+	nevergib = 12, --don't create gibs
+	alwaysgib = 13, --always create gibs
+	drown = 14, --drown damage
+	paralyze = 15, --same as dmg_poison
+	nervegas = 16, --neurotoxin damage
+	poison = 17, --poison damage
+	acid = 18, --
+	airboat = 19, --airboat gun damage
+	blast_surface = 20, --this won't hurt the player underwater
+	buckshot = 21, --the pellets fired from a shotgun
+	direct = 22, --
+	dissolve = 23, --forces the entity to dissolve on death
+	drownrecover = 24, --damage applied to the player to restore health after drowning
+	physgun = 25, --damage done by the gravity gun
+	plasma = 26, --
+	prevent_physics_force = 27, --
+	radiation = 28, --radiation
+	removenoragdoll = 29, --don't create a ragdoll on death
+	slowburn = 30, --
 
-	self.bulletinfo.Force = self.Force
-	self.bulletinfo.Distance = self.MaxDistance
-	self.bulletinfo.Num = self.NumberBullets
-	self.bulletinfo.Tracer = self.TracerSparseness --tracer every x bullets
-	self.bulletinfo.TracerName = self.TracerName
-	self.bulletinfo.DistributeDamage = self.DistributeDamage
+	fire = 31, -- ent:Ignite(5)
 
-	self.bulletinfo.DamageFalloff = self.DamageFalloff
-	self.bulletinfo.DamageFalloffDistance = self.DamageFalloffDistance
-	self.bulletinfo.DamageFalloffFraction = self.DamageFalloffFraction
+	-- env_entity_dissolver
+	dissolve_energy = 32,
+	dissolve_heavy_electrical = 33,
+	dissolve_light_electrical = 34,
+	dissolve_core_effect = 35,
 
-	--[[bulletinfo.ammodata = {
-		name = ""
-		dmgtype = self.DamageType
-		tracer = TRACER_LINE_AND_WHIZ
-		maxcarry = -2
+	heal = 36,
+	armor = 37,
+}
 
-	}]]--
+local tracer_ids = {
+	["Tracer"] = 1,
+	["AR2Tracer"] = 2,
+	["HelicopterTracer"] = 3,
+	["AirboatGunTracer"] = 4,
+	["AirboatGunHeavyTracer"] = 5,
+	["GaussTracer"] = 6,
+	["HunterTracer"] = 7,
+	["StriderTracer"] = 8,
+	["GunshipTracer"] = 9,
+	["ToolgunTracer"] = 10,
+	["LaserTracer"] = 11
+}
+
+
+function PART:SendNetMessage()
+	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
+	if not GetConVar('pac_sv_hitscan'):GetBool() then return end
+	if pac.Blocked_Combat_Parts[self.ClassName] then
+		return
+	end
+
+	net.Start("pac_hitscan", true)
+	net.WriteBool(self.AffectSelf)
+	net.WriteVector(self:GetWorldPosition())
+	net.WriteAngle(self:GetWorldAngles())
+
+	net.WriteUInt(damage_ids[self.DamageType] or 0,7)
+	net.WriteVector(Vector(self.SpreadX*self.Spread,self.SpreadY*self.Spread,0))
+	net.WriteUInt(self.Damage, 28)
+	net.WriteUInt(self.TracerSparseness, 8)
+	net.WriteUInt(self.Force, 16)
+	net.WriteUInt(self.MaxDistance, 16)
+	net.WriteUInt(self.NumberBullets, 9)
+	net.WriteUInt(tracer_ids[self.TracerName], 4)
+	net.WriteBool(self.DistributeDamage)
+
+	net.WriteBool(self.DamageFalloff)
+	net.WriteUInt(self.DamageFalloffDistance, 16)
+	net.WriteUInt(math.Clamp(math.floor(self.DamageFalloffFraction * 1000),0, 1000), 10)
+
+	net.WriteString(string.sub(self.UniqueID,1,8))
+
+	net.SendToServer()
 end
-
 
 BUILDER:Register()
 

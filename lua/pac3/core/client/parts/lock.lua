@@ -23,8 +23,8 @@ local physics_point_ent_classes = {
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "lock"
-PART.Group = 'advanced'
-PART.Icon = 'icon16/lock.png'
+PART.Group = "advanced"
+PART.Icon = "icon16/lock.png"
 
 
 BUILDER:StartStorableVars()
@@ -61,6 +61,10 @@ BUILDER:StartStorableVars()
 BUILDER:EndStorableVars()
 
 function PART:OnThink()
+	if not GetConVar('pac_sv_lock'):GetBool() then return end
+	if pac.Blocked_Combat_Parts then
+		if pac.Blocked_Combat_Parts[self.ClassName] then return end
+	end
 	if self.forcebreak then
 		if self.next_allowed_grab < CurTime() then --we're able to resume
 			if self.ContinuousSearch then
@@ -74,7 +78,12 @@ function PART:OnThink()
 	end
 
 	if self.Mode == "Grab" then
-		
+		if not GetConVar('pac_sv_lock_grab'):GetBool() then return end
+		if pac.Blocked_Combat_Parts then
+			if pac.Blocked_Combat_Parts[self.ClassName] then
+				return
+			end
+		end
 		if self.ContinuousSearch then
 			self:DecideTarget()
 		end
@@ -110,7 +119,7 @@ function PART:OnThink()
 			local relative_offset_pos = offset_matrix:GetTranslation()
 			local relative_offset_ang = offset_matrix:GetAngles()
 	
-			if LocalPlayer() == self:GetPlayerOwner() then
+			if pac.LocalPlayer == self:GetPlayerOwner() then
 				net.Start("pac_request_position_override_on_entity_grab")
 				net.WriteBool(self.is_first_time)
 				net.WriteString(self.UniqueID)
@@ -127,7 +136,7 @@ function PART:OnThink()
 			if self.target_ent:IsPlayer() then
 				if self.OverrideEyeAngles then try_override_eyeang = true end
 			end
-			if LocalPlayer() == self:GetPlayerOwner() then
+			if pac.LocalPlayer == self:GetPlayerOwner() then
 				net.WriteBool(self.OverrideAngles)
 				net.WriteBool(try_override_eyeang)
 				net.WriteEntity(self.target_ent)
@@ -281,6 +290,7 @@ function PART:SetRadius(val)
 end
 
 function PART:OnShow()
+	
 	local origin_part
 	self.is_first_time = true
 	if self.resetting_condition or self.forcebreak then
@@ -295,7 +305,7 @@ function PART:OnShow()
 		else
 			origin_part = self
 		end
-		if origin_part == nil or not self.Preview or LocalPlayer() ~= self:GetPlayerOwner() then return end
+		if origin_part == nil or not self.Preview or pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 		local sv_dist = GetConVar("pac_sv_lock_max_grab_radius"):GetInt()
 
 		render.DrawLine(origin_part:GetWorldPosition(),origin_part:GetWorldPosition() + Vector(0,0,-self.OffsetDownAmount),Color(255,255,255))
@@ -312,12 +322,13 @@ function PART:OnShow()
 
 	end)
 	if self.Mode == "Teleport" then
+		if not GetConVar('pac_sv_lock_teleport'):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then return end
 		self.target_ent = nil
 		
 		local ang_yaw_only = self:GetWorldAngles()
 		ang_yaw_only.p = 0
 		ang_yaw_only.r = 0
-		if LocalPlayer() == self:GetPlayerOwner() then
+		if pac.LocalPlayer == self:GetPlayerOwner() then
 			
 			local teleport_pos_final = self:GetWorldPosition()
 
@@ -360,7 +371,7 @@ function PART:reset_ent_ang()
 	
 	if reset_ent:IsValid() then
 		timer.Simple(math.min(self.RestoreDelay,5), function()
-			if LocalPlayer() == self:GetPlayerOwner() then
+			if pac.LocalPlayer == self:GetPlayerOwner() then
 				net.Start("pac_request_angle_reset_on_entity")
 				net.WriteAngle(Angle(0,0,0))
 				net.WriteFloat(self.RestoreDelay)
@@ -438,7 +449,7 @@ function PART:DecideTarget()
 	
 	if chosen_ent ~= nil then
 		self.target_ent = chosen_ent
-		if LocalPlayer() == self:GetPlayerOwner() then
+		if pac.LocalPlayer == self:GetPlayerOwner() then
 			print("selected ", chosen_ent, "dist ", (chosen_ent:GetPos()):Distance( self:GetWorldPosition() ))
 		end
 		self.valid_ent = true
@@ -472,6 +483,25 @@ function PART:CalculateRelativeOffset()
 	self.relative_transform_matrix:Rotate(self.target_ent:GetAngles() - self:GetWorldAngles())
 	self.relative_transform_matrix:Translate(self.target_ent:GetPos() - self:GetWorldPosition())
 	--print("ang delta!", self.target_ent:GetAngles() - self:GetWorldAngles())
+end
+
+function PART:Initialize()
+	
+	if not GetConVar('pac_sv_lock_grab'):GetBool() then
+		if not GetConVar('pac_sv_lock_teleport'):GetBool() then
+			self:SetWarning("lock part grabs and teleports are disabled on this server!")
+		else
+			self:SetWarning("lock part grabs are disabled on this server!")
+		end
+	end
+	if not GetConVar('pac_sv_lock_teleport'):GetBool() then
+		if not GetConVar('pac_sv_lock_grab'):GetBool() then
+			self:SetWarning("lock part grabs and teleports are disabled on this server!")
+		else
+			self:SetWarning("lock part teleports are disabled on this server!")
+		end
+	end
+	if not GetConVar('pac_sv_lock'):GetBool() then self:SetError("lock parts are disabled on this server!") end
 end
 
 BUILDER:Register()

@@ -1,6 +1,6 @@
 local physprop_enums = {}
 local physprop_indices = {}
-for i=0,500,1 do
+for i=0,200,1 do
 	local name = util.GetSurfacePropName(i)
 	if name ~= "" then
 		physprop_enums[name] = name
@@ -15,8 +15,8 @@ language.Add("pac_projectile", "Projectile")
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "projectile"
-PART.Group = 'advanced'
-PART.Icon = 'icon16/bomb.png'
+PART.Group = "advanced"
+PART.Icon = "icon16/bomb.png"
 
 BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("Firing")
@@ -184,6 +184,57 @@ end
 
 local enable = CreateClientConVar("pac_sv_projectiles", 0, true)
 
+local damage_ids = {
+	generic = 0, --generic damage
+	crush = 1, --caused by physics interaction
+	bullet = 2, --bullet damage
+	slash = 3, --sharp objects, such as manhacks or other npcs attacks
+	burn = 4, --damage from fire
+	vehicle = 5, --hit by a vehicle
+	fall = 6, --fall damage
+	blast = 7, --explosion damage
+	club = 8, --crowbar damage
+	shock = 9, --electrical damage, shows smoke at the damage position
+	sonic = 10, --sonic damage,used by the gargantua and houndeye npcs
+	energybeam = 11, --laser
+	nevergib = 12, --don't create gibs
+	alwaysgib = 13, --always create gibs
+	drown = 14, --drown damage
+	paralyze = 15, --same as dmg_poison
+	nervegas = 16, --neurotoxin damage
+	poison = 17, --poison damage
+	acid = 18, --
+	airboat = 19, --airboat gun damage
+	blast_surface = 20, --this won't hurt the player underwater
+	buckshot = 21, --the pellets fired from a shotgun
+	direct = 22, --
+	dissolve = 23, --forces the entity to dissolve on death
+	drownrecover = 24, --damage applied to the player to restore health after drowning
+	physgun = 25, --damage done by the gravity gun
+	plasma = 26, --
+	prevent_physics_force = 27, --
+	radiation = 28, --radiation
+	removenoragdoll = 29, --don't create a ragdoll on death
+	slowburn = 30, --
+
+	explosion = 31, -- ent:Ignite(5)
+	fire = 32, -- ent:Ignite(5)
+
+	-- env_entity_dissolver
+	dissolve_energy = 33,
+	dissolve_heavy_electrical = 34,
+	dissolve_light_electrical = 35,
+	dissolve_core_effect = 36,
+
+	heal = 37,
+	armor = 38,
+}
+local attract_ids = {
+	hitpos = 0,
+	hitpos_radius = 1,
+	closest_to_projectile = 2,
+	closest_to_hitpos = 3,
+}
 function PART:Shoot(pos, ang, multi_projectile_count)
 	local physics = self.Physical
 	local multi_projectile_count = multi_projectile_count or 1
@@ -192,15 +243,53 @@ function PART:Shoot(pos, ang, multi_projectile_count)
 		if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 
 		local tbl = {}
-		for key in pairs(self:GetStorableVars()) do
-			tbl[key] = self[key]
-		end
 
-		net.Start("pac_projectile")
+		net.Start("pac_projectile",true)
 			net.WriteUInt(multi_projectile_count,7)
 			net.WriteVector(pos)
 			net.WriteAngle(ang)
-			net.WriteTable(tbl)
+
+			--bools
+			net.WriteBool(self.Sphere)
+			net.WriteBool(self.RemoveOnCollide)
+			net.WriteBool(self.CollideWithOwner)
+			net.WriteBool(self.RemoveOnHide)
+			net.WriteBool(self.OverridePhysMesh)
+			net.WriteBool(self.Gravity)
+			net.WriteBool(self.AddOwnerSpeed)
+			net.WriteBool(self.Collisions)
+			net.WriteBool(self.CollideWithSelf)
+			net.WriteBool(self.AimDir)
+			net.WriteBool(self.DrawShadow)
+			net.WriteBool(self.Sticky)
+			net.WriteBool(self.BulletImpact)
+
+			--vectors
+			net.WriteVector(self.RandomAngleVelocity)
+			net.WriteVector(self.LocalAngleVelocity)
+
+			--strings
+			net.WriteString(self.OverridePhysMesh and string.sub(string.gsub(self.FallbackSurfpropModel, "^models/", ""),1,150) or "") --custom model is an unavoidable string
+			net.WriteString(string.sub(self.UniqueID,1,12)) --long string but we can probably truncate it
+			net.WriteUInt(physprop_indices[self.SurfaceProperties],10)
+			net.WriteUInt(damage_ids[self.DamageType],7)
+			net.WriteUInt(attract_ids[self.AttractMode],3)
+
+			--numbers
+			net.WriteUInt(self.Radius,8)
+			net.WriteUInt(self.DamageRadius,10)
+			net.WriteUInt(self.Damage,24)
+			net.WriteUInt(1000*self.Speed,16)
+			net.WriteUInt(self.Maximum,7)
+			net.WriteUInt(100*self.LifeTime,14) --might need decimals
+			net.WriteUInt(100*self.Delay,9) --might need decimals
+			net.WriteUInt(self.Mass,18)
+			net.WriteInt(100*self.Spread,10)
+			net.WriteInt(100*self.Damping,20) --might need decimals
+			net.WriteInt(self.Attract,14)
+			net.WriteUInt(self.AttractRadius,10)
+			net.WriteInt(100*self.Bounce,8) --might need decimals
+
 		net.SendToServer()
 	else
 		self.projectiles = self.projectiles or {}
@@ -397,13 +486,13 @@ do -- physical
 			local ent = Entity(data.ent_id)
 
 			if ent:IsValid() and ent:GetClass() == "pac_projectile" then
-				local part = pac.GetPartFromUniqueID(pac.Hash(data.ply), data.partuid)
+				local part = pac.FindPartByPartialUniqueID(pac.Hash(data.ply), data.partuid)
 				if part:IsValid() and part:GetPlayerOwner() == data.ply then
 					part:AttachToEntity(ent, true)
 				end
 				projectiles[key] = nil
 			end
-			
+
 			::CONTINUE::
 		end
 	end)
@@ -413,7 +502,6 @@ do -- physical
 		local ent_id = net.ReadInt(16)
 		local partuid = net.ReadString()
 		local surfprop = net.ReadString()
-		
 
 		if ply:IsValid() then
 			table.insert(projectiles, {ply = ply, ent_id = ent_id, partuid = partuid})

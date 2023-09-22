@@ -502,6 +502,32 @@ function pac.GetPartFromUniqueID(owner_id, id)
 	return uid_parts[owner_id] and uid_parts[owner_id][id] or NULL
 end
 
+function pac.FindPartByPartialUniqueID(owner_id, crumb)
+	if #crumb <= 3 then return NULL end
+	if not crumb then return NULL end
+	local closest_match
+	local length_of_closest_match = 0
+	if uid_parts[owner_id] then
+		if uid_parts[owner_id][crumb] then
+			return uid_parts[owner_id][crumb]
+		end
+
+		for _, part in pairs(uid_parts[owner_id]) do
+			local start_i,end_i = string.find(part.UniqueID, crumb)
+			if start_i or end_i then
+				closest_match = part
+				if length_of_closest_match < end_i - start_i + 1 then
+					closest_match = part
+					length_of_closest_match = end_i - start_i + 1
+				end
+				
+			end
+		end
+
+	end
+	return closest_match or NULL
+end
+
 function pac.FindPartByName(owner_id, str, exclude)
 	if uid_parts[owner_id] then
 		if uid_parts[owner_id][str] then

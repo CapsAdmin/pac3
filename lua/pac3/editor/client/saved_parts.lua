@@ -233,9 +233,15 @@ function pace.LoadParts(name, clear, override_part)
 
 			local data,err = pace.luadata.ReadFile("pac3/" .. name .. ".txt")
 			local has_possible_prop_pacs = false
-			for i,part in pairs(data) do
-				if isnumber(tonumber(part.self.OwnerName)) then has_possible_prop_pacs = true end
+			
+			if IsValid(data) then
+				if istable(data) then
+					for i,part in pairs(data) do
+						if isnumber(tonumber(part.self.OwnerName)) then has_possible_prop_pacs = true end
+					end
+				end
 			end
+			
 
 			--queue up prop pacs for the next prop or npc you spawn when in singleplayer
 			if (auto_spawn_prop:GetInt() == 2 or (auto_spawn_prop:GetInt() == 1 and #data == 1)) and game.SinglePlayer() and has_possible_prop_pacs then

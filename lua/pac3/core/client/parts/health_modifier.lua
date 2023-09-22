@@ -2,8 +2,8 @@ local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "health_modifier"
 
-PART.Group = 'advanced'
-PART.Icon = 'icon16/heart.png'
+PART.Group = "advanced"
+PART.Icon = "icon16/heart.png"
 
 BUILDER:StartStorableVars()
 
@@ -33,6 +33,12 @@ BUILDER:EndStorableVars()
 
 function PART:SendModifier(str)
 	if self:IsHidden() then return end
+	if LocalPlayer() ~= self:GetPlayerOwner() then return end
+	if not GetConVar("pac_sv_health_modifier"):GetBool() then return end
+	if pac.Blocked_Combat_Parts then
+		if pac.Blocked_Combat_Parts[self.ClassName] then return end
+	end
+
 	if str == "MaxHealth" and self.ChangeHealth then
 		net.Start("pac_request_healthmod")
 		net.WriteString(self.UniqueID)
@@ -79,42 +85,42 @@ end
 
 function PART:SetHealthBars(val)
 	self.HealthBars = val
-	if LocalPlayer() ~= self:GetPlayerOwner() then return end
+	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	self:SendModifier("HealthBars")
 end
 
 function PART:SetBarsAmount(val)
 	self.BarsAmount = val
-	if LocalPlayer() ~= self:GetPlayerOwner() then return end
+	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	self:SendModifier("HealthBars")
 end
 
 function PART:SetBarsLayer(val)
 	self.BarsLayer = val
-	if LocalPlayer() ~= self:GetPlayerOwner() then return end
+	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	self:SendModifier("HealthBars")
 end
 
 function PART:SetMaxHealth(val)
 	self.MaxHealth = val
-	if LocalPlayer() ~= self:GetPlayerOwner() then return end
+	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	self:SendModifier("MaxHealth")
 end
 
 function PART:SetMaxArmor(val)
 	self.MaxArmor = val
-	if LocalPlayer() ~= self:GetPlayerOwner() then return end
+	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	self:SendModifier("MaxArmor")
 end
 
 function PART:SetDamageMultiplier(val)
 	self.DamageMultiplier = val
-	if LocalPlayer() ~= self:GetPlayerOwner() then return end
+	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	self:SendModifier("DamageMultiplier")
 end
 
 function PART:OnRemove()
-	if LocalPlayer() ~= self:GetPlayerOwner() then return end
+	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	local found_remaining_healthmod = false
 	for _,part in pairs(pac.GetLocalParts()) do
 		if part.ClassName == "health_modifier" and part ~= self then
@@ -150,6 +156,10 @@ end
 
 function PART:OnShow()
 	self:SendModifier("all")
+end
+
+function PART:Initialize()
+	if not GetConVar("pac_sv_health_modifier"):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then self:SetError("health modifiers are disabled on this server!") end
 end
 
 BUILDER:Register()
