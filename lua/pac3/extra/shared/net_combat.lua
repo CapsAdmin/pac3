@@ -1152,11 +1152,11 @@ if SERVER then
 	}
 
 
-	function net.Incoming( len, client )
+	--[[function net.Incoming( len, client )
 		
 		local i = net.ReadHeader()
 		local strName = util.NetworkIDToString( i )
-		if strName ~= "DrGBasePlayerLuminosity" and strName ~= "pac_in_editor_posang" then
+		if strName ~= "pac_in_editor_posang" then
 			print(strName, client, "message with " .. len .." bits")
 		end
 
@@ -1172,7 +1172,7 @@ if SERVER then
 	
 		func( len, client )
 	
-	end
+	end]]
 
 	local force_hitbox_ids = {["Box"] = 0,["Cube"] = 1,["Sphere"] = 2,["Cylinder"] = 3,["Cone"] = 4,["Ray"] = 5}
 	local base_force_mode_ids = {["Radial"] = 0, ["Locus"] = 1, ["Local"] = 2}
