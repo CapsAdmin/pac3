@@ -271,9 +271,9 @@ function PART:Shoot(pos, ang, multi_projectile_count)
 			--strings
 			net.WriteString(self.OverridePhysMesh and string.sub(string.gsub(self.FallbackSurfpropModel, "^models/", ""),1,150) or "") --custom model is an unavoidable string
 			net.WriteString(string.sub(self.UniqueID,1,12)) --long string but we can probably truncate it
-			net.WriteUInt(physprop_indices[self.SurfaceProperties],10)
-			net.WriteUInt(damage_ids[self.DamageType],7)
-			net.WriteUInt(attract_ids[self.AttractMode],3)
+			net.WriteUInt(physprop_indices[self.SurfaceProperties] or 0,10)
+			net.WriteUInt(damage_ids[self.DamageType] or 0,7)
+			net.WriteUInt(attract_ids[self.AttractMode] or 2,3)
 
 			--numbers
 			net.WriteUInt(self.Radius,8)
