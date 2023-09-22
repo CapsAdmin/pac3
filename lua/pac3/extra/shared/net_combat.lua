@@ -78,6 +78,7 @@ local force_consents = {}
 local hitscan_consents = {}
 local calcview_consents = {}
 local active_force_ids = {}
+local active_grabbed_ents = {}
 
 local damage_types = {
 	generic = 0, --generic damage
@@ -204,9 +205,11 @@ if SERVER then
 		--reverting the state requires to reset the eyeang roll in case it was modified
 		if ent:IsPlayer() then
 			if bool then
+				active_grabbed_ents[ent] = true
 				ent:SetMoveType(MOVETYPE_NONE)
 				ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
 			else
+				active_grabbed_ents[ent] = nil
 				ent:SetMoveType(MOVETYPE_WALK)
 				ent:SetCollisionGroup(COLLISION_GROUP_NONE)
 				local eyeang = ent:EyeAngles()
@@ -223,9 +226,11 @@ if SERVER then
 			
 		elseif ent:IsNPC() then
 			if bool then
+				active_grabbed_ents[ent] = true
 				ent:SetMoveType(MOVETYPE_NONE)
 				ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
 			else
+				active_grabbed_ents[ent] = nil
 				ent:SetMoveType(MOVETYPE_STEP)
 				ent:SetCollisionGroup(COLLISION_GROUP_NONE)
 				ent_ang = ent:GetAngles()
@@ -1124,16 +1129,17 @@ if SERVER then
 
 	local nextchecklock = CurTime()
 	hook.Add("Tick", "pac_checklocks", function()
-		if nextchecklock > CurTime() then return else nextchecklock = CurTime() + 0.1 end
+		if nextchecklock > CurTime() then return else nextchecklock = CurTime() + 0.14 end
 		--go through every entity and check if they're still active, if beyond 0.5 seconds we nil out. this is the closest to a regular check
-		for _,ent in pairs(ents.GetAll()) do
-			if ent.grabbed_by then
+		for ent,bool in pairs(active_grabbed_ents) do
+			if ent.grabbed_by or bool then
 				if ent.grabbed_by_time + 0.5 < CurTime() then --restore the movetype
 					local grabber = ent.grabbed_by
 					ent.grabbed_by_uid = nil
 					ent.grabbed_by = nil
 					grabber.grabbed_ents[ent] = false
 					ApplyLockState(ent, false)
+					active_grabbed_ents[ent] = nil
 				end
 			end
 		end
