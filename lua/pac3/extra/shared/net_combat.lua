@@ -41,6 +41,9 @@ cvars.AddChangeCallback('pac_sv_block_combat_features_on_next_restart', function
 
 local enforce_netrate = CreateConVar("pac_sv_combat_enforce_netrate", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'whether to enforce a limit on how often any pac combat net messages can be sent. 0 to disable, otherwise a number in mililiseconds')
 local enforce_netrate_buffer = CreateConVar("pac_sv_combat_enforce_netrate_buffersize", 5000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'the budgeted allowance to limit how often pac combat net messages can be sent. 0 to disable, otherwise a number in bit size')
+local raw_ent_limit = CreateConVar("pac_sv_entity_limit_per_combat_operation", 500, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Hard limit to drop any force or damage zone if more than this amount of entities is selected")
+local per_ply_limit = CreateConVar("pac_sv_entity_limit_per_player_per_combat_operation", 40, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Limit per player to drop any force or damage zone if this amount multiplied by each client is more than the hard limit")
+local player_fraction = CreateConVar("pac_sv_player_limit_as_fraction_to_drop_damage_zone", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "The fraction (0.0-1.0) of players that will stop damage zone net messages if a damage zone order covers more than this fraction of the server's population, when there are more than 12 players covered")
 
 local global_combat_whitelisting = CreateConVar('pac_sv_combat_whitelisting', 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'How the server should decide which players are allowed to use the main PAC3 combat parts (lock, damagezone, force).\n0:Everyone is allowed unless the parts are disabled serverwide\n1:No one is allowed until they get verified as trustworthy\tpac_sv_whitelist_combat <playername>\n\tpac_sv_blacklist_combat <playername>')
 local global_combat_prop_protection = CreateConVar('pac_sv_prop_protection', 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Whether players\' owned (created) entities (physics props and gmod contraption entities) will be considered in the consent calculations, protecting them. Without this cvar, only the player is protected.')
@@ -68,6 +71,17 @@ local physics_point_ent_classes = {
 
 local contraption_classes = {
 	["prop_physics"] = true,
+}
+
+local pre_excluded_ent_classes = {
+	["info_player_start"] = true,
+	["env_tonemap_controller"] = true,
+	["env_fog_controller"] = true,
+	["env_skypaint"] = true,
+	["shadow_control"] = true,
+	["env_sun"] = true,
+	["predicted_viewmodel"] = true,
+	["physgun_beam"] = true,
 }
 
 
@@ -193,6 +207,29 @@ if SERVER then
 		end
 		
 		return true
+	end
+
+	--stopping condition to stop force or damage operation if too many entities, because net impact is proportional to players
+	local function TooManyEnts(count)
+		local playercount = player.GetCount()
+		local hard_limit = raw_ent_limit:GetInt()
+		local per_ply = per_ply_limit:GetInt()
+		print(count .. " compared against hard limit " .. hard_limit .. " and " .. playercount .. " players*" .. per_ply .. " limit (" .. count*playercount .. " | " .. playercount*per_ply .. ")")
+		if count > hard_limit then
+			MsgC(Color(255,0,0), "TOO MANY ENTS.\n")
+			return true
+		end
+		if not game.SinglePlayer() then
+			if count > per_ply_limit:GetInt() * playercount then
+				MsgC(Color(255,0,0), "TOO MANY ENTS.\n")
+				return true
+			end
+			if count * playercount > math.min(hard_limit, per_ply*playercount) then
+				MsgC(Color(255,0,0), "TOO MANY ENTS.\n")
+				return true
+			end
+		end
+		return false
 	end
 
 	--consent check
@@ -544,12 +581,27 @@ if SERVER then
 	end)
 
 	local function MergeTargetsByID(tbl1, tbl2)
-		for i,v in pairs(tbl2) do
+		for i,v in ipairs(tbl2) do
 			tbl1[v:EntIndex()] = v
 		end
 	end
 
 	local function ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang)
+		local ent_count = 0
+		local ply_count = 0
+		local ply_prog_count = 0
+		for i,v in pairs(ents_hits) do
+			if pre_excluded_ent_classes[v:GetClass()] or (v:IsNPC() and not tbl.NPC) or (v:IsPlayer() and not tbl.Players) then ents_hits[i] = nil
+			else
+				ent_count = ent_count + 1
+				if v:IsPlayer() then ply_count = ply_count + 1 end
+			end
+		end
+
+		--dangerous conditions: absurd amounts of entities, damaging a large percentage of the server's players beyond a certain point
+		if TooManyEnts(ent_count) or ((ply_count) > 12 and (ply_count > player_fraction:GetFloat() * player.GetCount())) then
+			return false,false,nil,{},{}
+		end
 
 		local pac_sv_damage_zone_allow_dissolve = GetConVar("pac_sv_damage_zone_allow_dissolve"):GetBool()
 		local pac_sv_prop_protection = global_combat_prop_protection:GetBool()
@@ -616,7 +668,10 @@ if SERVER then
 			local canhit = false --whether the policies allow the hit
 			local prop_protected_consent = ent:GetCreator() ~= inflictor and ent ~= inflictor and ent:GetCreator():IsPlayer() and damage_zone_consents[ent:GetCreator()] == false-- and ent:GetCreator() ~= inflictor
 			local contraption = IsPossibleContraptionEntity(ent)
-			
+			local bot_exception = true
+			if ent:IsPlayer() then
+				if ent:IsBot() then bot_exception = true end
+			end
 			--first pass: entity class blacklist
 			if IsEntity(ent) and ((damageable_point_ent_classes[ent:GetClass()] ~= false) or ((damageable_point_ent_classes[ent:GetClass()] == nil) or (damageable_point_ent_classes[ent:GetClass()] == true))) then
 				--second pass: the damagezone's settings
@@ -627,10 +682,9 @@ if SERVER then
 						and --one of the base classes
 						(damageable_point_ent_classes[ent:GetClass()] ~= false) --non-blacklisted class
 						and --enforce prop protection
-						(ent:GetCreator() == inflictor or ent == inflictor or (ent:GetCreator() ~= inflictor and pac_sv_prop_protection and damage_zone_consents[ent:GetCreator()] == true) or not pac_sv_prop_protection)
+						(bot_exception or (ent:GetCreator() == inflictor or ent == inflictor or (ent:GetCreator() ~= inflictor and pac_sv_prop_protection and damage_zone_consents[ent:GetCreator()] == true) or not pac_sv_prop_protection))
 						then
 					canhit = true
-					
 					if ent:IsPlayer() and tbl.Players then
 						--rules for players:
 							--self can always hurt itself if asked to
@@ -763,7 +817,7 @@ if SERVER then
 			
 			if tbl.DamageType == "fire" then ent:Ignite(5) end
 		end
-		
+
 		--the forward bullet, if applicable and no entity is found
 		if #ents_hits == 0 then
 			if tbl.Bullet then
@@ -771,13 +825,19 @@ if SERVER then
 			end
 			return hit,kill,dmg,successful_hit_ents,successful_kill_ents
 		end
-		
+
 		--look through each entity
 		for _,ent in pairs(ents_hits) do
 			local canhit = DMGAllowed(ent)
 			local oldhp = ent:Health()
 			if canhit then
-				DoDamage(ent)
+				if ent:IsPlayer() and ply_count > 5 then
+					--jank fix to delay players damage in case they die all at once overflowing the reliable buffer
+					timer.Simple(ply_prog_count / 32, function() DoDamage(ent) end)
+					ply_prog_count = ply_prog_count + 1
+				else
+					DoDamage(ent)
+				end
 			end
 			if not hit and (oldhp > 0 and canhit) then hit = true end
 		end
@@ -860,6 +920,13 @@ if SERVER then
 
 	--second stage of force: apply
 	local function ProcessForcesList(ents_hits, tbl, pos, ang, ply)
+		local ent_count = 0
+		for i,v in pairs(ents_hits) do
+			if pre_excluded_ent_classes[v:GetClass()] or (v:IsNPC() and not tbl.NPC) or (v:IsPlayer() and not tbl.Players) then ents_hits[i] = nil
+			else ent_count = ent_count + 1 end
+		end
+
+		if TooManyEnts(ent_count) then return end
 		for _,ent in pairs(ents_hits) do
 
 			local phys_ent
@@ -869,7 +936,9 @@ if SERVER then
 						or (string.find(ent:GetClass(), "npc") ~= nil)
 						or ent:IsNPC()
 						or physics_point_ent_classes[ent:GetClass()]
-						or string.find(ent:GetClass(), "item_")
+						or string.find(ent:GetClass(),"item_")
+						or string.find(ent:GetClass(),"ammo_")
+						or (ent:IsWeapon() and not IsValid(ent:GetOwner()))
 					) then
 				
 				local is_phys = true
@@ -1162,7 +1231,7 @@ if SERVER then
 		
 		local i = net.ReadHeader()
 		local strName = util.NetworkIDToString( i )
-		if strName ~= "pac_in_editor_posang" then
+		if strName ~= "pac_in_editor_posang" and strName ~= "DrGBasePlayerLuminosity" then
 			print(strName, client, "message with " .. len .." bits")
 		end
 

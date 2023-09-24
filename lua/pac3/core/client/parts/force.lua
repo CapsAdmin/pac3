@@ -156,6 +156,13 @@ function PART:Impulse(on)
 		end
 	else locus_pos = self:GetWorldPosition() end
 
+	if self.BaseForce == 0 and not game.SinglePlayer() then
+		if math.abs(self.AddedVectorForce.x) < 10 and math.abs(self.AddedVectorForce.y) < 10 and math.abs(self.AddedVectorForce.z) < 10 then
+			if math.abs(self.Torque.x) < 10 and math.abs(self.Torque.y) < 10 and math.abs(self.Torque.z) < 10 then
+				return
+			end
+		end
+	end
 
 	net.Start("pac_request_force", true)
 	net.WriteVector(self:GetWorldPosition())

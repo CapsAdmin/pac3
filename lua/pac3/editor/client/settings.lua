@@ -33,8 +33,11 @@ local healthmod_allow_change_maxhp = CreateConVar('pac_sv_health_modifier_allow_
 local healthmod_minimum_dmgscaling = CreateConVar('pac_sv_health_modifier_min_damagescaling', -1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Minimum health modifier amount. Negative values can heal.')
 
 local master_init_featureblocker = CreateConVar('pac_sv_block_combat_features_on_next_restart', 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Whether to stop initializing the net receivers for the networking of PAC3 combat parts those selectively disabled. This requires a restart!\n0=initialize all the receivers\n1=disable those whose corresponding part cvar is disabled\n2=block all combat features\nAfter updating the sv cvars, you can still reinitialize the net receivers with pac_sv_combat_reinitialize_missing_receivers, but you cannot turn them off after they are turned on')
+
 local enforce_netrate = CreateConVar("pac_sv_combat_enforce_netrate", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'whether to enforce a limit on how often any pac combat net messages can be sent. 0 to disable, otherwise a number in mililiseconds')
 local enforce_netrate_buffer = CreateConVar("pac_sv_combat_enforce_netrate_buffersize", 5000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'the budgeted allowance to limit how often pac combat net messages can be sent. 0 to disable, otherwise a number in bit size')
+local raw_ent_limit = CreateConVar("pac_sv_entity_limit_per_combat_operation", 500, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Hard limit to drop any force or damage zone if more than this amount of entities is selected")
+local per_ply_limit = CreateConVar("pac_sv_entity_limit_per_player_per_combat_operation", 40, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Limit per player to drop any force or damage zone if this amount multiplied by each client is more than the hard limit")
 
 local global_combat_whitelisting = CreateConVar('pac_sv_combat_whitelisting', 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'How the server should decide which players are allowed to use the main PAC3 combat parts (lock, damagezone, force).\n0:Everyone is allowed unless the parts are disabled serverwide\n1:No one is allowed until they get verified as trustworthy\tpac_sv_whitelist_combat <playername>\n\tpac_sv_blacklist_combat <playername>')
 local global_combat_prop_protection = CreateConVar('pac_sv_prop_protection', 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Whether players\' owned (created) entities (physics props and gmod contraption entities) will be considered in the consent calculations, protecting them. Without this cvar, only the player is protected.')
@@ -829,6 +832,38 @@ function pace.FillCombatSettings(pnl)
 		sv_master_break_box:SetSize(400,30)
 		sv_master_break_box:SetConVar("pac_sv_block_combat_features_on_next_restart")
 		sv_master_break_box:SetTooltip("You can go to the console and set pac_sv_block_combat_features_on_next_restart to 2 to block everything.\nif you re-enable a blocked part, update with pac_sv_combat_reinitialize_missing_receivers")
+
+		local sv_netrate_time_numbox = vgui.Create("DNumSlider", general_list_list)
+			sv_netrate_time_numbox:SetText("Client net message limit (milliseconds delay)")
+			sv_netrate_time_numbox:SetValue(GetConVar("pac_sv_combat_enforce_netrate"):GetInt())
+			sv_netrate_time_numbox:SetMin(0) sv_netrate_time_numbox:SetDecimals(0) sv_netrate_time_numbox:SetMax(1000)
+			sv_netrate_time_numbox:SetSize(400,30)
+			sv_netrate_time_numbox:SetConVar("pac_sv_combat_enforce_netrate")
+			sv_netrate_time_numbox:SetTooltip("Not yet implemented! Leave it at 0 for now.")
+
+		local sv_netrate_buffer_numbox = vgui.Create("DNumSlider", general_list_list)
+			sv_netrate_buffer_numbox:SetText("Client net message limit (buffer size / bit budget per second)")
+			sv_netrate_buffer_numbox:SetValue(GetConVar("pac_sv_combat_enforce_netrate_buffersize"):GetInt())
+			sv_netrate_buffer_numbox:SetMin(0) sv_netrate_buffer_numbox:SetDecimals(0) sv_netrate_buffer_numbox:SetMax(50000)
+			sv_netrate_buffer_numbox:SetSize(400,30)
+			sv_netrate_buffer_numbox:SetConVar("pac_sv_combat_enforce_netrate_buffersize")
+			sv_netrate_buffer_numbox:SetTooltip("Not yet implemented!")
+
+		local sv_hard_ent_limit_numbox = vgui.Create("DNumSlider", general_list_list)
+			sv_hard_ent_limit_numbox:SetText("Hard entity limit to cutoff damage zones and force parts")
+			sv_hard_ent_limit_numbox:SetValue(GetConVar("pac_sv_entity_limit_per_combat_operation"):GetInt())
+			sv_hard_ent_limit_numbox:SetMin(0) sv_hard_ent_limit_numbox:SetDecimals(0) sv_hard_ent_limit_numbox:SetMax(1000)
+			sv_hard_ent_limit_numbox:SetSize(400,30)
+			sv_hard_ent_limit_numbox:SetConVar("pac_sv_entity_limit_per_combat_operation")
+			sv_hard_ent_limit_numbox:SetTooltip("If the number of entities selected is more than this value, the whole operation gets dropped.\nThis is so that the server doesn't have to send huge amounts of entity updates to everyone.")
+		
+		local sv_per_player_ent_limit_numbox = vgui.Create("DNumSlider", general_list_list)
+			sv_per_player_ent_limit_numbox:SetText("Entity limit per player to cutoff damage zones and force parts")
+			sv_per_player_ent_limit_numbox:SetValue(GetConVar("pac_sv_entity_limit_per_player_per_combat_operation"):GetInt())
+			sv_per_player_ent_limit_numbox:SetMin(0) sv_per_player_ent_limit_numbox:SetDecimals(0) sv_per_player_ent_limit_numbox:SetMax(500)
+			sv_per_player_ent_limit_numbox:SetSize(400,30)
+			sv_per_player_ent_limit_numbox:SetConVar("pac_sv_entity_limit_per_player_per_combat_operation")
+			sv_per_player_ent_limit_numbox:SetTooltip("When in multiplayer, with the server's player count, if the number of entities selected is more than this value, the whole operation gets dropped.\nThis is so that the server doesn't have to send huge amounts of entity updates to everyone.")
 
 	end
 

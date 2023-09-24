@@ -818,6 +818,7 @@ do -- menu
 	end
 //@note pace.DoBulkSelect
 	function pace.DoBulkSelect(obj, silent)
+		obj = obj or pace.current_part
 		refresh_halo_hook = false
 		--print(obj.pace_tree_node, "color", obj.pace_tree_node:GetFGColor().r .. " " .. obj.pace_tree_node:GetFGColor().g .. " " .. obj.pace_tree_node:GetFGColor().b)
 		if obj.ClassName == "timeline_dummy_bone" then return end
@@ -1366,7 +1367,7 @@ do -- menu
 		menu:SetPos(input.GetCursorPos())
 			--new_operations_order
 			--default_operations_order
-		if not obj then obj = pace.current_part end
+		--if not obj then obj = pace.current_part end
 		for _,option_name in ipairs(pace.operations_order) do
 			pace.addPartMenuComponent(menu, obj, option_name)
 		end
@@ -1620,12 +1621,12 @@ function pace.GetPartSizeInformation(obj)
 end
 
 function pace.addPartMenuComponent(menu, obj, option_name)
-	
+
 	if option_name == "save" and obj then
 		local save, pnl = menu:AddSubMenu(L"save", function() pace.SaveParts() end)
 		pnl:SetImage(pace.MiscIcons.save)
 		add_expensive_submenu_load(pnl, function() pace.AddSaveMenuToMenu(save, obj) end)
-	elseif option_name == "load" and obj then
+	elseif option_name == "load" then
 		local load, pnl = menu:AddSubMenu(L"load", function() pace.LoadParts() end)
 		add_expensive_submenu_load(pnl, function() pace.AddSavedPartsToMenu(load, false, obj) end)
 		pnl:SetImage(pace.MiscIcons.load)

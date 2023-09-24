@@ -2322,7 +2322,7 @@ PART.OldEvents = {
 		end}},
 		callback = function(self, ent, time, damage, uid)
 			uid = uid or ""
-			local valid_uid, err = xpcall(pac.GetPartFromUniqueID, uid)
+			local valid_uid, err = pcall(pac.GetPartFromUniqueID, uid)
 			if uid == "" then
 				for _,part in pairs(pac.GetLocalParts()) do
 					if part.ClassName == "damage_zone" then
@@ -2368,7 +2368,7 @@ PART.OldEvents = {
 		end}},
 		callback = function(self, ent, time, uid)
 			uid = uid or ""
-			local valid_uid, err = xpcall(pac.GetPartFromUniqueID, uid)
+			local valid_uid, err = pcall(pac.GetPartFromUniqueID, uid)
 			if uid == "" then
 				for _,part in pairs(pac.GetLocalParts()) do
 					if part.ClassName == "damage_zone" then
@@ -2421,7 +2421,7 @@ PART.OldEvents = {
 		end}},
 		callback = function(self, ent, uid)
 			uid = uid or ""
-			local valid_uid, err = xpcall(pac.GetPartFromUniqueID, uid)
+			local valid_uid, err = pcall(pac.GetPartFromUniqueID, uid)
 			if uid == "" then
 				for _,part in pairs(pac.GetLocalParts()) do
 					if part.ClassName == "lock" then
@@ -2444,13 +2444,13 @@ PART.OldEvents = {
 			end
 			return false
 		end
-	}
+	},
 }
 
 
 do
 	
-	local base_input_enums_names = {
+	--[[local base_input_enums_names = {
 		["IN_ATTACK"] = 1,
 		["IN_JUMP"] = 2,
 		["IN_DUCK"] = 4,
@@ -2487,7 +2487,7 @@ do
 		input_aliases[alternative0] = value
 		input_aliases[alternative1] = value
 		input_aliases[alternative2] = value
-	end
+	end]]
 
 
 	local enums = {}
