@@ -695,8 +695,8 @@ if SERVER then
 			--first pass: entity class blacklist
 			if IsEntity(ent) and ((damageable_point_ent_classes[ent:GetClass()] ~= false) or ((damageable_point_ent_classes[ent:GetClass()] == nil) or (damageable_point_ent_classes[ent:GetClass()] == true))) then
 				--second pass: the damagezone's settings
-					--1.don't hurt yourself
-				if (tbl.AffectSelf) and ent == inflictor then --nothing
+					--1.player hurt self if asked
+				if (tbl.AffectSelf) and ent == inflictor then
 					canhit = true
 					--2.main target types : players, NPC, point entities
 				elseif	((ent:IsPlayer() and tbl.Players) or (tbl.NPC and (ent:IsNPC() or string.find(ent:GetClass(), "npc") or ent.IsVJBaseSNPC or ent.IsDRGEntity)) or tbl.PointEntities)
