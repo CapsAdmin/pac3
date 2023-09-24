@@ -38,6 +38,7 @@ local enforce_netrate = CreateConVar("pac_sv_combat_enforce_netrate", 0, CLIENT 
 local enforce_netrate_buffer = CreateConVar("pac_sv_combat_enforce_netrate_buffersize", 5000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'the budgeted allowance to limit how often pac combat net messages can be sent. 0 to disable, otherwise a number in bit size')
 local raw_ent_limit = CreateConVar("pac_sv_entity_limit_per_combat_operation", 500, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Hard limit to drop any force or damage zone if more than this amount of entities is selected")
 local per_ply_limit = CreateConVar("pac_sv_entity_limit_per_player_per_combat_operation", 40, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Limit per player to drop any force or damage zone if this amount multiplied by each client is more than the hard limit")
+local player_fraction = CreateConVar("pac_sv_player_limit_as_fraction_to_drop_damage_zone", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "The fraction (0.0-1.0) of players that will stop damage zone net messages if a damage zone order covers more than this fraction of the server's population, when there are more than 12 players covered")
 
 local global_combat_whitelisting = CreateConVar('pac_sv_combat_whitelisting', 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'How the server should decide which players are allowed to use the main PAC3 combat parts (lock, damagezone, force).\n0:Everyone is allowed unless the parts are disabled serverwide\n1:No one is allowed until they get verified as trustworthy\tpac_sv_whitelist_combat <playername>\n\tpac_sv_blacklist_combat <playername>')
 local global_combat_prop_protection = CreateConVar('pac_sv_prop_protection', 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Whether players\' owned (created) entities (physics props and gmod contraption entities) will be considered in the consent calculations, protecting them. Without this cvar, only the player is protected.')
@@ -865,6 +866,15 @@ function pace.FillCombatSettings(pnl)
 			sv_per_player_ent_limit_numbox:SetConVar("pac_sv_entity_limit_per_player_per_combat_operation")
 			sv_per_player_ent_limit_numbox:SetTooltip("When in multiplayer, with the server's player count, if the number of entities selected is more than this value, the whole operation gets dropped.\nThis is so that the server doesn't have to send huge amounts of entity updates to everyone.")
 
+
+		local sv_player_fraction_slider = vgui.Create("DNumSlider", general_list_list)
+			sv_player_fraction_slider:SetText("block damage zones targeting this fraction of players")
+			sv_player_fraction_slider:SetValue(GetConVar("pac_sv_player_limit_as_fraction_to_drop_damage_zone"):GetFloat())
+			sv_player_fraction_slider:SetMin(0) sv_player_fraction_slider:SetDecimals(2) sv_player_fraction_slider:SetMax(1)
+			sv_player_fraction_slider:SetSize(400,30)
+			sv_player_fraction_slider:SetConVar("pac_sv_player_limit_as_fraction_to_drop_damage_zone")
+			sv_player_fraction_slider:SetTooltip("This applies when the zone covers more than 12 players. 0 is 0% of the server, 1 is 100%\nFor example, if this is at 0.5, there are 24 players and a damage zone covers 13 players, it will be blocked.")
+		
 	end
 
 	do --hitscan

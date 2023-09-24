@@ -75,6 +75,8 @@ local contraption_classes = {
 
 local pre_excluded_ent_classes = {
 	["info_player_start"] = true,
+	["aoc_spawnpoint"] = true,	
+	["info_player_teamspawn"] = true,
 	["env_tonemap_controller"] = true,
 	["env_fog_controller"] = true,
 	["env_skypaint"] = true,
@@ -82,6 +84,21 @@ local pre_excluded_ent_classes = {
 	["env_sun"] = true,
 	["predicted_viewmodel"] = true,
 	["physgun_beam"] = true,
+	["ambient_generic"] = true,
+	["trigger_once"] = true,
+	["trigger_multiple"] = true,
+	["trigger_hurt"] = true,
+	["info_ladder_dismount"] = true,
+	["info_particle_system"] = true,
+	["env_sprite"] = true,
+	["env_fire"] = true,
+	["env_soundscape"] = true,
+	["env_smokestack"] = true,
+	["light"] = true,
+	["move_rope"] = true,
+	["keyframe_rope"] = true,
+	["env_soundscape_proxy"] = true,
+	["gmod_hands"] = true,
 }
 
 
@@ -216,16 +233,16 @@ if SERVER then
 		local per_ply = per_ply_limit:GetInt()
 		print(count .. " compared against hard limit " .. hard_limit .. " and " .. playercount .. " players*" .. per_ply .. " limit (" .. count*playercount .. " | " .. playercount*per_ply .. ")")
 		if count > hard_limit then
-			MsgC(Color(255,0,0), "TOO MANY ENTS.\n")
+			MsgC(Color(255,0,0), "TOO MANY ENTS. Beyond hard limit.\n")
 			return true
 		end
 		if not game.SinglePlayer() then
 			if count > per_ply_limit:GetInt() * playercount then
-				MsgC(Color(255,0,0), "TOO MANY ENTS.\n")
+				MsgC(Color(255,0,0), "TOO MANY ENTS. Beyond per-player sending limit.\n")
 				return true
 			end
 			if count * playercount > math.min(hard_limit, per_ply*playercount) then
-				MsgC(Color(255,0,0), "TOO MANY ENTS.\n")
+				MsgC(Color(255,0,0), "TOO MANY ENTS. Beyond hard limit or player limit\n")
 				return true
 			end
 		end
@@ -586,20 +603,23 @@ if SERVER then
 		end
 	end
 
-	local function ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang)
+	local function ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang, ply)
 		local ent_count = 0
 		local ply_count = 0
 		local ply_prog_count = 0
 		for i,v in pairs(ents_hits) do
-			if pre_excluded_ent_classes[v:GetClass()] or (v:IsNPC() and not tbl.NPC) or (v:IsPlayer() and not tbl.Players) then ents_hits[i] = nil
+			if not (v:IsPlayer() or v:IsNPC() or string.find(v:GetClass(), "npc_")) and not tbl.PointEntities then ents_hits[i] = nil end
+			if pre_excluded_ent_classes[v:GetClass()] or v:IsWeapon() or (v:IsNPC() and not tbl.NPC) or ((v ~= ply and v:IsPlayer() and not tbl.Players) and not (tbl.AffectSelf and v == ply)) then ents_hits[i] = nil
 			else
 				ent_count = ent_count + 1
+				--print(v, "counted")
 				if v:IsPlayer() then ply_count = ply_count + 1 end
 			end
 		end
 
 		--dangerous conditions: absurd amounts of entities, damaging a large percentage of the server's players beyond a certain point
 		if TooManyEnts(ent_count) or ((ply_count) > 12 and (ply_count > player_fraction:GetFloat() * player.GetCount())) then
+			print("early exit")
 			return false,false,nil,{},{}
 		end
 
@@ -676,7 +696,8 @@ if SERVER then
 			if IsEntity(ent) and ((damageable_point_ent_classes[ent:GetClass()] ~= false) or ((damageable_point_ent_classes[ent:GetClass()] == nil) or (damageable_point_ent_classes[ent:GetClass()] == true))) then
 				--second pass: the damagezone's settings
 					--1.don't hurt yourself
-				if (not tbl.AffectSelf) and ent == inflictor then --nothing
+				if (tbl.AffectSelf) and ent == inflictor then --nothing
+					canhit = true
 					--2.main target types : players, NPC, point entities
 				elseif	((ent:IsPlayer() and tbl.Players) or (tbl.NPC and (ent:IsNPC() or string.find(ent:GetClass(), "npc") or ent.IsVJBaseSNPC or ent.IsDRGEntity)) or tbl.PointEntities)
 						and --one of the base classes
@@ -819,7 +840,7 @@ if SERVER then
 		end
 
 		--the forward bullet, if applicable and no entity is found
-		if #ents_hits == 0 then
+		if ent_count == 0 then
 			if tbl.Bullet then
 				dmg_info:GetInflictor():FireBullets(bullet)
 			end
@@ -1522,7 +1543,7 @@ if SERVER then
 					dmg_info:GetInflictor():FireBullets(bullet)
 				end
 			end
-			hit,kill,highest_dmg,successful_hit_ents,successful_kill_ents = ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang)
+			hit,kill,highest_dmg,successful_hit_ents,successful_kill_ents = ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang, ply)
 			highest_dmg = highest_dmg or 0
 			net.Start("pac_hit_results")
 			net.WriteBool(hit)
