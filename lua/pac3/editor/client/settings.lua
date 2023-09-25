@@ -2184,7 +2184,7 @@ function pace.FillEditorSettings2(pnl)
 	end
 	
 	local function load_partgroup_template_into_tree(categorytree, tbl)
-		
+		tbl = tbl or pace.partgroups or pace.partmenu_categories_default
 		categorytree:Clear()
 		for category,category_contents in pairs(tbl) do
 			
@@ -2328,3 +2328,4 @@ if not file.Exists("pac_part_categories_default.txt", "DATA") then
 	file.Write("pac3_config/pac_part_categories_default.txt", util.TableToKeyValues(pace.partmenu_categories_default))
 end
 decode_table_from_file("pac_part_categories")
+pace.partgroups = pace.partgroups or pace.partmenu_categories_default
