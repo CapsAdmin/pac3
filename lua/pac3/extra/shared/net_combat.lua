@@ -1545,7 +1545,7 @@ if SERVER then
 			end
 			hit,kill,highest_dmg,successful_hit_ents,successful_kill_ents = ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang, ply)
 			highest_dmg = highest_dmg or 0
-			net.Start("pac_hit_results")
+			net.Start("pac_hit_results", true)
 			net.WriteBool(hit)
 			net.WriteBool(kill)
 			net.WriteFloat(highest_dmg)
@@ -1559,6 +1559,11 @@ if SERVER then
 		util.AddNetworkString("pac_request_position_override_on_entity_teleport")
 		util.AddNetworkString("pac_request_position_override_on_entity_grab")
 		util.AddNetworkString("pac_request_angle_reset_on_entity")
+		util.AddNetworkString("pac_lock_imposecalcview")
+		util.AddNetworkString("pac_signal_stop_lock")
+		util.AddNetworkString("pac_request_lock_break")
+		util.AddNetworkString("pac_mark_grabbed_ent")
+		util.AddNetworkString("pac_notify_grabbed_player")
 		--The lock part grab request net message
 		net.Receive("pac_request_position_override_on_entity_grab", function(len, ply)
 			--server allow
