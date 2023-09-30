@@ -359,10 +359,10 @@ PART.Inputs.part_distance = function(self, uid1, uid2)
 	if not uid1 or not uid2 then return 0 end
 	local owner = self:GetPlayerOwner()
 
-	local PartA = pac.GetPartFromUniqueID(pac.Hash(self:GetPlayerOwner()), uid1) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid1)
+	local PartA = pac.GetPartFromUniqueID(pac.Hash(owner), uid1) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid1)
 	if not PartA:IsValid() then PartA = pac.FindPartByName(pac.Hash(owner), uid1, self) end
 
-	local PartB = pac.GetPartFromUniqueID(pac.Hash(self:GetPlayerOwner()), uid2) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid2)
+	local PartB = pac.GetPartFromUniqueID(pac.Hash(owner), uid2) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid2)
 	if not PartB:IsValid() then PartB = pac.FindPartByName(pac.Hash(owner), uid2, self) end
 
 	if not PartA:IsValid() or not PartB:IsValid() then return 0 end
