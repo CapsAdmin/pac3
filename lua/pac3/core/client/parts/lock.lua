@@ -62,9 +62,11 @@ BUILDER:EndStorableVars()
 
 function PART:OnThink()
 	if not GetConVar('pac_sv_lock'):GetBool() then return end
+	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 	if pac.Blocked_Combat_Parts then
 		if pac.Blocked_Combat_Parts[self.ClassName] then return end
 	end
+	
 	if self.forcebreak then
 		if self.next_allowed_grab < CurTime() then --we're able to resume
 			if self.ContinuousSearch then
@@ -120,6 +122,9 @@ function PART:OnThink()
 			local relative_offset_ang = offset_matrix:GetAngles()
 	
 			if pac.LocalPlayer == self:GetPlayerOwner() then
+				if not GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside"):GetBool() then
+					if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
+				end
 				net.Start("pac_request_position_override_on_entity_grab")
 				net.WriteBool(self.is_first_time)
 				net.WriteString(self.UniqueID)
@@ -342,6 +347,9 @@ function PART:OnShow()
 				end
 			end
 			if self.SlopeSafety then teleport_pos_final = teleport_pos_final + Vector(0,0,30) end
+			if not GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside"):GetBool() then
+				if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
+			end
 			net.Start("pac_request_position_override_on_entity_teleport")
 			net.WriteString(self.UniqueID)
 			net.WriteVector(teleport_pos_final)
@@ -372,6 +380,9 @@ function PART:reset_ent_ang()
 	if reset_ent:IsValid() then
 		timer.Simple(math.min(self.RestoreDelay,5), function()
 			if pac.LocalPlayer == self:GetPlayerOwner() then
+				if not GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside"):GetBool() then
+					if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
+				end
 				net.Start("pac_request_angle_reset_on_entity")
 				net.WriteAngle(Angle(0,0,0))
 				net.WriteFloat(self.RestoreDelay)
@@ -503,5 +514,6 @@ function PART:Initialize()
 	end
 	if not GetConVar('pac_sv_lock'):GetBool() then self:SetError("lock parts are disabled on this server!") end
 end
+
 
 BUILDER:Register()

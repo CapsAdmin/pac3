@@ -7,46 +7,47 @@ end
 
 pac.global_combat_whitelist = pac.global_combat_whitelist or {}
 
-local hitscan_allow = CreateConVar('pac_sv_hitscan', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow hitscan parts serverside')
-local hitscan_max_bullets = CreateConVar('pac_sv_hitscan_max_bullets', '200', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'hitscan part maximum number of bullets')
-local hitscan_max_damage = CreateConVar('pac_sv_hitscan_max_damage', '20000', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'hitscan part maximum damage')
-local hitscan_spreadout_dmg = CreateConVar('pac_sv_hitscan_divide_max_damage_by_max_bullets', 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Whether or not force hitscans to divide their damage among the number of bullets fired')
+local hitscan_allow = CreateConVar("pac_sv_hitscan", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow hitscan parts serverside")
+local hitscan_max_bullets = CreateConVar("pac_sv_hitscan_max_bullets", "200", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "hitscan part maximum number of bullets")
+local hitscan_max_damage = CreateConVar("pac_sv_hitscan_max_damage", "20000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "hitscan part maximum damage")
+local hitscan_spreadout_dmg = CreateConVar("pac_sv_hitscan_divide_max_damage_by_max_bullets", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether or not force hitscans to divide their damage among the number of bullets fired")
 
-local damagezone_allow = CreateConVar('pac_sv_damage_zone', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow damage zone parts serverside')
-local damagezone_max_damage = CreateConVar('pac_sv_damage_zone_max_damage', '20000', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'damage zone maximum damage')
-local damagezone_max_length = CreateConVar('pac_sv_damage_zone_max_length', '20000', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'damage zone maximum length')
-local damagezone_max_radius = CreateConVar('pac_sv_damage_zone_max_radius', '10000', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'damage zone maximum radius')
-local damagezone_allow_dissolve = CreateConVar('pac_sv_damage_zone_allow_dissolve', '1', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Whether to enable entity dissolvers and removing NPCs\' weapons on death for damagezone')
+local damagezone_allow = CreateConVar("pac_sv_damage_zone", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow damage zone parts serverside")
+local damagezone_max_damage = CreateConVar("pac_sv_damage_zone_max_damage", "20000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "damage zone maximum damage")
+local damagezone_max_length = CreateConVar("pac_sv_damage_zone_max_length", "20000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "damage zone maximum length")
+local damagezone_max_radius = CreateConVar("pac_sv_damage_zone_max_radius", "10000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "damage zone maximum radius")
+local damagezone_allow_dissolve = CreateConVar("pac_sv_damage_zone_allow_dissolve", "1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to enable entity dissolvers and removing NPCs\" weapons on death for damagezone")
 
-local lock_allow = CreateConVar('pac_sv_lock', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow lock parts serverside')
-local lock_allow_grab = CreateConVar('pac_sv_lock_grab', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow lock part grabs serverside')
-local lock_allow_teleport = CreateConVar('pac_sv_lock_teleport', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow lock part teleports serverside')
-local lock_max_radius = CreateConVar('pac_sv_lock_max_grab_radius', '200', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'lock part maximum grab radius')
-local lock_allow_grab_ply = CreateConVar('pac_sv_lock_allow_grab_ply', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'allow grabbing players with lock part')
-local lock_allow_grab_npc = CreateConVar('pac_sv_lock_allow_grab_npc', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'allow grabbing NPCs with lock part')
-local lock_allow_grab_ent = CreateConVar('pac_sv_lock_allow_grab_ent', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'allow grabbing other entities with lock part')
+local lock_allow = CreateConVar("pac_sv_lock", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow lock parts serverside")
+local lock_allow_grab = CreateConVar("pac_sv_lock_grab", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow lock part grabs serverside")
+local lock_allow_teleport = CreateConVar("pac_sv_lock_teleport", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow lock part teleports serverside")
+local lock_max_radius = CreateConVar("pac_sv_lock_max_grab_radius", "200", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "lock part maximum grab radius")
+local lock_allow_grab_ply = CreateConVar("pac_sv_lock_allow_grab_ply", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow grabbing players with lock part")
+local lock_allow_grab_npc = CreateConVar("pac_sv_lock_allow_grab_npc", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow grabbing NPCs with lock part")
+local lock_allow_grab_ent = CreateConVar("pac_sv_lock_allow_grab_ent", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow grabbing other entities with lock part")
 
-local force_allow = CreateConVar('pac_sv_force', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow force parts serverside')
-local force_max_length = CreateConVar('pac_sv_force_max_length', '10000', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'force part maximum length')
-local force_max_radius = CreateConVar('pac_sv_force_max_radius', '10000', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'force part maximum radius')
-local force_max_amount = CreateConVar('pac_sv_force_max_amount', '10000', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'force part maximum amount of force')
+local force_allow = CreateConVar("pac_sv_force", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow force parts serverside")
+local force_max_length = CreateConVar("pac_sv_force_max_length", "10000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "force part maximum length")
+local force_max_radius = CreateConVar("pac_sv_force_max_radius", "10000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "force part maximum radius")
+local force_max_amount = CreateConVar("pac_sv_force_max_amount", "10000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "force part maximum amount of force")
 
-local healthmod_allow = CreateConVar('pac_sv_health_modifier', 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow health modifier parts serverside')
-local healthmod_allowed_extra_bars = CreateConVar('pac_sv_health_modifier_extra_bars', 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow extra health bars')
-local healthmod_allow_change_maxhp = CreateConVar('pac_sv_health_modifier_allow_maxhp', 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Allow players to change their maximum health and armor.')
-local healthmod_minimum_dmgscaling = CreateConVar('pac_sv_health_modifier_min_damagescaling', -1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Minimum health modifier amount. Negative values can heal.')
+local healthmod_allow = CreateConVar("pac_sv_health_modifier", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow health modifier parts serverside")
+local healthmod_allowed_extra_bars = CreateConVar("pac_sv_health_modifier_extra_bars", 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow extra health bars")
+local healthmod_allow_change_maxhp = CreateConVar("pac_sv_health_modifier_allow_maxhp", 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow players to change their maximum health and armor.")
+local healthmod_minimum_dmgscaling = CreateConVar("pac_sv_health_modifier_min_damagescaling", -1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Minimum health modifier amount. Negative values can heal.")
 
-local master_init_featureblocker = CreateConVar('pac_sv_block_combat_features_on_next_restart', 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Whether to stop initializing the net receivers for the networking of PAC3 combat parts those selectively disabled. This requires a restart!\n0=initialize all the receivers\n1=disable those whose corresponding part cvar is disabled\n2=block all combat features\nAfter updating the sv cvars, you can still reinitialize the net receivers with pac_sv_combat_reinitialize_missing_receivers, but you cannot turn them off after they are turned on')
-cvars.AddChangeCallback('pac_sv_block_combat_features_on_next_restart', function() print("Remember that pac_sv_block_combat_features_on_next_restart is applied on server startup! Only do it if you know what you're doing. You'll need to restart the server.") end)
+local master_init_featureblocker = CreateConVar("pac_sv_block_combat_features_on_next_restart", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to stop initializing the net receivers for the networking of PAC3 combat parts those selectively disabled. This requires a restart!\n0=initialize all the receivers\n1=disable those whose corresponding part cvar is disabled\n2=block all combat features\nAfter updating the sv cvars, you can still reinitialize the net receivers with pac_sv_combat_reinitialize_missing_receivers, but you cannot turn them off after they are turned on")
+cvars.AddChangeCallback("pac_sv_block_combat_features_on_next_restart", function() print("Remember that pac_sv_block_combat_features_on_next_restart is applied on server startup! Only do it if you know what you're doing. You'll need to restart the server.") end)
 
-local enforce_netrate = CreateConVar("pac_sv_combat_enforce_netrate", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'whether to enforce a limit on how often any pac combat net messages can be sent. 0 to disable, otherwise a number in mililiseconds')
-local enforce_netrate_buffer = CreateConVar("pac_sv_combat_enforce_netrate_buffersize", 5000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'the budgeted allowance to limit how often pac combat net messages can be sent. 0 to disable, otherwise a number in bit size')
+local enforce_netrate = CreateConVar("pac_sv_combat_enforce_netrate", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "whether to enforce a limit on how often any pac combat net messages can be sent. 0 to disable, otherwise a number in mililiseconds.\nSee the related cvar pac_sv_combat_enforce_netrate_buffersize. That second convar is governed by this one, if the netrate enforcement is 0, the allowance doesn\"t matter")
+local netrate_allowance = CreateConVar("pac_sv_combat_enforce_netrate_buffersize", 60, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "the budgeted allowance to limit how many pac combat net messages can be sent in bursts. 0 to disable, otherwise a number of net messages of allowance.")
+local netrate_enforcement_sv_monitoring = CreateConVar("pac_sv_combat_enforce_netrate_monitor_serverside", 0, {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether or not to let clients enforce their net message rates.\nSet this to 1 to get serverside prints telling you whenever someone is going over their allowance, but it'll still take the network bandwidth.\nSet this to 0 to let clients enforce their net rate and save some bandwidth but the server won't know who's spamming net messages.")
 local raw_ent_limit = CreateConVar("pac_sv_entity_limit_per_combat_operation", 500, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Hard limit to drop any force or damage zone if more than this amount of entities is selected")
 local per_ply_limit = CreateConVar("pac_sv_entity_limit_per_player_per_combat_operation", 40, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Limit per player to drop any force or damage zone if this amount multiplied by each client is more than the hard limit")
 local player_fraction = CreateConVar("pac_sv_player_limit_as_fraction_to_drop_damage_zone", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "The fraction (0.0-1.0) of players that will stop damage zone net messages if a damage zone order covers more than this fraction of the server's population, when there are more than 12 players covered")
 
-local global_combat_whitelisting = CreateConVar('pac_sv_combat_whitelisting', 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'How the server should decide which players are allowed to use the main PAC3 combat parts (lock, damagezone, force).\n0:Everyone is allowed unless the parts are disabled serverwide\n1:No one is allowed until they get verified as trustworthy\tpac_sv_whitelist_combat <playername>\n\tpac_sv_blacklist_combat <playername>')
-local global_combat_prop_protection = CreateConVar('pac_sv_prop_protection', 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'Whether players\' owned (created) entities (physics props and gmod contraption entities) will be considered in the consent calculations, protecting them. Without this cvar, only the player is protected.')
+local global_combat_whitelisting = CreateConVar("pac_sv_combat_whitelisting", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "How the server should decide which players are allowed to use the main PAC3 combat parts (lock, damagezone, force).\n0:Everyone is allowed unless the parts are disabled serverwide\n1:No one is allowed until they get verified as trustworthy\tpac_sv_whitelist_combat <playername>\n\tpac_sv_blacklist_combat <playername>")
+local global_combat_prop_protection = CreateConVar("pac_sv_prop_protection", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether players owned (created) entities (physics props and gmod contraption entities) will be considered in the consent calculations, protecting them. Without this cvar, only the player is protected.")
 
 local damageable_point_ent_classes = {
 	["predicted_viewmodel"] = false,
@@ -166,6 +167,38 @@ end
 
 if SERVER then
 
+	local function CountNetMessage(ply)
+		local stime = SysTime()
+		local ms_basis = enforce_netrate:GetInt()/1000
+		local base_allowance = netrate_allowance:GetInt()
+
+		ply.pac_netmessage_allowance = ply.pac_netmessage_allowance or base_allowance
+		ply.pac_netmessage_allowance_time = ply.pac_netmessage_allowance_time or 0 --initialize fields
+
+		local timedelta = stime - ply.pac_netmessage_allowance_time --in seconds
+		ply.pac_netmessage_allowance_time = stime
+		local regen_rate = math.Clamp(ms_basis,0.01,10) / 20 --delay (converted from milliseconds) -> frequency (1/seconds)
+		local regens = timedelta / regen_rate
+		--print(timedelta .. " s, " .. 1/regen_rate .. "/s, " .. regens .. " regens")
+		if base_allowance == 0 then --limiting only by time, with no reserves
+			return timedelta > ms_basis
+		elseif ms_basis == 0 then --allowance with 0 time means ??? I guess automatic pass
+			return true
+		else
+			if timedelta > ms_basis then --good, count up
+				--print("good time: +"..regens .. "->" .. math.Clamp(ply.pac_netmessage_allowance + math.min(regens,base_allowance), -1, base_allowance))
+				ply.pac_netmessage_allowance = math.Clamp(ply.pac_netmessage_allowance + math.min(regens,base_allowance), -1, base_allowance)
+			else --earlier than base delay, so count down the allowance
+				--print("bad time: -1")
+				ply.pac_netmessage_allowance = ply.pac_netmessage_allowance - 1
+			end
+			ply.pac_netmessage_allowance = math.Clamp(ply.pac_netmessage_allowance,-1,base_allowance)
+			ply.pac_netmessage_allowance_time = stime
+			return ply.pac_netmessage_allowance ~= -1
+		end
+
+	end
+
 	--hack fix to stop GetOwner returning [NULL Entity]
 	hook.Add("PlayerSpawnedProp", "HackReAssignOwner", function(ply, model, ent) ent.m_PlayerCreator = ply end)
 	hook.Add("PlayerSpawnedNPC", "HackReAssignOwner", function(ply, ent) ent.m_PlayerCreator = ply end)
@@ -231,7 +264,7 @@ if SERVER then
 		local playercount = player.GetCount()
 		local hard_limit = raw_ent_limit:GetInt()
 		local per_ply = per_ply_limit:GetInt()
-		print(count .. " compared against hard limit " .. hard_limit .. " and " .. playercount .. " players*" .. per_ply .. " limit (" .. count*playercount .. " | " .. playercount*per_ply .. ")")
+		--print(count .. " compared against hard limit " .. hard_limit .. " and " .. playercount .. " players*" .. per_ply .. " limit (" .. count*playercount .. " | " .. playercount*per_ply .. ")")
 		if count > hard_limit then
 			MsgC(Color(255,0,0), "TOO MANY ENTS. Beyond hard limit.\n")
 			return true
@@ -943,13 +976,12 @@ if SERVER then
 	local function ProcessForcesList(ents_hits, tbl, pos, ang, ply)
 		local ent_count = 0
 		for i,v in pairs(ents_hits) do
-			if pre_excluded_ent_classes[v:GetClass()] or (v:IsNPC() and not tbl.NPC) or (v:IsPlayer() and not tbl.Players) then ents_hits[i] = nil
+			if pre_excluded_ent_classes[v:GetClass()] or (v:IsNPC() and not tbl.NPC) or (v:IsPlayer() and not tbl.Players and not (v == ply and tbl.AffectSelf)) then ents_hits[i] = nil
 			else ent_count = ent_count + 1 end
 		end
 
 		if TooManyEnts(ent_count) then return end
 		for _,ent in pairs(ents_hits) do
-
 			local phys_ent
 			if (ent ~= tbl.RootPartOwner or (tbl.AffectSelf and ent == tbl.RootPartOwner))
 					and (
@@ -991,7 +1023,18 @@ if SERVER then
 				local dir2 = ent_center - tbl.Locus_pos--locus
 
 				local dist_multiplier = 1
+				local up_mult = 1
 				local distance = (ent_center - pos):Length()
+				local height_delta = pos.z + tbl.LevitationHeight - ent_center.z
+
+				--what it do
+				--if delta is -100 (ent is lower than the desired height), that means +100 adjustment direction
+				--height decides how much to knee the force until it equalizes at 0
+				--clamp the delta to the ratio levitation height
+
+				if tbl.Levitation then
+					up_mult = math.Clamp(height_delta / (5 + math.abs(tbl.LevitationHeight)),-1,1)
+				end
 
 				if tbl.BaseForceAngleMode == "Radial" then --radial on self
 					addvel = dir:GetNormalized() * tbl.BaseForce
@@ -1051,30 +1094,40 @@ if SERVER then
 				if tbl.Falloff then
 					dist_multiplier = math.Clamp(1 - distance / math.max(tbl.Radius, tbl.Length),0,1)
 				end
-				
+				if tbl.ReverseFalloff then
+					dist_multiplier = 1 - math.Clamp(1 - distance / math.max(tbl.Radius, tbl.Length),0,1)
+				end
+				if tbl.Levitation then
+					addvel.z = addvel.z * up_mult
+				end
+
 				addvel = addvel * dist_multiplier
 				add_angvel = add_angvel * dist_multiplier
-				
+
 				local unconsenting_owner = ent:GetCreator() ~= ply and force_consents[ent:GetCreator()] == false
-				
+
 				if (ent:IsPlayer() and tbl.Players) or (ent == ply and tbl.AffectSelf) then
 					if (ent ~= ply and force_consents[ent] ~= false) or (ent == ply and tbl.AffectSelf) then
-						phys_ent:SetVelocity(addvel)
-						ent:SetVelocity(addvel)
+						phys_ent:SetVelocity(oldvel * (-tbl.Damping) + addvel)
+						ent:SetVelocity(oldvel * (-tbl.Damping) + addvel)
 					end
 
 				elseif (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or ent:IsWeapon()) and tbl.PhysicsProps then
 					if not IsPropProtected(ent, ply) and not (global_combat_prop_protection:GetBool() and unconsenting_owner) then
 						if IsValid(phys_ent) then
 							ent:PhysWake()
+							ent:SetVelocity(tbl.Damping * oldvel + addvel)
 							if islocaltorque then
+								phys_ent:SetAngleVelocity(tbl.Damping * phys_ent:GetAngleVelocity())
 								phys_ent:AddAngleVelocity(add_angvel)
+								
 							else
+								phys_ent:SetAngleVelocity(tbl.Damping * phys_ent:GetAngleVelocity())
 								add_angvel = phys_ent:WorldToLocalVector( add_angvel )
 								phys_ent:ApplyTorqueCenter(add_angvel)
 							end
 							ent:SetPos(ent:GetPos() + Vector(0,0,0.0001)) --dumb workaround to fight against the ground friction reversing the forces
-							phys_ent:SetVelocity(oldvel + addvel)
+							phys_ent:SetVelocity((oldvel * tbl.Damping) + addvel)
 						end
 					end
 				elseif (ent:IsNPC() or string.find(ent:GetClass(), "npc") ~= nil) and tbl.NPC then
@@ -1084,11 +1137,11 @@ if SERVER then
 							local clamp_vec = vec:GetNormalized()*500
 							ent:SetVelocity(Vector(0.7 * clamp_vec.x,0.7 * clamp_vec.y,clamp_vec.z)*math.Clamp(1.5*(pos - ent_center):Length()/tbl.Radius,0,1)) --more jank, this one is to prevent some of the weird sliding of npcs by lowering the force as we get closer
 							
-						else ent:SetVelocity(oldvel + addvel) end
+						else ent:SetVelocity((oldvel * tbl.Damping) + addvel) end
 					end
-				else
+				elseif tbl.PointEntities then
 					if not IsPropProtected(ent, ply) and not global_combat_prop_protection:GetBool() and not unconsenting_owner then
-						phys_ent:SetVelocity(oldvel + addvel)
+						phys_ent:SetVelocity(tbl.Damping * oldvel + addvel)
 					end
 				end
 				hook.Run("PhysicsUpdate", ent)
@@ -1099,11 +1152,17 @@ if SERVER then
 	end
 	--first stage of force: look for targets and determine force amount if continuous
 	local function ImpulseForce(tbl, pos, ang, ply)
+		local ftime = 0.016 --approximate tick duration
 		if tbl.Continuous then
-			tbl.BaseForce = tbl.BaseForce * FrameTime() * 3.3333 --weird value to equalize how 600 cancels out gravity
-			tbl.AddedVectorForce = tbl.AddedVectorForce * FrameTime() * 3.3333
-			tbl.Torque = tbl.Torque * FrameTime() * 3.3333
+			tbl.BaseForce = tbl.BaseForce1 * ftime * 3.3333 --weird value to equalize how 600 cancels out gravity
+			tbl.AddedVectorForce = tbl.AddedVectorForce1 * ftime * 3.3333
+			tbl.Torque = tbl.Torque1 * ftime * 3.3333
+		else
+			tbl.BaseForce = tbl.BaseForce1
+			tbl.AddedVectorForce = tbl.AddedVectorForce1
+			tbl.Torque = tbl.Torque1
 		end
+
 		if tbl.HitboxMode == "Sphere" then
 			local ents_hits = ents.FindInSphere(pos, tbl.Radius)
 			ProcessForcesList(ents_hits, tbl, pos, ang, ply)
@@ -1217,23 +1276,6 @@ if SERVER then
 		PrintTable(damageable_point_ent_classes)
 	end)
 
-	local nextchecklock = CurTime()
-	hook.Add("Tick", "pac_checklocks", function()
-		if nextchecklock > CurTime() then return else nextchecklock = CurTime() + 0.14 end
-		--go through every entity and check if they're still active, if beyond 0.5 seconds we nil out. this is the closest to a regular check
-		for ent,bool in pairs(active_grabbed_ents) do
-			if ent.grabbed_by or bool then
-				if ent.grabbed_by_time + 0.5 < CurTime() then --restore the movetype
-					local grabber = ent.grabbed_by
-					ent.grabbed_by_uid = nil
-					ent.grabbed_by = nil
-					grabber.grabbed_ents[ent] = false
-					ApplyLockState(ent, false)
-					active_grabbed_ents[ent] = nil
-				end
-			end
-		end
-	end)
 
 	util.AddNetworkString("pac_signal_player_combat_consent")
 	util.AddNetworkString("pac_request_blocked_parts")
@@ -1274,6 +1316,7 @@ if SERVER then
 	local base_force_mode_ids = {["Radial"] = 0, ["Locus"] = 1, ["Local"] = 2}
 	local vect_force_mode_ids = {["Global"] = 0, ["Local"] = 1, ["Radial"] = 2,  ["RadialNoPitch"] = 3}
 	local ang_torque_mode_ids = {["Global"] = 0, ["TargetLocal"] = 1, ["Local"] = 2, ["Radial"] = 3}
+	local nextcheckforce = SysTime()
 
 	function DeclareForceReceivers()
 		util.AddNetworkString("pac_request_force")
@@ -1282,6 +1325,7 @@ if SERVER then
 			--server allow
 			if not force_allow:GetBool() then return end
 			if not PlayerIsCombatAllowed(ply) then return end
+			
 
 			local tbl = {}
 			local pos = net.ReadVector()
@@ -1290,6 +1334,18 @@ if SERVER then
 			local on = net.ReadBool()
 
 			tbl.UniqueID = net.ReadString()
+
+			if not CountNetMessage(ply) then
+				if netrate_enforcement_sv_monitoring:GetBool() then 
+					MsgC(Color(255,255,0), "[PAC3] Force part: ") MsgC(Color(255,0,0), ply, " over allowance or delay!\n")
+				end
+				
+				hook.Remove("Tick", "pac_force_hold"..tbl.UniqueID)
+				active_force_ids[tbl.UniqueID] = nil
+
+				return
+			end
+
 			tbl.RootPartOwner = net.ReadEntity()
 
 			tbl.HitboxMode = table.KeyFromValue(force_hitbox_ids, net.ReadUInt(4))
@@ -1300,13 +1356,18 @@ if SERVER then
 			tbl.Length = net.ReadInt(16)
 			tbl.Radius = net.ReadInt(16)
 
-			tbl.BaseForce = net.ReadInt(18)
-			tbl.AddedVectorForce = net.ReadVector()
-			tbl.Torque = net.ReadVector()
+			tbl.BaseForce1 = net.ReadInt(18)
+			tbl.AddedVectorForce1 = net.ReadVector()
+			tbl.Torque1 = net.ReadVector()
+
+			tbl.Damping = 1 - net.ReadUInt(10)/1000
+			tbl.LevitationHeight = net.ReadInt(14)
 
 			tbl.Continuous = net.ReadBool()
 			tbl.AccountMass = net.ReadBool()
 			tbl.Falloff = net.ReadBool()
+			tbl.ReverseFalloff = net.ReadBool()
+			tbl.Levitation = net.ReadBool()
 			tbl.AffectSelf = net.ReadBool()
 			tbl.Players = net.ReadBool()
 			tbl.PhysicsProps = net.ReadBool()
@@ -1315,21 +1376,25 @@ if SERVER then
 			--server limits
 			tbl.Radius = math.Clamp(tbl.Radius,-force_max_radius:GetInt(),force_max_radius:GetInt())
 			tbl.Length = math.Clamp(tbl.Length,-force_max_length:GetInt(),force_max_length:GetInt())
-			tbl.BaseForce = math.Clamp(tbl.BaseForce,-force_max_amount:GetInt(),force_max_amount:GetInt())
-
+			tbl.BaseForce = math.Clamp(tbl.BaseForce1,-force_max_amount:GetInt(),force_max_amount:GetInt())
+			tbl.AddedVectorForce1.x = math.Clamp(tbl.AddedVectorForce1.x,-force_max_amount:GetInt(),force_max_amount:GetInt())
+			tbl.AddedVectorForce1.y = math.Clamp(tbl.AddedVectorForce1.y,-force_max_amount:GetInt(),force_max_amount:GetInt())
+			tbl.AddedVectorForce1.z = math.Clamp(tbl.AddedVectorForce1.z,-force_max_amount:GetInt(),force_max_amount:GetInt())
+			tbl.Torque1.x = math.Clamp(tbl.Torque1.x,-force_max_amount:GetInt(),force_max_amount:GetInt())
+			tbl.Torque1.y = math.Clamp(tbl.Torque1.y,-force_max_amount:GetInt(),force_max_amount:GetInt())
+			tbl.Torque1.z = math.Clamp(tbl.Torque1.z,-force_max_amount:GetInt(),force_max_amount:GetInt())
 
 			if on then
 				if tbl.Continuous then
 					hook.Add("Tick", "pac_force_hold"..tbl.UniqueID, function()
 						ImpulseForce(tbl, pos, ang, ply)
-
 					end)
-					
+
 					active_force_ids[tbl.UniqueID] = CurTime()
 				else
-					ImpulseForce(tbl, pos, ang, ply)
 					active_force_ids[tbl.UniqueID] = nil
 				end
+				ImpulseForce(tbl, pos, ang, ply)
 			else
 				hook.Remove("Tick", "pac_force_hold"..tbl.UniqueID)
 				active_force_ids[tbl.UniqueID] = nil
@@ -1348,6 +1413,20 @@ if SERVER then
 			
 
 		end)
+
+		hook.Add("Tick", "pac_check_force_hooks", function()
+			if nextcheckforce > SysTime() then return else nextcheckforce = SysTime() + 0.2 end
+			for i,v in pairs(active_force_ids) do
+				if not v then
+					hook.Remove("Tick", "pac_force_hold"..i)
+					--print("removed an invalid force")
+				elseif v + 0.1 < CurTime() then
+					hook.Remove("Tick", "pac_force_hold"..i)
+					--print("removed an outdated force")
+				end
+			end
+			
+		end)
 	end
 
 	function DeclareDamageZoneReceivers()
@@ -1357,6 +1436,14 @@ if SERVER then
 			--server allow
 			if not damagezone_allow:GetBool() then return end
 			if not PlayerIsCombatAllowed(ply) then return end
+
+			--netrate enforce
+			if not CountNetMessage(ply) then
+				if netrate_enforcement_sv_monitoring:GetBool() then 
+					MsgC(Color(255,255,0), "[PAC3] Damage zone: ") MsgC(Color(255,0,0), ply, " over allowance or delay!\n")
+				end
+				return
+			end
 
 			local pos = net.ReadVector()
 			local ang = net.ReadAngle()
@@ -1555,6 +1642,7 @@ if SERVER then
 		end)
 	end
 
+	local nextchecklock = CurTime()
 	function DeclareLockReceivers()
 		util.AddNetworkString("pac_request_position_override_on_entity_teleport")
 		util.AddNetworkString("pac_request_position_override_on_entity_grab")
@@ -1570,6 +1658,14 @@ if SERVER then
 			if not lock_allow:GetBool() then return end
 			if not lock_allow_grab:GetBool() then return end
 			if not PlayerIsCombatAllowed(ply) then return end
+			
+			--netrate enforce
+			if not CountNetMessage(ply) then
+				if netrate_enforcement_sv_monitoring:GetBool() then 
+					MsgC(Color(255,255,0), "[PAC3] Lock grab: ") MsgC(Color(255,0,0), ply, " over allowance or delay!\n")
+				end
+				return
+			end
 
 			local did_grab = true
 			local need_breakup = false
@@ -1736,6 +1832,14 @@ if SERVER then
 			if not lock_allow_teleport:GetBool() then return end
 			if not PlayerIsCombatAllowed(ply) then return end
 			
+			--netrate enforce
+			if not CountNetMessage(ply) then
+				if netrate_enforcement_sv_monitoring:GetBool() then 
+					MsgC(Color(255,255,0), "[PAC3] Lock teleport: ") MsgC(Color(255,0,0), ply, " over allowance or delay!\n")
+				end
+				return
+			end
+			
 			local lockpart_UID = net.ReadString()
 			local pos = net.ReadVector()
 			local ang = net.ReadAngle()
@@ -1763,6 +1867,24 @@ if SERVER then
 			ApplyLockState(targ_ent, false)
 			
 		end)
+
+		
+		hook.Add("Tick", "pac_checklocks", function()
+			if nextchecklock > CurTime() then return else nextchecklock = CurTime() + 0.2 end
+			--go through every entity and check if they're still active, if beyond 0.5 seconds we nil out. this is the closest to a regular check
+			for ent,bool in pairs(active_grabbed_ents) do
+				if ent.grabbed_by or bool then
+					if ent.grabbed_by_time + 0.5 < CurTime() then --restore the movetype
+						local grabber = ent.grabbed_by
+						ent.grabbed_by_uid = nil
+						ent.grabbed_by = nil
+						grabber.grabbed_ents[ent] = false
+						ApplyLockState(ent, false)
+						active_grabbed_ents[ent] = nil
+					end
+				end
+			end
+		end)
 	end
 
 	function DeclareHitscanReceivers()
@@ -1771,6 +1893,14 @@ if SERVER then
 
 			if not hitscan_allow:GetBool() then return end
 			if not PlayerIsCombatAllowed(ply) then return end
+			
+			--netrate enforce
+			if not CountNetMessage(ply) then
+				if netrate_enforcement_sv_monitoring:GetBool() then 
+					MsgC(Color(255,255,0), "[PAC3] Hitscan: ") MsgC(Color(255,0,0), ply, " over allowance or delay!\n")
+				end
+				return
+			end
 
 			local bulletinfo = {}
 			local affect_self = net.ReadBool()
@@ -1848,10 +1978,19 @@ if SERVER then
 		util.AddNetworkString("pac_update_healthbars")
 		net.Receive("pac_request_healthmod", function(len,ply)
 			if not healthmod_allow:GetBool() then return end
+
+			--netrate enforce
+			if not CountNetMessage(ply) then
+				if netrate_enforcement_sv_monitoring:GetBool() then 
+					MsgC(Color(255,255,0), "[PAC3] Health modifier: ") MsgC(Color(255,0,0), ply, " over allowance or delay!\n")
+				end
+				return
+			end
+
 			local part_uid = net.ReadString()
 			local mod_id = net.ReadString()
 			local action = net.ReadString()
-			
+
 			if action == "MaxHealth" then
 				if not healthmod_allow:GetBool() then return end
 				local num = net.ReadUInt(32)
@@ -1994,12 +2133,46 @@ if SERVER then
 end
 
 if CLIENT then
-	CreateConVar("pac_client_grab_consent", "0", {FCVAR_ARCHIVE and FCVAR_USERINFO}, "Whether you want to consent to being grabbed by other players in PAC3 with the lock part")
-	CreateConVar("pac_client_lock_camera_consent", "0", {FCVAR_ARCHIVE and FCVAR_USERINFO}, "Whether you want to consent to having lock parts override your view")
-	CreateConVar("pac_client_damage_zone_consent", "0", {FCVAR_ARCHIVE and FCVAR_USERINFO}, "Whether you want to consent to receiving damage by other players in PAC3 with the damage zone part")
-	CreateConVar("pac_client_force_consent", "0", {FCVAR_ARCHIVE and FCVAR_USERINFO}, "Whether you want to consent to pac3 physics forces")
-	CreateConVar("pac_client_hitscan_consent", "0", {FCVAR_ARCHIVE and FCVAR_USERINFO}, "Whether you want to consent to receiving damage by other players in PAC3 with the hitscan part.")
+	CreateConVar("pac_client_grab_consent", "0", {FCVAR_ARCHIVE}, "Whether you want to consent to being grabbed by other players in PAC3 with the lock part")
+	CreateConVar("pac_client_lock_camera_consent", "0", {FCVAR_ARCHIVE}, "Whether you want to consent to having lock parts override your view")
+	CreateConVar("pac_client_damage_zone_consent", "0", {FCVAR_ARCHIVE}, "Whether you want to consent to receiving damage by other players in PAC3 with the damage zone part")
+	CreateConVar("pac_client_force_consent", "0", {FCVAR_ARCHIVE}, "Whether you want to consent to pac3 physics forces")
+	CreateConVar("pac_client_hitscan_consent", "0", {FCVAR_ARCHIVE}, "Whether you want to consent to receiving damage by other players in PAC3 with the hitscan part.")
 	
+	function pac.CountNetMessage()
+		local ply = LocalPlayer()
+	
+		local stime = SysTime()
+		local ms_basis = GetConVar("pac_sv_combat_enforce_netrate"):GetInt()/1000
+		local base_allowance = GetConVar("pac_sv_combat_enforce_netrate_buffersize"):GetInt()
+	
+		ply.pac_netmessage_allowance = ply.pac_netmessage_allowance or base_allowance
+		ply.pac_netmessage_allowance_time = ply.pac_netmessage_allowance_time or 0 --initialize fields
+	
+		local timedelta = stime - ply.pac_netmessage_allowance_time --in seconds
+		ply.pac_netmessage_allowance_time = stime
+		local regen_rate = math.Clamp(ms_basis,0.01,10) / 20 --delay (converted from milliseconds) -> frequency (1/seconds)
+		local regens = timedelta / regen_rate
+		--print(timedelta .. " s, " .. 1/regen_rate .. "/s, " .. regens .. " regens")
+		if base_allowance == 0 then --limiting only by time, with no reserves
+			return timedelta > ms_basis
+		elseif ms_basis == 0 then --allowance with 0 time means ??? I guess automatic pass
+			return true
+		else
+			if timedelta > ms_basis then --good, count up
+				--print("good time: +"..regens .. "->" .. math.Clamp(ply.pac_netmessage_allowance + math.min(regens,base_allowance), -1, base_allowance))
+				ply.pac_netmessage_allowance = math.Clamp(ply.pac_netmessage_allowance + math.min(regens,base_allowance), -1, base_allowance)
+			else --earlier than base delay, so count down the allowance
+				--print("bad time: -1")
+				ply.pac_netmessage_allowance = ply.pac_netmessage_allowance - 1
+			end
+			ply.pac_netmessage_allowance = math.Clamp(ply.pac_netmessage_allowance,-1,base_allowance)
+			ply.pac_netmessage_allowance_time = stime
+			return ply.pac_netmessage_allowance ~= -1
+		end
+	
+	end
+
 	local function SendConsents()
 		net.Start("pac_signal_player_combat_consent")
 		net.WriteBool(GetConVar("pac_client_grab_consent"):GetBool())
@@ -2124,5 +2297,6 @@ if CLIENT then
 
 	hook.Add("InitPostEntity", "PAC_Send_Consents_On_Join", SendConsents)
 	hook.Add("InitPostEntity", "PAC_Request_BlockedParts_On_Join", RequestBlockedParts)
+	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 end
 

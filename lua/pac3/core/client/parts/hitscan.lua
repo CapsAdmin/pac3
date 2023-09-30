@@ -13,7 +13,7 @@ BUILDER:StartStorableVars()
 	:GetSet("ServerBullets", true, {description = "serverside bullets can do damage and exert a physical impact force"})
 	:SetPropertyGroup("bullet properties")
 		:GetSet("BulletImpact", false)
-		:GetSet("Damage", 0, {editor_onchange = function (self,val) return math.floor(math.Clamp(val,0,268435455)) end})
+		:GetSet("Damage", 1, {editor_onchange = function (self,val) return math.floor(math.Clamp(val,0,268435455)) end})
 		:GetSet("Force",1000, {editor_onchange = function (self,val) return math.floor(math.Clamp(val,0,65535)) end})
 		:GetSet("AffectSelf", false, {description = "whether to allow to damage yourself"})
 		:GetSet("DamageFalloff", false, {description = "enable damage falloff. The lowest damage is not a fixed damage number, but a fraction of the total initial damage.\nThe server can still restrict the maximum distance of all bullets"})
@@ -195,8 +195,12 @@ local tracer_ids = {
 function PART:SendNetMessage()
 	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	if not GetConVar('pac_sv_hitscan'):GetBool() then return end
+	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 	if pac.Blocked_Combat_Parts[self.ClassName] then
 		return
+	end
+	if not GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside"):GetBool() then
+		if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
 	end
 
 	net.Start("pac_hitscan", true)
@@ -222,6 +226,7 @@ function PART:SendNetMessage()
 
 	net.SendToServer()
 end
+
 
 BUILDER:Register()
 

@@ -208,7 +208,7 @@ function PANEL:OnMouseReleased(mc)
 end
 
 function PANEL:SetModel(path)
-	if not file.Exists(path, "GAME") then
+	if not file.Exists(path or "", "GAME") then
 		path = player_manager.TranslatePlayerModel(path)
 		if not file.Exists(path, "GAME") then
 			print(path, "is invalid")
@@ -583,10 +583,10 @@ pac.AddHook("pace_OnVariableChanged", "pace_create_tree_nodes", function(part, k
 end)
 
 local function refresh_events_gated()
-	pace.final_scheduled_event_refresh = pace.final_scheduled_event_refresh or CurTime() + 0.2
+	pace.final_scheduled_event_refresh = pace.final_scheduled_event_refresh or CurTime() + 0.08
 	pace.event_refresh_spam_time = CurTime()
 	hook.Add("Tick", "pace_refresh_events", function()
-		if CurTime() < pace.event_refresh_spam_time + 0.2 then return end
+		if CurTime() < pace.event_refresh_spam_time + 0.08 then return end
 		if CurTime() > pace.final_scheduled_event_refresh then
 			pace.RefreshEvents()
 			pace.final_scheduled_event_refresh = nil

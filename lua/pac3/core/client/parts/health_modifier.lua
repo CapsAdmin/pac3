@@ -35,8 +35,12 @@ function PART:SendModifier(str)
 	if self:IsHidden() then return end
 	if LocalPlayer() ~= self:GetPlayerOwner() then return end
 	if not GetConVar("pac_sv_health_modifier"):GetBool() then return end
+	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 	if pac.Blocked_Combat_Parts then
 		if pac.Blocked_Combat_Parts[self.ClassName] then return end
+	end
+	if not GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside"):GetBool() then
+		if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
 	end
 
 	if str == "MaxHealth" and self.ChangeHealth then
@@ -161,5 +165,6 @@ end
 function PART:Initialize()
 	if not GetConVar("pac_sv_health_modifier"):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then self:SetError("health modifiers are disabled on this server!") end
 end
+
 
 BUILDER:Register()

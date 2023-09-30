@@ -44,10 +44,10 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("Pow", 1)
 
 	BUILDER:SetPropertyGroup("behavior")
-		BUILDER:GetSet("Additive", false)
-		BUILDER:GetSet("PlayerAngles", false)
-		BUILDER:GetSet("ZeroEyePitch", false)
-		BUILDER:GetSet("ResetVelocitiesOnHide", true)
+		BUILDER:GetSet("Additive", false, {description = "This means that every computation frame, the proxy will add its output to its current stored memory. This can quickly get out of control if you don't know what you're doing! This is like using the feedback() function"})
+		BUILDER:GetSet("PlayerAngles", false, {description = "For some functions/inputs (eye angles, owner velocity increases, aim length) it will choose between the owner entity's Angles or EyeAngles. Unsure of whether this makes a difference."})
+		BUILDER:GetSet("ZeroEyePitch", false, {description = "For some functions/inputs (eye angles, owner velocity increases, aim length) it will force the angle to be horizon level."})
+		BUILDER:GetSet("ResetVelocitiesOnHide", true, {description = "Because velocity calculators use smoothing that makes the output converge toward a crude rolling average, it might matter whether you want to get a clean slate readout.\n(VelocityRoughness is how close to the snapshots it will be. Lower means smoother but delayed. Higher means less smoothing but it might overshoot and be inaccurate because of frame time works and varies)"})
 		BUILDER:GetSet("VelocityRoughness", 10)
 
 BUILDER:EndStorableVars()
@@ -357,22 +357,25 @@ end
 
 PART.Inputs.part_distance = function(self, uid1, uid2)
 	if not uid1 or not uid2 then return 0 end
+	local owner = self:GetPlayerOwner()
 
-	local PartA = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid1)
-	if not PartA:IsValid() then PartA = pac.FindPartByName(pac.Hash(pac.LocalPlayer), uid1, self) end
+	local PartA = pac.GetPartFromUniqueID(pac.Hash(self:GetPlayerOwner()), uid1) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid1)
+	if not PartA:IsValid() then PartA = pac.FindPartByName(pac.Hash(owner), uid1, self) end
 
-	local PartB = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid2)
-	if not PartB:IsValid() then PartB = pac.FindPartByName(pac.Hash(pac.LocalPlayer), uid2, self) end
+	local PartB = pac.GetPartFromUniqueID(pac.Hash(self:GetPlayerOwner()), uid2) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid2)
+	if not PartB:IsValid() then PartB = pac.FindPartByName(pac.Hash(owner), uid2, self) end
 
 	if not PartA:IsValid() or not PartB:IsValid() then return 0 end
+	if not PartA.Position or not PartB.Position then return 0 end
 	return (PartB:GetWorldPosition() - PartA:GetWorldPosition()):Length()
 end
 
 PART.Inputs.event_alternative = function(self, uid1, num1, num2)
 	if not uid1 then return 0 end
+	local owner = self:GetPlayerOwner()
 
-	local PartA = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid1)
-	if not PartA:IsValid() then PartA = pac.FindPartByName(pac.Hash(pac.LocalPlayer), uid1, self) end
+	local PartA = pac.GetPartFromUniqueID(pac.Hash(owner), uid1) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid1)
+	if not PartA:IsValid() then PartA = pac.FindPartByName(pac.Hash(owner), uid1, self) end
 
 	if PartA.ClassName == "event" then
 		if PartA.event_triggered then return num1 or 0

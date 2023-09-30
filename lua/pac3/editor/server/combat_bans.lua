@@ -34,15 +34,17 @@ local function load_table_from_file()
 	end
 end
 
+if SERVER then
+	util.AddNetworkString("pac.BanUpdate")
+	util.AddNetworkString("pac.RequestBanStates")
+	util.AddNetworkString("pac.SendBanStates")
 
-util.AddNetworkString("pac.BanUpdate")
-util.AddNetworkString("pac.RequestBanStates")
-util.AddNetworkString("pac.SendBanStates")
 
+	util.AddNetworkString("pac.CombatBanUpdate")
+	util.AddNetworkString("pac.SendCombatBanStates")
+	util.AddNetworkString("pac.RequestCombatBanStates")
+end
 
-util.AddNetworkString("pac.CombatBanUpdate")
-util.AddNetworkString("pac.SendCombatBanStates")
-util.AddNetworkString("pac.RequestCombatBanStates")
 
 net.Receive("pac.CombatBanUpdate", function()
 	--get old states first

@@ -236,7 +236,6 @@ function pace.LoadParts(name, clear, override_part)
 
 			if data and istable(data) then
 				for i,part in pairs(data) do
-					print(part, part.self, part.seld)
 					if isnumber(tonumber(part.self.OwnerName)) then has_possible_prop_pacs = true end
 				end
 			end

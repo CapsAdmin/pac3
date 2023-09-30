@@ -242,19 +242,32 @@ local part_setup_runtimes = 0
 		
 	}
 ]]
+--[[
+	owner.hitmarker_partpool[group.UniqueID] = {active, template_uid, group_part_data}
+	owner.hitparts[free] = {active, specimen_part, hitmarker_id, template_uid}
+]]
 
-local function FindOrCreateFloatingPart(owner, part_uid)
+function PART:FindOrCreateFloatingPart(owner, ent, part_uid, id)
 	owner.hitmarker_partpool = owner.hitmarker_partpool or {}
-	
 	for spec_uid,tbl in pairs(owner.hitmarker_partpool) do
 		if tbl.template_uid == part_uid then
 			if not tbl.active then
-				return part --whoowee we found an already existing part
+				return pac.GetPartFromUniqueID(pac.Hash(owner), spec_uid) --whoowee we found an already existing part
 			end
 		end
 	end
+	--what if we don't!
+	local tbl = pac.GetPartFromUniqueID(pac.Hash(owner), part_uid):ToTable()
+	local group = pac.CreatePart("group", self:GetPlayerOwner()) print("\tcreated a group for " .. id)
+	group:SetShowInEditor(false)
 
-	return part
+	local part = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner(), tbl, tostring(tbl))
+	group:AddChild(part)
+
+	group:CallRecursive("Think")
+	owner.hitmarker_partpool[group.UniqueID] = {active = true, hitmarker_id = id, template_uid = part_uid, group_part_data = group}
+
+	return group, owner.hitmarker_partpool[group.UniqueID]
 
 end
 
@@ -272,73 +285,125 @@ local function FreeSpotInStack(owner)
 	return nil
 end
 
-local function MatchInStack(owner, ent)
+--[[
+	owner.hitmarker_partpool[group.UniqueID] = {active, template_uid, group_part_data}
+	owner.hitparts[free] = {active, specimen_part, hitmarker_id, template_uid}
+]]
+
+local function MatchInStack(owner, ent, uid, id)
 	owner.hitparts = owner.hitparts or {}
 	for i=1,20,1 do
 		if owner.hitparts[i] then
-			--match: entry's template uid is the same as entity's template uid
-			--if there's more, still match entry's specimen ID with specimen ID
-			if owner.hitparts[i].pac_hitmarker_template_id == ent.pac_hitmarker_template_id and owner.hitparts[i].hitmarker_id == ent.marker_id then
+			if owner.hitparts[i].template_uid == ent.template_uid and owner.hitparts[i].hitmarker_id == ent.marker_id then
 				return i
 			end
+			--match: entry's template uid is the same as entity's template uid
+			--if there's more, still match entry's specimen ID with specimen ID
 		end
 	end
+
 	return nil
 end
 
-local function AddHitMarkerToStack(owner, ent, part_uid, ent_id)
+local function UIDMatchInStackForExistingPart(owner, ent, part_uid, ent_id)
 	owner.hitparts = owner.hitparts or {}
-	local free = FreeSpotInStack()
-	if free then
-		owner.hitparts[free] = {active = true, specimen_part = FindOrCreateFloatingPart(ent, part_uid), hitmarker_id = ent_id, template_uid = part_uid}
+	for i=1,20,1 do
+		if owner.hitparts[i] then
+			--print(i, "match compare:", owner.hitparts[i].active, owner.hitparts[i].specimen_part, owner.hitparts[i].hitmarker_id, owner.hitparts[i].template_uid == part_uid)
+			if owner.hitparts[i].template_uid == part_uid then
+				if owner.hitmarker_partpool then
+					for spec_uid,tbl in pairs(owner.hitmarker_partpool) do
+						if tbl.template_uid == part_uid then
+							if not tbl.active then
+								return tbl.group_part_data
+							end
+						end
+					end
+				end
+			end
+		end
 	end
+	
+	return nil
 end
 
-local function RemoveHitMarker(owner, ent)
+--[[
+	owner.hitmarker_partpool[group.UniqueID] = {active, template_uid, group_part_data}
+	owner.hitparts[free] = {active, specimen_part, hitmarker_id, template_uid}
+]]
+function PART:AddHitMarkerToStack(owner, ent, part_uid, ent_id)
 	owner.hitparts = owner.hitparts or {}
-	local match = MatchInStack(owner, ent)
+	local free = FreeSpotInStack(owner)
+	local returned_part = nil
+	local existingpart = UIDMatchInStackForExistingPart(owner, ent, part_uid, ent_id)
+	returned_part = existingpart
+
+	if free and not existingpart then
+		local group, tbl = self:FindOrCreateFloatingPart(owner, ent, part_uid, ent_id)
+		owner.hitparts[free] = {active = true, specimen_part = group, hitmarker_id = ent_id, template_uid = part_uid}
+		returned_part = owner.hitparts[free].specimen_part
+	else
+		owner.hitparts[free] = {active = true, specimen_part = returned_part, hitmarker_id = ent_id, template_uid = part_uid}
+	end
+	
+	return returned_part
+end
+
+local function RemoveHitMarker(owner, ent, uid, id)
+	owner.hitparts = owner.hitparts or {}
+
+	local match = MatchInStack(owner, ent, uid, id)
 	if match then
-		owner.hitparts[match].active = false
+		if owner.hitparts[match] then
+			owner.hitparts[match].active = false
+		end
 	end
-	SafeRemoveEntity(ent)
+	if owner.hitmarker_partpool then
+		for spec_uid,tbl in pairs(owner.hitmarker_partpool) do
+			if tbl.hitmarker_id == id then
+				tbl.active = false
+				tbl.group_part_data:SetHide(true)
+				tbl.group_part_data:SetShowInEditor(false)
+				tbl.group_part_data:SetOwner(owner)
+				print(tbl.group_part_data, "dormant")
+			end
+		end
+	end
+	--SafeRemoveEntity(ent)
 end
 
---grabbed the function from projectile.lua
-function PART:AttachToEntity(part, ent, parent_ent, marker_id)
-	if not part:IsValid() then return false end
+--[[
+	owner.hitmarker_partpool[group.UniqueID] = {active, template_uid, group_part_data}
+	owner.hitparts[free] = {active, specimen_part, hitmarker_id, template_uid}
+]]
+function PART:AssignFloatingPartToEntity(part, owner, ent, parent_ent, template_uid, marker_id)
+	if not IsValid(part) then return false end
 
 	ent.pac_draw_distance = 0
 
-	local tbl = part:ToTable()
+	local group = part
+	local part2 = group:GetChildrenList()[1]
 
-	local group = pac.CreatePart("group", self:GetPlayerOwner())
-	group:SetShowInEditor(false)
-
-	local part = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner(), tbl, tostring(tbl))
-	group:AddChild(part)
-
-	group:SetOwner(ent)
-	group.SetOwner = function(s) s.Owner = ent end
-	part:SetHide(false)
-
-	local id = group.Id
-	local owner_id = self:GetPlayerOwnerId()
-	if owner_id then
-		id = id .. owner_id
-	end
-
-	ent:CallOnRemove("pac_dmgzone_hitmarker_" .. id, function()
-		group:Remove()
-	end)
 	group:CallRecursive("Think")
-	
+
+	owner.hitmarker_partpool[group.UniqueID] = {active = true, hitmarker_id = marker_id, template_uid = template_uid, group_part_data = group}
+	owner.hitparts[FreeSpotInStack(owner) or 1] = {active = true, specimen_part = group, hitmarker_id = marker_id, template_uid = template_uid}
+
 	parent_ent.pac_dmgzone_hitmarker_ents = parent_ent.pac_dmgzone_hitmarker_ents or {}
 	ent.part = group
-	ent.pac_hitmarker_template_id = part.UniqueID
+	ent.parent_ent = parent_ent
+	ent.template_uid = template_uid
 	parent_ent.pac_dmgzone_hitmarker_ents[marker_id] = ent
 	ent.marker_id = marker_id
 
-	return true
+	group:SetShowInEditor(false)
+	group:SetOwner(ent)
+	group.Owner = ent
+	group:SetHide(false)
+	part2:SetHide(false)
+	group:CallRecursive("Think")
+	print(group, "assigned to " .. marker_id .. " / " .. parent_ent:EntIndex())
+
 end
 
 local function RecursedHitmarker(part)
@@ -428,13 +493,17 @@ local hitbox_ids = {
 
 --more compressed net message
 function PART:SendNetMessage()
+	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	if not GetConVar('pac_sv_damage_zone'):GetBool() then return end
 	if pac.Blocked_Combat_Parts then
 		if pac.Blocked_Combat_Parts[self.ClassName] then return end
 	end
+	if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") end
 
-	if not GetConVar("pac_sv_combat_enforce_netrate"):GetInt() == 0 then return end
+	if GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside"):GetBool() then
+		if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
+	end
 
 	net.Start("pac_request_zone_damage", true)
 
@@ -518,9 +587,7 @@ function PART:OnShow()
 			if part == self then return end --stop infinite feedback loops of using the damagezone as a hitmarker
 			--what if people employ a more roundabout method? CRACKDOWN!
 			
-
 			if not owner.hitparts then owner.hitparts = {} end
-			if not owner.hitparts_floatingparts then owner.hitparts_floatingparts = {} end
 
 			if owner.stop_hit_markers_until then
 				if owner.stop_hit_markers_until > CurTime() then return end
@@ -529,19 +596,6 @@ function PART:OnShow()
 			if not self:IsValid() then return end
 			if not part:IsValid() then return end
 
-			if not HasBudget(owner, part) then
-				local overbudget = math.abs(owner.pac_dmgzone_hitmarker_budget - CalculateHitMarkerPrice(part))
-				if overbudget > 10000 then
-					self:LaunchAuditAndEnforceSoftBan(overbudget)
-				end
-				--print(owner, "is trying to go over budget by " .. string.NiceSize(math.abs(overbudget)))
-				return
-			else
-				timer.Simple(1, function() self:ClearBudgetAdmonishmentWarning() end)
-				local budget_add = CalculateHitMarkerPrice(part)
-				--print(owner, "is within budget with " .. owner.pac_dmgzone_hitmarker_budget .. " left. can add " .. string.NiceSize(budget_add))
-				owner.pac_dmgzone_hitmarker_budget = owner.pac_dmgzone_hitmarker_budget - CalculateHitMarkerPrice(part)
-			end
 
 			local start = SysTime()
 			local ent = pac.CreateEntity("models/props_junk/popcan01a.mdl")
@@ -551,6 +605,7 @@ function PART:OnShow()
 			ent:SetPos(pos)
 			ent:SetAngles(ang)
 			global_hitmarker_CSEnt_seed = global_hitmarker_CSEnt_seed + 1
+			local csent_id = global_hitmarker_CSEnt_seed
 
 			--the spawn order needs to decide whether it can or can't create an ent or part
 
@@ -558,44 +613,49 @@ function PART:OnShow()
 			if flush then
 				--go through the entity and remove the clientside hitmarkers entities
 				if parent_ent.pac_dmgzone_hitmarker_ents then
-					for id,ent in pairs(parent_ent.pac_dmgzone_hitmarker_ents) do
-						if IsValid(ent) then
-							if ent.part:IsValid() then
-								owner.pac_dmgzone_hitmarker_budget = owner.pac_dmgzone_hitmarker_budget + CalculateHitMarkerPrice(part)
-								ent.part:Remove()
+					for id,ent2 in pairs(parent_ent.pac_dmgzone_hitmarker_ents) do
+						if IsValid(ent2) then
+							if ent2.part:IsValid() then
+								--owner.pac_dmgzone_hitmarker_budget = owner.pac_dmgzone_hitmarker_budget + CalculateHitMarkerPrice(part)
+								ent2.part:SetHide(true)
 							end
-							RemoveHitMarker(ent, part.UniqueID, id)
+							--RemoveHitMarker(owner, ent, part.UniqueID, id)
 						end
 					end
 				end
 			end
+
 			if FreeSpotInStack(owner) then
-				if self:AttachToEntity(part, ent, parent_ent, global_hitmarker_CSEnt_seed) then
+				if part:IsValid() then --self:AttachToEntity(part, ent, parent_ent, global_hitmarker_CSEnt_seed)
+					local newpart
+					local bool = UIDMatchInStackForExistingPart(owner, ent, part.UniqueID, csent_id)
+					
+					newpart = UIDMatchInStackForExistingPart(owner, ent, part.UniqueID, csent_id) or self:AddHitMarkerToStack(owner, ent, part.UniqueID, csent_id)
+					
+					self:AssignFloatingPartToEntity(newpart, owner, ent, parent_ent, part.UniqueID, csent_id)
+
+					MsgC(bool and Color(0,255,0) or Color(0,200,255), bool and "existing" or "created", " : ", newpart, "\n")
 					timer.Simple(math.Clamp(duration, 0, 8), function()
 						if ent:IsValid() then
 							if parent_ent.pac_dmgzone_hitmarker_ents then
-								for id,ent in pairs(parent_ent.pac_dmgzone_hitmarker_ents) do
-									if IsValid(ent) then
-										if ent.part:IsValid() then
-											owner.pac_dmgzone_hitmarker_budget = owner.pac_dmgzone_hitmarker_budget + CalculateHitMarkerPrice(part)
-											ent.part:Remove()
-										end
-										RemoveHitMarker(ent, part.UniqueID, id)
+								for id,ent2 in pairs(parent_ent.pac_dmgzone_hitmarker_ents) do
+									if IsValid(ent2) then
+										RemoveHitMarker(owner, ent2, part.UniqueID, id)
+										--SafeRemoveEntity(ent2)
 									end
 								end
 							end
-	
-							timer.Simple(0.5, function()
-								RemoveHitMarker(ent, part.UniqueID, id)
-							end)
+							--[[timer.Simple(0.5, function()
+								RemoveHitMarker(owner, ent, part.UniqueID, csent_id)
+								SafeRemoveEntity(ent)
+							end)]]
 						end
 					end)
 				end
 			end
-			
+
 			local creation_delta = SysTime() - start
-			--print(string.NiceTime(creation_delta))
-			--print(100000 * creation_delta / CalculateHitMarkerPrice(part) .. "budget score")
+			
 			return creation_delta
 		end
 
@@ -644,9 +704,42 @@ function PART:OnShow()
 		if IsValid(self.HitMarkerPart) then
 			--print("runtimes were " .. string.FormattedTime( part_setup_runtimes).ms .. "ms.\n\t" .. 1000*part_setup_runtimes .. " impact.\n\t" .. table.Count(self.HitMarkerPart:GetChildrenList()) .. " children, " .. 1000*part_setup_runtimes / table.Count(self.HitMarkerPart:GetChildrenList()) .. " impact per children")
 		end
+		if owner.hitparts then
+			for i,v in ipairs(owner.hitparts) do
+				--print(i,v,v.active,v.specimen_part,v.hitmarker_id,v.template_uid)
+			end
+			self:SetInfo(table.Count(owner.hitparts) .. " hitmarkers in slot")
+		end
+
 	end)
-	
+
 end
+
+concommand.Add("pac_cleanup_hitmarks", function()
+	if LocalPlayer().hitparts then
+		for i,v in pairs(LocalPlayer().hitparts) do
+			v.specimen_part:Remove()
+		end
+	end
+
+	LocalPlayer().hitmarker_partpool = nil
+	LocalPlayer().hitparts = nil
+end)
+
+concommand.Add("pac_count_inactive_hitmarks", function()
+	print("first the markers")
+	if LocalPlayer().hitparts then
+		for i,v in pairs(LocalPlayer().hitparts) do
+			print(i,v.active)
+		end
+	end
+	print("second the partpool")
+	if LocalPlayer().hitmarker_partpool then
+		for i,v in pairs(LocalPlayer().hitmarker_partpool) do
+			print(i,v.active, pac.GetPartFromUniqueID(pac.Hash(LocalPlayer()),v.spec_uid))
+		end
+	end
+end)
 
 function PART:OnHide()
 	hook.Remove(self.RenderingHook, "pace_draw_hitbox"..self.UniqueID)
@@ -919,5 +1012,6 @@ function PART:Initialize()
 	if not GetConVar("pac_sv_damage_zone"):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then self:SetError("damage zones are disabled on this server!") end
 	self.validTime = SysTime() + 2
 end
+
 
 BUILDER:Register()

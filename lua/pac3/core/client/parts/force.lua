@@ -31,10 +31,15 @@ BUILDER:StartStorableVars()
 		:GetSet("Continuous", true, {description = "If set to false, the force will be a single, stronger impulse"})
 		:GetSet("AccountMass", false, {description = "Apply acceleration according to mass."})
 		:GetSet("Falloff", false, {description = "Whether the force to apply should fade with distance"})
+		:GetSet("ReverseFalloff", false, {description = "The reverse of the falloff means the force fades when getting closer."})
+		:GetSet("Damping", 0, {editor_clamp = {0,1}, editor_sensitivity = 0.1})
+		:GetSet("Levitation", false, {description = "Tries to stabilize the force to levitate targets at a certain height relative to the part"})
+		:GetSet("LevitationHeight", 0)
 	:SetPropertyGroup("Targets")
 		:GetSet("AffectSelf",false)
 		:GetSet("Players",true)
 		:GetSet("PhysicsProps", true)
+		:GetSet("PointEntities",true, {description = "other entities not covered by physics props but with potential physics"})
 		:GetSet("NPC",false)
 :EndStorableVars()
 
@@ -141,12 +146,16 @@ function PART:OnThink()
 end
 
 function PART:Impulse(on)
-	self.next_impulse = CurTime() + 0.1
+	self.next_impulse = CurTime() + 0.05
 	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	if not on and not self.Continuous then return end
 	if not GetConVar("pac_sv_force"):GetBool() then return end
+	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 	if pac.Blocked_Combat_Parts then
 		if pac.Blocked_Combat_Parts[self.ClassName] then return end
+	end
+	if not GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside"):GetBool() then
+		if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
 	end
 
 	local locus_pos = Vector(0,0,0)
@@ -184,10 +193,14 @@ function PART:Impulse(on)
 	net.WriteInt(self.BaseForce, 18)
 	net.WriteVector(self.AddedVectorForce)
 	net.WriteVector(self.Torque)
+	net.WriteUInt(self.Damping*1000, 10)
+	net.WriteInt(self.LevitationHeight,14)
 
 	net.WriteBool(self.Continuous)
 	net.WriteBool(self.AccountMass)
 	net.WriteBool(self.Falloff)
+	net.WriteBool(self.ReverseFalloff)
+	net.WriteBool(self.Levitation)
 	net.WriteBool(self.AffectSelf)
 	net.WriteBool(self.Players)
 	net.WriteBool(self.PhysicsProps)
