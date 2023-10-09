@@ -258,16 +258,16 @@ do
 		elseif pace.IsActive() then
 			pac.Message("not wearing autoload outfit, editor is open")
 		else
-			local autoload_state = "autoload"
-			autoload_state = hook.Run("PAC3Autoload", autoload_state)
+			local autoload_file = "autoload"
+			local autoload_result = hook.Run("PAC3Autoload", autoload_file)
 			
-			if autoload_state ~= false then
-				if not isstring(autoload_state) then
-					autoload_state = "autoload"
+			if autoload_result ~= false then
+				if isstring(autoload_result) then
+					autoload_file = autoload_result
 				end
 			
-				pac.Message("Wearing " .. autoload_state .. "...")
-				pace.LoadParts(autoload_state)
+				pac.Message("Wearing " .. autoload_file .. "...")
+				pace.LoadParts(autoload_file)
 				pace.WearParts()
 			end
 		end
