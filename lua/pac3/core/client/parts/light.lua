@@ -20,7 +20,7 @@ BUILDER:EndStorableVars()
 
 function PART:GetLight()
 	if not self.light then
-		self.light = DynamicLight(tonumber(pac.LocalPlayer:EntIndex()))
+		self.light = DynamicLight(tonumber(self:GetPrintUniqueID(),16))
 	end
 	self.light.decay = 0
 	self.light.dietime = math.huge
@@ -40,7 +40,6 @@ function PART:RemoveLight()
 end
 
 function PART:GetNiceName()
-	-- forgot the reason why this was changed to be a 0-1 range anyway
 	local color = self:GetColor()
 	local hue = pac.ColorToNames({r = color[1] * 255, g = color[2] * 255, b = color[3] * 255})
 	return hue .. " light"
