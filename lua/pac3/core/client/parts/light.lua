@@ -20,7 +20,7 @@ BUILDER:EndStorableVars()
 
 function PART:GetLight()
 	if not self.light then
-		self.light = DynamicLight(tonumber(self.UniqueID))
+		self.light = DynamicLight(tonumber(pac.LocalPlayer:EntIndex()))
 	end
 	self.light.decay = 0
 	self.light.dietime = math.huge
