@@ -40,7 +40,9 @@ function PART:RemoveLight()
 end
 
 function PART:GetNiceName()
-	local hue = pac.ColorToNames(self:GetColor())
+	-- forgot the reason why this was changed to be a 0-1 range anyway
+	local color = self:GetColor()
+	local hue = pac.ColorToNames({r = color[1] * 255, g = color[2] * 255, b = color[3] * 255})
 	return hue .. " light"
 end
 
