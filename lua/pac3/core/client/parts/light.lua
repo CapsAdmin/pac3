@@ -1,3 +1,5 @@
+local DynamicLight = DynamicLight
+
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.FriendlyName = "light"
@@ -20,7 +22,7 @@ BUILDER:EndStorableVars()
 
 function PART:GetLight()
 	if not self.light then
-		self.light = DynamicLight(tonumber(self:GetPrintUniqueID(),16))
+		self.light = DynamicLight(tonumber(self:GetPrintUniqueID(), 16))
 	end
 	self.light.decay = 0
 	self.light.dietime = math.huge
@@ -33,7 +35,7 @@ function PART:RemoveLight()
 	local light = self.light
 	self.light = nil
 	-- this prevents fade out when removing the light
-	light.pos = Vector(9999,9999,9999)
+	light.pos = Vector(9999, 9999, 9999)
 	timer.Simple(0, function()
 		light.dietime = 0
 	end)
@@ -61,8 +63,6 @@ function PART:OnShow()
 	end
 end
 
-local DynamicLight = DynamicLight
-
 function PART:OnDraw()
 	local pos, ang = self:GetDrawPosition()
 	self:GetLight().pos = pos
@@ -76,9 +76,9 @@ end
 
 function PART:SetColor(val)
 	self.Color = val
-	self:GetLight().r = math.Clamp(val.r*255, 0, 255)
-	self:GetLight().g = math.Clamp(val.g*255, 0, 255)
-	self:GetLight().b = math.Clamp(val.b*255, 0, 255)
+	self:GetLight().r = math.Clamp(val.r * 255, 0, 255)
+	self:GetLight().g = math.Clamp(val.g * 255, 0, 255)
+	self:GetLight().b = math.Clamp(val.b * 255, 0, 255)
 end
 
 function PART:SetBrightness(val)
