@@ -1,0 +1,8 @@
+{
+	"lint_maxScopeDepth": 0,
+	"lint_shadowing": false,
+	"lint_spaceAfterComma": true,
+	"lint_ignoreFiles": [
+		"lua/entities/gmod_wire_expression2/*"
+	]
+}

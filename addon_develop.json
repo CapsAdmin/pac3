@@ -4,18 +4,19 @@
 	"tags" : [ "fun", "roleplay" ],
 	"ignore" :
 	[
-		".gitignore",
 		".editorconfig",
 		".git*",
+		".gitignore",
+		".glualint.json",
 		".vscode/*",
-		"*.txt",
-		"*.md",
-		"*.bat",
-		"*.sh",
-		"icon.jpg",
 		"*.7z",
+		"*.bat",
 		"*.md",
+		"*.md",
+		"*.sh",
+		"*.txt",
 		"*.yml",
-		"COPYING"
+		"COPYING",
+		"icon.jpg"
 	]
 }
