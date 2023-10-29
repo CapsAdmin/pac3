@@ -40,6 +40,8 @@ local netrate_enforcement_sv_monitoring = CreateConVar("pac_sv_combat_enforce_ne
 local raw_ent_limit = CreateConVar("pac_sv_entity_limit_per_combat_operation", 500, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Hard limit to drop any force or damage zone if more than this amount of entities is selected")
 local per_ply_limit = CreateConVar("pac_sv_entity_limit_per_player_per_combat_operation", 40, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Limit per player to drop any force or damage zone if this amount multiplied by each client is more than the hard limit")
 local player_fraction = CreateConVar("pac_sv_player_limit_as_fraction_to_drop_damage_zone", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "The fraction (0.0-1.0) of players that will stop damage zone net messages if a damage zone order covers more than this fraction of the server's population, when there are more than 12 players covered")
+local enforce_distance = CreateConVar("pac_sv_combat_distance_enforced", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to enforce a limit on how far a pac combat action can originate.\nIf set to a distance, it will prevent actions that are too far from the acting player.\n0 to disable.")
+
 
 local global_combat_whitelisting = CreateConVar("pac_sv_combat_whitelisting", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "How the server should decide which players are allowed to use the main PAC3 combat parts (lock, damagezone, force).\n0:Everyone is allowed unless the parts are disabled serverwide\n1:No one is allowed until they get verified as trustworthy\tpac_sv_whitelist_combat <playername>\n\tpac_sv_blacklist_combat <playername>")
 local global_combat_prop_protection = CreateConVar("pac_sv_prop_protection", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether players owned (created) entities (physics props and gmod contraption entities) will be considered in the consent calculations, protecting them. Without this cvar, only the player is protected.")
@@ -547,7 +549,9 @@ local function encode_table_to_file(str)
 			str = category
 			file.Write("pac3_config/bookmarked_" .. str..".txt", util.TableToKeyValues(data))
 		end
-		
+	elseif str == "eventwheel_colors" then
+		data = pace.command_colors or {}
+		file.Write("pac3_config/" .. str..".txt", util.TableToKeyValues(data))
 	end
 
 end
@@ -575,6 +579,8 @@ local function decode_table_from_file(str)
 	elseif str == "pac_part_categories" then
 		pace.partgroups = util.KeyValuesToTable(data)
 	
+	elseif str == "eventwheel_colors" then
+		pace.command_colors = util.KeyValuesToTable(data)
 	end
 
 
@@ -880,6 +886,14 @@ function pace.FillCombatSettings(pnl)
 			sv_player_fraction_slider:SetSize(400,30)
 			sv_player_fraction_slider:SetConVar("pac_sv_player_limit_as_fraction_to_drop_damage_zone")
 			sv_player_fraction_slider:SetTooltip("This applies when the zone covers more than 12 players. 0 is 0% of the server, 1 is 100%\nFor example, if this is at 0.5, there are 24 players and a damage zone covers 13 players, it will be blocked.")
+		
+		local sv_distance_slider = vgui.Create("DNumSlider", general_list_list)
+			sv_distance_slider:SetText("distance to block combat actions that are too far")
+			sv_distance_slider:SetValue(GetConVar("pac_sv_combat_distance_enforced"):GetFloat())
+			sv_distance_slider:SetMin(0) sv_distance_slider:SetDecimals(0) sv_distance_slider:SetMax(64000)
+			sv_distance_slider:SetSize(400,30)
+			sv_distance_slider:SetConVar("pac_sv_combat_distance_enforced")
+			sv_distance_slider:SetTooltip("The distance is compared between the action's origin and the player's position.\n0 to ignore.")
 		
 	end
 
@@ -1353,8 +1367,8 @@ function pace.FillEditorSettings(pnl)
 	partmenu_order_presets:SetText("Select a part menu preset")
 	partmenu_order_presets:AddChoice("factory preset")
 	partmenu_order_presets:AddChoice("expanded PAC4.5 preset")
-	partmenu_order_presets:AddChoice("custom preset")
 	partmenu_order_presets:AddChoice("bulk select poweruser")
+	partmenu_order_presets:AddChoice("user preset")
 	partmenu_order_presets:SetX(10) partmenu_order_presets:SetY(10)
 	partmenu_order_presets:SetWidth(200)
 	partmenu_order_presets:SetHeight(20)
@@ -1756,7 +1770,7 @@ function pace.FillEditorSettings(pnl)
 	partmenu_choices:SetY(50)
 	partmenu_choices:SetX(10)
 	for i,v in pairs(pace.operations_all_operations) do
-		local pnl = vgui.Create("DButton", menu)
+		local pnl = vgui.Create("DButton", f)
 		pnl:SetText(string.Replace(string.upper(v),"_"," "))
 		pnl:SetImage(FindImage(v))
 
@@ -1812,8 +1826,8 @@ function pace.FillEditorSettings(pnl)
 			temp_list = table.Copy(pace.operations_experimental)
 		elseif value == "bulk select poweruser" then
 			temp_list = table.Copy(pace.operations_bulk_poweruser)
-		elseif value == "custom preset" then
-			temp_list = {"wear","save","load"}
+		elseif value == "user preset" then
+			temp_list = pace.operations_order
 		end
 		ClearPartMenuPreviewList()
 		for i,v in ipairs(temp_list) do
@@ -1844,6 +1858,14 @@ function pace.FillEditorSettings(pnl)
 		end
 
 		PrintTable(buildlist_partmenu)
+	end
+
+	
+	if pace.operations_order then
+		for i,v in pairs(pace.operations_order) do
+			table.insert(buildlist_partmenu,v)
+			partmenu_previews:AddLine(#buildlist_partmenu,v)
+		end
 	end
 
 	return f
@@ -2323,9 +2345,230 @@ function pace.GetPartMenuComponentPreviewForMenuEdit(menu, option_name)
 	return pnl
 end
 
+function pace.ConfigureEventWheelMenu()
+	pace.command_colors = pace.command_colors or {}
+	local master_panel = vgui.Create("DFrame")
+	master_panel:SetTitle("event wheel config")
+	master_panel:SetSize(500,800)
+	master_panel:Center()
+	local mid_panel = vgui.Create("DPanel", master_panel)
+	mid_panel:Dock(FILL)
+	
+	local scr_pnl = vgui.Create("DScrollPanel", mid_panel)
+	scr_pnl:SetSize(490,800)
+	scr_pnl:SetPos(0,45)
+	local list = vgui.Create("DListLayout", scr_pnl) list:Dock(FILL)
+
+	local first_panel = vgui.Create("DPanel", mid_panel)
+	first_panel:SetSize(500,40)
+	first_panel:Dock(TOP)
+	
+	local circle_style_listmenu = vgui.Create("DComboBox",first_panel)
+	circle_style_listmenu:SetText("Choose eventwheel style")
+	circle_style_listmenu:SetSize(200,20)
+	circle_style_listmenu:AddChoice("legacy")
+	circle_style_listmenu:AddChoice("concentric")
+	circle_style_listmenu:AddChoice("alternative")
+	function circle_style_listmenu:OnSelect( index, value )
+		if value == "legacy" then
+			GetConVar("pac_eventwheel_style"):SetString("0")
+		elseif value == "concentric" then
+			GetConVar("pac_eventwheel_style"):SetString("1")
+		elseif value == "alternative" then
+			GetConVar("pac_eventwheel_style"):SetString("2")
+		end
+	end
+
+	local circle_clickmode = vgui.Create("DComboBox",first_panel)
+	circle_clickmode:SetText("Choose eventwheel clickmode")
+	circle_clickmode:SetSize(200,20)
+	circle_clickmode:SetPos(200,0)
+	circle_clickmode:AddChoice("clickable and activates on close")
+	circle_clickmode:AddChoice("not clickable, but activate on close")
+	circle_clickmode:AddChoice("clickable, but do not activate on close")
+	function circle_clickmode:OnSelect( index, value )
+		if value == "clickable and activates on close" then
+			GetConVar("pac_eventwheel_clickmode"):SetString("0")
+		elseif value == "not clickable, but activate on close" then
+			GetConVar("pac_eventwheel_clickmode"):SetString("-1")
+		elseif value == "clickable, but do not activate on close" then
+			GetConVar("pac_eventwheel_clickmode"):SetString("1")
+		end
+	end
+	
+
+	local rectangle_style_listmenu = vgui.Create("DComboBox",first_panel)
+	rectangle_style_listmenu:SetText("Choose eventlist style")
+	rectangle_style_listmenu:SetSize(200,20)
+	rectangle_style_listmenu:SetPos(0,20)
+	rectangle_style_listmenu:AddChoice("legacy-like")
+	rectangle_style_listmenu:AddChoice("concentric")
+	rectangle_style_listmenu:AddChoice("alternative")
+
+	function rectangle_style_listmenu:OnSelect( index, value )
+		if value == "legacy-like" then
+			GetConVar("pac_eventlist_style"):SetString("0")
+		elseif value == "concentric" then
+			GetConVar("pac_eventlist_style"):SetString("1")
+		elseif value == "alternative" then
+			GetConVar("pac_eventlist_style"):SetString("2")
+		end
+	end
+
+	local rectangle_clickmode = vgui.Create("DComboBox",first_panel)
+	rectangle_clickmode:SetText("Choose eventlist clickmode")
+	rectangle_clickmode:SetSize(200,20)
+	rectangle_clickmode:SetPos(200,20)
+	rectangle_clickmode:AddChoice("clickable and activates on close")
+	rectangle_clickmode:AddChoice("not clickable, but activate on close")
+	rectangle_clickmode:AddChoice("clickable, but do not activate on close")
+	function rectangle_clickmode:OnSelect( index, value )
+		if value == "clickable and activates on close" then
+			GetConVar("pac_eventlist_clickmode"):SetString("0")
+		elseif value == "not clickable, but activate on close" then
+			GetConVar("pac_eventlist_clickmode"):SetString("-1")
+		elseif value == "clickable, but do not activate on close" then
+			GetConVar("pac_eventlist_clickmode"):SetString("1")
+		end
+	end
+
+	local events = {}
+	for i,v in pairs(pac.GetLocalParts()) do
+		if v.ClassName == "event" then
+			local e = v:GetEvent()
+			if e == "command" then
+				local cmd, time, hide = v:GetParsedArgumentsForObject(v.Events.command)
+				local this_event_hidden = v:IsHiddenBySomethingElse(false)
+				events[cmd] = cmd
+			end
+		end
+		
+	end
+
+	local names = table.GetKeys( events )
+	table.sort(names, function(a, b) return a < b end)
+	
+	local copied_color = nil
+	local lanes = {}
+	local colorpanel
+	if LocalPlayer().pac_command_events then
+		if table.Count(names) == 0 then
+			local error_label = vgui.Create("DLabel", list)
+			error_label:SetText("Uh oh, nothing to see here! Looks like you don't have any command events in your outfit!\nPlease go back to the editor.")
+			error_label:SetPos(100,200)
+			error_label:SetFont("DermaDefaultBold")
+			error_label:SetSize(450,50)
+			error_label:SetColor(Color(150,0,0))
+		end
+		for _, name in ipairs(names) do
+			local pnl = vgui.Create("DPanel") list:Add(pnl) pnl:SetSize(400,20)
+			local btn = vgui.Create("DButton", pnl)
+			
+			btn:SetSize(200,25)
+			btn:SetText(name)
+			btn:SetTooltip(name)
+
+
+			if pace.command_colors[name] then
+				local tbl = string.Split(pace.command_colors[name], " ")
+				btn:SetColor(Color(tonumber(tbl[1]),tonumber(tbl[2]),tonumber(tbl[3])))
+			end
+			local colorbutton = vgui.Create("DButton", pnl)
+			colorbutton:SetText("Color")
+			colorbutton:SetIcon("icon16/color_wheel.png")
+			colorbutton:SetPos(200,0) colorbutton:SetSize(65,20)
+			function colorbutton:DoClick()
+				if IsValid(colorpanel) then colorpanel:Remove() end
+				local clr_frame = vgui.Create("DPanel")
+				colorpanel = clr_frame
+				function clr_frame:Think()
+					if not pace.command_event_menu_opened and not IsValid(master_panel) then self:Remove() end
+				end
+
+				local clr_pnl = vgui.Create("DColorMixer", clr_frame)
+				if pace.command_colors[name] then
+					local str_tbl = string.Split(pace.command_colors[name], " ")
+					clr_pnl:SetBaseColor(Color(tonumber(str_tbl[1]),tonumber(str_tbl[2]),tonumber(str_tbl[3])))
+				end
+				
+				clr_frame:SetSize(300,200) clr_pnl:Dock(FILL)
+				clr_frame:SetPos(self:LocalToScreen(0,0))
+				clr_frame:RequestFocus()
+				function clr_pnl:Think()
+					if input.IsMouseDown(MOUSE_LEFT) then
+						
+						if not IsValid(vgui.GetHoveredPanel()) then
+							self:Remove() clr_frame:Remove()
+						else
+							if vgui.GetHoveredPanel():GetClassName() == "CGModBase" and not self.clicking then
+								self:Remove() clr_frame:Remove()
+							end
+						end
+						self.clicking = true
+					else
+						self.clicking = false
+					end
+				end
+				function clr_pnl:ValueChanged(col)
+					pace.command_colors = pace.command_colors or {}
+					pace.command_colors[name] = col.r .. " " .. col.g .. " " .. col.b
+					btn:SetColor(col)
+				end
+				
+			end
+
+			local copypastebutton = vgui.Create("DButton", pnl)
+			copypastebutton:SetText("Copy/Paste")
+			copypastebutton:SetToolTip("right click to copy\nleft click to paste")
+			copypastebutton:SetIcon("icon16/page_copy.png")
+			copypastebutton:SetPos(265,0) copypastebutton:SetSize(150,20)
+			function copypastebutton:DoClick()
+				if not copied_color then return end
+				pace.command_colors[name] = copied_color
+				btn:SetColor(Color(tonumber(string.Split(copied_color, " ")[1]), tonumber(string.Split(copied_color, " ")[2]), tonumber(string.Split(copied_color, " ")[3])))
+			end
+			function copypastebutton:DoRightClick()
+				for _,tbl in pairs(lanes) do
+					if tbl.cmd ~= name then
+						tbl.copypaste:SetText("Copy/Paste")
+					end
+				end
+				copied_color = pace.command_colors[name]
+				if copied_color then
+					self:SetText("copied: " .. pace.command_colors[name])
+				else
+					self:SetText("no color to copy!")
+				end
+			end
+
+			local clearbutton = vgui.Create("DButton", pnl)
+			clearbutton:SetText("Clear")
+			clearbutton:SetIcon("icon16/cross.png")
+			clearbutton:SetPos(415,0) clearbutton:SetSize(60,20)
+			function clearbutton:DoClick()
+				btn:SetColor(Color(0,0,0))
+				pace.command_colors[name] = nil
+			end
+
+			lanes[name] = {cmd = name, main_btn = btn, color_btn = colorbutton, copypaste = copypastebutton, clear = clearbutton}
+		end
+	end
+
+	function master_panel:OnRemove()
+		gui.EnableScreenClicker(false)
+		pace.command_event_menu_opened = nil
+		encode_table_to_file("eventwheel_colors", pace.command_colors)
+	end
+	
+	master_panel:RequestFocus()
+	gui.EnableScreenClicker(true)
+	pace.command_event_menu_opened = master_panel
+end
+
 
 decode_table_from_file("pac_editor_shortcuts")
 decode_table_from_file("pac_editor_partmenu_layouts")
+decode_table_from_file("eventwheel_colors")
 
 if not file.Exists("pac_part_categories_cedrics.txt", "DATA") then
 	file.Write("pac3_config/pac_part_categories_cedrics.txt", util.TableToKeyValues(pace.partmenu_categories_cedrics))

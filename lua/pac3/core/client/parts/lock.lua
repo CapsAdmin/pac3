@@ -61,6 +61,7 @@ BUILDER:StartStorableVars()
 BUILDER:EndStorableVars()
 
 function PART:OnThink()
+	
 	if not GetConVar('pac_sv_lock'):GetBool() then return end
 	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 	if pac.Blocked_Combat_Parts then
@@ -215,7 +216,7 @@ do
 		self.grabbing = false
 		pac.Message(Color(255, 50, 50), "lock break result:")
 		MsgC(Color(0,255,255), "\t", self) MsgC(Color(200, 200, 200), " in your group ") MsgC(Color(0,255,255), self:GetRootPart(),"\n")
-		MsgC(Color(200, 200, 200), "\tIt will now be in the forcebreak state until the next allowed grab, 3 seconds from now.\n")
+		MsgC(Color(200, 200, 200), "\tIt will now be in the forcebreak state until the next allowed grab, 3 seconds from now\nalso this entity can't be grabbed for 10 seconds.\n")
 		if not self.ContinuousSearch then
 			self.resetcondition = true
 		end
@@ -241,7 +242,7 @@ do
 
 		if uid ~= "" then --if a uid is provided
 			MsgC(Color(255, 50, 50), "AND IT KNOWS YOUR UID! " .. uid .. "\n")
-			local part = pac.GetPartFromUniqueID(found_uid)
+			local part = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid)
 			if part then
 				if part.ClassName == "lock" then
 					part:BreakLock(target_to_release)
@@ -269,7 +270,7 @@ do
 		local target_to_mark = net.ReadEntity()
 		local successful_grab = net.ReadBool()
 		local uid = net.ReadString()
-		local part = pac.GetPartFromUniqueID(uid)
+		local part = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid)
 		--print(target_to_mark,"is grabbed by",uid)
 
 		if not successful_grab then
@@ -291,7 +292,6 @@ function PART:SetRadius(val)
 	else
 		self:SetInfo(nil)
 	end
-	
 end
 
 function PART:OnShow()
@@ -350,12 +350,16 @@ function PART:OnShow()
 			if not GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside"):GetBool() then
 				if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
 			end
-			net.Start("pac_request_position_override_on_entity_teleport")
-			net.WriteString(self.UniqueID)
-			net.WriteVector(teleport_pos_final)
-			net.WriteAngle(ang_yaw_only)
-			net.WriteBool(self.OverrideAngles)
-			net.SendToServer()
+			timer.Simple(0, function()
+				if self:IsHidden() or self:IsDrawHidden() then return end
+				net.Start("pac_request_position_override_on_entity_teleport")
+				net.WriteString(self.UniqueID)
+				net.WriteVector(teleport_pos_final)
+				net.WriteAngle(ang_yaw_only)
+				net.WriteBool(self.OverrideAngles)
+				net.SendToServer()
+			end)
+			
 		end
 		self.grabbing = false
 	elseif self.Mode == "Grab" then

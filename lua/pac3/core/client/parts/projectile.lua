@@ -425,13 +425,67 @@ function PART:Shoot(pos, ang, multi_projectile_count)
 	end
 end
 
-function PART:OnRemove()
-	if not self.Physical and self.projectiles then
-		for key, ent in pairs(self.projectiles) do
-			SafeRemoveEntity(ent)
-		end
+function PART:SetDamage(val)
 
-		self.projectiles = {}
+end
+
+function PART:SetRadius(val)
+	self.Radius = val
+	local sv_dist = GetConVar("pac_sv_projectile_max_radius"):GetInt()
+	if self.Radius > sv_dist then
+		self:SetInfo("Your radius is beyond the server's maximum permitted! Server max is " .. sv_dist)
+	else
+		self:SetInfo(nil)
+	end
+end
+
+function PART:SetDamageRadius(val)
+	self.DamageRadius = val
+	local sv_dist = GetConVar("pac_sv_projectile_max_damage_radius"):GetInt()
+	if self.DamageRadius > sv_dist then
+		self:SetInfo("Your damage radius is beyond the server's maximum permitted! Server max is " .. sv_dist)
+	else
+		self:SetInfo(nil)
+	end
+end
+
+function PART:SetAttractRadius(val)
+	self.AttractRadius = val
+	local sv_dist = GetConVar("pac_sv_projectile_max_attract_radius"):GetInt()
+	if self.AttractRadius > sv_dist then
+		self:SetInfo("Your attract radius is beyond the server's maximum permitted! Server max is " .. sv_dist)
+	else
+		self:SetInfo(nil)
+	end
+end
+
+function PART:SetSpeed(val)
+	self.Speed = val
+	local sv_max = GetConVar("pac_sv_projectile_max_speed"):GetInt()
+	if self.Speed > sv_max then
+		self:SetInfo("Your speed is beyond the server's maximum permitted! Server max is " .. sv_max)
+	else
+		self:SetInfo(nil)
+	end
+end
+
+function PART:SetMass(val)
+	self.Mass = val
+	local sv_max = GetConVar("pac_sv_projectile_max_mass"):GetInt()
+	if self.Mass > sv_max then
+		self:SetInfo("Your mass is beyond the server's maximum permitted! Server max is " .. sv_max)
+	else
+		self:SetInfo(nil)
+	end
+end
+
+function PART:SetDamage(val)
+	self.Damage = val
+	local sv_max = GetConVar("pac_sv_damage_zone_max_damage"):GetInt()
+	if self.Damage > sv_max then
+		self:SetInfo("Your damage is beyond the server's maximum permitted! Server max is " .. sv_max)
+	else
+		self:SetInfo(nil)
 	end
 end
 

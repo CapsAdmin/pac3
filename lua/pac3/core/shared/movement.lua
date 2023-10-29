@@ -43,6 +43,7 @@ if SERVER then
 		if str == "disable" then
 			ply.pac_movement = nil
 			ply:GetPhysicsObject():SetMass(default.Mass)
+			ply.scale_mass = 1
 		else
 			if default[str] ~= nil then
 				local val = net.ReadType()
@@ -162,14 +163,14 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 	end
 
 	if (movementConvar:GetInt() == 1 or (movementConvar:GetInt() == -1 and hook.Run("PlayerNoClip", ply, true) == true)) and massDamageScale:GetInt() == 1 then
-		scale_mass = 85/math.Clamp(self.Mass, math.max(massLowerLimit:GetFloat(), 0.01), massUpperLimit:GetFloat())
+		ply.scale_mass = 85/math.Clamp(self.Mass, math.max(massLowerLimit:GetFloat(), 0.01), massUpperLimit:GetFloat())
 	else
-		scale_mass = 1
+		ply.scale_mass = 1
 	end
 	
 	pac.AddHook("EntityTakeDamage", "PAC3MassDamageScale", function(target, dmginfo)
 		if (target:IsPlayer() and dmginfo:IsDamageType(DMG_CRUSH or DMG_VEHICLE)) then
-				dmginfo:ScaleDamage(scale_mass)
+			dmginfo:ScaleDamage(target.scale_mass or 1)
 		end
 	end)
 
@@ -282,7 +283,7 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 			if self.MaxGroundSpeed == 0 then self.MaxGroundSpeed = 400 end
 			if self.MaxAirSpeed == 0 then self.MaxAirSpeed = 400 end
 			local water_speed = math.min(ground_speed, self.MaxAirSpeed, self.MaxGroundSpeed)
-			print("water speed " .. water_speed)
+			--print("water speed " .. water_speed)
 
 			ang = ply:EyeAngles()
 			local vel2 = Vector()

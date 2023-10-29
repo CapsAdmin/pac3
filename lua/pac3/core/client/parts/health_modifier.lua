@@ -13,11 +13,12 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("MaxHealth", 100, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,0,math.huge)) end})
 
 	BUILDER:SetPropertyGroup("ExtraHpBars")
-		BUILDER:GetSet("FollowHealthBars", true, {description = "whether changing the extra health bars should try to set your health at the same time"})
+		BUILDER:GetSet("FollowHealthBars", true, {description = "whether changing the extra health bars should try to update them at the same time"})
 		BUILDER:GetSet("HealthBars", 0, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,0,100)) end})
 		BUILDER:GetSet("BarsAmount", 100, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,0,math.huge)) end})
 		BUILDER:GetSet("BarsLayer", 1, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,0,15)) end})
 		BUILDER:GetSet("AbsorbFactor", 0, {editor_onchange = function(self,num) return math.Clamp(num,-1,1) end})
+		BUILDER:GetSet("HPBarsResetOnHide", false)
 
 	BUILDER:SetPropertyGroup("Armor")
 		BUILDER:GetSet("ChangeArmor", false)
@@ -27,6 +28,7 @@ BUILDER:StartStorableVars()
 	BUILDER:SetPropertyGroup("DamageMultipliers")
 		BUILDER:GetSet("DamageMultiplier", 1)
 		BUILDER:GetSet("ModifierId", "")
+		BUILDER:GetSet("MultiplierResetOnHide", false)
 	
 BUILDER:EndStorableVars()
 
@@ -121,6 +123,12 @@ function PART:SetDamageMultiplier(val)
 	self.DamageMultiplier = val
 	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	self:SendModifier("DamageMultiplier")
+	local sv_min = GetConVar("pac_sv_health_modifier_min_damagescaling"):GetInt()
+	if self.DamageMultiplier < sv_min then
+		self:SetInfo("Your damage scaling is beyond the server's minimum permitted! Server minimum is " .. sv_min)
+	else
+		self:SetInfo(nil)
+	end
 end
 
 function PART:OnRemove()
@@ -160,6 +168,30 @@ end
 
 function PART:OnShow()
 	self:SendModifier("all")
+end
+
+function PART:OnHide()
+	if self.HPBarsResetOnHide then
+		net.Start("pac_request_healthmod")
+		net.WriteString(self.UniqueID)
+		net.WriteString(self.ModifierId)
+		net.WriteString("HealthBars")
+		net.WriteUInt(0, 32)
+		net.WriteUInt(0, 32)
+		net.WriteUInt(self.BarsLayer, 4)
+		net.WriteFloat(1)
+		net.WriteBool(self.FollowHealthBars)
+		net.SendToServer()
+	end
+	if self.MultiplierResetOnHide then
+		net.Start("pac_request_healthmod")
+		net.WriteString(self.UniqueID)
+		net.WriteString(self.ModifierId)
+		net.WriteString("DamageMultiplier")
+		net.WriteFloat(1)
+		net.WriteBool(true)
+		net.SendToServer()
+	end
 end
 
 function PART:Initialize()

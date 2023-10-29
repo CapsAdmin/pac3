@@ -95,6 +95,8 @@ local function populate_pac(menu)
 	do
 		menu:AddOption(L"exit", function() pace.CloseEditor() end):SetImage(pace.MiscIcons.exit)
 	end
+
+	
 end
 
 local function populate_view(menu)
@@ -114,6 +116,7 @@ local function populate_options(menu)
 	menu:AddCVar(L"inverse collapse/expand controls", "pac_reverse_collapse", "1", "0")
 	menu:AddCVar(L"enable shift+move/rotate clone", "pac_grab_clone", "1", "0")
 	menu:AddCVar(L"remember editor position", "pac_editor_remember_position", "1", "0")
+	menu:AddCVar(L"remember divider position", "pac_editor_remember_divider_height", "1", "0")
 	menu:AddCVar(L"ask before loading autoload", "pac_prompt_for_autoload", "1", "0")
 
 	local prop_pac_load_mode, pnlpplm = menu:AddSubMenu("(singleplayer only) How to handle prop/npc outfits", function() end)
@@ -138,6 +141,23 @@ local function populate_options(menu)
 			popup_pref_mode:AddOption(L"menu bar", function() RunConsoleCommand("pac_popups_preferred_location", "menu bar") end):SetImage('icon16/layout_header.png')
 			popup_pref_mode:AddOption(L"cursor", function() RunConsoleCommand("pac_popups_preferred_location", "cursor") end):SetImage('icon16/mouse.png')
 			popup_pref_mode:AddOption(L"screen", function() RunConsoleCommand("pac_popups_preferred_location", "screen") end):SetImage('icon16/monitor.png')
+	
+	menu:AddOption(L"configure event wheel", pace.ConfigureEventWheelMenu):SetImage("icon16/color_wheel.png")
+
+	local copilot, pnlc = menu:AddSubMenu("configure editor copilot", function() end)
+		copilot.GetDeleteSelf = function() return false end
+		pnlc:SetImage("icon16/award_star_gold_3.png")
+		copilot:AddCVar(L"show info popup when changing an event's type", "pac_copilot_make_popup_when_selecting_event", "1", "0")
+		copilot:AddCVar(L"auto-focus on the main property when creating some parts", "pac_copilot_auto_focus_main_property_when_creating_part","1","0")
+		copilot:AddCVar(L"auto-setup a command event when entering a name as an event type", "pac_copilot_auto_setup_command_events", "1", "0")
+		copilot:AddCVar(L"open asset browser when creating some parts", "pac_copilot_open_asset_browser_when_creating_part", "1", "0")
+		copilot:AddCVar(L"disable the editor view when creating a camera part", "pac_copilot_force_preview_cameras", "1", "0")
+		local copilot_add_part_search_menu, pnlaps = copilot:AddSubMenu("configure the searchable add part menu", function() end)
+			pnlaps:SetImage("icon16/add.png")
+			copilot_add_part_search_menu.GetDeleteSelf = function() return false end
+			copilot_add_part_search_menu:AddOption(L"No copilot", function() RunConsoleCommand("pac_copilot_partsearch_depth", "-1") end):SetImage('icon16/page_white.png')
+			copilot_add_part_search_menu:AddOption(L"automatically select a text field after creating the part (e.g. event type)", function() RunConsoleCommand("pac_copilot_partsearch_depth", "0") end):SetImage('icon16/layout_edit.png')
+			copilot_add_part_search_menu:AddOption(L"open another quick list menu (event types, favorite models...)", function() RunConsoleCommand("pac_copilot_partsearch_depth", "1") end):SetImage('icon16/application_view_list.png')
 
 	local combat_consents, pnlcc = menu:AddSubMenu("pac combat consents", function() end)
 	combat_consents.GetDeleteSelf = function() return false end
@@ -168,6 +188,7 @@ local function populate_options(menu)
 	menu:AddCVar(L"enable language identifier in text fields", "pac_editor_languageid", "1", "0")
 	pace.AddLanguagesToMenu(menu)
 	pace.AddFontsToMenu(menu)
+	menu:AddCVar(L"Use the new PAC4.5 icon", "pac_icon", "1", "0")
 
 	menu:AddSpacer()
 
@@ -204,6 +225,7 @@ function pace.PopulateMenuBarTab(menu, tab)
 	elseif tab == "view" then
 		populate_view(menu)
 	end
+	--timer.Simple(0.3, function() menu:RequestFocus() end)
 end
 
 function pace.OnMenuBarPopulate(bar)
@@ -218,11 +240,11 @@ function pace.OnMenuBarPopulate(bar)
 	pace.AddToolsToMenu(bar:AddMenu(L"tools"))
 
 	bar:RequestFocus(true)
-	timer.Simple(0.2, function()
+	--[[timer.Simple(0.2, function()
 		if IsValid(bar) then
 			bar:RequestFocus(true)
 		end
-	end)
+	end)]]
 end
 
 function pace.OnOpenMenu()

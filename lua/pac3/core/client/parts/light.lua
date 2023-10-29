@@ -84,7 +84,6 @@ function PART:OnDraw()
 	self:GetLight().dir = ang:Forward()
 end
 function PART:SetStyle(val)
-	print(val, type(val))
 	self.Style = val
 	self:GetLight().Style = self.Style
 end

@@ -20,7 +20,8 @@ BUILDER:StartStorableVars()
 		:GetSet("Length", 50, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,-32768,32767)) end})
 		:GetSet("Radius", 50, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,-32768,32767)) end})
 		:GetSet("Preview",false)
-	:SetPropertyGroup("Forces")
+
+	:SetPropertyGroup("BaseForces")
 		:GetSet("BaseForce", 0)
 		:GetSet("AddedVectorForce", Vector(0,0,0))
 		:GetSet("Torque", Vector(0,0,0))
@@ -28,13 +29,20 @@ BUILDER:StartStorableVars()
 		:GetSet("VectorForceAngleMode", "Global", {enums = {["Global"] = "Global", ["Local"] = "Local", ["Radial"] = "Radial",  ["RadialNoPitch"] = "RadialNoPitch"}})
 		:GetSet("TorqueMode", "TargetLocal", {enums = {["Global"] = "Global", ["TargetLocal"] = "TargetLocal", ["Local"] = "Local", ["Radial"] = "Radial"}})
 		:GetSetPart("Locus", nil)
+
+	:SetPropertyGroup("Behaviors")
 		:GetSet("Continuous", true, {description = "If set to false, the force will be a single, stronger impulse"})
 		:GetSet("AccountMass", false, {description = "Apply acceleration according to mass."})
 		:GetSet("Falloff", false, {description = "Whether the force to apply should fade with distance"})
 		:GetSet("ReverseFalloff", false, {description = "The reverse of the falloff means the force fades when getting closer."})
-		:GetSet("Damping", 0, {editor_clamp = {0,1}, editor_sensitivity = 0.1})
 		:GetSet("Levitation", false, {description = "Tries to stabilize the force to levitate targets at a certain height relative to the part"})
 		:GetSet("LevitationHeight", 0)
+
+	:SetPropertyGroup("Damping")
+		:GetSet("Damping", 0, {editor_clamp = {0,1}, editor_sensitivity = 0.1})
+		:GetSet("DampingFalloff", false, {description = "Whether the damping should fade with distance"})
+		:GetSet("DampingReverseFalloff", false, {description = "Whether the damping should fade with distance but reverse"})
+
 	:SetPropertyGroup("Targets")
 		:GetSet("AffectSelf",false)
 		:GetSet("Players",true)
@@ -200,6 +208,8 @@ function PART:Impulse(on)
 	net.WriteBool(self.AccountMass)
 	net.WriteBool(self.Falloff)
 	net.WriteBool(self.ReverseFalloff)
+	net.WriteBool(self.DampingFalloff)
+	net.WriteBool(self.DampingReverseFalloff)
 	net.WriteBool(self.Levitation)
 	net.WriteBool(self.AffectSelf)
 	net.WriteBool(self.Players)
@@ -265,5 +275,34 @@ function PART:BuildCone(obj)
 	obj:BuildFromTriangles( circle_tris )
 end
 
+function PART:SetRadius(val)
+	self.Radius = val
+	local sv_dist = GetConVar("pac_sv_force_max_radius"):GetInt()
+	if self.Radius > sv_dist then
+		self:SetInfo("Your radius is beyond the server's maximum permitted! Server max is " .. sv_dist)
+	else
+		self:SetInfo(nil)
+	end
+end
+
+function PART:SetLength(val)
+	self.Length = val
+	local sv_dist = GetConVar("pac_sv_force_max_length"):GetInt()
+	if self.Length > sv_dist then
+		self:SetInfo("Your length is beyond the server's maximum permitted! Server max is " .. sv_dist)
+	else
+		self:SetInfo(nil)
+	end
+end
+
+function PART:SetBaseForce(val)
+	self.BaseForce = val
+	local sv_max = GetConVar("pac_sv_force_max_amount"):GetInt()
+	if self.BaseForce > sv_max then
+		self:SetInfo("Your base force is beyond the server's maximum permitted! Server max is " .. sv_max)
+	else
+		self:SetInfo(nil)
+	end
+end
 
 BUILDER:Register()

@@ -36,6 +36,8 @@ pace.PACActionShortcut_Dictionary = {
 	"restart",
 	"partmenu",
 	"add_part",
+	"property_search_current_part",
+	"property_search_in_tree",
 	"toolbar_pac",
 	"toolbar_tools",
 	"toolbar_player",
@@ -107,6 +109,12 @@ pace.PACActionShortcut_Default = {
 	},
 	["T_Pose"] = {
 		[1] = {"CTRL", "t"}
+	},
+	["property_search_current_part"] = {
+		[1] = {"CTRL", "f"}
+	},
+	["property_search_in_tree"] = {
+		[1] = {"CTRL", "SHIFT", "f"}
 	},
 	["editor_up"] = {
 		[1] = {"UPARROW"}
@@ -505,6 +513,26 @@ function pace.DoShortcutFunc(action)
 	end
 
 	if action == "partmenu" then pace.OnPartMenu(pace.current_part) end
+	if action == "property_search_current_part" then
+		if pace.properties.search:IsVisible() then
+			pace.properties.search:SetVisible(false)
+			pace.properties.search:SetEnabled(false)
+			pace.property_searching = false
+		else
+			pace.properties.search:SetVisible(true)
+			pace.properties.search:RequestFocus()
+			pace.properties.search:SetEnabled(true)
+			pace.property_searching = true
+		end
+		
+	end
+	if action == "property_search_in_tree" then
+		if pace.tree_search_open then
+			pace.tree_searcher:Remove()
+		else
+			pace.OpenTreeSearch()
+		end
+	end
 	if action == "add_part" then pace.OnAddPartMenu(pace.current_part) end
 	if action == "toolbar_tools" then
 		menu = DermaMenu()
@@ -692,12 +720,16 @@ function pace.CheckShortcuts()
 			end
 
 			if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_F) then
-				pace.properties.search:SetVisible(true)
-				pace.properties.search:RequestFocus()
-				pace.properties.search:SetEnabled(true)
-				pace.property_searching = true
-
-				last = RealTime() + 0.2
+				if not input.IsKeyDown(KEY_LSHIFT)then
+					pace.properties.search:SetVisible(true)
+					pace.properties.search:RequestFocus()
+					pace.properties.search:SetEnabled(true)
+					pace.property_searching = true
+		
+					last = RealTime() + 0.2
+				else
+					pace.OpenTreeSearch()
+				end
 			end
 
 		end
@@ -736,9 +768,6 @@ function pace.CheckShortcuts()
 	if IsValid(vgui.GetKeyboardFocus()) and vgui.GetKeyboardFocus():GetClassName():find('Text') then return end
 	if gui.IsConsoleVisible() then return end
 	if not pace.Editor or not pace.Editor:IsValid() then return end
-
-
-	local master_bool = true
 	
 	
 	if skip and not no_input_override then return end
@@ -762,52 +791,6 @@ function pace.CheckShortcuts()
 		end
 	end
 	
-	if master_bool then return end
-
-
-	if input.IsKeyDown(KEY_LALT) and input.IsKeyDown(KEY_E) then
-		pace.Call("ToggleFocus", true)
-		last = RealTime() + 0.2
-	end
-
-	if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_E) then
-		pace.Call("ToggleFocus")
-		last = RealTime() + 0.2
-	end
-
-
-	if input.IsKeyDown(KEY_LALT) and input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_P) then
-		RunConsoleCommand("pac_restart")
-	end
-
-	-- Only if the editor is in the foreground
-	if pace.IsFocused() then
-		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_S) then
-			pace.Call("ShortcutSave")
-			last = RealTime() + 0.2
-		end
-
-		-- CTRL + (W)ear?
-		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_N) then
-			pace.Call("ShortcutWear")
-			last = RealTime() + 0.2
-		end
-
-		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_T) then
-			pace.SetTPose(not pace.GetTPose())
-			last = RealTime() + 0.2
-		end
-
-		if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_F) then
-			pace.properties.search:SetVisible(true)
-			pace.properties.search:RequestFocus()
-			pace.properties.search:SetEnabled(true)
-			pace.property_searching = true
-
-			last = RealTime() + 0.2
-		end
-		
-	end
 end
 
 pac.AddHook("Think", "pace_shortcuts", pace.CheckShortcuts)

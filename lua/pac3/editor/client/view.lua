@@ -18,8 +18,8 @@ pace.camera_moveleft_bind = CreateClientConVar("pac_editor_camera_moveleft_bind"
 pace.camera_moveright_bind = CreateClientConVar("pac_editor_camera_moveright_bind", "d", true)
 pace.camera_up_bind = CreateClientConVar("pac_editor_camera_up_bind", "space", true)
 pace.camera_down_bind = CreateClientConVar("pac_editor_camera_down_bind", "", true)
-pace.camera_slow_bind = CreateClientConVar("pac_editor_camera_slow_bind", "lctrl", true)
-pace.camera_speed_bind = CreateClientConVar("pac_editor_camera_speed_bind", "lshift", true)
+pace.camera_slow_bind = CreateClientConVar("pac_editor_camera_slow_bind", "ctrl", true)
+pace.camera_speed_bind = CreateClientConVar("pac_editor_camera_speed_bind", "shift", true)
 
 pace.camera_movement_binds = {
 	["forward"] = pace.camera_forward_bind,

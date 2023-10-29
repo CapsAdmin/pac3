@@ -117,6 +117,33 @@ function PART:SetEvent(event)
 	local reset = (self.Arguments == "") or
 	(self.Arguments ~= "" and self.Event ~= "" and self.Event ~= event)
 	
+	if not self.Events[event] then --invalid event? try a command event
+		local command_was_found_in_cmd_part = false
+		for i,v in ipairs(pac.GetLocalParts()) do
+			if v.ClassName == "command" then
+				if string.find(v.String, "pac_event " .. event) then
+					command_was_found_in_cmd_part = true
+				end
+			end
+		end
+		if self:GetPlayerOwner().pac_command_events or command_was_found_in_cmd_part then
+			self:GetPlayerOwner().pac_command_events = self:GetPlayerOwner().pac_command_events or {}
+			if self:GetPlayerOwner().pac_command_events[event] or command_was_found_in_cmd_part or GetConVar("pac_copilot_auto_setup_command_events"):GetBool() then
+				timer.Simple(0.2, function()
+					--now we'll use event as a command name
+					self:SetEvent("command")
+					self.pace_properties["Event"]:SetValue("command")
+					
+					self:SetArguments(event .. "@@0")
+					self.pace_properties["Arguments"]:SetValue(event .. "@@0@@0")
+					pace.PopulateProperties(self)
+					
+				end)
+				return
+			end
+		end
+	end
+
 	self.Event = event
 	self:SetWarning()
 	self:SetInfo()
@@ -128,10 +155,11 @@ function PART:SetEvent(event)
 	pace.changed_event = self --a reference to make it refresh the popup label panel
 	pace.changed_event_time = CurTime()
 
-	if self == pace.current_part then self:AttachEditorPopup() end --don't flood the popup system with superfluous requests when loading an outfit
+	if self == pace.current_part and GetConVar("pac_copilot_make_popup_when_selecting_event"):GetBool() then self:AttachEditorPopup() end --don't flood the popup system with superfluous requests when loading an outfit
 
 	self:GetDynamicProperties(reset)
-	
+	if not GetConVar("pac_editor_remember_divider_height"):GetBool() then pace.Editor.div:SetTopHeight(ScrH() - 520) end
+
 end
 
 function PART:Initialize()
@@ -691,8 +719,9 @@ PART.OldEvents = {
 		callback = function(self, ent, name, num)
 			ent = try_viewmodel(ent)
 			if ent:IsValid() then
-				min,max = ent:GetPoseParameterRange(ent:LookupPoseParameter(name))
-				actual_value = min + (max - min)*(ent:GetPoseParameter(name))
+				local min,max = ent:GetPoseParameterRange(ent:LookupPoseParameter(name))
+				if not min or not max then return 0 end
+				local actual_value = min + (max - min)*(ent:GetPoseParameter(name))
 				return self:NumberOperator(actual_value, num)
 			end
 		end,
@@ -1140,6 +1169,7 @@ PART.OldEvents = {
 		end,
 		nice = function(self, ent, extra_radius, x_stretch, y_stretch, z_stretch, nearest_model)
 			if nearest_model then ent = self:GetOwner() end
+			if not IsValid(ent) then return false end
 			local radius = ent:BoundingRadius()
 
 			if radius == 0 and IsValid(ent.pac_projectile) then
@@ -2322,7 +2352,7 @@ PART.OldEvents = {
 		end}},
 		callback = function(self, ent, time, damage, uid)
 			uid = uid or ""
-			local valid_uid, err = pcall(pac.GetPartFromUniqueID, uid)
+			local valid_uid, err = pcall(pac.GetPartFromUniqueID, pac.Hash(ent), uid)
 			if uid == "" then
 				for _,part in pairs(pac.GetLocalParts()) do
 					if part.ClassName == "damage_zone" then
@@ -2336,7 +2366,7 @@ PART.OldEvents = {
 			elseif not valid_uid and err then
 				self:SetError("invalid part Unique ID\n"..err)
 			elseif valid_uid then
-				local part = pac.GetPartFromUniqueID(uid)
+				local part = pac.GetPartFromUniqueID(pac.Hash(ent), uid)
 				if part.ClassName == "damage_zone" then
 					if part.dmgzone_hit_done and self:NumberOperator(part.Damage, damage) then
 						if part.dmgzone_hit_done + time > CurTime() then
@@ -2368,7 +2398,7 @@ PART.OldEvents = {
 		end}},
 		callback = function(self, ent, time, uid)
 			uid = uid or ""
-			local valid_uid, err = pcall(pac.GetPartFromUniqueID, uid)
+			local valid_uid, err = pcall(pac.GetPartFromUniqueID, pac.Hash(ent), uid)
 			if uid == "" then
 				for _,part in pairs(pac.GetLocalParts()) do
 					if part.ClassName == "damage_zone" then
@@ -2382,7 +2412,7 @@ PART.OldEvents = {
 			elseif not valid_uid and err then
 				self:SetError("invalid part Unique ID\n"..err)
 			elseif valid_uid then
-				local part = pac.GetPartFromUniqueID(uid)
+				local part = pac.GetPartFromUniqueID(pac.Hash(ent), uid)
 				if part.ClassName == "damage_zone" then
 					if part.dmgzone_kill_done then
 						if part.dmgzone_kill_done + time > CurTime() then
@@ -2421,7 +2451,7 @@ PART.OldEvents = {
 		end}},
 		callback = function(self, ent, uid)
 			uid = uid or ""
-			local valid_uid, err = pcall(pac.GetPartFromUniqueID, uid)
+			local valid_uid, err = pcall(pac.GetPartFromUniqueID, pac.Hash(ent), uid)
 			if uid == "" then
 				for _,part in pairs(pac.GetLocalParts()) do
 					if part.ClassName == "lock" then
@@ -2433,7 +2463,7 @@ PART.OldEvents = {
 			elseif not valid_uid and err then
 				self:SetError("invalid part Unique ID\n"..err)
 			elseif valid_uid then
-				local part = pac.GetPartFromUniqueID(uid)
+				local part = pac.GetPartFromUniqueID(pac.Hash(ent), uid)
 				if part.ClassName == "lock" then
 					if part.grabbing then
 						return IsValid(part.target_ent)
@@ -2445,6 +2475,98 @@ PART.OldEvents = {
 			return false
 		end
 	},
+
+	--[[
+		ent.pac_healthbars_layertotals = ent.pac_healthbars_layertotals or {}
+		ent.pac_healthbars_uidtotals = ent.pac_healthbars_uidtotals or {}
+		ent.pac_healthbars_total = 0
+	]]
+	healthmod_bar_total = {
+		operator_type = "number", preferred_operator = "above",
+		arguments = {{HpValue = "number"}},
+		userdata = {{default = 0}},
+		callback = function(self, ent, HpValue)
+			if ent.pac_healthbars and ent.pac_healthbars_total then
+				return self:NumberOperator(ent.pac_healthbars_total, HpValue)
+			end
+			return false
+		end,
+		nice = function(self, ent, HpValue)
+			local str = "healthmod_bar_total : [" .. self.Operator .. " " .. HpValue .. "]"
+			if ent.pac_healthbars_total then
+				str = str .. " | " .. ent.pac_healthbars_total
+			end
+			return str
+		end
+	},
+
+	healthmod_bar_layertotal = {
+		operator_type = "number", preferred_operator = "above",
+		arguments = {{HpValue = "number"}, {layer = "number"}},
+		userdata = {{default = 0}, {default = 0}},
+		callback = function(self, ent, HpValue, layer)
+			if ent.pac_healthbars and ent.pac_healthbars_layertotals then
+				if ent.pac_healthbars_layertotals[layer] then
+					return self:NumberOperator(ent.pac_healthbars_layertotals[layer], HpValue)
+				end
+				
+			end
+			return false
+		end,
+		nice = function(self, ent, HpValue, layer)
+			local str = "healthmod_layer_total at layer " .. layer .. " : [" .. self.Operator .. " " .. HpValue .. "]"
+			if ent.pac_healthbars_layertotals then
+				if ent.pac_healthbars_layertotals[layer] then
+					str = str .. " | " .. ent.pac_healthbars_layertotals[layer]
+				else
+					str = str .. " | not found"
+				end
+				
+			else
+				str = str .. " | not found"
+			end
+			return str
+		end
+	},
+
+	healthmod_bar_uidvalue = {
+		operator_type = "number", preferred_operator = "above",
+		arguments = {{HpValue = "number"}, {part_uid = "string"}},
+		userdata = {{default = 0}, {enums = function(part)
+			local output = {}
+			local parts = pac.GetLocalParts()
+
+			for i, part in pairs(parts) do
+				if part.ClassName == "health_modifier" then
+					output[i] = part
+				end
+			end
+
+			return output
+		end}},
+		callback = function(self, ent, HpValue, part_uid)
+			if ent.pac_healthbars and ent.pac_healthbars_uidtotals then
+				if ent.pac_healthbars_uidtotals[part_uid] then
+					return self:NumberOperator(ent.pac_healthbars_uidtotals[part_uid], HpValue)
+				end
+			end
+			return false
+		end,
+		nice = function(self, ent, HpValue, part_uid)
+			local str = "healthmod_bar_uidvalue : [" .. self.Operator .. " " .. HpValue .. "]"
+			if ent.pac_healthbars_uidtotals then
+				if ent.pac_healthbars_uidtotals[part_uid] then
+					str = str .. " | " .. ent.pac_healthbars_uidtotals[part_uid]
+				else
+					str = str .. " | nothing for UID "..part_uid
+				end
+			else
+				str = str .. " | nothing for UID "..part_uid
+			end
+			return str
+		end
+	},
+
 }
 
 
@@ -2555,6 +2677,7 @@ do
 				part.toggleimpulsekey = part.toggleimpulsekey or {}
 				part.toggleimpulsekey[key] = down
 				part.pac_broadcasted_buttons_holduntil[key] = part.pac_broadcasted_buttons_holduntil[key] or 0
+				ply.pac_broadcasted_buttons_lastpressed[key] = ply.pac_broadcasted_buttons_lastpressed[key] or 0
 				part.pac_broadcasted_buttons_holduntil[key] = ply.pac_broadcasted_buttons_lastpressed[key] + part.holdtime
 			end
 		end
@@ -3602,7 +3725,7 @@ concommand.Add("pac_event_sequenced", function(ply, cmd, args)
 				if sequence_number == 0 then sequence_number = i end
 				found = true
 			end
-		elseif ply.pac_command_events[event..i] == nil then
+		--elseif ply.pac_command_events[event..i] == nil then
 			ply.pac_command_events[event..i] = {name = event..i, time = 0, on = 0}
 		end
 	end
@@ -3715,12 +3838,25 @@ local eventwheel_visibility_rule = CreateConVar("pac_eventwheel_visibility_rule"
 "3 will hide a command only if ALL events of a name are being hidden\n"..
 "4 will only show commands containing the following substrings, separated by spaces\n"..
 "-4 will hide commands containing the following substrings, separated by spaces")
+
+local eventwheel_style = CreateConVar("pac_eventwheel_style", "0", FCVAR_ARCHIVE, "The style of the eventwheel.\n0 is the default legacy style with one circle\n1 is the new style with colors, using one circle for the color and one circle for the activation indicator\n2 is an alternative style using a smaller indicator circle on the corner of the circle")
+local eventlist_style = CreateConVar("pac_eventlist_style", "0", FCVAR_ARCHIVE, "The style of the eventwheel list alternative.\n0 is like the default eventwheel legacy style with one indicator for the activation\n1 is the new style with colors, using one rectangle for the color and one rectangle for the activation indicator\n2 is an alternative style using a smaller indicator on the corner")
+
+local eventwheel_font = CreateConVar("pac_eventwheel_font", "DermaDefault", FCVAR_ARCHIVE, "pac3 eventwheel font. try pac_font_<size> such as pac_font_20 or pac_font_bold30. the pac fonts go up to 34")
+local eventwheel_clickable = CreateConVar("pac_eventwheel_clickmode", "0", FCVAR_ARCHIVE, "The activation modes for pac3 event wheel.\n-1 : not clickable, but activate on menu close\n0 : clickable, and activate on menu close\n1 : clickable, but doesn't activate on menu close")
+local eventlist_clickable = CreateConVar("pac_eventlist_clickmode", "0", FCVAR_ARCHIVE, "The activation modes for pac3 event wheel list alternative.\n-1 : not clickable, but activate a hovered event on menu close\n0 : clickable, and activate a hovered event on menu close\n1 : clickable, but doesn't do anything on menu close")
+
+local event_list_font_size = CreateConVar("pac_eventlist_fontsize", "12", FCVAR_ARCHIVE, "How big the font should be for the eventwheel's rectangle list counterpart.\nMight not work if the corresponding pac_font is missing")
+
 -- Custom event selector wheel
 do
+
 	local function get_events()
+		pace.command_colors = pace.command_colors or {}
 		local available = {}
 		local names = {}
 		local args = string.Split(eventwheel_visibility_rule:GetString(), " ")
+		local uncolored_events = {}
 
 		for k,v in pairs(pac.GetLocalParts()) do
 			if v.ClassName == "event" then
@@ -3728,6 +3864,7 @@ do
 				if e == "command" then
 					local cmd, time, hide = v:GetParsedArgumentsForObject(v.Events.command)
 					local this_event_hidden = v:IsHiddenBySomethingElse(false)
+					
 
 					if not names[cmd] then
 						--wheel_hidden is the hide_in_eventwheel box
@@ -3763,11 +3900,12 @@ do
 
 					end
 					
-					available[cmd] = {type = e, time = time}
+					available[cmd] = {type = e, time = time, trigger = cmd}
 				end
 			end
 		end
 		for cmd,v in pairs(names) do
+			uncolored_events[cmd] = not pace.command_colors[cmd]
 			local remove = false
 
 			if args[1] == "-1" then --skip
@@ -3805,7 +3943,7 @@ do
 						remove = true
 					end
 
-				else --why would you use the 2 or -2 mode if you didn't set keywords??
+				else --why would you use the 4 or -4 mode if you didn't set keywords??
 					remove = false
 				end
 			end
@@ -3814,24 +3952,94 @@ do
 				available[cmd] = nil
 			end
 		end
-
+		
 		local list = {}
-		for k,v in pairs(available) do
-			if k == names[k].name then
-				v.trigger = k
+
+		if true then
+			local colors = {}
+
+			for name,colstr in pairs(pace.command_colors) do
+				colors[colstr] = colors[colstr] or {}
+				colors[colstr][name] = available[name]
+			end
+			
+
+			for col,tbl in pairs(colors) do
+				
+				local sublist = {}
+				for k,v in pairs(tbl) do
+					table.insert(sublist,available[k])
+				end
+				
+				table.sort(sublist, function(a, b) return a.trigger < b.trigger end)
+
+				for i,v in pairs(sublist) do
+					table.insert(list,v)
+				end
+			end
+			
+			local uncolored_sublist = {}
+
+			for k,v in pairs(available) do
+				if uncolored_events[k] then
+					table.insert(uncolored_sublist,available[k])
+				end
+			end
+			
+			table.sort(uncolored_sublist, function(a, b) return a.trigger < b.trigger end)
+
+			for k,v in ipairs(uncolored_sublist) do
 				table.insert(list, v)
 			end
+		else
+			
+			for k,v in pairs(available) do
+				if k == names[k].name then
+					v.trigger = k
+					table.insert(list, v)
+				end
+			end
+			
+			table.sort(list, function(a, b) return a.trigger > b.trigger end)
 		end
-
-		table.sort(list, function(a, b) return a.trigger > b.trigger end)
-
+		
 		return list
 	end
 
 	local selectorBg = Material("sgm/playercircle")
 	local selected
+	local clicking = false
+	local open_btn
+
+
+	local clickable = eventwheel_clickable:GetInt() == 0 or eventwheel_clickable:GetInt() == 1
+	local close_click = eventwheel_clickable:GetInt() == -1 or eventwheel_clickable:GetInt() == 0
+
+	local clickable2 = eventlist_clickable:GetInt() == 0 or eventlist_clickable:GetInt() == 1
+	local close_click2 = eventlist_clickable:GetInt() == -1 or eventlist_clickable:GetInt() == 0
 
 	function pac.openEventSelectionWheel()
+		if not IsValid(open_btn) then open_btn = vgui.Create("DButton") end
+		open_btn:SetSize(80,30)
+		open_btn:SetText("Customize")
+		open_btn:SetPos(ScrW() - 80,0)
+		pace.command_event_menu_opened = nil
+		
+		function open_btn:DoClick()
+
+			if (pace.command_event_menu_opened == nil) then
+				pace.ConfigureEventWheelMenu()
+			elseif IsValid(pace.command_event_menu_opened) then
+				pace.command_event_menu_opened:Remove()
+			end
+			
+		end
+
+		open_btn:Show()
+		pace.command_colors = pace.command_colors or {}
+		clickable = eventwheel_clickable:GetInt() == 0 or eventwheel_clickable:GetInt() == 1
+		close_click = eventwheel_clickable:GetInt() == -1 or eventwheel_clickable:GetInt() == 0
+
 		gui.EnableScreenClicker(true)
 
 		local scrw, scrh = ScrW(), ScrH()
@@ -3896,6 +4104,13 @@ do
 
 			local ply = pac.LocalPlayer
 			local data = ply.pac_command_events and ply.pac_command_events[self.event.trigger] and ply.pac_command_events[self.event.trigger]
+			
+
+			local d1 = 64 --indicator
+			
+			
+			local d2 = 50 --color
+			local indicator_color
 			if data then
 				local is_oneshot = self.event.time and self.event.time > 0
 
@@ -3903,29 +4118,84 @@ do
 					local f = (pac.RealTime - data.time) / self.event.time
 					local s = Lerp(math.Clamp(f,0,1), 1, 0)
 					local v = Lerp(math.Clamp(f,0,1), 0.55, 0.15)
-					surface.SetDrawColor(HSVToColor(210,s,v))
+					indicator_color = HSVToColor(210,s,v)
+					
 				else
 					if data.on == 1 then
-						surface.SetDrawColor(HSVToColor(210,1,0.55))
+						indicator_color = HSVToColor(210,1,0.55)
 					else
-						surface.SetDrawColor(HSVToColor(210,0,0.15))
+						indicator_color = HSVToColor(210,0,0.15)
 					end
 				end
 			else
-				surface.SetDrawColor(HSVToColor(210,0,0.15))
+				indicator_color = HSVToColor(210,0,0.15)
 			end
 
-			--surface.DrawTexturedRect(x-48, y-48, 96, 96)
-			surface.DrawTexturedRect(x-48, y-48, 96, 96)
-			draw.SimpleText(self.name, "DermaDefault", x, y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			if eventwheel_style:GetInt() == 0 then
+				d2 = 96
+				surface.SetDrawColor(indicator_color)
+				surface.DrawTexturedRect(x-(d2/2), y-(d2/2), d2, d2)
+			elseif eventwheel_style:GetInt() == 1 then
+				if pace.command_colors[self.name] then
+					local col_str_tbl = string.Split(pace.command_colors[self.name]," ")
+					surface.SetDrawColor(tonumber(col_str_tbl[1]),tonumber(col_str_tbl[2]),tonumber(col_str_tbl[3]))
+				else
+					surface.SetDrawColor(HSVToColor(210,0,0.15))
+				end
 
+				d1 = 100 --color
+				d2 = 50 --indicator
+
+				surface.DrawTexturedRect(x-(d1/2), y-(d1/2), d1, d1)
+				
+				surface.SetDrawColor(indicator_color)
+				surface.DrawTexturedRect(x-(d2/2), y-(d2/2), d2, d2)
+				
+				draw.RoundedBox(0,x-40,y-8,80,16,Color(0,0,0))
+
+			elseif eventwheel_style:GetInt() == 2 then
+				if pace.command_colors[self.name] then
+					local col_str_tbl = string.Split(pace.command_colors[self.name]," ")
+					surface.SetDrawColor(tonumber(col_str_tbl[1]),tonumber(col_str_tbl[2]),tonumber(col_str_tbl[3]))
+				else
+					surface.SetDrawColor(HSVToColor(210,0,0.15))
+				end
+
+				d1 = 96 --color
+				d2 = 40 --indicator
+
+				surface.DrawTexturedRect(x-(d1/2), y-(d1/2), d1, d1)
+				surface.SetDrawColor(indicator_color)
+				surface.DrawTexturedRect(x-1.2*d2, y-1.2*d2, d2, d2)
+			end
+
+			draw.SimpleText(self.name, eventwheel_font:GetString(), x, y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+			
 			cam.PopModelMatrix()
 		end
 
 		pac.AddHook("HUDPaint","custom_event_selector",function()
 			-- Right clicking cancels
 			if input.IsButtonDown(MOUSE_RIGHT) then pac.closeEventSelectionWheel(true) return end
-
+			if input.IsButtonDown(MOUSE_LEFT) and not pace.command_event_menu_opened and not open_btn:IsHovered() and clickable then
+				
+				if not clicking and selected then
+					if not selected.event.time then
+						RunConsoleCommand("pac_event", selected.event.trigger, "toggle")
+					elseif selected.event.time > 0 then
+						RunConsoleCommand("pac_event", selected.event.trigger)
+					else
+						local ply = pac.LocalPlayer
+		
+						if ply.pac_command_events and ply.pac_command_events[selected.event.trigger] and ply.pac_command_events[selected.event.trigger].on == 1 then
+							RunConsoleCommand("pac_event", selected.event.trigger, "0")
+						else
+							RunConsoleCommand("pac_event", selected.event.trigger, "1")
+						end
+					end
+				end
+				clicking = true
+			else clicking = false end
 			-- Normalize mouse vector from center of screen
 			local x, y = input.GetCursorPos()
 			x = x - scrw2
@@ -3952,10 +4222,11 @@ do
 	end
 
 	function pac.closeEventSelectionWheel(cancel)
+		open_btn:Hide()
 		gui.EnableScreenClicker(false)
 		pac.RemoveHook("HUDPaint","custom_event_selector")
 
-		if selected and cancel ~= true then
+		if selected and cancel ~= true and close_click then
 			if not selected.event.time then
 				RunConsoleCommand("pac_event", selected.event.trigger, "toggle")
 			elseif selected.event.time > 0 then
@@ -3973,59 +4244,209 @@ do
 		selected = nil
 	end
 
+	local panels = {}
 	function pac.openEventSelectionList()
+		if not IsValid(open_btn) then open_btn = vgui.Create("DButton") end
+		open_btn:SetSize(80,30)
+		open_btn:SetText("Customize")
+		open_btn:SetPos(ScrW() - 80,0)
+		pace.command_event_menu_opened = nil
+		
+		function open_btn:DoClick()
+
+			if (pace.command_event_menu_opened == nil) then
+				pace.ConfigureEventWheelMenu()
+			elseif IsValid(pace.command_event_menu_opened) then
+				pace.command_event_menu_opened:Remove()
+			end
+			
+		end
+
+		open_btn:Show()
+		pace.command_colors = pace.command_colors or {}
+		clickable2 = eventlist_clickable:GetInt() == 0 or eventlist_clickable:GetInt() == 1
+		close_click2 = eventlist_clickable:GetInt() == -1 or eventlist_clickable:GetInt() == 0
+
+		local height = 2*event_list_font_size:GetInt() + 8
+		panels = panels or {}
+		if not table.IsEmpty(panels) then
+			for i, v in pairs(panels) do
+				v:Remove()
+			end
+		end
 		local selections = {}
 		local events = get_events()
-		for k, v in ipairs(events) do
+		for i, v in ipairs(events) do
 			
-			selections[k] = {
+			
+			local list_element = vgui.Create("DPanel")
+			
+			panels[i] = list_element
+			list_element:SetSize(250,height)
+			list_element.event = v
+			
+			selections[i] = {
 				grow = 0,
 				name = v.trigger,
-				event = v
+				event = v,
+				pnl = list_element
 			}
+			function list_element:Paint() end
+			function list_element:DoCommand()
+				if not selected.event.time then
+					RunConsoleCommand("pac_event", selected.event.trigger, "toggle")
+				elseif selected.event.time > 0 then
+					RunConsoleCommand("pac_event", selected.event.trigger)
+				else
+					local ply = pac.LocalPlayer
+	
+					if ply.pac_command_events and ply.pac_command_events[selected.event.trigger] and ply.pac_command_events[selected.event.trigger].on == 1 then
+						RunConsoleCommand("pac_event", selected.event.trigger, "0")
+					else
+						RunConsoleCommand("pac_event", selected.event.trigger, "1")
+					end
+				end
+			end
+			function list_element:Think()
+				if input.IsKeyDown(KEY_LCONTROL) and input.IsKeyDown(KEY_G) then
+					self:Remove()
+				end
+				if self:IsHovered() then
+					selected = self
+					if input.IsMouseDown(MOUSE_LEFT) and not self.was_clicked and not IsValid(pace.command_event_menu_opened) and not open_btn:IsHovered() and clickable2 then
+						self.was_clicked = true
+						self:DoCommand()
+					elseif not input.IsMouseDown(MOUSE_LEFT) then self.was_clicked = false end
+				end
+			end
+			
 		end
 
 		gui.EnableScreenClicker(true)
 
 		pac.AddHook("HUDPaint","custom_event_selector_list",function()
+			local height = 2*event_list_font_size:GetInt() + 8
 			-- Right clicking cancels
-			if input.IsButtonDown(MOUSE_RIGHT) then pac.closeEventSelectionWheel(true) return end
+			if input.IsButtonDown(MOUSE_RIGHT) then pac.closeEventSelectionList(true) return end
 
 			DisableClipping(true)
 			render.PushFilterMag(TEXFILTER.ANISOTROPIC)
 			render.PushFilterMin(TEXFILTER.ANISOTROPIC)
 			draw.SimpleText("Right click to cancel", "DermaDefault", ScrW()/2, ScrH()/2, color_red, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
-			for _, v in ipairs(selections) do
-				draw_circle(v, x, y)
+			local x = 0
+			local y = 0
+			for i, v in ipairs(selections) do
+				if IsValid(v.pnl) then
+					
+					if y + height > ScrH() then
+						y = 0
+						x = x + 200
+					end
+					local list_element = v.pnl
+					list_element:SetPos(x,y)
+					list_element:SetSize(250,height)
+
+					local ply = pac.LocalPlayer
+					local data = ply.pac_command_events and ply.pac_command_events[list_element.event.trigger]
+					local indicator_color
+					
+					if data then
+						local is_oneshot = list_element.event.time and list_element.event.time > 0
+
+						if is_oneshot then
+							local f = (pac.RealTime - data.time) / list_element.event.time
+							local s = Lerp(math.Clamp(f,0,1), 1, 0)
+							local v = Lerp(math.Clamp(f,0,1), 0.55, 0.15)
+							
+							indicator_color = HSVToColor(210,s,v)
+						else
+							if data.on == 1 then
+								indicator_color = HSVToColor(210,1,0.55)
+							else
+								indicator_color = HSVToColor(210,0,0.15)
+							end
+						end
+					else
+						indicator_color = HSVToColor(210,0,0.15)
+					end
+
+					local main_color = HSVToColor(210,0,0.15)
+					if pace.command_colors[v.name] then
+						local col_str_tbl = string.Split(pace.command_colors[v.name]," ")
+						main_color = Color(tonumber(col_str_tbl[1]),tonumber(col_str_tbl[2]),tonumber(col_str_tbl[3]))
+					end
+					
+					local hue, sat, lightness_value = ColorToHSL(main_color)
+
+
+					if eventlist_style:GetInt() == 0 then
+						surface.SetDrawColor(indicator_color)
+						surface.DrawRect(x,y,200,height)
+						surface.SetDrawColor(0,0,0)
+						surface.DrawOutlinedRect(x,y,200,height,2)
+					elseif eventlist_style:GetInt() == 1 then
+						if pace.command_colors[v.name] then
+							local col_str_tbl = string.Split(pace.command_colors[v.name]," ")
+							surface.SetDrawColor(tonumber(col_str_tbl[1]),tonumber(col_str_tbl[2]),tonumber(col_str_tbl[3]))
+						else
+							surface.SetDrawColor(HSVToColor(210,0,0.15))
+						end
+						surface.DrawRect(x,y,200,height)
+						
+						surface.SetDrawColor(indicator_color)
+						surface.DrawRect(x + 200/6,y + height/6,200 * 0.666,height * 0.666,2)
+						surface.SetDrawColor(0,0,0)
+						surface.DrawOutlinedRect(x,y,200,height,2)
+
+					elseif eventlist_style:GetInt() == 2 then
+						surface.DrawOutlinedRect(x,y,200,height,2)
+						if pace.command_colors[v.name] then
+							local col_str_tbl = string.Split(pace.command_colors[v.name]," ")
+							surface.SetDrawColor(tonumber(col_str_tbl[1]),tonumber(col_str_tbl[2]),tonumber(col_str_tbl[3]))
+						else
+							surface.SetDrawColor(HSVToColor(210,0,0.15))
+						end
+						surface.DrawRect(x,y,200,height)
+						
+						surface.SetDrawColor(indicator_color)
+						surface.DrawRect(x + 150,y,50,height/2,2)
+						surface.SetDrawColor(0,0,0)
+						surface.DrawOutlinedRect(x + 150,y,50,height/2,2)
+						surface.DrawOutlinedRect(x,y,200,height,2)
+					end
+
+					local text_color = Color(255,255,255)
+					if lightness_value > 0.5 and eventlist_style:GetInt() ~= 0 then
+						text_color = Color(0,0,0)
+					end
+					draw.SimpleText(v.name,"pac_font_" .. event_list_font_size:GetString(),x + 4,y + 4, text_color, TEXT_ALIGN_LEFT)
+					y = y + height
+
+				end
+				
 			end
 
 			render.PopFilterMag()
 			render.PopFilterMin()
 			DisableClipping(false)
+			
 		end)
 	end
 
 	function pac.closeEventSelectionList(cancel)
+		open_btn:Hide()
 		gui.EnableScreenClicker(false)
 		pac.RemoveHook("HUDPaint","custom_event_selector_list")
 
-		if selected and cancel ~= true then
-			if not selected.event.time then
-				RunConsoleCommand("pac_event", selected.event.trigger, "toggle")
-			elseif selected.event.time > 0 then
-				RunConsoleCommand("pac_event", selected.event.trigger)
-			else
-				local ply = pac.LocalPlayer
-
-				if ply.pac_command_events and ply.pac_command_events[selected.event.trigger] and ply.pac_command_events[selected.event.trigger].on == 1 then
-					RunConsoleCommand("pac_event", selected.event.trigger, "0")
-				else
-					RunConsoleCommand("pac_event", selected.event.trigger, "1")
-				end
+		if IsValid(selected) and close_click2 then
+			if selected:IsHovered() then
+				selected:DoCommand()
 			end
 		end
+		for i,v  in pairs(panels) do v:Remove() end
 		selected = nil
 	end
+
 
 	concommand.Add("+pac_events", pac.openEventSelectionWheel)
 	concommand.Add("-pac_events", pac.closeEventSelectionWheel)
@@ -4033,8 +4454,6 @@ do
 	concommand.Add("+pac_events_list", pac.openEventSelectionList)
 	concommand.Add("-pac_events_list", pac.closeEventSelectionList)
 
-
-	
 end
 
 net.Receive("pac.SendPlayerObjUsed", function()

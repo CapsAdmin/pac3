@@ -227,6 +227,26 @@ function PART:SendNetMessage()
 	net.SendToServer()
 end
 
+function PART:SetDamage(val)
+	self.Damage = val
+	local sv_max = GetConVar("pac_sv_hitscan_max_damage"):GetInt()
+	if self.Damage > sv_max then
+		self:SetInfo("Your damage is beyond the server's maximum permitted! Server max is " .. sv_max)
+	else
+		self:SetInfo(nil)
+	end
+end
+
+function PART:SetNumberBullets(val)
+	self.NumberBullets = val
+	local sv_max = GetConVar("pac_sv_hitscan_max_bullets"):GetInt()
+	if self.NumberBullets > sv_max then
+		self:SetInfo("Your bullet count is beyond the server's maximum permitted! Server max is " .. sv_max)
+	else
+		self:SetInfo(nil)
+	end
+end
+
 
 BUILDER:Register()
 

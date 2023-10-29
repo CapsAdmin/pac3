@@ -45,6 +45,10 @@ local netrate_enforcement_sv_monitoring = CreateConVar("pac_sv_combat_enforce_ne
 local raw_ent_limit = CreateConVar("pac_sv_entity_limit_per_combat_operation", 500, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Hard limit to drop any force or damage zone if more than this amount of entities is selected")
 local per_ply_limit = CreateConVar("pac_sv_entity_limit_per_player_per_combat_operation", 40, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Limit per player to drop any force or damage zone if this amount multiplied by each client is more than the hard limit")
 local player_fraction = CreateConVar("pac_sv_player_limit_as_fraction_to_drop_damage_zone", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "The fraction (0.0-1.0) of players that will stop damage zone net messages if a damage zone order covers more than this fraction of the server's population, when there are more than 12 players covered")
+local enforce_distance = CreateConVar("pac_sv_combat_distance_enforced", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to enforce a limit on how far a pac combat action can originate.\nIf set to a distance, it will prevent actions that are too far from the acting player.\n0 to disable.")
+local ENFORCE_DISTANCE_SQR = math.pow(enforce_distance:GetInt(),2)
+cvars.AddChangeCallback("pac_sv_combat_distance_enforced", function() ENFORCE_DISTANCE_SQR = math.pow(enforce_distance:GetInt(),2) end)
+
 
 local global_combat_whitelisting = CreateConVar("pac_sv_combat_whitelisting", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "How the server should decide which players are allowed to use the main PAC3 combat parts (lock, damagezone, force).\n0:Everyone is allowed unless the parts are disabled serverwide\n1:No one is allowed until they get verified as trustworthy\tpac_sv_whitelist_combat <playername>\n\tpac_sv_blacklist_combat <playername>")
 local global_combat_prop_protection = CreateConVar("pac_sv_prop_protection", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether players owned (created) entities (physics props and gmod contraption entities) will be considered in the consent calculations, protecting them. Without this cvar, only the player is protected.")
@@ -637,6 +641,7 @@ if SERVER then
 	end
 
 	local function ProcessDamagesList(ents_hits, dmg_info, tbl, pos, ang, ply)
+		local base_damage = tbl.Damage
 		local ent_count = 0
 		local ply_count = 0
 		local ply_prog_count = 0
@@ -772,6 +777,9 @@ if SERVER then
 
 		--final action to apply the DamageInfo
 		local function DoDamage(ent)
+			--add the max hp-scaled damage calculated with this entity's max health
+			tbl.Damage = base_damage + tbl.MaxHpScaling * ent:GetMaxHealth()
+			dmg_info:SetDamage(tbl.Damage)
 			--we'll need to find out whether the damage will crack open a player's extra bars
 			local de_facto_dmg = GetPredictedHPBarDamage(ent, tbl.Damage)
 
@@ -882,6 +890,7 @@ if SERVER then
 
 		--look through each entity
 		for _,ent in pairs(ents_hits) do
+			
 			local canhit = DMGAllowed(ent)
 			local oldhp = ent:Health()
 			if canhit then
@@ -1023,6 +1032,7 @@ if SERVER then
 				local dir2 = ent_center - tbl.Locus_pos--locus
 
 				local dist_multiplier = 1
+				local damping_dist_mult = 1
 				local up_mult = 1
 				local distance = (ent_center - pos):Length()
 				local height_delta = pos.z + tbl.LevitationHeight - ent_center.z
@@ -1097,6 +1107,16 @@ if SERVER then
 				if tbl.ReverseFalloff then
 					dist_multiplier = 1 - math.Clamp(1 - distance / math.max(tbl.Radius, tbl.Length),0,1)
 				end
+
+				if tbl.DampingFalloff then
+					damping_dist_mult = math.Clamp(1 - distance / math.max(tbl.Radius, tbl.Length),0,1)
+				end
+				if tbl.DampingReverseFalloff then
+					damping_dist_mult = 1 - math.Clamp(1 - distance / math.max(tbl.Radius, tbl.Length),0,1)
+				end
+				damping_dist_mult = damping_dist_mult
+				local final_damping = 1 - (tbl.Damping * damping_dist_mult)
+				
 				if tbl.Levitation then
 					addvel.z = addvel.z * up_mult
 				end
@@ -1108,26 +1128,26 @@ if SERVER then
 
 				if (ent:IsPlayer() and tbl.Players) or (ent == ply and tbl.AffectSelf) then
 					if (ent ~= ply and force_consents[ent] ~= false) or (ent == ply and tbl.AffectSelf) then
-						phys_ent:SetVelocity(oldvel * (-tbl.Damping) + addvel)
-						ent:SetVelocity(oldvel * (-tbl.Damping) + addvel)
+						phys_ent:SetVelocity(oldvel * (-final_damping) + addvel)
+						ent:SetVelocity(oldvel * (-final_damping) + addvel)
 					end
 
 				elseif (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or ent:IsWeapon()) and tbl.PhysicsProps then
 					if not IsPropProtected(ent, ply) and not (global_combat_prop_protection:GetBool() and unconsenting_owner) then
 						if IsValid(phys_ent) then
 							ent:PhysWake()
-							ent:SetVelocity(tbl.Damping * oldvel + addvel)
+							ent:SetVelocity(final_damping * oldvel + addvel)
 							if islocaltorque then
-								phys_ent:SetAngleVelocity(tbl.Damping * phys_ent:GetAngleVelocity())
+								phys_ent:SetAngleVelocity(final_damping * phys_ent:GetAngleVelocity())
 								phys_ent:AddAngleVelocity(add_angvel)
 								
 							else
-								phys_ent:SetAngleVelocity(tbl.Damping * phys_ent:GetAngleVelocity())
+								phys_ent:SetAngleVelocity(final_damping * phys_ent:GetAngleVelocity())
 								add_angvel = phys_ent:WorldToLocalVector( add_angvel )
 								phys_ent:ApplyTorqueCenter(add_angvel)
 							end
 							ent:SetPos(ent:GetPos() + Vector(0,0,0.0001)) --dumb workaround to fight against the ground friction reversing the forces
-							phys_ent:SetVelocity((oldvel * tbl.Damping) + addvel)
+							phys_ent:SetVelocity((oldvel * final_damping) + addvel)
 						end
 					end
 				elseif (ent:IsNPC() or string.find(ent:GetClass(), "npc") ~= nil) and tbl.NPC then
@@ -1137,11 +1157,11 @@ if SERVER then
 							local clamp_vec = vec:GetNormalized()*500
 							ent:SetVelocity(Vector(0.7 * clamp_vec.x,0.7 * clamp_vec.y,clamp_vec.z)*math.Clamp(1.5*(pos - ent_center):Length()/tbl.Radius,0,1)) --more jank, this one is to prevent some of the weird sliding of npcs by lowering the force as we get closer
 							
-						else ent:SetVelocity((oldvel * tbl.Damping) + addvel) end
+						else ent:SetVelocity((oldvel * final_damping) + addvel) end
 					end
 				elseif tbl.PointEntities then
 					if not IsPropProtected(ent, ply) and not global_combat_prop_protection:GetBool() and not unconsenting_owner then
-						phys_ent:SetVelocity(tbl.Damping * oldvel + addvel)
+						phys_ent:SetVelocity(final_damping * oldvel + addvel)
 					end
 				end
 				hook.Run("PhysicsUpdate", ent)
@@ -1329,6 +1349,7 @@ if SERVER then
 
 			local tbl = {}
 			local pos = net.ReadVector()
+			if ply:GetPos():DistToSqr(pos) > ENFORCE_DISTANCE_SQR and ENFORCE_DISTANCE_SQR > 0 then return end
 			local ang = net.ReadAngle()
 			tbl.Locus_pos = net.ReadVector()
 			local on = net.ReadBool()
@@ -1360,13 +1381,15 @@ if SERVER then
 			tbl.AddedVectorForce1 = net.ReadVector()
 			tbl.Torque1 = net.ReadVector()
 
-			tbl.Damping = 1 - net.ReadUInt(10)/1000
+			tbl.Damping = net.ReadUInt(10)/1000
 			tbl.LevitationHeight = net.ReadInt(14)
 
 			tbl.Continuous = net.ReadBool()
 			tbl.AccountMass = net.ReadBool()
 			tbl.Falloff = net.ReadBool()
 			tbl.ReverseFalloff = net.ReadBool()
+			tbl.DampingFalloff = net.ReadBool()
+			tbl.DampingReverseFalloff = net.ReadBool()
 			tbl.Levitation = net.ReadBool()
 			tbl.AffectSelf = net.ReadBool()
 			tbl.Players = net.ReadBool()
@@ -1410,7 +1433,6 @@ if SERVER then
 					--print("outdated force")
 				end
 			end
-			
 
 		end)
 
@@ -1446,10 +1468,12 @@ if SERVER then
 			end
 
 			local pos = net.ReadVector()
+			if ply:GetPos():DistToSqr(pos) > ENFORCE_DISTANCE_SQR and ENFORCE_DISTANCE_SQR > 0 then return end
 			local ang = net.ReadAngle()
 			local tbl = {}
 
 			tbl.Damage = net.ReadUInt(28)
+			tbl.MaxHpScaling = net.ReadUInt(10) / 1000
 			tbl.Length = net.ReadInt(16)
 			tbl.Radius = net.ReadInt(16)
 
@@ -1684,6 +1708,18 @@ if SERVER then
 			local alt_ang = net.ReadAngle()
 			local ask_drawviewer = net.ReadBool()
 
+			if ply:GetPos():DistToSqr(pos) > ENFORCE_DISTANCE_SQR and ENFORCE_DISTANCE_SQR > 0 then
+				ApplyLockState(targ_ent, false)
+				if ply.grabbed_ents then
+					net.Start("pac_request_lock_break")
+					net.WriteEntity(targ_ent)
+					net.WriteString(lockpart_UID)
+					net.WriteString(breakup_condition)
+					net.Send(ply)
+				end
+				return
+			end
+
 			local prop_protected, reason = IsPropProtected(targ_ent, ply)
 			
 			local unconsenting_owner = targ_ent:GetCreator() ~= ply and (grab_consents[targ_ent:GetCreator()] == false or (targ_ent:IsPlayer() and grab_consents[targ_ent] == false))
@@ -1873,12 +1909,17 @@ if SERVER then
 			if nextchecklock > CurTime() then return else nextchecklock = CurTime() + 0.2 end
 			--go through every entity and check if they're still active, if beyond 0.5 seconds we nil out. this is the closest to a regular check
 			for ent,bool in pairs(active_grabbed_ents) do
-				if ent.grabbed_by or bool then
+				if not IsValid(ent) then
+					active_grabbed_ents[ent] = nil
+				elseif (ent.grabbed_by or bool) then
 					if ent.grabbed_by_time + 0.5 < CurTime() then --restore the movetype
 						local grabber = ent.grabbed_by
 						ent.grabbed_by_uid = nil
 						ent.grabbed_by = nil
-						grabber.grabbed_ents[ent] = false
+						if grabber then
+							grabber.grabbed_ents[ent] = false
+						end
+						
 						ApplyLockState(ent, false)
 						active_grabbed_ents[ent] = nil
 					end

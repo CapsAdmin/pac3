@@ -115,6 +115,7 @@ BUILDER:StartStorableVars()
 		}})
 		:GetSet("DoNotKill",false, {description = "Will only damage to as low as critical health"})
 		:GetSet("CriticalHealth",1, {editor_onchange = function(self,num) return math.floor(math.Clamp(num,0,65535)) end})
+		:GetSet("MaxHpScaling", 0, {editor_clamp = {0,1}})
 	:SetPropertyGroup("HitOutcome")
 		:GetSetPart("HitSoundPart")
 		:GetSetPart("KillSoundPart")
@@ -258,7 +259,7 @@ function PART:FindOrCreateFloatingPart(owner, ent, part_uid, id)
 	end
 	--what if we don't!
 	local tbl = pac.GetPartFromUniqueID(pac.Hash(owner), part_uid):ToTable()
-	local group = pac.CreatePart("group", self:GetPlayerOwner()) print("\tcreated a group for " .. id)
+	local group = pac.CreatePart("group", self:GetPlayerOwner()) --print("\tcreated a group for " .. id)
 	group:SetShowInEditor(false)
 
 	local part = pac.CreatePart(tbl.self.ClassName, self:GetPlayerOwner(), tbl, tostring(tbl))
@@ -365,7 +366,7 @@ local function RemoveHitMarker(owner, ent, uid, id)
 				tbl.group_part_data:SetHide(true)
 				tbl.group_part_data:SetShowInEditor(false)
 				tbl.group_part_data:SetOwner(owner)
-				print(tbl.group_part_data, "dormant")
+				--print(tbl.group_part_data, "dormant")
 			end
 		end
 	end
@@ -402,7 +403,7 @@ function PART:AssignFloatingPartToEntity(part, owner, ent, parent_ent, template_
 	group:SetHide(false)
 	part2:SetHide(false)
 	group:CallRecursive("Think")
-	print(group, "assigned to " .. marker_id .. " / " .. parent_ent:EntIndex())
+	--print(group, "assigned to " .. marker_id .. " / " .. parent_ent:EntIndex())
 
 end
 
@@ -510,6 +511,7 @@ function PART:SendNetMessage()
 	net.WriteVector(self:GetWorldPosition())
 	net.WriteAngle(self:GetWorldAngles())
 	net.WriteUInt(self.Damage, 28)
+	net.WriteUInt(self.MaxHpScaling*1000,10)
 	net.WriteInt(self.Length, 16)
 	net.WriteInt(self.Radius, 16)
 	net.WriteBool(self.AffectSelf)
@@ -715,7 +717,7 @@ function PART:OnShow()
 
 end
 
-concommand.Add("pac_cleanup_hitmarks", function()
+concommand.Add("pac_cleanup_damagezone_hitmarks", function()
 	if LocalPlayer().hitparts then
 		for i,v in pairs(LocalPlayer().hitparts) do
 			v.specimen_part:Remove()
@@ -726,20 +728,6 @@ concommand.Add("pac_cleanup_hitmarks", function()
 	LocalPlayer().hitparts = nil
 end)
 
-concommand.Add("pac_count_inactive_hitmarks", function()
-	print("first the markers")
-	if LocalPlayer().hitparts then
-		for i,v in pairs(LocalPlayer().hitparts) do
-			print(i,v.active)
-		end
-	end
-	print("second the partpool")
-	if LocalPlayer().hitmarker_partpool then
-		for i,v in pairs(LocalPlayer().hitmarker_partpool) do
-			print(i,v.active, pac.GetPartFromUniqueID(pac.Hash(LocalPlayer()),v.spec_uid))
-		end
-	end
-end)
 
 function PART:OnHide()
 	hook.Remove(self.RenderingHook, "pace_draw_hitbox"..self.UniqueID)
@@ -1011,6 +999,36 @@ function PART:Initialize()
 	
 	if not GetConVar("pac_sv_damage_zone"):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then self:SetError("damage zones are disabled on this server!") end
 	self.validTime = SysTime() + 2
+end
+
+function PART:SetRadius(val)
+	self.Radius = val
+	local sv_dist = GetConVar("pac_sv_damage_zone_max_radius"):GetInt()
+	if self.Radius > sv_dist then
+		self:SetInfo("Your radius is beyond the server's maximum permitted! Server max is " .. sv_dist)
+	else
+		self:SetInfo(nil)
+	end
+end
+
+function PART:SetLength(val)
+	self.Length = val
+	local sv_dist = GetConVar("pac_sv_damage_zone_max_length"):GetInt()
+	if self.Length > sv_dist then
+		self:SetInfo("Your length is beyond the server's maximum permitted! Server max is " .. sv_dist)
+	else
+		self:SetInfo(nil)
+	end
+end
+
+function PART:SetDamage(val)
+	self.Damage = val
+	local sv_max = GetConVar("pac_sv_damage_zone_max_damage"):GetInt()
+	if self.Damage > sv_max then
+		self:SetInfo("Your damage is beyond the server's maximum permitted! Server max is " .. sv_max)
+	else
+		self:SetInfo(nil)
+	end
 end
 
 

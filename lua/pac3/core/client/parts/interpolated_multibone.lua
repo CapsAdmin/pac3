@@ -67,7 +67,7 @@ end
 --PROPORTION	0	0.5	0	0.5	0	0.5	3
 function PART:OnDraw()
 	self:UpdateNodes()
-	if self.valid_time > CurTime() then print("returned") return end
+	if self.valid_time > CurTime() then return end
 	
 	self.pos = self.pos or self:GetWorldPosition()
 	self.ang = self.ang or self:GetWorldAngles()

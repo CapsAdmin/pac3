@@ -3,6 +3,7 @@ local L = pace.LanguageString
 local languageID = CreateClientConVar("pac_editor_languageid", 1, true, false, "Whether we should show the language indicator inside of editable text entries.")
 local favorites_menu_expansion = CreateClientConVar("pac_favorites_try_to_build_asset_series", "0", true, false)
 
+
 local searched_cache_series_results = {}
 
 function pace.ShowSpecial(pnl, parent, size)
@@ -288,6 +289,25 @@ pac.AddHook("GUIMousePressed", "pace_SafeRemoveSpecialPanel", function()
 	end
 end)
 
+pac.AddHook("PostRenderVGUI", "flash_properties", function()
+	if not pace.flashes then return end
+	for pnl, tbl in pairs(pace.flashes) do
+		if IsValid(pnl) then
+			--print(pnl:LocalToScreen(0,0))
+			local x,y = pnl:LocalToScreen(0,0)
+			local flash_alpha = 255*math.pow(math.Clamp((tbl.flash_end - CurTime()) / 2.5,0,1), 0.6)
+			surface.SetDrawColor(Color(tbl.color.r, tbl.color.g, tbl.color.b, flash_alpha))
+			local flash_size = 300*math.pow(math.Clamp((tbl.flash_end - 1.8 - CurTime()) / 0.7,0,1), 8) + 5
+			if pnl:GetY() > 4 then
+				surface.DrawOutlinedRect(-flash_size + x,-flash_size + y,pnl:GetWide() + 2*flash_size,pnl:GetTall() + 2*flash_size,5)
+				surface.SetDrawColor(Color(tbl.color.r, tbl.color.g, tbl.color.b, flash_alpha/2))
+				surface.DrawOutlinedRect(-flash_size + x - 3,-flash_size + y - 3,pnl:GetWide() + 2*flash_size + 6,pnl:GetTall() + 2*flash_size + 6,2)
+			end
+			if tbl.flash_end < CurTime() then pace.flashes[pnl] = nil end
+		end
+	end
+end)
+
 do -- container
 	local PANEL = {}
 
@@ -311,6 +331,28 @@ do -- container
 
 		self.AltLine = self.alt_line
 		derma.SkinHook( "Paint", "CategoryButton", self, w, h )
+	end
+
+	function PANEL:Flash()
+		pace.flashes = pace.flashes or {}
+		pace.flashes[self] = {start = CurTime(), flash_end = CurTime() + 2.5, color = Color(255,0,0)}
+		
+		do	--scroll to the property
+			local _,y = self:LocalToScreen(0,0)
+			local _,py = pace.properties:LocalToScreen(0,0)
+			local scry = pace.properties.scr:GetScroll()
+			
+			if y > ScrH() then
+				pace.properties.scr:SetScroll(scry - py + y)
+			elseif y < py - 200 then
+				pace.properties.scr:SetScroll(scry + (y - py) - 100)
+			end
+		end
+		
+		do	--scroll to the tree node
+			pace.tree:ScrollToChild(self:GetChildren()[1].part.pace_tree_node)
+		end
+
 	end
 
 	function PANEL:SetContent(pnl)
@@ -880,10 +922,16 @@ end
 do -- base editable
 	local PANEL = {}
 
+	
 	PANEL.ClassName = "properties_base_type"
 	PANEL.Base = "DLabel"
 
 	PANEL.SingleClick = true
+
+	function PANEL:Flash()
+		--redirect to the parent (container)
+		self:GetParent():Flash()
+	end
 
 	function PANEL:OnCursorMoved()
 		self:SetCursor("hand")
@@ -1246,12 +1294,22 @@ do -- base editable
 
 			pnl:AddOption("Current playermodel - " .. string.gsub(string.GetFileFromFilename(pm), ".mdl", ""), function()
 				pace.current_part:SetModel(pm)
+				
+				pace.current_part.pace_properties["Model"]:SetValue(pm)
+				pace.PopulateProperties(pace.current_part)
+
 			end):SetImage("materials/spawnicons/"..string.gsub(pm, ".mdl", "")..".png")
 			
 			for id,mdl in ipairs(pace.bookmarked_ressources["models"]) do
 				pnl:AddOption(string.GetFileFromFilename(mdl), function()
 					self:SetValue(mdl)
+					
 					pace.current_part:SetModel(mdl)
+					timer.Simple(0.2, function()
+						pace.current_part.pace_properties["Model"]:SetValue(mdl)
+						pace.PopulateProperties(pace.current_part)
+					end)
+					
 				end):SetImage("materials/spawnicons/"..string.gsub(mdl, ".mdl", "")..".png")
 			end
 		end
@@ -1988,6 +2046,7 @@ do -- vector
 		end,
 		0.25
 	)
+
 end
 
 do -- number
@@ -2150,4 +2209,181 @@ do -- boolean
 	end
 
 	pace.RegisterPanel(PANEL)
+end
+
+
+local tree_search_excluded_vars = {
+	["ParentUID"] = true,
+	["UniqueID"] = true,
+	["ModelTracker"] = true,
+	["ClassTracker"] = true,
+	["LoadVmt"] = true
+}
+
+function pace.OpenTreeSearch()
+	if pace.tree_search_open then return end
+	pace.Editor.y_offset = 24
+	pace.tree_search_open = true
+	pace.tree_search_match_index = 0
+	pace.tree_search_matches = {}
+	local resulting_part
+	local search_term = "friend"
+	local matched_property
+	local matches = {}
+
+	local base = vgui.Create("DFrame")
+	pace.tree_searcher = base
+	local edit = vgui.Create("DTextEntry", base)
+	local search_button = vgui.Create("DButton", base)
+	local range_label = vgui.Create("DLabel", base)
+	local close_button = vgui.Create("DButton", base)
+	local case_box = vgui.Create("DButton", base)
+
+	case_box:SetText("Aa")
+	case_box:SetPos(325,2)
+	case_box:SetSize(25,20)
+	case_box:SetTooltip("case sensitive")
+	case_box:SetColor(Color(150,150,150))
+	case_box:SetFont("DermaDefaultBold")
+	function case_box:DoClick()
+		self.on = not self.on
+		if self.on then
+			self:SetColor(Color(0,0,0))
+		else
+			self:SetColor(Color(150,150,150))
+		end
+	end
+	
+
+	local function select_match()
+		if table.IsEmpty(pace.tree_search_matches) then range_label:SetText("0 / 0") return end
+		if not pace.tree_search_matches[pace.tree_search_match_index] then return end
+		
+		resulting_part = pace.tree_search_matches[pace.tree_search_match_index].part_matched
+		matched_property = pace.tree_search_matches[pace.tree_search_match_index].key_matched
+		if resulting_part ~= pace.current_part then pace.OnPartSelected(resulting_part, true) end
+		local parent = resulting_part:GetParent()
+		while IsValid(parent) and (parent:GetParent() ~= parent) do
+			parent.pace_tree_node:SetExpanded(true)
+			parent = parent:GetParent()
+			if parent:IsValid() then
+				parent.pace_tree_node:SetExpanded(true)
+			end
+		end
+		--pace.RefreshTree()
+		pace.FlashProperty(resulting_part, matched_property, false)
+	end
+
+	function base.OnRemove()
+		pace.tree_search_open = false
+		if not IsValid(pace.Editor) then return end
+		pace.Editor.y_offset = 0
+	end
+
+	function base.Think()
+		if not IsValid(pace.Editor) then base:Remove() return end
+		if not pace.Focused then base:Remove() end
+		base:SetX(pace.Editor:GetX())
+	end
+	function base.Paint(_,w,h)
+		surface.SetDrawColor(Color(255,255,255))
+		surface.DrawRect(0,0,w,h)
+	end
+	base:SetDraggable(false)
+	base:SetX(pace.Editor:GetX())
+	base:ShowCloseButton(false)
+	
+	close_button:SetSize(40,20)
+	close_button:SetPos(450,2)
+	close_button:SetText("close")
+	function close_button.DoClick()
+		base:Remove()
+	end
+
+	local fwd = vgui.Create("DButton", base)
+	local bck = vgui.Create("DButton", base)
+
+	local function perform_search()
+		local case_sensitive = case_box.on
+		matches = {}
+		pace.tree_search_matches = {}
+		search_term = edit:GetText()
+		if not case_sensitive then search_term = string.lower(search_term) end
+		for _,part in pairs(pac.GetLocalParts()) do
+			
+			for k,v in pairs(part:GetProperties()) do
+				local value = v.get(part)
+				
+				if (type(value) ~= "number" and type(value) ~= "string") or tree_search_excluded_vars[v.key] then continue end
+				
+				value = tostring(value)
+				if not case_sensitive then value = string.lower(value) end
+
+				if string.find(case_sensitive and v.key or string.lower(v.key), search_term) or (string.find(value, search_term)) then
+					if v.key == "Name" and part.Name == "" then continue end
+					table.insert(matches, #matches + 1, {part_matched = part, key_matched = v.key})
+					table.insert(pace.tree_search_matches, #matches, {part_matched = part, key_matched = v.key})
+				end
+			end
+		end
+		table.sort(pace.tree_search_matches, function(a, b) return select(2, a.part_matched.pace_tree_node:LocalToScreen()) < select(2, b.part_matched.pace_tree_node:LocalToScreen()) end)
+		if table.IsEmpty(matches) then range_label:SetText("0 / 0") else pace.tree_search_match_index = 1 end
+		range_label:SetText(pace.tree_search_match_index .. " / " .. #pace.tree_search_matches)
+	end
+
+	base:SetSize(492,24)
+	edit:SetSize(290,20)
+	edit:SetPos(0,2)
+	base:MakePopup()
+	edit:RequestFocus()
+	edit:SetUpdateOnType(true)
+	edit.previous_search = ""
+
+	range_label:SetSize(50,20)
+	range_label:SetPos(295,2)
+	range_label:SetText("0 / 0")
+	range_label:SetTextColor(Color(0,0,0))
+
+	fwd:SetSize(25,20)
+	fwd:SetPos(375,2)
+	fwd:SetText(">")
+	function fwd.DoClick()
+		if table.IsEmpty(pace.tree_search_matches) then range_label:SetText("0 / 0") return end
+		pace.tree_search_match_index = (pace.tree_search_match_index % math.max(#matches,1)) + 1
+		range_label:SetText(pace.tree_search_match_index .. " / " .. #pace.tree_search_matches)
+		select_match()
+	end
+	
+	search_button:SetSize(50,20)
+	search_button:SetPos(400,2)
+	search_button:SetText("search")
+	function search_button.DoClick()
+		perform_search()
+		select_match()
+	end
+
+	bck:SetSize(25,20)
+	bck:SetPos(350,2)
+	bck:SetText("<")
+	function bck.DoClick()
+		if table.IsEmpty(pace.tree_search_matches) then range_label:SetText("0 / 0") return end
+		pace.tree_search_match_index = ((pace.tree_search_match_index - 2 + #matches) % math.max(#matches,1)) + 1
+		range_label:SetText(pace.tree_search_match_index .. " / " .. #pace.tree_search_matches)
+		select_match()
+	end
+	
+	function edit.OnEnter()
+		if self.previous_search ~= edit:GetText() then
+			perform_search()
+			self.previous_search = edit:GetText()
+		elseif not table.IsEmpty(pace.tree_search_matches) then
+			fwd:DoClick()
+		else
+			perform_search()
+		end
+		select_match()
+		
+		timer.Simple(0.1,function() edit:RequestFocus() end)
+	end
+	
 end

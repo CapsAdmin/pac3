@@ -86,6 +86,7 @@ pace.ActivePanels = pace.ActivePanels or {}
 pace.Editor = NULL
 
 local remember = CreateConVar("pac_editor_remember_position", "1", {FCVAR_ARCHIVE}, "Remember PAC3 editor position on screen")
+local remember_divider = CreateConVar("pac_editor_remember_divider_height", "0", {FCVAR_ARCHIVE}, "Remember PAC3 editor's vertical divider position")
 local positionMode = CreateConVar("pac_editor_position_mode", "0", {FCVAR_ARCHIVE}, "Editor position mode. 0 - Left, 1 - middle, 2 - Right. Has no effect if pac_editor_remember_position is true")
 local showCameras = CreateConVar("pac_show_cameras", "1", {FCVAR_ARCHIVE}, "Show the PAC cameras of players using the editor")
 local showInEditor = CreateConVar("pac_show_in_editor", "1", {FCVAR_ARCHIVE}, "Show the 'In PAC3 Editor' text above players using the editor")
@@ -133,6 +134,15 @@ function pace.OpenEditor()
 		else
 			editor:SetPos(0, 0)
 		end
+	end
+	
+	if remember_divider:GetBool() then
+		pace.vertical_div_height = pace.vertical_div_height or ScrH()/1.4
+		
+		timer.Simple(0, function()
+			editor.div:SetTopHeight(pace.vertical_div_height)
+		end)
+
 	end
 
 	if ctp and ctp.Disable then

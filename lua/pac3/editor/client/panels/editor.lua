@@ -17,6 +17,7 @@ local use_tabs = CreateClientConVar("pac_property_tabs", 1, true)
 local zoom_persistent = CreateClientConVar("pac_zoom_persistent", 0, true, false, 'Keep zoom between sessions.')
 local zoom_mousewheel = CreateClientConVar("pac_zoom_mousewheel", 0, true, false, 'Enable zooming with mouse wheel.')
 local zoom_smooth = CreateClientConVar("pac_zoom_smooth", 0, true, false, 'Enable smooth zooming.')
+local remember_divider = CreateConVar("pac_editor_remember_divider_height", "0", {FCVAR_ARCHIVE}, "Remember PAC3 editor's vertical divider position")
 
 function PANEL:Init()
 	self:SetTitle("")
@@ -172,6 +173,10 @@ function PANEL:MakeBar()
 end
 
 function PANEL:OnRemove()
+	if remember_divider:GetBool() then
+		pace.vertical_div_height = self.div:GetTopHeight()
+	end
+	
 	if self.menu_bar:IsValid() then
 		self.menu_bar:Remove()
 	end
@@ -204,10 +209,11 @@ function PANEL:Think(...)
 
 	local bar = self.menu_bar
 
-	self:SetTall(ScrH())
+
+	self:SetTall(ScrH() - (self.y_offset or 0))
 	local w = math.max(self:GetWide(), 200)
 	self:SetWide(w)
-	self:SetPos(math.Clamp(self:GetPos(), 0, ScrW() - w), 0)
+	self:SetPos(math.Clamp(self:GetPos(), 0, ScrW() - w), (self.y_offset or 0))
 
 	if x ~= self.last_x then
 		self:SetCookie("x", x)
@@ -287,6 +293,9 @@ function PANEL:PerformLayout()
 	end
 
 	if self.old_part ~= pace.current_part then
+		if remember_divider:GetBool() then
+			pace.vertical_div_height = self.div:GetTopHeight()
+		end
 		self.div:InvalidateLayout()
 		self.bottom:PerformLayout()
 		pace.properties:PerformLayout()
@@ -301,10 +310,23 @@ function PANEL:PerformLayout()
 				local oldh = self.div:GetTopHeight()
 
 				if newh<oldh then
-					self.div:SetTopHeight(newh)
+					if remember_divider:GetBool() then
+						self.div:SetTopHeight(pace.vertical_div_height)
+					else
+						self.div:SetTopHeight(newh)
+					end
 				end
 			elseif sz >= 1 then
-				self.div:SetTopHeight(newh)
+				
+				if remember_divider:GetBool() then
+					if remember_divider:GetBool() then
+						self.div:SetTopHeight(pace.vertical_div_height)
+					else
+						self.div:SetTopHeight(newh)
+					end
+				else
+					self.div:SetTopHeight(newh)
+				end
 			end
 		end
 	end

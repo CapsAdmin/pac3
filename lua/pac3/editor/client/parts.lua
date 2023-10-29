@@ -22,6 +22,28 @@ CreateConVar( "pac_hover_halo_limit", 100, FCVAR_ARCHIVE, "max number of parts b
 CreateConVar( "pac_bulk_select_key", "ctrl", FCVAR_ARCHIVE, "Button to hold to use bulk select")
 CreateConVar( "pac_bulk_select_halo_mode", 1, FCVAR_ARCHIVE, "Halo Highlight mode.\n0 is no highlighting\n1 is passive\n2 is when the same key as bulk select is pressed\n3 is when control key pressed\n4 is when shift key is pressed.")
 
+CreateConVar("pac_copilot_partsearch_depth", -1, FCVAR_ARCHIVE, "amount of copiloting in the searchable part menu\n-1:none\n0:auto-focus on the text edit for events\n1:bring up a list of clickable event types\nother parts aren't supported yet")
+CreateConVar("pac_copilot_make_popup_when_selecting_event", 1, FCVAR_ARCHIVE, "whether to create a popup so you can read what an event does")
+CreateConVar("pac_copilot_open_asset_browser_when_creating_part", 0, FCVAR_ARCHIVE, "whether to open the asset browser for models, materials, or sounds")
+CreateConVar("pac_copilot_force_preview_cameras", 1, FCVAR_ARCHIVE, "whether to force the editor camera off when creating a camera part")
+CreateConVar("pac_copilot_auto_setup_command_events", 0, FCVAR_ARCHIVE, "whether to automatically setup a command event if the name you type doesn't match an existing event. we'll assume you want a command event name.\nif this is set to 0, it will only auto-setup in such a case if you already have such a command event actively present in your events or waiting to be activated by your command parts")
+CreateConVar("pac_copilot_auto_focus_main_property_when_creating_part", 1, FCVAR_ARCHIVE, "whether to automatically focus on the main property that defines a part, such as the event's event type, the text's text, the proxy's expression or the command's string.")
+
+--the necessary properties we always edit for certain parts
+--others might be opened with the asset browser so this is not the full list
+--should be a minimal list because we don't want to get too much in the way of routine editing
+local star_properties = {
+	["event"] = "Event",
+	["proxy"] = "Expression",
+	["text"] = "Text",
+	["command"] = "String",
+	["animation"] = "SequenceName",
+	["flex"] = "Flex",
+	["bone3"] = "Bone",
+	["poseparameter"] = "PoseParameter",
+	["damage_zone"] = "Damage",
+	["hitscan"] = "Damage"
+}
 
 -- load only when hovered above
 local function add_expensive_submenu_load(pnl, callback)
@@ -126,6 +148,96 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 
 	pace.RefreshTree()
 	timer.Simple(0.3, function() BulkSelectRefreshFadedNodes() end)
+
+	if GetConVar("pac_copilot_open_asset_browser_when_creating_part"):GetBool() then
+		timer.Simple(0.5, function()
+			local self = nil
+			if class_name == "model2" then
+				self = pace.current_part.pace_properties["Model"]
+
+				pace.AssetBrowser(function(path)
+					if not part:IsValid() then return end
+					-- because we refresh the properties
+		
+					if IsValid(self) and self.OnValueChanged then
+						self.OnValueChanged(path)
+					end
+		
+					if pace.current_part.SetMaterials then
+						local model = pace.current_part:GetModel()
+						local part = pace.current_part
+						if part.pace_last_model and part.pace_last_model ~= model then
+							part:SetMaterials("")
+						end
+						part.pace_last_model = model
+					end
+		
+					pace.PopulateProperties(pace.current_part)
+		
+					for k,v in ipairs(pace.properties.List) do
+						if v.panel and v.panel.part == part and v.key == key then
+							self = v.panel
+							break
+						end
+					end
+		
+				end, "models")
+			elseif class_name == "sound" or class_name == "sound2" then
+				if class_name == "sound"then
+					self = pace.current_part.pace_properties["Sound"]
+				elseif class_name == "sound2" then
+					self = pace.current_part.pace_properties["Path"]
+				end
+				
+				pace.AssetBrowser(function(path)
+					if not self:IsValid() then return end
+
+					self:SetValue(path)
+					self.OnValueChanged(path)
+
+				end, "sound")
+			elseif pace.current_part.pace_properties["LoadVmt"] then
+				self = pace.current_part.pace_properties["LoadVmt"]
+				pace.AssetBrowser(function(path)
+					if not self:IsValid() then return end
+					path = string.gsub(string.StripExtension(path), "^materials/", "") or "error"
+					self:SetValue(path)
+					self.OnValueChanged(path)
+					pace.current_part:SetLoadVmt(path)
+				end, "materials")
+
+			end
+		end)
+		
+	end
+	if class_name == "camera" and GetConVar("pac_copilot_force_preview_cameras"):GetBool() then
+		RunConsoleCommand("pac_enable_editor_view", "0")
+		pace.EnableView(true)
+		pac.RemoveHook("CalcView", "editor")
+		pac.AddHook("CalcView", "camera_part", function(ply, pos, ang, fov, nearz, farz)
+			part:CalcShowHide()
+			pos, ang, fov, nearz, farz = part:CalcView(_,_,ply:EyeAngles())
+			local temp = {}
+			temp.origin = pos
+			temp.angles = ang
+			temp.fov = fov
+			temp.znear = nearz
+			temp.zfar = farz
+			temp.drawviewer = not part.DrawViewModel
+			return temp
+			
+		end)
+	end
+	if GetConVar("pac_copilot_auto_focus_main_property_when_creating_part"):GetBool() then
+		if star_properties[part.ClassName] then
+			timer.Simple(0.2, function()
+
+				pace.FlashProperty(part, star_properties[part.ClassName], true)
+
+			end)
+		end
+	end
+
 	return part
 end
 
@@ -211,6 +323,28 @@ function pace.OnPartSelected(part, is_selecting)
 		pace.StopSelect()
 	end
 
+end
+
+pace.suppress_flashing_property = false
+
+function pace.FlashProperty(obj, key, edit)
+	if pace.suppress_flashing_property then return end
+	if not obj.flashing_property then
+		obj.flashing_property = true
+		timer.Simple(0.1, function()
+			if not obj.pace_properties[key] then return end
+			obj.pace_properties[key]:Flash()
+			pace.current_flashed_property = key
+			if edit then
+				obj.pace_properties[key]:RequestFocus()
+				if obj.pace_properties[key].EditText then
+					obj.pace_properties[key]:EditText()
+				end
+			end
+		end)
+		timer.Simple(0.3, function() obj.flashing_property = false end)
+	end
+	
 end
 
 function pace.OnVariableChanged(obj, key, val, not_from_editor)
@@ -550,6 +684,15 @@ do -- menu
 	end
 
 	function pace.OnAddPartMenu(obj)
+		local event_part_template
+		for _, part in ipairs(pace.GetRegisteredParts()) do
+			if part.ClassName == "event" then
+				event_part_template = part
+			end
+		end
+		local mode = GetConVar("pac_copilot_partsearch_depth"):GetInt()
+		pace.suppress_flashing_property = false
+		
 		local base = vgui.Create("EditablePanel")
 		base:SetPos(input.GetCursorPos())
 		base:SetSize(200, 300)
@@ -568,36 +711,210 @@ do -- menu
 
 		local result = base:Add("DScrollPanel")
 		result:Dock(FILL)
+		base.search_mode = "classes"
 
-		function edit:OnEnter()
-			if result.found[1] then
-				pace.RecordUndoHistory()
-				pace.Call("CreatePart", result.found[1].ClassName)
-				pace.RecordUndoHistory()
-			end
-			base:Remove()
-		end
-
-		edit.OnValueChange = function(_, str)
-			result:Clear()
-			result.found = {}
-
-			for _, part in ipairs(pace.GetRegisteredParts()) do
-				if (part.FriendlyName or part.ClassName):find(str, nil, true) then
-					table.insert(result.found, part)
+		local function populate_with_sounds(base,result,filter)
+			base.search_mode = "sounds"
+			for _,snd in ipairs(pace.bookmarked_ressources["sound"]) do
+				if filter ~= nil and filter ~= "" then
+					if snd:find(filter, nil, true) then
+						table.insert(result.found, snd)
+					end
+				else
+					table.insert(result.found, snd)
 				end
 			end
+			for _,snd in ipairs(result.found) do
+				if not isstring(snd) then continue end
+				local line = result:Add("DButton")
+				line:SetText("")
+				line:SetTall(20)
+				local btn = line:Add("DImageButton")
+				btn:SetSize(16, 16)
+				btn:SetPos(4,0)
+				btn:CenterVertical()
+				btn:SetMouseInputEnabled(false)
+				local icon = "icon16/sound.png"
 
+				if string.find(snd, "music") or string.find(snd, "theme") then
+					icon = "icon16/music.png"
+				elseif string.find(snd, "loop") then
+					icon = "icon16/arrow_rotate_clockwise.png"
+				end
+
+				btn:SetIcon(icon)
+				local label = line:Add("DLabel")
+				label:SetTextColor(label:GetSkin().Colours.Category.Line.Text)
+				label:SetText(snd)
+				label:SizeToContents()
+				label:MoveRightOf(btn, 4)
+				label:SetMouseInputEnabled(false)
+				label:CenterVertical()
+
+				line.DoClick = function()
+					if pace.current_part.ClassName == "sound" then
+						pace.current_part:SetSound(snd)
+					elseif pace.current_part.ClassName == "sound2" then
+						pace.current_part:SetPath(snd)
+					end
+					pace.PopulateProperties(pace.current_part)
+					base:Remove()
+				end
+
+				line:Dock(TOP)
+			end
+		end
+
+		local function populate_with_models(base,result,filter)
+			base.search_mode = "models"
+			for _,mdl in ipairs(pace.bookmarked_ressources["models"]) do
+				if filter ~= nil and filter ~= "" then
+					if mdl:find(filter, nil, true) then
+						table.insert(result.found, mdl)
+					end
+				else
+					table.insert(result.found, mdl)
+				end
+			end
+			for _,mdl in ipairs(result.found) do
+				if not isstring(mdl) then continue end
+				local line = result:Add("DButton")
+				line:SetText("")
+				line:SetTall(20)
+				local btn = line:Add("DImageButton")
+				btn:SetSize(16, 16)
+				btn:SetPos(4,0)
+				btn:CenterVertical()
+				btn:SetMouseInputEnabled(false)
+				btn:SetIcon("materials/spawnicons/"..string.gsub(mdl, ".mdl", "")..".png")
+				local label = line:Add("DLabel")
+				label:SetTextColor(label:GetSkin().Colours.Category.Line.Text)
+				label:SetText(mdl)
+				label:SizeToContents()
+				label:MoveRightOf(btn, 4)
+				label:SetMouseInputEnabled(false)
+				label:CenterVertical()
+
+				line.DoClick = function()
+					if pace.current_part.Model then
+						pace.current_part:SetModel(mdl)
+						pace.PopulateProperties(pace.current_part)
+					end
+					base:Remove()
+				end
+
+				line:Dock(TOP)
+			end
+		end
+
+		local function populate_with_events(base,result,filter)
+			base.search_mode = "events"
+			for e,tbl in pairs(event_part_template.Events) do
+				if filter ~= nil and filter ~= "" then
+					if e:find(filter, nil, true) then
+						table.insert(result.found, e)
+					end
+				else
+					table.insert(result.found, e)
+				end
+			end
+			for _,e in ipairs(result.found) do
+				if not isstring(e) then continue end
+				local line = result:Add("DButton")
+				line:SetText("")
+				line:SetTall(20)
+				local btn = line:Add("DImageButton")
+				btn:SetSize(16, 16)
+				btn:SetPos(4,0)
+				btn:CenterVertical()
+				btn:SetMouseInputEnabled(false)
+				btn:SetIcon("icon16/clock.png")
+				local label = line:Add("DLabel")
+				label:SetTextColor(label:GetSkin().Colours.Category.Line.Text)
+				label:SetText(e)
+				label:SizeToContents()
+				label:MoveRightOf(btn, 4)
+				label:SetMouseInputEnabled(false)
+				label:CenterVertical()
+
+				line.DoClick = function()
+					if pace.current_part.Event then
+						pace.current_part:SetEvent(e)
+						pace.PopulateProperties(pace.current_part)
+					end
+					base:Remove()
+				end
+
+				line:Dock(TOP)
+			end
+		end
+
+		local function populate_with_classes(base, result, filter)
+			for i, part in ipairs(pace.GetRegisteredParts()) do
+				if filter then
+					if (part.FriendlyName or part.ClassName):find(filter, nil, true) then
+						table.insert(result.found, part)
+					end
+				else table.insert(result.found, part) end
+			end
 			table.sort(result.found, function(a, b) return #a.ClassName < #b.ClassName end)
-
 			for _, part in ipairs(result.found) do
 				local line = result:Add("DButton")
 				line:SetText("")
 				line:SetTall(20)
+				local remove_now = false
 				line.DoClick = function()
 					pace.RecordUndoHistory()
 					pace.Call("CreatePart", part.ClassName)
-					base:Remove()
+					
+					if part.ClassName == "event" then
+						remove_now = false
+						result:Clear()
+						result.found = {}
+						
+						if mode == 0 then --auto-focus mode
+							remove_now = true
+							timer.Simple(0.1, function()
+								pace.FlashProperty(pace.current_part, "Event", true)
+							end)
+						elseif mode == 1 then --event partsearch
+							pace.suppress_flashing_property = true
+							populate_with_events(base,result,"")
+							edit:SetText("")
+							edit:RequestFocus()
+						else
+							remove_now = true
+						end
+					elseif part.ClassName == "model2" and mode == 1 then --model partsearch
+						remove_now = false
+						result:Clear()
+						result.found = {}
+						populate_with_models(base,result,"")
+						pace.suppress_flashing_property = true
+						edit:SetText("")
+						edit:RequestFocus()
+					elseif (part.ClassName == "sound" or part.ClassName == "sound2") and mode == 1 then
+						remove_now = false
+						result:Clear()
+						result.found = {}
+						populate_with_sounds(base,result,"")
+						pace.suppress_flashing_property = true
+						edit:SetText("")
+						edit:RequestFocus()
+					elseif star_properties[result.found[1].ClassName] and (mode == 0 or GetConVar("pac_copilot_auto_focus_main_property_when_creating_part"):GetBool()) then
+						pace.suppress_flashing_property = false
+						local classname = part.ClassName
+						timer.Simple(0.1, function()
+							pace.FlashProperty(pace.current_part, star_properties[classname], true)
+						end)
+						remove_now = true
+					else
+						remove_now = true
+					end
+					timer.Simple(0.4, function()
+						pace.suppress_flashing_property = false
+					end)
+					if remove_now then base:Remove() end
 					pace.RecordUndoHistory()
 				end
 
@@ -628,7 +945,106 @@ do -- menu
 
 				line:Dock(TOP)
 			end
+		end
 
+		function edit:OnEnter()
+			local remove_now = true
+			if result.found[1] then
+				if base.search_mode == "classes" then
+					pace.RecordUndoHistory()
+					local part = pace.Call("CreatePart", result.found[1].ClassName)
+					pace.RecordUndoHistory()
+
+					if mode == 1 then
+						if result.found[1].ClassName == "event" then
+							result:Clear()
+							populate_with_events(base,result,"")
+						elseif result.found[1].ClassName == "model2" then
+							result:Clear()
+							populate_with_models(base,result,"")
+						end
+						
+					else
+						base:Remove()
+					end
+					
+				elseif base.search_mode == "events" then
+					if pace.current_part.Event then
+						pace.current_part:SetEvent()
+						pace.PopulateProperties(pace.current_part)
+					end
+					base:Remove()
+
+				elseif base.search_mode == "models" then
+					if mode == 1 then
+						result:Clear()
+						pace.current_part:SetModel(result.found[1])
+						pace.PopulateProperties(pace.current_part)
+					else
+						base:Remove()
+					end
+				elseif base.search_mode == "sounds" then
+					if mode == 1 then
+						result:Clear()
+						if pace.current_part.ClassName == "sound" then
+							pace.current_part:SetSound(result.found[1])
+						elseif pace.current_part.ClassName == "sound2" then
+							pace.current_part:SetPath(result.found[1])
+						end
+						pace.PopulateProperties(pace.current_part)
+					else
+						base:Remove()
+					end
+					
+				end
+				
+				if result.found[1].ClassName == "event" then
+					remove_now = false
+					result:Clear()
+					result.found = {}
+					if mode == 0 then
+						remove_now = true
+						timer.Simple(0.1, function()
+							pace.FlashProperty(pace.current_part, "Event", true)
+						end)
+					elseif mode == 1 then
+						pace.suppress_flashing_property = true
+						populate_with_events(base,result,"")
+						edit:SetText("")
+						edit:RequestFocus()
+					else
+						remove_now = true
+					end
+				elseif star_properties[result.found[1].ClassName] and (mode == 0 or GetConVar("pac_copilot_auto_focus_main_property_when_creating_part"):GetBool()) then
+					local classname = result.found[1].ClassName
+					timer.Simple(0.1, function()
+						pace.FlashProperty(pace.current_part, star_properties[classname], true)
+					end)
+				end
+			end
+			timer.Simple(0.4, function()
+				pace.suppress_flashing_property = false
+			end)
+			if remove_now then base:Remove() end
+		end
+
+		edit.OnValueChange = function(_, str)
+			result:Clear()
+			result.found = {}
+			local remove_now = true
+
+			if base.search_mode == "classes" then
+				populate_with_classes(base, result, str)
+				
+			elseif base.search_mode == "events" then
+				populate_with_events(base,result,str,event_template)
+				
+			elseif base.search_mode == "models" then
+				populate_with_models(base,result,str)
+			elseif base.search_mode == "sounds" then
+				populate_with_sounds(base,result,str)
+			end
+			
 			--base:SetHeight(20 * #result.found + edit:GetTall())
 			base:SetHeight(600 + edit:GetTall())
 			
@@ -643,6 +1059,12 @@ do -- menu
 				end
 			end
 		end)
+		
+		timer.Simple(0.1, function()
+			base:MoveToFront()
+			base:RequestFocus()
+		end)
+		
 	end
 
 	function pace.Copy(obj)
@@ -694,6 +1116,17 @@ do -- menu
 
 		if not obj:HasParent() and obj.ClassName == "group" then
 			pace.RemovePartOnServer(obj:GetUniqueID(), false, true)
+		end
+		if obj.ClassName == "camera" and GetConVar("pac_copilot_force_preview_cameras"):GetBool() then
+			local no_camera_part = true
+			for i,v in ipairs(pac.GetLocalParts()) do
+				if v.ClassName == "camera" then no_camera_part = false end
+			end
+			if no_camera_part then
+				RunConsoleCommand("pac_enable_editor_view", "1")
+				pac.RemoveHook("CalcView", "camera_part")
+				pac.AddHook("CalcView", "editor", pace.CalcView, DLib and -4 or ULib and -1 or nil)
+			end
 		end
 	end
 
@@ -943,8 +1376,13 @@ do -- menu
 		basepart_label:SetText("base part: "..partinfo)
 		basepart_label:SetFont("Font")
 
-		local excluded_vars = {"Duplicate","OwnerName","ParentUID","UniqueID","TargetEntityUID"}
-		local var_candidates = {}
+		local excluded_vars = {
+			["Duplicate"] = true,
+			["OwnerName"] = true,
+			["ParentUID"] = true,
+			["UniqueID"] = true,
+			["TargetEntityUID"] = true
+		}
 		
 		local shared_properties = {}
 		local shared_udata_properties = {}
@@ -987,6 +1425,11 @@ do -- menu
 			shared_properties = initial_shared_properties
 			shared_udata_properties = initial_shared_udata_properties
 		end
+
+		for i,v in ipairs(shared_properties) do
+			if excluded_vars[v] then table.remove(shared_properties,i) end
+		end
+
 		--populate panels for standard GetSet part properties
 		for i,v in pairs(shared_properties) do
 			local VAR_PANEL = vgui.Create("DFrame")
@@ -1209,10 +1652,8 @@ do -- menu
 									sent_var = sent_var..i
 								end
 							else sent_var = VAR_PANEL_EDITZONE:GetValue() end
-							
-							print(part, part:GetArguments(), v, sent_var, GetEventArgIndex(part,v))
+
 							part:SetArguments(ApplyArgToIndex(part:GetArguments(), sent_var, GetEventArgIndex(part,v)))
-							print(part:GetArguments())
 						end
 
 						if thoroughness_tickbox:GetChecked() then
@@ -1858,11 +2299,13 @@ function pace.UltraCleanup(obj)
 	local marked_for_deletion = {}
 
 	local function IsImportantMarked(part)
-		if part.Notes and part.Notes == "important" then return true end
+		if not IsValid(part) then return false end
+		if part.Notes == "important" then return true end
 		return false
 	end
 
 	local function FoundImportantMarkedParent(part)
+		if not IsValid(part) then return false end
 		if IsImportantMarked(part) then return true end
 		local root = part:GetRootPart()
 		local parent = part
@@ -1874,6 +2317,7 @@ function pace.UltraCleanup(obj)
 	end
 
 	local function Important(part)
+		if not IsValid(part) then return false end
 		return IsImportantMarked(part) or FoundImportantMarkedParent(part)
 	end
 
@@ -2062,7 +2506,10 @@ function pace.UltraCleanup(obj)
 		--first pass: absolute unsafes: hidden parts
 	for i,v in pairs(root:GetChildrenList()) do
 		if v:IsHidden() or v.Hide then
-			v:Remove()
+			if not FoundImportantMarkedParent(part) then
+				v:Remove()
+			end
+			
 		end
 	end
 
