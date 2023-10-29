@@ -57,7 +57,7 @@ local function compile_expression(str, extra_lib)
 	functions.select = select
 	str = "local IN = select(1, ...) return " .. str
 
-	local func = CompileString(str, "pac_expression", true)
+	local func = CompileString(str, "pac_expression", false)
 
 	if isstring(func) then
 		return false, func

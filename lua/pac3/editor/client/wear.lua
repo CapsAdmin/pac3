@@ -240,7 +240,7 @@ end)
 function pace.Notify(allowed, reason, name)
 	name = name or "???"
 
-	 if allowed == true then
+	if allowed == true then
 		pac.Message(string.format('Your part %q has been applied', name))
 	else
 		chat.AddText(Color(255, 255, 0), "[PAC3] ", Color(255, 0, 0), string.format('The server rejected applying your part (%q) - %s', name, reason))
@@ -253,22 +253,54 @@ end)
 
 do
 	local function LoadUpDefault()
-		if GetConVar("pac_prompt_for_autoload"):GetBool() then
-			local files, directories = file.Find( "pac3/__backup/*.txt", "DATA", "datedesc")
-			if not files then
-				Derma_Query("Do you want to load your autoload outfit?", "PAC3 autoload (pac_prompt_for_autoload)",
+		if not GetConVar("pac_prompt_for_autoload"):GetBool() then
+			--legacy behavior
+			if next(pac.GetLocalParts()) then
+				pac.Message("not wearing autoload outfit, already wearing something")
+			elseif pace.IsActive() then
+				pac.Message("not wearing autoload outfit, editor is open")
+			else
+				local autoload_file = "autoload"
+				local autoload_result = hook.Run("PAC3Autoload", autoload_file)
+
+				if autoload_result ~= false then
+					if isstring(autoload_result) then
+						autoload_file = autoload_result
+					end
+					pac.Message("Wearing " .. autoload_file .. "...")
+					pace.LoadParts(autoload_file)
+					pace.WearParts()
+				end
+			end
+
+		else
+			--prompt
+			local backup_files, directories = file.Find( "pac3/__backup/*.txt", "DATA", "datedesc")
+			if not backup_files then
+				local pnl = Derma_Query("Do you want to load your autoload outfit?", "PAC3 autoload (pac_prompt_for_autoload)",
 					"load pac3/autoload.txt : " .. string.NiceSize(file.Size("pac3/autoload.txt", "DATA")), function()
 						pac.Message("Wearing autoload...")
 						pace.LoadParts("autoload") 
 						pace.WearParts()
 					end,
 
+					"load latest outfit : pac3/" .. latest_outfit .. " " .. string.NiceSize(file.Size("pac3/" .. latest_outfit, "DATA")), function()
+							
+						if latest_outfit and file.Exists("pac3/" .. latest_outfit, "DATA") then
+							pac.Message("Wearing latest outfit...")
+							pace.LoadParts(latest_outfit, true)
+							pace.WearParts()
+						end
+					end,
+
 					"cancel", function() pac.Message("Not loading autoload or backups...")  end
 				)
+				pnl.Think = function() if not pnl:HasFocus() or (input.IsMouseDown(MOUSE_LEFT) and not (pnl:IsHovered() or pnl:IsChildHovered())) then pnl:Remove() end end
 			else
-				if files[1] then
-					local latest_autosave = "pac3/__backup/" .. files[1]
-					Derma_Query("Do you want to load an outfit?", "PAC3 autoload (pac_prompt_for_autoload)",
+				if backup_files[1] then
+					local latest_autosave = "pac3/__backup/" .. backup_files[1]
+					local latest_outfit = cookie.GetString( "pac_last_loaded_outfit", "" )
+					local pnl = Derma_Query("Do you want to load an outfit?", "PAC3 autoload (pac_prompt_for_autoload)",
 						"load pac3/autoload.txt : " .. string.NiceSize(file.Size("pac3/autoload.txt", "DATA")), function()
 							pac.Message("Wearing autoload...")
 							pace.LoadParts("autoload") 
@@ -277,14 +309,23 @@ do
 
 						"load latest backup : " .. latest_autosave .. " " .. string.NiceSize(file.Size(latest_autosave, "DATA")), function()
 							pac.Message("Wearing latest backup outfit...")
-							pace.LoadParts("__backup/" .. files[1], true)
+							pace.LoadParts("__backup/" .. backup_files[1], true)
 							pace.WearParts()
+						end,
+
+						"load latest outfit : pac3/" .. latest_outfit .. " " .. string.NiceSize(file.Size("pac3/" .. latest_outfit, "DATA")), function()
+							if latest_outfit and file.Exists("pac3/" .. latest_outfit, "DATA") then
+								pac.Message("Wearing latest outfit...")
+								pace.LoadParts(latest_outfit, true)
+								pace.WearParts()
+							end
 						end,
 
 						"cancel", function() pac.Message("Not loading autoload or backups...")  end
 					)
+					pnl.Think = function() if not pnl:HasFocus() or (input.IsMouseDown(MOUSE_LEFT) and not (pnl:IsHovered() or pnl:IsChildHovered())) then pnl:Remove() end end
 				else
-					Derma_Query("Do you want to load your autoload outfit?", "PAC3 autoload (pac_prompt_for_autoload)",
+					local pnl = Derma_Query("Do you want to load your autoload outfit?", "PAC3 autoload (pac_prompt_for_autoload)",
 						"load pac3/autoload.txt : " .. string.NiceSize(file.Size("pac3/autoload.txt", "DATA")), function()
 							pac.Message("Wearing autoload...")
 							pace.LoadParts("autoload") 
@@ -293,22 +334,10 @@ do
 
 						"cancel", function() pac.Message("Not loading autoload or backups...")  end
 					)
+					pnl.Think = function() if not pnl:HasFocus() or (input.IsMouseDown(MOUSE_LEFT) and not (pnl:IsHovered() or pnl:IsChildHovered())) then pnl:Remove() end end
 				end
-				
-			end
-
-		else
-			if next(pac.GetLocalParts()) then
-				pac.Message("not wearing autoload outfit, already wearing something")
-			elseif pace.IsActive() then
-				pac.Message("not wearing autoload outfit, editor is open")
-			else
-				pac.Message("Wearing autoload...")
-				pace.LoadParts("autoload")
-				pace.WearParts()
 			end
 		end
-		
 
 		pac.RemoveHook("Think", "pac_request_outfits")
 		pac.Message("Requesting outfits in 8 seconds...")

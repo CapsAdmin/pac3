@@ -606,7 +606,7 @@ function PART:ProcessModelChange()
 	local path = self.Model
 
 	if path:find("://", nil, true) then
-		if path:StartWith("objhttp") or path:StartWith("obj:http") or path:EndsWith(".obj") or self.ForceObjUrl then
+		if path:StartWith("objhttp") or path:StartWith("obj:http") or path:match("%.obj%p?") or self.ForceObjUrl then
 			path = path:gsub("^objhttp","http"):gsub("^obj:http","http")
 			self.loading = "downloading obj"
 
