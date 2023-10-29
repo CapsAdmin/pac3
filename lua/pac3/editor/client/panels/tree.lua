@@ -57,6 +57,69 @@ do
 	function PANEL:Think(...)
 		if not pace.current_part:IsValid() then return end
 
+		if GetConVar("pac_editor_shortcuts_legacy_mode"):GetBool() then
+			if
+				pace.current_part.pace_tree_node and
+				pace.current_part.pace_tree_node:IsValid() and not
+				(
+					pace.BusyWithProperties:IsValid() or
+					pace.ActiveSpecialPanel:IsValid() or
+					pace.editing_viewmodel or
+					pace.editing_hands or
+					pace.properties.search:HasFocus()
+				) and
+				not gui.IsConsoleVisible()
+			then
+				if input.IsKeyDown(KEY_LEFT) then
+					pace.Call("VariableChanged", pace.current_part, "EditorExpand", false)
+				elseif input.IsKeyDown(KEY_RIGHT) then
+					pace.Call("VariableChanged", pace.current_part, "EditorExpand", true)
+				end
+
+				if input.IsKeyDown(KEY_UP) or input.IsKeyDown(KEY_PAGEUP) then
+					local added_nodes = get_added_nodes(self)
+					local offset = input.IsKeyDown(KEY_PAGEUP) and 10 or 1
+					if not self.scrolled_up or self.scrolled_up < os.clock() then
+						for i,v in ipairs(added_nodes) do
+							if v == pace.current_part.pace_tree_node then
+								local node = added_nodes[i - offset] or added_nodes[1]
+								if node then
+									node:DoClick()
+									scroll_to_node(self, node)
+									break
+								end
+							end
+						end
+
+						self.scrolled_up = self.scrolled_up or os.clock() + 0.4
+					end
+				else
+					self.scrolled_up = nil
+				end
+
+				if input.IsKeyDown(KEY_DOWN) or input.IsKeyDown(KEY_PAGEDOWN) then
+					local added_nodes = get_added_nodes(self)
+					local offset = input.IsKeyDown(KEY_PAGEDOWN) and 10 or 1
+					if not self.scrolled_down or self.scrolled_down < os.clock() then
+						for i,v in ipairs(added_nodes) do
+							if v == pace.current_part.pace_tree_node then
+								local node = added_nodes[i + offset] or added_nodes[#added_nodes]
+								if node then
+									node:DoClick()
+									--scroll_to_node(self, node)
+									break
+								end
+							end
+						end
+
+						self.scrolled_down = self.scrolled_down or os.clock() + 0.4
+					end
+				else
+					self.scrolled_down = nil
+				end
+			end
+		end
+
 		for _, part in pairs(pac.GetLocalParts()) do
 			local node = part.pace_tree_node
 			if not node or not node:IsValid() then continue end
