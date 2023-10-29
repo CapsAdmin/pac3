@@ -2506,7 +2506,7 @@ function pace.UltraCleanup(obj)
 		--first pass: absolute unsafes: hidden parts
 	for i,v in pairs(root:GetChildrenList()) do
 		if v:IsHidden() or v.Hide then
-			if not FoundImportantMarkedParent(part) then
+			if not FoundImportantMarkedParent(v) then
 				v:Remove()
 			end
 			
@@ -2789,4 +2789,3 @@ tbl = {
 }
 
 ]]
-
