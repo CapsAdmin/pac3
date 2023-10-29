@@ -70,6 +70,7 @@ function pace.OnOpenEditor()
 end
 
 function pace.OnCloseEditor()
+	pace.FlushInfoPopups()
 	pace.EnableView(false)
 	pace.StopSelect()
 	pace.SafeRemoveSpecialPanel()

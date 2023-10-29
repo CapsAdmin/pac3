@@ -1,3 +1,4 @@
+CreateClientConVar("pac_editor_scale","1", true, false)
 local L = pace.LanguageString
 
 local PANEL = {}
@@ -8,7 +9,7 @@ PANEL.Base = "pac_dtree"
 function PANEL:Init()
 	pace.pac_dtree.Init(self)
 
-	self:SetLineHeight(18)
+	self:SetLineHeight(18 * GetConVar("pac_editor_scale"):GetFloat())
 	self:SetIndentSize(10)
 
 	self.parts = {}
@@ -19,6 +20,7 @@ function PANEL:Init()
 end
 
 do
+
 	local function get_added_nodes(self)
 		local added_nodes = {}
 		for i,v in ipairs(self.added_nodes) do
@@ -55,64 +57,66 @@ do
 	function PANEL:Think(...)
 		if not pace.current_part:IsValid() then return end
 
-		if
-			pace.current_part.pace_tree_node and
-			pace.current_part.pace_tree_node:IsValid() and not
-			(
-				pace.BusyWithProperties:IsValid() or
-				pace.ActiveSpecialPanel:IsValid() or
-				pace.editing_viewmodel or
-				pace.editing_hands or
-				pace.properties.search:HasFocus()
-			) and
-			not gui.IsConsoleVisible()
-		then
-			if input.IsKeyDown(KEY_LEFT) then
-				pace.Call("VariableChanged", pace.current_part, "EditorExpand", false)
-			elseif input.IsKeyDown(KEY_RIGHT) then
-				pace.Call("VariableChanged", pace.current_part, "EditorExpand", true)
-			end
+		if GetConVar("pac_editor_shortcuts_legacy_mode"):GetBool() then
+			if
+				pace.current_part.pace_tree_node and
+				pace.current_part.pace_tree_node:IsValid() and not
+				(
+					pace.BusyWithProperties:IsValid() or
+					pace.ActiveSpecialPanel:IsValid() or
+					pace.editing_viewmodel or
+					pace.editing_hands or
+					pace.properties.search:HasFocus()
+				) and
+				not gui.IsConsoleVisible()
+			then
+				if input.IsKeyDown(KEY_LEFT) then
+					pace.Call("VariableChanged", pace.current_part, "EditorExpand", false)
+				elseif input.IsKeyDown(KEY_RIGHT) then
+					pace.Call("VariableChanged", pace.current_part, "EditorExpand", true)
+				end
 
-			if input.IsKeyDown(KEY_UP) or input.IsKeyDown(KEY_PAGEUP) then
-				local added_nodes = get_added_nodes(self)
-				local offset = input.IsKeyDown(KEY_PAGEUP) and 10 or 1
-				if not self.scrolled_up or self.scrolled_up < os.clock() then
-					for i,v in ipairs(added_nodes) do
-						if v == pace.current_part.pace_tree_node then
-							local node = added_nodes[i - offset] or added_nodes[1]
-							if node then
-								node:DoClick()
-								scroll_to_node(self, node)
-								break
+				if input.IsKeyDown(KEY_UP) or input.IsKeyDown(KEY_PAGEUP) then
+					local added_nodes = get_added_nodes(self)
+					local offset = input.IsKeyDown(KEY_PAGEUP) and 10 or 1
+					if not self.scrolled_up or self.scrolled_up < os.clock() then
+						for i,v in ipairs(added_nodes) do
+							if v == pace.current_part.pace_tree_node then
+								local node = added_nodes[i - offset] or added_nodes[1]
+								if node then
+									node:DoClick()
+									scroll_to_node(self, node)
+									break
+								end
 							end
 						end
+
+						self.scrolled_up = self.scrolled_up or os.clock() + 0.4
 					end
-
-					self.scrolled_up = self.scrolled_up or os.clock() + 0.4
+				else
+					self.scrolled_up = nil
 				end
-			else
-				self.scrolled_up = nil
-			end
 
-			if input.IsKeyDown(KEY_DOWN) or input.IsKeyDown(KEY_PAGEDOWN) then
-				local added_nodes = get_added_nodes(self)
-				local offset = input.IsKeyDown(KEY_PAGEDOWN) and 10 or 1
-				if not self.scrolled_down or self.scrolled_down < os.clock() then
-					for i,v in ipairs(added_nodes) do
-						if v == pace.current_part.pace_tree_node then
-							local node = added_nodes[i + offset] or added_nodes[#added_nodes]
-							if node then
-								node:DoClick()
-								--scroll_to_node(self, node)
-								break
+				if input.IsKeyDown(KEY_DOWN) or input.IsKeyDown(KEY_PAGEDOWN) then
+					local added_nodes = get_added_nodes(self)
+					local offset = input.IsKeyDown(KEY_PAGEDOWN) and 10 or 1
+					if not self.scrolled_down or self.scrolled_down < os.clock() then
+						for i,v in ipairs(added_nodes) do
+							if v == pace.current_part.pace_tree_node then
+								local node = added_nodes[i + offset] or added_nodes[#added_nodes]
+								if node then
+									node:DoClick()
+									--scroll_to_node(self, node)
+									break
+								end
 							end
 						end
-					end
 
-					self.scrolled_down = self.scrolled_down or os.clock() + 0.4
+						self.scrolled_down = self.scrolled_down or os.clock() + 0.4
+					end
+				else
+					self.scrolled_down = nil
 				end
-			else
-				self.scrolled_down = nil
 			end
 		end
 
@@ -156,8 +160,8 @@ do
 				if not node.Icon.event_icon then
 					local pnl = vgui.Create("DImage", node.Icon)
 					pnl:SetImage("icon16/clock_red.png")
-					pnl:SetSize(8, 8)
-					pnl:SetPos(8, 8)
+					pnl:SetSize(8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)), 8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)))
+					pnl:SetPos(8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)), 8*(1 + 0.5*(GetConVar("pac_editor_scale"):GetFloat()-1)))
 					pnl:SetVisible(false)
 					node.Icon.event_icon = pnl
 				end
@@ -183,7 +187,82 @@ do
 			end
 		end
 	end
+
+	function DoScrollControl(self, action)
+		pace.BulkSelectKey = input.GetKeyCode(GetConVar("pac_bulk_select_key"):GetString())
+		if
+				pace.current_part.pace_tree_node and
+				pace.current_part.pace_tree_node:IsValid() and not
+				(
+					pace.BusyWithProperties:IsValid() or
+					pace.ActiveSpecialPanel:IsValid() or
+					pace.editing_viewmodel or
+					pace.editing_hands or
+					pace.properties.search:HasFocus()
+				) and
+				not gui.IsConsoleVisible()
+			then
+	
+				if action == "editor_node_collapse" then
+					pace.Call("VariableChanged", pace.current_part, "EditorExpand", false)
+				elseif action == "editor_node_expand" then
+					pace.Call("VariableChanged", pace.current_part, "EditorExpand", true)
+				end
+	
+				if action == "editor_up" or action == "editor_pageup" then
+					local added_nodes = get_added_nodes(self)
+					local offset = action == "editor_pageup" and 10 or 1
+					if not self.scrolled_up or self.scrolled_up < os.clock() then
+						for i,v in ipairs(added_nodes) do
+							if v == pace.current_part.pace_tree_node then
+								local node = added_nodes[i - offset] or added_nodes[1]
+								if node then
+									node:DoClick()
+									scroll_to_node(self, node)
+									if input.IsKeyDown(pace.BulkSelectKey) then pace.DoBulkSelect(node.part, true) end
+									break
+								end
+							end
+						end
+	
+						self.scrolled_up = self.scrolled_up or os.clock() + 0.4
+					end
+				else
+					self.scrolled_up = nil
+				end
+	
+				if action == "editor_down" or action == "editor_pagedown" then
+					local added_nodes = get_added_nodes(self)
+					local offset = action == "editor_pagedown" and 10 or 1
+					if not self.scrolled_down or self.scrolled_down < os.clock() then
+						for i,v in ipairs(added_nodes) do
+							if v == pace.current_part.pace_tree_node then
+								local node = added_nodes[i + offset] or added_nodes[#added_nodes]
+								if node then
+									node:DoClick()
+									if input.IsKeyDown(pace.BulkSelectKey) then pace.DoBulkSelect(node.part, true) end
+									--scroll_to_node(self, node)
+									break
+								end
+							end
+						end
+	
+						self.scrolled_down = self.scrolled_down or os.clock() + 0.4
+					end
+				else
+					self.scrolled_down = nil
+				end
+			end
+	end
+	
+	function pace.DoScrollControls(action)
+		DoScrollControl(pace.tree, action)
+	end
+
 end
+
+
+
 
 function PANEL:OnMouseReleased(mc)
 	if mc == MOUSE_RIGHT then
@@ -192,7 +271,7 @@ function PANEL:OnMouseReleased(mc)
 end
 
 function PANEL:SetModel(path)
-	if not file.Exists(path, "GAME") then
+	if not file.Exists(path or "", "GAME") then
 		path = player_manager.TranslatePlayerModel(path)
 		if not file.Exists(path, "GAME") then
 			print(path, "is invalid")
@@ -352,7 +431,7 @@ function PANEL:AddNode(...)
 
 	local add_button = node:Add("DImageButton")
 	add_button:SetImage(pace.MiscIcons.new)
-	add_button:SetSize(16, 16)
+	add_button:SetSize(16*GetConVar("pac_editor_scale"):GetFloat(), 16*GetConVar("pac_editor_scale"):GetFloat())
 	add_button:SetVisible(false)
 	add_button.DoClick = function() add_parts_menu(node) pace.Call("PartSelected", node.part) end
 	add_button.DoRightClick = function() node:DoRightClick() end
@@ -454,6 +533,7 @@ function PANEL:PopulateParts(node, parts, children)
 			elseif isstring(part.Icon) then
 				part_node.Icon:SetImage(part.Icon)
 			end
+			part_node.Icon:SetSize(16 * GetConVar("pac_editor_scale"):GetFloat(),16 * GetConVar("pac_editor_scale"):GetFloat())
 
 			self:PopulateParts(part_node, part:GetChildren(), true)
 
@@ -499,8 +579,8 @@ end
 
 function PANEL:Populate(reset)
 
-	self:SetLineHeight(18)
-	self:SetIndentSize(2)
+	self:SetLineHeight(18 * (1 + (GetConVar("pac_editor_scale"):GetFloat()-1)))
+	self:SetIndentSize(10)
 
 	for key, node in pairs(self.parts) do
 		if reset or (not node.part or not node.part:IsValid()) then
@@ -530,6 +610,7 @@ local function remove_node(part)
 		part.pace_tree_node:GetRoot().m_pSelectedItem = nil
 		part.pace_tree_node:Remove()
 		pace.RefreshTree()
+		
 	end
 end
 
@@ -564,7 +645,42 @@ pac.AddHook("pace_OnVariableChanged", "pace_create_tree_nodes", function(part, k
 	end
 end)
 
+local function refresh_events_gated()
+	pace.final_scheduled_event_refresh = pace.final_scheduled_event_refresh or CurTime() + 0.08
+	pace.event_refresh_spam_time = CurTime()
+	hook.Add("Tick", "pace_refresh_events", function()
+		if CurTime() < pace.event_refresh_spam_time + 0.08 then return end
+		if CurTime() > pace.final_scheduled_event_refresh then
+			pace.RefreshEvents()
+			pace.final_scheduled_event_refresh = nil
+			hook.Remove("Tick", "pace_refresh_events")
+		end
+	end)
+end
+
+function pace.RefreshEvents()
+	local events = {}
+	for _, part in pairs(pac.GetLocalParts()) do
+		if part.ClassName == "event" then
+			events[part] = part
+		end
+	end
+	local no_events = table.Count(events) == 0
+	
+	for _, child in pairs(pac.GetLocalParts()) do
+		child.active_events = {}
+		child.active_events_ref_count = 0
+		if not no_events then
+			for _,event in pairs(events) do
+				event:OnThink()
+			end
+		end
+		child:CallRecursive("CalcShowHide", false)
+	end
+end
+
 function pace.RefreshTree(reset)
+	--print("pace.RefreshTree("..tostring(reset)..")")
 	if pace.tree:IsValid() then
 		timer.Create("pace_refresh_tree",  0.01, 1, function()
 			if pace.tree:IsValid() then
@@ -573,8 +689,10 @@ function pace.RefreshTree(reset)
 
 				pace.TrySelectPart()
 			end
+			refresh_events_gated()
 		end)
 	end
+	
 end
 
 if Entity(1):IsPlayer() and not PAC_RESTART and not VLL2_FILEDEF then

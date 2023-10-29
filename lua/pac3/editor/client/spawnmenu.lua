@@ -110,8 +110,36 @@ function pace.ClientSettingsMenu(self)
 end
 
 
-local icon = "icon64/pac3.png"
+
+local icon_cvar = CreateConVar("pac_icon", "1", {FCVAR_ARCHIVE}, "Use the new PAC4.5 icon or the old PAC icon.\n0 = use the old one\n1 = use the new one")
+local icon = icon_cvar:GetBool() and "icon64/new pac icon.png" or "icon64/pac3.png"
+
 icon = file.Exists("materials/"..icon,'GAME') and icon or "icon64/playermodel.png"
+
+local function ResetPACIcon()
+	if icon_cvar:GetBool() then icon = "icon64/new pac icon.png" else icon = "icon64/pac3.png" end
+	list.Set(
+		"DesktopWindows",
+		"PACEditor",
+		{
+			title = "PAC Editor",
+			icon = icon,
+			width = 960,
+			height = 700,
+			onewindow = true,
+			init = function(icn, pnl)
+				pnl:Remove()
+				RunConsoleCommand("pac_editor")
+			end
+		}
+	)
+	RunConsoleCommand("spawnmenu_reload")
+end
+
+cvars.AddChangeCallback("pac_icon", ResetPACIcon)
+
+concommand.Add("pac_change_icon", function() RunConsoleCommand("pac_icon", (not icon_cvar:GetBool()) and "1" or "0") ResetPACIcon() end)
+
 
 list.Set(
 	"DesktopWindows",
