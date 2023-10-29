@@ -1,3 +1,7 @@
+util.AddNetworkString("pac.BanUpdate")
+util.AddNetworkString("pac.RequestBanStates")
+util.AddNetworkString("pac.SendBanStates")
+
 local function get_bans()
 	local str = file.Read("pac_bans.txt", "DATA")
 
@@ -111,3 +115,39 @@ function pace.IsBanned(ply)
 
 	return pace.Bans[ply:UniqueID()] ~= nil
 end
+
+net.Receive("pac.BanUpdate", function(len, ply)
+	pac.Message("Received ban list update operation from : ", ply)
+	pac.Message("Time : ", os.date( "%a %X %x", os.time() ))
+	local playerlist = net.ReadTable()
+	for i,v in pairs(playerlist) do
+		if playerlist[i] == "Allowed" then
+			pace.Unban(i)
+		elseif playerlist[i] == "Banned" then
+			pace.Ban(i)
+		end
+		print(i, "banned?", pace.IsBanned(i), "Update ->", playerlist[i])
+	end
+end)
+
+net.Receive("pac.RequestBanStates", function(len,ply)
+	local archive = net.ReadBool()
+	pac.Message("Received ban list request from : ", ply)
+	pac.Message("Time : ", os.date( "%a %X %x", os.time() ))
+	local players = {}
+	for _,v in pairs(player.GetAll()) do 
+		players[v] = false
+	end
+	if not pace.Bans then
+		pace.Bans = get_bans()
+	end
+	for i,v in pairs(pace.Bans) do
+		print(player.GetBySteamID(i), player.GetBySteamID(v[1]))
+		local ply = player.GetBySteamID(v[1])
+		players[ply] = true
+	end
+
+	net.Start("pac.SendBanStates")
+	net.WriteTable(players)
+	net.Send(ply)
+end)

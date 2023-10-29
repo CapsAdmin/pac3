@@ -185,6 +185,10 @@ function PANEL:OnRemove()
 	end
 end
 
+function PANEL:IsLeft() --which side the editor is on.
+	return self:GetPos() + self:GetWide() / 2 < ScrW() / 2
+end
+
 function PANEL:Think(...)
 	if not self.okay then return end
 	DFrame.Think(self, ...)
@@ -212,7 +216,7 @@ function PANEL:Think(...)
 
 	if self.exit_button:IsValid() then
 
-		if self:GetPos() + self:GetWide() / 2 < ScrW() / 2 then
+		if self:IsLeft() then
 			self.exit_button:SetPos(ScrW() - self.exit_button:GetWide() + 4, -4)
 		else
 			self.exit_button:SetPos(-4, -4)
@@ -244,6 +248,9 @@ function PANEL:Think(...)
 			self.zoomslider:SetValue(75)
 			pace.zoom_reset = nil
 		end
+		if pace.OverridingFOVSlider then
+			self.zoomslider:SetValue(pace.ViewFOV)
+		end
 
 		if zoom_smooth:GetInt() == 1 then
 			pace.SetZoom(self.zoomslider:GetValue(),true)
@@ -261,6 +268,8 @@ function PANEL:Think(...)
 		else
 			self.zoomsettings:SetVisible(false)
 		end
+		
+
 	end
 end
 

@@ -1,6 +1,87 @@
 -- based on starfall
 CreateClientConVar("pac_asset_browser_close_on_select", "1")
 CreateClientConVar("pac_asset_browser_remember_layout", "1")
+CreateClientConVar("pac_asset_browser_extra_options", "1")
+CreateClientConVar("pac_favorites_try_to_get_asset_series", "1")
+CreateClientConVar("pac_favorites_try_to_build_asset_series", "0")
+
+local function rebuild_bookmarks()
+	pace.bookmarked_ressources = pace.bookmarked_ressources or {}
+
+	--here's some default favorites
+	if not pace.bookmarked_ressources["models"] or table.IsEmpty(pace.bookmarked_ressources["models"]) then
+		pace.bookmarked_ressources["models"] = {
+			"models/pac/default.mdl",
+			"models/pac/plane.mdl",
+			"models/pac/circle.mdl",
+			"models/hunter/blocks/cube025x025x025.mdl",
+			"models/editor/axis_helper.mdl",
+			"models/editor/axis_helper_thick.mdl"
+		}
+	end
+
+	if not pace.bookmarked_ressources["sound"] or table.IsEmpty(pace.bookmarked_ressources["sound"]) then
+		pace.bookmarked_ressources["sound"] = {
+			"music/hl1_song11.mp3",
+			"npc/combine_gunship/dropship_engine_near_loop1.wav",
+			"ambient/alarms/warningbell1.wav",
+			"phx/epicmetal_hard7.wav",
+			"phx/explode02.wav"
+		}
+	end
+
+	if not pace.bookmarked_ressources["materials"] or table.IsEmpty(pace.bookmarked_ressources["materials"]) then
+		pace.bookmarked_ressources["materials"] = {
+			"models/debug/debugwhite",
+			"vgui/null",
+			"debug/env_cubemap_model",
+			"models/wireframe",
+			"cable/physbeam",
+			"cable/cable2",
+			"effects/tool_tracer",
+			"effects/flashlight/logo",
+			"particles/flamelet[1,5]",
+			"sprites/key_[0,9]",
+			"vgui/spawnmenu/generating",
+			"vgui/spawnmenu/hover"
+		}
+	end
+end
+
+local function encode_table_to_file(str)
+	local data = {}
+	if not file.Exists("pac3_config", "DATA") then
+		file.CreateDir("pac3_config")
+		
+	end
+	
+
+	if str == "pac_editor_shortcuts" then
+		data = pace.PACActionShortcut
+		file.Write("pac3_config/" .. str..".txt", util.TableToKeyValues(data))
+	elseif str == "pac_editor_partmenu_layouts" then
+		data = pace.operations_order
+		file.Write("pac3_config/" .. str..".txt", util.TableToJSON(data))
+	elseif str == "pac_part_categories" then
+		data = pace.partgroups
+		file.Write("pac3_config/" .. str..".txt", util.TableToKeyValues(data))
+	elseif str == "bookmarked_ressources" then
+		rebuild_bookmarks()
+		for category, tbl in pairs(pace.bookmarked_ressources) do
+			data = tbl
+			str = category
+			file.Write("pac3_config/bookmarked_" .. str..".txt", util.TableToKeyValues(data))
+		end
+		
+	end
+
+end
+
+function pace.SaveRessourceBookmarks()
+	encode_table_to_file("bookmarked_ressources")
+end
+
+
 
 local function table_tolist(tbl, sort)
 	local list = {}
@@ -51,6 +132,7 @@ end
 
 local L = pace.LanguageString
 
+--icon is the item's panel, path is the item's full file path, on_menu is a function that can extend the function
 local function install_click(icon, path, pattern, on_menu, pathid)
 	local old = icon.OnMouseReleased
 	icon.OnMouseReleased = function(_, code)
@@ -70,6 +152,42 @@ local function install_click(icon, path, pattern, on_menu, pathid)
 				end
 				SetClipboardText(path)
 			end)
+			
+			if string.match(path, "^materials/(.+)%.vmt$") or string.match(path, "^materials/(.+%.png)$") then resource_type = "materials"
+			elseif string.match(path, "^models/") then resource_type = "models" end
+
+			if not pace.bookmarked_ressources then
+				pace.SaveRessourceBookmarks()
+			elseif not pace.bookmarked_ressources[resource_type] then
+				pace.SaveRessourceBookmarks()
+			end
+			if GetConVar("pac_asset_browser_extra_options"):GetBool() then
+				if GetConVar("pac_favorites_try_to_get_asset_series"):GetBool() then
+					if not table.HasValue(pace.bookmarked_ressources[resource_type], path) then
+						menu:AddOption(L"add series to favorites", function()
+							table.insert(pace.bookmarked_ressources[resource_type], path)
+							pace.SaveRessourceBookmarks()
+						end):SetImage("icon16/star.png")
+					else
+						menu:AddOption(L"remove series from favorites", function()
+							table.remove(pace.bookmarked_ressources[resource_type], table.KeyFromValue( pace.bookmarked_ressources[resource_type], path ))
+							pace.SaveRessourceBookmarks()
+						end):SetImage("icon16/cross.png")
+					end
+				end
+				if not table.HasValue(pace.bookmarked_ressources[resource_type], path) then
+					menu:AddOption(L"add to favorites", function()
+						table.insert(pace.bookmarked_ressources[resource_type], path)
+						pace.SaveRessourceBookmarks()
+					end):SetImage("icon16/star.png")
+				else
+					menu:AddOption(L"remove from favorites", function()
+						table.remove(pace.bookmarked_ressources[resource_type], table.KeyFromValue( pace.bookmarked_ressources[resource_type], path ))
+						pace.SaveRessourceBookmarks()
+					end):SetImage("icon16/cross.png")
+				end
+			end
+			
 			if on_menu then on_menu(menu) end
 			menu:Open()
 		end
@@ -91,6 +209,10 @@ local function get_unlit_mat(path)
 	end
 
 	return CreateMaterial(path .. "_pac_asset_browser", "UnlitGeneric", {["$basetexture"] = path:match("materials/(.+)%.vtf")})
+end
+
+function pace.get_unlit_mat(path)
+	return get_unlit_mat(path)
 end
 
 local next_generate_icon = 0
@@ -215,25 +337,25 @@ local function create_material_icon(path, grid_panel)
 
 			--[[
 
-			local old = icon.OnCursorEntered
-			function icon:OnCursorEntered(...)
-				if pace.current_part:IsValid() and pace.current_part.Materialm then
-					pace.asset_browser_old_mat = pace.asset_browser_old_mat or pace.current_part.Materialm
-					pace.current_part.Materialm = mat
+				local old = icon.OnCursorEntered
+				function icon:OnCursorEntered(...)
+					if pace.current_part:IsValid() and pace.current_part.Materialm then
+						pace.asset_browser_old_mat = pace.asset_browser_old_mat or pace.current_part.Materialm
+						pace.current_part.Materialm = mat
+					end
+
+					old(self, ...)
 				end
 
-				old(self, ...)
-			end
 
-
-			local old = icon.OnCursorExited
-			function icon:OnCursorExited(...)
-				if pace.current_part:IsValid() and pace.current_part.Materialm then
-					pace.current_part.Materialm = pace.asset_browser_old_mat
+				local old = icon.OnCursorExited
+				function icon:OnCursorExited(...)
+					if pace.current_part:IsValid() and pace.current_part.Materialm then
+						pace.current_part.Materialm = pace.asset_browser_old_mat
+					end
+					old(self, ...)
 				end
-				old(self, ...)
-			end
-]]
+			]]
 
 			local unlit_mat = get_unlit_mat(path)
 
@@ -343,6 +465,7 @@ local function create_material_icon(path, grid_panel)
 
 			create_text_view(str)
 		end)
+
 	end)
 
 	grid_panel:Add(icon)
@@ -606,6 +729,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 	local frame = vgui.Create("DFrame")
 	frame.title = L"asset browser" .. " - " .. (browse_types_str:gsub(";", " "))
 
+	
 	if GetConVar("pac_asset_browser_remember_layout"):GetBool() then
 		frame:SetCookieName("pac_asset_browser")
 	end
@@ -681,6 +805,9 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 	options_menu:SetDeleteSelf(false)
 	options_menu:AddCVar(L"close browser on select", "pac_asset_browser_close_on_select", "1", "0")
 	options_menu:AddCVar(L"remember layout", "pac_asset_browser_remember_layout", "1", "0")
+	options_menu:AddCVar(L"additional right click options", "pac_asset_browser_extra_options", "1", "0")
+	options_menu:AddCVar(L"try to find asset series for saving favorites", "pac_favorites_try_to_get_asset_series", "1", "0")
+	options_menu:AddCVar(L"try to build asset series in the editor", "pac_favorites_try_to_build_asset_series", "1", "0")
 
 
 	local zoom_controls = vgui.Create("pac_AssetBrowser_ZoomControls", menu_bar)
@@ -813,6 +940,60 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 
 			if code == MOUSE_RIGHT then
 				play:Start()
+				local menu = DermaMenu()
+				menu:SetPos(input.GetCursorPos())
+				menu:AddOption(L"copy path", function()
+					SetClipboardText(sound)
+				end)
+				if GetConVar("pac_asset_browser_extra_options"):GetBool() then
+					pace.bookmarked_ressources["sound"] = pace.bookmarked_ressources["sound"] or {}
+					local resource_type = "sound"
+					if GetConVar("pac_favorites_try_to_get_asset_series"):GetBool() then
+						--print(sound)
+						local extension = string.GetExtensionFromFilename(sound)
+						local base_name = string.gsub(sound, "%d+."..extension.."$", "")
+						base_name = string.gsub(base_name, "^sound/", "")
+						--print(resource_type, base_name, extension)
+
+						local series_results = pace.FindAssetSeriesBounds(resource_type, base_name, extension)
+						PrintTable(series_results)
+						if not series_results.start_index then
+							goto CONTINUE
+						end
+						
+						local series_str = base_name .. "[" .. series_results.start_index .. "," .. series_results.end_index .. "]." .. extension
+
+						if not table.HasValue(pace.bookmarked_ressources[resource_type], series_str) then
+
+							menu:AddOption(L"add series to favorites", function()
+								table.insert(pace.bookmarked_ressources[resource_type], series_str)
+								pace.SaveRessourceBookmarks()
+
+							end):SetImage("icon16/star.png")
+						else
+							menu:AddOption(L"remove series from favorites", function()
+								table.remove(pace.bookmarked_ressources[resource_type], table.KeyFromValue( pace.bookmarked_ressources[resource_type], series_str ))
+								pace.SaveRessourceBookmarks()
+
+							end):SetImage("icon16/cross.png")
+						end
+
+						::CONTINUE::
+					end
+					
+					if not table.HasValue(pace.bookmarked_ressources["sound"], sound) then
+						menu:AddOption(L"add to favorites", function()
+							table.insert(pace.bookmarked_ressources["sound"], sound)
+							pace.SaveRessourceBookmarks()
+						end):SetImage("icon16/star.png")
+					else
+						menu:AddOption(L"remove from favorites", function()
+							table.remove(pace.bookmarked_ressources["sound"], table.KeyFromValue( pace.bookmarked_ressources["sound"], sound ))
+							pace.SaveRessourceBookmarks()
+						end):SetImage("icon16/cross.png")
+					end
+				end
+				menu:MakePopup() menu:RequestFocus()
 			else
 				pace.model_browser_callback(sound, "GAME")
 			end
