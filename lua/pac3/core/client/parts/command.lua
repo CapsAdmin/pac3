@@ -25,7 +25,10 @@ end
 
 function PART:OnShow(from_rendering)
 	if not from_rendering and self:GetExecuteOnShow() then
-		self:Execute()
+		timer.Simple(0, function()
+			if self.Hide or self:IsHidden() then return end
+			self:Execute()
+		end)
 	end
 end
 
