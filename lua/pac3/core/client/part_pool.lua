@@ -503,8 +503,9 @@ function pac.GetPartFromUniqueID(owner_id, id)
 end
 
 function pac.FindPartByPartialUniqueID(owner_id, crumb)
-	if #crumb <= 3 then return NULL end
 	if not crumb then return NULL end
+	if not isstring(crumb) then return NULL end
+	if #crumb <= 3 then return NULL end
 	local closest_match
 	local length_of_closest_match = 0
 	if uid_parts[owner_id] then
