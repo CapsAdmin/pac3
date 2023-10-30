@@ -111,7 +111,7 @@ end
 
 
 
-local icon_cvar = CreateConVar("pac_icon", "1", {FCVAR_ARCHIVE}, "Use the new PAC4.5 icon or the old PAC icon.\n0 = use the old one\n1 = use the new one")
+local icon_cvar = CreateConVar("pac_icon", "0", {FCVAR_ARCHIVE}, "Use the new PAC4.5 icon or the old PAC icon.\n0 = use the old one\n1 = use the new one")
 local icon = icon_cvar:GetBool() and "icon64/new pac icon.png" or "icon64/pac3.png"
 
 icon = file.Exists("materials/"..icon,'GAME') and icon or "icon64/playermodel.png"
