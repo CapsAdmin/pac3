@@ -2670,17 +2670,9 @@ do
 			ply.pac_broadcasted_buttons_lastpressed[key] = SysTime()
 		end
 
-		for _,part in pairs(pac.getallparts()) do --locate the corresponding parts among the part pool
-			if part:GetPlayerOwner() == ply and part.ClassName == "event" and part.Event == "button" then
-				part.pac_broadcasted_buttons_holduntil = part.pac_broadcasted_buttons_holduntil or {}
-				part.holdtime = part.holdtime or 0
-				part.toggleimpulsekey = part.toggleimpulsekey or {}
-				part.toggleimpulsekey[key] = down
-				part.pac_broadcasted_buttons_holduntil[key] = part.pac_broadcasted_buttons_holduntil[key] or 0
-				ply.pac_broadcasted_buttons_lastpressed[key] = ply.pac_broadcasted_buttons_lastpressed[key] or 0
-				part.pac_broadcasted_buttons_holduntil[key] = ply.pac_broadcasted_buttons_lastpressed[key] + part.holdtime
-			end
-		end
+		--outsource the part pool operations
+		pac.UpdateButtonEvents(ply, key, down)
+		
 		
 	end)
 

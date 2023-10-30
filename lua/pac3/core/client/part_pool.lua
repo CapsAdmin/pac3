@@ -44,9 +44,6 @@ local ent_parts = _G.pac_local_parts or {}
 local all_parts = _G.pac_all_parts or {}
 local uid_parts = _G.pac_uid_parts or {}
 
-function pac.getentparts() return ent_parts or _G.pac_ent_parts or {} end
-function pac.getallparts() return all_parts or _G.pac_all_parts or {} end
-function pac.getuidparts() return uid_parts or _G.pac_uid_parts or {} end
 
 if game.SinglePlayer() or (player.GetCount() == 1 and LocalPlayer():IsSuperAdmin()) then
 	_G.pac_local_parts = ent_parts
@@ -644,6 +641,20 @@ function pac.EnablePartsByClass(classname, enable)
 	for _, part in pairs(all_parts) do
 		if part.ClassName == classname then
 			part:SetEnabled(enable)
+		end
+	end
+end
+
+function pac.UpdateButtonEvents(ply, key, down)
+	for _,part in pairs(all_parts) do
+		if part:GetPlayerOwner() == ply and part.ClassName == "event" and part.Event == "button" then
+			part.pac_broadcasted_buttons_holduntil = part.pac_broadcasted_buttons_holduntil or {}
+			part.holdtime = part.holdtime or 0
+			part.toggleimpulsekey = part.toggleimpulsekey or {}
+			part.toggleimpulsekey[key] = down
+			part.pac_broadcasted_buttons_holduntil[key] = part.pac_broadcasted_buttons_holduntil[key] or 0
+			ply.pac_broadcasted_buttons_lastpressed[key] = ply.pac_broadcasted_buttons_lastpressed[key] or 0
+			part.pac_broadcasted_buttons_holduntil[key] = ply.pac_broadcasted_buttons_lastpressed[key] + part.holdtime
 		end
 	end
 end
