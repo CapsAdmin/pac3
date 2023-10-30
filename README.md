@@ -1,10 +1,8 @@
-# PAC3
+# PAC4.5
 
 ---
 
 Welcome to my experimental combat update for PAC3. Here's the overview of the important bits to expect.
-
-I have a major update coming soon, when I finish wrapping some things up, so some of these aren't in yet.
 
 
 # New combat-related parts:
@@ -28,14 +26,14 @@ The combat features work with the principle of consent. The lock part especially
 	pac_client_hitscan_consent 0
 	pac_client_force_consent 0
 	pac_client_grab_consent 0
-	pac_client_lock_camera_consent 1
+	pac_client_lock_camera_consent 0
 
 There are also commands for clients to free themselves if they're being grabbed.
 
  	pac_break_lock
 	pac_stop_lock
 
-Multiple options exist for servers to prevent mass abuse. Although I might've had things to say about server owners being resistant to new disruptive features, I've come to a compromise in the form of cvars. size limits, damage limits, which combat parts are allowed...
+Multiple options exist for servers to prevent mass abuse. Although I might've had things to say about server owners being resistant to new disruptive features, I've come to a compromise in the form of cvars, size limits, damage limits, which combat parts are allowed, as well as several net-protecting options to ease the load on the server's processing and on the network (reliable channel)...
 
 	pac_sv_combat_whitelisting 0
 	pac_sv_damage_zone 1
@@ -43,6 +41,11 @@ Multiple options exist for servers to prevent mass abuse. Although I might've ha
 	pac_sv_lock_grab 1
 	pac_sv_lock_teleport 1
 	pac_sv_lock_max_grab_radius 200
+ 	pac_sv_combat_enforce_netrate 0
+	pac_sv_entity_limit_per_combat_operation 500
+ 	pac_sv_entity_limit_per_player_per_combat_operation 40
+  	pac_sv_player_limit_as_fraction_to_drop_damage_zone 1
+	pac_sv_block_combat_features_on_next_restart 0
  	...
 
 
@@ -61,7 +64,9 @@ Customizable shortcuts for almost every action (in the pac settings menu).
 
 Reordering the part menu actions layout (in the pac settings menu).
 
-Changing your part categories, with possible custom icons. (no menu, you'll have to edit the pac_part_categories.txt file directly)
+Changing your part categories, with possible custom icons.
+
+Colors for the event wheel (with a menu) + a new grid style for command events that doesn't move too much.
 
 
 ## Expanded settings menu
@@ -76,19 +81,22 @@ right click on assets in the pac asset browser to save it to your favorites. it 
 
 select a part and press F1 to open information about it. limited support but it will be useful later on. It can be configured to be on a part in your viewport, on your cursor, next to the part's tree label ...
  
-## Editor autopilot
+## Editor copilot : Foolproofing and editor assist
 
-An idea: correct common mistakes automatically or inform the user about it.
+Selecting an event will pick an appropriate operator, and clicking away from a proxy without a variable name will notify you about how it won't work, telling you to go back and change it
 
-For now, it's only two things: selecting an event will pick an appropriate operator, and clicking away from a proxy without a variable name will notify you about how it won't work, telling you to go back and change it
+Writing a name into an event's type will create a command event with that name if the name isn't a recognized event type, so you can quickly setup command events.
 
+auto-disable editor camera to preview the camera part when creating a camera part
+
+auto-focus on the relevant property when creating certain parts
 
 # Reference and help features
 
 proxy bank: some presets with tooltip explanations. right click on the expression field to look at them
  
 command bank: presets to use the command part. again, right click on the expression field to look at them
-	
+
 built-in wiki written by me, for every part and most event types: short tooltips to tell you what a part does when you hover over the label when choosing which part to create, longer tutorials opened with F1 when you select an existing part.
 
 
@@ -97,6 +105,14 @@ built-in wiki written by me, for every part and most event types: short tooltips
 ## Part notes
 
 a text field for the base_part, so you can write notes on any part.
+
+## Prompt for autoload
+
+option to get a prompt to choose between your autoload file, your latest backup or latest loaded outfit when starting.
+
+## Queue prop/NPC outfits (singleplayer only)
+
+option so that, when loading an outfit for props/NPCs, instead of hanging in the editor and needing to reassign the owner name manually, pac will not wear yet, but wait for you to spawn an appropriate prop or entity that had the outfit.
 
 ## pac_event_sequenced
 
