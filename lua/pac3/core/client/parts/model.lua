@@ -606,7 +606,7 @@ function PART:ProcessModelChange()
 	local path = self.Model
 
 	if path:find("://", nil, true) then
-		if path:StartWith("objhttp") or path:StartWith("obj:http") or path:EndsWith(".obj") or self.ForceObjUrl then
+		if path:StartWith("objhttp") or path:StartWith("obj:http") or path:match("%.obj%p?") or self.ForceObjUrl then
 			path = path:gsub("^objhttp","http"):gsub("^obj:http","http")
 			self.loading = "downloading obj"
 
@@ -747,8 +747,9 @@ function PART:SetAlternativeScaling(b)
 end
 
 function PART:SetScale(vec)
-	max_scale = GetConVar("pac_model_max_scales"):GetFloat()
-	largest_scale = math.max(math.abs(vec.x), math.abs(vec.y), math.abs(vec.z))
+	local max_scale = GetConVar("pac_model_max_scales"):GetFloat()
+	local largest_scale = math.max(math.abs(vec.x), math.abs(vec.y), math.abs(vec.z))
+
 	if vec and max_scale > 0 and (LocalPlayer() ~= self:GetPlayerOwner()) then --clamp for other players if they have pac_model_max_scales convar more than 0
 		vec = Vector(math.Clamp(vec.x, -max_scale, max_scale), math.Clamp(vec.y, -max_scale, max_scale), math.Clamp(vec.z, -max_scale, max_scale))
 	end

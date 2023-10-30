@@ -293,10 +293,26 @@ PART.Inputs.ftime = FrameTime
 PART.Inputs.framenumber = FrameNumber
 PART.Inputs.fnumber = FrameNumber
 
-PART.Inputs.random = function(self)
-	return math.random()
+PART.Inputs.random = function(self, min, max)
+	min = min or 0
+	max = max or 1
+	return min + math.random()*(max-min)
 end
 
+PART.Inputs.random_once = function(self, seed, min, max)
+	min = min or 0
+	max = max or 1
+
+	seed = seed or 0
+	self.rand_id = self.rand_id or {}
+	if seed then
+		self.rand_id[seed] = self.rand_id[seed] or min + math.random()*(max-min)
+	else
+		self.rand = self.rand or min + math.random()*(max-min)
+	end
+
+	return self.rand_id[seed] or self.rand
+end
 
 PART.Inputs.lerp = function(self, m, a, b)
 	m = tonumber(m) or 0
@@ -306,10 +322,69 @@ PART.Inputs.lerp = function(self, m, a, b)
 	return (b - a) * m + a
 end
 
+for ease,f in pairs(math.ease) do
+	if string.find(ease,"In") or string.find(ease,"Out") then
+		local f2 = function(self, frac, min, max)
+			min = min or 0
+			max = max or 1
+			return min + f(frac)*(max-min)
+		end
+		PART.Inputs["ease"..ease] = f2
+		PART.Inputs["ease_"..ease] = f2
+		PART.Inputs[ease] = f2
+	end
+end
+
 PART.Inputs.timeex = function(s)
 	s.time = s.time or pac.RealTime
 
 	return pac.RealTime - s.time
+end
+
+PART.Inputs.part_distance = function(self, uid1, uid2)
+	if not uid1 or not uid2 then return 0 end
+
+	local PartA = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid1)
+	if not PartA:IsValid() then PartA = pac.FindPartByName(pac.Hash(pac.LocalPlayer), uid1, self) end
+
+	local PartB = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid2)
+	if not PartB:IsValid() then PartB = pac.FindPartByName(pac.Hash(pac.LocalPlayer), uid2, self) end
+
+	if not PartA:IsValid() or not PartB:IsValid() then return 0 end
+	return (PartB:GetWorldPosition() - PartA:GetWorldPosition()):Length()
+end
+
+PART.Inputs.event_alternative = function(self, uid1, num1, num2)
+	if not uid1 then return 0 end
+
+	local PartA = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid1)
+	if not PartA:IsValid() then PartA = pac.FindPartByName(pac.Hash(pac.LocalPlayer), uid1, self) end
+
+	if PartA.ClassName == "event" then
+		if PartA.event_triggered then return num1 or 0
+		else return num2 or 0 end
+	else return -1 end
+	return 0
+end
+
+PART.Inputs.number_operator_alternative = function(self, comp1, op, comp2, num1, num2)
+	if not (comp1 and op and comp2 and num1 and num2) then return -1 end
+	if not (isnumber(comp1) and isnumber(comp2) and isnumber(num1) and isnumber(num2)) then return -1 end
+	local b = true
+	if op == "=" or op == "==" or op == "equal" then
+		b = comp1 == comp2
+	elseif op == ">" or op == "above" or op == "greater" or op == "greater than" then
+		b = comp1 > comp2
+	elseif op == ">=" or op == "above or equal" or op == "greater or equal" or op == "greater than or equal" then
+		b = comp1 >= comp2
+	elseif op == "<" or op == "below" or op == "less" or op == "less than" then
+		b = comp1 < comp2
+	elseif op == "<=" or op == "below or equal" or op == "less or equal" or op == "less than or equal" then
+		b = comp1 <= comp2
+	elseif op == "~=" or op == "~=" or op == "not equal" then
+		b = comp1 ~= comp2
+	end
+	if b then return num1 or 0 else return num2 or 0 end
 end
 
 do
@@ -556,10 +631,9 @@ PART.Inputs.pose_parameter_true = function(self, name)
 	if not name then return 0 end
 	local owner = get_owner(self)
 	if owner:IsValid() then
-		min,max = owner:GetPoseParameterRange(owner:LookupPoseParameter(name))
-		actual_value = min + (max - min)*(owner:GetPoseParameter(name))
-		return actual_value
-	else end
+		local min, max = owner:GetPoseParameterRange(owner:LookupPoseParameter(name))
+		return min + (max - min)*(owner:GetPoseParameter(name))
+	end
 	return 0
 end
 
@@ -912,6 +986,8 @@ end
 
 function PART:OnHide()
 	self.time = nil
+	self.rand = nil
+	self.rand_id = nil
 	self.vec_additive = Vector()
 
 	if self.ResetVelocitiesOnHide then
@@ -937,6 +1013,8 @@ end
 
 function PART:OnShow()
 	self.time = nil
+	self.rand = nil
+	self.rand_id = nil
 	self.vec_additive = Vector()
 end
 

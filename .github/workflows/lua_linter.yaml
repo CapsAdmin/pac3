@@ -1,0 +1,10 @@
+name: lint
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_call:
+
+jobs:
+  lua-lint:
+    uses: FPtje/GLuaFixer/.github/workflows/glualint.yml@master

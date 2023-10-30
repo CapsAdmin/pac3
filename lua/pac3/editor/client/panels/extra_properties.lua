@@ -746,7 +746,7 @@ do -- event is_touching
 				mins = mins,
 				filter = ent
 			} )
-			
+
 			if self.udata then
 				render.DrawWireframeBox( startpos, Angle( 0, 0, 0 ), mins, maxs, tr.Hit and Color(255,0,0) or Color(255,255,255), true )
 			end

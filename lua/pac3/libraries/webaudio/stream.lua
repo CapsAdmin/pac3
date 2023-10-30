@@ -29,7 +29,7 @@ pac.AddHook("RenderScene", "webaudio_3d", function(position, angle)
 end)
 
 webaudio.Streams.STREAM = {}
-STREAM = webaudio.Streams.STREAM
+local STREAM = webaudio.Streams.STREAM
 STREAM.__index = STREAM
 
 -- Identity

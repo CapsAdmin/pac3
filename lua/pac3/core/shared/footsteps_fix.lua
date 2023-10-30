@@ -4,11 +4,11 @@ if game.SinglePlayer() then
 		util.AddNetworkString('pac_footstep')
 		util.AddNetworkString('pac_footstep_request_state_update')
 		util.AddNetworkString('pac_signal_mute_footstep')
-		
+
 		hook.Add("PlayerFootstep", "footstep_fix", function(ply, pos, _, snd, vol)
 			net.Start("pac_footstep_request_state_update")
 			net.Send(ply)
-			
+
 			net.Start("pac_footstep")
 				net.WriteEntity(ply)
 				net.WriteVector(pos)
@@ -16,7 +16,7 @@ if game.SinglePlayer() then
 				net.WriteFloat(vol)
 			net.Broadcast()
 		end)
-		
+
 		net.Receive("pac_signal_mute_footstep", function(len,ply)
 			local b = net.ReadBool()
 			ply.pac_mute_footsteps = b
@@ -26,8 +26,8 @@ if game.SinglePlayer() then
 				end)
 			else hook.Remove("PlayerFootstep", "pac_footstep_silence") end
 		end)
-		
-		
+
+
 	end
 
 	if CLIENT then

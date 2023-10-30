@@ -1,0 +1,30 @@
+name: update_workshop
+
+on:
+  push:
+    branches:
+      - develop
+      - master
+  workflow_dispatch:
+
+jobs:
+  linter:
+    uses: CapsAdmin/pac3/.github/workflows/lua_linter.yaml@develop
+
+  update-workshop:
+      if: github.repository == 'CapsAdmin/pac3'
+      # needs: linter
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v2
+
+        - name: Publish to Steam Workshop
+          uses: vurv78/gmod-upload@v0.1.3
+          env:
+            STEAM_USERNAME: ${{ secrets.STEAM_NAME }}
+            STEAM_PASSWORD: ${{ secrets.STEAM_PASSWORD }}
+          with:
+            id: ${{ github.ref == 'refs/heads/master' && '104691717' || '3038093543' }}
+            changelog: ${{ github.event.head_commit.message }}
+            config: ${{ github.ref == 'refs/heads/master' && 'addon.json' || 'addon_develop.json' }}

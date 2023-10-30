@@ -632,7 +632,7 @@ do
 						surface.DrawTexturedRect(1+x,mat:Height() - 5,mat:Width(), mat:Height())
 
 					end
-					
+
 					if esmat then
 						local ps = v:GetSize()
 						local x = v:GetPos() + (ps * 0.5)
@@ -826,7 +826,7 @@ do
 	function KEYFRAME:GetRestart()
 		return self.restart
 	end
-	
+
 	function KEYFRAME:GetData()
 		return self.DataTable
 	end
@@ -1048,10 +1048,12 @@ do
 				timeline.frame.keyframe_scroll:InvalidateLayout()
 
 				self:Remove()
-
-				timeline.SelectKeyframe(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()[#timeline.frame.keyframe_scroll:GetCanvas():GetChildren()])
+				-- * even if it was removed from the table it still exists for some reason
+				local count = #timeline.frame.keyframe_scroll:GetCanvas():GetChildren()
+				local offset = frameNum == count and count - 1 or count
+				timeline.SelectKeyframe(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()[offset])
 			end):SetImage("icon16/application_delete.png")
-			
+
 			menu:AddOption(L"set easing style", function()
 				if timeline.data.Interpolation != "linear" then
 					local frame = vgui.Create("DFrame")
@@ -1059,7 +1061,7 @@ do
 					frame:Center()
 					frame:SetTitle("Easing styles work only with the linear interpolation type!")
 					frame:ShowCloseButton(false)
-					
+
 					local button = vgui.Create("DButton", frame)
 					button:SetText("Okay")
 					button:Dock(FILL)
@@ -1069,31 +1071,31 @@ do
 					frame:MakePopup()
 					return
 				end
-			
+
 				local frameNum = self:GetAnimationIndex()
-			
+
 				local frame = vgui.Create( "DFrame" )
 				frame:SetSize( 200, 100 )
 				frame:Center()
 				frame:SetTitle("Select easing type")
 				frame:MakePopup()
-				
+
 				local combo = vgui.Create( "DComboBox", frame )
-				
+
 				combo:SetPos( 5, 30 )
 				combo:Dock(FILL)
 				combo:SetValue("None")
-				
+
 				for easeName, _ in pairs(eases) do
 					combo:AddChoice(easeName)
 				end
-				
+
 				combo.OnSelect = function(sf, index, val)
 					self:SetEaseStyle(val)
 					frame:Close()
 				end
 			end):SetImage("icon16/arrow_turn_right.png")
-			
+
 			if self:GetEaseStyle() then
 				menu:AddOption(L"unset easing style", function()
 					self:RemoveEaseStyle()
@@ -1110,17 +1112,17 @@ do
 		self:GetParent():GetParent():InvalidateLayout() --rebuild the timeline
 		self:GetData().FrameRate = 1/math.max(int, 0.001) --set animation frame rate
 	end
-	
+
 	function KEYFRAME:GetEaseStyle()
 		return self.estyle
 	end
-	
+
 	function KEYFRAME:SetEaseStyle(style)
 		if not style then return end
 		self:GetData().EaseStyle = style
 		self.estyle = style
 	end
-	
+
 	function KEYFRAME:RemoveEaseStyle()
 		self:GetData().EaseStyle = nil
 		self.estyle = nil

@@ -27,6 +27,10 @@ function pacx.PartToContraptionData(part, tbl)
 		data.mat = part:GetMaterial()
 		data.mdl = part:GetModel()
 		data.skn = part:GetSkin()
+
+		local size = part:GetSize()
+		data.scale = part:GetScale()*size
+
 		data.id = part.UniqueID
 
 		table.insert(tbl, data)
