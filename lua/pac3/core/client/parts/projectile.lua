@@ -431,7 +431,7 @@ end
 
 function PART:SetRadius(val)
 	self.Radius = val
-	local sv_dist = GetConVar("pac_sv_projectile_max_radius"):GetInt()
+	local sv_dist = GetConVar("pac_sv_projectile_max_phys_radius"):GetInt()
 	if self.Radius > sv_dist then
 		self:SetInfo("Your radius is beyond the server's maximum permitted! Server max is " .. sv_dist)
 	else
