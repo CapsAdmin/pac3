@@ -8,12 +8,14 @@ pace.BulkSelectClipboard = {}
 refresh_halo_hook = true
 pace.operations_all_operations = {"wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "save", "load", "remove", "bulk_select", "bulk_apply_properties", "partsize_info", "hide_editor", "expand_all", "collapse_all", "copy_uid", "help_part_info", "reorder_movables"}
 
-pace.operations_default = {"wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "spacer", "save", "load", "spacer", "remove"}
+pace.operations_default = {"help_part_info", "wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "spacer", "save", "load", "spacer", "remove"}
 
 pace.operations_experimental = {"help_part_info", "wear", "copy", "paste", "cut", "paste_properties", "clone", "bulk_select", "spacer", "registered_parts", "spacer", "bulk_apply_properties", "partsize_info", "copy_uid", "spacer", "save", "load", "spacer", "remove"}
 pace.operations_bulk_poweruser = {"bulk_select","clone", "registered_parts", "spacer", "copy", "paste", "cut", "spacer", "wear", "save", "load", "partsize_info"}
 
-pace.operations_order = pace.operations_experimental
+if not file.Exists("pac3_config/pac_editor_partmenu_layouts.txt", "DATA") then
+	pace.operations_order = pace.operations_default
+end
 
 CreateConVar( "pac_hover_color", "255 255 255", FCVAR_ARCHIVE, "R G B value of the highlighting when hovering over pac3 parts, there are also special options: none, ocean, funky, rave, rainbow")
 CreateConVar( "pac_hover_pulserate", 20, FCVAR_ARCHIVE, "pulse rate of the highlighting when hovering over pac3 parts")

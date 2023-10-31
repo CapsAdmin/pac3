@@ -4,21 +4,26 @@ if SERVER then
 	include("pac3/editor/server/bans.lua")
 end
 
+local master_default = "0"
+
+if string.find(engine.ActiveGamemode(), "sandbox") then
+	master_default = "1"
+end
 
 pac.global_combat_whitelist = pac.global_combat_whitelist or {}
 
-local hitscan_allow = CreateConVar("pac_sv_hitscan", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow hitscan parts serverside")
+local hitscan_allow = CreateConVar("pac_sv_hitscan", master_default, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow hitscan parts serverside")
 local hitscan_max_bullets = CreateConVar("pac_sv_hitscan_max_bullets", "200", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "hitscan part maximum number of bullets")
 local hitscan_max_damage = CreateConVar("pac_sv_hitscan_max_damage", "20000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "hitscan part maximum damage")
 local hitscan_spreadout_dmg = CreateConVar("pac_sv_hitscan_divide_max_damage_by_max_bullets", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether or not force hitscans to divide their damage among the number of bullets fired")
 
-local damagezone_allow = CreateConVar("pac_sv_damage_zone", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow damage zone parts serverside")
+local damagezone_allow = CreateConVar("pac_sv_damage_zone", master_default, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow damage zone parts serverside")
 local damagezone_max_damage = CreateConVar("pac_sv_damage_zone_max_damage", "20000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "damage zone maximum damage")
 local damagezone_max_length = CreateConVar("pac_sv_damage_zone_max_length", "20000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "damage zone maximum length")
 local damagezone_max_radius = CreateConVar("pac_sv_damage_zone_max_radius", "10000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "damage zone maximum radius")
 local damagezone_allow_dissolve = CreateConVar("pac_sv_damage_zone_allow_dissolve", "1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to enable entity dissolvers and removing NPCs\" weapons on death for damagezone")
 
-local lock_allow = CreateConVar("pac_sv_lock", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow lock parts serverside")
+local lock_allow = CreateConVar("pac_sv_lock", master_default, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow lock parts serverside")
 local lock_allow_grab = CreateConVar("pac_sv_lock_grab", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow lock part grabs serverside")
 local lock_allow_teleport = CreateConVar("pac_sv_lock_teleport", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow lock part teleports serverside")
 local lock_max_radius = CreateConVar("pac_sv_lock_max_grab_radius", "200", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "lock part maximum grab radius")
@@ -26,12 +31,12 @@ local lock_allow_grab_ply = CreateConVar("pac_sv_lock_allow_grab_ply", 1, CLIENT
 local lock_allow_grab_npc = CreateConVar("pac_sv_lock_allow_grab_npc", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow grabbing NPCs with lock part")
 local lock_allow_grab_ent = CreateConVar("pac_sv_lock_allow_grab_ent", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow grabbing other entities with lock part")
 
-local force_allow = CreateConVar("pac_sv_force", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow force parts serverside")
+local force_allow = CreateConVar("pac_sv_force", master_default, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow force parts serverside")
 local force_max_length = CreateConVar("pac_sv_force_max_length", "10000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "force part maximum length")
 local force_max_radius = CreateConVar("pac_sv_force_max_radius", "10000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "force part maximum radius")
 local force_max_amount = CreateConVar("pac_sv_force_max_amount", "10000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "force part maximum amount of force")
 
-local healthmod_allow = CreateConVar("pac_sv_health_modifier", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow health modifier parts serverside")
+local healthmod_allow = CreateConVar("pac_sv_health_modifier", master_default, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow health modifier parts serverside")
 local healthmod_allowed_extra_bars = CreateConVar("pac_sv_health_modifier_extra_bars", 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow extra health bars")
 local healthmod_allow_change_maxhp = CreateConVar("pac_sv_health_modifier_allow_maxhp", 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow players to change their maximum health and armor.")
 local healthmod_minimum_dmgscaling = CreateConVar("pac_sv_health_modifier_min_damagescaling", -1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Minimum health modifier amount. Negative values can heal.")

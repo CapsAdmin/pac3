@@ -158,7 +158,7 @@ function PART:SetEvent(event)
 	if self == pace.current_part and GetConVar("pac_copilot_make_popup_when_selecting_event"):GetBool() then self:AttachEditorPopup() end --don't flood the popup system with superfluous requests when loading an outfit
 
 	self:GetDynamicProperties(reset)
-	if not GetConVar("pac_editor_remember_divider_height"):GetBool() then pace.Editor.div:SetTopHeight(ScrH() - 520) end
+	if not GetConVar("pac_editor_remember_divider_height"):GetBool() and IsValid(pace.Editor) then pace.Editor.div:SetTopHeight(ScrH() - 520) end
 
 end
 
@@ -2670,17 +2670,9 @@ do
 			ply.pac_broadcasted_buttons_lastpressed[key] = SysTime()
 		end
 
-		for _,part in pairs(pac.getallparts()) do --locate the corresponding parts among the part pool
-			if part:GetPlayerOwner() == ply and part.ClassName == "event" and part.Event == "button" then
-				part.pac_broadcasted_buttons_holduntil = part.pac_broadcasted_buttons_holduntil or {}
-				part.holdtime = part.holdtime or 0
-				part.toggleimpulsekey = part.toggleimpulsekey or {}
-				part.toggleimpulsekey[key] = down
-				part.pac_broadcasted_buttons_holduntil[key] = part.pac_broadcasted_buttons_holduntil[key] or 0
-				ply.pac_broadcasted_buttons_lastpressed[key] = ply.pac_broadcasted_buttons_lastpressed[key] or 0
-				part.pac_broadcasted_buttons_holduntil[key] = ply.pac_broadcasted_buttons_lastpressed[key] + part.holdtime
-			end
-		end
+		--outsource the part pool operations
+		pac.UpdateButtonEvents(ply, key, down)
+		
 		
 	end)
 
