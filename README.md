@@ -33,7 +33,9 @@ There are also commands for clients to free themselves if they're being grabbed.
  	pac_break_lock
 	pac_stop_lock
 
-Multiple options exist for servers to prevent mass abuse. Although I might've had things to say about server owners being resistant to new disruptive features, I've come to a compromise in the form of cvars, size limits, damage limits, which combat parts are allowed, as well as several net-protecting options to ease the load on the server's processing and on the network (reliable channel)...
+Multiple options exist for servers to prevent mass abuse. Although I might've had things to say about server owners being resistant to new disruptive features, I've come to some compromises in the form of cvars, size limits, damage limits, which combat parts are allowed, as well as several net-protecting options to ease the load on the server's processing and on the network (reliable channel)...
+
+In sandbox, the default for the combat features will be 1 when creating the convars the first time. In other gamemodes, it will be 0.
 
 	pac_sv_combat_whitelisting 0
 	pac_sv_damage_zone 1
