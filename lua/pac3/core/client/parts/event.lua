@@ -158,7 +158,7 @@ function PART:SetEvent(event)
 	if self == pace.current_part and GetConVar("pac_copilot_make_popup_when_selecting_event"):GetBool() then self:AttachEditorPopup() end --don't flood the popup system with superfluous requests when loading an outfit
 
 	self:GetDynamicProperties(reset)
-	if not GetConVar("pac_editor_remember_divider_height"):GetBool() then pace.Editor.div:SetTopHeight(ScrH() - 520) end
+	if not GetConVar("pac_editor_remember_divider_height"):GetBool() and IsValid(pace.Editor) then pace.Editor.div:SetTopHeight(ScrH() - 520) end
 
 end
 
