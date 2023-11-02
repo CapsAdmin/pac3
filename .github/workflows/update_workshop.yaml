@@ -19,6 +19,20 @@ jobs:
         - name: Checkout
           uses: actions/checkout@v2
 
+        - name: Update PAC_VERSION
+          run: |
+            cat > lua/autorun/pac_version.lua << EOF
+            if SERVER then
+              SetGlobalString("pac_version", "${{ github.ref }}")
+            end
+            function _G.PAC_VERSION()
+              return GetGlobalString("pac_version")
+            end
+            concommand.Add("pac_version", function()
+              print(PAC_VERSION())
+            end)
+            EOF
+
         - name: Publish to Steam Workshop
           uses: vurv78/gmod-upload@v0.1.3
           env:
