@@ -20,7 +20,7 @@ jobs:
           uses: actions/checkout@v2
 
         - name: Publish to Steam Workshop
-          uses: PAC3-Server/gmod-upload@v0.1.0
+          uses: PAC3-Server/gmod-upload@master
           env:
             STEAM_USERNAME: ${{ secrets.STEAM_NAME }}
             STEAM_PASSWORD: ${{ secrets.STEAM_PASSWORD }}
