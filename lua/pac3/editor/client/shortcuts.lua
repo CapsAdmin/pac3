@@ -45,6 +45,7 @@ pace.PACActionShortcut_Dictionary = {
 	"toolbar_options",
 	"zoom_panel",
 	"T_Pose",
+	"bulk_select",
 	"clear_bulkselect",
 	"copy_bulkselect",
 	"bulk_insert",
@@ -179,26 +180,49 @@ pace.PACActionShortcut_NoCTRL = {
 }
 
 pace.PACActionShortcut_Cedric = {
+	["help_info_popup"] = {
+		[1] = {"F1"}
+	},
+	["property_search_in_tree"] = {
+		[1] = {"CTRL", "f"}
+	},
 	["wear"] = {
 		[1] = {"CTRL", "n"}
 	},
+	["pac_restart"] = {
+		[1] = {"CTRL", "ALT", "SHIFT", "r"}
+	},
+	["pac_panic"] = {
+		[1] = {"CTRL", "ALT", "SHIFT", "p"}
+	},
+
 
 	["save"] = {
 		[1] = {"CTRL", "m"}
 	},
 
+	["load"] = {
+		[1] = {"SHIFT", "m"}
+	},
+
 	["hide_editor"] = {
 		[1] = {"CTRL", "e"},
 		[2] = {"INS"},
-		[3] = {"TAB"}
+		[3] = {"TAB"},
+		[4] = {"4"}
 	},
 
 	["hide_editor_visible"] = {
-		[1] = {"LALT", "e"}
+		[1] = {"ALT", "e"},
+		[2] = {"5"}
 	},
 
 	["copy"] = {
 		[1] = {"CTRL", "c"}
+	},
+
+	["bulk_copy"] = {
+		[1] = {"SHIFT", "CTRL", "c"}
 	},
 
 	["paste"] = {
@@ -207,14 +231,17 @@ pace.PACActionShortcut_Cedric = {
 	["cut"] = {
 		[1] = {"CTRL", "x"}
 	},
+	["bulk_insert"] = {
+		[1] = {"CTRL", "SHIFT", "v"}
+	},
 	["delete"] = {
 		[1] = {"DEL"}
 	},
-	["expand_all"] = {
-		[1] = {"x"}
+	["bulk_delete"] = {
+		[1] = {"SHIFT", "DEL"}
 	},
-	["collapse_all"] = {
-		[1] = {"c"}
+	["clear_bulkselect"] = {
+		[1] = {"CTRL", "SHIFT", "DEL"}
 	},
 	["undo"] = {
 		[1] = {"CTRL", "z"},
@@ -226,6 +253,27 @@ pace.PACActionShortcut_Cedric = {
 	},
 	["tpose"] = {
 		[1] = {"CTRL", "t"}
+	},
+	["zoom_panel"] = {
+		[1] = {"v"}
+	},
+	["toolbar_view"] = {
+		[1] = {"SHIFT", "v"}
+	},
+	["add_part"] = {
+		[1] = {"1"}
+	},
+	["partmenu"] = {
+		[1] = {"2"}
+	},
+	["bulk_select"] = {
+		[1] = {"3"}
+	},
+	["hide"] = {
+		[1] = {"CTRL", "h"}
+	},
+	["bulk_hide"] = {
+		[1] = {"SHIFT", "h"}
 	},
 	["editor_up"] = {
 		[1] = {"UPARROW"}
@@ -573,6 +621,9 @@ function pace.DoShortcutFunc(action)
 	
 	if action == "T_Pose" then pace.SetTPose(not pace.GetTPose()) end
 
+	if action == "bulk_select" then
+		pace.DoBulkSelect(pace.current_part)
+	end
 	if action == "clear_bulkselect" then pace.ClearBulkList() end
 	if action == "copy_bulkselect" then pace.BulkCopy(pace.current_part) end
 	if action == "bulk_insert" then pace.BulkCutPaste(pace.current_part) end
@@ -676,10 +727,10 @@ pace.delaymovement = 0
 --always refresh the inputs, but check if we stay the same before checking the shortcuts!
 --
 
-skip = false
-no_input_override = false
-has_run_something = false
-previous_inputs_str = ""
+local skip = false
+local no_input_override = false
+local has_run_something = false
+local previous_inputs_str = ""
 
 function pace.CheckShortcuts()
 	if GetConVar("pac_editor_shortcuts_legacy_mode"):GetBool() then
@@ -732,6 +783,48 @@ function pace.CheckShortcuts()
 				end
 			end
 
+			if input.IsKeyDown(KEY_F1) then
+				last = RealTime() + 0.5
+				local new_popup = true
+				if IsValid(pace.legacy_floating_popup_reserved) then
+					new_popup = false
+					if pace.current_part ~= pace.legacy_floating_popup_reserved_part then
+						if IsValid(pace.legacy_floating_popup_reserved) then
+							pace.legacy_floating_popup_reserved:Remove()
+							pace.legacy_floating_popup_reserved = nil
+							pace.legacy_floating_popup_reserved_part = nil
+						end
+						new_popup = true
+					end
+				else
+					pace.legacy_floating_popup_reserved = nil
+					pace.legacy_floating_popup_reserved_part = nil
+				end
+			
+				local popup_setup_tbl = {
+					obj_type = "",
+					clickfunc = function() pace.OnAddPartMenu(pace.current_part) end,
+					hoverfunc = "open",
+					pac_part = pace.current_part,
+					panel_exp_width = 900, panel_exp_height = 400,
+					from_legacy = true
+				}
+		
+				popup_setup_tbl.obj_type = "pac tree label"
+				popup_setup_tbl.obj = pace.current_part.pace_tree_node
+				
+				if new_popup then
+					local created_panel = pace.current_part:SetupEditorPopup(nil, true, popup_setup_tbl)
+					pace.legacy_floating_popup_reserved = created_panel
+					pace.legacy_floating_popup_reserved_part = pace.current_part
+				end
+				pac.AddHook("Think", "killpopupwheneditorunfocused", function()
+					if not pace:IsFocused() then
+						if IsValid(pace.legacy_floating_popup_reserved) then pace.legacy_floating_popup_reserved:Remove() end
+					end
+					if not IsValid(pace.legacy_floating_popup_reserved) then pace.legacy_floating_popup_reserved = nil end
+				end)
+			end
 		end
 		return
 	end
@@ -776,7 +869,7 @@ function pace.CheckShortcuts()
 	
 	for action,list_of_lists in pairs(pace.PACActionShortcut) do
 		if not has_run_something then
-			if action == "hide_editor" and pace.LookupShortcutsForAction(action, input_active, true) then --we can focus back if editor is not focused
+			if (action == "hide_editor" or action == "hide_editor_visible") and pace.LookupShortcutsForAction(action, input_active, true) then --we can focus back if editor is not focused
 				--pace.DoShortcutFunc(action)
 				last = RealTime()
 				has_run_something = true
