@@ -1153,7 +1153,12 @@ end
 
 --the popup system
 function PART:SetupEditorPopup(str, force_open, tbl)
-	
+	local legacy_help_popup_hack = false
+	if not tbl then
+		legacy_help_popup_hack = false
+	elseif tbl.from_legacy then
+		legacy_help_popup_hack = true
+	end
 	if not IsValid(self) then return end
 
 	local popup_config_table = tbl or {
@@ -1188,7 +1193,7 @@ function PART:SetupEditorPopup(str, force_open, tbl)
 		function tree_node:Think()
 			--if not part.killpopup and ((self.Label:IsHovered() and GetConVar("pac_popups_preferred_location"):GetString() == "pac tree label") or input.IsButtonDown(KEY_F1) or force_open) then
 			if not part.killpopup and ((self.Label:IsHovered() and GetConVar("pac_popups_preferred_location"):GetString() == "pac tree label") or force_open) then
-				if not self.popuppnl_is_up and not IsValid(self.popupinfopnl) and not part.killpopup then
+				if not self.popuppnl_is_up and not IsValid(self.popupinfopnl) and not part.killpopup and not legacy_help_popup_hack then
 					self.popupinfopnl = pac.InfoPopup(
 						info_string,
 						popup_config_table
@@ -1202,7 +1207,14 @@ function PART:SetupEditorPopup(str, force_open, tbl)
 			end
 			if not IsValid(self.popupinfopnl) then self.popupinfopnl = nil self.popuppnl_is_up = false end
 		end
+		tree_node:Think()
 	end
+	if not pnl then
+		pnl = pac.InfoPopup(info_string,popup_config_table)
+		self.pace_tree_node.popupinfopnl = pnl
+	end
+	pace.legacy_floating_popup_reserved = pnl
+	
 	return pnl
 end
 
