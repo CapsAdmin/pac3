@@ -1213,7 +1213,9 @@ function PART:SetupEditorPopup(str, force_open, tbl)
 		pnl = pac.InfoPopup(info_string,popup_config_table)
 		self.pace_tree_node.popupinfopnl = pnl
 	end
-	pace.legacy_floating_popup_reserved = pnl
+	if pace then
+		pace.legacy_floating_popup_reserved = pnl
+	end
 	
 	return pnl
 end
