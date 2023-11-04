@@ -201,7 +201,11 @@ function pace.LoadParts(name, clear, override_part)
 		end
 
 	else
-		if name ~= "autoload.txt" and not string.find(name, "pac3/__backup") then cookie.Set( "pac_last_loaded_outfit", name ) end
+		if name ~= "autoload.txt" and not string.find(name, "pac3/__backup") then
+			if file.Exists("pac3/" .. name..".txt", "DATA") then
+				cookie.Set( "pac_last_loaded_outfit", name .. ".txt" )
+			end
+		end
 		if hook.Run("PrePACLoadOutfit", name) == false then
 			return
 		end
