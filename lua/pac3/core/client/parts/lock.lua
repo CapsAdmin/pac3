@@ -87,7 +87,7 @@ function PART:OnThink()
 				return
 			end
 		end
-		if self.ContinuousSearch then
+		if self.ContinuousSearch and not self.grabbing then
 			self:DecideTarget()
 		end
 		self:CheckEntValidity()
