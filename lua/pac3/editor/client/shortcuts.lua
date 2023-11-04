@@ -189,13 +189,12 @@ pace.PACActionShortcut_Cedric = {
 	["wear"] = {
 		[1] = {"CTRL", "n"}
 	},
-	["pac_restart"] = {
+	["restart"] = {
 		[1] = {"CTRL", "ALT", "SHIFT", "r"}
 	},
-	["pac_panic"] = {
+	["panic"] = {
 		[1] = {"CTRL", "ALT", "SHIFT", "p"}
 	},
-
 
 	["save"] = {
 		[1] = {"CTRL", "m"}
@@ -255,7 +254,7 @@ pace.PACActionShortcut_Cedric = {
 		[1] = {"CTRL", "t"}
 	},
 	["zoom_panel"] = {
-		[1] = {"v"}
+		[1] = {"ALT", "v"}
 	},
 	["toolbar_view"] = {
 		[1] = {"SHIFT", "v"}
