@@ -501,7 +501,7 @@ function PART:CalculateRelativeOffset()
 end
 
 function PART:Initialize()
-	
+	self.default_ang = Angle(0,0,0)
 	if not GetConVar('pac_sv_lock_grab'):GetBool() then
 		if not GetConVar('pac_sv_lock_teleport'):GetBool() then
 			self:SetWarning("lock part grabs and teleports are disabled on this server!")
