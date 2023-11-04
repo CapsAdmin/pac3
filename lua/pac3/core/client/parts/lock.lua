@@ -211,7 +211,7 @@ do
 	function PART:BreakLock(ent)
 		self.forcebreak = true
 		self.next_allowed_grab = CurTime() + 3
-		self.target_ent.IsGrabbedID = nil
+		if self.target_ent then self.target_ent.IsGrabbedID = nil end
 		self.target_ent = nil
 		self.grabbing = false
 		pac.Message(Color(255, 50, 50), "lock break result:")
