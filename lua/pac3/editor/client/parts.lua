@@ -264,11 +264,13 @@ function pace.OnPartSelected(part, is_selecting)
 			local startnodenumber = table.KeyFromValue( added_nodes, pace.current_part.pace_tree_node)
 			local endnodenumber = table.KeyFromValue( added_nodes, part.pace_tree_node)
 
+			if not startnodenumber or not endnodenumber then return end
+
 			table.sort(added_nodes, function(a, b) return select(2, a:LocalToScreen()) < select(2, b:LocalToScreen()) end)
 
 			local i = startnodenumber
 
-			direction = math.Clamp(endnodenumber - startnodenumber,-1,1)
+			local direction = math.Clamp(endnodenumber - startnodenumber,-1,1)
 			if direction == 0 then last_direction = direction return end
 			last_direction = last_direction or 0
 			if last_span_select_part == nil then last_span_select_part = part end
@@ -1734,7 +1736,7 @@ do -- menu
 	function pace.BulkCopy(obj)
 		if #pace.BulkSelectList == 1 then pace.Copy(obj) end				--at least if there's one selected, we can take it that we want to copy that part
 		pace.BulkSelectClipboard = table.Copy(pace.BulkSelectList)		--if multiple parts are selected, copy it to a new bulk clipboard
-		print("copied: ")
+		print("[PAC3 bulk select] copied: ")
 		TestPrintTable(pace.BulkSelectClipboard,"pace.BulkSelectClipboard")
 	end
 
@@ -2161,9 +2163,40 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 		elseif mode == 3 then info = "halo-highlighted on preset keypress: control"
 		elseif mode == 4 then info = "halo-highlighted on preset keypress: shift" end
 
-		bulk_menu:AddOption(L"Bulk select info: "..info, function() end):SetImage(pace.MiscIcons.info)
-		bulk_menu:AddOption(L"Bulk select clipboard info: " .. #pace.BulkSelectClipboard .. " copied parts", function() end):SetImage(pace.MiscIcons.info)
-
+		bulk_menu:AddOption(L"Bulk select info: "..info):SetImage(pace.MiscIcons.info)
+		if #pace.BulkSelectList == 0 then
+			bulk_menu:AddOption(L"Bulk select info: nothing selected"):SetImage(pace.MiscIcons.info)
+		else
+			local copied, pnl = bulk_menu:AddSubMenu(L"Bulk select info: " .. #pace.BulkSelectList .. " copied parts")
+			pnl:SetImage(pace.MiscIcons.info)
+			for i,v in ipairs(pace.BulkSelectList) do
+				local name_str
+				if v.Name == "" then
+					name_str = tostring(v)
+				else
+					name_str = v.Name
+				end
+				
+				copied:AddOption(i .. " : " .. name_str .. " (" .. v.ClassName .. ")"):SetIcon(v.Icon)
+			end
+		end
+		if #pace.BulkSelectClipboard == 0 then
+			bulk_menu:AddOption(L"Bulk select clipboard info: nothing copied"):SetImage(pace.MiscIcons.info)
+		else
+			local copied, pnl = bulk_menu:AddSubMenu(L"Bulk select clipboard info: " .. #pace.BulkSelectClipboard .. " copied parts")
+			pnl:SetImage(pace.MiscIcons.info)
+			for i,v in ipairs(pace.BulkSelectClipboard) do
+				local name_str
+				if v.Name == "" then
+					name_str = tostring(v)
+				else
+					name_str = v.Name
+				end
+				
+				copied:AddOption(i .. " : " .. name_str .. " (" .. v.ClassName .. ")"):SetIcon(v.Icon)
+			end
+		end
+		
 		bulk_menu:AddOption(L"Insert (Move / Cut + Paste)", function()
 			pace.BulkCutPaste(obj)
 		end):SetImage('icon16/arrow_join.png')
