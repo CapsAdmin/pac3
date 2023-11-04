@@ -425,10 +425,6 @@ function PART:Shoot(pos, ang, multi_projectile_count)
 	end
 end
 
-function PART:SetDamage(val)
-
-end
-
 function PART:SetRadius(val)
 	self.Radius = val
 	local sv_dist = GetConVar("pac_sv_projectile_max_phys_radius"):GetInt()
