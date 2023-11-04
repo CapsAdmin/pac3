@@ -236,7 +236,7 @@ do
 		local target_to_release = net.ReadEntity()
 		local uid = net.ReadString()
 		local reason = net.ReadString()
-		pac.Message(Color(255, 255, 255), "------------CEASE AND DESIST!------------")
+		pac.Message(Color(255, 255, 255), "------------ CEASE AND DESIST! / BREAK LOCK ------------")
 		MsgC(Color(0,255,255), tostring(target_to_release)) MsgC(Color(255,50,50), " WANTS TO BREAK FREE!!\n")
 		MsgC(Color(255,50,50), "reason:") MsgC(Color(0,255,255), reason .."\n")
 
