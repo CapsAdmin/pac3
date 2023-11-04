@@ -1719,7 +1719,7 @@ if SERVER then
 					net.Start("pac_request_lock_break")
 					net.WriteEntity(targ_ent)
 					net.WriteString(lockpart_UID)
-					net.WriteString(breakup_condition)
+					net.WriteString("too far!")
 					net.Send(ply)
 				end
 				return
@@ -1770,11 +1770,14 @@ if SERVER then
 			end
 
 			if is_first_time then
-				if (auth_ent_owner ~= targ_ent and auth_ent_owner.grabbed_ents[targ_ent] == true) then
-					did_grab = false
-					need_breakup = true
-					breakup_condition = breakup_condition .. "mutual grab prevention, "
+				if targ_ent.grabbed_ents then
+					if (auth_ent_owner ~= targ_ent and targ_ent.grabbed_ents[auth_ent_owner] == true) then
+						did_grab = false
+						need_breakup = true
+						breakup_condition = breakup_condition .. "mutual grab prevention, "
+					end
 				end
+				
 			end
 
 			if did_grab then
