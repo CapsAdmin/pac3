@@ -1554,7 +1554,7 @@ do -- menu
 			]]
 
 			local function GetEventArgType(part, str)
-				
+				if not part.Events then return "string" end
 				for argn,arg in ipairs(part.Events[part.Event].__registeredArguments) do
 					if arg[1] == str then
 						return arg[2]
@@ -1636,28 +1636,29 @@ do -- menu
 					
 					for i,part in ipairs(pace.BulkSelectList) do
 						--PrintTable(part.Events[part.Event].__registeredArguments)
+						local sent_var
+						if var_type == "number" then
+							sent_var = VAR_PANEL_EDITZONE:GetValue()
+							if not tonumber(sent_var) then
+								local ok, res = pac.CompileExpression(sent_var)
+								if ok then
+									sent_var = res() or 0
+								end
+							end
+						elseif var_type == "boolean" then
+							sent_var = VAR_PANEL_EDITZONE:GetChecked()
+							if sent_var == true then sent_var = "1"
+							else sent_var = "0" end
+						elseif var_type == "string" then
+							sent_var = VAR_PANEL_EDITZONE:GetValue()
+							if v == "Name" and sent_var ~= "" then 
+								sent_var = sent_var..i
+							end
+						else sent_var = VAR_PANEL_EDITZONE:GetValue() end
 						if part.ClassName == "event" and part.Event == basepart.Event then
-							local sent_var
-							if var_type == "number" then
-								sent_var = VAR_PANEL_EDITZONE:GetValue()
-								if not tonumber(sent_var) then
-									local ok, res = pac.CompileExpression(sent_var)
-									if ok then
-										sent_var = res() or 0
-									end
-								end
-							elseif var_type == "boolean" then
-								sent_var = VAR_PANEL_EDITZONE:GetChecked()
-								if sent_var == true then sent_var = "1"
-								else sent_var = "0" end
-							elseif var_type == "string" then
-								sent_var = VAR_PANEL_EDITZONE:GetValue()
-								if v == "Name" and sent_var ~= "" then 
-									sent_var = sent_var..i
-								end
-							else sent_var = VAR_PANEL_EDITZONE:GetValue() end
-
 							part:SetArguments(ApplyArgToIndex(part:GetArguments(), sent_var, GetEventArgIndex(part,v)))
+						else
+							part:SetProperty(udata_val_name, sent_var)
 						end
 
 						if thoroughness_tickbox:GetChecked() then
