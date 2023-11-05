@@ -1140,30 +1140,14 @@ do
 	end
 end
 
-local motd_cvar = CreateConVar("pac_show_message_on_startup", "2", {FCVAR_ARCHIVE}, "Whether to show the update MOTD when you load in the game")
+local update_cvar = CreateConVar("pac_show_message_on_startup", "1", {FCVAR_ARCHIVE}, "Whether to show the update notification when loading in")
 
-
-function pac.OpenMOTD(from_initial_startup)
+--accessed in the editor under pac-help-version
+function pac.OpenMOTD()
 	local pnl = vgui.Create("DFrame")
 	pnl:SetSize(math.min(1400, ScrW()),math.min(900,ScrH()))
 
 	local url = "https://github.com/pingu7867/pac3#readme"
-	
-	function pnl:OnClose()
-		if not from_initial_startup then return end
-		local function exit_message()
-			if LocalPlayer():IsAdmin() then
-				notification.AddLegacy("Looks like you're an admin. You should probably go in the settings menu to configure your server's cvars for pac combat!", NOTIFY_GENERIC, 10)
-			end
-			notification.AddLegacy("Before you go, once you're in the PAC editor, please go to the options tab and consider choosing which parts of the combat update you want to consent to.", NOTIFY_GENERIC, 10)
-		end
-		Derma_Query("Did you read the update news?", "update news",
-			"Yes, go away", function() motd_cvar:SetInt(0) exit_message() end,
-			"Bring it up next update", function() motd_cvar:SetInt(1) exit_message() end,
-			"No, I'll read later", function() motd_cvar:SetInt(2) exit_message() end
-		)
-		
-	end
 
 	pnl:SetTitle("Welcome to a new update!")
 	local html = vgui.Create("DHTML", pnl)
@@ -1175,6 +1159,21 @@ function pac.OpenMOTD(from_initial_startup)
 	pnl:MakePopup()
 	pace.motd_opened = true
 end
- 
 
-timer.Simple(10, function() if motd_cvar:GetInt() ~= 0 and not pace.motd_opened then pac.OpenMOTD(true) end end)
+
+hook.Add("InitPostEntity", "PAC_Update_News", function()
+	if update_cvar:GetBool() then
+		timer.Simple(5, function()
+			if LocalPlayer():IsAdmin() then
+				notification.AddLegacy("Welcome. Player Appearance Customizer (PAC3) has recently received a major update, The Combat Update, or \"PAC4.5\"\nYou can review the latest additions in the editor, in pac-help-Version-update news", NOTIFY_GENERIC, 15)
+			end
+		end)
+		
+		timer.Simple(10, function()
+			if LocalPlayer():IsAdmin() then
+				notification.AddLegacy("Looks like you're an admin. You should probably go in the settings menu to configure your server's cvars for pac combat! They're off by default though.", NOTIFY_GENERIC, 15)
+			end
+		end)
+		update_cvar:SetBool(false)
+	end
+end)
