@@ -1,7 +1,3 @@
-include("pac3/extra/shared/net_combat.lua")
---pac3/extra/shared/net_combat.lua
-
-
 local pac = pac
 local Vector = Vector
 local Angle = Angle
