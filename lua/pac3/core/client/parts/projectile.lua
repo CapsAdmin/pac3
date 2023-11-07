@@ -276,8 +276,8 @@ function PART:Shoot(pos, ang, multi_projectile_count)
 			net.WriteUInt(attract_ids[self.AttractMode] or 2,3)
 
 			--numbers
-			net.WriteUInt(self.Radius,8)
-			net.WriteUInt(self.DamageRadius,10)
+			net.WriteUInt(self.Radius,12)
+			net.WriteUInt(self.DamageRadius,12)
 			net.WriteUInt(self.Damage,24)
 			net.WriteUInt(1000*self.Speed,16)
 			net.WriteUInt(self.Maximum,7)

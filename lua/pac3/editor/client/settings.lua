@@ -47,7 +47,7 @@ local global_combat_whitelisting = CreateConVar("pac_sv_combat_whitelisting", 0,
 local global_combat_prop_protection = CreateConVar("pac_sv_prop_protection", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether players owned (created) entities (physics props and gmod contraption entities) will be considered in the consent calculations, protecting them. Without this cvar, only the player is protected.")
 
 
-include("pac3/editor/server/combat_bans.lua")
+--include("pac3/editor/server/combat_bans.lua")
 
 
 pace = pace
@@ -953,14 +953,14 @@ function pace.FillCombatSettings(pnl)
 		local projectile_max_phys_radius_numbox = vgui.Create("DNumSlider", projectiles_list_list)
 			projectile_max_phys_radius_numbox:SetText("Max projectile physical radius")
 			projectile_max_phys_radius_numbox:SetValue(GetConVar("pac_sv_projectile_max_phys_radius"):GetInt())
-			projectile_max_phys_radius_numbox:SetMin(0) projectile_max_phys_radius_numbox:SetDecimals(0) projectile_max_phys_radius_numbox:SetMax(1000)
+			projectile_max_phys_radius_numbox:SetMin(0) projectile_max_phys_radius_numbox:SetDecimals(0) projectile_max_phys_radius_numbox:SetMax(4095)
 			projectile_max_phys_radius_numbox:SetSize(400,30)
 			projectile_max_phys_radius_numbox:SetConVar("pac_sv_projectile_max_phys_radius")
 
 		local projectile_max_dmg_radius_numbox = vgui.Create("DNumSlider", projectiles_list_list)
 			projectile_max_dmg_radius_numbox:SetText("Max projectile damage radius")
 			projectile_max_dmg_radius_numbox:SetValue(GetConVar("pac_sv_projectile_max_damage_radius"):GetInt())
-			projectile_max_dmg_radius_numbox:SetMin(0) projectile_max_dmg_radius_numbox:SetDecimals(0) projectile_max_dmg_radius_numbox:SetMax(5000)
+			projectile_max_dmg_radius_numbox:SetMin(0) projectile_max_dmg_radius_numbox:SetDecimals(0) projectile_max_dmg_radius_numbox:SetMax(4095)
 			projectile_max_dmg_radius_numbox:SetSize(400,30)
 			projectile_max_dmg_radius_numbox:SetConVar("pac_sv_projectile_max_damage_radius")
 

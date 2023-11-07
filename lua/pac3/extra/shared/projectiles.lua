@@ -65,7 +65,6 @@ do -- projectile entity
 			self.projectile_owner = ply
 
 			local radius = math.Clamp(part.Radius, 1, pac_sv_projectile_max_phys_radius:GetFloat())
-
 			if part.Sphere then
 				self:PhysicsInitSphere(radius, part.SurfaceProperties)
 			else
@@ -543,8 +542,8 @@ if SERVER then
 		part.AttractMode = table.KeyFromValue(attract_ids, net.ReadUInt(3))
 
 		--numbers
-		part.Radius = net.ReadUInt(8)
-		part.DamageRadius = net.ReadUInt(10)
+		part.Radius = net.ReadUInt(12)
+		part.DamageRadius = net.ReadUInt(12)
 		part.Damage = net.ReadUInt(24)
 		part.Speed = net.ReadUInt(16) / 1000
 		part.Maximum = net.ReadUInt(7)
