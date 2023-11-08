@@ -1,6 +1,7 @@
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "interpolated_multibone"
+PART.FriendlyName = "interpolator"
 PART.Group = 'advanced'
 PART.Icon = 'icon16/table_multiple.png'
 PART.is_model_part = false
@@ -17,26 +18,26 @@ BUILDER:StartStorableVars()
 		:GetSet("InterpolatePosition", true)
 		:GetSet("InterpolateAngles", true)
 	:SetPropertyGroup("Nodes")
-		:GetSetPart("Node1")
-		:GetSetPart("Node2")
-		:GetSetPart("Node3")
-		:GetSetPart("Node4")
-		:GetSetPart("Node5")
-		:GetSetPart("Node6")
-		:GetSetPart("Node7")
-		:GetSetPart("Node8")
-		:GetSetPart("Node9")
-		:GetSetPart("Node10")
-		:GetSetPart("Node11")
-		:GetSetPart("Node12")
-		:GetSetPart("Node13")
-		:GetSetPart("Node14")
-		:GetSetPart("Node15")
-		:GetSetPart("Node16")
-		:GetSetPart("Node17")
-		:GetSetPart("Node18")
-		:GetSetPart("Node19")
-		:GetSetPart("Node20")
+		:GetSetPart("Node1", {editor_friendly = "part 1"})
+		:GetSetPart("Node2", {editor_friendly = "part 2"})
+		:GetSetPart("Node3", {editor_friendly = "part 3"})
+		:GetSetPart("Node4", {editor_friendly = "part 4"})
+		:GetSetPart("Node5", {editor_friendly = "part 5"})
+		:GetSetPart("Node6", {editor_friendly = "part 6"})
+		:GetSetPart("Node7", {editor_friendly = "part 7"})
+		:GetSetPart("Node8", {editor_friendly = "part 8"})
+		:GetSetPart("Node9", {editor_friendly = "part 9"})
+		:GetSetPart("Node10", {editor_friendly = "part 10"})
+		:GetSetPart("Node11", {editor_friendly = "part 11"})
+		:GetSetPart("Node12", {editor_friendly = "part 12"})
+		:GetSetPart("Node13", {editor_friendly = "part 13"})
+		:GetSetPart("Node14", {editor_friendly = "part 14"})
+		:GetSetPart("Node15", {editor_friendly = "part 15"})
+		:GetSetPart("Node16", {editor_friendly = "part 16"})
+		:GetSetPart("Node17", {editor_friendly = "part 17"})
+		:GetSetPart("Node18", {editor_friendly = "part 18"})
+		:GetSetPart("Node19", {editor_friendly = "part 19"})
+		:GetSetPart("Node20", {editor_friendly = "part 20"})
 :EndStorableVars()
 
 function PART:OnRemove()
@@ -45,6 +46,7 @@ end
 
 function PART:Initialize()
 	self.nodes = {}
+	self.valid_nodes = {}
 	self.Owner = pac.CreateEntity("models/pac/default.mdl")
 	self.Owner:SetNoDraw(true)
 	self.valid_time = CurTime() + 1
@@ -83,6 +85,32 @@ function PART:OnDraw()
 			render.DrawLine(self.pos,self.pos - self.ang:Right()*50, Color(0,255,0))
 			render.DrawLine(self.pos,self.pos + self.ang:Up()*50, Color(0,0,255))
 			render.DrawWireframeSphere(self.pos, 8 + 2*math.sin(5*RealTime()), 15, 15, Color(255,255,255), true)
+			local origin_pos = self:GetWorldPosition():ToScreen()
+			draw.DrawText("0 origin", "DermaDefaultBold", origin_pos.x, origin_pos.y)
+
+			for i=1,20,1 do
+
+				if i == 1 and self.valid_nodes[i] then
+					local startpos = self:GetWorldPosition()
+					local endpos = self.nodes["Node"..i]:GetWorldPosition()
+					local endang = self.nodes["Node"..i]:GetWorldAngles()
+					local screen_endpos = endpos:ToScreen()
+					render.DrawLine(endpos,endpos + endang:Forward()*4, Color(255,0,0))
+					render.DrawLine(endpos,endpos - endang:Right()*4, Color(0,255,0))
+					render.DrawLine(endpos,endpos + endang:Up()*4, Color(0,0,255))
+					render.DrawLine(self:GetWorldPosition(),self.nodes["Node"..i]:GetWorldPosition(), Color(255,255,255))
+				elseif self.valid_nodes[i - 1] and self.valid_nodes[i] then
+					local startpos = self.nodes["Node"..i-1]:GetWorldPosition()
+					local endpos = self.nodes["Node"..i]:GetWorldPosition()
+					local endang = self.nodes["Node"..i]:GetWorldAngles()
+					local screen_endpos = endpos:ToScreen()
+					render.DrawLine(endpos,endpos + endang:Forward()*4, Color(255,0,0))
+					render.DrawLine(endpos,endpos - endang:Right()*4, Color(0,255,0))
+					render.DrawLine(endpos,endpos + endang:Up()*4, Color(0,0,255))
+					render.DrawLine(self.nodes["Node"..i-1]:GetWorldPosition(),self.nodes["Node"..i]:GetWorldPosition(), Color(255,255,255))
+				end
+				
+			end
 		end)
 	end
 	self:Interpolate(stage,proportion)
@@ -90,8 +118,9 @@ function PART:OnDraw()
 end
 
 function PART:UpdateNodes()
-	for i=1,10,1 do
+	for i=1,20,1 do
 		self.nodes["Node"..i] = self["Node"..i]
+		self.valid_nodes[i] = IsValid(self["Node"..i]) and self["Node"..i].GetWorldPosition
 	end
 end
 
@@ -117,24 +146,17 @@ function PART:Interpolate(stage, proportion)
 
 	proportion = math.pow(proportion,self.Power)
 	if secondnode ~= nil and secondnode ~= NULL then
-		self.pos = (1-proportion)*(firstnode:GetWorldPosition()) + (secondnode:GetWorldPosition())*proportion
-		self.ang = GetClosestAngleMidpoint(firstnode:GetWorldAngles(), secondnode:GetWorldAngles(), proportion)
-		--self.ang = (1-proportion)*(firstnode:GetWorldAngles() + Angle(360,360,360)) + (secondnode:GetWorldAngles() + Angle(360,360,360))*proportion
-	elseif proportion == 0 then
-		self.pos = firstnode:GetWorldPosition()
-		self.ang = firstnode:GetWorldAngles()
-	else
-		if self.InterpolatePosition then self.pos = (1-proportion)*self:GetWorldPosition() + (self:GetWorldPosition())*proportion end
-		if self.InterpolateAngles then self.ang = GetClosestAngleMidpoint(self:GetWorldAngles(), self:GetWorldAngles(), proportion) end
+		if self.InterpolatePosition then
+			self.pos = LerpVector(proportion,firstnode:GetWorldPosition(), secondnode:GetWorldPosition())
+			--self.pos = (1-proportion)*self:GetWorldPosition() + (self:GetWorldPosition())*proportion
+		else self.pos = self:GetWorldPosition() end
+		if self.InterpolateAngles then
+			self.ang = LerpAngle(proportion, firstnode:GetWorldAngles(), secondnode:GetWorldAngles())
+			--self.ang = GetClosestAngleMidpoint(self:GetWorldAngles(), self:GetWorldAngles(), proportion)
+		else self.ang = self:GetWorldAngles() end
 		--self.ang = (1-proportion)*(self:GetWorldAngles() + Angle(360,360,360)) + (self:GetWorldAngles() + Angle(360,360,360))*proportion
 	end
 
-	if not self.InterpolatePosition then
-		self.pos = self:GetWorldPosition()
-	end
-	if not self.InterpolateAngles then
-		self.ang = self:GetWorldAngles()
-	end
 	self.Owner:SetPos(self.pos)
 	self.Owner:SetAngles(self.ang)
 end
