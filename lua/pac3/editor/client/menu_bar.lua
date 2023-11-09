@@ -80,8 +80,10 @@ local function populate_pac(menu)
 			version_pnl:SetImage(pace.MiscIcons.info)
 
 			version:AddOption(version_string)
-
-			version:AddOption("update news", function() pac.OpenMOTD(false) end)
+			
+			version:AddOption("local update changelogs", function() pac.OpenMOTD("local_changelog") end)
+			version:AddOption("external commit history", function() pac.OpenMOTD("commit_history") end)
+			version:AddOption("major update news (combat update)", function() pac.OpenMOTD("combat_update") end)
 		end
 
 		

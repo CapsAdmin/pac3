@@ -1366,6 +1366,7 @@ function pace.FillEditorSettings(pnl)
 	local partmenu_order_presets = vgui.Create("DComboBox",LeftPanel)
 	partmenu_order_presets:SetText("Select a part menu preset")
 	partmenu_order_presets:AddChoice("factory preset")
+	partmenu_order_presets:AddChoice("legacy")
 	partmenu_order_presets:AddChoice("expanded PAC4.5 preset")
 	partmenu_order_presets:AddChoice("bulk select poweruser")
 	partmenu_order_presets:AddChoice("user preset")
@@ -1822,6 +1823,8 @@ function pace.FillEditorSettings(pnl)
 		local temp_list = {"wear","save","load"}
 		if value == "factory preset" then
 			temp_list = table.Copy(pace.operations_default)
+		elseif value == "legacy" then
+			temp_list = table.Copy(pace.operations_legacy)
 		elseif value == "expanded PAC4.5 preset" then
 			temp_list = table.Copy(pace.operations_experimental)
 		elseif value == "bulk select poweruser" then
