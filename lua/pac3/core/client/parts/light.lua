@@ -22,7 +22,7 @@ BUILDER:EndStorableVars()
 
 function PART:GetLight()
 	if not self.light then
-		self.light = DynamicLight(tonumber(self:GetPrintUniqueID(), 16))
+		self.light = DynamicLight(tonumber(string.sub(self:GetPrintUniqueID(),1,7), 16))
 	end
 	self.light.decay = 0
 	self.light.dietime = math.huge
