@@ -6,7 +6,7 @@ end
 
 local master_default = "0"
 
-if string.find(engine.ActiveGamemode(), "sandbox") then
+if string.find(engine.ActiveGamemode(), "sandbox") and game.SinglePlayer() then
 	master_default = "1"
 end
 
@@ -41,7 +41,7 @@ local healthmod_allowed_extra_bars = CreateConVar("pac_sv_health_modifier_extra_
 local healthmod_allow_change_maxhp = CreateConVar("pac_sv_health_modifier_allow_maxhp", 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow players to change their maximum health and armor.")
 local healthmod_minimum_dmgscaling = CreateConVar("pac_sv_health_modifier_min_damagescaling", -1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Minimum health modifier amount. Negative values can heal.")
 
-local master_init_featureblocker = CreateConVar("pac_sv_block_combat_features_on_next_restart", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to stop initializing the net receivers for the networking of PAC3 combat parts those selectively disabled. This requires a restart!\n0=initialize all the receivers\n1=disable those whose corresponding part cvar is disabled\n2=block all combat features\nAfter updating the sv cvars, you can still reinitialize the net receivers with pac_sv_combat_reinitialize_missing_receivers, but you cannot turn them off after they are turned on")
+local master_init_featureblocker = CreateConVar("pac_sv_block_combat_features_on_next_restart", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to stop initializing the net receivers for the networking of PAC3 combat parts those selectively disabled. This requires a restart!\n0=initialize all the receivers\n1=disable those whose corresponding part cvar is disabled\n2=block all combat features\nAfter updating the sv cvars, you can still reinitialize the net receivers with pac_sv_combat_reinitialize_missing_receivers, but you cannot turn them off after they are turned on")
 cvars.AddChangeCallback("pac_sv_block_combat_features_on_next_restart", function() print("Remember that pac_sv_block_combat_features_on_next_restart is applied on server startup! Only do it if you know what you're doing. You'll need to restart the server.") end)
 
 local enforce_netrate = CreateConVar("pac_sv_combat_enforce_netrate", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "whether to enforce a limit on how often any pac combat net messages can be sent. 0 to disable, otherwise a number in mililiseconds.\nSee the related cvar pac_sv_combat_enforce_netrate_buffersize. That second convar is governed by this one, if the netrate enforcement is 0, the allowance doesn\"t matter")
@@ -296,14 +296,19 @@ if SERVER then
 		return grab_consents[ply] and calcview_consents[ply] --oops it's redundant but I prefer it this way
 	end
 
-	local function ApplyLockState(ent, bool) --Change the movement states and reset some other angle-related things
+	local function ApplyLockState(ent, bool, nocollide) --Change the movement states and reset some other angle-related things
 		--the grab imposes MOVETYPE_NONE and no collisions
 		--reverting the state requires to reset the eyeang roll in case it was modified
 		if ent:IsPlayer() then
 			if bool then
 				active_grabbed_ents[ent] = true
-				ent:SetMoveType(MOVETYPE_NONE)
-				ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
+				if nocollide then
+					ent:SetMoveType(MOVETYPE_NONE)
+					ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
+				else
+					ent:SetMoveType(MOVETYPE_WALK)
+					ent:SetCollisionGroup(COLLISION_GROUP_NONE)
+				end
 			else
 				active_grabbed_ents[ent] = nil
 				ent:SetMoveType(MOVETYPE_WALK)
@@ -323,8 +328,13 @@ if SERVER then
 		elseif ent:IsNPC() then
 			if bool then
 				active_grabbed_ents[ent] = true
-				ent:SetMoveType(MOVETYPE_NONE)
-				ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
+				if nocollide then
+					ent:SetMoveType(MOVETYPE_NONE)
+					ent:SetCollisionGroup(COLLISION_GROUP_IN_VEHICLE)
+				else
+					ent:SetMoveType(MOVETYPE_STEP)
+					ent:SetCollisionGroup(COLLISION_GROUP_NONE)
+				end
 			else
 				active_grabbed_ents[ent] = nil
 				ent:SetMoveType(MOVETYPE_STEP)
@@ -687,6 +697,7 @@ if SERVER then
 
 		--the function to determine if we can dissolve, based on policy and setting factors
 		local function IsDissolvable(ent)
+			if not pac_sv_damage_zone_allow_dissolve then return false end
 			local dissolvable = true
 			local prop_protected, reason = IsPropProtected(ent, attacker)
 			local prop_protected_final = prop_protected and ent:GetCreator():IsPlayer() and damage_zone_consents[ent:GetCreator()] == false
@@ -727,7 +738,7 @@ if SERVER then
 		--the giga function to determine if we can damage
 		local function DMGAllowed(ent)
 			
-			if ent:Health() == 0 then return false end --immediately exclude entities with 0 health
+			if ent:Health() == 0 and not (string.find(tbl.DamageType, "dissolve")) then return false end --immediately exclude entities with 0 health, except if we want to dissolve
 			local canhit = false --whether the policies allow the hit
 			local prop_protected_consent = ent:GetCreator() ~= inflictor and ent ~= inflictor and ent:GetCreator():IsPlayer() and damage_zone_consents[ent:GetCreator()] == false-- and ent:GetCreator() ~= inflictor
 			local contraption = IsPossibleContraptionEntity(ent)
@@ -872,7 +883,7 @@ if SERVER then
 				
 				--finally we reached the normal damage event!
 				else
-					if string.find(tbl.DamageType, "dissolve") and IsDissolvable(ent) and pac_sv_damage_zone_allow_dissolve then
+					if string.find(tbl.DamageType, "dissolve") and IsDissolvable(ent) then
 						dissolve(ent, dmg_info:GetInflictor(), damage_types[tbl.DamageType])
 					end
 					dmg_info:SetDamagePosition(ent:NearestPoint(pos))
@@ -994,7 +1005,7 @@ if SERVER then
 			else ent_count = ent_count + 1 end
 		end
 
-		if TooManyEnts(ent_count) then return end
+		if TooManyEnts(ent_count) and not (tbl.AffectSelf and not tbl.Players and not tbl.NPC and not tbl.PhysicsProps and not tbl.PointEntities) then return end
 		for _,ent in pairs(ents_hits) do
 			local phys_ent
 			if (ent ~= tbl.RootPartOwner or (tbl.AffectSelf and ent == tbl.RootPartOwner))
@@ -1706,6 +1717,7 @@ if SERVER then
 			local ang = net.ReadAngle()
 			local override_ang = net.ReadBool()
 			local override_eyeang = net.ReadBool()
+			local no_collide = net.ReadBool()
 			local targ_ent = net.ReadEntity()
 			local auth_ent = net.ReadEntity()
 			local override_viewposition = net.ReadBool()
@@ -1828,7 +1840,7 @@ if SERVER then
 				
 				targ_ent:SetPos(pos)
 				
-				ApplyLockState(targ_ent, true)
+				ApplyLockState(targ_ent, true, no_collide)
 				if targ_ent:GetClass() == "prop_ragdoll" then targ_ent:GetPhysicsObject():SetPos(pos) end
 
 				--@@note lock assignation! IMPORTANT
@@ -1920,6 +1932,7 @@ if SERVER then
 				if not IsValid(ent) then
 					active_grabbed_ents[ent] = nil
 				elseif (ent.grabbed_by or bool) then
+					ent.grabbed_by_time = ent.grabbed_by_time or 0
 					if ent.grabbed_by_time + 0.5 < CurTime() then --restore the movetype
 						local grabber = ent.grabbed_by
 						ent.grabbed_by_uid = nil
@@ -2152,7 +2165,12 @@ if SERVER then
 	if not FINAL_BLOCKED_COMBAT_FEATURES["hitscan"] then DeclareHitscanReceivers() end
 	if not FINAL_BLOCKED_COMBAT_FEATURES["health_modifier"] then DeclareHealthModifierReceivers() end
 
-	concommand.Add("pac_sv_combat_reinitialize_missing_receivers", function()
+	concommand.Add("pac_sv_combat_reinitialize_missing_receivers", function(ply)
+		if IsValid(ply) then
+			if not ply:IsAdmin() or not pac.RatelimitPlayer( ply, "pac_sv_combat_reinitialize_missing_receivers", 3, 5, {"Player ", ply, " is spamming pac_sv_combat_reinitialize_missing_receivers!"} ) then
+				return
+			end
+		end
 		for name,blocked in pairs(FINAL_BLOCKED_COMBAT_FEATURES) do
 			local update = blocked and (blocked == GetConVar("pac_sv_"..name):GetBool())
 			local new_bool = not (blocked or not GetConVar("pac_sv_"..name):GetBool())
@@ -2166,9 +2184,7 @@ if SERVER then
 				elseif name == "health_modifier" then DeclareHealthModifierReceivers() print("reinitialized " .. name)
 				end
 			end
-			
 		end
-
 		net.Start("pac_inform_blocked_parts")
 		net.WriteTable(FINAL_BLOCKED_COMBAT_FEATURES)
 		net.Broadcast()

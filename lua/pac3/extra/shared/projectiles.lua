@@ -1,10 +1,11 @@
-local enable = CreateConVar("pac_sv_projectiles", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'allow physical projectiles serverside')
-local pac_sv_projectile_max_attract_radius = CreateConVar("pac_sv_projectile_max_attract_radius", 300, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'maximum attract radius for physical projectiles')
-local pac_sv_projectile_max_damage_radius = CreateConVar("pac_sv_projectile_max_damage_radius", 100, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'maximum damage radius for physical projectiles')
-local pac_sv_projectile_max_phys_radius = CreateConVar("pac_sv_projectile_max_phys_radius", 100, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'maximum physical radius for physical projectiles')
-local pac_sv_projectile_max_speed = CreateConVar("pac_sv_projectile_max_speed", 100, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'maximum speed for physical projectiles')
-local pac_sv_projectile_max_damage = CreateConVar("pac_sv_projectile_max_damage", 100000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'maximum damage for physical projectiles')
-local pac_sv_projectile_max_mass = CreateConVar("pac_sv_projectile_max_mass", 50000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, 'maximum speed for physical projectiles')
+local enable = CreateConVar("pac_sv_projectiles", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow physical projectiles serverside")
+local pac_sv_projectile_max_attract_radius = CreateConVar("pac_sv_projectile_max_attract_radius", 300, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "maximum attract radius for physical projectiles")
+local pac_sv_projectile_max_damage_radius = CreateConVar("pac_sv_projectile_max_damage_radius", 100, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "maximum damage radius for physical projectiles")
+local pac_sv_projectile_max_phys_radius = CreateConVar("pac_sv_projectile_max_phys_radius", 100, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "maximum physical radius for physical projectiles")
+local pac_sv_projectile_max_speed = CreateConVar("pac_sv_projectile_max_speed", 100, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "maximum speed for physical projectiles")
+local pac_sv_projectile_max_damage = CreateConVar("pac_sv_projectile_max_damage", 100000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "maximum damage for physical projectiles")
+local pac_sv_projectile_max_mass = CreateConVar("pac_sv_projectile_max_mass", 50000, CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "maximum speed for physical projectiles")
+local pac_sv_projectile_allow_custom_collision_mesh = CreateConVar("pac_sv_projectile_allow_custom_collision_mesh", "1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to allow other models' collision mesh as a physical projectile, rather than just box and sphere")
 
 do -- projectile entity
 	local ENT = {}
@@ -68,7 +69,7 @@ do -- projectile entity
 			if part.Sphere then
 				self:PhysicsInitSphere(radius, part.SurfaceProperties)
 			else
-				local valid_fallback = util.IsValidModel( part.FallbackSurfpropModel ) and not IsUselessModel(part.FallbackSurfpropModel)
+				local valid_fallback = util.IsValidModel( part.FallbackSurfpropModel ) and not IsUselessModel(part.FallbackSurfpropModel) and pac_sv_projectile_allow_custom_collision_mesh:GetBool()
 				--print("valid fallback? " .. part.FallbackSurfpropModel , valid_fallback)
 				self:PhysicsInitBox(Vector(1,1,1) * - radius, Vector(1,1,1) * radius, part.SurfaceProperties)
 
@@ -78,7 +79,7 @@ do -- projectile entity
 					self:PhysicsInitMultiConvex(self:GetPhysicsObject():GetMeshConvexes(), part.SurfaceProperties)
 				end
 
-				if part.RescalePhysMesh then
+				if valid_fallback and part.RescalePhysMesh then
 					local physmesh = self:GetPhysicsObject():GetMeshConvexes()
 					--hack from prop resizer
 					for convexkey, convex in pairs( physmesh ) do
@@ -519,6 +520,7 @@ if SERVER then
 		part.RemoveOnCollide = net.ReadBool()
 		part.CollideWithOwner = net.ReadBool()
 		part.RemoveOnHide = net.ReadBool()
+		part.RescalePhysMesh = net.ReadBool()
 		part.OverridePhysMesh = net.ReadBool()
 		part.Gravity = net.ReadBool()
 		part.AddOwnerSpeed = net.ReadBool()

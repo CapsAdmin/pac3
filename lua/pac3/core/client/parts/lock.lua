@@ -29,6 +29,7 @@ BUILDER:StartStorableVars()
 		:GetSet("OverrideAngles", true, {description = "Whether the part will rotate the entity alongside it, otherwise it changes just the position"})
 		:GetSet("RelativeGrab", false)
 		:GetSet("RestoreDelay", 1, {description = "Seconds until the entity's original angles before self.grabbing are re-applied"})
+		:GetSet("NoCollide", true, {description = "Whether to disable collisions on the entity while grabbed."})
 
 	:SetPropertyGroup("DetectionOrigin")
 		:GetSet("Radius", 20)
@@ -141,6 +142,7 @@ function PART:OnThink()
 			if pac.LocalPlayer == self:GetPlayerOwner() then
 				net.WriteBool(self.OverrideAngles)
 				net.WriteBool(try_override_eyeang)
+				net.WriteBool(self.NoCollide)
 				net.WriteEntity(self.target_ent)
 				net.WriteEntity(self:GetRootPart():GetOwner())
 				local can_calcview = false
@@ -430,8 +432,10 @@ function PART:DecideTarget()
 					if self.Players and ent_candidate:IsPlayer() then
 						--we don't want to grab ourselves
 						if (ent_candidate ~= self:GetRootPart():GetOwner()) or (self.AffectPlayerOwner and ent_candidate == self:GetPlayerOwner()) then
-							chosen_ent = ent_candidate
-							table.insert(ents_candidates, ent_candidate)
+							if not (not self.AffectPlayerOwner and ent_candidate == self:GetPlayerOwner()) then
+								chosen_ent = ent_candidate
+								table.insert(ents_candidates, ent_candidate)
+							end
 						elseif (self:GetPlayerOwner() ~= ent_candidate) then --if it's another player, good
 							chosen_ent = ent_candidate
 							table.insert(ents_candidates, ent_candidate)

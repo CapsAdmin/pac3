@@ -950,6 +950,11 @@ function pace.FillCombatSettings(pnl)
 			sv_projectiles_box:SetSize(400,30)
 			sv_projectiles_box:SetConVar("pac_sv_projectiles")
 
+		local sv_projectiles_mesh_box = vgui.Create("DCheckBoxLabel", projectiles_list_list)
+			sv_projectiles_mesh_box:SetText("allow custom collision meshes for physical projectiles")
+			sv_projectiles_mesh_box:SetSize(400,30)
+			sv_projectiles_mesh_box:SetConVar("pac_sv_projectile_allow_custom_collision_mesh")
+
 		local projectile_max_phys_radius_numbox = vgui.Create("DNumSlider", projectiles_list_list)
 			projectile_max_phys_radius_numbox:SetText("Max projectile physical radius")
 			projectile_max_phys_radius_numbox:SetValue(GetConVar("pac_sv_projectile_max_phys_radius"):GetInt())
