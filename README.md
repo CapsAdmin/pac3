@@ -1,6 +1,8 @@
 # PAC4.5
 
 ---
+THIS BRANCH IS NO LONGER UPDATED. I'm only keeping this branch to display my readme. For the latest fixes, get the cedricversion-for-final-publish branch!
+
 
 Welcome to my experimental combat update for PAC3. Here's the overview of the important bits to expect.
 
@@ -33,21 +35,22 @@ There are also commands for clients to free themselves if they're being grabbed.
  	pac_break_lock
 	pac_stop_lock
 
-Multiple options exist for servers to prevent mass abuse. Although I might've had things to say about server owners being resistant to new disruptive features, I've come to some compromises in the form of cvars, size limits, damage limits, which combat parts are allowed, as well as several net-protecting options to ease the load on the server's processing and on the network (reliable channel)...
+Multiple options exist for servers to prevent mass abuse. Although I might've had things to say about server owners being resistant to new disruptive features, I've come to some compromises in the form of cvars, size limits, damage limits, which combat parts are allowed, several net-protecting options to ease the load on the server's processing and on the network (reliable channel)... With pac_sv_block_combat_features_on_next_restart on, the server doesn't even create the network strings or the net receivers for corresponding disabled parts when starting up.
 
-In sandbox, the default for the combat features will be 1 when creating the convars the first time. In other gamemodes, it will be 0.
+In singleplayer sandbox, the default for the combat features will be 1 when creating the convars the first time. In other gamemodes and in multiplayer, however, it will be 0.
 
 	pac_sv_combat_whitelisting 0
-	pac_sv_damage_zone 1
-	pac_sv_lock 1
-	pac_sv_lock_grab 1
-	pac_sv_lock_teleport 1
+	pac_sv_damage_zone 0
+	pac_sv_lock 0
+	pac_sv_lock_grab 0
+	pac_sv_lock_teleport 0
 	pac_sv_lock_max_grab_radius 200
  	pac_sv_combat_enforce_netrate 0
 	pac_sv_entity_limit_per_combat_operation 500
  	pac_sv_entity_limit_per_player_per_combat_operation 40
   	pac_sv_player_limit_as_fraction_to_drop_damage_zone 1
-	pac_sv_block_combat_features_on_next_restart 0
+	pac_sv_block_combat_features_on_next_restart 1
+	pac_sv_combat_distance_enforced 0
  	...
 
 
