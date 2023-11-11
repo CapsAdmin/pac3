@@ -3028,6 +3028,21 @@ function PART:SetAffectChildrenOnly(b)
 	
 end
 
+function PART:OnRemove()
+	if not self.AffectChildrenOnly then
+		local parent = self:GetParent()
+		if parent:IsValid() then
+			parent.active_events[self] = nil
+			parent.active_events_ref_count = parent.active_events_ref_count - 1
+			parent:CalcShowHide()
+		end
+	end
+	if IsValid(self.DestinationPart) then
+		self.DestinationPart.active_events[self] = nil
+		self.DestinationPart.active_events_ref_count = self.DestinationPart.active_events_ref_count - 1
+		self.DestinationPart:CalcShowHide()
+	end
+end
 
 function PART:TriggerEvent(b)
 	self.event_triggered = b -- event_triggered is just used for the editor
@@ -3051,6 +3066,10 @@ function PART:TriggerEvent(b)
 		
 		(self.DestinationPart):SetEventTrigger(self, b)
 		self.previousdestinationpart = (self.DestinationPart)
+	elseif IsValid(self.previousdestinationpart) then
+		if self.DestinationPart ~= self.previousdestinationpart then --once we change the destination part we need to reset the old one
+			self.previousdestinationpart:SetEventTrigger(self, false)
+		end
 	end
 end
 
@@ -3475,7 +3494,7 @@ local eventwheel_font = CreateConVar("pac_eventwheel_font", "DermaDefault", FCVA
 local eventwheel_clickable = CreateConVar("pac_eventwheel_clickmode", "0", FCVAR_ARCHIVE, "The activation modes for pac3 event wheel.\n-1 : not clickable, but activate on menu close\n0 : clickable, and activate on menu close\n1 : clickable, but doesn't activate on menu close")
 local eventlist_clickable = CreateConVar("pac_eventlist_clickmode", "0", FCVAR_ARCHIVE, "The activation modes for pac3 event wheel list alternative.\n-1 : not clickable, but activate a hovered event on menu close\n0 : clickable, and activate a hovered event on menu close\n1 : clickable, but doesn't do anything on menu close")
 
-local event_list_font_size = CreateConVar("pac_eventlist_fontsize", "12", FCVAR_ARCHIVE, "How big the font should be for the eventwheel's rectangle list counterpart.\nMight not work if the corresponding pac_font is missing")
+local event_list_font = CreateConVar("pac_eventlist_font", "DermaDefault", FCVAR_ARCHIVE, "The font for the eventwheel's rectangle list counterpart. It will also scale the rectangles' height.\nMight not work if the font is missing")
 
 -- Custom event selector wheel
 do
@@ -3896,7 +3915,8 @@ do
 		clickable2 = eventlist_clickable:GetInt() == 0 or eventlist_clickable:GetInt() == 1
 		close_click2 = eventlist_clickable:GetInt() == -1 or eventlist_clickable:GetInt() == 0
 
-		local height = 2*event_list_font_size:GetInt() + 8
+		local base_fontsize = tonumber(string.match(event_list_font:GetString(),"%d*$")) or 12
+		local height = 2*base_fontsize + 8
 		panels = panels or {}
 		if not table.IsEmpty(panels) then
 			for i, v in pairs(panels) do
@@ -3954,7 +3974,8 @@ do
 		gui.EnableScreenClicker(true)
 
 		pac.AddHook("HUDPaint","custom_event_selector_list",function()
-			local height = 2*event_list_font_size:GetInt() + 8
+			local base_fontsize = tonumber(string.match(event_list_font:GetString(),"%d*$")) or 12
+			local height = 2*base_fontsize + 8
 			-- Right clicking cancels
 			if input.IsButtonDown(MOUSE_RIGHT) then pac.closeEventSelectionList(true) return end
 
@@ -4048,7 +4069,7 @@ do
 					if lightness_value > 0.5 and eventlist_style:GetInt() ~= 0 then
 						text_color = Color(0,0,0)
 					end
-					draw.SimpleText(v.name,"pac_font_" .. event_list_font_size:GetString(),x + 4,y + 4, text_color, TEXT_ALIGN_LEFT)
+					draw.SimpleText(v.name,event_list_font:GetString(),x + 4,y + 4, text_color, TEXT_ALIGN_LEFT)
 					y = y + height
 
 				end

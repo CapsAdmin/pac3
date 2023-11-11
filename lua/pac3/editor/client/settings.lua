@@ -2373,7 +2373,7 @@ function pace.ConfigureEventWheelMenu()
 	
 	local circle_style_listmenu = vgui.Create("DComboBox",first_panel)
 	circle_style_listmenu:SetText("Choose eventwheel style")
-	circle_style_listmenu:SetSize(200,20)
+	circle_style_listmenu:SetSize(150,20)
 	circle_style_listmenu:AddChoice("legacy")
 	circle_style_listmenu:AddChoice("concentric")
 	circle_style_listmenu:AddChoice("alternative")
@@ -2389,8 +2389,8 @@ function pace.ConfigureEventWheelMenu()
 
 	local circle_clickmode = vgui.Create("DComboBox",first_panel)
 	circle_clickmode:SetText("Choose eventwheel clickmode")
-	circle_clickmode:SetSize(200,20)
-	circle_clickmode:SetPos(200,0)
+	circle_clickmode:SetSize(160,20)
+	circle_clickmode:SetPos(150,0)
 	circle_clickmode:AddChoice("clickable and activates on close")
 	circle_clickmode:AddChoice("not clickable, but activate on close")
 	circle_clickmode:AddChoice("clickable, but do not activate on close")
@@ -2407,7 +2407,7 @@ function pace.ConfigureEventWheelMenu()
 
 	local rectangle_style_listmenu = vgui.Create("DComboBox",first_panel)
 	rectangle_style_listmenu:SetText("Choose eventlist style")
-	rectangle_style_listmenu:SetSize(200,20)
+	rectangle_style_listmenu:SetSize(150,20)
 	rectangle_style_listmenu:SetPos(0,20)
 	rectangle_style_listmenu:AddChoice("legacy-like")
 	rectangle_style_listmenu:AddChoice("concentric")
@@ -2425,8 +2425,8 @@ function pace.ConfigureEventWheelMenu()
 
 	local rectangle_clickmode = vgui.Create("DComboBox",first_panel)
 	rectangle_clickmode:SetText("Choose eventlist clickmode")
-	rectangle_clickmode:SetSize(200,20)
-	rectangle_clickmode:SetPos(200,20)
+	rectangle_clickmode:SetSize(160,20)
+	rectangle_clickmode:SetPos(150,20)
 	rectangle_clickmode:AddChoice("clickable and activates on close")
 	rectangle_clickmode:AddChoice("not clickable, but activate on close")
 	rectangle_clickmode:AddChoice("clickable, but do not activate on close")
@@ -2438,6 +2438,30 @@ function pace.ConfigureEventWheelMenu()
 		elseif value == "clickable, but do not activate on close" then
 			GetConVar("pac_eventlist_clickmode"):SetString("1")
 		end
+	end
+
+	local rectangle_fontsize = vgui.Create("DComboBox",first_panel)
+	rectangle_fontsize:SetText("Eventlist font / height")
+	rectangle_fontsize:SetSize(160,20)
+	rectangle_fontsize:SetPos(310,20)
+	for _,font in ipairs(pace.Fonts) do
+		rectangle_fontsize:AddChoice(font)
+	end
+
+	function rectangle_fontsize:OnSelect( index, value )
+		GetConVar("pac_eventlist_font"):SetString(value)
+	end
+
+	local circle_fontsize = vgui.Create("DComboBox",first_panel)
+	circle_fontsize:SetText("Eventwheel font size")
+	circle_fontsize:SetSize(160,20)
+	circle_fontsize:SetPos(310,0)
+	for _,font in ipairs(pace.Fonts) do
+		circle_fontsize:AddChoice(font)
+	end
+
+	function circle_fontsize:OnSelect( index, value )
+		GetConVar("pac_eventwheel_font"):SetString(value)
 	end
 
 	local events = {}

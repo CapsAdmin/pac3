@@ -308,6 +308,7 @@ local function install_drag(node)
 			if self.part and self.part:IsValid() and self.part:GetParent() ~= child.part then
 				pace.RecordUndoHistory()
 				self.part:SetParent(child.part)
+				pace.RefreshEvents()
 				pace.RecordUndoHistory()
 			end
 		elseif self.part and self.part:IsValid() then
@@ -316,6 +317,7 @@ local function install_drag(node)
 				local group = pac.CreatePart("group", self.part:GetPlayerOwner())
 				group:SetEditorExpand(true)
 				self.part:SetParent(group)
+				pace.RefreshEvents()
 				pace.RecordUndoHistory()
 				pace.TrySelectPart()
 
@@ -343,6 +345,7 @@ local function install_drag(node)
 			if self.part and self.part:IsValid() and child.part:GetParent() ~= self.part then
 				pace.RecordUndoHistory()
 				child.part:SetParent(self.part)
+				pace.RefreshEvents()
 				pace.RecordUndoHistory()
 			end
 		end
@@ -645,20 +648,13 @@ pac.AddHook("pace_OnVariableChanged", "pace_create_tree_nodes", function(part, k
 	end
 end)
 
-local function refresh_events_gated()
-	pace.final_scheduled_event_refresh = pace.final_scheduled_event_refresh or CurTime() + 0.08
-	pace.event_refresh_spam_time = CurTime()
-	hook.Add("Tick", "pace_refresh_events", function()
-		if CurTime() < pace.event_refresh_spam_time + 0.08 then return end
-		if CurTime() > pace.final_scheduled_event_refresh then
-			pace.RefreshEvents()
-			pace.final_scheduled_event_refresh = nil
-			hook.Remove("Tick", "pace_refresh_events")
-		end
-	end)
-end
+pace.allowed_event_refresh = 0
+
 
 function pace.RefreshEvents()
+	--spam preventer, (load parts' initializes gets called)
+	if pace.allowed_event_refresh > CurTime() then return else pace.allowed_event_refresh = CurTime() + 0.1 end
+	
 	local events = {}
 	for _, part in pairs(pac.GetLocalParts()) do
 		if part.ClassName == "event" then
@@ -677,6 +673,7 @@ function pace.RefreshEvents()
 		end
 		child:CallRecursive("CalcShowHide", false)
 	end
+	
 end
 
 function pace.RefreshTree(reset)
@@ -689,7 +686,6 @@ function pace.RefreshTree(reset)
 
 				pace.TrySelectPart()
 			end
-			refresh_events_gated()
 		end)
 	end
 	
