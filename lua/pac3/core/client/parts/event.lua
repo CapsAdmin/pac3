@@ -581,34 +581,6 @@ PART.OldEvents = {
 		end,
 	},
 
-	is_using_entity = {
-		operator_type = "none",
-		tutorial_explanation = "For when you're picking up props, clicking buttons etc.\nAlthough not all entities will do things if you +use them, the event tries to take the class of the entity you used,\nand compares it with the one written in class",
-		arguments = {{class = "string"}},
-		callback = function(self, ent, class)
-			ent = self:GetPlayerOwner()
-			local b = false
-			
-			if not ent:IsPlayer() then return false
-			elseif ent == LocalPlayer() and self.singleactivatestate then
-				net.Start("pac.RequestPlayerObjUsed")
-				net.SendToServer()
-				self.singleactivatestate = false
-				self.nextactivationrefresh = CurTime() + 0.05
-			end
-			if ent.entity_inuse or ent.entity_inuse_classname then
-				if ent.entity_inuse_classname == "player_pickup" then
-					b = true
-				end
-				if IsValid(ent.entity_inuse) and string.find(ent.entity_inuse_classname, class, 1, true) and string.find(ent.entity_inuse:GetClass(), class, 1, true) then
-					b = true
-				end
-			end
-
-			return b
-		end
-	},
-
 	eyetrace_entity_class = {
 		operator_type = "string", preferred_operator = "find simple",
 		tutorial_explanation = "this compares the class of the entity you point to with the one(s) written in class",
@@ -4113,36 +4085,6 @@ do
 
 end
 
-net.Receive("pac.SendPlayerObjUsed", function()
-
-	local ply = net.ReadEntity()
-	local ent = net.ReadEntity()
-	local class = net.ReadString()
-	local override = net.ReadBool()
-
-	if ply then
-		if ply:IsPlayer() and override then
-			ply.entity_inuse = ent
-			ply.entity_inuse_classname = class
-		end
-	end
-end)
-
-net.Receive("pac.BroadcastDamageAttributions", function()
-	local ent = net.ReadEntity()
-	local tbl = net.ReadTable()
-	local kill = net.ReadBool()
-	if IsValid(ent) and tbl and IsValid(tbl.inflictor) then
-		ent.pac_damage_attributions = ent.pac_damage_attributions or {}
-		ent.pac_damage_attributions[tbl.attacker] = tbl
-		ent.pac_damage_attributions.latest = tbl
-		ent.pac_damage_attributions.is_kill = kill
-		if tbl.inflictor:GetClass() == "npc_grenade_frag" then
-			ent.pac_damage_attributions.IngoingGraceTime = CurTime()
-		end
-	end
-	
-end)
 
 net.Receive("pac_update_healthbars", function()
 	local ent = net.ReadEntity()
