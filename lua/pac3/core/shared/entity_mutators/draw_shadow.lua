@@ -1,23 +1,24 @@
 local MUTATOR = {} 
-  
-MUTATOR.ClassName = "draw_shadow" 
 
-function MUTATOR:WriteArguments(enum) 
-	net.WriteBool(enum, 8) 
-end 
- 
-function MUTATOR:ReadArguments() 
-	return net.ReadBool() 
-end 
- 
-if SERVER then 
-	function MUTATOR:StoreState() 
-		return self.Entity:GetBloodColor() 
+MUTATOR.ClassName = "draw_shadow"
+
+function MUTATOR:WriteArguments(b)
+	net.WriteBool(b)
+end
+
+function MUTATOR:ReadArguments()
+	return net.ReadBool()
+end
+
+if SERVER then
+	function MUTATOR:StoreState()
+		return self.Entity.pac_emut_draw_shadow
+	end
+
+	function MUTATOR:Mutate(b)
+		self.Entity:DrawShadow(b)
+		self.Entity.pac_emut_draw_shadow = b
 	end 
- 
-	function MUTATOR:Mutate(enum) 
-		self.Entity:SetBloodColor(enum) 
-	end 
 end 
- 
+
 pac.emut.Register(MUTATOR) 
