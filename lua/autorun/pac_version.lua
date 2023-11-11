@@ -46,10 +46,6 @@ concommand.Add("pac_version", function()
 end)
 
 
-
---if a major enough update happens, we can perhaps change this cvar's behavior in the hook below and keep it to track major updates as a number
-local update_cvar = CreateConVar("pac_show_message_on_startup", "1", {FCVAR_ARCHIVE}, "Whether to show the update notification when loading in")
-
 --accessed in the editor under pac-help-version
 function pac.OpenMOTD(mode)
 	local pnl = vgui.Create("DFrame")
@@ -74,23 +70,6 @@ function pac.OpenMOTD(mode)
 	pnl:MakePopup()
 end
 
-
-hook.Add("InitPostEntity", "PAC_Update_News", function()
-	if update_cvar:GetBool() then
-		timer.Simple(5, function()
-			if LocalPlayer():IsAdmin() then
-				notification.AddLegacy("Welcome. Player Appearance Customizer (PAC3) has recently received a major update, The Combat Update, or \"PAC4.5\"\nYou can review the latest additions in the editor, in pac-help-Version-update news", NOTIFY_GENERIC, 15)
-			end
-		end)
-		
-		timer.Simple(10, function()
-			if LocalPlayer():IsAdmin() then
-				notification.AddLegacy("Looks like you're an admin. You should probably go in the settings menu to configure your server's cvars for pac combat! They're off by default though.", NOTIFY_GENERIC, 15)
-			end
-		end)
-		update_cvar:SetBool(false)
-	end
-end)
 
 --CHANGELOGS
 
