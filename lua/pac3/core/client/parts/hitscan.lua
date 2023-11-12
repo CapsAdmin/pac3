@@ -6,7 +6,7 @@ language.Add("pac_hitscan", "Hitscan")
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "hitscan"
-PART.Group = "advanced"
+PART.Group = "combat"
 PART.Icon = "icon16/user_gray.png"
 
 BUILDER:StartStorableVars()

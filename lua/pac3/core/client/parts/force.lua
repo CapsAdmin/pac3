@@ -1,7 +1,7 @@
 local BUILDER, PART = pac.PartTemplate("base_drawable")
 
 PART.ClassName = "force"
-PART.Group = "advanced"
+PART.Group = "combat"
 PART.Icon = "icon16/database_go.png"
 
 PART.ManualDraw = true

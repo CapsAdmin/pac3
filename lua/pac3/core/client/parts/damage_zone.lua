@@ -3,7 +3,7 @@ local BUILDER, PART = pac.PartTemplate("base_movable")
 --ultrakill parryables: club, slash, buckshot
 
 PART.ClassName = "damage_zone"
-PART.Group = "advanced"
+PART.Group = "combat"
 PART.Icon = "icon16/package.png"
 
 local renderhooks = {
@@ -534,6 +534,7 @@ function PART:SendNetMessage()
 end
 
 function PART:OnShow()
+	if self.validTime > SysTime() then return end
 
 	if self.Preview then
 		self:PreviewHitbox()
@@ -551,8 +552,6 @@ function PART:OnShow()
 
 			self:SendNetMessage()
 		end)
-	elseif (self.validTime > SysTime()) then
-		return
 	else
 		self:SendNetMessage()
 	end
@@ -999,6 +998,7 @@ function PART:Initialize()
 	
 	if not GetConVar("pac_sv_damage_zone"):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then self:SetError("damage zones are disabled on this server!") end
 	self.validTime = SysTime() + 2
+
 end
 
 function PART:SetRadius(val)

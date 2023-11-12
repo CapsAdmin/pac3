@@ -15,7 +15,7 @@ language.Add("pac_projectile", "Projectile")
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "projectile"
-PART.Group = "advanced"
+PART.Group = {"advanced", "combat"}
 PART.Icon = "icon16/bomb.png"
 
 BUILDER:StartStorableVars()

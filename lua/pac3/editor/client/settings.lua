@@ -196,21 +196,25 @@ pace.partmenu_categories_default =
 		["webaudio"]=		"webaudio",
 		["ogg"]	=	"ogg",
 	},
+	["combat"]=
+	{
+		["icon"]				=		pace.GroupsIcons.combat,
+		["lock"]=		"lock",
+		["force"]=		"force",
+		["projectile"]=		"projectile",
+		["damage_zone"]	=	"damage_zone",
+		["hitscan"]	=	"hitscan",
+		["health_modifier"]	=	"health_modifier",
+	},
 	["advanced"]=
 	{
 		["icon"]				=		pace.GroupsIcons.advanced,
-		["lock"]=		"lock",
-		["force"]=		"force",
 		["custom_animation"]=		"custom_animation",
 		["material_refract"]=		"material_refract",
 		["projectile"]=		"projectile",
 		["link"]	=	"link",
-		["damage_zone"]	=	"damage_zone",
-		["interpolated_multibone"]	=	"interpolated_multibone",
 		["material_2d"]	=	"material_2d",
 		["material_eye refract"]	=	"material_eye refract",
-		["hitscan"]	=	"hitscan",
-		["health_modifier"]	=	"health_modifier",
 		["command"]		="command",
 	},
 	["entity"]=

@@ -19,7 +19,7 @@ local physics_point_ent_classes = {
 local BUILDER, PART = pac.PartTemplate("base_movable")
 
 PART.ClassName = "lock"
-PART.Group = "advanced"
+PART.Group = "combat"
 PART.Icon = "icon16/lock.png"
 
 

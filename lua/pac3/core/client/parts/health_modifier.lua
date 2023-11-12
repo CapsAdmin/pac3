@@ -2,7 +2,7 @@ local BUILDER, PART = pac.PartTemplate("base")
 
 PART.ClassName = "health_modifier"
 
-PART.Group = "advanced"
+PART.Group = "combat"
 PART.Icon = "icon16/heart.png"
 
 BUILDER:StartStorableVars()
