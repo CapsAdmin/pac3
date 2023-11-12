@@ -190,12 +190,13 @@ function PART:CalcAngles(ang, wpos)
 		return self.Angles + (pac.EyePos - wpos):Angle()
 	end
 	
-	if pac.StringFind(self.AimPartName, "NEAREST_LIFE_YAW", true, true) then
-		local nearest_ent = self:GetRootPart():GetOwner()
+	local function get_nearest_ent(part)
+		local nearest_ent = part:GetRootPart():GetOwner()
 		local nearest_dist = math.huge
-		local owner_ent = self:GetRootPart():GetOwner()
-		local part_ent = self:GetOwner()
-		for _,ent in pairs(ents.GetAll()) do
+		local owner_ent = part:GetRootPart():GetOwner()
+		local part_pos = part:GetWorldPosition()
+
+		for _,ent in pairs(ents.FindInSphere(part_pos, 5000)) do
 			if (ent:IsNPC() or ent:IsPlayer()) and ent ~= owner_ent then
 				local dist = (owner_ent:GetPos() - ent:GetPos()):LengthSqr()
 				if dist < nearest_dist then
@@ -204,42 +205,24 @@ function PART:CalcAngles(ang, wpos)
 				end
 			end
 		end
-		local ang = (nearest_ent:GetPos() - part_ent:GetPos()):Angle()
+
+		return nearest_ent
+	end
+
+	if pac.StringFind(self.AimPartName, "NEAREST_LIFE_YAW", true, true) then
+		local nearest_ent = get_nearest_ent(self)
+		local ang = (nearest_ent:GetPos() - self:GetWorldPosition()):Angle()
 		return Angle(0,ang.y,0) + self.Angles
 	end
 	
 	if pac.StringFind(self.AimPartName, "NEAREST_LIFE_POS", true, true) then
-		local nearest_ent = self:GetRootPart():GetOwner()
-		local nearest_dist = math.huge
-		local owner_ent = self:GetRootPart():GetOwner()
-		local part_ent = self:GetOwner()
-		for _,ent in pairs(ents.GetAll()) do
-			if (ent:IsNPC() or ent:IsPlayer()) and ent ~= owner_ent then
-				local dist = (owner_ent:GetPos() - ent:GetPos()):LengthSqr()
-				if dist < nearest_dist then
-					nearest_ent = ent
-					nearest_dist = dist
-				end
-			end
-		end
-		return self.Angles + (nearest_ent:GetPos() - part_ent:GetPos()):Angle()
+		local nearest_ent = get_nearest_ent(self)
+		return self.Angles + (nearest_ent:GetPos() - self:GetWorldPosition()):Angle()
 	end
 	
 	if pac.StringFind(self.AimPartName, "NEAREST_LIFE", true, true) then
-		local nearest_ent = self:GetRootPart():GetOwner()
-		local nearest_dist = math.huge
-		local owner_ent = self:GetRootPart():GetOwner()
-		local part_ent = self:GetOwner()
-		for _,ent in pairs(ents.GetAll()) do
-			if (ent:IsNPC() or ent:IsPlayer()) and ent ~= owner_ent then
-				local dist = (owner_ent:GetPos() - ent:GetPos()):LengthSqr()
-				if dist < nearest_dist then
-					nearest_ent = ent
-					nearest_dist = dist
-				end
-			end
-		end
-		return self.Angles + ( nearest_ent:GetPos() + Vector(0,0,(nearest_ent:WorldSpaceCenter() - nearest_ent:GetPos()).z * 1.5) - part_ent:GetPos()):Angle()
+		local nearest_ent = get_nearest_ent(self)
+		return self.Angles + ( nearest_ent:GetPos() + Vector(0,0,(nearest_ent:WorldSpaceCenter() - nearest_ent:GetPos()).z * 1.5) - self:GetWorldPosition()):Angle()
 	end
 
 	if self.AimPart:IsValid() and self.AimPart.GetWorldPosition then
