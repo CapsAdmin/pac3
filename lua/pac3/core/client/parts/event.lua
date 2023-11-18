@@ -1452,20 +1452,7 @@ do
 			return part:GetName()
 		end,
 		args = {
-			{"animation", "string", {
-				enums = function(part)
-					local output = {}
-					local parts = pac.GetLocalParts()
-
-					for i, part in pairs(parts) do
-						if part.ClassName == "custom_animation" then
-							output[i] = part
-						end
-					end
-
-					return output
-				end
-			}},
+			{"animation", "string", {editor_panel = "custom_animation_frame"}},
 			{"frame_start", "number", {
 				editor_onchange = function(self, num)
 					local anim = pace.current_part:GetProperty("animation")
@@ -1504,6 +1491,7 @@ do
 				if v == ent then
 					local part = pac.GetPartFromUniqueID(pac.Hash(ent), animation)
 					if not IsValid(part) then return end
+					if part.ClassName ~= "custom_animation" then return end
 					local frame, delta = animations.GetEntityAnimationFrame(ent, part:GetAnimID())
 					if not frame or not delta then return end -- different animation part is playing
 					return frame >= frame_start and frame <= frame_end

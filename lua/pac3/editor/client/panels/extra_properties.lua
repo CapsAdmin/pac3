@@ -219,6 +219,72 @@ do -- part
 	pace.RegisterPanel(PANEL)
 end
 
+do -- custom animation frame event
+	local PANEL = {}
+
+	PANEL.ClassName = "properties_custom_animation_frame"
+	PANEL.Base = "pace_properties_part"
+
+	function PANEL:MoreOptionsLeftClick()
+		pace.CreateSearchList(
+			self,
+			self.CurrentKey,
+			L"custom animations",
+
+			function(list)
+				list:AddColumn(L"name")
+				list:AddColumn(L"id")
+			end,
+
+			function()
+				local output = {}
+				local parts = pac.GetLocalParts()
+
+				for i, part in pairs(parts) do
+
+					if part.ClassName == "custom_animation" then
+						local name = part.Name ~= "" and part.Name or "no name"
+						output[i] = name
+					end
+				end
+
+				return output
+			end,
+
+			function() return pace.current_part:GetProperty("animation") end,
+
+			function(list, key, val)
+				return list:AddLine(val, key)
+			end,
+
+			function(key, val) return val end,
+
+			function(key, val) return key end
+		)
+	end
+
+	function PANEL:MoreOptionsRightClick(key)
+		local menu = DermaMenu()
+
+		menu:MakePopup()
+
+		for _, part in pairs(pac.GetLocalParts()) do
+			if not part:HasParent() and part:GetShowInEditor() then
+				populate_part_menu(menu, part, function(part)
+					if not self:IsValid() then return end
+					if part.ClassName ~= "custom_animation" then return end
+					self:SetValue(part:GetUniqueID())
+					self.OnValueChanged(part:GetUniqueID())
+				end)
+			end
+		end
+
+		pace.FixMenu(menu)
+	end
+
+	pace.RegisterPanel(PANEL)
+end
+
 do -- owner
 	local PANEL = {}
 
