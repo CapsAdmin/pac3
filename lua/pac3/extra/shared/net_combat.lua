@@ -1144,8 +1144,8 @@ if SERVER then
 
 				if (ent:IsPlayer() and tbl.Players) or (ent == ply and tbl.AffectSelf) then
 					if (ent ~= ply and force_consents[ent] ~= false) or (ent == ply and tbl.AffectSelf) then
-						phys_ent:SetVelocity(oldvel * (-final_damping) + addvel)
-						ent:SetVelocity(oldvel * (-final_damping) + addvel)
+						phys_ent:SetVelocity(oldvel * (-1 + final_damping) + addvel)
+						ent:SetVelocity(oldvel * (-1 + final_damping) + addvel)
 					end
 
 				elseif (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or ent:IsWeapon()) and tbl.PhysicsProps then
