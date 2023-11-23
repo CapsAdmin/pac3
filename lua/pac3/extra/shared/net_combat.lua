@@ -2000,6 +2000,7 @@ if SERVER then
 			ply.pac_bullet_emitters = ply.pac_bullet_emitters or {}
 			ply.pac_bullet_emitters[part_uid] = ply.pac_bullet_emitters[part_uid] or ents.Create("pac_bullet_emitter")
 	
+			bulletinfo.Attacker = ply
 			bulletinfo.Callback = function(atk, trc, dmg)
 				dmg:SetDamageType(bulletinfo.dmgtype)
 				if trc.Hit and IsValid(trc.Entity) then
