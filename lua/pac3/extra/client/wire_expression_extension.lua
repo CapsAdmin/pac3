@@ -8,6 +8,8 @@ end)
 
 local function SetKeyValue(ply, ent, unique_id, key, val)
 	local set = "Set" .. key
+	
+	if ent == game.GetWorld() then ent = pac.WorldEntity end
 
 	local part = pac.GetPartFromUniqueID(pac.Hash(ply), unique_id)
 	if not IsValid( part ) then return end
