@@ -1454,7 +1454,28 @@ PART.OldEvents = {
 		tutorial_explanation = "the command event reads your pac_event states.\nthe pac_event command can turn on (1), off (0) or toggle (2) a state that has a name.\nfor example, \"pac_event myhat 2\" can be used with a myhat command event to put the hat on or off\n\nwith this event, you read the states that contain this find name\n(equal being an exact match; find and find simple allowing to detect from different states having a part of the name)\n\nthe final result is to activate if:\n\tA) there's one active, or \n\tB) there's one recently turned off not too long ago",
 		arguments = {{find = "string"}, {time = "number"}, {hide_in_eventwheel = "boolean"}},
 		userdata = {
-			{default = "change_me", editor_friendly = "CommandName"},
+			{default = "change_me", editor_friendly = "CommandName", enums = function()
+				local output = {}
+				local parts = pac.GetLocalParts()
+
+				for i, part in pairs(parts) do
+					if part.ClassName == "command" then
+						local str = part.String
+						if string.find(str,"pac_event") then
+							for s in string.gmatch(str, "pac_event%s[%w_]+") do
+								local name_substring = string.gsub(s,"pac_event%s","")
+								output[name_substring] = name_substring
+							end
+						end
+						
+					elseif part.ClassName == "event" and part.Event == "command" then
+						local cmd, time, hide = part:GetParsedArgumentsForObject(part.Events.command)
+						output[cmd] = cmd
+					end
+				end
+
+				return output
+			end},
 			{default = 0, editor_friendly = "EventDuration"},
 			{default = false, group = "event wheel", editor_friendly = "HideInEventWheel"}
 		},
@@ -2062,7 +2083,7 @@ PART.OldEvents = {
 
 			for i, part in pairs(parts) do
 				if part.ClassName == "damage_zone" then
-					output[i] = part
+					output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part
 				end
 			end
 
@@ -2108,7 +2129,7 @@ PART.OldEvents = {
 
 			for i, part in pairs(parts) do
 				if part.ClassName == "damage_zone" then
-					output[i] = part
+					output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part
 				end
 			end
 
@@ -2161,7 +2182,7 @@ PART.OldEvents = {
 
 			for i, part in pairs(parts) do
 				if part.ClassName == "lock" then
-					output[i] = part
+					output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part
 				end
 			end
 
@@ -2256,7 +2277,7 @@ PART.OldEvents = {
 
 			for i, part in pairs(parts) do
 				if part.ClassName == "health_modifier" then
-					output[i] = part
+					output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part
 				end
 			end
 
@@ -3489,12 +3510,14 @@ local eventwheel_visibility_rule = CreateConVar("pac_eventwheel_visibility_rule"
 
 local eventwheel_style = CreateConVar("pac_eventwheel_style", "0", FCVAR_ARCHIVE, "The style of the eventwheel.\n0 is the default legacy style with one circle\n1 is the new style with colors, using one circle for the color and one circle for the activation indicator\n2 is an alternative style using a smaller indicator circle on the corner of the circle")
 local eventlist_style = CreateConVar("pac_eventlist_style", "0", FCVAR_ARCHIVE, "The style of the eventwheel list alternative.\n0 is like the default eventwheel legacy style with one indicator for the activation\n1 is the new style with colors, using one rectangle for the color and one rectangle for the activation indicator\n2 is an alternative style using a smaller indicator on the corner")
+local show_customize_button = CreateConVar("pac_eventwheel_show_customize_button", "1", FCVAR_ARCHIVE, "Whether to show the Customize button with the event wheel.")
 
 local eventwheel_font = CreateConVar("pac_eventwheel_font", "DermaDefault", FCVAR_ARCHIVE, "pac3 eventwheel font. try pac_font_<size> such as pac_font_20 or pac_font_bold30. the pac fonts go up to 34")
 local eventwheel_clickable = CreateConVar("pac_eventwheel_clickmode", "0", FCVAR_ARCHIVE, "The activation modes for pac3 event wheel.\n-1 : not clickable, but activate on menu close\n0 : clickable, and activate on menu close\n1 : clickable, but doesn't activate on menu close")
 local eventlist_clickable = CreateConVar("pac_eventlist_clickmode", "0", FCVAR_ARCHIVE, "The activation modes for pac3 event wheel list alternative.\n-1 : not clickable, but activate a hovered event on menu close\n0 : clickable, and activate a hovered event on menu close\n1 : clickable, but doesn't do anything on menu close")
 
 local event_list_font = CreateConVar("pac_eventlist_font", "DermaDefault", FCVAR_ARCHIVE, "The font for the eventwheel's rectangle list counterpart. It will also scale the rectangles' height.\nMight not work if the font is missing")
+
 
 -- Custom event selector wheel
 do
@@ -3671,7 +3694,6 @@ do
 		open_btn:SetSize(80,30)
 		open_btn:SetText("Customize")
 		open_btn:SetPos(ScrW() - 80,0)
-		pace.command_event_menu_opened = nil
 		
 		function open_btn:DoClick()
 
@@ -3683,7 +3705,11 @@ do
 			
 		end
 
-		open_btn:Show()
+		if show_customize_button:GetBool() then
+			open_btn:Show()
+		else
+			open_btn:Hide()
+		end
 		pace.command_colors = pace.command_colors or {}
 		clickable = eventwheel_clickable:GetInt() == 0 or eventwheel_clickable:GetInt() == 1
 		close_click = eventwheel_clickable:GetInt() == -1 or eventwheel_clickable:GetInt() == 0
@@ -3824,7 +3850,7 @@ do
 
 		pac.AddHook("HUDPaint","custom_event_selector",function()
 			-- Right clicking cancels
-			if input.IsButtonDown(MOUSE_RIGHT) then pac.closeEventSelectionWheel(true) return end
+			if input.IsButtonDown(MOUSE_RIGHT) and not IsValid(pace.command_event_menu_opened) then pac.closeEventSelectionWheel(true) return end
 			if input.IsButtonDown(MOUSE_LEFT) and not pace.command_event_menu_opened and not open_btn:IsHovered() and clickable then
 				
 				if not clicking and selected then
@@ -3867,9 +3893,12 @@ do
 			render.PopFilterMin()
 			DisableClipping(false)
 		end)
+		pace.event_wheel_opened = true
 	end
 
 	function pac.closeEventSelectionWheel(cancel)
+
+		if IsValid(pace.command_event_menu_opened) then return end
 		open_btn:Hide()
 		gui.EnableScreenClicker(false)
 		pac.RemoveHook("HUDPaint","custom_event_selector")
@@ -3890,6 +3919,7 @@ do
 			end
 		end
 		selected = nil
+		pace.event_wheel_opened = false
 	end
 
 	local panels = {}
@@ -3898,7 +3928,6 @@ do
 		open_btn:SetSize(80,30)
 		open_btn:SetText("Customize")
 		open_btn:SetPos(ScrW() - 80,0)
-		pace.command_event_menu_opened = nil
 		
 		function open_btn:DoClick()
 
@@ -3910,7 +3939,11 @@ do
 			
 		end
 
-		open_btn:Show()
+		if show_customize_button:GetBool() then
+			open_btn:Show()
+		else
+			open_btn:Hide()
+		end
 		pace.command_colors = pace.command_colors or {}
 		clickable2 = eventlist_clickable:GetInt() == 0 or eventlist_clickable:GetInt() == 1
 		close_click2 = eventlist_clickable:GetInt() == -1 or eventlist_clickable:GetInt() == 0
@@ -3977,7 +4010,7 @@ do
 			local base_fontsize = tonumber(string.match(event_list_font:GetString(),"%d*$")) or 12
 			local height = 2*base_fontsize + 8
 			-- Right clicking cancels
-			if input.IsButtonDown(MOUSE_RIGHT) then pac.closeEventSelectionList(true) return end
+			if input.IsButtonDown(MOUSE_RIGHT) and not IsValid(pace.command_event_menu_opened) then pac.closeEventSelectionList(true) return end
 
 			DisableClipping(true)
 			render.PushFilterMag(TEXFILTER.ANISOTROPIC)
@@ -4081,20 +4114,24 @@ do
 			DisableClipping(false)
 			
 		end)
+
+		pace.event_wheel_list_opened = true
 	end
 
 	function pac.closeEventSelectionList(cancel)
+		if IsValid(pace.command_event_menu_opened) then return end
 		open_btn:Hide()
 		gui.EnableScreenClicker(false)
 		pac.RemoveHook("HUDPaint","custom_event_selector_list")
 
-		if IsValid(selected) and close_click2 then
+		if IsValid(selected) and close_click2 and cancel ~= true then
 			if selected:IsHovered() then
 				selected:DoCommand()
 			end
 		end
 		for i,v  in pairs(panels) do v:Remove() end
 		selected = nil
+		pace.event_wheel_list_opened = false
 	end
 
 

@@ -2468,6 +2468,13 @@ function pace.ConfigureEventWheelMenu()
 		GetConVar("pac_eventwheel_font"):SetString(value)
 	end
 
+	local customizer_button_box = vgui.Create("DCheckBox",first_panel)
+	customizer_button_box:SetTooltip("Show the Customize button when eventwheels are active")
+	customizer_button_box:SetSize(20,20)
+	customizer_button_box:SetPos(470,0)
+	customizer_button_box:SetConVar("pac_eventwheel_show_customize_button")
+
+
 	local events = {}
 	for i,v in pairs(pac.GetLocalParts()) do
 		if v.ClassName == "event" then
@@ -2594,6 +2601,8 @@ function pace.ConfigureEventWheelMenu()
 		gui.EnableScreenClicker(false)
 		pace.command_event_menu_opened = nil
 		encode_table_to_file("eventwheel_colors", pace.command_colors)
+		if pace.event_wheel_list_opened then pac.closeEventSelectionList(true) end
+		if pace.event_wheel_opened then pac.closeEventSelectionWheel(true) end
 	end
 	
 	master_panel:RequestFocus()
