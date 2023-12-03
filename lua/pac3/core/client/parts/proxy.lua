@@ -356,7 +356,8 @@ PART.Inputs.timeex = function(s)
 end
 
 PART.Inputs.part_distance = function(self, uid1, uid2)
-	if not uid1 or not uid2 then return 0 end
+	
+	if not uid1 then return 0 end
 	local owner = self:GetPlayerOwner()
 
 	local PartA = pac.GetPartFromUniqueID(pac.Hash(owner), uid1) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid1)
@@ -364,9 +365,22 @@ PART.Inputs.part_distance = function(self, uid1, uid2)
 
 	local PartB = pac.GetPartFromUniqueID(pac.Hash(owner), uid2) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid2)
 	if not PartB:IsValid() then PartB = pac.FindPartByName(pac.Hash(owner), uid2, self) end
+	if not PartB:IsValid() then
+		if not uid2 then --no second argument, take parent
+			PartB = self:GetParent()
+		else --second argument exists and failed to find anything, ERROR
+			self.invalid_parts_in_expression[uid2] = "invalid argument " .. uid2 .. " in part_distance"
+		end
+	end
+
+	if not PartA:IsValid() and uid1 then --first argument exists and failed to find anything, ERROR
+		self.invalid_parts_in_expression[uid1] = "invalid argument " .. uid1 .. " in part_distance"
+	end
 
 	if not PartA:IsValid() or not PartB:IsValid() then return 0 end
 	if not PartA.Position or not PartB.Position then return 0 end
+	self.valid_parts_in_expression[PartA] = PartA
+	self.valid_parts_in_expression[PartB] = PartB
 	return (PartB:GetWorldPosition() - PartA:GetWorldPosition()):Length()
 end
 
@@ -377,10 +391,21 @@ PART.Inputs.event_alternative = function(self, uid1, num1, num2)
 	local PartA = pac.GetPartFromUniqueID(pac.Hash(owner), uid1) or pac.FindPartByPartialUniqueID(pac.Hash(owner), uid1)
 	if not PartA:IsValid() then PartA = pac.FindPartByName(pac.Hash(owner), uid1, self) end
 
+	if not IsValid(PartA) then
+		if uid1 then --first argument exists and failed to find anything, ERROR
+			self.invalid_parts_in_expression[uid1] = "invalid argument: " .. uid1 .. " in event_alternative"
+		end
+		return 0
+	end
+	
 	if PartA.ClassName == "event" then
+		self.valid_parts_in_expression[PartA] = PartA
 		if PartA.event_triggered then return num1 or 0
 		else return num2 or 0 end
-	else return -1 end
+	else
+		self.invalid_parts_in_expression[uid1] = "found part, but invalid class : " .. uid1 .. " : " .. tostring(PartA) .. " in event_alternative"
+		return -1
+	end
 	return 0
 end
 
@@ -402,6 +427,56 @@ PART.Inputs.number_operator_alternative = function(self, comp1, op, comp2, num1,
 		b = comp1 ~= comp2
 	end
 	if b then return num1 or 0 else return num2 or 0 end
+end
+
+PART.Inputs.hexadecimal_level_sequence = function(self, freq, str)
+	if not str then return 0 end
+	local index = 1 + math.ceil(#str * freq * pac.RealTime) % #str
+	return (tonumber(string.sub(str,index,index),16) or 0) / 15
+end
+
+local letter_numbers = {
+	a = 0,
+	b = 1,
+	c = 2,
+	d = 3,
+	e = 4,
+	f = 5,
+	g = 6,
+	h = 7,
+	i = 8,
+	j = 9,
+	k = 10,
+	l = 11,
+	m = 12,
+	n = 13,
+	o = 14,
+	p = 15,
+	q = 16,
+	r = 17,
+	s = 18,
+	t = 19,
+	u = 20,
+	v = 21,
+	w = 22,
+	x = 23,
+	y = 24,
+	z = 25
+}
+
+PART.Inputs.letters_level_sequence = function(self, freq, str)
+	if not str then return 0 end
+	local index = 1 + math.ceil(#str * freq * pac.RealTime) % #str
+	local lookup_result = letter_numbers[string.sub(str,index,index)] or 0
+	return lookup_result / 25
+end
+
+PART.Inputs.numberlist_level_sequence = function(self, freq, ...)
+	local args = { ... }
+	if not args[1] then return 0 end
+	local index = 1 + math.ceil(#args * freq * pac.RealTime) % #args
+
+	return args[index] or 0
 end
 
 do
@@ -965,7 +1040,20 @@ end
 
 PART.Inputs.pac_healthbar_uidvalue = function(self, uid)
 	local ent = self:GetPlayerOwner()
+	local part = pac.GetPartFromUniqueID(pac.Hash(ent), uid)
+
+	if not IsValid(pac.GetPartFromUniqueID(pac.Hash(ent), uid)) then
+		self.invalid_parts_in_expression[uid] = "invalid uid : " .. uid .. " in pac_healthbar_uidvalue"
+	elseif part.ClassName ~= "health_modifier" then
+		self.invalid_parts_in_expression[uid] = "invalid class : " .. uid .. " in pac_healthbar_uidvalue"
+	end
 	if ent.pac_healthbars and ent.pac_healthbars_uidtotals then
+		if ent.pac_healthbars_uidtotals[uid] then
+			
+			if part:IsValid() then
+				self.valid_parts_in_expression[part] = part
+			end
+		end
 		return ent.pac_healthbars_uidtotals[uid] or 0
 	end
 	return 0
@@ -1009,6 +1097,8 @@ local allowed = {
 function PART:SetExpression(str)
 	self.Expression = str
 	self.ExpressionFunc = nil
+	self.valid_parts_in_expression = {}
+	self.invalid_parts_in_expression = {}
 
 	if str and str ~= "" then
 		local lib = {}
@@ -1279,6 +1369,13 @@ function PART:OnThink()
 		end
 	end
 
+	if table.Count(self.invalid_parts_in_expression) > 0 then
+		local error_msg = ""
+		for str, message in pairs(self.invalid_parts_in_expression) do
+			error_msg = error_msg .. " " .. message .. "\n"
+		end
+		self:SetError(error_msg)
+	end
 end
 
 BUILDER:Register()
