@@ -389,7 +389,7 @@ function pace.EnableView(b)
 		pace.SetTPose(false)
 	end
 
-	if not enable_editor_view:GetBool() then
+	if not enable_editor_view:GetBool() or not pace.Editor:IsValid() then
 		local ply = LocalPlayer()
 		pac.RemoveHook("CalcView", "editor")
 		pac.AddHook("CalcView", "camera_part", function(ply, pos, ang, fov, nearz, farz)
