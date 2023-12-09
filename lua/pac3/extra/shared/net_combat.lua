@@ -475,14 +475,6 @@ if SERVER then
 
 	end
 
-	local function CalculateHealthBarUIDCombinedHP(ply, uid)
-
-	end
-
-	local function CalculateHealthBarLayerCombinedHP(ply, layer)
-
-	end
-
 	local function GatherExtraHPBars(ply)
 		if not ply.pac_healthbars then return 0,nil end
 		local built_tbl = {}
@@ -1273,8 +1265,12 @@ if SERVER then
 
 	--lock break order from client
 	net.Receive("pac_signal_stop_lock", function(len,ply)
+		if not pac.RatelimitPlayer( ply, "pac_signal_stop_lock", 3, 5, {"Player ", ply, " is spamming pac_signal_stop_lock!"} ) then
+			return
+		end
 		ApplyLockState(ply, false)
 		MsgC(Color(0,255,255), "Requesting lock break!\n")
+
 		if ply.grabbed_by then --directly go for the grabbed_by player
 			net.Start("pac_request_lock_break")
 			net.WriteEntity(ply)
@@ -1297,17 +1293,31 @@ if SERVER then
 	end)
 
 	concommand.Add("pac_damage_zone_whitelist_entity_class", function(ply, cmd, args, argStr)
+		if IsValid(ply) then
+			if not ply:IsAdmin() or not pac.RatelimitPlayer( ply, "pac_damage_zone_whitelist_entity_class", 3, 5, {"Player ", ply, " is spamming pac_damage_zone_whitelist_entity_class!"} ) then
+				return
+			end
+		end
 		for _,v in pairs(string.Explode(";",argStr)) do
-			damageable_point_ent_classes[v] = true
-			print("added " .. v .. " to the entities you can damage")
+			if v ~= "" then
+				damageable_point_ent_classes[v] = true
+				print("added " .. v .. " to the entities you can damage")
+			end
 		end
 		PrintTable(damageable_point_ent_classes)
 	end)
 
 	concommand.Add("pac_damage_zone_blacklist_entity_class", function(ply, cmd, args, argStr)
+		if IsValid(ply) then
+			if not ply:IsAdmin() or not pac.RatelimitPlayer( ply, "pac_damage_zone_blacklist_entity_class", 3, 5, {"Player ", ply, " is spamming pac_damage_zone_blacklist_entity_class!"} ) then
+				return
+			end
+		end
 		for _,v in pairs(string.Explode(";",argStr)) do
-			damageable_point_ent_classes[v] = false
-			print("removed " .. v .. " from the entities you can damage")
+			if v ~= "" then
+				damageable_point_ent_classes[v] = false
+				print("removed " .. v .. " from the entities you can damage")
+			end
 		end
 		PrintTable(damageable_point_ent_classes)
 	end)
@@ -1354,7 +1364,7 @@ if SERVER then
 	local ang_torque_mode_ids = {["Global"] = 0, ["TargetLocal"] = 1, ["Local"] = 2, ["Radial"] = 3}
 	local nextcheckforce = SysTime()
 
-	function DeclareForceReceivers()
+	local function DeclareForceReceivers()
 		util.AddNetworkString("pac_request_force")
 		--the force part impulse request net message
 		net.Receive("pac_request_force", function(len,ply)
@@ -1467,7 +1477,7 @@ if SERVER then
 		end)
 	end
 
-	function DeclareDamageZoneReceivers()
+	local function DeclareDamageZoneReceivers()
 		util.AddNetworkString("pac_request_zone_damage")
 		util.AddNetworkString("pac_hit_results")
 		net.Receive("pac_request_zone_damage", function(len,ply)
@@ -1683,7 +1693,7 @@ if SERVER then
 	end
 
 	local nextchecklock = CurTime()
-	function DeclareLockReceivers()
+	local function DeclareLockReceivers()
 		util.AddNetworkString("pac_request_position_override_on_entity_teleport")
 		util.AddNetworkString("pac_request_position_override_on_entity_grab")
 		util.AddNetworkString("pac_request_angle_reset_on_entity")
@@ -1949,7 +1959,7 @@ if SERVER then
 		end)
 	end
 
-	function DeclareHitscanReceivers()
+	local function DeclareHitscanReceivers()
 		util.AddNetworkString("pac_hitscan")
 		net.Receive("pac_hitscan", function(len,ply)
 
@@ -2036,7 +2046,7 @@ if SERVER then
 		end)
 	end
 
-	function DeclareHealthModifierReceivers()
+	local function DeclareHealthModifierReceivers()
 		util.AddNetworkString("pac_request_healthmod")
 		util.AddNetworkString("pac_update_healthbars")
 		net.Receive("pac_request_healthmod", function(len,ply)
