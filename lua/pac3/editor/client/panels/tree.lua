@@ -188,7 +188,7 @@ do
 		end
 	end
 
-	function DoScrollControl(self, action)
+	local function DoScrollControl(self, action)
 		pace.BulkSelectKey = input.GetKeyCode(GetConVar("pac_bulk_select_key"):GetString())
 		if
 				pace.current_part.pace_tree_node and
