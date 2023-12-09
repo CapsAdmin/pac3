@@ -5,7 +5,7 @@ local L = pace.LanguageString
 pace.BulkSelectList = {}
 pace.BulkSelectUIDs = {}
 pace.BulkSelectClipboard = {}
-refresh_halo_hook = true
+local refresh_halo_hook = true
 pace.operations_all_operations = {"wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "save", "load", "remove", "bulk_select", "bulk_apply_properties", "partsize_info", "hide_editor", "expand_all", "collapse_all", "copy_uid", "help_part_info", "reorder_movables"}
 
 pace.operations_default = {"help_part_info", "wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "spacer", "bulk_select", "bulk_apply_properties", "spacer", "save", "load", "spacer", "remove"}
@@ -56,6 +56,128 @@ local function add_expensive_submenu_load(pnl, callback)
 		pnl.OnCursorEntered = old
 		return old(...)
 	end
+end
+
+
+local function BulkSelectRefreshFadedNodes(part_trace)
+	if refresh_halo_hook then return end
+	if part_trace then
+		for _,v in ipairs(part_trace:GetRootPart():GetChildrenList()) do
+			if IsValid(v.pace_tree_node) then
+				v.pace_tree_node:SetAlpha( 255 )
+			end
+
+		end
+	end
+
+	for _,v in ipairs(pace.BulkSelectList) do
+		if not v:IsValid() then table.RemoveByValue(pace.BulkSelectList, v)
+		elseif v.pace_tree_node then
+			v.pace_tree_node:SetAlpha( 150 )
+		end
+	end
+end
+
+local function RebuildBulkHighlight()
+	local parts_tbl = {}
+	local ents_tbl = {}
+	local hover_tbl = {}
+	local ent = {}
+
+	--get potential entities and part-children from each parent in the bulk list
+	for _,v in pairs(pace.BulkSelectList) do --this will get parts
+
+		if (v == v:GetRootPart()) then --if this is the root part, send the entity
+			table.insert(ents_tbl,v:GetRootPart():GetOwner())
+			table.insert(parts_tbl,v)
+		else
+			table.insert(parts_tbl,v)
+		end
+
+		for _,child in ipairs(v:GetChildrenList()) do --now do its children
+			table.insert(parts_tbl,child)
+		end
+	end
+
+	--check what parts are candidates we can give to halo
+	for _,v in ipairs(parts_tbl) do
+		local can_add = false
+		if (v.ClassName == "model" or v.ClassName ==  "model2") then
+			can_add = true
+		end
+		if (v.ClassName == "group") or (v.Hide == true) or (v.Size == 0) or (v.Alpha == 0) or (v:IsHidden()) then
+			can_add = false
+		end
+		if can_add then
+			table.insert(hover_tbl, v:GetOwner())
+		end
+	end
+
+	table.Add(hover_tbl,ents_tbl)
+	--TestPrintTable(hover_tbl, "hover_tbl")
+
+	last_bulk_select_tbl = hover_tbl
+end
+
+local function TestPrintTable(tbl, tbl_name)
+	MsgC(Color(200,255,200), "TABLE CONTENTS:" .. tbl_name .. " = {\n")
+	for _,v in pairs(tbl) do
+		MsgC(Color(200,255,200), "\t", tostring(v), ", \n")
+	end
+	MsgC(Color(200,255,200), "}\n")
+end
+
+local function ThinkBulkHighlight()
+	if table.IsEmpty(pace.BulkSelectList) or last_bulk_select_tbl == nil or table.IsEmpty(pac.GetLocalParts()) or (#pac.GetLocalParts() == 1) then
+		hook.Remove('PreDrawHalos', "BulkSelectHighlights")
+		return
+	end
+	DrawHaloHighlight(last_bulk_select_tbl)
+end
+
+local function DrawHaloHighlight(tbl)
+	if (type(tbl) ~= "table") then return end
+	if not pace.Active then
+		hook.Remove('PreDrawHalos', "BulkSelectHighlights")
+	end
+
+	--Find out the color and apply the halo
+	local color_string = GetConVar("pac_hover_color"):GetString()
+	local pulse_rate = math.min(math.abs(GetConVar("pac_hover_pulserate"):GetFloat()), 100)
+	local pulse = math.sin(SysTime() * pulse_rate) * 0.5 + 0.5
+	if pulse_rate == 0 then pulse = 1 end
+	local pulseamount
+
+	local halo_color = Color(255,255,255)
+
+	if color_string == "rave" then
+		halo_color = Color(255*((0.33 + SysTime() * pulse_rate/20)%1), 255*((0.66 + SysTime() * pulse_rate/20)%1), 255*((SysTime() * pulse_rate/20)%1), 255)
+		pulseamount = 8
+	elseif color_string == "funky" then
+		halo_color = Color(255*((0.33 + SysTime() * pulse_rate/10)%1), 255*((0.2 + SysTime() * pulse_rate/15)%1), 255*((SysTime() * pulse_rate/15)%1), 255)
+		pulseamount = 5
+	elseif color_string == "ocean" then
+		halo_color = Color(0, 80 + 30*(pulse), 200 + 50*(pulse) * 0.5 + 0.5, 255)
+		pulseamount = 4
+	elseif color_string == "rainbow" then
+		--halo_color = Color(255*(0.5 + 0.5*math.sin(pac.RealTime * pulse_rate/20)),255*(0.5 + 0.5*-math.cos(pac.RealTime * pulse_rate/20)),255*(0.5 + 0.5*math.sin(1 + pac.RealTime * pulse_rate/20)), 255)
+		halo_color = HSVToColor(SysTime() * 360 * pulse_rate/20, 1, 1)
+		pulseamount = 4
+	elseif #string.Split(color_string, " ") == 3 then
+		halo_color_tbl = string.Split( color_string, " " )
+		for i,v in ipairs(halo_color_tbl) do
+			if not isnumber(tonumber(halo_color_tbl[i])) then halo_color_tbl[i] = 0 end
+		end
+		halo_color = Color(pulse*halo_color_tbl[1],pulse*halo_color_tbl[2],pulse*halo_color_tbl[3],255)
+		pulseamount = 4
+	else
+		halo_color = Color(255,255,255,255)
+		pulseamount = 2
+	end
+	--print("using", halo_color, "blurs=" .. 2, "amount=" .. pulseamount)
+
+	pac.haloex.Add(tbl, halo_color, 2, 2, pulseamount, true, true, pulseamount, 1, 1)
+	--haloex.Add( ents, color, blurx, blury, passes, add, ignorez, amount, spherical, shape )
 end
 
 function pace.WearParts(temp_wear_filter)
@@ -2322,10 +2444,6 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 
 end
 
-function pace.addPartGroupMenuComponent(menu, obj, group_name)
-
-end
-
 --destructive tool
 function pace.UltraCleanup(obj)
 	if not obj then return end
@@ -2692,126 +2810,6 @@ do --hover highlight halo
 		if not skip then timer.Simple(0.3, function() BulkSelectRefreshFadedNodes(self) end) end
 	end
 
-	local function BulkSelectRefreshFadedNodes(part_trace)
-		if refresh_halo_hook then return end
-		if part_trace then
-			for _,v in ipairs(part_trace:GetRootPart():GetChildrenList()) do
-				if IsValid(v.pace_tree_node) then
-					v.pace_tree_node:SetAlpha( 255 )
-				end
-
-			end
-		end
-
-		for _,v in ipairs(pace.BulkSelectList) do
-			if not v:IsValid() then table.RemoveByValue(pace.BulkSelectList, v)
-			elseif v.pace_tree_node then
-				v.pace_tree_node:SetAlpha( 150 )
-			end
-		end
-	end
-
-	local function RebuildBulkHighlight()
-		local parts_tbl = {}
-		local ents_tbl = {}
-		local hover_tbl = {}
-		local ent = {}
-
-		--get potential entities and part-children from each parent in the bulk list
-		for _,v in pairs(pace.BulkSelectList) do --this will get parts
-
-			if (v == v:GetRootPart()) then --if this is the root part, send the entity
-				table.insert(ents_tbl,v:GetRootPart():GetOwner())
-				table.insert(parts_tbl,v)
-			else
-				table.insert(parts_tbl,v)
-			end
-
-			for _,child in ipairs(v:GetChildrenList()) do --now do its children
-				table.insert(parts_tbl,child)
-			end
-		end
-
-		--check what parts are candidates we can give to halo
-		for _,v in ipairs(parts_tbl) do
-			local can_add = false
-			if (v.ClassName == "model" or v.ClassName ==  "model2") then
-				can_add = true
-			end
-			if (v.ClassName == "group") or (v.Hide == true) or (v.Size == 0) or (v.Alpha == 0) or (v:IsHidden()) then
-				can_add = false
-			end
-			if can_add then
-				table.insert(hover_tbl, v:GetOwner())
-			end
-		end
-
-		table.Add(hover_tbl,ents_tbl)
-		--TestPrintTable(hover_tbl, "hover_tbl")
-
-		last_bulk_select_tbl = hover_tbl
-	end
-
-	local function TestPrintTable(tbl, tbl_name)
-		MsgC(Color(200,255,200), "TABLE CONTENTS:" .. tbl_name .. " = {\n")
-		for _,v in pairs(tbl) do
-			MsgC(Color(200,255,200), "\t", tostring(v), ", \n")
-		end
-		MsgC(Color(200,255,200), "}\n")
-	end
-
-	local function ThinkBulkHighlight()
-		if table.IsEmpty(pace.BulkSelectList) or last_bulk_select_tbl == nil or table.IsEmpty(pac.GetLocalParts()) or (#pac.GetLocalParts() == 1) then
-			hook.Remove('PreDrawHalos', "BulkSelectHighlights")
-			return
-		end
-		DrawHaloHighlight(last_bulk_select_tbl)
-	end
-
-	local function DrawHaloHighlight(tbl)
-		if (type(tbl) ~= "table") then return end
-		if not pace.Active then
-			hook.Remove('PreDrawHalos', "BulkSelectHighlights")
-		end
-
-		--Find out the color and apply the halo
-		local color_string = GetConVar("pac_hover_color"):GetString()
-		local pulse_rate = math.min(math.abs(GetConVar("pac_hover_pulserate"):GetFloat()), 100)
-		local pulse = math.sin(SysTime() * pulse_rate) * 0.5 + 0.5
-		if pulse_rate == 0 then pulse = 1 end
-		local pulseamount
-
-		local halo_color = Color(255,255,255)
-
-		if color_string == "rave" then
-			halo_color = Color(255*((0.33 + SysTime() * pulse_rate/20)%1), 255*((0.66 + SysTime() * pulse_rate/20)%1), 255*((SysTime() * pulse_rate/20)%1), 255)
-			pulseamount = 8
-		elseif color_string == "funky" then
-			halo_color = Color(255*((0.33 + SysTime() * pulse_rate/10)%1), 255*((0.2 + SysTime() * pulse_rate/15)%1), 255*((SysTime() * pulse_rate/15)%1), 255)
-			pulseamount = 5
-		elseif color_string == "ocean" then
-			halo_color = Color(0, 80 + 30*(pulse), 200 + 50*(pulse) * 0.5 + 0.5, 255)
-			pulseamount = 4
-		elseif color_string == "rainbow" then
-			--halo_color = Color(255*(0.5 + 0.5*math.sin(pac.RealTime * pulse_rate/20)),255*(0.5 + 0.5*-math.cos(pac.RealTime * pulse_rate/20)),255*(0.5 + 0.5*math.sin(1 + pac.RealTime * pulse_rate/20)), 255)
-			halo_color = HSVToColor(SysTime() * 360 * pulse_rate/20, 1, 1)
-			pulseamount = 4
-		elseif #string.Split(color_string, " ") == 3 then
-			halo_color_tbl = string.Split( color_string, " " )
-			for i,v in ipairs(halo_color_tbl) do
-				if not isnumber(tonumber(halo_color_tbl[i])) then halo_color_tbl[i] = 0 end
-			end
-			halo_color = Color(pulse*halo_color_tbl[1],pulse*halo_color_tbl[2],pulse*halo_color_tbl[3],255)
-			pulseamount = 4
-		else
-			halo_color = Color(255,255,255,255)
-			pulseamount = 2
-		end
-		--print("using", halo_color, "blurs=" .. 2, "amount=" .. pulseamount)
-
-		pac.haloex.Add(tbl, halo_color, 2, 2, pulseamount, true, true, pulseamount, 1, 1)
-		--haloex.Add( ents, color, blurx, blury, passes, add, ignorez, amount, spherical, shape )
-	end
 end
 
 --custom info panel
