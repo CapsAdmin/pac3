@@ -179,7 +179,7 @@ pace.PACActionShortcut_NoCTRL = {
 	}
 }
 
-pace.PACActionShortcut_Cedric = {
+pace.PACActionShortcut_Experimental = {
 	["help_info_popup"] = {
 		[1] = {"F1"}
 	},
@@ -294,7 +294,7 @@ pace.PACActionShortcut_Cedric = {
 	}
 }
 
-pace.PACActionShortcut = pace.PACActionShortcut or pace.PACActionShortcut_Cedric
+pace.PACActionShortcut = pace.PACActionShortcut or pace.PACActionShortcut_Experimental
 
 --pace.PACActionShortcut = pace.PACActionShortcuts_NoCTRL
 
