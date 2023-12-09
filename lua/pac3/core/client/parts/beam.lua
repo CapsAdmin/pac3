@@ -24,8 +24,8 @@ do
 	local vector = Vector()
 	local color = Color(255, 255, 255, 255)
 
-	function pac.DrawBeam(veca, vecb, dira, dirb, bend, res, width, start_color, end_color, frequency, tex_stretch, tex_scroll, width_bend, width_bend_size, width_start_mul, width_end_mul)
-
+	function pac.DrawBeam(veca, vecb, dira, dirb, bend, res, width, start_color, end_color, frequency, tex_stretch, tex_scroll, width_bend, width_bend_size, width_start_mul, width_end_mul, width_pow)
+		
 		if not veca or not vecb or not dira or not dirb then return end
 
 		ax = veca.x; ay = veca.y; az = veca.z
@@ -46,6 +46,7 @@ do
 		tex_scroll = tex_scroll or 0
 		width_start_mul = width_start_mul or 1
 		width_end_mul = width_end_mul or 1
+		width_pow = width_pow or 1
 
 		render_StartBeam(res + 1)
 
@@ -66,7 +67,7 @@ do
 
 				render_AddBeam(
 					vector,
-					(width + ((math_sin(wave) ^ width_bend_size) * width_bend)) * Lerp(frac, width_start_mul, width_end_mul),
+					(width + ((math_sin(wave) ^ width_bend_size) * width_bend)) * Lerp(math.pow(frac,width_pow), width_start_mul, width_end_mul),
 					(i / tex_stretch) + tex_scroll,
 					color
 				)
@@ -98,6 +99,7 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("WidthBendSize", 1)
 		BUILDER:GetSet("StartWidthMultiplier", 1)
 		BUILDER:GetSet("EndWidthMultiplier", 1)
+		BUILDER:GetSet("WidthMorphPower", 1)
 		BUILDER:GetSet("TextureStretch", 1)
 		BUILDER:GetSet("TextureScroll", 0)
 	BUILDER:SetPropertyGroup("orientation")
@@ -222,7 +224,8 @@ function PART:OnDraw()
 			self.WidthBend,
 			self.WidthBendSize,
 			self.StartWidthMultiplier,
-			self.EndWidthMultiplier
+			self.EndWidthMultiplier,
+			self.WidthMorphPower
 		)
 	end
 end

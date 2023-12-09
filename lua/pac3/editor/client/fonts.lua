@@ -2,7 +2,8 @@ local L = pace.LanguageString
 
 pace.Fonts = {}
 
-for i = 1, 5 do
+
+for i = 1, 7 do
 	surface.CreateFont("pac_font_"..i,
 	{
 		font = "Arial",
@@ -14,15 +15,39 @@ for i = 1, 5 do
 	table.insert(pace.Fonts, "pac_font_"..i)
 end
 
-for i = 1, 5 do
-	surface.CreateFont("pac_font_bold"..i,
+for i = 8, 32, 4 do
+	surface.CreateFont("pac_font_"..i,
+	{
+		font = "Arial",
+		size = 11 + i,
+		weight = 50,
+		antialias = true,
+	})
+
+	table.insert(pace.Fonts, "pac_font_"..i)
+end
+
+for i = 1, 7 do
+	surface.CreateFont("pac_font_bold_"..i,
 	{
 		font = "Arial",
 		size = 11 + i,
 		weight = 800,
 		antialias = true,
 	})
-	table.insert(pace.Fonts, "pac_font_bold"..i)
+	table.insert(pace.Fonts, "pac_font_bold_"..i)
+end
+
+for i = 8, 32, 4 do
+	surface.CreateFont("pac_font_bold_"..i,
+	{
+		font = "Arial",
+		size = 11 + i,
+		weight = 50,
+		antialias = true,
+	})
+
+	table.insert(pace.Fonts, "pac_font_bold_"..i)
 end
 
 table.insert(pace.Fonts, "DermaDefault")

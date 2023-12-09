@@ -1,10 +1,11 @@
 local L = pace.LanguageString
 
 -- load only when hovered above
-local function add_expensive_submenu_load(pnl, callback)
+local function add_expensive_submenu_load(pnl, callback, subdir)
+	
 	local old = pnl.OnCursorEntered
 	pnl.OnCursorEntered = function(...)
-		callback()
+		callback(subdir)
 		pnl.OnCursorEntered = old
 		return old(...)
 	end
@@ -95,6 +96,10 @@ end
 
 local last_backup
 local maxBackups = CreateConVar("pac_backup_limit", "100", {FCVAR_ARCHIVE}, "Maximal amount of backups")
+local autoload_prompt = CreateConVar("pac_prompt_for_autoload", "1", {FCVAR_ARCHIVE}, "Whether to ask before loading autoload. The prompt can let you choose to not load, pick autoload or the newest backup")
+local auto_spawn_prop = CreateConVar("pac_autoload_preferred_prop", "2", {FCVAR_ARCHIVE}, "When loading a pac with an owner name suggesting a prop, notify you and then wait before auto-applying the outfit next time you spawn a prop.\n"..
+																								"0 : do not check\n1 : check if only 1 such group is present\n2 : check if multiple such groups are present and queue one group at a time")
+
 
 function pace.Backup(data, name)
 	name = name or ""
@@ -138,7 +143,28 @@ function pace.Backup(data, name)
 	end
 end
 
+local latestprop
+local latest_uid
+if game.SinglePlayer() then
+	hook.Add("OnEntityCreated", "PAC_queue_proppacs", function( ent )
+		if ( ent:GetClass() == "prop_physics" or ent:IsNPC()) and not ent:CreatedByMap() and LocalPlayer().pac_propload_queuedparts then
+			if not table.IsEmpty(LocalPlayer().pac_propload_queuedparts) then
+				ent:EmitSound( "buttons/button4.wav" )
+				local root = LocalPlayer().pac_propload_queuedparts[next(LocalPlayer().pac_propload_queuedparts)]
+				root.self.OwnerName = ent:EntIndex()
+				latest_uid = root.self.UniqueID
+				pace.LoadPartsFromTable(root, false, false)
+				LocalPlayer().pac_propload_queuedparts[next(LocalPlayer().pac_propload_queuedparts)] = nil
+				latestprop = ent
+			end
+
+		end
+	end)
+end
+
+
 function pace.LoadParts(name, clear, override_part)
+
 	if not name then
 		local frm = vgui.Create("DFrame")
 		frm:SetTitle(L"parts")
@@ -175,6 +201,11 @@ function pace.LoadParts(name, clear, override_part)
 		end
 
 	else
+		if name ~= "autoload.txt" and not string.find(name, "pac3/__backup") then
+			if file.Exists("pac3/" .. name..".txt", "DATA") then
+				cookie.Set( "pac_last_loaded_outfit", name .. ".txt" )
+			end
+		end
 		if hook.Run("PrePACLoadOutfit", name) == false then
 			return
 		end
@@ -190,6 +221,7 @@ function pace.LoadParts(name, clear, override_part)
 
 				local data, err = pace.luadata.Decode(str)
 				if not data then
+					ErrorNoHalt(("URL fail: %s : %s\n"):format(name,err))
 					local message = string.format("URL fail: %s : %s\n", name, err)
 					pace.MessagePrompt(message, "URL Failed", "OK")
 					return
@@ -205,22 +237,62 @@ function pace.LoadParts(name, clear, override_part)
 			name = name:gsub("%.txt", "")
 
 			local data,err = pace.luadata.ReadFile("pac3/" .. name .. ".txt")
+			local has_possible_prop_pacs = false
 
-			if name == "autoload" and (not data or not next(data)) then
-				local err
-				data,err = pace.luadata.ReadFile("pac3/sessions/" .. name .. ".txt",nil,true)
-				if not data then
-					if err then
-						ErrorNoHalt(("Autoload failed: %s\n"):format(err))
-					end
-					return
+			if data and istable(data) then
+				for i,part in pairs(data) do
+					if isnumber(tonumber(part.self.OwnerName)) then has_possible_prop_pacs = true end
 				end
-			elseif not data then
-				ErrorNoHalt(("Decoding %s failed: %s\n"):format(name,err))
-				return
 			end
 
-			pace.LoadPartsFromTable(data, clear, override_part)
+			--queue up prop pacs for the next prop or npc you spawn when in singleplayer
+			if (auto_spawn_prop:GetInt() == 2 or (auto_spawn_prop:GetInt() == 1 and #data == 1)) and game.SinglePlayer() and has_possible_prop_pacs then
+				if clear then pace.ClearParts() end
+				LocalPlayer().pac_propload_queuedparts = LocalPlayer().pac_propload_queuedparts or {}
+
+				--check all root parts from data. format: each data member is a {self, children} table of the part and the list of children
+				for i,part in pairs(data) do
+					local possible_prop_pac = isnumber(tonumber(part.self.OwnerName))
+					if part.self.ClassName == "group" and possible_prop_pac then
+
+						part.self.ModelTracker = part.self.ModelTracker or ""
+						part.self.ClassTracker = part.self.ClassTracker or ""
+						local str = ""
+						if part.self.ClassTracker == "" or part.self.ClassTracker == "" then
+							str = "But the class or model is unknown"
+						else
+							str = part.self.ClassTracker .. " : " .. part.self.ModelTracker
+						end
+						--notify which model / entity should be spawned with the class tracker
+						notification.AddLegacy( "You have queued a pac part (" .. i .. ":" .. part.self.Name .. ") for a prop or NPC! " .. str, NOTIFY_HINT, 10 )
+						LocalPlayer().pac_propload_queuedparts[i] = part
+
+					else
+						pace.LoadPartsFromTable(part, false, false)
+					end
+				end
+				
+			else
+
+				if name == "autoload" and (not data or not next(data)) then
+					local err
+					data,err = pace.luadata.ReadFile("pac3/sessions/" .. name .. ".txt",nil,true)
+					if not data then
+						if err then
+							ErrorNoHalt(("Autoload failed: %s\n"):format(err))
+						end
+						return
+					end
+				elseif not data then
+					ErrorNoHalt(("Decoding %s failed: %s\n"):format(name,err))
+					return
+				end
+
+				
+				pace.LoadPartsFromTable(data, clear, override_part)
+
+			end
+			
 		end
 	end
 end
@@ -425,6 +497,39 @@ local function populate_parts(menu, tbl, override_part, clear)
 	end
 end
 
+function pace.AddOneDirectorySavedPartsToMenu(menu, subdir, nicename)
+	if not subdir then return end
+	local subdir_head = subdir .. "/"
+
+	local exp_submenu, pnl = menu:AddSubMenu(L""..subdir)
+	pnl:SetImage(pace.MiscIcons.load)
+	exp_submenu.GetDeleteSelf = function() return false end
+	subdir = "pac3/" .. subdir
+	if nicename then exp_submenu:SetText(nicename) end
+
+	add_expensive_submenu_load(pnl, function(subdir)
+		local files = file.Find(subdir.."/*", "DATA")
+		local files2 = {}
+		--PrintTable(files)
+		for i, filename in ipairs(files) do
+			table.insert(files2, {filename, file.Time(subdir .. filename, "DATA")})
+		end
+
+		table.sort(files2, function(a, b)
+			return a[2] > b[2]
+		end)
+
+		for _, data in pairs(files2) do
+			local name = data[1]
+			local full_path = subdir .. "/" .. name
+			--print(full_path)
+			local friendly_name = name .. " " .. string.NiceSize(file.Size(full_path, "DATA"))
+			exp_submenu:AddOption(friendly_name, function() pace.LoadParts(subdir_head .. name, true) end)
+			:SetImage(pace.MiscIcons.outfit)
+		end
+	end, subdir)
+end
+
 function pace.AddSavedPartsToMenu(menu, clear, override_part)
 	menu.GetDeleteSelf = function() return false end
 
@@ -481,7 +586,10 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 	pnl:SetImage(pace.MiscIcons.clone)
 	backups.GetDeleteSelf = function() return false end
 
-	add_expensive_submenu_load(pnl, function()
+	local subdir = "pac3/__backup/*"
+
+	add_expensive_submenu_load(pnl, function(subdir)
+		
 		local files = file.Find("pac3/__backup/*", "DATA")
 		local files2 = {}
 
@@ -500,14 +608,15 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 			backups:AddOption(friendly_name, function() pace.LoadParts("__backup/" .. name, true) end)
 			:SetImage(pace.MiscIcons.outfit)
 		end
-	end)
+	end, subdir)
 
 	local backups, pnl = menu:AddSubMenu(L"outfit backups")
 	pnl:SetImage(pace.MiscIcons.clone)
 	backups.GetDeleteSelf = function() return false end
 
+	subdir = "pac3/__backup_save/*"
 	add_expensive_submenu_load(pnl, function()
-		local files = file.Find("pac3/__backup_save/*", "DATA")
+		local files = file.Find(subdir, "DATA")
 		local files2 = {}
 
 		for i, filename in ipairs(files) do
@@ -534,7 +643,7 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 				end)
 			:SetImage(pace.MiscIcons.outfit)
 		end
-	end)
+	end, subdir)
 end
 
 local function populate_parts(menu, tbl, dir, override_part)

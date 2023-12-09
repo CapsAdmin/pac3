@@ -41,6 +41,7 @@ function PART:SetDrawShadow(b)
 	local ent = self:GetOwner()
 	if not ent:IsValid() then return end
 
+	pac.emut.MutateEntity(self:GetPlayerOwner(), "draw_shadow", ent, b)
 	ent:DrawShadow(b)
 	ent:MarkShadowAsDirty()
 end
@@ -211,6 +212,7 @@ function PART:OnRemove()
 	local player_owner = self:GetPlayerOwner()
 
 	pac.emut.RestoreMutations(player_owner, "model", ent)
+	pac.emut.RestoreMutations(player_owner, "draw_shadow", ent)
 
 	if ent:IsPlayer() or ent:IsNPC() then
 		pac.emut.RestoreMutations(player_owner, "size", ent)
