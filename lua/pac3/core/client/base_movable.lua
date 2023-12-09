@@ -64,7 +64,7 @@ do -- bones
 
 	function PART:GetBoneMatrix()
 		local parent = self:GetParent()
-		if parent:IsValid() or IsValid(parent) then
+		if IsValid(parent) then
 			if parent.ClassName == "jiggle" or parent.ClassName == "interpolated_multibone" then
 				local bone_matrix = Matrix()
 				if parent.pos then
@@ -189,7 +189,7 @@ function PART:CalcAngles(ang, wpos)
 
 		return self.Angles + (pac.EyePos - wpos):Angle()
 	end
-	
+
 	local function get_nearest_ent(part)
 		local nearest_ent = part:GetRootPart():GetOwner()
 		local nearest_dist = math.huge
@@ -213,12 +213,12 @@ function PART:CalcAngles(ang, wpos)
 		local ang = (nearest_ent:GetPos() - wpos):Angle()
 		return Angle(0,ang.y,0) + self.Angles
 	end
-	
+
 	if pac.StringFind(self.AimPartName, "NEAREST_LIFE_POS", true, true) then
 		local nearest_ent = get_nearest_ent(self)
 		return self.Angles + (nearest_ent:GetPos() - wpos):Angle()
 	end
-	
+
 	if pac.StringFind(self.AimPartName, "NEAREST_LIFE", true, true) then
 		local nearest_ent = get_nearest_ent(self)
 		return self.Angles + ( nearest_ent:GetPos() + Vector(0,0,(nearest_ent:WorldSpaceCenter() - nearest_ent:GetPos()).z * 1.5) - wpos):Angle()
