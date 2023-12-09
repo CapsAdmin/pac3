@@ -1278,8 +1278,8 @@ do -- base editable
 			if not pace.bookmarked_ressources["models"] then
 				pace.bookmarked_ressources["models"] = {
 					"models/pac/default.mdl",
-					"models/cedrics_models/basic_shapes/plane.mdl",
-					"models/cedrics_models/basic_shapes/circle.mdl",
+					"models/pac/plane.mdl",
+					"models/pac/circle.mdl",
 					"models/hunter/blocks/cube025x025x025.mdl",
 					"models/editor/axis_helper.mdl",
 					"models/editor/axis_helper_thick.mdl"
