@@ -1799,8 +1799,8 @@ function pace.FillEditorSettings(pnl)
 
 
 	local RightPanel = vgui.Create( "DTree", f )
-	Test_Node = RightPanel:AddNode( "Test", "icon16/world.png" )
-	test_part = pac.CreatePart("base") //the menu needs a part to get its full version in preview
+	local Test_Node = RightPanel:AddNode( "Test", "icon16/world.png" )
+	local test_part = pac.CreatePart("base") //the menu needs a part to get its full version in preview
 	function RightPanel:DoRightClick()
 		temp_list = pace.operations_order
 		pace.operations_order = buildlist_partmenu
