@@ -52,7 +52,7 @@ local global_combat_prop_protection = CreateConVar("pac_sv_prop_protection", 0, 
 
 pace = pace
 
-pace.partmenu_categories_cedrics = {
+pace.partmenu_categories_experimental = {
 	["new!"] =
 	{
 		["icon"]				=		"icon16/new.png",
@@ -1469,7 +1469,7 @@ function pace.FillEditorSettings(pnl)
 	shortcutaction_presets:SetText("Select a shortcut preset")
 	shortcutaction_presets:AddChoice("factory preset", pace.PACActionShortcut_Default)
 	shortcutaction_presets:AddChoice("no CTRL preset", pace.PACActionShortcut_NoCTRL)
-	shortcutaction_presets:AddChoice("Cedric's preset", pace.PACActionShortcut_Cedric)
+	shortcutaction_presets:AddChoice("experimental preset", pace.PACActionShortcut_Experimental)
 
 	for i,filename in ipairs(file.Find("pac3_config/pac_editor_shortcuts*.txt","DATA")) do
 		local data = file.Read("pac3_config/" .. filename, "DATA")
@@ -2006,27 +2006,6 @@ function pace.FillEditorSettings2(pnl)
 			pace.camera_movement_binds["speed"]:SetString(input.GetKeyName( num ))
 		end
 
-	--[[pace.partmenu_categories_cedrics =
-		{
-			["new!"] =
-			{
-				["icon"]				=		"icon16/new.png",
-				["interpolated_multibone"]=	"interpolated_multibone",
-				["damage_zone"]			=	"damage_zone",
-				["hitscan"]				=	"hitscan",
-				["lock"]				=		"lock",
-				["force"]				=		"force",
-				["health_modifier"]		=		"health_modifier",
-			},
-			["logic"] =
-			{
-				["icon"]				=		"icon16/server_chart.png",
-				["proxy"]				=	"proxy",
-				["command"]				=	"command",
-				["event"]				=		"event",
-				["text"]				=		"text",
-				["link"]				=		"link",
-		},]]
 	local Parts = pac.GetRegisteredParts()
 	local function get_icon(str, fallback)
 		if str then
@@ -2275,10 +2254,10 @@ function pace.FillEditorSettings2(pnl)
 		part_categories_presets:SetText("Select a part category preset")
 		part_categories_presets:AddChoice("active preset")
 		part_categories_presets:AddChoice("factory preset")
-		part_categories_presets:AddChoice("Cedric's preset")
+		part_categories_presets:AddChoice("experimental preset")
 		local default_partgroup_presets = {
 			["pac_part_categories.txt"] = true,
-			["pac_part_categories_cedrics.txt"] = true,
+			["pac_part_categories_experimental.txt"] = true,
 			["pac_part_categories_default.txt"] = true
 		}
 		for i,filename in ipairs(file.Find("pac3_config/pac_part_categories*.txt","DATA")) do
@@ -2294,8 +2273,8 @@ function pace.FillEditorSettings2(pnl)
 	part_categories_presets.OnSelect = function( self, index, value )
 		if value == "factory preset" then
 			pace.partgroups = pace.partmenu_categories_default
-		elseif value == "Cedric's preset" then
-			pace.partgroups = pace.partmenu_categories_cedrics
+		elseif value == "experimental preset" then
+			pace.partgroups = pace.partmenu_categories_experimental
 		elseif string.find(value, ".txt") then
 			pace.partgroups = util.KeyValuesToTable(file.Read("pac3_config/"..value))
 		elseif value == "active preset" then
@@ -2614,8 +2593,8 @@ decode_table_from_file("pac_editor_shortcuts")
 decode_table_from_file("pac_editor_partmenu_layouts")
 decode_table_from_file("eventwheel_colors")
 
-if not file.Exists("pac_part_categories_cedrics.txt", "DATA") then
-	file.Write("pac3_config/pac_part_categories_cedrics.txt", util.TableToKeyValues(pace.partmenu_categories_cedrics))
+if not file.Exists("pac_part_categories_experimental.txt", "DATA") then
+	file.Write("pac3_config/pac_part_categories_experimental.txt", util.TableToKeyValues(pace.partmenu_categories_experimental))
 end
 if not file.Exists("pac_part_categories_default.txt", "DATA") then
 	file.Write("pac3_config/pac_part_categories_default.txt", util.TableToKeyValues(pace.partmenu_categories_default))
