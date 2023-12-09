@@ -70,10 +70,10 @@ end
 function PART:OnDraw()
 	self:UpdateNodes()
 	if self.valid_time > CurTime() then return end
-	
+
 	self.pos = self.pos or self:GetWorldPosition()
 	self.ang = self.ang or self:GetWorldAngles()
-	
+
 	if not self.Preview then hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID) end
 
 	local stage = math.max(0,math.floor(self.LerpValue))
@@ -109,12 +109,12 @@ function PART:OnDraw()
 					render.DrawLine(endpos,endpos + endang:Up()*4, Color(0,0,255))
 					render.DrawLine(self.nodes["Node"..i-1]:GetWorldPosition(),self.nodes["Node"..i]:GetWorldPosition(), Color(255,255,255))
 				end
-				
+
 			end
 		end)
 	end
 	self:Interpolate(stage,proportion)
-	
+
 end
 
 function PART:UpdateNodes()
@@ -138,8 +138,8 @@ function PART:Interpolate(stage, proportion)
 	else
 		firstnode = self.nodes["Node"..stage] or self
 	end
-	
-	
+
+
 	local secondnode = self.nodes["Node"..stage+1]
 	if firstnode == nil or firstnode == NULL or not firstnode.GetWorldPosition then firstnode = self end
 	if secondnode == nil or secondnode == NULL or not secondnode.GetWorldPosition then secondnode = self end
@@ -181,7 +181,7 @@ function GetClosestAngleMidpoint(a1, a2, proportion)
 		if math.abs(ang_delta_candidate2) < math.abs(ang_delta_final) then
 			ang_delta_final = ang_delta_candidate2
 		end
-		if math.abs(ang_delta_candidate3) < math.abs(ang_delta_final) then 
+		if math.abs(ang_delta_candidate3) < math.abs(ang_delta_final) then
 			ang_delta_final = ang_delta_candidate3
 		end
 		--print("at "..ax.." 1:"..ang_delta_candidate1.." 2:"..ang_delta_candidate2.." 3:"..ang_delta_candidate3.." pick "..ang_delta_final)

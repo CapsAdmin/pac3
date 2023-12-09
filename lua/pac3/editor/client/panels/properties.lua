@@ -29,12 +29,12 @@ function pace.FindAssetSeriesBounds(base_directory, base_file, extension)
 	--LEADING ZEROES FIX NOT YET IMPLEMENTED
 	local function leading_zeros(str)
 		str = string.StripExtension(str)
-		
+
 		local untilzero_pattern = "%f[1-9][0-9]+$"
 		local afterzero_pattern = "0+%f[1-9+]"
 		local beforenumbers_pattern = "%f[%f[1-9][0-9]+$]"
 		--string.gsub(str, "%f[1-9][0-9]+$", "") --get the start until the zeros stop
-		
+
 		--string.gsub(str, "0+%f[1-9+]", "") --leave start
 
 		if string.find(str, afterzero_pattern) then
@@ -54,7 +54,7 @@ function pace.FindAssetSeriesBounds(base_directory, base_file, extension)
 	local index_compressed = 1 --increasing ID number of valid files
 
 	while keep_looking do
-		
+
 		file_n = base_directory .. "/" .. base_file .. i .. "." .. extension
 		--print(file_n , "file" , file.Exists(file_n, "GAME") and "exists" or "doesn't exist")
 		--print("checking" , file_n) print("\tThe file" , file.Exists(file_n, "GAME") and "exists" or "doesn't exist")
@@ -64,8 +64,8 @@ function pace.FindAssetSeriesBounds(base_directory, base_file, extension)
 			tbl.all_paths[index_compressed] = file_n
 			index_compressed = index_compressed + 1
 		end
-		
-		
+
+
 		i = i + 1
 		file_n = base_directory .. "/" .. base_file .. i .. "." .. extension
 		next_exists = file.Exists(file_n, "GAME")
@@ -137,13 +137,13 @@ function pace.AddSubmenuWithBracketExpansion(pnl, func, base_file, extension, ba
 			--local mat = string.gsub(base_file_original, "." .. string.GetExtensionFromFilename(base_file_original), "")
 			--pnl2:AddOption(mat, function() func(base_file_original) end):SetImage("icon16/paint_can.png")
 		elseif base_directory == "models" then
-			
+
 		elseif base_directory == "sound" then
 			local snd = base_file_original
 			menu2 = pnl:AddOption(snd, function() func(snd) end):SetImage(icon)
 		end
 	end
-	
+
 
 	--print(tbl)
 	--PrintTable(tbl.all_paths)
@@ -154,7 +154,7 @@ function pace.AddSubmenuWithBracketExpansion(pnl, func, base_file, extension, ba
 			if base_directory == "materials" then
 				local mat = string.gsub(path_no_trunk, "." .. string.GetExtensionFromFilename(path_no_trunk), "")
 				pnl2:AddOption(mat, function() func(mat) end):SetMaterial(pace.get_unlit_mat(path))
-				
+
 			elseif base_directory == "models" then
 				local mdl = path
 				pnl2:AddOption(string.GetFileFromFilename(mdl), function() func(mdl) end):SetImage("materials/spawnicons/"..string.gsub(mdl, ".mdl", "")..".png")
@@ -166,7 +166,7 @@ function pace.AddSubmenuWithBracketExpansion(pnl, func, base_file, extension, ba
 		end
 	end
 
-	
+
 
 end
 
@@ -336,19 +336,19 @@ do -- container
 	function PANEL:Flash()
 		pace.flashes = pace.flashes or {}
 		pace.flashes[self] = {start = CurTime(), flash_end = CurTime() + 2.5, color = Color(255,0,0)}
-		
+
 		do	--scroll to the property
 			local _,y = self:LocalToScreen(0,0)
 			local _,py = pace.properties:LocalToScreen(0,0)
 			local scry = pace.properties.scr:GetScroll()
-			
+
 			if y > ScrH() then
 				pace.properties.scr:SetScroll(scry - py + y)
 			elseif y < py - 200 then
 				pace.properties.scr:SetScroll(scry + (y - py) - 100)
 			end
 		end
-		
+
 		do	--scroll to the tree node
 			pace.tree:ScrollToChild(self:GetChildren()[1].part.pace_tree_node)
 		end
@@ -922,7 +922,7 @@ end
 do -- base editable
 	local PANEL = {}
 
-	
+
 	PANEL.ClassName = "properties_base_type"
 	PANEL.Base = "DLabel"
 
@@ -1037,12 +1037,12 @@ do -- base editable
 
 		--command's String variable
 		if self.CurrentKey == "String" then
-			
+
 			pace.bookmarked_ressources = pace.bookmarked_ressources or {}
-			pace.bookmarked_ressources["command"] = 
+			pace.bookmarked_ressources["command"] =
 				{
 					--[[["user"] = {
-						
+
 					},]]
 					["basic lua"] = {
 						{
@@ -1125,7 +1125,7 @@ do -- base editable
 						},
 					}]]
 				}
-				
+
 			local menu1, pnl1 = menu:AddSubMenu(L"example commands", function()
             end)
 			pnl1:SetIcon("icon16/cart_go.png")
@@ -1157,7 +1157,7 @@ do -- base editable
 										for i,v in pairs(LocalPlayer().pac_command_events) do tbl3[i] = v.on end
 										for i,v in pairs(LocalPlayer().pac_command_events) do RunConsoleCommand("pac_event", i, "0") end
 										new_expression = ""
-										
+
 										for i,v in pairs(tbl3) do new_expression = new_expression .. "pac_event " .. i .. " " .. v .. ";" end
 										pace.current_part:SetUseLua(false)
 									end
@@ -1170,7 +1170,7 @@ do -- base editable
 									expression = expression .. ";" .. tbl2.expression
 									pace.current_part:SetUseLua(tbl2.lua)
 								end
-								
+
 								if not hardcode then
 									pace.current_part:SetString(expression)
 									self:SetValue(expression)
@@ -1179,20 +1179,20 @@ do -- base editable
 									self:SetValue(new_expression)
 								end
 							end
-							
+
 						end)
 						pnl3:SetIcon(icon)
 						pnl3:SetTooltip(tbl2.explanation)
 					end
-					
+
 				end
 			end
 		end
 
 		--proxy expression
 		if self.CurrentKey == "Expression" then
-			
-			
+
+
 			pace.bookmarked_ressources = pace.bookmarked_ressources or {}
 			pace.bookmarked_ressources["proxy"] = pace.bookmarked_ressources["proxy"]
 			local menu1, pnl1 = menu:AddSubMenu(L"Proxy template bits", function()
@@ -1222,16 +1222,16 @@ do -- base editable
 								elseif true then --something present: multiply the existing bit?
 									expression = expression .. " * " .. tbl2.expression
 								end
-								
+
 								pace.current_part:SetExpression(expression)
 								self:SetValue(expression)
 							end
-							
+
 						end)
 						pnl3:SetIcon(icon)
 						pnl3:SetTooltip(tbl2.explanation)
 					end
-					
+
 				end
 			end
 		end
@@ -1259,7 +1259,7 @@ do -- base editable
 				local txt_zone = vgui.Create("DTextEntry", pnl2)
 				local str = ""
 				for i,v in pairs(tbl) do
-					str = str .. i .. "  =  " .. v .."\n"	
+					str = str .. i .. "  =  " .. v .."\n"
 				end
 				txt_zone:SetMultiline(true)
 				txt_zone:SetText(str)
@@ -1270,7 +1270,7 @@ do -- base editable
 				pnl2:MakePopup()
 
             end):SetImage("icon16/table.png")
-			
+
 		end
 
 		if self.CurrentKey == "Model" then
@@ -1294,26 +1294,26 @@ do -- base editable
 
 			pnl:AddOption("Current playermodel - " .. string.gsub(string.GetFileFromFilename(pm), ".mdl", ""), function()
 				pace.current_part:SetModel(pm)
-				
+
 				pace.current_part.pace_properties["Model"]:SetValue(pm)
 				pace.PopulateProperties(pace.current_part)
 
 			end):SetImage("materials/spawnicons/"..string.gsub(pm, ".mdl", "")..".png")
-			
+
 			for id,mdl in ipairs(pace.bookmarked_ressources["models"]) do
 				pnl:AddOption(string.GetFileFromFilename(mdl), function()
 					self:SetValue(mdl)
-					
+
 					pace.current_part:SetModel(mdl)
 					timer.Simple(0.2, function()
 						pace.current_part.pace_properties["Model"]:SetValue(mdl)
 						pace.PopulateProperties(pace.current_part)
 					end)
-					
+
 				end):SetImage("materials/spawnicons/"..string.gsub(mdl, ".mdl", "")..".png")
 			end
 		end
-		
+
 		if self.CurrentKey == "Material" or self.CurrentKey == "SpritePath" then
 			pace.bookmarked_ressources = pace.bookmarked_ressources or {}
 			if not pace.bookmarked_ressources["materials"] then
@@ -1333,15 +1333,15 @@ do -- base editable
 					"metal"
 				}
 			end
-			
+
 			local pnl, menu2 = menu:AddSubMenu(L"Load favourite materials", function()
             end)
 			menu2:SetImage("icon16/cart_go.png")
-			
+
 			for id,mat in ipairs(pace.bookmarked_ressources["materials"]) do
 				mat = string.gsub(mat, "^materials/", "")
 				local mat_no_ext = string.StripExtension(mat)
-				
+
 				if string.find(mat, "%[%d+,%d+%]") then --find the bracket notation
 					mat_no_ext = string.gsub(mat_no_ext, "%[%d+,%d+%]", "")
 					pace.AddSubmenuWithBracketExpansion(pnl, function(str)
@@ -1354,7 +1354,7 @@ do -- base editable
 							pace.current_part:SetSpritePath(str)
 						end
 					end, mat_no_ext, "vmt", "materials")
-					
+
 				else
 					pnl:AddOption(string.StripExtension(mat), function()
 						self:SetValue(mat_no_ext)
@@ -1365,7 +1365,7 @@ do -- base editable
 						end
 					end):SetMaterial(mat)
 				end
-				
+
 			end
 		end
 
@@ -1383,11 +1383,11 @@ do -- base editable
 						"phx/explode02.wav"
 					}
 				end
-				
+
 				local pnl, menu2 = menu:AddSubMenu(L"Load favourite sounds", function()
 				end)
 				menu2:SetImage("icon16/cart_go.png")
-				
+
 				for id,snd in ipairs(pace.bookmarked_ressources["sound"]) do
 					local extension = string.GetExtensionFromFilename(snd)
 					local snd_no_ext = string.StripExtension(snd)
@@ -1402,7 +1402,7 @@ do -- base editable
 								pace.current_part:SetPath(str)
 							end
 						end, snd_no_ext, extension, "sound")
-						
+
 					elseif not single_menu and string.find(snd_no_ext, "%d+") then	--find a file ending in a number
 																					--expand only if we want it with the cvar
 						pace.AddSubmenuWithBracketExpansion(pnl, function(str)
@@ -1415,7 +1415,7 @@ do -- base editable
 						end, snd_no_ext, extension, "sound")
 
 					else
-						
+
 						local icon = "icon16/sound.png"
 
 						if string.find(snd, "music") or string.find(snd, "theme") then
@@ -1423,7 +1423,7 @@ do -- base editable
 						elseif string.find(snd, "loop") then
 							icon = "icon16/arrow_rotate_clockwise.png"
 						end
-						
+
 						pnl:AddOption(snd, function()
 							self:SetValue(snd)
 							if self.CurrentKey == "Sound" then
@@ -1431,24 +1431,24 @@ do -- base editable
 							elseif self.CurrentKey == "Path" then
 								pace.current_part:SetPath(snd)
 							end
-							
+
 						end):SetIcon(icon)
 					end
-					
-					
+
+
 				end
 			end
 		end
 
 		--long string menu to bypass the DLabel's limits, only applicable for sound2 for urls and base part's notes
 		if (pace.current_part.ClassName == "sound2" and self.CurrentKey == "Path") or self.CurrentKey == "Notes" then
-			
+
 			menu:AddOption(L"Insert long text", function()
 				local pnl = vgui.Create("DFrame")
 				local DText = vgui.Create("DTextEntry", pnl)
 				local DButtonOK = vgui.Create("DButton", pnl)
 				DText:SetMaximumCharCount(50000)
-				
+
 				pnl:SetSize(1200,800)
 				pnl:SetTitle("Long text for " .. self.CurrentKey .. ". Do not touch the label after this!")
 				pnl:SetPos(200, 100)
@@ -2253,12 +2253,12 @@ function pace.OpenTreeSearch()
 			self:SetColor(Color(150,150,150))
 		end
 	end
-	
+
 
 	local function select_match()
 		if table.IsEmpty(pace.tree_search_matches) then range_label:SetText("0 / 0") return end
 		if not pace.tree_search_matches[pace.tree_search_match_index] then return end
-		
+
 		resulting_part = pace.tree_search_matches[pace.tree_search_match_index].part_matched
 		matched_property = pace.tree_search_matches[pace.tree_search_match_index].key_matched
 		if resulting_part ~= pace.current_part then pace.OnPartSelected(resulting_part, true) end
@@ -2292,7 +2292,7 @@ function pace.OpenTreeSearch()
 	base:SetDraggable(false)
 	base:SetX(pace.Editor:GetX())
 	base:ShowCloseButton(false)
-	
+
 	close_button:SetSize(40,20)
 	close_button:SetPos(450,2)
 	close_button:SetText("close")
@@ -2310,12 +2310,12 @@ function pace.OpenTreeSearch()
 		search_term = edit:GetText()
 		if not case_sensitive then search_term = string.lower(search_term) end
 		for _,part in pairs(pac.GetLocalParts()) do
-			
+
 			for k,v in pairs(part:GetProperties()) do
 				local value = v.get(part)
-				
+
 				if (type(value) ~= "number" and type(value) ~= "string") or tree_search_excluded_vars[v.key] then continue end
-				
+
 				value = tostring(value)
 				if not case_sensitive then value = string.lower(value) end
 
@@ -2353,7 +2353,7 @@ function pace.OpenTreeSearch()
 		range_label:SetText(pace.tree_search_match_index .. " / " .. #pace.tree_search_matches)
 		select_match()
 	end
-	
+
 	search_button:SetSize(50,20)
 	search_button:SetPos(400,2)
 	search_button:SetText("search")
@@ -2371,7 +2371,7 @@ function pace.OpenTreeSearch()
 		range_label:SetText(pace.tree_search_match_index .. " / " .. #pace.tree_search_matches)
 		select_match()
 	end
-	
+
 	function edit.OnEnter()
 		if self.previous_search ~= edit:GetText() then
 			perform_search()
@@ -2382,8 +2382,8 @@ function pace.OpenTreeSearch()
 			perform_search()
 		end
 		select_match()
-		
+
 		timer.Simple(0.1,function() edit:RequestFocus() end)
 	end
-	
+
 end

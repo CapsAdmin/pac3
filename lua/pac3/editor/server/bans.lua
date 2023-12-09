@@ -135,7 +135,7 @@ net.Receive("pac.RequestBanStates", function(len,ply)
 	pac.Message("Received ban list request from : ", ply)
 	pac.Message("Time : ", os.date( "%a %X %x", os.time() ))
 	local players = {}
-	for _,v in pairs(player.GetAll()) do 
+	for _,v in pairs(player.GetAll()) do
 		players[v] = false
 	end
 	if not pace.Bans then

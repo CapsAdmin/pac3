@@ -789,7 +789,7 @@ do -- event is_touching
 			local x_stretch = part:GetProperty("x_stretch") or 1
 			local y_stretch = part:GetProperty("y_stretch") or 1
 			local z_stretch = part:GetProperty("z_stretch") or 1
-			
+
 			local ent
 			if part.RootOwner then
 				ent = part:GetRootPart():GetOwner()
@@ -797,7 +797,7 @@ do -- event is_touching
 				ent = part:GetOwner()
 			end
 
-			if nearest_model then ent = part:GetOwner() end 
+			if nearest_model then ent = part:GetOwner() end
 
 			if not IsValid(ent) then stop() return end
 			local radius
@@ -812,9 +812,9 @@ do -- event is_touching
 			radius = math.max(ent:BoundingRadius() + extra_radius + 1, 1)
 			mins = mins * radius
 			maxs = maxs * radius
-			
+
 			local startpos = ent:WorldSpaceCenter()
-			local b = false 
+			local b = false
 			if part:GetEvent() == "is_touching" or part:GetEvent() == "is_touching_scalable" then
 				local tr = util.TraceHull( {
 					start = startpos,
@@ -828,7 +828,7 @@ do -- event is_touching
 				local found = false
 				local ents_hits = ents.FindInBox(startpos + mins, startpos + maxs)
 				for _,ent2 in pairs(ents_hits) do
-					
+
 					if IsValid(ent2) and (ent2 ~= ent and ent2 ~= part:GetRootPart():GetOwner()) and
 					(ent2:IsNPC() or ent2:IsPlayer())
 					then
@@ -850,7 +850,7 @@ do -- event is_touching
 					then b = true end
 				end
 			end
-			
+
 			if self.udata then
 				render.DrawWireframeBox( startpos, Angle( 0, 0, 0 ), mins, maxs, b and Color(255,0,0) or Color(255,255,255), true )
 			end
@@ -889,7 +889,7 @@ do --projectile radius
 					render.DrawWireframeBox( last_part:GetWorldPosition(), last_part:GetWorldAngles(), -mins_ph, mins_ph, Color(255,255,255), true )
 					render.DrawWireframeBox( last_part:GetWorldPosition(), last_part:GetWorldAngles(), -mins_dm, mins_dm, Color(255,0,0), true )
 				end
-				
+
 			end
 		end)
 	end

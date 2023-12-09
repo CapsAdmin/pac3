@@ -25,7 +25,7 @@ do
 	local color = Color(255, 255, 255, 255)
 
 	function pac.DrawBeam(veca, vecb, dira, dirb, bend, res, width, start_color, end_color, frequency, tex_stretch, tex_scroll, width_bend, width_bend_size, width_start_mul, width_end_mul, width_pow)
-		
+
 		if not veca or not vecb or not dira or not dirb then return end
 
 		ax = veca.x; ay = veca.y; az = veca.z

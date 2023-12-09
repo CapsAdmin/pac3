@@ -66,7 +66,7 @@ BUILDER:StartStorableVars()
 		ADD(PART, "HorizontalAirFrictionMultiplier", 1, {editor_clamp = {0,  1}, editor_sensitivity = 0.1})
 		ADD(PART, "MaxAirSpeed", 750)
 		ADD(PART, "StrafingStrengthMultiplier", 1)
-		
+
 
 	BUILDER:SetPropertyGroup("view angles")
 		ADD(PART, "ReversePitch", false)
@@ -101,8 +101,8 @@ end
 
 function PART:OnShow()
 	local ent = self:GetPlayerOwner()
-	
-	if ent:IsValid() then 
+
+	if ent:IsValid() then
 		if ent:GetClass() == "viewmodel" then ent = self:GetPlayerOwner() end
 		ent.last_movement_part = self:GetUniqueID()
 		for i,v in ipairs(update_these) do

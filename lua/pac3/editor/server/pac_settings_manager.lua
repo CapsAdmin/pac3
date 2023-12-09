@@ -6,7 +6,7 @@ net.Receive("pac_send_sv_cvar", function(len,ply)
 	local cmd = net.ReadString()
 	local val = net.ReadString()
 	--if cmd == "" then
-		
+
 	--end
 	GetConVar(cmd):SetString(val)
 	print("[PAC3]: Admin "..ply:GetName().." set "..cmd.." to "..val)

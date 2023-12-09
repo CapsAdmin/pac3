@@ -518,7 +518,7 @@ function pac.FindPartByPartialUniqueID(owner_id, crumb)
 					closest_match = part
 					length_of_closest_match = end_i - start_i + 1
 				end
-				
+
 			end
 		end
 

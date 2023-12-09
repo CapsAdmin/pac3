@@ -280,12 +280,12 @@ do
 				local pnl = Derma_Query("Do you want to load your autoload outfit?", "PAC3 autoload (pac_prompt_for_autoload)",
 					"load pac3/autoload.txt : " .. string.NiceSize(file.Size("pac3/autoload.txt", "DATA")), function()
 						pac.Message("Wearing autoload...")
-						pace.LoadParts("autoload") 
+						pace.LoadParts("autoload")
 						pace.WearParts()
 					end,
 
 					"load latest outfit : pac3/" .. latest_outfit .. " " .. string.NiceSize(file.Size("pac3/" .. latest_outfit, "DATA")), function()
-							
+
 						if latest_outfit and file.Exists("pac3/" .. latest_outfit, "DATA") then
 							pac.Message("Wearing latest outfit...")
 							pace.LoadParts(latest_outfit, true)
@@ -303,7 +303,7 @@ do
 					local pnl = Derma_Query("Do you want to load an outfit?", "PAC3 autoload (pac_prompt_for_autoload)",
 						"load pac3/autoload.txt : " .. string.NiceSize(file.Size("pac3/autoload.txt", "DATA")), function()
 							pac.Message("Wearing autoload...")
-							pace.LoadParts("autoload") 
+							pace.LoadParts("autoload")
 							pace.WearParts()
 						end,
 
@@ -328,7 +328,7 @@ do
 					local pnl = Derma_Query("Do you want to load your autoload outfit?", "PAC3 autoload (pac_prompt_for_autoload)",
 						"load pac3/autoload.txt : " .. string.NiceSize(file.Size("pac3/autoload.txt", "DATA")), function()
 							pac.Message("Wearing autoload...")
-							pace.LoadParts("autoload") 
+							pace.LoadParts("autoload")
 							pace.WearParts()
 						end,
 

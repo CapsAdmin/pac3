@@ -80,13 +80,13 @@ local function populate_pac(menu)
 			version_pnl:SetImage(pace.MiscIcons.info)
 
 			version:AddOption(version_string)
-			
+
 			version:AddOption("local update changelogs", function() pac.OpenMOTD("local_changelog") end)
 			version:AddOption("external commit history", function() pac.OpenMOTD("commit_history") end)
 			version:AddOption("major update news (combat update)", function() pac.OpenMOTD("combat_update") end)
 		end
 
-		
+
 
 		help:AddOption(
 			L"about",
@@ -98,7 +98,7 @@ local function populate_pac(menu)
 		menu:AddOption(L"exit", function() pace.CloseEditor() end):SetImage(pace.MiscIcons.exit)
 	end
 
-	
+
 end
 
 local function populate_view(menu)
@@ -143,7 +143,7 @@ local function populate_options(menu)
 			popup_pref_mode:AddOption(L"menu bar", function() RunConsoleCommand("pac_popups_preferred_location", "menu bar") end):SetImage('icon16/layout_header.png')
 			popup_pref_mode:AddOption(L"cursor", function() RunConsoleCommand("pac_popups_preferred_location", "cursor") end):SetImage('icon16/mouse.png')
 			popup_pref_mode:AddOption(L"screen", function() RunConsoleCommand("pac_popups_preferred_location", "screen") end):SetImage('icon16/monitor.png')
-	
+
 	menu:AddOption(L"configure event wheel", pace.ConfigureEventWheelMenu):SetImage("icon16/color_wheel.png")
 
 	local copilot, pnlc = menu:AddSubMenu("configure editor copilot", function() end)
@@ -164,14 +164,14 @@ local function populate_options(menu)
 	local combat_consents, pnlcc = menu:AddSubMenu("pac combat consents", function() end)
 	combat_consents.GetDeleteSelf = function() return false end
 	pnlcc:SetImage("icon16/joystick.png")
-	
+
 	combat_consents:AddCVar(L"damage_zone part (area damage)", "pac_client_damage_zone_consent", "1", "0")
 	combat_consents:AddCVar(L"hitscan part (bullets)", "pac_client_hitscan_consent", "1", "0")
 	combat_consents:AddCVar(L"force part (physics forces)", "pac_client_force_consent", "1", "0")
 	combat_consents:AddCVar(L"lock part's grab (can take control of your position)", "pac_client_grab_consent", "1", "0")
 	combat_consents:AddCVar(L"lock part's grab calcview (can take control of your view)", "pac_client_lock_camera_consent", "1", "0")
-	
-	
+
+
 	menu:AddSpacer()
 	menu:AddOption(L"position grid size", function()
 		Derma_StringRequest(L"position grid size", L"size in units:", GetConVarNumber("pac_grid_pos_size"), function(val)

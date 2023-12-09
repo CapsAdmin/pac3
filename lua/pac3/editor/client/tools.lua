@@ -823,16 +823,16 @@ end)
 
 --aka pace.UltraCleanup
 pace.AddTool(L"Destroy hidden parts, proxies and events", function(part)
-	
+
 	if not part then part = pace.current_part end
 	root = part:GetRootPart()
-	
+
 	pnl = Derma_Query("Only do this if you know what you're doing!\nMark parts as important in their notes to protect them.", "Warning",
 		"Destroy!", function() pace.UltraCleanup( root ) end,
 		"cancel", nil
 	)
 	pnl:SetWidth(300)
-	
+
 end)
 
 pace.AddTool(L"stop all custom animations", function()

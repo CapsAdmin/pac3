@@ -46,7 +46,7 @@ function PART:register_command_event(str,b)
 
 	local event = str
 	local flush = b
-	
+
 	local num = tonumber(string.sub(event, string.find(event,"[%d]+$") or 0)) or 0
 
 	if string.find(event,"[%d]+$") then
@@ -79,7 +79,7 @@ function PART:fix_event_operator()
 				self.Operator = PART.Events[self.Event].preferred_operator --which depends, it's usually above but we'll have cases where it's best to have below, or equal
 				self:SetInfo("The operator was automatically changed to work with this event type, which handles numbers")
 			end
-			
+
 		elseif event_type == "string" then
 			if self.Operator ~= "find" and self.Operator ~= "find simple" and self.Operator ~= "equal" then
 				self.Operator = PART.Events[self.Event].preferred_operator --find simple
@@ -105,9 +105,9 @@ function PART:AttachEditorPopup(str)
 			info_string = "invalid event"
 		end
 		--if verbosity == "reference tutorial" or verbosity == "beginner tutorial" then
-			
+
 		--end
-		
+
 		str = info_string or str
 	end
 	self:SetupEditorPopup(info_string, true)
@@ -116,7 +116,7 @@ end
 function PART:SetEvent(event)
 	local reset = (self.Arguments == "") or
 	(self.Arguments ~= "" and self.Event ~= "" and self.Event ~= event)
-	
+
 	if not self.Events[event] then --invalid event? try a command event
 		local command_was_found_in_cmd_part = false
 		for i,v in ipairs(pac.GetLocalParts()) do
@@ -133,11 +133,11 @@ function PART:SetEvent(event)
 					--now we'll use event as a command name
 					self:SetEvent("command")
 					self.pace_properties["Event"]:SetValue("command")
-					
+
 					self:SetArguments(event .. "@@0")
 					self.pace_properties["Arguments"]:SetValue(event .. "@@0@@0")
 					pace.PopulateProperties(self)
-					
+
 				end)
 				return
 			end
@@ -151,7 +151,7 @@ function PART:SetEvent(event)
 	--foolproofing: fix the operator to match the event's type, and fix arguments as needed
 	self:fix_event_operator()
 	self:fix_args()
-	
+
 	pace.changed_event = self --a reference to make it refresh the popup label panel
 	pace.changed_event_time = CurTime()
 
@@ -174,7 +174,7 @@ function PART:Initialize()
 			end
 		end)
 	end
-	
+
 end
 
 local function get_default(typ)
@@ -366,7 +366,7 @@ local animation_event_enums = {
 
 PART.Events = {}
 PART.OldEvents = {
-	
+
 	random = {
 		operator_type = "number", preferred_operator = "above",
 		arguments = {{compare = "number"}},
@@ -444,7 +444,7 @@ PART.OldEvents = {
 				return false
 			end
 			self.number = time - self.time
-			
+
 			return self:NumberOperator(self.number, seconds)
 		end,
 	},
@@ -729,7 +729,7 @@ PART.OldEvents = {
 	client_spawned = {
 		operator_type = "number", preferred_operator = "below",
 		tutorial_explanation = "client_spawned supposedly activates for some time after you spawn",
-		
+
 		arguments = {{time = "number"}},
 		callback = function(self, ent, time)
 			time = time or 0.1
@@ -801,7 +801,7 @@ PART.OldEvents = {
 				if npcs_and_players_only and (not res.Entity:IsPlayer() and not res.Entity:IsNPC()) then
 					return false
 				end
-				
+
 				return self:NumberOperator(res.Fraction * distance, compare)
 			else
 				local classname = parent:GetNiceName()
@@ -821,7 +821,7 @@ PART.OldEvents = {
 		arguments = {{exclude_noclip = "boolean"}, {surfaces = "string"}},
 		userdata = {{}, {enums = function()
 			--grounds_enums =
-			return 
+			return
 			{
 				["MAT_ANTLION"] = "65",
 				["MAT_BLOODYFLESH"] = "66",
@@ -933,7 +933,7 @@ PART.OldEvents = {
 			return false
 		end,
 	},
-	
+
 	--this one uses util.TraceHull
 	is_touching = {
 		operator_type = "none",
@@ -958,7 +958,7 @@ PART.OldEvents = {
 			mins = mins * radius
 			maxs = maxs * radius
 
-			
+
 			local tr = util.TraceHull( {
 				start = startpos,
 				endpos = startpos,
@@ -966,7 +966,7 @@ PART.OldEvents = {
 				mins = mins,
 				filter = {ent, self:GetRootPart():GetOwner()}
 			})
-			
+
 			return tr.Hit
 		end,
 		nice = function(self, ent, extra_radius, nearest_model)
@@ -978,7 +978,7 @@ PART.OldEvents = {
 			end
 
 			radius = math.Round(math.max(radius + extra_radius + 1, 1))
-			
+
 			local str = self.Event .. " [radius: " .. radius .. "]"
 			return str
 		end,
@@ -1018,7 +1018,7 @@ PART.OldEvents = {
 					not ( (no_npc and ent2:IsNPC()) or (no_players and ent2:IsPlayer()) )
 				then b = true end
 			end
-			
+
 			return b
 		end,
 		nice = function(self, ent, extra_radius, no_npc, no_players, nearest_model)
@@ -1042,11 +1042,11 @@ PART.OldEvents = {
 	is_touching_life = {
 		operator_type = "none",
 		tutorial_explanation = "is_touching_life checks in a stretchable box (ents.FindInBox) around the host model to see if there's something inside it.\nusually the center is the parent model or root owner entity,\nbut you can force it to use the nearest pac3 model as an owner to override the old root owner setting,\nin case of issues when stacking this event inside others",
-		
+
 		arguments = {{extra_radius = "number"}, {x_stretch = "number"}, {y_stretch = "number"}, {z_stretch = "number"}, {no_npc = "boolean"}, {no_players = "boolean"}, {nearest_model = "boolean"}},
 		userdata = {{editor_panel = "is_touching", default = 0}, {x = "x_stretch", default = 1}, {y = "y_stretch", default = 1}, {z = "z_stretch", default = 1}, {default = false}, {default = false}, {default = false}},
 		callback = function(self, ent, extra_radius, x_stretch, y_stretch, z_stretch, no_npc, no_players, nearest_model)
-			
+
 			if nearest_model then ent = self:GetOwner() end
 			extra_radius = extra_radius or 0
 			no_npc = no_npc or false
@@ -1075,7 +1075,7 @@ PART.OldEvents = {
 			for _,ent2 in pairs(ents_hits) do
 				if IsValid(ent2) and (ent2 ~= ent and ent2 ~= self:GetRootPart():GetOwner()) and
 				(ent2:IsNPC() or ent2:IsPlayer())
-				
+
 				then
 					b = true
 					if ent2:IsNPC() and no_npc then
@@ -1111,7 +1111,7 @@ PART.OldEvents = {
 	is_touching_scalable = {
 		operator_type = "none",
 		tutorial_explanation = "is_touching_life checks in a stretchable box (util.TraceHull) around the host model to see if there's something inside it.\nusually the center is the parent model or root owner entity,\nbut you can force it to use the nearest pac3 model as an owner to override the old root owner setting,\nin case of issues when stacking this event inside others",
-		
+
 		arguments = {{extra_radius = "number"}, {x_stretch = "number"}, {y_stretch = "number"}, {z_stretch = "number"}, {nearest_model = "boolean"}},
 		userdata = {{editor_panel = "is_touching", default = 0}, {x = "x_stretch", default = 1}, {y = "y_stretch", default = 1}, {z = "z_stretch", default = 1}, {default = false}},
 		callback = function(self, ent, extra_radius, x_stretch, y_stretch, z_stretch, nearest_model)
@@ -1121,7 +1121,7 @@ PART.OldEvents = {
 			y_stretch = y_stretch or 1
 			z_stretch = z_stretch or 1
 			nearest_model = nearest_model or false
-			
+
 			local mins = Vector(-x_stretch,-y_stretch,-z_stretch)
 			local maxs = Vector(x_stretch,y_stretch,z_stretch)
 			local startpos = ent:WorldSpaceCenter()
@@ -1158,7 +1158,7 @@ PART.OldEvents = {
 	is_explicit = {
 		operator_type = "none",
 		tutorial_explanation = "is_explicit activates for viewers who want to hide explicit content with pac_hide_disturbing.\nyou can make special censoring effects for them, for example",
-		
+
 		callback = function(self, ent)
 			return GetConVar("pac_hide_disturbing"):GetBool()
 		end
@@ -1380,11 +1380,11 @@ PART.OldEvents = {
 
 			local data = ent.pac_anim_event
 			local b = false
-			
+
 			if data and (self:StringOperator(data.name, find) and (time == 0 or data.time + time > pac.RealTime)) then
 				data.reset = false
 				b = true
-				if try_stop_gesture then 
+				if try_stop_gesture then
 					if string.find(find, "attack grenade") then
 						ent:AnimResetGestureSlot( GESTURE_SLOT_GRENADE )
 					elseif string.find(find, "attack") or string.find(find, "reload") then
@@ -1467,7 +1467,7 @@ PART.OldEvents = {
 								output[name_substring] = name_substring
 							end
 						end
-						
+
 					elseif part.ClassName == "event" and part.Event == "command" then
 						local cmd, time, hide = part:GetParsedArgumentsForObject(part.Events.command)
 						output[cmd] = cmd
@@ -1485,7 +1485,7 @@ PART.OldEvents = {
 			return "command: [" .. self.Operator .. " " .. find .."] | " .. "duration: " .. time
 		end,
 		callback = function(self, ent, find, time)
-			
+
 			time = time or 0
 
 			local ply = self:GetPlayerOwner()
@@ -1802,7 +1802,7 @@ PART.OldEvents = {
 	dot_right = {
 		operator_type = "number", preferred_operator = "above",
 		tutorial_explanation = "the dot product is a mathematical operation on vectors (angles / arrows / directions).\n\nfor reference, vectors angled 0 degrees apart have dot of 1, 45 degrees is around 0.707 (half of the square root of 2), 90 degrees is 0,\nand when you go beyond that it goes negative the same way (145 degrees: dot = -0.707, 180 degrees: dot = -1).\n\ndot_right takes the viewer's eye angles and the root owner's RIGHT component of eye angles;\nmakes the dot product and compares it with the number defined in normal.\nfor example, dot_right below 0.707 should make something visible if you don't look beyond 45 degrees of the direction of the owner's side",
-		
+
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
 
@@ -1821,7 +1821,7 @@ PART.OldEvents = {
 	flat_dot_forward = {
 		operator_type = "number", preferred_operator = "above",
 		tutorial_explanation = "the dot product is a mathematical operation on vectors (angles / arrows / directions).\n\nfor reference, vectors angled 0 degrees apart have dot of 1, 45 degrees is around 0.707 (half of the square root of 2), 90 degrees is 0,\nand when you go beyond that it goes negative the same way (145 degrees: dot = -0.707, 180 degrees: dot = -1).\n\ndot_forward takes the viewer's eye angles and the root owner's FORWARD component of eye angles;\nmakes the dot product and compares it with the number defined in normal.\nfor example, dot_forward below 0.707 should make something visible if you don't look beyond 45 degrees of the direction of the owner's forward eye angles.\nflat means it's projecting onto a 2D plane, so if you're looking down it won't make a difference",
-		
+
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
 			local owner = self:GetRootPart():GetOwner()
@@ -1843,7 +1843,7 @@ PART.OldEvents = {
 	flat_dot_right = {
 		operator_type = "number", preferred_operator = "above",
 		tutorial_explanation = "the dot product is a mathematical operation on vectors (angles / arrows / directions).\n\nfor reference, vectors angled 0 degrees apart have dot of 1, 45 degrees is around 0.707 (half of the square root of 2), 90 degrees is 0,\nand when you go beyond that it goes negative the same way (145 degrees: dot = -0.707, 180 degrees: dot = -1).\n\ndot_right takes the viewer's eye angles and the root owner's RIGHT component of eye angles;\nmakes the dot product and compares it with the number defined in normal.\nfor example, dot_right below 0.707 should make something visible if you don't look beyond 45 degrees of the direction of the owner's side.\nflat means it's projecting onto a 2D plane, so if you're looking down it won't make a difference",
-		
+
 		arguments = {{normal = "number"}},
 		callback = function(self, ent, normal)
 			local owner = self:GetRootPart():GetOwner()
@@ -1876,11 +1876,11 @@ PART.OldEvents = {
 		callback = function(self, ent)
 			if not ent:IsPlayer() then return false end
 			local vehicle = ent:GetVehicle()
-			
+
 			if IsValid(vehicle) then --vehicle entity exists
 				if IsValid(vehicle:GetParent()) then --some vehicle seats have a parent
 					--print(vehicle:GetParent().PassengerSeats)
-					
+
 					if vehicle:GetParent():GetClass() == "gmod_sent_vehicle_fphysics_base" and ent.IsDrivingSimfphys then --try simfphys
 						return ent:IsDrivingSimfphys() and ent:GetVehicle() == ent:GetSimfphys():GetDriverSeat() --in simfphys vehicle and seat is the driver seat
 					elseif vehicle:GetParent().BaseClass.ClassName == "wac_hc_base" then --try with WAC aircraft too
@@ -1906,7 +1906,7 @@ PART.OldEvents = {
 		callback = function(self, ent)
 			if not ent:IsPlayer() then return false end
 			local vehicle = ent:GetVehicle()
-			
+
 			if IsValid(vehicle) then --vehicle entity exists
 				if IsValid(vehicle:GetParent()) then --some vehicle seats have a parent
 					if vehicle:GetParent():GetClass() == "gmod_sent_vehicle_fphysics_base" and ent.IsDrivingSimfphys then --try simfphys
@@ -1990,8 +1990,8 @@ PART.OldEvents = {
 					end
 				end
 			end
-			
-			
+
+
 			return false
 		end,
 		nice = function(self, ent, name_or_id)
@@ -2002,7 +2002,7 @@ PART.OldEvents = {
 			local str = "weapon_firemode ["..self.Operator.. " " .. name_or_id .. "] | "
 
 			if wep.IsFAS2Weapon then
-				
+
 				if wep.FireMode then
 					str = str .. wep.FireMode .. " | options : "
 					for i,v in ipairs(wep.FireModes) do
@@ -2011,7 +2011,7 @@ PART.OldEvents = {
 				else str = str .. "<none>" end
 				return str
 			end
-			
+
 			if wep.ArcCW then
 				if not IsValid(wep) then return "no active weapon" end
 				if wep.GetFiremodeName then
@@ -2050,8 +2050,8 @@ PART.OldEvents = {
 				str = str .. " | options : 1/auto/automatic, 0/single/semi-auto/semi-automatic"
 				return str
 			end
-			
-			
+
+
 			return str
 		end
 	},
@@ -2073,7 +2073,7 @@ PART.OldEvents = {
 			return false
 		end
 	},
-	
+
 	damage_zone_hit = {
 		operator_type = "mixed", preferred_operator = "above",
 		arguments = {{time = "number"}, {damage = "number"}, {uid = "string"}},
@@ -2248,7 +2248,7 @@ PART.OldEvents = {
 				if ent.pac_healthbars_layertotals[layer] then
 					return self:NumberOperator(ent.pac_healthbars_layertotals[layer], HpValue)
 				end
-				
+
 			end
 			return false
 		end,
@@ -2260,7 +2260,7 @@ PART.OldEvents = {
 				else
 					str = str .. " | not found"
 				end
-				
+
 			else
 				str = str .. " | not found"
 			end
@@ -2310,7 +2310,7 @@ PART.OldEvents = {
 
 
 do
-	
+
 	--[[local base_input_enums_names = {
 		["IN_ATTACK"] = 1,
 		["IN_JUMP"] = 2,
@@ -2366,7 +2366,7 @@ do
 	end
 
 	pac.key_enums = enums
-	
+
 --@note button broadcast
 
 	--TODO: Rate limit!!!
@@ -2394,10 +2394,10 @@ do
 					end
 				end
 			end
-		
+
 			pac.key_enums = enums
 		end
-		
+
 		key = pac.key_enums[key] or key
 
 		ply.pac_buttons = ply.pac_buttons or {}
@@ -2411,8 +2411,8 @@ do
 
 		--outsource the part pool operations
 		pac.UpdateButtonEvents(ply, key, down)
-		
-		
+
+
 	end)
 
 	PART.OldEvents.button = {
@@ -2441,10 +2441,10 @@ do
 			return self:GetOperator() .. " \"" .. button .. "\"" .. " in (" .. active .. ")"
 		end,
 		callback = function(self, ent, button, holdtime, toggle)
-			
+
 			local holdtime = holdtime or 0
 			local toggle = toggle or false
-			
+
 			self.togglestate = self.togglestate or false
 			self.holdtime = holdtime
 			self.toggle = toggle
@@ -2459,12 +2459,12 @@ do
 			--print(button, "hold" ,self.holdtime)
 			local ply = self:GetPlayerOwner()
 			self.pac_broadcasted_buttons_holduntil = self.pac_broadcasted_buttons_holduntil or {}
-			
+
 
 			if ply == pac.LocalPlayer then
-				
+
 				ply.pac_broadcast_buttons = ply.pac_broadcast_buttons or {}
-				
+
 				if not ply.pac_broadcast_buttons[button] then
 					local val = enums2[button:lower()]
 					if val then
@@ -2474,7 +2474,7 @@ do
 					end
 					ply.pac_broadcast_buttons[button] = true
 				end
-				
+
 				--print(button, ply.pac_broadcasted_buttons_holduntil[button], ply.pac_broadcast_buttons[button])
 				--PrintTable(ply.pac_broadcast_buttons)
 				--PrintTable(self.pac_broadcasted_buttons_holduntil)
@@ -2494,7 +2494,7 @@ do
 				else
 					return buttons[button]
 				end
-				
+
 			end
 		end,
 	}
@@ -2653,7 +2653,7 @@ do
 		local arguments = data.arguments
 		local think = data.callback
 		local eventObject = pac.CreateEvent(classname)
-		
+
 		if arguments then
 			for i, data2 in ipairs(arguments) do
 				local key, Type = next(data2)
@@ -2892,7 +2892,7 @@ local function is_hidden_by_something_else(part, ignored_part)
 	if part.active_events_ref_count > 0 and not part.active_events[ignored_part] then
 		return true
 	end
-	
+
 	return part.Hide
 end
 
@@ -2979,7 +2979,7 @@ function PART:OnThink()
 	if not ent:IsValid() then return end
 
 	local data = PART.Events[self.Event]
-	
+
 	if not data then return end
 
 	self:fix_args()
@@ -3000,14 +3000,14 @@ function PART:SetAffectChildrenOnly(b)
 		--print("changing")
 		local ent = get_owner(self)
 		local data = PART.Events[self.Event]
-		
+
 		if ent:IsValid() and data then
 			local b = should_trigger(self, ent, data)
 			if self.AffectChildrenOnly then
 				local parent = self:GetParent()
 				if parent:IsValid() then
 					parent:SetEventTrigger(self, b)
-		
+
 					for _, child in ipairs(self:GetChildren()) do
 						if child.active_events[self] then
 							child.active_events[self] = nil
@@ -3016,7 +3016,7 @@ function PART:SetAffectChildrenOnly(b)
 						end
 					end
 				end
-				
+
 			else
 				for _, child in ipairs(self:GetChildren()) do
 					child:SetEventTrigger(self, b)
@@ -3029,12 +3029,12 @@ function PART:SetAffectChildrenOnly(b)
 						parent:CallRecursive("CalcShowHide", false)
 					end
 				end
-				
+
 			end
 		end
 	end
 	self.AffectChildrenOnly = b
-	
+
 end
 
 function PART:OnRemove()
@@ -3072,7 +3072,7 @@ function PART:TriggerEvent(b)
 				self.previousdestinationpart:SetEventTrigger(self, false)
 			end
 		end
-		
+
 		(self.DestinationPart):SetEventTrigger(self, b)
 		self.previousdestinationpart = (self.DestinationPart)
 	elseif IsValid(self.previousdestinationpart) then
@@ -3386,7 +3386,7 @@ concommand.Add("pac_event_sequenced", function(ply, cmd, args)
 			ply.pac_command_events[event..i] = {name = event..i, time = 0, on = 0}
 		end
 	end
-	
+
 	if found then
 		if action == "+" or action == "forward" or action == "add" or action == "sequence+" or action == "advance" then
 
@@ -3408,7 +3408,7 @@ concommand.Add("pac_event_sequenced", function(ply, cmd, args)
 			if sequence_number == min then
 				target_number = max
 			else target_number = sequence_number - 1 end
-			
+
 			print("sequencing event series: " .. event .. "\n\t" .. sequence_number .. "->" .. target_number .. " / " .. max, "action: "..action)
 			ply.pac_command_events[event..target_number] = {name = event..target_number, time = pac.RealTime, on = 1}
 
@@ -3523,27 +3523,27 @@ do
 				if e == "command" then
 					local cmd, time, hide = v:GetParsedArgumentsForObject(v.Events.command)
 					local this_event_hidden = v:IsHiddenBySomethingElse(false)
-					
+
 
 					if not names[cmd] then
 						--wheel_hidden is the hide_in_eventwheel box
 						--possible_hidden is part hidden
 						names[cmd] = {
 							name = cmd, event = v,
-							
+
 							wheel_hidden = hide,
 							all_wheel_hidden = hide,
-							
+
 							possible_hidden = this_event_hidden,
 							all_possible_hidden = this_event_hidden,
 						}
 					else
 						--if already exists, we need to check counter examples for whether all members are hidden or hide_in_eventwheel
-						
+
 						if not hide then
 							names[cmd].all_wheel_hidden = false
 						end
-					
+
 						if not this_event_hidden then
 							names[cmd].all_possible_hidden = false
 						end
@@ -3558,7 +3558,7 @@ do
 
 
 					end
-					
+
 					available[cmd] = {type = e, time = time, trigger = cmd}
 				end
 			end
@@ -3611,7 +3611,7 @@ do
 				available[cmd] = nil
 			end
 		end
-		
+
 		local list = {}
 
 		if true then
@@ -3621,22 +3621,22 @@ do
 				colors[colstr] = colors[colstr] or {}
 				colors[colstr][name] = available[name]
 			end
-			
+
 
 			for col,tbl in pairs(colors) do
-				
+
 				local sublist = {}
 				for k,v in pairs(tbl) do
 					table.insert(sublist,available[k])
 				end
-				
+
 				table.sort(sublist, function(a, b) return a.trigger < b.trigger end)
 
 				for i,v in pairs(sublist) do
 					table.insert(list,v)
 				end
 			end
-			
+
 			local uncolored_sublist = {}
 
 			for k,v in pairs(available) do
@@ -3644,24 +3644,24 @@ do
 					table.insert(uncolored_sublist,available[k])
 				end
 			end
-			
+
 			table.sort(uncolored_sublist, function(a, b) return a.trigger < b.trigger end)
 
 			for k,v in ipairs(uncolored_sublist) do
 				table.insert(list, v)
 			end
 		else
-			
+
 			for k,v in pairs(available) do
 				if k == names[k].name then
 					v.trigger = k
 					table.insert(list, v)
 				end
 			end
-			
+
 			table.sort(list, function(a, b) return a.trigger > b.trigger end)
 		end
-		
+
 		return list
 	end
 
@@ -3682,7 +3682,7 @@ do
 		open_btn:SetSize(80,30)
 		open_btn:SetText("Customize")
 		open_btn:SetPos(ScrW() - 80,0)
-		
+
 		function open_btn:DoClick()
 
 			if (pace.command_event_menu_opened == nil) then
@@ -3690,7 +3690,7 @@ do
 			elseif IsValid(pace.command_event_menu_opened) then
 				pace.command_event_menu_opened:Remove()
 			end
-			
+
 		end
 
 		if show_customize_button:GetBool() then
@@ -3766,11 +3766,11 @@ do
 
 			local ply = pac.LocalPlayer
 			local data = ply.pac_command_events and ply.pac_command_events[self.event.trigger] and ply.pac_command_events[self.event.trigger]
-			
+
 
 			local d1 = 64 --indicator
-			
-			
+
+
 			local d2 = 50 --color
 			local indicator_color
 			if data then
@@ -3781,7 +3781,7 @@ do
 					local s = Lerp(math.Clamp(f,0,1), 1, 0)
 					local v = Lerp(math.Clamp(f,0,1), 0.55, 0.15)
 					indicator_color = HSVToColor(210,s,v)
-					
+
 				else
 					if data.on == 1 then
 						indicator_color = HSVToColor(210,1,0.55)
@@ -3809,10 +3809,10 @@ do
 				d2 = 50 --indicator
 
 				surface.DrawTexturedRect(x-(d1/2), y-(d1/2), d1, d1)
-				
+
 				surface.SetDrawColor(indicator_color)
 				surface.DrawTexturedRect(x-(d2/2), y-(d2/2), d2, d2)
-				
+
 				draw.RoundedBox(0,x-40,y-8,80,16,Color(0,0,0))
 
 			elseif eventwheel_style:GetInt() == 2 then
@@ -3832,7 +3832,7 @@ do
 			end
 
 			draw.SimpleText(self.name, eventwheel_font:GetString(), x, y, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-			
+
 			cam.PopModelMatrix()
 		end
 
@@ -3840,7 +3840,7 @@ do
 			-- Right clicking cancels
 			if input.IsButtonDown(MOUSE_RIGHT) and not IsValid(pace.command_event_menu_opened) then pac.closeEventSelectionWheel(true) return end
 			if input.IsButtonDown(MOUSE_LEFT) and not pace.command_event_menu_opened and not open_btn:IsHovered() and clickable then
-				
+
 				if not clicking and selected then
 					if not selected.event.time then
 						RunConsoleCommand("pac_event", selected.event.trigger, "toggle")
@@ -3848,7 +3848,7 @@ do
 						RunConsoleCommand("pac_event", selected.event.trigger)
 					else
 						local ply = pac.LocalPlayer
-		
+
 						if ply.pac_command_events and ply.pac_command_events[selected.event.trigger] and ply.pac_command_events[selected.event.trigger].on == 1 then
 							RunConsoleCommand("pac_event", selected.event.trigger, "0")
 						else
@@ -3916,7 +3916,7 @@ do
 		open_btn:SetSize(80,30)
 		open_btn:SetText("Customize")
 		open_btn:SetPos(ScrW() - 80,0)
-		
+
 		function open_btn:DoClick()
 
 			if (pace.command_event_menu_opened == nil) then
@@ -3924,7 +3924,7 @@ do
 			elseif IsValid(pace.command_event_menu_opened) then
 				pace.command_event_menu_opened:Remove()
 			end
-			
+
 		end
 
 		if show_customize_button:GetBool() then
@@ -3947,14 +3947,14 @@ do
 		local selections = {}
 		local events = get_events()
 		for i, v in ipairs(events) do
-			
-			
+
+
 			local list_element = vgui.Create("DPanel")
-			
+
 			panels[i] = list_element
 			list_element:SetSize(250,height)
 			list_element.event = v
-			
+
 			selections[i] = {
 				grow = 0,
 				name = v.trigger,
@@ -3969,7 +3969,7 @@ do
 					RunConsoleCommand("pac_event", selected.event.trigger)
 				else
 					local ply = pac.LocalPlayer
-	
+
 					if ply.pac_command_events and ply.pac_command_events[selected.event.trigger] and ply.pac_command_events[selected.event.trigger].on == 1 then
 						RunConsoleCommand("pac_event", selected.event.trigger, "0")
 					else
@@ -3989,7 +3989,7 @@ do
 					elseif not input.IsMouseDown(MOUSE_LEFT) then self.was_clicked = false end
 				end
 			end
-			
+
 		end
 
 		gui.EnableScreenClicker(true)
@@ -4008,7 +4008,7 @@ do
 			local y = 0
 			for i, v in ipairs(selections) do
 				if IsValid(v.pnl) then
-					
+
 					if y + height > ScrH() then
 						y = 0
 						x = x + 200
@@ -4020,7 +4020,7 @@ do
 					local ply = pac.LocalPlayer
 					local data = ply.pac_command_events and ply.pac_command_events[list_element.event.trigger]
 					local indicator_color
-					
+
 					if data then
 						local is_oneshot = list_element.event.time and list_element.event.time > 0
 
@@ -4028,7 +4028,7 @@ do
 							local f = (pac.RealTime - data.time) / list_element.event.time
 							local s = Lerp(math.Clamp(f,0,1), 1, 0)
 							local v = Lerp(math.Clamp(f,0,1), 0.55, 0.15)
-							
+
 							indicator_color = HSVToColor(210,s,v)
 						else
 							if data.on == 1 then
@@ -4046,7 +4046,7 @@ do
 						local col_str_tbl = string.Split(pace.command_colors[v.name]," ")
 						main_color = Color(tonumber(col_str_tbl[1]),tonumber(col_str_tbl[2]),tonumber(col_str_tbl[3]))
 					end
-					
+
 					local hue, sat, lightness_value = ColorToHSL(main_color)
 
 
@@ -4063,7 +4063,7 @@ do
 							surface.SetDrawColor(HSVToColor(210,0,0.15))
 						end
 						surface.DrawRect(x,y,200,height)
-						
+
 						surface.SetDrawColor(indicator_color)
 						surface.DrawRect(x + 200/6,y + height/6,200 * 0.666,height * 0.666,2)
 						surface.SetDrawColor(0,0,0)
@@ -4078,7 +4078,7 @@ do
 							surface.SetDrawColor(HSVToColor(210,0,0.15))
 						end
 						surface.DrawRect(x,y,200,height)
-						
+
 						surface.SetDrawColor(indicator_color)
 						surface.DrawRect(x + 150,y,50,height/2,2)
 						surface.SetDrawColor(0,0,0)
@@ -4094,13 +4094,13 @@ do
 					y = y + height
 
 				end
-				
+
 			end
 
 			render.PopFilterMag()
 			render.PopFilterMin()
 			DisableClipping(false)
-			
+
 		end)
 
 		pace.event_wheel_list_opened = true

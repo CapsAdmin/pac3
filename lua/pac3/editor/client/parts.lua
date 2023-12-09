@@ -67,7 +67,7 @@ function pace.WearParts(temp_wear_filter)
 		pac.Message(reason or "the server doesn't want you to wear parts for some reason")
 		return
 	end
-	
+
 	pace.still_loading_wearing = false
 
 	return pace.WearOnServer(temp_wear_filter)
@@ -161,11 +161,11 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 				pace.AssetBrowser(function(path)
 					if not part:IsValid() then return end
 					-- because we refresh the properties
-		
+
 					if IsValid(self) and self.OnValueChanged then
 						self.OnValueChanged(path)
 					end
-		
+
 					if pace.current_part.SetMaterials then
 						local model = pace.current_part:GetModel()
 						local part = pace.current_part
@@ -174,16 +174,16 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 						end
 						part.pace_last_model = model
 					end
-		
+
 					pace.PopulateProperties(pace.current_part)
-		
+
 					for k,v in ipairs(pace.properties.List) do
 						if v.panel and v.panel.part == part and v.key == key then
 							self = v.panel
 							break
 						end
 					end
-		
+
 				end, "models")
 			elseif class_name == "sound" or class_name == "sound2" then
 				if class_name == "sound"then
@@ -191,7 +191,7 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 				elseif class_name == "sound2" then
 					self = pace.current_part.pace_properties["Path"]
 				end
-				
+
 				pace.AssetBrowser(function(path)
 					if not self:IsValid() then return end
 
@@ -211,7 +211,7 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 
 			end
 		end)
-		
+
 	end
 	if class_name == "camera" and GetConVar("pac_copilot_force_preview_cameras"):GetBool() then
 		RunConsoleCommand("pac_enable_editor_view", "0")
@@ -228,7 +228,7 @@ function pace.OnCreatePart(class_name, name, mdl, no_parent)
 			temp.zfar = farz
 			temp.drawviewer = not part.DrawViewModel
 			return temp
-			
+
 		end)
 	end
 	if GetConVar("pac_copilot_auto_focus_main_property_when_creating_part"):GetBool() then
@@ -349,7 +349,7 @@ function pace.FlashProperty(obj, key, edit)
 		end)
 		timer.Simple(0.3, function() obj.flashing_property = false end)
 	end
-	
+
 end
 
 function pace.OnVariableChanged(obj, key, val, not_from_editor)
@@ -517,7 +517,7 @@ do -- menu
 		for _, part in pairs(pace.GetRegisteredParts()) do
 			local class = part.ClassName
 			local groupname = "other"
-			
+
 			local group = part.Group or part.Groups or "other"
 			--print(group)
 			if isstring(group) then
@@ -532,9 +532,9 @@ do -- menu
 					Groups[v][class] = Groups[v][class] or class
 				end
 			end
-			
+
 			Groups[groupname] = Groups[groupname] or group
-			
+
 			Groups[groupname][class] = Groups[groupname][class] or class
 
 			--[[if isstring(group) then
@@ -558,9 +558,9 @@ do -- menu
 				end
 			end
 		end
-		
+
 		--file.Write("pac_partgroups.txt", util.TableToKeyValues(Groups))
-		
+
 		local other = sortedTree.other
 		sortedTree.other = nil
 
@@ -615,7 +615,7 @@ do -- menu
 		--tbl is a shallow table with part class names
 		--PrintTable(Groups)
 			for group, tbl in pairs(Groups) do
-				
+
 				local sub, pnl = menu:AddSubMenu(group, function()
 					if Parts[group] then
 						if group == "entity" then
@@ -633,10 +633,10 @@ do -- menu
 						end
 					end
 				end)
-				
+
 --@note partmenu definer
 				sub.GetDeleteSelf = function() return false end
-				
+
 				if tbl["icon"] then
 					--print(tbl["icon"])
 					if pace.MiscIcons[string.gsub(tbl["icon"], "pace.MiscIcons.", "")] then
@@ -660,7 +660,7 @@ do -- menu
 				for i, class in pairs(tbl) do
 					if isstring(i) and Parts[class] then
 						local tooltip = pace.TUTORIALS.PartInfos[class].tooltip
-						
+
 						if not tooltip or tooltip == "" then tooltip = "no information available" end
 						if #i > 2 then
 							local part_submenu = add_part(sub, Parts[class])
@@ -697,11 +697,11 @@ do -- menu
 		end
 		local mode = GetConVar("pac_copilot_partsearch_depth"):GetInt()
 		pace.suppress_flashing_property = false
-		
+
 		local base = vgui.Create("EditablePanel")
 		base:SetPos(input.GetCursorPos())
 		base:SetSize(200, 300)
-		
+
 		base:MakePopup()
 
 		function base:OnRemove()
@@ -871,12 +871,12 @@ do -- menu
 				line.DoClick = function()
 					pace.RecordUndoHistory()
 					pace.Call("CreatePart", part.ClassName)
-					
+
 					if part.ClassName == "event" then
 						remove_now = false
 						result:Clear()
 						result.found = {}
-						
+
 						if mode == 0 then --auto-focus mode
 							remove_now = true
 							timer.Simple(0.1, function()
@@ -968,11 +968,11 @@ do -- menu
 							result:Clear()
 							populate_with_models(base,result,"")
 						end
-						
+
 					else
 						base:Remove()
 					end
-					
+
 				elseif base.search_mode == "events" then
 					if pace.current_part.Event then
 						pace.current_part:SetEvent()
@@ -1000,9 +1000,9 @@ do -- menu
 					else
 						base:Remove()
 					end
-					
+
 				end
-				
+
 				if result.found[1].ClassName == "event" then
 					remove_now = false
 					result:Clear()
@@ -1040,19 +1040,19 @@ do -- menu
 
 			if base.search_mode == "classes" then
 				populate_with_classes(base, result, str)
-				
+
 			elseif base.search_mode == "events" then
 				populate_with_events(base,result,str,event_template)
-				
+
 			elseif base.search_mode == "models" then
 				populate_with_models(base,result,str)
 			elseif base.search_mode == "sounds" then
 				populate_with_sounds(base,result,str)
 			end
-			
+
 			--base:SetHeight(20 * #result.found + edit:GetTall())
 			base:SetHeight(600 + edit:GetTall())
-			
+
 		end
 
 		edit:OnValueChange("")
@@ -1064,12 +1064,12 @@ do -- menu
 				end
 			end
 		end)
-		
+
 		timer.Simple(0.1, function()
 			base:MoveToFront()
 			base:RequestFocus()
 		end)
-		
+
 	end
 
 	function pace.Copy(obj)
@@ -1229,17 +1229,17 @@ do -- menu
 					pace.Editor:InvalidateLayout()
 					pace.RefreshTree()
 				end
-				
+
 
 				obj.ClassName = str
-				
+
 				timer.Simple(0, function()
 					_G.pac_Restart()
 					if str == "model2" then
 						obj = pac.GetPartFromUniqueID(pac.Hash(pac.LocalPlayer), uid)
 						obj:SetModel("models/pac/default.mdl")
 					end
-					
+
 				end)
 			end)
 		end
@@ -1291,7 +1291,7 @@ do -- menu
 		if not silent then
 			if selected_part_added then
 				surface.PlaySound('buttons/button1.wav')
-				
+
 			else surface.PlaySound('buttons/button16.wav') end
 		end
 
@@ -1343,12 +1343,12 @@ do -- menu
 		--[[if not table.HasValue(pace.BulkSelectList,obj) then
 			basepart = pace.BulkSelectList[1]
 		end]]
-		
+
 		local Panel = vgui.Create( "DFrame" )
 		Panel:SetSize( 500, 600 )
 		Panel:Center()
 		Panel:SetTitle("BULK SELECT PROPERTY EDIT - WARNING! EXPERIMENTAL FEATURE!")
-		
+
 		Panel:MakePopup()
 		surface.CreateFont("Font", {
 			font = "Arial",
@@ -1377,7 +1377,7 @@ do -- menu
 		partinfo_icon:SetSize(30,30)
 		partinfo_icon:SetPos( 300, 0 )
 		partinfo_icon:SetImage(basepart.Icon)
-		
+
 		basepart_label:SetText("base part: "..partinfo)
 		basepart_label:SetFont("Font")
 
@@ -1388,12 +1388,12 @@ do -- menu
 			["UniqueID"] = true,
 			["TargetEntityUID"] = true
 		}
-		
+
 		local shared_properties = {}
 		local shared_udata_properties = {}
 
 		for _,prop in pairs(basepart:GetProperties()) do
-			
+
 			local shared = true
 			for _,part2 in pairs(pace.BulkSelectList) do
 				if basepart ~= part2 and basepart.ClassName ~= part2.ClassName then
@@ -1454,7 +1454,7 @@ do -- menu
 				end
 			end
 			if basepart["Get" .. v] ~= nil then var_type = type(basepart["Get" .. v](basepart)) end
-			
+
 			if var_type == "number" then
 				VAR_PANEL_EDITZONE = vgui.Create("DTextEntry", VAR_PANEL)
 				VAR_PANEL_EDITZONE:SetSize(200,30)
@@ -1475,11 +1475,11 @@ do -- menu
 				VAR_PANEL_EDITZONE:SetSize(200,30)
 			end
 			VAR_PANEL_EDITZONE:SetPos(200,0)
-			
+
 			VAR_PANEL_BUTTON:SetText("APPLY")
-			
+
 			VAR_PANEL:SetTitle("[" .. i .. "]   "..v.."   "..var_type)
-			
+
 			VAR_PANEL:Dock( TOP )
 			VAR_PANEL:DockMargin( 5, 0, 0, 5 )
 			VAR_PANEL_BUTTON.DoClick = function()
@@ -1497,7 +1497,7 @@ do -- menu
 						sent_var = VAR_PANEL_EDITZONE:GetChecked()
 					elseif var_type == "string" then
 						sent_var = VAR_PANEL_EDITZONE:GetValue()
-						if v == "Name" and sent_var ~= "" then 
+						if v == "Name" and sent_var ~= "" then
 							sent_var = sent_var..i
 						end
 					elseif var_type == "Vector" then
@@ -1532,7 +1532,7 @@ do -- menu
 			end
 			scroll_panel:AddItem( VAR_PANEL )
 		end
-		
+
 		--populate panels for event "userdata" packaged into arguments
 		if #shared_udata_properties > 0 then
 			local fallback_event_types = {}
@@ -1575,7 +1575,7 @@ do -- menu
 
 			local function GetEventArgIndex(part,str)
 				str = string.gsub(str, "event_udata_", "")
-				
+
 				for argn,arg in ipairs(part.Events[part.Event].__registeredArguments) do
 					if arg[1] == str then
 						return argn
@@ -1598,7 +1598,7 @@ do -- menu
 				if var_type == nil then var_type = "string" end
 
 				local VAR_PANEL = vgui.Create("DFrame")
-				
+
 				VAR_PANEL:SetSize(500,30)
 				VAR_PANEL:SetPos(0,0)
 				VAR_PANEL:ShowCloseButton( false )
@@ -1629,12 +1629,12 @@ do -- menu
 				VAR_PANEL_EDITZONE:SetPos(200,0)
 				VAR_PANEL:SetTitle("[" .. i .. "]   "..udata_val_name.."   "..var_type)
 				VAR_PANEL_BUTTON:SetText("APPLY")
-				
-				
+
+
 				VAR_PANEL:Dock( TOP )
 				VAR_PANEL:DockMargin( 5, 0, 0, 5 )
 				VAR_PANEL_BUTTON.DoClick = function()
-					
+
 					for i,part in ipairs(pace.BulkSelectList) do
 						--PrintTable(part.Events[part.Event].__registeredArguments)
 						local sent_var
@@ -1652,7 +1652,7 @@ do -- menu
 							else sent_var = "0" end
 						elseif var_type == "string" then
 							sent_var = VAR_PANEL_EDITZONE:GetValue()
-							if v == "Name" and sent_var ~= "" then 
+							if v == "Name" and sent_var ~= "" then
 								sent_var = sent_var..i
 							end
 						else sent_var = VAR_PANEL_EDITZONE:GetValue() end
@@ -1680,7 +1680,7 @@ do -- menu
 										else sent_var = "0" end
 									elseif var_type == "string" then
 										sent_var = VAR_PANEL_EDITZONE:GetValue()
-										if v == "Name" and sent_var ~= "" then 
+										if v == "Name" and sent_var ~= "" then
 											sent_var = sent_var..i
 										end
 									else sent_var = VAR_PANEL_EDITZONE:GetValue() end
@@ -1690,7 +1690,7 @@ do -- menu
 							end
 						end
 					end
-					
+
 					pace.RefreshTree(true)
 					timer.Simple(0.3, function() BulkSelectRefreshFadedNodes() end)
 				end
@@ -1818,7 +1818,7 @@ do -- menu
 		for _,option_name in ipairs(pace.operations_order) do
 			pace.addPartMenuComponent(menu, obj, option_name)
 		end
-		
+
 		--[[if obj then
 			if not obj:HasParent() then
 				menu:AddOption(L"wear", function()
@@ -1832,7 +1832,7 @@ do -- menu
 			menu:AddOption(L"cut", function() pace.Cut(obj) end):SetImage('icon16/cut.png')
 			menu:AddOption(L"paste properties", function() pace.PasteProperties(obj) end):SetImage(pace.MiscIcons.replace)
 			menu:AddOption(L"clone", function() pace.Clone(obj) end):SetImage(pace.MiscIcons.clone)
-			
+
 			local part_size_info, psi_icon = menu:AddSubMenu(L"get part size information", function()
 				local function GetTableSizeInfo(obj_arg)
 					if not IsValid(obj_arg) then return {
@@ -1840,7 +1840,7 @@ do -- menu
 						info = ""
 					} end
 					local charsize = #util.TableToJSON(obj_arg:ToTable())
-				
+
 					local kilo_range = -1
 					local remainder = charsize*2
 					while remainder / 1000 > 1 do
@@ -1862,7 +1862,7 @@ do -- menu
 						info = "raw JSON table size: " .. charsize*2 .. " bytes (" .. remainder .. " " .. unit .. ")"
 					}
 				end
-				
+
 				local part_size_info = GetTableSizeInfo(obj)
 				local part_size_info_root = GetTableSizeInfo(obj:GetRootPart())
 
@@ -1889,7 +1889,7 @@ do -- menu
 
 			end)
 			psi_icon:SetImage('icon16/drive.png')
-			
+
 			part_size_info:AddOption(L"from bulk select", function()
 					local cumulative_bytes = 0
 					for _,v in pairs(pace.BulkSelectList) do
@@ -1914,7 +1914,7 @@ do -- menu
 					pac.Message("Bulk selected parts total " .. remainder .. unit)
 				end
 			)
-			
+
 			local bulk_apply_properties,bap_icon = menu:AddSubMenu(L"bulk change properties", function() pace.BulkApplyProperties(obj, "harsh") end)
 			bap_icon:SetImage('icon16/table_multiple.png')
 			bulk_apply_properties:AddOption("Policy: harsh filtering", function() pace.BulkApplyProperties(obj, "harsh") end)
@@ -1993,7 +1993,7 @@ do -- menu
 
 			menu:AddSpacer()
 		end]]
-		
+
 		--pace.AddRegisteredPartsToMenu(menu, not obj)
 
 		--menu:AddSpacer()
@@ -2020,7 +2020,7 @@ do -- menu
 	function pace.OnNewPartMenu()
 		pace.current_part = NULL
 		local menu = DermaMenu()
-		
+
 		menu:MakePopup()
 		menu:SetPos(input.GetCursorPos())
 
@@ -2038,7 +2038,7 @@ do -- menu
 
 	end
 
-	
+
 end
 
 function pace.GetPartSizeInformation(obj)
@@ -2054,7 +2054,7 @@ function pace.GetPartSizeInformation(obj)
 	for i,v in pairs(roots) do
 		all_charsize = all_charsize + #util.TableToJSON(v:ToTable())
 	end
-	
+
 	return {
 		raw_bytes = charsize*2,
 		info = "raw JSON table size: " .. charsize*2 .. " bytes (" .. string.NiceSize(charsize*2) .. ")",
@@ -2106,9 +2106,9 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 		local part_size_info, psi_icon = menu:AddSubMenu(L"get part size information", function()
 			local part_size_info = GetTableSizeInfo(obj)
 			local part_size_info_root = GetTableSizeInfo(obj:GetRootPart())
-	
+
 			local part_size_info_root_processed = "\t" .. math.Round(100 * part_size_info.raw_bytes / part_size_info_root.raw_bytes,1) .. "% share of root "
-	
+
 			local part_size_info_parent
 			local part_size_info_parent_processed
 			if IsValid(obj.Parent) then
@@ -2127,7 +2127,7 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 					part_size_info_root_processed,obj:GetRootPart()
 				)
 			end
-	
+
 		end)
 		psi_icon:SetImage('icon16/drive.png')
 		part_size_info:AddOption(L"from bulk select", function()
@@ -2136,7 +2136,7 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 				v.partsize_info = pace.GetPartSizeInformation(v)
 				cumulative_bytes = cumulative_bytes + 2*#util.TableToJSON(v:ToTable())
 			end
-			
+
 			pac.Message("Bulk selected parts total " .. string.NiceSize(cumulative_bytes) .. "\nhere's the breakdown:")
 			for _,v in pairs(pace.BulkSelectList) do
 				local partsize_info = pace.GetPartSizeInformation(v)
@@ -2178,7 +2178,7 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 				else
 					name_str = v.Name
 				end
-				
+
 				copied:AddOption(i .. " : " .. name_str .. " (" .. v.ClassName .. ")"):SetIcon(v.Icon)
 			end
 		end
@@ -2194,11 +2194,11 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 				else
 					name_str = v.Name
 				end
-				
+
 				copied:AddOption(i .. " : " .. name_str .. " (" .. v.ClassName .. ")"):SetIcon(v.Icon)
 			end
 		end
-		
+
 		bulk_menu:AddOption(L"Insert (Move / Cut + Paste)", function()
 			pace.BulkCutPaste(obj)
 		end):SetImage('icon16/arrow_join.png')
@@ -2212,7 +2212,7 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 				pace.BulkCutPasteOrdered()
 			end):SetImage('icon16/arrow_switch.png')
 		end
-		
+
 
 		bulk_menu:AddOption(L"Copy to Bulk Clipboard", function()
 			pace.BulkCopy(obj)
@@ -2365,7 +2365,7 @@ function pace.UltraCleanup(obj)
 			["OutfitPart"] = nil, --projectile bullets
 			["EndPoint"] = nil --beams
 		}
-		
+
 		if part.ClassName == "projectile" then
 			if part.OutfitPart then
 				if part.OutfitPart:IsValid() then
@@ -2412,7 +2412,7 @@ function pace.UltraCleanup(obj)
 		if part.ClassName == "event" or part.ClassName == "proxy" or part.ClassName == "command" then
 			return false
 		end
-		
+
 		if not part:IsHidden() and not part.Hide then
 		else
 			safe = false
@@ -2420,7 +2420,7 @@ function pace.UltraCleanup(obj)
 				safe = true
 			end
 		end
-		 
+
 		return safe
 	end
 
@@ -2448,7 +2448,7 @@ function pace.UltraCleanup(obj)
 				if part.PlayCount == 0 then return true end
 			end
 		end
-		
+
 		--fireonce particles should be wiped
 		if c == "particle" then
 			if part.NumberParticles == 0 or part.FireOnce then return true end
@@ -2462,7 +2462,7 @@ function pace.UltraCleanup(obj)
 		if c == "sunbeams" then
 			if math.abs(part.Multiplier) == 0 then return true end
 		end
-		
+
 		--other parts to leave forever
 		if c == "shake" or c == "gesture"  then
 			return true
@@ -2470,7 +2470,7 @@ function pace.UltraCleanup(obj)
 	end
 
 	local function FindNearestSafeParent(part)
-		if not part then return end 
+		if not part then return end
 		local root = part:GetRootPart()
 		local parent = part:GetParent()
 		local child = part
@@ -2510,7 +2510,7 @@ function pace.UltraCleanup(obj)
 			--extract children into nearest safe parent BUT ONLY DO IT VIA ITS DOMINANT and IF IT'S SAFE
 		--delete remaining unsafes: events, hiddens, commands ...
 			--but we still need to check for children to extract!
-	
+
 	local function Move_contents_up(part) --this will be the powerhouse recursor
 		local parent = FindNearestSafeParent(part)
 		--print(part, "nearest parent is", parent)
@@ -2529,13 +2529,13 @@ function pace.UltraCleanup(obj)
 				else											--parent = process the children? done by the recursion
 																--the parent still needs to be moved up
 					child:SetParent(parent)
-					
+
 					safe_parts[child] = child
 					Move_contents_up(child)						--recurse
 				end
-				
+
 			end
-			
+
 		end
 	end
 
@@ -2546,7 +2546,7 @@ function pace.UltraCleanup(obj)
 			if not FoundImportantMarkedParent(v) then
 				v:Remove()
 			end
-			
+
 		end
 	end
 
@@ -2564,7 +2564,7 @@ function pace.UltraCleanup(obj)
 			Move_contents_up(v)
 			marked_for_deletion[v] = v
 		end
-		
+
 	end
 		--after that, the remaining events etc are marked
 	for i,v in pairs(root:GetChildrenList()) do
@@ -2572,15 +2572,15 @@ function pace.UltraCleanup(obj)
 			marked_for_deletion[v] = v
 		end
 	end
-	
+
 	pace.RefreshTree()
 	--go through delete tables except when marked as important or those protected by these
 	for i,v in pairs(marked_for_deletion) do
-		
+
 		local delete = false
-		
+
 		if not safe_parts[v] then
-			
+
 			if v:IsValid() then
 				delete = true
 			end
@@ -2699,7 +2699,7 @@ do --hover highlight halo
 				if IsValid(v.pace_tree_node) then
 					v.pace_tree_node:SetAlpha( 255 )
 				end
-				
+
 			end
 		end
 
@@ -2819,7 +2819,7 @@ end
 tbl = {
 	obj = part.Label, --the associated object, could be a tree label, mouse, part etc.
 	pac_part = part --a pac part reference, if applicable
-	obj_type = "pac tree label",	
+	obj_type = "pac tree label",
 	hoverfunc = function() end,
 	doclickfunc = function() end,
 	panel_exp_width = 300, panel_exp_height = 200

@@ -29,7 +29,7 @@ BUILDER:StartStorableVars()
 		BUILDER:GetSet("DamageMultiplier", 1)
 		BUILDER:GetSet("ModifierId", "")
 		BUILDER:GetSet("MultiplierResetOnHide", false)
-	
+
 BUILDER:EndStorableVars()
 
 

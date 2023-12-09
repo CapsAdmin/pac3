@@ -1170,7 +1170,7 @@ function PART:SetupEditorPopup(str, force_open, tbl)
 
 	local default_state = str == nil or str == ""
 	local info_string = str or self.ClassName .. "\nno special information available"
-	
+
 	if default_state and pace then
 		local partsize_tbl = pace.GetPartSizeInformation(self)
 		info_string = info_string .. "\n" .. partsize_tbl.info .. ", " .. partsize_tbl.all_share_percent .. "% of all parts"
@@ -1184,7 +1184,7 @@ function PART:SetupEditorPopup(str, force_open, tbl)
 	local part = self
 	self.killpopup = false
 	local pnl
-	
+
 	--local pace = pace or {}
 	if tree_node then
 		tree_node.Label:SetTooltip(self.ClassName)
@@ -1200,10 +1200,10 @@ function PART:SetupEditorPopup(str, force_open, tbl)
 					)
 					self.popuppnl_is_up = true
 				end
-				
+
 				--if IsValid(self.popupinfopnl) then self.popupinfopnl:MakePopup() end
 				pnl = self.popupinfopnl
-				
+
 			end
 			if not IsValid(self.popupinfopnl) then self.popupinfopnl = nil self.popuppnl_is_up = false end
 		end
@@ -1216,7 +1216,7 @@ function PART:SetupEditorPopup(str, force_open, tbl)
 	if pace then
 		pace.legacy_floating_popup_reserved = pnl
 	end
-	
+
 	return pnl
 end
 

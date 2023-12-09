@@ -135,10 +135,10 @@ function pace.OpenEditor()
 			editor:SetPos(0, 0)
 		end
 	end
-	
+
 	if remember_divider:GetBool() then
 		pace.vertical_div_height = pace.vertical_div_height or ScrH()/1.4
-		
+
 		timer.Simple(0, function()
 			editor.div:SetTopHeight(pace.vertical_div_height)
 		end)

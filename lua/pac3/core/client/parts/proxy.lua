@@ -321,7 +321,7 @@ PART.Inputs.random_once = function(self, seed, min, max)
 	self.rand_id = self.rand_id or {}
 	if seed then
 		self.rand_id[seed] = self.rand_id[seed] or min + math.random()*(max-min)
-	else 
+	else
 		self.rand = self.rand or min + math.random()*(max-min)
 	end
 
@@ -356,7 +356,7 @@ PART.Inputs.timeex = function(s)
 end
 
 PART.Inputs.part_distance = function(self, uid1, uid2)
-	
+
 	if not uid1 then return 0 end
 	local owner = self:GetPlayerOwner()
 
@@ -397,7 +397,7 @@ PART.Inputs.event_alternative = function(self, uid1, num1, num2)
 		end
 		return 0
 	end
-	
+
 	if PartA.ClassName == "event" then
 		self.valid_parts_in_expression[PartA] = PartA
 		if PartA.event_triggered then return num1 or 0
@@ -1049,7 +1049,7 @@ PART.Inputs.pac_healthbar_uidvalue = function(self, uid)
 	end
 	if ent.pac_healthbars and ent.pac_healthbars_uidtotals then
 		if ent.pac_healthbars_uidtotals[uid] then
-			
+
 			if part:IsValid() then
 				self.valid_parts_in_expression[part] = part
 			end

@@ -56,7 +56,7 @@ BUILDER:StartStorableVars()
 		:GetSetPart("InitialVelocityPart")
 		:GetSet("OverrideInitialPosition", false, {description = "Whether the initial velocity part should be used as an initial position, otherwise it'll just be for the initial velocity's angle"})
 
-	
+
 BUILDER:EndStorableVars()
 
 local function IsInvalidParent(self)
@@ -214,7 +214,7 @@ function PART:OnThink()
 
 				phys:ComputeShadowControl(params)
 			end
-			
+
 			-- this is nicer i think
 			if self.ConstrainSphere ~= 0 and phys:GetPos():Distance(self.Parent:GetWorldPosition()) > self.ConstrainSphere then
 				if not self.PushFollow then
@@ -259,7 +259,7 @@ function PART:OnHide()
 			self.Parent:OnShow()
 			for _,part in pairs(self:GetParent():GetChildrenList()) do
 				part:OnShow()
-				
+
 			end
 		end)
 		return
@@ -329,8 +329,8 @@ function PART:Enable()
 			end
 			if valid_phys_pushers > 0 then self.phys:AddVelocity(pushvec / valid_phys_pushers) end
 		end
-		
-		
+
+
 	end) end)
 end
 

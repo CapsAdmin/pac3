@@ -145,7 +145,7 @@ pac.AddHook("CalcView", "camera_part", function(ply, pos, ang, fov, nearz, farz)
 					temp.znear = fnearz
 					temp.zfar = ffarz
 					temp.drawviewer = false
-					
+
 					if not part:IsHidden() and not part.inactive and part.priority then
 						temp.drawviewer = not part.DrawViewModel
 						return temp

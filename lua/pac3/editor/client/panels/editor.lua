@@ -176,7 +176,7 @@ function PANEL:OnRemove()
 	if remember_divider:GetBool() then
 		pace.vertical_div_height = self.div:GetTopHeight()
 	end
-	
+
 	if self.menu_bar:IsValid() then
 		self.menu_bar:Remove()
 	end
@@ -274,7 +274,7 @@ function PANEL:Think(...)
 		else
 			self.zoomsettings:SetVisible(false)
 		end
-		
+
 
 	end
 end
@@ -317,7 +317,7 @@ function PANEL:PerformLayout()
 					end
 				end
 			elseif sz >= 1 then
-				
+
 				if remember_divider:GetBool() then
 					if remember_divider:GetBool() then
 						self.div:SetTopHeight(pace.vertical_div_height)

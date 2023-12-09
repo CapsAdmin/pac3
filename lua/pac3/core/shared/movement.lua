@@ -167,7 +167,7 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 	else
 		ply.scale_mass = 1
 	end
-	
+
 	pac.AddHook("EntityTakeDamage", "PAC3MassDamageScale", function(target, dmginfo)
 		if (target:IsPlayer() and dmginfo:IsDamageType(DMG_CRUSH or DMG_VEHICLE)) then
 			dmginfo:ScaleDamage(target.scale_mass or 1)
@@ -227,8 +227,8 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 	elseif mv:KeyDown(IN_MOVELEFT) then
 		vel = vel - ang:Right()
 	end
-	
-	
+
+
 	vel = vel:GetNormalized() * speed
 
 	if self.AllowZVelocity then
@@ -265,7 +265,7 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 	-- todo: don't allow adding more velocity to existing velocity if it exceeds
 	-- but allow decreasing
 	if not on_ground then
-		
+
 		if ply:WaterLevel() >= 2 then
 			local ground_speed = self.RunSpeed
 
@@ -301,7 +301,7 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 			end
 
 			vel = vel + vel2 * math.min(FrameTime(),0.3) * 2
-			
+
 		else
 			local friction = self.AirFriction
 			local friction_mult = -(friction) + 1
@@ -330,7 +330,7 @@ pac.AddHook("Move", "custom_movement", function(ply, mv)
 		vel = vel * friction
 
 		speed = speed:GetNormalized() * math.min(speed:Length(), self.MaxGroundSpeed)
-		
+
 		local trace = {
 			start = mv:GetOrigin(),
 			endpos = mv:GetOrigin() + Vector(0, 0, -20),

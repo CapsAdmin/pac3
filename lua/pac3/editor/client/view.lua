@@ -627,7 +627,7 @@ function pace.PopupMiniFOVSlider()
 	zoomframe.zoomslider:SetDefaultValue( 75 )
 
 	zoomframe.zoomslider:SetValue( pace.ViewFOV )
-	
+
 	function zoomframe:Think(...)
 		pace.ViewFOV = zoomframe.zoomslider:GetValue()
 		if zoom_smooth:GetInt() == 1 then
@@ -654,5 +654,5 @@ function pace.PopupMiniFOVSlider()
 			end
 		end
 	end)
-	
+
 end

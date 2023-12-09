@@ -175,7 +175,7 @@ function PART:SetPath(path)
 			pace.RefreshTree()
 		end
 	end
-	
+
 	self.seq_index = 1
 	self.Path = path
 
@@ -196,7 +196,7 @@ function PART:SetPath(path)
 			table.insert(paths, path)
 			self.AllPaths = self.AllPaths .. ";" .. path
 		end
-		
+
 	end
 
 	for _, stream in pairs(self.streams) do

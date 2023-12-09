@@ -52,9 +52,9 @@ local function encode_table_to_file(str)
 	local data = {}
 	if not file.Exists("pac3_config", "DATA") then
 		file.CreateDir("pac3_config")
-		
+
 	end
-	
+
 
 	if str == "pac_editor_shortcuts" then
 		data = pace.PACActionShortcut
@@ -72,7 +72,7 @@ local function encode_table_to_file(str)
 			str = category
 			file.Write("pac3_config/bookmarked_" .. str..".txt", util.TableToKeyValues(data))
 		end
-		
+
 	end
 
 end
@@ -152,7 +152,7 @@ local function install_click(icon, path, pattern, on_menu, pathid)
 				end
 				SetClipboardText(path)
 			end)
-			
+
 			if string.match(path, "^materials/(.+)%.vmt$") or string.match(path, "^materials/(.+%.png)$") then resource_type = "materials"
 			elseif string.match(path, "^models/") then resource_type = "models" end
 
@@ -187,7 +187,7 @@ local function install_click(icon, path, pattern, on_menu, pathid)
 					end):SetImage("icon16/cross.png")
 				end
 			end
-			
+
 			if on_menu then on_menu(menu) end
 			menu:Open()
 		end
@@ -729,7 +729,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 	local frame = vgui.Create("DFrame")
 	frame.title = L"asset browser" .. " - " .. (browse_types_str:gsub(";", " "))
 
-	
+
 	if GetConVar("pac_asset_browser_remember_layout"):GetBool() then
 		frame:SetCookieName("pac_asset_browser")
 	end
@@ -960,7 +960,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 						if not series_results.start_index then
 							goto CONTINUE
 						end
-						
+
 						local series_str = base_name .. "[" .. series_results.start_index .. "," .. series_results.end_index .. "]." .. extension
 
 						if not table.HasValue(pace.bookmarked_ressources[resource_type], series_str) then
@@ -980,7 +980,7 @@ function pace.AssetBrowser(callback, browse_types_str, part_key)
 
 						::CONTINUE::
 					end
-					
+
 					if not table.HasValue(pace.bookmarked_ressources["sound"], sound) then
 						menu:AddOption(L"add to favorites", function()
 							table.insert(pace.bookmarked_ressources["sound"], sound)

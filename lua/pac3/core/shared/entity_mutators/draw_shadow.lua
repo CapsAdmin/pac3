@@ -1,4 +1,4 @@
-local MUTATOR = {} 
+local MUTATOR = {}
 
 MUTATOR.ClassName = "draw_shadow"
 
@@ -18,7 +18,7 @@ if SERVER then
 	function MUTATOR:Mutate(b)
 		self.Entity:DrawShadow(b)
 		self.Entity.pac_emut_draw_shadow = b
-	end 
-end 
+	end
+end
 
-pac.emut.Register(MUTATOR) 
+pac.emut.Register(MUTATOR)

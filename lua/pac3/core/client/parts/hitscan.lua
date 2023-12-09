@@ -85,7 +85,7 @@ BUILDER:StartStorableVars()
 			["Toolgun tracer"] = "ToolTracer",
 			["Laser tracer"] = "LaserTracer"
 		}})
-		
+
 BUILDER:EndStorableVars()
 
 function PART:Initialize()

@@ -2,7 +2,7 @@ local L = pace.LanguageString
 
 -- load only when hovered above
 local function add_expensive_submenu_load(pnl, callback, subdir)
-	
+
 	local old = pnl.OnCursorEntered
 	pnl.OnCursorEntered = function(...)
 		callback(subdir)
@@ -271,7 +271,7 @@ function pace.LoadParts(name, clear, override_part)
 						pace.LoadPartsFromTable(part, false, false)
 					end
 				end
-				
+
 			else
 
 				if name == "autoload" and (not data or not next(data)) then
@@ -288,11 +288,11 @@ function pace.LoadParts(name, clear, override_part)
 					return
 				end
 
-				
+
 				pace.LoadPartsFromTable(data, clear, override_part)
 
 			end
-			
+
 		end
 	end
 end
@@ -589,7 +589,7 @@ function pace.AddSavedPartsToMenu(menu, clear, override_part)
 	local subdir = "pac3/__backup/*"
 
 	add_expensive_submenu_load(pnl, function(subdir)
-		
+
 		local files = file.Find("pac3/__backup/*", "DATA")
 		local files2 = {}
 

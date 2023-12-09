@@ -50,9 +50,8 @@ end)
 function pac.OpenMOTD(mode)
 	local pnl = vgui.Create("DFrame")
 	pnl:SetSize(math.min(1400, ScrW()),math.min(900,ScrH()))
-	
+
 	local html = vgui.Create("DHTML", pnl)
-	
 
 	if mode == "combat_update" then
 		pnl:SetTitle("Welcome to a new update!")
@@ -108,7 +107,7 @@ pace.current_version_changelog_html = [[
 				<h3 style="margin-left: 35px">eventwheel colors</h3>
 				<h3 style="margin-left: 35px">eventwheel styles and grid eventwheel</h3>
 				<h3 style="margin-left: 35px">pac_eventwheel_visibility_rule command for filtering eventwheel with many choices and keywords</h3>
-			
+
 			<h2 style="margin-left: 15px">More miscellaneous features</h2>
 				<h3 style="margin-left: 35px">nearest life aim part names : point movable parts toward the nearest NPC or player</h3>
 				<h3 style="margin-left: 35px">prompt for autoload : optional menu to pick between autoload.txt, your autosave backup, or your latest loaded outfit</h3>
@@ -135,7 +134,7 @@ pace.current_version_changelog_html = [[
 		<h1>Changelog : August 2023</h1>
 			<h2>"spawn as props" bone scale retention</h2>
 			<h2>Fix/rework submitpart</h2>
-			
+
 		<h1>Changelog : July 2023</h1>
 			<h2>small fix for sequential in legacy sound</h2>
 			<h2>less awkward selection when deleting keyframes</h2>
@@ -147,7 +146,7 @@ pace.current_version_changelog_html = [[
 		<h1>Changelog : June 2023</h1>
 			<h2>sequential playback for legacy sound and websound parts</h2>
 			<h2>more proxy functions</h2>
-			
+
 		<h1>Changelog : June 2023</h1>
 			<h2>Fix new dropbox urls</h2>
 
@@ -188,15 +187,15 @@ pace.cedrics_combat_update_changelog_html = [[
 	<h1 id="new-combat-related-parts">New combat-related parts:</h1>
 	<pre><code>
 	damage_zone: deals damage (a more direct and controllable alternative to projectiles)
-	
+
 	hitscan: shoots bullets
-	
+
 	lock: teleport/grab
-	
+
 	force: does physics forces
-	
+
 	health_modifier: changes your health, armor etc
-	
+
 	interpolated_multibone: morphs position / angles between different base_movables nodes, like a path
 	</code></pre>
 	<p>The combat features work with the principle of consent. The lock part especially is severely restricted for grabbing players, for what should be obvious reasons. You can only damage or grab players who have opted in for the corresponding consent.</p>

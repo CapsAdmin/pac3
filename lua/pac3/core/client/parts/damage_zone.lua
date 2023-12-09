@@ -145,7 +145,7 @@ function HasBudget(owner, part)
 	if not owner.pac_dmgzone_hitmarker_budget then
 		owner.pac_dmgzone_hitmarker_budget = 50000 --50kB's worth of pac parts
 	end
-	
+
 	if part then --calculate based on an additional part added
 		--print("budget:" .. string.NiceSize(owner.pac_dmgzone_hitmarker_budget) .. ", cost: " .. string.NiceSize(CalculateHitMarkerPrice(part)))
 		return owner.pac_dmgzone_hitmarker_budget - CalculateHitMarkerPrice(part) > 0
@@ -192,7 +192,7 @@ function PART:LaunchAuditAndEnforceSoftBan(amount, reason)
 			print(str_admonishment)
 		end
 	end)
-	
+
 end
 
 function PART:ClearBudgetAdmonishmentWarning()
@@ -240,7 +240,7 @@ local part_setup_runtimes = 0
 		active
 		template_uid		--to identify from which part it's derived
 		hitmarker_id		--to identify what entity it's attached to
-		
+
 	}
 ]]
 --[[
@@ -324,7 +324,7 @@ local function UIDMatchInStackForExistingPart(owner, ent, part_uid, ent_id)
 			end
 		end
 	end
-	
+
 	return nil
 end
 
@@ -346,7 +346,7 @@ function PART:AddHitMarkerToStack(owner, ent, part_uid, ent_id)
 	else
 		owner.hitparts[free] = {active = true, specimen_part = returned_part, hitmarker_id = ent_id, template_uid = part_uid}
 	end
-	
+
 	return returned_part
 end
 
@@ -429,7 +429,7 @@ local function RecursedHitmarker(part)
 			end
 		end
 	end
-	
+
 end
 
 
@@ -557,7 +557,7 @@ function PART:OnShow()
 	end
 
 	net.Receive("pac_hit_results", function()
-		
+
 		local hit = net.ReadBool()
 		local kill = net.ReadBool()
 		local highest_dmg = net.ReadFloat()
@@ -587,7 +587,7 @@ function PART:OnShow()
 		local function spawn(part, pos, ang, parent_ent, duration, owner)
 			if part == self then return end --stop infinite feedback loops of using the damagezone as a hitmarker
 			--what if people employ a more roundabout method? CRACKDOWN!
-			
+
 			if not owner.hitparts then owner.hitparts = {} end
 
 			if owner.stop_hit_markers_until then
@@ -630,9 +630,9 @@ function PART:OnShow()
 				if part:IsValid() then --self:AttachToEntity(part, ent, parent_ent, global_hitmarker_CSEnt_seed)
 					local newpart
 					local bool = UIDMatchInStackForExistingPart(owner, ent, part.UniqueID, csent_id)
-					
+
 					newpart = UIDMatchInStackForExistingPart(owner, ent, part.UniqueID, csent_id) or self:AddHitMarkerToStack(owner, ent, part.UniqueID, csent_id)
-					
+
 					self:AssignFloatingPartToEntity(newpart, owner, ent, parent_ent, part.UniqueID, csent_id)
 
 					MsgC(bool and Color(0,255,0) or Color(0,200,255), bool and "existing" or "created", " : ", newpart, "\n")
@@ -656,7 +656,7 @@ function PART:OnShow()
 			end
 
 			local creation_delta = SysTime() - start
-			
+
 			return creation_delta
 		end
 
@@ -669,7 +669,7 @@ function PART:OnShow()
 			--try not to play both sounds at once
 			if ValidSound(self.HitSoundPart) then
 				--if can overlap, always play
-				if self.AllowOverlappingHitSounds then 
+				if self.AllowOverlappingHitSounds then
 					self.HitSoundPart:PlaySound()
 				--if cannot overlap, only play if there's only one entity or if we didn't kill
 				elseif (table.Count(ents_kill) == 1) or not (kill and ValidSound(self.KillSoundPart)) then
@@ -745,7 +745,7 @@ end
 local previousRenderingHook
 
 function PART:PreviewHitbox()
-	
+
 	if previousRenderingHook ~= self.RenderingHook then
 		for _,v in pairs(renderhooks) do
 			hook.Remove(v, "pace_draw_hitbox"..self.UniqueID)
@@ -783,7 +783,7 @@ function PART:PreviewHitbox()
 				if self.Radius ~= 0 then
 					local sides = self.Detail
 					if self.Detail < 1 then sides = 1 end
-					
+
 					local area_factor = self.Radius*self.Radius / (400 + 100*self.Length/math.max(self.Radius,0.1)) --bigger radius means more rays needed to cast to approximate the cylinder detection
 					local steps = 3 + math.ceil(4*(area_factor / ((4 + self.Length/4) / (20 / math.max(self.Detail,1)))))
 					if self.HitboxMode == "CylinderHybrid" and self.Length ~= 0 then
@@ -791,7 +791,7 @@ function PART:PreviewHitbox()
 						steps = 1 + math.ceil(4*(area_factor / ((4 + self.Length/4) / (20 / math.max(self.Detail,1)))))
 					end
 					steps = math.max(steps + math.abs(self.ExtraSteps),1)
-					
+
 					--print("steps",steps, "total casts will be "..steps*self.Detail)
 					for ringnumber=1,0,-1/steps do --concentric circles go smaller and smaller by lowering the i multiplier
 						phase = math.random()
@@ -866,7 +866,7 @@ function PART:PreviewHitbox()
 						steps = 1 + math.ceil(4*(area_factor / ((4 + self.Length/4) / (20 / math.max(self.Detail,1)))))
 					end
 					steps = math.max(steps + math.abs(self.ExtraSteps),1)
-					
+
 					--print("steps",steps, "total casts will be "..steps*self.Detail)
 					for ringnumber=1,0,-1/steps do --concentric circles go smaller and smaller by lowering the i multiplier
 						phase = math.random()
@@ -995,7 +995,7 @@ function PART:BuildCone(obj)
 end
 
 function PART:Initialize()
-	
+
 	if not GetConVar("pac_sv_damage_zone"):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then self:SetError("damage zones are disabled on this server!") end
 	self.validTime = SysTime() + 2
 

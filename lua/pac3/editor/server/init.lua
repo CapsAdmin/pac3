@@ -44,24 +44,24 @@ function pace.CanPlayerModify(ply, ent)
 	if ent.CPPIGetOwner and ent:CPPIGetOwner() == ply then
 		return true
 	end
-	
+
 	if GetConVar("pac_sv_prop_outfits"):GetInt() ~= 0 then
 		if GetConVar("pac_sv_prop_outfits"):GetInt() == 1 then
 			return not (ply ~= ent and ent:IsPlayer())
 		elseif GetConVar("pac_sv_prop_outfits"):GetInt() == 2 then
 			return true
 		end
-		
+
 	end
-	
+
 	do
 		local tr = util.TraceLine({ start = ply:EyePos(), endpos = ent:WorldSpaceCenter(), filter = ply })
 		if tr.Entity == ent and hook.Run("CanTool", ply, tr, "paint") == true then
 			return true
 		end
 	end
-	
-	
+
+
 
 	return false
 end

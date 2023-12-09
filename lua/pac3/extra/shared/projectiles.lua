@@ -93,9 +93,9 @@ do -- projectile entity
 				elseif not valid_fallback then
 					self:PhysicsInitBox(Vector(1,1,1) * - radius, Vector(1,1,1) * radius, part.SurfaceProperties)
 				end
-				
+
 			end
-			
+
 
 			local phys = self:GetPhysicsObject()
 			phys:SetMaterial(part.SurfaceProperties)
@@ -120,7 +120,7 @@ do -- projectile entity
 			else
 				phys:EnableCollisions(false)
 			end
-			
+
 
 			phys:SetMass(math.Clamp(part.Mass, 0.001, pac_sv_projectile_max_mass:GetFloat()))
 			phys:SetDamping(0, 0)
@@ -608,7 +608,7 @@ if SERVER then
 			ent:SetPos(pos)
 			ent:SetAngles(ang)
 			ent:Spawn()
-			
+
 
 			if not part.CollideWithOwner then
 				ent:SetOwner(ply)
@@ -697,7 +697,7 @@ if SERVER then
 		if ent.part_data.RemoveOnHide then
 			SafeRemoveEntity(ent)
 		end
-		
+
 	end)
-		
+
 end

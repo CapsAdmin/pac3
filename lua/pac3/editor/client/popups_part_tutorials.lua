@@ -1,7 +1,7 @@
 --[[
 	This is the framework for popups. This should be expandable for various use cases.
 	It uses DFrame as a base, overrides the Paint function for a basic fade effect.
-	
+
 	Tutorials will be written here
 ]]
 
@@ -44,13 +44,13 @@ function pace.OpenPopupConfig()
 	local basecolor_pulse = vgui.Create("DNumSlider")
 	basecolor_pulse:SetMax(255)
 	basecolor_pulse:SetMin(0)
-	
+
 	if isnumber(GetConVar("pac_popups_base_color_pulse"):GetInt()) then
 		basecolor_pulse:SetValue(GetConVar("pac_popups_base_color_pulse"):GetInt())
 	else
 		basecolor_pulse:SetValue(0)
 	end
-	
+
 	basecolor_pulse:SetText("base pulse")
 	function basecolor_pulse:OnValueChanged(val)
 		val = math.Round(tonumber(val),0)
@@ -215,7 +215,7 @@ function pac.InfoPopup(str, tbl, x, y)
 	local rgb3 = string.Split(GetConVar("pac_popups_text_color"):GetString(), " ")
 	if rgb3[1] == "invert" then rgb3 = {nil,nil,nil} end
 	local r3,g3,b3 = tonumber(rgb3[1]) or (255 - (a1*r1/255 + a2*r2/255)/2), tonumber(rgb3[2]) or (255 - (a1*g1/255 + a2*g2/255)/2), tonumber(rgb3[3]) or (255 - (a1*b1/255 + a2*b2/255)/2)
-	
+
 	local pnl = vgui.Create("DFrame")
 	local txt_zone = vgui.Create("RichText", pnl)
 
@@ -231,19 +231,19 @@ function pac.InfoPopup(str, tbl, x, y)
 			end
 		end
 	end
-	
-	
+
+
 	pnl.hoverfunc = function() end
 	pnl.doclickfunc = function() end
 	pnl.titletext = "Click for more information! (or F1)"
 	pnl.alternativetitle = "Right click / Alt+P to kill popups. \"pac_popups_preserve_on_autofade\" is set to " .. GetConVar("pac_popups_preserve_on_autofade"):GetInt() .. ", " .. (GetConVar("pac_popups_preserve_on_autofade"):GetBool() and "If it fades away, the popup is allowed to reappear on hover or F1" or "If it fades away, the popup will not reappear")
-	
+
 	--pnl:SetPos(ScrW()/2 + math.Rand(-100,100), ScrH()/2 + math.Rand(-100,100))
 
 	function pnl:FixPartReference(tbl)
 		if not tbl or table.IsEmpty(tbl) then self:Remove() end
 		if tbl.pac_part then tbl.obj = tbl.pac_part.pace_tree_node end
-		
+
 	end
 
 	function pnl:MoveToObj(tbl)
@@ -284,7 +284,7 @@ function pac.InfoPopup(str, tbl, x, y)
 
 		elseif tbl.obj_type == "screen" then
 			self:SetPos(x,y)
-		
+
 		elseif tbl.obj_type == "cursor" then
 			self:SetPos(input.GetCursorPos())
 
@@ -310,7 +310,7 @@ function pac.InfoPopup(str, tbl, x, y)
 					if not pnl.hovering and not pnl.expand then
 						pnl.resizing = true
 						pnl.expand = true
-						
+
 						pnl.ResizeStartTime = CurTime()
 						pnl.ResizeEndTime = CurTime() + 0.3
 					end
@@ -322,7 +322,7 @@ function pac.InfoPopup(str, tbl, x, y)
 		pnl.exp_height = tbl.panel_exp_height or 400
 		pnl.exp_width = tbl.panel_exp_width or 800
 	end
-	
+
 	pnl.exp_height = pnl.exp_height or 400
 	pnl.exp_width = pnl.exp_width or 800
 	pnl:SetSize(200,20)
@@ -346,14 +346,14 @@ function pac.InfoPopup(str, tbl, x, y)
 
 	--the header needs a label to click on to open the popup
 	function pnl:DoClick()
-		
+
 		if input.IsKeyDown(KEY_F1) or (self:IsHovered() and not txt_zone:IsHovered()) then
 			pnl.expand = not pnl.expand
 			pnl.ResizeStartTime = CurTime()
 			pnl.ResizeEndTime = CurTime() + 0.3
 			pnl.resizing = true
 		end
-		
+
 		pnl:keep_alive(3)
 		pnl.doclickfunc()
 	end
@@ -371,7 +371,7 @@ function pac.InfoPopup(str, tbl, x, y)
 				self:Remove()
 			end
 		end
-		
+
 		self.F1_doclick_possible_at = self.F1_doclick_possible_at or 0
 		self.mouse_doclick_possible_at = self.mouse_doclick_possible_at or 0
 
@@ -412,7 +412,7 @@ function pac.InfoPopup(str, tbl, x, y)
 			else
 				width = 200 + (self.exp_width - 200)*(1 - expand_frac_h)
 				height = 20 + (self.exp_height - 20)*(1 - expand_frac_w)
-				
+
 			end
 			self:SetSize(width,height)
 			txt_zone:SetSize(width-10,height-30)
@@ -462,7 +462,7 @@ function pac.InfoPopup(str, tbl, x, y)
 
 	pnl.doclickfunc = tbl.doclickfunc or function() end
 
-	
+
 
 	pnl.exp_height = tbl.panel_exp_height
 	pnl.exp_width = tbl.panel_exp_width
@@ -493,14 +493,14 @@ function pac.InfoPopup(str, tbl, x, y)
 			pnl:keep_alive(3)
 		end
 	end
-	
+
 	txt_zone:SetText("")
 	txt_zone:AppendText(str)
-	
+
 	txt_zone:SetVerticalScrollbarEnabled(true)
 
 	function pnl:Paint( w, h )
-		
+
 
 		self.fade_factor = self.fade_factor or 1
 		--base layer
@@ -517,7 +517,7 @@ function pac.InfoPopup(str, tbl, x, y)
 			--draw.RoundedBox( 0, band, 0, 1, 1, Color( 88, 179, 255, 255))
 			--draw.RoundedBox( 0, band, h-1, 1, 1, Color( 0, 0, 0, 255))
 		end
-		
+
 		if self.expand then
 			draw.DrawText(self.alternativetitle, "DermaDefaultBold", 5, 5, Color(r3,g3,b3,self.fade_factor * 255))
 		else
@@ -543,7 +543,7 @@ function pace.FlushInfoPopups()
 			node.popupinfopnl = nil
 		end
 	end
-	
+
 end
 
 --[[
@@ -563,7 +563,7 @@ but then again we should probably look for better ways for the full-length expla
 ]]
 
 do
-	
+
 	pace.TUTORIALS = pace.TUTORIALS or {}
 	pace.TUTORIALS.PartInfos = {
 
@@ -739,7 +739,7 @@ do
 			popup_tutorial =
 			"The legacy experimental bone part still does the basic things you need a bone part to do, but you should probably use the new bone part."
 		},
-		
+
 		["bone3"] = {
 			tooltip = "changes a bone",
 			popup_tutorial =
@@ -749,7 +749,7 @@ do
 
 		["player_config"] = {
 			tooltip = "sets your player entity's behaviour",
-			popup_tutorial = 
+			popup_tutorial =
 			"This part has access to some of your player's behavior, like whether you will play footsteps, the chat animation etc.\n"..
 			"Some of these may or may not work as intended..."
 		},
@@ -760,7 +760,7 @@ do
 			"This legacy part still does the basic thing you want from a light, but the new light part is more fully-featured, for the most part.\n"..
 			"There is one thing it does that the new part doesn't, and that's styles."
 		},
-		
+
 		["light2"] = {
 			tooltip = "lights up models or the world",
 			popup_tutorial =
@@ -814,7 +814,7 @@ do
 
 		["faceposer"] = {
 			tooltip = "Adjusts multiple facial expression slots",
-			popup_tutorial = 
+			popup_tutorial =
 			"This part gives access to multiple facial expressions defined by your model's shape keys in one part.\n"..
 			"The flex multiplier affects the whole model, so you should avoid stacking faceposers if they have different multipliers."
 		},
@@ -1131,7 +1131,7 @@ do
 	--print("we have defined the pace.TUTORIALS.PartInfos", pace.TUTORIALS.PartInfos)
 
 	for i,v in pairs(pace.TUTORIALS.PartInfos) do
-		--print(i,v)  
+		--print(i,v)
 		if pace.PartTemplates then
 			if pace.PartTemplates[i] then
 				pace.PartTemplates[i].TutorialInfo = v

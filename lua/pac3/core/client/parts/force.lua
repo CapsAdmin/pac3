@@ -130,7 +130,7 @@ function PART:OnDraw()
 					for i = 1,0,-1/steps do
 						render.DrawWireframeSphere( self:GetWorldPosition() + self:GetWorldAngles():Forward()*self.Length*i, i * self.Radius, 10, 10, Color( 255, 255, 255 ) )
 					end
-	
+
 					steps = math.Clamp(math.ceil(self.Length / (self.Radius or 1)),1,4)
 					for i = 0,1/8,1/128 do
 						render.DrawWireframeSphere( self:GetWorldPosition() + self:GetWorldAngles():Forward()*self.Length*i, i * self.Radius, 10, 10, Color( 255, 255, 255 ) )
@@ -168,7 +168,7 @@ function PART:Impulse(on)
 
 	local locus_pos = Vector(0,0,0)
 	if self.Locus ~= nil then
-		if self.Locus:IsValid() then 
+		if self.Locus:IsValid() then
 			locus_pos = self.Locus:GetWorldPosition()
 		end
 	else locus_pos = self:GetWorldPosition() end

@@ -52,12 +52,11 @@ local global_combat_prop_protection = CreateConVar("pac_sv_prop_protection", 0, 
 
 pace = pace
 
-pace.partmenu_categories_cedrics = 
-{
+pace.partmenu_categories_cedrics = {
 	["new!"] =
 	{
 		["icon"]				=		"icon16/new.png",
-		["interpolated_multibone"]=	"interpolated_multibone",
+		["interpolated_multibone"] =	"interpolated_multibone",
 		["damage_zone"]			=	"damage_zone",
 		["hitscan"]				=	"hitscan",
 		["lock"]				=		"lock",
@@ -73,16 +72,16 @@ pace.partmenu_categories_cedrics =
 		["text"]				=		"text",
 		["link"]				=		"link",
 	},
-	["scaffolds"] = 
+	["scaffolds"] =
 	{
 		["tooltip"]				=	"useful to build up structures with specific positioning rules",
 		["icon"]				=		"map",
 		["jiggle"]				=	"jiggle",
 		["model2"]				=	"model2",
 		["projectile"]			=	"projectile",
-		["interpolated_multibone"]=	"interpolated_multibone",
+		["interpolated_multibone"] =	"interpolated_multibone",
 	},
-	["combat"] =  
+	["combat"] =
 	{
 		["icon"]				=		"icon16/joystick.png",
 		["damage_zone"]			=	"damage_zone",
@@ -103,16 +102,16 @@ pace.partmenu_categories_cedrics =
 		["sprite"]				=	"sprite",
 		["particle"]			=		"particle",
 	},
-	["materials"]=
+	["materials"] =
 	{
 		["icon"]				=		"pace.MiscIcons.appearance",
 		["material_3d"]			=	"material_3d",
 		["material_2d"]			=	"material_2d",
 		["material_refract"]	=		"material_refract",
-		["material_eye refract"]=		"material_eye refract",
+		["material_eye refract"] =		"material_eye refract",
 		["submaterial"]			=	"submaterial",
 	},
-	["entity"] = 
+	["entity"] =
 	{
 		["icon"]				=		"icon16/cd_go.png",
 		["bone3"]				=		"bone3",
@@ -132,7 +131,7 @@ pace.partmenu_categories_cedrics =
 		["material_3d"]		=		"material_3d",
 		["weapon"]			=		"weapon",
 	},
-	["model"] = 
+	["model"] =
 	{
 		["icon"]			=			"icon16/bricks.png",
 		["jiggle"]			=		"jiggle",
@@ -146,7 +145,7 @@ pace.partmenu_categories_cedrics =
 		["material_3d"]		=		"material_3d",
 		["model2"]			=		"model2",
 	},
-	["modifiers"] = 
+	["modifiers"] =
 	{
 		["icon"]			=			"icon16/connect.png",
 		["fog"]				=		"fog",
@@ -158,7 +157,7 @@ pace.partmenu_categories_cedrics =
 		["material_3d"]	=			"material_3d",
 		["proxy"]=						"proxy",
 	},
-	["effects"] = 
+	["effects"] =
 	{
 		["icon"]	=					"icon16/wand.png",
 		["sprite"]	=				"sprite",
@@ -179,7 +178,7 @@ pace.partmenu_categories_cedrics =
 	}
 }
 
-pace.partmenu_categories_default = 
+pace.partmenu_categories_default =
 {
 	["legacy"]=
 	{
@@ -328,7 +327,7 @@ local function rebuild_bookmarks()
 	if not pace.bookmarked_ressources["proxy"] or table.IsEmpty(pace.bookmarked_ressources["proxy"]) then
 		pace.bookmarked_ressources["proxy"] = {
 			--[[["user"] = {
-				
+
 			},]]
 			["fades and transitions"] ={
 				{
@@ -342,7 +341,7 @@ local function rebuild_bookmarks()
 					explanation = "the simplest fade's reverse.\nthis is normalized, which means you'll often multiply this whole unit by the amount you want, like a distance.\ntimeex() starts at 1, moves gradually to 0 and stops progressing at 0 due to the clamp"
 				},
 				{
-					nicename = "standard clamp fade (delayed in)", 
+					nicename = "standard clamp fade (delayed in)",
 					expression = "clamp(-1 + timeex(),0,1)",
 					explanation = "the basic fade is delayed by the fact that the clamp makes sure the negative values are pulled back to 0 until the first argument crosses 0 into the clamp's range."
 				},
@@ -519,7 +518,7 @@ local function rebuild_bookmarks()
 				}
 			}
 		}
-		
+
 	end
 
 end
@@ -533,9 +532,9 @@ local function encode_table_to_file(str)
 	local data = {}
 	if not file.Exists("pac3_config", "DATA") then
 		file.CreateDir("pac3_config")
-		
+
 	end
-	
+
 
 	if str == "pac_editor_shortcuts" then
 		data = pace.PACActionShortcut
@@ -579,10 +578,10 @@ local function decode_table_from_file(str)
 
 	elseif str == "pac_editor_partmenu_layouts" then
 		pace.operations_order = util.JSONToTable(data)
-		
+
 	elseif str == "pac_part_categories" then
 		pace.partgroups = util.KeyValuesToTable(data)
-	
+
 	elseif str == "eventwheel_colors" then
 		pace.command_colors = util.KeyValuesToTable(data)
 	end
@@ -624,12 +623,12 @@ function PANEL:Init()
 
 		local combat_ban_settings = pace.FillCombatBanPanel(master_pnl)
 		master_pnl:AddSheet("Combat Bans (SV)", combat_ban_settings)
-		
+
 	end
-	
-	
+
+
 	self.sheet = master_pnl
-	
+
 	--local properties_shortcuts = pace.FillShortcutSettings(pnl)
 	--pnl:AddSheet("Editor Shortcuts", properties_shortcuts)
 end
@@ -666,7 +665,7 @@ function pace.FillBanPanel(pnl)
 		ban_list:SetText("ban list")
 		ban_list:SetSize(400,400)
 		ban_list:SetPos(10,10)
-	
+
 		ban_list:AddColumn("Player name")
 		ban_list:AddColumn("SteamID")
 		ban_list:AddColumn("State")
@@ -686,10 +685,10 @@ function pace.FillBanPanel(pnl)
 			ply_state_list[player.GetBySteamID(line:GetColumnText( 2 ))] = state
 			PrintTable(ply_state_list)
 		end
-	
+
 	local ban_confirm_list_button = vgui.Create("DButton", BAN)
 		ban_confirm_list_button:SetText("Send ban list update to server")
-		
+
 		ban_confirm_list_button:SetTooltip("WARNING! Unauthorized use will be notified to the server!")
 		ban_confirm_list_button:SetColor(Color(255,0,0))
 		ban_confirm_list_button:SetSize(200, 40)
@@ -704,7 +703,7 @@ function pace.FillBanPanel(pnl)
 		--ban_request_list_button:SetColor(Color(255,0,0))
 		ban_request_list_button:SetSize(200, 40)
 		ban_request_list_button:SetPos(450, 60)
-		
+
 		function ban_request_list_button:DoClick()
 			net.Start("pac.RequestBanStates")
 			net.SendToServer()
@@ -715,7 +714,7 @@ function pace.FillBanPanel(pnl)
 			player_ban_list = players
 			PrintTable(players)
 		end)
-		
+
 
 	return BAN
 end
@@ -724,13 +723,13 @@ function pace.FillCombatBanPanel(pnl)
 	local pnl = pnl
 	local BAN = vgui.Create("DPanel", pnl)
 	pac.global_combat_whitelist = pac.global_combat_whitelist or {}
-	
+
 
 	local ban_list = vgui.Create("DListView", BAN)
 		ban_list:SetText("Combat ban list")
 		ban_list:SetSize(400,400)
 		ban_list:SetPos(10,10)
-	
+
 		ban_list:AddColumn("Player name")
 		ban_list:AddColumn("SteamID")
 		ban_list:AddColumn("State")
@@ -750,7 +749,7 @@ function pace.FillCombatBanPanel(pnl)
 		for id,data in pairs(pac.global_combat_whitelist) do
 			combat_bans_temp_merger[id] = data
 		end
-		
+
 		for id,data in pairs(combat_bans_temp_merger) do
 			ban_list:AddLine(data.nick,data.steamid,data.permission)
 		end
@@ -766,10 +765,10 @@ function pace.FillCombatBanPanel(pnl)
 			pac.global_combat_whitelist[string.lower(line:GetColumnText( 2 ))].permission = state
 			PrintTable(pac.global_combat_whitelist)
 		end
-	
+
 	local ban_confirm_list_button = vgui.Create("DButton", BAN)
 		ban_confirm_list_button:SetText("Send combat ban list update to server")
-		
+
 		ban_confirm_list_button:SetTooltip("WARNING! Unauthorized use will be notified to the server!")
 		ban_confirm_list_button:SetColor(Color(255,0,0))
 		ban_confirm_list_button:SetSize(200, 40)
@@ -803,7 +802,7 @@ function pace.FillCombatBanPanel(pnl)
 			for id,data in pairs(pac.global_combat_whitelist) do
 				combat_bans_temp_merger[id] = data
 			end
-			
+
 			for id,data in pairs(combat_bans_temp_merger) do
 				ban_list:AddLine(data.nick,data.steamid,data.permission)
 			end
@@ -874,7 +873,7 @@ function pace.FillCombatSettings(pnl)
 			sv_hard_ent_limit_numbox:SetSize(400,30)
 			sv_hard_ent_limit_numbox:SetConVar("pac_sv_entity_limit_per_combat_operation")
 			sv_hard_ent_limit_numbox:SetTooltip("If the number of entities selected is more than this value, the whole operation gets dropped.\nThis is so that the server doesn't have to send huge amounts of entity updates to everyone.")
-		
+
 		local sv_per_player_ent_limit_numbox = vgui.Create("DNumSlider", general_list_list)
 			sv_per_player_ent_limit_numbox:SetText("Entity limit per player to cutoff damage zones and force parts")
 			sv_per_player_ent_limit_numbox:SetValue(GetConVar("pac_sv_entity_limit_per_player_per_combat_operation"):GetInt())
@@ -890,7 +889,7 @@ function pace.FillCombatSettings(pnl)
 			sv_player_fraction_slider:SetSize(400,30)
 			sv_player_fraction_slider:SetConVar("pac_sv_player_limit_as_fraction_to_drop_damage_zone")
 			sv_player_fraction_slider:SetTooltip("This applies when the zone covers more than 12 players. 0 is 0% of the server, 1 is 100%\nFor example, if this is at 0.5, there are 24 players and a damage zone covers 13 players, it will be blocked.")
-		
+
 		local sv_distance_slider = vgui.Create("DNumSlider", general_list_list)
 			sv_distance_slider:SetText("distance to block combat actions that are too far")
 			sv_distance_slider:SetValue(GetConVar("pac_sv_combat_distance_enforced"):GetFloat())
@@ -898,7 +897,7 @@ function pace.FillCombatSettings(pnl)
 			sv_distance_slider:SetSize(400,30)
 			sv_distance_slider:SetConVar("pac_sv_combat_distance_enforced")
 			sv_distance_slider:SetTooltip("The distance is compared between the action's origin and the player's position.\n0 to ignore.")
-		
+
 	end
 
 	do --hitscan
@@ -1040,7 +1039,7 @@ function pace.FillCombatSettings(pnl)
 			sv_dmgzone_allow_dissolve_box:SetText("Allow damage entity dissolvers")
 			sv_dmgzone_allow_dissolve_box:SetSize(400,30)
 			sv_dmgzone_allow_dissolve_box:SetConVar("pac_sv_damage_zone_allow_dissolve")
-			
+
 	end
 
 	do --lock part
@@ -1055,7 +1054,7 @@ function pace.FillCombatSettings(pnl)
 			sv_lock_allow_box:SetText("Allow lock part")
 			sv_lock_allow_box:SetSize(400,30)
 			sv_lock_allow_box:SetConVar("pac_sv_lock")
-		
+
 		local sv_lock_grab_box = vgui.Create("DCheckBoxLabel", lock_list_list)
 			sv_lock_grab_box:SetText("Allow lock part grabbing")
 			sv_lock_grab_box:SetSize(400,30)
@@ -1163,7 +1162,7 @@ function pace.FillServerSettings(pnl)
 
 	local master_list = vgui.Create("DCategoryList", pnl)
 	master_list:Dock(FILL)
-	
+
 	--models/entity
 			--[[
 				pac_allow_blood_color
@@ -1172,7 +1171,7 @@ function pace.FillServerSettings(pnl)
 				pac_modifier_model
 				pac_modifier_size
 			]]
-	
+
 	local model_category = master_list:Add("Allowed Playermodel Mutations")
 	model_category.Header:SetSize(40,40)
 	model_category.Header:SetFont("DermaLarge")
@@ -1205,12 +1204,12 @@ function pace.FillServerSettings(pnl)
 		pac_modifier_size_box:SetSize(400,30)
 		pac_modifier_size_box:SetConVar("pac_modifier_size")
 		model_category_list:Add(pac_modifier_size_box)
-	
+
 	--movement and mass
 		--[[
 			pac_free_movement
 		]]
-	
+
 	local movement_category = master_list:Add("Player Movement")
 	movement_category.Header:SetSize(40,40)
 	movement_category.Header:SetFont("DermaLarge")
@@ -1248,9 +1247,9 @@ function pace.FillServerSettings(pnl)
 				--pac_allow_movement_form.form = generic_form("PAC player movement is enabled.")
 			end
 		end
-		
+
 		--mode:ChooseOption(mode_str)
-		
+
 	local pac_player_movement_allow_mass_box = vgui.Create("DCheckBoxLabel", movement_category_list)
 		pac_player_movement_allow_mass_box:SetText("Allow Modify Mass")
 		pac_player_movement_allow_mass_box:SetSize(400,30)
@@ -1264,7 +1263,7 @@ function pace.FillServerSettings(pnl)
 		playermovement_min_mass_numbox:SetSize(400,30)
 		movement_category_list:Add(playermovement_min_mass_numbox)
 		playermovement_min_mass_numbox:SetConVar("pac_player_movement_min_mass")
-		
+
 
 	local playermovement_max_mass_numbox = vgui.Create("DNumSlider", movement_category_list)
 		playermovement_max_mass_numbox:SetText("Maximum mass players can set for themselves")
@@ -1273,7 +1272,7 @@ function pace.FillServerSettings(pnl)
 		playermovement_max_mass_numbox:SetSize(400,30)
 		movement_category_list:Add(playermovement_max_mass_numbox)
 		playermovement_max_mass_numbox:SetConVar("pac_player_movement_max_mass")
-		
+
 
 	local pac_player_movement_allow_mass_dmgscaling_box = vgui.Create("DCheckBoxLabel", movement_category_list)
 		pac_player_movement_allow_mass_dmgscaling_box:SetText("Allow damage scaling of physics damage based on player's mass")
@@ -1282,7 +1281,7 @@ function pace.FillServerSettings(pnl)
 		pac_player_movement_allow_mass_dmgscaling_box:SetConVar("pac_player_movement_physics_damage_scaling")
 		movement_category_list:Add(pac_player_movement_allow_mass_dmgscaling_box)
 
-		
+
 	--wear limits and bans
 		--[[
 			pac_sv_draw_distance
@@ -1292,7 +1291,7 @@ function pace.FillServerSettings(pnl)
 			pac_ban
 			pac_unban
 		]]
-	
+
 	local wear_list = master_list:Add("Server wearing/drawing")
 	wear_list.Header:SetSize(40,40)
 	wear_list.Header:SetFont("DermaLarge")
@@ -1320,7 +1319,7 @@ function pace.FillServerSettings(pnl)
 		pac_submit_spam_box:SetConVar("pac_submit_spam")
 
 
-	
+
 	--misc
 		--[[
 			sv_pac_webcontent_allow_no_content_length
@@ -1344,7 +1343,7 @@ function pace.FillServerSettings(pnl)
 		contraption_box:SetText("allow contraptions")
 		contraption_box:SetSize(400,30)
 		contraption_box:SetConVar("pac_to_contraption_allow")
-	
+
 	local contraption_entities_numbox = vgui.Create("DNumSlider", misc_list_list)
 		contraption_entities_numbox:SetText("PAC3 contraption entities limit")
 		contraption_entities_numbox:SetValue(GetConVar("pac_max_contraption_entities"):GetInt())
@@ -1356,7 +1355,7 @@ function pace.FillServerSettings(pnl)
 		cam_restrict_box:SetText("restrict PAC editor camera movement")
 		cam_restrict_box:SetSize(400,30)
 		cam_restrict_box:SetConVar("pac_restrictions")
-	
+
 
 	return master_list
 end
@@ -1389,7 +1388,7 @@ function pace.FillEditorSettings(pnl)
 	partmenu_apply_button:SetY(10)
 	partmenu_apply_button:SetWidth(65)
 	partmenu_apply_button:SetImage('icon16/accept.png')
-	
+
 	local partmenu_clearlist_button = vgui.Create("DButton", LeftPanel)
 	partmenu_clearlist_button:SetText("Clear")
 	partmenu_clearlist_button:SetX(285)
@@ -1403,7 +1402,7 @@ function pace.FillEditorSettings(pnl)
 	partmenu_savelist_button:SetY(10)
 	partmenu_savelist_button:SetWidth(70)
 	partmenu_savelist_button:SetImage('icon16/disk.png')
-	
+
 
 
 	local partmenu_choices = vgui.Create("DScrollPanel", LeftPanel)
@@ -1433,7 +1432,7 @@ function pace.FillEditorSettings(pnl)
 	partmenu_previews:SetWidth(200)
 
 
-	
+
 	local shortcutaction_choices = vgui.Create("DComboBox", LeftPanel)
 	shortcutaction_choices:SetText("Select a PAC action")
 	for _,name in ipairs(pace.PACActionShortcut_Dictionary) do
@@ -1443,12 +1442,12 @@ function pace.FillEditorSettings(pnl)
 	shortcutaction_choices:SetWidth(170)
 	shortcutaction_choices:SetHeight(20)
 	shortcutaction_choices:ChooseOptionID(1)
-	
+
 	function shortcutaction_choices:Think()
 		self.next = self.next or 0
 		self.found = self.found or false
 		if self.next < RealTime() then self.found = false end
-		if self:IsHovered() then 
+		if self:IsHovered() then
 			if input.IsKeyDown(KEY_UP) then
 				if not self.found then self:ChooseOptionID(math.Clamp(self:GetSelectedID() + 1,1,table.Count(pace.PACActionShortcut_Dictionary))) self.found = true self.next = RealTime() + 0.3 end
 			elseif input.IsKeyDown(KEY_DOWN) then
@@ -1457,7 +1456,7 @@ function pace.FillEditorSettings(pnl)
 		else self.found = false
 		end
 	end
-	
+
 	local shortcuts_description_text = vgui.Create("DLabel", LeftPanel)
 	shortcuts_description_text:SetFont("DermaDefaultBold")
 	shortcuts_description_text:SetText("Edit keyboard shortcuts")
@@ -1491,7 +1490,7 @@ function pace.FillEditorSettings(pnl)
 			end
 		end
 	end
-	
+
 
 	local shortcutaction_choices_textCurrentShortcut = vgui.Create("DLabel", LeftPanel)
 	shortcutaction_choices_textCurrentShortcut:SetText("Shortcut to edit:")
@@ -1499,8 +1498,8 @@ function pace.FillEditorSettings(pnl)
 	shortcutaction_choices_textCurrentShortcut:SetWidth(200)
 	shortcutaction_choices_textCurrentShortcut:SetX(200)
 	shortcutaction_choices_textCurrentShortcut:SetY(420)
-	
-	
+
+
 	local shortcutaction_index = vgui.Create("DNumberWang", LeftPanel)
 	shortcutaction_index:SetToolTip("index")
 	shortcutaction_index:SetValue(1)
@@ -1516,7 +1515,7 @@ function pace.FillEditorSettings(pnl)
 		num = tonumber(num)
 		local action, val = shortcutaction_choices:GetSelected()
 		local strs = {}
-		
+
 		if action and action ~= "" then
 			if pace.PACActionShortcut[action] and pace.PACActionShortcut[action][num] then
 				for i,v in ipairs(pace.PACActionShortcut[action][num]) do
@@ -1577,7 +1576,7 @@ function pace.FillEditorSettings(pnl)
 	local function send_active_shortcut_to_assign(tbl)
 		local action = shortcutaction_choices:GetValue()
 		local index = shortcutaction_index:GetValue()
-		
+
 		if not tbl then
 			pace.PACActionShortcut[action] = pace.PACActionShortcut[action] or {}
 			pace.PACActionShortcut[action][index] = pace.PACActionShortcut[action][index] or {}
@@ -1655,7 +1654,7 @@ function pace.FillEditorSettings(pnl)
 	bindcapture_text:SetX(300)
 	bindcapture_text:SetY(480)
 	bindcapture_text:SetSize(300, 30)
-	
+
 	function bindcapture_text:Think()
 		self:SetText(pace.bindcapturelabel_text)
 	end
@@ -1689,7 +1688,7 @@ function pace.FillEditorSettings(pnl)
 				end
 			end
 			pace.bindcapturelabel_text = "Recording input:\n" .. inputs_str
-			
+
 			if previous_inputs_tbl and table.Count(previous_inputs_tbl) > 0 then
 				if table.Count(inputs_tbl) < table.Count(previous_inputs_tbl) then
 					pace.FlashNotification("ending input!" .. previous_inputs_str)
@@ -1711,7 +1710,7 @@ function pace.FillEditorSettings(pnl)
 			previous_inputs_str = inputs_str
 			previous_inputs_tbl = inputs_tbl
 		end)
-		
+
 	end
 
 	local bulkbinder = vgui.Create("DBinder", LeftPanel)
@@ -1734,7 +1733,7 @@ function pace.FillEditorSettings(pnl)
 		end
 	end
 
-	local function FindImage(option_name) 
+	local function FindImage(option_name)
 		if option_name == "save" then
 			return pace.MiscIcons.save
 		elseif option_name == "load" then
@@ -1771,7 +1770,7 @@ function pace.FillEditorSettings(pnl)
 			return pace.MiscIcons.uniqueid
 		elseif option_name == "help_part_info" then
 			return 'icon16/information.png'
-		elseif option_name == "reorder_movables" then 
+		elseif option_name == "reorder_movables" then
 			return 'icon16/application_double.png'
 		end
 		return 'icon16/world.png'
@@ -1793,11 +1792,11 @@ function pace.FillEditorSettings(pnl)
 		pnl:SetWidth(200)
 		pnl:SetY(20*(i-1))
 	end
-	
+
 	partmenu_choices:SetWidth(200)
 	partmenu_choices:SetHeight(320)
 	partmenu_choices:SetVerticalScrollbarEnabled(true)
-	
+
 
 	local RightPanel = vgui.Create( "DTree", f )
 	Test_Node = RightPanel:AddNode( "Test", "icon16/world.png" )
@@ -1815,7 +1814,7 @@ function pace.FillEditorSettings(pnl)
 		pace.OnPartMenu(test_part)
 		temp_list = pace.operations_order
 		pace.operations_order = temp_list
-	end 
+	end
 	test_part:Remove() //dumb workaround but it works
 
 
@@ -1823,7 +1822,7 @@ function pace.FillEditorSettings(pnl)
 	div:Dock( FILL )
 	div:SetLeft( LeftPanel )
 	div:SetRight( RightPanel )
-	
+
 	div:SetDividerWidth( 8 )
 	div:SetLeftMin( 50 )
 	div:SetRightMin( 50 )
@@ -1848,11 +1847,11 @@ function pace.FillEditorSettings(pnl)
 		buildlist_partmenu = temp_list
 	end
 
-	function partmenu_apply_button:DoClick() 
+	function partmenu_apply_button:DoClick()
 		pace.operations_order = buildlist_partmenu
 	end
 
-	function partmenu_clearlist_button:DoClick() 
+	function partmenu_clearlist_button:DoClick()
 		ClearPartMenuPreviewList()
 		buildlist_partmenu = {}
 	end
@@ -1863,7 +1862,7 @@ function pace.FillEditorSettings(pnl)
 
 	function partmenu_previews:DoDoubleClick(id, line)
 		table.remove(buildlist_partmenu,id)
-		
+
 		ClearPartMenuPreviewList()
 		for i,v in ipairs(buildlist_partmenu) do
 			partmenu_previews:AddLine(i,v)
@@ -1872,7 +1871,7 @@ function pace.FillEditorSettings(pnl)
 		PrintTable(buildlist_partmenu)
 	end
 
-	
+
 	if pace.operations_order then
 		for i,v in pairs(pace.operations_order) do
 			table.insert(buildlist_partmenu,v)
@@ -1888,17 +1887,17 @@ function pace.FillEditorSettings2(pnl)
 	local panel = vgui.Create( "DPanel", pnl )
 	--[[ movement binds
 		CreateConVar("pac_editor_camera_forward_bind", "w")
-	
+
 		CreateConVar("pac_editor_camera_back_bind", "s")
-	
+
 		CreateConVar("pac_editor_camera_moveleft_bind", "a")
-	
+
 		CreateConVar("pac_editor_camera_moveright_bind", "d")
-	
+
 		CreateConVar("pac_editor_camera_up_bind", "space")
-	
+
 		CreateConVar("pac_editor_camera_down_bind", "")
-		
+
 		]]
 
 	--[[pace.camera_movement_binds = {
@@ -2006,8 +2005,8 @@ function pace.FillEditorSettings2(pnl)
 		function speed_binder:OnChange(num)
 			pace.camera_movement_binds["speed"]:SetString(input.GetKeyName( num ))
 		end
-	
-	--[[pace.partmenu_categories_cedrics = 
+
+	--[[pace.partmenu_categories_cedrics =
 		{
 			["new!"] =
 			{
@@ -2044,9 +2043,9 @@ function pace.FillEditorSettings2(pnl)
 		else
 			return "icon16/page_white.png"
 		end
-		
+
 	end
-		
+
 	local categorytree = vgui.Create("DTree", RightPanel)
 		categorytree:SetY(30)
 		categorytree:SetSize(360,400)
@@ -2073,7 +2072,7 @@ function pace.FillEditorSettings2(pnl)
 		local base = vgui.Create("EditablePanel")
 		base:SetPos(input.GetCursorPos())
 		base:SetSize(200, 300)
-		
+
 		base:MakePopup()
 
 		function base:OnRemove()
@@ -2138,7 +2137,7 @@ function pace.FillEditorSettings2(pnl)
 
 			--base:SetHeight(20 * #result.found + edit:GetTall())
 			base:SetHeight(600 + edit:GetTall())
-			
+
 		end
 
 		edit:OnValueChange("")
@@ -2194,10 +2193,10 @@ function pace.FillEditorSettings2(pnl)
 			if input.IsMouseDown(MOUSE_LEFT) and not (self:IsHovered() or edit:IsHovered()) then self:Remove() end
 		end
 		frame:MakePopup()
-		
+
 		frame:SetSize(300,30)
 		frame:SetPos(input.GetCursorPos())
-		
+
 		edit:Dock(TOP)
 		edit:RequestFocus()
 		edit:SetUpdateOnType(true)
@@ -2214,20 +2213,20 @@ function pace.FillEditorSettings2(pnl)
 			if input.IsMouseDown(MOUSE_LEFT) and not (self:IsHovered() or edit:IsHovered()) then self:Remove() end
 		end
 		frame:MakePopup()
-		
+
 		frame:SetSize(300,30)
 		frame:SetPos(category_node.Label:LocalToScreen(category_node.Label:GetPos()))
-		
+
 		edit:Dock(TOP)
 		edit:RequestFocus()
 		edit:SetUpdateOnType(true)
 	end
-	
+
 	local function load_partgroup_template_into_tree(categorytree, tbl)
 		tbl = tbl or pace.partgroups or pace.partmenu_categories_default
 		categorytree:Clear()
 		for category,category_contents in pairs(tbl) do
-			
+
 			local category_node = categorytree:AddNode(category)
 			category_node:SetIcon(get_icon(category_contents.icon, category))
 
@@ -2287,7 +2286,7 @@ function pace.FillEditorSettings2(pnl)
 				part_categories_presets:AddChoice(string.GetFileFromFilename(filename))
 			end
 		end
-		
+
 		part_categories_presets:SetX(10) part_categories_presets:SetY(10)
 		part_categories_presets:SetWidth(170)
 		part_categories_presets:SetHeight(20)
@@ -2365,7 +2364,7 @@ function pace.ConfigureEventWheelMenu()
 	master_panel:Center()
 	local mid_panel = vgui.Create("DPanel", master_panel)
 	mid_panel:Dock(FILL)
-	
+
 	local scr_pnl = vgui.Create("DScrollPanel", mid_panel)
 	scr_pnl:SetSize(490,800)
 	scr_pnl:SetPos(0,45)
@@ -2374,7 +2373,7 @@ function pace.ConfigureEventWheelMenu()
 	local first_panel = vgui.Create("DPanel", mid_panel)
 	first_panel:SetSize(500,40)
 	first_panel:Dock(TOP)
-	
+
 	local circle_style_listmenu = vgui.Create("DComboBox",first_panel)
 	circle_style_listmenu:SetText("Choose eventwheel style")
 	circle_style_listmenu:SetSize(150,20)
@@ -2407,7 +2406,7 @@ function pace.ConfigureEventWheelMenu()
 			GetConVar("pac_eventwheel_clickmode"):SetString("1")
 		end
 	end
-	
+
 
 	local rectangle_style_listmenu = vgui.Create("DComboBox",first_panel)
 	rectangle_style_listmenu:SetText("Choose eventlist style")
@@ -2485,12 +2484,12 @@ function pace.ConfigureEventWheelMenu()
 				events[cmd] = cmd
 			end
 		end
-		
+
 	end
 
 	local names = table.GetKeys( events )
 	table.sort(names, function(a, b) return a < b end)
-	
+
 	local copied_color = nil
 	local lanes = {}
 	local colorpanel
@@ -2506,7 +2505,7 @@ function pace.ConfigureEventWheelMenu()
 		for _, name in ipairs(names) do
 			local pnl = vgui.Create("DPanel") list:Add(pnl) pnl:SetSize(400,20)
 			local btn = vgui.Create("DButton", pnl)
-			
+
 			btn:SetSize(200,25)
 			btn:SetText(name)
 			btn:SetTooltip(name)
@@ -2533,13 +2532,13 @@ function pace.ConfigureEventWheelMenu()
 					local str_tbl = string.Split(pace.command_colors[name], " ")
 					clr_pnl:SetBaseColor(Color(tonumber(str_tbl[1]),tonumber(str_tbl[2]),tonumber(str_tbl[3])))
 				end
-				
+
 				clr_frame:SetSize(300,200) clr_pnl:Dock(FILL)
 				clr_frame:SetPos(self:LocalToScreen(0,0))
 				clr_frame:RequestFocus()
 				function clr_pnl:Think()
 					if input.IsMouseDown(MOUSE_LEFT) then
-						
+
 						if not IsValid(vgui.GetHoveredPanel()) then
 							self:Remove() clr_frame:Remove()
 						else
@@ -2557,7 +2556,7 @@ function pace.ConfigureEventWheelMenu()
 					pace.command_colors[name] = col.r .. " " .. col.g .. " " .. col.b
 					btn:SetColor(col)
 				end
-				
+
 			end
 
 			local copypastebutton = vgui.Create("DButton", pnl)
@@ -2604,7 +2603,7 @@ function pace.ConfigureEventWheelMenu()
 		if pace.event_wheel_list_opened then pac.closeEventSelectionList(true) end
 		if pace.event_wheel_opened then pac.closeEventSelectionWheel(true) end
 	end
-	
+
 	master_panel:RequestFocus()
 	gui.EnableScreenClicker(true)
 	pace.command_event_menu_opened = master_panel

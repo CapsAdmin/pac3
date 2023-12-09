@@ -398,7 +398,7 @@ function PART:Shoot(pos, ang, multi_projectile_count)
 			ent:SetCollisionGroup(COLLISION_GROUP_PROJECTILE)
 
 			if self:AttachToEntity(ent, false) then
-				
+
 				timer.Simple(math.Clamp(self.LifeTime, 0, 10), function()
 					if ent:IsValid() then
 						if ent.pac_projectile_part and ent.pac_projectile_part:IsValid() then
@@ -410,10 +410,10 @@ function PART:Shoot(pos, ang, multi_projectile_count)
 						end)
 					end
 				end)
-				
+
 			end
-			
-			
+
+
 		end
 
 		if self.Delay == 0 then
@@ -491,7 +491,7 @@ pac.AddHook("Think", "pac_cleanup_CS_projectiles", function()
 		if ent.pac_projectile_part == rootpart then
 			local tbl = ent.pac_projectile_part:GetChildren()
 			local partchild = tbl[next(tbl)] --ent.pac_projectile_part is the root group, but outfit part is the first child
-			
+
 			if IsValid(partchild) then
 				if partchild:IsHidden() then
 					SafeRemoveEntity(ent)
@@ -571,11 +571,11 @@ do -- physical
 							net.Start("pac_projectile_remove")
 							net.WriteInt(ent_id, 16)
 							net.SendToServer()
-							
+
 						end
 					end
 				end
-				
+
 			end
 		end
 	end)

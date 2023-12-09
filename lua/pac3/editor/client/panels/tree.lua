@@ -202,13 +202,13 @@ do
 				) and
 				not gui.IsConsoleVisible()
 			then
-	
+
 				if action == "editor_node_collapse" then
 					pace.Call("VariableChanged", pace.current_part, "EditorExpand", false)
 				elseif action == "editor_node_expand" then
 					pace.Call("VariableChanged", pace.current_part, "EditorExpand", true)
 				end
-	
+
 				if action == "editor_up" or action == "editor_pageup" then
 					local added_nodes = get_added_nodes(self)
 					local offset = action == "editor_pageup" and 10 or 1
@@ -224,13 +224,13 @@ do
 								end
 							end
 						end
-	
+
 						self.scrolled_up = self.scrolled_up or os.clock() + 0.4
 					end
 				else
 					self.scrolled_up = nil
 				end
-	
+
 				if action == "editor_down" or action == "editor_pagedown" then
 					local added_nodes = get_added_nodes(self)
 					local offset = action == "editor_pagedown" and 10 or 1
@@ -246,7 +246,7 @@ do
 								end
 							end
 						end
-	
+
 						self.scrolled_down = self.scrolled_down or os.clock() + 0.4
 					end
 				else
@@ -254,7 +254,7 @@ do
 				end
 			end
 	end
-	
+
 	function pace.DoScrollControls(action)
 		DoScrollControl(pace.tree, action)
 	end
@@ -613,7 +613,7 @@ local function remove_node(part)
 		part.pace_tree_node:GetRoot().m_pSelectedItem = nil
 		part.pace_tree_node:Remove()
 		pace.RefreshTree()
-		
+
 	end
 end
 
@@ -654,7 +654,7 @@ pace.allowed_event_refresh = 0
 function pace.RefreshEvents()
 	--spam preventer, (load parts' initializes gets called)
 	if pace.allowed_event_refresh > CurTime() then return else pace.allowed_event_refresh = CurTime() + 0.1 end
-	
+
 	local events = {}
 	for _, part in pairs(pac.GetLocalParts()) do
 		if part.ClassName == "event" then
@@ -662,7 +662,7 @@ function pace.RefreshEvents()
 		end
 	end
 	local no_events = table.Count(events) == 0
-	
+
 	for _, child in pairs(pac.GetLocalParts()) do
 		child.active_events = {}
 		child.active_events_ref_count = 0
@@ -673,7 +673,7 @@ function pace.RefreshEvents()
 		end
 		child:CallRecursive("CalcShowHide", false)
 	end
-	
+
 end
 
 function pace.RefreshTree(reset)
@@ -688,7 +688,7 @@ function pace.RefreshTree(reset)
 			end
 		end)
 	end
-	
+
 end
 
 if Entity(1):IsPlayer() and not PAC_RESTART and not VLL2_FILEDEF then
