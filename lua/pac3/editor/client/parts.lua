@@ -2692,7 +2692,7 @@ do --hover highlight halo
 		if not skip then timer.Simple(0.3, function() BulkSelectRefreshFadedNodes(self) end) end
 	end
 
-	function BulkSelectRefreshFadedNodes(part_trace)
+	local function BulkSelectRefreshFadedNodes(part_trace)
 		if refresh_halo_hook then return end
 		if part_trace then
 			for _,v in ipairs(part_trace:GetRootPart():GetChildrenList()) do
@@ -2711,7 +2711,7 @@ do --hover highlight halo
 		end
 	end
 
-	function RebuildBulkHighlight()
+	local function RebuildBulkHighlight()
 		local parts_tbl = {}
 		local ents_tbl = {}
 		local hover_tbl = {}
@@ -2752,7 +2752,7 @@ do --hover highlight halo
 		last_bulk_select_tbl = hover_tbl
 	end
 
-	function TestPrintTable(tbl, tbl_name)
+	local function TestPrintTable(tbl, tbl_name)
 		MsgC(Color(200,255,200), "TABLE CONTENTS:" .. tbl_name .. " = {\n")
 		for _,v in pairs(tbl) do
 			MsgC(Color(200,255,200), "\t", tostring(v), ", \n")
@@ -2760,7 +2760,7 @@ do --hover highlight halo
 		MsgC(Color(200,255,200), "}\n")
 	end
 
-	function ThinkBulkHighlight()
+	local function ThinkBulkHighlight()
 		if table.IsEmpty(pace.BulkSelectList) or last_bulk_select_tbl == nil or table.IsEmpty(pac.GetLocalParts()) or (#pac.GetLocalParts() == 1) then
 			hook.Remove('PreDrawHalos', "BulkSelectHighlights")
 			return
@@ -2768,7 +2768,7 @@ do --hover highlight halo
 		DrawHaloHighlight(last_bulk_select_tbl)
 	end
 
-	function DrawHaloHighlight(tbl)
+	local function DrawHaloHighlight(tbl)
 		if (type(tbl) ~= "table") then return end
 		if not pace.Active then
 			hook.Remove('PreDrawHalos', "BulkSelectHighlights")
