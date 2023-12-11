@@ -127,14 +127,6 @@ local function TestPrintTable(tbl, tbl_name)
 	MsgC(Color(200,255,200), "}\n")
 end
 
-local function ThinkBulkHighlight()
-	if table.IsEmpty(pace.BulkSelectList) or last_bulk_select_tbl == nil or table.IsEmpty(pac.GetLocalParts()) or (#pac.GetLocalParts() == 1) then
-		hook.Remove('PreDrawHalos', "BulkSelectHighlights")
-		return
-	end
-	DrawHaloHighlight(last_bulk_select_tbl)
-end
-
 local function DrawHaloHighlight(tbl)
 	if (type(tbl) ~= "table") then return end
 	if not pace.Active then
@@ -179,6 +171,15 @@ local function DrawHaloHighlight(tbl)
 	pac.haloex.Add(tbl, halo_color, 2, 2, pulseamount, true, true, pulseamount, 1, 1)
 	--haloex.Add( ents, color, blurx, blury, passes, add, ignorez, amount, spherical, shape )
 end
+
+local function ThinkBulkHighlight()
+	if table.IsEmpty(pace.BulkSelectList) or last_bulk_select_tbl == nil or table.IsEmpty(pac.GetLocalParts()) or (#pac.GetLocalParts() == 1) then
+		hook.Remove('PreDrawHalos', "BulkSelectHighlights")
+		return
+	end
+	DrawHaloHighlight(last_bulk_select_tbl)
+end
+
 
 function pace.WearParts(temp_wear_filter)
 	pace.still_loading_wearing = true
