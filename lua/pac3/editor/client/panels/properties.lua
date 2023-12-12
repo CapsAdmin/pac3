@@ -291,6 +291,7 @@ end)
 
 pac.AddHook("PostRenderVGUI", "flash_properties", function()
 	if not pace.flashes then return end
+	if not IsValid(pace.tree) or not IsValid(pace.properties) then return end
 	for pnl, tbl in pairs(pace.flashes) do
 		if IsValid(pnl) then
 			--print(pnl:LocalToScreen(0,0))
@@ -334,6 +335,7 @@ do -- container
 	end
 
 	function PANEL:Flash()
+		if not IsValid(pace.tree) or not IsValid(pace.properties) then return end
 		pace.flashes = pace.flashes or {}
 		pace.flashes[self] = {start = CurTime(), flash_end = CurTime() + 2.5, color = Color(255,0,0)}
 
