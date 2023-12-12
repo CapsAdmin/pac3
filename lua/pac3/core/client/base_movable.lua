@@ -210,17 +210,20 @@ function PART:CalcAngles(ang, wpos)
 
 	if pac.StringFind(self.AimPartName, "NEAREST_LIFE_YAW", true, true) then
 		local nearest_ent = get_nearest_ent(self)
+		if not IsValid(nearest_ent) then return ang or Angle(0,0,0) end
 		local ang = (nearest_ent:GetPos() - wpos):Angle()
 		return Angle(0,ang.y,0) + self.Angles
 	end
 
 	if pac.StringFind(self.AimPartName, "NEAREST_LIFE_POS", true, true) then
 		local nearest_ent = get_nearest_ent(self)
+		if not IsValid(nearest_ent) then return ang or Angle(0,0,0) end
 		return self.Angles + (nearest_ent:GetPos() - wpos):Angle()
 	end
 
 	if pac.StringFind(self.AimPartName, "NEAREST_LIFE", true, true) then
 		local nearest_ent = get_nearest_ent(self)
+		if not IsValid(nearest_ent) then return ang or Angle(0,0,0) end
 		return self.Angles + ( nearest_ent:GetPos() + Vector(0,0,(nearest_ent:WorldSpaceCenter() - nearest_ent:GetPos()).z * 1.5) - wpos):Angle()
 	end
 
