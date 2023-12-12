@@ -158,6 +158,7 @@ function PART:Impulse(on)
 	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	if not on and not self.Continuous then return end
 	if not GetConVar("pac_sv_force"):GetBool() then return end
+	if util.NetworkStringToID( "pac_request_force" ) == 0 then self:SetError("This part is deactivated on the server") return end
 	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 	if pac.Blocked_Combat_Parts then
 		if pac.Blocked_Combat_Parts[self.ClassName] then return end

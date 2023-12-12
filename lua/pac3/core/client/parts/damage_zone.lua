@@ -497,6 +497,7 @@ function PART:SendNetMessage()
 	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	if not GetConVar('pac_sv_damage_zone'):GetBool() then return end
+	if util.NetworkStringToID( "pac_request_zone_damage" ) == 0 then self:SetError("This part is deactivated on the server") return end
 	if pac.Blocked_Combat_Parts then
 		if pac.Blocked_Combat_Parts[self.ClassName] then return end
 	end
@@ -585,6 +586,7 @@ function PART:OnShow()
 		--grabbed the function from projectile.lua
 		--here, we spawn a static hitmarker and the max delay is 8 seconds
 		local function spawn(part, pos, ang, parent_ent, duration, owner)
+			if not IsValid(owner) then return end
 			if part == self then return end --stop infinite feedback loops of using the damagezone as a hitmarker
 			--what if people employ a more roundabout method? CRACKDOWN!
 
@@ -757,6 +759,7 @@ function PART:PreviewHitbox()
 
 	hook.Add(self.RenderingHook, "pace_draw_hitbox"..self.UniqueID, function()
 		if not self.Preview then hook.Remove(self.RenderingHook, "pace_draw_hitbox"..self.UniqueID) end
+		if not IsValid(self) then hook.Remove(self.RenderingHook, "pace_draw_hitbox"..self.UniqueID) end
 		self:GetWorldPosition()
 		if self.HitboxMode == "Box" then
 			local mins =  Vector(-self.Radius, -self.Radius, -self.Length)

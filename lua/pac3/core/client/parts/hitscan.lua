@@ -195,6 +195,7 @@ local tracer_ids = {
 function PART:SendNetMessage()
 	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	if not GetConVar('pac_sv_hitscan'):GetBool() then return end
+	if util.NetworkStringToID( "pac_hitscan" ) == 0 then self:SetError("This part is deactivated on the server") return end
 	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 	if pac.Blocked_Combat_Parts[self.ClassName] then
 		return

@@ -60,6 +60,7 @@ BUILDER:EndStorableVars()
 function PART:OnThink()
 
 	if not GetConVar('pac_sv_lock'):GetBool() then return end
+	if util.NetworkStringToID( "pac_request_position_override_on_entity_grab" ) == 0 then  self:SetError("This part is deactivated on the server") return end
 	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 	if pac.Blocked_Combat_Parts then
 		if pac.Blocked_Combat_Parts[self.ClassName] then return end
