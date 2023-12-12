@@ -58,13 +58,14 @@ BUILDER:StartStorableVars()
 BUILDER:EndStorableVars()
 
 function PART:OnThink()
-	
+
 	if not GetConVar('pac_sv_lock'):GetBool() then return end
+	if util.NetworkStringToID( "pac_request_position_override_on_entity_grab" ) == 0 then  self:SetError("This part is deactivated on the server") return end
 	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 	if pac.Blocked_Combat_Parts then
 		if pac.Blocked_Combat_Parts[self.ClassName] then return end
 	end
-	
+
 	if self.forcebreak then
 		if self.next_allowed_grab < CurTime() then --we're able to resume
 			if self.ContinuousSearch then
@@ -95,14 +96,14 @@ function PART:OnThink()
 					self.default_ang = self.target_ent:GetAngles() --record the initial ent angles
 				end
 				if self.OverrideEyeAngles then self.default_ang.y = self:GetWorldAngles().y end --if we want to override players eye angles we will keep recording the yaw
-				
+
 			elseif not self.grabbing then
 				self.default_ang = self.target_ent:GetAngles() --record the initial ent angles anyway
 			end
-			
+
 			local relative_transform_matrix = Matrix()
 			relative_transform_matrix:Identity()
-			
+
 			if self.RelativeGrab then
 				if self.is_first_time then self:CalculateRelativeOffset() end
 				relative_transform_matrix = self.relative_transform_matrix or Matrix():Identity()
@@ -110,15 +111,15 @@ function PART:OnThink()
 				relative_transform_matrix = Matrix()
 				relative_transform_matrix:Identity()
 			end
-			
+
 			local offset_matrix = Matrix()
 			offset_matrix:Translate(self:GetWorldPosition())
 			offset_matrix:Rotate(self:GetWorldAngles())
 			offset_matrix:Mul(relative_transform_matrix)
-	
+
 			local relative_offset_pos = offset_matrix:GetTranslation()
 			local relative_offset_ang = offset_matrix:GetAngles()
-	
+
 			if pac.LocalPlayer == self:GetPlayerOwner() then
 				if not GetConVar("pac_sv_combat_enforce_netrate_monitor_serverside"):GetBool() then
 					if not pac.CountNetMessage() then self:SetInfo("Went beyond the allowance") return end
@@ -134,7 +135,7 @@ function PART:OnThink()
 					net.WriteAngle(self:GetWorldAngles())
 				end
 			end
-			
+
 			local try_override_eyeang = false
 			if self.target_ent:IsPlayer() then
 				if self.OverrideEyeAngles then try_override_eyeang = true end
@@ -150,7 +151,7 @@ function PART:OnThink()
 					if self.OverrideEyePositionPart.GetWorldAngles then
 						can_calcview = true
 					end
-				end 
+				end
 				net.WriteBool(can_calcview)
 				--print(IsValid(self.OverrideEyePositionPart), self.OverrideEyeAngles)
 				if can_calcview then
@@ -167,7 +168,7 @@ function PART:OnThink()
 			if self.Players and self.target_ent:IsPlayer() and self.OverrideAngles then
 				local mat = Matrix()
 				mat:Identity()
-				
+
 				if self.OverrideAngles then
 					final_ang = self:GetWorldAngles()
 				end
@@ -191,12 +192,12 @@ function PART:OnThink()
 				--print("transform ang", final_ang)
 				--print("part's angles", self:GetWorldAngles())
 				--mat:Rotate(self:GetWorldAngles())
-				
-				
+
+
 				self.target_ent:EnableMatrix("RenderMultiply", mat)
-				
+
 			end
-			
+
 			self.grabbing = true
 			self.teleported = false
 		end
@@ -220,7 +221,7 @@ do
 		end
 
 		ent:SetGravity(1)
-		
+
 		ent.pac_recently_broken_free_from_lock = CurTime()
 		ent:DisableMatrix("RenderMultiply")
 	end
@@ -244,10 +245,10 @@ do
 			if part then
 				if part.ClassName == "lock" then
 					part:BreakLock(target_to_release)
-					
+
 				end
 			end
-			
+
 		else
 			MsgC(Color(200, 200, 200), "NOW! WE SEARCH YOUR LOCAL PARTS!\n")
 			for i,part in pairs(pac.GetLocalParts()) do
@@ -260,11 +261,11 @@ do
 				end
 			end
 		end
-		
+
 	end)
 
 	net.Receive("pac_mark_grabbed_ent", function(len)
-		
+
 		local target_to_mark = net.ReadEntity()
 		local successful_grab = net.ReadBool()
 		local uid = net.ReadString()
@@ -293,7 +294,7 @@ function PART:SetRadius(val)
 end
 
 function PART:OnShow()
-	
+
 	local origin_part
 	self.is_first_time = true
 	if self.resetting_condition or self.forcebreak then
@@ -312,7 +313,7 @@ function PART:OnShow()
 		local sv_dist = GetConVar("pac_sv_lock_max_grab_radius"):GetInt()
 
 		render.DrawLine(origin_part:GetWorldPosition(),origin_part:GetWorldPosition() + Vector(0,0,-self.OffsetDownAmount),Color(255,255,255))
-		
+
 		if self.Radius < sv_dist then
 			self:SetInfo(nil)
 			render.DrawWireframeSphere(origin_part:GetWorldPosition() + Vector(0,0,-self.OffsetDownAmount), sv_dist, 30, 30, Color(50,50,150),true)
@@ -327,18 +328,18 @@ function PART:OnShow()
 	if self.Mode == "Teleport" then
 		if not GetConVar('pac_sv_lock_teleport'):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then return end
 		self.target_ent = nil
-		
+
 		local ang_yaw_only = self:GetWorldAngles()
 		ang_yaw_only.p = 0
 		ang_yaw_only.r = 0
 		if pac.LocalPlayer == self:GetPlayerOwner() then
-			
+
 			local teleport_pos_final = self:GetWorldPosition()
 
 			if self.ClampDistance then
 				local ply_pos = self:GetPlayerOwner():GetPos()
 				local pos = self:GetWorldPosition()
-				
+
 				if pos:Distance(ply_pos) > self.Radius then
 					local clamped_pos = ply_pos + (pos - ply_pos):GetNormalized()*self.Radius
 					teleport_pos_final = clamped_pos
@@ -357,7 +358,7 @@ function PART:OnShow()
 				net.WriteBool(self.OverrideAngles)
 				net.SendToServer()
 			end)
-			
+
 		end
 		self.grabbing = false
 	elseif self.Mode == "Grab" then
@@ -378,7 +379,7 @@ end
 function PART:reset_ent_ang()
 	if self.target_ent == nil then return end
 	local reset_ent = self.target_ent
-	
+
 	if reset_ent:IsValid() then
 		timer.Simple(math.min(self.RestoreDelay,5), function()
 			if pac.LocalPlayer == self:GetPlayerOwner() then
@@ -403,7 +404,7 @@ function PART:OnRemove()
 end
 
 function PART:DecideTarget()
-	
+
 	local RADIUS = math.Clamp(self.Radius,0,GetConVar("pac_sv_lock_max_grab_radius"):GetInt())
 	local ents_candidates = {}
 	local chosen_ent = nil
@@ -461,7 +462,7 @@ function PART:DecideTarget()
 			chosen_ent = ent_candidate
 		end
 	end
-	
+
 	if chosen_ent ~= nil then
 		self.target_ent = chosen_ent
 		if pac.LocalPlayer == self:GetPlayerOwner() then
@@ -477,7 +478,7 @@ end
 
 
 function PART:CheckEntValidity()
-	
+
 	if self.target_ent == nil then
 		self.valid_ent = false
 	elseif self.target_ent:EntIndex() == 0 then
