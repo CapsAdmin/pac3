@@ -55,7 +55,7 @@ local ENFORCE_DISTANCE_SQR = math.pow(enforce_distance:GetInt(),2)
 cvars.AddChangeCallback("pac_sv_combat_distance_enforced", function() ENFORCE_DISTANCE_SQR = math.pow(enforce_distance:GetInt(),2) end)
 
 
-local global_combat_whitelisting = CreateConVar("pac_sv_combat_whitelisting", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "How the server should decide which players are allowed to use the main PAC3 combat parts (lock, damagezone, force).\n0:Everyone is allowed unless the parts are disabled serverwide\n1:No one is allowed until they get verified as trustworthy\tpac_sv_whitelist_combat <playername>\n\tpac_sv_blacklist_combat <playername>")
+local global_combat_whitelisting = CreateConVar("pac_sv_combat_whitelisting", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "How the server should decide which players are allowed to use the main PAC3 combat parts (lock, damagezone, force...).\n0:Everyone is allowed unless the parts are disabled serverwide\n1:No one is allowed until they get verified as trustworthy\tpac_sv_whitelist_combat <playername>\n\tpac_sv_blacklist_combat <playername>")
 local global_combat_prop_protection = CreateConVar("pac_sv_prop_protection", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether players owned (created) entities (physics props and gmod contraption entities) will be considered in the consent calculations, protecting them. Without this cvar, only the player is protected.")
 
 local damageable_point_ent_classes = {
@@ -208,14 +208,43 @@ if SERVER then
 
 	end
 
+	local function Try_CPPISetOwner(ent, ply)
+		if ent.CPPISetOwner then --a prop protection using CPPI probably exists
+			ent:CPPISetOwner(ply)
+		end
+		ent.pac_prop_protection_owner = ply --otherwise we'll have this field
+	end
+
+	local function Try_CPPIGetOwner(ent)
+		if ent.CPPIGetOwner then --a prop protection using CPPI probably exists so we use it
+			return ent:CPPIGetOwner()
+		end
+		return ent.pac_prop_protection_owner or nil --otherwise we'll use the field we set or 
+	end
+
 	--hack fix to stop GetOwner returning [NULL Entity]
-	hook.Add("PlayerSpawnedProp", "HackReAssignOwner", function(ply, model, ent) ent.m_PlayerCreator = ply end)
-	hook.Add("PlayerSpawnedNPC", "HackReAssignOwner", function(ply, ent) ent.m_PlayerCreator = ply end)
-	hook.Add("PlayerSpawnedRagdoll", "HackReAssignOwner", function(ply, model, ent) ent.m_PlayerCreator = ply end)
-	hook.Add("PlayerSpawnedSENT", "HackReAssignOwner", function(ply, ent) ent.m_PlayerCreator = ply end)
-	hook.Add("PlayerSpawnedSWEP", "HackReAssignOwner", function(ply, ent) ent.m_PlayerCreator = ply end)
-	hook.Add("PlayerSpawnedVehicle", "HackReAssignOwner", function(ply, ent) ent.m_PlayerCreator = ply end)
-	hook.Add("PlayerSpawnedEffect", "HackReAssignOwner", function(ply, model, ent) ent.m_PlayerCreator = ply end)
+	--uses CPPI interface from prop protectors if present
+	hook.Add("PlayerSpawnedProp", "HackReAssignOwner", function(ply, model, ent)
+		Try_CPPISetOwner(ent, ply)
+	end)
+	hook.Add("PlayerSpawnedNPC", "PAC_HackReAssignOwner", function(ply, ent)
+		Try_CPPISetOwner(ent, ply)
+	end)
+	hook.Add("PlayerSpawnedRagdoll", "PAC_HackReAssignOwner", function(ply, model, ent)
+		Try_CPPISetOwner(ent, ply)
+	end)
+	hook.Add("PlayerSpawnedSENT", "PAC_HackReAssignOwner", function(ply, ent)
+		Try_CPPISetOwner(ent, ply)
+	end)
+	hook.Add("PlayerSpawnedSWEP", "PAC_HackReAssignOwner", function(ply, ent)
+		Try_CPPISetOwner(ent, ply)
+	end)
+	hook.Add("PlayerSpawnedVehicle", "PAC_HackReAssignOwner", function(ply, ent)
+		Try_CPPISetOwner(ent, ply)
+	end)
+	hook.Add("PlayerSpawnedEffect", "PAC_HackReAssignOwner", function(ply, model, ent)
+		Try_CPPISetOwner(ent, ply)
+	end)
 
 	local function IsPossibleContraptionEntity(ent)
 		if not IsValid(ent) then return false end
@@ -228,11 +257,17 @@ if SERVER then
 	end
 
 	local function IsPropProtected(ent, ply)
+		local owner = Try_CPPIGetOwner(ent)
+
+		local prop_protected
+		if IsValid(owner) then --created entities should be fine
+			prop_protected = owner:IsPlayer() and owner ~= ply
+		else --players and world props could nil out
+			prop_protected = false
+		end
 
 		local reason = ""
 		local pac_sv_prop_protection = global_combat_prop_protection:GetBool()
-
-		local prop_protected = ent:GetCreator():IsPlayer() and ent:GetCreator() ~= ply
 
 		local contraption = IsPossibleContraptionEntity(ent) and ent:IsConstrained()
 
@@ -250,6 +285,8 @@ if SERVER then
 
 	--whitelisting/blacklisting check
 	local function PlayerIsCombatAllowed(ply)
+		if pace.IsBanned(ply) then return false end
+		if ulx and (ply.frozen or ply.jail) then return false end
 		if pac.global_combat_whitelist[string.lower(ply:SteamID())] then
 			if pac.global_combat_whitelist[string.lower(ply:SteamID())].permission == "Allowed" then return true end
 			if pac.global_combat_whitelist[string.lower(ply:SteamID())].permission == "Banned" then return false end
@@ -297,10 +334,11 @@ if SERVER then
 	end
 
 	local function ApplyLockState(ent, bool, nocollide) --Change the movement states and reset some other angle-related things
+		if ulx and (ent.frozen or ent.jail) then return end
 		--the grab imposes MOVETYPE_NONE and no collisions
 		--reverting the state requires to reset the eyeang roll in case it was modified
 		if ent:IsPlayer() then
-			if bool then
+			if bool then --apply lock
 				active_grabbed_ents[ent] = true
 				if nocollide then
 					ent:SetMoveType(MOVETYPE_NONE)
@@ -309,9 +347,12 @@ if SERVER then
 					ent:SetMoveType(MOVETYPE_WALK)
 					ent:SetCollisionGroup(COLLISION_GROUP_NONE)
 				end
-			else
+			else --revert
 				active_grabbed_ents[ent] = nil
-				ent:SetMoveType(MOVETYPE_WALK)
+				if ent.default_movetype_reserved then
+					ent:SetMoveType(ent.default_movetype)
+					ent.default_movetype_reserved = nil
+				end
 				ent:SetCollisionGroup(COLLISION_GROUP_NONE)
 				local eyeang = ent:EyeAngles()
 				eyeang.r = 0
@@ -352,10 +393,13 @@ if SERVER then
 					print(ent , "no longer grabbed by", ply)
 				end
 			end
+		elseif bool == false then
+			ent.lock_state_applied = false
 		end
 
 		ent:PhysWake()
 		ent:SetGravity(1)
+
 	end
 
 	local function maximized_ray_mins_maxs(startpos,endpos,padding)
@@ -610,9 +654,10 @@ if SERVER then
 			dmginfo:ScaleDamage(cumulative_mult)
 			local remaining_dmg,surviving_layer,side_effect_dmg = GetHPBarDamage(target, dmginfo:GetDamage())
 
-
-			if dmginfo:GetInflictor():GetClass() == "pac_bullet_emitter" and hitscan_consents[target] == false then
-				dmginfo:SetDamage(0)
+			if IsValid(dmginfo:GetInflictor()) then
+				if dmginfo:GetInflictor():GetClass() == "pac_bullet_emitter" and hitscan_consents[target] == false then
+					dmginfo:SetDamage(0)
+				end
 			else
 				local total_hp_value,built_tbl = GatherExtraHPBars(target)
 				if surviving_layer == nil or total_hp_value == 0 or not built_tbl then --no shields = use the dmginfo base damage scaled with the cumulative mult
@@ -654,6 +699,8 @@ if SERVER then
 		local ply_prog_count = 0
 		for i,v in pairs(ents_hits) do
 			if not (v:IsPlayer() or v:IsNPC() or string.find(v:GetClass(), "npc_")) and not tbl.PointEntities then ents_hits[i] = nil end
+			if v.CPPICanDamage and not v:CPPICanDamage(ply) then ents_hits[i] = nil end --CPPI check on the player
+			
 			if pre_excluded_ent_classes[v:GetClass()] or v:IsWeapon() or (v:IsNPC() and not tbl.NPC) or ((v ~= ply and v:IsPlayer() and not tbl.Players) and not (tbl.AffectSelf and v == ply)) then ents_hits[i] = nil
 			else
 				ent_count = ent_count + 1
@@ -689,10 +736,17 @@ if SERVER then
 
 		--the function to determine if we can dissolve, based on policy and setting factors
 		local function IsDissolvable(ent)
+			local owner = Try_CPPIGetOwner(ent)
+
+			local prop_protected_final
+			if IsValid(owner) then --created entities should be fine
+				prop_protected_final = prop_protected and owner:IsPlayer() and damage_zone_consents[owner] == false
+			else --players and world props could nil out
+				prop_protected_final = false
+			end
 			if not pac_sv_damage_zone_allow_dissolve then return false end
 			local dissolvable = true
 			local prop_protected, reason = IsPropProtected(ent, attacker)
-			local prop_protected_final = prop_protected and ent:GetCreator():IsPlayer() and damage_zone_consents[ent:GetCreator()] == false
 
 			if ent:IsPlayer() then
 				if not kill then dissolvable = false
@@ -700,7 +754,7 @@ if SERVER then
 			elseif inflictor == ent then
 				dissolvable = false --do we allow that?
 			end
-			if ent:IsWeapon() and IsValid(ent:GetCreator()) then
+			if ent:IsWeapon() and IsValid(owner) then
 				dissolvable = false
 			end
 			if ent:CreatedByMap() then
@@ -729,46 +783,71 @@ if SERVER then
 
 		--the giga function to determine if we can damage
 		local function DMGAllowed(ent)
-
 			if ent:Health() == 0 and not (string.find(tbl.DamageType, "dissolve")) then return false end --immediately exclude entities with 0 health, except if we want to dissolve
+			
+
 			local canhit = false --whether the policies allow the hit
-			local prop_protected_consent = ent:GetCreator() ~= inflictor and ent ~= inflictor and ent:GetCreator():IsPlayer() and damage_zone_consents[ent:GetCreator()] == false-- and ent:GetCreator() ~= inflictor
+			local prop_protected_consent
 			local contraption = IsPossibleContraptionEntity(ent)
-			local bot_exception = true
+			local bot_exception = false
 			if ent:IsPlayer() then
 				if ent:IsBot() then bot_exception = true end
 			end
+
+			local owner = Try_CPPIGetOwner(ent)
+			local target_ply
+			if IsValid(owner) then --created entities should be fine
+				target_ply = owner
+				prop_protected_consent = owner ~= inflictor and ent ~= inflictor and owner:IsPlayer() and damage_zone_consents[owner] == false
+			else --players and world props could nil out
+				prop_protected_consent = false
+				if ent:IsPlayer() then
+					target_ply = ent
+				end
+			end
+
 			--first pass: entity class blacklist
+			
 			if IsEntity(ent) and ((damageable_point_ent_classes[ent:GetClass()] ~= false) or ((damageable_point_ent_classes[ent:GetClass()] == nil) or (damageable_point_ent_classes[ent:GetClass()] == true))) then
 				--second pass: the damagezone's settings
 					--1.player hurt self if asked
+				local is_player = ent:IsPlayer()
+				local is_physics = (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or ent:IsWeapon())
+				local is_npc = ent:IsNPC() or string.find(ent:GetClass(), "npc") or ent.IsVJBaseSNPC or ent.IsDRGEntity
+				
 				if (tbl.AffectSelf) and ent == inflictor then
 					canhit = true
 					--2.main target types : players, NPC, point entities
-				elseif	((ent:IsPlayer() and tbl.Players) or (tbl.NPC and (ent:IsNPC() or string.find(ent:GetClass(), "npc") or ent.IsVJBaseSNPC or ent.IsDRGEntity)) or tbl.PointEntities)
-						and --one of the base classes
+				elseif		--one of the base classes
 						(damageable_point_ent_classes[ent:GetClass()] ~= false) --non-blacklisted class
 						and --enforce prop protection
-						(bot_exception or (ent:GetCreator() == inflictor or ent == inflictor or (ent:GetCreator() ~= inflictor and pac_sv_prop_protection and damage_zone_consents[ent:GetCreator()] == true) or not pac_sv_prop_protection))
+						(bot_exception or (owner == inflictor or ent == inflictor or (pac_sv_prop_protection and damage_zone_consents[target_ply] ~= false) or not pac_sv_prop_protection))
 						then
-					canhit = true
-					if ent:IsPlayer() and tbl.Players then
-						--rules for players:
-							--self can always hurt itself if asked to
-						if (ent == inflictor and tbl.AffectSelf) then canhit = true
-							--self shouldn't hurt itself if asked not to
-						elseif (ent == inflictor and not tbl.AffectSelf) then canhit = false
-							--other players need to consent, bots don't care about it
-						elseif damage_zone_consents[ent] == true or ent:IsBot() then canhit = true
-							--other players that didn't consent are excluded
-						else canhit = false end
-
-					elseif (tbl.NPC and damageable_point_ent_classes[ent:GetClass()] ~= false) or (tbl.PointEntities and (damageable_point_ent_classes[ent:GetClass()] == true)) then
+					
+					if is_player then
+						if tbl.Players then
+							canhit = true
+							--rules for players:
+								--self can always hurt itself if asked to
+							if (ent == inflictor and not tbl.AffectSelf) then
+								canhit = false --self shouldn't hurt itself if asked not to
+							elseif (damage_zone_consents[ent] == true) or ent:IsBot() then
+								canhit = true --other players need to consent, bots don't care about it
+								--other players that didn't consent are excluded
+							else
+								canhit = false
+							end
+						end
+					elseif is_npc then
+						if tbl.NPC then
+							canhit = true
+						end
+					elseif tbl.PointEntities and (damageable_point_ent_classes[ent:GetClass()] == true) then
 						canhit = true
 					end
 
 					--apply prop protection
-					if IsPropProtected(ent, inflictor) or prop_protected_consent then
+					if (IsPropProtected(ent, inflictor) and IsValid(owner) and damage_zone_consents[target_ply]) or prop_protected_consent or (ent.CPPICanDamage and not ent:CPPICanDamage(ply)) then
 						canhit = false
 					end
 
@@ -993,6 +1072,8 @@ if SERVER then
 	local function ProcessForcesList(ents_hits, tbl, pos, ang, ply)
 		local ent_count = 0
 		for i,v in pairs(ents_hits) do
+			if v.CPPICanPickup and not v:CPPICanPickup(ply) then ents_hits[i] = nil end
+			if v.CPPICanPunt and not v:CPPICanPunt(ply) then ents_hits[i] = nil end
 			if pre_excluded_ent_classes[v:GetClass()] or (v:IsNPC() and not tbl.NPC) or (v:IsPlayer() and not tbl.Players and not (v == ply and tbl.AffectSelf)) then ents_hits[i] = nil
 			else ent_count = ent_count + 1 end
 		end
@@ -1000,6 +1081,7 @@ if SERVER then
 		if TooManyEnts(ent_count) and not (tbl.AffectSelf and not tbl.Players and not tbl.NPC and not tbl.PhysicsProps and not tbl.PointEntities) then return end
 		for _,ent in pairs(ents_hits) do
 			local phys_ent
+			local owner = Try_CPPIGetOwner(ent)
 			if (ent ~= tbl.RootPartOwner or (tbl.AffectSelf and ent == tbl.RootPartOwner))
 					and (
 						ent:IsPlayer()
@@ -1085,8 +1167,6 @@ if SERVER then
 					+ang2:Up()*tbl.AddedVectorForce.z
 				end
 
-
-
 				if tbl.TorqueMode == "Global" then
 					add_angvel = tbl.Torque
 				elseif tbl.TorqueMode == "Local" then
@@ -1100,13 +1180,19 @@ if SERVER then
 
 				local islocaltorque = tbl.TorqueMode == "TargetLocal"
 
+				local mass = 1
+				if IsValid(phys_ent) then
+					if phys_ent.GetMass then
+						phys_ent:GetMass()
+					end
+				end
 				if is_phys and tbl.AccountMass then
 					if not (string.find(ent:GetClass(), "npc") ~= nil) then
-						addvel = addvel * (1 / math.max(phys_ent:GetMass(),0.1))
+						addvel = addvel * (1 / math.max(mass,0.1))
 					else
 						addvel = addvel
 					end
-					add_angvel = add_angvel * (1 / math.max(phys_ent:GetMass(),0.1))
+					add_angvel = add_angvel * (1 / math.max(mass,0.1))
 				end
 
 				if tbl.Falloff then
@@ -1132,7 +1218,7 @@ if SERVER then
 				addvel = addvel * dist_multiplier
 				add_angvel = add_angvel * dist_multiplier
 
-				local unconsenting_owner = ent:GetCreator() ~= ply and force_consents[ent:GetCreator()] == false
+				local unconsenting_owner = owner ~= ply and force_consents[owner] == false
 
 				if (ent:IsPlayer() and tbl.Players) or (ent == ply and tbl.AffectSelf) then
 					if (ent ~= ply and force_consents[ent] ~= false) or (ent == ply and tbl.AffectSelf) then
@@ -1141,7 +1227,7 @@ if SERVER then
 					end
 
 				elseif (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or ent:IsWeapon()) and tbl.PhysicsProps then
-					if not IsPropProtected(ent, ply) and not (global_combat_prop_protection:GetBool() and unconsenting_owner) then
+					if not (IsPropProtected(ent, ply) and global_combat_prop_protection:GetBool()) or not unconsenting_owner then
 						if IsValid(phys_ent) then
 							ent:PhysWake()
 							ent:SetVelocity(final_damping * oldvel + addvel)
@@ -1159,7 +1245,7 @@ if SERVER then
 						end
 					end
 				elseif (ent:IsNPC() or string.find(ent:GetClass(), "npc") ~= nil) and tbl.NPC then
-					if not IsPropProtected(ent, ply) and not global_combat_prop_protection:GetBool() and not unconsenting_owner then
+					if not (IsPropProtected(ent, ply) and global_combat_prop_protection:GetBool()) or not unconsenting_owner then
 						if phys_ent:GetVelocity():Length() > 500 then
 							local vec = oldvel + addvel
 							local clamp_vec = vec:GetNormalized()*500
@@ -1168,7 +1254,7 @@ if SERVER then
 						else ent:SetVelocity((oldvel * final_damping) + addvel) end
 					end
 				elseif tbl.PointEntities then
-					if not IsPropProtected(ent, ply) and not global_combat_prop_protection:GetBool() and not unconsenting_owner then
+					if not (IsPropProtected(ent, ply) and global_combat_prop_protection:GetBool()) or not unconsenting_owner then
 						phys_ent:SetVelocity(final_damping * oldvel + addvel)
 					end
 				end
@@ -1269,6 +1355,10 @@ if SERVER then
 			return
 		end
 		ApplyLockState(ply, false)
+		if ply.default_movetype and ply.lock_state_applied and not (ulx and (ply.frozen or ply.jail)) then
+			ply:SetMoveType(ply.default_movetype)
+			targ_ent.default_movetype_reserved = nil
+		end
 		MsgC(Color(0,255,255), "Requesting lock break!\n")
 
 		if ply.grabbed_by then --directly go for the grabbed_by player
@@ -1708,6 +1798,7 @@ if SERVER then
 			if not lock_allow:GetBool() then return end
 			if not lock_allow_grab:GetBool() then return end
 			if not PlayerIsCombatAllowed(ply) then return end
+			
 
 			--netrate enforce
 			if not CountNetMessage(ply) then
@@ -1735,6 +1826,9 @@ if SERVER then
 			local alt_ang = net.ReadAngle()
 			local ask_drawviewer = net.ReadBool()
 
+			if targ_ent.CPPICanPhysgun and not targ_ent:CPPICanPhysgun(ply) then return end
+			if ulx and (targ_ent.frozen or targ_ent.jail) then return end --we can't grab frozen/jailed players either
+
 			if ply:GetPos():DistToSqr(pos) > ENFORCE_DISTANCE_SQR and ENFORCE_DISTANCE_SQR > 0 then
 				ApplyLockState(targ_ent, false)
 				if ply.grabbed_ents then
@@ -1749,12 +1843,19 @@ if SERVER then
 
 			local prop_protected, reason = IsPropProtected(targ_ent, ply)
 
-			local unconsenting_owner = targ_ent:GetCreator() ~= ply and (grab_consents[targ_ent:GetCreator()] == false or (targ_ent:IsPlayer() and grab_consents[targ_ent] == false))
-			local calcview_unconsenting = targ_ent:GetCreator() ~= ply and (calcview_consents[targ_ent:GetCreator()] == false or (targ_ent:IsPlayer() and calcview_consents[targ_ent] == false))
+			local owner = Try_CPPIGetOwner(targ_ent)
 
-			if unconsenting_owner or (global_combat_prop_protection:GetBool() and prop_protected) then return end
 
-			local targ_ent_owner = targ_ent:GetCreator() or targ_ent
+			local unconsenting_owner = owner ~= ply and (grab_consents[owner] == false or (targ_ent:IsPlayer() and grab_consents[targ_ent] == false))
+			local calcview_unconsenting = owner ~= ply and (calcview_consents[owner] == false or (targ_ent:IsPlayer() and calcview_consents[targ_ent] == false))
+
+			if unconsenting_owner then
+				if owner:IsPlayer() then return
+				elseif (global_combat_prop_protection:GetBool() and prop_protected) then return
+				end
+			end
+
+			local targ_ent_owner = owner or targ_ent
 			local auth_ent_owner = ply
 
 			auth_ent_owner.grabbed_ents = auth_ent_owner.grabbed_ents or {}
@@ -1766,7 +1867,7 @@ if SERVER then
 				elseif targ_ent:IsPlayer() then --if not the same player, we cannot grab
 					consent_break_condition = true
 					breakup_condition = breakup_condition .. "cannot grab another player if they don't consent to grabs, "
-				elseif global_combat_prop_protection:GetBool() and targ_ent:GetCreator() ~= ply then
+				elseif global_combat_prop_protection:GetBool() and owner ~= ply then
 					--if entity not owned by grabbing player, he cannot do it to other players' entities in the prop-protected mode
 					consent_break_condition = true
 					breakup_condition = breakup_condition .. "cannot grab another player's owned entities if they don't consent to grabs, "
@@ -1850,6 +1951,11 @@ if SERVER then
 
 				targ_ent:SetPos(pos)
 
+				if not targ_ent.lock_state_applied and not targ_ent.default_movetype_reserved then
+					targ_ent.default_movetype = targ_ent:GetMoveType()
+					targ_ent.default_movetype_reserved = true
+					targ_ent.lock_state_applied = true
+				end
 				ApplyLockState(targ_ent, true, no_collide)
 				if targ_ent:GetClass() == "prop_ragdoll" then targ_ent:GetPhysicsObject():SetPos(pos) end
 
@@ -1928,7 +2034,18 @@ if SERVER then
 			local delay = net.ReadFloat()
 			local targ_ent = net.ReadEntity()
 			local auth_ent = net.ReadEntity()
+			if targ_ent.CPPICanPhysgun and not targ_ent:CPPICanPhysgun(ply) then return end
+			local prop_protected, reason = IsPropProtected(targ_ent, ply)
 
+			local owner = Try_CPPIGetOwner(targ_ent)
+
+			local unconsenting_owner = owner ~= ply and (grab_consents[owner] == false or (targ_ent:IsPlayer() and grab_consents[targ_ent] == false))
+			if unconsenting_owner then
+				if owner:IsPlayer() then return
+				elseif (global_combat_prop_protection:GetBool() and prop_protected) then return
+				end
+			end
+			
 			targ_ent:SetAngles(ang)
 			ApplyLockState(targ_ent, false)
 
