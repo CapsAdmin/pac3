@@ -208,11 +208,8 @@ if SERVER then
 
 	end
 
-	local function Try_CPPISetOwner(ent, ply)
-		if ent.CPPISetOwner then --a prop protection using CPPI probably exists
-			ent:CPPISetOwner(ply)
-		end
-		ent.pac_prop_protection_owner = ply --otherwise we'll have this field
+	local function SetNoCPPIFallbackOwner(ent, ply)
+		ent.pac_prop_protection_owner = ply
 	end
 
 	local function Try_CPPIGetOwner(ent)
@@ -225,25 +222,25 @@ if SERVER then
 	--hack fix to stop GetOwner returning [NULL Entity]
 	--uses CPPI interface from prop protectors if present
 	hook.Add("PlayerSpawnedProp", "HackReAssignOwner", function(ply, model, ent)
-		Try_CPPISetOwner(ent, ply)
+		SetNoCPPIFallbackOwner(ent, ply)
 	end)
 	hook.Add("PlayerSpawnedNPC", "PAC_HackReAssignOwner", function(ply, ent)
-		Try_CPPISetOwner(ent, ply)
+		SetNoCPPIFallbackOwner(ent, ply)
 	end)
 	hook.Add("PlayerSpawnedRagdoll", "PAC_HackReAssignOwner", function(ply, model, ent)
-		Try_CPPISetOwner(ent, ply)
+		SetNoCPPIFallbackOwner(ent, ply)
 	end)
 	hook.Add("PlayerSpawnedSENT", "PAC_HackReAssignOwner", function(ply, ent)
-		Try_CPPISetOwner(ent, ply)
+		SetNoCPPIFallbackOwner(ent, ply)
 	end)
 	hook.Add("PlayerSpawnedSWEP", "PAC_HackReAssignOwner", function(ply, ent)
-		Try_CPPISetOwner(ent, ply)
+		SetNoCPPIFallbackOwner(ent, ply)
 	end)
 	hook.Add("PlayerSpawnedVehicle", "PAC_HackReAssignOwner", function(ply, ent)
-		Try_CPPISetOwner(ent, ply)
+		SetNoCPPIFallbackOwner(ent, ply)
 	end)
 	hook.Add("PlayerSpawnedEffect", "PAC_HackReAssignOwner", function(ply, model, ent)
-		Try_CPPISetOwner(ent, ply)
+		SetNoCPPIFallbackOwner(ent, ply)
 	end)
 
 	local function IsPossibleContraptionEntity(ent)
