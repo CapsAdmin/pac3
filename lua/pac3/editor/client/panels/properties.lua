@@ -291,7 +291,6 @@ end)
 
 pac.AddHook("PostRenderVGUI", "flash_properties", function()
 	if not pace.flashes then return end
-	if not IsValid(pace.tree) or not IsValid(pace.properties) then return end
 	for pnl, tbl in pairs(pace.flashes) do
 		if IsValid(pnl) then
 			--print(pnl:LocalToScreen(0,0))
@@ -352,7 +351,9 @@ do -- container
 		end
 
 		do	--scroll to the tree node
-			pace.tree:ScrollToChild(self:GetChildren()[1].part.pace_tree_node)
+			if self:GetChildren()[1].part.pace_tree_node then
+				pace.tree:ScrollToChild(self:GetChildren()[1].part.pace_tree_node)
+			end
 		end
 
 	end
