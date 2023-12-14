@@ -655,31 +655,30 @@ if SERVER then
 			local remaining_dmg,surviving_layer,side_effect_dmg = GetHPBarDamage(target, dmginfo:GetDamage())
 
 			if IsValid(dmginfo:GetInflictor()) then
-				if dmginfo:GetInflictor():GetClass() == "pac_bullet_emitter" and hitscan_consents[target] == false then
-					dmginfo:SetDamage(0)
+				if dmginfo:GetInflictor():GetClass() == "pac_bullet_emitter" and hitscan_consents[target] == false then --unconsenting for pac hitscans = no damage, exit now
+					return true
 				end
-			else
-				local total_hp_value,built_tbl = GatherExtraHPBars(target)
-				if surviving_layer == nil or total_hp_value == 0 or not built_tbl then --no shields = use the dmginfo base damage scaled with the cumulative mult
+			end
+			
+			local total_hp_value,built_tbl = GatherExtraHPBars(target)
+			if surviving_layer == nil or total_hp_value == 0 or not built_tbl then --no shields = use the dmginfo base damage scaled with the cumulative mult
 
-					if cumulative_mult < 0 then
-						target:SetHealth(math.floor(math.Clamp(target:Health() + math.abs(dmginfo:GetDamage()),0,target:GetMaxHealth())))
-						return true
-					else
-						dmginfo:SetDamage(remaining_dmg)
-						if target.pac_healthbars then SendUpdateHealthBars(target) end
-					end
+				if cumulative_mult < 0 then
+					target:SetHealth(math.floor(math.Clamp(target:Health() + math.abs(dmginfo:GetDamage()),0,target:GetMaxHealth())))
+					return true
+				else
+					dmginfo:SetDamage(remaining_dmg)
+					if target.pac_healthbars then SendUpdateHealthBars(target) end
+				end
 
-				else --shields = use the calculated cumulative side effect damage from each uid's related absorbfactor
+			else --shields = use the calculated cumulative side effect damage from each uid's related absorbfactor
 
-					if side_effect_dmg < 0 then
-						target:SetHealth(math.floor(math.Clamp(target:Health() + math.abs(side_effect_dmg),0,target:GetMaxHealth())))
-						return true
-					else
-						dmginfo:SetDamage(side_effect_dmg + remaining_dmg)
-						SendUpdateHealthBars(target)
-					end
-
+				if side_effect_dmg < 0 then
+					target:SetHealth(math.floor(math.Clamp(target:Health() + math.abs(side_effect_dmg),0,target:GetMaxHealth())))
+					return true
+				else
+					dmginfo:SetDamage(side_effect_dmg + remaining_dmg)
+					SendUpdateHealthBars(target)
 				end
 
 			end
