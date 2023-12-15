@@ -60,7 +60,7 @@ BUILDER:EndStorableVars()
 function PART:OnThink()
 
 	if not GetConVar('pac_sv_lock'):GetBool() then return end
-	if util.NetworkStringToID( "pac_request_position_override_on_entity_grab" ) == 0 then  self:SetError("This part is deactivated on the server") return end
+	if util.NetworkStringToID( "pac_request_position_override_on_entity_grab" ) == 0 then self:SetError("This part is deactivated on the server") return end
 	pac.Blocked_Combat_Parts = pac.Blocked_Combat_Parts or {}
 	if pac.Blocked_Combat_Parts then
 		if pac.Blocked_Combat_Parts[self.ClassName] then return end
@@ -294,7 +294,7 @@ function PART:SetRadius(val)
 end
 
 function PART:OnShow()
-
+	if util.NetworkStringToID( "pac_request_position_override_on_entity_grab" ) == 0 then self:SetError("This part is deactivated on the server") return end
 	local origin_part
 	self.is_first_time = true
 	if self.resetting_condition or self.forcebreak then
@@ -373,6 +373,7 @@ function PART:OnHide()
 	self.grabbing = false
 	if self.target_ent == nil then return
 	else self.target_ent.IsGrabbed = false self.target_ent.IsGrabbedID = nil end
+	if util.NetworkStringToID( "pac_request_position_override_on_entity_grab" ) == 0 then self:SetError("This part is deactivated on the server") return end
 	self:reset_ent_ang()
 end
 
