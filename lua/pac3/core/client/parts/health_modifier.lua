@@ -134,6 +134,7 @@ end
 
 function PART:OnRemove()
 	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
+	if util.NetworkStringToID( "pac_request_healthmod" ) == 0 then return end
 	local found_remaining_healthmod = false
 	for _,part in pairs(pac.GetLocalParts()) do
 		if part.ClassName == "health_modifier" and part ~= self then
@@ -172,6 +173,7 @@ function PART:OnShow()
 end
 
 function PART:OnHide()
+	if util.NetworkStringToID( "pac_request_healthmod" ) == 0 then self:SetError("This part is deactivated on the server") return end
 	if self.HPBarsResetOnHide then
 		net.Start("pac_request_healthmod")
 		net.WriteString(self.UniqueID)
