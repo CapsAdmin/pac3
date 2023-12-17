@@ -1339,18 +1339,6 @@ function pace.FillServerSettings(pnl)
 		webcontent_no_content_box:SetSize(400,30)
 		webcontent_no_content_box:SetConVar("sv_pac_webcontent_allow_no_content_length")
 
-	local contraption_box = vgui.Create("DCheckBoxLabel", misc_list_list)
-		contraption_box:SetText("allow contraptions")
-		contraption_box:SetSize(400,30)
-		contraption_box:SetConVar("pac_to_contraption_allow")
-
-	local contraption_entities_numbox = vgui.Create("DNumSlider", misc_list_list)
-		contraption_entities_numbox:SetText("PAC3 contraption entities limit")
-		contraption_entities_numbox:SetValue(GetConVar("pac_max_contraption_entities"):GetInt())
-		contraption_entities_numbox:SetMin(0) contraption_entities_numbox:SetDecimals(0) contraption_entities_numbox:SetMax(200)
-		contraption_entities_numbox:SetSize(400,30)
-		contraption_entities_numbox:SetConVar("pac_max_contraption_entities")
-
 	local cam_restrict_box = vgui.Create("DCheckBoxLabel", misc_list_list)
 		cam_restrict_box:SetText("restrict PAC editor camera movement")
 		cam_restrict_box:SetSize(400,30)
