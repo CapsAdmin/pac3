@@ -61,6 +61,8 @@ function PART:PreInitialize()
 	self.hide_disturbing = false
 	self.active_events = {}
 	self.active_events_ref_count = 0
+	local cvarName = "pac_enable_" .. string.Replace(self.ClassName, " ", "_"):lower()
+	if not GetConVar(cvarName):GetBool() then self:SetWarning("This part class is disabled! Enable it with " .. cvarName .. " 1") end
 end
 
 function PART:Initialize() end
