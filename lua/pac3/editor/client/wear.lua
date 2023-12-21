@@ -46,7 +46,8 @@ function pace.ClearParts()
 	end)
 end
 
-
+--wearing tracker counter
+pace.still_loading_wearing_count = 0
 
 do -- to server
 	local function net_write_table(tbl)
@@ -94,6 +95,15 @@ do -- to server
 
 		net.SendToServer()
 		pac.Message(('Transmitting outfit %q to server (%s)'):format(part.Name or part.ClassName or '<unknown>', string.NiceSize(bytes)))
+
+		pace.still_loading_wearing = true
+		pace.still_loading_wearing_count = pace.still_loading_wearing_count + 1 --this group is added to the tracked wear count
+		timer.Simple(8, function()
+			pace.still_loading_wearing_count = pace.still_loading_wearing_count - 1 --assume max 8 seconds to wear
+			if pace.still_loading_wearing_count == 0 then --if this is the last group to wear, we're done
+				pace.still_loading_wearing = false
+			end
+		end)
 
 		return true
 	end
