@@ -370,9 +370,7 @@ do -- hook helpers
 			priority = nil
 		end
 		if pac.IsEnabled() then
-			print("adding", event_name, id)
 			hook.Add(event_name, id, func, priority)
-			print("adding hooks", event_name .. tostring(id))
 			pac.added_hooks[event_name .. tostring(id)] = {event_name = event_name, id = id, func = func, priority = priority}
 		end
 	end
@@ -384,9 +382,7 @@ do -- hook helpers
 
 		if data then
 			hook.Remove(data.event_name, data.id)
-			print("removing", data.event_name, data.id)
 			pac.added_hooks[event_name .. id] = nil
-			print("removing hooks", event_name .. id)
 		end
 	end
 
