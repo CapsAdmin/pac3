@@ -72,7 +72,7 @@ local function BulkSelectRefreshFadedNodes(part_trace)
 
 	for _,v in ipairs(pace.BulkSelectList) do
 		if not v:IsValid() then table.RemoveByValue(pace.BulkSelectList, v)
-		elseif v.pace_tree_node then
+		elseif IsValid(v.pace_tree_node) then
 			v.pace_tree_node:SetAlpha( 150 )
 		end
 	end
@@ -182,7 +182,6 @@ end
 
 
 function pace.WearParts(temp_wear_filter)
-	pace.still_loading_wearing = true
 
 	local allowed, reason = pac.CallHook("CanWearParts", pac.LocalPlayer)
 
@@ -190,8 +189,6 @@ function pace.WearParts(temp_wear_filter)
 		pac.Message(reason or "the server doesn't want you to wear parts for some reason")
 		return
 	end
-
-	pace.still_loading_wearing = false
 
 	return pace.WearOnServer(temp_wear_filter)
 end
@@ -1434,9 +1431,6 @@ do -- menu
 			end)
 		end
 
-		for _,v in ipairs(pace.BulkSelectList) do
-			--v.pace_tree_node:SetAlpha( 150 )
-		end
 	end
 
 	function pace.RemoveFromBulkSelect(obj)
