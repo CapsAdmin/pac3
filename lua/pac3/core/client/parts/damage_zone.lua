@@ -535,6 +535,7 @@ function PART:SendNetMessage()
 end
 
 function PART:OnShow()
+	if pace.still_loading_wearing then return end
 	if self.validTime > SysTime() then return end
 
 	if self.Preview then
@@ -603,6 +604,7 @@ function PART:OnShow()
 			local start = SysTime()
 			local ent = pac.CreateEntity("models/props_junk/popcan01a.mdl")
 			if not ent:IsValid() then return end
+			ent.is_pac_hitmarker = true
 			ent:SetNoDraw(true)
 			ent:SetOwner(self:GetPlayerOwner(true))
 			ent:SetPos(pos)
@@ -637,7 +639,7 @@ function PART:OnShow()
 
 					self:AssignFloatingPartToEntity(newpart, owner, ent, parent_ent, part.UniqueID, csent_id)
 
-					MsgC(bool and Color(0,255,0) or Color(0,200,255), bool and "existing" or "created", " : ", newpart, "\n")
+					if self.Preview then MsgC("hitmarker:", bool and Color(0,255,0) or Color(0,200,255), bool and "existing" or "created", " : ", newpart, "\n") end
 					timer.Simple(math.Clamp(duration, 0, 8), function()
 						if ent:IsValid() then
 							if parent_ent.pac_dmgzone_hitmarker_ents then
@@ -648,10 +650,6 @@ function PART:OnShow()
 									end
 								end
 							end
-							--[[timer.Simple(0.5, function()
-								RemoveHitMarker(owner, ent, part.UniqueID, csent_id)
-								SafeRemoveEntity(ent)
-							end)]]
 						end
 					end)
 				end
@@ -660,10 +658,6 @@ function PART:OnShow()
 			local creation_delta = SysTime() - start
 
 			return creation_delta
-		end
-
-		if IsValid(self.HitMarkerPart) then
-			--(self.HitMarkerPart, "price is", string.NiceSize(CalculateHitMarkerPrice(self.HitMarkerPart)))
 		end
 
 		if hit then
@@ -704,13 +698,7 @@ function PART:OnShow()
 				end
 			end
 		end
-		if IsValid(self.HitMarkerPart) then
-			--print("runtimes were " .. string.FormattedTime( part_setup_runtimes).ms .. "ms.\n\t" .. 1000*part_setup_runtimes .. " impact.\n\t" .. table.Count(self.HitMarkerPart:GetChildrenList()) .. " children, " .. 1000*part_setup_runtimes / table.Count(self.HitMarkerPart:GetChildrenList()) .. " impact per children")
-		end
 		if owner.hitparts then
-			for i,v in ipairs(owner.hitparts) do
-				--print(i,v,v.active,v.specimen_part,v.hitmarker_id,v.template_uid)
-			end
 			self:SetInfo(table.Count(owner.hitparts) .. " hitmarkers in slot")
 		end
 
@@ -998,9 +986,15 @@ function PART:BuildCone(obj)
 end
 
 function PART:Initialize()
-
 	if not GetConVar("pac_sv_damage_zone"):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then self:SetError("damage zones are disabled on this server!") end
-	self.validTime = SysTime() + 2
+	self.validTime = SysTime() + 5 --jank fix to try to stop activation on load
+	timer.Simple(0.1, function() --jank fix on the jank fix to allow it earlier on projectiles and hitmarkers
+		if IsValid(self:GetRootPart():GetOwner()) then
+			if self:GetRootPart():GetOwner():GetClass() == "pac_projectile" or self:GetRootPart():GetOwner().is_pac_hitmarker then
+				self.validTime = 0
+			end
+		end
+	end)
 
 end
 
