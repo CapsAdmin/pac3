@@ -1231,6 +1231,7 @@ do -- menu
 	end
 
 	function pace.RemovePart(obj)
+		pace.ExtendWearTracker(1)
 		if table.HasValue(pace.BulkSelectList,obj) then table.RemoveByValue(pace.BulkSelectList,obj) end
 
 		pace.RecordUndoHistory()
