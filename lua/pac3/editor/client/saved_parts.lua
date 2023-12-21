@@ -58,7 +58,7 @@ function pace.SaveParts(name, prompt_name, override_part, overrideAsUsual)
 		end
 	end
 
-	data = hook.Run("pac_pace.SaveParts", data) or data
+	data = pac.CallHook("pace.SaveParts", data) or data
 
 	if not override_part and #file.Find("pac3/sessions/*", "DATA") > 0 and not name:find("/") then
 		pace.luadata.WriteFile("pac3/sessions/" .. name .. ".txt", data)
@@ -146,7 +146,7 @@ end
 local latestprop
 local latest_uid
 if game.SinglePlayer() then
-	hook.Add("OnEntityCreated", "PAC_queue_proppacs", function( ent )
+	pac.AddHook("OnEntityCreated", "queue_proppacs", function( ent )
 		if ( ent:GetClass() == "prop_physics" or ent:IsNPC()) and not ent:CreatedByMap() and LocalPlayer().pac_propload_queuedparts then
 			if not table.IsEmpty(LocalPlayer().pac_propload_queuedparts) then
 				ent:EmitSound( "buttons/button4.wav" )

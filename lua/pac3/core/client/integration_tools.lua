@@ -25,7 +25,7 @@ end
 do
 	local force_draw_localplayer = false
 
-	hook.Add("ShouldDrawLocalPlayer", "pac_draw_2d_entity", function()
+	pac.AddHook("ShouldDrawLocalPlayer", "draw_2d_entity", function()
 		if force_draw_localplayer == true then
 			return true
 		end
@@ -244,7 +244,7 @@ function pac.AddEntityClassListener(class, session, check_func, draw_dist)
 	draw_dist = 0
 	check_func = check_func or function(ent) return ent:GetClass() == class end
 
-	local id = "pac_auto_attach_" .. class
+	local id = "auto_attach_" .. class
 
 	local weapons = {}
 	local function weapon_think()
@@ -282,7 +282,7 @@ function pac.AddEntityClassListener(class, session, check_func, draw_dist)
 		if ent:IsValid() and check_func(ent) then
 			if ent:IsWeapon() then
 				weapons[ent:EntIndex()] = ent
-				hook.Add("Think", id, weapon_think)
+				pac.AddHook("Think", id, weapon_think)
 			else
 				pac.SetupENT(ent)
 				ent:AttachPACSession(session)
@@ -302,8 +302,8 @@ function pac.AddEntityClassListener(class, session, check_func, draw_dist)
 		created(ent)
 	end
 
-	hook.Add("EntityRemoved", id, removed)
-	hook.Add("OnEntityCreated", id, created)
+	pac.AddHook("EntityRemoved", id, removed)
+	pac.AddHook("OnEntityCreated", id, created)
 end
 
 function pac.RemoveEntityClassListener(class, session, check_func)
@@ -319,11 +319,11 @@ function pac.RemoveEntityClassListener(class, session, check_func)
 		end
 	end
 
-	local id = "pac_auto_attach_" .. class
+	local id = "auto_attach_" .. class
 
-	hook.Remove("Think", id)
-	hook.Remove("EntityRemoved", id)
-	hook.Remove("OnEntityCreated", id)
+	pac.RemoveHook("Think", id)
+	pac.RemoveHook("EntityRemoved", id)
+	pac.RemoveHook("OnEntityCreated", id)
 end
 
 timer.Simple(0, function()

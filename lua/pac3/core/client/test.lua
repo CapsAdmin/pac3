@@ -79,17 +79,17 @@ local function start_test(name, done)
 	end
 
 	function test.Setup()
-		hook.Add("ShouldDrawLocalPlayer", "pac_test", function() return true end)
+		pac.AddHook("ShouldDrawLocalPlayer", "test", function() return true end)
 	end
 
 	function test.Teardown()
-		hook.Remove("ShouldDrawLocalPlayer", "pac_test")
+		pac.RemoveHook("ShouldDrawLocalPlayer", "test")
 	end
 
 	function test.Run(done) error("test.Run is not defined") end
 	function test.Remove()
-		hook.Remove("ShouldDrawLocalPlayer", "pac_test")
-		hook.Remove("Think", "pac_test_coroutine")
+		pac.RemoveHook("ShouldDrawLocalPlayer", "test")
+		pac.RemoveHook("Think", "test_coroutine")
 
 		if test.done then return end
 
@@ -172,7 +172,7 @@ local function start_test(name, done)
 		test.Remove()
 	end
 
-	hook.Add("Think", "pac_test_coroutine", function()
+	pac.AddHook("Think", "test_coroutine", function()
 		if not test.co then return end
 
 		local ok, err = coroutine.resume(test.co)
@@ -213,7 +213,7 @@ concommand.Add("pac_test", function(ply, _, args)
 
 		local current_test = nil
 
-		hook.Add("Think", "pac_tests", function()
+		pac.AddHook("Think", "tests", function()
 			if current_test then
 				if current_test.time < os.clock() then
 					msg_error("test ", current_test.name, " timed out")
@@ -232,7 +232,7 @@ concommand.Add("pac_test", function(ply, _, args)
 			local name = table.remove(tests, 1)
 			if not name then
 				msg("finished testing")
-				hook.Remove("Think", "pac_tests")
+				pac.RemoveHook("Think", "tests")
 				return
 			end
 

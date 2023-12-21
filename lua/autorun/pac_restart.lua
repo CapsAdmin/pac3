@@ -4,7 +4,7 @@ if SERVER then
 	return
 end
 
-local sv_allowcslua = GetConVar('sv_allowcslua')
+local sv_allowcslua = GetConVar("sv_allowcslua")
 local prefer_local_version = CreateClientConVar("pac_restart_prefer_local_version", "0")
 
 function _G.pac_ReloadParts()
@@ -92,7 +92,7 @@ function _G.pac_Restart()
 
 	if pac and pac.Disable then
 		pacLocal.Message("removing all traces of pac3 from lua")
-		pac.Disable()
+		pac.Disable(true)
 		pac.Panic()
 
 		if pace and pace.Editor then
@@ -110,7 +110,8 @@ function _G.pac_Restart()
 
 		for hook_name, hooks in pairs(hook.GetTable()) do
 			for id, func in pairs(hooks) do
-				if isstring(id) and (id:StartWith("pace_") or id:StartWith("pac_") or id:StartWith("pac3_") or id:StartWith("pacx_")) then
+				local lower = isstring(id) and string.lower(id)
+				if lower and (lower:StartWith("pace_") or lower:StartWith("pac_") or lower:StartWith("pac3_") or lower:StartWith("pacx_")) then
 					hook.Remove(hook_name, id)
 				end
 			end

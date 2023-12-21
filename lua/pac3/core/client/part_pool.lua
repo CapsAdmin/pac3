@@ -349,8 +349,8 @@ pac.AddHook("Think", "events", function()
 		lamp:SetAngles( pac.LocalPlayer:EyeAngles() )
 		lamp:Update()
 
-		hook.Add("PostRender", "pac_flashlight_stuck_fix", function()
-			hook.Remove("PostRender", "pac_flashlight_stuck_fix")
+		pac.AddHook("PostRender", "flashlight_stuck_fix", function()
+			pac.RemoveHook("PostRender", "flashlight_stuck_fix")
 			lamp:Remove()
 		end)
 

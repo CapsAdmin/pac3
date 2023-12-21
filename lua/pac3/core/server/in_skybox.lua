@@ -1,4 +1,4 @@
-hook.Add("InitPostEntity","pac_get_sky_camera",function()
+pac.AddHook("InitPostEntity", "get_sky_camera", function()
 	local sky_camera = ents.FindByClass("sky_camera")[1]
 	if sky_camera then
 		local nwVarName = "pac_in_skybox"

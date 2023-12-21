@@ -269,17 +269,17 @@ function pace.SubmitPartNow(data, filter)
 		if not players or istable(players) and not next(players) then return true end
 
 		-- Alternative transmission system
-		local ret = hook.Run("pac_SendData", players, data)
+		local ret = pac.CallHook("SendData", players, data)
 		if ret == nil then
 			net.Start("pac_submit")
 			local bytes, err = net_write_table(data)
 
 			if not bytes then
 				local errStr = tostring(err)
-				ErrorNoHalt("[PAC3] Outfit broadcast failed for " .. tostring(owner) .. ": " .. errStr .. '\n')
+				ErrorNoHalt("[PAC3] Outfit broadcast failed for " .. tostring(owner) .. ": " .. errStr .. "\n")
 
 				if owner and owner:IsValid() then
-					owner:ChatPrint('[PAC3] ERROR: Could not broadcast your outfit: ' .. errStr)
+					owner:ChatPrint("[PAC3] ERROR: Could not broadcast your outfit: " .. errStr)
 				end
 			else
 				net.Send(players)
@@ -378,8 +378,8 @@ end
 
 util.AddNetworkString("pac_submit")
 
-local pac_submit_spam = CreateConVar('pac_submit_spam', '1', {FCVAR_NOTIFY, FCVAR_ARCHIVE}, 'Prevent users from spamming pac_submit')
-local pac_submit_limit = CreateConVar('pac_submit_limit', '30', {FCVAR_NOTIFY, FCVAR_ARCHIVE}, 'pac_submit spam limit')
+local pac_submit_spam = CreateConVar("pac_submit_spam", "1", {FCVAR_NOTIFY, FCVAR_ARCHIVE}, "Prevent users from spamming pac_submit")
+local pac_submit_limit = CreateConVar("pac_submit_limit", "30", {FCVAR_NOTIFY, FCVAR_ARCHIVE}, "pac_submit spam limit")
 
 pace.PCallNetReceive(net.Receive, "pac_submit", function(len, ply)
 	if len < 64 then return end

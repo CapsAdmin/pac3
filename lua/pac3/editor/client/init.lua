@@ -221,7 +221,7 @@ function pace.Panic()
 		if ent:IsValid() then
 			ent.pac_onuse_only = nil
 			ent.pac_onuse_only_check = nil
-			hook.Remove('pace_OnUseOnlyUpdates', ent)
+			pac.RemoveHook("pace_OnUseOnlyUpdates", ent)
 		end
 	end
 end
@@ -313,7 +313,7 @@ do
 
 	local up = Vector(0,0,10000)
 
-	hook.Add("HUDPaint", "pac_in_editor", function()
+	pac.AddHook("HUDPaint", "in_editor", function()
 		for _, ply in ipairs(player.GetAll()) do
 			if ply ~= pac.LocalPlayer and ply:GetNW2Bool("pac_in_editor") then
 

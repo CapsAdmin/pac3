@@ -17,7 +17,7 @@ end
 
 local pac_IsPacOnUseOnly = pac.IsPacOnUseOnly
 
-hook.Add("PlayerBindPress", "pac_onuse_only", function(ply, bind, isPressed)
+pac.AddHook("PlayerBindPress", "onuse_only", function(ply, bind, isPressed)
 	if bind ~= "use" and bind ~= "+use" then return end
 	if bind ~= "+use" and isPressed then return end
 	if not pac_IsPacOnUseOnly() then return end
@@ -47,7 +47,7 @@ do
 		weight = 600,
 	})
 
-	hook.Add("HUDPaint", "pac_onuse_only", function()
+	pac.AddHook("HUDPaint", "onuse_only", function()
 		if not pac_IsPacOnUseOnly() then return end
 		local ply = pac.LocalPlayer
 		local eyes, aim = ply:EyePos(), ply:GetAimVector()
@@ -72,7 +72,7 @@ do
 end
 
 function pace.OnUseOnlyUpdates(cvar, ...)
-	hook.Call('pace_OnUseOnlyUpdates', nil, ...)
+	pace.Call("OnUseOnlyUpdates", ...)
 end
 
 cvars.AddChangeCallback("pac_onuse_only", pace.OnUseOnlyUpdates, "PAC3")
@@ -122,7 +122,7 @@ function pace.HandleOnUseReceivedData(data)
 
 	-- behaviour of this (if one of entities on this hook becomes invalid)
 	-- is undefined if DLib is not installed, but anyway
-	hook.Add('pace_OnUseOnlyUpdates', data.owner, function()
+	pac.AddHook('pace_OnUseOnlyUpdates', data.owner, function()
 		if pac_IsPacOnUseOnly() then
 			pac.ToggleIgnoreEntity(data.owner, data.owner.pac_onuse_only_check, 'pac_onuse_only')
 		else

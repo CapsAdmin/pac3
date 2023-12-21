@@ -1661,7 +1661,7 @@ function pace.FillEditorSettings(pnl)
 		local previous_inputs_str = ""
 		pace.FlashNotification("Recording input... Release one key when you're done")
 
-		hook.Add("Tick", "pace_buttoncapture_countdown", function()
+		pac.AddHook("Tick", "pace_buttoncapture_countdown", function()
 			pace.delayshortcuts = RealTime() + 5
 			local inputs_tbl = {}
 			inputs_str = ""
@@ -1692,7 +1692,7 @@ function pace.FillEditorSettings(pnl)
 					--pace.PACActionShortcut[shortcutaction_choices:GetValue()][shortcutaction_index:GetValue()] = tbl
 					pace.delayshortcuts = RealTime() + 5
 					pace.bindcapturelabel_text = "Recorded input:\n" .. previous_inputs_str
-					hook.Remove("Tick", "pace_buttoncapture_countdown")
+					pac.RemoveHook("Tick", "pace_buttoncapture_countdown")
 				end
 			end
 			previous_inputs_str = inputs_str

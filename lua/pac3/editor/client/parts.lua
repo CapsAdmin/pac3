@@ -12,7 +12,7 @@ pace.operations_default = {"help_part_info", "wear", "copy", "paste", "cut", "pa
 pace.operations_legacy = {"wear", "copy", "paste", "cut", "paste_properties", "clone", "spacer", "registered_parts", "spacer", "save", "load", "spacer", "remove"}
 
 pace.operations_experimental = {"help_part_info", "wear", "copy", "paste", "cut", "paste_properties", "clone", "bulk_select", "spacer", "registered_parts", "spacer", "bulk_apply_properties", "partsize_info", "copy_uid", "spacer", "save", "load", "spacer", "remove"}
-pace.operations_bulk_poweruser = {"bulk_select","clone", "registered_parts", "spacer", "copy", "paste", "cut", "spacer", "wear", "save", "load", "partsize_info"}
+pace.operations_bulk_poweruser = {"bulk_select", "clone", "registered_parts", "spacer", "copy", "paste", "cut", "spacer", "wear", "save", "load", "partsize_info"}
 
 if not file.Exists("pac3_config/pac_editor_partmenu_layouts.txt", "DATA") then
 	pace.operations_order = pace.operations_default
@@ -130,7 +130,7 @@ end
 local function DrawHaloHighlight(tbl)
 	if (type(tbl) ~= "table") then return end
 	if not pace.Active then
-		hook.Remove('PreDrawHalos', "BulkSelectHighlights")
+		pac.RemoveHook("PreDrawHalos", "BulkSelectHighlights")
 	end
 
 	--Find out the color and apply the halo
@@ -174,7 +174,7 @@ end
 
 local function ThinkBulkHighlight()
 	if table.IsEmpty(pace.BulkSelectList) or last_bulk_select_tbl == nil or table.IsEmpty(pac.GetLocalParts()) or (#pac.GetLocalParts() == 1) then
-		hook.Remove('PreDrawHalos', "BulkSelectHighlights")
+		pac.RemoveHook("PreDrawHalos", "BulkSelectHighlights")
 		return
 	end
 	DrawHaloHighlight(last_bulk_select_tbl)
@@ -474,9 +474,9 @@ end
 
 function pace.OnVariableChanged(obj, key, val, not_from_editor)
 	local valType = type(val)
-	if valType == 'Vector' then
+	if valType == "Vector" then
 		val = Vector(val)
-	elseif valType == 'Angle' then
+	elseif valType == "Angle" then
 		val = Angle(val)
 	end
 
@@ -580,14 +580,14 @@ do -- menu
 
 	local trap
 	if not pace.Active or refresh_halo_hook then
-		hook.Remove('PreDrawHalos', "BulkSelectHighlights")
+		pac.RemoveHook("PreDrawHalos", "BulkSelectHighlights")
 	end
 //@note registered parts
 	function pace.AddRegisteredPartsToMenu(menu, parent)
 		local partsToShow = {}
 		local clicked = false
 
-		hook.Add('Think', menu, function()
+		pac.AddHook("Think", menu, function()
 			local ctrl = input.IsControlDown()
 
 			if clicked and not ctrl then
@@ -600,7 +600,7 @@ do -- menu
 			menu:SetDeleteSelf(not ctrl)
 		end)
 
-		hook.Add('CloseDermaMenus', menu, function()
+		pac.AddHook("CloseDermaMenus", menu, function()
 			clicked = true
 			if input.IsControlDown() then
 				menu:SetVisible(true)
@@ -609,7 +609,7 @@ do -- menu
 		end)
 
 		local function add_part(menu, part)
-			local newMenuEntry = menu:AddOption(L(part.FriendlyName or part.ClassName:Replace('_', ' ')), function()
+			local newMenuEntry = menu:AddOption(L(part.FriendlyName or part.ClassName:Replace("_", " ")), function()
 				pace.RecordUndoHistory()
 				pace.Call("CreatePart", part.ClassName, nil, nil, parent)
 				pace.RecordUndoHistory()
@@ -706,7 +706,7 @@ do -- menu
 					add_part(sub, part)
 				end
 
-				hook.Add('Think', sub, function()
+				pac.AddHook("Think", sub, function()
 					local ctrl = input.IsControlDown()
 
 					if clicked and not ctrl then
@@ -719,7 +719,7 @@ do -- menu
 					sub:SetDeleteSelf(not ctrl)
 				end)
 
-				hook.Add('CloseDermaMenus', sub, function()
+				pac.AddHook("CloseDermaMenus", sub, function()
 					if input.IsControlDown() and trap then
 						trap = false
 						sub:SetVisible(true)
@@ -796,7 +796,7 @@ do -- menu
 		end
 
 		for class_name, part in pairs(partsToShow) do
-			local newMenuEntry = menu:AddOption(L((part.FriendlyName or part.ClassName):Replace('_', ' ')), function()
+			local newMenuEntry = menu:AddOption(L((part.FriendlyName or part.ClassName):Replace("_", " ")), function()
 				pace.RecordUndoHistory()
 				pace.Call("CreatePart", class_name, nil, nil, parent)
 				pace.RecordUndoHistory()
@@ -1062,7 +1062,7 @@ do -- menu
 
 				local label = line:Add("DLabel")
 				label:SetTextColor(label:GetSkin().Colours.Category.Line.Text)
-				label:SetText(L((part.FriendlyName or part.ClassName):Replace('_', ' ')))
+				label:SetText(L((part.FriendlyName or part.ClassName):Replace("_", " ")))
 				label:SizeToContents()
 				label:MoveRightOf(btn, 4)
 				label:SetMouseInputEnabled(false)
@@ -1411,17 +1411,17 @@ do -- menu
 		RebuildBulkHighlight()
 		if not silent then
 			if selected_part_added then
-				surface.PlaySound('buttons/button1.wav')
+				surface.PlaySound("buttons/button1.wav")
 
-			else surface.PlaySound('buttons/button16.wav') end
+			else surface.PlaySound("buttons/button16.wav") end
 		end
 
 		if table.IsEmpty(pace.BulkSelectList) then
 			--remove halo hook
-			hook.Remove('PreDrawHalos', "BulkSelectHighlights")
+			pac.RemoveHook("PreDrawHalos", "BulkSelectHighlights")
 		else
 			--start halo hook
-			hook.Add('PreDrawHalos', "BulkSelectHighlights", function()
+			pac.AddHook("PreDrawHalos", "BulkSelectHighlights", function()
 				local mode = GetConVar("pac_bulk_select_halo_mode"):GetInt()
 				if mode == 0 then return
 				elseif mode == 1 then ThinkBulkHighlight()
@@ -2212,7 +2212,7 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 	elseif option_name == "paste" and obj then
 		menu:AddOption(L"paste", function() pace.Paste(obj) end):SetImage(pace.MiscIcons.paste)
 	elseif option_name == "cut" and obj then
-		menu:AddOption(L"cut", function() pace.Cut(obj) end):SetImage('icon16/cut.png')
+		menu:AddOption(L"cut", function() pace.Cut(obj) end):SetImage("icon16/cut.png")
 	elseif option_name == "paste_properties" and obj then
 		menu:AddOption(L"paste properties", function() pace.PasteProperties(obj) end):SetImage(pace.MiscIcons.replace)
 	elseif option_name == "clone" and obj then
@@ -2247,7 +2247,7 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 			end
 
 		end)
-		psi_icon:SetImage('icon16/drive.png')
+		psi_icon:SetImage("icon16/drive.png")
 		part_size_info:AddOption(L"from bulk select", function()
 			local cumulative_bytes = 0
 			for _,v in pairs(pace.BulkSelectList) do
@@ -2267,12 +2267,12 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 		end)
 	elseif option_name == "bulk_apply_properties" then
 		local bulk_apply_properties,bap_icon = menu:AddSubMenu(L"bulk change properties", function() pace.BulkApplyProperties(obj, "harsh") end)
-		bap_icon:SetImage('icon16/application_form.png')
+		bap_icon:SetImage("icon16/application_form.png")
 		bulk_apply_properties:AddOption("Policy: harsh filtering", function() pace.BulkApplyProperties(obj, "harsh") end)
 		bulk_apply_properties:AddOption("Policy: lenient filtering", function() pace.BulkApplyProperties(obj, "lenient") end)
 	elseif option_name == "bulk_select" then
 		bulk_menu, bs_icon = menu:AddSubMenu(L"bulk select ("..#pace.BulkSelectList..")", function() pace.DoBulkSelect(obj) end)
-		bs_icon:SetImage('icon16/table_multiple.png')
+		bs_icon:SetImage("icon16/table_multiple.png")
 		bulk_menu.GetDeleteSelf = function() return false end
 
 		local mode = GetConVar("pac_bulk_select_halo_mode"):GetInt()
@@ -2319,16 +2319,16 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 
 		bulk_menu:AddOption(L"Insert (Move / Cut + Paste)", function()
 			pace.BulkCutPaste(obj)
-		end):SetImage('icon16/arrow_join.png')
+		end):SetImage("icon16/arrow_join.png")
 
 		if not pace.ordered_operation_readystate then
 			bulk_menu:AddOption(L"prepare Ordered Insert (please select parts in order beforehand)", function()
 				pace.BulkCutPasteOrdered()
-			end):SetImage('icon16/text_list_numbers.png')
+			end):SetImage("icon16/text_list_numbers.png")
 		else
 			bulk_menu:AddOption(L"do Ordered Insert (select destinations in order)", function()
 				pace.BulkCutPasteOrdered()
-			end):SetImage('icon16/arrow_switch.png')
+			end):SetImage("icon16/arrow_switch.png")
 		end
 
 
@@ -2341,20 +2341,20 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 		--bulk paste modes
 		bulk_menu:AddOption(L"Bulk Paste (bulk select -> into this part)", function()
 			pace.BulkPasteFromBulkSelectToSinglePart(obj)
-		end):SetImage('icon16/arrow_join.png')
+		end):SetImage("icon16/arrow_join.png")
 
 		bulk_menu:AddOption(L"Bulk Paste (clipboard or this part -> into bulk selection)", function()
 			if not pace.Clipboard then pace.Copy(obj) end
 			pace.BulkPasteFromSingleClipboard()
-		end):SetImage('icon16/arrow_divide.png')
+		end):SetImage("icon16/arrow_divide.png")
 
 		bulk_menu:AddOption(L"Bulk Paste (Single paste from bulk clipboard -> into this part)", function()
 			pace.BulkPasteFromBulkClipboard(obj)
-		end):SetImage('icon16/arrow_join.png')
+		end):SetImage("icon16/arrow_join.png")
 
 		bulk_menu:AddOption(L"Bulk Paste (Multi-paste from bulk clipboard -> into bulk selection)", function()
 			pace.BulkPasteFromBulkClipboardToBulkSelect()
-		end):SetImage('icon16/arrow_divide.png')
+		end):SetImage("icon16/arrow_divide.png")
 
 		bulk_menu:AddSpacer()
 
@@ -2381,14 +2381,14 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 					part.Arguments = str..i.."@@0@@0"
 				end
 			end)
-		end):SetImage('icon16/clock.png')
+		end):SetImage("icon16/clock.png")
 
 		bulk_menu:AddOption(L"Pack into a new root group", function()
 			root = pac.CreatePart("group")
 			for i,v in ipairs(pace.BulkSelectList) do
 				v:SetParent(root)
 			end
-		end):SetImage('icon16/world.png')
+		end):SetImage("icon16/world.png")
 
 		bulk_menu:AddSpacer()
 
@@ -2398,21 +2398,21 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 
 		bulk_menu:AddOption(L"Clear Bulk List", function()
 			pace.ClearBulkList()
-		end):SetImage('icon16/table_delete.png')
+		end):SetImage("icon16/table_delete.png")
 	elseif option_name == "spacer" then
 		menu:AddSpacer()
 	elseif option_name == "registered_parts" then
 		pace.AddRegisteredPartsToMenu(menu, not obj)
 	elseif option_name == "hide_editor" then
-		menu:AddOption(L"hide editor / toggle focus", function() pace.Call("ToggleFocus") end):SetImage('icon16/zoom.png')
+		menu:AddOption(L"hide editor / toggle focus", function() pace.Call("ToggleFocus") end):SetImage("icon16/zoom.png")
 	elseif option_name == "expand_all" and obj then
 		menu:AddOption(L"expand all", function()
-		obj:CallRecursive('SetEditorExpand', true)
-		pace.RefreshTree(true) end):SetImage('icon16/arrow_down.png')
+		obj:CallRecursive("SetEditorExpand", true)
+		pace.RefreshTree(true) end):SetImage("icon16/arrow_down.png")
 	elseif option_name == "collapse_all" and obj then
 		menu:AddOption(L"collapse all", function()
-		obj:CallRecursive('SetEditorExpand', false)
-		pace.RefreshTree(true) end):SetImage('icon16/arrow_in.png')
+		obj:CallRecursive("SetEditorExpand", false)
+		pace.RefreshTree(true) end):SetImage("icon16/arrow_in.png")
 	elseif option_name == "copy_uid" and obj then
 		local menu2, pnl = menu:AddSubMenu(L"Copy part UniqueID", function() pace.CopyUID(obj) end)
 		pnl:SetIcon(pace.MiscIcons.uniqueid)
@@ -2422,11 +2422,11 @@ function pace.addPartMenuComponent(menu, obj, option_name)
 			hoverfunc = "open",
 			pac_part = pace.current_part,
 			panel_exp_width = 900, panel_exp_height = 400
-		}) end):SetImage('icon16/information.png')
+		}) end):SetImage("icon16/information.png")
 	elseif option_name == "reorder_movables" and obj then
 		if (obj.Position and obj.Angles and obj.PositionOffset) then
 			local substitute, pnl = menu:AddSubMenu("Reorder / replace base movable")
-			pnl:SetImage('icon16/application_double.png')
+			pnl:SetImage("icon16/application_double.png")
 			substitute:AddOption("Create a parent for position substitution", function() pace.SubstituteBaseMovable(obj, "create_parent") end)
 			if obj.Parent then
 				if obj.Parent.Position and obj.Parent.Angles then

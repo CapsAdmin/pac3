@@ -301,15 +301,15 @@ if SERVER then
 		end
 	end
 
-	hook.Add("PlayerInitialSpawn", "pac_entity_mutators_spawn", function(ply)
-		local id = "pac_entity_mutators_spawn" .. ply:UniqueID()
-		hook.Add( "SetupMove", id, function(movingPly, _, cmd)
+	pac.AddHook("PlayerInitialSpawn", "entity_mutators_spawn", function(ply)
+		local id = "entity_mutators_spawn" .. ply:UniqueID()
+		pac.AddHook( "SetupMove", id, function(movingPly, _, cmd)
 			if not ply:IsValid() then
-				hook.Remove("SetupMove", id)
+				pac.RemoveHook("SetupMove", id)
 			elseif movingPly == ply and not cmd:IsForced() then
 				emut.ReplicateMutatorsForPlayer(ply)
 
-				hook.Remove("SetupMove", id)
+				pac.RemoveHook("SetupMove", id)
 			end
 		end)
 	end)
@@ -323,7 +323,7 @@ function emut.RemoveMutationsForPlayer(ply)
 	end
 end
 
-hook.Add("EntityRemoved", "pac_entity_mutators_left", function(ent)
+pac.AddHook("EntityRemoved", "entity_mutators_left", function(ent)
 		if not IsValid(ent) then return end
 		if ent:IsPlayer() then
 			if Player(ent:UserID()) == NULL then

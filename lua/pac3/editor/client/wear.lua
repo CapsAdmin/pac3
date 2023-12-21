@@ -354,7 +354,7 @@ do
 			end
 		end
 
-		pac.RemoveHook("Think", "pac_request_outfits")
+		pac.RemoveHook("Think", "request_outfits")
 		pac.Message("Requesting outfits in 8 seconds...")
 
 		timer.Simple(8, function()
@@ -364,14 +364,14 @@ do
 	end
 
 	local function Initialize()
-		pac.RemoveHook("KeyRelease", "pac_request_outfits")
+		pac.RemoveHook("KeyRelease", "request_outfits")
 
 		if not pac.LocalPlayer:IsValid() then
 			return
 		end
 
 		if not pac.IsEnabled() then
-			pac.RemoveHook("Think", "pac_request_outfits")
+			pac.RemoveHook("Think", "request_outfits")
 			pace.NeverLoaded = true
 			return
 		end
@@ -379,7 +379,7 @@ do
 		LoadUpDefault()
 	end
 
-	hook.Add("pac_Enable", "pac_LoadUpDefault", function()
+	pac.AddHook("pac_Enable", "LoadUpDefault", function()
 		if not pace.NeverLoaded then return end
 		pace.NeverLoaded = nil
 		LoadUpDefault()
@@ -387,7 +387,7 @@ do
 
 	local frames = 0
 
-	pac.AddHook("Think", "pac_request_outfits", function()
+	pac.AddHook("Think", "request_outfits", function()
 		if RealFrameTime() > 0.2 then -- lag?
 			return
 		end
@@ -396,13 +396,13 @@ do
 
 		if frames > 400 then
 			if not xpcall(Initialize, ErrorNoHalt) then
-				pac.RemoveHook("Think", "pac_request_outfits")
+				pac.RemoveHook("Think", "request_outfits")
 				pace.NeverLoaded = true
 			end
 		end
 	end)
 
-	pac.AddHook("KeyRelease", "pac_request_outfits", function()
+	pac.AddHook("KeyRelease", "request_outfits", function()
 		local me = pac.LocalPlayer
 
 		if me:IsValid() and me:GetVelocity():Length() > 50 then

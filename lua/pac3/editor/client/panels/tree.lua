@@ -619,7 +619,6 @@ end
 
 pac.AddHook("pac_OnPartRemove", "pace_remove_tree_nodes", remove_node)
 
-
 local last_refresh = 0
 local function refresh(part)
 	if last_refresh > SysTime() then return end

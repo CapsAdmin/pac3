@@ -32,7 +32,7 @@ function pac.AddHook(str, id, func, priority)
 		local status, a, b, c, d, e, f, g = pcall(func, ...)
 
 		if not status then
-			pac.Message('Error on hook ' .. str .. ' (' .. id .. ')! ', a)
+			pac.Message("Error on hook " .. str .. " (" .. id .. ")! ", a)
 			return
 		end
 

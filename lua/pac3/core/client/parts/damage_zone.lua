@@ -719,16 +719,16 @@ end)
 
 
 function PART:OnHide()
-	hook.Remove(self.RenderingHook, "pace_draw_hitbox"..self.UniqueID)
+	pac.RemoveHook(self.RenderingHook, "pace_draw_hitbox"..self.UniqueID)
 	for _,v in pairs(renderhooks) do
-		hook.Remove(v, "pace_draw_hitbox"..self.UniqueID)
+		pac.RemoveHook(v, "pace_draw_hitbox"..self.UniqueID)
 	end
 end
 
 function PART:OnRemove()
-	hook.Remove(self.RenderingHook, "pace_draw_hitbox")
+	pac.RemoveHook(self.RenderingHook, "pace_draw_hitbox")
 	for _,v in pairs(renderhooks) do
-		hook.Remove(v, "pace_draw_hitbox")
+		pac.RemoveHook(v, "pace_draw_hitbox")
 	end
 end
 
@@ -738,16 +738,16 @@ function PART:PreviewHitbox()
 
 	if previousRenderingHook ~= self.RenderingHook then
 		for _,v in pairs(renderhooks) do
-			hook.Remove(v, "pace_draw_hitbox"..self.UniqueID)
+			pac.RemoveHook(v, "pace_draw_hitbox"..self.UniqueID)
 		end
 		previousRenderingHook = self.RenderingHook
 	end
 
 	if not self.Preview then return end
 
-	hook.Add(self.RenderingHook, "pace_draw_hitbox"..self.UniqueID, function()
-		if not self.Preview then hook.Remove(self.RenderingHook, "pace_draw_hitbox"..self.UniqueID) end
-		if not IsValid(self) then hook.Remove(self.RenderingHook, "pace_draw_hitbox"..self.UniqueID) end
+	pac.AddHook(self.RenderingHook, "pace_draw_hitbox"..self.UniqueID, function()
+		if not self.Preview then pac.RemoveHook(self.RenderingHook, "pace_draw_hitbox"..self.UniqueID) end
+		if not IsValid(self) then pac.RemoveHook(self.RenderingHook, "pace_draw_hitbox"..self.UniqueID) end
 		self:GetWorldPosition()
 		if self.HitboxMode == "Box" then
 			local mins =  Vector(-self.Radius, -self.Radius, -self.Length)

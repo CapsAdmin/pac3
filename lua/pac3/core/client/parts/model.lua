@@ -669,7 +669,7 @@ function PART:ProcessModelChange()
 				end
 			)
 		else
-			local status, reason = hook.Run('PAC3AllowMDLDownload', self:GetPlayerOwner(), self, path)
+			local status, reason = hook.Run("PAC3AllowMDLDownload", self:GetPlayerOwner(), self, path)
 
 			if ALLOW_TO_MDL:GetBool() and status ~= false then
 				self.loading = "downloading mdl zip"

@@ -27,14 +27,15 @@ do
 		pac_enable:SetBool(true)
 	end
 
-	function pac.Disable()
+	function pac.Disable(temp)
 		pac.EnableDrawnEntities(false)
 		pac.DisableAddedHooks()
 		pac.CallHook("Disable")
-		pac_enable:SetBool(false)
+		if not temp then
+			pac_enable:SetBool(false)
+		end
 	end
 end
-
 include("util.lua")
 include("class.lua")
 
@@ -58,7 +59,7 @@ include("ear_grab_animation.lua")
 
 pac.LoadParts()
 
-hook.Add("OnEntityCreated", "pac_init", function(ent)
+pac.AddHook("OnEntityCreated", "init", function(ent)
 	local ply = LocalPlayer()
 	if not ply:IsValid() then return end
 
@@ -67,8 +68,8 @@ hook.Add("OnEntityCreated", "pac_init", function(ent)
 	pac.LocalHands = pac.LocalPlayer:GetHands()
 
 	pac.in_initialize = true
-	hook.Run("pac_Initialized")
+	pac.CallHook("Initialized")
 	pac.in_initialize = nil
 
-	hook.Remove("OnEntityCreated", "pac_init")
+	pac.RemoveHook("OnEntityCreated", "init")
 end)
