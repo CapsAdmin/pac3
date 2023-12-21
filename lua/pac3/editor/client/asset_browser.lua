@@ -152,7 +152,7 @@ local function install_click(icon, path, pattern, on_menu, pathid)
 				end
 				SetClipboardText(path)
 			end)
-
+			local resource_type = ""
 			if string.match(path, "^materials/(.+)%.vmt$") or string.match(path, "^materials/(.+%.png)$") then resource_type = "materials"
 			elseif string.match(path, "^models/") then resource_type = "models" end
 
@@ -161,7 +161,7 @@ local function install_click(icon, path, pattern, on_menu, pathid)
 			elseif not pace.bookmarked_ressources[resource_type] then
 				pace.SaveRessourceBookmarks()
 			end
-			if GetConVar("pac_asset_browser_extra_options"):GetBool() then
+			if GetConVar("pac_asset_browser_extra_options"):GetBool() and pace.bookmarked_ressources[resource_type] then
 				if GetConVar("pac_favorites_try_to_get_asset_series"):GetBool() then
 					if not table.HasValue(pace.bookmarked_ressources[resource_type], path) then
 						menu:AddOption(L"add series to favorites", function()
