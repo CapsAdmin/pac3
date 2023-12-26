@@ -1030,6 +1030,8 @@ PART.Inputs.pac_healthbars_total = function(self)
 	return 0
 end
 
+PART.Inputs.healthmod_bar_total = PART.Inputs.pac_healthbars_total
+
 PART.Inputs.pac_healthbars_layertotal = function(self, layer)
 	local ent = self:GetPlayerOwner()
 	if ent.pac_healthbars and ent.pac_healthbars_layertotals then
@@ -1037,6 +1039,8 @@ PART.Inputs.pac_healthbars_layertotal = function(self, layer)
 	end
 	return 0
 end
+
+PART.Inputs.healthmod_bar_layertotal = PART.Inputs.pac_healthbars_layertotal
 
 PART.Inputs.pac_healthbar_uidvalue = function(self, uid)
 	local ent = self:GetPlayerOwner()
@@ -1058,6 +1062,32 @@ PART.Inputs.pac_healthbar_uidvalue = function(self, uid)
 	end
 	return 0
 end
+
+PART.Inputs.healthmod_bar_uidvalue = PART.Inputs.pac_healthbar_uidvalue
+
+PART.Inputs.pac_healthbar_remaining_bars = function(self, uid)
+	local ent = self:GetPlayerOwner()
+	local part = pac.GetPartFromUniqueID(pac.Hash(ent), uid) or pac.FindPartByPartialUniqueID(pac.Hash(ent), uid)
+	if not part:IsValid() then part = pac.FindPartByName(pac.Hash(ent), uid, self) end
+
+	if not IsValid(part) then
+		self.invalid_parts_in_expression[uid] = "invalid uid or name : " .. uid .. " in pac_healthbar_remaining_bars"
+	elseif part.ClassName ~= "health_modifier" then
+		self.invalid_parts_in_expression[uid] = "invalid class : " .. uid .. " in pac_healthbar_remaining_bars"
+	end
+	if ent.pac_healthbars and ent.pac_healthbars_uidtotals then
+		if ent.pac_healthbars_uidtotals[uid] then
+
+			if part:IsValid() then
+				self.valid_parts_in_expression[part] = part
+			end
+		end
+		return part.healthbar_index or 0
+	end
+	return 0
+end
+
+PART.Inputs.healthmod_bar_remaining_bars = PART.Inputs.pac_healthbar_remaining_bars
 
 
 net.Receive("pac_proxy", function()
