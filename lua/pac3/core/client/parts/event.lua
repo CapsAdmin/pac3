@@ -94,23 +94,25 @@ function PART:fix_event_operator()
 	end
 end
 
+function PART:GetEventTutorialText()
+	if PART.Events[self.Event] then
+		return PART.Events[self.Event].tutorial_explanation or "no tutorial entry was added, probably because this event is self-explanatory"
+	else
+		return "invalid event"
+	end
+end
+
 function PART:AttachEditorPopup(str)
 
 	local info_string = str or "no information available"
 	local verbosity = ""
 	if self.Event ~= "" then
-		if PART.Events[self.Event] then
-			info_string = PART.Events[self.Event].tutorial_explanation or "no tutorial entry was added, probably because this event is self-explanatory"
-		else
-			info_string = "invalid event"
-		end
+		info_string = self:GetEventTutorialText()
 		--if verbosity == "reference tutorial" or verbosity == "beginner tutorial" then
-
 		--end
-
-		str = info_string or str
 	end
-	self:SetupEditorPopup(info_string, true)
+	str = info_string or str
+	self:SetupEditorPopup(str, true)
 end
 
 function PART:SetEvent(event)
@@ -118,29 +120,16 @@ function PART:SetEvent(event)
 	(self.Arguments ~= "" and self.Event ~= "" and self.Event ~= event)
 
 	if not self.Events[event] then --invalid event? try a command event
-		local command_was_found_in_cmd_part = false
-		for i,v in ipairs(pac.GetLocalParts()) do
-			if v.ClassName == "command" then
-				if string.find(v.String, "pac_event " .. event) then
-					command_was_found_in_cmd_part = true
-				end
-			end
-		end
-		if self:GetPlayerOwner().pac_command_events or command_was_found_in_cmd_part then
-			self:GetPlayerOwner().pac_command_events = self:GetPlayerOwner().pac_command_events or {}
-			if self:GetPlayerOwner().pac_command_events[event] or command_was_found_in_cmd_part or GetConVar("pac_copilot_auto_setup_command_events"):GetBool() then
-				timer.Simple(0.2, function()
-					--now we'll use event as a command name
-					self:SetEvent("command")
-					self.pace_properties["Event"]:SetValue("command")
-
-					self:SetArguments(event .. "@@0")
-					self.pace_properties["Arguments"]:SetValue(event .. "@@0@@0")
-					pace.PopulateProperties(self)
-
-				end)
-				return
-			end
+		if GetConVar("pac_copilot_auto_setup_command_events"):GetBool() then
+			timer.Simple(0.2, function()
+				--now we'll use event as a command name
+				self:SetEvent("command")
+				self.pace_properties["Event"]:SetValue("command")
+				self:SetArguments(event .. "@@0")
+				self.pace_properties["Arguments"]:SetValue(event .. "@@0@@0")
+				pace.PopulateProperties(self)
+			end)
+			return
 		end
 	end
 
@@ -2075,7 +2064,7 @@ PART.OldEvents = {
 	},
 
 	damage_zone_hit = {
-		operator_type = "mixed", preferred_operator = "above",
+		operator_type = "number", preferred_operator = "above",
 		arguments = {{time = "number"}, {damage = "number"}, {uid = "string"}},
 		userdata = {{default = 1}, {default = 0}, {enums = function(part)
 			local output = {}
@@ -2083,7 +2072,7 @@ PART.OldEvents = {
 
 			for i, part in pairs(parts) do
 				if part.ClassName == "damage_zone" then
-					output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part
+					output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part.UniqueID
 				end
 			end
 
@@ -2091,6 +2080,7 @@ PART.OldEvents = {
 		end}},
 		callback = function(self, ent, time, damage, uid)
 			uid = uid or ""
+			uid = string.gsub(uid, "\"", "")
 			local valid_uid, err = pcall(pac.GetPartFromUniqueID, pac.Hash(ent), uid)
 			if uid == "" then
 				for _,part in pairs(pac.GetLocalParts()) do
@@ -2129,7 +2119,7 @@ PART.OldEvents = {
 
 			for i, part in pairs(parts) do
 				if part.ClassName == "damage_zone" then
-					output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part
+					output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part.UniqueID
 				end
 			end
 
@@ -2137,6 +2127,7 @@ PART.OldEvents = {
 		end}},
 		callback = function(self, ent, time, uid)
 			uid = uid or ""
+			uid = string.gsub(uid, "\"", "")
 			local valid_uid, err = pcall(pac.GetPartFromUniqueID, pac.Hash(ent), uid)
 			if uid == "" then
 				for _,part in pairs(pac.GetLocalParts()) do
@@ -2182,7 +2173,7 @@ PART.OldEvents = {
 
 			for i, part in pairs(parts) do
 				if part.ClassName == "lock" then
-					output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part
+					output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part.UniqueID
 				end
 			end
 
@@ -2190,6 +2181,7 @@ PART.OldEvents = {
 		end}},
 		callback = function(self, ent, uid)
 			uid = uid or ""
+			uid = string.gsub(uid, "\"", "")
 			local valid_uid, err = pcall(pac.GetPartFromUniqueID, pac.Hash(ent), uid)
 			if uid == "" then
 				for _,part in pairs(pac.GetLocalParts()) do
@@ -2277,13 +2269,15 @@ PART.OldEvents = {
 
 			for i, part in pairs(parts) do
 				if part.ClassName == "health_modifier" then
-					output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part
+					output["[UID:" .. string.sub(i,1,16) .. "...] " .. part:GetName() .. "; in " .. part:GetParent().ClassName  .. " " .. part:GetParent():GetName()] = part.UniqueID
 				end
 			end
 
 			return output
 		end}},
 		callback = function(self, ent, HpValue, part_uid)
+			part_uid = part_uid or ""
+			part_uid = string.gsub(part_uid, "\"", "")
 			if ent.pac_healthbars and ent.pac_healthbars_uidtotals then
 				if ent.pac_healthbars_uidtotals[part_uid] then
 					return self:NumberOperator(ent.pac_healthbars_uidtotals[part_uid], HpValue)
@@ -4149,6 +4143,8 @@ net.Receive("pac_update_healthbars", function()
 				ent.pac_healthbars_uidtotals[uid] = value
 				ent.pac_healthbars_layertotals[layer] = ent.pac_healthbars_layertotals[layer] + value
 				ent.pac_healthbars_total = ent.pac_healthbars_total + value
+				local part = pac.GetPartFromUniqueID(pac.Hash(ent), uid)
+				if IsValid(part) and part.UpdateHPBars then part:UpdateHPBars() end
 			end
 		else
 			ent.pac_healthbars_layertotals[layer] = nil
