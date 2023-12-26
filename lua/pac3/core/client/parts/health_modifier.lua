@@ -206,7 +206,7 @@ end
 
 function PART:UpdateHPBars()
 	local ent = self:GetPlayerOwner()
-	if ent.pac_healthbars_uidtotals then
+	if ent.pac_healthbars_uidtotals and ent.pac_healthbars_uidtotals[self.UniqueID] then
 		self.healthbar_index = math.ceil(ent.pac_healthbars_uidtotals[self.UniqueID] / self.BarsAmount)
 		if ent.pac_healthbars_uidtotals[self.UniqueID] then
 			self:SetInfo("Extra healthbars:\nHP is " .. ent.pac_healthbars_uidtotals[self.UniqueID] .. "/" .. self.HealthBars * self.BarsAmount .. "\n" .. self.healthbar_index .. " of " .. self.HealthBars .. " bars")
