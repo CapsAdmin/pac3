@@ -1170,7 +1170,11 @@ function PART:SetupEditorPopup(str, force_open, tbl)
 	}
 
 	local default_state = str == nil or str == ""
-	local info_string = str or self.ClassName .. "\nno special information available"
+	local info_string
+	if self.ClassName == "event" and default_state then
+		info_string = self:GetEventTutorialText()
+	end
+	info_string = info_string or str or self.ClassName .. "\nno special information available"
 
 	if default_state and pace then
 		local partsize_tbl = pace.GetPartSizeInformation(self)
