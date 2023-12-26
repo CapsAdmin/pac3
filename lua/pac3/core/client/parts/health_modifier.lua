@@ -100,12 +100,14 @@ function PART:SetBarsAmount(val)
 	self.BarsAmount = val
 	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	self:SendModifier("HealthBars")
+	self:UpdateHPBars()
 end
 
 function PART:SetBarsLayer(val)
 	self.BarsLayer = val
 	if pac.LocalPlayer ~= self:GetPlayerOwner() then return end
 	self:SendModifier("HealthBars")
+	self:UpdateHPBars()
 end
 
 function PART:SetMaxHealth(val)
@@ -198,7 +200,18 @@ function PART:OnHide()
 end
 
 function PART:Initialize()
+	self.healthbar_index = 0
 	if not GetConVar("pac_sv_health_modifier"):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then self:SetError("health modifiers are disabled on this server!") end
+end
+
+function PART:UpdateHPBars()
+	local ent = self:GetPlayerOwner()
+	if ent.pac_healthbars_uidtotals then
+		self.healthbar_index = math.ceil(ent.pac_healthbars_uidtotals[self.UniqueID] / self.BarsAmount)
+		if ent.pac_healthbars_uidtotals[self.UniqueID] then
+			self:SetInfo("Extra healthbars:\nHP is " .. ent.pac_healthbars_uidtotals[self.UniqueID] .. "/" .. self.HealthBars * self.BarsAmount .. "\n" .. self.healthbar_index .. " of " .. self.HealthBars .. " bars")
+		end
+	end
 end
 
 
