@@ -1,54 +1,93 @@
 include("parts.lua")
 include("shortcuts.lua")
 
-local pac_submit_spam = CreateConVar('pac_submit_spam', '1', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE}, 'Prevent users from spamming pac_submit')
-local pac_submit_limit = CreateConVar('pac_submit_limit', '30', CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE}, 'pac_submit spam limit')
-local hitscan_allow = CreateConVar("pac_sv_hitscan", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow hitscan parts serverside")
-local hitscan_max_bullets = CreateConVar("pac_sv_hitscan_max_bullets", "200", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "hitscan part maximum number of bullets")
-local hitscan_max_damage = CreateConVar("pac_sv_hitscan_max_damage", "20000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "hitscan part maximum damage")
-local hitscan_spreadout_dmg = CreateConVar("pac_sv_hitscan_divide_max_damage_by_max_bullets", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether or not force hitscans to divide their damage among the number of bullets fired")
+--{"cvar", "description", "tooltip", decimals, min, max}	if decimals is -1 it's a bool
+local convar_params_combat_generic = {
 
-local damagezone_allow = CreateConVar("pac_sv_damage_zone", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow damage zone parts serverside")
-local damagezone_max_damage = CreateConVar("pac_sv_damage_zone_max_damage", "20000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "damage zone maximum damage")
-local damagezone_max_length = CreateConVar("pac_sv_damage_zone_max_length", "20000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "damage zone maximum length")
-local damagezone_max_radius = CreateConVar("pac_sv_damage_zone_max_radius", "10000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "damage zone maximum radius")
-local damagezone_allow_dissolve = CreateConVar("pac_sv_damage_zone_allow_dissolve", "1", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to enable entity dissolvers and removing NPCs\" weapons on death for damagezone")
+	--general sv protection
+	{"pac_sv_prop_protection", "Enforce generic prop protection for player-owned props and physics entities based on client consents.", "", -1, 0, 200},
+	{"pac_sv_combat_whitelisting", "Restrict new pac3 combat (damage zone, lock, force, hitscan, health modifier) to only whitelisted users.", "off = Blacklist mode: Default players are allowed to use the combat features\non = Whitelist mode: Default players aren't allowed to use the combat features until set to Allowed", -1, 0, 200},
+	{"pac_sv_block_combat_features_on_next_restart", "Block the combat features that aren't enabled. WARNING! Requires a restart!\nThis applies to damage zone, lock, force, hitscan and health modifier parts", "You can go to the console and set pac_sv_block_combat_features_on_next_restart to 2 to block everything.\nif you re-enable a blocked part, update with pac_sv_combat_reinitialize_missing_receivers", -1, 0, 200},
+	{"pac_sv_combat_enforce_netrate_monitor_serverside", "Enable serverside monitoring prints for allowance and rate limiters", "Enable serverside monitoring prints.\n0=let clients enforce their netrate allowance before sending messages\n1=the server will receive net messages and print the outcome.", -1, 0, 200},
+	{"pac_sv_combat_enforce_netrate", "Rate limiter (milliseconds)", "The milliseconds delay between net messages.\nIf this is 0, the allowance won't matter, otherwise early net messages use up the player's allowance.\nThe allowance regenerates gradually when unused, and one unit gets spent if the message is earlier than the rate limiter's delay.", 0, 0, 1000},
+	{"pac_sv_combat_enforce_netrate_buffersize", "Allowance, in number of messages", "Allowance:\nIf this is 0, only the time limiter will stop pac combat messages if they're too fast.\nOtherwise, players trying to use a pac combat message earlier will deduct 1 from the player's allowance, and only stop the messages if the allowance reaches 0.", 0, 0, 400},
+	{"pac_sv_entity_limit_per_combat_operation", "Hard entity limit to cutoff damage zones and force parts", "If the number of entities selected is more than this value, the whole operation gets dropped.\nThis is so that the server doesn't have to send huge amounts of entity updates to everyone.", 0, 0, 1000},
+	{"pac_sv_entity_limit_per_player_per_combat_operation", "Entity limit per player to cutoff damage zones and force parts", "When in multiplayer, with the server's player count, if the number of entities selected is more than this value, the whole operation gets dropped.\nThis is so that the server doesn't have to send huge amounts of entity updates to everyone.", 0, 0, 500},
+	{"pac_sv_player_limit_as_fraction_to_drop_damage_zone", "block damage zones targeting this fraction of players", "This applies when the zone covers more than 12 players. 0 is 0% of the server, 1 is 100%\nFor example, if this is at 0.5, there are 24 players and a damage zone covers 13 players, it will be blocked.", 2, 0, 1},
+	{"pac_sv_combat_distance_enforced", "distance to block combat actions that are too far", "The distance is compared between the action's origin and the player's position.\n0 to ignore.", 0, 0, 64000},
 
-local lock_allow = CreateConVar("pac_sv_lock", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow lock parts serverside")
-local lock_allow_grab = CreateConVar("pac_sv_lock_grab", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow lock part grabs serverside")
-local lock_allow_teleport = CreateConVar("pac_sv_lock_teleport", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow lock part teleports serverside")
-local lock_max_radius = CreateConVar("pac_sv_lock_max_grab_radius", "200", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "lock part maximum grab radius")
-local lock_allow_grab_ply = CreateConVar("pac_sv_lock_allow_grab_ply", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow grabbing players with lock part")
-local lock_allow_grab_npc = CreateConVar("pac_sv_lock_allow_grab_npc", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow grabbing NPCs with lock part")
-local lock_allow_grab_ent = CreateConVar("pac_sv_lock_allow_grab_ent", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "allow grabbing other entities with lock part")
+}
+local convar_params_lock = {
+	{"pac_sv_lock", "Allow lock part", "", -1, 0, 200},
+	{"pac_sv_lock_teleport", "Allow lock part teleportation", "", -1, 0, 200},
+	{"pac_sv_lock_grab", "Allow lock part grabbing", "", -1, 0, 200},
+	{"pac_sv_lock_allow_grab_ply", "Allow grabbing players", "", -1, 0, 200},
+	{"pac_sv_lock_allow_grab_npc", "Allow grabbing NPCs", "", -1, 0, 200},
+	{"pac_sv_lock_allow_grab_ent", "Allow grabbing other entities", "", -1, 0, 200},
+	{"pac_sv_lock_max_grab_radius", "Max lock part grab range", "", 0, 0, 5000},
+}
+local convar_params_damage_zone = {
+	{"pac_sv_damage_zone", "Allow damage zone", "", -1, 0, 200},
+	{"pac_sv_damage_zone_max_radius", "Max damage zone radius", "", 0, 0, 32767},
+	{"pac_sv_damage_zone_max_length", "Max damage zone length", "", 0, 0, 32767},
+	{"pac_sv_damage_zone_max_damage", "Max damage zone damage", "", 0, 0, 268435455},
+	{"pac_sv_damage_zone_allow_dissolve", "Allow damage entity dissolvers", "", -1, 0, 200},
+}
+local convar_params_force = {
+	{"pac_sv_force", "Allow force part", "", -1, 0, 200},
+	{"pac_sv_force_max_radius", "Max force radius", "", 0, 0, 32767},
+	{"pac_sv_force_max_length", "Max force length", "", 0, 0, 32767},
+	{"pac_sv_force_max_length", "Max force amount", "", 0, 0, 10000000},
+}
+local convar_params_hitscan = {
+	{"pac_sv_hitscan", "allow serverside bullets", "", -1, 0, 200},
+	{"pac_sv_hitscan_max_damage", "Max hitscan damage (per bullet, per multishot,\ndepending on the next setting)", "", 0, 0, 268435455},
+	{"pac_sv_hitscan_divide_max_damage_by_max_bullets", "force hitscans to distribute their total damage accross bullets. if off, every bullet does full damage; if on, adding more bullets doesn't do more damage", "", -1, 0, 200},
+	{"pac_sv_hitscan_max_bullets", "Maximum number of bullets for hitscan multishots", "", 0, 0, 500},
+}
+local convar_params_projectile = {
+	{"pac_sv_projectiles", "allow serverside physical projectiles", "", -1, 0, 200},
+	{"pac_sv_projectile_allow_custom_collision_mesh", "allow custom collision meshes for physical projectiles", "", -1, 0, 200},
+	{"pac_sv_projectile_max_phys_radius", "Max projectile physical radius", "", 0, 0, 4095},
+	{"pac_sv_projectile_max_damage_radius", "Max projectile damage radius", "", 0, 0, 4095},
+	{"pac_sv_projectile_max_attract_radius", "Max projectile attract radius", "", 0, 0, 100000000},
+	{"pac_sv_projectile_max_damage", "Max projectile damage", "", 0, 0, 100000000},
+	{"pac_sv_projectile_max_speed", "Max projectile speed", "", 0, 0, 50000},
+	{"pac_sv_projectile_max_mass", "Max projectile mass", "", 0, 0, 500000},
+}
+local convar_params_health_modifier = {
+	{"pac_sv_health_modifier", "Allow health modifier part", "", -1, 0, 200},
+	{"pac_sv_health_modifier_allow_maxhp", "Allow changing max health and max armor", "", -1, 0, 200},
+	{"pac_sv_health_modifier_min_damagescaling", "Minimum combined damage multiplier allowed.\nNegative values lead to healing from damage.", "", 2, -10, 1},
+	{"pac_sv_health_modifier_extra_bars", "Allow extra healthbars", "What are those? It's like an armor layer that takes damage before it gets applied to the entity.", -1, 0, 200},
+}
 
-local force_allow = CreateConVar("pac_sv_force", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow force parts serverside")
-local force_max_length = CreateConVar("pac_sv_force_max_length", "10000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "force part maximum length")
-local force_max_radius = CreateConVar("pac_sv_force_max_radius", "10000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "force part maximum radius")
-local force_max_amount = CreateConVar("pac_sv_force_max_amount", "10000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "force part maximum amount of force")
-
-local healthmod_allow = CreateConVar("pac_sv_health_modifier", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow health modifier parts serverside")
-local healthmod_allowed_extra_bars = CreateConVar("pac_sv_health_modifier_extra_bars", 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow extra health bars")
-local healthmod_allow_change_maxhp = CreateConVar("pac_sv_health_modifier_allow_maxhp", 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow players to change their maximum health and armor.")
-local healthmod_minimum_dmgscaling = CreateConVar("pac_sv_health_modifier_min_damagescaling", -1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Minimum health modifier amount. Negative values can heal.")
-
-local master_init_featureblocker = CreateConVar("pac_sv_block_combat_features_on_next_restart", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to stop initializing the net receivers for the networking of PAC3 combat parts those selectively disabled. This requires a restart!\n0=initialize all the receivers\n1=disable those whose corresponding part cvar is disabled\n2=block all combat features\nAfter updating the sv cvars, you can still reinitialize the net receivers with pac_sv_combat_reinitialize_missing_receivers, but you cannot turn them off after they are turned on")
-
-local enforce_netrate = CreateConVar("pac_sv_combat_enforce_netrate", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "whether to enforce a limit on how often any pac combat net messages can be sent. 0 to disable, otherwise a number in mililiseconds.\nSee the related cvar pac_sv_combat_enforce_netrate_buffersize. That second convar is governed by this one, if the netrate enforcement is 0, the allowance doesn\"t matter")
-local netrate_allowance = CreateConVar("pac_sv_combat_enforce_netrate_buffersize", 60, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "the budgeted allowance to limit how many pac combat net messages can be sent in bursts. 0 to disable, otherwise a number of net messages of allowance.")
-local netrate_enforcement_sv_monitoring = CreateConVar("pac_sv_combat_enforce_netrate_monitor_serverside", 0, {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether or not to let clients enforce their net message rates.\nSet this to 1 to get serverside prints telling you whenever someone is going over their allowance, but it'll still take the network bandwidth.\nSet this to 0 to let clients enforce their net rate and save some bandwidth but the server won't know who's spamming net messages.")
-local raw_ent_limit = CreateConVar("pac_sv_entity_limit_per_combat_operation", 500, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Hard limit to drop any force or damage zone if more than this amount of entities is selected")
-local per_ply_limit = CreateConVar("pac_sv_entity_limit_per_player_per_combat_operation", 40, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Limit per player to drop any force or damage zone if this amount multiplied by each client is more than the hard limit")
-local player_fraction = CreateConVar("pac_sv_player_limit_as_fraction_to_drop_damage_zone", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "The fraction (0.0-1.0) of players that will stop damage zone net messages if a damage zone order covers more than this fraction of the server's population, when there are more than 12 players covered")
-local enforce_distance = CreateConVar("pac_sv_combat_distance_enforced", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to enforce a limit on how far a pac combat action can originate.\nIf set to a distance, it will prevent actions that are too far from the acting player.\n0 to disable.")
-
-
-local global_combat_whitelisting = CreateConVar("pac_sv_combat_whitelisting", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "How the server should decide which players are allowed to use the main PAC3 combat parts (lock, damagezone, force).\n0:Everyone is allowed unless the parts are disabled serverwide\n1:No one is allowed until they get verified as trustworthy\tpac_sv_whitelist_combat <playername>\n\tpac_sv_blacklist_combat <playername>")
-local global_combat_prop_protection = CreateConVar("pac_sv_prop_protection", 0, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether players owned (created) entities (physics props and gmod contraption entities) will be considered in the consent calculations, protecting them. Without this cvar, only the player is protected.")
-
-
---include("pac3/editor/server/combat_bans.lua")
-
+local convar_params_modifiers = {
+	{"pac_modifier_blood_color", "Blood", "", -1, 0, 200},
+	{"pac_allow_mdl", "MDL", "", -1, 0, 200},
+	{"pac_allow_mdl_entity", "Entity MDL", "", -1, 0, 200},
+	{"pac_modifier_model", "Entity model", "", -1, 0, 200},
+	{"pac_modifier_size", "Entity size", "", -1, 0, 200},
+}
+local convar_params_movement = {
+	--the playermovement enabler policy cvar is a form, not a slider nor a bool
+	{"pac_player_movement_allow_mass", "Allow Modify Mass", "", -1, 0, 200},
+	{"pac_player_movement_min_mass", "Mimnimum mass players can set for themselves", "", 0, 0, 1000000},
+	{"pac_player_movement_max_mass", "Maximum mass players can set for themselves", "", 0, 0, 1000000},
+	{"pac_player_movement_physics_damage_scaling", "Allow damage scaling of physics damage based on player's mass", "", -1, 0, 200},
+}
+local convar_params_wearing_drawing = {
+	{"pac_sv_draw_distance", "PAC server draw distance", "", 0, 0, 500000},
+	{"pac_submit_spam", "Limit pac_submit to prevent spam", "", -1, 0, 200},
+	{"pac_submit_limit", "limit of pac_submits", "", 0, 0, 100},
+	{"pac_onuse_only_force", "Players need to +USE on others to reveal outfits", "", -1, 0, 200},
+}
+local convar_params_misc = {
+	{"sv_pac_webcontent_allow_no_content_length", "Players need to +USE on others to reveal outfits", "", -1, 0, 200},
+	{"pac_to_contraption_allow", "Allow PAC to contraption tool", "", -1, 0, 200},
+	{"pac_max_contraption_entities", "Entity limit for PAC to contraption", "", 0, 0, 200},
+	{"pac_restrictions", "restrict PAC editor camera movement", "", -1, 0, 200},
+}
 
 pace = pace
 
@@ -623,7 +662,7 @@ function PANEL:Init()
 
 		local combat_ban_settings = pace.FillCombatBanPanel(master_pnl)
 		master_pnl:AddSheet("Combat Bans (SV)", combat_ban_settings)
-
+		net.Start("pac_request_sv_cvars") net.SendToServer()
 	end
 
 
@@ -646,7 +685,34 @@ function pace.OpenSettings()
 	pnl:MakePopup()
 	pnl:Center()
 	pnl:SetSizable(true)
-
+	pnl.OnClose = function()
+		if LocalPlayer():IsAdmin() and pace.cvar_changes then
+			local changes_str = ""
+			for cmd, val in pairs(pace.cvar_changes) do
+				if isbool(val) then
+					changes_str = changes_str .. cmd .. " set to " ..  (val and "1" or "0") .. "\n"
+				else 
+					changes_str = changes_str .. cmd .. " set to " ..  val .. "\n"
+				end
+			end
+			Derma_Query("Send changes to the server?\n"..changes_str,table.Count(pace.cvar_changes) .. " server convars changed",
+				"Send changes to server", function()
+					for cmd, val in pairs(pace.cvar_changes) do
+						net.Start("pac_send_sv_cvar")
+						net.WriteString(cmd)
+						if isbool(val) then
+							net.WriteString(val and "1" or "0")
+						else 
+							net.WriteString(val)
+						end
+						net.SendToServer()
+					end
+					pace.cvar_changes = nil 
+				end,
+				"Cancel", function() pace.cvar_changes = nil end)
+		end
+	end
+	timer.Simple(0.5, function() pace.cvar_changes = nil end)
 	local pnl = vgui.Create("pace_settings", pnl)
 	pnl:Dock(FILL)
 end
@@ -811,349 +877,76 @@ function pace.FillCombatBanPanel(pnl)
 
 	return BAN
 end
+local cvar_panels = {}
+
+
+local function PopulateCategory(str, pnl, cvars_tbl)
+	--create a collapsible header category
+	local list = pnl:Add(str)
+	list.Header:SetSize(40,40)
+	list.Header:SetFont("DermaLarge")
+	local list_list = vgui.Create("DListLayout")
+	list_list:DockPadding(20,0,20,20)
+	list:SetContents(list_list)
+
+	--insert the cvars for the category
+	for i, tbl in ipairs(cvars_tbl) do
+		local cvar_pnl
+		if tbl[4] == -1 then
+			cvar_pnl = vgui.Create("DCheckBoxLabel", list_list)
+			cvar_pnl.OnChange = function(self, val)
+				pace.cvar_changes = pace.cvar_changes or {}
+				pace.cvar_changes[tbl[1]] = val
+			end
+		else
+			cvar_pnl = vgui.Create("DNumSlider", list_list)
+			cvar_pnl:SetDecimals(tbl[4])
+			cvar_pnl:SetMin(tbl[5])
+			cvar_pnl:SetMax(tbl[6])
+			cvar_pnl.OnValueChanged = function(self, val)
+				pace.cvar_changes = pace.cvar_changes or {}
+				pace.cvar_changes[tbl[1]] = val
+			end
+		end
+		cvar_panels[tbl[1]] = cvar_pnl
+		cvar_pnl:SetText(tbl[2])
+		if tbl[3] ~= "" then cvar_pnl:SetTooltip(tbl[3]) end
+		cvar_pnl:SetSize(400,30)
+		
+	end
+	return list_list
+end
+
+net.Receive("pac_send_cvars_to_client", function()
+	local cvars_tbl = net.ReadTable()
+	for cmd, val in pairs(cvars_tbl) do
+		if cvar_panels[cmd] then
+			--print("cvar exists " .. cmd .. " = " .. val)
+			cvar_panels[cmd]:SetValue(val)
+		else
+			--print("wrong cvar? " .. cmd)
+		end
+	end
+	pace.cvar_changes = nil
+end)
 
 function pace.FillCombatSettings(pnl)
 	local pnl = pnl
 
 	local master_list = vgui.Create("DCategoryList", pnl)
 	master_list:Dock(FILL)
+
 	--general
-	do
-		local general_list = master_list:Add("General (Global policy and Network protection)")
-		general_list.Header:SetSize(40,40)
-		general_list.Header:SetFont("DermaLarge")
-		local general_list_list = vgui.Create("DListLayout")
-		general_list_list:DockPadding(20,0,20,20)
-		general_list:SetContents(general_list_list)
+	PopulateCategory("General (Global policy and Network protections)", master_list, convar_params_combat_generic)
+	
+	--combat parts
+	PopulateCategory("Force part", master_list, convar_params_force)
+	PopulateCategory("Damage Zone", master_list, convar_params_damage_zone)
+	PopulateCategory("Lock part", master_list, convar_params_lock)
+	PopulateCategory("Hitscan part", master_list, convar_params_hitscan)
+	PopulateCategory("Projectiles", master_list, convar_params_projectile)
+	PopulateCategory("Health modifier part", master_list, convar_params_health_modifier)
 
-		local sv_prop_protection_props_box = vgui.Create("DCheckBoxLabel", general_list_list)
-			sv_prop_protection_props_box:SetText("Enforce generic prop protection for player-owned props and physics entities.\nRelated to client consents, but the policies for each part are not uniform.")
-			sv_prop_protection_props_box:SetSize(400,30)
-			sv_prop_protection_props_box:SetConVar("pac_sv_prop_protection")
-
-
-		local sv_combat_whitelisting_box = vgui.Create("DCheckBoxLabel", general_list_list)
-			sv_combat_whitelisting_box:SetText("Restrict new pac3 combat (damage zone, lock, force, hitscan, health modifier) to only whitelisted users.")
-			sv_combat_whitelisting_box:SetSize(400,30)
-			sv_combat_whitelisting_box:SetConVar("pac_sv_combat_whitelisting")
-			sv_combat_whitelisting_box:SetTooltip("off = Blacklist mode: Default players are allowed to use the combat features\non = Whitelist mode: Default players aren't allowed to use the combat features until set to Allowed")
-
-		local sv_master_break_box = vgui.Create("DCheckBoxLabel", general_list_list)
-			sv_master_break_box:SetText("Block the combat features that aren't enabled. WARNING! Requires a restart!\nThis applies to damage zone, lock, force, hitscan and health modifier parts")
-			sv_master_break_box:SetSize(400,30)
-			sv_master_break_box:SetConVar("pac_sv_block_combat_features_on_next_restart")
-			sv_master_break_box:SetTooltip("You can go to the console and set pac_sv_block_combat_features_on_next_restart to 2 to block everything.\nif you re-enable a blocked part, update with pac_sv_combat_reinitialize_missing_receivers")
-
-		local sv_netrate_monitoring_box = vgui.Create("DCheckBoxLabel", general_list_list)
-			sv_netrate_monitoring_box:SetText("Enable serverside monitoring prints for allowance and rate limiters")
-			sv_netrate_monitoring_box:SetSize(400,30)
-			sv_netrate_monitoring_box:SetConVar("pac_sv_combat_enforce_netrate_monitor_serverside")
-			sv_netrate_monitoring_box:SetTooltip("Enable serverside monitoring prints.\n0=let clients enforce their netrate allowance before sending messages\n1=the server will receive net messages and print the outcome.")
-
-		local sv_netrate_time_numbox = vgui.Create("DNumSlider", general_list_list)
-			sv_netrate_time_numbox:SetText("Rate limiter (milliseconds)")
-			sv_netrate_time_numbox:SetValue(GetConVar("pac_sv_combat_enforce_netrate"):GetInt())
-			sv_netrate_time_numbox:SetMin(0) sv_netrate_time_numbox:SetDecimals(0) sv_netrate_time_numbox:SetMax(1000)
-			sv_netrate_time_numbox:SetSize(400,30)
-			sv_netrate_time_numbox:SetConVar("pac_sv_combat_enforce_netrate")
-			sv_netrate_time_numbox:SetTooltip("The milliseconds delay between net messages.\nIf this is 0, the allowance won't matter, otherwise early net messages use up the player's allowance.\nThe allowance regenerates gradually when unused, and one unit gets spent if the message is earlier than the rate limiter's delay.")
-
-		local sv_netrate_buffer_numbox = vgui.Create("DNumSlider", general_list_list)
-			sv_netrate_buffer_numbox:SetText("Allowance, in number of messages")
-			sv_netrate_buffer_numbox:SetValue(GetConVar("pac_sv_combat_enforce_netrate_buffersize"):GetInt())
-			sv_netrate_buffer_numbox:SetMin(0) sv_netrate_buffer_numbox:SetDecimals(0) sv_netrate_buffer_numbox:SetMax(400)
-			sv_netrate_buffer_numbox:SetSize(400,30)
-			sv_netrate_buffer_numbox:SetConVar("pac_sv_combat_enforce_netrate_buffersize")
-			sv_netrate_buffer_numbox:SetTooltip("Allowance:\nIf this is 0, only the time limiter will stop pac combat messages if they're too fast.\nOtherwise, players trying to use a pac combat message earlier will deduct 1 from the player's allowance, and only stop the messages if the allowance reaches 0.")
-
-		local sv_hard_ent_limit_numbox = vgui.Create("DNumSlider", general_list_list)
-			sv_hard_ent_limit_numbox:SetText("Hard entity limit to cutoff damage zones and force parts")
-			sv_hard_ent_limit_numbox:SetValue(GetConVar("pac_sv_entity_limit_per_combat_operation"):GetInt())
-			sv_hard_ent_limit_numbox:SetMin(0) sv_hard_ent_limit_numbox:SetDecimals(0) sv_hard_ent_limit_numbox:SetMax(1000)
-			sv_hard_ent_limit_numbox:SetSize(400,30)
-			sv_hard_ent_limit_numbox:SetConVar("pac_sv_entity_limit_per_combat_operation")
-			sv_hard_ent_limit_numbox:SetTooltip("If the number of entities selected is more than this value, the whole operation gets dropped.\nThis is so that the server doesn't have to send huge amounts of entity updates to everyone.")
-
-		local sv_per_player_ent_limit_numbox = vgui.Create("DNumSlider", general_list_list)
-			sv_per_player_ent_limit_numbox:SetText("Entity limit per player to cutoff damage zones and force parts")
-			sv_per_player_ent_limit_numbox:SetValue(GetConVar("pac_sv_entity_limit_per_player_per_combat_operation"):GetInt())
-			sv_per_player_ent_limit_numbox:SetMin(0) sv_per_player_ent_limit_numbox:SetDecimals(0) sv_per_player_ent_limit_numbox:SetMax(500)
-			sv_per_player_ent_limit_numbox:SetSize(400,30)
-			sv_per_player_ent_limit_numbox:SetConVar("pac_sv_entity_limit_per_player_per_combat_operation")
-			sv_per_player_ent_limit_numbox:SetTooltip("When in multiplayer, with the server's player count, if the number of entities selected is more than this value, the whole operation gets dropped.\nThis is so that the server doesn't have to send huge amounts of entity updates to everyone.")
-
-		local sv_player_fraction_slider = vgui.Create("DNumSlider", general_list_list)
-			sv_player_fraction_slider:SetText("block damage zones targeting this fraction of players")
-			sv_player_fraction_slider:SetValue(GetConVar("pac_sv_player_limit_as_fraction_to_drop_damage_zone"):GetFloat())
-			sv_player_fraction_slider:SetMin(0) sv_player_fraction_slider:SetDecimals(2) sv_player_fraction_slider:SetMax(1)
-			sv_player_fraction_slider:SetSize(400,30)
-			sv_player_fraction_slider:SetConVar("pac_sv_player_limit_as_fraction_to_drop_damage_zone")
-			sv_player_fraction_slider:SetTooltip("This applies when the zone covers more than 12 players. 0 is 0% of the server, 1 is 100%\nFor example, if this is at 0.5, there are 24 players and a damage zone covers 13 players, it will be blocked.")
-
-		local sv_distance_slider = vgui.Create("DNumSlider", general_list_list)
-			sv_distance_slider:SetText("distance to block combat actions that are too far")
-			sv_distance_slider:SetValue(GetConVar("pac_sv_combat_distance_enforced"):GetFloat())
-			sv_distance_slider:SetMin(0) sv_distance_slider:SetDecimals(0) sv_distance_slider:SetMax(64000)
-			sv_distance_slider:SetSize(400,30)
-			sv_distance_slider:SetConVar("pac_sv_combat_distance_enforced")
-			sv_distance_slider:SetTooltip("The distance is compared between the action's origin and the player's position.\n0 to ignore.")
-
-	end
-
-	do --hitscan
-		--[[
-			pac_sv_hitscan
-			pac_sv_hitscan_max_bullets
-			pac_sv_hitscan_max_damage
-			pac_sv_hitscan_divide_max_damage_by_max_bullets
-		]]
-
-		local hitscans_list = master_list:Add("Hitscans")
-		hitscans_list.Header:SetSize(40,40)
-		hitscans_list.Header:SetFont("DermaLarge")
-		local hitscans_list_list = vgui.Create("DListLayout")
-		hitscans_list_list:DockPadding(20,0,20,20)
-		hitscans_list:SetContents(hitscans_list_list)
-
-		local sv_hitscans_box = vgui.Create("DCheckBoxLabel", hitscans_list_list)
-			sv_hitscans_box:SetText("allow serverside bullets")
-			sv_hitscans_box:SetSize(400,30)
-			sv_hitscans_box:SetConVar("pac_sv_hitscan")
-
-		local hitscans_max_dmg_numbox = vgui.Create("DNumSlider", hitscans_list_list)
-			hitscans_max_dmg_numbox:SetText("Max hitscan damage (per bullet, per multishot,\ndepending on the next setting)")
-			hitscans_max_dmg_numbox:SetValue(GetConVar("pac_sv_hitscan_max_damage"):GetInt())
-			hitscans_max_dmg_numbox:SetMin(0) hitscans_max_dmg_numbox:SetDecimals(0) hitscans_max_dmg_numbox:SetMax(268435455)
-			hitscans_max_dmg_numbox:SetSize(400,30)
-			hitscans_max_dmg_numbox:SetConVar("pac_sv_hitscan_max_damage")
-
-		local sv_hitscans_distribute_box = vgui.Create("DCheckBoxLabel", hitscans_list_list)
-			sv_hitscans_distribute_box:SetText("force hitscans to distribute their total damage accross bullets. if off, every bullet does full damage; if on, adding more bullets doesn't do more damage")
-			sv_hitscans_distribute_box:SetSize(400,30)
-			sv_hitscans_distribute_box:SetConVar("pac_sv_hitscan_divide_max_damage_by_max_bullets")
-
-		local hitscans_max_numbullets_numbox = vgui.Create("DNumSlider", hitscans_list_list)
-			hitscans_max_numbullets_numbox:SetText("Maximum number of bullets for hitscan multishots")
-			hitscans_max_numbullets_numbox:SetValue(GetConVar("pac_sv_hitscan_max_bullets"):GetInt())
-			hitscans_max_numbullets_numbox:SetMin(1) hitscans_max_numbullets_numbox:SetDecimals(0) hitscans_max_numbullets_numbox:SetMax(500)
-			hitscans_max_numbullets_numbox:SetSize(400,30)
-			hitscans_max_numbullets_numbox:SetConVar("pac_sv_hitscan_max_bullets")
-	end
-
-	do --projectiles
-		local projectiles_list = master_list:Add("Projectiles")
-		projectiles_list.Header:SetSize(40,40)
-		projectiles_list.Header:SetFont("DermaLarge")
-		local projectiles_list_list = vgui.Create("DListLayout")
-		projectiles_list_list:DockPadding(20,0,20,20)
-		projectiles_list:SetContents(projectiles_list_list)
-
-		local sv_projectiles_box = vgui.Create("DCheckBoxLabel", projectiles_list_list)
-			sv_projectiles_box:SetText("allow serverside physical projectiles")
-			sv_projectiles_box:SetSize(400,30)
-			sv_projectiles_box:SetConVar("pac_sv_projectiles")
-
-		local sv_projectiles_mesh_box = vgui.Create("DCheckBoxLabel", projectiles_list_list)
-			sv_projectiles_mesh_box:SetText("allow custom collision meshes for physical projectiles")
-			sv_projectiles_mesh_box:SetSize(400,30)
-			sv_projectiles_mesh_box:SetConVar("pac_sv_projectile_allow_custom_collision_mesh")
-
-		local projectile_max_phys_radius_numbox = vgui.Create("DNumSlider", projectiles_list_list)
-			projectile_max_phys_radius_numbox:SetText("Max projectile physical radius")
-			projectile_max_phys_radius_numbox:SetValue(GetConVar("pac_sv_projectile_max_phys_radius"):GetInt())
-			projectile_max_phys_radius_numbox:SetMin(0) projectile_max_phys_radius_numbox:SetDecimals(0) projectile_max_phys_radius_numbox:SetMax(4095)
-			projectile_max_phys_radius_numbox:SetSize(400,30)
-			projectile_max_phys_radius_numbox:SetConVar("pac_sv_projectile_max_phys_radius")
-
-		local projectile_max_dmg_radius_numbox = vgui.Create("DNumSlider", projectiles_list_list)
-			projectile_max_dmg_radius_numbox:SetText("Max projectile damage radius")
-			projectile_max_dmg_radius_numbox:SetValue(GetConVar("pac_sv_projectile_max_damage_radius"):GetInt())
-			projectile_max_dmg_radius_numbox:SetMin(0) projectile_max_dmg_radius_numbox:SetDecimals(0) projectile_max_dmg_radius_numbox:SetMax(4095)
-			projectile_max_dmg_radius_numbox:SetSize(400,30)
-			projectile_max_dmg_radius_numbox:SetConVar("pac_sv_projectile_max_damage_radius")
-
-		local projectile_max_attract_radius_numbox = vgui.Create("DNumSlider", projectiles_list_list)
-			projectile_max_attract_radius_numbox:SetText("Max projectile attract radius")
-			projectile_max_attract_radius_numbox:SetValue(GetConVar("pac_sv_projectile_max_attract_radius"):GetInt())
-			projectile_max_attract_radius_numbox:SetMin(0) projectile_max_attract_radius_numbox:SetDecimals(0) projectile_max_attract_radius_numbox:SetMax(100000000)
-			projectile_max_attract_radius_numbox:SetSize(400,30)
-			projectile_max_attract_radius_numbox:SetConVar("pac_sv_projectile_max_attract_radius")
-
-		local projectile_max_dmg_numbox = vgui.Create("DNumSlider", projectiles_list_list)
-			projectile_max_dmg_numbox:SetText("Max projectile damage")
-			projectile_max_dmg_numbox:SetValue(GetConVar("pac_sv_projectile_max_damage"):GetInt())
-			projectile_max_dmg_numbox:SetMin(0) projectile_max_dmg_numbox:SetDecimals(0) projectile_max_dmg_numbox:SetMax(100000000)
-			projectile_max_dmg_numbox:SetSize(400,30)
-			projectile_max_dmg_numbox:SetConVar("pac_sv_projectile_max_damage")
-
-		local projectile_max_speed_numbox = vgui.Create("DNumSlider", projectiles_list_list)
-			projectile_max_speed_numbox:SetText("Max projectile speed")
-			projectile_max_speed_numbox:SetValue(GetConVar("pac_sv_projectile_max_speed"):GetInt())
-			projectile_max_speed_numbox:SetMin(0) projectile_max_speed_numbox:SetDecimals(0) projectile_max_speed_numbox:SetMax(50000)
-			projectile_max_speed_numbox:SetSize(400,30)
-			projectile_max_speed_numbox:SetConVar("pac_sv_projectile_max_speed")
-
-		local projectile_max_mass_numbox = vgui.Create("DNumSlider", projectiles_list_list)
-			projectile_max_mass_numbox:SetText("Max projectile mass")
-			projectile_max_mass_numbox:SetValue(GetConVar("pac_sv_projectile_max_mass"):GetInt())
-			projectile_max_mass_numbox:SetMin(0) projectile_max_mass_numbox:SetDecimals(0) projectile_max_mass_numbox:SetMax(500000)
-			projectile_max_mass_numbox:SetSize(400,30)
-			projectile_max_mass_numbox:SetConVar("pac_sv_projectile_max_mass")
-	end
-
-	do --damage zone
-		local damagezone_list = master_list:Add("Damage Zone")
-			damagezone_list.Header:SetSize(40,40)
-			damagezone_list.Header:SetFont("DermaLarge")
-			local damagezone_list_list = vgui.Create("DListLayout")
-			damagezone_list_list:DockPadding(20,0,20,20)
-			damagezone_list:SetContents(damagezone_list_list)
-
-		local sv_dmgzone_box = vgui.Create("DCheckBoxLabel", damagezone_list_list)
-			sv_dmgzone_box:SetText("Allow damage zone")
-			sv_dmgzone_box:SetSize(400,30)
-			sv_dmgzone_box:SetConVar("pac_sv_damage_zone")
-
-		local max_dmgzone_radius_numbox = vgui.Create("DNumSlider", damagezone_list_list)
-			max_dmgzone_radius_numbox:SetText("Max damage zone radius")
-			max_dmgzone_radius_numbox:SetValue(GetConVar("pac_sv_damage_zone_max_radius"):GetInt())
-			max_dmgzone_radius_numbox:SetMin(0) max_dmgzone_radius_numbox:SetDecimals(0) max_dmgzone_radius_numbox:SetMax(32767)
-			max_dmgzone_radius_numbox:SetSize(400,30)
-			max_dmgzone_radius_numbox:SetConVar("pac_sv_damage_zone_max_radius")
-
-		local max_dmgzone_length_numbox = vgui.Create("DNumSlider", damagezone_list_list)
-			max_dmgzone_length_numbox:SetText("Max damage zone length")
-			max_dmgzone_length_numbox:SetValue(GetConVar("pac_sv_damage_zone_max_length"):GetInt())
-			max_dmgzone_length_numbox:SetMin(0) max_dmgzone_length_numbox:SetDecimals(0) max_dmgzone_length_numbox:SetMax(32767)
-			max_dmgzone_length_numbox:SetSize(400,30)
-			max_dmgzone_length_numbox:SetConVar("pac_sv_damage_zone_max_length")
-
-		local max_dmgzone_damage_numbox = vgui.Create("DNumSlider", damagezone_list_list)
-			max_dmgzone_damage_numbox:SetText("Max damage zone damage")
-			max_dmgzone_damage_numbox:SetValue(GetConVar("pac_sv_damage_zone_max_damage"):GetInt())
-			max_dmgzone_damage_numbox:SetMin(0) max_dmgzone_damage_numbox:SetDecimals(0) max_dmgzone_damage_numbox:SetMax(268435455)
-			max_dmgzone_damage_numbox:SetSize(400,30)
-			max_dmgzone_damage_numbox:SetConVar("pac_sv_damage_zone_max_damage")
-
-		local sv_dmgzone_allow_dissolve_box = vgui.Create("DCheckBoxLabel", damagezone_list_list)
-			sv_dmgzone_allow_dissolve_box:SetText("Allow damage entity dissolvers")
-			sv_dmgzone_allow_dissolve_box:SetSize(400,30)
-			sv_dmgzone_allow_dissolve_box:SetConVar("pac_sv_damage_zone_allow_dissolve")
-
-	end
-
-	do --lock part
-		local lock_list = master_list:Add("Lock part")
-			lock_list.Header:SetSize(40,40)
-			lock_list.Header:SetFont("DermaLarge")
-			local lock_list_list = vgui.Create("DListLayout")
-			lock_list_list:DockPadding(20,0,20,20)
-			lock_list:SetContents(lock_list_list)
-
-		local sv_lock_allow_box = vgui.Create("DCheckBoxLabel", lock_list_list)
-			sv_lock_allow_box:SetText("Allow lock part")
-			sv_lock_allow_box:SetSize(400,30)
-			sv_lock_allow_box:SetConVar("pac_sv_lock")
-
-		local sv_lock_grab_box = vgui.Create("DCheckBoxLabel", lock_list_list)
-			sv_lock_grab_box:SetText("Allow lock part grabbing")
-			sv_lock_grab_box:SetSize(400,30)
-			sv_lock_grab_box:SetConVar("pac_sv_lock_grab")
-
-		local sv_lock_grab_ply_box = vgui.Create("DCheckBoxLabel", lock_list_list)
-			sv_lock_grab_ply_box:SetText("Allow grabbing players")
-			sv_lock_grab_ply_box:SetSize(400,30)
-			sv_lock_grab_ply_box:SetConVar("pac_sv_lock_allow_grab_ply")
-
-		local sv_lock_grab_npc_box = vgui.Create("DCheckBoxLabel", lock_list_list)
-			sv_lock_grab_npc_box:SetText("Allow grabbing NPCs")
-			sv_lock_grab_npc_box:SetSize(400,30)
-			sv_lock_grab_npc_box:SetConVar("pac_sv_lock_allow_grab_npc")
-
-		local sv_lock_grab_ents_box = vgui.Create("DCheckBoxLabel", lock_list_list)
-			sv_lock_grab_ents_box:SetText("Allow grabbing other entities")
-			sv_lock_grab_ents_box:SetSize(400,30)
-			sv_lock_grab_ents_box:SetConVar("pac_sv_lock_allow_grab_ent")
-
-		local sv_lock_teleport_box = vgui.Create("DCheckBoxLabel", lock_list_list)
-			sv_lock_teleport_box:SetText("Allow lock part teleportation")
-			sv_lock_teleport_box:SetSize(400,30)
-			sv_lock_teleport_box:SetConVar("pac_sv_lock_teleport")
-
-		local max_lock_radius_numbox = vgui.Create("DNumSlider", lock_list_list)
-			max_lock_radius_numbox:SetText("Max lock part grab range")
-			max_lock_radius_numbox:SetValue(GetConVar("pac_sv_lock_max_grab_radius"):GetInt())
-			max_lock_radius_numbox:SetMin(0) max_lock_radius_numbox:SetDecimals(0) max_lock_radius_numbox:SetMax(5000)
-			max_lock_radius_numbox:SetSize(400,30)
-			max_lock_radius_numbox:SetConVar("pac_sv_lock_max_grab_radius")
-	end
-
-	do --force
-		local force_list = master_list:Add("Force part")
-			force_list.Header:SetSize(40,40)
-			force_list.Header:SetFont("DermaLarge")
-			local force_list_list = vgui.Create("DListLayout")
-			force_list_list:DockPadding(20,0,20,20)
-			force_list:SetContents(force_list_list)
-
-		local sv_force_box = vgui.Create("DCheckBoxLabel", force_list_list)
-			sv_force_box:SetText("Allow force part")
-			sv_force_box:SetSize(400,30)
-			sv_force_box:SetConVar("pac_sv_force")
-
-		local max_force_radius_numbox = vgui.Create("DNumSlider", force_list_list)
-			max_force_radius_numbox:SetText("Max force part radius")
-			max_force_radius_numbox:SetValue(GetConVar("pac_sv_force_max_radius"):GetInt())
-			max_force_radius_numbox:SetMin(0) max_force_radius_numbox:SetDecimals(0) max_force_radius_numbox:SetMax(32767)
-			max_force_radius_numbox:SetSize(400,30)
-			max_force_radius_numbox:SetConVar("pac_sv_force_max_radius")
-
-		local max_force_length_numbox = vgui.Create("DNumSlider", force_list_list)
-			max_force_length_numbox:SetText("Max force part length")
-			max_force_length_numbox:SetValue(GetConVar("pac_sv_force_max_length"):GetInt())
-			max_force_length_numbox:SetMin(0) max_force_length_numbox:SetDecimals(0) max_force_length_numbox:SetMax(32767)
-			max_force_length_numbox:SetSize(400,30)
-			max_force_length_numbox:SetConVar("pac_sv_force_max_length")
-
-		local max_force_amount_numbox = vgui.Create("DNumSlider", force_list_list)
-			max_force_amount_numbox:SetText("Max force part amount")
-			max_force_amount_numbox:SetValue(GetConVar("pac_sv_force_max_amount"):GetInt())
-			max_force_amount_numbox:SetMin(0) max_force_amount_numbox:SetDecimals(0) max_force_amount_numbox:SetMax(10000000)
-			max_force_amount_numbox:SetSize(400,30)
-			max_force_amount_numbox:SetConVar("pac_sv_force_max_amount")
-	end
-
-	do --health_modifier
-		local healthmod_list = master_list:Add("Health modifier part")
-		healthmod_list.Header:SetSize(40,40)
-		healthmod_list.Header:SetFont("DermaLarge")
-		local healthmod_list_list = vgui.Create("DListLayout")
-		healthmod_list_list:DockPadding(20,0,20,20)
-		healthmod_list:SetContents(healthmod_list_list)
-
-		local sv_healthmod_box = vgui.Create("DCheckBoxLabel", healthmod_list_list)
-			sv_healthmod_box:SetText("Allow health modifier part")
-			sv_healthmod_box:SetSize(400,30)
-			sv_healthmod_box:SetConVar("pac_sv_health_modifier")
-
-		local healthmod_extrabars_box = vgui.Create("DCheckBoxLabel", healthmod_list_list)
-			healthmod_extrabars_box:SetText("Allow changing max health and max armor")
-			healthmod_extrabars_box:SetSize(400,30)
-			healthmod_extrabars_box:SetConVar("pac_sv_health_modifier_allow_maxhp")
-
-		local min_healthmod_dmgmult_box = vgui.Create("DNumSlider", healthmod_list_list)
-			min_healthmod_dmgmult_box:SetText("Minimum combined damage multiplier allowed.\nNegative values lead to healing from damage.")
-			min_healthmod_dmgmult_box:SetValue(GetConVar("pac_sv_health_modifier_min_damagescaling"):GetInt())
-			min_healthmod_dmgmult_box:SetMin(-10) min_healthmod_dmgmult_box:SetDecimals(2) min_healthmod_dmgmult_box:SetMax(1)
-			min_healthmod_dmgmult_box:SetSize(400,30)
-			min_healthmod_dmgmult_box:SetConVar("pac_sv_health_modifier_min_damagescaling")
-
-		local healthmod_extrabars_box = vgui.Create("DCheckBoxLabel", healthmod_list_list)
-			healthmod_extrabars_box:SetText("Allow extra healthbars")
-			healthmod_extrabars_box:SetSize(400,30)
-			healthmod_extrabars_box:SetConVar("pac_sv_health_modifier_extra_bars")
-			healthmod_extrabars_box:SetToolTip("What are those? It's like an armor layer that takes damage before it gets applied to the entity.")
-	end
 	return master_list
 end
 
@@ -1163,187 +956,44 @@ function pace.FillServerSettings(pnl)
 	local master_list = vgui.Create("DCategoryList", pnl)
 	master_list:Dock(FILL)
 
-	--models/entity
-			--[[
-				pac_allow_blood_color
-				pac_allow_mdl
-				pac_allow_mdl_entity
-				pac_modifier_model
-				pac_modifier_size
-			]]
+	--general server stuff
+	PopulateCategory("Allowed Playermodel Mutations", master_list, convar_params_modifiers)
 
-	local model_category = master_list:Add("Allowed Playermodel Mutations")
-	model_category.Header:SetSize(40,40)
-	model_category.Header:SetFont("DermaLarge")
-	local model_category_list = vgui.Create("DListLayout")
-	model_category_list:DockPadding(20,0,20,20)
-	model_category:SetContents(model_category_list)
-
-	local pac_allow_blood_color_box = vgui.Create("DCheckBoxLabel", master_list)
-		pac_allow_blood_color_box:SetText("Blood")
-		pac_allow_blood_color_box:SetSize(400,30)
-		pac_allow_blood_color_box:SetConVar("pac_allow_blood_color")
-		model_category_list:Add(pac_allow_blood_color_box)
-	local pac_allow_mdl_box = vgui.Create("DCheckBoxLabel", master_list)
-		pac_allow_mdl_box:SetText("MDL")
-		pac_allow_mdl_box:SetSize(400,30)
-		pac_allow_mdl_box:SetConVar("pac_allow_mdl")
-		model_category_list:Add(pac_allow_mdl_box)
-	local pac_allow_mdl_entity_box = vgui.Create("DCheckBoxLabel", master_list)
-		pac_allow_mdl_entity_box:SetText("Entity MDL")
-		pac_allow_mdl_entity_box:SetSize(400,30)
-		pac_allow_mdl_entity_box:SetConVar("pac_allow_mdl_entity")
-		model_category_list:Add(pac_allow_mdl_entity_box)
-	local pac_modifier_model_box = vgui.Create("DCheckBoxLabel", master_list)
-		pac_modifier_model_box:SetText("Entity model")
-		pac_modifier_model_box:SetSize(400,30)
-		pac_modifier_model_box:SetConVar("pac_modifier_model")
-		model_category_list:Add(pac_modifier_model_box)
-	local pac_modifier_size_box = vgui.Create("DCheckBoxLabel", master_list)
-		pac_modifier_size_box:SetText("Entity size")
-		pac_modifier_size_box:SetSize(400,30)
-		pac_modifier_size_box:SetConVar("pac_modifier_size")
-		model_category_list:Add(pac_modifier_size_box)
-
-	--movement and mass
-		--[[
-			pac_free_movement
-		]]
-
-	local movement_category = master_list:Add("Player Movement")
-	movement_category.Header:SetSize(40,40)
-	movement_category.Header:SetFont("DermaLarge")
-	local movement_category_list = vgui.Create("DListLayout")
-	movement_category_list:DockPadding(20,20,20,20)
-	movement_category:SetContents(movement_category_list)
-
+	--player movement stuff
+	local movement_category_list = PopulateCategory("Player Movement", master_list, convar_params_movement)
 	local pac_allow_movement_form = vgui.Create("DComboBox", movement_category_list)
-		pac_allow_movement_form:SetText("Allow PAC player movement")
-		--pac_allow_movement_form:SetSize(400,20)
-		pac_allow_movement_form:SetSortItems(false)
+	pac_allow_movement_form:SetText("Allow PAC player movement")
+	pac_allow_movement_form:SetSize(400, 30)
+	pac_allow_movement_form:SetSortItems(false)
 
-		pac_allow_movement_form:AddChoice("disabled")
-		pac_allow_movement_form:AddChoice("disabled if noclip not allowed")
-		pac_allow_movement_form:AddChoice("enabled")
+	pac_allow_movement_form:AddChoice("disabled")
+	pac_allow_movement_form:AddChoice("disabled if noclip not allowed")
+	pac_allow_movement_form:AddChoice("enabled")
 
-		pac_allow_movement_form.OnSelect = function(_, _, value)
-			if value == "disabled" then
-				net.Start("pac_send_sv_cvar")
-				net.WriteString("pac_free_movement")
-				net.WriteString("0")
-				net.SendToServer()
-				--pac_allow_movement_form.form = generic_form("PAC player movement is disabled.")
-			elseif value == "disabled if noclip not allowed" then
-				net.Start("pac_send_sv_cvar")
-				net.WriteString("pac_free_movement")
-				net.WriteString("-1")
-				net.SendToServer()
-				--pac_allow_movement_form.form = generic_form("PAC player movement is disabled if noclip is not allowed.")
-			elseif value == "enabled" then
-				net.Start("pac_send_sv_cvar")
-				net.WriteString("pac_free_movement")
-				net.WriteString("1")
-				net.SendToServer()
-				--pac_allow_movement_form.form = generic_form("PAC player movement is enabled.")
-			end
+	pac_allow_movement_form.OnSelect = function(_, _, value)
+		if value == "disabled" then
+			net.Start("pac_send_sv_cvar")
+			net.WriteString("pac_free_movement")
+			net.WriteString("0")
+			net.SendToServer()
+			--pac_allow_movement_form.form = generic_form("PAC player movement is disabled.")
+		elseif value == "disabled if noclip not allowed" then
+			net.Start("pac_send_sv_cvar")
+			net.WriteString("pac_free_movement")
+			net.WriteString("-1")
+			net.SendToServer()
+			--pac_allow_movement_form.form = generic_form("PAC player movement is disabled if noclip is not allowed.")
+		elseif value == "enabled" then
+			net.Start("pac_send_sv_cvar")
+			net.WriteString("pac_free_movement")
+			net.WriteString("1")
+			net.SendToServer()
+			--pac_allow_movement_form.form = generic_form("PAC player movement is enabled.")
 		end
+	end
 
-		--mode:ChooseOption(mode_str)
-
-	local pac_player_movement_allow_mass_box = vgui.Create("DCheckBoxLabel", movement_category_list)
-		pac_player_movement_allow_mass_box:SetText("Allow Modify Mass")
-		pac_player_movement_allow_mass_box:SetSize(400,30)
-		movement_category_list:Add(pac_player_movement_allow_mass_box)
-		pac_player_movement_allow_mass_box:SetConVar("pac_player_movement_allow_mass")
-
-	local playermovement_min_mass_numbox = vgui.Create("DNumSlider", movement_category_list)
-		playermovement_min_mass_numbox:SetText("Mimnimum mass players can set for themselves")
-		playermovement_min_mass_numbox:SetValue(GetConVar("pac_player_movement_min_mass"):GetFloat())
-		playermovement_min_mass_numbox:SetMin(0.01) playermovement_min_mass_numbox:SetDecimals(0) playermovement_min_mass_numbox:SetMax(1000000)
-		playermovement_min_mass_numbox:SetSize(400,30)
-		movement_category_list:Add(playermovement_min_mass_numbox)
-		playermovement_min_mass_numbox:SetConVar("pac_player_movement_min_mass")
-
-
-	local playermovement_max_mass_numbox = vgui.Create("DNumSlider", movement_category_list)
-		playermovement_max_mass_numbox:SetText("Maximum mass players can set for themselves")
-		playermovement_max_mass_numbox:SetValue(GetConVar("pac_player_movement_max_mass"):GetFloat())
-		playermovement_max_mass_numbox:SetMin(0.01) playermovement_max_mass_numbox:SetDecimals(0) playermovement_max_mass_numbox:SetMax(1000000)
-		playermovement_max_mass_numbox:SetSize(400,30)
-		movement_category_list:Add(playermovement_max_mass_numbox)
-		playermovement_max_mass_numbox:SetConVar("pac_player_movement_max_mass")
-
-
-	local pac_player_movement_allow_mass_dmgscaling_box = vgui.Create("DCheckBoxLabel", movement_category_list)
-		pac_player_movement_allow_mass_dmgscaling_box:SetText("Allow damage scaling of physics damage based on player's mass")
-		pac_player_movement_allow_mass_dmgscaling_box:SetSize(400,30)
-		movement_category_list:Add(pac_player_movement_allow_mass_dmgscaling_box)
-		pac_player_movement_allow_mass_dmgscaling_box:SetConVar("pac_player_movement_physics_damage_scaling")
-		movement_category_list:Add(pac_player_movement_allow_mass_dmgscaling_box)
-
-
-	--wear limits and bans
-		--[[
-			pac_sv_draw_distance
-			pac_sv_hide_outfit_on_death WORKSHOP DEPRECATED
-			pac_submit_limit
-			pac_submit_spam
-			pac_ban
-			pac_unban
-		]]
-
-	local wear_list = master_list:Add("Server wearing/drawing")
-	wear_list.Header:SetSize(40,40)
-	wear_list.Header:SetFont("DermaLarge")
-	local draw_distance_list = vgui.Create("DListLayout")
-	draw_distance_list:DockPadding(20,0,20,20)
-	wear_list:SetContents(draw_distance_list)
-
-	local draw_dist_numbox = vgui.Create("DNumSlider", draw_distance_list)
-		draw_dist_numbox:SetText("Server draw distance")
-		draw_dist_numbox:SetValue(GetConVar("pac_sv_draw_distance"):GetInt())
-		draw_dist_numbox:SetMin(0) draw_dist_numbox:SetDecimals(0) draw_dist_numbox:SetMax(50000)
-		draw_dist_numbox:SetSize(400,30)
-		draw_dist_numbox:SetConVar("pac_sv_draw_distance")
-
-	local pac_submit_limit_numbox = vgui.Create("DNumSlider", draw_distance_list)
-		pac_submit_limit_numbox:SetText("pac_submit limit")
-		pac_submit_limit_numbox:SetValue(GetConVar("pac_submit_limit"):GetInt())
-		pac_submit_limit_numbox:SetMin(0) pac_submit_limit_numbox:SetDecimals(0) pac_submit_limit_numbox:SetMax(100)
-		pac_submit_limit_numbox:SetSize(400,30)
-		pac_submit_limit_numbox:SetConVar("pac_submit_limit")
-
-	local pac_submit_spam_box = vgui.Create("DCheckBoxLabel", draw_distance_list)
-		pac_submit_spam_box:SetText("prevent pac_submit spam")
-		pac_submit_spam_box:SetSize(400,30)
-		pac_submit_spam_box:SetConVar("pac_submit_spam")
-
-
-
-	--misc
-		--[[
-			sv_pac_webcontent_allow_no_content_length
-			sv_pac_webcontent_limit
-			pac_to_contraption_allow
-			pac_max_contraption_entities
-			pac_restrictions
-		]]
-	local misc_list = master_list:Add("Misc")
-	misc_list.Header:SetSize(40,40)
-	misc_list.Header:SetFont("DermaLarge")
-	local misc_list_list = vgui.Create("DListLayout")
-	misc_list_list:DockPadding(20,0,20,20)
-	misc_list:SetContents(misc_list_list)
-	local webcontent_no_content_box = vgui.Create("DCheckBoxLabel", misc_list_list)
-		webcontent_no_content_box:SetText("allow downloads with no content length")
-		webcontent_no_content_box:SetSize(400,30)
-		webcontent_no_content_box:SetConVar("sv_pac_webcontent_allow_no_content_length")
-
-	local cam_restrict_box = vgui.Create("DCheckBoxLabel", misc_list_list)
-		cam_restrict_box:SetText("restrict PAC editor camera movement")
-		cam_restrict_box:SetSize(400,30)
-		cam_restrict_box:SetConVar("pac_restrictions")
-
+	PopulateCategory("Server wearing/drawing", master_list, convar_params_wearing_drawing)
+	PopulateCategory("Misc", master_list, convar_params_misc)
 
 	return master_list
 end
