@@ -1242,11 +1242,10 @@ if SERVER then
 					end
 				elseif (ent:IsNPC() or string.find(ent:GetClass(), "npc") ~= nil) and tbl.NPC then
 					if not (IsPropProtected(ent, ply) and global_combat_prop_protection:GetBool()) or not unconsenting_owner then
-						if phys_ent:GetVelocity():Length() > 500 then
+						if IsValid(phys_ent) and phys_ent:GetVelocity():Length() > 500 then
 							local vec = oldvel + addvel
 							local clamp_vec = vec:GetNormalized()*500
 							ent:SetVelocity(Vector(0.7 * clamp_vec.x,0.7 * clamp_vec.y,clamp_vec.z)*math.Clamp(1.5*(pos - ent_center):Length()/tbl.Radius,0,1)) --more jank, this one is to prevent some of the weird sliding of npcs by lowering the force as we get closer
-
 						else ent:SetVelocity((oldvel * final_damping) + addvel) end
 					end
 				elseif tbl.PointEntities then
