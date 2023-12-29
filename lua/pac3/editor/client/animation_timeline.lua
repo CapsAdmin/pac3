@@ -63,7 +63,7 @@ local function check_tpose()
 	end
 end
 
-timeline.interpolation = "cosine"
+timeline.interpolation = "linear"
 
 function timeline.SetInterpolation(str)
 	timeline.interpolation = str
