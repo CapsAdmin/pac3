@@ -37,8 +37,8 @@ local force_max_radius = CreateConVar("pac_sv_force_max_radius", "10000", CLIENT
 local force_max_amount = CreateConVar("pac_sv_force_max_amount", "10000", CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "force part maximum amount of force")
 
 local healthmod_allow = CreateConVar("pac_sv_health_modifier", master_default, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow health modifier parts serverside")
-local healthmod_allowed_extra_bars = CreateConVar("pac_sv_health_modifier_extra_bars", 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow extra health bars")
-local healthmod_allow_change_maxhp = CreateConVar("pac_sv_health_modifier_allow_maxhp", 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow players to change their maximum health and armor.")
+local healthmod_allowed_extra_bars = CreateConVar("pac_sv_health_modifier_extra_bars", 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow extra health bars")
+local healthmod_allow_change_maxhp = CreateConVar("pac_sv_health_modifier_allow_maxhp", 1, CLIENT and {FCVAR_NOTIFY, FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Allow players to change their maximum health and armor.")
 local healthmod_minimum_dmgscaling = CreateConVar("pac_sv_health_modifier_min_damagescaling", -1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Minimum health modifier amount. Negative values can heal.")
 
 local master_init_featureblocker = CreateConVar("pac_sv_block_combat_features_on_next_restart", 1, CLIENT and {FCVAR_REPLICATED} or {FCVAR_NOTIFY, FCVAR_ARCHIVE, FCVAR_REPLICATED}, "Whether to stop initializing the net receivers for the networking of PAC3 combat parts those selectively disabled. This requires a restart!\n0=initialize all the receivers\n1=disable those whose corresponding part cvar is disabled\n2=block all combat features\nAfter updating the sv cvars, you can still reinitialize the net receivers with pac_sv_combat_reinitialize_missing_receivers, but you cannot turn them off after they are turned on")
@@ -1077,21 +1077,24 @@ if SERVER then
 		if TooManyEnts(ent_count) and not (tbl.AffectSelf and not tbl.Players and not tbl.NPC and not tbl.PhysicsProps and not tbl.PointEntities) then return end
 		for _,ent in pairs(ents_hits) do
 			local phys_ent
+			local ent_getphysobj = ent:GetPhysicsObject()
 			local owner = Try_CPPIGetOwner(ent)
+			local is_player = ent:IsPlayer()
+			local is_physics = (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or (ent:IsWeapon() and not IsValid(ent:GetOwner())))
+			local is_npc = ent.IsVJBaseSNPC or ent.IsDRGEntity or string.find(ent:GetClass(), "npc") or ent:IsNPC() 
+			
+
 			if (ent ~= tbl.RootPartOwner or (tbl.AffectSelf and ent == tbl.RootPartOwner))
 					and (
-						ent:IsPlayer()
-						or (string.find(ent:GetClass(), "npc") ~= nil)
-						or ent:IsNPC()
-						or physics_point_ent_classes[ent:GetClass()]
-						or string.find(ent:GetClass(),"item_")
-						or string.find(ent:GetClass(),"ammo_")
-						or (ent:IsWeapon() and not IsValid(ent:GetOwner()))
+						is_player
+						or is_npc
+						or is_physics
+						or IsValid( ent_getphysobj )
 					) then
 
 				local is_phys = true
-				if ent:GetPhysicsObject() ~= nil then
-					phys_ent = ent:GetPhysicsObject()
+				if ent_getphysobj ~= nil then
+					phys_ent = ent_getphysobj
 					if (string.find(ent:GetClass(), "npc") ~= nil) then
 						phys_ent = ent
 					end
@@ -1215,39 +1218,46 @@ if SERVER then
 				add_angvel = add_angvel * dist_multiplier
 
 				local unconsenting_owner = owner ~= ply and force_consents[owner] == false
-
-				if (ent:IsPlayer() and tbl.Players) or (ent == ply and tbl.AffectSelf) then
-					if (ent ~= ply and force_consents[ent] ~= false) or (ent == ply and tbl.AffectSelf) then
-						phys_ent:SetVelocity(oldvel * (-1 + final_damping) + addvel)
-						ent:SetVelocity(oldvel * (-1 + final_damping) + addvel)
-					end
-
-				elseif (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or ent:IsWeapon()) and tbl.PhysicsProps then
-					if not (IsPropProtected(ent, ply) and global_combat_prop_protection:GetBool()) or not unconsenting_owner then
-						if IsValid(phys_ent) then
-							ent:PhysWake()
-							ent:SetVelocity(final_damping * oldvel + addvel)
-							if islocaltorque then
-								phys_ent:SetAngleVelocity(final_damping * phys_ent:GetAngleVelocity())
-								phys_ent:AddAngleVelocity(add_angvel)
-
-							else
-								phys_ent:SetAngleVelocity(final_damping * phys_ent:GetAngleVelocity())
-								add_angvel = phys_ent:WorldToLocalVector( add_angvel )
-								phys_ent:ApplyTorqueCenter(add_angvel)
-							end
-							ent:SetPos(ent:GetPos() + Vector(0,0,0.0001)) --dumb workaround to fight against the ground friction reversing the forces
-							phys_ent:SetVelocity((oldvel * final_damping) + addvel)
+				if ent:GetClass() == "pac_projectile" then print(ent, ent:GetPhysicsObject(), "is_player", is_player, "is_physics", is_physics, "is_npc", is_npc, "tbl.PointEntities", tbl.PointEntities) end
+				if is_player then
+					if  tbl.Players or (ent == ply and tbl.AffectSelf) then
+						if (ent ~= ply and force_consents[ent] ~= false) or (ent == ply and tbl.AffectSelf) then
+							phys_ent:SetVelocity(oldvel * (-1 + final_damping) + addvel)
+							ent:SetVelocity(oldvel * (-1 + final_damping) + addvel)
 						end
 					end
-				elseif (ent:IsNPC() or string.find(ent:GetClass(), "npc") ~= nil) and tbl.NPC then
-					if not (IsPropProtected(ent, ply) and global_combat_prop_protection:GetBool()) or not unconsenting_owner then
-						if IsValid(phys_ent) and phys_ent:GetVelocity():Length() > 500 then
-							local vec = oldvel + addvel
-							local clamp_vec = vec:GetNormalized()*500
-							ent:SetVelocity(Vector(0.7 * clamp_vec.x,0.7 * clamp_vec.y,clamp_vec.z)*math.Clamp(1.5*(pos - ent_center):Length()/tbl.Radius,0,1)) --more jank, this one is to prevent some of the weird sliding of npcs by lowering the force as we get closer
-						else ent:SetVelocity((oldvel * final_damping) + addvel) end
+				elseif is_physics then
+					if tbl.PhysicsProps then
+						if not (IsPropProtected(ent, ply) and global_combat_prop_protection:GetBool()) or not unconsenting_owner then
+							if IsValid(phys_ent) then
+								ent:PhysWake()
+								ent:SetVelocity(final_damping * oldvel + addvel)
+								if islocaltorque then
+									phys_ent:SetAngleVelocity(final_damping * phys_ent:GetAngleVelocity())
+									phys_ent:AddAngleVelocity(add_angvel)
+	
+								else
+									phys_ent:SetAngleVelocity(final_damping * phys_ent:GetAngleVelocity())
+									add_angvel = phys_ent:WorldToLocalVector( add_angvel )
+									phys_ent:ApplyTorqueCenter(add_angvel)
+								end
+								ent:SetPos(ent:GetPos() + Vector(0,0,0.0001)) --dumb workaround to fight against the ground friction reversing the forces
+								phys_ent:SetVelocity((oldvel * final_damping) + addvel)
+							end
+						end
 					end
+					
+				elseif is_npc then
+					if tbl.NPC then
+						if not (IsPropProtected(ent, ply) and global_combat_prop_protection:GetBool()) or not unconsenting_owner then
+							if IsValid(phys_ent) and phys_ent:GetVelocity():Length() > 500 then
+								local vec = oldvel + addvel
+								local clamp_vec = vec:GetNormalized()*500
+								ent:SetVelocity(Vector(0.7 * clamp_vec.x,0.7 * clamp_vec.y,clamp_vec.z)*math.Clamp(1.5*(pos - ent_center):Length()/tbl.Radius,0,1)) --more jank, this one is to prevent some of the weird sliding of npcs by lowering the force as we get closer
+							else ent:SetVelocity((oldvel * final_damping) + addvel) end
+						end
+					end
+					
 				elseif tbl.PointEntities then
 					if not (IsPropProtected(ent, ply) and global_combat_prop_protection:GetBool()) or not unconsenting_owner then
 						phys_ent:SetVelocity(final_damping * oldvel + addvel)
@@ -1505,6 +1515,7 @@ if SERVER then
 			tbl.AffectSelf = net.ReadBool()
 			tbl.Players = net.ReadBool()
 			tbl.PhysicsProps = net.ReadBool()
+			tbl.PointEntities = net.ReadBool()
 			tbl.NPC = net.ReadBool()
 
 			--server limits
