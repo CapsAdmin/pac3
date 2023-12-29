@@ -215,6 +215,7 @@ function PART:Impulse(on)
 	net.WriteBool(self.AffectSelf)
 	net.WriteBool(self.Players)
 	net.WriteBool(self.PhysicsProps)
+	net.WriteBool(self.PointEntities)
 	net.WriteBool(self.NPC)
 	net.SendToServer()
 end
