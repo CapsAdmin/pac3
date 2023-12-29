@@ -115,6 +115,14 @@ function timeline.UpdateFrameData()
 	timeline.dummy_bone:SetAngles(Angle(data.RR, data.RU, data.RF))
 end
 
+function timeline.Reindex()
+	timeline.frame:Clear()
+	for i, v in ipairs(timeline.data.FrameData) do
+		local keyframe = timeline.frame:AddKeyFrame(true)
+		keyframe:SetFrameData(i, v)
+	end
+end
+
 function timeline.EditBone()
 	pace.Call("PartSelected", timeline.dummy_bone)
 	local boneData = pac.GetModelBones(timeline.entity)
@@ -174,7 +182,6 @@ function timeline.Load(data)
 		timeline.frame:Clear()
 
 		timeline.SelectKeyframe(timeline.frame:AddKeyFrame())
-		timeline.Save()
 	end
 
 	timeline.UpdateFrameData()
@@ -249,8 +256,8 @@ function timeline.Open(part)
 	timeline.entity = part:GetOwner()
 
 	timeline.frame = vgui.Create("pac3_timeline")
-	timeline.frame:SetSize(ScrW()-pace.Editor:GetWide(),93)
-	timeline.frame:SetPos(pace.Editor:GetWide(),ScrH()-timeline.frame:GetTall())
+	timeline.frame:SetSize(ScrW()-pace.Editor:GetWide(), 93)
+	timeline.frame:SetPos(pace.Editor:GetWide(), ScrH()-timeline.frame:GetTall())
 	timeline.frame:SetTitle("")
 	timeline.frame:ShowCloseButton(false)
 
@@ -343,36 +350,36 @@ do
 	local TIMELINE = {}
 
 	function TIMELINE:Init()
-		self:DockMargin(0,0,0,0)
-		self:DockPadding(0,35,0,0)
+		self:DockMargin(0, 0, 0, 0)
+		self:DockPadding(0, 30, 0, 0)
 
 		do -- time display info
 			local time = self:Add("DPanel")
 
 			local test = L"frame" .. ": 10.888"
 			surface.SetFont(pace.CurrentFont)
-			local w,h = surface.GetTextSize(test)
+			local w, h = surface.GetTextSize(test)
 			time:SetWide(w)
 
 			time:SetTall(h*2 + 2)
-			time:SetPos(0,1)
-			time.Paint = function(s, w,h)
+			time:SetPos(0, 1)
+			time.Paint = function(s, w, h)
 				self:GetSkin().tex.Tab_Control( 0, 0, w, h )
 				self:GetSkin().tex.CategoryList.Header( 0, 0, w, h )
 
 				if not timeline.animation_part then return end
 
-				local w,h = draw.TextShadow({
+				local w, h = draw.TextShadow({
 					text = L"frame" .. ": " .. (animations.GetEntityAnimationFrame(timeline.entity, timeline.animation_part:GetAnimID()) or 0),
 					font = pace.CurrentFont,
-					pos = {2, 0},
+					pos = {5, 0},
 					color = self:GetSkin().Colours.Category.Header
 				}, 1, 100)
 
 				draw.TextShadow({
 					text = L"time" .. ": " .. math.Round(timeline.GetCycle() * animations.GetAnimationDuration(timeline.entity, timeline.animation_part:GetAnimID()), 3),
 					font = pace.CurrentFont,
-					pos = {2, h},
+					pos = {5, h},
 					color = self:GetSkin().Colours.Category.Header
 				}, 1, 100)
 			end
@@ -393,18 +400,18 @@ do
 				local spacing = (size - 24)/2
 
 				local play = controls:Add("DButton")
-				play:SetSize(size,size)
+				play:SetSize(size, size)
 				play:SetText("")
 				play.DoClick = function() self:Toggle() end
 				play:Dock(LEFT)
 
 				local stop = controls:Add("DButton")
-				stop:SetSize(size,size)
+				stop:SetSize(size, size)
 				stop:SetText("")
 				stop.DoClick = function() self:Stop() end
 				stop:Dock(LEFT)
 
-				function play.PaintOver(_,w,h)
+				function play.PaintOver(_, w, h)
 					surface.SetDrawColor(self:GetSkin().Colours.Button.Normal)
 					draw.NoTexture()
 					if self:IsPlaying() then
@@ -419,9 +426,9 @@ do
 					end
 				end
 
-				function stop:PaintOver(w,h)
+				function stop:PaintOver(w, h)
 					surface.SetDrawColor(self:GetSkin().Colours.Button.Normal)
-					surface.DrawRect(spacing,spacing,24,24)
+					surface.DrawRect(spacing, spacing, 24, 24)
 				end
 			end
 			do -- save/load
@@ -491,7 +498,7 @@ do
 
 					menu:PerformLayout()
 
-					local x, y = bottom:LocalToScreen(0,0)
+					local x, y = bottom:LocalToScreen(0, 0)
 					x = x + bottom:GetWide()
 					menu:SetPos(x - menu:GetWide(), y - menu:GetTall())
 				end
@@ -500,10 +507,10 @@ do
 		end
 
 		do -- keyframes
-			local pnl = vgui.Create("pac_scrollpanel_horizontal",self)
+			local pnl = vgui.Create("pac_scrollpanel_horizontal", self)
 			pnl:Dock(FILL)
 
-			pnl:GetCanvas().Paint = function(_,w,h)
+			pnl:GetCanvas().Paint = function(_, w, h)
 				derma.SkinHook( "Paint", "ListBox", self, w, h )
 			end
 
@@ -528,7 +535,7 @@ do
 				if self.moving then return end
 
 				local x = 0
-				for k,v in ipairs(pnl:GetCanvas():GetChildren()) do
+				for k, v in ipairs(pnl:GetCanvas():GetChildren()) do
 					v:SetWide(math.max(1/v:GetData().FrameRate * secondDistance, 4))
 					v:SetTall(h)
 					v:SetPos(x, 0)
@@ -540,7 +547,7 @@ do
 		end
 
 		do -- timeline
-			local pnl = vgui.Create("DPanel",self)
+			local pnl = vgui.Create("DPanel", self)
 
 			surface.SetFont(pace.CurrentFont)
 			local _, h = surface.GetTextSize("|")
@@ -571,20 +578,19 @@ do
 			local start = Material("icon16/control_play_blue.png")
 			local restart = Material("icon16/control_repeat_blue.png")
 			local estyle = Material("icon16/arrow_branch.png")
-			pnl.Paint = function(s,w,h)
+			pnl.Paint = function(s, w, h)
 				local offset = -self.keyframe_scroll:GetCanvas():GetPos()
-				local esoffset = self.keyframe_scroll:GetCanvas():GetPos()
 
 				self:GetSkin().tex.Tab_Control( 0, 0, w, h )
 				self:GetSkin().tex.CategoryList.Header( 0, 0, w, h )
 
 				local previousSecond = offset-(offset%secondDistance)
-				for i=previousSecond,previousSecond+s:GetWide(),secondDistance/2 do
+				for i = previousSecond, previousSecond+s:GetWide(), secondDistance/2 do
 					if i-offset > 0 and i-offset < ScrW() then
 						local sec = i/secondDistance
 						local x = i-offset
 
-						surface.SetDrawColor(0,0,0,100)
+						surface.SetDrawColor(0, 0, 0, 100)
 						surface.DrawLine(x+1, 1+1, x+1, pnl:GetTall() - 3+1)
 
 						surface.SetDrawColor(self:GetSkin().Colours.Category.Header)
@@ -592,7 +598,7 @@ do
 
 						surface.SetTextPos(x+2+1, 1+1)
 						surface.SetFont(pace.CurrentFont)
-						surface.SetTextColor(0,0,0,100)
+						surface.SetTextColor(0, 0, 0, 100)
 						surface.DrawText(sec)
 
 						surface.SetTextPos(x+2, 1)
@@ -602,10 +608,10 @@ do
 					end
 				end
 
-				for i=previousSecond,previousSecond+s:GetWide(),secondDistance/8 do
+				for i = previousSecond, previousSecond+s:GetWide(), secondDistance/8 do
 					if i-offset > 0 and i-offset < ScrW() then
 						local x = i-offset
-						surface.SetDrawColor(0,0,0,100)
+						surface.SetDrawColor(0, 0, 0, 100)
 						surface.DrawLine(x+1, 1+1, x+1, pnl:GetTall()/2+1)
 
 						surface.SetDrawColor(self:GetSkin().Colours.Category.Header)
@@ -623,24 +629,28 @@ do
 					local esmat = v.estyle and estyle or false
 
 					if mat then
-						local x = v:GetPos()
-						surface.SetDrawColor(255,255,255,200)
+						local x = v:GetPos() - offset
+						if x > s:GetWide() - 10 then continue end
+						surface.SetDrawColor(255, 255, 255, 200)
 						surface.DrawLine(x, -mat:Height()/2 - 5, x, h)
 
-						surface.SetDrawColor(255,255,255,255)
+						surface.SetDrawColor(255, 255, 255, 255)
 						surface.SetMaterial(mat)
-						surface.DrawTexturedRect(1+x,mat:Height() - 5,mat:Width(), mat:Height())
+						surface.DrawTexturedRect(1+x, mat:Height() - 5, mat:Width(), mat:Height())
 
 					end
 
 					if esmat then
 						local ps = v:GetSize()
-						local x = v:GetPos() + (ps * 0.5)
-						surface.SetDrawColor(255,255,255,255)
+						local x = v:GetPos() - offset + (ps * 0.5)
+						if x > s:GetWide() - 10 then continue end
+						surface.SetDrawColor(255, 255, 255, 255)
 						surface.SetMaterial(esmat)
-						surface.DrawTexturedRect(1+x - (esmat:Width() * 0.5), esmat:Height(),esmat:Width(), esmat:Height())
+						surface.DrawTexturedRect(1+x - (esmat:Width() * 0.5), esmat:Height(), esmat:Width(), esmat:Height())
 						if ps >= 65 then
-							draw.SimpleText( v.estyle, "Default", x, esmat:Height() * 2, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP )
+							draw.SimpleText( v.estyle, pace.CurrentFont, x, esmat:Height() * 2, self:GetSkin().Colours.Label.Dark, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP )
+						else
+							v:SetTooltip(v.estyle)
 						end
 					end
 				end
@@ -650,17 +660,17 @@ do
 				local x = timeline.GetCycle() * self.keyframe_scroll:GetCanvas():GetWide()
 				x = x - offset
 
-				surface.SetDrawColor(255,0,0,200)
+				surface.SetDrawColor(255, 0, 0, 200)
 				surface.DrawLine(x, 0, x, h)
 
-				surface.SetDrawColor(255,0,0,255)
+				surface.SetDrawColor(255, 0, 0, 255)
 				surface.SetMaterial(scrub)
-				surface.DrawTexturedRect(1 + x - scrub:Width()/2,-11,scrub:Width(), scrub:Height())
+				surface.DrawTexturedRect(1 + x - scrub:Width()/2, -11, scrub:Width(), scrub:Height())
 			end
 		end
 	end
 
-	function TIMELINE:Paint(w,h)
+	function TIMELINE:Paint(w, h)
 		self:GetSkin().tex.Tab_Control(0, 35, w, h-35)
 	end
 
@@ -668,11 +678,11 @@ do
 		DFrame.Think(self)
 
 		if pace.Editor:GetPos() + pace.Editor:GetWide() / 2 < ScrW() / 2 then
-			self:SetSize(ScrW()-(pace.Editor.x+pace.Editor:GetWide()),93)
-			self:SetPos(pace.Editor.x+pace.Editor:GetWide(),ScrH()-self:GetTall())
+			self:SetSize(ScrW()-(pace.Editor.x+pace.Editor:GetWide()), 93)
+			self:SetPos(pace.Editor.x+pace.Editor:GetWide(), ScrH()-self:GetTall())
 		else
-			self:SetSize(ScrW()-(ScrW()-pace.Editor.x),93)
-			self:SetPos(0,ScrH()-self:GetTall())
+			self:SetSize(ScrW()-(ScrW()-pace.Editor.x), 93)
+			self:SetPos(0, ScrH()-self:GetTall())
 		end
 
 		if input.IsKeyDown(KEY_SPACE) then
@@ -729,7 +739,7 @@ do
 	end
 
 	function TIMELINE:Clear()
-		for i,v in pairs(self.keyframe_scroll:GetCanvas():GetChildren()) do
+		for i, v in pairs(self.keyframe_scroll:GetCanvas():GetChildren()) do
 			v:Remove()
 		end
 		self.add_keyframe_button:SetDisabled(false)
@@ -754,7 +764,7 @@ do
 		local restartFrame = timeline.data.RestartFrame
 		if not restartFrame then return 0 end --no restart pos? start at the start
 
-		for i,v in ipairs(timeline.data.FrameData) do
+		for i, v in ipairs(timeline.data.FrameData) do
 			if i == restartFrame then return timeInSeconds end
 			timeInSeconds = timeInSeconds+(1/(v.FrameRate or 1))
 		end
@@ -768,7 +778,7 @@ do
 		local startFrame = timeline.data.StartFrame
 		if not startFrame then return 0 end --no restart pos? start at the start
 
-		for i,v in ipairs(timeline.data.FrameData) do
+		for i, v in ipairs(timeline.data.FrameData) do
 			if i == startFrame then return timeInSeconds end
 			timeInSeconds = timeInSeconds+(1/(v.FrameRate or 1))
 		end
@@ -793,7 +803,7 @@ do
 
 		return keyframe
 	end
-	vgui.Register("pac3_timeline",TIMELINE,"DFrame")
+	vgui.Register("pac3_timeline", TIMELINE, "DFrame")
 end
 
 do
@@ -830,7 +840,8 @@ do
 	function KEYFRAME:GetData()
 		return self.DataTable
 	end
-	function KEYFRAME:SetFrameData(index,tbl)
+
+	function KEYFRAME:SetFrameData(index, tbl)
 		self.DataTable = tbl
 		self.AnimationKeyIndex = index
 		self:GetParent():GetParent():InvalidateLayout() --rebuild the timeline
@@ -849,19 +860,19 @@ do
 		return self.AnimationKeyIndex
 	end
 
-	function KEYFRAME:Paint(w,h)
+	function KEYFRAME:Paint(w, h)
 		self.AltLine = self.Alternate
 		derma.SkinHook( "Paint", "CategoryButton", self, w, h )
 
 		if timeline.selected_keyframe == self then
 			local c = self:GetSkin().Colours.Category.Line.Button_Selected
-			surface.SetDrawColor(c.r,c.g,c.b,250)
+			surface.SetDrawColor(c.r, c.g, c.b, 250)
 		end
 
-		surface.DrawRect(0,0,w,h)
+		surface.DrawRect(0, 0, w, h)
 
-		surface.SetDrawColor(0,0,0,75)
-		surface.DrawOutlinedRect(0,0,w,h)
+		surface.SetDrawColor(0, 0, 0, 75)
+		surface.DrawOutlinedRect(0, 0, w, h)
 	end
 
 	function KEYFRAME:Think()
@@ -897,14 +908,14 @@ do
 					return (a:GetPos() + a:GetWide() / 2) < (b:GetPos() + b:GetWide() / 2)
 				end)
 
-				for i,v in ipairs(panels) do
+				for i, v in ipairs(panels) do
 					v:SetParent(timeline.frame.keyframe_scroll)
 					v.Alternate = #timeline.frame.keyframe_scroll:GetCanvas():GetChildren()%2 == 1
 
 					frames[i] = timeline.data.FrameData[v:GetAnimationIndex()]
 				end
 
-				for i,v in ipairs(frames) do
+				for i, v in ipairs(frames) do
 					timeline.data.FrameData[i] = v
 					panels[i].AnimationKeyIndex = i
 				end
@@ -940,8 +951,9 @@ do
 			timeline.frame:Toggle(false)
 			timeline.SelectKeyframe(self)
 		elseif mc == MOUSE_RIGHT then
+			timeline.SelectKeyframe(self)
 			local menu = DermaMenu()
-			menu:AddOption(L"set length",function()
+			menu:AddOption(L"set length", function()
 				Derma_StringRequest(L"question",
 					L"how long should this frame be in seconds?",
 					tostring(self:GetWide()/secondDistance),
@@ -951,7 +963,7 @@ do
 					L"cancel" )
 			end):SetImage("icon16/time.png")
 
-			menu:AddOption(L"multiply length",function()
+			menu:AddOption(L"multiply length", function()
 				Derma_StringRequest(L"question",
 					L"multiply "..self:GetAnimationIndex().."'s length",
 					"1.0",
@@ -962,36 +974,36 @@ do
 			end):SetImage("icon16/time_add.png")
 
 			if not self:GetRestart() then
-				menu:AddOption(L"set restart",function()
-					for _,v in pairs(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()) do
+				menu:AddOption(L"set restart", function()
+					for _, v in pairs(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()) do
 						v:SetRestart(false)
 					end
 					self:SetRestart(true)
 					timeline.data.RestartFrame = self:GetAnimationIndex()
 				end):SetImage("icon16/control_repeat_blue.png")
 			else
-				menu:AddOption(L"unset restart",function()
+				menu:AddOption(L"unset restart", function()
 					self:SetRestart(false)
 					timeline.data.StartFrame = nil
 				end):SetImage("icon16/control_repeat.png")
 			end
 
 			if not self:GetStart() then
-				menu:AddOption(L"set start",function()
-					for _,v in pairs(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()) do
+				menu:AddOption(L"set start", function()
+					for _, v in pairs(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()) do
 						v:SetStart(false)
 					end
 					self:SetStart(true)
 					timeline.data.StartFrame = self:GetAnimationIndex()
 				end):SetImage("icon16/control_play_blue.png")
 			else
-				menu:AddOption(L"unset start",function()
+				menu:AddOption(L"unset start", function()
 					self:SetStart(false)
 					timeline.data.StartFrame = nil
 				end):SetImage("icon16/control_play.png")
 			end
 
-			menu:AddOption(L"reverse",function()
+			menu:AddOption(L"reverse", function()
 				local frame = timeline.data.FrameData[self:GetAnimationIndex() - 1]
 				if not frame then
 					frame = timeline.data.FrameData[#timeline.data.FrameData]
@@ -1009,32 +1021,29 @@ do
 				timeline.UpdateFrameData()
 			end):SetImage("icon16/control_rewind_blue.png")
 
-			menu:AddOption(L"duplicate to end", function()
-				local keyframe = timeline.frame:AddKeyFrame()
+			local function duplicateTo(index)
+				local data = self:GetData();
+				table.insert(timeline.data.FrameData, index, table.Copy(data))
+				timeline.Reindex()
 
-				local tbl = self:GetData().BoneInfo
-				for i, v in pairs(tbl) do
-					local data = keyframe:GetData()
-					data.BoneInfo[i] = table.Copy(self:GetData().BoneInfo[i] or {})
-					data.BoneInfo[i].MU = v.MU
-					data.BoneInfo[i].MR = v.MR
-					data.BoneInfo[i].MF = v.MF
-					data.BoneInfo[i].RU = v.RU
-					data.BoneInfo[i].RR = v.RR
-					data.BoneInfo[i].RF = v.RF
-				end
-				keyframe:SetLength(1/(self:GetData().FrameRate))
-				timeline.SelectKeyframe(keyframe)
-			end):SetImage("icon16/application_double.png")
+				timer.Simple(0, function()
+					timeline.SelectKeyframe(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()[index])
+				end)
+			end
 
-			menu:AddOption(L"remove",function()
+			local sub, opt = menu:AddSubMenu(L"duplicate", function() duplicateTo(self:GetAnimationIndex()) end)
+			sub:AddOption(L"start", function() duplicateTo(1) end):SetImage("icon16/resultset_first.png")
+			sub:AddOption(L"end", function() duplicateTo(#timeline.data.FrameData + 1) end):SetImage("icon16/resultset_last.png")
+			opt:SetIcon("icon16/page_copy.png")
+
+			menu:AddOption(L"remove", function()
 				local frameNum = self:GetAnimationIndex()
 				if frameNum == 1 and not timeline.data.FrameData[2] then return end
 				table.remove(timeline.data.FrameData, frameNum)
 
 				local remove_i
 
-				for i,v in pairs(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()) do
+				for i, v in pairs(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()) do
 					if v == self then
 						remove_i = i
 					elseif v:GetAnimationIndex() > frameNum then
@@ -1048,14 +1057,16 @@ do
 				timeline.frame.keyframe_scroll:InvalidateLayout()
 
 				self:Remove()
-				-- * even if it was removed from the table it still exists for some reason
+
 				local count = #timeline.frame.keyframe_scroll:GetCanvas():GetChildren()
-				local offset = frameNum == count and count - 1 or count
-				timeline.SelectKeyframe(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()[offset])
-			end):SetImage("icon16/application_delete.png")
+				local offset = remove_i >= count and count - 1 or remove_i
+				timer.Simple(0, function()
+					timeline.SelectKeyframe(timeline.frame.keyframe_scroll:GetCanvas():GetChildren()[offset])
+				end)
+			end):SetImage("icon16/page_delete.png")
 
 			menu:AddOption(L"set easing style", function()
-				if timeline.data.Interpolation != "linear" then
+				if timeline.data.Interpolation ~= "linear" then
 					local frame = vgui.Create("DFrame")
 					frame:SetSize(300, 100)
 					frame:Center()
@@ -1071,8 +1082,6 @@ do
 					frame:MakePopup()
 					return
 				end
-
-				local frameNum = self:GetAnimationIndex()
 
 				local frame = vgui.Create( "DFrame" )
 				frame:SetSize( 200, 100 )
@@ -1121,12 +1130,14 @@ do
 		if not style then return end
 		self:GetData().EaseStyle = style
 		self.estyle = style
+		timeline.Save()
 	end
 
 	function KEYFRAME:RemoveEaseStyle()
 		self:GetData().EaseStyle = nil
 		self.estyle = nil
+		timeline.Save()
 	end
 
-	vgui.Register("pac3_timeline_keyframe",KEYFRAME,"DPanel")
+	vgui.Register("pac3_timeline_keyframe", KEYFRAME, "DPanel")
 end
