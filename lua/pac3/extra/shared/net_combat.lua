@@ -1218,7 +1218,7 @@ if SERVER then
 				add_angvel = add_angvel * dist_multiplier
 
 				local unconsenting_owner = owner ~= ply and force_consents[owner] == false
-				if ent:GetClass() == "pac_projectile" then print(ent, ent:GetPhysicsObject(), "is_player", is_player, "is_physics", is_physics, "is_npc", is_npc, "tbl.PointEntities", tbl.PointEntities) end
+
 				if is_player then
 					if  tbl.Players or (ent == ply and tbl.AffectSelf) then
 						if (ent ~= ply and force_consents[ent] ~= false) or (ent == ply and tbl.AffectSelf) then
