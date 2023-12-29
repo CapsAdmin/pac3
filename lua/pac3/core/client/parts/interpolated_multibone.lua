@@ -57,12 +57,12 @@ function PART:OnShow()
 end
 
 function PART:OnHide()
-	hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID)
+	pac.RemoveHook("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID)
 
 end
 
 function PART:OnRemove()
-	hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID)
+	pac.RemoveHook("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID)
 end
 --NODES			self	1		2		3
 --STAGE			0		1		2		3
@@ -74,13 +74,13 @@ function PART:OnDraw()
 	self.pos = self.pos or self:GetWorldPosition()
 	self.ang = self.ang or self:GetWorldAngles()
 
-	if not self.Preview then hook.Remove("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID) end
+	if not self.Preview then pac.RemoveHook("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID) end
 
 	local stage = math.max(0,math.floor(self.LerpValue))
 	local proportion = math.max(0,self.LerpValue) % 1
 
 	if self.Preview then
-		hook.Add("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID, function()
+		pac.AddHook("PostDrawOpaqueRenderables", "Multibone_draw"..self.UniqueID, function()
 			render.DrawLine(self.pos,self.pos + self.ang:Forward()*50, Color(255,0,0))
 			render.DrawLine(self.pos,self.pos - self.ang:Right()*50, Color(0,255,0))
 			render.DrawLine(self.pos,self.pos + self.ang:Up()*50, Color(0,0,255))

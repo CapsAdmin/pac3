@@ -70,22 +70,22 @@ function PART:OnShow()
 end
 
 function PART:OnHide()
-	hook.Remove("PostDrawOpaqueRenderables", "pac_force_Draw"..self.UniqueID)
+	pac.RemoveHook("PostDrawOpaqueRenderables", "pac_force_Draw"..self.UniqueID)
 	self:Impulse(false)
 end
 
 function PART:OnRemove()
-	hook.Remove("PostDrawOpaqueRenderables", "pac_force_Draw"..self.UniqueID)
+	pac.RemoveHook("PostDrawOpaqueRenderables", "pac_force_Draw"..self.UniqueID)
 	self:Impulse(false)
 end
 
 
 function PART:OnDraw()
 	self.pos,self.ang = self:GetDrawPosition()
-	if not self.Preview then hook.Remove("PostDrawOpaqueRenderables", "pac_force_Draw"..self.UniqueID) end
+	if not self.Preview then pac.RemoveHook("PostDrawOpaqueRenderables", "pac_force_Draw"..self.UniqueID) end
 
 	if self.Preview then
-		hook.Add("PostDrawOpaqueRenderables", "pac_force_Draw"..self.UniqueID, function()
+		pac.AddHook("PostDrawOpaqueRenderables", "pac_force_Draw"..self.UniqueID, function()
 			if self.HitboxMode == "Box" then
 				local mins =  Vector(-self.Radius, -self.Radius, -self.Length)
 				local maxs = Vector(self.Radius, self.Radius, self.Length)

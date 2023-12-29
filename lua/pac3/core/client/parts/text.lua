@@ -407,7 +407,7 @@ function PART:OnDraw()
 				cam_End3D2D()
 			cam_End3D()
 		elseif self.DrawMode == "SurfaceText" or self.DrawMode == "DrawTextOutlined2D" then
-			hook.Add("HUDPaint", "pac.DrawText"..self.UniqueID, function()
+			pac.AddHook("HUDPaint", "pac.DrawText"..self.UniqueID, function()
 				if not pcall(surface_SetFont, self.UsedFont) then return end
 				self:SetFont(self.UsedFont)
 
@@ -469,9 +469,9 @@ function PART:OnDraw()
 			end)
 		end
 		if self.DrawMode == "DrawTextOutlined" then
-			hook.Remove("HUDPaint", "pac.DrawText"..self.UniqueID)
+			pac.RemoveHook("HUDPaint", "pac.DrawText"..self.UniqueID)
 		end
-	else hook.Remove("HUDPaint", "pac.DrawText"..self.UniqueID) end
+	else pac.RemoveHook("HUDPaint", "pac.DrawText"..self.UniqueID) end
 end
 
 function PART:Initialize()
@@ -525,10 +525,10 @@ function PART:OnShow()
 end
 
 function PART:OnHide()
-	hook.Remove("HUDPaint", "pac.DrawText"..self.UniqueID)
+	pac.RemoveHook("HUDPaint", "pac.DrawText"..self.UniqueID)
 end
 function PART:OnRemove()
-	hook.Remove("HUDPaint", "pac.DrawText"..self.UniqueID)
+	pac.RemoveHook("HUDPaint", "pac.DrawText"..self.UniqueID)
 end
 function PART:SetText(str)
 	self.Text = str

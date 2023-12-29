@@ -303,7 +303,7 @@ function PART:OnShow()
 			self.resetting_condition = false
 		end
 	end
-	hook.Add("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview"..self.UniqueID, function()
+	pac.AddHook("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview"..self.UniqueID, function()
 		if self.TargetPart:IsValid() then
 			origin_part = self.TargetPart
 		else
@@ -368,7 +368,7 @@ function PART:OnShow()
 end
 
 function PART:OnHide()
-	hook.Remove("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview"..self.UniqueID)
+	pac.RemoveHook("PostDrawOpaqueRenderables", "pace_draw_lockpart_preview"..self.UniqueID)
 	self.teleported = false
 	self.grabbing = false
 	if self.target_ent == nil then return
