@@ -732,10 +732,18 @@ PART.OldEvents = {
 
 	is_client = {
 		operator_type = "none",
-		tutorial_explanation = "is_client makes something visible only for you, or others (uninverted)",
+		tutorial_explanation = "is_client activates when the group owner entity is your player or viewmodel, rather than another entity like a prop",
 		callback = function(self, ent)
 			ent = try_viewmodel(ent)
 			return self:GetPlayerOwner() == ent
+		end,
+	},
+
+	viewed_by_owner = {
+		operator_type = "none",
+		tutorial = "viewed_by_owner shows for only you. uninvert to show only to other players",
+		callback = function(self, ent)
+			return self:GetPlayerOwner() == pac.LocalPlayer
 		end,
 	},
 
