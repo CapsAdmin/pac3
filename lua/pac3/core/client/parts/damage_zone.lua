@@ -989,8 +989,9 @@ function PART:Initialize()
 	if not GetConVar("pac_sv_damage_zone"):GetBool() or pac.Blocked_Combat_Parts[self.ClassName] then self:SetError("damage zones are disabled on this server!") end
 	self.validTime = SysTime() + 5 --jank fix to try to stop activation on load
 	timer.Simple(0.1, function() --jank fix on the jank fix to allow it earlier on projectiles and hitmarkers
-		if IsValid(self:GetRootPart():GetOwner()) then
-			if self:GetRootPart():GetOwner():GetClass() == "pac_projectile" or self:GetRootPart():GetOwner().is_pac_hitmarker then
+		local ent = self:GetRootPart():GetOwner()
+		if IsValid(ent) then
+			if ent.is_pac_hitmarker or ent.pac_projectile_part then
 				self.validTime = 0
 			end
 		end
