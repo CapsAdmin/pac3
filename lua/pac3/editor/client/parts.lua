@@ -1628,9 +1628,9 @@ do -- menu
 					elseif var_type == "Angle" then
 						local str = string.Split(VAR_PANEL_EDITZONE:GetValue(), ",")
 						sent_var = Angle()
-						sent_var.r = tonumber(str[1]) or 1
-						sent_var.g = tonumber(str[2]) or 1
-						sent_var.b = tonumber(str[3]) or 1
+						sent_var.p = tonumber(str[1]) or 1
+						sent_var.y = tonumber(str[2]) or 1
+						sent_var.r = tonumber(str[3]) or 1
 					else sent_var = VAR_PANEL_EDITZONE:GetValue() end
 
 
