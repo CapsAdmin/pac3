@@ -122,6 +122,7 @@ function PART:SetEvent(event)
 	if not self.Events[event] then --invalid event? try a command event
 		if GetConVar("pac_copilot_auto_setup_command_events"):GetBool() then
 			timer.Simple(0.2, function()
+				if not self.pace_properties or self ~= pace.current_part then return end
 				--now we'll use event as a command name
 				self:SetEvent("command")
 				self.pace_properties["Event"]:SetValue("command")
@@ -939,6 +940,7 @@ PART.OldEvents = {
 		userdata = {{editor_panel = "is_touching", is_touching_property = "extra_radius", default = 0}, {default = 0}},
 		callback = function(self, ent, extra_radius, nearest_model)
 			if nearest_model then ent = self:GetOwner() end
+			if not IsValid(ent) then return false end
 			extra_radius = extra_radius or 0
 
 			local radius =  ent:BoundingRadius()
@@ -968,6 +970,7 @@ PART.OldEvents = {
 		end,
 		nice = function(self, ent, extra_radius, nearest_model)
 			if nearest_model then ent = self:GetOwner() end
+			if not IsValid(ent) then return "" end
 			local radius = ent:BoundingRadius()
 
 			if radius == 0 and IsValid(ent.pac_projectile) then
@@ -988,6 +991,7 @@ PART.OldEvents = {
 		userdata = {{editor_panel = "is_touching", is_touching_property = "extra_radius", default = 0}, {default = false}, {default = false}, {default = false}},
 		callback = function(self, ent, extra_radius, no_npc, no_players, nearest_model)
 			if nearest_model then ent = self:GetOwner() end
+			if not IsValid(ent) then return false end
 			extra_radius = extra_radius or 0
 			no_npc = no_npc or false
 			no_players = no_players or false
@@ -1020,6 +1024,7 @@ PART.OldEvents = {
 		end,
 		nice = function(self, ent, extra_radius, no_npc, no_players, nearest_model)
 			if nearest_model then ent = self:GetOwner() end
+			if not IsValid(ent) then return "" end
 			local radius = ent:BoundingRadius()
 
 			if radius == 0 and IsValid(ent.pac_projectile) then
@@ -1045,6 +1050,7 @@ PART.OldEvents = {
 		callback = function(self, ent, extra_radius, x_stretch, y_stretch, z_stretch, no_npc, no_players, nearest_model)
 
 			if nearest_model then ent = self:GetOwner() end
+			if not IsValid(ent) then return false end
 			extra_radius = extra_radius or 0
 			no_npc = no_npc or false
 			no_players = no_players or false
@@ -1089,6 +1095,7 @@ PART.OldEvents = {
 		nice = function(self, ent, extra_radius, x_stretch, y_stretch, z_stretch, no_npc, no_players, nearest_model)
 
 			if nearest_model then ent = self:GetOwner() end
+			if not IsValid(ent) then return "" end
 			local radius = ent:BoundingRadius()
 
 			if radius == 0 and IsValid(ent.pac_projectile) then
@@ -1113,6 +1120,7 @@ PART.OldEvents = {
 		userdata = {{editor_panel = "is_touching", default = 0}, {x = "x_stretch", default = 1}, {y = "y_stretch", default = 1}, {z = "z_stretch", default = 1}, {default = false}},
 		callback = function(self, ent, extra_radius, x_stretch, y_stretch, z_stretch, nearest_model)
 			if nearest_model then ent = self:GetOwner() end
+			if not IsValid(ent) then return false end
 			extra_radius = extra_radius or 15
 			x_stretch = x_stretch or 1
 			y_stretch = y_stretch or 1
@@ -1138,7 +1146,7 @@ PART.OldEvents = {
 		end,
 		nice = function(self, ent, extra_radius, x_stretch, y_stretch, z_stretch, nearest_model)
 			if nearest_model then ent = self:GetOwner() end
-			if not IsValid(ent) then return false end
+			if not IsValid(ent) then return "" end
 			local radius = ent:BoundingRadius()
 
 			if radius == 0 and IsValid(ent.pac_projectile) then
