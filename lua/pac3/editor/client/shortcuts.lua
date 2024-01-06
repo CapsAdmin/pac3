@@ -250,7 +250,7 @@ pace.PACActionShortcut_Experimental = {
 		[1] = {"CTRL", "y"},
 		[2] = {"i"}
 	},
-	["tpose"] = {
+	["T_Pose"] = {
 		[1] = {"CTRL", "t"}
 	},
 	["zoom_panel"] = {
