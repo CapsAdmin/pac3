@@ -2384,30 +2384,34 @@ if CLIENT then
 
 
 	local function RequestBlockedParts()
-
 		net.Start("pac_request_blocked_parts")
 		net.SendToServer()
 	end
-	concommand.Add("pac_inform_about_blocked_parts", RequestBlockedParts)
 
-	net.Receive("pac_inform_blocked_parts", function()
+	concommand.Add("pac_inform_about_blocked_parts", function()
+		RequestBlockedParts()
+		pac.Message("Manually fetching info about pac3 combat parts...")
+
+		timer.Simple(2, function()
+			for name,b in pairs(pac.Blocked_Combat_Parts) do
+				local blocked = b
+				local disabled = not GetConVar("pac_sv_"..name):GetBool()
+
+				local bool_str
+
+				if disabled and blocked then bool_str = "disabled and blocked -> unavailable"
+				elseif disabled and not blocked then bool_str = "disabled -> unavailable"
+				elseif not disabled and blocked then bool_str = "blocked - > unavailable"
+				elseif not disabled and not blocked then bool_str = "available"
+				else bool_str = "??" end
+
+				print(name .. " is " .. bool_str)
+			end
+		end)
+	end)
+
+	net.Receive("pac_inform_blocked_parts", function() --silent
 		pac.Blocked_Combat_Parts = net.ReadTable()
-		print("Are these pac combat parts blocked?")
-
-		for name,b in pairs(pac.Blocked_Combat_Parts) do
-			local blocked = b
-			local disabled = not GetConVar("pac_sv_"..name):GetBool()
-
-			local bool_str
-
-			if disabled and blocked then bool_str = "disabled and blocked -> unavailable"
-			elseif disabled and not blocked then bool_str = "disabled -> unavailable"
-			elseif not disabled and blocked then bool_str = "blocked - > unavailable"
-			elseif not disabled and not blocked then bool_str = "available"
-			else bool_str = "??" end
-
-			print(name .. " is " .. bool_str)
-		end
 	end)
 
 	local consent_cvars = {"pac_client_grab_consent", "pac_client_lock_camera_consent", "pac_client_damage_zone_consent", "pac_client_force_consent", "pac_client_hitscan_consent"}
