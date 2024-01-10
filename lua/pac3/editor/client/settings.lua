@@ -691,7 +691,7 @@ function pace.OpenSettings()
 			for cmd, val in pairs(pace.cvar_changes) do
 				if isbool(val) then
 					changes_str = changes_str .. cmd .. " set to " ..  (val and "1" or "0") .. "\n"
-				else 
+				else
 					changes_str = changes_str .. cmd .. " set to " ..  val .. "\n"
 				end
 			end
@@ -702,12 +702,12 @@ function pace.OpenSettings()
 						net.WriteString(cmd)
 						if isbool(val) then
 							net.WriteString(val and "1" or "0")
-						else 
+						else
 							net.WriteString(val)
 						end
 						net.SendToServer()
 					end
-					pace.cvar_changes = nil 
+					pace.cvar_changes = nil
 				end,
 				"Cancel", function() pace.cvar_changes = nil end)
 		end
@@ -912,7 +912,7 @@ local function PopulateCategory(str, pnl, cvars_tbl)
 		cvar_pnl:SetText(tbl[2])
 		if tbl[3] ~= "" then cvar_pnl:SetTooltip(tbl[3]) end
 		cvar_pnl:SetSize(400,30)
-		
+
 	end
 	return list_list
 end
@@ -938,7 +938,7 @@ function pace.FillCombatSettings(pnl)
 
 	--general
 	PopulateCategory("General (Global policy and Network protections)", master_list, convar_params_combat_generic)
-	
+
 	--combat parts
 	PopulateCategory("Force part", master_list, convar_params_force)
 	PopulateCategory("Damage Zone", master_list, convar_params_damage_zone)

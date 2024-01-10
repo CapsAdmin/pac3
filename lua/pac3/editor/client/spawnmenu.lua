@@ -137,7 +137,7 @@ function pace.AdminSettingsMenu(self)
 		self:CheckBox(L"Only specifically allowed users can do pac3 combat actions", "pac_sv_combat_whitelisting")
 	self:Help(""):SetFont("DermaDefaultBold")--spacers
 	self:Help(""):SetFont("DermaDefaultBold")
-		
+
 	self:Help(L"Combat parts (more detailed settings in the full editor settings menu)"):SetFont("DermaDefaultBold")
 		self:Help(L"Damage Zones"):SetFont("DermaDefaultBold")
 		self:CheckBox(L"Enable damage zones", "pac_sv_damage_zone")
@@ -145,7 +145,7 @@ function pace.AdminSettingsMenu(self)
 		self:NumSlider(L"Max radius", "pac_sv_damage_zone_max_radius", 0, 32767, 0)
 		self:NumSlider(L"Max length", "pac_sv_damage_zone_max_length", 0, 32767, 0)
 		self:CheckBox(L"Enable damage zone dissolve", "pac_sv_damage_zone_allow_dissolve")
-		
+
 		self:Help(L"Hitscan"):SetFont("DermaDefaultBold")
 		self:CheckBox(L"Enable hitscan part", "pac_sv_hitscan")
 		self:NumSlider(L"Max damage", "pac_sv_hitscan_max_damage", 0, 268435455, 0)
@@ -155,19 +155,19 @@ function pace.AdminSettingsMenu(self)
 		self:CheckBox(L"Enable lock part", "pac_sv_lock")
 		self:CheckBox(L"Allow grab", "pac_sv_lock_grab")
 		self:CheckBox(L"Allow teleport", "pac_sv_lock_teleport")
-		
+
 		self:Help(L"Force part"):SetFont("DermaDefaultBold")
 		self:CheckBox(L"Enable force part", "pac_sv_force")
 		self:NumSlider(L"Max amount", "pac_sv_force_max_amount", 0, 10000000, 0)
 		self:NumSlider(L"Max radius", "pac_sv_force_max_radius", 0, 32767, 0)
 		self:NumSlider(L"Max length", "pac_sv_force_max_length", 0, 32767, 0)
-		
+
 		self:Help(L"Force part"):SetFont("DermaDefaultBold")
 		self:CheckBox(L"Enable health modifier", "pac_sv_health_modifier")
 		self:CheckBox(L"Allow changing max health or armor", "pac_sv_health_modifier_allow_maxhp")
 		self:NumSlider(L"Minimum combined damage scaling", "pac_sv_health_modifier_min_damagescaling", -10, 1, 2)
 		self:CheckBox(L"Allow extra health bars", "pac_sv_health_modifier_extra_bars")
-		
+
 		self:Help(L"Projectile part"):SetFont("DermaDefaultBold")
 		self:CheckBox(L"Enable physical projectiles", "pac_sv_projectiles")
 		self:CheckBox(L"Enable custom collide meshes for physical projectiles", "pac_sv_projectile_allow_custom_collision_mesh")
@@ -179,7 +179,7 @@ function pace.AdminSettingsMenu(self)
 		self:CheckBox(L"Allow playermovement", "pac_free_movement")
 		self:CheckBox(L"Allow playermovement mass", "pac_player_movement_allow_mass")
 		self:CheckBox(L"Allow physics damage scaling by mass", "pac_player_movement_physics_damage_scaling")
-		
+
 end
 
 

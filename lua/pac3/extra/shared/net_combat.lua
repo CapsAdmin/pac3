@@ -216,7 +216,7 @@ if SERVER then
 		if ent.CPPIGetOwner then --a prop protection using CPPI probably exists so we use it
 			return ent:CPPIGetOwner()
 		end
-		return ent.pac_prop_protection_owner or nil --otherwise we'll use the field we set or 
+		return ent.pac_prop_protection_owner or nil --otherwise we'll use the field we set or
 	end
 
 	--hack fix to stop GetOwner returning [NULL Entity]
@@ -656,7 +656,7 @@ if SERVER then
 					return true
 				end
 			end
-			
+
 			local total_hp_value,built_tbl = GatherExtraHPBars(target)
 			if surviving_layer == nil or total_hp_value == 0 or not built_tbl then --no shields = use the dmginfo base damage scaled with the cumulative mult
 
@@ -696,7 +696,7 @@ if SERVER then
 		for i,v in pairs(ents_hits) do
 			if not (v:IsPlayer() or v:IsNPC() or string.find(v:GetClass(), "npc_")) and not tbl.PointEntities then ents_hits[i] = nil end
 			if v.CPPICanDamage and not v:CPPICanDamage(ply) then ents_hits[i] = nil end --CPPI check on the player
-			
+
 			if pre_excluded_ent_classes[v:GetClass()] or v:IsWeapon() or (v:IsNPC() and not tbl.NPC) or ((v ~= ply and v:IsPlayer() and not tbl.Players) and not (tbl.AffectSelf and v == ply)) then ents_hits[i] = nil
 			else
 				ent_count = ent_count + 1
@@ -780,7 +780,7 @@ if SERVER then
 		--the giga function to determine if we can damage
 		local function DMGAllowed(ent)
 			if ent:Health() == 0 and not (string.find(tbl.DamageType, "dissolve")) then return false end --immediately exclude entities with 0 health, except if we want to dissolve
-			
+
 
 			local canhit = false --whether the policies allow the hit
 			local prop_protected_consent
@@ -803,14 +803,14 @@ if SERVER then
 			end
 
 			--first pass: entity class blacklist
-			
+
 			if IsEntity(ent) and ((damageable_point_ent_classes[ent:GetClass()] ~= false) or ((damageable_point_ent_classes[ent:GetClass()] == nil) or (damageable_point_ent_classes[ent:GetClass()] == true))) then
 				--second pass: the damagezone's settings
 					--1.player hurt self if asked
 				local is_player = ent:IsPlayer()
 				local is_physics = (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or ent:IsWeapon())
 				local is_npc = ent:IsNPC() or string.find(ent:GetClass(), "npc") or ent.IsVJBaseSNPC or ent.IsDRGEntity
-				
+
 				if (tbl.AffectSelf) and ent == inflictor then
 					canhit = true
 					--2.main target types : players, NPC, point entities
@@ -819,7 +819,7 @@ if SERVER then
 						and --enforce prop protection
 						(bot_exception or (owner == inflictor or ent == inflictor or (pac_sv_prop_protection and damage_zone_consents[target_ply] ~= false) or not pac_sv_prop_protection))
 						then
-					
+
 					if is_player then
 						if tbl.Players then
 							canhit = true
@@ -1081,8 +1081,8 @@ if SERVER then
 			local owner = Try_CPPIGetOwner(ent)
 			local is_player = ent:IsPlayer()
 			local is_physics = (physics_point_ent_classes[ent:GetClass()] or string.find(ent:GetClass(),"item_") or string.find(ent:GetClass(),"ammo_") or (ent:IsWeapon() and not IsValid(ent:GetOwner())))
-			local is_npc = ent.IsVJBaseSNPC or ent.IsDRGEntity or string.find(ent:GetClass(), "npc") or ent:IsNPC() 
-			
+			local is_npc = ent.IsVJBaseSNPC or ent.IsDRGEntity or string.find(ent:GetClass(), "npc") or ent:IsNPC()
+
 
 			if (ent ~= tbl.RootPartOwner or (tbl.AffectSelf and ent == tbl.RootPartOwner))
 					and (
@@ -1235,7 +1235,7 @@ if SERVER then
 								if islocaltorque then
 									phys_ent:SetAngleVelocity(final_damping * phys_ent:GetAngleVelocity())
 									phys_ent:AddAngleVelocity(add_angvel)
-	
+
 								else
 									phys_ent:SetAngleVelocity(final_damping * phys_ent:GetAngleVelocity())
 									add_angvel = phys_ent:WorldToLocalVector( add_angvel )
@@ -1246,7 +1246,7 @@ if SERVER then
 							end
 						end
 					end
-					
+
 				elseif is_npc then
 					if tbl.NPC then
 						if not (IsPropProtected(ent, ply) and global_combat_prop_protection:GetBool()) or not unconsenting_owner then
@@ -1257,7 +1257,7 @@ if SERVER then
 							else ent:SetVelocity((oldvel * final_damping) + addvel) end
 						end
 					end
-					
+
 				elseif tbl.PointEntities then
 					if not (IsPropProtected(ent, ply) and global_combat_prop_protection:GetBool()) or not unconsenting_owner then
 						phys_ent:SetVelocity(final_damping * oldvel + addvel)
@@ -1804,7 +1804,7 @@ if SERVER then
 			if not lock_allow:GetBool() then return end
 			if not lock_allow_grab:GetBool() then return end
 			if not PlayerIsCombatAllowed(ply) then return end
-			
+
 
 			--netrate enforce
 			if not CountNetMessage(ply) then
@@ -2051,7 +2051,7 @@ if SERVER then
 				elseif (global_combat_prop_protection:GetBool() and prop_protected) then return
 				end
 			end
-			
+
 			targ_ent:SetAngles(ang)
 			ApplyLockState(targ_ent, false)
 

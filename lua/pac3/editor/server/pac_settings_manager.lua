@@ -102,5 +102,5 @@ net.Receive("pac_request_sv_cvars", function (len, ply)
 		net.WriteTable(cvars_tbl)
 		net.Send(ply)
 	end)
-	
+
 end)
